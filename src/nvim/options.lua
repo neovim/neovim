@@ -210,6 +210,12 @@ return {
       defaults={if_true={vi=false}}
     },
     {
+      full_name='bracketedpaste',
+      type='bool', scope={'global'},
+      varname='p_bracketedpaste',
+      defaults={if_true={vi=false, vim=true}}
+    },
+    {
       full_name='breakat', abbreviation='brk',
       type='string', list='flags', scope={'global'},
       vi_def=true,

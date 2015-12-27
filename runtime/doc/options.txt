@@ -1068,6 +1068,16 @@ A jump table for the options with a short description can be found at |Q_op|.
 	don't see it when editing.  When you don't change the options, the BOM
 	will be restored when writing the file.
 
+						*'bracketedpaste'*
+'bracketedpaste'	boolean	(default on)
+			global
+	Use bracketed paste functionality of the terminal.  When this option is
+	enabled neovim will handle pasted input specially, e.g. paste the
+	string verbatim instead of putting it character by character.  {Nvim}
+	This option's value is used only during initialization so the option
+	should be set/unset before neovim has loaded, e.g. in the config
+	file.
+
 						*'breakat'* *'brk'*
 'breakat' 'brk'		string	(default " ^I!@*-+;:,./?")
 			global

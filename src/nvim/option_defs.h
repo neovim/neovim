@@ -319,6 +319,7 @@ static char *(p_bo_values[]) = {"all", "backspace", "cursor", "complete",
 #define BO_WILD   0x40000
 
 EXTERN char_u   *p_bsk;         /* 'backupskip' */
+EXTERN int p_bracketedpaste;    ///< 'bracketedpaste'
 EXTERN char_u   *p_breakat;     /* 'breakat' */
 EXTERN char_u   *p_cmp;         /* 'casemap' */
 EXTERN unsigned cmp_flags;

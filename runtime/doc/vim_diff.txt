@@ -124,7 +124,8 @@ Additional differences:
 
 See |nvim-intro| for a list of Nvim's largest new features.
 
-|bracketed-paste-mode| is built-in and enabled by default.
+|bracketed-paste-mode| is built-in and enabled by default.  Mode's status is
+controlled by the 'bracketedpaste' option.
 
 Meta (alt) chords are recognized (even in the terminal).
   <M-1>, <M-2>, ...

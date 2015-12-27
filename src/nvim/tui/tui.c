@@ -137,7 +137,9 @@ static void terminfo_start(UI *ui)
   unibi_out(ui, unibi_enter_ca_mode);
   unibi_out(ui, unibi_clear_screen);
   // Enable bracketed paste
-  unibi_out(ui, data->unibi_ext.enable_bracketed_paste);
+  if (p_bracketedpaste) {
+    unibi_out(ui, data->unibi_ext.enable_bracketed_paste);
+  }
   // Enable focus reporting
   unibi_out(ui, data->unibi_ext.enable_focus_reporting);
   uv_loop_init(&data->write_loop);
