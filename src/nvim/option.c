@@ -882,16 +882,16 @@ set_option_default (
             *(long *)varp;
       }
     } else {  /* P_BOOL */
-      *(int *)varp = (int)(intptr_t)options[opt_idx].def_val[dvi];
+      *(bool *)varp = (bool)(intptr_t)options[opt_idx].def_val[dvi];
 #ifdef UNIX
       /* 'modeline' defaults to off for root */
       if (options[opt_idx].indir == PV_ML && getuid() == ROOT_UID)
-        *(int *)varp = FALSE;
+        *(bool *)varp = false;
 #endif
       /* May also set global value for local option. */
       if (both)
-        *(int *)get_varp_scope(&(options[opt_idx]), OPT_GLOBAL) =
-          *(int *)varp;
+        *(bool *)get_varp_scope(&(options[opt_idx]), OPT_GLOBAL) =
+          *(bool *)varp;
     }
 
     /* The default value is not insecure. */
@@ -1403,7 +1403,7 @@ do_set (
            * ":set opt<": reset to global value
            */
           if (nextchar == '!')
-            value = *(int *)(varp) ^ 1;
+            value = !(*(bool *)varp);
           else if (nextchar == '&')
             value = (int)(intptr_t)options[opt_idx].def_val[
               ((flags & P_VI_DEF) || cp_val)
@@ -1414,7 +1414,7 @@ do_set (
                 && opt_flags == OPT_LOCAL)
               value = -1;
             else
-              value = *(int *)get_varp_scope(&(options[opt_idx]),
+              value = *(bool *)get_varp_scope(&(options[opt_idx]),
                   OPT_GLOBAL);
           } else {
             /*
@@ -1426,12 +1426,12 @@ do_set (
               goto skip;
             }
             if (prefix == 2)                    /* inv */
-              value = *(int *)(varp) ^ 1;
+              value = !(*(bool *)varp);
             else
               value = prefix;
           }
 
-          errmsg = set_bool_option(opt_idx, varp, (int)value,
+          errmsg = set_bool_option(opt_idx, varp, (bool)value,
               opt_flags);
         } else {                                  /* numeric or string */
           if (vim_strchr((char_u *)"=:&<", nextchar) == NULL
@@ -3516,11 +3516,11 @@ static char_u *
 set_bool_option (
     int opt_idx,                            /* index in options[] table */
     char_u *varp,                      /* pointer to the option variable */
-    int value,                              /* new value */
+    bool value,                              /* new value */
     int opt_flags                          /* OPT_LOCAL and/or OPT_GLOBAL */
 )
 {
-  int old_value = *(int *)varp;
+  int old_value = *(bool *)varp;
 
   /* Disallow changing some options from secure mode */
   if ((secure || sandbox != 0)
@@ -3528,14 +3528,14 @@ set_bool_option (
     return e_secure;
   }
 
-  *(int *)varp = value;             /* set the new value */
+  *(bool *)varp = value;             /* set the new value */
   /* Remember where the option was set. */
   set_option_scriptID_idx(opt_idx, opt_flags, current_SID);
 
 
   /* May set global value for local option. */
   if ((opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0)
-    *(int *)get_varp_scope(&(options[opt_idx]), OPT_GLOBAL) = value;
+    *(bool *)get_varp_scope(&(options[opt_idx]), OPT_GLOBAL) = value;
 
   // Ensure that options set to p_force_on cannot be disabled.
   if ((int *)varp == &p_force_on && p_force_on == FALSE) {
@@ -4458,15 +4458,15 @@ get_option_value (
 
   if (varp == NULL)                 /* hidden option */
     return -1;
-  if (options[opt_idx].flags & P_NUM)
+  if (options[opt_idx].flags & P_NUM) {
     *numval = *(long *)varp;
-  else {
+  } else { // P_BOOL
     /* Special case: 'modified' is b_changed, but we also want to consider
      * it set when 'ff' or 'fenc' changed. */
     if ((bool *)varp == &curbuf->b_changed)
       *numval = curbufIsChanged();
     else
-      *numval = *(int *)varp;
+      *numval = *(bool *)varp;
   }
   return 1;
 }
@@ -4586,8 +4586,8 @@ int get_option_value_strict(char *name,
       *stringval = xstrdup(*(char **)(varp));
     } else if (p->flags & P_NUM) {
       *numval = *(long *) varp;
-    } else {
-      *numval = *(int *)varp;
+    } else { // P_BOOL
+      *numval = *(bool *)varp;
     }
   }
 
@@ -4651,7 +4651,7 @@ set_option_value (
           return set_num_option(opt_idx, varp, number,
               NULL, 0, opt_flags);
         else
-          return set_bool_option(opt_idx, varp, (int)number,
+          return set_bool_option(opt_idx, varp, (bool)number,
               opt_flags);
       }
     }
@@ -4813,7 +4813,7 @@ static int optval_default(vimoption_T *p, char_u *varp)
   if (p->flags & P_NUM)
     return *(long *)varp == (long)p->def_val[dvi];
   if (p->flags & P_BOOL)
-    return *(int *)varp == (int)(intptr_t)p->def_val[dvi];
+    return *(bool *)varp == (bool)(intptr_t)p->def_val[dvi];
   /* P_STRING */
   return STRCMP(*(char_u **)varp, p->def_val[dvi]) == 0;
 }
@@ -4946,7 +4946,7 @@ int makeset(FILE *fd, int opt_flags, int local_only)
             cmd = "setlocal";
 
           if (p->flags & P_BOOL) {
-            if (put_setbool(fd, cmd, p->fullname, *(int *)varp) == FAIL)
+            if (put_setbool(fd, cmd, p->fullname, *(bool *)varp) == FAIL)
               return FAIL;
           } else if (p->flags & P_NUM) {
             if (put_setnum(fd, cmd, p->fullname, (long *)varp) == FAIL)
