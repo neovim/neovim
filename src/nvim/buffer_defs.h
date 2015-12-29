@@ -649,7 +649,7 @@ struct file_buffer {
   bool b_p_swf;                 /* 'swapfile' */
   long b_p_smc;                 /* 'synmaxcol' */
   char_u      *b_p_syn;         /* 'syntax' */
-  int b_p_ts;                   /* 'tabstop' */
+  long b_p_ts;                  /* 'tabstop' */
   long b_p_tw;                  /* 'textwidth' */
   long b_p_tw_nobin;            /* b_p_tw saved for binary mode */
   long b_p_tw_nopaste;          /* b_p_tw saved for paste mode */

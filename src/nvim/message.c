@@ -44,10 +44,10 @@ typedef struct msgchunk_S msgchunk_T;
 struct msgchunk_S {
   msgchunk_T  *sb_next;
   msgchunk_T  *sb_prev;
-  bool sb_eol;                  // TRUE when line ends after this text
-  int sb_msg_col;               /* column in which text starts */
-  int sb_attr;                  /* text attributes */
-  char_u sb_text[1];            /* text to be displayed, actually longer */
+  bool sb_eol;           ///< TRUE when line ends after this text
+  int sb_msg_col;        ///< column in which text starts
+  int sb_attr;           ///< text attributes
+  char_u sb_text[1];     ///< text to be displayed, actually longer
 };
 
 /* Magic chars used in confirm dialog strings */
@@ -214,10 +214,10 @@ char_u *msg_strtrunc(
     len = (size_t)vim_strsize(s);
     assert(Rows > msg_row);
     if (msg_scrolled != 0) {
-      /* Use all the columns. */
+      // Use all the columns.
       room = (size_t)((Rows - msg_row) * Columns - 1);
     } else {
-      /* Use up to 'showcmd' column. */
+      // Use up to 'showcmd' column.
       room = (size_t)((Rows - msg_row - 1) * Columns + sc_col - 1);
     }
     if (len > room && room > 0) {
@@ -260,16 +260,19 @@ void trunc_string(char_u *s, char_u *buf, size_t room, size_t buflen)
       return;
     }
     n = (size_t)ptr2cells(s + e);
-    if (len + n >= half)
+    if (len + n >= half) {
       break;
+    }
     len += n;
     buf[e] = s[e];
-    if (has_mbyte)
+    if (has_mbyte) {
       for (n = (size_t)(*mb_ptr2len)(s + e); --n > 0; ) {
-        if (++e == buflen)
+        if (++e == buflen) {
           break;
+        }
         buf[e] = s[e];
       }
+    }
   }
 
   /* Last part: End of the string. */
@@ -284,15 +287,16 @@ void trunc_string(char_u *s, char_u *buf, size_t room, size_t buflen)
       i += (size_t)(*mb_ptr2len)(s + i);
     }
   } else if (enc_utf8) {
-    /* For UTF-8 we can go backwards easily. */
+    // For UTF-8 we can go backwards easily.
     half = i = STRLEN(s);
     for (;; ) {
       do {
         half = half - (size_t)(*mb_head_off)(s, s + half - 1) - 1;
       } while (utf_iscomposing(utf_ptr2char(s + half)) && half > 0);
       n = (size_t)ptr2cells(s + half);
-      if (len + n > room)
+      if (len + n > room) {
         break;
+      }
       len += n;
       i = half;
     }
@@ -307,8 +311,9 @@ void trunc_string(char_u *s, char_u *buf, size_t room, size_t buflen)
   if (e + 3 < buflen) {
     memmove(buf + e, "...", 3);
     len = STRLEN(s + i) + 1;
-    if (len >= buflen - e - 3)
+    if (len >= buflen - e - 3) {
       len = buflen - e - 3 - 1;
+    }
     memmove(buf + e + 3, s + i, len);
     buf[e + 3 + len - 1] = NUL;
   } else {
@@ -620,7 +625,7 @@ char_u *msg_trunc_attr(char_u *s, int force, int attr)
 {
   int n;
 
-  /* Add message to history before truncating */
+  // Add message to history before truncating
   add_msg_hist(s, STRLEN(s), attr);
 
   s = msg_may_trunc(force, s);
@@ -644,7 +649,7 @@ char_u *msg_may_trunc(int force, char_u *s)
   int n;
   int room;
 
-  room = (Rows - cmdline_row - 1) * Columns + sc_col - 1;
+  room = (int)((Rows - cmdline_row - 1) * Columns + sc_col - 1);
   if ((force || (shortmess(SHM_TRUNC) && !exmode_active))
       && (n = (int)STRLEN(s) - room) > 0) {
     if (has_mbyte) {
@@ -677,7 +682,7 @@ static void add_msg_hist(char_u *s, size_t len, int attr)
 
   /* allocate an entry and add the message at the end of the history */
   struct msg_hist *p = xmalloc(sizeof(struct msg_hist));
-  /* remove leading and trailing newlines */
+  // remove leading and trailing newlines
   while (len > 0 && *s == '\n') {
     ++s;
     --len;
@@ -999,7 +1004,7 @@ void msg_start(void)
   if (!msg_scroll && full_screen) {     /* overwrite last message */
     msg_row = cmdline_row;
     msg_col = (int)(cmdmsg_rl ? Columns - 1 : 0);
-  } else if (msg_didout) {                /* start message on next line */
+  } else if (msg_didout) {  // start message on next line
     msg_putchar('\n');
     did_return = TRUE;
     if (exmode_active != EXMODE_NORMAL)
@@ -1135,7 +1140,7 @@ int msg_outtrans_len_attr(char_u *msgstr, size_t len, int attr)
    */
   while (len-- > 0) {
     if (enc_utf8) {
-      /* Don't include composing chars after the end. */
+      // Don't include composing chars after the end.
       assert(len <= INT_MAX);
       mb_l = utfc_ptr2len_len(str, (int)len + 1);
     } else if (has_mbyte) {
@@ -1400,8 +1405,8 @@ void msg_prt_line(char_u *s, int list)
       attr = 0;
       c = *s++;
       if (c == TAB && (!list || lcs_tab1)) {
-        /* tab amount depends on current column */
-        n_extra = curbuf->b_p_ts - col % curbuf->b_p_ts - 1;
+        // tab amount depends on current column
+        n_extra = (int)(curbuf->b_p_ts - col % curbuf->b_p_ts - 1);
         if (!list) {
           c = ' ';
           c_extra = ' ';
@@ -1468,7 +1473,7 @@ static char_u *screen_puts_mbyte(char_u *s, int l, int attr)
   if (cmdmsg_rl) {
     msg_col -= cw;
     if (msg_col == 0) {
-      msg_col = Columns;
+      msg_col = (int)Columns;
       ++msg_row;
     }
   } else {
@@ -1608,14 +1613,13 @@ static void msg_puts_display(char_u *str, int maxlen, int attr, int recurse)
                    || (*s == TAB && msg_col + t_col >= ((Columns - 1) & ~7))
                    || (has_mbyte && (*mb_ptr2cells)(s) > 1
                        && msg_col + t_col >= Columns - 2))))) {
-      /*
-       * The screen is scrolled up when at the last row (some terminals
-       * scroll automatically, some don't.  To avoid problems we scroll
-       * ourselves).
-       */
-      if (t_col > 0)
-        /* output postponed text */
+      // The screen is scrolled up when at the last row (some terminals
+      // scroll automatically, some don't.  To avoid problems we scroll
+      // ourselves).
+      if (t_col > 0) {
+        // output postponed text
         t_puts(&t_col, t_s, s, attr);
+      }
 
       /* When no more prompt and no more room, truncate here */
       if (msg_no_more && lines_left == 0)
@@ -1624,9 +1628,9 @@ static void msg_puts_display(char_u *str, int maxlen, int attr, int recurse)
       /* Scroll the screen up one line. */
       msg_scroll_up();
 
-      msg_row = Rows - 2;
+      msg_row = (int)Rows - 2;
       if (msg_col >= Columns) {  // can happen after screen resize
-        msg_col = Columns - 1;
+        msg_col = (int)Columns - 1;
       }
 
       /* Display char in last column before showing more-prompt. */
@@ -1646,9 +1650,10 @@ static void msg_puts_display(char_u *str, int maxlen, int attr, int recurse)
       } else
         did_last_char = FALSE;
 
-      if (p_more)
-        /* store text for scrolling back */
+      if (p_more) {
+        // store text for scrolling back
         store_sb_text(&sb_str, s, attr, &sb_col, true);
+      }
 
       inc_msg_scrolled();
       need_wait_return = TRUE;       /* may need wait_return in main() */
@@ -1688,26 +1693,29 @@ static void msg_puts_display(char_u *str, int maxlen, int attr, int recurse)
       /* output any postponed text */
       t_puts(&t_col, t_s, s, attr);
 
-    if (wrap && p_more && !recurse)
-      /* store text for scrolling back */
+    if (wrap && p_more && !recurse) {
+      // store text for scrolling back
       store_sb_text(&sb_str, s, attr, &sb_col, true);
+    }
 
-    if (*s == '\n') {               /* go to next line */
-      msg_didout = false;           /* remember that line is empty */
+    if (*s == '\n') {      // go to next line
+      msg_didout = false;  // remember that line is empty
       if (cmdmsg_rl) {
         assert(Columns <= INT_MAX);
         msg_col = (int)Columns - 1;
       } else {
         msg_col = 0;
       }
-      if (++msg_row >= Rows)        /* safety check */
+      if (++msg_row >= Rows) {    // safety check
         msg_row = (int)Rows - 1;
-    } else if (*s == '\r') {      /* go to column 0 */
+      }
+    } else if (*s == '\r') {      // go to column 0
       msg_col = 0;
-    } else if (*s == '\b') {      /* go to previous char */
-      if (msg_col)
+    } else if (*s == '\b') {      // go to previous char
+      if (msg_col) {
         --msg_col;
-    } else if (*s == TAB) {       /* translate Tab into spaces */
+      }
+    } else if (*s == TAB) {       // translate Tab into spaces
       do {
         msg_screen_putchar(' ', attr);
       } while (msg_col & 7);
@@ -1748,12 +1756,13 @@ static void msg_puts_display(char_u *str, int maxlen, int attr, int recurse)
     ++s;
   }
 
-  /* output any postponed text */
-  if (t_col > 0)
+  // output any postponed text
+  if (t_col > 0) {
     t_puts(&t_col, t_s, s, attr);
-  if (p_more && !recurse)
+  }
+  if (p_more && !recurse) {
     store_sb_text(&sb_str, s, attr, &sb_col, false);
-
+  }
   msg_check();
 }
 
@@ -1797,16 +1806,15 @@ static msgchunk_T *last_msgchunk = NULL; /* last displayed text */
 
 static int do_clear_sb_text = FALSE;    /* clear text on next msg */
 
-/*
- * Store part of a printed message for displaying when scrolling back.
- */
-static void store_sb_text(
-    char_u **sb_str,           /* start of string */
-    char_u *s,                 /* just after string */
-    int attr,
-    int *sb_col,
-    bool finish                 // line ends
-)
+/// Store part of a printed message for displaying when scrolling back.
+///
+/// @param sb_str start of string
+/// @param s just after string
+/// @param attr
+/// @param sb_col
+/// @param finish line ends
+static void store_sb_text(char_u **sb_str, char_u *s, int attr,
+                          int *sb_col, bool finish)
 {
   msgchunk_T  *mp;
 
@@ -1898,8 +1906,9 @@ static msgchunk_T *msg_sb_start(msgchunk_T *mps)
  */
 void msg_sb_eol(void)
 {
-  if (last_msgchunk != NULL)
+  if (last_msgchunk != NULL) {
     last_msgchunk->sb_eol = true;
+  }
 }
 
 /*
@@ -2024,8 +2033,9 @@ static int do_more_prompt(int typed_char)
 
   State = ASKMORE;
   setmouse();
-  if (typed_char == NUL)
+  if (typed_char == NUL) {
     msg_moremsg(false);
+  }
   for (;; ) {
     /*
      * Get a typed character directly from the user.
@@ -2053,24 +2063,24 @@ static int do_more_prompt(int typed_char)
       toscroll = 1;
       break;
 
-    case 'u':                   /* Up half a page */
-      toscroll = -(Rows / 2);
+    case 'u':                   // Up half a page
+      toscroll = -((int)Rows / 2);
       break;
 
-    case 'd':                   /* Down half a page */
-      toscroll = Rows / 2;
+    case 'd':                   // Down half a page
+      toscroll = (int)Rows / 2;
       break;
 
     case 'b':                   /* one page back */
     case K_PAGEUP:
-      toscroll = -(Rows - 1);
+      toscroll = -((int)Rows - 1);
       break;
 
     case ' ':                   /* one extra page */
     case 'f':
     case K_PAGEDOWN:
     case K_LEFTMOUSE:
-      toscroll = Rows - 1;
+      toscroll = (int)Rows - 1;
       break;
 
     case 'g':                   /* all the way back to the start */
@@ -2087,7 +2097,7 @@ static int do_more_prompt(int typed_char)
         /* Since got_int is set all typeahead will be flushed, but we
          * want to keep this ':', remember that in a special way. */
         typeahead_noflush(':');
-        cmdline_row = Rows - 1;            // put ':' on this line
+        cmdline_row = (int)Rows - 1;       // put ':' on this line
         skip_redraw = true;                // skip redraw once
         need_wait_return = false;          // don't wait in main()
       }
@@ -2096,7 +2106,7 @@ static int do_more_prompt(int typed_char)
     case Ctrl_C:
     case ESC:
       if (confirm_msg_used) {
-        /* Jump to the choices of the dialog. */
+        // Jump to the choices of the dialog.
         retval = true;
       } else {
         got_int = TRUE;
@@ -2104,10 +2114,10 @@ static int do_more_prompt(int typed_char)
       }
       /* When there is some more output (wrapping line) display that
        * without another prompt. */
-      lines_left = Rows - 1;
+      lines_left = (int)Rows - 1;
       break;
 
-    default:                    /* no valid response */
+    default:                    // no valid response
       msg_moremsg(true);
       continue;
     }
@@ -2167,9 +2177,8 @@ static int do_more_prompt(int typed_char)
       }
 
       if (toscroll <= 0) {
-        /* displayed the requested text, more prompt again */
-        screen_fill((int)Rows - 1, (int)Rows, 0,
-            (int)Columns, ' ', ' ', 0);
+        // displayed the requested text, more prompt again
+        screen_fill((int)Rows - 1, (int)Rows, 0, (int)Columns, ' ', ' ', 0);
         msg_moremsg(false);
         continue;
       }
@@ -2186,10 +2195,10 @@ static int do_more_prompt(int typed_char)
   State = oldState;
   setmouse();
   if (quit_more) {
-    msg_row = Rows - 1;
+    msg_row = (int)Rows - 1;
     msg_col = 0;
   } else if (cmdmsg_rl) {
-    msg_col = Columns - 1;
+    msg_col = (int)Columns - 1;
   }
 
   return retval;
@@ -2283,7 +2292,7 @@ static void msg_screen_putchar(int c, int attr)
   screen_putchar(c, msg_row, msg_col, attr);
   if (cmdmsg_rl) {
     if (--msg_col == 0) {
-      msg_col = Columns;
+      msg_col = (int)Columns;
       ++msg_row;
     }
   } else {
@@ -2300,11 +2309,11 @@ void msg_moremsg(bool full)
   char_u      *s = (char_u *)_("-- More --");
 
   attr = hl_attr(HLF_M);
-  screen_puts(s, Rows - 1, 0, attr);
+  screen_puts(s, (int)Rows - 1, 0, attr);
   if (full)
     screen_puts((char_u *)
         _(" SPACE/d/j: screen/page/line down, b/u/k: up, q: quit "),
-        Rows - 1, vim_strsize(s), attr);
+        (int)Rows - 1, vim_strsize(s), attr);
 }
 
 /*
@@ -2314,11 +2323,11 @@ void msg_moremsg(bool full)
 void repeat_message(void)
 {
   if (State == ASKMORE) {
-    msg_moremsg(true);          /* display --more-- message again */
-    msg_row = Rows - 1;
+    msg_moremsg(true);          // display --more-- message again
+    msg_row = (int)Rows - 1;
   } else if (State == CONFIRM) {
-    display_confirm_msg();      /* display ":confirm" message again */
-    msg_row = Rows - 1;
+    display_confirm_msg();      // display ":confirm" message again
+    msg_row = (int)Rows - 1;
   } else if (State == EXTERNCMD) {
     ui_cursor_goto(msg_row, msg_col);     /* put cursor back */
   } else if (State == HITRETURN || State == SETWSIZE) {
@@ -2331,7 +2340,7 @@ void repeat_message(void)
       msg_clr_eos();
     }
     hit_return_msg();
-    msg_row = Rows - 1;
+    msg_row = (int)Rows - 1;
   }
 }
 
@@ -2584,15 +2593,18 @@ void msg_advance(int col)
     msg_col = col;              /* for redirection, may fill it up later */
     return;
   }
-  if (col >= Columns) {         /* not enough room */
-    col = Columns - 1;
+  if (col >= Columns) {         // not enough room
+    col = (int)Columns - 1;
   }
-  if (cmdmsg_rl)
-    while (msg_col > Columns - col)
+  if (cmdmsg_rl) {
+    while (msg_col > Columns - col) {
       msg_putchar(' ');
-  else
-    while (msg_col < col)
+    }
+  } else {
+    while (msg_col < col) {
       msg_putchar(' ');
+    }
+  }
 }
 
 /*
@@ -3324,10 +3336,11 @@ int vim_vsnprintf(char *str, size_t str_m, char *fmt, va_list ap, typval_T *tvs)
           case 'h':
             // char and short arguments are passed as int
             int_arg = (int)(tvs ? tv_nr(tvs, &arg_idx) : va_arg(ap, int));
-            if (int_arg > 0)
+            if (int_arg > 0) {
               arg_sign =  1;
-            else if (int_arg < 0)
+            } else if (int_arg < 0) {
               arg_sign = -1;
+            }
             break;
           case 'l':
             long_arg = tvs ? tv_nr(tvs, &arg_idx) : va_arg(ap, long int);
@@ -3419,35 +3432,35 @@ int vim_vsnprintf(char *str, size_t str_m, char *fmt, va_list ap, typval_T *tvs)
           f[f_l++] = '\0';
 
           if (fmt_spec == 'p') {
-            str_arg_l += (size_t)sprintf(tmp + str_arg_l, f, ptr_arg);
+            str_arg_l += (size_t)sprintf(tmp + str_arg_l, f, ptr_arg); // NOLINT
           } else if (fmt_spec == 'd') {
             // signed
             switch (length_modifier) {
             case '\0':
-            case 'h': str_arg_l += (size_t)sprintf(tmp + str_arg_l, f,
+            case 'h': str_arg_l += (size_t)sprintf(tmp + str_arg_l, f, // NOLINT
                                                    int_arg);
                       break;
-            case 'l': str_arg_l += (size_t)sprintf(tmp + str_arg_l, f,
+            case 'l': str_arg_l += (size_t)sprintf(tmp + str_arg_l, f, // NOLINT
                                                    long_arg);
                       break;
-            case '2': str_arg_l += (size_t)sprintf(tmp + str_arg_l, f,
-                                                  long_long_arg);
+            case '2': str_arg_l += (size_t)sprintf(tmp + str_arg_l, f, // NOLINT
+                                                   long_long_arg);
                       break;
             }
           } else {
             // unsigned
             switch (length_modifier) {
             case '\0':
-            case 'h': str_arg_l += (size_t)sprintf(tmp + str_arg_l, f,
+            case 'h': str_arg_l += (size_t)sprintf(tmp + str_arg_l, f, // NOLINT
                                                    uint_arg);
                       break;
-            case 'l': str_arg_l += (size_t)sprintf(tmp + str_arg_l, f,
+            case 'l': str_arg_l += (size_t)sprintf(tmp + str_arg_l, f, // NOLINT
                                                    ulong_arg);
                       break;
-            case '2': str_arg_l += (size_t)sprintf(tmp + str_arg_l, f,
+            case '2': str_arg_l += (size_t)sprintf(tmp + str_arg_l, f, // NOLINT
                                                    ulong_long_arg);
                       break;
-            case 'z': str_arg_l += (size_t)sprintf(tmp + str_arg_l, f,
+            case 'z': str_arg_l += (size_t)sprintf(tmp + str_arg_l, f, // NOLINT
                                                    size_t_arg);
                       break;
             }
@@ -3538,7 +3551,7 @@ int vim_vsnprintf(char *str, size_t str_m, char *fmt, va_list ap, typval_T *tvs)
           }
           format[l] = fmt_spec;
           format[l + 1] = NUL;
-          str_arg_l = (size_t)sprintf(tmp, format, f);
+          str_arg_l = (size_t)sprintf(tmp, format, f);  // NOLINT
 
           if (remove_trailing_zeroes) {
             int i;

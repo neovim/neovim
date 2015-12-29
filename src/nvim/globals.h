@@ -112,12 +112,12 @@
  * after setting Rows or Columns (e.g., when starting up).
  */
 
-#define DFLT_COLS       80             /* default value for 'columns' */
-#define DFLT_ROWS       24             /* default value for 'lines' */
+#define DFLT_COLS       80              // default value for 'columns'
+#define DFLT_ROWS       24              // default value for 'lines'
 
-EXTERN int Rows INIT(= DFLT_ROWS);     // nr of rows in the screen
+EXTERN long Rows INIT(= DFLT_ROWS);     // nr of rows in the screen
 
-EXTERN int Columns INIT(= DFLT_COLS);  // nr of columns in the screen
+EXTERN long Columns INIT(= DFLT_COLS);  // nr of columns in the screen
 
 /*
  * The characters and attributes cached for the screen.
@@ -910,23 +910,23 @@ EXTERN int readonlymode INIT(= FALSE);      /* Set to TRUE for "view" */
 EXTERN int recoverymode INIT(= FALSE);      /* Set to TRUE for "-r" option */
 
 // typeahead buffer
-EXTERN typebuf_T typebuf INIT(= {NULL, NULL, 0, 0, 0, 0, 0, 0, 0});
+EXTERN typebuf_T typebuf INIT(= { NULL, NULL, 0, 0, 0, 0, 0, 0, 0 });
 
-EXTERN int ex_normal_busy INIT(= 0);      /* recursiveness of ex_normal() */
-EXTERN int ex_normal_lock INIT(= 0);      /* forbid use of ex_normal() */
-EXTERN int ignore_script INIT(= FALSE);       /* ignore script input */
-EXTERN int stop_insert_mode;            /* for ":stopinsert" and 'insertmode' */
+EXTERN int ex_normal_busy INIT(= 0);     ///< recursiveness of ex_normal()
+EXTERN int ex_normal_lock INIT(= 0);     ///< forbid use of ex_normal()
+EXTERN int ignore_script INIT(= false);  ///< ignore script input
+EXTERN int stop_insert_mode;             ///< for ":stopinsert" and 'insertmode'
 
-EXTERN int KeyTyped;                    /* TRUE if user typed current char */
-EXTERN int KeyStuffed;                  /* TRUE if current char from stuffbuf */
-EXTERN int maptick INIT(= 0);           /* tick for each non-mapped char */
+EXTERN int KeyTyped;                     ///< TRUE if user typed current char
+EXTERN int KeyStuffed;                   ///< TRUE if current char from stuffbuf
+EXTERN int maptick INIT(= 0);            ///< tick for each non-mapped char
 
-EXTERN char_u chartab[256];             /* table used in charset.c; See
-                                           init_chartab() for explanation */
+EXTERN char_u chartab[256];              ///< table used in charset.c; See
+                                         ///< init_chartab() for explanation
 
-EXTERN int must_redraw INIT(= 0);           /* type of redraw necessary */
-EXTERN int skip_redraw INIT(= FALSE);       /* skip redraw once */
-EXTERN int do_redraw INIT(= FALSE);         /* extra redraw once */
+EXTERN int must_redraw INIT(= 0);        ///< type of redraw necessary */
+EXTERN int skip_redraw INIT(= false);    ///< skip redraw once */
+EXTERN int do_redraw INIT(= false);      ///< extra redraw once */
 
 EXTERN int need_highlight_changed INIT(= true);
 EXTERN char *used_shada_file INIT(= NULL);  // name of the ShaDa file to use
@@ -970,8 +970,8 @@ EXTERN int did_cursorhold INIT(= false);       // set when CursorHold t'gerd
 // for CursorMoved event
 EXTERN pos_T last_cursormoved INIT(= INIT_POS_T(0, 0, 0));
 
-EXTERN int last_changedtick INIT(= 0);        /* for TextChanged event */
-EXTERN buf_T    *last_changedtick_buf INIT(= NULL);
+EXTERN int last_changedtick INIT(= 0);         // for TextChanged event
+EXTERN buf_T *last_changedtick_buf INIT(= NULL);
 
 EXTERN int postponed_split INIT(= 0);       /* for CTRL-W CTRL-] command */
 EXTERN int postponed_split_flags INIT(= 0);       /* args for win_split() */
@@ -1080,9 +1080,9 @@ EXTERN int typebuf_was_filled INIT(= FALSE);      /* received text from client
 
 
 #ifdef BACKSLASH_IN_FILENAME
-EXTERN char psepc INIT(= '\\');          // normal path separator character
-EXTERN char psepcN INIT(= '/');          // abnormal path separator character
-EXTERN char pseps[2] INIT(= {'\\', 0});  // normal path separator string
+EXTERN char psepc INIT(= '\\');  ///< normal path separator character
+EXTERN char psepcN INIT(= '/');  ///< abnormal path separator character
+EXTERN char pseps[2] INIT(= { '\\', 0 });  ///< normal path separator string
 #endif
 
 /* Set to TRUE when an operator is being executed with virtual editing, MAYBE

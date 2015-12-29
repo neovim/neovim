@@ -426,16 +426,13 @@ int mch_expand_wildcards(int num_pat, char_u **pat, int *num_file,
   if (i) {                         /* os_call_shell() failed */
     os_remove((char *)tempname);
     xfree(tempname);
-    /*
-     * With interactive completion, the error message is not printed.
-     */
-    if (!(flags & EW_SILENT))
-    {
-      redraw_later_clear();             /* probably messed up screen */
-      msg_putchar('\n');                /* clear bottom line quickly */
-      cmdline_row = Rows - 1;           /* continue on last line */
+    // With interactive completion, the error message is not printed.
+    if (!(flags & EW_SILENT)) {
+      redraw_later_clear();         // probably messed up screen
+      msg_putchar('\n');            // clear bottom line quickly
+      cmdline_row = (int)Rows - 1;  // continue on last line
       MSG(_(e_wildexpand));
-      msg_start();                    /* don't overwrite this message */
+      msg_start();                  // don't overwrite this message
     }
 
     /* If a `cmd` expansion failed, don't list `cmd` as a match, even when

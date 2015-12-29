@@ -2231,16 +2231,17 @@ void putcmdline(int c, int shift)
  */
 void unputcmdline(void)
 {
-  if (cmd_silent)
+  if (cmd_silent) {
     return;
+  }
   msg_no_more = true;
-  if (ccline.cmdlen == ccline.cmdpos)
+  if (ccline.cmdlen == ccline.cmdpos) {
     msg_putchar(' ');
-  else if (has_mbyte)
-    draw_cmdline(ccline.cmdpos,
-        (*mb_ptr2len)(ccline.cmdbuff + ccline.cmdpos));
-  else
+  } else if (has_mbyte) {
+    draw_cmdline(ccline.cmdpos, (*mb_ptr2len)(ccline.cmdbuff + ccline.cmdpos));
+  } else {
     draw_cmdline(ccline.cmdpos, 1);
+  }
   msg_no_more = false;
   cursorcmd();
 }
@@ -2600,7 +2601,7 @@ void redrawcmd(void)
   msg_start();
   redrawcmdprompt();
 
-  /* Don't use more prompt, truncate the cmdline if it doesn't fit. */
+  // Don't use more prompt, truncate the cmdline if it doesn't fit.
   msg_no_more = true;
   draw_cmdline(0, ccline.cmdlen);
   msg_clr_eos();

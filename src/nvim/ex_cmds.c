@@ -3360,8 +3360,7 @@ void do_sub(exarg_T *eap)
               msg_scroll = 0;                           /* truncate msg when
                                                            needed */
               msg_no_more = true;
-              /* write message same highlighting as for
-               * wait_return */
+              // write message same highlighting as for wait_return
               smsg_attr(hl_attr(HLF_R),
                         _("replace with %s (y/n/a/q/l/^E/^Y)?"), sub);
               msg_no_more = false;
