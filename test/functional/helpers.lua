@@ -323,6 +323,10 @@ local function expect(contents)
   return eq(dedent(contents), curbuf_contents())
 end
 
+local function os_is_windows()
+  return nvim_eval('has("win32")') == 1
+end
+
 local function rmdir(path)
   if lfs.attributes(path, 'mode') ~= 'directory' then
     return nil
@@ -425,6 +429,7 @@ return {
   wait = wait,
   set_session = set_session,
   write_file = write_file,
+  os_is_windows = os_is_windows,
   rmdir = rmdir,
   mkdir = lfs.mkdir,
   exc_exec = exc_exec,
