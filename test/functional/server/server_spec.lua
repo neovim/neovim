@@ -38,8 +38,13 @@ describe('serverstart(), serverstop()', function()
     eq('', eval('v:servername'))
 
     -- v:servername will take the next available server.
-    nvim('command', "call serverstart('test_server_socket')")
-    eq('test_server_socket', eval('v:servername'))
+    if eval('has("win32")') then
+      nvim('command', "call serverstart('\\\\.\\pipe\\test_server_pipe')")
+      eq('\\\\.\\pipe\\test_server_pipe', eval('v:servername'))
+    else
+      nvim('command', "call serverstart('test_server_socket')")
+      eq('test_server_socket', eval('v:servername'))
+    end
   end)
 
   it('serverstop() ignores invalid input', function()
