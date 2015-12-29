@@ -126,7 +126,7 @@ void update_topline(void)
   int old_topfill;
   bool check_topline = false;
   bool check_botline = false;
-  long save_so = p_so;
+  NumOpt save_so = p_so;
 
   if (!screen_valid(true))
     return;
@@ -185,7 +185,7 @@ void update_topline(void)
       int halfheight = curwin->w_height / 2 - 1;
       if (halfheight < 2)
         halfheight = 2;
-      long n;
+      NumOpt n;
       if (hasAnyFolding(curwin)) {
         /* Count the number of logical lines between the cursor and
          * topline + p_so (approximation of how much will be
@@ -265,17 +265,18 @@ void update_topline(void)
         }
       }
       if (check_botline) {
-        long line_count = 0;
+        NumOpt line_count = 0;
         if (hasAnyFolding(curwin)) {
           /* Count the number of logical lines between the cursor and
            * botline - p_so (approximation of how much will be
            * scrolled). */
           for (linenr_T lnum = curwin->w_cursor.lnum;
-               lnum >= curwin->w_botline - p_so; --lnum) {
-            ++line_count;
-            /* stop at end of file or when we know we are far off */
-            if (lnum <= 0 || line_count > curwin->w_height + 1)
+               lnum >= curwin->w_botline - p_so; lnum--) {
+            line_count++;
+            // stop at end of file or when we know we are far off
+            if (lnum <= 0 || line_count > curwin->w_height + 1) {
               break;
+            }
             (void)hasFolding(lnum, &lnum, NULL);
           }
         } else
@@ -328,7 +329,7 @@ void update_topline_win(win_T* win)
  */
 static int scrolljump_value(void)
 {
-  long result = p_sj >= 0 ? p_sj : (curwin->w_height * -p_sj) / 100;
+  NumOpt result = p_sj >= 0 ? p_sj : (curwin->w_height * -p_sj) / 100;
   assert(result <= INT_MAX);
   return (int)result;
 }
@@ -1761,13 +1762,15 @@ int onepage(int dir, long count)
     loff.fill = 0;
     if (dir == FORWARD) {
       if (firstwin == lastwin && p_window > 0 && p_window < Rows - 1) {
-        /* Vi compatible scrolling */
-        if (p_window <= 2)
-          ++curwin->w_topline;
-        else
-          curwin->w_topline += p_window - 2;
-        if (curwin->w_topline > curbuf->b_ml.ml_line_count)
+        // Vi compatible scrolling
+        if (p_window <= 2) {
+          curwin->w_topline++;
+        } else {
+          curwin->w_topline += (linenr_T)p_window - 2;
+        }
+        if (curwin->w_topline > curbuf->b_ml.ml_line_count) {
           curwin->w_topline = curbuf->b_ml.ml_line_count;
+        }
         curwin->w_cursor.lnum = curwin->w_topline;
       } else if (curwin->w_botline > curbuf->b_ml.ml_line_count) {
         /* at end of file */
@@ -1795,16 +1798,19 @@ int onepage(int dir, long count)
         continue;
       }
       if (firstwin == lastwin && p_window > 0 && p_window < Rows - 1) {
-        /* Vi compatible scrolling (sort of) */
-        if (p_window <= 2)
-          --curwin->w_topline;
-        else
-          curwin->w_topline -= p_window - 2;
-        if (curwin->w_topline < 1)
+        // Vi compatible scrolling (sort of)
+        if (p_window <= 2) {
+          curwin->w_topline--;
+        } else {
+          curwin->w_topline -= (linenr_T)p_window - 2;
+        }
+        if (curwin->w_topline < 1) {
           curwin->w_topline = 1;
-        curwin->w_cursor.lnum = curwin->w_topline + p_window - 1;
-        if (curwin->w_cursor.lnum > curbuf->b_ml.ml_line_count)
+        }
+        curwin->w_cursor.lnum = curwin->w_topline + (linenr_T)p_window - 1;
+        if (curwin->w_cursor.lnum > curbuf->b_ml.ml_line_count) {
           curwin->w_cursor.lnum = curbuf->b_ml.ml_line_count;
+        }
         continue;
       }
 

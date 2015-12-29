@@ -2352,7 +2352,7 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer,
 
   // Initialize history merger
   for (uint8_t i = 0; i < HIST_COUNT; i++) {
-    long num_saved = get_shada_parameter(hist_type2char(i));
+    intmax_t num_saved = get_shada_parameter(hist_type2char(i));
     if (num_saved == -1) {
       num_saved = p_hi;
     }

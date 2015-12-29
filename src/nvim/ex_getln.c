@@ -114,7 +114,7 @@ typedef struct command_line_state {
   int ignore_drag_release;
   int break_ctrl_c;
   expand_T xpc;
-  long *b_im_ptr;
+  NumOpt *b_im_ptr;
   // Everything that may work recursively should save and restore the
   // current command line in save_ccline.  That includes update_screen(), a
   // custom status line may invoke ":normal".
@@ -4902,8 +4902,8 @@ int del_history_idx(int histype, int idx)
 int get_list_range(char_u **str, int *num1, int *num2)
 {
   int len;
-  int first = false;
-  long num;
+  bool first = false;
+  intmax_t num;
 
   *str = skipwhite(*str);
   if (**str == '-' || ascii_isdigit(**str)) {  // parse "from" part of range

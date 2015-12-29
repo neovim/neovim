@@ -636,7 +636,7 @@ static int pum_set_selected(int n, int repeat)
           // text, but no more than 'previewheight' lines.
           if (repeat == 0) {
             if (lnum > p_pvh) {
-              lnum = p_pvh;
+              lnum = (linenr_T)p_pvh;
             }
 
             if (curwin->w_height < lnum) {

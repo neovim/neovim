@@ -360,8 +360,8 @@ static inline int parse_json_string(vimconv_T *const conv,
         case 'u': {
           const char ubuf[] = { t[1], t[2], t[3], t[4] };
           t += 4;
-          unsigned long ch;
-          vim_str2nr((char_u *) ubuf, NULL, NULL,
+          uintmax_t ch;
+          vim_str2nr((char_u *)ubuf, NULL, NULL,
                      STR2NR_HEX | STR2NR_FORCE, NULL, &ch, 4);
           if (ch == 0) {
             hasnul = true;
@@ -564,7 +564,7 @@ parse_json_number_check:
     tv.v_type = VAR_FLOAT;
   } else {
     // Convert integer
-    long nr;
+    intmax_t nr;
     int num_len;
     vim_str2nr((char_u *) s, NULL, &num_len, 0, &nr, NULL, (int) (p - s));
     if ((int) exp_num_len != num_len) {

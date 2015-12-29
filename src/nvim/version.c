@@ -2644,9 +2644,6 @@ void maybe_intro_message(void)
 void intro_message(int colon)
 {
   int i;
-  long row;
-  long blanklines;
-  int sponsor;
   char *p;
   static char *(lines[]) = {
     N_(NVIM_VERSION_LONG),
@@ -2667,9 +2664,9 @@ void intro_message(int colon)
 
   // blanklines = screen height - # message lines
   size_t lines_size = ARRAY_SIZE(lines);
-  assert(lines_size <= LONG_MAX);
 
-  blanklines = Rows - ((long)lines_size - 1l);
+  assert(lines_size <= LONG_MAX);
+  intmax_t blanklines = Rows - (intmax_t)lines_size + 1;
 
   // Don't overwrite a statusline.  Depends on 'cmdheight'.
   if (p_ls > 1) {
@@ -2682,11 +2679,11 @@ void intro_message(int colon)
 
   // Show the sponsor and register message one out of four times, the Uganda
   // message two out of four times.
-  sponsor = (int)time(NULL);
+  int sponsor = (int)time(NULL);
   sponsor = ((sponsor & 2) == 0) - ((sponsor & 4) == 0);
 
   // start displaying the message lines after half of the blank lines
-  row = blanklines / 2;
+  intmax_t row = blanklines / 2;
 
   if (((row >= 2) && (Columns >= 50)) || colon) {
     for (i = 0; i < (int)ARRAY_SIZE(lines); ++i) {
@@ -2720,15 +2717,14 @@ void intro_message(int colon)
   }
 }
 
-static void do_intro_line(long row, char_u *mesg, int attr)
+static void do_intro_line(intmax_t row, char_u *mesg, int attr)
 {
-  long col;
   char_u *p;
   int l;
   int clen;
 
   // Center the message horizontally.
-  col = vim_strsize(mesg);
+  intmax_t col = vim_strsize(mesg);
 
   col = (Columns - col) / 2;
 
