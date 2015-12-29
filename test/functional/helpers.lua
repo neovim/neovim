@@ -291,15 +291,51 @@ local function write_file(name, text, dont_dedent)
   file:close()
 end
 
-local function source(code)
-  local tmpname = os.tmpname()
-  if os_name() == 'osx' and string.match(tmpname, '^/tmp') then
-   tmpname = '/private'..tmpname
+-- Tries to get platform name, from $SYSTEM_NAME, uname,
+-- fallback is 'Windows'
+local uname = (function()
+  local platform = nil
+  return (function()
+    if platform then
+      return platform
+    end
+
+    platform = os.getenv("SYSTEM_NAME")
+    if platform then
+      return platform
+    end
+
+    local status, f = pcall(io.popen, "uname -s")
+    if status then
+      platform = f:read("*l")
+    else
+      platform = 'Windows'
+    end
+    return platform
+  end)
+end)()
+
+local function tmpname()
+  local fname = os.tmpname()
+  if uname() == 'Windows' and fname:sub(1, 2) == '\\s' then
+    -- In Windows tmpname() returns a filename starting with
+    -- special sequence \s, prepend $TEMP path
+    local tmpdir = os.getenv('TEMP')
+    return tmpdir..fname
+  elseif fname:match('^/tmp') and uname() == 'Darwin' then
+    -- In OS X /tmp links to /private/tmp
+    return '/private'..fname
+  else
+    return fname
   end
-  write_file(tmpname, code)
-  nvim_command('source '..tmpname)
-  os.remove(tmpname)
-  return tmpname
+end
+
+local function source(code)
+  local fname = tmpname()
+  write_file(fname, code)
+  nvim_command('source '..fname)
+  os.remove(fname)
+  return fname
 end
 
 local function nvim(method, ...)
@@ -431,10 +467,10 @@ local function create_callindex(func)
 end
 
 -- Helper to skip tests. Returns true in Windows systems.
--- pending_func is the pending() from busted
+-- pending_func is pending() from busted
 local function pending_win32(pending_func)
   clear()
-  if os_name() == 'windows' then
+  if uname() == 'Windows' then
     if pending_func ~= nil then
       pending_func('FIXME: Windows', function() end)
     end
@@ -508,6 +544,7 @@ return function(after_each)
     curwinmeths = curwinmeths,
     curtabmeths = curtabmeths,
     pending_win32 = pending_win32,
+    tmpname = tmpname,
     NIL = mpack.NIL,
   }
 end

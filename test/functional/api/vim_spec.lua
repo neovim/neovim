@@ -13,7 +13,7 @@ describe('vim_* functions', function()
 
   describe('command', function()
     it('works', function()
-      local fname = os.tmpname()
+      local fname = helpers.tmpname()
       nvim('command', 'new')
       nvim('command', 'edit '..fname)
       nvim('command', 'normal itesting\napi')

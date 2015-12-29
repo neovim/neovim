@@ -91,7 +91,7 @@ describe('jobs', function()
 
   it('preserves NULs', function()
     -- Make a file with NULs in it.
-    local filename = os.tmpname()
+    local filename = helpers.tmpname()
     write_file(filename, "abc\0def\n")
 
     nvim('command', "let j = jobstart(['cat', '"..filename.."'], g:job_opts)")

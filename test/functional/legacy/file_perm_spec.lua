@@ -6,7 +6,7 @@ local clear, call, eq = helpers.clear, helpers.call, helpers.eq
 local neq, exc_exec = helpers.neq, helpers.exc_exec
 
 describe('Test getting and setting file permissions', function()
-  local tempfile = os.tmpname()
+  local tempfile = helpers.tmpname()
 
   before_each(function()
     os.remove(tempfile)

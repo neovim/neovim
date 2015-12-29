@@ -5,9 +5,9 @@ local helpers  = require('test.functional.helpers')(after_each)
 local eval     = helpers.eval
 local command  = helpers.command
 local eq, neq  = helpers.eq, helpers.neq
-local tempfile = os.tmpname()
+local tempfile = helpers.tmpname()
 
--- os.tmpname() also creates the file on POSIX systems. Remove it again.
+-- tmpname() also creates the file on POSIX systems. Remove it again.
 -- We just need the name, ignoring any race conditions.
 if lfs.attributes(tempfile, 'uid') then
   os.remove(tempfile)

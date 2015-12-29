@@ -28,6 +28,7 @@ if(DEFINED ENV{TEST_FILTER})
   set(TEST_TAG "--filter=$ENV{TEST_FILTER}")
 endif()
 
+set(ENV{SYSTEM_NAME} ${SYSTEM_NAME})
 execute_process(
   COMMAND ${BUSTED_PRG} ${TEST_TAG} ${TEST_FILTER} -v -o ${BUSTED_OUTPUT_TYPE}
     --lua=${LUA_PRG} --lazy --helper=${TEST_DIR}/${TEST_TYPE}/preload.lua
