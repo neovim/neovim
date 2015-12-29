@@ -3,6 +3,7 @@
 
 #include <windows.h>
 #include <sys/stat.h>
+#include <stdio.h>
 
 #define TEMP_DIR_NAMES {"$TMP", "$TEMP", "$USERPROFILE", ""}
 #define TEMP_FILE_PATH_MAXLEN _MAX_PATH
@@ -17,6 +18,12 @@
 # endif
 # ifndef restrict
 #  define restrict __restrict
+# endif
+# ifndef STDOUT_FILENO
+#  define STDOUT_FILENO _fileno(stdout)
+# endif
+# ifndef STDERR_FILENO
+#  define STDERR_FILENO _fileno(stderr)
 # endif
 # ifndef S_IXUSR
 #  define S_IXUSR S_IEXEC
