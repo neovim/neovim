@@ -786,8 +786,8 @@ static int command_line_execute(VimState *state, int key)
         if ((wim_flags[s->wim_index] & WIM_LIST)
             || (p_wmnu && (wim_flags[s->wim_index] & WIM_FULL) != 0)) {
           if (!(wim_flags[0] & WIM_LONGEST)) {
-            int p_wmnu_save = p_wmnu;
-            p_wmnu = 0;
+            bool p_wmnu_save = p_wmnu;
+            p_wmnu = false;
             // remove match
             nextwild(&s->xpc, WILD_PREV, 0, s->firstc != '@');
             p_wmnu = p_wmnu_save;

@@ -1995,9 +1995,9 @@ set_options_bin (
     if (!(opt_flags & OPT_LOCAL)) {
       p_tw = 0;
       p_wm = 0;
-      p_ml = FALSE;
-      p_et = FALSE;
-      p_bin = TRUE;             /* needed when called for the "-b" argument */
+      p_ml = false;
+      p_et = false;
+      p_bin = true;             /* needed when called for the "-b" argument */
     }
   } else if (oldval) {        /* switched off */
     if (!(opt_flags & OPT_GLOBAL)) {
@@ -5655,7 +5655,7 @@ void reset_modifiable(void)
   int opt_idx;
 
   curbuf->b_p_ma = true;
-  p_ma = FALSE;
+  p_ma = false;
   opt_idx = findoption((char_u *)"ma");
   if (opt_idx >= 0)
     options[opt_idx].def_val[VI_DEFAULT] = FALSE;
@@ -6206,10 +6206,10 @@ int shortmess(int x)
 static void paste_option_changed(void)
 {
   static int old_p_paste = FALSE;
-  static int save_sm = 0;
-  static int save_ru = 0;
-  static int save_ri = 0;
-  static int save_hkmap = 0;
+  static bool save_sm = false;
+  static bool save_ru = false;
+  static bool save_ri = false;
+  static bool save_hkmap = false;
 
   if (p_paste) {
     /*
@@ -6250,17 +6250,17 @@ static void paste_option_changed(void)
     }
 
     /* set global options */
-    p_sm = 0;                       /* no showmatch */
+    p_sm = false;                       /* no showmatch */
     if (p_ru)
       status_redraw_all();          /* redraw to remove the ruler */
-    p_ru = 0;                       /* no ruler */
-    p_ri = 0;                       /* no reverse insert */
-    p_hkmap = 0;                    /* no Hebrew keyboard */
+    p_ru = false;                       /* no ruler */
+    p_ri = false;                       /* no reverse insert */
+    p_hkmap = false;                    /* no Hebrew keyboard */
     /* set global values for local buffer options */
     p_tw = 0;
     p_wm = 0;
     p_sts = 0;
-    p_ai = 0;
+    p_ai = false;
   }
   /*
    * Paste switched from on to off: Restore saved values.

@@ -1259,14 +1259,14 @@ openscript (
     int oldcurscript;
     int save_State = State;
     int save_restart_edit = restart_edit;
-    int save_insertmode = p_im;
+    bool save_insertmode = p_im;
     int save_finish_op = finish_op;
     int save_msg_scroll = msg_scroll;
 
     State = NORMAL;
     msg_scroll = FALSE;         /* no msg scrolling in Normal mode */
     restart_edit = 0;           /* don't go to Insert mode */
-    p_im = FALSE;               /* don't use 'insertmode' */
+    p_im = false;               /* don't use 'insertmode' */
     clear_oparg(&oa);
     finish_op = FALSE;
 

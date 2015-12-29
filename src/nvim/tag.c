@@ -2286,9 +2286,9 @@ jumpto_tag (
 )
 {
   int save_secure;
-  int save_magic;
+  bool save_magic;
   bool save_p_ws;
-  int save_p_scs, save_p_ic;
+  bool save_p_scs, save_p_ic;
   linenr_T save_lnum;
   int csave = 0;
   char_u      *str;
@@ -2409,7 +2409,7 @@ jumpto_tag (
     secure = 1;
     ++sandbox;
     save_magic = p_magic;
-    p_magic = FALSE;            /* always execute with 'nomagic' */
+    p_magic = false;            /* always execute with 'nomagic' */
     /* Save value of no_hlsearch, jumping to a tag is not a real search */
     save_no_hlsearch = no_hlsearch;
 
@@ -2439,8 +2439,8 @@ jumpto_tag (
       save_p_ic = p_ic;
       save_p_scs = p_scs;
       p_ws = true;              /* need 'wrapscan' for backward searches */
-      p_ic = FALSE;             /* don't ignore case now */
-      p_scs = FALSE;
+      p_ic = false;             /* don't ignore case now */
+      p_scs = false;
       save_lnum = curwin->w_cursor.lnum;
       curwin->w_cursor.lnum = 0;        /* start search before first line */
       if (do_search(NULL, pbuf[0], pbuf + 1, (long)1,
@@ -2453,7 +2453,7 @@ jumpto_tag (
         /*
          * try again, ignore case now
          */
-        p_ic = TRUE;
+        p_ic = true;
         if (!do_search(NULL, pbuf[0], pbuf + 1, (long)1,
                 search_options, NULL)) {
           /*

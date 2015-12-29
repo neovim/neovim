@@ -7095,7 +7095,7 @@ void ex_may_print(exarg_T *eap)
  */
 static void ex_submagic(exarg_T *eap)
 {
-  int magic_save = p_magic;
+  bool magic_save = p_magic;
 
   p_magic = (eap->cmdidx == CMD_smagic);
   do_sub(eap);
@@ -7321,7 +7321,7 @@ static void ex_redraw(exarg_T *eap)
   int p = p_lz;
 
   RedrawingDisabled = 0;
-  p_lz = FALSE;
+  p_lz = false;
   update_topline();
   update_screen(eap->forceit ? CLEAR :
       VIsual_active ? INVERTED :
@@ -7350,7 +7350,7 @@ static void ex_redrawstatus(exarg_T *eap)
   int p = p_lz;
 
   RedrawingDisabled = 0;
-  p_lz = FALSE;
+  p_lz = false;
   if (eap->forceit)
     status_redraw_all();
   else
@@ -7623,7 +7623,7 @@ static void ex_normal(exarg_T *eap)
   int save_msg_didout = msg_didout;
   int save_State = State;
   tasave_T tabuf;
-  int save_insertmode = p_im;
+  bool save_insertmode = p_im;
   int save_finish_op = finish_op;
   long save_opcount = opcount;
   char_u      *arg = NULL;
@@ -7642,7 +7642,7 @@ static void ex_normal(exarg_T *eap)
 
   msg_scroll = FALSE;       /* no msg scrolling in Normal mode */
   restart_edit = 0;         /* don't go to Insert mode */
-  p_im = FALSE;             /* don't use 'insertmode' */
+  p_im = false;             /* don't use 'insertmode' */
 
   /*
    * vgetc() expects a CSI and K_SPECIAL to have been escaped.  Don't do

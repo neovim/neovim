@@ -5596,9 +5596,9 @@ void do_autocmd(char_u *arg, int forceit)
    * forward slashes here. */
   if (vim_strchr(pat, '$') != NULL || vim_strchr(pat, '~') != NULL) {
 #ifdef BACKSLASH_IN_FILENAME
-    int p_ssl_save = p_ssl;
+    bool p_ssl_save = p_ssl;
 
-    p_ssl = TRUE;
+    p_ssl = true;
 #endif
     envpat = expand_env_save(pat);
 #ifdef BACKSLASH_IN_FILENAME
@@ -6018,8 +6018,8 @@ aucmd_prepbuf (
 )
 {
   win_T       *win;
-  int save_ea;
-  int save_acd;
+  bool save_ea;
+  bool save_acd;
 
   /* Find a window that is for the new buffer */
   if (buf == curbuf) {          /* be quick when buf is curbuf */

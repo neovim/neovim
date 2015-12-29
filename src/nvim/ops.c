@@ -300,9 +300,9 @@ static void shift_block(oparg_T *oap, int amount)
   colnr_T ws_vcol;
   int i = 0, j = 0;
   int len;
-  int old_p_ri = p_ri;
+  bool old_p_ri = p_ri;
 
-  p_ri = 0;                     /* don't want revins in indent */
+  p_ri = false;                     /* don't want revins in indent */
 
   State = INSERT;               /* don't want REPLACE for State */
   block_prep(oap, &bd, curwin->w_cursor.lnum, TRUE);
@@ -3763,7 +3763,6 @@ format_lines (
   int do_number_indent;
   int do_trail_white;
   int first_par_line = TRUE;
-  int smd_save;
   long count;
   int need_set_indent = TRUE;           /* set indent of next paragraph */
   int force_format = FALSE;
@@ -3893,8 +3892,8 @@ format_lines (
 
         /* do the formatting, without 'showmode' */
         State = INSERT;         /* for open_line() */
-        smd_save = p_smd;
-        p_smd = FALSE;
+        bool smd_save = p_smd;
+        p_smd = false;
         insertchar(NUL, INSCHAR_FORMAT
             + (do_comments ? INSCHAR_DO_COM : 0)
             + (do_comments && do_comments_list

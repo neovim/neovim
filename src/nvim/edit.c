@@ -2580,7 +2580,6 @@ ins_compl_dictionaries (
   regmatch_T regmatch;
   char_u      **files;
   int count;
-  int save_p_scs;
   int dir = compl_direction;
 
   if (*dict == NUL) {
@@ -2596,9 +2595,9 @@ ins_compl_dictionaries (
   regmatch.regprog = NULL;      /* so that we can goto theend */
 
   /* If 'infercase' is set, don't use 'smartcase' here */
-  save_p_scs = p_scs;
+  bool save_p_scs = p_scs;
   if (curbuf->b_p_inf)
-    p_scs = FALSE;
+    p_scs = false;
 
   /* When invoked to match whole lines for CTRL-X CTRL-L adjust the pattern
    * to only match at the start of a line.  Otherwise just match the
@@ -3555,9 +3554,9 @@ static int ins_compl_get_exp(pos_T *ini)
 
   pos_T       *pos;
   char_u      **matches;
-  int save_p_scs;
+  bool save_p_scs;
   bool save_p_ws;
-  int save_p_ic;
+  bool save_p_ic;
   int i;
   int num_matches;
   int len;
@@ -3752,7 +3751,7 @@ static int ins_compl_get_exp(pos_T *ini)
       save_p_scs = p_scs;
       assert(ins_buf);
       if (ins_buf->b_p_inf)
-        p_scs = FALSE;
+        p_scs = false;
 
       /*	Buffers other than curbuf are scanned from the beginning or the
        *	end but never from the middle, thus setting nowrapscan in this
