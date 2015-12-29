@@ -3037,7 +3037,7 @@ static double tv_float(typval_T *tvs, int *idxp)
  *	http://www.ijs.si/software/snprintf/
  *
  * This snprintf() only supports the following conversion specifiers:
- * s, c, d, u, o, x, X, p  (and synonyms: i, D, U, O - see below)
+ * s, c, b, B, d, u, o, x, X, p  (and synonyms: i, D, U, O - see below)
  * with flags: '-', '+', ' ', '0' and '#'.
  * An asterisk is supported for field width as well as precision.
  *
@@ -3295,8 +3295,8 @@ int vim_vsnprintf(char *str, size_t str_m, char *fmt, va_list ap, typval_T *tvs)
         }
         break;
 
-      case 'd': case 'u': case 'o': case 'x': case 'X': case 'p': {
-        // u, o, x, X and p conversion specifiers imply the value is unsigned;
+      case 'd': case 'u': case 'b': case 'B': case 'o': case 'x': case 'X': case 'p': {
+        // u, b, B, o, x, X and p conversion specifiers imply the value is unsigned;
         // d implies a signed value
 
         // 0 if numeric argument is zero (or if pointer is NULL for 'p'),
@@ -3399,7 +3399,8 @@ int vim_vsnprintf(char *str, size_t str_m, char *fmt, va_list ap, typval_T *tvs)
           // leave negative numbers for sprintf to handle, to
           // avoid handling tricky cases like (short int)-32768
         } else if (alternate_form) {
-          if (arg_sign != 0 && (fmt_spec == 'x' || fmt_spec == 'X') ) {
+          if (arg_sign != 0 && (fmt_spec == 'x' || fmt_spec == 'X' ||
+                                fmt_spec == 'b' || fmt_spec == 'B')) {
             tmp[str_arg_l++] = '0';
             tmp[str_arg_l++] = fmt_spec;
           }
@@ -3411,7 +3412,7 @@ int vim_vsnprintf(char *str, size_t str_m, char *fmt, va_list ap, typval_T *tvs)
           precision = 1;  // default precision is 1
         if (precision == 0 && arg_sign == 0) {
           // when zero value is formatted with an explicit precision 0,
-          // resulting formatted string is empty (d, i, u, o, x, X, p)
+          // resulting formatted string is empty (d, i, u, b, B, o, x, X, p)
         } else {
           char f[5];
           int f_l = 0;
@@ -3441,6 +3442,36 @@ int vim_vsnprintf(char *str, size_t str_m, char *fmt, va_list ap, typval_T *tvs)
             case '2': str_arg_l += sprintf(tmp + str_arg_l, f, long_long_arg);
                       break;
             }
+          } else if (fmt_spec == 'b' || fmt_spec == 'B') {
+            //binary
+            size_t bits = 0;
+            switch (length_modifier) {
+            case '\0':
+            case 'h': for (bits = sizeof(unsigned) * 8; bits > 0; bits--)
+                        if ((uint_arg >> (bits - 1)) & 0x1) break;
+              
+                      while (bits > 0)
+                        tmp[str_arg_l++] = ((uint_arg >> --bits) & 0x1) ? '1' : '0';
+                      break;
+            case 'l': for (bits = sizeof(unsigned long) * 8; bits > 0; bits--)
+                        if ((ulong_arg >> (bits - 1)) & 0x1) break;
+              
+                      while (bits > 0)
+                        tmp[str_arg_l++] = ((ulong_arg >> --bits) & 0x1) ? '1' : '0';
+                      break;
+            case '2': for (bits = sizeof(unsigned long long) * 8; bits > 0; bits--)
+                        if ((ulong_long_arg >> (bits - 1)) & 0x1) break;
+              
+                      while (bits > 0)
+                        tmp[str_arg_l++] = ((ulong_long_arg >> --bits) & 0x1) ? '1' : '0';
+                      break;
+            case 'z': for (bits = sizeof(size_t) * 8; bits > 0; bits--)
+                        if ((size_t_arg >> (bits - 1)) & 0x1) break;
+              
+                      while (bits > 0)
+                        tmp[str_arg_l++] = ((size_t_arg >> --bits) & 0x1) ? '1' : '0';
+                      break;
+            }
           } else {
             // unsigned
             switch (length_modifier) {
@@ -3464,7 +3495,9 @@ int vim_vsnprintf(char *str, size_t str_m, char *fmt, va_list ap, typval_T *tvs)
           if (zero_padding_insertion_ind + 1 < str_arg_l
               && tmp[zero_padding_insertion_ind]   == '0'
               && (tmp[zero_padding_insertion_ind + 1] == 'x'
-                  || tmp[zero_padding_insertion_ind + 1] == 'X'))
+                  || tmp[zero_padding_insertion_ind + 1] == 'X'
+                  || tmp[zero_padding_insertion_ind + 1] == 'b'
+                  || tmp[zero_padding_insertion_ind + 1] == 'B'))
             zero_padding_insertion_ind += 2;
         }
 

@@ -4197,7 +4197,7 @@ int do_addsub(int command, linenr_T Prenum1)
   int col;
   char_u      *buf1;
   char_u buf2[NUMBUFLEN];
-  int hex;                      /* 'X' or 'x': hex; '0': octal */
+  int pre;                      /* 'X' or 'x': hex; '0': octal; 'B' or 'b': bin */
   static int hexupper = FALSE;          /* 0xABC */
   unsigned long n, oldn;
   char_u      *ptr;
@@ -4206,6 +4206,7 @@ int do_addsub(int command, linenr_T Prenum1)
   int todel;
   int dohex;
   int dooct;
+  int dobin;
   int doalp;
   int firstdigit;
   int negative;
@@ -4213,6 +4214,7 @@ int do_addsub(int command, linenr_T Prenum1)
 
   dohex = (vim_strchr(curbuf->b_p_nf, 'x') != NULL);    /* "heX" */
   dooct = (vim_strchr(curbuf->b_p_nf, 'o') != NULL);    /* "Octal" */
+  dobin = (vim_strchr(curbuf->b_p_nf, 'b') != NULL);    /* "Bin" */
   doalp = (vim_strchr(curbuf->b_p_nf, 'p') != NULL);    /* "alPha" */
 
   ptr = get_cursor_line_ptr();
@@ -4222,19 +4224,44 @@ int do_addsub(int command, linenr_T Prenum1)
    * First check if we are on a hexadecimal number, after the "0x".
    */
   col = curwin->w_cursor.col;
+
+  if (dobin)
+    while (col > 0 && ascii_isbdigit(ptr[col]))
+      --col;
+
   if (dohex)
     while (col > 0 && ascii_isxdigit(ptr[col]))
       --col;
-  if (       dohex
-             && col > 0
+  if (       dobin
+             && dohex
+             && ! ((col > 0
              && (ptr[col] == 'X'
                  || ptr[col] == 'x')
              && ptr[col - 1] == '0'
-             && ascii_isxdigit(ptr[col + 1])) {
-    /*
-     * Found hexadecimal number, move to its start.
-     */
-    --col;
+             && ascii_isxdigit(ptr[col + 1])))) {
+
+      /* In case of binary/hexadecimal pattern overlap match, rescan */
+
+      col = curwin->w_cursor.col;
+
+      while (col > 0 && ascii_isdigit(ptr[col]))
+        col--;
+  }
+
+  if ((       dohex
+              && col > 0
+              && (ptr[col] == 'X'
+                  || ptr[col] == 'x')
+              && ptr[col - 1] == '0'
+              && ascii_isxdigit(ptr[col + 1])) ||
+      (       dobin
+              && col > 0
+              && (ptr[col] == 'B'
+                  || ptr[col] == 'b')
+              && ptr[col - 1] == '0'
+              && ascii_isbdigit(ptr[col + 1]))) {
+       /* Found hexadecimal or binary number, move to its start. */
+      --col;
   } else {
     /*
      * Search forward and then backward to find the start of number.
@@ -4297,10 +4324,10 @@ int do_addsub(int command, linenr_T Prenum1)
     }
 
     /* get the number value (unsigned) */
-    vim_str2nr(ptr + col, &hex, &length, dooct, dohex, NULL, &n);
+    vim_str2nr(ptr + col, &pre, &length, dobin, dooct, dohex, NULL, &n);
 
-    /* ignore leading '-' for hex and octal numbers */
-    if (hex && negative) {
+    /* ignore leading '-' for hex, octal and bin numbers */
+    if (pre && negative) {
       ++col;
       --length;
       negative = FALSE;
@@ -4320,7 +4347,7 @@ int do_addsub(int command, linenr_T Prenum1)
       n += (unsigned long)Prenum1;
 
     /* handle wraparound for decimal numbers */
-    if (!hex) {
+    if (!pre) {
       if (subtract) {
         if (n > oldn) {
           n = 1 + (n ^ (unsigned long)-1);
@@ -4370,23 +4397,38 @@ int do_addsub(int command, linenr_T Prenum1)
     if (negative) {
       *ptr++ = '-';
     }
-    if (hex) {
+    if (pre) {
       *ptr++ = '0';
       --length;
     }
-    if (hex == 'x' || hex == 'X') {
-      *ptr++ = hex;
+    if (pre == 'b' || pre == 'B' 
+        || pre == 'x' || pre == 'X') {
+      *ptr++ = pre;
       --length;
     }
 
     /*
      * Put the number characters in buf2[].
      */
-    if (hex == 0)
+    if (pre == 'b' || pre == 'B') {
+
+      size_t bits = 0;
+      size_t pos = 0;
+
+      /* leading zeros */
+      for (bits = 8 * sizeof(unsigned long); bits > 0; bits--)
+          if ((n >> (bits - 1)) & 0x1) break;
+
+      while (bits > 0)
+          buf2[pos++] = ((n >> --bits) & 0x1) ? '1' : '0';
+
+      buf2[pos] = '\0';
+
+    } else if (pre == 0)
       sprintf((char *)buf2, "%" PRIu64, (uint64_t)n);
-    else if (hex == '0')
+    else if (pre == '0')
       sprintf((char *)buf2, "%" PRIo64, (uint64_t)n);
-    else if (hex && hexupper)
+    else if (pre && hexupper)
       sprintf((char *)buf2, "%" PRIX64, (uint64_t)n);
     else
       sprintf((char *)buf2, "%" PRIx64, (uint64_t)n);
@@ -4398,7 +4440,7 @@ int do_addsub(int command, linenr_T Prenum1)
      * Don't do this when
      * the result may look like an octal number.
      */
-    if (firstdigit == '0' && !(dooct && hex == 0))
+    if (firstdigit == '0' && !(dooct && pre == 0))
       while (length-- > 0)
         *ptr++ = '0';
     *ptr = NUL;

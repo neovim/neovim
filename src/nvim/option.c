@@ -260,7 +260,7 @@ typedef struct vimoption {
 
 static char *(p_ambw_values[]) = {"single", "double", NULL};
 static char *(p_bg_values[]) = {"light", "dark", NULL};
-static char *(p_nf_values[]) = {"octal", "hex", "alpha", NULL};
+static char *(p_nf_values[]) = {"bin", "octal", "hex", "alpha", NULL};
 static char *(p_ff_values[]) = {FF_UNIX, FF_DOS, FF_MAC, NULL};
 static char *(p_wop_values[]) = {"tagfile", NULL};
 static char *(p_wak_values[]) = {"yes", "menu", "no", NULL};
@@ -1431,7 +1431,7 @@ do_set (
             } else if (*arg == '-' || ascii_isdigit(*arg)) {
               // Allow negative (for 'undolevels'), octal and
               // hex numbers.
-              vim_str2nr(arg, NULL, &i, true, true, &value, NULL);
+              vim_str2nr(arg, NULL, &i, true, true, true, &value, NULL);
               if (arg[i] != NUL && !ascii_iswhite(arg[i])) {
                 errmsg = e_invarg;
                 goto skip;

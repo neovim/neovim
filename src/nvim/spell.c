@@ -1095,7 +1095,9 @@ spell_check (
   // 0X99FF.  But always do check spelling to find "3GPP" and "11
   // julifeest".
   if (*ptr >= '0' && *ptr <= '9') {
-    if (*ptr == '0' && (ptr[1] == 'x' || ptr[1] == 'X'))
+    if (*ptr == '0' && (ptr[1] == 'b' || ptr[1] == 'B'))
+      mi.mi_end = skipbin(ptr + 2);
+    else if (*ptr == '0' && (ptr[1] == 'x' || ptr[1] == 'X'))
       mi.mi_end = skiphex(ptr + 2);
     else
       mi.mi_end = skipdigits(ptr);
