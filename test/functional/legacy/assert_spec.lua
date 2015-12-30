@@ -1,8 +1,7 @@
-local ffi = require('ffi')
 local helpers = require('test.functional.helpers')
 local nvim, call = helpers.meths, helpers.call
 local clear, eq = helpers.clear, helpers.eq
-local write_file, execute = helpers.write_file, helpers.execute
+local source, execute = helpers.source, helpers.execute
 
 local function expected_errors(errors)
   eq(errors, nvim.get_vvar('errors'))
@@ -10,19 +9,6 @@ end
 
 local function expected_empty()
   eq({}, nvim.get_vvar('errors'))
-end
-
-local function source(code)
-  local tmpname = os.tmpname()
-
-  if ffi.os == 'OSX' and string.match(tmpname, '^/tmp') then
-   tmpname = '/private'..tmpname
-  end
-
-  write_file(tmpname, code)
-  nvim.command('source '..tmpname)
-  os.remove(tmpname)
-  return tmpname
 end
 
 describe('assert function:', function()
