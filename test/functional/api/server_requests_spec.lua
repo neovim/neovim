@@ -32,6 +32,26 @@ describe('server -> client', function()
     end)
   end)
 
+  describe('empty string handling in arrays', function()
+    -- Because the msgpack encoding for an empty string was interpreted as an
+    -- error, msgpack arrays with an empty string looked like
+    -- [..., '', 0, ..., 0] after the conversion, regardless of the array
+    -- elements following the empty string.
+    it('works', function()
+      local function on_setup()
+        eq({1, 2, '', 3, 'asdf'}, eval('rpcrequest('..cid..', "nstring")'))
+        stop()
+      end
+
+      local function on_request(method, args)
+        -- No need to evaluate the args, we are only interested in
+        -- a response that contains an array with an empty string.
+        return {1, 2, '', 3, 'asdf'}
+      end
+      run(on_request, nil, on_setup)
+    end)
+  end)
+
   describe('recursive call', function()
     it('works', function()
       local function on_setup()
