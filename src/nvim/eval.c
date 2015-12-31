@@ -19606,7 +19606,10 @@ void ex_function(exarg_T *eap)
 
     /* insert the new function in the function list */
     STRCPY(fp->uf_name, name);
-    hash_add(&func_hashtab, UF2HIKEY(fp));
+    if (hash_add(&func_hashtab, UF2HIKEY(fp)) == FAIL) {
+        xfree(fp);
+        goto erret;
+    }
   }
   fp->uf_refcount = 1;
   fp->uf_args = newargs;
