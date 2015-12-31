@@ -77,7 +77,7 @@ set(LIBUV_SHA256 db5d46318e18330c696d954747036e1be8e2346411d4f30236d7e2f499f0cfa
 set(MSGPACK_URL https://github.com/msgpack/msgpack-c/archive/cpp-1.0.0.tar.gz)
 set(MSGPACK_SHA256 afda64ca445203bb7092372b822bae8b2539fdcebbfc3f753f393628c2bcfe7d)
 
-set(LUAJIT_URL https://github.com/neovim/deps/raw/master/src/LuaJIT-2.0.4.tar.gz)
+set(LUAJIT_URL https://github.com/neovim/deps/raw/master/opt/LuaJIT-2.0.4.tar.gz)
 set(LUAJIT_SHA256 620fa4eb12375021bef6e4f237cbd2dd5d49e56beb414bee052c746beef1807d)
 
 set(LUAROCKS_URL https://github.com/keplerproject/luarocks/archive/5d8a16526573b36d5b22aa74866120c998466697.tar.gz)
