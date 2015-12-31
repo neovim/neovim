@@ -495,10 +495,12 @@ void ex_sort(exarg_T *eap)
     s = ml_get(nrs[eap->forceit ? count - i - 1 : i].lnum);
     if (!unique || i == 0
         || (sort_ic ? STRICMP(s, sortbuf1) : STRCMP(s, sortbuf1)) != 0) {
-      if (ml_append(lnum++, s, (colnr_T)0, FALSE) == FAIL)
+      // Copy the line into a buffer, it may become invalid in
+      // ml_append(). And it's needed for "unique".
+      STRCPY(sortbuf1, s);
+      if (ml_append(lnum++, sortbuf1, (colnr_T)0, false) == FAIL) {
         break;
-      if (unique)
-        STRCPY(sortbuf1, s);
+      }
     }
     fast_breakcheck();
     if (got_int)
