@@ -1,7 +1,8 @@
 
 local helpers = require('test.functional.helpers')
 local nvim, eq, neq, eval = helpers.nvim, helpers.eq, helpers.neq, helpers.eval
-local clear = helpers.clear
+local clear, funcs, meths = helpers.clear, helpers.funcs, helpers.meths
+local os_is_windows = helpers.os_is_windows
 
 describe('serverstart(), serverstop()', function()
   before_each(clear)
@@ -17,34 +18,32 @@ describe('serverstart(), serverstop()', function()
     eq('', eval('$NVIM_LISTEN_ADDRESS'))
   end)
 
-  it([[sets v:servername _only_ on nvim startup
-      (unless all servers are stopped)]], function()
-    local initial_server = eval('v:servername')
+  it('sets v:servername _only_ on nvim startup unless all servers are stopped',
+  function()
+    local initial_server = meths.get_vvar('servername')
     assert(initial_server ~= nil and initial_server:len() > 0,
-      "v:servername was not initialized")
+           'v:servername was not initialized')
 
     -- v:servername is readonly so we cannot unset it--but we can test that it
     -- does not get set again thereafter.
-    local s = eval('serverstart()')
+    local s = funcs.serverstart()
     assert(s ~= nil and s:len() > 0, "serverstart() returned empty")
     neq(initial_server, s)
 
     -- serverstop() does _not_ modify v:servername...
-    nvim('command', "call serverstop('"..s.."')")
-    eq(initial_server, eval('v:servername'))
+    funcs.serverstop(s)
+    eq(initial_server, meths.get_vvar('servername'))
 
     -- ...unless we stop _all_ servers.
-    nvim('command', "call serverstop(serverlist()[0])")
-    eq('', eval('v:servername'))
+    funcs.serverstop(funcs.serverlist()[1])
+    eq('', meths.get_vvar('servername'))
 
     -- v:servername will take the next available server.
-    if eval('has("win32")') then
-      nvim('command', "call serverstart('\\\\.\\pipe\\test_server_pipe')")
-      eq('\\\\.\\pipe\\test_server_pipe', eval('v:servername'))
-    else
-      nvim('command', "call serverstart('test_server_socket')")
-      eq('test_server_socket', eval('v:servername'))
-    end
+    local servername = (os_is_windows()
+                        and [[\\.\pipe\Xtest-functional-server-server-pipe]]
+                        or 'Xtest-functional-server-server-socket')
+    funcs.serverstart(servername)
+    eq(servername, meths.get_vvar('servername'))
   end)
 
   it('serverstop() ignores invalid input', function()
