@@ -42,17 +42,17 @@ int os_get_usernames(garray_T *users)
 int os_get_user_name(char *s, size_t len)
 {
 #ifdef UNIX
-  return os_get_uname(getuid(), s, len);
+  return os_get_uname((uv_uid_t)getuid(), s, len);
 #else
   // TODO(equalsraf): Windows GetUserName()
-  return os_get_uname(0, s, len);
+  return os_get_uname((uv_uid_t)0, s, len);
 #endif
 }
 
 // Insert user name for "uid" in s[len].
 // Return OK if a name found.
 // If the name is not found, write the uid into s[len] and return FAIL.
-int os_get_uname(uid_t uid, char *s, size_t len)
+int os_get_uname(uv_uid_t uid, char *s, size_t len)
 {
 #if defined(HAVE_PWD_H) && defined(HAVE_GETPWUID)
   struct passwd *pw;
