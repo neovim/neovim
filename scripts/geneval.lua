@@ -15,28 +15,20 @@ end
 package.path = nvimsrcdir .. '/?.lua;' .. package.path
 
 local funcsfname = autodir .. '/funcs.generated.h'
-local funcsfile = io.open(funcsfname, 'w')
+
+local funcspipe = io.open(funcsfname .. '.hsh', 'w')
 
 local funcs = require('eval')
 
-local sorted_funcs = {}
 for name, def in pairs(funcs.funcs) do
-  def.name = name
-  def.args = def.args or 0
-  if type(def.args) == 'number' then
-    def.args = {def.args, def.args}
-  elseif #def.args == 1 then
-    def.args[2] = 'MAX_FUNC_ARGS'
+  args = def.args or 0
+  if type(args) == 'number' then
+    args = {args, args}
+  elseif #args == 1 then
+    args[2] = 'MAX_FUNC_ARGS'
   end
-  def.func = def.func or ('f_' .. def.name)
-  sorted_funcs[#sorted_funcs + 1] = def
+  func = def.func or ('f_' .. name)
+  local val = ('{ %s, %s, &%s }'):format(args[1], args[2], func)
+  funcspipe:write(name .. '\n' .. val .. '\n')
 end
-table.sort(sorted_funcs, function(a, b) return a.name < b.name end)
-
-funcsfile:write('static const VimLFuncDef functions[] = {\n')
-for _, def in ipairs(sorted_funcs) do
-  funcsfile:write(('  { "%s", %s, %s, &%s },\n'):format(
-      def.name, def.args[1], def.args[2], def.func
-  ))
-end
-funcsfile:write('};\n')
+funcspipe:close()

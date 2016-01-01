@@ -130,7 +130,9 @@ int main() {
 #include <limits.h>
 #include <stdint.h>
 
-#include "nvim/memory.h"
+#ifndef USE_LIBC_ALLOCATOR
+# include "nvim/memory.h"
+#endif
 
 #include "nvim/func_attr.h"
 
@@ -171,17 +173,32 @@ typedef khint_t khiter_t;
 #define kroundup32(x) (--(x), (x)|=(x)>>1, (x)|=(x)>>2, (x)|=(x)>>4, (x)|=(x)>>8, (x)|=(x)>>16, ++(x))
 #endif
 
-#ifndef kcalloc
-#define kcalloc(N,Z) xcalloc(N,Z)
-#endif
-#ifndef kmalloc
-#define kmalloc(Z) xmalloc(Z)
-#endif
-#ifndef krealloc
-#define krealloc(P,Z) xrealloc(P,Z)
-#endif
-#ifndef kfree
-#define kfree(P) xfree(P)
+#ifdef USE_LIBC_ALLOCATOR
+# ifndef kcalloc
+#  define kcalloc(N,Z) calloc(N,Z)
+# endif
+# ifndef kmalloc
+#  define kmalloc(Z) malloc(Z)
+# endif
+# ifndef krealloc
+#  define krealloc(P,Z) realloc(P,Z)
+# endif
+# ifndef kfree
+#  define kfree(P) free(P)
+# endif
+#else
+# ifndef kcalloc
+#  define kcalloc(N,Z) xcalloc(N,Z)
+# endif
+# ifndef kmalloc
+#  define kmalloc(Z) xmalloc(Z)
+# endif
+# ifndef krealloc
+#  define krealloc(P,Z) xrealloc(P,Z)
+# endif
+# ifndef kfree
+#  define kfree(P) xfree(P)
+# endif
 #endif
 
 #define __ac_HASH_UPPER 0.77

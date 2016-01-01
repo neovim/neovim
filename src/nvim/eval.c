@@ -90,6 +90,8 @@
 #include "nvim/os/dl.h"
 #include "nvim/os/input.h"
 #include "nvim/event/loop.h"
+#include "nvim/lib/kvec.h"
+#include "nvim/lib/khash.h"
 #include "nvim/lib/queue.h"
 #include "nvim/eval/typval_encode.h"
 
@@ -441,6 +443,18 @@ typedef struct {
   bool stopped;
   ufunc_T *callback;
 } timer_T;
+
+/// Prototype of C function that implements VimL function
+typedef void (*VimLFunc)(typval_T *args, typval_T *rvar);
+
+/// Structure holding VimL function definition
+typedef struct fst {
+  uint8_t min_argc;  ///< Minimal number of arguments.
+  uint8_t max_argc;  ///< Maximal number of arguments.
+  VimLFunc func;     ///< Function implementation.
+} VimLFuncDef;
+
+KHASH_MAP_INIT_STR(functions, VimLFuncDef)
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "eval.c.generated.h"
@@ -6681,17 +6695,7 @@ static int get_env_tv(char_u **arg, typval_T *rettv, int evaluate)
   return OK;
 }
 
-/// Prototype of C function that implements VimL function
-typedef void (*VimLFunc)(typval_T *args, typval_T *rvar);
-
-/// Structure holding VimL function definition
-typedef struct fst {
-  char *f_name;        ///< Function name.
-  uint8_t f_min_argc;  ///< Minimal number of arguments.
-  uint8_t f_max_argc;  ///< Maximal number of arguments.
-  VimLFunc f_func;     ///< Function implementation.
-} VimLFuncDef;
-
+#define NOFUNC { 0, 0, NULL }
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "funcs.generated.h"
 #endif
@@ -6713,15 +6717,25 @@ char_u *get_function_name(expand_T *xp, int idx)
     if (name != NULL)
       return name;
   }
-  if (++intidx < (int)ARRAY_SIZE(functions)) {
-    STRCPY(IObuff, functions[intidx].f_name);
-    STRCAT(IObuff, "(");
-    if (functions[intidx].f_max_argc == 0)
-      STRCAT(IObuff, ")");
-    return IObuff;
+  while ((khiter_t) ++intidx < kh_end(&functions)
+         && !kh_exist(&functions, (khiter_t) intidx)) {
   }
 
-  return NULL;
+  if ((khiter_t) intidx >= kh_end(&functions)) {
+    return NULL;
+  }
+
+  const char *const key = kh_key(&functions, (khiter_t) intidx);
+  const size_t key_len = strlen(key);
+  memcpy(IObuff, key, key_len);
+  IObuff[key_len] = '(';
+  if (kh_val(&functions, (khiter_t) intidx).max_argc == 0) {
+    IObuff[key_len + 1] = ')';
+    IObuff[key_len + 2] = NUL;
+  } else {
+    IObuff[key_len + 1] = NUL;
+  }
+  return IObuff;
 }
 
 /*
@@ -6746,32 +6760,16 @@ char_u *get_expr_name(expand_T *xp, int idx)
 
 
 
-/*
- * Find internal function in table above.
- * Return index, or -1 if not found
- */
-static int 
-find_internal_func (
-    char_u *name              /* name of the function */
-)
+/// Find internal function in hash functions
+///
+/// @param[in]  name  Name of the function.
+///
+/// Returns pointer to the function definition or NULL if not found.
+static VimLFuncDef *find_internal_func(const char *const name)
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE FUNC_ATTR_NONNULL_ALL
 {
-  int first = 0;
-  int last = (int)ARRAY_SIZE(functions) - 1;
-
-  /*
-   * Find the function name in the table. Binary search.
-   */
-  while (first <= last) {
-    int x = first + ((unsigned)(last - first)) / 2;
-    int cmp = STRCMP(name, functions[x].f_name);
-    if (cmp < 0)
-      last = x - 1;
-    else if (cmp > 0)
-      first = x + 1;
-    else
-      return x;
-  }
-  return -1;
+  const khiter_t k = kh_get(functions, &functions, name);
+  return (k == kh_end(&functions) ? NULL : &kh_val(&functions, k));
 }
 
 /*
@@ -6889,7 +6887,6 @@ call_func (
 #define ERROR_NONE      5
 #define ERROR_OTHER     6
   int error = ERROR_NONE;
-  int i;
   int llen;
   ufunc_T     *fp;
 #define FLEN_FIXED 40
@@ -6911,7 +6908,7 @@ call_func (
     fname_buf[0] = K_SPECIAL;
     fname_buf[1] = KS_EXTRA;
     fname_buf[2] = (int)KE_SNR;
-    i = 3;
+    int i = 3;
     if (eval_fname_sid(name)) {         /* "<SID>" or "s:" */
       if (current_SID <= 0)
         error = ERROR_SCRIPT;
@@ -6983,18 +6980,16 @@ call_func (
         }
       }
     } else {
-      /*
-       * Find the function name in the table, call its implementation.
-       */
-      i = find_internal_func(fname);
-      if (i >= 0) {
-        if (argcount < functions[i].f_min_argc)
+      // Find the function name in the table, call its implementation.
+      VimLFuncDef *const fdef = find_internal_func((char *) fname);
+      if (fdef != NULL) {
+        if (argcount < fdef->min_argc) {
           error = ERROR_TOOFEW;
-        else if (argcount > functions[i].f_max_argc)
+        } else if (argcount > fdef->max_argc) {
           error = ERROR_TOOMANY;
-        else {
+        } else {
           argvars[argcount].v_type = VAR_UNKNOWN;
-          functions[i].f_func(argvars, rettv);
+          fdef->func(argvars, rettv);
           error = ERROR_NONE;
         }
       }
@@ -20120,7 +20115,7 @@ void free_all_functions(void)
 int translated_function_exists(char_u *name)
 {
   if (builtin_function(name, -1)) {
-    return find_internal_func(name) >= 0;
+    return find_internal_func((char *) name) != NULL;
   }
   return find_func(name) != NULL;
 }
