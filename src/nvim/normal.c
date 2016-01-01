@@ -1601,7 +1601,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
       if (VIsual_mode == Ctrl_V) {      /* block mode */
         colnr_T start, end;
 
-        oap->block_mode = true;
+        oap->motion_type = MBLOCK;
 
         getvvcol(curwin, &(oap->start),
             &oap->start_vcol, NULL, &oap->end_vcol);
@@ -1711,11 +1711,11 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
        */
       if (oap->motion_force == NUL || oap->motion_type == MLINE)
         oap->inclusive = true;
-      if (VIsual_mode == 'V')
+      if (VIsual_mode == 'V') {
         oap->motion_type = MLINE;
-      else {
+      } else if (VIsual_mode == 'v') {
         oap->motion_type = MCHAR;
-        if (VIsual_mode != Ctrl_V && *ml_get_pos(&(oap->end)) == NUL
+        if (*ml_get_pos(&(oap->end)) == NUL
             && (include_line_break || !virtual_op)
             ) {
           oap->inclusive = false;
@@ -1780,7 +1780,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
      * oap->empty is set when start and end are the same.  The inclusive
      * flag affects this too, unless yanking and the end is on a NUL.
      */
-    oap->empty = (oap->motion_type == MCHAR
+    oap->empty = (oap->motion_type != MLINE
                   && (!oap->inclusive
                       || (oap->op_type == OP_YANK
                           && gchar_pos(&oap->end) == NUL))
@@ -1810,14 +1810,13 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
      * first non-blank in the line, the operator becomes linewise
      * (strange, but that's the way vi does it).
      */
-    if (       oap->motion_type == MCHAR
-               && oap->inclusive == false
-               && !(cap->retval & CA_NO_ADJ_OP_END)
-               && oap->end.col == 0
-               && (!oap->is_VIsual || *p_sel == 'o')
-               && !oap->block_mode
-               && oap->line_count > 1) {
-      oap->end_adjusted = true;             /* remember that we did this */
+    if (oap->motion_type == MCHAR
+        && oap->inclusive == false
+        && !(cap->retval & CA_NO_ADJ_OP_END)
+        && oap->end.col == 0
+        && (!oap->is_VIsual || *p_sel == 'o')
+        && oap->line_count > 1) {
+      oap->end_adjusted = true;  // remember that we did this
       --oap->line_count;
       --oap->end.lnum;
       if (inindent(0))
@@ -2044,7 +2043,6 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
     } else {
       curwin->w_cursor = old_cursor;
     }
-    oap->block_mode = false;
     clearop(oap);
   }
   curwin->w_p_lbr = lbr_saved;
@@ -2115,12 +2113,13 @@ static void op_function(oparg_T *oap)
       /* Exclude the end position. */
       decl(&curbuf->b_op_end);
 
-    if (oap->block_mode)
+    if (oap->motion_type == MBLOCK) {
       argv[0] = (char_u *)"block";
-    else if (oap->motion_type == MLINE)
+    } else if (oap->motion_type == MLINE) {
       argv[0] = (char_u *)"line";
-    else
+    } else {
       argv[0] = (char_u *)"char";
+    }
 
     /* Reset virtual_op so that 'virtualedit' can be changed in the
      * function. */

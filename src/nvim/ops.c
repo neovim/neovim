@@ -174,20 +174,20 @@ void op_shift(oparg_T *oap, int curs_top, int amount)
           (linenr_T)(oap->end.lnum + 1)) == FAIL)
     return;
 
-  if (oap->block_mode)
+  if (oap->motion_type == MBLOCK) {
     block_col = curwin->w_cursor.col;
+  }
 
   for (i = oap->line_count - 1; i >= 0; i--) {
     first_char = *get_cursor_line_ptr();
-    if (first_char == NUL)                              /* empty line */
+    if (first_char == NUL) {  // empty line
       curwin->w_cursor.col = 0;
-    else if (oap->block_mode)
+    } else if (oap->motion_type == MBLOCK) {
       shift_block(oap, amount);
-    else
-    /* Move the line right if it doesn't start with '#', 'smartindent'
-     * isn't set or 'cindent' isn't set or '#' isn't in 'cino'. */
-    if (first_char != '#' || !preprocs_left()) {
-      shift_line(oap->op_type == OP_LSHIFT, p_sr, amount, FALSE);
+    } else if (first_char != '#' || !preprocs_left()) {
+      // Move the line right if it doesn't start with '#', 'smartindent'
+      // isn't set or 'cindent' isn't set or '#' isn't in 'cino'.
+      shift_line(oap->op_type == OP_LSHIFT, p_sr, amount, false);
     }
     ++curwin->w_cursor.lnum;
   }
@@ -196,7 +196,7 @@ void op_shift(oparg_T *oap, int curs_top, int amount)
   /* The cursor line is not in a closed fold */
   foldOpenCursor();
 
-  if (oap->block_mode) {
+  if (oap->motion_type == MBLOCK) {
     curwin->w_cursor.lnum = oap->start.lnum;
     curwin->w_cursor.col = block_col;
   } else if (curs_top) { /* put cursor on first line, for ">>" */
@@ -1275,8 +1275,9 @@ cmdline_paste_reg (
         || (i < reg->y_size - 1
             && !(remcr
                  && i == reg->y_size - 2
-                 && *reg->y_array[i + 1] == NUL)))
+                 && *reg->y_array[i + 1] == NUL))) {
       cmdline_paste_str((char_u *)"\r", literally);
+    }
 
     /* Check for CTRL-C, in case someone tries to paste a few thousand
      * lines and gets bored. */
@@ -1321,12 +1322,11 @@ int op_delete(oparg_T *oap)
    * line and motion_type == MCHAR and the result is a blank line, make the
    * delete linewise.  Don't do this for the change command or Visual mode.
    */
-  if (       oap->motion_type == MCHAR
-             && !oap->is_VIsual
-             && !oap->block_mode
-             && oap->line_count > 1
-             && oap->motion_force == NUL
-             && oap->op_type == OP_DELETE) {
+  if (oap->motion_type == MCHAR
+      && !oap->is_VIsual
+      && oap->line_count > 1
+      && oap->motion_force == NUL
+      && oap->op_type == OP_DELETE) {
     ptr = ml_get(oap->end.lnum) + oap->end.col;
     if (*ptr != NUL)
       ptr += oap->inclusive;
@@ -1339,20 +1339,20 @@ int op_delete(oparg_T *oap)
    * Check for trying to delete (e.g. "D") in an empty line.
    * Note: For the change operator it is ok.
    */
-  if (       oap->motion_type == MCHAR
-             && oap->line_count == 1
-             && oap->op_type == OP_DELETE
-             && *ml_get(oap->start.lnum) == NUL) {
-    /*
-     * It's an error to operate on an empty region, when 'E' included in
-     * 'cpoptions' (Vi compatible).
-     */
-    if (virtual_op)
-      /* Virtual editing: Nothing gets deleted, but we set the '[ and ']
-       * marks as if it happened. */
+  if (oap->motion_type != MLINE
+      && oap->line_count == 1
+      && oap->op_type == OP_DELETE
+      && *ml_get(oap->start.lnum) == NUL) {
+    // It's an error to operate on an empty region, when 'E' included in
+    // 'cpoptions' (Vi compatible).
+    if (virtual_op) {
+      // Virtual editing: Nothing gets deleted, but we set the '[ and ']
+      // marks as if it happened.
       goto setmarks;
-    if (vim_strchr(p_cpo, CPO_EMPTYREGION) != NULL)
+    }
+    if (vim_strchr(p_cpo, CPO_EMPTYREGION) != NULL) {
       beep_flush();
+    }
     return OK;
   }
 
@@ -1403,10 +1403,11 @@ int op_delete(oparg_T *oap)
   /*
    * block mode delete
    */
-  if (oap->block_mode) {
+  if (oap->motion_type == MBLOCK) {
     if (u_save((linenr_T)(oap->start.lnum - 1),
-            (linenr_T)(oap->end.lnum + 1)) == FAIL)
+               (linenr_T)(oap->end.lnum + 1)) == FAIL) {
       return FAIL;
+    }
 
     for (lnum = curwin->w_cursor.lnum; lnum <= oap->end.lnum; ++lnum) {
       block_prep(oap, &bd, lnum, TRUE);
@@ -1594,7 +1595,7 @@ int op_delete(oparg_T *oap)
   msgmore(curbuf->b_ml.ml_line_count - old_lcount);
 
 setmarks:
-  if (oap->block_mode) {
+  if (oap->motion_type == MBLOCK) {
     curbuf->b_op_end.lnum = oap->end.lnum;
     curbuf->b_op_end.col = oap->start.col;
   } else
@@ -1655,7 +1656,7 @@ int op_replace(oparg_T *oap, int c)
   /*
    * block mode replace
    */
-  if (oap->block_mode) {
+  if (oap->motion_type == MBLOCK) {
     bd.is_MAX = (curwin->w_curswant == MAXCOL);
     for (; curwin->w_cursor.lnum <= oap->end.lnum; ++curwin->w_cursor.lnum) {
       curwin->w_cursor.col = 0;        /* make sure cursor position is valid */
@@ -1837,7 +1838,7 @@ void op_tilde(oparg_T *oap)
     return;
 
   pos = oap->start;
-  if (oap->block_mode) {                    /* Visual block mode */
+  if (oap->motion_type == MBLOCK) {  // Visual block mode
     for (; pos.lnum <= oap->end.lnum; ++pos.lnum) {
       int one_change;
 
@@ -1999,11 +2000,11 @@ void op_insert(oparg_T *oap, long count1)
   curwin->w_cursor.lnum = oap->start.lnum;
   update_screen(INVERTED);
 
-  if (oap->block_mode) {
-    /* When 'virtualedit' is used, need to insert the extra spaces before
-     * doing block_prep().  When only "block" is used, virtual edit is
-     * already disabled, but still need it when calling
-     * coladvance_force(). */
+  if (oap->motion_type == MBLOCK) {
+    // When 'virtualedit' is used, need to insert the extra spaces before
+    // doing block_prep().  When only "block" is used, virtual edit is
+    // already disabled, but still need it when calling
+    // coladvance_force().
     if (curwin->w_cursor.coladd > 0) {
       int old_ve_flags = ve_flags;
 
@@ -2025,7 +2026,7 @@ void op_insert(oparg_T *oap, long count1)
   }
 
   if (oap->op_type == OP_APPEND) {
-    if (oap->block_mode
+    if (oap->motion_type == MBLOCK
         && curwin->w_cursor.coladd == 0
         ) {
       /* Move the cursor to the character right of the block. */
@@ -2061,7 +2062,7 @@ void op_insert(oparg_T *oap, long count1)
   if (curwin->w_cursor.lnum != oap->start.lnum || got_int)
     return;
 
-  if (oap->block_mode) {
+  if (oap->motion_type == MBLOCK) {
     struct block_def bd2;
 
     /* The user may have moved the cursor before inserting something, try
@@ -2166,13 +2167,14 @@ int op_change(oparg_T *oap)
       && !virtual_op)
     inc_cursor();
 
-  /* check for still on same line (<CR> in inserted text meaningless) */
-  /* skip blank lines too */
-  if (oap->block_mode) {
-    /* Add spaces before getting the current line length. */
+  // check for still on same line (<CR> in inserted text meaningless)
+  // skip blank lines too
+  if (oap->motion_type == MBLOCK) {
+    // Add spaces before getting the current line length.
     if (virtual_op && (curwin->w_cursor.coladd > 0
-                       || gchar_cursor() == NUL))
+                       || gchar_cursor() == NUL)) {
       coladvance_force(getviscol());
+    }
     firstline = ml_get(oap->start.lnum);
     pre_textlen = (long)STRLEN(firstline);
     pre_indent = (long)(skipwhite(firstline) - firstline);
@@ -2189,9 +2191,10 @@ int op_change(oparg_T *oap)
    * block.
    * Don't repeat the insert when Insert mode ended with CTRL-C.
    */
-  if (oap->block_mode && oap->start.lnum != oap->end.lnum && !got_int) {
-    /* Auto-indenting may have changed the indent.  If the cursor was past
-     * the indent, exclude that indent change from the inserted text. */
+  if (oap->motion_type == MBLOCK
+      && oap->start.lnum != oap->end.lnum && !got_int) {
+    // Auto-indenting may have changed the indent.  If the cursor was past
+    // the indent, exclude that indent change from the inserted text.
     firstline = ml_get(oap->start.lnum);
     if (bd.textcol > (colnr_T)pre_indent) {
       long new_indent = (long)(skipwhite(firstline) - firstline);
@@ -2332,13 +2335,12 @@ static void op_yank_reg(oparg_T *oap, bool message, yankreg_T *reg, bool append)
    * If the cursor was in column 1 before and after the movement, and the
    * operator is not inclusive, the yank is always linewise.
    */
-  if (       oap->motion_type == MCHAR
-             && oap->start.col == 0
-             && !oap->inclusive
-             && (!oap->is_VIsual || *p_sel == 'o')
-             && !oap->block_mode
-             && oap->end.col == 0
-             && yanklines > 1) {
+  if (oap->motion_type == MCHAR
+      && oap->start.col == 0
+      && !oap->inclusive
+      && (!oap->is_VIsual || *p_sel == 'o')
+      && oap->end.col == 0
+      && yanklines > 1) {
     yanktype = MLINE;
     --yankendlnum;
     --yanklines;
@@ -2354,9 +2356,8 @@ static void op_yank_reg(oparg_T *oap, bool message, yankreg_T *reg, bool append)
   y_idx = 0;
   lnum = oap->start.lnum;
 
-  if (oap->block_mode) {
-    /* Visual block mode */
-    reg->y_type = MBLOCK;             /* set the yank register type */
+  if (yanktype == MBLOCK) {
+    // Visual block mode
     reg->y_width = oap->end_vcol - oap->start_vcol;
 
     if (curwin->w_curswant == MAXCOL && reg->y_width > 0)
@@ -2470,25 +2471,26 @@ static void op_yank_reg(oparg_T *oap, bool message, yankreg_T *reg, bool append)
   if (curwin->w_p_rnu) {
     redraw_later(SOME_VALID);  // cursor moved to start
   }
-  if (message) {                   /* Display message about yank? */
-    if (yanktype == MCHAR
-        && !oap->block_mode
-        && yanklines == 1)
+  if (message) {  // Display message about yank?
+    if (yanktype == MCHAR && yanklines == 1) {
       yanklines = 0;
-    /* Some versions of Vi use ">=" here, some don't...  */
+    }
+    // Some versions of Vi use ">=" here, some don't...
     if (yanklines > p_report) {
-      /* redisplay now, so message is not deleted */
+      // redisplay now, so message is not deleted
       update_topline_redraw();
       if (yanklines == 1) {
-        if (oap->block_mode)
+        if (yanktype == MBLOCK) {
           MSG(_("block of 1 line yanked"));
-        else
+        } else {
           MSG(_("1 line yanked"));
-      } else if (oap->block_mode)
+        }
+      } else if (yanktype == MBLOCK) {
         smsg(_("block of %" PRId64 " lines yanked"),
              (int64_t)yanklines);
-      else
+      } else {
         smsg(_("%" PRId64 " lines yanked"), (int64_t)yanklines);
+      }
     }
   }
 
@@ -2497,9 +2499,7 @@ static void op_yank_reg(oparg_T *oap, bool message, yankreg_T *reg, bool append)
    */
   curbuf->b_op_start = oap->start;
   curbuf->b_op_end = oap->end;
-  if (yanktype == MLINE
-      && !oap->block_mode
-      ) {
+  if (yanktype == MLINE) {
     curbuf->b_op_start.col = 0;
     curbuf->b_op_end.col = MAXCOL;
   }
@@ -4903,7 +4903,7 @@ void cursor_pos_info(void)
         /* Make 'sbr' empty for a moment to get the correct size. */
         p_sbr = empty_option;
         oparg.is_VIsual = true;
-        oparg.block_mode = true;
+        oparg.motion_type = MBLOCK;
         oparg.op_type = OP_NOP;
         getvcols(curwin, &min_pos, &max_pos,
             &oparg.start_vcol, &oparg.end_vcol);
