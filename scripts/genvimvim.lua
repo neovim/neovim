@@ -23,6 +23,7 @@ end
 local options = require('options')
 local auevents = require('auevents')
 local ex_cmds = require('ex_cmds')
+local eval = require('eval')
 
 local cmd_kw = function(prev_cmd, cmd)
   if not prev_cmd then
@@ -113,23 +114,12 @@ local vimfun_start = 'syn keyword vimFuncName contained '
 w('\n\n' .. vimfun_start)
 eval_fd = io.open(nvimsrcdir .. '/eval.c', 'r')
 local started = 0
-for line in eval_fd:lines() do
-  if line == '} functions[] =' then
-    started = 1
-  elseif started == 1 then
-    assert (line == '{')
-    started = 2
-  elseif started == 2 then
-    if line == '};' then
-      break
+for name, def in pairs(eval.funcs) do
+  if name then
+    if lld.line_length > 850 then
+      w('\n' .. vimfun_start)
     end
-    local func_name = line:match('^  { "([%w_]+)",')
-    if func_name then
-      if lld.line_length > 850 then
-        w('\n' .. vimfun_start)
-      end
-      w(' ' .. func_name)
-    end
+    w(' ' .. name)
   end
 end
 eval_fd:close()
