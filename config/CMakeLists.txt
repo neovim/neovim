@@ -38,7 +38,6 @@ check_include_files(utime.h HAVE_UTIME_H)
 
 # Functions
 check_function_exists(fseeko HAVE_FSEEKO)
-check_function_exists(fsync HAVE_FSYNC)
 check_function_exists(getpwent HAVE_GETPWENT)
 check_function_exists(getpwnam HAVE_GETPWNAM)
 check_function_exists(getpwuid HAVE_GETPWUID)
@@ -101,10 +100,10 @@ endif()
 if (NOT "${HAVE_BE64TOH}")
   if (NOT "${CMAKE_CROSSCOMPILING}")
     # It is safe to make ORDER_BIG_ENDIAN not defined if
-    # - HAVE_BE64TOH is true. In this case be64toh will be used unconditionally in 
+    # - HAVE_BE64TOH is true. In this case be64toh will be used unconditionally in
     #   any case and ORDER_BIG_ENDIAN will not be examined.
-    # - CMAKE_CROSSCOMPILING *and* HAVE_BE64TOH are both false. In this case 
-    #   be64toh function which uses cycle and arithmetic operations is used which 
+    # - CMAKE_CROSSCOMPILING *and* HAVE_BE64TOH are both false. In this case
+    #   be64toh function which uses cycle and arithmetic operations is used which
     #   will work regardless of endianess. Function is sub-optimal though.
     check_c_source_runs("
       ${SI}

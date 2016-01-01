@@ -3368,16 +3368,16 @@ restore_backup:
     nchars += len;
   }
 
-#if defined(UNIX) && defined(HAVE_FSYNC)
-  /* On many journalling file systems there is a bug that causes both the
-   * original and the backup file to be lost when halting the system right
-   * after writing the file.  That's because only the meta-data is
-   * journalled.  Syncing the file slows down the system, but assures it has
-   * been written to disk and we don't lose it.
-   * For a device do try the fsync() but don't complain if it does not work
-   * (could be a pipe).
-   * If the 'fsync' option is FALSE, don't fsync().  Useful for laptops. */
-  if (p_fs && fsync(fd) != 0 && !device) {
+#if defined(UNIX)
+  // On many journalling file systems there is a bug that causes both the
+  // original and the backup file to be lost when halting the system right
+  // after writing the file.  That's because only the meta-data is
+  // journalled.  Syncing the file slows down the system, but assures it has
+  // been written to disk and we don't lose it.
+  // For a device do try the fsync() but don't complain if it does not work
+  // (could be a pipe).
+  // If the 'fsync' option is FALSE, don't fsync().  Useful for laptops.
+  if (p_fs && os_fsync(fd) != 0 && !device) {
     errmsg = (char_u *)_("E667: Fsync failed");
     end = 0;
   }

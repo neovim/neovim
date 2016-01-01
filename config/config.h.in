@@ -18,7 +18,6 @@
 #cmakedefine HAVE_FCNTL_H
 #cmakedefine HAVE_FD_CLOEXEC
 #cmakedefine HAVE_FSEEKO
-#cmakedefine HAVE_FSYNC
 #cmakedefine HAVE_GETPWENT
 #cmakedefine HAVE_GETPWNAM
 #cmakedefine HAVE_GETPWUID

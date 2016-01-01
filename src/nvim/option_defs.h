@@ -405,27 +405,25 @@ static char *(p_fdo_values[]) = {"all", "block", "hor", "mark", "percent",
 # define FDO_INSERT             0x100
 # define FDO_UNDO               0x200
 # define FDO_JUMP               0x400
-EXTERN char_u   *p_fp;          /* 'formatprg' */
-#ifdef HAVE_FSYNC
-EXTERN int p_fs;                /* 'fsync' */
-#endif
-EXTERN int p_gd;                /* 'gdefault' */
-EXTERN char_u   *p_pdev;        /* 'printdevice' */
-EXTERN char_u   *p_penc;        /* 'printencoding' */
-EXTERN char_u   *p_pexpr;       /* 'printexpr' */
-EXTERN char_u   *p_pmfn;        /* 'printmbfont' */
-EXTERN char_u   *p_pmcs;        /* 'printmbcharset' */
-EXTERN char_u   *p_pfn;         /* 'printfont' */
-EXTERN char_u   *p_popt;        /* 'printoptions' */
-EXTERN char_u   *p_header;      /* 'printheader' */
-EXTERN int p_prompt;            /* 'prompt' */
-EXTERN char_u   *p_guicursor;   /* 'guicursor' */
-EXTERN char_u   *p_hf;          /* 'helpfile' */
-EXTERN long p_hh;               /* 'helpheight' */
-EXTERN char_u   *p_hlg;         /* 'helplang' */
-EXTERN int p_hid;               /* 'hidden' */
-/* Use P_HID to check if a buffer is to be hidden when it is no longer
- * visible in a window. */
+EXTERN char_u   *p_fp;          // 'formatprg'
+EXTERN int p_fs;                // 'fsync'
+EXTERN int p_gd;                // 'gdefault'
+EXTERN char_u   *p_pdev;        // 'printdevice'
+EXTERN char_u   *p_penc;        // 'printencoding'
+EXTERN char_u   *p_pexpr;       // 'printexpr'
+EXTERN char_u   *p_pmfn;        // 'printmbfont'
+EXTERN char_u   *p_pmcs;        // 'printmbcharset'
+EXTERN char_u   *p_pfn;         // 'printfont'
+EXTERN char_u   *p_popt;        // 'printoptions'
+EXTERN char_u   *p_header;      // 'printheader'
+EXTERN int p_prompt;            // 'prompt'
+EXTERN char_u   *p_guicursor;   // 'guicursor'
+EXTERN char_u   *p_hf;          // 'helpfile'
+EXTERN long p_hh;               // 'helpheight'
+EXTERN char_u   *p_hlg;         // 'helplang'
+EXTERN int p_hid;               // 'hidden'
+// Use P_HID to check if a buffer is to be hidden when it is no longer
+// visible in a window.
 # define P_HID(buf) (buf_hide(buf))
 EXTERN char_u   *p_hl;          /* 'highlight' */
 EXTERN int p_hls;               /* 'hlsearch' */
