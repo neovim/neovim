@@ -5396,7 +5396,7 @@ void ex_ownsyntax(exarg_T *eap)
     curwin->w_s = xmalloc(sizeof(synblock_T));
     memset(curwin->w_s, 0, sizeof(synblock_T));
     // TODO: Keep the spell checking as it was.
-    curwin->w_p_spell = FALSE;          /* No spell checking */
+    curwin->w_p_spell = false;          /* No spell checking */
     clear_string_option(&curwin->w_s->b_p_spc);
     clear_string_option(&curwin->w_s->b_p_spf);
     clear_string_option(&curwin->w_s->b_p_spl);

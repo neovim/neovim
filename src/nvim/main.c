@@ -363,9 +363,9 @@ int main(int argc, char **argv)
     p_uc = 0;
 
   if (curwin->w_p_rl && p_altkeymap) {
-    p_hkmap = FALSE;              /* Reset the Hebrew keymap mode */
-    curwin->w_p_arab = FALSE;       /* Reset the Arabic keymap mode */
-    p_fkmap = TRUE;               /* Set the Farsi keymap mode */
+    p_hkmap = false;              /* Reset the Hebrew keymap mode */
+    curwin->w_p_arab = true;       /* Reset the Arabic keymap mode */
+    p_fkmap = true;               /* Set the Farsi keymap mode */
   }
 
   /*
@@ -751,7 +751,7 @@ static void command_line_scan(mparm_T *parmp)
             parmp->literal = TRUE;
 #endif
           } else if (STRNICMP(argv[0] + argv_idx, "noplugin", 8) == 0)
-            p_lpl = FALSE;
+            p_lpl = false;
           else if (STRNICMP(argv[0] + argv_idx, "cmd", 3) == 0) {
             want_argument = TRUE;
             argv_idx += 3;
@@ -795,7 +795,7 @@ static void command_line_scan(mparm_T *parmp)
           break;
 
         case 'F':                 /* "-F" start in Farsi mode: rl + fkmap set */
-          p_fkmap = TRUE;
+          p_fkmap = true;
           set_option_value((char_u *)"rl", 1L, NULL, 0);
           break;
 
@@ -804,13 +804,13 @@ static void command_line_scan(mparm_T *parmp)
           mch_exit(0);
 
         case 'H':                 /* "-H" start in Hebrew mode: rl + hkmap set */
-          p_hkmap = TRUE;
+          p_hkmap = true;
           set_option_value((char_u *)"rl", 1L, NULL, 0);
           break;
 
         case 'l':                 /* "-l" lisp mode, 'lisp' and 'showmatch' on */
           set_option_value((char_u *)"lisp", 1L, NULL, 0);
-          p_sm = TRUE;
+          p_sm = true;
           break;
 
         case 'M':                 /* "-M"  no changes or writing of files */
@@ -818,7 +818,7 @@ static void command_line_scan(mparm_T *parmp)
           /* FALLTHROUGH */
 
         case 'm':                 /* "-m"  no writing of files */
-          p_write = FALSE;
+          p_write = false;
           break;
 
         case 'N':                 /* "-N"  Nocompatible */
@@ -870,7 +870,7 @@ static void command_line_scan(mparm_T *parmp)
 
         case 'R':                 /* "-R" readonly mode */
           readonlymode = TRUE;
-          curbuf->b_p_ro = TRUE;
+          curbuf->b_p_ro = true;
           p_uc = 10000;                           /* don't update very often */
           break;
 

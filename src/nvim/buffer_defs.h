@@ -144,21 +144,21 @@ struct buffheader {
  * Also used in wininfo_T.
  */
 typedef struct {
-  int wo_arab;
+  bool wo_arab;
 # define w_p_arab w_onebuf_opt.wo_arab  /* 'arabic' */
-  int wo_bri;
+  bool wo_bri;
 # define w_p_bri w_onebuf_opt.wo_bri	/* 'breakindent' */
   char_u *wo_briopt;
 # define w_p_briopt w_onebuf_opt.wo_briopt /* 'breakindentopt' */
-  int wo_diff;
+  bool wo_diff;
 # define w_p_diff w_onebuf_opt.wo_diff  /* 'diff' */
   long wo_fdc;
 # define w_p_fdc w_onebuf_opt.wo_fdc    /* 'foldcolumn' */
   int wo_fdc_save;
 # define w_p_fdc_save w_onebuf_opt.wo_fdc_save  /* 'foldenable' saved for diff mode */
-  int wo_fen;
+  bool wo_fen;
 # define w_p_fen w_onebuf_opt.wo_fen    /* 'foldenable' */
-  int wo_fen_save;
+  bool wo_fen_save;
 # define w_p_fen_save w_onebuf_opt.wo_fen_save  /* 'foldenable' saved for diff mode */
   char_u      *wo_fdi;
 # define w_p_fdi w_onebuf_opt.wo_fdi    /* 'foldignore' */
@@ -180,45 +180,45 @@ typedef struct {
 #  define w_p_fdt w_onebuf_opt.wo_fdt   /* 'foldtext' */
   char_u      *wo_fmr;
 # define w_p_fmr w_onebuf_opt.wo_fmr    /* 'foldmarker' */
-  int wo_lbr;
+  bool wo_lbr;
 # define w_p_lbr w_onebuf_opt.wo_lbr    /* 'linebreak' */
-  int wo_list;
+  bool wo_list;
 #define w_p_list w_onebuf_opt.wo_list   /* 'list' */
-  int wo_nu;
+  bool wo_nu;
 #define w_p_nu w_onebuf_opt.wo_nu       /* 'number' */
-  int wo_rnu;
+  bool wo_rnu;
 #define w_p_rnu w_onebuf_opt.wo_rnu     /* 'relativenumber' */
   long wo_nuw;
 # define w_p_nuw w_onebuf_opt.wo_nuw    /* 'numberwidth' */
-  int wo_wfh;
+  bool wo_wfh;
 # define w_p_wfh w_onebuf_opt.wo_wfh    /* 'winfixheight' */
-  int wo_wfw;
+  bool wo_wfw;
 # define w_p_wfw w_onebuf_opt.wo_wfw    /* 'winfixwidth' */
-  int wo_pvw;
+  bool wo_pvw;
 # define w_p_pvw w_onebuf_opt.wo_pvw    /* 'previewwindow' */
-  int wo_rl;
+  bool wo_rl;
 # define w_p_rl w_onebuf_opt.wo_rl      /* 'rightleft' */
   char_u      *wo_rlc;
 # define w_p_rlc w_onebuf_opt.wo_rlc    /* 'rightleftcmd' */
   long wo_scr;
 #define w_p_scr w_onebuf_opt.wo_scr     /* 'scroll' */
-  int wo_spell;
+  bool wo_spell;
 # define w_p_spell w_onebuf_opt.wo_spell /* 'spell' */
-  int wo_cuc;
+  bool wo_cuc;
 # define w_p_cuc w_onebuf_opt.wo_cuc    /* 'cursorcolumn' */
-  int wo_cul;
+  bool wo_cul;
 # define w_p_cul w_onebuf_opt.wo_cul    /* 'cursorline' */
   char_u      *wo_cc;
 # define w_p_cc w_onebuf_opt.wo_cc      /* 'colorcolumn' */
   char_u      *wo_stl;
 #define w_p_stl w_onebuf_opt.wo_stl     /* 'statusline' */
-  int wo_scb;
+  bool wo_scb;
 # define w_p_scb w_onebuf_opt.wo_scb    /* 'scrollbind' */
-  int wo_diff_saved;           /* options were saved for starting diff mode */
+  bool wo_diff_saved;           /* options were saved for starting diff mode */
 # define w_p_diff_saved w_onebuf_opt.wo_diff_saved
-  int wo_scb_save;              /* 'scrollbind' saved for diff mode*/
+  bool wo_scb_save;              /* 'scrollbind' saved for diff mode*/
 # define w_p_scb_save w_onebuf_opt.wo_scb_save
-  int wo_wrap;
+  bool wo_wrap;
 #define w_p_wrap w_onebuf_opt.wo_wrap   /* 'wrap' */
   int wo_wrap_save;             /* 'wrap' state saved for diff mode*/
 # define w_p_wrap_save w_onebuf_opt.wo_wrap_save
@@ -226,9 +226,9 @@ typedef struct {
 # define w_p_cocu w_onebuf_opt.wo_cocu
   long wo_cole;                         /* 'conceallevel' */
 # define w_p_cole w_onebuf_opt.wo_cole
-  int wo_crb;
+  bool wo_crb;
 # define w_p_crb w_onebuf_opt.wo_crb    /* 'cursorbind' */
-  int wo_crb_save;              /* 'cursorbind' state saved for diff mode*/
+  bool wo_crb_save;              /* 'cursorbind' state saved for diff mode*/
 # define w_p_crb_save w_onebuf_opt.wo_crb_save
 
   int wo_scriptID[WV_COUNT];            /* SIDs for window-local options */
@@ -592,17 +592,17 @@ struct file_buffer {
 
   int b_p_scriptID[BV_COUNT];           /* SIDs for buffer-local options */
 
-  int b_p_ai;                   /* 'autoindent' */
-  int b_p_ai_nopaste;           /* b_p_ai saved for paste mode */
+  bool b_p_ai;                   /* 'autoindent' */
+  bool b_p_ai_nopaste;           /* b_p_ai saved for paste mode */
   char_u      *b_p_bkc;         ///< 'backupcopy'
   unsigned int b_bkc_flags;     ///< flags for 'backupcopy'
-  int b_p_ci;                   /* 'copyindent' */
-  int b_p_bin;                  /* 'binary' */
-  int b_p_bomb;                 /* 'bomb' */
+  bool b_p_ci;                   /* 'copyindent' */
+  bool b_p_bin;                  /* 'binary' */
+  bool b_p_bomb;                 /* 'bomb' */
   char_u      *b_p_bh;          /* 'bufhidden' */
   char_u      *b_p_bt;          /* 'buftype' */
-  int b_p_bl;                   /* 'buflisted' */
-  int b_p_cin;                  /* 'cindent' */
+  bool b_p_bl;                   /* 'buflisted' */
+  bool b_p_cin;                  /* 'cindent' */
   char_u      *b_p_cino;        /* 'cinoptions' */
   char_u      *b_p_cink;        /* 'cinkeys' */
   char_u      *b_p_cinw;        /* 'cinwords' */
@@ -611,16 +611,16 @@ struct file_buffer {
   char_u      *b_p_cpt;         /* 'complete' */
   char_u      *b_p_cfu;         /* 'completefunc' */
   char_u      *b_p_ofu;         /* 'omnifunc' */
-  int b_p_eol;                  /* 'endofline' */
-  int b_p_fixeol;               /* 'fixendofline' */
-  int b_p_et;                   /* 'expandtab' */
-  int b_p_et_nobin;             /* b_p_et saved for binary mode */
+  bool b_p_eol;                  /* 'endofline' */
+  bool b_p_fixeol;               /* 'fixendofline' */
+  bool b_p_et;                   /* 'expandtab' */
+  bool b_p_et_nobin;             /* b_p_et saved for binary mode */
   char_u      *b_p_fenc;        /* 'fileencoding' */
   char_u      *b_p_ff;          /* 'fileformat' */
   char_u      *b_p_ft;          /* 'filetype' */
   char_u      *b_p_fo;          /* 'formatoptions' */
   char_u      *b_p_flp;         /* 'formatlistpat' */
-  int b_p_inf;                  /* 'infercase' */
+  bool b_p_inf;                  /* 'infercase' */
   char_u      *b_p_isk;         /* 'iskeyword' */
   char_u      *b_p_def;         /* 'define' local value */
   char_u      *b_p_inc;         /* 'include' */
@@ -632,17 +632,17 @@ struct file_buffer {
   char_u      *b_p_fex;         /* 'formatexpr' */
   uint32_t b_p_fex_flags;       /* flags for 'formatexpr' */
   char_u      *b_p_kp;          /* 'keywordprg' */
-  int b_p_lisp;                 /* 'lisp' */
+  bool b_p_lisp;                 /* 'lisp' */
   char_u      *b_p_mps;         /* 'matchpairs' */
-  int b_p_ml;                   /* 'modeline' */
-  int b_p_ml_nobin;             /* b_p_ml saved for binary mode */
-  int b_p_ma;                   /* 'modifiable' */
+  bool b_p_ml;                   /* 'modeline' */
+  bool b_p_ml_nobin;             /* b_p_ml saved for binary mode */
+  bool b_p_ma;                   /* 'modifiable' */
   char_u      *b_p_nf;          /* 'nrformats' */
-  int b_p_pi;                   /* 'preserveindent' */
+  bool b_p_pi;                   /* 'preserveindent' */
   char_u      *b_p_qe;          /* 'quoteescape' */
-  int b_p_ro;                   /* 'readonly' */
+  bool b_p_ro;                   /* 'readonly' */
   long b_p_sw;                  /* 'shiftwidth' */
-  int b_p_si;                   /* 'smartindent' */
+  bool b_p_si;                   /* 'smartindent' */
   long b_p_sts;                 /* 'softtabstop' */
   long b_p_sts_nopaste;         /* b_p_sts saved for paste mode */
   char_u      *b_p_sua;         /* 'suffixesadd' */
@@ -664,12 +664,13 @@ struct file_buffer {
   char_u      *b_p_efm;         /* 'errorformat' local value */
   char_u      *b_p_ep;          /* 'equalprg' local value */
   char_u      *b_p_path;        /* 'path' local value */
-  int b_p_ar;                   /* 'autoread' local value */
+  bool b_p_ar;                  // 'autoread' local value, when present
+  bool has_b_p_ar;              // whether buffer has an 'autoread' local value
   char_u      *b_p_tags;        /* 'tags' local value */
   char_u      *b_p_dict;        /* 'dictionary' local value */
   char_u      *b_p_tsr;         /* 'thesaurus' local value */
   long b_p_ul;                  /* 'undolevels' local value */
-  int b_p_udf;                  /* 'undofile' */
+  bool b_p_udf;                  /* 'undofile' */
   char_u      *b_p_lw;          // 'lispwords' local value
 
   /* end of buffer options */

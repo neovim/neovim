@@ -100,7 +100,7 @@ open_buffer (
    */
   if (readonlymode && curbuf->b_ffname != NULL
       && (curbuf->b_flags & BF_NEVERLOADED))
-    curbuf->b_p_ro = TRUE;
+    curbuf->b_p_ro = true;
 
   if (ml_open(curbuf) == FAIL) {
     /*
@@ -149,7 +149,7 @@ open_buffer (
     if (curbuf->b_help)
       fix_help_buffer();
   } else if (read_stdin) {
-    int save_bin = curbuf->b_p_bin;
+    bool save_bin = curbuf->b_p_bin;
     linenr_T line_count;
 
     /*
@@ -158,7 +158,7 @@ open_buffer (
      * it possible to retry when 'fileformat' or 'fileencoding' was
      * guessed wrong.
      */
-    curbuf->b_p_bin = TRUE;
+    curbuf->b_p_bin = true;
     retval = readfile(NULL, NULL, (linenr_T)0,
         (linenr_T)0, (linenr_T)MAXLNUM, NULL,
         flags | (READ_NEW + READ_STDIN));
@@ -458,7 +458,7 @@ close_buffer (
     }
     buf_clear_file(buf);
     if (del_buf)
-      buf->b_p_bl = FALSE;
+      buf->b_p_bl = false;
   }
 }
 
@@ -469,9 +469,9 @@ void buf_clear_file(buf_T *buf)
 {
   buf->b_ml.ml_line_count = 1;
   unchanged(buf, TRUE);
-  buf->b_p_eol = TRUE;
+  buf->b_p_eol = true;
   buf->b_start_eol = TRUE;
-  buf->b_p_bomb = FALSE;
+  buf->b_p_bomb = false;
   buf->b_start_bomb = FALSE;
   buf->b_ml.ml_mfp = NULL;
   buf->b_ml.ml_flags = ML_EMPTY;                /* empty buffer */
@@ -1341,7 +1341,7 @@ buflist_new (
      * already */
     buf_copy_options(buf, 0);
     if ((flags & BLN_LISTED) && !buf->b_p_bl) {
-      buf->b_p_bl = TRUE;
+      buf->b_p_bl = true;
       if (!(flags & BLN_DUMMY)) {
         apply_autocmds(EVENT_BUFADD, NULL, NULL, FALSE, buf);
         if (!buf_valid(buf)) {
@@ -1472,7 +1472,7 @@ buflist_new (
   buf_clear_file(buf);
   clrallmarks(buf);                     /* clear marks */
   fmarks_check_names(buf);              /* check file marks for this file */
-  buf->b_p_bl = (flags & BLN_LISTED) ? TRUE : FALSE;    /* init 'buflisted' */
+  buf->b_p_bl = (flags & BLN_LISTED) ? true : false;    /* init 'buflisted' */
   if (!(flags & BLN_DUMMY)) {
     // Tricky: these autocommands may change the buffer list.  They could also
     // split the window with re-using the one empty buffer. This may result in
@@ -1546,7 +1546,7 @@ void free_buf_options(buf_T *buf, int free_p_ff)
   clear_string_option(&buf->b_p_dict);
   clear_string_option(&buf->b_p_tsr);
   clear_string_option(&buf->b_p_qe);
-  buf->b_p_ar = -1;
+  buf->has_b_p_ar = false;
   buf->b_p_ul = NO_LOCAL_UNDOLEVEL;
   clear_string_option(&buf->b_p_lw);
   clear_string_option(&buf->b_p_bkc);
@@ -3302,9 +3302,9 @@ int build_stl_str_hl(
       // In list mode virtcol needs to be recomputed
       colnr_T virtcol = wp->w_virtcol;
       if (wp->w_p_list && lcs_tab1 == NUL) {
-        wp->w_p_list = FALSE;
+        wp->w_p_list = false;
         getvcol(wp, &wp->w_cursor, NULL, &virtcol, NULL);
-        wp->w_p_list = TRUE;
+        wp->w_p_list = true;
       }
       ++virtcol;
       // Don't display %V if it's the same as %c.

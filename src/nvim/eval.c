@@ -8093,7 +8093,6 @@ static void f_bufloaded(typval_T *argvars, typval_T *rettv)
 static buf_T *get_buf_tv(typval_T *tv, int curtab_only)
 {
   char_u      *name = tv->vval.v_string;
-  int save_magic;
   char_u      *save_cpo;
   buf_T       *buf;
 
@@ -8107,8 +8106,8 @@ static buf_T *get_buf_tv(typval_T *tv, int curtab_only)
     return lastbuf;
 
   /* Ignore 'magic' and 'cpoptions' here to make scripts portable */
-  save_magic = p_magic;
-  p_magic = TRUE;
+  bool save_magic = p_magic;
+  p_magic = true;
   save_cpo = p_cpo;
   p_cpo = (char_u *)"";
 

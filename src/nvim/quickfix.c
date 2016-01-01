@@ -2101,7 +2101,7 @@ void ex_copen(exarg_T *eap)
           OPT_LOCAL);
       set_option_value((char_u *)"bh", 0L, (char_u *)"wipe", OPT_LOCAL);
       RESET_BINDING(curwin);
-      curwin->w_p_diff = FALSE;
+      curwin->w_p_diff = false;
       set_option_value((char_u *)"fdm", 0L, (char_u *)"manual",
           OPT_LOCAL);
     }
@@ -2112,7 +2112,7 @@ void ex_copen(exarg_T *eap)
         && curwin->w_width == Columns
         )
       win_setheight(height);
-    curwin->w_p_wfh = TRUE;         /* set 'winfixheight' */
+    curwin->w_p_wfh = true;         /* set 'winfixheight' */
     if (win_valid(win))
       prevwin = win;
   }
@@ -2354,7 +2354,7 @@ static void qf_fill_buffer(qf_info_T *qi)
    * resembles reading a file into a buffer, it's more logical when using
    * autocommands. */
   set_option_value((char_u *)"ft", 0L, (char_u *)"qf", OPT_LOCAL);
-  curbuf->b_p_ma = FALSE;
+  curbuf->b_p_ma = false;
 
   keep_filetype = TRUE;                 /* don't detect 'filetype' */
   apply_autocmds(EVENT_BUFREADPOST, (char_u *)"quickfix", NULL,

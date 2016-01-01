@@ -3409,7 +3409,7 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname,
           if (choice > 0) {
             switch (choice) {
             case 1:
-              buf->b_p_ro = TRUE;
+              buf->b_p_ro = true;
               break;
             case 2:
               break;

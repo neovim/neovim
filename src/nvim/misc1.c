@@ -112,7 +112,7 @@ open_line (
   int first_char = NUL;                 /* init for GCC */
   int vreplace_mode;
   int did_append;                       /* appended a new line */
-  int saved_pi = curbuf->b_p_pi;           /* copy of preserveindent setting */
+  bool saved_pi = curbuf->b_p_pi;           /* copy of preserveindent setting */
 
   /*
    * make a copy of the current line so we can mess with it
@@ -802,7 +802,7 @@ open_line (
        * with the line doesn't entirely destroy our efforts to preserve
        * it.  It gets restored at the function end.
        */
-      curbuf->b_p_pi = TRUE;
+      curbuf->b_p_pi = true;
     } else
       (void)set_indent(newindent, SIN_INSERT);
     less_cols -= curwin->w_cursor.col;
@@ -1451,16 +1451,15 @@ void ins_char_bytes(char_u *buf, int charlen)
     if (State & VREPLACE_FLAG) {
       colnr_T new_vcol = 0;             /* init for GCC */
       colnr_T vcol;
-      int old_list;
 
       /*
        * Disable 'list' temporarily, unless 'cpo' contains the 'L' flag.
        * Returns the old value of list, so when finished,
        * curwin->w_p_list should be set back to this.
        */
-      old_list = curwin->w_p_list;
+      bool old_list = curwin->w_p_list;
       if (old_list && vim_strchr(p_cpo, CPO_LISTWM) == NULL)
-        curwin->w_p_list = FALSE;
+        curwin->w_p_list = false;
 
       /*
        * In virtual replace mode each character may replace one or more

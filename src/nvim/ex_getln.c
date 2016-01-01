@@ -786,8 +786,8 @@ static int command_line_execute(VimState *state, int key)
         if ((wim_flags[s->wim_index] & WIM_LIST)
             || (p_wmnu && (wim_flags[s->wim_index] & WIM_FULL) != 0)) {
           if (!(wim_flags[0] & WIM_LONGEST)) {
-            int p_wmnu_save = p_wmnu;
-            p_wmnu = 0;
+            bool p_wmnu_save = p_wmnu;
+            p_wmnu = false;
             // remove match
             nextwild(&s->xpc, WILD_PREV, 0, s->firstc != '@');
             p_wmnu = p_wmnu_save;
@@ -4985,8 +4985,8 @@ static int ex_window(void)
   (void)setfname(curbuf, (char_u *)"[Command Line]", NULL, TRUE);
   set_option_value((char_u *)"bt", 0L, (char_u *)"nofile", OPT_LOCAL);
   set_option_value((char_u *)"swf", 0L, NULL, OPT_LOCAL);
-  curbuf->b_p_ma = TRUE;
-  curwin->w_p_fen = FALSE;
+  curbuf->b_p_ma = true;
+  curwin->w_p_fen = false;
   curwin->w_p_rl = cmdmsg_rl;
   cmdmsg_rl = FALSE;
   RESET_BINDING(curwin);

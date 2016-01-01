@@ -4981,7 +4981,7 @@ win_redr_custom (
   struct      stl_hlrec tabtab[STL_MAX_ITEM];
   int use_sandbox = FALSE;
   win_T       *ewp;
-  int p_crb_save;
+  bool p_crb_save;
 
   /* There is a tiny chance that this gets called recursively: When
    * redrawing a status line triggers redrawing the ruler or tabline.
@@ -5047,7 +5047,7 @@ win_redr_custom (
    * the cursor away and back. */
   ewp = wp == NULL ? curwin : wp;
   p_crb_save = ewp->w_p_crb;
-  ewp->w_p_crb = FALSE;
+  ewp->w_p_crb = false;
 
   /* Make a copy, because the statusline may include a function call that
    * might change the option value and free the memory. */
@@ -7073,9 +7073,9 @@ static void win_redr_ruler(win_T *wp, int always)
     /* In list mode virtcol needs to be recomputed */
     colnr_T virtcol = wp->w_virtcol;
     if (wp->w_p_list && lcs_tab1 == NUL) {
-      wp->w_p_list = FALSE;
+      wp->w_p_list = false;
       getvvcol(wp, &wp->w_cursor, NULL, &virtcol, NULL);
-      wp->w_p_list = TRUE;
+      wp->w_p_list = true;
     }
 
 #define RULER_BUF_LEN 70

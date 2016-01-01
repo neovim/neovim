@@ -105,14 +105,14 @@ typedef enum {
  * These are the global values for options which are also local to a buffer.
  * Only to be used in option.c!
  */
-static int p_ai;
-static int p_bin;
-static int p_bomb;
+static bool p_ai;
+static bool p_bin;
+static bool p_bomb;
 static char_u   *p_bh;
 static char_u   *p_bt;
-static int p_bl;
-static int p_ci;
-static int p_cin;
+static bool p_bl;
+static bool p_ci;
+static bool p_cin;
 static char_u   *p_cink;
 static char_u   *p_cino;
 static char_u   *p_cinw;
@@ -121,9 +121,9 @@ static char_u   *p_cms;
 static char_u   *p_cpt;
 static char_u   *p_cfu;
 static char_u   *p_ofu;
-static int p_eol;
-static int p_fixeol;
-static int p_et;
+static bool p_eol;
+static bool p_fixeol;
+static bool p_et;
 static char_u   *p_fenc;
 static char_u   *p_ff;
 static char_u   *p_fo;
@@ -135,22 +135,22 @@ static char_u   *p_inex;
 static char_u   *p_inde;
 static char_u   *p_indk;
 static char_u   *p_fex;
-static int p_inf;
+static bool p_inf;
 static char_u   *p_isk;
-static int p_lisp;
-static int p_ml;
-static int p_ma;
-static int p_mod;
+static bool p_lisp;
+static bool p_ml;
+static bool p_ma;
+static bool p_mod;
 static char_u   *p_mps;
 static char_u   *p_nf;
-static int p_pi;
+static bool p_pi;
 static char_u   *p_qe;
-static int p_ro;
-static int p_si;
+static bool p_ro;
+static bool p_si;
 static long p_sts;
 static char_u   *p_sua;
 static long p_sw;
-static int p_swf;
+static bool p_swf;
 static long p_smc;
 static char_u   *p_syn;
 static char_u   *p_spc;
@@ -158,7 +158,7 @@ static char_u   *p_spf;
 static char_u   *p_spl;
 static long p_ts;
 static long p_tw;
-static int p_udf;
+static bool p_udf;
 static long p_wm;
 static char_u   *p_keymap;
 
@@ -698,7 +698,7 @@ void set_init_1(void)
 
 
   curbuf->b_p_initialized = true;
-  curbuf->b_p_ar = -1;          /* no local 'autoread' value */
+  curbuf->has_b_p_ar = false;          /* no local 'autoread' value */
   curbuf->b_p_ul = NO_LOCAL_UNDOLEVEL;
   check_buf_options(curbuf);
   check_win_options(curwin);
@@ -882,16 +882,16 @@ set_option_default (
             *(long *)varp;
       }
     } else {  /* P_BOOL */
-      *(int *)varp = (int)(intptr_t)options[opt_idx].def_val[dvi];
+      *(bool *)varp = (bool)(intptr_t)options[opt_idx].def_val[dvi];
 #ifdef UNIX
       /* 'modeline' defaults to off for root */
       if (options[opt_idx].indir == PV_ML && getuid() == ROOT_UID)
-        *(int *)varp = FALSE;
+        *(bool *)varp = false;
 #endif
       /* May also set global value for local option. */
       if (both)
-        *(int *)get_varp_scope(&(options[opt_idx]), OPT_GLOBAL) =
-          *(int *)varp;
+        *(bool *)get_varp_scope(&(options[opt_idx]), OPT_GLOBAL) =
+          *(bool *)varp;
     }
 
     /* The default value is not insecure. */
@@ -1403,19 +1403,21 @@ do_set (
            * ":set opt<": reset to global value
            */
           if (nextchar == '!')
-            value = *(int *)(varp) ^ 1;
+            value = !(*(bool *)varp);
           else if (nextchar == '&')
             value = (int)(intptr_t)options[opt_idx].def_val[
               ((flags & P_VI_DEF) || cp_val)
               ?  VI_DEFAULT : VIM_DEFAULT];
           else if (nextchar == '<') {
-            /* For 'autoread' -1 means to use global value. */
-            if ((int *)varp == &curbuf->b_p_ar
-                && opt_flags == OPT_LOCAL)
-              value = -1;
-            else
-              value = *(int *)get_varp_scope(&(options[opt_idx]),
+            // mark buffer local 'autoread' as invalid
+            if ((bool *)varp == &curbuf->b_p_ar
+                && opt_flags == OPT_LOCAL) {
+                curbuf->has_b_p_ar = false;
+                goto skip;
+            } else {
+              value = *(bool *)get_varp_scope(&(options[opt_idx]),
                   OPT_GLOBAL);
+            }
           } else {
             /*
              * ":set invopt": invert
@@ -1426,12 +1428,12 @@ do_set (
               goto skip;
             }
             if (prefix == 2)                    /* inv */
-              value = *(int *)(varp) ^ 1;
+              value = !(*(bool *)varp);
             else
               value = prefix;
           }
 
-          errmsg = set_bool_option(opt_idx, varp, (int)value,
+          errmsg = set_bool_option(opt_idx, varp, (bool)value,
               opt_flags);
         } else {                                  /* numeric or string */
           if (vim_strchr((char_u *)"=:&<", nextchar) == NULL
@@ -1995,9 +1997,9 @@ set_options_bin (
     if (!(opt_flags & OPT_LOCAL)) {
       p_tw = 0;
       p_wm = 0;
-      p_ml = FALSE;
-      p_et = FALSE;
-      p_bin = TRUE;             /* needed when called for the "-b" argument */
+      p_ml = false;
+      p_et = false;
+      p_bin = true;             /* needed when called for the "-b" argument */
     }
   } else if (oldval) {        /* switched off */
     if (!(opt_flags & OPT_GLOBAL)) {
@@ -3516,11 +3518,11 @@ static char_u *
 set_bool_option (
     int opt_idx,                            /* index in options[] table */
     char_u *varp,                      /* pointer to the option variable */
-    int value,                              /* new value */
+    bool value,                              /* new value */
     int opt_flags                          /* OPT_LOCAL and/or OPT_GLOBAL */
 )
 {
-  int old_value = *(int *)varp;
+  int old_value = *(bool *)varp;
 
   /* Disallow changing some options from secure mode */
   if ((secure || sandbox != 0)
@@ -3528,27 +3530,27 @@ set_bool_option (
     return e_secure;
   }
 
-  *(int *)varp = value;             /* set the new value */
+  *(bool *)varp = value;             /* set the new value */
   /* Remember where the option was set. */
   set_option_scriptID_idx(opt_idx, opt_flags, current_SID);
 
 
   /* May set global value for local option. */
   if ((opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0)
-    *(int *)get_varp_scope(&(options[opt_idx]), OPT_GLOBAL) = value;
+    *(bool *)get_varp_scope(&(options[opt_idx]), OPT_GLOBAL) = value;
 
   // Ensure that options set to p_force_on cannot be disabled.
-  if ((int *)varp == &p_force_on && p_force_on == FALSE) {
-    p_force_on = TRUE;
+  if ((bool *)varp == &p_force_on && p_force_on == false) {
+    p_force_on = true;
     return e_unsupportedoption;
   }
   // Ensure that options set to p_force_off cannot be enabled.
-  else if ((int *)varp == &p_force_off && p_force_off == TRUE) {
-    p_force_off = FALSE;
+  else if ((bool *)varp == &p_force_off && p_force_off == true) {
+    p_force_off = false;
     return e_unsupportedoption;
   }
   /* 'undofile' */
-  else if ((int *)varp == &curbuf->b_p_udf || (int *)varp == &p_udf) {
+  else if ((bool *)varp == &curbuf->b_p_udf || (bool *)varp == &p_udf) {
     /* Only take action when the option was set. When reset we do not
      * delete the undo file, the option may be set again without making
      * any changes in between. */
@@ -3570,7 +3572,7 @@ set_bool_option (
       }
       curbuf = save_curbuf;
     }
-  } else if ((int *)varp == &curbuf->b_p_ro) {
+  } else if ((bool *)varp == &curbuf->b_p_ro) {
     /* when 'readonly' is reset globally, also reset readonlymode */
     if (!curbuf->b_p_ro && (opt_flags & OPT_LOCAL) == 0)
       readonlymode = FALSE;
@@ -3582,32 +3584,32 @@ set_bool_option (
     redraw_titles();
   }
   /* when 'modifiable' is changed, redraw the window title */
-  else if ((int *)varp == &curbuf->b_p_ma) {
+  else if ((bool *)varp == &curbuf->b_p_ma) {
     redraw_titles();
   }
   /* when 'endofline' is changed, redraw the window title */
-  else if ((int *)varp == &curbuf->b_p_eol) {
+  else if ((bool *)varp == &curbuf->b_p_eol) {
     redraw_titles();
-  } else if ((int *)varp == &curbuf->b_p_fixeol) {
+  } else if ((bool *)varp == &curbuf->b_p_fixeol) {
     // when 'fixeol' is changed, redraw the window title
     redraw_titles();
   }
   /* when 'bomb' is changed, redraw the window title and tab page text */
-  else if ((int *)varp == &curbuf->b_p_bomb) {
+  else if ((bool *)varp == &curbuf->b_p_bomb) {
     redraw_titles();
   }
   /* when 'bin' is set also set some other options */
-  else if ((int *)varp == &curbuf->b_p_bin) {
+  else if ((bool *)varp == &curbuf->b_p_bin) {
     set_options_bin(old_value, curbuf->b_p_bin, opt_flags);
     redraw_titles();
   }
   /* when 'buflisted' changes, trigger autocommands */
-  else if ((int *)varp == &curbuf->b_p_bl && old_value != curbuf->b_p_bl) {
+  else if ((bool *)varp == &curbuf->b_p_bl && old_value != curbuf->b_p_bl) {
     apply_autocmds(curbuf->b_p_bl ? EVENT_BUFADD : EVENT_BUFDELETE,
         NULL, NULL, TRUE, curbuf);
   }
   /* when 'swf' is set, create swapfile, when reset remove swapfile */
-  else if ((int *)varp == (int *)&curbuf->b_p_swf) {
+  else if ((bool *)varp == &curbuf->b_p_swf) {
     if (curbuf->b_p_swf && p_uc)
       ml_open_file(curbuf);                     /* create the swap file */
     else
@@ -3615,8 +3617,17 @@ set_bool_option (
        * buf->b_p_swf */
       mf_close_file(curbuf, true);              /* remove the swap file */
   }
+  else if ((bool *)varp == &curbuf->b_p_ar) {
+      // if buffer local value wasn't set
+      // the previous effective value was the global one
+      if (!curbuf->has_b_p_ar) {
+        old_value = p_ar;
+      }
+      // use buffer local value when set
+      curbuf->has_b_p_ar = true;
+  }
   /* when 'terse' is set change 'shortmess' */
-  else if ((int *)varp == &p_terse) {
+  else if ((bool *)varp == &p_terse) {
     char_u  *p;
 
     p = vim_strchr(p_shm, SHM_SEARCH);
@@ -3632,11 +3643,11 @@ set_bool_option (
       STRMOVE(p, p + 1);
   }
   /* when 'paste' is set or reset also change other options */
-  else if ((int *)varp == &p_paste) {
+  else if ((bool *)varp == &p_paste) {
     paste_option_changed();
   }
   /* when 'insertmode' is set from an autocommand need to do work here */
-  else if ((int *)varp == &p_im) {
+  else if ((bool *)varp == &p_im) {
     if (p_im) {
       if ((State & INSERT) == 0)
         need_start_insertmode = TRUE;
@@ -3650,27 +3661,27 @@ set_bool_option (
     }
   }
   /* when 'ignorecase' is set or reset and 'hlsearch' is set, redraw */
-  else if ((int *)varp == &p_ic && p_hls) {
+  else if ((bool *)varp == &p_ic && p_hls) {
     redraw_all_later(SOME_VALID);
   }
   /* when 'hlsearch' is set or reset: reset no_hlsearch */
-  else if ((int *)varp == &p_hls) {
+  else if ((bool *)varp == &p_hls) {
     SET_NO_HLSEARCH(FALSE);
   }
   /* when 'scrollbind' is set: snapshot the current position to avoid a jump
    * at the end of normal_cmd() */
-  else if ((int *)varp == &curwin->w_p_scb) {
+  else if ((bool *)varp == &curwin->w_p_scb) {
     if (curwin->w_p_scb) {
       do_check_scrollbind(FALSE);
       curwin->w_scbind_pos = curwin->w_topline;
     }
   }
   /* There can be only one window with 'previewwindow' set. */
-  else if ((int *)varp == &curwin->w_p_pvw) {
+  else if ((bool *)varp == &curwin->w_p_pvw) {
     if (curwin->w_p_pvw) {
       FOR_ALL_WINDOWS_IN_TAB(win, curtab) {
         if (win->w_p_pvw && win != curwin) {
-          curwin->w_p_pvw = FALSE;
+          curwin->w_p_pvw = false;
           return (char_u *)N_("E590: A preview window already exists");
         }
       }
@@ -3685,9 +3696,9 @@ set_bool_option (
     (void)buf_init_chartab(curbuf, FALSE);          /* ignore errors */
   }
   /* when 'title' changed, may need to change the title; same for 'icon' */
-  else if ((int *)varp == &p_title) {
+  else if ((bool *)varp == &p_title) {
     did_set_title(FALSE);
-  } else if ((int *)varp == &p_icon) {
+  } else if ((bool *)varp == &p_icon) {
     did_set_title(TRUE);
   } else if ((bool *)varp == &curbuf->b_changed) {
     if (!value)
@@ -3697,7 +3708,7 @@ set_bool_option (
   }
 
 #ifdef BACKSLASH_IN_FILENAME
-  else if ((int *)varp == &p_ssl) {
+  else if ((bool *)varp == &p_ssl) {
     if (p_ssl) {
       psepc = '/';
       psepcN = '\\';
@@ -3716,7 +3727,7 @@ set_bool_option (
 #endif
 
   /* If 'wrap' is set, set w_leftcol to zero. */
-  else if ((int *)varp == &curwin->w_p_wrap) {
+  else if ((bool *)varp == &curwin->w_p_wrap) {
     if (curwin->w_p_wrap)
       curwin->w_leftcol = 0;
   } else if ((bool *)varp == &p_ea) {
@@ -3727,7 +3738,7 @@ set_bool_option (
     do_autochdir();
   }
   /* 'diff' */
-  else if ((int *)varp == &curwin->w_p_diff) {
+  else if ((bool *)varp == &curwin->w_p_diff) {
     /* May add or remove the buffer from the list of diff buffers. */
     diff_buf_adjust(curwin);
     if (foldmethodIsDiff(curwin))
@@ -3736,13 +3747,13 @@ set_bool_option (
 
 
   /* 'spell' */
-  else if ((int *)varp == &curwin->w_p_spell) {
+  else if ((bool *)varp == &curwin->w_p_spell) {
     if (curwin->w_p_spell) {
       char_u      *errmsg = did_set_spelllang(curwin);
       if (errmsg != NULL)
         EMSG(_(errmsg));
     }
-  } else if ((int *)varp == &p_altkeymap) {
+  } else if ((bool *)varp == &p_altkeymap) {
     if (old_value != p_altkeymap) {
       if (!p_altkeymap) {
         p_hkmap = p_fkmap;
@@ -3765,7 +3776,7 @@ set_bool_option (
    */
   if ((p_hkmap || p_fkmap) && p_altkeymap) {
     p_altkeymap = p_fkmap;
-    curwin->w_p_arab = FALSE;
+    curwin->w_p_arab = false;
     (void)init_chartab();
   }
 
@@ -3775,7 +3786,7 @@ set_bool_option (
   if (p_hkmap && p_altkeymap) {
     p_altkeymap = 0;
     p_fkmap = 0;
-    curwin->w_p_arab = FALSE;
+    curwin->w_p_arab = false;
     (void)init_chartab();
   }
 
@@ -3785,11 +3796,11 @@ set_bool_option (
   if (p_fkmap && !p_altkeymap) {
     p_altkeymap = 1;
     p_hkmap = 0;
-    curwin->w_p_arab = FALSE;
+    curwin->w_p_arab = false;
     (void)init_chartab();
   }
 
-  if ((int *)varp == &curwin->w_p_arab) {
+  if ((bool *)varp == &curwin->w_p_arab) {
     if (curwin->w_p_arab) {
       /*
        * 'arabic' is set, handle various sub-settings.
@@ -3797,13 +3808,13 @@ set_bool_option (
       if (!p_tbidi) {
         /* set rightleft mode */
         if (!curwin->w_p_rl) {
-          curwin->w_p_rl = TRUE;
+          curwin->w_p_rl = true;
           changed_window_setting();
         }
 
         /* Enable Arabic shaping (major part of what Arabic requires) */
         if (!p_arshape) {
-          p_arshape = TRUE;
+          p_arshape = true;
           redraw_later_clear();
         }
       }
@@ -3820,7 +3831,7 @@ set_bool_option (
       }
 
       /* set 'delcombine' */
-      p_deco = TRUE;
+      p_deco = true;
 
       /* Force-set the necessary keymap for arabic */
       set_option_value((char_u *)"keymap", 0L, (char_u *)"arabic",
@@ -3836,7 +3847,7 @@ set_bool_option (
       if (!p_tbidi) {
         /* reset rightleft mode */
         if (curwin->w_p_rl) {
-          curwin->w_p_rl = FALSE;
+          curwin->w_p_rl = false;
           changed_window_setting();
         }
 
@@ -4458,15 +4469,15 @@ get_option_value (
 
   if (varp == NULL)                 /* hidden option */
     return -1;
-  if (options[opt_idx].flags & P_NUM)
+  if (options[opt_idx].flags & P_NUM) {
     *numval = *(long *)varp;
-  else {
+  } else { // P_BOOL
     /* Special case: 'modified' is b_changed, but we also want to consider
      * it set when 'ff' or 'fenc' changed. */
     if ((bool *)varp == &curbuf->b_changed)
       *numval = curbufIsChanged();
     else
-      *numval = *(int *)varp;
+      *numval = *(bool *)varp;
   }
   return 1;
 }
@@ -4586,8 +4597,8 @@ int get_option_value_strict(char *name,
       *stringval = xstrdup(*(char **)(varp));
     } else if (p->flags & P_NUM) {
       *numval = *(long *) varp;
-    } else {
-      *numval = *(int *)varp;
+    } else { // P_BOOL
+      *numval = *(bool *)varp;
     }
   }
 
@@ -4651,7 +4662,7 @@ set_option_value (
           return set_num_option(opt_idx, varp, number,
               NULL, 0, opt_flags);
         else
-          return set_bool_option(opt_idx, varp, (int)number,
+          return set_bool_option(opt_idx, varp, (bool)number,
               opt_flags);
       }
     }
@@ -4813,7 +4824,7 @@ static int optval_default(vimoption_T *p, char_u *varp)
   if (p->flags & P_NUM)
     return *(long *)varp == (long)p->def_val[dvi];
   if (p->flags & P_BOOL)
-    return *(int *)varp == (int)(intptr_t)p->def_val[dvi];
+    return *(bool *)varp == (bool)(intptr_t)p->def_val[dvi];
   /* P_STRING */
   return STRCMP(*(char_u **)varp, p->def_val[dvi]) == 0;
 }
@@ -4840,7 +4851,7 @@ showoneopt (
   if ((p->flags & P_BOOL) && ((bool *)varp == &curbuf->b_changed
                               ? !curbufIsChanged() : !*(bool *)varp))
     MSG_PUTS("no");
-  else if ((p->flags & P_BOOL) && *(int *)varp < 0)
+  else if ((p->flags & P_BOOL) && ((bool *)varp == &curbuf->b_p_ar) && !curbuf->has_b_p_ar)
     MSG_PUTS("--");
   else
     MSG_PUTS("  ");
@@ -4946,7 +4957,7 @@ int makeset(FILE *fd, int opt_flags, int local_only)
             cmd = "setlocal";
 
           if (p->flags & P_BOOL) {
-            if (put_setbool(fd, cmd, p->fullname, *(int *)varp) == FAIL)
+            if (put_setbool(fd, cmd, p->fullname, *(bool *)varp) == FAIL)
               return FAIL;
           } else if (p->flags & P_NUM) {
             if (put_setnum(fd, cmd, p->fullname, (long *)varp) == FAIL)
@@ -5129,7 +5140,7 @@ void unset_global_local_option(char *name, void *from)
       clear_string_option(&buf->b_p_path);
       break;
     case PV_AR:
-      buf->b_p_ar = -1;
+      buf->has_b_p_ar = false;
       break;
     case PV_BKC:
       clear_string_option(&buf->b_p_bkc);
@@ -5224,7 +5235,7 @@ static char_u *get_varp(vimoption_T *p)
            ? (char_u *)&curbuf->b_p_kp : p->var;
   case PV_PATH:   return *curbuf->b_p_path != NUL
            ? (char_u *)&(curbuf->b_p_path) : p->var;
-  case PV_AR:     return curbuf->b_p_ar >= 0
+  case PV_AR:     return curbuf->has_b_p_ar
            ? (char_u *)&(curbuf->b_p_ar) : p->var;
   case PV_TAGS:   return *curbuf->b_p_tags != NUL
            ? (char_u *)&(curbuf->b_p_tags) : p->var;
@@ -5528,7 +5539,7 @@ void buf_copy_options(buf_T *buf, int flags)
        */
       if (!buf->b_p_initialized) {
         free_buf_options(buf, TRUE);
-        buf->b_p_ro = FALSE;                    /* don't copy readonly */
+        buf->b_p_ro = false;                    /* don't copy readonly */
         buf->b_p_fenc = vim_strsave(p_fenc);
         buf->b_p_ff = vim_strsave(p_ff);
         buf->b_p_bh = empty_option;
@@ -5595,7 +5606,7 @@ void buf_copy_options(buf_T *buf, int flags)
 
       /* options that are normally global but also have a local value
        * are not copied, start using the global value */
-      buf->b_p_ar = -1;
+      buf->has_b_p_ar = false;
       buf->b_p_ul = NO_LOCAL_UNDOLEVEL;
       buf->b_p_bkc = empty_option;
       buf->b_bkc_flags = 0;
@@ -5654,8 +5665,8 @@ void reset_modifiable(void)
 {
   int opt_idx;
 
-  curbuf->b_p_ma = FALSE;
-  p_ma = FALSE;
+  curbuf->b_p_ma = true;
+  p_ma = false;
   opt_idx = findoption((char_u *)"ma");
   if (opt_idx >= 0)
     options[opt_idx].def_val[VI_DEFAULT] = FALSE;
@@ -6206,10 +6217,10 @@ int shortmess(int x)
 static void paste_option_changed(void)
 {
   static int old_p_paste = FALSE;
-  static int save_sm = 0;
-  static int save_ru = 0;
-  static int save_ri = 0;
-  static int save_hkmap = 0;
+  static bool save_sm = false;
+  static bool save_ru = false;
+  static bool save_ri = false;
+  static bool save_hkmap = false;
 
   if (p_paste) {
     /*
@@ -6250,17 +6261,17 @@ static void paste_option_changed(void)
     }
 
     /* set global options */
-    p_sm = 0;                       /* no showmatch */
+    p_sm = false;                       /* no showmatch */
     if (p_ru)
       status_redraw_all();          /* redraw to remove the ruler */
-    p_ru = 0;                       /* no ruler */
-    p_ri = 0;                       /* no reverse insert */
-    p_hkmap = 0;                    /* no Hebrew keyboard */
+    p_ru = false;                       /* no ruler */
+    p_ri = false;                       /* no reverse insert */
+    p_hkmap = false;                    /* no Hebrew keyboard */
     /* set global values for local buffer options */
     p_tw = 0;
     p_wm = 0;
     p_sts = 0;
-    p_ai = 0;
+    p_ai = false;
   }
   /*
    * Paste switched from on to off: Restore saved values.

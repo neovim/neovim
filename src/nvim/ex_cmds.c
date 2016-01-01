@@ -552,12 +552,11 @@ void ex_retab(exarg_T *eap)
   char_u      *new_line = (char_u *)1;      /* init to non-NULL */
   int did_undo;                         /* called u_save for current line */
   int new_ts;
-  int save_list;
   linenr_T first_line = 0;              /* first changed line */
   linenr_T last_line = 0;               /* last changed line */
 
-  save_list = curwin->w_p_list;
-  curwin->w_p_list = 0;             /* don't want list mode here */
+  bool save_list = curwin->w_p_list;
+  curwin->w_p_list = false;             /* don't want list mode here */
 
   new_ts = getdigits_int(&(eap->arg));
   if (new_ts < 0) {
@@ -1617,7 +1616,7 @@ int do_write(exarg_T *eap)
       apply_autocmds(EVENT_BUFFILEPOST, NULL, NULL, FALSE, curbuf);
       apply_autocmds(EVENT_BUFFILEPOST, NULL, NULL, FALSE, alt_buf);
       if (!alt_buf->b_p_bl) {
-        alt_buf->b_p_bl = TRUE;
+        alt_buf->b_p_bl = true;
         apply_autocmds(EVENT_BUFADD, NULL, NULL, FALSE, alt_buf);
       }
       if (curbuf != was_curbuf || aborting()) {
@@ -1645,7 +1644,7 @@ int do_write(exarg_T *eap)
     /* After ":saveas fname" reset 'readonly'. */
     if (eap->cmdidx == CMD_saveas) {
       if (retval == OK) {
-        curbuf->b_p_ro = FALSE;
+        curbuf->b_p_ro = false;
         redraw_tabline = TRUE;
       }
       /* Change directories when the 'acd' option is set. */
@@ -2876,7 +2875,7 @@ void do_sub(exarg_T *eap)
   int endcolumn = FALSE;                /* cursor in last column when done */
   pos_T old_cursor = curwin->w_cursor;
   int start_nsubs;
-  int save_ma = 0;
+  bool save_ma = false;
 
   cmd = eap->arg;
   if (!global_busy) {
@@ -3313,9 +3312,9 @@ void do_sub(exarg_T *eap)
             } else {
               char_u *orig_line = NULL;
               int len_change = 0;
-              int save_p_fen = curwin->w_p_fen;
+              bool save_p_fen = curwin->w_p_fen;
 
-              curwin->w_p_fen = FALSE;
+              curwin->w_p_fen = false;
               /* Invert the matched string.
                * Remove the inversion afterwards. */
               temp = RedrawingDisabled;
@@ -3443,7 +3442,7 @@ void do_sub(exarg_T *eap)
         if (do_count) {
           /* prevent accidentally changing the buffer by a function */
           save_ma = curbuf->b_p_ma;
-          curbuf->b_p_ma = FALSE;
+          curbuf->b_p_ma = false;
           sandbox++;
         }
         /* get length of substitution part */
@@ -4008,11 +4007,11 @@ prepare_tagpreview (
       if (win_split(g_do_tagpreview > 0 ? g_do_tagpreview : 0, 0)
           == FAIL)
         return false;
-      curwin->w_p_pvw = TRUE;
-      curwin->w_p_wfh = TRUE;
+      curwin->w_p_pvw = true;
+      curwin->w_p_wfh = true;
       RESET_BINDING(curwin);                /* don't take over 'scrollbind'
                                                and 'cursorbind' */
-      curwin->w_p_diff = FALSE;             /* no 'diff' */
+      curwin->w_p_diff = false;             /* no 'diff' */
       curwin->w_p_fdc = 0;                  /* no 'foldcolumn' */
       return true;
     }
@@ -4480,18 +4479,18 @@ static void prepare_help_buffer(void)
                            OPT_FREE|OPT_LOCAL, 0);
 
   curbuf->b_p_ts = 8;         // 'tabstop' is 8.
-  curwin->w_p_list = FALSE;   // No list mode.
+  curwin->w_p_list = false;   // No list mode.
 
-  curbuf->b_p_ma = FALSE;     // Not modifiable.
-  curbuf->b_p_bin = FALSE;    // Reset 'bin' before reading file.
-  curwin->w_p_nu = 0;         // No line numbers.
-  curwin->w_p_rnu = 0;        // No relative line numbers.
+  curbuf->b_p_ma = false;     // Not modifiable.
+  curbuf->b_p_bin = false;    // Reset 'bin' before reading file.
+  curwin->w_p_nu = false;         // No line numbers.
+  curwin->w_p_rnu = false;        // No relative line numbers.
   RESET_BINDING(curwin);      // No scroll or cursor binding.
-  curwin->w_p_arab = FALSE;   // No arabic mode.
-  curwin->w_p_rl  = FALSE;    // Help window is left-to-right.
-  curwin->w_p_fen = FALSE;    // No folding in the help window.
-  curwin->w_p_diff = FALSE;   // No 'diff'.
-  curwin->w_p_spell = FALSE;  // No spell checking.
+  curwin->w_p_arab = false;   // No arabic mode.
+  curwin->w_p_rl  = false;    // Help window is left-to-right.
+  curwin->w_p_fen = false;    // No folding in the help window.
+  curwin->w_p_diff = false;   // No 'diff'.
+  curwin->w_p_spell = false;  // No spell checking.
 
   set_buflisted(FALSE);
 }
