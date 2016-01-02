@@ -2130,7 +2130,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 'edcompatible' 'ed'	Removed. |vim-differences| {Nvim}
 
 					*'encoding'* *'enc'* *E543*
-'encoding' 'enc'	string (default: "utf-8" or value from $LANG)
+'encoding' 'enc'	string (default: "utf-8")
 			global
 			{only available when compiled with the |+multi_byte|
 			feature}
@@ -2152,10 +2152,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	can use: >
 		if has("multi_byte_encoding")
 <
-	Normally 'encoding' will be equal to your current locale.  This will
-	be the default if Vim recognizes your environment settings, otherwise
-	"utf-8" is used.
-
 	When you set this option, it fires the |EncodingChanged| autocommand
 	event so that you can set up fonts if necessary.
 
@@ -2171,9 +2167,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	|shada-file|.  And Vim expects the terminal to use utf-8 too.  Thus
 	setting 'encoding' to one of these values instead of utf-8 only has
 	effect for encoding used for files when 'fileencoding' is empty.
-
-	When 'encoding' is set to a Unicode encoding, and 'fileencodings' was
-	not set yet, the default for 'fileencodings' is changed.
 
 			*'endofline'* *'eol'* *'noendofline'* *'noeol'*
 'endofline' 'eol'	boolean	(default on)
@@ -2345,9 +2338,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	old short name was 'fe', which is no longer used.
 
 					*'fileencodings'* *'fencs'*
-'fileencodings' 'fencs'	string (default: "ucs-bom",
-				    "ucs-bom,utf-8,default,latin1" when
-				    'encoding' is set to a Unicode value)
+'fileencodings' 'fencs'	string (default: "ucs-bom,utf-8,default,latin1")
 			global
 			{only available when compiled with the |+multi_byte|
 			feature}
@@ -2387,9 +2378,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	because Vim cannot detect an error, thus the encoding is always
 	accepted.
 	The special value "default" can be used for the encoding from the
-	environment.  This is the default value for 'encoding'.  It is useful
-	when 'encoding' is set to "utf-8" and your environment uses a
-	non-latin1 encoding, such as Russian.
+	environment.  It is useful when 'encoding' is set to "utf-8" and
+	your environment uses a non-latin1 encoding, such as Russian.
 	When 'encoding' is "utf-8" and a file contains an illegal byte
 	sequence it won't be recognized as UTF-8.  You can use the |8g8|
 	command to find the illegal byte sequence.
@@ -3776,10 +3766,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	change 'iskeyword' instead.
 
 						*'iskeyword'* *'isk'*
-'iskeyword' 'isk'	string (Vim default for
-				  Win32:     @,48-57,_,128-167,224-235
-				  otherwise: @,48-57,_,192-255
-				Vi default:  @,48-57,_)
+'iskeyword' 'isk'	string (default: @,48-57,_,192-255
+				Vi default: @,48-57,_)
 			local to buffer
 	Keywords are used in searching and recognizing with many commands:
 	"w", "*", "[i", etc.  It is also used for "\k" in a |pattern|.  See
@@ -3791,8 +3779,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	When the 'lisp' option is on the '-' character is always included.
 
 						*'isprint'* *'isp'*
-'isprint' 'isp'	string	(default for MS-DOS, Win32, and Macintosh:
-				"@,~-255"; otherwise: "@,161-255")
+'isprint' 'isp'	string	(default: "@,161-255")
 			global
 	The characters given by this option are displayed directly on the
 	screen.  It is also used for "\p" in a |pattern|.  The characters from

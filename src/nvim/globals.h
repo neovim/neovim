@@ -798,6 +798,8 @@ EXTERN bool enc_utf8 INIT(= false);             /* UTF-8 encoded Unicode */
 EXTERN int enc_latin1like INIT(= TRUE);         /* 'encoding' is latin1 comp. */
 EXTERN int has_mbyte INIT(= 0);                 /* any multi-byte encoding */
 
+/// Encoding used when 'fencs' is set to "default"
+EXTERN char_u *fenc_default INIT(= NULL);
 
 /*
  * To speed up BYTELEN() we fill a table with the byte lengths whenever

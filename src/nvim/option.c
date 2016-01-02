@@ -233,12 +233,6 @@ typedef struct vimoption {
 #define P_CURSWANT    0x2000000U /* update curswant required; not needed when
                                   * there is a redraw flag */
 
-#define ISK_LATIN1  (char_u *)"@,48-57,_,192-255"
-
-/* 'isprint' for latin1 is also used for MS-Windows cp1252, where 0x80 is used
- * for the currency sign. */
-# define ISP_LATIN1 (char_u *)"@,161-255"
-
 #define HIGHLIGHT_INIT \
   "8:SpecialKey,~:EndOfBuffer,z:TermCursor,Z:TermCursorNC,@:NonText," \
   "d:Directory,e:ErrorMsg,i:IncSearch,l:Search,m:MoreMsg,M:ModeMsg,n:LineNr," \
@@ -776,59 +770,18 @@ void set_init_1(void)
   /* Parse default for 'listchars'. */
   (void)set_chars_option(&p_lcs);
 
-  /* enc_locale() will try to find the encoding of the current locale. */
+  // enc_locale() will try to find the encoding of the current locale.
+  // This will be used when 'default' is used as encoding specifier
+  // in 'fileencodings'
   char_u *p = enc_locale();
-  if (p != NULL) {
-    char_u *save_enc;
-
-    /* Try setting 'encoding' and check if the value is valid.
-     * If not, go back to the default "utf-8". */
-    save_enc = p_enc;
-    p_enc = (char_u *) p;
-    if (STRCMP(p_enc, "gb18030") == 0) {
-      /* We don't support "gb18030", but "cp936" is a good substitute
-       * for practical purposes, thus use that.  It's not an alias to
-       * still support conversion between gb18030 and utf-8. */
-      p_enc = vim_strsave((char_u *)"cp936");
-      xfree(p);
-    }
-    if (mb_init() == NULL) {
-      opt_idx = findoption((char_u *)"encoding");
-      if (opt_idx >= 0) {
-        options[opt_idx].def_val[VI_DEFAULT] = p_enc;
-        options[opt_idx].flags |= P_DEF_ALLOCED;
-      }
-
-#if defined(MSWIN) || defined(MACOS)
-      if (STRCMP(p_enc, "latin1") == 0
-          || enc_utf8
-          ) {
-        /* Adjust the default for 'isprint' and 'iskeyword' to match
-         * latin1. */
-        set_string_option_direct((char_u *)"isp", -1,
-            ISP_LATIN1, OPT_FREE, SID_NONE);
-        set_string_option_direct((char_u *)"isk", -1,
-            ISK_LATIN1, OPT_FREE, SID_NONE);
-        opt_idx = findoption((char_u *)"isp");
-        if (opt_idx >= 0)
-          options[opt_idx].def_val[VIM_DEFAULT] = ISP_LATIN1;
-        opt_idx = findoption((char_u *)"isk");
-        if (opt_idx >= 0)
-          options[opt_idx].def_val[VIM_DEFAULT] = ISK_LATIN1;
-        (void)init_chartab();
-      }
-#endif
-
-    } else {
-      xfree(p_enc);
-      // mb_init() failed; fallback to utf8 and try again.
-      p_enc = save_enc;
-      mb_init();
-    }
-  } else {
-    // enc_locale() failed; initialize the default (utf8).
-    mb_init();
+  if (p == NULL) {
+      // use utf-8 as 'default' if locale encoding can't be detected.
+      p = vim_strsave((char_u *)"utf-8");
   }
+  fenc_default = p;
+
+  // Initialize multibyte (utf-8) handling
+  mb_init();
 
   // Don't change &encoding when resetting to defaults with ":set all&".
   opt_idx = findoption((char_u *)"encoding");
@@ -4664,16 +4617,6 @@ char_u *get_highlight_default(void)
   int i;
 
   i = findoption((char_u *)"hl");
-  if (i >= 0)
-    return options[i].def_val[VI_DEFAULT];
-  return (char_u *)NULL;
-}
-
-char_u *get_encoding_default(void)
-{
-  int i;
-
-  i = findoption((char_u *)"enc");
   if (i >= 0)
     return options[i].def_val[VI_DEFAULT];
   return (char_u *)NULL;

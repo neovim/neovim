@@ -748,7 +748,7 @@ return {
       type='string', list='comma', scope={'global'},
       vi_def=true,
       varname='p_fencs',
-      defaults={if_true={vi="ucs-bom"}}
+      defaults={if_true={vi="ucs-bom,utf-8,default,latin1"}}
     },
     {
       full_name='fileformat', abbreviation='ff',
@@ -1285,7 +1285,7 @@ return {
       vim=true,
       alloced=true,
       varname='p_isk',
-      defaults={if_true={vi="@,48-57,_", vim=macros('ISK_LATIN1')}}
+      defaults={if_true={vi="@,48-57,_", vim="@,48-57,_,192-255"}}
     },
     {
       full_name='isprint', abbreviation='isp',
@@ -1294,10 +1294,7 @@ return {
       vi_def=true,
       redraw={'all_windows'},
       varname='p_isp',
-      defaults={
-        condition='MSWIN',
-        if_true={vi="@,~-255"},
-        if_false={vi=macros("ISP_LATIN1")}
+      defaults={if_true={vi="@,161-255"}
       }
     },
     {
