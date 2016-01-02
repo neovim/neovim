@@ -119,7 +119,7 @@ if os.getenv('VALGRIND') then
   default_screen_timeout = default_screen_timeout * 3
 end
 
-if os.getenv('CI_TARGET') then
+if os.getenv('CI') then
   default_screen_timeout = default_screen_timeout * 3
 end
 
