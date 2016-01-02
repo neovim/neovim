@@ -743,8 +743,16 @@ err_closing:
     (void)close(to_cs[1]);
     (void)close(from_cs[0]);
 #else
-  /* WIN32 */
-  /* Create pipes to communicate with cscope */
+  // Create pipes to communicate with cscope
+  int fd;
+  SECURITY_ATTRIBUTES sa;
+  PROCESS_INFORMATION pi;
+  BOOL pipe_stdin = FALSE, pipe_stdout = FALSE;  // NOLINT(readability/bool)
+  STARTUPINFO si;
+  HANDLE stdin_rd, stdout_rd;
+  HANDLE stdout_wr, stdin_wr;
+  BOOL created;
+
   sa.nLength = sizeof(SECURITY_ATTRIBUTES);
   sa.bInheritHandle = TRUE;
   sa.lpSecurityDescriptor = NULL;
