@@ -28,7 +28,6 @@ env:
     - CMAKE_FLAGS="-DTRAVIS_CI_BUILD=ON
                    -DCMAKE_BUILD_TYPE=Debug
                    -DCMAKE_INSTALL_PREFIX:PATH=$INSTALL_PREFIX
-                   -DUSE_GCOV=ON
                    -DBUSTED_OUTPUT_TYPE=gtest
                    -DDEPS_PREFIX=$DEPS_BUILD_DIR/usr"
     - DEPS_CMAKE_FLAGS="-DDEPS_DOWNLOAD_DIR:PATH=$DEPS_DOWNLOAD_DIR"
@@ -62,34 +61,31 @@ matrix:
       env: CI_TARGET=clint
     - os: linux
       compiler: gcc-5
-      env: GCOV=gcov-5
     - os: linux
       # Travis creates a cache per compiler.
       # Set a different value here to store 32-bit
       # dependencies in a separate cache.
       compiler: gcc-5 -m32
-      env: GCOV=gcov-5 BUILD_32BIT=ON
+      env: BUILD_32BIT=ON
     - os: linux
       compiler: clang-3.6
-      env: GCOV=llvm-cov-3.6 CLANG_SANITIZER=ASAN_UBSAN
+      env: GCOV=llvm-cov-3.6 CLANG_SANITIZER=ASAN_UBSAN CMAKE_FLAGS="$CMAKE_FLAGS -DUSE_GCOV=ON"
     - os: linux
       compiler: clang-3.6
-      env: GCOV=llvm-cov-3.6 CLANG_SANITIZER=MSAN
+      env: CLANG_SANITIZER=MSAN
     - os: linux
       compiler: clang-3.6
       env: CLANG_SANITIZER=TSAN
     - os: osx
       compiler: clang
-      env: GCOV=gcov
     - os: osx
       compiler: gcc-4.9
-      env: GCOV=gcov-4.9
     - os: linux
       env: BUILD_MINGW=ON
   fast_finish: true
   allow_failures:
     # TODO: Remove when all MSan errors have been fixed.
-    - env: GCOV=llvm-cov-3.6 CLANG_SANITIZER=MSAN
+    - env: CLANG_SANITIZER=MSAN
 
 before_install: .ci/before_install.sh
 install:        .ci/install.sh
