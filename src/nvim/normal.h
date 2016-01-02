@@ -35,8 +35,8 @@ typedef struct oparg_S {
   bool is_VIsual;               // operator on Visual area
   colnr_T start_vcol;           // start col for block mode operator
   colnr_T end_vcol;             // end col for block mode operator
-  long prev_opcount;            // ca.opcount saved for K_EVENT
-  long prev_count0;             // ca.count0 saved for K_EVENT
+  int prev_opcount;             // ca.opcount saved for K_EVENT
+  int prev_count0;              // ca.count0 saved for K_EVENT
 } oparg_T;
 
 /*
