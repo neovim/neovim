@@ -4,7 +4,7 @@ set -e
 set -o pipefail
 
 if [[ -n "${CI_TARGET}" ]]; then
-  make lint
+  make "${CI_TARGET}"
   exit 0
 fi
 

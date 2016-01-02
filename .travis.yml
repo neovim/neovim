@@ -58,7 +58,7 @@ env:
 matrix:
   include:
     - os: linux
-      env: CI_TARGET=clint
+      env: CI_TARGET=lint
     - os: linux
       compiler: gcc-5
     - os: linux
