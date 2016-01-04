@@ -11771,8 +11771,9 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv)
   }
 
   bool pty = job_opts && get_dict_number(job_opts, (uint8_t *)"pty") != 0;
+  bool detach = job_opts && get_dict_number(job_opts, (uint8_t *)"detach") != 0;
   TerminalJobData *data = common_job_init(argv, on_stdout, on_stderr, on_exit,
-      job_opts, pty);
+                                          job_opts, pty, detach);
   Process *proc = (Process *)&data->proc;
 
   if (pty) {
@@ -16776,7 +16777,7 @@ static void f_termopen(typval_T *argvars, typval_T *rettv)
   }
 
   TerminalJobData *data = common_job_init(argv, on_stdout, on_stderr, on_exit,
-      job_opts, true);
+                                          job_opts, true, false);
   data->proc.pty.width = curwin->w_width;
   data->proc.pty.height = curwin->w_height;
   data->proc.pty.term_name = xstrdup("xterm-256color");
@@ -21782,8 +21783,13 @@ char_u *do_string_sub(char_u *str, char_u *pat, char_u *sub, char_u *flags)
   return ret;
 }
 
-static inline TerminalJobData *common_job_init(char **argv, ufunc_T *on_stdout,
-    ufunc_T *on_stderr, ufunc_T *on_exit, dict_T *self, bool pty)
+static inline TerminalJobData *common_job_init(char **argv,
+                                               ufunc_T *on_stdout,
+                                               ufunc_T *on_stderr,
+                                               ufunc_T *on_exit,
+                                               dict_T *self,
+                                               bool pty,
+                                               bool detach)
 {
   TerminalJobData *data = xcalloc(1, sizeof(TerminalJobData));
   data->stopped = false;
@@ -21806,6 +21812,7 @@ static inline TerminalJobData *common_job_init(char **argv, ufunc_T *on_stdout,
   }
   proc->cb = on_process_exit;
   proc->events = data->events;
+  proc->detach = detach;
   return data;
 }
 
@@ -21833,8 +21840,13 @@ static inline bool common_job_callbacks(dict_T *vopts, ufunc_T **on_stdout,
 
 static inline bool common_job_start(TerminalJobData *data, typval_T *rettv)
 {
-  data->refcount++;
   Process *proc = (Process *)&data->proc;
+  if (proc->type == kProcessTypePty && proc->detach) {
+    EMSG2(_(e_invarg2), "terminal/pty job cannot be detached");
+    return false;
+  }
+
+  data->refcount++;
   char *cmd = xstrdup(proc->argv[0]);
   if (!process_spawn(proc)) {
     EMSG2(_(e_jobspawn), cmd);
