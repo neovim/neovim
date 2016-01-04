@@ -7200,6 +7200,7 @@ static struct fst {
   {"glob",            1, 3, f_glob},
   {"glob2regpat",     1, 1, f_glob2regpat},
   {"globpath",        2, 4, f_globpath},
+  {"grepfile",        2, 3, f_grepfile},
   {"has",             1, 1, f_has},
   {"has_key",         2, 2, f_has_key},
   {"haslocaldir",     0, 0, f_haslocaldir},
@@ -10588,6 +10589,61 @@ getwinvar (
     copy_tv(&argvars[off + 2], rettv);
 
   --emsg_off;
+}
+
+/// "grepfile()" function
+static void f_grepfile(typval_T *argvars, typval_T *rettv)
+{
+  char_u filebuf[MAXPATHL];
+  char_u *filepat = get_tv_string_buf_chk(&argvars[0], filebuf);
+  if (!filepat) {
+    return;
+  }
+
+  char_u *searchpat = get_tv_string_chk(&argvars[1]);
+  if (!searchpat) {
+    return;
+  }
+  searchpat = vim_strsave(searchpat);
+
+  char_u *program = p_gp;
+  if (argvars[2].v_type != VAR_UNKNOWN
+      && !(program = get_tv_string_chk(&argvars[2]))) {
+    goto theend;
+  }
+
+  if (strcmp((char *)program, "internal") == 0) {
+    list_T *retlist = rettv_list_alloc(rettv);
+    do_vimgrep(0, searchpat, filepat, MAXLNUM, 0, NULL, &retlist);
+  } else {
+    // In case searchpat contains quotes or special characters:
+    char_u *search_esc = vim_strsave_escaped(searchpat, (char_u *)"*\"\\ ");
+
+    // Copy the search string and file pattern to a string for
+    // replace_makeprg().
+    size_t size = STRLEN(search_esc) + STRLEN(filepat) + 2;
+    char_u *argstr = xmalloc(size);
+    snprintf((char *)argstr, size, "%s %s", search_esc, filepat);
+
+    char *command = (char *)replace_makeprg(argstr, program);
+    char **argv = shell_build_argv(command, NULL);
+
+    char *res;
+    size_t nread = 0;
+    (void)os_system(argv, NULL, 0, &res, &nread);
+
+    rettv->vval.v_list = string_to_list((char_u *) res, nread, false);
+    rettv->vval.v_list->lv_refcount++;
+    rettv->v_type = VAR_LIST;
+
+    xfree(search_esc);
+    xfree(argstr);
+    xfree(command);
+    xfree(res);
+  }
+
+theend:
+  xfree(searchpat);
 }
 
 /*
