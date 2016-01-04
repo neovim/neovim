@@ -2930,14 +2930,12 @@ static void ins_compl_new_leader(void)
     ins_compl_set_original_text(compl_leader);
   else {
     spell_bad_len = 0;          /* need to redetect bad word */
-    /*
-     * Matches were cleared, need to search for them now.
-     * If it's user complete function and refresh_always,
-     * not use "compl_leader" as prefix filter.
-     * Set "compl_restarting" to avoid that the first match is inserted.
-     */
-    if ((ctrl_x_mode == CTRL_X_FUNCTION || ctrl_x_mode == CTRL_X_OMNI)
-        && compl_opt_refresh_always){
+
+    // Matches were cleared, need to search for them now.
+    // If it's user complete function and refresh_always,
+    // not use "compl_leader" as prefix filter.
+    // Set "compl_restarting" to avoid that the first match is inserted.
+    if (ins_compl_need_restart()){
       xfree(compl_leader);
       compl_leader = NULL;
     }
@@ -2984,13 +2982,11 @@ static void ins_compl_addleader(int c)
     (*mb_char2bytes)(c, buf);
     buf[cc] = NUL;
     ins_char_bytes(buf, cc);
-    if ((ctrl_x_mode == CTRL_X_FUNCTION || ctrl_x_mode == CTRL_X_OMNI)
-        && compl_opt_refresh_always)
+    if (ins_compl_need_restart())
       AppendToRedobuff(buf);
   } else {
     ins_char(c);
-    if ((ctrl_x_mode == CTRL_X_FUNCTION || ctrl_x_mode == CTRL_X_OMNI)
-        && compl_opt_refresh_always)
+    if (ins_compl_need_restart())
       AppendCharToRedobuff(c);
   }
 
@@ -3010,9 +3006,8 @@ static void ins_compl_addleader(int c)
  */
 static void ins_compl_restart(void)
 {
-  /* update screen before restart.
-   * so if complete is blocked,
-   * will stay to the last popup menu and reduce flick */  
+  // Update screen before restart.  So if complete is blocked, will stay to the
+  // last popup menu and reduce flicker.
   update_screen(0);
   ins_compl_free();
   compl_started = FALSE;
