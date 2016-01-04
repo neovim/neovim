@@ -2930,12 +2930,15 @@ static void ins_compl_new_leader(void)
     ins_compl_set_original_text(compl_leader);
   else {
     spell_bad_len = 0;          /* need to redetect bad word */
-    /*
-     * Matches were cleared, need to search for them now.  First display
-     * the changed text before the cursor.  Set "compl_restarting" to
-     * avoid that the first match is inserted.
-     */
-    update_screen(0);
+
+    // Matches were cleared, need to search for them now.
+    // If it's user complete function and refresh_always,
+    // not use "compl_leader" as prefix filter.
+    // Set "compl_restarting" to avoid that the first match is inserted.
+    if (ins_compl_need_restart()){
+      xfree(compl_leader);
+      compl_leader = NULL;
+    }
     compl_restarting = TRUE;
     if (ins_complete(Ctrl_N) == FAIL)
       compl_cont_status = 0;
@@ -2979,11 +2982,11 @@ static void ins_compl_addleader(int c)
     (*mb_char2bytes)(c, buf);
     buf[cc] = NUL;
     ins_char_bytes(buf, cc);
-    if (compl_opt_refresh_always)
+    if (ins_compl_need_restart())
       AppendToRedobuff(buf);
   } else {
     ins_char(c);
-    if (compl_opt_refresh_always)
+    if (ins_compl_need_restart())
       AppendCharToRedobuff(c);
   }
 
@@ -2991,15 +2994,10 @@ static void ins_compl_addleader(int c)
   if (ins_compl_need_restart())
     ins_compl_restart();
 
-  /* When 'always' is set, don't reset compl_leader. While completing,
-   * cursor doesn't point original position, changing compl_leader would
-   * break redo. */
-  if (!compl_opt_refresh_always) {
-    xfree(compl_leader);
-    compl_leader = vim_strnsave(get_cursor_line_ptr() + compl_col,
-        (int)(curwin->w_cursor.col - compl_col));
-    ins_compl_new_leader();
-  }
+  xfree(compl_leader);
+  compl_leader = vim_strnsave(get_cursor_line_ptr() + compl_col,
+      (int)(curwin->w_cursor.col - compl_col));
+  ins_compl_new_leader();
 }
 
 /*
@@ -3008,6 +3006,9 @@ static void ins_compl_addleader(int c)
  */
 static void ins_compl_restart(void)
 {
+  // Update screen before restart.  So if complete is blocked, will stay to the
+  // last popup menu and reduce flicker.
+  update_screen(0);
   ins_compl_free();
   compl_started = FALSE;
   compl_matches = 0;
