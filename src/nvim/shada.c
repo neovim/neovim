@@ -1684,17 +1684,18 @@ static ShaDaWriteResult shada_pack_entry(msgpack_packer *const packer,
   msgpack_sbuffer sbuf;
   msgpack_sbuffer_init(&sbuf);
   msgpack_packer *spacker = msgpack_packer_new(&sbuf, &msgpack_sbuffer_write);
-#define DUMP_ADDITIONAL_ELEMENTS(src) \
+#define DUMP_ADDITIONAL_ELEMENTS(src, what) \
   do { \
     if ((src) != NULL) { \
       for (listitem_T *li = (src)->lv_first; li != NULL; li = li->li_next) { \
-        if (vim_to_msgpack(spacker, &li->li_tv) == FAIL) { \
+        if (vim_to_msgpack(spacker, &li->li_tv, \
+                           _("additional elements of ShaDa " what)) == FAIL) { \
           goto shada_pack_entry_error; \
         } \
       } \
     } \
   } while (0)
-#define DUMP_ADDITIONAL_DATA(src) \
+#define DUMP_ADDITIONAL_DATA(src, what) \
   do { \
     dict_T *const d = (src); \
     if (d != NULL) { \
@@ -1706,7 +1707,8 @@ static ShaDaWriteResult shada_pack_entry(msgpack_packer *const packer,
           const size_t key_len = strlen((const char *) hi->hi_key); \
           msgpack_pack_str(spacker, key_len); \
           msgpack_pack_str_body(spacker, (const char *) hi->hi_key, key_len); \
-          if (vim_to_msgpack(spacker, &di->di_tv) == FAIL) { \
+          if (vim_to_msgpack(spacker, &di->di_tv, \
+                             _("additional data of ShaDa " what)) == FAIL) { \
             goto shada_pack_entry_error; \
           } \
         } \
@@ -1741,7 +1743,8 @@ static ShaDaWriteResult shada_pack_entry(msgpack_packer *const packer,
       if (is_hist_search) {
         msgpack_pack_uint8(spacker, (uint8_t) entry.data.history_item.sep);
       }
-      DUMP_ADDITIONAL_ELEMENTS(entry.data.history_item.additional_elements);
+      DUMP_ADDITIONAL_ELEMENTS(entry.data.history_item.additional_elements,
+                               "history entry item");
       break;
     }
     case kSDItemVariable: {
@@ -1750,14 +1753,20 @@ static ShaDaWriteResult shada_pack_entry(msgpack_packer *const packer,
           ? 0
           : entry.data.global_var.additional_elements->lv_len);
       msgpack_pack_array(spacker, arr_size);
-      PACK_BIN(cstr_as_string(entry.data.global_var.name));
-      if (vim_to_msgpack(spacker, &entry.data.global_var.value) == FAIL) {
+      const String varname = cstr_as_string(entry.data.global_var.name);
+      PACK_BIN(varname);
+      char vardesc[256] = "variable g:";
+      memcpy(&vardesc[sizeof("variable g:") - 1], varname.data,
+             varname.size + 1);
+      if (vim_to_msgpack(spacker, &entry.data.global_var.value, vardesc)
+          == FAIL) {
         ret = kSDWriteIgnError;
         EMSG2(_(WERR "Failed to write variable %s"),
               entry.data.global_var.name);
         goto shada_pack_entry_error;
       }
-      DUMP_ADDITIONAL_ELEMENTS(entry.data.global_var.additional_elements);
+      DUMP_ADDITIONAL_ELEMENTS(entry.data.global_var.additional_elements,
+                               "variable item");
       break;
     }
     case kSDItemSubString: {
@@ -1767,7 +1776,8 @@ static ShaDaWriteResult shada_pack_entry(msgpack_packer *const packer,
           : entry.data.sub_string.additional_elements->lv_len);
       msgpack_pack_array(spacker, arr_size);
       PACK_BIN(cstr_as_string(entry.data.sub_string.sub));
-      DUMP_ADDITIONAL_ELEMENTS(entry.data.sub_string.additional_elements);
+      DUMP_ADDITIONAL_ELEMENTS(entry.data.sub_string.additional_elements,
+                               "sub string item");
       break;
     }
     case kSDItemSearchPattern: {
@@ -1814,7 +1824,8 @@ static ShaDaWriteResult shada_pack_entry(msgpack_packer *const packer,
         msgpack_pack_int64(spacker, entry.data.search_pattern.offset);
       }
 #undef PACK_BOOL
-      DUMP_ADDITIONAL_DATA(entry.data.search_pattern.additional_data);
+      DUMP_ADDITIONAL_DATA(entry.data.search_pattern.additional_data,
+                           "search pattern item");
       break;
     }
     case kSDItemChange:
@@ -1849,7 +1860,8 @@ static ShaDaWriteResult shada_pack_entry(msgpack_packer *const packer,
         PACK_STATIC_STR(KEY_NAME_CHAR);
         msgpack_pack_uint8(spacker, (uint8_t) entry.data.filemark.name);
       }
-      DUMP_ADDITIONAL_DATA(entry.data.filemark.additional_data);
+      DUMP_ADDITIONAL_DATA(entry.data.filemark.additional_data,
+                           "mark (change, jump, global or local) item");
       break;
     }
     case kSDItemRegister: {
@@ -1877,7 +1889,7 @@ static ShaDaWriteResult shada_pack_entry(msgpack_packer *const packer,
         PACK_STATIC_STR(REG_KEY_WIDTH);
         msgpack_pack_uint64(spacker, (uint64_t) entry.data.reg.width);
       }
-      DUMP_ADDITIONAL_DATA(entry.data.reg.additional_data);
+      DUMP_ADDITIONAL_DATA(entry.data.reg.additional_data, "register item");
       break;
     }
     case kSDItemBufferList: {
@@ -1908,7 +1920,8 @@ static ShaDaWriteResult shada_pack_entry(msgpack_packer *const packer,
           msgpack_pack_uint64(
               spacker, (uint64_t) entry.data.buffer_list.buffers[i].pos.col);
         }
-        DUMP_ADDITIONAL_DATA(entry.data.buffer_list.buffers[i].additional_data);
+        DUMP_ADDITIONAL_DATA(entry.data.buffer_list.buffers[i].additional_data,
+                             "buffer list subitem");
       }
       break;
     }

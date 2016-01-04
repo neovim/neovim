@@ -118,7 +118,8 @@ enum {
 /// Maximum number of function arguments
 #define MAX_FUNC_ARGS   20
 
-int vim_to_msgpack(msgpack_packer *const, typval_T *const);
+int vim_to_msgpack(msgpack_packer *const, typval_T *const,
+                   const char *const objname);
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "eval.h.generated.h"
