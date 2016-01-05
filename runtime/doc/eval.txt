@@ -6939,8 +6939,8 @@ filterpipe		When 'shelltemp' is off pipes are used for shell
 find_in_path		Compiled with support for include file searches
 			|+find_in_path|.
 float			Compiled with support for |Float|.
-fname_case		Case in file names matters (for MS-DOS and Windows
-			this is not present).
+fname_case		Case in file names matters (for Windows this is not
+			present).
 folding			Compiled with |folding| support.
 footer			Compiled with GUI footer support. |gui-footer|
 gettext			Compiled with message translation |multi-lang|
@@ -7023,10 +7023,9 @@ visualextra		Compiled with extra Visual mode commands.
 vreplace		Compiled with |gR| and |gr| commands.
 wildignore		Compiled with 'wildignore' option.
 wildmenu		Compiled with 'wildmenu' option.
-win32			Win32 version of Vim (MS-Windows 95 and later, 32 or
-			64 bits)
-win32unix		Win32 version of Vim, using Unix files (Cygwin)
-win64			Win64 version of Vim (MS-Windows 64 bit).
+win32			Windows version of Vim (32 or 64 bit).
+win32unix		Windows version of Vim, using Unix files (Cygwin).
+win64			Windows version of Vim (64 bit).
 winaltkeys		Compiled with 'winaltkeys' option.
 windows			Compiled with support for more than one window.
 writebackup		Compiled with 'writebackup' default on.
