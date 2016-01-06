@@ -26,11 +26,15 @@ foreach(DF ${DOCFILES})
   list(APPEND BUILDDOCFILES ${GENERATED_RUNTIME_DIR}/doc/${F})
 endforeach()
 
-add_custom_command(OUTPUT ${BUILDDOCFILES}
-  COMMAND ${CMAKE_COMMAND} -E copy_directory
-    ${PROJECT_SOURCE_DIR}/runtime/doc ${GENERATED_RUNTIME_DIR}/doc
-  DEPENDS
-    ${DOCFILES})
+set(DOCFILE_DEPS ${DOCFILES})
+foreach(DOCFILE ${BUILDDOCFILES})
+  list(REMOVE_AT DOCFILE_DEPS 0)
+  add_custom_command(OUTPUT ${DOCFILE}
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+      ${PROJECT_SOURCE_DIR}/runtime/doc ${GENERATED_RUNTIME_DIR}/doc
+    DEPENDS
+    ${DOCFILE_DEPS})
+endforeach()
 
 add_custom_command(OUTPUT ${GENERATED_HELP_TAGS}
   COMMAND ${CMAKE_COMMAND} -E copy_directory
