@@ -4712,12 +4712,16 @@ msgpackdump({list})				   {Nvim} *msgpackdump()*
 		(dictionary with zero items is represented by 0x80 byte in
 		messagepack).
 
-		Limitations:
+		Limitations:					*E951* *E952*
 		1. |Funcref|s cannot be dumped.
 		2. Containers that reference themselves cannot be dumped.
 		3. Dictionary keys are always dumped as STR strings.
 		4. Other strings are always dumped as BIN strings.
 		5. Points 3. and 4. do not apply to |msgpack-special-dict|s.
+
+		Note: error messages may use |msgpack#string()| function for 
+		      showing where error occurred. In case it is not 
+		      available it falls back to |string()|.
 
 msgpackparse({list})				   {Nvim} *msgpackparse()*
 		Convert a |readfile()|-style list to a list of VimL objects. 
