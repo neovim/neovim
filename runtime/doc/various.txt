@@ -563,7 +563,7 @@ which it was defined is reported.
 			     :5sleep	     "sleep for five seconds
 			     :sleep 100m     "sleep for a hundred milliseconds
 			     10gs	     "sleep for ten seconds
-<			Can be interrupted with CTRL-C (CTRL-Break on MS-DOS).
+<			Can be interrupted with CTRL-C (CTRL-Break on Windows).
 			"gs" stands for "goto sleep".
 			While sleeping the cursor is positioned in the text,
 			if at a visible position.

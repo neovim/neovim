@@ -142,7 +142,7 @@ void os_get_hostname(char *hostname, size_t len)
 ///   - go to that directory
 ///   - do os_dirname() to get the real name of that directory.
 /// This also works with mounts and links.
-/// Don't do this for MS-DOS, it will change the "current dir" for a drive.
+/// Don't do this for Windows, it will change the "current dir" for a drive.
 static char_u   *homedir = NULL;
 
 void init_homedir(void)

@@ -379,7 +379,7 @@ CTRL-N		After using 'wildchar' which got multiple matches, go to next
 <S-Tab>							*c_CTRL-P* *c_<S-Tab>*
 CTRL-P		After using 'wildchar' which got multiple matches, go to
 		previous match.  Otherwise recall older command-line from
-		history.  <S-Tab> only works with the GUI and with MS-DOS.
+		history.  <S-Tab> only works with the GUI.
 							*c_CTRL-A*
 CTRL-A		All names that match the pattern in front of the cursor are
 		inserted.
@@ -819,7 +819,7 @@ These modifiers can be given, in this order:
 		separator is removed.  Thus ":p:h" on a directory name results
 		on the directory name itself (without trailing slash).
 		When the file name is an absolute path (starts with "/" for
-		Unix; "x:\" for MS-DOS and WIN32), that part is not removed.
+		Unix; "x:\" for Windows), that part is not removed.
 		When there is no head (path is relative to current directory)
 		the result is empty.
 	:t	Tail of the file name (last component of the name).  Must
@@ -918,8 +918,8 @@ option contains "sh", this is done twice, to avoid the shell trying to expand
 the "!".
 
 							*filename-backslash*
-For filesystems that use a backslash as directory separator (MS-DOS and
-Windows), it's a bit difficult to recognize a backslash that is used
+For filesystems that use a backslash as directory separator (Windows
+filesystems), it's a bit difficult to recognize a backslash that is used
 to escape the special meaning of the next character.  The general rule is: If
 the backslash is followed by a normal file name character, it does not have a
 special meaning.  Therefore "\file\foo" is a valid file name, you don't have

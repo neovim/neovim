@@ -1041,7 +1041,7 @@ The pattern is interpreted like mostly used in file names:
 	[^ch]   match any character but 'c' and 'h'
 
 Note that for all systems the '/' character is used for path separator (even
-MS-DOS). This was done because the backslash is difficult to use in a pattern
+Windows). This was done because the backslash is difficult to use in a pattern
 and to make the autocommands portable across different systems.
 
 							*autocmd-changes*

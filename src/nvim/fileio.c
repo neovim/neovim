@@ -366,14 +366,13 @@ readfile (
   /* don't display the file info for another buffer now */
   need_fileinfo = FALSE;
 
-  /*
-   * For Unix: Use the short file name whenever possible.
-   * Avoids problems with networks and when directory names are changed.
-   * Don't do this for MS-DOS, a "cd" in a sub-shell may have moved us to
-   * another directory, which we don't detect.
-   */
-  if (sfname == NULL)
+  // For Unix: Use the short file name whenever possible.
+  // Avoids problems with networks and when directory names are changed.
+  // Don't do this for Windows, a "cd" in a sub-shell may have moved us to
+  // another directory, which we don't detect.
+  if (sfname == NULL) {
     sfname = fname;
+  }
 #if defined(UNIX)
   fname = sfname;
 #endif
@@ -2353,13 +2352,12 @@ buf_write (
 
   if (sfname == NULL)
     sfname = fname;
-  /*
-   * For Unix: Use the short file name whenever possible.
-   * Avoids problems with networks and when directory names are changed.
-   * Don't do this for MS-DOS, a "cd" in a sub-shell may have moved us to
-   * another directory, which we don't detect
-   */
-  ffname = fname;                           /* remember full fname */
+
+  // For Unix: Use the short file name whenever possible.
+  // Avoids problems with networks and when directory names are changed.
+  // Don't do this for Windows, a "cd" in a sub-shell may have moved us to
+  // another directory, which we don't detect.
+  ffname = fname;                           // remember full fname
 #ifdef UNIX
   fname = sfname;
 #endif
@@ -6449,12 +6447,11 @@ apply_autocmds_group (
   }
 
 #ifdef BACKSLASH_IN_FILENAME
-  /*
-   * Replace all backslashes with forward slashes.  This makes the
-   * autocommand patterns portable between Unix and MS-DOS.
-   */
-  if (sfname != NULL)
+  // Replace all backslashes with forward slashes. This makes the
+  // autocommand patterns portable between Unix and Windows.
+  if (sfname != NULL) {
     forward_slash(sfname);
+  }
   forward_slash(fname);
 #endif
 
@@ -6771,10 +6768,8 @@ int has_autocmd(event_T event, char_u *sfname, buf_T *buf)
     return FALSE;
 
 #ifdef BACKSLASH_IN_FILENAME
-  /*
-   * Replace all backslashes with forward slashes.  This makes the
-   * autocommand patterns portable between Unix and MS-DOS.
-   */
+  // Replace all backslashes with forward slashes. This makes the
+  // autocommand patterns portable between Unix and Windows.
   sfname = vim_strsave(sfname);
   forward_slash(sfname);
   forward_slash(fname);
