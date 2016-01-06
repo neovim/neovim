@@ -200,6 +200,7 @@ Other options:
   'guioptions' (only the 't' flag was removed)
   'guipty'
   'macatsui'
+  'restorescreen'
   'shelltype'
   'shortname'
   'termencoding' (Vim 7.4.852 also removed this for Windows)

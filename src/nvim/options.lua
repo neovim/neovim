@@ -1856,13 +1856,6 @@ return {
       defaults={if_true={vi=2}}
     },
     {
-      full_name='restorescreen', abbreviation='rs',
-      type='bool', scope={'global'},
-      vi_def=true,
-      enable_if=false,
-      defaults={if_true={vi=true}}
-    },
-    {
       full_name='revins', abbreviation='ri',
       type='bool', scope={'global'},
       vi_def=true,

@@ -540,10 +540,6 @@ if has("title")
   call append("$", "iconstring\twhen not empty, text for the icon of this window")
   call <SID>OptionG("iconstring", &iconstring)
 endif
-if has("win32")
-  call append("$", "restorescreen\trestore the screen contents when exiting Vim")
-  call <SID>BinOptionG("rs", &rs)
-endif
 
 
 call <SID>Header("using the mouse")
