@@ -402,12 +402,8 @@ char_u *vim_strchr(const char_u *string, int c)
     }
     return NULL;
   }
-  while ((b = *p) != NUL) {
-    if (b == c)
-      return (char_u *) p;
-    ++p;
-  }
-  return NULL;
+
+  return vim_strbyte(p, c);
 }
 
 /*
@@ -418,14 +414,19 @@ char_u *vim_strchr(const char_u *string, int c)
 char_u *vim_strbyte(const char_u *string, int c)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
 {
-  const char_u *p = string;
-
-  while (*p != NUL) {
-    if (*p == c)
-      return (char_u *) p;
-    ++p;
+  if (c == 0) {
+    return NULL;  // Vim prefers returning NULL instead of the end of string
   }
-  return NULL;
+
+  if (c > 255) {
+    // vim_strbyte() never casts c to int, which means that if c >= 255, it
+    // simply never matches and will always return NULL, but not before
+    // running through the entire string first. We emulate this behaviour by
+    // just returning NULL immediately.
+    return NULL;
+  }
+
+  return (char_u *) strchr((char *) string, c);
 }
 
 /*
