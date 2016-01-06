@@ -4927,18 +4927,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	instead of the number of lines.
 
 			 *'restorescreen'* *'rs'* *'norestorescreen'* *'nors'*
-'restorescreen' 'rs'	boolean	(default on)
-			global
-			{only in Windows 95/NT console version}
-	When set, the screen contents is restored when exiting Vim.  This also
-	happens when executing external commands.
-
-	For non-Windows Vim: You can set or reset the 't_ti' and 't_te'
-	options in your vimrc.  To disable restoring:
-		set t_ti= t_te=
-	To enable restoring (for an xterm):
-		set t_ti=^[7^[[r^[[?47h t_te=^[[?47l^[8
-	(Where ^[ is an <Esc>, type CTRL-V <Esc> to insert it)
+'restorescreen' 'rs'	Removed. |vim-differences| {Nvim}
 
 				*'revins'* *'ri'* *'norevins'* *'nori'*
 'revins' 'ri'		boolean	(default off)

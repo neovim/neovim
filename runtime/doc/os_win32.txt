@@ -14,9 +14,8 @@ The 32 bit version also runs on 64 bit MS-Windows systems.
 
 1. Known problems		|win32-problems|
 2. Startup			|win32-startup|
-3. Restore screen contents	|win32-restore|
-4. Using the mouse		|win32-mouse|
-5. Win32 mini FAQ	        |win32-faq|
+3. Using the mouse		|win32-mouse|
+4. Win32 mini FAQ	        |win32-faq|
 
 Additionally, there are a number of common Win32 and DOS items:
 File locations			|dos-locations|
@@ -77,14 +76,7 @@ make "!xxd" work, as it is in the Tools menu.  And it also means that when
 executable() returns 1 the executable can actually be executed.
 
 ==============================================================================
-3. Restore screen contents				*win32-restore*
-
-When 'restorescreen' is set (which is the default), Vim will restore the
-original contents of the console when exiting or when executing external
-commands.  If you don't want this, use ":set nors".	|'restorescreen'|
-
-==============================================================================
-4. Using the mouse					*win32-mouse*
+3. Using the mouse					*win32-mouse*
 
 The Win32 version of Vim supports using the mouse.  If you have a two-button
 mouse, the middle button can be emulated by pressing both left and right
@@ -96,7 +88,7 @@ When the mouse doesn't work, try disabling the "Quick Edit Mode" feature of
 the console.
 
 ==============================================================================
-5. Win32 mini FAQ					*win32-faq*
+4. Win32 mini FAQ					*win32-faq*
 
 Q. How do I change the font?
 A. In the GUI version, you can use the 'guifont' option.  Example: >

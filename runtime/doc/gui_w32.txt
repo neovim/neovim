@@ -84,7 +84,6 @@ when you have got a new version):
 You can also install Vim in the "Send To" menu:
 1. Start a Windows Explorer
 2. Navigate to your sendto directory:
-   Windows 95: %windir%\sendto (e.g. "c:\windows\sendto")
    Windows NT: %windir%\profiles\%user%\sendto (e.g.
 	       "c:\winnt\profiles\mattha\sendto").
 3. Right-click in the file pane and select New->Shortcut
