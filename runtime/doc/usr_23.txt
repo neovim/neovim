@@ -34,7 +34,7 @@ have line-break problems.  The Vim editor automatically recognizes the
 different file formats and handles things properly behind your back.
    The option 'fileformats' contains the various formats that will be tried
 when a new file is edited.  The following command, for example, tells Vim to
-try UNIX format first and MS-DOS format second: >
+try Unix format first and MS-DOS format second: >
 
 	:set fileformats=unix,dos
 

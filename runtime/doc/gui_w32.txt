@@ -257,17 +257,6 @@ WARNING: If you close this window with the "X" button, and confirm the
 question if you really want to kill the application, Vim may be killed too!
 (This does not apply to commands run asynchronously with ":!start".)
 
-							*msdos-mode*
-If you get a dialog that says "This program is set to run in MS-DOS mode..."
-when you run an external program, you can solve this by changing the
-properties of the associated shortcut:
-- Use a Windows Explorer to find the command.com that is used.  It can be
-  c:\command.com, c:\dos\command.com, c:\windows\command.com, etc.
-- With the right mouse button, select properties of this command.com.
-- In the Program tab select "Advanced".
-- Unselect "MS-DOS mode".
-- Click "OK" twice.
-
 							*win32-!start*
 Normally, Vim waits for a command to complete before continuing (this makes
 sense for most shell commands which produce output for Vim to use).  If you

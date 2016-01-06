@@ -71,10 +71,10 @@ with: >
 For a color terminal see |:hi-normal-cterm|.
 For setting up your own colors syntax highlighting see |syncolor|.
 
-NOTE: The syntax files on MS-DOS and Windows have lines that end in <CR><NL>.
-The files for Unix end in <NL>.  This means you should use the right type of
-file for your system.  Although on MS-DOS and Windows the right format is
-automatically selected if the 'fileformats' option is not empty.
+NOTE: The syntax files on Windows have lines that end in <CR><NL>.  The files
+for Unix end in <NL>.  This means you should use the right type of file for
+your system.  Although on Windows the right format is automatically selected
+if the 'fileformats' option is not empty.
 
 NOTE: When using reverse video ("gvim -fg white -bg black"), the default value
 of 'background' will not be set until the GUI window is opened, which is after
@@ -4507,7 +4507,7 @@ mentioned for the default values. See |:verbose-cmd| for more information.
 					*highlight-args* *E416* *E417* *E423*
 There are three types of terminals for highlighting:
 term	a normal terminal (vt100, xterm)
-cterm	a color terminal (MS-DOS console, color-xterm, these have the "Co"
+cterm	a color terminal (Windows console, color-xterm, these have the "Co"
 	termcap entry)
 gui	the GUI
 
@@ -4653,7 +4653,7 @@ ctermbg={color-nr}				*highlight-ctermbg*
 							*E419* *E420*
 	When Vim knows the normal foreground and background colors, "fg" and
 	"bg" can be used as color names.  This only works after setting the
-	colors for the Normal group and for the MS-DOS console.  Example, for
+	colors for the Normal group and for the Windows console.  Example, for
 	reverse video: >
 	    :highlight Visual ctermfg=bg ctermbg=fg
 <	Note that the colors are used that are valid at the moment this

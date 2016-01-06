@@ -131,7 +131,7 @@ gD			Goto global Declaration.  When the cursor is on a
 
 							*CTRL-C*
 CTRL-C			Interrupt current (search) command.  Use CTRL-Break on
-			MS-DOS |dos-CTRL-Break|.
+			Windows |dos-CTRL-Break|.
 			In Normal mode, any pending command is aborted.
 
 							*:noh* *:nohlsearch*

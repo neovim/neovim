@@ -356,7 +356,7 @@ accordingly.  Vim proceeds in this order:
 
 1. Set the 'shell' and 'term' option		*SHELL* *COMSPEC* *TERM*
 	The environment variable SHELL, if it exists, is used to set the
-	'shell' option.  On MS-DOS and Win32, the COMSPEC variable is used
+	'shell' option.  On Windows, the COMSPEC variable is used
 	if SHELL is not set.
 	The environment variable TERM, if it exists, is used to set the 'term'
 	option.  However, 'term' will change later when starting the GUI (step
@@ -494,7 +494,7 @@ sessions.  Put it in a place so that it will be found by 3b:
 Local setup:
 Put all commands that you need for editing a specific directory only into a
 vimrc file and place it in that directory under the name ".nvimrc" ("_nvimrc"
-for MS-DOS and Win32).  NOTE: To make Vim look for these special files you
+for Windows).  NOTE: To make Vim look for these special files you
 have to turn on the option 'exrc'.  See |trojan-horse| too.
 
 System setup:
@@ -516,10 +516,9 @@ interfere with Vi, then use the variable VIMINIT and the file init.vim
 instead.
 
 MS-DOS line separators:
-On MS-DOS-like systems (MS-DOS itself and Win32), Vim assumes that all
-the vimrc files have <CR> <NL> pairs as line separators.  This will give
-problems if you have a file with only <NL>s and have a line like
-":map xx yy^M".  The trailing ^M will be ignored.
+On Windows systems Vim assumes that all the vimrc files have <CR> <NL> pairs
+as line separators.  This will give problems if you have a file with only
+<NL>s and have a line like ":map xx yy^M".  The trailing ^M will be ignored.
 
 The $MYVIMRC or $MYGVIMRC file will be set to the first found vimrc and/or
 gvimrc file.
@@ -947,7 +946,7 @@ about to abandon with ":bdel", use ":wsh".  The '[' and ']' marks are not
 stored, but the '"' mark is.  The '"' mark is very useful for jumping to the
 cursor position when the file was last exited.  No marks are saved for files
 that start with any string given with the "r" flag in 'shada'.  This can be
-used to avoid saving marks for files on removable media (for MS-DOS you would
+used to avoid saving marks for files on removable media (for Windows you would
 use "ra:,rb:".
 The |v:oldfiles| variable is filled with the file names that the ShaDa file
 has marks for.

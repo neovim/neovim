@@ -1941,9 +1941,9 @@ If the 'fileformats' option is not empty Vim tries to recognize the type of
 changed, the detected format is only used while reading the file.
 A similar thing happens with 'fileencodings'.
 
-On non-MS-DOS and Win32 systems the message "[dos format]" is shown if
+On non-Windows systems the message "[dos format]" is shown if
 a file is read in DOS format, to remind you that something unusual is done.
-On Macintosh, MS-DOS, and Win32 the message "[unix format]" is shown if
+On Macintosh and Windows the message "[unix format]" is shown if
 a file is read in Unix format.
 On non-Macintosh systems, the message "[Mac format]" is shown if a file is
 read in Mac format.

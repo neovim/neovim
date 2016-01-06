@@ -2825,7 +2825,7 @@ executable({expr})					*executable()*
 		arguments.
 		executable() uses the value of $PATH and/or the normal
 		searchpath for programs.		*PATHEXT*
-		On MS-DOS and MS-Windows the ".exe", ".bat", etc. can
+		On Windows the ".exe", ".bat", etc. can
 		optionally be included.  Then the extensions in $PATHEXT are
 		tried.	Thus if "foo.exe" does not exist, "foo.exe.bat" can be
 		found.	If $PATHEXT is not set then ".exe;.com;.bat;.cmd" is
@@ -2833,9 +2833,9 @@ executable({expr})					*executable()*
 		the name without an extension.	When 'shell' looks like a
 		Unix shell, then the name is also tried without adding an
 		extension.
-		On MS-DOS and MS-Windows it only checks if the file exists and
+		On Windows it only checks if the file exists and
 		is not a directory, not if it's really executable.
-		On MS-Windows an executable in the same directory as Vim is
+		On Windows an executable in the same directory as Vim is
 		always found.  Since this directory is added to $PATH it
 		should also work to execute it |win32-PATH|.
 		The result is a Number:
@@ -3625,8 +3625,7 @@ getmatches()						*getmatches()*
 <
 							*getpid()*
 getpid()	Return a Number which is the process ID of the Vim process.
-		On Unix and MS-Windows this is a unique number, until Vim
-		exits.	On MS-DOS it's always zero.
+		This is a unique number, until Vim exits.
 
 							*getpos()*
 getpos({expr})	Get the position for {expr}.  For possible values of {expr}
@@ -5891,7 +5890,7 @@ sha256({string})						*sha256()*
 
 shellescape({string} [, {special}])			*shellescape()*
 		Escape {string} for use as a shell command argument.
-		On MS-Windows and MS-DOS, when 'shellslash' is not set, it
+		On Windows when 'shellslash' is not set, it
 		will enclose {string} in double quotes and double all double
 		quotes within {string}.
 		For other systems, it will enclose {string} in single quotes

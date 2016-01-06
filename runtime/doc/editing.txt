@@ -130,9 +130,7 @@ You can use this file if you discover that you need the original file.  See
 also the 'patchmode' option.  The name of the backup file is normally the same
 as the original file with 'backupext' appended.  The default "~" is a bit
 strange to avoid accidentally overwriting existing files.  If you prefer ".bak"
-change the 'backupext' option.  Extra dots are replaced with '_' on MS-DOS
-machines, when Vim has detected that an MS-DOS-like filesystem is being used
-(e.g., messydos or crossdos).  The backup file can be placed in another
+change the 'backupext' option.  The backup file can be placed in another
 directory by setting 'backupdir'.
 
 When you started editing without giving a file name, "No File" is displayed in
@@ -471,9 +469,9 @@ The 'fileformat' option sets the <EOL> style for a file:
   "mac"		<CR>		   Mac format		*Mac-format*
 
 When reading a file, the mentioned characters are interpreted as the <EOL>.
-In DOS format (default for MS-DOS and Win32), <CR><NL> and <NL> are both
-interpreted as the <EOL>. Note that when writing the file in DOS format,
-<CR> characters will be added for each single <NL>.  Also see |file-read|.
+In DOS format (default for Windows), <CR><NL> and <NL> are both interpreted as
+the <EOL>. Note that when writing the file in DOS format, <CR> characters will
+be added for each single <NL>.  Also see |file-read|.
 
 When writing a file, the mentioned characters are used for <EOL>.  For DOS
 format <CR><NL> is used.  Also see |DOS-format-write|.
@@ -494,13 +492,13 @@ If you start editing a new file and the 'fileformats' option is not empty
 (which is the default), Vim will try to detect whether the lines in the file
 are separated by the specified formats.  When set to "unix,dos", Vim will
 check for lines with a single <NL> (as used on Unix) or by a <CR><NL> pair
-(MS-DOS).  Only when ALL lines end in <CR><NL>, 'fileformat' is set to "dos",
+(Windows).  Only when ALL lines end in <CR><NL>, 'fileformat' is set to "dos",
 otherwise it is set to "unix".  When 'fileformats' includes "mac", and no <NL>
 characters are found in the file, 'fileformat' is set to "mac".
 
-If the 'fileformat' option is set to "dos" on non-MS-DOS systems the message
+If the 'fileformat' option is set to "dos" on non-Windows systems the message
 "[dos format]" is shown to remind you that something unusual is happening.  On
-MS-DOS systems you get the message "[unix format]" if 'fileformat' is set to
+Windows systems you get the message "[unix format]" if 'fileformat' is set to
 "unix".  On all systems but the Macintosh you get the message "[mac format]"
 if 'fileformat' is set to "mac".
 
@@ -966,10 +964,10 @@ lost the original file.
 
 						*DOS-format-write*
 If the 'fileformat' is "dos", <CR> <NL> is used for <EOL>.  This is default
-for MS-DOS and Win32. On other systems the message "[dos format]" is shown to
+for Windows. On other systems the message "[dos format]" is shown to
 remind you that an unusual <EOL> was used.
 						*Unix-format-write*
-If the 'fileformat' is "unix", <NL> is used for <EOL>.  On MS-DOS and Win32
+If the 'fileformat' is "unix", <NL> is used for <EOL>.  On Windows
 the message "[unix format]" is shown.
 						*Mac-format-write*
 If the 'fileformat' is "mac", <CR> is used for <EOL>.  On non-Mac systems the
@@ -999,11 +997,11 @@ When the file name is actually a device name, Vim will not make a backup (that
 would be impossible).  You need to use "!", since the device already exists.
 Example for Unix: >
 	:w! /dev/lpt0
-and for MS-DOS or MS-Windows: >
+and Windows: >
 	:w! lpt0
 For Unix a device is detected when the name doesn't refer to a normal file or
 a directory.  A fifo or named pipe also looks like a device to Vim.
-For MS-DOS and MS-Windows the device is detected by its name:
+For Windows the device is detected by its name:
 	CON
 	CLOCK$
 	NUL
@@ -1224,7 +1222,7 @@ present in 'cpoptions' and "!" is not used in the command.
 			Does not change the meaning of an already opened file,
 			because its full path name is remembered.  Files from
 			the |arglist| may change though!
-			On MS-DOS this also changes the active drive.
+			On Windows this also changes the active drive.
 			To change to the directory of the current file: >
 				:cd %:h
 <
