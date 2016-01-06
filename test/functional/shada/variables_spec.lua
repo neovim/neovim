@@ -143,7 +143,7 @@ describe('ShaDa support code', function()
     meths.set_var('U', '10')
     nvim_command('set shada+=!')
     set_additional_cmd('set shada+=!')
-    eq('Vim(wshada):E475: Invalid argument: attempt to dump function reference',
+    eq('Vim(wshada):E951: Error while dumping variable g:F, itself: attempt to dump function reference',
        exc_exec('wshada'))
     meths.set_option('shada', '')
     reset()
@@ -156,7 +156,7 @@ describe('ShaDa support code', function()
     nvim_command('call add(L, L)')
     meths.set_var('U', '10')
     nvim_command('set shada+=!')
-    eq('Vim(wshada):E475: Invalid argument: container references itself',
+    eq('Vim(wshada):E952: Unable to dump variable g:L: container references itself in index 0',
        exc_exec('wshada'))
     meths.set_option('shada', '')
     set_additional_cmd('set shada+=!')
