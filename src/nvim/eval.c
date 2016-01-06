@@ -12744,32 +12744,9 @@ static int conv_error(const char *const msg, const MPConvStack *const mpstack,
           ga_concat(&msg_ga, IObuff);
         } else {
           typval_T key_tv = li->li_tv.vval.v_list->lv_first->li_tv;
-          trylevel++;
-          typval_T rettv;
-          int doesrange;
-          char *key;
-          bool free_key = false;
-          if (call_func((char_u *) "msgpack#string",
-                        sizeof("msgpack#string") - 1,
-                        &rettv, 1, &key_tv, 0L, 0L, &doesrange, true,
-                        NULL) == FAIL
-              || ((key = (char *) get_tv_string(&rettv)) == NULL)
-              || did_throw
-              || (msg_list != NULL && *msg_list != NULL)) {
-            key = tv2string(&key_tv, NULL);
-            free_key = true;
-          }
-          did_emsg = false;
-          discard_current_exception();
-          if (msg_list != NULL && *msg_list != NULL) {
-            free_global_msglist();
-          }
-          trylevel--;
+          char *const key = echo_string(&key_tv, NULL);
           vim_snprintf((char *) IObuff, IOSIZE, key_pair_msg, key, idx);
-          clear_tv(&rettv);
-          if (free_key) {
-            xfree(key);
-          }
+          xfree(key);
           ga_concat(&msg_ga, IObuff);
         }
         break;

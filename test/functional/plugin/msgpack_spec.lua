@@ -697,27 +697,3 @@ describe('In autoload/msgpack.vim', function()
     end)
   end)
 end)
-
-describe('msgpackdump() function', function()
-  before_each(reset)
-
-  it('uses msgpack#string for dumping fref error messages for special map keys', function()
-    nvim_command('let todump = {"_TYPE": v:msgpack_types.map, "_VAL": [[{"_TYPE": v:msgpack_types.string, "_VAL": ["abc"]}, [function("tr")]]]}')
-    eq('Vim(call):E951: Error while dumping msgpackdump() argument, index 0, key ="abc" at index 0 from special map, index 0: attempt to dump function reference',
-       exc_exec('call msgpackdump([todump])'))
-  end)
-
-  it('falls back to using string() in case of error (fref)', function()
-    nvim_command('let todump = {"_TYPE": v:msgpack_types.map, "_VAL": [[[function("tr")], []]]}')
-    nvim_command('call add(todump._VAL[0][0], todump._VAL[0][0])')
-    eq('Vim(call):E951: Error while dumping msgpackdump() argument, index 0, key [function(\'tr\'), {E724@0}] at index 0 from special map, index 0: attempt to dump function reference',
-       exc_exec('call msgpackdump([todump])'))
-  end)
-
-  it('falls back to using string() in case of error (recurse)', function()
-    nvim_command('let todump = {"_TYPE": v:msgpack_types.map, "_VAL": [[[], []]]}')
-    nvim_command('call add(todump._VAL[0][0], todump._VAL[0][0])')
-    eq('Vim(call):E952: Unable to dump msgpackdump() argument, index 0: container references itself in key [{E724@0}] at index 0 from special map, index 0',
-       exc_exec('call msgpackdump([todump])'))
-  end)
-end)
