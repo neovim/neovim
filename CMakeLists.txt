@@ -197,6 +197,7 @@ endif()
 if(MINGW)
   # Use POSIX compatible stdio in Mingw
   add_definitions(-D__USE_MINGW_ANSI_STDIO)
+  add_definitions(-D_WIN32_WINNT=0x0600)
 endif()
 
 # OpenBSD's GCC (4.2.1) doesn't have -Wvla
