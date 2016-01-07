@@ -1878,7 +1878,8 @@ failed:
       }
       if (msg_add_fileformat(fileformat))
         c = TRUE;
-        msg_add_lines(c, (long)linecnt, filesize);
+
+      msg_add_lines(c, (long)linecnt, filesize);
 
       xfree(keep_msg);
       keep_msg = NULL;
