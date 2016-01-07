@@ -4105,7 +4105,6 @@ win_line (
          * xterm/screen: write an extra character beyond the end of
          * the line. This will work with all terminal types
          * (regardless of the xn,am settings).
-         * Only do this on a fast tty.
          * Only do this if the cursor is on the current line
          * (something has been written in it).
          * Don't do this for the GUI.
