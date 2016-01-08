@@ -1894,6 +1894,7 @@ isdirectory( {directory})	Number	TRUE if {directory} is a directory
 islocked( {expr})		Number	TRUE if {expr} is locked
 items( {dict})			List	key-value pairs in {dict}
 jobclose({job}[, {stream}])	Number	Closes a job stream(s)
+jobpid({job})			Number	Returns pid of a job.
 jobresize({job}, {width}, {height})
 				Number	Resize {job}'s pseudo terminal window
 jobsend({job}, {data})		Number	Writes {data} to {job}'s stdin
@@ -4156,6 +4157,9 @@ items({dict})						*items()*
 jobclose({job}[, {stream}])				{Nvim} *jobclose()*
 		Close {job}'s {stream}, which can be one "stdin", "stdout" or
 		"stderr". If {stream} is omitted, all streams are closed.
+
+jobpid({job})						{Nvim} *jobpid()*
+		Return the pid (process id) of {job}.
 
 jobresize({job}, {width}, {height})			{Nvim} *jobresize()*
 		Resize {job}'s pseudo terminal window to {width} and {height}.

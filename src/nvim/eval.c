@@ -7236,6 +7236,7 @@ static struct fst {
   { "islocked",          1, 1, f_islocked },
   { "items",             1, 1, f_items },
   { "jobclose",          1, 2, f_jobclose },
+  { "jobpid",            1, 1, f_jobpid },
   { "jobresize",         3, 3, f_jobresize },
   { "jobsend",           2, 2, f_jobsend },
   { "jobstart",          1, 2, f_jobstart },
@@ -11609,6 +11610,31 @@ static void f_jobclose(typval_T *argvars, typval_T *rettv)
   } else {
     process_close_streams(proc);
   }
+}
+
+// "jobpid(id)" function
+static void f_jobpid(typval_T *argvars, typval_T *rettv)
+{
+  rettv->v_type = VAR_NUMBER;
+  rettv->vval.v_number = 0;
+
+  if (check_restricted() || check_secure()) {
+    return;
+  }
+
+  if (argvars[0].v_type != VAR_NUMBER) {
+    EMSG(_(e_invarg));
+    return;
+  }
+
+  TerminalJobData *data = find_job(argvars[0].vval.v_number);
+  if (!data) {
+    EMSG(_(e_invjob));
+    return;
+  }
+
+  Process *proc = (Process *)&data->proc;
+  rettv->vval.v_number = proc->pid;
 }
 
 // "jobsend()" function
