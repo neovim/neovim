@@ -1772,8 +1772,8 @@ cursor( {lnum}, {col} [, {off}])
 cursor( {list})			Number	move cursor to position in {list}
 deepcopy( {expr} [, {noref}])	any	make a full copy of {expr}
 delete( {fname})		Number	delete file {fname}
-dictwatcheradd({dict}, {pattern}, {callback})	Start watching a dictionary
-dictwatcherdel({dict}, {pattern}, {callback})	Stop watching a dictionary
+dictwatcheradd( {dict}, {pattern}, {callback})	Start watching a dictionary
+dictwatcherdel( {dict}, {pattern}, {callback})	Stop watching a dictionary
 did_filetype()			Number	TRUE if FileType autocommand event used
 diff_filler( {lnum})		Number	diff filler lines about {lnum}
 diff_hlID( {lnum}, {col})	Number	diff highlighting at {lnum}/{col}
@@ -1881,13 +1881,13 @@ invert( {expr})			Number  bitwise invert
 isdirectory( {directory})	Number	TRUE if {directory} is a directory
 islocked( {expr})		Number	TRUE if {expr} is locked
 items( {dict})			List	key-value pairs in {dict}
-jobclose({job}[, {stream}])	Number	Closes a job stream(s)
-jobresize({job}, {width}, {height})
+jobclose( {job}[, {stream}])	Number	Closes a job stream(s)
+jobresize( {job}, {width}, {height})
 				Number	Resize {job}'s pseudo terminal window
-jobsend({job}, {data})		Number	Writes {data} to {job}'s stdin
-jobstart({cmd}[, {opts}])	Number	Spawns {cmd} as a job
-jobstop({job})			Number	Stops a job
-jobwait({ids}[, {timeout}])	Number	Wait for a set of jobs
+jobsend( {job}, {data})		Writes {data} to {job}'s stdin
+jobstart( {cmd}[, {opts}])	Number	Spawns {cmd} as a job
+jobstop( {job})			Number	Stops a job
+jobwait( {ids}[, {timeout}])	Number	Wait for a set of jobs
 join( {list} [, {sep}])		String	join {list} items into one String
 keys( {dict})			List	keys in {dict}
 len( {expr})			Number	the length of {expr}
@@ -1957,12 +1957,12 @@ repeat( {expr}, {count})	String	repeat {expr} {count} times
 resolve( {filename})		String	get filename a shortcut points to
 reverse( {list})		List	reverse {list} in-place
 round( {expr})			Float	round off {expr}
-rpcnotify({channel}, {event}[, {args}...])
+rpcnotify( {channel}, {event}[, {args}...])
 				Sends a |msgpack-rpc| notification to {channel}
-rpcrequest({channel}, {method}[, {args}...])
+rpcrequest( {channel}, {method}[, {args}...])
 				Sends a |msgpack-rpc| request to {channel}
-rpcstart({prog}[, {argv}])	Spawns {prog} and opens a |msgpack-rpc| channel
-rpcstop({channel})		Closes a |msgpack-rpc| {channel}
+rpcstart( {prog}[, {argv}])	Spawns {prog} and opens a |msgpack-rpc| channel
+rpcstop( {channel})		Closes a |msgpack-rpc| {channel}
 screenattr( {row}, {col})	Number	attribute at screen position
 screenchar( {row}, {col})	Number	character at screen position
 screencol()			Number	current cursor column
