@@ -837,14 +837,11 @@ WHAT IS IME
     URL.
 
 WHAT IS GLOBAL IME					*global-ime*
-    Global IME makes capability to input Chinese, Japanese, and Korean text
-    into Vim buffer on any language version of Windows 98, Windows 95, and
-    Windows NT 4.0.
-    On Windows 2000 and XP it should work as well (without downloading).  On
-    Windows 2000 Professional, Global IME is built in, and the Input Locales
-    can be added through Control Panel/Regional Options/Input Locales.
-    Please see below URL for detail of Global IME.  You can also find various
-    language version of Global IME at same place.
+    Global IME enables input of Chinese, Japanese, and Korean text into Vim
+    buffer on any language version of Windows.  Global IME is built in, and
+    the Input Locales can be added through Control Panel/Regional
+    Options/Input Locales.  Please see below URL for detail of Global IME.
+    You can also find various language version of Global IME at same place.
 
     - Global IME detailed information.
 	http://search.microsoft.com/results.aspx?q=global+ime
