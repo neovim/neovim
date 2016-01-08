@@ -6479,7 +6479,8 @@ failret:
 static int name##_convert_one_value(firstargtype firstargname, \
                                     MPConvStack *const mpstack, \
                                     typval_T *const tv, \
-                                    const int copyID) \
+                                    const int copyID, \
+                                    const char *const objname) \
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT \
 { \
   switch (tv->v_type) { \
@@ -6713,14 +6714,16 @@ name##_convert_one_value_regular_dict: \
   return OK; \
 } \
 \
-scope int vim_to_##name(firstargtype firstargname, typval_T *const tv) \
+scope int vim_to_##name(firstargtype firstargname, typval_T *const tv, \
+                        const char *const objname) \
   FUNC_ATTR_WARN_UNUSED_RESULT \
 { \
   current_copyID += COPYID_INC; \
   const int copyID = current_copyID; \
   MPConvStack mpstack; \
   kv_init(mpstack); \
-  if (name##_convert_one_value(firstargname, &mpstack, tv, copyID) == FAIL) { \
+  if (name##_convert_one_value(firstargname, &mpstack, tv, copyID, objname) \
+      == FAIL) { \
     goto vim_to_msgpack_error_ret; \
   } \
   while (kv_size(mpstack)) { \
@@ -6769,8 +6772,8 @@ scope int vim_to_##name(firstargtype firstargname, typval_T *const tv) \
         } \
         const list_T *const kv_pair = cur_mpsv->data.l.li->li_tv.vval.v_list; \
         if (name##_convert_one_value(firstargname, &mpstack, \
-                                     &kv_pair->lv_first->li_tv, copyID) \
-            == FAIL) { \
+                                     &kv_pair->lv_first->li_tv, copyID, \
+                                     objname) == FAIL) { \
           goto vim_to_msgpack_error_ret; \
         } \
         cur_tv = &kv_pair->lv_last->li_tv; \
@@ -6778,8 +6781,8 @@ scope int vim_to_##name(firstargtype firstargname, typval_T *const tv) \
         break; \
       } \
     } \
-    if (name##_convert_one_value(firstargname, &mpstack, cur_tv, copyID) \
-        == FAIL) { \
+    if (name##_convert_one_value(firstargname, &mpstack, cur_tv, copyID, \
+                                 objname) == FAIL) { \
       goto vim_to_msgpack_error_ret; \
     } \
   } \
@@ -6975,7 +6978,7 @@ static char *tv2string(typval_T *tv, size_t *len)
 {
   garray_T ga;
   ga_init(&ga, (int)sizeof(char), 80);
-  vim_to_string(&ga, tv);
+  vim_to_string(&ga, tv, "tv2string() argument");
   did_echo_string_emsg = false;
   if (len != NULL) {
     *len = (size_t) ga.ga_len;
@@ -7001,7 +7004,7 @@ static char *echo_string(typval_T *tv, size_t *len)
       ga_concat(&ga, tv->vval.v_string);
     }
   } else {
-    vim_to_echo(&ga, tv);
+    vim_to_echo(&ga, tv, ":echo argument");
     did_echo_string_emsg = false;
   }
   if (len != NULL) {
@@ -12686,6 +12689,77 @@ static inline bool vim_list_to_buf(const list_T *const list,
   return true;
 }
 
+/// Show a error message when converting to msgpack value
+///
+/// @param[in]  msg  Error message to dump. Must contain exactly two %s that
+///                  will be replaced with what was being dumped: first with
+///                  something like “F” or “function argument”, second with path
+///                  to the failed value.
+/// @param[in]  mpstack  Path to the failed value.
+/// @param[in]  objname  Dumped object name.
+///
+/// @return FAIL.
+static int conv_error(const char *const msg, const MPConvStack *const mpstack,
+                      const char *const objname)
+  FUNC_ATTR_NONNULL_ALL
+{
+  garray_T msg_ga;
+  ga_init(&msg_ga, (int)sizeof(char), 80);
+  char *const key_msg = _("key %s");
+  char *const key_pair_msg = _("key %s at index %i from special map");
+  char *const idx_msg = _("index %i");
+  for (size_t i = 0; i < kv_size(*mpstack); i++) {
+    if (i != 0) {
+      ga_concat(&msg_ga, (char_u *) ", ");
+    }
+    MPConvStackVal v = kv_A(*mpstack, i);
+    switch (v.type) {
+      case kMPConvDict: {
+        typval_T key_tv = {
+            .v_type = VAR_STRING,
+            .vval = { .v_string = (v.data.d.hi == NULL
+                                   ? v.data.d.dict->dv_hashtab.ht_array
+                                   : (v.data.d.hi - 1))->hi_key },
+        };
+        char *const key = tv2string(&key_tv, NULL);
+        vim_snprintf((char *) IObuff, IOSIZE, key_msg, key);
+        xfree(key);
+        ga_concat(&msg_ga, IObuff);
+        break;
+      }
+      case kMPConvPairs:
+      case kMPConvList: {
+        int idx = 0;
+        const listitem_T *li;
+        for (li = v.data.l.list->lv_first;
+             li != NULL && li->li_next != v.data.l.li;
+             li = li->li_next) {
+          idx++;
+        }
+        if (v.type == kMPConvList
+            || li == NULL
+            || (li->li_tv.v_type != VAR_LIST
+                && li->li_tv.vval.v_list->lv_len <= 0)) {
+          vim_snprintf((char *) IObuff, IOSIZE, idx_msg, idx);
+          ga_concat(&msg_ga, IObuff);
+        } else {
+          typval_T key_tv = li->li_tv.vval.v_list->lv_first->li_tv;
+          char *const key = echo_string(&key_tv, NULL);
+          vim_snprintf((char *) IObuff, IOSIZE, key_pair_msg, key, idx);
+          xfree(key);
+          ga_concat(&msg_ga, IObuff);
+        }
+        break;
+      }
+    }
+  }
+  EMSG3(msg, objname, (kv_size(*mpstack) == 0
+                       ? _("itself")
+                       : (char *) msg_ga.ga_data));
+  ga_clear(&msg_ga);
+  return FAIL;
+}
+
 #define CONV_STRING(buf, len) \
     do { \
       if (buf == NULL) { \
@@ -12726,10 +12800,9 @@ static inline bool vim_list_to_buf(const list_T *const list,
     msgpack_pack_double(packer, (double) (flt))
 
 #define CONV_FUNC(fun) \
-    do { \
-      EMSG2(_(e_invarg2), "attempt to dump function reference"); \
-      return FAIL; \
-    } while (0)
+    return conv_error(_("E951: Error while dumping %s, %s: " \
+                        "attempt to dump function reference"), \
+                      mpstack, objname)
 
 #define CONV_EMPTY_LIST() \
     msgpack_pack_array(packer, 0)
@@ -12772,10 +12845,9 @@ static inline bool vim_list_to_buf(const list_T *const list,
 #define CONV_LIST_BETWEEN_ITEMS(lst)
 
 #define CONV_RECURSE(val, conv_type) \
-    do { \
-      EMSG2(_(e_invarg2), "container references itself"); \
-      return FAIL; \
-    } while (0)
+    return conv_error(_("E952: Unable to dump %s: " \
+                        "container references itself in %s"), \
+                      mpstack, objname)
 
 #define CONV_ALLOW_SPECIAL true
 
@@ -12817,8 +12889,14 @@ static void f_msgpackdump(typval_T *argvars, typval_T *rettv)
     return;
   }
   msgpack_packer *lpacker = msgpack_packer_new(ret_list, &msgpack_list_write);
+  const char *const msg = _("msgpackdump() argument, index %i");
+  // Assume that translation will not take more then 4 times more space
+  char msgbuf[sizeof("msgpackdump() argument, index ") * 4 + NUMBUFLEN];
+  int idx = 0;
   for (listitem_T *li = list->lv_first; li != NULL; li = li->li_next) {
-    if (vim_to_msgpack(lpacker, &li->li_tv) == FAIL) {
+    vim_snprintf(msgbuf, sizeof(msgbuf), (char *) msg, idx);
+    idx++;
+    if (vim_to_msgpack(lpacker, &li->li_tv, msgbuf) == FAIL) {
       break;
     }
   }
