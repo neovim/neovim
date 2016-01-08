@@ -41,18 +41,18 @@ set(UNIX_CFGCMD sh ${DEPS_BUILD_DIR}/src/libuv/autogen.sh &&
   CC=${DEPS_C_COMPILER})
 
 if(UNIX)
-  BuildLibUv(
+  BuildLibuv(
     CONFIGURE_COMMAND ${UNIX_CFGCMD}
     INSTALL_COMMAND ${MAKE_PRG} V=1 install)
 
 elseif(MINGW AND CMAKE_CROSSCOMPILING)
   # Build libuv for the host
-  BuildLibUv(TARGET libuv_host
+  BuildLibuv(TARGET libuv_host
     CONFIGURE_COMMAND sh ${DEPS_BUILD_DIR}/src/libuv_host/autogen.sh && ${DEPS_BUILD_DIR}/src/libuv_host/configure --with-pic --disable-shared --prefix=${HOSTDEPS_INSTALL_DIR} CC=${HOST_C_COMPILER}
     INSTALL_COMMAND ${MAKE_PRG} V=1 install)
 
   # Build libuv for the target
-  BuildLibUv(
+  BuildLibuv(
     CONFIGURE_COMMAND ${UNIX_CFGCMD} --host=${CROSS_TARGET}
     INSTALL_COMMAND ${MAKE_PRG} V=1 install)
 
@@ -70,7 +70,7 @@ elseif(WIN32 AND MSVC)
   else()
     set(VS_ARCH x64)
   endif()
-  BuildLibUv(
+  BuildLibuv(
     # By default this creates Debug builds
     BUILD_COMMAND set PYTHON=${PYTHON_EXECUTABLE} COMMAND ${DEPS_BUILD_DIR}/src/libuv/vcbuild.bat static debug ${VS_ARCH}
     INSTALL_COMMAND ${CMAKE_COMMAND} -E make_directory ${DEPS_INSTALL_DIR}/lib
