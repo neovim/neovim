@@ -1992,13 +1992,15 @@ failed:
 }
 
 #ifdef OPEN_CHR_FILES
-/*
- * Returns TRUE if the file name argument is of the form "/dev/fd/\d\+",
- * which is the name of files used for process substitution output by
- * some shells on some operating systems, e.g., bash on SunOS.
- * Do not accept "/dev/fd/[012]", opening these may hang Vim.
- */
-static int is_dev_fd_file(char_u *fname)
+/// Returns true if the file name argument is of the form "/dev/fd/\d\+",
+/// which is the name of files used for process substitution output by
+/// some shells on some operating systems, e.g., bash on SunOS.
+/// Do not accept "/dev/fd/[012]", opening these may hang Vim.
+///
+/// @param fname The file name to check
+///
+/// @return true if the file name argument is of the form "/dev/fd/\d\+",
+static bool is_dev_fd_file(char_u *fname)
 {
   return STRNCMP(fname, "/dev/fd/", 8) == 0
          && ascii_isdigit(fname[8])
@@ -3807,29 +3809,30 @@ void msg_add_fname(buf_T *buf, char_u *fname)
   STRCAT(IObuff, "\" ");
 }
 
-/*
- * Append message for text mode to IObuff.
- * Return TRUE if something appended.
- */
-static int msg_add_fileformat(int eol_type)
+/// Append message for text mode to IObuff.
+///
+/// @param eol_type The line ending type
+///
+/// @return true if something appended.
+static bool msg_add_fileformat(int eol_type)
 {
 #ifndef USE_CRNL
   if (eol_type == EOL_DOS) {
     STRCAT(IObuff, shortmess(SHM_TEXT) ? _("[dos]") : _("[dos format]"));
-    return TRUE;
+    return true;
   }
 #endif
   if (eol_type == EOL_MAC) {
     STRCAT(IObuff, shortmess(SHM_TEXT) ? _("[mac]") : _("[mac format]"));
-    return TRUE;
+    return true;
   }
 #ifdef USE_CRNL
   if (eol_type == EOL_UNIX) {
     STRCAT(IObuff, shortmess(SHM_TEXT) ? _("[unix]") : _("[unix format]"));
-    return TRUE;
+    return true;
   }
 #endif
-  return FALSE;
+  return false;
 }
 
 /*
@@ -3893,7 +3896,13 @@ static int check_mtime(buf_T *buf, FileInfo *file_info)
   return OK;
 }
 
-static int time_differs(long t1, long t2)
+/// Return true if the times differ
+///
+/// @param t1 The first time
+/// @param t2 The second time
+///
+/// @return true if the times differ
+static bool time_differs(long t1, long t2)
 {
 #if defined(__linux__) || defined(MSWIN)
   /* On a FAT filesystem, esp. under Linux, there are only 5 bits to store
@@ -4082,19 +4091,21 @@ static int buf_write_bytes(struct bw_info *ip)
   return (wlen < len) ? FAIL : OK;
 }
 
-/*
- * Convert a Unicode character to bytes.
- * Return TRUE for an error, FALSE when it's OK.
- */
-static int 
-ucs2bytes (
-    unsigned c,                     /* in: character */
-    char_u **pp,               /* in/out: pointer to result */
-    int flags                      /* FIO_ flags */
+/// Convert a Unicode character to bytes.
+///
+/// @param         c     The character to convert
+/// @param[in,out] pp    The pointer to store the result at
+/// @param         flags The FIO_ flags to use
+///
+/// @return true for an error, false when it's OK.
+static bool ucs2bytes(
+    unsigned c,
+    char_u **pp,
+    int flags
 )
 {
   char_u      *p = *pp;
-  int error = FALSE;
+  bool error = false;
   int cc;
 
 
@@ -4116,8 +4127,9 @@ ucs2bytes (
         /* Make two words, ten bits of the character in each.  First
          * word is 0xd800 - 0xdbff, second one 0xdc00 - 0xdfff */
         c -= 0x10000;
-        if (c >= 0x100000)
-          error = TRUE;
+        if (c >= 0x100000) {
+          error = true;
+        }
         cc = ((c >> 10) & 0x3ff) + 0xd800;
         if (flags & FIO_ENDIAN_L) {
           *p++ = cc;
@@ -4127,8 +4139,9 @@ ucs2bytes (
           *p++ = cc;
         }
         c = (c & 0x3ff) + 0xdc00;
-      } else
-        error = TRUE;
+      } else {
+        error = true;
+      }
     }
     if (flags & FIO_ENDIAN_L) {
       *p++ = c;
@@ -4139,7 +4152,7 @@ ucs2bytes (
     }
   } else { /* Latin1 */
     if (c >= 0x100) {
-      error = TRUE;
+      error = true;
       *p++ = 0xBF;
     } else
       *p++ = c;
@@ -4149,11 +4162,13 @@ ucs2bytes (
   return error;
 }
 
-/*
- * Return TRUE if file encoding "fenc" requires conversion from or to
- * 'encoding'.
- */
-static int need_conversion(char_u *fenc)
+/// Return true if file encoding "fenc" requires conversion from or to
+/// 'encoding'.
+///
+/// @param fenc The file encoding to check
+///
+/// @return true if conversion is required
+static bool need_conversion(char_u *fenc)
 {
   int same_encoding;
   int enc_flags;
@@ -4424,11 +4439,15 @@ char *modname(const char *fname, const char *ext, bool prepend_dot)
   return retval;
 }
 
-/*
- * Like fgets(), but if the file line is too long, it is truncated and the
- * rest of the line is thrown away.  Returns TRUE for end-of-file.
- */
-int vim_fgets(char_u *buf, int size, FILE *fp)
+/// Like fgets(), but if the file line is too long, it is truncated and the
+/// rest of the line is thrown away.
+///
+/// @param[in,out] buf  The buffer to fill
+/// @param         size The size of the buffer
+/// @param         fp   The file to read from
+///
+/// @return true for end-of-file.
+bool vim_fgets(char_u *buf, int size, FILE *fp)
 {
   char        *eof;
 #define FGETS_SIZE 200
@@ -5341,10 +5360,12 @@ static int au_find_group(char_u *name)
   return AUGROUP_ERROR;
 }
 
-/*
- * Return TRUE if augroup "name" exists.
- */
-int au_has_group(char_u *name)
+/// Return true if augroup "name" exists.
+///
+/// @param name The augroup name
+///
+/// @return true if augroup "name" exists.
+bool au_has_group(char_u *name)
 {
   return au_find_group(name) != AUGROUP_ERROR;
 }
@@ -5461,21 +5482,25 @@ find_end_event (
   return pat;
 }
 
-/*
- * Return TRUE if "event" is included in 'eventignore'.
- */
-static int event_ignored(event_T event)
+/// Return true if "event" is included in 'eventignore'.
+///
+/// @param event The event to check
+///
+/// @return true if `event` is included in `eventignore`.
+static bool event_ignored(event_T event)
 {
-  char_u      *p = p_ei;
+  char_u *p = p_ei;
 
   while (*p != NUL) {
-    if (STRNICMP(p, "all", 3) == 0 && (p[3] == NUL || p[3] == ','))
-      return TRUE;
-    if (event_name2nr(p, &p) == event)
-      return TRUE;
+    if (STRNICMP(p, "all", 3) == 0 && (p[3] == NUL || p[3] == ',')) {
+      return true;
+    }
+    if (event_name2nr(p, &p) == event) {
+      return true;
+    }
   }
 
-  return FALSE;
+  return false;
 }
 
 /*
@@ -5992,18 +6017,20 @@ void ex_doautoall(exarg_T *eap)
   check_cursor();           /* just in case lines got deleted */
 }
 
-/*
- * Check *argp for <nomodeline>.  When it is present return FALSE, otherwise
- * return TRUE and advance *argp to after it.
- * Thus return TRUE when do_modelines() should be called.
- */
-int check_nomodeline(char_u **argp)
+/// Check *argp for <nomodeline>.  When it is present return false, otherwise
+/// return true and advance *argp to after it.
+/// Thus return true when do_modelines() should be called.
+///
+/// @param[in,out] The argument string
+///
+/// @return true when do_modelines() should be called.
+bool check_nomodeline(char_u **argp)
 {
   if (STRNCMP(*argp, "<nomodeline>", 12) == 0) {
     *argp = skipwhite(*argp + 12);
-    return FALSE;
+    return false;
   }
-  return TRUE;
+  return true;
 }
 
 /*
@@ -6180,55 +6207,78 @@ win_found:
 
 static int autocmd_nested = FALSE;
 
-/*
- * Execute autocommands for "event" and file name "fname".
- * Return TRUE if some commands were executed.
- */
-int 
-apply_autocmds (
+/// Execute autocommands for "event" and file name "fname".
+///
+/// @param event    The event that occured
+/// @param fname    The filename, NULL or empty means use actual file name
+/// @param fname_io The filename to use for <afile> on cmdline
+/// @param force    When TRUE, ignore autocmd_busy
+/// @param buf      Buffer for <abuf>
+///
+/// @return true if some commands were executed.
+bool apply_autocmds(
     event_T event,
-    char_u *fname,         /* NULL or empty means use actual file name */
-    char_u *fname_io,      /* fname to use for <afile> on cmdline */
-    int force,                  /* when TRUE, ignore autocmd_busy */
-    buf_T *buf           /* buffer for <abuf> */
+    char_u *fname,
+    char_u *fname_io,
+    int force,
+    buf_T *buf
 )
 {
   return apply_autocmds_group(event, fname, fname_io, force,
       AUGROUP_ALL, buf, NULL);
 }
 
-/*
- * Like apply_autocmds(), but with extra "eap" argument.  This takes care of
- * setting v:filearg.
- */
-static int apply_autocmds_exarg(event_T event, char_u *fname, char_u *fname_io, int force, buf_T *buf, exarg_T *eap)
+/// Like apply_autocmds(), but with extra "eap" argument.  This takes care of
+/// setting v:filearg.
+///
+/// @param event    The event that occured
+/// @param fname    NULL or empty means use actual file name
+/// @param fname_io fname to use for <afile> on cmdline
+/// @param force    When TRUE, ignore autocmd_busy
+/// @param buf      Buffer for <abuf>
+/// @param exarg    The Ex command arguments
+///
+/// @return true if some commands were executed.
+static bool apply_autocmds_exarg(
+    event_T event,
+    char_u *fname,
+    char_u *fname_io,
+    int force,
+    buf_T *buf,
+    exarg_T *eap
+)
 {
   return apply_autocmds_group(event, fname, fname_io, force,
       AUGROUP_ALL, buf, eap);
 }
 
-/*
- * Like apply_autocmds(), but handles the caller's retval.  If the script
- * processing is being aborted or if retval is FAIL when inside a try
- * conditional, no autocommands are executed.  If otherwise the autocommands
- * cause the script to be aborted, retval is set to FAIL.
- */
-int 
-apply_autocmds_retval (
+/// Like apply_autocmds(), but handles the caller's retval.  If the script
+/// processing is being aborted or if retval is FAIL when inside a try
+/// conditional, no autocommands are executed.  If otherwise the autocommands
+/// cause the script to be aborted, retval is set to FAIL.
+///
+/// @param         event    The event that occured
+/// @param         fname    NULL or empty means use actual file name
+/// @param         fname_io fname to use for <afile> on cmdline
+/// @param         force    When TRUE, ignore autocmd_busy
+/// @param         buf      Buffer for <abuf>
+/// @param[in,out] retval   The caller's retval
+///
+/// @return true if some autocommands were executed
+bool apply_autocmds_retval(
     event_T event,
-    char_u *fname,         /* NULL or empty means use actual file name */
-    char_u *fname_io,      /* fname to use for <afile> on cmdline */
-    int force,                  /* when TRUE, ignore autocmd_busy */
-    buf_T *buf,           /* buffer for <abuf> */
-    int *retval        /* pointer to caller's retval */
+    char_u *fname,
+    char_u *fname_io,
+    int force,
+    buf_T *buf,
+    int *retval
 )
 {
-  int did_cmd;
+  if (should_abort(*retval)) {
+    return false;
+  }
 
-  if (should_abort(*retval))
-    return FALSE;
-
-  did_cmd = apply_autocmds_group(event, fname, fname_io, force,
+  bool did_cmd = apply_autocmds_group(event, fname, fname_io, force,
       AUGROUP_ALL, buf, NULL);
   if (did_cmd
       && aborting()
@@ -6237,19 +6287,19 @@ apply_autocmds_retval (
   return did_cmd;
 }
 
-/*
- * Return TRUE when there is a CursorHold autocommand defined.
- */
-int has_cursorhold(void)
+/// Return true when there is a CursorHold autocommand defined.
+///
+/// @return true when there is a CursorHold autocommand defined.
+bool has_cursorhold(void)
 {
   return first_autopat[(int)(get_real_state() == NORMAL_BUSY
                              ? EVENT_CURSORHOLD : EVENT_CURSORHOLDI)] != NULL;
 }
 
-/*
- * Return TRUE if the CursorHold event can be triggered.
- */
-int trigger_cursorhold(void)
+/// Return true if the CursorHold event can be triggered.
+///
+/// @return true if the CursorHold event can be triggered.
+bool trigger_cursorhold(void)
 {
   int state;
 
@@ -6260,75 +6310,88 @@ int trigger_cursorhold(void)
       && !ins_compl_active()
       ) {
     state = get_real_state();
-    if (state == NORMAL_BUSY || (state & INSERT) != 0)
-      return TRUE;
+    if (state == NORMAL_BUSY || (state & INSERT) != 0) {
+      return true;
+    }
   }
-  return FALSE;
+  return false;
 }
 
-/*
- * Return TRUE when there is a CursorMoved autocommand defined.
- */
-int has_cursormoved(void)
+/// Return true when there is a CursorMoved autocommand defined.
+///
+/// @return true when there is a CursorMoved autocommand defined.
+bool has_cursormoved(void)
 {
   return first_autopat[(int)EVENT_CURSORMOVED] != NULL;
 }
 
-/*
- * Return TRUE when there is a CursorMovedI autocommand defined.
- */
-int has_cursormovedI(void)
+/// Return true when there is a CursorMovedI autocommand defined.
+///
+/// @return true when there is a CursorMovedI autocommand defined.
+bool has_cursormovedI(void)
 {
   return first_autopat[(int)EVENT_CURSORMOVEDI] != NULL;
 }
 
-/*
- * Return TRUE when there is a TextChanged autocommand defined.
- */
-int has_textchanged(void)
+/// Return true when there is a TextChanged autocommand defined.
+///
+/// @return true when there is a TextChanged autocommand defined.
+bool has_textchanged(void)
 {
   return first_autopat[(int)EVENT_TEXTCHANGED] != NULL;
 }
 
-/*
- * Return TRUE when there is a TextChangedI autocommand defined.
- */
-int has_textchangedI(void)
+/// Return true when there is a TextChangedI autocommand defined.
+///
+/// @return true when there is a TextChangedI autocommand defined.
+bool has_textchangedI(void)
 {
   return first_autopat[(int)EVENT_TEXTCHANGEDI] != NULL;
 }
 
-/*
- * Return TRUE when there is an InsertCharPre autocommand defined.
- */
-int has_insertcharpre(void)
+/// Return true when there is an InsertCharPre autocommand defined.
+///
+/// @return true when there is an InsertCharPre autocommand defined.
+bool has_insertcharpre(void)
 {
   return first_autopat[(int)EVENT_INSERTCHARPRE] != NULL;
 }
 
-/// @returns true when there is an CmdUndefined autocommand defined.
-int has_cmdundefined(void)
+/// Return true when there is an CmdUndefined autocommand defined.
+///
+/// @return true when there is an CmdUndefined autocommand defined.
+bool has_cmdundefined(void)
 {
   return first_autopat[(int)EVENT_CMDUNDEFINED] != NULL;
 }
 
-static int 
-apply_autocmds_group (
+/// Execute autocommands for "event" and file name "fname".
+///
+/// @param event    The event that occured
+/// @param fname    The filename, NULL or empty means use actual file name
+/// @param fname_io The filename to use for <afile> on cmdline,
+//                  NULL means use `fname`.
+/// @param force    When TRUE, ignore autocmd_busy
+/// @param group    The autocmd group ID or AUGROUP_ALL
+/// @param buf      Buffer for <abuf>
+/// @param exarg    The Ex command arguments
+///
+/// @return true if some commands were executed.
+static bool apply_autocmds_group(
     event_T event,
-    char_u *fname,         /* NULL or empty means use actual file name */
-    char_u *fname_io,      /* fname to use for <afile> on cmdline, NULL means
-                               use fname */
-    int force,                  /* when TRUE, ignore autocmd_busy */
-    int group,                  /* group ID, or AUGROUP_ALL */
-    buf_T *buf,           /* buffer for <abuf> */
-    exarg_T *eap           /* command arguments */
+    char_u *fname,
+    char_u *fname_io,
+    int force,
+    int group,
+    buf_T *buf,
+    exarg_T *eap
 )
 {
   char_u      *sfname = NULL;   /* short file name */
   char_u      *tail;
   bool save_changed;
   buf_T       *old_curbuf;
-  int retval = FALSE;
+  bool retval = false;
   char_u      *save_sourcing_name;
   linenr_T save_sourcing_lnum;
   char_u      *save_autocmd_fname;
@@ -6482,7 +6545,7 @@ apply_autocmds_group (
   }
   if (fname == NULL) {      /* out of memory */
     xfree(sfname);
-    retval = FALSE;
+    retval = false;
     goto BYPASS_AU;
   }
 
@@ -6568,7 +6631,7 @@ apply_autocmds_group (
       set_vim_var_nr(VV_CMDBANG, (long)eap->forceit);
     } else
       save_cmdarg = NULL;       /* avoid gcc warning */
-    retval = TRUE;
+    retval = true;
     /* mark the last pattern, to avoid an endless loop when more patterns
      * are added when executing autocommands */
     for (ap = patcmd.curpat; ap->next != NULL; ap = ap->next)
@@ -6792,21 +6855,26 @@ char_u *getnextac(int c, void *cookie, int indent)
   return retval;
 }
 
-/*
- * Return TRUE if there is a matching autocommand for "fname".
- * To account for buffer-local autocommands, function needs to know
- * in which buffer the file will be opened.
- */
-int has_autocmd(event_T event, char_u *sfname, buf_T *buf)
+/// Return true if there is a matching autocommand for "fname".
+/// To account for buffer-local autocommands, function needs to know
+/// in which buffer the file will be opened.
+///
+/// @param event  The event that occured.
+/// @param sfname The filename the event occured in.
+/// @param buf    The buffer the file is open in
+///
+/// @return true if there is a matching autocommand for "fname".
+bool has_autocmd(event_T event, char_u *sfname, buf_T *buf)
 {
   AutoPat     *ap;
   char_u      *fname;
   char_u      *tail = path_tail(sfname);
-  int retval = FALSE;
+  bool retval = false;
 
-  fname = (char_u *)FullName_save((char *)sfname, FALSE);
-  if (fname == NULL)
-    return FALSE;
+  fname = (char_u *)FullName_save((char *)sfname, false);
+  if (fname == NULL) {
+    return false;
+  }
 
 #ifdef BACKSLASH_IN_FILENAME
   /*
@@ -6818,16 +6886,16 @@ int has_autocmd(event_T event, char_u *sfname, buf_T *buf)
   forward_slash(fname);
 #endif
 
-  for (ap = first_autopat[(int)event]; ap != NULL; ap = ap->next)
+  for (ap = first_autopat[(int)event]; ap != NULL; ap = ap->next) {
     if (ap->pat != NULL && ap->cmds != NULL
         && (ap->buflocal_nr == 0
             ? match_file_pat(NULL, &ap->reg_prog, fname, sfname, tail,
                              ap->allow_dirs)
-            : buf != NULL && ap->buflocal_nr == buf->b_fnum
-            )) {
-      retval = TRUE;
+            : buf != NULL && ap->buflocal_nr == buf->b_fnum)) {
+      retval = true;
       break;
     }
+  }
 
   xfree(fname);
 #ifdef BACKSLASH_IN_FILENAME
@@ -6915,29 +6983,32 @@ char_u *get_event_name(expand_T *xp, int idx)
 }
 
 
-/*
- * Return TRUE if autocmd is supported.
- */
-int autocmd_supported(char_u *name)
+/// Return true if autocmd is supported.
+///
+/// @return true if autocmd is supported.
+bool autocmd_supported(char_u *name)
 {
   char_u *p;
 
   return event_name2nr(name, &p) != NUM_EVENTS;
 }
 
-/*
- * Return TRUE if an autocommand is defined for a group, event and
- * pattern:  The group can be omitted to accept any group. "event" and "pattern"
- * can be NULL to accept any event and pattern. "pattern" can be NULL to accept
- * any pattern. Buffer-local patterns <buffer> or <buffer=N> are accepted.
- * Used for:
- *	exists("#Group") or
- *	exists("#Group#Event") or
- *	exists("#Group#Event#pat") or
- *	exists("#Event") or
- *	exists("#Event#pat")
- */
-int au_exists(char_u *arg)
+/// Return true if an autocommand is defined for a group, event and
+/// pattern:  The group can be omitted to accept any group.
+/// `event` and `pattern` /// can be NULL to accept any event and pattern.
+/// `pattern` can be NULL to accept any pattern.
+/// Buffer-local patterns <buffer> or <buffer=N> are accepted.
+/// Used for:
+///   exists("#Group") or
+///   exists("#Group#Event") or
+///   exists("#Group#Event#pat") or
+///   exists("#Event") or
+///   exists("#Event#pat")
+///
+/// @param arg The autocommand string
+///
+/// @return true if an autocommand is defined for a group, event and pattern
+bool au_exists(char_u *arg)
 {
   char_u      *arg_save;
   char_u      *pattern = NULL;
@@ -6947,7 +7018,7 @@ int au_exists(char_u *arg)
   AutoPat     *ap;
   buf_T       *buflocal_buf = NULL;
   int group;
-  int retval = FALSE;
+  bool retval = false;
 
   /* Make a copy so that we can change the '#' chars to a NUL. */
   arg_save = vim_strsave(arg);
@@ -6964,7 +7035,7 @@ int au_exists(char_u *arg)
   } else {
     if (p == NULL) {
       /* "Group": group name is present and it's recognized */
-      retval = TRUE;
+      retval = true;
       goto theend;
     }
 
@@ -7006,7 +7077,7 @@ int au_exists(char_u *arg)
             || (buflocal_buf == NULL
                 ? fnamecmp(ap->pat, pattern) == 0
                 : ap->buflocal_nr == buflocal_buf->b_fnum))) {
-      retval = TRUE;
+      retval = true;
       break;
     }
 
@@ -7021,12 +7092,13 @@ theend:
 ///
 /// Used for autocommands and 'wildignore'.
 ///
-/// @param pattern    the pattern to match with
-/// @param prog       the pre-compiled regprog or NULL
-/// @param fname      the full path of the file name
-/// @param sfname     the short file name or NULL
-/// @param tail       the tail of the path
-/// @param allow_dirs allow matching with dir
+/// @param pattern    The pattern to match with
+/// @param prog       The pre-compiled regprog or NULL
+/// @param fname      The full path of the file name
+/// @param sfname     The short file name or NULL
+/// @param tail       The tail of the path
+/// @param allow_dirs Allow matching with dir
+///
 /// @return true if there is a match, false otherwise
 static bool match_file_pat(char_u *pattern, regprog_T **prog, char_u *fname,
                            char_u *sfname, char_u *tail, int allow_dirs)
@@ -7065,12 +7137,16 @@ static bool match_file_pat(char_u *pattern, regprog_T **prog, char_u *fname,
   return result;
 }
 
-/*
- * Return TRUE if a file matches with a pattern in "list".
- * "list" is a comma-separated list of patterns, like 'wildignore'.
- * "sfname" is the short file name or NULL, "ffname" the long file name.
- */
-int match_file_list(char_u *list, char_u *sfname, char_u *ffname)
+/// Return true if a file matches with a pattern in "list".
+/// "list" is a comma-separated list of patterns, like 'wildignore'.
+/// "sfname" is the short file name or NULL, "ffname" the long file name.
+///
+/// @param list   The list of patterns to match
+/// @param sfname The short file name
+/// @param ffname The full file name
+///
+/// @return true if a file matches with a pattern in "list".
+bool match_file_list(char_u *list, char_u *sfname, char_u *ffname)
 {
   char_u buf[100];
   char_u      *tail;
@@ -7085,16 +7161,18 @@ int match_file_list(char_u *list, char_u *sfname, char_u *ffname)
   p = list;
   while (*p) {
     copy_option_part(&p, buf, 100, ",");
-    regpat = file_pat_to_reg_pat(buf, NULL, &allow_dirs, FALSE);
-    if (regpat == NULL)
+    regpat = file_pat_to_reg_pat(buf, NULL, &allow_dirs, false);
+    if (regpat == NULL) {
       break;
+    }
     match = match_file_pat(regpat, NULL, ffname, sfname,
         tail, (int)allow_dirs);
     xfree(regpat);
-    if (match)
-      return TRUE;
+    if (match) {
+      return true;
+    }
   }
-  return FALSE;
+  return false;
 }
 
 /// Convert the given pattern "pat" which has shell style wildcards in it, into
