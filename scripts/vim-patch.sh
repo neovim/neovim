@@ -38,16 +38,17 @@ check_executable() {
 get_vim_sources() {
   check_executable git
 
-  cd "${VIM_SOURCE_DIR}"
   if [[ ! -d ${VIM_SOURCE_DIR} ]]; then
     echo "Cloning Vim sources into '${VIM_SOURCE_DIR}'."
     git clone --depth=1000 https://github.com/vim/vim.git "${VIM_SOURCE_DIR}"
+    cd "${VIM_SOURCE_DIR}"
   else
     if [[ ! -d "${VIM_SOURCE_DIR}/.git" ]]; then
       echo "✘ ${VIM_SOURCE_DIR} does not appear to be a git repository."
       echo "  Please remove it and try again."
       exit 1
     fi
+    cd "${VIM_SOURCE_DIR}"
     echo "Updating Vim sources in '${VIM_SOURCE_DIR}'."
     git pull &&
       echo "✔ Updated Vim sources." ||
