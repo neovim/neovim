@@ -422,7 +422,11 @@ if(BUSTED_PRG)
   if(POLICY CMP0026)
     cmake_policy(SET CMP0026 OLD)
   endif()
-  get_target_property(TEST_LIBNVIM_PATH nvim-test LOCATION)
+  if(CMAKE_GENERATOR MATCHES "Visual Studio")
+    set(TEST_LIBNVIM_PATH ${CMAKE_BINARY_DIR}/lib/nvim-test.dll)
+  else()
+    get_target_property(TEST_LIBNVIM_PATH nvim-test LOCATION)
+  endif()
 
   configure_file(
     test/config/paths.lua.in
