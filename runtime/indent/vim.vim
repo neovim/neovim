@@ -1,7 +1,7 @@
 " Vim indent file
 " Language:	Vim script
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2014 Sep 19
+" Last Change:	2014 Dec 12
 
 " Only load this indent file when no other was loaded.
 if exists("b:did_indent")
@@ -89,7 +89,7 @@ function GetVimIndentIntern()
 
   " Subtract a 'shiftwidth' on a :endif, :endwhile, :catch, :finally, :endtry,
   " :endfun, :else and :augroup END.
-  if cur_text =~ '^\s*\(ene\@!\|cat\|fina\|el\|aug\%[roup]\s*!\=\s\+END\)'
+  if cur_text =~ '^\s*\(ene\@!\|cat\|fina\|el\|aug\%[roup]\s*!\=\s\+[eE][nN][dD]\)'
     let ind = ind - &sw
   endif
 

@@ -1,4 +1,4 @@
-*map.txt*       For Vim version 7.4.  Last change: 2014 Oct 03
+*map.txt*       For Vim version 7.4.  Last change: 2014 Dec 08
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar

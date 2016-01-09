@@ -2415,6 +2415,10 @@ col({expr})	The result is a Number, which is the byte index of the column
 			    number of bytes in the cursor line plus one)
 		    'x	    position of mark x (if the mark is not set, 0 is
 			    returned)
+		    v       In Visual mode: the start of the Visual area (the
+			    cursor is the end).  When not in Visual mode
+			    returns the cursor position.  Differs from |'<| in
+			    that it's updated right away.
 		Additionally {expr} can be [lnum, col]: a |List| with the line
 		and column number. Most useful when the column is "$", to get
 		the last column of a specific line.  When "lnum" or "col" is
@@ -6695,6 +6699,10 @@ virtcol({expr})						*virtcol()*
 			    plus one)
 		    'x	    position of mark x (if the mark is not set, 0 is
 			    returned)
+		    v       In Visual mode: the start of the Visual area (the
+			    cursor is the end).  When not in Visual mode
+			    returns the cursor position.  Differs from |'<| in
+			    that it's updated right away.
 		Note that only marks in the current file can be used.
 		Examples: >
   virtcol(".")	   with text "foo^Lbar", with cursor on the "^L", returns 5
