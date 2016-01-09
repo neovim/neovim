@@ -581,9 +581,9 @@ static size_t do_path_expand(garray_T *gap, const char_u *path,
                && (vim_strchr((char_u *)"*?[{~$", *path_end) != NULL
 #ifndef WIN32
                    || (!p_fic && (flags & EW_ICASE)
-                       && isalpha(PTR2CHAR(path_end))))
+                       && isalpha(PTR2CHAR(path_end)))
 #endif
-    ) {
+    )) {
       e = p;
     }
     if (has_mbyte) {
