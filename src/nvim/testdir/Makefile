@@ -29,9 +29,8 @@ SCRIPTS := test_eval.out                                               \
            test_charsearch.out                                         \
            test_close_count.out                                        \
            test_command_count.out                                      \
-           test_cdo.out                                                \
 
-NEW_TESTS =
+NEW_TESTS = test_cdo.res
 
 SCRIPTS_GUI := test16.out
 
@@ -165,4 +164,4 @@ newtests: newtestssilent
 newtestssilent: $(NEW_TESTS)
 
 %.res: %.vim .gdbinit
-	$(RUN_VIMTEST) -u runtest.vim $*.vim
+	$(RUN_VIMTEST) -S runtest.vim $*.vim
