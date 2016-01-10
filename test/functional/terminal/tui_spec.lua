@@ -53,7 +53,7 @@ describe('tui', function()
     ]])
   end)
 
-  it('interprets leading esc byte as the alt modifier', function()
+  it('interprets leading <Esc> byte as ALT modifier in normal-mode', function()
     local keys = 'dfghjkl'
     for c in keys:gmatch('.') do
       execute('nnoremap <a-'..c..'> ialt-'..c..'<cr><esc>')
@@ -76,6 +76,25 @@ describe('tui', function()
       alt-h                                             |
       [No Name] [+]                                     |
                                                         |
+      -- TERMINAL --                                    |
+    ]])
+  end)
+
+  it('does not mangle unmapped ALT-key chord', function()
+    -- Vim represents ALT/META by setting the "high bit" of the modified key;
+    -- we do _not_. #3982
+    --
+    -- Example: for input ALT+j:
+    --    * Vim (Nvim prior to #3982) sets high-bit, inserts "ê".
+    --    * Nvim (after #3982) inserts "j".
+    feed('i\x1bj')
+    screen:expect([[
+      j{1: }                                                |
+      ~                                                 |
+      ~                                                 |
+      ~                                                 |
+      [No Name] [+]                                     |
+      -- INSERT --                                      |
       -- TERMINAL --                                    |
     ]])
   end)
