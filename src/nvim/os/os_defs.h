@@ -25,6 +25,10 @@
 # define MAXNAMLEN NAME_MAX         /* for Linux before .99p3 */
 #endif
 
+#if defined(_MAX_PATH) && !defined(MAXNAMLEN)
+# define MAXNAMLEN _MAX_PATH       /* for Windows */
+#endif
+
 // Default value.
 #ifndef MAXNAMLEN
 # define MAXNAMLEN 512
