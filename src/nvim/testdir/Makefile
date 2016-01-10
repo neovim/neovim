@@ -96,6 +96,7 @@ clean:
 	        *.rej          \
 	        *.orig         \
 	        test.log       \
+	        messages       \
 	        $(RM_ON_RUN)   \
 	        $(RM_ON_START) \
 	        valgrind.*     \
@@ -148,7 +149,7 @@ test1.out: .gdbinit test1.in
 test49.out: test49.vim
 
 nolog:
-	-rm -f test.log
+	-rm -f test.log messages
 
 
 # New style of tests uses Vim script with assert calls.  These are easier
@@ -164,4 +165,4 @@ newtests: newtestssilent
 newtestssilent: $(NEW_TESTS)
 
 %.res: %.vim .gdbinit
-	$(RUN_VIMTEST) -S runtest.vim $*.vim
+	$(RUN_VIMTEST) -u NONE -S runtest.vim $*.vim
