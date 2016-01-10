@@ -1,9 +1,9 @@
 " Vim syntax file
 " Language:	Elm Filter rules
-" Maintainer:	Dr. Charles E. Campbell, Jr. <NdrOchipS@PcampbellAfamily.Mbiz>
-" Last Change:	Sep 11, 2006
-" Version:	5
-" URL:	http://mysite.verizon.net/astronaut/vim/index.html#vimlinks_syntax
+" Maintainer:	Charles E. Campbell <NdrOchipS@PcampbellAfamily.Mbiz>
+" Last Change:	Oct 23, 2014
+" Version:	6
+" URL:	http://www.drchip.org/astronaut/vim/index.html#SYNTAX_ELMFILT
 
 " For version 5.x: Clear all syntax items
 " For version 6.x: Quit when a syntax file was already loaded
