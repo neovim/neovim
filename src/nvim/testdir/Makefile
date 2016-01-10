@@ -158,7 +158,12 @@ nolog:
 # Limitation: Only works with the +eval feature.
 RUN_VIMTEST = VIMRUNTIME=$(SCRIPTSOURCE); export VIMRUNTIME; $(VALGRIND) $(VIMPROG) -u unix.vim -U NONE --noplugin
 
-newtests: $(NEW_TESTS)
+newtests: newtestssilent
+	@/bin/sh -c "if test -f messages && grep -q 'FAILED' messages; then \
+	                 cat messages && cat test.log;                      \
+	             fi"                                                    \
+
+newtestssilent: $(NEW_TESTS)
 
 %.res: %.vim .gdbinit
 	$(RUN_VIMTEST) -u runtest.vim $*.vim
