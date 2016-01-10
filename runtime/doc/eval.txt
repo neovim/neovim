@@ -4180,9 +4180,14 @@ jobsend({job}, {data})					{Nvim} *jobsend()*
 
 jobstart({cmd}[, {opts}])				{Nvim} *jobstart()*
 		Spawns {cmd} as a job.  If {cmd} is a |List|, it will be run
-		directly.  If {cmd} is a |string|, it will be equivalent to >
-			:call jobstart([&shell, &shellcmdflag, '{cmd}'])
-<		If passed, {opts} must be a dictionary with any of the
+		directly.  If {cmd} is a |string|, it will be roughly 
+		equivalent to >
+			:call jobstart(split(&shell) + split(&shellcmdflag) + ['{cmd}'])
+<		NOTE: read |shell-unquoting| before constructing any lists 
+		with 'shell' or 'shellcmdflag' options.  The above call is 
+		only written to show the idea, one needs to perform unquoting 
+		and do split taking quotes into account.
+		If passed, {opts} must be a dictionary with any of the
 		following keys:
 		  - on_stdout: stdout event handler
 		  - on_stderr: stderr event handler
