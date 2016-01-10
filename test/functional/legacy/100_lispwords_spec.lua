@@ -4,10 +4,10 @@ local helpers = require('test.functional.helpers')
 local source = helpers.source
 local clear, expect = helpers.clear, helpers.expect
 
-describe('undolevel', function()
+describe('lispwords', function()
   setup(clear)
 
-  it('is working', function()
+  it('global-local', function()
     source([[
       setglobal lispwords=foo,bar,baz
       setlocal lispwords-=foo 
