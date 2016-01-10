@@ -7999,7 +7999,7 @@ static void prepare_assert_error(garray_T *gap)
     }
   }
   if (sourcing_lnum > 0) {
-    vim_snprintf(buf, ARRAY_SIZE(buf), "line %" PRId64, (long)sourcing_lnum);
+    vim_snprintf(buf, ARRAY_SIZE(buf), "line %" PRId64, (int64_t)sourcing_lnum);
     ga_concat(gap, (char_u *)buf);
   }
   if (sourcing_name != NULL || sourcing_lnum > 0) {
