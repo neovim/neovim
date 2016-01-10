@@ -160,7 +160,7 @@ RUN_VIMTEST = VIMRUNTIME=$(SCRIPTSOURCE); export VIMRUNTIME; $(VALGRIND) $(VIMPR
 newtests: newtestssilent
 	@/bin/sh -c "if test -f messages && grep -q 'FAILED' messages; then \
 	                 cat messages && cat test.log;                      \
-	             fi"                                                    \
+	             fi"
 
 newtestssilent: $(NEW_TESTS)
 
