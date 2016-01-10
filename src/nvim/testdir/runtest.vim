@@ -21,9 +21,7 @@
 " It will be called after each Test_ function.
 
 " Without the +eval feature we can't run these tests, bail out.
-if 0
-  quit!
-endif
+so small.vim
 
 " Check that the screen size is at least 24 x 80 characters.
 if &lines < 24 || &columns < 80 
@@ -38,7 +36,15 @@ endif
 " Source the test script.  First grab the file name, in case the script
 " navigates away.
 let testname = expand('%')
-source %
+let done = 0
+let fail = 0
+let errors = []
+try
+  source %
+catch
+  let fail += 1
+  call add(errors, 'Caught exception: ' . v:exception . ' @ ' . v:throwpoint)
+endtry
 
 " Locate Test_ functions and execute them.
 redir @q
@@ -46,9 +52,6 @@ function /^Test_
 redir END
 let tests = split(substitute(@q, 'function \(\k*()\)', '\1', 'g'))
 
-let done = 0
-let fail = 0
-let errors = []
 for test in tests
   if exists("*SetUp")
     call SetUp()
