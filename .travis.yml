@@ -12,8 +12,6 @@ env:
     - PATH="$(python2.7 -c 'import site; print(site.getuserbase())')/bin:$HOME/.local/mingw32/bin:$PATH"
     # LLVM symbolizer path.
     - LLVM_SYMBOLIZER="$(which llvm-symbolizer-3.6)"
-    # Force verification of DLOG macros.
-    - CFLAGS="-DMIN_LOG_LEVEL=0"
     # Build directory for Neovim.
     - BUILD_DIR="$TRAVIS_BUILD_DIR/build"
     # Build directory for third-party dependencies.
@@ -29,7 +27,8 @@ env:
                    -DCMAKE_BUILD_TYPE=Debug
                    -DCMAKE_INSTALL_PREFIX:PATH=$INSTALL_PREFIX
                    -DBUSTED_OUTPUT_TYPE=gtest
-                   -DDEPS_PREFIX=$DEPS_BUILD_DIR/usr"
+                   -DDEPS_PREFIX=$DEPS_BUILD_DIR/usr
+                   -DMIN_LOG_LEVEL=0"
     - DEPS_CMAKE_FLAGS="-DDEPS_DOWNLOAD_DIR:PATH=$DEPS_DOWNLOAD_DIR"
     # Additional CMake flags for 32-bit builds.
     - CMAKE_FLAGS_32BIT="-DCMAKE_SYSTEM_LIBRARY_PATH=/lib32:/usr/lib32:/usr/local/lib32

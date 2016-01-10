@@ -381,6 +381,16 @@ install_helper(
   FILES ${MANPAGES}
   DESTINATION ${CMAKE_INSTALL_MANDIR}/man1)
 
+# MIN_LOG_LEVEL for log.h
+if(DEFINED MIN_LOG_LEVEL)
+  if(NOT MIN_LOG_LEVEL MATCHES "^[0-3]$")
+    message(FATAL_ERROR "MIN_LOG_LEVEL must be a number DEBUG (0), INFO (1), WARNING (2) or ERROR (3)")
+  endif()
+  message(STATUS "Log level set to ${MIN_LOG_LEVEL}")
+else()
+  message(STATUS "Log level not specified, defaulting to INFO(1)")
+endif()
+
 # Go down the tree.
 
 add_subdirectory(src/nvim)

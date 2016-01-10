@@ -31,6 +31,11 @@
 #
 # CMAKE_BUILD_TYPE := Debug
 
+# By default, nvim's log level is INFO (1) (unless CMAKE_BUILD_TYPE is
+# "Release", in which case logging is disabled).
+# The log level must be a number DEBUG (0), INFO (1), WARNING (2) or ERROR (3).
+# CMAKE_EXTRA_FLAGS += -DMIN_LOG_LEVEL=1
+
 # By default, nvim uses bundled versions of its required third-party
 # dependencies.
 # Uncomment these entries to instead use system-wide installations of
