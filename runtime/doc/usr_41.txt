@@ -1,4 +1,4 @@
-*usr_41.txt*	For Vim version 7.4.  Last change: 2014 Aug 16
+*usr_41.txt*	For Vim version 7.4.  Last change: 2015 Nov 30
 
 		     VIM USER MANUAL - by Bram Moolenaar
 
@@ -887,6 +887,11 @@ Mappings:				    *mapping-functions*
 	mapcheck()		check if a matching mapping exists
 	maparg()		get rhs of a mapping
 	wildmenumode()		check if the wildmode is active
+
+Testing:				    *test-functions*
+	assert_equal()       	assert that two expressions values are equal
+	assert_false()		assert that an expression is false
+	assert_true()		assert that an expression is true
 
 Various:					*various-functions*
 	mode()			get current editing mode

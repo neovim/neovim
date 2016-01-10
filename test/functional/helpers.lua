@@ -1,4 +1,5 @@
 require('coxpcall')
+local ffi = require('ffi')
 local lfs = require('lfs')
 local assert = require('luassert')
 local Loop = require('nvim.loop')
@@ -246,9 +247,13 @@ end
 
 local function source(code)
   local tmpname = os.tmpname()
+  if ffi.os == 'OSX' and string.match(tmpname, '^/tmp') then
+   tmpname = '/private'..tmpname
+  end
   write_file(tmpname, code)
   nvim_command('source '..tmpname)
   os.remove(tmpname)
+  return tmpname
 end
 
 local function eq(expected, actual)
