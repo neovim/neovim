@@ -2,10 +2,10 @@
 " Language:		shell (sh) Korn shell (ksh) bash (sh)
 " Maintainer:		Charles E. Campbell  <NdrOchipS@PcampbellAfamily.Mbiz>
 " Previous Maintainer:	Lennart Schultz <Lennart.Schultz@ecmwf.int>
-" Last Change:		Mar 20, 2014
-" Version:		132
-" URL:		http://mysite.verizon.net/astronaut/vim/index.html#vimlinks_syntax
-" For options and settings, please use:	:help ft-sh-syntax
+" Last Change:		Jan 08, 2015
+" Version:		134
+" URL:		http://www.drchip.org/astronaut/vim/index.html#SYNTAX_SH
+" For options and settings, please use:      :help ft-sh-syntax
 " This file includes many ideas from ?ric Brunet (eric.brunet@ens.fr)
 
 " For version 5.x: Clear all syntax items {{{1
@@ -17,7 +17,7 @@ elseif exists("b:current_syntax")
 endif
 
 " AFAICT "." should be considered part of the iskeyword.  Using iskeywords in
-" syntax is dicey, so the following code permits the user to
+" syntax is dicey, so the following code permits the user to prevent/override
 "  g:sh_isk set to a string	: specify iskeyword.
 "  g:sh_noisk exists	: don't change iskeyword
 "  g:sh_noisk does not exist	: (default) append "." to iskeyword
@@ -104,7 +104,7 @@ syn cluster shErrorList	contains=shDoError,shIfError,shInError,shCaseError,shEsa
 if exists("b:is_kornshell")
  syn cluster ErrorList add=shDTestError
 endif
-syn cluster shArithParenList	contains=shArithmetic,shCaseEsac,shDeref,shDerefSimple,shEcho,shEscape,shNumber,shOperator,shPosnParm,shExSingleQuote,shExDoubleQuote,shRedir,shSingleQuote,shDoubleQuote,shStatement,shVariable,shAlias,shTest,shCtrlSeq,shSpecial,shParen,bashSpecialVariables,bashStatement
+syn cluster shArithParenList	contains=shArithmetic,shCaseEsac,shComment,shDeref,shDerefSimple,shDo,shEcho,shEscape,shIf,shFor,shNumber,shOperator,shPosnParm,shExSingleQuote,shExDoubleQuote,shRedir,shSingleQuote,shDoubleQuote,shStatement,shVariable,shAlias,shTest,shCtrlSeq,shSpecial,shParen,bashSpecialVariables,bashStatement
 syn cluster shArithList	contains=@shArithParenList,shParenError
 syn cluster shCaseEsacList	contains=shCaseStart,shCase,shCaseBar,shCaseIn,shComment,shDeref,shDerefSimple,shCaseCommandSub,shCaseExSingleQuote,shCaseSingleQuote,shCaseDoubleQuote,shCtrlSeq,@shErrorList,shStringSpecial,shCaseRange
 syn cluster shCaseList	contains=@shCommandSubList,shCaseEsac,shColon,shCommandSub,shComment,shDo,shEcho,shExpr,shFor,shHereDoc,shIf,shRedir,shSetList,shSource,shStatement,shVariable,shCtrlSeq
@@ -127,7 +127,7 @@ syn cluster shHereList	contains=shBeginHere,shHerePayload
 syn cluster shHereListDQ	contains=shBeginHere,@shDblQuoteList,shHerePayload
 syn cluster shIdList	contains=shCommandSub,shWrapLineOperator,shSetOption,shDeref,shDerefSimple,shRedir,shExSingleQuote,shExDoubleQuote,shSingleQuote,shDoubleQuote,shExpr,shCtrlSeq,shStringSpecial,shAtExpr
 syn cluster shIfList	contains=@shLoopList,shDblBrace,shDblParen,shFunctionKey,shFunctionOne,shFunctionTwo
-syn cluster shLoopList	contains=@shCaseList,shTestOpr,shExpr,shDblBrace,shConditional,shCaseEsac,shTest,@shErrorList,shSet,shOption
+syn cluster shLoopList	contains=@shCaseList,shIf,shFor,shForPP,shTestOpr,shExpr,shDblBrace,shConditional,shCaseEsac,shTest,@shErrorList,shSet,shOption
 syn cluster shSubShList	contains=@shCommandSubList,shCaseEsac,shColon,shCommandSub,shComment,shDo,shEcho,shExpr,shFor,shIf,shRedir,shSetList,shSource,shStatement,shVariable,shCtrlSeq,shOperator
 syn cluster shTestList	contains=shCharClass,shComment,shCommandSub,shDeref,shDerefSimple,shExDoubleQuote,shDoubleQuote,shExpr,shNumber,shOperator,shExSingleQuote,shSingleQuote,shTestOpr,shTest,shCtrlSeq
 " Echo: {{{1
@@ -151,18 +151,18 @@ endif
 " Error Codes: {{{1
 " ============
 if !exists("g:sh_no_error")
- syn match	shDoError	"\<done\>"
- syn match	shIfError	"\<fi\>"
- syn match	shInError	"\<in\>"
- syn match	shCaseError	";;"
- syn match	shEsacError	"\<esac\>"
- syn match	shCurlyError	"}"
- syn match	shParenError	")"
- syn match	shOK	'\.\(done\|fi\|in\|esac\)'
+ syn match   shDoError "\<done\>"
+ syn match   shIfError "\<fi\>"
+ syn match   shInError "\<in\>"
+ syn match   shCaseError ";;"
+ syn match   shEsacError "\<esac\>"
+ syn match   shCurlyError "}"
+ syn match   shParenError ")"
+ syn match   shOK	'\.\(done\|fi\|in\|esac\)'
  if exists("b:is_kornshell")
-   syn match	shDTestError	"]]"
+  syn match     shDTestError "]]"
  endif
- syn match	shTestError	"]"
+ syn match     shTestError "]"
 endif
 
 " Options: {{{1
@@ -197,9 +197,10 @@ syn region shTest	transparent matchgroup=shStatement start="\<test\s" skip=+\\\\
 syn match  shTestOpr	contained	"<=\|>=\|!=\|==\|-.\>\|-\(nt\|ot\|ef\|eq\|ne\|lt\|le\|gt\|ge\)\>\|[!<>]"
 syn match  shTestOpr	contained	'=' skipwhite nextgroup=shTestDoubleQuote,shTestSingleQuote,shTestPattern
 syn match  shTestPattern	contained	'\w\+'
-syn match  shTestDoubleQuote	contained	'\%(\%(\\\\\)*\\\)\@<!"[^"]*"'
+syn region shTestDoubleQuote	contained	start='"' skip='\\"' end='"' contains=shBQpairs
 syn match  shTestSingleQuote	contained	'\\.'
 syn match  shTestSingleQuote	contained	"'[^']*'"
+syn match  shBQpairs	contained	'\\\\'
 if exists("b:is_kornshell") || exists("b:is_bash")
  syn region  shDblBrace matchgroup=Delimiter start="\[\[" skip=+\\\\\|\\$+ end="\]\]"	contains=@shTestList
  syn region  shDblParen matchgroup=Delimiter start="((" skip=+\\\\\|\\$+ end="))"	contains=@shTestList
@@ -216,11 +217,11 @@ if s:sh_fold_ifdofor
  syn region shIf	fold transparent matchgroup=shConditional start="\<if\_s" matchgroup=shConditional skip=+-fi\>+ end="\<;\_s*then\>" end="\<fi\>"   contains=@shIfList
  syn region shFor	fold matchgroup=shLoop start="\<for\ze\_s\s*\%(((\)\@!" end="\<in\_s" end="\<do\>"me=e-2	contains=@shLoopList,shDblParen skipwhite nextgroup=shCurlyIn
 else
- syn region shDo	transparent matchgroup=shConditional start="\<do\>" matchgroup=shConditional end="\<done\>" contains=@shLoopList
+ syn region shDo	transparent matchgroup=shConditional start="\<do\>" matchgroup=shConditional end="\<done\>"	contains=@shLoopList
  syn region shIf	transparent matchgroup=shConditional start="\<if\_s" matchgroup=shConditional skip=+-fi\>+ end="\<;\_s*then\>" end="\<fi\>"   contains=@shIfList
  syn region shFor	matchgroup=shLoop start="\<for\ze\_s\s*\%(((\)\@!" end="\<in\>" end="\<do\>"me=e-2	contains=@shLoopList,shDblParen skipwhite nextgroup=shCurlyIn
- syn match  shForPP	'\<for\>\ze\_s*(('
 endif
+syn region shForPP	matchgroup=shLoop start='\<for\>\_s*((' end='))' contains=shTestOpr
 if exists("b:is_kornshell") || exists("b:is_bash")
  syn cluster shCaseList	add=shRepeat
  syn cluster shFunctionList	add=shRepeat
@@ -280,7 +281,7 @@ if exists("b:is_kornshell") || exists("b:is_bash")
 elseif !exists("g:sh_no_error")
  syn region shCommandSub matchgroup=Error start="\$(" end=")" contains=@shCommandSubList
 endif
-syn region shCmdParenRegion matchgroup=shCmdSubRegion start="(" skip='\\\\\|\\.' end=")"	contains=@shCommandSubList
+syn region shCmdParenRegion matchgroup=shCmdSubRegion start="(\ze[^(]" skip='\\\\\|\\.' end=")" contains=@shCommandSubList
 
 if exists("b:is_bash")
  syn cluster shCommandSubList add=bashSpecialVariables,bashStatement
@@ -321,12 +322,12 @@ elseif !exists("g:sh_no_error")
 endif
 syn region  shSingleQuote	matchgroup=shQuote start=+'+ end=+'+		contains=@Spell
 syn region  shDoubleQuote	matchgroup=shQuote start=+\%(\%(\\\\\)*\\\)\@<!"+ skip=+\\"+ end=+"+	contains=@shDblQuoteList,shStringSpecial,@Spell
+"syn region  shDoubleQuote	matchgroup=shQuote start=+"+ skip=+\\"+ end=+"+	contains=@shDblQuoteList,shStringSpecial,@Spell
 syn match   shStringSpecial	"[^[:print:] \t]"	contained
 syn match   shStringSpecial	"\%(\\\\\)*\\[\\"'`$()#]"
-"syn match   shSpecial	"[^\\]\zs\%(\\\\\)*\\[\\"'`$()#]"	nextgroup=shMoreSpecial,shComment
-syn match   shSpecial	"[^\\]\zs\%(\\\\\)*\\[\\"'`$()#]"	nextgroup=shMoreSpecial
-syn match   shSpecial	"^\%(\\\\\)*\\[\\"'`$()#]"		nextgroup=shComment
-syn match   shMoreSpecial	"\%(\\\\\)*\\[\\"'`$()#]" 	contained	nextgroup=shMoreSpecial
+syn match   shSpecial	"[^\\]\zs\%(\\\\\)*\\[\\"'`$()#]" nextgroup=shMoreSpecial,shComment
+syn match   shSpecial	"^\%(\\\\\)*\\[\\"'`$()#]"	nextgroup=shComment
+syn match   shMoreSpecial	"\%(\\\\\)*\\[\\"'`$()#]" nextgroup=shMoreSpecial contained
 
 " Comments: {{{1
 "==========
@@ -363,9 +364,9 @@ elseif s:sh_fold_heredoc
  syn region shHereDoc matchgroup=shRedir19 fold start="<<\\\z([^ \t|]*\)"		matchgroup=shRedir19 end="^\z1\s*$"
 
 else
- syn region shHereDoc matchgroup=shRedir20 start="<<\s*\\\=\z([^ \t|]*\)"		matchgroup=shRedir20 end="^\z1\s*$"	contains=@shDblQuoteList
+ syn region shHereDoc matchgroup=shRedir20 start="<<\s*\\\=\z([^ \t|]*\)"		matchgroup=shRedir20 end="^\z1\s*$"    contains=@shDblQuoteList
  syn region shHereDoc matchgroup=shRedir21 start="<<\s*\"\z([^ \t|]*\)\""		matchgroup=shRedir21 end="^\z1\s*$"
- syn region shHereDoc matchgroup=shRedir22 start="<<-\s*\z([^ \t|]*\)"		matchgroup=shRedir22 end="^\s*\z1\s*$"	contains=@shDblQuoteList
+ syn region shHereDoc matchgroup=shRedir22 start="<<-\s*\z([^ \t|]*\)"		matchgroup=shRedir22 end="^\s*\z1\s*$" contains=@shDblQuoteList
  syn region shHereDoc matchgroup=shRedir23 start="<<-\s*'\z([^ \t|]*\)'"		matchgroup=shRedir23 end="^\s*\z1\s*$"
  syn region shHereDoc matchgroup=shRedir24 start="<<\s*'\z([^ \t|]*\)'"		matchgroup=shRedir24 end="^\z1\s*$"
  syn region shHereDoc matchgroup=shRedir25 start="<<-\s*\"\z([^ \t|]*\)\""		matchgroup=shRedir25 end="^\s*\z1\s*$"
@@ -450,21 +451,21 @@ syn match  shDerefSpecial	contained	"\({[#!]\)\@<=[[:alnum:]*@_]\+"	nextgroup=@s
 syn match  shDerefVar	contained	"{\@<=\k\+"		nextgroup=@shDerefVarList
 
 " sh ksh bash : ${var[... ]...}  array reference: {{{1
-syn region  shDerefVarArray	contained	matchgroup=shDeref start="\[" end="]"	contains=@shCommandSubList nextgroup=shDerefOp,shDerefOpError
+syn region  shDerefVarArray   contained	matchgroup=shDeref start="\[" end="]"	contains=@shCommandSubList nextgroup=shDerefOp,shDerefOpError
 
 " Special ${parameter OPERATOR word} handling: {{{1
-" sh ksh bash : ${parameter:-word}	word is default value
-" sh ksh bash : ${parameter:=word}	assign word as default value
-" sh ksh bash : ${parameter:?word}	display word if parameter is null
-" sh ksh bash : ${parameter:+word}	use word if parameter is not null, otherwise nothing
-"    ksh bash : ${parameter#pattern}	remove small left  pattern
-"    ksh bash : ${parameter##pattern}	remove large left  pattern
-"    ksh bash : ${parameter%pattern}	remove small right pattern
-"    ksh bash : ${parameter%%pattern}	remove large right pattern
-"        bash : ${parameter^pattern}	Case modification
-"        bash : ${parameter^^pattern}	Case modification
-"        bash : ${parameter,pattern}	Case modification
-"        bash : ${parameter,,pattern}	Case modification
+" sh ksh bash : ${parameter:-word}    word is default value
+" sh ksh bash : ${parameter:=word}    assign word as default value
+" sh ksh bash : ${parameter:?word}    display word if parameter is null
+" sh ksh bash : ${parameter:+word}    use word if parameter is not null, otherwise nothing
+"    ksh bash : ${parameter#pattern}  remove small left  pattern
+"    ksh bash : ${parameter##pattern} remove large left  pattern
+"    ksh bash : ${parameter%pattern}  remove small right pattern
+"    ksh bash : ${parameter%%pattern} remove large right pattern
+"        bash : ${parameter^pattern}  Case modification
+"        bash : ${parameter^^pattern} Case modification
+"        bash : ${parameter,pattern}  Case modification
+"        bash : ${parameter,,pattern} Case modification
 syn cluster shDerefPatternList	contains=shDerefPattern,shDerefString
 if !exists("g:sh_no_error")
  syn match shDerefOpError	contained	":[[:punct:]]"
@@ -576,7 +577,7 @@ hi def link shDoubleQuote	shString
 hi def link shEcho	shString
 hi def link shEchoDelim	shOperator
 hi def link shEchoQuote	shString
-hi def link shForPP	shLoop
+"hi def link shForPP	shLoop
 hi def link shEmbeddedEcho	shString
 hi def link shEscape	shCommandSub
 hi def link shExDoubleQuote	shDoubleQuote
@@ -598,12 +599,12 @@ hi def link shSetOption	shOption
 hi def link shSingleQuote	shString
 hi def link shSource	shOperator
 hi def link shStringSpecial	shSpecial
-hi def link shStringSpecial	Unique
 hi def link shSubShRegion	shOperator
 hi def link shTestOpr	shConditional
 hi def link shTestPattern	shString
 hi def link shTestDoubleQuote	shString
 hi def link shTestSingleQuote	shString
+hi def link shBQpairs	shString
 hi def link shVariable	shSetList
 hi def link shWrapLineOperator	shOperator
 

@@ -42,7 +42,7 @@ exe "syn include @yaccCode ".s:Cpath
 " ---------------------------------------------------------------------
 "  Yacc Clusters: {{{1
 syn cluster yaccInitCluster	contains=yaccKey,yaccKeyActn,yaccBrkt,yaccType,yaccString,yaccUnionStart,yaccHeader2,yaccComment,yaccDefines,yaccParseParam,yaccParseOption
-syn cluster yaccRulesCluster	contains=yaccNonterminal,yaccString,yaccComment
+syn cluster yaccRulesCluster	contains=yaccNonterminal,yaccString
 
 " ---------------------------------------------------------------------
 "  Yacc Sections: {{{1
