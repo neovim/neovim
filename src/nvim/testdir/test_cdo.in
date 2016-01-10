@@ -2,6 +2,7 @@ Tests for the :cdo, :cfdo, :ldo and :lfdo commands
 
 STARTTEST
 :so small.vim
+:lang mess C
 :if !has('quickfix') | e! test.ok | wq! test.out | endif
 
 :call writefile(["Line1", "Line2", "Line3"], 'Xtestfile1')
