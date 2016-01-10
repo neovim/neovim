@@ -198,16 +198,18 @@ endif
 " From the 'Python Library Reference' class hierarchy at the bottom.
 " http://docs.python.org/library/exceptions.html
 if !exists("python_no_exception_highlight")
-  " builtin base exceptions (only used as base classes for other exceptions)
+  " builtin base exceptions (used mostly as base classes for other exceptions)
   syn keyword pythonExceptions	BaseException Exception
-  syn keyword pythonExceptions	ArithmeticError EnvironmentError
+  syn keyword pythonExceptions	ArithmeticError BufferError
   syn keyword pythonExceptions	LookupError
   " builtin base exception removed in Python 3.0
   syn keyword pythonExceptions	StandardError
+  " builtin exceptions deprecated since Python 3.3
+  syn keyword pythonExceptions	EnvironmentError IOError WindowsError
   " builtin exceptions (actually raised)
-  syn keyword pythonExceptions	AssertionError AttributeError BufferError
+  syn keyword pythonExceptions	AssertionError AttributeError
   syn keyword pythonExceptions	EOFError FloatingPointError GeneratorExit
-  syn keyword pythonExceptions	IOError ImportError IndentationError
+  syn keyword pythonExceptions	ImportError IndentationError
   syn keyword pythonExceptions	IndexError KeyError KeyboardInterrupt
   syn keyword pythonExceptions	MemoryError NameError NotImplementedError
   syn keyword pythonExceptions	OSError OverflowError ReferenceError
@@ -216,12 +218,20 @@ if !exists("python_no_exception_highlight")
   syn keyword pythonExceptions	UnboundLocalError UnicodeError
   syn keyword pythonExceptions	UnicodeDecodeError UnicodeEncodeError
   syn keyword pythonExceptions	UnicodeTranslateError ValueError VMSError
-  syn keyword pythonExceptions	WindowsError ZeroDivisionError
+  syn keyword pythonExceptions	ZeroDivisionError
+  " builtin OS exceptions
+  syn keyword pythonExceptions	BlockingIOError BrokenPipeError
+  syn keyword pythonExceptions	ChildProcessError ConnectionAbortedError
+  syn keyword pythonExceptions	ConnectionError ConnectionRefusedError
+  syn keyword pythonExceptions	ConnectionResetError FileExistsError
+  syn keyword pythonExceptions	FileNotFoundError InterruptedError
+  syn keyword pythonExceptions	IsADirectoryError NotADirectoryError
+  syn keyword pythonExceptions	PermissionError ProcessLookupError
   " builtin warnings
   syn keyword pythonExceptions	BytesWarning DeprecationWarning FutureWarning
   syn keyword pythonExceptions	ImportWarning PendingDeprecationWarning
-  syn keyword pythonExceptions	RuntimeWarning SyntaxWarning UnicodeWarning
-  syn keyword pythonExceptions	UserWarning Warning
+  syn keyword pythonExceptions	ResourceWarning RuntimeWarning SyntaxWarning
+  syn keyword pythonExceptions	UnicodeWarning UserWarning Warning
 endif
 
 if exists("python_space_error_highlight")
