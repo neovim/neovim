@@ -1828,9 +1828,9 @@ ex_let_one (
                       && vim_strchr(endchars, *skipwhite(p)) == NULL))
       EMSG(_(e_letunexp));
     else {
-      long n;
+      int n;
       int opt_type;
-      long numval;
+      int numval;
       char_u      *stringval = NULL;
       char_u      *s;
 
@@ -4540,7 +4540,7 @@ get_option_tv (
 )
 {
   char_u      *option_end;
-  long numval;
+  int numval;
   char_u      *stringval;
   int opt_type;
   int c;

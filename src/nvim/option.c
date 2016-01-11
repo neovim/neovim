@@ -793,61 +793,61 @@ void set_init_1(void)
   set_helplang_default(get_mess_lang());
 }
 
-/*
- * Set an option to its default value.
- * This does not take care of side effects!
- */
-static void 
-set_option_default (
-    int opt_idx,
-    int opt_flags,                  /* OPT_FREE, OPT_LOCAL and/or OPT_GLOBAL */
-    int compatible                 /* use Vi default value */
-)
+/// Set an option to its default value.
+/// This does not take care of side effects!
+///
+/// @param option index
+/// @param OPT_FREE, OPT_LOCAL and/or OPT_GLOBAL
+static void set_option_default(int opt_idx, int opt_flags)
 {
-  char_u      *varp;            /* pointer to variable for current option */
-  int dvi;                      /* index in def_val[] */
+  char_u *varp;  // pointer to variable for current option
   int both = (opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0;
 
   varp = get_varp_scope(&(options[opt_idx]), both ? OPT_LOCAL : opt_flags);
   uint32_t flags = options[opt_idx].flags;
-  if (varp != NULL) {       /* skip hidden option, nothing to do for it */
-    dvi = ((flags & P_VI_DEF) || compatible) ? VI_DEFAULT : VIM_DEFAULT;
+  if (varp != NULL) {  // skip hidden option, nothing to do for it
+    // index in def_val[]
+    int dvi = (flags & P_VI_DEF) ? VI_DEFAULT : VIM_DEFAULT;
     if (flags & P_STRING) {
-      /* Use set_string_option_direct() for local options to handle
-       * freeing and allocating the value. */
-      if (options[opt_idx].indir != PV_NONE)
+      // Use set_string_option_direct() for local options to handle
+      // freeing and allocating the value.
+      if (options[opt_idx].indir != PV_NONE) {
         set_string_option_direct(NULL, opt_idx,
             options[opt_idx].def_val[dvi], opt_flags, 0);
+      }
       else {
-        if ((opt_flags & OPT_FREE) && (flags & P_ALLOCED))
+        if ((opt_flags & OPT_FREE) && (flags & P_ALLOCED)) {
           free_string_option(*(char_u **)(varp));
+        }
         *(char_u **)varp = options[opt_idx].def_val[dvi];
         options[opt_idx].flags &= ~P_ALLOCED;
       }
     } else if (flags & P_NUM)   {
-      if (options[opt_idx].indir == PV_SCROLL)
+      if (options[opt_idx].indir == PV_SCROLL) {
         win_comp_scroll(curwin);
-      else {
-        *(long *)varp = (long)options[opt_idx].def_val[dvi];
-        /* May also set global value for local option. */
-        if (both)
-          *(long *)get_varp_scope(&(options[opt_idx]), OPT_GLOBAL) =
-            *(long *)varp;
+      } else {
+        *(int *)varp = (int)(intptr_t)options[opt_idx].def_val[dvi];
+        // May also set global value for local option.
+        if (both) {
+          *(int *)get_varp_scope(&(options[opt_idx]), OPT_GLOBAL) =
+            *(int *)varp;
+        }
       }
-    } else {  /* P_BOOL */
+    } else {  // P_BOOL
       *(int *)varp = (int)(intptr_t)options[opt_idx].def_val[dvi];
 #ifdef UNIX
-      /* 'modeline' defaults to off for root */
-      if (options[opt_idx].indir == PV_ML && getuid() == ROOT_UID)
+      // 'modeline' defaults to off for root
+      if (options[opt_idx].indir == PV_ML && getuid() == ROOT_UID) {
         *(int *)varp = FALSE;
+      }
 #endif
-      /* May also set global value for local option. */
-      if (both)
-        *(int *)get_varp_scope(&(options[opt_idx]), OPT_GLOBAL) =
-          *(int *)varp;
+      // May also set global value for local option.
+      if (both) {
+        *(int *)get_varp_scope(&(options[opt_idx]), OPT_GLOBAL) = *(int *)varp;
+      }
     }
 
-    /* The default value is not insecure. */
+    // The default value is not insecure.
     uint32_t *flagsp = insecure_flag(opt_idx, opt_flags);
     *flagsp = *flagsp & ~P_INSECURE;
   }
@@ -855,21 +855,17 @@ set_option_default (
   set_option_scriptID_idx(opt_idx, opt_flags, current_SID);
 }
 
-/*
- * Set all options (except terminal options) to their default value.
- */
-static void 
-set_options_default (
-    int opt_flags                  /* OPT_FREE, OPT_LOCAL and/or OPT_GLOBAL */
-)
+/// Set all options (except terminal options) to their default value.
+///
+/// @param OPT_FREE, OPT_LOCAL and/or OPT_GLOBAL
+static void set_options_default(int opt_flags)
 {
   for (int i = 0; options[i].fullname; i++) {
     if (!(options[i].flags & P_NODEFAULT)) {
-      set_option_default(i, opt_flags, p_cp);
+      set_option_default(i, opt_flags);
     }
   }
-
-  /* The 'scroll' option must be computed for all windows. */
+  // The 'scroll' option must be computed for all windows.
   FOR_ALL_TAB_WINDOWS(tp, wp) {
     win_comp_scroll(wp);
   }
@@ -952,8 +948,9 @@ void set_init_2(void)
    */
   set_number_default("scroll", Rows / 2);
   idx = findoption((char_u *)"scroll");
-  if (idx >= 0 && !(options[idx].flags & P_WAS_SET))
-    set_option_default(idx, OPT_LOCAL, p_cp);
+  if (idx >= 0 && !(options[idx].flags & P_WAS_SET)) {
+    set_option_default(idx, OPT_LOCAL);
+  }
   comp_col();
 
   /*
@@ -1363,12 +1360,11 @@ do_set (
               ?  VI_DEFAULT : VIM_DEFAULT];
           else if (nextchar == '<') {
             /* For 'autoread' -1 means to use global value. */
-            if ((int *)varp == &curbuf->b_p_ar
-                && opt_flags == OPT_LOCAL)
+            if ((int *)varp == &curbuf->b_p_ar && opt_flags == OPT_LOCAL) {
               value = -1;
-            else
-              value = *(int *)get_varp_scope(&(options[opt_idx]),
-                  OPT_GLOBAL);
+            } else {
+              value = *(int *)get_varp_scope(&(options[opt_idx]), OPT_GLOBAL);
+            }
           } else {
             /*
              * ":set invopt": invert
@@ -1411,12 +1407,12 @@ do_set (
             else if (nextchar == '<') {
               /* For 'undolevels' NO_LOCAL_UNDOLEVEL means to
                * use the global value. */
-              if ((long *)varp == &curbuf->b_p_ul
-                  && opt_flags == OPT_LOCAL)
+              if ((int *)varp == &curbuf->b_p_ul && opt_flags == OPT_LOCAL) {
                 value = NO_LOCAL_UNDOLEVEL;
-              else
-                value = *(long *)get_varp_scope(
-                    &(options[opt_idx]), OPT_GLOBAL);
+              } else {
+                value = (long)*(int *)get_varp_scope(&(options[opt_idx]),
+                                                     OPT_GLOBAL);
+              }
             } else if (((long *)varp == &p_wc
                         || (long *)varp == &p_wcm)
                        && (*arg == '<'
@@ -1442,12 +1438,12 @@ do_set (
             }
 
             if (adding)
-              value = *(long *)varp + value;
+              value = (long)*(int *)varp + value;
             if (prepending)
-              value = *(long *)varp * value;
+              value = (long)*(int *)varp * value;
             if (removing)
-              value = *(long *)varp - value;
-            errmsg = set_num_option(opt_idx, varp, value,
+              value = (long)*(int *)varp - value;
+            errmsg = set_num_option(opt_idx, varp, (int)value,
                 errbuf, sizeof(errbuf), opt_flags);
           } else if (opt_idx >= 0) {                      /* string */
             char_u      *save_arg = NULL;
@@ -3843,26 +3839,23 @@ set_bool_option (
   return NULL;
 }
 
-/*
- * Set the value of a number option, and take care of side effects.
- * Returns NULL for success, or an error message for an error.
- */
-static char_u *
-set_num_option (
-    int opt_idx,                            /* index in options[] table */
-    char_u *varp,                      /* pointer to the option variable */
-    long value,                             /* new value */
-    char_u *errbuf,                    /* buffer for error messages */
-    size_t errbuflen,                       /* length of "errbuf" */
-    int opt_flags                          /* OPT_LOCAL, OPT_GLOBAL and
-                                           OPT_MODELINE */
-)
+/// Set the value of a number option, and take care of side effects.
+/// Returns NULL for success, or an error message for an error.
+///
+/// @param opt_idx index in options[] table
+/// @param varp pointer to the option variable
+/// @param value new value
+/// @param errbuf buffer for error messages
+/// @param errbuflen length of "errbuf"
+/// @param opt_flags OPT_LOCAL, OPT_GLOBAL and OPT_MODELINE
+static char_u *set_num_option(int opt_idx, char_u *varp, int value,
+                              char_u *errbuf, size_t errbuflen, int opt_flags)
 {
   char_u      *errmsg = NULL;
-  long old_value = *(long *)varp;
-  long old_Rows = Rows;                 /* remember old Rows */
-  long old_Columns = Columns;           /* remember old Columns */
-  long        *pp = (long *)varp;
+  int old_value = *(int *)varp;
+  int old_Rows = Rows;                 // remember old Rows
+  int old_Columns = Columns;           // remember old Columns
+  long *pp = (long *)varp;
 
   /* Disallow changing some options from secure mode. */
   if ((secure || sandbox != 0)
@@ -3870,7 +3863,7 @@ set_num_option (
     return e_secure;
   }
 
-  *pp = value;
+  *(int *)pp = value;
   /* Remember where the option was set. */
   set_option_scriptID_idx(opt_idx, opt_flags, current_SID);
 
@@ -3882,7 +3875,7 @@ set_num_option (
   /*
    * Number options that need some action when changed
    */
-  if (pp == &p_wh || pp == &p_hh) {
+  if ((int *)pp == &p_wh || pp == &p_hh) {
     if (p_wh < 1) {
       errmsg = e_positive;
       p_wh = 1;
@@ -3898,14 +3891,12 @@ set_num_option (
 
     /* Change window height NOW */
     if (lastwin != firstwin) {
-      if (pp == &p_wh && curwin->w_height < p_wh)
-        win_setheight((int)p_wh);
+      if ((int *)pp == &p_wh && curwin->w_height < p_wh)
+        win_setheight(p_wh);
       if (pp == &p_hh && curbuf->b_help && curwin->w_height < p_hh)
         win_setheight((int)p_hh);
     }
-  }
-  /* 'winminheight' */
-  else if (pp == &p_wmh) {
+  } else if ((int *)pp == &p_wmh) {  // 'winminheight'
     if (p_wmh < 0) {
       errmsg = e_positive;
       p_wmh = 0;
@@ -3915,7 +3906,7 @@ set_num_option (
       p_wmh = p_wh;
     }
     win_setminheight();
-  } else if (pp == &p_wiw) {
+  } else if ((int *)pp == &p_wiw) {
     if (p_wiw < 1) {
       errmsg = e_positive;
       p_wiw = 1;
@@ -3926,11 +3917,10 @@ set_num_option (
     }
 
     /* Change window width NOW */
-    if (lastwin != firstwin && curwin->w_width < p_wiw)
-      win_setwidth((int)p_wiw);
-  }
-  /* 'winminwidth' */
-  else if (pp == &p_wmw) {
+    if (lastwin != firstwin && curwin->w_width < p_wiw) {
+      win_setwidth(p_wiw);
+    }
+  } else if ((int *)pp == &p_wmw) {  // 'winminwidth'
     if (p_wmw < 0) {
       errmsg = e_positive;
       p_wmw = 0;
@@ -4017,10 +4007,9 @@ set_num_option (
       p_titlelen = 85;
     }
     if (starting != NO_SCREEN && old_value != p_titlelen)
-      need_maketitle = TRUE;
-  }
-  /* if p_ch changed value, change the command line height */
-  else if (pp == &p_ch) {
+      need_maketitle = true;
+  } else if ((int *)pp == &p_ch) {  // if p_ch changed value,
+                                    // change the command line height
     if (p_ch < 1) {
       errmsg = e_positive;
       p_ch = 1;
@@ -4052,12 +4041,12 @@ set_num_option (
     }
   }
   /* sync undo before 'undolevels' changes */
-  else if (pp == &p_ul) {
+  else if ((int *)pp == &p_ul) {
     /* use the old value, otherwise u_sync() may not work properly */
     p_ul = old_value;
     u_sync(TRUE);
     p_ul = value;
-  } else if (pp == &curbuf->b_p_ul) {
+  } else if ((int *)pp == &curbuf->b_p_ul) {
     /* use the old value, otherwise u_sync() may not work properly */
     curbuf->b_p_ul = old_value;
     u_sync(TRUE);
@@ -4117,14 +4106,14 @@ set_num_option (
     if (updating_screen) {
       *pp = old_value;
     } else if (full_screen) {
-      screen_resize((int)Columns, (int)Rows);
+      screen_resize(Columns, Rows);
     } else {
       /* Postpone the resizing; check the size and cmdline position for
        * messages. */
       check_shellsize();
       if (cmdline_row > Rows - p_ch && Rows > p_ch) {
         assert(p_ch >= 0 && Rows - p_ch <= INT_MAX);
-        cmdline_row = (int)(Rows - p_ch);
+        cmdline_row = Rows - p_ch;
       }
     }
     if (p_window >= Rows || !option_was_set((char_u *)"window"))
@@ -4201,7 +4190,7 @@ set_num_option (
 
   /* May set global value for local option. */
   if ((opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0)
-    *(long *)get_varp_scope(&(options[opt_idx]), OPT_GLOBAL) = *pp;
+    *(int *)get_varp_scope(&(options[opt_idx]), OPT_GLOBAL) = *(int *)pp;
 
   options[opt_idx].flags |= P_WAS_SET;
 
@@ -4374,15 +4363,14 @@ bool set_tty_option(char *name, char *value)
  *
  * Returns:
  * Number or Toggle option: 1, *numval gets value.
- *	     String option: 0, *stringval gets allocated string.
+ *           String option: 0, *stringval gets allocated string.
  * Hidden Number or Toggle option: -1.
- *	     hidden String option: -2.
- *		   unknown option: -3.
+ *           hidden String option: -2.
+ *                 unknown option: -3.
  */
-int 
-get_option_value (
+int get_option_value(
     char_u *name,
-    long *numval,
+    int *numval,
     char_u **stringval,            /* NULL when only checking existence */
     int opt_flags
 )
@@ -4397,9 +4385,7 @@ get_option_value (
   opt_idx = findoption(name);
   if (opt_idx < 0)                  /* unknown option */
     return -3;
-
   varp = get_varp_scope(&(options[opt_idx]), opt_flags);
-
   if (options[opt_idx].flags & P_STRING) {
     if (varp == NULL)                       /* hidden option */
       return -2;
@@ -4411,9 +4397,9 @@ get_option_value (
 
   if (varp == NULL)                 /* hidden option */
     return -1;
-  if (options[opt_idx].flags & P_NUM)
-    *numval = *(long *)varp;
-  else {
+  if (options[opt_idx].flags & P_NUM) {
+    *numval = *(int *)varp;
+  } else {
     /* Special case: 'modified' is b_changed, but we also want to consider
      * it set when 'ff' or 'fenc' changed. */
     if ((bool *)varp == &curbuf->b_changed)
@@ -4538,7 +4524,7 @@ int get_option_value_strict(char *name,
     if (p->flags & P_STRING) {
       *stringval = xstrdup(*(char **)(varp));
     } else if (p->flags & P_NUM) {
-      *numval = *(long *) varp;
+      *numval = *(int *)varp;
     } else {
       *numval = *(int *)varp;
     }
@@ -4601,11 +4587,10 @@ set_option_value (
           }
         }
         if (flags & P_NUM)
-          return set_num_option(opt_idx, varp, number,
+          return set_num_option(opt_idx, varp, (int)number,
               NULL, 0, opt_flags);
         else
-          return set_bool_option(opt_idx, varp, (int)number,
-              opt_flags);
+          return set_bool_option(opt_idx, varp, (int)number, opt_flags);
       }
     }
   }
@@ -4716,11 +4701,9 @@ showoptions (
      * display the items
      */
     if (run == 1) {
-      assert(Columns <= LONG_MAX - GAP
-             && Columns + GAP >= LONG_MIN + 3
-             && (Columns + GAP - 3) / INC >= INT_MIN
+      assert((Columns + GAP - 3) / INC >= INT_MIN
              && (Columns + GAP - 3) / INC <= INT_MAX);
-      cols = (int)((Columns + GAP - 3) / INC);
+      cols = (Columns + GAP - 3) / INC;
       if (cols == 0)
         cols = 1;
       rows = (item_count + cols - 1) / cols;
@@ -4754,7 +4737,7 @@ static int optval_default(vimoption_T *p, char_u *varp)
     return TRUE;            /* hidden option is always at default */
   dvi = ((p->flags & P_VI_DEF) || p_cp) ? VI_DEFAULT : VIM_DEFAULT;
   if (p->flags & P_NUM)
-    return *(long *)varp == (long)p->def_val[dvi];
+    return *(int *)varp == (int)(intptr_t)p->def_val[dvi];
   if (p->flags & P_BOOL)
     return *(int *)varp == (int)(intptr_t)p->def_val[dvi];
   /* P_STRING */
@@ -4981,13 +4964,13 @@ static int put_setstring(FILE *fd, char *cmd, char *name, char_u **valuep, int e
 
 static int put_setnum(FILE *fd, char *cmd, char *name, long *valuep)
 {
-  long wc;
+  int wc;
 
   if (fprintf(fd, "%s %s=", cmd, name) < 0)
     return FAIL;
   if (wc_use_keyname((char_u *)valuep, &wc)) {
     /* print 'wildchar' and 'wildcharm' as a key name */
-    if (fputs((char *)get_special_key_name((int)wc, 0), fd) < 0)
+    if (fputs((char *)get_special_key_name(wc, 0), fd) < 0)
       return FAIL;
   } else if (fprintf(fd, "%" PRId64, (int64_t)*valuep) < 0)
     return FAIL;
@@ -5913,15 +5896,16 @@ option_value2string (
   varp = get_varp_scope(opp, opt_flags);
 
   if (opp->flags & P_NUM) {
-    long wc = 0;
+    int wc = 0;
 
-    if (wc_use_keyname(varp, &wc))
-      STRCPY(NameBuff, get_special_key_name((int)wc, 0));
-    else if (wc != 0)
-      STRCPY(NameBuff, transchar((int)wc));
-    else
-      sprintf((char *)NameBuff, "%" PRId64, (int64_t)*(long *)varp);
-  } else { /* P_STRING */
+    if (wc_use_keyname(varp, &wc)) {
+      STRCPY(NameBuff, get_special_key_name(wc, 0));
+    } else if (wc != 0) {
+      STRCPY(NameBuff, transchar(wc));
+    } else {
+      sprintf((char *)NameBuff, "%" PRId64, (int64_t)*(int *)varp);
+    }
+  } else {  // P_STRING
     varp = *(char_u **)(varp);
     if (varp == NULL)                       /* just in case */
       NameBuff[0] = NUL;
@@ -5935,19 +5919,19 @@ option_value2string (
   }
 }
 
-/*
- * Return TRUE if "varp" points to 'wildchar' or 'wildcharm' and it can be
- * printed as a keyname.
- * "*wcp" is set to the value of the option if it's 'wildchar' or 'wildcharm'.
- */
-static int wc_use_keyname(char_u *varp, long *wcp)
+/// @param pointer to the option
+/// @param is set to the value of the option if it's 'wildchar' or 'wildcharm'.
+///
+/// @return true if "varp" points to 'wildchar' or 'wildcharm' and it can be
+///         printed as a keymap.
+static bool wc_use_keyname(char_u *varp, int *wcp)
 {
   if (((long *)varp == &p_wc) || ((long *)varp == &p_wcm)) {
-    *wcp = *(long *)varp;
-    if (IS_SPECIAL(*wcp) || find_special_key_in_table((int)*wcp) >= 0)
-      return TRUE;
+    *wcp = *(int *)varp;
+    if (IS_SPECIAL(*wcp) || find_special_key_in_table(*wcp) >= 0)
+      return true;
   }
-  return FALSE;
+  return false;
 }
 
 /*

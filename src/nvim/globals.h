@@ -117,12 +117,9 @@
 #define DFLT_COLS       80              /* default value for 'columns' */
 #define DFLT_ROWS       24              /* default value for 'lines' */
 
-EXTERN long Rows                        /* nr of rows in the screen */
-#ifdef DO_INIT
-  = DFLT_ROWS
-#endif
-;
-EXTERN long Columns INIT(= DFLT_COLS);         /* nr of columns in the screen */
+EXTERN int Rows INIT(= DFLT_ROWS);      // nr of rows in the screen
+
+EXTERN int Columns INIT(= DFLT_COLS);   // nr of columns in the screen
 
 /*
  * The characters and attributes cached for the screen.
@@ -850,12 +847,10 @@ EXTERN int* (*iconv_errno)(void);
 EXTERN int State INIT(= NORMAL);        /* This is the current state of the
                                          * command interpreter. */
 
-EXTERN int finish_op INIT(= FALSE);     /* TRUE while an operator is pending */
-EXTERN long opcount INIT(= 0);          /* count for pending operator */
+EXTERN int finish_op INIT(= false);     /* TRUE while an operator is pending */
+EXTERN int opcount INIT(= 0);           /* count for pending operator */
 
-/*
- * ex mode (Q) state
- */
+// ex mode (Q) state
 EXTERN int exmode_active INIT(= 0);     /* zero, EXMODE_NORMAL or EXMODE_VIM */
 EXTERN int ex_no_reprint INIT(= FALSE); /* no need to print after z or p */
 
@@ -985,12 +980,12 @@ EXTERN pos_T last_cursormoved                 /* for CursorMoved event */
 EXTERN int last_changedtick INIT(= 0);        /* for TextChanged event */
 EXTERN buf_T    *last_changedtick_buf INIT(= NULL);
 
-EXTERN int postponed_split INIT(= 0);       /* for CTRL-W CTRL-] command */
-EXTERN int postponed_split_flags INIT(= 0);       /* args for win_split() */
-EXTERN int postponed_split_tab INIT(= 0);       /* cmdmod.tab */
-EXTERN int g_do_tagpreview INIT(= 0);       /* for tag preview commands:
-                                               height of preview window */
-EXTERN int replace_offset INIT(= 0);        /* offset for replace_push() */
+EXTERN int postponed_split INIT(= 0);         // for CTRL-W CTRL-] command
+EXTERN int postponed_split_flags INIT(= 0);   // args for win_split()
+EXTERN int postponed_split_tab INIT(= 0);     // cmdmod.tab
+EXTERN int g_do_tagpreview INIT(= 0);         // for tag preview commands:
+                                              // height of preview window
+EXTERN int replace_offset INIT(= 0);          // offset for replace_push()
 
 EXTERN char_u   *escape_chars INIT(= (char_u *)" \t\\\"|");
 /* need backslash in cmd line */

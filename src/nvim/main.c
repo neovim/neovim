@@ -100,7 +100,7 @@ typedef struct {
                                         // embedding)
   int no_swap_file;                     /* "-n" argument used */
   int use_debug_break_level;
-  int window_count;                     /* number of windows to use */
+  int window_count;                     // number of windows to use
   int window_layout;                    /* 0, WIN_HOR, WIN_VER or WIN_TABS */
 
 #if !defined(UNIX)
@@ -544,7 +544,7 @@ void getout(int exitval)
     exitval += ex_exitval;
 
   /* Position the cursor on the last screen line, below all the text */
-  ui_cursor_goto((int)Rows - 1, 0);
+  ui_cursor_goto(Rows - 1, 0);
 
   /* Optionally print hashtable efficiency. */
   hash_debug_results();
@@ -601,7 +601,7 @@ void getout(int exitval)
   }
 
   /* Position the cursor again, the autocommands may have moved it */
-  ui_cursor_goto((int)Rows - 1, 0);
+  ui_cursor_goto(Rows - 1, 0);
 
 #if defined(USE_ICONV) && defined(DYNAMIC_ICONV)
   iconv_end();

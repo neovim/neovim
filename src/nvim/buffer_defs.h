@@ -668,7 +668,7 @@ struct file_buffer {
   char_u      *b_p_tags;        /* 'tags' local value */
   char_u      *b_p_dict;        /* 'dictionary' local value */
   char_u      *b_p_tsr;         /* 'thesaurus' local value */
-  long b_p_ul;                  /* 'undolevels' local value */
+  int b_p_ul;                   /* 'undolevels' local value */
   int b_p_udf;                  /* 'undofile' */
   char_u      *b_p_lw;          // 'lispwords' local value
 
@@ -800,8 +800,8 @@ struct tabpage_S {
   win_T           *tp_lastwin;      /* last window in this Tab page */
   long tp_old_Rows;                 /* Rows when Tab page was left */
   long tp_old_Columns;              /* Columns when Tab page was left */
-  long tp_ch_used;                  /* value of 'cmdheight' when frame size
-                                       was set */
+  int tp_ch_used;                   // value of 'cmdheight' when frame size
+                                    // was set
   diff_T          *tp_first_diff;
   buf_T           *(tp_diffbuf[DB_COUNT]);
   int tp_diff_invalid;                  /* list of diffs is outdated */
@@ -835,7 +835,7 @@ typedef struct w_line {
  * or row (FR_ROW) layout or is a leaf, which has a window.
  */
 struct frame_S {
-  char fr_layout;               /* FR_LEAF, FR_COL or FR_ROW */
+  int fr_layout;                /* FR_LEAF, FR_COL or FR_ROW */
   int fr_width;
   int fr_newwidth;              /* new width used in win_equal_rec() */
   int fr_height;
