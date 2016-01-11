@@ -1352,24 +1352,21 @@ ins_redraw (
   if (char_avail())
     return;
 
-  /* Trigger CursorMoved if the cursor moved.  Not when the popup menu is
-   * visible, the command might delete it. */
-  if (ready && (
-        has_cursormovedI()
-        ||
-        curwin->w_p_cole > 0
-        )
+  // Trigger CursorMoved if the cursor moved.  Not when the popup menu is
+  // visible, the command might delete it.
+  if (ready && (has_event(EVENT_CURSORMOVEDI) || curwin->w_p_cole > 0)
       && !equalpos(last_cursormoved, curwin->w_cursor)
-      && !pum_visible()
-      ) {
-    /* Need to update the screen first, to make sure syntax
-     * highlighting is correct after making a change (e.g., inserting
-     * a "(".  The autocommand may also require a redraw, so it's done
-     * again below, unfortunately. */
-    if (syntax_present(curwin) && must_redraw)
+      && !pum_visible()) {
+    // Need to update the screen first, to make sure syntax
+    // highlighting is correct after making a change (e.g., inserting
+    // a "(".  The autocommand may also require a redraw, so it's done
+    // again below, unfortunately.
+    if (syntax_present(curwin) && must_redraw) {
       update_screen(0);
-    if (has_cursormovedI())
-      apply_autocmds(EVENT_CURSORMOVEDI, NULL, NULL, FALSE, curbuf);
+    }
+    if (has_event(EVENT_CURSORMOVEDI)) {
+      apply_autocmds(EVENT_CURSORMOVEDI, NULL, NULL, false, curbuf);
+    }
     if (curwin->w_p_cole > 0) {
       conceal_old_cursor_line = last_cursormoved.lnum;
       conceal_new_cursor_line = curwin->w_cursor.lnum;
@@ -1378,13 +1375,13 @@ ins_redraw (
     last_cursormoved = curwin->w_cursor;
   }
 
-  /* Trigger TextChangedI if b_changedtick differs. */
-  if (ready && has_textchangedI()
+  // Trigger TextChangedI if b_changedtick differs.
+  if (ready && has_event(EVENT_TEXTCHANGEDI)
       && last_changedtick != curbuf->b_changedtick
-      && !pum_visible()
-      ) {
-    if (last_changedtick_buf == curbuf)
-      apply_autocmds(EVENT_TEXTCHANGEDI, NULL, NULL, FALSE, curbuf);
+      && !pum_visible()) {
+    if (last_changedtick_buf == curbuf) {
+      apply_autocmds(EVENT_TEXTCHANGEDI, NULL, NULL, false, curbuf);
+    }
     last_changedtick_buf = curbuf;
     last_changedtick = curbuf->b_changedtick;
   }
@@ -5124,24 +5121,20 @@ insertchar (
   can_si = FALSE;
   can_si_back = FALSE;
 
-  /*
-   * If there's any pending input, grab up to INPUT_BUFLEN at once.
-   * This speeds up normal text input considerably.
-   * Don't do this when 'cindent' or 'indentexpr' is set, because we might
-   * need to re-indent at a ':', or any other character (but not what
-   * 'paste' is set)..
-   * Don't do this when there an InsertCharPre autocommand is defined,
-   * because we need to fire the event for every character.
-   */
-
-  if (       !ISSPECIAL(c)
-             && (!has_mbyte || (*mb_char2len)(c) == 1)
-             && vpeekc() != NUL
-             && !(State & REPLACE_FLAG)
-             && !cindent_on()
-             && !p_ri
-             && !has_insertcharpre()
-             ) {
+  // If there's any pending input, grab up to INPUT_BUFLEN at once.
+  // This speeds up normal text input considerably.
+  // Don't do this when 'cindent' or 'indentexpr' is set, because we might
+  // need to re-indent at a ':', or any other character (but not what
+  // 'paste' is set)..
+  // Don't do this when there an InsertCharPre autocommand is defined,
+  // because we need to fire the event for every character.
+  if (!ISSPECIAL(c)
+      && (!has_mbyte || (*mb_char2len)(c) == 1)
+      && vpeekc() != NUL
+      && !(State & REPLACE_FLAG)
+      && !cindent_on()
+      && !p_ri
+      && !has_event(EVENT_INSERTCHARPRE)) {
 #define INPUT_BUFLEN 100
     char_u buf[INPUT_BUFLEN + 1];
     int i;
@@ -8486,13 +8479,13 @@ static char_u *do_insert_char_pre(int c)
 {
   char_u buf[MB_MAXBYTES + 1];
 
-  /* Return quickly when there is nothing to do. */
-  if (!has_insertcharpre())
+  // Return quickly when there is nothing to do.
+  if (!has_event(EVENT_INSERTCHARPRE)) {
     return NULL;
-
-  if (has_mbyte)
+  }
+  if (has_mbyte) {
     buf[(*mb_char2bytes)(c, buf)] = NUL;
-  else {
+  } else {
     buf[0] = c;
     buf[1] = NUL;
   }

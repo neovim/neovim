@@ -1205,9 +1205,9 @@ static void normal_check_interrupt(NormalState *s)
 static void normal_check_cursor_moved(NormalState *s)
 {
   // Trigger CursorMoved if the cursor moved.
-  if (!finish_op && (has_cursormoved() || curwin->w_p_cole > 0)
+  if (!finish_op && (has_event(EVENT_CURSORMOVED) || curwin->w_p_cole > 0)
       && !equalpos(last_cursormoved, curwin->w_cursor)) {
-    if (has_cursormoved()) {
+    if (has_event(EVENT_CURSORMOVED)) {
       apply_autocmds(EVENT_CURSORMOVED, NULL, NULL, false, curbuf);
     }
 
@@ -1224,7 +1224,7 @@ static void normal_check_cursor_moved(NormalState *s)
 static void normal_check_text_changed(NormalState *s)
 {
   // Trigger TextChanged if b_changedtick differs.
-  if (!finish_op && has_textchanged()
+  if (!finish_op && has_event(EVENT_TEXTCHANGED)
       && last_changedtick != curbuf->b_changedtick) {
     if (last_changedtick_buf == curbuf) {
       apply_autocmds(EVENT_TEXTCHANGED, NULL, NULL, false, curbuf);
