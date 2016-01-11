@@ -832,13 +832,13 @@ This replaces each 'E' character with a euro sign.  Read more in |<Char->|.
 :promptf[ind] [string]
 			Put up a Search dialog.  When [string] is given, it is
 			used as the initial search string.
-			{only for Win32, Motif and GTK GUI}
+			{only for Win32 and GTK GUI}
 
 						*:promptr* *:promptrepl*
 :promptr[epl] [string]
 			Put up a Search/Replace dialog.  When [string] is
 			given, it is used as the initial search string.
-			{only for Win32, Motif and GTK GUI}
+			{only for Win32 and GTK GUI}
 
 
 4.4 Changing tabs					*change-tabs*

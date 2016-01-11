@@ -296,7 +296,7 @@ g8			Print the hex values of the bytes used in the
 B  *+arabic*		|Arabic| language support
 N  *+autocmd*		|:autocmd|, automatic commands
 m  *+balloon_eval*	|balloon-eval| support. Included when compiling with
-			supported GUI (Motif, GTK, GUI) and either
+			supported GUI (GTK GUI) and either
 			Netbeans/Sun Workshop integration or |+eval| feature.
 N  *+browse*		|:browse| command
 N  *+byte_offset*	support for 'o' flag in 'statusline' option, "go"
@@ -330,7 +330,6 @@ N  *+folding*		|folding|
    *+footer*		|gui-footer|
 N  *+gettext*		message translations |multi-lang|
    *+GUI_GTK*		Unix only: GTK+ |GUI|
-   *+GUI_Motif*		Unix only: Motif |GUI|
    *+iconv*		Compiled with the |iconv()| function
    *+iconv/dyn*		Likewise |iconv-dynamic| |/dyn|
 N  *+insert_expand*	|insert_expand| Insert mode completion
