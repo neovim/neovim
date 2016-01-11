@@ -18,6 +18,9 @@
 #include "nvim/strings.h"
 #include "nvim/mouse.h"
 
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "keymap.c.generated.h"
+#endif
 
 /*
  * Some useful tables.
@@ -637,11 +640,11 @@ find_special_key (
             key = DEL;
         }
 
-        /*
-         * Normal Key with modifier: Try to make a single byte code.
-         */
-        if (!IS_SPECIAL(key))
+        // Normal Key with modifier:
+        // Try to make a single byte code (except for Alt/Meta modifiers).
+        if (!IS_SPECIAL(key)) {
           key = extract_modifiers(key, &modifiers);
+        }
 
         *modp = modifiers;
         *srcp = end_of_name;
@@ -652,11 +655,9 @@ find_special_key (
   return 0;
 }
 
-/*
- * Try to include modifiers in the key.
- * Changes "Shift-a" to 'A', "Alt-A" to 0xc0, etc.
- */
-int extract_modifiers(int key, int *modp)
+/// Try to include modifiers (except alt/meta) in the key.
+/// Changes "Shift-a" to 'A', "Ctrl-@" to <Nul>, etc.
+static int extract_modifiers(int key, int *modp)
 {
   int modifiers = *modp;
 
@@ -665,19 +666,12 @@ int extract_modifiers(int key, int *modp)
     modifiers &= ~MOD_MASK_SHIFT;
   }
   if ((modifiers & MOD_MASK_CTRL)
-      && ((key >= '?' && key <= '_') || ASCII_ISALPHA(key))
-      ) {
+      && ((key >= '?' && key <= '_') || ASCII_ISALPHA(key))) {
     key = Ctrl_chr(key);
     modifiers &= ~MOD_MASK_CTRL;
-    /* <C-@> is <Nul> */
-    if (key == 0)
+    if (key == 0) {  // <C-@> is <Nul>
       key = K_ZERO;
-  }
-  if ((modifiers & MOD_MASK_ALT) && key < 0x80
-      && !enc_dbcs                      /* avoid creating a lead byte */
-      ) {
-    key |= 0x80;
-    modifiers &= ~MOD_MASK_ALT;         /* remove the META modifier */
+    }
   }
 
   *modp = modifiers;
