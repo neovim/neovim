@@ -5,6 +5,8 @@
 #include <sys/stat.h>
 #include <stdio.h>
 
+#define NAME_MAX _MAX_PATH
+
 #define TEMP_DIR_NAMES {"$TMP", "$TEMP", "$USERPROFILE", ""}
 #define TEMP_FILE_PATH_MAXLEN _MAX_PATH
 

@@ -1,13 +1,12 @@
 #ifndef NVIM_OS_UNIX_DEFS_H
 #define NVIM_OS_UNIX_DEFS_H
 
+// Windows doesn't have unistd.h, so we include it here to avoid numerous
+// instances of `#ifdef HAVE_UNISTD_H'.
 #include <unistd.h>
-#include <signal.h>
 
-// Defines BSD, if it's a BSD system.
-#ifdef HAVE_SYS_PARAM_H
-# include <sys/param.h>
-#endif
+// POSIX.1-2008 says that NAME_MAX should be in here
+#include <limits.h>
 
 #define TEMP_DIR_NAMES {"$TMPDIR", "/tmp", ".", "~"}
 #define TEMP_FILE_PATH_MAXLEN 256

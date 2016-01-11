@@ -13,28 +13,7 @@
 # include "nvim/os/unix_defs.h"
 #endif
 
-#if defined(DIRSIZ) && !defined(MAXNAMLEN)
-# define MAXNAMLEN DIRSIZ
-#endif
-
-#if defined(UFS_MAXNAMLEN) && !defined(MAXNAMLEN)
-# define MAXNAMLEN UFS_MAXNAMLEN    /* for dynix/ptx */
-#endif
-
-#if defined(NAME_MAX) && !defined(MAXNAMLEN)
-# define MAXNAMLEN NAME_MAX         /* for Linux before .99p3 */
-#endif
-
-#if defined(_MAX_PATH) && !defined(MAXNAMLEN)
-# define MAXNAMLEN _MAX_PATH       /* for Windows */
-#endif
-
-// Default value.
-#ifndef MAXNAMLEN
-# define MAXNAMLEN 512
-#endif
-
-#define BASENAMELEN (MAXNAMLEN - 5)
+#define BASENAMELEN (NAME_MAX - 5)
 
 // Use the system path length if it makes sense.
 #if defined(PATH_MAX) && (PATH_MAX > 1000)
