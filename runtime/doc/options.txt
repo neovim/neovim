@@ -5385,11 +5385,32 @@ A jump table for the options with a short description can be found at |Q_op|.
 	If the name of the shell contains a space, you might need to enclose
 	it in quotes.  Example: >
 		:set shell=\"c:\program\ files\unix\sh.exe\"\ -f
-<	Note the backslash before each quote (to avoid starting a comment) and
-	each space (to avoid ending the option value).  Also note that the
-	"-f" is not inside the quotes, because it is not part of the command
-	name.  And Vim automagically recognizes the backslashes that are path
-	separators.
+<	Note the backslash before each quote (to avoid starting a comment) and 
+	each space (to avoid ending the option value), so better use |:let-&| 
+	like this: >
+		:let &shell='"C:\Program Files\unix\sh.exe" -f'
+<	Also note that the "-f" is not inside the quotes, because it is not 
+	part of the command name.
+							*shell-unquoting*
+	Rules regarding quotes:
+	1. Option is split on space and tab characters that are not inside 
+	   quotes: "abc def" runs shell named "abc" with additional argument 
+	   "def", '"abc def"' runs shell named "abc def" with no additional 
+	   arguments (here and below: additional means “additional to 
+	   'shellcmdflag'”).
+	2. Quotes in option may be present in any position and any number: 
+	   '"abc"', '"a"bc', 'a"b"c', 'ab"c"' and '"a"b"c"' are all equivalent 
+	   to just "abc".
+	3. Inside quotes backslash preceding backslash means one backslash.  
+	   Backslash preceding quote means one quote. Backslash preceding 
+	   anything else means backslash and next character literally: 
+	   '"a\\b"' is the same as "a\b", '"a\\"b"' runs shell named literally 
+	   'a"b', '"a\b"' is the same as "a\b" again.
+	4. Outside of quotes backslash always means itself, it cannot be used 
+	   to escape quote: 'a\"b"' is the same as "a\b".
+	Note that such processing is done after |:set| did its own round of 
+	unescaping, so to keep yourself sane use |:let-&| like shown above.
+
 	This option cannot be set from a |modeline| or in the |sandbox|, for
 	security reasons.
 
@@ -5405,6 +5426,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	On Unix it can have more than one flag.  Each white space separated
 	part is passed as an argument to the shell command.
 	See |option-backslash| about including spaces and backslashes.
+	See |shell-unquoting| which talks about separating this option into 
+	multiple arguments.
 	Also see |dos-shell| for MS-DOS and MS-Windows.
 	This option cannot be set from a |modeline| or in the |sandbox|, for
 	security reasons.
