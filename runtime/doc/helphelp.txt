@@ -184,12 +184,6 @@ command: >
 	:!xterm -e vim +help &
 <
 
-			*:helpfind* *:helpf*
-:helpf[ind]		Like |:help|, but use a dialog to enter the argument.
-			Only for backwards compatibility.  It now executes the
-			ToolBar.FindHelp menu entry instead of using a builtin
-			dialog.  {only when compiled with |+GUI_GTK|}
-
 					*:helpt* *:helptags*
 				*E154* *E150* *E151* *E152* *E153* *E670*
 :helpt[ags] [++t] {dir}

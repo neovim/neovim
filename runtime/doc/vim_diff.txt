@@ -199,6 +199,9 @@ Other options:
   'cpoptions' ('g', 'w', 'H', '*', '-', 'j', and all POSIX flags were removed)
   'guioptions' (only the 't' flag was removed)
   'guipty'
+  'imactivatefunc'
+  'imactivatekey'
+  'imstatusfunc'
   'macatsui'
   'restorescreen'
   'shelltype'
@@ -215,6 +218,7 @@ Other options:
 Other commands:
   :Print
   :fixdel
+  :helpfind
   :mode (no longer accepts an argument)
   :open
   :shell

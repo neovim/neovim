@@ -1025,12 +1025,6 @@ return {
     func='ex_helpclose',
   },
   {
-    command='helpfind',
-    flags=bit.bor(EXTRA, NOTRLCOM),
-    addr_type=ADDR_LINES,
-    func='ex_ni',
-  },
-  {
     command='helpgrep',
     flags=bit.bor(EXTRA, NOTRLCOM, NEEDARG),
     addr_type=ADDR_LINES,

@@ -492,7 +492,6 @@ followed by another Vim command:
     :function
     :global
     :help
-    :helpfind
     :lcscope
     :ldo
     :lfdo

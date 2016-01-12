@@ -314,7 +314,6 @@ N  *+dialog_gui*	Support for |:confirm| with GUI dialog.
 N  *+dialog_con*	Support for |:confirm| with console dialog.
 N  *+dialog_con_gui*	Support for |:confirm| with GUI and console dialog.
 N  *+digraphs*		|digraphs| *E196*
-   *+dnd*		Support for DnD into the "~ register |quote_~|.
 N  *+eval*		expression evaluation |eval.txt|
 N  *+ex_extra*		Vim's extra Ex commands: |:center|, |:left|,
 			|:normal|, |:retab| and |:right|
@@ -325,7 +324,6 @@ N  *+find_in_path*	include file searches: |[I|, |:isearch|,
 			|CTRL-W_CTRL-I|, |:checkpath|, etc.
 N  *+folding*		|folding|
 N  *+gettext*		message translations |multi-lang|
-   *+GUI_GTK*		Unix only: GTK+ |GUI|
    *+iconv*		Compiled with the |iconv()| function
    *+iconv/dyn*		Likewise |iconv-dynamic| |/dyn|
 N  *+insert_expand*	|insert_expand| Insert mode completion
