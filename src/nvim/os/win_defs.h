@@ -10,6 +10,9 @@
 
 #define FNAME_ILLEGAL "\"*?><|"
 
+// Separator character for environment variables.
+#define ENV_SEPCHAR ';'
+
 #define USE_CRNL
 
 #ifdef _MSC_VER
