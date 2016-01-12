@@ -1,8 +1,3 @@
-#ifdef HAVE_BE64TOH
-# define _BSD_SOURCE 1
-# define _DEFAULT_SOURCE 1
-# include <endian.h>
-#endif
 #include <stdlib.h>
 #include <stddef.h>
 #include <stdbool.h>
@@ -48,6 +43,12 @@
 #include "nvim/quickfix.h"
 #include "nvim/lib/khash.h"
 #include "nvim/lib/kvec.h"
+
+#ifdef HAVE_BE64TOH
+# define _BSD_SOURCE 1
+# define _DEFAULT_SOURCE 1
+# include <endian.h>
+#endif
 
 // Note: when using bufset hash pointers are intentionally casted to uintptr_t
 // and not to khint32_t or khint64_t: this way compiler must give a warning
