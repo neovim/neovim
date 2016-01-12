@@ -16,7 +16,6 @@ check_type_size("void *" SIZEOF_VOID_PTR)
 check_symbol_exists(_NSGetEnviron crt_externs.h HAVE__NSGETENVIRON)
 
 # Headers
-check_include_files(dirent.h HAVE_DIRENT_H)
 check_include_files(fcntl.h HAVE_FCNTL_H)
 check_include_files(iconv.h HAVE_ICONV_H)
 check_include_files(langinfo.h HAVE_LANGINFO_H)
@@ -25,7 +24,6 @@ check_include_files(locale.h HAVE_LOCALE_H)
 check_include_files(pwd.h HAVE_PWD_H)
 check_include_files(strings.h HAVE_STRINGS_H)
 check_include_files(stropts.h HAVE_STROPTS_H)
-check_include_files(sys/param.h HAVE_SYS_PARAM_H)
 check_include_files(sys/wait.h HAVE_SYS_WAIT_H)
 if(NOT HAVE_SYS_WAIT_H AND UNIX)
   # See if_cscope.c
