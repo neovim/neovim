@@ -594,7 +594,7 @@ When no or zero priority is given, 500 is used.
 The priority for the PopUp menu is not used.
 
 The Help menu will be placed on the far right side of the menu bar on systems
-which support this (Motif and GTK+).  For GTK+ 2, this is not done anymore
+which support this (GTK+).  For GTK+ 2, this is not done anymore
 because right-aligning the Help menu is now discouraged UI design.
 
 You can use a priority higher than 9999, to make it go after the Help menu,

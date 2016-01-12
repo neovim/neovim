@@ -3184,8 +3184,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 		the right moment, try adding this flag.  This must be done
 		before starting the GUI.  Set it in your |gvimrc|.  Adding or
 		removing it after the GUI has started has no effect.
-								*'go-F'*
-	  'F'	Add a footer.  Only for Motif.  See |gui-footer|.
 
 
 						*'guipty'* *'noguipty'*
