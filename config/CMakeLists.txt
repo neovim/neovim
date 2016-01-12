@@ -23,7 +23,6 @@ check_include_files(libgen.h HAVE_LIBGEN_H)
 check_include_files(locale.h HAVE_LOCALE_H)
 check_include_files(pwd.h HAVE_PWD_H)
 check_include_files(strings.h HAVE_STRINGS_H)
-check_include_files(stropts.h HAVE_STROPTS_H)
 check_include_files(sys/wait.h HAVE_SYS_WAIT_H)
 if(NOT HAVE_SYS_WAIT_H AND UNIX)
   # See if_cscope.c
