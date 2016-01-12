@@ -30,7 +30,7 @@ SCRIPTS := test_eval.out                                               \
            test_close_count.out                                        \
            test_command_count.out                                      \
 
-NEW_TESTS = test_cdo.res
+NEW_TESTS =
 
 SCRIPTS_GUI := test16.out
 
