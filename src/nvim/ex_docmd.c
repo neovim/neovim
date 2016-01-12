@@ -1694,7 +1694,7 @@ static char_u * do_one_cmd(char_u **cmdlinep,
   // autocommands defined, trigger the matching autocommands.
   if (p != NULL && ea.cmdidx == CMD_SIZE && !ea.skip
       && ASCII_ISUPPER(*ea.cmd)
-      && has_cmdundefined()) {
+      && has_event(EVENT_CMDUNDEFINED)) {
     p = ea.cmd;
     while (ASCII_ISALNUM(*p)) {
       ++p;

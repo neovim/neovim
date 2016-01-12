@@ -6266,50 +6266,12 @@ int trigger_cursorhold(void)
   return FALSE;
 }
 
-/*
- * Return TRUE when there is a CursorMoved autocommand defined.
- */
-int has_cursormoved(void)
+/// Return true if "event" autocommand is defined.
+///
+/// @param event the autocommand to check
+bool has_event(int event) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  return first_autopat[(int)EVENT_CURSORMOVED] != NULL;
-}
-
-/*
- * Return TRUE when there is a CursorMovedI autocommand defined.
- */
-int has_cursormovedI(void)
-{
-  return first_autopat[(int)EVENT_CURSORMOVEDI] != NULL;
-}
-
-/*
- * Return TRUE when there is a TextChanged autocommand defined.
- */
-int has_textchanged(void)
-{
-  return first_autopat[(int)EVENT_TEXTCHANGED] != NULL;
-}
-
-/*
- * Return TRUE when there is a TextChangedI autocommand defined.
- */
-int has_textchangedI(void)
-{
-  return first_autopat[(int)EVENT_TEXTCHANGEDI] != NULL;
-}
-
-/*
- * Return TRUE when there is an InsertCharPre autocommand defined.
- */
-int has_insertcharpre(void)
-{
-  return first_autopat[(int)EVENT_INSERTCHARPRE] != NULL;
-}
-
-/// @returns true when there is an CmdUndefined autocommand defined.
-int has_cmdundefined(void)
-{
-  return first_autopat[(int)EVENT_CMDUNDEFINED] != NULL;
+  return first_autopat[event] != NULL;
 }
 
 static int 
