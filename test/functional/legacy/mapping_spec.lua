@@ -21,7 +21,7 @@ describe('mapping', function()
       vim ]])
   end)
 
-  it('works with Ctrl-c in Insert mode', function()
+  it('Ctrl-c works in Insert mode', function()
     -- Mapping of ctrl-c in insert mode
     execute('set cpo-=< cpo-=k')
     execute('inoremap <c-c> <ctrl-c>')
@@ -41,16 +41,13 @@ describe('mapping', function()
       ]])
   end)
 
-  it('works with Ctrl-c in Visual mode', function()
-    -- Mapping of ctrl-c in Visual mode.
-    execute([[vnoremap <c-c> :<C-u>$put ='vmap works']])
+  it('Ctrl-c works in Visual mode', function()
+    execute([[vnoremap <c-c> :<C-u>$put ='vmap works'<cr>]])
     feed('GV')
-    -- For some reason the mapping is only triggered when <C-c> is entered in a
-    -- separate feed command.
+    -- XXX: For some reason the mapping is only triggered
+    -- when <C-c> is in a separate feed command.
     wait()
     feed('<c-c>')
-    wait()
-    feed('<cr>')
     execute('vunmap <c-c>')
 
     expect([[
@@ -58,7 +55,7 @@ describe('mapping', function()
       vmap works]])
   end)
 
-  it('works with Ctrl-c in Insert mode with langmap', function()
+  it('langmap', function()
     -- langmap should not get remapped in insert mode.
     execute('inoremap { FAIL_ilangmap')
     execute('set langmap=+{ langnoremap')
