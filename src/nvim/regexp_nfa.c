@@ -5875,7 +5875,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
         // If ireg_icombine is not set only skip over the character
         // itself.  When it is set skip over composing characters.
         if (result && enc_utf8 && !ireg_icombine) {
-          clen = utf_char2len(curc);
+          clen = utf_ptr2len(reginput);
         }
 
         ADD_STATE_IF_MATCH(t->state);
