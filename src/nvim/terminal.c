@@ -77,9 +77,7 @@
 typedef struct terminal_state {
   VimState state;
   Terminal *term;
-  int save_state;           // saved value of State
   int save_rd;              // saved value of RedrawingDisabled
-  bool save_mapped_ctrl_c;  // saved value of mapped_ctrl_c;
   bool close;
   bool got_bs;              // if the last input was <C-\>
 } TerminalState;
@@ -362,12 +360,11 @@ void terminal_enter(void)
 
   checkpcmark();
   setpcmark();
-  s->save_state = State;
+  int save_state = State;
   s->save_rd = RedrawingDisabled;
   State = TERM_FOCUS;
+  mapped_ctrl_c |= TERM_FOCUS;  // Always map CTRL-C to avoid interrupt.
   RedrawingDisabled = false;
-  s->save_mapped_ctrl_c = mapped_ctrl_c;
-  mapped_ctrl_c = true;
   // go to the bottom when the terminal is focused
   adjust_topline(s->term, buf, false);
   // erase the unfocused cursor
@@ -380,11 +377,10 @@ void terminal_enter(void)
   state_enter(&s->state);
 
   restart_edit = 0;
-  State = s->save_state;
+  State = save_state;
   RedrawingDisabled = s->save_rd;
   // draw the unfocused cursor
   invalidate_terminal(s->term, s->term->cursor.row, s->term->cursor.row + 1);
-  mapped_ctrl_c = s->save_mapped_ctrl_c;
   unshowmode(true);
   redraw(curbuf->handle != s->term->buf_handle);
   ui_busy_stop();
