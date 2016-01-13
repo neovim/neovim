@@ -2859,6 +2859,8 @@ void do_sub(exarg_T *eap)
   static int do_list = FALSE;           /* list last line with subs. */
   static int do_number = FALSE;         /* list last line with line nr*/
   static int do_ic = 0;                 /* ignore case flag */
+  int save_do_all;                      // remember user specified 'g' flag
+  int save_do_ask;                      // remember user specified 'c' flag
   char_u      *pat = NULL, *sub = NULL;         /* init for GCC */
   int delimiter;
   int sublen;
@@ -3048,12 +3050,14 @@ void do_sub(exarg_T *eap)
       break;
     ++cmd;
   }
-  if (do_count)
+  if (do_count) {
     do_ask = FALSE;
+  }
 
-  /*
-   * check for a trailing count
-   */
+  save_do_all = do_all;
+  save_do_ask = do_ask;
+
+  // check for a trailing count
   cmd = skipwhite(cmd);
   if (ascii_isdigit(*cmd)) {
     i = getdigits_long(&cmd);
@@ -3752,8 +3756,12 @@ skip:
     /* Cursor position may require updating */
     changed_window_setting();
 
-  vim_regfree(regmatch.regprog);
-}
+    vim_regfree(regmatch.regprog);
+
+    // Restore the flag values, they can be used for ":&&".
+    do_all = save_do_all;
+    do_ask = save_do_ask;
+  }
 
 /*
  * Give message for number of substitutions.
