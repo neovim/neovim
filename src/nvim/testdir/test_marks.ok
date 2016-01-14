@@ -1,0 +1,6 @@
+	textline A
+	textline B
+	textline C
+
+Results:
+Mark after delete-undo-redo-undo: [0, 15, 2, 0]

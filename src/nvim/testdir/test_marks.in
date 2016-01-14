@@ -1,0 +1,18 @@
+Tests for marks.
+
+STARTTEST
+:so small.vim
+:" test that a deleted mark is restored after delete-undo-redo-undo
+:/^\t/+1
+:set nocp viminfo+=nviminfo
+madduu
+:let a = string(getpos("'a"))
+:$put ='Mark after delete-undo-redo-undo: '.a
+:/^\t/,$wq! test.out
+ENDTEST
+
+	textline A
+	textline B
+	textline C
+
+Results:
