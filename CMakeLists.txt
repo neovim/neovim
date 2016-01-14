@@ -216,12 +216,16 @@ if(HAS_WVLA_FLAG)
   add_definitions(-Wvla)
 endif()
 
-check_c_compiler_flag(-fstack-protector-strong HAS_FSTACK_PROTECTOR_STRONG_FLAG)
-check_c_compiler_flag(-fstack-protector HAS_FSTACK_PROTECTOR_FLAG)
-if(HAS_FSTACK_PROTECTOR_STRONG_FLAG)
-  add_definitions(-fstack-protector-strong)
-elseif(HAS_FSTACK_PROTECTOR_FLAG)
-  add_definitions(-fstack-protector --param ssp-buffer-size=4)
+if(UNIX)
+  # -fstack-protector breaks non Unix builds even in Mingw-w64
+  check_c_compiler_flag(-fstack-protector-strong HAS_FSTACK_PROTECTOR_STRONG_FLAG)
+  check_c_compiler_flag(-fstack-protector HAS_FSTACK_PROTECTOR_FLAG)
+
+  if(HAS_FSTACK_PROTECTOR_STRONG_FLAG)
+    add_definitions(-fstack-protector-strong)
+  elseif(HAS_FSTACK_PROTECTOR_FLAG)
+    add_definitions(-fstack-protector --param ssp-buffer-size=4)
+  endif()
 endif()
 
 check_c_compiler_flag(-fdiagnostics-color=auto HAS_DIAG_COLOR_FLAG)
