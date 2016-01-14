@@ -84,6 +84,23 @@ describe('mapping', function()
       +]])
   end)
 
+  it('feedkeys', function()
+    insert([[
+      a b c d
+      a b c d
+      ]])
+
+    -- Vim's issue #212 (feedkeys insert mapping at current position)
+    execute('nnoremap . :call feedkeys(".", "in")<cr>')
+    feed('/^a b<cr>')
+    feed('0qqdw.ifoo<esc>qj0@q<esc>')
+    execute('unmap .')
+    expect([[
+      fooc d
+      fooc d
+      ]])
+  end)
+
   it('i_CTRL-G_U', function()
     -- <c-g>U<cursor> works only within a single line
     execute('imapclear')
