@@ -2563,9 +2563,9 @@ confirm({msg} [, {choices} [, {default} [, {type}]]])
 		{default} is omitted, 1 is used.
 
 		The optional {type} argument gives the type of dialog.  This
-		is only used for the icon of the Mac and Win32 GUI.  It
-		can be one of these values: "Error", "Question", "Info",
-		"Warning" or "Generic".  Only the first character is relevant.
+		is only used for the icon of the Win32 GUI.  It can be one of
+		these values: "Error", "Question", "Info", "Warning" or
+		"Generic".  Only the first character is relevant.
 		When {type} is omitted, "Generic" is used.
 
 		If the user aborts the dialog by pressing <Esc>, CTRL-C,
@@ -6993,7 +6993,6 @@ fname_case		Case in file names matters (for Windows this is not
 folding			Compiled with |folding| support.
 gettext			Compiled with message translation |multi-lang|
 gui			Compiled with GUI enabled.
-gui_mac			Compiled with Macintosh GUI.
 gui_running		Vim is running in the GUI, or it will start soon.
 gui_win32		Compiled with MS Windows Win32 GUI.
 iconv			Can use iconv() for conversion.

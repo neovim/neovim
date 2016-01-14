@@ -390,7 +390,7 @@ To enter debugging mode use one of these methods:
    useful to find out what is happening when Vim is starting up.  A side
    effect is that Vim will switch the terminal mode before initialisations
    have finished, with unpredictable results.
-   For a GUI-only version (Windows, Macintosh) the debugging will start as
+   For a GUI-only version (Windows) the debugging will start as
    soon as the GUI window has been opened.  To make this happen early, add a
    ":gui" command in the vimrc file.
 								*:debug*
