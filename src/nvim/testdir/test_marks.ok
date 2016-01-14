@@ -1,6 +1,16 @@
+Tests for marks.
+
+
 	textline A
 	textline B
 	textline C
+
+
+CTRL-A CTRL-X:
+AAA 123 123
+123 XXXXXXX
+XXX 123 123
+
 
 Results:
 Mark after delete-undo-redo-undo: [0, 15, 2, 0]

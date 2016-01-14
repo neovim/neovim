@@ -4217,6 +4217,8 @@ int do_addsub(int command, linenr_T Prenum1, bool g_cmd)
   bool did_change = false;
   pos_T t = curwin->w_cursor;
   int maxlen = 0;
+  pos_T startpos;
+  pos_T endpos;
 
   dohex = (vim_strchr(curbuf->b_p_nf, 'x') != NULL);    // "heX"
   dooct = (vim_strchr(curbuf->b_p_nf, 'o') != NULL);    // "Octal"
@@ -4393,9 +4395,13 @@ int do_addsub(int command, linenr_T Prenum1, bool g_cmd)
         }
       }
       curwin->w_cursor.col = col;
+      if (!did_change) {
+        startpos = curwin->w_cursor;
+      }
       did_change = true;
       (void)del_char(false);
       ins_char(firstdigit);
+      endpos = curwin->w_cursor;
       curwin->w_cursor.col = col;
     } else {
       if (col > 0 && ptr[col - 1] == '-' && !visual) {
@@ -4477,6 +4483,9 @@ int do_addsub(int command, linenr_T Prenum1, bool g_cmd)
 
       // Delete the old number.
       curwin->w_cursor.col = col;
+      if (!did_change) {
+        startpos = curwin->w_cursor;
+      }
       did_change = true;
       todel = length;
       c = gchar_cursor();
@@ -4559,6 +4568,7 @@ int do_addsub(int command, linenr_T Prenum1, bool g_cmd)
       STRCAT(buf1, buf2);
       ins_str(buf1);              // insert the new number
       xfree(buf1);
+      endpos = curwin->w_cursor;
       if (lnum < lnume) {
         curwin->w_cursor.col = t.col;
       } else if (did_change && curwin->w_cursor.col) {
@@ -4585,6 +4595,14 @@ int do_addsub(int command, linenr_T Prenum1, bool g_cmd)
   if (visual) {
     // cursor at the top of the selection
     curwin->w_cursor = VIsual;
+  }
+  if (did_change) {
+    // set the '[ and '] marks
+    curbuf->b_op_start = startpos;
+    curbuf->b_op_end = endpos;
+    if (curbuf->b_op_end.col > 0) {
+      curbuf->b_op_end.col--;
+    }
   }
   return OK;
 }
