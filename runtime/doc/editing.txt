@@ -1145,7 +1145,7 @@ If you want to always use ":confirm", set the 'confirm' option.
 			|:diffsplit|, |:diffpatch|, |:pedit|, |:redir|,
 			|:source|, |:update|, |:visual|, |:vsplit|,
 			and |:qall| if 'confirm' is set.
-			{only in Win32 and Mac GUI}
+			{only in Win32 GUI}
 			When ":browse" is not possible you get an error
 			message.  If the |+browse| feature is missing or the
 			{command} doesn't support browsing, the {command} is
