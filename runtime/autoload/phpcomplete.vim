@@ -3,7 +3,7 @@
 " Maintainer:	Dávid Szabó ( complex857 AT gmail DOT com )
 " Previous Maintainer:	Mikolaj Machowski ( mikmach AT wp DOT pl )
 " URL: https://github.com/shawncplus/phpcomplete.vim
-" Last Change:  2014 Dec 01
+" Last Change:  2015 Feb 28
 "
 "	OPTIONS:
 "
@@ -145,7 +145,7 @@ function! phpcomplete#CompletePHP(findstart, base) " {{{
 
 	let [current_namespace, imports] = phpcomplete#GetCurrentNameSpace(getline(0, line('.')))
 
-	if context =~? '^use\s'
+	if context =~? '^use\s' || context ==? 'use'
 		return phpcomplete#CompleteUse(a:base)
 	endif
 
@@ -189,7 +189,7 @@ function! phpcomplete#CompletePHP(findstart, base) " {{{
 		" }}}
 	elseif context =~? 'implements'
 		return phpcomplete#CompleteClassName(a:base, ['i'], current_namespace, imports)
-	elseif context =~? 'extends\s\+.\+$'
+	elseif context =~? 'extends\s\+.\+$' && a:base == ''
 		return ['implements']
 	elseif context =~? 'extends'
 		let kinds = context =~? 'class\s' ? ['c'] : ['i']
@@ -244,12 +244,13 @@ function! phpcomplete#CompleteUse(base) " {{{
 			if has_key(tag, 'namespace')
 				let patched_ctags_detected = 1
 			endif
+
 			if tag.kind ==? 'n' && tag.name =~? '^'.namespace_match_pattern
 				let patched_ctags_detected = 1
 				call add(namespaced_matches, {'word': tag.name, 'kind': 'n', 'menu': tag.filename, 'info': tag.filename })
-			elseif has_key(tag, 'namespace') && (tag.kind ==? 'c' || tag.kind ==? 'i') && tag.namespace ==? namespace_for_class
+			elseif has_key(tag, 'namespace') && (tag.kind ==? 'c' || tag.kind ==? 'i' || tag.kind ==? 't') && tag.namespace ==? namespace_for_class
 				call add(namespaced_matches, {'word': namespace_for_class.'\'.tag.name, 'kind': tag.kind, 'menu': tag.filename, 'info': tag.filename })
-			elseif (tag.kind ==? 'c' || tag.kind ==? 'i')
+			elseif (tag.kind ==? 'c' || tag.kind ==? 'i' || tag.kind ==? 't')
 				call add(no_namespace_matches, {'word': namespace_for_class.'\'.tag.name, 'kind': tag.kind, 'menu': tag.filename, 'info': tag.filename })
 			endif
 		endfor
@@ -271,6 +272,10 @@ function! phpcomplete#CompleteUse(base) " {{{
 			call add(res, {'word': g:php_builtin_interfaces[tolower(interfacename)].name, 'kind': 'i'})
 		endfor
 	endif
+
+	for comp in res
+		let comp.word = substitute(comp.word, '^\\', '', '')
+	endfor
 
 	return res
 endfunction
@@ -326,6 +331,7 @@ function! phpcomplete#CompleteGeneral(base, current_namespace, imports) " {{{
 	let ext_functions  = {}
 	let ext_constants  = {}
 	let ext_classes    = {}
+	let ext_traits     = {}
 	let ext_interfaces = {}
 	let ext_namespaces = {}
 
@@ -420,7 +426,7 @@ function! phpcomplete#CompleteGeneral(base, current_namespace, imports) " {{{
 						endif
 					endif
 				endif
-			elseif tag.kind ==? 'c' || tag.kind ==? 'i'
+			elseif tag.kind ==? 'c' || tag.kind ==? 'i' || tag.kind ==? 't'
 				let info = ' - '.tag.filename
 
 				let key = ''
@@ -441,6 +447,8 @@ function! phpcomplete#CompleteGeneral(base, current_namespace, imports) " {{{
 						let ext_classes[key] = info
 					elseif tag.kind ==? 'i'
 						let ext_interfaces[key] = info
+					elseif tag.kind ==? 't'
+						let ext_traits[key] = info
 					endif
 				endif
 			endif
@@ -463,7 +471,7 @@ function! phpcomplete#CompleteGeneral(base, current_namespace, imports) " {{{
 		endfor
 		for [interfacename, info] in items(g:php_builtin_interfacenames)
 			if interfacename =~? '^'.base
-				let builtin_interfaces[leading_slash.interfacename] = info
+				let builtin_interfaces[leading_slash.g:php_builtin_interfaces[tolower(interfacename)].name] = info
 			endif
 		endfor
 	endif
@@ -511,6 +519,8 @@ function! phpcomplete#CompleteGeneral(base, current_namespace, imports) " {{{
 				else
 					let ext_interfaces[imported_name] = ' '.import.name.' - '.import.filename
 				endif
+			elseif import.kind ==? 't'
+				let ext_traits[imported_name] = ' '.import.name.' - '.import.filename
 			endif
 
 			" no builtin interfaces
@@ -540,6 +550,9 @@ function! phpcomplete#CompleteGeneral(base, current_namespace, imports) " {{{
 	" Add external interfaces
 	call extend(all_values, ext_interfaces)
 
+	" Add external traits
+	call extend(all_values, ext_traits)
+
 	" Add built-in classes
 	call extend(all_values, builtin_classnames)
 
@@ -566,6 +579,8 @@ function! phpcomplete#CompleteGeneral(base, current_namespace, imports) " {{{
 		elseif has_key(ext_interfaces, i) || has_key(builtin_interfaces, i)
 			let info = has_key(ext_interfaces, i) ? ext_interfaces[i] : builtin_interfaces[i].' - builtin'
 			let final_list += [{'word':i, 'kind': 'i', 'menu': info, 'info': i.info}]
+		elseif has_key(ext_traits, i)
+			let final_list += [{'word':i, 'kind': 't', 'menu': ext_traits[i], 'info': ext_traits[i]}]
 		elseif has_key(int_constants, i) || has_key(builtin_constants, i)
 			let info = has_key(int_constants, i) ? int_constants[i] : ' - builtin'
 			let final_list += [{'word':i, 'kind': 'd', 'menu': info, 'info': i.info}]
@@ -784,7 +799,7 @@ function! phpcomplete#CompleteClassName(base, kinds, current_namespace, imports)
 
 	let tags = []
 	if len(tag_match_pattern) >= g:phpcomplete_min_num_of_chars_for_namespace_completion
-		let tags = phpcomplete#GetTaglist('^'.tag_match_pattern)
+		let tags = phpcomplete#GetTaglist('^\c'.tag_match_pattern)
 	endif
 
 	if len(tags)
@@ -860,6 +875,39 @@ function! phpcomplete#CompareCompletionRow(i1, i2) " {{{
 	return a:i1.word == a:i2.word ? 0 : a:i1.word > a:i2.word ? 1 : -1
 endfunction
 " }}}
+
+function! s:getNextCharWithPos(filelines, current_pos) " {{{
+	let line_no   = a:current_pos[0]
+	let col_no    = a:current_pos[1]
+	let last_line = a:filelines[len(a:filelines) - 1]
+	let end_pos   = [len(a:filelines) - 1, strlen(last_line) - 1]
+	if line_no > end_pos[0] || line_no == end_pos[0] && col_no > end_pos[1]
+		return ['EOF', 'EOF']
+	endif
+
+	" we've not reached the end of the current line break
+	if col_no + 1 < strlen(a:filelines[line_no])
+		let col_no += 1
+	else
+		" we've reached the end of the current line, jump to the next
+		" non-blank line (blank lines have no position where we can read from,
+		" not even a whitespace. The newline char does not positionable by vim
+		let line_no += 1
+		while strlen(a:filelines[line_no]) == 0
+			let line_no += 1
+		endwhile
+
+		let col_no = 0
+	endif
+
+	" return 'EOF' string to signal end of file, normal results only one char
+	" in length
+	if line_no == end_pos[0] && col_no > end_pos[1]
+		return ['EOF', 'EOF']
+	endif
+
+	return [[line_no, col_no], a:filelines[line_no][col_no]]
+endfunction " }}}
 
 function! phpcomplete#EvaluateModifiers(modifiers, required_modifiers, prohibited_modifiers) " {{{
 	" if theres no modifier, and no modifier is allowed and no modifier is required
@@ -1602,26 +1650,26 @@ function! phpcomplete#GetClassName(start_line, context, current_namespace, impor
 				endif
 			endif
 
-			" in-file lookup for typehinted function arguments
-			"   - the function can have a name or be anonymous (e.g., function qux() { ... } vs. function () { ... })
-			"   - the type-hinted argument can be anywhere in the arguments list.
-			if line =~? 'function\(\s\+'.function_name_pattern.'\)\?\s*(.\{-}'.class_name_pattern.'\s\+'.object && !object_is_array
-				let f_args = matchstr(line, '\cfunction\(\s\+'.function_name_pattern.'\)\?\s*(\zs.\{-}\ze)')
-				let args = split(f_args, '\s*\zs,\ze\s*')
-				for arg in args
-					if arg =~# object.'\(,\|$\)'
-						let classname_candidate = matchstr(arg, '\s*\zs'.class_name_pattern.'\ze\s\+'.object)
-						let [classname_candidate, class_candidate_namespace] = phpcomplete#ExpandClassName(classname_candidate, a:current_namespace, a:imports)
+			" function declaration line
+			if line =~? 'function\(\s\+'.function_name_pattern.'\)\?\s*('
+				let function_lines = join(reverse(lines), " ")
+				" search for type hinted arguments
+				if function_lines =~? 'function\(\s\+'.function_name_pattern.'\)\?\s*(.\{-}'.class_name_pattern.'\s\+'.object && !object_is_array
+					let f_args = matchstr(function_lines, '\cfunction\(\s\+'.function_name_pattern.'\)\?\s*(\zs.\{-}\ze)')
+					let args = split(f_args, '\s*\zs,\ze\s*')
+					for arg in args
+						if arg =~# object.'\(,\|$\)'
+							let classname_candidate = matchstr(arg, '\s*\zs'.class_name_pattern.'\ze\s\+'.object)
+							let [classname_candidate, class_candidate_namespace] = phpcomplete#ExpandClassName(classname_candidate, a:current_namespace, a:imports)
+							break
+						endif
+					endfor
+					if classname_candidate != ''
 						break
 					endif
-				endfor
-				if classname_candidate != ''
-					break
 				endif
-			endif
 
-			" if we see a function declaration, try loading the docblock for it and look for matching @params
-			if line =~? 'function\(\s\+'.function_name_pattern.'\)\?\s*(.\{-}'.object
+				" search for docblock for the function
 				let match_line = substitute(line, '\\', '\\\\', 'g')
 				let sccontent = getline(0, a:start_line - i)
 				let doc_str = phpcomplete#GetDocBlock(sccontent, match_line)
@@ -1641,13 +1689,14 @@ function! phpcomplete#GetClassName(start_line, context, current_namespace, impor
 			endif
 
 			" assignment for the variable in question with a variable on the right hand side
-			if line =~# '^\s*'.object.'\s*=&\?\s*'.variable_name_pattern
+			if line =~# '^\s*'.object.'\s*=&\?\s\+\(clone\)\?\s*'.variable_name_pattern
 
 				" try to find the next non-comment or string ";" char
-				let start_col = match(line, '^\s*'.object.'\C\s*=\zs&\?\s*'.variable_name_pattern)
+				let start_col = match(line, '^\s*'.object.'\C\s*=\zs&\?\s\+\(clone\)\?\s*'.variable_name_pattern)
 				let filelines = reverse(lines)
 				let [pos, char] = s:getNextCharWithPos(filelines, [a:start_line - i - 1, start_col])
 				let chars_read = 1
+				let last_pos = pos
 				" read while end of the file
 				while char != 'EOF' && chars_read < 1000
 					let last_pos = pos
@@ -1689,6 +1738,7 @@ function! phpcomplete#GetClassName(start_line, context, current_namespace, impor
 				let filelines = reverse(lines)
 				let [pos, char] = s:getNextCharWithPos(filelines, [a:start_line - i - 1, start_col])
 				let chars_read = 1
+				let last_pos = pos
 				" read while end of the file
 				while char != 'EOF' && chars_read < 1000
 					let last_pos = pos
@@ -1819,7 +1869,7 @@ function! phpcomplete#GetClassLocation(classname, namespace) " {{{
 	let i = 1
 	while i < line('.')
 		let line = getline(line('.')-i)
-		if line =~? '^\s*\(abstract\s\+\|final\s\+\)*\s*class\s*'.a:classname.'\(\s\+\|$\)' && tolower(current_namespace) == search_namespace
+		if line =~? '^\s*\(abstract\s\+\|final\s\+\)*\s*\(class\|interface\|trait\)\s*'.a:classname.'\(\s\+\|$\)' && tolower(current_namespace) == search_namespace
 			return expand('%:p')
 		else
 			let i += 1
@@ -1831,7 +1881,9 @@ function! phpcomplete#GetClassLocation(classname, namespace) " {{{
 	let no_namespace_candidate = ''
 	let tags = phpcomplete#GetTaglist('^'.a:classname.'$')
 	for tag in tags
-		if tag.kind == 'c' || tag.kind == 'i'
+		" We'll allow interfaces and traits to be handled classes since you
+		" can't have colliding names with different kinds anyway
+		if tag.kind == 'c' || tag.kind == 'i' || tag.kind == 't'
 			if !has_key(tag, 'namespace')
 				let no_namespace_candidate = tag.filename
 			else
@@ -1979,9 +2031,9 @@ function! phpcomplete#GetClassContentsStructure(file_path, file_lines, class_nam
 	" remember the window we started at
 	let phpcomplete_original_window = winnr()
 
-	silent! below 1new
+	silent! tab 1new
 	silent! 0put =cfile
-	call search('\(class\|interface\)\_s\+'.a:class_name.'\(\>\|$\)')
+	call search('\c\(class\|interface\|trait\)\_s\+'.a:class_name.'\(\>\|$\)')
 	let cfline = line('.')
 	call search('{')
 	let endline = line('.')
@@ -1994,8 +2046,48 @@ function! phpcomplete#GetClassContentsStructure(file_path, file_lines, class_nam
 		let extends_class = ''
 	endif
 	call searchpair('{', '', '}', 'W')
-	let classcontent = join(getline(cfline, line('.')), "\n")
+	let class_closing_bracket_line = line('.')
+	let classcontent = join(getline(cfline, class_closing_bracket_line), "\n")
+
+	let used_traits = []
+	" move back to the line next to the class's definition
+	call cursor(endline + 1, 1)
+	let keep_searching = 1
+	while keep_searching != 0
+		" try to grab "use..." keywords
+		let [lnum, col] = searchpos('\c^\s\+use\s\+'.class_name_pattern, 'cW', class_closing_bracket_line)
+		let syn_name = synIDattr(synID(lnum, col, 0), "name")
+		if syn_name =~? 'string\|comment'
+			call cursor(lnum + 1, 1)
+			continue
+		endif
+
+		let trait_line = getline(lnum)
+		if trait_line !~? ';'
+			" try to find the next line containing ';'
+			let l = lnum
+			let search_line = trait_line
+
+			" add lines from the file until theres no ';' in them
+			while search_line !~? ';' && l > 0
+				" file lines are reversed so we need to go backwards
+				let l += 1
+				let search_line = getline(l)
+				let trait_line .= ' '.substitute(search_line, '\(^\s\+\|\s\+$\)', '', 'g')
+			endwhile
+		endif
+		let use_expression = matchstr(trait_line, '^\s*use\s\+\zs.\{-}\ze;')
+		let use_parts = map(split(use_expression, '\s*,\s*'), 'substitute(v:val, "\\s+", " ", "g")')
+		let used_traits += map(use_parts, 'substitute(v:val, "\\s", "", "g")')
+		call cursor(lnum + 1, 1)
+
+		if [lnum, col] == [0, 0]
+			let keep_searching = 0
+		endif
+	endwhile
+
 	silent! bw! %
+
 	let [current_namespace, imports] = phpcomplete#GetCurrentNameSpace(a:file_lines[0:cfline])
 	" go back to original window
 	exe phpcomplete_original_window.'wincmd w'
@@ -2008,21 +2100,27 @@ function! phpcomplete#GetClassContentsStructure(file_path, file_lines, class_nam
 				\ 'mtime': getftime(full_file_path),
 				\ })
 
+	let all_extends = used_traits
 	if extends_class != ''
-		let [extends_class, namespace] = phpcomplete#ExpandClassName(extends_class, current_namespace, imports)
-		if namespace == ''
-			let namespace = '\'
-		endif
-		let classlocation = phpcomplete#GetClassLocation(extends_class, namespace)
-		if classlocation == "VIMPHP_BUILTINOBJECT"
-			let result += [phpcomplete#GenerateBuiltinClassStub(g:php_builtin_classes[tolower(extends_class)])]
-		elseif classlocation != '' && filereadable(classlocation)
-			let full_file_path = fnamemodify(classlocation, ':p')
-			let result += phpcomplete#GetClassContentsStructure(full_file_path, readfile(full_file_path), extends_class)
-		elseif tolower(current_namespace) == tolower(namespace)
-			" try to find the declaration in the same file.
-			let result += phpcomplete#GetClassContentsStructure(full_file_path, a:file_lines, extends_class)
-		endif
+		call add(all_extends, extends_class)
+	endif
+	if len(all_extends) > 0
+		for class in all_extends
+			let [class, namespace] = phpcomplete#ExpandClassName(class, current_namespace, imports)
+			if namespace == ''
+				let namespace = '\'
+			endif
+			let classlocation = phpcomplete#GetClassLocation(class, namespace)
+			if classlocation == "VIMPHP_BUILTINOBJECT"
+				let result += [phpcomplete#GenerateBuiltinClassStub(g:php_builtin_classes[tolower(class)])]
+			elseif classlocation != '' && filereadable(classlocation)
+				let full_file_path = fnamemodify(classlocation, ':p')
+				let result += phpcomplete#GetClassContentsStructure(full_file_path, readfile(full_file_path), class)
+			elseif tolower(current_namespace) == tolower(namespace)
+				" try to find the declaration in the same file.
+				let result += phpcomplete#GetClassContentsStructure(full_file_path, a:file_lines, class)
+			endif
+		endfor
 	endif
 
 	return result
@@ -2270,19 +2368,40 @@ endfunction!
 " }}}
 
 function! phpcomplete#GetCurrentNameSpace(file_lines) " {{{
+	let original_window = winnr()
+
+	silent! tab 1new
+	silent! 0put =a:file_lines
+	normal! G
+
+	" clear out classes, functions and other blocks
+	while 1
+		let block_start_pos = searchpos('\c\(class\|trait\|function\|interface\)\s\+\_.\{-}\zs{', 'Web')
+		if block_start_pos == [0, 0]
+			break
+		endif
+		let block_end_pos = searchpairpos('{', '', '}\|\%$', 'W', 'synIDattr(synID(line("."), col("."), 0), "name") =~? "string\\|comment"')
+		silent! exec block_start_pos[0].','.block_end_pos[0].'d'
+	endwhile
+	normal! G
+
+	" grab the remains
+	let file_lines = reverse(getline(1, line('.') - 1))
+
+	silent! bw! %
+	exe original_window.'wincmd w'
+
 	let namespace_name_pattern = '[a-zA-Z_\x7f-\xff\\][a-zA-Z_0-9\x7f-\xff\\]*'
-	let file_lines = reverse(copy(a:file_lines))
 	let i = 0
 	let file_length = len(file_lines)
 	let imports = {}
-
 	let current_namespace = '\'
 
 	while i < file_length
 		let line = file_lines[i]
 
 		if line =~? '^\s*namespace\s*'.namespace_name_pattern
-			let current_namespace = matchstr(line, '^\s*namespace\s*\zs'.namespace_name_pattern.'\ze')
+			let current_namespace = matchstr(line, '\c^\s*namespace\s*\zs'.namespace_name_pattern.'\ze')
 			break
 		endif
 
@@ -2303,11 +2422,11 @@ function! phpcomplete#GetCurrentNameSpace(file_lines) " {{{
 					let use_line .= ' '.substitute(search_line, '\(^\s\+\|\s\+$\)', '', 'g')
 				endwhile
 			endif
-			let use_expression = matchstr(use_line, '^\s*use\s\+\zs.\{-}\ze;')
+			let use_expression = matchstr(use_line, '^\c\s*use\s\+\zs.\{-}\ze;')
 			let use_parts = map(split(use_expression, '\s*,\s*'), 'substitute(v:val, "\\s+", " ", "g")')
 			for part in use_parts
 				if part =~? '\s\+as\s\+'
-					let [object, name] = split(part, '\s\+as\s\+')
+					let [object, name] = split(part, '\s\+as\s\+\c')
 					let object = substitute(object, '^\\', '', '')
 					let name   = substitute(name, '^\\', '', '')
 				else
@@ -2343,7 +2462,7 @@ function! phpcomplete#GetCurrentNameSpace(file_lines) " {{{
 								break
 							endif
 							" if the name matches with the extracted classname and namespace
-							if (tag.kind == 'c' || tag.kind == 'i') && tag.name == classname
+							if (tag.kind == 'c' || tag.kind == 'i' || tag.kind == 't') && tag.name == classname
 								if has_key(tag, 'namespace')
 									let patched_ctags_detected = 1
 									if tag.namespace == namespace_for_classes
@@ -2386,7 +2505,7 @@ function! phpcomplete#GetCurrentNameSpace(file_lines) " {{{
 						let tags = phpcomplete#GetTaglist('^'.import['name'].'$')
 						for tag in tags
 							" search for the first matchin namespace, class, interface with no namespace
-							if !has_key(tag, 'namespace') && (tag.kind == 'n' || tag.kind == 'c' || tag.kind == 'i')
+							if !has_key(tag, 'namespace') && (tag.kind == 'n' || tag.kind == 'c' || tag.kind == 'i' || tag.kind == 't')
 								call extend(import, tag)
 								let import['builtin'] = 0
 								break

@@ -1,4 +1,4 @@
-*remote.txt*    For Vim version 7.4.  Last change: 2008 May 24
+*remote.txt*    For Vim version 7.4.  Last change: 2015 Mar 01
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -34,7 +34,8 @@ The following command line arguments are available:
 				The remote Vim is raised.  If you don't want
 				this use >
 				 vim --remote-send "<C-\><C-N>:n filename<CR>"
-<  --remote-silent [+{cmd}] {file} ...			*--remote-silent*
+<
+   --remote-silent [+{cmd}] {file} ...			*--remote-silent*
 				As above, but don't complain if there is no
 				server and the file is edited locally.
    --remote-wait [+{cmd}] {file} ...				*--remote-wait*
