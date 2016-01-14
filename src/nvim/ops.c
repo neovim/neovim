@@ -4416,6 +4416,7 @@ int do_addsub(int command, linenr_T Prenum1, bool g_cmd)
       did_change = true;
       (void)del_char(false);
       ins_char(firstdigit);
+      curwin->w_cursor.col = col;
     } else {
       if (col > 0 && ptr[col - 1] == '-' && !visual) {
         // negative number

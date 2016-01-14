@@ -268,7 +268,15 @@ Text:
  Expected:
  1) <Ctrl-V>j$ <ctrl-a>
  2
- 1b
+ 2a
+
+20) increment a single letter
+Text:
+ a
+
+ Expected:
+ 1) <Ctrl-a> and cursor is on a
+ b
    
 
 
@@ -384,6 +392,13 @@ V3kg..
 :/^S19=/+,/^E19=/-y a
 :/^E19=/+put a
 k$
+:set nrformats&vim
+
+:" Test 20
+:set nrformats+=alpha
+:/^S20=/+,/^E20=/-y a
+:/^E20=/+put a
+:.put =col('.')
 :set nrformats&vim
 
 :" Save the report
@@ -569,6 +584,13 @@ S19====
 1
 1a
 E19====
+
+
+
+# Test 20
+S20====
+a
+E20====
 
 
 
