@@ -3506,7 +3506,21 @@ static void nv_addsub(cmdarg_T *cap)
   bool visual = VIsual_active;
   if (cap->oap->op_type == OP_NOP
       && do_addsub((int)cap->cmdchar, cap->count1, cap->arg) == OK) {
-    prep_redo_cmd(cap);
+    if (visual) {
+      ResetRedobuff();
+      AppendCharToRedobuff(VIsual_mode);
+      if (VIsual_mode == 'V') {
+        AppendNumberToRedobuff(cap->oap->line_count);
+        AppendCharToRedobuff('j');
+      }
+      AppendNumberToRedobuff(cap->count1);
+      if (cap->nchar != NUL) {
+        AppendCharToRedobuff(cap->nchar);
+      }
+      AppendCharToRedobuff(cap->cmdchar);
+    } else {
+      prep_redo_cmd(cap);
+    }
   } else {
     clearopbeep(cap->oap);
   }

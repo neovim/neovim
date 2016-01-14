@@ -4213,7 +4213,7 @@ int do_addsub(int command, linenr_T Prenum1, bool g_cmd)
   int pre;  // 'X' or 'x': hex; '0': octal; 'B' or 'b': bin
   static bool hexupper = false;  // 0xABC
   unsigned long n;
-  long offset = 0;
+  unsigned long offset = 0;
   unsigned long oldn;
   char_u      *ptr;
   int c;
@@ -4226,9 +4226,11 @@ int do_addsub(int command, linenr_T Prenum1, bool g_cmd)
   int firstdigit;
   bool subtract;
   bool negative = false;
+  bool was_positive = true;
   bool visual = VIsual_active;
   int lnum = curwin->w_cursor.lnum;
   int lnume = curwin->w_cursor.lnum;
+  int startcol;
 
   dohex = (vim_strchr(curbuf->b_p_nf, 'x') != NULL);    // "heX"
   dooct = (vim_strchr(curbuf->b_p_nf, 'o') != NULL);    // "Octal"
@@ -4255,13 +4257,16 @@ int do_addsub(int command, linenr_T Prenum1, bool g_cmd)
     curbuf->b_visual.vi_end = curwin->w_cursor;
     curbuf->b_visual.vi_mode = VIsual_mode;
 
-    col = VIsual.col;
+    if (VIsual_mode != 'v') {
+      startcol = VIsual.col < curwin->w_cursor.col
+                 ? VIsual.col : curwin->w_cursor.col;
+    } else {
+      startcol = VIsual.col;
+    }
+    col = startcol;
+
     lnum = VIsual.lnum;
     lnume = curwin->w_cursor.lnum;
-    if (ptr[col] == '-') {
-      negative = true;
-      col++;
-    }
   } else {
     ptr = get_cursor_line_ptr();
     RLADDSUBFIX(ptr);
@@ -4328,10 +4333,16 @@ int do_addsub(int command, linenr_T Prenum1, bool g_cmd)
   for (int i = lnum; i <= lnume; i++) {
     curwin->w_cursor.lnum = i;
     ptr = get_cursor_line_ptr();
-    RLADDSUBFIX(ptr);
     if ((int)STRLEN(ptr) <= col) {
-      col = 0;
+      // try again on next line
+      continue;
     }
+    if (visual && ptr[col] == '-') {
+      negative = true;
+      was_positive = false;
+      col++;
+    }
+    RLADDSUBFIX(ptr);
     // If a number was found, and saving for undo works, replace the number.
     firstdigit = ptr[col];
     RLADDSUBFIX(ptr);
@@ -4424,6 +4435,12 @@ int do_addsub(int command, linenr_T Prenum1, bool g_cmd)
         }
       }
 
+      if (visual && !was_positive && !negative) {
+        // need to remove the '-'
+        col--;
+        length++;
+      }
+
       // Delete the old number.
       curwin->w_cursor.col = col;
       todel = length;
@@ -4452,8 +4469,7 @@ int do_addsub(int command, linenr_T Prenum1, bool g_cmd)
       // Allocate a bit too much.
       buf1 = xmalloc(length + NUMBUFLEN);
       ptr = buf1;
-      // do not add leading '-' for visual mode'
-      if (negative && !visual) {
+      if (negative && (!visual || (visual && was_positive))) {
         *ptr++ = '-';
       }
       if (pre) {
@@ -4483,20 +4499,15 @@ int do_addsub(int command, linenr_T Prenum1, bool g_cmd)
         buf2[pos] = '\0';
 
       } else if (pre == 0) {
-        snprintf((char *)buf2, NUMBUFLEN, "%" PRIu64, (uint64_t)n + offset);
+        vim_snprintf((char *)buf2, ARRAY_SIZE(buf2), "%" PRIu64, (uint64_t)n);
       } else if (pre == '0') {
-        snprintf((char *)buf2, NUMBUFLEN, "%" PRIo64, (uint64_t)n + offset);
+        vim_snprintf((char *)buf2, ARRAY_SIZE(buf2), "%" PRIo64, (uint64_t)n);
       } else if (pre && hexupper) {
-        snprintf((char *)buf2, NUMBUFLEN, "%" PRIX64, (uint64_t)n + offset);
+        vim_snprintf((char *)buf2, ARRAY_SIZE(buf2), "%" PRIX64, (uint64_t)n);
       } else {
-        snprintf((char *)buf2, NUMBUFLEN, "%" PRIx64, (uint64_t)n + offset);
+        vim_snprintf((char *)buf2, ARRAY_SIZE(buf2), "%" PRIx64, (uint64_t)n);
       }
       length -= (int)STRLEN(buf2);
-
-      if (g_cmd) {
-        offset = subtract ? offset - (unsigned long) Prenum1
-                          : offset + (unsigned long) Prenum1;
-      }
 
       // Adjust number of zeros to the new number of digits, so the
       // total length of the number remains the same.
@@ -4512,11 +4523,25 @@ int do_addsub(int command, linenr_T Prenum1, bool g_cmd)
       ins_str(buf1);              // insert the new number
       xfree(buf1);
     }
-    curwin->w_cursor.col--;
+
+    if (g_cmd) {
+      offset = (unsigned long)Prenum1;
+      g_cmd = 0;
+    }
+    // reset
+    subtract = false;
+    negative = false;
+    if (visual && VIsual_mode != Ctrl_V) {
+      col = 0;
+    } else {
+      col = startcol;
+    }
+    Prenum1 += offset;
     curwin->w_set_curswant = true;
     ptr = ml_get_buf(curbuf, curwin->w_cursor.lnum, true);
     RLADDSUBFIX(ptr);
   }
+  curwin->w_cursor.col--;
   return OK;
 }
 

@@ -6,6 +6,7 @@ Test cases
 1) Ctrl-A on visually selected number
 Text:
 foobar-10
+    Expected:
     1)    Ctrl-A on start of line:
 	foobar-9
     2)    Ctrl-A on visually selected "-10":
@@ -24,6 +25,7 @@ Text:
 30
 40
 
+    Expected:
     1) Ctrl-A on visually selected lines:
 11
 21
@@ -46,6 +48,7 @@ Text:
 
 40
 
+    Expected:
     1) 2 g Ctrl-A on visually selected lines:
 12
 
@@ -66,8 +69,121 @@ Text:
 4) Ctrl-A on non-number
 Text:
 foobar-10
+    Expected:
     1) visually select foobar:
     foobar-10
+
+5) g<Ctrl-A> on letter
+Test:
+a
+a
+a
+a
+    Expected:
+    1) g Ctrl-A on visually selected lines
+    b
+    c
+    d
+    e
+
+6) g<Ctrl-A> on letter
+Test:
+z
+z
+z
+z
+    Expected:
+    1) g Ctrl-X on visually selected lines
+    y
+    x
+    w
+    v
+
+7) <Ctrl-A> on letter
+Test:
+2
+1
+0
+-1
+-2
+
+    Expected:
+    1) Ctrl-A on visually selected lines
+    3
+    2
+    1
+    0
+    -1
+
+    2) Ctrl-X on visually selected lines
+    1
+    0
+    -1
+    -2
+    -3
+8) Block increment on 0x9
+Text:
+0x9
+0x9
+    Expected:
+    1) Ctrl-A on visually block selected region (cursor at beginning):
+    0xa
+    0xa
+    2) Ctrl-A on visually block selected region (cursor at end)
+    0xa
+    0xa
+
+9) Increment and redo
+Text:
+2
+2
+
+3
+3
+
+    Expected:
+    1) 2 Ctrl-A on first 2 visually selected lines
+    4
+    4
+    2) redo (.) on 3
+    5
+    5
+10) sequentially decrement 1
+Text:
+1
+1
+1
+1
+    Expected:
+    1) g Ctrl-X on visually selected lines
+    0
+    -1
+    -2
+    -3
+
+11) visually block selected indented lines
+Text:
+    1
+1
+    1
+    1
+    Expexted:
+    1) g Ctrl-A on block selected indented lines
+    2
+1
+    3
+    4
+
+12) visually selected several columns
+Text:
+0 0
+0 0
+0 0
+    Expected:
+    1) 'v' select last zero and first zeroes
+    0 1
+    1 0
+    1 0
 
 STARTTEST
 :so small.vim
@@ -77,16 +193,16 @@ STARTTEST
 :"
 :" Test 1
 :/^S1=/+,/^E1=/-y a
-:/^E1/+put a
-:/^E1/+2put a
-f-v$:/^E1/+3put a
-f1v$:/^E1/+4put a
-f-v$:/^E1/+5put a
+:/^E1=/+put a
+:/^E1=/+2put a
+f-v$:/^E1=/+3put a
+f1v$:/^E1=/+4put a
+f-v$:/^E1=/+5put a
 f1v$
 
 :" Test 22
 :/^S2=/+,/^E2=/-y a
-:/^E2/+put a
+:/^E2=/+put a
 V3k$:.+put a
 V3k$
 
@@ -100,6 +216,49 @@ V6k2g
 :/^S4=/+,/^E4=/-y a
 :/^E4=/+put a
 vf-
+
+:" Test 5
+:set nrformats+=alpha
+:/^S5=/+,/^E5=/-y a
+:/^E5=/+put a
+v3kg
+
+:" Test 6
+:/^S6=/+,/^E6=/-y a
+:/^E6=/+put a
+v3kg
+
+:" Test 7
+:/^S7=/+,/^E7=/-y a
+:/^E7=/+put a
+V4k:.+put a
+V4k
+
+:" Test 8
+:/^S8=/+,/^E8=/-y a
+:/^E8=/+put a
+kj$:.+put a
+k$+
+
+:" Test 9
+:/^S9=/+,/^E9=/-y a
+:/^E9=/+put a
+5kVj22j.
+
+:" Test 10
+:/^S10=/+,/^E10=/-y a
+:/^E10=/+put a
+V3kg
+
+: Test 11
+:/^S11=/+,/^E11=/-y a
+:/^E11=/+put a
+3kf13jg
+
+:" Test 12
+:/^S12=/+,/^E12=/-y a
+:/^E12=/+put a
+2k$v++
 
 :" Save the report
 :/^# Test 1/,$w! test.out
@@ -140,6 +299,94 @@ E3=====
 S4=====
 foobar-10
 E4=====
+
+
+
+# Test 5
+S5====
+a
+a
+a
+a
+E5====
+
+
+# Test 6
+S6====
+z
+z
+z
+z
+E6====
+
+
+
+# Test 7
+S7====
+2
+1
+0
+-1
+-2
+E7====
+
+
+
+# Test 8
+S8====
+0x9
+0x9
+E8====
+
+
+
+
+# Test 9
+S9====
+2
+2
+
+3
+3
+
+E9====
+
+
+
+
+# Test 10
+S10====
+1
+1
+1
+1
+E10====
+
+
+
+
+# Test 11
+S11====
+    1
+1
+    1
+    1
+E11====
+
+
+
+# Test 12
+S12====
+0 0
+0 0
+0 0
+E12====
+
+
+
+
+
+
 
 
 ENDTEST
