@@ -401,12 +401,6 @@ You have used an ":unabbreviate" command with an argument which is not an
 existing abbreviation.  All variations of this command give the same message:
 ":cunabbrev", ":iunabbrev", etc.  Check for trailing white space.
 
->
-  /dev/dsp: No such file or directory
-
-Only given for GTK GUI with Gnome support.  Gnome tries to use the audio
-device and it isn't present.  You can ignore this error.
-
 							*E31*  >
   No such mapping
 

@@ -1110,7 +1110,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'browsedir'* *'bsdir'*
 'browsedir' 'bsdir'	string	(default: "last")
 			global
-			{only for Motif, GTK, Mac and Win32 GUI}
+			{only for Mac and Win32 GUI}
 	Which directory to use for the file browser:
 	   last		Use same directory as with last file browser, where a
 			file was opened or saved.
@@ -2971,28 +2971,18 @@ A jump table for the options with a short description can be found at |Q_op|.
 	the case of X).  The font names given should be "normal" fonts.  Vim
 	will try to find the related bold and italic fonts.
 
-	For Win32, GTK, Motif, and Mac OS: >
+	For Win32 and Mac OS: >
 	    :set guifont=*
 <	will bring up a font requester, where you can pick the font you want.
 
 	The font name depends on the GUI used.  See |setting-guifont| for a
 	way to set 'guifont' for various systems.
 
-	For the GTK+ 2 GUI the font name looks like this: >
-	    :set guifont=Andale\ Mono\ 11
-<	That's all.  XLFDs are not used.  For Chinese this is reported to work
-	well: >
-	    if has("gui_gtk2")
-	      set guifont=Bitstream\ Vera\ Sans\ Mono\ 12,Fixed\ 12
-	      set guifontwide=Microsoft\ Yahei\ 12,WenQuanYi\ Zen\ Hei\ 12
-	    endif
-<
 	For Mac OSX you can use something like this: >
 	    :set guifont=Monaco:h10
 <								*E236*
 	Note that the fonts must be mono-spaced (all characters have the same
-	width).  An exception is GTK 2: all fonts are accepted, but
-	mono-spaced fonts look best.
+	width).
 
 	To preview a font on X11, you might be able to use the "xfontsel"
 	program.  The "xlsfonts" program gives a list of all available fonts.
@@ -3025,7 +3015,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 			global
 			{only available when compiled with GUI enabled and
 			with the |+xfontset| feature}
-			{not available in the GTK+ 2 GUI}
 	When not empty, specifies two (or more) fonts to be used.  The first
 	one for normal English, the second one for your special language.  See
 	|xfontset|.
@@ -3053,23 +3042,11 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Note: The size of these fonts must be exactly twice as wide as the one
 	specified with 'guifont' and the same height.
 
-	All GUI versions but GTK+ 2:
-
 	'guifontwide' is only used when 'encoding' is set to "utf-8" and
 	'guifontset' is empty or invalid.
 	When 'guifont' is set and a valid font is found in it and
 	'guifontwide' is empty Vim will attempt to find a matching
 	double-width font and set 'guifontwide' to it.
-
-	GTK+ 2 GUI only:			*guifontwide_gtk2*
-
-	If set and valid, 'guifontwide' is always used for double width
-	characters, even if 'encoding' is not set to "utf-8".
-	Vim does not attempt to find an appropriate value for 'guifontwide'
-	automatically.  If 'guifontwide' is empty Pango/Xft will choose the
-	font for characters not available in 'guifont'.  Thus you do not need
-	to set 'guifontwide' at all unless you want to override the choice
-	made by Pango/Xft.
 
 	Windows +multibyte only:		*guifontwide_win_mbyte*
 
@@ -3078,7 +3055,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'guiheadroom'* *'ghr'*
 'guiheadroom' 'ghr'	number	(default 50)
 			global
-			{only for GTK and X11 GUI}
+			{only for X11 GUI}
 	The number of pixels subtracted from the screen height when fitting
 	the GUI window on the screen.  Set this before the GUI is started,
 	e.g., in your |gvimrc| file.  When zero, the whole screen height will
@@ -3088,8 +3065,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	screen.
 
 						*'guioptions'* *'go'*
-'guioptions' 'go'	string	(default "egmrLT"   (MS-Windows),
-					 "aegimrLT" (GTK and Motif))
+'guioptions' 'go'	string	(default "egmrLT"   (MS-Windows))
 			global
 			{only available when compiled with GUI enabled}
 	This option only has an effect in the GUI version of Vim.  It is a
@@ -3135,10 +3111,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 		'guitablabel' can be used to change the text in the labels.
 		When 'e' is missing a non-GUI tab pages line may be used.
 		The GUI tabs are only supported on some systems, currently
-		GTK, Motif, Mac OS/X and MS-Windows.
+		Mac OS/X and MS-Windows.
 								*'go-i'*
-	  'i'	Use a Vim icon.  For GTK with KDE it is used in the left-upper
-		corner of the window.
+	  'i'	Use a Vim icon.
 								*'go-m'*
 	  'm'	Menu bar is present.
 								*'go-M'*
@@ -3151,8 +3126,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	  'g'	Grey menu items: Make menu items that are not active grey.  If
 		'g' is not included inactive menu items are not shown at all.
 								*'go-T'*
-	  'T'	Include Toolbar.  Currently only in Win32, GTK+, and
-		Motif GUIs.
+	  'T'	Include Toolbar.  Currently only in Win32 GUI.
 								*'go-r'*
 	  'r'	Right-hand scrollbar is always present.
 								*'go-R'*
@@ -3436,54 +3410,10 @@ A jump table for the options with a short description can be found at |Q_op|.
 	|/ignorecase|.
 
 						*'imactivatefunc'* *'imaf'*
-'imactivatefunc' 'imaf'	string (default "")
-			global
-			{only available when compiled with |+xim| and
-			|+GUI_GTK|}
-	This option specifies a function that will be called to
-	activate/inactivate Input Method.
+'imactivatefunc' 'imaf'	Removed. |vim-differences| {Nvim}
 
-	Example: >
-		function ImActivateFunc(active)
-		  if a:active
-		    ... do something
-		  else
-		    ... do something
-		  endif
-		  " return value is not used
-		endfunction
-		set imactivatefunc=ImActivateFunc
-<
 						*'imactivatekey'* *'imak'*
-'imactivatekey' 'imak'	string (default "")
-			global
-			{only available when compiled with |+xim| and
-			|+GUI_GTK|}				*E599*
-	Specifies the key that your Input Method in X-Windows uses for
-	activation.  When this is specified correctly, vim can fully control
-	IM with 'imcmdline', 'iminsert' and 'imsearch'.
-	You can't use this option to change the activation key, the option
-	tells Vim what the key is.
-	Format:
-		[MODIFIER_FLAG-]KEY_STRING
-
-	These characters can be used for MODIFIER_FLAG (case is ignored):
-		S	    Shift key
-		L	    Lock key
-		C	    Control key
-		1	    Mod1 key
-		2	    Mod2 key
-		3	    Mod3 key
-		4	    Mod4 key
-		5	    Mod5 key
-	Combinations are allowed, for example "S-C-space" or "SC-space" are
-	both shift+ctrl+space.
-	See <X11/keysymdef.h> and XStringToKeysym for KEY_STRING.
-
-	Example: >
-		:set imactivatekey=S-space
-<	"S-space" means shift+space.  This is the activation key for kinput2 +
-	canna (Japanese), and ami (Korean).
+'imactivatekey' 'imak'	Removed. |vim-differences| {Nvim}
 
 				*'imcmdline'* *'imc'* *'noimcmdline'* *'noimc'*
 'imcmdline' 'imc'	boolean (default off)
@@ -3542,21 +3472,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	option to a valid keymap name.
 
 						*'imstatusfunc'* *'imsf'*
-'imstatusfunc' 'imsf'	string (default "")
-			global
-			{only available when compiled with |+xim| and
-			|+GUI_GTK|}
-	This option specifies a function that is called to obtain the status
-	of Input Method.  It must return a positive number when IME is active.
-
-	Example: >
-		function ImStatusFunc()
-		  let is_active = ...do something
-		  return is_active ? 1 : 0
-		endfunction
-		set imstatusfunc=ImStatusFunc
-<
-	NOTE: This function is invoked very often.  Keep it fast.
+'imstatusfunc' 'imsf'	Removed. |vim-differences| {Nvim}
 
 						*'include'* *'inc'*
 'include' 'inc'		string	(default "^\s*#\s*include")
@@ -5707,8 +5623,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Use the 'M' flag in 'highlight' to set the type of highlighting for
 	this message.
 	When |XIM| may be used the message will include "XIM".  But this
-	doesn't mean XIM is really active, especially when 'imactivatekey' is
-	not set.
+	doesn't mean XIM is really active.
 
 						*'showtabline'* *'stal'*
 'showtabline' 'stal'	number	(default 1)
@@ -7012,7 +6927,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'winaltkeys'* *'wak'*
 'winaltkeys' 'wak'	string	(default "menu")
 			global
-			{only used in Win32, Motif, and GTK}
+			{only used in Win32}
 	Some GUI versions allow the access to menu entries by using the ALT
 	key in combination with a character that appears underlined in the
 	menu.  This conflicts with the use of the ALT key for mappings and
@@ -7027,8 +6942,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 		keys can be mapped.
 	If the menu is disabled by excluding 'm' from 'guioptions', the ALT
 	key is never used for the menu.
-	This option is not used for <F10>; on Win32 and with GTK <F10> will
-	select the menu, unless it has been mapped.
+	This option is not used for <F10>; on Win32.
 
 						*'window'* *'wi'*
 'window' 'wi'		number  (default screen height - 1)

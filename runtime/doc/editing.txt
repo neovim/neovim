@@ -1145,7 +1145,7 @@ If you want to always use ":confirm", set the 'confirm' option.
 			|:diffsplit|, |:diffpatch|, |:pedit|, |:redir|,
 			|:source|, |:update|, |:visual|, |:vsplit|,
 			and |:qall| if 'confirm' is set.
-			{only in Win32, GTK and Mac GUI}
+			{only in Win32 and Mac GUI}
 			When ":browse" is not possible you get an error
 			message.  If the |+browse| feature is missing or the
 			{command} doesn't support browsing, the {command} is
@@ -1173,16 +1173,13 @@ For versions of Vim where browsing is not supported, the command is executed
 unmodified.
 
 							*browsefilter*
-For MS Windows and GTK, you can modify the filters that are used in the browse
-dialog.  By setting the g:browsefilter or b:browsefilter variables, you can
-change the filters globally or locally to the buffer.  The variable is set to
-a string in the format "{filter label}\t{pattern};{pattern}\n" where {filter
-label} is the text that appears in the "Files of Type" comboBox, and {pattern}
-is the pattern which filters the filenames.  Several patterns can be given,
-separated by ';'.
-
-For Motif the same format is used, but only the very first pattern is actually
-used (Motif only offers one pattern, but you can edit it).
+For Windows you can modify the filters that are used in the browse dialog.  By
+setting the g:browsefilter or b:browsefilter variables, you can change the
+filters globally or locally to the buffer.  The variable is set to a string in
+the format "{filter label}\t{pattern};{pattern}\n" where {filter label} is the
+text that appears in the "Files of Type" comboBox, and {pattern} is the
+pattern which filters the filenames.  Several patterns can be given, separated
+by ';'.
 
 For example, to have only Vim files in the dialog, you could use the following
 command: >

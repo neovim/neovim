@@ -75,12 +75,8 @@ DEFINING A SIGN.			*:sign-define* *E255* *E160* *E612*
 		Define the file name where the bitmap can be found.  Should be
 		a full path.  The bitmap should fit in the place of two
 		characters.  This is not checked.  If the bitmap is too big it
-		will cause redraw problems.  Only GTK 2 can scale the bitmap
-		to fit the space available.
+		will cause redraw problems.
 			toolkit		supports ~
-			GTK 1		pixmap (.xpm)
-			GTK 2		many
-			Motif		pixmap (.xpm)
 			Win32		.bmp, .ico, .cur
 					pixmap (.xpm) |+xpm_w32|
 

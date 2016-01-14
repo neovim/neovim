@@ -1144,20 +1144,6 @@ return {
       defaults={if_true={vi=false}}
     },
     {
-      full_name='imactivatefunc', abbreviation='imaf',
-      type='string', scope={'global'},
-      secure=true,
-      vi_def=true,
-      enable_if=false,
-    },
-    {
-      full_name='imactivatekey', abbreviation='imak',
-      type='string', scope={'global'},
-      vi_def=true,
-      enable_if=false,
-      defaults={if_true={vi=""}}
-    },
-    {
       full_name='imcmdline', abbreviation='imc',
       type='bool', scope={'global'},
       vi_def=true,
@@ -1192,13 +1178,6 @@ return {
         if_true={vi=macros('B_IMODE_IM')},
         if_false={vi=macros('B_IMODE_NONE')},
       }
-    },
-    {
-      full_name='imstatusfunc', abbreviation='imsf',
-      type='string', scope={'global'},
-      secure=true,
-      vi_def=true,
-      enable_if=false,
     },
     {
       full_name='include', abbreviation='inc',

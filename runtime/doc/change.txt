@@ -832,13 +832,13 @@ This replaces each 'E' character with a euro sign.  Read more in |<Char->|.
 :promptf[ind] [string]
 			Put up a Search dialog.  When [string] is given, it is
 			used as the initial search string.
-			{only for Win32 and GTK GUI}
+			{only for Win32 GUI}
 
 						*:promptr* *:promptrepl*
 :promptr[epl] [string]
 			Put up a Search/Replace dialog.  When [string] is
 			given, it is used as the initial search string.
-			{only for Win32 and GTK GUI}
+			{only for Win32 GUI}
 
 
 4.4 Changing tabs					*change-tabs*
@@ -1170,18 +1170,6 @@ Use these registers for storing and retrieving the selected text for the GUI.
 See |quotestar| and |quoteplus|.  When the clipboard is not available or not
 working, the unnamed register is used instead.  For Unix systems and Mac OS X,
 see |nvim-clipboard|.
-
-						*quote_~* *quote~* *<Drop>*
-The read-only "~ register stores the dropped text from the last drag'n'drop
-operation.  When something has been dropped onto Vim, the "~ register is
-filled in and the <Drop> pseudo key is sent for notification.  You can remap
-this key if you want; the default action (for all modes) is to insert the
-contents of the "~ register at the cursor position.
-{only available when compiled with the |+dnd| feature, currently only with the
-GTK GUI}
-
-Note: The "~ register is only used when dropping plain text onto Vim.
-Drag'n'drop of URI lists is handled internally.
 
 9. Black hole register "_				*quote_*
 When writing to this register, nothing happens.  This can be used to delete
