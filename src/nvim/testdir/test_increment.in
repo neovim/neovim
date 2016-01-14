@@ -260,6 +260,16 @@ Text:
   9
   12
   
+19) increment on number with nrformat including alpha
+Text:
+ 1
+ 1a
+
+ Expected:
+ 1) <Ctrl-V>j$ <ctrl-a>
+ 2
+ 1b
+   
 
 
 STARTTEST
@@ -368,6 +378,13 @@ V3k
 :/^S18=/+,/^E18=/-y a
 :/^E18=/+put a
 V3kg..
+
+:" Test 19
+:set nrformats+=alpha
+:/^S19=/+,/^E19=/-y a
+:/^E19=/+put a
+k$
+:set nrformats&vim
 
 :" Save the report
 :/^# Test 1/,$w! test.out
@@ -545,6 +562,13 @@ S18====
 0
 E18====
 
+
+
+# Test 19
+S19====
+1
+1a
+E19====
 
 
 

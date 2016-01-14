@@ -4340,6 +4340,8 @@ int do_addsub(int command, linenr_T Prenum1, bool g_cmd)
   }
 
   for (int i = lnum; i <= lnume; i++) {
+    colnr_T stop = 0;
+
     t = curwin->w_cursor;
     curwin->w_cursor.lnum = i;
     ptr = get_cursor_line_ptr();
@@ -4349,31 +4351,26 @@ int do_addsub(int command, linenr_T Prenum1, bool g_cmd)
       continue;
     }
     if (visual) {
-      if (doalp) {
-        // search for ascii chars
-        while (!ASCII_ISALPHA(ptr[col]) && ptr[col]) {
-          col++;
-        }
-      } else if (dohex) {
-        // skip to first digit, but allow for leading '-'
-        while (!(ascii_isxdigit(ptr[col])
-               || (ptr[col] == '-' && ascii_isxdigit(ptr[col + 1])))
-               && ptr[col]) {
-          col++;
-        }
-      } else {
-        // decimal
-        while (!(ascii_isdigit(ptr[col])
-               || (ptr[col] == '-' && ascii_isdigit(ptr[col + 1])))
-               && ptr[col]) {
-          col++;
-        }
+      if (VIsual_mode == 'v' && i == lnume) {
+        stop = curwin->w_cursor.col;
+      } else if (VIsual_mode == Ctrl_V &&
+                 curbuf->b_visual.vi_curswant != MAXCOL) {
+        stop = curwin->w_cursor.col;
       }
-    }
-    if (visual && ptr[col] == '-') {
-      negative = true;
-      was_positive = false;
-      col++;
+
+      while (ptr[col] != NUL
+             && !ascii_isdigit(ptr[col])
+             && !(doalp && ASCII_ISALPHA(ptr[col]))) {
+        if (col > 0  && col == stop) {
+          break;
+        }
+        col++;
+      }
+
+      if (col > startcol && ptr[col - 1] == '-') {
+        negative = true;
+        was_positive = false;
+      }
     }
     // If a number was found, and saving for undo works, replace the number.
     firstdigit = ptr[col];
