@@ -535,27 +535,26 @@ EXTERN int p_stmp;              /* 'shelltemp' */
 #ifdef BACKSLASH_IN_FILENAME
 EXTERN int p_ssl;               /* 'shellslash' */
 #endif
-EXTERN char_u   *p_stl;         /* 'statusline' */
-EXTERN int p_sr;                /* 'shiftround' */
-EXTERN char_u   *p_shm;         /* 'shortmess' */
-EXTERN char_u   *p_sbr;         /* 'showbreak' */
-EXTERN int p_sc;                /* 'showcmd' */
-EXTERN int p_sft;               /* 'showfulltag' */
-EXTERN int p_sm;                /* 'showmatch' */
-EXTERN int p_smd;               /* 'showmode' */
-EXTERN long p_ss;               /* 'sidescroll' */
-EXTERN long p_siso;             /* 'sidescrolloff' */
-EXTERN int p_scs;               /* 'smartcase' */
-EXTERN int p_sta;               /* 'smarttab' */
-EXTERN int p_sb;                /* 'splitbelow' */
-EXTERN long p_tpm;              /* 'tabpagemax' */
-EXTERN char_u   *p_tal;         /* 'tabline' */
-EXTERN char_u   *p_sps;         /* 'spellsuggest' */
-EXTERN int p_spr;               /* 'splitright' */
-EXTERN int p_sol;               /* 'startofline' */
-EXTERN char_u   *p_su;          /* 'suffixes' */
-EXTERN char_u   *p_sws;         /* 'swapsync' */
-EXTERN char_u   *p_swb;         /* 'switchbuf' */
+EXTERN char_u   *p_stl;         // 'statusline'
+EXTERN int p_sr;                // 'shiftround'
+EXTERN char_u   *p_shm;         // 'shortmess'
+EXTERN char_u   *p_sbr;         // 'showbreak'
+EXTERN int p_sc;                // 'showcmd'
+EXTERN int p_sft;               // 'showfulltag'
+EXTERN int p_sm;                // 'showmatch'
+EXTERN int p_smd;               // 'showmode'
+EXTERN long p_ss;               // 'sidescroll'
+EXTERN long p_siso;             // 'sidescrolloff'
+EXTERN int p_scs;               // 'smartcase'
+EXTERN int p_sta;               // 'smarttab'
+EXTERN int p_sb;                // 'splitbelow'
+EXTERN long p_tpm;              // 'tabpagemax'
+EXTERN char_u   *p_tal;         // 'tabline'
+EXTERN char_u   *p_sps;         // 'spellsuggest'
+EXTERN int p_spr;               // 'splitright'
+EXTERN int p_sol;               // 'startofline'
+EXTERN char_u   *p_su;          // 'suffixes'
+EXTERN char_u   *p_swb;         // 'switchbuf'
 EXTERN unsigned swb_flags;
 #ifdef IN_OPTION_C
 static char *(p_swb_values[]) = {"useopen", "usetab", "split", "newtab", NULL};

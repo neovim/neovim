@@ -206,6 +206,7 @@ Other options:
   'restorescreen'
   'shelltype'
   'shortname'
+  'swapsync'
   'termencoding' (Vim 7.4.852 also removed this for Windows)
   'textauto'
   'textmode'
