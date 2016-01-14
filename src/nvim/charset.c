@@ -1862,6 +1862,9 @@ void vim_str2nr(char_u *start, int *prep, int *len,
     }
   } else if ((pre == 'X') || (pre == 'x') || dohex > 1) {
     // hex
+    if (pre != 0) {
+      n += 2;  // skip over "0x"
+    }
     while (ascii_isxdigit(*ptr)) {
       un = 16 * un + (unsigned long)hex2nr(*ptr);
       ptr++;

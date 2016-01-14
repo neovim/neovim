@@ -277,7 +277,15 @@ Text:
  Expected:
  1) <Ctrl-a> and cursor is on a
  b
-   
+
+21) block-wise increment on part of hexadecimal
+Text:
+0x123456
+
+  Expected:
+  1) Ctrl-V f3 <ctrl-a>
+0x124456
+
 
 
 STARTTEST
@@ -400,6 +408,12 @@ V3kg..
 :/^E20=/+put a
 :.put =col('.')
 :set nrformats&vim
+
+:" Test 21
+:/^S21=/+,/^E21=/-y a
+:/^E21=/+put a
+:set nrformats&vim
+f3
 
 :" Save the report
 :/^# Test 1/,$w! test.out
@@ -591,6 +605,13 @@ E19====
 S20====
 a
 E20====
+
+
+
+# Test 21
+S21====
+0x123456
+E21====
 
 
 
