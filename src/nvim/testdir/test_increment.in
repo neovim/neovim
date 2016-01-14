@@ -71,7 +71,10 @@ foobar-10
 
 STARTTEST
 :so small.vim
-
+:"
+:" Avoid CTRL-X being mapped in Visual mode for MS-Windows
+:vmapclear
+:"
 :" Test 1
 :/^S1=/+,/^E1=/-y a
 :/^E1/+put a
