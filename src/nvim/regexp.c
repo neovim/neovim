@@ -5333,10 +5333,12 @@ do_class:
     if ((len = (*mb_ptr2len)(opnd)) > 1) {
       if (ireg_ic && enc_utf8)
         cf = utf_fold(utf_ptr2char(opnd));
-      while (count < maxcount) {
-        for (i = 0; i < len; ++i)
-          if (opnd[i] != scan[i])
+      while (count < maxcount && (*mb_ptr2len)(scan) >= len) {
+        for (i = 0; i < len; ++i) {
+          if (opnd[i] != scan[i]) {
             break;
+          }
+        }
         if (i < len && (!ireg_ic || !enc_utf8
                         || utf_fold(utf_ptr2char(scan)) != cf))
           break;
