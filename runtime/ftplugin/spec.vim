@@ -2,7 +2,7 @@
 " Filename: spec.vim
 " Maintainer: Igor Gnatenko i.gnatenko.brain@gmail.com
 " Former Maintainer: Gustavo Niemeyer <niemeyer@conectiva.com> (until March 2014)
-" Last Change: Sun Mar 2 11:24 MSK 2014 Igor Gnatenko
+" Last Change: Fri Feb 20 16:01 MSK 2014 Igor Gnatenko
 
 if exists("b:did_ftplugin")
 	finish
@@ -18,7 +18,9 @@ if !exists("no_plugin_maps") && !exists("no_spec_maps")
 	endif
 endif
 
-noremap <buffer> <unique> <script> <Plug>SpecChangelog :call <SID>SpecChangelog("")<CR>
+if !hasmapto("call <SID>SpecChangelog(\"\")<CR>")
+       noremap <buffer> <unique> <script> <Plug>SpecChangelog :call <SID>SpecChangelog("")<CR>
+endif
 
 if !exists("*s:GetRelVer")
 	function! s:GetRelVer()

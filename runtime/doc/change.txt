@@ -1,4 +1,4 @@
-*change.txt*    For Vim version 7.4.  Last change: 2015 Jan 27
+*change.txt*    For Vim version 7.4.  Last change: 2015 Feb 10
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -1147,12 +1147,14 @@ if none of buffers matches the given name.
 7. Expression register "=			*quote_=* *quote=* *@=*
 This is not really a register that stores text, but is a way to use an
 expression in commands which use a register.  The expression register is
-read-only; you cannot put text into it.  After the '=', the cursor moves to
-the command-line, where you can enter any expression (see |expression|).  All
-normal command-line editing commands are available, including a special
-history for expressions.  When you end the command-line by typing <CR>, Vim
-computes the result of the expression.  If you end it with <Esc>, Vim abandons
-the expression.  If you do not enter an expression, Vim uses the previous
+read-write.
+
+When typing the '=' after " or CTRL-R the cursor moves to the command-line,
+where you can enter any expression (see |expression|).  All normal
+command-line editing commands are available, including a special history for
+expressions.  When you end the command-line by typing <CR>, Vim computes the
+result of the expression.  If you end it with <Esc>, Vim abandons the
+expression.  If you do not enter an expression, Vim uses the previous
 expression (like with the "/" command).
 
 The expression must evaluate to a String.  A Number is always automatically
@@ -1193,7 +1195,7 @@ Contains the most recent search-pattern.  This is used for "n" and 'hlsearch'.
 It is writable with `:let`, you can change it to have 'hlsearch' highlight
 other matches without actually searching.  You can't yank or delete into this
 register.  The search direction is available in |v:searchforward|.
-Note that the valued is restored when returning from a function
+Note that the value is restored when returning from a function
 |function-search-undo|.
 
 							*@/*
@@ -1405,10 +1407,10 @@ When you hit Return in a C-comment, Vim will insert the middle comment leader
 for the new line: " * ".  To close this comment you just have to type "/"
 before typing anything else on the new line.  This will replace the
 middle-comment leader with the end-comment leader and apply any specified
-alignment, leaving just " */".  There is no need to hit BackSpace first.
+alignment, leaving just " */".  There is no need to hit Backspace first.
 
-When there is a match with a middle part, but there also is a maching end part
-which is longer, the end part is used.  This makes a C style comment work
+When there is a match with a middle part, but there also is a matching end
+part which is longer, the end part is used.  This makes a C style comment work
 without requiring the middle part to end with a space.
 
 Here is an example of alignment flags at work to make a comment stand out
