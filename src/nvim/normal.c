@@ -3503,9 +3503,17 @@ static void nv_help(cmdarg_T *cap)
  */
 static void nv_addsub(cmdarg_T *cap)
 {
-  if (!checkclearopq(cap->oap)
-      && do_addsub(cap->cmdchar, cap->count1))
+  bool visual = VIsual_active;
+  if (cap->oap->op_type == OP_NOP
+      && do_addsub((int)cap->cmdchar, cap->count1, cap->arg) == OK) {
     prep_redo_cmd(cap);
+  } else {
+    clearopbeep(cap->oap);
+  }
+  if (visual) {
+    VIsual_active = false;
+    redraw_later(CLEAR);
+  }
 }
 
 /*
@@ -6327,9 +6335,19 @@ static void nv_g_cmd(cmdarg_T *cap)
   bool flag = false;
 
   switch (cap->nchar) {
-  /*
-   * "gR": Enter virtual replace mode.
-   */
+  // "g^A/g^X": Sequentially increment visually selected region.
+  case Ctrl_A:
+  case Ctrl_X:
+    if (VIsual_active) {
+      cap->arg = true;
+      cap->cmdchar = cap->nchar;
+      nv_addsub(cap);
+    } else {
+      clearopbeep(oap);
+    }
+    break;
+
+  // "gR": Enter virtual replace mode.
   case 'R':
     cap->arg = true;
     nv_Replace(cap);

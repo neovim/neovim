@@ -1,0 +1,143 @@
+Tests for using Ctrl-A/Ctrl-X on visual selections
+
+Test cases
+==========
+
+1) Ctrl-A on visually selected number
+Text:
+foobar-10
+    1)    Ctrl-A on start of line:
+	foobar-9
+    2)    Ctrl-A on visually selected "-10":
+	foobar-9
+    3)    Ctrl-A on visually selected "10":
+	foobar-11
+    4)    Ctrl-X on visually selected "-10"
+	foobar-11
+    5)    Ctrl-X on visually selected "10"
+	foobar-9
+
+2) Ctrl-A on visually selected lines
+Text:
+10
+20
+30
+40
+
+    1) Ctrl-A on visually selected lines:
+11
+21
+31
+41
+
+    2) Ctrl-X on visually selected lines:
+9
+19
+29
+39
+
+3) g Ctrl-A on visually selected lines, with non-numbers in between
+Text:
+10
+
+20
+
+30
+
+40
+
+    1) 2 g Ctrl-A on visually selected lines:
+12
+
+24
+
+36
+
+48
+    2) 2 g Ctrl-X on visually selected lines
+8
+
+16
+
+24
+
+32
+
+4) Ctrl-A on non-number
+Text:
+foobar-10
+    1) visually select foobar:
+    foobar-10
+
+STARTTEST
+:so small.vim
+
+:" Test 1
+:/^S1=/+,/^E1=/-y a
+:/^E1/+put a
+:/^E1/+2put a
+f-v$:/^E1/+3put a
+f1v$:/^E1/+4put a
+f-v$:/^E1/+5put a
+f1v$
+
+:" Test 22
+:/^S2=/+,/^E2=/-y a
+:/^E2/+put a
+V3k$:.+put a
+V3k$
+
+:" Test 3
+:/^S3=/+,/^E3=/-y a
+:/^E3=/+put a
+V6k2g:.+put a
+V6k2g
+
+:" Test 4
+:/^S4=/+,/^E4=/-y a
+:/^E4=/+put a
+vf-
+
+:" Save the report
+:/^# Test 1/,$w! test.out
+:qa!
+
+
+# Test 1
+S1======
+foobar-10
+E1======
+
+
+
+# Test 2
+S2=====
+10
+20
+30
+40
+E2=====
+
+
+
+# Test 3
+S3=====
+10
+
+20
+
+30
+
+40
+E3=====
+
+
+
+# Test 4
+S4=====
+foobar-10
+E4=====
+
+
+ENDTEST
+
