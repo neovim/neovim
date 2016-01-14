@@ -472,7 +472,7 @@ void ex_sort(exarg_T *eap)
         nrs[lnum - eap->line1].start_col_nr = -MAXLNUM;
       } else {
         vim_str2nr(s, NULL, NULL, sort_bin, sort_oct, sort_hex,
-                   &nrs[lnum - eap->line1].start_col_nr, NULL);
+                   &nrs[lnum - eap->line1].start_col_nr, NULL, 0);
       }
       *s2 = c;
     } else {

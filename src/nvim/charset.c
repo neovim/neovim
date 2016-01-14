@@ -1773,6 +1773,7 @@ int vim_isblankline(char_u *lbuf)
 /// octal number.
 /// If "dohex" is non-zero recognize hex numbers, when > 1 always assume
 /// hex number.
+/// If maxlen > 0, check at a maximum maxlen chars.
 ///
 /// @param start
 /// @param prep Returns type of number 0 = decimal, 'x' or 'X' is hex,
@@ -1783,9 +1784,10 @@ int vim_isblankline(char_u *lbuf)
 /// @param dohex recognize hex number
 /// @param nptr Returns the signed result.
 /// @param unptr Returns the unsigned result.
+/// @param maxlen Max length of string to check.
 void vim_str2nr(char_u *start, int *prep, int *len,
                 int dobin, int dooct, int dohex,
-                long *nptr, unsigned long *unptr)
+                long *nptr, unsigned long *unptr, int maxlen)
 {
   char_u *ptr = start;
   int pre = 0;  // default is decimal
@@ -1797,18 +1799,21 @@ void vim_str2nr(char_u *start, int *prep, int *len,
     ptr++;
   }
 
-  // Recognize hex, octal, and bin.
-  if ((ptr[0] == '0') && (ptr[1] != '8') && (ptr[1] != '9')) {
+  // Recognize hex, octal and bin.
+  if ((ptr[0] == '0') && (ptr[1] != '8') && (ptr[1] != '9')
+      && (maxlen == 0 || maxlen > 1)) {
     pre = ptr[1];
 
     if (dohex
         && ((pre == 'X') || (pre == 'x'))
-        && ascii_isxdigit(ptr[2])) {
+        && ascii_isxdigit(ptr[2])
+        && (maxlen == 0 || maxlen > 2)) {
       // hexadecimal
       ptr += 2;
     } else if (dobin
                && ((pre == 'B') || (pre == 'b'))
-               && ascii_isbdigit(ptr[2])) {
+               && ascii_isbdigit(ptr[2])
+               && (maxlen == 0 || maxlen > 2)) {
       // binary
       ptr += 2;
     } else {
@@ -1827,35 +1832,51 @@ void vim_str2nr(char_u *start, int *prep, int *len,
             // assume octal
             pre = '0';
           }
+          if (n == maxlen) {
+            break;
+          }
         }
       }
     }
   }
 
   // Do the string-to-numeric conversion "manually" to avoid sscanf quirks.
-  if ((pre == 'B') || (pre == 'b') || (dobin > 1)) {
+  int n = 1;
+  if ((pre == 'B') || (pre == 'b') || what == STR2NR_BIN + STR2NR_FORCE) {
     // bin
     while ('0' <= *ptr && *ptr <= '1') {
       un = 2 * un + (unsigned long)(*ptr - '0');
       ptr++;
+      if (n++ == maxlen) {
+        break;
+      }
     }
   } else if ((pre == '0') || (dooct > 1)) {
     // octal
     while ('0' <= *ptr && *ptr <= '7') {
       un = 8 * un + (unsigned long)(*ptr - '0');
       ptr++;
+      if (n++ == maxlen) {
+        break;
+      }
     }
   } else if ((pre == 'X') || (pre == 'x') || dohex > 1) {
     // hex
     while (ascii_isxdigit(*ptr)) {
       un = 16 * un + (unsigned long)hex2nr(*ptr);
       ptr++;
+      if (n++ == maxlen) {
+        break;
+      }
     }
   } else {
     // decimal
     while (ascii_isdigit(*ptr)) {
       un = 10 * un + (unsigned long)(*ptr - '0');
       ptr++;
+      if (n++ == maxlen) {
+        break;
+      }
     }
   }
 

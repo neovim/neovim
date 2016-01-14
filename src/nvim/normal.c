@@ -3028,6 +3028,34 @@ size_t find_ident_at_pos(win_T *wp, linenr_T lnum, colnr_T startcol,
   return (size_t)col;
 }
 
+// Add commands to reselect Visual mode into the redo buffer.
+static void prep_redo_visual(cmdarg_T *cap)
+{
+  ResetRedobuff();
+  AppendCharToRedobuff(VIsual_mode);
+  if (VIsual_mode == 'V' &&
+      curbuf->b_visual.vi_end.lnum != curbuf->b_visual.vi_start.lnum) {
+    AppendNumberToRedobuff(curbuf->b_visual.vi_end.lnum -
+                           curbuf->b_visual.vi_start.lnum);
+    AppendCharToRedobuff('j');
+  } else if (VIsual_mode == 'v' || VIsual_mode == Ctrl_V) {
+    // block visual mode or char visual mmode
+    if (curbuf->b_visual.vi_end.lnum != curbuf->b_visual.vi_start.lnum) {
+      AppendNumberToRedobuff(curbuf->b_visual.vi_end.lnum -
+                             curbuf->b_visual.vi_start.lnum);
+      AppendCharToRedobuff('j');
+    }
+    if (curbuf->b_visual.vi_curswant == MAXCOL) {
+      AppendCharToRedobuff('$');
+    } else if (curbuf->b_visual.vi_end.col > curbuf->b_visual.vi_start.col) {
+      AppendNumberToRedobuff(curbuf->b_visual.vi_end.col -
+                             curbuf->b_visual.vi_start.col - 1);
+      AppendCharToRedobuff(' ');
+    }
+  }
+  AppendNumberToRedobuff(cap->count1);
+}
+
 /*
  * Prepare for redo of a normal command.
  */
@@ -3507,15 +3535,9 @@ static void nv_addsub(cmdarg_T *cap)
   if (cap->oap->op_type == OP_NOP
       && do_addsub((int)cap->cmdchar, cap->count1, cap->arg) == OK) {
     if (visual) {
-      ResetRedobuff();
-      AppendCharToRedobuff(VIsual_mode);
-      if (VIsual_mode == 'V') {
-        AppendNumberToRedobuff(cap->oap->line_count);
-        AppendCharToRedobuff('j');
-      }
-      AppendNumberToRedobuff(cap->count1);
-      if (cap->nchar != NUL) {
-        AppendCharToRedobuff(cap->nchar);
+      prep_redo_visual(cap);
+      if (cap->arg) {
+        AppendCharToRedobuff('g');
       }
       AppendCharToRedobuff(cap->cmdchar);
     } else {
@@ -3526,7 +3548,8 @@ static void nv_addsub(cmdarg_T *cap)
   }
   if (visual) {
     VIsual_active = false;
-    redraw_later(CLEAR);
+    redo_VIsual_busy = false;
+    redraw_later(INVERTED);
   }
 }
 

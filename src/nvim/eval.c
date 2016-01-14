@@ -1147,7 +1147,7 @@ int call_vim_function(
       len = 0;
     } else {
       // Recognize a number argument, the others must be strings.
-      vim_str2nr(argv[i], NULL, &len, true, true, true, &n, NULL);
+      vim_str2nr(argv[i], NULL, &len, true, true, true, &n, NULL, 0);
     }
     if (len != 0 && len == (int)STRLEN(argv[i])) {
       argvars[i].v_type = VAR_NUMBER;
@@ -4138,7 +4138,7 @@ static int eval7(
         rettv->vval.v_float = f;
       }
     } else {
-      vim_str2nr(*arg, NULL, &len, true, true, true, &n, NULL);
+      vim_str2nr(*arg, NULL, &len, true, true, true, &n, NULL, 0);
       *arg += len;
       if (evaluate) {
         rettv->v_type = VAR_NUMBER;
@@ -16054,7 +16054,7 @@ static void f_str2nr(typval_T *argvars, typval_T *rettv)
              base == 2 ? 2 : 0,
              base == 8 ? 2 : 0,
              base == 16 ? 2 : 0,
-             &n, NULL);
+             &n, NULL, 0);
   rettv->vval.v_number = n;
 }
 
@@ -18336,7 +18336,7 @@ long get_tv_number_chk(typval_T *varp, int *denote)
   case VAR_STRING:
     if (varp->vval.v_string != NULL) {
       vim_str2nr(varp->vval.v_string, NULL, NULL,
-                 true, true, true, &n, NULL);
+                 true, true, true, &n, NULL, 0);
     }
     return n;
   case VAR_LIST:

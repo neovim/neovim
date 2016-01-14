@@ -185,6 +185,83 @@ Text:
     1 0
     1 0
 
+13) visually selected part of columns
+Text:
+max: 100px
+max: 200px
+max: 300px
+max: 400px
+    Expected:
+    1) 'v' on first two numbers Ctrl-A
+    max: 110px
+    max: 220px
+    max: 330px
+    max: 400px
+    2) 'v' on first two numbers Ctrl-X
+    max: 90px
+    max: 190px
+    max: 290px
+    max: 400px
+
+14) redo in block mode
+Text:
+1 1
+1 1
+    Expected:
+    1) Ctrl-a on first column, redo on second column
+    2 2
+    2 2
+
+15) block select single numbers
+Text:
+101
+    Expected:
+    1) Ctrl-a on visually selected zero
+    111
+
+16) increment right aligned numbers
+Text:
+   1
+  19
+ 119
+    Expected:
+    1) Ctrl-a on line selected region
+       2
+      20
+     120
+
+17) block-wise increment and redo
+Text:
+  100
+  1
+
+  100
+  1
+
+  Expected:
+  1) Ctrl-V j $ on first block, afterwards '.' on second
+  101
+  2
+
+  101
+  2
+
+18) repeat of g<Ctrl-a>
+Text:
+  0
+  0
+  0
+  0
+
+  Expected:
+  1) V 4j g<ctrl-a>, repeat twice afterwards with .
+  3
+  6
+  9
+  12
+  
+
+
 STARTTEST
 :so small.vim
 :"
@@ -200,16 +277,16 @@ f1v$:/^E1=/+4put a
 f-v$:/^E1=/+5put a
 f1v$
 
-:" Test 22
+:" Test 2
 :/^S2=/+,/^E2=/-y a
 :/^E2=/+put a
-V3k$:.+put a
+V3k$3j:.+put a
 V3k$
 
 :" Test 3
 :/^S3=/+,/^E3=/-y a
 :/^E3=/+put a
-V6k2g:.+put a
+V6k2g6j:.+put a
 V6k2g
 
 :" Test 4
@@ -229,21 +306,22 @@ v3kg
 v3kg
 
 :" Test 7
+:set nrformats&vim
 :/^S7=/+,/^E7=/-y a
 :/^E7=/+put a
-V4k:.+put a
+V4k4j:.+put a
 V4k
 
 :" Test 8
 :/^S8=/+,/^E8=/-y a
 :/^E8=/+put a
-kj$:.+put a
+kj$j:.+put a
 k$+
 
 :" Test 9
 :/^S9=/+,/^E9=/-y a
 :/^E9=/+put a
-5kVj22j.
+5kVj23j.
 
 :" Test 10
 :/^S10=/+,/^E10=/-y a
@@ -259,6 +337,37 @@ V3kg
 :/^S12=/+,/^E12=/-y a
 :/^E12=/+put a
 2k$v++
+
+:" Test 13
+:/^S13=/+,/^E13=/-y a
+:/^E13=/+put a
+3kf1l2j3j:.+put a
+3kf1l2j
+
+:" Test 14
+:/^S14=/+,/^E14=/-y a
+:/^E14=/+put a
+kw.
+
+:" Test 15
+:/^S15=/+,/^E15=/-y a
+:/^E15=/+put a
+lv
+
+:" Test 16
+:/^S16=/+,/^E16=/-y a
+:/^E16=/+put a
+V3k
+
+:" Test 17
+:/^S17=/+,/^E17=/-y a
+:/^E17=/+put a
+4kj$2j.
+
+:" Test 18
+:/^S18=/+,/^E18=/-y a
+:/^E18=/+put a
+V3kg..
 
 :" Save the report
 :/^# Test 1/,$w! test.out
@@ -384,6 +493,57 @@ E12====
 
 
 
+# Test 13
+S13====
+max: 100px
+max: 200px
+max: 300px
+max: 400px
+E13====
+
+
+
+# Test 14
+S14====
+1 1
+1 1
+E14====
+
+
+
+# Test 15
+S15====
+101
+E15====
+
+
+
+# Test 16
+S16====
+   1
+  19
+ 119
+E16====
+
+
+
+# Test 17
+S17====
+ 100
+ 1
+
+ 100
+ 1
+E17====
+
+
+# Test 18
+S18====
+0
+0
+0
+0
+E18====
 
 
 
