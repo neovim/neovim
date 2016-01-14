@@ -459,11 +459,9 @@ int mf_sync(memfile_T *mfp, int flags)
   if (hp == NULL || status == FAIL)
     mfp->mf_dirty = false;
 
-  if ((flags & MFS_FLUSH) && *p_sws != NUL) {
-    if (STRCMP(p_sws, "fsync") == 0) {
-      if (os_fsync(mfp->mf_fd)) {
-        status = FAIL;
-      }
+  if (flags & MFS_FLUSH) {
+    if (os_fsync(mfp->mf_fd)) {
+      status = FAIL;
     }
   }
 

@@ -293,7 +293,6 @@ If you really don't want to see this message, you can add the 'A' flag to the
 'updatecount'	Number of key strokes after which the swap file is flushed to
 		disk.
 'updatetime'	Timeout after which the swap file is flushed to disk.
-'swapsync'	Whether the disk is synced when the swap file is flushed.
 'directory'	List of directory names where to store the swap file.
 'maxmem'	Limit for memory usage before writing text to the swap file.
 'maxmemtot'	Same, but for all files in total.

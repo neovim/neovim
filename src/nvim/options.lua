@@ -2297,13 +2297,6 @@ return {
       defaults={if_true={vi=true}}
     },
     {
-      full_name='swapsync', abbreviation='sws',
-      type='string', scope={'global'},
-      vi_def=true,
-      varname='p_sws',
-      defaults={if_true={vi="fsync"}}
-    },
-    {
       full_name='switchbuf', abbreviation='swb',
       type='string', list='comma', scope={'global'},
       deny_duplicates=true,
