@@ -28,9 +28,8 @@ SCRIPTS :=                                                             \
            test_charsearch.out                                         \
            test_close_count.out                                        \
            test_command_count.out                                      \
-           test_increment.out                                          \
 
-NEW_TESTS =
+NEW_TESTS = test_increment.res
 
 SCRIPTS_GUI := test16.out
 
