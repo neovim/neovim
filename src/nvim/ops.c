@@ -4230,7 +4230,7 @@ int do_addsub(int command, linenr_T Prenum1, bool g_cmd)
   bool visual = VIsual_active;
   int lnum = curwin->w_cursor.lnum;
   int lnume = curwin->w_cursor.lnum;
-  int startcol;
+  int startcol = 0;
   bool did_change = false;
 
   dohex = (vim_strchr(curbuf->b_p_nf, 'x') != NULL);    // "heX"
