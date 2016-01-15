@@ -4181,23 +4181,6 @@ static void block_prep(oparg_T *oap, struct block_def *bdp, linenr_T lnum, int i
   bdp->textstart = pstart;
 }
 
-
-static void reverse_line(char_u *s)
-{
-  int i, j;
-  char_u c;
-
-  if ((i = (int)STRLEN(s) - 1) <= 0)
-    return;
-
-  curwin->w_cursor.col = i - curwin->w_cursor.col;
-  for (j = 0; j < i; j++, i--) {
-    c = s[i]; s[i] = s[j]; s[j] = c;
-  }
-}
-
-# define RLADDSUBFIX(ptr) if (curwin->w_p_rl) reverse_line(ptr);
-
 /// Add or subtract from a number in a line.
 ///
 /// @param command CTRL-A for add, CTRL-X for subtract
@@ -4249,7 +4232,6 @@ int do_addsub(int command, linenr_T Prenum1, bool g_cmd)
     }
 
     ptr = ml_get(VIsual.lnum);
-    RLADDSUBFIX(ptr);
     if (VIsual_mode == 'V') {
       VIsual.col = 0;
       curwin->w_cursor.col = STRLEN(ptr);
@@ -4278,7 +4260,6 @@ int do_addsub(int command, linenr_T Prenum1, bool g_cmd)
     lnume = curwin->w_cursor.lnum;
   } else {
     ptr = get_cursor_line_ptr();
-    RLADDSUBFIX(ptr);
 
     if (dobin) {
       while (col > 0 && ascii_isbdigit(ptr[col])) {
@@ -4345,7 +4326,6 @@ int do_addsub(int command, linenr_T Prenum1, bool g_cmd)
     t = curwin->w_cursor;
     curwin->w_cursor.lnum = i;
     ptr = get_cursor_line_ptr();
-    RLADDSUBFIX(ptr);
     if ((int)STRLEN(ptr) <= col) {
       // try again on next line
       continue;
@@ -4601,8 +4581,6 @@ int do_addsub(int command, linenr_T Prenum1, bool g_cmd)
     }
     Prenum1 += offset;
     curwin->w_set_curswant = true;
-    ptr = ml_get_buf(curbuf, curwin->w_cursor.lnum, true);
-    RLADDSUBFIX(ptr);
   }
   if (visual) {
     // cursor at the top of the selection

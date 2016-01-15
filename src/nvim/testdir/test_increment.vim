@@ -558,4 +558,21 @@ func Test_visual_increment_26()
   call assert_equal([0, 1, 1, 0], getpos('.'))
 endfunc
 
+" 27) increment with 'rightreft', if supported
+func Test_visual_increment_27()
+  if exists('+rightleft')
+    set rightleft
+    call setline(1, ["1234 56"])
+
+    exec "norm! $\<C-A>"
+    call assert_equal(["1234 57"], getline(1, '$'))
+    call assert_equal([0, 1, 7, 0], getpos('.'))
+
+    exec "norm! \<C-A>"
+    call assert_equal(["1234 58"], getline(1, '$'))
+    call assert_equal([0, 1, 7, 0], getpos('.'))
+    set norightleft
+  endif
+endfunc
+
 " vim: tabstop=2 shiftwidth=2 expandtab
