@@ -596,7 +596,7 @@ static int command_line_execute(VimState *state, int key)
       }
 
       if (s->j > 0) {
-        // TODO(tarruda): this is only for DOS/UNIX systems - need to put in
+        // TODO(tarruda): this is only for DOS/Unix systems - need to put in
         // machine-specific stuff here and in upseg init
         cmdline_del(s->j);
         put_on_cmdline(upseg + 1, 3, false);

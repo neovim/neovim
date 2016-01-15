@@ -55,7 +55,7 @@ endif()
 
 # Cross compiling: use these for dependencies built for the
 # HOST system, when not crosscompiling these should be the
-# same as DEPS_*. Except when targeting UNIX in which case
+# same as DEPS_*. Except when targeting Unix in which case
 # want all the dependencies to use the same compiler.
 if(CMAKE_CROSSCOMPILING AND NOT UNIX)
   set(HOSTDEPS_INSTALL_DIR "${CMAKE_BINARY_DIR}/host")

@@ -1084,7 +1084,7 @@ x	A single character, with no special meaning, matches itself
 *[:backspace:]*		  [:backspace:]	the <BS> character
 	  The brackets in character class expressions are additional to the
 	  brackets delimiting a collection.  For example, the following is a
-	  plausible pattern for a UNIX filename: "[-./[:alnum:]_~]\+" That is,
+	  plausible pattern for a Unix filename: "[-./[:alnum:]_~]\+" That is,
 	  a list of at least one character, each of which is either '-', '.',
 	  '/', alphabetic, numeric, '_' or '~'.
 	  These items only work for 8-bit characters.

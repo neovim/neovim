@@ -3316,7 +3316,7 @@ def ProcessFile(filename, vlevel, extra_check_functions=[]):
     _SetVerboseLevel(vlevel)
 
     try:
-        # Support the UNIX convention of using "-" for stdin.  Note that
+        # Support the Unix convention of using "-" for stdin.  Note that
         # we are not opening the file with universal newline support
         # (which codecs doesn't support anyway), so the resulting lines do
         # contain trailing '\r' characters if we are reading a file that

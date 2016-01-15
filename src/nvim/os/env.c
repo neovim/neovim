@@ -290,7 +290,7 @@ void expand_env_esc(char_u *srcp, char_u *dst, int dstlen, bool esc, bool one,
         }
 
 #if defined(UNIX)
-        // Verify that we have found the end of a UNIX ${VAR} style variable
+        // Verify that we have found the end of a Unix ${VAR} style variable
         if (src[1] == '{' && *tail != '}') {
           var = NULL;
         } else {

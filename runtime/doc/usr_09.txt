@@ -134,10 +134,10 @@ The following command makes the mouse work like a Microsoft Windows mouse: >
 
 	:behave mswin
 
-The default behavior of the mouse on UNIX systems is xterm.  The default
-behavior on a Microsoft Windows system is selected during the installation
-process.  For details about what the two behaviors are, see |:behave|.  Here
-follows a summary.
+The default behavior of the mouse on Unix systems is xterm.  The default
+behavior on Windows systems is selected during the installation process.  For
+details about what the two behaviors are, see |:behave|.  Here follows a
+summary.
 
 
 XTERM MOUSE BEHAVIOR

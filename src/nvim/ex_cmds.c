@@ -951,30 +951,26 @@ void do_bang(int addr_count, exarg_T *eap, int forceit, int do_in, int do_out)
     xfree(newcmd);
 }
 
-/*
- * do_filter: filter lines through a command given by the user
- *
- * We mostly use temp files and the call_shell() routine here. This would
- * normally be done using pipes on a UNIX machine, but this is more portable
- * to non-unix machines. The call_shell() routine needs to be able
- * to deal with redirection somehow, and should handle things like looking
- * at the PATH env. variable, and adding reasonable extensions to the
- * command name given by the user. All reasonable versions of call_shell()
- * do this.
- * Alternatively, if on Unix and redirecting input or output, but not both,
- * and the 'shelltemp' option isn't set, use pipes.
- * We use input redirection if do_in is TRUE.
- * We use output redirection if do_out is TRUE.
- */
-static void 
-do_filter (
+// do_filter: filter lines through a command given by the user
+//
+// We mostly use temp files and the call_shell() routine here. This would
+// normally be done using pipes on a Unix system, but this is more portable
+// to non-Unix systems. The call_shell() routine needs to be able
+// to deal with redirection somehow, and should handle things like looking
+// at the PATH env. variable, and adding reasonable extensions to the
+// command name given by the user. All reasonable versions of call_shell()
+// do this.
+// Alternatively, if on Unix and redirecting input or output, but not both,
+// and the 'shelltemp' option isn't set, use pipes.
+// We use input redirection if do_in is TRUE.
+// We use output redirection if do_out is TRUE.
+static void do_filter(
     linenr_T line1,
     linenr_T line2,
     exarg_T *eap,               /* for forced 'ff' and 'fenc' */
     char_u *cmd,
     int do_in,
-    int do_out
-)
+    int do_out)
 {
   char_u      *itmp = NULL;
   char_u      *otmp = NULL;
@@ -1690,7 +1686,7 @@ check_overwrite (
              && os_file_exists(ffname)) {
     if (!eap->forceit && !eap->append) {
 #ifdef UNIX
-      /* with UNIX it is possible to open a directory */
+      // It is possible to open a directory on Unix.
       if (os_isdir(ffname)) {
         EMSG2(_(e_isadir2), ffname);
         return FAIL;

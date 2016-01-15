@@ -196,7 +196,7 @@ char_u *get_past_head(char_u *path)
 int vim_ispathsep(int c)
 {
 #ifdef UNIX
-  return c == '/';          /* UNIX has ':' inside file names */
+  return c == '/';          // Unix has ':' inside file names
 #else
 # ifdef BACKSLASH_IN_FILENAME
   return c == ':' || c == '/' || c == '\\';

@@ -6843,9 +6843,9 @@ void ex_cd(exarg_T *eap)
       prev_dir = NULL;
 
 #if defined(UNIX)
-    /* for UNIX ":cd" means: go to home directory */
+    // On Unix ":cd" means: go to home directory.
     if (*new_dir == NUL) {
-      /* use NameBuff for home directory name */
+      // Use NameBuff for home directory name.
       expand_env((char_u *)"$HOME", NameBuff, MAXPATHL);
       new_dir = NameBuff;
     }
