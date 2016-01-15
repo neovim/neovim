@@ -701,4 +701,11 @@ func Test_visual_increment_37()
   call assert_equal(["1 26", "4 59"], getline(1, 2))
 endfunc
 
+" Check redo after the normal mode increment
+func Test_visual_increment_38()
+  exec "norm! i10\<ESC>5\<C-A>."
+  call assert_equal(["20"], getline(1, '$'))
+  call assert_equal([0, 1, 2, 0], getpos('.'))
+endfunc
+
 " vim: tabstop=2 shiftwidth=2 expandtab
