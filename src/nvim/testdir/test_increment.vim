@@ -556,6 +556,7 @@ func Test_visual_increment_26()
   exec "norm! \<C-V>$\<C-A>"
   call assert_equal(["0b11111111111111111111111111111111"], getline(1, '$'))
   call assert_equal([0, 1, 1, 0], getpos('.'))
+  set nrformats-=alpha
 endfunc
 
 " 27) increment with 'rightreft', if supported
@@ -573,6 +574,27 @@ func Test_visual_increment_27()
     call assert_equal([0, 1, 7, 0], getpos('.'))
     set norightleft
   endif
+endfunc
+
+" 28) block-wise increment and dot-repeat
+" Text:
+"   1 23
+"   4 56
+" 
+" Expected:
+"   1) f2 Ctrl-V jl <ctrl-a>, repeat twice afterwards with .
+"   1 26
+"   4 59
+"
+" Try with and without indent.
+func Test_visual_increment_28()
+  call setline(1, ["  1 23", "  4 56"])
+  exec "norm! ggf2\<C-V>jl\<C-A>.."
+  call assert_equal(["  1 26", "  4 59"], getline(1, 2))
+
+  call setline(1, ["1 23", "4 56"])
+  exec "norm! ggf2\<C-V>jl\<C-A>.."
+  call assert_equal(["1 26", "4 59"], getline(1, 2))
 endfunc
 
 " vim: tabstop=2 shiftwidth=2 expandtab
