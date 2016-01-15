@@ -78,7 +78,7 @@ mistakes; you can correct them later.  To enter the following programmer's
 limerick, this is what you type: >
 
 	iA very intelligent turtle
-	Found programming UNIX a hurdle
+	Found programming Unix a hurdle
 
 After typing "turtle" you press the <Enter> key to start a new line.  Finally
 you press the <Esc> key to stop Insert mode and go back to Normal mode.  You
@@ -86,7 +86,7 @@ now have two lines of text in your Vim window:
 
 	+---------------------------------------+
 	|A very intelligent turtle		|
-	|Found programming UNIX a hurdle	|
+	|Found programming Unix a hurdle	|
 	|~					|
 	|~					|
 	|					|
@@ -108,7 +108,7 @@ of the window.  This indicates you are in Insert mode.
 
 	+---------------------------------------+
 	|A very intelligent turtle		|
-	|Found programming UNIX a hurdle	|
+	|Found programming Unix a hurdle	|
 	|~					|
 	|~					|
 	|-- INSERT --				|
@@ -185,7 +185,7 @@ look like this:
 
 	+---------------------------------------+
 	|intelligent turtle			|
-	|Found programming UNIX a hurdle	|
+	|Found programming Unix a hurdle	|
 	|~					|
 	|~					|
 	|					|
@@ -200,7 +200,7 @@ insert mode (the final <Esc>).	The result:
 
 	+---------------------------------------+
 	|A young intelligent turtle		|
-	|Found programming UNIX a hurdle	|
+	|Found programming Unix a hurdle	|
 	|~					|
 	|~					|
 	|					|
@@ -213,7 +213,7 @@ To delete a whole line use the "dd" command.  The following line will
 then move up to fill the gap:
 
 	+---------------------------------------+
-	|Found programming UNIX a hurdle	|
+	|Found programming Unix a hurdle	|
 	|~					|
 	|~					|
 	|~					|
@@ -330,7 +330,7 @@ Insert mode.  Then you can type the text for the new line.
    Suppose the cursor is somewhere in the first of these two lines:
 
 	A very intelligent turtle ~
-	Found programming UNIX a hurdle ~
+	Found programming Unix a hurdle ~
 
 If you now use the "o" command and type new text: >
 
@@ -340,7 +340,7 @@ The result is:
 
 	A very intelligent turtle ~
 	That liked using Vim ~
-	Found programming UNIX a hurdle ~
+	Found programming Unix a hurdle ~
 
 The "O" command (uppercase) opens a line above the cursor.
 

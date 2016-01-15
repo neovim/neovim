@@ -111,7 +111,7 @@ The letter encoding used is the Vim extended ISIR-3342 standard with a built
 in function to convert between Vim extended ISIR-3342 and ISIR-3342 standard.
 
 For document portability reasons, the letter encoding is kept the same across
-different platforms (i.e. UNIX's, NT/95/98, MS DOS, ...).
+different platforms (i.e. Unix, Windows, ...).
 
 
 o  Keyboard

@@ -148,8 +148,8 @@ describe('env function', function()
       local name = 'NEOVIM_UNIT_TEST_EXPAND_ENV_ESCN'
       local value = 'NEOVIM_UNIT_TEST_EXPAND_ENV_ESCV'
       os_setenv(name, value, 1)
-      -- TODO(bobtwinkles) This only tests UNIX expansions. There should be a
-      -- test for windows as well
+      -- TODO(bobtwinkles) This only tests Unix expansions. There should be a
+      -- test for Windows as well
       local input1 = to_cstr('$NEOVIM_UNIT_TEST_EXPAND_ENV_ESCN/test')
       local input2 = to_cstr('${NEOVIM_UNIT_TEST_EXPAND_ENV_ESCN}/test')
       local output_buff1 = cstr(255, '')

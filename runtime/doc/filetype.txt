@@ -595,7 +595,7 @@ Format description:
    ignored.
 2. Each entry starts with line that has format "{type} with timestamp 
    {timestamp}:". {timestamp} is |strftime()|-formatted string representing 
-   actual UNIX timestamp value. First strftime() argument is equal to 
+   actual Unix timestamp value. First strftime() argument is equal to
    `%Y-%m-%dT%H:%M:%S`.  When writing this timestamp is parsed using 
    |msgpack#strptime()|, with caching (it remembers which timestamp produced 
    particular strftime() output and uses this value if you did not change 

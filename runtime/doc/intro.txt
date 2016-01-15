@@ -251,7 +251,7 @@ Vim would never have become what it is now, without the help of these people!
 				lots of patches
 	Ingo Wilken		Tcl interface
 	Mike Williams		PostScript printing
-	Juergen Weigert		Lattice version, AUX improvements, UNIX and
+	Juergen Weigert		Lattice version, AUX improvements, Unix and
 				MS-DOS ports, autoconf
 	Stefan 'Sec' Zehl	Maintainer of vim.org
 
