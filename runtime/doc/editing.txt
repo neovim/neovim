@@ -276,7 +276,8 @@ CTRL-^			Edit the alternate file.  Mostly the alternate file is
 			Mnemonic: "goto file".
 			Uses the 'isfname' option to find out which characters
 			are supposed to be in a file name.  Trailing
-			punctuation characters ".,:;!" are ignored.
+			punctuation characters ".,:;!" are ignored. Escaped
+			spaces "\ " are reduced to a single space.
 			Uses the 'path' option as a list of directory names to
 			look for the file.  See the 'path' option for details
 			about relative directories and wildcards.

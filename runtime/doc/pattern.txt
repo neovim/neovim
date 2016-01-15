@@ -1,4 +1,4 @@
-*pattern.txt*   For Vim version 7.4.  Last change: 2014 Sep 06
+*pattern.txt*   For Vim version 7.4.  Last change: 2015 Feb 17
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -59,6 +59,8 @@ explanations are in chapter 27 |usr_27.txt|.
 
 							*n*
 n			Repeat the latest "/" or "?" [count] times.
+			If the cursor doesn't move the search is repeated with
+			count + 1.
 			|last-pattern|
 
 							*N*

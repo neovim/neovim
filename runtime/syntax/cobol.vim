@@ -1,10 +1,10 @@
 " Vim syntax file
-" Language:   COBOL
-" Maintainer: Tim Pope <vimNOSPAM@tpope.info>
+" Language:     COBOL
+" Maintainer:   Tim Pope <vimNOSPAM@tpope.org>
 "     (formerly Davyd Ondrejko <vondraco@columbus.rr.com>)
 "     (formerly Sitaram Chamarty <sitaram@diac.com> and
-"		    James Mitchell <james_mitchell@acm.org>)
-" $Id: cobol.vim,v 1.2 2007/05/05 18:23:43 vimboss Exp $
+"               James Mitchell <james_mitchell@acm.org>)
+" Last Change:  2015 Feb 13
 
 " For version 5.x: Clear all syntax items
 " For version 6.x: Quit when a syntax file was already loaded
@@ -145,7 +145,7 @@ syn match   cobolString       /'[^']*\('\|$\)/
 syn match   cobolIndicator   "\%7c[D-]" contained
 
 if exists("cobol_legacy_code")
-  syn region  cobolCondFlow     contains=ALLBUT,cobolLine start="\<\(IF\|INVALID\|END\|EOP\)\>" skip=/\('\|"\)[^"]\{-}\("\|'\|$\)/ end="\." keepend
+  syn region  cobolCondFlow     contains=ALLBUT,cobolLine,cobolBadLine start="\<\(IF\|INVALID\|END\|EOP\)\>" skip=/\('\|"\)[^"]\{-}\("\|'\|$\)/ end="\." keepend
 endif
 
 " many legacy sources have junk in columns 1-6: must be before others

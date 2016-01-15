@@ -488,11 +488,11 @@ number can be specified where "vim:" or "Vim:" is used:
 	vim<{vers}:	version before {vers}
 	vim={vers}:	version {vers}
 	vim>{vers}:	version after {vers}
-{vers} is 600 for Vim 6.0 (hundred times the major version plus minor).
-For example, to use a modeline only for Vim 6.0 and later:
-	/* vim600: set foldmethod=marker: */ ~
-To use a modeline for Vim before version 5.7:
-	/* vim<570: set sw=4: */ ~
+{vers} is 700 for Vim 7.0 (hundred times the major version plus minor).
+For example, to use a modeline only for Vim 7.0:
+	/* vim700: set foldmethod=marker */ ~
+To use a modeline for Vim after version 7.2:
+	/* vim>702: set cole=2: */ ~
 There can be no blanks between "vim" and the ":".
 
 
@@ -1193,8 +1193,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 	nofile only:	The buffer name is fixed, it is not handled like a
 			file name.  It is not modified in response to a |:cd|
 			command.
-	nofile only:	When using ":e bufname" and already editing "bufname"
-			nothing changes, since there is no file to edit.
+	both:		When using ":e bufname" and already editing "bufname"
+			the buffer is made empty and autocommands are
+			triggered as usual for |:edit|.
 							*E676*
 	"acwrite" implies that the buffer name is not related to a file, like
 	"nofile", but it will be written.  Thus, in contrast to "nofile" and
@@ -2438,8 +2439,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	  2. If a <NL> is found and 'fileformats' includes "unix", 'fileformat'
 	     is set to "unix".  Note that when a <NL> is found without a
 	     preceding <CR>, "unix" is preferred over "dos".
-	  3. If 'fileformat' has not yet been set, and if 'fileformats'
-	     includes "mac", 'fileformat' is set to "mac".
+	  3. If 'fileformat' has not yet been set, and if a <CR> is found, and
+	     if 'fileformats' includes "mac", 'fileformat' is set to "mac".
 	     This means that "mac" is only chosen when:
 	      "unix" is not present or no <NL> is found in the file, and
 	      "dos" is not present or no <CR><NL> is found in the file.

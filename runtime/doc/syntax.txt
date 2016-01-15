@@ -1,4 +1,4 @@
-*syntax.txt*	For Vim version 7.4.  Last change: 2015 Feb 03
+*syntax.txt*	For Vim version 7.4.  Last change: 2015 Feb 22
 
 
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
@@ -206,7 +206,8 @@ thing.  These are then linked to a highlight group that specifies the color.
 A syntax group name doesn't specify any color or attributes itself.
 
 The name for a highlight or syntax group must consist of ASCII letters, digits
-and the underscore.  As a regexp: "[a-zA-Z0-9_]*"
+and the underscore.  As a regexp: "[a-zA-Z0-9_]*".  However, Vim does not give
+an error when using other characters.
 
 To be able to allow each user to pick his favorite set of colors, there must
 be preferred names for highlight groups that are common for many languages.
@@ -4238,7 +4239,7 @@ If the "maxlines={N}" argument is given, the number of lines that are searched
 for a comment or syncing pattern is restricted to N lines backwards (after
 adding "minlines").  This is useful if you have few things to sync on and a
 slow machine.  Example: >
-   :syntax sync ccomment maxlines=500
+   :syntax sync maxlines=500 ccomment
 <
 						*:syn-sync-linebreaks*
 When using a pattern that matches multiple lines, a change in one line may

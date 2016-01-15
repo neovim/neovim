@@ -3410,7 +3410,7 @@ getchar([expr])						*getchar()*
 			:  endwhile
 			:endfunction
 <
-		You may also receive syntetic characters, such as
+		You may also receive synthetic characters, such as
 		|<CursorHold>|. Often you will want to ignore this and get
 		another character: >
 			:function GetKey()
@@ -5083,7 +5083,7 @@ py3eval({expr})						*py3eval()*
 		Evaluate Python expression {expr} and return its result
 		converted to Vim data structures.
 		Numbers and strings are returned as they are (strings are 
-		copied though, unicode strings are additionally converted to 
+		copied though, Unicode strings are additionally converted to 
 		'encoding').
 		Lists are represented as Vim |List| type.
 		Dictionaries are represented as Vim |Dictionary| type with 
@@ -5886,7 +5886,7 @@ setwinvar({nr}, {varname}, {val})			*setwinvar()*
 			:call setwinvar(2, "myvar", "foobar")
 
 sha256({string})						*sha256()*
-		Returns a String with 64 hex charactes, which is the SHA256
+		Returns a String with 64 hex characters, which is the SHA256
 		checksum of {string}.
 
 shellescape({string} [, {special}])			*shellescape()*
@@ -8554,7 +8554,7 @@ You can catch all Vim errors by the pattern >
 							*catch-text*
 NOTE: You should never catch the error message text itself: >
 	:catch /No such variable/
-only works in the english locale, but not when the user has selected
+only works in the English locale, but not when the user has selected
 a different language by the |:language| command.  It is however helpful to
 cite the message text in a comment: >
 	:catch /^Vim(\a\+):E108:/   " No such variable
