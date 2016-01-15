@@ -30,7 +30,7 @@ SCRIPTS :=                                                             \
            test_command_count.out                                      \
            test_marks.out                                              \
 
-NEW_TESTS = test_increment.res
+NEW_TESTS =
 
 SCRIPTS_GUI := test16.out
 
