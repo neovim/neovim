@@ -27,9 +27,6 @@ Error: configure did not run properly.Check auto/config.log.
 # endif
 #endif
 
-/* user ID of root is usually zero, but not for everybody */
-#define ROOT_UID 0
-
 
 /* Can't use "PACKAGE" here, conflicts with a Perl include file. */
 #ifndef VIMPACKAGE
@@ -231,15 +228,6 @@ enum {
 
 /* Size in bytes of the hash used in the undo file. */
 #define UNDO_HASH_SIZE 32
-
-#ifdef HAVE_FCNTL_H
-# include <fcntl.h>
-#endif
-
-
-#ifndef O_NOFOLLOW
-# define O_NOFOLLOW 0
-#endif
 
 /*
  * defines to avoid typecasts from (char_u *) to (char *) and back

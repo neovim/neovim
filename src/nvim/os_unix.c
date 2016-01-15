@@ -175,13 +175,6 @@ void mch_exit(int r)
   exit(r);
 }
 
-#ifndef SEEK_SET
-# define SEEK_SET 0
-#endif
-#ifndef SEEK_END
-# define SEEK_END 2
-#endif
-
 #define SHELL_SPECIAL (char_u *)"\t \"&'$;<>()\\|"
 
 /// Does wildcard pattern matching using the shell.

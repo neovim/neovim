@@ -2729,13 +2729,6 @@ void fast_breakcheck(void)
   }
 }
 
-#ifndef SEEK_SET
-# define SEEK_SET 0
-#endif
-#ifndef SEEK_END
-# define SEEK_END 2
-#endif
-
 /*
  * Get the stdout of an external command.
  * If "ret_len" is NULL replace NUL characters with NL.  When "ret_len" is not
