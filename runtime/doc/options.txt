@@ -5287,8 +5287,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 						*'shell'* *'sh'* *E91*
 'shell' 'sh'		string	(default $SHELL or "sh",
-					Windows: "command.com" or
-					"cmd.exe")
+					Windows: "cmd.exe")
 			global
 	Name of the shell to use for ! and :! commands.  When changing the
 	value also check these options: 'shellpipe', 'shellslash'
@@ -5334,7 +5333,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 				 contain "sh" somewhere: "/c")
 			global
 	Flag passed to the shell to execute "!" and ":!" commands; e.g.,
-	"bash.exe -c ls" or "command.com /c dir".  For Windows
+	"bash.exe -c ls" or "cmd.exe /c dir".  For Windows
 	systems, the default is set according to the value of 'shell', to
 	reduce the need to set this option by the user.
 	On Unix it can have more than one flag.  Each white space separated
