@@ -4531,10 +4531,10 @@ int do_addsub(int command, linenr_T Prenum1, bool g_cmd)
     // reset
     subtract = false;
     negative = false;
-    if (visual && VIsual_mode != Ctrl_V) {
-      col = 0;
-    } else {
+    if (visual && VIsual_mode == Ctrl_V) {
       col = startcol;
+    } else {
+      col = 0;
     }
     Prenum1 += offset;
     curwin->w_set_curswant = true;
