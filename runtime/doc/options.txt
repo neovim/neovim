@@ -779,7 +779,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 	Normally this option would be set in the vimrc file.  Possibly
 	depending on the terminal name.  Example: >
-		:if &term == "pcterm"
+		:if &term == "xterm"
 		:  set background=dark
 		:endif
 <	When this option is set, the default settings for the highlight groups
@@ -7098,6 +7098,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 			global
 	The number of microseconds to wait for each character sent to the
 	screen.  When non-zero, characters are sent to the terminal one by
-	one.  For MS-DOS pcterm this does not work.  For debugging purposes.
+	one.  For debugging purposes.
 
  vim:tw=78:ts=8:ft=help:noet:norl:
