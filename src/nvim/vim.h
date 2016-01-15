@@ -37,7 +37,9 @@ Error: configure did not run properly.Check auto/config.log.
 
 #define NUMBUFLEN 30        /* length of a buffer to store a number in ASCII */
 
-# define MAX_TYPENR 65535
+#define MAX_TYPENR 65535
+
+#define ROOT_UID 0
 
 #include "nvim/keymap.h"
 #include "nvim/macros.h"

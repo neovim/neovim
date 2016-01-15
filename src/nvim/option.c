@@ -837,10 +837,9 @@ set_option_default (
     } else {  /* P_BOOL */
       *(int *)varp = (int)(intptr_t)options[opt_idx].def_val[dvi];
 #ifdef UNIX
-      // 'modeline' defaults to off for root
-      if (options[opt_idx].indir == PV_ML && getuid() == 0) {
-        *(int *)varp = false;
-      }
+      /* 'modeline' defaults to off for root */
+      if (options[opt_idx].indir == PV_ML && getuid() == ROOT_UID)
+        *(int *)varp = FALSE;
 #endif
       /* May also set global value for local option. */
       if (both)

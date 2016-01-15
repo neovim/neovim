@@ -3082,8 +3082,8 @@ shada_write_file_nomerge: {}
       // viminfo file that the user can't read.
       FileInfo old_info;
       if (os_fileinfo((char *)fname, &old_info)) {
-        if (getuid() == 0) {
-          if (old_info.stat.st_uid != 0
+        if (getuid() == ROOT_UID) {
+          if (old_info.stat.st_uid != ROOT_UID
               || old_info.stat.st_gid != getgid()) {
             const uv_uid_t old_uid = (uv_uid_t) old_info.stat.st_uid;
             const uv_gid_t old_gid = (uv_gid_t) old_info.stat.st_gid;
