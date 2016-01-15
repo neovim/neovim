@@ -4219,10 +4219,10 @@ int do_addsub(int command, linenr_T Prenum1, bool g_cmd)
   int c;
   int length = 0;  // character length of the number
   int todel;
-  int dohex;
-  int dooct;
-  int dobin;
-  int doalp;
+  bool dohex;
+  bool dooct;
+  bool dobin;
+  bool doalp;
   int firstdigit;
   bool subtract;
   bool negative = false;
@@ -4443,7 +4443,10 @@ int do_addsub(int command, linenr_T Prenum1, bool g_cmd)
         }
       }
 
-      vim_str2nr(ptr + col, &pre, &length, dobin, dooct, dohex,
+      vim_str2nr(ptr + col, &pre, &length,
+                 0 + (dobin ? STR2NR_BIN : 0)
+                 + (dooct ? STR2NR_OCT : 0)
+                 + (dohex ? STR2NR_HEX : 0),
                  NULL, &n, maxlen);
 
       // ignore leading '-' for hex, octal and bin numbers
@@ -4540,8 +4543,10 @@ int do_addsub(int command, linenr_T Prenum1, bool g_cmd)
         size_t pos = 0;
 
         // leading zeros
-        for (bits = 8 * sizeof(unsigned long); bits > 0; bits--) {
-            if ((n >> (bits - 1)) & 0x1) { break; }
+        for (bits = 8 * sizeof(n); bits > 0; bits--) {
+            if ((n >> (bits - 1)) & 0x1) {
+              break;
+            }
         }
 
         while (bits > 0) {

@@ -286,6 +286,49 @@ Text:
   1) Ctrl-V f3 <ctrl-a>
 0x124456
 
+22) Block increment on 0b0
+Text:
+0b1
+0b1
+    Expected:
+    1) Ctrl-A on visually block selected region (cursor at beginning):
+    0b10
+    0b10
+    2) Ctrl-A on visually block selected region (cursor at end)
+    0b10
+    0b10
+
+23) block-wise increment on part of binary
+Text:
+0b1001
+
+  Expected:
+  1) Ctrl-V 5l <ctrl-a>
+0b1011
+
+24) increment hexadecimal
+Text:
+0x0b1001
+
+  Expected:
+  1) <ctrl-a>
+0x0b1002
+
+25) increment binary with nrformats including alpha
+Text:
+0b1001a
+
+  Expected:
+  1) <ctrl-a>
+0b1010a
+
+26) increment binary with 64 bits
+Text:
+0b1111111111111111111111111111111111111111111111111111111111111110
+
+  Expected:
+  1) <ctrl-a>
+0b1111111111111111111111111111111111111111111111111111111111111111
 
 
 STARTTEST
@@ -414,6 +457,38 @@ V3kg..
 :/^E21=/+put a
 :set nrformats&vim
 f3
+
+:" Test 22
+:/^S22=/+,/^E22=/-y a
+:/^E22=/+put a
+kj$j:.+put a
+k$+
+
+:" Test 23
+:/^S23=/+,/^E23=/-y a
+:/^E23=/+put a
+:set nrformats&vim
+4l
+
+:" Test 24
+:/^S24=/+,/^E24=/-y a
+:/^E24=/+put a
+:set nrformats&vim
+$
+
+:" Test 25
+:set nrformats+=alpha
+:/^S25=/+,/^E25=/-y a
+:/^E25=/+put a
+k$
+:set nrformats&vim
+
+:" Test 26
+:set nrformats+=alpha
+:/^S26=/+,/^E26=/-y a
+:/^E26=/+put a
+k$
+:set nrformats&vim
 
 :" Save the report
 :/^# Test 1/,$w! test.out
@@ -613,6 +688,45 @@ S21====
 0x123456
 E21====
 
+
+
+# Test 22
+S22====
+0b1
+0b1
+E22====
+
+
+
+
+# Test 23
+S23====
+0b1001
+E23====
+
+
+
+
+# Test 24
+S24====
+0x0b1001
+E24====
+
+
+
+
+# Test 25
+S25====
+0b1001a
+E25====
+
+
+
+
+# Test 26
+S26====
+0b1111111111111111111111111111111111111111111111111111111111111110
+E26====
 
 
 

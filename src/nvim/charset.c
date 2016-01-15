@@ -1767,31 +1767,26 @@ int vim_isblankline(char_u *lbuf)
 /// If "len" is not NULL, the length of the number in characters is returned.
 /// If "nptr" is not NULL, the signed result is returned in it.
 /// If "unptr" is not NULL, the unsigned result is returned in it.
-/// If "dobin" is non-zero recognize binary numbers, when > 1 always assume
-/// binary number.
-/// If "dooct" is non-zero recognize octal numbers, when > 1 always assume
-/// octal number.
-/// If "dohex" is non-zero recognize hex numbers, when > 1 always assume
-/// hex number.
+/// If "what" contains STR2NR_BIN recognize binary numbers.
+/// If "what" contains STR2NR_OCT recognize octal numbers.
+/// If "what" contains STR2NR_HEX recognize hex numbers.
+/// If "what" contains STR2NR_FORCE always assume bin/oct/hex.
 /// If maxlen > 0, check at a maximum maxlen chars.
 ///
 /// @param start
 /// @param prep Returns type of number 0 = decimal, 'x' or 'X' is hex,
-//         '0' = octal, 'b' or 'B' is bin
+///        '0' = octal, 'b' or 'B' is bin
 /// @param len Returns the detected length of number.
-/// @param dobin recognize binary number
-/// @param dooct recognize octal number
-/// @param dohex recognize hex number
+/// @param what Recognizes what number passed.
 /// @param nptr Returns the signed result.
 /// @param unptr Returns the unsigned result.
 /// @param maxlen Max length of string to check.
-void vim_str2nr(char_u *start, int *prep, int *len,
-                int dobin, int dooct, int dohex,
+void vim_str2nr(char_u *start, int *prep, int *len, int what,
                 long *nptr, unsigned long *unptr, int maxlen)
 {
   char_u *ptr = start;
   int pre = 0;  // default is decimal
-  int negative = false;
+  bool negative = false;
   unsigned long un = 0;
 
   if (ptr[0] == '-') {
@@ -1804,23 +1799,23 @@ void vim_str2nr(char_u *start, int *prep, int *len,
       && (maxlen == 0 || maxlen > 1)) {
     pre = ptr[1];
 
-    if (dohex
+    if ((what & STR2NR_HEX)
         && ((pre == 'X') || (pre == 'x'))
         && ascii_isxdigit(ptr[2])
         && (maxlen == 0 || maxlen > 2)) {
       // hexadecimal
       ptr += 2;
-    } else if (dobin
+    } else if ((what & STR2NR_BIN)
                && ((pre == 'B') || (pre == 'b'))
                && ascii_isbdigit(ptr[2])
                && (maxlen == 0 || maxlen > 2)) {
       // binary
       ptr += 2;
     } else {
-      // default is decimal
+      // decimal or octal, default is decimal
       pre = 0;
 
-      if (dooct) {
+      if (what & STR2NR_OCT) {
         // Don't interpret "0", "08" or "0129" as octal.
         for (int n = 1; ascii_isdigit(ptr[n]); ++n) {
           if (ptr[n] > '7') {
@@ -1844,6 +1839,9 @@ void vim_str2nr(char_u *start, int *prep, int *len,
   int n = 1;
   if ((pre == 'B') || (pre == 'b') || what == STR2NR_BIN + STR2NR_FORCE) {
     // bin
+    if (pre != 0) {
+      n += 2;  // skip over "0b"
+    }
     while ('0' <= *ptr && *ptr <= '1') {
       un = 2 * un + (unsigned long)(*ptr - '0');
       ptr++;
@@ -1851,7 +1849,7 @@ void vim_str2nr(char_u *start, int *prep, int *len,
         break;
       }
     }
-  } else if ((pre == '0') || (dooct > 1)) {
+  } else if ((pre == '0') || what == STR2NR_OCT + STR2NR_FORCE) {
     // octal
     while ('0' <= *ptr && *ptr <= '7') {
       un = 8 * un + (unsigned long)(*ptr - '0');
@@ -1860,7 +1858,8 @@ void vim_str2nr(char_u *start, int *prep, int *len,
         break;
       }
     }
-  } else if ((pre == 'X') || (pre == 'x') || dohex > 1) {
+  } else if ((pre == 'X') || (pre == 'x')
+             || what == STR2NR_HEX + STR2NR_FORCE) {
     // hex
     if (pre != 0) {
       n += 2;  // skip over "0x"

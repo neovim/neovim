@@ -307,6 +307,13 @@ describe("spell checking with 'encoding' set to utf-8", function()
       bar
       faabar
       ]])
+    write_latin1('Xtest9.aff', [[
+      ]])
+    write_latin1('Xtest9.dic', [[
+      1234
+      foo
+      bar
+      ]])
     write_latin1('Xtest-sal.aff', [[
       SET ISO8859-1
       TRY esianrtolcdugmphbyfvkwjkqxz-ëéèêïîäàâöüû'ESIANRTOLCDUGMPHBYFVKWJKQXZ
@@ -490,6 +497,8 @@ describe("spell checking with 'encoding' set to utf-8", function()
     os.remove('Xtest7.dic')
     os.remove('Xtest8.aff')
     os.remove('Xtest8.dic')
+    os.remove('Xtest9.aff')
+    os.remove('Xtest9.dic')
   end)
 
   -- Function to test .aff/.dic with list of good and bad words.  This was a
@@ -971,5 +980,22 @@ describe("spell checking with 'encoding' set to utf-8", function()
       ['faabar', 'foo bar', 'bar']
       barfoo
       ['bar foo', 'bar', 'foo']]=])
+  end)
+
+  it('part 9-9', function()
+    insert([[
+      9good: 0b1011 0777 1234 0x01ff
+      badend
+      ]])
+    -- NOSPLITSUGS
+    test_one(9, 9)
+    -- Assert buffer contents.
+    execute('1,/^test 9-9/-1d')
+    expect([=[
+      test 9-9
+      # file: Xtest.utf-8.spl
+      bar
+      foo
+      -------]=])
   end)
 end)
