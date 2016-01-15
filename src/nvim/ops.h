@@ -66,6 +66,10 @@ typedef int (*Indenter)(void);
 #define OP_FOLDDELREC   25      /* "zD" delete folds recursively */
 #define OP_FORMAT2      26      /* "gw" format operator, keeps cursor pos */
 #define OP_FUNCTION     27      /* "g@" call 'operatorfunc' */
+#define OP_NR_ADD       28      // "<C-A>" Add to the number or alphabetic
+                                // character (OP_ADD conflicts with Perl)
+#define OP_NR_SUB       29      // "<C-X>" Subtract from the number or
+                                // alphabetic character
 
 /// Flags for get_reg_contents().
 enum GRegFlags {

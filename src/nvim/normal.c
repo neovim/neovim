@@ -1414,11 +1414,12 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
   int lbr_saved = curwin->w_p_lbr;
 
 
-  /* The visual area is remembered for redo */
-  static int redo_VIsual_mode = NUL;        /* 'v', 'V', or Ctrl-V */
-  static linenr_T redo_VIsual_line_count;   /* number of lines */
-  static colnr_T redo_VIsual_vcol;          /* number of cols or end column */
-  static long redo_VIsual_count;            /* count for Visual operator */
+  // The visual area is remembered for redo
+  static int redo_VIsual_mode = NUL;        // 'v', 'V', or Ctrl-V
+  static linenr_T redo_VIsual_line_count;   // number of lines
+  static colnr_T redo_VIsual_vcol;          // number of cols or end column
+  static long redo_VIsual_count;            // count for Visual operator
+  static int redo_VIsual_arg;               // extra argument
   bool include_line_break = false;
 
   old_cursor = curwin->w_cursor;
@@ -1656,6 +1657,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
           redo_VIsual_vcol = resel_VIsual_vcol;
           redo_VIsual_line_count = resel_VIsual_line_count;
           redo_VIsual_count = cap->count0;
+          redo_VIsual_arg = cap->arg;
         }
       }
 
@@ -1989,6 +1991,20 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
       VIsual_reselect = false;          /* don't reselect now */
       deleteFold(oap->start.lnum, oap->end.lnum,
           oap->op_type == OP_FOLDDELREC, oap->is_VIsual);
+      break;
+
+    case OP_NR_ADD:
+    case OP_NR_SUB:
+      if (empty_region_error) {
+        vim_beep(BO_OPER);
+        CancelRedo();
+      } else {
+        VIsual_active = true;
+        curwin->w_p_lbr = lbr_saved;
+        op_addsub(oap, cap->count1, redo_VIsual_arg);
+        VIsual_active = false;
+      }
+      check_cursor_col();
       break;
     default:
       clearopbeep(oap);
@@ -3022,34 +3038,6 @@ size_t find_ident_at_pos(win_T *wp, linenr_T lnum, colnr_T startcol,
   return (size_t)col;
 }
 
-// Add commands to reselect Visual mode into the redo buffer.
-static void prep_redo_visual(cmdarg_T *cap)
-{
-  ResetRedobuff();
-  AppendCharToRedobuff(VIsual_mode);
-  if (VIsual_mode == 'V' &&
-      curbuf->b_visual.vi_end.lnum != curbuf->b_visual.vi_start.lnum) {
-    AppendNumberToRedobuff(curbuf->b_visual.vi_end.lnum -
-                           curbuf->b_visual.vi_start.lnum);
-    AppendCharToRedobuff('j');
-  } else if (VIsual_mode == 'v' || VIsual_mode == Ctrl_V) {
-    // block visual mode or char visual mmode
-    if (curbuf->b_visual.vi_end.lnum != curbuf->b_visual.vi_start.lnum) {
-      AppendNumberToRedobuff(curbuf->b_visual.vi_end.lnum -
-                             curbuf->b_visual.vi_start.lnum);
-      AppendCharToRedobuff('j');
-    }
-    if (curbuf->b_visual.vi_curswant == MAXCOL) {
-      AppendCharToRedobuff('$');
-    } else if (curbuf->b_visual.vi_end.col > curbuf->b_visual.vi_start.col) {
-      AppendNumberToRedobuff(curbuf->b_visual.vi_end.col -
-                             curbuf->b_visual.vi_start.col);
-      AppendCharToRedobuff(' ');
-    }
-  }
-  AppendNumberToRedobuff(cap->count1);
-}
-
 /*
  * Prepare for redo of a normal command.
  */
@@ -3534,27 +3522,14 @@ static void nv_help(cmdarg_T *cap)
  */
 static void nv_addsub(cmdarg_T *cap)
 {
-  bool visual = VIsual_active;
-
-  if (cap->oap->op_type == OP_NOP
-      && do_addsub((int)cap->cmdchar, cap->count1, cap->arg) == OK) {
-    if (visual) {
-      prep_redo_visual(cap);
-      if (cap->arg) {
-        AppendCharToRedobuff('g');
-      }
-      AppendCharToRedobuff(cap->cmdchar);
-    } else {
-      prep_redo_cmd(cap);
-    }
+  if (!VIsual_active && cap->oap->op_type == OP_NOP) {
+    cap->oap->op_type = cap->cmdchar == Ctrl_A ? OP_NR_ADD : OP_NR_SUB;
+    op_addsub(cap->oap, cap->count1, cap->arg);
+    cap->oap->op_type = OP_NOP;
+  } else if (VIsual_active) {
+    nv_operator(cap);
   } else {
-    clearopbeep(cap->oap);
-  }
-  if (visual) {
-    VIsual_active = false;
-    redo_VIsual_busy = false;
-    may_clear_cmdline();
-    redraw_later(INVERTED);
+    clearop(cap->oap);
   }
 }
 
@@ -6383,6 +6358,7 @@ static void nv_g_cmd(cmdarg_T *cap)
     if (VIsual_active) {
       cap->arg = true;
       cap->cmdchar = cap->nchar;
+      cap->nchar = NUL;
       nv_addsub(cap);
     } else {
       clearopbeep(oap);

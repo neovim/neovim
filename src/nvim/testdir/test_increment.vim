@@ -133,7 +133,7 @@ func Test_visual_increment_04()
   exec "norm! vf-\<C-A>"
   call assert_equal(["foobar-10"], getline(1, '$'))
   " NOTE: I think this is correct behavior...
-  "call assert_equal([0, 1, 1, 0], getpos('.'))
+  call assert_equal([0, 1, 1, 0], getpos('.'))
 endfunc
 
 " 5) g<Ctrl-A> on letter
@@ -576,7 +576,111 @@ func Test_visual_increment_27()
   endif
 endfunc
 
-" 28) block-wise increment and dot-repeat
+" Tab code and linewise-visual inc/dec
+func Test_visual_increment_28()
+  call setline(1, ["x\<TAB>10", "\<TAB>-1"])
+  exec "norm! Vj\<C-A>"
+  call assert_equal(["x\<TAB>11", "\<TAB>0"], getline(1, '$'))
+  call assert_equal([0, 1, 1, 0], getpos('.'))
+
+  call setline(1, ["x\<TAB>10", "\<TAB>-1"])
+  exec "norm! ggVj\<C-X>"
+  call assert_equal(["x\<TAB>9", "\<TAB>-2"], getline(1, '$'))
+  call assert_equal([0, 1, 1, 0], getpos('.'))
+endfunc
+
+" Tab code and linewise-visual inc/dec with 'nrformats'+=alpha
+func Test_visual_increment_29()
+  set nrformats+=alpha
+  call setline(1, ["x\<TAB>10", "\<TAB>-1"])
+  exec "norm! Vj\<C-A>"
+  call assert_equal(["y\<TAB>10", "\<TAB>0"], getline(1, '$'))
+  call assert_equal([0, 1, 1, 0], getpos('.'))
+
+  call setline(1, ["x\<TAB>10", "\<TAB>-1"])
+  exec "norm! ggVj\<C-X>"
+  call assert_equal(["w\<TAB>10", "\<TAB>-2"], getline(1, '$'))
+  call assert_equal([0, 1, 1, 0], getpos('.'))
+endfunc
+
+" Tab code and character-visual inc/dec
+func Test_visual_increment_30()
+  call setline(1, ["x\<TAB>10", "\<TAB>-1"])
+  exec "norm! f1vjf1\<C-A>"
+  call assert_equal(["x\<TAB>11", "\<TAB>0"], getline(1, '$'))
+  call assert_equal([0, 1, 3, 0], getpos('.'))
+
+  call setline(1, ["x\<TAB>10", "\<TAB>-1"])
+  exec "norm! ggf1vjf1\<C-X>"
+  call assert_equal(["x\<TAB>9", "\<TAB>-2"], getline(1, '$'))
+  call assert_equal([0, 1, 3, 0], getpos('.'))
+endfunc
+
+" Tab code and blockwise-visual inc/dec
+func Test_visual_increment_31()
+  call setline(1, ["x\<TAB>10", "\<TAB>-1"])
+  exec "norm! f1\<C-V>jl\<C-A>"
+  call assert_equal(["x\<TAB>11", "\<TAB>0"], getline(1, '$'))
+  call assert_equal([0, 1, 3, 0], getpos('.'))
+
+  call setline(1, ["x\<TAB>10", "\<TAB>-1"])
+  exec "norm! ggf1\<C-V>jl\<C-X>"
+  call assert_equal(["x\<TAB>9", "\<TAB>-2"], getline(1, '$'))
+  call assert_equal([0, 1, 3, 0], getpos('.'))
+endfunc
+
+" Tab code and blockwise-visual decrement with 'linebreak' and 'showbreak'
+func Test_visual_increment_32()
+  28vnew dummy_31
+  set linebreak showbreak=+
+  call setline(1, ["x\<TAB>\<TAB>\<TAB>10", "\<TAB>\<TAB>\<TAB>\<TAB>-1"])
+  exec "norm! ggf0\<C-V>jg_\<C-X>"
+  call assert_equal(["x\<TAB>\<TAB>\<TAB>1-1", "\<TAB>\<TAB>\<TAB>\<TAB>-2"], getline(1, '$'))
+  call assert_equal([0, 1, 6, 0], getpos('.'))
+  bwipe!
+endfunc
+
+" Tab code and blockwise-visual increment with $
+func Test_visual_increment_33()
+  call setline(1, ["\<TAB>123", "456"])
+  exec "norm! gg0\<C-V>j$\<C-A>"
+  call assert_equal(["\<TAB>124", "457"], getline(1, '$'))
+  call assert_equal([0, 1, 1, 0], getpos('.'))
+endfunc
+
+" Tab code and blockwise-visual increment and redo
+func Test_visual_increment_34()
+  call setline(1, ["\<TAB>123", "     456789"])
+  exec "norm! gg0\<C-V>j\<C-A>"
+  call assert_equal(["\<TAB>123", "     457789"], getline(1, '$'))
+  call assert_equal([0, 1, 1, 0], getpos('.'))
+
+  exec "norm! .."
+  call assert_equal(["\<TAB>123", "     459789"], getline(1, '$'))
+  call assert_equal([0, 1, 1, 0], getpos('.'))
+endfunc
+
+" Tab code, spaces and character-visual increment and redo
+func Test_visual_increment_35()
+  call setline(1, ["\<TAB>123", "        123", "\<TAB>123", "\<TAB>123"])
+  exec "norm! ggvjf3\<C-A>..."
+  call assert_equal(["\<TAB>127", "        127", "\<TAB>123", "\<TAB>123"], getline(1, '$'))
+  call assert_equal([0, 1, 2, 0], getpos('.'))
+endfunc
+
+" Tab code, spaces and blockwise-visual increment and redo
+func Test_visual_increment_36()
+  call setline(1, ["           123", "\<TAB>456789"])
+  exec "norm! G0\<C-V>kl\<C-A>"
+  call assert_equal(["           123", "\<TAB>556789"], getline(1, '$'))
+  call assert_equal([0, 1, 1, 0], getpos('.'))
+
+  exec "norm! ..."
+  call assert_equal(["           123", "\<TAB>856789"], getline(1, '$'))
+  call assert_equal([0, 1, 1, 0], getpos('.'))
+endfunc
+
+" block-wise increment and dot-repeat
 " Text:
 "   1 23
 "   4 56
@@ -587,7 +691,7 @@ endfunc
 "   4 59
 "
 " Try with and without indent.
-func Test_visual_increment_28()
+func Test_visual_increment_37()
   call setline(1, ["  1 23", "  4 56"])
   exec "norm! ggf2\<C-V>jl\<C-A>.."
   call assert_equal(["  1 26", "  4 59"], getline(1, 2))
