@@ -4235,28 +4235,27 @@ void op_addsub(oparg_T *oap, linenr_T Prenum1, bool g_cmd)
         block_prep(oap, &bd, pos.lnum, false);
         pos.col = bd.textcol;
         length = bd.textlen;
+      } else if (oap->motion_type == MLINE) {
+        curwin->w_cursor.col = 0;
+        pos.col = 0;
+        length = (colnr_T)STRLEN(ml_get(pos.lnum));
       } else {
-        if (oap->motion_type == MLINE) {
-          curwin->w_cursor.col = 0;
-          pos.col = 0;
-          length = (colnr_T)STRLEN(ml_get(pos.lnum));
-        } else if (oap->motion_type == MCHAR) {
-          if (!oap->inclusive) {
-            dec(&(oap->end));
+        // oap->motion_type == MCHAR
+        if (!oap->inclusive) {
+          dec(&(oap->end));
+        }
+        length = (colnr_T)STRLEN(ml_get(pos.lnum));
+        pos.col = 0;
+        if (pos.lnum == oap->start.lnum) {
+          pos.col += oap->start.col;
+          length -= oap->start.col;
+        }
+        if (pos.lnum == oap->end.lnum) {
+          length = (int)STRLEN(ml_get(oap->end.lnum));
+          if (oap->end.col >= length) {
+            oap->end.col = length - 1;
           }
-          length = (colnr_T)STRLEN(ml_get(pos.lnum));
-          pos.col = 0;
-          if (pos.lnum == oap->start.lnum) {
-            pos.col += oap->start.col;
-            length -= oap->start.col;
-          }
-          if (pos.lnum == oap->end.lnum) {
-            length = (int)STRLEN(ml_get(oap->end.lnum));
-            if (oap->end.col >= length) {
-              oap->end.col = length - 1;
-            }
-            length = oap->end.col - pos.col + 1;
-          }
+          length = oap->end.col - pos.col + 1;
         }
       }
       one_change = do_addsub(oap->op_type, &pos, length, amount);
@@ -4327,7 +4326,7 @@ int do_addsub(int op_type, pos_T *pos, int length, linenr_T Prenum1)
   bool was_positive = true;
   bool visual = VIsual_active;
   bool did_change = false;
-  pos_T t = curwin->w_cursor;
+  pos_T save_cursor = curwin->w_cursor;
   int maxlen = 0;
   pos_T startpos;
   pos_T endpos;
@@ -4624,10 +4623,6 @@ int do_addsub(int op_type, pos_T *pos, int length, linenr_T Prenum1)
     }
   }
 
-theend:
-  if (visual) {
-    curwin->w_cursor = t;
-  }
   if (did_change) {
     // set the '[ and '] marks
     curbuf->b_op_start = startpos;
@@ -4636,6 +4631,12 @@ theend:
       curbuf->b_op_end.col--;
     }
   }
+
+theend:
+  if (visual) {
+    curwin->w_cursor = save_cursor;
+  }
+
   return did_change;
 }
 
