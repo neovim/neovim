@@ -4767,35 +4767,40 @@ int del_history_idx(int histype, int idx)
   return TRUE;
 }
 
-/*
- * Get indices "num1,num2" that specify a range within a list (not a range of
- * text lines in a buffer!) from a string.  Used for ":history" and ":clist".
- * Returns OK if parsed successfully, otherwise FAIL.
- */
+/// Get indices that specify a range within a list (not a range of text lines
+/// in a buffer!) from a string.  Used for ":history" and ":clist".
+///
+/// @param str string to parse range from
+/// @param num1 from
+/// @param num2 to
+///
+/// @return OK if parsed successfully, otherwise FAIL.
 int get_list_range(char_u **str, int *num1, int *num2)
 {
   int len;
-  int first = FALSE;
+  int first = false;
   long num;
 
   *str = skipwhite(*str);
-  if (**str == '-' || ascii_isdigit(**str)) {  /* parse "from" part of range */
-    vim_str2nr(*str, NULL, &len, FALSE, FALSE, FALSE, &num, NULL);
+  if (**str == '-' || ascii_isdigit(**str)) {  // parse "from" part of range
+    vim_str2nr(*str, NULL, &len, false, false, false, &num, NULL);
     *str += len;
     *num1 = (int)num;
-    first = TRUE;
+    first = true;
   }
   *str = skipwhite(*str);
-  if (**str == ',') {                   /* parse "to" part of range */
+  if (**str == ',') {                   // parse "to" part of range
     *str = skipwhite(*str + 1);
-    vim_str2nr(*str, NULL, &len, FALSE, FALSE, FALSE, &num, NULL);
+    vim_str2nr(*str, NULL, &len, false, false, false, &num, NULL);
     if (len > 0) {
       *num2 = (int)num;
       *str = skipwhite(*str + len);
-    } else if (!first)                  /* no number given at all */
+    } else if (!first) {                  // no number given at all
       return FAIL;
-  } else if (first)                     /* only one number given */
+    }
+  } else if (first) {                     // only one number given
     *num2 = *num1;
+  }
   return OK;
 }
 

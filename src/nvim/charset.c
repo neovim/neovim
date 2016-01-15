@@ -1456,16 +1456,20 @@ char_u* skipdigits(char_u *q)
 
 /// skip over binary digits
 ///
-/// @param q
+/// @param q pointer to string
 ///
 /// @return Pointer to the character after the skipped digits.
-char_u* skipbin(char_u *q)
+const char* skipbin(const char *q)
+  FUNC_ATTR_PURE
+  FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_RET
 {
-    char_u	*p = q;
-
-    while (ascii_isbdigit(*p))	/* skip to next non-digit */
-	++p;
-    return p;
+  const char *p = q;
+  while (ascii_isbdigit(*p)) {
+    // skip to next non-digit
+    p++;
+  }
+  return p;
 }
 
 /// skip over digits and hex characters
@@ -1501,16 +1505,20 @@ char_u* skiptodigit(char_u *q)
 
 /// skip to binary character (or NUL after the string)
 ///
-/// @param q
+/// @param q pointer to string
 ///
 /// @return Pointer to the binary character or (NUL after the string).
-char_u* skiptobin(char_u *q)
+const char* skiptobin(const char *q)
+  FUNC_ATTR_PURE
+  FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_RET
 {
-    char_u	*p = q;
-
-    while (*p != NUL && !ascii_isbdigit(*p))	/* skip to next digit */
-	++p;
-    return p;
+  const char *p = q;
+  while (*p != NUL && !ascii_isbdigit(*p)) {
+    // skip to next digit
+    p++;
+  }
+  return p;
 }
 
 /// skip to hex character (or NUL after the string)
@@ -1752,8 +1760,8 @@ int vim_isblankline(char_u *lbuf)
 /// If "prep" is not NULL, returns a flag to indicate the type of the number:
 ///   0      decimal
 ///   '0'    octal
-///   'B'	   bin
-///   'b'	   bin
+///   'B'    bin
+///   'b'    bin
 ///   'X'    hex
 ///   'x'    hex
 /// If "len" is not NULL, the length of the number in characters is returned.
@@ -1775,18 +1783,19 @@ int vim_isblankline(char_u *lbuf)
 /// @param dohex recognize hex number
 /// @param nptr Returns the signed result.
 /// @param unptr Returns the unsigned result.
-void vim_str2nr(char_u *start, int *prep, int *len, int dobin, int dooct, int dohex,
+void vim_str2nr(char_u *start, int *prep, int *len,
+                int dobin, int dooct, int dohex,
                 long *nptr, unsigned long *unptr)
 {
   char_u *ptr = start;
-  int pre = 0; // default is decimal
-  int negative = FALSE;
+  int pre = 0;  // default is decimal
+  int negative = false;
   unsigned long un = 0;
   int n;
 
   if (ptr[0] == '-') {
-    negative = TRUE;
-    ++ptr;
+    negative = true;
+    ptr++;
   }
 
   // Recognize hex, octal, and bin.
@@ -1827,11 +1836,12 @@ void vim_str2nr(char_u *start, int *prep, int *len, int dobin, int dooct, int do
   // Do the string-to-numeric conversion "manually" to avoid sscanf quirks.
   if ((pre == 'B') || (pre == 'b') || (dobin > 1)) {
     // bin
-    if (pre != 0)
-      n += 2; // skip over "0b"
+    if (pre != 0) {
+      n += 2;  // skip over "0b"
+    }
     while ('0' <= *ptr && *ptr <= '1') {
       un = 2 * un + (unsigned long)(*ptr - '0');
-      ++ptr;
+      ptr++;
     }
   } else if ((pre == '0') || (dooct > 1)) {
     // octal
@@ -1841,17 +1851,18 @@ void vim_str2nr(char_u *start, int *prep, int *len, int dobin, int dooct, int do
     }
   } else if (pre != 0 || dohex > 1) {
     // hex
-    if (pre != 0)
-      n += 2; // skip over "0x"
+    if (pre != 0) {
+      n += 2;  // skip over "0x"
+    }
     while (ascii_isxdigit(*ptr)) {
       un = 16 * un + (unsigned long)hex2nr(*ptr);
-      ++ptr;
+      ptr++;
     }
   } else {
     // decimal
     while (ascii_isdigit(*ptr)) {
       un = 10 * un + (unsigned long)(*ptr - '0');
-      ++ptr;
+      ptr++;
     }
   }
 

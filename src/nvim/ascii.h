@@ -85,10 +85,25 @@
 # define PATHSEPSTR     "/"
 #endif
 
-static inline bool ascii_iswhite(int) REAL_FATTR_ALWAYS_INLINE REAL_FATTR_CONST;
-static inline bool ascii_isdigit(int) REAL_FATTR_ALWAYS_INLINE REAL_FATTR_CONST;
-static inline bool ascii_isxdigit(int) REAL_FATTR_ALWAYS_INLINE REAL_FATTR_CONST;
-static inline bool ascii_isspace(int) REAL_FATTR_ALWAYS_INLINE REAL_FATTR_CONST;
+static inline bool ascii_iswhite(int)
+  REAL_FATTR_CONST
+  REAL_FATTR_ALWAYS_INLINE;
+
+static inline bool ascii_isdigit(int)
+  REAL_FATTR_CONST
+  REAL_FATTR_ALWAYS_INLINE;
+
+static inline bool ascii_isxdigit(int)
+  REAL_FATTR_CONST
+  REAL_FATTR_ALWAYS_INLINE;
+
+static inline bool ascii_isbdigit(int)
+  REAL_FATTR_CONST
+  REAL_FATTR_ALWAYS_INLINE;
+
+static inline bool ascii_isspace(int)
+  REAL_FATTR_CONST
+  REAL_FATTR_ALWAYS_INLINE;
 
 /// Checks if `c` is a space or tab character.
 ///

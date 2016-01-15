@@ -4186,23 +4186,23 @@ static void reverse_line(char_u *s)
 
 # define RLADDSUBFIX(ptr) if (curwin->w_p_rl) reverse_line(ptr);
 
-/*
- * add or subtract 'Prenum1' from a number in a line
- * 'command' is CTRL-A for add, CTRL-X for subtract
- *
- * return FAIL for failure, OK otherwise
- */
+/// Add or subtract from a number in a line.
+///
+/// @param command CTRL-A for add, CTRL-X for subtract
+//  @param Prenum1 number to add or subtract
+///
+/// @return FAIL for failure, OK otherwise
 int do_addsub(int command, linenr_T Prenum1)
 {
   int col;
   char_u      *buf1;
   char_u buf2[NUMBUFLEN];
-  int pre;                      /* 'X' or 'x': hex; '0': octal; 'B' or 'b': bin */
-  static int hexupper = FALSE;          /* 0xABC */
+  int pre;                      // 'X' or 'x': hex; '0': octal; 'B' or 'b': bin
+  static int hexupper = false;  // 0xABC
   unsigned long n, oldn;
   char_u      *ptr;
   int c;
-  int length = 0;                       /* character length of the number */
+  int length = 0;               // character length of the number
   int todel;
   int dohex;
   int dooct;
@@ -4212,76 +4212,76 @@ int do_addsub(int command, linenr_T Prenum1)
   int negative;
   int subtract;
 
-  dohex = (vim_strchr(curbuf->b_p_nf, 'x') != NULL);    /* "heX" */
-  dooct = (vim_strchr(curbuf->b_p_nf, 'o') != NULL);    /* "Octal" */
-  dobin = (vim_strchr(curbuf->b_p_nf, 'b') != NULL);    /* "Bin" */
-  doalp = (vim_strchr(curbuf->b_p_nf, 'p') != NULL);    /* "alPha" */
+  dohex = (vim_strchr(curbuf->b_p_nf, 'x') != NULL);    // "heX"
+  dooct = (vim_strchr(curbuf->b_p_nf, 'o') != NULL);    // "Octal"
+  dobin = (vim_strchr(curbuf->b_p_nf, 'b') != NULL);    // "Bin"
+  doalp = (vim_strchr(curbuf->b_p_nf, 'p') != NULL);    // "alPha"
 
   ptr = get_cursor_line_ptr();
   RLADDSUBFIX(ptr);
 
-  /*
-   * First check if we are on a hexadecimal number, after the "0x".
-   */
+  // First check if we are on a hexadecimal number, after the "0x".
   col = curwin->w_cursor.col;
 
-  if (dobin)
-    while (col > 0 && ascii_isbdigit(ptr[col]))
-      --col;
+  if (dobin) {
+    while (col > 0 && ascii_isbdigit(ptr[col])) {
+      col--;
+    }
+  }
 
-  if (dohex)
-    while (col > 0 && ascii_isxdigit(ptr[col]))
-      --col;
-  if (       dobin
-             && dohex
-             && ! ((col > 0
-             && (ptr[col] == 'X'
-                 || ptr[col] == 'x')
-             && ptr[col - 1] == '0'
-             && ascii_isxdigit(ptr[col + 1])))) {
-
-      /* In case of binary/hexadecimal pattern overlap match, rescan */
+  if (dohex) {
+    while (col > 0 && ascii_isxdigit(ptr[col])) {
+      col--;
+    }
+  }
+  if (dobin
+      && dohex
+      && !((col > 0
+            && (ptr[col] == 'X' ||
+                ptr[col] == 'x')
+            && ptr[col - 1] == '0'
+            && ascii_isxdigit(ptr[col + 1])))) {
+      // In case of binary/hexadecimal pattern overlap match, rescan
 
       col = curwin->w_cursor.col;
 
-      while (col > 0 && ascii_isdigit(ptr[col]))
+      while (col > 0 && ascii_isdigit(ptr[col])) {
         col--;
+      }
   }
 
-  if ((       dohex
-              && col > 0
-              && (ptr[col] == 'X'
-                  || ptr[col] == 'x')
-              && ptr[col - 1] == '0'
-              && ascii_isxdigit(ptr[col + 1])) ||
-      (       dobin
-              && col > 0
-              && (ptr[col] == 'B'
-                  || ptr[col] == 'b')
-              && ptr[col - 1] == '0'
-              && ascii_isbdigit(ptr[col + 1]))) {
-       /* Found hexadecimal or binary number, move to its start. */
-      --col;
+  if ((dohex
+       && col > 0
+       && (ptr[col] == 'X'
+           || ptr[col] == 'x')
+       && ptr[col - 1] == '0'
+       && ascii_isxdigit(ptr[col + 1])) ||
+      (dobin
+       && col > 0
+       && (ptr[col] == 'B'
+           || ptr[col] == 'b')
+       && ptr[col - 1] == '0'
+       && ascii_isbdigit(ptr[col + 1]))) {
+       // Found hexadecimal or binary number, move to its start.
+      col--;
   } else {
-    /*
-     * Search forward and then backward to find the start of number.
-     */
+    // Search forward and then backward to find the start of number.
     col = curwin->w_cursor.col;
 
     while (ptr[col] != NUL
            && !ascii_isdigit(ptr[col])
-           && !(doalp && ASCII_ISALPHA(ptr[col])))
-      ++col;
+           && !(doalp && ASCII_ISALPHA(ptr[col]))) {
+      col++;
+    }
 
     while (col > 0
            && ascii_isdigit(ptr[col - 1])
-           && !(doalp && ASCII_ISALPHA(ptr[col])))
-      --col;
+           && !(doalp && ASCII_ISALPHA(ptr[col]))) {
+      col--;
+    }
   }
 
-  /*
-   * If a number was found, and saving for undo works, replace the number.
-   */
+  // If a number was found, and saving for undo works, replace the number.
   firstdigit = ptr[col];
   RLADDSUBFIX(ptr);
   if ((!ascii_isdigit(firstdigit) && !(doalp && ASCII_ISALPHA(firstdigit)))
@@ -4290,108 +4290,111 @@ int do_addsub(int command, linenr_T Prenum1)
     return FAIL;
   }
 
-  /* get ptr again, because u_save() may have changed it */
+  // get ptr again, because u_save() may have changed it
   ptr = get_cursor_line_ptr();
   RLADDSUBFIX(ptr);
 
   if (doalp && ASCII_ISALPHA(firstdigit)) {
-    /* decrement or increment alphabetic character */
+    // decrement or increment alphabetic character
     if (command == Ctrl_X) {
       if (CharOrd(firstdigit) < Prenum1) {
-        if (isupper(firstdigit))
+        if (isupper(firstdigit)) {
           firstdigit = 'A';
-        else
+        } else {
           firstdigit = 'a';
-      } else
+        }
+      } else {
         firstdigit -= Prenum1;
+      }
     } else {
       if (26 - CharOrd(firstdigit) - 1 < Prenum1) {
-        if (isupper(firstdigit))
+        if (isupper(firstdigit)) {
           firstdigit = 'Z';
-        else
+        } else {
           firstdigit = 'z';
-      } else
+        }
+      } else {
         firstdigit += Prenum1;
+      }
     }
     curwin->w_cursor.col = col;
-    (void)del_char(FALSE);
+    (void)del_char(false);
     ins_char(firstdigit);
   } else {
-    negative = FALSE;
-    if (col > 0 && ptr[col - 1] == '-') {           /* negative number */
+    negative = false;
+    if (col > 0 && ptr[col - 1] == '-') {           // negative number
       --col;
-      negative = TRUE;
+      negative = true;
     }
 
-    /* get the number value (unsigned) */
+    // get the number value (unsigned)
     vim_str2nr(ptr + col, &pre, &length, dobin, dooct, dohex, NULL, &n);
 
-    /* ignore leading '-' for hex, octal and bin numbers */
+    // ignore leading '-' for hex, octal and bin numbers
     if (pre && negative) {
       ++col;
       --length;
-      negative = FALSE;
+      negative = false;
     }
 
-    /* add or subtract */
-    subtract = FALSE;
-    if (command == Ctrl_X)
-      subtract ^= TRUE;
-    if (negative)
-      subtract ^= TRUE;
+    // add or subtract
+    subtract = false;
+    if (command == Ctrl_X) {
+      subtract ^= true;
+    }
+    if (negative) {
+      subtract ^= true;
+    }
 
     oldn = n;
-    if (subtract)
-      n -= (unsigned long)Prenum1;
-    else
-      n += (unsigned long)Prenum1;
 
-    /* handle wraparound for decimal numbers */
+    n = subtract ? n - (unsigned long) Prenum1
+                 : n + (unsigned long) Prenum1;
+
+    // handle wraparound for decimal numbers
     if (!pre) {
       if (subtract) {
         if (n > oldn) {
           n = 1 + (n ^ (unsigned long)-1);
-          negative ^= TRUE;
+          negative ^= true;
         }
       } else { /* add */
         if (n < oldn) {
           n = (n ^ (unsigned long)-1);
-          negative ^= TRUE;
+          negative ^= true;
         }
       }
-      if (n == 0)
-        negative = FALSE;
+      if (n == 0) {
+        negative = false;
+      }
     }
 
-    /*
-     * Delete the old number.
-     */
+    // Delete the old number.
     curwin->w_cursor.col = col;
     todel = length;
     c = gchar_cursor();
-    /*
-     * Don't include the '-' in the length, only the length of the part
-     * after it is kept the same.
-     */
-    if (c == '-')
+
+    // Don't include the '-' in the length, only the length of the part
+    // after it is kept the same.
+    if (c == '-') {
       --length;
+    }
     while (todel-- > 0) {
       if (c < 0x100 && isalpha(c)) {
-        if (isupper(c))
-          hexupper = TRUE;
-        else
-          hexupper = FALSE;
+        if (isupper(c)) {
+          hexupper = true;
+        } else {
+          hexupper = false;
+        }
       }
-      /* del_char() will mark line needing displaying */
-      (void)del_char(FALSE);
+      // del_char() will mark line needing displaying
+      (void)del_char(false);
       c = gchar_cursor();
     }
 
-    /*
-     * Prepare the leading characters in buf1[].
-     * When there are many leading zeros it could be very long.  Allocate
-     * a bit too much.
-     */
+    // Prepare the leading characters in buf1[].
+    // When there are many leading zeros it could be very long.  Allocate
+    // a bit too much.
     buf1 = xmalloc(length + NUMBUFLEN);
     ptr = buf1;
     if (negative) {
@@ -4401,56 +4404,56 @@ int do_addsub(int command, linenr_T Prenum1)
       *ptr++ = '0';
       --length;
     }
-    if (pre == 'b' || pre == 'B' 
-        || pre == 'x' || pre == 'X') {
+    if (pre == 'b' || pre == 'B' ||
+        pre == 'x' || pre == 'X') {
       *ptr++ = pre;
       --length;
     }
 
-    /*
-     * Put the number characters in buf2[].
-     */
+    // Put the number characters in buf2[].
     if (pre == 'b' || pre == 'B') {
-
       size_t bits = 0;
       size_t pos = 0;
 
-      /* leading zeros */
-      for (bits = 8 * sizeof(unsigned long); bits > 0; bits--)
-          if ((n >> (bits - 1)) & 0x1) break;
+      // leading zeros
+      for (bits = 8 * sizeof(unsigned long); bits > 0; bits--) {
+          if ((n >> (bits - 1)) & 0x1) { break; }
+      }
 
-      while (bits > 0)
+      while (bits > 0) {
           buf2[pos++] = ((n >> --bits) & 0x1) ? '1' : '0';
+      }
 
       buf2[pos] = '\0';
 
-    } else if (pre == 0)
-      sprintf((char *)buf2, "%" PRIu64, (uint64_t)n);
-    else if (pre == '0')
-      sprintf((char *)buf2, "%" PRIo64, (uint64_t)n);
-    else if (pre && hexupper)
-      sprintf((char *)buf2, "%" PRIX64, (uint64_t)n);
-    else
-      sprintf((char *)buf2, "%" PRIx64, (uint64_t)n);
+    } else if (pre == 0) {
+      snprintf((char *)buf2, NUMBUFLEN, "%" PRIu64, (uint64_t)n);
+    } else if (pre == '0') {
+      snprintf((char *)buf2, NUMBUFLEN, "%" PRIo64, (uint64_t)n);
+    } else if (pre && hexupper) {
+      snprintf((char *)buf2, NUMBUFLEN, "%" PRIX64, (uint64_t)n);
+    } else {
+      snprintf((char *)buf2, NUMBUFLEN, "%" PRIx64, (uint64_t)n);
+    }
     length -= (int)STRLEN(buf2);
 
-    /*
-     * Adjust number of zeros to the new number of digits, so the
-     * total length of the number remains the same.
-     * Don't do this when
-     * the result may look like an octal number.
-     */
-    if (firstdigit == '0' && !(dooct && pre == 0))
-      while (length-- > 0)
+    // Adjust number of zeros to the new number of digits, so the
+    // total length of the number remains the same.
+    // Don't do this when
+    // the result may look like an octal number.
+    if (firstdigit == '0' && !(dooct && pre == 0)) {
+      while (length-- > 0) {
         *ptr++ = '0';
+      }
+    }
     *ptr = NUL;
     STRCAT(buf1, buf2);
     ins_str(buf1);              /* insert the new number */
     xfree(buf1);
   }
   --curwin->w_cursor.col;
-  curwin->w_set_curswant = TRUE;
-  ptr = ml_get_buf(curbuf, curwin->w_cursor.lnum, TRUE);
+  curwin->w_set_curswant = true;
+  ptr = ml_get_buf(curbuf, curwin->w_cursor.lnum, true);
   RLADDSUBFIX(ptr);
   return OK;
 }

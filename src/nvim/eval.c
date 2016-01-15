@@ -1113,19 +1113,17 @@ typval_T *eval_expr(char_u *arg, char_u **nextcmd)
 }
 
 
-/*
- * Call some vimL function and return the result in "*rettv".
- * Uses argv[argc] for the function arguments.  Only Number and String
- * arguments are currently supported.
- * Returns OK or FAIL.
- */
-int 
-call_vim_function (
+// Call some vimL function and return the result in "*rettv".
+// Uses argv[argc] for the function arguments.  Only Number and String
+// arguments are currently supported.
+//
+// Return OK or FAIL.
+int call_vim_function(
     char_u *func,
     int argc,
     char_u **argv,
-    int safe,                       /* use the sandbox */
-    int str_arg_only,               /* all arguments are strings */
+    int safe,                       // use the sandbox
+    int str_arg_only,               // all arguments are strings
     typval_T *rettv
 )
 {
@@ -1138,18 +1136,19 @@ call_vim_function (
   typval_T *argvars = xmalloc((argc + 1) * sizeof(typval_T));
 
   for (int i = 0; i < argc; i++) {
-    /* Pass a NULL or empty argument as an empty string */
+    // Pass a NULL or empty argument as an empty string
     if (argv[i] == NULL || *argv[i] == NUL) {
       argvars[i].v_type = VAR_STRING;
       argvars[i].vval.v_string = (char_u *)"";
       continue;
     }
 
-    if (str_arg_only)
+    if (str_arg_only) {
       len = 0;
-    else
-      /* Recognize a number argument, the others must be strings. */
-      vim_str2nr(argv[i], NULL, &len, TRUE, TRUE, TRUE, &n, NULL);
+    } else {
+      // Recognize a number argument, the others must be strings.
+      vim_str2nr(argv[i], NULL, &len, true, true, true, &n, NULL);
+    }
     if (len != 0 && len == (int)STRLEN(argv[i])) {
       argvars[i].v_type = VAR_NUMBER;
       argvars[i].vval.v_number = n;
@@ -1166,16 +1165,17 @@ call_vim_function (
 
   rettv->v_type = VAR_UNKNOWN;                  /* clear_tv() uses this */
   ret = call_func(func, (int)STRLEN(func), rettv, argc, argvars,
-      curwin->w_cursor.lnum, curwin->w_cursor.lnum,
-      &doesrange, TRUE, NULL);
+                  curwin->w_cursor.lnum, curwin->w_cursor.lnum,
+                  &doesrange, true, NULL);
   if (safe) {
     --sandbox;
     restore_funccal(save_funccalp);
   }
   xfree(argvars);
 
-  if (ret == FAIL)
+  if (ret == FAIL) {
     clear_tv(rettv);
+  }
 
   return ret;
 }
@@ -4025,38 +4025,35 @@ eval6 (
   return OK;
 }
 
-/*
- * Handle sixth level expression:
- *  number		number constant
- *  "string"		string constant
- *  'string'		literal string constant
- *  &option-name	option value
- *  @r			register contents
- *  identifier		variable value
- *  function()		function call
- *  $VAR		environment variable
- *  (expression)	nested expression
- *  [expr, expr]	List
- *  {key: val, key: val}  Dictionary
- *
- *  Also handle:
- *  ! in front		logical NOT
- *  - in front		unary minus
- *  + in front		unary plus (ignored)
- *  trailing []		subscript in String or List
- *  trailing .name	entry in Dictionary
- *
- * "arg" must point to the first non-white of the expression.
- * "arg" is advanced to the next non-white after the recognized expression.
- *
- * Return OK or FAIL.
- */
-static int 
-eval7 (
+// Handle sixth level expression:
+//  number  number constant
+//  "string"  string constant
+//  'string'  literal string constant
+//  &option-name option value
+//  @r   register contents
+//  identifier  variable value
+//  function()  function call
+//  $VAR  environment variable
+//  (expression) nested expression
+//  [expr, expr] List
+//  {key: val, key: val}  Dictionary
+//
+//  Also handle:
+//  ! in front  logical NOT
+//  - in front  unary minus
+//  + in front  unary plus (ignored)
+//  trailing []  subscript in String or List
+//  trailing .name entry in Dictionary
+//
+// "arg" must point to the first non-white of the expression.
+// "arg" is advanced to the next non-white after the recognized expression.
+//
+// Return OK or FAIL.
+static int eval7(
     char_u **arg,
     typval_T *rettv,
     int evaluate,
-    int want_string                 /* after "." operator */
+    int want_string                 // after "." operator
 )
 {
   long n;
@@ -4066,24 +4063,19 @@ eval7 (
   int ret = OK;
   char_u      *alias;
 
-  /*
-   * Initialise variable so that clear_tv() can't mistake this for a
-   * string and free a string that isn't there.
-   */
+  // Initialise variable so that clear_tv() can't mistake this for a
+  // string and free a string that isn't there.
   rettv->v_type = VAR_UNKNOWN;
 
-  /*
-   * Skip '!' and '-' characters.  They are handled later.
-   */
+  // Skip '!' and '-' characters.  They are handled later.
   start_leader = *arg;
-  while (**arg == '!' || **arg == '-' || **arg == '+')
+  while (**arg == '!' || **arg == '-' || **arg == '+') {
     *arg = skipwhite(*arg + 1);
+  }
   end_leader = *arg;
 
   switch (**arg) {
-  /*
-   * Number constant.
-   */
+  // Number constant.
   case '0':
   case '1':
   case '2':
@@ -4096,27 +4088,30 @@ eval7 (
   case '9':
   {
     char_u *p = skipdigits(*arg + 1);
-    int get_float = FALSE;
+    int get_float = false;
 
-    /* We accept a float when the format matches
-     * "[0-9]\+\.[0-9]\+\([eE][+-]\?[0-9]\+\)\?".  This is very
-     * strict to avoid backwards compatibility problems.
-     * Don't look for a float after the "." operator, so that
-     * ":let vers = 1.2.3" doesn't fail. */
+    // We accept a float when the format matches
+    // "[0-9]\+\.[0-9]\+\([eE][+-]\?[0-9]\+\)\?".  This is very
+    // strict to avoid backwards compatibility problems.
+    // Don't look for a float after the "." operator, so that
+    // ":let vers = 1.2.3" doesn't fail.
     if (!want_string && p[0] == '.' && ascii_isdigit(p[1])) {
-      get_float = TRUE;
+      get_float = true;
       p = skipdigits(p + 2);
       if (*p == 'e' || *p == 'E') {
         ++p;
-        if (*p == '-' || *p == '+')
+        if (*p == '-' || *p == '+') {
           ++p;
-        if (!ascii_isdigit(*p))
-          get_float = FALSE;
-        else
+        }
+        if (!ascii_isdigit(*p)) {
+          get_float = false;
+        } else {
           p = skipdigits(p + 1);
+        }
       }
-      if (ASCII_ISALPHA(*p) || *p == '.')
-        get_float = FALSE;
+      if (ASCII_ISALPHA(*p) || *p == '.') {
+        get_float = false;
+      }
     }
     if (get_float) {
       float_T f;
@@ -4127,7 +4122,7 @@ eval7 (
         rettv->vval.v_float = f;
       }
     } else {
-      vim_str2nr(*arg, NULL, &len, TRUE, TRUE, TRUE, &n, NULL);
+      vim_str2nr(*arg, NULL, &len, true, true, true, &n, NULL);
       *arg += len;
       if (evaluate) {
         rettv->v_type = VAR_NUMBER;
@@ -4137,62 +4132,47 @@ eval7 (
     break;
   }
 
-  /*
-   * String constant: "string".
-   */
+  // String constant: "string".
   case '"':   ret = get_string_tv(arg, rettv, evaluate);
     break;
 
-  /*
-   * Literal string constant: 'str''ing'.
-   */
+  // Literal string constant: 'str''ing'.
   case '\'':  ret = get_lit_string_tv(arg, rettv, evaluate);
     break;
 
-  /*
-   * List: [expr, expr]
-   */
+  // List: [expr, expr]
   case '[':   ret = get_list_tv(arg, rettv, evaluate);
     break;
 
-  /*
-   * Dictionary: {key: val, key: val}
-   */
+  // Dictionary: {key: val, key: val}
   case '{':   ret = get_dict_tv(arg, rettv, evaluate);
     break;
 
-  /*
-   * Option value: &name
-   */
+  // Option value: &name
   case '&':   ret = get_option_tv(arg, rettv, evaluate);
     break;
 
-  /*
-   * Environment variable: $VAR.
-   */
+  // Environment variable: $VAR.
   case '$':   ret = get_env_tv(arg, rettv, evaluate);
     break;
 
-  /*
-   * Register contents: @r.
-   */
+  // Register contents: @r.
   case '@':   ++*arg;
     if (evaluate) {
       rettv->v_type = VAR_STRING;
       rettv->vval.v_string = get_reg_contents(**arg, kGRegExprSrc);
     }
-    if (**arg != NUL)
+    if (**arg != NUL) {
       ++*arg;
+    }
     break;
 
-  /*
-   * nested expression: (expression).
-   */
+  // nested expression: (expression).
   case '(':   *arg = skipwhite(*arg + 1);
-    ret = eval1(arg, rettv, evaluate);                  /* recursive! */
-    if (**arg == ')')
+    ret = eval1(arg, rettv, evaluate);                  // recursive!
+    if (**arg == ')') {
       ++*arg;
-    else if (ret == OK) {
+    } else if (ret == OK) {
       EMSG(_("E110: Missing ')'"));
       clear_tv(rettv);
       ret = FAIL;
@@ -4204,71 +4184,72 @@ eval7 (
   }
 
   if (ret == NOTDONE) {
-    /*
-     * Must be a variable or function name.
-     * Can also be a curly-braces kind of name: {expr}.
-     */
+    // Must be a variable or function name.
+    // Can also be a curly-braces kind of name: {expr}.
     s = *arg;
-    len = get_name_len(arg, &alias, evaluate, TRUE);
-    if (alias != NULL)
+    len = get_name_len(arg, &alias, evaluate, true);
+    if (alias != NULL) {
       s = alias;
+    }
 
-    if (len <= 0)
+    if (len <= 0) {
       ret = FAIL;
-    else {
-      if (**arg == '(') {               /* recursive! */
-        /* If "s" is the name of a variable of type VAR_FUNC
-         * use its contents. */
+    } else {
+      if (**arg == '(') {               // recursive!
+        // If "s" is the name of a variable of type VAR_FUNC
+        // use its contents.
         s = deref_func_name(s, &len, !evaluate);
 
-        /* Invoke the function. */
+        // Invoke the function.
         ret = get_func_tv(s, len, rettv, arg,
             curwin->w_cursor.lnum, curwin->w_cursor.lnum,
             &len, evaluate, NULL);
 
-        /* If evaluate is FALSE rettv->v_type was not set in
-         * get_func_tv, but it's needed in handle_subscript() to parse
-         * what follows. So set it here. */
+        // If evaluate is false rettv->v_type was not set in
+        // get_func_tv, but it's needed in handle_subscript() to parse
+        // what follows. So set it here.
         if (rettv->v_type == VAR_UNKNOWN && !evaluate && **arg == '(') {
           rettv->vval.v_string = empty_string;
           rettv->v_type = VAR_FUNC;
         }
 
-        /* Stop the expression evaluation when immediately
-         * aborting on error, or when an interrupt occurred or
-         * an exception was thrown but not caught. */
+        // Stop the expression evaluation when immediately
+        // aborting on error, or when an interrupt occurred or
+        // an exception was thrown but not caught.
         if (aborting()) {
-          if (ret == OK)
+          if (ret == OK) {
             clear_tv(rettv);
+          }
           ret = FAIL;
         }
-      } else if (evaluate)
-        ret = get_var_tv(s, len, rettv, TRUE, FALSE);
-      else
+      } else if (evaluate) {
+        ret = get_var_tv(s, len, rettv, true, false);
+      } else {
         ret = OK;
+      }
     }
     xfree(alias);
   }
 
   *arg = skipwhite(*arg);
 
-  /* Handle following '[', '(' and '.' for expr[expr], expr.name,
-   * expr(expr). */
-  if (ret == OK)
-    ret = handle_subscript(arg, rettv, evaluate, TRUE);
+  // Handle following '[', '(' and '.' for expr[expr], expr.name,
+  // expr(expr).
+  if (ret == OK) {
+    ret = handle_subscript(arg, rettv, evaluate, true);
+  }
 
-  /*
-   * Apply logical NOT and unary '-', from right to left, ignore '+'.
-   */
+  // Apply logical NOT and unary '-', from right to left, ignore '+'.
   if (ret == OK && evaluate && end_leader > start_leader) {
-    int error = FALSE;
+    int error = false;
     int val = 0;
     float_T f = 0.0;
 
-    if (rettv->v_type == VAR_FLOAT)
+    if (rettv->v_type == VAR_FLOAT) {
       f = rettv->vval.v_float;
-    else
+    } else {
       val = get_tv_number_chk(rettv, &error);
+    }
     if (error) {
       clear_tv(rettv);
       ret = FAIL;
@@ -4276,15 +4257,17 @@ eval7 (
       while (end_leader > start_leader) {
         --end_leader;
         if (*end_leader == '!') {
-          if (rettv->v_type == VAR_FLOAT)
+          if (rettv->v_type == VAR_FLOAT) {
             f = !f;
-          else
+          } else {
             val = !val;
+          }
         } else if (*end_leader == '-') {
-          if (rettv->v_type == VAR_FLOAT)
+          if (rettv->v_type == VAR_FLOAT) {
             f = -f;
-          else
+          } else {
             val = -val;
+          }
         }
       }
       if (rettv->v_type == VAR_FLOAT) {
@@ -15971,9 +15954,7 @@ static void f_str2float(typval_T *argvars, typval_T *rettv)
   rettv->v_type = VAR_FLOAT;
 }
 
-/*
- * "str2nr()" function
- */
+// "str2nr()" function
 static void f_str2nr(typval_T *argvars, typval_T *rettv)
 {
   int base = 10;
@@ -15989,9 +15970,14 @@ static void f_str2nr(typval_T *argvars, typval_T *rettv)
   }
 
   p = skipwhite(get_tv_string(&argvars[0]));
-  if (*p == '+')
+  if (*p == '+') {
     p = skipwhite(p + 1);
-  vim_str2nr(p, NULL, NULL, base == 2 ? 2 : 0, base == 8 ? 2 : 0, base == 16 ? 2 : 0, &n, NULL);
+  }
+  vim_str2nr(p, NULL, NULL,
+             base == 2 ? 2 : 0,
+             base == 8 ? 2 : 0,
+             base == 16 ? 2 : 0,
+             &n, NULL);
   rettv->vval.v_number = n;
 }
 
@@ -18271,9 +18257,10 @@ long get_tv_number_chk(typval_T *varp, int *denote)
     EMSG(_("E703: Using a Funcref as a Number"));
     break;
   case VAR_STRING:
-    if (varp->vval.v_string != NULL)
+    if (varp->vval.v_string != NULL) {
       vim_str2nr(varp->vval.v_string, NULL, NULL,
-          TRUE, TRUE, TRUE, &n, NULL);
+                 true, true, true, &n, NULL);
+    }
     return n;
   case VAR_LIST:
     EMSG(_("E745: Using a List as a Number"));
@@ -18285,10 +18272,12 @@ long get_tv_number_chk(typval_T *varp, int *denote)
     EMSG2(_(e_intern2), "get_tv_number()");
     break;
   }
-  if (denote == NULL)           /* useful for values that must be unsigned */
+  if (denote == NULL) {
+    // useful for values that must be unsigned
     n = -1;
-  else
-    *denote = TRUE;
+  } else {
+    *denote = true;
+  }
   return n;
 }
 
