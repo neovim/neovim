@@ -26,19 +26,12 @@ foreach(DF ${DOCFILES})
   list(APPEND BUILDDOCFILES ${GENERATED_RUNTIME_DIR}/doc/${F})
 endforeach()
 
-set(DOCFILE_DEPS ${DOCFILES})
-foreach(DOCFILE ${BUILDDOCFILES})
-  list(REMOVE_AT DOCFILE_DEPS 0)
-  add_custom_command(OUTPUT ${DOCFILE}
+add_custom_command(OUTPUT copy_docfiles
     COMMAND ${CMAKE_COMMAND} -E copy_directory
-      ${PROJECT_SOURCE_DIR}/runtime/doc ${GENERATED_RUNTIME_DIR}/doc
-    DEPENDS
-    ${DOCFILE_DEPS})
-endforeach()
+    ${PROJECT_SOURCE_DIR}/runtime/doc ${GENERATED_RUNTIME_DIR}/doc
+)
 
 add_custom_command(OUTPUT ${GENERATED_HELP_TAGS}
-  COMMAND ${CMAKE_COMMAND} -E copy_directory
-    ${PROJECT_SOURCE_DIR}/runtime/doc ${GENERATED_RUNTIME_DIR}/doc
   COMMAND "${PROJECT_BINARY_DIR}/bin/nvim"
     -u NONE
     -i NONE
@@ -47,7 +40,7 @@ add_custom_command(OUTPUT ${GENERATED_HELP_TAGS}
     -c "helptags ++t ."
     -c quit
   DEPENDS
-    ${BUILDDOCFILES}
+    copy_docfiles
     nvim
   WORKING_DIRECTORY "${GENERATED_RUNTIME_DIR}/doc"
 )
