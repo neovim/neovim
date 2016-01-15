@@ -22,7 +22,7 @@ cimport('./src/nvim/main.h')
 cimport('./src/nvim/fileio.h')
 local fs = cimport('./src/nvim/os/os.h')
 cppimport('sys/stat.h')
-cppimport('sys/fcntl.h')
+cppimport('fcntl.h')
 cppimport('uv-errno.h')
 
 local buffer = ""
