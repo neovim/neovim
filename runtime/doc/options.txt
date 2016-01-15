@@ -4396,7 +4396,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	recognized as a multi click.
 
 							*'nrformats'* *'nf'*
-'nrformats' 'nf'	string	(default "hex")
+'nrformats' 'nf'	string	(default "bin,hex")
 			local to buffer
 	This defines what bases Vim will consider for numbers when using the
 	CTRL-A and CTRL-X commands for adding to and subtracting from a number
@@ -4409,6 +4409,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 	hex	If included, numbers starting with "0x" or "0X" will be
 		considered to be hexadecimal.  Example: Using CTRL-X on
 		"0x100" results in "0x0ff".
+	bin	If included, numbers starting with "0b" or "0B" will be
+		considered to be binary.  Example: Using CTRL-X on
+		"0b1000" subtracts one, resulting in "0b0111".
 	Numbers which simply begin with a digit in the range 1-9 are always
 	considered decimal.  This also happens for numbers that are not
 	recognized as octal or hex.
