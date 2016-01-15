@@ -4507,7 +4507,7 @@ mentioned for the default values. See |:verbose-cmd| for more information.
 					*highlight-args* *E416* *E417* *E423*
 There are three types of terminals for highlighting:
 term	a normal terminal (vt100, xterm)
-cterm	a color terminal (Wondows console, color-xterm, these have the "Co"
+cterm	a color terminal (Windows console, color-xterm, these have the "Co"
 	termcap entry)
 gui	the GUI
 
