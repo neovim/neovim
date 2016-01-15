@@ -687,8 +687,8 @@ alt key is pressed (it may move the window).
 
 							*double-click*
 Double, triple and quadruple clicks are supported when the GUI is active, for
-Windows and for an xterm (if the gettimeofday() function is available).  For
-selecting text, extra clicks extend the selection:
+Windows and for an xterm.  For selecting text, extra clicks extend the
+selection:
 	click		select ~
 	double		word or % match		*<2-LeftMouse>*
 	triple		line			*<3-LeftMouse>*
