@@ -9,7 +9,7 @@ SCRIPTSOURCE := ../../../runtime
 
 SCRIPTS := test_eval.out                                               \
                                    test8.out               test10.out  \
-           test11.out  test12.out  test13.out  test14.out              \
+           test11.out  test12.out              test14.out              \
                        test17.out                                      \
                                                test24.out              \
                                                            test30.out  \
