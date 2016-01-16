@@ -3,6 +3,7 @@
 
 #include <windows.h>
 #include <sys/stat.h>
+#include <io.h>
 #include <stdio.h>
 
 #define NAME_MAX _MAX_PATH
