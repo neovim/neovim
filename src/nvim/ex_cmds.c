@@ -3359,12 +3359,11 @@ void do_sub(exarg_T *eap)
               i = msg_scroll;
               msg_scroll = 0;                           /* truncate msg when
                                                            needed */
-              msg_no_more = TRUE;
-              /* write message same highlighting as for
-               * wait_return */
+              msg_no_more = true;
+              // write message same highlighting as for wait_return
               smsg_attr(hl_attr(HLF_R),
                         _("replace with %s (y/n/a/q/l/^E/^Y)?"), sub);
-              msg_no_more = FALSE;
+              msg_no_more = false;
               msg_scroll = i;
               showruler(TRUE);
               ui_cursor_goto(msg_row, msg_col);

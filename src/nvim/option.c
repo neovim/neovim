@@ -156,7 +156,7 @@ static char_u   *p_syn;
 static char_u   *p_spc;
 static char_u   *p_spf;
 static char_u   *p_spl;
-static long p_ts;
+static int p_ts;
 static long p_tw;
 static int p_udf;
 static long p_wm;
@@ -829,10 +829,11 @@ set_option_default (
         win_comp_scroll(curwin);
       else {
         *(long *)varp = (long)options[opt_idx].def_val[dvi];
-        /* May also set global value for local option. */
-        if (both)
-          *(long *)get_varp_scope(&(options[opt_idx]), OPT_GLOBAL) =
-            *(long *)varp;
+        // May also set global value for local option.
+        if (both) {
+          *(int *)get_varp_scope(&(options[opt_idx]), OPT_GLOBAL) =
+            *(int *)varp;
+        }
       }
     } else {  /* P_BOOL */
       *(int *)varp = (int)(intptr_t)options[opt_idx].def_val[dvi];
@@ -3859,10 +3860,10 @@ set_num_option (
 )
 {
   char_u      *errmsg = NULL;
-  long old_value = *(long *)varp;
-  long old_Rows = Rows;                 /* remember old Rows */
-  long old_Columns = Columns;           /* remember old Columns */
-  long        *pp = (long *)varp;
+  int old_value = *(int *)varp;
+  int old_Rows = (int)Rows;            // remember old Rows
+  int old_Columns = (int)Columns;      // remember old Columns
+  long *pp = (long *)varp;
 
   /* Disallow changing some options from secure mode. */
   if ((secure || sandbox != 0)
@@ -3972,15 +3973,16 @@ set_num_option (
       errmsg = e_invarg;
       curwin->w_p_fdc = 12;
     }
-  }
-  /* 'shiftwidth' or 'tabstop' */
-  else if (pp == &curbuf->b_p_sw || pp == &curbuf->b_p_ts) {
-    if (foldmethodIsIndent(curwin))
+  // 'shiftwidth' or 'tabstop'
+  } else if (pp == &curbuf->b_p_sw || pp == (long *)&curbuf->b_p_ts) {
+    if (foldmethodIsIndent(curwin)) {
       foldUpdateAll(curwin);
-    /* When 'shiftwidth' changes, or it's zero and 'tabstop' changes:
-     * parse 'cinoptions'. */
-    if (pp == &curbuf->b_p_sw || curbuf->b_p_sw == 0)
+    }
+    // When 'shiftwidth' changes, or it's zero and 'tabstop' changes:
+    // parse 'cinoptions'.
+    if (pp == &curbuf->b_p_sw || curbuf->b_p_sw == 0) {
       parse_cino(curbuf);
+    }
   }
   /* 'maxcombine' */
   else if (pp == &p_mco) {
@@ -4199,10 +4201,10 @@ set_num_option (
     p_ss = 0;
   }
 
-  /* May set global value for local option. */
-  if ((opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0)
-    *(long *)get_varp_scope(&(options[opt_idx]), OPT_GLOBAL) = *pp;
-
+  // May set global value for local option.
+  if ((opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0) {
+    *(int *)get_varp_scope(&(options[opt_idx]), OPT_GLOBAL) = *(int *)pp;
+  }
   options[opt_idx].flags |= P_WAS_SET;
 
   if (!starting && errmsg == NULL) {
@@ -4411,15 +4413,16 @@ get_option_value (
 
   if (varp == NULL)                 /* hidden option */
     return -1;
-  if (options[opt_idx].flags & P_NUM)
-    *numval = *(long *)varp;
-  else {
-    /* Special case: 'modified' is b_changed, but we also want to consider
-     * it set when 'ff' or 'fenc' changed. */
-    if ((bool *)varp == &curbuf->b_changed)
+  if (options[opt_idx].flags & P_NUM) {
+    *numval = *(int *)varp;
+  } else {
+    // Special case: 'modified' is b_changed, but we also want to consider
+    // it set when 'ff' or 'fenc' changed.
+    if ((bool *)varp == &curbuf->b_changed) {
       *numval = curbufIsChanged();
-    else
+    } else {
       *numval = *(int *)varp;
+    }
   }
   return 1;
 }
@@ -4716,13 +4719,12 @@ showoptions (
      * display the items
      */
     if (run == 1) {
-      assert(Columns <= LONG_MAX - GAP
-             && Columns + GAP >= LONG_MIN + 3
-             && (Columns + GAP - 3) / INC >= INT_MIN
+      assert((Columns + GAP - 3) / INC >= INT_MIN
              && (Columns + GAP - 3) / INC <= INT_MAX);
-      cols = (int)((Columns + GAP - 3) / INC);
-      if (cols == 0)
+      cols = (((int)Columns + GAP - 3) / INC);
+      if (cols == 0) {
         cols = 1;
+      }
       rows = (item_count + cols - 1) / cols;
     } else      /* run == 2 */
       rows = item_count;
