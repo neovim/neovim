@@ -11,6 +11,7 @@
 #include <assert.h>
 #include <errno.h>
 #include <inttypes.h>
+#include <fcntl.h>
 
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
