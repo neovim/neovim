@@ -13,7 +13,6 @@
 #endif
 
 #cmakedefine HAVE__NSGETENVIRON
-#cmakedefine HAVE_FCNTL_H
 #cmakedefine HAVE_FD_CLOEXEC
 #cmakedefine HAVE_FSEEKO
 #cmakedefine HAVE_GETPWENT
