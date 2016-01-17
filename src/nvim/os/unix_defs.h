@@ -2,7 +2,7 @@
 #define NVIM_OS_UNIX_DEFS_H
 
 // Windows doesn't have unistd.h, so we include it here to avoid numerous
-// instances of `#ifdef HAVE_UNISTD_H'.
+// instances of `#ifdef WIN32'.
 #include <unistd.h>
 
 // POSIX.1-2008 says that NAME_MAX should be in here
