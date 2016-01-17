@@ -182,7 +182,7 @@ list_vim_patches() {
       local patch_number="${BASH_REMATCH[2]}"
       # Tagged Vim patch, check version.c:
       is_missing="$(sed -n '/static int included_patches/,/}/p' "${NEOVIM_SOURCE_DIR}/src/nvim/version.c" |
-        grep -x -e "[[:space:]]*//${patch_number} NA" -e "[[:space:]]*${patch_number}," >/dev/null && echo "false" || echo "true")"
+        grep -x -e "[[:space:]]*//[[:space:]]${patch_number} NA" -e "[[:space:]]*${patch_number}," >/dev/null && echo "false" || echo "true")"
       vim_commit="${BASH_REMATCH[1]//-/.}"
     else
       # Untagged Vim patch (e.g. runtime updates), check the Neovim git log:
