@@ -658,10 +658,6 @@ long you take to respond to the input() prompt is irrelevant.
 Profiling should give a good indication of where time is spent, but keep in
 mind there are various things that may clobber the results:
 
-- The accuracy of the time measured depends on the gettimeofday() system
-  function.  It may only be as accurate as 1/100 second, even though the times
-  are displayed in micro seconds.
-
 - Real elapsed time is measured, if other processes are busy they may cause
   delays at unpredictable moments.  You may want to run the profiling several
   times and use the lowest results.

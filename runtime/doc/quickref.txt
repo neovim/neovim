@@ -983,8 +983,6 @@ Short explanation of each option:		*option-list*
 |dos-CTRL-Break|   CTRL-Break	Windows: during searches: Interrupt the search
 |<Del>|		   <Del>	while entering a count: delete last character
 |:version|	:ve[rsion]	show version information
-|:mode|		:mode N		Windows: set screen mode to N (number, C80,
-				   C4350, etc.)
 |:normal|	:norm[al][!] {commands}
 				execute Normal mode commands
 |Q|		   Q		switch to "Ex" mode
