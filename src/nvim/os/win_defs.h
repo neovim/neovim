@@ -5,6 +5,10 @@
 #include <sys/stat.h>
 #include <stdio.h>
 
+// Windows does not have S_IFLNK but libuv defines it
+// and sets the flag for us when calling uv_fs_stat.
+#include <uv.h>
+
 #define NAME_MAX _MAX_PATH
 
 #define TEMP_DIR_NAMES {"$TMP", "$TEMP", "$USERPROFILE", ""}
