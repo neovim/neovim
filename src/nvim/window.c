@@ -1044,19 +1044,21 @@ static void win_init_some(win_T *newp, win_T *oldp)
 }
 
 
-/*
- * Check if "win" is a pointer to an existing window.
- */
-int win_valid(win_T *win)
+/// Check if "win" is a pointer to an existing window in the current tabpage.
+///
+/// @param  win  window to check
+bool win_valid(win_T *win) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  if (win == NULL)
-    return FALSE;
+  if (win == NULL) {
+    return false;
+  }
+
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     if (wp == win) {
-      return TRUE;
+      return true;
     }
   }
-  return FALSE;
+  return false;
 }
 
 /*
@@ -1732,21 +1734,18 @@ close_windows (
     shell_new_rows();
 }
 
-/*
- * Return TRUE if the current window is the only window that exists (ignoring
- * "aucmd_win").
- * Returns FALSE if there is a window, possibly in another tab page.
- */
-static int last_window(void)
+/// Check that current window is the last one.
+///
+/// @return true if the current window is the only window that exists, false if
+///         there is another, possibly in another tab page.
+static bool last_window(void) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return one_window() && first_tabpage->tp_next == NULL;
 }
 
-/*
- * Return TRUE if there is only one window other than "aucmd_win" in the
- * current tab page.
- */
-bool one_window(void)
+/// Check that current tab page contains no more then one window other than
+/// "aucmd_win".
+bool one_window(void) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   bool seen_one = false;
 
@@ -1761,14 +1760,20 @@ bool one_window(void)
   return true;
 }
 
-/*
- * Close the possibly last window in a tab page.
- * Returns TRUE when the window was closed already.
- */
-static int close_last_window_tabpage(win_T *win, int free_buf, tabpage_T *prev_curtab)
+/// Close the possibly last window in a tab page.
+///
+/// @param  win          window to close
+/// @param  free_buf     whether to free the window's current buffer
+/// @param  prev_curtab  previous tabpage that will be closed if "win" is the
+///                      last window in the tabpage
+///
+/// @return true when the window was closed already.
+static bool close_last_window_tabpage(win_T *win, bool free_buf,
+                                      tabpage_T *prev_curtab)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
   if (firstwin != lastwin) {
-    return FALSE;
+    return false;
   }
   buf_T   *old_curbuf = curbuf;
 
@@ -1809,14 +1814,15 @@ static int close_last_window_tabpage(win_T *win, int free_buf, tabpage_T *prev_c
     terminal_resize(term, 0, 0);
   }
 
-  /* Since goto_tabpage_tp above did not trigger *Enter autocommands, do
-   * that now. */
-  apply_autocmds(EVENT_TABCLOSED, prev_idx, prev_idx, FALSE, curbuf);
-  apply_autocmds(EVENT_WINENTER, NULL, NULL, FALSE, curbuf);
-  apply_autocmds(EVENT_TABENTER, NULL, NULL, FALSE, curbuf);
-  if (old_curbuf != curbuf)
-    apply_autocmds(EVENT_BUFENTER, NULL, NULL, FALSE, curbuf);
-  return TRUE;
+  // Since goto_tabpage_tp above did not trigger *Enter autocommands, do
+  // that now.
+  apply_autocmds(EVENT_TABCLOSED, prev_idx, prev_idx, false, curbuf);
+  apply_autocmds(EVENT_WINENTER, NULL, NULL, false, curbuf);
+  apply_autocmds(EVENT_TABENTER, NULL, NULL, false, curbuf);
+  if (old_curbuf != curbuf) {
+    apply_autocmds(EVENT_BUFENTER, NULL, NULL, false, curbuf);
+  }
+  return true;
 }
 
 /*
@@ -2301,20 +2307,22 @@ static win_T *frame2win(frame_T *frp)
   return frp->fr_win;
 }
 
-/*
- * Return TRUE if frame "frp" contains window "wp".
- */
-static int frame_has_win(frame_T *frp, win_T *wp)
+/// Check that the frame "frp" contains the window "wp".
+///
+/// @param  frp  frame
+/// @param  wp   window
+static bool frame_has_win(frame_T *frp, win_T *wp)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ARG(1)
 {
-  frame_T     *p;
-
-  if (frp->fr_layout == FR_LEAF)
+  if (frp->fr_layout == FR_LEAF) {
     return frp->fr_win == wp;
-
-  for (p = frp->fr_child; p != NULL; p = p->fr_next)
-    if (frame_has_win(p, wp))
-      return TRUE;
-  return FALSE;
+  }
+  for (frame_T *p = frp->fr_child; p != NULL; p = p->fr_next) {
+    if (frame_has_win(p, wp)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 /*
@@ -2406,58 +2414,72 @@ frame_new_height (
   topfrp->fr_height = height;
 }
 
-/*
- * Return TRUE if height of frame "frp" should not be changed because of
- * the 'winfixheight' option.
- */
-static int frame_fixed_height(frame_T *frp)
+/// Return true if height of frame "frp" should not be changed because of
+/// the 'winfixheight' option.
+///
+/// @param  frp  frame
+///
+/// @return true if the frame has a fixed height
+static bool frame_fixed_height(frame_T *frp)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
-  /* frame with one window: fixed height if 'winfixheight' set. */
-  if (frp->fr_win != NULL)
+  // frame with one window: fixed height if 'winfixheight' set.
+  if (frp->fr_win != NULL) {
     return frp->fr_win->w_p_wfh;
-
+  }
   if (frp->fr_layout == FR_ROW) {
-    /* The frame is fixed height if one of the frames in the row is fixed
-     * height. */
-    for (frp = frp->fr_child; frp != NULL; frp = frp->fr_next)
-      if (frame_fixed_height(frp))
-        return TRUE;
-    return FALSE;
+    // The frame is fixed height if one of the frames in the row is fixed
+    // height.
+    for (frp = frp->fr_child; frp != NULL; frp = frp->fr_next) {
+      if (frame_fixed_height(frp)) {
+        return true;
+      }
+    }
+    return false;
   }
 
-  /* frp->fr_layout == FR_COL: The frame is fixed height if all of the
-   * frames in the row are fixed height. */
-  for (frp = frp->fr_child; frp != NULL; frp = frp->fr_next)
-    if (!frame_fixed_height(frp))
-      return FALSE;
-  return TRUE;
+  // frp->fr_layout == FR_COL: The frame is fixed height if all of the
+  // frames in the row are fixed height.
+  for (frp = frp->fr_child; frp != NULL; frp = frp->fr_next) {
+    if (!frame_fixed_height(frp)) {
+      return false;
+    }
+  }
+  return true;
 }
 
-/*
- * Return TRUE if width of frame "frp" should not be changed because of
- * the 'winfixwidth' option.
- */
-static int frame_fixed_width(frame_T *frp)
+/// Return true if width of frame "frp" should not be changed because of
+/// the 'winfixwidth' option.
+///
+/// @param  frp  frame
+///
+/// @return true if the frame has a fixed width
+static bool frame_fixed_width(frame_T *frp)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
-  /* frame with one window: fixed width if 'winfixwidth' set. */
-  if (frp->fr_win != NULL)
+  // frame with one window: fixed width if 'winfixwidth' set.
+  if (frp->fr_win != NULL) {
     return frp->fr_win->w_p_wfw;
-
+  }
   if (frp->fr_layout == FR_COL) {
-    /* The frame is fixed width if one of the frames in the row is fixed
-     * width. */
-    for (frp = frp->fr_child; frp != NULL; frp = frp->fr_next)
-      if (frame_fixed_width(frp))
-        return TRUE;
-    return FALSE;
+    // The frame is fixed width if one of the frames in the row is fixed
+    // width.
+    for (frp = frp->fr_child; frp != NULL; frp = frp->fr_next) {
+      if (frame_fixed_width(frp)) {
+        return true;
+      }
+    }
+    return false;
   }
 
-  /* frp->fr_layout == FR_ROW: The frame is fixed width if all of the
-   * frames in the row are fixed width. */
-  for (frp = frp->fr_child; frp != NULL; frp = frp->fr_next)
-    if (!frame_fixed_width(frp))
-      return FALSE;
-  return TRUE;
+  // frp->fr_layout == FR_ROW: The frame is fixed width if all of the
+  // frames in the row are fixed width.
+  for (frp = frp->fr_child; frp != NULL; frp = frp->fr_next) {
+    if (!frame_fixed_width(frp)) {
+      return false;
+    }
+  }
+  return true;
 }
 
 /*
@@ -3028,10 +3050,10 @@ int make_tabpages(int maxcount)
   return count - todo;
 }
 
-/*
- * Return TRUE when "tpc" points to a valid tab page.
- */
-bool valid_tabpage(tabpage_T *tpc)
+/// Check that tpc points to a valid tab page.
+///
+/// @param[in]  tpc  Tabpage to check.
+bool valid_tabpage(tabpage_T *tpc) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   FOR_ALL_TABS(tp) {
     if (tp == tpc) {
@@ -5052,27 +5074,22 @@ int min_rows(void)
   return total;
 }
 
-/*
- * Return TRUE if there is only one window (in the current tab page), not
- * counting a help or preview window, unless it is the current window.
- * Does not count "aucmd_win".
- */
-int only_one_window(void)
+/// Check that there is only one window (and only one tab page), not counting a
+/// help or preview window, unless it is the current window. Does not count
+/// "aucmd_win".
+bool only_one_window(void) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
+  // If there is another tab page there always is another window.
+  if (first_tabpage->tp_next != NULL) {
+    return false;
+  }
+
   int count = 0;
-
-  /* If there is another tab page there always is another window. */
-  if (first_tabpage->tp_next != NULL)
-    return FALSE;
-
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     if (wp->w_buffer != NULL
         && (!((wp->w_buffer->b_help && !curbuf->b_help)
-              || wp->w_p_pvw
-              ) || wp == curwin)
-        && wp != aucmd_win
-        ) {
-      ++count;
+              || wp->w_p_pvw) || wp == curwin) && wp != aucmd_win) {
+      count++;
     }
   }
   return count <= 1;
@@ -5571,38 +5588,42 @@ matchitem_T *get_match(win_T *wp, int id)
 }
 
 
-/*
- * Return TRUE if "topfrp" and its children are at the right height.
- */
-static int frame_check_height(frame_T *topfrp, int height)
+/// Check that "topfrp" and its children are at the right height.
+///
+/// @param  topfrp  top frame pointer
+/// @param  height  expected height
+static bool frame_check_height(frame_T *topfrp, int height)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
-  frame_T *frp;
-
-  if (topfrp->fr_height != height)
-    return FALSE;
-
-  if (topfrp->fr_layout == FR_ROW)
-    for (frp = topfrp->fr_child; frp != NULL; frp = frp->fr_next)
-      if (frp->fr_height != height)
-        return FALSE;
-
-  return TRUE;
+  if (topfrp->fr_height != height) {
+    return false;
+  }
+  if (topfrp->fr_layout == FR_ROW) {
+    for (frame_T *frp = topfrp->fr_child; frp != NULL; frp = frp->fr_next) {
+      if (frp->fr_height != height) {
+        return false;
+      }
+    }
+  }
+  return true;
 }
 
-/*
- * Return TRUE if "topfrp" and its children are at the right width.
- */
-static int frame_check_width(frame_T *topfrp, int width)
+/// Check that "topfrp" and its children are at the right width.
+///
+/// @param  topfrp  top frame pointer
+/// @param  width   expected width
+static bool frame_check_width(frame_T *topfrp, int width)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
-  frame_T *frp;
-
-  if (topfrp->fr_width != width)
-    return FALSE;
-
-  if (topfrp->fr_layout == FR_COL)
-    for (frp = topfrp->fr_child; frp != NULL; frp = frp->fr_next)
-      if (frp->fr_width != width)
-        return FALSE;
-
-  return TRUE;
+  if (topfrp->fr_width != width) {
+    return false;
+  }
+  if (topfrp->fr_layout == FR_COL) {
+    for (frame_T *frp = topfrp->fr_child; frp != NULL; frp = frp->fr_next) {
+      if (frp->fr_width != width) {
+        return false;
+      }
+    }
+  }
+  return true;
 }
