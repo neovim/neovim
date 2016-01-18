@@ -1,5 +1,6 @@
 """Legacy python/python3-vim emulation."""
 import imp
+import io
 import logging
 import os
 import sys
@@ -151,7 +152,7 @@ class ScriptHost(object):
         current.range = current.buffer.range(start, stop)
 
 
-class RedirectStream(object):
+class RedirectStream(io.IOBase):
     def __init__(self, redirect_handler):
         self.redirect_handler = redirect_handler
 
@@ -160,9 +161,6 @@ class RedirectStream(object):
 
     def writelines(self, seq):
         self.redirect_handler('\n'.join(seq))
-
-    def flush(self):
-        pass
 
 
 class LegacyEvalHook(neovim.SessionHook):
