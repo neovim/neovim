@@ -184,6 +184,9 @@ static expand_T compl_xp;
 
 static int compl_opt_refresh_always = FALSE;
 
+static bool compl_show_pum = true;          //  true: show popup menu
+                                            // false: don't show popup menu
+
 typedef struct insert_state {
   VimState state;
   cmdarg_T *ca;
@@ -2321,9 +2324,10 @@ static int ins_compl_make_cyclic(void)
  */
 void set_completion(colnr_T startcol, list_T *list)
 {
-  /* If already doing completions stop it. */
-  if (ctrl_x_mode != 0)
+  // If already doing completions stop it.
+  if (ctrl_x_mode != 0) {
     ins_compl_prep(' ');
+  }
   ins_compl_clear();
 
   if (stop_arrow() == FAIL)
@@ -2349,8 +2353,10 @@ void set_completion(colnr_T startcol, list_T *list)
   compl_started = TRUE;
   compl_used_match = TRUE;
   compl_cont_status = 0;
+  int save_w_wrow = curwin->w_wrow;
 
   compl_curr_match = compl_first_match;
+  compl_show_pum = false;
   if (compl_no_insert) {
     ins_complete(K_DOWN);
   } else {
@@ -2359,6 +2365,13 @@ void set_completion(colnr_T startcol, list_T *list)
       ins_complete(Ctrl_P);
     }
   }
+
+  // Lazily show the popup menu, unless we got interrupted.
+  compl_show_pum = true;
+  if (!compl_interrupted) {
+    show_pum(save_w_wrow);
+  }
+
   ui_flush();
 }
 
@@ -4781,20 +4794,9 @@ static int ins_complete(int c)
     }
   }
 
-  /* Show the popup menu, unless we got interrupted. */
-  if (!compl_interrupted) {
-    /* RedrawingDisabled may be set when invoked through complete(). */
-    n = RedrawingDisabled;
-    RedrawingDisabled = 0;
-
-    /* If the cursor moved we need to remove the pum first. */
-    setcursor();
-    if (save_w_wrow != curwin->w_wrow)
-      ins_compl_del_pum();
-
-    ins_compl_show_pum();
-    setcursor();
-    RedrawingDisabled = n;
+  // Show the popup menu, unless we got interrupted.
+  if (!compl_interrupted && compl_show_pum) {
+    show_pum(save_w_wrow);
   }
   compl_was_interrupted = compl_interrupted;
   compl_interrupted = FALSE;
@@ -8521,4 +8523,21 @@ static char_u *do_insert_char_pre(int c)
   --textlock;
 
   return res;
+}
+
+static void show_pum(int save_w_wrow)
+{
+  // RedrawingDisabled may be set when invoked through complete().
+  int n = RedrawingDisabled;
+  RedrawingDisabled = 0;
+
+  // If the cursor moved we need to remove the pum first.
+  setcursor();
+  if (save_w_wrow != curwin->w_wrow) {
+    ins_compl_del_pum();
+  }
+
+  ins_compl_show_pum();
+  setcursor();
+  RedrawingDisabled = n;
 }
