@@ -1991,6 +1991,7 @@ void op_insert(oparg_T *oap, long count1)
   char_u              *firstline, *ins_text;
   struct block_def bd;
   int i;
+  pos_T t1;
 
   /* edit() changes this - record it for OP_APPEND */
   bd.is_MAX = (curwin->w_curswant == MAXCOL);
@@ -2053,7 +2054,16 @@ void op_insert(oparg_T *oap, long count1)
     }
   }
 
-  edit(NUL, FALSE, (linenr_T)count1);
+  t1 = oap->start;
+  edit(NUL, false, (linenr_T)count1);
+
+  // When a tab was inserted, and the characters in front of the tab
+  // have been converted to a tab as well, the column of the cursor
+  // might have actually been reduced, so need to adjust here. */
+  if (t1.lnum == curbuf->b_op_start_orig.lnum &&
+      lt(curbuf->b_op_start_orig, t1)) {
+    oap->start = curbuf->b_op_start_orig;
+  }
 
   /* If user has moved off this line, we don't know what to do, so do
    * nothing.
@@ -2069,21 +2079,23 @@ void op_insert(oparg_T *oap, long count1)
     if (oap->start.lnum == curbuf->b_op_start_orig.lnum && !bd.is_MAX) {
       if (oap->op_type == OP_INSERT
           && oap->start.col + oap->start.coladd
-             != curbuf->b_op_start_orig.col + curbuf->b_op_start_orig.coladd) {
+          != curbuf->b_op_start_orig.col + curbuf->b_op_start_orig.coladd) {
+        size_t t = getviscol2(curbuf->b_op_start_orig.col,
+                              curbuf->b_op_start_orig.coladd);
         oap->start.col = curbuf->b_op_start_orig.col;
-        pre_textlen -= getviscol2(oap->start.col, oap->start.coladd)
-                       - oap->start_vcol;
-        oap->start_vcol = getviscol2(oap->start.col, oap->start.coladd);
+        pre_textlen -= t - oap->start_vcol;
+        oap->start_vcol = t;
       } else if (oap->op_type == OP_APPEND
                  && oap->end.col + oap->end.coladd
-                    >= curbuf->b_op_start_orig.col
-                       + curbuf->b_op_start_orig.coladd) {
+                 >= curbuf->b_op_start_orig.col
+                 + curbuf->b_op_start_orig.coladd) {
+        size_t t = getviscol2(curbuf->b_op_start_orig.col,
+                              curbuf->b_op_start_orig.coladd);
         oap->start.col = curbuf->b_op_start_orig.col;
         /* reset pre_textlen to the value of OP_INSERT */
         pre_textlen += bd.textlen;
-        pre_textlen -= getviscol2(oap->start.col, oap->start.coladd)
-                       - oap->start_vcol;
-        oap->start_vcol = getviscol2(oap->start.col, oap->start.coladd);
+        pre_textlen -= t - oap->start_vcol;
+        oap->start_vcol = t;
         oap->op_type = OP_INSERT;
       }
     }

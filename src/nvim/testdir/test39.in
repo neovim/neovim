@@ -2,6 +2,10 @@
 Test Visual block mode commands
 And test "U" in Visual mode, also on German sharp S.
 
+#define BO_ALL	    0x0001
+#define BO_BS	    0x0002
+#define BO_CRSR	    0x0004
+
 STARTTEST
 :so small.vim
 :so mbyte.vim
@@ -68,6 +72,12 @@ G3o987652k02l2jr
 :exe ":norm! 2k\<C-V>$gj\<Esc>"
 :let cpos=getpos("'>")
 :$put ='col:'.cpos[2].' off:'.cpos[3]
+:"
+:" block_insert when replacing spaces in front of the block with tabs
+:set ts=8 sts=4 sw=4
+:4,7y
+Gp
+:exe ":norm! f0\<C-V>2jI\<tab>\<esc>"
 :/^the/,$w >> test.out
 :qa!
 ENDTEST
