@@ -26,7 +26,6 @@ if(NOT HAVE_SYS_WAIT_H AND UNIX)
   message(SEND_ERROR "header sys/wait.h is required for Unix")
 endif()
 check_include_files(sys/utsname.h HAVE_SYS_UTSNAME_H)
-check_include_files(utime.h HAVE_UTIME_H)
 check_include_files(unistd.h HAVE_UNISTD_H)
 check_include_files(utime.h HAVE_UTIME_H)
 
