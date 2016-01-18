@@ -444,6 +444,9 @@ close_buffer (
     else
       buf->b_next->b_prev = buf->b_prev;
     free_buffer(buf);
+    if (!autocmd_busy && curbuf == buf) {
+      curbuf = firstbuf;
+    }
   } else {
     if (del_buf) {
       /* Free all internal variables and reset option values, to make
