@@ -1705,10 +1705,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
         VIsual_active = false;
         setmouse();
         mouse_dragging = 0;
-        if (mode_displayed)
-          clear_cmdline = true;             /* unshow visual mode later */
-        else
-          clear_showcmd();
+        may_clear_cmdline();
         if ((oap->op_type == OP_YANK
              || oap->op_type == OP_COLON
              || oap->op_type == OP_FUNCTION
@@ -2852,10 +2849,7 @@ void end_visual_mode(void)
   if (!virtual_active())
     curwin->w_cursor.coladd = 0;
 
-  if (mode_displayed)
-    clear_cmdline = true;               /* unshow visual mode later */
-  else
-    clear_showcmd();
+  may_clear_cmdline();
 
   adjust_cursor_eol();
 }
@@ -3149,10 +3143,19 @@ static void unshift_special(cmdarg_T *cap)
   cap->cmdchar = simplify_key(cap->cmdchar, &mod_mask);
 }
 
-/*
- * Routines for displaying a partly typed command
- */
+/// If the mode is currently displayed clear the command line or update the
+/// command displayed.
+static void may_clear_cmdline(void)
+{
+  if (mode_displayed) {
+    // unshow visual mode later
+    clear_cmdline = true;
+  } else {
+    clear_showcmd();
+  }
+}
 
+// Routines for displaying a partly typed command
 # define SHOWCMD_BUFLEN SHOWCMD_COLS + 1 + 30
 static char_u showcmd_buf[SHOWCMD_BUFLEN];
 static char_u old_showcmd_buf[SHOWCMD_BUFLEN];    /* For push_showcmd() */
@@ -3532,6 +3535,7 @@ static void nv_help(cmdarg_T *cap)
 static void nv_addsub(cmdarg_T *cap)
 {
   bool visual = VIsual_active;
+
   if (cap->oap->op_type == OP_NOP
       && do_addsub((int)cap->cmdchar, cap->count1, cap->arg) == OK) {
     if (visual) {
@@ -3549,6 +3553,7 @@ static void nv_addsub(cmdarg_T *cap)
   if (visual) {
     VIsual_active = false;
     redo_VIsual_busy = false;
+    may_clear_cmdline();
     redraw_later(INVERTED);
   }
 }
