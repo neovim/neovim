@@ -29,7 +29,6 @@ SCRIPTS := test_eval.out                                               \
            test_charsearch.out                                         \
            test_close_count.out                                        \
            test_command_count.out                                      \
-           test_cdo.out                                                \
 
 NEW_TESTS =
 
@@ -97,6 +96,7 @@ clean:
 	        *.rej          \
 	        *.orig         \
 	        test.log       \
+	        messages       \
 	        $(RM_ON_RUN)   \
 	        $(RM_ON_START) \
 	        valgrind.*     \
@@ -149,7 +149,7 @@ test1.out: .gdbinit test1.in
 test49.out: test49.vim
 
 nolog:
-	-rm -f test.log
+	-rm -f test.log messages
 
 
 # New style of tests uses Vim script with assert calls.  These are easier
@@ -160,9 +160,9 @@ RUN_VIMTEST = VIMRUNTIME=$(SCRIPTSOURCE); export VIMRUNTIME; $(VALGRIND) $(VIMPR
 newtests: newtestssilent
 	@/bin/sh -c "if test -f messages && grep -q 'FAILED' messages; then \
 	                 cat messages && cat test.log;                      \
-	             fi"                                                    \
+	             fi"
 
 newtestssilent: $(NEW_TESTS)
 
 %.res: %.vim .gdbinit
-	$(RUN_VIMTEST) -u runtest.vim $*.vim
+	$(RUN_VIMTEST) -u NONE -S runtest.vim $*.vim
