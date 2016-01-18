@@ -568,12 +568,6 @@ which it was defined is reported.
 			While sleeping the cursor is positioned in the text,
 			if at a visible position.
 
-
-							*g_CTRL-A*
-g CTRL-A		Only when Vim was compiled with MEM_PROFILING defined
-			(which is very rare): print memory usage statistics.
-			Only useful for debugging Vim.
-
 ==============================================================================
 2. Using Vim like less or more					*less*
 
