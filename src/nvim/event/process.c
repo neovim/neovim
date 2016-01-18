@@ -120,9 +120,14 @@ void process_teardown(Loop *loop) FUNC_ATTR_NONNULL_ALL
       // Close handles to process without killing it.
       CREATE_EVENT(loop->events, process_close_handles, 1, proc);
     } else {
-      uv_kill(proc->pid, SIGTERM);
-      proc->term_sent = true;
-      process_stop(proc);
+      if (proc->type == kProcessTypeUv) {
+        uv_kill(proc->pid, SIGTERM);
+        proc->term_sent = true;
+        process_stop(proc);
+      } else {  // kProcessTypePty
+        process_close_streams(proc);
+        pty_process_close_master((PtyProcess *)proc);
+      }
     }
   }
 
