@@ -1,7 +1,7 @@
 " Vim support file to detect file types
 "
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2015 Jan 14
+" Last Change:	2015 Mar 13
 
 " Listen very carefully, I will say this only once
 if exists("did_load_filetypes")
@@ -1262,8 +1262,8 @@ au BufNewFile,BufRead */etc/modules.conf,*/etc/modules,*/etc/conf.modules setf m
 " Mplayer config
 au BufNewFile,BufRead mplayer.conf,*/.mplayer/config	setf mplayerconf
 
-" Moterola S record
-au BufNewFile,BufRead *.s19,*.s28,*.s37		setf srec
+" Motorola S record
+au BufNewFile,BufRead *.s19,*.s28,*.s37,*.mot,*.srec	setf srec
 
 " Mrxvtrc
 au BufNewFile,BufRead mrxvtrc,.mrxvtrc		setf mrxvtrc

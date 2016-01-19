@@ -1,4 +1,4 @@
-*pattern.txt*   For Vim version 7.4.  Last change: 2015 Feb 17
+*pattern.txt*   For Vim version 7.4.  Last change: 2015 Mar 16
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -1052,7 +1052,10 @@ x	A single character, with no special meaning, matches itself
 								*E769*
 	When the ']' is not there Vim will not give an error message but
 	assume no collection is used.  Useful to search for '['.  However, you
-	do get E769 for internal searching.
+	do get E769 for internal searching.  And be aware that in a
+	`:substitute` command the whole command becomes the pattern.  E.g.
+	":s/[/x/" searches for "[/x" and replaces it with nothing.  It does
+	not search for "[" and replaces it with "x"!
 
 	If the sequence begins with "^", it matches any single character NOT
 	in the collection: "[^xyz]" matches anything but 'x', 'y' and 'z'.

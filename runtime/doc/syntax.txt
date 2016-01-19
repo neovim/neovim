@@ -1,4 +1,4 @@
-*syntax.txt*	For Vim version 7.4.  Last change: 2015 Feb 22
+*syntax.txt*	For Vim version 7.4.  Last change: 2015 Mar 20
 
 
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
@@ -4631,6 +4631,8 @@ ctermbg={color-nr}				*highlight-ctermbg*
 
 	Note that for some color terminals these names may result in the wrong
 	colors!
+
+	You can also use "NONE" to remove the color.
 
 							*:hi-normal-cterm*
 	When setting the "ctermfg" or "ctermbg" colors for the Normal group,
