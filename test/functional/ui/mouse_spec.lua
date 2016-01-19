@@ -14,6 +14,7 @@ describe('Mouse input', function()
   before_each(function()
     clear()
     nvim('set_option', 'mouse', 'a')
+    nvim('set_option', 'listchars', 'eol:$')
     -- set mouset to very high value to ensure that even in valgrind/travis,
     -- nvim will still pick multiple clicks
     nvim('set_option', 'mouset', 5000)
