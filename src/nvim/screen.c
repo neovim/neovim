@@ -752,10 +752,11 @@ static void win_update(win_T *wp)
             lnumt = wp->w_lines[i].wl_lastlnum + 1;
           if (lnumb == MAXLNUM && wp->w_lines[i].wl_lnum >= mod_bot) {
             lnumb = wp->w_lines[i].wl_lnum;
-            /* When there is a fold column it might need updating
-             * in the next line ("J" just above an open fold). */
-            if (wp->w_p_fdc > 0)
-              ++lnumb;
+            // When there is a fold column it might need updating
+            // in the next line ("J" just above an open fold).
+            if (compute_foldcolumn(wp, 0) > 0) {
+              lnumb++;
+            }
           }
         }
 
@@ -1567,10 +1568,11 @@ static void win_draw_end(win_T *wp, int c1, int c2, int row, int endrow, hlf_T h
 {
   int n = 0;
 # define FDC_OFF n
+  int fdc = compute_foldcolumn(wp, 0);
 
   if (wp->w_p_rl) {
-    /* No check for cmdline window: should never be right-left. */
-    n = wp->w_p_fdc;
+    // No check for cmdline window: should never be right-left.
+    n = fdc;
 
     if (n > 0) {
       /* draw the fold column at the right */
@@ -1610,8 +1612,8 @@ static void win_draw_end(win_T *wp, int c1, int c2, int row, int endrow, hlf_T h
                   wp->w_wincol, wp->w_wincol + n,
                   cmdwin_type, ' ', hl_attr(HLF_AT));
     }
-    if (wp->w_p_fdc > 0) {
-      int nn = n + wp->w_p_fdc;
+    if (fdc > 0) {
+      int nn = n + fdc;
 
       /* draw the fold column at the left */
       if (nn > wp->w_width)
@@ -1654,6 +1656,20 @@ static int advance_color_col(int vcol, int **color_cols)
   return **color_cols >= 0;
 }
 
+// Compute the width of the foldcolumn.  Based on 'foldcolumn' and how much
+// space is available for window "wp", minus "col".
+static int compute_foldcolumn(win_T *wp, int col)
+{
+  int fdc = wp->w_p_fdc;
+  int wmw = wp == curwin && p_wmw == 0 ? 1 : p_wmw;
+  int wwidth = wp->w_width;
+
+  if (fdc > wwidth - (col + wmw)) {
+    fdc = wwidth - (col + wmw);
+  }
+  return fdc;
+}
+
 /*
  * Display one folded line.
  */
@@ -1692,12 +1708,9 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
     ++col;
   }
 
-  /*
-   * 2. Add the 'foldcolumn'
-   */
-  fdc = wp->w_p_fdc;
-  if (fdc > wp->w_width - col)
-    fdc = wp->w_width - col;
+  // 2. Add the 'foldcolumn'
+  // Reduce the width when there is not enough space.
+  fdc = compute_foldcolumn(wp, col);
   if (fdc > 0) {
     fill_foldcolumn(buf, wp, TRUE, lnum);
     if (wp->w_p_rl) {
@@ -2018,37 +2031,42 @@ fill_foldcolumn (
   int level;
   int first_level;
   int empty;
+  int fdc = compute_foldcolumn(wp, 0);
 
-  /* Init to all spaces. */
-  memset(p, ' ', (size_t)wp->w_p_fdc);
+  // Init to all spaces.
+  memset(p, ' ', (size_t)fdc);
 
   level = win_foldinfo.fi_level;
   if (level > 0) {
-    /* If there is only one column put more info in it. */
-    empty = (wp->w_p_fdc == 1) ? 0 : 1;
+    // If there is only one column put more info in it.
+    empty = (fdc == 1) ? 0 : 1;
 
-    /* If the column is too narrow, we start at the lowest level that
-     * fits and use numbers to indicated the depth. */
-    first_level = level - wp->w_p_fdc - closed + 1 + empty;
-    if (first_level < 1)
+    // If the column is too narrow, we start at the lowest level that
+    // fits and use numbers to indicated the depth.
+    first_level = level - fdc - closed + 1 + empty;
+    if (first_level < 1) {
       first_level = 1;
+    }
 
-    for (i = 0; i + empty < wp->w_p_fdc; ++i) {
+    for (i = 0; i + empty < fdc; i++) {
       if (win_foldinfo.fi_lnum == lnum
-          && first_level + i >= win_foldinfo.fi_low_level)
+          && first_level + i >= win_foldinfo.fi_low_level) {
         p[i] = '-';
-      else if (first_level == 1)
+      } else if (first_level == 1) {
         p[i] = '|';
-      else if (first_level + i <= 9)
+      } else if (first_level + i <= 9) {
         p[i] = '0' + first_level + i;
-      else
+      } else {
         p[i] = '>';
-      if (first_level + i == level)
+      }
+      if (first_level + i == level) {
         break;
+      }
     }
   }
-  if (closed)
-    p[i >= wp->w_p_fdc ? i - 1 : i] = '+';
+  if (closed) {
+    p[i >= fdc ? i - 1 : i] = '+';
+  }
 }
 
 /*
@@ -2629,11 +2647,13 @@ win_line (
       }
 
       if (draw_state == WL_FOLD - 1 && n_extra == 0) {
+        int fdc = compute_foldcolumn(wp, 0);
+
         draw_state = WL_FOLD;
-        if (wp->w_p_fdc > 0) {
-          /* Draw the 'foldcolumn'. */
-          fill_foldcolumn(extra, wp, FALSE, lnum);
-          n_extra = wp->w_p_fdc;
+        if (fdc > 0) {
+          // Draw the 'foldcolumn'.
+          fill_foldcolumn(extra, wp, false, lnum);
+          n_extra = fdc;
           p_extra = extra;
           p_extra[n_extra] = NUL;
           c_extra = NUL;
