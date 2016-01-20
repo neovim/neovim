@@ -29,6 +29,7 @@
     }                                                               \
   } while (0)
 
+static bool process_is_tearing_down = false;
 
 bool process_spawn(Process *proc) FUNC_ATTR_NONNULL_ALL
 {
@@ -112,11 +113,22 @@ bool process_spawn(Process *proc) FUNC_ATTR_NONNULL_ALL
 
 void process_teardown(Loop *loop) FUNC_ATTR_NONNULL_ALL
 {
+  process_is_tearing_down = true;
   kl_iter(WatcherPtr, loop->children, current) {
     Process *proc = (*current)->data;
-    uv_kill(proc->pid, SIGTERM);
-    proc->term_sent = true;
-    process_stop(proc);
+    if (proc->detach) {
+      // Close handles to process without killing it.
+      CREATE_EVENT(loop->events, process_close_handles, 1, proc);
+    } else {
+      if (proc->type == kProcessTypeUv) {
+        uv_kill(proc->pid, SIGTERM);
+        proc->term_sent = true;
+        process_stop(proc);
+      } else {  // kProcessTypePty
+        process_close_streams(proc);
+        pty_process_close_master((PtyProcess *)proc);
+      }
+    }
   }
 
   // Wait until all children exit
@@ -303,6 +315,10 @@ static void decref(Process *proc)
 static void process_close(Process *proc)
   FUNC_ATTR_NONNULL_ARG(1)
 {
+  if (process_is_tearing_down && proc->detach && proc->closed) {
+    // If a detached process dies while tearing down it might get closed twice.
+    return;
+  }
   assert(!proc->closed);
   proc->closed = true;
   switch (proc->type) {
@@ -333,6 +349,7 @@ static void on_process_exit(Process *proc)
     DLOG("Stopping process kill timer");
     uv_timer_stop(&loop->children_kill_timer);
   }
+
   // Process handles are closed in the next event loop tick. This is done to
   // give libuv more time to read data from the OS after the process exits(If
   // process_close_streams is called with data still in the OS buffer, we lose

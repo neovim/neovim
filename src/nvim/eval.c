@@ -7236,6 +7236,7 @@ static struct fst {
   { "islocked",          1, 1, f_islocked },
   { "items",             1, 1, f_items },
   { "jobclose",          1, 2, f_jobclose },
+  { "jobpid",            1, 1, f_jobpid },
   { "jobresize",         3, 3, f_jobresize },
   { "jobsend",           2, 2, f_jobsend },
   { "jobstart",          1, 2, f_jobstart },
@@ -11611,6 +11612,31 @@ static void f_jobclose(typval_T *argvars, typval_T *rettv)
   }
 }
 
+// "jobpid(id)" function
+static void f_jobpid(typval_T *argvars, typval_T *rettv)
+{
+  rettv->v_type = VAR_NUMBER;
+  rettv->vval.v_number = 0;
+
+  if (check_restricted() || check_secure()) {
+    return;
+  }
+
+  if (argvars[0].v_type != VAR_NUMBER) {
+    EMSG(_(e_invarg));
+    return;
+  }
+
+  TerminalJobData *data = find_job(argvars[0].vval.v_number);
+  if (!data) {
+    EMSG(_(e_invjob));
+    return;
+  }
+
+  Process *proc = (Process *)&data->proc;
+  rettv->vval.v_number = proc->pid;
+}
+
 // "jobsend()" function
 static void f_jobsend(typval_T *argvars, typval_T *rettv)
 {
@@ -11771,8 +11797,9 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv)
   }
 
   bool pty = job_opts && get_dict_number(job_opts, (uint8_t *)"pty") != 0;
+  bool detach = job_opts && get_dict_number(job_opts, (uint8_t *)"detach") != 0;
   TerminalJobData *data = common_job_init(argv, on_stdout, on_stderr, on_exit,
-      job_opts, pty);
+                                          job_opts, pty, detach);
   Process *proc = (Process *)&data->proc;
 
   if (pty) {
@@ -16776,7 +16803,7 @@ static void f_termopen(typval_T *argvars, typval_T *rettv)
   }
 
   TerminalJobData *data = common_job_init(argv, on_stdout, on_stderr, on_exit,
-      job_opts, true);
+                                          job_opts, true, false);
   data->proc.pty.width = curwin->w_width;
   data->proc.pty.height = curwin->w_height;
   data->proc.pty.term_name = xstrdup("xterm-256color");
@@ -21782,8 +21809,13 @@ char_u *do_string_sub(char_u *str, char_u *pat, char_u *sub, char_u *flags)
   return ret;
 }
 
-static inline TerminalJobData *common_job_init(char **argv, ufunc_T *on_stdout,
-    ufunc_T *on_stderr, ufunc_T *on_exit, dict_T *self, bool pty)
+static inline TerminalJobData *common_job_init(char **argv,
+                                               ufunc_T *on_stdout,
+                                               ufunc_T *on_stderr,
+                                               ufunc_T *on_exit,
+                                               dict_T *self,
+                                               bool pty,
+                                               bool detach)
 {
   TerminalJobData *data = xcalloc(1, sizeof(TerminalJobData));
   data->stopped = false;
@@ -21806,6 +21838,7 @@ static inline TerminalJobData *common_job_init(char **argv, ufunc_T *on_stdout,
   }
   proc->cb = on_process_exit;
   proc->events = data->events;
+  proc->detach = detach;
   return data;
 }
 
@@ -21833,8 +21866,13 @@ static inline bool common_job_callbacks(dict_T *vopts, ufunc_T **on_stdout,
 
 static inline bool common_job_start(TerminalJobData *data, typval_T *rettv)
 {
-  data->refcount++;
   Process *proc = (Process *)&data->proc;
+  if (proc->type == kProcessTypePty && proc->detach) {
+    EMSG2(_(e_invarg2), "terminal/pty job cannot be detached");
+    return false;
+  }
+
+  data->refcount++;
   char *cmd = xstrdup(proc->argv[0]);
   if (!process_spawn(proc)) {
     EMSG2(_(e_jobspawn), cmd);

@@ -1894,6 +1894,7 @@ isdirectory( {directory})	Number	TRUE if {directory} is a directory
 islocked( {expr})		Number	TRUE if {expr} is locked
 items( {dict})			List	key-value pairs in {dict}
 jobclose({job}[, {stream}])	Number	Closes a job stream(s)
+jobpid({job})			Number	Returns pid of a job.
 jobresize({job}, {width}, {height})
 				Number	Resize {job}'s pseudo terminal window
 jobsend({job}, {data})		Number	Writes {data} to {job}'s stdin
@@ -4157,6 +4158,9 @@ jobclose({job}[, {stream}])				{Nvim} *jobclose()*
 		Close {job}'s {stream}, which can be one "stdin", "stdout" or
 		"stderr". If {stream} is omitted, all streams are closed.
 
+jobpid({job})						{Nvim} *jobpid()*
+		Return the pid (process id) of {job}.
+
 jobresize({job}, {width}, {height})			{Nvim} *jobresize()*
 		Resize {job}'s pseudo terminal window to {width} and {height}.
 		This function will fail if used on jobs started without the
@@ -4194,6 +4198,10 @@ jobstart({cmd}[, {opts}])				{Nvim} *jobstart()*
 		  - width: Width of the terminal screen(only if pty is set)
 		  - height: Height of the terminal screen(only if pty is set)
 		  - TERM: $TERM environment variable(only if pty is set)
+		  - detach: Detach the job process from the nvim process. The
+		    process won't get killed when nvim exists. If the process
+		    dies before nvim exits, on_exit will still be invoked.
+		    This option is only allowed for non-pty jobs.
 		Either funcrefs or function names can be passed as event
 		handlers. The {opts} object is also used as the "self"
 		argument for the callback, so the caller may pass arbitrary
