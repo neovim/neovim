@@ -78,8 +78,8 @@ CTRL-W		Delete the word before the cursor (see |i_backspacing| about
 		|word-motions|, for the definition of a word.
 						*i_CTRL-U*
 CTRL-U		Delete all entered characters before the cursor in the current
-		line.  If there are no newly entereed characters and
-		'backspace'is not empty, delete all characters before the
+		line.  If there are no newly entered characters and
+		'backspace' is not empty, delete all characters before the
 		cursor in the current line.
 		See |i_backspacing| about joining lines.
 						*i_CTRL-I* *i_<Tab>* *i_Tab*
