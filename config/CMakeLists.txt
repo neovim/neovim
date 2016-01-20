@@ -28,6 +28,7 @@ endif()
 check_include_files(sys/utsname.h HAVE_SYS_UTSNAME_H)
 check_include_files(unistd.h HAVE_UNISTD_H)
 check_include_files(utime.h HAVE_UTIME_H)
+check_include_files("sys/types.h;sys/acl.h" HAVE_SYS_ACL_H)
 
 # Functions
 check_function_exists(fseeko HAVE_FSEEKO)

@@ -46,6 +46,7 @@
 #cmakedefine HAVE_WORKING_LIBINTL
 #cmakedefine UNIX
 #cmakedefine USE_FNAME_CASE
+#cmakedefine HAVE_SYS_ACL_H
 
 #define FEAT_CSCOPE
 
