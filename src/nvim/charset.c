@@ -24,7 +24,6 @@
 #include "nvim/garray.h"
 #include "nvim/move.h"
 #include "nvim/option.h"
-#include "nvim/os_unix.h"
 #include "nvim/state.h"
 #include "nvim/strings.h"
 #include "nvim/path.h"

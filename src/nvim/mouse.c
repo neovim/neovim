@@ -13,7 +13,6 @@
 #include "nvim/syntax.h"
 #include "nvim/ui.h"
 #include "nvim/ui_compositor.h"
-#include "nvim/os_unix.h"
 #include "nvim/fold.h"
 #include "nvim/diff.h"
 #include "nvim/move.h"

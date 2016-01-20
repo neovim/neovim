@@ -24,7 +24,6 @@
 #include "nvim/option.h"
 #include "nvim/os/os.h"
 #include "nvim/os/shell.h"
-#include "nvim/os_unix.h"
 #include "nvim/quickfix.h"
 #include "nvim/regexp.h"
 #include "nvim/screen.h"

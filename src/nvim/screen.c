@@ -98,7 +98,6 @@
 #include "nvim/move.h"
 #include "nvim/normal.h"
 #include "nvim/option.h"
-#include "nvim/os_unix.h"
 #include "nvim/path.h"
 #include "nvim/popupmnu.h"
 #include "nvim/quickfix.h"

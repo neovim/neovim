@@ -100,7 +100,6 @@
 #include "nvim/memory.h"
 #include "nvim/garray.h"
 #include "nvim/option.h"
-#include "nvim/os_unix.h"
 #include "nvim/path.h"
 #include "nvim/sha256.h"
 #include "nvim/state.h"
@@ -109,6 +108,7 @@
 #include "nvim/os/os.h"
 #include "nvim/os/time.h"
 #include "nvim/lib/kvec.h"
+#include "nvim/os/acl.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "undo.c.generated.h"
@@ -1056,6 +1056,7 @@ void u_write_undo(const char *const name, const bool forceit, buf_T *const buf,
   int perm;
   bool write_ok = false;
   bufinfo_T bi;
+  vim_acl_T acl = NULL;
 
   if (name == NULL) {
     file_name = u_get_undo_file_name((char *) buf->b_ffname, false);
@@ -1082,10 +1083,12 @@ void u_write_undo(const char *const name, const bool forceit, buf_T *const buf,
     if (perm < 0) {
       perm = 0600;
     }
+    acl = os_get_acl(buf->b_ffname);
   }
 
   // Strip any sticky and executable bits.
   perm = perm & 0666;
+  // TODO: whatever the equivalent of stripping exec from ACL is
 
   /* If the undo file already exists, verify that it actually is an undo
    * file, and delete it. */
@@ -1234,20 +1237,16 @@ write_error:
   if (!write_ok)
     EMSG2(_("E829: write error in undo file: %s"), file_name);
 
-#ifdef HAVE_ACL
   if (buf->b_ffname != NULL) {
-    vim_acl_T acl;
-
     /* For systems that support ACL: get the ACL from the original file. */
-    acl = mch_get_acl(buf->b_ffname);
-    mch_set_acl((char_u *)file_name, acl);
-    mch_free_acl(acl);
+    os_set_acl((char_u *)file_name, acl);
   }
-#endif
 
 theend:
   if (file_name != name)
     xfree(file_name);
+
+  os_free_acl(acl);
 }
 
 /// Loads the undo tree from an undo file.
