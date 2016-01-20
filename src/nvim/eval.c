@@ -89,6 +89,7 @@
 #include "nvim/event/loop.h"
 #include "nvim/lib/kvec.h"
 #include "nvim/lib/queue.h"
+#include "nvim/os/acl.h"
 
 #define DICT_MAXNEST 100        /* maximum nesting of lists and dicts */
 
@@ -10821,7 +10822,7 @@ static void f_has(typval_T *argvars, typval_T *rettv)
     "win64",
 #endif
     "fname_case",
-#ifdef HAVE_ACL
+#if defined(HAVE_ACL)
     "acl",
 #endif
     "arabic",

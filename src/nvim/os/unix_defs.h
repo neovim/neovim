@@ -11,8 +11,6 @@
 #define TEMP_DIR_NAMES {"$TMPDIR", "/tmp", ".", "~"}
 #define TEMP_FILE_PATH_MAXLEN 256
 
-#define HAVE_ACL (HAVE_POSIX_ACL || HAVE_SOLARIS_ACL)
-
 // Special wildcards that need to be handled by the shell.
 #define SPECIAL_WILDCHAR "`'{"
 

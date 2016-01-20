@@ -54,16 +54,17 @@ static int selinux_enabled = -1;
 # include "os_unix.c.generated.h"
 #endif
 
-#if defined(HAVE_ACL)
-# ifdef HAVE_SYS_ACL_H
-#  include <sys/acl.h>
-# endif
-# ifdef HAVE_SYS_ACCESS_H
-#  include <sys/access.h>
-# endif
-
-
 #if defined(HAVE_SELINUX)
+
+// TODO: not sure if these are needed by this HAVE_SELINUX guarded code,
+// which was co-guarded by some ACL related code under HAVE_ACL, which
+// is no longer needed here.
+#ifdef HAVE_SYS_ACL_H
+#  include <sys/acl.h>
+#endif
+#ifdef HAVE_SYS_ACCESS_H
+#  include <sys/access.h>
+#endif
 /*
  * Copy security info from "from_file" to "to_file".
  */
@@ -110,32 +111,6 @@ void mch_copy_sec(char_u *from_file, char_u *to_file)
   }
 }
 #endif /* HAVE_SELINUX */
-
-/*
- * Return a pointer to the ACL of file "fname" in allocated memory.
- * Return NULL if the ACL is not available for whatever reason.
- */
-vim_acl_T mch_get_acl(char_u *fname)
-{
-  vim_acl_T ret = NULL;
-  return ret;
-}
-
-/*
- * Set the ACL of file "fname" to "acl" (unless it's NULL).
- */
-void mch_set_acl(char_u *fname, vim_acl_T aclent)
-{
-  if (aclent == NULL)
-    return;
-}
-
-void mch_free_acl(vim_acl_T aclent)
-{
-  if (aclent == NULL)
-    return;
-}
-#endif
 
 /*
  * Check what "name" is:
