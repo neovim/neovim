@@ -1632,35 +1632,43 @@ static char *cs_pathcomponents(char *path)
   return s;
 }
 
-/*
- * PRIVATE: cs_print_tags_priv
- *
- * called from cs_manage_matches()
- */
+/// Print cscope output that was converted into ctags style entries.
+///
+/// Only called from cs_manage_matches().
+///
+/// @param matches     Array of cscope lines in ctags style. Every entry was
+//                     produced with a format string of the form
+//                          "%s\t%s\t%s;\"\t%s" or
+//                          "%s\t%s\t%s;\""
+//                     by cs_make_vim_style_matches().
+/// @param cntxts      Context for matches.
+/// @param num_matches Number of entries in matches/cntxts, always greater 0.
 static void cs_print_tags_priv(char **matches, char **cntxts,
-                                size_t num_matches)
+                               size_t num_matches) FUNC_ATTR_NONNULL_ALL
 {
-  char        *ptag;
   char        *fname, *lno, *extra, *tbuf;
   size_t      num;
   char        *globalcntx = "GLOBAL";
   char        *context;
   char        *cstag_msg = _("Cscope tag: %s");
 
-  assert (num_matches > 0);
+  assert(num_matches > 0);
+  assert(strcnt(matches[0], '\t') >= 2);
 
-  tbuf = xmalloc(strlen(matches[0]) + 1);
+  char *ptag = matches[0];
+  char *ptag_end = strchr(ptag, '\t');
+  assert(ptag_end >= ptag);
+  // NUL terminate tag string in matches[0].
+  *ptag_end = NUL;
 
-  strcpy(tbuf, matches[0]);
-  ptag = strtok(tbuf, "\t");
-
-  size_t newsize = strlen(cstag_msg) + strlen(ptag);
+  size_t newsize = strlen(cstag_msg) + (size_t)(ptag_end - ptag);
   char *buf = xmalloc(newsize);
   size_t bufsize = newsize;  // Track available bufsize
   (void)sprintf(buf, cstag_msg, ptag);
   MSG_PUTS_ATTR(buf, hl_attr(HLF_T));
 
-  xfree(tbuf);
+  // restore matches[0]
+  *ptag_end = '\t';
 
   MSG_PUTS_ATTR(_("\n   #   line"), hl_attr(HLF_T));      /* strlen is 7 */
   msg_advance(msg_col + 2);
@@ -1668,6 +1676,7 @@ static void cs_print_tags_priv(char **matches, char **cntxts,
 
   num = 1;
   for (size_t i = 0; i < num_matches; i++) {
+    assert(strcnt(matches[i], '\t') >= 2);
     size_t idx = i;
 
     /* if we really wanted to, we could avoid this malloc and strcpy
