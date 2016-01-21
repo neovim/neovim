@@ -1661,6 +1661,8 @@ static void cs_print_tags_priv(char **matches, char **cntxts,
   // NUL terminate tag string in matches[0].
   *ptag_end = NUL;
 
+  // The "%s" in cstag_msg won't appear in the result string, so we don't need
+  // extra memory for terminating NUL.
   size_t newsize = strlen(cstag_msg) + (size_t)(ptag_end - ptag);
   char *buf = xmalloc(newsize);
   size_t bufsize = newsize;  // Track available bufsize
