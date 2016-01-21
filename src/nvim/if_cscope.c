@@ -1646,7 +1646,6 @@ static char *cs_pathcomponents(char *path)
 static void cs_print_tags_priv(char **matches, char **cntxts,
                                size_t num_matches) FUNC_ATTR_NONNULL_ALL
 {
-  char        *fname, *lno, *extra, *tbuf;
   size_t      num;
   char        *globalcntx = "GLOBAL";
   char        *context;
@@ -1681,26 +1680,23 @@ static void cs_print_tags_priv(char **matches, char **cntxts,
     assert(strcnt(matches[i], '\t') >= 2);
     size_t idx = i;
 
-    /* if we really wanted to, we could avoid this malloc and strcpy
-     * by parsing matches[i] on the fly and placing stuff into buf
-     * directly, but that's too much of a hassle
-     */
-    tbuf = xmalloc(strlen(matches[idx]) + 1);
-    (void)strcpy(tbuf, matches[idx]);
+    // Parse filename, line number and optional part.
+    char *fname = strchr(matches[i], '\t') + 1;
+    char *fname_end = strchr(fname, '\t');
+    // Replace second '\t' in matches[i] with NUL to terminate fname.
+    *fname_end = NUL;
 
-    if (strtok(tbuf, (const char *)"\t") == NULL)
-      continue;
-    if ((fname = strtok(NULL, (const char *)"\t")) == NULL)
-      continue;
-    if ((lno = strtok(NULL, (const char *)"\t")) == NULL)
-      continue;
-    extra = strtok(NULL, (const char *)"\t");
-
-    lno[strlen(lno)-2] = '\0';      /* ignore ;" at the end */
+    char *lno = fname_end + 1;
+    char *extra = xstrchrnul(lno, '\t');
+    // Ignore ;" at the end of lno.
+    char *lno_end = extra - 2;
+    *lno_end = NUL;
+    // Do we have an optional part?
+    extra = *extra ? extra + 1 : NULL;
 
     const char *csfmt_str = "%4zu %6s  ";
     /* hopefully 'num' (num of matches) will be less than 10^16 */
-    newsize = strlen(csfmt_str) + 16 + strlen(lno);
+    newsize = strlen(csfmt_str) + 16 + (size_t)(lno_end - lno);
     if (bufsize < newsize) {
       buf = xrealloc(buf, newsize);
       bufsize = newsize;
@@ -1737,7 +1733,9 @@ static void cs_print_tags_priv(char **matches, char **cntxts,
       MSG_PUTS_LONG(extra);
     }
 
-    xfree(tbuf);     /* only after printing extra due to strtok use */
+    // restore matches[i]
+    *fname_end = '\t';
+    *lno_end = ';';
 
     if (msg_col)
       msg_putchar('\n');
