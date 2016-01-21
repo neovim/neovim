@@ -395,7 +395,7 @@ static int included_patches[] = {
   // 732,
   // 731 NA
   // 730 NA
-  // 729,
+  729,
   // 728 NA
   // 727 NA
   // 726 NA
