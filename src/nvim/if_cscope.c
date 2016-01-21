@@ -1646,10 +1646,8 @@ static char *cs_pathcomponents(char *path)
 static void cs_print_tags_priv(char **matches, char **cntxts,
                                size_t num_matches) FUNC_ATTR_NONNULL_ALL
 {
-  size_t      num;
-  char        *globalcntx = "GLOBAL";
-  char        *context;
-  char        *cstag_msg = _("Cscope tag: %s");
+  char *globalcntx = "GLOBAL";
+  char *cstag_msg = _("Cscope tag: %s");
 
   assert(num_matches > 0);
   assert(strcnt(matches[0], '\t') >= 2);
@@ -1665,21 +1663,20 @@ static void cs_print_tags_priv(char **matches, char **cntxts,
   size_t newsize = strlen(cstag_msg) + (size_t)(ptag_end - ptag);
   char *buf = xmalloc(newsize);
   size_t bufsize = newsize;  // Track available bufsize
-  (void)sprintf(buf, cstag_msg, ptag);
+  (void)snprintf(buf, bufsize, cstag_msg, ptag);
   MSG_PUTS_ATTR(buf, hl_attr(HLF_T));
   msg_clr_eos();
 
   // restore matches[0]
   *ptag_end = '\t';
 
-  MSG_PUTS_ATTR(_("\n   #   line"), hl_attr(HLF_T));      /* strlen is 7 */
+  // Column headers for match number, line number and filename.
+  MSG_PUTS_ATTR(_("\n   #   line"), hl_attr(HLF_T));
   msg_advance(msg_col + 2);
   MSG_PUTS_ATTR(_("filename / context / line\n"), hl_attr(HLF_T));
 
-  num = 1;
   for (size_t i = 0; i < num_matches; i++) {
     assert(strcnt(matches[i], '\t') >= 2);
-    size_t idx = i;
 
     // Parse filename, line number and optional part.
     char *fname = strchr(matches[i], '\t') + 1;
@@ -1696,21 +1693,18 @@ static void cs_print_tags_priv(char **matches, char **cntxts,
     extra = *extra ? extra + 1 : NULL;
 
     const char *csfmt_str = "%4zu %6s  ";
-    /* hopefully 'num' (num of matches) will be less than 10^16 */
+    // hopefully num_matches will be less than 10^16
     newsize = strlen(csfmt_str) + 16 + (size_t)(lno_end - lno);
     if (bufsize < newsize) {
       buf = xrealloc(buf, newsize);
       bufsize = newsize;
     }
-    (void)sprintf(buf, csfmt_str, num, lno);
+    (void)snprintf(buf, bufsize, csfmt_str, i + 1, lno);
     MSG_PUTS_ATTR(buf, hl_attr(HLF_CM));
     MSG_PUTS_LONG_ATTR(cs_pathcomponents(fname), hl_attr(HLF_CM));
 
-    /* compute the required space for the context */
-    if (cntxts[idx] != NULL)
-      context = cntxts[idx];
-    else
-      context = globalcntx;
+    // compute the required space for the context
+    char *context = cntxts[i] ? cntxts[i] : globalcntx;
 
     const char *cntxformat = " <<%s>>";
     // '%s' won't appear in result string, so:
@@ -1721,11 +1715,13 @@ static void cs_print_tags_priv(char **matches, char **cntxts,
       buf = xrealloc(buf, newsize);
       bufsize = newsize;
     }
-    (void)sprintf(buf, cntxformat, context);
+    int buf_len = snprintf(buf, bufsize, cntxformat, context);
+    assert(buf_len >= 0);
 
-    /* print the context only if it fits on the same line */
-    if (msg_col + (int)strlen(buf) >= (int)Columns)
+    // Print the context only if it fits on the same line.
+    if (msg_col + buf_len >= (int)Columns) {
       msg_putchar('\n');
+    }
     msg_advance(12);
     MSG_PUTS_LONG(buf);
     msg_putchar('\n');
@@ -1738,21 +1734,19 @@ static void cs_print_tags_priv(char **matches, char **cntxts,
     *fname_end = '\t';
     *lno_end = ';';
 
-    if (msg_col)
+    if (msg_col) {
       msg_putchar('\n');
+    }
 
     os_breakcheck();
     if (got_int) {
-      got_int = FALSE;          /* don't print any more matches */
+      got_int = false;  // don't print any more matches
       break;
     }
-
-    num++;
-  }   /* for all matches */
+  }
 
   xfree(buf);
-} /* cs_print_tags_priv */
-
+}
 
 /*
  * PRIVATE: cs_read_prompt
