@@ -5,6 +5,8 @@ local funcs = helpers.funcs
 local exc_exec = helpers.exc_exec
 
 describe('printf()', function()
+  before_each(clear)
+
   it('works with zero and %b', function()
     eq('0', funcs.printf('%lb', 0))
     eq('0', funcs.printf('%llb', 0))
