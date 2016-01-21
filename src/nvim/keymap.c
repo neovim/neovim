@@ -531,17 +531,14 @@ trans_special (
   return dlen;
 }
 
-/*
- * Try translating a <> name at (*srcp)[], return the key and modifiers.
- * srcp is advanced to after the <> name.
- * returns 0 if there is no match.
- */
-int 
-find_special_key (
+// Try translating a <> name at (*srcp)[], return the key and modifiers.
+// srcp is advanced to after the <> name.
+// returns 0 if there is no match.
+int find_special_key(
     char_u **srcp,
     int *modp,
-    int keycode,                 /* prefer key code, e.g. K_DEL instead of DEL */
-    int keep_x_key              /* don't translate xHome to Home key */
+    int keycode,                // prefer key code, e.g. K_DEL instead of DEL
+    int keep_x_key              // don't translate xHome to Home key
 )
 {
   char_u      *last_dash;
@@ -558,24 +555,26 @@ find_special_key (
   if (src[0] != '<')
     return 0;
 
-  /* Find end of modifier list */
+  // Find end of modifier list
   last_dash = src;
   for (bp = src + 1; *bp == '-' || vim_isIDc(*bp); bp++) {
     if (*bp == '-') {
       last_dash = bp;
       if (bp[1] != NUL) {
-        if (has_mbyte)
+        if (has_mbyte) {
           l = mb_ptr2len(bp + 1);
-        else
+        } else {
           l = 1;
-        if (bp[l + 1] == '>')
-          bp += l;              /* anything accepted, like <C-?> */
+        }
+        if (bp[l + 1] == '>') {
+          bp += l;              // anything accepted, like <C-?>
+        }
       }
     }
-    if (bp[0] == 't' && bp[1] == '_' && bp[2] && bp[3])
-      bp += 3;          /* skip t_xx, xx may be '-' or '>' */
-    else if (STRNICMP(bp, "char-", 5) == 0) {
-      vim_str2nr(bp + 5, NULL, &l, TRUE, TRUE, NULL, NULL);
+    if (bp[0] == 't' && bp[1] == '_' && bp[2] && bp[3]) {
+      bp += 3;          // skip t_xx, xx may be '-' or '>'
+    } else if (STRNICMP(bp, "char-", 5) == 0) {
+      vim_str2nr(bp + 5, NULL, &l, true, true, true, NULL, NULL);
       bp += l + 5;
       break;
     }
@@ -589,55 +588,53 @@ find_special_key (
     for (bp = src + 1; bp < last_dash; bp++) {
       if (*bp != '-') {
         bit = name_to_mod_mask(*bp);
-        if (bit == 0x0)
-          break;                /* Illegal modifier name */
+        if (bit == 0x0) {
+          break;                // Illegal modifier name
+        }
         modifiers |= bit;
       }
     }
 
-    /*
-     * Legal modifier name.
-     */
+    // Legal modifier name.
     if (bp >= last_dash) {
       if (STRNICMP(last_dash + 1, "char-", 5) == 0
           && ascii_isdigit(last_dash[6])) {
-        /* <Char-123> or <Char-033> or <Char-0x33> */
-        vim_str2nr(last_dash + 6, NULL, NULL, TRUE, TRUE, NULL, &n);
+        // <Char-123> or <Char-033> or <Char-0x33>
+        vim_str2nr(last_dash + 6, NULL, NULL, true, true, true, NULL, &n);
         key = (int)n;
       } else {
         /*
          * Modifier with single letter, or special key name.
          */
-        if (has_mbyte)
+        if (has_mbyte) {
           l = mb_ptr2len(last_dash + 1);
-        else
+        } else {
           l = 1;
-        if (modifiers != 0 && last_dash[l + 1] == '>')
+        }
+        if (modifiers != 0 && last_dash[l + 1] == '>') {
           key = PTR2CHAR(last_dash + 1);
-        else {
+        } else {
           key = get_special_key_code(last_dash + 1);
-          if (!keep_x_key)
+          if (!keep_x_key) {
             key = handle_x_keys(key);
+          }
         }
       }
 
-      /*
-       * get_special_key_code() may return NUL for invalid
-       * special key name.
-       */
+      // get_special_key_code() may return NUL for invalid
+      // special key name.
       if (key != NUL) {
-        /*
-         * Only use a modifier when there is no special key code that
-         * includes the modifier.
-         */
+        // Only use a modifier when there is no special key code that
+        // includes the modifier.
         key = simplify_key(key, &modifiers);
 
         if (!keycode) {
-          /* don't want keycode, use single byte code */
-          if (key == K_BS)
+          // don't want keycode, use single byte code
+          if (key == K_BS) {
             key = BS;
-          else if (key == K_DEL || key == K_KDEL)
+          } else if (key == K_DEL || key == K_KDEL) {
             key = DEL;
+          }
         }
 
         // Normal Key with modifier:

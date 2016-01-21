@@ -1599,7 +1599,7 @@ return {
       deny_duplicates=true,
       alloced=true,
       varname='p_nf',
-      defaults={if_true={vi="octal,hex", vim="hex"}}
+      defaults={if_true={vi="bin,octal,hex", vim="bin,hex"}}
     },
     {
       full_name='number', abbreviation='nu',

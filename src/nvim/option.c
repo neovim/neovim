@@ -258,30 +258,31 @@ typedef struct vimoption {
 
 #define PARAM_COUNT ARRAY_SIZE(options)
 
-static char *(p_ambw_values[]) = {"single", "double", NULL};
-static char *(p_bg_values[]) = {"light", "dark", NULL};
-static char *(p_nf_values[]) = {"octal", "hex", "alpha", NULL};
-static char *(p_ff_values[]) = {FF_UNIX, FF_DOS, FF_MAC, NULL};
-static char *(p_wop_values[]) = {"tagfile", NULL};
-static char *(p_wak_values[]) = {"yes", "menu", "no", NULL};
-static char *(p_mousem_values[]) =
-{"extend", "popup", "popup_setpos", "mac", NULL};
-static char *(p_sel_values[]) = {"inclusive", "exclusive", "old", NULL};
-static char *(p_slm_values[]) = {"mouse", "key", "cmd", NULL};
-static char *(p_km_values[]) = {"startsel", "stopsel", NULL};
-static char *(p_scbopt_values[]) = {"ver", "hor", "jump", NULL};
-static char *(p_debug_values[]) = {"msg", "throw", "beep", NULL};
-static char *(p_ead_values[]) = {"both", "ver", "hor", NULL};
-static char *(p_buftype_values[]) =
-{"nofile", "nowrite", "quickfix", "help", "acwrite", "terminal", NULL};
-static char *(p_bufhidden_values[]) = {"hide", "unload", "delete", "wipe", NULL};
-static char *(p_bs_values[]) = {"indent", "eol", "start", NULL};
-static char *(p_fdm_values[]) = {"manual", "expr", "marker", "indent", "syntax",
-                                 "diff",
-                                 NULL};
-static char *(p_fcl_values[]) = {"all", NULL};
-static char *(p_cot_values[]) = {"menu", "menuone", "longest", "preview",
-                                 "noinsert", "noselect", NULL};
+static char *(p_ambw_values[]) =      { "single", "double", NULL };
+static char *(p_bg_values[]) =        { "light", "dark", NULL };
+static char *(p_nf_values[]) =        { "bin", "octal", "hex", "alpha", NULL };
+static char *(p_ff_values[]) =        { FF_UNIX, FF_DOS, FF_MAC, NULL };
+static char *(p_wop_values[]) =       { "tagfile", NULL };
+static char *(p_wak_values[]) =       { "yes", "menu", "no", NULL };
+static char *(p_mousem_values[]) =    { "extend", "popup", "popup_setpos",
+                                        "mac", NULL };
+static char *(p_sel_values[]) =       { "inclusive", "exclusive", "old", NULL };
+static char *(p_slm_values[]) =       { "mouse", "key", "cmd", NULL };
+static char *(p_km_values[]) =        { "startsel", "stopsel", NULL };
+static char *(p_scbopt_values[]) =    { "ver", "hor", "jump", NULL };
+static char *(p_debug_values[]) =     { "msg", "throw", "beep", NULL };
+static char *(p_ead_values[]) =       { "both", "ver", "hor", NULL };
+static char *(p_buftype_values[]) =   { "nofile", "nowrite", "quickfix",
+                                        "help", "acwrite", "terminal", NULL };
+
+static char *(p_bufhidden_values[]) = { "hide", "unload", "delete",
+                                        "wipe", NULL };
+static char *(p_bs_values[]) =        { "indent", "eol", "start", NULL };
+static char *(p_fdm_values[]) =       { "manual", "expr", "marker", "indent",
+                                        "syntax",  "diff", NULL };
+static char *(p_fcl_values[]) =       { "all", NULL };
+static char *(p_cot_values[]) =       { "menu", "menuone", "longest", "preview",
+                                        "noinsert", "noselect", NULL };
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "option.c.generated.h"
@@ -1431,7 +1432,7 @@ do_set (
             } else if (*arg == '-' || ascii_isdigit(*arg)) {
               // Allow negative (for 'undolevels'), octal and
               // hex numbers.
-              vim_str2nr(arg, NULL, &i, true, true, &value, NULL);
+              vim_str2nr(arg, NULL, &i, true, true, true, &value, NULL);
               if (arg[i] != NUL && !ascii_iswhite(arg[i])) {
                 errmsg = e_invarg;
                 goto skip;
