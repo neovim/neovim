@@ -87,36 +87,36 @@ struct block_def {
  */
 static char opchars[][3] =
 {
-  {NUL, NUL, FALSE},    /* OP_NOP */
-  {'d', NUL, FALSE},    /* OP_DELETE */
-  {'y', NUL, FALSE},    /* OP_YANK */
-  {'c', NUL, FALSE},    /* OP_CHANGE */
-  {'<', NUL, TRUE},     /* OP_LSHIFT */
-  {'>', NUL, TRUE},     /* OP_RSHIFT */
-  {'!', NUL, TRUE},     /* OP_FILTER */
-  {'g', '~', FALSE},    /* OP_TILDE */
-  {'=', NUL, TRUE},     /* OP_INDENT */
-  {'g', 'q', TRUE},     /* OP_FORMAT */
-  {':', NUL, TRUE},     /* OP_COLON */
-  {'g', 'U', FALSE},    /* OP_UPPER */
-  {'g', 'u', FALSE},    /* OP_LOWER */
-  {'J', NUL, TRUE},     /* DO_JOIN */
-  {'g', 'J', TRUE},     /* DO_JOIN_NS */
-  {'g', '?', FALSE},    /* OP_ROT13 */
-  {'r', NUL, FALSE},    /* OP_REPLACE */
-  {'I', NUL, FALSE},    /* OP_INSERT */
-  {'A', NUL, FALSE},    /* OP_APPEND */
-  {'z', 'f', TRUE},     /* OP_FOLD */
-  {'z', 'o', TRUE},     /* OP_FOLDOPEN */
-  {'z', 'O', TRUE},     /* OP_FOLDOPENREC */
-  {'z', 'c', TRUE},     /* OP_FOLDCLOSE */
-  {'z', 'C', TRUE},     /* OP_FOLDCLOSEREC */
-  {'z', 'd', TRUE},     /* OP_FOLDDEL */
-  {'z', 'D', TRUE},     /* OP_FOLDDELREC */
-  {'g', 'w', TRUE},     /* OP_FORMAT2 */
-  {'g', '@', FALSE},    /* OP_FUNCTION */
-  {Ctrl_A, NUL, false}, // OP_NR_ADD
-  {Ctrl_X, NUL, false}, // OP_NR_SUB
+  { NUL,    NUL, false },    // OP_NOP
+  { 'd',    NUL, false },    // OP_DELETE
+  { 'y',    NUL, false },    // OP_YANK
+  { 'c',    NUL, false },    // OP_CHANGE
+  { '<',    NUL, true },     // OP_LSHIFT
+  { '>',    NUL, true },     // OP_RSHIFT
+  { '!',    NUL, true },     // OP_FILTER
+  { 'g',    '~', false },    // OP_TILDE
+  { '=',    NUL, true },     // OP_INDENT
+  { 'g',    'q', true },     // OP_FORMAT
+  { ':',    NUL, true },     // OP_COLON
+  { 'g',    'U', false },    // OP_UPPER
+  { 'g',    'u', false },    // OP_LOWER
+  { 'J',    NUL, true },     // DO_JOIN
+  { 'g',    'J', true },     // DO_JOIN_NS
+  { 'g',    '?', false },    // OP_ROT13
+  { 'r',    NUL, false },    // OP_REPLACE
+  { 'I',    NUL, false },    // OP_INSERT
+  { 'A',    NUL, false },    // OP_APPEND
+  { 'z',    'f', true },     // OP_FOLD
+  { 'z',    'o', true },     // OP_FOLDOPEN
+  { 'z',    'O', true },     // OP_FOLDOPENREC
+  { 'z',    'c', true },     // OP_FOLDCLOSE
+  { 'z',    'C', true },     // OP_FOLDCLOSEREC
+  { 'z',    'd', true },     // OP_FOLDDEL
+  { 'z',    'D', true },     // OP_FOLDDELREC
+  { 'g',    'w', true },     // OP_FORMAT2
+  { 'g',    '@', false },    // OP_FUNCTION
+  { Ctrl_A, NUL, false },    // OP_NR_ADD
+  { Ctrl_X, NUL, false },    // OP_NR_SUB
 };
 
 /*
