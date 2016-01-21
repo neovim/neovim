@@ -681,7 +681,6 @@ can also get to them with the buffer list commands, like ":bnext".
 		When using the |:tab| modifier each argument is opened in a
 		tab page.  The last window is used if it's empty.
 		Also see |++opt| and |+cmd|.
-		{only available when compiled with a GUI}
 
 ==============================================================================
 8. Do a command in all buffers or windows			*list-repeat*
