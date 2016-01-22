@@ -4837,16 +4837,15 @@ static void frame_add_height(frame_T *frp, int n)
  */
 char_u *grab_file_name(long count, linenr_T *file_lnum)
 {
-  int options = FNAME_MESS|FNAME_EXP|FNAME_REL|FNAME_UNESC;
+  int options = FNAME_MESS | FNAME_EXP | FNAME_REL | FNAME_UNESC;
   if (VIsual_active) {
     size_t len;
     char_u  *ptr;
     if (get_visual_text(NULL, &ptr, &len) == FAIL)
       return NULL;
-    return find_file_name_in_path(ptr, len, options,
-                                  count, curbuf->b_ffname);
+    return find_file_name_in_path(ptr, len, options, count, curbuf->b_ffname);
   }
-  return file_name_at_cursor(options|FNAME_HYP, count, file_lnum);
+  return file_name_at_cursor(options | FNAME_HYP, count, file_lnum);
 }
 
 /*
