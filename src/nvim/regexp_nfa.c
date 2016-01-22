@@ -4846,10 +4846,12 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
   /* Some patterns may take a long time to match, especially when using
    * recursive_regmatch(). Allow interrupting them with CTRL-C. */
   fast_breakcheck();
-  if (got_int)
-    return FALSE;
-  if (nfa_time_limit != NULL && profile_passed_limit(*nfa_time_limit))
-      return FALSE;
+  if (got_int) {
+    return FALSE;  // NOLINT(readability/bool)
+  }
+  if (nfa_time_limit != NULL && profile_passed_limit(*nfa_time_limit)) {
+      return FALSE;  // NOLINT(readability/bool)
+  }
 
   nfa_match = FALSE;
 
@@ -6074,8 +6076,9 @@ nextchar:
     }
     if (nfa_time_limit != NULL && ++nfa_time_count == 20) {
       nfa_time_count = 0;
-      if (profile_passed_limit(*nfa_time_limit))
+      if (profile_passed_limit(*nfa_time_limit)) {
         break;
+      }
     }
   }
 
@@ -6220,8 +6223,8 @@ static long nfa_regtry(nfa_regprog_T *prog, colnr_T col, proftime_T *tm)
 static long 
 nfa_regexec_both (
     char_u *line,
-    colnr_T startcol               /* column to start looking for match */,
-    proftime_T *tm                 /* timeout limit or NULL */
+    colnr_T startcol,              // column to start looking for match
+    proftime_T *tm                 // timeout limit or NULL
 )
 {
   nfa_regprog_T   *prog;
