@@ -7,7 +7,7 @@
 if(NOT MSGPACK_USE_BUNDLED)
   find_package(PkgConfig)
   if (PKG_CONFIG_FOUND)
-    pkg_check_modules(PC_MSGPACK QUIET msgpack)
+    pkg_search_module(PC_MSGPACK QUIET msgpackc msgpack)
   endif()
 else()
   set(PC_MSGPACK_INCLUDEDIR)
@@ -23,13 +23,14 @@ find_path(MSGPACK_INCLUDE_DIR msgpack.h
   HINTS ${PC_MSGPACK_INCLUDEDIR} ${PC_MSGPACK_INCLUDE_DIRS}
   ${LIMIT_SEARCH})
 
-# If we're asked to use static linkage, add libmsgpack.a as a preferred library name.
+# If we're asked to use static linkage, add libmsgpack{,c}.a as a preferred library name.
 if(MSGPACK_USE_STATIC)
   list(APPEND MSGPACK_NAMES
+    "${CMAKE_STATIC_LIBRARY_PREFIX}msgpackc${CMAKE_STATIC_LIBRARY_SUFFIX}"
     "${CMAKE_STATIC_LIBRARY_PREFIX}msgpack${CMAKE_STATIC_LIBRARY_SUFFIX}")
 endif()
 
-list(APPEND MSGPACK_NAMES msgpack)
+list(APPEND MSGPACK_NAMES msgpackc msgpack)
 
 find_library(MSGPACK_LIBRARY NAMES ${MSGPACK_NAMES}
   HINTS ${PC_MSGPACK_LIBDIR} ${PC_MSGPACK_LIBRARY_DIRS}
