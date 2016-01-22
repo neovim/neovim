@@ -20,6 +20,7 @@
 #define EW_KEEPDOLLAR   0x800   /* do not escape $, $var is expanded */
 /* Note: mostly EW_NOTFOUND and EW_SILENT are mutually exclusive: EW_NOTFOUND
 * is used when executing commands and EW_SILENT for interactive expanding. */
+#define EW_ALLLINKS     0x1000  // also links not pointing to existing file
 
 /// Return value for the comparison of two files. Also @see path_full_compare.
 typedef enum file_comparison {
