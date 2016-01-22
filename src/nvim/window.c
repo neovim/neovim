@@ -4923,10 +4923,11 @@ file_name_in_line (
       // Skip over the "\" in "\ ".
       ++len;
     }
-    if (has_mbyte)
+    if (has_mbyte) {
       len += (size_t)(*mb_ptr2len)(ptr + len);
-    else
+    } else {
       ++len;
+    }
   }
 
   /*
