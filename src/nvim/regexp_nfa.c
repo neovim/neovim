@@ -6074,6 +6074,7 @@ nextchar:
     if (got_int) {
       break;
     }
+    // Check for timeout once in a twenty times to avoid overhead.
     if (nfa_time_limit != NULL && ++nfa_time_count == 20) {
       nfa_time_count = 0;
       if (profile_passed_limit(*nfa_time_limit)) {
