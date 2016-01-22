@@ -4918,7 +4918,7 @@ file_name_in_line (
   len = 0;
   while (vim_isfilec(ptr[len]) || (ptr[len] == '\\' && ptr[len + 1] == ' ')
          || ((options & FNAME_HYP) && path_is_url((char *)ptr + len))) {
-    if (ptr[len] == '\\') {
+    if (ptr[len] == '\\' && ptr[len + 1] == ' ') {
       // Skip over the "\" in "\ ".
       ++len;
     }
