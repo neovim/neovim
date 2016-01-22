@@ -862,18 +862,27 @@ void ex_changes(exarg_T *eap)
       *lp += amount_after; \
   }
 
-/*
- * Adjust marks between line1 and line2 (inclusive) to move 'amount' lines.
- * Must be called before changed_*(), appended_lines() or deleted_lines().
- * May be called before or after changing the text.
- * When deleting lines line1 to line2, use an 'amount' of MAXLNUM: The marks
- * within this range are made invalid.
- * If 'amount_after' is non-zero adjust marks after line2.
- * Example: Delete lines 34 and 35: mark_adjust(34, 35, MAXLNUM, -2);
- * Example: Insert two lines below 55: mark_adjust(56, MAXLNUM, 2, 0);
- *				   or: mark_adjust(56, 55, MAXLNUM, 2);
- */
-void mark_adjust(linenr_T line1, linenr_T line2, long amount, long amount_after)
+///
+/// Adjust marks between line1 and line2 (inclusive) to move 'amount' lines.
+/// Must be called before changed_*(), appended_lines() or deleted_lines().
+/// May be called before or after changing the text.
+/// When deleting lines line1 to line2, use an 'amount' of MAXLNUM: The marks
+/// within this range are made invalid.
+/// If 'amount_after' is non-zero adjust marks after line2.
+/// Example: Delete lines 34 and 35: mark_adjust(34, 35, MAXLNUM, -2);
+/// Example: Insert two lines below 55: mark_adjust(56, MAXLNUM, 2, 0);
+///				   or: mark_adjust(56, 55, MAXLNUM, 2);
+///
+/// WCONV: Here's the call to diff_mark_adjust, which takes amount &
+/// WCONV: as arguments
+/// WCONV: Called from diff.c, ex_cmds.c, misc1.c, ops.c, undo.c
+/// WCONV: All places have been checked so the arguments are at most
+/// WCONV: MAXLNUM which is defined to be INT32_MAX
+/// WCONV: Is this ok to change to int? MAXLNUM probably would need to be
+/// WCONV: INT_MAX then, but since long is to be avoided and not guaranteed to
+/// WCONV: be 32bit anyways...
+
+void mark_adjust(linenr_T line1, linenr_T line2, int amount, int amount_after)
 {
   int i;
   int fnum = curbuf->b_fnum;

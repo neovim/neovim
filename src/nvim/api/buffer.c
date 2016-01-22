@@ -291,7 +291,11 @@ void buffer_set_line_slice(Buffer buffer,
   // Only adjust marks if we managed to switch to a window that holds
   // the buffer, otherwise line numbers will be invalid.
   if (save_curbuf == NULL) {
-    mark_adjust((linenr_T)start, (linenr_T)(end - 1), MAXLNUM, extra);
+    /// WCONV: extra is ssize_t, representing lines added or removed, so
+    /// WCONF: logically it should be < MAXLNUM, which is INT32_MAX
+    /// WCONF: Add an assertion to be sure
+    assert( -MAXLNUM <= extra && extra <= MAXLNUM);
+    mark_adjust((linenr_T)start, (linenr_T)(end - 1), MAXLNUM, (int)extra);
   }
 
   changed_lines((linenr_T)start, 0, (linenr_T)end, extra);

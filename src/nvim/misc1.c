@@ -760,9 +760,10 @@ open_line (
     if (ml_append(curwin->w_cursor.lnum, p_extra, (colnr_T)0, FALSE)
         == FAIL)
       goto theend;
-    /* Postpone calling changed_lines(), because it would mess up folding
-     * with markers. */
-    mark_adjust(curwin->w_cursor.lnum + 1, (linenr_T)MAXLNUM, 1L, 0L);
+    // Postpone calling changed_lines(), because it would mess up folding
+    // with markers.
+    /// WCONV: Easy
+    mark_adjust(curwin->w_cursor.lnum + 1, (linenr_T)MAXLNUM, 1, 0);
     did_append = TRUE;
   } else {
     /*
@@ -1912,12 +1913,14 @@ void appended_lines(linenr_T lnum, long count)
   changed_lines(lnum + 1, 0, lnum + 1, count);
 }
 
-/*
- * Like appended_lines(), but adjust marks first.
- */
-void appended_lines_mark(linenr_T lnum, long count)
+//
+// Like appended_lines(), but adjust marks first.
+//
+/// WCONV: Refactor count to int for mark_adjust
+/// WCONV: TODO -> check calls of this
+void appended_lines_mark(linenr_T lnum, int count)
 {
-  mark_adjust(lnum + 1, (linenr_T)MAXLNUM, count, 0L);
+  mark_adjust(lnum + 1, (linenr_T)MAXLNUM, count, 0);
   changed_lines(lnum + 1, 0, lnum + 1, count);
 }
 
@@ -1931,14 +1934,16 @@ void deleted_lines(linenr_T lnum, long count)
   changed_lines(lnum, 0, lnum + count, -count);
 }
 
-/*
- * Like deleted_lines(), but adjust marks first.
- * Make sure the cursor is on a valid line before calling, a GUI callback may
- * be triggered to display the cursor.
- */
-void deleted_lines_mark(linenr_T lnum, long count)
+//
+// Like deleted_lines(), but adjust marks first.
+// Make sure the cursor is on a valid line before calling, a GUI callback may
+// be triggered to display the cursor.
+///
+/// WCONV: refactored count to int for mark_adjust
+/// WCONV: TODO -> check calls of this
+void deleted_lines_mark(linenr_T lnum, int count)
 {
-  mark_adjust(lnum, (linenr_T)(lnum + count - 1), (long)MAXLNUM, -count);
+  mark_adjust(lnum, (linenr_T)(lnum + count - 1), MAXLNUM, -count);
   changed_lines(lnum, 0, lnum + count, -count);
 }
 

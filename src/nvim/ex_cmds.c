@@ -527,11 +527,16 @@ void ex_sort(exarg_T *eap)
   }
 
   // Adjust marks for deleted (or added) lines and prepare for displaying.
-  deleted = (long)(count - (lnum - eap->line2));
+  // WCONV: What's this? lnum is eap->line2 by line 503 above...
+  // WCONV: Let's add an assertion to make sure
+  // WCONV: Uses INT_MAX, although mark_adjust might take up to MAXLNUM
+  // WCONV: To decide: Should MAXLNUM be INT_MAX?
+  assert(count -(lnum - eap->line2) <= INT_MAX);
+  deleted = (int)(count - (lnum - eap->line2));
   if (deleted > 0) {
-    mark_adjust(eap->line2 - deleted, eap->line2, (long)MAXLNUM, -deleted);
+    mark_adjust(eap->line2 - deleted, eap->line2, MAXLNUM, -deleted);
   } else if (deleted < 0) {
-    mark_adjust(eap->line2, MAXLNUM, -deleted, 0L);
+    mark_adjust(eap->line2, MAXLNUM, -deleted, 0);
   }
   changed_lines(eap->line1, 0, eap->line2 + 1, -deleted);
 
@@ -710,36 +715,51 @@ int do_move(linenr_T line1, linenr_T line2, linenr_T dest)
       extra++;
   }
 
-  /*
-   * Now we must be careful adjusting our marks so that we don't overlap our
-   * mark_adjust() calls.
-   *
-   * We adjust the marks within the old text so that they refer to the
-   * last lines of the file (temporarily), because we know no other marks
-   * will be set there since these line numbers did not exist until we added
-   * our new lines.
-   *
-   * Then we adjust the marks on lines between the old and new text positions
-   * (either forwards or backwards).
-   *
-   * And Finally we adjust the marks we put at the end of the file back to
-   * their final destination at the new text position -- webb
-   */
+  //
+  // Now we must be careful adjusting our marks so that we don't overlap our
+  // mark_adjust() calls.
+  //
+  // We adjust the marks within the old text so that they refer to the
+  // last lines of the file (temporarily), because we know no other marks
+  // will be set there since these line numbers did not exist until we added
+  // our new lines.
+  //
+  // Then we adjust the marks on lines between the old and new text positions
+  // (either forwards or backwards).
+  //
+  // And Finally we adjust the marks we put at the end of the file back to
+  // their final destination at the new text position -- webb
+  //
   last_line = curbuf->b_ml.ml_line_count;
-  mark_adjust(line1, line2, last_line - line2, 0L);
+  /// WCONV: Both last_line and line2 are linenr_T (=long), so no way to simply
+  /// WCONV: make an int out of them... add an assertion and a cast for now
+  /// WCONV: Should linenr_T be int?
+  assert( last_line - line2 < INT_MAX);
+  mark_adjust(line1, line2, (int)(last_line - line2), 0);
   changed_lines(last_line - num_lines + 1, 0, last_line + 1, num_lines);
   if (dest >= line2) {
-    mark_adjust(line2 + 1, dest, -num_lines, 0L);
+    /// WCONV: num_lines is linenr_T (=long) and could be up to MAXLNUM, so can't simply
+    /// WCONV: be adjusted to int... add an assertion and a cast
+    /// WCONV: Should linenr_T be int?
+    assert(num_lines < INT_MAX);
+    mark_adjust(line2 + 1, dest, -(int)num_lines, 0);
     curbuf->b_op_start.lnum = dest - num_lines + 1;
     curbuf->b_op_end.lnum = dest;
   } else {
-    mark_adjust(dest + 1, line1 - 1, num_lines, 0L);
+    /// WCONV: num_lines is linenr_T (=long) and could be up to MAXLNUM, so can't simply
+    /// WCONV: be adjusted to int... add an assertion and a cast
+    /// WCONV: Should linenr_T be int?
+    assert(num_lines < INT_MAX);
+    mark_adjust(dest + 1, line1 - 1, (int)num_lines, 0);
     curbuf->b_op_start.lnum = dest + 1;
     curbuf->b_op_end.lnum = dest + num_lines;
   }
   curbuf->b_op_start.col = curbuf->b_op_end.col = 0;
+  /// WCONV: Again, lastline could be up to MAXLNUM, so just add an assertion
+  /// WCONV: and a cast
+  assert(last_line - dest - extra < INT_MAX);
   mark_adjust(last_line - num_lines + 1, last_line,
-      -(last_line - dest - extra), 0L);
+      -(int)(last_line - dest - extra), 0);
   changed_lines(last_line - num_lines + 1, 0, last_line + 1, -extra);
 
   /*
@@ -1138,15 +1158,24 @@ static void do_filter(
 
     if (do_in) {
       if (cmdmod.keepmarks || vim_strchr(p_cpo, CPO_REMMARK) == NULL) {
-        if (read_linecount >= linecount)
+        if (read_linecount >= linecount) {
           /* move all marks from old lines to new lines */
-          mark_adjust(line1, line2, linecount, 0L);
-        else {
+          /// WCONV: linecount is linenr_T, could span the whole file, so
+          /// WCONV: could be up to MAXLNUM... add assertion and cast
+          /// WCONV: Question: SHould MAXLNUM be INT_MAX?
+          assert(linecount <= INT_MAX);
+          mark_adjust(line1, line2, (int)linecount, 0L);
+        } else {
           /* move marks from old lines to new lines, delete marks
            * that are in deleted lines */
+          /// WCONV: Same reasoning as above
+          assert(linecount <= INT_MAX);
           mark_adjust(line1, line1 + read_linecount - 1,
-              linecount, 0L);
-          mark_adjust(line1 + read_linecount, line2, MAXLNUM, 0L);
+              (int)linecount, 0);
+          /// WCONV: MAXLNUM could be > INT_MAX, in which case the whole
+          /// WCONV: refactoring doesn't make sense
+          /// WCONV: Qestion: Should MAXLNUM be INT_MAX?
+          mark_adjust(line1 + read_linecount, line2, MAXLNUM, 0);
         }
       }
 
@@ -3575,7 +3604,8 @@ void do_sub(exarg_T *eap)
               *p1 = NUL;                            /* truncate up to the CR */
               ml_append(lnum - 1, new_start,
                   (colnr_T)(p1 - new_start + 1), FALSE);
-              mark_adjust(lnum + 1, (linenr_T)MAXLNUM, 1L, 0L);
+              /// WCONV: This was easy...
+              mark_adjust(lnum + 1, (linenr_T)MAXLNUM, 1, 0);
               if (do_ask)
                 appended_lines(lnum - 1, 1L);
               else {
@@ -3662,8 +3692,11 @@ skip:
                 break;
               for (i = 0; i < nmatch_tl; ++i)
                 ml_delete(lnum, (int)FALSE);
+              /// WCONV: nmatch_tl is long and could be up to the number of
+              /// WCONV: lines in the file... cast to int and guard by assertion
+              assert(nmatch_tl < INT_MAX);
               mark_adjust(lnum, lnum + nmatch_tl - 1,
-                  (long)MAXLNUM, -nmatch_tl);
+                  MAXLNUM, -(int)nmatch_tl);
               if (do_ask)
                 deleted_lines(lnum, nmatch_tl);
               --lnum;

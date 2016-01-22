@@ -3045,8 +3045,11 @@ error:
         if (dir == FORWARD)
           curbuf->b_op_start.lnum++;
       }
+      /// WCONV: nr_lines is long (but >0), and as long as MAXLNUM is not INT_MAX we can't
+      /// WCONV: be sure it's small enough for int... add assertion to be sure for now
+      assert(nr_lines < INT_MAX);
       mark_adjust(curbuf->b_op_start.lnum + (y_type == MCHAR),
-          (linenr_T)MAXLNUM, nr_lines, 0L);
+          (linenr_T)MAXLNUM, (int)nr_lines, 0);
 
       /* note changed text for displaying and folding */
       if (y_type == MCHAR)
