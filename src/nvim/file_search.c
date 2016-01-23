@@ -1340,6 +1340,7 @@ void free_findfile(void)
  *
  * options:
  * FNAME_MESS	    give error message when not found
+ * FNAME_UNESC      unescape backslashes
  *
  * Uses NameBuff[]!
  *
@@ -1385,6 +1386,14 @@ find_file_in_path_option (
 
     xfree(ff_file_to_find);
     ff_file_to_find = vim_strsave(NameBuff);
+    if (options & FNAME_UNESC) {
+      // Change all "\ " to " ".
+      for (ptr = ff_file_to_find; *ptr != NUL; ++ptr) {
+        if (ptr[0] == '\\' && ptr[1] == ' ') {
+          memmove(ptr, ptr + 1, STRLEN(ptr));
+        }
+      }
+    }
   }
 
   rel_to_curdir = (ff_file_to_find[0] == '.'
