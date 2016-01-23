@@ -801,7 +801,6 @@ static void reg_equi_class(int c)
     case 0xc3: case 0xc4: case 0xc5:
       CASEMBC(0x100) CASEMBC(0x102) CASEMBC(0x104) CASEMBC(0x1cd)
       CASEMBC(0x1de) CASEMBC(0x1e0) CASEMBC(0x1ea2)
-    case '\303': case '\304': case '\305':
       regmbc('A'); regmbc(0xc0); regmbc(0xc1);
       regmbc(0xc2); regmbc(0xc3); regmbc(0xc4);
       regmbc(0xc5);
