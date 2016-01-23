@@ -9,6 +9,8 @@ readonly VIM_SOURCE_DIR_DEFAULT=${NEOVIM_SOURCE_DIR}/.vim-src
 readonly VIM_SOURCE_DIR="${VIM_SOURCE_DIR:-${VIM_SOURCE_DIR_DEFAULT}}"
 readonly BASENAME="$(basename "${0}")"
 
+CREATED_FILES=()
+
 usage() {
   echo "Helper script for porting Vim patches. For more information, see"
   echo "https://github.com/neovim/neovim/wiki/Merging-patches-from-upstream-vim"
@@ -32,6 +34,27 @@ check_executable() {
   if [[ ! -x $(command -v "${1}") ]]; then
     >&2 echo "${BASENAME}: '${1}' not found in PATH or not executable."
     exit 1
+  fi
+}
+
+clean_files() {
+  if [[ ${#CREATED_FILES[@]} -eq 0 ]]; then
+    return
+  fi
+
+  echo
+  echo "Created files:"
+  local file
+  for file in ${CREATED_FILES[@]}; do
+    echo "  • ${file}"
+  done
+
+  read -p "Delete these files (Y/n)? " -n 1 -r reply
+  echo
+  if [[ "${reply}" =~ ^[Yy]$ ]]; then
+    rm -- ${CREATED_FILES[@]}
+  else
+    echo "You can use 'git clean' to remove these files when you're done."
   fi
 }
 
@@ -66,13 +89,14 @@ assign_commit_details() {
     # Interpret parameter as version number (tag).
     vim_version="${1}"
     vim_tag="v${1}"
-    vim_commit=$( cd "${VIM_SOURCE_DIR}" \
-      && git log -1 --format="%H" ${vim_tag} )
+    vim_commit=$(cd "${VIM_SOURCE_DIR}" \
+      && git log -1 --format="%H" ${vim_tag})
     local strip_commit_line=true
   else
     # Interpret parameter as commit hash.
     vim_version="${1:0:7}"
-    vim_commit="${1}"
+    vim_commit=$(cd "${VIM_SOURCE_DIR}" \
+      && git log -1 --format="%H" ${vim_version})
     local strip_commit_line=false
   fi
 
@@ -198,21 +222,14 @@ list_vim_patches() {
   echo "        Out-of-order patches increase the possibility of bugs."
 }
 
-review_pr() {
-  check_executable curl
-  check_executable nvim
-
-  get_vim_sources
-
-  local pr="${1}"
-  echo
-  echo "Downloading data for pull request #${pr}."
+review_commit() {
+  local neovim_commit_url="${1}"
 
   local git_patch_prefix='Subject: \[PATCH\] '
-  local neovim_patch="$(curl -Ssf "https://patch-diff.githubusercontent.com/raw/neovim/neovim/pull/${pr}.patch")"
-  echo "${neovim_patch}" > a
+  local neovim_patch="$(curl -Ssf "${neovim_commit_url}.patch")"
   local vim_version="$(head -n 4 <<< "${neovim_patch}" | sed -n "s/${git_patch_prefix}vim-patch:\([a-z0-9.]*\)$/\1/p")"
 
+  echo
   if [[ -n "${vim_version}" ]]; then
     echo "✔ Detected Vim patch '${vim_version}'."
   else
@@ -235,23 +252,55 @@ review_pr() {
     echo "${expected_commit_message}"
     echo "  Actual:"
     echo "${commit_message#${git_patch_prefix}}"
-    exit 1
   fi
 
   local base_name="vim-${vim_version}"
   echo
   echo "Creating files."
-  curl -Ssfo "${NEOVIM_SOURCE_DIR}/n${base_name}.diff" "https://patch-diff.githubusercontent.com/raw/neovim/neovim/pull/${pr}.diff"
+  curl -Ssfo "${NEOVIM_SOURCE_DIR}/n${base_name}.diff" "${neovim_commit_url}.diff"
   echo "✔ Saved pull request diff to '${NEOVIM_SOURCE_DIR}/n${base_name}.diff'."
-  echo "${neovim_patch}" > "${NEOVIM_SOURCE_DIR}/n${base_name}.patch"
-  echo "✔ Saved full pull request commit details to '${NEOVIM_SOURCE_DIR}/n${base_name}.patch'."
-  git show "${vim_commit}" > "${NEOVIM_SOURCE_DIR}/${base_name}.diff"
+  CREATED_FILES+=("${NEOVIM_SOURCE_DIR}/n${base_name}.diff")
+
+  git show -b --format= "${vim_commit}" > "${NEOVIM_SOURCE_DIR}/${base_name}.diff"
   echo "✔ Saved Vim diff to '${NEOVIM_SOURCE_DIR}/${base_name}.diff'."
-  echo "You can use 'git clean' to remove these files when you're done."
+  CREATED_FILES+=("${NEOVIM_SOURCE_DIR}/${base_name}.diff")
 
   echo
   echo "Launching nvim."
-  exec nvim -O "${NEOVIM_SOURCE_DIR}/${base_name}.diff" "${NEOVIM_SOURCE_DIR}/n${base_name}.diff"
+  nvim -c "cd ${NEOVIM_SOURCE_DIR}" \
+    -O "${NEOVIM_SOURCE_DIR}/${base_name}.diff" "${NEOVIM_SOURCE_DIR}/n${base_name}.diff"
+}
+
+review_pr() {
+  check_executable curl
+  check_executable nvim
+  check_executable jq
+
+  get_vim_sources
+
+  local pr="${1}"
+  echo
+  echo "Downloading data for pull request #${pr}."
+
+  local pr_commit_urls=($(curl -Ssf "https://api.github.com/repos/neovim/neovim/pulls/${pr}/commits" \
+                          | jq -r '.[].html_url'))
+
+  echo "Found ${#pr_commit_urls[@]} commit(s)."
+
+  local pr_commit_url
+  local reply
+  for pr_commit_url in ${pr_commit_urls[@]}; do
+    review_commit "${pr_commit_url}"
+    if [[ "${pr_commit_url}" != "${pr_commit_urls[-1]}" ]]; then
+      read -p "Continue with next commit (Y/n)? " -n 1 -r reply
+      echo
+      if [[ ! "${reply}" =~ ^[Yy]$ ]]; then
+        break
+      fi
+    fi
+  done
+
+  clean_files
 }
 
 while getopts "hlp:r:" opt; do
