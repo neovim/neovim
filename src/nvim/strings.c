@@ -428,7 +428,7 @@ char_u *vim_strchr(const char_u *string, int c)
       int l = (*mb_ptr2len)(p);
 
       // Avoid matching an illegal byte here.
-      if (utf_ptr2char(p) == c && l > 1) {
+      if (l > 1 && utf_ptr2char(p) == c) {
         return (char_u *) p;
       }
       p += l;
