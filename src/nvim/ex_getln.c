@@ -4972,32 +4972,36 @@ static int ex_window(void)
   /* Save current window sizes. */
   win_size_save(&winsizes);
 
-  /* Don't execute autocommands while creating the window. */
-  block_autocmds();
-  /* don't use a new tab page */
-  cmdmod.tab = 0;
+  // Don't execute autocommands while creating the window.
+  WITH_BLOCK_AUTOCMDS({
+    /* don't use a new tab page */
+    cmdmod.tab = 0;
 
-  /* Create a window for the command-line buffer. */
-  if (win_split((int)p_cwh, WSP_BOT) == FAIL) {
-    beep_flush();
-    unblock_autocmds();
-    return K_IGNORE;
-  }
-  cmdwin_type = get_cmdline_type();
+    /* Create a window for the command-line buffer. */
+    if (win_split((int)p_cwh, WSP_BOT) == FAIL) {
+      beep_flush();
 
-  /* Create the command-line buffer empty. */
-  (void)do_ecmd(0, NULL, NULL, NULL, ECMD_ONE, ECMD_HIDE, NULL);
-  (void)setfname(curbuf, (char_u *)"[Command Line]", NULL, TRUE);
-  set_option_value((char_u *)"bt", 0L, (char_u *)"nofile", OPT_LOCAL);
-  set_option_value((char_u *)"swf", 0L, NULL, OPT_LOCAL);
-  curbuf->b_p_ma = TRUE;
-  curwin->w_p_fen = FALSE;
-  curwin->w_p_rl = cmdmsg_rl;
-  cmdmsg_rl = FALSE;
-  RESET_BINDING(curwin);
+      // Note: We have to manually unblock autocmds here
+      //       since we are returning before the macro has a
+      //       chance to unblock them.
+      unblock_autocmds();
+      return K_IGNORE;
+    }
+    cmdwin_type = get_cmdline_type();
 
-  /* Do execute autocommands for setting the filetype (load syntax). */
-  unblock_autocmds();
+    /* Create the command-line buffer empty. */
+    (void)do_ecmd(0, NULL, NULL, NULL, ECMD_ONE, ECMD_HIDE, NULL);
+    (void)setfname(curbuf, (char_u *)"[Command Line]", NULL, true);
+    set_option_value((char_u *)"bt", 0L, (char_u *)"nofile", OPT_LOCAL);
+    set_option_value((char_u *)"swf", 0L, NULL, OPT_LOCAL);
+    curbuf->b_p_ma = true;
+    curwin->w_p_fen = false;
+    curwin->w_p_rl = cmdmsg_rl;
+    cmdmsg_rl = false;
+    RESET_BINDING(curwin);
+  });
+
+  // Do execute autocommands for setting the filetype (load syntax).
 
   /* Showing the prompt may have set need_wait_return, reset it. */
   need_wait_return = FALSE;
@@ -5132,21 +5136,21 @@ static int ex_window(void)
     }
 
     /* Don't execute autocommands while deleting the window. */
-    block_autocmds();
-    wp = curwin;
-    bp = curbuf;
-    win_goto(old_curwin);
-    win_close(wp, TRUE);
+    WITH_BLOCK_AUTOCMDS({
+      wp = curwin;
+      bp = curbuf;
+      win_goto(old_curwin);
+      win_close(wp, true);
 
-    /* win_close() may have already wiped the buffer when 'bh' is
-     * set to 'wipe' */
-    if (buf_valid(bp))
-      close_buffer(NULL, bp, DOBUF_WIPE, FALSE);
+      /* win_close() may have already wiped the buffer when 'bh' is
+       * set to 'wipe' */
+      if (buf_valid(bp)) {
+        close_buffer(NULL, bp, DOBUF_WIPE, false);
+      }
 
-    /* Restore window sizes. */
-    win_size_restore(&winsizes);
-
-    unblock_autocmds();
+      /* Restore window sizes. */
+      win_size_restore(&winsizes);
+    });
   }
 
   ga_clear(&winsizes);
