@@ -156,8 +156,6 @@ ${vim_diff}
 
   echo
   echo "Creating files."
-  echo "${vim_diff}" > "${NEOVIM_SOURCE_DIR}/${neovim_branch}.diff"
-  echo "✔ Saved diff to '${NEOVIM_SOURCE_DIR}/${neovim_branch}.diff'."
   echo "${vim_full}" > "${NEOVIM_SOURCE_DIR}/${neovim_branch}.patch"
   echo "✔ Saved full commit details to '${NEOVIM_SOURCE_DIR}/${neovim_branch}.patch'."
   echo "${neovim_pr}" > "${NEOVIM_SOURCE_DIR}/${neovim_branch}.pr"
@@ -168,7 +166,7 @@ ${vim_diff}
   echo "Instructions:"
   echo
   echo "  Proceed to port the patch."
-  echo "  You might want to try 'patch -p1 < ${neovim_branch}.diff' first."
+  echo "  You might want to try 'patch -p1 < ${neovim_branch}.patch' first."
   echo
   echo "  Stage your changes ('git add ...') and use 'git commit --amend' to commit."
   echo
@@ -223,10 +221,10 @@ list_vim_patches() {
 }
 
 review_commit() {
-  local neovim_commit_url="${1}"
+  local neovim_patch_url="${1}"
 
   local git_patch_prefix='Subject: \[PATCH\] '
-  local neovim_patch="$(curl -Ssf "${neovim_commit_url}.patch")"
+  local neovim_patch="$(curl -Ssf "${neovim_patch_url}")"
   local vim_version="$(head -n 4 <<< "${neovim_patch}" | sed -n "s/${git_patch_prefix}vim-patch:\([a-z0-9.]*\)$/\1/p")"
 
   echo
@@ -240,6 +238,8 @@ review_commit() {
   fi
 
   assign_commit_details "${vim_version}"
+
+  local vim_patch_url="https://github.com/vim/vim/commit/${vim_commit}.patch"
 
   local expected_commit_message="$(commit_message)"
   local message_length="$(wc -l <<< "${expected_commit_message}")"
@@ -257,18 +257,18 @@ review_commit() {
   local base_name="vim-${vim_version}"
   echo
   echo "Creating files."
-  curl -Ssfo "${NEOVIM_SOURCE_DIR}/n${base_name}.diff" "${neovim_commit_url}.diff"
-  echo "✔ Saved pull request diff to '${NEOVIM_SOURCE_DIR}/n${base_name}.diff'."
-  CREATED_FILES+=("${NEOVIM_SOURCE_DIR}/n${base_name}.diff")
+  echo "${neovim_patch}" > "${NEOVIM_SOURCE_DIR}/n${base_name}.patch"
+  echo "✔ Saved pull request diff to '${NEOVIM_SOURCE_DIR}/n${base_name}.patch'."
+  CREATED_FILES+=("${NEOVIM_SOURCE_DIR}/n${base_name}.patch")
 
-  git show -b --format= "${vim_commit}" > "${NEOVIM_SOURCE_DIR}/${base_name}.diff"
-  echo "✔ Saved Vim diff to '${NEOVIM_SOURCE_DIR}/${base_name}.diff'."
-  CREATED_FILES+=("${NEOVIM_SOURCE_DIR}/${base_name}.diff")
+  curl -Ssfo "${NEOVIM_SOURCE_DIR}/${base_name}.patch" "${vim_patch_url}"
+  echo "✔ Saved Vim diff to '${NEOVIM_SOURCE_DIR}/${base_name}.patch'."
+  CREATED_FILES+=("${NEOVIM_SOURCE_DIR}/${base_name}.patch")
 
   echo
   echo "Launching nvim."
   nvim -c "cd ${NEOVIM_SOURCE_DIR}" \
-    -O "${NEOVIM_SOURCE_DIR}/${base_name}.diff" "${NEOVIM_SOURCE_DIR}/n${base_name}.diff"
+    -O "${NEOVIM_SOURCE_DIR}/${base_name}.patch" "${NEOVIM_SOURCE_DIR}/n${base_name}.patch"
 }
 
 review_pr() {
@@ -290,7 +290,7 @@ review_pr() {
   local pr_commit_url
   local reply
   for pr_commit_url in ${pr_commit_urls[@]}; do
-    review_commit "${pr_commit_url}"
+    review_commit "${pr_commit_url}.patch"
     if [[ "${pr_commit_url}" != "${pr_commit_urls[-1]}" ]]; then
       read -p "Continue with next commit (Y/n)? " -n 1 -r reply
       echo
