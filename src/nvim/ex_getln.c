@@ -3701,6 +3701,9 @@ ExpandFromContext (
     flags |= EW_KEEPALL;
   if (options & WILD_SILENT)
     flags |= EW_SILENT;
+  if (options & WILD_ALLLINKS) {
+    flags |= EW_ALLLINKS;
+  }
 
   if (xp->xp_context == EXPAND_FILES
       || xp->xp_context == EXPAND_DIRECTORIES
