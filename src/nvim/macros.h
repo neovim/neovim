@@ -1,6 +1,17 @@
 #ifndef NVIM_MACROS_H
 #define NVIM_MACROS_H
 
+// EXTERN is only defined in main.c. That's where global variables are
+// actually defined and initialized.
+#ifndef EXTERN
+# define EXTERN extern
+# define INIT(...)
+#else
+# ifndef INIT
+#  define INIT(...) __VA_ARGS__
+# endif
+#endif
+
 #ifndef MIN
 # define MIN(X, Y) ((X) < (Y) ? (X) : (Y))
 #endif

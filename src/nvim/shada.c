@@ -39,6 +39,7 @@
 #include "nvim/fileio.h"
 #include "nvim/strings.h"
 #include "nvim/quickfix.h"
+#include "nvim/encode.h"
 #include "nvim/lib/khash.h"
 #include "nvim/lib/kvec.h"
 
@@ -1687,8 +1688,9 @@ static ShaDaWriteResult shada_pack_entry(msgpack_packer *const packer,
   do { \
     if ((src) != NULL) { \
       for (listitem_T *li = (src)->lv_first; li != NULL; li = li->li_next) { \
-        if (vim_to_msgpack(spacker, &li->li_tv, \
-                           _("additional elements of ShaDa " what)) == FAIL) { \
+        if (encode_vim_to_msgpack(spacker, &li->li_tv, \
+                                  _("additional elements of ShaDa " what)) \
+            == FAIL) { \
           goto shada_pack_entry_error; \
         } \
       } \
@@ -1706,8 +1708,9 @@ static ShaDaWriteResult shada_pack_entry(msgpack_packer *const packer,
           const size_t key_len = strlen((const char *) hi->hi_key); \
           msgpack_pack_str(spacker, key_len); \
           msgpack_pack_str_body(spacker, (const char *) hi->hi_key, key_len); \
-          if (vim_to_msgpack(spacker, &di->di_tv, \
-                             _("additional data of ShaDa " what)) == FAIL) { \
+          if (encode_vim_to_msgpack(spacker, &di->di_tv, \
+                                    _("additional data of ShaDa " what)) \
+              == FAIL) { \
             goto shada_pack_entry_error; \
           } \
         } \
@@ -1757,7 +1760,7 @@ static ShaDaWriteResult shada_pack_entry(msgpack_packer *const packer,
       char vardesc[256] = "variable g:";
       memcpy(&vardesc[sizeof("variable g:") - 1], varname.data,
              varname.size + 1);
-      if (vim_to_msgpack(spacker, &entry.data.global_var.value, vardesc)
+      if (encode_vim_to_msgpack(spacker, &entry.data.global_var.value, vardesc)
           == FAIL) {
         ret = kSDWriteIgnError;
         EMSG2(_(WERR "Failed to write variable %s"),

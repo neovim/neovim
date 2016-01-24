@@ -4,9 +4,22 @@
 #include <msgpack.h>
 
 #include "nvim/profile.h"
+#include "nvim/hashtab.h"  // For hashtab_T
+#include "nvim/garray.h"  // For garray_T
+#include "nvim/buffer_defs.h"  // For scid_T
+#include "nvim/ex_cmds_defs.h"  // For exarg_T
+
+#define COPYID_INC 2
+#define COPYID_MASK (~0x1)
 
 // All user-defined functions are found in this hashtable.
-EXTERN hashtab_T func_hashtab;
+extern hashtab_T func_hashtab;
+
+/// CopyID for recursively traversing lists and dicts
+///
+/// This value is needed to avoid endless recursiveness. Last bit is used for
+/// previous_funccal and normally ignored when comparing.
+extern int current_copyID;
 
 // Structure to hold info for a user function.
 typedef struct ufunc ufunc_T;
@@ -117,11 +130,27 @@ enum {
     VV_LEN,  // number of v: vars
 };
 
+/// All recognized msgpack types
+typedef enum {
+  kMPNil,
+  kMPBoolean,
+  kMPInteger,
+  kMPFloat,
+  kMPString,
+  kMPBinary,
+  kMPArray,
+  kMPMap,
+  kMPExt,
+#define LAST_MSGPACK_TYPE kMPExt
+} MessagePackType;
+
+/// Array mapping values from MessagePackType to corresponding list pointers
+extern const list_T *eval_msgpack_type_lists[LAST_MSGPACK_TYPE + 1];
+
+#undef LAST_MSGPACK_TYPE
+
 /// Maximum number of function arguments
 #define MAX_FUNC_ARGS   20
-
-int vim_to_msgpack(msgpack_packer *const, typval_T *const,
-                   const char *const objname);
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "eval.h.generated.h"
