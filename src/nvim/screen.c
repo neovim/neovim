@@ -3410,7 +3410,7 @@ win_line (
             int    i;
             int    saved_nextra = n_extra;
 
-            if ((is_concealing || boguscols > 0) && vcol_off > 0) {
+            if (vcol_off > 0) {
               // there are characters to conceal
               tab_len += vcol_off;
             }
@@ -3440,25 +3440,31 @@ win_line (
 
             // n_extra will be increased by FIX_FOX_BOGUSCOLS
             // macro below, so need to adjust for that here
-            if ((is_concealing || boguscols > 0) && vcol_off > 0) {
+            if (vcol_off > 0) {
               n_extra -= vcol_off;
             }
           }
-          /* Tab alignment should be identical regardless of
-           * 'conceallevel' value. So tab compensates of all
-           * previous concealed characters, and thus resets vcol_off
-           * and boguscols accumulated so far in the line. Note that
-           * the tab can be longer than 'tabstop' when there
-           * are concealed characters. */
-          FIX_FOR_BOGUSCOLS;
-          // Make sure that the highlighting for the tab char will be correctly
-          // set further below (effectively reverts the FIX_FOR_BOGSUCOLS
-          // macro).
-          if (old_boguscols > 0 && n_extra > tab_len && wp->w_p_list
-              && lcs_tab1) {
-            tab_len += n_extra - tab_len;
+
+          {
+            int vc_saved = vcol_off;
+
+            // Tab alignment should be identical regardless of
+            // 'conceallevel' value. So tab compensates of all
+            // previous concealed characters, and thus resets
+            // vcol_off and boguscols accumulated so far in the
+            // line. Note that the tab can be longer than
+            // 'tabstop' when there are concealed characters.
+            FIX_FOR_BOGUSCOLS;
+
+            // Make sure, the highlighting for the tab char will be
+            // correctly set further below (effectively reverts the
+            // FIX_FOR_BOGSUCOLS macro.
+            if (n_extra == tab_len + vc_saved && wp->w_p_list && lcs_tab1) {
+              tab_len += vc_saved;
+            }
           }
-          mb_utf8 = FALSE;              /* don't draw as UTF-8 */
+
+          mb_utf8 = (int)false;  // don't draw as UTF-8
           if (wp->w_p_list) {
             c = lcs_tab1;
             if (wp->w_p_lbr) {

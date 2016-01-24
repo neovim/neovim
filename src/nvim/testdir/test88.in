@@ -71,6 +71,17 @@ GGk
 :set lbr
 :normal $
 GGk
+:set list listchars=tab:>-
+:normal 0
+GGk
+:normal W
+GGk
+:normal W
+GGk
+:normal W
+GGk
+:normal $
+GGk
 :" Display result.
 :call append('$', 'end:')
 :call append('$', positions)

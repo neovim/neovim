@@ -2,6 +2,7 @@
 
 local helpers = require('test.functional.helpers')
 local source = helpers.source
+local feed = helpers.feed
 local clear, expect = helpers.clear, helpers.expect
 
 describe('linebreak', function()
@@ -61,6 +62,43 @@ describe('linebreak', function()
       redraw!
       let line=ScreenChar(winwidth(0),7)
       call DoRecordScreen()
+      let g:test ="Test 5: set linebreak list listchars and concealing part2"
+      let c_defines=['bbeeeeee		;	some text']
+      call append('$', c_defines)
+      $
+      norm! zt
+      set nowrap ts=2 list linebreak listchars=tab:>- cole=2 concealcursor=n
+      syn clear
+      syn match meaning    /;\s*\zs.*/
+      syn match hasword    /^\x\{8}/    contains=word
+      syn match word       /\<\x\{8}\>/ contains=beginword,endword contained
+      syn match beginword  /\<\x\x/     contained conceal
+      syn match endword    /\x\{6}\>/   contained
+      hi meaning   guibg=blue
+      hi beginword guibg=green
+      hi endword   guibg=red
+      redraw!
+      let line=ScreenChar(winwidth(0),1)
+      call DoRecordScreen()
+      let g:test ="Test 6: Screenattributes for comment"
+      $put =g:test
+      call append('$', ' /*		 and some more */')
+      exe "set ft=c ts=7 linebreak list listchars=nbsp:\u2423,tab:\u2595\u2014,trail:\u02d1,eol:\ub6"
+      syntax on
+      hi SpecialKey term=underline ctermfg=red guifg=red
+      let attr=[]
+      nnoremap <expr> GG ":let attr += ['".screenattr(screenrow(),screencol())."']\n"
+      $
+      norm! zt0
+    ]])
+    feed('GGlGGlGGlGGlGGlGGlGGlGGlGGlGGl')
+    source([[
+      call append('$', ['ScreenAttributes for test6:'])
+      if attr[0] != attr[1] && attr[1] != attr[3] && attr[3] != attr[5]
+         call append('$', "Attribut 0 and 1 and 3 and 5 are different!")
+      else
+         call append('$', "Not all attributes are different")
+      endif
     ]])
 
     -- Assert buffer contents.
@@ -102,6 +140,14 @@ describe('linebreak', function()
       #define >CDEFGH>----1                   
       #define >_FILE>--------->--->---1       
       #define >_CONSOLE>---------->---2       
-      #define >_FILE_AND_CONSOLE>---------3   ]])
+      #define >_FILE_AND_CONSOLE>---------3   
+      bbeeeeee		;	some text
+      
+      Test 5: set linebreak list listchars and concealing part2
+      eeeeee>--->-;>some text                 
+      Test 6: Screenattributes for comment
+       /*		 and some more */
+      ScreenAttributes for test6:
+      Attribut 0 and 1 and 3 and 5 are different!]])
   end)
 end)
