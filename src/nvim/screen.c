@@ -3202,7 +3202,8 @@ win_line (
 
       // 'list': change char 160 to lcs_nbsp and space to lcs_space.
       if (wp->w_p_list
-          && (((c == 160 || (mb_utf8 && mb_c == 160)) && lcs_nbsp)
+          && (((c == 160 || (mb_utf8 && (mb_c == 160 || mb_c == 0x202f)))
+               && lcs_nbsp)
               || (c == ' ' && lcs_space && ptr - line <=  trailcol))) {
         c = (c == ' ') ? lcs_space : lcs_nbsp;
         if (area_attr == 0 && search_attr == 0) {
