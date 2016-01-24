@@ -7586,27 +7586,35 @@ static int ins_bs(int c, int mode, int *inserted_space_p)
        * happen when using 'sts' and 'linebreak'. */
       if (vcol >= start_vcol)
         ins_bs_one(&vcol);
-    }
-    /*
-     * Delete upto starting point, start of line or previous word.
-     */
-    else do {
-        if (!revins_on)     /* put cursor on char to be deleted */
-          dec_cursor();
 
-        /* start of word? */
-        if (mode == BACKSPACE_WORD && !ascii_isspace(gchar_cursor())) {
-          mode = BACKSPACE_WORD_NOT_SPACE;
-          temp = vim_iswordc(gchar_cursor());
+    // Delete upto starting point, start of line or previous word.
+    } else {
+      int cclass = 0, prev_cclass = 0;
+
+      if (has_mbyte) {
+        cclass = mb_get_class(get_cursor_pos_ptr());
+      }
+      do {
+        if (!revins_on) {   // put cursor on char to be deleted
+          dec_cursor();
         }
-        /* end of word? */
-        else if (mode == BACKSPACE_WORD_NOT_SPACE
-                 && (ascii_isspace(cc = gchar_cursor())
-                     || vim_iswordc(cc) != temp)) {
-          if (!revins_on)
+        cc = gchar_cursor();
+        // look multi-byte character class
+        if (has_mbyte) {
+          prev_cclass = cclass;
+          cclass = mb_get_class(get_cursor_pos_ptr());
+        }
+        if (mode == BACKSPACE_WORD && !ascii_isspace(cc)) {   // start of word?
+          mode = BACKSPACE_WORD_NOT_SPACE;
+          temp = vim_iswordc(cc);
+        } else if (mode == BACKSPACE_WORD_NOT_SPACE
+                   && ((ascii_isspace(cc) || vim_iswordc(cc) != temp)
+                       || prev_cclass != cclass)) {   // end of word?
+          if (!revins_on) {
             inc_cursor();
-          else if (State & REPLACE_FLAG)
+          } else if (State & REPLACE_FLAG) {
             dec_cursor();
+          }
           break;
         }
         if (State & REPLACE_FLAG)
@@ -7639,18 +7647,18 @@ static int ins_bs(int c, int mode, int *inserted_space_p)
         (curwin->w_cursor.col > mincol
          && (curwin->w_cursor.lnum != Insstart_orig.lnum
              || curwin->w_cursor.col != Insstart_orig.col)));
-    did_backspace = TRUE;
+    }
+    did_backspace = true;
   }
-  did_si = FALSE;
-  can_si = FALSE;
-  can_si_back = FALSE;
-  if (curwin->w_cursor.col <= 1)
-    did_ai = FALSE;
-  /*
-   * It's a little strange to put backspaces into the redo
-   * buffer, but it makes auto-indent a lot easier to deal
-   * with.
-   */
+  did_si = false;
+  can_si = false;
+  can_si_back = false;
+  if (curwin->w_cursor.col <= 1) {
+    did_ai = false;
+  }
+  // It's a little strange to put backspaces into the redo
+  // buffer, but it makes auto-indent a lot easier to deal
+  // with.
   AppendCharToRedobuff(c);
 
   /* If deleted before the insertion point, adjust it */
