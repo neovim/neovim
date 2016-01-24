@@ -3984,8 +3984,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 	  conceal:c	Character to show in place of concealed text, when
 			'conceallevel' is set to 1.  A space when omitted.
 							*lcs-nbsp*
-	  nbsp:c	Character to show for a non-breakable space (character
-			0xA0, 160).  Left blank when omitted.
+	  nbsp:c	Character to show for a non-breakable space character
+			(0xA0 (160 decimal) and U+202F).  Left blank when
+			omitted.
 
 	The characters ':' and ',' should not be used.  UTF-8 characters can
 	be used when 'encoding' is "utf-8", otherwise only printable
