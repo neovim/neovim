@@ -4638,10 +4638,13 @@ static int get_string_tv(char_u **arg, typval_T *rettv, int evaluate)
           int n, nr;
           int c = toupper(*p);
 
-          if (c == 'X')
+          if (c == 'X') {
             n = 2;
-          else
+          } else if (*p == 'u') {
             n = 4;
+          } else {
+            n = 8;
+          }
           nr = 0;
           while (--n >= 0 && ascii_isxdigit(p[1])) {
             ++p;
