@@ -4,4 +4,3 @@
 local ffi = require('ffi')
 local helpers = require('test.unit.helpers')
 local lfs = require('lfs')
-local preprocess = require('test.unit.preprocess')

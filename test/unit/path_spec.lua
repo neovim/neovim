@@ -11,7 +11,6 @@ local NULL = helpers.NULL
 local OK = helpers.OK
 local FAIL = helpers.FAIL
 
-cimport('string.h')
 local path = cimport('./src/nvim/path.h')
 
 -- import constants parsed by ffi

@@ -1,18 +1,12 @@
 local ffi = require('ffi')
 local formatc = require('test.unit.formatc')
 local Set = require('test.unit.set')
-local Preprocess = require('test.unit.preprocess')
 local Paths = require('test.config.paths')
 local global_helpers = require('test.helpers')
 
 local neq = global_helpers.neq
 local eq = global_helpers.eq
 local ok = global_helpers.ok
-
--- add some standard header locations
-for _, p in ipairs(Paths.include_paths) do
-  Preprocess.add_to_include_path(p)
-end
 
 -- load neovim shared library
 local libnvim = ffi.load(Paths.test_libnvim_path)
@@ -44,6 +38,21 @@ local function filter_complex_blocks(body)
   return table.concat(result, "\n")
 end
 
+local function preprocess_headers(...)
+  local args = {...}
+  local body = ""
+  for _,hdr in pairs(args) do
+    local stream = io.open(Paths.test_ffi_include_path..'/'..hdr..'.i', 'r')
+    if stream == nil then
+      print("Failed to open ffi header "..hdr..", is it set in test/includes/CMakeLists.txt?" )
+      return nil
+    end
+    body = body .. stream:read("*a")
+    stream:close()
+  end
+  return body
+end
+
 -- use this helper to import C files, you can pass multiple paths at once,
 -- this helper will return the C namespace of the nvim library.
 local function cimport(...)
@@ -67,14 +76,12 @@ local function cimport(...)
 
   local body = nil
   for _ = 1, 10 do
-    local stream = Preprocess.preprocess_stream(unpack(paths))
-    body = stream:read("*a")
-    stream:close()
+    body = preprocess_headers(unpack(paths))
     if body ~= nil then break end
   end
 
   if body == nil then
-    print("ERROR: helpers.lua: Preprocess.preprocess_stream():read() returned empty")
+    print("ERROR: helpers.lua: preprocess_headers() returned empty")
   end
 
   -- format it (so that the lines are "unique" statements), also filter out
@@ -120,10 +127,6 @@ local function cimport(...)
   return libnvim
 end
 
-local function cppimport(path)
-  return cimport(Paths.test_include_path .. '/' .. path)
-end
-
 cimport('./src/nvim/types.h')
 
 -- take a pointer to a C-allocated string and return an interned
@@ -156,7 +159,6 @@ local FAIL = 0
 
 return {
   cimport = cimport,
-  cppimport = cppimport,
   internalize = internalize,
   ok = ok,
   eq = eq,
