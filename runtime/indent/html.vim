@@ -245,6 +245,10 @@ call s:AddITags(s:indent_tags, [
     \ 'header', 'group', 'keygen', 'mark', 'math', 'meter', 'nav', 'output',
     \ 'progress', 'ruby', 'section', 'svg', 'texture', 'time', 'video',
     \ 'wbr', 'text'])
+
+" Tags added for web components:
+call s:AddITags(s:indent_tags, [
+    \ 'content', 'shadow', 'template'])
 "}}}
 
 " Add Block Tags: these contain alien content
@@ -287,7 +291,7 @@ func! s:CountITags(text)
   let s:nextrel = 0  " relative indent steps for next line [unit &sw]:
   let s:block = 0		" assume starting outside of a block
   let s:countonly = 1	" don't change state
-  call substitute(a:text, '<\zs/\=\w\+\>\|<!--\|-->', '\=s:CheckTag(submatch(0))', 'g')
+  call substitute(a:text, '<\zs/\=\w\+\(-\w\+\)*\>\|<!--\|-->', '\=s:CheckTag(submatch(0))', 'g')
   let s:countonly = 0
 endfunc "}}}
 
@@ -299,7 +303,7 @@ func! s:CountTagsAndState(text)
   let s:nextrel = 0  " relative indent steps for next line [unit &sw]:
 
   let s:block = b:hi_newstate.block
-  let tmp = substitute(a:text, '<\zs/\=\w\+\>\|<!--\|-->', '\=s:CheckTag(submatch(0))', 'g')
+  let tmp = substitute(a:text, '<\zs/\=\w\+\(-\w\+\)*\>\|<!--\|-->', '\=s:CheckTag(submatch(0))', 'g')
   if s:block == 3
     let b:hi_newstate.scripttype = s:GetScriptType(matchstr(tmp, '\C.*<SCRIPT\>\zs[^>]*'))
   endif
@@ -311,6 +315,9 @@ func! s:CheckTag(itag)
   "{{{
   " Returns an empty string or "SCRIPT".
   " a:itag can be "tag" or "/tag" or "<!--" or "-->"
+  if (s:CheckCustomTag(a:itag))
+    return ""
+  endif
   let ind = s:get_tag(a:itag)
   if ind == -1
     " closing tag
@@ -363,6 +370,36 @@ func! s:CheckBlockTag(blocktag, ind)
     " we get here if starting and closing a block-tag on the same line
   endif
   return ""
+endfunc "}}}
+
+" Used by s:CheckTag().
+func! s:CheckCustomTag(ctag)
+  "{{{
+  " Returns 1 if ctag is the tag for a custom element, 0 otherwise.
+  " a:ctag can be "tag" or "/tag" or "<!--" or "-->"
+  let pattern = '\%\(\w\+-\)\+\w\+'
+  if match(a:ctag, pattern) == -1
+    return 0
+  endif
+  if matchstr(a:ctag, '\/\ze.\+') == "/"
+    " closing tag
+    if s:block != 0
+      " ignore ctag within a block
+      return 1
+    endif
+    if s:nextrel == 0
+      let s:curind -= 1
+    else
+      let s:nextrel -= 1
+    endif
+  else
+    " opening tag
+    if s:block != 0
+      return 1
+    endif
+    let s:nextrel += 1
+  endif
+  return 1
 endfunc "}}}
 
 " Return the <script> type: either "javascript" or ""

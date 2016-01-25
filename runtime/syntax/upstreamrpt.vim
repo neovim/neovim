@@ -1,12 +1,14 @@
 " Vim syntax file
-" Language:		Innovation Data Processing upstream.dat file
+" Language:		Innovation Data Processing upstream.rpt file
 " Maintainer:		Rob Owens <rowens@fdrinnovation.com>
-" Latest Revision:	2013-11-27
+" Latest Revision:	2014-03-13
 
 " Quit when a syntax file was already loaded
 if exists("b:current_syntax")
   finish
 endif
+
+setlocal foldmethod=syntax
 
 " Parameters:
 syn keyword upstreamdat_Parameter ACCEPTPCREMOTE 
@@ -297,6 +299,9 @@ syn match upstreamdat_Filespec /file spec\c \d\{1,3}.*/
 
 " Comments:
 syn match upstreamdat_Comment /^#.*/
+
+" List Of Parameters:
+syn region upstreamdat_Parms start="Current Parameters:" end="End Of Parameters" transparent fold
 
 hi def link upstreamdat_Parameter Type
 "hi def link upstreamdat_Filespec Underlined
