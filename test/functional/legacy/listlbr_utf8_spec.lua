@@ -120,7 +120,9 @@ describe('linebreak', function()
       $put ='a b c'
       $put ='a b c'
       set list nolinebreak cc=3
-      sign define foo text=ï¼
+    ]])
+    feed(':sign define foo text=<C-v>uff0b<CR>')
+    source([[
       sign place 1 name=foo line=50 buffer=2
       norm! 2kztj
       let line1=line('.')
@@ -136,8 +138,6 @@ describe('linebreak', function()
       redraw!
       let line=ScreenChar(winwidth(0),3)
       call DoRecordScreen()
-      call append('$', ['ScreenAttributes for test9:'])
-      call append('$', ["Line: ".line1. " ". string(g:attr),"Line: ".line2. " ". string(g:attr2)])
       " expected: attr[2] is different because of colorcolumn
       if attr[0] != attr2[0] || attr[1] != attr2[1] || attr[2] != attr2[2]
          call append('$', "Screen attributes are different!")
@@ -201,12 +201,9 @@ describe('linebreak', function()
       a b c
       
       Test 9: a multibyte sign and colorcolumn
-        Â¶                                     
-      ï¼a b cÂ¶                                
-        a b cÂ¶                                
-      ScreenAttributes for test9:
-      Line: 50 ['0', '0', '72', '0']
-      Line: 51 ['0', '0', '72', '0']
+        ¶                                     
+      ＋a b c¶                                
+        a b c¶                                
       Screen attributes are the same!]])
   end)
 end)
