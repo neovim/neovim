@@ -99,6 +99,13 @@ describe('linebreak', function()
       else
          call append('$', "Not all attributes are different")
       endif
+      set cpo&vim linebreak selection=exclusive
+      let g:test ="Test 8: set linebreak with visual block mode and v_b_A and selection=exclusive and multibyte char"
+      $put =g:test
+    ]])
+    feed("Golong line: <Esc>40afoobar <Esc>aTARGETÃ' at end<Esc>")
+    source([[
+      exe "norm! $3B\<C-v>eAx\<Esc>"
     ]])
 
     -- Assert buffer contents.
@@ -148,6 +155,8 @@ describe('linebreak', function()
       Test 6: Screenattributes for comment
        /*		 and some more */
       ScreenAttributes for test6:
-      Attribut 0 and 1 and 3 and 5 are different!]])
+      Attribut 0 and 1 and 3 and 5 are different!
+      Test 8: set linebreak with visual block mode and v_b_A and selection=exclusive and multibyte char
+      long line: foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar TARGETÃx' at end]])
   end)
 end)
