@@ -33,16 +33,19 @@ describe('linebreak', function()
       	$put =g:line
       	wincmd p
       endfu
+      "
       let g:test ="Test 1: set linebreak + set list + fancy listchars"
       exe "set linebreak list listchars=nbsp:\u2423,tab:\u2595\u2014,trail:\u02d1,eol:\ub6"
       redraw!
       let line=ScreenChar(winwidth(0),4)
       call DoRecordScreen()
+      "
       let g:test ="Test 2: set nolinebreak list"
       set list nolinebreak
       redraw!
       let line=ScreenChar(winwidth(0),4)
       call DoRecordScreen()
+      "
       let g:test ="Test 3: set linebreak nolist"
       $put =\"\t*mask = nil;\"
       $
@@ -51,6 +54,7 @@ describe('linebreak', function()
       redraw!
       let line=ScreenChar(winwidth(0),4)
       call DoRecordScreen()
+      "
       let g:test ="Test 4: set linebreak list listchars and concealing"
       let c_defines=['#define ABCDE		1','#define ABCDEF		1','#define ABCDEFG		1','#define ABCDEFGH	1', '#define MSG_MODE_FILE			1','#define MSG_MODE_CONSOLE		2','#define MSG_MODE_FILE_AND_CONSOLE	3','#define MSG_MODE_FILE_THEN_CONSOLE	4']
       call append('$', c_defines)
@@ -62,6 +66,7 @@ describe('linebreak', function()
       redraw!
       let line=ScreenChar(winwidth(0),7)
       call DoRecordScreen()
+      "
       let g:test ="Test 5: set linebreak list listchars and concealing part2"
       let c_defines=['bbeeeeee		;	some text']
       call append('$', c_defines)
@@ -80,6 +85,7 @@ describe('linebreak', function()
       redraw!
       let line=ScreenChar(winwidth(0),1)
       call DoRecordScreen()
+      "
       let g:test ="Test 6: Screenattributes for comment"
       $put =g:test
       call append('$', ' /*		 and some more */')
@@ -106,6 +112,38 @@ describe('linebreak', function()
     feed("Golong line: <Esc>40afoobar <Esc>aTARGETÃ' at end<Esc>")
     source([[
       exe "norm! $3B\<C-v>eAx\<Esc>"
+      "
+      let g:test ="Test 9: a multibyte sign and colorcolumn"
+      let attr=[]
+      let attr2=[]
+      $put =''
+      $put ='a b c'
+      $put ='a b c'
+      set list nolinebreak cc=3
+      sign define foo text=ï¼
+      sign place 1 name=foo line=50 buffer=2
+      norm! 2kztj
+      let line1=line('.')
+    ]])
+    feed('0GGlGGlGGlGGl')
+    source([[
+      let line2=line('.')
+      let attr2=attr
+      let attr=[]
+    ]])
+    feed('0GGlGGlGGlGGl')
+    source([[
+      redraw!
+      let line=ScreenChar(winwidth(0),3)
+      call DoRecordScreen()
+      call append('$', ['ScreenAttributes for test9:'])
+      call append('$', ["Line: ".line1. " ". string(g:attr),"Line: ".line2. " ". string(g:attr2)])
+      " expected: attr[2] is different because of colorcolumn
+      if attr[0] != attr2[0] || attr[1] != attr2[1] || attr[2] != attr2[2]
+         call append('$', "Screen attributes are different!")
+      else
+         call append('$', "Screen attributes are the same!")
+      endif
     ]])
 
     -- Assert buffer contents.
@@ -157,6 +195,18 @@ describe('linebreak', function()
       ScreenAttributes for test6:
       Attribut 0 and 1 and 3 and 5 are different!
       Test 8: set linebreak with visual block mode and v_b_A and selection=exclusive and multibyte char
-      long line: foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar TARGETÃx' at end]])
+      long line: foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar TARGETÃx' at end
+      
+      a b c
+      a b c
+      
+      Test 9: a multibyte sign and colorcolumn
+        Â¶                                     
+      ï¼a b cÂ¶                                
+        a b cÂ¶                                
+      ScreenAttributes for test9:
+      Line: 50 ['0', '0', '72', '0']
+      Line: 51 ['0', '0', '72', '0']
+      Screen attributes are the same!]])
   end)
 end)

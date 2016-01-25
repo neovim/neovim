@@ -3975,20 +3975,24 @@ win_line (
         ScreenAttrs[off] = char_attr;
 
       if (has_mbyte && (*mb_char2cells)(mb_c) > 1) {
-        /* Need to fill two screen columns. */
-        ++off;
-        ++col;
-        if (enc_utf8)
-          /* UTF-8: Put a 0 in the second screen char. */
+        // Need to fill two screen columns.
+        off++;
+        col++;
+        if (enc_utf8) {
+          // UTF-8: Put a 0 in the second screen char.
           ScreenLines[off] = 0;
-        else
-          /* DBCS: Put second byte in the second screen char. */
+        } else {
+          // DBCS: Put second byte in the second screen char.
           ScreenLines[off] = mb_c & 0xff;
-        ++vcol;
-        /* When "tocol" is halfway through a character, set it to the end of
-         * the character, otherwise highlighting won't stop. */
-        if (tocol == vcol)
-          ++tocol;
+        }
+        if (draw_state > WL_NR && filler_todo <= 0) {
+          vcol++;
+        }
+        // When "tocol" is halfway through a character, set it to the end of
+        // the character, otherwise highlighting won't stop.
+        if (tocol == vcol) {
+          tocol++;
+        }
         if (wp->w_p_rl) {
           /* now it's time to backup one cell */
           --off;
