@@ -6305,7 +6305,7 @@ bool has_event(int event) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 /// @param force When true, ignore autocmd_busy
 /// @param group autocmd group ID or AUGROUP_ALL
 /// @param buf Buffer for <abuf>
-/// @param exarg Ex command arguments
+/// @param eap Ex command arguments
 ///
 /// @return true if some commands were executed.
 static bool apply_autocmds_group(event_T event, char_u *fname, char_u *fname_io,
