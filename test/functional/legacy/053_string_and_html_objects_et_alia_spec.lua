@@ -73,6 +73,13 @@ describe('string and html objects, cursor past end-of-line, match(), matchstr(),
       -<b></b>
       </begin>]])
   end)
+  it('matchstr', function()
+    eq('b',  eval([[matchstr("abcd", ".",  0,  2)]]))
+    eq('bc', eval([[matchstr("abcd", "..", 0,  2)]]))
+    -- next line: zero and negative -> first match
+    eq('c',  eval([[matchstr("abcd", ".",  2,  0)]]))
+    eq('a',  eval([[matchstr("abcd", ".",  0, -1)]]))
+  end)
   it('are working', function()
     insert([[
       <begin>
@@ -122,10 +129,6 @@ describe('string and html objects, cursor past end-of-line, match(), matchstr(),
     feed('0fXdat<cr>')
     feed('dit<cr>')
 
-    execute([[put =matchstr(\"abcd\", \".\", 0, 2)]]) -- b
-    execute([[put =matchstr(\"abcd\", \"..\", 0, 2)]]) -- bc
-    execute([[put =matchstr(\"abcd\", \".\", 2, 0)]]) -- c (zero and negative -> first match)
-    execute([[put =matchstr(\"abcd\", \".\", 0, -1)]]) -- a
     execute([[put =match(\"abcd\", \".\", 0, 5)]]) -- -1
     execute([[put =match(\"abcd\", \".\", 0, -1)]]) -- 0
     execute("put =match('abc', '.', 0, 1)") -- 0
@@ -190,10 +193,6 @@ describe('string and html objects, cursor past end-of-line, match(), matchstr(),
       --
       -<b></b>
       </begin>
-      b
-      bc
-      c
-      a
       -1
       0
       0
