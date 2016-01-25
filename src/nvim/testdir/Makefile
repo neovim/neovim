@@ -22,7 +22,6 @@ SCRIPTS := test_eval.out                                               \
                                    test68.out  test69.out              \
                                    test73.out                          \
                                                test79.out              \
-                                   test83.out                          \
                                    test88.out                          \
            test_listlbr.out                                            \
            test_breakindent.out                                        \
