@@ -1791,7 +1791,7 @@ void vim_str2nr(char_u *start, int *prep, int *len,
   int pre = 0;  // default is decimal
   int negative = false;
   unsigned long un = 0;
-  int n;
+  int n = 0;
 
   if (ptr[0] == '-') {
     negative = true;
