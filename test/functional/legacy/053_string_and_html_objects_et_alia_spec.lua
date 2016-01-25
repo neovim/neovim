@@ -80,6 +80,32 @@ describe('string and html objects, cursor past end-of-line, match(), matchstr(),
     eq('c',  eval([[matchstr("abcd", ".",  2,  0)]]))
     eq('a',  eval([[matchstr("abcd", ".",  0, -1)]]))
   end)
+  it('match', function()
+    eq(-1, eval("match('abcd', '.', 0, 5)"))
+    eq(0,  eval("match('abcd', '.', 0, -1)"))
+    eq(0,  eval("match('abc', '.', 0, 1)"))
+    eq(1,  eval("match('abc', '.', 0, 2)"))
+    eq(2,  eval("match('abc', '.', 0, 3)"))
+    eq(-1, eval("match('abc', '.', 0, 4)"))
+    eq(1,  eval("match('abc', '.', 1, 1)"))
+    eq(2,  eval("match('abc', '.', 2, 1)"))
+    eq(-1, eval("match('abc', '.', 3, 1)"))
+    eq(3,  eval("match('abc', '$', 0, 1)"))
+    eq(-1, eval("match('abc', '$', 0, 2)"))
+    eq(3,  eval("match('abc', '$', 1, 1)"))
+    eq(3,  eval("match('abc', '$', 2, 1)"))
+    eq(3,  eval("match('abc', '$', 3, 1)"))
+    eq(-1, eval("match('abc', '$', 4, 1)"))
+    eq(0,  eval([[match('abc', '\zs', 0, 1)]]))
+    eq(1,  eval([[match('abc', '\zs', 0, 2)]]))
+    eq(2,  eval([[match('abc', '\zs', 0, 3)]]))
+    eq(3,  eval([[match('abc', '\zs', 0, 4)]]))
+    eq(-1, eval([[match('abc', '\zs', 0, 5)]]))
+    eq(1,  eval([[match('abc', '\zs', 1, 1)]]))
+    eq(2,  eval([[match('abc', '\zs', 2, 1)]]))
+    eq(3,  eval([[match('abc', '\zs', 3, 1)]]))
+    eq(-1, eval([[match('abc', '\zs', 4, 1)]]))
+  end)
   it('are working', function()
     insert([[
       <begin>
@@ -129,30 +155,6 @@ describe('string and html objects, cursor past end-of-line, match(), matchstr(),
     feed('0fXdat<cr>')
     feed('dit<cr>')
 
-    execute([[put =match(\"abcd\", \".\", 0, 5)]]) -- -1
-    execute([[put =match(\"abcd\", \".\", 0, -1)]]) -- 0
-    execute("put =match('abc', '.', 0, 1)") -- 0
-    execute("put =match('abc', '.', 0, 2)") -- 1
-    execute("put =match('abc', '.', 0, 3)") -- 2
-    execute("put =match('abc', '.', 0, 4)") -- -1
-    execute("put =match('abc', '.', 1, 1)") -- 1
-    execute("put =match('abc', '.', 2, 1)") -- 2
-    execute("put =match('abc', '.', 3, 1)") -- -1
-    execute("put =match('abc', '$', 0, 1)") -- 3
-    execute("put =match('abc', '$', 0, 2)") -- -1
-    execute("put =match('abc', '$', 1, 1)") -- 3
-    execute("put =match('abc', '$', 2, 1)") -- 3
-    execute("put =match('abc', '$', 3, 1)") -- 3
-    execute("put =match('abc', '$', 4, 1)") -- -1
-    execute([[put =match('abc', '\zs', 0, 1)]]) -- 0
-    execute([[put =match('abc', '\zs', 0, 2)]]) -- 1
-    execute([[put =match('abc', '\zs', 0, 3)]]) -- 2
-    execute([[put =match('abc', '\zs', 0, 4)]]) -- 3
-    execute([[put =match('abc', '\zs', 0, 5)]]) -- -1
-    execute([[put =match('abc', '\zs', 1, 1)]]) -- 1
-    execute([[put =match('abc', '\zs', 2, 1)]]) -- 2
-    execute([[put =match('abc', '\zs', 3, 1)]]) -- 3
-    execute([[put =match('abc', '\zs', 4, 1)]]) -- -1
     execute('/^foobar')
     feed('gncsearchmatch<esc>')
     execute([[/one\_s*two\_s]])
@@ -193,30 +195,6 @@ describe('string and html objects, cursor past end-of-line, match(), matchstr(),
       --
       -<b></b>
       </begin>
-      -1
-      0
-      0
-      1
-      2
-      -1
-      1
-      2
-      -1
-      3
-      -1
-      3
-      3
-      3
-      -1
-      0
-      1
-      2
-      3
-      -1
-      1
-      2
-      3
-      -1
       SEARCH:
       searchmatch
       abcdx |  | abcdx
