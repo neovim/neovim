@@ -83,37 +83,6 @@ describe('text objects:', function()
       -<b></b>
       </begin>]])
   end)
-  it('are working', function()
-    insert([[
-      <begin>
-      -<b>asdf<i>Xasdf</i>asdf</b>-
-      -<b>asdX<i>a<i />sdf</i>asdf</b>-
-      -<b>asdf<i>Xasdf</i>asdf</b>-
-      -<b>asdX<i>as<b />df</i>asdf</b>-
-      -<b>
-      innertext object
-      </b>
-      </begin>
-      ]])
-
-    execute('/^<begin')
-    feed('jfXdit<cr>')
-    feed('0fXdit<cr>')
-    feed('fXdat<cr>')
-    feed('0fXdat<cr>')
-    feed('dit<cr>')
-
-
-    -- Assert buffer contents.
-    expect([[
-      <begin>
-      -<b>asdf<i></i>asdf</b>-
-      -<b></b>-
-      -<b>asdfasdf</b>-
-      --
-      -<b></b>
-      </begin>]])
-  end)
 end)
 describe('text matching functions:', function()
   before_each(clear)
@@ -151,8 +120,8 @@ describe('text matching functions:', function()
     eq(-1, eval([[match('abc', '\zs', 4, 1)]]))
   end)
 end)
-describe('search and gn (and repeat)', function()
-  it('search and gn', function()
+describe('repeating gn', function()
+  it('works', function()
     insert([[
       SEARCH:
       foobar
