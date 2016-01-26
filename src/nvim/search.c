@@ -621,43 +621,39 @@ int searchit(
                   break;
                 }
                 matchcol = endpos.col;
-                /* for empty match: advance one char */
-                if (matchcol == matchpos.col
-                    && ptr[matchcol] != NUL) {
-                  if (has_mbyte)
-                    matchcol +=
-                      (*mb_ptr2len)(ptr + matchcol);
-                  else
-                    ++matchcol;
-                }
+                // for empty match (matchcol == matchpos.col): advance one char
               } else {
+                // Prepare to start after first matched character.
                 matchcol = matchpos.col;
-                if (ptr[matchcol] != NUL) {
-                  if (has_mbyte)
-                    matchcol += (*mb_ptr2len)(ptr
-                                              + matchcol);
-                  else
-                    ++matchcol;
-                }
               }
-              if (matchcol == 0 && (options & SEARCH_START))
+
+              if (matchcol == matchpos.col && ptr[matchcol] != NUL) {
+                matchcol += MB_PTR2LEN(ptr + matchcol);
+              }
+
+              if (matchcol == 0 && (options & SEARCH_START)) {
                 break;
-              if (STRLEN(ptr) <= (size_t)matchcol || ptr[matchcol] == NUL
-                  || (nmatched = vim_regexec_multi(&regmatch,
-                          win, buf, lnum + matchpos.lnum,
-                          matchcol,
-                          tm
-                          )) == 0) {
-                match_ok = FALSE;
+              }
+
+              if (ptr[matchcol] == NUL ||
+                  (nmatched = vim_regexec_multi(&regmatch, win, buf, lnum,
+                                                matchcol, tm)) == 0) {
+                match_ok = false;
                 break;
               }
               matchpos = regmatch.startpos[0];
               endpos = regmatch.endpos[0];
               submatch = first_submatch(&regmatch);
 
-              /* Need to get the line pointer again, a
-               * multi-line search may have made it invalid. */
-              ptr = ml_get_buf(buf, lnum + matchpos.lnum, FALSE);
+              // This while-loop only works with matchpos.lnum == 0.
+              // For bigger values the next line pointer ptr might not be a
+              // buffer line.
+              if (matchpos.lnum != 0) {
+                break;
+              }
+              // Need to get the line pointer again, a multi-line search may
+              // have made it invalid.
+              ptr = ml_get_buf(buf, lnum, false);
             }
             if (!match_ok)
               continue;
