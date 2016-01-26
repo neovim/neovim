@@ -63,7 +63,17 @@ describe('text objects:', function()
     feed('0fXdit<cr>')
     feed('fXdat<cr>')
     feed('0fXdat<cr>')
-    feed('dit<cr>')
+    expect([[
+      <begin>
+      -<b>asdf<i></i>asdf</b>-
+      -<b></b>-
+      -<b>asdfasdf</b>-
+      --
+      -<b>
+      innertext object
+      </b>
+      </begin>]])
+    feed('dit<cr>') -- TODO
     expect([[
       <begin>
       -<b>asdf<i></i>asdf</b>-
