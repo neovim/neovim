@@ -7,7 +7,7 @@ local feed, insert, source = helpers.feed, helpers.insert, helpers.source
 local clear, execute, expect = helpers.clear, helpers.execute, helpers.expect
 local eq, eval, wait, write_file = helpers.eq, helpers.eval, helpers.wait, helpers.write_file
 
-describe('various eval features', function()
+describe('eval', function()
   setup(function()
     write_file('test_eval_setup.vim', [[
       set encoding=latin1
@@ -50,7 +50,7 @@ describe('various eval features', function()
     os.remove('test_eval_setup.vim')
   end)
 
-  it('let tests', function()
+  it(':let', function()
     execute('so test_eval_setup.vim')
     execute([[let @" = 'abc']])
     execute('AR "')
@@ -213,6 +213,9 @@ describe('various eval features', function()
     execute([[call setreg('d', 'abcD2', 'V')]])
     execute([[call setreg('e', 'abcE2', 'b')]])
     execute([[call setreg('f', 'abcF2', "\<C-v>")]])
+    -- These registers where set like this in the old test_eval.in but never
+    -- copied to the output buffer with SetReg().  They do not appear in
+    -- test_eval.ok.  Therefore they are commented out.
     --execute([[call setreg('g', 'abcG2', 'b10')]])
     --execute([[call setreg('h', 'abcH2', "\<C-v>10")]])
     --execute([[call setreg('I', 'abcI2')]])
@@ -575,7 +578,7 @@ describe('various eval features', function()
     eq('Vim(function):E128: Function name must start with a capital or "s:": g:test()', eval('tmp'))
   end)
 
-  it('Function name folowed by #', function()
+  it('Function name followed by #', function()
     execute('try')
     execute('  func! test2() "#')
     execute('    echo "test2"')
