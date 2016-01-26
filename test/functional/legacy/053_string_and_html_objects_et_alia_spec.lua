@@ -16,7 +16,7 @@ local function expect_line_above(text)
   return eq(text, eval('getline(line(".")-1)'))
 end
 
-describe('string and html objects, cursor past end-of-line, match(), matchstr(), repeating gn', function()
+describe('text objects:', function()
   before_each(clear)
 
   it('quote objects', function()
@@ -73,14 +73,48 @@ describe('string and html objects, cursor past end-of-line, match(), matchstr(),
       -<b></b>
       </begin>]])
   end)
-  it('matchstr', function()
+  it('are working', function()
+    insert([[
+      <begin>
+      -<b>asdf<i>Xasdf</i>asdf</b>-
+      -<b>asdX<i>a<i />sdf</i>asdf</b>-
+      -<b>asdf<i>Xasdf</i>asdf</b>-
+      -<b>asdX<i>as<b />df</i>asdf</b>-
+      -<b>
+      innertext object
+      </b>
+      </begin>
+      ]])
+
+    execute('/^<begin')
+    feed('jfXdit<cr>')
+    feed('0fXdit<cr>')
+    feed('fXdat<cr>')
+    feed('0fXdat<cr>')
+    feed('dit<cr>')
+
+
+    -- Assert buffer contents.
+    expect([[
+      <begin>
+      -<b>asdf<i></i>asdf</b>-
+      -<b></b>-
+      -<b>asdfasdf</b>-
+      --
+      -<b></b>
+      </begin>]])
+  end)
+end)
+describe('text matching functions:', function()
+  before_each(clear)
+  it('matchstr()', function()
     eq('b',  eval([[matchstr("abcd", ".",  0,  2)]]))
     eq('bc', eval([[matchstr("abcd", "..", 0,  2)]]))
     -- next line: zero and negative -> first match
     eq('c',  eval([[matchstr("abcd", ".",  2,  0)]]))
     eq('a',  eval([[matchstr("abcd", ".",  0, -1)]]))
   end)
-  it('match', function()
+  it('match()', function()
     eq(-1, eval("match('abcd', '.', 0, 5)"))
     eq(0,  eval("match('abcd', '.', 0, -1)"))
     eq(0,  eval("match('abc', '.', 0, 1)"))
@@ -106,6 +140,8 @@ describe('string and html objects, cursor past end-of-line, match(), matchstr(),
     eq(3,  eval([[match('abc', '\zs', 3, 1)]]))
     eq(-1, eval([[match('abc', '\zs', 4, 1)]]))
   end)
+end)
+describe('search and gn (and repeat)', function()
   it('search and gn', function()
     insert([[
       SEARCH:
@@ -197,36 +233,5 @@ describe('string and html objects, cursor past end-of-line, match(), matchstr(),
       DEPP
       --5
       end:]])
-  end)
-  it('are working', function()
-    insert([[
-      <begin>
-      -<b>asdf<i>Xasdf</i>asdf</b>-
-      -<b>asdX<i>a<i />sdf</i>asdf</b>-
-      -<b>asdf<i>Xasdf</i>asdf</b>-
-      -<b>asdX<i>as<b />df</i>asdf</b>-
-      -<b>
-      innertext object
-      </b>
-      </begin>
-      ]])
-
-    execute('/^<begin')
-    feed('jfXdit<cr>')
-    feed('0fXdit<cr>')
-    feed('fXdat<cr>')
-    feed('0fXdat<cr>')
-    feed('dit<cr>')
-
-
-    -- Assert buffer contents.
-    expect([[
-      <begin>
-      -<b>asdf<i></i>asdf</b>-
-      -<b></b>-
-      -<b>asdfasdf</b>-
-      --
-      -<b></b>
-      </begin>]])
   end)
 end)
