@@ -4762,48 +4762,54 @@ static int skip_to_start(int c, colnr_T *colp)
  */
 static long find_match_text(colnr_T startcol, int regstart, char_u *match_text)
 {
-  colnr_T col = startcol;
-  int c1, c2;
-  int len1, len2;
-  int match;
+#define PTR2LEN(x) enc_utf8 ? utf_ptr2len(x) : MB_PTR2LEN(x)
 
-  for (;; ) {
-    match = TRUE;
-    len2 = MB_CHAR2LEN(regstart);     /* skip regstart */
-    for (len1 = 0; match_text[len1] != NUL; len1 += MB_CHAR2LEN(c1)) {
-      c1 = PTR2CHAR(match_text + len1);
-      c2 = PTR2CHAR(regline + col + len2);
-      if (c1 != c2 && (!ireg_ic || vim_tolower(c1) != vim_tolower(c2))) {
-        match = FALSE;
+  colnr_T col = startcol;
+  int regstart_len = PTR2LEN(regline + startcol);
+
+  for (;;) {
+    bool match = true;
+    char_u *s1 = match_text;
+    char_u *s2 = regline + col + regstart_len;  // skip regstart
+    while (*s1) {
+      int c1_len = PTR2LEN(s1);
+      int c1 = PTR2CHAR(s1);
+      int c2_len = PTR2LEN(s2);
+      int c2 = PTR2CHAR(s2);
+
+      if ((c1 != c2 && (!ireg_ic || vim_tolower(c1) != vim_tolower(c2))) ||
+          c1_len != c2_len) {
+        match = false;
         break;
       }
-      len2 += MB_CHAR2LEN(c2);
+      s1 += c1_len;
+      s2 += c2_len;
     }
     if (match
-        /* check that no composing char follows */
-        && !(enc_utf8
-             && STRLEN(regline) > (size_t)(col + len2)
-             && utf_iscomposing(PTR2CHAR(regline + col + len2)))
-        ) {
+        // check that no composing char follows
+        && !(enc_utf8 && utf_iscomposing(PTR2CHAR(s2)))) {
       cleanup_subexpr();
       if (REG_MULTI) {
         reg_startpos[0].lnum = reglnum;
         reg_startpos[0].col = col;
         reg_endpos[0].lnum = reglnum;
-        reg_endpos[0].col = col + len2;
+        reg_endpos[0].col = s2 - regline;
       } else {
         reg_startp[0] = regline + col;
-        reg_endp[0] = regline + col + len2;
+        reg_endp[0] = s2;
       }
       return 1L;
     }
 
-    /* Try finding regstart after the current match. */
-    col += MB_CHAR2LEN(regstart);     /* skip regstart */
-    if (skip_to_start(regstart, &col) == FAIL)
+    // Try finding regstart after the current match.
+    col += regstart_len;  // skip regstart
+    if (skip_to_start(regstart, &col) == FAIL) {
       break;
+    }
   }
   return 0L;
+
+#undef PTR2LEN
 }
 
 /*
