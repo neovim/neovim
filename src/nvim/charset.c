@@ -799,32 +799,41 @@ unsigned int win_linetabsize(win_T *wp, char_u *line, colnr_T len)
   return (unsigned int)col;
 }
 
-/// Return TRUE if 'c' is a normal identifier character:
+/// Return true if 'c' is a normal identifier character:
 ///
 /// Letters and characters from the 'isident' option.
 ///
-/// @param c
+/// @param c The character to check
 ///
-/// @return TRUE if 'c' is a normal identifier character.
-int vim_isIDc(int c)
+/// @return true if 'c' is a normal identifier character.
+bool vim_isIDc(int c)
 {
   return c > 0 && c < 0x100 && (chartab[c] & CT_ID_CHAR);
 }
 
-/// return TRUE if 'c' is a keyword character: Letters and characters from
+/// Return true if 'c' is a keyword character: Letters and characters from
 /// 'iskeyword' option for current buffer.
 ///
 /// For multi-byte characters mb_get_class() is used (builtin rules).
 ///
-/// @param c
+/// @param c The character to check
 ///
-/// @return TRUE if 'c' is a keyword character.
-int vim_iswordc(int c)
+/// @return true if 'c' is a keyword character.
+bool vim_iswordc(int c)
 {
   return vim_iswordc_buf(c, curbuf);
 }
 
-int vim_iswordc_buf(int c, buf_T *buf)
+/// Return true if 'c' is a keyword character: Letters and characters from
+/// 'iskeyword' option for given buffer.
+///
+/// For multi-byte characters mb_get_class() is used (builtin rules).
+///
+/// @param c   The character to check
+/// @param buf The buffer whose keywords to use
+///
+/// @return true if 'c' is a keyword character.
+bool vim_iswordc_buf(int c, buf_T *buf)
 {
   if (c >= 0x100) {
     if (enc_dbcs != 0) {
@@ -840,10 +849,10 @@ int vim_iswordc_buf(int c, buf_T *buf)
 
 /// Just like vim_iswordc() but uses a pointer to the (multi-byte) character.
 ///
-/// @param p
+/// @param p The pointer to the multi-byte character
 ///
-/// @return TRUE if 'p' points to a keyword character.
-int vim_iswordp(char_u *p)
+/// @return true if 'p' points to a keyword character.
+bool vim_iswordp(char_u *p)
 {
   if (has_mbyte && (MB_BYTE2LEN(*p) > 1)) {
     return mb_get_class(p) >= 2;
@@ -851,7 +860,14 @@ int vim_iswordp(char_u *p)
   return GET_CHARTAB(curbuf, *p) != 0;
 }
 
-int vim_iswordp_buf(char_u *p, buf_T *buf)
+/// Just like vim_iswordc_buf() but uses a pointer to
+/// the (multi-byte) character.
+///
+/// @param p The pointer to the multi-byte character
+/// @param buf The buffer whose keywords to use
+///
+/// @return true if 'p' points to a keyword character.
+bool vim_iswordp_buf(char_u *p, buf_T *buf)
 {
   if (has_mbyte && (MB_BYTE2LEN(*p) > 1)) {
     return mb_get_class(p) >= 2;
@@ -859,26 +875,26 @@ int vim_iswordp_buf(char_u *p, buf_T *buf)
   return GET_CHARTAB(buf, *p) != 0;
 }
 
-/// return TRUE if 'c' is a valid file-name character
+/// Return true if 'c' is a valid file-name character
 /// Assume characters above 0x100 are valid (multi-byte).
 ///
-/// @param c
+/// @param c The character to check
 ///
-/// @return TRUE if 'c' is a valid file name character.
-int vim_isfilec(int c)
+/// @return true if 'c' is a valid file name character.
+bool vim_isfilec(int c)
 {
   return c >= 0x100 || (c > 0 && (chartab[c] & CT_FNAME_CHAR));
 }
 
-/// return TRUE if 'c' is a valid file-name character or a wildcard character
+/// Return true if 'c' is a valid file-name character or a wildcard character
 /// Assume characters above 0x100 are valid (multi-byte).
 /// Explicitly interpret ']' as a wildcard character as path_has_wildcard("]")
 /// returns false.
 ///
-/// @param c
+/// @param c The character to check
 ///
-/// @return TRUE if 'c' is a valid file-name character or wildcard character.
-int vim_isfilec_or_wc(int c)
+/// @return true if 'c' is a valid file-name character or wildcard character.
+bool vim_isfilec_or_wc(int c)
 {
   char_u buf[2];
   buf[0] = (char_u)c;
@@ -886,14 +902,14 @@ int vim_isfilec_or_wc(int c)
   return vim_isfilec(c) || c == ']' || path_has_wildcard(buf);
 }
 
-/// return TRUE if 'c' is a printable character
+/// Return true if 'c' is a printable character
 /// Assume characters above 0x100 are printable (multi-byte), except for
 /// Unicode.
 ///
-/// @param c
+/// @param c The character to check
 ///
-/// @return TRUE if 'c' a printable character.
-int vim_isprintc(int c)
+/// @return true if 'c' a printable character.
+bool vim_isprintc(int c)
 {
   if (enc_utf8 && (c >= 0x100)) {
     return utf_printable(c);
@@ -901,16 +917,16 @@ int vim_isprintc(int c)
   return c >= 0x100 || (c > 0 && (chartab[c] & CT_PRINT_CHAR));
 }
 
-/// Strict version of vim_isprintc(c), don't return TRUE if "c" is the head
+/// Strict version of vim_isprintc(c), don't return true if "c" is the head
 /// byte of a double-byte character.
 ///
-/// @param c
+/// @param c The character to check
 ///
-/// @return TRUE if 'c' is a printable character.
-int vim_isprintc_strict(int c)
+/// @return true if 'c' is a printable character.
+bool vim_isprintc_strict(int c)
 {
   if ((enc_dbcs != 0) && (c < 0x100) && (MB_BYTE2LEN(c) > 1)) {
-    return FALSE;
+    return false;
   }
 
   if (enc_utf8 && (c >= 0x100)) {
@@ -921,7 +937,7 @@ int vim_isprintc_strict(int c)
 
 /// like chartabsize(), but also check for line breaks on the screen
 ///
-/// @param line 
+/// @param line
 /// @param s
 /// @param col
 ///
@@ -1144,35 +1160,35 @@ static int win_nolbr_chartabsize(win_T *wp, char_u *s, colnr_T col, int *headp)
   return n;
 }
 
-/// Return TRUE if virtual column "vcol" is in the rightmost column of window
+/// Return true if virtual column "vcol" is in the rightmost column of window
 /// "wp".
 ///
-/// @param wp
-/// @param vcol
+/// @param wp   The window
+/// @param vcol The column number
 ///
-/// @return TRUE if the virtual column is in the rightmost column.
-int in_win_border(win_T *wp, colnr_T vcol)
+/// @return true if the virtual column is in the rightmost column.
+bool in_win_border(win_T *wp, colnr_T vcol)
 {
   int width1;             // width of first line (after line number)
   int width2;             // width of further lines
 
   if (wp->w_width == 0) {
     // there is no border
-    return FALSE;
+    return false;
   }
   width1 = wp->w_width - win_col_off(wp);
 
   if ((int)vcol < width1 - 1) {
-    return FALSE;
+    return false;
   }
 
   if ((int)vcol == width1 - 1) {
-    return TRUE;
+    return true;
   }
   width2 = width1 + win_col_off2(wp);
 
   if (width2 <= 0) {
-    return FALSE;
+    return false;
   }
   return (vcol - width1) % width2 == width2 - 1;
 }
@@ -1571,10 +1587,15 @@ static char_u latin1lower[257] =
     "\xdf\xe0\xe1\xe2\xe3\xe4\xe5\xe6\xe7\xe8\xe9\xea\xeb\xec\xed\xee"
     "\xef\xf0\xf1\xf2\xf3\xf4\xf5\xf6\xf7\xf8\xf9\xfa\xfb\xfc\xfd\xfe\xff";
 
-int vim_islower(int c)
+/// Return true if the character is lower-case
+///
+/// @param c The character to check
+///
+/// @return true if the character is lower-case
+bool vim_islower(int c)
 {
   if (c <= '@') {
-    return FALSE;
+    return false;
   }
 
   if (c >= 0x80) {
@@ -1588,7 +1609,7 @@ int vim_islower(int c)
       }
 
       // islower() can't handle these chars and may crash
-      return FALSE;
+      return false;
     }
 
     if (enc_latin1like) {
@@ -1598,10 +1619,15 @@ int vim_islower(int c)
   return islower(c);
 }
 
-int vim_isupper(int c)
+/// Return true if the character is upper-case
+///
+/// @param c The character to check
+///
+/// @return true if the character is upper-case
+bool vim_isupper(int c)
 {
   if (c <= '@') {
-    return FALSE;
+    return false;
   }
 
   if (c >= 0x80) {
@@ -1614,8 +1640,8 @@ int vim_isupper(int c)
         return iswupper(c);
       }
 
-      // islower() can't handle these chars and may crash
-      return FALSE;
+      // isupper() can't handle these chars and may crash
+      return false;
     }
 
     if (enc_latin1like) {
@@ -1744,12 +1770,12 @@ long getdigits_long(char_u **pp)
   return (long)number;
 }
 
-/// Return TRUE if "lbuf" is empty or only contains blanks.
+/// Return true if "lbuf" is empty or only contains blanks.
 ///
-/// @param lbuf
+/// @param lbuf The line buffer to check
 ///
-/// @return TRUE if `lbuf` is empty or only contains blanks.
-int vim_isblankline(char_u *lbuf)
+/// @return true if `lbuf` is empty or only contains blanks.
+bool vim_isblankline(char_u *lbuf)
 {
   char_u *p = skipwhite(lbuf);
   return *p == NUL || *p == '\r' || *p == '\n';
@@ -1918,7 +1944,7 @@ int hex2nr(int c)
 /// character, assume that all multi-byte characters are valid file name
 /// characters.
 ///
-/// @param str
+/// @param str The file path string to check
 ///
 /// @return true if `str` starts with a backslash that should be removed.
 bool rem_backslash(const char_u *str)
