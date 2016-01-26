@@ -1791,7 +1791,6 @@ void vim_str2nr(char_u *start, int *prep, int *len,
   int pre = 0;  // default is decimal
   int negative = false;
   unsigned long un = 0;
-  int n = 0;
 
   if (ptr[0] == '-') {
     negative = true;
@@ -1818,7 +1817,7 @@ void vim_str2nr(char_u *start, int *prep, int *len,
 
       if (dooct) {
         // Don't interpret "0", "08" or "0129" as octal.
-        for (n = 1; ascii_isdigit(ptr[n]); ++n) {
+        for (int n = 1; ascii_isdigit(ptr[n]); ++n) {
           if (ptr[n] > '7') {
             // can't be octal
             pre = 0;
@@ -1836,9 +1835,6 @@ void vim_str2nr(char_u *start, int *prep, int *len,
   // Do the string-to-numeric conversion "manually" to avoid sscanf quirks.
   if ((pre == 'B') || (pre == 'b') || (dobin > 1)) {
     // bin
-    if (pre != 0) {
-      n += 2;  // skip over "0b"
-    }
     while ('0' <= *ptr && *ptr <= '1') {
       un = 2 * un + (unsigned long)(*ptr - '0');
       ptr++;
@@ -1849,11 +1845,8 @@ void vim_str2nr(char_u *start, int *prep, int *len,
       un = 8 * un + (unsigned long)(*ptr - '0');
       ptr++;
     }
-  } else if (pre != 0 || dohex > 1) {
+  } else if ((pre == 'X') || (pre == 'x') || dohex > 1) {
     // hex
-    if (pre != 0) {
-      n += 2;  // skip over "0x"
-    }
     while (ascii_isxdigit(*ptr)) {
       un = 16 * un + (unsigned long)hex2nr(*ptr);
       ptr++;
