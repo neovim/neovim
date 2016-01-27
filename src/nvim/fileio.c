@@ -7106,6 +7106,7 @@ char_u * file_pat_to_reg_pat(
     char *allow_dirs,        // Result passed back out in here
     int no_bslash            // Don't use a backward slash as pathsep
 )
+  FUNC_ATTR_NONNULL_ARG(1)
 {
   const char_u *endp;
   char_u      *reg_pat;
