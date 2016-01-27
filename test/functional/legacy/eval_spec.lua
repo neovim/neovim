@@ -1,34 +1,27 @@
 -- Test for various eval features.
--- Note: system clipboard support is not tested. I do not think anybody will
--- thank me for messing with clipboard.
 
 local helpers = require('test.functional.helpers')
 local feed, insert, source = helpers.feed, helpers.insert, helpers.source
 local clear, execute, expect = helpers.clear, helpers.execute, helpers.expect
 local eq, eval, wait, write_file = helpers.eq, helpers.eval, helpers.wait, helpers.write_file
 
+local function has_clipboard()
+  clear()
+  return 1 == eval("has('clipboard')")
+end
+
 describe('eval', function()
   setup(function()
     write_file('test_eval_setup.vim', [[
-      set encoding=latin1
       set noswapfile
       lang C
 
-      fun RegInfo(reg)
-        return [
-	  \ a:reg,
-	  \ getregtype(a:reg),
-	  \ getreg(a:reg),
-	  \ string(getreg(a:reg, 0, 1)),
-	  \ getreg(a:reg, 1),
-	  \ string(getreg(a:reg, 1, 1))
-	  \ ]
+      fun AppendRegContents(reg)
+	  call AppendRegParts(a:reg, getregtype(a:reg), getreg(a:reg), string(getreg(a:reg, 0, 1)), getreg(a:reg, 1), string(getreg(a:reg, 1, 1)))
       endfun
 
-      fun AppendRegContents(reg)
-      let x = RegInfo(a:reg)
-	call append('$', printf('%s: type %s; value: %s (%s), expr: %s (%s)',
-	  \ x[0], x[1], x[2], x[3], x[4], x[5]))
+      fun AppendRegParts(reg, type, cont, strcont, cont1, strcont1)
+	  call append('$', printf('%s: type %s; value: %s (%s), expr: %s (%s)', a:reg, a:type, a:cont, a:strcont, a:cont1, a:strcont1))
       endfun
 
       command -nargs=? AR :call AppendRegContents(<q-args>)
@@ -525,6 +518,42 @@ describe('eval', function()
       {{{2 setreg('=', ['"abc/]]..'\x00'..[["'])
       =: type v; value: abc/]].."\x00 (['abc/\x00"..[[']), expr: "abc/]]..'\x00'..[[" (['"abc/]]..'\x00'..[["'])]])
   end)
+
+  -- If the clipboard feature is not available the next test will be sciped.
+  if has_clipboard() then
+    it('system clipboard', function()
+      insert([[
+	Some first line (this text was at the top of the old test_eval.in).
+	
+	Note: system clipboard is saved, changed and restored.
+	
+	clipboard contents
+	something else]])
+      execute('so test_eval_setup.vim')
+      -- Save and restore system clipboard.
+      execute("let _clipreg = ['*', getreg('*'), getregtype('*')]")
+      execute('let _clipopt = &cb')
+      execute("let &cb='unnamed'")
+      execute('5y')
+      execute('AR *')
+      execute('tabdo :windo :echo "hi"')
+      execute('6y')
+      execute('AR *')
+      execute('let &cb=_clipopt')
+      execute("call call('setreg', _clipreg)")
+      expect([[
+	Some first line (this text was at the top of the old test_eval.in).
+	
+	Note: system clipboard is saved, changed and restored.
+	
+	clipboard contents
+	something else
+	*: type V; value: clipboard contents]]..'\00'..[[ (['clipboard contents']), expr: clipboard contents]]..'\00'..[[ (['clipboard contents'])
+	*: type V; value: something else]]..'\00'..[[ (['something else']), expr: something else]]..'\00'..[[ (['something else'])]])
+    end)
+  else
+    pending('system clipboard not available', function() end)
+  end
 
   it('errors', function()
     source([[
