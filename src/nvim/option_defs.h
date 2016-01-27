@@ -564,7 +564,7 @@ static char *(p_swb_values[]) = {"useopen", "usetab", "split", "newtab", NULL};
 #define SWB_SPLIT               0x004
 #define SWB_NEWTAB              0x008
 EXTERN int p_tbs;               /* 'tagbsearch' */
-EXTERN long p_tl;               /* 'taglength' */
+EXTERN size_t p_tl;             /* 'taglength' */
 EXTERN int p_tr;                /* 'tagrelative' */
 EXTERN char_u   *p_tags;        /* 'tags' */
 EXTERN int p_tgst;              /* 'tagstack' */
