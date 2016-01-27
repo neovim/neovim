@@ -6345,7 +6345,7 @@ static void ex_tabnext(exarg_T *eap)
  */
 static void ex_tabmove(exarg_T *eap)
 {
-  int tab_number = 9999;
+  int tab_number;
 
   if (eap->arg && *eap->arg != NUL) {
     char_u *p = eap->arg;
@@ -6361,17 +6361,35 @@ static void ex_tabmove(exarg_T *eap)
     } else
       p = eap->arg;
 
-    if (p == skipdigits(p)) {
-      /* No numbers as argument. */
-      eap->errmsg = e_invarg;
-      return;
+    if (relative == 0) {
+      if (STRCMP(p, "$") == 0) {
+        tab_number = LAST_TAB_NR;
+      } else if (p == skipdigits(p)) {
+        // No numbers as argument.
+        eap->errmsg = e_invarg;
+        return;
+      } else {
+        tab_number = getdigits(&p);
+      }
+    } else {
+      if (*p != NUL) {
+        tab_number = getdigits(&p);
+      } else {
+        tab_number = 1;
+      }
+      tab_number = tab_number * relative + tabpage_index(curtab);
+      if (relative == -1) {
+        --tab_number;
+      }
     }
-
-    tab_number = getdigits_int(&p);
-    if (relative != 0)
-      tab_number = tab_number * relative + tabpage_index(curtab) - 1; ;
-  } else if (eap->addr_count != 0)
+  } else if (eap->addr_count != 0) {
     tab_number = eap->line2;
+    if (**eap->cmdlinep == '-') {
+      --tab_number;
+    }
+  } else {
+    tab_number = LAST_TAB_NR;
+  }
 
   tabpage_move(tab_number);
 }

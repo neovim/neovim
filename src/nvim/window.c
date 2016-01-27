@@ -3274,16 +3274,26 @@ void goto_tabpage_win(tabpage_T *tp, win_T *wp)
   }
 }
 
-/*
- * Move the current tab page to before tab page "nr".
- */
+// Move the current tab page to after tab page "nr".
 void tabpage_move(int nr)
 {
-  int n = nr;
-  tabpage_T   *tp;
+  int n = 1;
+  tabpage_T *tp;
+  tabpage_T *tp_dst;
 
   if (first_tabpage->tp_next == NULL)
     return;
+
+  for (tp = first_tabpage; tp->tp_next != NULL && n < nr; tp = tp->tp_next) {
+    ++n;
+  }
+
+  if (tp == curtab || (nr > 0 && tp->tp_next != NULL
+                       && tp->tp_next == curtab)) {
+    return;
+  }
+
+  tp_dst = tp;
 
   /* Remove the current tab page from the list of tab pages. */
   if (curtab == first_tabpage)
@@ -3297,15 +3307,13 @@ void tabpage_move(int nr)
     tp->tp_next = curtab->tp_next;
   }
 
-  /* Re-insert it at the specified position. */
-  if (n <= 0) {
+  // Re-insert it at the specified position.
+  if (nr <= 0) {
     curtab->tp_next = first_tabpage;
     first_tabpage = curtab;
   } else {
-    for (tp = first_tabpage; tp->tp_next != NULL && n > 1; tp = tp->tp_next)
-      --n;
-    curtab->tp_next = tp->tp_next;
-    tp->tp_next = curtab;
+    curtab->tp_next = tp_dst->tp_next;
+    tp_dst->tp_next = curtab;
   }
 
   /* Need to redraw the tabline.  Tab page contents doesn't change. */

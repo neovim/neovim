@@ -197,22 +197,29 @@ REORDERING TAB PAGES:
 		Move the current tab page to after tab page N.  Use zero to
 		make the current tab page the first one.  Without N the tab
 		page is made the last one. >
+		    :.tabmove   " do nothing
 		    :-tabmove   " move the tab page to the left
-		    :tabmove    " move the tab page to the right
-		    :.tabmove   " as above
-		    :+tabmove   " as above
+		    :+tabmove   " move the tab page to the right
 		    :0tabmove   " move the tab page to the beginning  of the tab
 				" list
-		    :$tabmove   " move the tab page to the end of the tab list
-<
+		    :tabmove 0	" as above
+		    :tabmove	" move the tab page to the last
+		    :$tabmove	" as above
+		    :tabmove $	" as above
+
 :tabm[ove] +[N]
 :tabm[ove] -[N]
 		Move the current tab page N places to the right (with +) or to
-		the left (with -).
+		the left (with -). >
+		    :tabmove -	" move the tab page to the left
+		    :tabmove -1	" as above
+		    :tabmove +	" move the tab page to the right
+		    :tabmove +1	" as above
+
 
 Note that although it is possible to move a tab behind the N-th one by using
-:Ntabmove, it is impossible to move it by N places by using :+Ntabmove. For
-clarification what +N means in this context see |[range]|.
+:Ntabmove. And move it by N places by using :+Ntabmove. For clarification what
++N means in this context see |[range]|.
 
 
 LOOPING OVER TAB PAGES:
