@@ -1,4 +1,4 @@
-*autocmd.txt*   For Vim version 7.4.  Last change: 2014 Sep 23
+*autocmd.txt*   For Vim version 7.4.  Last change: 2015 Mar 21
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -972,6 +972,13 @@ WinLeave			Before leaving a window.  If the window to be
 
 ==============================================================================
 6. Patterns					*autocmd-patterns* *{pat}*
+
+The {pat} argument can be a comma separated list.  This works as if the
+command was given with each pattern separately.  Thus this command: >
+	:autocmd BufRead *.txt,*.info set et
+Is equivalent to: >
+	:autocmd BufRead *.txt set et
+	:autocmd BufRead *.info set et
 
 The file pattern {pat} is tested for a match against the file name in one of
 two ways:
