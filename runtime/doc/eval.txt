@@ -1029,8 +1029,8 @@ A string constant accepts these special characters:
 \x.	byte specified with one hex number (must be followed by non-hex char)
 \X..	same as \x..
 \X.	same as \x.
-\u....	character specified with up to 4 hex numbers, stored according to the
-	current value of 'encoding' (e.g., "\u02a4")
+\u....	character specified with up to 4 hex numbers, stored as UTF-8
+	(e.g., "\u02a4")
 \U....	same as \u but allows up to 8 hex numbers.
 \b	backspace <BS>
 \e	escape <Esc>
@@ -1045,8 +1045,7 @@ A string constant accepts these special characters:
 	utf-8 character, use \uxxxx as mentioned above.
 
 Note that "\xff" is stored as the byte 255, which may be invalid in some
-encodings.  Use "\u00ff" to store character 255 according to the current value
-of 'encoding'.
+encodings.  Use "\u00ff" to store character 255 correctly as UTF-8.
 
 Note that "\000" and "\x00" force the end of the string.
 
@@ -2532,8 +2531,6 @@ byteidxcomp({expr}, {nr})					*byteidxcomp()*
 <		The first and third echo result in 3 ('e' plus composing
 		character is 3 bytes), the second echo results in 1 ('e' is
 		one byte).
-		Only works different from byteidx() when 'encoding' is set to
-		a Unicode encoding.
 
 call({func}, {arglist} [, {dict}])			*call()* *E699*
 		Call function {func} with the items in |List| {arglist} as
@@ -2568,11 +2565,11 @@ char2nr({expr}[, {utf8}])					*char2nr()*
 		Return number value of the first char in {expr}.  Examples: >
 			char2nr(" ")		returns 32
 			char2nr("ABC")		returns 65
-<		When {utf8} is omitted or zero, the current 'encoding' is used.
-		Example for "utf-8": >
 			char2nr("á")		returns 225
 			char2nr("á"[0])		returns 195
-<		With {utf8} set to 1, always treat as utf-8 characters.
+<		Non-ASCII characters are always treated as UTF-8 characters.
+		{utf8} has no effect, and exists only for
+		backwards-compatibility.
 		A combining character is a separate character.
 		|nr2char()| does the opposite.
 
@@ -4225,11 +4222,7 @@ iconv({expr}, {from}, {to})				*iconv()*
 		Most conversions require Vim to be compiled with the |+iconv|
 		feature.  Otherwise only UTF-8 to latin1 conversion and back
 		can be done.
-		This can be used to display messages with special characters,
-		no matter what 'encoding' is set to.  Write the message in
-		UTF-8 and use: >
-			echo iconv(utf8_str, "utf-8", &enc)
-<		Note that Vim uses UTF-8 for all Unicode encodings, conversion
+		Note that Vim uses UTF-8 for all Unicode encodings, conversion
 		from/to UCS-2 is automatically changed to use UTF-8.  You
 		cannot use UCS-2 in a string anyway, because of the NUL bytes.
 		{only available when compiled with the |+multi_byte| feature}
@@ -4513,9 +4506,7 @@ join({list} [, {sep}])					*join()*
 json_decode({expr})					*json_decode()*
 		Convert {expr} from JSON object.  Accepts |readfile()|-style 
 		list as the input, as well as regular string.  May output any 
-		Vim value.  When 'encoding' is not UTF-8 string is converted 
-		from UTF-8 to 'encoding', failing conversion fails 
-		json_decode().  In the following cases it will output 
+		Vim value. In the following cases it will output
 		|msgpack-special-dict|:
 		1. Dictionary contains duplicate key.
 		2. Dictionary contains empty key.
@@ -4523,32 +4514,21 @@ json_decode({expr})					*json_decode()*
 		   dictionary and for string will be emitted in case string 
 		   with NUL byte was a dictionary key.
 
-		Note: function treats its input as UTF-8 always regardless of 
-		'encoding' value.  This is needed because JSON source is 
-		supposed to be external (e.g. |readfile()|) and JSON standard 
-		allows only a few encodings, of which UTF-8 is recommended and 
-		the only one required to be supported.  Non-UTF-8 characters 
-		are an error.
+		Note: function treats its input as UTF-8 always.  The JSON
+		standard allows only a few encodings, of which UTF-8 is
+		recommended and the only one required to be supported.
+		Non-UTF-8 characters are an error.
 
 json_encode({expr})					*json_encode()*
 		Convert {expr} into a JSON string.  Accepts 
-		|msgpack-special-dict| as the input.  Converts from 'encoding' 
-		to UTF-8 when encoding strings.  Will not convert |Funcref|s, 
+		|msgpack-special-dict| as the input.  Will not convert |Funcref|s, 
 		mappings with non-string keys (can be created as 
 		|msgpack-special-dict|), values with self-referencing 
 		containers, strings which contain non-UTF-8 characters, 
 		pseudo-UTF-8 strings which contain codepoints reserved for 
 		surrogate pairs (such strings are not valid UTF-8 strings).  
-		When converting 'encoding' is taken into account, if it is not 
-		"utf-8", then conversion is performed before encoding strings.  
 		Non-printable characters are converted into "\u1234" escapes 
 		or special escapes like "\t", other are dumped as-is.
-
-		Note: all characters above U+0079 are considered non-printable 
-		when 'encoding' is not UTF-8.  This function always outputs 
-		UTF-8 strings as required by the standard thus when 'encoding' 
-		is not unicode resulting string will look incorrect if 
-		"\u1234" notation is not used.
 
 keys({dict})						*keys()*
 		Return a |List| with all the keys of {dict}.  The |List| is in
@@ -4651,9 +4631,9 @@ line2byte({lnum})					*line2byte()*
 		Return the byte count from the start of the buffer for line
 		{lnum}.  This includes the end-of-line character, depending on
 		the 'fileformat' option for the current buffer.  The first
-		line returns 1. 'encoding' matters, 'fileencoding' is ignored.
-		This can also be used to get the byte count for the line just
-		below the last line: >
+		line returns 1. UTF-8 encoding is used, 'fileencoding' is
+		ignored.  This can also be used to get the byte count for the
+		line just below the last line: >
 			line2byte(line("$") + 1)
 <		This is the buffer size plus one.  If 'fileencoding' is empty
 		it is the file size plus one.
@@ -5172,10 +5152,10 @@ nr2char({expr}[, {utf8}])				*nr2char()*
 		value {expr}.  Examples: >
 			nr2char(64)		returns "@"
 			nr2char(32)		returns " "
-<		When {utf8} is omitted or zero, the current 'encoding' is used.
-		Example for "utf-8": >
+<		Example for "utf-8": >
 			nr2char(300)		returns I with bow character
-<		With {utf8} set to 1, always return utf-8 characters.
+<		UTF-8 encoding is always used, {utf8} option has no effect,
+		and exists only for backwards-compatibility.
 		Note that a NUL character in the file is specified with
 		nr2char(10), because NULs are represented with newline
 		characters.  nr2char(0) is a real NUL and terminates the
@@ -5417,7 +5397,7 @@ py3eval({expr})						*py3eval()*
 		converted to Vim data structures.
 		Numbers and strings are returned as they are (strings are 
 		copied though, Unicode strings are additionally converted to 
-		'encoding').
+		UTF-8).
 		Lists are represented as Vim |List| type.
 		Dictionaries are represented as Vim |Dictionary| type with 
 		keys converted to strings.
@@ -5467,8 +5447,7 @@ readfile({fname} [, {binary} [, {max}]])
 		Otherwise:
 		- CR characters that appear before a NL are removed.
 		- Whether the last line ends in a NL or not does not matter.
-		- When 'encoding' is Unicode any UTF-8 byte order mark is
-		  removed from the text.
+		- Any UTF-8 byte order mark is removed from the text.
 		When {max} is given this specifies the maximum number of lines
 		to be read.  Useful if you only want to check the first ten
 		lines of a file: >
@@ -6621,8 +6600,7 @@ string({expr})	Return {expr} converted to a String.  If {expr} is a Number,
 		for infinite and NaN floating-point values representations 
 		which use |str2float()|.  Strings are also dumped literally, 
 		only single quote is escaped, which does not allow using YAML 
-		for parsing back binary strings (including text when 
-		'encoding' is not UTF-8).  |eval()| should always work for 
+		for parsing back binary strings.  |eval()| should always work for 
 		strings and floats though and this is the only official 
 		method, use |msgpackdump()| or |json_encode()| if you need to 
 		share data with other application.

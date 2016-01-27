@@ -52,7 +52,6 @@ achieve special effects.  These options come in three forms:
 :se[t] all&		Set all options to their default value.  The values of
 			these options are not changed:
 			  'columns'
-			  'encoding'
 			  'lines'
 			Warning: This may have a lot of side effects.
 
@@ -615,7 +614,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 			global
 			{only available when compiled with the |+multi_byte|
 			feature}
-	Only effective when 'encoding' is "utf-8" or another Unicode encoding.
 	Tells Vim what to do with characters with East Asian Width Class
 	Ambiguous (such as Euro, Registered Sign, Copyright Sign, Greek
 	letters, Cyrillic letters).
@@ -668,7 +666,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	- Set the 'keymap' option to "arabic"; in Insert mode CTRL-^ toggles
 	  between typing English and Arabic key mapping.
 	- Set the 'delcombine' option
-	Note that 'encoding' must be "utf-8" for working with Arabic text.
 
 	Resetting this option will:
 	- Reset the 'rightleft' option.
@@ -1078,8 +1075,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 			{not available when compiled without the |+linebreak|
 			feature}
 	This option lets you choose which characters might cause a line
-	break if 'linebreak' is on.  Only works for ASCII and also for 8-bit
-	characters when 'encoding' is an 8-bit encoding.
+	break if 'linebreak' is on.  Only works for ASCII characters.
 
 						*'breakindent'* *'bri'*
 'breakindent' 'bri'	boolean (default off)
@@ -1214,11 +1210,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Specifies details about changing the case of letters.  It may contain
 	these words, separated by a comma:
 	internal	Use internal case mapping functions, the current
-			locale does not change the case mapping.  This only
-			matters when 'encoding' is a Unicode encoding,
-			"latin1" or "iso-8859-15".  When "internal" is
-			omitted, the towupper() and towlower() system library
-			functions are used when available.
+			locale does not change the case mapping. When
+			"internal" is omitted, the towupper() and towlower()
+			system library functions are used when available.
 	keepascii	For the ASCII characters (0x00 to 0x7f) use the US
 			case mapping, the current locale is not effective.
 			This probably only matters for Turkish.
@@ -1271,13 +1265,12 @@ A jump table for the options with a short description can be found at |Q_op|.
 	file to convert from.  You will have to save the text in a file first.
 	The expression must return zero or an empty string for success,
 	non-zero for failure.
-	The possible encoding names encountered are in 'encoding'.
+	See |encoding-names| for possible encoding names.
 	Additionally, names given in 'fileencodings' and 'fileencoding' are
 	used.
 	Conversion between "latin1", "unicode", "ucs-2", "ucs-4" and "utf-8"
 	is done internally by Vim, 'charconvert' is not used for this.
-	'charconvert' is also used to convert the shada file, if 'encoding' is 
-	not "utf-8".  Also used for Unicode conversion.
+	Also used for Unicode conversion.
 	Example: >
 		set charconvert=CharConvert()
 		fun CharConvert()
@@ -1292,8 +1285,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 		v:fname_in		name of the input file
 		v:fname_out		name of the output file
 	Note that v:fname_in and v:fname_out will never be the same.
-	Note that v:charconvert_from and v:charconvert_to may be different
-	from 'encoding'.  Vim internally uses UTF-8 instead of UCS-2 or UCS-4.
 	This option cannot be set from a |modeline| or in the |sandbox|, for
 	security reasons.
 
@@ -2140,43 +2131,13 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 
 					*'encoding'* *'enc'* *E543*
-'encoding' 'enc'	string (default: "utf-8")
-			global
-			{only available when compiled with the |+multi_byte|
-			feature}
-	Sets the character encoding used inside Vim.  It applies to text in
-	the buffers, registers, Strings in expressions, text stored in the
-	shada file, etc.  It sets the kind of characters which Vim can work
-	with.  See |encoding-names| for the possible values.
+'encoding' 'enc'	Removed. |vim-differences| {Nvim}
+	Nvim always uses UTF-8 internally. RPC communication
+	(remote plugins/GUIs) must use UTF-8 strings.
 
-	'encoding' cannot be changed after startup, because (1) it causes
-	non-ASCII text inside Vim to become invalid, and (2) it complicates
-	runtime logic.  The recommended 'encoding' is "utf-8".  Remote plugins
-	and GUIs only support utf-8. See |multibyte|.
-
-	The character encoding of files can be different from 'encoding'.
+	The character encoding of files can be different than UTF-8.
 	This is specified with 'fileencoding'.  The conversion is done with
 	iconv() or as specified with 'charconvert'.
-
-	If you need to know whether 'encoding' is a multi-byte encoding, you
-	can use: >
-		if has("multi_byte_encoding")
-<
-	When you set this option, it fires the |EncodingChanged| autocommand
-	event so that you can set up fonts if necessary.
-
-	When the option is set, the value is converted to lowercase.  Thus
-	you can set it with uppercase values too.  Underscores are translated
-	to '-' signs.
-	When the encoding is recognized, it is changed to the standard name.
-	For example "Latin-1" becomes "latin1", "ISO_88592" becomes
-	"iso-8859-2" and "utf8" becomes "utf-8".
-
-	When "unicode", "ucs-2" or "ucs-4" is used, Vim internally uses utf-8.
-	You don't notice this while editing, but it does matter for the
-	|shada-file|.  And Vim expects the terminal to use utf-8 too.  Thus
-	setting 'encoding' to one of these values instead of utf-8 only has
-	effect for encoding used for files when 'fileencoding' is empty.
 
 			*'endofline'* *'eol'* *'noendofline'* *'noeol'*
 'endofline' 'eol'	boolean	(default on)
@@ -2304,20 +2265,14 @@ A jump table for the options with a short description can be found at |Q_op|.
 			feature}
 	Sets the character encoding for the file of this buffer.
 
-	When 'fileencoding' is different from 'encoding', conversion will be
+	When 'fileencoding' is different from "utf-8", conversion will be
 	done when writing the file.  For reading see below.
-	When 'fileencoding' is empty, the same value as 'encoding' will be
-	used (no conversion when reading or writing a file).
-	Conversion will also be done when 'encoding' and 'fileencoding' are
-	both a Unicode encoding and 'fileencoding' is not utf-8.  That's
-	because internally Unicode is always stored as utf-8.
-		WARNING: Conversion can cause loss of information!  When
-		'encoding' is "utf-8" or another Unicode encoding, conversion
-		is most likely done in a way that the reverse conversion
-		results in the same text.  When 'encoding' is not "utf-8" some
-		characters may be lost!
+	When 'fileencoding' is empty, the file will be saved with utf-8
+	encoding.  (no conversion when reading or writing a file).
+		WARNING: Conversion to a non-Unicode encoding can cause loss of
+		information! 
 
-	See 'encoding' for the possible values.  Additionally, values may be
+	See |encoding-names| for the possible values.  Additionally, values may be
 	specified that can be handled by the converter, see
 	|mbyte-conversion|.
 
@@ -2330,8 +2285,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Prepending "8bit-" and "2byte-" has no meaning here, they are ignored.
 	When the option is set, the value is converted to lowercase.  Thus
 	you can set it with uppercase values too.  '_' characters are
-	replaced with '-'.  If a name is recognized from the list for
-	'encoding', it is replaced by the standard name.  For example
+	replaced with '-'.  If a name is recognized from the list at
+	|encoding-names|, it is replaced by the standard name.  For example
 	"ISO8859-2" becomes "iso-8859-2".
 
 	When this option is set, after starting to edit a file, the 'modified'
@@ -2354,12 +2309,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	mentioned character encoding.  If an error is detected, the next one
 	in the list is tried.  When an encoding is found that works,
 	'fileencoding' is set to it.  If all fail, 'fileencoding' is set to
-	an empty string, which means the value of 'encoding' is used.
-		WARNING: Conversion can cause loss of information!  When
-		'encoding' is "utf-8" (or one of the other Unicode variants)
-		conversion is most likely done in a way that the reverse
-		conversion results in the same text.  When 'encoding' is not
-		"utf-8" some non-ASCII characters may be lost!  You can use
+	an empty string, which means that UTF-8 is used.
+		WARNING: Conversion can cause loss of information! You can use
 		the |++bad| argument to specify what is done with characters
 		that can't be converted.
 	For an empty file or a file with only ASCII characters most encodings
@@ -2385,11 +2336,11 @@ A jump table for the options with a short description can be found at |Q_op|.
 	because Vim cannot detect an error, thus the encoding is always
 	accepted.
 	The special value "default" can be used for the encoding from the
-	environment.  It is useful when 'encoding' is set to "utf-8" and
-	your environment uses a non-latin1 encoding, such as Russian.
-	When 'encoding' is "utf-8" and a file contains an illegal byte
-	sequence it won't be recognized as UTF-8.  You can use the |8g8|
-	command to find the illegal byte sequence.
+	environment.  It is useful when your environment uses a non-latin1
+	encoding, such as Russian.
+	When a file contains an illegal UTF-8 byte sequence it won't be
+	recognized as "utf-8".  You can use the |8g8| command to find the
+	illegal byte sequence.
 	WRONG VALUES:			WHAT'S WRONG:
 		latin1,utf-8		"latin1" will always be used
 		utf-8,ucs-bom,latin1	BOM won't be recognized in an utf-8
@@ -3048,8 +2999,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Note: The size of these fonts must be exactly twice as wide as the one
 	specified with 'guifont' and the same height.
 
-	'guifontwide' is only used when 'encoding' is set to "utf-8" and
-	'guifontset' is empty or invalid.
+	'guifontwide' is only used when 'guifontset' is empty or invalid.
 	When 'guifont' is set and a valid font is found in it and
 	'guifontwide' is empty Vim will attempt to find a matching
 	double-width font and set 'guifontwide' to it.
@@ -3702,7 +3652,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 		128 - 159	"~@" - "~_"
 		160 - 254	"| " - "|~"
 		   255		"~?"
-	When 'encoding' is a Unicode one, illegal bytes from 128 to 255 are
+	Illegal bytes from 128 to 255 (invalid UTF-8) are
 	displayed as <xx>, with the hexadecimal value of the byte.
 	When 'display' contains "uhex" all unprintable characters are
 	displayed as <xx>.
@@ -3980,8 +3930,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 			omitted.
 
 	The characters ':' and ',' should not be used.  UTF-8 characters can
-	be used when 'encoding' is "utf-8", otherwise only printable
-	characters are allowed.  All characters must be single width.
+	be used.  All characters must be single width.
 
 	Examples: >
 	    :set lcs=tab:>-,trail:-
@@ -4078,7 +4027,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 			{only available when compiled with the |+multi_byte|
 			feature}
 	The maximum number of combining characters supported for displaying.
-	Only used when 'encoding' is "utf-8".
 	The default is OK for most languages.  Hebrew may require 4.
 	Maximum value is 6.
 	Even when this option is set to 2 you can still edit text with more
@@ -5825,9 +5773,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	(_xx is an underscore, two letters and followed by a non-letter).
 	This is mainly for testing purposes.  You must make sure the correct
 	encoding is used, Vim doesn't check it.
-	When 'encoding' is set the word lists are reloaded.  Thus it's a good
-	idea to set 'spelllang' after setting 'encoding' to avoid loading the
-	files twice.
 	How the related spell files are found is explained here: |spell-load|.
 
 	If the |spellfile.vim| plugin is active and you use a language name

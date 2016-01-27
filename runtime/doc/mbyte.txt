@@ -70,29 +70,24 @@ See |mbyte-locale| for details.
 
 ENCODING
 
-If your locale works properly, Vim will try to set the 'encoding' option
-accordingly.  If this doesn't work you can overrule its value: >
+Nvim always uses UTF-8 internally. Thus 'encoding' option is always set
+to "utf-8" and cannot be changed.
 
-	:set encoding=utf-8
+All the text that is used inside Vim will be in UTF-8. Not only the text in
+the buffers, but also in registers, variables, etc.
 
-See |encoding-values| for a list of acceptable values.
-
-The result is that all the text that is used inside Vim will be in this
-encoding.  Not only the text in the buffers, but also in registers, variables,
-etc. 'encoding' is read-only after startup because changing it would make the
-existing text invalid.
-
-You can edit files in another encoding than what 'encoding' is set to.  Vim
+You can edit files in different encodings than UTF-8.  Nvim
 will convert the file when you read it and convert it back when you write it.
 See 'fileencoding', 'fileencodings' and |++enc|.
 
 
 DISPLAY AND FONTS
 
-If you are working in a terminal (emulator) you must make sure it accepts the
-same encoding as which Vim is working with.
+If you are working in a terminal (emulator) you must make sure it accepts
+UTF-8, the encoding which Vim is working with. Otherwise only ASCII can
+be displayed and edited correctly.
 
-For the GUI you must select fonts that work with the current 'encoding'.  This
+For the GUI you must select fonts that work with UTF-8.  This
 is the difficult part.  It depends on the system you are using, the locale and
 a few other things.  See the chapters on fonts: |mbyte-fonts-X11| for
 X-Windows and |mbyte-fonts-MSwin| for MS-Windows.
@@ -216,10 +211,9 @@ You could make a small shell script for this.
 ==============================================================================
 3.  Encoding				*mbyte-encoding*
 
-Vim uses the 'encoding' option to specify how characters are identified and
-encoded when they are used inside Vim.  This applies to all the places where
-text is used, including buffers (files loaded into memory), registers and
-variables.
+In Nvim UTF-8 is always used internally to encode characters.
+ This applies to all the places where text is used, including buffers (files
+ loaded into memory), registers and variables.
 
 							*charset* *codeset*
 Charset is another name for encoding.  There are subtle differences, but these
@@ -240,7 +234,7 @@ matter what language is used.  Thus you might see the right text even when the
 encoding was set wrong.
 
 							*encoding-names*
-Vim can use many different character encodings.  There are three major groups:
+Vim can edit files in different character encodings.  There are three major groups:
 
 1   8bit	Single-byte encodings, 256 different characters.  Mostly used
 		in USA and Europe.  Example: ISO-8859-1 (Latin1).  All
@@ -255,11 +249,10 @@ u   Unicode	Universal encoding, can replace all others.  ISO 10646.
 		Millions of different characters.  Example: UTF-8.  The
 		relation between bytes and screen cells is complex.
 
-Other encodings cannot be used by Vim internally.  But files in other
+Only UTF-8 is used by Vim internally.  But files in other
 encodings can be edited by using conversion, see 'fileencoding'.
-Note that all encodings must use ASCII for the characters up to 128.
 
-Supported 'encoding' values are:			*encoding-values*
+Recognized 'fileencoding' values include:		*encoding-values*
 1   latin1	8-bit characters (ISO 8859-1, also used for cp1252)
 1   iso-8859-n	ISO_8859 variant (n = 2 to 15)
 1   koi8-r	Russian
@@ -311,11 +304,11 @@ u   ucs-4	32 bit UCS-4 encoded Unicode (ISO/IEC 10646-1)
 u   ucs-4le	like ucs-4, little endian
 
 The {name} can be any encoding name that your system supports.  It is passed
-to iconv() to convert between the encoding of the file and the current locale.
+to iconv() to convert between UTF-8 and the encoding of the file.
 For MS-Windows "cp{number}" means using codepage {number}.
 Examples: >
-		:set encoding=8bit-cp1252
-		:set encoding=2byte-cp932
+		:set fileencoding=8bit-cp1252
+		:set fileencoding=2byte-cp932
 
 The MS-Windows codepage 1252 is very similar to latin1.  For practical reasons
 the same encoding is used and it's called latin1.  'isprint' can be used to
@@ -337,8 +330,7 @@ u   ucs-2be	same as ucs-2 (big endian)
 u   ucs-4be	same as ucs-4 (big endian)
 u   utf-32	same as ucs-4
 u   utf-32le	same as ucs-4le
-    default     stands for the default value of 'encoding', depends on the
-		environment
+    default     the encoding of the current locale.
 
 For the UCS codes the byte order matters.  This is tricky, use UTF-8 whenever
 you can.  The default is to use big-endian (most significant byte comes
@@ -363,13 +355,12 @@ or when conversion is not possible:
 CONVERSION						*charset-conversion*
 
 Vim will automatically convert from one to another encoding in several places:
-- When reading a file and 'fileencoding' is different from 'encoding'
-- When writing a file and 'fileencoding' is different from 'encoding'
+- When reading a file and 'fileencoding' is different from "utf-8"
+- When writing a file and 'fileencoding' is different from "utf-8"
 - When displaying messages and the encoding used for LC_MESSAGES differs from
-  'encoding' (requires a gettext version that supports this).
+  "utf-8" (requires a gettext version that supports this).
 - When reading a Vim script where |:scriptencoding| is different from
-  'encoding'.
-- When reading or writing a |shada| file.
+  "utf-8".
 Most of these require the |+iconv| feature.  Conversion for reading and
 writing files may also be specified with the 'charconvert' option.
 
@@ -408,11 +399,11 @@ Useful utilities for converting the charset:
 
 
 							*mbyte-conversion*
-When reading and writing files in an encoding different from 'encoding',
+When reading and writing files in an encoding different from "utf-8",
 conversion needs to be done.  These conversions are supported:
 - All conversions between Latin-1 (ISO-8859-1), UTF-8, UCS-2 and UCS-4 are
   handled internally.
-- For MS-Windows, when 'encoding' is a Unicode encoding, conversion from and
+- For MS-Windows, conversion from and
   to any codepage should work.
 - Conversion specified with 'charconvert'
 - Conversion with the iconv library, if it is available.
@@ -467,8 +458,6 @@ and you will have a working UTF-8 terminal emulator.  Try both >
 
 with the demo text that comes with ucs-fonts.tar.gz in order to see
 whether there are any problems with UTF-8 in your xterm.
-
-For Vim you may need to set 'encoding' to "utf-8".
 
 ==============================================================================
 5.  Fonts on X11					*mbyte-fonts-X11*
@@ -864,11 +853,11 @@ between two keyboard settings.
 The value of the 'keymap' option specifies a keymap file to use.  The name of
 this file is one of these two:
 
-	keymap/{keymap}_{encoding}.vim
+	keymap/{keymap}_utf-8.vim
 	keymap/{keymap}.vim
 
-Here {keymap} is the value of the 'keymap' option and {encoding} of the
-'encoding' option.  The file name with the {encoding} included is tried first.
+Here {keymap} is the value of the 'keymap' option.
+The file name with "utf-8" included is tried first.
 
 'runtimepath' is used to find these files.  To see an overview of all
 available keymap files, use this: >
@@ -950,7 +939,7 @@ this is unusual.  But you can use various ways to specify the character: >
 	A	<char-0141>	octal value
 	x	<Space>		special key name
 
-The characters are assumed to be encoded for the current value of 'encoding'.
+The characters are assumed to be encoded in UTF-8.
 It's possible to use ":scriptencoding" when all characters are given
 literally.  That doesn't work when using the <char-> construct, because the
 conversion is done on the keymap file, not on the resulting character.
@@ -1170,21 +1159,13 @@ Useful commands:
   message is truncated, use ":messages").
 - "g8" shows the bytes used in a UTF-8 character, also the composing
   characters, as hex numbers.
-- ":set encoding=utf-8 fileencodings=" forces using UTF-8 for all files.  The
-  default is to use the current locale for 'encoding' and set 'fileencodings'
-  to automatically detect the encoding of a file.
+- ":set fileencodings=" forces using UTF-8 for all files.  The
+  default is to automatically detect the encoding of a file.
 
 
 STARTING VIM
 
-If your current locale is in an utf-8 encoding, Vim will automatically start
-in utf-8 mode.
-
-If you are using another locale: >
-
-	set encoding=utf-8
-
-You might also want to select the font used for the menus.  Unfortunately this
+You might want to select the font used for the menus.  Unfortunately this
 doesn't always work.  See the system specific remarks below, and 'langmenu'.
 
 
@@ -1245,10 +1226,9 @@ not everybody is able to type a composing character.
 These options are relevant for editing multi-byte files.  Check the help in
 options.txt for detailed information.
 
-'encoding'	Encoding used for the keyboard and display.  It is also the
-		default encoding for files.
+'encoding'	Internal text encoding, always "utf-8".
 
-'fileencoding'	Encoding of a file.  When it's different from 'encoding'
+'fileencoding'	Encoding of a file.  When it's different from "utf-8"
 		conversion is done when reading or writing the file.
 
 'fileencodings'	List of possible encodings of a file.  When opening a file
