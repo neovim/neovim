@@ -10792,7 +10792,7 @@ static void f_glob2regpat(typval_T *argvars, typval_T *rettv)
   char_u *pat = get_tv_string_chk(&argvars[0]);  // NULL on type error
 
   rettv->v_type = VAR_STRING;
-  rettv->vval.v_string = (pat == NULL || *pat == NUL)
+  rettv->vval.v_string = (pat == NULL)
     ? NULL
     : file_pat_to_reg_pat(pat, NULL, NULL, false);
 }

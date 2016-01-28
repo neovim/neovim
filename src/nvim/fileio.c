@@ -7119,6 +7119,10 @@ char_u * file_pat_to_reg_pat(
   if (pat_end == NULL)
     pat_end = pat + STRLEN(pat);
 
+  if (pat_end == pat) {
+    return (char_u *)xstrdup("^$");
+  }
+
   size_t size = 2;  // '^' at start, '$' at end.
 
   for (p = pat; p < pat_end; p++) {
