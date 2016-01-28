@@ -103,7 +103,7 @@ typedef struct dictitem_S dictitem_T;
 
 #define DI_FLAGS_RO     1   // "di_flags" value: read-only variable
 #define DI_FLAGS_RO_SBX 2   // "di_flags" value: read-only in the sandbox
-#define DI_FLAGS_FIX    4   // "di_flags" value: fixed variable, not allocated
+#define DI_FLAGS_FIX    4   // "di_flags" value: fixed: no :unlet or remove()
 #define DI_FLAGS_LOCK   8   // "di_flags" value: locked variable
 #define DI_FLAGS_ALLOC  16  // "di_flags" value: separately allocated
 
