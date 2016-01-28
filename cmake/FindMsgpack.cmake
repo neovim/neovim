@@ -7,7 +7,7 @@
 if(NOT MSGPACK_USE_BUNDLED)
   find_package(PkgConfig)
   if (PKG_CONFIG_FOUND)
-    pkg_search_module(PC_MSGPACK QUIET msgpackc msgpack)
+    pkg_search_module(PC_MSGPACK QUIET msgpackc>=1.0 msgpack>=1.0)
   endif()
 else()
   set(PC_MSGPACK_INCLUDEDIR)
