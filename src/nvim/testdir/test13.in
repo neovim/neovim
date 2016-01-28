@@ -48,6 +48,12 @@ otestje3
 :au BufWipeout Xtestje1 buf Xtestje1
 :bwipe
 :w >>test.out
+:only
+:help
+:wincmd w
+:1quit
+:$put ='Final line'
+:$w >>test.out
 :qa!
 ENDTEST
 
