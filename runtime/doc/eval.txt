@@ -524,7 +524,7 @@ Funcref to a Dictionary, but the "self" variable is not available then.
 To avoid the extra name for the function it can be defined and directly
 assigned to a Dictionary in this way: >
 	:let mydict = {'data': [0, 1, 2, 3]}
-	:function mydict.len() dict
+	:function mydict.len()
 	:   return len(self.data)
 	:endfunction
 	:echo mydict.len()

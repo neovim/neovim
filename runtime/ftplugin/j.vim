@@ -2,7 +2,7 @@
 " Language:	J
 " Maintainer:	David Bürgin <676c7473@gmail.com>
 " URL:		https://github.com/glts/vim-j
-" Last Change:	2015-01-11
+" Last Change:	2015-03-27
 
 if exists('b:did_ftplugin')
   finish
@@ -16,12 +16,9 @@ setlocal iskeyword=48-57,A-Z,_,a-z
 setlocal comments=:NB.
 setlocal commentstring=NB.\ %s
 setlocal formatoptions-=t
-setlocal shiftwidth=2
-setlocal softtabstop=2
-setlocal expandtab
 setlocal matchpairs=(:)
 
-let b:undo_ftplugin = 'setlocal matchpairs< expandtab< softtabstop< shiftwidth< formatoptions< commentstring< comments< iskeyword<'
+let b:undo_ftplugin = 'setlocal matchpairs< formatoptions< commentstring< comments< iskeyword<'
 
 " Section movement with ]] ][ [[ []. The start/end patterns below are amended
 " inside the function in order to avoid matching on the current cursor line.

@@ -1,4 +1,4 @@
-*usr_02.txt*	For Vim version 7.4.  Last change: 2010 Jul 20
+*usr_02.txt*	For Vim version 7.4.  Last change: 2015 Apr 12
 
 		     VIM USER MANUAL - by Bram Moolenaar
 
@@ -516,9 +516,11 @@ Summary: 					*help-summary*  >
 	:help subject()
 <		Function "subject". >
 	:help -subject
-<		Command-line option "-subject". >
+<		Command-line argument "-subject". >
 	:help +subject
 <		Compile-time feature "+subject". >
+	:help /*
+<		Regular expression item "*" >
 	:help EventName
 <		Autocommand event "EventName". >
 	:help digraphs.txt

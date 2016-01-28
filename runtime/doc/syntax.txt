@@ -1,4 +1,4 @@
-*syntax.txt*	For Vim version 7.4.  Last change: 2015 Mar 20
+*syntax.txt*	For Vim version 7.4.  Last change: 2015 Mar 29
 
 
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
@@ -3306,6 +3306,32 @@ must not click outside of the pixel strings, but feel free to improve it.
 
 It will look much better with a font in a quadratic cell size, e.g. for X: >
 	:set guifont=-*-clean-medium-r-*-*-8-*-*-*-*-80-*
+
+
+YAML						*yaml.vim* *ft-yaml-syntax*
+
+					*g:yaml_schema* *b:yaml_schema*
+A YAML schema is a combination of a set of tags and a mechanism for resolving 
+non-specific tags. For user this means that YAML parser may, depending on 
+plain scalar contents, treat plain scalar (which can actually be only string 
+and nothing else) as a value of the other type: null, boolean, floating-point, 
+integer. `g:yaml_schema` option determines according to which schema values 
+will be highlighted specially. Supported schemas are
+
+Schema		Description ~
+failsafe	No additional highlighting.
+json		Supports JSON-style numbers, booleans and null.
+core		Supports more number, boolean and null styles.
+pyyaml		In addition to core schema supports highlighting timestamps, 
+		but there are some differences in what is recognized as 
+		numbers and many additional boolean values not present in core 
+		schema.
+
+Default schema is `core`.
+
+Note that schemas are not actually limited to plain scalars, but this is the 
+only difference between schemas defined in YAML specification and the only 
+difference defined in the syntax file.
 
 ==============================================================================
 5. Defining a syntax					*:syn-define* *E410*

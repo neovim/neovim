@@ -1,7 +1,7 @@
 " Vim support file to detect file types
 "
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2015 Mar 13
+" Last Change:	2015 Apr 06
 
 " Listen very carefully, I will say this only once
 if exists("did_load_filetypes")
@@ -1290,7 +1290,7 @@ au BufNewFile,BufRead *.mush			setf mush
 au BufNewFile,BufRead Mutt{ng,}rc		setf muttrc
 
 " Nano
-au BufNewFile,BufRead */etc/nanorc,.nanorc	setf nanorc
+au BufNewFile,BufRead */etc/nanorc,*.nanorc  	setf nanorc
 
 " Nastran input/DMAP
 "au BufNewFile,BufRead *.dat			setf nastran
