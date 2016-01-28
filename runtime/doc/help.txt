@@ -1,4 +1,4 @@
-*help.txt*	For Vim version 7.4.  Last change: 2015 Apr 11
+*help.txt*	For Vim version 7.4.  Last change: 2015 Apr 15
 
 			VIM - main help file
 									 k
@@ -171,16 +171,6 @@ Standard plugins ~
 |pi_zip.txt|       Zip archive explorer
 
 LOCAL ADDITIONS:				*local-additions*
-|Mines.txt|	The Mines Game 				Jul 30, 2009
-|Tabular.txt|   Configurable, flexible, intuitive text aligning
-|cecutil.txt|	DrChip's Utilities				Jun 11, 2004
-|example.txt|	Example for a locally added help file
-|matchit.txt|   Extended "%" matching
-|pi_netrw.txt|  For Vim version 7.4.  Last change: 2014 Jul 09
-|synchk.txt|	Syntax Checker    			May 15, 2013
-|test.txt|	Testing the hélp cömmånd nôw
-|typecorr.txt|	Plugin for correcting typing mistakes
-|helpp.txt|	Dummy line to avoid an error message
 
 ------------------------------------------------------------------------------
 *bars*		Bars example
