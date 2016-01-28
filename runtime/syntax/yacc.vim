@@ -1,8 +1,8 @@
 " Vim syntax file
 " Language:	Yacc
 " Maintainer:	Charles E. Campbell <NdrOchipS@PcampbellAfamily.Mbiz>
-" Last Change:	Jan 14, 2015
-" Version:	12
+" Last Change:	Apr 02, 2015
+" Version:	13
 " URL:	http://mysite.verizon.net/astronaut/vim/index.html#vimlinks_syntax
 "
 " Options: {{{1

@@ -1,8 +1,8 @@
 " Vim syntax file
 " Language:	C-shell (csh)
 " Maintainer:	Charles E. Campbell <NdrOchipS@PcampbellAfamily.Mbiz>
-" Version:	11
 " Last Change:	Oct 23, 2014
+" Version:	11
 " URL:	http://www.drchip.org/astronaut/vim/index.html#SYNTAX_CSH
 
 " For version 5.x: Clear all syntax items
