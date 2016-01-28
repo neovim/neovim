@@ -425,9 +425,13 @@ char_u *vim_strchr(const char_u *string, int c)
   const char_u *p = string;
   if (enc_utf8 && c >= 0x80) {
     while (*p != NUL) {
-      if (utf_ptr2char(p) == c)
+      int l = (*mb_ptr2len)(p);
+
+      // Avoid matching an illegal byte here.
+      if (l > 1 && utf_ptr2char(p) == c) {
         return (char_u *) p;
-      p += (*mb_ptr2len)(p);
+      }
+      p += l;
     }
     return NULL;
   }
