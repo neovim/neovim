@@ -1673,6 +1673,11 @@ do_set (
                          && *newval != NUL);
                 if (adding) {
                   i = (int)STRLEN(origval);
+                  // Strip a trailing comma, would get 2.
+                  if (comma && i > 1 && origval[i - 1] == ','
+                      && origval[i - 2] != '\\') {
+                    --i;
+                  }
                   memmove(newval + i + comma, newval,
                       STRLEN(newval) + 1);
                   memmove(newval, origval, (size_t)i);
