@@ -7,7 +7,7 @@ export SHELL := sh
 VIMPROG := ../../../build/bin/nvim
 SCRIPTSOURCE := ../../../runtime
 
-SCRIPTS := test_eval.out                                               \
+SCRIPTS :=                                                             \
                                    test8.out               test10.out  \
            test11.out  test12.out  test13.out  test14.out              \
                        test17.out                                      \
