@@ -1913,9 +1913,16 @@ int win_close(win_T *win, int free_buf)
    */
   if (win->w_buffer != NULL) {
     win->w_closing = true;
-    close_buffer(win, win->w_buffer, free_buf ? DOBUF_UNLOAD : 0, TRUE);
-    if (win_valid(win))
+    close_buffer(win, win->w_buffer, free_buf ? DOBUF_UNLOAD : 0, true);
+    if (win_valid(win)) {
       win->w_closing = false;
+    }
+
+    // Make sure curbuf is valid. It can become invalid if 'bufhidden' is
+    // "wipe".
+    if (!buf_valid(curbuf)) {
+      curbuf = firstbuf;
+    }
   }
 
   if (only_one_window() && win_valid(win) && win->w_buffer == NULL
