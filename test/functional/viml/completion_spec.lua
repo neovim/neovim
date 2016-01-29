@@ -100,4 +100,43 @@ describe('completion', function()
       eq('', eval('getline(3)'))
     end)
   end)
+  describe('with always option', function ()
+    before_each(function ()
+      source([[
+function! TestCompletion(findstart, base) abort
+  if a:findstart
+    let line = getline('.')
+    let start = col('.') - 1
+    while start > 0 && line[start - 1] =~ '\a'
+      let start -= 1
+    endwhile
+    return start
+  else
+    let ret = []
+    for m in split("January February March April May June July Auguest September October November December")
+      if m =~ a:base            " match by regex
+        call add(ret, m)
+      endif
+    endfor
+    return {'words':ret, 'refresh':'always'}
+  endif
+endfunction
+
+set completeopt=menuone,noselect
+set completefunc=TestCompletion
+      ]])
+    end )
+
+    it('should complete when add more char', function ()
+      -- to select first word after input char:
+      -- <Down><C-y> work, <C-n> not work.
+      -- but <C-n><C-n>work. there may have some bugs with <C-n>
+      feed('i<C-x><C-u>gu<Down><C-y><ESC>')
+      eq('Auguest', eval('getline(1)'))
+    end)
+    it("shouldn't break repeat", function ()
+      feed('o<C-x><C-u>Ja<BS>un<Down><C-y><ESC>', '.')
+      eq('June', eval('getline(3)'))
+    end)
+  end)
 end)
