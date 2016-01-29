@@ -17,11 +17,11 @@ describe('eval', function()
       lang C
 
       fun AppendRegContents(reg)
-	  call AppendRegParts(a:reg, getregtype(a:reg), getreg(a:reg), string(getreg(a:reg, 0, 1)), getreg(a:reg, 1), string(getreg(a:reg, 1, 1)))
+        call AppendRegParts(a:reg, getregtype(a:reg), getreg(a:reg), string(getreg(a:reg, 0, 1)), getreg(a:reg, 1), string(getreg(a:reg, 1, 1)))
       endfun
 
       fun AppendRegParts(reg, type, cont, strcont, cont1, strcont1)
-	  call append('$', printf('%s: type %s; value: %s (%s), expr: %s (%s)', a:reg, a:type, a:cont, a:strcont, a:cont1, a:strcont1))
+        call append('$', printf('%s: type %s; value: %s (%s), expr: %s (%s)', a:reg, a:type, a:cont, a:strcont, a:cont1, a:strcont1))
       endfun
 
       command -nargs=? AR :call AppendRegContents(<q-args>)
@@ -38,8 +38,6 @@ describe('eval', function()
   end)
   before_each(clear)
   teardown(function()
-    os.remove('test.out')
-    os.remove('test_eval_func.vim')
     os.remove('test_eval_setup.vim')
   end)
 
@@ -421,7 +419,7 @@ describe('eval', function()
 
   -- The tests for setting lists with NLs are split into seperate it() blocks
   -- to make the expect() calls easier to write.  Otherwise the null byte can
-  -- make trouble on a line on it's own.
+  -- make trouble on a line on its own.
   it('setting lists with NLs with setreg(), part 1', function()
     execute('so test_eval_setup.vim')
     execute([=[call SetReg('a', ['abcA4-0', "\n", "abcA4-2\n", "\nabcA4-3", "abcA4-4\nabcA4-4-2"])]=])
@@ -519,7 +517,6 @@ describe('eval', function()
       =: type v; value: abc/]].."\x00 (['abc/\x00"..[[']), expr: "abc/]]..'\x00'..[[" (['"abc/]]..'\x00'..[["'])]])
   end)
 
-  -- If the clipboard feature is not available the next test will be sciped.
   if has_clipboard() then
     it('system clipboard', function()
       insert([[
