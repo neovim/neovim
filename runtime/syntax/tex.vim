@@ -1,8 +1,8 @@
 " Vim syntax file
 " Language:	TeX
 " Maintainer:	Charles E. Campbell <NdrchipO@ScampbellPfamily.AbizM>
-" Last Change:	Nov 18, 2014
-" Version:	83
+" Last Change:	Apr 02, 2015
+" Version:	84
 " URL:		http://www.drchip.org/astronaut/vim/index.html#SYNTAX_TEX
 "
 " Notes: {{{1
@@ -391,10 +391,17 @@ endif
 " particular support for bold and italic {{{1
 if s:tex_fast =~ 'b'
   if s:tex_conceal =~ 'b'
-   syn region texBoldStyle	matchgroup=texTypeStyle start="\\textbf\s*{" end="}" concealends contains=@texBoldGroup
-   syn region texBoldItalStyle	matchgroup=texTypeStyle start="\\textit\s*{" end="}" concealends contains=@texItalGroup
-   syn region texItalStyle	matchgroup=texTypeStyle start="\\textit\s*{" end="}" concealends contains=@texItalGroup
-   syn region texItalBoldStyle	matchgroup=texTypeStyle start="\\textbf\s*{" end="}" concealends contains=@texBoldGroup
+   if !exists("g:tex_nospell") || !g:tex_nospell
+    syn region texBoldStyle	matchgroup=texTypeStyle start="\\textbf\s*\ze{" matchgroup=Delimiter end="}" concealends contains=@texBoldGroup,@Spell
+    syn region texBoldItalStyle	matchgroup=texTypeStyle start="\\textit\s*\ze{" matchgroup=Delimiter end="}" concealends contains=@texItalGroup,@Spell
+    syn region texItalStyle	matchgroup=texTypeStyle start="\\textit\s*\ze{" matchgroup=Delimiter end="}" concealends contains=@texItalGroup,@Spell
+    syn region texItalBoldStyle	matchgroup=texTypeStyle start="\\textbf\s*\ze{" matchgroup=Delimiter end="}" concealends contains=@texBoldGroup,@Spell
+   else
+    syn region texBoldStyle	matchgroup=texTypeStyle start="\\textbf\s*\ze{" matchgroup=Delimiter end="}" concealends contains=@texBoldGroup
+    syn region texBoldItalStyle	matchgroup=texTypeStyle start="\\textit\s*\ze{" matchgroup=Delimiter end="}" concealends contains=@texItalGroup
+    syn region texItalStyle	matchgroup=texTypeStyle start="\\textit\s*\ze{" matchgroup=Delimiter end="}" concealends contains=@texItalGroup
+    syn region texItalBoldStyle	matchgroup=texTypeStyle start="\\textbf\s*\ze{" matchgroup=Delimiter end="}" concealends contains=@texBoldGroup
+   endif
   endif
 endif
 
@@ -576,14 +583,14 @@ else
    syn match  texComment	"%.*$"			contains=@texCommentGroup
    if s:tex_fast =~ 'c'
     syn region texComment	start="^\zs\s*%.*\_s*%"	skip="^\s*%"	end='^\ze\s*[^%]' fold
-    syn region texNoSpell	contained	matchgroup=texComment start="%\s*nospell\s*{"		end="%\s*nospell\s*}"	fold contains=@texFoldGroup,@NoSpell
-    syn region texSpellZone		 	matchgroup=texComment start="%\s*spellzone_start"	end="%\s*spellzone_end"	fold contains=@Spell,@texFoldGroup
+    syn region texNoSpell	contained		matchgroup=texComment start="%\s*nospell\s*{"		end="%\s*nospell\s*}"	fold contains=@texFoldGroup,@NoSpell
+    syn region texSpellZone		 		matchgroup=texComment start="%\s*spellzone_start"	end="%\s*spellzone_end"	fold contains=@Spell,@texFoldGroup
    endif
   else
-   syn match texComment		"%.*$"		contains=@texCommentGroup
+   syn match texComment		"%.*$"			contains=@texCommentGroup
    if s:tex_fast =~ 'c'
-    syn region texNoSpell	contained	matchgroup=texComment start="%\s*nospell\s*{"		end="%\s*nospell\s*}"	contains=@texFoldGroup,@NoSpell
-    syn region  texSpellZone		 	matchgroup=texComment start="%\s*spellzone_start"	end="%\s*spellzone_end"	contains=@Spell,@texFoldGroup
+    syn region texNoSpell	contained		matchgroup=texComment start="%\s*nospell\s*{"		end="%\s*nospell\s*}"	contains=@texFoldGroup,@NoSpell
+    syn region  texSpellZone		 		matchgroup=texComment start="%\s*spellzone_start"	end="%\s*spellzone_end"	contains=@Spell,@texFoldGroup
    endif
   endif
 endif

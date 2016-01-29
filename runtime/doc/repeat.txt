@@ -1,4 +1,4 @@
-*repeat.txt*    For Vim version 7.4.  Last change: 2015 Jan 07
+*repeat.txt*    For Vim version 7.4.  Last change: 2015 Apr 13
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -583,6 +583,7 @@ For example, to profile the one_script.vim script file: >
 
 :prof[ile] start {fname}			*:prof* *:profile* *E750*
 		Start profiling, write the output in {fname} upon exit.
+		"~/" and environment variables in {fname} will be expanded.
 		If {fname} already exists it will be silently overwritten.
 		The variable |v:profiling| is set to one.
 

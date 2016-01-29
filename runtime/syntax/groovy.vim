@@ -4,7 +4,7 @@
 " Maintainer:	Tobias Rapp <yahuxo@gmx.de>
 " Version: 	0.1.13
 " URL:	  http://www.vim.org/scripts/script.php?script_id=945
-" Last Change:	2013 Apr 24
+" Last Change:	2015 Apr 13
 
 " THE ORIGINAL AUTHOR'S NOTES:
 "
@@ -220,7 +220,6 @@ syn region  groovyComment          start="/\*"  end="\*/" contains=@groovyCommen
 syn match   groovyCommentStar      contained "^\s*\*[^/]"me=e-1
 syn match   groovyCommentStar      contained "^\s*\*$"
 syn match   groovyLineComment      "//.*" contains=@groovyCommentSpecial2,groovyTodo,@Spell
-syn match   groovyLineComment      "#.*" contains=@groovyCommentSpecial2,groovyTodo,@Spell
 GroovyHiLink groovyCommentString groovyString
 GroovyHiLink groovyComment2String groovyString
 GroovyHiLink groovyCommentCharacter groovyCharacter
