@@ -608,6 +608,7 @@ scope int encode_vim_to_##name(firstargtype firstargname, typval_T *const tv, \
         break; \
       } \
     } \
+    assert(cur_tv != NULL); \
     if (name##_convert_one_value(firstargname, &mpstack, cur_tv, copyID, \
                                  objname) == FAIL) { \
       goto encode_vim_to_##name##_error_ret; \
