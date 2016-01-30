@@ -445,17 +445,10 @@ do_tag (
         tagmatchname = vim_strsave(name);
       }
 
-      /*
-       * If a count is supplied to the ":tag <name>" command, then
-       * jump to count'th matching tag.
-       */
-      if (type == DT_TAG && *tag != NUL && count > 0)
-        cur_match = count - 1;
-
-      if (type == DT_SELECT || type == DT_JUMP
-          || type == DT_LTAG
-          )
+      if (type == DT_TAG || type == DT_SELECT || type == DT_JUMP
+          || type == DT_LTAG) {
         cur_match = MAXCOL - 1;
+      }
       max_num_matches = cur_match + 1;
 
       /* when the argument starts with '/', use it as a regexp */
@@ -511,8 +504,11 @@ do_tag (
       if (type == DT_CSCOPE && num_matches > 1) {
         cs_print_tags();
         ask_for_selection = TRUE;
-      } else if (type == DT_SELECT ||
-                 (type == DT_JUMP && num_matches > 1))        {
+      } else if (type == DT_TAG) {
+        // If a count is supplied to the ":tag <name>" command, then
+        // jump to count'th matching tag.
+        cur_match = count > 0 ? count - 1 : 0;
+      } else if (type == DT_SELECT || (type == DT_JUMP && num_matches > 1)) {
         /*
          * List all the matching tags.
          * Assume that the first match indicates how long the tags can
@@ -851,7 +847,7 @@ do_tag (
 
 
       ic = (matches[cur_match][0] & MT_IC_OFF);
-      if (type != DT_SELECT && type != DT_JUMP
+      if (type != DT_TAG && type != DT_SELECT && type != DT_JUMP
           && type != DT_CSCOPE
           && (num_matches > 1 || ic)
           && !skip_msg) {
