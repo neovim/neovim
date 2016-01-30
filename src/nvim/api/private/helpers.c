@@ -397,13 +397,13 @@ bool object_to_vim(Object obj, typval_T *tv, Error *err)
 
   switch (obj.type) {
     case kObjectTypeNil:
-      tv->v_type = VAR_NUMBER;
-      tv->vval.v_number = 0;
+      tv->v_type = VAR_SPECIAL;
+      tv->vval.v_special = kSpecialVarNull;
       break;
 
     case kObjectTypeBoolean:
-      tv->v_type = VAR_NUMBER;
-      tv->vval.v_number = obj.data.boolean;
+      tv->v_type = VAR_SPECIAL;
+      tv->vval.v_special = obj.data.boolean? kSpecialVarTrue: kSpecialVarFalse;
       break;
 
     case kObjectTypeBuffer:

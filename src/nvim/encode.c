@@ -343,6 +343,24 @@ static int name##_convert_one_value(firstargtype firstargname, \
           })); \
       break; \
     } \
+    case VAR_SPECIAL: { \
+      switch (tv->vval.v_special) { \
+        case kSpecialVarNull: { \
+          CONV_NIL(); \
+          break; \
+        } \
+        case kSpecialVarTrue: \
+        case kSpecialVarFalse: { \
+          CONV_BOOL(tv->vval.v_special == kSpecialVarTrue); \
+          break; \
+        } \
+        case kSpecialVarNone: { \
+          CONV_NONE(); \
+          break; \
+        } \
+      } \
+      break; \
+    } \
     case VAR_DICT: { \
       if (tv->vval.v_dict == NULL \
           || tv->vval.v_dict->dv_hashtab.ht_used == 0) { \
@@ -369,14 +387,14 @@ static int name##_convert_one_value(firstargtype firstargname, \
         } \
         switch ((MessagePackType) i) { \
           case kMPNil: { \
-            CONV_SPECIAL_NIL(); \
+            CONV_NIL(); \
             break; \
           } \
           case kMPBoolean: { \
             if (val_di->di_tv.v_type != VAR_NUMBER) { \
               goto name##_convert_one_value_regular_dict; \
             } \
-            CONV_SPECIAL_BOOL(val_di->di_tv.vval.v_number); \
+            CONV_BOOL(val_di->di_tv.vval.v_number); \
             break; \
           } \
           case kMPInteger: { \
@@ -698,9 +716,14 @@ encode_vim_to_##name##_error_ret: \
 #define CONV_EMPTY_DICT() \
     ga_concat(gap, "{}")
 
-#define CONV_SPECIAL_NIL()
+#define CONV_NIL() \
+    ga_append(gap, "v:null")
 
-#define CONV_SPECIAL_BOOL(num)
+#define CONV_BOOL(num) \
+    ga_append(gap, ((num)? "v:true": "v:false"))
+
+#define CONV_NONE() \
+    ga_append(gap, "v:none")
 
 #define CONV_UNSIGNED_NUMBER(num)
 
@@ -804,12 +827,12 @@ DEFINE_VIML_CONV_FUNCTIONS(, echo, garray_T *const, gap)
 #undef CONV_ALLOW_SPECIAL
 #define CONV_ALLOW_SPECIAL true
 
-#undef CONV_SPECIAL_NIL
-#define CONV_SPECIAL_NIL() \
+#undef CONV_NIL
+#define CONV_NIL() \
       ga_concat(gap, "null")
 
-#undef CONV_SPECIAL_BOOL
-#define CONV_SPECIAL_BOOL(num) \
+#undef CONV_BOOL
+#define CONV_BOOL(num) \
       ga_concat(gap, ((num)? "true": "false"))
 
 #undef CONV_UNSIGNED_NUMBER
@@ -1046,6 +1069,9 @@ static inline bool check_json_key(const typval_T *const tv)
       } \
     } while (0)
 
+#undef CONV_NONE
+#define CONV_NONE()
+
 DEFINE_VIML_CONV_FUNCTIONS(static, json, garray_T *const, gap)
 
 #undef CONV_STRING
@@ -1057,8 +1083,9 @@ DEFINE_VIML_CONV_FUNCTIONS(static, json, garray_T *const, gap)
 #undef CONV_EMPTY_LIST
 #undef CONV_LIST_START
 #undef CONV_EMPTY_DICT
-#undef CONV_SPECIAL_NIL
-#undef CONV_SPECIAL_BOOL
+#undef CONV_NIL
+#undef CONV_BOOL
+#undef CONV_NONE
 #undef CONV_UNSIGNED_NUMBER
 #undef CONV_DICT_START
 #undef CONV_DICT_END
@@ -1191,10 +1218,14 @@ char *encode_tv2json(typval_T *tv, size_t *len)
 #define CONV_EMPTY_DICT() \
     msgpack_pack_map(packer, 0)
 
-#define CONV_SPECIAL_NIL() \
+#define CONV_NIL() \
     msgpack_pack_nil(packer)
 
-#define CONV_SPECIAL_BOOL(num) \
+#define CONV_NONE() \
+    return conv_error(_("E953: Attempt to convert v:none in %s, %s"), \
+                      mpstack, objname)
+
+#define CONV_BOOL(num) \
     do { \
       if ((num)) { \
         msgpack_pack_true(packer); \
@@ -1239,8 +1270,8 @@ DEFINE_VIML_CONV_FUNCTIONS(, msgpack, msgpack_packer *const, packer)
 #undef CONV_EMPTY_LIST
 #undef CONV_LIST_START
 #undef CONV_EMPTY_DICT
-#undef CONV_SPECIAL_NIL
-#undef CONV_SPECIAL_BOOL
+#undef CONV_NIL
+#undef CONV_BOOL
 #undef CONV_UNSIGNED_NUMBER
 #undef CONV_DICT_START
 #undef CONV_DICT_END

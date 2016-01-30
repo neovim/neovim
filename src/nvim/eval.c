@@ -8474,6 +8474,9 @@ static void f_empty(typval_T *argvars, typval_T *rettv)
     n = argvars[0].vval.v_dict == NULL
         || argvars[0].vval.v_dict->dv_hashtab.ht_used == 0;
     break;
+  case VAR_SPECIAL:
+    n = argvars[0].vval.v_special != kSpecialVarTrue;
+    break;
   default:
     EMSG2(_(e_intern2), "f_empty()");
     n = 0;
@@ -17571,26 +17574,27 @@ handle_subscript (
 void free_tv(typval_T *varp)
 {
   if (varp != NULL) {
-    switch (varp->v_type) {
-    case VAR_FUNC:
-      func_unref(varp->vval.v_string);
-    /*FALLTHROUGH*/
-    case VAR_STRING:
-      xfree(varp->vval.v_string);
-      break;
-    case VAR_LIST:
-      list_unref(varp->vval.v_list);
-      break;
-    case VAR_DICT:
-      dict_unref(varp->vval.v_dict);
-      break;
-    case VAR_NUMBER:
-    case VAR_FLOAT:
-    case VAR_UNKNOWN:
-      break;
-    default:
-      EMSG2(_(e_intern2), "free_tv()");
-      break;
+    switch ((VarType) varp->v_type) {
+      case VAR_FUNC:
+        func_unref(varp->vval.v_string);
+        /*FALLTHROUGH*/
+      case VAR_STRING:
+        xfree(varp->vval.v_string);
+        break;
+      case VAR_LIST:
+        list_unref(varp->vval.v_list);
+        break;
+      case VAR_DICT:
+        dict_unref(varp->vval.v_dict);
+        break;
+      case VAR_SPECIAL:
+      case VAR_NUMBER:
+      case VAR_FLOAT:
+      case VAR_UNKNOWN:
+        break;
+      default:
+        EMSG2(_(e_intern2), "free_tv()");
+        break;
     }
     xfree(varp);
   }
