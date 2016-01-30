@@ -5,6 +5,7 @@ Look in the file for hints on how it can be disabled without deleting it.
 
 getscriptPlugin.vim  get latest version of Vim scripts
 gzip.vim	     edit compressed files
+logiPat.vim	     logical operators on patterns
 matchparen.vim	     highlight paren matching the one under the cursor
 netrwPlugin.vim	     edit files over a network and browse (remote) directories
 rrhelper.vim	     used for --remote-wait editing
