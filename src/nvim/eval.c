@@ -15256,7 +15256,7 @@ static void f_setmatches(typval_T *argvars, typval_T *rettv)
 
         // match from matchaddpos()
         for (i = 1; i < 9; ++i) {
-          sprintf((char *)buf, (char *)"pos%d", i);
+          snprintf((char *)buf, sizeof(buf), (char *)"pos%d", i);
           if ((di = dict_find(d, (char_u *)buf, -1)) != NULL) {
             if (di->di_tv.v_type != VAR_LIST) {
               return;
@@ -15271,12 +15271,12 @@ static void f_setmatches(typval_T *argvars, typval_T *rettv)
       }
 
       if (i == 0) {
-        match_add(curwin, get_dict_string(d, (char_u *)"group", FALSE),
-                  get_dict_string(d, (char_u *)"pattern", FALSE),
+        match_add(curwin, get_dict_string(d, (char_u *)"group", false),
+                  get_dict_string(d, (char_u *)"pattern", false),
                   (int)get_dict_number(d, (char_u *)"priority"),
                   (int)get_dict_number(d, (char_u *)"id"), NULL);
       } else {
-        match_add(curwin, get_dict_string(d, (char_u *)"group", FALSE),
+        match_add(curwin, get_dict_string(d, (char_u *)"group", false),
                   NULL, (int)get_dict_number(d, (char_u *)"priority"),
                   (int)get_dict_number(d, (char_u *)"id"), s);
         list_unref(s);

@@ -499,21 +499,19 @@ do_tag (
         EMSG2(_("E426: tag not found: %s"), name);
       g_do_tagpreview = 0;
     } else {
-      int ask_for_selection = FALSE;
+      bool ask_for_selection = false;
 
       if (type == DT_CSCOPE && num_matches > 1) {
         cs_print_tags();
-        ask_for_selection = TRUE;
+        ask_for_selection = true;
       } else if (type == DT_TAG) {
         // If a count is supplied to the ":tag <name>" command, then
         // jump to count'th matching tag.
         cur_match = count > 0 ? count - 1 : 0;
       } else if (type == DT_SELECT || (type == DT_JUMP && num_matches > 1)) {
-        /*
-         * List all the matching tags.
-         * Assume that the first match indicates how long the tags can
-         * be, and align the file names to that.
-         */
+        // List all the matching tags.
+        // Assume that the first match indicates how long the tags can
+        // be, and align the file names to that.
         parse_match(matches[0], &tagp);
         taglen = (int)(tagp.tagname_end - tagp.tagname + 2);
         if (taglen < 18)
@@ -662,9 +660,10 @@ do_tag (
             msg_putchar('\n');
           os_breakcheck();
         }
-        if (got_int)
-          got_int = FALSE;              /* only stop the listing */
-        ask_for_selection = TRUE;
+        if (got_int) {
+          got_int = false;  // only stop the listing
+        }
+        ask_for_selection = true;
       } else if (type == DT_LTAG)   {
         list_T  *list;
         char_u tag_name[128 + 1];
@@ -797,10 +796,8 @@ do_tag (
         cur_match = 0;                  /* Jump to the first tag */
       }
 
-      if (ask_for_selection == TRUE) {
-        /*
-         * Ask to select a tag from the list.
-         */
+      if (ask_for_selection) {
+        // Ask to select a tag from the list.
         i = prompt_for_number(NULL);
         if (i <= 0 || i > num_matches || got_int) {
           /* no valid choice: don't change anything */
