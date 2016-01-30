@@ -528,6 +528,20 @@ describe('msgpackdump() function', function()
 
   it('can v:null', function()
     execute('let todump = v:null')
+  end)
+
+  it('can dump special bool mapping (true)', function()
+    execute('let todump = {"_TYPE": v:msgpack_types.boolean, "_VAL": 1}')
+    eq({'\195'}, eval('msgpackdump([todump])'))
+  end)
+
+  it('can dump special bool mapping (false)', function()
+    execute('let todump = {"_TYPE": v:msgpack_types.boolean, "_VAL": 0}')
+    eq({'\194'}, eval('msgpackdump([todump])'))
+  end)
+
+  it('can dump special nil mapping', function()
+    execute('let todump = {"_TYPE": v:msgpack_types.nil, "_VAL": 0}')
     eq({'\192'}, eval('msgpackdump([todump])'))
   end)
 
