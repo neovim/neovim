@@ -89,7 +89,11 @@ describe('063: Test for ":match", "matchadd()" and related functions', function(
     execute("call clearmatches()")
     execute("call setmatches(ml)")
     eq(ml, eval('getmatches()'))
+
+    -- Check that "setmatches()" can correctly restore the matches from matchaddpos()
     execute("call clearmatches()")
+    execute("call setmatches(ml)")
+    eq(ml, eval('getmatches()'))
 
     -- Check that "setmatches()" will not add two matches with the same ID. The
     -- expected behaviour (for now) is to add the first match but not the
