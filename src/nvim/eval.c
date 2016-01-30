@@ -15242,7 +15242,7 @@ static void f_setmatches(typval_T *argvars, typval_T *rettv)
     li = l->lv_first;
     while (li != NULL) {
       int i = 0;
-      char_u buf[4];
+      char_u buf[5];
       dictitem_T *di;
       d = li->li_tv.vval.v_dict;
 
