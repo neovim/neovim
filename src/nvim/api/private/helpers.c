@@ -651,6 +651,22 @@ static Object vim_to_object_rec(typval_T *obj, PMap(ptr_t) *lookup)
   }
 
   switch (obj->v_type) {
+    case VAR_SPECIAL:
+      switch (obj->vval.v_special) {
+        case kSpecialVarTrue:
+        case kSpecialVarFalse: {
+          rv.type = kObjectTypeBoolean;
+          rv.data.boolean = (obj->vval.v_special == kSpecialVarTrue);
+          break;
+        }
+        case kSpecialVarNull:
+        case kSpecialVarNone: {
+          rv.type = kObjectTypeNil;
+          break;
+        }
+      }
+      break;
+
     case VAR_STRING:
       rv.type = kObjectTypeString;
       rv.data.string = cstr_to_string((char *) obj->vval.v_string);
@@ -729,6 +745,10 @@ static Object vim_to_object_rec(typval_T *obj, PMap(ptr_t) *lookup)
           }
         }
       }
+      break;
+
+    case VAR_UNKNOWN:
+    case VAR_FUNC:
       break;
   }
 

@@ -51,6 +51,9 @@ static inline ListReaderState encode_init_lrstate(const list_T *const list)
   };
 }
 
+/// Array mapping values from SpecialVarValue enum to names
+extern const char *const encode_special_var_names[];
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "encode.h.generated.h"
 #endif

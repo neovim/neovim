@@ -1418,6 +1418,13 @@ v:exception	The value of the exception most recently caught and not
 	:endtry
 <		Output: "caught oops".
 
+					*v:false* *false-variable*
+v:false		Special value used to put "false" in JSON and msgpack.  See 
+		|jsonencode()|.  This value is converted to "false" when used 
+		as a String (e.g. in |expr5| with string concatenation 
+		operator) and to zero when used as a Number (e.g. in |expr5| 
+		or |expr7| when used with numeric operators).
+
 					*v:fcs_reason* *fcs_reason-variable*
 v:fcs_reason	The reason why the |FileChangedShell| event was triggered.
 		Can be used in an autocommand to decide what to do and/or what
@@ -1556,6 +1563,20 @@ v:msgpack_types	Dictionary containing msgpack types used by |msgpackparse()|
 		and |msgpackdump()|. All types inside dictionary are fixed 
 		(not editable) empty lists. To check whether some list is one 
 		of msgpack types, use |is| operator.
+
+					*v:null* *null-variable*
+v:null		Special value used to put "null" in JSON and NIL in msgpack.  
+		See |jsonencode()|.  This value is converted to "null" when 
+		used as a String (e.g. in |expr5| with string concatenation 
+		operator) and to zero when used as a Number (e.g. in |expr5| 
+		or |expr7| when used with numeric operators).
+
+					*v:none* *none-variable*
+v:none		Special value used to put an empty item in JSON.  See 
+		|jsonencode()|.  This value is converted to "none" when used 
+		as a String (e.g. in |expr5| with string concatenation 
+		operator) and to zero when used as a Number (e.g. in |expr5| 
+		or |expr7| when used with numeric operators).
 
 					*v:oldfiles* *oldfiles-variable*
 v:oldfiles	List of file names that is loaded from the |shada| file on
@@ -1721,6 +1742,13 @@ v:throwpoint	The point where the exception most recently caught and not
 	:  echo "Exception from" v:throwpoint
 	:endtry
 <		Output: "Exception from test.vim, line 2"
+
+					*v:true* *true-variable*
+v:true		Special value used to put "true" in JSON and msgpack.  See 
+		|jsonencode()|.  This value is converted to "true" when used 
+		as a String (e.g. in |expr5| with string concatenation 
+		operator) and to one when used as a Number (e.g. in |expr5| or 
+		|expr7| when used with numeric operators).
 
 						*v:val* *val-variable*
 v:val		Value of the current item of a |List| or |Dictionary|.	Only
@@ -4832,8 +4860,8 @@ msgpackdump({list})				   {Nvim} *msgpackdump()*
 		(dictionary with zero items is represented by 0x80 byte in
 		messagepack).
 
-		Limitations:					*E951* *E952*
-		1. |Funcref|s cannot be dumped.
+		Limitations:				*E951* *E952* *E953*
+		1. |Funcref|s and |v:none| cannot be dumped.
 		2. Containers that reference themselves cannot be dumped.
 		3. Dictionary keys are always dumped as STR strings.
 		4. Other strings are always dumped as BIN strings.

@@ -28,6 +28,13 @@ describe('string() function', function()
       eq('0.0', eval('string(0.0)'))
     end)
 
+    it('dumps special v: values', function()
+      eq('v:true', eval('string(v:true)'))
+      eq('v:false', eval('string(v:false)'))
+      eq('v:none', eval('string(v:none)'))
+      eq('v:null', eval('string(v:null)'))
+    end)
+
     it('dumps values with at most six digits after the decimal point',
     function()
       eq('1.234568e-20', funcs.string(1.23456789123456789123456789e-020))

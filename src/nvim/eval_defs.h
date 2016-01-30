@@ -18,11 +18,31 @@ typedef struct dictvar_S dict_T;
 
 /// Special variable values
 typedef enum {
-  kSpecialVarNull,   ///< v:null
-  kSpecialVarNone,   ///< v:none
   kSpecialVarFalse,  ///< v:false
   kSpecialVarTrue,   ///< v:true
+  kSpecialVarNone,   ///< v:none
+  kSpecialVarNull,   ///< v:null
 } SpecialVarValue;
+
+/// Variable lock status for typval_T.v_lock
+typedef enum {
+  VAR_UNLOCKED = 0,  ///< Not locked.
+  VAR_LOCKED,        ///< User lock, can be unlocked.
+  VAR_FIXED,         ///< Locked forever.
+} VarLockStatus;
+
+/// VimL variable types, for use in typval_T.v_type
+typedef enum {
+  VAR_UNKNOWN = 0,  ///< Unknown (unspecified) value.
+  VAR_NUMBER,       ///< Number, .v_number is used.
+  VAR_STRING,       ///< String, .v_string is used.
+  VAR_FUNC,         ///< Function referene, .v_string is used for function name.
+  VAR_LIST,         ///< List, .v_list is used.
+  VAR_DICT,         ///< Dictionary, .v_dict is used.
+  VAR_FLOAT,        ///< Floating-point value, .v_float is used.
+  VAR_SPECIAL,      ///< Special value (true, false, null, none), .v_special
+                    ///< is used.
+} VarType;
 
 /// Structure that holds an internal variable value
 typedef struct {
@@ -38,33 +58,10 @@ typedef struct {
   }           vval;  ///< Actual value.
 } typval_T;
 
-/// VimL variable types, for use in typval_T.v_type
-///
-/// @warning Numbers are part of the user API (returned by type()), so they must
-/// not be changed.
-typedef enum {
-  VAR_UNKNOWN = 0,  ///< Unknown (unspecified) value.
-  VAR_NUMBER = 1,   ///< Number, .v_number is used.
-  VAR_STRING = 2,   ///< String, .v_string is used.
-  VAR_FUNC = 3,     ///< Function referene, .v_string is used for function name.
-  VAR_LIST = 4,     ///< List, .v_list is used.
-  VAR_DICT = 5,     ///< Dictionary, .v_dict is used.
-  VAR_FLOAT = 6,    ///< Floating-point value, .v_float is used.
-  VAR_SPECIAL = 7,  ///< Special value (true, false, null, none), .v_special
-                    ///< is used.
-} VarType;
-
 /* Values for "dv_scope". */
 #define VAR_SCOPE     1 /* a:, v:, s:, etc. scope dictionaries */
 #define VAR_DEF_SCOPE 2 /* l:, g: scope dictionaries: here funcrefs are not
                            allowed to mask existing functions */
-
-/// Variable lock status for typval_T.v_lock
-typedef enum {
-  VAR_UNLOCKED = 0,  ///< Not locked.
-  VAR_LOCKED,        ///< User lock, can be unlocked.
-  VAR_FIXED,         ///< Locked forever.
-} VarLockStatus;
 
 /*
  * Structure to hold an item of a list: an internal variable without a name.

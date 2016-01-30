@@ -178,8 +178,6 @@ static dictitem_T globvars_var;                 /* variable used for g: */
  */
 static hashtab_T compat_hashtab;
 
-int current_copyID = 0;
-
 hashtab_T func_hashtab;
 
 /*
@@ -366,11 +364,16 @@ static struct vimvar {
   { VV_NAME("errors",           VAR_LIST), 0 },
   { VV_NAME("msgpack_types",    VAR_DICT), VV_RO },
   { VV_NAME("event",            VAR_DICT), VV_RO },
+  { VV_NAME("false",            VAR_SPECIAL), VV_RO },
+  { VV_NAME("true",             VAR_SPECIAL), VV_RO },
+  { VV_NAME("null",             VAR_SPECIAL), VV_RO },
+  { VV_NAME("none",             VAR_SPECIAL), VV_RO },
 };
 
 /* shorthand */
 #define vv_type         vv_di.di_tv.v_type
 #define vv_nr           vv_di.di_tv.vval.v_number
+#define vv_special      vv_di.di_tv.vval.v_special
 #define vv_float        vv_di.di_tv.vval.v_float
 #define vv_str          vv_di.di_tv.vval.v_string
 #define vv_list         vv_di.di_tv.vval.v_list
@@ -506,7 +509,13 @@ void eval_init(void)
   set_vim_var_list(VV_ERRORS, list_alloc());
   set_vim_var_nr(VV_SEARCHFORWARD, 1L);
   set_vim_var_nr(VV_HLSEARCH, 1L);
-  set_reg_var(0);    /* default for v:register is not 0 but '"' */
+
+  set_vim_var_special(VV_FALSE, kSpecialVarFalse);
+  set_vim_var_special(VV_TRUE, kSpecialVarTrue);
+  set_vim_var_special(VV_NONE, kSpecialVarNone);
+  set_vim_var_special(VV_NULL, kSpecialVarNull);
+
+  set_reg_var(0);  // default for v:register is not 0 but '"'
 }
 
 #if defined(EXITFREE)
@@ -2368,11 +2377,12 @@ static int tv_op(typval_T *tv1, typval_T *tv2, char_u *op)
   char_u numbuf[NUMBUFLEN];
   char_u      *s;
 
-  /* Can't do anything with a Funcref or a Dict on the right. */
+  // Can't do anything with a Funcref, a Dict or special value on the right.
   if (tv2->v_type != VAR_FUNC && tv2->v_type != VAR_DICT) {
     switch (tv1->v_type) {
     case VAR_DICT:
     case VAR_FUNC:
+    case VAR_SPECIAL:
       break;
 
     case VAR_LIST:
@@ -2440,6 +2450,9 @@ static int tv_op(typval_T *tv1, typval_T *tv2, char_u *op)
         tv1->vval.v_float -= f;
     }
       return OK;
+
+    case VAR_UNKNOWN:
+      assert(false);
     }
   }
 
@@ -3077,6 +3090,15 @@ static void item_lock(typval_T *tv, int deep, int lock)
         }
       }
     }
+    break;
+  case VAR_NUMBER:
+  case VAR_FLOAT:
+  case VAR_STRING:
+  case VAR_FUNC:
+  case VAR_SPECIAL:
+    break;
+  case VAR_UNKNOWN:
+    assert(false);
   }
   --recurse;
 }
@@ -4306,6 +4328,11 @@ eval_index (
     if (verbose)
       EMSG(_(e_float_as_string));
     return FAIL;
+  } else if (rettv->v_type == VAR_SPECIAL) {
+    if (verbose) {
+      EMSG(_("E15: Cannot index a special value"));
+    }
+    return FAIL;
   }
 
   init_tv(&var1);
@@ -4496,6 +4523,11 @@ eval_index (
         *rettv = var1;
       }
       break;
+    case VAR_FUNC:
+    case VAR_FLOAT:
+    case VAR_UNKNOWN:
+    case VAR_SPECIAL:
+      assert(false);
     }
   }
 
@@ -5040,6 +5072,12 @@ tv_equal (
     s1 = get_tv_string_buf(tv1, buf1);
     s2 = get_tv_string_buf(tv2, buf2);
     return (ic ? mb_stricmp(s1, s2) : STRCMP(s1, s2)) == 0;
+
+  case VAR_SPECIAL:
+    return tv1->vval.v_special == tv2->vval.v_special;
+
+  case VAR_UNKNOWN:
+    break;
   }
 
   EMSG2(_(e_intern2), "tv_equal()");
@@ -5505,6 +5543,22 @@ static int list_join(garray_T *const gap, list_T *const l,
   return retval;
 }
 
+/// Get next (unique) copy ID
+///
+/// Used for traversing nested structures e.g. when serializing them or garbage
+/// collecting.
+int get_copyID(void)
+  FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  // CopyID for recursively traversing lists and dicts
+  //
+  // This value is needed to avoid endless recursiveness. Last bit is used for
+  // previous_funccal and normally ignored when comparing.
+  static int current_copyID = 0;
+  current_copyID += COPYID_INC;
+  return current_copyID;
+}
+
 /*
  * Garbage collection for lists and dictionaries.
  *
@@ -5540,8 +5594,7 @@ bool garbage_collect(void)
 
   // We advance by two because we add one for items referenced through
   // previous_funccal.
-  current_copyID += COPYID_INC;
-  int copyID = current_copyID;
+  const int copyID = get_copyID();
 
   // 1. Go through all accessible variables and mark all lists and dicts
   // with copyID.
@@ -5884,6 +5937,15 @@ bool set_ref_in_item(typval_T *tv, int copyID, ht_stack_T **ht_stack,
           }
         }
       }
+      break;
+    }
+
+    case VAR_FUNC:
+    case VAR_UNKNOWN:
+    case VAR_SPECIAL:
+    case VAR_FLOAT:
+    case VAR_NUMBER:
+    case VAR_STRING: {
       break;
     }
   }
@@ -8260,9 +8322,8 @@ static void f_deepcopy(typval_T *argvars, typval_T *rettv)
   if (noref < 0 || noref > 1)
     EMSG(_(e_invarg));
   else {
-    current_copyID += COPYID_INC;
     var_item_copy(NULL, &argvars[0], rettv, true, (noref == 0
-                                                   ? current_copyID
+                                                   ? get_copyID()
                                                    : 0));
   }
 }
@@ -8477,7 +8538,7 @@ static void f_empty(typval_T *argvars, typval_T *rettv)
   case VAR_SPECIAL:
     n = argvars[0].vval.v_special != kSpecialVarTrue;
     break;
-  default:
+  case VAR_UNKNOWN:
     EMSG2(_(e_intern2), "f_empty()");
     n = 0;
   }
@@ -16386,13 +16447,28 @@ static void f_type(typval_T *argvars, typval_T *rettv)
   int n;
 
   switch (argvars[0].v_type) {
-  case VAR_NUMBER: n = 0; break;
-  case VAR_STRING: n = 1; break;
-  case VAR_FUNC:   n = 2; break;
-  case VAR_LIST:   n = 3; break;
-  case VAR_DICT:   n = 4; break;
-  case VAR_FLOAT:  n = 5; break;
-  default: EMSG2(_(e_intern2), "f_type()"); n = 0; break;
+    case VAR_NUMBER: n = 0; break;
+    case VAR_STRING: n = 1; break;
+    case VAR_FUNC:   n = 2; break;
+    case VAR_LIST:   n = 3; break;
+    case VAR_DICT:   n = 4; break;
+    case VAR_FLOAT:  n = 5; break;
+    case VAR_SPECIAL: {
+      switch (argvars[0].vval.v_special) {
+        case kSpecialVarTrue:
+        case kSpecialVarFalse: {
+          n = 6;
+          break;
+        }
+        case kSpecialVarNone:
+        case kSpecialVarNull: {
+          n = 7;
+          break;
+        }
+      }
+      break;
+    }
+    case VAR_UNKNOWN: EMSG2(_(e_intern2), "f_type()"); n = 0; break;
   }
   rettv->vval.v_number = n;
 }
@@ -17226,6 +17302,12 @@ void set_vim_var_nr(int idx, long val)
   vimvars[idx].vv_nr = val;
 }
 
+/// Set special v: variable to "val"
+void set_vim_var_special(const int idx, const SpecialVarValue val)
+{
+  vimvars[idx].vv_special = val;
+}
+
 /*
  * Get number v: variable value.
  */
@@ -17574,7 +17656,7 @@ handle_subscript (
 void free_tv(typval_T *varp)
 {
   if (varp != NULL) {
-    switch ((VarType) varp->v_type) {
+    switch (varp->v_type) {
       case VAR_FUNC:
         func_unref(varp->vval.v_string);
         /*FALLTHROUGH*/
@@ -17591,9 +17673,6 @@ void free_tv(typval_T *varp)
       case VAR_NUMBER:
       case VAR_FLOAT:
       case VAR_UNKNOWN:
-        break;
-      default:
-        EMSG2(_(e_intern2), "free_tv()");
         break;
     }
     xfree(varp);
@@ -17632,10 +17711,11 @@ void clear_tv(typval_T *varp)
     case VAR_FLOAT:
       varp->vval.v_float = 0.0;
       break;
+    case VAR_SPECIAL:
+      varp->vval.v_special = kSpecialVarFalse;
+      break;
     case VAR_UNKNOWN:
       break;
-    default:
-      EMSG2(_(e_intern2), "clear_tv()");
     }
     varp->v_lock = 0;
   }
@@ -17690,7 +17770,19 @@ long get_tv_number_chk(typval_T *varp, int *denote)
   case VAR_DICT:
     EMSG(_("E728: Using a Dictionary as a Number"));
     break;
-  default:
+  case VAR_SPECIAL:
+    switch (varp->vval.v_special) {
+      case kSpecialVarTrue: {
+        return 1;
+      }
+      case kSpecialVarFalse:
+      case kSpecialVarNone:
+      case kSpecialVarNull: {
+        return 0;
+      }
+    }
+    break;
+  case VAR_UNKNOWN:
     EMSG2(_(e_intern2), "get_tv_number()");
     break;
   }
@@ -17796,7 +17888,10 @@ static char_u *get_tv_string_buf_chk(const typval_T *varp, char_u *buf)
     if (varp->vval.v_string != NULL)
       return varp->vval.v_string;
     return (char_u *)"";
-  default:
+  case VAR_SPECIAL:
+    STRCPY(buf, encode_special_var_names[varp->vval.v_special]);
+    return buf;
+  case VAR_UNKNOWN:
     EMSG2(_(e_intern2), "get_tv_string_buf()");
     break;
   }
@@ -18345,42 +18440,34 @@ void copy_tv(typval_T *from, typval_T *to)
 {
   to->v_type = from->v_type;
   to->v_lock = 0;
+  memmove(&to->vval, &from->vval, sizeof(to->vval));
   switch (from->v_type) {
-  case VAR_NUMBER:
-    to->vval.v_number = from->vval.v_number;
-    break;
-  case VAR_FLOAT:
-    to->vval.v_float = from->vval.v_float;
-    break;
-  case VAR_STRING:
-  case VAR_FUNC:
-    if (from->vval.v_string == NULL)
-      to->vval.v_string = NULL;
-    else {
-      to->vval.v_string = vim_strsave(from->vval.v_string);
-      if (from->v_type == VAR_FUNC)
-        func_ref(to->vval.v_string);
-    }
-    break;
-  case VAR_LIST:
-    if (from->vval.v_list == NULL)
-      to->vval.v_list = NULL;
-    else {
-      to->vval.v_list = from->vval.v_list;
-      ++to->vval.v_list->lv_refcount;
-    }
-    break;
-  case VAR_DICT:
-    if (from->vval.v_dict == NULL)
-      to->vval.v_dict = NULL;
-    else {
-      to->vval.v_dict = from->vval.v_dict;
-      ++to->vval.v_dict->dv_refcount;
-    }
-    break;
-  default:
-    EMSG2(_(e_intern2), "copy_tv()");
-    break;
+    case VAR_NUMBER:
+    case VAR_FLOAT:
+    case VAR_SPECIAL:
+      break;
+    case VAR_STRING:
+    case VAR_FUNC:
+      if (from->vval.v_string != NULL) {
+        to->vval.v_string = vim_strsave(from->vval.v_string);
+        if (from->v_type == VAR_FUNC) {
+          func_ref(to->vval.v_string);
+        }
+      }
+      break;
+    case VAR_LIST:
+      if (from->vval.v_list != NULL) {
+        to->vval.v_list->lv_refcount++;
+      }
+      break;
+    case VAR_DICT:
+      if (from->vval.v_dict != NULL) {
+        to->vval.v_dict->dv_refcount++;
+      }
+      break;
+    case VAR_UNKNOWN:
+      EMSG2(_(e_intern2), "copy_tv()");
+      break;
   }
 }
 
@@ -18420,6 +18507,7 @@ int var_item_copy(const vimconv_T *const conv,
   case VAR_NUMBER:
   case VAR_FLOAT:
   case VAR_FUNC:
+  case VAR_SPECIAL:
     copy_tv(from, to);
     break;
   case VAR_STRING:
@@ -18466,7 +18554,7 @@ int var_item_copy(const vimconv_T *const conv,
     if (to->vval.v_dict == NULL)
       ret = FAIL;
     break;
-  default:
+  case VAR_UNKNOWN:
     EMSG2(_(e_intern2), "var_item_copy()");
     ret = FAIL;
   }
@@ -21705,4 +21793,3 @@ static bool is_watched(dict_T *d)
 {
   return d && !QUEUE_EMPTY(&d->watchers);
 }
-

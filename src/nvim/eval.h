@@ -15,12 +15,6 @@
 // All user-defined functions are found in this hashtable.
 extern hashtab_T func_hashtab;
 
-/// CopyID for recursively traversing lists and dicts
-///
-/// This value is needed to avoid endless recursiveness. Last bit is used for
-/// previous_funccal and normally ignored when comparing.
-extern int current_copyID;
-
 // Structure to hold info for a user function.
 typedef struct ufunc ufunc_T;
 
@@ -127,7 +121,11 @@ enum {
     VV_ERRORS,
     VV_MSGPACK_TYPES,
     VV_EVENT,
-    VV_LEN,  // number of v: vars
+    VV_FALSE,
+    VV_TRUE,
+    VV_NULL,
+    VV_NONE,
+    VV_LEN,  ///< Number of v: variables
 };
 
 /// All recognized msgpack types

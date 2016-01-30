@@ -1,5 +1,6 @@
 local helpers = require('test.functional.helpers')
 local clear = helpers.clear
+local funcs = helpers.funcs
 local eval, eq = helpers.eval, helpers.eq
 local execute = helpers.execute
 local nvim = helpers.nvim
@@ -517,6 +518,19 @@ describe('msgpackdump() function', function()
     eq({'\129\128\128'}, eval('msgpackdump([todump])'))
   end)
 
+  it('can dump v:true', function()
+    eq({'\195'}, funcs.msgpackdump({true}))
+  end)
+
+  it('can dump v:false', function()
+    eq({'\194'}, funcs.msgpackdump({false}))
+  end)
+
+  it('can v:null', function()
+    execute('let todump = v:null')
+    eq({'\192'}, eval('msgpackdump([todump])'))
+  end)
+
   it('can dump special ext mapping', function()
     execute('let todump = {"_TYPE": v:msgpack_types.ext, "_VAL": [5, ["",""]]}')
     eq({'\212\005', ''}, eval('msgpackdump([todump])'))
@@ -620,6 +634,11 @@ describe('msgpackdump() function', function()
        exc_exec('call msgpackdump([todump])'))
   end)
 
+  it('fails to dump v:none', function()
+    eq('Vim(call):E953: Attempt to convert v:none in msgpackdump() argument, index 0, itself',
+       exc_exec('call msgpackdump([v:none])'))
+  end)
+
   it('fails when called with no arguments', function()
     eq('Vim(call):E119: Not enough arguments for function: msgpackdump',
        exc_exec('call msgpackdump()'))
@@ -653,5 +672,12 @@ describe('msgpackdump() function', function()
   it('fails to dump a float', function()
     eq('Vim(call):E686: Argument of msgpackdump() must be a List',
        exc_exec('call msgpackdump(0.0)'))
+  end)
+
+  it('fails to dump special value', function()
+    for _, val in ipairs({'v:true', 'v:false', 'v:null', 'v:none'}) do
+      eq('Vim(call):E686: Argument of msgpackdump() must be a List',
+        exc_exec('call msgpackdump(' .. val .. ')'))
+    end
   end)
 end)

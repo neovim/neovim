@@ -8,10 +8,12 @@
 
 #include <msgpack.h>
 #include <inttypes.h>
+#include <assert.h>
 
 #include "nvim/encode.h"
 #include "nvim/buffer_defs.h"  // vimconv_T
 #include "nvim/eval.h"
+#include "nvim/eval_defs.h"
 #include "nvim/garray.h"
 #include "nvim/mbyte.h"
 #include "nvim/message.h"
@@ -52,6 +54,13 @@ typedef struct {
 
 /// Stack used to convert VimL values to messagepack.
 typedef kvec_t(MPConvStackVal) MPConvStack;
+
+const char *const encode_special_var_names[] = {
+  [kSpecialVarNull] = "null",
+  [kSpecialVarNone] = "none",
+  [kSpecialVarTrue] = "true",
+  [kSpecialVarFalse] = "false",
+};
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "encode.c.generated.h"
@@ -355,7 +364,7 @@ static int name##_convert_one_value(firstargtype firstargname, \
           break; \
         } \
         case kSpecialVarNone: { \
-          CONV_NONE(); \
+          CONV_NONE_VAL(); \
           break; \
         } \
       } \
@@ -558,8 +567,7 @@ scope int encode_vim_to_##name(firstargtype firstargname, typval_T *const tv, \
                                const char *const objname) \
   FUNC_ATTR_WARN_UNUSED_RESULT \
 { \
-  current_copyID += COPYID_INC; \
-  const int copyID = current_copyID; \
+  const int copyID = get_copyID(); \
   MPConvStack mpstack; \
   kv_init(mpstack); \
   if (name##_convert_one_value(firstargname, &mpstack, tv, copyID, objname) \
@@ -717,13 +725,13 @@ encode_vim_to_##name##_error_ret: \
     ga_concat(gap, "{}")
 
 #define CONV_NIL() \
-    ga_append(gap, "v:null")
+    ga_concat(gap, "v:null")
 
 #define CONV_BOOL(num) \
-    ga_append(gap, ((num)? "v:true": "v:false"))
+    ga_concat(gap, ((num)? "v:true": "v:false"))
 
-#define CONV_NONE() \
-    ga_append(gap, "v:none")
+#define CONV_NONE_VAL() \
+    ga_concat(gap, "v:none")
 
 #define CONV_UNSIGNED_NUMBER(num)
 
@@ -1069,8 +1077,8 @@ static inline bool check_json_key(const typval_T *const tv)
       } \
     } while (0)
 
-#undef CONV_NONE
-#define CONV_NONE()
+#undef CONV_NONE_VAL
+#define CONV_NONE_VAL()
 
 DEFINE_VIML_CONV_FUNCTIONS(static, json, garray_T *const, gap)
 
@@ -1085,7 +1093,7 @@ DEFINE_VIML_CONV_FUNCTIONS(static, json, garray_T *const, gap)
 #undef CONV_EMPTY_DICT
 #undef CONV_NIL
 #undef CONV_BOOL
-#undef CONV_NONE
+#undef CONV_NONE_VAL
 #undef CONV_UNSIGNED_NUMBER
 #undef CONV_DICT_START
 #undef CONV_DICT_END
@@ -1221,7 +1229,7 @@ char *encode_tv2json(typval_T *tv, size_t *len)
 #define CONV_NIL() \
     msgpack_pack_nil(packer)
 
-#define CONV_NONE() \
+#define CONV_NONE_VAL() \
     return conv_error(_("E953: Attempt to convert v:none in %s, %s"), \
                       mpstack, objname)
 
@@ -1272,6 +1280,7 @@ DEFINE_VIML_CONV_FUNCTIONS(, msgpack, msgpack_packer *const, packer)
 #undef CONV_EMPTY_DICT
 #undef CONV_NIL
 #undef CONV_BOOL
+#undef CONV_NONE_VAL
 #undef CONV_UNSIGNED_NUMBER
 #undef CONV_DICT_START
 #undef CONV_DICT_END
