@@ -1,4 +1,5 @@
 local helpers = require('test.functional.helpers')
+local meths = helpers.meths
 local eq, nvim_eval, nvim_command, exc_exec =
   helpers.eq, helpers.eval, helpers.command, helpers.exc_exec
 local ok = helpers.ok
@@ -409,6 +410,12 @@ describe('In autoload/msgpack.vim', function()
       string_eq('nan', '(1.0/0.0-1.0/0.0)')
       string_eq('nan', '-(1.0/0.0-1.0/0.0)')
     end)
+
+    it('works for special v: values like v:true', function()
+      string_eq('TRUE', 'v:true')
+      string_eq('FALSE', 'v:false')
+      string_eq('NIL', 'v:null')
+    end)
   end)
 
   describe('function msgpack#deepcopy', function()
@@ -522,6 +529,20 @@ describe('In autoload/msgpack.vim', function()
       eq(1, nvim_eval('int2'))
       eq(2.0, nvim_eval('flt2'))
       eq('abc', nvim_eval('bin2'))
+    end)
+
+    it('works for special v: values like v:true', function()
+      meths.set_var('true', true)
+      meths.set_var('false', false)
+      nvim_command('let nil = v:null')
+
+      nvim_command('let true2 = msgpack#deepcopy(true)')
+      nvim_command('let false2 = msgpack#deepcopy(false)')
+      nvim_command('let nil2 = msgpack#deepcopy(nil)')
+
+      eq(true, meths.get_var('true'))
+      eq(false, meths.get_var('false'))
+      eq(nil, meths.get_var('nil'))
     end)
   end)
 
