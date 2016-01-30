@@ -60,11 +60,21 @@ STARTTEST
 :set cpo&vim linebreak
 :let g:test ="Test 6: set linebreak with visual block mode"
 :let line="REMOVE: this not"
+:$put =g:test
 :$put =line
 :let line="REMOVE: aaaaaaaaaaaaa"
 :$put =line
 :1/^REMOVE:
 0jf x:$put
+:set cpo&vim linebreak
+:let g:test ="Test 7: set linebreak with visual block mode and v_b_A"
+:$put =g:test
+Golong line: 40afoobar aTARGET at end
+:exe "norm! $3B\<C-v>eAx\<Esc>"
+:set cpo&vim linebreak sbr=
+:let g:test ="Test 8: set linebreak with visual char mode and changing block"
+:$put =g:test
+Go1111-1111-1111-11-1111-1111-11110f-lv3lc2222bgj.
 :%w! test.out
 :qa!
 ENDTEST
