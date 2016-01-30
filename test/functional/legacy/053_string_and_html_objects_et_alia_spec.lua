@@ -63,17 +63,9 @@ describe('text objects:', function()
     feed('0fXdit<cr>')
     feed('fXdat<cr>')
     feed('0fXdat<cr>')
-    expect([[
-      <begin>
-      -<b>asdf<i></i>asdf</b>-
-      -<b></b>-
-      -<b>asdfasdf</b>-
-      --
-      -<b>
-      innertext object
-      </b>
-      </begin>]])
-    feed('dit<cr>') -- TODO
+    -- This feed call was fixed after the discussion in neovim/neovim#2974 and
+    -- vim/vim#606.
+    feed('0f<lt>dit')
     expect([[
       <begin>
       -<b>asdf<i></i>asdf</b>-
@@ -121,6 +113,7 @@ describe('text matching functions:', function()
   end)
 end)
 describe('repeating gn', function()
+  setup(clear)
   it('works', function()
     insert([[
       SEARCH:
