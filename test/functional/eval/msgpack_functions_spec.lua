@@ -382,6 +382,11 @@ describe('msgpack*() functions', function()
     eq({"\n"}, eval('parsed'))
     eq(1, eval('dumped ==# dumped2'))
   end)
+
+  it('dump and restore special mapping with floating-point value', function()
+    execute('let todump = {"_TYPE": v:msgpack_types.float, "_VAL": 0.125}')
+    eq({0.125}, eval('msgpackparse(msgpackdump([todump]))'))
+  end)
 end)
 
 describe('msgpackparse() function', function()
@@ -532,11 +537,6 @@ describe('msgpackdump() function', function()
     execute('let todump = {"_TYPE": v:msgpack_types.integer}')
     execute('let todump._VAL = [-1, 2, 0, 0]')
     eq({'\211\128\n\n\n\n\n\n\n'}, eval('msgpackdump([todump])'))
-  end)
-
-  it('dump and restore special mapping with floating-point value', function()
-    execute('let todump = {"_TYPE": v:msgpack_types.float, "_VAL": 0.125}')
-    eq({0.125}, eval('msgpackparse(msgpackdump([todump]))'))
   end)
 
   it('fails to dump a function reference', function()
