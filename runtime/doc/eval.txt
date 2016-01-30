@@ -1932,6 +1932,7 @@ jobstart( {cmd}[, {opts}])	Number	Spawns {cmd} as a job
 jobstop( {job})			Number	Stops a job
 jobwait( {ids}[, {timeout}])	Number	Wait for a set of jobs
 join( {list} [, {sep}])		String	join {list} items into one String
+jsonencode( {expr})		String	Convert {expr} to JSON
 keys( {dict})			List	keys in {dict}
 len( {expr})			Number	the length of {expr}
 libcall( {lib}, {func}, {arg})	String	call {func} in library {lib} with {arg}
@@ -4290,6 +4291,19 @@ join({list} [, {sep}])					*join()*
 <		String items are used as-is.  |Lists| and |Dictionaries| are
 		converted into a string like with |string()|.
 		The opposite function is |split()|.
+
+jsonencode({expr})					*jsonencode()*
+		Convert {expr} into a JSON string.  Accepts 
+		|msgpack-special-dict| as the input.  Will not convert 
+		|Funcref|s, mappings with non-string keys (can be created as 
+		|msgpack-special-dict|), values with self-referencing 
+		containers, strings which contain non-UTF-8 characters, 
+		pseudo-UTF-8 strings which contain codepoints reserved for 
+		surrogate pairs (such strings are not valid UTF-8 strings).  
+		When converting 'encoding' is taken into account, if it is not 
+		"utf-8", then conversion is performed before encoding strings.  
+		Non-printable characters are converted into "\u1234" escapes 
+		or special escapes like "\t", other are dumped as-is.
 
 keys({dict})						*keys()*
 		Return a |List| with all the keys of {dict}.  The |List| is in

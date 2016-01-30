@@ -6704,6 +6704,7 @@ static struct fst {
   { "jobstop",           1, 1, f_jobstop },
   { "jobwait",           1, 2, f_jobwait },
   { "join",              1, 2, f_join },
+  { "jsonencode",        1, 1, f_jsonencode },
   { "keys",              1, 1, f_keys },
   { "last_buffer_nr",    0, 0, f_last_buffer_nr },  // obsolete
   { "len",               1, 1, f_len },
@@ -11492,6 +11493,13 @@ static void f_join(typval_T *argvars, typval_T *rettv)
     rettv->vval.v_string = (char_u *)ga.ga_data;
   } else
     rettv->vval.v_string = NULL;
+}
+
+/// jsonencode() function
+static void f_jsonencode(typval_T *argvars, typval_T *rettv)
+{
+  rettv->v_type = VAR_STRING;
+  rettv->vval.v_string = (char_u *) encode_tv2json(&argvars[0], NULL);
 }
 
 /*

@@ -7,15 +7,28 @@
 // TODO(ZyX-I): Move this to src/nvim/viml or src/nvim/eval
 
 #include <msgpack.h>
+#include <inttypes.h>
 
 #include "nvim/encode.h"
+#include "nvim/buffer_defs.h"  // vimconv_T
 #include "nvim/eval.h"
 #include "nvim/garray.h"
+#include "nvim/mbyte.h"
 #include "nvim/message.h"
+#include "nvim/charset.h"  // vim_isprintc()
 #include "nvim/macros.h"
 #include "nvim/ascii.h"
 #include "nvim/vim.h"  // For _()
 #include "nvim/lib/kvec.h"
+
+#define ga_concat(a, b) ga_concat(a, (char_u *)b)
+#define utf_ptr2char(b) utf_ptr2char((char_u *)b)
+#define utf_ptr2len(b) ((size_t)utf_ptr2len((char_u *)b))
+#define utf_char2len(b) ((size_t)utf_char2len(b))
+#define string_convert(a, b, c) \
+      ((char *)string_convert((vimconv_T *)a, (char_u *)b, c))
+#define convert_setup(vcp, from, to) \
+    (convert_setup(vcp, (char_u *)from, (char_u *)to))
 
 /// Structure representing current VimL to messagepack conversion state
 typedef struct {
@@ -120,7 +133,7 @@ static int conv_error(const char *const msg, const MPConvStack *const mpstack,
   char *const idx_msg = _("index %i");
   for (size_t i = 0; i < kv_size(*mpstack); i++) {
     if (i != 0) {
-      ga_concat(&msg_ga, (char_u *) ", ");
+      ga_concat(&msg_ga, ", ");
     }
     MPConvStackVal v = kv_A(*mpstack, i);
     switch (v.type) {
@@ -450,11 +463,11 @@ static int name##_convert_one_value(firstargtype firstargname, \
             if (val_di->di_tv.v_type != VAR_LIST) { \
               goto name##_convert_one_value_regular_dict; \
             } \
-            if (val_di->di_tv.vval.v_list == NULL) { \
+            list_T *const val_list = val_di->di_tv.vval.v_list; \
+            if (val_list == NULL || val_list->lv_len == 0) { \
               CONV_EMPTY_DICT(); \
               break; \
             } \
-            list_T *const val_list = val_di->di_tv.vval.v_list; \
             for (const listitem_T *li = val_list->lv_first; li != NULL; \
                  li = li->li_next) { \
               if (li->li_tv.v_type != VAR_LIST \
@@ -463,7 +476,7 @@ static int name##_convert_one_value(firstargtype firstargname, \
               } \
             } \
             CHECK_SELF_REFERENCE(val_list, lv_copyID, kMPConvPairs); \
-            CONV_SPECIAL_MAP_START(val_list); \
+            CONV_DICT_START(val_list->lv_len); \
             kv_push(MPConvStackVal, *mpstack, ((MPConvStackVal) { \
                       .type = kMPConvPairs, \
                       .data = { \
@@ -502,7 +515,7 @@ static int name##_convert_one_value(firstargtype firstargname, \
       } \
 name##_convert_one_value_regular_dict: \
       CHECK_SELF_REFERENCE(tv->vval.v_dict, dv_copyID, kMPConvDict); \
-      CONV_DICT_START(tv->vval.v_dict); \
+      CONV_DICT_START(tv->vval.v_dict->dv_hashtab.ht_used); \
       kv_push(MPConvStackVal, *mpstack, ((MPConvStackVal) { \
                 .type = kMPConvDict, \
                 .data = { \
@@ -543,11 +556,11 @@ scope int encode_vim_to_##name(firstargtype firstargname, typval_T *const tv, \
         if (!cur_mpsv->data.d.todo) { \
           (void) kv_pop(mpstack); \
           cur_mpsv->data.d.dict->dv_copyID = copyID - 1; \
-          CONV_DICT_END(cur_mpsv->data.d.dict); \
+          CONV_DICT_END(); \
           continue; \
         } else if (cur_mpsv->data.d.todo \
                    != cur_mpsv->data.d.dict->dv_hashtab.ht_used) { \
-          CONV_DICT_BETWEEN_ITEMS(cur_mpsv->data.d.dict); \
+          CONV_DICT_BETWEEN_ITEMS(); \
         } \
         while (HASHITEM_EMPTY(cur_mpsv->data.d.hi)) { \
           cur_mpsv->data.d.hi++; \
@@ -556,7 +569,7 @@ scope int encode_vim_to_##name(firstargtype firstargname, typval_T *const tv, \
         cur_mpsv->data.d.todo--; \
         cur_mpsv->data.d.hi++; \
         CONV_STR_STRING(&di->di_key[0], STRLEN(&di->di_key[0])); \
-        CONV_DICT_AFTER_KEY(cur_mpsv->data.d.dict); \
+        CONV_DICT_AFTER_KEY(); \
         cur_tv = &di->di_tv; \
         break; \
       } \
@@ -567,7 +580,7 @@ scope int encode_vim_to_##name(firstargtype firstargname, typval_T *const tv, \
           CONV_LIST_END(cur_mpsv->data.l.list); \
           continue; \
         } else if (cur_mpsv->data.l.li != cur_mpsv->data.l.list->lv_first) { \
-          CONV_LIST_BETWEEN_ITEMS(cur_mpsv->data.l.list); \
+          CONV_LIST_BETWEEN_ITEMS(); \
         } \
         cur_tv = &cur_mpsv->data.l.li->li_tv; \
         cur_mpsv->data.l.li = cur_mpsv->data.l.li->li_next; \
@@ -577,14 +590,19 @@ scope int encode_vim_to_##name(firstargtype firstargname, typval_T *const tv, \
         if (cur_mpsv->data.l.li == NULL) { \
           (void) kv_pop(mpstack); \
           cur_mpsv->data.l.list->lv_copyID = copyID - 1; \
+          CONV_DICT_END(); \
           continue; \
+        } else if (cur_mpsv->data.l.li != cur_mpsv->data.l.list->lv_first) { \
+          CONV_DICT_BETWEEN_ITEMS(); \
         } \
         const list_T *const kv_pair = cur_mpsv->data.l.li->li_tv.vval.v_list; \
+        CONV_SPECIAL_DICT_KEY_CHECK(kv_pair); \
         if (name##_convert_one_value(firstargname, &mpstack, \
                                      &kv_pair->lv_first->li_tv, copyID, \
                                      objname) == FAIL) { \
           goto encode_vim_to_##name##_error_ret; \
         } \
+        CONV_DICT_AFTER_KEY(); \
         cur_tv = &kv_pair->lv_last->li_tv; \
         cur_mpsv->data.l.li = cur_mpsv->data.l.li->li_next; \
         break; \
@@ -606,7 +624,7 @@ encode_vim_to_##name##_error_ret: \
     do { \
       const char *const buf_ = (const char *) buf; \
       if (buf == NULL) { \
-        ga_concat(gap, (char_u *) "''"); \
+        ga_concat(gap, "''"); \
       } else { \
         const size_t len_ = (len); \
         size_t num_quotes = 0; \
@@ -637,7 +655,7 @@ encode_vim_to_##name##_error_ret: \
     do { \
       char numbuf[NUMBUFLEN]; \
       vim_snprintf(numbuf, NUMBUFLEN - 1, "%" PRId64, (int64_t) (num)); \
-      ga_concat(gap, (char_u *) numbuf); \
+      ga_concat(gap, numbuf); \
     } while (0)
 
 #define CONV_FLOAT(flt) \
@@ -665,19 +683,19 @@ encode_vim_to_##name##_error_ret: \
 
 #define CONV_FUNC(fun) \
     do { \
-      ga_concat(gap, (char_u *) "function("); \
+      ga_concat(gap, "function("); \
       CONV_STRING(fun, STRLEN(fun)); \
       ga_append(gap, ')'); \
     } while (0)
 
 #define CONV_EMPTY_LIST() \
-    ga_concat(gap, (char_u *) "[]")
+    ga_concat(gap, "[]")
 
 #define CONV_LIST_START(lst) \
     ga_append(gap, '[')
 
 #define CONV_EMPTY_DICT() \
-    ga_concat(gap, (char_u *) "{}")
+    ga_concat(gap, "{}")
 
 #define CONV_SPECIAL_NIL()
 
@@ -685,25 +703,25 @@ encode_vim_to_##name##_error_ret: \
 
 #define CONV_UNSIGNED_NUMBER(num)
 
-#define CONV_SPECIAL_MAP_START(lst)
-
-#define CONV_DICT_START(dct) \
+#define CONV_DICT_START(len) \
     ga_append(gap, '{')
 
-#define CONV_DICT_END(dct) \
+#define CONV_DICT_END() \
     ga_append(gap, '}')
 
-#define CONV_DICT_AFTER_KEY(dct) \
-    ga_concat(gap, (char_u *) ": ")
+#define CONV_DICT_AFTER_KEY() \
+    ga_concat(gap, ": ")
 
-#define CONV_DICT_BETWEEN_ITEMS(dct) \
-    ga_concat(gap, (char_u *) ", ")
+#define CONV_DICT_BETWEEN_ITEMS() \
+    ga_concat(gap, ", ")
+
+#define CONV_SPECIAL_DICT_KEY_CHECK(kv_pair)
 
 #define CONV_LIST_END(lst) \
     ga_append(gap, ']')
 
-#define CONV_LIST_BETWEEN_ITEMS(lst) \
-    CONV_DICT_BETWEEN_ITEMS(NULL)
+#define CONV_LIST_BETWEEN_ITEMS() \
+    CONV_DICT_BETWEEN_ITEMS()
 
 #define CONV_RECURSE(val, conv_type) \
     do { \
@@ -731,7 +749,7 @@ encode_vim_to_##name##_error_ret: \
         } \
       } \
       vim_snprintf(ebuf, NUMBUFLEN + 6, "{E724@%zu}", backref); \
-      ga_concat(gap, (char_u *) &ebuf[0]); \
+      ga_concat(gap, &ebuf[0]); \
       return OK; \
     } while (0)
 
@@ -763,11 +781,271 @@ DEFINE_VIML_CONV_FUNCTIONS(static, string, garray_T *const, gap)
       } else { \
         vim_snprintf(ebuf, NUMBUFLEN + 6, "[...@%zu]", backref); \
       } \
-      ga_concat(gap, (char_u *) &ebuf[0]); \
+      ga_concat(gap, &ebuf[0]); \
       return OK; \
     } while (0)
 
 DEFINE_VIML_CONV_FUNCTIONS(, echo, garray_T *const, gap)
+
+#undef CONV_RECURSE
+#define CONV_RECURSE(val, conv_type) \
+    do { \
+      if (!did_echo_string_emsg) { \
+        /* Only give this message once for a recursive call to avoid */ \
+        /* flooding the user with errors. */ \
+        did_echo_string_emsg = true; \
+        EMSG(_("E724: unable to correctly dump variable " \
+               "with self-referencing container")); \
+      } \
+      return OK; \
+    } while (0)
+
+#undef CONV_ALLOW_SPECIAL
+#define CONV_ALLOW_SPECIAL true
+
+#undef CONV_SPECIAL_NIL
+#define CONV_SPECIAL_NIL() \
+      ga_concat(gap, "null")
+
+#undef CONV_SPECIAL_BOOL
+#define CONV_SPECIAL_BOOL(num) \
+      ga_concat(gap, ((num)? "true": "false"))
+
+#undef CONV_UNSIGNED_NUMBER
+#define CONV_UNSIGNED_NUMBER(num) \
+      do { \
+        char numbuf[NUMBUFLEN]; \
+        vim_snprintf(numbuf, sizeof(numbuf), "%" PRIu64, (num)); \
+        ga_concat(gap, numbuf); \
+      } while (0)
+
+#undef CONV_FLOAT
+#define CONV_FLOAT(flt) \
+    do { \
+      char numbuf[NUMBUFLEN]; \
+      vim_snprintf(numbuf, NUMBUFLEN - 1, "%g", (flt)); \
+      ga_concat(gap, numbuf); \
+    } while (0)
+
+/// Last used p_enc value
+///
+/// Generic pointer: it is not used as a string, only pointer comparisons are
+/// performed. Must not be freed.
+static const void *last_p_enc = NULL;
+
+/// Conversion setup for converting from last_p_enc to UTF-8
+static vimconv_T p_enc_conv = {
+  .vc_type = CONV_NONE,
+};
+
+/// Escape sequences used in JSON
+static const char escapes[][3] = {
+  [BS] = "\\b",
+  [TAB] = "\\t",
+  [NL] = "\\n",
+  [CAR] = "\\r",
+  ['"'] = "\\\"",
+  ['\\'] = "\\\\",
+};
+
+static const char xdigits[] = "0123456789ABCDEF";
+
+/// Convert given string to JSON string
+///
+/// @param[out]  gap  Garray where result will be saved.
+/// @param[in]  buf  Converted string.
+/// @param[in]  len  Converted string length.
+///
+/// @return OK in case of success, FAIL otherwise.
+static inline int convert_to_json_string(garray_T *const gap,
+                                         const char *const buf,
+                                         const size_t len)
+  FUNC_ATTR_NONNULL_ARG(1) FUNC_ATTR_ALWAYS_INLINE
+{
+  const char *buf_ = buf;
+  if (buf_ == NULL) {
+    ga_concat(gap, "\"\"");
+  } else {
+    size_t len_ = len;
+    char *tofree = NULL;
+    if (last_p_enc != (const void *) p_enc) {
+      convert_setup(&p_enc_conv, p_enc, "utf-8");
+      p_enc_conv.vc_fail = true;
+      last_p_enc = p_enc;
+    }
+    if (p_enc_conv.vc_type != CONV_NONE) {
+      tofree = string_convert(&p_enc_conv, buf_, &len_);
+      if (tofree == NULL) {
+        EMSG2(_("E474: Failed to convert string \"%s\" to UTF-8"), buf_);
+        return FAIL;
+      }
+      buf_ = tofree;
+    }
+    size_t str_len = 0;
+    for (size_t i = 0; i < len_;) {
+      const int ch = utf_ptr2char(buf + i);
+      const size_t shift = (ch == 0? 1: utf_ptr2len(buf + i));
+      assert(shift > 0);
+      i += shift;
+      switch (ch) {
+        case BS:
+        case TAB:
+        case NL:
+        case FF:
+        case CAR:
+        case '"':
+        case '\\': {
+          str_len += 2;
+          break;
+        }
+        default: {
+          if (ch > 0x7F && shift == 1) {
+            EMSG2(_("E474: String \"%s\" contains byte that does not start any "
+                    "UTF-8 character"), buf_);
+            return FAIL;
+          } else if ((0xD800 <= ch && ch <= 0xDB7F)
+                     || (0xDC00 <= ch && ch <= 0xDFFF)) {
+            EMSG2(_("E474: UTF-8 string contains code point which belongs "
+                    "to surrogate pairs"), buf_);
+            return FAIL;
+          } else if (vim_isprintc(ch)) {
+            str_len += shift;
+          } else {
+            str_len += ((sizeof("\\u1234") - 1) * (1 + (ch > 0xFFFF)));
+          }
+          break;
+        }
+      }
+    }
+    ga_append(gap, '"');
+    ga_grow(gap, (int) str_len);
+    for (size_t i = 0; i < len_;) {
+      const int ch = utf_ptr2char(buf + i);
+      const size_t shift = (ch == 0? 1: utf_char2len(ch));
+      assert(shift > 0);
+      // Is false on invalid unicode, but this should already be handled.
+      assert(ch == 0 || shift == utf_ptr2len(buf + i));
+      switch (ch) {
+        case BS:
+        case TAB:
+        case NL:
+        case FF:
+        case CAR:
+        case '"':
+        case '\\': {
+          ga_concat_len(gap, escapes[ch], 2);
+          break;
+        }
+        default: {
+          if (vim_isprintc(ch)) {
+            ga_concat_len(gap, buf + i, shift);
+          } else if (ch <= 0xFFFF) {
+            ga_concat_len(gap, ((const char []) {
+                '\\', 'u',
+                xdigits[(ch >> (4 * 3)) & 0xF],
+                xdigits[(ch >> (4 * 2)) & 0xF],
+                xdigits[(ch >> (4 * 1)) & 0xF],
+                xdigits[(ch >> (4 * 0)) & 0xF],
+            }), sizeof("\\u1234") - 1);
+          } else {
+            uint32_t tmp = (uint32_t) ch - 0x010000;
+            uint16_t hi = 0xD800 + ((tmp >> 10) & 0x03FF);
+            uint16_t lo = 0xDC00 + ((tmp >>  0) & 0x03FF);
+            ga_concat_len(gap, ((const char []) {
+                '\\', 'u',
+                xdigits[(hi >> (4 * 3)) & 0xF],
+                xdigits[(hi >> (4 * 2)) & 0xF],
+                xdigits[(hi >> (4 * 1)) & 0xF],
+                xdigits[(hi >> (4 * 0)) & 0xF],
+                '\\', 'u',
+                xdigits[(lo >> (4 * 3)) & 0xF],
+                xdigits[(lo >> (4 * 2)) & 0xF],
+                xdigits[(lo >> (4 * 1)) & 0xF],
+                xdigits[(lo >> (4 * 0)) & 0xF],
+            }), (sizeof("\\u1234") - 1) * 2);
+          }
+          break;
+        }
+      }
+      i += shift;
+    }
+    ga_append(gap, '"');
+    xfree(tofree);
+  }
+  return OK;
+}
+
+#undef CONV_STRING
+#define CONV_STRING(buf, len) \
+    do { \
+      if (convert_to_json_string(gap, (const char *) (buf), (len)) != OK) { \
+        return FAIL; \
+      } \
+    } while (0)
+
+#undef CONV_EXT_STRING
+#define CONV_EXT_STRING(buf, len, type) \
+    do { \
+      xfree(buf); \
+      EMSG(_("E474: Unable to convert EXT string to JSON")); \
+      return FAIL; \
+    } while (0)
+
+#undef CONV_FUNC
+#define CONV_FUNC(fun) \
+    return conv_error(_("E474: Error while dumping %s, %s: " \
+                        "attempt to dump function reference"), \
+                      mpstack, objname)
+
+/// Check whether given key can be used in jsonencode()
+///
+/// @param[in]  tv  Key to check.
+static inline bool check_json_key(const typval_T *const tv)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE
+  FUNC_ATTR_ALWAYS_INLINE
+{
+  if (tv->v_type == VAR_STRING) {
+    return true;
+  }
+  if (tv->v_type != VAR_DICT) {
+    return false;
+  }
+  const dict_T *const spdict = tv->vval.v_dict;
+  if (spdict->dv_hashtab.ht_used != 2) {
+    return false;
+  }
+  const dictitem_T *type_di;
+  const dictitem_T *val_di;
+  if ((type_di = dict_find((dict_T *) spdict, (char_u *) "_TYPE", -1)) == NULL
+      || type_di->di_tv.v_type != VAR_LIST
+      || (type_di->di_tv.vval.v_list != eval_msgpack_type_lists[kMPString]
+          && type_di->di_tv.vval.v_list != eval_msgpack_type_lists[kMPBinary])
+      || (val_di = dict_find((dict_T *) spdict, (char_u *) "_VAL", -1)) == NULL
+      || val_di->di_tv.v_type != VAR_LIST) {
+    return false;
+  }
+  if (val_di->di_tv.vval.v_list == NULL) {
+    return true;
+  }
+  for (const listitem_T *li = val_di->di_tv.vval.v_list->lv_first;
+       li != NULL; li = li->li_next) {
+    if (li->li_tv.v_type != VAR_STRING) {
+      return false;
+    }
+  }
+  return true;
+}
+
+#undef CONV_SPECIAL_DICT_KEY_CHECK
+#define CONV_SPECIAL_DICT_KEY_CHECK(kv_pair) \
+    do { \
+      if (!check_json_key(&kv_pair->lv_first->li_tv)) { \
+        EMSG(_("E474: Invalid key in special dictionary")); \
+        return FAIL; \
+      } \
+    } while (0)
+
+DEFINE_VIML_CONV_FUNCTIONS(static, json, garray_T *const, gap)
 
 #undef CONV_STRING
 #undef CONV_STR_STRING
@@ -781,11 +1059,11 @@ DEFINE_VIML_CONV_FUNCTIONS(, echo, garray_T *const, gap)
 #undef CONV_SPECIAL_NIL
 #undef CONV_SPECIAL_BOOL
 #undef CONV_UNSIGNED_NUMBER
-#undef CONV_SPECIAL_MAP_START
 #undef CONV_DICT_START
 #undef CONV_DICT_END
 #undef CONV_DICT_AFTER_KEY
 #undef CONV_DICT_BETWEEN_ITEMS
+#undef CONV_SPECIAL_DICT_KEY_CHECK
 #undef CONV_LIST_END
 #undef CONV_LIST_BETWEEN_ITEMS
 #undef CONV_RECURSE
@@ -831,6 +1109,27 @@ char *encode_tv2echo(typval_T *tv, size_t *len)
   } else {
     encode_vim_to_echo(&ga, tv, ":echo argument");
   }
+  if (len != NULL) {
+    *len = (size_t) ga.ga_len;
+  }
+  ga_append(&ga, '\0');
+  return (char *) ga.ga_data;
+}
+
+/// Return a string with the string representation of a variable.
+/// Puts quotes around strings, so that they can be parsed back by eval().
+///
+/// @param[in]  tv  typval_T to convert.
+/// @param[out]  len  Location where length of the result will be saved.
+///
+/// @return String representation of the variable or NULL.
+char *encode_tv2json(typval_T *tv, size_t *len)
+  FUNC_ATTR_NONNULL_ARG(1) FUNC_ATTR_MALLOC
+{
+  garray_T ga;
+  ga_init(&ga, (int)sizeof(char), 80);
+  encode_vim_to_json(&ga, tv, "encode_tv2json() argument");
+  did_echo_string_emsg = false;
   if (len != NULL) {
     *len = (size_t) ga.ga_len;
   }
@@ -906,21 +1205,20 @@ char *encode_tv2echo(typval_T *tv, size_t *len)
 #define CONV_UNSIGNED_NUMBER(num) \
     msgpack_pack_uint64(packer, (num))
 
-#define CONV_SPECIAL_MAP_START(lst) \
-    msgpack_pack_map(packer, (size_t) (lst)->lv_len)
+#define CONV_DICT_START(len) \
+    msgpack_pack_map(packer, (size_t) (len))
 
-#define CONV_DICT_START(dct) \
-    msgpack_pack_map(packer, (dct)->dv_hashtab.ht_used)
+#define CONV_DICT_END()
 
-#define CONV_DICT_END(dct)
+#define CONV_DICT_AFTER_KEY()
 
-#define CONV_DICT_AFTER_KEY(dct)
+#define CONV_DICT_BETWEEN_ITEMS()
 
-#define CONV_DICT_BETWEEN_ITEMS(dct)
+#define CONV_SPECIAL_DICT_KEY_CHECK(kv_pair)
 
 #define CONV_LIST_END(lst)
 
-#define CONV_LIST_BETWEEN_ITEMS(lst)
+#define CONV_LIST_BETWEEN_ITEMS()
 
 #define CONV_RECURSE(val, conv_type) \
     return conv_error(_("E952: Unable to dump %s: " \
@@ -943,11 +1241,11 @@ DEFINE_VIML_CONV_FUNCTIONS(, msgpack, msgpack_packer *const, packer)
 #undef CONV_SPECIAL_NIL
 #undef CONV_SPECIAL_BOOL
 #undef CONV_UNSIGNED_NUMBER
-#undef CONV_SPECIAL_MAP_START
 #undef CONV_DICT_START
 #undef CONV_DICT_END
 #undef CONV_DICT_AFTER_KEY
 #undef CONV_DICT_BETWEEN_ITEMS
+#undef CONV_SPECIAL_DICT_KEY_CHECK
 #undef CONV_LIST_END
 #undef CONV_LIST_BETWEEN_ITEMS
 #undef CONV_RECURSE
