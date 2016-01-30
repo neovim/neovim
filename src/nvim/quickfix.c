@@ -1606,6 +1606,7 @@ win_found:
       }
       if (qf_ptr->qf_col > 0) {
         curwin->w_cursor.col = qf_ptr->qf_col - 1;
+        curwin->w_cursor.coladd = 0;
         if (qf_ptr->qf_viscol == TRUE) {
           /*
            * Check each character from the beginning of the error
