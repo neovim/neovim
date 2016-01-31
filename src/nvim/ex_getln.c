@@ -5136,6 +5136,8 @@ static int ex_window(void)
 
     /* Don't execute autocommands while deleting the window. */
     block_autocmds();
+    // Avoid command-line window first character being concealed
+    curwin->w_p_cole = 0;
     wp = curwin;
     bp = curbuf;
     win_goto(old_curwin);
