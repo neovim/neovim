@@ -45,6 +45,8 @@
 #include "nvim/os/input.h"
 #include "nvim/os/time.h"
 
+#include "nvim/x11clip.h"
+
 static yankreg_T y_regs[NUM_REGISTERS];
 
 static yankreg_T *y_previous = NULL; /* ptr to last written yankreg */
@@ -5445,11 +5447,23 @@ static bool get_clipboard(int name, yankreg_T **target, bool quiet)
   if (reg == NULL) {
     return false;
   }
+  *target = reg;
   free_register(reg);
+
+  int typename = 0, yanktype;
+  size_t len;
+  // might contain NUL, so we need explicit length;
+  char* value = x11clip_get(name, &yanktype, &len);
+  if (value == NULL) {
+      return false;
+  }
+  str_to_reg(reg, yanktype, (char_u*)value, len, -1, false);
+  return true;
 
   list_T *args = list_alloc();
   char_u regname = name;
   list_append_string(args, &regname, 1);
+
 
   typval_T result = eval_call_provider("clipboard", "get", args);
 
