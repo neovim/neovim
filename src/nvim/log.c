@@ -10,10 +10,6 @@
 #include "nvim/os/os.h"
 #include "nvim/os/time.h"
 
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
-
 #define USR_LOG_FILE "$HOME" _PATHSEPSTR ".nvimlog"
 
 static uv_mutex_t mutex;
