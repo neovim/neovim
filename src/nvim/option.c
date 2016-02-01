@@ -1432,7 +1432,7 @@ do_set (
             } else if (*arg == '-' || ascii_isdigit(*arg)) {
               // Allow negative (for 'undolevels'), octal and
               // hex numbers.
-              vim_str2nr(arg, NULL, &i, true, true, true, &value, NULL);
+              vim_str2nr(arg, NULL, &i, STR2NR_ALL, &value, NULL, 0);
               if (arg[i] != NUL && !ascii_iswhite(arg[i])) {
                 errmsg = e_invarg;
                 goto skip;

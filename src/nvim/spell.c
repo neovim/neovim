@@ -12910,8 +12910,8 @@ void ex_spelldump(exarg_T *eap)
   do_cmdline_cmd("new");
 
   // enable spelling locally in the new window
-  set_option_value((char_u*)"spell", TRUE, (char_u*)"", OPT_LOCAL);
-  set_option_value((char_u*)"spl",  dummy,         spl, OPT_LOCAL);
+  set_option_value((char_u*)"spell", true, (char_u*)"", OPT_LOCAL);
+  set_option_value((char_u*)"spl",  dummy, spl, OPT_LOCAL);
   xfree(spl);
 
   if (!bufempty() || !buf_valid(curbuf))

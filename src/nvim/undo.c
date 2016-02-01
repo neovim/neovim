@@ -2222,12 +2222,17 @@ static void u_undoredo(int undo)
   /*
    * restore marks from before undo/redo
    */
-  for (i = 0; i < NMARKS; ++i)
+  for (i = 0; i < NMARKS; ++i) {
     if (curhead->uh_namedm[i].mark.lnum != 0) {
       free_fmark(curbuf->b_namedm[i]);
       curbuf->b_namedm[i] = curhead->uh_namedm[i];
-      curhead->uh_namedm[i] = namedm[i];
     }
+    if (namedm[i].mark.lnum != 0) {
+      curhead->uh_namedm[i] = namedm[i];
+    } else {
+      curhead->uh_namedm[i].mark.lnum = 0;
+    }
+  }
   if (curhead->uh_visual.vi_start.lnum != 0) {
     curbuf->b_visual = curhead->uh_visual;
     curhead->uh_visual = visualinfo;

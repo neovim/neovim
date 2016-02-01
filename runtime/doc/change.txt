@@ -370,11 +370,14 @@ CTRL-A			Add [count] to the number or alphabetic character at
 CTRL-X			Subtract [count] from the number or alphabetic
 			character at or after the cursor.
 
-The CTRL-A and CTRL-X commands work for (signed) decimal numbers, unsigned
-binary/octal/hexadecimal numbers and alphabetic characters.  This
-depends on the 'nrformats' option.
-- When 'nrformats' includes "bin", Vim considers numbers starting with '0b' or
-  '0B' as binary.
+The CTRL-A and CTRL-X commands can work for:
+- signed and unsigned decimal numbers
+- unsigned binary, octal and hexadecimal numbers
+- alphabetic characters
+
+This depends on the 'nrformats' option:
+- When 'nrformats' includes "bin", Vim assumes numbers starting with '0b' or
+  '0B' are binary.
 - When 'nrformats' includes "octal", Vim considers numbers starting with a '0'
   to be octal, unless the number includes a '8' or '9'.  Other numbers are
   decimal and may have a preceding minus sign.

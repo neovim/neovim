@@ -1414,11 +1414,12 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
   int lbr_saved = curwin->w_p_lbr;
 
 
-  /* The visual area is remembered for redo */
-  static int redo_VIsual_mode = NUL;        /* 'v', 'V', or Ctrl-V */
-  static linenr_T redo_VIsual_line_count;   /* number of lines */
-  static colnr_T redo_VIsual_vcol;          /* number of cols or end column */
-  static long redo_VIsual_count;            /* count for Visual operator */
+  // The visual area is remembered for redo
+  static int redo_VIsual_mode = NUL;        // 'v', 'V', or Ctrl-V
+  static linenr_T redo_VIsual_line_count;   // number of lines
+  static colnr_T redo_VIsual_vcol;          // number of cols or end column
+  static long redo_VIsual_count;            // count for Visual operator
+  static int redo_VIsual_arg;               // extra argument
   bool include_line_break = false;
 
   old_cursor = curwin->w_cursor;
@@ -1656,6 +1657,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
           redo_VIsual_vcol = resel_VIsual_vcol;
           redo_VIsual_line_count = resel_VIsual_line_count;
           redo_VIsual_count = cap->count0;
+          redo_VIsual_arg = cap->arg;
         }
       }
 
@@ -1705,10 +1707,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
         VIsual_active = false;
         setmouse();
         mouse_dragging = 0;
-        if (mode_displayed)
-          clear_cmdline = true;             /* unshow visual mode later */
-        else
-          clear_showcmd();
+        may_clear_cmdline();
         if ((oap->op_type == OP_YANK
              || oap->op_type == OP_COLON
              || oap->op_type == OP_FUNCTION
@@ -1992,6 +1991,20 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
       VIsual_reselect = false;          /* don't reselect now */
       deleteFold(oap->start.lnum, oap->end.lnum,
           oap->op_type == OP_FOLDDELREC, oap->is_VIsual);
+      break;
+
+    case OP_NR_ADD:
+    case OP_NR_SUB:
+      if (empty_region_error) {
+        vim_beep(BO_OPER);
+        CancelRedo();
+      } else {
+        VIsual_active = true;
+        curwin->w_p_lbr = lbr_saved;
+        op_addsub(oap, cap->count1, redo_VIsual_arg);
+        VIsual_active = false;
+      }
+      check_cursor_col();
       break;
     default:
       clearopbeep(oap);
@@ -2852,10 +2865,7 @@ void end_visual_mode(void)
   if (!virtual_active())
     curwin->w_cursor.coladd = 0;
 
-  if (mode_displayed)
-    clear_cmdline = true;               /* unshow visual mode later */
-  else
-    clear_showcmd();
+  may_clear_cmdline();
 
   adjust_cursor_eol();
 }
@@ -3121,10 +3131,19 @@ static void unshift_special(cmdarg_T *cap)
   cap->cmdchar = simplify_key(cap->cmdchar, &mod_mask);
 }
 
-/*
- * Routines for displaying a partly typed command
- */
+/// If the mode is currently displayed clear the command line or update the
+/// command displayed.
+static void may_clear_cmdline(void)
+{
+  if (mode_displayed) {
+    // unshow visual mode later
+    clear_cmdline = true;
+  } else {
+    clear_showcmd();
+  }
+}
 
+// Routines for displaying a partly typed command
 # define SHOWCMD_BUFLEN SHOWCMD_COLS + 1 + 30
 static char_u showcmd_buf[SHOWCMD_BUFLEN];
 static char_u old_showcmd_buf[SHOWCMD_BUFLEN];    /* For push_showcmd() */
@@ -3503,9 +3522,16 @@ static void nv_help(cmdarg_T *cap)
  */
 static void nv_addsub(cmdarg_T *cap)
 {
-  if (!checkclearopq(cap->oap)
-      && do_addsub(cap->cmdchar, cap->count1))
+  if (!VIsual_active && cap->oap->op_type == OP_NOP) {
     prep_redo_cmd(cap);
+    cap->oap->op_type = cap->cmdchar == Ctrl_A ? OP_NR_ADD : OP_NR_SUB;
+    op_addsub(cap->oap, cap->count1, cap->arg);
+    cap->oap->op_type = OP_NOP;
+  } else if (VIsual_active) {
+    nv_operator(cap);
+  } else {
+    clearop(cap->oap);
+  }
 }
 
 /*
@@ -6327,9 +6353,20 @@ static void nv_g_cmd(cmdarg_T *cap)
   bool flag = false;
 
   switch (cap->nchar) {
-  /*
-   * "gR": Enter virtual replace mode.
-   */
+  // "g^A/g^X": Sequentially increment visually selected region.
+  case Ctrl_A:
+  case Ctrl_X:
+    if (VIsual_active) {
+      cap->arg = true;
+      cap->cmdchar = cap->nchar;
+      cap->nchar = NUL;
+      nv_addsub(cap);
+    } else {
+      clearopbeep(oap);
+    }
+    break;
+
+  // "gR": Enter virtual replace mode.
   case 'R':
     cap->arg = true;
     nv_Replace(cap);

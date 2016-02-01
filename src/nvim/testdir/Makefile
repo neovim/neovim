@@ -28,6 +28,7 @@ SCRIPTS :=                                                             \
            test_charsearch.out                                         \
            test_close_count.out                                        \
            test_command_count.out                                      \
+           test_marks.out                                              \
 
 NEW_TESTS =
 
@@ -131,7 +132,7 @@ test1.out: .gdbinit test1.in
 
 	# Check if the test.out file matches test.ok.
 	@/bin/sh -c "if test -f test.out; then                \
-	                 if diff test.out $*.ok; then         \
+	                 if diff -u test.out $*.ok; then         \
 	                     mv -f test.out $*.out;           \
 	                 else                                 \
 	                     echo $* FAILED >> test.log;      \

@@ -35,7 +35,15 @@ Error: configure did not run properly.Check auto/config.log.
 
 #include "nvim/os/os_defs.h"       /* bring lots of system header files */
 
-#define NUMBUFLEN 65        // length of a buffer to store a number in ASCII
+/// length of a buffer to store a number in ASCII (64 bits binary + NUL)
+#define NUMBUFLEN 65
+
+// flags for vim_str2nr()
+#define STR2NR_BIN 1
+#define STR2NR_OCT 2
+#define STR2NR_HEX 4
+#define STR2NR_ALL (STR2NR_BIN + STR2NR_OCT + STR2NR_HEX)
+#define STR2NR_FORCE 8  // only when ONE of the above is used
 
 #define MAX_TYPENR 65535
 

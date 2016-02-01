@@ -342,27 +342,27 @@ void ex_sort(exarg_T *eap)
   char_u      *s;
   char_u      *s2;
   char_u c;                             // temporary character storage
-  int unique = false;
+  bool unique = false;
   long deleted;
   colnr_T start_col;
   colnr_T end_col;
-  int sort_bin;                         // sort on bin number
-  int sort_oct;                         // sort on octal number
-  int sort_hex;                         // sort on hex number
+  int sort_what = 0;
 
   // Sorting one line is really quick!
   if (count <= 1) {
     return;
   }
 
-  if (u_save((linenr_T)(eap->line1 - 1), (linenr_T)(eap->line2 + 1)) == FAIL)
+  if (u_save((linenr_T)(eap->line1 - 1), (linenr_T)(eap->line2 + 1)) == FAIL) {
     return;
+  }
   sortbuf1 = NULL;
   sortbuf2 = NULL;
   regmatch.regprog = NULL;
   sorti_T *nrs = xmalloc(count * sizeof(sorti_T));
 
-  sort_abort = sort_ic = sort_rx = sort_nr = sort_bin = sort_oct = sort_hex = 0;
+  sort_abort = sort_ic = sort_rx = sort_nr = 0;
+  size_t format_found = 0;
 
   for (p = eap->arg; *p != NUL; ++p) {
     if (ascii_iswhite(*p)) {
@@ -372,12 +372,16 @@ void ex_sort(exarg_T *eap)
       sort_rx = true;
     } else if (*p == 'n') {
       sort_nr = 2;
+      format_found++;
     } else if (*p == 'b') {
-      sort_bin = 2;
+      sort_what = STR2NR_BIN + STR2NR_FORCE;
+      format_found++;
     } else if (*p == 'o') {
-      sort_oct = 2;
+      sort_what = STR2NR_OCT + STR2NR_FORCE;
+      format_found++;
     } else if (*p == 'x') {
-      sort_hex = 2;
+      sort_what = STR2NR_HEX + STR2NR_FORCE;
+      format_found++;
     } else if (*p == 'u') {
       unique = true;
     } else if (*p == '"') {
@@ -415,13 +419,13 @@ void ex_sort(exarg_T *eap)
   }
 
   // Can only have one of 'n', 'b', 'o' and 'x'.
-  if (sort_nr + sort_bin + sort_oct + sort_hex > 2) {
+  if (format_found > 1) {
     EMSG(_(e_invarg));
     goto sortend;
   }
 
   // From here on "sort_nr" is used as a flag for any number sorting.
-  sort_nr += sort_bin + sort_oct + sort_hex;
+  sort_nr += sort_what;
 
   // Make an array with all line numbers.  This avoids having to copy all
   // the lines into allocated memory.
@@ -457,22 +461,23 @@ void ex_sort(exarg_T *eap)
       *s2 = NUL;
       // Sorting on number: Store the number itself.
       p = s + start_col;
-      if (sort_hex) {
+      if (sort_what & STR2NR_HEX) {
         s = skiptohex(p);
-      } else if (sort_bin) {
+      } else if (sort_what & STR2NR_BIN) {
         s = (char_u*) skiptobin((char*) p);
       } else {
         s = skiptodigit(p);
       }
       if (s > p && s[-1] == '-') {
-        --s;          // include preceding negative sign
+        // include preceding negative sign
+        s--;
       }
       if (*s == NUL) {
         // empty line should sort before any number
         nrs[lnum - eap->line1].start_col_nr = -MAXLNUM;
       } else {
-        vim_str2nr(s, NULL, NULL, sort_bin, sort_oct, sort_hex,
-                   &nrs[lnum - eap->line1].start_col_nr, NULL);
+        vim_str2nr(s, NULL, NULL, sort_what,
+                   &nrs[lnum - eap->line1].start_col_nr, NULL, 0);
       }
       *s2 = c;
     } else {

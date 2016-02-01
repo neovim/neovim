@@ -574,7 +574,7 @@ int find_special_key(
     if (bp[0] == 't' && bp[1] == '_' && bp[2] && bp[3]) {
       bp += 3;          // skip t_xx, xx may be '-' or '>'
     } else if (STRNICMP(bp, "char-", 5) == 0) {
-      vim_str2nr(bp + 5, NULL, &l, true, true, true, NULL, NULL);
+      vim_str2nr(bp + 5, NULL, &l, STR2NR_ALL, NULL, NULL, 0);
       bp += l + 5;
       break;
     }
@@ -600,7 +600,7 @@ int find_special_key(
       if (STRNICMP(last_dash + 1, "char-", 5) == 0
           && ascii_isdigit(last_dash[6])) {
         // <Char-123> or <Char-033> or <Char-0x33>
-        vim_str2nr(last_dash + 6, NULL, NULL, true, true, true, NULL, &n);
+        vim_str2nr(last_dash + 6, NULL, NULL, STR2NR_ALL, NULL, &n, 0);
         key = (int)n;
       } else {
         /*
