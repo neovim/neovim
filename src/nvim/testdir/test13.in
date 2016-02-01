@@ -49,7 +49,7 @@ otestje3
 :bwipe
 :w >>test.out
 :only
-:help
+:new|set ft=help
 :wincmd w
 :1quit
 :$put ='Final line'
