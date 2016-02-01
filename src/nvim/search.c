@@ -523,10 +523,10 @@ int searchit(
     if (pos->col == MAXCOL) {
       start_char_len = 0;
     } else if (has_mbyte
-        && pos->lnum >= 1 && pos->lnum <= buf->b_ml.ml_line_count
-        && pos->col < MAXCOL - 2) {
+               && pos->lnum >= 1 && pos->lnum <= buf->b_ml.ml_line_count
+               && pos->col < MAXCOL - 2) {
       // Watch out for the "col" being MAXCOL - 2, used in a closed fold.
-      ptr = ml_get_buf(buf, pos->lnum, FALSE) + pos->col;
+      ptr = ml_get_buf(buf, pos->lnum, false) + pos->col;
       start_char_len = *ptr == NUL ? 1 : (*mb_ptr2len)(ptr);
     } else {
       start_char_len = 1;
@@ -692,7 +692,7 @@ int searchit(
                              == start_pos.lnum
                              && (int)regmatch.startpos[0].col
                              < (int)start_pos.col + extra_col)))) {
-                match_ok = TRUE;
+                match_ok = true;
                 matchpos = regmatch.startpos[0];
                 endpos = regmatch.endpos[0];
                 submatch = first_submatch(&regmatch);
