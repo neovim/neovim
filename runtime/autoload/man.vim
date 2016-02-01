@@ -75,7 +75,9 @@ function man#get_page(...) abort
 
   setlocal modifiable
   silent keepjumps norm! 1G"_dG
-  let $MANWIDTH = winwidth(0)
+  if empty($MANWIDTH)
+    let $MANWIDTH = winwidth(0)
+  endif
   silent exec 'r!/usr/bin/man '.s:cmd(sect, page).' | col -b'
   " Remove blank lines from top and bottom.
   while getline(1) =~ '^\s*$'
