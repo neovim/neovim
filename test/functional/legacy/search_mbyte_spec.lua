@@ -1,7 +1,7 @@
 -- Test for search('multi-byte char', 'bce')
 
 local helpers = require('test.functional.helpers')
-local feed, insert, source = helpers.feed, helpers.insert, helpers.source
+local insert = helpers.insert
 local clear, execute, expect = helpers.clear, helpers.execute, helpers.expect
 
 describe('search_mbyte', function()
