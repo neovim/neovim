@@ -6,6 +6,238 @@ local eval = helpers.eval
 local execute = helpers.execute
 local exc_exec = helpers.exc_exec
 
+describe('jsondecode() function', function()
+  before_each(clear)
+
+  it('accepts readfile()-style list', function()
+    eq({Test=1}, funcs.jsondecode({
+      '{',
+      '\t"Test": 1',
+      '}',
+    }))
+  end)
+
+  it('accepts strings with newlines', function()
+    eq({Test=1}, funcs.jsondecode([[
+      {
+        "Test": 1
+      }
+    ]]))
+  end)
+
+  it('parses null, true, false', function()
+    eq(nil, funcs.jsondecode('null'))
+    eq(true, funcs.jsondecode('true'))
+    eq(false, funcs.jsondecode('false'))
+  end)
+
+  it('fails to parse incomplete null, true, false', function()
+    eq('Vim(call):E474: Expected null: n',
+       exc_exec('call jsondecode("n")'))
+    eq('Vim(call):E474: Expected null: nu',
+       exc_exec('call jsondecode("nu")'))
+    eq('Vim(call):E474: Expected null: nul',
+       exc_exec('call jsondecode("nul")'))
+    eq('Vim(call):E474: Expected null: nul\n\t',
+       exc_exec('call jsondecode("nul\\n\\t")'))
+
+    eq('Vim(call):E474: Expected true: t',
+       exc_exec('call jsondecode("t")'))
+    eq('Vim(call):E474: Expected true: tr',
+       exc_exec('call jsondecode("tr")'))
+    eq('Vim(call):E474: Expected true: tru',
+       exc_exec('call jsondecode("tru")'))
+    eq('Vim(call):E474: Expected true: tru\t\n',
+       exc_exec('call jsondecode("tru\\t\\n")'))
+
+    eq('Vim(call):E474: Expected false: f',
+       exc_exec('call jsondecode("f")'))
+    eq('Vim(call):E474: Expected false: fa',
+       exc_exec('call jsondecode("fa")'))
+    eq('Vim(call):E474: Expected false: fal',
+       exc_exec('call jsondecode("fal")'))
+    eq('Vim(call):E474: Expected false: fal   <',
+       exc_exec('call jsondecode("   fal   <")'))
+    eq('Vim(call):E474: Expected false: fals',
+       exc_exec('call jsondecode("fals")'))
+  end)
+
+  it('parses integer numbers', function()
+    eq(100000, funcs.jsondecode('100000'))
+    eq(-100000, funcs.jsondecode('-100000'))
+    eq(100000, funcs.jsondecode('  100000  '))
+    eq(-100000, funcs.jsondecode('  -100000  '))
+  end)
+
+  it('fails to parse +numbers', function()
+    eq('Vim(call):E474: Unidentified byte: +1000',
+       exc_exec('call jsondecode("+1000")'))
+  end)
+
+  it('fails to parse negative numbers with space after -', function()
+    eq('Vim(call):E474: Missing number after minus sign: - 1000',
+       exc_exec('call jsondecode("- 1000")'))
+  end)
+
+  it('fails to parse -', function()
+    eq('Vim(call):E474: Missing number after minus sign: -',
+       exc_exec('call jsondecode("-")'))
+  end)
+
+  it('parses floating-point numbers', function()
+    eq('100000.0', eval('string(jsondecode("100000.0"))'))
+    eq(100000.5, funcs.jsondecode('100000.5'))
+    eq(-100000.5, funcs.jsondecode('-100000.5'))
+    eq(-100000.5e50, funcs.jsondecode('-100000.5e50'))
+    eq(100000.5e50, funcs.jsondecode('100000.5e50'))
+    eq(100000.5e50, funcs.jsondecode('100000.5e+50'))
+    eq(-100000.5e-50, funcs.jsondecode('-100000.5e-50'))
+    eq(100000.5e-50, funcs.jsondecode('100000.5e-50'))
+  end)
+
+  it('fails to parse incomplete floating-point numbers', function()
+    eq('Vim(call):E474: Missing number after decimal dot: 0.',
+       exc_exec('call jsondecode("0.")'))
+    eq('Vim(call):E474: Missing exponent: 0.0e',
+       exc_exec('call jsondecode("0.0e")'))
+    eq('Vim(call):E474: Missing exponent: 0.0e+',
+       exc_exec('call jsondecode("0.0e+")'))
+    eq('Vim(call):E474: Missing exponent: 0.0e-',
+       exc_exec('call jsondecode("0.0e-")'))
+  end)
+
+  it('fails to parse floating-point numbers with spaces inside', function()
+    eq('Vim(call):E474: Missing number after decimal dot: 0. ',
+       exc_exec('call jsondecode("0. ")'))
+    eq('Vim(call):E474: Missing number after decimal dot: 0. 0',
+       exc_exec('call jsondecode("0. 0")'))
+    eq('Vim(call):E474: Missing exponent: 0.0e 1',
+       exc_exec('call jsondecode("0.0e 1")'))
+    eq('Vim(call):E474: Missing exponent: 0.0e+ 1',
+       exc_exec('call jsondecode("0.0e+ 1")'))
+    eq('Vim(call):E474: Missing exponent: 0.0e- 1',
+       exc_exec('call jsondecode("0.0e- 1")'))
+  end)
+
+  it('fails to parse "," and ":"', function()
+    eq('Vim(call):E474: Comma not inside container: ,  ',
+       exc_exec('call jsondecode("  ,  ")'))
+    eq('Vim(call):E474: Colon not inside container: :  ',
+       exc_exec('call jsondecode("  :  ")'))
+  end)
+
+  it('parses empty containers', function()
+    eq({}, funcs.jsondecode('[]'))
+    eq('[]', eval('string(jsondecode("[]"))'))
+  end)
+
+  it('fails to parse "[" and "{"', function()
+    eq('Vim(call):E474: Unexpected end of input: {',
+       exc_exec('call jsondecode("{")'))
+    eq('Vim(call):E474: Unexpected end of input: [',
+       exc_exec('call jsondecode("[")'))
+  end)
+
+  it('fails to parse "}" and "]"', function()
+    eq('Vim(call):E474: No container to close: ]',
+       exc_exec('call jsondecode("]")'))
+    eq('Vim(call):E474: No container to close: }',
+       exc_exec('call jsondecode("}")'))
+  end)
+
+  it('fails to parse containers which are closed by different brackets',
+  function()
+    eq('Vim(call):E474: Closing dictionary with bracket: ]',
+       exc_exec('call jsondecode("{]")'))
+    eq('Vim(call):E474: Closing list with figure brace: }',
+       exc_exec('call jsondecode("[}")'))
+  end)
+
+  it('fails to parse containers with leading comma or colon', function()
+    eq('Vim(call):E474: Leading comma: ,}',
+       exc_exec('call jsondecode("{,}")'))
+    eq('Vim(call):E474: Leading comma: ,]',
+       exc_exec('call jsondecode("[,]")'))
+    eq('Vim(call):E474: Using colon not in dictionary: :]',
+       exc_exec('call jsondecode("[:]")'))
+    eq('Vim(call):E474: Unexpected colon: :}',
+       exc_exec('call jsondecode("{:}")'))
+  end)
+
+  it('fails to parse containers with trailing comma', function()
+    eq('Vim(call):E474: Trailing comma: ]',
+       exc_exec('call jsondecode("[1,]")'))
+    eq('Vim(call):E474: Trailing comma: }',
+       exc_exec('call jsondecode("{\\"1\\": 2,}")'))
+  end)
+
+  it('fails to parse dictionaries with missing value', function()
+    eq('Vim(call):E474: Expected value after colon: }',
+       exc_exec('call jsondecode("{\\"1\\":}")'))
+    eq('Vim(call):E474: Expected value: }',
+       exc_exec('call jsondecode("{\\"1\\"}")'))
+  end)
+
+  it('fails to parse containers with two commas or colons', function()
+    eq('Vim(call):E474: Duplicate comma: , "2": 2}',
+       exc_exec('call jsondecode("{\\"1\\": 1,, \\"2\\": 2}")'))
+    eq('Vim(call):E474: Duplicate comma: , "2", 2]',
+       exc_exec('call jsondecode("[\\"1\\", 1,, \\"2\\", 2]")'))
+    eq('Vim(call):E474: Duplicate colon: : 2}',
+       exc_exec('call jsondecode("{\\"1\\": 1, \\"2\\":: 2}")'))
+    eq('Vim(call):E474: Comma after colon: , 2}',
+       exc_exec('call jsondecode("{\\"1\\": 1, \\"2\\":, 2}")'))
+    eq('Vim(call):E474: Unexpected colon: : "2": 2}',
+       exc_exec('call jsondecode("{\\"1\\": 1,: \\"2\\": 2}")'))
+    eq('Vim(call):E474: Unexpected colon: :, "2": 2}',
+       exc_exec('call jsondecode("{\\"1\\": 1:, \\"2\\": 2}")'))
+  end)
+
+  it('fails to parse concat of two values', function()
+    eq('Vim(call):E474: Trailing characters: []',
+       exc_exec('call jsondecode("{}[]")'))
+  end)
+
+  it('parses containers', function()
+    eq({1}, funcs.jsondecode('[1]'))
+    eq({nil, 1}, funcs.jsondecode('[null, 1]'))
+    eq({['1']=2}, funcs.jsondecode('{"1": 2}'))
+    eq({['1']=2, ['3']={{['4']={['5']={{}, 1}}}}},
+       funcs.jsondecode('{"1": 2, "3": [{"4": {"5": [[], 1]}}]}'))
+  end)
+
+  it('fails to parse incomplete strings', function()
+    eq('Vim(call):E474: Expected string end: \t"',
+       exc_exec('call jsondecode("\\t\\"")'))
+    eq('Vim(call):E474: Expected string end: \t"abc',
+       exc_exec('call jsondecode("\\t\\"abc")'))
+    eq('Vim(call):E474: Unfinished escape sequence: \t"abc\\',
+       exc_exec('call jsondecode("\\t\\"abc\\\\")'))
+    eq('Vim(call):E474: Unfinished unicode escape sequence: \t"abc\\u',
+       exc_exec('call jsondecode("\\t\\"abc\\\\u")'))
+    eq('Vim(call):E474: Unfinished unicode escape sequence: \t"abc\\u0',
+       exc_exec('call jsondecode("\\t\\"abc\\\\u0")'))
+    eq('Vim(call):E474: Unfinished unicode escape sequence: \t"abc\\u00',
+       exc_exec('call jsondecode("\\t\\"abc\\\\u00")'))
+    eq('Vim(call):E474: Unfinished unicode escape sequence: \t"abc\\u000',
+       exc_exec('call jsondecode("\\t\\"abc\\\\u000")'))
+    eq('Vim(call):E474: Expected string end: \t"abc\\u0000',
+       exc_exec('call jsondecode("\\t\\"abc\\\\u0000")'))
+  end)
+
+  it('fails to parse unknown escape sequnces', function()
+    eq('Vim(call):E474: Unknown escape sequence: \\a"',
+       exc_exec('call jsondecode("\\t\\"\\\\a\\"")'))
+  end)
+
+  it('parses strings properly', function()
+    eq('\n', funcs.jsondecode('"\\n"'))
+    eq('', funcs.jsondecode('""'))
+    eq('\\/"\t\b\n\r\f', funcs.jsondecode([["\\\/\"\t\b\n\r\f"]]))
+    eq('/a', funcs.jsondecode([["\/a"]]))
+  end)
+end)
+
 describe('jsonencode() function', function()
   before_each(clear)
 

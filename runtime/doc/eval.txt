@@ -1960,6 +1960,7 @@ jobstart( {cmd}[, {opts}])	Number	Spawns {cmd} as a job
 jobstop( {job})			Number	Stops a job
 jobwait( {ids}[, {timeout}])	Number	Wait for a set of jobs
 join( {list} [, {sep}])		String	join {list} items into one String
+jsondecode( {expr})		any	Convert {expr} from JSON
 jsonencode( {expr})		String	Convert {expr} to JSON
 keys( {dict})			List	keys in {dict}
 len( {expr})			Number	the length of {expr}
@@ -4319,6 +4320,17 @@ join({list} [, {sep}])					*join()*
 <		String items are used as-is.  |Lists| and |Dictionaries| are
 		converted into a string like with |string()|.
 		The opposite function is |split()|.
+
+jsondecode({expr})					*jsondecode()*
+		Convert {expr} from JSON object.  Accepts |readfile()|-style 
+		list as the input, as well as regular string.  May output any 
+		Vim value.  In the following cases it will output 
+		|msgpack-special-dict|:
+		1. Dictionary contains duplicate key.
+		2. Dictionary contains empty key.
+		3. String contains NUL byte.  Two special dictionaries: for 
+		   dictionary and for string will be emitted in case string 
+		   with NUL byte was a dictionary key.
 
 jsonencode({expr})					*jsonencode()*
 		Convert {expr} into a JSON string.  Accepts 

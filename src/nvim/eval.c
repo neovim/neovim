@@ -89,6 +89,7 @@
 #include "nvim/os/input.h"
 #include "nvim/event/loop.h"
 #include "nvim/lib/queue.h"
+#include "nvim/lib/kvec.h"
 
 #define DICT_MAXNEST 100        /* maximum nesting of lists and dicts */
 
@@ -414,6 +415,16 @@ typedef struct {
   list_T *received;
   int status;
 } JobEvent;
+
+/// Helper structure for container_struct
+typedef struct {
+  size_t stack_index;  ///< Index of current container in stack.
+  typval_T container;  ///< Container. Either VAR_LIST, VAR_DICT or VAR_LIST
+                       ///< which is _VAL from special dictionary.
+} ContainerStackItem;
+
+typedef kvec_t(typval_T) ValuesStack;
+typedef kvec_t(ContainerStackItem) ContainerStack;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "eval.c.generated.h"
@@ -6766,6 +6777,7 @@ static struct fst {
   { "jobstop",           1, 1, f_jobstop },
   { "jobwait",           1, 2, f_jobwait },
   { "join",              1, 2, f_join },
+  { "jsondecode",        1, 1, f_jsondecode },
   { "jsonencode",        1, 1, f_jsonencode },
   { "keys",              1, 1, f_keys },
   { "last_buffer_nr",    0, 0, f_last_buffer_nr },  // obsolete
@@ -11557,6 +11569,529 @@ static void f_join(typval_T *argvars, typval_T *rettv)
     rettv->vval.v_string = (char_u *)ga.ga_data;
   } else
     rettv->vval.v_string = NULL;
+}
+
+/// Helper function used for working with stack vectors used by JSON decoder
+///
+/// @param[in]  obj  New object.
+/// @param[out]  stack  Object stack.
+/// @param[out]  container_stack  Container objects stack.
+/// @param[in]  p  Position in string which is currently being parsed.
+///
+/// @return OK in case of success, FAIL in case of error.
+static inline int json_decoder_pop(typval_T obj, ValuesStack *const stack,
+                                   ContainerStack *const container_stack,
+                                   const char *const p)
+  FUNC_ATTR_NONNULL_ALL
+{
+  if (kv_size(*container_stack) == 0) {
+    kv_push(typval_T, *stack, obj);
+    return OK;
+  }
+  ContainerStackItem last_container = kv_last(*container_stack);
+  if (obj.v_type == last_container.container.v_type
+      // vval.v_list and vval.v_dict should have the same size and offset
+      && ((void *) obj.vval.v_list
+          == (void *) last_container.container.vval.v_list)) {
+    kv_pop(*container_stack);
+    last_container = kv_last(*container_stack);
+  }
+  if (last_container.container.v_type == VAR_LIST) {
+    listitem_T *obj_li = listitem_alloc();
+    obj_li->li_tv = obj;
+    list_append(last_container.container.vval.v_list, obj_li);
+  } else if (last_container.stack_index == kv_size(*stack) - 2) {
+    typval_T key = kv_pop(*stack);
+    if (key.v_type != VAR_STRING) {
+      assert(false);
+    } else if (key.vval.v_string == NULL || *key.vval.v_string == NUL) {
+      // TODO: fall back to special dict in case of empty key
+      EMSG(_("E474: Empty key"));
+      clear_tv(&obj);
+      return FAIL;
+    }
+    dictitem_T *obj_di = dictitem_alloc(key.vval.v_string);
+    clear_tv(&key);
+    if (dict_add(last_container.container.vval.v_dict, obj_di)
+        == FAIL) {
+      // TODO: fall back to special dict in case of duplicate keys
+      EMSG(_("E474: Duplicate key"));
+      dictitem_free(obj_di);
+      clear_tv(&obj);
+      return FAIL;
+    }
+    obj_di->di_tv = obj;
+  } else {
+    // Object with key only
+    if (obj.v_type != VAR_STRING) {
+      EMSG2(_("E474: Expected string key: %s"), p);
+      clear_tv(&obj);
+      return FAIL;
+    }
+    kv_push(typval_T, *stack, obj);
+  }
+  return OK;
+}
+
+/// Convert JSON string into VimL object
+///
+/// @param[in]  buf  String to convert. UTF-8 encoding is assumed.
+/// @param[in]  len  Length of the string.
+/// @param[out]  rettv  Location where to save results.
+///
+/// @return OK in case of success, FAIL otherwise.
+static int json_decode_string(const char *const buf, const size_t len,
+                              typval_T *rettv)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  vimconv_T conv;
+  convert_setup(&conv, (char_u *) "utf-8", p_enc);
+  conv.vc_fail = true;
+  int ret = OK;
+  ValuesStack stack;
+  kv_init(stack);
+  ContainerStack container_stack;
+  kv_init(container_stack);
+  rettv->v_type = VAR_UNKNOWN;
+  const char *const e = buf + len;
+  bool didcomma = false;
+  bool didcolon = false;
+#define POP(obj) \
+  do { \
+    if (json_decoder_pop(obj, &stack, &container_stack, p) == FAIL) { \
+      goto json_decode_string_fail; \
+    } \
+  } while (0)
+  const char *p = buf;
+  for (; p < e; p++) {
+    switch (*p) {
+      case '}':
+      case ']': {
+        if (kv_size(container_stack) == 0) {
+          EMSG2(_("E474: No container to close: %s"), p);
+          goto json_decode_string_fail;
+        }
+        ContainerStackItem last_container = kv_last(container_stack);
+        if (*p == '}' && last_container.container.v_type != VAR_DICT) {
+          EMSG2(_("E474: Closing list with figure brace: %s"), p);
+          goto json_decode_string_fail;
+        } else if (*p == ']' && last_container.container.v_type != VAR_LIST) {
+          EMSG2(_("E474: Closing dictionary with bracket: %s"), p);
+          goto json_decode_string_fail;
+        } else if (didcomma) {
+          EMSG2(_("E474: Trailing comma: %s"), p);
+          goto json_decode_string_fail;
+        } else if (didcolon) {
+          EMSG2(_("E474: Expected value after colon: %s"), p);
+          goto json_decode_string_fail;
+        } else if (last_container.stack_index != kv_size(stack) - 1) {
+          assert(last_container.stack_index < kv_size(stack) - 1);
+          EMSG2(_("E474: Expected value: %s"), p);
+          goto json_decode_string_fail;
+        }
+        if (kv_size(stack) == 1) {
+          p++;
+          kv_pop(container_stack);
+          goto json_decode_string_after_cycle;
+        } else {
+          typval_T obj = kv_pop(stack);
+          POP(obj);
+          break;
+        }
+      }
+      case ',': {
+        if (kv_size(container_stack) == 0) {
+          EMSG2(_("E474: Comma not inside container: %s"), p);
+          goto json_decode_string_fail;
+        }
+        ContainerStackItem last_container = kv_last(container_stack);
+        if (didcomma) {
+          EMSG2(_("E474: Duplicate comma: %s"), p);
+          goto json_decode_string_fail;
+        } else if (didcolon) {
+          EMSG2(_("E474: Comma after colon: %s"), p);
+          goto json_decode_string_fail;
+        } if (last_container.container.v_type == VAR_DICT
+            && last_container.stack_index != kv_size(stack) - 1) {
+          EMSG2(_("E474: Using comma in place of colon: %s"), p);
+          goto json_decode_string_fail;
+        } else if ((last_container.container.v_type == VAR_DICT
+                    && (last_container.container.vval.v_dict->dv_hashtab.ht_used
+                        == 0))
+                   || (last_container.container.v_type == VAR_LIST
+                       && last_container.container.vval.v_list->lv_len == 0)) {
+          EMSG2(_("E474: Leading comma: %s"), p);
+          goto json_decode_string_fail;
+        }
+        didcomma = true;
+        continue;
+      }
+      case ':': {
+        if (kv_size(container_stack) == 0) {
+          EMSG2(_("E474: Colon not inside container: %s"), p);
+          goto json_decode_string_fail;
+        }
+        ContainerStackItem last_container = kv_last(container_stack);
+        if (last_container.container.v_type != VAR_DICT) {
+          EMSG2(_("E474: Using colon not in dictionary: %s"), p);
+          goto json_decode_string_fail;
+        } else if (last_container.stack_index != kv_size(stack) - 2) {
+          EMSG2(_("E474: Unexpected colon: %s"), p);
+          goto json_decode_string_fail;
+        } else if (didcomma) {
+          EMSG2(_("E474: Colon after comma: %s"), p);
+          goto json_decode_string_fail;
+        } else if (didcolon) {
+          EMSG2(_("E474: Duplicate colon: %s"), p);
+          goto json_decode_string_fail;
+        }
+        didcolon = true;
+        continue;
+      }
+      case ' ':
+      case TAB:
+      case NL: {
+        continue;
+      }
+      case 'n': {
+        if (strncmp(p + 1, "ull", 3) != 0) {
+          EMSG2(_("E474: Expected null: %s"), p);
+          goto json_decode_string_fail;
+        }
+        p += 3;
+        POP(vimvars[VV_NULL].vv_di.di_tv);
+        break;
+      }
+      case 't': {
+        if (strncmp(p + 1, "rue", 3) != 0) {
+          EMSG2(_("E474: Expected true: %s"), p);
+          goto json_decode_string_fail;
+        }
+        p += 3;
+        POP(vimvars[VV_TRUE].vv_di.di_tv);
+        break;
+      }
+      case 'f': {
+        if (strncmp(p + 1, "alse", 4) != 0) {
+          EMSG2(_("E474: Expected false: %s"), p);
+          goto json_decode_string_fail;
+        }
+        p += 4;
+        POP(vimvars[VV_FALSE].vv_di.di_tv);
+        break;
+      }
+      case '"': {
+        size_t len = 0;
+        const char *s;
+        for (s = ++p; p < e && *p != '"'; p++) {
+          if (*p == '\\') {
+            p++;
+            if (p == e) {
+              EMSG2(_("E474: Unfinished escape sequence: %s"), buf);
+              goto json_decode_string_fail;
+            }
+            switch (*p) {
+              case 'u': {
+                if (p + 4 >= e) {
+                  EMSG2(_("E474: Unfinished unicode escape sequence: %s"), buf);
+                  goto json_decode_string_fail;
+                } else if (!ascii_isxdigit(p[1])
+                           || !ascii_isxdigit(p[2])
+                           || !ascii_isxdigit(p[3])
+                           || !ascii_isxdigit(p[4])) {
+                  EMSG2(_("E474: Expected four hex digits after \\u: %s"),
+                        p - 1);
+                  goto json_decode_string_fail;
+                }
+                // One UTF-8 character below U+10000 can take up to 3 bytes
+                len += 3;
+                p += 4;
+                break;
+              }
+              case '\\':
+              case '/':
+              case '"':
+              case 't':
+              case 'b':
+              case 'n':
+              case 'r':
+              case 'f': {
+                len++;
+                break;
+              }
+              default: {
+                EMSG2(_("E474: Unknown escape sequence: %s"), p - 1);
+                goto json_decode_string_fail;
+              }
+            }
+          } else {
+            len++;
+          }
+        }
+        if (*p != '"') {
+          EMSG2(_("E474: Expected string end: %s"), buf);
+          goto json_decode_string_fail;
+        }
+        char *str = xmalloc(len + 1);
+        uint16_t fst_in_pair = 0;
+        char *str_end = str;
+        for (const char *t = s; t < p; t++) {
+          if (t[0] != '\\' || t[1] != 'u') {
+            if (fst_in_pair != 0) {
+              str_end += utf_char2bytes((int) fst_in_pair, (char_u *) str_end);
+              fst_in_pair = 0;
+            }
+          }
+          if (*t == '\\') {
+            t++;
+            switch (*t) {
+              case 'u': {
+                char ubuf[] = { t[1], t[2], t[3], t[4], 0 };
+                t += 4;
+                unsigned long ch;
+                vim_str2nr((char_u *) ubuf, NULL, NULL, 0, 0, 2, NULL, &ch);
+                if (0xD800UL <= ch && ch <= 0xDB7FUL) {
+                  fst_in_pair = (uint16_t) ch;
+                } else if (0xDC00ULL <= ch && ch <= 0xDB7FUL) {
+                  if (fst_in_pair != 0) {
+                    int full_char = (
+                        (int) (ch - 0xDC00UL)
+                        + (((int) (fst_in_pair - 0xD800)) << 10)
+                    );
+                    str_end += utf_char2bytes(full_char, (char_u *) str_end);
+                  }
+                } else {
+                  str_end += utf_char2bytes((int) ch, (char_u *) str_end);
+                }
+                break;
+              }
+              case '\\':
+              case '/':
+              case '"':
+              case 't':
+              case 'b':
+              case 'n':
+              case 'r':
+              case 'f': {
+                static const char escapes[] = {
+                  ['\\'] = '\\',
+                  ['/'] = '/',
+                  ['"'] = '"',
+                  ['t'] = TAB,
+                  ['b'] = BS,
+                  ['n'] = NL,
+                  ['r'] = CAR,
+                  ['f'] = FF,
+                };
+                *str_end++ = escapes[(int) *t];
+                break;
+              }
+              default: {
+                assert(false);
+              }
+            }
+          } else {
+            *str_end++ = *t;
+          }
+        }
+        if (fst_in_pair != 0) {
+          str_end += utf_char2bytes((int) fst_in_pair, (char_u *) str_end);
+        }
+        if (conv.vc_type != CONV_NONE) {
+          size_t len = (str_end - str);
+          char *const new_str = (char *) string_convert(&conv, (char_u *) str,
+                                                        &len);
+          if (new_str == NULL) {
+            EMSG2(_("E474: Failed to convert string \"%s\" from UTF-8"), str);
+            xfree(str);
+            goto json_decode_string_fail;
+          }
+          xfree(str);
+          str = new_str;
+          str_end = new_str + len;
+        }
+        *str_end = NUL;
+        // TODO: return special string in case of NUL bytes
+        POP(((typval_T) {
+          .v_type = VAR_STRING,
+          .vval = { .v_string = (char_u *) str, },
+        }));
+        break;
+      }
+      case '-':
+      case '0':
+      case '1':
+      case '2':
+      case '3':
+      case '4':
+      case '5':
+      case '6':
+      case '7':
+      case '8':
+      case '9': {
+        // a.bE[+-]exp
+        const char *const s = p;
+        const char *ints = NULL;
+        const char *fracs = NULL;
+        const char *exps = NULL;
+        if (*p == '-') {
+          p++;
+        }
+        ints = p;
+        while (p < e && ascii_isdigit(*p)) {
+          p++;
+        }
+        if (p < e && *p == '.') {
+          p++;
+          fracs = p;
+          while (p < e && ascii_isdigit(*p)) {
+            p++;
+          }
+          if (p < e && (*p == 'e' || *p == 'E')) {
+            p++;
+            if (p < e && (*p == '-' || *p == '+')) {
+              p++;
+            }
+            exps = p;
+            while (p < e && ascii_isdigit(*p)) {
+              p++;
+            }
+          }
+        }
+        if (p == ints) {
+          EMSG2(_("E474: Missing number after minus sign: %s"), s);
+          goto json_decode_string_fail;
+        } else if (p == fracs) {
+          EMSG2(_("E474: Missing number after decimal dot: %s"), s);
+          goto json_decode_string_fail;
+        } else if (p == exps) {
+          EMSG2(_("E474: Missing exponent: %s"), s);
+          goto json_decode_string_fail;
+        }
+        typval_T tv = {
+          .v_type = VAR_NUMBER,
+          .v_lock = VAR_UNLOCKED,
+        };
+        if (fracs) {
+          // Convert floating-point number
+          (void) string2float((char_u *) s, &tv.vval.v_float);
+          tv.v_type = VAR_FLOAT;
+        } else {
+          // Convert integer
+          long nr;
+          vim_str2nr((char_u *) s, NULL, NULL, 0, 0, 0, &nr, NULL);
+          tv.vval.v_number = (varnumber_T) nr;
+        }
+        POP(tv);
+        p--;
+        break;
+      }
+      case '[': {
+        list_T *list = list_alloc();
+        list->lv_refcount++;
+        typval_T tv = {
+          .v_type = VAR_LIST,
+          .v_lock = VAR_UNLOCKED,
+          .vval = { .v_list = list },
+        };
+        kv_push(ContainerStackItem, container_stack, ((ContainerStackItem) {
+          .stack_index = kv_size(stack),
+          .container = tv,
+        }));
+        kv_push(typval_T, stack, tv);
+        break;
+      }
+      case '{': {
+        dict_T *dict = dict_alloc();
+        dict->dv_refcount++;
+        typval_T tv = {
+          .v_type = VAR_DICT,
+          .v_lock = VAR_UNLOCKED,
+          .vval = { .v_dict = dict },
+        };
+        kv_push(ContainerStackItem, container_stack, ((ContainerStackItem) {
+          .stack_index = kv_size(stack),
+          .container = tv,
+        }));
+        kv_push(typval_T, stack, tv);
+        break;
+      }
+      default: {
+        EMSG2(_("E474: Unidentified byte: %s"), p);
+        goto json_decode_string_fail;
+      }
+    }
+    didcomma = false;
+    didcolon = false;
+    if (kv_size(container_stack) == 0) {
+      p++;
+      break;
+    }
+  }
+#undef POP
+json_decode_string_after_cycle:
+  for (; p < e; p++) {
+    switch (*p) {
+      case NL:
+      case ' ':
+      case TAB: {
+        break;
+      }
+      default: {
+        EMSG2(_("E474: Trailing characters: %s"), p);
+        goto json_decode_string_fail;
+      }
+    }
+  }
+  if (kv_size(stack) > 1 || kv_size(container_stack)) {
+    EMSG2(_("E474: Unexpected end of input: %s"), buf);
+    goto json_decode_string_fail;
+  }
+  goto json_decode_string_ret;
+json_decode_string_fail:
+  ret = FAIL;
+  while (kv_size(stack)) {
+    clear_tv(&kv_pop(stack));
+  }
+json_decode_string_ret:
+  if (ret != FAIL) {
+    assert(kv_size(stack) == 1);
+    *rettv = kv_pop(stack);
+  }
+  kv_destroy(stack);
+  kv_destroy(container_stack);
+  return ret;
+}
+
+/// jsondecode() function
+static void f_jsondecode(typval_T *argvars, typval_T *rettv)
+{
+  char numbuf[NUMBUFLEN];
+  char *s = NULL;
+  char *tofree = NULL;
+  size_t len;
+  if (argvars[0].v_type == VAR_LIST) {
+    if (!encode_vim_list_to_buf(argvars[0].vval.v_list, &len, &s)) {
+      EMSG(_("E474: Failed to convert list to string"));
+      return;
+    }
+    tofree = s;
+  } else {
+    s = (char *) get_tv_string_buf_chk(&argvars[0], (char_u *) numbuf);
+    if (s) {
+      len = strlen(s);
+    }
+  }
+  if (s == NULL) {
+    return;
+  }
+  if (json_decode_string(s, len, rettv) == FAIL) {
+    EMSG2(_("E474: Failed to parse %s"), s);
+    rettv->v_type = VAR_NUMBER;
+    rettv->vval.v_number = 0;
+  }
+  assert(rettv->v_type != VAR_UNKNOWN);
+  xfree(tofree);
 }
 
 /// jsonencode() function

@@ -200,8 +200,8 @@ static int conv_error(const char *const msg, const MPConvStack *const mpstack,
 ///                       zero.
 ///
 /// @return true in case of success, false in case of failure.
-static inline bool vim_list_to_buf(const list_T *const list,
-                                   size_t *const ret_len, char **const ret_buf)
+bool encode_vim_list_to_buf(const list_T *const list, size_t *const ret_len,
+                            char **const ret_buf)
   FUNC_ATTR_NONNULL_ARG(2,3) FUNC_ATTR_WARN_UNUSED_RESULT
 {
   size_t len = 0;
@@ -457,7 +457,8 @@ static int name##_convert_one_value(firstargtype firstargname, \
             } \
             size_t len; \
             char *buf; \
-            if (!vim_list_to_buf(val_di->di_tv.vval.v_list, &len, &buf)) { \
+            if (!encode_vim_list_to_buf(val_di->di_tv.vval.v_list, &len, \
+                                        &buf)) { \
               goto name##_convert_one_value_regular_dict; \
             } \
             if (is_string) { \
@@ -529,8 +530,8 @@ static int name##_convert_one_value(firstargtype firstargname, \
             } \
             size_t len; \
             char *buf; \
-            if (!vim_list_to_buf(val_list->lv_last->li_tv.vval.v_list, \
-                                 &len, &buf)) { \
+            if (!encode_vim_list_to_buf(val_list->lv_last->li_tv.vval.v_list, \
+                                        &len, &buf)) { \
               goto name##_convert_one_value_regular_dict; \
             } \
             CONV_EXT_STRING(buf, len, type); \

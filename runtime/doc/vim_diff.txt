@@ -100,6 +100,12 @@ are always available and may be used simultaneously in separate plugins.  The
 4. Stringifyed infinite and NaN values now use |str2float()| and can be evaled
    back.
 
+|jsondecode()| behaviour changed:
+1. It may output |msgpack-special-dict|.
+2. It accepts only valid JSON.  |v:none| is never emitted.
+|jsonencode()| behaviour slightly changed: now |msgpack-special-dict| values 
+are accepted.
+
 Viminfo text files were replaced with binary (messagepack) ShaDa files.
 Additional differences:
 
