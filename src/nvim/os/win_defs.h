@@ -3,6 +3,7 @@
 
 #include <windows.h>
 #include <sys/stat.h>
+#include <io.h>
 #include <stdio.h>
 
 // Windows does not have S_IFLNK but libuv defines it
