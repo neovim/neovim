@@ -555,7 +555,7 @@ name##_convert_one_value_regular_dict: \
               })); \
       break; \
     } \
-    default: { \
+    case VAR_UNKNOWN: { \
       EMSG2(_(e_intern2), #name "_convert_one_value()"); \
       return FAIL; \
     } \
