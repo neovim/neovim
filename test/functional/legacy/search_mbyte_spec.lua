@@ -5,7 +5,7 @@ local feed, insert, source = helpers.feed, helpers.insert, helpers.source
 local clear, execute, expect = helpers.clear, helpers.execute, helpers.expect
 
 describe('search_mbyte', function()
-  setup(clear)
+  before_each(clear)
 
   it('is working', function()
     insert([=[
