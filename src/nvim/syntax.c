@@ -4843,9 +4843,10 @@ static char_u *get_syn_pattern(char_u *arg, synpat_T *ci)
   int idx;
   char_u      *cpo_save;
 
-  /* need at least three chars */
-  if (arg == NULL || arg[1] == NUL || arg[2] == NUL)
+  // need at least three chars
+  if (arg == NULL || arg[0] == NUL || arg[1] == NUL || arg[2] == NUL) {
     return NULL;
+  }
 
   end = skip_regexp(arg + 1, *arg, TRUE, NULL);
   if (*end != *arg) {                       /* end delimiter not found */
