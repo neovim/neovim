@@ -1,7 +1,7 @@
 -- Tests for signs
 
 local helpers = require('test.functional.helpers')
-local clear, execute, expect = helpers.clear, helpers.execute, helpers.expect
+local clear, execute = helpers.clear, helpers.execute
 local eq, neq, eval = helpers.eq, helpers.neq, helpers.eval
 
 describe('glob2regpat()', function()

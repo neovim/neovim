@@ -1,7 +1,6 @@
 local helpers = require("test.unit.helpers")
 
 local cimport = helpers.cimport
-local internalize = helpers.internalize
 local eq = helpers.eq
 local ffi = helpers.ffi
 local to_cstr = helpers.to_cstr

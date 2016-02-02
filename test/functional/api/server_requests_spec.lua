@@ -43,7 +43,7 @@ describe('server -> client', function()
         stop()
       end
 
-      local function on_request(method, args)
+      local function on_request()
         -- No need to evaluate the args, we are only interested in
         -- a response that contains an array with an empty string.
         return {1, 2, '', 3, 'asdf'}

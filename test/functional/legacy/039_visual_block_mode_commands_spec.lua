@@ -5,7 +5,7 @@ local helpers = require('test.functional.helpers')
 local nvim, eq = helpers.meths, helpers.eq
 local insert, feed = helpers.insert, helpers.feed
 local clear, expect = helpers.clear, helpers.expect
-local source, execute = helpers.source, helpers.execute
+local execute = helpers.execute
 
 describe('Visual block mode', function()
 
