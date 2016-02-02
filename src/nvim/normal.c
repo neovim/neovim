@@ -2347,8 +2347,9 @@ do_mouse (
   if (mouse_row == 0 && firstwin->w_winrow > 0) {
     if (is_drag) {
       if (in_tab_line) {
-        c1 = TabPageIdxs[mouse_col];
-        tabpage_move(c1 <= 0 ? 9999 : c1 - 1);
+        tabpage_move(tab_page_click_defs[mouse_col].type == kStlClickTabClose
+                     ? 9999
+                     : tab_page_click_defs[mouse_col].tabnr - 1);
       }
       return false;
     }
@@ -2358,41 +2359,114 @@ do_mouse (
         && cmdwin_type == 0
         && mouse_col < Columns) {
       in_tab_line = true;
-      c1 = TabPageIdxs[mouse_col];
-      if (c1 >= 0) {
-        if ((mod_mask & MOD_MASK_MULTI_CLICK) == MOD_MASK_2CLICK) {
-          /* double click opens new page */
-          end_visual_mode();
-          tabpage_new();
-          tabpage_move(c1 == 0 ? 9999 : c1 - 1);
-        } else {
-          /* Go to specified tab page, or next one if not clicking
-           * on a label. */
-          goto_tabpage(c1);
-
-          /* It's like clicking on the status line of a window. */
-          if (curwin != old_curwin)
-            end_visual_mode();
+      c1 = tab_page_click_defs[mouse_col].tabnr;
+      switch (tab_page_click_defs[mouse_col].type) {
+        case kStlClickDisabled: {
+          break;
         }
-      } else if (c1 < 0) {
-        tabpage_T       *tp;
+        case kStlClickTabClose: {
+          tabpage_T *tp;
 
-        /* Close the current or specified tab page. */
-        if (c1 == -999)
-          tp = curtab;
-        else
-          tp = find_tabpage(-c1);
-        if (tp == curtab) {
-          if (first_tabpage->tp_next != NULL)
-            tabpage_close(false);
-        } else if (tp != NULL)
-          tabpage_close_other(tp, false);
+          // Close the current or specified tab page.
+          if (c1 == 999) {
+            tp = curtab;
+          } else {
+            tp = find_tabpage(c1);
+          }
+          if (tp == curtab) {
+            if (first_tabpage->tp_next != NULL) {
+              tabpage_close(false);
+            }
+          } else if (tp != NULL) {
+            tabpage_close_other(tp, false);
+          }
+          break;
+        }
+        case kStlClickTabSwitch: {
+          if ((mod_mask & MOD_MASK_MULTI_CLICK) == MOD_MASK_2CLICK) {
+            // double click opens new page
+            end_visual_mode();
+            tabpage_new();
+            tabpage_move(c1 == 0 ? 9999 : c1 - 1);
+          } else {
+            // Go to specified tab page, or next one if not clicking
+            // on a label.
+            goto_tabpage(c1);
+
+            // It's like clicking on the status line of a window.
+            if (curwin != old_curwin) {
+              end_visual_mode();
+            }
+          }
+          break;
+        }
+        case kStlClickFuncRun: {
+          typval_T argv[] = {
+            {
+              .v_lock = VAR_FIXED,
+              .v_type = VAR_NUMBER,
+              .vval = {
+                .v_number = (varnumber_T) tab_page_click_defs[mouse_col].tabnr
+              },
+            },
+            {
+              .v_lock = VAR_FIXED,
+              .v_type = VAR_NUMBER,
+              .vval = {
+                .v_number = (((mod_mask & MOD_MASK_MULTI_CLICK)
+                              == MOD_MASK_4CLICK)
+                             ? 4
+                             : ((mod_mask & MOD_MASK_MULTI_CLICK)
+                                == MOD_MASK_3CLICK)
+                             ? 3
+                             : ((mod_mask & MOD_MASK_MULTI_CLICK)
+                                == MOD_MASK_2CLICK)
+                             ? 2
+                             : 1)
+              },
+            },
+            {
+              .v_lock = VAR_FIXED,
+              .v_type = VAR_STRING,
+              .vval = { .v_string = (char_u *) (which_button == MOUSE_LEFT
+                                                ? "l"
+                                                : which_button == MOUSE_RIGHT
+                                                ? "r"
+                                                : which_button == MOUSE_MIDDLE
+                                                ? "m"
+                                                : "?") },
+            },
+            {
+              .v_lock = VAR_FIXED,
+              .v_type = VAR_STRING,
+              .vval = {
+                .v_string = (char_u[]) {
+                  (char_u) (mod_mask & MOD_MASK_SHIFT ? 's' : ' '),
+                  (char_u) (mod_mask & MOD_MASK_CTRL ? 'c' : ' '),
+                  (char_u) (mod_mask & MOD_MASK_ALT ? 'a' : ' '),
+                  (char_u) (mod_mask & MOD_MASK_META ? 'm' : ' '),
+                  NUL
+                }
+              },
+            }
+          };
+          typval_T rettv;
+          int doesrange;
+          (void) call_func((char_u *) tab_page_click_defs[mouse_col].func,
+                           (int) strlen(tab_page_click_defs[mouse_col].func),
+                           &rettv, ARRAY_SIZE(argv), argv,
+                           curwin->w_cursor.lnum, curwin->w_cursor.lnum,
+                           &doesrange, true, NULL);
+          clear_tv(&rettv);
+          break;
+        }
       }
     }
     return true;
   } else if (is_drag && in_tab_line) {
-    c1 = TabPageIdxs[mouse_col];
-    tabpage_move(c1 <= 0 ? 9999 : c1 - 1);
+    tabpage_move(tab_page_click_defs[mouse_col].type == kStlClickTabClose
+                 ? 9999
+                 : tab_page_click_defs[mouse_col].tabnr - 1);
     in_tab_line = false;
     return false;
   }

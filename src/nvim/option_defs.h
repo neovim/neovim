@@ -209,44 +209,58 @@
 #define COM_ALL         "nbsmexflrO"    /* all flags for 'comments' option */
 #define COM_MAX_LEN     50              /* maximum length of a part */
 
-/* flags for 'statusline' option */
-#define STL_FILEPATH    'f'             /* path of file in buffer */
-#define STL_FULLPATH    'F'             /* full path of file in buffer */
-#define STL_FILENAME    't'             /* last part (tail) of file path */
-#define STL_COLUMN      'c'             /* column og cursor*/
-#define STL_VIRTCOL     'v'             /* virtual column */
-#define STL_VIRTCOL_ALT 'V'             /* - with 'if different' display */
-#define STL_LINE        'l'             /* line number of cursor */
-#define STL_NUMLINES    'L'             /* number of lines in buffer */
-#define STL_BUFNO       'n'             /* current buffer number */
-#define STL_KEYMAP      'k'             /* 'keymap' when active */
-#define STL_OFFSET      'o'             /* offset of character under cursor*/
-#define STL_OFFSET_X    'O'             /* - in hexadecimal */
-#define STL_BYTEVAL     'b'             /* byte value of character */
-#define STL_BYTEVAL_X   'B'             /* - in hexadecimal */
-#define STL_ROFLAG      'r'             /* readonly flag */
-#define STL_ROFLAG_ALT  'R'             /* - other display */
-#define STL_HELPFLAG    'h'             /* window is showing a help file */
-#define STL_HELPFLAG_ALT 'H'            /* - other display */
-#define STL_FILETYPE    'y'             /* 'filetype' */
-#define STL_FILETYPE_ALT 'Y'            /* - other display */
-#define STL_PREVIEWFLAG 'w'             /* window is showing the preview buf */
-#define STL_PREVIEWFLAG_ALT 'W'         /* - other display */
-#define STL_MODIFIED    'm'             /* modified flag */
-#define STL_MODIFIED_ALT 'M'            /* - other display */
-#define STL_QUICKFIX    'q'             /* quickfix window description */
-#define STL_PERCENTAGE  'p'             /* percentage through file */
-#define STL_ALTPERCENT  'P'             /* percentage as TOP BOT ALL or NN% */
-#define STL_ARGLISTSTAT 'a'             /* argument list status as (x of y) */
-#define STL_PAGENUM     'N'             /* page number (when printing)*/
-#define STL_VIM_EXPR    '{'             /* start of expression to substitute */
-#define STL_MIDDLEMARK  '='             /* separation between left and right */
-#define STL_TRUNCMARK   '<'             /* truncation mark if line is too long*/
-#define STL_USER_HL     '*'             /* highlight from (User)1..9 or 0 */
-#define STL_HIGHLIGHT   '#'             /* highlight name */
-#define STL_TABPAGENR   'T'             /* tab page label nr */
-#define STL_TABCLOSENR  'X'             /* tab page close nr */
-#define STL_ALL         ((char_u *) "fFtcvVlLknoObBrRhHmYyWwMqpPaN{#")
+/// 'statusline' option flags
+enum {
+  STL_FILEPATH        = 'f',  ///< Path of file in buffer.
+  STL_FULLPATH        = 'F',  ///< Full path of file in buffer.
+  STL_FILENAME        = 't',  ///< Last part (tail) of file path.
+  STL_COLUMN          = 'c',  ///< Column og cursor.
+  STL_VIRTCOL         = 'v',  ///< Virtual column.
+  STL_VIRTCOL_ALT     = 'V',  ///< - with 'if different' display.
+  STL_LINE            = 'l',  ///< Line number of cursor.
+  STL_NUMLINES        = 'L',  ///< Number of lines in buffer.
+  STL_BUFNO           = 'n',  ///< Current buffer number.
+  STL_KEYMAP          = 'k',  ///< 'keymap' when active.
+  STL_OFFSET          = 'o',  ///< Offset of character under cursor.
+  STL_OFFSET_X        = 'O',  ///< - in hexadecimal.
+  STL_BYTEVAL         = 'b',  ///< Byte value of character.
+  STL_BYTEVAL_X       = 'B',  ///< - in hexadecimal.
+  STL_ROFLAG          = 'r',  ///< Readonly flag.
+  STL_ROFLAG_ALT      = 'R',  ///< - other display.
+  STL_HELPFLAG        = 'h',  ///< Window is showing a help file.
+  STL_HELPFLAG_ALT    = 'H',  ///< - other display.
+  STL_FILETYPE        = 'y',  ///< 'filetype'.
+  STL_FILETYPE_ALT    = 'Y',  ///< - other display.
+  STL_PREVIEWFLAG     = 'w',  ///< Window is showing the preview buf.
+  STL_PREVIEWFLAG_ALT = 'W',  ///< - other display.
+  STL_MODIFIED        = 'm',  ///< Modified flag.
+  STL_MODIFIED_ALT    = 'M',  ///< - other display.
+  STL_QUICKFIX        = 'q',  ///< Quickfix window description.
+  STL_PERCENTAGE      = 'p',  ///< Percentage through file.
+  STL_ALTPERCENT      = 'P',  ///< Percentage as TOP BOT ALL or NN%.
+  STL_ARGLISTSTAT     = 'a',  ///< Argument list status as (x of y).
+  STL_PAGENUM         = 'N',  ///< Page number (when printing).
+  STL_VIM_EXPR        = '{',  ///< Start of expression to substitute.
+  STL_MIDDLEMARK      = '=',  ///< Separation between left and right.
+  STL_TRUNCMARK       = '<',  ///< Truncation mark if line is too long.
+  STL_USER_HL         = '*',  ///< Highlight from (User)1..9 or 0.
+  STL_HIGHLIGHT       = '#',  ///< Highlight name.
+  STL_TABPAGENR       = 'T',  ///< Tab page label nr.
+  STL_TABCLOSENR      = 'X',  ///< Tab page close nr.
+  STL_CLICK_FUNC      = '@',  ///< Click region start.
+};
+/// C string containing all 'statusline' option flags
+#define STL_ALL ((char_u[]) { \
+  STL_FILEPATH, STL_FULLPATH, STL_FILENAME, STL_COLUMN, STL_VIRTCOL, \
+  STL_VIRTCOL_ALT, STL_LINE, STL_NUMLINES, STL_BUFNO, STL_KEYMAP, STL_OFFSET, \
+  STL_OFFSET_X, STL_BYTEVAL, STL_BYTEVAL_X, STL_ROFLAG, STL_ROFLAG_ALT, \
+  STL_HELPFLAG, STL_HELPFLAG_ALT, STL_FILETYPE, STL_FILETYPE_ALT, \
+  STL_PREVIEWFLAG, STL_PREVIEWFLAG_ALT, STL_MODIFIED, STL_MODIFIED_ALT, \
+  STL_QUICKFIX, STL_PERCENTAGE, STL_ALTPERCENT, STL_ARGLISTSTAT, STL_PAGENUM, \
+  STL_VIM_EXPR, STL_MIDDLEMARK, STL_TRUNCMARK, STL_USER_HL, STL_HIGHLIGHT, \
+  STL_TABPAGENR, STL_TABCLOSENR, STL_CLICK_FUNC, \
+  0, \
+})
 
 /* flags used for parsed 'wildmode' */
 #define WIM_FULL        1

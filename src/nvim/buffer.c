@@ -22,6 +22,7 @@
 
 #include "nvim/api/private/handle.h"
 #include "nvim/ascii.h"
+#include "nvim/assert.h"
 #include "nvim/vim.h"
 #include "nvim/buffer.h"
 #include "nvim/charset.h"
@@ -2826,7 +2827,7 @@ typedef enum {
 /// @param fillchar Character to use when filling empty space in the statusline
 /// @param maxwidth The maximum width to make the statusline
 /// @param hltab HL attributes (can be NULL)
-/// @param tabtab tab page nrs (can be NULL)
+/// @param tabtab Tab clicks definition (can be NULL).
 ///
 /// @return The final width of the statusline
 int build_stl_str_hl(
@@ -2838,13 +2839,15 @@ int build_stl_str_hl(
     int fillchar,
     int maxwidth,
     struct stl_hlrec *hltab,
-    struct stl_hlrec *tabtab
+    StlClickRecord *tabtab
 )
 {
   int groupitem[STL_MAX_ITEM];
   struct stl_item {
     // Where the item starts in the status line output buffer
-    char_u          *start;
+    char_u *start;
+    // Function to run for ClickFunc items.
+    char *cmd;
     // The minimum width of the item
     int minwid;
     // The maximum width of the item
@@ -2856,10 +2859,10 @@ int build_stl_str_hl(
       Middle,
       Highlight,
       TabPage,
+      ClickFunc,
       Trunc
-    }               type;
-  }           item[STL_MAX_ITEM];
-
+    } type;
+  } item[STL_MAX_ITEM];
 #define TMPLEN 70
   char_u tmp[TMPLEN];
   char_u      *usefmt = fmt;
@@ -3164,6 +3167,24 @@ int build_stl_str_hl(
       continue;
     }
 
+    if (*fmt_p == STL_CLICK_FUNC) {
+      fmt_p++;
+      char *t = (char *) fmt_p;
+      while (*fmt_p != STL_CLICK_FUNC && *fmt_p) {
+        fmt_p++;
+      }
+      if (*fmt_p != STL_CLICK_FUNC) {
+        break;
+      }
+      item[curitem].type = ClickFunc;
+      item[curitem].start = out_p;
+      item[curitem].cmd = xmemdupz(t, (size_t) (((char *) fmt_p - t)));
+      item[curitem].minwid = minwid;
+      fmt_p++;
+      curitem++;
+      continue;
+    }
+
     // Denotes the end of the minwid
     // the maxwid may follow immediately after
     if (*fmt_p == '.') {
@@ -3281,6 +3302,7 @@ int build_stl_str_hl(
       }
       break;
     }
+
     case STL_LINE:
       num = (wp->w_buffer->b_ml.ml_flags & ML_EMPTY)
             ? 0L : (long)(wp->w_cursor.lnum);
@@ -3821,16 +3843,37 @@ int build_stl_str_hl(
 
   // Store the info about tab pages labels.
   if (tabtab != NULL) {
-    struct stl_hlrec *sp = tabtab;
+    StlClickRecord *cur_tab_rec = tabtab;
     for (long l = 0; l < itemcnt; l++) {
       if (item[l].type == TabPage) {
-        sp->start = item[l].start;
-        sp->userhl = item[l].minwid;
-        sp++;
+        cur_tab_rec->start = (char *) item[l].start;
+        if (item[l].minwid == 0) {
+          cur_tab_rec->def.type = kStlClickDisabled;
+          cur_tab_rec->def.tabnr = 0;
+        } else {
+          int tabnr = item[l].minwid;
+          if (item[l].minwid > 0) {
+            cur_tab_rec->def.type = kStlClickTabSwitch;
+          } else {
+            cur_tab_rec->def.type = kStlClickTabClose;
+            tabnr = -tabnr;
+          }
+          cur_tab_rec->def.tabnr = tabnr;
+        }
+        cur_tab_rec->def.func = NULL;
+        cur_tab_rec++;
+      } else if (item[l].type == ClickFunc) {
+        cur_tab_rec->start = (char *) item[l].start;
+        cur_tab_rec->def.type = kStlClickFuncRun;
+        cur_tab_rec->def.tabnr = item[l].minwid;
+        cur_tab_rec->def.func = item[l].cmd;
+        cur_tab_rec++;
       }
     }
-    sp->start = NULL;
-    sp->userhl = 0;
+    cur_tab_rec->start = NULL;
+    cur_tab_rec->def.type = kStlClickDisabled;
+    cur_tab_rec->def.tabnr = 0;
+    cur_tab_rec->def.func = NULL;
   }
 
   return width;
