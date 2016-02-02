@@ -763,8 +763,8 @@ void ex_diffupdate(exarg_T *eap)
   // Make a difference between the first buffer and every other.
   for (idx_new = idx_orig + 1; idx_new < DB_COUNT; ++idx_new) {
     buf_T *buf = curtab->tp_diffbuf[idx_new];
-    if (buf == NULL) {
-      continue;
+    if (buf == NULL || buf->b_ml.ml_mfp == NULL) {
+      continue;  // skip buffer that isn't loaded
     }
 
     if (diff_write(buf, tmp_new) == FAIL) {
