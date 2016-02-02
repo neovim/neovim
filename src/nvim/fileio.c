@@ -7218,12 +7218,12 @@ char_u * file_pat_to_reg_pat(
 #ifdef BACKSLASH_IN_FILENAME
           && no_bslash
 #endif
-          )
+          ) {
         reg_pat[i++] = '?';
-      else if (*p == ',' || *p == '%' || *p == '#'
-               || *p == ' ' || *p == '{' || *p == '}')
+      } else if (*p == ',' || *p == '%' || *p == '#'
+                 || ascii_isspace(*p) || *p == '{' || *p == '}') {
         reg_pat[i++] = *p;
-      else if (*p == '\\' && p[1] == '\\' && p[2] == '{') {
+      } else if (*p == '\\' && p[1] == '\\' && p[2] == '{') {
         reg_pat[i++] = '\\';
         reg_pat[i++] = '{';
         p += 2;
