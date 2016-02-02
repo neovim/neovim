@@ -41,3 +41,8 @@ Test 7: set linebreak with visual block mode and v_b_A
 long line: foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar TARGETx at end
 Test 8: set linebreak with visual char mode and changing block
 1111-2222-1111-11-1111-2222-1111
+Test 9: using redo after block visual mode
+
+AaA
+AaA
+A
