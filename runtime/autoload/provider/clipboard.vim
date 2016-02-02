@@ -37,16 +37,16 @@ if executable('pbcopy')
   let s:copy['*'] = s:copy['+']
   let s:paste['*'] = s:paste['+']
   let s:cache_enabled = 0
-elseif executable('xclip')
-  let s:copy['+'] = 'xclip -quiet -i -selection clipboard'
-  let s:paste['+'] = 'xclip -o -selection clipboard'
-  let s:copy['*'] = 'xclip -quiet -i -selection primary'
-  let s:paste['*'] = 'xclip -o -selection primary'
-elseif executable('xsel')
+elseif exists('$DISPLAY') && executable('xsel')
   let s:copy['+'] = 'xsel --nodetach -i -b'
   let s:paste['+'] = 'xsel -o -b'
   let s:copy['*'] = 'xsel --nodetach -i -p'
   let s:paste['*'] = 'xsel -o -p'
+elseif exists('$DISPLAY') && executable('xclip')
+  let s:copy['+'] = 'xclip -quiet -i -selection clipboard'
+  let s:paste['+'] = 'xclip -o -selection clipboard'
+  let s:copy['*'] = 'xclip -quiet -i -selection primary'
+  let s:paste['*'] = 'xclip -o -selection primary'
 else
   echom 'clipboard: No clipboard tool available. See :help nvim-clipboard'
   finish
