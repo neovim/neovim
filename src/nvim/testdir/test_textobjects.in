@@ -3,7 +3,7 @@ Tests for text-objects     vim: set ft=vim :
 STARTTEST
 :so small.vim
 :if !has('textobjects') | e! test.ok | wq! test.out | endif
-:set nocompatible
+:set nocp viminfo+=nviminfo
 :"
 :function SelectionOut(data)
 :  new
