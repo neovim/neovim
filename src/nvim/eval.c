@@ -19626,7 +19626,10 @@ void ex_function(exarg_T *eap)
       break;
     }
   }
-  ++p;          /* skip the ')' */
+  if (*p != ')') {
+    goto erret;
+  }
+  ++p;  // skip the ')'
 
   /* find extra arguments "range", "dict" and "abort" */
   for (;; ) {
