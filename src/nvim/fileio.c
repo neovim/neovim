@@ -7160,10 +7160,11 @@ char_u * file_pat_to_reg_pat(
   else
     reg_pat[i++] = '^';
   endp = pat_end - 1;
-  if (*endp == '*') {
-    while (endp - pat > 0 && *endp == '*')
+  if (endp >= pat && *endp == '*') {
+    while (endp - pat > 0 && *endp == '*') {
       endp--;
-    add_dollar = FALSE;
+    }
+    add_dollar = false;
   }
   for (p = pat; *p && nested >= 0 && p <= endp; p++) {
     switch (*p) {
