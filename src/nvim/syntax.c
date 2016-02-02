@@ -4183,12 +4183,14 @@ static void syn_cmd_keyword(exarg_T *eap, int syncing)
             break;
           if (p[1] == NUL) {
             EMSG2(_("E789: Missing ']': %s"), kw);
-            kw = p + 2;                       /* skip over the NUL */
-            break;
+            goto error;
           }
           if (p[1] == ']') {
-            kw = p + 1;                       /* skip over the "]" */
-            break;
+            if (p[2] != NUL) {
+              EMSG3(_("E890: trailing char after ']': %s]%s"),
+                    kw, &p[2]);
+              goto error;
+            }
           }
           if (has_mbyte) {
             int l = (*mb_ptr2len)(p + 1);
@@ -4203,6 +4205,7 @@ static void syn_cmd_keyword(exarg_T *eap, int syncing)
       }
     }
 
+error:
     xfree(keyword_copy);
     xfree(syn_opt_arg.cont_in_list);
     xfree(syn_opt_arg.next_list);
