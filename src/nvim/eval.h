@@ -54,7 +54,7 @@ EXTERN ufunc_T dumuf;
 #define HI2UF(hi)    HIKEY2UF((hi)->hi_key)
 
 /* Defines for Vim variables.  These must match vimvars[] in eval.c! */
-enum {
+typedef enum {
     VV_COUNT,
     VV_COUNT1,
     VV_PREVCOUNT,
@@ -125,8 +125,7 @@ enum {
     VV_TRUE,
     VV_NULL,
     VV_NONE,
-    VV_LEN,  ///< Number of v: variables
-};
+} VimVarIndex;
 
 /// All recognized msgpack types
 typedef enum {

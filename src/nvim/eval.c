@@ -289,11 +289,11 @@ typedef enum {
 // The reason to use this table anyway is for very quick access to the
 // variables with the VV_ defines.
 static struct vimvar {
-  char        *vv_name;         /* name of variable, without v: */
-  dictitem_T vv_di;             /* value and name for key */
-  char vv_filler[16];           /* space for LONGEST name below!!! */
-  char vv_flags;                /* VV_COMPAT, VV_RO, VV_RO_SBX */
-} vimvars[VV_LEN] =
+  char        *vv_name;  ///< Name of the variable, without v:.
+  dictitem_T vv_di;      ///< Value of the variable, with name.
+  char vv_filler[16];    ///< Space for longest name from below.
+  char vv_flags;         ///< Flags: #VV_COMPAT, #VV_RO, #VV_RO_SBX.
+} vimvars[] =
 {
   /*
    * The order here must match the VV_ defines in eval.h!
@@ -465,7 +465,6 @@ const list_T *eval_msgpack_type_lists[] = {
 void eval_init(void)
 {
   jobs = pmap_new(uint64_t)();
-  int i;
   struct vimvar   *p;
 
   init_var_dict(&globvardict, &globvars_var, VAR_DEF_SCOPE);
@@ -474,7 +473,7 @@ void eval_init(void)
   hash_init(&compat_hashtab);
   hash_init(&func_hashtab);
 
-  for (i = 0; i < VV_LEN; ++i) {
+  for (size_t i = 0; i < ARRAY_SIZE(vimvars); ++i) {
     p = &vimvars[i];
     STRCPY(p->vv_di.di_key, p->vv_name);
     if (p->vv_flags & VV_RO)
@@ -534,7 +533,7 @@ void eval_clear(void)
 {
   struct vimvar   *p;
 
-  for (int i = 0; i < VV_LEN; ++i) {
+  for (size_t i = 0; i < ARRAY_SIZE(vimvars); ++i) {
     p = &vimvars[i];
     if (p->vv_di.di_tv.v_type == VAR_STRING) {
       xfree(p->vv_str);
@@ -3188,7 +3187,7 @@ char_u *get_user_var_name(expand_T *xp, int idx)
   static size_t bdone;
   static size_t wdone;
   static size_t tdone;
-  static int vidx;
+  static size_t vidx;
   static hashitem_T   *hi;
   hashtab_T           *ht;
 
@@ -3250,9 +3249,10 @@ char_u *get_user_var_name(expand_T *xp, int idx)
     return cat_prefix_varname('t', hi->hi_key);
   }
 
-  /* v: variables */
-  if (vidx < VV_LEN)
+  // v: variables
+  if (vidx < ARRAY_SIZE(vimvars)) {
     return cat_prefix_varname('v', (char_u *)vimvars[vidx++].vv_name);
+  }
 
   xfree(varnamebuf);
   varnamebuf = NULL;
