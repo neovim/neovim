@@ -1130,15 +1130,15 @@ void ex_diffoff(exarg_T *eap)
 
       if (wp->w_p_diff_saved) {
         if (wp->w_p_scb) {
-          wp->w_p_scb = wp->w_p_diff_saved ? wp->w_p_scb_save : false;
+          wp->w_p_scb = wp->w_p_scb_save;
         }
 
         if (wp->w_p_crb) {
-          wp->w_p_crb = wp->w_p_diff_saved ? wp->w_p_crb_save : false;
+          wp->w_p_crb = wp->w_p_crb_save;
         }
 
         if (!wp->w_p_wrap) {
-          wp->w_p_wrap = wp->w_p_diff_saved ? wp->w_p_wrap_save : true;
+          wp->w_p_wrap = wp->w_p_wrap_save;
         }
 
         free_string_option(wp->w_p_fdm);
