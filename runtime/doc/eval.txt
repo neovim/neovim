@@ -4324,7 +4324,9 @@ join({list} [, {sep}])					*join()*
 jsondecode({expr})					*jsondecode()*
 		Convert {expr} from JSON object.  Accepts |readfile()|-style 
 		list as the input, as well as regular string.  May output any 
-		Vim value.  In the following cases it will output 
+		Vim value.  When 'encoding' is not UTF-8 string is converted 
+		from UTF-8 to 'encoding', failing conversion fails 
+		jsondecode().  In the following cases it will output 
 		|msgpack-special-dict|:
 		1. Dictionary contains duplicate key.
 		2. Dictionary contains empty key.
@@ -4334,8 +4336,9 @@ jsondecode({expr})					*jsondecode()*
 
 jsonencode({expr})					*jsonencode()*
 		Convert {expr} into a JSON string.  Accepts 
-		|msgpack-special-dict| as the input.  Will not convert 
-		|Funcref|s, mappings with non-string keys (can be created as 
+		|msgpack-special-dict| as the input.  Converts from 'encoding' 
+		to UTF-8 when encoding strings.  Will not convert |Funcref|s, 
+		mappings with non-string keys (can be created as 
 		|msgpack-special-dict|), values with self-referencing 
 		containers, strings which contain non-UTF-8 characters, 
 		pseudo-UTF-8 strings which contain codepoints reserved for 
