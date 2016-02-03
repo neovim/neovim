@@ -41,22 +41,24 @@ include_directories(${GENERATED_DIR})
 include_directories(${GENERATED_INCLUDES_DIR})
 
 file(MAKE_DIRECTORY ${GENERATED_DIR})
-file(MAKE_DIRECTORY ${GENERATED_DIR}/os)
-file(MAKE_DIRECTORY ${GENERATED_DIR}/api)
-file(MAKE_DIRECTORY ${GENERATED_DIR}/api/private)
-file(MAKE_DIRECTORY ${GENERATED_DIR}/msgpack_rpc)
-file(MAKE_DIRECTORY ${GENERATED_DIR}/tui)
-file(MAKE_DIRECTORY ${GENERATED_DIR}/event)
 file(MAKE_DIRECTORY ${GENERATED_INCLUDES_DIR})
-file(MAKE_DIRECTORY ${GENERATED_INCLUDES_DIR}/os)
-file(MAKE_DIRECTORY ${GENERATED_INCLUDES_DIR}/api)
-file(MAKE_DIRECTORY ${GENERATED_INCLUDES_DIR}/api/private)
-file(MAKE_DIRECTORY ${GENERATED_INCLUDES_DIR}/msgpack_rpc)
-file(MAKE_DIRECTORY ${GENERATED_INCLUDES_DIR}/tui)
-file(MAKE_DIRECTORY ${GENERATED_INCLUDES_DIR}/event)
 
-file(GLOB NEOVIM_SOURCES *.c os/*.c api/*.c api/private/*.c msgpack_rpc/*.c
-  tui/*.c event/*.c)
+file(GLOB NEOVIM_SOURCES *.c)
+
+foreach(subdir
+        os
+        api
+        api/private
+        msgpack_rpc
+        tui
+        event
+       )
+  file(MAKE_DIRECTORY ${GENERATED_DIR}/${subdir})
+  file(MAKE_DIRECTORY ${GENERATED_INCLUDES_DIR}/${subdir})
+  file(GLOB sources ${subdir}/*.c)
+  list(APPEND NEOVIM_SOURCES ${sources})
+endforeach()
+
 file(GLOB_RECURSE NEOVIM_HEADERS *.h)
 file(GLOB UNIT_TEST_FIXTURES ${PROJECT_SOURCE_DIR}/test/unit/fixtures/*.c)
 
