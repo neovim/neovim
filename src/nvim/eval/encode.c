@@ -970,7 +970,7 @@ static inline int convert_to_json_string(garray_T *const gap,
         default: {
           if (vim_isprintc(ch)) {
             ga_concat_len(gap, buf + i, shift);
-          } else if (ch <= 0xFFFF) {
+          } else if (ch < SURROGATE_FIRST_CHAR) {
             ga_concat_len(gap, ((const char []) {
                 '\\', 'u',
                 xdigits[(ch >> (4 * 3)) & 0xF],
@@ -979,9 +979,9 @@ static inline int convert_to_json_string(garray_T *const gap,
                 xdigits[(ch >> (4 * 0)) & 0xF],
             }), sizeof("\\u1234") - 1);
           } else {
-            uint32_t tmp = (uint32_t) ch - 0x010000;
-            uint16_t hi = 0xD800 + ((tmp >> 10) & 0x03FF);
-            uint16_t lo = 0xDC00 + ((tmp >>  0) & 0x03FF);
+            uint32_t tmp = (uint32_t) ch - SURROGATE_FIRST_CHAR;
+            uint16_t hi = SURROGATE_HI_START + ((tmp >> 10) & ((1 << 10) - 1));
+            uint16_t lo = SURROGATE_LO_END + ((tmp >>  0) & ((1 << 10) - 1));
             ga_concat_len(gap, ((const char []) {
                 '\\', 'u',
                 xdigits[(hi >> (4 * 3)) & 0xF],

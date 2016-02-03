@@ -54,6 +54,21 @@ static inline ListReaderState encode_init_lrstate(const list_T *const list)
 /// Array mapping values from SpecialVarValue enum to names
 extern const char *const encode_special_var_names[];
 
+/// First codepoint in high surrogates block
+#define SURROGATE_HI_START 0xD800
+
+/// Last codepoint in high surrogates block
+#define SURROGATE_HI_END   0xDBFF
+
+/// First codepoint in low surrogates block
+#define SURROGATE_LO_START 0xDC00
+
+/// Last codepoint in low surrogates block
+#define SURROGATE_LO_END   0xDFFF
+
+/// First character that needs to be encoded as surrogate pair
+#define SURROGATE_FIRST_CHAR 0x10000
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "eval/encode.h.generated.h"
 #endif

@@ -340,12 +340,12 @@ int json_decode_string(const char *const buf, const size_t len,
           goto json_decode_string_fail;
         }
         char *str = xmalloc(len + 1);
-        uint16_t fst_in_pair = 0;
+        int fst_in_pair = 0;
         char *str_end = str;
         for (const char *t = s; t < p; t++) {
           if (t[0] != '\\' || t[1] != 'u') {
             if (fst_in_pair != 0) {
-              str_end += utf_char2bytes((int) fst_in_pair, (char_u *) str_end);
+              str_end += utf_char2bytes(fst_in_pair, (char_u *) str_end);
               fst_in_pair = 0;
             }
           }
@@ -353,20 +353,21 @@ int json_decode_string(const char *const buf, const size_t len,
             t++;
             switch (*t) {
               case 'u': {
-                char ubuf[] = { t[1], t[2], t[3], t[4], 0 };
+                const char ubuf[] = { t[1], t[2], t[3], t[4], 0 };
                 t += 4;
                 unsigned long ch;
                 vim_str2nr((char_u *) ubuf, NULL, NULL, 0, 0, 2, NULL, &ch);
-                if (0xD800UL <= ch && ch <= 0xDB7FUL) {
-                  fst_in_pair = (uint16_t) ch;
-                } else if (0xDC00ULL <= ch && ch <= 0xDB7FUL) {
-                  if (fst_in_pair != 0) {
-                    int full_char = (
-                        (int) (ch - 0xDC00UL)
-                        + (((int) (fst_in_pair - 0xD800)) << 10)
-                    );
-                    str_end += utf_char2bytes(full_char, (char_u *) str_end);
-                  }
+                if (SURROGATE_HI_START <= ch && ch <= SURROGATE_HI_END) {
+                  fst_in_pair = (int) ch;
+                } else if (SURROGATE_LO_START <= ch && ch <= SURROGATE_LO_END
+                           && fst_in_pair != 0) {
+                  const int full_char = (
+                      (int) (ch - SURROGATE_LO_START)
+                      + ((fst_in_pair - SURROGATE_HI_START) << 10)
+                      + SURROGATE_FIRST_CHAR
+                  );
+                  str_end += utf_char2bytes(full_char, (char_u *) str_end);
+                  fst_in_pair = 0;
                 } else {
                   str_end += utf_char2bytes((int) ch, (char_u *) str_end);
                 }

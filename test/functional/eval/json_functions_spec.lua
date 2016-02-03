@@ -297,6 +297,24 @@ describe('jsondecode() function', function()
     -- '"\xF9\x80\x80\x80\x80"',
     -- '"\xFC\x90\x80\x80\x80\x80"',
   end)
+
+  it('parses surrogate pairs properly', function()
+    eq('\xF0\x90\x80\x80', funcs.jsondecode('"\\uD800\\uDC00"'))
+    eq('\xED\xA0\x80a\xED\xB0\x80', funcs.jsondecode('"\\uD800a\\uDC00"'))
+    eq('\xED\xA0\x80\t\xED\xB0\x80', funcs.jsondecode('"\\uD800\\t\\uDC00"'))
+
+    eq('\xED\xA0\x80', funcs.jsondecode('"\\uD800"'))
+    eq('\xED\xA0\x80a', funcs.jsondecode('"\\uD800a"'))
+    eq('\xED\xA0\x80\t', funcs.jsondecode('"\\uD800\\t"'))
+
+    eq('\xED\xB0\x80', funcs.jsondecode('"\\uDC00"'))
+    eq('\xED\xB0\x80a', funcs.jsondecode('"\\uDC00a"'))
+    eq('\xED\xB0\x80\t', funcs.jsondecode('"\\uDC00\\t"'))
+
+    eq('\xED\xB0\x80', funcs.jsondecode('"\\uDC00"'))
+    eq('a\xED\xB0\x80', funcs.jsondecode('"a\\uDC00"'))
+    eq('\t\xED\xB0\x80', funcs.jsondecode('"\\t\\uDC00"'))
+  end)
 end)
 
 describe('jsonencode() function', function()
