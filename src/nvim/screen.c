@@ -6222,8 +6222,8 @@ void clear_tab_page_click_defs(StlClickDefinition *const tpcd,
         xfree(tpcd[i].func);
       }
     }
+    memset(tpcd, 0, (size_t) tpcd_size * sizeof(tpcd[0]));
   }
-  memset(tpcd, 0, (size_t) tpcd_size * sizeof(tpcd[0]));
 }
 
 void screenclear(void)
