@@ -2,8 +2,8 @@
 " Language:		shell (sh) Korn shell (ksh) bash (sh)
 " Maintainer:		Charles E. Campbell  <NdrOchipS@PcampbellAfamily.Mbiz>
 " Previous Maintainer:	Lennart Schultz <Lennart.Schultz@ecmwf.int>
-" Last Change:		Apr 10, 2015
-" Version:		136
+" Last Change:		May 29, 2015
+" Version:		137
 " URL:		http://www.drchip.org/astronaut/vim/index.html#SYNTAX_SH
 " For options and settings, please use:      :help ft-sh-syntax
 " This file includes many ideas from ?ric Brunet (eric.brunet@ens.fr)
@@ -17,7 +17,7 @@ elseif exists("b:current_syntax")
 endif
 
 " AFAICT "." should be considered part of the iskeyword.  Using iskeywords in
-" syntax is dicey, so the following code permits the user to prevent/override
+" syntax is dicey, so the following code permits the user to
 "  g:sh_isk set to a string	: specify iskeyword.
 "  g:sh_noisk exists	: don't change iskeyword
 "  g:sh_noisk does not exist	: (default) append "." to iskeyword
@@ -108,8 +108,7 @@ syn cluster shArithParenList	contains=shArithmetic,shCaseEsac,shComment,shDeref,
 syn cluster shArithList	contains=@shArithParenList,shParenError
 syn cluster shCaseEsacList	contains=shCaseStart,shCase,shCaseBar,shCaseIn,shComment,shDeref,shDerefSimple,shCaseCommandSub,shCaseExSingleQuote,shCaseSingleQuote,shCaseDoubleQuote,shCtrlSeq,@shErrorList,shStringSpecial,shCaseRange
 syn cluster shCaseList	contains=@shCommandSubList,shCaseEsac,shColon,shCommandSub,shComment,shDo,shEcho,shExpr,shFor,shHereDoc,shIf,shRedir,shSetList,shSource,shStatement,shVariable,shCtrlSeq
-"syn cluster shColonList	contains=@shCaseList
-syn cluster shCommandSubList	contains=shArithmetic,shDeref,shDerefSimple,shEcho,shEscape,shNumber,shOption,shPosnParm,shExSingleQuote,shSingleQuote,shExDoubleQuote,shDoubleQuote,shStatement,shVariable,shSubSh,shAlias,shTest,shCtrlSeq,shSpecial,shCmdParenRegion
+syn cluster shCommandSubList	contains=shAlias,shArithmetic,shCmdParenRegion,shCtrlSeq,shDeref,shDerefSimple,shDoubleQuote,shEcho,shEscape,shExDoubleQuote,shExpr,shExSingleQuote,shNumber,shOperator,shOption,shPosnParm,shSingleQuote,shSpecial,shStatement,shSubSh,shTest,shVariable
 syn cluster shCurlyList	contains=shNumber,shComma,shDeref,shDerefSimple,shDerefSpecial
 syn cluster shDblQuoteList	contains=shCommandSub,shDeref,shDerefSimple,shEscape,shPosnParm,shCtrlSeq,shSpecial
 syn cluster shDerefList	contains=shDeref,shDerefSimple,shDerefVar,shDerefSpecial,shDerefWordError,shDerefPPS
@@ -182,7 +181,7 @@ syn match      shRedir	"\d<<-\="
 syn match   shOperator	"<<\|>>"		contained
 syn match   shOperator	"[!&;|]"		contained
 syn match   shOperator	"\[[[^:]\|\]]"		contained
-syn match   shOperator	"!\=="		skipwhite nextgroup=shPattern
+syn match   shOperator	"[-=/*+%]\=="		skipwhite nextgroup=shPattern
 syn match   shPattern	"\<\S\+\())\)\@="	contained contains=shExSingleQuote,shSingleQuote,shExDoubleQuote,shDoubleQuote,shDeref
 
 " Subshells: {{{1
@@ -194,8 +193,8 @@ syn region shSubSh transparent matchgroup=shSubShRegion start="[^(]\zs(" end=")"
 "=======
 syn region shExpr	matchgroup=shRange start="\[" skip=+\\\\\|\\$\|\[+ end="\]" contains=@shTestList,shSpecial
 syn region shTest	transparent matchgroup=shStatement start="\<test\s" skip=+\\\\\|\\$+ matchgroup=NONE end="[;&|]"me=e-1 end="$" contains=@shExprList1
+syn match  shTestOpr	contained	'[^-+/%]\zs=' skipwhite nextgroup=shTestDoubleQuote,shTestSingleQuote,shTestPattern
 syn match  shTestOpr	contained	"<=\|>=\|!=\|==\|-.\>\|-\(nt\|ot\|ef\|eq\|ne\|lt\|le\|gt\|ge\)\>\|[!<>]"
-syn match  shTestOpr	contained	'=' skipwhite nextgroup=shTestDoubleQuote,shTestSingleQuote,shTestPattern
 syn match  shTestPattern	contained	'\w\+'
 syn region shTestDoubleQuote	contained	start='\%(\%(\\\\\)*\\\)\@<!"' skip=+\\\\\|\\"+ end='"'
 syn match  shTestSingleQuote	contained	'\\.'
@@ -322,12 +321,13 @@ elseif !exists("g:sh_no_error")
 endif
 syn region  shSingleQuote	matchgroup=shQuote start=+'+ end=+'+		contains=@Spell
 syn region  shDoubleQuote	matchgroup=shQuote start=+\%(\%(\\\\\)*\\\)\@<!"+ skip=+\\"+ end=+"+	contains=@shDblQuoteList,shStringSpecial,@Spell
-"syn region  shDoubleQuote	matchgroup=shQuote start=+"+ skip=+\\"+ end=+"+	contains=@shDblQuoteList,shStringSpecial,@Spell
-syn match   shStringSpecial	"[^[:print:] \t]"	contained
+syn region  shDoubleQuote	matchgroup=shQuote start=+"+ skip=+\\"+ end=+"+	contains=@shDblQuoteList,shStringSpecial,@Spell
+syn match   shStringSpecial	"[^[:print:] \t]"		contained
 syn match   shStringSpecial	"\%(\\\\\)*\\[\\"'`$()#]"
-syn match   shSpecial	"[^\\]\zs\%(\\\\\)*\\[\\"'`$()#]" nextgroup=shMoreSpecial,shComment
-syn match   shSpecial	"^\%(\\\\\)*\\[\\"'`$()#]"	nextgroup=shComment
-syn match   shMoreSpecial	"\%(\\\\\)*\\[\\"'`$()#]" nextgroup=shMoreSpecial contained
+" COMBAK: why is ,shComment on next line???
+syn match   shSpecial	"[^\\]\zs\%(\\\\\)*\\[\\"'`$()#]"	nextgroup=shMoreSpecial,shComment
+syn match   shSpecial	"^\%(\\\\\)*\\[\\"'`$()#]"		nextgroup=shComment
+syn match   shMoreSpecial	"\%(\\\\\)*\\[\\"'`$()#]"		nextgroup=shMoreSpecial contained
 
 " Comments: {{{1
 "==========
@@ -341,42 +341,42 @@ syn match	shQuickComment	contained	"#.*$"
 " Here Documents: {{{1
 " =========================================
 if version < 600
- syn region shHereDoc matchgroup=shRedir01 start="<<\s*\**END[a-zA-Z_0-9]*\**" 		matchgroup=shRedir01 end="^END[a-zA-Z_0-9]*$"	contains=@shDblQuoteList
- syn region shHereDoc matchgroup=shRedir02 start="<<-\s*\**END[a-zA-Z_0-9]*\**"		matchgroup=shRedir02 end="^\s*END[a-zA-Z_0-9]*$"	contains=@shDblQuoteList
- syn region shHereDoc matchgroup=shRedir03 start="<<\s*\**EOF\**"		matchgroup=shRedir03	end="^EOF$"	contains=@shDblQuoteList
- syn region shHereDoc matchgroup=shRedir04 start="<<-\s*\**EOF\**"		matchgroup=shRedir04	end="^\s*EOF$"	contains=@shDblQuoteList
- syn region shHereDoc matchgroup=shRedir05 start="<<\s*\**\.\**"		matchgroup=shRedir05	end="^\.$"	contains=@shDblQuoteList
- syn region shHereDoc matchgroup=shRedir06 start="<<-\s*\**\.\**"		matchgroup=shRedir06	end="^\s*\.$"	contains=@shDblQuoteList
+ syn region shHereDoc matchgroup=shHereDoc01 start="<<\s*\**END[a-zA-Z_0-9]*\**" 	matchgroup=shHereDoc01 end="^END[a-zA-Z_0-9]*$"	contains=@shDblQuoteList
+ syn region shHereDoc matchgroup=shHereDoc02 start="<<-\s*\**END[a-zA-Z_0-9]*\**"	matchgroup=shHereDoc02 end="^\s*END[a-zA-Z_0-9]*$"	contains=@shDblQuoteList
+ syn region shHereDoc matchgroup=shHereDoc03 start="<<\s*\**EOF\**"		matchgroup=shHereDoc03 end="^EOF$"	contains=@shDblQuoteList
+ syn region shHereDoc matchgroup=shHereDoc04 start="<<-\s*\**EOF\**"		matchgroup=shHereDoc04 end="^\s*EOF$"	contains=@shDblQuoteList
+ syn region shHereDoc matchgroup=shHereDoc05 start="<<\s*\**\.\**"		matchgroup=shHereDoc05 end="^\.$"	contains=@shDblQuoteList
+ syn region shHereDoc matchgroup=shHereDoc06 start="<<-\s*\**\.\**"		matchgroup=shHereDoc06 end="^\s*\.$"	contains=@shDblQuoteList
 
 elseif s:sh_fold_heredoc
- syn region shHereDoc matchgroup=shRedir07 fold start="<<\s*\z([^ \t|]*\)"		matchgroup=shRedir07 end="^\z1\s*$"	contains=@shDblQuoteList
- syn region shHereDoc matchgroup=shRedir08 fold start="<<\s*\"\z([^ \t|]*\)\""		matchgroup=shRedir08 end="^\z1\s*$"
- syn region shHereDoc matchgroup=shRedir09 fold start="<<\s*'\z([^ \t|]*\)'"		matchgroup=shRedir09 end="^\z1\s*$"
- syn region shHereDoc matchgroup=shRedir10 fold start="<<-\s*\z([^ \t|]*\)"		matchgroup=shRedir10 end="^\s*\z1\s*$"	contains=@shDblQuoteList
- syn region shHereDoc matchgroup=shRedir11 fold start="<<-\s*\"\z([^ \t|]*\)\""		matchgroup=shRedir11 end="^\s*\z1\s*$"
- syn region shHereDoc matchgroup=shRedir12 fold start="<<-\s*'\z([^ \t|]*\)'"		matchgroup=shRedir12 end="^\s*\z1\s*$"
- syn region shHereDoc matchgroup=shRedir13 fold start="<<\s*\\\_$\_s*\z([^ \t|]*\)"	matchgroup=shRedir13 end="^\z1\s*$"
- syn region shHereDoc matchgroup=shRedir14 fold start="<<\s*\\\_$\_s*\"\z([^ \t|]*\)\""	matchgroup=shRedir14 end="^\z1\s*$"
- syn region shHereDoc matchgroup=shRedir15 fold start="<<-\s*\\\_$\_s*'\z([^ \t|]*\)'"	matchgroup=shRedir15 end="^\s*\z1\s*$"
- syn region shHereDoc matchgroup=shRedir16 fold start="<<-\s*\\\_$\_s*\z([^ \t|]*\)"	matchgroup=shRedir16 end="^\s*\z1\s*$"
- syn region shHereDoc matchgroup=shRedir17 fold start="<<-\s*\\\_$\_s*\"\z([^ \t|]*\)\""	matchgroup=shRedir17 end="^\s*\z1\s*$"
- syn region shHereDoc matchgroup=shRedir18 fold start="<<\s*\\\_$\_s*'\z([^ \t|]*\)'"	matchgroup=shRedir18 end="^\z1\s*$"
- syn region shHereDoc matchgroup=shRedir19 fold start="<<\\\z([^ \t|]*\)"		matchgroup=shRedir19 end="^\z1\s*$"
+ syn region shHereDoc matchgroup=shHereDoc07 fold start="<<\s*\z([^ \t|]*\)"		matchgroup=shHereDoc07 end="^\z1\s*$"	contains=@shDblQuoteList
+ syn region shHereDoc matchgroup=shHereDoc08 fold start="<<\s*\"\z([^ \t|]*\)\""	matchgroup=shHereDoc08 end="^\z1\s*$"
+ syn region shHereDoc matchgroup=shHereDoc09 fold start="<<\s*'\z([^ \t|]*\)'"		matchgroup=shHereDoc09 end="^\z1\s*$"
+ syn region shHereDoc matchgroup=shHereDoc10 fold start="<<-\s*\z([^ \t|]*\)"		matchgroup=shHereDoc10 end="^\s*\z1\s*$"	contains=@shDblQuoteList
+ syn region shHereDoc matchgroup=shHereDoc11 fold start="<<-\s*\"\z([^ \t|]*\)\""	matchgroup=shHereDoc11 end="^\s*\z1\s*$"
+ syn region shHereDoc matchgroup=shHereDoc12 fold start="<<-\s*'\z([^ \t|]*\)'"		matchgroup=shHereDoc12 end="^\s*\z1\s*$"
+ syn region shHereDoc matchgroup=shHereDoc13 fold start="<<\s*\\\_$\_s*\z([^ \t|]*\)"	matchgroup=shHereDoc13 end="^\z1\s*$"
+ syn region shHereDoc matchgroup=shHereDoc14 fold start="<<\s*\\\_$\_s*\"\z([^ \t|]*\)\""	matchgroup=shHereDoc14 end="^\z1\s*$"
+ syn region shHereDoc matchgroup=shHereDoc15 fold start="<<-\s*\\\_$\_s*'\z([^ \t|]*\)'"	matchgroup=shHereDoc15 end="^\s*\z1\s*$"
+ syn region shHereDoc matchgroup=shHereDoc16 fold start="<<-\s*\\\_$\_s*\z([^ \t|]*\)"	matchgroup=shHereDoc16 end="^\s*\z1\s*$"
+ syn region shHereDoc matchgroup=shHereDoc17 fold start="<<-\s*\\\_$\_s*\"\z([^ \t|]*\)\""	matchgroup=shHereDoc17 end="^\s*\z1\s*$"
+ syn region shHereDoc matchgroup=shHereDoc18 fold start="<<\s*\\\_$\_s*'\z([^ \t|]*\)'"	matchgroup=shHereDoc18 end="^\z1\s*$"
+ syn region shHereDoc matchgroup=shHereDoc19 fold start="<<\\\z([^ \t|]*\)"		matchgroup=shHereDoc19 end="^\z1\s*$"
 
 else
- syn region shHereDoc matchgroup=shRedir20 start="<<\s*\\\=\z([^ \t|]*\)"		matchgroup=shRedir20 end="^\z1\s*$"    contains=@shDblQuoteList
- syn region shHereDoc matchgroup=shRedir21 start="<<\s*\"\z([^ \t|]*\)\""		matchgroup=shRedir21 end="^\z1\s*$"
- syn region shHereDoc matchgroup=shRedir22 start="<<-\s*\z([^ \t|]*\)"		matchgroup=shRedir22 end="^\s*\z1\s*$" contains=@shDblQuoteList
- syn region shHereDoc matchgroup=shRedir23 start="<<-\s*'\z([^ \t|]*\)'"		matchgroup=shRedir23 end="^\s*\z1\s*$"
- syn region shHereDoc matchgroup=shRedir24 start="<<\s*'\z([^ \t|]*\)'"		matchgroup=shRedir24 end="^\z1\s*$"
- syn region shHereDoc matchgroup=shRedir25 start="<<-\s*\"\z([^ \t|]*\)\""		matchgroup=shRedir25 end="^\s*\z1\s*$"
- syn region shHereDoc matchgroup=shRedir26 start="<<\s*\\\_$\_s*\z([^ \t|]*\)"		matchgroup=shRedir26 end="^\z1\s*$"
- syn region shHereDoc matchgroup=shRedir27 start="<<-\s*\\\_$\_s*\z([^ \t|]*\)"		matchgroup=shRedir27 end="^\s*\z1\s*$"
- syn region shHereDoc matchgroup=shRedir28 start="<<-\s*\\\_$\_s*'\z([^ \t|]*\)'"	matchgroup=shRedir28 end="^\s*\z1\s*$"
- syn region shHereDoc matchgroup=shRedir29 start="<<\s*\\\_$\_s*'\z([^ \t|]*\)'"	matchgroup=shRedir29 end="^\z1\s*$"
- syn region shHereDoc matchgroup=shRedir30 start="<<\s*\\\_$\_s*\"\z([^ \t|]*\)\""	matchgroup=shRedir30 end="^\z1\s*$"
- syn region shHereDoc matchgroup=shRedir31 start="<<-\s*\\\_$\_s*\"\z([^ \t|]*\)\""	matchgroup=shRedir31 end="^\s*\z1\s*$"
- syn region shHereDoc matchgroup=shRedir32 start="<<\\\z([^ \t|]*\)"		matchgroup=shRedir32 end="^\z1\s*$"
+ syn region shHereDoc matchgroup=shHereDoc20 start="<<\s*\\\=\z([^ \t|]*\)"		matchgroup=shHereDoc20 end="^\z1\s*$"    contains=@shDblQuoteList
+ syn region shHereDoc matchgroup=shHereDoc21 start="<<\s*\"\z([^ \t|]*\)\""		matchgroup=shHereDoc21 end="^\z1\s*$"
+ syn region shHereDoc matchgroup=shHereDoc22 start="<<-\s*\z([^ \t|]*\)"		matchgroup=shHereDoc22 end="^\s*\z1\s*$" contains=@shDblQuoteList
+ syn region shHereDoc matchgroup=shHereDoc23 start="<<-\s*'\z([^ \t|]*\)'"		matchgroup=shHereDoc23 end="^\s*\z1\s*$"
+ syn region shHereDoc matchgroup=shHereDoc24 start="<<\s*'\z([^ \t|]*\)'"		matchgroup=shHereDoc24 end="^\z1\s*$"
+ syn region shHereDoc matchgroup=shHereDoc25 start="<<-\s*\"\z([^ \t|]*\)\""		matchgroup=shHereDoc25 end="^\s*\z1\s*$"
+ syn region shHereDoc matchgroup=shHereDoc26 start="<<\s*\\\_$\_s*\z([^ \t|]*\)"	matchgroup=shHereDoc26 end="^\z1\s*$"
+ syn region shHereDoc matchgroup=shHereDoc27 start="<<-\s*\\\_$\_s*\z([^ \t|]*\)"	matchgroup=shHereDoc27 end="^\s*\z1\s*$"
+ syn region shHereDoc matchgroup=shHereDoc28 start="<<-\s*\\\_$\_s*'\z([^ \t|]*\)'"	matchgroup=shHereDoc28 end="^\s*\z1\s*$"
+ syn region shHereDoc matchgroup=shHereDoc29 start="<<\s*\\\_$\_s*'\z([^ \t|]*\)'"	matchgroup=shHereDoc29 end="^\z1\s*$"
+ syn region shHereDoc matchgroup=shHereDoc30 start="<<\s*\\\_$\_s*\"\z([^ \t|]*\)\""	matchgroup=shHereDoc30 end="^\z1\s*$"
+ syn region shHereDoc matchgroup=shHereDoc31 start="<<-\s*\\\_$\_s*\"\z([^ \t|]*\)\""	matchgroup=shHereDoc31 end="^\s*\z1\s*$"
+ syn region shHereDoc matchgroup=shHereDoc32 start="<<\\\z([^ \t|]*\)"		matchgroup=shHereDoc32 end="^\z1\s*$"
 endif
 
 " Here Strings: {{{1
@@ -389,8 +389,8 @@ endif
 " Identifiers: {{{1
 "=============
 syn match  shSetOption	"\s\zs[-+][a-zA-Z0-9]\+\>"	contained
-syn match  shVariable	"\<\([bwglsav]:\)\=[a-zA-Z0-9.!@_%+,]*\ze="	nextgroup=shSetIdentifier
-syn match  shSetIdentifier	"="		contained	nextgroup=shCmdParenRegion,shPattern,shDeref,shDerefSimple,shDoubleQuote,shExDoubleQuote,shSingleQuote,shExSingleQuote
+syn match  shVariable	"\<\([bwglsav]:\)\=[a-zA-Z0-9.!@_%+,]*\ze="	nextgroup=shVarAssign
+syn match  shVarAssign	"="		contained	nextgroup=shCmdParenRegion,shPattern,shDeref,shDerefSimple,shDoubleQuote,shExDoubleQuote,shSingleQuote,shExSingleQuote
 syn region shAtExpr	contained	start="@(" end=")" contains=@shIdList
 if exists("b:is_bash")
  syn region shSetList oneline matchgroup=shSet start="\<\(declare\|typeset\|local\|export\|unset\)\>\ze[^/]" end="$"	matchgroup=shSetListDelim end="\ze[}|);&]" matchgroup=NONE end="\ze\s\+#\|="	contains=@shIdList
@@ -668,38 +668,38 @@ hi def link shStatement		Statement
 hi def link shString		String
 hi def link shTodo		Todo
 hi def link shAlias		Identifier
-hi def link shRedir01		shRedir
-hi def link shRedir02		shRedir
-hi def link shRedir03		shRedir
-hi def link shRedir04		shRedir
-hi def link shRedir05		shRedir
-hi def link shRedir06		shRedir
-hi def link shRedir07		shRedir
-hi def link shRedir08		shRedir
-hi def link shRedir09		shRedir
-hi def link shRedir10		shRedir
-hi def link shRedir11		shRedir
-hi def link shRedir12		shRedir
-hi def link shRedir13		shRedir
-hi def link shRedir14		shRedir
-hi def link shRedir15		shRedir
-hi def link shRedir16		shRedir
-hi def link shRedir17		shRedir
-hi def link shRedir18		shRedir
-hi def link shRedir19		shRedir
-hi def link shRedir20		shRedir
-hi def link shRedir21		shRedir
-hi def link shRedir22		shRedir
-hi def link shRedir23		shRedir
-hi def link shRedir24		shRedir
-hi def link shRedir25		shRedir
-hi def link shRedir26		shRedir
-hi def link shRedir27		shRedir
-hi def link shRedir28		shRedir
-hi def link shRedir29		shRedir
-hi def link shRedir30		shRedir
-hi def link shRedir31		shRedir
-hi def link shRedir32		shRedir
+hi def link shHereDoc01		shRedir
+hi def link shHereDoc02		shRedir
+hi def link shHereDoc03		shRedir
+hi def link shHereDoc04		shRedir
+hi def link shHereDoc05		shRedir
+hi def link shHereDoc06		shRedir
+hi def link shHereDoc07		shRedir
+hi def link shHereDoc08		shRedir
+hi def link shHereDoc09		shRedir
+hi def link shHereDoc10		shRedir
+hi def link shHereDoc11		shRedir
+hi def link shHereDoc12		shRedir
+hi def link shHereDoc13		shRedir
+hi def link shHereDoc14		shRedir
+hi def link shHereDoc15		shRedir
+hi def link shHereDoc16		shRedir
+hi def link shHereDoc17		shRedir
+hi def link shHereDoc18		shRedir
+hi def link shHereDoc19		shRedir
+hi def link shHereDoc20		shRedir
+hi def link shHereDoc21		shRedir
+hi def link shHereDoc22		shRedir
+hi def link shHereDoc23		shRedir
+hi def link shHereDoc24		shRedir
+hi def link shHereDoc25		shRedir
+hi def link shHereDoc26		shRedir
+hi def link shHereDoc27		shRedir
+hi def link shHereDoc28		shRedir
+hi def link shHereDoc29		shRedir
+hi def link shHereDoc30		shRedir
+hi def link shHereDoc31		shRedir
+hi def link shHereDoc32		shRedir
 
 " Set Current Syntax: {{{1
 " ===================

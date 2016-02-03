@@ -1,9 +1,8 @@
 " Vim syntax file
 " Language:	Python
-" Maintainer:	Neil Schemenauer <nas@python.ca>
-" Last Change:	2014 Jul 16
-" Credits:	Zvezdan Petkovic <zpetkovic@acm.org>
-"		Neil Schemenauer <nas@python.ca>
+" Maintainer:	Zvezdan Petkovic <zpetkovic@acm.org>
+" Last Change:	2015 Jun 19
+" Credits:	Neil Schemenauer <nas@python.ca>
 "		Dmitry Vasiliev
 "
 "		This version is a major rewrite by Zvezdan Petkovic.
@@ -95,16 +94,16 @@ syn match   pythonComment	"#.*$" contains=pythonTodo,@Spell
 syn keyword pythonTodo		FIXME NOTE NOTES TODO XXX contained
 
 " Triple-quoted strings can contain doctests.
-syn region  pythonString
+syn region  pythonString matchgroup=pythonQuotes
       \ start=+[uU]\=\z(['"]\)+ end="\z1" skip="\\\\\|\\\z1"
       \ contains=pythonEscape,@Spell
-syn region  pythonString
+syn region  pythonString matchgroup=pythonTripleQuotes
       \ start=+[uU]\=\z('''\|"""\)+ skip=+\\["']+ end="\z1" keepend
       \ contains=pythonEscape,pythonSpaceError,pythonDoctest,@Spell
-syn region  pythonRawString
+syn region  pythonRawString matchgroup=pythonQuotes
       \ start=+[uU]\=[rR]\z(['"]\)+ end="\z1" skip="\\\\\|\\\z1"
       \ contains=@Spell
-syn region  pythonRawString
+syn region  pythonRawString matchgroup=pythonTripleQuotes
       \ start=+[uU]\=[rR]\z('''\|"""\)+ end="\z1" keepend
       \ contains=pythonSpaceError,pythonDoctest,@Spell
 
@@ -113,7 +112,7 @@ syn match   pythonEscape	"\\\o\{1,3}" contained
 syn match   pythonEscape	"\\x\x\{2}" contained
 syn match   pythonEscape	"\%(\\u\x\{4}\|\\U\x\{8}\)" contained
 " Python allows case-insensitive Unicode IDs: http://www.unicode.org/charts/
-syn match   pythonEscape	"\\N{.\{-}}" contained
+syn match   pythonEscape	"\\N{\a\+\%(\s\a\+\)*}" contained
 syn match   pythonEscape	"\\$"
 
 if exists("python_highlight_all")
@@ -274,6 +273,8 @@ if version >= 508 || !exists("did_python_syn_inits")
   HiLink pythonTodo		Todo
   HiLink pythonString		String
   HiLink pythonRawString	String
+  HiLink pythonQuotes		String
+  HiLink pythonTripleQuotes	pythonQuotes
   HiLink pythonEscape		Special
   if !exists("python_no_number_highlight")
     HiLink pythonNumber		Number
