@@ -29,7 +29,6 @@ SCRIPTS :=                                                             \
            test_close_count.out                                        \
            test_command_count.out                                      \
            test_marks.out                                              \
-           test_textobjects.out                                        \
 
 NEW_TESTS =
 
