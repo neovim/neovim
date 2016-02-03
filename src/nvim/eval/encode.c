@@ -194,13 +194,13 @@ static int conv_error(const char *const msg, const MPConvStack *const mpstack,
 ///
 /// @param[in]  list  Converted list.
 /// @param[out]  ret_len  Resulting buffer length.
-/// @param[out]  ret_buf  Allocated buffer with the result or NULL if ret_len is 
+/// @param[out]  ret_buf  Allocated buffer with the result or NULL if ret_len is
 ///                       zero.
 ///
 /// @return true in case of success, false in case of failure.
 bool encode_vim_list_to_buf(const list_T *const list, size_t *const ret_len,
                             char **const ret_buf)
-  FUNC_ATTR_NONNULL_ARG(2,3) FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_NONNULL_ARG(2, 3) FUNC_ATTR_WARN_UNUSED_RESULT
 {
   size_t len = 0;
   if (list != NULL) {
@@ -336,18 +336,15 @@ static int name##_convert_one_value(firstargtype firstargname, \
       } \
       CHECK_SELF_REFERENCE(tv->vval.v_list, lv_copyID, kMPConvList); \
       CONV_LIST_START(tv->vval.v_list); \
-      kv_push( \
-          MPConvStackVal, \
-          *mpstack, \
-          ((MPConvStackVal) { \
-            .type = kMPConvList, \
-            .data = { \
-              .l = { \
-                .list = tv->vval.v_list, \
-                .li = tv->vval.v_list->lv_first, \
-              }, \
-            }, \
-          })); \
+      kv_push(MPConvStackVal, *mpstack, ((MPConvStackVal) { \
+        .type = kMPConvList, \
+        .data = { \
+          .l = { \
+            .list = tv->vval.v_list, \
+            .li = tv->vval.v_list->lv_first, \
+          }, \
+        }, \
+      })); \
       break; \
     } \
     case VAR_SPECIAL: { \
@@ -475,14 +472,14 @@ static int name##_convert_one_value(firstargtype firstargname, \
                                  kMPConvList); \
             CONV_LIST_START(val_di->di_tv.vval.v_list); \
             kv_push(MPConvStackVal, *mpstack, ((MPConvStackVal) { \
-                      .type = kMPConvList, \
-                      .data = { \
-                        .l = { \
-                          .list = val_di->di_tv.vval.v_list, \
-                          .li = val_di->di_tv.vval.v_list->lv_first, \
-                        }, \
-                      }, \
-                    })); \
+              .type = kMPConvList, \
+              .data = { \
+                .l = { \
+                  .list = val_di->di_tv.vval.v_list, \
+                  .li = val_di->di_tv.vval.v_list->lv_first, \
+                }, \
+              }, \
+            })); \
             break; \
           } \
           case kMPMap: { \
@@ -504,14 +501,14 @@ static int name##_convert_one_value(firstargtype firstargname, \
             CHECK_SELF_REFERENCE(val_list, lv_copyID, kMPConvPairs); \
             CONV_DICT_START(val_list->lv_len); \
             kv_push(MPConvStackVal, *mpstack, ((MPConvStackVal) { \
-                      .type = kMPConvPairs, \
-                      .data = { \
-                        .l = { \
-                          .list = val_list, \
-                          .li = val_list->lv_first, \
-                        }, \
-                      }, \
-                    })); \
+              .type = kMPConvPairs, \
+              .data = { \
+                .l = { \
+                  .list = val_list, \
+                  .li = val_list->lv_first, \
+                }, \
+              }, \
+            })); \
             break; \
           } \
           case kMPExt: { \
@@ -543,15 +540,15 @@ name##_convert_one_value_regular_dict: \
       CHECK_SELF_REFERENCE(tv->vval.v_dict, dv_copyID, kMPConvDict); \
       CONV_DICT_START(tv->vval.v_dict->dv_hashtab.ht_used); \
       kv_push(MPConvStackVal, *mpstack, ((MPConvStackVal) { \
-                .type = kMPConvDict, \
-                .data = { \
-                  .d = { \
-                    .dict = tv->vval.v_dict, \
-                    .hi = tv->vval.v_dict->dv_hashtab.ht_array, \
-                    .todo = tv->vval.v_dict->dv_hashtab.ht_used, \
-                  }, \
-                }, \
-              })); \
+        .type = kMPConvDict, \
+        .data = { \
+          .d = { \
+            .dict = tv->vval.v_dict, \
+            .hi = tv->vval.v_dict->dv_hashtab.ht_array, \
+            .todo = tv->vval.v_dict->dv_hashtab.ht_used, \
+          }, \
+        }, \
+      })); \
       break; \
     } \
     case VAR_UNKNOWN: { \
@@ -971,7 +968,7 @@ static inline int convert_to_json_string(garray_T *const gap,
           if (vim_isprintc(ch)) {
             ga_concat_len(gap, buf + i, shift);
           } else if (ch < SURROGATE_FIRST_CHAR) {
-            ga_concat_len(gap, ((const char []) {
+            ga_concat_len(gap, ((const char[]) {
                 '\\', 'u',
                 xdigits[(ch >> (4 * 3)) & 0xF],
                 xdigits[(ch >> (4 * 2)) & 0xF],
@@ -982,7 +979,7 @@ static inline int convert_to_json_string(garray_T *const gap,
             uint32_t tmp = (uint32_t) ch - SURROGATE_FIRST_CHAR;
             uint16_t hi = SURROGATE_HI_START + ((tmp >> 10) & ((1 << 10) - 1));
             uint16_t lo = SURROGATE_LO_END + ((tmp >>  0) & ((1 << 10) - 1));
-            ga_concat_len(gap, ((const char []) {
+            ga_concat_len(gap, ((const char[]) {
                 '\\', 'u',
                 xdigits[(hi >> (4 * 3)) & 0xF],
                 xdigits[(hi >> (4 * 2)) & 0xF],

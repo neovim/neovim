@@ -193,8 +193,8 @@ int json_decode_string(const char *const buf, const size_t len,
         } else if (didcolon) {
           EMSG2(_("E474: Comma after colon: %s"), p);
           goto json_decode_string_fail;
-        } if (last_container.container.v_type == VAR_DICT
-            && last_container.stack_index != kv_size(stack) - 1) {
+        } else if (last_container.container.v_type == VAR_DICT
+                   && last_container.stack_index != kv_size(stack) - 1) {
           EMSG2(_("E474: Using comma in place of colon: %s"), p);
           goto json_decode_string_fail;
         } else if ((last_container.container.v_type == VAR_DICT
@@ -364,8 +364,7 @@ int json_decode_string(const char *const buf, const size_t len,
                   const int full_char = (
                       (int) (ch - SURROGATE_LO_START)
                       + ((fst_in_pair - SURROGATE_HI_START) << 10)
-                      + SURROGATE_FIRST_CHAR
-                  );
+                      + SURROGATE_FIRST_CHAR);
                   str_end += utf_char2bytes(full_char, (char_u *) str_end);
                   fst_in_pair = 0;
                 } else {
@@ -763,7 +762,7 @@ msgpack_to_vim_generic_map: {}
         .vval = { .v_list = list },
       }));
       if (encode_list_write((void *) ext_val_list, mobj.via.ext.ptr,
-                             mobj.via.ext.size) == -1) {
+                            mobj.via.ext.size) == -1) {
         return FAIL;
       }
       break;
