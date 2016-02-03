@@ -5656,8 +5656,13 @@ static void ex_quit(exarg_T *eap)
       || (only_one_window() && check_changed_any(eap->forceit))) {
     not_exiting();
   } else {
-    if (only_one_window()) {
-      // quit last window
+    // quit last window
+    // Note: only_one_window() returns true, even so a help window is
+    // still open. In that case only quit, if no address has been
+    // specified. Example:
+    // :h|wincmd w|1q     - don't quit
+    // :h|wincmd w|q      - quit
+    if (only_one_window() && (firstwin == lastwin || eap->addr_count == 0)) {
       getout(0);
     }
     /* close window; may free buffer */
