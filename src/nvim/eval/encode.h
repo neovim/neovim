@@ -1,5 +1,5 @@
-#ifndef NVIM_ENCODE_H
-#define NVIM_ENCODE_H
+#ifndef NVIM_EVAL_ENCODE_H
+#define NVIM_EVAL_ENCODE_H
 
 #include <stddef.h>
 
@@ -55,6 +55,6 @@ static inline ListReaderState encode_init_lrstate(const list_T *const list)
 extern const char *const encode_special_var_names[];
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "encode.h.generated.h"
+# include "eval/encode.h.generated.h"
 #endif
-#endif  // NVIM_ENCODE_H
+#endif  // NVIM_EVAL_ENCODE_H

@@ -73,7 +73,7 @@
 #include "nvim/undo.h"
 #include "nvim/version.h"
 #include "nvim/window.h"
-#include "nvim/encode.h"
+#include "nvim/eval/encode.h"
 #include "nvim/os/os.h"
 #include "nvim/event/libuv_process.h"
 #include "nvim/event/pty_process.h"

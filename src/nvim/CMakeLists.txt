@@ -52,6 +52,7 @@ foreach(subdir
         msgpack_rpc
         tui
         event
+        eval
        )
   file(MAKE_DIRECTORY ${GENERATED_DIR}/${subdir})
   file(MAKE_DIRECTORY ${GENERATED_INCLUDES_DIR}/${subdir})

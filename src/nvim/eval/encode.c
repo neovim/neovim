@@ -4,13 +4,11 @@
 ///
 /// Split out from eval.c.
 
-// TODO(ZyX-I): Move this to src/nvim/viml or src/nvim/eval
-
 #include <msgpack.h>
 #include <inttypes.h>
 #include <assert.h>
 
-#include "nvim/encode.h"
+#include "nvim/eval/encode.h"
 #include "nvim/buffer_defs.h"  // vimconv_T
 #include "nvim/eval.h"
 #include "nvim/eval_defs.h"
@@ -63,7 +61,7 @@ const char *const encode_special_var_names[] = {
 };
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "encode.c.generated.h"
+# include "eval/encode.c.generated.h"
 #endif
 
 /// Msgpack callback for writing to readfile()-style list

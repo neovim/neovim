@@ -39,7 +39,7 @@
 #include "nvim/fileio.h"
 #include "nvim/strings.h"
 #include "nvim/quickfix.h"
-#include "nvim/encode.h"
+#include "nvim/eval/encode.h"
 #include "nvim/lib/khash.h"
 #include "nvim/lib/kvec.h"
 
