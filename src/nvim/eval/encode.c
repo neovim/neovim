@@ -65,7 +65,7 @@ const char *const encode_special_var_names[] = {
 #endif
 
 /// Msgpack callback for writing to readfile()-style list
-int msgpack_list_write(void *data, const char *buf, size_t len)
+int encode_list_write(void *data, const char *buf, size_t len)
 {
   if (len == 0) {
     return 0;

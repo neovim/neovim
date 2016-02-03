@@ -31,7 +31,6 @@
 #include "nvim/misc2.h"
 #include "nvim/ex_getln.h"
 #include "nvim/search.h"
-#include "nvim/eval.h"
 #include "nvim/regexp.h"
 #include "nvim/eval_defs.h"
 #include "nvim/version.h"
@@ -40,6 +39,7 @@
 #include "nvim/strings.h"
 #include "nvim/quickfix.h"
 #include "nvim/eval/encode.h"
+#include "nvim/eval/decode.h"
 #include "nvim/lib/khash.h"
 #include "nvim/lib/kvec.h"
 
