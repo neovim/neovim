@@ -551,21 +551,11 @@ int msgpack_to_vim(const msgpack_object mobj, typval_T *const rettv)
 {
   switch (mobj.type) {
     case MSGPACK_OBJECT_NIL: {
-      create_special_dict(rettv, kMPNil, ((typval_T) {
-        .v_type = VAR_NUMBER,
-        .v_lock = 0,
-        .vval = { .v_number = 0 },
-      }));
+      *rettv = get_vim_var_tv(VV_NULL);
       break;
     }
     case MSGPACK_OBJECT_BOOLEAN: {
-      create_special_dict(rettv, kMPBoolean, ((typval_T) {
-        .v_type = VAR_NUMBER,
-        .v_lock = 0,
-        .vval = {
-          .v_number = (varnumber_T) mobj.via.boolean,
-        },
-      }));
+      *rettv = get_vim_var_tv(mobj.via.boolean ? VV_TRUE : VV_FALSE);
       break;
     }
     case MSGPACK_OBJECT_POSITIVE_INTEGER: {

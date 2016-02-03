@@ -4907,9 +4907,13 @@ msgpackparse({list})				   {Nvim} *msgpackparse()*
 		   contains name of the key from |v:msgpack_types|):
 
 		Key	Value ~
-		nil	Zero, ignored when dumping.
-		boolean	One or zero. When dumping it is only checked that 
-			value is a |Number|.
+		nil	Zero, ignored when dumping.  This value cannot 
+			possibly appear in |msgpackparse()| output in Neovim 
+			versions which have |v:null|.
+		boolean	One or zero.  When dumping it is only checked that 
+			value is a |Number|.  This value cannot possibly 
+			appear in |msgpackparse()| output in Neovim versions 
+			which have |v:true| and |v:false|.
 		integer	|List| with four numbers: sign (-1 or 1), highest two 
 			bits, number with bits from 62nd to 31st, lowest 31 
 			bits. I.e. to get actual number one will need to use 
