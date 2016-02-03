@@ -1543,12 +1543,12 @@ rewind_retry:
       if (fileformat == EOL_UNKNOWN) {
         /* First try finding a NL, for Dos and Unix */
         if (try_dos || try_unix) {
-          for (p = ptr; p < ptr + size; ++p) {
-            // Reset the carriage return counter.
-            if (try_mac) {
-              try_mac = 1;
-            }
+          // Reset the carriage return counter.
+          if (try_mac) {
+            try_mac = 1;
+          }
 
+          for (p = ptr; p < ptr + size; ++p) {
             if (*p == NL) {
               if (!try_unix
                   || (try_dos && p > ptr && p[-1] == CAR))
