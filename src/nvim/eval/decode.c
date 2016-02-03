@@ -264,8 +264,8 @@ int json_decode_string(const char *const buf, const size_t len,
       }
       case '"': {
         size_t len = 0;
-        const char *s;
-        for (s = ++p; p < e && *p != '"'; p++) {
+        const char *const s = ++p;
+        while (p < e && *p != '"') {
           if (*p == '\\') {
             p++;
             if (p == e) {
@@ -285,9 +285,10 @@ int json_decode_string(const char *const buf, const size_t len,
                         p - 1);
                   goto json_decode_string_fail;
                 }
-                // One UTF-8 character below U+10000 can take up to 3 bytes
+                // One UTF-8 character below U+10000 can take up to 3 bytes,
+                // above up to 6, but they are encoded using two \u escapes.
                 len += 3;
-                p += 4;
+                p += 5;
                 break;
               }
               case '\\':
@@ -299,6 +300,7 @@ int json_decode_string(const char *const buf, const size_t len,
               case 'r':
               case 'f': {
                 len++;
+                p++;
                 break;
               }
               default: {
@@ -307,7 +309,30 @@ int json_decode_string(const char *const buf, const size_t len,
               }
             }
           } else {
-            len++;
+            uint8_t p_byte = (uint8_t) *p;
+            // unescaped = %x20-21 / %x23-5B / %x5D-10FFFF
+            if (p_byte < 0x20) {
+              EMSG2(_("E474: ASCII control characters cannot be present "
+                      "inside string: %s"), p);
+              goto json_decode_string_fail;
+            }
+            const int ch = utf_ptr2char((char_u *) p);
+            // All characters above U+007F are encoded using two or more bytes
+            // and thus cannot possibly be equal to *p. But utf_ptr2char({0xFF,
+            // 0}) will return 0xFF, even though 0xFF cannot start any UTF-8
+            // code point at all.
+            if (ch >= 0x80 && p_byte == ch) {
+              EMSG2(_("E474: Only UTF-8 strings allowed: %s"), p);
+              goto json_decode_string_fail;
+            } else if (ch > 0x10FFFF) {
+              EMSG2(_("E474: Only UTF-8 code points up to U+10FFFF "
+                      "are allowed to appear unescaped: %s"), p);
+              goto json_decode_string_fail;
+            }
+            const size_t ch_len = (size_t) utf_char2len(ch);
+            assert(ch_len == (size_t) (ch ? utf_ptr2len((char_u *) p) : 1));
+            len += ch_len;
+            p += ch_len;
           }
         }
         if (*p != '"') {

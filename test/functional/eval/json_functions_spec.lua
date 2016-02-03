@@ -235,6 +235,67 @@ describe('jsondecode() function', function()
     eq('', funcs.jsondecode('""'))
     eq('\\/"\t\b\n\r\f', funcs.jsondecode([["\\\/\"\t\b\n\r\f"]]))
     eq('/a', funcs.jsondecode([["\/a"]]))
+    -- Unicode characters: 2-byte, 3-byte, 4-byte
+    eq({
+      '«',
+      'ફ',
+      '\xF0\x90\x80\x80',
+    }, funcs.jsondecode({
+      '[',
+      '"«",',
+      '"ફ",',
+      '"\xF0\x90\x80\x80"',
+      ']',
+    }))
+  end)
+
+  it('fails on strings with invalid bytes', function()
+    eq('Vim(call):E474: Only UTF-8 strings allowed: \255"',
+       exc_exec('call jsondecode("\\t\\"\\xFF\\"")'))
+    eq('Vim(call):E474: ASCII control characters cannot be present inside string: ',
+       exc_exec('call jsondecode(["\\"\\n\\""])'))
+    -- 0xC2 starts 2-byte unicode character
+    eq('Vim(call):E474: Only UTF-8 strings allowed: \194"',
+       exc_exec('call jsondecode("\\t\\"\\xC2\\"")'))
+    -- 0xE0 0xAA starts 3-byte unicode character
+    eq('Vim(call):E474: Only UTF-8 strings allowed: \224"',
+       exc_exec('call jsondecode("\\t\\"\\xE0\\"")'))
+    eq('Vim(call):E474: Only UTF-8 strings allowed: \224\170"',
+       exc_exec('call jsondecode("\\t\\"\\xE0\\xAA\\"")'))
+    -- 0xF0 0x90 0x80 starts 4-byte unicode character
+    eq('Vim(call):E474: Only UTF-8 strings allowed: \240"',
+       exc_exec('call jsondecode("\\t\\"\\xF0\\"")'))
+    eq('Vim(call):E474: Only UTF-8 strings allowed: \240\144"',
+       exc_exec('call jsondecode("\\t\\"\\xF0\\x90\\"")'))
+    eq('Vim(call):E474: Only UTF-8 strings allowed: \240\144\128"',
+       exc_exec('call jsondecode("\\t\\"\\xF0\\x90\\x80\\"")'))
+    -- 0xF9 0x80 0x80 0x80 starts 5-byte unicode character
+    eq('Vim(call):E474: Only UTF-8 strings allowed: \xF9"',
+       exc_exec('call jsondecode("\\t\\"\\xF9\\"")'))
+    eq('Vim(call):E474: Only UTF-8 strings allowed: \xF9\x80"',
+       exc_exec('call jsondecode("\\t\\"\\xF9\\x80\\"")'))
+    eq('Vim(call):E474: Only UTF-8 strings allowed: \xF9\x80\x80"',
+       exc_exec('call jsondecode("\\t\\"\\xF9\\x80\\x80\\"")'))
+    eq('Vim(call):E474: Only UTF-8 strings allowed: \xF9\x80\x80\x80"',
+       exc_exec('call jsondecode("\\t\\"\\xF9\\x80\\x80\\x80\\"")'))
+    -- 0xFC 0x90 0x80 0x80 0x80 starts 6-byte unicode character
+    eq('Vim(call):E474: Only UTF-8 strings allowed: \xFC"',
+       exc_exec('call jsondecode("\\t\\"\\xFC\\"")'))
+    eq('Vim(call):E474: Only UTF-8 strings allowed: \xFC\x90"',
+       exc_exec('call jsondecode("\\t\\"\\xFC\\x90\\"")'))
+    eq('Vim(call):E474: Only UTF-8 strings allowed: \xFC\x90\x80"',
+       exc_exec('call jsondecode("\\t\\"\\xFC\\x90\\x80\\"")'))
+    eq('Vim(call):E474: Only UTF-8 strings allowed: \xFC\x90\x80\x80"',
+       exc_exec('call jsondecode("\\t\\"\\xFC\\x90\\x80\\x80\\"")'))
+    eq('Vim(call):E474: Only UTF-8 strings allowed: \xFC\x90\x80\x80\x80"',
+       exc_exec('call jsondecode("\\t\\"\\xFC\\x90\\x80\\x80\\x80\\"")'))
+    -- Specification does not allow unquoted characters above 0x10FFFF
+    eq('Vim(call):E474: Only UTF-8 code points up to U+10FFFF are allowed to appear unescaped: \xF9\x80\x80\x80\x80"',
+       exc_exec('call jsondecode("\\t\\"\\xF9\\x80\\x80\\x80\\x80\\"")'))
+    eq('Vim(call):E474: Only UTF-8 code points up to U+10FFFF are allowed to appear unescaped: \xFC\x90\x80\x80\x80\x80"',
+       exc_exec('call jsondecode("\\t\\"\\xFC\\x90\\x80\\x80\\x80\\x80\\"")'))
+    -- '"\xF9\x80\x80\x80\x80"',
+    -- '"\xFC\x90\x80\x80\x80\x80"',
   end)
 end)
 
