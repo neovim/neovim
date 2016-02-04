@@ -897,6 +897,7 @@ static inline int convert_to_json_string(garray_T *const gap,
     size_t len_ = len;
     char *tofree = NULL;
     if (last_p_enc != (const void *) p_enc) {
+      p_enc_conv.vc_type = CONV_NONE;
       convert_setup(&p_enc_conv, p_enc, "utf-8");
       p_enc_conv.vc_fail = true;
       last_p_enc = p_enc;

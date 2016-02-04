@@ -13,12 +13,28 @@
 
 /// Helper structure for container_struct
 typedef struct {
-  size_t stack_index;  ///< Index of current container in stack.
-  typval_T container;  ///< Container. Either VAR_LIST, VAR_DICT or VAR_LIST
-                       ///< which is _VAL from special dictionary.
+  size_t stack_index;   ///< Index of current container in stack.
+  list_T *special_val;  ///< _VAL key contents for special maps.
+                        ///< When container is not a special dictionary it is
+                        ///< NULL.
+  const char *s;        ///< Location where container starts.
+  typval_T container;   ///< Container. Either VAR_LIST, VAR_DICT or VAR_LIST
+                        ///< which is _VAL from special dictionary.
 } ContainerStackItem;
 
-typedef kvec_t(typval_T) ValuesStack;
+/// Helper structure for values struct
+typedef struct {
+  bool is_special_string;  ///< Indicates that current value is a special
+                           ///< dictionary with string.
+  bool didcomma;           ///< True if previous token was comma.
+  bool didcolon;           ///< True if previous token was colon.
+  typval_T val;            ///< Actual value.
+} ValuesStackItem;
+
+/// Vector containing values not yet saved in any container
+typedef kvec_t(ValuesStackItem) ValuesStack;
+
+/// Vector containing containers, each next container is located inside previous
 typedef kvec_t(ContainerStackItem) ContainerStack;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -58,59 +74,119 @@ static inline void create_special_dict(typval_T *const rettv,
 /// @param[in]  obj  New object.
 /// @param[out]  stack  Object stack.
 /// @param[out]  container_stack  Container objects stack.
-/// @param[in]  p  Position in string which is currently being parsed.
+/// @param[in,out]  pp  Position in string which is currently being parsed. Used
+///                     for error reporting and is also set when decoding is
+///                     restarted due to the necessity of converting regular
+///                     dictionary to a special map.
+/// @param[out]  next_map_special  Is set to true when dictionary is converted
+///                                to a special map, otherwise not touched.
+/// @param[out]  didcomma  True if previous token was comma. Is set to recorded
+///                        value when decoder is restarted, otherwise unused.
+/// @param[out]  didcolon  True if previous token was colon. Is set to recorded
+///                        value when decoder is restarted, otherwise unused.
 ///
 /// @return OK in case of success, FAIL in case of error.
-static inline int json_decoder_pop(typval_T obj, ValuesStack *const stack,
+static inline int json_decoder_pop(ValuesStackItem obj,
+                                   ValuesStack *const stack,
                                    ContainerStack *const container_stack,
-                                   const char *const p)
+                                   const char **const pp,
+                                   bool *const next_map_special,
+                                   bool *const didcomma,
+                                   bool *const didcolon)
   FUNC_ATTR_NONNULL_ALL
 {
   if (kv_size(*container_stack) == 0) {
-    kv_push(typval_T, *stack, obj);
+    kv_push(ValuesStackItem, *stack, obj);
     return OK;
   }
   ContainerStackItem last_container = kv_last(*container_stack);
-  if (obj.v_type == last_container.container.v_type
+  const char *val_location = *pp;
+  if (obj.val.v_type == last_container.container.v_type
       // vval.v_list and vval.v_dict should have the same size and offset
-      && ((void *) obj.vval.v_list
+      && ((void *) obj.val.vval.v_list
           == (void *) last_container.container.vval.v_list)) {
     kv_pop(*container_stack);
+    val_location = last_container.s;
     last_container = kv_last(*container_stack);
   }
   if (last_container.container.v_type == VAR_LIST) {
+    if (last_container.container.vval.v_list->lv_len != 0
+        && !obj.didcomma) {
+      EMSG2(_("E474: Expected comma before list item: %s"), val_location);
+      clear_tv(&obj.val);
+      return FAIL;
+    }
+    assert(last_container.special_val == NULL);
     listitem_T *obj_li = listitem_alloc();
-    obj_li->li_tv = obj;
+    obj_li->li_tv = obj.val;
     list_append(last_container.container.vval.v_list, obj_li);
   } else if (last_container.stack_index == kv_size(*stack) - 2) {
-    typval_T key = kv_pop(*stack);
-    if (key.v_type != VAR_STRING) {
-      assert(false);
-    } else if (key.vval.v_string == NULL || *key.vval.v_string == NUL) {
-      // TODO: fall back to special dict in case of empty key
-      EMSG(_("E474: Empty key"));
-      clear_tv(&obj);
+    if (!obj.didcolon) {
+      EMSG2(_("E474: Expected colon before dictionary value: %s"),
+            val_location);
+      clear_tv(&obj.val);
       return FAIL;
     }
-    dictitem_T *obj_di = dictitem_alloc(key.vval.v_string);
-    clear_tv(&key);
-    if (dict_add(last_container.container.vval.v_dict, obj_di)
-        == FAIL) {
-      // TODO: fall back to special dict in case of duplicate keys
-      EMSG(_("E474: Duplicate key"));
-      dictitem_free(obj_di);
-      clear_tv(&obj);
-      return FAIL;
+    ValuesStackItem key = kv_pop(*stack);
+    if (last_container.special_val == NULL) {
+      // These cases should have already been handled.
+      assert(!(key.is_special_string
+               || key.val.vval.v_string == NULL
+               || *key.val.vval.v_string == NUL));
+      dictitem_T *obj_di = dictitem_alloc(key.val.vval.v_string);
+      clear_tv(&key.val);
+      if (dict_add(last_container.container.vval.v_dict, obj_di)
+          == FAIL) {
+        assert(false);
+      }
+      obj_di->di_tv = obj.val;
+    } else {
+      list_T *const kv_pair = list_alloc();
+      list_append_list(last_container.special_val, kv_pair);
+      listitem_T *const key_li = listitem_alloc();
+      key_li->li_tv = key.val;
+      list_append(kv_pair, key_li);
+      listitem_T *const val_li = listitem_alloc();
+      val_li->li_tv = obj.val;
+      list_append(kv_pair, val_li);
     }
-    obj_di->di_tv = obj;
   } else {
     // Object with key only
-    if (obj.v_type != VAR_STRING) {
-      EMSG2(_("E474: Expected string key: %s"), p);
-      clear_tv(&obj);
+    if (!obj.is_special_string && obj.val.v_type != VAR_STRING) {
+      EMSG2(_("E474: Expected string key: %s"), *pp);
+      clear_tv(&obj.val);
+      return FAIL;
+    } else if (!obj.didcomma
+               && (last_container.special_val == NULL
+                   && (last_container.container.vval.v_dict->dv_hashtab.ht_used
+                       != 0))) {
+      EMSG2(_("E474: Expected comma before dictionary key: %s"), val_location);
+      clear_tv(&obj.val);
       return FAIL;
     }
-    kv_push(typval_T, *stack, obj);
+    // Handle empty key and key represented as special dictionary
+    if (last_container.special_val == NULL
+        && (obj.is_special_string
+            || obj.val.vval.v_string == NULL
+            || *obj.val.vval.v_string == NUL
+            || dict_find(last_container.container.vval.v_dict,
+                         obj.val.vval.v_string, -1))) {
+      clear_tv(&obj.val);
+
+      // Restart
+      kv_pop(*container_stack);
+      ValuesStackItem last_container_val =
+          kv_A(*stack, last_container.stack_index);
+      while (kv_size(*stack) > last_container.stack_index) {
+        clear_tv(&(kv_pop(*stack).val));
+      }
+      *pp = last_container.s;
+      *didcomma = last_container_val.didcomma;
+      *didcolon = last_container_val.didcolon;
+      *next_map_special = true;
+      return OK;
+    }
+    kv_push(ValuesStackItem, *stack, obj);
   }
   return OK;
 }
@@ -126,7 +202,7 @@ int json_decode_string(const char *const buf, const size_t len,
                        typval_T *const rettv)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  vimconv_T conv;
+  vimconv_T conv = { .vc_type = CONV_NONE };
   convert_setup(&conv, (char_u *) "utf-8", p_enc);
   conv.vc_fail = true;
   int ret = OK;
@@ -138,14 +214,29 @@ int json_decode_string(const char *const buf, const size_t len,
   const char *const e = buf + len;
   bool didcomma = false;
   bool didcolon = false;
-#define POP(obj) \
+  bool next_map_special = false;
+#define OBJ(obj_tv, is_sp_string) \
+  ((ValuesStackItem) { \
+    .is_special_string = (is_sp_string), \
+    .val = (obj_tv), \
+    .didcomma = didcomma, \
+    .didcolon = didcolon, \
+  })
+#define POP(obj_tv, is_sp_string) \
   do { \
-    if (json_decoder_pop(obj, &stack, &container_stack, p) == FAIL) { \
+    if (json_decoder_pop(OBJ(obj_tv, is_sp_string), &stack, &container_stack, \
+                         &p, &next_map_special, &didcomma, &didcolon) \
+        == FAIL) { \
       goto json_decode_string_fail; \
+    } \
+    if (next_map_special) { \
+      goto json_decode_string_cycle_start; \
     } \
   } while (0)
   const char *p = buf;
   for (; p < e; p++) {
+json_decode_string_cycle_start:
+    assert(*p == '{' || next_map_special == false);
     switch (*p) {
       case '}':
       case ']': {
@@ -176,8 +267,11 @@ int json_decode_string(const char *const buf, const size_t len,
           kv_pop(container_stack);
           goto json_decode_string_after_cycle;
         } else {
-          typval_T obj = kv_pop(stack);
-          POP(obj);
+          if (json_decoder_pop(kv_pop(stack), &stack, &container_stack, &p,
+                               &next_map_special, &didcomma, &didcolon) == FAIL) {
+            goto json_decode_string_fail;
+          }
+          assert(!next_map_special);
           break;
         }
       }
@@ -197,11 +291,12 @@ int json_decode_string(const char *const buf, const size_t len,
                    && last_container.stack_index != kv_size(stack) - 1) {
           EMSG2(_("E474: Using comma in place of colon: %s"), p);
           goto json_decode_string_fail;
-        } else if ((last_container.container.v_type == VAR_DICT
-                    && (last_container.container.vval.v_dict->dv_hashtab.ht_used
-                        == 0))
-                   || (last_container.container.v_type == VAR_LIST
-                       && last_container.container.vval.v_list->lv_len == 0)) {
+        } else if (last_container.special_val == NULL
+                   ? (last_container.container.v_type == VAR_DICT
+                      ? (last_container.container.vval.v_dict->dv_hashtab.ht_used
+                         == 0)
+                      : (last_container.container.vval.v_list->lv_len == 0))
+                   : (last_container.special_val->lv_len == 0)) {
           EMSG2(_("E474: Leading comma: %s"), p);
           goto json_decode_string_fail;
         }
@@ -241,7 +336,7 @@ int json_decode_string(const char *const buf, const size_t len,
           goto json_decode_string_fail;
         }
         p += 3;
-        POP(get_vim_var_tv(VV_NULL));
+        POP(get_vim_var_tv(VV_NULL), false);
         break;
       }
       case 't': {
@@ -250,7 +345,7 @@ int json_decode_string(const char *const buf, const size_t len,
           goto json_decode_string_fail;
         }
         p += 3;
-        POP(get_vim_var_tv(VV_TRUE));
+        POP(get_vim_var_tv(VV_TRUE), false);
         break;
       }
       case 'f': {
@@ -259,7 +354,7 @@ int json_decode_string(const char *const buf, const size_t len,
           goto json_decode_string_fail;
         }
         p += 4;
-        POP(get_vim_var_tv(VV_FALSE));
+        POP(get_vim_var_tv(VV_FALSE), false);
         break;
       }
       case '"': {
@@ -338,6 +433,13 @@ int json_decode_string(const char *const buf, const size_t len,
         if (*p != '"') {
           EMSG2(_("E474: Expected string end: %s"), buf);
           goto json_decode_string_fail;
+        }
+        if (len == 0) {
+          POP(((typval_T) {
+            .v_type = VAR_STRING,
+            .vval = { .v_string = NULL },
+          }), false);
+          break;
         }
         char *str = xmalloc(len + 1);
         int fst_in_pair = 0;
@@ -435,14 +537,13 @@ int json_decode_string(const char *const buf, const size_t len,
             clear_tv(&obj);
             goto json_decode_string_fail;
           }
-          POP(obj);
+          POP(obj, true);
         } else {
           *str_end = NUL;
-          // TODO: return special string in case of NUL bytes
           POP(((typval_T) {
             .v_type = VAR_STRING,
-            .vval = { .v_string = (char_u *) str, },
-          }));
+            .vval = { .v_string = (char_u *) str },
+          }), false);
         }
         break;
       }
@@ -510,7 +611,7 @@ int json_decode_string(const char *const buf, const size_t len,
           vim_str2nr((char_u *) s, NULL, NULL, 0, 0, 0, &nr, NULL);
           tv.vval.v_number = (varnumber_T) nr;
         }
-        POP(tv);
+        POP(tv, false);
         p--;
         break;
       }
@@ -524,24 +625,41 @@ int json_decode_string(const char *const buf, const size_t len,
         };
         kv_push(ContainerStackItem, container_stack, ((ContainerStackItem) {
           .stack_index = kv_size(stack),
+          .s = p,
           .container = tv,
+          .special_val = NULL,
         }));
-        kv_push(typval_T, stack, tv);
+        kv_push(ValuesStackItem, stack, OBJ(tv, false));
         break;
       }
       case '{': {
-        dict_T *dict = dict_alloc();
-        dict->dv_refcount++;
-        typval_T tv = {
-          .v_type = VAR_DICT,
-          .v_lock = VAR_UNLOCKED,
-          .vval = { .v_dict = dict },
-        };
+        typval_T tv;
+        list_T *val_list = NULL;
+        if (next_map_special) {
+          next_map_special = false;
+          val_list = list_alloc();
+          val_list->lv_refcount++;
+          create_special_dict(&tv, kMPMap, ((typval_T) {
+            .v_type = VAR_LIST,
+            .v_lock = VAR_UNLOCKED,
+            .vval = { .v_list = val_list },
+          }));
+        } else {
+          dict_T *dict = dict_alloc();
+          dict->dv_refcount++;
+          tv = (typval_T) {
+            .v_type = VAR_DICT,
+            .v_lock = VAR_UNLOCKED,
+            .vval = { .v_dict = dict },
+          };
+        }
         kv_push(ContainerStackItem, container_stack, ((ContainerStackItem) {
           .stack_index = kv_size(stack),
+          .s = p,
           .container = tv,
+          .special_val = val_list,
         }));
-        kv_push(typval_T, stack, tv);
+        kv_push(ValuesStackItem, stack, OBJ(tv, false));
         break;
       }
       default: {
@@ -557,6 +675,7 @@ int json_decode_string(const char *const buf, const size_t len,
     }
   }
 #undef POP
+#undef OBJ
 json_decode_string_after_cycle:
   for (; p < e; p++) {
     switch (*p) {
@@ -579,12 +698,12 @@ json_decode_string_after_cycle:
 json_decode_string_fail:
   ret = FAIL;
   while (kv_size(stack)) {
-    clear_tv(&kv_pop(stack));
+    clear_tv(&(kv_pop(stack).val));
   }
 json_decode_string_ret:
   if (ret != FAIL) {
     assert(kv_size(stack) == 1);
-    *rettv = kv_pop(stack);
+    *rettv = kv_pop(stack).val;
   }
   kv_destroy(stack);
   kv_destroy(container_stack);

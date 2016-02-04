@@ -203,6 +203,19 @@ describe('jsondecode() function', function()
        exc_exec('call jsondecode("[}")'))
   end)
 
+  it('fails to parse concat inside container', function()
+    eq('Vim(call):E474: Expected comma before list item: []]',
+       exc_exec('call jsondecode("[[][]]")'))
+    eq('Vim(call):E474: Expected comma before list item: {}]',
+       exc_exec('call jsondecode("[{}{}]")'))
+    eq('Vim(call):E474: Expected comma before list item: ]',
+       exc_exec('call jsondecode("[1 2]")'))
+    eq('Vim(call):E474: Expected comma before dictionary key: ": 4}',
+       exc_exec('call jsondecode("{\\"1\\": 2 \\"3\\": 4}")'))
+    eq('Vim(call):E474: Expected colon before dictionary value: , "3" 4}',
+       exc_exec('call jsondecode("{\\"1\\" 2, \\"3\\" 4}")'))
+  end)
+
   it('fails to parse containers with leading comma or colon', function()
     eq('Vim(call):E474: Leading comma: ,}',
        exc_exec('call jsondecode("{,}")'))
@@ -383,6 +396,45 @@ describe('jsondecode() function', function()
   it('parses strings with NUL properly', function()
     sp_decode_eq({_TYPE='string', _VAL={'\n'}}, '"\\u0000"')
     sp_decode_eq({_TYPE='string', _VAL={'\n', '\n'}}, '"\\u0000\\n\\u0000"')
+  end)
+
+  it('parses dictionaries with duplicate keys to special maps', function()
+    sp_decode_eq({_TYPE='map', _VAL={{'a', 1}, {'a', 2}}},
+                 '{"a": 1, "a": 2}')
+    sp_decode_eq({_TYPE='map', _VAL={{'b', 3}, {'a', 1}, {'a', 2}}},
+                 '{"b": 3, "a": 1, "a": 2}')
+    sp_decode_eq({_TYPE='map', _VAL={{'b', 3}, {'a', 1}, {'c', 4}, {'a', 2}}},
+                 '{"b": 3, "a": 1, "c": 4, "a": 2}')
+    sp_decode_eq({_TYPE='map', _VAL={{'b', 3}, {'a', 1}, {'c', 4}, {'a', 2}, {'c', 4}}},
+                 '{"b": 3, "a": 1, "c": 4, "a": 2, "c": 4}')
+    sp_decode_eq({{_TYPE='map', _VAL={{'b', 3}, {'a', 1}, {'c', 4}, {'a', 2}, {'c', 4}}}},
+                 '[{"b": 3, "a": 1, "c": 4, "a": 2, "c": 4}]')
+    sp_decode_eq({{d={_TYPE='map', _VAL={{'b', 3}, {'a', 1}, {'c', 4}, {'a', 2}, {'c', 4}}}}},
+                 '[{"d": {"b": 3, "a": 1, "c": 4, "a": 2, "c": 4}}]')
+    sp_decode_eq({1, {d={_TYPE='map', _VAL={{'b', 3}, {'a', 1}, {'c', 4}, {'a', 2}, {'c', 4}}}}},
+                 '[1, {"d": {"b": 3, "a": 1, "c": 4, "a": 2, "c": 4}}]')
+    sp_decode_eq({1, {a={}, d={_TYPE='map', _VAL={{'b', 3}, {'a', 1}, {'c', 4}, {'a', 2}, {'c', 4}}}}},
+                 '[1, {"a": [], "d": {"b": 3, "a": 1, "c": 4, "a": 2, "c": 4}}]')
+  end)
+
+  it('parses dictionaries with empty keys to special maps', function()
+    sp_decode_eq({_TYPE='map', _VAL={{'', 4}}},
+                 '{"": 4}')
+    sp_decode_eq({_TYPE='map', _VAL={{'b', 3}, {'a', 1}, {'c', 4}, {'d', 2}, {'', 4}}},
+                 '{"b": 3, "a": 1, "c": 4, "d": 2, "": 4}')
+    sp_decode_eq({_TYPE='map', _VAL={{'', 3}, {'a', 1}, {'c', 4}, {'d', 2}, {'', 4}}},
+                 '{"": 3, "a": 1, "c": 4, "d": 2, "": 4}')
+    sp_decode_eq({{_TYPE='map', _VAL={{'', 3}, {'a', 1}, {'c', 4}, {'d', 2}, {'', 4}}}},
+                 '[{"": 3, "a": 1, "c": 4, "d": 2, "": 4}]')
+  end)
+
+  it('parses dictionaries with keys with NUL bytes to special maps', function()
+    sp_decode_eq({_TYPE='map', _VAL={{{_TYPE='string', _VAL={'a\n', 'b'}}, 4}}},
+                 '{"a\\u0000\\nb": 4}')
+    sp_decode_eq({_TYPE='map', _VAL={{{_TYPE='string', _VAL={'a\n', 'b', ''}}, 4}}},
+                 '{"a\\u0000\\nb\\n": 4}')
+    sp_decode_eq({_TYPE='map', _VAL={{'b', 3}, {'a', 1}, {'c', 4}, {'d', 2}, {{_TYPE='string', _VAL={'\n'}}, 4}}},
+                 '{"b": 3, "a": 1, "c": 4, "d": 2, "\\u0000": 4}')
   end)
 end)
 
