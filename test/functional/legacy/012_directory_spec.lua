@@ -9,6 +9,11 @@ local feed, insert, source, eq, neq, eval, clear, execute, expect, wait,
   helpers.neq, helpers.eval, helpers.clear, helpers.execute, helpers.expect,
   helpers.wait, helpers.write_file
 
+local function expect_test_out(text)
+  wait()
+  return eq(helpers.dedent(text), io.open('test.out'):read('*all'))
+end
+
 describe('the directory option', function()
   setup(function()
     local text = [[
@@ -41,26 +46,41 @@ describe('the directory option', function()
     -- Assert that the swap file does not exist.
     eq(nil, lfs.attributes('.Xtest1.swp')) -- for unix
     eq(nil, lfs.attributes('Xtest1.swp'))  -- for other systems
-    execute('!echo first line >test.out')
+    execute('silent !echo first line >test.out')
+    expect_test_out('first line\n')
     execute('e! Xtest1')
     wait()
+    eq('Xtest1', eval('buffer_name("%")'))
     -- Assert that the swapfile does exists. (Same as the vim commands below)
     if eval('has("unix")') == 1 then
       neq(nil, lfs.attributes('.Xtest1.swp'))
     else
       neq(nil, lfs.attributes('Xtest1.swp'))
     end
-    execute('if has("unix")')
     -- Do an ls of the current dir to find the swap file, remove the leading
     -- dot to make the result the same for all systems.
-    execute('  r!ls .X*.swp')
-    execute([[  s/\.*X/X/]])
-    execute('  .w >>test.out')
-    execute('  undo')
-    execute('else')
-    execute('  !ls X*.swp >>test.out')
-    execute('endif')
+    source([[
+      if has("unix")
+        r!ls .X*.swp
+        s/\.*X/X/
+        .w >>test.out
+        undo
+      else
+        !ls X*.swp >>test.out
+      endif]])
+    expect_test_out([[
+    first line
+    Xtest1.swp
+    ]])
     execute('!echo under Xtest1.swp >>test.out')
+
+    feed('<cr>')
+    wait()
+    --expect_test_out([[
+    --first line
+    --Xtest1.swp
+    --under Xtest1.swp
+    --]])
 
     execute('set dir=./Xtest2,.,~')
     execute('e Xtest1')
@@ -68,6 +88,11 @@ describe('the directory option', function()
     eq(nil, lfs.attributes('Xtest.swp'))
     eq('', io.popen('ls X*.swp'):read('*all'))
     execute('!ls X*.swp >>test.out')
+    expect_test_out([[
+    first line
+    Xtest1.swp
+    under Xtest1.swp
+    ]])
     execute('!echo under under >>test.out')
     -- DONE
     -- There should be only one file in the directory Xtest2.
