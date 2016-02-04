@@ -14,15 +14,6 @@ describe('color scheme compatibility', function()
     request('vim_set_option', 't_Co', '88')
     eq('88', request('vim_eval', '&t_Co'))
   end)
-
-  it('emulates gui_running when a rgb UI is attached', function()
-    eq(0, request('vim_eval', 'has("gui_running")'))
-    local screen = Screen.new()
-    screen:attach()
-    eq(1, request('vim_eval', 'has("gui_running")'))
-    screen:detach()
-    eq(0, request('vim_eval', 'has("gui_running")'))
-  end)
 end)
 
 

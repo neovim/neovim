@@ -10988,8 +10988,6 @@ static void f_has(typval_T *argvars, typval_T *rettv)
 #endif
     } else if (STRICMP(name, "syntax_items") == 0) {
       n = syntax_present(curwin);
-    } else if (STRICMP(name, "gui_running") == 0) {
-      n = ui_rgb_attached();
     }
   }
 
