@@ -1,13 +1,63 @@
 local helpers = require('test.functional.helpers')
 local clear = helpers.clear
 local funcs = helpers.funcs
+local meths = helpers.meths
 local eq = helpers.eq
 local eval = helpers.eval
 local execute = helpers.execute
 local exc_exec = helpers.exc_exec
 
 describe('jsondecode() function', function()
-  before_each(clear)
+  before_each(function()
+    clear()
+    execute([[
+      function Eq(exp, act)
+        let act = a:act
+        let exp = a:exp
+        if type(exp) != type(act)
+          return 0
+        endif
+        if type(exp) == type({})
+          if sort(keys(exp)) !=# sort(keys(act))
+            return 0
+          endif
+          if sort(keys(exp)) ==# ['_TYPE', '_VAL']
+            let exp_typ = v:msgpack_types[exp._TYPE]
+            let act_typ = act._TYPE
+            if exp_typ isnot act_typ
+              return 0
+            endif
+            return Eq(exp._VAL, act._VAL)
+          else
+            return empty(filter(copy(exp), '!Eq(v:val, act[v:key])'))
+          endif
+        else
+          if type(exp) == type([])
+            if len(exp) != len(act)
+              return 0
+            endif
+            return empty(filter(copy(exp), '!Eq(v:val, act[v:key])'))
+          endif
+          return exp ==# act
+        endif
+        return 1
+      endfunction
+    ]])
+    execute([[
+      function EvalEq(exp, act_expr)
+        let act = eval(a:act_expr)
+        if Eq(a:exp, act)
+          return 1
+        else
+          return string(act)
+        endif
+      endfunction
+    ]])
+  end)
+
+  local speq = function(expected, actual_expr)
+    eq(1, funcs.EvalEq(expected, actual_expr))
+  end
 
   it('accepts readfile()-style list', function()
     eq({Test=1}, funcs.jsondecode({
@@ -221,6 +271,14 @@ describe('jsondecode() function', function()
        exc_exec('call jsondecode("\\t\\"abc\\\\u00")'))
     eq('Vim(call):E474: Unfinished unicode escape sequence: \t"abc\\u000',
        exc_exec('call jsondecode("\\t\\"abc\\\\u000")'))
+    eq('Vim(call):E474: Expected four hex digits after \\u: \\u"    ',
+       exc_exec('call jsondecode("\\t\\"abc\\\\u\\"    ")'))
+    eq('Vim(call):E474: Expected four hex digits after \\u: \\u0"    ',
+       exc_exec('call jsondecode("\\t\\"abc\\\\u0\\"    ")'))
+    eq('Vim(call):E474: Expected four hex digits after \\u: \\u00"    ',
+       exc_exec('call jsondecode("\\t\\"abc\\\\u00\\"    ")'))
+    eq('Vim(call):E474: Expected four hex digits after \\u: \\u000"    ',
+       exc_exec('call jsondecode("\\t\\"abc\\\\u000\\"    ")'))
     eq('Vim(call):E474: Expected string end: \t"abc\\u0000',
        exc_exec('call jsondecode("\\t\\"abc\\\\u0000")'))
   end)
@@ -314,6 +372,17 @@ describe('jsondecode() function', function()
     eq('\xED\xB0\x80', funcs.jsondecode('"\\uDC00"'))
     eq('a\xED\xB0\x80', funcs.jsondecode('"a\\uDC00"'))
     eq('\t\xED\xB0\x80', funcs.jsondecode('"\\t\\uDC00"'))
+  end)
+
+  local sp_decode_eq = function(expected, json)
+    meths.set_var('__json', json)
+    speq(expected, 'jsondecode(g:__json)')
+    execute('unlet! g:__json')
+  end
+
+  it('parses strings with NUL properly', function()
+    sp_decode_eq({_TYPE='string', _VAL={'\n'}}, '"\\u0000"')
+    sp_decode_eq({_TYPE='string', _VAL={'\n', '\n'}}, '"\\u0000\\n\\u0000"')
   end)
 end)
 

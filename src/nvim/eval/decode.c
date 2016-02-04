@@ -342,6 +342,7 @@ int json_decode_string(const char *const buf, const size_t len,
         char *str = xmalloc(len + 1);
         int fst_in_pair = 0;
         char *str_end = str;
+        bool hasnul = false;
         for (const char *t = s; t < p; t++) {
           if (t[0] != '\\' || t[1] != 'u') {
             if (fst_in_pair != 0) {
@@ -357,6 +358,9 @@ int json_decode_string(const char *const buf, const size_t len,
                 t += 4;
                 unsigned long ch;
                 vim_str2nr((char_u *) ubuf, NULL, NULL, 0, 0, 2, NULL, &ch);
+                if (ch == 0) {
+                  hasnul = true;
+                }
                 if (SURROGATE_HI_START <= ch && ch <= SURROGATE_HI_END) {
                   fst_in_pair = (int) ch;
                 } else if (SURROGATE_LO_START <= ch && ch <= SURROGATE_LO_END
@@ -405,9 +409,9 @@ int json_decode_string(const char *const buf, const size_t len,
           str_end += utf_char2bytes((int) fst_in_pair, (char_u *) str_end);
         }
         if (conv.vc_type != CONV_NONE) {
-          size_t len = (size_t) (str_end - str);
+          size_t str_len = (size_t) (str_end - str);
           char *const new_str = (char *) string_convert(&conv, (char_u *) str,
-                                                        &len);
+                                                        &str_len);
           if (new_str == NULL) {
             EMSG2(_("E474: Failed to convert string \"%s\" from UTF-8"), str);
             xfree(str);
@@ -415,14 +419,31 @@ int json_decode_string(const char *const buf, const size_t len,
           }
           xfree(str);
           str = new_str;
-          str_end = new_str + len;
+          str_end = new_str + str_len;
         }
-        *str_end = NUL;
-        // TODO: return special string in case of NUL bytes
-        POP(((typval_T) {
-          .v_type = VAR_STRING,
-          .vval = { .v_string = (char_u *) str, },
-        }));
+        if (hasnul) {
+          typval_T obj;
+          list_T *const list = list_alloc();
+          list->lv_refcount++;
+          create_special_dict(&obj, kMPString, ((typval_T) {
+            .v_type = VAR_LIST,
+            .v_lock = 0,
+            .vval = { .v_list = list },
+          }));
+          if (encode_list_write((void *) list, str, (size_t) (str_end - str))
+              == -1) {
+            clear_tv(&obj);
+            goto json_decode_string_fail;
+          }
+          POP(obj);
+        } else {
+          *str_end = NUL;
+          // TODO: return special string in case of NUL bytes
+          POP(((typval_T) {
+            .v_type = VAR_STRING,
+            .vval = { .v_string = (char_u *) str, },
+          }));
+        }
         break;
       }
       case '-':
