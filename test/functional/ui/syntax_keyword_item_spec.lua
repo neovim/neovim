@@ -25,7 +25,6 @@ describe('Syntax', function()
 
   it('keyword item matches keyword', function()
     insert('integer a;\n')
-    screen:snapshot_util()
     screen:expect([[
       {1:integer} a;               |
       ^                         |
@@ -37,7 +36,6 @@ describe('Syntax', function()
 
   it('keyword item does not match \'iskeyword\' characters extended string', function()
     insert('integer_type a;\n')
-    screen:snapshot_util()
     screen:expect([[
       integer_type a;          |
       ^                         |
