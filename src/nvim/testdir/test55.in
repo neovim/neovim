@@ -442,6 +442,17 @@ let l = [0, 1, 2, 3]
 :unlockvar 1 b:
 :unlet! b:testvar
 :"
+:$put ='No :let += of locked list variable:'
+:let l = ['a', 'b', 3]
+:lockvar 1 l
+:try
+:  let l += ['x']
+:  $put ='did :let +='
+:catch
+:  $put =v:exception[:14]
+:endtry
+:$put =string(l)
+:"
 :unlet l
 :let l = [1, 2, 3, 4]
 :lockvar! l

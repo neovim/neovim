@@ -1700,12 +1700,13 @@ static char_u *list_arg_vars(exarg_T *eap, char_u *arg, int *first)
         }
         error = TRUE;
       } else {
-        if (tofree != NULL)
+        if (tofree != NULL) {
           name = tofree;
-        if (get_var_tv(name, len, &tv, TRUE, FALSE) == FAIL)
-          error = TRUE;
-        else {
-          /* handle d.key, l[idx], f(expr) */
+        }
+        if (get_var_tv(name, len, &tv, NULL, true, false) == FAIL) {
+          error = true;
+        } else {
+          // handle d.key, l[idx], f(expr)
           arg_subsc = arg;
           if (handle_subscript(&arg, &tv, TRUE, TRUE) == FAIL)
             error = TRUE;
@@ -2274,11 +2275,16 @@ static void set_var_lval(lval_T *lp, char_u *endp, typval_T *rettv, int copy, ch
       if (op != NULL && *op != '=') {
         typval_T tv;
 
-        /* handle +=, -= and .= */
+        // handle +=, -= and .=
+        di = NULL;
         if (get_var_tv(lp->ll_name, (int)STRLEN(lp->ll_name),
-                &tv, TRUE, FALSE) == OK) {
-          if (tv_op(&tv, rettv, op) == OK)
-            set_var(lp->ll_name, &tv, FALSE);
+                       &tv, &di, true, false) == OK) {
+          if ((di == NULL
+               || (!var_check_ro(di->di_flags, lp->ll_name, false) &&
+                   !tv_check_lock(di->di_tv.v_lock, lp->ll_name, false)))
+              && tv_op(&tv, rettv, op) == OK) {
+            set_var(lp->ll_name, &tv, false);
+          }
           clear_tv(&tv);
         }
       } else
@@ -4240,7 +4246,7 @@ static int eval7(
           ret = FAIL;
         }
       } else if (evaluate) {
-        ret = get_var_tv(s, len, rettv, true, false);
+        ret = get_var_tv(s, len, rettv, NULL, true, false);
       } else {
         ret = OK;
       }
@@ -9132,9 +9138,10 @@ static void f_exists(typval_T *argvars, typval_T *rettv)
     name = p;
     len = get_name_len(&p, &tofree, TRUE, FALSE);
     if (len > 0) {
-      if (tofree != NULL)
+      if (tofree != NULL) {
         name = tofree;
-      n = (get_var_tv(name, len, &tv, FALSE, TRUE) == OK);
+      }
+      n = (get_var_tv(name, len, &tv, NULL, false, true) == OK);
       if (n) {
         /* handle d.key, l[idx], f(expr) */
         n = (handle_subscript(&p, &tv, TRUE, FALSE) == OK);
@@ -18166,10 +18173,11 @@ char_u *set_cmdarg(exarg_T *eap, char_u *oldarg)
 static int 
 get_var_tv (
     char_u *name,
-    int len,                        /* length of "name" */
-    typval_T *rettv,             /* NULL when only checking existence */
-    int verbose,                    /* may give error message */
-    int no_autoload                /* do not use script autoloading */
+    int len,           // length of "name"
+    typval_T *rettv,   // NULL when only checking existence
+    dictitem_T **dip,  // non-NULL when typval's dict item is needed
+    int verbose,       // may give error message
+    int no_autoload    // do not use script autoloading
 )
 {
   int ret = OK;
@@ -18195,8 +18203,12 @@ get_var_tv (
    */
   else {
     v = find_var(name, NULL, no_autoload);
-    if (v != NULL)
+    if (v != NULL) {
       tv = &v->di_tv;
+      if (dip != NULL) {
+        *dip = v;
+      }
+    }
   }
 
   if (tv == NULL) {
@@ -18878,10 +18890,8 @@ set_var (
       return;
     }
 
-    /*
-     * Handle setting internal v: variables separately: we don't change
-     * the type.
-     */
+    // Handle setting internal v: variables separately where needed to
+    // prevent changing the type.
     if (ht == &vimvarht) {
       if (v->di_tv.v_type == VAR_STRING) {
         xfree(v->di_tv.vval.v_string);
@@ -18892,9 +18902,8 @@ set_var (
           v->di_tv.vval.v_string = tv->vval.v_string;
           tv->vval.v_string = NULL;
         }
-      } else if (v->di_tv.v_type != VAR_NUMBER)
-        EMSG2(_(e_intern2), "set_var()");
-      else {
+        return;
+      } else if (v->di_tv.v_type == VAR_NUMBER) {
         v->di_tv.vval.v_number = get_tv_number(tv);
         if (STRCMP(varname, "searchforward") == 0)
           set_search_direction(v->di_tv.vval.v_number ? '/' : '?');
@@ -18902,8 +18911,10 @@ set_var (
           no_hlsearch = !v->di_tv.vval.v_number;
           redraw_all_later(SOME_VALID);
         }
+        return;
+      } else if (v->di_tv.v_type != tv->v_type) {
+        EMSG2(_(e_intern2), "set_var()");
       }
-      return;
     }
 
     if (watched) {
