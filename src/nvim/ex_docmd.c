@@ -8368,8 +8368,7 @@ makeopens (
 {
   int only_save_windows = TRUE;
   int nr;
-  int cnr = 1;
-  int restore_size = TRUE;
+  int restore_size = true;
   win_T       *wp;
   char_u      *sname;
   win_T       *edited_win = NULL;
@@ -8486,7 +8485,8 @@ makeopens (
   tab_firstwin = firstwin;      /* first window in tab page "tabnr" */
   tab_topframe = topframe;
   for (tabnr = 1;; ++tabnr) {
-    int need_tabnew = FALSE;
+    int need_tabnew = false;
+    int cnr = 1;
 
     if ((ssop_flags & SSOP_TABPAGES)) {
       tabpage_T *tp = find_tabpage(tabnr);
