@@ -336,7 +336,11 @@ json_decode_string_cycle_start:
           goto json_decode_string_fail;
         }
         p += 3;
-        POP(get_vim_var_tv(VV_NULL), false);
+        POP(((typval_T) {
+          .v_type = VAR_SPECIAL,
+          .v_lock = VAR_UNLOCKED,
+          .vval = { .v_special = kSpecialVarNull },
+        }), false);
         break;
       }
       case 't': {
@@ -345,7 +349,11 @@ json_decode_string_cycle_start:
           goto json_decode_string_fail;
         }
         p += 3;
-        POP(get_vim_var_tv(VV_TRUE), false);
+        POP(((typval_T) {
+          .v_type = VAR_SPECIAL,
+          .v_lock = VAR_UNLOCKED,
+          .vval = { .v_special = kSpecialVarTrue },
+        }), false);
         break;
       }
       case 'f': {
@@ -354,7 +362,11 @@ json_decode_string_cycle_start:
           goto json_decode_string_fail;
         }
         p += 4;
-        POP(get_vim_var_tv(VV_FALSE), false);
+        POP(((typval_T) {
+          .v_type = VAR_SPECIAL,
+          .v_lock = VAR_UNLOCKED,
+          .vval = { .v_special = kSpecialVarFalse },
+        }), false);
         break;
       }
       case '"': {
@@ -716,11 +728,21 @@ int msgpack_to_vim(const msgpack_object mobj, typval_T *const rettv)
 {
   switch (mobj.type) {
     case MSGPACK_OBJECT_NIL: {
-      *rettv = get_vim_var_tv(VV_NULL);
+      *rettv = (typval_T) {
+        .v_type = VAR_SPECIAL,
+        .v_lock = VAR_UNLOCKED,
+        .vval = { .v_special = kSpecialVarNull },
+      };
       break;
     }
     case MSGPACK_OBJECT_BOOLEAN: {
-      *rettv = get_vim_var_tv(mobj.via.boolean ? VV_TRUE : VV_FALSE);
+      *rettv = (typval_T) {
+        .v_type = VAR_SPECIAL,
+        .v_lock = VAR_UNLOCKED,
+        .vval = {
+          .v_special = mobj.via.boolean ? kSpecialVarTrue : kSpecialVarFalse
+        },
+      };
       break;
     }
     case MSGPACK_OBJECT_POSITIVE_INTEGER: {

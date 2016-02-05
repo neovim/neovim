@@ -17060,18 +17060,6 @@ long get_vim_var_nr(int idx) FUNC_ATTR_PURE
   return vimvars[idx].vv_nr;
 }
 
-/// Get typval_T representing v: variable
-///
-/// @warning if v: variable has reference counter it is not increased.
-///
-/// @param[in]  idx  Variable index, @see VimVarIndex.
-typval_T get_vim_var_tv(VimVarIndex idx) FUNC_ATTR_PURE
-{
-  typval_T ret = vimvars[idx].vv_di.di_tv;
-  ret.v_lock = VAR_UNLOCKED;
-  return ret;
-}
-
 /*
  * Get string v: variable value.  Uses a static buffer, can only be used once.
  */
