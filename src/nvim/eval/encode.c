@@ -55,7 +55,6 @@ typedef kvec_t(MPConvStackVal) MPConvStack;
 
 const char *const encode_special_var_names[] = {
   [kSpecialVarNull] = "null",
-  [kSpecialVarNone] = "none",
   [kSpecialVarTrue] = "true",
   [kSpecialVarFalse] = "false",
 };
@@ -356,10 +355,6 @@ static int name##_convert_one_value(firstargtype firstargname, \
         case kSpecialVarTrue: \
         case kSpecialVarFalse: { \
           CONV_BOOL(tv->vval.v_special == kSpecialVarTrue); \
-          break; \
-        } \
-        case kSpecialVarNone: { \
-          CONV_NONE_VAL(); \
           break; \
         } \
       } \
@@ -726,9 +721,6 @@ encode_vim_to_##name##_error_ret: \
 #define CONV_BOOL(num) \
     ga_concat(gap, ((num)? "v:true": "v:false"))
 
-#define CONV_NONE_VAL() \
-    ga_concat(gap, "v:none")
-
 #define CONV_UNSIGNED_NUMBER(num)
 
 #define CONV_DICT_START(len) \
@@ -1074,9 +1066,6 @@ static inline bool check_json_key(const typval_T *const tv)
       } \
     } while (0)
 
-#undef CONV_NONE_VAL
-#define CONV_NONE_VAL()
-
 DEFINE_VIML_CONV_FUNCTIONS(static, json, garray_T *const, gap)
 
 #undef CONV_STRING
@@ -1090,7 +1079,6 @@ DEFINE_VIML_CONV_FUNCTIONS(static, json, garray_T *const, gap)
 #undef CONV_EMPTY_DICT
 #undef CONV_NIL
 #undef CONV_BOOL
-#undef CONV_NONE_VAL
 #undef CONV_UNSIGNED_NUMBER
 #undef CONV_DICT_START
 #undef CONV_DICT_END
@@ -1226,10 +1214,6 @@ char *encode_tv2json(typval_T *tv, size_t *len)
 #define CONV_NIL() \
     msgpack_pack_nil(packer)
 
-#define CONV_NONE_VAL() \
-    return conv_error(_("E953: Attempt to convert v:none in %s, %s"), \
-                      mpstack, objname)
-
 #define CONV_BOOL(num) \
     do { \
       if ((num)) { \
@@ -1277,7 +1261,6 @@ DEFINE_VIML_CONV_FUNCTIONS(, msgpack, msgpack_packer *const, packer)
 #undef CONV_EMPTY_DICT
 #undef CONV_NIL
 #undef CONV_BOOL
-#undef CONV_NONE_VAL
 #undef CONV_UNSIGNED_NUMBER
 #undef CONV_DICT_START
 #undef CONV_DICT_END

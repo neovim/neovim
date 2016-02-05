@@ -1571,13 +1571,6 @@ v:null		Special value used to put "null" in JSON and NIL in msgpack.
 		operator) and to zero when used as a Number (e.g. in |expr5| 
 		or |expr7| when used with numeric operators).
 
-					*v:none* *none-variable*
-v:none		Special value used to put an empty item in JSON.  See 
-		|jsonencode()|.  This value is converted to "none" when used 
-		as a String (e.g. in |expr5| with string concatenation 
-		operator) and to zero when used as a Number (e.g. in |expr5| 
-		or |expr7| when used with numeric operators).
-
 					*v:oldfiles* *oldfiles-variable*
 v:oldfiles	List of file names that is loaded from the |shada| file on
 		startup.  These are the files that Vim remembers marks for.
@@ -4876,7 +4869,7 @@ msgpackdump({list})				   {Nvim} *msgpackdump()*
 		messagepack).
 
 		Limitations:				*E951* *E952* *E953*
-		1. |Funcref|s and |v:none| cannot be dumped.
+		1. |Funcref|s cannot be dumped.
 		2. Containers that reference themselves cannot be dumped.
 		3. Dictionary keys are always dumped as STR strings.
 		4. Other strings are always dumped as BIN strings.

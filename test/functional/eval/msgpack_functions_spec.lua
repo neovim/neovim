@@ -645,11 +645,6 @@ describe('msgpackdump() function', function()
        exc_exec('call msgpackdump([todump])'))
   end)
 
-  it('fails to dump v:none', function()
-    eq('Vim(call):E953: Attempt to convert v:none in msgpackdump() argument, index 0, itself',
-       exc_exec('call msgpackdump([v:none])'))
-  end)
-
   it('fails when called with no arguments', function()
     eq('Vim(call):E119: Not enough arguments for function: msgpackdump',
        exc_exec('call msgpackdump()'))
@@ -686,7 +681,7 @@ describe('msgpackdump() function', function()
   end)
 
   it('fails to dump special value', function()
-    for _, val in ipairs({'v:true', 'v:false', 'v:null', 'v:none'}) do
+    for _, val in ipairs({'v:true', 'v:false', 'v:null'}) do
       eq('Vim(call):E686: Argument of msgpackdump() must be a List',
         exc_exec('call msgpackdump(' .. val .. ')'))
     end

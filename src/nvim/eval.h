@@ -124,7 +124,6 @@ typedef enum {
     VV_FALSE,
     VV_TRUE,
     VV_NULL,
-    VV_NONE,
 } VimVarIndex;
 
 /// All recognized msgpack types

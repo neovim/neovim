@@ -20,7 +20,6 @@ typedef struct dictvar_S dict_T;
 typedef enum {
   kSpecialVarFalse,  ///< v:false
   kSpecialVarTrue,   ///< v:true
-  kSpecialVarNone,   ///< v:none
   kSpecialVarNull,   ///< v:null
 } SpecialVarValue;
 
@@ -40,7 +39,7 @@ typedef enum {
   VAR_LIST,         ///< List, .v_list is used.
   VAR_DICT,         ///< Dictionary, .v_dict is used.
   VAR_FLOAT,        ///< Floating-point value, .v_float is used.
-  VAR_SPECIAL,      ///< Special value (true, false, null, none), .v_special
+  VAR_SPECIAL,      ///< Special value (true, false, null), .v_special
                     ///< is used.
 } VarType;
 

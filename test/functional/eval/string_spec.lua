@@ -31,7 +31,6 @@ describe('string() function', function()
     it('dumps special v: values', function()
       eq('v:true', eval('string(v:true)'))
       eq('v:false', eval('string(v:false)'))
-      eq('v:none', eval('string(v:none)'))
       eq('v:null', eval('string(v:null)'))
     end)
 

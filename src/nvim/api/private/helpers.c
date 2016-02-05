@@ -659,8 +659,7 @@ static Object vim_to_object_rec(typval_T *obj, PMap(ptr_t) *lookup)
           rv.data.boolean = (obj->vval.v_special == kSpecialVarTrue);
           break;
         }
-        case kSpecialVarNull:
-        case kSpecialVarNone: {
+        case kSpecialVarNull: {
           rv.type = kObjectTypeNil;
           break;
         }

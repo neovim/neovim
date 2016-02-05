@@ -368,7 +368,6 @@ static struct vimvar {
   { VV_NAME("false",            VAR_SPECIAL), VV_RO },
   { VV_NAME("true",             VAR_SPECIAL), VV_RO },
   { VV_NAME("null",             VAR_SPECIAL), VV_RO },
-  { VV_NAME("none",             VAR_SPECIAL), VV_RO },
 };
 
 /* shorthand */
@@ -512,7 +511,6 @@ void eval_init(void)
 
   set_vim_var_special(VV_FALSE, kSpecialVarFalse);
   set_vim_var_special(VV_TRUE, kSpecialVarTrue);
-  set_vim_var_special(VV_NONE, kSpecialVarNone);
   set_vim_var_special(VV_NULL, kSpecialVarNull);
 
   set_reg_var(0);  // default for v:register is not 0 but '"'
@@ -16204,7 +16202,6 @@ static void f_type(typval_T *argvars, typval_T *rettv)
           n = 6;
           break;
         }
-        case kSpecialVarNone:
         case kSpecialVarNull: {
           n = 7;
           break;
@@ -17520,7 +17517,6 @@ long get_tv_number_chk(typval_T *varp, int *denote)
         return 1;
       }
       case kSpecialVarFalse:
-      case kSpecialVarNone:
       case kSpecialVarNull: {
         return 0;
       }

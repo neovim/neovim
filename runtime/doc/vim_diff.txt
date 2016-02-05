@@ -106,6 +106,10 @@ are always available and may be used simultaneously in separate plugins.  The
 |jsonencode()| behaviour slightly changed: now |msgpack-special-dict| values 
 are accepted.
 
+*v:none* variable is absent.  In Vim it represents “no value” in non-JSON 
+strings like "{"a": }" parsed as "{'a': v:none}".  See |jsondecode()| and 
+|jsonencode()| incompatibilities above.
+
 Viminfo text files were replaced with binary (messagepack) ShaDa files.
 Additional differences:
 
