@@ -1,6 +1,12 @@
 " The clipboard provider uses shell commands to communicate with the clipboard.
 " The provider function will only be registered if a supported command is
 " available.
+if exists('s:loaded_provider_clipboard')
+  finish
+endif
+
+let s:loaded_provider_clipboard = 1
+
 let s:copy = {}
 let s:paste = {}
 
