@@ -59,4 +59,40 @@ describe('Syntax', function()
     ]])
   end)
 
+  it('match item matches line comment', function()
+    execute('syntax match Comment +//.*$+')
+    insert('// Comment\n')
+    insert('Not a Comment\n')
+    screen:expect([[
+      {1:// Comment}               |
+      Not a Comment            |
+      ^                         |
+      ~                        |
+                               |
+    ]], {[1] = {foreground = Screen.colors.Blue}})
+  end)
+
+  it('match item respects highlight offsets', function()
+    execute('syntax match Comment /##.*##/hs=s+2,he=e-2')
+    insert('## Comment ##\n')
+    screen:expect([[
+      ##{1: Comment }##            |
+      ^                         |
+      ~                        |
+      ~                        |
+                               |
+    ]], {[1] = {foreground = Screen.colors.Blue}})
+  end)
+
+  it('match item respects match offsets', function()
+    execute('syntax match Comment /##.*##/ms=s+2,me=e-2')
+    insert('## Comment ##\n')
+    screen:expect([[
+      ##{1: Comment }##            |
+      ^                         |
+      ~                        |
+      ~                        |
+                               |
+    ]], {[1] = {foreground = Screen.colors.Blue}})
+  end)
 end)
