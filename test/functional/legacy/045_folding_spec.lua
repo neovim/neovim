@@ -5,7 +5,7 @@ local feed, insert, clear, execute, expect =
   helpers.feed, helpers.insert, helpers.clear, helpers.execute, helpers.expect
 
 describe('folding', function()
-  setup(clear)
+  before_each(clear)
 
   it('is working', function()
     insert([[
@@ -113,5 +113,27 @@ describe('folding', function()
       1
       2
       0]])
+  end)
+
+  it('can open after :move', function()
+    insert([[
+      Test fdm=indent and :move bug END
+      line2
+      	Test fdm=indent START
+      	line3
+      	line4]])
+
+    execute('set noai nosta')
+    execute('set fdm=indent')
+    execute('1m1')
+    feed('2jzc')
+    execute('m0')
+
+    expect([[
+      	Test fdm=indent START
+      	line3
+      	line4
+      Test fdm=indent and :move bug END
+      line2]])
   end)
 end)
