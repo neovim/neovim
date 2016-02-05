@@ -3281,15 +3281,21 @@ static void syn_cmd_off(exarg_T *eap, int syncing)
 }
 
 static void syn_cmd_onoff(exarg_T *eap, char *name)
+  FUNC_ATTR_NONNULL_ALL
 {
-  char buf[100];
-
   eap->nextcmd = check_nextcmd(eap->arg);
   if (!eap->skip) {
-    strcpy(buf, "so ");
-    vim_snprintf(buf + 3, sizeof(buf) - 3, SYNTAX_FNAME, name);
-    do_cmdline_cmd(buf);
+    syn_cmd(name);
   }
+}
+
+void syn_cmd(char *name)
+  FUNC_ATTR_NONNULL_ALL
+{
+  char buf[100];
+  strcpy(buf, "so ");
+  vim_snprintf(buf + 3, sizeof(buf) - 3, SYNTAX_FNAME, name);
+  do_cmdline_cmd(buf);
 }
 
 /*
