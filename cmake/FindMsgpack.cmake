@@ -43,6 +43,9 @@ endif()
 list(APPEND MSGPACK_NAMES msgpackc msgpack)
 
 find_library(MSGPACK_LIBRARY NAMES ${MSGPACK_NAMES}
+  # Check each directory for all names to avoid using headers/libraries from
+  # different places.
+  NAMES_PER_DIR
   HINTS ${PC_MSGPACK_LIBDIR} ${PC_MSGPACK_LIBRARY_DIRS}
   ${LIMIT_SEARCH})
 
