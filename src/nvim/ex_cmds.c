@@ -690,9 +690,17 @@ int do_move(linenr_T line1, linenr_T line2, linenr_T dest)
 {
   char_u      *str;
   linenr_T l;
-  linenr_T extra;           /* Num lines added before line1 */
-  linenr_T num_lines;       /* Num lines moved */
-  linenr_T last_line;       /* Last line in file after adding new text */
+  linenr_T extra;      // Num lines added before line1
+  linenr_T num_lines;  // Num lines moved
+  linenr_T last_line;  // Last line in file after adding new text
+
+  // Moving lines seems to corrupt the folds, delete folding info now
+  // and recreate it when finished.  Don't do this for manual folding, it
+  // would delete all folds.
+  bool isFolded = hasAnyFolding(curwin) && !foldmethodIsManual(curwin);
+  if (isFolded) {
+    deleteFoldRecurse(&curwin->w_folds);
+  }
 
   if (dest >= line1 && dest < line2) {
     EMSG(_("E134: Move lines into themselves"));
@@ -777,8 +785,14 @@ int do_move(linenr_T line1, linenr_T line2, linenr_T dest)
     if (dest > last_line + 1)
       dest = last_line + 1;
     changed_lines(line1, 0, dest, 0L);
-  } else
+  } else {
     changed_lines(dest + 1, 0, line1 + num_lines, 0L);
+  }
+
+  // recreate folds
+  if (isFolded) {
+    foldUpdateAll(curwin);
+  }
 
   return OK;
 }

@@ -16,3 +16,8 @@ expr 2
 1
 2
 0
+	Test fdm=indent START
+	line3
+	line4
+Test fdm=indent and :move bug END
+line2

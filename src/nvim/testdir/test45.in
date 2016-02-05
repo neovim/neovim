@@ -63,6 +63,16 @@ endfun
 :call append("$", foldlevel("."))
 :/^last/+1,$w! test.out
 :delfun Flvl
+:new
+iTest fdm=indent and :move bug END
+line2
+	Test fdm=indent START
+	line3
+	line4
+:set fdm=indent
+:1m1
+2jzc:m0
+:%w >> test.out
 :qa!
 ENDTEST
 
