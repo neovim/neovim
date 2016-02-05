@@ -34,6 +34,19 @@ describe('Syntax', function()
     ]], {[1] = {bold = true, foreground = Screen.colors.SeaGreen}})
   end)
 
+  it('keyword item matches keyword with case ignored', function()
+    execute('syntax case ignore')
+    execute('syntax keyword Type integer')
+    insert('Integer a;\n')
+    screen:expect([[
+      {1:Integer} a;               |
+      ^                         |
+      ~                        |
+      ~                        |
+                               |
+    ]], {[1] = {bold = true, foreground = Screen.colors.SeaGreen}})
+  end)
+
   it('keyword item does not match \'iskeyword\' characters extended string', function()
     execute('syntax keyword Type integer')
     insert('integer_type a;\n')
