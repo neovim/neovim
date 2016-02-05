@@ -16,7 +16,6 @@ describe('Syntax', function()
     screen:attach()
     screen:set_default_attr_ignore( {{bold=true, foreground = Screen.colors.Blue}} )
     execute('syntax on')
-    execute('syntax keyword Type integer')
   end)
 
   after_each(function()
@@ -24,6 +23,7 @@ describe('Syntax', function()
   end)
 
   it('keyword item matches keyword', function()
+    execute('syntax keyword Type integer')
     insert('integer a;\n')
     screen:expect([[
       {1:integer} a;               |
@@ -35,6 +35,7 @@ describe('Syntax', function()
   end)
 
   it('keyword item does not match \'iskeyword\' characters extended string', function()
+    execute('syntax keyword Type integer')
     insert('integer_type a;\n')
     screen:expect([[
       integer_type a;          |
