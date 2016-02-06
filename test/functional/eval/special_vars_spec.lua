@@ -147,9 +147,9 @@ describe('Special values', function()
   end)
 
   it('fails in index', function()
-    eq('Vim(echo):E15: Cannot index a special value', exc_exec('echo v:true[0]'))
-    eq('Vim(echo):E15: Cannot index a special value', exc_exec('echo v:false[0]'))
-    eq('Vim(echo):E15: Cannot index a special value', exc_exec('echo v:null[0]'))
+    eq('Vim(echo):E909: Cannot index a special variable', exc_exec('echo v:true[0]'))
+    eq('Vim(echo):E909: Cannot index a special variable', exc_exec('echo v:false[0]'))
+    eq('Vim(echo):E909: Cannot index a special variable', exc_exec('echo v:null[0]'))
   end)
 
   it('is accepted by assert_true and assert_false', function()

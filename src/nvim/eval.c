@@ -4319,19 +4319,37 @@ eval_index (
   char_u      *s;
   char_u      *key = NULL;
 
-  if (rettv->v_type == VAR_FUNC) {
-    if (verbose)
-      EMSG(_("E695: Cannot index a Funcref"));
-    return FAIL;
-  } else if (rettv->v_type == VAR_FLOAT) {
-    if (verbose)
-      EMSG(_(e_float_as_string));
-    return FAIL;
-  } else if (rettv->v_type == VAR_SPECIAL) {
-    if (verbose) {
-      EMSG(_("E15: Cannot index a special value"));
+  switch (rettv->v_type) {
+    case VAR_FUNC: {
+      if (verbose) {
+        EMSG(_("E695: Cannot index a Funcref"));
+      }
+      return FAIL;
     }
-    return FAIL;
+    case VAR_FLOAT: {
+      if (verbose) {
+        EMSG(_(e_float_as_string));
+      }
+      return FAIL;
+    }
+    case VAR_SPECIAL: {
+      if (verbose) {
+        EMSG(_("E909: Cannot index a special variable"));
+      }
+      return FAIL;
+    }
+    case VAR_UNKNOWN: {
+      if (evaluate) {
+        return FAIL;
+      }
+      // fallthrough
+    }
+    case VAR_STRING:
+    case VAR_NUMBER:
+    case VAR_LIST:
+    case VAR_DICT: {
+      break;
+    }
   }
 
   init_tv(&var1);
@@ -4522,11 +4540,11 @@ eval_index (
         *rettv = var1;
       }
       break;
+    case VAR_SPECIAL:
     case VAR_FUNC:
     case VAR_FLOAT:
     case VAR_UNKNOWN:
-    case VAR_SPECIAL:
-      assert(false);
+      break;  // Not evaluating, skipping over subscript
     }
   }
 
@@ -5076,11 +5094,12 @@ tv_equal (
     return tv1->vval.v_special == tv2->vval.v_special;
 
   case VAR_UNKNOWN:
-    break;
+    // VAR_UNKNOWN can be the result of an invalid expression, let’s say it does
+    // not equal anything, not even self.
+    return false;
   }
 
-  EMSG2(_(e_intern2), "tv_equal()");
-  return TRUE;
+  assert(false);
 }
 
 /*
@@ -8516,7 +8535,7 @@ static void f_diff_hlID(typval_T *argvars, typval_T *rettv)
  */
 static void f_empty(typval_T *argvars, typval_T *rettv)
 {
-  int n;
+  bool n;
 
   switch (argvars[0].v_type) {
   case VAR_STRING:
@@ -8542,8 +8561,9 @@ static void f_empty(typval_T *argvars, typval_T *rettv)
     n = argvars[0].vval.v_special != kSpecialVarTrue;
     break;
   case VAR_UNKNOWN:
-    EMSG2(_(e_intern2), "f_empty()");
-    n = 0;
+    EMSG2(_(e_intern2), "f_empty(UNKNOWN)");
+    n = true;
+    break;
   }
 
   rettv->vval.v_number = n;
@@ -11641,7 +11661,10 @@ static void f_len(typval_T *argvars, typval_T *rettv)
   case VAR_DICT:
     rettv->vval.v_number = dict_len(argvars[0].vval.v_dict);
     break;
-  default:
+  case VAR_UNKNOWN:
+  case VAR_SPECIAL:
+  case VAR_FLOAT:
+  case VAR_FUNC:
     EMSG(_("E701: Invalid type for len()"));
     break;
   }
@@ -16215,7 +16238,11 @@ static void f_type(typval_T *argvars, typval_T *rettv)
       }
       break;
     }
-    case VAR_UNKNOWN: EMSG2(_(e_intern2), "f_type()"); n = 0; break;
+    case VAR_UNKNOWN: {
+      EMSG2(_(e_intern2), "f_type(UNKNOWN)");
+      n = -1;
+      break;
+    }
   }
   rettv->vval.v_number = n;
 }
@@ -17529,7 +17556,7 @@ long get_tv_number_chk(typval_T *varp, int *denote)
     }
     break;
   case VAR_UNKNOWN:
-    EMSG2(_(e_intern2), "get_tv_number()");
+    EMSG2(_(e_intern2), "get_tv_number(UNKNOWN)");
     break;
   }
   if (denote == NULL) {
@@ -17638,7 +17665,7 @@ static char_u *get_tv_string_buf_chk(const typval_T *varp, char_u *buf)
     STRCPY(buf, encode_special_var_names[varp->vval.v_special]);
     return buf;
   case VAR_UNKNOWN:
-    EMSG2(_(e_intern2), "get_tv_string_buf()");
+    EMSG(_("E908: using an invalid value as a String"));
     break;
   }
   return NULL;
@@ -18212,7 +18239,7 @@ void copy_tv(typval_T *from, typval_T *to)
       }
       break;
     case VAR_UNKNOWN:
-      EMSG2(_(e_intern2), "copy_tv()");
+      EMSG2(_(e_intern2), "copy_tv(UNKNOWN)");
       break;
   }
 }
@@ -18301,7 +18328,7 @@ int var_item_copy(const vimconv_T *const conv,
       ret = FAIL;
     break;
   case VAR_UNKNOWN:
-    EMSG2(_(e_intern2), "var_item_copy()");
+    EMSG2(_(e_intern2), "var_item_copy(UNKNOWN)");
     ret = FAIL;
   }
   --recurse;
