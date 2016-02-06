@@ -470,10 +470,11 @@ json_decode_string_cycle_start:
             t++;
             switch (*t) {
               case 'u': {
-                const char ubuf[] = { t[1], t[2], t[3], t[4], 0 };
+                const char ubuf[] = { t[1], t[2], t[3], t[4] };
                 t += 4;
                 unsigned long ch;
-                vim_str2nr((char_u *) ubuf, NULL, NULL, 0, 0, 2, NULL, &ch);
+                vim_str2nr((char_u *) ubuf, NULL, NULL,
+                           STR2NR_HEX | STR2NR_FORCE, NULL, &ch, 4);
                 if (ch == 0) {
                   hasnul = true;
                 }
@@ -622,7 +623,7 @@ json_decode_string_cycle_start:
         } else {
           // Convert integer
           long nr;
-          vim_str2nr((char_u *) s, NULL, NULL, 0, 0, 0, &nr, NULL);
+          vim_str2nr((char_u *) s, NULL, NULL, 0, &nr, NULL, (int) (p - s));
           tv.vval.v_number = (varnumber_T) nr;
         }
         POP(tv, false);
