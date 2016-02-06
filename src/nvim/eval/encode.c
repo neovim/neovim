@@ -755,7 +755,7 @@ encode_vim_to_##name##_error_ret: \
       char ebuf[NUMBUFLEN + 7]; \
       size_t backref = 0; \
       for (; backref < kv_size(*mpstack); backref++) { \
-        const MPConvStackVal mpval = kv_a(MPConvStackVal, *mpstack, backref); \
+        const MPConvStackVal mpval = kv_A(*mpstack, backref); \
         if (mpval.type == conv_type) { \
           if (conv_type == kMPConvDict) { \
             if ((void *) mpval.data.d.dict == (void *) (val)) { \
@@ -783,7 +783,7 @@ DEFINE_VIML_CONV_FUNCTIONS(static, string, garray_T *const, gap)
       char ebuf[NUMBUFLEN + 7]; \
       size_t backref = 0; \
       for (; backref < kv_size(*mpstack); backref++) { \
-        const MPConvStackVal mpval = kv_a(MPConvStackVal, *mpstack, backref); \
+        const MPConvStackVal mpval = kv_A(*mpstack, backref); \
         if (mpval.type == conv_type) { \
           if (conv_type == kMPConvDict) { \
             if ((void *) mpval.data.d.dict == (void *) val) { \
@@ -932,7 +932,7 @@ static inline int convert_to_json_string(garray_T *const gap,
           } else if (vim_isprintc(ch)) {
             str_len += shift;
           } else {
-            str_len += ((sizeof("\\u1234") - 1) * (1 + (ch > 0xFFFF)));
+            str_len += ((sizeof("\\u1234") - 1) * (size_t) (1 + (ch > 0xFFFF)));
           }
           break;
         }
@@ -969,9 +969,9 @@ static inline int convert_to_json_string(garray_T *const gap,
                 xdigits[(ch >> (4 * 0)) & 0xF],
             }), sizeof("\\u1234") - 1);
           } else {
-            uint32_t tmp = (uint32_t) ch - SURROGATE_FIRST_CHAR;
-            uint16_t hi = SURROGATE_HI_START + ((tmp >> 10) & ((1 << 10) - 1));
-            uint16_t lo = SURROGATE_LO_END + ((tmp >>  0) & ((1 << 10) - 1));
+            const int tmp = ch - SURROGATE_FIRST_CHAR;
+            const int hi = SURROGATE_HI_START + ((tmp >> 10) & ((1 << 10) - 1));
+            const int lo = SURROGATE_LO_END + ((tmp >>  0) & ((1 << 10) - 1));
             ga_concat_len(gap, ((const char[]) {
                 '\\', 'u',
                 xdigits[(hi >> (4 * 3)) & 0xF],

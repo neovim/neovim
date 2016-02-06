@@ -204,7 +204,7 @@ void ga_concat_len(garray_T *const gap, const char *restrict s,
     ga_grow(gap, (int) len);
     char *data = gap->ga_data;
     memcpy(data + gap->ga_len, s, len);
-    gap->ga_len += len;
+    gap->ga_len += (int) len;
   }
 }
 

@@ -107,7 +107,7 @@ static inline int json_decoder_pop(ValuesStackItem obj,
       // vval.v_list and vval.v_dict should have the same size and offset
       && ((void *) obj.val.vval.v_list
           == (void *) last_container.container.vval.v_list)) {
-    kv_pop(*container_stack);
+    (void) kv_pop(*container_stack);
     val_location = last_container.s;
     last_container = kv_last(*container_stack);
   }
@@ -175,7 +175,7 @@ static inline int json_decoder_pop(ValuesStackItem obj,
       clear_tv(&obj.val);
 
       // Restart
-      kv_pop(*container_stack);
+      (void) kv_pop(*container_stack);
       ValuesStackItem last_container_val =
           kv_A(*stack, last_container.stack_index);
       while (kv_size(*stack) > last_container.stack_index) {
@@ -266,7 +266,7 @@ json_decode_string_cycle_start:
         }
         if (kv_size(stack) == 1) {
           p++;
-          kv_pop(container_stack);
+          (void) kv_pop(container_stack);
           goto json_decode_string_after_cycle;
         } else {
           if (json_decoder_pop(kv_pop(stack), &stack, &container_stack, &p,
