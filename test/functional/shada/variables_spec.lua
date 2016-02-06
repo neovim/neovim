@@ -22,12 +22,17 @@ describe('ShaDa support code', function()
     eq('foo', meths.get_var('STRVAR'))
   end)
 
-  local autotest = function(tname, varname, varval)
+  local autotest = function(tname, varname, varval, val_is_expr)
     it('is able to dump and read back ' .. tname .. ' variable automatically',
     function()
       set_additional_cmd('set shada+=!')
       reset()
-      meths.set_var(varname, varval)
+      if val_is_expr then
+        nvim_command('let g:' .. varname .. ' = ' .. varval)
+        varval = meths.get_var(varname)
+      else
+        meths.set_var(varname, varval)
+      end
       -- Exit during `reset` is not a regular exit: it does not write shada 
       -- automatically
       nvim_command('qall')
@@ -41,6 +46,10 @@ describe('ShaDa support code', function()
   autotest('float', 'FLTVAR', 42.5)
   autotest('dictionary', 'DCTVAR', {a=10})
   autotest('list', 'LSTVAR', {{a=10}, {b=10.5}, {c='str'}})
+  autotest('true', 'TRUEVAR', true)
+  autotest('false', 'FALSEVAR', false)
+  autotest('null', 'NULLVAR', 'v:null', true)
+  autotest('ext', 'EXTVAR', '{"_TYPE": v:msgpack_types.ext, "_VAL": [2, ["", ""]]}', true)
 
   it('does not read back variables without `!` in &shada', function()
     meths.set_var('STRVAR', 'foo')

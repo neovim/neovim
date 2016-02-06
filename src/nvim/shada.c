@@ -3883,12 +3883,6 @@ shada_read_next_item_hist_no_conv:
               initial_fpos);
         goto shada_read_next_item_error;
       }
-      if (unpacked.data.via.array.ptr[1].type == MSGPACK_OBJECT_NIL
-          || unpacked.data.via.array.ptr[1].type == MSGPACK_OBJECT_EXT) {
-        emsgu(_(READERR("variable", "has wrong variable value type")),
-              initial_fpos);
-        goto shada_read_next_item_error;
-      }
       entry->data.global_var.name =
           xmemdupz(unpacked.data.via.array.ptr[0].via.bin.ptr,
                    unpacked.data.via.array.ptr[0].via.bin.size);
