@@ -6955,10 +6955,16 @@ static void n_opencmd(cmdarg_T *cap)
                        (cap->cmdchar == 'o' ? 1 : 0))
             )
         && open_line(cap->cmdchar == 'O' ? BACKWARD : FORWARD,
-            has_format_option(FO_OPEN_COMS) ? OPENLINE_DO_COM :
-            0, 0)) {
-      if (curwin->w_p_cole > 0 && oldline != curwin->w_cursor.lnum)
+                     has_format_option(FO_OPEN_COMS)
+                     ? OPENLINE_DO_COM : 0,
+                     0)) {
+      if (curwin->w_p_cole > 0 && oldline != curwin->w_cursor.lnum) {
         update_single_line(curwin, oldline);
+      }
+      if (curwin->w_p_cul) {
+        // force redraw of cursorline
+        curwin->w_valid &= ~VALID_CROW;
+      }
       invoke_edit(cap, false, cap->cmdchar, true);
     }
   }
