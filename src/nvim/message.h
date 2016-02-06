@@ -41,7 +41,7 @@
 
 /// Like #EMSG, but for messages with two "%s" inside
 #define EMSG3(s, p, q)              emsg3((char_u *)(s), (char_u *)(p), \
-    (char_u *)(q))
+                                          (char_u *)(q))
 
 /// Like #EMSG, but for messages with one "%" PRId64 inside
 #define EMSGN(s, n)                 emsgn((char_u *)(s), (int64_t)(n))

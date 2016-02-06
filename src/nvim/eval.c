@@ -5482,8 +5482,9 @@ static int list_join_inner(garray_T *const gap, list_T *const l,
     char *s;
     size_t len;
     s = encode_tv2echo(&item->li_tv, &len);
-    if (s == NULL)
+    if (s == NULL) {
       return FAIL;
+    }
 
     sumlen += (int) len;
 
@@ -8317,9 +8318,9 @@ static void f_deepcopy(typval_T *argvars, typval_T *rettv)
 
   if (argvars[1].v_type != VAR_UNKNOWN)
     noref = get_tv_number_chk(&argvars[1], NULL);
-  if (noref < 0 || noref > 1)
+  if (noref < 0 || noref > 1) {
     EMSG(_(e_invarg));
-  else {
+  } else {
     var_item_copy(NULL, &argvars[0], rettv, true, (noref == 0
                                                    ? get_copyID()
                                                    : 0));
@@ -11960,8 +11961,9 @@ static void find_some_match(typval_T *argvars, typval_T *rettv, int type)
         }
         xfree(tofree);
         tofree = str = (char_u *) encode_tv2echo(&li->li_tv, NULL);
-        if (str == NULL)
+        if (str == NULL) {
           break;
+        }
       }
 
       match = vim_regexec_nl(&regmatch, str, (colnr_T)startcol);
@@ -17400,7 +17402,7 @@ void free_tv(typval_T *varp)
     switch (varp->v_type) {
       case VAR_FUNC:
         func_unref(varp->vval.v_string);
-        /*FALLTHROUGH*/
+        // FALLTHROUGH
       case VAR_STRING:
         xfree(varp->vval.v_string);
         break;

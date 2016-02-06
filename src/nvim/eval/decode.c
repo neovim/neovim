@@ -69,6 +69,8 @@ static inline void create_special_dict(typval_T *const rettv,
   };
 }
 
+#define DICT_LEN(dict) (dict)->dv_hashtab.ht_used
+
 /// Helper function used for working with stack vectors used by JSON decoder
 ///
 /// @param[in]  obj  New object.
@@ -158,8 +160,7 @@ static inline int json_decoder_pop(ValuesStackItem obj,
       return FAIL;
     } else if (!obj.didcomma
                && (last_container.special_val == NULL
-                   && (last_container.container.vval.v_dict->dv_hashtab.ht_used
-                       != 0))) {
+                   && (DICT_LEN(last_container.container.vval.v_dict) != 0))) {
       EMSG2(_("E474: Expected comma before dictionary key: %s"), val_location);
       clear_tv(&obj.val);
       return FAIL;
@@ -191,6 +192,25 @@ static inline int json_decoder_pop(ValuesStackItem obj,
   return OK;
 }
 
+#define OBJ(obj_tv, is_sp_string) \
+  ((ValuesStackItem) { \
+    .is_special_string = (is_sp_string), \
+    .val = (obj_tv), \
+    .didcomma = didcomma, \
+    .didcolon = didcolon, \
+  })
+#define POP(obj_tv, is_sp_string) \
+  do { \
+    if (json_decoder_pop(OBJ(obj_tv, is_sp_string), &stack, &container_stack, \
+                         &p, &next_map_special, &didcomma, &didcolon) \
+        == FAIL) { \
+      goto json_decode_string_fail; \
+    } \
+    if (next_map_special) { \
+      goto json_decode_string_cycle_start; \
+    } \
+  } while (0)
+
 /// Convert JSON string into VimL object
 ///
 /// @param[in]  buf  String to convert. UTF-8 encoding is assumed.
@@ -215,24 +235,6 @@ int json_decode_string(const char *const buf, const size_t len,
   bool didcomma = false;
   bool didcolon = false;
   bool next_map_special = false;
-#define OBJ(obj_tv, is_sp_string) \
-  ((ValuesStackItem) { \
-    .is_special_string = (is_sp_string), \
-    .val = (obj_tv), \
-    .didcomma = didcomma, \
-    .didcolon = didcolon, \
-  })
-#define POP(obj_tv, is_sp_string) \
-  do { \
-    if (json_decoder_pop(OBJ(obj_tv, is_sp_string), &stack, &container_stack, \
-                         &p, &next_map_special, &didcomma, &didcolon) \
-        == FAIL) { \
-      goto json_decode_string_fail; \
-    } \
-    if (next_map_special) { \
-      goto json_decode_string_cycle_start; \
-    } \
-  } while (0)
   const char *p = buf;
   for (; p < e; p++) {
 json_decode_string_cycle_start:
@@ -268,7 +270,8 @@ json_decode_string_cycle_start:
           goto json_decode_string_after_cycle;
         } else {
           if (json_decoder_pop(kv_pop(stack), &stack, &container_stack, &p,
-                               &next_map_special, &didcomma, &didcolon) == FAIL) {
+                               &next_map_special, &didcomma, &didcolon)
+              == FAIL) {
             goto json_decode_string_fail;
           }
           assert(!next_map_special);
@@ -293,8 +296,7 @@ json_decode_string_cycle_start:
           goto json_decode_string_fail;
         } else if (last_container.special_val == NULL
                    ? (last_container.container.v_type == VAR_DICT
-                      ? (last_container.container.vval.v_dict->dv_hashtab.ht_used
-                         == 0)
+                      ? (DICT_LEN(last_container.container.vval.v_dict) == 0)
                       : (last_container.container.vval.v_list->lv_len == 0))
                    : (last_container.special_val->lv_len == 0)) {
           EMSG2(_("E474: Leading comma: %s"), p);
@@ -686,8 +688,6 @@ json_decode_string_cycle_start:
       break;
     }
   }
-#undef POP
-#undef OBJ
 json_decode_string_after_cycle:
   for (; p < e; p++) {
     switch (*p) {
@@ -721,6 +721,11 @@ json_decode_string_ret:
   kv_destroy(container_stack);
   return ret;
 }
+
+#undef POP
+#undef OBJ
+
+#undef DICT_LEN
 
 /// Convert msgpack object to a VimL one
 int msgpack_to_vim(const msgpack_object mobj, typval_T *const rettv)
