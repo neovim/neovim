@@ -255,7 +255,7 @@ int encode_read_from_list(ListReaderState *const state, char *const buf,
   while (p < buf_end) {
     for (size_t i = state->offset; i < state->li_length && p < buf_end; i++) {
       const char ch = (char) state->li->li_tv.vval.v_string[state->offset++];
-      *p++ = (ch == NL ? NUL : ch);
+      *p++ = (char) ((char) ch == (char) NL ? (char) NUL : (char) ch);
     }
     if (p < buf_end) {
       state->li = state->li->li_next;

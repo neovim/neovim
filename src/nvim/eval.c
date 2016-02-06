@@ -5100,6 +5100,7 @@ tv_equal (
   }
 
   assert(false);
+  return false;
 }
 
 /*
@@ -7614,9 +7615,10 @@ static void assert_bool(typval_T *argvars, bool is_true)
   if ((argvars[0].v_type != VAR_NUMBER ||
        (get_tv_number_chk(&argvars[0], &error) == 0) == is_true || error)
       && (argvars[0].v_type != VAR_SPECIAL
-          || argvars[0].vval.v_special != (is_true
-                                           ?kSpecialVarTrue
-                                           :kSpecialVarFalse))) {
+          || (argvars[0].vval.v_special
+              != (SpecialVarValue) (is_true
+                                    ? kSpecialVarTrue
+                                    : kSpecialVarFalse)))) {
     prepare_assert_error(&ga);
     fill_assert_error(&ga, &argvars[1],
                       (char_u *)(is_true ? "True" : "False"),
@@ -8535,7 +8537,7 @@ static void f_diff_hlID(typval_T *argvars, typval_T *rettv)
  */
 static void f_empty(typval_T *argvars, typval_T *rettv)
 {
-  bool n;
+  bool n = true;
 
   switch (argvars[0].v_type) {
   case VAR_STRING:
@@ -8562,7 +8564,6 @@ static void f_empty(typval_T *argvars, typval_T *rettv)
     break;
   case VAR_UNKNOWN:
     EMSG2(_(e_intern2), "f_empty(UNKNOWN)");
-    n = true;
     break;
   }
 
@@ -16215,7 +16216,7 @@ static void f_trunc(typval_T *argvars, typval_T *rettv)
  */
 static void f_type(typval_T *argvars, typval_T *rettv)
 {
-  int n;
+  int n = -1;
 
   switch (argvars[0].v_type) {
     case VAR_NUMBER: n = 0; break;
@@ -16240,7 +16241,6 @@ static void f_type(typval_T *argvars, typval_T *rettv)
     }
     case VAR_UNKNOWN: {
       EMSG2(_(e_intern2), "f_type(UNKNOWN)");
-      n = -1;
       break;
     }
   }
