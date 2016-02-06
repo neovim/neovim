@@ -120,19 +120,18 @@ typedef struct dictitem_S dictitem_T;
 #define DI_FLAGS_LOCK   8   // "di_flags" value: locked variable
 #define DI_FLAGS_ALLOC  16  // "di_flags" value: separately allocated
 
-/*
- * Structure to hold info about a Dictionary.
- */
+/// Structure representing a Dictionary
 struct dictvar_S {
-  char dv_lock;                 /* zero, VAR_LOCKED, VAR_FIXED */
-  char dv_scope;                /* zero, VAR_SCOPE, VAR_DEF_SCOPE */
-  int dv_refcount;              /* reference count */
-  int dv_copyID;                /* ID used by deepcopy() */
-  hashtab_T dv_hashtab;         /* hashtab that refers to the items */
-  dict_T      *dv_copydict;     /* copied dict used by deepcopy() */
-  dict_T      *dv_used_next;    /* next dict in used dicts list */
-  dict_T      *dv_used_prev;    /* previous dict in used dicts list */
-  QUEUE watchers;               // dictionary key watchers set by user code
+  VarLockStatus dv_lock;  ///< Whole dictionary lock status.
+  char dv_scope;          ///< Non-zero (#VAR_SCOPE, #VAR_DEF_SCOPE) if
+                          ///< dictionary represents a scope (i.e. g:, l: …).
+  int dv_refcount;        ///< Reference count.
+  int dv_copyID;          ///< ID used when recursivery traversing a value.
+  hashtab_T dv_hashtab;   ///< Hashtab containing all items.
+  dict_T *dv_copydict;    ///< Copied dict used by deepcopy().
+  dict_T *dv_used_next;   ///< Next dictionary in used dictionaries list.
+  dict_T *dv_used_prev;   ///< Previous dictionary in used dictionaries list.
+  QUEUE watchers;         ///< Dictionary key watchers set by user code.
 };
 
 // structure used for explicit stack while garbage collecting hash tables
