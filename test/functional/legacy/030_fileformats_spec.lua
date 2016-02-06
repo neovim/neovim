@@ -12,10 +12,13 @@ describe('fileformats option', function()
     local dos = 'dos\r\ndos\r\n'
     local mac = 'mac\rmac\r'
     local unix = 'unix\nunix\n'
+    local eol = 'noeol'
     write_file('XXDos', dos)
     write_file('XXMac', mac)
     write_file('XXUnix', unix)
+    write_file('XXEol', eol)
     write_file('XXDosMac', dos..mac)
+    write_file('XXMacEol', mac..eol)
     write_file('XXUxDs', unix..dos)
     write_file('XXUxDsMc', unix..dos..mac)
     write_file('XXUxMac', unix..mac)
@@ -25,12 +28,14 @@ describe('fileformats option', function()
     os.remove('XXDos')
     os.remove('XXMac')
     os.remove('XXUnix')
+    os.remove('XXEol')
     os.remove('XXDosMac')
+    os.remove('XXMacEol')
     os.remove('XXUxDs')
     os.remove('XXUxDsMc')
     os.remove('XXUxMac')
     for i = 0, 9 do
-      for j = 1, 3 do
+      for j = 1, 4 do
 	os.remove('XXtt'..i..j)
       end
     end
@@ -100,26 +105,43 @@ describe('fileformats option', function()
     execute('e! XXDosMac')
     execute('w! XXtt53')
     execute('bwipe XXDosMac')
+    execute('e! XXEol')
+    feed('ggO<C-R>=&ffs<CR>:<C-R>=&ff<CR><ESC>')
+    execute('w! XXtt54')
+    execute('bwipe XXEol')
     execute('set fileformats=dos,mac')
     execute('e! XXUxDs')
     execute('w! XXtt61')
     execute('bwipe XXUxDs')
     execute('e! XXUxMac')
+    feed('ggO<C-R>=&ffs<CR>:<C-R>=&ff<CR><ESC>')
     execute('w! XXtt62')
     execute('bwipe XXUxMac')
     execute('e! XXUxDsMc')
     execute('w! XXtt63')
     execute('bwipe XXUxDsMc')
+    execute('e! XXMacEol')
+    feed('ggO<C-R>=&ffs<CR>:<C-R>=&ff<CR><ESC>')
+    execute('w! XXtt64')
+    execute('bwipe XXMacEol')
 
     -- Try reading and writing with 'fileformats' set to three formats.
     execute('set fileformats=unix,dos,mac')
     execute('e! XXUxDsMc')
     execute('w! XXtt71')
     execute('bwipe XXUxDsMc')
+    execute('e! XXEol')
+    feed('ggO<C-R>=&ffs<CR>:<C-R>=&ff<CR><ESC>')
+    execute('w! XXtt72')
+    execute('bwipe XXEol')
     execute('set fileformats=mac,dos,unix')
     execute('e! XXUxDsMc')
     execute('w! XXtt81')
     execute('bwipe XXUxDsMc')
+    execute('e! XXEol')
+    feed('ggO<C-R>=&ffs<CR>:<C-R>=&ff<CR><ESC>')
+    execute('w! XXtt82')
+    execute('bwipe XXEol')
     -- Try with 'binary' set.
     execute('set fileformats=mac,unix,dos')
     execute('set binary')
@@ -154,11 +176,15 @@ describe('fileformats option', function()
     execute('w >>XXtt51')
     execute('w >>XXtt52')
     execute('w >>XXtt53')
+    execute('w >>XXtt54')
     execute('w >>XXtt61')
     execute('w >>XXtt62')
     execute('w >>XXtt63')
+    execute('w >>XXtt64')
     execute('w >>XXtt71')
+    execute('w >>XXtt72')
     execute('w >>XXtt81')
+    execute('w >>XXtt82')
     execute('w >>XXtt91')
     execute('w >>XXtt92')
     execute('w >>XXtt93')
@@ -190,14 +216,18 @@ describe('fileformats option', function()
     execute('$r XXtt51')
     execute('$r XXtt52')
     execute('$r XXtt53')
+    execute('$r XXtt54')
     feed('Go6<esc>')
     execute('$r XXtt61')
     execute('$r XXtt62')
     execute('$r XXtt63')
+    execute('$r XXtt64')
     feed('Go7<esc>')
     execute('$r XXtt71')
+    execute('$r XXtt72')
     feed('Go8<esc>')
     execute('$r XXtt81')
+    execute('$r XXtt82')
     feed('Go9<esc>')
     execute('$r XXtt91')
     execute('$r XXtt92')
@@ -282,12 +312,16 @@ describe('fileformats option', function()
       'dos\r\n'..
       'dos\r\n'..
       'mac\rmac\rEND\n'..
+      'unix,mac:unix\n'..
+      'noeol\n'..
+      'END\n'..
       '6\n'..
       'unix\r\n'..
       'unix\r\n'..
       'dos\r\n'..
       'dos\r\n'..
       'END\n'..
+      'dos,mac:dos\r\n'..
       'unix\r\n'..
       'unix\r\n'..
       'mac\rmac\r\r\n'..
@@ -298,12 +332,16 @@ describe('fileformats option', function()
       'dos\r\n'..
       'mac\rmac\r\r\n'..
       'END\n'..
+      'dos,mac:mac\rmac\rmac\rnoeol\rEND\n'..
       '7\n'..
       'unix\n'..
       'unix\n'..
       'dos\r\n'..
       'dos\r\n'..
       'mac\rmac\r\n'..
+      'END\n'..
+      'unix,dos,mac:unix\n'..
+      'noeol\n'..
       'END\n'..
       '8\n'..
       'unix\n'..
@@ -312,6 +350,7 @@ describe('fileformats option', function()
       'dos\r\n'..
       'mac\rmac\r\n'..
       'END\n'..
+      'mac,dos,unix:mac\rnoeol\rEND\n'..
       '9\n'..
       'unix\n'..
       'unix\n'..
