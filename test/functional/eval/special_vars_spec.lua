@@ -151,4 +151,21 @@ describe('Special values', function()
     eq('Vim(echo):E15: Cannot index a special value', exc_exec('echo v:false[0]'))
     eq('Vim(echo):E15: Cannot index a special value', exc_exec('echo v:null[0]'))
   end)
+
+  it('is accepted by assert_true and assert_false', function()
+    funcs.assert_false(false)
+    funcs.assert_false(true)
+    eval('assert_false(v:null)')
+
+    funcs.assert_true(false)
+    funcs.assert_true(true)
+    eval('assert_true(v:null)')
+
+    eq({
+      'Expected False but got v:true',
+      'Expected False but got v:null',
+      'Expected True but got v:false',
+      'Expected True but got v:null',
+    }, meths.get_vvar('errors'))
+  end)
 end)

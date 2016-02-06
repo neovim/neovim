@@ -7587,16 +7587,20 @@ static void f_assert_equal(typval_T *argvars, typval_T *rettv)
 }
 
 // Common for assert_true() and assert_false().
-static void assert_bool(typval_T *argvars, bool isTrue)
+static void assert_bool(typval_T *argvars, bool is_true)
 {
   int error = (int)false;
   garray_T ga;
 
-  if (argvars[0].v_type != VAR_NUMBER ||
-      (get_tv_number_chk(&argvars[0], &error) == 0) == isTrue || error) {
+  if ((argvars[0].v_type != VAR_NUMBER ||
+       (get_tv_number_chk(&argvars[0], &error) == 0) == is_true || error)
+      && (argvars[0].v_type != VAR_SPECIAL
+          || argvars[0].vval.v_special != (is_true
+                                           ?kSpecialVarTrue
+                                           :kSpecialVarFalse))) {
     prepare_assert_error(&ga);
     fill_assert_error(&ga, &argvars[1],
-                      (char_u *)(isTrue ? "True" : "False"),
+                      (char_u *)(is_true ? "True" : "False"),
                       NULL, &argvars[0]);
     assert_error(&ga);
     ga_clear(&ga);
