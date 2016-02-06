@@ -613,7 +613,7 @@ scope int encode_vim_to_##name(firstargtype firstargname, typval_T *const tv, \
           CONV_DICT_BETWEEN_ITEMS(); \
         } \
         const list_T *const kv_pair = cur_mpsv->data.l.li->li_tv.vval.v_list; \
-        CONV_SPECIAL_DICT_KEY_CHECK(kv_pair); \
+        CONV_SPECIAL_DICT_KEY_CHECK(name, kv_pair); \
         if (name##_convert_one_value(firstargname, &mpstack, \
                                      &kv_pair->lv_first->li_tv, copyID, \
                                      objname) == FAIL) { \
@@ -735,7 +735,7 @@ encode_vim_to_##name##_error_ret: \
 #define CONV_DICT_BETWEEN_ITEMS() \
     ga_concat(gap, ", ")
 
-#define CONV_SPECIAL_DICT_KEY_CHECK(kv_pair)
+#define CONV_SPECIAL_DICT_KEY_CHECK(name, kv_pair)
 
 #define CONV_LIST_END(lst) \
     ga_append(gap, ']')
@@ -1058,11 +1058,11 @@ static inline bool check_json_key(const typval_T *const tv)
 }
 
 #undef CONV_SPECIAL_DICT_KEY_CHECK
-#define CONV_SPECIAL_DICT_KEY_CHECK(kv_pair) \
+#define CONV_SPECIAL_DICT_KEY_CHECK(name, kv_pair) \
     do { \
       if (!check_json_key(&kv_pair->lv_first->li_tv)) { \
         EMSG(_("E474: Invalid key in special dictionary")); \
-        return FAIL; \
+        goto encode_vim_to_##name##_error_ret; \
       } \
     } while (0)
 
@@ -1235,7 +1235,7 @@ char *encode_tv2json(typval_T *tv, size_t *len)
 
 #define CONV_DICT_BETWEEN_ITEMS()
 
-#define CONV_SPECIAL_DICT_KEY_CHECK(kv_pair)
+#define CONV_SPECIAL_DICT_KEY_CHECK(name, kv_pair)
 
 #define CONV_LIST_END(lst)
 

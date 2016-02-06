@@ -552,6 +552,7 @@ json_decode_string_cycle_start:
             clear_tv(&obj);
             goto json_decode_string_fail;
           }
+          xfree(str);
           POP(obj, true);
         } else {
           *str_end = NUL;
