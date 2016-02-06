@@ -882,11 +882,11 @@ static inline int convert_to_json_string(garray_T *const gap,
                                          const size_t len)
   FUNC_ATTR_NONNULL_ARG(1) FUNC_ATTR_ALWAYS_INLINE
 {
-  const char *buf_ = buf;
-  if (buf_ == NULL) {
+  const char *utf_buf = buf;
+  if (utf_buf == NULL) {
     ga_concat(gap, "\"\"");
   } else {
-    size_t len_ = len;
+    size_t utf_len = len;
     char *tofree = NULL;
     if (last_p_enc != (const void *) p_enc) {
       p_enc_conv.vc_type = CONV_NONE;
@@ -895,17 +895,28 @@ static inline int convert_to_json_string(garray_T *const gap,
       last_p_enc = p_enc;
     }
     if (p_enc_conv.vc_type != CONV_NONE) {
-      tofree = string_convert(&p_enc_conv, buf_, &len_);
+      tofree = string_convert(&p_enc_conv, buf, &utf_len);
       if (tofree == NULL) {
-        EMSG2(_("E474: Failed to convert string \"%s\" to UTF-8"), buf_);
+        EMSG2(_("E474: Failed to convert string \"%s\" to UTF-8"), utf_buf);
         return FAIL;
       }
-      buf_ = tofree;
+      utf_buf = tofree;
     }
     size_t str_len = 0;
-    for (size_t i = 0; i < len_;) {
-      const int ch = utf_ptr2char(buf + i);
-      const size_t shift = (ch == 0? 1: utf_ptr2len(buf + i));
+    // Encode character as \u0000 if
+    // 1. It is an ASCII control character (0x0 .. 0x1F, 0x7F).
+    // 2. &encoding is not UTF-8 and code point is above 0x7F.
+    // 3. &encoding is UTF-8 and code point is not printable according to
+    //    utf_printable().
+    // This is done to make it possible to :echo values when &encoding is not
+    // UTF-8.
+#define ENCODE_RAW(p_enc_conv, ch) \
+    (ch >= 0x20 && (p_enc_conv.vc_type == CONV_NONE \
+                    ? utf_printable(ch) \
+                    : ch < 0x7F))
+    for (size_t i = 0; i < utf_len;) {
+      const int ch = utf_ptr2char(utf_buf + i);
+      const size_t shift = (ch == 0? 1: utf_ptr2len(utf_buf + i));
       assert(shift > 0);
       i += shift;
       switch (ch) {
@@ -922,14 +933,14 @@ static inline int convert_to_json_string(garray_T *const gap,
         default: {
           if (ch > 0x7F && shift == 1) {
             EMSG2(_("E474: String \"%s\" contains byte that does not start any "
-                    "UTF-8 character"), buf_);
+                    "UTF-8 character"), utf_buf);
             return FAIL;
           } else if ((0xD800 <= ch && ch <= 0xDB7F)
                      || (0xDC00 <= ch && ch <= 0xDFFF)) {
             EMSG2(_("E474: UTF-8 string contains code point which belongs "
-                    "to surrogate pairs"), buf_);
+                    "to surrogate pairs: %s"), utf_buf + i);
             return FAIL;
-          } else if (vim_isprintc(ch)) {
+          } else if (ENCODE_RAW(p_enc_conv, ch)) {
             str_len += shift;
           } else {
             str_len += ((sizeof("\\u1234") - 1) * (size_t) (1 + (ch > 0xFFFF)));
@@ -940,12 +951,12 @@ static inline int convert_to_json_string(garray_T *const gap,
     }
     ga_append(gap, '"');
     ga_grow(gap, (int) str_len);
-    for (size_t i = 0; i < len_;) {
-      const int ch = utf_ptr2char(buf + i);
+    for (size_t i = 0; i < utf_len;) {
+      const int ch = utf_ptr2char(utf_buf + i);
       const size_t shift = (ch == 0? 1: utf_char2len(ch));
       assert(shift > 0);
       // Is false on invalid unicode, but this should already be handled.
-      assert(ch == 0 || shift == utf_ptr2len(buf + i));
+      assert(ch == 0 || shift == utf_ptr2len(utf_buf + i));
       switch (ch) {
         case BS:
         case TAB:
@@ -958,8 +969,8 @@ static inline int convert_to_json_string(garray_T *const gap,
           break;
         }
         default: {
-          if (vim_isprintc(ch)) {
-            ga_concat_len(gap, buf + i, shift);
+          if (ENCODE_RAW(p_enc_conv, ch)) {
+            ga_concat_len(gap, utf_buf + i, shift);
           } else if (ch < SURROGATE_FIRST_CHAR) {
             ga_concat_len(gap, ((const char[]) {
                 '\\', 'u',

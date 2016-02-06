@@ -8,8 +8,8 @@ local execute = helpers.execute
 local exc_exec = helpers.exc_exec
 
 describe('jsondecode() function', function()
-  before_each(function()
-    clear()
+  local restart = function(cmd)
+    clear(cmd)
     execute([[
       function Eq(exp, act)
         let act = a:act
@@ -53,7 +53,8 @@ describe('jsondecode() function', function()
         endif
       endfunction
     ]])
-  end)
+  end
+  before_each(restart)
 
   local speq = function(expected, actual_expr)
     eq(1, funcs.EvalEq(expected, actual_expr))
@@ -396,6 +397,7 @@ describe('jsondecode() function', function()
   it('parses strings with NUL properly', function()
     sp_decode_eq({_TYPE='string', _VAL={'\n'}}, '"\\u0000"')
     sp_decode_eq({_TYPE='string', _VAL={'\n', '\n'}}, '"\\u0000\\n\\u0000"')
+    sp_decode_eq({_TYPE='string', _VAL={'\n«\n'}}, '"\\u0000\\u00AB\\u0000"')
   end)
 
   it('parses dictionaries with duplicate keys to special maps', function()
@@ -436,6 +438,12 @@ describe('jsondecode() function', function()
     sp_decode_eq({_TYPE='map', _VAL={{'b', 3}, {'a', 1}, {'c', 4}, {'d', 2}, {{_TYPE='string', _VAL={'\n'}}, 4}}},
                  '{"b": 3, "a": 1, "c": 4, "d": 2, "\\u0000": 4}')
   end)
+
+  it('converts strings to latin1 when &encoding is latin1', function()
+    restart('set encoding=latin1')
+    eq('\xAB', funcs.jsondecode('"\\u00AB"'))
+    sp_decode_eq({_TYPE='string', _VAL={'\n\xAB\n'}}, '"\\u0000\\u00AB\\u0000"')
+  end)
 end)
 
 describe('jsonencode() function', function()
@@ -447,6 +455,7 @@ describe('jsonencode() function', function()
     eq('"\\t"', funcs.jsonencode('\t'))
     eq('"\\n"', funcs.jsonencode('\n'))
     eq('"\\u001B"', funcs.jsonencode('\27'))
+    eq('"þÿþ"', funcs.jsonencode('þÿþ'))
   end)
 
   it('dumps numbers', function()
@@ -641,5 +650,17 @@ describe('jsonencode() function', function()
   it('fails when called with two arguments', function()
     eq('Vim(call):E118: Too many arguments for function: jsonencode',
        exc_exec('call jsonencode(["", ""], 1)'))
+  end)
+
+  it('converts strings from latin1 when &encoding is latin1', function()
+    clear('set encoding=latin1')
+    eq('"\\u00AB"', funcs.jsonencode('\xAB'))
+    eq('"\\u0000\\u00AB\\u0000"', eval('jsonencode({"_TYPE": v:msgpack_types.string, "_VAL": ["\\n\xAB\\n"]})'))
+  end)
+
+  it('ignores improper values in &isprint', function()
+    meths.set_option('isprint', '1')
+    eq(1, eval('"\x01" =~# "\\\\p"'))
+    eq('"\\u0001"', funcs.jsonencode('\x01'))
   end)
 end)
