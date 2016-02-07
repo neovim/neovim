@@ -1,16 +1,9 @@
 -- Test for writing and reading a file starting with a BOM
 
 local helpers, lfs = require('test.functional.helpers'), require('lfs')
-local feed, insert, source = helpers.feed, helpers.insert, helpers.source
-local clear, execute, expect, eq, eval, wait = helpers.clear, helpers.execute, helpers.expect, helpers.eq, helpers.eval, helpers.wait
-
--- Helper function to write a string to a file after dedenting it.
-local write_file = function (name, contents)
-  local file = io.open(name, 'w')
-  file:write(helpers.dedent(contents))
-  file:flush()
-  file:close()
-end
+local insert, source, clear, execute, expect, eq, eval, wait, write_file =
+  helpers.insert, helpers.source, helpers.clear, helpers.execute,
+  helpers.expect, helpers.eq, helpers.eval, helpers.wait, helpers.write_file
 
 local function diff(filename, text)
   local file = io.open(filename)
