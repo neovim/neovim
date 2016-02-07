@@ -1,10 +1,5 @@
 build_deps() {
   if [[ "${BUILD_32BIT}" == ON ]]; then
-    if [[ "${BUILD_MINGW}" == ON ]]; then
-      >&2 echo "32-bit MinGW builds not supported."
-      exit 1
-    fi
-
     DEPS_CMAKE_FLAGS="${DEPS_CMAKE_FLAGS} ${CMAKE_FLAGS_32BIT}"
   fi
   if [[ "${BUILD_MINGW}" == ON ]]; then
@@ -42,11 +37,6 @@ build_nvim() {
     CMAKE_FLAGS="${CMAKE_FLAGS} -DCLANG_${CLANG_SANITIZER}=ON"
   fi
   if [[ "${BUILD_32BIT}" == ON ]]; then
-    if [[ "${BUILD_MINGW}" == ON ]]; then
-      >&2 echo "32-bit MinGW builds not supported."
-      exit 1
-    fi
-
     CMAKE_FLAGS="${CMAKE_FLAGS} ${CMAKE_FLAGS_32BIT}"
   fi
   if [[ "${BUILD_MINGW}" == ON ]]; then

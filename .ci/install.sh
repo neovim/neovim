@@ -14,7 +14,9 @@ elif [[ "${BUILD_MINGW}" == ON ]]; then
   # binutils-mingw-w64-i686 gcc-mingw-w64-i686 g++-mingw-w64-i686 mingw-w64-dev mingw-w64-tools
 
   echo "Downloading MinGW..."
-  curl -sSL "http://downloads.sourceforge.net/project/mingw-w64/Toolchains%20targetting%20Win32/Personal%20Builds/rubenvb/gcc-4.8-release/i686-w64-mingw32-gcc-4.8.0-linux64_rubenvb.tar.xz" | tar xJf - -C "${HOME}/.local"
+  curl -sSL "https://github.com/neovim/deps/raw/master/opt/i686-w64-mingw32-gcc-4.8.0-linux64_rubenvb.tar.xz" \
+    | tar xJf - -C "${HOME}/.local"
+  
 fi
 
 # Set CC to default to avoid compilation problems
