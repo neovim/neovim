@@ -6203,15 +6203,16 @@ static void paste_option_changed(void)
       buf->b_p_et = 0;              // no expandtab
     }
 
-    /* set global options */
+    // set global options
     p_sm = 0;                       // no showmatch
     p_sta = 0;                      // no smarttab
-    if (p_ru)
-      status_redraw_all();          /* redraw to remove the ruler */
-    p_ru = 0;                       /* no ruler */
-    p_ri = 0;                       /* no reverse insert */
-    p_hkmap = 0;                    /* no Hebrew keyboard */
-    /* set global values for local buffer options */
+    if (p_ru) {
+      status_redraw_all();          // redraw to remove the ruler
+    }
+    p_ru = 0;                       // no ruler
+    p_ri = 0;                       // no reverse insert
+    p_hkmap = 0;                    // no Hebrew keyboard
+    // set global values for local buffer options
     p_tw = 0;
     p_wm = 0;
     p_sts = 0;
@@ -6233,8 +6234,9 @@ static void paste_option_changed(void)
     /* restore global options */
     p_sm = save_sm;
     p_sta = save_sta;
-    if (p_ru != save_ru)
-      status_redraw_all();          /* redraw to draw the ruler */
+    if (p_ru != save_ru) {
+      status_redraw_all();          // redraw to draw the ruler
+    }
     p_ru = save_ru;
     p_ri = save_ri;
     p_hkmap = save_hkmap;
