@@ -219,9 +219,10 @@ int main(int argc, char **argv)
 {
   argv0 = (char *)path_tail((char_u *)argv[0]);
 
-  char_u      *fname = NULL;            /* file name from command line */
-  mparm_T params;                       /* various parameters passed between
-                                         * main() and other functions. */
+  char_u *fname = NULL;   // file name from command line
+  mparm_T params;         // various parameters passed between
+                          // main() and other functions.
+  char_u *cwd = NULL;     // current workding dir on startup
   time_init();
 
   /* Many variables are in "params" so that we can pass them to invoked
@@ -461,11 +462,10 @@ int main(int argc, char **argv)
     TIME_MSG("jump to first error");
   }
 
-  /*
-   * If opened more than one window, start editing files in the other
-   * windows.
-   */
-  edit_buffers(&params);
+  // If opened more than one window, start editing files in the other
+  // windows.
+  edit_buffers(&params, cwd);
+  xfree(cwd);
 
   if (params.diff_mode) {
     /* set options in each window for "nvim -d". */
@@ -1182,12 +1182,19 @@ static char_u *get_fname(mparm_T *parmp)
    * Expand wildcards in file names.
    */
   if (!parmp->literal) {
-    /* Temporarily add '(' and ')' to 'isfname'.  These are valid
-     * filename characters but are excluded from 'isfname' to make
-     * "gf" work on a file name in parenthesis (e.g.: see vim.h). */
+    cwd = xmalloc(MAXPATHL);
+    if (cwd != NULL) {
+      os_dirname(cwd, MAXPATHL);
+    }
+    // Temporarily add '(' and ')' to 'isfname'.  These are valid
+    // filename characters but are excluded from 'isfname' to make
+    // "gf" work on a file name in parenthesis (e.g.: see vim.h).
     do_cmdline_cmd(":set isf+=(,)");
     alist_expand(NULL, 0);
     do_cmdline_cmd(":set isf&");
+    if (cwd != NULL) {
+      os_chdir((char *)cwd);
+    }
   }
 #endif
   return alist_name(&GARGLIST[0]);
@@ -1417,11 +1424,9 @@ static void create_windows(mparm_T *parmp)
   }
 }
 
-/*
- * If opened more than one window, start editing files in the other
- * windows.  make_windows() has already opened the windows.
- */
-static void edit_buffers(mparm_T *parmp)
+/// If opened more than one window, start editing files in the other
+/// windows. make_windows() has already opened the windows.
+static void edit_buffers(mparm_T *parmp, char_u *cwd)
 {
   int arg_idx;                          /* index in argument list */
   int i;
@@ -1442,7 +1447,10 @@ static void edit_buffers(mparm_T *parmp)
 
   arg_idx = 1;
   for (i = 1; i < parmp->window_count; ++i) {
-    /* When w_arg_idx is -1 remove the window (see create_windows()). */
+    if (cwd != NULL) {
+      os_chdir((char *)cwd);
+    }
+    // When w_arg_idx is -1 remove the window (see create_windows()).
     if (curwin->w_arg_idx == -1) {
       ++arg_idx;
       win_close(curwin, TRUE);
