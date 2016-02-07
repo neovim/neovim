@@ -1837,14 +1837,6 @@ describe('regexp pattern without multi byte support:', function() -- TODO multi 
     expect([=[
       Results of test64:
       
-      thexE thE thExethe
-      AndAxAnd AndAxAnd
-      oooxOfOr fOrOxooo
-      oooxOfOr fOrOxooo
-      
-      asdfhereasdf
-      asdfagainasdf
-      
       -0-
       ffo
       bob
