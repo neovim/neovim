@@ -1732,25 +1732,37 @@ describe('regexp pattern without multi byte support:', function() -- TODO multi 
       oooxOfOr fOrOxooo]])
   end)
 
-  it('is working', function()
+  it('matching marks', function()
     insert([[
+      dummy text
+      dummy text
+      
       Marks:
       asdfSasdfsadfEasdf
       asdfSas
       dfsadfEasdf
       
-      Results of test64:]])
+      dummy text
+      dummy text]])
 
-    -- Check matching marks.
     execute('/^Marks:')
     feed('jfSmsfEme')
-    execute([[.-4,.+6s/.\%>'s.*\%<'e../here/]])
+    execute([[.-4,.+3s/.\%>'s.*\%<'e../here/]])
     feed('jfSmsj0fEme')
-    execute([[.-4,.+6s/.\%>'s\_.*\%<'e../again/]])
-    execute(':/^Marks:/+1,/^Marks:/+3yank')
+    execute([[.-4,.+3s/.\%>'s\_.*\%<'e../again/]])
+    expect([[
+    dummy text
+    dummy text
+    
+    Marks:
+    asdfhereasdf
+    asdfagainasdf
+    
+    dummy text
+    dummy text]])
+  end)
 
-    feed('Go<esc>p')
-
+  it('is working', function()
     -- Check patterns matching cursor position.
     -- TODO: is the line cont OK?
     source([[
@@ -1778,6 +1790,10 @@ describe('regexp pattern without multi byte support:', function() -- TODO multi 
     execute('set re=0')
     execute('call Postest()')
     execute('put')
+    eq(1,2)
+    expect([[
+    hans
+    ]])
     feed('o-1-<esc>')
     execute('set re=1')
     execute('call Postest()')
