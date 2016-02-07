@@ -1,11 +1,13 @@
 -- Test for writing and reading a file starting with a BOM
 
 local helpers, lfs = require('test.functional.helpers'), require('lfs')
-local insert, source, clear, execute, expect, eq, eval, wait, write_file =
-  helpers.insert, helpers.source, helpers.clear, helpers.execute,
-  helpers.expect, helpers.eq, helpers.eval, helpers.wait, helpers.write_file
+local clear, execute, expect, eq, eval, wait, write_file, neq =
+  helpers.clear, helpers.execute, helpers.expect, helpers.eq, helpers.eval,
+  helpers.wait, helpers.write_file, helpers.neq
 
 local function diff(filename, text)
+  -- Assert that the file exists, otherwise we could get a nil error later.
+  neq(nil, lfs.attributes(filename))
   local file = io.open(filename)
   local filecontents = file:read('*all')
   file:close()
