@@ -767,9 +767,9 @@ void foldUpdate(win_T *wp, linenr_T top, linenr_T bot)
     return;
   }
 
-  /* Mark all folds from top to bot as maybe-small. */
-  (void)foldFind(&curwin->w_folds, top, &fp);
-  while (fp < (fold_T *)curwin->w_folds.ga_data + curwin->w_folds.ga_len
+  // Mark all folds from top to bot as maybe-small.
+  (void)foldFind(&wp->w_folds, top, &fp);
+  while (fp < (fold_T *)wp->w_folds.ga_data + wp->w_folds.ga_len
          && fp->fd_top < bot) {
     fp->fd_small = MAYBE;
     ++fp;
