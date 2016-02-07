@@ -2533,6 +2533,12 @@ return {
     func='ex_menu',
   },
   {
+    command='smile',
+    flags=bit.bor(TRLBAR, CMDWIN, SBOXOK),
+    addr_type=ADDR_LINES,
+    func='ex_smile',
+  },
+  {
     command='suspend',
     flags=bit.bor(TRLBAR, BANG, CMDWIN),
     addr_type=ADDR_LINES,
