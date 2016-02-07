@@ -6177,6 +6177,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	   split	If included, split the current window before loading
 			a buffer for a |quickfix| command that display errors.
 			Otherwise: do not split, use current window.
+	   vsplit	Just like "split" but split vertically.
 	   newtab	Like "split", but open a new tab page.  Overrules
 			"split" when both are present.
 

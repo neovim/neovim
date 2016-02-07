@@ -571,12 +571,13 @@ EXTERN char_u   *p_su;          // 'suffixes'
 EXTERN char_u   *p_swb;         // 'switchbuf'
 EXTERN unsigned swb_flags;
 #ifdef IN_OPTION_C
-static char *(p_swb_values[]) = {"useopen", "usetab", "split", "newtab", NULL};
+static char *(p_swb_values[]) = {"useopen", "usetab", "split", "newtab", "vsplit", NULL};
 #endif
 #define SWB_USEOPEN             0x001
 #define SWB_USETAB              0x002
 #define SWB_SPLIT               0x004
 #define SWB_NEWTAB              0x008
+#define SWB_VSPLIT              0x010
 EXTERN int p_tbs;               /* 'tagbsearch' */
 EXTERN long p_tl;               /* 'taglength' */
 EXTERN int p_tr;                /* 'tagrelative' */
