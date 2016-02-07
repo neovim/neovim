@@ -54,7 +54,7 @@ describe('reading and writing files with BOM:', function()
     eq('latin1', eval('&fileencoding'))
     execute('set bomb fenc=latin-1')
     execute('w! Xtest.out')
-    wait() -- Wait for the file to be written.
+    expect('þþlatin-1') -- The BOM is interpreted as text.
     diff('Xtest.out', latin1..'\n')
   end)
 
@@ -87,55 +87,47 @@ describe('reading and writing files with BOM:', function()
     diff('Xtest.out', '\xc3\xaf\xc2\xbb\xc2\xbfutf-8\xc2\x80err\n')
   end)
 
-  it('ucs2', function()
+  it('ucs-2', function()
     execute('set fileencodings=ucs-bom,latin-1')
     execute('set noeol')
     execute('set bomb fenc=latin-1')
     execute('set fenc=utf-8')
-
-    -- Check ucs-2.
     execute('e! Xtest3')
     eq(1, eval('&bomb'))
     eq('utf-16', eval('&fileencoding'))
     execute('set fenc=ucs-2')
     execute('w! Xtest.out')
     expect('ucs-2')
-    wait() -- Wait for the file to be written.
-    diff('Xtest.out', ucs2..'\n')
+    diff('Xtest.out', ucs2..'\x00\n')
   end)
 
-  it('ucs-2le', function()
-    -- Check ucs-2le.
+  it('ucs-2 little endian', function()
     execute('e! Xtest4')
     eq(1, eval('&bomb'))
     eq('utf-16le', eval('&fileencoding'))
     execute('set fenc=ucs-2le')
     execute('w! Xtest.out')
     expect('ucs-2le')
-    diff('Xtest.out', utf8..'\n')
+    diff('Xtest.out', ucs2_le..'\n\x00')
   end)
 
   it('ucs-4', function()
-    -- Check ucs-4.
     execute('e! Xtest5')
     eq(1, eval('&bomb'))
     eq('ucs-4', eval('&fileencoding'))
     execute('set fenc=ucs-4')
     execute('w! Xtest.out')
     expect('ucs-4')
-    wait() -- Wait for the file to be written.
-    diff('Xtest.out', utf8..'\n')
+    diff('Xtest.out', ucs4..'\x00\x00\x00\n')
   end)
 
-  it('is working', function()
-    -- Check ucs-4le.
+  it('ucs-4 little endian', function()
     execute('e! Xtest6')
     eq(1, eval('&bomb'))
     eq('ucs-4le', eval('&fileencoding'))
     execute('set fenc=ucs-4le')
     execute('w! Xtest.out')
     expect('ucs-4le')
-    wait() -- Wait for the file to be written.
-    diff('Xtest.out', utf8..'\n')
+    diff('Xtest.out', ucs4_le..'\n\x00\x00\x00')
   end)
 end)
