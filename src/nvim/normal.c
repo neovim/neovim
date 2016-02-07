@@ -1538,9 +1538,11 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
         curbuf->b_visual_mode_eval = VIsual_mode;
       }
 
-      /* In Select mode, a linewise selection is operated upon like a
-       * characterwise selection. */
-      if (VIsual_select && VIsual_mode == 'V') {
+      // In Select mode, a linewise selection is operated upon like a
+      // characterwise selection.
+      // Special case: gH<Del> deletes the last line.
+      if (VIsual_select && VIsual_mode == 'V'
+          && cap->oap->op_type != OP_DELETE) {
         if (lt(VIsual, curwin->w_cursor)) {
           VIsual.col = 0;
           curwin->w_cursor.col =
@@ -1676,20 +1678,15 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
             && (include_line_break || !virtual_op)
             ) {
           oap->inclusive = false;
-          /* Try to include the newline, unless it's an operator
-           * that works on lines only. */
-          if (*p_sel != 'o' && !op_on_lines(oap->op_type)) {
-            if (oap->end.lnum < curbuf->b_ml.ml_line_count) {
-              ++oap->end.lnum;
-              oap->end.col = 0;
-              oap->end.coladd = 0;
-              ++oap->line_count;
-            } else {
-              /* Cannot move below the last line, make the op
-               * inclusive to tell the operation to include the
-               * line break. */
-              oap->inclusive = true;
-            }
+          // Try to include the newline, unless it's an operator
+          // that works on lines only.
+          if (*p_sel != 'o'
+              && !op_on_lines(oap->op_type)
+              && oap->end.lnum < curbuf->b_ml.ml_line_count) {
+            oap->end.lnum++;
+            oap->end.col = 0;
+            oap->end.coladd = 0;
+            oap->line_count++;
           }
         }
       }
