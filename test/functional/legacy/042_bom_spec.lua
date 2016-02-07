@@ -15,23 +15,23 @@ local function diff(filename, text)
 end
 
 describe('reading and writing files with BOM:', function()
-  local latin1 = '\xfe\xfelatin-1'
-  local utf8 = '\xef\xbb\xbfutf-8'
-  local utf8_err = '\xef\xbb\xbfutf-8\x80err'
-  local ucs2 = '\xfe\xff\x00u\x00c\x00s\x00-\x002'
-  local ucs2_le = '\xff\xfeu\x00c\x00s\x00-\x002\x00l\x00e\x00'
+  local latin1 = '\xfe\xfelatin-1\n'
+  local utf8 = '\xef\xbb\xbfutf-8\n'
+  local utf8_err = '\xef\xbb\xbfutf-8\x80err\n'
+  local ucs2 = '\xfe\xff\x00u\x00c\x00s\x00-\x002\x00\n'
+  local ucs2_le = '\xff\xfeu\x00c\x00s\x00-\x002\x00l\x00e\x00\n\x00'
   local ucs4 = '\x00\x00\xfe\xff\x00\x00\x00u\x00\x00\x00c\x00\x00\x00s'..
-    '\x00\x00\x00-\x00\x00\x004'
+    '\x00\x00\x00-\x00\x00\x004\x00\x00\x00\n'
   local ucs4_le = '\xff\xfe\x00\x00u\x00\x00\x00c\x00\x00\x00s\x00\x00\x00'..
-    '-\x00\x00\x004\x00\x00\x00l\x00\x00\x00e\x00\x00\x00'
+    '-\x00\x00\x004\x00\x00\x00l\x00\x00\x00e\x00\x00\x00\n\x00\x00\x00'
   setup(function()
-    write_file('Xtest0', latin1..'\n')
-    write_file('Xtest1', utf8..'\n')
-    write_file('Xtest2', utf8_err..'\n')
-    write_file('Xtest3', ucs2..'\x00\n')
-    write_file('Xtest4', ucs2_le..'\n\x00')
-    write_file('Xtest5', ucs4..'\x00\x00\x00\n')
-    write_file('Xtest6', ucs4_le..'\n\x00\x00\x00')
+    write_file('Xtest0', latin1)
+    write_file('Xtest1', utf8)
+    write_file('Xtest2', utf8_err)
+    write_file('Xtest3', ucs2)
+    write_file('Xtest4', ucs2_le)
+    write_file('Xtest5', ucs4)
+    write_file('Xtest6', ucs4_le)
   end)
   before_each(clear)
   teardown(function()
@@ -53,7 +53,7 @@ describe('reading and writing files with BOM:', function()
     execute('set bomb fenc=latin-1')
     execute('w! Xtest.out')
     expect('þþlatin-1') -- The BOM is interpreted as text.
-    diff('Xtest.out', latin1..'\n')
+    diff('Xtest.out', latin1)
   end)
 
   it('utf-8', function()
@@ -63,7 +63,7 @@ describe('reading and writing files with BOM:', function()
     execute('set fenc=utf-8')
     execute('w! Xtest.out')
     expect('utf-8')
-    diff('Xtest.out', utf8..'\n')
+    diff('Xtest.out', utf8)
   end)
 
   it('utf-8 with erronous BOM should fall back to latin1', function()
@@ -83,7 +83,7 @@ describe('reading and writing files with BOM:', function()
     execute('set fenc=ucs-2')
     execute('w! Xtest.out')
     expect('ucs-2')
-    diff('Xtest.out', ucs2..'\x00\n')
+    diff('Xtest.out', ucs2)
   end)
 
   it('ucs-2 little endian', function()
@@ -93,7 +93,7 @@ describe('reading and writing files with BOM:', function()
     execute('set fenc=ucs-2le')
     execute('w! Xtest.out')
     expect('ucs-2le')
-    diff('Xtest.out', ucs2_le..'\n\x00')
+    diff('Xtest.out', ucs2_le)
   end)
 
   it('ucs-4', function()
@@ -103,7 +103,7 @@ describe('reading and writing files with BOM:', function()
     execute('set fenc=ucs-4')
     execute('w! Xtest.out')
     expect('ucs-4')
-    diff('Xtest.out', ucs4..'\x00\x00\x00\n')
+    diff('Xtest.out', ucs4)
   end)
 
   it('ucs-4 little endian', function()
@@ -113,6 +113,6 @@ describe('reading and writing files with BOM:', function()
     execute('set fenc=ucs-4le')
     execute('w! Xtest.out')
     expect('ucs-4le')
-    diff('Xtest.out', ucs4_le..'\n\x00\x00\x00')
+    diff('Xtest.out', ucs4_le)
   end)
 end)
