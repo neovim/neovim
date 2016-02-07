@@ -2178,8 +2178,12 @@ static void u_undoredo(int undo)
 
     /* adjust marks */
     if (oldsize != newsize) {
-      mark_adjust(top + 1, top + oldsize, (long)MAXLNUM,
-          (long)newsize - (long)oldsize);
+      /// WCONV: newsize and oldsize are linenr_T = long representing sizes of
+      /// WCONV: blocks ... could be huge, theoretically
+      /// WCONV: add asserting and cast away
+      assert(newsize - oldsize < INT_MAX);
+      mark_adjust(top + 1, top + oldsize, MAXLNUM,
+          (int)(newsize - oldsize));
       if (curbuf->b_op_start.lnum > top + oldsize)
         curbuf->b_op_start.lnum += newsize - oldsize;
       if (curbuf->b_op_end.lnum > top + oldsize)

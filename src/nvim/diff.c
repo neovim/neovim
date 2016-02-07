@@ -81,7 +81,6 @@ void diff_buf_delete(buf_T *buf)
 /// @param win
 void diff_buf_adjust(win_T *win)
 {
-
   if (!win->w_p_diff) {
     // When there is no window showing a diff for this buffer, remove
     // it from the diffs.
@@ -190,8 +189,10 @@ void diff_invalidate(buf_T *buf)
 /// @param line2
 /// @param amount
 /// @param amount_after
-void diff_mark_adjust(linenr_T line1, linenr_T line2, long amount,
-                      long amount_after)
+///
+/// WCONV: Only called at one place in mark.c
+void diff_mark_adjust(linenr_T line1, linenr_T line2, int amount,
+                      int amount_after)
 {
   // Handle all tab pages that use the current buffer in a diff.
   FOR_ALL_TABS(tp) {
@@ -215,8 +216,10 @@ void diff_mark_adjust(linenr_T line1, linenr_T line2, long amount,
 /// @param line2
 /// @param amount
 /// @amount_after
+///
+/// WCONV: Gets called in diff.c only, from diff_mark_adjust
 static void diff_mark_adjust_tp(tabpage_T *tp, int idx, linenr_T line1,
-                                linenr_T line2, long amount, long amount_after)
+                                linenr_T line2, int amount, int amount_after)
 {
   int inserted;
   int deleted;
@@ -305,7 +308,10 @@ static void diff_mark_adjust_tp(tabpage_T *tp, int idx, linenr_T line1,
         // 2. 3. 4. 5.: inserted/deleted lines touching this diff.
         if (deleted > 0) {
           if (dp->df_lnum[idx] >= line1) {
-            off = dp->df_lnum[idx] - lnum_deleted;
+            /// WCONV: Should these be refactored to int anyways?
+            /// WCONV: Probably needs a decision about linenr_T
+            assert(dp->df_lnum[idx] - lnum_deleted <= INT_MAX);
+            off = (int)(dp->df_lnum[idx] - lnum_deleted);
 
             if (last <= line2) {
               // 4. delete all lines of diff
@@ -313,12 +319,18 @@ static void diff_mark_adjust_tp(tabpage_T *tp, int idx, linenr_T line1,
                   && (dp->df_next->df_lnum[idx] - 1 <= line2)) {
                 // delete continues in next diff, only do
                 // lines until that one
-                n = dp->df_next->df_lnum[idx] - lnum_deleted;
+                /// WCONV: Same as above
+                assert(dp->df_next->df_lnum[idx] - lnum_deleted <= INT_MAX);
+                n = (int)(dp->df_next->df_lnum[idx] - lnum_deleted);
                 deleted -= n;
-                n -= dp->df_count[idx];
+                /// WCONV: Same as above
+                assert(dp->df_count[idx] <= INT_MAX);
+                n -= (int)dp->df_count[idx];
                 lnum_deleted = dp->df_next->df_lnum[idx];
               } else {
-                n = deleted - dp->df_count[idx];
+                /// WCONV: Same as above
+                assert(deleted - dp->df_count[idx] <= INT_MAX);
+                n = (int)(deleted - dp->df_count[idx]);
               }
               dp->df_count[idx] = 0;
             } else {
@@ -339,11 +351,17 @@ static void diff_mark_adjust_tp(tabpage_T *tp, int idx, linenr_T line1,
                   && (dp->df_next->df_lnum[idx] - 1 <= line2)) {
                 // delete continues in next diff, only do
                 // lines until that one
-                n = dp->df_next->df_lnum[idx] - 1 - last;
-                deleted -= dp->df_next->df_lnum[idx] - lnum_deleted;
+                /// WCONV: Same as above
+                assert(dp->df_next->df_lnum[idx] - 1 - last <= INT_MAX);
+                n = (int)(dp->df_next->df_lnum[idx] - 1 - last);
+                /// WCONV: Same as above
+                assert(dp->df_next->df_lnum[idx] - lnum_deleted <= INT_MAX);
+                deleted -= (int)(dp->df_next->df_lnum[idx] - lnum_deleted);
                 lnum_deleted = dp->df_next->df_lnum[idx];
               } else {
-                n = line2 - last;
+                /// WCONV: Same as above
+                assert(line2 - last <= INT_MAX);
+                n = (int)(line2 - last);
               }
               check_unchanged = TRUE;
             } else {
@@ -499,7 +517,11 @@ static void diff_check_unchanged(tabpage_T *tp, diff_T *dp)
     while (dp->df_count[i_org] > 0) {
       // Copy the line, the next ml_get() will invalidate it.
       if (dir == BACKWARD) {
-        off_org = dp->df_count[i_org] - 1;
+        /// WCONV: df_count is the number of changed lines, maybe size_t?
+        /// WCONV: For now, just guard, b/c the arrays of dp might be refactored
+        /// WCONV: anyways
+        assert(dp->df_count[i_org] - 1 <= INT_MAX);
+        off_org = (int)(dp->df_count[i_org] - 1);
       }
       char_u *line_org = vim_strsave(ml_get_buf(tp->tp_diffbuf[i_org],
                                                 dp->df_lnum[i_org] + off_org,
@@ -512,7 +534,9 @@ static void diff_check_unchanged(tabpage_T *tp, diff_T *dp)
         }
 
         if (dir == BACKWARD) {
-          off_new = dp->df_count[i_new] - 1;
+          /// WCONV: Same as above
+          assert(dp->df_count[i_new] - 1 <= INT_MAX);
+          off_new = (int)(dp->df_count[i_new] - 1);
         }
 
         // if other buffer doesn't have this line, it was inserted
@@ -950,8 +974,9 @@ void ex_diffpatch(exarg_T *eap)
     EMSG(_("E816: Cannot read patch output"));
   } else {
     if (curbuf->b_fname != NULL) {
+      /// WCONV: vim_strnsave uses size_t now anyways
       newname = vim_strnsave(curbuf->b_fname,
-                             (int)(STRLEN(curbuf->b_fname) + 4));
+                             STRLEN(curbuf->b_fname) + 4);
       STRCAT(newname, ".new");
     }
 
@@ -1086,9 +1111,11 @@ void diff_win_options(win_T *wp, int addbuf)
   curbuf = curwin->w_buffer;
 
   if (!wp->w_p_diff_saved) {
-    wp->w_p_fdc_save = wp->w_p_fdc;
+    /// WCONV: Same question as always, just for columns... should this option
+    /// WCONV: stay long?
+    wp->w_p_fdc_save = (int)wp->w_p_fdc;
     wp->w_p_fen_save = wp->w_p_fen;
-    wp->w_p_fdl_save = wp->w_p_fdl;
+    wp->w_p_fdl_save = (int)wp->w_p_fdl;
   }
   wp->w_p_fdc = diff_foldcolumn;
   wp->w_p_fen = TRUE;
@@ -1540,10 +1567,14 @@ int diff_check(win_T *wp, linenr_T lnum)
   maxcount = 0;
   for (i = 0; i < DB_COUNT; ++i) {
     if ((curtab->tp_diffbuf[i] != NULL) && (dp->df_count[i] > maxcount)) {
-      maxcount = dp->df_count[i];
+      /// WCONV: Again, maybe df_count could just be int
+      assert(dp->df_count[i] <= INT_MAX);
+      maxcount = (int)dp->df_count[i];
     }
   }
-  return maxcount - dp->df_count[idx];
+  /// WCONV: Again, maybe df_count could just be int
+  assert(dp->df_count[idx] <= INT_MAX);
+  return maxcount - (int)dp->df_count[idx];
 }
 
 /// Compare two entries in diff "*dp" and return TRUE if they are equal.
@@ -1670,7 +1701,9 @@ int diff_check_fill(win_T *wp, linenr_T lnum)
 void diff_set_topline(win_T *fromwin, win_T *towin)
 {
   buf_T *frombuf = fromwin->w_buffer;
-  linenr_T lnum = fromwin->w_topline;
+  /// WCONV: Again, can linenumbers be ints?
+  assert(fromwin->w_topline <= INT_MAX);
+  int lnum = (int)fromwin->w_topline;
   diff_T *dp;
   int max_count;
   int i;
@@ -1716,7 +1749,9 @@ void diff_set_topline(win_T *fromwin, win_T *towin)
 
       for (i = 0; i < DB_COUNT; ++i) {
         if ((curtab->tp_diffbuf[i] != NULL) && (max_count < dp->df_count[i])) {
-          max_count = dp->df_count[i];
+          /// WCONV: df_count might just become int
+          assert(dp->df_count[i] <= INT_MAX);
+          max_count = (int)dp->df_count[i];
         }
       }
 
@@ -1749,7 +1784,10 @@ void diff_set_topline(win_T *fromwin, win_T *towin)
             towin->w_topfill = fromwin->w_topfill;
           } else {
             // fromwin has some diff lines
-            towin->w_topfill = dp->df_lnum[fromidx] + max_count - lnum;
+            /// WCONV: df_lnum might become int?
+            assert(dp->df_lnum[fromidx] <= INT_MAX);
+            /// WCONV: How to ensure the RHS is not overflowing INT_MAX?
+            towin->w_topfill = (int)dp->df_lnum[fromidx] + max_count - lnum;
           }
         }
       }
@@ -1890,8 +1928,9 @@ int diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
     xfree(line_org);
     return FALSE;
   }
-
-  int off = lnum - dp->df_lnum[idx];
+  /// WCONV: linenr_T
+  assert(lnum- dp->df_lnum[idx] <= INT_MAX);
+  int off = (int)(lnum - dp->df_lnum[idx]);
   int i;
   for (i = 0; i < DB_COUNT; ++i) {
     if ((curtab->tp_diffbuf[i] != NULL) && (i != idx)) {
@@ -2064,7 +2103,6 @@ void ex_diffgetput(exarg_T *eap)
   diff_T *dprev;
   diff_T *dfree;
   int i;
-  int added;
   char_u *p;
   aco_save_T aco;
   buf_T *buf;
@@ -2128,7 +2166,11 @@ void ex_diffgetput(exarg_T *eap)
 
     if (eap->arg + i == p) {
       // digits only
-      i = atol((char *)eap->arg);
+      /// WCONV: I was not able to find out what atoi does if the argument
+      /// WCONV: represents a too large number. Should strtol ane errno checking
+      /// WCONV: be used? Returns long, though, so casts and asserts would be
+      /// WCONV: needed
+      i = atoi((char *)eap->arg);
     } else {
       i = buflist_findpat(eap->arg, p, FALSE, TRUE, FALSE);
 
@@ -2206,7 +2248,9 @@ void ex_diffgetput(exarg_T *eap)
     }
     dfree = NULL;
     lnum = dp->df_lnum[idx_to];
-    count = dp->df_count[idx_to];
+    /// WCONV: df_count might be int
+    assert(dp->df_count[idx_to] <= INT_MAX);
+    count = (int)dp->df_count[idx_to];
 
     if ((dp->df_lnum[idx_cur] + dp->df_count[idx_cur] > eap->line1 + off)
         && (u_save(lnum - 1, lnum + count) != FAIL)) {
@@ -2216,7 +2260,9 @@ void ex_diffgetput(exarg_T *eap)
 
       if (eap->addr_count > 0) {
         // A range was specified: check if lines need to be skipped.
-        start_skip = eap->line1 + off - dp->df_lnum[idx_cur];
+        /// WCONV: Both line1 and df_lnum represent linenumbers, i.e. linenr_T
+        assert(eap->line1 - (long)off - dp->df_lnum[idx_cur] <= INT_MAX);
+        start_skip = (int)(eap->line1 + off - dp->df_lnum[idx_cur]);
         if (start_skip > 0) {
           // range starts below start of current diff block
           if (start_skip > count) {
@@ -2229,15 +2275,20 @@ void ex_diffgetput(exarg_T *eap)
         } else {
           start_skip = 0;
         }
+        /// WCONV: linenr_T again
+        assert(dp->df_lnum[idx_cur] + dp->df_count[idx_cur] - 1
+                   - (eap->line2 + off) <= INT_MAX);
 
-        end_skip = dp->df_lnum[idx_cur] + dp->df_count[idx_cur] - 1
-                   - (eap->line2 + off);
+        end_skip = (int)(dp->df_lnum[idx_cur] + dp->df_count[idx_cur] - 1
+                   - (eap->line2 + off));
 
         if (end_skip > 0) {
           // range ends above end of current/from diff block
           if (idx_cur == idx_from) {
             // :diffput
-            i = dp->df_count[idx_cur] - start_skip - end_skip;
+            /// WCONV: linenr_T again
+            assert(dp->df_count[idx_cur] - (long)start_skip - (long)end_skip <= INT_MAX);
+            i = (int)(dp->df_count[idx_cur] - start_skip - end_skip);
 
             if (count > i) {
               count = i;
@@ -2245,7 +2296,9 @@ void ex_diffgetput(exarg_T *eap)
           } else {
             // :diffget
             count -= end_skip;
-            end_skip = dp->df_count[idx_from] - start_skip - count;
+            /// WCONV: linenr_T again
+            assert(dp->df_count[idx_from] - start_skip - count <= INT_MAX);
+            end_skip = (int)(dp->df_count[idx_from] - start_skip - count);
 
             if (end_skip < 0) {
               end_skip = 0;
@@ -2257,7 +2310,7 @@ void ex_diffgetput(exarg_T *eap)
       }
 
       buf_empty = bufempty();
-      added = 0;
+      int added = 0;
 
       for (i = 0; i < count; ++i) {
         // remember deleting the last line of the buffer
@@ -2282,7 +2335,9 @@ void ex_diffgetput(exarg_T *eap)
           ml_delete((linenr_T)2, FALSE);
         }
       }
-      new_count = dp->df_count[idx_to] + added;
+      /// WCONV: linenr_T again
+      assert(dp->df_count[idx_to] + (long)added <= INT_MAX);
+      new_count = (int)(dp->df_count[idx_to] + added);
       dp->df_count[idx_to] = new_count;
 
       if ((start_skip == 0) && (end_skip == 0)) {
@@ -2312,7 +2367,8 @@ void ex_diffgetput(exarg_T *eap)
 
       // Adjust marks.  This will change the following entries!
       if (added != 0) {
-        mark_adjust(lnum, lnum + count - 1, (long)MAXLNUM, (long)added);
+        /// WCONV: added is an int anyways, so it's not bigger than MAXLNUM
+        mark_adjust(lnum, lnum + count - 1, MAXLNUM, added);
         if (curwin->w_cursor.lnum >= lnum) {
           // Adjust the cursor position if it's in/after the changed
           // lines.
@@ -2513,10 +2569,14 @@ linenr_T diff_get_corresponding_line(buf_T *buf1, linenr_T lnum1, buf_T *buf2,
       return lnum2;
     } else if ((dp->df_lnum[idx1] + dp->df_count[idx1]) > lnum1) {
       // Inside the diffblock
-      baseline = lnum1 - dp->df_lnum[idx1];
+      /// WCONV: linenr_T again
+      assert(lnum1 - dp->df_lnum[idx1] <= INT_MAX);
+      baseline = (int)(lnum1 - dp->df_lnum[idx1]);
 
       if (baseline > dp->df_count[idx2]) {
-        baseline = dp->df_count[idx2];
+        /// WCONV: linenr_T again
+        assert(dp->df_count[idx2] <= INT_MAX);
+        baseline = (int)dp->df_count[idx2];
       }
 
       return dp->df_lnum[idx2] + baseline;
@@ -2531,8 +2591,11 @@ linenr_T diff_get_corresponding_line(buf_T *buf1, linenr_T lnum1, buf_T *buf2,
       // as expected.
       return lnum3;
     }
-    baseline = (dp->df_lnum[idx1] + dp->df_count[idx1])
-               - (dp->df_lnum[idx2] + dp->df_count[idx2]);
+    assert((dp->df_lnum[idx1] + dp->df_count[idx1])
+               - (dp->df_lnum[idx2] + dp->df_count[idx2]) <= INT_MAX);
+
+    baseline = (int)((dp->df_lnum[idx1] + dp->df_count[idx1])
+               - (dp->df_lnum[idx2] + dp->df_count[idx2]));
   }
 
   // If we get here then the cursor is after the last diff
