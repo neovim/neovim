@@ -1,8 +1,8 @@
 " Vim syntax file
 " Language:	TeX
 " Maintainer:	Charles E. Campbell <NdrchipO@ScampbellPfamily.AbizM>
-" Last Change:	Apr 02, 2015
-" Version:	84
+" Last Change:	Jun 11, 2015
+" Version:	87
 " URL:		http://www.drchip.org/astronaut/vim/index.html#SYNTAX_TEX
 "
 " Notes: {{{1
@@ -207,7 +207,7 @@ if s:tex_fast =~ 'M'
    if !exists("s:tex_no_error") || !s:tex_no_error
     syn match  texMathError	"}"	contained
    endif
-   syn region texMathMatcher	matchgroup=Delimiter	start="{"          skip="\\\\\|\\}"     end="}" end="%stopzone\>"	contained contains=@texMathMatchGroup
+   syn region texMathMatcher	matchgroup=Delimiter	start="{"          skip="\(\\\\\)*\\}"     end="}" end="%stopzone\>"	contained contains=@texMathMatchGroup
   endif
 endif
 
@@ -226,7 +226,7 @@ endif
 " TeX/LaTeX delimiters: {{{1
 syn match texDelimiter		"&"
 syn match texDelimiter		"\\\\"
-syn match texDelimiter		"[{}]"
+"%syn match texDelimiter		"[{}]"
 
 " Tex/Latex Options: {{{1
 syn match texOption		"[^\\]\zs#\d\+\|^#\d\+"
@@ -247,7 +247,7 @@ syn match texLigature		"\\\([ijolL]\|ae\|oe\|ss\|AA\|AE\|OE\)$"
 " \begin{}/\end{} section markers: {{{1
 syn match  texBeginEnd		"\\begin\>\|\\end\>" nextgroup=texBeginEndName
 if s:tex_fast =~ 'm'
-  syn region texBeginEndName	matchgroup=Delimiter	start="{"		end="}"	contained	nextgroup=texBeginEndModifier	contains=texComment
+  syn region texBeginEndName		matchgroup=Delimiter	start="{"		end="}"	contained	nextgroup=texBeginEndModifier	contains=texComment
   syn region texBeginEndModifier	matchgroup=Delimiter	start="\["		end="]"	contained	contains=texComment,@NoSpell
 endif
 
@@ -392,22 +392,22 @@ endif
 if s:tex_fast =~ 'b'
   if s:tex_conceal =~ 'b'
    if !exists("g:tex_nospell") || !g:tex_nospell
-    syn region texBoldStyle	matchgroup=texTypeStyle start="\\textbf\s*\ze{" matchgroup=Delimiter end="}" concealends contains=@texBoldGroup,@Spell
-    syn region texBoldItalStyle	matchgroup=texTypeStyle start="\\textit\s*\ze{" matchgroup=Delimiter end="}" concealends contains=@texItalGroup,@Spell
-    syn region texItalStyle	matchgroup=texTypeStyle start="\\textit\s*\ze{" matchgroup=Delimiter end="}" concealends contains=@texItalGroup,@Spell
-    syn region texItalBoldStyle	matchgroup=texTypeStyle start="\\textbf\s*\ze{" matchgroup=Delimiter end="}" concealends contains=@texBoldGroup,@Spell
-   else
-    syn region texBoldStyle	matchgroup=texTypeStyle start="\\textbf\s*\ze{" matchgroup=Delimiter end="}" concealends contains=@texBoldGroup
-    syn region texBoldItalStyle	matchgroup=texTypeStyle start="\\textit\s*\ze{" matchgroup=Delimiter end="}" concealends contains=@texItalGroup
-    syn region texItalStyle	matchgroup=texTypeStyle start="\\textit\s*\ze{" matchgroup=Delimiter end="}" concealends contains=@texItalGroup
-    syn region texItalBoldStyle	matchgroup=texTypeStyle start="\\textbf\s*\ze{" matchgroup=Delimiter end="}" concealends contains=@texBoldGroup
+    syn region texBoldStyle	matchgroup=texTypeStyle start="\\textbf\s*{" matchgroup=texTypeStyle  end="}" concealends contains=@texBoldGroup,@Spell
+    syn region texBoldItalStyle	matchgroup=texTypeStyle start="\\textit\s*{" matchgroup=texTypeStyle  end="}" concealends contains=@texItalGroup,@Spell
+    syn region texItalStyle	matchgroup=texTypeStyle start="\\textit\s*{" matchgroup=texTypeStyle  end="}" concealends contains=@texItalGroup,@Spell
+    syn region texItalBoldStyle	matchgroup=texTypeStyle start="\\textbf\s*{" matchgroup=texTypeStyle  end="}" concealends contains=@texBoldGroup,@Spell
+   else                                                                                              
+    syn region texBoldStyle	matchgroup=texTypeStyle start="\\textbf\s*{" matchgroup=texTypeStyle  end="}" concealends contains=@texBoldGroup
+    syn region texBoldItalStyle	matchgroup=texTypeStyle start="\\textit\s*{" matchgroup=texTypeStyle  end="}" concealends contains=@texItalGroup
+    syn region texItalStyle	matchgroup=texTypeStyle start="\\textit\s*{" matchgroup=texTypeStyle  end="}" concealends contains=@texItalGroup
+    syn region texItalBoldStyle	matchgroup=texTypeStyle start="\\textbf\s*{" matchgroup=texTypeStyle  end="}" concealends contains=@texBoldGroup
    endif
   endif
 endif
 
 " Bad Math (mismatched): {{{1
 if !exists("g:tex_no_math") && (!exists("s:tex_no_error") || !s:tex_no_error)
- syn match texBadMath		"\\end\s*{\s*\(array\|gathered\|bBpvV]matrix\|split\|subequations\|smallmatrix\|xxalignat\)\s*}"
+ syn match texBadMath		"\\end\s*{\s*\(array\|gathered\|bBpvV]matrix\|split\|smallmatrix\|xxalignat\)\s*}"
  syn match texBadMath		"\\end\s*{\s*\(align\|alignat\|displaymath\|displaymath\|eqnarray\|equation\|flalign\|gather\|math\|multline\|xalignat\)\*\=\s*}"
  syn match texBadMath		"\\[\])]"
 endif
@@ -456,24 +456,23 @@ if !exists("g:tex_no_math")
  call TexNewMathZone("G","gather",1)
  call TexNewMathZone("H","math",1)
  call TexNewMathZone("I","multline",1)
- call TexNewMathZone("J","subequations",0)
- call TexNewMathZone("K","xalignat",1)
- call TexNewMathZone("L","xxalignat",0)
+ call TexNewMathZone("J","xalignat",1)
+ call TexNewMathZone("K","xxalignat",0)
 
  " Inline Math Zones: {{{2
  if s:tex_fast =~ 'M'
   if has("conceal") && &enc == 'utf-8' && s:tex_conceal =~ 'd'
-   syn region texMathZoneV	matchgroup=Delimiter start="\\("			matchgroup=Delimiter end="\\)\|%stopzone\>"	keepend concealends contains=@texMathZoneGroup
-   syn region texMathZoneW	matchgroup=Delimiter start="\\\["			matchgroup=Delimiter end="\\]\|%stopzone\>"	keepend concealends contains=@texMathZoneGroup
-   syn region texMathZoneX	matchgroup=Delimiter start="\$" skip="\\\\\|\\\$"	matchgroup=Delimiter end="\$" end="%stopzone\>"		concealends contains=@texMathZoneGroup
-   syn region texMathZoneY	matchgroup=Delimiter start="\$\$" 			matchgroup=Delimiter end="\$\$" end="%stopzone\>"	concealends keepend		contains=@texMathZoneGroup
+   syn region texMathZoneV	matchgroup=Delimiter start="\\("			matchgroup=Delimiter	end="\\)\|%stopzone\>"			keepend concealends contains=@texMathZoneGroup
+   syn region texMathZoneW	matchgroup=Delimiter start="\\\["			matchgroup=Delimiter	end="\\]\|%stopzone\>"			keepend concealends contains=@texMathZoneGroup
+   syn region texMathZoneX	matchgroup=Delimiter start="\$" skip="\\\\\|\\\$"	matchgroup=Delimiter	end="\$"	end="%stopzone\>"		concealends contains=@texMathZoneGroup
+   syn region texMathZoneY	matchgroup=Delimiter start="\$\$" 			matchgroup=Delimiter	end="\$\$"	end="%stopzone\>"	keepend concealends contains=@texMathZoneGroup
   else
-   syn region texMathZoneV	matchgroup=Delimiter start="\\("			matchgroup=Delimiter end="\\)\|%stopzone\>"	keepend contains=@texMathZoneGroup
-   syn region texMathZoneW	matchgroup=Delimiter start="\\\["			matchgroup=Delimiter end="\\]\|%stopzone\>"	keepend contains=@texMathZoneGroup
-   syn region texMathZoneX	matchgroup=Delimiter start="\$" skip="\\\\\|\\\$"	matchgroup=Delimiter end="\$" end="%stopzone\>"	contains=@texMathZoneGroup
-   syn region texMathZoneY	matchgroup=Delimiter start="\$\$" 			matchgroup=Delimiter end="\$\$" end="%stopzone\>"	keepend		contains=@texMathZoneGroup
+   syn region texMathZoneV	matchgroup=Delimiter start="\\("			matchgroup=Delimiter	end="\\)\|%stopzone\>"			keepend contains=@texMathZoneGroup
+   syn region texMathZoneW	matchgroup=Delimiter start="\\\["			matchgroup=Delimiter	end="\\]\|%stopzone\>"			keepend contains=@texMathZoneGroup
+   syn region texMathZoneX	matchgroup=Delimiter start="\$" skip="\\\\\|\\\$"	matchgroup=Delimiter	end="\$"	end="%stopzone\>"		contains=@texMathZoneGroup
+   syn region texMathZoneY	matchgroup=Delimiter start="\$\$" 			matchgroup=Delimiter	end="\$\$"	end="%stopzone\>"	keepend	contains=@texMathZoneGroup
   endif
-  syn region texMathZoneZ	matchgroup=texStatement start="\\ensuremath\s*{"	matchgroup=texStatement end="}" end="%stopzone\>"	contains=@texMathZoneGroup
+  syn region texMathZoneZ	matchgroup=texStatement start="\\ensuremath\s*{"	matchgroup=texStatement	end="}"		end="%stopzone\>"	contains=@texMathZoneGroup
  endif
 
  syn match texMathOper		"[_^=]" contained
@@ -1062,11 +1061,12 @@ if has("conceal") && &enc == 'utf-8'
    syn region texSuperscript	matchgroup=Delimiter start='\^{'	skip="\\\\\|\\[{}]" end='}'	contained concealends contains=texSpecialChar,texSuperscripts,texStatement,texSubscript,texSuperscript,texMathMatcher
    syn region texSubscript	matchgroup=Delimiter start='_{'		skip="\\\\\|\\[{}]" end='}'	contained concealends contains=texSpecialChar,texSubscripts,texStatement,texSubscript,texSuperscript,texMathMatcher
   endif
+  " s:SuperSub:
   fun! s:SuperSub(group,leader,pat,cchar)
     if a:pat =~ '^\\' || (a:leader == '\^' && a:pat =~ g:tex_superscripts) || (a:leader == '_' && a:pat =~ g:tex_subscripts)
 "     call Decho("SuperSub: group<".a:group."> leader<".a:leader."> pat<".a:pat."> cchar<".a:cchar.">")
      exe 'syn match '.a:group." '".a:leader.a:pat."' contained conceal cchar=".a:cchar
-     exe 'syn match '.a:group."s '".a:pat."' contained conceal cchar=".a:cchar.' nextgroup='.a:group.'s'
+     exe 'syn match '.a:group."s '".a:pat        ."' contained conceal cchar=".a:cchar.' nextgroup='.a:group.'s'
     endif
   endfun
   call s:SuperSub('texSuperscript','\^','0','⁰')

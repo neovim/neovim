@@ -2,7 +2,7 @@
 " Header: "{{{
 " Maintainer:	Bram Moolenaar
 " Original Author: Andy Wokula <anwoku@yahoo.de>
-" Last Change:	2015 Jan 11
+" Last Change:	2015 Jun 12
 " Version:	1.0
 " Description:	HTML indent script with cached state for faster indenting on a
 "		range of lines.
@@ -94,7 +94,7 @@ func! HtmlIndent_CheckUserSettings()
     let autotags = g:html_indent_autotags
   endif
   let b:hi_removed_tags = {}
-  if autotags
+  if len(autotags) > 0
     call s:RemoveITags(b:hi_removed_tags, split(autotags, ","))
   endif
 
