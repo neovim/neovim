@@ -615,6 +615,7 @@ struct file_buffer {
   int b_p_fixeol;               /* 'fixendofline' */
   int b_p_et;                   /* 'expandtab' */
   int b_p_et_nobin;             /* b_p_et saved for binary mode */
+  int b_p_et_nopaste;           // b_p_et saved for paste mode
   char_u      *b_p_fenc;        /* 'fileencoding' */
   char_u      *b_p_ff;          /* 'fileformat' */
   char_u      *b_p_ft;          /* 'filetype' */

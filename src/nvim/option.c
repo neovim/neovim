@@ -168,11 +168,12 @@ static int p_ml_nobin;
 static long p_tw_nobin;
 static long p_wm_nobin;
 
-/* Saved values for when 'paste' is set */
+// Saved values for when 'paste' is set.
+static int p_ai_nopaste;
+static int p_et_nopaste;
+static long p_sts_nopaste;
 static long p_tw_nopaste;
 static long p_wm_nopaste;
-static long p_sts_nopaste;
-static int p_ai_nopaste;
 
 typedef struct vimoption {
   char        *fullname;        /* full option name */
@@ -5499,6 +5500,7 @@ void buf_copy_options(buf_T *buf, int flags)
       buf->b_p_et = p_et;
       buf->b_p_fixeol = p_fixeol;
       buf->b_p_et_nobin = p_et_nobin;
+      buf->b_p_et_nopaste = p_et_nopaste;
       buf->b_p_ml = p_ml;
       buf->b_p_ml_nobin = p_ml_nobin;
       buf->b_p_inf = p_inf;
@@ -6156,6 +6158,7 @@ static void paste_option_changed(void)
 {
   static int old_p_paste = FALSE;
   static int save_sm = 0;
+  static int save_sta = 0;
   static int save_ru = 0;
   static int save_ri = 0;
   static int save_hkmap = 0;
@@ -6172,34 +6175,37 @@ static void paste_option_changed(void)
         buf->b_p_wm_nopaste = buf->b_p_wm;
         buf->b_p_sts_nopaste = buf->b_p_sts;
         buf->b_p_ai_nopaste = buf->b_p_ai;
+        buf->b_p_et_nopaste = buf->b_p_et;
       }
 
-      /* save global options */
+      // save global options
       save_sm = p_sm;
+      save_sta = p_sta;
       save_ru = p_ru;
       save_ri = p_ri;
       save_hkmap = p_hkmap;
-      /* save global values for local buffer options */
+      // save global values for local buffer options
+      p_ai_nopaste = p_ai;
+      p_et_nopaste = p_et;
+      p_sts_nopaste = p_sts;
       p_tw_nopaste = p_tw;
       p_wm_nopaste = p_wm;
-      p_sts_nopaste = p_sts;
-      p_ai_nopaste = p_ai;
     }
 
-    /*
-     * Always set the option values, also when 'paste' is set when it is
-     * already on.
-     */
-    /* set options for each buffer */
+    // Always set the option values, also when 'paste' is set when it is
+    // already on.
+    // set options for each buffer
     FOR_ALL_BUFFERS(buf) {
-      buf->b_p_tw = 0;              /* textwidth is 0 */
-      buf->b_p_wm = 0;              /* wrapmargin is 0 */
-      buf->b_p_sts = 0;             /* softtabstop is 0 */
-      buf->b_p_ai = 0;              /* no auto-indent */
+      buf->b_p_tw = 0;              // textwidth is 0
+      buf->b_p_wm = 0;              // wrapmargin is 0
+      buf->b_p_sts = 0;             // softtabstop is 0
+      buf->b_p_ai = 0;              // no auto-indent
+      buf->b_p_et = 0;              // no expandtab
     }
 
     /* set global options */
-    p_sm = 0;                       /* no showmatch */
+    p_sm = 0;                       // no showmatch
+    p_sta = 0;                      // no smarttab
     if (p_ru)
       status_redraw_all();          /* redraw to remove the ruler */
     p_ru = 0;                       /* no ruler */
@@ -6221,20 +6227,23 @@ static void paste_option_changed(void)
       buf->b_p_wm = buf->b_p_wm_nopaste;
       buf->b_p_sts = buf->b_p_sts_nopaste;
       buf->b_p_ai = buf->b_p_ai_nopaste;
+      buf->b_p_et = buf->b_p_et_nopaste;
     }
 
     /* restore global options */
     p_sm = save_sm;
+    p_sta = save_sta;
     if (p_ru != save_ru)
       status_redraw_all();          /* redraw to draw the ruler */
     p_ru = save_ru;
     p_ri = save_ri;
     p_hkmap = save_hkmap;
-    /* set global values for local buffer options */
+    // set global values for local buffer options
+    p_ai = p_ai_nopaste;
+    p_et = p_et_nopaste;
+    p_sts = p_sts_nopaste;
     p_tw = p_tw_nopaste;
     p_wm = p_wm_nopaste;
-    p_sts = p_sts_nopaste;
-    p_ai = p_ai_nopaste;
   }
 
   old_p_paste = p_paste;
