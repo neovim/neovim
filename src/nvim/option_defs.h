@@ -571,42 +571,43 @@ EXTERN char_u   *p_su;          // 'suffixes'
 EXTERN char_u   *p_swb;         // 'switchbuf'
 EXTERN unsigned swb_flags;
 #ifdef IN_OPTION_C
-static char *(p_swb_values[]) = {"useopen", "usetab", "split", "newtab", "vsplit", NULL};
+static char *(p_swb_values[]) =
+  { "useopen", "usetab", "split", "newtab", "vsplit", NULL };
 #endif
 #define SWB_USEOPEN             0x001
 #define SWB_USETAB              0x002
 #define SWB_SPLIT               0x004
 #define SWB_NEWTAB              0x008
 #define SWB_VSPLIT              0x010
-EXTERN int p_tbs;               /* 'tagbsearch' */
-EXTERN long p_tl;               /* 'taglength' */
-EXTERN int p_tr;                /* 'tagrelative' */
-EXTERN char_u   *p_tags;        /* 'tags' */
-EXTERN int p_tgst;              /* 'tagstack' */
-EXTERN int p_tbidi;             /* 'termbidi' */
-EXTERN int p_terse;             /* 'terse' */
-EXTERN int p_to;                /* 'tildeop' */
-EXTERN int p_timeout;           /* 'timeout' */
-EXTERN long p_tm;               /* 'timeoutlen' */
-EXTERN int p_title;             /* 'title' */
-EXTERN long p_titlelen;         /* 'titlelen' */
-EXTERN char_u   *p_titleold;    /* 'titleold' */
-EXTERN char_u   *p_titlestring; /* 'titlestring' */
-EXTERN char_u   *p_tsr;         /* 'thesaurus' */
-EXTERN int p_ttimeout;          /* 'ttimeout' */
-EXTERN long p_ttm;              /* 'ttimeoutlen' */
-EXTERN char_u   *p_udir;        /* 'undodir' */
-EXTERN long p_ul;               /* 'undolevels' */
-EXTERN long p_ur;               /* 'undoreload' */
-EXTERN long p_uc;               /* 'updatecount' */
-EXTERN long p_ut;               /* 'updatetime' */
-EXTERN char_u   *p_fcs;         /* 'fillchar' */
-EXTERN char_u   *p_shada;       /* 'shada' */
-EXTERN char_u   *p_vdir;        /* 'viewdir' */
-EXTERN char_u   *p_vop;         /* 'viewoptions' */
-EXTERN unsigned vop_flags;      /* uses SSOP_ flags */
-EXTERN int p_vb;                /* 'visualbell' */
-EXTERN char_u   *p_ve;          /* 'virtualedit' */
+EXTERN int p_tbs;               ///< 'tagbsearch'
+EXTERN long p_tl;               ///< 'taglength'
+EXTERN int p_tr;                ///< 'tagrelative'
+EXTERN char_u *p_tags;          ///< 'tags'
+EXTERN int p_tgst;              ///< 'tagstack'
+EXTERN int p_tbidi;             ///< 'termbidi'
+EXTERN int p_terse;             ///< 'terse'
+EXTERN int p_to;                ///< 'tildeop'
+EXTERN int p_timeout;           ///< 'timeout'
+EXTERN long p_tm;               ///< 'timeoutlen'
+EXTERN int p_title;             ///< 'title'
+EXTERN long p_titlelen;         ///< 'titlelen'
+EXTERN char_u *p_titleold;      ///< 'titleold'
+EXTERN char_u *p_titlestring;   ///< 'titlestring'
+EXTERN char_u *p_tsr;           ///< 'thesaurus'
+EXTERN int p_ttimeout;          ///< 'ttimeout'
+EXTERN long p_ttm;              ///< 'ttimeoutlen'
+EXTERN char_u *p_udir;          ///< 'undodir'
+EXTERN long p_ul;               ///< 'undolevels'
+EXTERN long p_ur;               ///< 'undoreload'
+EXTERN long p_uc;               ///< 'updatecount'
+EXTERN long p_ut;               ///< 'updatetime'
+EXTERN char_u *p_fcs;           ///< 'fillchar'
+EXTERN char_u *p_shada;         ///< 'shada'
+EXTERN char_u *p_vdir;          ///< 'viewdir'
+EXTERN char_u *p_vop;           ///< 'viewoptions'
+EXTERN unsigned vop_flags;      ///< uses SSOP_ flags
+EXTERN int p_vb;                ///< 'visualbell'
+EXTERN char_u *p_ve;            ///< 'virtualedit'
 EXTERN unsigned ve_flags;
 # ifdef IN_OPTION_C
 static char *(p_ve_values[]) = {"block", "insert", "all", "onemore", NULL};
