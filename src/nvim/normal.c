@@ -7745,6 +7745,10 @@ static void nv_put(cmdarg_T *cap)
     if (was_visual) {
       curbuf->b_visual.vi_start = curbuf->b_op_start;
       curbuf->b_visual.vi_end = curbuf->b_op_end;
+      // need to adjust cursor position
+      if (*p_sel == 'e') {
+        inc(&curbuf->b_visual.vi_end);
+      }
     }
 
     /* When all lines were selected and deleted do_put() leaves an empty

@@ -371,4 +371,28 @@ describe('Visual mode and operator', function()
         ]])
     end)
   end)
+
+  it('gv in exclusive select mode after operation', function()
+    source([[
+      $put ='zzz '
+      $put ='Ã¤Ã '
+      set selection=exclusive]])
+    feed('kv3lyjv3lpgvcxxx<Esc>')
+
+    expect([[
+      
+      zzz 
+      xxx ]])
+  end)
+
+  it('gv in exclusive select mode without operation', function()
+    source([[
+      $put ='zzz '
+      set selection=exclusive]])
+    feed('0v3l<Esc>gvcxxx<Esc>')
+
+    expect([[
+      
+      xxx ]])
+  end)
 end)
