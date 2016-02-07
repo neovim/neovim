@@ -54,7 +54,7 @@ describe('reading and writing files with BOM:', function()
     eq('latin1', eval('&fileencoding'))
     execute('set bomb fenc=latin-1')
     execute('w! Xtest.out')
-    --expect(latin1) -- TODO
+    wait() -- Wait for the file to be written.
     diff('Xtest.out', latin1..'\n')
   end)
 
@@ -83,8 +83,8 @@ describe('reading and writing files with BOM:', function()
     eq('latin1', eval('&fileencoding'))
     execute('set fenc=utf-8')
     execute('w! Xtest.out')
-    expect('ï»¿utf-8\x80err')
-    diff('Xtest.out', utf8_err..'\n')
+    wait() -- Wait for the file to be written.
+    diff('Xtest.out', '\xc3\xaf\xc2\xbb\xc2\xbfutf-8\xc2\x80err\n')
   end)
 
   it('ucs2', function()
@@ -100,6 +100,7 @@ describe('reading and writing files with BOM:', function()
     execute('set fenc=ucs-2')
     execute('w! Xtest.out')
     expect('ucs-2')
+    wait() -- Wait for the file to be written.
     diff('Xtest.out', ucs2..'\n')
   end)
 
@@ -122,6 +123,7 @@ describe('reading and writing files with BOM:', function()
     execute('set fenc=ucs-4')
     execute('w! Xtest.out')
     expect('ucs-4')
+    wait() -- Wait for the file to be written.
     diff('Xtest.out', utf8..'\n')
   end)
 
@@ -133,6 +135,7 @@ describe('reading and writing files with BOM:', function()
     execute('set fenc=ucs-4le')
     execute('w! Xtest.out')
     expect('ucs-4le')
+    wait() -- Wait for the file to be written.
     diff('Xtest.out', utf8..'\n')
   end)
 end)
