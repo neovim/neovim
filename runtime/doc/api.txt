@@ -1,0 +1,99 @@
+*api.txt*    For Nvim.							 {Nvim}
+
+
+		 NVIM REFERENCE MANUAL    by Thiago de Arruda
+
+The C API of Nvim						     *nvim-api*
+
+1. Introduction			|nvim-api-intro|
+2. API Types			|nvim-api-types|
+3. API metadata			|nvim-api-metadata|
+4. Buffer highlighting		|nvim-api-highlights|
+
+==============================================================================
+1. Introduction			*nvim-api-intro*
+
+Nvim defines a C API as the primary way for external code to interact with
+the NVim core. In the present version of Nvim the API is primarily used by
+external processes to interact with Nvim using the msgpack-rpc protocol, see
+|msgpack-rpc|. The API will also be used from vimscript to access new Nvim core
+features, but this is not implemented yet. Later on, Nvim might be embeddable
+in C applications as libnvim, and the application will then control the
+embedded instance by calling the C API directly.
+
+==============================================================================
+2. API Types						       *nvim-api-types*
+
+Nvim's C API uses custom types for all functions. Some are just typedefs
+around C99 standard types, and some are Nvim defined data structures.
+
+Boolean				  -> bool
+Integer (signed 64-bit integer)	  -> int64_t
+Float (IEEE 754 double precision) -> double
+String				  -> {char* data, size_t size} struct
+
+Additionally, the following data structures are defined:
+
+Array
+Dictionary
+Object
+
+The following handle types are defined as integer typedefs, but are
+discriminated as separate types in an Object:
+
+Buffer				  -> enum value kObjectTypeBuffer
+Window				  -> enum value kObjectTypeWindow
+Tabpage				  -> enum value kObjectTypeTabpage
+
+==============================================================================
+3. API metadata						    *nvim-api-metadata*
+
+Nvim exposes metadata about the API as a Dictionary with the following keys:
+
+functions  	calling signature of the API functions
+types		The custom handle types defined by Nvim
+error_types	The possible kinds of errors an API function can exit with.
+
+This metadata is mostly useful for external programs accessing the api over
+msgpack-api, see |msgpack-rpc-api|.
+
+==============================================================================
+4. Buffer highlighting					  *nvim-api-highlights*
+
+Nvim allows plugins to add position-based highlights to buffers. This is
+similar to |matchaddpos()| but with some key differences. The added highlights
+are associated with a buffer and adapts to line insertions and deletions,
+similar to signs. It is also possible to manage a set of highlights as a group
+and delete or replace all at once.
+
+The intended use case are linter or semantic highlighter plugins that monitor
+a buffer for changes, and in the background compute highlights to the buffer.
+Another use case are plugins that show output in an append-only buffer, and
+want to add highlights to the outputs. Highlight data cannot be preserved
+on writing and loading a buffer to file, nor in undo/redo cycles.
+
+Highlights are registered using the |buffer_add_highlight| function, see the
+generated API documentation for details. If an external highlighter plugin is
+adding a large number of highlights in a batch, performance can be improved by
+calling |buffer_add_highlight| as an asynchronous notification, after first
+(synchronously) reqesting a source id. Here is an example using wrapper
+functions in the python client:
+>
+    src = vim.new_highlight_source()
+
+    buf = vim.current.buffer
+    for i in range(5):
+        buf.add_highlight("String",i,0,-1,src_id=src)
+
+    # some time later
+
+    buf.clear_highlight(src)
+<
+If the highlights don't need to be deleted or updated, just pass -1 as
+src_id (this is the default in python). |buffer_clear_highlight| can be used
+to clear highligts from a specific source, in a specific line range or the
+entire buffer by passing in the line range 0, -1 (the later is the default
+in python as used above).
+
+==============================================================================
+ vim:tw=78:ts=8:noet:ft=help:norl:
