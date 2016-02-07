@@ -1762,9 +1762,7 @@ describe('regexp pattern without multi byte support:', function() -- TODO multi 
     dummy text]])
   end)
 
-  it('is working', function()
-    -- Check patterns matching cursor position.
-    -- TODO: is the line cont OK?
+  it('patterns matching cursor position', function()
     source([[
       func! Postest()
         new
@@ -1790,10 +1788,6 @@ describe('regexp pattern without multi byte support:', function() -- TODO multi 
     execute('set re=0')
     execute('call Postest()')
     execute('put')
-    eq(1,2)
-    expect([[
-    hans
-    ]])
     feed('o-1-<esc>')
     execute('set re=1')
     execute('call Postest()')
@@ -1802,7 +1796,42 @@ describe('regexp pattern without multi byte support:', function() -- TODO multi 
     execute('set re=2')
     execute('call Postest()')
     execute('put')
+    feed('<C-L>')
+    expect([[
+      
+      -0-
+      ffo
+      bob
+      __ooooo
+      koooo__
+      moooooo
+      			f__
+      ab!babababababfoo
+      ba!ab##abab?bafoo
+      **!*****_
+      -1-
+      ffo
+      bob
+      __ooooo
+      koooo__
+      moooooo
+      			f__
+      ab!babababababfoo
+      ba!ab##abab?bafoo
+      **!*****_
+      -2-
+      ffo
+      bob
+      __ooooo
+      koooo__
+      moooooo
+      			f__
+      ab!babababababfoo
+      ba!ab##abab?bafoo
+      **!*****_]])
+  end)
 
+  it('hans', function()
     -- Start and end of buffer.
     execute([[/\%^]])
 
@@ -1834,44 +1863,13 @@ describe('regexp pattern without multi byte support:', function() -- TODO multi 
     execute([[0,/\%#=1^Results/-1 delete]])
 
     -- Assert buffer contents.
-    expect([=[
-      Results of test64:
+    expect([[
       
-      -0-
-      ffo
-      bob
-      __ooooo
-      koooo__
-      moooooo
-      			f__
-      ab!babababababfoo
-      ba!ab##abab?bafoo
-      **!*****_
-      -1-
-      ffo
-      bob
-      __ooooo
-      koooo__
-      moooooo
-      			f__
-      ab!babababababfoo
-      ba!ab##abab?bafoo
-      **!*****_
-      -2-
-      ffo
-      bob
-      __ooooo
-      koooo__
-      moooooo
-      			f__
-      ab!babababababfoo
-      ba!ab##abab?bafoo
-      **!*****_
       Test
       Test END
       EN
       E
       E888 detected for  \ze*
-      E888 detected for  \zs*]=])
+      E888 detected for  \zs*]])
   end)
 end)
