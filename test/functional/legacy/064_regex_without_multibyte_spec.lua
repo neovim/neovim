@@ -1831,23 +1831,72 @@ describe('regexp pattern without multi byte support:', function() -- TODO multi 
       **!*****_]])
   end)
 
-  it('hans', function()
-    -- Start and end of buffer.
+  it('start and end of buffer', function()
+    insert([[
+      Test for regexp patterns without multi-byte support.
+      dummy text 1
+      dummy text 2
+      dummy text 3
+      dummy text 4
+      dummy text 5
+      dummy text 6
+      dummy text 7
+      dummy text 8
+      dummy text 9
+      dummy text 10
+      dummy text 11
+      dummy text 12
+      dummy text 13
+      dummy text 14
+      dummy text 15
+      dummy text 16
+      dummy text 17
+      dummy text 18
+      dummy text 19
+      dummy text 20]])
+    feed('50%')
+    execute('set re=2')
     execute([[/\%^]])
-
     feed('yeGo<esc>p')
-    feed('50%') -- TODO
+    feed('50%')
     execute([[/\%^..]])
 
     feed('yeGo<esc>pA END<esc>')
-    feed('50%') -- TODO
+    feed('50%')
     execute([[/\%$]])
-    feed('ayb20gg')
+    feed('"ayb20gg')
     execute([[/..\%$]])
     feed('"bybGo<esc>"apo<esc>"bp')
+    expect([[
+      Test for regexp patterns without multi-byte support.
+      dummy text 1
+      dummy text 2
+      dummy text 3
+      dummy text 4
+      dummy text 5
+      dummy text 6
+      dummy text 7
+      dummy text 8
+      dummy text 9
+      dummy text 10
+      dummy text 11
+      dummy text 12
+      dummy text 13
+      dummy text 14
+      dummy text 15
+      dummy text 16
+      dummy text 17
+      dummy text 18
+      dummy text 19
+      dummy text 20
+      Test
+      Test END
+      EN
+      E]])
+  end)
 
-    -- Check for detecting error.
-    source([=[
+  it('detecting error', function()
+    source([[
       set regexpengine=2
       for pat in [' \ze*', ' \zs*']
         try
@@ -1856,19 +1905,9 @@ describe('regexp pattern without multi byte support:', function() -- TODO multi 
         catch
           $put ='E888 detected for ' . pat
         endtry
-      endfor
-    ]=])
-
-    -- Prepare buffer for expect()
-    execute([[0,/\%#=1^Results/-1 delete]])
-
-    -- Assert buffer contents.
+      endfor]])
     expect([[
       
-      Test
-      Test END
-      EN
-      E
       E888 detected for  \ze*
       E888 detected for  \zs*]])
   end)
