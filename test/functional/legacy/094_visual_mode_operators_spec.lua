@@ -31,6 +31,13 @@ local function put_abc()
     $put ='c']])
 end
 
+local function put_aaabbbccc()
+  source([[
+    $put ='aaa'
+    $put ='bbb'
+    $put ='ccc']])
+end
+
 local function define_select_mode_maps()
   source([[
     snoremap <lt>End> <End>
@@ -305,6 +312,63 @@ describe('Visual mode and operator', function()
       expect([[
         
         a]])
+    end)
+  end)
+
+  describe('v_p:', function()
+    it('replace last character with line register at middle line', function()
+      put_aaabbbccc()
+      execute('-2yank')
+      feed('k$vp')
+
+      expect([[
+        
+        aaa
+        bb
+        aaa
+        
+        ccc]])
+    end)
+
+    it('replace last character with line register at middle line selecting newline', function()
+      put_aaabbbccc()
+      execute('-2yank')
+      feed('k$v$p')
+
+      expect([[
+        
+        aaa
+        bb
+        aaa
+        ccc]])
+    end)
+
+    it('replace last character with line register at last line', function()
+      put_aaabbbccc()
+      execute('-2yank')
+      feed('$vp')
+
+      expect([[
+        
+        aaa
+        bbb
+        cc
+        aaa
+        ]])
+    end)
+
+    it('replace last character with line register at last line selecting newline', function()
+      put_aaabbbccc()
+      execute('-2yank')
+      feed('$v$p')
+
+      expect([[
+        
+        aaa
+        bbb
+        cc
+        aaa
+        ]])
     end)
   end)
 end)

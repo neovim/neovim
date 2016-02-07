@@ -2664,17 +2664,27 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
 
   if (y_type == MLINE) {
     if (flags & PUT_LINE_SPLIT) {
-      /* "p" or "P" in Visual mode: split the lines to put the text in
-       * between. */
-      if (u_save_cursor() == FAIL)
+      // "p" or "P" in Visual mode: split the lines to put the text in
+      // between.
+      if (u_save_cursor() == FAIL) {
         goto end;
-      ptr = vim_strsave(get_cursor_pos_ptr());
-      ml_append(curwin->w_cursor.lnum, ptr, (colnr_T)0, FALSE);
+      }
+      char_u *p = get_cursor_pos_ptr();
+      if (dir == FORWARD && *p != NUL) {
+        mb_ptr_adv(p);
+      }
+      ptr = vim_strsave(p);
+      ml_append(curwin->w_cursor.lnum, ptr, (colnr_T)0, false);
       xfree(ptr);
 
-      ptr = vim_strnsave(get_cursor_line_ptr(), curwin->w_cursor.col);
-      ml_replace(curwin->w_cursor.lnum, ptr, FALSE);
-      ++nr_lines;
+      oldp = get_cursor_line_ptr();
+      p = oldp + curwin->w_cursor.col;
+      if (dir == FORWARD && *p != NUL) {
+        mb_ptr_adv(p);
+      }
+      ptr = vim_strnsave(oldp, p - oldp);
+      ml_replace(curwin->w_cursor.lnum, ptr, false);
+      nr_lines++;
       dir = FORWARD;
     }
     if (flags & PUT_LINE_FORWARD) {
