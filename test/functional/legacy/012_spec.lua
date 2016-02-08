@@ -3,9 +3,11 @@
 -- - "./dir", in directory relative to file
 -- - "dir", in directory relative to current dir
 
-local helpers = require('test.functional.helpers')
-local feed, insert, source = helpers.feed, helpers.insert, helpers.source
-local clear, execute, expect = helpers.clear, helpers.execute, helpers.expect
+local helpers, lfs = require('test.functional.helpers'), require('lfs')
+local feed, insert, source, eq, neq, eval, clear, execute, expect, wait,
+  write_file = helpers.feed, helpers.insert, helpers.source, helpers.eq,
+  helpers.neq, helpers.eval, helpers.clear, helpers.execute, helpers.expect,
+  helpers.wait, helpers.write_file
 
 describe('12', function()
   setup(clear)
