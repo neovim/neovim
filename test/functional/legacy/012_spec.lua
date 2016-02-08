@@ -13,13 +13,12 @@ describe('12', function()
   setup(clear)
 
   it('is working', function()
-    insert([=[
+    insert([[
       start of testfile
       line 2 Abcdefghij
       line 3 Abcdefghij
-      end of testfile]=])
+      end of testfile]])
 
-    execute('so small.vim')
     execute('set dir=.,~')
     execute('/start of testfile/,/end of testfile/w! Xtest1')
     -- Do an ls of the current dir to find the swap file (should not be there).
@@ -57,10 +56,10 @@ describe('12', function()
     execute('!echo under Xtest3 >>test.out')
     execute('!ls Xtest.je >>test.out')
     execute('!echo under Xtest3.swp >>test.out')
-    execute('qa!')
+    execute('e! test.out')
 
     -- Assert buffer contents.
-    expect([=[
+    expect([[
       first line
       Xtest1.swp
       under Xtest1.swp
@@ -70,6 +69,6 @@ describe('12', function()
       Xtest3
       under Xtest3
       Xtest3.swp
-      under Xtest3.swp]=])
+      under Xtest3.swp]])
   end)
 end)
