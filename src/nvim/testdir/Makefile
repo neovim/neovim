@@ -9,7 +9,6 @@ SCRIPTSOURCE := ../../../runtime
 
 SCRIPTS := \
            test8.out              \
-           test12.out             \
            test13.out             \
            test14.out             \
            test17.out             \
