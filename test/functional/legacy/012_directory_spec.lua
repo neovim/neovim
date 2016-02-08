@@ -52,27 +52,13 @@ describe('the directory option', function()
     execute('e! Xtest1')
     wait()
     eq('Xtest1', eval('buffer_name("%")'))
-    -- Assert that the swapfile does exists. (Same as the vim commands below)
+    -- Assert that the swapfile does exists.  In the legacy test this was done
+    -- by reading the output from :!ls.
     if eval('has("unix")') == 1 then
       neq(nil, lfs.attributes('.Xtest1.swp'))
     else
       neq(nil, lfs.attributes('Xtest1.swp'))
     end
-    -- Do an ls of the current dir to find the swap file, remove the leading
-    -- dot to make the result the same for all systems.
-    source([[
-      if has("unix")
-        r!ls .X*.swp
-        s/\.*X/X/
-        .w >>test.out
-        undo
-      else
-        !ls X*.swp >>test.out
-      endif]])
-    expect_test_out([[
-    first line
-    Xtest1.swp
-    ]])
     execute('!echo under Xtest1.swp >>test.out')
 
     feed('<cr>')
