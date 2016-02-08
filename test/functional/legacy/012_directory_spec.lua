@@ -14,7 +14,7 @@ local function expect_test_out(text)
   return eq(helpers.dedent(text), io.open('test.out'):read('*all'))
 end
 
-describe('the directory option', function()
+describe('directory option', function()
   setup(function()
     local text = [[
       start of testfile
