@@ -44,11 +44,11 @@ describe('the directory option', function()
     -- command line.
     execute('set swapfile')
     execute('set dir=.,~')
+
     -- Assert that the swap file does not exist.
     eq(nil, lfs.attributes('.Xtest1.swp')) -- for unix
     eq(nil, lfs.attributes('Xtest1.swp'))  -- for other systems
-    execute('silent !echo first line >test.out')
-    expect_test_out('first line\n')
+
     execute('e! Xtest1')
     wait()
     eq('Xtest1', eval('buffer_name("%")'))
@@ -59,29 +59,13 @@ describe('the directory option', function()
     else
       neq(nil, lfs.attributes('Xtest1.swp'))
     end
-    execute('!echo under Xtest1.swp >>test.out')
-
-    feed('<cr>')
-    wait()
-    --expect_test_out([[
-    --first line
-    --Xtest1.swp
-    --under Xtest1.swp
-    --]])
 
     execute('set dir=./Xtest2,.,~')
     execute('e Xtest1')
     -- Swapfile in the current directory should not exist any longer.
-    eq(nil, lfs.attributes('Xtest.swp'))
-    eq('', io.popen('ls X*.swp'):read('*all'))
-    execute('!ls X*.swp >>test.out')
-    expect_test_out([[
-    first line
-    Xtest1.swp
-    under Xtest1.swp
-    ]])
-    execute('!echo under under >>test.out')
-    -- DONE
+    eq(nil, lfs.attributes('.Xtest1.swp')) -- for unix
+    eq(nil, lfs.attributes('Xtest1.swp'))  -- for other systems
+
     -- There should be only one file in the directory Xtest2.
     eq('Xtest3\n', io.popen('ls Xtest2'):read('*all'))
     execute('!ls Xtest2 >>test.out')
