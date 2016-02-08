@@ -10,7 +10,26 @@ local feed, insert, source, eq, neq, eval, clear, execute, expect, wait,
   helpers.wait, helpers.write_file
 
 describe('12', function()
-  setup(clear)
+  setup(function()
+    local text = [[
+      start of testfile
+      line 2 Abcdefghij
+      line 3 Abcdefghij
+      end of testfile]]
+    clear()
+    write_file('Xtest1', text)
+    lfs.mkdir('Xtest.je')
+    lfs.mkdir('Xtest2')
+    execute('/start of testfile/,/end of testfile/w! Xtest2/Xtest3')
+    write_file('Xtest2/Xtest3', text)
+  end)
+  teardown(function()
+    os.remove('Xtest1')
+    os.remove('Xtest2/Xtest3')
+    os.remove('Xtest2')
+    os.remove('Xtest.je')
+    os.remove('test.out')
+  end)
 
   it('is working', function()
     insert([[
