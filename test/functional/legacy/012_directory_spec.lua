@@ -20,7 +20,8 @@ describe('the directory option', function()
       start of testfile
       line 2 Abcdefghij
       line 3 Abcdefghij
-      end of testfile]]
+      end of testfile
+      ]]
     clear()
     write_file('Xtest1', text)
     lfs.mkdir('Xtest.je')
