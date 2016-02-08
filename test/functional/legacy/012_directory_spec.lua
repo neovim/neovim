@@ -62,38 +62,21 @@ describe('the directory option', function()
 
     execute('set dir=./Xtest2,.,~')
     execute('e Xtest1')
+    wait()
     -- Swapfile in the current directory should not exist any longer.
     eq(nil, lfs.attributes('.Xtest1.swp')) -- for unix
     eq(nil, lfs.attributes('Xtest1.swp'))  -- for other systems
+    -- In the old test Xtest2/Xtest3 was not yet present because it was not
+    -- written in setup().
+    eq('.\n..\nXtest1.swp\nXtest3\n', io.popen('ls -a Xtest2'):read('*all'))
 
-    -- There should be only one file in the directory Xtest2.
-    eq('Xtest3\n', io.popen('ls Xtest2'):read('*all'))
-    execute('!ls Xtest2 >>test.out')
-    -- DONE???????
-    execute('!echo under Xtest1.swp >>test.out')
-    eq([[
-      ]], io.open('test.out'):read('*all'))
     execute('set dir=Xtest.je,~')
     execute('e Xtest2/Xtest3')
     eq(1, eval('&swapfile'))
     execute('swap')
-    execute('!ls Xtest2 >>test.out')
-    execute('!echo under Xtest3 >>test.out')
-    execute('!ls Xtest.je >>test.out')
-    execute('!echo under Xtest3.swp >>test.out')
-    execute('e! test.out')
-
-    -- Assert buffer contents.
-    expect([[
-      first line
-      Xtest1.swp
-      under Xtest1.swp
-      under under
-      Xtest1.swp
-      under Xtest1.swp
-      Xtest3
-      under Xtest3
-      Xtest3.swp
-      under Xtest3.swp]])
+    wait()
+    eq('.\n..\nXtest3\n', io.popen('ls -a Xtest2'):read('*all'))
+    wait()
+    eq('.\n..\nXtest3.swp\n', io.popen('ls -a Xtest.je'):read('*all'))
   end)
 end)
