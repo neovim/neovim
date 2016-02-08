@@ -5,9 +5,10 @@ set -u
 set -o pipefail
 
 readonly NEOVIM_SOURCE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-readonly VIM_SOURCE_DIR_DEFAULT=${NEOVIM_SOURCE_DIR}/.vim-src
+readonly VIM_SOURCE_DIR_DEFAULT="${NEOVIM_SOURCE_DIR}/.vim-src"
 readonly VIM_SOURCE_DIR="${VIM_SOURCE_DIR:-${VIM_SOURCE_DIR_DEFAULT}}"
 readonly BASENAME="$(basename "${0}")"
+readonly BRANCH_PREFIX="vim-"
 
 CREATED_FILES=()
 
@@ -127,12 +128,31 @@ get_vim_patch() {
   #   - transform src/ paths to src/nvim/
   local vim_full="$(git show -1 --pretty=medium "${vim_commit}" \
     | LC_ALL=C sed -e 's/\( [ab]\/src\)/\1\/nvim/g')"
-  local neovim_branch="vim-${vim_version}"
+  local neovim_branch="${BRANCH_PREFIX}${vim_version}"
+
+  cd "${NEOVIM_SOURCE_DIR}"
+  local checked_out_branch="$(git rev-parse --abbrev-ref HEAD)"
+  if [[ "${checked_out_branch}" == ${BRANCH_PREFIX}* ]]; then
+    echo "✔ Current branch '${checked_out_branch}' seems to be a vim-patch"
+    echo "  branch; not creating a new branch."
+  else
+    echo
+    echo "Fetching 'upstream/master'."
+    output="$(git fetch upstream master 2>&1)" &&
+      echo "✔ ${output}" ||
+      (echo "✘ ${output}"; false)
+
+    echo
+    echo "Creating new branch '${neovim_branch}' based on 'upstream/master'."
+    cd "${NEOVIM_SOURCE_DIR}"
+    output="$(git checkout -b "${neovim_branch}" upstream/master 2>&1)" &&
+      echo "✔ ${output}" ||
+      (echo "✘ ${output}"; false)
+  fi
 
   echo
-  echo "Creating Git branch."
-  cd "${NEOVIM_SOURCE_DIR}"
-  output="$(git checkout -b "${neovim_branch}" 2>&1)" &&
+  echo "Creating empty commit with correct commit message."
+  output="$(commit_message | git commit --allow-empty --file 2>&1 -)" &&
     echo "✔ ${output}" ||
     (echo "✘ ${output}"; false)
 
@@ -147,7 +167,17 @@ get_vim_patch() {
   echo "  Proceed to port the patch."
   echo "  You might want to try 'patch -p1 < ${patch_file}' first."
   echo
-  echo "  Stage your changes ('git add ...') and use '${BASENAME} -s' to submit."
+  echo "  If the patch contains a new test, consider porting it to Lua."
+  echo "  You might want to try 'scripts/legacy2luatest.pl'."
+  echo
+  echo "  Stage your changes ('git add ...') and use 'git commit --amend' to commit."
+  echo
+  echo "  To port additional patches related to ${vim_version} and add them to the current"
+  echo "  branch, call '${BASENAME} -p' again.  Please use this only if it wouldn't make"
+  echo "  sense to send in each patch individually, as it will increase the size of the"
+  echo "  pull request and make it harder to review."
+  echo
+  echo "  When you are finished, use '${BASENAME} -s' to submit a pull request."
   echo
   echo "  See https://github.com/neovim/neovim/wiki/Merging-patches-from-upstream-vim"
   echo "  for more information."
@@ -158,40 +188,42 @@ submit_pr() {
   check_executable hub
 
   cd "${NEOVIM_SOURCE_DIR}"
-  local neovim_branch="$(git rev-parse --abbrev-ref HEAD)"
-  if [[ "${neovim_branch}" != vim-* ]]; then
-    echo "✘ Current branch '${neovim_branch}' doesn't seem to be a vim-patch branch."
+  local checked_out_branch="$(git rev-parse --abbrev-ref HEAD)"
+  if [[ "${checked_out_branch}" != ${BRANCH_PREFIX}* ]]; then
+    echo "✘ Current branch '${checked_out_branch}' doesn't seem to be a vim-patch branch."
     exit 1
   fi
 
-  local vim_version="${neovim_branch#vim-}"
-  echo "✔ Detected Vim patch '${vim_version}'."
+  local pr_body="$(git log --reverse --format='#### %s%n%n%b%n' upstream/master..HEAD)"
+  local patches=("$(git log --reverse --format='%s' upstream/master..HEAD)")
+  patches=(${patches[@]//vim-patch:}) # Remove 'vim-patch:' prefix for each item in array.
+  local pr_title="${patches[@]}" # Create space-separated string from array.
+  pr_title="${pr_title// /,}" # Replace spaces with commas.
 
-  assign_commit_details "${vim_version}"
-  neovim_message="$(commit_message)"
+  local pr_message="$(printf '[RFC] vim-patch:%s\n\n%s\n' "${pr_title#,}" "${pr_body}")"
 
-  echo
-  echo "Creating commit."
-  output="$(git commit --file 2>&1 - <<< "${neovim_message}")" &&
-    echo "✔ ${output}" ||
-    (echo "✘ ${output}"; false)
-
-  echo
-  echo "Pushing to Git repository."
-  output="$(git push origin "${neovim_branch}" 2>&1)" &&
+  echo "Pushing to 'origin/${checked_out_branch}'."
+  output="$(git push origin "${checked_out_branch}" 2>&1)" &&
     echo "✔ ${output}" ||
     (echo "✘ ${output}"; git reset --soft HEAD^1; false)
 
   echo
   echo "Creating pull request."
-  output="$(hub pull-request -F - 2>&1 <<< "[RFC] ${neovim_message}")" &&
+  output="$(hub pull-request -F - 2>&1 <<< "${pr_message}")" &&
     echo "✔ ${output}" ||
     (echo "✘ ${output}"; false)
 
   echo
   echo "Cleaning up files."
-  rm -- "${NEOVIM_SOURCE_DIR}/${patch_file}"
-  echo "✔ Removed '${NEOVIM_SOURCE_DIR}/${patch_file}'."
+  local patch_file
+  for patch_file in ${patches[@]}; do
+    patch_file="vim-${patch_file}.patch"
+    if [[ ! -f "${NEOVIM_SOURCE_DIR}/${patch_file}" ]]; then
+      continue
+    fi
+    rm -- "${NEOVIM_SOURCE_DIR}/${patch_file}"
+    echo "✔ Removed '${NEOVIM_SOURCE_DIR}/${patch_file}'."
+  done
 }
 
 list_vim_patches() {
@@ -250,8 +282,8 @@ review_commit() {
     echo "✔ Detected Vim patch '${vim_version}'."
   else
     echo "✘ Could not detect the Vim patch number."
-    echo "  This script assumes that the PR contains a single commit"
-    echo "  with 'vim-patch:XXX' as its title."
+    echo "  This script assumes that the PR contains only commits"
+    echo "  with 'vim-patch:XXX' in their title."
     exit 1
   fi
 
