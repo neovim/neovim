@@ -39,17 +39,22 @@ describe('12', function()
       end of testfile]])
 
     execute('set dir=.,~')
-    -- Do an ls of the current dir to find the swap file (should not be there).
+    -- Assert that the swap file does not exist.
+    eq(nil, lfs.attributes('.Xtest1.swp')) -- for unix
+    eq(nil, lfs.attributes('Xtest1.swp'))  -- for other systems
+    execute('!echo first line >test.out')
+    execute('e! Xtest1')
+    helpers.wait()
+    -- Assert that the swapfile exists.
+    if eval('has("unix")') == 1 then
+      neq(nil, lfs.attributes('.Xtest1.swp'))
+    else
+      neq(nil, lfs.attributes('Xtest1.swp'))
+    end
+    eq(1,2)
     execute('if has("unix")')
-    execute('  !ls .X*.swp >test.out')
-    execute('else')
-    execute('  r !ls X*.swp >test.out')
-    execute('endif')
-    execute('!echo first line >>test.out')
-    execute('e Xtest1')
-    execute('if has("unix")')
-    -- Do an ls of the current dir to find the swap file, remove the leading dot.
-    -- To make the result the same for all systems.
+    -- Do an ls of the current dir to find the swap file, remove the leading
+    -- dot to make the result the same for all systems.
     execute('  r!ls .X*.swp')
     execute([[  s/\.*X/X/]])
     execute('  .w >>test.out')
