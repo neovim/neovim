@@ -218,20 +218,22 @@ typedef struct vimoption {
 #define P_RALL          0x6000U  /* redraw all windows */
 #define P_RCLR          0x7000U  /* clear and redraw all */
 
-#define P_COMMA         0x8000U  /* comma separated list */
-#define P_NODUP         0x10000U /* don't allow duplicate strings */
-#define P_FLAGLIST      0x20000U /* list of single-char flags */
+#define P_COMMA         0x8000U    ///< comma separated list
+#define P_ONECOMMA      0x18000U   ///< P_COMMA and cannot have two consecutive
+                                   ///< commas
+#define P_NODUP         0x20000U   ///< don't allow duplicate strings
+#define P_FLAGLIST      0x40000U   ///< list of single-char flags
 
-#define P_SECURE        0x40000U /* cannot change in modeline or secure mode */
-#define P_GETTEXT       0x80000U /* expand default value with _() */
-#define P_NOGLOB       0x100000U /* do not use local value for global vimrc */
-#define P_NFNAME       0x200000U /* only normal file name chars allowed */
-#define P_INSECURE     0x400000U /* option was set from a modeline */
-#define P_PRI_MKRC     0x800000U /* priority for :mkvimrc (setting option has
-                                    side effects) */
-#define P_NO_ML       0x1000000U /* not allowed in modeline */
-#define P_CURSWANT    0x2000000U /* update curswant required; not needed when
-                                  * there is a redraw flag */
+#define P_SECURE        0x80000U   ///< cannot change in modeline or secure mode
+#define P_GETTEXT       0x100000U  ///< expand default value with _()
+#define P_NOGLOB        0x200000U  ///< do not use local value for global vimrc
+#define P_NFNAME        0x400000U  ///< only normal file name chars allowed
+#define P_INSECURE      0x800000U  ///< option was set from a modeline
+#define P_PRI_MKRC     0x1000000U  ///< priority for :mkvimrc (setting option
+                                   ///< has side effects)
+#define P_NO_ML        0x2000000U  ///< not allowed in modeline
+#define P_CURSWANT     0x4000000U  ///< update curswant required; not needed
+                                   ///< when there is a redraw flag
 
 #define HIGHLIGHT_INIT \
   "8:SpecialKey,~:EndOfBuffer,z:TermCursor,Z:TermCursorNC,@:NonText," \
@@ -1674,9 +1676,10 @@ do_set (
                 if (adding) {
                   i = (int)STRLEN(origval);
                   // Strip a trailing comma, would get 2.
-                  if (comma && i > 1 && origval[i - 1] == ','
+                  if (comma && (flags & P_ONECOMMA) && i > 1
+                      && origval[i - 1] == ','
                       && origval[i - 2] != '\\') {
-                    --i;
+                    i--;
                   }
                   memmove(newval + i + comma, newval,
                       STRLEN(newval) + 1);
