@@ -1,8 +1,8 @@
 " An example for a vimrc file.
 "
 " To use it, copy it to
-"     for Unix:  ~/.vimrc
-"     for Windows:  $VIM\_vimrc
+"     for Unix:  ${XDG_CONFIG_HOME:=$HOME/.config}/nvim/init.vim
+"     for Windows:  %userprofile%\AppData\Local\nvim\init.vim
 
 set backup             " keep a backup file (restore to previous version)
 set undofile           " keep an undo file (undo changes after closing)
