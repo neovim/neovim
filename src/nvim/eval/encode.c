@@ -79,11 +79,9 @@ int encode_list_write(void *data, const char *buf, size_t len)
   do {
     const char *line_start = line_end;
     line_end = xmemscan(line_start, NL, (size_t) (end - line_start));
-    if (line_end == line_start) {
-      list_append_allocated_string(list, NULL);
-    } else {
+    char *str = NULL;
+    if (line_end != line_start) {
       const size_t line_length = (size_t) (line_end - line_start);
-      char *str;
       if (li == NULL) {
         str = xmemdupz(line_start, line_length);
       } else {
@@ -93,7 +91,7 @@ int encode_list_write(void *data, const char *buf, size_t len)
         li->li_tv.vval.v_string = xrealloc(li->li_tv.vval.v_string,
                                            li_len + line_length + 1);
         str = (char *) li->li_tv.vval.v_string + li_len;
-        memmove(str, line_start, line_length);
+        memcpy(str, line_start, line_length);
         str[line_length] = 0;
       }
       for (size_t i = 0; i < line_length; i++) {
@@ -101,14 +99,14 @@ int encode_list_write(void *data, const char *buf, size_t len)
           str[i] = NL;
         }
       }
-      if (li == NULL) {
-        list_append_allocated_string(list, str);
-      } else {
-        li = NULL;
-      }
-      if (line_end == end - 1) {
-        list_append_allocated_string(list, NULL);
-      }
+    }
+    if (li == NULL) {
+      list_append_allocated_string(list, str);
+    } else {
+      li = NULL;
+    }
+    if (line_end == end - 1) {
+      list_append_allocated_string(list, NULL);
     }
     line_end++;
   } while (line_end < end);

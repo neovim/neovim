@@ -1,8 +1,6 @@
 #ifndef NVIM_EVAL_H
 #define NVIM_EVAL_H
 
-#include <msgpack.h>
-
 #include "nvim/profile.h"
 #include "nvim/hashtab.h"  // For hashtab_T
 #include "nvim/garray.h"  // For garray_T
