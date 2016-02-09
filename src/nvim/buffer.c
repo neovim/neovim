@@ -1601,21 +1601,28 @@ int buflist_getfile(int n, linenr_T lnum, int options, int forceit)
     col = 0;
 
   if (options & GETF_SWITCH) {
-    /* If 'switchbuf' contains "useopen": jump to first window containing
-     * "buf" if one exists */
-    if (swb_flags & SWB_USEOPEN)
+    // If 'switchbuf' contains "useopen": jump to first window containing
+    // "buf" if one exists
+    if (swb_flags & SWB_USEOPEN) {
       wp = buf_jump_open_win(buf);
-    /* If 'switchbuf' contains "usetab": jump to first window in any tab
-     * page containing "buf" if one exists */
-    if (wp == NULL && (swb_flags & SWB_USETAB))
+    }
+
+    // If 'switchbuf' contains "usetab": jump to first window in any tab
+    // page containing "buf" if one exists
+    if (wp == NULL && (swb_flags & SWB_USETAB)) {
       wp = buf_jump_open_tab(buf);
-    /* If 'switchbuf' contains "split" or "newtab" and the current buffer
-     * isn't empty: open new window */
-    if (wp == NULL && (swb_flags & (SWB_SPLIT | SWB_NEWTAB)) && !bufempty()) {
-      if (swb_flags & SWB_NEWTAB)               /* Open in a new tab */
+    }
+
+    // If 'switchbuf' contains "split", "vsplit" or "newtab" and the
+    // current buffer isn't empty: open new tab or window
+    if (wp == NULL && (swb_flags & (SWB_VSPLIT | SWB_SPLIT | SWB_NEWTAB))
+        && !bufempty()) {
+      if (swb_flags & SWB_NEWTAB) {
         tabpage_new();
-      else if (win_split(0, 0) == FAIL)         /* Open in a new window */
+      } else if (win_split(0, (swb_flags & SWB_VSPLIT) ? WSP_VERT : 0)
+                 == FAIL) {
         return FAIL;
+      }
       RESET_BINDING(curwin);
     }
   }
