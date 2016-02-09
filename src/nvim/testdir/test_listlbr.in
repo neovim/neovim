@@ -75,6 +75,12 @@ Golong line: 40afoobar aTARGET at end
 :let g:test ="Test 8: set linebreak with visual char mode and changing block"
 :$put =g:test
 Go1111-1111-1111-11-1111-1111-11110f-lv3lc2222bgj.
+:let g:test ="Test 9: using redo after block visual mode"
+:$put =g:test
+Go
+aaa
+aaa
+a2k2j~e.
 :%w! test.out
 :qa!
 ENDTEST

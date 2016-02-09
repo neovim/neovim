@@ -1702,9 +1702,9 @@ static char_u * do_one_cmd(char_u **cmdlinep,
     p = vim_strnsave(ea.cmd, p - ea.cmd);
     int ret = apply_autocmds(EVENT_CMDUNDEFINED, p, p, TRUE, NULL);
     xfree(p);
-    if (ret && !aborting()) {
-      p = find_command(&ea, NULL);
-    }
+    // If the autocommands did something and didn't cause an error, try
+    // finding the command again.
+    p = (ret && !aborting()) ? find_command(&ea, NULL) : NULL;
   }
 
   if (p == NULL) {
@@ -2348,8 +2348,11 @@ static char_u *find_command(exarg_T *eap, int *full)
     eap->cmdidx = CMD_k;
     ++p;
   } else if (p[0] == 's'
-             && ((p[1] == 'c' && p[2] != 's' && p[2] != 'r'
-                  && p[3] != 'i' && p[4] != 'p')
+             && ((p[1] == 'c'
+                  && (p[2] == NUL
+                      || (p[2] != 's' && p[2] != 'r'
+                          && (p[3] == NUL
+                              || (p[3] != 'i' && p[4] != 'p')))))
                  || p[1] == 'g'
                  || (p[1] == 'i' && p[2] != 'm' && p[2] != 'l' && p[2] != 'g')
                  || p[1] == 'I'
