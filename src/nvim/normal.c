@@ -1431,7 +1431,7 @@ bool get_visual_selection_bounds(oparg_T *oap)
   if (VIsual_mode == Ctrl_V) {      /* block mode */
     colnr_T start, end;
 
-    oap->block_mode = true;
+    oap->motion_type = MBLOCK;
 
     getvvcol(curwin, &(oap->start),
         &oap->start_vcol, NULL, &oap->end_vcol);
