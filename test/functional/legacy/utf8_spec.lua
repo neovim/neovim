@@ -3,6 +3,7 @@
 local helpers = require('test.functional.helpers')
 local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
 local execute, expect = helpers.execute, helpers.expect
+local eq, eval = helpers.eq, helpers.eval
 
 describe('utf8', function()
   setup(clear)
@@ -26,5 +27,27 @@ describe('utf8', function()
       axaa
       xあああ
       bxbb]])
+  end)
+
+  it('strchars()', function()
+    eq(1, eval('strchars("a")'))
+    eq(1, eval('strchars("a", 0)'))
+    eq(1, eval('strchars("a", 1)'))
+
+    eq(3, eval('strchars("あいa")'))
+    eq(3, eval('strchars("あいa", 0)'))
+    eq(3, eval('strchars("あいa", 1)'))
+
+    eq(2, eval('strchars("A\\u20dd")'))
+    eq(2, eval('strchars("A\\u20dd", 0)'))
+    eq(1, eval('strchars("A\\u20dd", 1)'))
+
+    eq(3, eval('strchars("A\\u20dd\\u20dd")'))
+    eq(3, eval('strchars("A\\u20dd\\u20dd", 0)'))
+    eq(1, eval('strchars("A\\u20dd\\u20dd", 1)'))
+
+    eq(1, eval('strchars("\\u20dd")'))
+    eq(1, eval('strchars("\\u20dd", 0)'))
+    eq(1, eval('strchars("\\u20dd", 1)'))
   end)
 end)

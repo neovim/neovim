@@ -3004,14 +3004,19 @@ static void syn_cmd_spell(exarg_T *eap, int syncing)
     return;
 
   next = skiptowhite(arg);
-  if (STRNICMP(arg, "toplevel", 8) == 0 && next - arg == 8)
+  if (STRNICMP(arg, "toplevel", 8) == 0 && next - arg == 8) {
     curwin->w_s->b_syn_spell = SYNSPL_TOP;
-  else if (STRNICMP(arg, "notoplevel", 10) == 0 && next - arg == 10)
+  } else if (STRNICMP(arg, "notoplevel", 10) == 0 && next - arg == 10) {
     curwin->w_s->b_syn_spell = SYNSPL_NOTOP;
-  else if (STRNICMP(arg, "default", 7) == 0 && next - arg == 7)
+  } else if (STRNICMP(arg, "default", 7) == 0 && next - arg == 7) {
     curwin->w_s->b_syn_spell = SYNSPL_DEFAULT;
-  else
+  } else {
     EMSG2(_("E390: Illegal argument: %s"), arg);
+    return;
+  }
+
+  // assume spell checking changed, force a redraw
+  redraw_win_later(curwin, NOT_VALID);
 }
 
 /*

@@ -1,4 +1,4 @@
-*change.txt*    For Vim version 7.4.  Last change: 2015 Feb 10
+*change.txt*    For Vim version 7.4.  Last change: 2015 Jun 25
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -366,14 +366,45 @@ Adding and subtracting ~
 CTRL-A			Add [count] to the number or alphabetic character at
 			or after the cursor.
 
+                                                       *v_CTRL-A*
+{Visual}CTRL-A		Add [count] to the number or alphabetic character in
+			the highlighted text.  {not in Vi}
+
+							*v_g_CTRL-A*
+{Visual}g CTRL-A	Add [count] to the number or alphabetic character in
+			the highlighted text. If several lines are
+		        highlighted, each one will be incremented by an
+			additional [count] (so effectively creating a
+			[count] incrementing sequence).  {not in Vi}
+			For Example, if you have this list of numbers:
+				1. ~
+				1. ~
+				1. ~
+				1. ~
+			Move to the second "1." and Visually select three
+			lines, pressing g CTRL-A results in:
+				1. ~
+				2. ~
+				3. ~
+				4. ~
+
 							*CTRL-X*
 CTRL-X			Subtract [count] from the number or alphabetic
 			character at or after the cursor.
 
-The CTRL-A and CTRL-X commands can work for:
-- signed and unsigned decimal numbers
-- unsigned binary, octal and hexadecimal numbers
-- alphabetic characters
+							*v_CTRL-X*
+{Visual}CTRL-X		Subtract [count] from the number or alphabetic
+			character in the highlighted text.  {not in Vi}
+
+							*v_g_CTRL-X*
+{Visual}g CTRL-X	Subtract [count] from the number or alphabetic
+			character in the highlighted text. If several lines
+			are highlighted, each value will be decremented by an
+			additional [count] (so effectively creating a [count]
+			decrementing sequence).  {not in Vi}
+
+The CTRL-A and CTRL-X commands work for (signed) decimal numbers, unsigned
+binary/octal/hexadecimal numbers and alphabetic characters.
 
 This depends on the 'nrformats' option:
 - When 'nrformats' includes "bin", Vim assumes numbers starting with '0b' or

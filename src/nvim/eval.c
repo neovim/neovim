@@ -3045,12 +3045,13 @@ static int do_lock_var(lval_T *lp, char_u *name_end, int deep, int lock)
       li = li->li_next;
       ++lp->ll_n1;
     }
-  } else if (lp->ll_list != NULL)
-    /* (un)lock a List item. */
+  } else if (lp->ll_list != NULL) {
+    // (un)lock a List item.
     item_lock(&lp->ll_li->li_tv, deep, lock);
-  else
-    /* un(lock) a Dictionary item. */
+  } else {
+    // (un)lock a Dictionary item.
     item_lock(&lp->ll_di->di_tv, deep, lock);
+  }
 
   return ret;
 }
@@ -7337,7 +7338,7 @@ static struct fst {
   { "sqrt",              1, 1, f_sqrt },
   { "str2float",         1, 1, f_str2float },
   { "str2nr",            1, 2, f_str2nr },
-  { "strchars",          1, 1, f_strchars },
+  { "strchars",          1, 2, f_strchars },
   { "strdisplaywidth",   1, 2, f_strdisplaywidth },
   { "strftime",          1, 2, f_strftime },
   { "stridx",            2, 3, f_stridx },
@@ -16213,13 +16214,23 @@ static void f_strlen(typval_T *argvars, typval_T *rettv)
 static void f_strchars(typval_T *argvars, typval_T *rettv)
 {
   char_u              *s = get_tv_string(&argvars[0]);
+  int skipcc = 0;
   varnumber_T len = 0;
+  int (*func_mb_ptr2char_adv)(char_u **pp);
 
-  while (*s != NUL) {
-    mb_cptr2char_adv(&s);
-    ++len;
+  if (argvars[1].v_type != VAR_UNKNOWN) {
+    skipcc = get_tv_number_chk(&argvars[1], NULL);
   }
-  rettv->vval.v_number = len;
+  if (skipcc < 0 || skipcc > 1) {
+    EMSG(_(e_invarg));
+  } else {
+    func_mb_ptr2char_adv = skipcc ? mb_ptr2char_adv : mb_cptr2char_adv;
+    while (*s != NUL) {
+      func_mb_ptr2char_adv(&s);
+      ++len;
+    }
+    rettv->vval.v_number = len;
+  }
 }
 
 /*
