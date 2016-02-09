@@ -1302,13 +1302,10 @@ void scroll_cursor_top(int min_scroll, int always)
   }
   new_topline = top + 1;
 
-  // used already contains the number of filler lines above, don't add it
+  // "used" already contains the number of filler lines above, don't add it
   // again.
-  // TODO: if filler lines above new top are to be considered as context for
-  // the current window, leave next statement commented, else hide filler
-  // lines above cursor line, by adding them to extra
-  // int extra += diff_check_fill(curwin, curwin->w_cursor.lnum);
-  int extra = 0;
+  // Hide filler lines above cursor line by adding them to "extra".
+  int extra = diff_check_fill(curwin, curwin->w_cursor.lnum);
 
   /*
    * Check if the lines from "top" to "bot" fit in the window.  If they do,
@@ -1317,7 +1314,7 @@ void scroll_cursor_top(int min_scroll, int always)
   while (top > 0) {
     int i = hasFolding(top, &top, NULL)
             ? 1  // count one logical line for a sequence of folded lines
-            : plines(top);
+            : plines_nofill(top);
     used += i;
     if (extra + i <= off && bot < curbuf->b_ml.ml_line_count) {
       if (hasFolding(bot, NULL, &bot))
