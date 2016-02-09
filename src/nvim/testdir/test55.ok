@@ -144,6 +144,9 @@ No extend() of write-protected scope-level variable:
 Vim(put):E742: 
 No :unlet of variable in locked scope:
 Vim(unlet):E741: 
+No :let += of locked list variable:
+Vim(let):E741: 
+['a', 'b', 3]
 [1, 2, 3, 4]
 [1, 2, 3, 4]
 [1, 2, 3, 4]
