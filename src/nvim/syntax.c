@@ -4196,6 +4196,8 @@ static void syn_cmd_keyword(exarg_T *eap, int syncing)
                     kw, &p[2]);
               goto error;
             }
+            kw = p + 1;
+            break;   // skip over the "]"
           }
           if (has_mbyte) {
             int l = (*mb_ptr2len)(p + 1);
