@@ -21,6 +21,10 @@ ggoyyyjjjozzzz
 :redir => diffsettings
 :silent! :set diff? fdm? fdc? scb? crb? wrap?
 :redir END
+:let diff_fdm = &fdm
+:let diff_fdc = &fdc
+:" repeat entering diff mode here to see if this saves the wrong settings
+:diffthis
 :" jump to second window for a moment to have filler line appear at start of
 :" first window
 ggpgg:let one = winline()
@@ -47,6 +51,12 @@ j:let three = three . "-" . winline()
 :$-2,$w! test.out
 :"
 :" Test diffoff
+:diffoff!
+1
+:let &diff = 1
+:let &fdm = diff_fdm
+:let &fdc = diff_fdc
+4
 :diffoff!
 :$put =nodiffsettings
 :$put =diffsettings
@@ -82,7 +92,7 @@ j:let three = three . "-" . winline()
 :enew
 :put =w0
 :.w >> test.out
-:unlet! one two three nodiffsettings diffsettings nd1 nd2 nd3 w0
+:unlet! one two three nodiffsettings diffsettings diff_fdm diff_fdc nd1 nd2 nd3 w0
 :qa!
 ENDTEST
 
