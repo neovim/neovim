@@ -10593,9 +10593,10 @@ static void f_gettabvar(typval_T *argvars, typval_T *rettv)
   varname = get_tv_string_chk(&argvars[1]);
   tp = find_tabpage((int)get_tv_number_chk(&argvars[0], NULL));
   if (tp != NULL && varname != NULL) {
-    /* Set tp to be our tabpage, temporarily.  Also set the window to the
-     * first window in the tabpage, otherwise the window is not valid. */
-    if (switch_win(&oldcurwin, &oldtabpage, tp->tp_firstwin, tp, TRUE) == OK) {
+    // Set tp to be our tabpage, temporarily.  Also set the window to the
+    // first window in the tabpage, otherwise the window is not valid.
+    win_T *window = tp->tp_firstwin == NULL ? firstwin : tp->tp_firstwin;
+    if (switch_win(&oldcurwin, &oldtabpage, window, tp, true) == OK) {
       // look up the variable
       // Let gettabvar({nr}, "") return the "t:" dictionary.
       v = find_var_in_ht(&tp->tp_vars->dv_hashtab, 't', varname, FALSE);

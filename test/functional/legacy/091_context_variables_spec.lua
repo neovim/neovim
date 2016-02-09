@@ -13,6 +13,9 @@ describe('context variables', function()
     -- Test for getbufvar().
     -- Use strings to test for memory leaks.
     source([[
+      let t:testvar='abcd'
+      $put =string(gettabvar(1, 'testvar'))
+      $put =string(gettabvar(1, 'testvar'))
       let b:var_num = '1234'
       let def_num = '5678'
       $put =string(getbufvar(1, 'var_num'))
@@ -125,6 +128,8 @@ describe('context variables', function()
     -- Assert buffer contents.
     expect([[
       start:
+      'abcd'
+      'abcd'
       '1234'
       '1234'
       {'var_num': '1234'}
