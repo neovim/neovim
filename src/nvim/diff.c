@@ -1057,27 +1057,28 @@ void diff_win_options(win_T *wp, int addbuf)
   newFoldLevel();
   curwin = old_curwin;
 
-  wp->w_p_diff = TRUE;
-
   // Use 'scrollbind' and 'cursorbind' when available
-  if (!wp->w_p_diff_saved) {
+  if (!wp->w_p_diff) {
     wp->w_p_scb_save = wp->w_p_scb;
   }
   wp->w_p_scb = TRUE;
 
-  if (!wp->w_p_diff_saved) {
+  if (!wp->w_p_diff) {
     wp->w_p_crb_save = wp->w_p_crb;
   }
   wp->w_p_crb = TRUE;
 
-  if (!wp->w_p_diff_saved) {
+  if (!wp->w_p_diff) {
     wp->w_p_wrap_save = wp->w_p_wrap;
   }
   wp->w_p_wrap = FALSE;
   curwin = wp;
   curbuf = curwin->w_buffer;
 
-  if (!wp->w_p_diff_saved) {
+  if (!wp->w_p_diff) {
+    if (wp->w_p_diff_saved) {
+      free_string_option(wp->w_p_fdm_save);
+    }
     wp->w_p_fdm_save = vim_strsave(wp->w_p_fdm);
   }
   set_string_option_direct((char_u *)"fdm", -1, (char_u *)"diff",
@@ -1085,7 +1086,7 @@ void diff_win_options(win_T *wp, int addbuf)
   curwin = old_curwin;
   curbuf = curwin->w_buffer;
 
-  if (!wp->w_p_diff_saved) {
+  if (!wp->w_p_diff) {
     wp->w_p_fdc_save = wp->w_p_fdc;
     wp->w_p_fen_save = wp->w_p_fen;
     wp->w_p_fdl_save = wp->w_p_fdl;
@@ -1104,6 +1105,8 @@ void diff_win_options(win_T *wp, int addbuf)
   // Saved the current values, to be restored in ex_diffoff().
   wp->w_p_diff_saved = TRUE;
 
+  wp->w_p_diff = true;
+
   if (addbuf) {
     diff_buf_add(wp->w_buffer);
   }
@@ -1116,68 +1119,50 @@ void diff_win_options(win_T *wp, int addbuf)
 /// @param eap
 void ex_diffoff(exarg_T *eap)
 {
-  win_T *old_curwin = curwin;
-  int diffwin = FALSE;
+  int diffwin = false;
 
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     if (eap->forceit ? wp->w_p_diff : (wp == curwin)) {
-      // Set 'diff', 'scrollbind' off and 'wrap' on. If option values
-      // were saved in diff_win_options() restore them.
-      wp->w_p_diff = FALSE;
-
-      if (wp->w_p_scb) {
-        wp->w_p_scb = wp->w_p_diff_saved ? wp->w_p_scb_save : FALSE;
-      }
-
-      if (wp->w_p_crb) {
-        wp->w_p_crb = wp->w_p_diff_saved ? wp->w_p_crb_save : FALSE;
-      }
-
-      if (!wp->w_p_wrap) {
-        wp->w_p_wrap = wp->w_p_diff_saved ? wp->w_p_wrap_save : TRUE;
-      }
-      curwin = wp;
-      curbuf = curwin->w_buffer;
+      // Set 'diff' off. If option values were saved in
+      // diff_win_options(), restore the ones whose settings seem to have
+      // been left over from diff mode.
+      wp->w_p_diff = false;
 
       if (wp->w_p_diff_saved) {
+        if (wp->w_p_scb) {
+          wp->w_p_scb = wp->w_p_scb_save;
+        }
+
+        if (wp->w_p_crb) {
+          wp->w_p_crb = wp->w_p_crb_save;
+        }
+
+        if (!wp->w_p_wrap) {
+          wp->w_p_wrap = wp->w_p_wrap_save;
+        }
+
         free_string_option(wp->w_p_fdm);
-        wp->w_p_fdm = wp->w_p_fdm_save;
-        wp->w_p_fdm_save = empty_option;
-      } else {
-        set_string_option_direct((char_u *)"fdm", -1,
-                                 (char_u *)"manual", OPT_LOCAL | OPT_FREE, 0);
-      }
-      curwin = old_curwin;
-      curbuf = curwin->w_buffer;
-
-      if (wp->w_p_fdc == diff_foldcolumn) {
-        wp->w_p_fdc = wp->w_p_diff_saved ? wp->w_p_fdc_save : 0;
-      }
-
-      if ((wp->w_p_fdl == 0)
-          && wp->w_p_diff_saved) {
-        wp->w_p_fdl = wp->w_p_fdl_save;
-      }
-
-      if (wp->w_p_fen) {
+        wp->w_p_fdm = vim_strsave(wp->w_p_fdm_save);
+        if (wp->w_p_fdc == diff_foldcolumn) {
+          wp->w_p_fdc = wp->w_p_fdc_save;
+        }
+        if (wp->w_p_fdl == 0) {
+          wp->w_p_fdl = wp->w_p_fdl_save;
+        }
         // Only restore 'foldenable' when 'foldmethod' is not
         // "manual", otherwise we continue to show the diff folds.
-        if (foldmethodIsManual(wp) || !wp->w_p_diff_saved) {
-          wp->w_p_fen = FALSE;
-        } else {
-          wp->w_p_fen = wp->w_p_fen_save;
+        if (wp->w_p_fen) {
+          wp->w_p_fen = foldmethodIsManual(wp) ? false : wp->w_p_fen_save;
         }
+
+        foldUpdateAll(wp);
+
+        // make sure topline is not halfway through a fold
+        changed_window_setting_win(wp);
       }
-
-      foldUpdateAll(wp);
-
-      // make sure topline is not halfway through a fold
-      changed_window_setting_win(wp);
 
       // Note: 'sbo' is not restored, it's a global option.
       diff_buf_adjust(wp);
-
-      wp->w_p_diff_saved = FALSE;
     }
     diffwin |= wp->w_p_diff;
   }
