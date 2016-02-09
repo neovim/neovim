@@ -1676,7 +1676,8 @@ do_set (
                 if (adding) {
                   i = (int)STRLEN(origval);
                   // Strip a trailing comma, would get 2.
-                  if (comma && (flags & P_ONECOMMA) && i > 1
+                  if (comma && i > 1
+                      && (flags & P_ONECOMMA) == P_ONECOMMA
                       && origval[i - 1] == ','
                       && origval[i - 2] != '\\') {
                     i--;
