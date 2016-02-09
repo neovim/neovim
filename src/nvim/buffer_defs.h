@@ -904,13 +904,14 @@ struct posmatch
 typedef struct matchitem matchitem_T;
 struct matchitem {
   matchitem_T *next;
-  int id;                   /* match ID */
-  int priority;             /* match priority */
-  char_u      *pattern;     /* pattern to highlight */
-  int hlg_id;               /* highlight group ID */
-  regmmatch_T match;        /* regexp program for pattern */
-  posmatch_T pos;           // position matches
-  match_T hl;               /* struct for doing the actual highlighting */
+  int id;                   ///< match ID
+  int priority;             ///< match priority
+  char_u *pattern;          ///< pattern to highlight
+  int hlg_id;               ///< highlight group ID
+  regmmatch_T match;        ///< regexp program for pattern
+  posmatch_T pos;           ///< position matches
+  match_T hl;               ///< struct for doing the actual highlighting
+  int conceal_char;         ///< cchar for Conceal highlighting
 };
 
 /*

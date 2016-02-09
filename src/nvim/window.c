@@ -5342,14 +5342,14 @@ void restore_buffer(buf_T *save_curbuf)
 }
 
 
-/*
- * Add match to the match list of window 'wp'.  The pattern 'pat' will be
- * highlighted with the group 'grp' with priority 'prio'.
- * Optionally, a desired ID 'id' can be specified (greater than or equal to 1).
- * If no particular ID is desired, -1 must be specified for 'id'.
- * Return ID of added match, -1 on failure.
- */
-int match_add(win_T *wp, char_u *grp, char_u *pat, int prio, int id, list_T *pos_list)
+// Add match to the match list of window 'wp'.  The pattern 'pat' will be
+// highlighted with the group 'grp' with priority 'prio'.
+// Optionally, a desired ID 'id' can be specified (greater than or equal to 1).
+// If no particular ID is desired, -1 must be specified for 'id'.
+// Return ID of added match, -1 on failure.
+int match_add(win_T *wp, char_u *grp, char_u *pat,
+              int prio, int id, list_T *pos_list,
+              char_u *conceal_char)
 {
   matchitem_T *cur;
   matchitem_T *prev;
@@ -5405,6 +5405,10 @@ int match_add(win_T *wp, char_u *grp, char_u *pat, int prio, int id, list_T *pos
   m->match.regprog = regprog;
   m->match.rmm_ic = FALSE;
   m->match.rmm_maxcol = 0;
+  m->conceal_char = 0;
+  if (conceal_char != NULL) {
+    m->conceal_char = (*mb_ptr2char)(conceal_char);
+  }
 
   // Set up position matches
   if (pos_list != NULL)
