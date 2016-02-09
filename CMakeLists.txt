@@ -153,7 +153,11 @@ if(${INIT_FLAGS_NAME})
   set(CMAKE_REQUIRED_FLAGS "${${INIT_FLAGS_NAME}}")
 endif()
 
+# Include <string.h> because some toolchains define _FORTIFY_SOURCE=2 in
+# internal header files, which should in turn be #included by <string.h>.
 check_c_source_compiles("
+#include <string.h>
+
 #if defined(_FORTIFY_SOURCE) && _FORTIFY_SOURCE > 1
 #error \"_FORTIFY_SOURCE > 1\"
 #endif
