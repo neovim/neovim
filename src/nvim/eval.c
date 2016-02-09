@@ -3580,9 +3580,10 @@ static int eval4(char_u **arg, typval_T *rettv, int evaluate)
       type = TYPE_SEQUAL;
     break;
   case 'i':   if (p[1] == 's') {
-      if (p[2] == 'n' && p[3] == 'o' && p[4] == 't')
+      if (p[2] == 'n' && p[3] == 'o' && p[4] == 't') {
         len = 5;
-      if (!vim_isIDc(p[len])) {
+      }
+      if (!isalnum(p[len]) && p[len] != '_') {
         type = len == 2 ? TYPE_EQUAL : TYPE_NEQUAL;
         type_is = TRUE;
       }
