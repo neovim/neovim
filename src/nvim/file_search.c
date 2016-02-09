@@ -1057,6 +1057,8 @@ static ff_visited_list_hdr_T *ff_get_visited_list(char_u *filename, ff_visited_l
  */
 static int ff_wc_equal(char_u *s1, char_u *s2)
 {
+  int c1 = NUL;
+  int c2 = NUL;
   int prev1 = NUL;
   int prev2 = NUL;
 
@@ -1066,13 +1068,13 @@ static int ff_wc_equal(char_u *s1, char_u *s2)
   if (s1 == NULL || s2 == NULL)
     return FALSE;
 
-  for (int i = 0, j = 0; s1[i] != NUL;) {
-    int c1 = PTR2CHAR(s1 + i);
-    int c2 = PTR2CHAR(s2 + j);
+  for (int i = 0, j = 0; s1[i] != NUL && s2[j] != NUL;) {
+    c1 = PTR2CHAR(s1 + i);
+    c2 = PTR2CHAR(s2 + j);
 
     if ((p_fic ? vim_tolower(c1) != vim_tolower(c2) : c1 != c2)
         && (prev1 != '*' || prev2 != '*')) {
-      return FAIL;
+      return false;
     }
     prev2 = prev1;
     prev1 = c1;
@@ -1080,7 +1082,7 @@ static int ff_wc_equal(char_u *s1, char_u *s2)
     i += MB_PTR2LEN(s1 + i);
     j += MB_PTR2LEN(s2 + j);
   }
-  return TRUE;
+  return c1 == c2;
 }
 
 /*
