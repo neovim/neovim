@@ -3895,6 +3895,11 @@ void get_rel_pos(win_T *wp, char_u *buf, int buflen)
 
   above = wp->w_topline - 1;
   above += diff_check_fill(wp, wp->w_topline) - wp->w_topfill;
+  if (wp->w_topline == 1 && wp->w_topfill >= 1) {
+    // All buffer lines are displayed and there is an indication
+    // of filler lines, that can be considered seeing all lines.
+    above = 0;
+  }
   below = wp->w_buffer->b_ml.ml_line_count - wp->w_botline + 1;
   if (below <= 0)
     STRLCPY(buf, (above == 0 ? _("All") : _("Bot")), buflen);

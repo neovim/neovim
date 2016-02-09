@@ -18587,6 +18587,9 @@ static hashtab_T *find_var_ht_dict(char_u *name, uint8_t **varname, dict_T **d)
   hashitem_T  *hi;
   *d = NULL;
 
+  if (name[0] == NUL) {
+    return NULL;
+  }
   if (name[1] != ':') {
     // name has implicit scope
     if (name[0] == ':' || name[0] == AUTOLOAD_CHAR) {
@@ -18636,6 +18639,7 @@ end:
 }
 
 // Find the hashtab used for a variable name.
+// Return NULL if the name is not valid.
 // Set "varname" to the start of name without ':'.
 static hashtab_T *find_var_ht(uint8_t *name, uint8_t **varname)
 {
@@ -19631,7 +19635,10 @@ void ex_function(exarg_T *eap)
       break;
     }
   }
-  ++p;          /* skip the ')' */
+  if (*p != ')') {
+    goto erret;
+  }
+  ++p;  // skip the ')'
 
   /* find extra arguments "range", "dict" and "abort" */
   for (;; ) {

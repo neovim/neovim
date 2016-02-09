@@ -7160,10 +7160,11 @@ char_u * file_pat_to_reg_pat(
   else
     reg_pat[i++] = '^';
   endp = pat_end - 1;
-  if (*endp == '*') {
-    while (endp - pat > 0 && *endp == '*')
+  if (endp >= pat && *endp == '*') {
+    while (endp - pat > 0 && *endp == '*') {
       endp--;
-    add_dollar = FALSE;
+    }
+    add_dollar = false;
   }
   for (p = pat; *p && nested >= 0 && p <= endp; p++) {
     switch (*p) {
@@ -7218,12 +7219,12 @@ char_u * file_pat_to_reg_pat(
 #ifdef BACKSLASH_IN_FILENAME
           && no_bslash
 #endif
-          )
+          ) {
         reg_pat[i++] = '?';
-      else if (*p == ',' || *p == '%' || *p == '#'
-               || *p == ' ' || *p == '{' || *p == '}')
+      } else if (*p == ',' || *p == '%' || *p == '#'
+                 || ascii_isspace(*p) || *p == '{' || *p == '}') {
         reg_pat[i++] = *p;
-      else if (*p == '\\' && p[1] == '\\' && p[2] == '{') {
+      } else if (*p == '\\' && p[1] == '\\' && p[2] == '{') {
         reg_pat[i++] = '\\';
         reg_pat[i++] = '{';
         p += 2;
