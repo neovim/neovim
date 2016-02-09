@@ -1288,9 +1288,10 @@ void scroll_cursor_top(int min_scroll, int always)
    * - at least 'scrolloff' lines above and below the cursor
    */
   validate_cheight();
-  int used = curwin->w_cline_height;
-  if (curwin->w_cursor.lnum < curwin->w_topline)
+  int used = curwin->w_cline_height;  // includes filler lines above
+  if (curwin->w_cursor.lnum < curwin->w_topline) {
     scrolled = used;
+  }
 
   if (hasFolding(curwin->w_cursor.lnum, &top, &bot)) {
     --top;
@@ -1301,9 +1302,13 @@ void scroll_cursor_top(int min_scroll, int always)
   }
   new_topline = top + 1;
 
-  /* count filler lines of the cursor window as context */
-  int extra = diff_check_fill(curwin, curwin->w_cursor.lnum);
-  used += extra;
+  // used already contains the number of filler lines above, don't add it
+  // again.
+  // TODO: if filler lines above new top are to be considered as context for
+  // the current window, leave next statement commented, else hide filler
+  // lines above cursor line, by adding them to extra
+  // int extra += diff_check_fill(curwin, curwin->w_cursor.lnum);
+  int extra = 0;
 
   /*
    * Check if the lines from "top" to "bot" fit in the window.  If they do,
