@@ -1057,7 +1057,6 @@ static ff_visited_list_hdr_T *ff_get_visited_list(char_u *filename, ff_visited_l
  */
 static int ff_wc_equal(char_u *s1, char_u *s2)
 {
-  int i, j;
   int prev1 = NUL;
   int prev2 = NUL;
 
@@ -1067,7 +1066,7 @@ static int ff_wc_equal(char_u *s1, char_u *s2)
   if (s1 == NULL || s2 == NULL)
     return FALSE;
 
-  for (i = 0, j = 0; s1[i] != NUL;) {
+  for (int i = 0, j = 0; s1[i] != NUL;) {
     int c1 = PTR2CHAR(s1 + i);
     int c2 = PTR2CHAR(s2 + j);
 
