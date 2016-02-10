@@ -64,7 +64,7 @@ syn match matlabComment			"%.*$"	contains=matlabTodo,matlabTab
 syn match matlabComment			"\.\.\..*$"	contains=matlabTodo,matlabTab
 syn region matlabMultilineComment	start=+%{+ end=+%}+ contains=matlabTodo,matlabTab
 
-syn keyword matlabOperator		break zeros default margin round ones rand
+syn keyword matlabOperator		break zeros default round ones rand
 syn keyword matlabOperator		ceil floor size clear zeros eye mean std cov
 
 syn keyword matlabFunction		error eval function
