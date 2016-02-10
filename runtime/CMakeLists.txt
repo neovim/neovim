@@ -35,7 +35,7 @@ add_custom_command(OUTPUT ${GENERATED_HELP_TAGS}
   COMMAND "${PROJECT_BINARY_DIR}/bin/nvim"
     -u NONE
     -i NONE
-    -es
+    -e
     --headless
     -c "helptags ++t ."
     -c quit
