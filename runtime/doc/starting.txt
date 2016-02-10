@@ -217,7 +217,7 @@ argument.
 			:set      to display option values.
 		When 'verbose' is non-zero messages are printed (for
 		debugging, to stderr).
-		'term' and $TERM are not used.
+		$TERM is not used.
 		If Vim appears to be stuck try typing "qa!<Enter>".  You don't
 		get a prompt thus you can't see Vim is waiting for you to type
 		something.
@@ -354,13 +354,10 @@ argument.
 At startup, Vim checks environment variables and files and sets values
 accordingly.  Vim proceeds in this order:
 
-1. Set the 'shell' and 'term' option		*SHELL* *COMSPEC* *TERM*
+1. Set the 'shell' option		*SHELL* *COMSPEC* *TERM*
 	The environment variable SHELL, if it exists, is used to set the
 	'shell' option.  On Windows, the COMSPEC variable is used
 	if SHELL is not set.
-	The environment variable TERM, if it exists, is used to set the 'term'
-	option.  However, 'term' will change later when starting the GUI (step
-	8 below).
 
 2. Process the arguments
 	The options and file names from the command that start Vim are
@@ -705,8 +702,8 @@ vimrc file.
 These commands will write ":map" and ":set" commands to a file, in such a way
 that when these commands are executed, the current key mappings and options
 will be set to the same values.  The options 'columns', 'endofline',
-'fileformat', 'lines', 'modified', 'scroll', and 'term' are not included,
-because these are terminal or file dependent.
+'fileformat', 'lines', 'modified', and 'scroll' are not included, because 
+these are terminal or file dependent.
 Note that the options 'binary', 'paste' and 'readonly' are included, this
 might not always be what you want.
 

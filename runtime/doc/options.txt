@@ -50,8 +50,8 @@ achieve special effects.  These options come in three forms:
 :se[t] {option}&vim	Reset option to its Vim default value.
 
 :se[t] all&		Set all options, except terminal options, to their
-			default value.  The values of 'term', 'lines' and
-			'columns' are not changed.
+			default value.  The values of 'lines' and 'columns'
+			are not changed.
 
 						*:set-args* *E487* *E521*
 :se[t] {option}={value}		or
@@ -772,14 +772,13 @@ A jump table for the options with a short description can be found at |Q_op|.
 	putting a ":gui" command in the gvimrc file, before where the value
 	of 'background' is used (e.g., before ":syntax on").
 
-	For Windows the default is "dark".
-	For other systems "dark" is used when 'term' is "linux",
-	"screen.linux", "cygwin" or "putty", or $COLORFGBG suggests a dark
-	background.  Otherwise the default is "light".
+	For Windows the default is "dark". "dark" should be used if $COLORFGBG
+	suggests a dark	background (not yet implemented). Otherwise the default
+	is "light".
 
 	Normally this option would be set in the vimrc file.  Possibly
 	depending on the terminal name.  Example: >
-		:if &term == "xterm"
+		:if $TERM == "xterm"
 		:  set background=dark
 		:endif
 <	When this option is set, the default settings for the highlight groups
@@ -6371,17 +6370,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	mapping which should not change the tagstack.
 
 						*'term'* *E529* *E530* *E531*
-'term'			string	(default is $TERM, if that fails:
-				      in the GUI: "builtin_gui"
-					  on Mac: "mac-ansi"
-					 on Unix: "ansi"
-				       on Windows: "win32")
-			global
-	Name of the terminal.  Used for choosing the terminal control
-	characters.  Environment variables are expanded |:set_env|.
-	For example: >
-		:set term=$TERM
-<	See |termcap|.
+'term'			Removed. |vim-differences| {Nvim}
 
 						*'termbidi'* *'tbidi'*
 						*'notermbidi'* *'notbidi'*
@@ -6561,9 +6550,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 'ttyscroll' 'tsl'	Removed. |vim-differences| {Nvim}
 
 						*'ttytype'* *'tty'*
-'ttytype' 'tty'		string	(default from $TERM)
-			global
-	Alias for 'term', see above.
+'ttytype' 'tty'		Alias for 'term'. Removed. |vim-differences| {Nvim}
 
 						*'undodir'* *'udir'* *E926*
 'undodir' 'udir'	string	(default "$XDG_DATA_HOME/nvim/undo")
