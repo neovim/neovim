@@ -3,6 +3,7 @@ local helpers = require('test.functional.helpers')
 local clear, nvim, buffer = helpers.clear, helpers.nvim, helpers.buffer
 local curbuf, curwin, eq = helpers.curbuf, helpers.curwin, helpers.eq
 local curbufmeths, ok = helpers.curbufmeths, helpers.ok
+local funcs = helpers.funcs
 
 describe('buffer_* functions', function()
   before_each(clear)
@@ -234,11 +235,14 @@ describe('buffer_* functions', function()
 
   end)
 
-  describe('{get,set}_var', function()
+  describe('{get,set,del}_var', function()
     it('works', function()
       curbuf('set_var', 'lua', {1, 2, {['3'] = 1}})
       eq({1, 2, {['3'] = 1}}, curbuf('get_var', 'lua'))
       eq({1, 2, {['3'] = 1}}, nvim('eval', 'b:lua'))
+      eq(1, funcs.exists('b:lua'))
+      curbufmeths.del_var('lua')
+      eq(0, funcs.exists('b:lua'))
     end)
   end)
 

@@ -627,6 +627,7 @@ static int term_settermprop(VTermProp prop, VTermValue *val, void *data)
       api_free_object(dict_set_value(buf->b_vars,
                                      cstr_as_string("term_title"),
                                      STRING_OBJ(cstr_as_string(val->string)),
+                                     false,
                                      &err));
       break;
     }

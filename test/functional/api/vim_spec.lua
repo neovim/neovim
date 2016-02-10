@@ -4,6 +4,8 @@ local Screen = require('test.functional.ui.screen')
 local clear, nvim, eq, neq = helpers.clear, helpers.nvim, helpers.eq, helpers.neq
 local ok, nvim_async, feed = helpers.ok, helpers.nvim_async, helpers.feed
 local os_name = helpers.os_name
+local meths = helpers.meths
+local funcs = helpers.funcs
 
 describe('vim_* functions', function()
   before_each(clear)
@@ -70,11 +72,14 @@ describe('vim_* functions', function()
     end)
   end)
 
-  describe('{get,set}_var', function()
+  describe('{get,set,del}_var', function()
     it('works', function()
       nvim('set_var', 'lua', {1, 2, {['3'] = 1}})
       eq({1, 2, {['3'] = 1}}, nvim('get_var', 'lua'))
       eq({1, 2, {['3'] = 1}}, nvim('eval', 'g:lua'))
+      eq(1, funcs.exists('g:lua'))
+      meths.del_var('lua')
+      eq(0, funcs.exists('g:lua'))
     end)
 
     it('set_var returns the old value', function()
@@ -82,6 +87,14 @@ describe('vim_* functions', function()
       local val2 = {4, 7}
       eq(NIL, nvim('set_var', 'lua', val1))
       eq(val1, nvim('set_var', 'lua', val2))
+    end)
+
+    it('del_var returns the old value', function()
+      local val1 = {1, 2, {['3'] = 1}}
+      local val2 = {4, 7}
+      eq(nil, meths.set_var('lua', val1))
+      eq(val1, meths.set_var('lua', val2))
+      eq(val2, meths.del_var('lua'))
     end)
 
     it('truncates values with NULs in them', function()

@@ -90,14 +90,17 @@ Object dict_get_value(dict_T *dict, String key, Error *err)
 }
 
 /// Set a value in a dict. Objects are recursively expanded into their
-/// vimscript equivalents. Passing 'nil' as value deletes the key.
+/// vimscript equivalents.
 ///
 /// @param dict The vimscript dict
 /// @param key The key
 /// @param value The new value
+/// @param del Delete key in place of setting it. Argument `value` is ignored in
+///            this case.
 /// @param[out] err Details of an error that may have occurred
 /// @return the old value, if any
-Object dict_set_value(dict_T *dict, String key, Object value, Error *err)
+Object dict_set_value(dict_T *dict, String key, Object value, bool del,
+                      Error *err)
 {
   Object rv = OBJECT_INIT;
 
@@ -118,7 +121,7 @@ Object dict_set_value(dict_T *dict, String key, Object value, Error *err)
 
   dictitem_T *di = dict_find(dict, (uint8_t *)key.data, (int)key.size);
 
-  if (value.type == kObjectTypeNil) {
+  if (del) {
     // Delete the key
     if (di == NULL) {
       // Doesn't exist, fail

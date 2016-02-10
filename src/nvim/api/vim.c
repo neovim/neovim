@@ -331,7 +331,7 @@ Object vim_get_var(String name, Error *err)
   return dict_get_value(&globvardict, name, err);
 }
 
-/// Sets a global variable. Passing 'nil' as value deletes the variable.
+/// Sets a global variable
 ///
 /// @param name The variable name
 /// @param value The variable value
@@ -339,7 +339,17 @@ Object vim_get_var(String name, Error *err)
 /// @return the old value if any
 Object vim_set_var(String name, Object value, Error *err)
 {
-  return dict_set_value(&globvardict, name, value, err);
+  return dict_set_value(&globvardict, name, value, false, err);
+}
+
+/// Removes a global variable
+///
+/// @param name The variable name
+/// @param[out] err Details of an error that may have occurred
+/// @return the old value if any
+Object vim_del_var(String name, Error *err)
+{
+  return dict_set_value(&globvardict, name, NIL, true, err);
 }
 
 /// Gets a vim variable

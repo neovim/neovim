@@ -3,6 +3,9 @@ local helpers = require('test.functional.helpers')
 local clear, nvim, tabpage, curtab, eq, ok =
   helpers.clear, helpers.nvim, helpers.tabpage, helpers.curtab, helpers.eq,
   helpers.ok
+local wait = helpers.wait
+local curtabmeths = helpers.curtabmeths
+local funcs = helpers.funcs
 
 describe('tabpage_* functions', function()
   before_each(clear)
@@ -21,11 +24,14 @@ describe('tabpage_* functions', function()
     end)
   end)
 
-  describe('{get,set}_var', function()
+  describe('{get,set,del}_var', function()
     it('works', function()
       curtab('set_var', 'lua', {1, 2, {['3'] = 1}})
       eq({1, 2, {['3'] = 1}}, curtab('get_var', 'lua'))
       eq({1, 2, {['3'] = 1}}, nvim('eval', 't:lua'))
+      eq(1, funcs.exists('t:lua'))
+      curtabmeths.del_var('lua')
+      eq(0, funcs.exists('t:lua'))
     end)
   end)
 
