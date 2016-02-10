@@ -927,12 +927,14 @@ static inline int convert_to_json_string(garray_T *const gap,
             emsgf(_("E474: String \"%.*s\" contains byte that does not start "
                     "any UTF-8 character"),
                   utf_len - (i - shift), utf_buf + i - shift);
+            xfree(tofree);
             return FAIL;
           } else if ((SURROGATE_HI_START <= ch && ch <= SURROGATE_HI_END)
                      || (SURROGATE_LO_START <= ch && ch <= SURROGATE_LO_END)) {
             emsgf(_("E474: UTF-8 string contains code point which belongs "
                     "to a surrogate pair: %.*s"),
                   utf_len - (i - shift), utf_buf + i - shift);
+            xfree(tofree);
             return FAIL;
           } else if (ENCODE_RAW(p_enc_conv, ch)) {
             str_len += shift;
