@@ -8283,16 +8283,22 @@ static char_u *arg_all(void)
           retval[len] = ' ';
         ++len;
       }
-      for (; *p != NUL; ++p) {
-        if (*p == ' ' || *p == '\\') {
-          /* insert a backslash */
-          if (retval != NULL)
+      for (; *p != NUL; p++) {
+        if (*p == ' '
+#ifndef BACKSLASH_IN_FILENAME
+            || *p == '\\'
+#endif
+            ) {
+          // insert a backslash
+          if (retval != NULL) {
             retval[len] = '\\';
-          ++len;
+          }
+          len++;
         }
-        if (retval != NULL)
+        if (retval != NULL) {
           retval[len] = *p;
-        ++len;
+        }
+        len++;
       }
     }
 
