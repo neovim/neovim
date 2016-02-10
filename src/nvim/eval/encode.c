@@ -72,9 +72,6 @@ int encode_list_write(void *data, const char *buf, size_t len)
   list_T *const list = (list_T *) data;
   const char *const end = buf + len;
   const char *line_end = buf;
-  if (list->lv_last == NULL) {
-    list_append_string(list, NULL, 0);
-  }
   listitem_T *li = list->lv_last;
   do {
     const char *line_start = line_end;
@@ -94,11 +91,7 @@ int encode_list_write(void *data, const char *buf, size_t len)
         memcpy(str, line_start, line_length);
         str[line_length] = 0;
       }
-      for (size_t i = 0; i < line_length; i++) {
-        if (str[i] == NUL) {
-          str[i] = NL;
-        }
-      }
+      memchrsub(str, NUL, NL, line_length);
     }
     if (li == NULL) {
       list_append_allocated_string(list, str);
