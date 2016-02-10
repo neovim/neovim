@@ -30,7 +30,7 @@ Error: configure did not run properly.Check auto/config.log.
 
 /* Can't use "PACKAGE" here, conflicts with a Perl include file. */
 #ifndef VIMPACKAGE
-# define VIMPACKAGE     "vim"
+# define VIMPACKAGE     "nvim"
 #endif
 
 #include "nvim/os/os_defs.h"       /* bring lots of system header files */
