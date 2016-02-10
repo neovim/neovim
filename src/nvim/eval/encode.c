@@ -895,7 +895,8 @@ static inline int convert_to_json_string(garray_T *const gap,
     if (p_enc_conv.vc_type != CONV_NONE) {
       tofree = string_convert(&p_enc_conv, buf, &utf_len);
       if (tofree == NULL) {
-        EMSG2(_("E474: Failed to convert string \"%s\" to UTF-8"), utf_buf);
+        emsgf(_("E474: Failed to convert string \"%.*s\" to UTF-8"),
+              utf_len, utf_buf);
         return FAIL;
       }
       utf_buf = tofree;
@@ -930,18 +931,21 @@ static inline int convert_to_json_string(garray_T *const gap,
         }
         default: {
           if (ch > 0x7F && shift == 1) {
-            EMSG2(_("E474: String \"%s\" contains byte that does not start any "
-                    "UTF-8 character"), utf_buf);
+            emsgf(_("E474: String \"%.*s\" contains byte that does not start "
+                    "any UTF-8 character"),
+                  utf_len - (i - shift), utf_buf + i - shift);
             return FAIL;
-          } else if ((0xD800 <= ch && ch <= 0xDB7F)
-                     || (0xDC00 <= ch && ch <= 0xDFFF)) {
-            EMSG2(_("E474: UTF-8 string contains code point which belongs "
-                    "to surrogate pairs: %s"), utf_buf + i);
+          } else if ((SURROGATE_HI_START <= ch && ch <= SURROGATE_HI_END)
+                     || (SURROGATE_LO_START <= ch && ch <= SURROGATE_LO_END)) {
+            emsgf(_("E474: UTF-8 string contains code point which belongs "
+                    "to a surrogate pair: %.*s"),
+                  utf_len - (i - shift), utf_buf + i - shift);
             return FAIL;
           } else if (ENCODE_RAW(p_enc_conv, ch)) {
             str_len += shift;
           } else {
-            str_len += ((sizeof("\\u1234") - 1) * (size_t) (1 + (ch > 0xFFFF)));
+            str_len += ((sizeof("\\u1234") - 1)
+                        * (size_t) (1 + (ch >= SURROGATE_FIRST_CHAR)));
           }
           break;
         }

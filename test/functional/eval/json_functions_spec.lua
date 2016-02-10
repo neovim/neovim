@@ -663,4 +663,11 @@ describe('jsonencode() function', function()
     eq(1, eval('"\x01" =~# "\\\\p"'))
     eq('"\\u0001"', funcs.jsonencode('\x01'))
   end)
+
+  it('fails when using surrogate character in a UTF-8 string', function()
+    eq('Vim(call):E474: UTF-8 string contains code point which belongs to a surrogate pair: \xED\xA0\x80',
+       exc_exec('call jsonencode("\xED\xA0\x80")'))
+    eq('Vim(call):E474: UTF-8 string contains code point which belongs to a surrogate pair: \xED\xAF\xBF',
+       exc_exec('call jsonencode("\xED\xAF\xBF")'))
+  end)
 end)

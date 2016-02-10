@@ -609,6 +609,21 @@ int emsgu(char_u *s, uint64_t n)
   return emsg(IObuff);
 }
 
+/// Print an error message with unknown number of arguments
+bool emsgf(const char *const fmt, ...)
+{
+  if (emsg_not_now()) {
+    return true;
+  }
+
+  va_list ap;
+  va_start(ap, fmt);
+  vim_vsnprintf((char *) IObuff, IOSIZE, fmt, ap, NULL);
+  va_end(ap);
+
+  return emsg(IObuff);
+}
+
 /*
  * Like msg(), but truncate to a single line if p_shm contains 't', or when
  * "force" is TRUE.  This truncates in another way as for normal messages.
@@ -3097,11 +3112,12 @@ int vim_snprintf(char *str, size_t str_m, char *fmt, ...)
   return str_l;
 }
 
-int vim_vsnprintf(char *str, size_t str_m, char *fmt, va_list ap, typval_T *tvs)
+int vim_vsnprintf(char *str, size_t str_m, const char *fmt, va_list ap,
+                  typval_T *tvs)
 {
   size_t str_l = 0;
   bool str_avail = str_l < str_m;
-  char *p = fmt;
+  const char *p = fmt;
   int arg_idx = 1;
 
   if (!p) {
@@ -3135,7 +3151,7 @@ int vim_vsnprintf(char *str, size_t str_m, char *fmt, va_list ap, typval_T *tvs)
       char tmp[TMP_LEN];
 
       // string address in case of string argument
-      char *str_arg;
+      const char *str_arg;
 
       // natural field width of arg without padding and sign
       size_t str_arg_l;
