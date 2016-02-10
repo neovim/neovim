@@ -15,6 +15,7 @@
 #include "nvim/garray.h"
 #include "nvim/mbyte.h"
 #include "nvim/message.h"
+#include "nvim/memory.h"
 #include "nvim/charset.h"  // vim_isprintc()
 #include "nvim/macros.h"
 #include "nvim/ascii.h"
@@ -636,17 +637,10 @@ encode_vim_to_##name##_error_ret: \
         ga_concat(gap, "''"); \
       } else { \
         const size_t len_ = (len); \
-        size_t num_quotes = 0; \
-        for (size_t i = 0; i < len_; i++) { \
-          if (buf_[i] == '\'') { \
-            num_quotes++; \
-          } \
-        } \
-        ga_grow(gap, (int) (2 + len_ + num_quotes)); \
+        ga_grow(gap, (int) (2 + len_ + memcnt(buf_, '\'', len_))); \
         ga_append(gap, '\''); \
         for (size_t i = 0; i < len_; i++) { \
           if (buf_[i] == '\'') { \
-            num_quotes++; \
             ga_append(gap, '\''); \
           } \
           ga_append(gap, buf_[i]); \
