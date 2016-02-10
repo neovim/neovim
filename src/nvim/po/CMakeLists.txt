@@ -73,7 +73,7 @@ if(HAVE_WORKING_LIBINTL AND GETTEXT_FOUND AND XGETTEXT_PRG AND ICONV_PRG)
     install_helper(
       FILES ${moFile}
       DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/nvim/runtime/lang/${name}/LC_MESSAGES
-      RENAME vim.mo)
+      RENAME nvim.mo)
 
     list(APPEND LANGUAGE_MO_FILES ${moFile})
   endmacro()
