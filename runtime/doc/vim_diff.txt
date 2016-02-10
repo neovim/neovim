@@ -207,6 +207,7 @@ Other options:
   'shelltype'
   'shortname'
   'swapsync'
+  'term'
   'termencoding' (Vim 7.4.852 also removed this for Windows)
   'textauto'
   'textmode'
@@ -214,6 +215,8 @@ Other options:
   'toolbariconsize'
   'ttybuiltin'
   'ttymouse'
+  'ttyscroll'
+  'ttytype'
   'weirdinvert'
 
 Other commands:
