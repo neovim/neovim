@@ -1150,9 +1150,10 @@ do_set (
        */
       arg += 3;
       if (*arg == '&') {
-        ++arg;
-        /* Only for :set command set global value of local options. */
+        arg++;
+        // Only for :set command set global value of local options.
         set_options_default(OPT_FREE | opt_flags);
+        redraw_all_later(CLEAR);
       } else {
         showoptions(1, opt_flags);
         did_show = TRUE;
