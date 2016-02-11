@@ -10697,11 +10697,11 @@ getwinvar (
     int off                    /* 1 for gettabwinvar() */
 )
 {
-  win_T       *win, *oldcurwin;
-  char_u      *varname;
-  dictitem_T  *v;
-  tabpage_T   *tp = NULL;
-  tabpage_T   *oldtabpage = NULL;
+  win_T *win, *oldcurwin;
+  char_u *varname;
+  dictitem_T *v;
+  tabpage_T *tp = NULL;
+  tabpage_T *oldtabpage = NULL;
   bool done = false;
 
   if (off == 1)
@@ -10716,12 +10716,16 @@ getwinvar (
   rettv->vval.v_string = NULL;
 
   if (win != NULL && varname != NULL) {
-    /* Set curwin to be our win, temporarily.  Also set the tabpage,
-     * otherwise the window is not valid. */
-    if (switch_win(&oldcurwin, &oldtabpage, win, tp, TRUE) == OK) {
-      if (*varname == '&') {      /* window-local-option */
-        if (get_option_tv(&varname, rettv, 1) == OK)
+    // Set curwin to be our win, temporarily.  Also set the tabpage,
+    // otherwise the window is not valid. Only do this when needed,
+    // autocommands get blocked.
+    bool need_switch_win = tp != curtab || win != curwin;
+    if (!need_switch_win
+        || switch_win(&oldcurwin, &oldtabpage, win, tp, true) == OK) {
+      if (*varname == '&') {  // window-local-option
+        if (get_option_tv(&varname, rettv, 1) == OK) {
           done = true;
+        }
       } else {
         // Look up the variable.
         // Let getwinvar({nr}, "") return the "w:" dictionary.
@@ -10733,8 +10737,10 @@ getwinvar (
       }
     }
 
-    /* restore previous notion of curwin */
-    restore_win(oldcurwin, oldtabpage, TRUE);
+    if (need_switch_win) {
+      // restore previous notion of curwin
+      restore_win(oldcurwin, oldtabpage, true);
+    }
   }
 
   if (!done && argvars[off + 2].v_type != VAR_UNKNOWN)
@@ -15559,26 +15565,32 @@ static void setwinvar(typval_T *argvars, typval_T *rettv, int off)
   varname = get_tv_string_chk(&argvars[off + 1]);
   varp = &argvars[off + 2];
 
-  if (win != NULL && varname != NULL && varp != NULL
-      && switch_win(&save_curwin, &save_curtab, win, tp, TRUE) == OK) {
-    if (*varname == '&') {
-      long numval;
-      char_u      *strval;
-      int error = FALSE;
+  if (win != NULL && varname != NULL && varp != NULL) {
+    bool need_switch_win = tp != curtab || win != curwin;
+    if (!need_switch_win
+        || switch_win(&save_curwin, &save_curtab, win, tp, true) == OK) {
+      if (*varname == '&') {
+        long numval;
+        char_u *strval;
+        int error = false;
 
-      ++varname;
-      numval = get_tv_number_chk(varp, &error);
-      strval = get_tv_string_buf_chk(varp, nbuf);
-      if (!error && strval != NULL)
-        set_option_value(varname, numval, strval, OPT_LOCAL);
-    } else {
-      winvarname = xmalloc(STRLEN(varname) + 3);
-      STRCPY(winvarname, "w:");
-      STRCPY(winvarname + 2, varname);
-      set_var(winvarname, varp, TRUE);
-      xfree(winvarname);
+        ++varname;
+        numval = get_tv_number_chk(varp, &error);
+        strval = get_tv_string_buf_chk(varp, nbuf);
+        if (!error && strval != NULL) {
+          set_option_value(varname, numval, strval, OPT_LOCAL);
+        }
+      } else {
+        winvarname = xmalloc(STRLEN(varname) + 3);
+        STRCPY(winvarname, "w:");
+        STRCPY(winvarname + 2, varname);
+        set_var(winvarname, varp, TRUE);
+        xfree(winvarname);
+      }
     }
-    restore_win(save_curwin, save_curtab, TRUE);
+    if (need_switch_win) {
+      restore_win(save_curwin, save_curtab, true);
+    }
   }
 }
 
