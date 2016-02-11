@@ -4,7 +4,7 @@ local helpers = require('test.functional.helpers')
 local feed, insert, source = helpers.feed, helpers.insert, helpers.source
 local clear, execute, expect = helpers.clear, helpers.execute, helpers.expect
 
-describe('55', function()
+describe('list and dictionary types', function()
   before_each(clear)
 
   it('creating list directly with different types', function()
