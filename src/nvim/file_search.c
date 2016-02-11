@@ -1055,6 +1055,7 @@ static ff_visited_list_hdr_T *ff_get_visited_list(char_u *filename, ff_visited_l
 //    '**\20' is equal to '**\24'
 static bool ff_wc_equal(char_u *s1, char_u *s2)
 {
+  int i, j;
   int c1 = NUL;
   int c2 = NUL;
   int prev1 = NUL;
@@ -1068,7 +1069,7 @@ static bool ff_wc_equal(char_u *s1, char_u *s2)
     return false;
   }
 
-  for (int i = 0, j = 0; s1[i] != NUL && s2[j] != NUL;) {
+  for (i = 0, j = 0; s1[i] != NUL && s2[j] != NUL;) {
     c1 = PTR2CHAR(s1 + i);
     c2 = PTR2CHAR(s2 + j);
 
@@ -1082,7 +1083,7 @@ static bool ff_wc_equal(char_u *s1, char_u *s2)
     i += MB_PTR2LEN(s1 + i);
     j += MB_PTR2LEN(s2 + j);
   }
-  return c1 == c2;
+  return s1[i] == s2[j];
 }
 
 /*
