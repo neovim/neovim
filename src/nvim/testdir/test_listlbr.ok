@@ -52,3 +52,11 @@ abcdpqrs
 Test 11: using block replace mode after wrapping
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa0aaa
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa0aaa
+Test 12: set linebreak list listchars=space:_,tab:>-,tail:-,eol:$
+a aaaaaaaaaaaaaaaaaaaaaa	a 
+
+Test 12: set linebreak list listchars=space:_,tab:>-,tail:-,eol:$
+a_                  
+aaaaaaaaaaaaaaaaaaaa
+aa>-----a-$         
+~                   
