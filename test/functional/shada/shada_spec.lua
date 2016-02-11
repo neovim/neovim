@@ -174,6 +174,7 @@ describe('ShaDa support code', function()
     nvim_command('set shada+=%')
     nvim_command('wshada! ' .. shada_fname)
     local readme_fname = paths.test_source_path .. '/README.md'
+    readme_fname = helpers.eval( 'resolve("' .. readme_fname .. '")' )
     eq({[7]=1, [8]=2, [9]=1, [10]=4, [11]=1}, find_file(readme_fname))
     nvim_command('set shada+=r~')
     nvim_command('wshada! ' .. shada_fname)
