@@ -7797,9 +7797,7 @@ static void get_op_vcol(
     return;
   }
 
-  if (VIsual_active) {
-    oap->motion_type = MBLOCK;
-  }
+  oap->motion_type = MBLOCK;
 
   // prevent from moving onto a trail byte
   if (has_mbyte) {

@@ -88,6 +88,10 @@ Go
 abcd{ef
 ghijklm
 no}pqrs2k0f{c%
+:let g:test ="Test 11: using block replace mode after wrapping"
+:$put =g:test
+:set linebreak wrap
+Go150aayypk147|jr0
 :%w! test.out
 :qa!
 ENDTEST
