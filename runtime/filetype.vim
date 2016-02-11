@@ -868,7 +868,7 @@ func! s:FThtml()
       setf xhtml
       return
     endif
-    if getline(n) =~ '{%\s*\(extends\|block\|load\)\>'
+    if getline(n) =~ '{%\s*\(extends\|block\|load\)\>\|{#\s\+'
       setf htmldjango
       return
     endif
