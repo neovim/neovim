@@ -1555,55 +1555,31 @@ int op_delete(oparg_T *oap)
         if (gchar_cursor() != NUL)
           curwin->w_cursor.coladd = 0;
       }
-      if (oap->op_type == OP_DELETE
-          && oap->inclusive
-          && oap->end.lnum == curbuf->b_ml.ml_line_count
-          && n > (int)STRLEN(ml_get(oap->end.lnum))) {
-        /* Special case: gH<Del> deletes the last line. */
-        del_lines(1L, FALSE);
-      } else {
-        (void)del_bytes((long)n, !virtual_op, oap->op_type == OP_DELETE
-            && !oap->is_VIsual
-            );
-      }
-    } else {                          /* delete characters between lines */
+
+      (void)del_bytes((long)n, !virtual_op,
+                      oap->op_type == OP_DELETE && !oap->is_VIsual);
+    } else {
+      // delete characters between lines
       pos_T curpos;
-      int delete_last_line;
 
       /* save deleted and changed lines for undo */
       if (u_save((linenr_T)(curwin->w_cursor.lnum - 1),
               (linenr_T)(curwin->w_cursor.lnum + oap->line_count)) == FAIL)
         return FAIL;
 
-      delete_last_line = (oap->end.lnum == curbuf->b_ml.ml_line_count);
-      truncate_line(TRUE);              /* delete from cursor to end of line */
+      truncate_line(true);        // delete from cursor to end of line
 
-      curpos = curwin->w_cursor;        /* remember curwin->w_cursor */
-      ++curwin->w_cursor.lnum;
-      del_lines(oap->line_count - 2, FALSE);
+      curpos = curwin->w_cursor;  // remember curwin->w_cursor
+      curwin->w_cursor.lnum++;
+      del_lines(oap->line_count - 2, false);
 
-      if (delete_last_line)
-        oap->end.lnum = curbuf->b_ml.ml_line_count;
-
+      // delete from start of line until op_end
       n = (oap->end.col + 1 - !oap->inclusive);
-      if (oap->inclusive && delete_last_line
-          && n > (int)STRLEN(ml_get(oap->end.lnum))) {
-        /* Special case: gH<Del> deletes the last line. */
-        del_lines(1L, FALSE);
-        curwin->w_cursor = curpos;              /* restore curwin->w_cursor */
-        if (curwin->w_cursor.lnum > curbuf->b_ml.ml_line_count)
-          curwin->w_cursor.lnum = curbuf->b_ml.ml_line_count;
-      } else {
-        /* delete from start of line until op_end */
-        curwin->w_cursor.col = 0;
-        (void)del_bytes((long)n, !virtual_op, oap->op_type == OP_DELETE
-            && !oap->is_VIsual
-            );
-        curwin->w_cursor = curpos;              /* restore curwin->w_cursor */
-      }
-      if (curwin->w_cursor.lnum < curbuf->b_ml.ml_line_count) {
-        do_join(2, FALSE, FALSE, FALSE, false);
-      }
+      curwin->w_cursor.col = 0;
+      (void)del_bytes((long)n, !virtual_op,
+                      oap->op_type == OP_DELETE && !oap->is_VIsual);
+      curwin->w_cursor = curpos;  // restore curwin->w_cursor
+      (void)do_join(2, false, false, false, false);
     }
   }
 
@@ -2688,17 +2664,27 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
 
   if (y_type == MLINE) {
     if (flags & PUT_LINE_SPLIT) {
-      /* "p" or "P" in Visual mode: split the lines to put the text in
-       * between. */
-      if (u_save_cursor() == FAIL)
+      // "p" or "P" in Visual mode: split the lines to put the text in
+      // between.
+      if (u_save_cursor() == FAIL) {
         goto end;
-      ptr = vim_strsave(get_cursor_pos_ptr());
-      ml_append(curwin->w_cursor.lnum, ptr, (colnr_T)0, FALSE);
+      }
+      char_u *p = get_cursor_pos_ptr();
+      if (dir == FORWARD && *p != NUL) {
+        mb_ptr_adv(p);
+      }
+      ptr = vim_strsave(p);
+      ml_append(curwin->w_cursor.lnum, ptr, (colnr_T)0, false);
       xfree(ptr);
 
-      ptr = vim_strnsave(get_cursor_line_ptr(), curwin->w_cursor.col);
-      ml_replace(curwin->w_cursor.lnum, ptr, FALSE);
-      ++nr_lines;
+      oldp = get_cursor_line_ptr();
+      p = oldp + curwin->w_cursor.col;
+      if (dir == FORWARD && *p != NUL) {
+        mb_ptr_adv(p);
+      }
+      ptr = vim_strnsave(oldp, p - oldp);
+      ml_replace(curwin->w_cursor.lnum, ptr, false);
+      nr_lines++;
       dir = FORWARD;
     }
     if (flags & PUT_LINE_FORWARD) {
