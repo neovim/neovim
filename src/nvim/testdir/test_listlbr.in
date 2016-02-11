@@ -81,6 +81,13 @@ Go
 aaa
 aaa
 a2k2j~e.
+:let g:test ="Test 10: using normal commands after block-visual"
+:$put =g:test
+:set linebreak
+Go
+abcd{ef
+ghijklm
+no}pqrs2k0f{c%
 :%w! test.out
 :qa!
 ENDTEST

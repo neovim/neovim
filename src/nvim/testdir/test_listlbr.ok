@@ -46,3 +46,6 @@ Test 9: using redo after block visual mode
 AaA
 AaA
 A
+Test 10: using normal commands after block-visual
+
+abcdpqrs
