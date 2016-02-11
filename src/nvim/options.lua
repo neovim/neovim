@@ -15,7 +15,7 @@
 --  }
 -- }
 -- types: bool, number, string
--- lists: (nil), comma, flags, flagscomma
+-- lists: (nil), comma, onecomma, flags, flagscomma
 -- scopes: global, buffer, window
 -- redraw options: statuslines, current_window, current_buffer, all_windows, 
 --                 everything, curswant
@@ -133,7 +133,7 @@ return {
     },
     {
       full_name='backspace', abbreviation='bs',
-      type='string', list='comma', scope={'global'},
+      type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
       vim=true,
       varname='p_bs',
@@ -149,7 +149,7 @@ return {
     },
     {
       full_name='backupcopy', abbreviation='bkc',
-      type='string', list='comma', scope={'global', 'buffer'},
+      type='string', list='onecomma', scope={'global', 'buffer'},
       deny_duplicates=true,
       vim=true,
       varname='p_bkc',
@@ -161,7 +161,7 @@ return {
     },
     {
       full_name='backupdir', abbreviation='bdir',
-      type='string', list='comma', scope={'global'},
+      type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
       secure=true,
       vi_def=true,
@@ -179,7 +179,7 @@ return {
     },
     {
       full_name='backupskip', abbreviation='bsk',
-      type='string', list='comma', scope={'global'},
+      type='string', list='onecomma', scope={'global'},
       vi_def=true,
       varname='p_bsk',
       defaults={if_true={vi=""}}
@@ -227,7 +227,7 @@ return {
     },
     {
       full_name='breakindentopt', abbreviation='briopt',
-      type='string', list='comma', scope={'window'},
+      type='string', list='onecomma', scope={'window'},
       deny_duplicates=true,
       vi_def=true,
       alloced=true,
@@ -268,7 +268,7 @@ return {
     },
     {
       full_name='casemap', abbreviation='cmp',
-      type='string', list='comma', scope={'global'},
+      type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
       vi_def=true,
       varname='p_cmp',
@@ -307,7 +307,7 @@ return {
     },
     {
       full_name='cinkeys', abbreviation='cink',
-      type='string', list='comma', scope={'buffer'},
+      type='string', list='onecomma', scope={'buffer'},
       deny_duplicates=true,
       vi_def=true,
       alloced=true,
@@ -316,7 +316,7 @@ return {
     },
     {
       full_name='cinoptions', abbreviation='cino',
-      type='string', list='comma', scope={'buffer'},
+      type='string', list='onecomma', scope={'buffer'},
       deny_duplicates=true,
       vi_def=true,
       alloced=true,
@@ -325,7 +325,7 @@ return {
     },
     {
       full_name='cinwords', abbreviation='cinw',
-      type='string', list='comma', scope={'buffer'},
+      type='string', list='onecomma', scope={'buffer'},
       deny_duplicates=true,
       vi_def=true,
       alloced=true,
@@ -334,7 +334,7 @@ return {
     },
     {
       full_name='clipboard', abbreviation='cb',
-      type='string', list='comma', scope={'global'},
+      type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
       vi_def=true,
       varname='p_cb',
@@ -357,7 +357,7 @@ return {
     },
     {
       full_name='colorcolumn', abbreviation='cc',
-      type='string', list='comma', scope={'window'},
+      type='string', list='onecomma', scope={'window'},
       deny_duplicates=true,
       vi_def=true,
       redraw={'current_window'},
@@ -375,7 +375,7 @@ return {
     },
     {
       full_name='comments', abbreviation='com',
-      type='string', list='comma', scope={'buffer'},
+      type='string', list='onecomma', scope={'buffer'},
       deny_duplicates=true,
       vi_def=true,
       alloced=true,
@@ -403,7 +403,7 @@ return {
     },
     {
       full_name='complete', abbreviation='cpt',
-      type='string', list='comma', scope={'buffer'},
+      type='string', list='onecomma', scope={'buffer'},
       deny_duplicates=true,
       alloced=true,
       varname='p_cpt',
@@ -435,7 +435,7 @@ return {
     },
     {
       full_name='completeopt', abbreviation='cot',
-      type='string', list='comma', scope={'global'},
+      type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
       vi_def=true,
       varname='p_cot',
@@ -483,7 +483,7 @@ return {
     },
     {
       full_name='cscopequickfix', abbreviation='csqf',
-      type='string', list='comma', scope={'global'},
+      type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
       vi_def=true,
       varname='p_csqf',
@@ -568,7 +568,7 @@ return {
     },
     {
       full_name='dictionary', abbreviation='dict',
-      type='string', list='comma', scope={'global', 'buffer'},
+      type='string', list='onecomma', scope={'global', 'buffer'},
       deny_duplicates=true,
       vi_def=true,
       expand=true,
@@ -594,7 +594,7 @@ return {
     },
     {
       full_name='diffopt', abbreviation='dip',
-      type='string', list='comma', scope={'global'},
+      type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
       vi_def=true,
       alloced=true,
@@ -612,7 +612,7 @@ return {
     },
     {
       full_name='directory', abbreviation='dir',
-      type='string', list='comma', scope={'global'},
+      type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
       secure=true,
       vi_def=true,
@@ -622,7 +622,7 @@ return {
     },
     {
       full_name='display', abbreviation='dy',
-      type='string', list='comma', scope={'global'},
+      type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
       vim=true,
       redraw={'all_windows'},
@@ -696,7 +696,7 @@ return {
     },
     {
       full_name='errorformat', abbreviation='efm',
-      type='string', list='comma', scope={'global', 'buffer'},
+      type='string', list='onecomma', scope={'global', 'buffer'},
       deny_duplicates=true,
       vi_def=true,
       varname='p_efm',
@@ -711,7 +711,7 @@ return {
     },
     {
       full_name='eventignore', abbreviation='ei',
-      type='string', list='comma', scope={'global'},
+      type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
       vi_def=true,
       varname='p_ei',
@@ -745,7 +745,7 @@ return {
     },
     {
       full_name='fileencodings', abbreviation='fencs',
-      type='string', list='comma', scope={'global'},
+      type='string', list='onecomma', scope={'global'},
       vi_def=true,
       varname='p_fencs',
       defaults={if_true={vi="ucs-bom,utf-8,default,latin1"}}
@@ -762,7 +762,7 @@ return {
     },
     {
       full_name='fileformats', abbreviation='ffs',
-      type='string', list='comma', scope={'global'},
+      type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
       vim=true,
       varname='p_ffs',
@@ -791,7 +791,7 @@ return {
     },
     {
       full_name='fillchars', abbreviation='fcs',
-      type='string', list='comma', scope={'global'},
+      type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
       vi_def=true,
       redraw={'all_windows'},
@@ -815,7 +815,7 @@ return {
     },
     {
       full_name='foldclose', abbreviation='fcl',
-      type='string', list='comma', scope={'global'},
+      type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
       vi_def=true,
       redraw={'current_window'},
@@ -871,7 +871,7 @@ return {
     },
     {
       full_name='foldmarker', abbreviation='fmr',
-      type='string', list='comma', scope={'window'},
+      type='string', list='onecomma', scope={'window'},
       deny_duplicates=true,
       vi_def=true,
       vim=true,
@@ -904,7 +904,7 @@ return {
     },
     {
       full_name='foldopen', abbreviation='fdo',
-      type='string', list='comma', scope={'global'},
+      type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
       vi_def=true,
       redraw={'curswant'},
@@ -972,7 +972,7 @@ return {
     },
     {
       full_name='grepformat', abbreviation='gfm',
-      type='string', list='comma', scope={'global'},
+      type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
       vi_def=true,
       varname='p_gefm',
@@ -995,7 +995,7 @@ return {
     },
     {
       full_name='guicursor', abbreviation='gcr',
-      type='string', list='comma', scope={'global'},
+      type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
       vi_def=true,
       varname='p_guicursor',
@@ -1003,7 +1003,7 @@ return {
     },
     {
       full_name='guifont', abbreviation='gfn',
-      type='string', list='comma', scope={'global'},
+      type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
       vi_def=true,
       redraw={'everything'},
@@ -1011,14 +1011,14 @@ return {
     },
     {
       full_name='guifontset', abbreviation='gfs',
-      type='string', list='comma', scope={'global'},
+      type='string', list='onecomma', scope={'global'},
       vi_def=true,
       redraw={'everything'},
       enable_if=false,
     },
     {
       full_name='guifontwide', abbreviation='gfw',
-      type='string', list='comma', scope={'global'},
+      type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
       vi_def=true,
       redraw={'everything'},
@@ -1070,7 +1070,7 @@ return {
     },
     {
       full_name='helplang', abbreviation='hlg',
-      type='string', list='comma', scope={'global'},
+      type='string', list='onecomma', scope={'global'},
       vi_def=true,
       varname='p_hlg',
       defaults={if_true={vi=""}}
@@ -1084,7 +1084,7 @@ return {
     },
     {
       full_name='highlight', abbreviation='hl',
-      type='string', list='comma', scope={'global'},
+      type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
       vi_def=true,
       redraw={'everything'},
@@ -1213,7 +1213,7 @@ return {
     },
     {
       full_name='indentkeys', abbreviation='indk',
-      type='string', list='comma', scope={'buffer'},
+      type='string', list='onecomma', scope={'buffer'},
       deny_duplicates=true,
       vi_def=true,
       alloced=true,
@@ -1297,7 +1297,7 @@ return {
     },
     {
       full_name='keymodel', abbreviation='km',
-      type='string', list='comma', scope={'global'},
+      type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
       vi_def=true,
       varname='p_km',
@@ -1316,7 +1316,7 @@ return {
     },
     {
       full_name='langmap', abbreviation='lmap',
-      type='string', list='comma', scope={'global'},
+      type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
       secure=true,
       vi_def=true,
@@ -1385,7 +1385,7 @@ return {
     },
     {
       full_name='lispwords', abbreviation='lw',
-      type='string', list='comma', scope={'global', 'buffer'},
+      type='string', list='onecomma', scope={'global', 'buffer'},
       deny_duplicates=true,
       vi_def=true,
       varname='p_lispwords', pv_name='p_lw',
@@ -1400,7 +1400,7 @@ return {
     },
     {
       full_name='listchars', abbreviation='lcs',
-      type='string', list='comma', scope={'global'},
+      type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
       vim=true,
       redraw={'all_windows'},
@@ -1441,7 +1441,7 @@ return {
     },
     {
       full_name='matchpairs', abbreviation='mps',
-      type='string', list='comma', scope={'buffer'},
+      type='string', list='onecomma', scope={'buffer'},
       deny_duplicates=true,
       vi_def=true,
       alloced=true,
@@ -1581,7 +1581,7 @@ return {
     },
     {
       full_name='mouseshape', abbreviation='mouses',
-      type='string', list='comma', scope={'global'},
+      type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
       vi_def=true,
       enable_if=false,
@@ -1595,7 +1595,7 @@ return {
     },
     {
       full_name='nrformats', abbreviation='nf',
-      type='string', list='comma', scope={'buffer'},
+      type='string', list='onecomma', scope={'buffer'},
       deny_duplicates=true,
       alloced=true,
       varname='p_nf',
@@ -1762,7 +1762,7 @@ return {
     },
     {
       full_name='printoptions', abbreviation='popt',
-      type='string', list='comma', scope={'global'},
+      type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
       vi_def=true,
       varname='p_popt',
@@ -1877,7 +1877,7 @@ return {
     },
     {
       full_name='runtimepath', abbreviation='rtp',
-      type='string', list='comma', scope={'global'},
+      type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
       secure=true,
       vi_def=true,
@@ -1919,7 +1919,7 @@ return {
     },
     {
       full_name='scrollopt', abbreviation='sbo',
-      type='string', list='comma', scope={'global'},
+      type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
       vi_def=true,
       varname='p_sbo',
@@ -1949,7 +1949,7 @@ return {
     },
     {
       full_name='selectmode', abbreviation='slm',
-      type='string', list='comma', scope={'global'},
+      type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
       vi_def=true,
       varname='p_slm',
@@ -1957,7 +1957,7 @@ return {
     },
     {
       full_name='sessionoptions', abbreviation='ssop',
-      type='string', list='comma', scope={'global'},
+      type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
       vim=true,
       varname='p_ssop',
@@ -1968,7 +1968,7 @@ return {
     },
     {
       full_name='shada', abbreviation='sd',
-      type='string', list='comma', scope={'global'},
+      type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
       secure=true,
       varname='p_shada',
@@ -2192,7 +2192,7 @@ return {
     },
     {
       full_name='spellfile', abbreviation='spf',
-      type='string', list='comma', scope={'buffer'},
+      type='string', list='onecomma', scope={'buffer'},
       secure=true,
       vi_def=true,
       alloced=true,
@@ -2202,7 +2202,7 @@ return {
     },
     {
       full_name='spelllang', abbreviation='spl',
-      type='string', list='comma', scope={'buffer'},
+      type='string', list='onecomma', scope={'buffer'},
       vi_def=true,
       alloced=true,
       expand=true,
@@ -2212,7 +2212,7 @@ return {
     },
     {
       full_name='spellsuggest', abbreviation='sps',
-      type='string', list='comma', scope={'global'},
+      type='string', list='onecomma', scope={'global'},
       secure=true,
       vi_def=true,
       expand=true,
@@ -2252,7 +2252,7 @@ return {
     },
     {
       full_name='suffixes', abbreviation='su',
-      type='string', list='comma', scope={'global'},
+      type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
       vi_def=true,
       varname='p_su',
@@ -2260,7 +2260,7 @@ return {
     },
     {
       full_name='suffixesadd', abbreviation='sua',
-      type='string', list='comma', scope={'buffer'},
+      type='string', list='onecomma', scope={'buffer'},
       deny_duplicates=true,
       vi_def=true,
       alloced=true,
@@ -2277,7 +2277,7 @@ return {
     },
     {
       full_name='switchbuf', abbreviation='swb',
-      type='string', list='comma', scope={'global'},
+      type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
       vi_def=true,
       varname='p_swb',
@@ -2347,7 +2347,7 @@ return {
     },
     {
       full_name='tags', abbreviation='tag',
-      type='string', list='comma', scope={'global', 'buffer'},
+      type='string', list='onecomma', scope={'global', 'buffer'},
       deny_duplicates=true,
       vi_def=true,
       expand=true,
@@ -2393,7 +2393,7 @@ return {
     },
     {
       full_name='thesaurus', abbreviation='tsr',
-      type='string', list='comma', scope={'global', 'buffer'},
+      type='string', list='onecomma', scope={'global', 'buffer'},
       deny_duplicates=true,
       vi_def=true,
       expand=true,
@@ -2478,7 +2478,7 @@ return {
     },
     {
       full_name='undodir', abbreviation='udir',
-      type='string', list='comma', scope={'global'},
+      type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
       secure=true,
       vi_def=true,
@@ -2549,7 +2549,7 @@ return {
     },
     {
       full_name='viewoptions', abbreviation='vop',
-      type='string', list='comma', scope={'global'},
+      type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
       vi_def=true,
       varname='p_vop',
@@ -2557,7 +2557,7 @@ return {
     },
     {
       full_name='viminfo', abbreviation='vi',
-      type='string', list='comma', scope={'global'},
+      type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
       secure=true,
       varname='p_shada',
@@ -2565,7 +2565,7 @@ return {
     },
     {
       full_name='virtualedit', abbreviation='ve',
-      type='string', list='comma', scope={'global'},
+      type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
       vi_def=true,
       vim=true,
@@ -2610,7 +2610,7 @@ return {
     },
     {
       full_name='wildignore', abbreviation='wig',
-      type='string', list='comma', scope={'global'},
+      type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
       vi_def=true,
       varname='p_wig',
@@ -2632,7 +2632,7 @@ return {
     },
     {
       full_name='wildmode', abbreviation='wim',
-      type='string', list='comma', scope={'global'},
+      type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
       vim=true,
       varname='p_wim',
