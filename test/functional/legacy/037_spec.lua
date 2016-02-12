@@ -8,7 +8,7 @@ describe('37', function()
   setup(clear)
 
   it('is working', function()
-    insert([=[
+    insert([[
       start of window 1
       . line 01 0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ 01
       . line 02 0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ 02
@@ -47,7 +47,7 @@ describe('37', function()
       . line 16 ZYXWVUTSRQPONMLKJIHGREDCBA9876543210 16
       end of window 2
       
-      end of test37.in (please don't delete this line)]=])
+      end of test37.in (please don't delete this line)]])
 
     execute('set noscrollbind')
     execute('set scrollopt=ver,jump')
@@ -120,7 +120,7 @@ describe('37', function()
     feed('<C-W>tH3k<C-W>jH<C-W>tHyy<C-W>bp<C-W>t<C-W>jyy<C-W>bp:<cr>')
 
     -- Assert buffer contents.
-    expect([=[
+    expect([[
       
       0 line 05 ZYXWVUTSRQPONMLKJIHGREDCBA9876543210 05
       1 line 05 0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ 05
@@ -152,7 +152,7 @@ describe('37', function()
       :set scrollbind
       :set scrollbind
       . line 16 ZYXWVUTSRQPONMLKJIHGREDCBA9876543210 16
-      ]=]..'\x17'..[=[j:
-      . line 12 ZYXWVUTSRQPONMLKJIHGREDCBA9876543210 12]=])
+      ]]..'\x17'..[[j:
+      . line 12 ZYXWVUTSRQPONMLKJIHGREDCBA9876543210 12]])
   end)
 end)
