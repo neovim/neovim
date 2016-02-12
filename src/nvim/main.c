@@ -332,12 +332,12 @@ int main(int argc, char **argv)
   /* Source startup scripts. */
   source_startup_scripts(&params);
 
-  // If using the runtime (-u is not NONE), enable syntax and filetype plugins
+  // If using the runtime (-u is not NONE), enable syntax & filetype plugins.
   if (params.use_vimrc != NULL && strcmp(params.use_vimrc, "NONE") != 0) {
-    // Do this before syntax/syntax.vim (which calls `:filetype on`).
+    // Do ":filetype plugin indent on".
     force_enable_filetype();
-    // Enable syntax highlighting.
-    syn_cmd("syntax");  // sources syntax/syntax.vim
+    // Enable syntax (sources syntax/syntax.vim, which calls `:filetype on`).
+    syn_cmd("syntax");
   }
 
   /*
