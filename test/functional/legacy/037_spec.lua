@@ -61,23 +61,31 @@ describe('37', function()
     execute('new')
     feed('<C-W>t')
     execute('resize 8')
+    -- Intermediate check: Window height is really 8.
+    eq(7, eval('line("w$") - line("w0")'))
     execute('/^start of window 1$/')
     feed('zt')
-    eq(1, eval('line("w0")')) -- TODO
-    eq(8, eval('line("w$")')) -- TODO
+    -- Intermediate check: 'scrolloff' has no effect if we are at the top of
+    -- the buffer.
+    eq(1, eval('line(".")'))
+    eq(1, eval('line("w0")'))
     execute('set scrollbind')
     feed('<C-W>j')
     execute('resize 7')
+    -- Intermediate check: Window height is really 7.
     eq(6, eval('line("w$") - line("w0")'))
     execute('/^start of window 2$/')
     feed('zt')
-    wait()
-    eq(20, eval('line("w0")')) -- TODO
-    eq(26, eval('line("w$")')) -- TODO
+    -- Intermediate check: 'scrolloff' has an effect here.
+    eq(18, eval('line("w0")'))
+    eq(20, eval('line(".")'))
     execute('set scrollbind')
     -- -- start of tests --.
     -- TEST scrolling down.
     feed('L')
+    -- Intermediate check: 'scrolloff' has an effect here.
+    eq(22, eval('line(".")'))
+    eq(24, eval('line("w$")'))
     feed('5j')
     feed('H')
     feed('yy')
