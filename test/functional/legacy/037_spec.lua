@@ -5,6 +5,13 @@ local feed, insert, source = helpers.feed, helpers.insert, helpers.source
 local clear, execute, expect = helpers.clear, helpers.execute, helpers.expect
 local eq, eval, wait = helpers.eq, helpers.eval, helpers.wait
 
+local function expect_scroll_pos(cursor, top, bottom)
+  wait()
+  eq(cursor, eval('line(".")'))
+  eq(top, eval('line("w0")'))
+  eq(bottom, eval('line("w$")'))
+end
+
 describe('37', function()
   setup(clear)
 
@@ -77,23 +84,23 @@ describe('37', function()
     execute('/^start of window 2$/')
     feed('zt')
     -- Intermediate check: 'scrolloff' has an effect here.
-    eq(18, eval('line("w0")'))
-    eq(20, eval('line(".")'))
+    expect_scroll_pos(20, 18, 24)
     execute('set scrollbind')
     -- -- start of tests --.
     -- TEST scrolling down.
     feed('L')
-    -- Intermediate check: 'scrolloff' has an effect here.
-    eq(22, eval('line(".")'))
-    eq(24, eval('line("w$")'))
+    expect_scroll_pos(22, 18, 24)
     feed('5j')
+    expect_scroll_pos(27, 23, 29)
     feed('H')
+    expect_scroll_pos(25, 23, 29)
     feed('yy')
     feed('<C-W>b')
     feed('p')
     feed('r0')
     feed('<C-W>t')
     feed('H')
+    expect_scroll_pos(25, 23, 29)
     feed('yy')
     feed('<C-W>b')
     feed('p')
