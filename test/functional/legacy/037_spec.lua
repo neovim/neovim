@@ -59,17 +59,17 @@ describe('37', function()
     -- TEST using two windows open to one buffer, one extra empty window.
     execute('split')
     execute('new')
-    feed('<C-W>t:<cr>')
+    feed('<C-W>t')
     execute('resize 8')
     execute('/^start of window 1$/')
-    feed('zt:<cr>')
+    feed('zt')
     eq(1, eval('line("w0")')) -- TODO
     eq(8, eval('line("w$")')) -- TODO
     execute('set scrollbind')
-    feed('<C-W>j:<cr>')
+    feed('<C-W>j')
     execute('resize 7')
     execute('/^start of window 2$/')
-    feed('zt:<cr>')
+    feed('zt')
     wait()
     eq(20, eval('line("w0")')) -- TODO
     eq(26, eval('line("w$")')) -- TODO
