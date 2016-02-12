@@ -54,6 +54,6 @@ describe('marks', function()
       
       
       Results:
-      Mark after delete-undo-redo-undo: [0, 15, 2, 0]]=])
+      Mark after delete-undo-redo-undo: [0, 5, 2, 0]]=])
   end)
 end)
