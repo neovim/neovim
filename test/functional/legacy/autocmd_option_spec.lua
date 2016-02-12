@@ -2,7 +2,7 @@ local helpers = require('test.functional.helpers')
 local nvim = helpers.meths
 local clear, eq, neq = helpers.clear, helpers.eq, helpers.neq
 local curbuf, buf = helpers.curbuf, helpers.bufmeths
-local curwin, win = helpers.curwin, helpers.winmeths
+local curwin = helpers.curwin
 local redir_exec = helpers.redir_exec
 local source, execute = helpers.source, helpers.execute
 
@@ -98,7 +98,7 @@ local function make_buffer()
   return new_buf
 end
 
-local function make_window_with_winnr()
+local function get_new_window_number()
   local old_win = curwin()
   execute('botright new')
   local new_win = curwin()
@@ -108,7 +108,7 @@ local function make_window_with_winnr()
   neq(old_win, new_win)
   eq(old_win, curwin())
 
-  return new_win, new_winnr:gsub('\n', '')
+  return new_winnr:gsub('\n', '')
 end
 
 describe('au OptionSet', function()
@@ -281,7 +281,7 @@ describe('au OptionSet', function()
       it('should not trigger if the current window is different from the targetted window', function()
         set_hook('cursorcolumn')
 
-        local new_window, new_winnr = make_window_with_winnr()
+        local new_winnr = get_new_window_number()
 
         execute('call setwinvar(' .. new_winnr .. ', "&cursorcolumn", 1)')
         -- expected_combination({'cursorcolumn', 0, 1, 'local', {winnr = new_winnr}})
