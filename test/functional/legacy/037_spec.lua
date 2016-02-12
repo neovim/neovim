@@ -3,6 +3,7 @@
 local helpers = require('test.functional.helpers')
 local feed, insert, source = helpers.feed, helpers.insert, helpers.source
 local clear, execute, expect = helpers.clear, helpers.execute, helpers.expect
+local eq, eval, wait = helpers.eq, helpers.eval, helpers.wait
 
 describe('37', function()
   setup(clear)
@@ -62,11 +63,16 @@ describe('37', function()
     execute('resize 8')
     execute('/^start of window 1$/')
     feed('zt:<cr>')
+    eq(1, eval('line("w0")')) -- TODO
+    eq(8, eval('line("w$")')) -- TODO
     execute('set scrollbind')
     feed('<C-W>j:<cr>')
     execute('resize 7')
     execute('/^start of window 2$/')
     feed('zt:<cr>')
+    wait()
+    eq(20, eval('line("w0")')) -- TODO
+    eq(26, eval('line("w$")')) -- TODO
     execute('set scrollbind')
     -- -- start of tests --.
     -- TEST scrolling down.
