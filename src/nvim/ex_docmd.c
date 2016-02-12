@@ -9297,15 +9297,11 @@ static void ex_filetype(exarg_T *eap)
 /// Updates the state used for :filetype without args.
 void force_enable_filetype(void)
 {
-  if (!filetype_detect) {
+  if (!filetype_detect && !filetype_plugin && !filetype_indent) {
     source_runtime((char_u *)FILETYPE_FILE, true);
     filetype_detect = true;
-  }
-  if (!filetype_plugin) {
     source_runtime((char_u *)FTPLUGIN_FILE, true);
     filetype_plugin = true;
-  }
-  if (!filetype_indent) {
     source_runtime((char_u *)INDENT_FILE, true);
     filetype_indent = true;
   }
