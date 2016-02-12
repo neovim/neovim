@@ -9293,7 +9293,7 @@ static void ex_filetype(exarg_T *eap)
     EMSG2(_(e_invarg2), arg);
 }
 
-/// Same as :filetype plugin indent enable
+/// Same as :filetype plugin indent on
 /// Updates the state used for :filetype without args.
 void force_enable_filetype(void)
 {

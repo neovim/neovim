@@ -335,7 +335,7 @@ int main(int argc, char **argv)
   // If using the runtime (-u is not NONE), enable syntax and filetype plugins
   if (params.use_vimrc != NULL && strcmp(params.use_vimrc, "NONE") != 0) {
     syn_cmd("syntax");        // Enable syntax highlighting.
-    force_enable_filetype();  // :filetype plugin indent enable
+    force_enable_filetype();  // :filetype plugin indent on
   }
 
   /*
