@@ -15584,7 +15584,7 @@ static void setwinvar(typval_T *argvars, typval_T *rettv, int off)
         winvarname = xmalloc(STRLEN(varname) + 3);
         STRCPY(winvarname, "w:");
         STRCPY(winvarname + 2, varname);
-        set_var(winvarname, varp, TRUE);
+        set_var(winvarname, varp, true);
         xfree(winvarname);
       }
     }
