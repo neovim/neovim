@@ -49,7 +49,6 @@ describe('37', function()
       
       end of test37.in (please don't delete this line)]=])
 
-    execute('so small.vim')
     execute('set noscrollbind')
     execute('set scrollopt=ver,jump')
     execute('set scrolloff=2')
@@ -119,10 +118,6 @@ describe('37', function()
     feed('<C-W>tG<C-W>jG<C-W>t:syncbind<cr>')
     feed('Hk<C-W>jH<C-W>tHyy<C-W>bp<C-W>t<C-W>jyy<C-W>bp:<cr>')
     feed('<C-W>tH3k<C-W>jH<C-W>tHyy<C-W>bp<C-W>t<C-W>jyy<C-W>bp:<cr>')
-    -- ***** done with tests *****.
-    -- Write contents of this file.
-    execute('w! test.out')
-    execute('qa!')
 
     -- Assert buffer contents.
     expect([=[
