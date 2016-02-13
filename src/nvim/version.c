@@ -391,7 +391,7 @@ static int included_patches[] = {
   // 900 NA
   // 899 NA
   898,
-  // 897,
+  // 897 NA
   // 896,
   // 895,
   // 894 NA
@@ -415,20 +415,20 @@ static int included_patches[] = {
   // 876 NA
   // 875 NA
   // 874 NA
-  // 873,
+  // 873 NA
   // 872 NA
   // 871,
   // 870,
   // 869 NA
   // 868,
   // 867 NA
-  // 866,
-  // 865,
+  // 866 NA
+  // 865 NA
   // 864 NA
   // 863 NA
   // 862 NA
   // 861 NA
-  // 860,
+  // 860 NA
   // 859,
   858,
   // 857,
@@ -449,8 +449,8 @@ static int included_patches[] = {
   // 842 NA
   // 841 NA
   // 840 NA
-  // 839,
-  // 838,
+  // 839 NA
+  // 838 NA
   // 837 NA
   836,
   // 835,
@@ -461,13 +461,13 @@ static int included_patches[] = {
   // 830,
   // 829 NA
   828,
-  // 827,
+  // 827 NA
   826,
   825,
   // 824 NA
   823,
   // 822,
-  // 821,
+  // 821 NA
   820,
   // 819,
   // 818,
@@ -476,7 +476,7 @@ static int included_patches[] = {
   815,
   814,
   813,
-  // 812,
+  // 812 NA
   811,
   810,
   809,
@@ -484,7 +484,7 @@ static int included_patches[] = {
   807,
   806,
   805,
-  // 804,
+  // 804 NA
   803,
   802,
   801,
@@ -521,7 +521,7 @@ static int included_patches[] = {
   // 770 NA
   769,
   768,
-  // 767,
+  // 767 NA
   // 766 NA
   765,
   764,
@@ -536,7 +536,7 @@ static int included_patches[] = {
   755,
   754,
   753,
-  // 752,
+  // 752 NA
   // 751 NA
   // 750 NA
   749,
@@ -563,7 +563,7 @@ static int included_patches[] = {
   // 728 NA
   // 727 NA
   // 726 NA
-  // 725,
+  // 725 NA
   // 724 NA
   723,
   722,
@@ -604,7 +604,7 @@ static int included_patches[] = {
   // 687 NA
   686,
   685,
-  // 684,
+  // 684 NA
   // 683 NA
   682,
   // 681 NA
