@@ -102,15 +102,19 @@ are always available and may be used simultaneously in separate plugins.  The
 5. (internal) Trying to print or stringify VAR_UNKNOWN in Vim results in 
    nothing, |E908|, in Neovim it is internal error.
 
-|jsondecode()| behaviour changed:
+|json_decode()| behaviour changed:
 1. It may output |msgpack-special-dict|.
-2. It accepts only valid JSON.  |v:none| is never emitted.
-|jsonencode()| behaviour slightly changed: now |msgpack-special-dict| values 
-are accepted.
+2. |msgpack-special-dict| is emitted also in case of duplicate keys, while in 
+   Vim it errors out.
+3. It accepts only valid JSON.  Trailing commas are not accepted.
 
-*v:none* variable is absent.  In Vim it represents “no value” in non-JSON 
-strings like "{"a": }" parsed as "{'a': v:none}".  See |jsondecode()| and 
-|jsonencode()| incompatibilities above.
+|json_encode()| behaviour slightly changed: now |msgpack-special-dict| values 
+are accepted, but |v:none| is not.
+
+*v:none* variable is absent.  In Vim it represents “no value” in “js” strings 
+like "[,]" parsed as "[v:none]" by |js_decode()|.
+
+*js_encode()* and *js_decode()* functions are also absent.
 
 Viminfo text files were replaced with binary (messagepack) ShaDa files.
 Additional differences:

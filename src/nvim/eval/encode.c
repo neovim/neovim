@@ -1020,7 +1020,7 @@ static inline int convert_to_json_string(garray_T *const gap,
                         "attempt to dump function reference"), \
                       mpstack, objname)
 
-/// Check whether given key can be used in jsonencode()
+/// Check whether given key can be used in json_encode()
 ///
 /// @param[in]  tv  Key to check.
 static inline bool check_json_key(const typval_T *const tv)

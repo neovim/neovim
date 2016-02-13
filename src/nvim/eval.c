@@ -6784,8 +6784,8 @@ static struct fst {
   { "jobstop",           1, 1, f_jobstop },
   { "jobwait",           1, 2, f_jobwait },
   { "join",              1, 2, f_join },
-  { "jsondecode",        1, 1, f_jsondecode },
-  { "jsonencode",        1, 1, f_jsonencode },
+  { "json_decode",        1, 1, f_json_decode },
+  { "json_encode",        1, 1, f_json_encode },
   { "keys",              1, 1, f_keys },
   { "last_buffer_nr",    0, 0, f_last_buffer_nr },  // obsolete
   { "len",               1, 1, f_len },
@@ -11583,8 +11583,8 @@ static void f_join(typval_T *argvars, typval_T *rettv)
     rettv->vval.v_string = NULL;
 }
 
-/// jsondecode() function
-static void f_jsondecode(typval_T *argvars, typval_T *rettv)
+/// json_decode() function
+static void f_json_decode(typval_T *argvars, typval_T *rettv)
 {
   char numbuf[NUMBUFLEN];
   char *s = NULL;
@@ -11614,8 +11614,8 @@ static void f_jsondecode(typval_T *argvars, typval_T *rettv)
   xfree(tofree);
 }
 
-/// jsonencode() function
-static void f_jsonencode(typval_T *argvars, typval_T *rettv)
+/// json_encode() function
+static void f_json_encode(typval_T *argvars, typval_T *rettv)
 {
   rettv->v_type = VAR_STRING;
   rettv->vval.v_string = (char_u *) encode_tv2json(&argvars[0], NULL);

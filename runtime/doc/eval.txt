@@ -1420,7 +1420,7 @@ v:exception	The value of the exception most recently caught and not
 
 					*v:false* *false-variable*
 v:false		Special value used to put "false" in JSON and msgpack.  See 
-		|jsonencode()|.  This value is converted to "false" when used 
+		|json_encode()|.  This value is converted to "false" when used 
 		as a String (e.g. in |expr5| with string concatenation 
 		operator) and to zero when used as a Number (e.g. in |expr5| 
 		or |expr7| when used with numeric operators).
@@ -1566,7 +1566,7 @@ v:msgpack_types	Dictionary containing msgpack types used by |msgpackparse()|
 
 					*v:null* *null-variable*
 v:null		Special value used to put "null" in JSON and NIL in msgpack.  
-		See |jsonencode()|.  This value is converted to "null" when 
+		See |json_encode()|.  This value is converted to "null" when 
 		used as a String (e.g. in |expr5| with string concatenation 
 		operator) and to zero when used as a Number (e.g. in |expr5| 
 		or |expr7| when used with numeric operators).
@@ -1738,7 +1738,7 @@ v:throwpoint	The point where the exception most recently caught and not
 
 					*v:true* *true-variable*
 v:true		Special value used to put "true" in JSON and msgpack.  See 
-		|jsonencode()|.  This value is converted to "true" when used 
+		|json_encode()|.  This value is converted to "true" when used 
 		as a String (e.g. in |expr5| with string concatenation 
 		operator) and to one when used as a Number (e.g. in |expr5| or 
 		|expr7| when used with numeric operators).
@@ -1953,8 +1953,8 @@ jobstart( {cmd}[, {opts}])	Number	Spawns {cmd} as a job
 jobstop( {job})			Number	Stops a job
 jobwait( {ids}[, {timeout}])	Number	Wait for a set of jobs
 join( {list} [, {sep}])		String	join {list} items into one String
-jsondecode( {expr})		any	Convert {expr} from JSON
-jsonencode( {expr})		String	Convert {expr} to JSON
+json_decode( {expr})		any	Convert {expr} from JSON
+json_encode( {expr})		String	Convert {expr} to JSON
 keys( {dict})			List	keys in {dict}
 len( {expr})			Number	the length of {expr}
 libcall( {lib}, {func}, {arg})	String	call {func} in library {lib} with {arg}
@@ -4314,12 +4314,12 @@ join({list} [, {sep}])					*join()*
 		converted into a string like with |string()|.
 		The opposite function is |split()|.
 
-jsondecode({expr})					*jsondecode()*
+json_decode({expr})					*json_decode()*
 		Convert {expr} from JSON object.  Accepts |readfile()|-style 
 		list as the input, as well as regular string.  May output any 
 		Vim value.  When 'encoding' is not UTF-8 string is converted 
 		from UTF-8 to 'encoding', failing conversion fails 
-		jsondecode().  In the following cases it will output 
+		json_decode().  In the following cases it will output 
 		|msgpack-special-dict|:
 		1. Dictionary contains duplicate key.
 		2. Dictionary contains empty key.
@@ -4327,7 +4327,7 @@ jsondecode({expr})					*jsondecode()*
 		   dictionary and for string will be emitted in case string 
 		   with NUL byte was a dictionary key.
 
-jsonencode({expr})					*jsonencode()*
+json_encode({expr})					*json_encode()*
 		Convert {expr} into a JSON string.  Accepts 
 		|msgpack-special-dict| as the input.  Converts from 'encoding' 
 		to UTF-8 when encoding strings.  Will not convert |Funcref|s, 
