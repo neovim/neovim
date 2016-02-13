@@ -5,7 +5,7 @@ let s:remote_plugins_manifest = fnamemodify(expand($MYVIMRC, 1), ':h')
 
 
 " Register a host by associating it with a factory(funcref)
-function! remote#host#Register(name, pattern, factory)
+function! remote#host#Register(name, pattern, factory) abort
   let s:hosts[a:name] = {'factory': a:factory, 'channel': 0, 'initialized': 0}
   let s:plugin_patterns[a:name] = a:pattern
   if type(a:factory) == type(1) && a:factory
@@ -19,7 +19,7 @@ endfunction
 " as `source`, but it will run as a different process. This can be used by
 " plugins that should run isolated from other plugins created for the same host
 " type
-function! remote#host#RegisterClone(name, orig_name)
+function! remote#host#RegisterClone(name, orig_name) abort
   if !has_key(s:hosts, a:orig_name)
     throw 'No host named "'.a:orig_name.'" is registered'
   endif
@@ -34,7 +34,7 @@ endfunction
 
 
 " Get a host channel, bootstrapping it if necessary
-function! remote#host#Require(name)
+function! remote#host#Require(name) abort
   if !has_key(s:hosts, a:name)
     throw 'No host named "'.a:name.'" is registered'
   endif
@@ -51,7 +51,7 @@ function! remote#host#Require(name)
 endfunction
 
 
-function! remote#host#IsRunning(name)
+function! remote#host#IsRunning(name) abort
   if !has_key(s:hosts, a:name)
     throw 'No host named "'.a:name.'" is registered'
   endif
@@ -72,7 +72,7 @@ endfunction
 "
 " The third item in a declaration is a boolean: non zero means the command,
 " autocommand or function will be executed synchronously with rpcrequest.
-function! remote#host#RegisterPlugin(host, path, specs)
+function! remote#host#RegisterPlugin(host, path, specs) abort
   let plugins = remote#host#PluginsForHost(a:host)
 
   for plugin in plugins
@@ -116,14 +116,14 @@ function! remote#host#RegisterPlugin(host, path, specs)
 endfunction
 
 
-function! remote#host#LoadRemotePlugins()
+function! remote#host#LoadRemotePlugins() abort
   if filereadable(s:remote_plugins_manifest)
     exe 'source '.s:remote_plugins_manifest
   endif
 endfunction
 
 
-function! s:RegistrationCommands(host)
+function! s:RegistrationCommands(host) abort
   " Register a temporary host clone for discovering specs
   let host_id = a:host.'-registration-clone'
   call remote#host#RegisterClone(host_id, a:host)
@@ -163,7 +163,7 @@ function! s:RegistrationCommands(host)
 endfunction
 
 
-function! s:UpdateRemotePlugins()
+function! s:UpdateRemotePlugins() abort
   let commands = []
   let hosts = keys(s:hosts)
   for host in hosts
@@ -180,6 +180,8 @@ function! s:UpdateRemotePlugins()
     endif
   endfor
   call writefile(commands, s:remote_plugins_manifest)
+  echomsg printf('remote/host: generated the manifest file in "%s"',
+        \ s:remote_plugins_manifest)
 endfunction
 
 
@@ -187,7 +189,7 @@ command! UpdateRemotePlugins call s:UpdateRemotePlugins()
 
 
 let s:plugins_for_host = {}
-function! remote#host#PluginsForHost(host)
+function! remote#host#PluginsForHost(host) abort
   if !has_key(s:plugins_for_host, a:host)
     let s:plugins_for_host[a:host] = []
   end
@@ -198,7 +200,7 @@ endfunction
 " Registration of standard hosts
 
 " Python/Python3 {{{
-function! s:RequirePythonHost(host)
+function! s:RequirePythonHost(host) abort
   let ver = (a:host.orig_name ==# 'python') ? 2 : 3
 
   " Python host arguments
