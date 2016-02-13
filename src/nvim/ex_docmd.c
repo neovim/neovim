@@ -9301,7 +9301,7 @@ static void ex_filetype(exarg_T *eap)
 
 /// Do ":filetype plugin indent on" if user did not already do some
 /// permutation thereof.
-void force_enable_filetype(void)
+void maybe_enable_filetype(void)
 {
   if (!filetype_detect && !filetype_plugin && !filetype_indent) {
     source_runtime((char_u *)FILETYPE_FILE, true);
