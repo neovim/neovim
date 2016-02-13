@@ -23,20 +23,20 @@ describe('charsearch', function()
     feed('fip')
     execute('call setcharsearch(csave)')
     feed(';p;p')
-    -- Check that setcharsearch() changes the settins.
+    -- Check that setcharsearch() changes the settings.
     execute('/^Z')
     feed('ylfep')
     execute("call setcharsearch({'char': 'k'})")
     feed(';p')
     execute("call setcharsearch({'forward': 0})")
     feed('$;p')
-    execute("call setcharseearch({'until'}: 1})")
+    execute("call setcharsearch({'until': 1})")
     feed(';;p')
 
     -- Assert buffer contents.
     expect([[
       XabcdeXfghijkeXmnopqreXtuvwxyz
       YabcdeYfghiYjkeYmnopqreYtuvwxyz
-      ZabcdeZfghijkZemnokZqretkZvwxyz]])
+      ZabcdeZfghijkZZemnokqretkZvwxyz]])
   end)
 end)
