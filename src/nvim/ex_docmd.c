@@ -2679,16 +2679,24 @@ set_one_cmd_context (
     p = cmd + 1;
   } else {
     p = cmd;
-    while (ASCII_ISALPHA(*p) || *p == '*')        /* Allow * wild card */
+    while (ASCII_ISALPHA(*p) || *p == '*') {  // Allow * wild card
       ++p;
-    /* check for non-alpha command */
-    if (p == cmd && vim_strchr((char_u *)"@*!=><&~#", *p) != NULL)
-      ++p;
-    /* for python 3.x: ":py3*" commands completion */
+    }
+    // a user command may contain digits
+    if (ASCII_ISUPPER(cmd[0])) {
+      while (ASCII_ISALNUM(*p) || *p == '*') {
+        ++p;
+      }
+    }
+    // for python 3.x: ":py3*" commands completion
     if (cmd[0] == 'p' && cmd[1] == 'y' && p == cmd + 2 && *p == '3') {
       ++p;
       while (ASCII_ISALPHA(*p) || *p == '*')
         ++p;
+    }
+    // check for non-alpha command
+    if (p == cmd && vim_strchr((char_u *)"@*!=><&~#", *p) != NULL) {
+      ++p;
     }
     len = (int)(p - cmd);
 
