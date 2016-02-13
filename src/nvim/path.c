@@ -556,8 +556,9 @@ static size_t do_path_expand(garray_T *gap, const char_u *path,
       return 0;
   }
 
-  /* make room for file name */
-  buf = xmalloc(STRLEN(path) + BASENAMELEN + 5);
+  // Make room for file name.  When doing encoding conversion the actual
+  // length may be quite a bit longer, thus use the maximum possible length.
+  buf = xmalloc(MAXPATHL);
 
   /*
    * Find the first part in the path name that contains a wildcard.
