@@ -315,10 +315,10 @@ argument.
 		When {vimrc} is equal to "NONE" (all uppercase), all
 		initializations from files and environment variables are
 		skipped, including reading the |ginit.vim| file when the GUI
-		starts.  Loading plugins and enabling syntax highlighting are
-		also skipped.
+		starts.  Plugins and syntax highlighting are also skipped.
 		When {vimrc} is equal to "NORC" (all uppercase), this has the
-		same effect as "NONE", but loading plugins is not skipped.
+		same effect as "NONE", but plugins and syntax highlighting are
+		not skipped.
 
 							*-i*
 -i {shada}	The file {shada} is used instead of the default ShaDa
@@ -392,8 +392,8 @@ accordingly.  Vim proceeds in this order:
 	All following initializations until 4. are skipped. $MYVIMRC is not
 	set.
 	"vim -u NORC" can be used to skip these initializations without
-	reading a file.  "vim -u NONE" also skips loading plugins and enabling
-	syntax highlighting.  |-u|
+	reading a file.  "vim -u NONE" also skips plugins and syntax
+	highlighting.  |-u|
 
 	If Vim was started in Ex mode with the "-s" argument, all following
 	initializations until 4. are skipped.  Only the "-u" option is
@@ -426,16 +426,17 @@ accordingly.  Vim proceeds in this order:
 	-  The file ".exrc"  (for Unix)
 		    "_exrc"  (for Win32)
 
-4. Enable syntax highlighting.
-	This does the same as the command: >
-		:runtime! syntax/syntax.vim
-<	This can be skipped with the "-u NONE" command line argument.
-
-5. Enable filetype and indent plugins.
+4. Enable filetype and indent plugins.
 	This does the same as the commands: >
 		:runtime! filetype.vim
 		:runtime! ftplugin.vim
 		:runtime! indent.vim
+<	This step is skipped if ":filetype ..." was called before now or if
+	the "-u NONE" command line argument was given.
+
+5. Enable syntax highlighting.
+	This does the same as the command: >
+		:runtime! syntax/syntax.vim
 <	This can be skipped with the "-u NONE" command line argument.
 
 6. Load the plugin scripts.					*load-plugins*
