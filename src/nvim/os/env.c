@@ -278,7 +278,7 @@ void expand_env_esc(char_u *srcp, char_u *dst, int dstlen, bool esc, bool one,
       }
       memcpy((char *)dst, (char *)var, len);
       dst += len;
-      dstlen -= len;
+      dstlen -= (int)len;
       continue;
     }
     copy_char = true;
