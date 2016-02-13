@@ -94,11 +94,9 @@ open_line (
   pos_T old_cursor;                     /* old cursor position */
   int newcol = 0;                       /* new cursor column */
   int newindent = 0;                    /* auto-indent of the new line */
-  int n;
   int trunc_line = FALSE;               /* truncate current line afterwards */
   int retval = FALSE;                   /* return value, default is FAIL */
   int extra_len = 0;                    /* length of p_extra string */
-  int lead_len;                         /* length of comment leader */
   char_u      *lead_flags;      /* position in 'comments' for comment leader */
   char_u      *leader = NULL;           /* copy of comment leader */
   char_u      *allocated = NULL;        /* allocated memory */
@@ -113,6 +111,9 @@ open_line (
   int vreplace_mode;
   int did_append;                       /* appended a new line */
   int saved_pi = curbuf->b_p_pi;           /* copy of preserveindent setting */
+
+  size_t n = 0;
+  size_t lead_len;                         /* length of comment leader */
 
   /*
    * make a copy of the current line so we can mess with it
@@ -943,7 +944,7 @@ theend:
  * If "include_space" is set, include trailing whitespace while calculating the
  * length.
  */
-int get_leader_len(char_u *line, char_u **flags, int backward, int include_space)
+size_t get_leader_len(char_u *line, char_u **flags, int backward, int include_space)
 {
   int i, j;
   int result;
