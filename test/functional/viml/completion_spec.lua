@@ -2,7 +2,7 @@
 local helpers = require('test.functional.helpers')
 local clear, feed = helpers.clear, helpers.feed
 local eval, eq, neq = helpers.eval, helpers.eq, helpers.neq
-local execute, source = helpers.execute, helpers.source
+local execute, source, expect = helpers.execute, helpers.source, helpers.expect
 
 describe('completion', function()
   before_each(function()
@@ -98,6 +98,47 @@ describe('completion', function()
       eq('', eval('getline(2)'))
       feed('o<C-r>=TestComplete()<CR><ESC>')
       eq('', eval('getline(3)'))
+    end)
+  end)
+
+  describe("refresh:always", function()
+    before_each(function()
+      source([[
+        function! TestCompletion(findstart, base) abort
+          if a:findstart
+            let line = getline('.')
+            let start = col('.') - 1
+            while start > 0 && line[start - 1] =~ '\a'
+              let start -= 1
+            endwhile
+            return start
+          else
+            let ret = []
+            for m in split("January February March April May June July August September October November December")
+              if m =~ a:base  " match by regex
+                call add(ret, m)
+              endif
+            endfor
+            return {'words':ret, 'refresh':'always'}
+          endif
+        endfunction
+
+        set completeopt=menuone,noselect
+        set completefunc=TestCompletion
+      ]])
+    end )
+
+    it('completes on each input char', function ()
+      feed('i<C-x><C-u>gu<Down><C-y>')
+      expect('August')
+    end)
+    it("repeats correctly after backspace #2674", function ()
+      feed('o<C-x><C-u>Ja<BS><C-n><C-n><Esc>')
+      feed('.')
+      expect([[
+        
+        June
+        June]])
     end)
   end)
 end)
