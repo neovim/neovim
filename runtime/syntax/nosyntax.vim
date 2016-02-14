@@ -24,9 +24,6 @@ augroup END
 
 if exists("syntax_on")
   unlet syntax_on
-else
-  " only used when starting, to disable the default syntax enable
-  let syntax_off = 1
 endif
 if exists("syntax_manual")
   unlet syntax_manual
