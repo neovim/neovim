@@ -437,7 +437,8 @@ accordingly.  Vim proceeds in this order:
 5. Enable syntax highlighting.
 	This does the same as the command: >
 		:runtime! syntax/syntax.vim
-<	This can be skipped with the "-u NONE" command line argument.
+<	This is skipped if the "-u NONE" command line argument is given.
+	Note that keeping the syntax enabled will also enable filetype detection.
 
 6. Load the plugin scripts.					*load-plugins*
 	This does the same as the command: >
