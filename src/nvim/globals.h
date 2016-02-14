@@ -100,6 +100,12 @@
 # define VIMRC_FILE     ".nvimrc"
 #endif
 
+typedef enum {
+  kNone  = -1,
+  kFalse = 0,
+  kTrue  = 1,
+} TriState;
+
 /* Values for "starting" */
 #define NO_SCREEN       2       /* no screen updating yet */
 #define NO_BUFFERS      1       /* not all buffers loaded yet */

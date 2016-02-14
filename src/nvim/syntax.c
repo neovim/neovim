@@ -41,6 +41,8 @@
 #include "nvim/os/os.h"
 #include "nvim/os/time.h"
 
+static bool did_syntax_onoff = false;
+
 // Structure that stores information about a highlight group.
 // The ID of a highlight group is also called group ID.  It is the index in
 // the highlight_ga array PLUS ONE.
@@ -3286,14 +3288,25 @@ static void syn_cmd_off(exarg_T *eap, int syncing)
 }
 
 static void syn_cmd_onoff(exarg_T *eap, char *name)
+  FUNC_ATTR_NONNULL_ALL
 {
-  char buf[100];
-
+  did_syntax_onoff = true;
   eap->nextcmd = check_nextcmd(eap->arg);
   if (!eap->skip) {
-    strcpy(buf, "so ");
+    char buf[100];
+    strncpy(buf, "so ", 3);
     vim_snprintf(buf + 3, sizeof(buf) - 3, SYNTAX_FNAME, name);
     do_cmdline_cmd(buf);
+  }
+}
+
+void syn_maybe_on(void)
+{
+  if (!did_syntax_onoff) {
+    exarg_T ea;
+    ea.arg = (char_u *)"";
+    ea.skip = false;
+    syn_cmd_onoff(&ea, "syntax");
   }
 }
 

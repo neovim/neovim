@@ -9222,9 +9222,9 @@ char_u *get_behave_arg(expand_T *xp, int idx)
   return NULL;
 }
 
-static int filetype_detect = FALSE;
-static int filetype_plugin = FALSE;
-static int filetype_indent = FALSE;
+static TriState filetype_detect = kNone;
+static TriState filetype_plugin = kNone;
+static TriState filetype_indent = kNone;
 
 /*
  * ":filetype [plugin] [indent] {on,off,detect}"
@@ -9238,27 +9238,27 @@ static int filetype_indent = FALSE;
 static void ex_filetype(exarg_T *eap)
 {
   char_u      *arg = eap->arg;
-  int plugin = FALSE;
-  int indent = FALSE;
+  bool plugin = false;
+  bool indent = false;
 
   if (*eap->arg == NUL) {
     /* Print current status. */
     smsg("filetype detection:%s  plugin:%s  indent:%s",
-        filetype_detect ? "ON" : "OFF",
-        filetype_plugin ? (filetype_detect ? "ON" : "(on)") : "OFF",
-        filetype_indent ? (filetype_detect ? "ON" : "(on)") : "OFF");
+         filetype_detect == kTrue ? "ON" : "OFF",
+         filetype_plugin == kTrue ? (filetype_detect == kTrue ? "ON" : "(on)") : "OFF",   // NOLINT(whitespace/line_length)
+         filetype_indent == kTrue ? (filetype_detect == kTrue ? "ON" : "(on)") : "OFF");  // NOLINT(whitespace/line_length)
     return;
   }
 
   /* Accept "plugin" and "indent" in any order. */
   for (;; ) {
     if (STRNCMP(arg, "plugin", 6) == 0) {
-      plugin = TRUE;
+      plugin = true;
       arg = skipwhite(arg + 6);
       continue;
     }
     if (STRNCMP(arg, "indent", 6) == 0) {
-      indent = TRUE;
+      indent = true;
       arg = skipwhite(arg + 6);
       continue;
     }
@@ -9266,15 +9266,15 @@ static void ex_filetype(exarg_T *eap)
   }
   if (STRCMP(arg, "on") == 0 || STRCMP(arg, "detect") == 0) {
     if (*arg == 'o' || !filetype_detect) {
-      source_runtime((char_u *)FILETYPE_FILE, TRUE);
-      filetype_detect = TRUE;
+      source_runtime((char_u *)FILETYPE_FILE, true);
+      filetype_detect = kTrue;
       if (plugin) {
-        source_runtime((char_u *)FTPLUGIN_FILE, TRUE);
-        filetype_plugin = TRUE;
+        source_runtime((char_u *)FTPLUGIN_FILE, true);
+        filetype_plugin = kTrue;
       }
       if (indent) {
-        source_runtime((char_u *)INDENT_FILE, TRUE);
-        filetype_indent = TRUE;
+        source_runtime((char_u *)INDENT_FILE, true);
+        filetype_indent = kTrue;
       }
     }
     if (*arg == 'd') {
@@ -9284,19 +9284,35 @@ static void ex_filetype(exarg_T *eap)
   } else if (STRCMP(arg, "off") == 0) {
     if (plugin || indent) {
       if (plugin) {
-        source_runtime((char_u *)FTPLUGOF_FILE, TRUE);
-        filetype_plugin = FALSE;
+        source_runtime((char_u *)FTPLUGOF_FILE, true);
+        filetype_plugin = kFalse;
       }
       if (indent) {
-        source_runtime((char_u *)INDOFF_FILE, TRUE);
-        filetype_indent = FALSE;
+        source_runtime((char_u *)INDOFF_FILE, true);
+        filetype_indent = kFalse;
       }
     } else {
-      source_runtime((char_u *)FTOFF_FILE, TRUE);
-      filetype_detect = FALSE;
+      source_runtime((char_u *)FTOFF_FILE, true);
+      filetype_detect = kFalse;
     }
   } else
     EMSG2(_(e_invarg2), arg);
+}
+
+/// Do ":filetype plugin indent on" if user did not already do some
+/// permutation thereof.
+void filetype_maybe_enable(void)
+{
+  if (filetype_detect == kNone
+      && filetype_plugin == kNone
+      && filetype_indent == kNone) {
+    source_runtime((char_u *)FILETYPE_FILE, true);
+    filetype_detect = kTrue;
+    source_runtime((char_u *)FTPLUGIN_FILE, true);
+    filetype_plugin = kTrue;
+    source_runtime((char_u *)INDENT_FILE, true);
+    filetype_indent = kTrue;
+  }
 }
 
 /*

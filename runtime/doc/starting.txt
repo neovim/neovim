@@ -315,9 +315,10 @@ argument.
 		When {vimrc} is equal to "NONE" (all uppercase), all
 		initializations from files and environment variables are
 		skipped, including reading the |ginit.vim| file when the GUI
-		starts.  Loading plugins is also skipped.
+		starts.  Plugins and syntax highlighting are also skipped.
 		When {vimrc} is equal to "NORC" (all uppercase), this has the
-		same effect as "NONE", but loading plugins is not skipped.
+		same effect as "NONE", but plugins and syntax highlighting are
+		not skipped.
 
 							*-i*
 -i {shada}	The file {shada} is used instead of the default ShaDa
@@ -391,7 +392,8 @@ accordingly.  Vim proceeds in this order:
 	All following initializations until 4. are skipped. $MYVIMRC is not
 	set.
 	"vim -u NORC" can be used to skip these initializations without
-	reading a file.  "vim -u NONE" also skips loading plugins.  |-u|
+	reading a file.  "vim -u NONE" also skips plugins and syntax
+	highlighting.  |-u|
 
 	If Vim was started in Ex mode with the "-s" argument, all following
 	initializations until 4. are skipped.  Only the "-u" option is
@@ -424,7 +426,22 @@ accordingly.  Vim proceeds in this order:
 	-  The file ".exrc"  (for Unix)
 		    "_exrc"  (for Win32)
 
-4. Load the plugin scripts.					*load-plugins*
+4. Enable filetype and indent plugins.
+	This does the same as the commands: >
+		:runtime! filetype.vim
+		:runtime! ftplugin.vim
+		:runtime! indent.vim
+<	This step is skipped if ":filetype ..." was called before now or if
+	the "-u NONE" command line argument was given.
+
+5. Enable syntax highlighting.
+	This does the same as the command: >
+		:runtime! syntax/syntax.vim
+<	Note: This enables filetype detection even if ":filetype off" was
+	called before now.
+	This step is skipped if the "-u NONE" command line argument was given.
+
+6. Load the plugin scripts.					*load-plugins*
 	This does the same as the command: >
 		:runtime! plugin/**/*.vim
 <	The result is that all directories in the 'runtimepath' option will be
@@ -440,31 +457,30 @@ accordingly.  Vim proceeds in this order:
 	commands from the command line have not been executed yet.  You can
 	use "--cmd 'set noloadplugins'" |--cmd|.
 
-5. Set 'shellpipe' and 'shellredir'
+7. Set 'shellpipe' and 'shellredir'
 	The 'shellpipe' and 'shellredir' options are set according to the
 	value of the 'shell' option, unless they have been set before.
 	This means that Vim will figure out the values of 'shellpipe' and
 	'shellredir' for you, unless you have set them yourself.
 
-6. Set 'updatecount' to zero, if "-n" command argument used
+8. Set 'updatecount' to zero, if "-n" command argument used
 
-7. Set binary options
+9. Set binary options
 	If the "-b" flag was given to Vim, the options for binary editing will
 	be set now.  See |-b|.
 
-8. Perform GUI initializations
+10. Perform GUI initializations
 	Only when starting "gvim", the GUI initializations will be done.  See
 	|gui-init|.
 
-9. Read the ShaDa file
-	If the 'shada' option is not empty, the ShaDa file is read.  See
-	|shada-file|.
+11. Read the ShaDa file
+	See |shada-file|.
 
-10. Read the quickfix file
+12. Read the quickfix file
 	If the "-q" flag was given to Vim, the quickfix file is read.  If this
 	fails, Vim exits.
 
-11. Open all windows
+13. Open all windows
 	When the |-o| flag was given, windows will be opened (but not
 	displayed yet).
 	When the |-p| flag was given, tab pages will be created (but not
@@ -473,7 +489,7 @@ accordingly.  Vim proceeds in this order:
 	If the "-q" flag was given to Vim, the first error is jumped to.
 	Buffers for all windows will be loaded.
 
-12. Execute startup commands
+14. Execute startup commands
 	If a "-t" flag was given to Vim, the tag is jumped to.
 	The commands given with the |-c| and |+cmd| arguments are executed.
 	The starting flag is reset, has("vim_starting") will now return zero.
