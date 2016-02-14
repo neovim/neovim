@@ -64,7 +64,6 @@
  */
 typedef struct sign sign_T;
 
-
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ex_cmds.c.generated.h"
 #endif
@@ -4613,8 +4612,11 @@ void fix_help_buffer(void)
           char_u      *cp;
 
           /* Find all "doc/ *.txt" files in this directory. */
-          add_pathsep((char *)NameBuff);
-          STRCAT(NameBuff, "doc/*.??[tx]");
+          if (add_pathsep((char *)NameBuff)
+              && STRLCAT(NameBuff, "doc/*.??[tx]", MAXPATHL) >= MAXPATHL) {
+            EMSG(_(e_pathtoolong));
+            continue;
+          }
 
           // Note: We cannot just do `&NameBuff` because it is a statically sized array
           //       so `NameBuff == &NameBuff` according to C semantics.
@@ -4783,9 +4785,13 @@ void ex_helptags(exarg_T *eap)
   }
 
   /* Get a list of all files in the help directory and in subdirectories. */
-  STRCPY(NameBuff, dirname);
-  add_pathsep((char *)NameBuff);
-  STRCAT(NameBuff, "**");
+  STRLCPY(NameBuff, dirname, MAXPATHL);
+  if (add_pathsep((char *)NameBuff)
+      && STRLCAT(NameBuff, "**", MAXPATHL) >= MAXPATHL) {
+    EMSG(_(e_pathtoolong));
+    xfree(dirname);
+    return;
+  }
 
   // Note: We cannot just do `&NameBuff` because it is a statically sized array
   //       so `NameBuff == &NameBuff` according to C semantics.
@@ -4876,7 +4882,6 @@ helptags_one (
   int fi;
   char_u      *s;
   char_u      *fname;
-  int dirlen;
   int utf8 = MAYBE;
   int this_utf8;
   int firstline;
@@ -4885,10 +4890,13 @@ helptags_one (
   /*
    * Find all *.txt files.
    */
-  dirlen = (int)STRLEN(dir);
-  STRCPY(NameBuff, dir);
-  STRCAT(NameBuff, "/**/*");
-  STRCAT(NameBuff, ext);
+  size_t dirlen = STRLEN(dir);
+  if (STRLCPY(NameBuff, dir, MAXPATHL) >= MAXPATHL
+      || STRLCAT(NameBuff, "/**/*", MAXPATHL) >= MAXPATHL
+      || STRLCAT(NameBuff, ext, MAXPATHL) >= MAXPATHL) {
+    EMSG(_(e_pathtoolong));
+    return;
+  }
 
   // Note: We cannot just do `&NameBuff` because it is a statically sized array
   //       so `NameBuff == &NameBuff` according to C semantics.
@@ -4905,9 +4913,12 @@ helptags_one (
    * Open the tags file for writing.
    * Do this before scanning through all the files.
    */
-  STRCPY(NameBuff, dir);
-  add_pathsep((char *)NameBuff);
-  STRCAT(NameBuff, tagfname);
+  memcpy(NameBuff, dir, dirlen + 1);
+  if (add_pathsep((char *)NameBuff)
+      && STRLCAT(NameBuff, tagfname, MAXPATHL) >= MAXPATHL) {
+    EMSG(_(e_pathtoolong));
+    return;
+  }
   fd_tags = mch_fopen((char *)NameBuff, "w");
   if (fd_tags == NULL) {
     EMSG2(_("E152: Cannot open %s for writing"), NameBuff);

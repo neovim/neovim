@@ -367,6 +367,33 @@ size_t xstrlcpy(char *restrict dst, const char *restrict src, size_t size)
     return ret;
 }
 
+/// xstrlcat - appends string src to the end of dst.
+///
+/// Compatible with *BSD strlcat: It will append at most
+/// dstsize - strlen(dst) - 1 characters.
+/// dst then will be NULL-terminate.
+///
+/// @param dst Where to copy the string to
+/// @param src Where to copy the string from
+/// @param dstsize size of destination buffer, it should be larger than 0
+/// @param size Size of destination buffer
+/// @return the initial length of dst plus the length of src.
+///         (i.e. strlen(src) + strlen(dst))
+size_t xstrlcat(char *restrict dst, const char *restrict src, size_t dstsize)
+  FUNC_ATTR_NONNULL_ALL
+{
+  assert(dstsize > 0);
+  size_t src_len = strlen(src);
+  size_t dst_len = strlen(dst);
+  size_t ret = src_len + dst_len;
+  if (src_len) {
+    size_t len = (ret >= dstsize) ? dstsize - 1 : ret;
+    memcpy(dst + dst_len, src, len - dst_len);
+    dst[len] = '\0';
+  }
+  return ret;
+}
+
 /// strdup() wrapper
 ///
 /// @see {xmalloc}

@@ -5926,9 +5926,9 @@ option_value2string (
     long wc = 0;
 
     if (wc_use_keyname(varp, &wc))
-      STRCPY(NameBuff, get_special_key_name((int)wc, 0));
+      STRLCPY(NameBuff, get_special_key_name((int)wc, 0), MAXPATHL);
     else if (wc != 0)
-      STRCPY(NameBuff, transchar((int)wc));
+      STRLCPY(NameBuff, transchar((int)wc), MAXPATHL);
     else
       sprintf((char *)NameBuff, "%" PRId64, (int64_t)*(long *)varp);
   } else { /* P_STRING */
