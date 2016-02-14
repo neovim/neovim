@@ -337,7 +337,8 @@ int main(int argc, char **argv)
     // Do ":filetype plugin indent on".
     maybe_enable_filetype();
     // Enable syntax (sources syntax/syntax.vim, which calls `:filetype on`).
-    syn_cmd("syntax");
+    do_cmdline_cmd("if !exists('syntax_off') | syntax on |"
+                   "else | unlet syntax_off | endif");
   }
 
   /*
