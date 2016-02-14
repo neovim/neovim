@@ -413,7 +413,7 @@ int get_number_indent(linenr_T lnum)
   colnr_T col;
   pos_T pos;
   regmatch_T regmatch;
-  int lead_len = 0;  // Length of comment leader.
+  size_t lead_len = 0;  // Length of comment leader.
 
   if (lnum > curbuf->b_ml.ml_line_count) {
     return -1;
