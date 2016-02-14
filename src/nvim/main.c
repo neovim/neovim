@@ -332,6 +332,15 @@ int main(int argc, char **argv)
   /* Source startup scripts. */
   source_startup_scripts(&params);
 
+  // If using the runtime (-u is not NONE), enable syntax & filetype plugins.
+  if (params.use_vimrc != NULL && strcmp(params.use_vimrc, "NONE") != 0) {
+    // Do ":filetype plugin indent on".
+    maybe_enable_filetype();
+    // Enable syntax (sources syntax/syntax.vim, which calls `:filetype on`).
+    do_cmdline_cmd("if !exists('syntax_off') | syntax on |"
+                   "else | unlet syntax_off | endif");
+  }
+
   /*
    * Read all the plugin files.
    * Only when compiled with +eval, since most plugins need it.
