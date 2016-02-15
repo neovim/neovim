@@ -1132,13 +1132,21 @@ static int cin_is_cpp_baseclass(cpp_baseclass_cache_T *cached) {
 
   pos->lnum = lnum;
   line = ml_get(lnum);
-  s = cin_skipcomment(line);
+  s = line;
   for (;; ) {
     if (*s == NUL) {
-      if (lnum == curwin->w_cursor.lnum)
+      if (lnum == curwin->w_cursor.lnum) {
         break;
-      /* Continue in the cursor line. */
+      }
+      // Continue in the cursor line.
       line = ml_get(++lnum);
+      s = line;
+    }
+    if (s == line) {
+      // don't recognize "case (foo):" as a baseclass */
+      if (cin_iscase(s, false)) {
+        break;
+      }
       s = cin_skipcomment(line);
       if (*s == NUL)
         continue;

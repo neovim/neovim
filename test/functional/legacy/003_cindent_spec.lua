@@ -941,6 +941,33 @@ describe('cindent', function()
       a = 1;
       }
       
+      void func()
+      {
+      switch (foo)
+      {
+      case (bar):
+      if (baz())
+      quux();
+      break;
+      case (shmoo):
+      if (!bar)
+      {
+      }
+      case (foo1):
+      switch (bar)
+      {
+      case baz:
+      baz_f();
+      break;
+      }
+      break;
+      default:
+      baz();
+      baz();
+      break;
+      }
+      }
+      
       /* end of AUTO */
       ]=])
 
@@ -1867,6 +1894,33 @@ describe('cindent', function()
       		 * bbbbb
       		 */
       		a = 1;
+      }
+      
+      void func()
+      {
+      	switch (foo)
+      	{
+      		case (bar):
+      			if (baz())
+      				quux();
+      			break;
+      		case (shmoo):
+      			if (!bar)
+      			{
+      			}
+      		case (foo1):
+      			switch (bar)
+      			{
+      				case baz:
+      					baz_f();
+      					break;
+      			}
+      			break;
+      		default:
+      			baz();
+      			baz();
+      			break;
+      	}
       }
       
       /* end of AUTO */
