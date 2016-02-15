@@ -4779,6 +4779,7 @@ void ex_helptags(exarg_T *eap)
       WILD_LIST_NOTFOUND|WILD_SILENT, WILD_EXPAND_FREE);
   if (dirname == NULL || !os_isdir(dirname)) {
     EMSG2(_("E150: Not a directory: %s"), eap->arg);
+    xfree(dirname);
     return;
   }
 
