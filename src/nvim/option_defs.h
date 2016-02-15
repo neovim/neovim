@@ -170,7 +170,8 @@
 #define SHM_ATTENTION   'A'             /* no ATTENTION messages */
 #define SHM_INTRO       'I'             /* intro messages */
 #define SHM_COMPLETIONMENU 'c'          // completion menu messages
-#define SHM_ALL         "rmfixlnwaWtToOsAIc" /* all possible flags for 'shm' */
+#define SHM_RECORDING   'q'             ///< short recording message
+#define SHM_ALL         "rmfixlnwaWtToOsAIcq"  ///< all possible flags for 'shm'
 
 /* characters for p_go: */
 #define GO_ASEL         'a'             /* autoselect */
