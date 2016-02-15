@@ -4048,6 +4048,7 @@ skip_add:
         sub->list.multi[subidx].start_col =
           (colnr_T)(reginput - regline + off);
       }
+      sub->list.multi[subidx].end_lnum = -1;
     } else {
       if (subidx < sub->in_use) {
         save_ptr = sub->list.line[subidx].start;
