@@ -20873,14 +20873,18 @@ call_user_func (
   save_sourcing_name = sourcing_name;
   save_sourcing_lnum = sourcing_lnum;
   sourcing_lnum = 1;
-  sourcing_name = xmalloc((save_sourcing_name == NULL ? 0 : STRLEN(save_sourcing_name))
-                          + STRLEN(fp->uf_name) + 13);
+  // need space for function name + ("function " + 3) or "[number]"
+  size_t len = (save_sourcing_name == NULL ? 0 : STRLEN(save_sourcing_name))
+               + STRLEN(fp->uf_name) + 20;
+  sourcing_name = xmalloc(len);
   {
     if (save_sourcing_name != NULL
-        && STRNCMP(save_sourcing_name, "function ", 9) == 0)
-      sprintf((char *)sourcing_name, "%s..", save_sourcing_name);
-    else
+        && STRNCMP(save_sourcing_name, "function ", 9) == 0) {
+      vim_snprintf((char *)sourcing_name, len, "%s[%zu]..",
+                   save_sourcing_name, save_sourcing_lnum);
+    } else {
       STRCPY(sourcing_name, "function ");
+    }
     cat_func_name(sourcing_name + STRLEN(sourcing_name), fp);
 
     if (p_verbose >= 12) {
