@@ -4,9 +4,10 @@ local helpers = require('test.functional.helpers')
 local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
 local execute, expect = helpers.execute, helpers.expect
 local eq, eval = helpers.eq, helpers.eval
+local source = helpers.source
 
 describe('utf8', function()
-  setup(clear)
+  before_each(clear)
 
   it('is working', function()
     insert('start:')
@@ -49,5 +50,34 @@ describe('utf8', function()
     eq(1, eval('strchars("\\u20dd")'))
     eq(1, eval('strchars("\\u20dd", 0)'))
     eq(1, eval('strchars("\\u20dd", 1)'))
+  end)
+
+  it('customlist completion', function()
+    source([[
+      function! CustomComplete1(lead, line, pos)
+        return ['あ', 'い']
+      endfunction
+      command -nargs=1 -complete=customlist,CustomComplete1 Test1 :]])
+    feed(":Test1 <C-L>'<C-B>$put='<CR>")
+
+    source([[
+      function! CustomComplete2(lead, line, pos)
+        return ['あたし', 'あたま', 'あたりめ']
+      endfunction
+      command -nargs=1 -complete=customlist,CustomComplete2 Test2 :]])
+    feed(":Test2 <C-L>'<C-B>$put='<CR>")
+
+    source([[
+      function! CustomComplete3(lead, line, pos)
+        return ['Nこ', 'Nん', 'Nぶ']
+      endfunction
+      command -nargs=1 -complete=customlist,CustomComplete3 Test3 :]])
+    feed(":Test3 <C-L>'<C-B>$put='<CR>")
+
+    expect([[
+      
+      Test1 
+      Test2 あた
+      Test3 N]])
   end)
 end)
