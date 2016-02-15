@@ -381,15 +381,14 @@ int do_cmdline(char_u *cmdline, LineGetter fgetline,
     suppress_errthrow = FALSE;
   }
 
-  /*
-   * If requested, store and reset the global values controlling the
-   * exception handling (used when debugging).  Otherwise clear it to avoid
-   * a bogus compiler warning when the optimizer uses inline functions...
-   */
-  if (flags & DOCMD_EXCRESET)
+  // If requested, store and reset the global values controlling the
+  // exception handling (used when debugging).  Otherwise clear it to avoid
+  // a bogus compiler warning when the optimizer uses inline functions...
+  if (flags & DOCMD_EXCRESET) {
     save_dbg_stuff(&debug_saved);
-  else
-    memset(&debug_saved, 0, 1);
+  } else {
+    memset(&debug_saved, 0, sizeof(debug_saved));
+  }
 
   initial_trylevel = trylevel;
 
