@@ -57,21 +57,21 @@ describe('utf8', function()
       function! CustomComplete1(lead, line, pos)
         return ['あ', 'い']
       endfunction
-      command -nargs=1 -complete=customlist,CustomComplete1 Test1 :]])
+      command -nargs=1 -complete=customlist,CustomComplete1 Test1 echo]])
     feed(":Test1 <C-L>'<C-B>$put='<CR>")
 
     source([[
       function! CustomComplete2(lead, line, pos)
         return ['あたし', 'あたま', 'あたりめ']
       endfunction
-      command -nargs=1 -complete=customlist,CustomComplete2 Test2 :]])
+      command -nargs=1 -complete=customlist,CustomComplete2 Test2 echo]])
     feed(":Test2 <C-L>'<C-B>$put='<CR>")
 
     source([[
       function! CustomComplete3(lead, line, pos)
         return ['Nこ', 'Nん', 'Nぶ']
       endfunction
-      command -nargs=1 -complete=customlist,CustomComplete3 Test3 :]])
+      command -nargs=1 -complete=customlist,CustomComplete3 Test3 echo]])
     feed(":Test3 <C-L>'<C-B>$put='<CR>")
 
     expect([[
