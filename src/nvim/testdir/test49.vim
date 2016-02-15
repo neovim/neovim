@@ -1,6 +1,6 @@
 " Vim script language tests
 " Author:	Servatius Brandt <Servatius.Brandt@fujitsu-siemens.com>
-" Last Change:	2013 Jun 06
+" Last Change:	2015 Sep 25
 
 "-------------------------------------------------------------------------------
 " Test environment							    {{{1
@@ -5188,19 +5188,19 @@ catch /.*/
     Xpath 65536					" X: 65536
     let exception  = v:exception
     let throwpoint = v:throwpoint
-    call CHECK(1, "oops", '\<F\.\.G\.\.T\>', '\<2\>')
+    call CHECK(1, "oops", '\<F\[1]\.\.G\[1]\.\.T\>', '\<2\>')
     exec "let exception  = v:exception"
     exec "let throwpoint = v:throwpoint"
-    call CHECK(2, "oops", '\<F\.\.G\.\.T\>', '\<2\>')
+    call CHECK(2, "oops", '\<F\[1]\.\.G\[1]\.\.T\>', '\<2\>')
     CmdException
     CmdThrowpoint
-    call CHECK(3, "oops", '\<F\.\.G\.\.T\>', '\<2\>')
+    call CHECK(3, "oops", '\<F\[1]\.\.G\[1]\.\.T\>', '\<2\>')
     call FuncException()
     call FuncThrowpoint()
-    call CHECK(4, "oops", '\<F\.\.G\.\.T\>', '\<2\>')
+    call CHECK(4, "oops", '\<F\[1]\.\.G\[1]\.\.T\>', '\<2\>')
     exec "source" scriptException
     exec "source" scriptThrowPoint
-    call CHECK(5, "oops", '\<F\.\.G\.\.T\>', '\<2\>')
+    call CHECK(5, "oops", '\<F\[1]\.\.G\[1]\.\.T\>', '\<2\>')
     try
 	Xpath 131072				" X: 131072
 	call G("arrgh", 4)
@@ -5208,7 +5208,7 @@ catch /.*/
 	Xpath 262144				" X: 262144
 	let exception  = v:exception
 	let throwpoint = v:throwpoint
-	call CHECK(6, "arrgh", '\<G\.\.T\>', '\<4\>')
+	call CHECK(6, "arrgh", '\<G\[1]\.\.T\>', '\<4\>')
 	try
 	    Xpath 524288			" X: 524288
 	    let g:arg = "autsch"
@@ -5226,7 +5226,7 @@ catch /.*/
 	    Xpath 2097152			" X: 2097152
 	    let exception  = v:exception
 	    let throwpoint = v:throwpoint
-	    call CHECK(8, "arrgh", '\<G\.\.T\>', '\<4\>')
+	    call CHECK(8, "arrgh", '\<G\[1]\.\.T\>', '\<4\>')
 	    try
 		Xpath 4194304			" X: 4194304
 		let g:arg = "brrrr"
@@ -5242,27 +5242,27 @@ catch /.*/
 		Xpath 16777216			" X: 16777216
 		let exception  = v:exception
 		let throwpoint = v:throwpoint
-		call CHECK(10, "arrgh", '\<G\.\.T\>', '\<4\>')
+		call CHECK(10, "arrgh", '\<G\[1]\.\.T\>', '\<4\>')
 	    endtry
 	    Xpath 33554432			" X: 33554432
 	    let exception  = v:exception
 	    let throwpoint = v:throwpoint
-	    call CHECK(11, "arrgh", '\<G\.\.T\>', '\<4\>')
+	    call CHECK(11, "arrgh", '\<G\[1]\.\.T\>', '\<4\>')
 	endtry
 	Xpath 67108864				" X: 67108864
 	let exception  = v:exception
 	let throwpoint = v:throwpoint
-	call CHECK(12, "arrgh", '\<G\.\.T\>', '\<4\>')
+	call CHECK(12, "arrgh", '\<G\[1]\.\.T\>', '\<4\>')
     finally
 	Xpath 134217728				" X: 134217728
 	let exception  = v:exception
 	let throwpoint = v:throwpoint
-	call CHECK(13, "oops", '\<F\.\.G\.\.T\>', '\<2\>')
+	call CHECK(13, "oops", '\<F\[1]\.\.G\[1]\.\.T\>', '\<2\>')
     endtry
     Xpath 268435456				" X: 268435456
     let exception  = v:exception
     let throwpoint = v:throwpoint
-    call CHECK(14, "oops", '\<F\.\.G\.\.T\>', '\<2\>')
+    call CHECK(14, "oops", '\<F\[1]\.\.G\[1]\.\.T\>', '\<2\>')
 finally
     Xpath 536870912				" X: 536870912
     let exception  = v:exception
