@@ -50,7 +50,7 @@ these differences.
 - 'listchars' defaults to "tab:> ,trail:-,nbsp:+"
 - 'mouse' defaults to "a"
 - 'nocompatible' is always set
-- 'nrformats' defaults to "hex"
+- 'nrformats' defaults to "bin,hex"
 - 'sessionoptions' doesn't include "options"
 - 'smarttab' is set by default
 - 'tabpagemax' defaults to 50
