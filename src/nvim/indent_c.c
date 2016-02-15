@@ -69,23 +69,33 @@ find_start_comment (  /* XXX */
   return pos;
 }
 
-/*
- * Find the start of a comment or raw string, not knowing if we are in a
- * comment or raw string right now.
- * Search starts at w_cursor.lnum and goes backwards.
- * Return NULL when not inside a comment or raw string.
- * "CORS" -> Comment Or Raw String
- */
+/// Find the start of a comment or raw string, not knowing if we are in a
+/// comment or raw string right now.
+/// Search starts at w_cursor.lnum and goes backwards.
+///
+/// @returns NULL when not inside a comment or raw string.
+///
+/// @note "CORS" -> Comment Or Raw String
 static pos_T *ind_find_start_CORS(void)
-{ /* XXX */
-    pos_T *comment_pos = find_start_comment(curbuf->b_ind_maxcomment);
-    pos_T *rs_pos = find_start_rawstring(curbuf->b_ind_maxcomment);
+{
+  // XXX
+  static pos_T comment_pos_copy;
 
-    /* If comment_pos is before rs_pos the raw string is inside the comment.
-     * If rs_pos is before comment_pos the comment is inside the raw string. */
-    if (comment_pos == NULL || (rs_pos != NULL && lt(*rs_pos, *comment_pos)))
-        return rs_pos;
-    return comment_pos;
+  pos_T *comment_pos = find_start_comment(curbuf->b_ind_maxcomment);
+  if (comment_pos != NULL) {
+    // Need to make a copy of the static pos in findmatchlimit(),
+    // calling find_start_rawstring() may change it.
+    comment_pos_copy = *comment_pos;
+    comment_pos = &comment_pos_copy;
+  }
+  pos_T *rs_pos = find_start_rawstring(curbuf->b_ind_maxcomment);
+
+  // If comment_pos is before rs_pos the raw string is inside the comment.
+  // If rs_pos is before comment_pos the comment is inside the raw string.
+  if (comment_pos == NULL || (rs_pos != NULL && lt(*rs_pos, *comment_pos))) {
+    return rs_pos;
+  }
+  return comment_pos;
 }
 
 /*
@@ -2707,7 +2717,8 @@ int get_c_indent(void)
 
           if (terminated == 0 || (lookfor != LOOKFOR_UNTERM
                                   && terminated == ',')) {
-            if (*skipwhite(l) == '[' || l[STRLEN(l) - 1] == '[') {
+            if (lookfor != LOOKFOR_ENUM_OR_INIT
+                && (*skipwhite(l) == '[' || l[STRLEN(l) - 1] == '[')) {
               amount += ind_continuation;
             }
             // If we're in the middle of a paren thing, Go back to the line
@@ -2915,34 +2926,35 @@ int get_c_indent(void)
                   continue;
                 }
 
-                /* Ignore unterminated lines in between, but
-                 * reduce indent. */
-                if (amount > cur_amount)
+                // Ignore unterminated lines in between, but
+                // reduce indent.
+                if (amount > cur_amount) {
                   amount = cur_amount;
+                }
               } else {
-                /*
-                 * Found first unterminated line on a row, may
-                 * line up with this line, remember its indent
-                 *	    100 +
-                 * ->	    here;
-                 */
+                // Found first unterminated line on a row, may
+                // line up with this line, remember its indent
+                // 	    100 +  //  NOLINT(whitespace/tab)
+                // ->	    here;  //  NOLINT(whitespace/tab)
                 l = get_cursor_line_ptr();
                 amount = cur_amount;
-                if (*skipwhite(l) == ']' || l[STRLEN(l) - 1] == ']') {
+
+                n = (int)STRLEN(l);
+                if (terminated == ','
+                    && (*skipwhite(l) == ']'
+                        || (n >=2 && l[n - 2] == ']'))) {
                   break;
                 }
 
-                /*
-                 * If previous line ends in ',', check whether we
-                 * are in an initialization or enum
-                 * struct xxx =
-                 * {
-                 *      sizeof a,
-                 *      124 };
-                 * or a normal possible continuation line.
-                 * but only, of no other statement has been found
-                 * yet.
-                 */
+                // If previous line ends in ',', check whether we
+                // are in an initialization or enum
+                // struct xxx =
+                // {
+                //      sizeof a,
+                //      124 };
+                // or a normal possible continuation line.
+                // but only, of no other statement has been found
+                // yet.
                 if (lookfor == LOOKFOR_INITIAL && terminated == ',') {
                   if (curbuf->b_ind_js) {
                     // Search for a line ending in a comma

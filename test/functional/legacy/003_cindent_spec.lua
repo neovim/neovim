@@ -919,6 +919,28 @@ describe('cindent', function()
           )foo";
            }
       
+      {
+      int a[4] = {
+      [0] = 0,
+      [1] = 1,
+      [2] = 2,
+      [3] = 3,
+      };
+      }
+      
+      {
+      a = b[2]
+      + 3;
+      }
+      
+      {
+      if (1)
+      /* aaaaa
+      * bbbbb
+      */
+      a = 1;
+      }
+      
       /* end of AUTO */
       ]=])
 
@@ -1823,6 +1845,28 @@ describe('cindent', function()
           field: 123
         }
           )foo";
+      }
+      
+      {
+      	int a[4] = {
+      		[0] = 0,
+      		[1] = 1,
+      		[2] = 2,
+      		[3] = 3,
+      	};
+      }
+      
+      {
+      	a = b[2]
+      		+ 3;
+      }
+      
+      {
+      	if (1)
+      		/* aaaaa
+      		 * bbbbb
+      		 */
+      		a = 1;
       }
       
       /* end of AUTO */
