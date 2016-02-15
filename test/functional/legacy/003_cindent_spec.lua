@@ -674,6 +674,13 @@ describe('cindent', function()
       {
       }
       
+      A::A(int a, int b)
+      : aa(a),
+      bb(b),
+      cc(c)
+      {
+      }
+      
       class CAbc :
          public BaseClass1,
          protected BaseClass2
@@ -1626,6 +1633,13 @@ describe('cindent', function()
       Constructor::Constructor(int a,
       		int b ) /*x*/ : /*x*/ BaseClass(a),
       	member(b)
+      {
+      }
+      
+      A::A(int a, int b)
+      	: aa(a),
+      	bb(b),
+      	cc(c)
       {
       }
       

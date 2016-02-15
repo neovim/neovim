@@ -857,13 +857,27 @@ static int cin_isfuncdecl(char_u **sp, linenr_T first_lnum, linenr_T min_lnum)
     return FALSE;
 
   while (*s && *s != '(' && *s != ';' && *s != '\'' && *s != '"') {
-    if (cin_iscomment(s))       /* ignore comments */
+    // ignore comments
+    if (cin_iscomment(s)) {
       s = cin_skipcomment(s);
-    else
-      ++s;
+    } else if (*s == ':') {
+      if (*(s + 1) == ':') {
+        s += 2;
+      } else {
+        // To avoid a mistake in the following situation:
+        // A::A(int a, int b)
+        //     : a(0)  // <--not a function decl
+        //     , b(0)
+        // {...
+        return false;
+      }
+    } else {
+      s++;
+    }
   }
-  if (*s != '(')
-    return FALSE;               /* ';', ' or "  before any () or no '(' */
+  if (*s != '(') {
+    return false;  // ';', ' or "  before any () or no '('
+  }
 
   while (*s && *s != ';' && *s != '\'' && *s != '"') {
     if (*s == ')' && cin_nocode(s + 1)) {
