@@ -161,6 +161,7 @@ enum {
   SHM_LINES          = 'l',  ///< "L" instead of "lines".
   SHM_NEW            = 'n',  ///< "[New]" instead of "[New file]".
   SHM_WRI            = 'w',  ///< "[w]" instead of "written".
+  SHM_ABBREVIATIONS  = 'a',  ///< Use abbreviations from #SHM_ALL_ABBREVIATIONS.
   SHM_WRITE          = 'W',  ///< Don't use "written" at all.
   SHM_TRUNC          = 't',  ///< Trunctate file messages.
   SHM_TRUNCALL       = 'T',  ///< Trunctate all messages.
@@ -173,15 +174,16 @@ enum {
   SHM_RECORDING      = 'q',  ///< Short recording message.
 };
 /// Represented by 'a' flag.
-#define SHM_A ((char_u[]) { \
+#define SHM_ALL_ABBREVIATIONS ((char_u[]) { \
   SHM_RO, SHM_MOD, SHM_FILE, SHM_LAST, SHM_TEXT, SHM_LINES, SHM_NEW, SHM_WRI, \
   0, \
 })
 /// All possible flags for 'shm'.
 #define SHM_ALL ((char_u[]) { \
   SHM_RO, SHM_MOD, SHM_FILE, SHM_LAST, SHM_TEXT, SHM_LINES, SHM_NEW, SHM_WRI, \
-  'a', SHM_WRITE, SHM_TRUNC, SHM_TRUNCALL, SHM_OVER, SHM_OVERALL, SHM_SEARCH, \
-  SHM_ATTENTION, SHM_INTRO, SHM_COMPLETIONMENU, SHM_RECORDING, \
+  SHM_ABBREVIATIONS, SHM_WRITE, SHM_TRUNC, SHM_TRUNCALL, SHM_OVER, \
+  SHM_OVERALL, SHM_SEARCH, SHM_ATTENTION, SHM_INTRO, SHM_COMPLETIONMENU, \
+  SHM_RECORDING, \
   0, \
 })
 
