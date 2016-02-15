@@ -28,6 +28,7 @@ SCRIPTS :=                                                             \
            test_charsearch.out                                         \
            test_close_count.out                                        \
            test_marks.out                                              \
+           test_match_conceal.out                                      \
 
 NEW_TESTS =
 

@@ -2199,11 +2199,13 @@ win_line (
   int syntax_seqnr    = 0;
   int prev_syntax_id  = 0;
   int conceal_attr    = hl_attr(HLF_CONCEAL);
-  int is_concealing   = FALSE;
-  int boguscols       = 0;              /* nonexistent columns added to force
-                                           wrapping */
-  int vcol_off        = 0;              /* offset for concealed characters */
-  int did_wcol        = FALSE;
+  int is_concealing   = false;
+  int boguscols       = 0;              ///< nonexistent columns added to
+                                        ///< force wrapping
+  int vcol_off        = 0;              ///< offset for concealed characters
+  int did_wcol        = false;
+  int match_conc      = false;          ///< cchar for match functions
+  int has_match_conc  = false;          ///< match wants to conceal
   int old_boguscols = 0;
 # define VCOL_HLC (vcol - vcol_off)
 # define FIX_FOR_BOGUSCOLS \
@@ -2633,11 +2635,10 @@ win_line (
     extra_check = true;
   }
 
-  /*
-   * Repeat for the whole displayed line.
-   */
+  // Repeat for the whole displayed line.
   for (;; ) {
-    /* Skip this quickly when working on the text. */
+    has_match_conc = false;
+    // Skip this quickly when working on the text.
     if (draw_state != WL_LINE) {
       if (draw_state == WL_CMDLINE - 1 && n_extra == 0) {
         draw_state = WL_CMDLINE;
@@ -2884,8 +2885,16 @@ win_line (
                 shl->endcol = tmp_col;
               }
               shl->attr_cur = shl->attr;
+              if (cur != NULL && syn_name2id((char_u *)"Conceal")
+                  == cur->hlg_id) {
+                has_match_conc = true;
+                match_conc = cur->conceal_char;
+              } else {
+                has_match_conc = match_conc = false;
+              }
             } else if (v == (long)shl->endcol) {
               shl->attr_cur = 0;
+              prev_syntax_id = 0;
 
               next_search_hl(wp, shl, lnum, (colnr_T)v, cur);
               pos_inprogress = !(cur == NULL || cur->pos.cur == 0);
@@ -3602,24 +3611,28 @@ win_line (
         }
       }
 
-      if (   wp->w_p_cole > 0
-             && (wp != curwin || lnum != wp->w_cursor.lnum ||
-                 conceal_cursor_line(wp))
-             && (syntax_flags & HL_CONCEAL) != 0
-             && !(lnum_in_visual_area
-                  && vim_strchr(wp->w_p_cocu, 'v') == NULL)) {
+      if (wp->w_p_cole > 0
+          && (wp != curwin || lnum != wp->w_cursor.lnum ||
+              conceal_cursor_line(wp))
+          && ((syntax_flags & HL_CONCEAL) != 0 || has_match_conc)
+          && !(lnum_in_visual_area
+               && vim_strchr(wp->w_p_cocu, 'v') == NULL)) {
         char_attr = conceal_attr;
         if (prev_syntax_id != syntax_seqnr
-            && (syn_get_sub_char() != NUL || wp->w_p_cole == 1)
+            && (syn_get_sub_char() != NUL || match_conc
+                || wp->w_p_cole == 1)
             && wp->w_p_cole != 3) {
-          /* First time at this concealed item: display one
-           * character. */
-          if (syn_get_sub_char() != NUL)
+          // First time at this concealed item: display one
+          // character.
+          if (match_conc) {
+            c = match_conc;
+          } else if (syn_get_sub_char() != NUL) {
             c = syn_get_sub_char();
-          else if (lcs_conceal != NUL)
+          } else if (lcs_conceal != NUL) {
             c = lcs_conceal;
-          else
+          } else {
             c = ' ';
+          }
 
           prev_syntax_id = syntax_seqnr;
 

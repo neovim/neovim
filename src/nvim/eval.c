@@ -7270,8 +7270,8 @@ static struct fst {
   { "maparg",            1, 4, f_maparg },
   { "mapcheck",          1, 3, f_mapcheck },
   { "match",             2, 4, f_match },
-  { "matchadd",          2, 4, f_matchadd },
-  { "matchaddpos",       2, 4, f_matchaddpos },
+  { "matchadd",          2, 5, f_matchadd },
+  { "matchaddpos",       2, 5, f_matchaddpos },
   { "matcharg",          1, 1, f_matcharg },
   { "matchdelete",       1, 1, f_matchdelete },
   { "matchend",          2, 4, f_matchend },
@@ -10422,6 +10422,14 @@ static void f_getmatches(typval_T *argvars, typval_T *rettv)
     dict_add_nr_str(dict, "group", 0L, syn_id2name(cur->hlg_id));
     dict_add_nr_str(dict, "priority", (long)cur->priority, NULL);
     dict_add_nr_str(dict, "id", (long)cur->id, NULL);
+
+    if (cur->conceal_char) {
+      char_u buf[MB_MAXBYTES + 1];
+
+      buf[(*mb_char2bytes)((int)cur->conceal_char, buf)] = NUL;
+      dict_add_nr_str(dict, "conceal", 0L, (char_u *)&buf);
+    }
+
     list_append_dict(rettv->vval.v_list, dict);
     cur = cur->next;
   }
@@ -12487,7 +12495,8 @@ static void f_matchadd(typval_T *argvars, typval_T *rettv)
   char_u      *pat = get_tv_string_buf_chk(&argvars[1], buf);   /* pattern */
   int prio = 10;                /* default priority */
   int id = -1;
-  int error = FALSE;
+  int error = false;
+  char_u *conceal_char = NULL;
 
   rettv->vval.v_number = -1;
 
@@ -12495,17 +12504,31 @@ static void f_matchadd(typval_T *argvars, typval_T *rettv)
     return;
   if (argvars[2].v_type != VAR_UNKNOWN) {
     prio = get_tv_number_chk(&argvars[2], &error);
-    if (argvars[3].v_type != VAR_UNKNOWN)
+    if (argvars[3].v_type != VAR_UNKNOWN) {
       id = get_tv_number_chk(&argvars[3], &error);
+      if (argvars[4].v_type != VAR_UNKNOWN) {
+        if (argvars[4].v_type != VAR_DICT) {
+          EMSG(_(e_dictreq));
+          return;
+        }
+        if (dict_find(argvars[4].vval.v_dict,
+                      (char_u *)"conceal", -1) != NULL) {
+          conceal_char = get_dict_string(argvars[4].vval.v_dict,
+                                         (char_u *)"conceal", false);
+        }
+      }
+    }
   }
-  if (error == TRUE)
+  if (error == true) {
     return;
+  }
   if (id >= 1 && id <= 3) {
     EMSGN("E798: ID is reserved for \":match\": %" PRId64, id);
     return;
   }
 
-  rettv->vval.v_number = match_add(curwin, grp, pat, prio, id, NULL);
+  rettv->vval.v_number = match_add(curwin, grp, pat, prio, id, NULL,
+                                   conceal_char);
 }
 
 static void f_matchaddpos(typval_T *argvars, typval_T *rettv) FUNC_ATTR_NONNULL_ALL
@@ -12533,12 +12556,24 @@ static void f_matchaddpos(typval_T *argvars, typval_T *rettv) FUNC_ATTR_NONNULL_
     int error = false;
     int prio = 10;
     int id = -1;
+    char_u *conceal_char = NULL;
 
     if (argvars[2].v_type != VAR_UNKNOWN) {
-        prio = get_tv_number_chk(&argvars[2], &error);
-        if (argvars[3].v_type != VAR_UNKNOWN) {
-            id = get_tv_number_chk(&argvars[3], &error);
+      prio = get_tv_number_chk(&argvars[2], &error);
+      if (argvars[3].v_type != VAR_UNKNOWN) {
+        id = get_tv_number_chk(&argvars[3], &error);
+        if (argvars[4].v_type != VAR_UNKNOWN) {
+          if (argvars[4].v_type != VAR_DICT) {
+            EMSG(_(e_dictreq));
+            return;
+          }
+          if (dict_find(argvars[4].vval.v_dict,
+                        (char_u *)"conceal", -1) != NULL) {
+            conceal_char = get_dict_string(argvars[4].vval.v_dict,
+                                           (char_u *)"conceal", false);
+          }
         }
+      }
     }
     if (error == true) {
         return;
@@ -12550,7 +12585,8 @@ static void f_matchaddpos(typval_T *argvars, typval_T *rettv) FUNC_ATTR_NONNULL_
         return;
     }
 
-    rettv->vval.v_number = match_add(curwin, group, NULL, prio, id, l);
+  rettv->vval.v_number = match_add(curwin, group, NULL, prio, id, l,
+                                   conceal_char);
 }
 
 /*
@@ -15259,8 +15295,8 @@ static void f_setmatches(typval_T *argvars, typval_T *rettv)
       int i = 0;
       char_u buf[5];
       dictitem_T *di;
-      d = li->li_tv.vval.v_dict;
 
+      d = li->li_tv.vval.v_dict;
       if (dict_find(d, (char_u *)"pattern", -1) == NULL) {
         if (s == NULL) {
           s = list_alloc();
@@ -15285,15 +15321,19 @@ static void f_setmatches(typval_T *argvars, typval_T *rettv)
         }
       }
 
+      char_u *group = get_dict_string(d, (char_u *)"group", false);
+      int priority = get_dict_number(d, (char_u *)"priority");
+      int id = get_dict_number(d, (char_u *)"id");
+      char_u *conceal = dict_find(d, (char_u *)"conceal", -1) != NULL
+                                  ? get_dict_string(d, (char_u *)"conceal",
+                                                    false)
+                                  : NULL;
       if (i == 0) {
-        match_add(curwin, get_dict_string(d, (char_u *)"group", false),
+        match_add(curwin, group,
                   get_dict_string(d, (char_u *)"pattern", false),
-                  (int)get_dict_number(d, (char_u *)"priority"),
-                  (int)get_dict_number(d, (char_u *)"id"), NULL);
+                  priority, id, NULL, conceal);
       } else {
-        match_add(curwin, get_dict_string(d, (char_u *)"group", false),
-                  NULL, (int)get_dict_number(d, (char_u *)"priority"),
-                  (int)get_dict_number(d, (char_u *)"id"), s);
+        match_add(curwin, group, NULL, priority, id, s, conceal);
         list_unref(s);
         s = NULL;
       }
