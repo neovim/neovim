@@ -1097,6 +1097,8 @@ static void redraw(bool restore_cursor)
 
   unblock_autocmds();
   ui_flush();
+
+  apply_autocmds(EVENT_TERMREDRAW, NULL, NULL, false, curbuf);
 }
 
 static void adjust_topline(Terminal *term, buf_T *buf, bool force)
