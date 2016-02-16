@@ -2332,6 +2332,13 @@ return {
       defaults={if_true={vi=true}}
     },
     {
+      full_name='tagcase', abbreviation='tc',
+      type='string', scope={'global', 'buffer'},
+      vim=true,
+      varname='p_tc',
+      defaults={if_true={vi="followic", vim="followic"}}
+    },
+    {
       full_name='taglength', abbreviation='tl',
       type='number', scope={'global'},
       vi_def=true,

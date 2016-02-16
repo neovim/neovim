@@ -84,11 +84,13 @@ changed, to avoid confusion when using ":tnext".  It is changed when using
 ":tag {ident}".
 
 The ignore-case matches are not found for a ":tag" command when the
-'ignorecase' option is off.  They are found when a pattern is used (starting
-with a "/") and for ":tselect", also when 'ignorecase' is off.  Note that
-using ignore-case tag searching disables binary searching in the tags file,
-which causes a slowdown.  This can be avoided by fold-case sorting the tag
-file.  See the 'tagbsearch' option for an explanation.
+'ignorecase' option is off and 'tagcase' is "followic" or when 'tagcase' is
+"match".  They are found when a pattern is used (starting with a "/") and for
+":tselect", also when 'ignorecase' is off and 'tagcase' is "followic" or when
+'tagcase' is "match".  Note that using ignore-case tag searching disables
+binary searching in the tags file, which causes a slowdown.  This can be
+avoided by fold-case sorting the tag file.  See the 'tagbsearch' option for an
+explanation.
 
 ==============================================================================
 2. Tag stack				*tag-stack* *tagstack* *E425*
@@ -418,12 +420,13 @@ file "tags".  It can also be used to access a common tags file.
 The next file in the list is not used when:
 - A matching static tag for the current buffer has been found.
 - A matching global tag has been found.
-This also depends on the 'ignorecase' option.  If it is off, and the tags file
-only has a match without matching case, the next tags file is searched for a
-match with matching case.  If no tag with matching case is found, the first
-match without matching case is used.  If 'ignorecase' is on, and a matching
-global tag with or without matching case is found, this one is used, no
-further tags files are searched.
+This also depends on whether case is ignored.  Case is ignored when
+'ignorecase' is set and 'tagcase' is "followic", or when 'tagcase' is
+"ignore".  If case is not ignored, and the tags file only has a match without
+matching case, the next tags file is searched for a match with matching case.
+If no tag with matching case is found, the first match without matching case
+is used.  If case is ignored, and a matching global tag with or without
+matching case is found, this one is used, no further tags files are searched.
 
 When a tag file name starts with "./", the '.' is replaced with the path of
 the current file.  This makes it possible to use a tags file in the directory
@@ -556,8 +559,10 @@ that indicates if the file was sorted.  When this line is found, Vim uses
 binary searching for the tags file:
 	!_TAG_FILE_SORTED<Tab>1<Tab>{anything} ~
 
-A tag file may be case-fold sorted to avoid a linear search when 'ignorecase'
-is on.  See 'tagbsearch' for details.  The value '2' should be used then:
+A tag file may be case-fold sorted to avoid a linear search when case is
+ignored.  (Case is ignored when 'ignorecase' is set and 'tagcase' is
+"followic", or when 'tagcase' is "ignore".)  See 'tagbsearch' for details.
+The value '2' should be used then:
 	!_TAG_FILE_SORTED<Tab>2<Tab>{anything} ~
 
 The other tag that Vim recognizes, but only when compiled with the

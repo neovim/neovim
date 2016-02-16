@@ -674,6 +674,8 @@ struct file_buffer {
   char_u      *b_p_path;        /* 'path' local value */
   int b_p_ar;                   /* 'autoread' local value */
   char_u      *b_p_tags;        /* 'tags' local value */
+  char_u      *b_p_tc;          ///< 'tagcase' local value
+  unsigned    b_tc_flags;       ///< flags for 'tagcase'
   char_u      *b_p_dict;        /* 'dictionary' local value */
   char_u      *b_p_tsr;         /* 'thesaurus' local value */
   long b_p_ul;                  /* 'undolevels' local value */
@@ -953,9 +955,7 @@ struct window_S {
                                        time through cursupdate() to the
                                        current virtual column */
 
-  /*
-   * the next six are used to update the visual part
-   */
+  // the next seven are used to update the visual part
   char w_old_visual_mode;           /* last known VIsual_mode */
   linenr_T w_old_cursor_lnum;       /* last known end of visual part */
   colnr_T w_old_cursor_fcol;        /* first column for block visual part */

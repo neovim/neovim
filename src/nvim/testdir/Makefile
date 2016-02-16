@@ -38,6 +38,7 @@ SCRIPTS := \
            test_close_count.out   \
            test_marks.out         \
            test_match_conceal.out \
+           test_tagcase.out       \
 
 NEW_TESTS =
 
