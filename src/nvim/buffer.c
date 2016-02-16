@@ -264,17 +264,16 @@ open_buffer (
   return retval;
 }
 
-/*
- * Return TRUE if "buf" points to a valid buffer (in the buffer list).
- */
-int buf_valid(buf_T *buf)
+/// Check that "buf" points to a valid buffer (in the buffer list).
+bool buf_valid(buf_T *buf)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   FOR_ALL_BUFFERS(bp) {
     if (bp == buf) {
-      return TRUE;
+      return true;
     }
   }
-  return FALSE;
+  return false;
 }
 
 /*
@@ -2062,16 +2061,15 @@ void buflist_setfpos(buf_T *const buf, win_T *const win,
 }
 
 
-/*
- * Return true when "wip" has 'diff' set and the diff is only for another tab
- * page.  That's because a diff is local to a tab page.
- */
+/// Check that "wip" has 'diff' set and the diff is only for another tab page.
+/// That's because a diff is local to a tab page.
 static bool wininfo_other_tab_diff(wininfo_T *wip)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   if (wip->wi_opt.wo_diff) {
     FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-      /* return false when it's a window in the current tab page, thus
-       * the buffer was in diff mode here */
+      // return false when it's a window in the current tab page, thus
+      // the buffer was in diff mode here
       if (wip->wi_win == wp) {
         return false;
       }
@@ -2428,52 +2426,62 @@ void buflist_altfpos(win_T *win)
   buflist_setfpos(curbuf, win, win->w_cursor.lnum, win->w_cursor.col, TRUE);
 }
 
-/*
- * Return TRUE if 'ffname' is not the same file as current file.
- * Fname must have a full path (expanded by path_get_absolute_path()).
- */
-int otherfile(char_u *ffname)
+/// Check that "ffname" is not the same file as current file.
+/// Fname must have a full path (expanded by path_get_absolute_path()).
+///
+/// @param  ffname  full path name to check
+bool otherfile(char_u *ffname)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   return otherfile_buf(curbuf, ffname, NULL, false);
 }
 
-static int otherfile_buf(buf_T *buf, char_u *ffname,
-                         FileID *file_id_p, bool file_id_valid)
+/// Check that "ffname" is not the same file as the file loaded in "buf".
+/// Fname must have a full path (expanded by path_get_absolute_path()).
+///
+/// @param  buf            buffer to check
+/// @param  ffname         full path name to check
+/// @param  file_id_p      information about the file at "ffname".
+/// @param  file_id_valid  whether a valid "file_id_p" was passed in.
+static bool otherfile_buf(buf_T *buf, char_u *ffname, FileID *file_id_p,
+                          bool file_id_valid)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  /* no name is different */
+  // no name is different
   if (ffname == NULL || *ffname == NUL || buf->b_ffname == NULL) {
-    return TRUE;
+    return true;
   }
   if (fnamecmp(ffname, buf->b_ffname) == 0) {
-    return FALSE;
+    return false;
   }
   {
     FileID file_id;
-    /* If no struct stat given, get it now */
+    // If no struct stat given, get it now
     if (file_id_p == NULL) {
       file_id_p = &file_id;
       file_id_valid = os_fileid((char *)ffname, file_id_p);
     }
     if (!file_id_valid) {
       // file_id not valid, assume files are different.
-      return TRUE;
+      return true;
     }
-    /* Use dev/ino to check if the files are the same, even when the names
-     * are different (possible with links).  Still need to compare the
-     * name above, for when the file doesn't exist yet.
-     * Problem: The dev/ino changes when a file is deleted (and created
-     * again) and remains the same when renamed/moved.  We don't want to
-     * stat() each buffer each time, that would be too slow.  Get the
-     * dev/ino again when they appear to match, but not when they appear
-     * to be different: Could skip a buffer when it's actually the same
-     * file. */
+    // Use dev/ino to check if the files are the same, even when the names
+    // are different (possible with links).  Still need to compare the
+    // name above, for when the file doesn't exist yet.
+    // Problem: The dev/ino changes when a file is deleted (and created
+    // again) and remains the same when renamed/moved.  We don't want to
+    // stat() each buffer each time, that would be too slow.  Get the
+    // dev/ino again when they appear to match, but not when they appear
+    // to be different: Could skip a buffer when it's actually the same
+    // file.
     if (buf_same_file_id(buf, file_id_p)) {
       buf_set_file_id(buf);
-      if (buf_same_file_id(buf, file_id_p))
-        return FALSE;
+      if (buf_same_file_id(buf, file_id_p)) {
+        return false;
+      }
     }
   }
-  return TRUE;
+  return true;
 }
 
 // Set file_id for a buffer.
@@ -2490,11 +2498,14 @@ void buf_set_file_id(buf_T *buf)
   }
 }
 
-// return TRUE if file_id in buffer "buf" matches with "file_id".
+/// Check that file_id in buffer "buf" matches with "file_id".
+///
+/// @param  buf      buffer
+/// @param  file_id  file id
 static bool buf_same_file_id(buf_T *buf, FileID *file_id)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
-  return buf->file_id_valid
-         && os_fileid_equal(&(buf->file_id), file_id);
+  return buf->file_id_valid && os_fileid_equal(&(buf->file_id), file_id);
 }
 
 /*
@@ -2777,23 +2788,28 @@ void maketitle(void)
     resettitle();
 }
 
-/*
- * Used for title and icon: Check if "str" differs from "*last".  Set "*last"
- * from "str" if it does.
- * Return TRUE when "*last" changed.
- */
-static int ti_change(char_u *str, char_u **last)
+/// Used for title and icon: Check if "str" differs from "*last".  Set "*last"
+/// from "str" if it does by freeing the old value of "*last" and duplicating
+/// "str".
+///
+/// @param          str   desired title string
+/// @param[in,out]  last  current title string
+//
+/// @return true when "*last" changed.
+static bool ti_change(char_u *str, char_u **last)
+  FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if ((str == NULL) != (*last == NULL)
       || (str != NULL && *last != NULL && STRCMP(str, *last) != 0)) {
     xfree(*last);
-    if (str == NULL)
+    if (str == NULL) {
       *last = NULL;
-    else
+    } else {
       *last = vim_strsave(str);
-    return TRUE;
+    }
+    return true;
   }
-  return FALSE;
+  return false;
 }
 
 /*
@@ -3929,26 +3945,29 @@ void get_rel_pos(win_T *wp, char_u *buf, int buflen)
         : (int)(above * 100L / (above + below)));
 }
 
-/*
- * Append (file 2 of 8) to "buf[buflen]", if editing more than one file.
- * Return TRUE if it was appended.
- */
-static int 
-append_arg_number (
-    win_T *wp,
-    char_u *buf,
-    int buflen,
-    int add_file                   /* Add "file" before the arg number */
-)
+/// Append (file 2 of 8) to "buf[buflen]", if editing more than one file.
+///
+/// @param          wp        window whose buffers to check
+/// @param[in,out]  buf       string buffer to add the text to
+/// @param          buflen    length of the string buffer
+/// @param          add_file  if true, add "file" before the arg number
+///
+/// @return true if it was appended.
+static bool append_arg_number(win_T *wp, char_u *buf, int buflen, bool add_file)
+  FUNC_ATTR_NONNULL_ALL
 {
-  char_u      *p;
+  // Nothing to do
+  if (ARGCOUNT <= 1) {
+    return false;
+  }
 
-  if (ARGCOUNT <= 1)            /* nothing to do */
-    return FALSE;
+  char_u *p = buf + STRLEN(buf);  // go to the end of the buffer
 
-  p = buf + STRLEN(buf);        /* go to the end of the buffer */
-  if (p - buf + 35 >= buflen)   /* getting too long */
-    return FALSE;
+  // Early out if the string is getting too long
+  if (p - buf + 35 >= buflen) {
+    return false;
+  }
+
   *p++ = ' ';
   *p++ = '(';
   if (add_file) {
@@ -3956,9 +3975,10 @@ append_arg_number (
     p += 5;
   }
   vim_snprintf((char *)p, (size_t)(buflen - (p - buf)),
-      wp->w_arg_idx_invalid ? "(%d) of %d)"
-      : "%d of %d)", wp->w_arg_idx + 1, ARGCOUNT);
-  return TRUE;
+               wp->w_arg_idx_invalid
+               ? "(%d) of %d)"
+               : "%d of %d)", wp->w_arg_idx + 1, ARGCOUNT);
+  return true;
 }
 
 /*
@@ -4592,11 +4612,16 @@ char_u *buf_spname(buf_T *buf)
   return NULL;
 }
 
-/*
- * Find a window for buffer "buf".
- * If found true is returned and "wp" and "tp" are set to the window and tabpage.
- * If not found false is returned.
- */
+/// Find a window for buffer "buf".
+/// If found true is returned and "wp" and "tp" are set to
+/// the window and tabpage.
+/// If not found, false is returned.
+///
+/// @param       buf  buffer to find a window for
+/// @param[out]  wp   stores the found window
+/// @param[out]  tp   stores the found tabpage
+///
+/// @return true if a window was found for the buffer.
 bool find_win_for_buf(buf_T *buf, win_T **wp, tabpage_T **tp)
 {
   *wp = NULL;
@@ -5110,50 +5135,54 @@ void set_buflisted(int on)
   }
 }
 
-/*
- * Read the file for "buf" again and check if the contents changed.
- * Return TRUE if it changed or this could not be checked.
- */
-int buf_contents_changed(buf_T *buf)
+/// Read the file for "buf" again and check if the contents changed.
+/// Return true if it changed or this could not be checked.
+///
+/// @param  buf  buffer to check
+///
+/// @return true if the buffer's contents have changed
+bool buf_contents_changed(buf_T *buf)
+  FUNC_ATTR_NONNULL_ALL
 {
-  buf_T       *newbuf;
-  int differ = TRUE;
-  linenr_T lnum;
-  aco_save_T aco;
+  bool differ = true;
+
+  // Allocate a buffer without putting it in the buffer list.
+  buf_T *newbuf = buflist_new(NULL, NULL, (linenr_T)1, BLN_DUMMY);
+  if (newbuf == NULL) {
+    return true;
+  }
+
+  // Force the 'fileencoding' and 'fileformat' to be equal.
   exarg_T ea;
-
-  /* Allocate a buffer without putting it in the buffer list. */
-  newbuf = buflist_new(NULL, NULL, (linenr_T)1, BLN_DUMMY);
-  if (newbuf == NULL)
-    return TRUE;
-
-  /* Force the 'fileencoding' and 'fileformat' to be equal. */
   prep_exarg(&ea, buf);
 
-  /* set curwin/curbuf to buf and save a few things */
+  // set curwin/curbuf to buf and save a few things
+  aco_save_T aco;
   aucmd_prepbuf(&aco, newbuf);
 
   if (ml_open(curbuf) == OK
       && readfile(buf->b_ffname, buf->b_fname,
-          (linenr_T)0, (linenr_T)0, (linenr_T)MAXLNUM,
-          &ea, READ_NEW | READ_DUMMY) == OK) {
-    /* compare the two files line by line */
+                  (linenr_T)0, (linenr_T)0, (linenr_T)MAXLNUM,
+                  &ea, READ_NEW | READ_DUMMY) == OK) {
+    // compare the two files line by line
     if (buf->b_ml.ml_line_count == curbuf->b_ml.ml_line_count) {
-      differ = FALSE;
-      for (lnum = 1; lnum <= curbuf->b_ml.ml_line_count; ++lnum)
-        if (STRCMP(ml_get_buf(buf, lnum, FALSE), ml_get(lnum)) != 0) {
-          differ = TRUE;
+      differ = false;
+      for (linenr_T lnum = 1; lnum <= curbuf->b_ml.ml_line_count; ++lnum) {
+        if (STRCMP(ml_get_buf(buf, lnum, false), ml_get(lnum)) != 0) {
+          differ = true;
           break;
         }
+      }
     }
   }
   xfree(ea.cmd);
 
-  /* restore curwin/curbuf and a few other things */
+  // restore curwin/curbuf and a few other things
   aucmd_restbuf(&aco);
 
-  if (curbuf != newbuf)         /* safety check */
-    wipe_buffer(newbuf, FALSE);
+  if (curbuf != newbuf) {  // safety check
+    wipe_buffer(newbuf, false);
+  }
 
   return differ;
 }

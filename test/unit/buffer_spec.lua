@@ -41,13 +41,13 @@ describe('buffer functions', function()
   describe('buf_valid', function()
 
     it('should view NULL as an invalid buffer', function()
-      eq(0, buffer.buf_valid(NULL))
+      eq(false, buffer.buf_valid(NULL))
     end)
 
     it('should view an open buffer as valid', function()
       local buf = buflist_new(path1, buffer.BLN_LISTED)
 
-      eq(1, buffer.buf_valid(buf))
+      eq(true, buffer.buf_valid(buf))
     end)
 
     it('should view a closed and hidden buffer as valid', function()
@@ -55,7 +55,7 @@ describe('buffer functions', function()
 
       close_buffer(NULL, buf, 0, 0)
 
-      eq(1, buffer.buf_valid(buf))
+      eq(true, buffer.buf_valid(buf))
     end)
 
     it('should view a closed and unloaded buffer as valid', function()
@@ -63,7 +63,7 @@ describe('buffer functions', function()
 
       close_buffer(NULL, buf, buffer.DOBUF_UNLOAD, 0)
 
-      eq(1, buffer.buf_valid(buf))
+      eq(true, buffer.buf_valid(buf))
     end)
 
     it('should view a closed and wiped buffer as invalid', function()
@@ -71,7 +71,7 @@ describe('buffer functions', function()
 
       close_buffer(NULL, buf, buffer.DOBUF_WIPE, 0)
 
-      eq(0, buffer.buf_valid(buf))
+      eq(false, buffer.buf_valid(buf))
     end)
   end)
 
