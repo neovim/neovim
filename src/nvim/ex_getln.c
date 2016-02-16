@@ -2969,7 +2969,7 @@ ExpandOne (
         mb_len = (* mb_ptr2len)(&xp->xp_files[0][len]);
         c0 = (* mb_ptr2char)(&xp->xp_files[0][len]);
       } else {
-        c0 = xp->xp_files[i][len];
+        c0 = xp->xp_files[0][len];
       }
       for (i = 1; i < xp->xp_numfiles; ++i) {
         if (has_mbyte) {
