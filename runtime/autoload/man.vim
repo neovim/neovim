@@ -51,7 +51,7 @@ function man#get_page(...) abort
     if winnr() > 1
       exe "norm! " . thiswin . "\<C-W>w"
       while 1
-        if &filetype == 'man'
+        if &filetype ==# 'man'
           break
         endif
         wincmd w
@@ -75,10 +75,10 @@ function man#get_page(...) abort
   endif
   silent exec 'r!/usr/bin/man '.s:cmd(sect, page).' | col -b'
   " Remove blank lines from top and bottom.
-  while getline(1) =~ '^\s*$'
+  while getline(1) =~# '^\s*$'
     silent keepjumps norm! gg"_dd
   endwhile
-  while getline('$') =~ '^\s*$'
+  while getline('$') =~# '^\s*$'
     silent keepjumps norm! G"_dd
   endwhile
   setlocal nomodified
@@ -133,10 +133,5 @@ endfunction
 
 function s:find_page(sect, page) abort
   let where = system('/usr/bin/man '.s:man_find_arg.' '.s:cmd(a:sect, a:page))
-  if where !~ "^/"
-    if matchstr(where, " [^ ]*$") !~ "^ /"
-      return 0
-    endif
-  endif
-  return 1
+  return (where =~# '^ */')
 endfunction
