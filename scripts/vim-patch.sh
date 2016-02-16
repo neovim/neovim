@@ -104,7 +104,8 @@ assign_commit_details() {
 
   vim_commit_url="https://github.com/vim/vim/commit/${vim_commit}"
   vim_message="$(cd "${VIM_SOURCE_DIR}" \
-    && git log -1 --pretty='format:%B' "${vim_commit}")"
+    && git log -1 --pretty='format:%B' "${vim_commit}" \
+      | sed -e 's/\(#[0-9]*\)/vim\/vim\1/g')"
   if [[ ${strip_commit_line} == "true" ]]; then
     # Remove first line of commit message.
     vim_message="$(echo "${vim_message}" | sed -e '1d')"
