@@ -21,6 +21,9 @@ describe('37', function()
 
   it('is working', function()
     insert([[
+      start of window 3
+      start of window 4
+      
       start of window 1
       . line 01 0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ 01
       . line 02 0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ 02
