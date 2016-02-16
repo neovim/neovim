@@ -250,6 +250,14 @@ static unsigned int handle_mouse_event(char **ptr, uint8_t *buf,
   int col, row, advance;
   if (sscanf(*ptr, "<%d,%d>%n", &col, &row, &advance) != EOF && advance) {
     if (col >= 0 && row >= 0) {
+      // Make sure the mouse position is valid.  Some terminals may
+      // return weird values.
+      if (col >= Columns) {
+        col = (int)Columns - 1;
+      }
+      if (row >= Rows) {
+        row = (int)Rows - 1;
+      }
       mouse_row = row;
       mouse_col = col;
     }
