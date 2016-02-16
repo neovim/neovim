@@ -49,7 +49,7 @@ function man#get_page(...) abort
     let thiswin = winnr()
     wincmd b
     if winnr() > 1
-      exe "norm! " . thiswin . "\<C-W>w"
+      exec thiswin . 'wincmd w'
       while 1
         if &filetype ==# 'man'
           break
@@ -76,10 +76,10 @@ function man#get_page(...) abort
   silent exec 'r!/usr/bin/man '.s:cmd(sect, page).' | col -b'
   " Remove blank lines from top and bottom.
   while getline(1) =~# '^\s*$'
-    silent keepjumps norm! gg"_dd
+    silent keepjumps 1delete _
   endwhile
   while getline('$') =~# '^\s*$'
-    silent keepjumps norm! G"_dd
+    silent keepjumps $delete _
   endwhile
   setlocal nomodified
   setlocal filetype=man
