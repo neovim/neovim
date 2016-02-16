@@ -74,8 +74,7 @@ describe('37', function()
     feed('zt')
     -- Intermediate check: 'scrolloff' has no effect if we are at the top of
     -- the buffer.
-    eq(1, eval('line(".")'))
-    eq(1, eval('line("w0")'))
+    expect_scroll_pos(1, 1, 8)
     execute('set scrollbind')
     feed('<C-W>j')
     execute('resize 7')
