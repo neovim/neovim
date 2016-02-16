@@ -12,6 +12,10 @@ local function expect_scroll_pos(cursor, top, bottom)
   eq(bottom, eval('line("w$")'))
 end
 
+local function expect_winnr(winnr)
+  eq(winnr, eval('winnr()'))
+end
+
 describe('37', function()
   setup(clear)
 
@@ -74,11 +78,13 @@ describe('37', function()
     feed('zt')
     -- Intermediate check: 'scrolloff' has no effect if we are at the top of
     -- the buffer.
+    expect_winnr(1)
     expect_scroll_pos(1, 1, 8)
     execute('set scrollbind')
     feed('<C-W>j')
     execute('resize 7')
     -- Intermediate check: Window height is really 7.
+    expect_winnr(2)
     eq(6, eval('line("w$") - line("w0")'))
     execute('/^start of window 2$/')
     feed('zt')
@@ -95,9 +101,11 @@ describe('37', function()
     expect_scroll_pos(25, 23, 29)
     feed('yy')
     feed('<C-W>b')
+    expect_winnr(3)
     feed('p')
     feed('r0')
     feed('<C-W>t')
+    expect_winnr(1)
     feed('H')
     expect_scroll_pos(25, 23, 29)
     feed('yy')
