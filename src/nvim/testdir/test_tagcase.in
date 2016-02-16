@@ -2,6 +2,7 @@ Tests for 'tagcase' option
 
 STARTTEST
 :so small.vim
+:lang mess C
 :/^start text$/+1,/^end text$/w! Xtext
 :/^start tags$/+1,/^end tags$/-1w! Xtags
 :set tags=Xtags
