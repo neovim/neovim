@@ -4575,10 +4575,19 @@ void win_drag_vsep_line(win_T *dragwin, int offset)
   }
   assert(fr);
 
-  if (room < offset)            /* Not enough room */
-    offset = room;              /* Move as far as we can */
-  if (offset <= 0)              /* No room at all, quit. */
+  // Not enough room
+  if (room < offset) {
+    offset = room;  // Move as far as we can
+  }
+
+  // No room at all, quit.
+  if (offset <= 0) {
     return;
+  }
+
+  if (fr == NULL) {
+    return;  // Safety check, should not happen.
+  }
 
   /* grow frame fr by offset lines */
   frame_new_width(fr, fr->fr_width + offset, left, FALSE);
