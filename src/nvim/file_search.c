@@ -484,28 +484,21 @@ vim_findfile_init (
         len = (int)(p - search_ctx->ffsc_fix_path) - 1;
         STRNCAT(ff_expand_buffer, search_ctx->ffsc_fix_path, len);
         add_pathsep((char *)ff_expand_buffer);
-      } else
+      } else {
         len = (int)STRLEN(search_ctx->ffsc_fix_path);
+      }
 
       if (search_ctx->ffsc_wc_path != NULL) {
         wc_path = vim_strsave(search_ctx->ffsc_wc_path);
         temp = xmalloc(STRLEN(search_ctx->ffsc_wc_path)
                        + STRLEN(search_ctx->ffsc_fix_path + len)
                        + 1);
-      }
-
-      if (temp == NULL || wc_path == NULL) {
-        xfree(buf);
-        xfree(temp);
+        STRCPY(temp, search_ctx->ffsc_fix_path + len);
+        STRCAT(temp, search_ctx->ffsc_wc_path);
+        xfree(search_ctx->ffsc_wc_path);
         xfree(wc_path);
-        goto error_return;
+        search_ctx->ffsc_wc_path = temp;
       }
-
-      STRCPY(temp, search_ctx->ffsc_fix_path + len);
-      STRCAT(temp, search_ctx->ffsc_wc_path);
-      xfree(search_ctx->ffsc_wc_path);
-      xfree(wc_path);
-      search_ctx->ffsc_wc_path = temp;
     }
     xfree(buf);
   }
