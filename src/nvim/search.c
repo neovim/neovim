@@ -3144,10 +3144,12 @@ current_block (
   }
 
   if (VIsual_active) {
-    if (*p_sel == 'e')
-      ++curwin->w_cursor.col;
-    if (sol && gchar_cursor() != NUL)
-      inc(&curwin->w_cursor);           /* include the line break */
+    if (*p_sel == 'e') {
+      inc(&curwin->w_cursor);
+    }
+    if (sol && gchar_cursor() != NUL) {
+      inc(&curwin->w_cursor);  // include the line break
+    }
     VIsual = start_pos;
     VIsual_mode = 'v';
     redraw_curbuf_later(INVERTED);      /* update the inversion */
