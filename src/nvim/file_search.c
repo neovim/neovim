@@ -1046,41 +1046,44 @@ static ff_visited_list_hdr_T *ff_get_visited_list(char_u *filename, ff_visited_l
   return retptr;
 }
 
-/*
- * check if two wildcard paths are equal. Returns TRUE or FALSE.
- * They are equal if:
- *  - both paths are NULL
- *  - they have the same length
- *  - char by char comparison is OK
- *  - the only differences are in the counters behind a '**', so
- *    '**\20' is equal to '**\24'
- */
-static int ff_wc_equal(char_u *s1, char_u *s2)
+// Check if two wildcard paths are equal.
+// They are equal if:
+//  - both paths are NULL
+//  - they have the same length
+//  - char by char comparison is OK
+//  - the only differences are in the counters behind a '**', so
+//    '**\20' is equal to '**\24'
+static bool ff_wc_equal(char_u *s1, char_u *s2)
 {
-  int i;
+  int i, j;
+  int c1 = NUL;
+  int c2 = NUL;
   int prev1 = NUL;
   int prev2 = NUL;
 
-  if (s1 == s2)
-    return TRUE;
+  if (s1 == s2) {
+    return true;
+  }
 
-  if (s1 == NULL || s2 == NULL)
-    return FALSE;
+  if (s1 == NULL || s2 == NULL) {
+    return false;
+  }
 
-  if (STRLEN(s1) != STRLEN(s2))
-    return FAIL;
-
-  for (i = 0; s1[i] != NUL && s2[i] != NUL; i += MB_PTR2LEN(s1 + i)) {
-    int c1 = PTR2CHAR(s1 + i);
-    int c2 = PTR2CHAR(s2 + i);
+  for (i = 0, j = 0; s1[i] != NUL && s2[j] != NUL;) {
+    c1 = PTR2CHAR(s1 + i);
+    c2 = PTR2CHAR(s2 + j);
 
     if ((p_fic ? vim_tolower(c1) != vim_tolower(c2) : c1 != c2)
-        && (prev1 != '*' || prev2 != '*'))
-      return FAIL;
+        && (prev1 != '*' || prev2 != '*')) {
+      return false;
+    }
     prev2 = prev1;
     prev1 = c1;
+
+    i += MB_PTR2LEN(s1 + i);
+    j += MB_PTR2LEN(s2 + j);
   }
-  return TRUE;
+  return s1[i] == s2[j];
 }
 
 /*
@@ -1111,10 +1114,11 @@ static int ff_check_visited(ff_visited_T **visited_list, char_u *fname, char_u *
     if ((url && fnamecmp(vp->ffv_fname, ff_expand_buffer) == 0)
         || (!url && vp->file_id_valid
             && os_fileid_equal(&(vp->file_id), &file_id))) {
-      /* are the wildcard parts equal */
-      if (ff_wc_equal(vp->ffv_wc_path, wc_path) == TRUE)
-        /* already visited */
+      // are the wildcard parts equal
+      if (ff_wc_equal(vp->ffv_wc_path, wc_path)) {
+        // already visited
         return FAIL;
+      }
     }
   }
 

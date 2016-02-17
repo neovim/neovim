@@ -1775,19 +1775,20 @@ bool same_directory(char_u *f1, char_u *f2)
  */
 int pathcmp(const char *p, const char *q, int maxlen)
 {
-  int i;
+  int i, j;
   int c1, c2;
   const char  *s = NULL;
 
-  for (i = 0; maxlen < 0 || i < maxlen; i += MB_PTR2LEN((char_u *)p + i)) {
+  for (i = 0, j = 0; maxlen < 0 || (i < maxlen && j < maxlen);) {
     c1 = PTR2CHAR((char_u *)p + i);
-    c2 = PTR2CHAR((char_u *)q + i);
+    c2 = PTR2CHAR((char_u *)q + j);
 
     /* End of "p": check if "q" also ends or just has a slash. */
     if (c1 == NUL) {
       if (c2 == NUL)        /* full match */
         return 0;
       s = q;
+      i = j;
       break;
     }
 
@@ -1811,9 +1812,13 @@ int pathcmp(const char *p, const char *q, int maxlen)
       return p_fic ? vim_toupper(c1) - vim_toupper(c2)
              : c1 - c2;         /* no match */
     }
+
+    i += MB_PTR2LEN((char_u *)p + i);
+    j += MB_PTR2LEN((char_u *)q + j);
   }
-  if (s == NULL)        /* "i" ran into "maxlen" */
+  if (s == NULL) {  // "i" or "j" ran into "maxlen"
     return 0;
+  }
 
   c1 = PTR2CHAR((char_u *)s + i);
   c2 = PTR2CHAR((char_u *)s + i + MB_PTR2LEN((char_u *)s + i));
