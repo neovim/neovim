@@ -571,8 +571,8 @@ char_u * mb_init(void)
 #ifdef HAVE_WORKING_LIBINTL
   /* GNU gettext 0.10.37 supports this feature: set the codeset used for
    * translated messages independently from the current locale. */
-  (void)bind_textdomain_codeset(VIMPACKAGE,
-      enc_utf8 ? "utf-8" : (char *)p_enc);
+  (void)bind_textdomain_codeset(PROJECT_NAME,
+                                enc_utf8 ? "utf-8" : (char *)p_enc);
 #endif
 
 
