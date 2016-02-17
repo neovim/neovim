@@ -334,13 +334,14 @@ static int cin_islabel_skip(char_u **s)
   return **s == ':' && *++*s != ':';
 }
 
-/*
- * Recognize a label: "label:".
- * Note: curwin->w_cursor must be where we are looking for the label.
- */
-int cin_islabel(void)
+/// Recognize a label: "label:"
+///
+/// @param lnum The line number on which to look for a label.
+///
+/// @returns TRUE if there is a label on the current line.
+int cin_islabel(linenr_T lnum)
 { /* XXX */
-  char_u *s = cin_skipcomment(get_cursor_line_ptr());
+  char_u *s = cin_skipcomment(ml_get(lnum));
 
   /*
    * Exclude "default" from labels, since it should be indented
@@ -364,6 +365,8 @@ int cin_islabel(void)
   char_u  *line;
 
   cursor_save = curwin->w_cursor;
+  curwin->w_cursor.lnum = lnum;
+
   while (curwin->w_cursor.lnum > 1) {
     --curwin->w_cursor.lnum;
 
@@ -558,19 +561,22 @@ static char_u *after_label(char_u *l)
   return l;
 }
 
-/*
- * Get indent of line "lnum", skipping a label.
- * Return 0 if there is nothing after the label.
- */
-static int 
-get_indent_nolabel (     /* XXX */
-    linenr_T lnum
-)
-{
-  char_u      *l;
+/// Gets the indent of line "lnum", skipping any label.
+///
+/// For the following text the marked character is the indent value:
+///
+///   label: if (asdf && asdfasdf)
+///          ^
+/// @param lnum The line number on which to calculate the indent.
+///
+/// @returns The indent column (after any labels) or 0 if there is no text
+///          after the label.
+static int get_indent_after_label(linenr_T lnum)
+{ /* XXX */
+  char_u *l;
   pos_T fp;
   colnr_T col;
-  char_u      *p;
+  char_u *p;
 
   l = ml_get(lnum);
   p = after_label(l);
@@ -583,35 +589,36 @@ get_indent_nolabel (     /* XXX */
   return (int)col;
 }
 
-/*
- * Find indent for line "lnum", ignoring any case or jump label.
- * Also return a pointer to the text (after the label) in "pp".
- *   label:	if (asdf && asdfasdf)
- *		^
- */
-static int skip_label(linenr_T lnum, char_u **pp)
-{
-  char_u      *l;
-  int amount;
-  pos_T cursor_save;
+/// Find indent for line "lnum", ignoring any case or jump label.
+///
+/// For the following text it'll select the marked character as the indent
+/// value:
+///
+///   label: if (asdf && asdfasdf)
+///          ^
+/// @param      lnum The line number for which you want the indent value.
+/// @param[out] pp A pointer to store a reference to the text at this indent.
+///
+/// @returns An integer representing the number of columns of indent.
+static int get_indent_after_label_with_ref(linenr_T lnum, char_u **pp)
+  FUNC_ATTR_NONNULL_ALL
+{ /* XXX */
+  char_u *l = ml_get(lnum);
+  int indent;
 
-  cursor_save = curwin->w_cursor;
-  curwin->w_cursor.lnum = lnum;
-  l = get_cursor_line_ptr();
-  /* XXX */
-  if (cin_iscase(l, FALSE) || cin_isscopedecl(l) || cin_islabel()) {
-    amount = get_indent_nolabel(lnum);
-    l = after_label(get_cursor_line_ptr());
-    if (l == NULL)              /* just in case */
-      l = get_cursor_line_ptr();
+  // We repeatedly call "ml_get(lnum)" because every time it's called
+  // (or any time we call a function that calls it, marked with an 'XXX'
+  // comment) the returned pointer is invalidated.
+  if (cin_iscase(l, FALSE) || cin_isscopedecl(l) || cin_islabel(lnum)) {
+    indent = get_indent_after_label(lnum);
+    l = after_label(ml_get(lnum));
+    *pp = (l == NULL) ? ml_get(lnum) : l;
   } else {
-    amount = get_indent();
-    l = get_cursor_line_ptr();
+    *pp = l = ml_get(lnum);
+    indent = get_indent_str(l, (int)curbuf->b_p_ts, false);
   }
-  *pp = l;
 
-  curwin->w_cursor = cursor_save;
-  return amount;
+  return indent;
 }
 
 /*
@@ -1725,7 +1732,7 @@ int get_c_indent(void)
 
   curwin->w_cursor.col = 0;
 
-  original_line_islabel = cin_islabel();    /* XXX */
+  original_line_islabel = cin_islabel(curwin->w_cursor.lnum);    /* XXX */
 
   /*
    * If we are inside a raw string don't change the indent.
@@ -2012,7 +2019,7 @@ int get_c_indent(void)
             cin_is_if_for_while_before_offset(line, &outermost.col);
         }
 
-        amount = skip_label(our_paren_pos.lnum, &look);
+        amount = get_indent_after_label_with_ref(our_paren_pos.lnum, &look);
         look = skipwhite(look);
         if (*look == '(') {
           linenr_T save_lnum = curwin->w_cursor.lnum;
@@ -2199,7 +2206,7 @@ int get_c_indent(void)
         } else if (curbuf->b_ind_js) {
           amount = get_indent_lnum(lnum);
         } else {
-          amount = skip_label(lnum, &l);
+          amount = get_indent_after_label_with_ref(lnum, &l);
         }
 
         start_brace = BRACE_AT_END;
@@ -2532,7 +2539,7 @@ int get_c_indent(void)
               continue;
             }
 
-            n = get_indent_nolabel(curwin->w_cursor.lnum);          /* XXX */
+            n = get_indent_after_label(curwin->w_cursor.lnum);  /* XXX */
 
             /*
              *	 case xx: if (cond)	    <- line up with this if
@@ -2604,7 +2611,7 @@ int get_c_indent(void)
           /*
            * Ignore jump labels with nothing after them.
            */
-          if (!curbuf->b_ind_js && cin_islabel()) {
+          if (!curbuf->b_ind_js && cin_islabel(curwin->w_cursor.lnum)) {
             l = after_label(get_cursor_line_ptr());
             if (l == NULL || cin_nocode(l))
               continue;
@@ -2613,7 +2620,7 @@ int get_c_indent(void)
           /*
            * Ignore #defines, #if, etc.
            * Ignore comment and empty lines.
-           * (need to get the line again, cin_islabel() may have
+           * (need to get the line again, cin_islabel may have
            * unlocked it)
            */
           l = get_cursor_line_ptr();
@@ -2772,7 +2779,8 @@ int get_c_indent(void)
             if (curbuf->b_ind_js) {
               cur_amount = get_indent();
             } else {
-              cur_amount = skip_label(curwin->w_cursor.lnum, &l);
+              cur_amount = get_indent_after_label_with_ref(
+                             curwin->w_cursor.lnum, &l);
             }
             /*
              * If this is just above the line we are indenting, and it
@@ -3131,7 +3139,8 @@ term_again:
                * Get indent and pointer to text for current line,
                * ignoring any jump label.
                */
-              amount = skip_label(curwin->w_cursor.lnum, &l);
+              amount = get_indent_after_label_with_ref(
+                         curwin->w_cursor.lnum, &l);
 
               if (theline[0] == '{')
                 amount += curbuf->b_ind_open_extra;
