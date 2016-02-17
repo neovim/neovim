@@ -711,13 +711,9 @@ void set_init_1(void)
   /* Must be before option_expand(), because that one needs vim_isIDc() */
   didset_options();
 
-  /* Use the current chartab for the generic chartab. */
+  // Use the current chartab for the generic chartab. This is not in
+  // didset_options() because it only depends on 'encoding'.
   init_spell_chartab();
-
-  /*
-   * initialize the table for 'breakat'.
-   */
-  fill_breakat_flags();
 
   /*
    * Expand environment variables and things like "~" for the defaults.
@@ -751,13 +747,7 @@ void set_init_1(void)
     }
   }
 
-  /* Initialize the highlight_attr[] table. */
-  highlight_changed();
-
   save_file_ff(curbuf);         /* Buffer is unchanged */
-
-  /* Parse default for 'wildmode'  */
-  check_opt_wim();
 
   /* Detect use of mlterm.
    * Mlterm is a terminal emulator akin to xterm that has some special
@@ -768,11 +758,7 @@ void set_init_1(void)
   if (os_env_exists("MLTERM"))
     set_option_value((char_u *)"tbidi", 1L, NULL, 0);
 
-  /* Parse default for 'fillchars'. */
-  (void)set_chars_option(&p_fcs);
-
-  /* Parse default for 'listchars'. */
-  (void)set_chars_option(&p_lcs);
+  didset_options2();
 
   // enc_locale() will try to find the encoding of the current locale.
   // This will be used when 'default' is used as encoding specifier
@@ -1151,9 +1137,12 @@ do_set (
        */
       arg += 3;
       if (*arg == '&') {
-        ++arg;
-        /* Only for :set command set global value of local options. */
+        arg++;
+        // Only for :set command set global value of local options.
         set_options_default(OPT_FREE | opt_flags);
+        didset_options();
+        didset_options2();
+        redraw_all_later(CLEAR);
       } else {
         showoptions(1, opt_flags);
         did_show = TRUE;
@@ -2073,9 +2062,31 @@ static void didset_options(void)
   (void)spell_check_msm();
   (void)spell_check_sps();
   (void)compile_cap_prog(curwin->w_s);
-  /* set cedit_key */
+  (void)did_set_spell_option(true);
+  // set cedit_key
   (void)check_cedit();
   briopt_check(curwin);
+  // initialize the table for 'breakat'.
+  fill_breakat_flags();
+}
+
+// More side effects of setting options.
+static void didset_options2(void)
+{
+  // Initialize the highlight_attr[] table.
+  (void)highlight_changed();
+
+  // Parse default for 'clipboard'.
+  opt_strings_flags(p_cb, p_cb_values, &cb_flags, true);
+
+  // Parse default for 'fillchars'.
+  (void)set_chars_option(&p_fcs);
+
+  // Parse default for 'listchars'.
+  (void)set_chars_option(&p_lcs);
+
+  // Parse default for 'wildmode'.
+  check_opt_wim();
 }
 
 /*
@@ -2854,22 +2865,7 @@ did_set_string_option (
              || varp == &(curwin->w_s->b_p_spf)) {
     // When 'spelllang' or 'spellfile' is set and there is a window for this
     // buffer in which 'spell' is set load the wordlists.
-    if (varp == &(curwin->w_s->b_p_spf)) {
-      int l = (int)STRLEN(curwin->w_s->b_p_spf);
-      if (l > 0
-          && (l < 4 || STRCMP(curwin->w_s->b_p_spf + l - 4, ".add") != 0)) {
-        errmsg = e_invarg;
-      }
-    }
-
-    if (errmsg == NULL) {
-      FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-        if (wp->w_buffer == curbuf && wp->w_p_spell) {
-          errmsg = did_set_spelllang(wp);
-          break;
-        }
-      }
-    }
+    errmsg = did_set_spell_option(varp == &(curwin->w_s->b_p_spf));
   }
   /* When 'spellcapcheck' is set compile the regexp program. */
   else if (varp == &(curwin->w_s->b_p_spc)) {
@@ -3423,6 +3419,30 @@ char_u *check_stl_option(char_u *s)
   if (groupdepth != 0)
     return (char_u *)N_("E542: unbalanced groups");
   return NULL;
+}
+
+static char_u *did_set_spell_option(bool is_spellfile)
+{
+  char_u  *errmsg = NULL;
+
+  if (is_spellfile) {
+    int l = (int)STRLEN(curwin->w_s->b_p_spf);
+    if (l > 0
+        && (l < 4 || STRCMP(curwin->w_s->b_p_spf + l - 4, ".add") != 0)) {
+      errmsg = e_invarg;
+    }
+  }
+
+  if (errmsg == NULL) {
+    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+      if (wp->w_buffer == curbuf && wp->w_p_spell) {
+        errmsg = did_set_spelllang(wp);
+        break;
+      }
+    }
+  }
+
+  return errmsg;
 }
 
 /*
