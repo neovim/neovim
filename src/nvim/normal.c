@@ -7783,7 +7783,7 @@ static void nv_open(cmdarg_T *cap)
     n_opencmd(cap);
 }
 
-// calculate start/end virtual columns for operating in block mode
+// Calculate start/end virtual columns for operating in block mode.
 static void get_op_vcol(
     oparg_T *oap,
     colnr_T redo_VIsual_vcol,
@@ -7793,7 +7793,8 @@ static void get_op_vcol(
   colnr_T start;
   colnr_T end;
 
-  if (VIsual_mode != Ctrl_V) {
+  if (VIsual_mode != Ctrl_V
+      || (!initial && oap->end.col < curwin->w_width)) {
     return;
   }
 

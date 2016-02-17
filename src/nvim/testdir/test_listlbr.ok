@@ -46,3 +46,17 @@ Test 9: using redo after block visual mode
 AaA
 AaA
 A
+Test 10: using normal commands after block-visual
+
+abcdpqrs
+Test 11: using block replace mode after wrapping
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa0aaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa0aaa
+Test 12: set linebreak list listchars=space:_,tab:>-,tail:-,eol:$
+a aaaaaaaaaaaaaaaaaaaaaa	a 
+
+Test 12: set linebreak list listchars=space:_,tab:>-,tail:-,eol:$
+a_                  
+aaaaaaaaaaaaaaaaaaaa
+aa>-----a-$         
+~                   

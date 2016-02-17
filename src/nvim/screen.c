@@ -2432,13 +2432,18 @@ win_line (
     }
   }
 
-  /* find start of trailing whitespace */
-  if (wp->w_p_list && lcs_trail) {
-    trailcol = (colnr_T)STRLEN(ptr);
-    while (trailcol > (colnr_T)0 && ascii_iswhite(ptr[trailcol - 1]))
-      --trailcol;
-    trailcol += (colnr_T) (ptr - line);
-    extra_check = TRUE;
+  if (wp->w_p_list) {
+    if (lcs_space || lcs_trail) {
+      extra_check = true;
+    }
+    // find start of trailing whitespace
+    if (lcs_trail) {
+      trailcol = (colnr_T)STRLEN(ptr);
+      while (trailcol > (colnr_T)0 && ascii_iswhite(ptr[trailcol - 1])) {
+        trailcol--;
+      }
+      trailcol += (colnr_T) (ptr - line);
+    }
   }
 
   /*
@@ -3210,27 +3215,7 @@ win_line (
         }
 
       }
-      ++ptr;
-
-      // 'list': change char 160 to lcs_nbsp and space to lcs_space.
-      if (wp->w_p_list
-          && (((c == 160 || (mb_utf8 && (mb_c == 160 || mb_c == 0x202f)))
-               && lcs_nbsp)
-              || (c == ' ' && lcs_space && ptr - line <=  trailcol))) {
-        c = (c == ' ') ? lcs_space : lcs_nbsp;
-        if (area_attr == 0 && search_attr == 0) {
-          n_attr = 1;
-          extra_attr = hl_attr(HLF_8);
-          saved_attr2 = char_attr;           /* save current attr */
-        }
-        mb_c = c;
-        if (enc_utf8 && (*mb_char2len)(c) > 1) {
-          mb_utf8 = TRUE;
-          u8cc[0] = 0;
-          c = 0xc0;
-        } else
-          mb_utf8 = FALSE;
-      }
+      ptr++;
 
       if (extra_check) {
         bool can_spell = true;
@@ -3374,6 +3359,28 @@ win_line (
             if (!wp->w_p_list) {
               c = ' ';
             }
+          }
+        }
+
+        // 'list': change char 160 to lcs_nbsp and space to lcs_space.
+        if (wp->w_p_list
+            && (((c == 160
+                  || (mb_utf8 && (mb_c == 160 || mb_c == 0x202f)))
+                 && lcs_nbsp)
+                || (c == ' ' && lcs_space && ptr - line <= trailcol))) {
+          c = (c == ' ') ? lcs_space : lcs_nbsp;
+          if (area_attr == 0 && search_attr == 0) {
+            n_attr = 1;
+            extra_attr = hl_attr(HLF_8);
+            saved_attr2 = char_attr;  // save current attr
+          }
+          mb_c = c;
+          if (enc_utf8 && (*mb_char2len)(c) > 1) {
+            mb_utf8 = true;
+            u8cc[0] = 0;
+            c = 0xc0;
+          } else {
+            mb_utf8 = false;
           }
         }
 
