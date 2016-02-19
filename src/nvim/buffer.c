@@ -1741,12 +1741,15 @@ int buflist_findpat(
   int toggledollar;
 
   if (pattern_end == pattern + 1 && (*pattern == '%' || *pattern == '#')) {
-    if (*pattern == '%')
+    if (*pattern == '%') {
       match = curbuf->b_fnum;
-    else
+    } else {
       match = curwin->w_alt_fnum;
-    if (diffmode && !diff_mode_buf(buflist_findnr(match)))
+    }
+    buf_T *found_buf = buflist_findnr(match);
+    if (diffmode && !(found_buf && diff_mode_buf(found_buf))) {
       match = -1;
+    }
   }
   /*
    * Try four ways of matching a listed buffer:
