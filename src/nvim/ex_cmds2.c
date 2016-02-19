@@ -57,7 +57,7 @@ typedef struct scriptitem_S {
   char_u      *sn_name;
   bool file_id_valid;
   FileID file_id;
-  int sn_prof_on;               /* TRUE when script is/was profiled */
+  bool sn_prof_on;              /* true when script is/was profiled */
   int sn_pr_force;              /* forceit: profile functions in this script */
   proftime_T sn_pr_child;       /* time set when going into first child */
   int sn_pr_nest;               /* nesting for sn_pr_child */
@@ -72,7 +72,7 @@ typedef struct scriptitem_S {
   proftime_T sn_prl_start;      /* start time for current line */
   proftime_T sn_prl_children;    /* time spent in children for this line */
   proftime_T sn_prl_wait;       /* wait start time for current line */
-  int sn_prl_idx;               /* index of line being timed; -1 if none */
+  linenr_T sn_prl_idx;          /* index of line being timed; -1 if none */
   int sn_prl_execed;            /* line being timed was executed */
 } scriptitem_T;
 
@@ -272,7 +272,7 @@ void do_debug(char_u *cmd)
 
       xfree(cmdline);
     }
-    lines_left = Rows - 1;
+    lines_left = (int)(Rows - 1);
   }
   xfree(cmdline);
 
@@ -281,7 +281,7 @@ void do_debug(char_u *cmd)
   redraw_all_later(NOT_VALID);
   need_wait_return = FALSE;
   msg_scroll = save_msg_scroll;
-  lines_left = Rows - 1;
+  lines_left = (int)(Rows - 1);
   State = save_State;
   did_emsg = save_did_emsg;
   cmd_silent = save_cmd_silent;
@@ -564,7 +564,7 @@ void ex_breakdel(exarg_T *eap)
 
   if (ascii_isdigit(*eap->arg)) {
     /* ":breakdel {nr}" */
-    nr = atol((char *)eap->arg);
+    nr = atoi((char *)eap->arg);
     for (int i = 0; i < gap->ga_len; ++i)
       if (DEBUGGY(gap, i).dbg_nr == nr) {
         todel = i;
@@ -602,11 +602,13 @@ void ex_breakdel(exarg_T *eap)
       --gap->ga_len;
       if (todel < gap->ga_len)
         memmove(&DEBUGGY(gap, todel), &DEBUGGY(gap, todel + 1),
-            (gap->ga_len - todel) * sizeof(struct debuggy));
-      if (eap->cmdidx == CMD_breakdel)
+                (size_t)(gap->ga_len - todel) * sizeof(struct debuggy));
+      if (eap->cmdidx == CMD_breakdel) {
         ++debug_tick;
-      if (!del_all)
+      }
+      if (!del_all) {
         break;
+      }
     }
 
     /* If all breakpoints were removed clear the array. */
@@ -892,7 +894,7 @@ static void profile_reset(void)
   for (int id = 1; id <= script_items.ga_len; id++) {
     scriptitem_T *si = &SCRIPT_ITEM(id);
     if (si->sn_prof_on) {
-      si->sn_prof_on      = 0;
+      si->sn_prof_on      = false;
       si->sn_pr_force     = 0;
       si->sn_pr_child     = profile_zero();
       si->sn_pr_nest      = 0;
@@ -949,7 +951,7 @@ static void profile_init(scriptitem_T *si)
 
   ga_init(&si->sn_prl_ga, sizeof(sn_prl_T), 100);
   si->sn_prl_idx = -1;
-  si->sn_prof_on = TRUE;
+  si->sn_prof_on = true;
   si->sn_pr_nest = 0;
 }
 
@@ -1255,7 +1257,7 @@ check_changed_any (
   int save;
   int i;
   int bufnum = 0;
-  int bufcount = 0;
+  size_t bufcount = 0;
   int         *bufnrs;
 
   FOR_ALL_BUFFERS(buf) {
@@ -1520,7 +1522,7 @@ do_arglist (
           didone = TRUE;
           xfree(ARGLIST[match].ae_fname);
           memmove(ARGLIST + match, ARGLIST + match + 1,
-              (ARGCOUNT - match - 1) * sizeof(aentry_T));
+                  (size_t)(ARGCOUNT - match - 1) * sizeof(aentry_T));
           --ALIST(curwin)->al_ga.ga_len;
           if (curwin->w_arg_idx > match)
             --curwin->w_arg_idx;
@@ -1702,10 +1704,11 @@ void ex_argument(exarg_T *eap)
 {
   int i;
 
-  if (eap->addr_count > 0)
-    i = eap->line2 - 1;
-  else
+  if (eap->addr_count > 0) {
+    i = (int)eap->line2 - 1;
+  } else {
     i = curwin->w_arg_idx;
+  }
   do_argfile(eap, i);
 }
 
@@ -1845,21 +1848,24 @@ void ex_argdelete(exarg_T *eap)
 {
   if (eap->addr_count > 0) {
     /* ":1,4argdel": Delete all arguments in the range. */
-    if (eap->line2 > ARGCOUNT)
+    if (eap->line2 > ARGCOUNT) {
       eap->line2 = ARGCOUNT;
-    int n = eap->line2 - eap->line1 + 1;
-    if (*eap->arg != NUL || n <= 0)
+    }
+    linenr_T n = eap->line2 - eap->line1 + 1;
+    if (*eap->arg != NUL || n <= 0) {
       EMSG(_(e_invarg));
-    else {
-      for (int i = eap->line1; i <= eap->line2; ++i)
+    } else {
+      for (linenr_T i = eap->line1; i <= eap->line2; ++i) {
         xfree(ARGLIST[i - 1].ae_fname);
+      }
       memmove(ARGLIST + eap->line1 - 1, ARGLIST + eap->line2,
-          (size_t)((ARGCOUNT - eap->line2) * sizeof(aentry_T)));
-      ALIST(curwin)->al_ga.ga_len -= n;
-      if (curwin->w_arg_idx >= eap->line2)
-        curwin->w_arg_idx -= n;
-      else if (curwin->w_arg_idx > eap->line1)
-        curwin->w_arg_idx = eap->line1;
+              (size_t)(ARGCOUNT - eap->line2) * sizeof(aentry_T));
+      ALIST(curwin)->al_ga.ga_len -= (int)n;
+      if (curwin->w_arg_idx >= eap->line2) {
+        curwin->w_arg_idx -= (int)n;
+      } else if (curwin->w_arg_idx > eap->line1) {
+        curwin->w_arg_idx = (int)eap->line1;
+      }
     }
   } else if (*eap->arg == NUL)
     EMSG(_(e_argreq));
@@ -1909,7 +1915,7 @@ void ex_listdo(exarg_T *eap)
         }
         break;
       case CMD_argdo:
-        i = eap->line1 - 1;
+        i = (int)eap->line1 - 1;
         break;
       default:
         break;
@@ -1942,10 +1948,11 @@ void ex_listdo(exarg_T *eap)
         ex_cc(eap);
 
         buf = curbuf;
-        i = eap->line1 - 1;
+        i = (int)eap->line1 - 1;
         if (eap->addr_count <= 0) {
           // Default to all quickfix/location list entries.
-          eap->line2 = qf_size;
+          assert(qf_size < MAXLNUM);
+          eap->line2 = (linenr_T)qf_size;
         }
       }
     } else {
@@ -2098,7 +2105,7 @@ alist_add_list (
       after = ARGCOUNT;
     if (after < ARGCOUNT)
       memmove(&(ARGLIST[after + count]), &(ARGLIST[after]),
-          (ARGCOUNT - after) * sizeof(aentry_T));
+              (size_t)(ARGCOUNT - after) * sizeof(aentry_T));
     for (int i = 0; i < count; ++i) {
       ARGLIST[after + i].ae_fname = files[i];
       ARGLIST[after + i].ae_fnum = buflist_add(files[i], BLN_LISTED);
@@ -2571,7 +2578,7 @@ do_source (
     while (script_items.ga_len < current_SID) {
       ++script_items.ga_len;
       SCRIPT_ITEM(script_items.ga_len).sn_name = NULL;
-      SCRIPT_ITEM(script_items.ga_len).sn_prof_on = FALSE;
+      SCRIPT_ITEM(script_items.ga_len).sn_prof_on = false;
     }
     si = &SCRIPT_ITEM(current_SID);
     si->sn_name = fname_exp;
@@ -3386,8 +3393,8 @@ static void script_host_execute(char *name, exarg_T *eap)
     // script
     list_append_string(args, script ? script : eap->arg, -1);
     // current range
-    list_append_number(args, eap->line1);
-    list_append_number(args, eap->line2);
+    list_append_number(args, (int)eap->line1);
+    list_append_number(args, (int)eap->line2);
     (void)eval_call_provider(name, "execute", args);
   }
 
@@ -3403,16 +3410,16 @@ static void script_host_execute_file(char *name, exarg_T *eap)
   // filename
   list_append_string(args, buffer, -1);
   // current range
-  list_append_number(args, eap->line1);
-  list_append_number(args, eap->line2);
+  list_append_number(args, (int)eap->line1);
+  list_append_number(args, (int)eap->line2);
   (void)eval_call_provider(name, "execute_file", args);
 }
 
 static void script_host_do_range(char *name, exarg_T *eap)
 {
   list_T *args = list_alloc();
-  list_append_number(args, eap->line1);
-  list_append_number(args, eap->line2);
+  list_append_number(args, (int)eap->line1);
+  list_append_number(args, (int)eap->line2);
   list_append_string(args, eap->arg, -1);
   (void)eval_call_provider(name, "do_range", args);
 }
