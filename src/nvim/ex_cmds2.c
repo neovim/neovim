@@ -57,23 +57,23 @@ typedef struct scriptitem_S {
   char_u      *sn_name;
   bool file_id_valid;
   FileID file_id;
-  bool sn_prof_on;              /* true when script is/was profiled */
-  int sn_pr_force;              /* forceit: profile functions in this script */
-  proftime_T sn_pr_child;       /* time set when going into first child */
-  int sn_pr_nest;               /* nesting for sn_pr_child */
-  /* profiling the script as a whole */
-  int sn_pr_count;              /* nr of times sourced */
-  proftime_T sn_pr_total;       /* time spent in script + children */
-  proftime_T sn_pr_self;        /* time spent in script itself */
-  proftime_T sn_pr_start;       /* time at script start */
-  proftime_T sn_pr_children;    /* time in children after script start */
-  /* profiling the script per line */
-  garray_T sn_prl_ga;           /* things stored for every line */
-  proftime_T sn_prl_start;      /* start time for current line */
-  proftime_T sn_prl_children;    /* time spent in children for this line */
-  proftime_T sn_prl_wait;       /* wait start time for current line */
-  linenr_T sn_prl_idx;          /* index of line being timed; -1 if none */
-  int sn_prl_execed;            /* line being timed was executed */
+  bool sn_prof_on;              ///< true when script is/was profiled
+  int sn_pr_force;              ///< forceit: profile functions in this script
+  proftime_T sn_pr_child;       ///< time set when going into first child
+  int sn_pr_nest;               ///< nesting for sn_pr_child
+  // profiling the script as a whole
+  int sn_pr_count;              ///< nr of times sourced
+  proftime_T sn_pr_total;       ///< time spent in script + children
+  proftime_T sn_pr_self;        ///< time spent in script itself
+  proftime_T sn_pr_start;       ///< time at script start
+  proftime_T sn_pr_children;    ///< time in children after script start
+  // profiling the script per line
+  garray_T sn_prl_ga;           ///< things stored for every line
+  proftime_T sn_prl_start;      ///< start time for current line
+  proftime_T sn_prl_children;   ///< time spent in children for this line
+  proftime_T sn_prl_wait;       ///< wait start time for current line
+  linenr_T sn_prl_idx;          ///< index of line being timed; -1 if none
+  int sn_prl_execed;            ///< line being timed was executed
 } scriptitem_T;
 
 static garray_T script_items = {0, 0, sizeof(scriptitem_T), 4, NULL};
@@ -81,9 +81,9 @@ static garray_T script_items = {0, 0, sizeof(scriptitem_T), 4, NULL};
 
 /* Struct used in sn_prl_ga for every line of a script. */
 typedef struct sn_prl_S {
-  int snp_count;                /* nr of times line was executed */
-  proftime_T sn_prl_total;      /* time spent in a line + children */
-  proftime_T sn_prl_self;       /* time spent in a line itself */
+  int snp_count;                ///< nr of times line was executed
+  proftime_T sn_prl_total;      ///< time spent in a line + children
+  proftime_T sn_prl_self;       ///< time spent in a line itself
 } sn_prl_T;
 
 /*
@@ -93,18 +93,18 @@ typedef struct sn_prl_S {
  * sourcing can be done recursively.
  */
 struct source_cookie {
-  FILE        *fp;              /* opened file for sourcing */
-  char_u      *nextline;        /* if not NULL: line that was read ahead */
-  int finished;                 /* ":finish" used */
+  FILE *fp;                     ///< opened file for sourcing
+  char_u *nextline;             ///< if not NULL: line that was read ahead
+  int finished;                 ///< ":finish" used
 #if defined(USE_CRNL)
-  int fileformat;               /* EOL_UNKNOWN, EOL_UNIX or EOL_DOS */
-  int error;                    /* TRUE if LF found after CR-LF */
+  int fileformat;               ///< EOL_UNKNOWN, EOL_UNIX or EOL_DOS
+  int error;                    ///< TRUE if LF found after CR-LF
 #endif
-  linenr_T breakpoint;          /* next line with breakpoint or zero */
-  char_u      *fname;           /* name of sourced file */
-  int dbg_tick;                 /* debug_tick when breakpoint was set */
-  int level;                    /* top nesting level of sourced file */
-  vimconv_T conv;               /* type of conversion */
+  linenr_T breakpoint;          ///< next line with breakpoint or zero
+  char_u *fname;                ///< name of sourced file
+  int dbg_tick;                 ///< debug_tick when breakpoint was set
+  int level;                    ///< top nesting level of sourced file
+  vimconv_T conv;               ///< type of conversion
 };
 
 #  define PRL_ITEM(si, idx)     (((sn_prl_T *)(si)->sn_prl_ga.ga_data)[(idx)])
@@ -392,12 +392,12 @@ int dbg_check_skipped(exarg_T *eap)
  * This is a grow-array of structs.
  */
 struct debuggy {
-  int dbg_nr;                   /* breakpoint number */
-  int dbg_type;                 /* DBG_FUNC or DBG_FILE */
-  char_u      *dbg_name;        /* function or file name */
-  regprog_T   *dbg_prog;        /* regexp program */
-  linenr_T dbg_lnum;            /* line number in function or file */
-  int dbg_forceit;              /* ! used */
+  int dbg_nr;                   ///< breakpoint number
+  int dbg_type;                 ///< DBG_FUNC or DBG_FILE
+  char_u *dbg_name;             ///< function or file name
+  regprog_T *dbg_prog;          ///< regexp program
+  linenr_T dbg_lnum;            ///< line number in function or file
+  int dbg_forceit;              ///< ! used
 };
 
 static garray_T dbg_breakp = {0, 0, sizeof(struct debuggy), 4, NULL};
@@ -563,13 +563,14 @@ void ex_breakdel(exarg_T *eap)
   }
 
   if (ascii_isdigit(*eap->arg)) {
-    /* ":breakdel {nr}" */
+    // ":breakdel {nr}"
     nr = atoi((char *)eap->arg);
-    for (int i = 0; i < gap->ga_len; ++i)
+    for (int i = 0; i < gap->ga_len; ++i) {
       if (DEBUGGY(gap, i).dbg_nr == nr) {
         todel = i;
         break;
       }
+    }
   } else if (*eap->arg == '*') {
     todel = 0;
     del_all = TRUE;
@@ -812,8 +813,8 @@ void ex_pydo3(exarg_T *eap)
 
 /* Command line expansion for :profile. */
 static enum {
-  PEXP_SUBCMD,          /* expand :profile sub-commands */
-  PEXP_FUNC             /* expand :profile func {funcname} */
+  PEXP_SUBCMD,          ///< expand :profile sub-commands
+  PEXP_FUNC             ///< expand :profile func {funcname}
 } pexpand_what;
 
 static char *pexpand_cmds[] = {
@@ -1847,7 +1848,7 @@ void ex_argadd(exarg_T *eap)
 void ex_argdelete(exarg_T *eap)
 {
   if (eap->addr_count > 0) {
-    /* ":1,4argdel": Delete all arguments in the range. */
+    // ":1,4argdel": Delete all arguments in the range.
     if (eap->line2 > ARGCOUNT) {
       eap->line2 = ARGCOUNT;
     }
