@@ -2077,7 +2077,7 @@ static void didset_options2(void)
   (void)highlight_changed();
 
   // Parse default for 'clipboard'.
-  opt_strings_flags(p_cb, p_cb_values, &cb_flags, true);
+  (void)opt_strings_flags(p_cb, p_cb_values, &cb_flags, true);
 
   // Parse default for 'fillchars'.
   (void)set_chars_option(&p_fcs);
