@@ -2,6 +2,8 @@ local helpers = require('test.functional.helpers')
 local nvim = helpers.meths
 local clear, eq, neq = helpers.clear, helpers.eq, helpers.neq
 local curbuf, buf = helpers.curbuf, helpers.bufmeths
+local curwin = helpers.curwin
+local redir_exec = helpers.redir_exec
 local source, execute = helpers.source, helpers.execute
 
 local function declare_hook_function()
@@ -86,7 +88,7 @@ end
 
 local function make_buffer()
   local old_buf = curbuf()
-  execute('new')
+  execute('botright new')
   local new_buf = curbuf()
   execute('wincmd p') -- move previous window
 
@@ -94,6 +96,19 @@ local function make_buffer()
   eq(old_buf, curbuf())
 
   return new_buf
+end
+
+local function get_new_window_number()
+  local old_win = curwin()
+  execute('botright new')
+  local new_win = curwin()
+  local new_winnr = redir_exec('echo winnr()')
+  execute('wincmd p') -- move previous window
+
+  neq(old_win, new_win)
+  eq(old_win, curwin())
+
+  return new_winnr:gsub('\n', '')
 end
 
 describe('au OptionSet', function()
@@ -245,6 +260,32 @@ describe('au OptionSet', function()
 
         execute('call setbufvar(' .. new_bufnr .. ', "&buftype", "nofile")')
         expected_combination({'buftype', '', 'nofile', 'local', {bufnr = new_bufnr}})
+      end)
+    end)
+
+    describe('being set by setwinvar()', function()
+      it('should not trigger because option name does not match with backup', function()
+        set_hook('backup')
+
+        execute('call setwinvar(1, "&l:bk", 1)')
+        expected_empty()
+      end)
+
+      it('should trigger, use correct option name backup', function()
+        set_hook('backup')
+
+        execute('call setwinvar(1, "&backup", 1)')
+        expected_combination({'backup', 0, 1, 'local'})
+      end)
+
+      it('should not trigger if the current window is different from the targetted window', function()
+        set_hook('cursorcolumn')
+
+        local new_winnr = get_new_window_number()
+
+        execute('call setwinvar(' .. new_winnr .. ', "&cursorcolumn", 1)')
+        -- expected_combination({'cursorcolumn', 0, 1, 'local', {winnr = new_winnr}})
+        expected_empty()
       end)
     end)
 
