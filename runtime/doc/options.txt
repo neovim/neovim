@@ -1360,7 +1360,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 			option, yank and delete operations (but not put)
 			will additionally copy the text into register
 			'*'. See |nvim-clipboard|.
-<
+
 						*clipboard-autoselect*
 	autoselect	Works like the 'a' flag in 'guioptions': If present,
 			then whenever Visual mode is started, or the Visual
