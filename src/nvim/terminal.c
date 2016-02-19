@@ -288,8 +288,9 @@ void terminal_close(Terminal *term, char *msg)
 
   term->forward_mouse = false;
   term->closed = true;
+  buf_T *buf = handle_get_buffer(term->buf_handle);
+
   if (!msg || exiting) {
-    buf_T *buf = handle_get_buffer(term->buf_handle);
     // If no msg was given, this was called by close_buffer(buffer.c).  Or if
     // exiting, we must inform the buffer the terminal no longer exists so that
     // close_buffer() doesn't call this again.
@@ -303,6 +304,10 @@ void terminal_close(Terminal *term, char *msg)
     }
   } else {
     terminal_receive(term, msg, strlen(msg));
+  }
+
+  if (buf) {
+    apply_autocmds(EVENT_TERMCLOSE, NULL, NULL, false, buf);
   }
 }
 
