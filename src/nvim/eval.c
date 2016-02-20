@@ -15748,6 +15748,7 @@ typedef struct {
 
 static int item_compare_ic;
 static bool item_compare_numeric;
+static bool item_compare_numbers;
 static char_u   *item_compare_func;
 static dict_T   *item_compare_selfdict;
 static int item_compare_func_err;
@@ -15769,6 +15770,14 @@ static int item_compare(const void *s1, const void *s2, bool keep_zero)
   si2 = (sortItem_T *)s2;
   typval_T *tv1 = &si1->item->li_tv;
   typval_T *tv2 = &si2->item->li_tv;
+
+  if (item_compare_numbers) {
+    long v1 = get_tv_number(tv1);
+    long v2 = get_tv_number(tv2);
+
+    return v1 == v2 ? 0 : v1 > v2 ? 1 : -1;
+  }
+
   // tv2string() puts quotes around a string and allocates memory.  Don't do
   // that for string variables. Use a single quote when comparing with a
   // non-string to do what the docs promise.
@@ -15915,6 +15924,7 @@ static void do_sort_uniq(typval_T *argvars, typval_T *rettv, bool sort)
 
     item_compare_ic = FALSE;
     item_compare_numeric = false;
+    item_compare_numbers = false;
     item_compare_func = NULL;
     item_compare_selfdict = NULL;
 
@@ -15936,6 +15946,9 @@ static void do_sort_uniq(typval_T *argvars, typval_T *rettv, bool sort)
           if (STRCMP(item_compare_func, "n") == 0) {
             item_compare_func = NULL;
             item_compare_numeric = true;
+          } else if (STRCMP(item_compare_func, "N") == 0) {
+            item_compare_func = NULL;
+            item_compare_numbers = true;
           } else if (STRCMP(item_compare_func, "i") == 0) {
             item_compare_func = NULL;
             item_compare_ic = TRUE;
@@ -22560,4 +22573,3 @@ static bool is_watched(dict_T *d)
 {
   return d && !QUEUE_EMPTY(&d->watchers);
 }
-
