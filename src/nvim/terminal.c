@@ -236,7 +236,7 @@ Terminal *terminal_open(TerminalOptions opts)
   set_option_value((uint8_t *)"relativenumber", false, NULL, OPT_LOCAL);
   RESET_BINDING(curwin);
   // Apply TermOpen autocmds so the user can configure the terminal
-  apply_autocmds(EVENT_TERMOPEN, NULL, NULL, true, curbuf);
+  apply_autocmds(EVENT_TERMOPEN, NULL, NULL, false, curbuf);
 
   // Configure the scrollback buffer. Try to get the size from:
   //
