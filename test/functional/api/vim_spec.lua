@@ -144,15 +144,23 @@ describe('vim_* functions', function()
 
   describe('replace_termcodes', function()
     it('escapes K_SPECIAL as K_SPECIAL KS_SPECIAL KE_FILLER', function()
-      eq(helpers.nvim('replace_termcodes', '\128', true, true, true), '\128\254X')
+      eq('\128\254X', helpers.nvim('replace_termcodes', '\128', true, true, true))
     end)
 
-    it('leaves non K_SPECIAL string unchanged', function()
-      eq(helpers.nvim('replace_termcodes', 'abc', true, true, true), 'abc')
+    it('leaves non-K_SPECIAL string unchanged', function()
+      eq('abc', helpers.nvim('replace_termcodes', 'abc', true, true, true))
     end)
 
     it('converts <expressions>', function()
-      eq(helpers.nvim('replace_termcodes', '<Leader>', true, true, true), '\\')
+      eq('\\', helpers.nvim('replace_termcodes', '<Leader>', true, true, true))
+    end)
+
+    it('converts <LeftMouse> to K_SPECIAL KS_EXTRA KE_LEFTMOUSE', function()
+      -- K_SPECIAL KS_EXTRA KE_LEFTMOUSE
+      -- 0x80      0xfd     0x2c
+      -- 128       253      44
+      eq('\128\253\44', helpers.nvim('replace_termcodes',
+                                     '<LeftMouse>', true, true, true))
     end)
   end)
 
