@@ -1380,13 +1380,15 @@ int vgetc(void)
   } else {
     mod_mask = 0x0;
     last_recorded_len = 0;
-    for (;; ) {                 /* this is done twice if there are modifiers */
-      if (mod_mask) {           /* no mapping after modifier has been read */
+    for (;; ) {                 // this is done twice if there are modifiers
+      bool did_inc = false;
+      if (mod_mask) {           // no mapping after modifier has been read
         ++no_mapping;
         ++allow_keys;
+        did_inc = true;         // mod_mask may change value
       }
-      c = vgetorpeek(TRUE);
-      if (mod_mask) {
+      c = vgetorpeek(true);
+      if (did_inc) {
         --no_mapping;
         --allow_keys;
       }
