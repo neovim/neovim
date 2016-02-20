@@ -3,6 +3,7 @@ local Screen = require('test.functional.ui.screen')
 
 local clear, execute, feed, nvim, nvim_dir = helpers.clear,
 helpers.execute, helpers.feed, helpers.nvim, helpers.nvim_dir
+local eval, eq = helpers.eval, helpers.eq
 
 describe('TermClose event', function()
   local screen
@@ -24,5 +25,20 @@ describe('TermClose event', function()
       ^                    |
       TermClose works!    |
     ]])
+  end)
+
+  it('reports the correct <abuf>', function()
+    execute('set hidden')
+    execute('autocmd TermClose * let g:abuf = expand("<abuf>")')
+    execute('edit foo')
+    execute('edit bar')
+    eq(2, eval('bufnr("%")'))
+    execute('terminal')
+    feed('<c-\\><c-n>')
+    eq(3, eval('bufnr("%")'))
+    execute('buffer 1')
+    eq(1, eval('bufnr("%")'))
+    execute('3bdelete!')
+    eq('3', eval('g:abuf'))
   end)
 end)
