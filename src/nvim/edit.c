@@ -184,9 +184,6 @@ static expand_T compl_xp;
 
 static int compl_opt_refresh_always = FALSE;
 
-static bool compl_show_pum = true;          //  true: show popup menu
-                                            // false: don't show popup menu
-
 typedef struct insert_state {
   VimState state;
   cmdarg_T *ca;
@@ -1250,7 +1247,7 @@ normalchar:
 static void insert_do_complete(InsertState *s)
 {
   compl_busy = true;
-  if (ins_complete(s->c) == FAIL) {
+  if (ins_complete(s->c, true) == FAIL) {
     compl_cont_status = 0;
   }
   compl_busy = false;
@@ -2356,18 +2353,16 @@ void set_completion(colnr_T startcol, list_T *list)
   int save_w_wrow = curwin->w_wrow;
 
   compl_curr_match = compl_first_match;
-  compl_show_pum = false;
   if (compl_no_insert) {
-    ins_complete(K_DOWN);
+    ins_complete(K_DOWN, false);
   } else {
-    ins_complete(Ctrl_N);
+    ins_complete(Ctrl_N, false);
     if (compl_no_select) {
-      ins_complete(Ctrl_P);
+      ins_complete(Ctrl_P, false);
     }
   }
 
   // Lazily show the popup menu, unless we got interrupted.
-  compl_show_pum = true;
   if (!compl_interrupted) {
     show_pum(save_w_wrow);
   }
@@ -2948,18 +2943,17 @@ static void ins_compl_new_leader(void)
   ins_bytes(compl_leader + ins_compl_len());
   compl_used_match = FALSE;
 
-  if (compl_started)
+  if (compl_started) {
     ins_compl_set_original_text(compl_leader);
-  else {
-    spell_bad_len = 0;          /* need to redetect bad word */
-    /*
-     * Matches were cleared, need to search for them now.
-     * Set "compl_restarting" to avoid that the first match is inserted.
-     */
-    compl_restarting = TRUE;
-    if (ins_complete(Ctrl_N) == FAIL)
+  } else {
+    spell_bad_len = 0;  // need to redetect bad word
+    // Matches were cleared, need to search for them now.
+    // Set "compl_restarting" to avoid that the first match is inserted.
+    compl_restarting = true;
+    if (ins_complete(Ctrl_N, true) == FAIL) {
       compl_cont_status = 0;
-    compl_restarting = FALSE;
+    }
+    compl_restarting = false;
   }
 
   compl_enter_selects = !compl_used_match;
@@ -4311,7 +4305,7 @@ static int ins_compl_use_match(int c)
  * Called when character "c" was typed, which has a meaning for completion.
  * Returns OK if completion was done, FAIL if something failed.
  */
-static int ins_complete(int c)
+static int ins_complete(int c, bool enable_pum)
 {
   char_u      *line;
   int startcol = 0;                 /* column where searched text starts */
@@ -4795,7 +4789,7 @@ static int ins_complete(int c)
   }
 
   // Show the popup menu, unless we got interrupted.
-  if (!compl_interrupted && compl_show_pum) {
+  if (enable_pum && !compl_interrupted) {
     show_pum(save_w_wrow);
   }
   compl_was_interrupted = compl_interrupted;
