@@ -429,7 +429,10 @@ Object buffer_get_var(Buffer buffer, String name, Error *err)
 /// @param name The variable name
 /// @param value The variable value
 /// @param[out] err Details of an error that may have occurred
-/// @return The old value
+/// @return The old value or nil if there was no previous value.
+///
+///         @warning It may return nil if there was no previous value
+///                  or if previous value was `v:null`.
 Object buffer_set_var(Buffer buffer, String name, Object value, Error *err)
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);

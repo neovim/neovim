@@ -336,7 +336,10 @@ Object vim_get_var(String name, Error *err)
 /// @param name The variable name
 /// @param value The variable value
 /// @param[out] err Details of an error that may have occurred
-/// @return the old value if any
+/// @return The old value or nil if there was no previous value.
+///
+///         @warning It may return nil if there was no previous value
+///                  or if previous value was `v:null`.
 Object vim_set_var(String name, Object value, Error *err)
 {
   return dict_set_value(&globvardict, name, value, false, err);
