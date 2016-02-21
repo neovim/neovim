@@ -6221,12 +6221,22 @@ string({expr})	Return {expr} converted to a String.  If {expr} is a Number,
 			{expr} type	result ~
 			String		'string'
 			Number		123
-			Float		123.123456 or 1.123456e8
-			Funcref		function('name')
+			Float		123.123456 or 1.123456e8 or 
+					`str2float('inf')`
+			Funcref		`function('name')`
 			List		[item, item]
 			Dictionary	{key: value, key: value}
 		Note that in String values the ' character is doubled.
 		Also see |strtrans()|.
+		Note 2: Output format is mostly compatible with YAML, except 
+		for infinite and NaN floating-point values representations 
+		which use |str2float()|.  Strings are also dumped literally, 
+		only single quote is escaped, which does not allow using YAML 
+		for parsing back binary strings (including text when 
+		'encoding' is not UTF-8).  |eval()| should always work for 
+		strings and floats though and this is the only official 
+		method, use |msgpackdump()| or |json_encode()| if you need to 
+		share data with other application.
 
 							*strlen()*
 strlen({expr})	The result is a Number, which is the length of the String
