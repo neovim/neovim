@@ -472,6 +472,15 @@ describe('json_encode() function', function()
     eq('1.0e50', eval('json_encode(1.0e50)'))
   end)
 
+  it('fails to dump NaN and infinite values', function()
+    eq('Vim(call):E474: Unable to represent NaN value in JSON',
+       exc_exec('call json_encode(str2float("nan"))'))
+    eq('Vim(call):E474: Unable to represent infinity in JSON',
+       exc_exec('call json_encode(str2float("inf"))'))
+    eq('Vim(call):E474: Unable to represent infinity in JSON',
+       exc_exec('call json_encode(-str2float("inf"))'))
+  end)
+
   it('dumps lists', function()
     eq('[]', funcs.json_encode({}))
     eq('[[]]', funcs.json_encode({{}}))

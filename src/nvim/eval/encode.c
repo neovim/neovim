@@ -7,6 +7,7 @@
 #include <msgpack.h>
 #include <inttypes.h>
 #include <assert.h>
+#include <math.h>
 
 #include "nvim/eval/encode.h"
 #include "nvim/buffer_defs.h"  // vimconv_T
@@ -827,9 +828,23 @@ DEFINE_VIML_CONV_FUNCTIONS(, echo, garray_T *const, gap)
 #undef CONV_FLOAT
 #define CONV_FLOAT(flt) \
     do { \
-      char numbuf[NUMBUFLEN]; \
-      vim_snprintf(numbuf, NUMBUFLEN - 1, "%g", (flt)); \
-      ga_concat(gap, numbuf); \
+      const float_T flt_ = (flt); \
+      switch (fpclassify(flt_)) { \
+        case FP_NAN: { \
+          EMSG(_("E474: Unable to represent NaN value in JSON")); \
+          return FAIL; \
+        } \
+        case FP_INFINITE: { \
+          EMSG(_("E474: Unable to represent infinity in JSON")); \
+          return FAIL; \
+        } \
+        default: { \
+          char numbuf[NUMBUFLEN]; \
+          vim_snprintf(numbuf, NUMBUFLEN - 1, "%g", flt_); \
+          ga_concat(gap, (char_u *) numbuf); \
+          break; \
+        } \
+      } \
     } while (0)
 
 /// Last used p_enc value
