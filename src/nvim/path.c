@@ -1118,7 +1118,6 @@ int gen_expand_wildcards(int num_pat, char_u **pat, int *num_file,
   char_u              *p;
   static bool recursive = false;
   int add_pat;
-  bool retval = OK;
   bool did_expand_in_path = false;
 
   /*
@@ -1163,7 +1162,11 @@ int gen_expand_wildcards(int num_pat, char_u **pat, int *num_file,
     if (vim_backtick(p)) {
       add_pat = expand_backtick(&ga, p, flags);
       if (add_pat == -1) {
-        retval = FAIL;
+        recursive = false;
+        FreeWild(ga.ga_len, (char_u **)ga.ga_data);
+        *num_file = 0;
+        *file = NULL;
+        return FAIL;
       }
     } else {
       // First expand environment variables, "~/" and "~user/".
@@ -1237,7 +1240,7 @@ int gen_expand_wildcards(int num_pat, char_u **pat, int *num_file,
 
   recursive = false;
 
-  return (ga.ga_data != NULL) ? retval : FAIL;
+  return (ga.ga_data != NULL) ? OK : FAIL;
 }
 
 
