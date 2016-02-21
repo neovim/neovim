@@ -22199,7 +22199,6 @@ static void on_process_exit(Process *proc, int status, void *d)
     char msg[22];
     snprintf(msg, sizeof msg, "\r\n[Process exited %d]", proc->status);
     terminal_close(data->term, msg);
-    apply_autocmds(EVENT_TERMCLOSE, NULL, NULL, false, curbuf);
   }
 
   if (data->status_ptr) {
