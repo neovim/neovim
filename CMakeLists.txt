@@ -82,6 +82,12 @@ if(CMAKE_C_FLAGS_RELEASE MATCHES "-O3")
   string(REPLACE "-O3" "-O2" CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")
 endif()
 
+# Enable link-time optimisations on release builds.
+check_c_compiler_flag(-flto HAS_FLTO_FLAG)
+if(HAS_FLTO_FLAG)
+  set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS} -flto")
+endif()
+
 # Disable logging for release-type builds.
 if(NOT CMAKE_C_FLAGS_RELEASE MATCHES DDISABLE_LOG)
   set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -DDISABLE_LOG")
