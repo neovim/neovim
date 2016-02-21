@@ -19,6 +19,7 @@
 #include "nvim/ex_cmds.h"
 #include "nvim/ex_cmds2.h"
 #include "nvim/ex_getln.h"
+#include "nvim/fileio.h"
 #include "nvim/fold.h"
 #include "nvim/getchar.h"
 #include "nvim/indent.h"
@@ -1585,6 +1586,10 @@ int op_delete(oparg_T *oap)
 
   msgmore(curbuf->b_ml.ml_line_count - old_lcount);
 
+  textlock++;
+  apply_autocmds(EVENT_TEXTDELETEPOST, NULL, NULL, false, curbuf);
+  textlock--;
+
 setmarks:
   if (oap->motion_type == MBLOCK) {
     curbuf->b_op_end.lnum = oap->end.lnum;
@@ -2309,6 +2314,13 @@ bool op_yank(oparg_T *oap, bool message)
   yankreg_T *reg = get_yank_register(oap->regname, YREG_YANK);
   op_yank_reg(oap, message, reg, is_append_register(oap->regname));
   set_clipboard(oap->regname, reg);
+
+  if (message) {
+    textlock++;
+    apply_autocmds(EVENT_TEXTYANKPOST, NULL, NULL, false, curbuf);
+    textlock--;
+  }
+
   return true;
 }
 
