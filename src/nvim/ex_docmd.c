@@ -8774,19 +8774,18 @@ static int ses_do_frame(frame_T *fr)
   return FALSE;
 }
 
-/*
- * Return non-zero if window "wp" is to be stored in the Session.
- */
+/// Return non-zero if window "wp" is to be stored in the Session.
 static int ses_do_win(win_T *wp)
 {
   if (wp->w_buffer->b_fname == NULL
-      /* When 'buftype' is "nofile" can't restore the window contents. */
-      || bt_nofile(wp->w_buffer)
-      )
+      // When 'buftype' is "nofile" can't restore the window contents.
+      || (!wp->w_buffer->terminal && bt_nofile(wp->w_buffer))) {
     return ssop_flags & SSOP_BLANK;
-  if (wp->w_buffer->b_help)
+  }
+  if (wp->w_buffer->b_help) {
     return ssop_flags & SSOP_HELP;
-  return TRUE;
+  }
+  return true;
 }
 
 /*
