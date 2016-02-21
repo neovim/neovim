@@ -556,8 +556,9 @@ static size_t do_path_expand(garray_T *gap, const char_u *path,
       return 0;
   }
 
-  /* make room for file name */
-  buf = xmalloc(STRLEN(path) + BASENAMELEN + 5);
+  // Make room for file name.  When doing encoding conversion the actual
+  // length may be quite a bit longer, thus use the maximum possible length.
+  buf = xmalloc(MAXPATHL);
 
   /*
    * Find the first part in the path name that contains a wildcard.
@@ -1158,12 +1159,17 @@ int gen_expand_wildcards(int num_pat, char_u **pat, int *num_file,
     add_pat = -1;
     p = pat[i];
 
-    if (vim_backtick(p))
+    if (vim_backtick(p)) {
       add_pat = expand_backtick(&ga, p, flags);
-    else {
-      /*
-       * First expand environment variables, "~/" and "~user/".
-       */
+      if (add_pat == -1) {
+        recursive = false;
+        FreeWild(ga.ga_len, (char_u **)ga.ga_data);
+        *num_file = 0;
+        *file = NULL;
+        return FAIL;
+      }
+    } else {
+      // First expand environment variables, "~/" and "~user/".
       if (has_env_var(p) || *p == '~') {
         p = expand_env_save_opt(p, true);
         if (p == NULL)
@@ -1246,13 +1252,10 @@ static int vim_backtick(char_u *p)
   return *p == '`' && *(p + 1) != NUL && *(p + STRLEN(p) - 1) == '`';
 }
 
-/*
- * Expand an item in `backticks` by executing it as a command.
- * Currently only works when pat[] starts and ends with a `.
- * Returns number of file names found.
- */
-static int 
-expand_backtick (
+// Expand an item in `backticks` by executing it as a command.
+// Currently only works when pat[] starts and ends with a `.
+// Returns number of file names found, -1 if an error is encountered.
+static int expand_backtick(
     garray_T *gap,
     char_u *pat,
     int flags              /* EW_* flags */
@@ -1273,8 +1276,9 @@ expand_backtick (
     buffer = get_cmd_output(cmd, NULL,
         (flags & EW_SILENT) ? kShellOptSilent : 0, NULL);
   xfree(cmd);
-  if (buffer == NULL)
-    return 0;
+  if (buffer == NULL) {
+    return -1;
+  }
 
   cmd = buffer;
   while (*cmd != NUL) {

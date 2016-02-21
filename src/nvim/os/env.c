@@ -262,8 +262,25 @@ void expand_env_esc(char_u *srcp, char_u *dst, int dstlen, bool esc, bool one,
     startstr_len = (int)STRLEN(startstr);
 
   src = skipwhite(srcp);
-  --dstlen;  // leave one char space for "\,"
+  dstlen--;  // leave one char space for "\,"
   while (*src && dstlen > 0) {
+    // Skip over `=expr`.
+    if (src[0] == '`' && src[1] == '=') {
+      var = src;
+      src += 2;
+      (void)skip_expr(&src);
+      if (*src == '`') {
+        src++;
+      }
+      size_t len = (size_t)(src - var);
+      if (len > (size_t)dstlen) {
+        len = (size_t)dstlen;
+      }
+      memcpy((char *)dst, (char *)var, len);
+      dst += len;
+      dstlen -= (int)len;
+      continue;
+    }
     copy_char = true;
     if ((*src == '$') || (*src == '~' && at_start)) {
       mustfree = false;
