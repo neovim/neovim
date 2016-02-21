@@ -9387,17 +9387,20 @@ static void ex_match(exarg_T *eap)
       g = vim_strnsave(eap->arg, (int)(p - eap->arg));
     p = skipwhite(p);
     if (*p == NUL) {
-      /* There must be two arguments. */
+      // There must be two arguments.
+      xfree(g);
       EMSG2(_(e_invarg2), eap->arg);
       return;
     }
     end = skip_regexp(p + 1, *p, TRUE, NULL);
     if (!eap->skip) {
       if (*end != NUL && !ends_excmd(*skipwhite(end + 1))) {
+        xfree(g);
         eap->errmsg = e_trailing;
         return;
       }
       if (*end != *p) {
+        xfree(g);
         EMSG2(_(e_invarg2), p);
         return;
       }
