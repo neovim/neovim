@@ -4096,6 +4096,7 @@ dozet:
 
   case 't':   scroll_cursor_top(0, true);
     redraw_later(VALID);
+    set_fraction(curwin);
     break;
 
   /* "z." and "zz": put cursor in middle of screen */
@@ -4104,6 +4105,7 @@ dozet:
 
   case 'z':   scroll_cursor_halfway(true);
     redraw_later(VALID);
+    set_fraction(curwin);
     break;
 
   /* "z^", "z-" and "zb": put cursor at bottom of screen */
@@ -4124,6 +4126,7 @@ dozet:
 
   case 'b':   scroll_cursor_bot(0, true);
     redraw_later(VALID);
+    set_fraction(curwin);
     break;
 
   /* "zH" - scroll screen right half-page */
