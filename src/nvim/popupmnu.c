@@ -545,7 +545,11 @@ static int pum_set_selected(int n, int repeat)
         g_do_tagpreview = (int)p_pvh;
       }
       RedrawingDisabled++;
+      // Prevent undo sync here, if an autocommand syncs undo weird
+      // things can happen to the undo tree.
+      no_u_sync++;
       resized = prepare_tagpreview(false);
+      no_u_sync--;
       RedrawingDisabled--;
       g_do_tagpreview = 0;
 
@@ -629,7 +633,9 @@ static int pum_set_selected(int n, int repeat)
             // the window when needed, otherwise it will always be
             // redraw.
             if (resized) {
+              no_u_sync++;
               win_enter(curwin_save, true);
+              no_u_sync--;
               update_topline();
             }
 
@@ -640,7 +646,9 @@ static int pum_set_selected(int n, int repeat)
             pum_do_redraw = FALSE;
 
             if (!resized && win_valid(curwin_save)) {
+              no_u_sync++;
               win_enter(curwin_save, true);
+              no_u_sync--;
             }
 
             // May need to update the screen again when there are
