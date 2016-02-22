@@ -2957,20 +2957,37 @@ ExpandOne (
     }
   }
 
-  /* Find longest common part */
+  // Find longest common part
   if (mode == WILD_LONGEST && xp->xp_numfiles > 0) {
     size_t len;
-    for (len = 0; xp->xp_files[0][len]; ++len) {
-      for (i = 0; i < xp->xp_numfiles; ++i) {
+    size_t mb_len = 1;
+    int c0;
+    int ci;
+
+    for (len = 0; xp->xp_files[0][len]; len += mb_len) {
+      if (has_mbyte) {
+        mb_len = (* mb_ptr2len)(&xp->xp_files[0][len]);
+        c0 = (* mb_ptr2char)(&xp->xp_files[0][len]);
+      } else {
+        c0 = xp->xp_files[0][len];
+      }
+      for (i = 1; i < xp->xp_numfiles; ++i) {
+        if (has_mbyte) {
+          ci =(* mb_ptr2char)(&xp->xp_files[i][len]);
+        } else {
+          ci = xp->xp_files[i][len];
+        }
+
         if (p_fic && (xp->xp_context == EXPAND_DIRECTORIES
                       || xp->xp_context == EXPAND_FILES
                       || xp->xp_context == EXPAND_SHELLCMD
                       || xp->xp_context == EXPAND_BUFFERS)) {
-          if (TOLOWER_LOC(xp->xp_files[i][len]) !=
-              TOLOWER_LOC(xp->xp_files[0][len]))
+          if (vim_tolower(c0) != vim_tolower(ci)) {
             break;
-        } else if (xp->xp_files[i][len] != xp->xp_files[0][len])
+          }
+        } else if (c0 != ci) {
           break;
+        }
       }
       if (i < xp->xp_numfiles) {
         if (!(options & WILD_NO_BEEP)) {
@@ -2979,8 +2996,9 @@ ExpandOne (
         break;
       }
     }
+
     ss = (char_u *)xstrndup((char *)xp->xp_files[0], len);
-    findex = -1;                            /* next p_wc gets first one */
+    findex = -1;  // next p_wc gets first one
   }
 
   // Concatenate all matching names
