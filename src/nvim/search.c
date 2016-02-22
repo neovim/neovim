@@ -453,25 +453,24 @@ void last_pat_prog(regmmatch_T *regmatch)
   --emsg_off;
 }
 
-/*
- * lowest level search function.
- * Search for 'count'th occurrence of pattern 'pat' in direction 'dir'.
- * Start at position 'pos' and return the found position in 'pos'.
- *
- * if (options & SEARCH_MSG) == 0 don't give any messages
- * if (options & SEARCH_MSG) == SEARCH_NFMSG don't give 'notfound' messages
- * if (options & SEARCH_MSG) == SEARCH_MSG give all messages
- * if (options & SEARCH_HIS) put search pattern in history
- * if (options & SEARCH_END) return position at end of match
- * if (options & SEARCH_START) accept match at pos itself
- * if (options & SEARCH_KEEP) keep previous search pattern
- * if (options & SEARCH_FOLD) match only once in a closed fold
- * if (options & SEARCH_PEEK) check for typed char, cancel search
- *
- * Return FAIL (zero) for failure, non-zero for success.
- * Returns the index of the first matching
- * subpattern plus one; one if there was none.
- */
+/// lowest level search function.
+/// Search for 'count'th occurrence of pattern 'pat' in direction 'dir'.
+/// Start at position 'pos' and return the found position in 'pos'.
+///
+/// if (options & SEARCH_MSG) == 0 don't give any messages
+/// if (options & SEARCH_MSG) == SEARCH_NFMSG don't give 'notfound' messages
+/// if (options & SEARCH_MSG) == SEARCH_MSG give all messages
+/// if (options & SEARCH_HIS) put search pattern in history
+/// if (options & SEARCH_END) return position at end of match
+/// if (options & SEARCH_START) accept match at pos itself
+/// if (options & SEARCH_KEEP) keep previous search pattern
+/// if (options & SEARCH_FOLD) match only once in a closed fold
+/// if (options & SEARCH_PEEK) check for typed char, cancel search
+/// if (options & SEARCH_COL) start at pos->col instead of zero
+///
+/// @returns FAIL (zero) for failure, non-zero for success.
+///          the index of the first matching
+///          subpattern plus one; one if there was none.
 int searchit(
     win_T       *win,               /* window to search in, can be NULL for a
                                        buffer without a window! */
@@ -571,16 +570,14 @@ int searchit(
         if (tm != NULL && profile_passed_limit(*tm))
           break;
 
-        /*
-         * Look for a match somewhere in line "lnum".
-         */
+        // Look for a match somewhere in line "lnum".
+        colnr_T col = at_first_line && (options & SEARCH_COL) ? pos->col : 0;
         nmatched = vim_regexec_multi(&regmatch, win, buf,
-            lnum, (colnr_T)0,
-            tm
-            );
-        /* Abort searching on an error (e.g., out of stack). */
-        if (called_emsg)
+                                     lnum, col, tm);
+        // Abort searching on an error (e.g., out of stack).
+        if (called_emsg) {
           break;
+        }
         if (nmatched > 0) {
           /* match may actually be in another line when using \zs */
           matchpos = regmatch.startpos[0];
@@ -881,9 +878,8 @@ static void set_vv_searchforward(void)
   set_vim_var_nr(VV_SEARCHFORWARD, (long)(spats[0].off.dir == '/'));
 }
 
-/*
- * Return the number of the first subpat that matched.
- */
+// Return the number of the first subpat that matched.
+// Return zero if none of them matched.
 static int first_submatch(regmmatch_T *rp)
 {
   int submatch;

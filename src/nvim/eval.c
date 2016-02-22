@@ -14345,14 +14345,14 @@ static void f_reverse(typval_T *argvars, typval_T *rettv)
   }
 }
 
-#define SP_NOMOVE       0x01        /* don't move cursor */
-#define SP_REPEAT       0x02        /* repeat to find outer pair */
-#define SP_RETCOUNT     0x04        /* return matchcount */
-#define SP_SETPCMARK    0x08        /* set previous context mark */
-#define SP_START        0x10        /* accept match at start position */
-#define SP_SUBPAT       0x20        /* return nr of matching sub-pattern */
-#define SP_END          0x40        /* leave cursor at end of match */
-
+#define SP_NOMOVE       0x01        ///< don't move cursor
+#define SP_REPEAT       0x02        ///< repeat to find outer pair
+#define SP_RETCOUNT     0x04        ///< return matchcount
+#define SP_SETPCMARK    0x08        ///< set previous context mark
+#define SP_START        0x10        ///< accept match at start position
+#define SP_SUBPAT       0x20        ///< return nr of matching sub-pattern
+#define SP_END          0x40        ///< leave cursor at end of match
+#define SP_COLUMN       0x80        ///< start at cursor column
 
 /*
  * Get flags for a search function.
@@ -14378,13 +14378,14 @@ static int get_search_arg(typval_T *varp, int *flagsp)
       default:  mask = 0;
         if (flagsp != NULL)
           switch (*flags) {
-          case 'c': mask = SP_START; break;
-          case 'e': mask = SP_END; break;
-          case 'm': mask = SP_RETCOUNT; break;
-          case 'n': mask = SP_NOMOVE; break;
-          case 'p': mask = SP_SUBPAT; break;
-          case 'r': mask = SP_REPEAT; break;
-          case 's': mask = SP_SETPCMARK; break;
+            case 'c': mask = SP_START; break;
+            case 'e': mask = SP_END; break;
+            case 'm': mask = SP_RETCOUNT; break;
+            case 'n': mask = SP_NOMOVE; break;
+            case 'p': mask = SP_SUBPAT; break;
+            case 'r': mask = SP_REPEAT; break;
+            case 's': mask = SP_SETPCMARK; break;
+            case 'z': mask = SP_COLUMN; break;
           }
         if (mask == 0) {
           EMSG2(_(e_invarg2), flags);
@@ -14400,9 +14401,7 @@ static int get_search_arg(typval_T *varp, int *flagsp)
   return dir;
 }
 
-/*
- * Shared by search() and searchpos() functions
- */
+// Shared by search() and searchpos() functions.
 static int search_cmn(typval_T *argvars, pos_T *match_pos, int *flagsp)
 {
   int flags;
@@ -14423,10 +14422,15 @@ static int search_cmn(typval_T *argvars, pos_T *match_pos, int *flagsp)
   if (dir == 0)
     goto theend;
   flags = *flagsp;
-  if (flags & SP_START)
+  if (flags & SP_START) {
     options |= SEARCH_START;
-  if (flags & SP_END)
+  }
+  if (flags & SP_END) {
     options |= SEARCH_END;
+  }
+  if (flags & SP_COLUMN) {
+    options |= SEARCH_COL;
+  }
 
   /* Optional arguments: line number to stop searching and timeout. */
   if (argvars[1].v_type != VAR_UNKNOWN && argvars[2].v_type != VAR_UNKNOWN) {
