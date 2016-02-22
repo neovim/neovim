@@ -7,27 +7,37 @@ export SHELL := sh
 VIMPROG := ../../../build/bin/nvim
 SCRIPTSOURCE := ../../../runtime
 
-SCRIPTS :=                                                             \
-                                   test8.out               test10.out  \
-                       test12.out  test13.out  test14.out              \
-                       test17.out                                      \
-                                               test24.out              \
-                                                           test30.out  \
-                       test32.out              test34.out              \
-                       test37.out                          test40.out  \
-                       test42.out                                      \
-                       test47.out  test48.out  test49.out              \
-                       test52.out  test53.out              test55.out  \
-                                               test64.out              \
-                                   test68.out  test69.out              \
-                                   test73.out                          \
-                                               test79.out              \
-                                   test88.out                          \
-           test_listlbr.out                                            \
-           test_breakindent.out                                        \
-           test_close_count.out                                        \
-           test_marks.out                                              \
-           test_match_conceal.out                                      \
+SCRIPTS := \
+           test8.out              \
+           test10.out             \
+           test12.out             \
+           test13.out             \
+           test14.out             \
+           test17.out             \
+           test24.out             \
+           test30.out             \
+           test32.out             \
+           test34.out             \
+           test37.out             \
+           test40.out             \
+           test42.out             \
+           test47.out             \
+           test48.out             \
+           test49.out             \
+           test52.out             \
+           test53.out             \
+           test55.out             \
+           test64.out             \
+           test68.out             \
+           test69.out             \
+           test73.out             \
+           test79.out             \
+           test88.out             \
+           test_listlbr.out       \
+           test_breakindent.out   \
+           test_close_count.out   \
+           test_marks.out         \
+           test_match_conceal.out \
 
 NEW_TESTS =
 
