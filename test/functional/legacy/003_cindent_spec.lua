@@ -674,6 +674,13 @@ describe('cindent', function()
       {
       }
       
+      A::A(int a, int b)
+      : aa(a),
+      bb(b),
+      cc(c)
+      {
+      }
+      
       class CAbc :
          public BaseClass1,
          protected BaseClass2
@@ -918,6 +925,55 @@ describe('cindent', function()
         }
           )foo";
            }
+      
+      {
+      int a[4] = {
+      [0] = 0,
+      [1] = 1,
+      [2] = 2,
+      [3] = 3,
+      };
+      }
+      
+      {
+      a = b[2]
+      + 3;
+      }
+      
+      {
+      if (1)
+      /* aaaaa
+      * bbbbb
+      */
+      a = 1;
+      }
+      
+      void func()
+      {
+      switch (foo)
+      {
+      case (bar):
+      if (baz())
+      quux();
+      break;
+      case (shmoo):
+      if (!bar)
+      {
+      }
+      case (foo1):
+      switch (bar)
+      {
+      case baz:
+      baz_f();
+      break;
+      }
+      break;
+      default:
+      baz();
+      baz();
+      break;
+      }
+      }
       
       /* end of AUTO */
       ]=])
@@ -1580,6 +1636,13 @@ describe('cindent', function()
       {
       }
       
+      A::A(int a, int b)
+      	: aa(a),
+      	bb(b),
+      	cc(c)
+      {
+      }
+      
       class CAbc :
       	public BaseClass1,
       	protected BaseClass2
@@ -1823,6 +1886,55 @@ describe('cindent', function()
           field: 123
         }
           )foo";
+      }
+      
+      {
+      	int a[4] = {
+      		[0] = 0,
+      		[1] = 1,
+      		[2] = 2,
+      		[3] = 3,
+      	};
+      }
+      
+      {
+      	a = b[2]
+      		+ 3;
+      }
+      
+      {
+      	if (1)
+      		/* aaaaa
+      		 * bbbbb
+      		 */
+      		a = 1;
+      }
+      
+      void func()
+      {
+      	switch (foo)
+      	{
+      		case (bar):
+      			if (baz())
+      				quux();
+      			break;
+      		case (shmoo):
+      			if (!bar)
+      			{
+      			}
+      		case (foo1):
+      			switch (bar)
+      			{
+      				case baz:
+      					baz_f();
+      					break;
+      			}
+      			break;
+      		default:
+      			baz();
+      			baz();
+      			break;
+      	}
       }
       
       /* end of AUTO */
