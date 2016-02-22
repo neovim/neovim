@@ -1,8 +1,3 @@
-/*
- * functions that use lookup tables for various things, generally to do with
- * special key codes.
- */
-
 #include <assert.h>
 #include <inttypes.h>
 #include <limits.h>
@@ -39,7 +34,8 @@ static struct modmasktable {
   {MOD_MASK_MULTI_CLICK,      MOD_MASK_2CLICK,        (char_u)'2'},
   {MOD_MASK_MULTI_CLICK,      MOD_MASK_3CLICK,        (char_u)'3'},
   {MOD_MASK_MULTI_CLICK,      MOD_MASK_4CLICK,        (char_u)'4'},
-  /* 'A' must be the last one */
+  {MOD_MASK_CMD,              MOD_MASK_CMD,           (char_u)'D'},
+  // 'A' must be the last one
   {MOD_MASK_ALT,              MOD_MASK_ALT,           (char_u)'A'},
   {0, 0, NUL}
 };
@@ -658,9 +654,11 @@ static int extract_modifiers(int key, int *modp)
 {
   int modifiers = *modp;
 
-  if ((modifiers & MOD_MASK_SHIFT) && ASCII_ISALPHA(key)) {
-    key = TOUPPER_ASC(key);
-    modifiers &= ~MOD_MASK_SHIFT;
+  if (!(modifiers & MOD_MASK_CMD)) {  // Command-key is special
+    if ((modifiers & MOD_MASK_SHIFT) && ASCII_ISALPHA(key)) {
+      key = TOUPPER_ASC(key);
+      modifiers &= ~MOD_MASK_SHIFT;
+    }
   }
   if ((modifiers & MOD_MASK_CTRL)
       && ((key >= '?' && key <= '_') || ASCII_ISALPHA(key))) {

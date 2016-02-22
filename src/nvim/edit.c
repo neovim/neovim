@@ -4947,15 +4947,10 @@ int get_literal(void)
   return cc;
 }
 
-/*
- * Insert character, taking care of special keys and mod_mask
- */
-static void
-insert_special (
-    int c,
-    int allow_modmask,
-    int ctrlv                  /* c was typed after CTRL-V */
-)
+/// Insert character, taking care of special keys and mod_mask
+///
+/// @param ctrlv `c` was typed after CTRL-V
+static void insert_special(int c, int allow_modmask, int ctrlv)
 {
   char_u  *p;
   int len;
@@ -4967,6 +4962,9 @@ insert_special (
    * Only use mod_mask for special keys, to avoid things like <S-Space>,
    * unless 'allow_modmask' is TRUE.
    */
+  if (mod_mask & MOD_MASK_CMD) {  // Command-key never produces a normal key.
+    allow_modmask = true;
+  }
   if (IS_SPECIAL(c) || (mod_mask && allow_modmask)) {
     p = get_special_key_name(c, mod_mask);
     len = (int)STRLEN(p);
