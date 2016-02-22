@@ -9362,52 +9362,55 @@ static void ex_nohlsearch(exarg_T *eap)
   redraw_all_later(SOME_VALID);
 }
 
-/*
- * ":[N]match {group} {pattern}"
- * Sets nextcmd to the start of the next command, if any.  Also called when
- * skipping commands to find the next command.
- */
+// ":[N]match {group} {pattern}"
+// Sets nextcmd to the start of the next command, if any.  Also called when
+// skipping commands to find the next command.
 static void ex_match(exarg_T *eap)
 {
-  char_u      *p;
-  char_u      *g = NULL;
-  char_u      *end;
+  char_u *p;
+  char_u *g = NULL;
+  char_u *end;
   int c;
   int id;
 
-  if (eap->line2 <= 3)
+  if (eap->line2 <= 3) {
     id = eap->line2;
-  else {
+  } else {
     EMSG(e_invcmd);
     return;
   }
 
-  /* First clear any old pattern. */
-  if (!eap->skip)
-    match_delete(curwin, id, FALSE);
+  // First clear any old pattern.
+  if (!eap->skip) {
+    match_delete(curwin, id, false);
+  }
 
-  if (ends_excmd(*eap->arg))
+  if (ends_excmd(*eap->arg)) {
     end = eap->arg;
-  else if ((STRNICMP(eap->arg, "none", 4) == 0
-            && (ascii_iswhite(eap->arg[4]) || ends_excmd(eap->arg[4]))))
+  } else if ((STRNICMP(eap->arg, "none", 4) == 0
+              && (ascii_iswhite(eap->arg[4]) || ends_excmd(eap->arg[4])))) {
     end = eap->arg + 4;
-  else {
+  } else {
     p = skiptowhite(eap->arg);
-    if (!eap->skip)
+    if (!eap->skip) {
       g = vim_strnsave(eap->arg, (int)(p - eap->arg));
+    }
     p = skipwhite(p);
     if (*p == NUL) {
-      /* There must be two arguments. */
+      // There must be two arguments.
+      xfree(g);
       EMSG2(_(e_invarg2), eap->arg);
       return;
     }
-    end = skip_regexp(p + 1, *p, TRUE, NULL);
+    end = skip_regexp(p + 1, *p, true, NULL);
     if (!eap->skip) {
       if (*end != NUL && !ends_excmd(*skipwhite(end + 1))) {
+        xfree(g);
         eap->errmsg = e_trailing;
         return;
       }
       if (*end != *p) {
+        xfree(g);
         EMSG2(_(e_invarg2), p);
         return;
       }
