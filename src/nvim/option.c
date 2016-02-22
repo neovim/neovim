@@ -5947,13 +5947,17 @@ option_value2string (
   if (opp->flags & P_NUM) {
     long wc = 0;
 
-    if (wc_use_keyname(varp, &wc))
-      STRCPY(NameBuff, get_special_key_name((int)wc, 0));
-    else if (wc != 0)
-      STRCPY(NameBuff, transchar((int)wc));
-    else
-      sprintf((char *)NameBuff, "%" PRId64, (int64_t)*(long *)varp);
-  } else { /* P_STRING */
+    if (wc_use_keyname(varp, &wc)) {
+      STRLCPY(NameBuff, get_special_key_name((int)wc, 0), sizeof(NameBuff));
+    } else if (wc != 0) {
+      STRLCPY(NameBuff, transchar((int)wc), sizeof(NameBuff));
+    } else {
+      snprintf((char *)NameBuff,
+               sizeof(NameBuff),
+               "%" PRId64,
+               (int64_t)*(long *)varp);
+    }
+  } else {  // P_STRING
     varp = *(char_u **)(varp);
     if (varp == NULL)                       /* just in case */
       NameBuff[0] = NUL;
