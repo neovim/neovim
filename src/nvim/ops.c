@@ -2558,23 +2558,7 @@ static void yank_do_autocmd(oparg_T *oap, yankreg_T *reg)
 
   // the register type
   char buf[NUMBUFLEN+2];
-  buf[0] = NUL;
-  buf[1] = NUL;
-  switch (reg->y_type) {
-    case MLINE:
-      buf[0] = 'V';
-      break;
-    case MCHAR:
-      buf[0] = 'v';
-      break;
-    case MBLOCK:
-      buf[0] = Ctrl_V;
-      snprintf(buf + 1, ARRAY_SIZE(buf) - 1, "%" PRId64,
-               (int64_t)(reg->y_width + 1));
-      break;
-    case MAUTO:
-      assert(false);
-  }
+  format_reg_type(reg->y_type, reg->y_width, buf, ARRAY_SIZE(buf));
   dict_add_nr_str(dict, "regtype", 0, (char_u *)buf);
 
   // name of requested register or the empty string for an unnamed operation.
@@ -4703,7 +4687,7 @@ theend:
  * Used for getregtype()
  * Returns MAUTO for error.
  */
-char_u get_reg_type(int regname, long *reglen)
+char_u get_reg_type(int regname, colnr_T *reg_width)
 {
   switch (regname) {
   case '%':                     /* file name */
@@ -4726,12 +4710,44 @@ char_u get_reg_type(int regname, long *reglen)
   yankreg_T *reg = get_yank_register(regname, YREG_PASTE);
 
   if (reg->y_array != NULL) {
-    if (reglen != NULL && reg->y_type == MBLOCK)
-      *reglen = reg->y_width;
+    if (reg_width != NULL && reg->y_type == MBLOCK) {
+      *reg_width = reg->y_width;
+    }
     return reg->y_type;
   }
   return MAUTO;
 }
+
+/// Format the register type as a string.
+///
+/// @param reg_type The register type.
+/// @param reg_width The width, only used if "reg_type" is MBLOCK.
+/// @param[out] buf Buffer to store formatted string. The allocated size should
+///                 be at least NUMBUFLEN+2 to always fit the value.
+/// @param buf_len The allocated size of the buffer.
+void format_reg_type(char_u reg_type, colnr_T reg_width,
+                     char* buf, size_t buf_len)
+  FUNC_ATTR_NONNULL_ALL
+{
+  assert(buf_len > 1);
+  switch (reg_type) {
+    case MLINE:
+      buf[0] = 'V';
+      buf[1] = NUL;
+      break;
+    case MCHAR:
+      buf[0] = 'v';
+      buf[1] = NUL;
+      break;
+    case MBLOCK:
+      snprintf(buf, buf_len, CTRL_V_STR "%" PRIdCOLNR, reg_width + 1);
+      break;
+    case MAUTO:
+      buf[0] = NUL;
+      break;
+  }
+}
+
 
 /// When `flags` has `kGRegList` return a list with text `s`.
 /// Otherwise just return `s`.

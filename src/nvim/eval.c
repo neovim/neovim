@@ -10623,8 +10623,6 @@ static void f_getregtype(typval_T *argvars, typval_T *rettv)
 {
   char_u      *strregname;
   int regname;
-  char_u buf[NUMBUFLEN + 2];
-  long reglen = 0;
 
   if (argvars[0].v_type != VAR_UNKNOWN) {
     strregname = get_tv_string_chk(&argvars[0]);
@@ -10641,18 +10639,13 @@ static void f_getregtype(typval_T *argvars, typval_T *rettv)
   if (regname == 0)
     regname = '"';
 
-  buf[0] = NUL;
-  buf[1] = NUL;
-  switch (get_reg_type(regname, &reglen)) {
-  case MLINE: buf[0] = 'V'; break;
-  case MCHAR: buf[0] = 'v'; break;
-  case MBLOCK:
-    buf[0] = Ctrl_V;
-    sprintf((char *)buf + 1, "%" PRId64, (int64_t)(reglen + 1));
-    break;
-  }
+  colnr_T reglen = 0;
+  char buf[NUMBUFLEN + 2];
+  char_u reg_type = get_reg_type(regname, &reglen);
+  format_reg_type(reg_type, reglen, buf, ARRAY_SIZE(buf));
+
   rettv->v_type = VAR_STRING;
-  rettv->vval.v_string = vim_strsave(buf);
+  rettv->vval.v_string = (char_u *)xstrdup(buf);
 }
 
 /*
