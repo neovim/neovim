@@ -19,6 +19,7 @@
 #include "nvim/mark.h"
 #include "nvim/fileio.h"
 #include "nvim/move.h"
+#include "nvim/syntax.h"
 #include "nvim/window.h"
 #include "nvim/undo.h"
 
@@ -514,6 +515,99 @@ ArrayOf(Integer, 2) buffer_get_mark(Buffer buffer, String name, Error *err)
   return rv;
 }
 
+/// Adds a highlight to buffer.
+///
+/// This can be used for plugins which dynamically generate highlights to a
+/// buffer (like a semantic highlighter or linter). The function adds a single
+/// highlight to a buffer. Unlike matchaddpos() highlights follow changes to
+/// line numbering (as lines are inserted/removed above the highlighted line),
+/// like signs and marks do.
+///
+/// "src_id" is useful for batch deletion/updating of a set of highlights. When
+/// called with src_id = 0, an unique source id is generated and returned.
+/// Succesive calls can pass in it as "src_id" to add new highlights to the same
+/// source group. All highlights in the same group can then be cleared with
+/// buffer_clear_highlight. If the highlight never will be manually deleted
+/// pass in -1 for "src_id".
+///
+/// If "hl_group" is the empty string no highlight is added, but a new src_id
+/// is still returned. This is useful for an external plugin to synchrounously
+/// request an unique src_id at initialization, and later asynchronously add and
+/// clear highlights in response to buffer changes.
+///
+/// @param buffer The buffer handle
+/// @param src_id Source group to use or 0 to use a new group,
+///               or -1 for ungrouped highlight
+/// @param hl_group Name of the highlight group to use
+/// @param line The line to highlight
+/// @param col_start Start of range of columns to highlight
+/// @param col_end End of range of columns to highlight,
+///                or -1 to highlight to end of line
+/// @param[out] err Details of an error that may have occurred
+/// @return The src_id that was used
+Integer buffer_add_highlight(Buffer buffer,
+                             Integer src_id,
+                             String hl_group,
+                             Integer line,
+                             Integer col_start,
+                             Integer col_end,
+                             Error *err)
+{
+  buf_T *buf = find_buffer_by_handle(buffer, err);
+  if (!buf) {
+    return 0;
+  }
+
+  if (line < 0 || line >= MAXLNUM) {
+    api_set_error(err, Validation, _("Line number outside range"));
+    return 0;
+  }
+  if (col_start < 0 || col_start > MAXCOL) {
+    api_set_error(err, Validation, _("Column value outside range"));
+    return 0;
+  }
+  if (col_end < 0 || col_end > MAXCOL) {
+    col_end = MAXCOL;
+  }
+
+  int hlg_id = syn_name2id((char_u*)hl_group.data);
+  src_id = bufhl_add_hl(buf, (int)src_id, hlg_id, (linenr_T)line+1,
+                        (colnr_T)col_start+1, (colnr_T)col_end);
+  return src_id;
+}
+
+/// Clears highlights from a given source group and a range of lines
+///
+/// To clear a source group in the entire buffer, pass in 1 and -1 to
+/// line_start and line_end respectively.
+///
+/// @param buffer The buffer handle
+/// @param src_id Highlight source group to clear, or -1 to clear all groups.
+/// @param line_start Start of range of lines to clear
+/// @param line_end End of range of lines to clear (exclusive)
+///                 or -1 to clear to end of file.
+/// @param[out] err Details of an error that may have occurred
+void buffer_clear_highlight(Buffer buffer,
+                            Integer src_id,
+                            Integer line_start,
+                            Integer line_end,
+                            Error *err)
+{
+  buf_T *buf = find_buffer_by_handle(buffer, err);
+  if (!buf) {
+    return;
+  }
+
+  if (line_start < 0 || line_start >= MAXLNUM) {
+    api_set_error(err, Validation, _("Line number outside range"));
+    return;
+  }
+  if (line_end < 0 || line_end > MAXLNUM) {
+    line_end = MAXLNUM;
+  }
+
+  bufhl_clear_line_range(buf, (int)src_id, (int)line_start+1, (int)line_end);
+}
 
 // Check if deleting lines made the cursor position invalid.
 // Changed the lines from "lo" to "hi" and added "extra" lines (negative if

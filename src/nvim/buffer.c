@@ -580,16 +580,17 @@ free_buffer_stuff (
 )
 {
   if (free_options) {
-    clear_wininfo(buf);                 /* including window-local options */
-    free_buf_options(buf, TRUE);
+    clear_wininfo(buf);                 // including window-local options
+    free_buf_options(buf, true);
     ga_clear(&buf->b_s.b_langp);
   }
-  vars_clear(&buf->b_vars->dv_hashtab);   /* free all internal variables */
+  vars_clear(&buf->b_vars->dv_hashtab);   // free all internal variables
   hash_init(&buf->b_vars->dv_hashtab);
-  uc_clear(&buf->b_ucmds);              /* clear local user commands */
-  buf_delete_signs(buf);                /* delete any signs */
-  map_clear_int(buf, MAP_ALL_MODES, TRUE, FALSE);    /* clear local mappings */
-  map_clear_int(buf, MAP_ALL_MODES, TRUE, TRUE);     /* clear local abbrevs */
+  uc_clear(&buf->b_ucmds);              // clear local user commands
+  buf_delete_signs(buf);                // delete any signs
+  bufhl_clear_all(buf);                // delete any highligts
+  map_clear_int(buf, MAP_ALL_MODES, true, false);    // clear local mappings
+  map_clear_int(buf, MAP_ALL_MODES, true, true);     // clear local abbrevs
   xfree(buf->b_start_fenc);
   buf->b_start_fenc = NULL;
 }
@@ -4869,6 +4870,224 @@ void sign_mark_adjust(linenr_T line1, linenr_T line2, long amount, long amount_a
             sign->lnum += amount_after;
     }
 }
+
+// bufhl: plugin highlights associated with a buffer
+
+/// Adds a highlight to buffer.
+///
+/// Unlike matchaddpos() highlights follow changes to line numbering (as lines
+/// are inserted/removed above the highlighted line), like signs and marks do.
+///
+/// When called with "src_id" set to 0, a unique source id is generated and
+/// returned. Succesive calls can pass it in as "src_id" to add new highlights
+/// to the same source group. All highlights in the same group can be cleared
+/// at once. If the highlight never will be manually deleted pass in -1 for
+/// "src_id"
+///
+/// if "hl_id" or "lnum" is invalid no highlight is added, but a new src_id
+/// is still returned.
+///
+/// @param buf The buffer to add highlights to
+/// @param src_id src_id to use or 0 to use a new src_id group,
+///               or -1 for ungrouped highlight.
+/// @param hl_id Id of the highlight group to use
+/// @param lnum The line to highlight
+/// @param col_start First column to highlight
+/// @param col_end The last column to highlight,
+///                or -1 to highlight to end of line
+/// @return The src_id that was used
+int bufhl_add_hl(buf_T *buf,
+                 int src_id,
+                 int hl_id,
+                 linenr_T lnum,
+                 colnr_T col_start,
+                 colnr_T col_end) {
+  static int next_src_id = 1;
+  if (src_id == 0) {
+    src_id = next_src_id++;
+  }
+  if (hl_id <= 0) {
+      // no highlight group or invalid line, just return src_id
+      return src_id;
+  }
+  if (!buf->b_bufhl_info) {
+    buf->b_bufhl_info = map_new(linenr_T, bufhl_vec_T)();
+  }
+  bufhl_vec_T* lineinfo = map_ref(linenr_T, bufhl_vec_T)(buf->b_bufhl_info,
+                                                         lnum, true);
+
+  bufhl_hl_item_T *hlentry = kv_pushp(bufhl_hl_item_T, *lineinfo);
+  hlentry->src_id = src_id;
+  hlentry->hl_id = hl_id;
+  hlentry->start = col_start;
+  hlentry->stop = col_end;
+
+  if (0 < lnum && lnum <= buf->b_ml.ml_line_count) {
+    changed_lines_buf(buf, lnum, lnum+1, 0);
+    redraw_buf_later(buf, VALID);
+  }
+  return src_id;
+}
+
+/// Clear bufhl highlights from a given source group and range of lines.
+///
+/// @param buf The buffer to remove highlights from
+/// @param src_id highlight source group to clear, or -1 to clear all groups.
+/// @param line_start first line to clear
+/// @param line_end last line to clear or MAXLNUM to clear to end of file.
+void bufhl_clear_line_range(buf_T *buf,
+                            int src_id,
+                            linenr_T line_start,
+                            linenr_T line_end) {
+  if (!buf->b_bufhl_info) {
+    return;
+  }
+  linenr_T line;
+  linenr_T first_changed = MAXLNUM, last_changed = -1;
+  // In the case line_start - line_end << bufhl_info->size
+  // it might be better to reverse this, i e loop over the lines
+  // to clear on.
+  bufhl_vec_T unused;
+  map_foreach(buf->b_bufhl_info, line, unused, {
+    (void)unused;
+    if (line_start <= line && line <= line_end) {
+      if (bufhl_clear_line(buf->b_bufhl_info, src_id, line)) {
+        if (line > last_changed) {
+          last_changed = line;
+        }
+        if (line < first_changed) {
+          first_changed = line;
+        }
+      }
+    }
+  })
+
+  if (last_changed != -1) {
+    changed_lines_buf(buf, first_changed, last_changed+1, 0);
+    redraw_buf_later(buf, VALID);
+  }
+}
+
+/// Clear bufhl highlights from a given source group and given line
+///
+/// @param bufhl_info The highlight info for the buffer
+/// @param src_id Highlight source group to clear, or -1 to clear all groups.
+/// @param lnum Linenr where the highlight should be cleared
+static bool bufhl_clear_line(bufhl_info_T *bufhl_info, int src_id, int lnum) {
+  bufhl_vec_T* lineinfo = map_ref(linenr_T, bufhl_vec_T)(bufhl_info,
+                                                         lnum, false);
+  size_t oldsize = kv_size(*lineinfo);
+  if (src_id < 0) {
+    kv_size(*lineinfo) = 0;
+  } else {
+    size_t newind = 0;
+    for (size_t i = 0; i < kv_size(*lineinfo); i++) {
+      if (kv_A(*lineinfo, i).src_id != src_id) {
+        if (i != newind) {
+          kv_A(*lineinfo, newind) = kv_A(*lineinfo, i);
+        }
+        newind++;
+      }
+    }
+    kv_size(*lineinfo) = newind;
+  }
+
+  if (kv_size(*lineinfo) == 0) {
+    kv_destroy(*lineinfo);
+    map_del(linenr_T, bufhl_vec_T)(bufhl_info, lnum);
+  }
+  return kv_size(*lineinfo) != oldsize;
+}
+
+/// Remove all highlights and free the highlight data
+void bufhl_clear_all(buf_T* buf) {
+  if (!buf->b_bufhl_info) {
+    return;
+  }
+  bufhl_clear_line_range(buf, -1, 1, MAXLNUM);
+  map_free(linenr_T, bufhl_vec_T)(buf->b_bufhl_info);
+  buf->b_bufhl_info = NULL;
+}
+
+/// Adjust a placed highlight for inserted/deleted lines.
+void bufhl_mark_adjust(buf_T* buf,
+                       linenr_T line1,
+                       linenr_T line2,
+                       long amount,
+                       long amount_after) {
+  if (!buf->b_bufhl_info) {
+    return;
+  }
+
+  bufhl_info_T *newmap = map_new(linenr_T, bufhl_vec_T)();
+  linenr_T line;
+  bufhl_vec_T lineinfo;
+  map_foreach(buf->b_bufhl_info, line, lineinfo, {
+    if (line >= line1 && line <= line2) {
+      if (amount == MAXLNUM) {
+        bufhl_clear_line(buf->b_bufhl_info, -1, line);
+        continue;
+      } else {
+        line += amount;
+      }
+    } else if (line > line2) {
+      line += amount_after;
+    }
+    map_put(linenr_T, bufhl_vec_T)(newmap, line, lineinfo);
+  });
+  map_free(linenr_T, bufhl_vec_T)(buf->b_bufhl_info);
+  buf->b_bufhl_info = newmap;
+}
+
+
+/// Get highlights to display at a specific line
+///
+/// @param buf The buffer handle
+/// @param lnum The line number
+/// @param[out] info The highligts for the line
+/// @return true if there was highlights to display
+bool bufhl_start_line(buf_T *buf, linenr_T lnum, bufhl_lineinfo_T *info) {
+  if (!buf->b_bufhl_info) {
+    return false;
+  }
+
+  info->valid_to = -1;
+  info->entries = map_get(linenr_T, bufhl_vec_T)(buf->b_bufhl_info, lnum);
+  return kv_size(info->entries) > 0;
+}
+
+/// get highlighting at column col
+///
+/// It is is assumed this will be called with
+/// non-decreasing column nrs, so that it is
+/// possible to only recalculate highlights
+/// at endpoints.
+///
+/// @param info The info returned by bufhl_start_line
+/// @param col The column to get the attr for
+/// @return The highilight attr to display at the column
+int bufhl_get_attr(bufhl_lineinfo_T *info, colnr_T col) {
+  if (col <= info->valid_to) {
+    return info->current;
+  }
+  int attr = 0;
+  info->valid_to = MAXCOL;
+  for (size_t i = 0; i < kv_size(info->entries); i++) {
+    bufhl_hl_item_T entry = kv_A(info->entries, i);
+    if (entry.start <= col && col <= entry.stop) {
+      int entry_attr = syn_id2attr(entry.hl_id);
+      attr = hl_combine_attr(attr, entry_attr);
+      if (entry.stop < info->valid_to) {
+        info->valid_to = entry.stop;
+      }
+    } else if (col < entry.start && entry.start-1 < info->valid_to) {
+      info->valid_to = entry.start-1;
+    }
+  }
+  info->current = attr;
+  return attr;
+}
+
 
 /*
  * Set 'buflisted' for curbuf to "on" and trigger autocommands if it changed.

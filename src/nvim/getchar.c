@@ -2915,9 +2915,9 @@ do_map (
                 did_it = TRUE;
               }
             }
-            if (mp->m_mode == 0) {              /* entry can be deleted */
-              map_free(mpp);
-              continue;                         /* continue with *mpp */
+            if (mp->m_mode == 0) {              // entry can be deleted
+              mapblock_free(mpp);
+              continue;                         // continue with *mpp
             }
 
             /*
@@ -3012,7 +3012,7 @@ theend:
  * Delete one entry from the abbrlist or maphash[].
  * "mpp" is a pointer to the m_next field of the PREVIOUS entry!
  */
-static void map_free(mapblock_T **mpp)
+static void mapblock_free(mapblock_T **mpp)
 {
   mapblock_T  *mp;
 
@@ -3080,7 +3080,7 @@ int get_map_mode(char_u **cmdp, int forceit)
  * Clear all mappings or abbreviations.
  * 'abbr' should be FALSE for mappings, TRUE for abbreviations.
  */
-void map_clear(char_u *cmdp, char_u *arg, int forceit, int abbr)
+void map_clear_mode(char_u *cmdp, char_u *arg, int forceit, int abbr)
 {
   int mode;
   int local;
@@ -3132,8 +3132,8 @@ map_clear_int (
       mp = *mpp;
       if (mp->m_mode & mode) {
         mp->m_mode &= ~mode;
-        if (mp->m_mode == 0) {       /* entry can be deleted */
-          map_free(mpp);
+        if (mp->m_mode == 0) {       // entry can be deleted
+          mapblock_free(mpp);
           continue;
         }
         /*

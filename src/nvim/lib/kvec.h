@@ -77,10 +77,10 @@ int main() {
 		(v).items[(v).size++] = (x);										\
 	} while (0)
 
-#define kv_pushp(type, v) (((v).size == (v).capacity)?							\
+#define kv_pushp(type, v) ((((v).size == (v).capacity)?							\
 						   ((v).capacity = ((v).capacity? (v).capacity<<1 : 8),				\
 							(v).items = (type*)xrealloc((v).items, sizeof(type) * (v).capacity), 0)	\
-						   : 0), ((v).items + ((v).size++))
+						   : 0), ((v).items + ((v).size++)))
 
 #define kv_a(type, v, i) (((v).capacity <= (size_t)(i)? \
 						  ((v).capacity = (v).size = (i) + 1, kv_roundup32((v).capacity), \

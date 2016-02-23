@@ -6,6 +6,7 @@
 #include "nvim/map_defs.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/msgpack_rpc/defs.h"
+#include "nvim/bufhl_defs.h"
 
 #define MAP_DECLS(T, U)                                                       \
   KHASH_DECLARE(T##_##U##_map, T, U)                                          \
@@ -19,6 +20,7 @@
   U map_##T##_##U##_get(Map(T, U) *map, T key);                               \
   bool map_##T##_##U##_has(Map(T, U) *map, T key);                            \
   U map_##T##_##U##_put(Map(T, U) *map, T key, U value);                      \
+  U *map_##T##_##U##_ref(Map(T, U) *map, T key, bool put);                    \
   U map_##T##_##U##_del(Map(T, U) *map, T key);                               \
   void map_##T##_##U##_clear(Map(T, U) *map);
 
@@ -28,12 +30,14 @@ MAP_DECLS(cstr_t, ptr_t)
 MAP_DECLS(ptr_t, ptr_t)
 MAP_DECLS(uint64_t, ptr_t)
 MAP_DECLS(String, MsgpackRpcRequestHandler)
+MAP_DECLS(linenr_T, bufhl_vec_T)
 
 #define map_new(T, U) map_##T##_##U##_new
 #define map_free(T, U) map_##T##_##U##_free
 #define map_get(T, U) map_##T##_##U##_get
 #define map_has(T, U) map_##T##_##U##_has
 #define map_put(T, U) map_##T##_##U##_put
+#define map_ref(T, U) map_##T##_##U##_ref
 #define map_del(T, U) map_##T##_##U##_del
 #define map_clear(T, U) map_##T##_##U##_clear
 

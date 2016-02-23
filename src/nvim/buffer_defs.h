@@ -28,6 +28,8 @@ typedef struct file_buffer buf_T; // Forward declaration
 #include "nvim/profile.h"
 // for String
 #include "nvim/api/private/defs.h"
+// for Map(K, V)
+#include "nvim/map.h"
 
 #define MODIFIABLE(buf) (!buf->terminal && buf->b_p_ma)
 
@@ -59,21 +61,21 @@ typedef struct file_buffer buf_T; // Forward declaration
 #define VALID_BOTLINE_AP 0x40   /* w_botine is approximated */
 #define VALID_TOPLINE   0x80    /* w_topline is valid (for cursor position) */
 
-/* flags for b_flags */
-#define BF_RECOVERED    0x01    /* buffer has been recovered */
-#define BF_CHECK_RO     0x02    /* need to check readonly when loading file
-                                   into buffer (set by ":e", may be reset by
-                                   ":buf" */
-#define BF_NEVERLOADED  0x04    /* file has never been loaded into buffer,
-                                   many variables still need to be set */
-#define BF_NOTEDITED    0x08    /* Set when file name is changed after
-                                   starting to edit, reset when file is
-                                   written out. */
-#define BF_NEW          0x10    /* file didn't exist when editing started */
-#define BF_NEW_W        0x20    /* Warned for BF_NEW and file created */
-#define BF_READERR      0x40    /* got errors while reading the file */
-#define BF_DUMMY        0x80    /* dummy buffer, only used internally */
-#define BF_PRESERVED    0x100   /* ":preserve" was used */
+// flags for b_flags
+#define BF_RECOVERED    0x01    // buffer has been recovered
+#define BF_CHECK_RO     0x02    // need to check readonly when loading file
+                                // into buffer (set by ":e", may be reset by
+                                // ":buf")
+#define BF_NEVERLOADED  0x04    // file has never been loaded into buffer,
+                                // many variables still need to be set
+#define BF_NOTEDITED    0x08    // Set when file name is changed after
+                                // starting to edit, reset when file is
+                                // written out.
+#define BF_NEW          0x10    // file didn't exist when editing started
+#define BF_NEW_W        0x20    // Warned for BF_NEW and file created
+#define BF_READERR      0x40    // got errors while reading the file
+#define BF_DUMMY        0x80    // dummy buffer, only used internally
+#define BF_PRESERVED    0x100   // ":preserve" was used
 
 /* Mask to check for flags that prevent normal writing */
 #define BF_WRITE_MASK   (BF_NOTEDITED + BF_NEW + BF_READERR)
@@ -100,6 +102,11 @@ typedef int scid_T;                     /* script ID */
 
 // for signlist_T
 #include "nvim/sign_defs.h"
+
+// for bufhl_*_T
+#include "nvim/bufhl_defs.h"
+
+typedef Map(linenr_T, bufhl_vec_T) bufhl_info_T;
 
 // for FileID
 #include "nvim/os/fs_defs.h"
@@ -754,6 +761,8 @@ struct file_buffer {
   dict_T *additional_data;      // Additional data from shada file if any.
 
   int b_mapped_ctrl_c;          // modes where CTRL-C is mapped
+
+  bufhl_info_T *b_bufhl_info;   // buffer stored highlights
 };
 
 /*
