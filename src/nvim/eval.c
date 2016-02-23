@@ -18104,23 +18104,23 @@ void set_vim_var_list(int idx, list_T *val)
 }
 
 /// Set Dictionary v: variable to "val".
-void set_vim_var_dict(int idx, dict_T *val) FUNC_ATTR_NONNULL_ALL
+void set_vim_var_dict(int idx, dict_T *val)
 {
   dict_unref(vimvars[idx].vv_dict);
-
-  // Set readonly
-  int todo = (int)val->dv_hashtab.ht_used;
-  for (hashitem_T *hi = val->dv_hashtab.ht_array; todo > 0 ; ++hi) {
-    if (HASHITEM_EMPTY(hi)) {
-       continue;
-    }
-
-    --todo;
-    HI2DI(hi)->di_flags = DI_FLAGS_RO | DI_FLAGS_FIX;
-  }
-
   vimvars[idx].vv_dict = val;
-  ++val->dv_refcount;
+
+  if (val != NULL) {
+    ++val->dv_refcount;
+    // Set readonly
+    size_t todo = val->dv_hashtab.ht_used;
+    for (hashitem_T *hi = val->dv_hashtab.ht_array; todo > 0 ; ++hi) {
+      if (HASHITEM_EMPTY(hi)) {
+         continue;
+      }
+      --todo;
+      HI2DI(hi)->di_flags = DI_FLAGS_RO | DI_FLAGS_FIX;
+    }
+  }
 }
 
 /*
