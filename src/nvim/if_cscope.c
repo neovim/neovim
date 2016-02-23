@@ -1677,12 +1677,18 @@ static void cs_print_tags_priv(char **matches, char **cntxts,
     tbuf = xmalloc(strlen(matches[idx]) + 1);
     (void)strcpy(tbuf, matches[idx]);
 
-    if (strtok(tbuf, (const char *)"\t") == NULL)
+    if (strtok(tbuf, (const char *)"\t") == NULL) {
+      xfree(tbuf);
       continue;
-    if ((fname = strtok(NULL, (const char *)"\t")) == NULL)
+    }
+    if ((fname = strtok(NULL, (const char *)"\t")) == NULL) {
+      xfree(tbuf);
       continue;
-    if ((lno = strtok(NULL, (const char *)"\t")) == NULL)
+    }
+    if ((lno = strtok(NULL, (const char *)"\t")) == NULL) {
+      xfree(tbuf);
       continue;
+    }
     extra = strtok(NULL, (const char *)"\t");
 
     lno[strlen(lno)-2] = '\0';      /* ignore ;" at the end */
