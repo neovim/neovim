@@ -4877,16 +4877,13 @@ helptags_one (
   int fi;
   char_u      *s;
   char_u      *fname;
-  int dirlen;
   int utf8 = MAYBE;
   int this_utf8;
   int firstline;
   int mix = FALSE;              /* detected mixed encodings */
 
-  /*
-   * Find all *.txt files.
-   */
-  dirlen = (int)STRLEN(dir);
+  // Find all *.txt files.
+  size_t dirlen = STRLEN(dir);
   STRCPY(NameBuff, dir);
   STRCAT(NameBuff, "/**/*");
   STRCAT(NameBuff, ext);
@@ -4908,7 +4905,7 @@ helptags_one (
    */
   STRCPY(NameBuff, dir);
   add_pathsep((char *)NameBuff);
-  STRCAT(NameBuff, tagfname);
+  STRNCAT(NameBuff, tagfname, sizeof(NameBuff) - dirlen - 2);
   fd_tags = mch_fopen((char *)NameBuff, "w");
   if (fd_tags == NULL) {
     EMSG2(_("E152: Cannot open %s for writing"), NameBuff);
