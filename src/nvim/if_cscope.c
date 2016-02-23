@@ -1632,77 +1632,79 @@ static char *cs_pathcomponents(char *path)
   return s;
 }
 
-/*
- * PRIVATE: cs_print_tags_priv
- *
- * called from cs_manage_matches()
- */
+/// Print cscope output that was converted into ctags style entries.
+///
+/// Only called from cs_manage_matches().
+///
+/// @param matches     Array of cscope lines in ctags style. Every entry was
+//                     produced with a format string of the form
+//                          "%s\t%s\t%s;\"\t%s" or
+//                          "%s\t%s\t%s;\""
+//                     by cs_make_vim_style_matches().
+/// @param cntxts      Context for matches.
+/// @param num_matches Number of entries in matches/cntxts, always greater 0.
 static void cs_print_tags_priv(char **matches, char **cntxts,
-                                size_t num_matches)
+                               size_t num_matches) FUNC_ATTR_NONNULL_ALL
 {
-  char        *ptag;
-  char        *fname, *lno, *extra, *tbuf;
-  size_t      num;
-  char        *globalcntx = "GLOBAL";
-  char        *context;
-  char        *cstag_msg = _("Cscope tag: %s");
+  char *globalcntx = "GLOBAL";
+  char *cstag_msg = _("Cscope tag: %s");
 
-  assert (num_matches > 0);
+  assert(num_matches > 0);
+  assert(strcnt(matches[0], '\t') >= 2);
 
-  tbuf = xmalloc(strlen(matches[0]) + 1);
+  char *ptag = matches[0];
+  char *ptag_end = strchr(ptag, '\t');
+  assert(ptag_end >= ptag);
+  // NUL terminate tag string in matches[0].
+  *ptag_end = NUL;
 
-  strcpy(tbuf, matches[0]);
-  ptag = strtok(tbuf, "\t");
-
-  size_t newsize = strlen(cstag_msg) + strlen(ptag);
+  // The "%s" in cstag_msg won't appear in the result string, so we don't need
+  // extra memory for terminating NUL.
+  size_t newsize = strlen(cstag_msg) + (size_t)(ptag_end - ptag);
   char *buf = xmalloc(newsize);
   size_t bufsize = newsize;  // Track available bufsize
-  (void)sprintf(buf, cstag_msg, ptag);
+  (void)snprintf(buf, bufsize, cstag_msg, ptag);
   MSG_PUTS_ATTR(buf, hl_attr(HLF_T));
+  msg_clr_eos();
 
-  xfree(tbuf);
+  // restore matches[0]
+  *ptag_end = '\t';
 
-  MSG_PUTS_ATTR(_("\n   #   line"), hl_attr(HLF_T));      /* strlen is 7 */
+  // Column headers for match number, line number and filename.
+  MSG_PUTS_ATTR(_("\n   #   line"), hl_attr(HLF_T));
   msg_advance(msg_col + 2);
   MSG_PUTS_ATTR(_("filename / context / line\n"), hl_attr(HLF_T));
 
-  num = 1;
   for (size_t i = 0; i < num_matches; i++) {
-    size_t idx = i;
+    assert(strcnt(matches[i], '\t') >= 2);
 
-    /* if we really wanted to, we could avoid this malloc and strcpy
-     * by parsing matches[i] on the fly and placing stuff into buf
-     * directly, but that's too much of a hassle
-     */
-    tbuf = xmalloc(strlen(matches[idx]) + 1);
-    (void)strcpy(tbuf, matches[idx]);
+    // Parse filename, line number and optional part.
+    char *fname = strchr(matches[i], '\t') + 1;
+    char *fname_end = strchr(fname, '\t');
+    // Replace second '\t' in matches[i] with NUL to terminate fname.
+    *fname_end = NUL;
 
-    if (strtok(tbuf, (const char *)"\t") == NULL)
-      continue;
-    if ((fname = strtok(NULL, (const char *)"\t")) == NULL)
-      continue;
-    if ((lno = strtok(NULL, (const char *)"\t")) == NULL)
-      continue;
-    extra = strtok(NULL, (const char *)"\t");
-
-    lno[strlen(lno)-2] = '\0';      /* ignore ;" at the end */
+    char *lno = fname_end + 1;
+    char *extra = xstrchrnul(lno, '\t');
+    // Ignore ;" at the end of lno.
+    char *lno_end = extra - 2;
+    *lno_end = NUL;
+    // Do we have an optional part?
+    extra = *extra ? extra + 1 : NULL;
 
     const char *csfmt_str = "%4zu %6s  ";
-    /* hopefully 'num' (num of matches) will be less than 10^16 */
-    newsize = strlen(csfmt_str) + 16 + strlen(lno);
+    // hopefully num_matches will be less than 10^16
+    newsize = strlen(csfmt_str) + 16 + (size_t)(lno_end - lno);
     if (bufsize < newsize) {
       buf = xrealloc(buf, newsize);
       bufsize = newsize;
     }
-    (void)sprintf(buf, csfmt_str, num, lno);
+    (void)snprintf(buf, bufsize, csfmt_str, i + 1, lno);
     MSG_PUTS_ATTR(buf, hl_attr(HLF_CM));
     MSG_PUTS_LONG_ATTR(cs_pathcomponents(fname), hl_attr(HLF_CM));
 
-    /* compute the required space for the context */
-    if (cntxts[idx] != NULL)
-      context = cntxts[idx];
-    else
-      context = globalcntx;
+    // compute the required space for the context
+    char *context = cntxts[i] ? cntxts[i] : globalcntx;
 
     const char *cntxformat = " <<%s>>";
     // '%s' won't appear in result string, so:
@@ -1713,11 +1715,13 @@ static void cs_print_tags_priv(char **matches, char **cntxts,
       buf = xrealloc(buf, newsize);
       bufsize = newsize;
     }
-    (void)sprintf(buf, cntxformat, context);
+    int buf_len = snprintf(buf, bufsize, cntxformat, context);
+    assert(buf_len >= 0);
 
-    /* print the context only if it fits on the same line */
-    if (msg_col + (int)strlen(buf) >= (int)Columns)
+    // Print the context only if it fits on the same line.
+    if (msg_col + buf_len >= (int)Columns) {
       msg_putchar('\n');
+    }
     msg_advance(12);
     MSG_PUTS_LONG(buf);
     msg_putchar('\n');
@@ -1726,23 +1730,23 @@ static void cs_print_tags_priv(char **matches, char **cntxts,
       MSG_PUTS_LONG(extra);
     }
 
-    xfree(tbuf);     /* only after printing extra due to strtok use */
+    // restore matches[i]
+    *fname_end = '\t';
+    *lno_end = ';';
 
-    if (msg_col)
+    if (msg_col) {
       msg_putchar('\n');
+    }
 
     os_breakcheck();
     if (got_int) {
-      got_int = FALSE;          /* don't print any more matches */
+      got_int = false;  // don't print any more matches
       break;
     }
-
-    num++;
-  }   /* for all matches */
+  }
 
   xfree(buf);
-} /* cs_print_tags_priv */
-
+}
 
 /*
  * PRIVATE: cs_read_prompt
