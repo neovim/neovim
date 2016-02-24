@@ -26,11 +26,11 @@
 #include "nvim/event/rstream.h"
 #include "nvim/event/wstream.h"
 #include "nvim/event/process.h"
-#include "nvim/event/pty_process.h"
+#include "nvim/os/pty_process_unix.h"
 #include "nvim/log.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "event/pty_process.c.generated.h"
+# include "os/pty_process_unix.c.generated.h"
 #endif
 
 bool pty_process_spawn(PtyProcess *ptyproc)
@@ -44,7 +44,7 @@ bool pty_process_spawn(PtyProcess *ptyproc)
   Process *proc = (Process *)ptyproc;
   assert(!proc->err);
   uv_signal_start(&proc->loop->children_watcher, chld_handler, SIGCHLD);
-  ptyproc->winsize = (struct winsize){ptyproc->height, ptyproc->width, 0, 0};
+  ptyproc->winsize = (struct winsize){ ptyproc->height, ptyproc->width, 0, 0 };
   uv_disable_stdio_inheritance();
   int master;
   int pid = forkpty(&master, NULL, &termios, &ptyproc->winsize);
@@ -86,11 +86,10 @@ error:
   return false;
 }
 
-void pty_process_resize(PtyProcess *ptyproc, uint16_t width,
-    uint16_t height)
+void pty_process_resize(PtyProcess *ptyproc, uint16_t width, uint16_t height)
   FUNC_ATTR_NONNULL_ALL
 {
-  ptyproc->winsize = (struct winsize){height, width, 0, 0};
+  ptyproc->winsize = (struct winsize){ height, width, 0, 0 };
   ioctl(ptyproc->tty_fd, TIOCSWINSZ, &ptyproc->winsize);
 }
 

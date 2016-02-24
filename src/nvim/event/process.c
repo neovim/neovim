@@ -9,7 +9,7 @@
 #include "nvim/event/wstream.h"
 #include "nvim/event/process.h"
 #include "nvim/event/libuv_process.h"
-#include "nvim/event/pty_process.h"
+#include "nvim/os/pty_process.h"
 #include "nvim/globals.h"
 #include "nvim/log.h"
 
