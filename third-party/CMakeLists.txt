@@ -123,6 +123,9 @@ set(GPERF_SHA256 767112a204407e62dbc3106647cf839ed544f3cf5d0f0523aaa2508623aad63
 set(WIN32YANK_URL https://github.com/equalsraf/win32yank/releases/download/v0.0.2/win32yank.zip)
 set(WIN32YANK_SHA256 78869bf68565607cda1b6a3d549e2487d59d6f0f16f9b003e123c0086f90309d)
 
+set(WINPTY_URL https://github.com/rprichard/winpty/releases/download/0.4.2/winpty-0.4.2-msvc2015.zip)
+set(WINPTY_SHA256 b465f2584ff394b3fe27c01aa1dcfc679583c1ee951d0e83de3f859d8b8305b8)
+
 if(USE_BUNDLED_UNIBILIUM)
   include(BuildUnibilium)
 endif()
@@ -172,6 +175,25 @@ include(GetBinaryDeps)
 if(WIN32)
   GetBinaryDep(TARGET win32yank
     INSTALL_COMMAND ${CMAKE_COMMAND} -E copy win32yank.exe ${DEPS_INSTALL_DIR}/bin)
+
+  include(TargetArch)
+  if("${TARGET_ARCH}" STREQUAL "X86_64")
+    set(TARGET_ARCH x64)
+  elseif(TARGET_ARCH STREQUAL "X86")
+    set(TARGET_ARCH ia32)
+  endif()
+
+  GetBinaryDep(TARGET winpty
+    INSTALL_COMMAND ${CMAKE_COMMAND} -E make_directory ${DEPS_INSTALL_DIR}/bin
+      COMMAND ${CMAKE_COMMAND} -DFROM_GLOB=${DEPS_BUILD_DIR}/src/winpty/${TARGET_ARCH}/bin/*
+        -DTO=${DEPS_INSTALL_DIR}/bin/
+        -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/CopyFilesGlob.cmake
+      COMMAND ${CMAKE_COMMAND} -DFROM_GLOB=${DEPS_BUILD_DIR}/src/winpty/include/*
+        -DTO=${DEPS_INSTALL_DIR}/include/
+        -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/CopyFilesGlob.cmake
+      COMMAND ${CMAKE_COMMAND} -DFROM_GLOB=${DEPS_BUILD_DIR}/src/winpty/${TARGET_ARCH}/lib/*
+        -DTO=${DEPS_INSTALL_DIR}/lib/
+        -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/CopyFilesGlob.cmake)
 endif()
 
 add_custom_target(clean-shared-libraries
