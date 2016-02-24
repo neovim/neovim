@@ -1,7 +1,7 @@
 local helpers = require('test.functional.helpers')
 local Screen = require('test.functional.ui.screen')
-local clear, feed, nvim, insert = helpers.clear, helpers.feed, helpers.nvim, helpers.insert
-local execute, request, eq, neq = helpers.execute, helpers.request, helpers.eq, helpers.neq
+local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
+local execute, request, neq = helpers.execute, helpers.request, helpers.neq
 
 
 describe('Buffer highlighting', function()
@@ -213,9 +213,9 @@ describe('Buffer highlighting', function()
   it('prioritizes latest added highlight', function()
     insert([[
       three overlapping colors]])
-    id1 = add_hl(0, "Identifier", 0, 6, 17)
-    id2 = add_hl(0, "Special", 0, 0, 9)
-    id3 = add_hl(0, "String", 0, 14, 23)
+    add_hl(0, "Identifier", 0, 6, 17)
+    add_hl(0, "String", 0, 14, 23)
+    local id = add_hl(0, "Special", 0, 0, 9)
 
     screen:expect([[
       {3:three ove}{5:rlapp}{1:ing color}^s                |
@@ -228,7 +228,7 @@ describe('Buffer highlighting', function()
                                               |
     ]])
 
-    clear_hl(id2, 0, 1)
+    clear_hl(id, 0, 1)
     screen:expect([[
       three {5:overlapp}{1:ing color}^s                |
       ~                                       |

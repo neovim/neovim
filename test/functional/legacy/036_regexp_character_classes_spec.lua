@@ -2,13 +2,12 @@
 
 local helpers = require('test.functional.helpers')
 local ffi = require('ffi')
-local feed, insert, source = helpers.feed, helpers.insert, helpers.source
-local clear, execute, expect, eq, eval = helpers.clear, helpers.execute, helpers.expect, helpers.eq, helpers.eval
-local write_file = helpers.write_file
+local clear, execute, expect = helpers.clear, helpers.execute, helpers.expect
+local source, write_file = helpers.source, helpers.write_file
 
 local function sixlines(text)
     local result = ''
-    for i = 1, 6 do
+    for _ = 1, 6 do
       result = result .. text .. '\n'
     end
     return result
