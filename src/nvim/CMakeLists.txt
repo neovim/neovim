@@ -111,6 +111,9 @@ foreach(sfile ${NVIM_SOURCES})
   if(WIN32 AND ${f} MATCHES "^(pty_process_unix.c)$")
     list(APPEND to_remove ${sfile})
   endif()
+  if(NOT WIN32 AND ${f} MATCHES "^(pty_process_win.c)$")
+    list(APPEND to_remove ${sfile})
+  endif()
 endforeach()
 
 list(REMOVE_ITEM NVIM_SOURCES ${to_remove})
@@ -348,6 +351,10 @@ endif()
 
 if(Iconv_LIBRARIES)
   list(APPEND NVIM_LINK_LIBRARIES ${Iconv_LIBRARIES})
+endif()
+
+if(WIN32)
+  list(APPEND NVIM_LINK_LIBRARIES ${WINPTY_LIBRARIES})
 endif()
 
 # Put these last on the link line, since multiple things may depend on them.
