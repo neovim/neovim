@@ -1999,11 +1999,12 @@ setbufvar( {expr}, {varname}, {val})	set {varname} in buffer {expr} to {val}
 setcharsearch( {dict})		Dict	set character search from {dict}
 setcmdpos( {pos})		Number	set cursor position in command-line
 setline( {lnum}, {line})	Number	set line {lnum} to {line}
-setloclist( {nr}, {list}[, {action}])
+setloclist( {nr}, {list}[, {action}[, {title}]])
 				Number	modify location list using {list}
 setmatches( {list})		Number	restore a list of matches
 setpos( {expr}, {list})		Number	set the {expr} position to {list}
-setqflist( {list}[, {action}])	Number	modify quickfix list using {list}
+setqflist( {list}[, {action}[, {title}]]
+				Number	modify quickfix list using {list}
 setreg( {n}, {v}[, {opt}])	Number	set register to value and type
 settabvar( {nr}, {varname}, {val})	set {varname} in tab page {nr} to {val}
 settabwinvar( {tabnr}, {winnr}, {varname}, {val})    set {varname} in window
@@ -5732,11 +5733,13 @@ setline({lnum}, {text})					*setline()*
 			:endfor
 <		Note: The '[ and '] marks are not set.
 
-setloclist({nr}, {list} [, {action}])			*setloclist()*
+setloclist({nr}, {list} [, {action}[, {title}]])	*setloclist()*
 		Create or replace or add to the location list for window {nr}.
 		When {nr} is zero the current window is used. For a location
 		list window, the displayed location list is modified.  For an
-		invalid window number {nr}, -1 is returned.
+		invalid window number {nr}, -1 is returned. If {title} is
+		given, it will be used to set |w:quickfix_title| after opening
+		the location window.
 		Otherwise, same as |setqflist()|.
 		Also see |location-list|.
 
@@ -5793,7 +5796,7 @@ setpos({expr}, {list})
 		|winrestview()|.
 
 
-setqflist({list} [, {action}])				*setqflist()*
+setqflist({list} [, {action}[, {title}]])		*setqflist()*
 		Create or replace or add to the quickfix list using the items
 		in {list}.  Each item in {list} is a dictionary.
 		Non-dictionary items in {list} are ignored.  Each dictionary
@@ -5831,6 +5834,9 @@ setqflist({list} [, {action}])				*setqflist()*
 		then the items from the current quickfix list are replaced
 		with the items from {list}. If {action} is not present or is
 		set to ' ', then a new list is created.
+
+		If {title} is given, it will be used to set |w:quickfix_title|
+		after opening the quickfix window.
 
 		Returns zero for success, -1 for failure.
 
