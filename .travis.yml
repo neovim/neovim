@@ -115,7 +115,7 @@ addons:
       - libtool
       - llvm-3.6-dev
       - pkg-config
-      - python3.3-dev
+      - python3-dev
       - unzip
       - valgrind
       - xclip

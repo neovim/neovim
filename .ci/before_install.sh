@@ -12,7 +12,7 @@ if [[ "${TRAVIS_OS_NAME}" == osx ]]; then
 fi
 
 echo "Upgrade Python 2's pip."
-pip2.7 install --user --upgrade pip
+pip2 install --user --upgrade pip
 
 if [[ "${TRAVIS_OS_NAME}" == osx ]]; then
   echo "Install Python 3."
@@ -24,5 +24,5 @@ else
   echo "Install pip for Python 3."
   curl -sSL https://bootstrap.pypa.io/get-pip.py -o "${HOME}/get-pip.py"
   # After this, pip in PATH will refer to Python 3's pip.
-  python3.3 "${HOME}/get-pip.py" --user --upgrade
+  python3 "${HOME}/get-pip.py" --user --upgrade
 fi
