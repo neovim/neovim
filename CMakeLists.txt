@@ -201,6 +201,7 @@ if(MSVC)
   add_definitions(/W3 -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE)
 else()
   add_definitions(-Wall -Wextra -pedantic -Wno-unused-parameter
+    -Wno-c11-extensions
     -Wstrict-prototypes -std=gnu99)
 endif()
 
