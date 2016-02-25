@@ -239,24 +239,23 @@ end
 non_static = non_static .. footer
 static = static .. footer
 
+local F
+F = io.open(static_fname, 'w')
+F:write(static)
+F:close()
 
--- Before generating the headers, check if the current file (if exists) is
--- different from the new one. If they are the same, we won't touch the
--- current version to avoid triggering an unnecessary rebuilds of modules
+-- Before generating the non-static headers, check if the current file(if
+-- exists) is different from the new one. If they are the same, we won't touch
+-- the current version to avoid triggering an unnecessary rebuilds of modules
 -- that depend on this one
-local update_changed = function (fname, contents)
-  local F = io.open(fname, 'r')
-  if F ~= nil then
-    if F:read('*a') == contents then
-      return
-    end
-    io.close(F)
+F = io.open(non_static_fname, 'r')
+if F ~= nil then
+  if F:read('*a') == non_static then
+    os.exit(0)
   end
-
-  F = io.open(fname, 'w')
-  F:write(contents)
-  F:close()
+  io.close(F)
 end
 
-update_changed(static_fname, static)
-update_changed(non_static_fname, non_static)
+F = io.open(non_static_fname, 'w')
+F:write(non_static)
+F:close()
