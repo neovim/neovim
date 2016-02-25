@@ -459,12 +459,16 @@ json_decode_string_cycle_start:
         int fst_in_pair = 0;
         char *str_end = str;
         bool hasnul = false;
+#define PUT_FST_IN_PAIR(fst_in_pair, str_end) \
+        do { \
+          if (fst_in_pair != 0) { \
+            str_end += utf_char2bytes(fst_in_pair, (char_u *) str_end); \
+            fst_in_pair = 0; \
+          } \
+        } while (0)
         for (const char *t = s; t < p; t++) {
           if (t[0] != '\\' || t[1] != 'u') {
-            if (fst_in_pair != 0) {
-              str_end += utf_char2bytes(fst_in_pair, (char_u *) str_end);
-              fst_in_pair = 0;
-            }
+            PUT_FST_IN_PAIR(fst_in_pair, str_end);
           }
           if (*t == '\\') {
             t++;
@@ -489,6 +493,7 @@ json_decode_string_cycle_start:
                   str_end += utf_char2bytes(full_char, (char_u *) str_end);
                   fst_in_pair = 0;
                 } else {
+                  PUT_FST_IN_PAIR(fst_in_pair, str_end);
                   str_end += utf_char2bytes((int) ch, (char_u *) str_end);
                 }
                 break;
@@ -522,9 +527,8 @@ json_decode_string_cycle_start:
             *str_end++ = *t;
           }
         }
-        if (fst_in_pair != 0) {
-          str_end += utf_char2bytes((int) fst_in_pair, (char_u *) str_end);
-        }
+        PUT_FST_IN_PAIR(fst_in_pair, str_end);
+#undef PUT_FST_IN_PAIR
         if (conv.vc_type != CONV_NONE) {
           size_t str_len = (size_t) (str_end - str);
           char *const new_str = (char *) string_convert(&conv, (char_u *) str,
