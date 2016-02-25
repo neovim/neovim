@@ -141,10 +141,6 @@ struct terminal {
   int pressed_button;
   // pending width/height
   bool pending_resize;
-  // color palette. this isn't set directly in the vterm instance because
-  // the default values are used to obtain the color numbers passed to cterm
-  // colors
-  RgbValue colors[256];
   // With a reference count of 0 the terminal can be freed.
   size_t refcount;
 };
@@ -205,6 +201,7 @@ void terminal_teardown(void)
 
 Terminal *terminal_open(TerminalOptions opts)
 {
+  bool true_color = ui_rgb_attached();
   // Create a new terminal instance and configure it
   Terminal *rv = xcalloc(1, sizeof(Terminal));
   rv->opts = opts;
@@ -220,7 +217,7 @@ Terminal *terminal_open(TerminalOptions opts)
   // Set up screen
   rv->vts = vterm_obtain_screen(rv->vt);
   vterm_screen_enable_altscreen(rv->vts, true);
-    // delete empty lines at the end of the buffer
+  // delete empty lines at the end of the buffer
   vterm_screen_set_callbacks(rv->vts, &vterm_screen_callbacks, rv);
   vterm_screen_set_damage_merge(rv->vts, VTERM_DAMAGE_SCROLL);
   vterm_screen_reset(rv->vts, 1);
@@ -250,12 +247,18 @@ Terminal *terminal_open(TerminalOptions opts)
   rv->sb_size = MIN(rv->sb_size, 100000);
   rv->sb_buffer = xmalloc(sizeof(ScrollbackLine *) * rv->sb_size);
 
+  if (!true_color) {
+    return rv;
+  }
+
+  vterm_state_set_bold_highbright(state, true);
+
   // Configure the color palette. Try to get the color from:
   //
   // - b:terminal_color_{NUM}
   // - g:terminal_color_{NUM}
   // - the VTerm instance
-  for (int i = 0; i < (int)ARRAY_SIZE(rv->colors); i++) {
+  for (int i = 0; i < 16; i++) {
     RgbValue color_val = -1;
     char var[64];
     snprintf(var, sizeof(var), "terminal_color_%d", i);
@@ -265,15 +268,12 @@ Terminal *terminal_open(TerminalOptions opts)
       xfree(name);
 
       if (color_val != -1) {
-        rv->colors[i] = color_val;
+        VTermColor color;
+        color.red = (uint8_t)((color_val >> 16) & 0xFF);
+        color.green = (uint8_t)((color_val >> 8) & 0xFF);
+        color.blue = (uint8_t)((color_val >> 0) & 0xFF);
+        vterm_state_set_palette_color(state, i, &color);
       }
-    }
-
-    if (color_val == -1) {
-      // the default is taken from vterm
-      VTermColor color;
-      vterm_state_get_palette_color(state, i, &color);
-      rv->colors[i] = RGB(color.red, color.green, color.blue);
     }
   }
 
@@ -548,10 +548,6 @@ void terminal_get_line_attributes(Terminal *term, win_T *wp, int linenr,
                     map_get(int, int)(color_indexes, vt_fg) : 0;
     int vt_bg_idx = vt_bg != default_vt_bg ?
                     map_get(int, int)(color_indexes, vt_bg) : 0;
-    // The index is now used to get the final rgb value from the
-    // user-customizable palette.
-    int vt_fg_rgb = vt_fg_idx != 0 ? term->colors[vt_fg_idx - 1] : -1;
-    int vt_bg_rgb = vt_bg_idx != 0 ? term->colors[vt_bg_idx - 1] : -1;
 
     int hl_attrs = (cell.attrs.bold ? HL_BOLD : 0)
                  | (cell.attrs.italic ? HL_ITALIC : 0)
@@ -566,8 +562,8 @@ void terminal_get_line_attributes(Terminal *term, win_T *wp, int linenr,
         .cterm_fg_color = vt_fg_idx,
         .cterm_bg_color = vt_bg_idx,
         .rgb_ae_attr = (int16_t)hl_attrs,
-        .rgb_fg_color = vt_fg_rgb,
-        .rgb_bg_color = vt_bg_rgb,
+        .rgb_fg_color = vt_fg,
+        .rgb_bg_color = vt_bg,
       });
     }
 
