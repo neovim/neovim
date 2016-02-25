@@ -273,8 +273,8 @@ window on the same buffer and then edit another buffer.  Thus ":tabnew"
 triggers:
 	WinLeave		leave current window
 	TabLeave		leave current tab page
-	TabEnter		enter new tab page
 	WinEnter		enter window in new tab page
+	TabEnter		enter new tab page
 	BufLeave		leave current buffer
 	BufEnter		enter new empty buffer
 
@@ -282,8 +282,8 @@ When switching to another tab page the order is:
 	BufLeave
 	WinLeave
 	TabLeave
-	TabEnter
 	WinEnter
+	TabEnter
 	BufEnter
 
 When entering a new tab page (|:tabnew|), TabNew is triggered before TabEnter
