@@ -2,7 +2,11 @@ get_filename_component(LINT_DIR ${LINT_DIR} ABSOLUTE)
 get_filename_component(LINT_PREFIX ${LINT_DIR} PATH)
 set(LINT_SUPPRESS_FILE "${LINT_PREFIX}/errors.json")
 
-file(GLOB_RECURSE LINT_FILES ${LINT_DIR}/*.c ${LINT_DIR}/*.h)
+if(DEFINED ENV{LINT_FILE})
+  file(GLOB_RECURSE LINT_FILES "$ENV{LINT_FILE}")
+else()
+  file(GLOB_RECURSE LINT_FILES ${LINT_DIR}/*.c ${LINT_DIR}/*.h)
+endif()
 
 set(LINT_ARGS)
 
