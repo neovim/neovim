@@ -7324,10 +7324,10 @@ static struct fst {
   { "setcharsearch",     1, 1, f_setcharsearch },
   { "setcmdpos",         1, 1, f_setcmdpos },
   { "setline",           2, 2, f_setline },
-  { "setloclist",        2, 3, f_setloclist },
+  { "setloclist",        2, 4, f_setloclist },
   { "setmatches",        1, 1, f_setmatches },
   { "setpos",            2, 2, f_setpos },
-  { "setqflist",         1, 2, f_setqflist },
+  { "setqflist",         1, 3, f_setqflist },
   { "setreg",            2, 3, f_setreg },
   { "settabvar",         3, 3, f_settabvar },
   { "settabwinvar",      4, 4, f_settabwinvar },
@@ -15215,14 +15215,26 @@ static void f_setline(typval_T *argvars, typval_T *rettv)
     appended_lines_mark(lcount, added);
 }
 
-
-/*
- * Used by "setqflist()" and "setloclist()" functions
- */
-static void set_qf_ll_list(win_T *wp, typval_T *list_arg, typval_T *action_arg, typval_T *rettv)
+/// Create quickfix/location list from VimL values
+///
+/// Used by `setqflist()` and `setloclist()` functions. Accepts invalid
+/// list_arg, action_arg and title_arg arguments in which case errors out,
+/// including VAR_UNKNOWN parameters.
+///
+/// @param[in,out]  wp  Window to create location list for. May be NULL in
+///                     which case quickfix list will be created.
+/// @param[in]  list_arg  Quickfix list contents.
+/// @param[in]  action_arg  Action to perform: append to an existing list,
+///                         replace its content or create a new one.
+/// @param[in]  title_arg  New list title. Defaults to caller function name.
+/// @param[out]  rettv  Return value: 0 in case of success, -1 otherwise.
+static void set_qf_ll_list(win_T *wp, typval_T *list_arg, typval_T *action_arg,
+                           typval_T *title_arg, typval_T *rettv)
+  FUNC_ATTR_NONNULL_ARG(2, 3, 4, 5)
 {
   char_u      *act;
   int action = ' ';
+  char_u *title = NULL;
 
   rettv->vval.v_number = -1;
 
@@ -15231,7 +15243,7 @@ static void set_qf_ll_list(win_T *wp, typval_T *list_arg, typval_T *action_arg, 
   else {
     list_T  *l = list_arg->vval.v_list;
 
-    if (action_arg->v_type == VAR_STRING) {
+    if (action_arg->v_type != VAR_UNKNOWN) {
       act = get_tv_string_chk(action_arg);
       if (act == NULL)
         return;                 /* type error; errmsg already given */
@@ -15239,9 +15251,20 @@ static void set_qf_ll_list(win_T *wp, typval_T *list_arg, typval_T *action_arg, 
         action = *act;
     }
 
-    if (l != NULL && set_errorlist(wp, l, action,
-            (char_u *)(wp == NULL ? "setqflist()" : "setloclist()")) == OK)
+    if (title_arg->v_type != VAR_UNKNOWN) {
+      title = get_tv_string_chk(title_arg);
+      if (!title) {
+        return;  // type error; errmsg already given
+      }
+    }
+
+    if (!title) {
+      title = (char_u*)(wp ? "setloclist()" : "setqflist()");
+    }
+
+    if (l && set_errorlist(wp, l, action, title) == OK) {
       rettv->vval.v_number = 0;
+    }
   }
 }
 
@@ -15255,8 +15278,9 @@ static void f_setloclist(typval_T *argvars, typval_T *rettv)
   rettv->vval.v_number = -1;
 
   win = find_win_by_nr(&argvars[0], NULL);
-  if (win != NULL)
-    set_qf_ll_list(win, &argvars[1], &argvars[2], rettv);
+  if (win != NULL) {
+    set_qf_ll_list(win, &argvars[1], &argvars[2], &argvars[3], rettv);
+  }
 }
 
 /*
@@ -15392,7 +15416,7 @@ static void f_setpos(typval_T *argvars, typval_T *rettv)
  */
 static void f_setqflist(typval_T *argvars, typval_T *rettv)
 {
-  set_qf_ll_list(NULL, &argvars[0], &argvars[1], rettv);
+  set_qf_ll_list(NULL, &argvars[0], &argvars[1], &argvars[2], rettv);
 }
 
 /*
