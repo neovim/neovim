@@ -15251,7 +15251,7 @@ static void set_qf_ll_list(win_T *wp, typval_T *list_arg, typval_T *action_arg,
         action = *act;
     }
 
-    if (title_arg->v_type != VAR_UNKNOWN) {
+    if (title_arg->v_type == VAR_STRING) {
       title = get_tv_string_chk(title_arg);
       if (!title) {
         return;  // type error; errmsg already given
