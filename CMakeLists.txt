@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.7)
-project(NEOVIM)
+project(nvim)
 
 # Point CMake at any custom modules we may ship
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")

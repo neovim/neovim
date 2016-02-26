@@ -12,6 +12,9 @@
 #define ARCH_32
 #endif
 
+#define PROJECT_NAME "@PROJECT_NAME@"
+#define LOCALE_INSTALL_DIR "@CMAKE_INSTALL_FULL_LOCALEDIR@"
+
 #cmakedefine HAVE__NSGETENVIRON
 #cmakedefine HAVE_FD_CLOEXEC
 #cmakedefine HAVE_FSEEKO

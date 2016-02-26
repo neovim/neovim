@@ -657,6 +657,9 @@ static void init_locale(void)
   setlocale(LC_NUMERIC, "C");
 # endif
 
+# ifdef LOCALE_INSTALL_DIR    // gnu/linux standard: $prefix/share/locale
+  bindtextdomain(PROJECT_NAME, LOCALE_INSTALL_DIR);
+# else                        // old vim style: $runtime/lang
   {
     char_u  *p;
 
@@ -665,11 +668,12 @@ static void init_locale(void)
     p = (char_u *)vim_getenv("VIMRUNTIME");
     if (p != NULL && *p != NUL) {
       vim_snprintf((char *)NameBuff, MAXPATHL, "%s/lang", p);
-      bindtextdomain(VIMPACKAGE, (char *)NameBuff);
+      bindtextdomain(PROJECT_NAME, (char *)NameBuff);
     }
     xfree(p);
-    textdomain(VIMPACKAGE);
   }
+# endif
+  textdomain(PROJECT_NAME);
   TIME_MSG("locale set");
 }
 #endif

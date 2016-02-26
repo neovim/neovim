@@ -759,15 +759,15 @@ char_u * home_replace_save(buf_T *buf, char_u *src) FUNC_ATTR_NONNULL_RET
 void vim_setenv(const char *name, const char *val)
 {
   os_setenv(name, val, 1);
-  /*
-   * When setting $VIMRUNTIME adjust the directory to find message
-   * translations to $VIMRUNTIME/lang.
-   */
+#ifndef LOCALE_INSTALL_DIR
+  // When setting $VIMRUNTIME adjust the directory to find message
+  // translations to $VIMRUNTIME/lang.
   if (*val != NUL && STRICMP(name, "VIMRUNTIME") == 0) {
     char *buf = (char *)concat_str((char_u *)val, (char_u *)"/lang");
-    bindtextdomain(VIMPACKAGE, buf);
+    bindtextdomain(PROJECT_NAME, buf);
     xfree(buf);
   }
+#endif
 }
 
 
