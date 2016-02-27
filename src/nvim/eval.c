@@ -17900,7 +17900,8 @@ static int get_name_len(char_u **arg, char_u **alias, int evaluate, int verbose)
 // "flags" can have FNE_INCL_BR and FNE_CHECK_START.
 // Return a pointer to just after the name.  Equal to "arg" if there is no
 // valid name.
-static char_u *find_name_end(char_u *arg, char_u **expr_start, char_u **expr_end, int flags)
+static char_u *find_name_end(char_u *arg, char_u **expr_start,
+                             char_u **expr_end, int flags)
 {
   int mb_nest = 0;
   int br_nest = 0;
