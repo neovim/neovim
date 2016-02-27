@@ -173,6 +173,7 @@ static char *e_illvar = N_("E461: Illegal variable name: %s");
 static char *e_float_as_string = N_("E806: using Float as a String");
 
 static char_u * const empty_string = (char_u *)"";
+static char_u * const namespace_char = (char_u *)"abglstvw";
 
 static dictitem_T globvars_var;                 /* variable used for g: */
 #define globvarht globvardict.dv_hashtab
@@ -17801,21 +17802,28 @@ static int get_env_len(char_u **arg)
   return len;
 }
 
-/*
- * Get the length of the name of a function or internal variable.
- * "arg" is advanced to the first non-white character after the name.
- * Return 0 if something is wrong.
- */
-static int get_id_len(char_u **arg)
-{
-  char_u      *p;
+// Get the length of the name of a function or internal variable.
+// "arg" is advanced to the first non-white character after the name.
+// Return 0 if something is wrong.
+static int get_id_len(char_u **arg) {
+  char_u *p;
   int len;
 
-  /* Find the end of the name. */
-  for (p = *arg; eval_isnamec(*p); ++p)
-    ;
-  if (p == *arg)            /* no name found */
+  // Find the end of the name.
+  for (p = *arg; eval_isnamec(*p); p++) {
+    if (*p == ':') {
+      // "s:" is start of "s:var", but "n:" is not and can be used in
+      // slice "[n:]". Also "xx:" is not a namespace.
+      len = (int)(p - *arg);
+      if (len > 1
+          || (len == 1 && vim_strchr(namespace_char, **arg) == NULL)) {
+        break;
+      }
+    }
+  }
+  if (p == *arg) {  // no name found
     return 0;
+  }
 
   len = (int)(p - *arg);
   *arg = skipwhite(p);
@@ -17886,28 +17894,28 @@ static int get_name_len(char_u **arg, char_u **alias, int evaluate, int verbose)
   return len;
 }
 
-/*
- * Find the end of a variable or function name, taking care of magic braces.
- * If "expr_start" is not NULL then "expr_start" and "expr_end" are set to the
- * start and end of the first magic braces item.
- * "flags" can have FNE_INCL_BR and FNE_CHECK_START.
- * Return a pointer to just after the name.  Equal to "arg" if there is no
- * valid name.
- */
+// Find the end of a variable or function name, taking care of magic braces.
+// If "expr_start" is not NULL then "expr_start" and "expr_end" are set to the
+// start and end of the first magic braces item.
+// "flags" can have FNE_INCL_BR and FNE_CHECK_START.
+// Return a pointer to just after the name.  Equal to "arg" if there is no
+// valid name.
 static char_u *find_name_end(char_u *arg, char_u **expr_start, char_u **expr_end, int flags)
 {
   int mb_nest = 0;
   int br_nest = 0;
-  char_u      *p;
+  char_u *p;
+  int len;
 
   if (expr_start != NULL) {
     *expr_start = NULL;
     *expr_end = NULL;
   }
 
-  /* Quick check for valid starting character. */
-  if ((flags & FNE_CHECK_START) && !eval_isnamec1(*arg) && *arg != '{')
+  // Quick check for valid starting character.
+  if ((flags & FNE_CHECK_START) && !eval_isnamec1(*arg) && *arg != '{') {
     return arg;
+  }
 
   for (p = arg; *p != NUL
        && (eval_isnamec(*p)
@@ -17922,30 +17930,44 @@ static char_u *find_name_end(char_u *arg, char_u **expr_start, char_u **expr_end
       if (*p == NUL)
         break;
     } else if (*p == '"') {
-      /* skip over "str\"ing" to avoid counting [ and ] inside it. */
-      for (p = p + 1; *p != NUL && *p != '"'; mb_ptr_adv(p))
-        if (*p == '\\' && p[1] != NUL)
+      // skip over "str\"ing" to avoid counting [ and ] inside it.
+      for (p = p + 1; *p != NUL && *p != '"'; mb_ptr_adv(p)) {
+        if (*p == '\\' && p[1] != NUL) {
           ++p;
-      if (*p == NUL)
+        }
+      }
+      if (*p == NUL) {
         break;
+      }
+    } else if (br_nest == 0 && mb_nest == 0 && *p == ':') {
+      // "s:" is start of "s:var", but "n:" is not and can be used in
+      // slice "[n:]".  Also "xx:" is not a namespace.
+      len = (int)(p - arg);
+      if (len > 1
+          || (len == 1 && vim_strchr(namespace_char, *arg) == NULL)) {
+        break;
+      }
     }
 
     if (mb_nest == 0) {
-      if (*p == '[')
+      if (*p == '[') {
         ++br_nest;
-      else if (*p == ']')
+      } else if (*p == ']') {
         --br_nest;
+      }
     }
 
     if (br_nest == 0) {
       if (*p == '{') {
         mb_nest++;
-        if (expr_start != NULL && *expr_start == NULL)
+        if (expr_start != NULL && *expr_start == NULL) {
           *expr_start = p;
+        }
       } else if (*p == '}') {
         mb_nest--;
-        if (expr_start != NULL && mb_nest == 0 && *expr_end == NULL)
+        if (expr_start != NULL && mb_nest == 0 && *expr_end == NULL) {
           *expr_end = p;
+        }
       }
     }
   }
