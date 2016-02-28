@@ -1815,7 +1815,7 @@ static bool del_char_after_col(int limit_col)
     if (*get_cursor_pos_ptr() == NUL || curwin->w_cursor.col == ecol) {
       return false;
     }
-    del_bytes((long)(ecol - curwin->w_cursor.col), false, true);
+    del_bytes(ecol - curwin->w_cursor.col, false, true);
   } else {
     del_char(false);
   }

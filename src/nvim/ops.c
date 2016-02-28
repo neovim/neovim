@@ -3989,7 +3989,7 @@ format_lines (
         if (line_count < 0 && u_save_cursor() == FAIL)
           break;
         if (next_leader_len > 0) {
-          (void)del_bytes((long)next_leader_len, FALSE, FALSE);
+          (void)del_bytes(next_leader_len, false, false);
           mark_col_adjust(curwin->w_cursor.lnum, (colnr_T)0, 0L,
               (long)-next_leader_len);
         } else if (second_indent > 0) {  /* the "leader" for FO_Q_SECOND */
