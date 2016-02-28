@@ -99,6 +99,8 @@ are always available and may be used simultaneously in separate plugins.  The
    Same thing applies to |string()| (though it uses construct like 
    "{E724@level}"), but this is not reliable because |string()| continues to 
    error out.
+4. Stringifyed infinite and NaN values now use |str2float()| and can be evaled 
+   back.
 
 Viminfo text files were replaced with binary (messagepack) ShaDa files. 
 Additional differences:

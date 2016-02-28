@@ -395,7 +395,8 @@ endfunction
 ""
 " Dump floating-point value.
 function s:msgpack_dump_float(v) abort
-  return string(type(a:v) == type({}) ? a:v._VAL : a:v)
+  return substitute(string(type(a:v) == type({}) ? a:v._VAL : a:v),
+                   \'\V\^\(-\)\?str2float(''\(inf\|nan\)'')\$', '\1\2', '')
 endfunction
 
 ""

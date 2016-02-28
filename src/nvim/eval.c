@@ -4010,12 +4010,22 @@ eval6 (
        * When either side is a float the result is a float.
        */
       if (use_float) {
-        if (op == '*')
+        if (op == '*') {
           f1 = f1 * f2;
-        else if (op == '/') {
-          /* We rely on the floating point library to handle divide
-           * by zero to result in "inf" and not a crash. */
-          f1 = f2 != 0 ? f1 / f2 : INFINITY;
+        } else if (op == '/') {
+          // Division by zero triggers error from AddressSanitizer
+          f1 = (f2 == 0
+                ? (
+#ifdef NAN
+                    f1 == 0
+                    ? NAN
+                    :
+#endif
+                    (f1 > 0
+                     ? INFINITY
+                     : -INFINITY)
+                )
+                : f1 / f2);
         } else {
           EMSG(_("E804: Cannot use '%' with Float"));
           return FAIL;
@@ -6848,9 +6858,25 @@ vim_to_msgpack_error_ret: \
 
 #define CONV_FLOAT(flt) \
     do { \
-      char numbuf[NUMBUFLEN]; \
-      vim_snprintf(numbuf, NUMBUFLEN - 1, "%g", (flt)); \
-      ga_concat(gap, (char_u *) numbuf); \
+      const float_T flt_ = (flt); \
+      switch (fpclassify(flt_)) { \
+        case FP_NAN: { \
+          ga_concat(gap, (char_u *) "str2float('nan')"); \
+          break; \
+        } \
+        case FP_INFINITE: { \
+          if (flt_ < 0) { \
+            ga_append(gap, '-'); \
+          } \
+          ga_concat(gap, (char_u *) "str2float('inf')"); \
+          break; \
+        } \
+        default: { \
+          char numbuf[NUMBUFLEN]; \
+          vim_snprintf(numbuf, NUMBUFLEN - 1, "%g", flt_); \
+          ga_concat(gap, (char_u *) numbuf); \
+        } \
+      } \
     } while (0)
 
 #define CONV_FUNC(fun) \
