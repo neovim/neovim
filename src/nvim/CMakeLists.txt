@@ -76,7 +76,6 @@ set(CONV_SOURCES
   diff.c
   edit.c
   eval.c
-  ex_cmds2.c
   ex_cmds.c
   ex_docmd.c
   ex_getln.c
