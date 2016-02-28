@@ -87,7 +87,6 @@ set(CONV_SOURCES
   misc1.c
   ops.c
   path.c
-  quickfix.c
   regexp.c
   screen.c
   search.c
