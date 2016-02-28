@@ -219,12 +219,22 @@ function Screen:expect(expected, attr_ids, attr_ignore)
   local ids = attr_ids or self._default_attr_ids
   local ignore = attr_ignore or self._default_attr_ignore
   self:wait(function()
+    local actual_rows = {}
     for i = 1, self._height do
-      local expected_row = expected_rows[i]
-      local actual_row = self:_row_repr(self._rows[i], ids, ignore)
-      if expected_row ~= actual_row then
-        return 'Row '..tostring(i)..' didn\'t match.\nExpected: "'..
-               expected_row..'"\nActual:   "'..actual_row..'"'
+      actual_rows[i] = self:_row_repr(self._rows[i], ids, ignore)
+    end
+    for i = 1, self._height do
+      if expected_rows[i] ~= actual_rows[i] then
+        local msg_expected_rows = {}
+        for i = 1, #expected_rows do msg_expected_rows[i] = expected_rows[i] end
+        msg_expected_rows[i] = '*' .. msg_expected_rows[i]
+        actual_rows[i] = '*' .. actual_rows[i]
+        msg = (
+          'Row ' .. tostring(i) .. ' didn\'t match.\n'
+          .. 'Expected:\n|' .. table.concat(msg_expected_rows, '|\n|') .. '|\n'
+          .. 'Actual:\n|' .. table.concat(actual_rows, '|\n|') .. '|'
+        )
+        return msg
       end
     end
   end)
