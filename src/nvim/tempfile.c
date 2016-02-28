@@ -70,8 +70,8 @@ int delete_recursive(char_u *name)
     int file_count;
     char_u *exp = vim_strsave(NameBuff);
     if (gen_expand_wildcards(1, &exp, &file_count, &files,
-                             EW_DIR | EW_FILE | EW_SILENT
-                             | EW_ALLLINKS | EW_DODOT) == OK) {
+                             EW_DIR | EW_FILE | EW_SILENT | EW_ALLLINKS
+                             | EW_DODOT | EW_EMPTYOK) == OK) {
       for (int i = 0; i < file_count; i++) {
         if (delete_recursive(files[i]) != 0) {
           result = -1;

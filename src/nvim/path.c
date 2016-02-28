@@ -1223,7 +1223,7 @@ int gen_expand_wildcards(int num_pat, char_u **pat, int *num_file,
 
   recursive = false;
 
-  return (ga.ga_data != NULL) ? OK : FAIL;
+  return ((flags & EW_EMPTYOK) || ga.ga_data != NULL) ? OK : FAIL;
 }
 
 
