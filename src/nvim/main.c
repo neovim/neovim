@@ -317,15 +317,16 @@ int main(int argc, char **argv)
   }
 
   // open terminals when opening files that start with term://
-  do_cmdline_cmd("autocmd BufReadCmd term://* "
+#define PROTO "term://"
+  do_cmdline_cmd("autocmd BufReadCmd " PROTO "* nested "
                  ":call termopen( "
                  // Capture the command string
                  "matchstr(expand(\"<amatch>\"), "
-                 "'\\c\\mterm://\\%(.\\{-}//\\%(\\d\\+:\\)\\?\\)\\?\\zs.*'), "
+                 "'\\c\\m" PROTO "\\%(.\\{-}//\\%(\\d\\+:\\)\\?\\)\\?\\zs.*'), "
                  // capture the working directory
                  "{'cwd': get(matchlist(expand(\"<amatch>\"), "
-                 "'\\c\\mterm://\\(.\\{-}\\)//'), 1, '')})"
-                 "|doautocmd TermOpen");
+                 "'\\c\\m" PROTO "\\(.\\{-}\\)//'), 1, '')})");
+#undef PROTO
 
   /* Execute --cmd arguments. */
   exe_pre_commands(&params);
