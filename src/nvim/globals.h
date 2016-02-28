@@ -755,11 +755,9 @@ EXTERN pos_T Insstart;                  /* This is where the latest
 // op_insert(), to detect correctly where inserting by the user started.
 EXTERN pos_T Insstart_orig;
 
-/*
- * Stuff for VREPLACE mode.
- */
-EXTERN int orig_line_count INIT(= 0);       /* Line count when "gR" started */
-EXTERN int vr_lines_changed INIT(= 0);      /* #Lines changed by "gR" so far */
+// Stuff for VREPLACE mode.
+EXTERN linenr_T orig_line_count INIT(= 0);  ///< Line count when "gR" started
+EXTERN int vr_lines_changed INIT(= 0);      ///< #Lines changed by "gR" so far
 
 
 /*
@@ -964,12 +962,11 @@ EXTERN pos_T last_cursormoved INIT(= INIT_POS_T(0, 0, 0));
 EXTERN int last_changedtick INIT(= 0);  // for TextChanged event
 EXTERN buf_T    *last_changedtick_buf INIT(= NULL);
 
-EXTERN int postponed_split INIT(= 0);       /* for CTRL-W CTRL-] command */
-EXTERN int postponed_split_flags INIT(= 0);       /* args for win_split() */
-EXTERN int postponed_split_tab INIT(= 0);       /* cmdmod.tab */
-EXTERN int g_do_tagpreview INIT(= 0);       /* for tag preview commands:
-                                               height of preview window */
-EXTERN int replace_offset INIT(= 0);        /* offset for replace_push() */
+EXTERN int postponed_split INIT(= 0);        ///< for CTRL-W CTRL-] command
+EXTERN int postponed_split_flags INIT(= 0);  ///< args for win_split()
+EXTERN int postponed_split_tab INIT(= 0);    ///< cmdmod.tab
+EXTERN int g_do_tagpreview INIT(= 0);        ///< for tag preview commands:
+                                             ///< height of preview window
 
 EXTERN char_u   *escape_chars INIT(= (char_u *)" \t\\\"|");
 /* need backslash in cmd line */
