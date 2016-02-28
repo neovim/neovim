@@ -324,7 +324,8 @@ int main(int argc, char **argv)
                  "'\\c\\mterm://\\%(.\\{-}//\\%(\\d\\+:\\)\\?\\)\\?\\zs.*'), "
                  // capture the working directory
                  "{'cwd': get(matchlist(expand(\"<amatch>\"), "
-                 "'\\c\\mterm://\\(.\\{-}\\)//'), 1, '')})");
+                 "'\\c\\mterm://\\(.\\{-}\\)//'), 1, '')})"
+                 "|doautocmd TermOpen");
 
   /* Execute --cmd arguments. */
   exe_pre_commands(&params);
