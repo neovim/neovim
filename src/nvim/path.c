@@ -605,7 +605,7 @@ static size_t do_path_expand(garray_T *gap, const char_u *path,
 
   // convert the file pattern to a regexp pattern
   int starts_with_dot = *s == '.' || (flags & EW_DODOT);
-  char_u *pat = file_pat_to_reg_pat(s, e, NULL, FALSE);
+  char_u *pat = file_pat_to_reg_pat(s, e, NULL, false);
   if (pat == NULL) {
     xfree(buf);
     return 0;
@@ -647,8 +647,8 @@ static size_t do_path_expand(garray_T *gap, const char_u *path,
   if (os_file_is_readable(dirpath) && os_scandir(&dir, dirpath)) {
     // Find all matching entries.
     char_u *name;
-    scandir_next_with_dots(NULL /* initialize */);
-    while((name = (char_u *) scandir_next_with_dots(&dir)) && name != NULL) {
+    scandir_next_with_dots(NULL);  // initialize
+    while ((name = (char_u *) scandir_next_with_dots(&dir)) && name != NULL) {
       if ((name[0] != '.' || (starts_with_dot
                               && name[1] != NUL
                               && (name[1] != '.' || name[2] != NUL)))

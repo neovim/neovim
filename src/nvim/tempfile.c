@@ -64,7 +64,7 @@ int delete_recursive(char_u *name)
   int result = 0;
 
   if (os_isrealdir(name)) {
-    snprintf((char *)NameBuff, MAXPATHL, "%s/*", name);
+    snprintf((char *)NameBuff, MAXPATHL, "%s/*", name);  // NOLINT
 
     char_u **files;
     int file_count;
