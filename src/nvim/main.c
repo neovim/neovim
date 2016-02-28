@@ -317,7 +317,7 @@ int main(int argc, char **argv)
   }
 
   // open terminals when opening files that start with term://
-  do_cmdline_cmd("autocmd BufReadCmd term://* "
+  do_cmdline_cmd("autocmd BufReadCmd term://* nested "
                  ":call termopen( "
                  // Capture the command string
                  "matchstr(expand(\"<amatch>\"), "
