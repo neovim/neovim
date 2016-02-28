@@ -59,6 +59,23 @@ int os_dirname(char_u *buf, size_t len)
   return OK;
 }
 
+/// Check if the given path is a directory and not a symlink to a directory.
+/// @return `true` if `name` is a directory and NOT a symlink to a directory.
+///         `false` if `name` is not a directory or if an error occurred.
+bool os_isrealdir(const char_u *name)
+  FUNC_ATTR_NONNULL_ALL
+{
+  uv_fs_t request;
+  if (uv_fs_lstat(&fs_loop, &request, (char *)name, NULL) != kLibuvSuccess) {
+    return false;
+  }
+  if (S_ISLNK(request.statbuf.st_mode)) {
+    return false;
+  } else {
+    return S_ISDIR(request.statbuf.st_mode);
+  }
+}
+
 /// Check if the given path is a directory or not.
 ///
 /// @return `true` if `fname` is a directory.

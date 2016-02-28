@@ -2772,13 +2772,14 @@ deepcopy({expr}[, {noref}])				*deepcopy()* *E698*
 
 delete({fname} [, {flags}])					*delete()*
 		Without {flags} or with {flags} empty: Deletes the file by the
-		name {fname}.
+		name {fname}.  This also works when {fname} is a symbolic link.
+		A symbolic link itself is deleted, not what it points to.
 
 		When {flags} is "d": Deletes the directory by the name
-		{fname}.  This fails when {fname} is not empty.
+		{fname}.  This fails when directory {fname} is not empty.
 
 		When {flags} is "rf": Deletes the directory by the name
-		{fname} and everything in it, recursively.  Be careful!
+		{fname} and everything in it, recursively.  BE CAREFUL!
 
 		The result is a Number, which is 0 if the delete operation was
 		successful and -1 when the deletion failed or partly failed.
