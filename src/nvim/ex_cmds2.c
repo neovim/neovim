@@ -1537,9 +1537,7 @@ do_arglist (
     int i = expand_wildcards(new_ga.ga_len, (char_u **)new_ga.ga_data,
         &exp_count, &exp_files, EW_DIR|EW_FILE|EW_ADDSLASH|EW_NOTFOUND);
     ga_clear(&new_ga);
-    if (i == FAIL)
-      return FAIL;
-    if (exp_count == 0) {
+    if (i == FAIL || exp_count == 0) {
       EMSG(_(e_nomatch));
       return FAIL;
     }
