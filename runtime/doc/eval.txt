@@ -1,4 +1,4 @@
-*eval.txt*	For Vim version 7.4.  Last change: 2015 Sep 19
+*eval.txt*	For Vim version 7.4.  Last change: 2016 Jan 16
 
 
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
@@ -1830,7 +1830,7 @@ cursor( {lnum}, {col} [, {off}])
 				Number	move cursor to {lnum}, {col}, {off}
 cursor( {list})			Number	move cursor to position in {list}
 deepcopy( {expr} [, {noref}])	any	make a full copy of {expr}
-delete( {fname})		Number	delete file {fname}
+delete( {fname} [, {flags}])	Number	delete the file or directory {fname}
 dictwatcheradd( {dict}, {pattern}, {callback})
 				Start watching a dictionary
 dictwatcherdel( {dict}, {pattern}, {callback})
@@ -2770,13 +2770,18 @@ deepcopy({expr}[, {noref}])				*deepcopy()* *E698*
 		{noref} set to 1 will fail.
 		Also see |copy()|.
 
-delete({fname})							*delete()*
-		Deletes the file by the name {fname}.  The result is a Number,
-		which is 0 if the file was deleted successfully, and non-zero
-		when the deletion failed.
-		Use |remove()| to delete an item from a |List|.
-		To delete a line from the buffer use |:delete|.  Use |:exe|
-		when the line number is in a variable.
+delete({fname} [, {flags}])					*delete()*
+		Without {flags} or with {flags} empty: Deletes the file by the
+		name {fname}.
+
+		When {flags} is "d": Deletes the directory by the name
+		{fname}.  This fails when {fname} is not empty.
+
+		When {flags} is "rf": Deletes the directory by the name
+		{fname} and everything in it, recursively.  Be careful!
+
+		The result is a Number, which is 0 if the delete operation was
+		successful and -1 when the deletion failed or partly failed.
 
 dictwatcheradd({dict}, {pattern}, {callback})		      *dictwatcheradd()*
 		Adds a watcher to a dictionary. A dictionary watcher is

@@ -56,28 +56,47 @@ static void vim_maketempdir(void)
   }
 }
 
+/// Delete "name" and everything in it, recursively.
+/// @param name The path which should be deleted.
+/// @return 0 for success, -1 if some file was not deleted.
+int delete_recursive(char_u *name)
+{
+  int result = 0;
+
+  if (os_isdir(name)) {
+    snprintf((char *)NameBuff, MAXPATHL, "%s/*", name);
+
+    char_u **files;
+    int file_count;
+    char_u *exp = vim_strsave(NameBuff);
+    if (gen_expand_wildcards(1, &exp, &file_count, &files,
+                             EW_DIR | EW_FILE | EW_SILENT) == OK) {
+      for (int i = 0; i < file_count; i++) {
+        if (delete_recursive(files[i]) != 0) {
+          result = -1;
+        }
+      }
+      FreeWild(file_count, files);
+    } else {
+      result = -1;
+    }
+
+    xfree(exp);
+    os_rmdir((char *)name);
+  } else {
+    result = os_remove((char *)name) == 0 ? 0 : -1;
+  }
+
+  return result;
+}
+
 /// Delete the temp directory and all files it contains.
 void vim_deltempdir(void)
 {
   if (vim_tempdir != NULL) {
-    snprintf((char *)NameBuff, MAXPATHL, "%s*", vim_tempdir);
-
-    char_u **files;
-    int file_count;
-
-    // Note: We cannot just do `&NameBuff` because it is a statically
-    //       sized array so `NameBuff == &NameBuff` according to C semantics.
-    char_u *buff_list[1] = {NameBuff};
-    if (gen_expand_wildcards(1, buff_list, &file_count, &files,
-        EW_DIR|EW_FILE|EW_SILENT) == OK) {
-      for (int i = 0; i < file_count; ++i) {
-        os_remove((char *)files[i]);
-      }
-      FreeWild(file_count, files);
-    }
-    path_tail(NameBuff)[-1] = NUL;
-    os_rmdir((char *)NameBuff);
-
+    // remove the trailing path separator
+    path_tail(vim_tempdir)[-1] = NUL;
+    delete_recursive(vim_tempdir);
     xfree(vim_tempdir);
     vim_tempdir = NULL;
   }
