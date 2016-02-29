@@ -378,6 +378,7 @@ static struct vimvar {
   { VV_NAME("option_type",      VAR_STRING), VV_RO },
   { VV_NAME("errors",           VAR_LIST), 0 },
   { VV_NAME("msgpack_types",    VAR_DICT), VV_RO },
+  { VV_NAME("event",            VAR_DICT), VV_RO },
 };
 
 /* shorthand */
@@ -545,6 +546,10 @@ void eval_init(void)
 
   set_vim_var_dict(VV_MSGPACK_TYPES, msgpack_types_dict);
   set_vim_var_dict(VV_COMPLETED_ITEM, dict_alloc());
+
+  dict_T *v_event = dict_alloc();
+  v_event->dv_lock = VAR_FIXED;
+  set_vim_var_dict(VV_EVENT, v_event);
   set_vim_var_list(VV_ERRORS, list_alloc());
   set_vim_var_nr(VV_SEARCHFORWARD, 1L);
   set_vim_var_nr(VV_HLSEARCH, 1L);
@@ -6017,6 +6022,27 @@ static void rettv_dict_alloc(typval_T *rettv)
   ++d->dv_refcount;
 }
 
+/// Clear all the keys of a Dictionary. "d" remains a valid empty Dictionary.
+///
+/// @param d The Dictionary to clear
+void dict_clear(dict_T *d)
+  FUNC_ATTR_NONNULL_ALL
+{
+  hash_lock(&d->dv_hashtab);
+  assert(d->dv_hashtab.ht_locked > 0);
+
+  size_t todo = d->dv_hashtab.ht_used;
+  for (hashitem_T *hi = d->dv_hashtab.ht_array; todo > 0; hi++) {
+    if (!HASHITEM_EMPTY(hi)) {
+      dictitem_free(HI2DI(hi));
+      hash_remove(&d->dv_hashtab, hi);
+      todo--;
+    }
+  }
+
+  hash_unlock(&d->dv_hashtab);
+}
+
 
 /*
  * Unreference a Dictionary: decrement the reference count and free it when it
@@ -6256,6 +6282,24 @@ int dict_add_list(dict_T *d, char *key, list_T *list)
   }
   ++list->lv_refcount;
   return OK;
+}
+
+/// Set all existing keys in "dict" as read-only.
+///
+/// This does not protect against adding new keys to the Dictionary.
+///
+/// @param dict The dict whose keys should be frozen
+void dict_set_keys_readonly(dict_T *dict)
+  FUNC_ATTR_NONNULL_ALL
+{
+  size_t todo = dict->dv_hashtab.ht_used;
+  for (hashitem_T *hi = dict->dv_hashtab.ht_array; todo > 0 ; hi++) {
+    if (HASHITEM_EMPTY(hi)) {
+      continue;
+    }
+    todo--;
+    HI2DI(hi)->di_flags |= DI_FLAGS_RO | DI_FLAGS_FIX;
+  }
 }
 
 /*
@@ -10579,8 +10623,6 @@ static void f_getregtype(typval_T *argvars, typval_T *rettv)
 {
   char_u      *strregname;
   int regname;
-  char_u buf[NUMBUFLEN + 2];
-  long reglen = 0;
 
   if (argvars[0].v_type != VAR_UNKNOWN) {
     strregname = get_tv_string_chk(&argvars[0]);
@@ -10597,18 +10639,13 @@ static void f_getregtype(typval_T *argvars, typval_T *rettv)
   if (regname == 0)
     regname = '"';
 
-  buf[0] = NUL;
-  buf[1] = NUL;
-  switch (get_reg_type(regname, &reglen)) {
-  case MLINE: buf[0] = 'V'; break;
-  case MCHAR: buf[0] = 'v'; break;
-  case MBLOCK:
-    buf[0] = Ctrl_V;
-    sprintf((char *)buf + 1, "%" PRId64, (int64_t)(reglen + 1));
-    break;
-  }
+  colnr_T reglen = 0;
+  char buf[NUMBUFLEN + 2];
+  char_u reg_type = get_reg_type(regname, &reglen);
+  format_reg_type(reg_type, reglen, buf, ARRAY_SIZE(buf));
+
   rettv->v_type = VAR_STRING;
-  rettv->vval.v_string = vim_strsave(buf);
+  rettv->vval.v_string = (char_u *)xstrdup(buf);
 }
 
 /*
@@ -18162,14 +18199,7 @@ void set_vim_var_dict(int idx, dict_T *val)
   if (val != NULL) {
     ++val->dv_refcount;
     // Set readonly
-    size_t todo = val->dv_hashtab.ht_used;
-    for (hashitem_T *hi = val->dv_hashtab.ht_array; todo > 0 ; ++hi) {
-      if (HASHITEM_EMPTY(hi)) {
-         continue;
-      }
-      --todo;
-      HI2DI(hi)->di_flags = DI_FLAGS_RO | DI_FLAGS_FIX;
-    }
+    dict_set_keys_readonly(val);
   }
 }
 

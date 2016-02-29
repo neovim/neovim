@@ -83,6 +83,7 @@ return {
     'TermResponse',           -- after setting "v:termresponse"
     'TextChanged',            -- text was modified
     'TextChangedI',           -- text was modified in Insert mode
+    'TextYankPost',           -- after a yank or delete was done (y, d, c)
     'User',                   -- user defined autocommand
     'VimEnter',               -- after starting Vim
     'VimLeave',               -- before exiting Vim

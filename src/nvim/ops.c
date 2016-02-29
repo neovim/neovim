@@ -19,6 +19,7 @@
 #include "nvim/ex_cmds.h"
 #include "nvim/ex_cmds2.h"
 #include "nvim/ex_getln.h"
+#include "nvim/fileio.h"
 #include "nvim/fold.h"
 #include "nvim/getchar.h"
 #include "nvim/indent.h"
@@ -1409,8 +1410,9 @@ int op_delete(oparg_T *oap)
       op_yank_reg(oap, false, reg, false);
     }
 
-    if(oap->regname == 0) {
+    if (oap->regname == 0) {
       set_clipboard(0, reg);
+      yank_do_autocmd(oap, reg);
     }
 
   }
@@ -2309,6 +2311,8 @@ bool op_yank(oparg_T *oap, bool message)
   yankreg_T *reg = get_yank_register(oap->regname, YREG_YANK);
   op_yank_reg(oap, message, reg, is_append_register(oap->regname));
   set_clipboard(oap->regname, reg);
+  yank_do_autocmd(oap, reg);
+
   return true;
 }
 
@@ -2522,6 +2526,58 @@ static void yank_copy_line(yankreg_T *reg, struct block_def *bd, long y_idx)
   memset(pnew, ' ', (size_t)bd->endspaces);
   pnew += bd->endspaces;
   *pnew = NUL;
+}
+
+/// Execute autocommands for TextYankPost.
+///
+/// @param oap Operator arguments.
+/// @param reg The yank register used.
+static void yank_do_autocmd(oparg_T *oap, yankreg_T *reg)
+  FUNC_ATTR_NONNULL_ALL
+{
+  static bool recursive = false;
+
+  if (recursive || !has_event(EVENT_TEXTYANKPOST)) {
+    // No autocommand was defined
+    // or we yanked from this autocommand.
+    return;
+  }
+
+  recursive = true;
+
+  // set v:event to a dictionary with information about the yank
+  dict_T *dict = get_vim_var_dict(VV_EVENT);
+
+  // the yanked text
+  list_T *list = list_alloc();
+  for (linenr_T i = 0; i < reg->y_size; i++) {
+    list_append_string(list, reg->y_array[i], -1);
+  }
+  list->lv_lock = VAR_FIXED;
+  dict_add_list(dict, "regcontents", list);
+
+  // the register type
+  char buf[NUMBUFLEN+2];
+  format_reg_type(reg->y_type, reg->y_width, buf, ARRAY_SIZE(buf));
+  dict_add_nr_str(dict, "regtype", 0, (char_u *)buf);
+
+  // name of requested register or the empty string for an unnamed operation.
+  buf[0] = (char)oap->regname;
+  buf[1] = NUL;
+  dict_add_nr_str(dict, "regname", 0, (char_u *)buf);
+
+  // kind of operation (yank/delete/change)
+  buf[0] = get_op_char(oap->op_type);
+  buf[1] = NUL;
+  dict_add_nr_str(dict, "operator", 0, (char_u *)buf);
+
+  dict_set_keys_readonly(dict);
+  textlock++;
+  apply_autocmds(EVENT_TEXTYANKPOST, NULL, NULL, false, curbuf);
+  textlock--;
+  dict_clear(dict);
+
+  recursive = false;
 }
 
 
@@ -4631,7 +4687,7 @@ theend:
  * Used for getregtype()
  * Returns MAUTO for error.
  */
-char_u get_reg_type(int regname, long *reglen)
+char_u get_reg_type(int regname, colnr_T *reg_width)
 {
   switch (regname) {
   case '%':                     /* file name */
@@ -4654,12 +4710,44 @@ char_u get_reg_type(int regname, long *reglen)
   yankreg_T *reg = get_yank_register(regname, YREG_PASTE);
 
   if (reg->y_array != NULL) {
-    if (reglen != NULL && reg->y_type == MBLOCK)
-      *reglen = reg->y_width;
+    if (reg_width != NULL && reg->y_type == MBLOCK) {
+      *reg_width = reg->y_width;
+    }
     return reg->y_type;
   }
   return MAUTO;
 }
+
+/// Format the register type as a string.
+///
+/// @param reg_type The register type.
+/// @param reg_width The width, only used if "reg_type" is MBLOCK.
+/// @param[out] buf Buffer to store formatted string. The allocated size should
+///                 be at least NUMBUFLEN+2 to always fit the value.
+/// @param buf_len The allocated size of the buffer.
+void format_reg_type(char_u reg_type, colnr_T reg_width,
+                     char* buf, size_t buf_len)
+  FUNC_ATTR_NONNULL_ALL
+{
+  assert(buf_len > 1);
+  switch (reg_type) {
+    case MLINE:
+      buf[0] = 'V';
+      buf[1] = NUL;
+      break;
+    case MCHAR:
+      buf[0] = 'v';
+      buf[1] = NUL;
+      break;
+    case MBLOCK:
+      snprintf(buf, buf_len, CTRL_V_STR "%" PRIdCOLNR, reg_width + 1);
+      break;
+    case MAUTO:
+      buf[0] = NUL;
+      break;
+  }
+}
+
 
 /// When `flags` has `kGRegList` return a list with text `s`.
 /// Otherwise just return `s`.

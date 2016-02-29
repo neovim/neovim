@@ -2552,7 +2552,7 @@ def CheckBraces(filename, clean_lines, linenum, error):
 
     # If should always have a brace
     for blockstart in ('if', 'while', 'for'):
-        if Match(r'\s*{0}[^{{]*$'.format(blockstart), line):
+        if Match(r'\s*{0}(?!\w)[^{{]*$'.format(blockstart), line):
             pos = line.find(blockstart)
             pos = line.find('(', pos)
             if pos > 0:
