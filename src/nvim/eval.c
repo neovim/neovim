@@ -15254,14 +15254,16 @@ static void f_setline(typval_T *argvars, typval_T *rettv)
 ///                         replace its content or create a new one.
 /// @param[in]  title_arg  New list title. Defaults to caller function name.
 /// @param[out]  rettv  Return value: 0 in case of success, -1 otherwise.
-static void set_qf_ll_list(win_T *wp, typval_T *list_arg, typval_T *action_arg,
-                           typval_T *title_arg, typval_T *rettv)
-  FUNC_ATTR_NONNULL_ARG(2, 3, 4, 5)
+static void set_qf_ll_list(win_T *wp, typval_T *args, typval_T *rettv)
+  FUNC_ATTR_NONNULL_ARG(2, 3)
 {
   char_u      *act;
   int action = ' ';
   char_u *title = NULL;
-
+  typval_T *list_arg = &args[0];    // always present
+  typval_T *action_arg = &args[1];  // vtype == VAR_UNKNOWN if not given
+  typval_T *title_arg = (action_arg->v_type != VAR_UNKNOWN
+                         && args[2].v_type != VAR_UNKNOWN) ? &args[2] : NULL;
   rettv->vval.v_number = -1;
 
   if (list_arg->v_type != VAR_LIST)
@@ -15277,7 +15279,7 @@ static void set_qf_ll_list(win_T *wp, typval_T *list_arg, typval_T *action_arg,
         action = *act;
     }
 
-    if (title_arg->v_type == VAR_STRING) {
+    if (title_arg) {
       title = get_tv_string_chk(title_arg);
       if (!title) {
         return;  // type error; errmsg already given
@@ -15305,7 +15307,7 @@ static void f_setloclist(typval_T *argvars, typval_T *rettv)
 
   win = find_win_by_nr(&argvars[0], NULL);
   if (win != NULL) {
-    set_qf_ll_list(win, &argvars[1], &argvars[2], &argvars[3], rettv);
+    set_qf_ll_list(win, &argvars[1], rettv);
   }
 }
 
@@ -15442,7 +15444,7 @@ static void f_setpos(typval_T *argvars, typval_T *rettv)
  */
 static void f_setqflist(typval_T *argvars, typval_T *rettv)
 {
-  set_qf_ll_list(NULL, &argvars[0], &argvars[1], &argvars[2], rettv);
+  set_qf_ll_list(NULL, argvars, rettv);
 }
 
 /*
