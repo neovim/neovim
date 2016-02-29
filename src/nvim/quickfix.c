@@ -2299,13 +2299,15 @@ static void qf_fill_buffer(qf_info_T *qi)
       if (qfp->qf_fnum != 0
           && (errbuf = buflist_findnr(qfp->qf_fnum)) != NULL
           && errbuf->b_fname != NULL) {
-        if (qfp->qf_type == 1)          /* :helpgrep */
-          STRCPY(IObuff, path_tail(errbuf->b_fname));
-        else
-          STRCPY(IObuff, errbuf->b_fname);
+        if (qfp->qf_type == 1) {  // :helpgrep
+          STRLCPY(IObuff, path_tail(errbuf->b_fname), sizeof(IObuff));
+        } else {
+          STRLCPY(IObuff, errbuf->b_fname, sizeof(IObuff));
+        }
         len = (int)STRLEN(IObuff);
-      } else
+      } else {
         len = 0;
+      }
       IObuff[len++] = '|';
 
       if (qfp->qf_lnum > 0) {
