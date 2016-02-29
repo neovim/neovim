@@ -14,7 +14,7 @@
 #include "nvim/vim.h"
 #include "nvim/memory.h"
 #include "nvim/log.h"
-#include "nvim/tempfile.h"
+#include "nvim/fileio.h"
 #include "nvim/path.h"
 #include "nvim/strings.h"
 

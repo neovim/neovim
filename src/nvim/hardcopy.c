@@ -32,7 +32,6 @@
 #include "nvim/syntax.h"
 #include "nvim/ui.h"
 #include "nvim/version.h"
-#include "nvim/tempfile.h"
 #include "nvim/os/os.h"
 #include "nvim/os/input.h"
 

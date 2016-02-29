@@ -29,7 +29,6 @@
 #include "nvim/path.h"
 #include "nvim/screen.h"
 #include "nvim/strings.h"
-#include "nvim/tempfile.h"
 #include "nvim/undo.h"
 #include "nvim/window.h"
 #include "nvim/os/os.h"

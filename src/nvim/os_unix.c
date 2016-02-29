@@ -34,7 +34,6 @@
 #include "nvim/screen.h"
 #include "nvim/strings.h"
 #include "nvim/syntax.h"
-#include "nvim/tempfile.h"
 #include "nvim/ui.h"
 #include "nvim/types.h"
 #include "nvim/os/os.h"
