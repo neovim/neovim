@@ -1386,6 +1386,10 @@ v:errors	Errors found by assert functions, such as |assert_true()|.
 <		If v:errors is set to anything but a list it is made an empty
 		list by the assert function.
 
+					*v:event* *event-variable*
+v:event		Dictionary of event data for the current |autocommand|.  The
+		available keys differ per event type and are specified at the
+		documentation for each |event|.
 					*v:exception* *exception-variable*
 v:exception	The value of the exception most recently caught and not
 		finished.  See also |v:throwpoint| and |throw-variables|.

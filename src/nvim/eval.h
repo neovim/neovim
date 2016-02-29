@@ -113,7 +113,8 @@ enum {
     VV_OPTION_TYPE,
     VV_ERRORS,
     VV_MSGPACK_TYPES,
-    VV_LEN, /* number of v: vars */
+    VV_EVENT,
+    VV_LEN,  // number of v: vars
 };
 
 /// Maximum number of function arguments
