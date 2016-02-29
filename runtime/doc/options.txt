@@ -6112,7 +6112,13 @@ A jump table for the options with a short description can be found at |Q_op|.
 	  :function VarExists(var, val)
 	  :    if exists(a:var) | return a:val | else | return '' | endif
 	  :endfunction
-<
+
+<			*'statusframe'* *'stf'* *'nostatusframe'* *'nostf'*
+'statusframe' 'stf'	boolean	(default off)
+			global
+	When on, the statusline is moved to the bottom of the window
+	freeing up 'cmdheight' lines for text.
+
 						*'suffixes'* *'su'*
 'suffixes' 'su'		string	(default ".bak,~,.o,.h,.info,.swp,.obj")
 			global

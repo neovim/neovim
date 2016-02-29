@@ -3409,7 +3409,7 @@ static void display_showcmd(void)
   if (len == 0)
     showcmd_is_clear = true;
   else {
-    screen_puts(showcmd_buf, (int)Rows - 1, sc_col, 0);
+    screen_puts(showcmd_buf, default_cmd_row(), sc_col, 0);
     showcmd_is_clear = false;
   }
 
@@ -3417,7 +3417,7 @@ static void display_showcmd(void)
    * clear the rest of an old message by outputting up to SHOWCMD_COLS
    * spaces
    */
-  screen_puts((char_u *)"          " + len, (int)Rows - 1, sc_col + len, 0);
+  screen_puts((char_u *)"          " + len, default_cmd_row(), sc_col + len, 0);
 
   setcursor();              /* put cursor back where it belongs */
 }
@@ -4477,7 +4477,7 @@ static void nv_colon(cmdarg_T *cap)
 
     /* When typing, don't type below an old message */
     if (KeyTyped)
-      compute_cmdrow();
+      cmdline_row = default_cmd_row();
 
     old_p_im = p_im;
 

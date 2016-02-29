@@ -28,6 +28,7 @@
 #include "nvim/ops.h"
 #include "nvim/option.h"
 #include "nvim/normal.h"
+#include "nvim/ex_getln.h"
 #include "nvim/screen.h"
 #include "nvim/strings.h"
 #include "nvim/ui.h"
@@ -643,7 +644,11 @@ char_u *msg_may_trunc(int force, char_u *s)
   int n;
   int room;
 
-  room = (int)(Rows - cmdline_row - 1) * Columns + sc_col - 1;
+  if (p_stf)
+    room = (default_status_row(NULL) - default_msg_row()) * Columns + sc_col - 1;
+  else
+    room = (int)(Rows - cmdline_row - 1) * Columns + sc_col - 1;
+
   if ((force || (shortmess(SHM_TRUNC) && !exmode_active))
       && (n = (int)STRLEN(s) - room) > 0) {
     if (has_mbyte) {
@@ -1603,7 +1608,7 @@ static void msg_puts_display(char_u *str, int maxlen, int attr, int recurse)
 
   did_wait_return = FALSE;
 
-  const int bottom_row = Rows - 1;
+  const int bottom_row = default_msg_row();
   while ((maxlen < 0 || (int)(s - str) < maxlen) && *s != NUL) {
     /*
      * We are at the end of the screen line when:
@@ -1641,7 +1646,7 @@ static void msg_puts_display(char_u *str, int maxlen, int attr, int recurse)
       /* Scroll the screen up one line. */
       msg_scroll_up();
 
-      msg_row = Rows - 2;
+      msg_row = default_msg_row();
       if (msg_col >= Columns)           /* can happen after screen resize */
         msg_col = Columns - 1;
 
@@ -2028,7 +2033,7 @@ static int do_more_prompt(int typed_char)
   if (typed_char == 'G') {
     /* "g<": Find first line on the last page. */
     mp_last = msg_sb_start(last_msgchunk);
-    for (i = 0; i < Rows - 2 && mp_last != NULL
+    for (i = 0; i < default_msg_row() - 1 && mp_last != NULL
          && mp_last->sb_prev != NULL; ++i)
       mp_last = msg_sb_start(mp_last->sb_prev);
   }
@@ -2098,7 +2103,7 @@ static int do_more_prompt(int typed_char)
         /* Since got_int is set all typeahead will be flushed, but we
          * want to keep this ':', remember that in a special way. */
         typeahead_noflush(':');
-        cmdline_row = Rows - 1;                 /* put ':' on this line */
+        cmdline_row = default_cmd_row();        /* put ':' on this line */
         skip_redraw = TRUE;                     /* skip redraw once */
         need_wait_return = FALSE;               /* don't wait in main() */
       }
@@ -2170,7 +2175,7 @@ static int do_more_prompt(int typed_char)
           /* scroll up, display line at bottom */
           msg_scroll_up();
           inc_msg_scrolled();
-          screen_fill((int)Rows - 2, (int)Rows - 1, 0,
+          screen_fill(default_msg_row(), default_msg_row() + 1, 0,
               (int)Columns, ' ', ' ', 0);
           mp_last = disp_sb_line((int)Rows - 2, mp_last);
           --toscroll;
@@ -2179,7 +2184,7 @@ static int do_more_prompt(int typed_char)
 
       if (toscroll <= 0) {
         /* displayed the requested text, more prompt again */
-        screen_fill((int)Rows - 1, (int)Rows, 0,
+        screen_fill(default_msg_row(), default_msg_row() + 1, 0,
             (int)Columns, ' ', ' ', 0);
         msg_moremsg(FALSE);
         continue;
@@ -2197,7 +2202,7 @@ static int do_more_prompt(int typed_char)
   State = oldState;
   setmouse();
   if (quit_more) {
-    msg_row = Rows - 1;
+    msg_row = default_msg_row();
     msg_col = 0;
   } else if (cmdmsg_rl)
     msg_col = Columns - 1;
@@ -2310,11 +2315,11 @@ void msg_moremsg(int full)
   char_u      *s = (char_u *)_("-- More --");
 
   attr = hl_attr(HLF_M);
-  screen_puts(s, (int)Rows - 1, 0, attr);
+  screen_puts(s, default_msg_row(), 0, attr);
   if (full)
     screen_puts((char_u *)
         _(" SPACE/d/j: screen/page/line down, b/u/k: up, q: quit "),
-        (int)Rows - 1, vim_strsize(s), attr);
+        default_msg_row(), vim_strsize(s), attr);
 }
 
 /*
@@ -2325,14 +2330,14 @@ void repeat_message(void)
 {
   if (State == ASKMORE) {
     msg_moremsg(TRUE);          /* display --more-- message again */
-    msg_row = Rows - 1;
+    msg_row = default_msg_row();
   } else if (State == CONFIRM) {
     display_confirm_msg();      /* display ":confirm" message again */
-    msg_row = Rows - 1;
+    msg_row = default_msg_row();
   } else if (State == EXTERNCMD) {
     ui_cursor_goto(msg_row, msg_col);     /* put cursor back */
   } else if (State == HITRETURN || State == SETWSIZE) {
-    if (msg_row == Rows - 1) {
+    if (msg_row == default_msg_row()) {
       /* Avoid drawing the "hit-enter" prompt below the previous one,
        * overwrite it.  Esp. useful when regaining focus and a
        * FocusGained autocmd exists but didn't draw anything. */
@@ -2341,7 +2346,7 @@ void repeat_message(void)
       msg_clr_eos();
     }
     hit_return_msg();
-    msg_row = Rows - 1;
+    msg_row = default_msg_row();
   }
 }
 
@@ -2355,6 +2360,15 @@ void msg_clr_eos(void)
     msg_clr_eos_force();
 }
 
+// clear the message row:
+static void msg_clear(void)
+{
+  if (cmdmsg_rl)
+    screen_fill(msg_row, msg_row + 1, 0, msg_col + 1, ' ', ' ', 0);
+  else
+    screen_fill(msg_row, msg_row + 1, msg_col, (int)Columns, ' ', ' ', 0);
+}
+
 /*
  * Clear from current message position to end of screen.
  * Note: msg_col is not updated, so we remember the end of the message
@@ -2362,20 +2376,23 @@ void msg_clr_eos(void)
  */
 void msg_clr_eos_force(void)
 {
-  if (cmdmsg_rl) {
-    screen_fill(msg_row, msg_row + 1, 0, msg_col + 1, ' ', ' ', 0);
-    screen_fill(msg_row + 1, (int)Rows, 0, (int)Columns, ' ', ' ', 0);
-  } else {
-    screen_fill(msg_row, msg_row + 1, msg_col, (int)Columns, ' ', ' ', 0);
-    screen_fill(msg_row + 1, (int)Rows, 0, (int)Columns, ' ', ' ', 0);
-  }
+  msg_clear();
+
+  bool status_line_at_bottom = p_stf && p_ls;
+  int end_of_screen = status_line_at_bottom ? Rows - 1 : Rows;
+  screen_fill(msg_row + 1, end_of_screen, 0, (int)Columns, ' ', ' ', 0);
 }
 
 /*
  * Clear the command line.
+ * if p_stf == TRUE, the data area is shared with cmdline,
+ * so msg_clr_eos_force must be used to clear this area.
  */
 void msg_clr_cmdline(void)
 {
+  if (p_stf)
+      return;
+
   msg_row = cmdline_row;
   msg_col = 0;
   msg_clr_eos_force();
@@ -2408,7 +2425,7 @@ int msg_end(void)
  */
 void msg_check(void)
 {
-  if (msg_row == Rows - 1 && msg_col >= sc_col) {
+  if (msg_row == default_msg_row() && msg_col >= sc_col) {
     need_wait_return = TRUE;
     redraw_cmdline = TRUE;
   }

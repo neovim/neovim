@@ -2162,6 +2162,7 @@ void buflist_list(exarg_T *eap)
   int len;
   int i;
 
+  msg_row = default_msg_row();
   for (buf = firstbuf; buf != NULL && !got_int; buf = buf->b_next) {
     // skip unspecified buffers
     if ((!buf->b_p_bl && !eap->forceit && !strchr((char *)eap->arg, 'u'))

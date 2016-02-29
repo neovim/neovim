@@ -36,6 +36,9 @@ typedef struct {
 # include "os/shell.c.generated.h"
 #endif
 
+int default_msg_row(void);
+int default_cmd_row(void);
+
 /// Builds the argument vector for running the user-configured 'shell' (p_sh)
 /// with an optional command prefixed by 'shellcmdflag' (p_shcf).
 ///
@@ -323,7 +326,7 @@ static void out_data_cb(Stream *stream, RBuffer *buf, size_t count, void *data,
   // No output written, force emptying the Rbuffer if it is full.
   if (!written && rbuffer_size(buf) == rbuffer_capacity(buf)) {
     screen_del_lines(0, 0, 1, (int)Rows, NULL);
-    screen_puts_len((char_u *)ptr, (int)cnt, (int)Rows - 1, 0, 0);
+    screen_puts_len((char_u *)ptr, (int)cnt, default_msg_row(), 0, 0);
     written = cnt;
   }
   if (written) {

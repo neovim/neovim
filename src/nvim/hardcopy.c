@@ -27,6 +27,7 @@
 #include "nvim/garray.h"
 #include "nvim/option.h"
 #include "nvim/path.h"
+#include "nvim/ex_getln.h"
 #include "nvim/screen.h"
 #include "nvim/strings.h"
 #include "nvim/syntax.h"
@@ -560,8 +561,8 @@ static void prt_header(prt_settings_T *psettings, int pagenum, linenr_T lnum)
  */
 static void prt_message(char_u *s)
 {
-  screen_fill((int)Rows - 1, (int)Rows, 0, (int)Columns, ' ', ' ', 0);
-  screen_puts(s, (int)Rows - 1, 0, hl_attr(HLF_R));
+  screen_fill(default_msg_row(), default_msg_row() + 1, 0, (int)Columns, ' ', ' ', 0);
+  screen_puts(s, default_msg_row(), 0, hl_attr(HLF_R));
   ui_flush();
 }
 

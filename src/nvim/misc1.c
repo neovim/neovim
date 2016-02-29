@@ -2246,7 +2246,7 @@ change_warning (
      * be after the mode message.
      */
     msg_start();
-    if (msg_row == Rows - 1)
+    if (msg_row == default_msg_row())
       msg_col = col;
     msg_source(hl_attr(HLF_W));
     MSG_PUTS_ATTR(_(w_readonly), hl_attr(HLF_W) | MSG_HIST);
@@ -2259,7 +2259,7 @@ change_warning (
     }
     curbuf->b_did_warn = true;
     redraw_cmdline = FALSE;     /* don't redraw and erase the message */
-    if (msg_row < Rows - 1)
+    if (msg_row < default_msg_row())
       showmode();
   }
 }

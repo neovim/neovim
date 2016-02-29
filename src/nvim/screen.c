@@ -334,7 +334,7 @@ void update_screen(int type)
   }
 
   /* reset cmdline_row now (may have been changed temporarily) */
-  compute_cmdrow();
+  cmdline_row = default_cmd_row();
 
   /* Check for changed highlighting */
   if (need_highlight_changed)
@@ -1192,10 +1192,13 @@ static void win_update(win_T *wp)
   row = 0;
   srow = 0;
   lnum = wp->w_topline;         /* first line shown in window */
+  const int end_of_text_area = p_stf
+    ? default_status_row(NULL)
+    : wp->w_height;
   for (;; ) {
     /* stop updating when reached the end of the window (check for _past_
      * the end of the window is at the end of the loop) */
-    if (row == wp->w_height) {
+    if (row == end_of_text_area) {
       didline = TRUE;
       break;
     }
@@ -1426,7 +1429,7 @@ static void win_update(win_T *wp)
 
       wp->w_lines[idx].wl_lnum = lnum;
       wp->w_lines[idx].wl_valid = TRUE;
-      if (row > wp->w_height) {         /* past end of screen */
+      if (row > wp->w_height) {        /* past end of screen */
         /* we may need the size of that too long line later on */
         if (dollar_vcol == -1)
           wp->w_lines[idx].wl_size = plines_win(wp, lnum, TRUE);
@@ -4325,11 +4328,12 @@ static void screen_line(int row, int coloff, int endcol, int clear_width, int rl
   int clear_next = FALSE;
   int char_cells;                       /* 1: normal char */
                                         /* 2: occupies two display cells */
+
 # define CHAR_CELLS char_cells
 
   /* Check for illegal row and col, just in case. */
   if (row >= Rows)
-    row = Rows - 1;
+    row = default_msg_row();
   if (endcol > Columns)
     endcol = Columns;
 
@@ -4769,13 +4773,13 @@ win_redr_status_matches (
 
   buf[len] = NUL;
 
-  row = cmdline_row - 1;
+  row = default_msg_row();
   if (row >= 0) {
     if (wild_menu_showing == 0) {
       if (msg_scrolled > 0) {
         /* Put the wildmenu just above the command line.  If there is
          * no room, scroll the screen one line up. */
-        if (cmdline_row == Rows - 1) {
+        if (cmdline_row == default_cmd_row()) {
           screen_del_lines(0, 0, 1, (int)Rows, NULL);
           ++msg_scrolled;
         } else {
@@ -4836,12 +4840,10 @@ void win_redr_status(win_T *wp)
   if (wp->w_status_height == 0) {
     /* no status line, can only be last window */
     redraw_cmdline = TRUE;
-  } else if (!redrawing()
-             /* don't update status line when popup menu is visible and may be
-              * drawn over it */
-             || pum_visible()
-             ) {
-    /* Don't redraw right now, do it later. */
+  } else if (!p_stf && (!redrawing() || pum_visible())) {
+    // Don't update status line when popup menu is visible and may be
+    // drawn over it - unless the statsline is located at the bottom row
+    // Don't redraw right now, do it later.
     wp->w_redr_status = TRUE;
   } else if (*p_stl != NUL || *wp->w_p_stl != NUL) {
     /* redraw custom status line */
@@ -4905,7 +4907,7 @@ void win_redr_status(win_T *wp)
       len = this_ru_col - 1;
     }
 
-    row = wp->w_winrow + wp->w_height;
+    row = default_status_row(wp);
     screen_puts(p, row, wp->w_wincol, attr);
     screen_fill(row, row + 1, len + wp->w_wincol,
         this_ru_col + wp->w_wincol, fillchar, fillchar, attr);
@@ -5074,7 +5076,7 @@ win_redr_custom (
     maxwidth = Columns;
     use_sandbox = was_set_insecurely((char_u *)"tabline", 0);
   } else {
-    row = wp->w_winrow + wp->w_height;
+    row = default_status_row(wp);
     fillchar = fillchar_status(&attr, wp == curwin);
     maxwidth = wp->w_width;
 
@@ -5095,7 +5097,7 @@ win_redr_custom (
         col = (wp->w_width + 1) / 2;
       maxwidth = wp->w_width - col;
       if (!wp->w_status_height) {
-        row = Rows - 1;
+        row = default_status_row(NULL);
         --maxwidth;             /* writing in last column may cause scrolling */
         fillchar = ' ';
         attr = 0;
@@ -5943,7 +5945,7 @@ void screen_fill(int start_row, int end_row, int start_col, int end_col, int c1,
     }
     if (end_col == Columns)
       LineWraps[row] = FALSE;
-    if (row == Rows - 1) {              /* overwritten the command line */
+    if (row == default_status_row(NULL)) { /* overwritten the last line */
       redraw_cmdline = TRUE;
       if (c1 == ' ' && c2 == ' ')
         clear_cmdline = FALSE;          /* command line has been cleared */
@@ -6465,7 +6467,7 @@ int win_del_lines(win_T *wp, int row, int line_count, int invalid, int mayclear)
    * If there are windows or status lines below, try to put them at the
    * correct place. If we can't do that, they have to be redrawn.
    */
-  if (wp->w_next || wp->w_status_height || cmdline_row < Rows - 1) {
+  if (wp->w_next || wp->w_status_height || cmdline_row < default_msg_row()) {
     if (screen_ins_lines(0, wp->w_winrow + wp->w_height - line_count,
             line_count, (int)Rows, NULL) == FAIL) {
       wp->w_redr_status = TRUE;
@@ -6693,7 +6695,7 @@ int showmode(void)
 
     /* if the cmdline is more than one line high, erase top lines */
     need_clear = clear_cmdline;
-    if (clear_cmdline && cmdline_row < Rows - 1)
+    if (clear_cmdline && cmdline_row < default_cmd_row())
       msg_clr_cmdline();                        /* will reset clear_cmdline */
 
     /* Position on the last line in the window, column 0 */
@@ -6817,7 +6819,7 @@ int showmode(void)
 static void msg_pos_mode(void)
 {
   msg_col = 0;
-  msg_row = Rows - 1;
+  msg_row = default_msg_row();
 }
 
 /// Delete mode message.  Used when ESC is typed which is expected to end
@@ -7172,12 +7174,12 @@ static void win_redr_ruler(win_T *wp, int always)
     int off;
 
     if (wp->w_status_height) {
-      row = wp->w_winrow + wp->w_height;
+      row = default_status_row(NULL);
       fillchar = fillchar_status(&attr, wp == curwin);
       off = wp->w_wincol;
       width = wp->w_width;
     } else {
-      row = Rows - 1;
+      row = default_status_row(NULL);
       fillchar = ' ';
       attr = 0;
       width = Columns;
@@ -7425,7 +7427,7 @@ void win_new_shellsize(void)
   if (old_Rows != Rows) {
     // if 'window' uses the whole screen, keep it using that */
     if (p_window == old_Rows - 1 || old_Rows == 0) {
-      p_window = Rows - 1;
+      p_window = default_msg_row();
     }
     old_Rows = Rows;
     shell_new_rows();  // update window sizes

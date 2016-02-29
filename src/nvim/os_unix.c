@@ -31,6 +31,7 @@
 #include "nvim/mouse.h"
 #include "nvim/garray.h"
 #include "nvim/path.h"
+#include "nvim/ex_getln.h"
 #include "nvim/screen.h"
 #include "nvim/strings.h"
 #include "nvim/syntax.h"
@@ -429,7 +430,7 @@ int mch_expand_wildcards(int num_pat, char_u **pat, int *num_file,
 #if SIZEOF_LONG > SIZEOF_INT
       assert(Rows <= (long)INT_MAX + 1);
 #endif
-      cmdline_row = (int)(Rows - 1);           /* continue on last line */
+      cmdline_row = default_cmd_row();  /* continue on last line */
       MSG(_(e_wildexpand));
       msg_start();                    /* don't overwrite this message */
     }

@@ -11463,7 +11463,7 @@ static void f_inputlist(typval_T *argvars, typval_T *rettv)
   }
 
   msg_start();
-  msg_row = Rows - 1;   /* for when 'cmdheight' > 1 */
+  msg_row = default_cmd_row();   /* for when 'cmdheight' > 1 */
   lines_left = Rows;    /* avoid more prompt */
   msg_scroll = TRUE;
   msg_clr_eos();

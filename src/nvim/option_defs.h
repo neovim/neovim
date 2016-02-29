@@ -601,6 +601,7 @@ EXTERN char_u *p_tags;          ///< 'tags'
 EXTERN int p_tgst;              ///< 'tagstack'
 EXTERN int p_tbidi;             ///< 'termbidi'
 EXTERN int p_terse;             ///< 'terse'
+EXTERN bool p_stf;              ///< 'statusframe'
 EXTERN int p_to;                ///< 'tildeop'
 EXTERN int p_timeout;           ///< 'timeout'
 EXTERN long p_tm;               ///< 'timeoutlen'
@@ -782,6 +783,7 @@ enum {
   , WV_CUL
   , WV_CC
   , WV_STL
+  , WV_STF
   , WV_WFH
   , WV_WFW
   , WV_WRAP

@@ -298,6 +298,7 @@
 #include "nvim/ex_cmds.h"
 #include "nvim/ex_cmds2.h"
 #include "nvim/ex_docmd.h"
+#include "nvim/ex_getln.h"
 #include "nvim/fileio.h"
 #include "nvim/func_attr.h"
 #include "nvim/getchar.h"
@@ -314,6 +315,7 @@
 #include "nvim/os_unix.h"
 #include "nvim/path.h"
 #include "nvim/regexp.h"
+#include "nvim/ex_getln.h"
 #include "nvim/screen.h"
 #include "nvim/search.h"
 #include "nvim/strings.h"
@@ -8452,8 +8454,8 @@ void spell_suggest(int count)
 
   // Get the list of suggestions.  Limit to 'lines' - 2 or the number in
   // 'spellsuggest', whatever is smaller.
-  if (sps_limit > (int)Rows - 2)
-    limit = (int)Rows - 2;
+  if (sps_limit > default_status_row(NULL))
+    limit = default_status_row(NULL);
   else
     limit = sps_limit;
   spell_find_suggest(line + curwin->w_cursor.col, badlen, &sug, limit,
@@ -8478,7 +8480,7 @@ void spell_suggest(int count)
 
     // List the suggestions.
     msg_start();
-    msg_row = Rows - 1;         // for when 'cmdheight' > 1
+    msg_row = default_msg_row();
     lines_left = Rows;          // avoid more prompt
     vim_snprintf((char *)IObuff, IOSIZE, _("Change \"%.*s\" to:"),
         sug.su_badlen, sug.su_badptr);

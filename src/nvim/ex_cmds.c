@@ -1084,7 +1084,7 @@ static void do_filter(
 
   /* Create the shell command in allocated memory. */
   cmd_buf = make_filter_cmd(cmd, itmp, otmp);
-  ui_cursor_goto((int)Rows - 1, 0);
+  ui_cursor_goto(default_cmd_row(), 0);
 
   /*
    * When not redirecting the output the command can write anything to the

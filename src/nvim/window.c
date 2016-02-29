@@ -929,11 +929,11 @@ int win_split_ins(int size, int flags, win_T *new_wp, int dir)
   oldwin->w_redr_status = TRUE;
 
   if (need_status) {
-    msg_row = Rows - 1;
+    msg_row = default_msg_row();
     msg_col = sc_col;
     msg_clr_eos_force();        /* Old command/ruler may still be there */
     comp_col();
-    msg_row = Rows - 1;
+    msg_row = default_msg_row();
     msg_col = 0;        /* put position back at start of line */
   }
 
@@ -4514,7 +4514,7 @@ void win_drag_status_line(win_T *dragwin, int offset)
   row = win_comp_pos();
   screen_fill(row, cmdline_row, 0, (int)Columns, ' ', ' ', 0);
   cmdline_row = row;
-  p_ch = Rows - cmdline_row;
+  p_ch = default_cmd_row() - cmdline_row + 1;
   if (p_ch < 1)
     p_ch = 1;
   curtab->tp_ch_used = p_ch;
@@ -4822,7 +4822,7 @@ void command_height(void)
     frp = frp->fr_prev;
 
   if (starting != NO_SCREEN) {
-    cmdline_row = Rows - p_ch;
+    cmdline_row = default_cmd_row();
 
     if (p_ch > old_p_ch) {                  /* p_ch got bigger */
       while (p_ch > old_p_ch) {
@@ -4830,7 +4830,7 @@ void command_height(void)
           EMSG(_(e_noroom));
           p_ch = old_p_ch;
           curtab->tp_ch_used = p_ch;
-          cmdline_row = Rows - p_ch;
+          cmdline_row = p_stf ? Rows - p_ch - 1 : Rows - p_ch;
           break;
         }
         h = frp->fr_height - frame_minheight(frp, NULL);
@@ -4846,7 +4846,7 @@ void command_height(void)
 
       /* clear the lines added to cmdline */
       if (full_screen)
-        screen_fill(cmdline_row, (int)Rows, 0,
+        screen_fill(default_cmd_row(), default_cmd_row() + p_ch, 0,
             (int)Columns, ' ', ' ', 0);
       msg_row = cmdline_row;
       redraw_cmdline = TRUE;

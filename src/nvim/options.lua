@@ -2251,6 +2251,14 @@ return {
       defaults={if_true={vi=""}}
     },
     {
+      full_name='statusframe', abbreviation='stf',
+      type='bool', scope={'global'},
+      vi_def=true,
+      redraw={'everything'},
+      varname='p_stf',
+      defaults={if_true={vi=true}}
+    },
+    {
       full_name='suffixes', abbreviation='su',
       type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
