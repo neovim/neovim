@@ -52,8 +52,6 @@ EXTERN ufunc_T dumuf;
 #define HI2UF(hi)    HIKEY2UF((hi)->hi_key)
 
 /// Defines for Vim variables
-///
-/// Order must match order in vimvars[] table in eval.c.
 typedef enum {
     VV_COUNT,
     VV_COUNT1,

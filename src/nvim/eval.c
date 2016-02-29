@@ -282,7 +282,21 @@ typedef enum {
 #define VV_RO           2       /* read-only */
 #define VV_RO_SBX       4       /* read-only in the sandbox */
 
-#define VV_NAME(s, t)   s, {{t, 0, {0}}, 0, {0}}, {0}
+#define VV(idx, name, type, flags) \
+  [idx] = { \
+    .vv_name = name, \
+    .vv_di = { \
+      .di_tv = { .v_type = type }, \
+      .di_flags = 0, \
+    }, \
+    .vv_filler = {( \
+        STATIC_ASSERT_EXPR( \
+            (sizeof(name) - 1 <= sizeof(vimvars[0].vv_filler)), \
+            "Vim variable name is too long, adjust vv_filler size"), \
+        0 \
+    )}, \
+    .vv_flags = flags, \
+  }
 
 // Array to hold the value of v: variables.
 // The value is in a dictitem, so that it can also be used in the v: scope.
@@ -295,80 +309,83 @@ static struct vimvar {
   char vv_flags;         ///< Flags: #VV_COMPAT, #VV_RO, #VV_RO_SBX.
 } vimvars[] =
 {
-  /*
-   * The order here must match the VV_ defines in eval.h!
-   * Initializing a union does not work, leave tv.vval empty to get zero's.
-   */
-  { VV_NAME("count",            VAR_NUMBER), VV_COMPAT+VV_RO },
-  { VV_NAME("count1",           VAR_NUMBER), VV_RO },
-  { VV_NAME("prevcount",        VAR_NUMBER), VV_RO },
-  { VV_NAME("errmsg",           VAR_STRING), VV_COMPAT },
-  { VV_NAME("warningmsg",       VAR_STRING), 0 },
-  { VV_NAME("statusmsg",        VAR_STRING), 0 },
-  { VV_NAME("shell_error",      VAR_NUMBER), VV_COMPAT+VV_RO },
-  { VV_NAME("this_session",     VAR_STRING), VV_COMPAT },
-  { VV_NAME("version",          VAR_NUMBER), VV_COMPAT+VV_RO },
-  { VV_NAME("lnum",             VAR_NUMBER), VV_RO_SBX },
-  { VV_NAME("termresponse",     VAR_STRING), VV_RO },
-  { VV_NAME("fname",            VAR_STRING), VV_RO },
-  { VV_NAME("lang",             VAR_STRING), VV_RO },
-  { VV_NAME("lc_time",          VAR_STRING), VV_RO },
-  { VV_NAME("ctype",            VAR_STRING), VV_RO },
-  { VV_NAME("charconvert_from", VAR_STRING), VV_RO },
-  { VV_NAME("charconvert_to",   VAR_STRING), VV_RO },
-  { VV_NAME("fname_in",         VAR_STRING), VV_RO },
-  { VV_NAME("fname_out",        VAR_STRING), VV_RO },
-  { VV_NAME("fname_new",        VAR_STRING), VV_RO },
-  { VV_NAME("fname_diff",       VAR_STRING), VV_RO },
-  { VV_NAME("cmdarg",           VAR_STRING), VV_RO },
-  { VV_NAME("foldstart",        VAR_NUMBER), VV_RO_SBX },
-  { VV_NAME("foldend",          VAR_NUMBER), VV_RO_SBX },
-  { VV_NAME("folddashes",       VAR_STRING), VV_RO_SBX },
-  { VV_NAME("foldlevel",        VAR_NUMBER), VV_RO_SBX },
-  { VV_NAME("progname",         VAR_STRING), VV_RO },
-  { VV_NAME("servername",       VAR_STRING), VV_RO },
-  { VV_NAME("dying",            VAR_NUMBER), VV_RO },
-  { VV_NAME("exception",        VAR_STRING), VV_RO },
-  { VV_NAME("throwpoint",       VAR_STRING), VV_RO },
-  { VV_NAME("register",         VAR_STRING), VV_RO },
-  { VV_NAME("cmdbang",          VAR_NUMBER), VV_RO },
-  { VV_NAME("insertmode",       VAR_STRING), VV_RO },
-  { VV_NAME("val",              VAR_UNKNOWN), VV_RO },
-  { VV_NAME("key",              VAR_UNKNOWN), VV_RO },
-  { VV_NAME("profiling",        VAR_NUMBER), VV_RO },
-  { VV_NAME("fcs_reason",       VAR_STRING), VV_RO },
-  { VV_NAME("fcs_choice",       VAR_STRING), 0 },
-  { VV_NAME("beval_bufnr",      VAR_NUMBER), VV_RO },
-  { VV_NAME("beval_winnr",      VAR_NUMBER), VV_RO },
-  { VV_NAME("beval_lnum",       VAR_NUMBER), VV_RO },
-  { VV_NAME("beval_col",        VAR_NUMBER), VV_RO },
-  { VV_NAME("beval_text",       VAR_STRING), VV_RO },
-  { VV_NAME("scrollstart",      VAR_STRING), 0 },
-  { VV_NAME("swapname",         VAR_STRING), VV_RO },
-  { VV_NAME("swapchoice",       VAR_STRING), 0 },
-  { VV_NAME("swapcommand",      VAR_STRING), VV_RO },
-  { VV_NAME("char",             VAR_STRING), 0 },
-  { VV_NAME("mouse_win",        VAR_NUMBER), 0 },
-  { VV_NAME("mouse_lnum",       VAR_NUMBER), 0 },
-  { VV_NAME("mouse_col",        VAR_NUMBER), 0 },
-  { VV_NAME("operator",         VAR_STRING), VV_RO },
-  { VV_NAME("searchforward",    VAR_NUMBER), 0 },
-  { VV_NAME("hlsearch",         VAR_NUMBER), 0 },
-  { VV_NAME("oldfiles",         VAR_LIST), 0 },
-  { VV_NAME("windowid",         VAR_NUMBER), VV_RO },
-  { VV_NAME("progpath",         VAR_STRING), VV_RO },
-  { VV_NAME("command_output",   VAR_STRING), 0 },
-  { VV_NAME("completed_item",   VAR_DICT), VV_RO },
-  { VV_NAME("option_new",       VAR_STRING), VV_RO },
-  { VV_NAME("option_old",       VAR_STRING), VV_RO },
-  { VV_NAME("option_type",      VAR_STRING), VV_RO },
-  { VV_NAME("errors",           VAR_LIST), 0 },
-  { VV_NAME("msgpack_types",    VAR_DICT), VV_RO },
-  { VV_NAME("event",            VAR_DICT), VV_RO },
-  { VV_NAME("false",            VAR_SPECIAL), VV_RO },
-  { VV_NAME("true",             VAR_SPECIAL), VV_RO },
-  { VV_NAME("null",             VAR_SPECIAL), VV_RO },
+  // VV_ tails differing from upcased string literals:
+  // VV_CC_FROM "charconvert_from"
+  // VV_CC_TO "charconvert_to"
+  // VV_SEND_SERVER "servername"
+  // VV_REG "register"
+  // VV_OP "operator"
+  VV(VV_COUNT,          "count",            VAR_NUMBER, VV_COMPAT+VV_RO),
+  VV(VV_COUNT1,         "count1",           VAR_NUMBER, VV_RO),
+  VV(VV_PREVCOUNT,      "prevcount",        VAR_NUMBER, VV_RO),
+  VV(VV_ERRMSG,         "errmsg",           VAR_STRING, VV_COMPAT),
+  VV(VV_WARNINGMSG,     "warningmsg",       VAR_STRING, 0),
+  VV(VV_STATUSMSG,      "statusmsg",        VAR_STRING, 0),
+  VV(VV_SHELL_ERROR,    "shell_error",      VAR_NUMBER, VV_COMPAT+VV_RO),
+  VV(VV_THIS_SESSION,   "this_session",     VAR_STRING, VV_COMPAT),
+  VV(VV_VERSION,        "version",          VAR_NUMBER, VV_COMPAT+VV_RO),
+  VV(VV_LNUM,           "lnum",             VAR_NUMBER, VV_RO_SBX),
+  VV(VV_TERMRESPONSE,   "termresponse",     VAR_STRING, VV_RO),
+  VV(VV_FNAME,          "fname",            VAR_STRING, VV_RO),
+  VV(VV_LANG,           "lang",             VAR_STRING, VV_RO),
+  VV(VV_LC_TIME,        "lc_time",          VAR_STRING, VV_RO),
+  VV(VV_CTYPE,          "ctype",            VAR_STRING, VV_RO),
+  VV(VV_CC_FROM,        "charconvert_from", VAR_STRING, VV_RO),
+  VV(VV_CC_TO,          "charconvert_to",   VAR_STRING, VV_RO),
+  VV(VV_FNAME_IN,       "fname_in",         VAR_STRING, VV_RO),
+  VV(VV_FNAME_OUT,      "fname_out",        VAR_STRING, VV_RO),
+  VV(VV_FNAME_NEW,      "fname_new",        VAR_STRING, VV_RO),
+  VV(VV_FNAME_DIFF,     "fname_diff",       VAR_STRING, VV_RO),
+  VV(VV_CMDARG,         "cmdarg",           VAR_STRING, VV_RO),
+  VV(VV_FOLDSTART,      "foldstart",        VAR_NUMBER, VV_RO_SBX),
+  VV(VV_FOLDEND,        "foldend",          VAR_NUMBER, VV_RO_SBX),
+  VV(VV_FOLDDASHES,     "folddashes",       VAR_STRING, VV_RO_SBX),
+  VV(VV_FOLDLEVEL,      "foldlevel",        VAR_NUMBER, VV_RO_SBX),
+  VV(VV_PROGNAME,       "progname",         VAR_STRING, VV_RO),
+  VV(VV_SEND_SERVER,    "servername",       VAR_STRING, VV_RO),
+  VV(VV_DYING,          "dying",            VAR_NUMBER, VV_RO),
+  VV(VV_EXCEPTION,      "exception",        VAR_STRING, VV_RO),
+  VV(VV_THROWPOINT,     "throwpoint",       VAR_STRING, VV_RO),
+  VV(VV_REG,            "register",         VAR_STRING, VV_RO),
+  VV(VV_CMDBANG,        "cmdbang",          VAR_NUMBER, VV_RO),
+  VV(VV_INSERTMODE,     "insertmode",       VAR_STRING, VV_RO),
+  VV(VV_VAL,            "val",              VAR_UNKNOWN, VV_RO),
+  VV(VV_KEY,            "key",              VAR_UNKNOWN, VV_RO),
+  VV(VV_PROFILING,      "profiling",        VAR_NUMBER, VV_RO),
+  VV(VV_FCS_REASON,     "fcs_reason",       VAR_STRING, VV_RO),
+  VV(VV_FCS_CHOICE,     "fcs_choice",       VAR_STRING, 0),
+  VV(VV_BEVAL_BUFNR,    "beval_bufnr",      VAR_NUMBER, VV_RO),
+  VV(VV_BEVAL_WINNR,    "beval_winnr",      VAR_NUMBER, VV_RO),
+  VV(VV_BEVAL_LNUM,     "beval_lnum",       VAR_NUMBER, VV_RO),
+  VV(VV_BEVAL_COL,      "beval_col",        VAR_NUMBER, VV_RO),
+  VV(VV_BEVAL_TEXT,     "beval_text",       VAR_STRING, VV_RO),
+  VV(VV_SCROLLSTART,    "scrollstart",      VAR_STRING, 0),
+  VV(VV_SWAPNAME,       "swapname",         VAR_STRING, VV_RO),
+  VV(VV_SWAPCHOICE,     "swapchoice",       VAR_STRING, 0),
+  VV(VV_SWAPCOMMAND,    "swapcommand",      VAR_STRING, VV_RO),
+  VV(VV_CHAR,           "char",             VAR_STRING, 0),
+  VV(VV_MOUSE_WIN,      "mouse_win",        VAR_NUMBER, 0),
+  VV(VV_MOUSE_LNUM,     "mouse_lnum",       VAR_NUMBER, 0),
+  VV(VV_MOUSE_COL,      "mouse_col",        VAR_NUMBER, 0),
+  VV(VV_OP,             "operator",         VAR_STRING, VV_RO),
+  VV(VV_SEARCHFORWARD,  "searchforward",    VAR_NUMBER, 0),
+  VV(VV_HLSEARCH,       "hlsearch",         VAR_NUMBER, 0),
+  VV(VV_OLDFILES,       "oldfiles",         VAR_LIST, 0),
+  VV(VV_WINDOWID,       "windowid",         VAR_NUMBER, VV_RO),
+  VV(VV_PROGPATH,       "progpath",         VAR_STRING, VV_RO),
+  VV(VV_COMMAND_OUTPUT, "command_output",   VAR_STRING, 0),
+  VV(VV_COMPLETED_ITEM, "completed_item",   VAR_DICT, VV_RO),
+  VV(VV_OPTION_NEW,     "option_new",       VAR_STRING, VV_RO),
+  VV(VV_OPTION_OLD,     "option_old",       VAR_STRING, VV_RO),
+  VV(VV_OPTION_TYPE,    "option_type",      VAR_STRING, VV_RO),
+  VV(VV_ERRORS,         "errors",           VAR_LIST, 0),
+  VV(VV_MSGPACK_TYPES,  "msgpack_types",    VAR_DICT, VV_RO),
+  VV(VV_EVENT,          "event",            VAR_DICT, VV_RO),
+  VV(VV_FALSE,          "false",            VAR_SPECIAL, VV_RO),
+  VV(VV_TRUE,           "true",             VAR_SPECIAL, VV_RO),
+  VV(VV_NULL,           "null",             VAR_SPECIAL, VV_RO),
 };
+#undef VV
 
 /* shorthand */
 #define vv_type         vv_di.di_tv.v_type
