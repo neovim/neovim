@@ -139,6 +139,7 @@ describe('tab pages', function()
 	  autocmd TabLeave * :call add(g:r, 'TabLeave')
 	  autocmd WinLeave * :call add(g:r, 'WinLeave')
 	  autocmd BufLeave * :call add(g:r, 'BufLeave')
+	  autocmd TabNew   * :call add(g:r, 'TabNew')
           let t:a='a'
           C tab split
           let t:a='b'
@@ -185,11 +186,13 @@ describe('tab pages', function()
       === tab split ===
       WinLeave
       TabLeave
+      TabNew
       WinEnter
       TabEnter
       === tabnew ===
       WinLeave
       TabLeave
+      TabNew
       WinEnter
       TabEnter
       BufLeave
@@ -222,6 +225,7 @@ describe('tab pages', function()
       === tabnew ===
       WinLeave
       TabLeave
+      TabNew
       WinEnter
       TabEnter
       BufLeave

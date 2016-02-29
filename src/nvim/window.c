@@ -248,7 +248,7 @@ newwindow:
       /* First create a new tab with the window, then go back to
        * the old tab and close the window there. */
       wp = curwin;
-      if (win_new_tabpage((int)Prenum) == OK
+      if (win_new_tabpage((int)Prenum, NULL) == OK
           && valid_tabpage(oldtab)) {
         newtab = curtab;
         goto_tabpage_tp(oldtab, TRUE, TRUE);
@@ -2952,14 +2952,15 @@ void free_tabpage(tabpage_T *tp)
   xfree(tp);
 }
 
-/*
- * Create a new Tab page with one window.
- * It will edit the current buffer, like after ":split".
- * When "after" is 0 put it just after the current Tab page.
- * Otherwise put it just before tab page "after".
- * Return FAIL or OK.
- */
-int win_new_tabpage(int after)
+/// Create a new tabpage with one window.
+///
+/// It will edit the current buffer, like after :split.
+///
+/// @param after Put new tabpage after tabpage "after", or after the current
+///              tabpage in case of 0.
+/// @param filename Will be passed to apply_autocmds().
+/// @return Was the new tabpage created successfully? FAIL or OK.
+int win_new_tabpage(int after, char_u *filename)
 {
   tabpage_T   *tp = curtab;
   tabpage_T   *newtp;
@@ -2999,10 +3000,12 @@ int win_new_tabpage(int after)
     newtp->tp_topframe = topframe;
     last_status(FALSE);
 
-
     redraw_all_later(CLEAR);
-    apply_autocmds(EVENT_WINENTER, NULL, NULL, FALSE, curbuf);
-    apply_autocmds(EVENT_TABENTER, NULL, NULL, FALSE, curbuf);
+
+    apply_autocmds(EVENT_TABNEW, filename, filename, false, curbuf);
+    apply_autocmds(EVENT_WINENTER, NULL, NULL, false, curbuf);
+    apply_autocmds(EVENT_TABENTER, NULL, NULL, false, curbuf);
+
     return OK;
   }
 
@@ -3023,7 +3026,7 @@ int may_open_tabpage(void)
   if (n != 0) {
     cmdmod.tab = 0;         /* reset it to avoid doing it twice */
     postponed_split_tab = 0;
-    return win_new_tabpage(n);
+    return win_new_tabpage(n, NULL);
   }
   return FAIL;
 }
@@ -3047,9 +3050,11 @@ int make_tabpages(int maxcount)
    */
   block_autocmds();
 
-  for (todo = count - 1; todo > 0; --todo)
-    if (win_new_tabpage(0) == FAIL)
+  for (todo = count - 1; todo > 0; --todo) {
+    if (win_new_tabpage(0, NULL) == FAIL) {
       break;
+    }
+  }
 
   unblock_autocmds();
 

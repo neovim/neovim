@@ -6290,10 +6290,8 @@ void ex_splitview(exarg_T *eap)
   if (eap->cmdidx == CMD_tabedit
       || eap->cmdidx == CMD_tabfind
       || eap->cmdidx == CMD_tabnew) {
-    if (win_new_tabpage(cmdmod.tab != 0 ? cmdmod.tab
-            : eap->addr_count == 0 ? 0
-            : (int)eap->line2 + 1) != FAIL) {
-      apply_autocmds(EVENT_TABNEW, eap->arg, eap->arg,  FALSE, curbuf); 
+    if (win_new_tabpage(cmdmod.tab != 0 ? cmdmod.tab : eap->addr_count == 0
+                        ? 0 : (int)eap->line2 + 1, eap->arg) != FAIL) {
       do_exedit(eap, old_curwin);
       apply_autocmds(EVENT_TABNEWENTERED, NULL, NULL, FALSE, curbuf);
 
