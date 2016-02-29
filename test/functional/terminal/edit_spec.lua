@@ -26,7 +26,7 @@ describe(':edit term://*', function()
     meths.set_var('termopen_runs', {})
     command('autocmd TermOpen * :call add(g:termopen_runs, expand("<amatch>"))')
     command('edit term://')
-    termopen_runs = meths.get_var('termopen_runs')
+    local termopen_runs = meths.get_var('termopen_runs')
     eq(1, #termopen_runs)
     eq(termopen_runs[1], termopen_runs[1]:match('^term://.//%d+:$'))
   end)
@@ -59,7 +59,6 @@ describe(':edit term://*', function()
     -- contents: buffer starts with 87:, screen with 86:.
     local exp_screen = '\n'
     local did_cursor = false
-    local shift = 10
     for i = 0,(winheight - 1) do
       local line = bufline(buf_cont_start + i - 1)
       exp_screen = (exp_screen

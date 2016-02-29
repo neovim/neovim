@@ -226,15 +226,16 @@ function Screen:expect(expected, attr_ids, attr_ignore)
     for i = 1, self._height do
       if expected_rows[i] ~= actual_rows[i] then
         local msg_expected_rows = {}
-        for i = 1, #expected_rows do msg_expected_rows[i] = expected_rows[i] end
+        for j = 1, #expected_rows do
+          msg_expected_rows[j] = expected_rows[j]
+        end
         msg_expected_rows[i] = '*' .. msg_expected_rows[i]
         actual_rows[i] = '*' .. actual_rows[i]
-        msg = (
+        return (
           'Row ' .. tostring(i) .. ' didn\'t match.\n'
           .. 'Expected:\n|' .. table.concat(msg_expected_rows, '|\n|') .. '|\n'
           .. 'Actual:\n|' .. table.concat(actual_rows, '|\n|') .. '|'
         )
-        return msg
       end
     end
   end)
