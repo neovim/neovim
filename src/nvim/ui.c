@@ -298,14 +298,16 @@ void ui_visual_bell(void)
   UI_CALL(visual_bell);
 }
 
-void ui_puts(uint8_t *str)
+void ui_puts(uint8_t *str, bool control)
 {
   uint8_t *ptr = str;
   uint8_t c;
 
   while ((c = *ptr)) {
     if (c < 0x20) {
-      parse_control_character(c);
+      if (control) {
+        parse_control_character(c);
+      }  // else, advance `ptr` to skip to next byte.
       ptr++;
     } else {
       send_output(&ptr);
@@ -313,10 +315,10 @@ void ui_puts(uint8_t *str)
   }
 }
 
-void ui_putc(uint8_t c)
+void ui_putc(uint8_t c, bool control)
 {
   uint8_t buf[2] = {c, 0};
-  ui_puts(buf);
+  ui_puts(buf, control);
 }
 
 void ui_cursor_goto(int new_row, int new_col)
@@ -373,16 +375,24 @@ static void send_output(uint8_t **ptr)
 
 static void parse_control_character(uint8_t c)
 {
-  if (c == '\n') {
+  switch (c) {
+  case '\n':
     ui_linefeed();
-  } else if (c == '\r') {
+    break;
+  case '\r':
     ui_carriage_return();
-  } else if (c == '\b') {
+    break;
+  case '\b':
     ui_cursor_left();
-  } else if (c == Ctrl_L) {
+    break;
+  case Ctrl_L:
     ui_cursor_right();
-  } else if (c == Ctrl_G) {
+    break;
+  case Ctrl_G:
     UI_CALL(bell);
+    break;
+  default:
+    break;
   }
 }
 

@@ -4209,9 +4209,9 @@ win_line (
           if (has_mbyte && MB_BYTE2LEN(ScreenLines[LineOffset[
                                                      screen_row -
                                                      1] + (Columns - 1)]) > 1) {
-            ui_putc(' ');
+            ui_putc(' ', false);
           } else {
-            ui_putc(ScreenLines[LineOffset[screen_row - 1] + (Columns - 1)]);
+            ui_putc(ScreenLines[LineOffset[screen_row - 1] + (Columns - 1)], false);
           }
           /* force a redraw of the first char on the next line */
           ScreenAttrs[LineOffset[screen_row]] = (sattr_T)-1;
@@ -5797,12 +5797,12 @@ static void screen_char(unsigned off, int row, int col)
 
     // Convert UTF-8 character to bytes and write it.
     buf[utfc_char2bytes(off, buf)] = NUL;
-    ui_puts(buf);
+    ui_puts(buf, false);
   } else {
-    ui_putc(ScreenLines[off]);
+    ui_putc(ScreenLines[off], false);
     // double-byte character in single-width cell
     if (enc_dbcs == DBCS_JPNU && ScreenLines[off] == 0x8e) {
-      ui_putc(ScreenLines2[off]);
+      ui_putc(ScreenLines2[off], false);
     }
   }
 }
@@ -5829,7 +5829,7 @@ static void screen_char_2(unsigned off, int row, int col)
   /* Output the first byte normally (positions the cursor), then write the
    * second byte directly. */
   screen_char(off, row, col);
-  ui_putc(ScreenLines[off + 1]);
+  ui_putc(ScreenLines[off + 1], false);
 }
 
 /*

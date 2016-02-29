@@ -2545,7 +2545,7 @@ void vim_beep(unsigned val)
       if (p_vb) {
         ui_visual_bell();
       } else {
-        ui_putc(BELL);
+        ui_putc(BELL, true);
       }
     }
 
