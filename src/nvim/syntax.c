@@ -6395,7 +6395,7 @@ do_highlight (
             HL_TABLE()[idx].sg_cterm_bg = color + 1;
             if (is_normal_group) {
               cterm_normal_bg_color = color + 1;
-              {
+              if (!ui_rgb_attached()) {
                 must_redraw = CLEAR;
                 if (color >= 0) {
                   if (t_colors < 16)
