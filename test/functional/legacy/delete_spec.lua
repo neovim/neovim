@@ -1,7 +1,6 @@
 local helpers = require('test.functional.helpers')
-local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
-local source = helpers.source
-local eq, eval, execute, expect = helpers.eq, helpers.eval, helpers.execute, helpers.expect
+local clear, source = helpers.clear, helpers.source
+local eq, eval, execute = helpers.eq, helpers.eval, helpers.execute
 
 describe('Test for delete()', function()
   before_each(clear)
