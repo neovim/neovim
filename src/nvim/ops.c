@@ -1410,8 +1410,9 @@ int op_delete(oparg_T *oap)
       op_yank_reg(oap, false, reg, false);
     }
 
-    if(oap->regname == 0) {
+    if (oap->regname == 0) {
       set_clipboard(0, reg);
+      yank_do_autocmd(oap, reg);
     }
 
   }
@@ -1585,10 +1586,6 @@ int op_delete(oparg_T *oap)
   }
 
   msgmore(curbuf->b_ml.ml_line_count - old_lcount);
-
-  textlock++;
-  apply_autocmds(EVENT_TEXTDELETEPOST, NULL, NULL, false, curbuf);
-  textlock--;
 
 setmarks:
   if (oap->motion_type == MBLOCK) {
@@ -2314,12 +2311,7 @@ bool op_yank(oparg_T *oap, bool message)
   yankreg_T *reg = get_yank_register(oap->regname, YREG_YANK);
   op_yank_reg(oap, message, reg, is_append_register(oap->regname));
   set_clipboard(oap->regname, reg);
-
-  if (message) {
-    textlock++;
-    apply_autocmds(EVENT_TEXTYANKPOST, NULL, NULL, false, curbuf);
-    textlock--;
-  }
+  yank_do_autocmd(oap, reg);
 
   return true;
 }
@@ -2534,6 +2526,74 @@ static void yank_copy_line(yankreg_T *reg, struct block_def *bd, long y_idx)
   memset(pnew, ' ', (size_t)bd->endspaces);
   pnew += bd->endspaces;
   *pnew = NUL;
+}
+
+/// Execute autocommands for TextYankPost.
+///
+/// @param oap Operator arguments.
+/// @param reg The yank register used.
+static void yank_do_autocmd(oparg_T *oap, yankreg_T *reg)
+  FUNC_ATTR_NONNULL_ALL
+{
+  static bool recursive = false;
+
+  if (recursive || !has_event(EVENT_TEXTYANKPOST)) {
+    // No autocommand was defined
+    // or we yanked from this autocommand.
+    return;
+  }
+
+  recursive = true;
+
+  // set v:event to a dictionary with information about the yank
+  dict_T *dict = get_vim_var_dict(VV_EVENT);
+
+  // the yanked text
+  list_T *list = list_alloc();
+  for (linenr_T i = 0; i < reg->y_size; i++) {
+    list_append_string(list, reg->y_array[i], -1);
+  }
+  list->lv_lock = VAR_FIXED;
+  dict_add_list(dict, "regcontents", list);
+
+  // the register type
+  char buf[NUMBUFLEN+2];
+  buf[0] = NUL;
+  buf[1] = NUL;
+  switch (reg->y_type) {
+    case MLINE:
+      buf[0] = 'V';
+      break;
+    case MCHAR:
+      buf[0] = 'v';
+      break;
+    case MBLOCK:
+      buf[0] = Ctrl_V;
+      snprintf(buf + 1, ARRAY_SIZE(buf) - 1, "%" PRId64,
+               (int64_t)(reg->y_width + 1));
+      break;
+    case MAUTO:
+      assert(false);
+  }
+  dict_add_nr_str(dict, "regtype", 0, (char_u *)buf);
+
+  // name of requested register or the empty string for an unnamed operation.
+  buf[0] = (char)oap->regname;
+  buf[1] = NUL;
+  dict_add_nr_str(dict, "regname", 0, (char_u *)buf);
+
+  // kind of operation (yank/delete/change)
+  buf[0] = get_op_char(oap->op_type);
+  buf[1] = NUL;
+  dict_add_nr_str(dict, "operator", 0, (char_u *)buf);
+
+  dict_set_keys_readonly(dict);
+  textlock++;
+  apply_autocmds(EVENT_TEXTYANKPOST, NULL, NULL, false, curbuf);
+  textlock--;
+  dict_clear(dict);
+
+  recursive = false;
 }
 
 

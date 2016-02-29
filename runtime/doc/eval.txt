@@ -1389,7 +1389,19 @@ v:errors	Errors found by assert functions, such as |assert_true()|.
 					*v:event* *event-variable*
 v:event		Dictionary of event data for the current |autocommand|.  The
 		available keys differ per event type and are specified at the
-		documentation for each |event|.
+		documentation for each |event|.  The possible keys are:
+			operator	The operation performed.  Unlike
+					|v:operator|, it is set also for an Ex
+					mode command.  For instance, |:yank| is
+					translated to "|y|".
+			regcontents	Text stored in the register as a
+					|readfile()|-style list of lines.
+			regname 	Requested register (e.g "x" for "xyy)
+					or the empty string for an unnamed
+					operation.
+			regtype		Type of register as returned by
+					|getregtype()|.
+
 					*v:exception* *exception-variable*
 v:exception	The value of the exception most recently caught and not
 		finished.  See also |v:throwpoint| and |throw-variables|.

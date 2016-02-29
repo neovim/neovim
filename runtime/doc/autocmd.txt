@@ -308,8 +308,7 @@ Name			triggered by ~
 |InsertCharPre|		when a character was typed in Insert mode, before
 			inserting it
 
-|TextDeletePost|	when some text is deleted (dw, dd, D)
-|TextYankPost|		when some text is yanked (yw, yd, Y)
+|TextYankPost|		when some text is yanked or deleted
 
 |TextChanged|		after a change was made to the text in Normal mode
 |TextChangedI|		after a change was made to the text in Insert mode
@@ -725,24 +724,18 @@ InsertCharPre			When a character is typed in Insert mode,
 				It is not allowed to change the text |textlock|.
 				The event is not triggered when 'paste' is
 				set.
-							*TextDeletePost*
-TextDeletePost			Just after a delete (|d|) command is issued.
-				Not issued if the black hole register
-				(|quote_|) is used. The affected text can be
-				accessed by several ways, through @"
-				(|quotequote| or |v:register|: >
-				  :echo @"
-				  :echo eval('@' . v:register)
-<
 							*TextYankPost*
-TextYankPost			Just after a |yank| (|y|) command is issued.
-				Not issued if the black hole register
-				(|quote_|) is used. The affected text can be
-				accessed by several ways, through @"
-				(|quotequote| or |v:register|: >
-				  :echo @"
-				  :echo eval('@' . v:register)
-<
+TextYankPost			Just after a |yank| or |deleting| command, but not
+				if the black hole register |quote_| is used nor
+				for |setreg()|. Pattern must be * because its
+				meaning may change in the future.
+				Sets these |v:event| keys:
+					operator
+					regcontents
+					regname
+					regtype
+				Recursion is ignored.
+				It is not allowed to change the text |textlock|.
 							*InsertEnter*
 InsertEnter			Just before starting Insert mode.  Also for
 				Replace mode and Virtual Replace mode.  The
