@@ -312,6 +312,12 @@ void ui_puts(uint8_t *str, bool control)
     } else {
       send_output(&ptr);
     }
+    if (p_wd) {
+      UI_CALL(flush);  // For testing/'writedelay' we flush each time.
+      assert(p_wd >= 0
+          && (sizeof(long) <= sizeof(uint64_t) || p_wd <= UINT64_MAX));
+      os_microdelay((uint64_t)p_wd);
+    }
   }
 }
 
