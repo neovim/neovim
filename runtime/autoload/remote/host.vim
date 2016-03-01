@@ -2,6 +2,7 @@ let s:hosts = {}
 let s:plugin_patterns = {}
 let s:remote_plugins_manifest = fnamemodify(expand($MYVIMRC, 1), ':h')
       \.'/.'.fnamemodify($MYVIMRC, ':t').'-rplugin~'
+let s:plugins_for_host = {}
 
 
 " Register a host by associating it with a factory(funcref)
@@ -35,6 +36,9 @@ endfunction
 
 " Get a host channel, bootstrapping it if necessary
 function! remote#host#Require(name) abort
+  if empty(s:hosts)
+    call remote#host#LoadRemotePlugins()
+  endif
   if !has_key(s:hosts, a:name)
     throw 'No host named "'.a:name.'" is registered'
   endif
@@ -123,12 +127,75 @@ function! remote#host#LoadRemotePlugins() abort
 endfunction
 
 
-command! UpdateRemotePlugins call remote#command#UpdateRemotePlugins(
-      \ s:hosts, s:plugin_patterns, s:remote_plugins_manifest,
-      \ s:plugins_for_host)
+function! remote#host#LoadRemotePluginsEvent(event, pattern) abort
+  autocmd! nvim-rplugin
+  call remote#host#LoadRemotePlugins()
+  execute 'doautocmd' a:event a:pattern
+endfunction
 
 
-let s:plugins_for_host = {}
+function! s:RegistrationCommands(host) abort
+  " Register a temporary host clone for discovering specs
+  let host_id = a:host.'-registration-clone'
+  call remote#host#RegisterClone(host_id, a:host)
+  let pattern = s:plugin_patterns[a:host]
+  let paths = globpath(&rtp, 'rplugin/'.a:host.'/'.pattern, 0, 1)
+  if empty(paths)
+    return []
+  endif
+
+  for path in paths
+    call remote#host#RegisterPlugin(host_id, path, [])
+  endfor
+  let channel = remote#host#Require(host_id)
+  let lines = []
+  for path in paths
+    let specs = rpcrequest(channel, 'specs', path)
+    if type(specs) != type([])
+      " host didn't return a spec list, indicates a failure while loading a
+      " plugin
+      continue
+    endif
+    call add(lines, "call remote#host#RegisterPlugin('".a:host
+          \ ."', '".path."', [")
+    for spec in specs
+      call add(lines, "      \\ ".string(spec).",")
+    endfor
+    call add(lines, "     \\ ])")
+  endfor
+  echomsg printf("remote/host: %s host registered plugins %s",
+        \ a:host, string(map(copy(paths), "fnamemodify(v:val, ':t')")))
+
+  " Delete the temporary host clone
+  call rpcstop(s:hosts[host_id].channel)
+  call remove(s:hosts, host_id)
+  call remove(s:plugins_for_host, host_id)
+  return lines
+endfunction
+
+
+function! remote#host#UpdateRemotePlugins() abort
+  let commands = []
+  let hosts = keys(s:hosts)
+  for host in hosts
+    if has_key(s:plugin_patterns, host)
+      try
+        let commands +=
+              \   ['" '.host.' plugins']
+              \ + s:RegistrationCommands(host)
+              \ + ['', '']
+      catch
+        echomsg v:throwpoint
+        echomsg v:exception
+      endtry
+    endif
+  endfor
+  call writefile(commands, s:remote_plugins_manifest)
+  echomsg printf('remote/host: generated the manifest file in "%s"',
+        \ s:remote_plugins_manifest)
+endfunction
+
+
 function! remote#host#PluginsForHost(host) abort
   if !has_key(s:plugins_for_host, a:host)
     let s:plugins_for_host[a:host] = []
