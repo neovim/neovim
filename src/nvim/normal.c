@@ -2344,9 +2344,12 @@ do_mouse (
   if (mouse_row == 0 && firstwin->w_winrow > 0) {
     if (is_drag) {
       if (in_tab_line) {
-        tabpage_move(tab_page_click_defs[mouse_col].type == kStlClickTabClose
-                     ? 9999
-                     : tab_page_click_defs[mouse_col].tabnr - 1);
+        if (tab_page_click_defs[mouse_col].type == kStlClickTabClose) {
+          tabpage_move(9999);
+        } else {
+          int tabnr = tab_page_click_defs[mouse_col].tabnr;
+          tabpage_move(tabnr < tabpage_index(curtab) ? tabnr - 1 : tabnr);
+        }
       }
       return false;
     }
