@@ -2,6 +2,7 @@ let s:hosts = {}
 let s:plugin_patterns = {}
 let s:remote_plugins_manifest = fnamemodify(expand($MYVIMRC, 1), ':h')
       \.'/.'.fnamemodify($MYVIMRC, ':t').'-rplugin~'
+let s:plugins_for_host = {}
 
 
 " Register a host by associating it with a factory(funcref)
@@ -35,6 +36,9 @@ endfunction
 
 " Get a host channel, bootstrapping it if necessary
 function! remote#host#Require(name) abort
+  if empty(s:hosts)
+    call remote#host#LoadRemotePlugins()
+  endif
   if !has_key(s:hosts, a:name)
     throw 'No host named "'.a:name.'" is registered'
   endif
@@ -123,6 +127,13 @@ function! remote#host#LoadRemotePlugins() abort
 endfunction
 
 
+function! remote#host#LoadRemotePluginsEvent(event, pattern) abort
+  autocmd! nvim-rplugin
+  call remote#host#LoadRemotePlugins()
+  execute 'doautocmd' a:event a:pattern
+endfunction
+
+
 function! s:RegistrationCommands(host) abort
   " Register a temporary host clone for discovering specs
   let host_id = a:host.'-registration-clone'
@@ -163,7 +174,7 @@ function! s:RegistrationCommands(host) abort
 endfunction
 
 
-function! s:UpdateRemotePlugins() abort
+function! remote#host#UpdateRemotePlugins() abort
   let commands = []
   let hosts = keys(s:hosts)
   for host in hosts
@@ -185,10 +196,6 @@ function! s:UpdateRemotePlugins() abort
 endfunction
 
 
-command! UpdateRemotePlugins call s:UpdateRemotePlugins()
-
-
-let s:plugins_for_host = {}
 function! remote#host#PluginsForHost(host) abort
   if !has_key(s:plugins_for_host, a:host)
     let s:plugins_for_host[a:host] = []
@@ -199,38 +206,8 @@ endfunction
 
 " Registration of standard hosts
 
-" Python/Python3 {{{
-function! s:RequirePythonHost(host) abort
-  let ver = (a:host.orig_name ==# 'python') ? 2 : 3
-
-  " Python host arguments
-  let args = ['-c', 'import sys; sys.path.remove(""); import neovim; neovim.start_host()']
-
-  " Collect registered Python plugins into args
-  let python_plugins = remote#host#PluginsForHost(a:host.name)
-  for plugin in python_plugins
-    call add(args, plugin.path)
-  endfor
-
-  try
-    let channel_id = rpcstart((ver == '2' ?
-          \ provider#python#Prog() : provider#python3#Prog()), args)
-    if rpcrequest(channel_id, 'poll') == 'ok'
-      return channel_id
-    endif
-  catch
-    echomsg v:throwpoint
-    echomsg v:exception
-  endtry
-  throw 'Failed to load '. a:host.orig_name . ' host. '.
-    \ 'You can try to see what happened '.
-    \ 'by starting Neovim with the environment variable '.
-    \ '$NVIM_PYTHON_LOG_FILE set to a file and opening '.
-    \ 'the generated log file. Also, the host stderr will be available '.
-    \ 'in Neovim log, so it may contain useful information. '.
-    \ 'See also ~/.nvimlog.'
-endfunction
-
-call remote#host#Register('python', '*.py', function('s:RequirePythonHost'))
-call remote#host#Register('python3', '*.py', function('s:RequirePythonHost'))
-" }}}
+" Python/Python3
+call remote#host#Register('python', '*.py',
+      \ function('provider#pythonx#Require'))
+call remote#host#Register('python3', '*.py',
+      \ function('provider#pythonx#Require'))
