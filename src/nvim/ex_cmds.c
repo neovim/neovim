@@ -3017,7 +3017,7 @@ void do_sub(exarg_T *eap)
     // The number of lines joined is the number of lines in the range
     linenr_T joined_lines_count = eap->line2 - eap->line1 + 1
       // plus one extra line if not at the end of file.
-      + eap->line2 < curbuf->b_ml.ml_line_count ? 1 : 0;
+      + (eap->line2 < curbuf->b_ml.ml_line_count ? 1 : 0);
     if (joined_lines_count > 1) {
       do_join(joined_lines_count, FALSE, TRUE, FALSE, true);
       sub_nsubs = joined_lines_count - 1;
