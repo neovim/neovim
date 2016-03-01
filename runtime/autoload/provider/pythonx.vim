@@ -5,6 +5,37 @@ endif
 
 let s:loaded_pythonx_provider = 1
 
+function! provider#pythonx#Require(host) abort
+  let ver = (a:host.orig_name ==# 'python') ? 2 : 3
+
+  " Python host arguments
+  let args = ['-c', 'import sys; sys.path.remove(""); import neovim; neovim.start_host()']
+
+  " Collect registered Python plugins into args
+  let python_plugins = remote#host#PluginsForHost(a:host.name)
+  for plugin in python_plugins
+    call add(args, plugin.path)
+  endfor
+
+  try
+    let channel_id = rpcstart((ver == '2' ?
+          \ provider#python#Prog() : provider#python3#Prog()), args)
+    if rpcrequest(channel_id, 'poll') == 'ok'
+      return channel_id
+    endif
+  catch
+    echomsg v:throwpoint
+    echomsg v:exception
+  endtry
+  throw 'Failed to load '. a:host.orig_name . ' host. '.
+    \ 'You can try to see what happened '.
+    \ 'by starting Neovim with the environment variable '.
+    \ '$NVIM_PYTHON_LOG_FILE set to a file and opening '.
+    \ 'the generated log file. Also, the host stderr will be available '.
+    \ 'in Neovim log, so it may contain useful information. '.
+    \ 'See also ~/.nvimlog.'
+endfunction
+
 function! provider#pythonx#Detect(major_ver) abort
   let host_var = (a:major_ver == 2) ?
         \ 'g:python_host_prog' : 'g:python3_host_prog'

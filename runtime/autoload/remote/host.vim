@@ -123,69 +123,9 @@ function! remote#host#LoadRemotePlugins() abort
 endfunction
 
 
-function! s:RegistrationCommands(host) abort
-  " Register a temporary host clone for discovering specs
-  let host_id = a:host.'-registration-clone'
-  call remote#host#RegisterClone(host_id, a:host)
-  let pattern = s:plugin_patterns[a:host]
-  let paths = globpath(&rtp, 'rplugin/'.a:host.'/'.pattern, 0, 1)
-  if empty(paths)
-    return []
-  endif
-
-  for path in paths
-    call remote#host#RegisterPlugin(host_id, path, [])
-  endfor
-  let channel = remote#host#Require(host_id)
-  let lines = []
-  for path in paths
-    let specs = rpcrequest(channel, 'specs', path)
-    if type(specs) != type([])
-      " host didn't return a spec list, indicates a failure while loading a
-      " plugin
-      continue
-    endif
-    call add(lines, "call remote#host#RegisterPlugin('".a:host
-          \ ."', '".path."', [")
-    for spec in specs
-      call add(lines, "      \\ ".string(spec).",")
-    endfor
-    call add(lines, "     \\ ])")
-  endfor
-  echomsg printf("remote/host: %s host registered plugins %s",
-        \ a:host, string(map(copy(paths), "fnamemodify(v:val, ':t')")))
-
-  " Delete the temporary host clone
-  call rpcstop(s:hosts[host_id].channel)
-  call remove(s:hosts, host_id)
-  call remove(s:plugins_for_host, host_id)
-  return lines
-endfunction
-
-
-function! s:UpdateRemotePlugins() abort
-  let commands = []
-  let hosts = keys(s:hosts)
-  for host in hosts
-    if has_key(s:plugin_patterns, host)
-      try
-        let commands +=
-              \   ['" '.host.' plugins']
-              \ + s:RegistrationCommands(host)
-              \ + ['', '']
-      catch
-        echomsg v:throwpoint
-        echomsg v:exception
-      endtry
-    endif
-  endfor
-  call writefile(commands, s:remote_plugins_manifest)
-  echomsg printf('remote/host: generated the manifest file in "%s"',
-        \ s:remote_plugins_manifest)
-endfunction
-
-
-command! UpdateRemotePlugins call s:UpdateRemotePlugins()
+command! UpdateRemotePlugins call remote#command#UpdateRemotePlugins(
+      \ s:hosts, s:plugin_patterns, s:remote_plugins_manifest,
+      \ s:plugins_for_host)
 
 
 let s:plugins_for_host = {}
@@ -199,38 +139,8 @@ endfunction
 
 " Registration of standard hosts
 
-" Python/Python3 {{{
-function! s:RequirePythonHost(host) abort
-  let ver = (a:host.orig_name ==# 'python') ? 2 : 3
-
-  " Python host arguments
-  let args = ['-c', 'import sys; sys.path.remove(""); import neovim; neovim.start_host()']
-
-  " Collect registered Python plugins into args
-  let python_plugins = remote#host#PluginsForHost(a:host.name)
-  for plugin in python_plugins
-    call add(args, plugin.path)
-  endfor
-
-  try
-    let channel_id = rpcstart((ver == '2' ?
-          \ provider#python#Prog() : provider#python3#Prog()), args)
-    if rpcrequest(channel_id, 'poll') == 'ok'
-      return channel_id
-    endif
-  catch
-    echomsg v:throwpoint
-    echomsg v:exception
-  endtry
-  throw 'Failed to load '. a:host.orig_name . ' host. '.
-    \ 'You can try to see what happened '.
-    \ 'by starting Neovim with the environment variable '.
-    \ '$NVIM_PYTHON_LOG_FILE set to a file and opening '.
-    \ 'the generated log file. Also, the host stderr will be available '.
-    \ 'in Neovim log, so it may contain useful information. '.
-    \ 'See also ~/.nvimlog.'
-endfunction
-
-call remote#host#Register('python', '*.py', function('s:RequirePythonHost'))
-call remote#host#Register('python3', '*.py', function('s:RequirePythonHost'))
-" }}}
+" Python/Python3
+call remote#host#Register('python', '*.py',
+      \ function('provider#pythonx#Require'))
+call remote#host#Register('python3', '*.py',
+      \ function('provider#pythonx#Require'))
