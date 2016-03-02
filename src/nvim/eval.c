@@ -289,12 +289,7 @@ typedef enum {
       .di_tv = { .v_type = type }, \
       .di_flags = 0, \
     }, \
-    .vv_filler = {( \
-        STATIC_ASSERT_EXPR( \
-            (sizeof(name) - 1 <= sizeof(vimvars[0].vv_filler)), \
-            "Vim variable name is too long, adjust vv_filler size"), \
-        0 \
-    )}, \
+    .vv_filler = { 0 }, \
     .vv_flags = flags, \
   }
 
