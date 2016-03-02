@@ -6167,16 +6167,14 @@ int has_format_option(int x)
   return vim_strchr(curbuf->b_p_fo, x) != NULL;
 }
 
-/*
- * Return TRUE if "x" is present in 'shortmess' option, or
- * 'shortmess' contains 'a' and "x" is present in SHM_A.
- */
-int shortmess(int x)
+/// @returns true if "x" is present in 'shortmess' option, or
+/// 'shortmess' contains 'a' and "x" is present in SHM_ALL_ABBREVIATIONS.
+bool shortmess(int x)
 {
   return p_shm != NULL &&
-         (   vim_strchr(p_shm, x) != NULL
-             || (vim_strchr(p_shm, 'a') != NULL
-                 && vim_strchr((char_u *)SHM_A, x) != NULL));
+         (vim_strchr(p_shm, x) != NULL
+          || (vim_strchr(p_shm, 'a') != NULL
+              && vim_strchr((char_u *)SHM_ALL_ABBREVIATIONS, x) != NULL));
 }
 
 /*

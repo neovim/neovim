@@ -151,26 +151,41 @@
 
 #define COCU_ALL        "nvic"          /* flags for 'concealcursor' */
 
-/* characters for p_shm option: */
-#define SHM_RO          'r'             /* readonly */
-#define SHM_MOD         'm'             /* modified */
-#define SHM_FILE        'f'             /* (file 1 of 2) */
-#define SHM_LAST        'i'             /* last line incomplete */
-#define SHM_TEXT        'x'             /* tx instead of textmode */
-#define SHM_LINES       'l'             /* "L" instead of "lines" */
-#define SHM_NEW         'n'             /* "[New]" instead of "[New file]" */
-#define SHM_WRI         'w'             /* "[w]" instead of "written" */
-#define SHM_A           "rmfixlnw"      /* represented by 'a' flag */
-#define SHM_WRITE       'W'             /* don't use "written" at all */
-#define SHM_TRUNC       't'             /* trunctate file messages */
-#define SHM_TRUNCALL    'T'             /* trunctate all messages */
-#define SHM_OVER        'o'             /* overwrite file messages */
-#define SHM_OVERALL     'O'             /* overwrite more messages */
-#define SHM_SEARCH      's'             /* no search hit bottom messages */
-#define SHM_ATTENTION   'A'             /* no ATTENTION messages */
-#define SHM_INTRO       'I'             /* intro messages */
-#define SHM_COMPLETIONMENU 'c'          // completion menu messages
-#define SHM_ALL         "rmfixlnwaWtToOsAIc" /* all possible flags for 'shm' */
+/// characters for p_shm option:
+enum {
+  SHM_RO             = 'r',  ///< Readonly.
+  SHM_MOD            = 'm',  ///< Modified.
+  SHM_FILE           = 'f',  ///< (file 1 of 2)
+  SHM_LAST           = 'i',  ///< Last line incomplete.
+  SHM_TEXT           = 'x',  ///< Tx instead of textmode.
+  SHM_LINES          = 'l',  ///< "L" instead of "lines".
+  SHM_NEW            = 'n',  ///< "[New]" instead of "[New file]".
+  SHM_WRI            = 'w',  ///< "[w]" instead of "written".
+  SHM_ABBREVIATIONS  = 'a',  ///< Use abbreviations from #SHM_ALL_ABBREVIATIONS.
+  SHM_WRITE          = 'W',  ///< Don't use "written" at all.
+  SHM_TRUNC          = 't',  ///< Trunctate file messages.
+  SHM_TRUNCALL       = 'T',  ///< Trunctate all messages.
+  SHM_OVER           = 'o',  ///< Overwrite file messages.
+  SHM_OVERALL        = 'O',  ///< Overwrite more messages.
+  SHM_SEARCH         = 's',  ///< No search hit bottom messages.
+  SHM_ATTENTION      = 'A',  ///< No ATTENTION messages.
+  SHM_INTRO          = 'I',  ///< Intro messages.
+  SHM_COMPLETIONMENU = 'c',  ///< Completion menu messages.
+  SHM_RECORDING      = 'q',  ///< Short recording message.
+};
+/// Represented by 'a' flag.
+#define SHM_ALL_ABBREVIATIONS ((char_u[]) { \
+  SHM_RO, SHM_MOD, SHM_FILE, SHM_LAST, SHM_TEXT, SHM_LINES, SHM_NEW, SHM_WRI, \
+  0, \
+})
+/// All possible flags for 'shm'.
+#define SHM_ALL ((char_u[]) { \
+  SHM_RO, SHM_MOD, SHM_FILE, SHM_LAST, SHM_TEXT, SHM_LINES, SHM_NEW, SHM_WRI, \
+  SHM_ABBREVIATIONS, SHM_WRITE, SHM_TRUNC, SHM_TRUNCALL, SHM_OVER, \
+  SHM_OVERALL, SHM_SEARCH, SHM_ATTENTION, SHM_INTRO, SHM_COMPLETIONMENU, \
+  SHM_RECORDING, \
+  0, \
+})
 
 /* characters for p_go: */
 #define GO_ASEL         'a'             /* autoselect */

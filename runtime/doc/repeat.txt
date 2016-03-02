@@ -109,6 +109,12 @@ q{0-9a-zA-Z"}		Record typed characters into register {0-9a-zA-Z"}
 			while executing a register, and it doesn't work inside
 			a mapping and |:normal|.
 
+			Note: If the register being used for recording is also
+			used for |y| and |p| the result is most likely not
+			what is expected, because the put will paste the
+			recorded macro and the yank will overwrite the
+			recorded macro.
+
 q			Stops recording.
 			Implementation note: The 'q' that stops recording is
 			not stored in the register, unless it was the result

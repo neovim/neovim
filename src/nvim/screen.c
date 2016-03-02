@@ -6780,8 +6780,8 @@ int showmode(void)
     if (Recording
         && edit_submode == NULL             /* otherwise it gets too long */
         ) {
-      MSG_PUTS_ATTR(_("recording"), attr);
-      need_clear = TRUE;
+      recording_mode(attr);
+      need_clear = true;
     }
 
     mode_displayed = TRUE;
@@ -6820,23 +6820,30 @@ static void msg_pos_mode(void)
   msg_row = Rows - 1;
 }
 
-/*
- * Delete mode message.  Used when ESC is typed which is expected to end
- * Insert mode (but Insert mode didn't end yet!).
- * Caller should check "mode_displayed".
- */
-void unshowmode(int force)
+/// Delete mode message.  Used when ESC is typed which is expected to end
+/// Insert mode (but Insert mode didn't end yet!).
+/// Caller should check "mode_displayed".
+void unshowmode(bool force)
 {
-  /*
-   * Don't delete it right now, when not redrawing or inside a mapping.
-   */
-  if (!redrawing() || (!force && char_avail() && !KeyTyped))
-    redraw_cmdline = TRUE;              /* delete mode later */
-  else {
+  // Don't delete it right now, when not redrawing or inside a mapping.
+  if (!redrawing() || (!force && char_avail() && !KeyTyped)) {
+    redraw_cmdline = true;  // delete mode later
+  } else {
     msg_pos_mode();
-    if (Recording)
-      MSG_PUTS_ATTR(_("recording"), hl_attr(HLF_CM));
+    if (Recording) {
+      recording_mode(hl_attr(HLF_CM));
+    }
     msg_clr_eos();
+  }
+}
+
+static void recording_mode(int attr)
+{
+  MSG_PUTS_ATTR(_("recording"), attr);
+  if (!shortmess(SHM_RECORDING)) {
+    char_u s[4];
+    vim_snprintf((char *)s, ARRAY_SIZE(s), " @%c", Recording);
+    MSG_PUTS_ATTR(s, attr);
   }
 }
 

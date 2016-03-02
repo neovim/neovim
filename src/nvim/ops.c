@@ -836,12 +836,13 @@ int do_record(int c)
   yankreg_T  *old_y_previous;
   int retval;
 
-  if (Recording == FALSE) {         /* start recording */
-    /* registers 0-9, a-z and " are allowed */
-    if (c < 0 || (!ASCII_ISALNUM(c) && c != '"'))
+  if (Recording == false) {
+    // start recording
+    // registers 0-9, a-z and " are allowed
+    if (c < 0 || (!ASCII_ISALNUM(c) && c != '"')) {
       retval = FAIL;
-    else {
-      Recording = TRUE;
+    } else {
+      Recording = c;
       showmode();
       regname = c;
       retval = OK;
