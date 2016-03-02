@@ -160,6 +160,7 @@ static char *e_listdictarg = N_(
 static char *e_emptykey = N_("E713: Cannot use empty key for Dictionary");
 static char *e_listreq = N_("E714: List required");
 static char *e_dictreq = N_("E715: Dictionary required");
+static char *e_strreq = N_("E114: String required");
 static char *e_toomanyarg = N_("E118: Too many arguments for function: %s");
 static char *e_dictkey = N_("E716: Key not present in Dictionary: %s");
 static char *e_funcexts = N_(
@@ -15291,43 +15292,51 @@ static void f_setline(typval_T *argvars, typval_T *rettv)
 ///                         replace its content or create a new one.
 /// @param[in]  title_arg  New list title. Defaults to caller function name.
 /// @param[out]  rettv  Return value: 0 in case of success, -1 otherwise.
-static void set_qf_ll_list(win_T *wp, typval_T *list_arg, typval_T *action_arg,
-                           typval_T *title_arg, typval_T *rettv)
-  FUNC_ATTR_NONNULL_ARG(2, 3, 4, 5)
+static void set_qf_ll_list(win_T *wp, typval_T *args, typval_T *rettv)
+  FUNC_ATTR_NONNULL_ARG(2, 3)
 {
-  char_u      *act;
-  int action = ' ';
   char_u *title = NULL;
-
+  int action = ' ';
   rettv->vval.v_number = -1;
 
-  if (list_arg->v_type != VAR_LIST)
+  typval_T *list_arg = &args[0];
+  if (list_arg->v_type != VAR_LIST) {
     EMSG(_(e_listreq));
-  else {
-    list_T  *l = list_arg->vval.v_list;
+    return;
+  }
 
-    if (action_arg->v_type != VAR_UNKNOWN) {
-      act = get_tv_string_chk(action_arg);
-      if (act == NULL)
-        return;                 /* type error; errmsg already given */
-      if (*act == 'a' || *act == 'r')
-        action = *act;
-    }
+  typval_T *action_arg = &args[1];
+  if (action_arg->v_type == VAR_UNKNOWN) {
+    // Option argument was not given.
+    goto skip_args;
+  } else if (action_arg->v_type != VAR_STRING) {
+    EMSG(_(e_strreq));
+    return;
+  }
+  char_u *act = get_tv_string_chk(action_arg);
+  if (*act == 'a' || *act == 'r') {
+    action = *act;
+  }
 
-    if (title_arg->v_type == VAR_STRING) {
-      title = get_tv_string_chk(title_arg);
-      if (!title) {
-        return;  // type error; errmsg already given
-      }
-    }
+  typval_T *title_arg = &args[2];
+  if (title_arg->v_type == VAR_UNKNOWN) {
+    // Option argument was not given.
+    goto skip_args;
+  }
+  title = get_tv_string_chk(title_arg);
+  if (!title) {
+    // Type error. Error already printed by get_tv_string_chk().
+    return;
+  }
 
-    if (!title) {
-      title = (char_u*)(wp ? "setloclist()" : "setqflist()");
-    }
+skip_args:
+  if (!title) {
+    title = (char_u*)(wp ? "setloclist()" : "setqflist()");
+  }
 
-    if (l && set_errorlist(wp, l, action, title) == OK) {
-      rettv->vval.v_number = 0;
-    }
+  list_T *l = list_arg->vval.v_list;
+  if (l && set_errorlist(wp, l, action, title) == OK) {
+    rettv->vval.v_number = 0;
   }
 }
 
@@ -15342,7 +15351,7 @@ static void f_setloclist(typval_T *argvars, typval_T *rettv)
 
   win = find_win_by_nr(&argvars[0], NULL);
   if (win != NULL) {
-    set_qf_ll_list(win, &argvars[1], &argvars[2], &argvars[3], rettv);
+    set_qf_ll_list(win, &argvars[1], rettv);
   }
 }
 
@@ -15479,7 +15488,7 @@ static void f_setpos(typval_T *argvars, typval_T *rettv)
  */
 static void f_setqflist(typval_T *argvars, typval_T *rettv)
 {
-  set_qf_ll_list(NULL, &argvars[0], &argvars[1], &argvars[2], rettv);
+  set_qf_ll_list(NULL, argvars, rettv);
 }
 
 /*
