@@ -4624,10 +4624,8 @@ void win_drag_vsep_line(win_T *dragwin, int offset)
 
 #define FRACTION_MULT   16384L
 
-/*
- * Set wp->w_fraction for the current w_wrow and w_height.
- */
-static void set_fraction(win_T *wp)
+// Set wp->w_fraction for the current w_wrow and w_height.
+void set_fraction(win_T *wp)
 {
   wp->w_fraction = ((long)wp->w_wrow * FRACTION_MULT + wp->w_height / 2)
                    / (long)wp->w_height;
