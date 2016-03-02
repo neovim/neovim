@@ -8818,12 +8818,12 @@ static void f_cscope_connection(typval_T *argvars, typval_T *rettv)
   rettv->vval.v_number = cs_connection(num, dbpath, prepend);
 }
 
-/*
- * "cursor(lnum, col)" function
- *
- * Moves the cursor to the specified line and column.
- * Returns 0 when the position could be set, -1 otherwise.
- */
+/// "cursor(lnum, col)" function, or
+/// "cursor(list)"
+///
+/// Moves the cursor to the specified line and column.
+///
+/// @returns 0 when the position could be set, -1 otherwise.
 static void f_cursor(typval_T *argvars, typval_T *rettv)
 {
   long line, col;
@@ -8835,8 +8835,10 @@ static void f_cursor(typval_T *argvars, typval_T *rettv)
     colnr_T curswant = -1;
 
     if (list2fpos(argvars, &pos, NULL, &curswant) == FAIL) {
+      EMSG(_(e_invarg));
       return;
     }
+
     line = pos.lnum;
     col = pos.col;
     coladd = pos.coladd;
