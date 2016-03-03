@@ -1,4 +1,4 @@
-*editing.txt*   For Vim version 7.4.  Last change: 2015 Apr 18
+*editing.txt*   For Vim version 7.4.  Last change: 2015 Jul 21
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -397,6 +397,8 @@ does apply like to other wildcards.
 If the expression returns a string then names are to be separated with line
 breaks.  When the result is a |List| then each item is used as a name.  Line
 breaks also separate names.
+Note that such expressions are only supported in places where a filename is
+expected as an argument to an Ex-command.
 
 							*++opt* *[++opt]*
 The [++opt] argument can be used to force the value of 'fileformat',
