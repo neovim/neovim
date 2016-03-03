@@ -222,6 +222,10 @@ g8			Print the hex values of the bytes used in the
 			modified, but can be forced with "!".  See |termopen()|
 			and |nvim-terminal-emulator| for more information.
 
+			To switch to terminal mode automatically:
+>
+			      autocmd BufEnter term://* startinsert
+<
 							*:!cmd* *:!* *E34*
 :!{cmd}			Execute {cmd} with 'shell'. See also |:terminal|.
 
