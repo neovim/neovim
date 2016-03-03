@@ -1,4 +1,4 @@
-*eval.txt*	For Vim version 7.4.  Last change: 2015 Jun 26
+*eval.txt*	For Vim version 7.4.  Last change: 2015 Jul 10
 
 
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
@@ -1491,7 +1491,9 @@ v:hlsearch	Variable that indicates whether search highlighting is on.
 		this variable to zero acts like the |:nohlsearch| command,
 		setting it to one acts like >
 			let &hlsearch = &hlsearch
-<
+<		Note that the value is restored when returning from a
+		function. |function-search-undo|.
+
 					*v:insertmode* *insertmode-variable*
 v:insertmode	Used for the |InsertEnter| and |InsertChange| autocommand
 		events.  Values:
@@ -5176,7 +5178,7 @@ readfile({fname} [, {binary} [, {max}]])
 		separated with CR will result in a single long line (unless a
 		NL appears somewhere).
 		All NUL characters are replaced with a NL character.
-		When {binary/append} contains "b" binary mode is used:
+		When {binary} contains "b" binary mode is used:
 		- When the last line ends in a NL an extra empty list item is
 		  added.
 		- No CR characters are removed.
@@ -6199,6 +6201,24 @@ strchars({expr} [, {skipcc}])					*strchars()*
 		counted separately.
 		When {skipcc} set to 1, Composing characters are ignored.
 		Also see |strlen()|, |strdisplaywidth()| and |strwidth()|.
+
+		
+		{skipcc} is only available after 7.4.755.  For backward
+		compatibility, you can define a wrapper function: >
+		    if has("patch-7.4.755")
+		      function s:strchars(str, skipcc)
+			return strchars(a:str, a:skipcc)
+		      endfunction
+		    else
+		      function s:strchars(str, skipcc)
+			if a:skipcc
+			  return strlen(substitute(a:str, ".", "x", "g"))
+			else
+			  return strchars(a:str)
+			endif
+		      endfunction
+		    endif
+<
 
 strdisplaywidth({expr}[, {col}])			*strdisplaywidth()*
 		The result is a Number, which is the number of display cells

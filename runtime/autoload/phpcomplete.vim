@@ -3,7 +3,7 @@
 " Maintainer:	Dávid Szabó ( complex857 AT gmail DOT com )
 " Previous Maintainer:	Mikolaj Machowski ( mikmach AT wp DOT pl )
 " URL: https://github.com/shawncplus/phpcomplete.vim
-" Last Change:  2015 Apr 02
+" Last Change:  2015 Jul 03
 "
 "	OPTIONS:
 "
@@ -1659,7 +1659,7 @@ function! phpcomplete#GetClassName(start_line, context, current_namespace, impor
 
 			" function declaration line
 			if line =~? 'function\(\s\+'.function_name_pattern.'\)\?\s*('
-				let function_lines = join(reverse(lines), " ")
+				let function_lines = join(reverse(copy(lines)), " ")
 				" search for type hinted arguments
 				if function_lines =~? 'function\(\s\+'.function_name_pattern.'\)\?\s*(.\{-}'.class_name_pattern.'\s\+'.object && !object_is_array
 					let f_args = matchstr(function_lines, '\cfunction\(\s\+'.function_name_pattern.'\)\?\s*(\zs.\{-}\ze)')
@@ -1700,7 +1700,7 @@ function! phpcomplete#GetClassName(start_line, context, current_namespace, impor
 
 				" try to find the next non-comment or string ";" char
 				let start_col = match(line, '^\s*'.object.'\C\s*=\zs&\?\s\+\(clone\)\?\s*'.variable_name_pattern)
-				let filelines = reverse(lines)
+				let filelines = reverse(copy(lines))
 				let [pos, char] = s:getNextCharWithPos(filelines, [a:start_line - i - 1, start_col])
 				let chars_read = 1
 				let last_pos = pos
@@ -1876,7 +1876,7 @@ function! phpcomplete#GetClassLocation(classname, namespace) " {{{
 	let i = 1
 	while i < line('.')
 		let line = getline(line('.')-i)
-		if line =~? '^\s*\(abstract\s\+\|final\s\+\)*\s*\(class\|interface\|trait\)\s*'.a:classname.'\(\s\+\|$\)' && tolower(current_namespace) == search_namespace
+		if line =~? '^\s*\(abstract\s\+\|final\s\+\)*\s*\(class\|interface\|trait\)\s*'.a:classname.'\(\s\+\|$\|{\)' && tolower(current_namespace) == search_namespace
 			return expand('%:p')
 		else
 			let i += 1
@@ -2123,7 +2123,7 @@ function! phpcomplete#GetClassContentsStructure(file_path, file_lines, class_nam
 			elseif classlocation != '' && filereadable(classlocation)
 				let full_file_path = fnamemodify(classlocation, ':p')
 				let result += phpcomplete#GetClassContentsStructure(full_file_path, readfile(full_file_path), class)
-			elseif tolower(current_namespace) == tolower(namespace)
+			elseif tolower(current_namespace) == tolower(namespace) && match(join(a:file_lines, "\n"), '\c\(class\|interface\|trait\)\_s\+'.class.'\(\>\|$\)') != -1
 				" try to find the declaration in the same file.
 				let result += phpcomplete#GetClassContentsStructure(full_file_path, a:file_lines, class)
 			endif
@@ -2407,8 +2407,8 @@ function! phpcomplete#GetCurrentNameSpace(file_lines) " {{{
 	while i < file_length
 		let line = file_lines[i]
 
-		if line =~? '^\s*namespace\s*'.namespace_name_pattern
-			let current_namespace = matchstr(line, '\c^\s*namespace\s*\zs'.namespace_name_pattern.'\ze')
+		if line =~? '^\(<?php\)\?\s*namespace\s*'.namespace_name_pattern
+			let current_namespace = matchstr(line, '\c^\(<?php\)\?\s*namespace\s*\zs'.namespace_name_pattern.'\ze')
 			break
 		endif
 
@@ -2571,7 +2571,7 @@ endfunction
 
 function! phpcomplete#ExpandClassName(classname, current_namespace, imports) " {{{
 	" if there's an imported class, just use that class's information
-	if has_key(a:imports, a:classname) && (a:imports[a:classname].kind == 'c' || a:imports[a:classname].kind == 'i')
+	if has_key(a:imports, a:classname) && (a:imports[a:classname].kind == 'c' || a:imports[a:classname].kind == 'i' || a:imports[a:classname].kind == 't')
 		let namespace = has_key(a:imports[a:classname], 'namespace') ? a:imports[a:classname].namespace : ''
 		return [a:imports[a:classname].name, namespace]
 	endif

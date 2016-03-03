@@ -1,4 +1,4 @@
-*diff.txt*      For Vim version 7.4.  Last change: 2015 Feb 03
+*diff.txt*      For Vim version 7.4.  Last change: 2015 Jul 03
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -124,8 +124,9 @@ file for a moment and come back to the same file and be in diff mode again.
 		if the current window does not have 'diff' set then no options
 		in it are changed.
 
-The ":diffoff" command resets the relevant options to the values they had when
-using |:diffsplit|, |:diffpatch| , |:diffthis|. or starting Vim in diff mode.
+The `:diffoff` command resets the relevant options to the values they had when
+using `:diffsplit`, `:diffpatch` , `:diffthis`. or starting Vim in diff mode.
+When using `:diffoff` twice the last saved values are restored.
 Otherwise they are set to their default value:
 
 	'diff'		off
