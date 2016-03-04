@@ -762,6 +762,10 @@ void clearFolding(win_T *win)
  */
 void foldUpdate(win_T *wp, linenr_T top, linenr_T bot)
 {
+  if (compl_busy) {
+    return;
+  }
+
   fold_T      *fp;
   if (wp->w_buffer->terminal) {
     return;

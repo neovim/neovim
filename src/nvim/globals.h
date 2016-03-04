@@ -214,6 +214,10 @@ EXTERN int compl_length INIT(= 0);
  * stop looking for matches. */
 EXTERN int compl_interrupted INIT(= FALSE);
 
+// Set when doing something for completion that may call edit() recursively,
+// which is not allowed. Also used to disable folding during completion
+EXTERN int compl_busy INIT(= false);
+
 /* List of flags for method of completion. */
 EXTERN int compl_cont_status INIT(= 0);
 # define CONT_ADDING    1       /* "normal" or "adding" expansion */

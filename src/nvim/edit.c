@@ -165,10 +165,6 @@ static int compl_restarting = FALSE;            /* don't insert match */
  * FALSE the word to be completed must be located. */
 static int compl_started = FALSE;
 
-/* Set when doing something for completion that may call edit() recursively,
- * which is not allowed. */
-static int compl_busy = FALSE;
-
 static int compl_matches = 0;
 static char_u     *compl_pattern = NULL;
 static int compl_direction = FORWARD;
