@@ -32,8 +32,9 @@ static void vim_maketempdir(void)
   char_u path[TEMP_FILE_PATH_MAXLEN];
   for (size_t i = 0; i < ARRAY_SIZE(temp_dirs); ++i) {
     // Expand environment variables, leave room for "/nvimXXXXXX/999999999"
+    // Skip the directory check if the expansion fails.
     expand_env((char_u *)temp_dirs[i], template, TEMP_FILE_PATH_MAXLEN - 22);
-    if (!os_isdir(template)) {  // directory doesn't exist
+    if (template[0] == '$' || !os_isdir(template)) {
       continue;
     }
 
