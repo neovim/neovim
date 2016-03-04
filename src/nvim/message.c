@@ -1602,30 +1602,29 @@ static void msg_puts_display(char_u *str, int maxlen, int attr, int recurse)
   int did_last_char;
 
   did_wait_return = FALSE;
+
+  const int bottom_row = Rows - 1;
   while ((maxlen < 0 || (int)(s - str) < maxlen) && *s != NUL) {
     /*
      * We are at the end of the screen line when:
      * - When outputting a newline.
      * - When outputting a character in the last column.
      */
-    if (!recurse && msg_row >= Rows - 1 && (*s == '\n' || (
-                                              cmdmsg_rl
-                                              ? (
-                                                msg_col <= 1
-                                                || (*s == TAB && msg_col <= 7)
-                                                || (has_mbyte &&
-                                                    (*mb_ptr2cells)(s) > 1 &&
-                                                    msg_col <= 2)
-                                                )
-                                              :
-                                              (msg_col + t_col >= Columns - 1
-                                               || (*s == TAB && msg_col +
-                                                   t_col >= ((Columns - 1) & ~7))
-                                               || (has_mbyte &&
-                                                   (*mb_ptr2cells)(s) > 1
-                                                   && msg_col + t_col >=
-                                                   Columns - 2)
-                                              )))) {
+    const bool msg_row_at_end = msg_row >= bottom_row;
+
+    const bool msg_col_at_start =
+      (msg_col <= 1 ||
+      (*s == TAB && msg_col <= 7) ||
+      (has_mbyte && (*mb_ptr2cells)(s) > 1 && msg_col <= 2));
+
+    const bool msg_col_at_end =
+      (msg_col + t_col >= Columns - 1 ||
+      (*s == TAB && msg_col + t_col >= ((Columns - 1) & ~7)) ||
+      (has_mbyte && (*mb_ptr2cells)(s) > 1 && msg_col + t_col >= Columns - 2));
+
+    if (!recurse &&
+        msg_row_at_end &&
+        (*s == '\n' || (cmdmsg_rl ? msg_col_at_start : msg_col_at_end))) {
       /*
        * The screen is scrolled up when at the last row (some terminals
        * scroll automatically, some don't.  To avoid problems we scroll
@@ -1647,9 +1646,7 @@ static void msg_puts_display(char_u *str, int maxlen, int attr, int recurse)
         msg_col = Columns - 1;
 
       /* Display char in last column before showing more-prompt. */
-      if (*s >= ' '
-          && !cmdmsg_rl
-          ) {
+      if (*s >= ' ' && !cmdmsg_rl) {
         if (has_mbyte) {
           if (enc_utf8 && maxlen >= 0)
             /* avoid including composing chars after the end */
@@ -1695,13 +1692,13 @@ static void msg_puts_display(char_u *str, int maxlen, int attr, int recurse)
         continue;
     }
 
-    wrap = *s == '\n'
-           || msg_col + t_col >= Columns
-           || (has_mbyte && (*mb_ptr2cells)(s) > 1
-               && msg_col + t_col >= Columns - 1)
-    ;
-    if (t_col > 0 && (wrap || *s == '\r' || *s == '\b'
-                      || *s == '\t' || *s == BELL))
+    wrap =
+      *s == '\n' ||
+      msg_col + t_col >= Columns ||
+      (has_mbyte && (*mb_ptr2cells)(s) > 1 && msg_col + t_col >= Columns - 1);
+
+    if (t_col > 0 &&
+       (wrap || *s == '\r' || *s == '\b' || *s == '\t' || *s == BELL))
       /* output any postponed text */
       t_puts(&t_col, t_s, s, attr);
 
