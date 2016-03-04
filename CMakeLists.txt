@@ -310,6 +310,9 @@ include_directories(SYSTEM ${LIBUV_INCLUDE_DIRS})
 find_package(Msgpack 1.0.0 REQUIRED)
 include_directories(SYSTEM ${MSGPACK_INCLUDE_DIRS})
 
+find_package(LuaJit REQUIRED)
+include_directories(SYSTEM ${LUAJIT_INCLUDE_DIRS})
+
 if(UNIX)
   option(FEAT_TUI "Enable the Terminal UI" ON)
 else()

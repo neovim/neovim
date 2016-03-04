@@ -45,7 +45,16 @@ c_proto = Ct(
 grammar = Ct((c_proto + c_comment + c_preproc + ws) ^ 1)
 
 -- we need at least 4 arguments since the last two are output files
-assert(#arg >= 3)
+if arg[1] == '--help' then
+  print('Usage: genmsgpack.lua args')
+  print('Args: 1: source directory')
+  print('      2: dispatch output file (dispatch_wrappers.generated.h)')
+  print('      3: functions metadata output file (funcs_metadata.generated.h)')
+  print('      4: API metadata output file (api_metadata.mpack)')
+  print('      5: lua C bindings output file (msgpack_lua_c_bindings.generated.c)')
+  print('      rest: C files where API functions are defined')
+end
+assert(#arg >= 4)
 functions = {}
 
 local nvimsrcdir = arg[1]
@@ -56,17 +65,18 @@ package.path = nvimsrcdir .. '/?.lua;' .. package.path
 headers = {}
 
 -- output h file with generated dispatch functions
-dispatch_outputf = arg[#arg-2]
+dispatch_outputf = arg[2]
 -- output h file with packed metadata
-funcs_metadata_outputf = arg[#arg-1]
+funcs_metadata_outputf = arg[3]
 -- output metadata mpack file, for use by other build scripts
-mpack_outputf = arg[#arg]
+mpack_outputf = arg[4]
+lua_c_bindings_outputf = arg[5]
 
 -- set of function names, used to detect duplicates
 function_names = {}
 
 -- read each input file, parse and append to the api metadata
-for i = 2, #arg - 3 do
+for i = 6, #arg do
   local full_path = arg[i]
   local parts = {}
   for part in string.gmatch(full_path, '[^/]+') do
@@ -332,3 +342,128 @@ output:close()
 mpack_output = io.open(mpack_outputf, 'wb')
 mpack_output:write(mpack.pack(functions))
 mpack_output:close()
+
+local function include_headers(output, headers)
+  for i = 1, #headers do
+    if headers[i]:sub(-12) ~= '.generated.h' then
+      output:write('\n#include "nvim/'..headers[i]..'"')
+    end
+  end
+end
+
+local function write_shifted_output(output, str)
+  str = str:gsub('\n  ', '\n')
+  str = str:gsub('^  ', '')
+  str = str:gsub(' +$', '')
+  output:write(str)
+end
+
+-- start building lua output
+output = io.open(lua_c_bindings_outputf, 'wb')
+
+output:write([[
+#include <lua.h>
+#include <lualib.h>
+#include <lauxlib.h>
+
+#include "nvim/func_attr.h"
+#include "nvim/api/private/defs.h"
+#include "nvim/viml/executor/converter.h"
+]])
+include_headers(output, headers)
+output:write('\n')
+
+lua_c_functions = {}
+
+local function process_function(fn)
+  lua_c_function_name = ('nlua_msgpack_%s'):format(fn.name)
+  write_shifted_output(output, string.format([[
+
+  static int %s(lua_State *lstate)
+  {
+    Error err = {.set = false};
+  ]], lua_c_function_name))
+  lua_c_functions[#lua_c_functions + 1] = {
+    binding=lua_c_function_name,
+    api=fn.name
+  }
+  cparams = ''
+  for j, param in ipairs(fn.parameters) do
+    cparam = string.format('arg%u', j)
+    if param[1]:match('^ArrayOf') then
+      param_type = 'Array'
+    else
+      param_type = param[1]
+    end
+    write_shifted_output(output, string.format([[
+    %s %s = nlua_pop_%s(lstate, &err);
+    if (err.set) {
+      lua_pushstring(lstate, err.msg);
+      return lua_error(lstate);
+    }
+    ]], param[1], cparam, param_type))
+    cparams = cparams .. cparam .. ', '
+  end
+  if fn.receives_channel_id then
+    cparams = 'INTERNAL_CALL, ' .. cparams
+  end
+  if fn.can_fail then
+    cparams = cparams .. '&err'
+  else
+    cparams = cparams:gsub(', $', '')
+  end
+  local name = fn.impl_name or fn.name
+  if fn.return_type ~= 'void' then
+    if fn.return_type:match('^ArrayOf') then
+      return_type = 'Array'
+    else
+      return_type = fn.return_type
+    end
+    write_shifted_output(output, string.format([[
+    %s ret = %s(%s);
+    if (err.set) {
+      lua_pushstring(lstate, err.msg);
+      return lua_error(lstate);
+    }
+    nlua_push_%s(lstate, ret);
+    return 1;
+    ]], fn.return_type, name, cparams, return_type))
+  else
+    write_shifted_output(output, string.format([[
+    %s(%s);
+    if (err.set) {
+      lua_pushstring(lstate, err.msg);
+      return lua_error(lstate);
+    }
+    return 0;
+    ]], name, cparams))
+  end
+  write_shifted_output(output, [[
+  }
+  ]])
+end
+
+for _, fn in ipairs(functions) do
+  if not fn.noeval then
+    process_function(fn)
+  end
+end
+
+output:write(string.format([[
+void nlua_add_api_functions(lua_State *lstate)
+  FUNC_ATTR_NONNULL_ALL
+{
+  lua_createtable(lstate, 0, %u);
+]], #lua_c_functions))
+for _, func in ipairs(lua_c_functions) do
+  output:write(string.format([[
+  lua_pushcfunction(lstate, &%s);
+  lua_setfield(lstate, -2, "%s");
+  ]], func.binding, func.api))
+end
+output:write([[
+  lua_setfield(lstate, -2, "api");
+}
+]])
+
+output:close()

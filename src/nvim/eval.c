@@ -95,6 +95,7 @@
 #include "nvim/lib/khash.h"
 #include "nvim/lib/queue.h"
 #include "nvim/eval/typval_encode.h"
+#include "nvim/viml/executor/executor.h"
 
 #define DICT_MAXNEST 100        /* maximum nesting of lists and dicts */
 
@@ -13374,6 +13375,48 @@ static void get_maparg(typval_T *argvars, typval_T *rettv, int exact)
       xfree(mapmode);
     }
   }
+}
+
+/// luaeval() function implementation
+static void f_luaeval(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+  FUNC_ATTR_NONNULL_ALL
+{
+  char *const str = (char *) get_tv_string(&argvars[0]);
+  if (str == NULL) {
+    return;
+  }
+
+  Object arg;
+  if (argvars[1].v_type == VAR_UNKNOWN) {
+    arg = NIL;
+  } else {
+    arg = vim_to_object(&argvars[1]);
+  }
+
+  // TODO(ZyX-I): Create function which converts lua objects directly to VimL
+  //              objects, not to API objects.
+  Error err;
+  String err_str;
+  Object ret = executor_eval_lua(cstr_as_string(str), arg, &err, &err_str);
+  if (err.set) {
+    if (err_str.size) {
+      EMSG3(_("E971: Failed to eval lua string: %s (%s)"), err.msg,
+            err_str.data);
+    } else {
+      EMSG2(_("E971: Failed to eval lua string: %s"), err.msg);
+    }
+  }
+
+  api_free_string(err_str);
+
+  if (!err.set) {
+    if (!object_to_vim(ret, rettv, &err)) {
+      EMSG2(_("E972: Failed to convert resulting API object to VimL: %s"),
+            err.msg);
+    }
+  }
+
+  api_free_object(ret);
 }
 
 /*

@@ -11,11 +11,10 @@ endif()
 endif()
 
 set(GENERATED_DIR ${PROJECT_BINARY_DIR}/src/nvim/auto)
-set(DISPATCH_GENERATOR ${PROJECT_SOURCE_DIR}/scripts/gendispatch.lua)
-file(GLOB API_HEADERS api/*.h)
-file(GLOB MSGPACK_RPC_HEADERS msgpack_rpc/*.h)
+set(MSGPACK_GENERATOR ${PROJECT_SOURCE_DIR}/scripts/genmsgpack.lua)
 set(API_METADATA ${PROJECT_BINARY_DIR}/api_metadata.mpack)
 set(FUNCS_DATA ${PROJECT_BINARY_DIR}/funcs_data.mpack)
+set(MSGPACK_LUA_C_BINDINGS ${GENERATED_DIR}/msgpack_lua_c_bindings.generated.c)
 set(HEADER_GENERATOR ${PROJECT_SOURCE_DIR}/scripts/gendeclarations.lua)
 set(GENERATED_INCLUDES_DIR ${PROJECT_BINARY_DIR}/include)
 set(GENERATED_API_DISPATCH ${GENERATED_DIR}/api/private/dispatch_wrappers.generated.h)
@@ -37,8 +36,14 @@ set(EVAL_DEFS_FILE ${PROJECT_SOURCE_DIR}/src/nvim/eval.lua)
 set(OPTIONS_LIST_FILE ${PROJECT_SOURCE_DIR}/src/nvim/options.lua)
 set(UNICODE_TABLES_GENERATOR ${PROJECT_SOURCE_DIR}/scripts/genunicodetables.lua)
 set(UNICODE_DIR ${PROJECT_SOURCE_DIR}/unicode)
-file(GLOB UNICODE_FILES ${UNICODE_DIR}/*.txt)
 set(GENERATED_UNICODE_TABLES ${GENERATED_DIR}/unicode_tables.generated.h)
+set(VIM_MODULE_FILE ${GENERATED_DIR}/viml/executor/vim_module.generated.h)
+set(VIM_MODULE_SOURCE ${PROJECT_SOURCE_DIR}/src/nvim/viml/executor/vim.lua)
+set(VIM_MODULE_GENERATOR ${PROJECT_SOURCE_DIR}/scripts/generate_vim_module.lua)
+
+file(GLOB API_HEADERS api/*.h)
+file(GLOB MSGPACK_RPC_HEADERS msgpack_rpc/*.h)
+file(GLOB UNICODE_FILES ${UNICODE_DIR}/*.txt)
 
 include_directories(${GENERATED_DIR})
 include_directories(${CACHED_GENERATED_DIR})
@@ -57,6 +62,8 @@ foreach(subdir
         tui
         event
         eval
+        viml
+        viml/executor
        )
   if(${subdir} MATCHES "tui" AND NOT FEAT_TUI)
     continue()
@@ -198,16 +205,28 @@ add_custom_command(OUTPUT ${GENERATED_UNICODE_TABLES}
     ${UNICODE_FILES}
 )
 
-add_custom_command(OUTPUT ${GENERATED_API_DISPATCH} ${GENERATED_FUNCS_METADATA}
-                          ${API_METADATA}
-  COMMAND ${LUA_PRG} ${DISPATCH_GENERATOR} ${CMAKE_CURRENT_LIST_DIR}
-                     ${API_HEADERS} ${GENERATED_API_DISPATCH}
+add_custom_command(
+  OUTPUT ${GENERATED_API_DISPATCH} ${GENERATED_FUNCS_METADATA}
+         ${API_METADATA} ${MSGPACK_LUA_C_BINDINGS}
+  COMMAND ${LUA_PRG} ${MSGPACK_GENERATOR} ${CMAKE_CURRENT_LIST_DIR}
+                     ${GENERATED_API_DISPATCH}
                      ${GENERATED_FUNCS_METADATA} ${API_METADATA}
+                     ${MSGPACK_LUA_C_BINDINGS}
+                     ${API_HEADERS}
   DEPENDS
     ${API_HEADERS}
     ${MSGPACK_RPC_HEADERS}
-    ${DISPATCH_GENERATOR}
+    ${MSGPACK_GENERATOR}
     ${CMAKE_CURRENT_LIST_DIR}/api/dispatch_deprecated.lua
+)
+
+add_custom_command(
+  OUTPUT ${VIM_MODULE_FILE}
+  COMMAND ${LUA_PRG} ${VIM_MODULE_GENERATOR} ${VIM_MODULE_SOURCE}
+                     ${VIM_MODULE_FILE}
+  DEPENDS
+    ${VIM_MODULE_GENERATOR}
+    ${VIM_MODULE_SOURCE}
 )
 
 list(APPEND NEOVIM_GENERATED_SOURCES
@@ -219,6 +238,8 @@ list(APPEND NEOVIM_GENERATED_SOURCES
   "${GENERATED_EVENTS_NAMES_MAP}"
   "${GENERATED_OPTIONS}"
   "${GENERATED_UNICODE_TABLES}"
+  "${MSGPACK_LUA_C_BINDINGS}"
+  "${VIM_MODULE_FILE}"
 )
 
 add_custom_command(OUTPUT ${GENERATED_EX_CMDS_ENUM} ${GENERATED_EX_CMDS_DEFS}
@@ -270,6 +291,7 @@ list(APPEND NVIM_LINK_LIBRARIES
   ${LIBTERMKEY_LIBRARIES}
   ${UNIBILIUM_LIBRARIES}
   ${CMAKE_THREAD_LIBS_INIT}
+  ${LUAJIT_LIBRARIES}
 )
 
 if(UNIX)
