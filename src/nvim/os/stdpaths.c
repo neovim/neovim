@@ -75,7 +75,8 @@ static char *get_xdg_home(const XDGVarType idx)
   char *dir = stdpaths_get_xdg_var(idx);
   if (dir) {
 #if defined(WIN32)
-    dir = concat_fnames_realloc(dir, (idx == kXDGDataHome ? "nvim-data" : "nvim"),
+    dir = concat_fnames_realloc(dir,
+                                (idx == kXDGDataHome ? "nvim-data" : "nvim"),
                                 true);
 #else
     dir = concat_fnames_realloc(dir, "nvim", true);
