@@ -17,6 +17,9 @@ typedef struct term_input {
 #endif
   TimeWatcher timer_handle;
   Loop *loop;
+#ifdef WIN32
+  uv_tty_t tty_in;
+#endif
   Stream read_stream;
   RBuffer *key_buffer;
   uv_mutex_t key_buffer_mutex;
