@@ -41,6 +41,10 @@ For Unix and Macintosh this file is always used and is recommended:
 
 	~/.config/nvim/init.vim ~
 
+For Win32 this file is at
+
+	~/AppData/Local/nvim/init.vim
+
 The vimrc file can contain all the commands that you type after a colon.  The
 most simple ones are for setting options.  For example, if you want Vim to
 always start with the 'ignorecase' option on, add this line your vimrc file: >
