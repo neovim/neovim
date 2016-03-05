@@ -201,8 +201,8 @@ qf_init_ext (
   char_u          *fmtstr = NULL;
   int col = 0;
   char_u use_viscol = FALSE;
-  int type = 0;
-  int valid;
+  char_u type = 0;
+  char_u valid;
   linenr_T buflnum = lnumfirst;
   long lnum = 0L;
   int enr = 0;
@@ -219,7 +219,7 @@ qf_init_ext (
   int len;
   int i;
   int round;
-  int idx = 0;
+  char_u idx = 0;
   int multiline = FALSE;
   int multiignore = FALSE;
   int multiscan = FALSE;
@@ -278,15 +278,15 @@ qf_init_ext (
   /*
    * Get some space to modify the format string into.
    */
-  i = 3 * FMT_PATTERNS + 4 * (int)STRLEN(efm);
+  size_t fmtstr_size = 3 * FMT_PATTERNS + 4 * STRLEN(efm);
   for (round = FMT_PATTERNS; round > 0; )
-    i += (int)STRLEN(fmt_pat[--round].pattern);
+    fmtstr_size += STRLEN(fmt_pat[--round].pattern);
 #ifdef COLON_IN_FILENAME
-  i += 12;   /* "%f" can become twelve chars longer */
+  fmtstr_size += 12;   /* "%f" can become twelve chars longer */
 #else
-  i += 2;   /* "%f" can become two chars longer */
+  fmtstr_size += 2;   /* "%f" can become two chars longer */
 #endif
-  fmtstr = xmalloc(i);
+  fmtstr = xmalloc(fmtstr_size);
 
   while (efm[0] != NUL) {
     /*
@@ -567,13 +567,11 @@ restofline:
          * the 'errorformat' may cause the wrong submatch to be used.
          */
         if ((i = (int)fmt_ptr->addr[0]) > 0) {                  /* %f */
-          int c;
-
           if (regmatch.startp[i] == NULL || regmatch.endp[i] == NULL)
             continue;
 
           /* Expand ~/file and $HOME/file to full path. */
-          c = *regmatch.endp[i];
+          char_u c = *regmatch.endp[i];
           *regmatch.endp[i] = NUL;
           expand_env(regmatch.startp[i], namebuf, CMDBUFFSIZE);
           *regmatch.endp[i] = c;
@@ -881,11 +879,11 @@ qf_add_entry (
     char_u *mesg,              /* message */
     long lnum,                      /* line number */
     int col,                        /* column */
-    int vis_col,                    /* using visual column */
+    char_u vis_col,                    /* using visual column */
     char_u *pattern,           /* search pattern */
     int nr,                         /* error number */
-    int type,                       /* type character */
-    int valid                      /* valid entry */
+    char_u type,                    /* type character */
+    char_u valid                    /* valid entry */
 )
 {
   qfline_T *qfp = xmalloc(sizeof(qfline_T));
@@ -1662,7 +1660,7 @@ win_found:
       else if (!msg_scrolled && shortmess(SHM_OVERALL))
         msg_scroll = FALSE;
       msg_attr_keep(IObuff, 0, TRUE);
-      msg_scroll = i;
+      msg_scroll = (int)i;
     }
   } else {
     if (opened_window)
@@ -1827,10 +1825,12 @@ void qf_age(exarg_T *eap)
     }
   }
 
-  if (eap->addr_count != 0)
-    count = eap->line2;
-  else
+  if (eap->addr_count != 0) {
+    assert(eap->line2 < INT_MAX);
+    count = (int)eap->line2;
+  } else {
     count = 1;
+  }
   while (count--) {
     if (eap->cmdidx == CMD_colder || eap->cmdidx == CMD_lolder) {
       if (qi->qf_curlist == 0) {
@@ -1948,7 +1948,7 @@ static char_u *qf_types(int c, int nr)
     p = (char_u *)"";
   else {
     cc[0] = ' ';
-    cc[1] = c;
+    cc[1] = (char_u)c;
     cc[2] = NUL;
     p = cc;
   }
@@ -2037,7 +2037,7 @@ void ex_copen(exarg_T *eap)
   }
 
   if (eap->addr_count != 0)
-    height = eap->line2;
+    height = (int)eap->line2;
   else
     height = QF_WINHEIGHT;
 
@@ -2434,7 +2434,7 @@ void ex_make(exarg_T *eap)
 {
   char_u      *fname;
   char_u      *cmd;
-  unsigned len;
+  size_t len;
   win_T       *wp = NULL;
   qf_info_T   *qi = &ql_info;
   int res;
@@ -2475,9 +2475,9 @@ void ex_make(exarg_T *eap)
   /*
    * If 'shellpipe' empty: don't redirect to 'errorfile'.
    */
-  len = (unsigned)STRLEN(p_shq) * 2 + (unsigned)STRLEN(eap->arg) + 1;
+  len = STRLEN(p_shq) * 2 + STRLEN(eap->arg) + 1;
   if (*p_sp != NUL)
-    len += (unsigned)STRLEN(p_sp) + (unsigned)STRLEN(fname) + 3;
+    len += STRLEN(p_sp) + STRLEN(fname) + 3;
   cmd = xmalloc(len);
   sprintf((char *)cmd, "%s%s%s", (char *)p_shq, (char *)eap->arg,
       (char *)p_shq);
@@ -2549,7 +2549,7 @@ static char_u *get_mef_name(void)
   /* Keep trying until the name doesn't exist yet. */
   for (;; ) {
     if (start == -1)
-      start = os_get_pid();
+      start = (int)os_get_pid();
     else
       off += 19;
 
@@ -2899,7 +2899,7 @@ void ex_vimgrep(exarg_T *eap)
   int found_match;
   buf_T       *first_match_buf = NULL;
   time_t seconds = 0;
-  int save_mls;
+  long save_mls;
   char_u      *save_ei = NULL;
   aco_save_T aco;
   int flags = 0;
@@ -3462,9 +3462,10 @@ int set_errorlist(win_T *wp, list_T *list, int action, char_u *title)
   int bufnum;
   long lnum;
   int col, nr;
-  int vcol;
+  char_u vcol;
   qfline_T    *prevp = NULL;
-  int valid, status;
+  char_u valid;
+  int status;
   int retval = OK;
   qf_info_T   *qi = &ql_info;
   int did_bufnr_emsg = FALSE;
@@ -3495,11 +3496,11 @@ int set_errorlist(win_T *wp, list_T *list, int action, char_u *title)
       continue;
 
     filename = get_dict_string(d, (char_u *)"filename", TRUE);
-    bufnum = get_dict_number(d, (char_u *)"bufnr");
+    bufnum = (int)get_dict_number(d, (char_u *)"bufnr");
     lnum = get_dict_number(d, (char_u *)"lnum");
-    col = get_dict_number(d, (char_u *)"col");
-    vcol = get_dict_number(d, (char_u *)"vcol");
-    nr = get_dict_number(d, (char_u *)"nr");
+    col = (int)get_dict_number(d, (char_u *)"col");
+    vcol = (char_u)get_dict_number(d, (char_u *)"vcol");
+    nr = (int)get_dict_number(d, (char_u *)"nr");
     type = get_dict_string(d, (char_u *)"type", TRUE);
     pattern = get_dict_string(d, (char_u *)"pattern", TRUE);
     text = get_dict_string(d, (char_u *)"text", TRUE);
@@ -3531,7 +3532,7 @@ int set_errorlist(win_T *wp, list_T *list, int action, char_u *title)
         vcol,                               /* vis_col */
         pattern,                            /* search pattern */
         nr,
-        type == NULL ? NUL : *type,
+        (char_u)(type == NULL ? NUL : *type),
         valid);
 
     xfree(filename);

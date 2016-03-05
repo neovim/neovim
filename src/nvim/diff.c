@@ -819,7 +819,7 @@ static void diff_file(char_u *tmp_orig, char_u *tmp_new, char_u *tmp_diff)
                  (diff_flags & DIFF_IWHITE) ? "-b " : "",
                  (diff_flags & DIFF_ICASE) ? "-i " : "",
                  tmp_orig, tmp_new);
-    append_redir(cmd, (int)len, p_srr, tmp_diff);
+    append_redir(cmd, len, p_srr, tmp_diff);
     block_autocmds(); /* Avoid ShellCmdPost stuff */
     (void)call_shell(
         cmd,
