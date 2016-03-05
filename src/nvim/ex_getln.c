@@ -1130,7 +1130,7 @@ static int command_line_handle_key(CommandLineState *s)
     if (!mouse_has(MOUSE_COMMAND)) {
       return command_line_not_changed(s);                   // Ignore mouse
     }
-    cmdline_paste(0, true, true);
+    cmdline_paste(eval_has_provider("clipboard") ? '*' : 0, true, true);
     redrawcmd();
     return command_line_changed(s);
 
@@ -2424,20 +2424,17 @@ void restore_cmdline_alloc(char_u *p)
   xfree(p);
 }
 
-/*
- * paste a yank register into the command line.
- * used by CTRL-R command in command-line mode
- * insert_reg() can't be used here, because special characters from the
- * register contents will be interpreted as commands.
- *
- * return FAIL for failure, OK otherwise
- */
-static int 
-cmdline_paste (
-    int regname,
-    int literally,          /* Insert text literally instead of "as typed" */
-    int remcr              /* remove trailing CR */
-)
+/// Paste a yank register into the command line.
+/// Used by CTRL-R command in command-line mode.
+/// insert_reg() can't be used here, because special characters from the
+/// register contents will be interpreted as commands.
+///
+/// @param regname   Register name.
+/// @param literally Insert text literally instead of "as typed".
+/// @param remcr     When true, remove trailing CR.
+///
+/// @returns FAIL for failure, OK otherwise
+static bool cmdline_paste(int regname, bool literally, bool remcr)
 {
   long i;
   char_u              *arg;

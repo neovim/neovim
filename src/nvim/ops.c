@@ -1261,21 +1261,18 @@ get_spec_reg (
   return FALSE;
 }
 
-/*
- * Paste a yank register into the command line.
- * Only for non-special registers.
- * Used by CTRL-R command in command-line mode
- * insert_reg() can't be used here, because special characters from the
- * register contents will be interpreted as commands.
- *
- * return FAIL for failure, OK otherwise
- */
-int 
-cmdline_paste_reg (
-    int regname,
-    int literally,          /* Insert text literally instead of "as typed" */
-    int remcr              /* don't add trailing CR */
-)
+/// Paste a yank register into the command line.
+/// Only for non-special registers.
+/// Used by CTRL-R command in command-line mode
+/// insert_reg() can't be used here, because special characters from the
+/// register contents will be interpreted as commands.
+///
+/// @param regname   Register name.
+/// @param literally Insert text literally instead of "as typed".
+/// @param remcr     When true, don't add CR characters.
+///
+/// @returns FAIL for failure, OK otherwise
+bool cmdline_paste_reg(int regname, bool literally, bool remcr)
 {
   long i;
 
@@ -1286,13 +1283,9 @@ cmdline_paste_reg (
   for (i = 0; i < reg->y_size; i++) {
     cmdline_paste_str(reg->y_array[i], literally);
 
-    /* Insert ^M between lines and after last line if type is MLINE.
-     * Don't do this when "remcr" is TRUE and the next line is empty. */
-    if (reg->y_type == MLINE
-        || (i < reg->y_size - 1
-            && !(remcr
-                 && i == reg->y_size - 2
-                 && *reg->y_array[i + 1] == NUL))) {
+    // Insert ^M between lines and after last line if type is MLINE.
+    // Don't do this when "remcr" is true.
+    if ((reg->y_type == MLINE || i < reg->y_size - 1) && !remcr) {
       cmdline_paste_str((char_u *)"\r", literally);
     }
 
