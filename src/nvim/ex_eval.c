@@ -378,7 +378,7 @@ char_u *get_exception_string(void *value, int type, char_u *cmdname, int *should
   char_u      *p, *val;
 
   if (type == ET_ERROR) {
-    *should_free = FALSE;
+    *should_free = true;
     mesg = ((struct msglist *)value)->throw_msg;
     if (cmdname != NULL && *cmdname != NUL) {
       size_t cmdlen = STRLEN(cmdname);
