@@ -1,9 +1,9 @@
 -- Test character classes in regexp using regexpengine 0, 1, 2.
 
 local helpers = require('test.functional.helpers')
-local ffi = require('ffi')
 local clear, execute, expect = helpers.clear, helpers.execute, helpers.expect
 local source, write_file = helpers.source, helpers.write_file
+local os_name = helpers.os_name
 
 local function sixlines(text)
     local result = ''
@@ -15,7 +15,7 @@ end
 
 local function diff(text, nodedent)
   local tmpname = os.tmpname()
-  if ffi.os == 'OSX' and string.match(tmpname, '^/tmp') then
+  if os_name() == 'osx' and string.match(tmpname, '^/tmp') then
    tmpname = '/private'..tmpname
   end
   execute('w! '..tmpname)

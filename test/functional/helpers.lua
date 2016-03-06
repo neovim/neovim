@@ -1,5 +1,4 @@
 require('coxpcall')
-local ffi = require('ffi')
 local lfs = require('lfs')
 local assert = require('luassert')
 local Loop = require('nvim.loop')
@@ -133,6 +132,22 @@ local function nvim_eval(expr)
   return request('vim_eval', expr)
 end
 
+local os_name = (function()
+  local name = nil
+  return (function()
+    if not name then
+      if nvim_eval('has("win32")') == 1 then
+        name = 'windows'
+      elseif nvim_eval('has("macunix")') == 1 then
+        name = 'osx'
+      else
+        name = 'unix'
+      end
+    end
+    return name
+  end)
+end)()
+
 local function nvim_call(name, ...)
   return request('vim_call_function', name, {...})
 end
@@ -247,7 +262,7 @@ end
 
 local function source(code)
   local tmpname = os.tmpname()
-  if ffi.os == 'OSX' and string.match(tmpname, '^/tmp') then
+  if os_name() == 'osx' and string.match(tmpname, '^/tmp') then
    tmpname = '/private'..tmpname
   end
   write_file(tmpname, code)
@@ -326,10 +341,6 @@ end
 
 local function expect(contents)
   return eq(dedent(contents), curbuf_contents())
-end
-
-local function os_is_windows()
-  return nvim_eval('has("win32")') == 1
 end
 
 local function rmdir(path)
@@ -434,7 +445,7 @@ return {
   wait = wait,
   set_session = set_session,
   write_file = write_file,
-  os_is_windows = os_is_windows,
+  os_name = os_name,
   rmdir = rmdir,
   mkdir = lfs.mkdir,
   exc_exec = exc_exec,
