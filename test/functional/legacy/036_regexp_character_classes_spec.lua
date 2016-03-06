@@ -30,7 +30,7 @@ local function diff(text, nodedent)
 end
 
 describe('character classes in regexp', function()
-  local ctrl1 = '\t\x0c\r'
+  local ctrl1 = '\t\012\r'
   local punct1 = " !\"#$%&'()#+'-./"
   local digits = '0123456789'
   local punct2 = ':;<=>?@'
@@ -38,8 +38,8 @@ describe('character classes in regexp', function()
   local punct3 = '[\\]^_`'
   local lower = 'abcdefghiwxyz'
   local punct4 = '{|}~'
-  local ctrl2 = '\x7f\x80\x82\x90\x9b'
-  local iso_text = '\xa6\xb1\xbc\xc7\xd3\xe9' -- "¦±¼ÇÓé" in utf-8
+  local ctrl2 = '\127\128\130\144\155'
+  local iso_text = '\166\177\188\199\211\233' -- "¦±¼ÇÓé" in utf-8
   setup(function()
     -- The original test32.in file was not in utf-8 encoding and did also
     -- contain some control characters.  We use lua escape sequences to write

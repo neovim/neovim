@@ -187,7 +187,7 @@ describe('Visual block mode', function()
       98<Nul>65
       98<Nul>65]]
     expected = expected:gsub('<CR>', '\r')
-    expected = expected:gsub('<Nul>', '\x00')
+    expected = expected:gsub('<Nul>', '\000')
 
     expect(expected)
   end)
