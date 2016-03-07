@@ -455,7 +455,7 @@ json_decode_string_cycle_start:
             p += ch_len;
           }
         }
-        if (*p != '"') {
+        if (p == e || *p != '"') {
           EMSG2(_("E474: Expected string end: %s"), buf);
           goto json_decode_string_fail;
         }

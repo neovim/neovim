@@ -18,12 +18,16 @@ local decode = cimport('./src/nvim/eval/decode.h', './src/nvim/eval_defs.h',
 describe('json_decode_string()', function()
   after_each(function()
     decode.emsg_silent = 0
+    decode.trylevel = 0
   end)
 
+  local char = function(c)
+    return ffi.gc(decode.xmemdup(c, 1), decode.xfree)
+  end
+
   it('does not overflow when running with `n…`, `t…`, `f…`', function()
-    local rettv = ffi.new('typval_T')
+    local rettv = ffi.new('typval_T', {v_type=decode.VAR_UNKNOWN})
     decode.emsg_silent = 1
-    rettv.v_type = decode.VAR_UNKNOWN
     -- This will not crash, but if `len` argument will be ignored it will parse 
     -- `null` as `null` and if not it will parse `null` as `n`.
     eq(0, decode.json_decode_string('null', 1, rettv))
@@ -49,17 +53,28 @@ describe('json_decode_string()', function()
   end)
 
   it('does not overflow and crash when running with `n`, `t`, `f`', function()
-    local rettv = ffi.new('typval_T')
+    local rettv = ffi.new('typval_T', {v_type=decode.VAR_UNKNOWN})
     decode.emsg_silent = 1
-    rettv.v_type = decode.VAR_UNKNOWN
-    local char = function(c)
-      return ffi.gc(decode.xmemdup(c, 1), decode.xfree)
-    end
     eq(0, decode.json_decode_string(char('n'), 1, rettv))
     eq(decode.VAR_UNKNOWN, rettv.v_type)
     eq(0, decode.json_decode_string(char('t'), 1, rettv))
     eq(decode.VAR_UNKNOWN, rettv.v_type)
     eq(0, decode.json_decode_string(char('f'), 1, rettv))
+    eq(decode.VAR_UNKNOWN, rettv.v_type)
+  end)
+
+  it('does not overflow when running with `"…`', function()
+    local rettv = ffi.new('typval_T', {v_type=decode.VAR_UNKNOWN})
+    decode.emsg_silent = 1
+    eq(0, decode.json_decode_string('"t"', 2, rettv))
+    eq(decode.VAR_UNKNOWN, rettv.v_type)
+    eq(0, decode.json_decode_string('""', 1, rettv))
+    eq(decode.VAR_UNKNOWN, rettv.v_type)
+  end)
+
+  it('does not overflow and crash when running with `"`', function()
+    local rettv = ffi.new('typval_T', {v_type=decode.VAR_UNKNOWN})
+    eq(0, decode.json_decode_string(char('"'), 1, rettv))
     eq(decode.VAR_UNKNOWN, rettv.v_type)
   end)
 end)
