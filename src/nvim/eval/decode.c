@@ -73,7 +73,8 @@ static inline void create_special_dict(typval_T *const rettv,
 
 /// Helper function used for working with stack vectors used by JSON decoder
 ///
-/// @param[in]  obj  New object.
+/// @param[in,out]  obj  New object. Will either be put into the stack (and,
+///                      probably, also inside container) or freed.
 /// @param[out]  stack  Object stack.
 /// @param[out]  container_stack  Container objects stack.
 /// @param[in,out]  pp  Position in string which is currently being parsed. Used
