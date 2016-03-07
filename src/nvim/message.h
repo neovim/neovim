@@ -64,6 +64,18 @@
 /// Like #MSG_PUTS_ATTR, but if middle part of long messages will be replaced
 #define MSG_PUTS_LONG_ATTR(s, a)    msg_puts_long_attr((char_u *)(s), (a))
 
+/// Message history for `:messages`
+typedef struct msg_hist {
+  struct msg_hist *next;  ///< Next message.
+  char_u *msg;            ///< Message text.
+  int attr;               ///< Message highlighting.
+} MessageHistoryEntry;
+
+/// First message
+extern MessageHistoryEntry *first_msg_hist;
+/// Last message
+extern MessageHistoryEntry *last_msg_hist;
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "message.h.generated.h"
 #endif

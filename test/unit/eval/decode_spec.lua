@@ -1,24 +1,28 @@
-local ffi = require('ffi')
 local helpers = require('test.unit.helpers')
-local eval_helpers = require('test.unit.eval.helpers')
 
 local cimport = helpers.cimport
 local to_cstr = helpers.to_cstr
 local eq = helpers.eq
-
-local list = eval_helpers.list
-local lst2tbl = eval_helpers.lst2tbl
-local type_key = eval_helpers.type_key
-local list_type = eval_helpers.list_type
-local null_string = eval_helpers.null_string
+local neq = helpers.neq
+local ffi = helpers.ffi
 
 local decode = cimport('./src/nvim/eval/decode.h', './src/nvim/eval_defs.h',
-                       './src/nvim/globals.h', './src/nvim/memory.h')
+                       './src/nvim/globals.h', './src/nvim/memory.h',
+                       './src/nvim/message.h')
 
 describe('json_decode_string()', function()
+  local saved_p_enc = nil
+
+  before_each(function()
+    saved_p_enc = decode.p_enc
+  end)
+
   after_each(function()
     decode.emsg_silent = 0
-    decode.trylevel = 0
+    decode.p_enc = saved_p_enc
+    while decode.delete_first_msg() == 1 do
+      -- Delete all messages
+    end
   end)
 
   local char = function(c)
@@ -72,8 +76,62 @@ describe('json_decode_string()', function()
     eq(decode.VAR_UNKNOWN, rettv.v_type)
   end)
 
+  it('does not overflow in error messages', function()
+    local check_failure = function(s, len, msg)
+      local rettv = ffi.new('typval_T', {v_type=decode.VAR_UNKNOWN})
+      eq(0, decode.json_decode_string(s, len, rettv))
+      eq(decode.VAR_UNKNOWN, rettv.v_type)
+      neq(nil, decode.last_msg_hist)
+      eq(msg, ffi.string(decode.last_msg_hist.msg))
+    end
+    local rettv = ffi.new('typval_T', {v_type=decode.VAR_UNKNOWN})
+    check_failure(']test', 1, 'E474: No container to close: ]')
+    check_failure('[}test', 2, 'E474: Closing list with curly bracket: }')
+    check_failure('{]test', 2,
+                  'E474: Closing dictionary with square bracket: ]')
+    check_failure('[1,]test', 4, 'E474: Trailing comma: ]')
+    check_failure('{"1":}test', 6, 'E474: Expected value after colon: }')
+    check_failure('{"1"}test', 5, 'E474: Expected value: }')
+    check_failure(',test', 1, 'E474: Comma not inside container: ,')
+    check_failure('[1,,1]test', 6, 'E474: Duplicate comma: ,1]')
+    check_failure('{"1":,}test', 7, 'E474: Comma after colon: ,}')
+    check_failure('{"1",}test', 6, 'E474: Using comma in place of colon: ,}')
+    check_failure('{,}test', 3, 'E474: Leading comma: ,}')
+    check_failure('[,]test', 3, 'E474: Leading comma: ,]')
+    check_failure(':test', 1, 'E474: Colon not inside container: :')
+    check_failure('[:]test', 3, 'E474: Using colon not in dictionary: :]')
+    check_failure('{:}test', 3, 'E474: Unexpected colon: :}')
+    check_failure('{"1"::1}test', 8, 'E474: Duplicate colon: :1}')
+    check_failure('ntest', 1, 'E474: Expected null: n')
+    check_failure('ttest', 1, 'E474: Expected true: t')
+    check_failure('ftest', 1, 'E474: Expected false: f')
+    check_failure('"\\test', 2, 'E474: Unfinished escape sequence: "\\')
+    check_failure('"\\u"test', 4,
+                  'E474: Unfinished unicode escape sequence: "\\u"')
+    check_failure('"\\uXXXX"est', 8,
+                  'E474: Expected four hex digits after \\u: \\uXXXX"')
+    check_failure('"\\?"test', 4, 'E474: Unknown escape sequence: \\?"')
+    check_failure(
+        '"\t"test', 3,
+        'E474: ASCII control characters cannot be present inside string: \t"')
+    check_failure('"\194"test', 3, 'E474: Only UTF-8 strings allowed: \194"')
+    check_failure('"\xFC\x90\x80\x80\x80\x80"test', 8, 'E474: Only UTF-8 code points up to U+10FFFF are allowed to appear unescaped: \xFC\x90\x80\x80\x80\x80"')
+    check_failure('"test', 1, 'E474: Expected string end: "')
+    decode.p_enc = to_cstr('latin1')
+    check_failure('"\\uABCD"test', 8,
+                  'E474: Failed to convert string "ꯍ" from UTF-8')
+    decode.p_enc = saved_p_enc
+    check_failure('-test', 1, 'E474: Missing number after minus sign: -')
+    check_failure('-1.test', 3, 'E474: Missing number after decimal dot: -1.')
+    check_failure('-1.0etest', 5, 'E474: Missing exponent: -1.0e')
+    check_failure('?test', 1, 'E474: Unidentified byte: ?')
+    check_failure('1?test', 2, 'E474: Trailing characters: ?')
+    check_failure('[1test', 2, 'E474: Unexpected end of input: [1')
+  end)
+
   it('does not overflow and crash when running with `"`', function()
     local rettv = ffi.new('typval_T', {v_type=decode.VAR_UNKNOWN})
+    decode.emsg_silent = 1
     eq(0, decode.json_decode_string(char('"'), 1, rettv))
     eq(decode.VAR_UNKNOWN, rettv.v_type)
   end)

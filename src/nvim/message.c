@@ -61,14 +61,8 @@ static int confirm_msg_used = FALSE;            /* displaying confirm_msg */
 static char_u   *confirm_msg = NULL;            /* ":confirm" message */
 static char_u   *confirm_msg_tail;              /* tail of confirm_msg */
 
-struct msg_hist {
-  struct msg_hist     *next;
-  char_u              *msg;
-  int attr;
-};
-
-static struct msg_hist *first_msg_hist = NULL;
-static struct msg_hist *last_msg_hist = NULL;
+MessageHistoryEntry *first_msg_hist = NULL;
+MessageHistoryEntry *last_msg_hist = NULL;
 static int msg_hist_len = 0;
 
 static FILE *verbose_fd = NULL;

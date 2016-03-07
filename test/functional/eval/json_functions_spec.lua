@@ -448,6 +448,12 @@ describe('json_decode() function', function()
     sp_decode_eq({_TYPE='string', _VAL={'\n\xAB\n'}}, '"\\u0000\\u00AB\\u0000"')
   end)
 
+  it('fails to convert string to latin1 if it is impossible', function()
+    restart('set encoding=latin1')
+    eq('Vim(call):E474: Failed to convert string "ꯍ" from UTF-8',
+       exc_exec('call json_decode(\'"\\uABCD"\')'))
+  end)
+
   it('parses U+00C3 correctly', function()
     eq('\xC3\x83', funcs.json_decode('"\xC3\x83"'))
   end)
