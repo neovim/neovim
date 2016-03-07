@@ -37,17 +37,16 @@
 #define EMSG(s)                     emsg((char_u *)(s))
 
 /// Like #EMSG, but for messages with one "%s" inside
-#define EMSG2(s, p)                 emsg2((char_u *)(s), (char_u *)(p))
+#define EMSG2(s, p)                 emsgf((const char *) (s), (p))
 
 /// Like #EMSG, but for messages with two "%s" inside
-#define EMSG3(s, p, q)              emsg3((char_u *)(s), (char_u *)(p), \
-                                          (char_u *)(q))
+#define EMSG3(s, p, q)              emsgf((const char *) (s), (p), (q))
 
 /// Like #EMSG, but for messages with one "%" PRId64 inside
-#define EMSGN(s, n)                 emsgn((char_u *)(s), (int64_t)(n))
+#define EMSGN(s, n)                 emsgf((const char *) (s), (int64_t)(n))
 
 /// Like #EMSG, but for messages with one "%" PRIu64 inside
-#define EMSGU(s, n)                 emsgu((char_u *)(s), (uint64_t)(n))
+#define EMSGU(s, n)                 emsgf((const char *) (s), (uint64_t)(n))
 
 /// Display message at the recorded position
 #define MSG_PUTS(s)                 msg_puts((char_u *)(s))

@@ -66,9 +66,6 @@ KHASH_SET_INIT_STR(strset)
     ((char *) copy_option_part((char_u **) src, (char_u *) dest, __VA_ARGS__))
 #define find_shada_parameter(...) \
     ((const char *) find_shada_parameter(__VA_ARGS__))
-#define emsg2(a, b) emsg2((char_u *) a, (char_u *) b)
-#define emsg3(a, b, c) emsg3((char_u *) a, (char_u *) b, (char_u *) c)
-#define emsgu(a, ...) emsgu((char_u *) a, __VA_ARGS__)
 #define home_replace_save(a, b) \
     ((char *)home_replace_save(a, (char_u *)b))
 #define home_replace(a, b, c, d, e) \
@@ -762,7 +759,7 @@ static void close_sd_writer(ShaDaWriteDef *const sd_writer)
 {
   const int fd = (int)(intptr_t) sd_writer->cookie;
   if (os_fsync(fd) < 0) {
-    emsg2(_(SERR "System error while synchronizing ShaDa file: %s"),
+    emsgf(_(SERR "System error while synchronizing ShaDa file: %s"),
           os_strerror(errno));
     errno = 0;
   }
@@ -812,11 +809,11 @@ static ShaDaReadResult sd_reader_skip(ShaDaReadDef *const sd_reader,
 {
   if (sd_reader->skip(sd_reader, offset) != OK) {
     if (sd_reader->error != NULL) {
-      emsg2(_(SERR "System error while skipping in ShaDa file: %s"),
+      emsgf(_(SERR "System error while skipping in ShaDa file: %s"),
             sd_reader->error);
       return kSDReadStatusReadError;
     } else if (sd_reader->eof) {
-      emsgu(_(RCERR "Error while reading ShaDa file: "
+      emsgf(_(RCERR "Error while reading ShaDa file: "
               "last entry specified that it occupies %" PRIu64 " bytes, "
               "but file ended earlier"),
             (uint64_t) offset);
@@ -850,7 +847,7 @@ open_file_start:
       goto open_file_start;
     }
     if (fd != UV_EEXIST) {
-      emsg3(_(SERR "System error while opening ShaDa file %s: %s"),
+      emsgf(_(SERR "System error while opening ShaDa file %s: %s"),
             fname, os_strerror(fd));
     }
     return fd;
@@ -898,7 +895,7 @@ close_file_start:
       errno = 0;
       goto close_file_start;
     } else {
-      emsg2(_(SERR "System error while closing ShaDa file: %s"),
+      emsgf(_(SERR "System error while closing ShaDa file: %s"),
             strerror(errno));
       errno = 0;
     }
@@ -935,7 +932,7 @@ static int msgpack_sd_writer_write(void *data, const char *buf, size_t len)
   ShaDaWriteDef *const sd_writer = (ShaDaWriteDef *) data;
   ptrdiff_t written_bytes = sd_writer->write(sd_writer, buf, len);
   if (written_bytes == -1) {
-    emsg2(_(SERR "System error while writing ShaDa file: %s"),
+    emsgf(_(SERR "System error while writing ShaDa file: %s"),
           sd_writer->error);
     return -1;
   }
@@ -982,7 +979,7 @@ static int shada_read_file(const char *const file, const int flags)
 
   if (of_ret != 0) {
     if (of_ret == UV_ENOENT && (flags & kShaDaMissingError)) {
-      emsg3(_(SERR "System error while opening ShaDa file %s for reading: %s"),
+      emsgf(_(SERR "System error while opening ShaDa file %s for reading: %s"),
             fname, os_strerror(of_ret));
     }
     xfree(fname);
@@ -2162,7 +2159,7 @@ shada_parse_msgpack_read_next: {}
       break;
     }
     case MSGPACK_UNPACK_PARSE_ERROR: {
-      emsgu(_(RCERR "Failed to parse ShaDa file due to a msgpack parser error "
+      emsgf(_(RCERR "Failed to parse ShaDa file due to a msgpack parser error "
               "at position %" PRIu64),
             (uint64_t) initial_fpos);
       ret = kSDReadStatusNotShaDa;
@@ -2179,7 +2176,7 @@ shada_parse_msgpack_read_next: {}
       break;
     }
     case MSGPACK_UNPACK_CONTINUE: {
-      emsgu(_(RCERR "Failed to parse ShaDa file: incomplete msgpack string "
+      emsgf(_(RCERR "Failed to parse ShaDa file: incomplete msgpack string "
               "at position %" PRIu64),
             (uint64_t) initial_fpos);
       ret = kSDReadStatusNotShaDa;
@@ -2187,7 +2184,7 @@ shada_parse_msgpack_read_next: {}
     }
     case MSGPACK_UNPACK_EXTRA_BYTES: {
 shada_parse_msgpack_extra_bytes:
-      emsgu(_(RCERR "Failed to parse ShaDa file: extra bytes in msgpack string "
+      emsgf(_(RCERR "Failed to parse ShaDa file: extra bytes in msgpack string "
               "at position %" PRIu64),
             (uint64_t) initial_fpos);
       ret = kSDReadStatusNotShaDa;
@@ -3268,11 +3265,11 @@ static ShaDaReadResult fread_len(ShaDaReadDef *const sd_reader,
   (void) read_bytes;
 
   if (sd_reader->error != NULL) {
-    emsg2(_(SERR "System error while reading ShaDa file: %s"),
+    emsgf(_(SERR "System error while reading ShaDa file: %s"),
           sd_reader->error);
     return kSDReadStatusReadError;
   } else if (sd_reader->eof) {
-    emsgu(_(RCERR "Error while reading ShaDa file: "
+    emsgf(_(RCERR "Error while reading ShaDa file: "
             "last entry specified that it occupies %" PRIu64 " bytes, "
             "but file ended earlier"),
           (uint64_t) length);
@@ -3307,11 +3304,11 @@ static ShaDaReadResult msgpack_read_uint64(ShaDaReadDef *const sd_reader,
 
   if (first_char == EOF) {
     if (sd_reader->error) {
-      emsg2(_(SERR "System error while reading integer from ShaDa file: %s"),
+      emsgf(_(SERR "System error while reading integer from ShaDa file: %s"),
             sd_reader->error);
       return kSDReadStatusReadError;
     } else if (sd_reader->eof) {
-      emsgu(_(RCERR "Error while reading ShaDa file: "
+      emsgf(_(RCERR "Error while reading ShaDa file: "
               "expected positive integer at position %" PRIu64
               ", but got nothing"),
             (uint64_t) fpos);
@@ -3342,7 +3339,7 @@ static ShaDaReadResult msgpack_read_uint64(ShaDaReadDef *const sd_reader,
         break;
       }
       default: {
-        emsgu(_(RCERR "Error while reading ShaDa file: "
+        emsgf(_(RCERR "Error while reading ShaDa file: "
                 "expected positive integer at position %" PRIu64),
               (uint64_t) fpos);
         return kSDReadStatusNotShaDa;
@@ -3406,18 +3403,18 @@ static inline char *get_converted_string(const vimconv_T *const sd_conv,
                       proc) \
   do { \
     if (!(condition)) { \
-      emsgu(_(READERR(entry_name, error_desc)), initial_fpos); \
+      emsgf(_(READERR(entry_name, error_desc)), initial_fpos); \
       CLEAR_GA_AND_ERROR_OUT(ad_ga); \
     } \
     tgt = proc(obj.via.attr); \
   } while (0)
 #define CHECK_KEY_IS_STR(entry_name) \
   if (unpacked.data.via.map.ptr[i].key.type != MSGPACK_OBJECT_STR) { \
-    emsgu(_(READERR(entry_name, "has key which is not a string")), \
+    emsgf(_(READERR(entry_name, "has key which is not a string")), \
           initial_fpos); \
     CLEAR_GA_AND_ERROR_OUT(ad_ga); \
   } else if (unpacked.data.via.map.ptr[i].key.via.str.size == 0) { \
-    emsgu(_(READERR(entry_name, "has empty key")), initial_fpos); \
+    emsgf(_(READERR(entry_name, "has empty key")), initial_fpos); \
     CLEAR_GA_AND_ERROR_OUT(ad_ga); \
   }
 #define CHECKED_KEY(entry_name, name, error_desc, tgt, condition, attr, proc) \
@@ -3480,7 +3477,7 @@ static inline char *get_converted_string(const vimconv_T *const sd_conv,
           typval_T adtv; \
           if (msgpack_to_vim(obj, &adtv) == FAIL \
               || adtv.v_type != VAR_DICT) { \
-            emsgu(_(READERR(name, \
+            emsgf(_(READERR(name, \
                             "cannot be converted to a VimL dictionary")), \
                   initial_fpos); \
             ga_clear(&ad_ga); \
@@ -3505,7 +3502,7 @@ static inline char *get_converted_string(const vimconv_T *const sd_conv,
           }; \
           typval_T aetv; \
           if (msgpack_to_vim(obj, &aetv) == FAIL) { \
-            emsgu(_(READERR(name, "cannot be converted to a VimL list")), \
+            emsgf(_(READERR(name, "cannot be converted to a VimL list")), \
                   initial_fpos); \
             clear_tv(&aetv); \
             goto shada_read_next_item_error; \
@@ -3573,7 +3570,7 @@ shada_read_next_item_start:
     // kSDItemUnknown cannot possibly pass that far because it is -1 and that
     // will fail in msgpack_read_uint64. But kSDItemMissing may and it will
     // otherwise be skipped because (1 << 0) will never appear in flags.
-    emsgu(_(RCERR "Error while reading ShaDa file: "
+    emsgf(_(RCERR "Error while reading ShaDa file: "
             "there is an item at position %" PRIu64 " "
             "that must not be there: Missing items are "
             "for internal uses only"),
@@ -3643,14 +3640,14 @@ shada_read_next_item_start:
   switch ((ShadaEntryType) type_u64) {
     case kSDItemHeader: {
       if (!msgpack_rpc_to_dictionary(&(unpacked.data), &(entry->data.header))) {
-        emsgu(_(READERR("header", "is not a dictionary")), initial_fpos);
+        emsgf(_(READERR("header", "is not a dictionary")), initial_fpos);
         goto shada_read_next_item_error;
       }
       break;
     }
     case kSDItemSearchPattern: {
       if (unpacked.data.type != MSGPACK_OBJECT_MAP) {
-        emsgu(_(READERR("search pattern", "is not a dictionary")),
+        emsgf(_(READERR("search pattern", "is not a dictionary")),
               initial_fpos);
         goto shada_read_next_item_error;
       }
@@ -3681,7 +3678,7 @@ shada_read_next_item_start:
         ADDITIONAL_KEY
       }
       if (entry->data.search_pattern.pat == NULL) {
-        emsgu(_(READERR("search pattern", "has no pattern")), initial_fpos);
+        emsgf(_(READERR("search pattern", "has no pattern")), initial_fpos);
         CLEAR_GA_AND_ERROR_OUT(ad_ga);
       }
       SET_ADDITIONAL_DATA(entry->data.search_pattern.additional_data,
@@ -3693,7 +3690,7 @@ shada_read_next_item_start:
     case kSDItemGlobalMark:
     case kSDItemLocalMark: {
       if (unpacked.data.type != MSGPACK_OBJECT_MAP) {
-        emsgu(_(READERR("mark", "is not a dictionary")), initial_fpos);
+        emsgf(_(READERR("mark", "is not a dictionary")), initial_fpos);
         goto shada_read_next_item_error;
       }
       garray_T ad_ga;
@@ -3702,7 +3699,7 @@ shada_read_next_item_start:
         CHECK_KEY_IS_STR("mark")
         if (CHECK_KEY(unpacked.data.via.map.ptr[i].key, KEY_NAME_CHAR)) {
           if (type_u64 == kSDItemJump || type_u64 == kSDItemChange) {
-            emsgu(_(READERR("mark", "has n key which is only valid for "
+            emsgf(_(READERR("mark", "has n key which is only valid for "
                             "local and global mark entries")), initial_fpos);
             CLEAR_GA_AND_ERROR_OUT(ad_ga);
           }
@@ -3719,15 +3716,15 @@ shada_read_next_item_start:
         ADDITIONAL_KEY
       }
       if (entry->data.filemark.fname == NULL) {
-        emsgu(_(READERR("mark", "is missing file name")), initial_fpos);
+        emsgf(_(READERR("mark", "is missing file name")), initial_fpos);
         CLEAR_GA_AND_ERROR_OUT(ad_ga);
       }
       if (entry->data.filemark.mark.lnum <= 0) {
-        emsgu(_(READERR("mark", "has invalid line number")), initial_fpos);
+        emsgf(_(READERR("mark", "has invalid line number")), initial_fpos);
         CLEAR_GA_AND_ERROR_OUT(ad_ga);
       }
       if (entry->data.filemark.mark.col < 0) {
-        emsgu(_(READERR("mark", "has invalid column number")), initial_fpos);
+        emsgf(_(READERR("mark", "has invalid column number")), initial_fpos);
         CLEAR_GA_AND_ERROR_OUT(ad_ga);
       }
       SET_ADDITIONAL_DATA(entry->data.filemark.additional_data, "mark");
@@ -3735,7 +3732,7 @@ shada_read_next_item_start:
     }
     case kSDItemRegister: {
       if (unpacked.data.type != MSGPACK_OBJECT_MAP) {
-        emsgu(_(READERR("register", "is not a dictionary")), initial_fpos);
+        emsgf(_(READERR("register", "is not a dictionary")), initial_fpos);
         goto shada_read_next_item_error;
       }
       garray_T ad_ga;
@@ -3745,14 +3742,14 @@ shada_read_next_item_start:
         if (CHECK_KEY(unpacked.data.via.map.ptr[i].key,
                       REG_KEY_CONTENTS)) {
           if (unpacked.data.via.map.ptr[i].val.type != MSGPACK_OBJECT_ARRAY) {
-            emsgu(_(READERR("register",
+            emsgf(_(READERR("register",
                             "has " REG_KEY_CONTENTS
                             " key with non-array value")),
                   initial_fpos);
             CLEAR_GA_AND_ERROR_OUT(ad_ga);
           }
           if (unpacked.data.via.map.ptr[i].val.via.array.size == 0) {
-            emsgu(_(READERR("register",
+            emsgf(_(READERR("register",
                             "has " REG_KEY_CONTENTS " key with empty array")),
                   initial_fpos);
             CLEAR_GA_AND_ERROR_OUT(ad_ga);
@@ -3761,7 +3758,7 @@ shada_read_next_item_start:
               unpacked.data.via.map.ptr[i].val.via.array;
           for (size_t i = 0; i < arr.size; i++) {
             if (arr.ptr[i].type != MSGPACK_OBJECT_BIN) {
-              emsgu(_(READERR("register", "has " REG_KEY_CONTENTS " array "
+              emsgf(_(READERR("register", "has " REG_KEY_CONTENTS " array "
                               "with non-binary value")), initial_fpos);
               CLEAR_GA_AND_ERROR_OUT(ad_ga);
             }
@@ -3781,7 +3778,7 @@ shada_read_next_item_start:
         ADDITIONAL_KEY
       }
       if (entry->data.reg.contents == NULL) {
-        emsgu(_(READERR("register", "has missing " REG_KEY_CONTENTS " array")),
+        emsgf(_(READERR("register", "has missing " REG_KEY_CONTENTS " array")),
               initial_fpos);
         CLEAR_GA_AND_ERROR_OUT(ad_ga);
       }
@@ -3790,29 +3787,29 @@ shada_read_next_item_start:
     }
     case kSDItemHistoryEntry: {
       if (unpacked.data.type != MSGPACK_OBJECT_ARRAY) {
-        emsgu(_(READERR("history", "is not an array")), initial_fpos);
+        emsgf(_(READERR("history", "is not an array")), initial_fpos);
         goto shada_read_next_item_error;
       }
       if (unpacked.data.via.array.size < 2) {
-        emsgu(_(READERR("history", "does not have enough elements")),
+        emsgf(_(READERR("history", "does not have enough elements")),
               initial_fpos);
         goto shada_read_next_item_error;
       }
       if (unpacked.data.via.array.ptr[0].type
           != MSGPACK_OBJECT_POSITIVE_INTEGER) {
-        emsgu(_(READERR("history", "has wrong history type type")),
+        emsgf(_(READERR("history", "has wrong history type type")),
               initial_fpos);
         goto shada_read_next_item_error;
       }
       if (unpacked.data.via.array.ptr[1].type
           != MSGPACK_OBJECT_BIN) {
-        emsgu(_(READERR("history", "has wrong history string type")),
+        emsgf(_(READERR("history", "has wrong history string type")),
               initial_fpos);
         goto shada_read_next_item_error;
       }
       if (memchr(unpacked.data.via.array.ptr[1].via.bin.ptr, 0,
                  unpacked.data.via.array.ptr[1].via.bin.size) != NULL) {
-        emsgu(_(READERR("history", "contains string with zero byte inside")),
+        emsgf(_(READERR("history", "contains string with zero byte inside")),
               initial_fpos);
         goto shada_read_next_item_error;
       }
@@ -3822,13 +3819,13 @@ shada_read_next_item_start:
           entry->data.history_item.histtype == HIST_SEARCH;
       if (is_hist_search) {
         if (unpacked.data.via.array.size < 3) {
-          emsgu(_(READERR("search history",
+          emsgf(_(READERR("search history",
                           "does not have separator character")), initial_fpos);
           goto shada_read_next_item_error;
         }
         if (unpacked.data.via.array.ptr[2].type
             != MSGPACK_OBJECT_POSITIVE_INTEGER) {
-          emsgu(_(READERR("search history",
+          emsgf(_(READERR("search history",
                           "has wrong history separator type")), initial_fpos);
           goto shada_read_next_item_error;
         }
@@ -3870,16 +3867,16 @@ shada_read_next_item_hist_no_conv:
     }
     case kSDItemVariable: {
       if (unpacked.data.type != MSGPACK_OBJECT_ARRAY) {
-        emsgu(_(READERR("variable", "is not an array")), initial_fpos);
+        emsgf(_(READERR("variable", "is not an array")), initial_fpos);
         goto shada_read_next_item_error;
       }
       if (unpacked.data.via.array.size < 2) {
-        emsgu(_(READERR("variable", "does not have enough elements")),
+        emsgf(_(READERR("variable", "does not have enough elements")),
               initial_fpos);
         goto shada_read_next_item_error;
       }
       if (unpacked.data.via.array.ptr[0].type != MSGPACK_OBJECT_BIN) {
-        emsgu(_(READERR("variable", "has wrong variable name type")),
+        emsgf(_(READERR("variable", "has wrong variable name type")),
               initial_fpos);
         goto shada_read_next_item_error;
       }
@@ -3888,7 +3885,7 @@ shada_read_next_item_hist_no_conv:
                    unpacked.data.via.array.ptr[0].via.bin.size);
       if (msgpack_to_vim(unpacked.data.via.array.ptr[1],
                          &(entry->data.global_var.value)) == FAIL) {
-        emsgu(_(READERR("variable", "has value that cannot "
+        emsgf(_(READERR("variable", "has value that cannot "
                         "be converted to the VimL value")), initial_fpos);
         goto shada_read_next_item_error;
       }
@@ -3909,16 +3906,16 @@ shada_read_next_item_hist_no_conv:
     }
     case kSDItemSubString: {
       if (unpacked.data.type != MSGPACK_OBJECT_ARRAY) {
-        emsgu(_(READERR("sub string", "is not an array")), initial_fpos);
+        emsgf(_(READERR("sub string", "is not an array")), initial_fpos);
         goto shada_read_next_item_error;
       }
       if (unpacked.data.via.array.size < 1) {
-        emsgu(_(READERR("sub string", "does not have enough elements")),
+        emsgf(_(READERR("sub string", "does not have enough elements")),
               initial_fpos);
         goto shada_read_next_item_error;
       }
       if (unpacked.data.via.array.ptr[0].type != MSGPACK_OBJECT_BIN) {
-        emsgu(_(READERR("sub string", "has wrong sub string type")),
+        emsgf(_(READERR("sub string", "has wrong sub string type")),
               initial_fpos);
         goto shada_read_next_item_error;
       }
@@ -3931,7 +3928,7 @@ shada_read_next_item_hist_no_conv:
     }
     case kSDItemBufferList: {
       if (unpacked.data.type != MSGPACK_OBJECT_ARRAY) {
-        emsgu(_(READERR("buffer list", "is not an array")), initial_fpos);
+        emsgf(_(READERR("buffer list", "is not an array")), initial_fpos);
         goto shada_read_next_item_error;
       }
       if (unpacked.data.via.array.size == 0) {
@@ -3948,7 +3945,7 @@ shada_read_next_item_hist_no_conv:
         {
           msgpack_unpacked unpacked = unpacked_2;
           if (unpacked.data.type != MSGPACK_OBJECT_MAP) {
-            emsgu(_(RERR "Error while reading ShaDa file: "
+            emsgf(_(RERR "Error while reading ShaDa file: "
                     "buffer list at position %" PRIu64 " "
                     "contains entry that is not a dictionary"),
                   initial_fpos);
@@ -3973,21 +3970,21 @@ shada_read_next_item_hist_no_conv:
             }
           }
           if (entry->data.buffer_list.buffers[i].pos.lnum <= 0) {
-            emsgu(_(RERR "Error while reading ShaDa file: "
+            emsgf(_(RERR "Error while reading ShaDa file: "
                     "buffer list at position %" PRIu64 " "
                     "contains entry with invalid line number"),
                   initial_fpos);
             CLEAR_GA_AND_ERROR_OUT(ad_ga);
           }
           if (entry->data.buffer_list.buffers[i].pos.col < 0) {
-            emsgu(_(RERR "Error while reading ShaDa file: "
+            emsgf(_(RERR "Error while reading ShaDa file: "
                     "buffer list at position %" PRIu64 " "
                     "contains entry with invalid column number"),
                   initial_fpos);
             CLEAR_GA_AND_ERROR_OUT(ad_ga);
           }
           if (entry->data.buffer_list.buffers[i].fname == NULL) {
-            emsgu(_(RERR "Error while reading ShaDa file: "
+            emsgf(_(RERR "Error while reading ShaDa file: "
                     "buffer list at position %" PRIu64 " "
                     "contains entry that does not have a file name"),
                   initial_fpos);

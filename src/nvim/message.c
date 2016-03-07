@@ -557,50 +557,9 @@ int emsg(char_u *s)
   return msg_attr(s, attr);
 }
 
-/*
- * Print an error message with one "%s" and one string argument.
- */
-int emsg2(char_u *s, char_u *a1)
-{
-  return emsg3(s, a1, NULL);
-}
-
 void emsg_invreg(int name)
 {
   EMSG2(_("E354: Invalid register name: '%s'"), transchar(name));
-}
-
-/// Print an error message with one or two "%s" and one or two string arguments.
-int emsg3(char_u *s, char_u *a1, char_u *a2)
-{
-  if (emsg_not_now()) {
-    return TRUE;                // no error messages at the moment
-  }
-
-  vim_snprintf((char *)IObuff, IOSIZE, (char *)s, a1, a2);
-  return emsg(IObuff);
-}
-
-/// Print an error message with one "%" PRId64 and one (int64_t) argument.
-int emsgn(char_u *s, int64_t n)
-{
-  if (emsg_not_now()) {
-    return TRUE;                // no error messages at the moment
-  }
-
-  vim_snprintf((char *)IObuff, IOSIZE, (char *)s, n);
-  return emsg(IObuff);
-}
-
-/// Print an error message with one "%" PRIu64 and one (uint64_t) argument.
-int emsgu(char_u *s, uint64_t n)
-{
-  if (emsg_not_now()) {
-    return TRUE;                // no error messages at the moment
-  }
-
-  vim_snprintf((char *)IObuff, IOSIZE, (char *)s, n);
-  return emsg(IObuff);
 }
 
 /// Print an error message with unknown number of arguments

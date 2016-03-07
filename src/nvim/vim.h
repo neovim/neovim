@@ -273,10 +273,9 @@ enum {
 
 #include "nvim/message.h"
 
-/* Prefer using emsg3(), because perror() may send the output to the wrong
+/* Prefer using emsgf(), because perror() may send the output to the wrong
  * destination and mess up the screen. */
-#define PERROR(msg) \
-  (void) emsg3((char_u *) "%s: %s", (char_u *)msg, (char_u *)strerror(errno))
+#define PERROR(msg) (void) emsgf("%s: %s", msg, strerror(errno))
 
 #define SHOWCMD_COLS 10                 /* columns needed by shown command */
 #define STL_MAX_ITEM 80                 /* max nr of %<flag> in statusline */
