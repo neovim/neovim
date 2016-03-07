@@ -334,7 +334,7 @@ json_decode_string_cycle_start:
         continue;
       }
       case 'n': {
-        if (strncmp(p + 1, "ull", 3) != 0) {
+        if ((p + 3) >= e || strncmp(p + 1, "ull", 3) != 0) {
           EMSG2(_("E474: Expected null: %s"), p);
           goto json_decode_string_fail;
         }
@@ -347,7 +347,7 @@ json_decode_string_cycle_start:
         break;
       }
       case 't': {
-        if (strncmp(p + 1, "rue", 3) != 0) {
+        if ((p + 3) >= e || strncmp(p + 1, "rue", 3) != 0) {
           EMSG2(_("E474: Expected true: %s"), p);
           goto json_decode_string_fail;
         }
@@ -360,7 +360,7 @@ json_decode_string_cycle_start:
         break;
       }
       case 'f': {
-        if (strncmp(p + 1, "alse", 4) != 0) {
+        if ((p + 4) >= e || strncmp(p + 1, "alse", 4) != 0) {
           EMSG2(_("E474: Expected false: %s"), p);
           goto json_decode_string_fail;
         }
