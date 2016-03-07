@@ -2,7 +2,7 @@
 local helpers = require('test.functional.helpers')
 local nvim, eq, neq, eval = helpers.nvim, helpers.eq, helpers.neq, helpers.eval
 local clear, funcs, meths = helpers.clear, helpers.funcs, helpers.meths
-local os_is_windows = helpers.os_is_windows
+local os_name = helpers.os_name
 
 describe('serverstart(), serverstop()', function()
   before_each(clear)
@@ -39,7 +39,7 @@ describe('serverstart(), serverstop()', function()
     eq('', meths.get_vvar('servername'))
 
     -- v:servername will take the next available server.
-    local servername = (os_is_windows()
+    local servername = (os_name() == 'windows'
                         and [[\\.\pipe\Xtest-functional-server-server-pipe]]
                         or 'Xtest-functional-server-server-socket')
     funcs.serverstart(servername)

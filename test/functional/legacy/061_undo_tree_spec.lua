@@ -191,7 +191,7 @@ describe('undo tree:', function()
   end)
 
   it('undo an expression-register', function()
-    local normal_commands = 'o1\x1ba2\x12=string(123)\n\x1b'
+    local normal_commands = 'o1\027a2\018=string(123)\n\027'
     write_file('Xtest.source', normal_commands)
 
     feed('oa<esc>')

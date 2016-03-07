@@ -390,6 +390,7 @@ message(STATUS "Using the Lua interpreter ${LUA_PRG}.")
 
 # Setup busted.
 find_program(BUSTED_PRG busted)
+find_program(BUSTED_LUA_PRG busted-lua)
 if(NOT BUSTED_OUTPUT_TYPE)
   set(BUSTED_OUTPUT_TYPE "utfTerminal")
 endif()
@@ -499,6 +500,20 @@ if(BUSTED_PRG)
       -DTEST_TYPE=benchmark
       -P ${PROJECT_SOURCE_DIR}/cmake/RunTests.cmake
     DEPENDS ${BENCHMARK_PREREQS})
+endif()
+
+if(BUSTED_LUA_PRG)
+  add_custom_target(functionaltest-lua
+    COMMAND ${CMAKE_COMMAND}
+      -DBUSTED_PRG=${BUSTED_LUA_PRG}
+      -DNVIM_PRG=$<TARGET_FILE:nvim>
+      -DWORKING_DIR=${CMAKE_CURRENT_SOURCE_DIR}
+      -DBUSTED_OUTPUT_TYPE=${BUSTED_OUTPUT_TYPE}
+      -DTEST_DIR=${CMAKE_CURRENT_SOURCE_DIR}/test
+      -DBUILD_DIR=${CMAKE_BINARY_DIR}
+      -DTEST_TYPE=functional
+      -P ${PROJECT_SOURCE_DIR}/cmake/RunTests.cmake
+    DEPENDS ${FUNCTIONALTEST_PREREQS})
 endif()
 
 if(LUACHECK_PRG)

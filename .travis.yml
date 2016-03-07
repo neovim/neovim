@@ -53,6 +53,8 @@ env:
     # if the tests were successful, but don't have this information
     # available in before_cache (which is run before after_success).
     - SUCCESS_MARKER="$BUILD_DIR/.tests_successful"
+    # default target name for functional tests
+    - FUNCTIONALTEST=functionaltest
 
 matrix:
   include:
@@ -60,6 +62,9 @@ matrix:
       env: CI_TARGET=lint
     - os: linux
       compiler: gcc-5
+    - os: linux
+      compiler: gcc-5
+      env: FUNCTIONALTEST=functionaltest-lua
     - os: linux
       # Travis creates a cache per compiler.
       # Set a different value here to store 32-bit

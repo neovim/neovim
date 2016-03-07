@@ -41,7 +41,7 @@ describe('tui', function()
       -- INSERT --                                      |
       -- TERMINAL --                                    |
     ]])
-    feed('\x1b')
+    feed('\027')
     screen:expect([[
       abc                                               |
       test1                                             |
@@ -57,7 +57,7 @@ describe('tui', function()
     local keys = 'dfghjkl'
     for c in keys:gmatch('.') do
       execute('nnoremap <a-'..c..'> ialt-'..c..'<cr><esc>')
-      feed('\x1b'..c)
+      feed('\027'..c)
     end
     screen:expect([[
       alt-j                                             |
@@ -87,7 +87,7 @@ describe('tui', function()
     -- Example: for input ALT+j:
     --    * Vim (Nvim prior to #3982) sets high-bit, inserts "ê".
     --    * Nvim (after #3982) inserts "j".
-    feed('i\x1bj')
+    feed('i\027j')
     screen:expect([[
       j{1: }                                                |
       ~                                                 |
@@ -101,9 +101,9 @@ describe('tui', function()
 
   it('accepts ascii control sequences', function()
     feed('i')
-    feed('\x16\x07') -- ctrl+g
-    feed('\x16\x16') -- ctrl+v
-    feed('\x16\x0d') -- ctrl+m
+    feed('\022\007') -- ctrl+g
+    feed('\022\022') -- ctrl+v
+    feed('\022\013') -- ctrl+m
     screen:expect([[
     {3:^G^V^M}{1: }                                           |
     ~                                                 |
@@ -116,7 +116,7 @@ describe('tui', function()
   end)
 
   it('automatically sends <Paste> for bracketed paste sequences', function()
-    feed('i\x1b[200~')
+    feed('i\027[200~')
     screen:expect([[
       {1: }                                                 |
       ~                                                 |
@@ -136,7 +136,7 @@ describe('tui', function()
       -- INSERT (paste) --                              |
       -- TERMINAL --                                    |
     ]])
-    feed('\x1b[201~')
+    feed('\027[201~')
     screen:expect([[
       pasted from terminal{1: }                             |
       ~                                                 |
@@ -154,9 +154,9 @@ describe('tui', function()
     for i = 1, 3000 do
       t[i] = 'item ' .. tostring(i)
     end
-    feed('i\x1b[200~')
+    feed('i\027[200~')
     feed(table.concat(t, '\n'))
-    feed('\x1b[201~')
+    feed('\027[201~')
     screen:expect([[
       item 2997                                         |
       item 2998                                         |
@@ -204,7 +204,7 @@ describe('tui focus event handling', function()
   end)
 
   it('can handle focus events in normal mode', function()
-    feed('\x1b[I')
+    feed('\027[I')
     screen:expect([[
       {1: }                                                 |
       ~                                                 |
@@ -215,7 +215,7 @@ describe('tui focus event handling', function()
       -- TERMINAL --                                    |
     ]])
 
-    feed('\x1b[O')
+    feed('\027[O')
     screen:expect([[
       {1: }                                                 |
       ~                                                 |
@@ -230,7 +230,7 @@ describe('tui focus event handling', function()
   it('can handle focus events in insert mode', function()
     execute('set noshowmode')
     feed('i')
-    feed('\x1b[I')
+    feed('\027[I')
     screen:expect([[
       {1: }                                                 |
       ~                                                 |
@@ -240,7 +240,7 @@ describe('tui focus event handling', function()
       gained                                            |
       -- TERMINAL --                                    |
     ]])
-    feed('\x1b[O')
+    feed('\027[O')
     screen:expect([[
       {1: }                                                 |
       ~                                                 |
@@ -254,7 +254,7 @@ describe('tui focus event handling', function()
 
   it('can handle focus events in cmdline mode', function()
     feed(':')
-    feed('\x1b[I')
+    feed('\027[I')
     screen:expect([[
                                                         |
       ~                                                 |
@@ -264,7 +264,7 @@ describe('tui focus event handling', function()
       g{1:a}ined                                            |
       -- TERMINAL --                                    |
     ]])
-    feed('\x1b[O')
+    feed('\027[O')
     screen:expect([[
                                                         |
       ~                                                 |
@@ -281,7 +281,7 @@ describe('tui focus event handling', function()
     execute('set laststatus=0')
     execute('set noshowmode')
     execute('terminal')
-    feed('\x1b[I')
+    feed('\027[I')
     screen:expect([[
       ready $                                           |
       [Process exited 0]{1: }                               |
@@ -291,7 +291,7 @@ describe('tui focus event handling', function()
       gained                                            |
       -- TERMINAL --                                    |
     ]])
-   feed('\x1b[O')
+   feed('\027[O')
     screen:expect([[
       ready $                                           |
       [Process exited 0]{1: }                               |

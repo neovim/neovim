@@ -3,7 +3,7 @@ local helpers = require('test.functional.helpers')
 local Screen = require('test.functional.ui.screen')
 local clear, nvim, eq, neq = helpers.clear, helpers.nvim, helpers.eq, helpers.neq
 local ok, nvim_async, feed = helpers.ok, helpers.nvim_async, helpers.feed
-local os_is_windows = helpers.os_is_windows
+local os_name = helpers.os_name
 
 describe('vim_* functions', function()
   before_each(clear)
@@ -17,7 +17,7 @@ describe('vim_* functions', function()
       nvim('command', 'w')
       local f = io.open(fname)
       ok(f ~= nil)
-      if os_is_windows() then
+      if os_name() == 'windows' then
         eq('testing\r\napi\r\n', f:read('*a'))
       else
         eq('testing\napi\n', f:read('*a'))
