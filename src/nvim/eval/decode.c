@@ -608,11 +608,13 @@ json_decode_string_cycle_start:
         while (p < e && ascii_isdigit(*p)) {
           p++;
         }
-        if (p < e && *p == '.') {
-          p++;
-          fracs = p;
-          while (p < e && ascii_isdigit(*p)) {
+        if (p < e && p != ints && (*p == '.' || *p == 'e' || *p == 'E')) {
+          if (*p == '.') {
             p++;
+            fracs = p;
+            while (p < e && ascii_isdigit(*p)) {
+              p++;
+            }
           }
           if (p < e && (*p == 'e' || *p == 'E')) {
             p++;
@@ -628,7 +630,7 @@ json_decode_string_cycle_start:
         if (p == ints) {
           emsgf(_("E474: Missing number after minus sign: %.*s"), LENP(s, e));
           goto json_decode_string_fail;
-        } else if (p == fracs) {
+        } else if (p == fracs || exps == fracs + 1) {
           emsgf(_("E474: Missing number after decimal dot: %.*s"), LENP(s, e));
           goto json_decode_string_fail;
         } else if (p == exps) {
@@ -639,14 +641,26 @@ json_decode_string_cycle_start:
           .v_type = VAR_NUMBER,
           .v_lock = VAR_UNLOCKED,
         };
-        if (fracs) {
+        const size_t exp_num_len = (size_t) (p - s);
+        if (fracs || exps) {
           // Convert floating-point number
-          (void) string2float(s, &tv.vval.v_float);
+          const size_t num_len = string2float(s, &tv.vval.v_float);
+          if (exp_num_len != num_len) {
+            emsgf(_("E685: internal error: while converting number \"%.*s\" "
+                    "to float string2float consumed %zu bytes in place of %zu"),
+                  (int) exp_num_len, s, num_len, exp_num_len);
+          }
           tv.v_type = VAR_FLOAT;
         } else {
           // Convert integer
           long nr;
-          vim_str2nr((char_u *) s, NULL, NULL, 0, &nr, NULL, (int) (p - s));
+          int num_len;
+          vim_str2nr((char_u *) s, NULL, &num_len, 0, &nr, NULL, (int) (p - s));
+          if ((int) exp_num_len != num_len) {
+            emsgf(_("E685: internal error: while converting number \"%.*s\" "
+                    "to float vim_str2nr consumed %i bytes in place of %zu"),
+                  (int) exp_num_len, s, num_len, exp_num_len);
+          }
           tv.vval.v_number = (varnumber_T) nr;
         }
         POP(tv, false);

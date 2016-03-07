@@ -121,19 +121,32 @@ describe('json_decode() function', function()
     eq(-100000, funcs.json_decode('  -100000  '))
   end)
 
-  it('fails to parse +numbers', function()
+  it('fails to parse +numbers and .number', function()
     eq('Vim(call):E474: Unidentified byte: +1000',
        exc_exec('call json_decode("+1000")'))
+    eq('Vim(call):E474: Unidentified byte: .1000',
+       exc_exec('call json_decode(".1000")'))
   end)
 
-  it('fails to parse negative numbers with space after -', function()
-    eq('Vim(call):E474: Missing number after minus sign: - 1000',
-       exc_exec('call json_decode("- 1000")'))
-  end)
-
-  it('fails to parse -', function()
+  it('fails to parse incomplete numbers', function()
+    eq('Vim(call):E474: Missing number after minus sign: -.1',
+       exc_exec('call json_decode("-.1")'))
     eq('Vim(call):E474: Missing number after minus sign: -',
        exc_exec('call json_decode("-")'))
+    eq('Vim(call):E474: Missing number after decimal dot: -1.',
+       exc_exec('call json_decode("-1.")'))
+    eq('Vim(call):E474: Missing number after decimal dot: 0.',
+       exc_exec('call json_decode("0.")'))
+    eq('Vim(call):E474: Missing exponent: 0.0e',
+       exc_exec('call json_decode("0.0e")'))
+    eq('Vim(call):E474: Missing exponent: 0.0e+',
+       exc_exec('call json_decode("0.0e+")'))
+    eq('Vim(call):E474: Missing exponent: 0.0e-',
+       exc_exec('call json_decode("0.0e-")'))
+    eq('Vim(call):E474: Missing exponent: 0.0e-',
+       exc_exec('call json_decode("0.0e-")'))
+    eq('Vim(call):E474: Missing number after decimal dot: 1.e5',
+       exc_exec('call json_decode("1.e5")'))
   end)
 
   it('parses floating-point numbers', function()
@@ -145,20 +158,12 @@ describe('json_decode() function', function()
     eq(100000.5e50, funcs.json_decode('100000.5e+50'))
     eq(-100000.5e-50, funcs.json_decode('-100000.5e-50'))
     eq(100000.5e-50, funcs.json_decode('100000.5e-50'))
+    eq(100000e-50, funcs.json_decode('100000e-50'))
   end)
 
-  it('fails to parse incomplete floating-point numbers', function()
-    eq('Vim(call):E474: Missing number after decimal dot: 0.',
-       exc_exec('call json_decode("0.")'))
-    eq('Vim(call):E474: Missing exponent: 0.0e',
-       exc_exec('call json_decode("0.0e")'))
-    eq('Vim(call):E474: Missing exponent: 0.0e+',
-       exc_exec('call json_decode("0.0e+")'))
-    eq('Vim(call):E474: Missing exponent: 0.0e-',
-       exc_exec('call json_decode("0.0e-")'))
-  end)
-
-  it('fails to parse floating-point numbers with spaces inside', function()
+  it('fails to parse numbers with spaces inside', function()
+    eq('Vim(call):E474: Missing number after minus sign: - 1000',
+       exc_exec('call json_decode("- 1000")'))
     eq('Vim(call):E474: Missing number after decimal dot: 0. ',
        exc_exec('call json_decode("0. ")'))
     eq('Vim(call):E474: Missing number after decimal dot: 0. 0',
