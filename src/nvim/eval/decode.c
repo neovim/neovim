@@ -431,7 +431,10 @@ json_decode_string_cycle_start:
             // and thus cannot possibly be equal to *p. But utf_ptr2char({0xFF,
             // 0}) will return 0xFF, even though 0xFF cannot start any UTF-8
             // code point at all.
-            if (ch >= 0x80 && p_byte == ch) {
+            //
+            // The only exception is U+00C3 which is represented as 0xC3 0x83.
+            if (ch >= 0x80 && p_byte == ch && !(
+                    ch == 0xC3 && p + 1 < e && (uint8_t) p[1] == 0x83)) {
               EMSG2(_("E474: Only UTF-8 strings allowed: %s"), p);
               goto json_decode_string_fail;
             } else if (ch > 0x10FFFF) {

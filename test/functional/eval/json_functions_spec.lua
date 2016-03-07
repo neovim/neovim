@@ -447,6 +447,10 @@ describe('json_decode() function', function()
     eq('\xAB', funcs.json_decode('"\\u00AB"'))
     sp_decode_eq({_TYPE='string', _VAL={'\n\xAB\n'}}, '"\\u0000\\u00AB\\u0000"')
   end)
+
+  it('parses U+00C3 correctly', function()
+    eq('\xC3\x83', funcs.json_decode('"\xC3\x83"'))
+  end)
 end)
 
 describe('json_encode() function', function()
