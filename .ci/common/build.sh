@@ -5,6 +5,9 @@ build_deps() {
   if [[ "${BUILD_MINGW}" == ON ]]; then
     DEPS_CMAKE_FLAGS="${DEPS_CMAKE_FLAGS} ${CMAKE_FLAGS_MINGW}"
   fi
+  if [[ "${FUNCTIONALTEST}" == "functionaltest-lua" ]]; then
+    DEPS_CMAKE_FLAGS="${DEPS_CMAKE_FLAGS} -DUSE_BUNDLED_LUA=ON"
+  fi
 
   rm -rf "${DEPS_BUILD_DIR}"
 
