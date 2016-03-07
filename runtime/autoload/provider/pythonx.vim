@@ -27,9 +27,9 @@ function! provider#pythonx#Detect(major_ver) abort
 
   let errors = []
   for prog in map(prog_suffixes, "'python' . v:val")
-    let [result, err] = s:check_interpreter(prog, a:major_ver, skip)
+    let [result, err, module_path] = s:check_interpreter(prog, a:major_ver, skip)
     if result
-      return [prog, err]
+      return [prog, err, module_path]
     endif
 
     " Accumulate errors in case we don't find
@@ -39,7 +39,7 @@ function! provider#pythonx#Detect(major_ver) abort
 
   " No suitable Python interpreter found.
   return ['', 'provider/pythonx: Could not load Python ' . a:major_ver
-        \ . ":\n" .  join(errors, "\n")]
+        \ . ":\n" .  join(errors, "\n"), '']
 endfunction
 
 function! s:check_interpreter(prog, major_ver, skip) abort
@@ -49,7 +49,7 @@ function! s:check_interpreter(prog, major_ver, skip) abort
   endif
 
   if a:skip
-    return [1, '']
+    return [1, '', '']
   endif
 
   let min_version = (a:major_ver == 2) ? '2.6' : '3.3'
@@ -59,13 +59,17 @@ function! s:check_interpreter(prog, major_ver, skip) abort
   "   0  Neovim module can be loaded.
   "   1  Something else went wrong.
   "   2  Neovim module cannot be loaded.
-  let prog_ver = system([ a:prog , '-c' ,
-        \ 'import sys; ' .
+  let out = split(system([ a:prog , '-c' ,
+        \ 'import sys, pkgutil, os; ' .
         \ 'sys.path.remove(""); ' .
         \ 'sys.stdout.write(str(sys.version_info[0]) + "." + str(sys.version_info[1])); ' .
-        \ 'import pkgutil; ' .
-        \ 'exit(2*int(pkgutil.get_loader("neovim") is None))'
-        \ ])
+        \ 'sys.stdout.write(";"); ' .
+        \ 'loader = pkgutil.get_loader("neovim"); ' .
+        \ 'sys.stdout.write(os.path.dirname(loader.get_filename()) if not loader is None else ""); ' .
+        \ 'exit(2*int(loader is None))'
+        \ ]), ';')
+  let prog_ver = out[0]
+  let module_path = out[1]
 
   if prog_ver
     if prog_ver !~ '^' . a:major_ver
@@ -79,11 +83,11 @@ function! s:check_interpreter(prog, major_ver, skip) abort
 
   if v:shell_error == 1
     return [0, 'Checking ' . prog_path . ' caused an unknown error. '
-          \ . 'Please report this at github.com/neovim/neovim.']
+          \ . 'Please report this at github.com/neovim/neovim.', '']
   elseif v:shell_error == 2
     return [0, prog_path . ' does have not have the neovim module installed. '
-          \ . 'See ":help nvim-python".']
+          \ . 'See ":help nvim-python".', '']
   endif
 
-  return [1, '']
+  return [1, '', module_path]
 endfunction
