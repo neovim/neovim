@@ -389,6 +389,8 @@ describe('json_decode() function', function()
     eq('\t\xED\xB0\x80', funcs.json_decode('"\\t\\uDC00"'))
 
     eq('\xED\xA0\x80¬', funcs.json_decode('"\\uD800\\u00AC"'))
+
+    eq('\xED\xA0\x80\xED\xA0\x80', funcs.json_decode('"\\uD800\\uD800"'))
   end)
 
   local sp_decode_eq = function(expected, json)

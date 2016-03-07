@@ -499,6 +499,7 @@ json_decode_string_cycle_start:
                   hasnul = true;
                 }
                 if (SURROGATE_HI_START <= ch && ch <= SURROGATE_HI_END) {
+                  PUT_FST_IN_PAIR(fst_in_pair, str_end);
                   fst_in_pair = (int) ch;
                 } else if (SURROGATE_LO_START <= ch && ch <= SURROGATE_LO_END
                            && fst_in_pair != 0) {
