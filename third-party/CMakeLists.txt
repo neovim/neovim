@@ -21,6 +21,9 @@ option(USE_BUNDLED_LIBUV "Use the bundled libuv." ${USE_BUNDLED})
 option(USE_BUNDLED_MSGPACK "Use the bundled msgpack." ${USE_BUNDLED})
 option(USE_BUNDLED_LUAJIT "Use the bundled version of luajit." ${USE_BUNDLED})
 option(USE_BUNDLED_LUAROCKS "Use the bundled version of luarocks." ${USE_BUNDLED})
+#XXX(tarruda): Lua is only used for debugging the functional test client, no
+# build it unless explicitly requested
+option(USE_BUNDLED_LUA "Use the bundled version of lua." OFF)
 
 option(USE_EXISTING_SRC_DIR "Skip download of deps sources in case of existing source directory." OFF)
 
@@ -80,6 +83,9 @@ set(MSGPACK_SHA256 afda64ca445203bb7092372b822bae8b2539fdcebbfc3f753f393628c2bcf
 set(LUAJIT_URL https://github.com/neovim/deps/raw/master/opt/LuaJIT-2.0.4.tar.gz)
 set(LUAJIT_SHA256 620fa4eb12375021bef6e4f237cbd2dd5d49e56beb414bee052c746beef1807d)
 
+set(LUA_URL https://github.com/lua/lua/archive/5.1.5.tar.gz)
+set(LUA_SHA256 1cd642c4c39778306a14e62ccddace5c7a4fb2257b0b06f43bc81cf305c7415f)
+
 set(LUAROCKS_URL https://github.com/keplerproject/luarocks/archive/5d8a16526573b36d5b22aa74866120c998466697.tar.gz)
 set(LUAROCKS_SHA256 cae709111c5701235770047dfd7169f66b82ae1c7b9b79207f9df0afb722bfd9)
 
@@ -117,6 +123,10 @@ endif()
 
 if(USE_BUNDLED_LUAJIT)
   include(BuildLuajit)
+endif()
+
+if(USE_BUNDLED_LUA AND NOT CMAKE_CROSSCOMPILING)
+  include(BuildLua)
 endif()
 
 if(USE_BUNDLED_LUAROCKS)
