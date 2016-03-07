@@ -198,9 +198,9 @@ describe('json_decode() function', function()
 
   it('fails to parse containers which are closed by different brackets',
   function()
-    eq('Vim(call):E474: Closing dictionary with bracket: ]',
+    eq('Vim(call):E474: Closing dictionary with square bracket: ]',
        exc_exec('call json_decode("{]")'))
-    eq('Vim(call):E474: Closing list with figure brace: }',
+    eq('Vim(call):E474: Closing list with curly bracket: }',
        exc_exec('call json_decode("[}")'))
   end)
 

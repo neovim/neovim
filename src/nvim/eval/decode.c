@@ -249,10 +249,10 @@ json_decode_string_cycle_start:
         }
         ContainerStackItem last_container = kv_last(container_stack);
         if (*p == '}' && last_container.container.v_type != VAR_DICT) {
-          EMSG2(_("E474: Closing list with figure brace: %s"), p);
+          EMSG2(_("E474: Closing list with curly bracket: %s"), p);
           goto json_decode_string_fail;
         } else if (*p == ']' && last_container.container.v_type != VAR_LIST) {
-          EMSG2(_("E474: Closing dictionary with bracket: %s"), p);
+          EMSG2(_("E474: Closing dictionary with square bracket: %s"), p);
           goto json_decode_string_fail;
         } else if (didcomma) {
           EMSG2(_("E474: Trailing comma: %s"), p);
