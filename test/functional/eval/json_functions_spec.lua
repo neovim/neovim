@@ -451,6 +451,19 @@ describe('json_decode() function', function()
   it('parses U+00C3 correctly', function()
     eq('\xC3\x83', funcs.json_decode('"\xC3\x83"'))
   end)
+
+  it('fails to parse empty string', function()
+    eq('Vim(call):E474: Attempt to decode a blank string',
+       exc_exec('call json_decode("")'))
+    eq('Vim(call):E474: Attempt to decode a blank string',
+       exc_exec('call json_decode(" ")'))
+    eq('Vim(call):E474: Attempt to decode a blank string',
+       exc_exec('call json_decode("\\t")'))
+    eq('Vim(call):E474: Attempt to decode a blank string',
+       exc_exec('call json_decode("\\n")'))
+    eq('Vim(call):E474: Attempt to decode a blank string',
+       exc_exec('call json_decode(" \\t\\n \\n\\t\\t \\n\\t\\n \\n \\t\\n\\t ")'))
+  end)
 end)
 
 describe('json_encode() function', function()

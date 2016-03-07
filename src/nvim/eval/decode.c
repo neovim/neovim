@@ -223,6 +223,15 @@ int json_decode_string(const char *const buf, const size_t len,
                        typval_T *const rettv)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
+  const char *p = buf;
+  const char *const e = buf + len;
+  while (p < e && (*p == ' ' || *p == '\t' || *p == '\n')) {
+    p++;
+  }
+  if (p == e) {
+    EMSG(_("E474: Attempt to decode a blank string"));
+    return FAIL;
+  }
   vimconv_T conv = { .vc_type = CONV_NONE };
   convert_setup(&conv, (char_u *) "utf-8", p_enc);
   conv.vc_fail = true;
@@ -232,11 +241,9 @@ int json_decode_string(const char *const buf, const size_t len,
   ContainerStack container_stack;
   kv_init(container_stack);
   rettv->v_type = VAR_UNKNOWN;
-  const char *const e = buf + len;
   bool didcomma = false;
   bool didcolon = false;
   bool next_map_special = false;
-  const char *p = buf;
   for (; p < e; p++) {
 json_decode_string_cycle_start:
     assert(*p == '{' || next_map_special == false);
