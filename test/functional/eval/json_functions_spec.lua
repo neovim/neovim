@@ -10,6 +10,7 @@ local exc_exec = helpers.exc_exec
 describe('json_decode() function', function()
   local restart = function(cmd)
     clear(cmd)
+    execute('language C')
     execute([[
       function Eq(exp, act)
         let act = a:act
@@ -449,7 +450,10 @@ describe('json_decode() function', function()
 end)
 
 describe('json_encode() function', function()
-  before_each(clear)
+  before_each(function()
+    clear()
+    execute('language C')
+  end)
 
   it('dumps strings', function()
     eq('"Test"', funcs.json_encode('Test'))
