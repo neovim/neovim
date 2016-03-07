@@ -54,7 +54,7 @@ static inline void create_special_dict(typval_T *const rettv,
   dict_T *const dict = dict_alloc();
   dictitem_T *const type_di = dictitem_alloc((char_u *) "_TYPE");
   type_di->di_tv.v_type = VAR_LIST;
-  type_di->di_tv.v_lock = 0;
+  type_di->di_tv.v_lock = VAR_UNLOCKED;
   type_di->di_tv.vval.v_list = (list_T *) eval_msgpack_type_lists[type];
   type_di->di_tv.vval.v_list->lv_refcount++;
   dict_add(dict, type_di);
@@ -548,7 +548,7 @@ json_decode_string_cycle_start:
           list->lv_refcount++;
           create_special_dict(&obj, kMPString, ((typval_T) {
             .v_type = VAR_LIST,
-            .v_lock = 0,
+            .v_lock = VAR_UNLOCKED,
             .vval = { .v_list = list },
           }));
           if (encode_list_write((void *) list, str, (size_t) (str_end - str))
@@ -760,7 +760,7 @@ int msgpack_to_vim(const msgpack_object mobj, typval_T *const rettv)
       if (mobj.via.u64 <= VARNUMBER_MAX) {
         *rettv = (typval_T) {
           .v_type = VAR_NUMBER,
-          .v_lock = 0,
+          .v_lock = VAR_UNLOCKED,
           .vval = { .v_number = (varnumber_T) mobj.via.u64 },
         };
       } else {
@@ -768,7 +768,7 @@ int msgpack_to_vim(const msgpack_object mobj, typval_T *const rettv)
         list->lv_refcount++;
         create_special_dict(rettv, kMPInteger, ((typval_T) {
           .v_type = VAR_LIST,
-          .v_lock = 0,
+          .v_lock = VAR_UNLOCKED,
           .vval = { .v_list = list },
         }));
         uint64_t n = mobj.via.u64;
@@ -783,7 +783,7 @@ int msgpack_to_vim(const msgpack_object mobj, typval_T *const rettv)
       if (mobj.via.i64 >= VARNUMBER_MIN) {
         *rettv = (typval_T) {
           .v_type = VAR_NUMBER,
-          .v_lock = 0,
+          .v_lock = VAR_UNLOCKED,
           .vval = { .v_number = (varnumber_T) mobj.via.i64 },
         };
       } else {
@@ -791,7 +791,7 @@ int msgpack_to_vim(const msgpack_object mobj, typval_T *const rettv)
         list->lv_refcount++;
         create_special_dict(rettv, kMPInteger, ((typval_T) {
           .v_type = VAR_LIST,
-          .v_lock = 0,
+          .v_lock = VAR_UNLOCKED,
           .vval = { .v_list = list },
         }));
         uint64_t n = -((uint64_t) mobj.via.i64);
@@ -805,7 +805,7 @@ int msgpack_to_vim(const msgpack_object mobj, typval_T *const rettv)
     case MSGPACK_OBJECT_FLOAT: {
       *rettv = (typval_T) {
         .v_type = VAR_FLOAT,
-        .v_lock = 0,
+        .v_lock = VAR_UNLOCKED,
         .vval = { .v_float = mobj.via.f64 },
       };
       break;
@@ -815,7 +815,7 @@ int msgpack_to_vim(const msgpack_object mobj, typval_T *const rettv)
       list->lv_refcount++;
       create_special_dict(rettv, kMPString, ((typval_T) {
         .v_type = VAR_LIST,
-        .v_lock = 0,
+        .v_lock = VAR_UNLOCKED,
         .vval = { .v_list = list },
       }));
       if (encode_list_write((void *) list, mobj.via.str.ptr, mobj.via.str.size)
@@ -828,7 +828,7 @@ int msgpack_to_vim(const msgpack_object mobj, typval_T *const rettv)
       if (memchr(mobj.via.bin.ptr, NUL, mobj.via.bin.size) == NULL) {
         *rettv = (typval_T) {
           .v_type = VAR_STRING,
-          .v_lock = 0,
+          .v_lock = VAR_UNLOCKED,
           .vval = { .v_string = xmemdupz(mobj.via.bin.ptr, mobj.via.bin.size) },
         };
         break;
@@ -837,7 +837,7 @@ int msgpack_to_vim(const msgpack_object mobj, typval_T *const rettv)
       list->lv_refcount++;
       create_special_dict(rettv, kMPBinary, ((typval_T) {
         .v_type = VAR_LIST,
-        .v_lock = 0,
+        .v_lock = VAR_UNLOCKED,
         .vval = { .v_list = list },
       }));
       if (encode_list_write((void *) list, mobj.via.bin.ptr, mobj.via.bin.size)
@@ -851,7 +851,7 @@ int msgpack_to_vim(const msgpack_object mobj, typval_T *const rettv)
       list->lv_refcount++;
       *rettv = (typval_T) {
         .v_type = VAR_LIST,
-        .v_lock = 0,
+        .v_lock = VAR_UNLOCKED,
         .vval = { .v_list = list },
       };
       for (size_t i = 0; i < mobj.via.array.size; i++) {
@@ -877,7 +877,7 @@ int msgpack_to_vim(const msgpack_object mobj, typval_T *const rettv)
       dict->dv_refcount++;
       *rettv = (typval_T) {
         .v_type = VAR_DICT,
-        .v_lock = 0,
+        .v_lock = VAR_UNLOCKED,
         .vval = { .v_dict = dict },
       };
       for (size_t i = 0; i < mobj.via.map.size; i++) {
@@ -902,7 +902,7 @@ msgpack_to_vim_generic_map: {}
       list->lv_refcount++;
       create_special_dict(rettv, kMPMap, ((typval_T) {
         .v_type = VAR_LIST,
-        .v_lock = 0,
+        .v_lock = VAR_UNLOCKED,
         .vval = { .v_list = list },
       }));
       for (size_t i = 0; i < mobj.via.map.size; i++) {
@@ -931,7 +931,7 @@ msgpack_to_vim_generic_map: {}
       list_append_list(list, ext_val_list);
       create_special_dict(rettv, kMPExt, ((typval_T) {
         .v_type = VAR_LIST,
-        .v_lock = 0,
+        .v_lock = VAR_UNLOCKED,
         .vval = { .v_list = list },
       }));
       if (encode_list_write((void *) ext_val_list, mobj.via.ext.ptr,
