@@ -740,21 +740,17 @@ json_decode_string_after_cycle:
       }
     }
   }
-  if (kv_size(stack) > 1 || kv_size(container_stack)) {
-    emsgf(_("E474: Unexpected end of input: %.*s"), (int) buf_len, buf);
-    goto json_decode_string_fail;
+  if (kv_size(stack) == 1 && kv_size(container_stack) == 0) {
+    *rettv = kv_pop(stack).val;
+    goto json_decode_string_ret;
   }
-  goto json_decode_string_ret;
+  emsgf(_("E474: Unexpected end of input: %.*s"), (int) buf_len, buf);
 json_decode_string_fail:
   ret = FAIL;
   while (kv_size(stack)) {
     clear_tv(&(kv_pop(stack).val));
   }
 json_decode_string_ret:
-  if (ret != FAIL) {
-    assert(kv_size(stack) == 1);
-    *rettv = kv_pop(stack).val;
-  }
   kv_destroy(stack);
   kv_destroy(container_stack);
   return ret;
