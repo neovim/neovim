@@ -6783,12 +6783,14 @@ trunc({expr})							*trunc()*
 
 type({expr})							*type()*
 		The result is a Number, depending on the type of {expr}:
-			Number:	    0
-			String:	    1
+			Number:     0
+			String:     1
 			Funcref:    2
-			List:	    3
+			List:       3
 			Dictionary: 4
-			Float:	    5
+			Float:      5
+			Boolean:    6 (|v:true| and |v:false|)
+			Null:       7 (|v:null|)
 		To avoid the magic numbers it should be used this way: >
 			:if type(myvar) == type(0)
 			:if type(myvar) == type("")
@@ -6796,6 +6798,10 @@ type({expr})							*type()*
 			:if type(myvar) == type([])
 			:if type(myvar) == type({})
 			:if type(myvar) == type(0.0)
+			:if type(myvar) == type(v:true)
+<		In place of checking for |v:null| type it is better to check 
+		for |v:null| directly as it is the only value of this type: >
+			:if myvar is v:null
 
 undofile({name})					*undofile()*
 		Return the name of the undo file that would be used for a file
