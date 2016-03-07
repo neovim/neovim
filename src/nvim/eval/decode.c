@@ -193,16 +193,388 @@ static inline int json_decoder_pop(ValuesStackItem obj,
   return OK;
 }
 
-#define OBJ(obj_tv, is_sp_string) \
+#define LENP(p, e) \
+    ((int) ((e) - (p))), (p)
+#define OBJ(obj_tv, is_sp_string, didcomma_, didcolon_) \
   ((ValuesStackItem) { \
     .is_special_string = (is_sp_string), \
     .val = (obj_tv), \
-    .didcomma = didcomma, \
-    .didcolon = didcolon, \
+    .didcomma = (didcomma_), \
+    .didcolon = (didcolon_), \
   })
+
 #define POP(obj_tv, is_sp_string) \
   do { \
-    if (json_decoder_pop(OBJ(obj_tv, is_sp_string), &stack, &container_stack, \
+    if (json_decoder_pop(OBJ(obj_tv, is_sp_string, *didcomma, *didcolon), \
+                         stack, container_stack, \
+                         &p, next_map_special, didcomma, didcolon) \
+        == FAIL) { \
+      goto parse_json_string_fail; \
+    } \
+    if (*next_map_special) { \
+      goto parse_json_string_ret; \
+    } \
+  } while (0)
+
+/// Parse JSON double-quoted string
+///
+/// @param[in]  conv  Defines conversion necessary to convert UTF-8 string to
+///                   &encoding.
+/// @param[in]  buf  Buffer being converted.
+/// @param[in]  buf_len  Length of the buffer.
+/// @param[in,out]  pp  Pointer to the start of the string. Must point to '"'.
+///                     Is advanced to the closing '"'.
+/// @param[out]  stack  Object stack.
+/// @param[out]  container_stack  Container objects stack.
+/// @param[out]  next_map_special  Is set to true when dictionary is converted
+///                                to a special map, otherwise not touched.
+/// @param[out]  didcomma  True if previous token was comma. Is set to recorded
+///                        value when decoder is restarted, otherwise unused.
+/// @param[out]  didcolon  True if previous token was colon. Is set to recorded
+///                        value when decoder is restarted, otherwise unused.
+///
+/// @return OK in case of success, FAIL in case of error.
+static inline int parse_json_string(vimconv_T *const conv,
+                                    const char *const buf, const size_t buf_len,
+                                    const char **const pp,
+                                    ValuesStack *const stack,
+                                    ContainerStack *const container_stack,
+                                    bool *const next_map_special,
+                                    bool *const didcomma,
+                                    bool *const didcolon)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_ALWAYS_INLINE
+{
+  const char *const e = buf + buf_len;
+  const char *p = *pp;
+  size_t len = 0;
+  const char *const s = ++p;
+  int ret = OK;
+  while (p < e && *p != '"') {
+    if (*p == '\\') {
+      p++;
+      if (p == e) {
+        emsgf(_("E474: Unfinished escape sequence: %.*s"),
+              (int) buf_len, buf);
+        goto parse_json_string_fail;
+      }
+      switch (*p) {
+        case 'u': {
+          if (p + 4 >= e) {
+            emsgf(_("E474: Unfinished unicode escape sequence: %.*s"),
+                  (int) buf_len, buf);
+            goto parse_json_string_fail;
+          } else if (!ascii_isxdigit(p[1])
+                     || !ascii_isxdigit(p[2])
+                     || !ascii_isxdigit(p[3])
+                     || !ascii_isxdigit(p[4])) {
+            emsgf(_("E474: Expected four hex digits after \\u: %.*s"),
+                  LENP(p - 1, e));
+            goto parse_json_string_fail;
+          }
+          // One UTF-8 character below U+10000 can take up to 3 bytes,
+          // above up to 6, but they are encoded using two \u escapes.
+          len += 3;
+          p += 5;
+          break;
+        }
+        case '\\':
+        case '/':
+        case '"':
+        case 't':
+        case 'b':
+        case 'n':
+        case 'r':
+        case 'f': {
+          len++;
+          p++;
+          break;
+        }
+        default: {
+          emsgf(_("E474: Unknown escape sequence: %.*s"), LENP(p - 1, e));
+          goto parse_json_string_fail;
+        }
+      }
+    } else {
+      uint8_t p_byte = (uint8_t) *p;
+      // unescaped = %x20-21 / %x23-5B / %x5D-10FFFF
+      if (p_byte < 0x20) {
+        emsgf(_("E474: ASCII control characters cannot be present "
+                "inside string: %.*s"), LENP(p, e));
+        goto parse_json_string_fail;
+      }
+      const int ch = utf_ptr2char((char_u *) p);
+      // All characters above U+007F are encoded using two or more bytes
+      // and thus cannot possibly be equal to *p. But utf_ptr2char({0xFF,
+      // 0}) will return 0xFF, even though 0xFF cannot start any UTF-8
+      // code point at all.
+      //
+      // The only exception is U+00C3 which is represented as 0xC3 0x83.
+      if (ch >= 0x80 && p_byte == ch
+          && !(ch == 0xC3 && p + 1 < e && (uint8_t) p[1] == 0x83)) {
+        emsgf(_("E474: Only UTF-8 strings allowed: %.*s"), LENP(p, e));
+        goto parse_json_string_fail;
+      } else if (ch > 0x10FFFF) {
+        emsgf(_("E474: Only UTF-8 code points up to U+10FFFF "
+                "are allowed to appear unescaped: %.*s"), LENP(p, e));
+        goto parse_json_string_fail;
+      }
+      const size_t ch_len = (size_t) utf_char2len(ch);
+      assert(ch_len == (size_t) (ch ? utf_ptr2len((char_u *) p) : 1));
+      len += ch_len;
+      p += ch_len;
+    }
+  }
+  if (p == e || *p != '"') {
+    emsgf(_("E474: Expected string end: %.*s"), (int) buf_len, buf);
+    goto parse_json_string_fail;
+  }
+  if (len == 0) {
+    POP(((typval_T) {
+      .v_type = VAR_STRING,
+      .vval = { .v_string = NULL },
+    }), false);
+    goto parse_json_string_ret;
+  }
+  char *str = xmalloc(len + 1);
+  int fst_in_pair = 0;
+  char *str_end = str;
+  bool hasnul = false;
+#define PUT_FST_IN_PAIR(fst_in_pair, str_end) \
+  do { \
+    if (fst_in_pair != 0) { \
+      str_end += utf_char2bytes(fst_in_pair, (char_u *) str_end); \
+      fst_in_pair = 0; \
+    } \
+  } while (0)
+  for (const char *t = s; t < p; t++) {
+    if (t[0] != '\\' || t[1] != 'u') {
+      PUT_FST_IN_PAIR(fst_in_pair, str_end);
+    }
+    if (*t == '\\') {
+      t++;
+      switch (*t) {
+        case 'u': {
+          const char ubuf[] = { t[1], t[2], t[3], t[4] };
+          t += 4;
+          unsigned long ch;
+          vim_str2nr((char_u *) ubuf, NULL, NULL,
+                     STR2NR_HEX | STR2NR_FORCE, NULL, &ch, 4);
+          if (ch == 0) {
+            hasnul = true;
+          }
+          if (SURROGATE_HI_START <= ch && ch <= SURROGATE_HI_END) {
+            PUT_FST_IN_PAIR(fst_in_pair, str_end);
+            fst_in_pair = (int) ch;
+          } else if (SURROGATE_LO_START <= ch && ch <= SURROGATE_LO_END
+                     && fst_in_pair != 0) {
+            const int full_char = (
+                (int) (ch - SURROGATE_LO_START)
+                + ((fst_in_pair - SURROGATE_HI_START) << 10)
+                + SURROGATE_FIRST_CHAR);
+            str_end += utf_char2bytes(full_char, (char_u *) str_end);
+            fst_in_pair = 0;
+          } else {
+            PUT_FST_IN_PAIR(fst_in_pair, str_end);
+            str_end += utf_char2bytes((int) ch, (char_u *) str_end);
+          }
+          break;
+        }
+        case '\\':
+        case '/':
+        case '"':
+        case 't':
+        case 'b':
+        case 'n':
+        case 'r':
+        case 'f': {
+          static const char escapes[] = {
+            ['\\'] = '\\',
+            ['/'] = '/',
+            ['"'] = '"',
+            ['t'] = TAB,
+            ['b'] = BS,
+            ['n'] = NL,
+            ['r'] = CAR,
+            ['f'] = FF,
+          };
+          *str_end++ = escapes[(int) *t];
+          break;
+        }
+        default: {
+          assert(false);
+        }
+      }
+    } else {
+      *str_end++ = *t;
+    }
+  }
+  PUT_FST_IN_PAIR(fst_in_pair, str_end);
+#undef PUT_FST_IN_PAIR
+  if (conv->vc_type != CONV_NONE) {
+    size_t str_len = (size_t) (str_end - str);
+    char *const new_str = (char *) string_convert(conv, (char_u *) str,
+                                                  &str_len);
+    if (new_str == NULL) {
+      emsgf(_("E474: Failed to convert string \"%.*s\" from UTF-8"),
+            (int) str_len, str);
+      xfree(str);
+      goto parse_json_string_fail;
+    }
+    xfree(str);
+    str = new_str;
+    str_end = new_str + str_len;
+  }
+  if (hasnul) {
+    typval_T obj;
+    list_T *const list = list_alloc();
+    list->lv_refcount++;
+    create_special_dict(&obj, kMPString, ((typval_T) {
+      .v_type = VAR_LIST,
+      .v_lock = VAR_UNLOCKED,
+      .vval = { .v_list = list },
+    }));
+    if (encode_list_write((void *) list, str, (size_t) (str_end - str))
+        == -1) {
+      clear_tv(&obj);
+      goto parse_json_string_fail;
+    }
+    xfree(str);
+    POP(obj, true);
+  } else {
+    *str_end = NUL;
+    POP(((typval_T) {
+      .v_type = VAR_STRING,
+      .vval = { .v_string = (char_u *) str },
+    }), false);
+  }
+  goto parse_json_string_ret;
+parse_json_string_fail:
+  ret = FAIL;
+parse_json_string_ret:
+  *pp = p;
+  return ret;
+}
+
+#undef POP
+
+/// Parse JSON number: both floating-point and integer
+///
+/// Number format: `-?\d+(?:.\d+)?(?:[eE][+-]?\d+)?`.
+///
+/// @param[in]  buf  Buffer being converted.
+/// @param[in]  buf_len  Length of the buffer.
+/// @param[in,out]  pp  Pointer to the start of the number. Must point to
+///                     a digit or a minus sign. Is advanced to the last
+///                     character of the number.
+/// @param[out]  stack  Object stack.
+/// @param[out]  container_stack  Container objects stack.
+/// @param[out]  next_map_special  Is set to true when dictionary is converted
+///                                to a special map, otherwise not touched.
+/// @param[out]  didcomma  True if previous token was comma. Is set to recorded
+///                        value when decoder is restarted, otherwise unused.
+/// @param[out]  didcolon  True if previous token was colon. Is set to recorded
+///                        value when decoder is restarted, otherwise unused.
+///
+/// @return OK in case of success, FAIL in case of error.
+static inline int parse_json_number(const char *const buf, const size_t buf_len,
+                                    const char **const pp,
+                                    ValuesStack *const stack,
+                                    ContainerStack *const container_stack,
+                                    bool *const next_map_special,
+                                    bool *const didcomma,
+                                    bool *const didcolon)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_ALWAYS_INLINE
+{
+  const char *const e = buf + buf_len;
+  const char *p = *pp;
+  int ret = OK;
+  const char *const s = p;
+  const char *ints = NULL;
+  const char *fracs = NULL;
+  const char *exps = NULL;
+  if (*p == '-') {
+    p++;
+  }
+  ints = p;
+  while (p < e && ascii_isdigit(*p)) {
+    p++;
+  }
+  if (p < e && p != ints && (*p == '.' || *p == 'e' || *p == 'E')) {
+    if (*p == '.') {
+      p++;
+      fracs = p;
+      while (p < e && ascii_isdigit(*p)) {
+        p++;
+      }
+    }
+    if (p < e && (*p == 'e' || *p == 'E')) {
+      p++;
+      if (p < e && (*p == '-' || *p == '+')) {
+        p++;
+      }
+      exps = p;
+      while (p < e && ascii_isdigit(*p)) {
+        p++;
+      }
+    }
+  }
+  if (p == ints) {
+    emsgf(_("E474: Missing number after minus sign: %.*s"), LENP(s, e));
+    goto parse_json_number_fail;
+  } else if (p == fracs || exps == fracs + 1) {
+    emsgf(_("E474: Missing number after decimal dot: %.*s"), LENP(s, e));
+    goto parse_json_number_fail;
+  } else if (p == exps) {
+    emsgf(_("E474: Missing exponent: %.*s"), LENP(s, e));
+    goto parse_json_number_fail;
+  }
+  typval_T tv = {
+    .v_type = VAR_NUMBER,
+    .v_lock = VAR_UNLOCKED,
+  };
+  const size_t exp_num_len = (size_t) (p - s);
+  if (fracs || exps) {
+    // Convert floating-point number
+    const size_t num_len = string2float(s, &tv.vval.v_float);
+    if (exp_num_len != num_len) {
+      emsgf(_("E685: internal error: while converting number \"%.*s\" "
+              "to float string2float consumed %zu bytes in place of %zu"),
+            (int) exp_num_len, s, num_len, exp_num_len);
+    }
+    tv.v_type = VAR_FLOAT;
+  } else {
+    // Convert integer
+    long nr;
+    int num_len;
+    vim_str2nr((char_u *) s, NULL, &num_len, 0, &nr, NULL, (int) (p - s));
+    if ((int) exp_num_len != num_len) {
+      emsgf(_("E685: internal error: while converting number \"%.*s\" "
+              "to float vim_str2nr consumed %i bytes in place of %zu"),
+            (int) exp_num_len, s, num_len, exp_num_len);
+    }
+    tv.vval.v_number = (varnumber_T) nr;
+  }
+  if (json_decoder_pop(OBJ(tv, false, *didcomma, *didcolon),
+                        stack, container_stack,
+                        &p, next_map_special, didcomma, didcolon) == FAIL) {
+    goto parse_json_number_fail;
+  }
+  if (*next_map_special) {
+    goto parse_json_number_ret;
+  }
+  p--;
+  goto parse_json_number_ret;
+parse_json_number_fail:
+  ret = FAIL;
+parse_json_number_ret:
+  *pp = p;
+  return ret;
+}
+
+#define POP(obj_tv, is_sp_string) \
+  do { \
+    if (json_decoder_pop(OBJ(obj_tv, is_sp_string, didcomma, didcolon), \
+                         &stack, &container_stack, \
                          &p, &next_map_special, &didcomma, &didcolon) \
         == FAIL) { \
       goto json_decode_string_fail; \
@@ -223,8 +595,6 @@ int json_decode_string(const char *const buf, const size_t buf_len,
                        typval_T *const rettv)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
-#define LENP(p, e) \
-    ((int) ((e) - (p))), (p)
   const char *p = buf;
   const char *const e = buf + buf_len;
   while (p < e && (*p == ' ' || *p == '\t' || *p == '\n')) {
@@ -383,205 +753,14 @@ json_decode_string_cycle_start:
         break;
       }
       case '"': {
-        size_t len = 0;
-        const char *const s = ++p;
-        while (p < e && *p != '"') {
-          if (*p == '\\') {
-            p++;
-            if (p == e) {
-              emsgf(_("E474: Unfinished escape sequence: %.*s"),
-                    (int) buf_len, buf);
-              goto json_decode_string_fail;
-            }
-            switch (*p) {
-              case 'u': {
-                if (p + 4 >= e) {
-                  emsgf(_("E474: Unfinished unicode escape sequence: %.*s"),
-                        (int) buf_len, buf);
-                  goto json_decode_string_fail;
-                } else if (!ascii_isxdigit(p[1])
-                           || !ascii_isxdigit(p[2])
-                           || !ascii_isxdigit(p[3])
-                           || !ascii_isxdigit(p[4])) {
-                  emsgf(_("E474: Expected four hex digits after \\u: %.*s"),
-                        LENP(p - 1, e));
-                  goto json_decode_string_fail;
-                }
-                // One UTF-8 character below U+10000 can take up to 3 bytes,
-                // above up to 6, but they are encoded using two \u escapes.
-                len += 3;
-                p += 5;
-                break;
-              }
-              case '\\':
-              case '/':
-              case '"':
-              case 't':
-              case 'b':
-              case 'n':
-              case 'r':
-              case 'f': {
-                len++;
-                p++;
-                break;
-              }
-              default: {
-                emsgf(_("E474: Unknown escape sequence: %.*s"), LENP(p - 1, e));
-                goto json_decode_string_fail;
-              }
-            }
-          } else {
-            uint8_t p_byte = (uint8_t) *p;
-            // unescaped = %x20-21 / %x23-5B / %x5D-10FFFF
-            if (p_byte < 0x20) {
-              emsgf(_("E474: ASCII control characters cannot be present "
-                      "inside string: %.*s"), LENP(p, e));
-              goto json_decode_string_fail;
-            }
-            const int ch = utf_ptr2char((char_u *) p);
-            // All characters above U+007F are encoded using two or more bytes
-            // and thus cannot possibly be equal to *p. But utf_ptr2char({0xFF,
-            // 0}) will return 0xFF, even though 0xFF cannot start any UTF-8
-            // code point at all.
-            //
-            // The only exception is U+00C3 which is represented as 0xC3 0x83.
-            if (ch >= 0x80 && p_byte == ch && !(
-                    ch == 0xC3 && p + 1 < e && (uint8_t) p[1] == 0x83)) {
-              emsgf(_("E474: Only UTF-8 strings allowed: %.*s"), LENP(p, e));
-              goto json_decode_string_fail;
-            } else if (ch > 0x10FFFF) {
-              emsgf(_("E474: Only UTF-8 code points up to U+10FFFF "
-                      "are allowed to appear unescaped: %.*s"), LENP(p, e));
-              goto json_decode_string_fail;
-            }
-            const size_t ch_len = (size_t) utf_char2len(ch);
-            assert(ch_len == (size_t) (ch ? utf_ptr2len((char_u *) p) : 1));
-            len += ch_len;
-            p += ch_len;
-          }
-        }
-        if (p == e || *p != '"') {
-          emsgf(_("E474: Expected string end: %.*s"), (int) buf_len, buf);
+        if (parse_json_string(&conv, buf, buf_len, &p, &stack, &container_stack,
+                              &next_map_special, &didcomma, &didcolon)
+            == FAIL) {
+          // Error message was already given
           goto json_decode_string_fail;
         }
-        if (len == 0) {
-          POP(((typval_T) {
-            .v_type = VAR_STRING,
-            .vval = { .v_string = NULL },
-          }), false);
-          break;
-        }
-        char *str = xmalloc(len + 1);
-        int fst_in_pair = 0;
-        char *str_end = str;
-        bool hasnul = false;
-#define PUT_FST_IN_PAIR(fst_in_pair, str_end) \
-        do { \
-          if (fst_in_pair != 0) { \
-            str_end += utf_char2bytes(fst_in_pair, (char_u *) str_end); \
-            fst_in_pair = 0; \
-          } \
-        } while (0)
-        for (const char *t = s; t < p; t++) {
-          if (t[0] != '\\' || t[1] != 'u') {
-            PUT_FST_IN_PAIR(fst_in_pair, str_end);
-          }
-          if (*t == '\\') {
-            t++;
-            switch (*t) {
-              case 'u': {
-                const char ubuf[] = { t[1], t[2], t[3], t[4] };
-                t += 4;
-                unsigned long ch;
-                vim_str2nr((char_u *) ubuf, NULL, NULL,
-                           STR2NR_HEX | STR2NR_FORCE, NULL, &ch, 4);
-                if (ch == 0) {
-                  hasnul = true;
-                }
-                if (SURROGATE_HI_START <= ch && ch <= SURROGATE_HI_END) {
-                  PUT_FST_IN_PAIR(fst_in_pair, str_end);
-                  fst_in_pair = (int) ch;
-                } else if (SURROGATE_LO_START <= ch && ch <= SURROGATE_LO_END
-                           && fst_in_pair != 0) {
-                  const int full_char = (
-                      (int) (ch - SURROGATE_LO_START)
-                      + ((fst_in_pair - SURROGATE_HI_START) << 10)
-                      + SURROGATE_FIRST_CHAR);
-                  str_end += utf_char2bytes(full_char, (char_u *) str_end);
-                  fst_in_pair = 0;
-                } else {
-                  PUT_FST_IN_PAIR(fst_in_pair, str_end);
-                  str_end += utf_char2bytes((int) ch, (char_u *) str_end);
-                }
-                break;
-              }
-              case '\\':
-              case '/':
-              case '"':
-              case 't':
-              case 'b':
-              case 'n':
-              case 'r':
-              case 'f': {
-                static const char escapes[] = {
-                  ['\\'] = '\\',
-                  ['/'] = '/',
-                  ['"'] = '"',
-                  ['t'] = TAB,
-                  ['b'] = BS,
-                  ['n'] = NL,
-                  ['r'] = CAR,
-                  ['f'] = FF,
-                };
-                *str_end++ = escapes[(int) *t];
-                break;
-              }
-              default: {
-                assert(false);
-              }
-            }
-          } else {
-            *str_end++ = *t;
-          }
-        }
-        PUT_FST_IN_PAIR(fst_in_pair, str_end);
-#undef PUT_FST_IN_PAIR
-        if (conv.vc_type != CONV_NONE) {
-          size_t str_len = (size_t) (str_end - str);
-          char *const new_str = (char *) string_convert(&conv, (char_u *) str,
-                                                        &str_len);
-          if (new_str == NULL) {
-            emsgf(_("E474: Failed to convert string \"%.*s\" from UTF-8"),
-                  (int) str_len, str);
-            xfree(str);
-            goto json_decode_string_fail;
-          }
-          xfree(str);
-          str = new_str;
-          str_end = new_str + str_len;
-        }
-        if (hasnul) {
-          typval_T obj;
-          list_T *const list = list_alloc();
-          list->lv_refcount++;
-          create_special_dict(&obj, kMPString, ((typval_T) {
-            .v_type = VAR_LIST,
-            .v_lock = VAR_UNLOCKED,
-            .vval = { .v_list = list },
-          }));
-          if (encode_list_write((void *) list, str, (size_t) (str_end - str))
-              == -1) {
-            clear_tv(&obj);
-            goto json_decode_string_fail;
-          }
-          xfree(str);
-          POP(obj, true);
-        } else {
-          *str_end = NUL;
-          POP(((typval_T) {
-            .v_type = VAR_STRING,
-            .vval = { .v_string = (char_u *) str },
-          }), false);
+        if (next_map_special) {
+          goto json_decode_string_cycle_start;
         }
         break;
       }
@@ -596,75 +775,15 @@ json_decode_string_cycle_start:
       case '7':
       case '8':
       case '9': {
-        // a.bE[+-]exp
-        const char *const s = p;
-        const char *ints = NULL;
-        const char *fracs = NULL;
-        const char *exps = NULL;
-        if (*p == '-') {
-          p++;
-        }
-        ints = p;
-        while (p < e && ascii_isdigit(*p)) {
-          p++;
-        }
-        if (p < e && p != ints && (*p == '.' || *p == 'e' || *p == 'E')) {
-          if (*p == '.') {
-            p++;
-            fracs = p;
-            while (p < e && ascii_isdigit(*p)) {
-              p++;
-            }
-          }
-          if (p < e && (*p == 'e' || *p == 'E')) {
-            p++;
-            if (p < e && (*p == '-' || *p == '+')) {
-              p++;
-            }
-            exps = p;
-            while (p < e && ascii_isdigit(*p)) {
-              p++;
-            }
-          }
-        }
-        if (p == ints) {
-          emsgf(_("E474: Missing number after minus sign: %.*s"), LENP(s, e));
-          goto json_decode_string_fail;
-        } else if (p == fracs || exps == fracs + 1) {
-          emsgf(_("E474: Missing number after decimal dot: %.*s"), LENP(s, e));
-          goto json_decode_string_fail;
-        } else if (p == exps) {
-          emsgf(_("E474: Missing exponent: %.*s"), LENP(s, e));
+        if (parse_json_number(buf, buf_len, &p, &stack, &container_stack,
+                              &next_map_special, &didcomma, &didcolon)
+            == FAIL) {
+          // Error message was already given
           goto json_decode_string_fail;
         }
-        typval_T tv = {
-          .v_type = VAR_NUMBER,
-          .v_lock = VAR_UNLOCKED,
-        };
-        const size_t exp_num_len = (size_t) (p - s);
-        if (fracs || exps) {
-          // Convert floating-point number
-          const size_t num_len = string2float(s, &tv.vval.v_float);
-          if (exp_num_len != num_len) {
-            emsgf(_("E685: internal error: while converting number \"%.*s\" "
-                    "to float string2float consumed %zu bytes in place of %zu"),
-                  (int) exp_num_len, s, num_len, exp_num_len);
-          }
-          tv.v_type = VAR_FLOAT;
-        } else {
-          // Convert integer
-          long nr;
-          int num_len;
-          vim_str2nr((char_u *) s, NULL, &num_len, 0, &nr, NULL, (int) (p - s));
-          if ((int) exp_num_len != num_len) {
-            emsgf(_("E685: internal error: while converting number \"%.*s\" "
-                    "to float vim_str2nr consumed %i bytes in place of %zu"),
-                  (int) exp_num_len, s, num_len, exp_num_len);
-          }
-          tv.vval.v_number = (varnumber_T) nr;
+        if (next_map_special) {
+          goto json_decode_string_cycle_start;
         }
-        POP(tv, false);
-        p--;
         break;
       }
       case '[': {
@@ -681,7 +800,7 @@ json_decode_string_cycle_start:
           .container = tv,
           .special_val = NULL,
         }));
-        kv_push(ValuesStackItem, stack, OBJ(tv, false));
+        kv_push(ValuesStackItem, stack, OBJ(tv, false, didcomma, didcolon));
         break;
       }
       case '{': {
@@ -711,7 +830,7 @@ json_decode_string_cycle_start:
           .container = tv,
           .special_val = val_list,
         }));
-        kv_push(ValuesStackItem, stack, OBJ(tv, false));
+        kv_push(ValuesStackItem, stack, OBJ(tv, false, didcomma, didcolon));
         break;
       }
       default: {
@@ -756,7 +875,9 @@ json_decode_string_ret:
   return ret;
 }
 
+#undef LENP
 #undef POP
+
 #undef OBJ
 
 #undef DICT_LEN

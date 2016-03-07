@@ -273,8 +273,8 @@ enum {
 
 #include "nvim/message.h"
 
-/* Prefer using emsgf(), because perror() may send the output to the wrong
- * destination and mess up the screen. */
+// Prefer using emsgf(), because perror() may send the output to the wrong
+// destination and mess up the screen.
 #define PERROR(msg) (void) emsgf("%s: %s", msg, strerror(errno))
 
 #define SHOWCMD_COLS 10                 /* columns needed by shown command */
