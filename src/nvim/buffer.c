@@ -3014,7 +3014,7 @@ int build_stl_str_hl(
           && item[groupitem[groupdepth]].minwid == 0) {
         bool has_normal_items = false;
         for (long n = groupitem[groupdepth] + 1; n < curitem; n++) {
-          if (item[n].type == Normal) {
+          if (item[n].type == Normal || item[n].type == Highlight) {
             has_normal_items = true;
             break;
           }
