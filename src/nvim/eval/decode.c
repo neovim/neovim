@@ -555,7 +555,7 @@ static inline int parse_json_number(const char *const buf, const size_t buf_len,
     vim_str2nr((char_u *) s, NULL, &num_len, 0, &nr, NULL, (int) (p - s));
     if ((int) exp_num_len != num_len) {
       emsgf(_("E685: internal error: while converting number \"%.*s\" "
-              "to float vim_str2nr consumed %i bytes in place of %zu"),
+              "to integer vim_str2nr consumed %i bytes in place of %zu"),
             (int) exp_num_len, s, num_len, exp_num_len);
     }
     tv.vval.v_number = (varnumber_T) nr;
