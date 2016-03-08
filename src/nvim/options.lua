@@ -1315,6 +1315,13 @@ return {
       }
     },
     {
+      full_name='lalign', abbreviation='la',
+      type='bool', scope={'window'},
+      vi_def=true,
+      redraw={'current_window'},
+      defaults={if_true={vi=false}}
+    },
+    {
       full_name='langmap', abbreviation='lmap',
       type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
@@ -1789,6 +1796,13 @@ return {
       alloced=true,
       varname='p_qe',
       defaults={if_true={vi="\\"}}
+    },
+    {
+      full_name='ralign', abbreviation='ra',
+      type='bool', scope={'window'},
+      vi_def=true,
+      redraw={'current_window'},
+      defaults={if_true={vi=false}}
     },
     {
       full_name='readonly', abbreviation='ro',
