@@ -81,8 +81,10 @@ static inline void create_special_dict(typval_T *const rettv,
 ///                     for error reporting and is also set when decoding is
 ///                     restarted due to the necessity of converting regular
 ///                     dictionary to a special map.
-/// @param[out]  next_map_special  Is set to true when dictionary is converted
-///                                to a special map, otherwise not touched.
+/// @param[out]  next_map_special  Is set to true when dictionary needs to be
+///                                converted to a special map, otherwise not
+///                                touched. Indicates that decoding has been
+///                                restarted.
 /// @param[out]  didcomma  True if previous token was comma. Is set to recorded
 ///                        value when decoder is restarted, otherwise unused.
 /// @param[out]  didcolon  True if previous token was colon. Is set to recorded
@@ -223,7 +225,9 @@ static inline int json_decoder_pop(ValuesStackItem obj,
 /// @param[in]  buf  Buffer being converted.
 /// @param[in]  buf_len  Length of the buffer.
 /// @param[in,out]  pp  Pointer to the start of the string. Must point to '"'.
-///                     Is advanced to the closing '"'.
+///                     Is advanced to the closing '"'. Also see
+///                     json_decoder_pop(), it may set pp to another location
+///                     and alter next_map_special, didcomma and didcolon.
 /// @param[out]  stack  Object stack.
 /// @param[out]  container_stack  Container objects stack.
 /// @param[out]  next_map_special  Is set to true when dictionary is converted
@@ -465,7 +469,9 @@ parse_json_string_ret:
 /// @param[in]  buf_len  Length of the buffer.
 /// @param[in,out]  pp  Pointer to the start of the number. Must point to
 ///                     a digit or a minus sign. Is advanced to the last
-///                     character of the number.
+///                     character of the number. Also see json_decoder_pop(), it
+///                     may set pp to another location and alter
+///                     next_map_special, didcomma and didcolon.
 /// @param[out]  stack  Object stack.
 /// @param[out]  container_stack  Container objects stack.
 /// @param[out]  next_map_special  Is set to true when dictionary is converted
