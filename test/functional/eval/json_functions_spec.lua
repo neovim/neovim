@@ -119,6 +119,8 @@ describe('json_decode() function', function()
     eq(-100000, funcs.json_decode('-100000'))
     eq(100000, funcs.json_decode('  100000  '))
     eq(-100000, funcs.json_decode('  -100000  '))
+    eq(0, funcs.json_decode('0'))
+    eq(0, funcs.json_decode('-0'))
   end)
 
   it('fails to parse +numbers and .number', function()
@@ -126,6 +128,17 @@ describe('json_decode() function', function()
        exc_exec('call json_decode("+1000")'))
     eq('Vim(call):E474: Unidentified byte: .1000',
        exc_exec('call json_decode(".1000")'))
+  end)
+
+  it('fails to parse numbers with leading zeroes', function()
+    eq('Vim(call):E474: Leading zeroes are not allowed: 00.1',
+       exc_exec('call json_decode("00.1")'))
+    eq('Vim(call):E474: Leading zeroes are not allowed: 01',
+       exc_exec('call json_decode("01")'))
+    eq('Vim(call):E474: Leading zeroes are not allowed: -01',
+       exc_exec('call json_decode("-01")'))
+    eq('Vim(call):E474: Leading zeroes are not allowed: -001.0',
+       exc_exec('call json_decode("-001.0")'))
   end)
 
   it('fails to parse incomplete numbers', function()
@@ -147,6 +160,10 @@ describe('json_decode() function', function()
        exc_exec('call json_decode("0.0e-")'))
     eq('Vim(call):E474: Missing number after decimal dot: 1.e5',
        exc_exec('call json_decode("1.e5")'))
+    eq('Vim(call):E474: Missing number after decimal dot: 1.e+5',
+       exc_exec('call json_decode("1.e+5")'))
+    eq('Vim(call):E474: Missing number after decimal dot: 1.e+',
+       exc_exec('call json_decode("1.e+")'))
   end)
 
   it('parses floating-point numbers', function()
@@ -159,6 +176,27 @@ describe('json_decode() function', function()
     eq(-100000.5e-50, funcs.json_decode('-100000.5e-50'))
     eq(100000.5e-50, funcs.json_decode('100000.5e-50'))
     eq(100000e-50, funcs.json_decode('100000e-50'))
+    eq(0.5, funcs.json_decode('0.5'))
+    eq(0.005, funcs.json_decode('0.005'))
+    eq(0.005, funcs.json_decode('0.00500'))
+    eq(0.5, funcs.json_decode('0.00500e+002'))
+    eq(0.00005, funcs.json_decode('0.00500e-002'))
+
+    eq(-0.0, funcs.json_decode('-0.0'))
+    eq(-0.0, funcs.json_decode('-0.0e0'))
+    eq(-0.0, funcs.json_decode('-0.0e+0'))
+    eq(-0.0, funcs.json_decode('-0.0e-0'))
+    eq(-0.0, funcs.json_decode('-0e-0'))
+    eq(-0.0, funcs.json_decode('-0e-2'))
+    eq(-0.0, funcs.json_decode('-0e+2'))
+
+    eq(0.0, funcs.json_decode('0.0'))
+    eq(0.0, funcs.json_decode('0.0e0'))
+    eq(0.0, funcs.json_decode('0.0e+0'))
+    eq(0.0, funcs.json_decode('0.0e-0'))
+    eq(0.0, funcs.json_decode('0e-0'))
+    eq(0.0, funcs.json_decode('0e-2'))
+    eq(0.0, funcs.json_decode('0e+2'))
   end)
 
   it('fails to parse numbers with spaces inside', function()

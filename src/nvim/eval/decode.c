@@ -492,12 +492,17 @@ static inline int parse_json_number(const char *const buf, const size_t buf_len,
   const char *ints = NULL;
   const char *fracs = NULL;
   const char *exps = NULL;
+  const char *exps_s = NULL;
   if (*p == '-') {
     p++;
   }
   ints = p;
   while (p < e && ascii_isdigit(*p)) {
     p++;
+  }
+  if (p != ints + 1 && *ints == '0') {
+    emsgf(_("E474: Leading zeroes are not allowed: %.*s"), LENP(s, e));
+    goto parse_json_number_fail;
   }
   if (p < e && p != ints && (*p == '.' || *p == 'e' || *p == 'E')) {
     if (*p == '.') {
@@ -509,6 +514,7 @@ static inline int parse_json_number(const char *const buf, const size_t buf_len,
     }
     if (p < e && (*p == 'e' || *p == 'E')) {
       p++;
+      exps_s = p;
       if (p < e && (*p == '-' || *p == '+')) {
         p++;
       }
@@ -521,7 +527,7 @@ static inline int parse_json_number(const char *const buf, const size_t buf_len,
   if (p == ints) {
     emsgf(_("E474: Missing number after minus sign: %.*s"), LENP(s, e));
     goto parse_json_number_fail;
-  } else if (p == fracs || exps == fracs + 1) {
+  } else if (p == fracs || exps_s == fracs + 1) {
     emsgf(_("E474: Missing number after decimal dot: %.*s"), LENP(s, e));
     goto parse_json_number_fail;
   } else if (p == exps) {
