@@ -35,6 +35,7 @@
 #else
 # include "nvim/msgpack_rpc/server.h"
 #endif
+#include "nvim/api/private/helpers.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ui.c.generated.h"
@@ -141,6 +142,15 @@ void ui_set_icon(char *icon)
 {
   UI_CALL(set_icon, icon);
   UI_CALL(flush);
+}
+
+void ui_event(char *name, Array args)
+{
+  bool args_consumed = false;
+  UI_CALL(event, name, args, &args_consumed);
+  if (!args_consumed) {
+    api_free_array(args);
+  }
 }
 
 // May update the shape of the cursor.
@@ -519,3 +529,4 @@ static void ui_mode_change(void)
   UI_CALL(mode_change, mode);
   conceal_check_cursur_line();
 }
+

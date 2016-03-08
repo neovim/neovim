@@ -10,6 +10,7 @@
 #include "nvim/msgpack_rpc/channel.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
+#include "nvim/popupmnu.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "api/ui.c.generated.h"
@@ -88,6 +89,7 @@ void ui_attach(uint64_t channel_id, Integer width, Integer height,
   ui->suspend = remote_ui_suspend;
   ui->set_title = remote_ui_set_title;
   ui->set_icon = remote_ui_set_icon;
+  ui->event = remote_ui_event;
   pmap_put(uint64_t)(connected_uis, channel_id, ui);
   ui_attach_impl(ui);
   return;
@@ -119,6 +121,20 @@ Object ui_try_resize(uint64_t channel_id, Integer width,
   ui->height = (int)height;
   ui_refresh();
   return NIL;
+}
+
+void ui_set_popupmenu_external(uint64_t channel_id, Boolean external,
+                               Error *error)
+{
+  // Technically this is not needed right now,
+  // but futher on we might implement smarter behavior when multiple
+  // ui:s are attached with different draw modes
+  if (!pmap_has(uint64_t)(connected_uis, channel_id)) {
+    api_set_error(error, Exception, _("UI is not attached for channel"));
+    return;
+  }
+
+  pum_set_external(external);
 }
 
 static void push_call(UI *ui, char *name, Array args)
@@ -340,4 +356,20 @@ static void remote_ui_set_icon(UI *ui, char *icon)
   Array args = ARRAY_DICT_INIT;
   ADD(args, STRING_OBJ(cstr_to_string(icon)));
   push_call(ui, "set_icon", args);
+}
+
+static void remote_ui_event(UI *ui, char *name, Array args, bool *args_consumed)
+{
+  Array my_args = ARRAY_DICT_INIT;
+  // Objects are currently single-reference
+  // make a copy, but only if necessary
+  if (*args_consumed) {
+    for (size_t i = 0; i < args.size; i++) {
+      ADD(my_args, copy_object(args.items[i]));
+    }
+  } else {
+    my_args = args;
+    *args_consumed = true;
+  }
+  push_call(ui, name, my_args);
 }

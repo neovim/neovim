@@ -5,6 +5,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "api/private/defs.h"
+
 typedef struct {
   bool bold, underline, undercurl, italic, reverse;
   int foreground, background, special;
@@ -39,6 +41,7 @@ struct ui_t {
   void (*suspend)(UI *ui);
   void (*set_title)(UI *ui, char *title);
   void (*set_icon)(UI *ui, char *icon);
+  void (*event)(UI *ui, char *name, Array args, bool *args_consumed);
   void (*stop)(UI *ui);
 };
 
