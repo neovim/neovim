@@ -76,15 +76,15 @@ describe('json_decode_string()', function()
     eq(decode.VAR_UNKNOWN, rettv.v_type)
   end)
 
-  it('does not overflow in error messages', function()
-    local check_failure = function(s, len, msg)
-      local rettv = ffi.new('typval_T', {v_type=decode.VAR_UNKNOWN})
-      eq(0, decode.json_decode_string(s, len, rettv))
-      eq(decode.VAR_UNKNOWN, rettv.v_type)
-      neq(nil, decode.last_msg_hist)
-      eq(msg, ffi.string(decode.last_msg_hist.msg))
-    end
+  local check_failure = function(s, len, msg)
     local rettv = ffi.new('typval_T', {v_type=decode.VAR_UNKNOWN})
+    eq(0, decode.json_decode_string(s, len, rettv))
+    eq(decode.VAR_UNKNOWN, rettv.v_type)
+    neq(nil, decode.last_msg_hist)
+    eq(msg, ffi.string(decode.last_msg_hist.msg))
+  end
+
+  it('does not overflow in error messages', function()
     check_failure(']test', 1, 'E474: No container to close: ]')
     check_failure('[}test', 2, 'E474: Closing list with curly bracket: }')
     check_failure('{]test', 2,
@@ -127,6 +127,10 @@ describe('json_decode_string()', function()
     check_failure('?test', 1, 'E474: Unidentified byte: ?')
     check_failure('1?test', 2, 'E474: Trailing characters: ?')
     check_failure('[1test', 2, 'E474: Unexpected end of input: [1')
+  end)
+
+  it('does not overflow with `-`', function()
+    check_failure('-0', 1, 'E474: Missing number after minus sign: -')
   end)
 
   it('does not overflow and crash when running with `"`', function()
