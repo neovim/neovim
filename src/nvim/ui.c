@@ -51,10 +51,10 @@
 static UI *uis[MAX_UI_COUNT];
 static bool ui_ext[kUIExtCount] = { 0 };
 static size_t ui_count = 0;
-static int row = 0, col = 0;
+static int ui_mode_idx = SHAPE_IDX_N;
+static int cursor_row = 0, cursor_col = 0;
 static bool pending_cursor_update = false;
 static int busy = 0;
-static int mode_idx = SHAPE_IDX_N;
 static bool pending_mode_info_update = false;
 static bool pending_mode_update = false;
 static handle_T cursor_grid_handle = DEFAULT_GRID_HANDLE;
@@ -189,12 +189,12 @@ void ui_refresh(void)
     UI *ui = uis[i];
     width = MIN(ui->width, width);
     height = MIN(ui->height, height);
-    for (UIExtension i = 0; (int)i < kUIExtCount; i++) {
-      ext_widgets[i] &= ui->ui_ext[i];
+    for (UIExtension j = 0; (int)j < kUIExtCount; j++) {
+      ext_widgets[j] &= ui->ui_ext[j];
     }
   }
 
-  row = col = 0;
+  cursor_row = cursor_col = 0;
   pending_cursor_update = true;
 
   for (UIExtension i = 0; (int)i < kUIExtCount; i++) {
@@ -327,9 +327,9 @@ void ui_line(ScreenGrid *grid, int row, int startcol, int endcol, int clearcol,
           (const sattr_T *)grid->attrs + off);
 
   if (p_wd) {  // 'writedelay': flush & delay each time.
-    int old_row = row, old_col = col;
+    int old_row = cursor_row, old_col = cursor_col;
     handle_T old_grid = cursor_grid_handle;
-    // If'writedelay is active, we set the cursor to highlight what was drawn
+    // If 'writedelay' is active, set the cursor to indicate what was drawn.
     ui_grid_cursor_goto(grid->handle, row, MIN(clearcol, (int)Columns-1));
     ui_flush();
     uint64_t wd = (uint64_t)labs(p_wd);
@@ -345,12 +345,14 @@ void ui_cursor_goto(int new_row, int new_col)
 
 void ui_grid_cursor_goto(handle_T grid_handle, int new_row, int new_col)
 {
-  if (new_row == row && new_col == col && grid_handle == cursor_grid_handle) {
+  if (new_row == cursor_row
+      && new_col == cursor_col
+      && grid_handle == cursor_grid_handle) {
     return;
   }
 
-  row = new_row;
-  col = new_col;
+  cursor_row = new_row;
+  cursor_col = new_col;
   cursor_grid_handle = grid_handle;
   pending_cursor_update = true;
 }
@@ -362,12 +364,12 @@ void ui_mode_info_set(void)
 
 int ui_current_row(void)
 {
-  return row;
+  return cursor_row;
 }
 
 int ui_current_col(void)
 {
-  return col;
+  return cursor_col;
 }
 
 void ui_flush(void)
@@ -375,7 +377,7 @@ void ui_flush(void)
   cmdline_ui_flush();
   win_ui_flush();
   if (pending_cursor_update) {
-    ui_call_grid_cursor_goto(cursor_grid_handle, row, col);
+    ui_call_grid_cursor_goto(cursor_grid_handle, cursor_row, cursor_col);
     pending_cursor_update = false;
   }
   if (pending_mode_info_update) {
@@ -386,8 +388,8 @@ void ui_flush(void)
     pending_mode_info_update = false;
   }
   if (pending_mode_update) {
-    char *full_name = shape_table[mode_idx].full_name;
-    ui_call_mode_change(cstr_as_string(full_name), mode_idx);
+    char *full_name = shape_table[ui_mode_idx].full_name;
+    ui_call_mode_change(cstr_as_string(full_name), ui_mode_idx);
     pending_mode_update = false;
   }
   ui_call_flush();
@@ -403,8 +405,8 @@ void ui_cursor_shape(void)
   }
   int new_mode_idx = cursor_get_mode_idx();
 
-  if (new_mode_idx != mode_idx) {
-    mode_idx = new_mode_idx;
+  if (new_mode_idx != ui_mode_idx) {
+    ui_mode_idx = new_mode_idx;
     pending_mode_update = true;
   }
   conceal_check_cursor_line();

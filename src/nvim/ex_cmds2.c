@@ -2130,9 +2130,9 @@ void ex_listdo(exarg_T *eap)
         // Remember the number of the next listed buffer, in case
         // ":bwipe" is used or autocommands do something strange.
         next_fnum = -1;
-        for (buf_T *buf = curbuf->b_next; buf != NULL; buf = buf->b_next) {
-          if (buf->b_p_bl) {
-            next_fnum = buf->b_fnum;
+        for (buf_T *bp = curbuf->b_next; bp != NULL; bp = bp->b_next) {
+          if (bp->b_p_bl) {
+            next_fnum = bp->b_fnum;
             break;
           }
         }

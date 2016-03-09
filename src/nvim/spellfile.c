@@ -4311,8 +4311,8 @@ static int write_vim_spell(spellinfo_T *spin, char_u *fname)
       qsort(gap->ga_data, (size_t)gap->ga_len,
           sizeof(fromto_T), rep_compare);
 
-    int i = round == 1 ? SN_REP : (round == 2 ? SN_SAL : SN_REPSAL);
-    putc(i, fd);                                        // <sectionID>
+    int sect_id = round == 1 ? SN_REP : (round == 2 ? SN_SAL : SN_REPSAL);
+    putc(sect_id, fd);                                  // <sectionID>
 
     // This is for making suggestions, section is not required.
     putc(0, fd);                                        // <sectionflags>

@@ -203,7 +203,7 @@ open_line (
       char_u  *ptr;
       char_u last_char;
 
-      pos_T old_cursor = curwin->w_cursor;
+      old_cursor = curwin->w_cursor;
       ptr = saved_line;
       if (flags & OPENLINE_DO_COM)
         lead_len = get_leader_len(ptr, NULL, FALSE, TRUE);

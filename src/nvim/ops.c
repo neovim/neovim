@@ -2670,7 +2670,6 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
   colnr_T vcol;
   int delcount;
   int incr = 0;
-  long j;
   struct block_def bd;
   char_u      **y_array = NULL;
   long nr_lines = 0;
@@ -2840,16 +2839,7 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
   }
 
   if (curbuf->terminal) {
-    for (int i = 0; i < count; i++) {  // -V756
-      // feed the lines to the terminal
-      for (size_t j = 0; j < y_size; j++) {
-        if (j) {
-          // terminate the previous line
-          terminal_send(curbuf->terminal, "\n", 1);
-        }
-        terminal_send(curbuf->terminal, (char *)y_array[j], STRLEN(y_array[j]));
-      }
-    }
+    terminal_paste(count, y_array, y_size);
     return;
   }
 
@@ -3035,12 +3025,14 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
 
       yanklen = (int)STRLEN(y_array[i]);
 
-      /* calculate number of spaces required to fill right side of block*/
+      // calculate number of spaces required to fill right side of block
       spaces = y_width + 1;
-      for (j = 0; j < yanklen; j++)
+      for (long j = 0; j < yanklen; j++) {
         spaces -= lbr_chartabsize(NULL, &y_array[i][j], 0);
-      if (spaces < 0)
+      }
+      if (spaces < 0) {
         spaces = 0;
+      }
 
       // insert the new text
       totlen = (size_t)(count * (yanklen + spaces)
@@ -3050,21 +3042,21 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
       ptr = newp;
       memmove(ptr, oldp, (size_t)bd.textcol);
       ptr += bd.textcol;
-      /* may insert some spaces before the new text */
+      // may insert some spaces before the new text
       memset(ptr, ' ', (size_t)bd.startspaces);
       ptr += bd.startspaces;
-      /* insert the new text */
-      for (j = 0; j < count; ++j) {
+      // insert the new text
+      for (long j = 0; j < count; j++) {
         memmove(ptr, y_array[i], (size_t)yanklen);
         ptr += yanklen;
 
-        /* insert block's trailing spaces only if there's text behind */
+        // insert block's trailing spaces only if there's text behind
         if ((j < count - 1 || !shortline) && spaces) {
           memset(ptr, ' ', (size_t)spaces);
           ptr += spaces;
         }
       }
-      /* may insert some spaces after the new text */
+      // may insert some spaces after the new text
       memset(ptr, ' ', (size_t)bd.endspaces);
       ptr += bd.endspaces;
       // move the text after the cursor to the end of the line.
@@ -5697,12 +5689,12 @@ static bool get_clipboard(int name, yankreg_T **target, bool quiet)
   // Timestamp is not saved for clipboard registers because clipboard registers
   // are not saved in the ShaDa file.
 
-  int i = 0;
+  size_t tv_idx = 0;
   TV_LIST_ITER_CONST(lines, li, {
     if (TV_LIST_ITEM_TV(li)->v_type != VAR_STRING) {
       goto err;
     }
-    reg->y_array[i++] = (char_u *)xstrdupnul(
+    reg->y_array[tv_idx++] = (char_u *)xstrdupnul(
         (const char *)TV_LIST_ITEM_TV(li)->vval.v_string);
   });
 

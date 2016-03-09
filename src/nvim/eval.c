@@ -2380,7 +2380,7 @@ static void set_var_lval(lval_T *lp, char_u *endp, typval_T *rettv,
     int ll_n1 = lp->ll_n1;
 
     // Check whether any of the list items is locked
-    for (listitem_T *ri = tv_list_first(rettv->vval.v_list);
+    for (ri = tv_list_first(rettv->vval.v_list);
          ri != NULL && ll_li != NULL; ) {
       if (tv_check_lock(TV_LIST_ITEM_TV(ll_li)->v_lock,
                         (const char *)lp->ll_name,
@@ -2476,9 +2476,9 @@ notify:
         assert(lp->ll_newkey != NULL);
         tv_dict_watcher_notify(dict, (char *)lp->ll_newkey, lp->ll_tv, NULL);
       } else {
-        dictitem_T *di = lp->ll_di;
-        assert(di->di_key != NULL);
-        tv_dict_watcher_notify(dict, (char *)di->di_key, lp->ll_tv, &oldtv);
+        dictitem_T *di_ = lp->ll_di;
+        assert(di_->di_key != NULL);
+        tv_dict_watcher_notify(dict, (char *)di_->di_key, lp->ll_tv, &oldtv);
         tv_clear(&oldtv);
       }
     }
@@ -5234,8 +5234,6 @@ bool garbage_collect(bool testing)
 /// @return true, if something was freed.
 static int free_unref_items(int copyID)
 {
-  dict_T *dd, *dd_next;
-  list_T *ll, *ll_next;
   bool did_free = false;
 
   // Let all "free" functions know that we are here. This means no
@@ -5273,14 +5271,16 @@ static int free_unref_items(int copyID)
   }
 
   // PASS 2: free the items themselves.
-  for (dd = gc_first_dict; dd != NULL; dd = dd_next) {
+  dict_T *dd_next;
+  for (dict_T *dd = gc_first_dict; dd != NULL; dd = dd_next) {
     dd_next = dd->dv_used_next;
     if ((dd->dv_copyID & COPYID_MASK) != (copyID & COPYID_MASK)) {
       tv_dict_free_dict(dd);
     }
   }
 
-  for (ll = gc_first_list; ll != NULL; ll = ll_next) {
+  list_T *ll_next;
+  for (list_T *ll = gc_first_list; ll != NULL; ll = ll_next) {
     ll_next = ll->lv_used_next;
     if ((ll->lv_copyID & COPYID_MASK) != (copyID & COPYID_MASK)
         && !tv_list_has_watchers(ll)) {
@@ -11508,23 +11508,23 @@ static void dict_list(typval_T *const tv, typval_T *const rettv,
   tv_list_alloc_ret(rettv, tv_dict_len(tv->vval.v_dict));
 
   TV_DICT_ITER(tv->vval.v_dict, di, {
-    typval_T tv = { .v_lock = VAR_UNLOCKED };
+    typval_T tv_item = { .v_lock = VAR_UNLOCKED };
 
     switch (what) {
       case kDictListKeys: {
-        tv.v_type = VAR_STRING;
-        tv.vval.v_string = vim_strsave(di->di_key);
+        tv_item.v_type = VAR_STRING;
+        tv_item.vval.v_string = vim_strsave(di->di_key);
         break;
       }
       case kDictListValues: {
-        tv_copy(&di->di_tv, &tv);
+        tv_copy(&di->di_tv, &tv_item);
         break;
       }
       case kDictListItems: {
         // items()
         list_T *const sub_l = tv_list_alloc(2);
-        tv.v_type = VAR_LIST;
-        tv.vval.v_list = sub_l;
+        tv_item.v_type = VAR_LIST;
+        tv_item.vval.v_list = sub_l;
         tv_list_ref(sub_l);
 
         tv_list_append_owned_tv(sub_l, (typval_T) {
@@ -11539,7 +11539,7 @@ static void dict_list(typval_T *const tv, typval_T *const rettv,
       }
     }
 
-    tv_list_append_owned_tv(rettv->vval.v_list, tv);
+    tv_list_append_owned_tv(rettv->vval.v_list, tv_item);
   });
 }
 
@@ -14785,12 +14785,12 @@ static void f_setmatches(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   list_T *const l = argvars[0].vval.v_list;
   // To some extent make sure that we are dealing with a list from
   // "getmatches()".
-  int i = 0;
+  int li_idx = 0;
   TV_LIST_ITER_CONST(l, li, {
     if (TV_LIST_ITEM_TV(li)->v_type != VAR_DICT
         || (d = TV_LIST_ITEM_TV(li)->vval.v_dict) == NULL) {
       emsgf(_("E474: List item %d is either not a dictionary "
-              "or an empty one"), i);
+              "or an empty one"), li_idx);
       return;
     }
     if (!(tv_dict_find(d, S_LEN("group")) != NULL
@@ -14798,10 +14798,11 @@ static void f_setmatches(typval_T *argvars, typval_T *rettv, FunPtr fptr)
               || tv_dict_find(d, S_LEN("pos1")) != NULL)
           && tv_dict_find(d, S_LEN("priority")) != NULL
           && tv_dict_find(d, S_LEN("id")) != NULL)) {
-      emsgf(_("E474: List item %d is missing one of the required keys"), i);
+      emsgf(_("E474: List item %d is missing one of the required keys"),
+            li_idx);
       return;
     }
-    i++;
+    li_idx++;
   });
 
   clear_matches(curwin);

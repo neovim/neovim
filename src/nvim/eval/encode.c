@@ -302,11 +302,11 @@ int encode_read_from_list(ListReaderState *const state, char *const buf,
         const size_t len_ = (len); \
         ga_grow(gap, (int) (2 + len_ + memcnt(buf_, '\'', len_))); \
         ga_append(gap, '\''); \
-        for (size_t i = 0; i < len_; i++) { \
-          if (buf_[i] == '\'') { \
+        for (size_t i_ = 0; i_ < len_; i_++) { \
+          if (buf_[i_] == '\'') { \
             ga_append(gap, '\''); \
           } \
-          ga_append(gap, buf_[i]); \
+          ga_append(gap, buf_[i_]); \
         } \
         ga_append(gap, '\''); \
       } \
