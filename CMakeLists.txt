@@ -206,15 +206,15 @@ endif()
 
 if(MSVC)
   # XXX: /W4 gives too many warnings. #3241
-  add_definitions(/W3 -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE)
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /W3")
+  add_definitions(-D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE)
 else()
-  add_definitions(-Wall -Wextra -pedantic -Wno-unused-parameter
-    -Wstrict-prototypes -std=gnu99)
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -pedantic -Wno-unused-parameter -Wstrict-prototypes -std=gnu99")
 
   # On FreeBSD 64 math.h uses unguarded C11 extension, which taints clang
   # 3.4.1 used there.
   if(CMAKE_SYSTEM_NAME STREQUAL "FreeBSD")
-    add_definitions(-Wno-c11-extensions)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-c11-extensions")
   endif()
 endif()
 
@@ -227,7 +227,7 @@ endif()
 # OpenBSD's GCC (4.2.1) doesn't have -Wvla
 check_c_compiler_flag(-Wvla HAS_WVLA_FLAG)
 if(HAS_WVLA_FLAG)
-  add_definitions(-Wvla)
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wvla")
 endif()
 
 if(UNIX)
@@ -236,15 +236,15 @@ if(UNIX)
   check_c_compiler_flag(-fstack-protector HAS_FSTACK_PROTECTOR_FLAG)
 
   if(HAS_FSTACK_PROTECTOR_STRONG_FLAG)
-    add_definitions(-fstack-protector-strong)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fstack-protector-strong")
   elseif(HAS_FSTACK_PROTECTOR_FLAG)
-    add_definitions(-fstack-protector --param ssp-buffer-size=4)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fstack-protector --param ssp-buffer-size=4")
   endif()
 endif()
 
 check_c_compiler_flag(-fdiagnostics-color=auto HAS_DIAG_COLOR_FLAG)
 if(HAS_DIAG_COLOR_FLAG)
-  add_definitions(-fdiagnostics-color=auto)
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fdiagnostics-color=auto")
 endif()
 
 option(
@@ -252,7 +252,7 @@ option(
 
 if(TRAVIS_CI_BUILD)
   message(STATUS "Travis CI build enabled.")
-  add_definitions(-Werror)
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Werror")
 endif()
 
 if(CMAKE_BUILD_TYPE MATCHES Debug)

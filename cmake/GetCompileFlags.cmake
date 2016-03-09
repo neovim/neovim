@@ -10,9 +10,12 @@ function(get_compile_flags _compile_flags)
     "${compile_flags}")
 
   # Get flags set by add_definition().
-  get_directory_property(definitions
+  get_directory_property(definition_list
     DIRECTORY "src/nvim"
-    DEFINITIONS)
+    COMPILE_DEFINITIONS)
+  foreach(def ${definition_list})
+    set(definitions "${definitions} -D${def}")
+  endforeach()
   string(REPLACE
     "<DEFINITIONS>"
     "${definitions}"
