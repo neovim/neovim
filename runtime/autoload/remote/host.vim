@@ -149,7 +149,9 @@ function! s:RegistrationCommands(host) abort
   endfor
   let channel = remote#host#Require(host_id)
   let lines = []
+  let registered = []
   for path in paths
+    unlet! specs
     let specs = rpcrequest(channel, 'specs', path)
     if type(specs) != type([])
       " host didn't return a spec list, indicates a failure while loading a
@@ -162,9 +164,10 @@ function! s:RegistrationCommands(host) abort
       call add(lines, "      \\ ".string(spec).",")
     endfor
     call add(lines, "     \\ ])")
+    call add(registered, path)
   endfor
   echomsg printf("remote/host: %s host registered plugins %s",
-        \ a:host, string(map(copy(paths), "fnamemodify(v:val, ':t')")))
+        \ a:host, string(map(registered, "fnamemodify(v:val, ':t')")))
 
   " Delete the temporary host clone
   call rpcstop(s:hosts[host_id].channel)
@@ -207,7 +210,7 @@ endfunction
 " Registration of standard hosts
 
 " Python/Python3
-call remote#host#Register('python', '*.py',
+call remote#host#Register('python', '*',
       \ function('provider#pythonx#Require'))
-call remote#host#Register('python3', '*.py',
+call remote#host#Register('python3', '*',
       \ function('provider#pythonx#Require'))
