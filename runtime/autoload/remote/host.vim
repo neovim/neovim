@@ -207,6 +207,17 @@ function! remote#host#PluginsForHost(host) abort
 endfunction
 
 
+function! remote#host#LoadErrorForHost(host, log) abort
+  return 'Failed to load '. a:host . ' host. '.
+    \ 'You can try to see what happened '.
+    \ 'by starting Neovim with the environment variable '.
+    \ a:log . ' set to a file and opening the generated '.
+    \ 'log file. Also, the host stderr will be available '.
+    \ 'in Neovim log, so it may contain useful information. '.
+    \ 'See also ~/.nvimlog.'
+endfunction
+
+
 " Registration of standard hosts
 
 " Python/Python3
@@ -214,3 +225,7 @@ call remote#host#Register('python', '*',
       \ function('provider#pythonx#Require'))
 call remote#host#Register('python3', '*',
       \ function('provider#pythonx#Require'))
+
+" Ruby
+call remote#host#Register('ruby', '*.rb',
+      \ function('provider#ruby#Require'))
