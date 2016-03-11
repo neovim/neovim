@@ -2315,7 +2315,7 @@ void msg_moremsg(int full)
   char_u      *s = (char_u *)_("-- More --");
 
   attr = hl_attr(HLF_M);
-  screen_puts(s, default_msg_row(), 0, attr);
+  screen_puts(s, Rows - 1, 0, attr);
   if (full)
     screen_puts((char_u *)
         _(" SPACE/d/j: screen/page/line down, b/u/k: up, q: quit "),
