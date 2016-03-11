@@ -27,13 +27,8 @@ function! provider#pythonx#Require(host) abort
     echomsg v:throwpoint
     echomsg v:exception
   endtry
-  throw 'Failed to load '. a:host.orig_name . ' host. '.
-    \ 'You can try to see what happened '.
-    \ 'by starting Neovim with the environment variable '.
-    \ '$NVIM_PYTHON_LOG_FILE set to a file and opening '.
-    \ 'the generated log file. Also, the host stderr will be available '.
-    \ 'in Neovim log, so it may contain useful information. '.
-    \ 'See also ~/.nvimlog.'
+  throw remote#host#LoadErrorForHost(a:host.orig_name,
+        \ '$NVIM_PYTHON_LOG_FILE')
 endfunction
 
 function! provider#pythonx#Detect(major_ver) abort
