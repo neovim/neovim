@@ -617,7 +617,7 @@ int json_decode_string(const char *const buf, const size_t buf_len,
 {
   const char *p = buf;
   const char *const e = buf + buf_len;
-  while (p < e && (*p == ' ' || *p == '\t' || *p == '\n')) {
+  while (p < e && (*p == ' ' || *p == TAB || *p == NL || *p == CAR)) {
     p++;
   }
   if (p == e) {
@@ -730,7 +730,8 @@ json_decode_string_cycle_start:
       }
       case ' ':
       case TAB:
-      case NL: {
+      case NL:
+      case CAR: {
         continue;
       }
       case 'n': {
@@ -870,7 +871,8 @@ json_decode_string_after_cycle:
     switch (*p) {
       case NL:
       case ' ':
-      case TAB: {
+      case TAB:
+      case CAR: {
         break;
       }
       default: {

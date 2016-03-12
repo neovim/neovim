@@ -515,6 +515,12 @@ describe('json_decode() function', function()
     eq('Vim(call):E474: Attempt to decode a blank string',
        exc_exec('call json_decode(" \\t\\n \\n\\t\\t \\n\\t\\n \\n \\t\\n\\t ")'))
   end)
+
+  it('accepts all spaces in every position where space may be put', function()
+    local s = ' \t\n\r \t\r\n \n\t\r \n\r\t \r\t\n \r\n\t\t \n\r\t \r\n\t\n \r\t\n\r \t\r \n\t\r\n \n \t\r\n \r\t\n\t \r\n\t\r \n\r \t\n\r\t \r \t\n\r \n\t\r\t \n\r\t\n \r\n \t\r\n\t'
+    local str = ('%s{%s"key"%s:%s[%s"val"%s,%s"val2"%s]%s,%s"key2"%s:%s1%s}%s'):gsub('%%s', s)
+    eq({key={'val', 'val2'}, key2=1}, funcs.json_decode(str))
+  end)
 end)
 
 describe('json_encode() function', function()
