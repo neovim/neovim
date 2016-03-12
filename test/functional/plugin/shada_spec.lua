@@ -2215,7 +2215,7 @@ describe('In plugin/shada.vim', function()
   describe('event BufWriteCmd', function()
     it('works', function()
       nvim('set_var', 'shada#add_own_header', 0)
-      curbuf('set_line_slice', 0, 0, true, true, {
+      curbuf('set_lines', 0, 1, true, {
         'Jump with timestamp ' .. epoch .. ':',
         '  % Key________  Description  Value',
         '  + n            name         \'A\'',
@@ -2271,7 +2271,7 @@ describe('In plugin/shada.vim', function()
   describe('event FileWriteCmd', function()
     it('works', function()
       nvim('set_var', 'shada#add_own_header', 0)
-      curbuf('set_line_slice', 0, 0, true, true, {
+      curbuf('set_lines', 0, 1, true, {
         'Jump with timestamp ' .. epoch .. ':',
         '  % Key________  Description  Value',
         '  + n            name         \'A\'',
@@ -2310,7 +2310,7 @@ describe('In plugin/shada.vim', function()
   describe('event FileAppendCmd', function()
     it('works', function()
       nvim('set_var', 'shada#add_own_header', 0)
-      curbuf('set_line_slice', 0, 0, true, true, {
+      curbuf('set_lines', 0, 1, true, {
         'Jump with timestamp ' .. epoch .. ':',
         '  % Key________  Description  Value',
         '  + n            name         \'A\'',
@@ -2512,7 +2512,7 @@ describe('syntax/shada.vim', function()
   it('works', function()
     nvim_command('syntax on')
     nvim_command('setlocal syntax=shada')
-    curbuf('set_line_slice', 0, 0, true, true, {
+    curbuf('set_lines', 0, 1, true, {
       'Header with timestamp ' .. epoch .. ':',
       '  % Key  Value',
       '  + t    "test"',

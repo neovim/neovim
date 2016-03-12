@@ -14,7 +14,7 @@ describe('TextYankPost', function()
     execute('autocmd TextYankPost * let g:event = copy(v:event)')
     execute('autocmd TextYankPost * let g:count += 1')
 
-    curbufmeths.set_line_slice(0, -1, true, true, {
+    curbufmeths.set_lines(0, -1, true, {
       'foo\0bar',
       'baz text',
     })
