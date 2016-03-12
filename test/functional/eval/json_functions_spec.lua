@@ -521,6 +521,14 @@ describe('json_decode() function', function()
     local str = ('%s{%s"key"%s:%s[%s"val"%s,%s"val2"%s]%s,%s"key2"%s:%s1%s}%s'):gsub('%%s', s)
     eq({key={'val', 'val2'}, key2=1}, funcs.json_decode(str))
   end)
+
+  it('always treats input as UTF-8', function()
+    -- When &encoding is latin1 string "«" is U+00C2 U+00AB U+00C2: Â«Â. So if
+    -- '"«"' was parsed as latin1 json_decode would return three characters, and
+    -- only one U+00AB when this string is parsed as latin1.
+    restart('set encoding=latin1')
+    eq(('%c'):format(0xAB), funcs.json_decode('"«"'))
+  end)
 end)
 
 describe('json_encode() function', function()

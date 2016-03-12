@@ -4327,6 +4327,13 @@ json_decode({expr})					*json_decode()*
 		   dictionary and for string will be emitted in case string 
 		   with NUL byte was a dictionary key.
 
+		Note: function treats its input as UTF-8 always regardless of 
+		'encoding' value.  This is needed because JSON source is 
+		supposed to be external (e.g. |readfile()|) and JSON standard 
+		allows only a few encodings, of which UTF-8 is recommended and 
+		the only one required to be supported.  Non-UTF-8 characters 
+		are an error.
+
 json_encode({expr})					*json_encode()*
 		Convert {expr} into a JSON string.  Accepts 
 		|msgpack-special-dict| as the input.  Converts from 'encoding' 
@@ -4340,6 +4347,12 @@ json_encode({expr})					*json_encode()*
 		"utf-8", then conversion is performed before encoding strings.  
 		Non-printable characters are converted into "\u1234" escapes 
 		or special escapes like "\t", other are dumped as-is.
+
+		Note: all characters above U+0079 are considered non-printable 
+		when 'encoding' is not UTF-8.  This function always outputs 
+		UTF-8 strings as required by the standard thus when 'encoding' 
+		is not unicode resulting string will look incorrect if 
+		"\u1234" notation is not used.
 
 keys({dict})						*keys()*
 		Return a |List| with all the keys of {dict}.  The |List| is in
