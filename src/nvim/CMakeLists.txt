@@ -91,7 +91,6 @@ set(CONV_SOURCES
   message.c
   misc1.c
   ops.c
-  path.c
   regexp.c
   screen.c
   search.c
