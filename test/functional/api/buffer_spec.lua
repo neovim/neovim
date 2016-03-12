@@ -1,8 +1,8 @@
 -- Sanity checks for buffer_* API calls via msgpack-rpc
 local helpers = require('test.functional.helpers')
-local clear, nvim, buffer, curbuf, curwin, eq, ok =
-  helpers.clear, helpers.nvim, helpers.buffer, helpers.curbuf, helpers.curwin,
-  helpers.eq, helpers.ok
+local clear, nvim, buffer = helpers.clear, helpers.nvim, helpers.buffer
+local curbuf, curwin, eq = helpers.curbuf, helpers.curwin, helpers.eq
+local curbufmeths, ok = helpers.curbufmeths, helpers.ok
 
 describe('buffer_* functions', function()
   before_each(clear)
@@ -102,6 +102,136 @@ describe('buffer_* functions', function()
       curbuf('set_line_slice', 0, -1, true, true, {})
       eq({''}, curbuf('get_line_slice', 0, -1, true, true))
     end)
+  end)
+
+  describe('{get,set}_lines', function()
+    local get_lines, set_lines = curbufmeths.get_lines, curbufmeths.set_lines
+    local line_count = curbufmeths.line_count
+
+    it('has correct line_count when inserting and deleting', function()
+      eq(1, line_count())
+      set_lines(-1, -1, true, {'line'})
+      eq(2, line_count())
+      set_lines(-1, -1, true, {'line'})
+      eq(3, line_count())
+      set_lines(-2, -1, true, {})
+      eq(2, line_count())
+      set_lines(-2, -1, true, {})
+      set_lines(-2, -1, true, {})
+      -- There's always at least one line
+      eq(1, line_count())
+    end)
+
+    it('can get, set and delete a single line', function()
+      eq({''}, get_lines(0, 1, true))
+      set_lines(0, 1, true, {'line1'})
+      eq({'line1'}, get_lines(0, 1, true))
+      set_lines(0, 1, true, {'line2'})
+      eq({'line2'}, get_lines(0, 1, true))
+      set_lines(0, 1, true, {})
+      eq({''}, get_lines(0, 1, true))
+    end)
+
+    it('can get a single line with strict indexing', function()
+      set_lines(0, 1, true, {'line1.a'})
+      eq(1, line_count()) -- sanity
+      eq(false, pcall(get_lines, 1, 2, true))
+      eq(false, pcall(get_lines, -3, -2, true))
+    end)
+
+    it('can get a single line with non-strict indexing', function()
+      set_lines(0, 1, true, {'line1.a'})
+      eq(1, line_count()) -- sanity
+      eq({}, get_lines(1, 2, false))
+      eq({}, get_lines(-3, -2, false))
+    end)
+
+    it('can set and delete a single line with strict indexing', function()
+      set_lines(0, 1, true, {'line1.a'})
+      eq(false, pcall(set_lines, 1, 2, true, {'line1.b'}))
+      eq(false, pcall(set_lines, -3, -2, true, {'line1.c'}))
+      eq({'line1.a'}, get_lines(0, -1, true))
+      eq(false, pcall(set_lines, 1, 2, true, {}))
+      eq(false, pcall(set_lines, -3, -2, true, {}))
+      eq({'line1.a'}, get_lines(0, -1, true))
+    end)
+
+    it('can set and delete a single line with non-strict indexing', function()
+      set_lines(0, 1, true, {'line1.a'})
+      set_lines(1, 2, false, {'line1.b'})
+      set_lines(-4, -3, false, {'line1.c'})
+      eq({'line1.c', 'line1.a', 'line1.b'}, get_lines(0, -1, true))
+      set_lines(3, 4, false, {})
+      set_lines(-5, -4, false, {})
+      eq({'line1.c', 'line1.a', 'line1.b'}, get_lines(0, -1, true))
+    end)
+
+    it('can handle NULs', function()
+      set_lines(0, 1, true, {'ab\0cd'})
+      eq({'ab\0cd'}, get_lines(0, -1, true))
+    end)
+
+    it('works with multiple lines', function()
+      eq({''}, get_lines(0, -1, true))
+      -- Replace buffer
+      for _, mode in pairs({false, true}) do
+        set_lines(0, -1, mode, {'a', 'b', 'c'})
+        eq({'a', 'b', 'c'}, get_lines(0, -1, mode))
+        eq({'b', 'c'}, get_lines(1, -1, mode))
+        eq({'b'}, get_lines(1, 2, mode))
+        eq({}, get_lines(1, 1, mode))
+        eq({'a', 'b'}, get_lines(0, -2, mode))
+        eq({'b'}, get_lines(1, -2, mode))
+        eq({'b', 'c'}, get_lines(-3, -1, mode))
+        set_lines(1, 2, mode, {'a', 'b', 'c'})
+        eq({'a', 'a', 'b', 'c', 'c'}, get_lines(0, -1, mode))
+        set_lines(-2, -1, mode, {'a', 'b', 'c'})
+        eq({'a', 'a', 'b', 'c', 'a', 'b', 'c'},
+          get_lines(0, -1, mode))
+        set_lines(0, -4, mode, {})
+        eq({'a', 'b', 'c'}, get_lines(0, -1, mode))
+        set_lines(0, -1, mode, {})
+        eq({''}, get_lines(0, -1, mode))
+      end
+    end)
+
+    it('can get line ranges with non-strict indexing', function()
+      set_lines(0, -1, true, {'a', 'b', 'c'})
+      eq({'a', 'b', 'c'}, get_lines(0, -1, true)) --sanity
+
+      eq({}, get_lines(3, 4, false))
+      eq({}, get_lines(3, 10, false))
+      eq({}, get_lines(-5, -5, false))
+      eq({}, get_lines(3, -1, false))
+      eq({}, get_lines(-3, -4, false))
+    end)
+
+    it('can get line ranges with strict indexing', function()
+      set_lines(0, -1, true, {'a', 'b', 'c'})
+      eq({'a', 'b', 'c'}, get_lines(0, -1, true)) --sanity
+
+      eq(false, pcall(get_lines, 3, 4, true))
+      eq(false, pcall(get_lines, 3, 10, true))
+      eq(false, pcall(get_lines, -5, -5, true))
+      -- empty or inverted ranges are not errors
+      eq({}, get_lines(3, -1, true))
+      eq({}, get_lines(-3, -4, true))
+    end)
+
+    it('set_line_slice: out-of-bounds can extend past end', function()
+      set_lines(0, -1, true, {'a', 'b', 'c'})
+      eq({'a', 'b', 'c'}, get_lines(0, -1, true)) --sanity
+
+      eq({'c'}, get_lines(-2, 5, false))
+      eq({'a', 'b', 'c'}, get_lines(0, 6, false))
+      eq(false, pcall(set_lines, 4, 6, true, {'d'}))
+      set_lines(4, 6, false, {'d'})
+      eq({'a', 'b', 'c', 'd'}, get_lines(0, -1, true))
+      eq(false, pcall(set_lines, -6, -6, true, {'e'}))
+      set_lines(-6, -6, false, {'e'})
+      eq({'e', 'a', 'b', 'c', 'd'}, get_lines(0, -1, true))
+    end)
+
   end)
 
   describe('{get,set}_var', function()
