@@ -320,7 +320,7 @@ local function curbuf_contents()
   -- previously sent keys are processed(vim_eval is a deferred function, and
   -- only processed after all input)
   wait()
-  return table.concat(curbuf('get_line_slice', 0, -1, true, true), '\n')
+  return table.concat(curbuf('get_lines', 0, -1, true), '\n')
 end
 
 local function curwin(method, ...)
