@@ -11,6 +11,8 @@ catch /E145:/
   " Ignore the error in restricted mode
 endtry
 
+" Load man page {page} from {section}
+"   call man#get_page([{section}, ]{page})
 function man#get_page(...) abort
   let invoked_from_man = (&filetype ==# 'man')
 
@@ -20,21 +22,14 @@ function man#get_page(...) abort
   elseif a:0 > 2
     echoerr 'too many arguments'
     return
-  elseif a:0 == 2
-    let [page, sect] = [a:2, 0 + a:1]
-  elseif type(1) == type(a:1)
-    let [page, sect] = ['<cword>', a:1]
-  else
-    let [page, sect] = [a:1, '']
   endif
 
-  if page == '<cword>'
-    let page = expand('<cword>')
-  endif
+  let sect = get(a:000, 0)
+  let page = get(a:000, 1, sect)
 
   let [page, sect] = s:parse_page_and_section(sect, page)
 
-  if 0 + sect > 0 && s:find_page(sect, page) == 0
+  if !empty(sect) && s:find_page(sect, page) == 0
     let sect = ''
   endif
 
@@ -54,9 +49,9 @@ function man#get_page(...) abort
     let thiswin = winnr()
     wincmd b
     if winnr() > 1
-      exe "norm! " . thiswin . "\<C-W>w"
+      exec thiswin . 'wincmd w'
       while 1
-        if &filetype == 'man'
+        if &filetype ==# 'man'
           break
         endif
         wincmd w
@@ -80,11 +75,11 @@ function man#get_page(...) abort
   endif
   silent exec 'r!/usr/bin/man '.s:cmd(sect, page).' | col -b'
   " Remove blank lines from top and bottom.
-  while getline(1) =~ '^\s*$'
-    silent keepjumps norm! gg"_dd
+  while getline(1) =~# '^\s*$'
+    silent keepjumps 1delete _
   endwhile
-  while getline('$') =~ '^\s*$'
-    silent keepjumps norm! G"_dd
+  while getline('$') =~# '^\s*$'
+    silent keepjumps $delete _
   endwhile
   setlocal nomodified
   setlocal filetype=man
@@ -118,15 +113,11 @@ endfunction
 " Expects a string like 'access' or 'access(2)'.
 function s:parse_page_and_section(sect, str) abort
   try
-    let save_isk = &iskeyword
-    setlocal iskeyword-=(,)
-    let page = substitute(a:str, '(*\(\k\+\).*', '\1', '')
-    let sect = substitute(a:str, '\(\k\+\)(\([^()]*\)).*', '\2', '')
-    if sect == page || -1 == match(sect, '^[0-9 ]\+$')
+    let [page, sect] = matchlist(a:str, '\v\C([-.[:alnum:]_]+)%(\(([-.[:alnum:]_]+)\))?')[1:2]
+    if empty(sect)
       let sect = a:sect
     endif
   catch
-    let &l:iskeyword = save_isk
     echoerr 'man.vim: failed to parse: "'.a:str.'"'
   endtry
 
@@ -134,7 +125,7 @@ function s:parse_page_and_section(sect, str) abort
 endfunction
 
 function s:cmd(sect, page) abort
-  if 0 + a:sect > 0
+  if !empty(a:sect)
     return s:man_sect_arg.' '.a:sect.' '.a:page
   endif
   return a:page
@@ -142,10 +133,5 @@ endfunction
 
 function s:find_page(sect, page) abort
   let where = system('/usr/bin/man '.s:man_find_arg.' '.s:cmd(a:sect, a:page))
-  if where !~ "^/"
-    if matchstr(where, " [^ ]*$") !~ "^ /"
-      return 0
-    endif
-  endif
-  return 1
+  return (where =~# '^ */')
 endfunction
