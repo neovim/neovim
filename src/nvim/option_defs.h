@@ -172,6 +172,7 @@ enum {
   SHM_INTRO          = 'I',  ///< Intro messages.
   SHM_COMPLETIONMENU = 'c',  ///< Completion menu messages.
   SHM_RECORDING      = 'q',  ///< Short recording message.
+  SHM_FILEINFO       = 'F',  ///< No file info messages.
 };
 /// Represented by 'a' flag.
 #define SHM_ALL_ABBREVIATIONS ((char_u[]) { \
@@ -183,7 +184,7 @@ enum {
   SHM_RO, SHM_MOD, SHM_FILE, SHM_LAST, SHM_TEXT, SHM_LINES, SHM_NEW, SHM_WRI, \
   SHM_ABBREVIATIONS, SHM_WRITE, SHM_TRUNC, SHM_TRUNCALL, SHM_OVER, \
   SHM_OVERALL, SHM_SEARCH, SHM_ATTENTION, SHM_INTRO, SHM_COMPLETIONMENU, \
-  SHM_RECORDING, \
+  SHM_RECORDING, SHM_FILEINFO, \
   0, \
 })
 

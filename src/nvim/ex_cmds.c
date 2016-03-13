@@ -1506,8 +1506,11 @@ void ex_file(exarg_T *eap)
     if (rename_buffer(eap->arg) == FAIL)
       return;
   }
-  /* print full file name if :cd used */
-  fileinfo(FALSE, FALSE, eap->forceit);
+
+  if (!shortmess(SHM_FILEINFO)) {
+    // print full file name if :cd used
+    fileinfo(false, false, eap->forceit);
+  }
 }
 
 /*
@@ -2483,7 +2486,9 @@ do_ecmd (
     msg_scroll = msg_scroll_save;
     msg_scrolled_ign = TRUE;
 
-    fileinfo(FALSE, TRUE, FALSE);
+    if (!shortmess(SHM_FILEINFO)) {
+      fileinfo(false, true, false);
+    }
 
     msg_scrolled_ign = FALSE;
   }

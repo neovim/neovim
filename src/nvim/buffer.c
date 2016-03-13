@@ -143,10 +143,17 @@ open_buffer (
 
   if (curbuf->b_ffname != NULL
       ) {
+    int old_msg_silent = msg_silent;
+    if (shortmess(SHM_FILEINFO)) {
+      msg_silent = 1;
+    }
+
     retval = readfile(curbuf->b_ffname, curbuf->b_fname,
-        (linenr_T)0, (linenr_T)0, (linenr_T)MAXLNUM, eap,
-        flags | READ_NEW);
-    /* Help buffer is filtered. */
+                      (linenr_T)0, (linenr_T)0, (linenr_T)MAXLNUM, eap,
+                      flags | READ_NEW);
+    msg_silent = old_msg_silent;
+
+    // Help buffer is filtered.
     if (curbuf->b_help)
       fix_help_buffer();
   } else if (read_stdin) {
