@@ -461,6 +461,10 @@ static int terminal_execute(VimState *state, int key)
       }
       break;
 
+    case K_COMMAND:
+      do_cmdline(NULL, getcmdkeycmd, NULL, 0);
+      break;
+
     case Ctrl_N:
       if (s->got_bsl) {
         return 0;

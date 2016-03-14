@@ -4247,3 +4247,70 @@ mapblock_T *get_maphash(int index, buf_T *buf)
 
   return (buf == NULL) ? maphash[index] : buf->b_maphash[index];
 }
+
+/// Get command argument for <Cmd> key
+char_u * getcmdkeycmd(int promptc, void *cookie, int indent)
+{
+  garray_T line_ga;
+  int c1 = -1, c2;
+  int cmod = 0;
+  bool aborted = false;
+
+  ga_init(&line_ga, 1, 32);
+
+  no_mapping++;
+
+  got_int = false;
+  while (c1 != NUL && !aborted) {
+    ga_grow(&line_ga, 32);
+
+    if (vgetorpeek(false) == NUL) {
+      // incomplete <Cmd> is an error, because there is not much the user
+      // could do in this state.
+      EMSG(e_cmdmap_err);
+      aborted = true;
+      break;
+    }
+
+    // Get one character at a time.
+    c1 = vgetorpeek(true);
+    // Get two extra bytes for special keys
+    if (c1 == K_SPECIAL) {
+      c1 = vgetorpeek(true);          // no mapping for these chars
+      c2 = vgetorpeek(true);
+      if (c1 == KS_MODIFIER) {
+        cmod = c2;
+        continue;
+      }
+      c1 = TO_SPECIAL(c1, c2);
+    }
+
+
+    if (got_int) {
+      aborted = true;
+    } else if (c1 == '\r' || c1 == '\n') {
+      c1 = NUL;  // end the line
+    } else if (c1 == ESC) {
+      aborted = true;
+    } else if (c1 == K_COMMAND) {
+      // special case to give nicer error message
+      EMSG(e_cmdmap_repeated);
+      aborted = true;
+    } else if (IS_SPECIAL(c1)) {
+      EMSG2(e_cmdmap_key, get_special_key_name(c1, cmod));
+      aborted = true;
+    } else {
+      ga_append(&line_ga, (char)c1);
+    }
+
+    cmod = 0;
+  }
+
+  no_mapping--;
+
+  if (aborted) {
+    ga_clear(&line_ga);
+  }
+
+  return (char_u *)line_ga.ga_data;
+}

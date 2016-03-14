@@ -6748,16 +6748,20 @@ int showmode(void)
           if (p_ri)
             MSG_PUTS_ATTR(_(" REVERSE"), attr);
           MSG_PUTS_ATTR(_(" INSERT"), attr);
-        } else if (restart_edit == 'I')
+        } else if (restart_edit == 'I' || restart_edit == 'i'
+                   || restart_edit == 'a') {
           MSG_PUTS_ATTR(_(" (insert)"), attr);
-        else if (restart_edit == 'R')
+        } else if (restart_edit == 'R') {
           MSG_PUTS_ATTR(_(" (replace)"), attr);
-        else if (restart_edit == 'V')
+        } else if (restart_edit == 'V') {
           MSG_PUTS_ATTR(_(" (vreplace)"), attr);
-        if (p_hkmap)
+        }
+        if (p_hkmap) {
           MSG_PUTS_ATTR(_(" Hebrew"), attr);
-        if (p_fkmap)
+        }
+        if (p_fkmap) {
           MSG_PUTS_ATTR(farsi_text_5, attr);
+        }
         if (State & LANGMAP) {
           if (curwin->w_p_arab) {
             MSG_PUTS_ATTR(_(" Arabic"), attr);
