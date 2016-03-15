@@ -45,6 +45,12 @@ Integer buffer_line_count(Buffer buffer, Error *err)
 
 /// Gets a buffer line
 ///
+/// @deprecated use buffer_get_lines instead.
+///             for positive indices (including 0) use
+///                 "buffer_get_lines(buffer, index, index+1, true)"
+///             for negative indices use
+///                 "buffer_get_lines(buffer, index-1, index, true)"
+///
 /// @param buffer The buffer handle
 /// @param index The line index
 /// @param[out] err Details of an error that may have occurred
@@ -67,6 +73,12 @@ String buffer_get_line(Buffer buffer, Integer index, Error *err)
 
 /// Sets a buffer line
 ///
+/// @deprecated use buffer_set_lines instead.
+///             for positive indices use
+///                 "buffer_set_lines(buffer, index, index+1, true, [line])"
+///             for negative indices use
+///                 "buffer_set_lines(buffer, index-1, index, true, [line])"
+///
 /// @param buffer The buffer handle
 /// @param index The line index
 /// @param line The new line.
@@ -81,6 +93,11 @@ void buffer_set_line(Buffer buffer, Integer index, String line, Error *err)
 
 /// Deletes a buffer line
 ///
+/// @deprecated use buffer_set_lines instead.
+///             for positive indices use
+///                 "buffer_set_lines(buffer, index, index+1, true, [])"
+///             for negative indices use
+///                 "buffer_set_lines(buffer, index-1, index, true, [])"
 /// @param buffer The buffer handle
 /// @param index The line index
 /// @param[out] err Details of an error that may have occurred
@@ -93,6 +110,10 @@ void buffer_del_line(Buffer buffer, Integer index, Error *err)
 
 /// Retrieves a line range from the buffer
 ///
+/// @deprecated use buffer_get_lines(buffer, newstart, newend, false)
+///             where newstart = start + int(not include_start) - int(start < 0)
+///                   newend = end + int(include_end) - int(end < 0)
+///                   int(bool) = 1 if bool is true else 0
 /// @param buffer The buffer handle
 /// @param start The first line index
 /// @param end The last line index
@@ -190,6 +211,11 @@ end:
 
 
 /// Replaces a line range on the buffer
+///
+/// @deprecated use buffer_set_lines(buffer, newstart, newend, false, lines)
+///             where newstart = start + int(not include_start) + int(start < 0)
+///                   newend = end + int(include_end) + int(end < 0)
+///                   int(bool) = 1 if bool is true else 0
 ///
 /// @param buffer The buffer handle
 /// @param start The first line index
@@ -525,6 +551,8 @@ Boolean buffer_is_valid(Buffer buffer)
 }
 
 /// Inserts a sequence of lines to a buffer at a certain index
+///
+/// @deprecated use buffer_set_lines(buffer, lnum, lnum, true, lines)
 ///
 /// @param buffer The buffer handle
 /// @param lnum Insert the lines after `lnum`. If negative, it will append
