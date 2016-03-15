@@ -60,6 +60,11 @@ file(GLOB NEOVIM_SOURCES *.c os/*.c api/*.c api/private/*.c msgpack_rpc/*.c
 file(GLOB_RECURSE NEOVIM_HEADERS *.h)
 file(GLOB UNIT_TEST_FIXTURES ${PROJECT_SOURCE_DIR}/test/unit/fixtures/*.c)
 
+# Sort file lists to ensure generated files are created in the same order from
+# build to build.
+list(SORT NEOVIM_SOURCES)
+list(SORT NEOVIM_HEADERS)
+
 foreach(sfile ${NEOVIM_SOURCES})
   get_filename_component(f ${sfile} NAME)
   if(${f} MATCHES "^(regexp_nfa.c)$")
