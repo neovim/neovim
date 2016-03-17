@@ -426,10 +426,8 @@ void ml_setname(buf_T *buf)
     /* try to rename the swap file */
     if (vim_rename(mfp->mf_fname, fname) == 0) {
       success = TRUE;
-      xfree(mfp->mf_fname);
-      mfp->mf_fname = fname;
-      xfree(mfp->mf_ffname);
-      mf_set_ffname(mfp);
+      mf_free_fnames(mfp);
+      mf_set_fnames(mfp, fname);
       ml_upd_block0(buf, UB_SAME_DIR);
       break;
     }
