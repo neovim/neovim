@@ -9,15 +9,14 @@ describe("'shortmess'", function()
     clear()
     screen = Screen.new(25, 5)
     screen:attach()
-    execute('set shortmess&')
   end)
 
   after_each(function()
     screen:detach()
   end)
 
-  describe("=F", function()
-    it(':hides messages about the files read', function()
+  describe('"F" flag', function()
+    it('hides messages about the files read', function()
       execute('e test')
       screen:expect([[
         ^                         |

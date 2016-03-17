@@ -141,8 +141,7 @@ open_buffer (
   /* mark cursor position as being invalid */
   curwin->w_valid = 0;
 
-  if (curbuf->b_ffname != NULL
-      ) {
+  if (curbuf->b_ffname != NULL) {
     int old_msg_silent = msg_silent;
     if (shortmess(SHM_FILEINFO)) {
       msg_silent = 1;
@@ -154,8 +153,9 @@ open_buffer (
     msg_silent = old_msg_silent;
 
     // Help buffer is filtered.
-    if (curbuf->b_help)
+    if (curbuf->b_help) {
       fix_help_buffer();
+    }
   } else if (read_stdin) {
     int save_bin = curbuf->b_p_bin;
     linenr_T line_count;
