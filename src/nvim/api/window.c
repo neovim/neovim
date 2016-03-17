@@ -223,7 +223,10 @@ Object window_set_var(Window window, String name, Object value, Error *err)
 /// @param window The window handle
 /// @param name The variable name
 /// @param[out] err Details of an error that may have occurred
-/// @return The old value
+/// @return The old value or nil if there was no previous value.
+///
+///         @warning It may return nil if there was no previous value
+///                  or if previous value was `v:null`.
 Object window_del_var(Window window, String name, Error *err)
 {
   win_T *win = find_window_by_handle(window, err);

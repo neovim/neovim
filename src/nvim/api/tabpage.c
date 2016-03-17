@@ -80,7 +80,10 @@ Object tabpage_set_var(Tabpage tabpage, String name, Object value, Error *err)
 /// @param tabpage handle
 /// @param name The variable name
 /// @param[out] err Details of an error that may have occurred
-/// @return The tab page handle
+/// @return The old value or nil if there was no previous value.
+///
+///         @warning It may return nil if there was no previous value
+///                  or if previous value was `v:null`.
 Object tabpage_del_var(Tabpage tabpage, String name, Error *err)
 {
   tabpage_T *tab = find_tab_by_handle(tabpage, err);

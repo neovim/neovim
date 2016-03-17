@@ -449,7 +449,10 @@ Object buffer_set_var(Buffer buffer, String name, Object value, Error *err)
 /// @param buffer The buffer handle
 /// @param name The variable name
 /// @param[out] err Details of an error that may have occurred
-/// @return The old value
+/// @return The old value or nil if there was no previous value.
+///
+///         @warning It may return nil if there was no previous value
+///                  or if previous value was `v:null`.
 Object buffer_del_var(Buffer buffer, String name, Error *err)
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
