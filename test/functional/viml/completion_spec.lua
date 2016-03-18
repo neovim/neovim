@@ -1,5 +1,6 @@
 
 local helpers = require('test.functional.helpers')
+local Screen = require('test.functional.ui.screen')
 local clear, feed = helpers.clear, helpers.feed
 local eval, eq, neq = helpers.eval, helpers.eq, helpers.neq
 local execute, source, expect = helpers.execute, helpers.source, helpers.expect
@@ -143,8 +144,60 @@ describe('completion', function()
   end)
 
   it('disables folding during completion', function ()
-	  execute("set foldmethod=indent")
-	  feed('i<Tab>foo<CR><Tab>bar<Esc>ggA<C-x><C-l>')
-	  eq(-1, eval('foldclosed(1)'))
+    execute("set foldmethod=indent")
+    feed('i<Tab>foo<CR><Tab>bar<Esc>ggA<C-x><C-l>')
+    eq(-1, eval('foldclosed(1)'))
   end)
+
+  it('popupmenu is not interrupted by events', function ()
+    local screen = Screen.new(40, 8)
+    screen:attach()
+    screen:set_default_attr_ignore({{bold=true, foreground=Screen.colors.Blue}})
+    screen:set_default_attr_ids({
+      [1] = {background = Screen.colors.LightMagenta},
+      [2] = {background = Screen.colors.Grey},
+      [3] = {bold = true},
+      [4] = {bold = true, foreground = Screen.colors.SeaGreen},
+    })
+
+    feed('ifoobar fooegg<cr>f<c-p>')
+    screen:expect([[
+      foobar fooegg                           |
+      fooegg^                                  |
+      {1:foobar         }                         |
+      {2:fooegg         }                         |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      {3:-- }{4:match 1 of 2}                         |
+    ]])
+
+    eval('1 + 1')
+    -- popupmenu still visible
+    screen:expect([[
+      foobar fooegg                           |
+      fooegg^                                  |
+      {1:foobar         }                         |
+      {2:fooegg         }                         |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      {3:-- }{4:match 1 of 2}                         |
+    ]])
+
+    feed('<c-p>')
+    -- Didn't restart completion: old matches still used
+    screen:expect([[
+      foobar fooegg                           |
+      foobar^                                  |
+      {2:foobar         }                         |
+      {1:fooegg         }                         |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      {3:-- }{4:match 2 of 2}                         |
+    ]])
+  end)
+
 end)
+
