@@ -3,11 +3,7 @@
 # writing a recipe that is meant for cross-compile, use the HOSTDEPS_* variables
 # instead of DEPS_* - check the main CMakeLists.txt for a list.
 
-if(MSVC OR (MINGW AND NOT CMAKE_CROSSCOMPILING))
-  message(STATUS "Building busted in Windows is not supported (skipping)")
-else()
-  option(USE_BUNDLED_BUSTED "Use the bundled version of busted to run tests." ON)
-endif()
+option(USE_BUNDLED_BUSTED "Use the bundled version of busted to run tests." ON)
 
 # BuildLuarocks(CONFIGURE_COMMAND ... BUILD_COMMAND ... INSTALL_COMMAND ...)
 # Reusable function to build luarocks, wraps ExternalProject_Add.
@@ -134,12 +130,17 @@ if(USE_BUNDLED_BUSTED)
   add_custom_target(penlight
     DEPENDS ${HOSTDEPS_LIB_DIR}/luarocks/rocks/penlight/1.3.2-2)
 
-  add_custom_command(OUTPUT ${HOSTDEPS_BIN_DIR}/busted
+  if(WIN32)
+    set(BUSTED_EXE "${HOSTDEPS_BIN_DIR}/busted.bat")
+  else()
+    set(BUSTED_EXE "${HOSTDEPS_BIN_DIR}/busted")
+  endif()
+  add_custom_command(OUTPUT ${BUSTED_EXE}
     COMMAND ${LUAROCKS_BINARY}
     ARGS build https://raw.githubusercontent.com/Olivine-Labs/busted/v2.0.rc11-0/busted-2.0.rc11-0.rockspec ${LUAROCKS_BUILDARGS}
     DEPENDS penlight)
   add_custom_target(busted
-    DEPENDS ${HOSTDEPS_BIN_DIR}/busted)
+    DEPENDS ${BUSTED_EXE})
 
   add_custom_command(OUTPUT ${HOSTDEPS_BIN_DIR}/luacheck
     COMMAND ${LUAROCKS_BINARY}
