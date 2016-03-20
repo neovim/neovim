@@ -2245,17 +2245,17 @@ assert_equal({expected}, {actual}, [, {msg}])
 
 assert_false({actual}, [, {msg}])				*assert_false()*
 		When {actual} is not false an error message is added to
-		|v:errors|, like with |assert_equal()|..
-		A value is false when it is zero. When "{actual}" is not a
-		number the assert fails.
+		|v:errors|, like with |assert_equal()|.
+		A value is false when it is zero or |v:false|. When "{actual}" 
+		is not a number or |v:false| the assert fails.
 		When {msg} is omitted an error in the form "Expected False but
 		got {actual}" is produced.
 
 assert_true({actual}, [, {msg}])				*assert_true()*
 		When {actual} is not true an error message is added to
-		|v:errors|, like with |assert_equal()|..
-		A value is true when it is a non-zeron number.  When {actual}
-		is not a number the assert fails.
+		|v:errors|, like with |assert_equal()|.
+		A value is true when it is a non-zero number or |v:true|.  
+		When {actual} is not a number or |v:true| the assert fails.
 		When {msg} is omitted an error in the form "Expected True but
 		got {actual}" is produced.
 
@@ -2849,9 +2849,8 @@ diff_hlID({lnum}, {col})				*diff_hlID()*
 empty({expr})						*empty()*
 		Return the Number 1 if {expr} is empty, zero otherwise.
 		A |List| or |Dictionary| is empty when it does not have any
-		items.	A Number is empty when its value is zero.
-		For a long |List| this is much faster than comparing the
-		length with zero.
+		items.  A Number is empty when its value is zero.  Special 
+		variable is empty when it is |v:false| or |v:null|.
 
 escape({string}, {chars})				*escape()*
 		Escape the characters in {chars} that occur in {string} with a
