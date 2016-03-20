@@ -508,6 +508,10 @@ describe('json_decode() function', function()
     eq('Vim(call):E474: Attempt to decode a blank string',
        exc_exec('call json_decode("")'))
     eq('Vim(call):E474: Attempt to decode a blank string',
+       exc_exec('call json_decode([])'))
+    eq('Vim(call):E474: Attempt to decode a blank string',
+       exc_exec('call json_decode([""])'))
+    eq('Vim(call):E474: Attempt to decode a blank string',
        exc_exec('call json_decode(" ")'))
     eq('Vim(call):E474: Attempt to decode a blank string',
        exc_exec('call json_decode("\\t")'))

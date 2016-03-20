@@ -11608,14 +11608,17 @@ static void f_json_decode(typval_T *argvars, typval_T *rettv)
       return;
     }
     tofree = s;
+    if (s == NULL) {
+      assert(len == 0);
+      s = "";
+    }
   } else {
     s = (char *) get_tv_string_buf_chk(&argvars[0], (char_u *) numbuf);
     if (s) {
       len = strlen(s);
+    } else {
+      return;
     }
-  }
-  if (s == NULL) {
-    return;
   }
   if (json_decode_string(s, len, rettv) == FAIL) {
     emsgf(_("E474: Failed to parse %.*s"), (int) len, s);
