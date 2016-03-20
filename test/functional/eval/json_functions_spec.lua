@@ -356,12 +356,12 @@ describe('json_decode() function', function()
     eq({
       '«',
       'ફ',
-      '\xF0\x90\x80\x80',
+      '\240\144\128\128',
     }, funcs.json_decode({
       '[',
       '"«",',
       '"ફ",',
-      '"\xF0\x90\x80\x80"',
+      '"\240\144\128\128"',
       ']',
     }))
   end)
@@ -387,54 +387,54 @@ describe('json_decode() function', function()
     eq('Vim(call):E474: Only UTF-8 strings allowed: \240\144\128"',
        exc_exec('call json_decode("\\t\\"\\xF0\\x90\\x80\\"")'))
     -- 0xF9 0x80 0x80 0x80 starts 5-byte unicode character
-    eq('Vim(call):E474: Only UTF-8 strings allowed: \xF9"',
+    eq('Vim(call):E474: Only UTF-8 strings allowed: \249"',
        exc_exec('call json_decode("\\t\\"\\xF9\\"")'))
-    eq('Vim(call):E474: Only UTF-8 strings allowed: \xF9\x80"',
+    eq('Vim(call):E474: Only UTF-8 strings allowed: \249\128"',
        exc_exec('call json_decode("\\t\\"\\xF9\\x80\\"")'))
-    eq('Vim(call):E474: Only UTF-8 strings allowed: \xF9\x80\x80"',
+    eq('Vim(call):E474: Only UTF-8 strings allowed: \249\128\128"',
        exc_exec('call json_decode("\\t\\"\\xF9\\x80\\x80\\"")'))
-    eq('Vim(call):E474: Only UTF-8 strings allowed: \xF9\x80\x80\x80"',
+    eq('Vim(call):E474: Only UTF-8 strings allowed: \249\128\128\128"',
        exc_exec('call json_decode("\\t\\"\\xF9\\x80\\x80\\x80\\"")'))
     -- 0xFC 0x90 0x80 0x80 0x80 starts 6-byte unicode character
-    eq('Vim(call):E474: Only UTF-8 strings allowed: \xFC"',
+    eq('Vim(call):E474: Only UTF-8 strings allowed: \252"',
        exc_exec('call json_decode("\\t\\"\\xFC\\"")'))
-    eq('Vim(call):E474: Only UTF-8 strings allowed: \xFC\x90"',
+    eq('Vim(call):E474: Only UTF-8 strings allowed: \252\144"',
        exc_exec('call json_decode("\\t\\"\\xFC\\x90\\"")'))
-    eq('Vim(call):E474: Only UTF-8 strings allowed: \xFC\x90\x80"',
+    eq('Vim(call):E474: Only UTF-8 strings allowed: \252\144\128"',
        exc_exec('call json_decode("\\t\\"\\xFC\\x90\\x80\\"")'))
-    eq('Vim(call):E474: Only UTF-8 strings allowed: \xFC\x90\x80\x80"',
+    eq('Vim(call):E474: Only UTF-8 strings allowed: \252\144\128\128"',
        exc_exec('call json_decode("\\t\\"\\xFC\\x90\\x80\\x80\\"")'))
-    eq('Vim(call):E474: Only UTF-8 strings allowed: \xFC\x90\x80\x80\x80"',
+    eq('Vim(call):E474: Only UTF-8 strings allowed: \252\144\128\128\128"',
        exc_exec('call json_decode("\\t\\"\\xFC\\x90\\x80\\x80\\x80\\"")'))
     -- Specification does not allow unquoted characters above 0x10FFFF
-    eq('Vim(call):E474: Only UTF-8 code points up to U+10FFFF are allowed to appear unescaped: \xF9\x80\x80\x80\x80"',
+    eq('Vim(call):E474: Only UTF-8 code points up to U+10FFFF are allowed to appear unescaped: \249\128\128\128\128"',
        exc_exec('call json_decode("\\t\\"\\xF9\\x80\\x80\\x80\\x80\\"")'))
-    eq('Vim(call):E474: Only UTF-8 code points up to U+10FFFF are allowed to appear unescaped: \xFC\x90\x80\x80\x80\x80"',
+    eq('Vim(call):E474: Only UTF-8 code points up to U+10FFFF are allowed to appear unescaped: \252\144\128\128\128\128"',
        exc_exec('call json_decode("\\t\\"\\xFC\\x90\\x80\\x80\\x80\\x80\\"")'))
-    -- '"\xF9\x80\x80\x80\x80"',
-    -- '"\xFC\x90\x80\x80\x80\x80"',
+    -- '"\249\128\128\128\128"',
+    -- '"\252\144\128\128\128\128"',
   end)
 
   it('parses surrogate pairs properly', function()
-    eq('\xF0\x90\x80\x80', funcs.json_decode('"\\uD800\\uDC00"'))
-    eq('\xED\xA0\x80a\xED\xB0\x80', funcs.json_decode('"\\uD800a\\uDC00"'))
-    eq('\xED\xA0\x80\t\xED\xB0\x80', funcs.json_decode('"\\uD800\\t\\uDC00"'))
+    eq('\240\144\128\128', funcs.json_decode('"\\uD800\\uDC00"'))
+    eq('\237\160\128a\237\176\128', funcs.json_decode('"\\uD800a\\uDC00"'))
+    eq('\237\160\128\t\237\176\128', funcs.json_decode('"\\uD800\\t\\uDC00"'))
 
-    eq('\xED\xA0\x80', funcs.json_decode('"\\uD800"'))
-    eq('\xED\xA0\x80a', funcs.json_decode('"\\uD800a"'))
-    eq('\xED\xA0\x80\t', funcs.json_decode('"\\uD800\\t"'))
+    eq('\237\160\128', funcs.json_decode('"\\uD800"'))
+    eq('\237\160\128a', funcs.json_decode('"\\uD800a"'))
+    eq('\237\160\128\t', funcs.json_decode('"\\uD800\\t"'))
 
-    eq('\xED\xB0\x80', funcs.json_decode('"\\uDC00"'))
-    eq('\xED\xB0\x80a', funcs.json_decode('"\\uDC00a"'))
-    eq('\xED\xB0\x80\t', funcs.json_decode('"\\uDC00\\t"'))
+    eq('\237\176\128', funcs.json_decode('"\\uDC00"'))
+    eq('\237\176\128a', funcs.json_decode('"\\uDC00a"'))
+    eq('\237\176\128\t', funcs.json_decode('"\\uDC00\\t"'))
 
-    eq('\xED\xB0\x80', funcs.json_decode('"\\uDC00"'))
-    eq('a\xED\xB0\x80', funcs.json_decode('"a\\uDC00"'))
-    eq('\t\xED\xB0\x80', funcs.json_decode('"\\t\\uDC00"'))
+    eq('\237\176\128', funcs.json_decode('"\\uDC00"'))
+    eq('a\237\176\128', funcs.json_decode('"a\\uDC00"'))
+    eq('\t\237\176\128', funcs.json_decode('"\\t\\uDC00"'))
 
-    eq('\xED\xA0\x80¬', funcs.json_decode('"\\uD800\\u00AC"'))
+    eq('\237\160\128¬', funcs.json_decode('"\\uD800\\u00AC"'))
 
-    eq('\xED\xA0\x80\xED\xA0\x80', funcs.json_decode('"\\uD800\\uD800"'))
+    eq('\237\160\128\237\160\128', funcs.json_decode('"\\uD800\\uD800"'))
   end)
 
   local sp_decode_eq = function(expected, json)
@@ -490,8 +490,8 @@ describe('json_decode() function', function()
 
   it('converts strings to latin1 when &encoding is latin1', function()
     restart('set encoding=latin1')
-    eq('\xAB', funcs.json_decode('"\\u00AB"'))
-    sp_decode_eq({_TYPE='string', _VAL={'\n\xAB\n'}}, '"\\u0000\\u00AB\\u0000"')
+    eq('\171', funcs.json_decode('"\\u00AB"'))
+    sp_decode_eq({_TYPE='string', _VAL={'\n\171\n'}}, '"\\u0000\\u00AB\\u0000"')
   end)
 
   it('fails to convert string to latin1 if it is impossible', function()
@@ -501,7 +501,7 @@ describe('json_decode() function', function()
   end)
 
   it('parses U+00C3 correctly', function()
-    eq('\xC3\x83', funcs.json_decode('"\xC3\x83"'))
+    eq('\195\131', funcs.json_decode('"\195\131"'))
   end)
 
   it('fails to parse empty string', function()
@@ -763,21 +763,21 @@ describe('json_encode() function', function()
 
   it('converts strings from latin1 when &encoding is latin1', function()
     clear('set encoding=latin1')
-    eq('"\\u00AB"', funcs.json_encode('\xAB'))
-    eq('"\\u0000\\u00AB\\u0000"', eval('json_encode({"_TYPE": v:msgpack_types.string, "_VAL": ["\\n\xAB\\n"]})'))
+    eq('"\\u00AB"', funcs.json_encode('\171'))
+    eq('"\\u0000\\u00AB\\u0000"', eval('json_encode({"_TYPE": v:msgpack_types.string, "_VAL": ["\\n\171\\n"]})'))
   end)
 
   it('ignores improper values in &isprint', function()
     meths.set_option('isprint', '1')
-    eq(1, eval('"\x01" =~# "\\\\p"'))
-    eq('"\\u0001"', funcs.json_encode('\x01'))
+    eq(1, eval('"\1" =~# "\\\\p"'))
+    eq('"\\u0001"', funcs.json_encode('\1'))
   end)
 
   it('fails when using surrogate character in a UTF-8 string', function()
-    eq('Vim(call):E474: UTF-8 string contains code point which belongs to a surrogate pair: \xED\xA0\x80',
-       exc_exec('call json_encode("\xED\xA0\x80")'))
-    eq('Vim(call):E474: UTF-8 string contains code point which belongs to a surrogate pair: \xED\xAF\xBF',
-       exc_exec('call json_encode("\xED\xAF\xBF")'))
+    eq('Vim(call):E474: UTF-8 string contains code point which belongs to a surrogate pair: \237\160\128',
+       exc_exec('call json_encode("\237\160\128")'))
+    eq('Vim(call):E474: UTF-8 string contains code point which belongs to a surrogate pair: \237\175\191',
+       exc_exec('call json_encode("\237\175\191")'))
   end)
 
   it('dumps control characters as expected', function()

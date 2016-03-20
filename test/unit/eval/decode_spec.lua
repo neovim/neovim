@@ -115,7 +115,7 @@ describe('json_decode_string()', function()
         '"\t"test', 3,
         'E474: ASCII control characters cannot be present inside string: \t"')
     check_failure('"\194"test', 3, 'E474: Only UTF-8 strings allowed: \194"')
-    check_failure('"\xFC\x90\x80\x80\x80\x80"test', 8, 'E474: Only UTF-8 code points up to U+10FFFF are allowed to appear unescaped: \xFC\x90\x80\x80\x80\x80"')
+    check_failure('"\252\144\128\128\128\128"test', 8, 'E474: Only UTF-8 code points up to U+10FFFF are allowed to appear unescaped: \252\144\128\128\128\128"')
     check_failure('"test', 1, 'E474: Expected string end: "')
     decode.p_enc = to_cstr('latin1')
     check_failure('"\\uABCD"test', 8,
