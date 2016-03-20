@@ -779,4 +779,9 @@ describe('json_encode() function', function()
     eq('Vim(call):E474: UTF-8 string contains code point which belongs to a surrogate pair: \xED\xAF\xBF',
        exc_exec('call json_encode("\xED\xAF\xBF")'))
   end)
+
+  it('dumps control characters as expected', function()
+    eq([["\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000B\f\r\u000E\u000F\u0010\u0011\u0012\u0013"]],
+       eval('json_encode({"_TYPE": v:msgpack_types.string, "_VAL": ["\n\1\2\3\4\5\6\7\8\9", "\11\12\13\14\15\16\17\18\19"]})'))
+  end)
 end)

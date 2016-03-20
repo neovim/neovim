@@ -866,6 +866,7 @@ static const char escapes[][3] = {
   [CAR] = "\\r",
   ['"'] = "\\\"",
   ['\\'] = "\\\\",
+  [FF] = "\\f",
 };
 
 static const char xdigits[] = "0123456789ABCDEF";
