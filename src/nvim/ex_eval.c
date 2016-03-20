@@ -569,17 +569,19 @@ static void catch_exception(except_T *excp)
 {
   excp->caught = caught_stack;
   caught_stack = excp;
-  set_vim_var_string(VV_EXCEPTION, excp->value, -1);
+  set_vim_var_string(VV_EXCEPTION, (char *) excp->value, -1);
   if (*excp->throw_name != NUL) {
-    if (excp->throw_lnum != 0)
+    if (excp->throw_lnum != 0) {
       vim_snprintf((char *)IObuff, IOSIZE, _("%s, line %" PRId64),
-          excp->throw_name, (int64_t)excp->throw_lnum);
-    else
+                   excp->throw_name, (int64_t)excp->throw_lnum);
+    } else {
       vim_snprintf((char *)IObuff, IOSIZE, "%s", excp->throw_name);
-    set_vim_var_string(VV_THROWPOINT, IObuff, -1);
-  } else
-    /* throw_name not set on an exception from a command that was typed. */
+    }
+    set_vim_var_string(VV_THROWPOINT, (char *) IObuff, -1);
+  } else {
+    // throw_name not set on an exception from a command that was typed.
     set_vim_var_string(VV_THROWPOINT, NULL, -1);
+  }
 
   if (p_verbose >= 13 || debug_break_level > 0) {
     int save_msg_silent = msg_silent;
@@ -614,20 +616,22 @@ static void finish_exception(except_T *excp)
     EMSG(_(e_internal));
   caught_stack = caught_stack->caught;
   if (caught_stack != NULL) {
-    set_vim_var_string(VV_EXCEPTION, caught_stack->value, -1);
+    set_vim_var_string(VV_EXCEPTION, (char *) caught_stack->value, -1);
     if (*caught_stack->throw_name != NUL) {
-      if (caught_stack->throw_lnum != 0)
+      if (caught_stack->throw_lnum != 0) {
         vim_snprintf((char *)IObuff, IOSIZE,
-            _("%s, line %" PRId64), caught_stack->throw_name,
-            (int64_t)caught_stack->throw_lnum);
-      else
+                     _("%s, line %" PRId64), caught_stack->throw_name,
+                     (int64_t)caught_stack->throw_lnum);
+      } else {
         vim_snprintf((char *)IObuff, IOSIZE, "%s",
-            caught_stack->throw_name);
-      set_vim_var_string(VV_THROWPOINT, IObuff, -1);
-    } else
-      /* throw_name not set on an exception from a command that was
-       * typed. */
+                     caught_stack->throw_name);
+      }
+      set_vim_var_string(VV_THROWPOINT, (char *) IObuff, -1);
+    } else {
+      // throw_name not set on an exception from a command that was
+      // typed.
       set_vim_var_string(VV_THROWPOINT, NULL, -1);
+    }
   } else {
     set_vim_var_string(VV_EXCEPTION, NULL, -1);
     set_vim_var_string(VV_THROWPOINT, NULL, -1);

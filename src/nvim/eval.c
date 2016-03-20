@@ -465,6 +465,8 @@ const list_T *eval_msgpack_type_lists[] = {
  */
 void eval_init(void)
 {
+  vimvars[VV_VERSION].vv_nr = VIM_VERSION_100;
+
   jobs = pmap_new(uint64_t)();
   struct vimvar   *p;
 
@@ -768,45 +770,50 @@ void var_redir_stop(void)
   redir_varname = NULL;
 }
 
-int eval_charconvert(char_u *enc_from, char_u *enc_to, char_u *fname_from, char_u *fname_to)
+int eval_charconvert(const char *const enc_from, const char *const enc_to,
+                     const char *const fname_from, const char *const fname_to)
 {
-  int err = FALSE;
+  int err = false;
 
   set_vim_var_string(VV_CC_FROM, enc_from, -1);
   set_vim_var_string(VV_CC_TO, enc_to, -1);
   set_vim_var_string(VV_FNAME_IN, fname_from, -1);
   set_vim_var_string(VV_FNAME_OUT, fname_to, -1);
-  if (eval_to_bool(p_ccv, &err, NULL, FALSE))
-    err = TRUE;
+  if (eval_to_bool(p_ccv, &err, NULL, false)) {
+    err = true;
+  }
   set_vim_var_string(VV_CC_FROM, NULL, -1);
   set_vim_var_string(VV_CC_TO, NULL, -1);
   set_vim_var_string(VV_FNAME_IN, NULL, -1);
   set_vim_var_string(VV_FNAME_OUT, NULL, -1);
 
-  if (err)
-    return FAIL;
-  return OK;
-}
-
-int eval_printexpr(char_u *fname, char_u *args)
-{
-  int err = FALSE;
-
-  set_vim_var_string(VV_FNAME_IN, fname, -1);
-  set_vim_var_string(VV_CMDARG, args, -1);
-  if (eval_to_bool(p_pexpr, &err, NULL, FALSE))
-    err = TRUE;
-  set_vim_var_string(VV_FNAME_IN, NULL, -1);
-  set_vim_var_string(VV_CMDARG, NULL, -1);
-
   if (err) {
-    os_remove((char *)fname);
     return FAIL;
   }
   return OK;
 }
 
-void eval_diff(char_u *origfile, char_u *newfile, char_u *outfile)
+int eval_printexpr(const char *const fname, const char *const args)
+{
+  int err = false;
+
+  set_vim_var_string(VV_FNAME_IN, fname, -1);
+  set_vim_var_string(VV_CMDARG, args, -1);
+  if (eval_to_bool(p_pexpr, &err, NULL, false)) {
+    err = true;
+  }
+  set_vim_var_string(VV_FNAME_IN, NULL, -1);
+  set_vim_var_string(VV_CMDARG, NULL, -1);
+
+  if (err) {
+    os_remove(fname);
+    return FAIL;
+  }
+  return OK;
+}
+
+void eval_diff(const char *const origfile, const char *const newfile,
+               const char *const outfile)
 {
   int err = FALSE;
 
@@ -819,7 +826,8 @@ void eval_diff(char_u *origfile, char_u *newfile, char_u *outfile)
   set_vim_var_string(VV_FNAME_OUT, NULL, -1);
 }
 
-void eval_patch(char_u *origfile, char_u *difffile, char_u *outfile)
+void eval_patch(const char *const origfile, const char *const difffile,
+                const char *const outfile)
 {
   int err;
 
@@ -17084,20 +17092,6 @@ static int eval_isnamec1(int c)
 }
 
 /*
- * Set number v: variable to "val".
- */
-void set_vim_var_nr(int idx, long val)
-{
-  vimvars[idx].vv_nr = val;
-}
-
-/// Set special v: variable to "val"
-void set_vim_var_special(const int idx, const SpecialVarValue val)
-{
-  vimvars[idx].vv_special = val;
-}
-
-/*
  * Get number v: variable value.
  */
 long get_vim_var_nr(int idx) FUNC_ATTR_PURE
@@ -17134,11 +17128,11 @@ dict_T *get_vim_var_dict(int idx) FUNC_ATTR_PURE
  */
 void set_vim_var_char(int c)
 {
-  char_u buf[MB_MAXBYTES + 1];
+  char buf[MB_MAXBYTES + 1];
 
-  if (has_mbyte)
-    buf[(*mb_char2bytes)(c, buf)] = NUL;
-  else {
+  if (has_mbyte) {
+    buf[(*mb_char2bytes)(c, (char_u *) buf)] = NUL;
+  } else {
     buf[0] = c;
     buf[1] = NUL;
   }
@@ -17157,47 +17151,68 @@ void set_vcount(long count, long count1, int set_prevcount)
   vimvars[VV_COUNT1].vv_nr = count1;
 }
 
-/*
- * Set string v: variable to a copy of "val".
- */
-void set_vim_var_string (
-    int idx,
-    char_u *val,
-    int len                    /* length of "val" to use or -1 (whole string) */
-)
+/// Set number v: variable to the given value
+///
+/// @param[in]  idx  Index of variable to set.
+/// @param[in]  val  Value to set to.
+void set_vim_var_nr(const VimVarIndex idx, const varnumber_T val)
 {
-  /* Need to do this (at least) once, since we can't initialize a union.
-   * Will always be invoked when "v:progname" is set. */
-  vimvars[VV_VERSION].vv_nr = VIM_VERSION_100;
-
-  xfree(vimvars[idx].vv_str);
-  if (val == NULL)
-    vimvars[idx].vv_str = NULL;
-  else if (len == -1)
-    vimvars[idx].vv_str = vim_strsave(val);
-  else
-    vimvars[idx].vv_str = vim_strnsave(val, len);
+  vimvars[idx].vv_nr = val;
 }
 
-/*
- * Set List v: variable to "val".
- */
-void set_vim_var_list(int idx, list_T *val)
+/// Set special v: variable to the given value
+///
+/// @param[in]  idx  Index of variable to set.
+/// @param[in]  val  Value to set to.
+void set_vim_var_special(const VimVarIndex idx, const SpecialVarValue val)
+{
+  vimvars[idx].vv_special = val;
+}
+
+/// Set string v: variable to the given string
+///
+/// @param[in]  idx  Index of variable to set.
+/// @param[in]  val  Value to set to. Will be copied.
+/// @param[in]  len  Legth of that value or -1 in which case strlen() will be
+///                  used.
+void set_vim_var_string(const VimVarIndex idx, const char *const val,
+                        const ptrdiff_t len)
+{
+  xfree(vimvars[idx].vv_str);
+  if (val == NULL) {
+    vimvars[idx].vv_str = NULL;
+  } else if (len == -1) {
+    vimvars[idx].vv_str = (char_u *) xstrdup(val);
+  } else {
+    vimvars[idx].vv_str = (char_u *) xstrndup(val, (size_t) len);
+  }
+}
+
+/// Set list v: variable to the given list
+///
+/// @param[in]  idx  Index of variable to set.
+/// @param[in,out]  val  Value to set to. Reference count will be incremented.
+void set_vim_var_list(const VimVarIndex idx, list_T *const val)
 {
   list_unref(vimvars[idx].vv_list);
   vimvars[idx].vv_list = val;
-  if (val != NULL)
-    ++val->lv_refcount;
+  if (val != NULL) {
+    val->lv_refcount++;
+  }
 }
 
-/// Set Dictionary v: variable to "val".
-void set_vim_var_dict(int idx, dict_T *val)
+/// Set Dictionary v: variable to the given dictionary
+///
+/// @param[in]  idx  Index of variable to set.
+/// @param[in,out]  val  Value to set to. Reference count will be incremented.
+///                      Also keys of the dictionary will be made read-only.
+void set_vim_var_dict(const VimVarIndex idx, dict_T *const val)
 {
   dict_unref(vimvars[idx].vv_dict);
   vimvars[idx].vv_dict = val;
 
   if (val != NULL) {
-    ++val->dv_refcount;
+    val->dv_refcount++;
     // Set readonly
     dict_set_keys_readonly(val);
   }
@@ -17208,15 +17223,17 @@ void set_vim_var_dict(int idx, dict_T *val)
  */
 void set_reg_var(int c)
 {
-  char_u regname;
+  char regname;
 
-  if (c == 0 || c == ' ')
+  if (c == 0 || c == ' ') {
     regname = '"';
-  else
+  } else {
     regname = c;
-  /* Avoid free/alloc when the value is already right. */
-  if (vimvars[VV_REG].vv_str == NULL || vimvars[VV_REG].vv_str[0] != c)
+  }
+  // Avoid free/alloc when the value is already right.
+  if (vimvars[VV_REG].vv_str == NULL || vimvars[VV_REG].vv_str[0] != c) {
     set_vim_var_string(VV_REG, &regname, 1);
+  }
 }
 
 /*

@@ -575,8 +575,8 @@ parse_json_number_check:
     tv.vval.v_number = (varnumber_T) nr;
   }
   if (json_decoder_pop(OBJ(tv, false, *didcomma, *didcolon),
-                        stack, container_stack,
-                        &p, next_map_special, didcomma, didcolon) == FAIL) {
+                       stack, container_stack,
+                       &p, next_map_special, didcomma, didcolon) == FAIL) {
     goto parse_json_number_fail;
   }
   if (*next_map_special) {

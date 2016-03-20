@@ -143,10 +143,11 @@ msg_attr_keep (
 {
   static int entered = 0;
   int retval;
-  char_u      *buf = NULL;
+  char_u *buf = NULL;
 
-  if (attr == 0)
-    set_vim_var_string(VV_STATUSMSG, s, -1);
+  if (attr == 0) {
+    set_vim_var_string(VV_STATUSMSG, (char *) s, -1);
+  }
 
   /*
    * It is possible that displaying a messages causes a problem (e.g.,
@@ -497,8 +498,8 @@ int emsg(char_u *s)
       return TRUE;
     }
 
-    /* set "v:errmsg", also when using ":silent! cmd" */
-    set_vim_var_string(VV_ERRMSG, s, -1);
+    // set "v:errmsg", also when using ":silent! cmd"
+    set_vim_var_string(VV_ERRMSG, (char *) s, -1);
 
     /*
      * When using ":silent! cmd" ignore error messages.
@@ -1755,25 +1756,24 @@ static void msg_scroll_up(void)
 static void inc_msg_scrolled(void)
 {
   if (*get_vim_var_str(VV_SCROLLSTART) == NUL) {
-    char_u      *p = sourcing_name;
-    char_u      *tofree = NULL;
-    int len;
+    char *p = (char *) sourcing_name;
+    char *tofree = NULL;
 
-    /* v:scrollstart is empty, set it to the script/function name and line
-     * number */
-    if (p == NULL)
-      p = (char_u *)_("Unknown");
-    else {
-      len = (int)STRLEN(p) + 40;
+    // v:scrollstart is empty, set it to the script/function name and line
+    // number
+    if (p == NULL) {
+      p = _("Unknown");
+    } else {
+      size_t len = strlen(p) + 40;
       tofree = xmalloc(len);
-      vim_snprintf((char *)tofree, len, _("%s line %" PRId64),
-          p, (int64_t)sourcing_lnum);
+      vim_snprintf(tofree, len, _("%s line %" PRId64),
+                   p, (int64_t) sourcing_lnum);
       p = tofree;
     }
     set_vim_var_string(VV_SCROLLSTART, p, -1);
     xfree(tofree);
   }
-  ++msg_scrolled;
+  msg_scrolled++;
 }
 
 static msgchunk_T *last_msgchunk = NULL; /* last displayed text */
@@ -2540,7 +2540,7 @@ void give_warning(char_u *message, bool hl) FUNC_ATTR_NONNULL_ARG(1)
   /* Don't want a hit-enter prompt here. */
   ++no_wait_return;
 
-  set_vim_var_string(VV_WARNINGMSG, message, -1);
+  set_vim_var_string(VV_WARNINGMSG, (char *) message, -1);
   xfree(keep_msg);
   keep_msg = NULL;
   if (hl)
@@ -3054,7 +3054,7 @@ int vim_snprintf_add(char *str, size_t str_m, char *fmt, ...)
   return str_l;
 }
 
-int vim_snprintf(char *str, size_t str_m, char *fmt, ...)
+int vim_snprintf(char *str, size_t str_m, const char *fmt, ...)
 {
   va_list ap;
   int str_l;

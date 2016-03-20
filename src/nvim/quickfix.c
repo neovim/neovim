@@ -2440,8 +2440,6 @@ int grep_internal(cmdidx_T cmdidx)
 void ex_make(exarg_T *eap)
 {
   char_u      *fname;
-  char_u      *cmd;
-  size_t len;
   win_T       *wp = NULL;
   qf_info_T   *qi = &ql_info;
   int res;
@@ -2479,30 +2477,28 @@ void ex_make(exarg_T *eap)
     return;
   os_remove((char *)fname);  // in case it's not unique
 
-  /*
-   * If 'shellpipe' empty: don't redirect to 'errorfile'.
-   */
-  len = STRLEN(p_shq) * 2 + STRLEN(eap->arg) + 1;
+  // If 'shellpipe' empty: don't redirect to 'errorfile'.
+  const size_t len = (STRLEN(p_shq) * 2 + STRLEN(eap->arg) + 1
+                      + (*p_sp == NUL
+                         ? 0
+                         : STRLEN(p_sp) + STRLEN(fname) + 3));
+  char *const cmd = xmalloc(len);
+  snprintf(cmd, len, "%s%s%s", (char *)p_shq, (char *)eap->arg,
+           (char *)p_shq);
   if (*p_sp != NUL) {
-    len += STRLEN(p_sp) + STRLEN(fname) + 3;
+    append_redir(cmd, len, (char *) p_sp, (char *) fname);
   }
-  cmd = xmalloc(len);
-  sprintf((char *)cmd, "%s%s%s", (char *)p_shq, (char *)eap->arg,
-      (char *)p_shq);
-  if (*p_sp != NUL)
-    append_redir(cmd, len, p_sp, fname);
-  /*
-   * Output a newline if there's something else than the :make command that
-   * was typed (in which case the cursor is in column 0).
-   */
-  if (msg_col == 0)
-    msg_didout = FALSE;
+  // Output a newline if there's something else than the :make command that
+  // was typed (in which case the cursor is in column 0).
+  if (msg_col == 0) {
+    msg_didout = false;
+  }
   msg_start();
   MSG_PUTS(":!");
-  msg_outtrans(cmd);            /* show what we are doing */
+  msg_outtrans((char_u *) cmd);  // show what we are doing
 
-  /* let the shell know if we are redirecting output or not */
-  do_shell(cmd, *p_sp != NUL ? kShellOptDoOut : 0);
+  // let the shell know if we are redirecting output or not
+  do_shell((char_u *) cmd, *p_sp != NUL ? kShellOptDoOut : 0);
 
 
   res = qf_init(wp, fname, (eap->cmdidx != CMD_make

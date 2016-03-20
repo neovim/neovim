@@ -7057,18 +7057,17 @@ static void nv_operator(cmdarg_T *cap)
  */
 static void set_op_var(int optype)
 {
-  char_u opchars[3];
-
-  if (optype == OP_NOP)
+  if (optype == OP_NOP) {
     set_vim_var_string(VV_OP, NULL, 0);
-  else {
+  } else {
+    char opchars[3];
     int opchar0 = get_op_char(optype);
     assert(opchar0 >= 0 && opchar0 <= UCHAR_MAX);
-    opchars[0] = (char_u)opchar0;
+    opchars[0] = (char) opchar0;
 
     int opchar1 = get_extra_op_char(optype); 
     assert(opchar1 >= 0 && opchar1 <= UCHAR_MAX);
-    opchars[1] = (char_u)opchar1;
+    opchars[1] = (char) opchar1;
 
     opchars[2] = NUL;
     set_vim_var_string(VV_OP, opchars, -1);

@@ -2139,9 +2139,10 @@ readfile_charconvert (
   else {
     close(*fdp);                /* close the input file, ignore errors */
     *fdp = -1;
-    if (eval_charconvert(fenc, enc_utf8 ? (char_u *)"utf-8" : p_enc,
-            fname, tmpname) == FAIL)
+    if (eval_charconvert((char *) fenc, enc_utf8 ? "utf-8" : (char *) p_enc,
+                         (char *) fname, (char *) tmpname) == FAIL) {
       errmsg = (char_u *)_("Conversion with 'charconvert' failed");
+    }
     if (errmsg == NULL && (*fdp = os_open((char *)tmpname, O_RDONLY, 0)) < 0) {
       errmsg = (char_u *)_("can't read output of 'charconvert'");
     }
@@ -3435,9 +3436,9 @@ restore_backup:
      * with 'charconvert' to (overwrite) the output file.
      */
     if (end != 0) {
-      if (eval_charconvert(enc_utf8 ? (char_u *)"utf-8" : p_enc, fenc,
-              wfname, fname) == FAIL) {
-        write_info.bw_conv_error = TRUE;
+      if (eval_charconvert(enc_utf8 ? "utf-8" : (char *) p_enc, (char *) fenc,
+                           (char *) wfname, (char *) fname) == FAIL) {
+        write_info.bw_conv_error = true;
         end = 0;
       }
     }
@@ -4740,7 +4741,6 @@ buf_check_timestamp (
 {
   int retval = 0;
   char_u      *path;
-  char_u      *tbuf;
   char        *mesg = NULL;
   char        *mesg2 = "";
   int helpmesg = FALSE;
@@ -4810,14 +4810,12 @@ buf_check_timestamp (
       else
         reason = "time";
 
-      /*
-       * Only give the warning if there are no FileChangedShell
-       * autocommands.
-       * Avoid being called recursively by setting "busy".
-       */
-      busy = TRUE;
-      set_vim_var_string(VV_FCS_REASON, (char_u *)reason, -1);
-      set_vim_var_string(VV_FCS_CHOICE, (char_u *)"", -1);
+      // Only give the warning if there are no FileChangedShell
+      // autocommands.
+      // Avoid being called recursively by setting "busy".
+      busy = true;
+      set_vim_var_string(VV_FCS_REASON, reason, -1);
+      set_vim_var_string(VV_FCS_CHOICE, "", -1);
       ++allbuf_lock;
       n = apply_autocmds(EVENT_FILECHANGEDSHELL,
           buf->b_fname, buf->b_fname, FALSE, buf);
@@ -4876,35 +4874,39 @@ buf_check_timestamp (
 
   if (mesg != NULL) {
     path = home_replace_save(buf, buf->b_fname);
-    if (!helpmesg)
+    if (!helpmesg) {
       mesg2 = "";
-    tbuf = xmalloc(STRLEN(path) + STRLEN(mesg) + STRLEN(mesg2) + 2);
-    sprintf((char *)tbuf, mesg, path);
-    /* Set warningmsg here, before the unimportant and output-specific
-     * mesg2 has been appended. */
+    }
+    const size_t tbuf_len = STRLEN(path) + STRLEN(mesg) + STRLEN(mesg2) + 2;
+    char *const tbuf = xmalloc(tbuf_len);
+    snprintf(tbuf, tbuf_len, mesg, path);
+    // Set warningmsg here, before the unimportant and output-specific
+    // mesg2 has been appended.
     set_vim_var_string(VV_WARNINGMSG, tbuf, -1);
     if (can_reload) {
       if (*mesg2 != NUL) {
-        STRCAT(tbuf, "\n");
-        STRCAT(tbuf, mesg2);
+        strncat(tbuf, "\n", tbuf_len);
+        strncat(tbuf, mesg2, tbuf_len);
       }
-      if (do_dialog(VIM_WARNING, (char_u *)_("Warning"), tbuf,
-                    (char_u *)_("&OK\n&Load File"), 1, NULL, TRUE) == 2)
-        reload = TRUE;
+      if (do_dialog(VIM_WARNING, (char_u *) _("Warning"), (char_u *) tbuf,
+                    (char_u *) _("&OK\n&Load File"), 1, NULL, true) == 2) {
+        reload = true;
+      }
     } else if (State > NORMAL_BUSY || (State & CMDLINE) || already_warned) {
       if (*mesg2 != NUL) {
-        STRCAT(tbuf, "; ");
-        STRCAT(tbuf, mesg2);
+        strncat(tbuf, "; ", tbuf_len);
+        strncat(tbuf, mesg2, tbuf_len);
       }
       EMSG(tbuf);
       retval = 2;
     } else {
       if (!autocmd_busy) {
         msg_start();
-        msg_puts_attr(tbuf, hl_attr(HLF_E) + MSG_HIST);
-        if (*mesg2 != NUL)
+        msg_puts_attr((char_u *) tbuf, hl_attr(HLF_E) + MSG_HIST);
+        if (*mesg2 != NUL) {
           msg_puts_attr((char_u *)mesg2,
                         hl_attr(HLF_W) + MSG_HIST);
+        }
         msg_clr_eos();
         (void)msg_end();
         if (emsg_silent == 0) {

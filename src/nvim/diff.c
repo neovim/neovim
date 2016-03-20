@@ -658,9 +658,9 @@ void ex_diffupdate(exarg_T *eap)
   }
 
   // We need three temp file names.
-  char_u *tmp_orig = vim_tempname();
-  char_u *tmp_new = vim_tempname();
-  char_u *tmp_diff = vim_tempname();
+  char *tmp_orig = (char *) vim_tempname();
+  char *tmp_new = (char *) vim_tempname();
+  char *tmp_diff = (char *) vim_tempname();
 
   if ((tmp_orig == NULL) || (tmp_new == NULL) || (tmp_diff == NULL)) {
     goto theend;
@@ -670,11 +670,11 @@ void ex_diffupdate(exarg_T *eap)
   // are no differences.  Can't use the return value, it's non-zero when
   // there are differences.
   // May try twice, first with "-a" and then without.
-  int io_error = FALSE;
-  int ok = FALSE;
+  int io_error = false;
+  bool ok = false;
   for (;;) {
-    ok = FALSE;
-    FILE *fd = mch_fopen((char *)tmp_orig, "w");
+    ok = false;
+    FILE *fd = mch_fopen(tmp_orig, "w");
 
     if (fd == NULL) {
       io_error = TRUE;
@@ -683,7 +683,7 @@ void ex_diffupdate(exarg_T *eap)
         io_error = TRUE;
       }
       fclose(fd);
-      fd = mch_fopen((char *)tmp_new, "w");
+      fd = mch_fopen(tmp_new, "w");
 
       if (fd == NULL) {
         io_error = TRUE;
@@ -693,7 +693,7 @@ void ex_diffupdate(exarg_T *eap)
         }
         fclose(fd);
         diff_file(tmp_orig, tmp_new, tmp_diff);
-        fd = mch_fopen((char *)tmp_diff, "r");
+        fd = mch_fopen(tmp_diff, "r");
 
         if (fd == NULL) {
           io_error = TRUE;
@@ -712,10 +712,10 @@ void ex_diffupdate(exarg_T *eap)
           }
           fclose(fd);
         }
-        os_remove((char *)tmp_diff);
-        os_remove((char *)tmp_new);
+        os_remove(tmp_diff);
+        os_remove(tmp_new);
       }
-      os_remove((char *)tmp_orig);
+      os_remove(tmp_orig);
     }
 
     // When using 'diffexpr' break here.
@@ -756,7 +756,7 @@ void ex_diffupdate(exarg_T *eap)
 
   // Write the first buffer to a tempfile.
   buf_T *buf = curtab->tp_diffbuf[idx_orig];
-  if (diff_write(buf, tmp_orig) == FAIL) {
+  if (diff_write(buf, (char_u *) tmp_orig) == FAIL) {
     goto theend;
   }
 
@@ -767,17 +767,17 @@ void ex_diffupdate(exarg_T *eap)
       continue;  // skip buffer that isn't loaded
     }
 
-    if (diff_write(buf, tmp_new) == FAIL) {
+    if (diff_write(buf, (char_u *) tmp_new) == FAIL) {
       continue;
     }
     diff_file(tmp_orig, tmp_new, tmp_diff);
 
     // Read the diff output and add each entry to the diff list.
-    diff_read(idx_orig, idx_new, tmp_diff);
-    os_remove((char *)tmp_diff);
-    os_remove((char *)tmp_new);
+    diff_read(idx_orig, idx_new, (char_u *) tmp_diff);
+    os_remove(tmp_diff);
+    os_remove(tmp_new);
   }
-  os_remove((char *)tmp_orig);
+  os_remove(tmp_orig);
 
   // force updating cursor position on screen
   curwin->w_valid_cursor.lnum = 0;
@@ -795,15 +795,16 @@ theend:
 /// @param tmp_orig
 /// @param tmp_new
 /// @param tmp_diff
-static void diff_file(char_u *tmp_orig, char_u *tmp_new, char_u *tmp_diff)
+static void diff_file(const char *const tmp_orig, const char *const tmp_new,
+                      const char *const tmp_diff)
 {
   if (*p_dex != NUL) {
     // Use 'diffexpr' to generate the diff file.
     eval_diff(tmp_orig, tmp_new, tmp_diff);
   } else {
-    size_t len = STRLEN(tmp_orig) + STRLEN(tmp_new) + STRLEN(tmp_diff)
-        + STRLEN(p_srr) + 27;
-    char_u *cmd = xmalloc(len);
+    const size_t len = (strlen(tmp_orig) + strlen(tmp_new) + strlen(tmp_diff)
+                        + STRLEN(p_srr) + 27);
+    char *const cmd = xmalloc(len);
 
     /* We don't want $DIFF_OPTIONS to get in the way. */
     if (os_getenv("DIFF_OPTIONS")) {
@@ -813,19 +814,17 @@ static void diff_file(char_u *tmp_orig, char_u *tmp_new, char_u *tmp_diff)
     /* Build the diff command and execute it.  Always use -a, binary
      * differences are of no use.  Ignore errors, diff returns
      * non-zero when differences have been found. */
-    vim_snprintf((char *)cmd, len, "diff %s%s%s%s%s %s",
-                 diff_a_works == FALSE ? "" : "-a ",
+    vim_snprintf(cmd, len, "diff %s%s%s%s%s %s",
+                 diff_a_works ? "-a " : "",
                  "",
                  (diff_flags & DIFF_IWHITE) ? "-b " : "",
                  (diff_flags & DIFF_ICASE) ? "-i " : "",
                  tmp_orig, tmp_new);
-    append_redir(cmd, len, p_srr, tmp_diff);
+    append_redir(cmd, len, (char *) p_srr, tmp_diff);
     block_autocmds();  // Avoid ShellCmdPost stuff
-    (void)call_shell(
-        cmd,
-        kShellOptFilter | kShellOptSilent | kShellOptDoOut,
-        NULL
-        );
+    (void)call_shell((char_u *) cmd,
+                     kShellOptFilter | kShellOptSilent | kShellOptDoOut,
+                     NULL);
     unblock_autocmds();
     xfree(cmd);
   }
@@ -902,9 +901,11 @@ void ex_diffpatch(exarg_T *eap)
   if (*p_pex != NUL) {
     // Use 'patchexpr' to generate the new file.
 #ifdef UNIX
-    eval_patch(tmp_orig, fullname != NULL ? fullname : eap->arg, tmp_new);
+    eval_patch((char *) tmp_orig,
+               (char *) (fullname != NULL ? fullname : eap->arg),
+               (char *) tmp_new);
 #else
-    eval_patch(tmp_orig, eap->arg, tmp_new);
+    eval_patch((char *) tmp_orig, (char *) eap->arg, (char *) tmp_new);
 #endif  // ifdef UNIX
   } else {
     // Build the patch command and execute it. Ignore errors. Switch to
