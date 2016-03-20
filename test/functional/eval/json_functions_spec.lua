@@ -6,6 +6,7 @@ local eq = helpers.eq
 local eval = helpers.eval
 local execute = helpers.execute
 local exc_exec = helpers.exc_exec
+local redir_exec = helpers.redir_exec
 
 describe('json_decode() function', function()
   local restart = function(cmd)
@@ -528,6 +529,13 @@ describe('json_decode() function', function()
     -- only one U+00AB when this string is parsed as latin1.
     restart('set encoding=latin1')
     eq(('%c'):format(0xAB), funcs.json_decode('"«"'))
+  end)
+
+  it('does not overflow when writing error message about decoding ["", ""]',
+  function()
+    eq('\nE474: Attempt to decode a blank string'
+       .. '\nE474: Failed to parse \n',
+       redir_exec('call json_decode(["", ""])'))
   end)
 end)
 
