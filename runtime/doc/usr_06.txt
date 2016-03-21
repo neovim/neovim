@@ -152,7 +152,7 @@ You could also write your own color scheme.  This is how you do it:
    directory.  For Unix, this should work: >
 
 	!mkdir -p ~/.config/nvim/colors
-	!cp $VIMRUNTIME/colors/morning.vim ~/.vim/colors/mine.vim
+	!cp $VIMRUNTIME/colors/morning.vim ~/.config/nvim/colors/mine.vim
 <
    This is done from Vim, because it knows the value of $VIMRUNTIME.
 
