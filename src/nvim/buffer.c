@@ -1908,7 +1908,7 @@ int ExpandBufnames(char_u *pat, int *num_file, char_u ***file, int options)
       if (count == 0)           /* no match found, break here */
         break;
       if (round == 1) {
-        *file = xmalloc(count * sizeof(**file));
+        *file = xmalloc((size_t)count * sizeof(**file));
       }
     }
     vim_regfree(regmatch.regprog);
@@ -2640,7 +2640,7 @@ void maketitle(void)
 
   if (p_title) {
     if (p_titlelen > 0) {
-      maxlen = p_titlelen * Columns / 100;
+      maxlen = (int)(p_titlelen * Columns) / 100;
       if (maxlen < 10)
         maxlen = 10;
     }
@@ -2854,7 +2854,7 @@ int build_stl_str_hl(
     size_t outlen,
     char_u *fmt,
     int use_sandbox,
-    int fillchar,
+    char_u fillchar,
     int maxwidth,
     struct stl_hlrec *hltab,
     StlClickRecord *tabtab
@@ -3058,7 +3058,7 @@ int build_stl_str_hl(
         out_p = out_p - n + 1;
         /* Fill up space left over by half a double-wide char. */
         while (++group_len < item[groupitem[groupdepth]].minwid)
-          *out_p++ = fillchar;
+          *out_p++ = (char_u)fillchar;
         // }
 
         /* correct the start of the items for the truncation */
@@ -3079,7 +3079,7 @@ int build_stl_str_hl(
         if (min_group_width < 0) {
           min_group_width = 0 - min_group_width;
           while (group_len++ < min_group_width && out_p < out_end_p)
-            *out_p++ = fillchar;
+            *out_p++ = (char_u)fillchar;
         // If the group is right-aligned, shift everything to the right and
         // prepend with filler characters.
         } else {
@@ -3099,7 +3099,7 @@ int build_stl_str_hl(
 
           // Prepend the fill characters
           for (; group_len > 0; group_len--) {
-            *t++ = fillchar;
+            *t++ = (char_u)fillchar;
           }
         }
       }
@@ -3456,7 +3456,7 @@ int build_stl_str_hl(
             wp->w_buffer->b_p_ft);
         // Uppercase the file extension
         for (char_u *t = tmp; *t != 0; t++) {
-          *t = TOUPPER_LOC(*t);
+          *t = (char_u)TOUPPER_LOC(*t);
         }
         str = tmp;
       }
@@ -3633,7 +3633,7 @@ int build_stl_str_hl(
       }
       // }
 
-      size_t remaining_buf_len = (out_end_p - out_p) + 1;
+      size_t remaining_buf_len = (size_t)(out_end_p - out_p) + 1;
 
       // If the number is going to take up too much room
       // Figure out the approximate number in "scientific" type notation.
@@ -3824,7 +3824,7 @@ int build_stl_str_hl(
   // add characters at the middle marker (if there is one) to
   // fill up the available space.
   } else if (width < maxwidth
-               && STRLEN(out) + maxwidth - width + 1 < outlen) {
+               && STRLEN(out) + (size_t)(maxwidth - width) + 1 < outlen) {
     for (int item_idx = 0; item_idx < itemcnt; item_idx++) {
       if (item[item_idx].type == Middle) {
         // Move the statusline to make room for the middle characters
@@ -4040,7 +4040,7 @@ do_arg_all (
   setpcmark();
 
   opened_len = ARGCOUNT;
-  opened = xcalloc(opened_len, 1);
+  opened = xcalloc((size_t)opened_len, 1);
 
   /* Autocommands may do anything to the argument list.  Make sure it's not
    * freed while we are working here by "locking" it.  We still have to
@@ -4253,7 +4253,7 @@ void ex_buffer_all(exarg_T *eap)
   bool p_ea_save;
   int open_wins = 0;
   int r;
-  int count;                    /* Maximum number of windows to open. */
+  long count;                    /* Maximum number of windows to open. */
   int all;                      /* When TRUE also load inactive buffers. */
   int had_tab = cmdmod.tab;
   tabpage_T   *tpnext;
@@ -4766,7 +4766,7 @@ int buf_findsign(
 
     for (sign = buf->b_signlist; sign != NULL; sign = sign->next) {
         if (sign->id == id) {
-            return sign->lnum;
+            return (int)sign->lnum;
         }
     }
 
