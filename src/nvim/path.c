@@ -13,6 +13,7 @@
 #include "nvim/fileio.h"
 #include "nvim/file_search.h"
 #include "nvim/garray.h"
+#include "nvim/iconv.h"
 #include "nvim/memfile.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
@@ -547,7 +548,10 @@ static size_t do_path_expand(garray_T *gap, const char_u *path,
   int matches;
   int len;
   bool starstar = false;
-  static int stardepth = 0;         /* depth for "**" expansion */
+  static int stardepth = 0;         // depth for "**" expansion
+#if defined(MAC_PRECOMPOSE_FNAME) && defined(USE_ICONV)
+  static iconv_t nfc_cd = (iconv_t)-1;
+#endif
 
   /* Expanding "**" may take a long time, check for CTRL-C. */
   if (stardepth > 0) {
@@ -692,6 +696,25 @@ static size_t do_path_expand(garray_T *gap, const char_u *path,
           // add existing file or symbolic link
           if ((flags & EW_ALLLINKS) ? os_fileinfo_link((char *)buf, &file_info)
               : os_file_exists(buf)) {
+#if defined(MAC_PRECOMPOSE_FNAME) && defined(USE_ICONV)
+            if (nfc_cd == (iconv_t)-1) {
+              nfc_cd = (iconv_t)my_iconv_open((char_u *)"UTF-8",
+                                              (char_u *)"UTF-8-MAC");
+            }
+            if (nfc_cd != (iconv_t)-1) {
+              size_t fromlen = STRLEN(buf);
+              size_t tolen = fromlen;
+              char *outbuf = xmalloc(fromlen + 1);
+              char *from = (char *)buf;
+              char *to = outbuf;
+              iconv(nfc_cd, NULL, NULL, NULL, NULL);
+              if (iconv(nfc_cd, &from, &fromlen, &to, &tolen) != (size_t)-1) {
+                *to = NUL;
+                STRCPY(buf, outbuf);
+              }
+              xfree(outbuf);
+            }
+#endif
             addfile(gap, buf, flags);
           }
         }

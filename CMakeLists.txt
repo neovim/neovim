@@ -42,6 +42,8 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
 
   # Enable fixing case-insensitive filenames for Mac.
   set(USE_FNAME_CASE TRUE)
+  # Enable precomposing filenames
+  set(MAC_PRECOMPOSE_FNAME TRUE)
 endif()
 
 # Set default build type.

@@ -48,6 +48,7 @@
 #cmakedefine HAVE_WORKING_LIBINTL
 #cmakedefine UNIX
 #cmakedefine USE_FNAME_CASE
+#cmakedefine MAC_PRECOMPOSE_FNAME
 
 #define FEAT_CSCOPE
 
