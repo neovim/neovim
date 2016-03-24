@@ -1886,6 +1886,8 @@ static void qf_free(qf_info_T *qi, int idx)
     --qi->qf_lists[idx].qf_count;
   }
   xfree(qi->qf_lists[idx].qf_title);
+  qi->qf_lists[idx].qf_start = NULL;
+  qi->qf_lists[idx].qf_ptr = NULL;
   qi->qf_lists[idx].qf_title = NULL;
   qi->qf_lists[idx].qf_index = 0;
 }
