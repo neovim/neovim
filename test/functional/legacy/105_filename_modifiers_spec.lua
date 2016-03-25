@@ -43,6 +43,7 @@ describe('filename modifiers', function()
     execute([=[Put fnamemodify('abc'' ''def',    ':S'      )]=])
     execute([=[Put fnamemodify('abc''%''def',    ':S'      )]=])
     execute([=[Put fnamemodify("abc\ndef",       ':S'      )]=])
+    execute([=[Put expand('%:r:S') == shellescape(expand('%:r'))]=])
     execute([=[set shell=tcsh]=])
     execute([=[Put fnamemodify("abc\ndef",       ':S'      )]=])
     execute([=[1 delete _]=])
@@ -76,6 +77,7 @@ describe('filename modifiers', function()
       fnamemodify('abc'' ''def',    ':S'      )	'''abc''\'''' ''\''''def'''
       fnamemodify('abc''%''def',    ':S'      )	'''abc''\''''%''\''''def'''
       fnamemodify("abc\ndef",       ':S'      )	'''abc^@def'''
+      expand('%:r:S') == shellescape(expand('%:r'))	1
       fnamemodify("abc\ndef",       ':S'      )	'''abc\^@def''']=])
   end)
 end)
