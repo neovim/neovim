@@ -191,7 +191,7 @@ void op_shift(oparg_T *oap, int curs_top, int amount)
           (linenr_T)(oap->end.lnum + 1)) == FAIL)
     return;
 
-  if (oap->motion_type == MBLOCK) {
+  if (oap->motion_type == kMTBlockWise) {
     block_col = curwin->w_cursor.col;
   }
 
@@ -199,7 +199,7 @@ void op_shift(oparg_T *oap, int curs_top, int amount)
     first_char = *get_cursor_line_ptr();
     if (first_char == NUL) {  // empty line
       curwin->w_cursor.col = 0;
-    } else if (oap->motion_type == MBLOCK) {
+    } else if (oap->motion_type == kMTBlockWise) {
       shift_block(oap, amount);
     } else if (first_char != '#' || !preprocs_left()) {
       // Move the line right if it doesn't start with '#', 'smartindent'
@@ -213,7 +213,7 @@ void op_shift(oparg_T *oap, int curs_top, int amount)
   /* The cursor line is not in a closed fold */
   foldOpenCursor();
 
-  if (oap->motion_type == MBLOCK) {
+  if (oap->motion_type == kMTBlockWise) {
     curwin->w_cursor.lnum = oap->start.lnum;
     curwin->w_cursor.col = block_col;
   } else if (curs_top) { /* put cursor on first line, for ">>" */
@@ -811,17 +811,17 @@ yankreg_T *copy_register(int name)
   return copy;
 }
 
-/*
- * return TRUE if the current yank register has type MLINE
- */
-int yank_register_mline(int regname)
+/// check if the current yank register has kMTLineWise register type
+bool yank_register_mline(int regname)
 {
-  if (regname != 0 && !valid_yank_reg(regname, false))
-    return FALSE;
-  if (regname == '_')           /* black hole is always empty */
-    return FALSE;
+  if (regname != 0 && !valid_yank_reg(regname, false)) {
+    return false;
+  }
+  if (regname == '_') {  // black hole is always empty
+    return false;
+  }
   yankreg_T *reg = get_yank_register(regname, YREG_PASTE);
-  return reg->y_type == MLINE;
+  return reg->y_type == kMTLineWise;
 }
 
 /*
@@ -919,7 +919,7 @@ static int stuff_yank(int regname, char_u *p)
     reg->y_array = (char_u **)xmalloc(sizeof(char_u *));
     reg->y_array[0] = p;
     reg->y_size = 1;
-    reg->y_type = MCHAR;      /* used to be MLINE, why? */
+    reg->y_type = kMTCharWise;
   }
   reg->timestamp = os_time();
   return OK;
@@ -1011,8 +1011,8 @@ do_execreg (
     for (i = reg->y_size - 1; i >= 0; i--) {
       char_u *escaped;
 
-      /* insert NL between lines and after last line if type is MLINE */
-      if (reg->y_type == MLINE || i < reg->y_size - 1
+      // insert NL between lines and after last line if type is kMTLineWise
+      if (reg->y_type == kMTLineWise || i < reg->y_size - 1
           || addcr) {
         if (ins_typebuf((char_u *)"\n", remap, 0, TRUE, silent) == FAIL)
           return FAIL;
@@ -1137,12 +1137,11 @@ insert_reg (
     else {
       for (i = 0; i < reg->y_size; i++) {
         stuffescaped(reg->y_array[i], literally);
-        /*
-         * Insert a newline between lines and after last line if
-         * y_type is MLINE.
-         */
-        if (reg->y_type == MLINE || i < reg->y_size - 1)
+        // Insert a newline between lines and after last line if
+        // y_type is kMTLineWise.
+        if (reg->y_type == kMTLineWise || i < reg->y_size - 1) {
           stuffcharReadbuff('\n');
+        }
       }
     }
   }
@@ -1283,9 +1282,9 @@ bool cmdline_paste_reg(int regname, bool literally, bool remcr)
   for (i = 0; i < reg->y_size; i++) {
     cmdline_paste_str(reg->y_array[i], literally);
 
-    // Insert ^M between lines and after last line if type is MLINE.
+    // Insert ^M between lines and after last line if type is kMTLineWise.
     // Don't do this when "remcr" is true.
-    if ((reg->y_type == MLINE || i < reg->y_size - 1) && !remcr) {
+    if ((reg->y_type == kMTLineWise || i < reg->y_size - 1) && !remcr) {
       cmdline_paste_str((char_u *)"\r", literally);
     }
 
@@ -1329,10 +1328,10 @@ int op_delete(oparg_T *oap)
 
   /*
    * Imitate the strange Vi behaviour: If the delete spans more than one
-   * line and motion_type == MCHAR and the result is a blank line, make the
+   * line and motion_type == kMTCharWise and the result is a blank line, make the
    * delete linewise.  Don't do this for the change command or Visual mode.
    */
-  if (oap->motion_type == MCHAR
+  if (oap->motion_type == kMTCharWise
       && !oap->is_VIsual
       && oap->line_count > 1
       && oap->motion_force == NUL
@@ -1341,15 +1340,16 @@ int op_delete(oparg_T *oap)
     if (*ptr != NUL)
       ptr += oap->inclusive;
     ptr = skipwhite(ptr);
-    if (*ptr == NUL && inindent(0))
-      oap->motion_type = MLINE;
+    if (*ptr == NUL && inindent(0)) {
+      oap->motion_type = kMTLineWise;
+    }
   }
 
   /*
    * Check for trying to delete (e.g. "D") in an empty line.
    * Note: For the change operator it is ok.
    */
-  if (oap->motion_type != MLINE
+  if (oap->motion_type != kMTLineWise
       && oap->line_count == 1
       && oap->op_type == OP_DELETE
       && *ml_get(oap->start.lnum) == NUL) {
@@ -1385,7 +1385,7 @@ int op_delete(oparg_T *oap)
      * Put deleted text into register 1 and shift number registers if the
      * delete contains a line break, or when a regname has been specified.
      */
-    if (oap->regname != 0 || oap->motion_type == MLINE
+    if (oap->regname != 0 || oap->motion_type == kMTLineWise
         || oap->line_count > 1 || oap->use_reg_one) {
       free_register(&y_regs[9]); /* free register "9 */
       for (n = 9; n > 1; n--)
@@ -1398,7 +1398,7 @@ int op_delete(oparg_T *oap)
 
     /* Yank into small delete register when no named register specified
      * and the delete is within one line. */
-    if (oap->regname == 0 && oap->motion_type != MLINE
+    if (oap->regname == 0 && oap->motion_type != kMTLineWise
         && oap->line_count == 1) {
       reg = get_yank_register('-', YREG_YANK);
       op_yank_reg(oap, false, reg, false);
@@ -1414,7 +1414,7 @@ int op_delete(oparg_T *oap)
   /*
    * block mode delete
    */
-  if (oap->motion_type == MBLOCK) {
+  if (oap->motion_type == kMTBlockWise) {
     if (u_save((linenr_T)(oap->start.lnum - 1),
                (linenr_T)(oap->end.lnum + 1)) == FAIL) {
       return FAIL;
@@ -1452,9 +1452,9 @@ int op_delete(oparg_T *oap)
 
     check_cursor_col();
     changed_lines(curwin->w_cursor.lnum, curwin->w_cursor.col,
-        oap->end.lnum + 1, 0L);
-    oap->line_count = 0;            /* no lines deleted */
-  } else if (oap->motion_type == MLINE) {
+                  oap->end.lnum + 1, 0L);
+    oap->line_count = 0;  // no lines deleted
+  } else if (oap->motion_type == kMTLineWise) {
     if (oap->op_type == OP_CHANGE) {
       /* Delete the lines except the first one.  Temporarily move the
        * cursor to the next line.  Save the current line number, if the
@@ -1582,7 +1582,7 @@ int op_delete(oparg_T *oap)
   msgmore(curbuf->b_ml.ml_line_count - old_lcount);
 
 setmarks:
-  if (oap->motion_type == MBLOCK) {
+  if (oap->motion_type == kMTBlockWise) {
     curbuf->b_op_end.lnum = oap->end.lnum;
     curbuf->b_op_end.col = oap->start.col;
   } else
@@ -1643,7 +1643,7 @@ int op_replace(oparg_T *oap, int c)
   /*
    * block mode replace
    */
-  if (oap->motion_type == MBLOCK) {
+  if (oap->motion_type == kMTBlockWise) {
     bd.is_MAX = (curwin->w_curswant == MAXCOL);
     for (; curwin->w_cursor.lnum <= oap->end.lnum; ++curwin->w_cursor.lnum) {
       curwin->w_cursor.col = 0;        /* make sure cursor position is valid */
@@ -1732,10 +1732,8 @@ int op_replace(oparg_T *oap, int c)
       }
     }
   } else {
-    /*
-     * MCHAR and MLINE motion replace.
-     */
-    if (oap->motion_type == MLINE) {
+    // Characterwise or linewise motion replace.
+    if (oap->motion_type == kMTLineWise) {
       oap->start.col = 0;
       curwin->w_cursor.col = 0;
       oap->end.col = (colnr_T)STRLEN(ml_get(oap->end.lnum));
@@ -1825,8 +1823,8 @@ void op_tilde(oparg_T *oap)
     return;
 
   pos = oap->start;
-  if (oap->motion_type == MBLOCK) {  // Visual block mode
-    for (; pos.lnum <= oap->end.lnum; ++pos.lnum) {
+  if (oap->motion_type == kMTBlockWise) {  // Visual block mode
+    for (; pos.lnum <= oap->end.lnum; pos.lnum++) {
       int one_change;
 
       block_prep(oap, &bd, pos.lnum, FALSE);
@@ -1837,8 +1835,8 @@ void op_tilde(oparg_T *oap)
     }
     if (did_change)
       changed_lines(oap->start.lnum, 0, oap->end.lnum + 1, 0L);
-  } else {                                /* not block mode */
-    if (oap->motion_type == MLINE) {
+  } else {  // not block mode
+    if (oap->motion_type == kMTLineWise) {
       oap->start.col = 0;
       pos.col = 0;
       oap->end.col = (colnr_T)STRLEN(ml_get(oap->end.lnum));
@@ -1988,7 +1986,7 @@ void op_insert(oparg_T *oap, long count1)
   curwin->w_cursor.lnum = oap->start.lnum;
   update_screen(INVERTED);
 
-  if (oap->motion_type == MBLOCK) {
+  if (oap->motion_type == kMTBlockWise) {
     // When 'virtualedit' is used, need to insert the extra spaces before
     // doing block_prep().  When only "block" is used, virtual edit is
     // already disabled, but still need it when calling
@@ -2014,7 +2012,7 @@ void op_insert(oparg_T *oap, long count1)
   }
 
   if (oap->op_type == OP_APPEND) {
-    if (oap->motion_type == MBLOCK
+    if (oap->motion_type == kMTBlockWise
         && curwin->w_cursor.coladd == 0
         ) {
       /* Move the cursor to the character right of the block. */
@@ -2059,7 +2057,7 @@ void op_insert(oparg_T *oap, long count1)
   if (curwin->w_cursor.lnum != oap->start.lnum || got_int)
     return;
 
-  if (oap->motion_type == MBLOCK) {
+  if (oap->motion_type == kMTBlockWise) {
     struct block_def bd2;
 
     /* The user may have moved the cursor before inserting something, try
@@ -2146,7 +2144,7 @@ int op_change(oparg_T *oap)
   struct block_def bd;
 
   l = oap->start.col;
-  if (oap->motion_type == MLINE) {
+  if (oap->motion_type == kMTLineWise) {
     l = 0;
     if (!p_paste && curbuf->b_p_si
         && !curbuf->b_p_cin
@@ -2168,7 +2166,7 @@ int op_change(oparg_T *oap)
 
   // check for still on same line (<CR> in inserted text meaningless)
   // skip blank lines too
-  if (oap->motion_type == MBLOCK) {
+  if (oap->motion_type == kMTBlockWise) {
     // Add spaces before getting the current line length.
     if (virtual_op && (curwin->w_cursor.coladd > 0
                        || gchar_cursor() == NUL)) {
@@ -2180,8 +2178,9 @@ int op_change(oparg_T *oap)
     bd.textcol = curwin->w_cursor.col;
   }
 
-  if (oap->motion_type == MLINE)
+  if (oap->motion_type == kMTLineWise) {
     fix_indent();
+  }
 
   retval = edit(NUL, FALSE, (linenr_T)1);
 
@@ -2190,7 +2189,7 @@ int op_change(oparg_T *oap)
    * block.
    * Don't repeat the insert when Insert mode ended with CTRL-C.
    */
-  if (oap->motion_type == MBLOCK
+  if (oap->motion_type == kMTBlockWise
       && oap->start.lnum != oap->end.lnum && !got_int) {
     // Auto-indenting may have changed the indent.  If the cursor was past
     // the indent, exclude that indent change from the inserted text.
@@ -2318,7 +2317,7 @@ static void op_yank_reg(oparg_T *oap, bool message, yankreg_T *reg, bool append)
   char_u              **new_ptr;
   linenr_T lnum;                        /* current line number */
   long j;
-  int yanktype = oap->motion_type;
+  MotionType yank_type = oap->motion_type;
   long yanklines = oap->line_count;
   linenr_T yankendlnum = oap->end.lnum;
   char_u              *p;
@@ -2336,19 +2335,19 @@ static void op_yank_reg(oparg_T *oap, bool message, yankreg_T *reg, bool append)
    * If the cursor was in column 1 before and after the movement, and the
    * operator is not inclusive, the yank is always linewise.
    */
-  if (oap->motion_type == MCHAR
+  if (oap->motion_type == kMTCharWise
       && oap->start.col == 0
       && !oap->inclusive
       && (!oap->is_VIsual || *p_sel == 'o')
       && oap->end.col == 0
       && yanklines > 1) {
-    yanktype = MLINE;
-    --yankendlnum;
-    --yanklines;
+    yank_type = kMTLineWise;
+    yankendlnum--;
+    yanklines--;
   }
 
   reg->y_size = yanklines;
-  reg->y_type = yanktype;     /* set the yank register type */
+  reg->y_type = yank_type;  // set the yank register type
   reg->y_width = 0;
   reg->y_array = xcalloc(yanklines, sizeof(char_u *));
   reg->additional_data = NULL;
@@ -2357,7 +2356,7 @@ static void op_yank_reg(oparg_T *oap, bool message, yankreg_T *reg, bool append)
   y_idx = 0;
   lnum = oap->start.lnum;
 
-  if (yanktype == MBLOCK) {
+  if (yank_type == kMTBlockWise) {
     // Visual block mode
     reg->y_width = oap->end_vcol - oap->start_vcol;
 
@@ -2367,16 +2366,16 @@ static void op_yank_reg(oparg_T *oap, bool message, yankreg_T *reg, bool append)
 
   for (; lnum <= yankendlnum; lnum++, y_idx++) {
     switch (reg->y_type) {
-    case MBLOCK:
-      block_prep(oap, &bd, lnum, FALSE);
+    case kMTBlockWise:
+      block_prep(oap, &bd, lnum, false);
       yank_copy_line(reg, &bd, y_idx);
       break;
 
-    case MLINE:
+    case kMTLineWise:
       reg->y_array[y_idx] = vim_strsave(ml_get(lnum));
       break;
 
-    case MCHAR:
+    case kMTCharWise:
     {
       colnr_T startcol = 0, endcol = MAXCOL;
       int is_oneChar = FALSE;
@@ -2437,7 +2436,9 @@ static void op_yank_reg(oparg_T *oap, bool message, yankreg_T *reg, bool append)
       yank_copy_line(reg, &bd, y_idx);
       break;
     }
-      /* NOTREACHED */
+    // NOTREACHED
+    case kMTUnknown:
+        assert(false);
     }
   }
 
@@ -2448,12 +2449,15 @@ static void op_yank_reg(oparg_T *oap, bool message, yankreg_T *reg, bool append)
     xfree(curr->y_array);
     curr->y_array = new_ptr;
 
-    if (yanktype == MLINE)      /* MLINE overrides MCHAR and MBLOCK */
-      curr->y_type = MLINE;
+    if (yank_type == kMTLineWise) {
+      // kMTLineWise overrides kMTCharWise and kMTBlockWise
+      curr->y_type = kMTLineWise;
+    }
 
-    /* Concatenate the last line of the old block with the first line of
-     * the new block, unless being Vi compatible. */
-    if (curr->y_type == MCHAR && vim_strchr(p_cpo, CPO_REGAPPEND) == NULL) {
+    // Concatenate the last line of the old block with the first line of
+    // the new block, unless being Vi compatible.
+    if (curr->y_type == kMTCharWise
+        && vim_strchr(p_cpo, CPO_REGAPPEND) == NULL) {
       pnew = xmalloc(STRLEN(curr->y_array[curr->y_size - 1])
                      + STRLEN(reg->y_array[0]) + 1);
       STRCPY(pnew, curr->y_array[--j]);
@@ -2473,7 +2477,7 @@ static void op_yank_reg(oparg_T *oap, bool message, yankreg_T *reg, bool append)
     redraw_later(SOME_VALID);  // cursor moved to start
   }
   if (message) {  // Display message about yank?
-    if (yanktype == MCHAR && yanklines == 1) {
+    if (yank_type == kMTCharWise && yanklines == 1) {
       yanklines = 0;
     }
     // Some versions of Vi use ">=" here, some don't...
@@ -2481,12 +2485,12 @@ static void op_yank_reg(oparg_T *oap, bool message, yankreg_T *reg, bool append)
       // redisplay now, so message is not deleted
       update_topline_redraw();
       if (yanklines == 1) {
-        if (yanktype == MBLOCK) {
+        if (yank_type == kMTBlockWise) {
           MSG(_("block of 1 line yanked"));
         } else {
           MSG(_("1 line yanked"));
         }
-      } else if (yanktype == MBLOCK) {
+      } else if (yank_type == kMTBlockWise) {
         smsg(_("block of %" PRId64 " lines yanked"),
              (int64_t)yanklines);
       } else {
@@ -2500,7 +2504,7 @@ static void op_yank_reg(oparg_T *oap, bool message, yankreg_T *reg, bool append)
    */
   curbuf->b_op_start = oap->start;
   curbuf->b_op_end = oap->end;
-  if (yanktype == MLINE) {
+  if (yank_type == kMTLineWise) {
     curbuf->b_op_start.col = 0;
     curbuf->b_op_end.col = MAXCOL;
   }
@@ -2590,8 +2594,8 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
   int totlen = 0;                       /* init for gcc */
   linenr_T lnum;
   colnr_T col;
-  long i;                               /* index in y_array[] */
-  int y_type;
+  long i;  // index in y_array[]
+  MotionType y_type;
   long y_size;
   int oldlen;
   long y_width = 0;
@@ -2652,7 +2656,7 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
   }
 
   if (insert_string != NULL) {
-    y_type = MCHAR;
+    y_type = kMTCharWise;
     if (regname == '=') {
       /* For the = register we need to split the string at NL
        * characters.
@@ -2671,7 +2675,7 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
             ++ptr;
             /* A trailing '\n' makes the register linewise. */
             if (*ptr == NUL) {
-              y_type = MLINE;
+              y_type = kMTLineWise;
               break;
             }
           }
@@ -2712,7 +2716,7 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
     return;
   }
 
-  if (y_type == MLINE) {
+  if (y_type == kMTLineWise) {
     if (flags & PUT_LINE_SPLIT) {
       // "p" or "P" in Visual mode: split the lines to put the text in
       // between.
@@ -2746,8 +2750,9 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
     curbuf->b_op_end = curwin->w_cursor;        /* default for '] mark */
   }
 
-  if (flags & PUT_LINE)         /* :put command or "p" in Visual line mode. */
-    y_type = MLINE;
+  if (flags & PUT_LINE) {  // :put command or "p" in Visual line mode.
+    y_type = kMTLineWise;
+  }
 
   if (y_size == 0 || y_array == NULL) {
     EMSG2(_("E353: Nothing in register %s"),
@@ -2755,13 +2760,13 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
     goto end;
   }
 
-  if (y_type == MBLOCK) {
+  if (y_type == kMTBlockWise) {
     lnum = curwin->w_cursor.lnum + y_size + 1;
     if (lnum > curbuf->b_ml.ml_line_count)
       lnum = curbuf->b_ml.ml_line_count + 1;
     if (u_save(curwin->w_cursor.lnum - 1, lnum) == FAIL)
       goto end;
-  } else if (y_type == MLINE) {
+  } else if (y_type == kMTLineWise) {
     lnum = curwin->w_cursor.lnum;
     /* Correct line number for closed fold.  Don't move the cursor yet,
      * u_save() uses it. */
@@ -2785,7 +2790,7 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
 
   yanklen = (int)STRLEN(y_array[0]);
 
-  if (ve_flags == VE_ALL && y_type == MCHAR) {
+  if (ve_flags == VE_ALL && y_type == kMTCharWise) {
     if (gchar_cursor() == TAB) {
       /* Don't need to insert spaces when "p" on the last position of a
        * tab or "P" on the first position. */
@@ -2805,7 +2810,7 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
   /*
    * Block mode
    */
-  if (y_type == MBLOCK) {
+  if (y_type == kMTBlockWise) {
     char c = gchar_cursor();
     colnr_T endcol2 = 0;
 
@@ -2953,12 +2958,10 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
     } else
       curwin->w_cursor.lnum = lnum;
   } else {
-    /*
-     * Character or Line mode
-     */
-    if (y_type == MCHAR) {
-      /* if type is MCHAR, FORWARD is the same as BACKWARD on the next
-       * char */
+    // Character or Line mode
+    if (y_type == kMTCharWise) {
+      // if type is kMTCharWise, FORWARD is the same as BACKWARD on the next
+      // char
       if (dir == FORWARD && gchar_cursor() != NUL) {
         if (has_mbyte) {
           int bytelen = (*mb_ptr2len)(get_cursor_pos_ptr());
@@ -2989,7 +2992,7 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
     /*
      * simple case: insert into current line
      */
-    if (y_type == MCHAR && y_size == 1) {
+    if (y_type == kMTCharWise && y_size == 1) {
       do {
         totlen = count * yanklen;
         if (totlen > 0) {
@@ -3024,18 +3027,14 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
         ++curwin->w_cursor.col;
       changed_bytes(lnum, col);
     } else {
-      /*
-       * Insert at least one line.  When y_type is MCHAR, break the first
-       * line in two.
-       */
-      for (cnt = 1; cnt <= count; ++cnt) {
+      // Insert at least one line.  When y_type is kMTCharWise, break the first
+      // line in two.
+      for (cnt = 1; cnt <= count; cnt++) {
         i = 0;
-        if (y_type == MCHAR) {
-          /*
-           * Split the current line in two at the insert position.
-           * First insert y_array[size - 1] in front of second line.
-           * Then append y_array[0] to first line.
-           */
+        if (y_type == kMTCharWise) {
+          // Split the current line in two at the insert position.
+          // First insert y_array[size - 1] in front of second line.
+          // Then append y_array[0] to first line.
           lnum = new_cursor.lnum;
           ptr = ml_get(lnum) + col;
           totlen = (int)STRLEN(y_array[y_size - 1]);
@@ -3059,10 +3058,11 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
         }
 
         for (; i < y_size; i++) {
-          if ((y_type != MCHAR || i < y_size - 1)
-              && ml_append(lnum, y_array[i], (colnr_T)0, FALSE)
-              == FAIL)
+          if ((y_type != kMTCharWise || i < y_size - 1)
+              && ml_append(lnum, y_array[i], (colnr_T)0, false)
+              == FAIL) {
             goto error;
+          }
           lnum++;
           ++nr_lines;
           if (flags & PUT_FIXINDENT) {
@@ -3091,22 +3091,23 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
       }
 
 error:
-      /* Adjust marks. */
-      if (y_type == MLINE) {
+      // Adjust marks.
+      if (y_type == kMTLineWise) {
         curbuf->b_op_start.col = 0;
         if (dir == FORWARD)
           curbuf->b_op_start.lnum++;
       }
-      mark_adjust(curbuf->b_op_start.lnum + (y_type == MCHAR),
-          (linenr_T)MAXLNUM, nr_lines, 0L);
+      mark_adjust(curbuf->b_op_start.lnum + (y_type == kMTCharWise),
+                  (linenr_T)MAXLNUM, nr_lines, 0L);
 
-      /* note changed text for displaying and folding */
-      if (y_type == MCHAR)
+      // note changed text for displaying and folding
+      if (y_type == kMTCharWise) {
         changed_lines(curwin->w_cursor.lnum, col,
-            curwin->w_cursor.lnum + 1, nr_lines);
-      else
+                      curwin->w_cursor.lnum + 1, nr_lines);
+      } else {
         changed_lines(curbuf->b_op_start.lnum, 0,
-            curbuf->b_op_start.lnum, nr_lines);
+                      curbuf->b_op_start.lnum, nr_lines);
+      }
 
       /* put '] mark at last inserted character */
       curbuf->b_op_end.lnum = lnum;
@@ -3122,19 +3123,20 @@ error:
         curwin->w_cursor.lnum = lnum;
         beginline(BL_WHITE | BL_FIX);
       } else if (flags & PUT_CURSEND) {
-        /* put cursor after inserted text */
-        if (y_type == MLINE) {
-          if (lnum >= curbuf->b_ml.ml_line_count)
+        // put cursor after inserted text
+        if (y_type == kMTLineWise) {
+          if (lnum >= curbuf->b_ml.ml_line_count) {
             curwin->w_cursor.lnum = curbuf->b_ml.ml_line_count;
-          else
+          } else {
             curwin->w_cursor.lnum = lnum + 1;
+          }
           curwin->w_cursor.col = 0;
         } else {
           curwin->w_cursor.lnum = lnum;
           curwin->w_cursor.col = col;
         }
-      } else if (y_type == MLINE) {
-        /* put cursor on first non-blank in first inserted line */
+      } else if (y_type == kMTLineWise) {
+        // put cursor on first non-blank in first inserted line
         curwin->w_cursor.col = 0;
         if (dir == FORWARD)
           ++curwin->w_cursor.lnum;
@@ -3273,9 +3275,10 @@ void ex_display(exarg_T *eap)
           p += clen - 1;
         }
       }
-      if (n > 1 && yb->y_type == MLINE)
+      if (n > 1 && yb->y_type == kMTLineWise) {
         MSG_PUTS_ATTR("^J", attr);
-      ui_flush();                          /* show one line at a time */
+      }
+      ui_flush();  // show one line at a time
     }
     os_breakcheck();
   }
@@ -4265,18 +4268,18 @@ void op_addsub(oparg_T *oap, linenr_T Prenum1, bool g_cmd)
     }
 
     pos = oap->start;
-    for (; pos.lnum <= oap->end.lnum; ++pos.lnum) {
-      if (oap->motion_type == MBLOCK) {
+    for (; pos.lnum <= oap->end.lnum; pos.lnum++) {
+      if (oap->motion_type == kMTBlockWise) {
         // Visual block mode
         block_prep(oap, &bd, pos.lnum, false);
         pos.col = bd.textcol;
         length = bd.textlen;
-      } else if (oap->motion_type == MLINE) {
+      } else if (oap->motion_type == kMTLineWise) {
         curwin->w_cursor.col = 0;
         pos.col = 0;
         length = (colnr_T)STRLEN(ml_get(pos.lnum));
       } else {
-        // oap->motion_type == MCHAR
+        // oap->motion_type == kMTCharWise
         if (!oap->inclusive) {
           dec(&(oap->end));
         }
@@ -4679,64 +4682,65 @@ theend:
 /*
  * Return the type of a register.
  * Used for getregtype()
- * Returns MAUTO for error.
+ * Returns kMTUnknown for error.
  */
-char_u get_reg_type(int regname, colnr_T *reg_width)
+MotionType get_reg_type(int regname, colnr_T *reg_width)
 {
   switch (regname) {
-  case '%':                     /* file name */
-  case '#':                     /* alternate file name */
-  case '=':                     /* expression */
-  case ':':                     /* last command line */
-  case '/':                     /* last search-pattern */
-  case '.':                     /* last inserted text */
-  case Ctrl_F:                  /* Filename under cursor */
-  case Ctrl_P:                  /* Path under cursor, expand via "path" */
-  case Ctrl_W:                  /* word under cursor */
-  case Ctrl_A:                  /* WORD (mnemonic All) under cursor */
-  case '_':                     /* black hole: always empty */
-    return MCHAR;
+    case '%':     // file name
+    case '#':     // alternate file name
+    case '=':     // expression
+    case ':':     // last command line
+    case '/':     // last search-pattern
+    case '.':     // last inserted text
+    case Ctrl_F:  // Filename under cursor
+    case Ctrl_P:  // Path under cursor, expand via "path"
+    case Ctrl_W:  // word under cursor
+    case Ctrl_A:  // WORD (mnemonic All) under cursor
+    case '_':     // black hole: always empty
+      return kMTCharWise;
   }
 
-  if (regname != NUL && !valid_yank_reg(regname, false))
-    return MAUTO;
+  if (regname != NUL && !valid_yank_reg(regname, false)) {
+    return kMTUnknown;
+  }
 
   yankreg_T *reg = get_yank_register(regname, YREG_PASTE);
 
   if (reg->y_array != NULL) {
-    if (reg_width != NULL && reg->y_type == MBLOCK) {
+    if (reg_width != NULL && reg->y_type == kMTBlockWise) {
       *reg_width = reg->y_width;
     }
     return reg->y_type;
   }
-  return MAUTO;
+  return kMTUnknown;
 }
 
 /// Format the register type as a string.
 ///
 /// @param reg_type The register type.
-/// @param reg_width The width, only used if "reg_type" is MBLOCK.
+/// @param reg_width The width, only used if "reg_type" is kMTBlockWise.
 /// @param[out] buf Buffer to store formatted string. The allocated size should
 ///                 be at least NUMBUFLEN+2 to always fit the value.
 /// @param buf_len The allocated size of the buffer.
-void format_reg_type(char_u reg_type, colnr_T reg_width,
-                     char* buf, size_t buf_len)
+void format_reg_type(MotionType reg_type, colnr_T reg_width,
+                     char *buf, size_t buf_len)
   FUNC_ATTR_NONNULL_ALL
 {
   assert(buf_len > 1);
   switch (reg_type) {
-    case MLINE:
+    case kMTLineWise:
       buf[0] = 'V';
       buf[1] = NUL;
       break;
-    case MCHAR:
+    case kMTCharWise:
       buf[0] = 'v';
       buf[1] = NUL;
       break;
-    case MBLOCK:
+    case kMTBlockWise:
       snprintf(buf, buf_len, CTRL_V_STR "%" PRIdCOLNR, reg_width + 1);
       break;
-    case MAUTO:
+    case kMTUnknown:
       buf[0] = NUL;
       break;
   }
@@ -4821,10 +4825,11 @@ void *get_reg_contents(int regname, int flags)
     len += STRLEN(reg->y_array[i]);
     /*
      * Insert a newline between lines and after last line if
-     * y_type is MLINE.
+     * y_type is kMTLineWise.
      */
-    if (reg->y_type == MLINE || i < reg->y_size - 1)
-      ++len;
+    if (reg->y_type == kMTLineWise || i < reg->y_size - 1) {
+      len++;
+    }
   }
 
   retval = xmalloc(len + 1);
@@ -4839,10 +4844,11 @@ void *get_reg_contents(int regname, int flags)
 
     /*
      * Insert a NL between lines and after the last line if y_type is
-     * MLINE.
+     * kMTLineWise.
      */
-    if (reg->y_type == MLINE || i < reg->y_size - 1)
+    if (reg->y_type == kMTLineWise || i < reg->y_size - 1) {
       retval[len++] = '\n';
+    }
   }
   retval[len] = NUL;
 
@@ -4883,11 +4889,12 @@ static void finish_write_reg(int name, yankreg_T *reg, yankreg_T *old_y_previous
 void write_reg_contents(int name, const char_u *str, ssize_t len,
                         int must_append)
 {
-  write_reg_contents_ex(name, str, len, must_append, MAUTO, 0L);
+  write_reg_contents_ex(name, str, len, must_append, kMTUnknown, 0L);
 }
 
 void write_reg_contents_lst(int name, char_u **strings, int maxlen,
-                            bool must_append, int yank_type, long block_len)
+                            bool must_append, MotionType yank_type,
+                            long block_len)
 {
   if (name == '/' || name == '=') {
     char_u  *s = strings[0];
@@ -4933,13 +4940,13 @@ void write_reg_contents_lst(int name, char_u **strings, int maxlen,
 ///                    contents of the register. Note that regardless of
 ///                    `must_append`, this function will append when `name`
 ///                    is an uppercase letter.
-/// @param yank_type MCHAR, MLINE, MBLOCK or MAUTO
+/// @param yank_type The motion type (kMTUnknown to auto detect)
 /// @param block_len width of visual block
 void write_reg_contents_ex(int name,
                            const char_u *str,
                            ssize_t len,
                            bool must_append,
-                           int yank_type,
+                           MotionType yank_type,
                            long block_len)
 {
   if (len < 0) {
@@ -5013,24 +5020,24 @@ void write_reg_contents_ex(int name,
 /// When the register is not empty, the string is appended.
 ///
 /// @param y_ptr pointer to yank register
-/// @param yank_type MCHAR, MLINE, MBLOCK or MAUTO
+/// @param yank_type The motion type (kMTUnknown to auto detect)
 /// @param str string or list of strings to put in register
 /// @param len length of the string (Ignored when str_list=true.)
 /// @param blocklen width of visual block, or -1 for "I don't know."
 /// @param str_list True if str is `char_u **`.
-static void str_to_reg(yankreg_T *y_ptr, int yank_type, const char_u *str,
-                       size_t len, colnr_T blocklen, bool str_list)
+static void str_to_reg(yankreg_T *y_ptr, MotionType yank_type,
+                       const char_u *str, size_t len, colnr_T blocklen,
+                       bool str_list)
   FUNC_ATTR_NONNULL_ALL
 {
   if (y_ptr->y_array == NULL) {  // NULL means empty register
     y_ptr->y_size = 0;
   }
 
-  int type = yank_type;  // MCHAR, MLINE or MBLOCK
-  if (yank_type == MAUTO) {
-    type = ((str_list ||
-             (len > 0 && (str[len - 1] == NL || str[len - 1] == CAR)))
-            ? MLINE : MCHAR);
+  if (yank_type == kMTUnknown) {
+    yank_type = ((str_list ||
+                  (len > 0 && (str[len - 1] == NL || str[len - 1] == CAR)))
+                 ? kMTLineWise : kMTCharWise);
   }
 
   size_t newlines = 0;
@@ -5044,11 +5051,11 @@ static void str_to_reg(yankreg_T *y_ptr, int yank_type, const char_u *str,
     }
   } else {
     newlines = memcnt(str, '\n', len);
-    if (type == MCHAR || len == 0 || str[len - 1] != '\n') {
+    if (yank_type == kMTCharWise || len == 0 || str[len - 1] != '\n') {
       extraline = 1;
       ++newlines;         // count extra newline at the end
     }
-    if (y_ptr->y_size > 0 && y_ptr->y_type == MCHAR) {
+    if (y_ptr->y_size > 0 && y_ptr->y_type == kMTCharWise) {
       append = true;
       --newlines;         // uncount newline when appending first line
     }
@@ -5101,11 +5108,11 @@ static void str_to_reg(yankreg_T *y_ptr, int yank_type, const char_u *str,
       memchrsub(pp[lnum], NUL, '\n', s_len);
     }
   }
-  y_ptr->y_type = type;
+  y_ptr->y_type = yank_type;
   y_ptr->y_size = lnum;
   set_yreg_additional_data(y_ptr, NULL);
   y_ptr->timestamp = os_time();
-  if (type == MBLOCK) {
+  if (yank_type == kMTBlockWise) {
     y_ptr->y_width = (blocklen == -1 ? (colnr_T) maxlen - 1 : blocklen);
   } else {
     y_ptr->y_width = 0;
@@ -5218,7 +5225,7 @@ void cursor_pos_info(void)
         /* Make 'sbr' empty for a moment to get the correct size. */
         p_sbr = empty_option;
         oparg.is_VIsual = true;
-        oparg.motion_type = MBLOCK;
+        oparg.motion_type = kMTBlockWise;
         oparg.op_type = OP_NOP;
         getvcols(curwin, &min_pos, &max_pos,
             &oparg.start_vcol, &oparg.end_vcol);
@@ -5473,16 +5480,16 @@ static bool get_clipboard(int name, yankreg_T **target, bool quiet)
     }
     switch (regtype[0]) {
     case 0:
-      reg->y_type = MAUTO;
+      reg->y_type = kMTUnknown;
       break;
     case 'v': case 'c':
-      reg->y_type = MCHAR;
+      reg->y_type = kMTCharWise;
       break;
     case 'V': case 'l':
-      reg->y_type = MLINE;
+      reg->y_type = kMTLineWise;
       break;
     case 'b': case Ctrl_V:
-      reg->y_type = MBLOCK;
+      reg->y_type = kMTBlockWise;
       break;
     default:
       goto err;
@@ -5490,7 +5497,7 @@ static bool get_clipboard(int name, yankreg_T **target, bool quiet)
   } else {
     lines = res;
     // provider did not specify regtype, calculate it below
-    reg->y_type = MAUTO;
+    reg->y_type = kMTUnknown;
   }
 
   reg->y_array = xcalloc(lines->lv_len, sizeof(uint8_t *));
@@ -5511,20 +5518,20 @@ static bool get_clipboard(int name, yankreg_T **target, bool quiet)
   if (reg->y_size > 0 && strlen((char*)reg->y_array[reg->y_size-1]) == 0) {
     // a known-to-be charwise yank might have a final linebreak
     // but otherwise there is no line after the final newline
-    if (reg->y_type != MCHAR) {
+    if (reg->y_type != kMTCharWise) {
       xfree(reg->y_array[reg->y_size-1]);
       reg->y_size--;
-      if (reg->y_type == MAUTO) {
-        reg->y_type = MLINE;
+      if (reg->y_type == kMTUnknown) {
+        reg->y_type = kMTLineWise;
       }
     }
   } else {
-    if (reg->y_type == MAUTO) {
-      reg->y_type = MCHAR;
+    if (reg->y_type == kMTUnknown) {
+      reg->y_type = kMTCharWise;
     }
   }
 
-  if (reg->y_type == MBLOCK) {
+  if (reg->y_type == kMTBlockWise) {
     int maxlen = 0;
     for (int i = 0; i < reg->y_size; i++) {
       int rowlen = STRLEN(reg->y_array[i]);
@@ -5573,17 +5580,19 @@ static void set_clipboard(int name, yankreg_T *reg)
 
   char_u regtype;
   switch (reg->y_type) {
-  case MLINE:
+  case kMTLineWise:
     regtype = 'V';
     list_append_string(lines, (char_u*)"", 0);
     break;
-  case MCHAR:
+  case kMTCharWise:
     regtype = 'v';
     break;
-  case MBLOCK:
+  case kMTBlockWise:
     regtype = 'b';
     list_append_string(lines, (char_u*)"", 0);
     break;
+  case kMTUnknown:
+    assert(false);
   }
   list_append_string(args, &regtype, 1);
 
@@ -5624,7 +5633,7 @@ static inline bool reg_empty(const yankreg_T *const reg)
   return (reg->y_array == NULL
           || reg->y_size == 0
           || (reg->y_size == 1
-              && reg->y_type == MCHAR
+              && reg->y_type == kMTCharWise
               && *(reg->y_array[0]) == NUL));
 }
 

@@ -1647,8 +1647,9 @@ pos_T *findmatchlimit(oparg_T *oap, int initc, int flags, int64_t maxtravel)
       /*
        * Look for matching #if, #else, #elif, or #endif
        */
-      if (oap != NULL)
-        oap->motion_type = MLINE;           /* Linewise for this case only */
+      if (oap != NULL) {
+        oap->motion_type = kMTLineWise;  // Linewise for this case only
+      }
       if (initc != '#') {
         ptr = skipwhite(skipwhite(linep) + 1);
         if (STRNCMP(ptr, "if", 2) == 0 || STRNCMP(ptr, "el", 2) == 0)
@@ -2793,7 +2794,7 @@ current_word (
       redraw_curbuf_later(INVERTED);            /* update the inversion */
     } else {
       oap->start = start_pos;
-      oap->motion_type = MCHAR;
+      oap->motion_type = kMTCharWise;
     }
     --count;
   }
@@ -3028,7 +3029,7 @@ extend:
     else
       oap->inclusive = false;
     oap->start = start_pos;
-    oap->motion_type = MCHAR;
+    oap->motion_type = kMTCharWise;
   }
   return OK;
 }
@@ -3152,7 +3153,7 @@ current_block (
     showmode();
   } else {
     oap->start = start_pos;
-    oap->motion_type = MCHAR;
+    oap->motion_type = kMTCharWise;
     oap->inclusive = false;
     if (sol)
       incl(&curwin->w_cursor);
@@ -3399,7 +3400,7 @@ again:
     showmode();
   } else {
     oap->start = start_pos;
-    oap->motion_type = MCHAR;
+    oap->motion_type = kMTCharWise;
     if (lt(end_pos, start_pos)) {
       /* End is before the start: there is no text between tags; operate
        * on an empty area. */
@@ -3564,7 +3565,7 @@ extend:
   } else {
     oap->start.lnum = start_lnum;
     oap->start.col = 0;
-    oap->motion_type = MLINE;
+    oap->motion_type = kMTLineWise;
   }
   curwin->w_cursor.lnum = end_lnum;
   curwin->w_cursor.col = 0;
@@ -3806,7 +3807,7 @@ current_quote (
     }
   } else {
     oap->start = curwin->w_cursor;
-    oap->motion_type = MCHAR;
+    oap->motion_type = kMTCharWise;
   }
 
   /* Set end position. */

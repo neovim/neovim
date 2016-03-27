@@ -10,18 +10,29 @@
 #define FIND_STRING     2       /* find any string (WORD) */
 #define FIND_EVAL       4       /* include "->", "[]" and "." */
 
+/// Motion types, used for operators and for yank/delete registers.
+///
+/// The three valid numerical values must not be changed, as they
+/// are used in external communication and serialization.
+typedef enum {
+  kMTCharWise = 0,     ///< character-wise movement/register
+  kMTLineWise = 1,     ///< line-wise movement/register
+  kMTBlockWise = 2,    ///< block-wise movement/register
+  kMTUnknown = -1      ///< Unknown or invalid motion type
+} MotionType;
+
 /*
  * Arguments for operators.
  */
 typedef struct oparg_S {
   int op_type;                  // current pending operator type
   int regname;                  // register to use for the operator
-  int motion_type;              // type of the current cursor motion
+  MotionType motion_type;       // type of the current cursor motion
   int motion_force;             // force motion type: 'v', 'V' or CTRL-V
   bool use_reg_one;             // true if delete uses reg 1 even when not
                                 // linewise
   bool inclusive;               // true if char motion is inclusive (only
-                                // valid when motion_type is MCHAR)
+                                // valid when motion_type is kMTCharWise)
   bool end_adjusted;            // backuped b_op_end one char (only used by
                                 // do_format())
   pos_T start;                  // start of the operator

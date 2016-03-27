@@ -283,7 +283,7 @@ typedef struct {
     } history_item;
     struct reg {
       char name;
-      uint8_t type;
+      MotionType type;
       char **contents;
       size_t contents_size;
       size_t width;
@@ -475,7 +475,7 @@ static const ShadaEntry sd_default_values[] = {
           .additional_elements = NULL),
   DEF_SDE(Register, reg,
           .name = NUL,
-          .type = MCHAR,
+          .type = kMTCharWise,
           .contents = NULL,
           .contents_size = 0,
           .width = 0,
@@ -1407,9 +1407,9 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
         break;
       }
       case kSDItemRegister: {
-        if (cur_entry.data.reg.type != MCHAR
-            && cur_entry.data.reg.type != MLINE
-            && cur_entry.data.reg.type != MBLOCK) {
+        if (cur_entry.data.reg.type != kMTCharWise
+            && cur_entry.data.reg.type != kMTLineWise
+            && cur_entry.data.reg.type != kMTBlockWise) {
           shada_free_shada_entry(&cur_entry);
           break;
         }
@@ -1882,7 +1882,7 @@ static ShaDaWriteResult shada_pack_entry(msgpack_packer *const packer,
       msgpack_pack_char(spacker, entry.data.reg.name);
       if (!CHECK_DEFAULT(entry, reg.type)) {
         PACK_STATIC_STR(REG_KEY_TYPE);
-        msgpack_pack_uint8(spacker, entry.data.reg.type);
+        msgpack_pack_uint8(spacker, (uint8_t)entry.data.reg.type);
       }
       if (!CHECK_DEFAULT(entry, reg.width)) {
         PACK_STATIC_STR(REG_KEY_WIDTH);
@@ -2757,8 +2757,8 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer,
             .reg = {
               .contents = (char **) reg.y_array,
               .contents_size = (size_t) reg.y_size,
-              .type = (uint8_t) reg.y_type,
-              .width = (size_t) (reg.y_type == MBLOCK ? reg.y_width : 0),
+              .type = reg.y_type,
+              .width = (size_t) (reg.y_type == kMTBlockWise ? reg.y_width : 0),
               .additional_data = reg.additional_data,
               .name = name,
             }

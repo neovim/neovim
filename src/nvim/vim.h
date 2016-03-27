@@ -201,15 +201,6 @@ enum {
 
 #define MAYBE   2           /* sometimes used for a variant on TRUE */
 
-/*
- * Motion types, used for operators and for yank/delete registers.
- */
-#define MCHAR   0               /* character-wise movement/register */
-#define MLINE   1               /* line-wise movement/register */
-#define MBLOCK  2               /* block-wise register */
-
-#define MAUTO   0xff            /* Decide between MLINE/MCHAR */
-
 #define STATUS_HEIGHT   1       /* height of a status line under a window */
 #define QF_WINHEIGHT    10      /* default height for quickfix window */
 
