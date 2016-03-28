@@ -54,11 +54,22 @@ describe('filename modifiers', function()
         set shell=tcsh
         call assert_equal("'abc\\\ndef'", fnamemodify("abc\ndef", ':S'))
       endfunc
+
+      func Test_expand()
+        new
+        call assert_equal("", expand('%:S'))
+        quit
+      endfunc
     ]=])
   end)
 
   it('is working', function()
     call('Test_fnamemodify')
+    expected_empty()
+  end)
+
+  it('works for :S in an unnamed buffer', function()
+    call('Test_expand')
     expected_empty()
   end)
 end)
