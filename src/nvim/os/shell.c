@@ -70,6 +70,18 @@ char **shell_build_argv(const char *cmd, const char *extra_args)
   return rv;
 }
 
+char **build_argv(char *cmd)
+  FUNC_ATTR_NONNULL_RET FUNC_ATTR_MALLOC
+{
+  size_t argc = tokenize((char_u*)cmd, NULL);
+  char **rv = xmalloc((argc + 1) * sizeof(*rv));
+
+  tokenize((char_u*)cmd, rv);
+  assert(rv[0]);
+  rv[argc] = NULL;
+  return rv;
+}
+
 /// Releases the memory allocated by `shell_build_argv`.
 ///
 /// @param argv The argument vector.
