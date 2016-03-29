@@ -39,12 +39,13 @@ typedef struct {
 #endif
 
 /// Builds the argument vector for running the user-configured 'shell' (p_sh)
-/// with an optional command prefixed by 'shellcmdflag' (p_shcf).
+/// with an optional command prefixed by 'shellcmdflag' (p_shcf). E.g.:
+///
+///   ["shell", "-extra_args", "-shellcmdflag", "command with spaces"]
 ///
 /// @param cmd Command string, or NULL to run an interactive shell.
 /// @param extra_args Extra arguments to the shell, or NULL.
-/// @return A newly allocated argument vector. It must be freed with
-///         `shell_free_argv` when no longer needed.
+/// @return Newly allocated argument vector. Must be freed with shell_free_argv.
 char **shell_build_argv(const char *cmd, const char *extra_args)
   FUNC_ATTR_NONNULL_RET FUNC_ATTR_MALLOC
 {
