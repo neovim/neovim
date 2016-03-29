@@ -195,12 +195,9 @@ void mf_close_file(buf_T *buf, bool getlines)
 
   if (getlines) {
     // get all blocks in memory by accessing all lines (clumsy!)
-    mf_dont_release = true;
-    for (linenr_T lnum = 1; lnum <= buf->b_ml.ml_line_count; ++lnum) {
+    for (linenr_T lnum = 1; lnum <= buf->b_ml.ml_line_count; lnum++) {
       (void)ml_get_buf(buf, lnum, false);
     }
-    mf_dont_release = false;
-    // TODO(elmart): should check if all blocks are really in core
   }
 
   if (close(mfp->mf_fd) < 0) {           // close the file
