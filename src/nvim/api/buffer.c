@@ -45,14 +45,22 @@ Integer buffer_line_count(Buffer buffer, Error *err)
 
 /// Gets a buffer line
 ///
+/// @deprecated use buffer_get_lines instead.
+///             for positive indices (including 0) use
+///                 "buffer_get_lines(buffer, index, index+1, true)"
+///             for negative indices use
+///                 "buffer_get_lines(buffer, index-1, index, true)"
+///
 /// @param buffer The buffer handle
 /// @param index The line index
 /// @param[out] err Details of an error that may have occurred
 /// @return The line string
 String buffer_get_line(Buffer buffer, Integer index, Error *err)
 {
-  String rv = {.size = 0};
-  Array slice = buffer_get_line_slice(buffer, index, index, true, true, err);
+  String rv = { .size = 0 };
+
+  index = convert_index(index);
+  Array slice = buffer_get_lines(buffer, index, index+1, true, err);
 
   if (!err->set && slice.size) {
     rv = slice.items[0].data.string;
@@ -65,6 +73,12 @@ String buffer_get_line(Buffer buffer, Integer index, Error *err)
 
 /// Sets a buffer line
 ///
+/// @deprecated use buffer_set_lines instead.
+///             for positive indices use
+///                 "buffer_set_lines(buffer, index, index+1, true, [line])"
+///             for negative indices use
+///                 "buffer_set_lines(buffer, index-1, index, true, [line])"
+///
 /// @param buffer The buffer handle
 /// @param index The line index
 /// @param line The new line.
@@ -72,23 +86,34 @@ String buffer_get_line(Buffer buffer, Integer index, Error *err)
 void buffer_set_line(Buffer buffer, Integer index, String line, Error *err)
 {
   Object l = STRING_OBJ(line);
-  Array array = {.items = &l, .size = 1};
-  buffer_set_line_slice(buffer, index, index, true, true, array, err);
+  Array array = { .items = &l, .size = 1 };
+  index = convert_index(index);
+  buffer_set_lines(buffer, index, index+1, true,  array, err);
 }
 
 /// Deletes a buffer line
 ///
+/// @deprecated use buffer_set_lines instead.
+///             for positive indices use
+///                 "buffer_set_lines(buffer, index, index+1, true, [])"
+///             for negative indices use
+///                 "buffer_set_lines(buffer, index-1, index, true, [])"
 /// @param buffer The buffer handle
 /// @param index The line index
 /// @param[out] err Details of an error that may have occurred
 void buffer_del_line(Buffer buffer, Integer index, Error *err)
 {
   Array array = ARRAY_DICT_INIT;
-  buffer_set_line_slice(buffer, index, index, true, true, array, err);
+  index = convert_index(index);
+  buffer_set_lines(buffer, index, index+1, true, array, err);
 }
 
 /// Retrieves a line range from the buffer
 ///
+/// @deprecated use buffer_get_lines(buffer, newstart, newend, false)
+///             where newstart = start + int(not include_start) - int(start < 0)
+///                   newend = end + int(include_end) - int(end < 0)
+///                   int(bool) = 1 if bool is true else 0
 /// @param buffer The buffer handle
 /// @param start The first line index
 /// @param end The last line index
@@ -103,16 +128,48 @@ ArrayOf(String) buffer_get_line_slice(Buffer buffer,
                                  Boolean include_end,
                                  Error *err)
 {
+  start = convert_index(start) + !include_start;
+  end = convert_index(end) + include_end;
+  return buffer_get_lines(buffer, start , end, false, err);
+}
+
+
+/// Retrieves a line range from the buffer
+///
+/// Indexing is zero-based, end-exclusive. Negative indices are interpreted
+/// as length+1+index, i e -1 refers to the index past the end. So to get the
+/// last element set start=-2 and end=-1.
+///
+/// Out-of-bounds indices are clamped to the nearest valid value, unless
+/// `strict_indexing` is set.
+///
+/// @param buffer The buffer handle
+/// @param start The first line index
+/// @param end The last line index (exclusive)
+/// @param strict_indexing whether out-of-bounds should be an error.
+/// @param[out] err Details of an error that may have occurred
+/// @return An array of lines
+ArrayOf(String) buffer_get_lines(Buffer buffer,
+                                 Integer start,
+                                 Integer end,
+                                 Boolean strict_indexing,
+                                 Error *err)
+{
   Array rv = ARRAY_DICT_INIT;
   buf_T *buf = find_buffer_by_handle(buffer, err);
 
-  if (!buf || !inbounds(buf, start)) {
+  if (!buf) {
     return rv;
   }
 
-  start = normalize_index(buf, start) + (include_start ? 0 : 1);
-  include_end = include_end || (end >= buf->b_ml.ml_line_count);
-  end = normalize_index(buf, end) + (include_end ? 1 : 0);
+  bool oob = false;
+  start = normalize_index(buf, start, &oob);
+  end = normalize_index(buf, end, &oob);
+
+  if (strict_indexing && oob) {
+    api_set_error(err, Validation, _("Index out of bounds"));
+    return rv;
+  }
 
   if (start >= end) {
     // Return 0-length array
@@ -152,7 +209,13 @@ end:
   return rv;
 }
 
+
 /// Replaces a line range on the buffer
+///
+/// @deprecated use buffer_set_lines(buffer, newstart, newend, false, lines)
+///             where newstart = start + int(not include_start) + int(start < 0)
+///                   newend = end + int(include_end) + int(end < 0)
+///                   int(bool) = 1 if bool is true else 0
 ///
 /// @param buffer The buffer handle
 /// @param start The first line index
@@ -170,20 +233,52 @@ void buffer_set_line_slice(Buffer buffer,
                       ArrayOf(String) replacement,
                       Error *err)
 {
+  start = convert_index(start) + !include_start;
+  end = convert_index(end) + include_end;
+  buffer_set_lines(buffer, start, end, false, replacement, err);
+}
+
+
+/// Replaces line range on the buffer
+///
+/// Indexing is zero-based, end-exclusive. Negative indices are interpreted
+/// as length+1+index, i e -1 refers to the index past the end. So to change
+/// or delete the last element set start=-2 and end=-1.
+///
+/// To insert lines at a given index, set both start and end to the same index.
+/// To delete a range of lines, set replacement to an empty array.
+///
+/// Out-of-bounds indices are clamped to the nearest valid value, unless
+/// `strict_indexing` is set.
+///
+/// @param buffer The buffer handle
+/// @param start The first line index
+/// @param end The last line index (exclusive)
+/// @param strict_indexing whether out-of-bounds should be an error.
+/// @param replacement An array of lines to use as replacement
+/// @param[out] err Details of an error that may have occurred
+void buffer_set_lines(Buffer buffer,
+                      Integer start,
+                      Integer end,
+                      Boolean strict_indexing,
+                      ArrayOf(String) replacement,
+                      Error *err)
+{
   buf_T *buf = find_buffer_by_handle(buffer, err);
 
   if (!buf) {
     return;
   }
 
-  if (!inbounds(buf, start)) {
+  bool oob = false;
+  start = normalize_index(buf, start, &oob);
+  end = normalize_index(buf, end, &oob);
+
+  if (strict_indexing && oob) {
     api_set_error(err, Validation, _("Index out of bounds"));
     return;
   }
 
-  start = normalize_index(buf, start) + (include_start ? 0 : 1);
-  include_end = include_end || (end >= buf->b_ml.ml_line_count);
-  end = normalize_index(buf, end) + (include_end ? 1 : 0);
 
   if (start > end) {
     api_set_error(err,
@@ -457,6 +552,8 @@ Boolean buffer_is_valid(Buffer buffer)
 
 /// Inserts a sequence of lines to a buffer at a certain index
 ///
+/// @deprecated use buffer_set_lines(buffer, lnum, lnum, true, lines)
+///
 /// @param buffer The buffer handle
 /// @param lnum Insert the lines after `lnum`. If negative, it will append
 ///        to the end of the buffer.
@@ -467,8 +564,9 @@ void buffer_insert(Buffer buffer,
                    ArrayOf(String) lines,
                    Error *err)
 {
-  bool end_start = lnum < 0;
-  buffer_set_line_slice(buffer, lnum, lnum, !end_start, end_start, lines, err);
+  // "lnum" will be the index of the line after inserting,
+  // no matter if it is negative or not
+  buffer_set_lines(buffer, lnum, lnum, true, lines, err);
 }
 
 /// Return a tuple (row,col) representing the position of the named mark
@@ -632,20 +730,26 @@ static void fix_cursor(linenr_T lo, linenr_T hi, linenr_T extra)
 }
 
 // Normalizes 0-based indexes to buffer line numbers
-static int64_t normalize_index(buf_T *buf, int64_t index)
+static int64_t normalize_index(buf_T *buf, int64_t index, bool *oob)
 {
+  int64_t line_count = buf->b_ml.ml_line_count;
   // Fix if < 0
-  index = index < 0 ?  buf->b_ml.ml_line_count + index : index;
+  index = index < 0 ? line_count + index +1 : index;
+
+  // Check for oob
+  if (index > line_count) {
+    *oob = true;
+    index = line_count;
+  } else if (index < 0) {
+    *oob = true;
+    index = 0;
+  }
   // Convert the index to a vim line number
   index++;
-  // Fix if > line_count
-  index = index > buf->b_ml.ml_line_count ? buf->b_ml.ml_line_count : index;
   return index;
 }
 
-// Returns true if the 0-indexed `index` is within the 1-indexed buffer bounds.
-static bool inbounds(buf_T *buf, int64_t index)
+static int64_t convert_index(int64_t index)
 {
-  linenr_T nlines = buf->b_ml.ml_line_count;
-  return index >= -nlines && index < nlines;
+  return index < 0 ? index - 1 : index;
 }

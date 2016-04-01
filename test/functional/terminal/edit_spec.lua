@@ -70,6 +70,6 @@ describe(':edit term://*', function()
     end
     exp_screen = exp_screen .. (' '):rep(columns) .. '|\n'
     scr:expect(exp_screen)
-    eq(bufcontents, curbufmeths.get_line_slice(1, -1, true, true))
+    eq(bufcontents, curbufmeths.get_lines(1, -1, true))
   end)
 end)
