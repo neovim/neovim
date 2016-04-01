@@ -147,7 +147,7 @@ static char_u   *homedir = NULL;
 
 void init_homedir(void)
 {
-  /* In case we are called a second time (when 'encoding' changes). */
+  // In case we are called a second time (when 'encoding' changes).
   xfree(homedir);
   homedir = NULL;
 
@@ -176,16 +176,16 @@ void init_homedir(void)
 
   if (var != NULL) {
 #ifdef UNIX
-    /*
-     * Change to the directory and get the actual path.  This resolves
-     * links.  Don't do it when we can't return.
-     */
+    // Change to the directory and get the actual path.  This resolves
+    // links.  Don't do it when we can't return.
     if (os_dirname(NameBuff, MAXPATHL) == OK
         && os_chdir((char *)NameBuff) == 0) {
-      if (!os_chdir((char *)var) && os_dirname(IObuff, IOSIZE) == OK)
+      if (!os_chdir((char *)var) && os_dirname(IObuff, IOSIZE) == OK) {
         var = IObuff;
-      if (os_chdir((char *)NameBuff) != 0)
+      }
+      if (os_chdir((char *)NameBuff) != 0) {
         EMSG(_(e_prev_dir));
+      }
     }
 #endif
     homedir = vim_strsave(var);
@@ -745,9 +745,10 @@ void home_replace(buf_T *buf, char_u *src, char_u *dst, int dstlen, bool one)
 /// @param src Input file name
 char_u * home_replace_save(buf_T *buf, char_u *src) FUNC_ATTR_NONNULL_RET
 {
-  size_t len = 3;                      /* space for "~/" and trailing NUL */
-  if (src != NULL)              /* just in case */
+  size_t len = 3;             // space for "~/" and trailing NUL
+  if (src != NULL) {          // just in case
     len += STRLEN(src);
+  }
   char_u *dst = xmalloc(len);
   home_replace(buf, src, dst, (int)len, true);
   return dst;
@@ -783,8 +784,7 @@ char_u *get_env_name(expand_T *xp, int idx)
     STRLCPY(name, envname, ENVNAMELEN);
     xfree(envname);
     return name;
-  } else {
-    return NULL;
   }
+  return NULL;
 }
 
