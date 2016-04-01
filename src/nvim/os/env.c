@@ -456,17 +456,37 @@ static char *vim_version_dir(const char *vimdir)
   return NULL;
 }
 
-/// If the string between "p" and "pend" ends in "name/", return "pend" minus
-/// the length of "name/".  Otherwise return "pend".
-static char *remove_tail(char *p, char *pend, char *name)
+/// If `dirname + "/"` precedes `pend` in the path, return the pointer to
+/// `dirname + "/" + pend`.  Otherwise return `pend`.
+///
+/// Examples (path = /usr/local/share/nvim/runtime/doc/help.txt):
+///
+///   pend    = help.txt
+///   dirname = doc
+///   -> doc/help.txt
+///
+///   pend    = doc/help.txt
+///   dirname = runtime
+///   -> runtime/doc/help.txt
+///
+///   pend    = runtime/doc/help.txt
+///   dirname = vim74
+///   -> runtime/doc/help.txt
+///
+/// @param path    Path to a file
+/// @param pend    A suffix of the path
+/// @param dirname The immediate path fragment before the pend
+/// @return The new pend including dirname or just pend
+static char *remove_tail(char *path, char *pend, char *dirname)
 {
-  size_t len = STRLEN(name) + 1;
-  char *newend = pend - len;
+  size_t len = STRLEN(dirname);
+  char *new_tail = pend - len - 1;
 
-  if (newend >= p
-      && fnamencmp((char_u *)newend, (char_u *)name, len - 1) == 0
-      && (newend == p || after_pathsep(p, newend)))
-    return newend;
+  if (new_tail >= path
+      && fnamencmp((char_u *)new_tail, (char_u *)dirname, len) == 0
+      && (new_tail == path || after_pathsep(path, new_tail))) {
+    return new_tail;
+  }
   return pend;
 }
 
