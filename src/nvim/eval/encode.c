@@ -658,7 +658,7 @@ encode_vim_to_##name##_error_ret: \
 #define CONV_NUMBER(num) \
     do { \
       char numbuf[NUMBUFLEN]; \
-      vim_snprintf(numbuf, NUMBUFLEN - 1, "%" PRId64, (int64_t) (num)); \
+      vim_snprintf(numbuf, ARRAY_SIZE(numbuf), "%" PRId64, (int64_t) (num)); \
       ga_concat(gap, numbuf); \
     } while (0)
 
@@ -679,7 +679,7 @@ encode_vim_to_##name##_error_ret: \
         } \
         default: { \
           char numbuf[NUMBUFLEN]; \
-          vim_snprintf(numbuf, NUMBUFLEN - 1, "%g", flt_); \
+          vim_snprintf(numbuf, ARRAY_SIZE(numbuf), "%g", flt_); \
           ga_concat(gap, (char_u *) numbuf); \
         } \
       } \
@@ -754,7 +754,7 @@ encode_vim_to_##name##_error_ret: \
           } \
         } \
       } \
-      vim_snprintf(ebuf, NUMBUFLEN + 6, "{E724@%zu}", backref); \
+      vim_snprintf(ebuf, ARRAY_SIZE(ebuf), "{E724@%zu}", backref); \
       ga_concat(gap, &ebuf[0]); \
       return OK; \
     } while (0)
@@ -783,9 +783,9 @@ DEFINE_VIML_CONV_FUNCTIONS(static, string, garray_T *const, gap)
         } \
       } \
       if (conv_type == kMPConvDict) { \
-        vim_snprintf(ebuf, NUMBUFLEN + 6, "{...@%zu}", backref); \
+        vim_snprintf(ebuf, ARRAY_SIZE(ebuf), "{...@%zu}", backref); \
       } else { \
-        vim_snprintf(ebuf, NUMBUFLEN + 6, "[...@%zu]", backref); \
+        vim_snprintf(ebuf, ARRAY_SIZE(ebuf), "[...@%zu]", backref); \
       } \
       ga_concat(gap, &ebuf[0]); \
       return OK; \
@@ -821,7 +821,7 @@ DEFINE_VIML_CONV_FUNCTIONS(, echo, garray_T *const, gap)
 #define CONV_UNSIGNED_NUMBER(num) \
       do { \
         char numbuf[NUMBUFLEN]; \
-        vim_snprintf(numbuf, sizeof(numbuf), "%" PRIu64, (num)); \
+        vim_snprintf(numbuf, ARRAY_SIZE(numbuf), "%" PRIu64, (num)); \
         ga_concat(gap, numbuf); \
       } while (0)
 
@@ -840,7 +840,7 @@ DEFINE_VIML_CONV_FUNCTIONS(, echo, garray_T *const, gap)
         } \
         default: { \
           char numbuf[NUMBUFLEN]; \
-          vim_snprintf(numbuf, NUMBUFLEN - 1, "%g", flt_); \
+          vim_snprintf(numbuf, ARRAY_SIZE(numbuf), "%g", flt_); \
           ga_concat(gap, (char_u *) numbuf); \
           break; \
         } \
