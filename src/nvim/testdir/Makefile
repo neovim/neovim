@@ -15,7 +15,6 @@ export TMPDIR := $(abspath ../../../Xtest-tmpdir)
 
 SCRIPTS_DEFAULT = \
            test14.out             \
-           test24.out             \
            test37.out             \
            test40.out             \
            test42.out             \
