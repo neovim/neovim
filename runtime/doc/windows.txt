@@ -706,7 +706,7 @@ can also get to them with the buffer list commands, like ":bnext".
 
 							*:bufdo*
 :[range]bufdo[!] {cmd}	Execute {cmd} in each buffer in the buffer list or if
-			[range[ is given only for buffers for which their
+			[range] is given only for buffers for which their
 			buffer name is in the [range]. It works like doing
                         this: >
 				:bfirst
