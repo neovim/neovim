@@ -2,6 +2,10 @@
 //
 #include "x11clip.h"
 #include "nvim/memory.h"
+#include "nvim/event/loop.h"
+
+#include <uv.h>
+
 #include <stdio.h>
 #include <time.h>
 #include <unistd.h>
@@ -17,6 +21,7 @@ typedef struct cbd {
     size_t len;
     int type; //FIXME do the enum on this branch
     bool done;
+    bool owned;
 } cbd_t;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -31,17 +36,14 @@ typedef struct cbd {
 #define MBLOCK  2               /* block-wise register */
 #define MAUTO   0xff            /* Decide between MLINE/MCHAR */
 
+static XtAppContext app_context;
 /* Our X Display and Window */
 static Display * display;
 static Window root;
 
-Widget appshell = (Widget)0, shell = (Widget)0;
+static Widget appshell = (Widget)0, shell = (Widget)0;
 
-struct {
-  int typename;
-  char* data;
-  size_t len;
-} sel[2] = {0};
+static cbd_t selections[2] = {0};
 
 #define LIST_OF_ATOMS \
     X(TIMESTAMP) \
@@ -67,10 +69,19 @@ LIST_OF_ATOMS
 const int n_atoms = 0 LIST_OF_ATOMS;
 #undef X
 
+// TODO: the binary plugin interface should obviously
+// not hand out the main loop like this
+static Loop *loop;
 
-static bool x11clip_init(void) {
+static uv_poll_t poll_handle;
+
+void x11clip_init(Loop* nvim_loop) {
+  loop = nvim_loop;
+}
+
+static bool x11clip_open(void) {
   XtToolkitInitialize();
-  XtAppContext app_context = XtCreateApplicationContext();
+  app_context = XtCreateApplicationContext();
   int argc = 0;
   char** argv = NULL;
   display = XtOpenDisplay (app_context, NULL, "nvim", "Nvim", NULL, 0, &argc, argv);
@@ -108,7 +119,42 @@ static bool x11clip_init(void) {
 #define X(name) name##_ATOM = ret[i++];
   LIST_OF_ATOMS
 #undef X
+
+  int fd = XConnectionNumber(display);
+  uv_poll_init(&loop->uv, &poll_handle, fd);
+  uv_poll_start(&poll_handle, UV_READABLE, poll_cb);
   return true;
+}
+
+static void poll_cb(uv_poll_t* handle, int status, int events) {
+  if (status == 0 && (events & UV_READABLE)) {
+    check_events();
+  }
+}
+
+static void check_events(void) {
+  XEvent event;
+
+  while (true) {
+    XtInputMask mask = XtAppPending(app_context);
+
+    if (mask == 0) {
+      break;
+    }
+
+    // I think this can be collapsed to one branch
+    if (mask & XtIMXEvent)
+    {
+      /* There is an event to process. */
+      XtAppNextEvent(app_context, &event);
+      XtDispatchEvent(&event);
+    }
+    else
+    {
+      /* There is something else than an event to process. */
+      XtAppProcessEvent(app_context, mask);
+    }
+  }
 }
 
 static bool try_get(Atom sel, Atom type, cbd_t* data, time_t timeout_time) {
@@ -216,35 +262,145 @@ cleanup_return:
   XtFree((char *)value);
 }
 
-
-static Atom sel_atom(int name) {
-  return (name == '*') ? XA_PRIMARY : CLIPBOARD_ATOM;
+static Atom sel_atom(int which) {
+  return (which == 1) ? XA_PRIMARY : CLIPBOARD_ATOM;
 }
 
-bool x11clip_set(int name, int typename, char* data, size_t len) {
+
+void own_selection(int which) {
+  if (XtOwnSelection(shell, sel_atom(which),
+        XtLastTimestampProcessed(display),
+        convert_selection_cb, lose_ownership_cb,
+        NULL)) {
+    selections[which].owned = true;
+  }
+}
+
+static Boolean convert_selection_cb(
+    Widget w,
+    Atom *sel_atom,
+    Atom *target,
+    Atom *type,
+    XtPointer *value,
+    unsigned long *length,
+    int  *format)
+{
+  static const char utf8[] = "utf-8";
+  const size_t utf8len = 5;
+
+  char	*result;
+
+  int which = (*sel_atom == XA_PRIMARY);
+  cbd_t *cbd = &selections[which];
+
+  if (!cbd->owned)
+    return false; /* Shouldn't ever happen */
+
+  /* requestor wants to know what target types we support */
+  if (*target == TARGETS_ATOM)
+  {
+    Atom *array;
+
+    if ((array = (Atom *)XtMalloc((unsigned)(sizeof(Atom) * 6))) == NULL) {
+      return False;
+    }
+    *value = (XtPointer)array;
+    unsigned int i = 0;
+    array[i++] = TARGETS_ATOM;
+    array[i++] = _VIMENC_TEXT_ATOM;
+    array[i++] = UTF8_STRING_ATOM;
+    array[i++] = XA_STRING;
+    array[i++] = TEXT_ATOM;
+    *type = XA_ATOM;
+    /* This used to be: *format = sizeof(Atom) * 8; but that caused
+     * crashes on 64 bit machines. (Peter Derr) */
+    *format = 32;
+    *length = i;
+    return true;
+  }
+
+  if (*target != XA_STRING
+      && *target != _VIMENC_TEXT_ATOM
+      && *target != UTF8_STRING_ATOM
+      && *target != TEXT_ATOM) {
+    return False;
+  }
+
+  *format = 8;   /* 8 bits per char */
+  *length = cbd->len;
+
+  /* Our own format with encoding: motion 'encoding' NUL text */
+  if (*target == _VIMENC_TEXT_ATOM) {
+    *length += utf8len + 2;
+  }
+
+  *value = XtMalloc((Cardinal)*length);
+  result = (char *)*value;
+  if (result == NULL) {
+    return False;
+  }
+
+  if (*target == XA_STRING || *target == UTF8_STRING_ATOM || *target == TEXT_ATOM) {
+    memmove(result, cbd->val, (size_t)(*length));
+    *type = *target;
+  }
+
+  else if (*target == _VIMENC_TEXT_ATOM)
+  {
+    result[0] = (char)cbd->type;
+    strcpy(result + 1, utf8);
+    memmove(result + utf8len + 2, cbd->val, cbd->len);
+    *type = _VIMENC_TEXT_ATOM;
+  }
+
+    return True;
+}
+
+static void lose_ownership_cb(Widget w, Atom *sel_atom)
+{
+  int which = (*sel_atom == XA_PRIMARY);
+  selections[which].owned = false;
+}
+
+
+/// takes ownership of "data"
+bool x11clip_set(int name, int type, char* data, size_t len) {
+  if (display == NULL && !x11clip_open()) {
+    return NULL;
+  }
   int which = (name == '*') ? 1 : 0;
-  sel[which].typename = typename;
-  sel[which].data = data;
-  sel[which].len = len;
+  cbd_t *sel_data = &selections[which];
+  sel_data->type = type;
+  if (sel_data->val != NULL) {
+    xfree(sel_data->val);
+  }
+  sel_data->val = data;
+  sel_data->len = len;
+  if (!sel_data->owned) {
+    own_selection(which);
+  }
   return true;
 }
 
+/// returns temporary reference
 char* x11clip_get(int name, int* type, size_t* len) {
+  // TODO: the reciever cbd_t needs to be distinct, probably one per selection also
   static cbd_t cbd;
-  if (display == NULL && !x11clip_init()) {
+  if (display == NULL && !x11clip_open()) {
     return NULL;
   }
+  int which = (name == '*') ? 1 : 0;
 
-  // TODO: we owned the clipboard
-  if (false) {
-    int which = (name == '*') ? 1 : 0;
-    *type = sel[which].typename;
-    *len = sel[which].len;
-    return sel[which].data;
+  // we owned the clipboard
+  cbd_t *sel_data = &selections[which];
+  if (sel_data->owned) {
+    *type = sel_data->type;
+    *len = sel_data->len;
+    return sel_data->val;
   }
 
 
-  Atom sel = sel_atom(name);
+  Atom sel = sel_atom(which);
 
   time_t timeout = time(NULL) + 2;
 

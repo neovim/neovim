@@ -5376,6 +5376,56 @@ void cursor_pos_info(void)
   }
 }
 
+/// Convert the '*'/'+' register into a GUI selection string returned in *str
+/// with length *len.
+/// Returns the motion type, or -1 for failure.
+char* clip_convert_selection(yankreg_T *reg, size_t *len)
+{
+    char	*str, *p;
+    size_t eolsize;
+
+#ifdef USE_CRNL
+    eolsize = 2;
+#else
+    eolsize = 1;
+#endif
+
+    *len = 0;
+    if (reg->y_array == NULL) {
+      return NULL;
+    }
+
+    for (linenr_T i = 0; i < reg->y_size; i++) {
+      *len += strlen((char*)reg->y_array[i]) + eolsize;
+    }
+
+    if (reg->y_type == MCHAR && *len >= eolsize) {
+      *len -= eolsize;
+    }
+
+    str = xmalloc(*len + 1); // add one to avoid zero
+    p = str;
+    for (linenr_T i = 0; i < reg->y_size; i++) {
+      for (size_t j = 0; ; j++) {
+        char c = (char)reg->y_array[i][j];
+        if (c == '\n') {
+          *p++ = NUL;
+        } else if (c == NUL) {
+          if (i < reg->y_size - 1 || reg->y_type != MCHAR) {
+#ifdef USE_CRNL
+            *p++ = '\r';
+#endif
+            *p++ = '\n';
+          }
+          break;
+        } else {
+          *p++ = c;
+        }
+      }
+    }
+    *p++ = NUL;
+    return str;
+}
 /// Check if the default register (used in an unnamed paste) should be a
 /// clipboard register. This happens when `clipboard=unnamed[plus]` is set
 /// and a provider is available.
@@ -5450,7 +5500,7 @@ static bool get_clipboard(int name, yankreg_T **target, bool quiet)
   *target = reg;
   free_register(reg);
 
-  int typename = 0, yanktype;
+  int yanktype;
   size_t len;
   // might contain NUL, so we need explicit length;
   char* value = x11clip_get(name, &yanktype, &len);
@@ -5575,6 +5625,11 @@ static void set_clipboard(int name, yankreg_T *reg)
   if (!adjust_clipboard_name(&name, false, true)) {
     return;
   }
+
+  size_t len;
+  char* data = clip_convert_selection(reg, &len);
+  x11clip_set(name, reg->y_type, data, len);
+  return;
 
   list_T *lines = list_alloc();
 

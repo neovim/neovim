@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
+#include "nvim/event/loop.h"
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "x11clip.h.generated.h"
 #endif
