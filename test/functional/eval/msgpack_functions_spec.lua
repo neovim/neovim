@@ -686,4 +686,18 @@ describe('msgpackdump() function', function()
         exc_exec('call msgpackdump(' .. val .. ')'))
     end
   end)
+
+  it('can dump NULL string', function()
+    eq({'\196\n'}, eval('msgpackdump([$XXX_UNEXISTENT_VAR_XXX])'))
+    eq({'\196\n'}, eval('msgpackdump([{"_TYPE": v:msgpack_types.binary, "_VAL": [$XXX_UNEXISTENT_VAR_XXX]}])'))
+    eq({'\160'}, eval('msgpackdump([{"_TYPE": v:msgpack_types.string, "_VAL": [$XXX_UNEXISTENT_VAR_XXX]}])'))
+  end)
+
+  it('can dump NULL list', function()
+    eq({'\144'}, eval('msgpackdump([v:_null_list])'))
+  end)
+
+  it('can dump NULL dictionary', function()
+    eq({'\128'}, eval('msgpackdump([v:_null_dict])'))
+  end)
 end)

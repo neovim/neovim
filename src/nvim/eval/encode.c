@@ -287,6 +287,9 @@ int encode_read_from_list(ListReaderState *const state, char *const buf,
       (val)->copyID_attr = copyID; \
     } while (0)
 
+#define TV_STRLEN(tv) \
+    (tv->vval.v_string == NULL ? 0 : STRLEN(tv->vval.v_string))
+
 /// Define functions which convert VimL value to something else
 ///
 /// Creates function `vim_to_{name}(firstargtype firstargname, typval_T *const
@@ -306,7 +309,7 @@ static int name##_convert_one_value(firstargtype firstargname, \
 { \
   switch (tv->v_type) { \
     case VAR_STRING: { \
-      CONV_STRING(tv->vval.v_string, STRLEN(tv->vval.v_string)); \
+      CONV_STRING(tv->vval.v_string, TV_STRLEN(tv)); \
       break; \
     } \
     case VAR_NUMBER: { \

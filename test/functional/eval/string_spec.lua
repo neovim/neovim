@@ -84,6 +84,18 @@ describe('string() function', function()
       eq('\'\'\'b\'\'\'\'d\'', funcs.string('\'b\'\'d'))
       eq('\'a\'\'b\'\'c\'\'d\'', funcs.string('a\'b\'c\'d'))
     end)
+
+    it('dumps NULL strings', function()
+      eq('\'\'', eval('string($XXX_UNEXISTENT_VAR_XXX)'))
+    end)
+
+    it('dumps NULL lists', function()
+      eq('[]', eval('string(v:_null_list)'))
+    end)
+
+    it('dumps NULL dictionaries', function()
+      eq('{}', eval('string(v:_null_dict)'))
+    end)
   end)
 
   describe('used to represent funcrefs', function()
