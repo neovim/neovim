@@ -75,36 +75,38 @@ int encode_list_write(void *data, const char *buf, size_t len)
   const char *const end = buf + len;
   const char *line_end = buf;
   listitem_T *li = list->lv_last;
-  do {
+
+  // Continue the last list element
+  if (li != NULL) {
+    line_end = xmemscan(buf, NL, len);
+    if (line_end != buf) {
+      const size_t line_length = (size_t)(line_end - buf);
+      char *str = (char *)li->li_tv.vval.v_string;
+      const size_t li_len = (str == NULL ? 0 : strlen(str));
+      li->li_tv.vval.v_string = xrealloc(str, li_len + line_length + 1);
+      str = (char *)li->li_tv.vval.v_string + li_len;
+      memcpy(str, buf, line_length);
+      str[line_length] = 0;
+      memchrsub(str, NUL, NL, line_length);
+    }
+    line_end++;
+  }
+
+  while (line_end < end) {
     const char *line_start = line_end;
     line_end = xmemscan(line_start, NL, (size_t) (end - line_start));
     char *str = NULL;
     if (line_end != line_start) {
-      const size_t line_length = (size_t) (line_end - line_start);
-      if (li == NULL) {
-        str = xmemdupz(line_start, line_length);
-      } else {
-        const size_t li_len = (li->li_tv.vval.v_string == NULL
-                               ? 0
-                               : STRLEN(li->li_tv.vval.v_string));
-        li->li_tv.vval.v_string = xrealloc(li->li_tv.vval.v_string,
-                                           li_len + line_length + 1);
-        str = (char *) li->li_tv.vval.v_string + li_len;
-        memcpy(str, line_start, line_length);
-        str[line_length] = 0;
-      }
+      const size_t line_length = (size_t)(line_end - line_start);
+      str = xmemdupz(line_start, line_length);
       memchrsub(str, NUL, NL, line_length);
     }
-    if (li == NULL) {
-      list_append_allocated_string(list, str);
-    } else {
-      li = NULL;
-    }
-    if (line_end == end - 1) {
-      list_append_allocated_string(list, NULL);
-    }
+    list_append_allocated_string(list, str);
     line_end++;
-  } while (line_end < end);
+  }
+  if (line_end == end) {
+    list_append_allocated_string(list, NULL);
+  }
   return 0;
 }
 
