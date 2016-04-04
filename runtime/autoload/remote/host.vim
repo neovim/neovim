@@ -36,7 +36,7 @@ endfunction
 
 " Get a host channel, bootstrapping it if necessary
 function! remote#host#Require(name) abort
-  if empty(s:hosts)
+  if empty(s:plugins_for_host)
     call remote#host#LoadRemotePlugins()
   endif
   if !has_key(s:hosts, a:name)
