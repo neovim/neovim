@@ -922,8 +922,8 @@ EXTERN int KeyTyped;                     // TRUE if user typed current char
 EXTERN int KeyStuffed;                   // TRUE if current char from stuffbuf
 EXTERN int maptick INIT(= 0);            // tick for each non-mapped char
 
-EXTERN char_u chartab[256];             /* table used in charset.c; See
-                                           init_chartab() for explanation */
+EXTERN uint8_t chartab[256];             // table used in charset.c; See
+                                         // init_chartab() for explanation
 
 EXTERN int must_redraw INIT(= 0);           /* type of redraw necessary */
 EXTERN int skip_redraw INIT(= FALSE);       /* skip redraw once */

@@ -32,16 +32,16 @@
 #endif
 
 
-static int chartab_initialized = FALSE;
+static bool chartab_initialized = false;
 
-// b_chartab[] is an array of 32 bytes, each bit representing one of the
+// b_chartab[] is an array with 256 bits, each bit representing one of the
 // characters 0-255.
 #define SET_CHARTAB(buf, c) \
-    (buf)->b_chartab[(unsigned)(c) >> 3] |= (1 << ((c) & 0x7))
+    (buf)->b_chartab[(unsigned)(c) >> 6] |= (1ull << ((c) & 0x3f))
 #define RESET_CHARTAB(buf, c) \
-    (buf)->b_chartab[(unsigned)(c) >> 3] &= ~(1 << ((c) & 0x7))
+    (buf)->b_chartab[(unsigned)(c) >> 6] &= ~(1ull << ((c) & 0x3f))
 #define GET_CHARTAB(buf, c) \
-    ((buf)->b_chartab[(unsigned)(c) >> 3] & (1 << ((c) & 0x7)))
+    ((buf)->b_chartab[(unsigned)(c) >> 6] & (1ull << ((c) & 0x3f)))
 
 /// Fill chartab[].  Also fills curbuf->b_chartab[] with flags for keyword
 /// characters for current buffer.
@@ -69,12 +69,12 @@ static int chartab_initialized = FALSE;
 /// an error, OK otherwise.
 int init_chartab(void)
 {
-  return buf_init_chartab(curbuf, TRUE);
+  return buf_init_chartab(curbuf, true);
 }
 
 /// Helper for init_chartab
 ///
-/// @param global FALSE: only set buf->b_chartab[]
+/// @param global false: only set buf->b_chartab[]
 ///
 /// @return FAIL if 'iskeyword', 'isident', 'isfname' or 'isprint' option has
 /// an error, OK otherwise.
@@ -84,13 +84,13 @@ int buf_init_chartab(buf_T *buf, int global)
   int c2;
   char_u *p;
   int i;
-  int tilde;
-  int do_isalpha;
+  bool tilde;
+  bool do_isalpha;
 
   if (global) {
     // Set the default size for printable characters:
     // From <Space> to '~' is 1 (printable), others are 2 (not printable).
-    // This also inits all 'isident' and 'isfname' flags to FALSE.
+    // This also inits all 'isident' and 'isfname' flags to false.
     c = 0;
 
     while (c < ' ') {
@@ -133,7 +133,7 @@ int buf_init_chartab(buf_T *buf, int global)
     }
   }
 
-  // Init word char flags all to FALSE
+  // Init word char flags all to false
   memset(buf->b_chartab, 0, (size_t)32);
 
   if (enc_dbcs != 0) {
@@ -169,11 +169,11 @@ int buf_init_chartab(buf_T *buf, int global)
     }
 
     while (*p) {
-      tilde = FALSE;
-      do_isalpha = FALSE;
+      tilde = false;
+      do_isalpha = false;
 
       if ((*p == '^') && (p[1] != NUL)) {
-        tilde = TRUE;
+        tilde = true;
         ++p;
       }
 
@@ -212,7 +212,7 @@ int buf_init_chartab(buf_T *buf, int global)
         // standard function isalpha(). This takes care of locale for
         // single-byte characters).
         if (c == '@') {
-          do_isalpha = TRUE;
+          do_isalpha = true;
           c = 1;
           c2 = 255;
         } else {
@@ -231,7 +231,7 @@ int buf_init_chartab(buf_T *buf, int global)
           if (i == 0) {
             // (re)set ID flag
             if (tilde) {
-              chartab[c] &= ~CT_ID_CHAR;
+              chartab[c] &= (uint8_t)~CT_ID_CHAR;
             } else {
               chartab[c] |= CT_ID_CHAR;
             }
@@ -244,18 +244,18 @@ int buf_init_chartab(buf_T *buf, int global)
                  || (p_altkeymap && (F_isalpha(c) || F_isdigit(c))))
                 && !(enc_dbcs && (MB_BYTE2LEN(c) == 2))) {
               if (tilde) {
-                chartab[c] = (chartab[c] & ~CT_CELL_MASK)
-                             + ((dy_flags & DY_UHEX) ? 4 : 2);
-                chartab[c] &= ~CT_PRINT_CHAR;
+                chartab[c] = (uint8_t)((chartab[c] & ~CT_CELL_MASK)
+                                       + ((dy_flags & DY_UHEX) ? 4 : 2));
+                chartab[c] &= (uint8_t)~CT_PRINT_CHAR;
               } else {
-                chartab[c] = (chartab[c] & ~CT_CELL_MASK) + 1;
+                chartab[c] = (uint8_t)((chartab[c] & ~CT_CELL_MASK) + 1);
                 chartab[c] |= CT_PRINT_CHAR;
               }
             }
           } else if (i == 2) {
             // (re)set fname flag
             if (tilde) {
-              chartab[c] &= ~CT_FNAME_CHAR;
+              chartab[c] &= (uint8_t)~CT_FNAME_CHAR;
             } else {
               chartab[c] |= CT_FNAME_CHAR;
             }
@@ -280,7 +280,7 @@ int buf_init_chartab(buf_T *buf, int global)
       }
     }
   }
-  chartab_initialized = TRUE;
+  chartab_initialized = true;
   return OK;
 }
 
@@ -333,7 +333,8 @@ char_u *transstr(char_u *s) FUNC_ATTR_NONNULL_RET
 {
   char_u *res;
   char_u *p;
-  int l, c;
+  int c;
+  size_t l;
   char_u hexbuf[11];
 
   if (has_mbyte) {
@@ -343,7 +344,7 @@ char_u *transstr(char_u *s) FUNC_ATTR_NONNULL_RET
     p = s;
 
     while (*p != NUL) {
-      if ((l = (*mb_ptr2len)(p)) > 1) {
+      if ((l = (size_t)(*mb_ptr2len)(p)) > 1) {
         c = (*mb_ptr2char)(p);
         p += l;
 
@@ -354,7 +355,7 @@ char_u *transstr(char_u *s) FUNC_ATTR_NONNULL_RET
           len += STRLEN(hexbuf);
         }
       } else {
-        l = byte2cells(*p++);
+        l = (size_t)byte2cells(*p++);
 
         if (l > 0) {
           len += l;
@@ -366,14 +367,14 @@ char_u *transstr(char_u *s) FUNC_ATTR_NONNULL_RET
     }
     res = xmallocz(len);
   } else {
-    res = xmallocz(vim_strsize(s));
+    res = xmallocz((size_t)vim_strsize(s));
   }
 
   *res = NUL;
   p = s;
 
   while (*p != NUL) {
-    if (has_mbyte && ((l = (*mb_ptr2len)(p)) > 1)) {
+    if (has_mbyte && ((l = (size_t)(*mb_ptr2len)(p)) > 1)) {
       c = (*mb_ptr2char)(p);
 
       if (vim_isprintc(c)) {
@@ -477,9 +478,9 @@ char_u* str_foldcase(char_u *str, int orglen, char_u *buf, int buflen)
       i += (*mb_ptr2len)(STR_PTR(i));
     } else {
       if (buf == NULL) {
-        GA_CHAR(i) = TOLOWER_LOC(GA_CHAR(i));
+        GA_CHAR(i) = (char_u)TOLOWER_LOC(GA_CHAR(i));
       } else {
-        buf[i] = TOLOWER_LOC(buf[i]);
+        buf[i] = (char_u)TOLOWER_LOC(buf[i]);
       }
       ++i;
     }
@@ -493,7 +494,7 @@ char_u* str_foldcase(char_u *str, int orglen, char_u *buf, int buflen)
 
 // Catch 22: chartab[] can't be initialized before the options are
 // initialized, and initializing options may cause transchar() to be called!
-// When chartab_initialized == FALSE don't use chartab[].
+// When chartab_initialized == false don't use chartab[].
 // Does NOT work for multi-byte characters, c must be <= 255.
 // Also doesn't work for the first byte of a multi-byte, "c" must be a
 // character!
@@ -518,7 +519,7 @@ char_u* transchar(int c)
   if ((!chartab_initialized && (((c >= ' ') && (c <= '~')) || F_ischar(c)))
       || ((c < 256) && vim_isprintc_strict(c))) {
     // printable character
-    transchar_buf[i] = c;
+    transchar_buf[i] = (char_u)c;
     transchar_buf[i + 1] = NUL;
   } else {
     transchar_nonprint(transchar_buf + i, c);
@@ -564,7 +565,7 @@ void transchar_nonprint(char_u *buf, int c)
     // 0x00 - 0x1f and 0x7f
     buf[0] = '^';
     // DEL displayed as ^?
-    buf[1] = c ^ 0x40;
+    buf[1] = (char_u)(c ^ 0x40);
 
     buf[2] = NUL;
   } else if (enc_utf8 && (c >= 0x80)) {
@@ -572,12 +573,12 @@ void transchar_nonprint(char_u *buf, int c)
   } else if ((c >= ' ' + 0x80) && (c <= '~' + 0x80)) {
     // 0xa0 - 0xfe
     buf[0] = '|';
-    buf[1] = c - 0x80;
+    buf[1] = (char_u)(c - 0x80);
     buf[2] = NUL;
   } else {
     // 0x80 - 0x9f and 0xff
     buf[0] = '~';
-    buf[1] = (c - 0x80) ^ 0x40;
+    buf[1] = (char_u)((c - 0x80) ^ 0x40);
     buf[2] = NUL;
   }
 }
@@ -592,11 +593,11 @@ void transchar_hex(char_u *buf, int c)
 
   buf[0] = '<';
   if (c > 255) {
-    buf[++i] = nr2hex((unsigned)c >> 12);
-    buf[++i] = nr2hex((unsigned)c >> 8);
+    buf[++i] = (char_u)nr2hex((unsigned)c >> 12);
+    buf[++i] = (char_u)nr2hex((unsigned)c >> 8);
   }
-  buf[++i] = nr2hex((unsigned)c >> 4);
-  buf[++i] = nr2hex((unsigned)c);
+  buf[++i] = (char_u)(nr2hex((unsigned)c >> 4));
+  buf[++i] = (char_u)(nr2hex((unsigned)c));
   buf[++i] = '>';
   buf[++i] = NUL;
 }
@@ -734,9 +735,8 @@ int vim_strnsize(char_u *s, int len)
 /// @return Number of characters.
 #define RET_WIN_BUF_CHARTABSIZE(wp, buf, p, col) \
   if (*(p) == TAB && (!(wp)->w_p_list || lcs_tab1)) { \
-    int ts; \
-    ts = (buf)->b_p_ts; \
-    return (int)(ts - (col % ts)); \
+    const int ts = (int) (buf)->b_p_ts; \
+    return (ts - (int)(col % ts)); \
   } else { \
     return ptr2cells(p); \
   }
@@ -1137,7 +1137,7 @@ static int win_nolbr_chartabsize(win_T *wp, char_u *s, colnr_T col, int *headp)
   int n;
 
   if ((*s == TAB) && (!wp->w_p_list || lcs_tab1)) {
-    n = wp->w_buffer->b_p_ts;
+    n = (int)wp->w_buffer->b_p_ts;
     return n - (col % n);
   }
   n = ptr2cells(s);
@@ -1205,11 +1205,11 @@ void getvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor,
   char_u *line;   // start of the line
   int incr;
   int head;
-  int ts = wp->w_buffer->b_p_ts;
+  int ts = (int)wp->w_buffer->b_p_ts;
   int c;
 
   vcol = 0;
-  line = ptr = ml_get_buf(wp->w_buffer, pos->lnum, FALSE);
+  line = ptr = ml_get_buf(wp->w_buffer, pos->lnum, false);
 
   if (pos->col == MAXCOL) {
     // continue until the NUL
@@ -1329,7 +1329,7 @@ colnr_T getvcol_nolist(pos_T *posp)
   int list_save = curwin->w_p_list;
   colnr_T vcol;
 
-  curwin->w_p_list = FALSE;
+  curwin->w_p_list = false;
   getvcol(curwin, posp, NULL, &vcol, NULL);
   curwin->w_p_list = list_save;
   return vcol;
@@ -1358,7 +1358,7 @@ void getvvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor,
     endadd = 0;
 
     // Cannot put the cursor on part of a wide character.
-    ptr = ml_get_buf(wp->w_buffer, pos->lnum, FALSE);
+    ptr = ml_get_buf(wp->w_buffer, pos->lnum, false);
 
     if (pos->col < (colnr_T)STRLEN(ptr)) {
       int c = (*mb_ptr2char)(ptr + pos->col);
@@ -1595,7 +1595,7 @@ bool vim_islower(int c)
 
     if (c >= 0x100) {
       if (has_mbyte) {
-        return iswlower(c);
+        return iswlower((wint_t)c);
       }
 
       // islower() can't handle these chars and may crash
@@ -1626,7 +1626,7 @@ bool vim_isupper(int c)
 
     if (c >= 0x100) {
       if (has_mbyte) {
-        return iswupper(c);
+        return iswupper((wint_t)c);
       }
 
       // isupper() can't handle these chars and may crash
@@ -1653,7 +1653,7 @@ int vim_toupper(int c)
 
     if (c >= 0x100) {
       if (has_mbyte) {
-        return towupper(c);
+        return (int)towupper((wint_t)c);
       }
 
       // toupper() can't handle these chars and may crash
@@ -1680,7 +1680,7 @@ int vim_tolower(int c)
 
     if (c >= 0x100) {
       if (has_mbyte) {
-        return towlower(c);
+        return (int)towlower((wint_t)c);
       }
 
       // tolower() can't handle these chars and may crash
