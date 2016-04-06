@@ -533,9 +533,9 @@ struct file_buffer {
 
   /*
    * Character table, only used in charset.c for 'iskeyword'
-   * 32 bytes of 8 bits: 1 bit per character 0-255.
+   * bitset with 4*64=256 bits: 1 bit per character 0-255.
    */
-  char_u b_chartab[32];
+  uint64_t b_chartab[4];
 
   /* Table used for mappings local to a buffer. */
   mapblock_T  *(b_maphash[256]);
