@@ -12,6 +12,8 @@ static void help(void)
   puts("  shell-test");
   puts("  shell-test EXE");
   puts("    Prints \"ready $ \" to stderr.");
+  puts("  shell-test -t {prompt text}");
+  puts("    Prints \"{prompt text} $ \" to stderr.");
   puts("  shell-test EXE \"prog args...\"");
   puts("    Prints \"ready $ prog args...\\n\" to stderr.");
   puts("  shell-test REP {byte} \"line line line\"");
@@ -30,7 +32,14 @@ int main(int argc, char **argv)
   }
 
   if (argc >= 2) {
-    if (strcmp(argv[1], "EXE") == 0) {
+    if (strcmp(argv[1], "-t") == 0) {
+      if (argc < 3) {
+        fprintf(stderr,"Missing promt text for -t option\n");
+        return 5;
+      } else {
+        fprintf(stderr, "%s $ ", argv[2]);
+      }
+    } else if (strcmp(argv[1], "EXE") == 0) {
       fprintf(stderr, "ready $ ");
       if (argc >= 3) {
         fprintf(stderr, "%s\n", argv[2]);
