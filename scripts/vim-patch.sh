@@ -65,7 +65,7 @@ get_vim_sources() {
 
   if [[ ! -d ${VIM_SOURCE_DIR} ]]; then
     echo "Cloning Vim sources into '${VIM_SOURCE_DIR}'."
-    git clone --depth=1000 https://github.com/vim/vim.git "${VIM_SOURCE_DIR}"
+    git clone https://github.com/vim/vim.git "${VIM_SOURCE_DIR}"
     cd "${VIM_SOURCE_DIR}"
   else
     if [[ ! -d "${VIM_SOURCE_DIR}/.git" ]]; then
@@ -243,7 +243,7 @@ list_vim_patches() {
       local patch_number="${vim_tag:5}" # Remove prefix like "v7.4."
       # Tagged Vim patch, check version.c:
       is_missing="$(sed -n '/static int included_patches/,/}/p' "${NEOVIM_SOURCE_DIR}/src/nvim/version.c" |
-        grep -x -e "[[:space:]]*//[[:space:]]${patch_number} NA" -e "[[:space:]]*${patch_number}," >/dev/null && echo "false" || echo "true")"
+        grep -x -e "[[:space:]]*//[[:space:]]${patch_number} NA.*" -e "[[:space:]]*${patch_number}," >/dev/null && echo "false" || echo "true")"
       vim_commit="${vim_tag#v}"
     else
       # Untagged Vim patch (e.g. runtime updates), check the Neovim git log:
