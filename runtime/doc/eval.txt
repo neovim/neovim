@@ -916,6 +916,11 @@ just above, except that indexes out of range cause an error.  Examples: >
 Using expr8[expr1] or expr8[expr1a : expr1b] on a |Funcref| results in an
 error.
 
+Watch out for confusion between a namespace and a variable followed by a colon
+for a sublist: >
+	mylist[n:]     " uses variable n
+	mylist[s:]     " uses namespace s:, error!
+
 
 expr8.name		entry in a |Dictionary|		*expr-entry*
 
