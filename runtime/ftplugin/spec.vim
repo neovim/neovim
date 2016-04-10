@@ -2,7 +2,7 @@
 " Filename: spec.vim
 " Maintainer: Igor Gnatenko i.gnatenko.brain@gmail.com
 " Former Maintainer: Gustavo Niemeyer <niemeyer@conectiva.com> (until March 2014)
-" Last Change: Fri Feb 20 16:01 MSK 2014 Igor Gnatenko
+" Last Change: Mon Jun 01 21:15 MSK 2015 Igor Gnatenko
 
 if exists("b:did_ftplugin")
 	finish
