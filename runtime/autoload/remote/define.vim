@@ -157,7 +157,7 @@ endfunction
 
 function! remote#define#FunctionOnChannel(channel, method, sync, name, opts)
   let rpcargs = [a:channel, '"'.a:method.'"', 'a:000']
-  if has_key(a:opts, 'range') && a:opts.range != '0'
+  if has_key(a:opts, 'range')
     call add(rpcargs, '[a:firstline, a:lastline]')
   endif
   call s:AddEval(rpcargs, a:opts)
@@ -222,7 +222,7 @@ endfunction
 
 function! s:GetFunctionPrefix(name, opts)
   let res = "function! ".a:name."(...)"
-  if has_key(a:opts, 'range') && a:opts.range != '0'
+  if has_key(a:opts, 'range')
     let res = res." range"
   endif
   return res."\n"
