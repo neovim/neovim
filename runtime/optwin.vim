@@ -1,7 +1,7 @@
 " These commands create the option window.
 "
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2014 Nov 19
+" Last Change:	2015 Jul 22
 
 " If there already is an option window, jump to that one.
 if bufwinnr("option-window") > 0
@@ -673,6 +673,8 @@ call append("$", "errorbells\tring the bell for error messages")
 call <SID>BinOptionG("eb", &eb)
 call append("$", "visualbell\tuse a visual bell instead of beeping")
 call <SID>BinOptionG("vb", &vb)
+call append("$", "belloff\tdo not ring the bell for these reasons")
+call <SID>OptionG("belloff", &belloff)
 if has("multi_lang")
   call append("$", "helplang\tlist of preferred languages for finding help")
   call <SID>OptionG("hlg", &hlg)
@@ -922,7 +924,7 @@ call <SID>BinOptionL("bin")
 call append("$", "endofline\tlast line in the file has an end-of-line")
 call append("$", "\t(local to buffer)")
 call <SID>BinOptionL("eol")
-call append("$", "fixeol\tfixes missing end-of-line at end of text file")
+call append("$", "fixendofline\tfixes missing end-of-line at end of text file")
 call append("$", "\t(local to buffer)")
 call <SID>BinOptionL("fixeol")
 if has("multi_byte")

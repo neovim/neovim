@@ -1,4 +1,4 @@
-*quickref.txt*  For Vim version 7.4.  Last change: 2014 Nov 19
+*quickref.txt*  For Vim version 7.4.  Last change: 2015 Jul 21
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -617,6 +617,7 @@ Short explanation of each option:		*option-list*
 'balloondelay'	  'bdlay'   delay in mS before a balloon may pop up
 'ballooneval'	  'beval'   switch on balloon evaluation
 'balloonexpr'	  'bexpr'   expression to show in balloon
+'belloff'	  'bo'	    do not ring the bell for these reasons
 'binary'	  'bin'     read/write/edit file in binary mode
 'bomb'			    prepend a Byte Order Mark to the file
 'breakat'	  'brk'     characters that may cause a line break
@@ -688,6 +689,7 @@ Short explanation of each option:		*option-list*
 'fileignorecase'  'fic'     ignore case when using file names
 'filetype'	  'ft'	    type of file, used for autocommands
 'fillchars'	  'fcs'     characters to use for displaying special items
+'fixendofline'	  'fixeol'  make sure last line in file has <EOL>
 'fkmap'		  'fk'	    Farsi keyboard mapping
 'foldclose'	  'fcl'     close a fold when the cursor leaves it
 'foldcolumn'	  'fdc'     width of the column used to indicate folds
@@ -702,10 +704,10 @@ Short explanation of each option:		*option-list*
 'foldnestmax'	  'fdn'     maximum fold depth
 'foldopen'	  'fdo'     for which commands a fold will be opened
 'foldtext'	  'fdt'     expression used to display for a closed fold
+'formatexpr'	  'fex'     expression used with "gq" command
 'formatlistpat'   'flp'     pattern used to recognize a list header
 'formatoptions'   'fo'	    how automatic formatting is to be done
 'formatprg'	  'fp'	    name of external program used with "gq" command
-'formatexpr'	  'fex'     expression used with "gq" command
 'fsync'		  'fs'	    whether to invoke fsync() after file write
 'gdefault'	  'gd'	    the ":substitute" flag 'g' is default on
 'grepformat'	  'gfm'     format of 'grepprg' output
@@ -873,9 +875,9 @@ Short explanation of each option:		*option-list*
 'switchbuf'	  'swb'     sets behavior when switching to another buffer
 'synmaxcol'	  'smc'     maximum column to find syntax items
 'syntax'	  'syn'     syntax to be loaded for current buffer
-'tabstop'	  'ts'	    number of spaces that <Tab> in file uses
 'tabline'	  'tal'     custom format for the console tab pages line
 'tabpagemax'	  'tpm'     maximum number of tab pages for |-p| and "tab all"
+'tabstop'	  'ts'	    number of spaces that <Tab> in file uses
 'tagbsearch'	  'tbs'     use binary searching in tags files
 'taglength'	  'tl'	    number of significant characters for a tag
 'tagrelative'	  'tr'	    file names in tag file are relative

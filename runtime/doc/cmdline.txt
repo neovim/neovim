@@ -1,4 +1,4 @@
-*cmdline.txt*   For Vim version 7.4.  Last change: 2014 Sep 06
+*cmdline.txt*   For Vim version 7.4.  Last change: 2015 Jul 21
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -565,6 +565,7 @@ starts editing the three files "foo bar", "goes to" and "school ".
 When you want to use the special characters '"' or '|' in a command, or want
 to use '%' or '#' in a file name, precede them with a backslash.  The
 backslash is not required in a range and in the ":substitute" command.
+See also |`=|.
 
 							*:_!*
 The '!' (bang) character after an Ex command makes the command behave in a
@@ -715,7 +716,7 @@ example, "%" stands for the current file name, while CTRL-R % inserts the
 current file name right away.  See |c_CTRL-R|.
 
 Note: If you want to avoid the special characters in a Vim script you may want
-to use |fnameescape()|.
+to use |fnameescape()|.  Also see |`=|.
 
 
 In Ex commands, at places where a file name can be used, the following
@@ -755,7 +756,7 @@ it, no matter how many backslashes.
 	   #			alternate.file
 	   \#			#
 	   \\#			\#
-
+Also see |`=|.
 			       *:<cword>* *:<cWORD>* *:<cfile>* *<cfile>*
 			       *:<sfile>* *<sfile>* *:<afile>* *<afile>*
 			       *:<abuf>* *<abuf>* *:<amatch>* *<amatch>*
@@ -910,6 +911,7 @@ Examples: (alternate file name is "?readme?")
 	:e #.*		:e {files matching "?readme?.*"}
 	:cd <cfile>	:cd {file name under cursor}
 	:cd <cfile>*	:cd {file name under cursor plus "*" and then expanded}
+Also see |`=|.
 
 When the expanded argument contains a "!" and it is used for a shell command
 (":!cmd", ":r !cmd" or ":w !cmd"), the "!" is escaped with a backslash to
@@ -935,6 +937,7 @@ for the file "$home" in the root directory.  A few examples:
 	\$home		file "$home" in current directory
 	/\$home		file "$home" in root directory
 	\\$home		file "\\", followed by expanded $home
+Also see |`=|.
 
 ==============================================================================
 7. Command-line window				*cmdline-window* *cmdwin*

@@ -2174,6 +2174,9 @@ au BufNewFile,BufRead *.tli			setf tli
 " Telix Salt
 au BufNewFile,BufRead *.slt			setf tsalt
 
+" Tera Term Language
+au BufRead,BufNewFile *.ttl			setf teraterm
+
 " Terminfo
 au BufNewFile,BufRead *.ti			setf terminfo
 

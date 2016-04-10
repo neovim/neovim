@@ -1,6 +1,8 @@
 " Vim indent file
 " Language:         Shell Script
-" Maintainer:       Peter Aronoff <telemachus@arpinum.org>
+" Maintainer:       Currently unmaintained. If you want to take it, please
+" 		    email Bram
+" Previous Maintainer: Peter Aronoff <telemachus@arpinum.org>
 " Original Author:  Nikolai Weibull <now@bitwi.se>
 " Latest Revision:  2014-08-22
 
