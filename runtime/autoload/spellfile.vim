@@ -1,6 +1,4 @@
 " Vim script to download a missing spell file
-" Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2012 Jan 08
 
 if !exists('g:spellfile_URL')
   " Prefer using http:// when netrw should be able to use it, since
@@ -43,22 +41,23 @@ function! spellfile#LoadFile(lang)
   if len(dirlist) == 0
     let dir_to_create = spellfile#WritableSpellDir()
     if &verbose || dir_to_create != ''
-      echomsg 'spellfile#LoadFile(): There is no writable spell directory.'
+      echomsg 'spellfile#LoadFile(): No (writable) spell directory found.'
     endif
     if dir_to_create != ''
-      if confirm("Shall I create " . dir_to_create, "&Yes\n&No", 2) == 1
-	" After creating the directory it should show up in the list.
-	call mkdir(dir_to_create, "p")
-	let [dirlist, dirchoices] = spellfile#GetDirChoices()
-      endif
+      call mkdir(dir_to_create, "p")
+      " Now it should show up in the list.
+      let [dirlist, dirchoices] = spellfile#GetDirChoices()
     endif
     if len(dirlist) == 0
+      echomsg 'Failed to create: '.dir_to_create
       return
+    else
+      echomsg 'Created '.dir_to_create
     endif
   endif
 
-  let msg = 'Cannot find spell file for "' . a:lang . '" in ' . &enc
-  let msg .= "\nDo you want me to try downloading it?"
+  let msg = 'No spell file for "' . a:lang . '" in ' . &enc
+  let msg .= "\nDownload it?"
   if confirm(msg, "&Yes\n&No", 2) == 1
     let enc = &encoding
     if enc == 'iso-8859-15'
@@ -78,78 +77,77 @@ function! spellfile#LoadFile(lang)
       " Careful: Nread() may have opened a new window for the error message,
       " we need to go back to our own buffer and window.
       if newbufnr != winbufnr(0)
-	let winnr = bufwinnr(newbufnr)
-	if winnr == -1
-	  " Our buffer has vanished!?  Open a new window.
-	  echomsg "download buffer disappeared, opening a new one"
-	  new
-	  setlocal bin fenc=
-	else
-	  exe winnr . "wincmd w"
-	endif
+        let winnr = bufwinnr(newbufnr)
+        if winnr == -1
+          " Our buffer has vanished!?  Open a new window.
+          echomsg "download buffer disappeared, opening a new one"
+          new
+          setlocal bin fenc=
+        else
+          exe winnr . "wincmd w"
+        endif
       endif
       if newbufnr == winbufnr(0)
-	" We are back the old buffer, remove any (half-finished) download.
-        g/^/d
+        " We are back the old buffer, remove any (half-finished) download.
+        g/^/d_
       else
-	let newbufnr = winbufnr(0)
+        let newbufnr = winbufnr(0)
       endif
 
       let fname = a:lang . '.ascii.spl'
       echo 'Could not find it, trying ' . fname . '...'
       call spellfile#Nread(fname)
       if getline(2) !~ 'VIMspell'
-	echo 'Sorry, downloading failed'
-	exe newbufnr . "bwipe!"
-	return
+        echo 'Download failed'
+        exe newbufnr . "bwipe!"
+        return
       endif
     endif
 
     " Delete the empty first line and mark the file unmodified.
-    1d
+    1d_
     set nomod
 
-    let msg = "In which directory do you want to write the file:"
-    for i in range(len(dirlist))
-      let msg .= "\n" . (i + 1) . '. ' . dirlist[i]
-    endfor
-    let dirchoice = confirm(msg, dirchoices) - 2
+    if len(dirlist) == 1
+      let dirchoice = 0
+    else
+      let msg = "In which directory do you want to write the file:"
+      for i in range(len(dirlist))
+        let msg .= "\n" . (i + 1) . '. ' . dirlist[i]
+      endfor
+      let dirchoice = confirm(msg, dirchoices) - 2
+    endif
     if dirchoice >= 0
       if exists('*fnameescape')
-	let dirname = fnameescape(dirlist[dirchoice])
+        let dirname = fnameescape(dirlist[dirchoice])
       else
-	let dirname = escape(dirlist[dirchoice], ' ')
+        let dirname = escape(dirlist[dirchoice], ' ')
       endif
       setlocal fenc=
       exe "write " . dirname . '/' . fname
 
-      " Also download the .sug file, if the user wants to.
-      let msg = "Do you want me to try getting the .sug file?\n"
-      let msg .= "This will improve making suggestions for spelling mistakes,\n"
-      let msg .= "but it uses quite a bit of memory."
-      if confirm(msg, "&No\n&Yes") == 2
-	g/^/d
-	let fname = substitute(fname, '\.spl$', '.sug', '')
-	echo 'Downloading ' . fname . '...'
-	call spellfile#Nread(fname)
-	if getline(2) =~ 'VIMsug'
-	  1d
-	  exe "write " . dirname . '/' . fname
-	  set nomod
-	else
-	  echo 'Sorry, downloading failed'
-	  " Go back to our own buffer/window, Nread() may have taken us to
-	  " another window.
-	  if newbufnr != winbufnr(0)
-	    let winnr = bufwinnr(newbufnr)
-	    if winnr != -1
-	      exe winnr . "wincmd w"
-	    endif
-	  endif
-	  if newbufnr == winbufnr(0)
-	    set nomod
-	  endif
-	endif
+      " Also download the .sug file.
+      g/^/d_
+      let fname = substitute(fname, '\.spl$', '.sug', '')
+      echo 'Downloading ' . fname . '...'
+      call spellfile#Nread(fname)
+      if getline(2) =~ 'VIMsug'
+        1d_
+        exe "write " . dirname . '/' . fname
+        set nomod
+      else
+        echo 'Download failed'
+        " Go back to our own buffer/window, Nread() may have taken us to
+        " another window.
+        if newbufnr != winbufnr(0)
+          let winnr = bufwinnr(newbufnr)
+          if winnr != -1
+            exe winnr . "wincmd w"
+          endif
+        endif
+        if newbufnr == winbufnr(0)
+          set nomod
+        endif
       endif
     endif
 
