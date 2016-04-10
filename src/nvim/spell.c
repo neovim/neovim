@@ -2332,14 +2332,17 @@ static void spell_load_lang(char_u *lang)
 
   if (r == FAIL) {
     if (starting) {
-      // Some startup file sets &spell, but the necessary files don't exist:
-      // try to prompt the user at VimEnter. Also set spell again. #3027
-      do_cmdline_cmd(
-        "autocmd VimEnter * call spellfile#LoadFile(&spelllang)|set spell");
+      // Prompt the user at VimEnter if spell files are missing. #3027
+      // Plugins aren't loaded yet, so spellfile.vim cannot handle this case.
+      char autocmd_buf[128] = { 0 };
+      snprintf(autocmd_buf, sizeof(autocmd_buf),
+               "autocmd VimEnter * call spellfile#LoadFile('%s')|set spell",
+               lang);
+      do_cmdline_cmd(autocmd_buf);
     } else {
       smsg(
         _("Warning: Cannot find word list \"%s.%s.spl\" or \"%s.ascii.spl\""),
-	    lang, spell_enc(), lang);
+        lang, spell_enc(), lang);
     }
   } else if (sl.sl_slang != NULL) {
     // At least one file was loaded, now load ALL the additions.
