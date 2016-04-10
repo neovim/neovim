@@ -333,6 +333,39 @@ local function function_specs_for(fn, sync, first_arg_factory, init)
           runx(sync, handler, on_setup)
         end)
       end)
+
+      describe('with range', function()
+        it('ok', function()
+          call(fn, args..[[, {'range': ''}]])
+          local function on_setup()
+            command('%call TestFunction(1, "a", ["b", "c"])')
+          end
+
+          local function handler(method, arguments)
+            eq('test-handler', method)
+            eq({{1, 'a', {'b', 'c'}}, {1, 1}}, arguments)
+            return 'rv'
+          end
+
+          runx(sync, handler, on_setup)
+        end)
+      end)
+      describe('with eval/range', function()
+        it('ok', function()
+          call(fn, args..[[, {'eval': '4', 'range': ''}]])
+          local function on_setup()
+            command('%call TestFunction(1, "a", ["b", "c"])')
+          end
+
+          local function handler(method, arguments)
+            eq('test-handler', method)
+            eq({{1, 'a', {'b', 'c'}}, {1, 1}, 4}, arguments)
+            return 'rv'
+          end
+
+          runx(sync, handler, on_setup)
+        end)
+      end)
     end)
   end)
 end
