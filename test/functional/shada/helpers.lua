@@ -20,14 +20,8 @@ local function nvim_argv()
   end
 end
 
-local session = nil
-
 local reset = function()
-  if session then
-    session:exit(0)
-  end
-  session = spawn(nvim_argv())
-  set_session(session)
+  set_session(spawn(nvim_argv()))
   meths.set_var('tmpname', tmpname)
 end
 

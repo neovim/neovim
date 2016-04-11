@@ -59,6 +59,9 @@ end
 local session, loop_running, last_error
 
 local function set_session(s)
+  if session then
+    session:exit(0)
+  end
   session = s
 end
 
@@ -218,15 +221,12 @@ local function spawn(argv, merge)
 end
 
 local function clear(extra_cmd)
-  if session then
-    session:exit(0)
-  end
   local args = {unpack(nvim_argv)}
   if extra_cmd ~= nil then
     table.insert(args, '--cmd')
     table.insert(args, extra_cmd)
   end
-  session = spawn(args)
+  set_session(spawn(args))
 end
 
 local function insert(...)
