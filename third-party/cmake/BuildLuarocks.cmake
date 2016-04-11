@@ -89,6 +89,9 @@ list(APPEND THIRD_PARTY_DEPS luarocks)
 
 if(USE_BUNDLED_LUAJIT)
   add_dependencies(luarocks luajit)
+  if(MINGW AND CMAKE_CROSSCOMPILING)
+    add_dependencies(luarocks luajit_host)
+  endif()
 endif()
 
 # Each target depends on the previous module, this serializes all calls to
@@ -128,11 +131,15 @@ if(USE_BUNDLED_BUSTED)
   add_custom_target(luacheck
     DEPENDS ${HOSTDEPS_BIN_DIR}/luacheck)
 
+  set(LUV_DEPS luacheck luv-static)
+  if(MINGW AND CMAKE_CROSSCOMPILING)
+    set(LUV_DEPS ${LUV_DEPS} libuv_host)
+  endif()
   add_custom_command(OUTPUT ${HOSTDEPS_LIB_DIR}/luarocks/rocks/luv
     COMMAND ${LUAROCKS_BINARY}
     ARGS make ${LUAROCKS_BUILDARGS} LIBUV_DIR=${HOSTDEPS_INSTALL_DIR} CFLAGS='-O0 -g3 -fPIC'
     WORKING_DIRECTORY ${DEPS_BUILD_DIR}/src/luv
-    DEPENDS luacheck luv-static)
+    DEPENDS ${LUV_DEPS})
   add_custom_target(luv
     DEPENDS ${HOSTDEPS_LIB_DIR}/luarocks/rocks/luv)
 
