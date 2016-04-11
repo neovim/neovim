@@ -128,6 +128,14 @@ if(USE_BUNDLED_BUSTED)
   add_custom_target(luacheck
     DEPENDS ${HOSTDEPS_BIN_DIR}/luacheck)
 
+  add_custom_command(OUTPUT ${HOSTDEPS_LIB_DIR}/luarocks/rocks/luv
+    COMMAND ${LUAROCKS_BINARY}
+    ARGS make ${LUAROCKS_BUILDARGS} LIBUV_DIR=${HOSTDEPS_INSTALL_DIR} CFLAGS='-O0 -g3 -fPIC'
+    WORKING_DIRECTORY ${DEPS_BUILD_DIR}/src/luv
+    DEPENDS luacheck luv-static)
+  add_custom_target(luv
+    DEPENDS ${HOSTDEPS_LIB_DIR}/luarocks/rocks/luv)
+
   add_custom_command(OUTPUT ${HOSTDEPS_LIB_DIR}/luarocks/rocks/nvim-client
     COMMAND ${LUAROCKS_BINARY}
     ARGS build https://raw.githubusercontent.com/neovim/lua-client/0.0.1-14/nvim-client-0.0.1-14.rockspec ${LUAROCKS_BUILDARGS} LIBUV_DIR=${HOSTDEPS_INSTALL_DIR}
