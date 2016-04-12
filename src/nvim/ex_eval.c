@@ -1370,7 +1370,11 @@ void ex_catch(exarg_T *eap)
         }
         save_cpo  = p_cpo;
         p_cpo = (char_u *)"";
+        // Disable error messages, it will make current exception
+        // invalid
+        ++emsg_off;
         regmatch.regprog = vim_regcomp(pat, RE_MAGIC + RE_STRING);
+        --emsg_off;
         regmatch.rm_ic = FALSE;
         if (end != NULL)
           *end = save_char;
