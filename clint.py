@@ -2291,6 +2291,11 @@ def CheckSpacing(filename, clean_lines, linenum, nesting_state, error):
     # there's too little whitespace, we get concerned.  It's hard to tell,
     # though, so we punt on this one for now.  TODO.
 
+    match = Search(r'(?:[^ (*/![])+(?<!\+\+|--)\*', line)
+    if match:
+        error(filename, linenum, 'whitespace/operators', 2,
+              'Missing space before asterisk in %s' % match.group(0))
+
     # You should always have whitespace around binary operators.
     #
     # Check <= and >= first to avoid false positives with < and >, then
