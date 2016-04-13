@@ -272,7 +272,7 @@ describe('ShaDa forward compatibility support code', function()
     eq(0, exc_exec(sdrcmd(true)))
     -- getreg may return empty list as list with NULL pointer which API 
     -- translates into nil for some reason.
-    eq({}, funcs.getreg('a', 1, 1) or {})
+    eq(NIL, funcs.getreg('a', 1, 1) or {})
     eq('', funcs.getregtype('a'))
     nvim_command('wshada ' .. shada_fname)
     local found = 0

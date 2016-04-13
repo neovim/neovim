@@ -80,7 +80,7 @@ describe('vim_* functions', function()
     it('set_var returns the old value', function()
       local val1 = {1, 2, {['3'] = 1}}
       local val2 = {4, 7}
-      eq(nil, nvim('set_var', 'lua', val1))
+      eq(NIL, nvim('set_var', 'lua', val1))
       eq(val1, nvim('set_var', 'lua', val2))
     end)
 

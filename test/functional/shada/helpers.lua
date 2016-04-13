@@ -3,7 +3,7 @@ local spawn, set_session, meths, nvim_prog =
   helpers.spawn, helpers.set_session, helpers.meths, helpers.nvim_prog
 local write_file, merge_args = helpers.write_file, helpers.merge_args
 
-local msgpack = require('MessagePack')
+local mpack = require('mpack')
 
 local tmpname = os.tmpname()
 local additional_cmd = ''
@@ -20,14 +20,8 @@ local function nvim_argv()
   end
 end
 
-local session = nil
-
 local reset = function()
-  if session then
-    session:exit(0)
-  end
-  session = spawn(nvim_argv())
-  set_session(session)
+  set_session(spawn(nvim_argv()))
   meths.set_var('tmpname', tmpname)
 end
 
@@ -66,13 +60,13 @@ local read_shada_file = function(fname)
   local fd = io.open(fname, 'r')
   local mstring = fd:read('*a')
   fd:close()
-  local unpacker = msgpack.unpacker(mstring)
+  local unpack = mpack.Unpacker()
   local ret = {}
-  local cur
+  local cur, val
   local i = 0
-  while true do
-    local off, val = unpacker()
-    if not off then break end
+  local off = 1
+  while off <= #mstring do
+    val, off = unpack(mstring, off)
     if i % 4 == 0 then
       cur = {}
       ret[#ret + 1] = cur

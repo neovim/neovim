@@ -753,6 +753,7 @@ static void command_line_scan(mparm_T *parmp)
               putchar(b->data[i]);
             }
 
+            msgpack_packer_free(p);
             mch_exit(0);
           } else if (STRICMP(argv[0] + argv_idx, "headless") == 0) {
             parmp->headless = true;

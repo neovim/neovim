@@ -9,7 +9,7 @@ describe(':wshada', function()
 
   before_each(function()
     if session then
-      session:exit(0)
+      session:close()
     end
 
     -- Override the default session because we need 'swapfile' for these tests.

@@ -24,6 +24,6 @@ describe('u_* functions', function()
                            '-c', 'set undodir=. undofile'})
     set_session(session)
     execute('echo "True"')  -- Should not error out due to crashed Neovim
-    session:exit(0)
+    session:close()
   end)
 end)

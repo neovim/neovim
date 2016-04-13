@@ -25,7 +25,7 @@ local session = nil
 
 local reset = function(...)
   if session then
-    session:exit(0)
+    session:close()
   end
   session = spawn(nvim_argv(...))
   set_session(session)

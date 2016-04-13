@@ -4,7 +4,7 @@ local eq, nvim_eval, nvim_command, nvim, exc_exec, funcs, nvim_feed, curbuf =
   helpers.funcs, helpers.feed, helpers.curbuf
 local neq = helpers.neq
 
-local msgpack = require('MessagePack')
+local mpack = require('mpack')
 
 local plugin_helpers = require('test.functional.plugin.helpers')
 local reset = plugin_helpers.reset
@@ -15,13 +15,13 @@ local get_shada_rw = shada_helpers.get_shada_rw
 local mpack_eq = function(expected, mpack_result)
   local mpack_keys = {'type', 'timestamp', 'length', 'value'}
 
-  local unpacker = msgpack.unpacker(mpack_result)
+  local unpack = mpack.Unpacker()
   local actual = {}
-  local cur
+  local cur, val
   local i = 0
-  while true do
-    local off, val = unpacker()
-    if not off then break end
+  local off = 1
+  while off <= #mpack_result do
+    val, off = unpack(mpack_result, off)
     if i % 4 == 0 then
       cur = {}
       actual[#actual + 1] = cur
@@ -76,36 +76,6 @@ describe('In autoload/shada.vim', function()
 
   local sp = function(typ, val)
     return ('{"_TYPE": v:msgpack_types.%s, "_VAL": %s}'):format(typ, val)
-  end
-
-  local st_meta = {
-    __pairs=function(table)
-      local ret = {}
-      local next_key = nil
-      local num_keys = 0
-      while true do
-        next_key = next(table, next_key)
-        if next_key == nil then
-          break
-        end
-        num_keys = num_keys + 1
-        ret[num_keys] = {next_key, table[next_key]}
-      end
-      table.sort(ret, function(a, b)
-        return a[1] < b[1]
-      end)
-      local state = {i=0}
-      return (function(state_, _)
-        state_.i = state_.i + 1
-        if ret[state_.i] then
-          return table.unpack(ret[state_.i])
-        end
-      end), state
-    end
-  }
-
-  local st = function(table)
-    return setmetatable(table, st_meta)
   end
 
   describe('function shada#mpack_to_sd', function()
@@ -184,7 +154,7 @@ describe('In autoload/shada.vim', function()
         '  + b                 2',
         '  + c    column       3',
         '  + d                 4',
-      }, {{type=1, timestamp=0, data=st({a=1, b=2, c=3, d=4})}})
+      }, {{type=1, timestamp=0, data={a=1, b=2, c=3, d=4}}})
       sd2strings_eq({
         'Header with timestamp ' .. epoch .. ':',
         '  % Key  Value',
@@ -2848,3 +2818,4 @@ describe('syntax/shada.vim', function()
     eq(exp, act)
   end)
 end)
+

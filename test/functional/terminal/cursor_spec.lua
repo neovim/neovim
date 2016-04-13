@@ -59,7 +59,7 @@ describe('terminal cursor', function()
       ]])
     end)
 
-    it('is positioned correctly when focused', function()
+    pending('is positioned correctly when focused', function()
       feed('i')
       screen:expect([[
           1 tty ready                                     |

@@ -21,6 +21,7 @@ option(USE_BUNDLED_LIBUV "Use the bundled libuv." ${USE_BUNDLED})
 option(USE_BUNDLED_MSGPACK "Use the bundled msgpack." ${USE_BUNDLED})
 option(USE_BUNDLED_LUAJIT "Use the bundled version of luajit." ${USE_BUNDLED})
 option(USE_BUNDLED_LUAROCKS "Use the bundled version of luarocks." ${USE_BUNDLED})
+option(USE_BUNDLED_LUV "Use the bundled version of luv." ${USE_BUNDLED})
 #XXX(tarruda): Lua is only used for debugging the functional test client, no
 # build it unless explicitly requested
 option(USE_BUNDLED_LUA "Use the bundled version of lua." OFF)
@@ -100,6 +101,9 @@ set(LIBVTERM_SHA256 1a4272be91d9614dc183a503786df83b6584e4afaab7feaaa5409f841afb
 
 set(JEMALLOC_URL https://github.com/jemalloc/jemalloc/releases/download/4.0.2/jemalloc-4.0.2.tar.bz2)
 set(JEMALLOC_SHA256 0d8a9c8a98adb6983e0ccb521d45d9db1656ef3e71d0b14fb333f2c8138f4611)
+            
+set(LUV_URL https://github.com/luvit/luv/archive/146f1ce4c08c3b67f604c9ee1e124b1cf5c15cf3.tar.gz)
+set(LUV_SHA256 3d537f8eb9fa5adb146a083eae22af886aee324ec268e2aa0fa75f2f1c52ca7a)
 
 if(USE_BUNDLED_UNIBILIUM)
   include(BuildUnibilium)
@@ -135,6 +139,10 @@ endif()
 
 if(USE_BUNDLED_JEMALLOC)
   include(BuildJeMalloc)
+endif()
+
+if(USE_BUNDLED_LUV)
+  include(BuildLuv)
 endif()
 
 add_custom_target(clean-shared-libraries

@@ -367,7 +367,7 @@ endforeach()
 
 # Find Lua interpreter
 include(LuaHelpers)
-set(LUA_DEPENDENCIES lpeg MessagePack bit)
+set(LUA_DEPENDENCIES lpeg mpack bit)
 if(NOT LUA_PRG)
   foreach(CURRENT_LUA_PRG luajit lua)
     # If LUA_PRG is set find_program() will not search

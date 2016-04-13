@@ -138,7 +138,7 @@ do
     -- this is just a helper to get any canonical name of a color
     colornames[rgb] = name
   end
-  session:exit(0)
+  session:close()
   Screen.colors = colors
   Screen.colornames = colornames
 end
