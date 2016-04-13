@@ -298,6 +298,94 @@ describe('vim_* functions', function()
     end)
   end)
 
+  describe('call_atomic', function()
+    it('works', function()
+      meths.buf_set_lines(0, 0, -1, true, {'first'})
+      local req = {
+        {'nvim_get_current_line', {}},
+        {'nvim_set_current_line', {'second'}},
+      }
+      eq({{'first', NIL}, NIL}, meths.call_atomic(req))
+      eq({'second'}, meths.buf_get_lines(0, 0, -1, true))
+    end)
+
+    it('allows multiple return values', function()
+      local req = {
+        {'nvim_set_var', {'avar', true}},
+        {'nvim_set_var', {'bvar', 'string'}},
+        {'nvim_get_var', {'avar'}},
+        {'nvim_get_var', {'bvar'}},
+      }
+      eq({{NIL, NIL, true, 'string'}, NIL}, meths.call_atomic(req))
+    end)
+
+    it('is aborted by errors in call', function()
+      local error_types = meths.get_api_info()[2].error_types
+      local req = {
+        {'nvim_set_var', {'one', 1}},
+        {'nvim_buf_set_lines', {}},
+        {'nvim_set_var', {'two', 2}},
+      }
+      eq({{NIL}, {1, error_types.Exception.id,
+                  'Wrong number of arguments: expecting 5 but got 0'}},
+         meths.call_atomic(req))
+      eq(1, meths.get_var('one'))
+      eq(false, pcall(meths.get_var, 'two'))
+
+      -- still returns all previous successful calls
+      req = {
+        {'nvim_set_var', {'avar', 5}},
+        {'nvim_set_var', {'bvar', 'string'}},
+        {'nvim_get_var', {'avar'}},
+        {'nvim_buf_get_lines', {0, 10, 20, true}},
+        {'nvim_get_var', {'bvar'}},
+      }
+      eq({{NIL, NIL, 5}, {3, error_types.Validation.id, 'Index out of bounds'}},
+        meths.call_atomic(req))
+
+      req = {
+        {'i_am_not_a_method', {'xx'}},
+        {'nvim_set_var', {'avar', 10}},
+      }
+      eq({{}, {0, error_types.Exception.id, 'Invalid method name'}},
+         meths.call_atomic(req))
+      eq(5, meths.get_var('avar'))
+    end)
+
+    it('throws error on malformated arguments', function()
+      local req = {
+        {'nvim_set_var', {'avar', 1}},
+        {'nvim_set_var'},
+        {'nvim_set_var', {'avar', 2}},
+      }
+      local status, err = pcall(meths.call_atomic, req)
+      eq(false, status)
+      ok(err:match(' All items in calls array must be arrays of size 2') ~= nil)
+      -- call before was done, but not after
+      eq(1, meths.get_var('avar'))
+
+      req = {
+        {'nvim_set_var', {'bvar', {2,3}}},
+        12,
+      }
+      status, err = pcall(meths.call_atomic, req)
+      eq(false, status)
+      ok(err:match('All items in calls array must be arrays') ~= nil)
+      eq({2,3}, meths.get_var('bvar'))
+
+      req = {
+        {'nvim_set_current_line', 'little line'},
+        {'nvim_set_var', {'avar', 3}},
+      }
+      status, err = pcall(meths.call_atomic, req)
+      eq(false, status)
+      ok(err:match('args must be Array') ~= nil)
+      -- call before was done, but not after
+      eq(1, meths.get_var('avar'))
+      eq({''}, meths.buf_get_lines(0, 0, -1, true))
+    end)
+  end)
+
   it('can throw exceptions', function()
     local status, err = pcall(nvim, 'get_option', 'invalid-option')
     eq(false, status)

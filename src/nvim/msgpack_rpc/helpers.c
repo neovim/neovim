@@ -455,7 +455,6 @@ void msgpack_rpc_from_dictionary(Dictionary result, msgpack_packer *res)
 
 /// Handler executed when an invalid method name is passed
 Object msgpack_rpc_handle_missing_method(uint64_t channel_id,
-                                         uint64_t request_id,
                                          Array args,
                                          Error *error)
 {
@@ -466,7 +465,6 @@ Object msgpack_rpc_handle_missing_method(uint64_t channel_id,
 
 /// Handler executed when malformated arguments are passed
 Object msgpack_rpc_handle_invalid_arguments(uint64_t channel_id,
-                                            uint64_t request_id,
                                             Array args,
                                             Error *error)
 {

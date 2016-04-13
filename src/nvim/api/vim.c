@@ -663,6 +663,95 @@ Array nvim_get_api_info(uint64_t channel_id)
   return rv;
 }
 
+/// Call many api methods atomically
+///
+/// This has two main usages: Firstly, to perform several requests from an
+/// async context atomically, i.e. without processing requests from other rpc
+/// clients or redrawing or allowing user interaction in between. Note that api
+/// methods that could fire autocommands or do event processing still might do
+/// so. For instance invoking the :sleep command might call timer callbacks.
+/// Secondly, it can be used to reduce rpc overhead (roundtrips) when doing
+/// many requests in sequence.
+///
+/// @param calls an array of calls, where each call is described by an array
+/// with two elements: the request name, and an array of arguments.
+/// @param[out] err Details of a validation error of the nvim_multi_request call
+/// itself, i e malformatted `calls` parameter. Errors from called methods will
+/// be indicated in the return value, see below.
+///
+/// @return an array with two elements. The first is an array of return
+/// values. The second is NIL if all calls succeeded. If a call resulted in
+/// an error, it is a three-element array with the zero-based index of the call
+/// which resulted in an error, the error type and the error message. If an
+/// error ocurred, the values from all preceding calls will still be returned.
+Array nvim_call_atomic(uint64_t channel_id, Array calls, Error *err)
+  FUNC_API_NOEVAL
+{
+  Array rv = ARRAY_DICT_INIT;
+  Array results = ARRAY_DICT_INIT;
+  Error nested_error = ERROR_INIT;
+
+  size_t i;  // also used for freeing the variables
+  for (i = 0; i < calls.size; i++) {
+    if (calls.items[i].type != kObjectTypeArray) {
+      api_set_error(err,
+                    Validation,
+                    _("All items in calls array must be arrays"));
+      goto validation_error;
+    }
+    Array call = calls.items[i].data.array;
+    if (call.size != 2) {
+      api_set_error(err,
+                    Validation,
+                    _("All items in calls array must be arrays of size 2"));
+      goto validation_error;
+    }
+
+    if (call.items[0].type != kObjectTypeString) {
+      api_set_error(err,
+                    Validation,
+                    _("name must be String"));
+      goto validation_error;
+    }
+    String name = call.items[0].data.string;
+
+    if (call.items[1].type != kObjectTypeArray) {
+      api_set_error(err,
+                    Validation,
+                    _("args must be Array"));
+      goto validation_error;
+    }
+    Array args = call.items[1].data.array;
+
+    MsgpackRpcRequestHandler handler = msgpack_rpc_get_handler_for(name.data,
+                                                                   name.size);
+    Object result = handler.fn(channel_id, args, &nested_error);
+    if (nested_error.set) {
+      // error handled after loop
+      break;
+    }
+
+    ADD(results, result);
+  }
+
+  ADD(rv, ARRAY_OBJ(results));
+  if (nested_error.set) {
+    Array errval = ARRAY_DICT_INIT;
+    ADD(errval, INTEGER_OBJ((Integer)i));
+    ADD(errval, INTEGER_OBJ(nested_error.type));
+    ADD(errval, STRING_OBJ(cstr_to_string(nested_error.msg)));
+    ADD(rv, ARRAY_OBJ(errval));
+  } else {
+    ADD(rv, NIL);
+  }
+  return rv;
+
+validation_error:
+  api_free_array(results);
+  return rv;
+}
+
+
 /// Writes a message to vim output or error buffer. The string is split
 /// and flushed after each newline. Incomplete lines are kept for writing
 /// later.
