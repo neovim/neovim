@@ -191,6 +191,7 @@ _ERROR_CATEGORIES = [
     'readability/nul',
     'readability/todo',
     'readability/utf8',
+    'readability/increment',
     'runtime/arrays',
     'runtime/int',
     'runtime/invalid_increment',
@@ -3199,6 +3200,23 @@ def CheckLanguage(filename, clean_lines, linenum, file_extension,
         error(filename, linenum, 'readability/bool', 4,
               'Use %s instead of %s.' % (token.lower(), token))
 
+    # Detect preincrement/predecrement
+    match = Match(r'^\s*(?:\+\+|--)', line)
+    if match:
+        error(filename, linenum, 'readability/increment', 5,
+              'Do not use preincrement in statements, '
+              'use postincrement instead')
+    # Detect preincrement/predecrement in for(;; preincrement)
+    match = Search(r';\s*(\+\+|--)', line)
+    if match:
+        end_pos, end_depth = FindEndOfExpressionInLine(line, match.start(1), 1,
+                                                       '(', ')')
+        expr = line[match.start(1):end_pos]
+        if end_depth == 0 and ';' not in expr and ' = ' not in expr:
+            error(filename, linenum, 'readability/increment', 4,
+                  'Do not use preincrement in statements, including '
+                  'for(;; action)')
+
 
 def ProcessLine(filename, file_extension, clean_lines, line,
                 include_state, function_state, nesting_state, error,
@@ -3489,6 +3507,7 @@ def main():
 if __name__ == '__main__':
     main()
 
+# vim: ts=4 sts=4 sw=4
 
 # Ignore "too complex" warnings when using pymode.
 # pylama:ignore=C901
