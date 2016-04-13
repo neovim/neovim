@@ -1,9 +1,8 @@
 require('coxpcall')
+NIL = require('mpack').NIL
 local lfs = require('lfs')
 local assert = require('luassert')
-local Loop = require('nvim.loop')
-local MsgpackStream = require('nvim.msgpack_stream')
-local AsyncSession = require('nvim.async_session')
+local ChildProcessStream = require('nvim.child_process_stream')
 local Session = require('nvim.session')
 
 local nvim_prog = os.getenv('NVIM_PROG') or 'build/bin/nvim'
@@ -60,7 +59,7 @@ local session, loop_running, last_error
 
 local function set_session(s)
   if session then
-    session:exit(0)
+    session:close()
   end
   session = s
 end
@@ -212,12 +211,8 @@ local function merge_args(...)
 end
 
 local function spawn(argv, merge)
-  local loop = Loop.new()
-  local msgpack_stream = MsgpackStream.new(loop)
-  local async_session = AsyncSession.new(msgpack_stream)
-  local sess = Session.new(async_session)
-  loop:spawn(merge and merge_args(prepend_argv, argv) or argv)
-  return sess
+  local child_stream = ChildProcessStream.spawn(merge and merge_args(prepend_argv, argv) or argv)
+  return Session.new(child_stream)
 end
 
 local function clear(extra_cmd)

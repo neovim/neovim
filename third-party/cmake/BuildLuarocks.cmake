@@ -96,21 +96,19 @@ endif()
 
 # Each target depends on the previous module, this serializes all calls to
 # luarocks since it is unhappy to be called in parallel.
-add_custom_command(OUTPUT ${HOSTDEPS_LIB_DIR}/luarocks/rocks/lua-messagepack
+add_custom_command(OUTPUT ${HOSTDEPS_LIB_DIR}/luarocks/rocks/mpack
   COMMAND ${LUAROCKS_BINARY}
-  ARGS build lua-messagepack ${LUAROCKS_BUILDARGS}
+  ARGS build mpack ${LUAROCKS_BUILDARGS}
   DEPENDS luarocks)
-add_custom_target(lua-messagepack
-  DEPENDS ${HOSTDEPS_LIB_DIR}/luarocks/rocks/lua-messagepack)
-list(APPEND THIRD_PARTY_DEPS lua-messagepack)
+add_custom_target(mpack
+  DEPENDS ${HOSTDEPS_LIB_DIR}/luarocks/rocks/mpack)
+list(APPEND THIRD_PARTY_DEPS mpack)
 
 
-# Like before, depend on lua-messagepack to ensure serialization of install
-# commands
 add_custom_command(OUTPUT ${HOSTDEPS_LIB_DIR}/luarocks/rocks/lpeg
   COMMAND ${LUAROCKS_BINARY}
   ARGS build lpeg ${LUAROCKS_BUILDARGS}
-  DEPENDS lua-messagepack)
+  DEPENDS mpack)
 add_custom_target(lpeg
   DEPENDS ${HOSTDEPS_LIB_DIR}/luarocks/rocks/lpeg)
 
@@ -120,7 +118,7 @@ if(USE_BUNDLED_BUSTED)
   add_custom_command(OUTPUT ${HOSTDEPS_BIN_DIR}/busted
     COMMAND ${LUAROCKS_BINARY}
     ARGS build https://raw.githubusercontent.com/Olivine-Labs/busted/v2.0.rc11-0/busted-2.0.rc11-0.rockspec ${LUAROCKS_BUILDARGS}
-    DEPENDS luarocks)
+    DEPENDS lpeg)
   add_custom_target(busted
     DEPENDS ${HOSTDEPS_BIN_DIR}/busted)
 
@@ -145,8 +143,8 @@ if(USE_BUNDLED_BUSTED)
 
   add_custom_command(OUTPUT ${HOSTDEPS_LIB_DIR}/luarocks/rocks/nvim-client
     COMMAND ${LUAROCKS_BINARY}
-    ARGS build https://raw.githubusercontent.com/neovim/lua-client/0.0.1-14/nvim-client-0.0.1-14.rockspec ${LUAROCKS_BUILDARGS} LIBUV_DIR=${HOSTDEPS_INSTALL_DIR}
-    DEPENDS luacheck libuv)
+    ARGS build https://raw.githubusercontent.com/neovim/lua-client/0.0.1-24/nvim-client-0.0.1-24.rockspec ${LUAROCKS_BUILDARGS}
+    DEPENDS luv)
   add_custom_target(nvim-client
     DEPENDS ${HOSTDEPS_LIB_DIR}/luarocks/rocks/nvim-client)
 
