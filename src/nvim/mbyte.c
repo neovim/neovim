@@ -1304,35 +1304,38 @@ int utfc_ptr2char(const char_u *p, int *pcc)
  */
 int utfc_ptr2char_len(const char_u *p, int *pcc, int maxlen)
 {
-  int len;
-  int c;
-  int cc;
+#define IS_COMPOSING(s1, s2, s3)                                               \
+  (i == 0 ? UTF_COMPOSINGLIKE((s1), (s2)) : utf_iscomposing((s3)))
+
+  assert(maxlen > 0);
+
   int i = 0;
 
-  c = utf_ptr2char(p);
-  len = utf_ptr2len_len(p, maxlen);
-  /* Only accept a composing char when the first char isn't illegal. */
-  if ((len > 1 || *p < 0x80)
-      && len < maxlen
-      && p[len] >= 0x80
-      && UTF_COMPOSINGLIKE(p, p + len)) {
-    cc = utf_ptr2char(p + len);
-    for (;; ) {
-      pcc[i++] = cc;
-      if (i == MAX_MCO)
+  int len = utf_ptr2len_len(p, maxlen);
+  // Is it safe to use utf_ptr2char()?
+  bool safe = len > 1 && len <= maxlen;
+  int c = safe ? utf_ptr2char(p) : *p;
+
+  // Only accept a composing char when the first char isn't illegal.
+  if ((safe || c < 0x80) && len < maxlen && p[len] >= 0x80) {
+    for (; i < MAX_MCO; i++) {
+      int len_cc = utf_ptr2len_len(p + len, maxlen - len);
+      safe = len_cc > 1 && len_cc <= maxlen - len;
+      if (!safe || (pcc[i] = utf_ptr2char(p + len)) < 0x80
+          || !IS_COMPOSING(p, p + len, pcc[i])) {
         break;
-      len += utf_ptr2len_len(p + len, maxlen - len);
-      if (len >= maxlen
-          || p[len] < 0x80
-          || !utf_iscomposing(cc = utf_ptr2char(p + len)))
-        break;
+      }
+      len += len_cc;
     }
   }
 
-  if (i < MAX_MCO)      /* last composing char must be 0 */
+  if (i < MAX_MCO) {
+    // last composing char must be 0
     pcc[i] = 0;
+  }
 
   return c;
+#undef ISCOMPOSING
 }
 
 /*
