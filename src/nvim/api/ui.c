@@ -7,13 +7,12 @@
 #include "nvim/ui.h"
 #include "nvim/memory.h"
 #include "nvim/map.h"
-#include "nvim/msgpack_rpc/remote_ui.h"
 #include "nvim/msgpack_rpc/channel.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "msgpack_rpc/remote_ui.c.generated.h"
+# include "api/ui.c.generated.h"
 #endif
 
 typedef struct {
@@ -24,21 +23,13 @@ typedef struct {
 static PMap(uint64_t) *connected_uis = NULL;
 
 void remote_ui_init(void)
+    FUNC_API_NOEXPORT
 {
   connected_uis = pmap_new(uint64_t)();
-  // Add handler for "attach_ui"
-  String method = cstr_as_string("ui_attach");
-  MsgpackRpcRequestHandler handler = {.fn = remote_ui_attach, .async = false};
-  msgpack_rpc_add_method_handler(method, handler);
-  method = cstr_as_string("ui_detach");
-  handler.fn = remote_ui_detach;
-  msgpack_rpc_add_method_handler(method, handler);
-  method = cstr_as_string("ui_try_resize");
-  handler.fn = remote_ui_try_resize;
-  msgpack_rpc_add_method_handler(method, handler);
 }
 
 void remote_ui_disconnect(uint64_t channel_id)
+    FUNC_API_NOEXPORT
 {
   UI *ui = pmap_get(uint64_t)(connected_uis, channel_id);
   if (!ui) {
@@ -49,34 +40,30 @@ void remote_ui_disconnect(uint64_t channel_id)
   api_free_array(data->buffer);
   pmap_del(uint64_t)(connected_uis, channel_id);
   xfree(ui->data);
-  ui_detach(ui);
+  ui_detach_impl(ui);
   xfree(ui);
 }
 
-static Object remote_ui_attach(uint64_t channel_id, uint64_t request_id,
-                               Array args, Error *error)
+void ui_attach(uint64_t channel_id, Integer width, Integer height,
+               Boolean enable_rgb, Error *err)
 {
   if (pmap_has(uint64_t)(connected_uis, channel_id)) {
-    api_set_error(error, Exception, _("UI already attached for channel"));
-    return NIL;
+    api_set_error(err, Exception, _("UI already attached for channel"));
+    return;
   }
 
-  if (args.size != 3 || args.items[0].type != kObjectTypeInteger
-      || args.items[1].type != kObjectTypeInteger
-      || args.items[2].type != kObjectTypeBoolean
-      || args.items[0].data.integer <= 0 || args.items[1].data.integer <= 0) {
-    api_set_error(error, Validation,
-                  _("Invalid arguments. Expected: "
-                    "(uint width > 0, uint height > 0, bool enable_rgb)"));
-    return NIL;
+  if (width <= 0 || height <= 0) {
+    api_set_error(err, Validation,
+                  _("Expected width > 0 and height > 0"));
+    return;
   }
   UIData *data = xmalloc(sizeof(UIData));
   data->channel_id = channel_id;
   data->buffer = (Array)ARRAY_DICT_INIT;
   UI *ui = xcalloc(1, sizeof(UI));
-  ui->width = (int)args.items[0].data.integer;
-  ui->height = (int)args.items[1].data.integer;
-  ui->rgb = args.items[2].data.boolean;
+  ui->width = (int)width;
+  ui->height = (int)height;
+  ui->rgb = enable_rgb;
   ui->data = data;
   ui->resize = remote_ui_resize;
   ui->clear = remote_ui_clear;
@@ -102,44 +89,37 @@ static Object remote_ui_attach(uint64_t channel_id, uint64_t request_id,
   ui->set_title = remote_ui_set_title;
   ui->set_icon = remote_ui_set_icon;
   pmap_put(uint64_t)(connected_uis, channel_id, ui);
-  ui_attach(ui);
-  return NIL;
+  ui_attach_impl(ui);
+  return;
 }
 
-static Object remote_ui_detach(uint64_t channel_id, uint64_t request_id,
-                               Array args, Error *error)
+void ui_detach(uint64_t channel_id, Error *err)
 {
   if (!pmap_has(uint64_t)(connected_uis, channel_id)) {
-    api_set_error(error, Exception, _("UI is not attached for channel"));
+    api_set_error(err, Exception, _("UI is not attached for channel"));
   }
   remote_ui_disconnect(channel_id);
-
-  return NIL;
 }
 
-static Object remote_ui_try_resize(uint64_t channel_id, uint64_t request_id,
-                                   Array args, Error *error)
+Object ui_try_resize(uint64_t channel_id, Integer width,
+                     Integer height, Error *err)
 {
   if (!pmap_has(uint64_t)(connected_uis, channel_id)) {
-    api_set_error(error, Exception, _("UI is not attached for channel"));
+    api_set_error(err, Exception, _("UI is not attached for channel"));
   }
 
-  if (args.size != 2 || args.items[0].type != kObjectTypeInteger
-      || args.items[1].type != kObjectTypeInteger
-      || args.items[0].data.integer <= 0 || args.items[1].data.integer <= 0) {
-    api_set_error(error, Validation,
-                  _("Invalid arguments. Expected: "
-                    "(uint width > 0, uint height > 0)"));
+  if (width <= 0 || height <= 0) {
+    api_set_error(err, Validation,
+                  _("Expected width > 0 and height > 0"));
     return NIL;
   }
 
   UI *ui = pmap_get(uint64_t)(connected_uis, channel_id);
-  ui->width = (int)args.items[0].data.integer;
-  ui->height = (int)args.items[1].data.integer;
+  ui->width = (int)width;
+  ui->height = (int)height;
   ui_refresh();
   return NIL;
 }
-
 
 static void push_call(UI *ui, char *name, Array args)
 {
@@ -236,7 +216,7 @@ static void remote_ui_mode_change(UI *ui, int mode)
 }
 
 static void remote_ui_set_scroll_region(UI *ui, int top, int bot, int left,
-    int right)
+                                        int right)
 {
   Array args = ARRAY_DICT_INIT;
   ADD(args, INTEGER_OBJ(top));
@@ -297,7 +277,7 @@ static void remote_ui_highlight_set(UI *ui, HlAttrs attrs)
 static void remote_ui_put(UI *ui, uint8_t *data, size_t size)
 {
   Array args = ARRAY_DICT_INIT;
-  String str = {.data = xmemdupz(data, size), .size = size};
+  String str = { .data = xmemdupz(data, size), .size = size };
   ADD(args, STRING_OBJ(str));
   push_call(ui, "put", args);
 }

@@ -143,7 +143,7 @@ local pattern = concat(
   lit(')'),
   any_amount(concat(       -- optional attributes
     spaces,
-    lit('FUNC_ATTR_'),
+    lit('FUNC_'),
     any_amount(aw),
     one_or_no(concat(      -- attribute argument
       spaces,

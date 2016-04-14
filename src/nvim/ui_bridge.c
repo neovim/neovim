@@ -71,7 +71,7 @@ UI *ui_bridge_attach(UI *ui, ui_main_fn ui_main, event_scheduler scheduler)
   }
   uv_mutex_unlock(&rv->mutex);
 
-  ui_attach(&rv->bridge);
+  ui_attach_impl(&rv->bridge);
   return &rv->bridge;
 }
 
@@ -105,7 +105,7 @@ static void ui_bridge_stop(UI *b)
   uv_thread_join(&bridge->ui_thread);
   uv_mutex_destroy(&bridge->mutex);
   uv_cond_destroy(&bridge->cond);
-  ui_detach(b);
+  ui_detach_impl(b);
   xfree(b);
 }
 static void ui_bridge_stop_event(void **argv)
