@@ -2,7 +2,7 @@ local Screen = require('test.functional.ui.screen')
 local helpers = require('test.functional.helpers')
 
 local buf, eq, execute = helpers.curbufmeths, helpers.eq, helpers.execute
-local feed, nvim_prog = helpers.feed, helpers.nvim_prog
+local feed, nvim_prog, wait = helpers.feed, helpers.nvim_prog, helpers.wait
 local ok, set_session, spawn = helpers.ok, helpers.set_session, helpers.spawn
 
 local shada_file = 'test.shada'
@@ -59,6 +59,7 @@ describe(':oldfiles!', function()
     execute('edit testfile2')
     filename2 = buf.get_name()
     execute('wshada ' .. shada_file)
+    wait()
     _clear()
     execute('rshada! ' .. shada_file)
 
