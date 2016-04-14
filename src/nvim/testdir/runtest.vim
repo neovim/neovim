@@ -33,6 +33,15 @@ if &lines < 24 || &columns < 80
   cquit
 endif
 
+" This also enables use of line continuation.
+set viminfo+=nviminfo
+
+" Avoid stopping at the "hit enter" prompt
+set nomore
+
+" Output all messages in English.
+lang mess C
+
 " Source the test script.  First grab the file name, in case the script
 " navigates away.
 let testname = expand('%')
