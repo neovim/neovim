@@ -49,12 +49,17 @@ let done = 0
 let fail = 0
 let errors = []
 let messages = []
-try
+if expand('%') =~ 'test_viml.vim'
+  " this test has intentional errors, don't use try/catch.
   source %
-catch
-  let fail += 1
-  call add(errors, 'Caught exception: ' . v:exception . ' @ ' . v:throwpoint)
-endtry
+else
+  try
+    source %
+  catch
+    let fail += 1
+    call add(errors, 'Caught exception: ' . v:exception . ' @ ' . v:throwpoint)
+  endtry
+endif
 
 " Locate Test_ functions and execute them.
 redir @q

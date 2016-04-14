@@ -402,6 +402,512 @@ function Test_defining_functions()
 endfunc
 
 "-------------------------------------------------------------------------------
+" Test 7:   Continuing on errors outside functions			    {{{1
+"
+"	    On an error outside a function, the script processing continues
+"	    at the line following the outermost :endif or :endwhile.  When not
+"	    inside an :if or :while, the script processing continues at the next
+"	    line.
+"-------------------------------------------------------------------------------
+
+XpathINIT
+
+if 1
+    Xpath 'a'
+    while 1
+	Xpath 'b'
+	asdf
+	Xpath 'c'
+	break
+    endwhile | Xpath 'd'
+    Xpath 'e'
+endif | Xpath 'f'
+Xpath 'g'
+
+while 1
+    Xpath 'h'
+    if 1
+	Xpath 'i'
+	asdf
+	Xpath 'j'
+    endif | Xpath 'k'
+    Xpath 'l'
+    break
+endwhile | Xpath 'm'
+Xpath 'n'
+
+asdf
+Xpath 'o'
+
+asdf | Xpath 'p'
+Xpath 'q'
+
+let g:test7_result = g:Xpath
+
+func Test_error_in_script()
+    call assert_equal('abghinoq', g:test7_result)
+endfunc
+
+"-------------------------------------------------------------------------------
+" Test 8:   Aborting and continuing on errors inside functions		    {{{1
+"
+"	    On an error inside a function without the "abort" attribute, the
+"	    script processing continues at the next line (unless the error was
+"	    in a :return command).  On an error inside a function with the
+"	    "abort" attribute, the function is aborted and the script processing
+"	    continues after the function call; the value -1 is returned then.
+"-------------------------------------------------------------------------------
+
+XpathINIT
+
+function! T8_F()
+    if 1
+	Xpath 'a'
+	while 1
+	    Xpath 'b'
+	    asdf
+	    Xpath 'c'
+	    asdf | Xpath 'd'
+	    Xpath 'e'
+	    break
+	endwhile
+	Xpath 'f'
+    endif | Xpath 'g'
+    Xpath 'h'
+
+    while 1
+	Xpath 'i'
+	if 1
+	    Xpath 'j'
+	    asdf
+	    Xpath 'k'
+	    asdf | Xpath 'l'
+	    Xpath 'm'
+	endif
+	Xpath 'n'
+	break
+    endwhile | Xpath 'o'
+    Xpath 'p'
+
+    return novar		" returns (default return value 0)
+    Xpath 'q'
+    return 1			" not reached
+endfunction
+
+function! T8_G() abort
+    if 1
+	Xpath 'r'
+	while 1
+	    Xpath 's'
+	    asdf		" returns -1
+	    Xpath 't'
+	    break
+	endwhile
+	Xpath 'v'
+    endif | Xpath 'w'
+    Xpath 'x'
+
+    return -4			" not reached
+endfunction
+
+function! T8_H() abort
+    while 1
+	Xpath 'A'
+	if 1
+	    Xpath 'B'
+	    asdf		" returns -1
+	    Xpath 'C'
+	endif
+	Xpath 'D'
+	break
+    endwhile | Xpath 'E'
+    Xpath 'F'
+
+    return -4			" not reached
+endfunction
+
+" Aborted functions (T8_G and T8_H) return -1.
+let g:test8_sum = (T8_F() + 1) - 4 * T8_G() - 8 * T8_H()
+Xpath 'X'
+let g:test8_result = g:Xpath
+
+func Test_error_in_function()
+    call assert_equal(13, g:test8_sum)
+    call assert_equal('abcefghijkmnoprsABX', g:test8_result)
+
+    delfunction T8_F
+    delfunction T8_G
+    delfunction T8_H
+endfunc
+
+
+"-------------------------------------------------------------------------------
+" Test 9:   Continuing after aborted functions				    {{{1
+"
+"	    When a function with the "abort" attribute is aborted due to an
+"	    error, the next function back in the call hierarchy without an
+"	    "abort" attribute continues; the value -1 is returned then.
+"-------------------------------------------------------------------------------
+
+XpathINIT
+
+function! F() abort
+    Xpath 'a'
+    let result = G()	" not aborted
+    Xpath 'b'
+    if result != 2
+	Xpath 'c'
+    endif
+    return 1
+endfunction
+
+function! G()		" no abort attribute
+    Xpath 'd'
+    if H() != -1	" aborted
+	Xpath 'e'
+    endif
+    Xpath 'f'
+    return 2
+endfunction
+
+function! H() abort
+    Xpath 'g'
+    call I()		" aborted
+    Xpath 'h'
+    return 4
+endfunction
+
+function! I() abort
+    Xpath 'i'
+    asdf		" error
+    Xpath 'j'
+    return 8
+endfunction
+
+if F() != 1
+    Xpath 'k'
+endif
+
+let g:test9_result = g:Xpath
+
+delfunction F
+delfunction G
+delfunction H
+delfunction I
+
+func Test_func_abort()
+    call assert_equal('adgifb', g:test9_result)
+endfunc
+
+
+"-------------------------------------------------------------------------------
+" Test 10:  :if, :elseif, :while argument parsing			    {{{1
+"
+"	    A '"' or '|' in an argument expression must not be mixed up with
+"	    a comment or a next command after a bar.  Parsing errors should
+"	    be recognized.
+"-------------------------------------------------------------------------------
+
+XpathINIT
+
+function! MSG(enr, emsg)
+    let english = v:lang == "C" || v:lang =~ '^[Ee]n'
+    if a:enr == ""
+	Xout "TODO: Add message number for:" a:emsg
+	let v:errmsg = ":" . v:errmsg
+    endif
+    let match = 1
+    if v:errmsg !~ '^'.a:enr.':' || (english && v:errmsg !~ a:emsg)
+	let match = 0
+	if v:errmsg == ""
+	    Xout "Message missing."
+	else
+	    let v:errmsg = escape(v:errmsg, '"')
+	    Xout "Unexpected message:" v:errmsg
+	endif
+    endif
+    return match
+endfunction
+
+if 1 || strlen("\"") | Xpath 'a'
+    Xpath 'b'
+endif
+Xpath 'c'
+
+if 0
+elseif 1 || strlen("\"") | Xpath 'd'
+    Xpath 'e'
+endif
+Xpath 'f'
+
+while 1 || strlen("\"") | Xpath 'g'
+    Xpath 'h'
+    break
+endwhile
+Xpath 'i'
+
+let v:errmsg = ""
+if 1 ||| strlen("\"") | Xpath 'j'
+    Xpath 'k'
+endif
+Xpath 'l'
+if !MSG('E15', "Invalid expression")
+    Xpath 'm'
+endif
+
+let v:errmsg = ""
+if 0
+elseif 1 ||| strlen("\"") | Xpath 'n'
+    Xpath 'o'
+endif
+Xpath 'p'
+if !MSG('E15', "Invalid expression")
+    Xpath 'q'
+endif
+
+let v:errmsg = ""
+while 1 ||| strlen("\"") | Xpath 'r'
+    Xpath 's'
+    break
+endwhile
+Xpath 't'
+if !MSG('E15', "Invalid expression")
+    Xpath 'u'
+endif
+
+let g:test10_result = g:Xpath
+delfunction MSG
+
+func Test_expr_parsing()
+    call assert_equal('abcdefghilpt', g:test10_result)
+endfunc
+
+
+"-------------------------------------------------------------------------------
+" Test 11:  :if, :elseif, :while argument evaluation after abort	    {{{1
+"
+"	    When code is skipped over due to an error, the boolean argument to
+"	    an :if, :elseif, or :while must not be evaluated.
+"-------------------------------------------------------------------------------
+
+XpathINIT
+
+let calls = 0
+
+function! P(num)
+    let g:calls = g:calls + a:num   " side effect on call
+    return 0
+endfunction
+
+if 1
+    Xpath 'a'
+    asdf		" error
+    Xpath 'b'
+    if P(1)		" should not be called
+	Xpath 'c'
+    elseif !P(2)	" should not be called
+	Xpath 'd'
+    else
+	Xpath 'e'
+    endif
+    Xpath 'f'
+    while P(4)		" should not be called
+	Xpath 'g'
+    endwhile
+    Xpath 'h'
+endif
+Xpath 'x'
+
+let g:test11_calls = calls
+let g:test11_result = g:Xpath
+
+unlet calls
+delfunction P
+
+func Test_arg_abort()
+    call assert_equal(0, g:test11_calls)
+    call assert_equal('ax', g:test11_result)
+endfunc
+
+
+"-------------------------------------------------------------------------------
+" Test 12:  Expressions in braces in skipped code			    {{{1
+"
+"	    In code skipped over due to an error or inactive conditional,
+"	    an expression in braces as part of a variable or function name
+"	    should not be evaluated.
+"-------------------------------------------------------------------------------
+
+XpathINIT
+
+function! NULL()
+    Xpath 'a'
+    return 0
+endfunction
+
+function! ZERO()
+    Xpath 'b'
+    return 0
+endfunction
+
+function! F0()
+    Xpath 'c'
+endfunction
+
+function! F1(arg)
+    Xpath 'e'
+endfunction
+
+let V0 = 1
+
+Xpath 'f'
+echo 0 ? F{NULL() + V{ZERO()}}() : 1
+
+Xpath 'g'
+if 0
+    Xpath 'h'
+    call F{NULL() + V{ZERO()}}()
+endif
+
+Xpath 'i'
+if 1
+    asdf		" error
+    Xpath 'j'
+    call F1(F{NULL() + V{ZERO()}}())
+endif
+
+Xpath 'k'
+if 1
+    asdf		" error
+    Xpath 'l'
+    call F{NULL() + V{ZERO()}}()
+endif
+
+let g:test12_result = g:Xpath
+
+func Test_braces_skipped()
+    call assert_equal('fgik', g:test12_result)
+endfunc
+
+
+"-------------------------------------------------------------------------------
+" Test 13:  Failure in argument evaluation for :while			    {{{1
+"
+"	    A failure in the expression evaluation for the condition of a :while
+"	    causes the whole :while loop until the matching :endwhile being
+"	    ignored.  Continuation is at the next following line.
+"-------------------------------------------------------------------------------
+
+XpathINIT
+
+Xpath 'a'
+while asdf
+    Xpath 'b'
+    while 1
+	Xpath 'c'
+	break
+    endwhile
+    Xpath 'd'
+    break
+endwhile
+Xpath 'e'
+
+while asdf | Xpath 'f' | endwhile | Xpath 'g'
+Xpath 'h'
+let g:test13_result = g:Xpath
+
+func Test_while_fail()
+    call assert_equal('aeh', g:test13_result)
+endfunc
+
+
+"-------------------------------------------------------------------------------
+" Test 14:  Failure in argument evaluation for :if			    {{{1
+"
+"	    A failure in the expression evaluation for the condition of an :if
+"	    does not cause the corresponding :else or :endif being matched to
+"	    a previous :if/:elseif.  Neither of both branches of the failed :if
+"	    are executed.
+"-------------------------------------------------------------------------------
+
+XpathINIT
+
+function! F()
+    Xpath 'a'
+    let x = 0
+    if x		" false
+	Xpath 'b'
+    elseif !x		" always true
+	Xpath 'c'
+	let x = 1
+	if g:boolvar	" possibly undefined
+	    Xpath 'd'
+	else
+	    Xpath 'e'
+	endif
+	Xpath 'f'
+    elseif x		" never executed
+	Xpath 'g'
+    endif
+    Xpath 'h'
+endfunction
+
+let boolvar = 1
+call F()
+Xpath '-'
+
+unlet boolvar
+call F()
+let g:test14_result = g:Xpath
+
+delfunction F
+
+func Test_if_fail()
+    call assert_equal('acdfh-acfh', g:test14_result)
+endfunc
+
+
+"-------------------------------------------------------------------------------
+" Test 15:  Failure in argument evaluation for :if (bar)		    {{{1
+"
+"	    Like previous test, except that the failing :if ... | ... | :endif
+"	    is in a single line.
+"-------------------------------------------------------------------------------
+
+XpathINIT
+
+function! F()
+    Xpath 'a'
+    let x = 0
+    if x		" false
+	Xpath 'b'
+    elseif !x		" always true
+	Xpath 'c'
+	let x = 1
+	if g:boolvar | Xpath 'd' | else | Xpath 'e' | endif
+	Xpath 'f'
+    elseif x		" never executed
+	Xpath 'g'
+    endif
+    Xpath 'h'
+endfunction
+
+let boolvar = 1
+call F()
+Xpath '-'
+
+unlet boolvar
+call F()
+let g:test15_result = g:Xpath
+
+delfunction F
+
+func Test_if_bar_fail()
+    call assert_equal('acdfh-acfh', g:test15_result)
+endfunc
+
+
+"-------------------------------------------------------------------------------
 " Modelines								    {{{1
 " vim: ts=8 sw=4 tw=80 fdm=marker
 " vim: fdt=substitute(substitute(foldtext(),\ '\\%(^+--\\)\\@<=\\(\\s*\\)\\(.\\{-}\\)\:\ \\%(\"\ \\)\\=\\(Test\ \\d*\\)\:\\s*',\ '\\3\ (\\2)\:\ \\1',\ \"\"),\ '\\(Test\\s*\\)\\(\\d\\)\\D\\@=',\ '\\1\ \\2',\ "")
