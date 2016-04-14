@@ -1,6 +1,6 @@
 " Vim script language tests
 " Author:	Servatius Brandt <Servatius.Brandt@fujitsu-siemens.com>
-" Last Change:	2016 Jan 02
+" Last Change:	2016 Feb 07
 
 "-------------------------------------------------------------------------------
 " Test environment							    {{{1
@@ -5749,8 +5749,7 @@ function! F()
 	    if !caught && !$VIMNOERRTHROW
 		Xpath 8192			" X: 0
 	    endif
-	    if caught ? !MSG('E55', 'Unmatched \\)')
-			\ : !MSG('E475', "Invalid argument")
+	    if !MSG('E475', "Invalid argument")
 		Xpath 16384			" X: 0
 	    endif
 	    if !caught
