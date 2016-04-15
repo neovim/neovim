@@ -1372,21 +1372,22 @@ void ex_catch(exarg_T *eap)
         p_cpo = (char_u *)"";
         // Disable error messages, it will make current exception
         // invalid
-        ++emsg_off;
+        emsg_off++;
         regmatch.regprog = vim_regcomp(pat, RE_MAGIC + RE_STRING);
-        --emsg_off;
-        regmatch.rm_ic = FALSE;
-        if (end != NULL)
+        emsg_off--;
+        regmatch.rm_ic = false;
+        if (end != NULL) {
           *end = save_char;
+        }
         p_cpo = save_cpo;
-        if (regmatch.regprog == NULL)
+        if (regmatch.regprog == NULL) {
           EMSG2(_(e_invarg2), pat);
-        else {
-          /*
-           * Save the value of got_int and reset it.  We don't want
-           * a previous interruption cancel matching, only hitting
-           * CTRL-C while matching should abort it.
-           */
+        } else {
+          //
+          // Save the value of got_int and reset it.  We don't want
+          // a previous interruption cancel matching, only hitting
+          // CTRL-C while matching should abort it.
+          //
           prev_got_int = got_int;
           got_int = FALSE;
           caught = vim_regexec_nl(&regmatch, current_exception->value,
