@@ -22,6 +22,8 @@ is found in your `$PATH`.
 - xclip
 - xsel (newer alternative to xclip)
 - pbcopy/pbpaste (only for Mac OS X)
+- lemonade (useful for SSH machine)
+  https://github.com/pocke/lemonade
 
 The presence of a suitable clipboard tool implicitly enables the '+' and '*'
 registers.
