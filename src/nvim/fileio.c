@@ -2688,7 +2688,6 @@ buf_write (
     } else if ((bkc & BKC_AUTO)) {          /* "auto" */
       int i;
 
-# ifdef UNIX
       /*
        * Don't rename the file when:
        * - it's a hard link
@@ -2699,9 +2698,7 @@ buf_write (
           || !os_fileinfo_link((char *)fname, &file_info)
           || !os_fileinfo_id_equal(&file_info, &file_info_old)) {
         backup_copy = TRUE;
-      } else
-# endif
-      {
+      } else {
         /*
          * Check if we can create a file and set the owner/group to
          * the ones from the original file.
