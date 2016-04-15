@@ -31,9 +31,7 @@ these differences.
 2. Defaults					            *nvim-defaults*
 
 - Syntax highlighting is enabled by default
-- Filetype-related plugins and scripts are enabled by default
-  Note: these defaults can be disabled with the "-u NONE" command line
-  argument.  |-u|
+- ":filetype plugin indent on" is enabled by default
 
 - 'autoindent' is set by default
 - 'autoread' is set by default
