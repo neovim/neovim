@@ -172,6 +172,7 @@ describe('completion', function()
       [4] = {bold = true, foreground = Screen.colors.SeaGreen},
     })
 
+    execute("set complete=.")
     feed('ifoobar fooegg<cr>f<c-p>')
     screen:expect([[
       foobar fooegg                           |
