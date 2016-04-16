@@ -6850,6 +6850,7 @@ static struct fst {
   { "range",             1, 3, f_range },
   { "readfile",          1, 3, f_readfile },
   { "reltime",           0, 2, f_reltime },
+  { "reltimefloat",      1, 1, f_reltimefloat },
   { "reltimestr",        1, 1, f_reltimestr },
   { "remove",            2, 3, f_remove },
   { "rename",            2, 2, f_rename },
@@ -15294,6 +15295,21 @@ static void f_sort(typval_T *argvars, typval_T *rettv)
 static void f_uniq(typval_T *argvars, typval_T *rettv)
 {
   do_sort_uniq(argvars, rettv, false);
+}
+
+//
+// "reltimefloat()" function
+//
+static void f_reltimefloat(typval_T *argvars , typval_T *rettv)
+  FUNC_ATTR_NONNULL_ALL
+{
+  proftime_T tm;
+
+  rettv->v_type = VAR_FLOAT;
+  rettv->vval.v_float = 0;
+  if (list2proftime(&argvars[0], &tm) == OK) {
+    rettv->vval.v_float = ((float_T)tm) / 1000000000;
+  }
 }
 
 /*
