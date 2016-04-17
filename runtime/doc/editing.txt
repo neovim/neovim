@@ -1,4 +1,4 @@
-*editing.txt*   For Vim version 7.4.  Last change: 2015 Jul 21
+*editing.txt*   For Vim version 7.4.  Last change: 2015 Jul 28
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -378,22 +378,34 @@ Finds files:
 	/usr/include/sys/types.h
 	/usr/inc_old/types.h
 					*backtick-expansion* *`-expansion*
-On Unix and a few other systems you can also use backticks in the file name,
-for example: >
-	:e `find . -name ver\\*.c -print`
-The backslashes before the star are required to prevent "ver*.c" to be
-expanded by the shell before executing the find program.
+On Unix and a few other systems you can also use backticks for the file name
+argument, for example: >
+	:next `find . -name ver\\*.c -print`
+The backslashes before the star are required to prevent the shell from
+expanding "ver*.c" prior to execution of the find program.  The backslash
+before the shell pipe symbol "|" prevents Vim from parsing it as command
+termination.
 This also works for most other systems, with the restriction that the
 backticks must be around the whole item.  It is not possible to have text
 directly before the first or just after the last backtick.
 
 							*`=*
-You can have the backticks expanded as a Vim expression, instead of an
-external command, by using the syntax `={expr}` e.g.: >
+You can have the backticks expanded as a Vim expression, instead of as an
+external command, by putting an equal sign right after the first backtick,
+e.g.: >
 	:e `=tempname()`
 The expression can contain just about anything, thus this can also be used to
 avoid the special meaning of '"', '|', '%' and '#'.  However, 'wildignore'
 does apply like to other wildcards.
+
+Environment variables are expanded before evaluating the expression, thus this
+does not work: >
+	:e `=$HOME . '.vimrc'`
+Because $HOME is expanding early, resulting in: >
+	:e `=/home/user . '.vimrc'`
+This does work: >
+	:e `=expand('$HOME') . '.vimrc'`
+
 If the expression returns a string then names are to be separated with line
 breaks.  When the result is a |List| then each item is used as a name.  Line
 breaks also separate names.
@@ -1294,7 +1306,7 @@ There are a few things to remember when editing binary files:
   and when the file is written the <NL> will be replaced with <CR> <NL>.
 - <Nul> characters are shown on the screen as ^@.  You can enter them with
   "CTRL-V CTRL-@" or "CTRL-V 000".
-- To insert a <NL> character in the file split up a line.  When writing the
+- To insert a <NL> character in the file split a line.  When writing the
   buffer to a file a <NL> will be written for the <EOL>.
 - Vim normally appends an <EOL> at the end of the file if there is none.
   Setting the 'binary' option prevents this.  If you want to add the final

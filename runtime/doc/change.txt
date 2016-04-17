@@ -1,4 +1,4 @@
-*change.txt*    For Vim version 7.4.  Last change: 2015 Jun 25
+*change.txt*    For Vim version 7.4.  Last change: 2015 Aug 04
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -622,9 +622,9 @@ For MS-Windows: $TMP, $TEMP, $USERPROFILE, current-dir.
 			may add [flags], see |:s_flags|.
 			Note that after `:substitute` the '&' flag can't be
 			used, it's recognized as a pattern separator.
-			The space between `:substitute` and the 'c', 'g' and
-			'r' flags isn't required, but in scripts it's a good
-			idea to keep it to avoid confusion.
+			The space between `:substitute` and the 'c', 'g',
+			'i', 'I' and 'r' flags isn't required, but in scripts
+			it's a good idea to keep it to avoid confusion.
 
 :[range]~[&][flags] [count]					*:~*
 			Repeat last substitute with same substitute string

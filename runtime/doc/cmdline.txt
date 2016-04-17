@@ -1,4 +1,4 @@
-*cmdline.txt*   For Vim version 7.4.  Last change: 2015 Jul 21
+*cmdline.txt*   For Vim version 7.4.  Last change: 2015 Jul 28
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -715,13 +715,13 @@ to insert special things while typing you can use the CTRL-R command.  For
 example, "%" stands for the current file name, while CTRL-R % inserts the
 current file name right away.  See |c_CTRL-R|.
 
-Note: If you want to avoid the special characters in a Vim script you may want
-to use |fnameescape()|.  Also see |`=|.
+Note:  If you want to avoid the effects of special characters in a Vim script
+you may want to use |fnameescape()|.  Also see |`=|.
 
 
 In Ex commands, at places where a file name can be used, the following
 characters have a special meaning.  These can also be used in the expression
-function expand() |expand()|.
+function |expand()|.
 	%	Is replaced with the current file name.		  *:_%* *c_%*
 	#	Is replaced with the alternate file name.	  *:_#* *c_#*
 		This is remembered for every window.
@@ -757,6 +757,7 @@ it, no matter how many backslashes.
 	   \#			#
 	   \\#			\#
 Also see |`=|.
+
 			       *:<cword>* *:<cWORD>* *:<cfile>* *<cfile>*
 			       *:<sfile>* *<sfile>* *:<afile>* *<afile>*
 			       *:<abuf>* *<abuf>* *:<amatch>* *<amatch>*
@@ -777,7 +778,7 @@ Note: these are typed literally, they are not special keys!
 		   <afile> only when the file name isn't used to match with
 		   (for FileType, Syntax and SpellFileMissing events).
 	<sfile>    When executing a ":source" command, is replaced with the
-		   file name of the sourced file.  *E498* 
+		   file name of the sourced file.  *E498*
 		   When executing a function, is replaced with
 		   "function {function-name}"; function call nesting is
 		   indicated like this:
@@ -845,7 +846,7 @@ These modifiers can be given, in this order:
 	:gs?pat?sub?
 		Substitute all occurrences of "pat" with "sub".  Otherwise
 		this works like ":s".
-	:S	Escape special characters for use with a shell command (see 
+	:S	Escape special characters for use with a shell command (see
 		|shellescape()|). Must be the last one. Examples: >
 		    :!dir <cfile>:S
 		    :call system('chmod +w -- ' . expand('%:S'))
@@ -898,9 +899,8 @@ name).  This is included for backwards compatibility with version 3.0, the
 
 Note: Where a file name is expected wildcards expansion is done.  On Unix the
 shell is used for this, unless it can be done internally (for speed).
-Backticks also work, like in >
+Unless in |restricted-mode|, backticks work also, like in >
 	:n `echo *.c`
-(backtick expansion is not possible in |restricted-mode|)
 But expansion is only done if there are any wildcards before expanding the
 '%', '#', etc..  This avoids expanding wildcards inside a file name.  If you
 want to expand the result of <cfile>, add a wildcard character to it.
@@ -937,6 +937,7 @@ for the file "$home" in the root directory.  A few examples:
 	\$home		file "$home" in current directory
 	/\$home		file "$home" in root directory
 	\\$home		file "\\", followed by expanded $home
+
 Also see |`=|.
 
 ==============================================================================

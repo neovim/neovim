@@ -6,7 +6,7 @@
 #  FIRST AUTHOR  DindinX         <David.Odin@bigfoot.com>     2000.
 # SECOND AUTHOR  Adrien Beau     <version.francaise@free.fr>  2002, 2003.
 #  THIRD AUTHOR  David Blanchet  <david.blanchet@free.fr>     2006, 2008.
-# FOURTH AUTHOR  Dominique Pellé <dominique.pelle@gmail.com>  2008, 2013.
+# FOURTH AUTHOR  Dominique Pellé <dominique.pelle@gmail.com>  2008, 2015.
 #
 # Latest translation available at:
 #   http://dominique.pelle.free.fr/vim-fr.php
@@ -15,8 +15,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Vim(Français)\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-05-26 14:21+0200\n"
-"PO-Revision-Date: 2013-05-27 10:22+0200\n"
+"POT-Creation-Date: 2015-07-30 17:54+0200\n"
+"PO-Revision-Date: 2015-07-30 18:00+0200\n"
 "Last-Translator: Dominique Pellé <dominique.pelle@gmail.com>\n"
 "Language-Team: \n"
 "Language: fr\n"
@@ -112,11 +112,6 @@ msgstr "E84: Aucun tampon n'est modifié"
 #: ../buffer.c:903
 msgid "E85: There is no listed buffer"
 msgstr "E85: Aucun tampon n'est listé"
-
-#: ../buffer.c:913
-#, c-format
-msgid "E86: Buffer %<PRId64> does not exist"
-msgstr "E86: Le tampon %<PRId64> n'existe pas"
 
 # AB - Je ne suis pas sûr que l'on puisse obtenir ce message.
 #: ../buffer.c:915
@@ -756,6 +751,11 @@ msgstr "E696: Il manque une virgule dans la Liste %s"
 msgid "E697: Missing end of List ']': %s"
 msgstr "E697: Il manque ']' à la fin de la Liste %s"
 
+#: ../eval.c:5750
+msgid "Not enough memory to set references, garbage collection aborted!"
+msgstr ""
+"Pas assez de mémoire pour les références, arrêt du ramassage de miètes !"
+
 #: ../eval.c:6475
 #, c-format
 msgid "E720: Missing colon in Dictionary: %s"
@@ -832,14 +832,14 @@ msgstr "E785: complete() n'est utilisable que dans le mode Insertion"
 msgid "&Ok"
 msgstr "&Ok"
 
-#: ../eval.c:8676
-#, c-format
-msgid "E737: Key already exists: %s"
-msgstr "E737: un mappage existe déjà pour %s"
-
 #: ../eval.c:8692
 msgid "extend() argument"
 msgstr "argument de extend()"
+
+#: ../eval.c:9345
+#, c-format
+msgid "E737: Key already exists: %s"
+msgstr "E737: un mappage existe déjà pour %s"
 
 #: ../eval.c:8915
 msgid "map() argument"
@@ -1798,10 +1798,10 @@ msgstr "E174: La commande existe déjà : ajoutez ! pour la redéfinir"
 #: ../ex_docmd.c:4432
 msgid ""
 "\n"
-"    Name        Args Range Complete  Definition"
+"    Name        Args       Address   Complete  Definition"
 msgstr ""
 "\n"
-"    Nom         Args Plage Complet.  Définition"
+"    Nom         Args       Adresse   Complet.  Définition"
 
 #: ../ex_docmd.c:4516
 msgid "No user-defined commands found"
@@ -1827,6 +1827,10 @@ msgstr "E178: La valeur par défaut du quantificateur est invalide"
 msgid "E179: argument required for -complete"
 msgstr "E179: argument requis avec -complete"
 
+#: ../ex_docmd.c:4933
+msgid "E179: argument required for -addr"
+msgstr "E179: argument requis avec -addr"
+
 #: ../ex_docmd.c:4635
 #, c-format
 msgid "E181: Invalid attribute: %s"
@@ -1849,6 +1853,11 @@ msgstr ""
 #, c-format
 msgid "E184: No such user-defined command: %s"
 msgstr "E184: Aucune commande %s définie par l'utilisateur"
+
+#: ../ex_docmd.c:5516
+#, c-format
+msgid "E180: Invalid address type value: %s"
+msgstr "E180: Valeur de type d'adresse invalide : %s"
 
 #: ../ex_docmd.c:5219
 #, c-format
@@ -3155,6 +3164,11 @@ msgstr "E363: le motif utilise plus de mémoire que 'maxmempattern'"
 msgid "E749: empty buffer"
 msgstr "E749: tampon vide"
 
+#: ../buffer.c:1587
+#, c-format
+msgid "E86: Buffer %<PRId64> does not exist"
+msgstr "E86: Le tampon %<PRId64> n'existe pas"
+
 #: ../globals.h:1108
 msgid "E682: Invalid search pattern or delimiter"
 msgstr "E682: Délimiteur ou motif de recherche invalide"
@@ -4308,7 +4322,7 @@ msgid ""
 "    to recover the changes (see \":help recovery\").\n"
 msgstr ""
 "\"\n"
-"    pour récupérer le fichier (voir \":help recovery\").\n"
+"    pour récupérer le fichier (consultez \":help recovery\").\n"
 
 #: ../memline.c:3250
 msgid "    If you did this already, delete the swap file \""
@@ -4804,6 +4818,11 @@ msgstr "E522: Introuvable dans termcap"
 #, c-format
 msgid "E539: Illegal character <%s>"
 msgstr "E539: Caractère <%s> invalide"
+
+#: ../option.c:2253
+#, c-format
+msgid "For option %s"
+msgstr "Pour l'option %s"
 
 #: ../option.c:3862
 msgid "E529: Cannot set 'term' to empty string"
@@ -6779,9 +6798,6 @@ msgstr "E446: Aucun nom de fichier sous le curseur"
 #~ msgid "Reading from stdin..."
 #~ msgstr "Lecture de stdin..."
 
-#~ msgid "[blowfish]"
-#~ msgstr "[blowfish]"
-
 #~ msgid "[crypted]"
 #~ msgstr "[chiffré]"
 
@@ -6909,8 +6925,8 @@ msgstr "E446: Aucun nom de fichier sous le curseur"
 #~ msgstr ""
 #~ "Vim : Une requête \"die\" a été reçue par le gestionnaire de session\n"
 
-#~ msgid "Close"
-#~ msgstr "Fermer"
+#~ msgid "Close tab"
+#~ msgstr "Fermer l'onglet"
 
 #~ msgid "New tab"
 #~ msgstr "Nouvel onglet"
@@ -6967,13 +6983,6 @@ msgstr "E446: Aucun nom de fichier sous le curseur"
 
 #~ msgid "E672: Unable to open window inside MDI application"
 #~ msgstr "E672: Impossible d'ouvrir une fenêtre dans une application MDI"
-
-# DB - Les quelques messages qui suivent se retrouvent aussi ici :
-#      gui_gtk_x11.c:3170 et suivants.
-#      Les libellés changent un peu (majuscule par exemple).
-#      La VF tâche de les unifier.
-#~ msgid "Close tab"
-#~ msgstr "Fermer l'onglet"
 
 #~ msgid "Open tab..."
 #~ msgstr "Ouvrir dans un onglet..."
@@ -7147,9 +7156,6 @@ msgstr "E446: Aucun nom de fichier sous le curseur"
 
 #~ msgid "E836: This Vim cannot execute :python after using :py3"
 #~ msgstr "E836: Vim ne peut pas exécuter :python après avoir utilisé :py3"
-
-#~ msgid "only string keys are allowed"
-#~ msgstr "seule une chaine est autorisée comme clé"
 
 #~ msgid ""
 #~ "E263: Sorry, this command is disabled, the Python library could not be "
@@ -7684,12 +7690,6 @@ msgstr "E446: Aucun nom de fichier sous le curseur"
 #~ msgid "E338: Sorry, no file browser in console mode"
 #~ msgstr "E338: Désolé, pas de sélecteur de fichiers en mode console"
 
-#~ msgid "Vim: preserving files...\n"
-#~ msgstr "Vim : préservation des fichiers...\n"
-
-#~ msgid "Vim: Finished.\n"
-#~ msgstr "Vim : Fini.\n"
-
 #~ msgid "ERROR: "
 #~ msgstr "ERREUR : "
 
@@ -7717,6 +7717,10 @@ msgstr "E446: Aucun nom de fichier sous le curseur"
 
 #~ msgid "E547: Illegal mouseshape"
 #~ msgstr "E547: Forme de curseur invalide"
+
+#~ msgid "Warning: Using a weak encryption method; see :help 'cm'"
+#~ msgstr ""
+#~ "Alerte : utilisation d'une méthode de chiffrage faible ; consultez :help 'cm'"
 
 #~ msgid "Enter encryption key: "
 #~ msgstr "Tapez la clé de chiffrement : "
@@ -7861,15 +7865,6 @@ msgstr "E446: Aucun nom de fichier sous le curseur"
 #~ msgid "E245: Illegal char '%c' in font name \"%s\""
 #~ msgstr "E245: Caractère '%c' invalide dans le nom de fonte \"%s\""
 
-#~ msgid "Vim: Double signal, exiting\n"
-#~ msgstr "Vim : Double signal, sortie\n"
-
-#~ msgid "Vim: Caught deadly signal %s\n"
-#~ msgstr "Vim : Signal mortel %s intercepté\n"
-
-#~ msgid "Vim: Caught deadly signal\n"
-#~ msgstr "Vim : Signal mortel intercepté\n"
-
 #~ msgid "Opening the X display took %<PRId64> msec"
 #~ msgstr "L'ouverture du display X a pris %<PRId64> ms"
 
@@ -7970,7 +7965,7 @@ msgstr "E446: Aucun nom de fichier sous le curseur"
 #~ msgstr ""
 #~ "VIMRUN.EXE est introuvable votre $PATH.\n"
 #~ "Les commandes externes ne feront pas de pause une fois terminées.\n"
-#~ "Voir  :help win32-vimrun  pour plus d'informations."
+#~ "Consultez  :help win32-vimrun  pour plus d'informations."
 
 #~ msgid "Vim Warning"
 #~ msgstr "Alerte Vim"
@@ -7981,11 +7976,6 @@ msgstr "E446: Aucun nom de fichier sous le curseur"
 #~ msgid "E868: Error building NFA with equivalence class!"
 #~ msgstr ""
 #~ "E868: Erreur lors de la construction du NFA avec classe d'équivalence"
-
-#~ msgid "E999: (NFA regexp internal error) Should not process NOT node !"
-#~ msgstr ""
-#~ "E999: (erreur interne du regexp NFA) Un noeud 'NOT' ne devrait pas être "
-#~ "traité !"
 
 #~ msgid "E878: (NFA) Could not allocate memory for branch traversal!"
 #~ msgstr ""
@@ -8306,14 +8296,8 @@ msgstr "E446: Aucun nom de fichier sous le curseur"
 #~ msgid "can't delete OutputObject attributes"
 #~ msgstr "impossible d'effacer les attributs d'OutputObject"
 
-#~ msgid "softspace must be an integer"
-#~ msgstr "softspace doit être un nombre entier"
-
 #~ msgid "invalid attribute"
 #~ msgstr "attribut invalide"
-
-#~ msgid "writelines() requires list of strings"
-#~ msgstr "writelines() requiert une liste de chaînes"
 
 #~ msgid "E264: Python: Error initialising I/O objects"
 #~ msgstr "E264: Python : Erreur d'initialisation des objets d'E/S"
@@ -8321,14 +8305,8 @@ msgstr "E446: Aucun nom de fichier sous le curseur"
 #~ msgid "empty keys are not allowed"
 #~ msgstr "les clés vides ne sont pas autorisées"
 
-#~ msgid "Cannot delete DictionaryObject attributes"
-#~ msgstr "Impossible d'effacer les attributs de DictionaryObject"
-
 #~ msgid "Cannot modify fixed dictionary"
 #~ msgstr "Impossible de modifier un dictionnaire fixe"
-
-#~ msgid "Cannot set this attribute"
-#~ msgstr "Impossible d'initialiser cet attribut"
 
 #~ msgid "dict is locked"
 #~ msgstr "dictionnaire est verrouillé"
@@ -8348,14 +8326,8 @@ msgstr "E446: Aucun nom de fichier sous le curseur"
 #~ msgid "Failed to add item to list"
 #~ msgstr "Ajout à la liste a échoué"
 
-#~ msgid "can only assign lists to slice"
-#~ msgstr "seules des tranches peuvent être assignées aux listes"
-
 #~ msgid "internal error: failed to add item to list"
 #~ msgstr "erreur interne : ajout d'élément à la liste a échoué"
-
-#~ msgid "can only concatenate with lists"
-#~ msgstr "on ne peut que concaténer avec des listes"
 
 #~ msgid "cannot delete vim.dictionary attributes"
 #~ msgstr "impossible d'effacer les attributs de vim.dictionary"
@@ -8366,9 +8338,6 @@ msgstr "E446: Aucun nom de fichier sous le curseur"
 #~ msgid "cannot set this attribute"
 #~ msgstr "impossible d'initialiser cet attribut"
 
-#~ msgid "'self' argument must be a dictionary"
-#~ msgstr "l'argument 'self' doit être un dictionnaire"
-
 #~ msgid "failed to run function"
 #~ msgstr "exécution de la fonction a échoué"
 
@@ -8378,23 +8347,8 @@ msgstr "E446: Aucun nom de fichier sous le curseur"
 #~ msgid "unable to unset option without global value"
 #~ msgstr "impossible de désactiver une option sans une valeur globale"
 
-#~ msgid "object must be integer"
-#~ msgstr "objet doit être un nombre entier"
-
-#~ msgid "object must be string"
-#~ msgstr "objet doit être de type string"
-
 #~ msgid "attempt to refer to deleted tab page"
 #~ msgstr "tentative de référencer un onglet effacé"
-
-#~ msgid "<tabpage object (deleted) at %p>"
-#~ msgstr "<objet onglet (effacé) à %p>"
-
-#~ msgid "<tabpage object (unknown) at %p>"
-#~ msgstr "<objet onglet (inconnu) à %p>"
-
-#~ msgid "<tabpage %d>"
-#~ msgstr "<onglet %d>"
 
 #~ msgid "no such tab page"
 #~ msgstr "cet onglet n'existe pas"
@@ -8408,26 +8362,11 @@ msgstr "E446: Aucun nom de fichier sous le curseur"
 #~ msgid "cursor position outside buffer"
 #~ msgstr "curseur positionné en dehors du tampon"
 
-#~ msgid "<window object (deleted) at %p>"
-#~ msgstr "<objet fenêtre (effacé) à %p>"
-
-#~ msgid "<window object (unknown) at %p>"
-#~ msgstr "<objet fenêtre (inconnu) à %p>"
-
-#~ msgid "<window %d>"
-#~ msgstr "<fenêtre %d>"
-
 #~ msgid "no such window"
 #~ msgstr "Cette fenêtre n'existe pas"
 
 #~ msgid "attempt to refer to deleted buffer"
 #~ msgstr "tentative de référencer un tampon effacé"
-
-#~ msgid "<buffer object (deleted) at %p>"
-#~ msgstr "<objet tampon (effacé) à %p>"
-
-#~ msgid "key must be integer"
-#~ msgstr "la clé doit être un nombre entier"
 
 #~ msgid "expected vim.buffer object"
 #~ msgstr "objet vim.buffer attendu"
@@ -8467,18 +8406,3 @@ msgstr "E446: Aucun nom de fichier sous le curseur"
 
 #~ msgid "internal error: invalid value type"
 #~ msgstr "erreur interne : type de valeur invalide"
-
-#~ msgid "E860: Eval did not return a valid python 3 object"
-#~ msgstr "E860: Eval n'a pas retourné un object python 3 valid"
-
-#~ msgid "E861: Failed to convert returned python 3 object to vim value"
-#~ msgstr "E861: Conversion d'objet python 3 à une valeur de vim a échoué"
-
-#~ msgid "E863: return value must be an instance of str"
-#~ msgstr "E863: valeur de retour doit être une instance de Str"
-
-#~ msgid "Only boolean objects are allowed"
-#~ msgstr "Seuls les objets booléens sont autorisés"
-
-#~ msgid "no such key in dictionary"
-#~ msgstr "cette clé est inexistante dans le dictionnaire"

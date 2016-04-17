@@ -161,6 +161,7 @@ an 50.30.290 &Syntax.DE.Doxygen.C\ with\ doxygen :cal SetSyn("c.doxygen")<CR>
 an 50.30.300 &Syntax.DE.Doxygen.C++\ with\ doxygen :cal SetSyn("cpp.doxygen")<CR>
 an 50.30.310 &Syntax.DE.Doxygen.IDL\ with\ doxygen :cal SetSyn("idl.doxygen")<CR>
 an 50.30.320 &Syntax.DE.Doxygen.Java\ with\ doxygen :cal SetSyn("java.doxygen")<CR>
+an 50.30.320 &Syntax.DE.Doxygen.DataScript\ with\ doxygen :cal SetSyn("datascript.doxygen")<CR>
 an 50.30.330 &Syntax.DE.Dracula :cal SetSyn("dracula")<CR>
 an 50.30.340 &Syntax.DE.DSSSL :cal SetSyn("dsl")<CR>
 an 50.30.350 &Syntax.DE.DTD :cal SetSyn("dtd")<CR>
