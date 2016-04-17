@@ -1177,24 +1177,27 @@ do_set (
           errmsg = e_invarg;
           goto skip;
         }
-        if (arg[1] == 't' && arg[2] == '_')         /* could be term code */
+        if (arg[1] == 't' && arg[2] == '_') {  // could be term code
           opt_idx = findoption_len(arg + 1, (size_t) (len - 1));
+        }
         len++;
-        if (opt_idx == -1)
+        if (opt_idx == -1) {
           key = find_key_option(arg + 1);
+        }
       } else {
         len = 0;
-        /*
-         * The two characters after "t_" may not be alphanumeric.
-         */
-        if (arg[0] == 't' && arg[1] == '_' && arg[2] && arg[3])
+        // The two characters after "t_" may not be alphanumeric.
+        if (arg[0] == 't' && arg[1] == '_' && arg[2] && arg[3]) {
           len = 4;
-        else
-          while (ASCII_ISALNUM(arg[len]) || arg[len] == '_')
-            ++len;
+        } else {
+          while (ASCII_ISALNUM(arg[len]) || arg[len] == '_') {
+            len++;
+          }
+        }
         opt_idx = findoption_len(arg, (size_t) len);
-        if (opt_idx == -1)
+        if (opt_idx == -1) {
           key = find_key_option(arg);
+        }
       }
 
       /* remember character after option name */
@@ -4281,14 +4284,16 @@ static void check_redraw(uint32_t flags)
     redraw_all_later(NOT_VALID);
 }
 
-/*
- * Find index for option 'arg' that has given length.
- * Return -1 if not found.
- */
+/// Find index for named option
+///
+/// @param[in]  arg  Option to find index for.
+/// @param[in]  len  Length of the option.
+///
+/// @return Index of the option or -1 if option was not found.
 int findoption_len(const char_u *const arg, const size_t len)
 {
-  char            *s, *p;
-  static short quick_tab[27] = {0, 0};          /* quick access table */
+  char *s, *p;
+  static int quick_tab[27] = { 0, 0 };  // quick access table
   int is_term_opt;
 
   /*
@@ -4318,22 +4323,25 @@ int findoption_len(const char_u *const arg, const size_t len)
 
   int opt_idx;
   is_term_opt = (len > 2 && arg[0] == 't' && arg[1] == '_');
-  if (is_term_opt)
+  if (is_term_opt) {
     opt_idx = quick_tab[26];
-  else
+  } else {
     opt_idx = quick_tab[CharOrdLow(arg[0])];
+  }
   // Match full name
   for (; (s = options[opt_idx].fullname) != NULL; opt_idx++) {
-    if (STRNCMP(arg, s, len) == 0 && s[len] == NUL)
+    if (STRNCMP(arg, s, len) == 0 && s[len] == NUL) {
       break;
+    }
   }
   if (s == NULL && !is_term_opt) {
     opt_idx = quick_tab[CharOrdLow(arg[0])];
     // Match short name
     for (; options[opt_idx].fullname != NULL; opt_idx++) {
       s = options[opt_idx].shortname;
-      if (s != NULL && STRNCMP(arg, s, len) == 0 && s[len] == NUL)
+      if (s != NULL && STRNCMP(arg, s, len) == 0 && s[len] == NUL) {
         break;
+      }
       s = NULL;
     }
   }
@@ -4670,14 +4678,12 @@ int find_key_option_len(const char_u *arg, size_t len)
   int key;
   int modifiers;
 
-  /*
-   * Don't use get_special_key_code() for t_xx, we don't want it to call
-   * add_termcap_entry().
-   */
-  if (len >= 4 && arg[0] == 't' && arg[1] == '_')
+  // Don't use get_special_key_code() for t_xx, we don't want it to call
+  // add_termcap_entry().
+  if (len >= 4 && arg[0] == 't' && arg[1] == '_') {
     key = TERMCAP2KEY(arg[2], arg[3]);
-  else {
-    --arg;                          /* put arg at the '<' */
+  } else {
+    arg--;  // put arg at the '<'
     modifiers = 0;
     key = find_special_key(&arg, len + 1, &modifiers, true, true);
     if (modifiers) {  // can't handle modifiers here

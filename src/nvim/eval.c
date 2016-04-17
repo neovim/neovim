@@ -11148,17 +11148,18 @@ static void f_histadd(typval_T *argvars, typval_T *rettv)
   char_u      *str;
   char_u buf[NUMBUFLEN];
 
-  rettv->vval.v_number = FALSE;
-  if (check_restricted() || check_secure())
+  rettv->vval.v_number = false;
+  if (check_restricted() || check_secure()) {
     return;
-  str = get_tv_string_chk(&argvars[0]);         /* NULL on type error */
+  }
+  str = get_tv_string_chk(&argvars[0]);  // NULL on type error
   histype = str != NULL ? get_histtype(str, STRLEN(str), false) : HIST_INVALID;
   if (histype != HIST_INVALID) {
     str = get_tv_string_buf(&argvars[1], buf);
     if (*str != NUL) {
       init_history();
-      add_to_history(histype, str, FALSE, NUL);
-      rettv->vval.v_number = TRUE;
+      add_to_history(histype, str, false, NUL);
+      rettv->vval.v_number = true;
       return;
     }
   }
@@ -11173,20 +11174,21 @@ static void f_histdel(typval_T *argvars, typval_T *rettv)
   char_u buf[NUMBUFLEN];
   char_u      *str;
 
-  str = get_tv_string_chk(&argvars[0]);         /* NULL on type error */
-  if (str == NULL)
+  str = get_tv_string_chk(&argvars[0]);  // NULL on type error
+  if (str == NULL) {
     n = 0;
-  else if (argvars[1].v_type == VAR_UNKNOWN)
-    /* only one argument: clear entire history */
+  } else if (argvars[1].v_type == VAR_UNKNOWN) {
+    // only one argument: clear entire history
     n = clr_history(get_histtype(str, STRLEN(str), false));
-  else if (argvars[1].v_type == VAR_NUMBER)
-    /* index given: remove that entry */
+  } else if (argvars[1].v_type == VAR_NUMBER) {
+    // index given: remove that entry
     n = del_history_idx(get_histtype(str, STRLEN(str), false),
-        (int)get_tv_number(&argvars[1]));
-  else
-    /* string given: remove all matching entries */
+                        (int) get_tv_number(&argvars[1]));
+  } else {
+    // string given: remove all matching entries
     n = del_history_entry(get_histtype(str, STRLEN(str), false),
-        get_tv_string_buf(&argvars[1], buf));
+                          get_tv_string_buf(&argvars[1], buf));
+  }
   rettv->vval.v_number = n;
 }
 
@@ -11199,7 +11201,7 @@ static void f_histget(typval_T *argvars, typval_T *rettv)
   int idx;
   char_u      *str;
 
-  str = get_tv_string_chk(&argvars[0]);         /* NULL on type error */
+  str = get_tv_string_chk(&argvars[0]);  // NULL on type error
   if (str == NULL) {
     rettv->vval.v_string = NULL;
   } else {
@@ -11226,10 +11228,11 @@ static void f_histnr(typval_T *argvars, typval_T *rettv)
 
   i = history == NULL ? HIST_CMD - 1 : get_histtype(history, STRLEN(history),
                                                     false);
-  if (i != HIST_INVALID)
+  if (i != HIST_INVALID) {
     i = get_history_idx(i);
-  else
+  } else {
     i = -1;
+  }
   rettv->vval.v_number = i;
 }
 
