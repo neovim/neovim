@@ -208,7 +208,7 @@ describe('mbyte', function()
       eq(1, pcc[6])
 
       -- Combining characters U+0300, U+0301, U+0302, U+0303, U+0304,
-      -- U+0305, U+0306, but only write save six.
+      -- U+0305, U+0306, but only save six (= MAX_MCO).
       local pcc = to_intp()
       eq(0x007f, mbyte.utfc_ptr2char_len(to_string(
           {0x7f, 0xcc, 0x80, 0xcc, 0x81, 0xcc, 0x82, 0xcc, 0x83, 0xcc, 0x84, 0xcc, 0x85, 0xcc, 0x86}), pcc, 15))
