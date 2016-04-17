@@ -177,6 +177,7 @@ SynMenu DE.Doxygen.C\ with\ doxygen:c.doxygen
 SynMenu DE.Doxygen.C++\ with\ doxygen:cpp.doxygen
 SynMenu DE.Doxygen.IDL\ with\ doxygen:idl.doxygen
 SynMenu DE.Doxygen.Java\ with\ doxygen:java.doxygen
+SynMenu DE.Doxygen.DataScript\ with\ doxygen:datascript.doxygen
 SynMenu DE.Dracula:dracula
 SynMenu DE.DSSSL:dsl
 SynMenu DE.DTD:dtd

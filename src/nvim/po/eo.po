@@ -23,8 +23,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Vim(Esperanto)\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-05-26 14:21+0200\n"
-"PO-Revision-Date: 2013-05-27 04:55+0200\n"
+"POT-Creation-Date: 2015-07-30 17:54+0200\n"
+"PO-Revision-Date: 2015-07-30 18:00+0200\n"
 "Last-Translator: Dominique PELLÉ <dominique.pelle@gmail.com>\n"
 "Language-Team: \n"
 "Language: eo\n"
@@ -114,11 +114,6 @@ msgstr "E84: Neniu modifita bufro trovita"
 #: ../buffer.c:903
 msgid "E85: There is no listed buffer"
 msgstr "E85: Estas neniu listigita bufro"
-
-#: ../buffer.c:913
-#, c-format
-msgid "E86: Buffer %<PRId64> does not exist"
-msgstr "E86: La bufro %<PRId64> ne ekzistas"
 
 #: ../buffer.c:915
 msgid "E87: Cannot go beyond last buffer"
@@ -691,6 +686,10 @@ msgstr "E696: Mankas komo en Listo: %s"
 #, c-format
 msgid "E697: Missing end of List ']': %s"
 msgstr "E697: Mankas fino de Listo ']': %s"
+
+#: ../eval.c:5750
+msgid "Not enough memory to set references, garbage collection aborted!"
+msgstr "Ne sufiĉa memory por valorigi referencojn, senrubigado ĉesigita!"
 
 #: ../eval.c:6475
 #, c-format
@@ -1616,14 +1615,13 @@ msgstr "E173: %<PRId64> pliaj redaktendaj dosieroj"
 msgid "E174: Command already exists: add ! to replace it"
 msgstr "E174: La komando jam ekzistas: aldonu ! por anstataŭigi ĝin"
 
-# DP: malfacilas traduki tion, kaj samtempe honori spacetojn
 #: ../ex_docmd.c:4432
 msgid ""
 "\n"
-"    Name        Args Range Complete  Definition"
+"    Name        Args       Address   Complete  Definition"
 msgstr ""
 "\n"
-"    Nomo        Arg Interv Kompleto  Difino"
+"    Nomo        Argumentoj Adreso    Kompleto  Difino"
 
 #: ../ex_docmd.c:4516
 msgid "No user-defined commands found"
@@ -1649,6 +1647,10 @@ msgstr "E178: Nevalida defaŭlta valoro de kvantoro"
 msgid "E179: argument required for -complete"
 msgstr "E179: argumento bezonata por -complete"
 
+#: ../ex_docmd.c:4933
+msgid "E179: argument required for -addr"
+msgstr "E179: argumento bezonata por -addr"
+
 #: ../ex_docmd.c:4635
 #, c-format
 msgid "E181: Invalid attribute: %s"
@@ -1670,6 +1672,11 @@ msgstr "E841: Rezervita nomo, neuzebla por komando difinita de uzanto"
 #, c-format
 msgid "E184: No such user-defined command: %s"
 msgstr "E184: Neniu komando-difinita-de-uzanto kiel: %s"
+
+#: ../ex_docmd.c:5516
+#, c-format
+msgid "E180: Invalid address type value: %s"
+msgstr "E180: Nevalida valoro de tipo de adreso: %s"
 
 #: ../ex_docmd.c:5219
 #, c-format
@@ -2950,6 +2957,11 @@ msgstr "E363: ŝablono uzas pli da memoro ol 'maxmempattern'"
 #: ../globals.h:1105
 msgid "E749: empty buffer"
 msgstr "E749: malplena bufro"
+
+#: ../globals.h:1226
+#, c-format
+msgid "E86: Buffer %<PRId64> does not exist"
+msgstr "E86: La bufro %<PRId64> ne ekzistas"
 
 #: ../globals.h:1108
 msgid "E682: Invalid search pattern or delimiter"
@@ -4598,6 +4610,11 @@ msgstr "E522: Netrovita en termcap"
 #, c-format
 msgid "E539: Illegal character <%s>"
 msgstr "E539: Nevalida signo <%s>"
+
+#: ../option.c:2253
+#, c-format
+msgid "For option %s"
+msgstr "Por opcio %s"
 
 #: ../option.c:3862
 msgid "E529: Cannot set 'term' to empty string"
@@ -6552,14 +6569,14 @@ msgstr "E446: Neniu dosiernomo sub la kursoro"
 #~ msgid "Reading from stdin..."
 #~ msgstr "Legado el stdin..."
 
-#~ msgid "[blowfish]"
-#~ msgstr "[blowfish]"
-
 #~ msgid "[crypted]"
 #~ msgstr "[ĉifrita]"
 
 #~ msgid "E821: File is encrypted with unknown method"
 #~ msgstr "E821: Dosiero estas ĉifrata per nekonata metodo"
+
+#~ msgid "Warning: Using a weak encryption method; see :help 'cm'"
+#~ msgstr "Averto: uzo de malfortika ĉifrada metodo; vidu :help 'cm'"
 
 #~ msgid "NetBeans disallows writes of unmodified buffers"
 #~ msgstr "NetBeans malpermesas skribojn de neŝanĝitaj bufroj"
@@ -6676,8 +6693,8 @@ msgstr "E446: Neniu dosiernomo sub la kursoro"
 #~ msgid "Vim: Received \"die\" request from session manager\n"
 #~ msgstr "Vim: Ricevis peton \"die\" (morti) el la seanca administrilo\n"
 
-#~ msgid "Close"
-#~ msgstr "Fermi"
+#~ msgid "Close tab"
+#~ msgstr "Fermi langeton"
 
 #~ msgid "New tab"
 #~ msgstr "Nova langeto"
@@ -6732,9 +6749,6 @@ msgstr "E446: Neniu dosiernomo sub la kursoro"
 
 #~ msgid "E672: Unable to open window inside MDI application"
 #~ msgstr "E672: Ne eblas malfermi fenestron interne de aplikaĵo MDI"
-
-#~ msgid "Close tab"
-#~ msgstr "Fermi langeton"
 
 #~ msgid "Open tab..."
 #~ msgstr "Malfermi langeton..."

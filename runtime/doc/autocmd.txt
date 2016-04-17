@@ -1,4 +1,4 @@
-*autocmd.txt*   For Vim version 7.4.  Last change: 2015 Jul 20
+*autocmd.txt*   For Vim version 7.4.  Last change: 2015 Aug 05
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -1100,7 +1100,7 @@ Instead of a pattern buffer-local autocommands use one of these forms:
 Examples: >
     :au CursorHold <buffer>  echo 'hold'
     :au CursorHold <buffer=33>  echo 'hold'
-    :au CursorHold <buffer=abuf>  echo 'hold'
+    :au BufNewFile * CursorHold <buffer=abuf>  echo 'hold'
 
 All the commands for autocommands also work with buffer-local autocommands,
 simply use the special string instead of the pattern.  Examples: >
