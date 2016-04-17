@@ -22320,7 +22320,7 @@ static void on_process_exit(Process *proc, int status, void *d)
   TerminalJobData *data = d;
   if (data->term && !data->exited) {
     data->exited = true;
-    char msg[22];
+    char msg[sizeof("\r\n[Process exited ]") + NUMBUFLEN];
     snprintf(msg, sizeof msg, "\r\n[Process exited %d]", proc->status);
     terminal_close(data->term, msg);
   }
