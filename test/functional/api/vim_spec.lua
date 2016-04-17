@@ -92,7 +92,7 @@ describe('vim_* functions', function()
     it('del_var returns the old value', function()
       local val1 = {1, 2, {['3'] = 1}}
       local val2 = {4, 7}
-      eq(nil, meths.set_var('lua', val1))
+      eq(NIL, meths.set_var('lua', val1))
       eq(val1, meths.set_var('lua', val2))
       eq(val2, meths.del_var('lua'))
     end)

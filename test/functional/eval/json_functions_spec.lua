@@ -79,7 +79,7 @@ describe('json_decode() function', function()
   end)
 
   it('parses null, true, false', function()
-    eq(nil, funcs.json_decode('null'))
+    eq(NIL, funcs.json_decode('null'))
     eq(true, funcs.json_decode('true'))
     eq(false, funcs.json_decode('false'))
   end)
@@ -309,7 +309,7 @@ describe('json_decode() function', function()
 
   it('parses containers', function()
     eq({1}, funcs.json_decode('[1]'))
-    eq({nil, 1}, funcs.json_decode('[null, 1]'))
+    eq({NIL, 1}, funcs.json_decode('[null, 1]'))
     eq({['1']=2}, funcs.json_decode('{"1": 2}'))
     eq({['1']=2, ['3']={{['4']={['5']={{}, 1}}}}},
        funcs.json_decode('{"1": 2, "3": [{"4": {"5": [[], 1]}}]}'))

@@ -32,6 +32,9 @@ describe('string() function', function()
       eq('v:true', eval('string(v:true)'))
       eq('v:false', eval('string(v:false)'))
       eq('v:null', eval('string(v:null)'))
+      eq('v:true', funcs.string(true))
+      eq('v:false', funcs.string(false))
+      eq('v:null', funcs.string(NIL))
     end)
 
     it('dumps values with at most six digits after the decimal point',

@@ -534,7 +534,7 @@ describe('In autoload/msgpack.vim', function()
     it('works for special v: values like v:true', function()
       meths.set_var('true', true)
       meths.set_var('false', false)
-      nvim_command('let nil = v:null')
+      meths.set_var('nil', NIL)
 
       nvim_command('let true2 = msgpack#deepcopy(true)')
       nvim_command('let false2 = msgpack#deepcopy(false)')
@@ -542,7 +542,7 @@ describe('In autoload/msgpack.vim', function()
 
       eq(true, meths.get_var('true'))
       eq(false, meths.get_var('false'))
-      eq(nil, meths.get_var('nil'))
+      eq(NIL, meths.get_var('nil'))
     end)
   end)
 
