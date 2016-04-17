@@ -478,7 +478,7 @@ void eval_init(void)
   hash_init(&compat_hashtab);
   hash_init(&func_hashtab);
 
-  for (size_t i = 0; i < ARRAY_SIZE(vimvars); ++i) {
+  for (size_t i = 0; i < ARRAY_SIZE(vimvars); i++) {
     p = &vimvars[i];
     STRCPY(p->vv_di.di_key, p->vv_name);
     if (p->vv_flags & VV_RO)
@@ -537,7 +537,7 @@ void eval_clear(void)
 {
   struct vimvar   *p;
 
-  for (size_t i = 0; i < ARRAY_SIZE(vimvars); ++i) {
+  for (size_t i = 0; i < ARRAY_SIZE(vimvars); i++) {
     p = &vimvars[i];
     if (p->vv_di.di_tv.v_type == VAR_STRING) {
       xfree(p->vv_str);
@@ -20069,10 +20069,10 @@ call_user_func (
             msg_outnum((long)argvars[i].vval.v_number);
           } else {
             // Do not want errors such as E724 here.
-            ++emsg_off;
+            emsg_off++;
             char_u *s = (char_u *) encode_tv2string(&argvars[i], NULL);
             char_u *tofree = s;
-            --emsg_off;
+            emsg_off--;
             if (s != NULL) {
               if (vim_strsize(s) > MSG_BUF_CLEN) {
                 trunc_string(s, buf, MSG_BUF_CLEN, MSG_BUF_LEN);
@@ -20163,10 +20163,10 @@ call_user_func (
       // The value may be very long.  Skip the middle part, so that we
       // have some idea how it starts and ends. smsg() would always
       // truncate it at the end. Don't want errors such as E724 here.
-      ++emsg_off;
+      emsg_off++;
       char_u *s = (char_u *) encode_tv2string(fc->rettv, NULL);
       char_u *tofree = s;
-      --emsg_off;
+      emsg_off--;
       if (s != NULL) {
         if (vim_strsize(s) > MSG_BUF_CLEN) {
           trunc_string(s, buf, MSG_BUF_CLEN, MSG_BUF_LEN);

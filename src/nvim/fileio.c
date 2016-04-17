@@ -4816,11 +4816,11 @@ buf_check_timestamp (
       busy = true;
       set_vim_var_string(VV_FCS_REASON, reason, -1);
       set_vim_var_string(VV_FCS_CHOICE, "", -1);
-      ++allbuf_lock;
+      allbuf_lock++;
       n = apply_autocmds(EVENT_FILECHANGEDSHELL,
-          buf->b_fname, buf->b_fname, FALSE, buf);
-      --allbuf_lock;
-      busy = FALSE;
+                         buf->b_fname, buf->b_fname, false, buf);
+      allbuf_lock--;
+      busy = false;
       if (n) {
         if (!buf_valid(buf))
           EMSG(_("E246: FileChangedShell autocommand deleted buffer"));
