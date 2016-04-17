@@ -26,6 +26,8 @@ def GetCompilationInfoForFile(filename):
         return None
     if IsHeaderFile(filename):
         basename = os.path.splitext(filename)[0]
+        if filename.endswith('.c.h'):
+          basename = os.path.splitext(basename)[0]
         c_file = basename + '.c'
         # for pure headers (no c file), default to main.c
         if not os.path.exists(c_file):

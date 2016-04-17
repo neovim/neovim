@@ -122,11 +122,8 @@ Error: configure did not run properly.Check auto/config.log.
 #define FAIL                    0
 #define NOTDONE                 2   /* not OK or FAIL but skipped */
 
-
-/*
- * values for xp_context when doing command line completion
- */
-enum {
+/// Values for xp_context when doing command line completion
+typedef enum {
   EXPAND_UNSUCCESSFUL = -2,
   EXPAND_OK = -1,
   EXPAND_NOTHING = 0,
@@ -174,11 +171,7 @@ enum {
   EXPAND_USER,
   EXPAND_SYNTIME,
   EXPAND_USER_ADDR_TYPE,
-};
-
-
-
-
+} CmdCompleteType;
 
 /*
  * Minimal size for block 0 of a swap file.

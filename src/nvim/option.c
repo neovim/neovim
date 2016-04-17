@@ -1177,10 +1177,9 @@ do_set (
           errmsg = e_invarg;
           goto skip;
         }
-        arg[len] = NUL;                             /* put NUL after name */
         if (arg[1] == 't' && arg[2] == '_')         /* could be term code */
-          opt_idx = findoption(arg + 1);
-        arg[len++] = '>';                           /* restore '>' */
+          opt_idx = findoption_len(arg + 1, (size_t) (len - 1));
+        len++;
         if (opt_idx == -1)
           key = find_key_option(arg + 1);
       } else {
@@ -1193,10 +1192,7 @@ do_set (
         else
           while (ASCII_ISALNUM(arg[len]) || arg[len] == '_')
             ++len;
-        nextchar = arg[len];
-        arg[len] = NUL;                             /* put NUL after name */
-        opt_idx = findoption(arg);
-        arg[len] = nextchar;                        /* restore nextchar */
+        opt_idx = findoption_len(arg, (size_t) len);
         if (opt_idx == -1)
           key = find_key_option(arg);
       }
@@ -1856,7 +1852,7 @@ static char_u *illegal_char(char_u *errbuf, int c)
  * Convert a key name or string into a key value.
  * Used for 'wildchar' and 'cedit' options.
  */
-static int string_to_key(char_u *arg)
+int string_to_key(char_u *arg)
 {
   if (*arg == '<')
     return find_key_option(arg + 1);
@@ -2964,7 +2960,8 @@ did_set_string_option (
   /* 'pastetoggle': translate key codes like in a mapping */
   else if (varp == &p_pt) {
     if (*p_pt) {
-      (void)replace_termcodes(p_pt, &p, TRUE, TRUE, FALSE);
+      (void)replace_termcodes(p_pt, STRLEN(p_pt), &p, true, true, false,
+                              CPO_TO_CPO_FLAGS);
       if (p != NULL) {
         if (new_value_alloced)
           free_string_option(p_pt);
@@ -4285,10 +4282,10 @@ static void check_redraw(uint32_t flags)
 }
 
 /*
- * Find index for option 'arg'.
+ * Find index for option 'arg' that has given length.
  * Return -1 if not found.
  */
-static int findoption(char_u *arg)
+int findoption_len(const char_u *const arg, const size_t len)
 {
   char            *s, *p;
   static short quick_tab[27] = {0, 0};          /* quick access table */
@@ -4315,24 +4312,27 @@ static int findoption(char_u *arg)
   /*
    * Check for name starting with an illegal character.
    */
-  if (arg[0] < 'a' || arg[0] > 'z')
+  if (len == 0 || arg[0] < 'a' || arg[0] > 'z') {
     return -1;
+  }
 
   int opt_idx;
-  is_term_opt = (arg[0] == 't' && arg[1] == '_');
+  is_term_opt = (len > 2 && arg[0] == 't' && arg[1] == '_');
   if (is_term_opt)
     opt_idx = quick_tab[26];
   else
     opt_idx = quick_tab[CharOrdLow(arg[0])];
+  // Match full name
   for (; (s = options[opt_idx].fullname) != NULL; opt_idx++) {
-    if (STRCMP(arg, s) == 0)                        /* match full name */
+    if (STRNCMP(arg, s, len) == 0 && s[len] == NUL)
       break;
   }
   if (s == NULL && !is_term_opt) {
     opt_idx = quick_tab[CharOrdLow(arg[0])];
+    // Match short name
     for (; options[opt_idx].fullname != NULL; opt_idx++) {
       s = options[opt_idx].shortname;
-      if (s != NULL && STRCMP(arg, s) == 0)         /* match short name */
+      if (s != NULL && STRNCMP(arg, s, len) == 0 && s[len] == NUL)
         break;
       s = NULL;
     }
@@ -4398,6 +4398,15 @@ bool set_tty_option(char *name, char *value)
 
   return is_tty_option(name) || !strcmp(name, "term")
     || !strcmp(name, "ttytype");
+}
+
+/*
+ * Find index for option 'arg'.
+ * Return -1 if not found.
+ */
+static int findoption(char_u *arg)
+{
+  return findoption_len(arg, STRLEN(arg));
 }
 
 /*
@@ -4656,7 +4665,7 @@ char_u *get_highlight_default(void)
 /*
  * Translate a string like "t_xx", "<t_xx>" or "<S-Tab>" to a key number.
  */
-static int find_key_option(char_u *arg)
+int find_key_option_len(const char_u *arg, size_t len)
 {
   int key;
   int modifiers;
@@ -4665,17 +4674,24 @@ static int find_key_option(char_u *arg)
    * Don't use get_special_key_code() for t_xx, we don't want it to call
    * add_termcap_entry().
    */
-  if (arg[0] == 't' && arg[1] == '_' && arg[2] && arg[3])
+  if (len >= 4 && arg[0] == 't' && arg[1] == '_')
     key = TERMCAP2KEY(arg[2], arg[3]);
   else {
     --arg;                          /* put arg at the '<' */
     modifiers = 0;
-    key = find_special_key(&arg, &modifiers, TRUE, TRUE);
-    if (modifiers)                  /* can't handle modifiers here */
+    key = find_special_key(&arg, len + 1, &modifiers, true, true);
+    if (modifiers) {  // can't handle modifiers here
       key = 0;
+    }
   }
   return key;
 }
+
+static int find_key_option(const char_u *arg)
+{
+  return find_key_option_len(arg, STRLEN(arg));
+}
+
 
 /*
  * if 'all' == 0: show changed options
@@ -6642,4 +6658,113 @@ static bool briopt_check(win_T *wp)
 unsigned int get_bkc_value(buf_T *buf)
 {
   return buf->b_bkc_flags ? buf->b_bkc_flags : bkc_flags;
+}
+
+/// Return option properties
+///
+/// Currently only returns the locality and type of the option. Returned flags:
+///
+/// GOP_GLOBAL
+/// :   This flag is set if option has global value.
+///
+/// GOP_BUFFER_LOCAL
+/// :   This flag is set if option is buffer-local.
+///
+/// GOP_WINDOW_LOCAL
+/// :   This flag is set if option is window-local.
+///
+/// GOP_DISABLED
+/// :   This flag is set if option is disabled in this version of neovim.
+///
+/// GOP_BOOLEAN
+/// :   This flag is set if option has boolean value.
+///
+/// GOP_NUMERIC
+/// :   This flag is set if option has numeric value.
+///
+/// GOP_STRING
+/// :   This flag is set if option has string value.
+///
+/// If no flags are set (== returned zero) then option was not found.
+///
+/// @param[in]  idx  Option index. Must be a valid index: this fact is not
+///                  checked.
+///
+/// @return Flag value.
+uint_least8_t get_option_properties_idx(int idx)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  uint_least8_t flags = 0;
+  const struct vimoption *const p = options + idx;
+
+  if (p->indir == PV_NONE) {
+    flags |= GOP_GLOBAL;
+  } else {
+    if (p->indir & PV_BOTH)
+      flags |= GOP_GLOBAL;
+    if (p->indir & PV_WIN)
+      flags |= GOP_WINDOW_LOCAL;
+    if (p->indir & PV_BUF)
+      flags |= GOP_BUFFER_LOCAL;
+    if (p->var != VAR_WIN && p->var != NULL)
+      // All buffer-local options really have global value, no matter what
+      // p->indir tells. This is just a saner variant then adding GOP_GLOBAL in
+      // one "if" with GOP_BUFFER_LOCAL.
+      flags |= GOP_GLOBAL;
+  }
+  if (p->var == NULL) {
+    flags |= GOP_DISABLED;
+  }
+
+  if (p->flags & P_BOOL) {
+    flags |= GOP_BOOLEAN;
+  } else if (p->flags & P_NUM) {
+    flags |= GOP_NUMERIC;
+  } else if (p->flags & P_STRING) {
+    flags |= GOP_STRING;
+  } else {
+    // Option may only be boolean, string or numeric
+    assert(false);
+  }
+
+  return flags;
+}
+
+/// Return option properties
+///
+/// Currently only returns the locality and type of the option. Check out
+/// get_option_properties_idx() description for the list of the flags.
+///
+/// @param[in]  name  Option that will be searched for.
+/// @param[in]  len   Length of the name.
+///
+/// @return Flag value.
+uint_least8_t get_option_properties(const char_u *const name, const size_t len)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  int idx = findoption_len(name, len);
+
+  if (idx == -1)
+    return 0;
+
+  return get_option_properties_idx(idx);
+}
+
+/// Return option name
+///
+/// @param[in]  idx           Option index.
+/// @param[in]  return_short  If true, return short name in place of long.
+///
+/// @return Option name in allocated memory or NULL for invalid option index.
+char *get_option_name(const int idx, const bool return_short)
+{
+  if (idx < 0 || idx > (int) PARAM_COUNT) {
+    return NULL;
+  } else if (return_short && options[idx].shortname != NULL) {
+    return xstrdup(options[idx].shortname);
+  } else if (options[idx].fullname != NULL) {
+    return xstrdup(options[idx].fullname);
+  } else {
+    return NULL;
+  }
 }

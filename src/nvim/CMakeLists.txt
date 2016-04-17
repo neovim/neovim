@@ -13,10 +13,11 @@ endif()
 endif()
 
 set(GENERATED_DIR ${PROJECT_BINARY_DIR}/src/nvim/auto)
-set(DISPATCH_GENERATOR ${PROJECT_SOURCE_DIR}/scripts/msgpack-gen.lua)
+set(MSGPACK_GENERATOR ${PROJECT_SOURCE_DIR}/scripts/msgpack-gen.lua)
 file(GLOB API_HEADERS api/*.h)
 file(GLOB MSGPACK_RPC_HEADERS msgpack_rpc/*.h)
 set(MSGPACK_DISPATCH ${GENERATED_DIR}/msgpack_dispatch.c)
+set(MSGPACK_LUA_C_BINDINGS ${GENERATED_DIR}/msgpack_lua_c_bindings.c)
 set(HEADER_GENERATOR ${PROJECT_SOURCE_DIR}/scripts/gendeclarations.lua)
 set(GENERATED_INCLUDES_DIR ${PROJECT_BINARY_DIR}/include)
 set(GENERATED_EX_CMDS_ENUM ${GENERATED_INCLUDES_DIR}/ex_cmds_enum.generated.h)
@@ -24,6 +25,7 @@ set(GENERATED_EX_CMDS_DEFS ${GENERATED_DIR}/ex_cmds_defs.generated.h)
 set(GENERATED_EVENTS_ENUM ${GENERATED_INCLUDES_DIR}/auevents_enum.generated.h)
 set(GENERATED_EVENTS_NAMES_MAP ${GENERATED_DIR}/auevents_name_map.generated.h)
 set(GENERATED_OPTIONS ${GENERATED_DIR}/options.generated.h)
+set(GENERATED_FIND_EVENT ${GENERATED_DIR}/viml/parser/auevents_find.generated.h)
 set(EX_CMDS_GENERATOR ${PROJECT_SOURCE_DIR}/scripts/genex_cmds.lua)
 set(EVENTS_GENERATOR ${PROJECT_SOURCE_DIR}/scripts/gen_events.lua)
 set(OPTIONS_GENERATOR ${PROJECT_SOURCE_DIR}/scripts/genoptions.lua)
@@ -36,24 +38,31 @@ set(UNICODEDATA_FILE ${UNICODE_DIR}/UnicodeData.txt)
 set(CASEFOLDING_FILE ${UNICODE_DIR}/CaseFolding.txt)
 set(EASTASIANWIDTH_FILE ${UNICODE_DIR}/EastAsianWidth.txt)
 set(GENERATED_UNICODE_TABLES ${GENERATED_DIR}/unicode_tables.generated.h)
+set(VIM_MODULE_FILE ${GENERATED_DIR}/viml/executor/vim_module.generated.h)
+set(VIM_MODULE_SOURCE ${PROJECT_SOURCE_DIR}/src/nvim/viml/executor/vim.lua)
+set(VIM_MODULE_GENERATOR ${PROJECT_SOURCE_DIR}/scripts/generate_vim_module.lua)
 
 include_directories(${GENERATED_DIR})
 include_directories(${GENERATED_INCLUDES_DIR})
 
 file(MAKE_DIRECTORY ${GENERATED_DIR})
-file(MAKE_DIRECTORY ${GENERATED_DIR}/os)
-file(MAKE_DIRECTORY ${GENERATED_DIR}/api)
-file(MAKE_DIRECTORY ${GENERATED_DIR}/api/private)
-file(MAKE_DIRECTORY ${GENERATED_DIR}/msgpack_rpc)
-file(MAKE_DIRECTORY ${GENERATED_DIR}/tui)
-file(MAKE_DIRECTORY ${GENERATED_DIR}/event)
 file(MAKE_DIRECTORY ${GENERATED_INCLUDES_DIR})
-file(MAKE_DIRECTORY ${GENERATED_INCLUDES_DIR}/os)
-file(MAKE_DIRECTORY ${GENERATED_INCLUDES_DIR}/api)
-file(MAKE_DIRECTORY ${GENERATED_INCLUDES_DIR}/api/private)
-file(MAKE_DIRECTORY ${GENERATED_INCLUDES_DIR}/msgpack_rpc)
-file(MAKE_DIRECTORY ${GENERATED_INCLUDES_DIR}/tui)
-file(MAKE_DIRECTORY ${GENERATED_INCLUDES_DIR}/event)
+foreach(subdir os
+               api
+               api/private
+               msgpack_rpc
+               tui
+               event
+               viml
+               viml/parser
+               viml/dumpers
+               viml/printer
+               viml/testhelpers
+               viml/translator
+               viml/executor)
+  file(MAKE_DIRECTORY ${GENERATED_DIR}/${subdir})
+  file(MAKE_DIRECTORY ${GENERATED_INCLUDES_DIR}/${subdir})
+endforeach()
 
 file(GLOB NEOVIM_SOURCES *.c os/*.c api/*.c api/private/*.c msgpack_rpc/*.c
   tui/*.c event/*.c)
@@ -73,6 +82,11 @@ foreach(sfile ${NEOVIM_SOURCES})
 endforeach()
 
 list(REMOVE_ITEM NEOVIM_SOURCES ${to_remove})
+
+file( GLOB VIML_SOURCES viml/*/*.c )
+file( GLOB VIML_CH_SOURCES viml/*/*.c.h)
+
+list(APPEND VIML_SOURCES "${PROJECT_SOURCE_DIR}/src/nvim/viml/viml.c")
 
 # Handle legacy files that don't yet pass -Wconversion.
 set(CONV_SOURCES
@@ -133,7 +147,9 @@ separate_arguments(C_FLAGS_${build_type}_ARRAY UNIX_COMMAND ${CMAKE_C_FLAGS_${bu
 set(gen_cflags ${gen_cflags} ${C_FLAGS_${build_type}_ARRAY} ${C_FLAGS_ARRAY})
 
 foreach(sfile ${NEOVIM_SOURCES}
-              "${PROJECT_SOURCE_DIR}/src/nvim/regexp_nfa.c")
+              "${PROJECT_SOURCE_DIR}/src/nvim/regexp_nfa.c"
+              ${VIML_SOURCES}
+              ${VIML_CH_SOURCES})
   get_filename_component(full_d ${sfile} PATH)
   file(RELATIVE_PATH d "${PROJECT_SOURCE_DIR}/src/nvim" "${full_d}")
   get_filename_component(f ${sfile} NAME)
@@ -142,9 +158,21 @@ foreach(sfile ${NEOVIM_SOURCES}
     set(f "${d}/${f}")
     set(r "${d}/${r}")
   endif()
-  set(gf1 "${GENERATED_DIR}/${r}.c.generated.h")
-  set(gf2 "${GENERATED_INCLUDES_DIR}/${r}.h.generated.h")
-  set(gf3 "${GENERATED_DIR}/${r}.i")
+  set(gfs)
+  if ("${sfile}" MATCHES "\\.c\\.h$")
+    set(f "${f}.c")
+    set(r "${r}.c")
+    set(gf1 "${GENERATED_DIR}/${r}.h.generated.h")
+    list(APPEND gfs "${gf1}")
+    set(gf2 "none")
+    set(gf3 "${GENERATED_DIR}/${r}.i")
+  else()
+    set(gf1 "${GENERATED_DIR}/${r}.c.generated.h")
+    set(gf2 "${GENERATED_INCLUDES_DIR}/${r}.h.generated.h")
+    set(gf3 "${GENERATED_DIR}/${r}.i")
+    list(APPEND gfs "${gf1}")
+    list(APPEND gfs "${gf2}")
+  endif()
 
   if(MSVC)
     set(PREPROC_OUTPUT /P /Fi${gf3})
@@ -153,13 +181,12 @@ foreach(sfile ${NEOVIM_SOURCES}
   endif()
 
   add_custom_command(
-    OUTPUT "${gf1}" "${gf2}"
+    OUTPUT ${gfs}
     COMMAND ${CMAKE_C_COMPILER} ${sfile} ${PREPROC_OUTPUT} ${gen_cflags} ${C_FLAGS_ARRAY}
     COMMAND "${LUA_PRG}" "${HEADER_GENERATOR}" "${sfile}" "${gf1}" "${gf2}" "${gf3}"
     DEPENDS "${HEADER_GENERATOR}" "${sfile}"
     )
-  list(APPEND NEOVIM_GENERATED_SOURCES "${gf1}")
-  list(APPEND NEOVIM_GENERATED_SOURCES "${gf2}")
+  list(APPEND NEOVIM_GENERATED_SOURCES ${gfs})
   if(${d} MATCHES "^api$" AND NOT ${f} MATCHES "^api/helpers.c$")
     list(APPEND API_HEADERS ${gf2})
   endif()
@@ -178,12 +205,21 @@ add_custom_command(OUTPUT ${GENERATED_UNICODE_TABLES}
     ${EASTASIANWIDTH_FILE}
 )
 
-add_custom_command(OUTPUT ${MSGPACK_DISPATCH}
-  COMMAND ${LUA_PRG} ${DISPATCH_GENERATOR} ${API_HEADERS} ${MSGPACK_DISPATCH}
+add_custom_command(OUTPUT ${MSGPACK_DISPATCH} ${MSGPACK_LUA_C_BINDINGS}
+  COMMAND ${LUA_PRG} ${MSGPACK_GENERATOR} ${API_HEADERS}
+                     ${MSGPACK_DISPATCH} ${MSGPACK_LUA_C_BINDINGS}
   DEPENDS
     ${API_HEADERS}
     ${MSGPACK_RPC_HEADERS}
-    ${DISPATCH_GENERATOR}
+    ${MSGPACK_GENERATOR}
+)
+
+add_custom_command(OUTPUT ${VIM_MODULE_FILE}
+  COMMAND ${LUA_PRG} ${VIM_MODULE_GENERATOR}
+                                        ${VIM_MODULE_SOURCE} ${VIM_MODULE_FILE}
+  DEPENDS
+    ${VIM_MODULE_GENERATOR}
+    ${VIM_MODULE_SOURCE}
 )
 
 list(APPEND NEOVIM_GENERATED_SOURCES
@@ -195,6 +231,12 @@ list(APPEND NEOVIM_GENERATED_SOURCES
   "${GENERATED_EVENTS_NAMES_MAP}"
   "${GENERATED_OPTIONS}"
   "${GENERATED_UNICODE_TABLES}"
+  "${GENERATED_FIND_EVENT}"
+)
+
+list(APPEND VIML_GENERATED_SOURCES
+  "${MSGPACK_LUA_C_BINDINGS}"
+  "${VIM_MODULE_FILE}"
 )
 
 add_custom_command(OUTPUT ${GENERATED_EX_CMDS_ENUM} ${GENERATED_EX_CMDS_DEFS}
@@ -203,9 +245,9 @@ add_custom_command(OUTPUT ${GENERATED_EX_CMDS_ENUM} ${GENERATED_EX_CMDS_DEFS}
   DEPENDS ${EX_CMDS_GENERATOR} ${EX_CMDS_DEFS_FILE}
 )
 
-add_custom_command(OUTPUT ${GENERATED_EVENTS_ENUM} ${GENERATED_EVENTS_NAMES_MAP}
+add_custom_command(OUTPUT ${GENERATED_EVENTS_ENUM} ${GENERATED_EVENTS_NAMES_MAP} ${GENERATED_FIND_EVENT}
   COMMAND ${LUA_PRG} ${EVENTS_GENERATOR}
-      ${PROJECT_SOURCE_DIR}/src/nvim ${GENERATED_EVENTS_ENUM} ${GENERATED_EVENTS_NAMES_MAP}
+    ${PROJECT_SOURCE_DIR}/src/nvim ${GENERATED_EVENTS_ENUM} ${GENERATED_EVENTS_NAMES_MAP} ${GENERATED_FIND_EVENT}
   DEPENDS ${EVENTS_GENERATOR} ${EVENTS_LIST_FILE}
 )
 
@@ -281,7 +323,9 @@ set_target_properties(libnvim PROPERTIES
 set_property(TARGET libnvim APPEND_STRING PROPERTY COMPILE_FLAGS " -DMAKE_LIB ")
 
 add_library(nvim-test MODULE EXCLUDE_FROM_ALL ${NEOVIM_GENERATED_SOURCES}
-    ${NEOVIM_SOURCES} ${UNIT_TEST_FIXTURES} ${NEOVIM_HEADERS})
+    ${NEOVIM_SOURCES} ${UNIT_TEST_FIXTURES} ${NEOVIM_HEADERS} ${VIML_SOURCES}
+    ${VIML_GENERATED_SOURCES}
+)
 target_link_libraries(nvim-test ${NVIM_LINK_LIBRARIES})
 set_property(TARGET nvim-test APPEND_STRING PROPERTY COMPILE_FLAGS -DUNIT_TESTING)
 

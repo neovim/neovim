@@ -19,6 +19,12 @@
 #define EXMODE_NORMAL           1
 #define EXMODE_VIM              2
 
+typedef struct {
+  const int expand;
+  const char *const name;
+} CompleteVariant;
+extern const CompleteVariant command_complete[];
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ex_docmd.h.generated.h"
 #endif

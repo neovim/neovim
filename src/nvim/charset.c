@@ -609,7 +609,7 @@ void transchar_hex(char_u *buf, int c)
 /// @param c
 ///
 /// @return the hex character.
-static unsigned nr2hex(unsigned c)
+unsigned nr2hex(unsigned c)
 {
   if ((c & 0xf) <= 9) {
     return (c & 0xf) + '0';
@@ -1794,7 +1794,7 @@ bool vim_isblankline(char_u *lbuf)
 /// @param nptr Returns the signed result.
 /// @param unptr Returns the unsigned result.
 /// @param maxlen Max length of string to check.
-void vim_str2nr(char_u *start, int *prep, int *len, int what,
+void vim_str2nr(const char_u *start, int *prep, int *len, int what,
                 long *nptr, unsigned long *unptr, int maxlen)
 {
   char_u *ptr = start;

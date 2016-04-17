@@ -28,6 +28,9 @@
 #define ENC_LATIN9     0x400       /* Latin9 */
 #define ENC_MACROMAN   0x800       /* Mac Roman (not Macro Man! :-) */
 
+/// Maximum length of one character
+#define MAX_CHAR_LEN 6
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "mbyte.h.generated.h"
 #endif
