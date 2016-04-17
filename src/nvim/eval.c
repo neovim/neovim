@@ -21038,15 +21038,22 @@ call_user_func (
   save_sourcing_name = sourcing_name;
   save_sourcing_lnum = sourcing_lnum;
   sourcing_lnum = 1;
-  // need space for function name + ("function " + 3) or "[number]"
+  // need space for new sourcing_name:
+  // * save_sourcing_name
+  // * "["number"].." or "function "
+  // * "<SNR>" + fp->uf_name - 3
+  // * terminating NUL
   size_t len = (save_sourcing_name == NULL ? 0 : STRLEN(save_sourcing_name))
-               + STRLEN(fp->uf_name) + 20;
+               + STRLEN(fp->uf_name) + 27;
   sourcing_name = xmalloc(len);
   {
     if (save_sourcing_name != NULL
         && STRNCMP(save_sourcing_name, "function ", 9) == 0) {
-      vim_snprintf((char *)sourcing_name, len, "%s[%zu]..",
-                   save_sourcing_name, save_sourcing_lnum);
+      vim_snprintf((char *)sourcing_name,
+                   len,
+                   "%s[%" PRId64 "]..",
+                   save_sourcing_name,
+                   (int64_t)save_sourcing_lnum);
     } else {
       STRCPY(sourcing_name, "function ");
     }
