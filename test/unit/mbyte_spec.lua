@@ -11,8 +11,8 @@ describe('mbyte', function()
   -- Array for composing characters
   local intp = ffi.typeof('int[?]')
   local function to_intp()
-      -- how to get MAX_MCO from globals.h?
-      return intp(7, 1)
+    -- how to get MAX_MCO from globals.h?
+    return intp(7, 1)
   end
 
   -- Convert from bytes to string
@@ -30,7 +30,7 @@ describe('mbyte', function()
   it('utf_ptr2char', function()
     -- For strings with length 1 the first byte is returned.
     for c = 0, 255 do
-        eq(c, mbyte.utf_ptr2char(to_string({c, 0})))
+      eq(c, mbyte.utf_ptr2char(to_string({c, 0})))
     end
 
     -- Some ill formed byte sequences that should not be recognized as UTF-8
@@ -48,8 +48,8 @@ describe('mbyte', function()
     it('1-byte sequences', function()
       local pcc = to_intp()
       for c = 0, 255 do
-          eq(c, mbyte.utfc_ptr2char_len(to_string({c}), pcc, 1))
-          eq(0, pcc[0])
+        eq(c, mbyte.utfc_ptr2char_len(to_string({c}), pcc, 1))
+        eq(0, pcc[0])
       end
     end)
 
@@ -187,7 +187,7 @@ describe('mbyte', function()
       -- Combining characters U+0300, U+0301, U+0302, U+0303, U+0304
       local pcc = to_intp()
       eq(0x007f, mbyte.utfc_ptr2char_len(to_string(
-          {0x7f, 0xcc, 0x80, 0xcc, 0x81, 0xcc, 0x82, 0xcc, 0x83, 0xcc, 0x84}), pcc, 11))
+        {0x7f, 0xcc, 0x80, 0xcc, 0x81, 0xcc, 0x82, 0xcc, 0x83, 0xcc, 0x84}), pcc, 11))
       eq(0x0300, pcc[0])
       eq(0x0301, pcc[1])
       eq(0x0302, pcc[2])
@@ -198,7 +198,7 @@ describe('mbyte', function()
       -- U+0305
       local pcc = to_intp()
       eq(0x007f, mbyte.utfc_ptr2char_len(to_string(
-          {0x7f, 0xcc, 0x80, 0xcc, 0x81, 0xcc, 0x82, 0xcc, 0x83, 0xcc, 0x84, 0xcc, 0x85}), pcc, 13))
+        {0x7f, 0xcc, 0x80, 0xcc, 0x81, 0xcc, 0x82, 0xcc, 0x83, 0xcc, 0x84, 0xcc, 0x85}), pcc, 13))
       eq(0x0300, pcc[0])
       eq(0x0301, pcc[1])
       eq(0x0302, pcc[2])
@@ -211,7 +211,7 @@ describe('mbyte', function()
       -- U+0305, U+0306, but only save six (= MAX_MCO).
       local pcc = to_intp()
       eq(0x007f, mbyte.utfc_ptr2char_len(to_string(
-          {0x7f, 0xcc, 0x80, 0xcc, 0x81, 0xcc, 0x82, 0xcc, 0x83, 0xcc, 0x84, 0xcc, 0x85, 0xcc, 0x86}), pcc, 15))
+        {0x7f, 0xcc, 0x80, 0xcc, 0x81, 0xcc, 0x82, 0xcc, 0x83, 0xcc, 0x84, 0xcc, 0x85, 0xcc, 0x86}), pcc, 15))
       eq(0x0300, pcc[0])
       eq(0x0301, pcc[1])
       eq(0x0302, pcc[2])
@@ -223,7 +223,7 @@ describe('mbyte', function()
       -- Only three following combining characters U+0300, U+0301, U+0302
       local pcc = to_intp()
       eq(0x007f, mbyte.utfc_ptr2char_len(to_string(
-          {0x7f, 0xcc, 0x80, 0xcc, 0x81, 0xcc, 0x82, 0xc2, 0x80, 0xcc, 0x84, 0xcc, 0x85}), pcc, 13))
+        {0x7f, 0xcc, 0x80, 0xcc, 0x81, 0xcc, 0x82, 0xc2, 0x80, 0xcc, 0x84, 0xcc, 0x85}), pcc, 13))
       eq(0x0300, pcc[0])
       eq(0x0301, pcc[1])
       eq(0x0302, pcc[2])
@@ -266,7 +266,7 @@ describe('mbyte', function()
       -- Combining characters U+1AB0 and U+0301
       local pcc = to_intp()
       eq(0x100000, mbyte.utfc_ptr2char_len(to_string(
-          {0xf4, 0x80, 0x80, 0x80, 0xe1, 0xaa, 0xb0, 0xcc, 0x81}), pcc, 9))
+        {0xf4, 0x80, 0x80, 0x80, 0xe1, 0xaa, 0xb0, 0xcc, 0x81}), pcc, 9))
       eq(0x1ab0, pcc[0])
       eq(0x0301, pcc[1])
       eq(0x0000, pcc[2])
