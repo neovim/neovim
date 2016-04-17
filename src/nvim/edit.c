@@ -1359,6 +1359,9 @@ ins_redraw (
       update_screen(0);
     }
     if (has_event(EVENT_CURSORMOVEDI)) {
+      // Make sure curswant is correct, an autocommand may call
+      // getcurpos()
+      update_curswant();
       apply_autocmds(EVENT_CURSORMOVEDI, NULL, NULL, false, curbuf);
     }
     if (curwin->w_p_cole > 0) {
