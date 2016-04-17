@@ -38,7 +38,7 @@ SCRIPTS := \
            test_marks.out         \
            test_match_conceal.out \
 
-NEW_TESTS =
+NEW_TESTS = test_viml.res
 
 SCRIPTS_GUI := test16.out
 

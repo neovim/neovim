@@ -33,6 +33,15 @@ if &lines < 24 || &columns < 80
   cquit
 endif
 
+" This also enables use of line continuation.
+set viminfo+=nviminfo
+
+" Avoid stopping at the "hit enter" prompt
+set nomore
+
+" Output all messages in English.
+lang mess C
+
 " Source the test script.  First grab the file name, in case the script
 " navigates away.
 let testname = expand('%')
@@ -40,12 +49,17 @@ let done = 0
 let fail = 0
 let errors = []
 let messages = []
-try
+if expand('%') =~ 'test_viml.vim'
+  " this test has intentional errors, don't use try/catch.
   source %
-catch
-  let fail += 1
-  call add(errors, 'Caught exception: ' . v:exception . ' @ ' . v:throwpoint)
-endtry
+else
+  try
+    source %
+  catch
+    let fail += 1
+    call add(errors, 'Caught exception: ' . v:exception . ' @ ' . v:throwpoint)
+  endtry
+endif
 
 " Locate Test_ functions and execute them.
 redir @q
