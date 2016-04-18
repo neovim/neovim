@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:	Python
 " Maintainer:	Zvezdan Petkovic <zpetkovic@acm.org>
-" Last Change:	2015 Jul 14
+" Last Change:	2015 Sep 15
 " Credits:	Neil Schemenauer <nas@python.ca>
 "		Dmitry Vasiliev
 "
@@ -70,6 +70,7 @@ set cpo&vim
 " - 'nonlocal' is a keyword in Python 3 and will be highlighted.
 " - 'print' is a built-in in Python 3 and will be highlighted as
 "   built-in below (use 'from __future__ import print_function' in 2)
+" - async and await were added in Python 3.5 and are soft keywords.
 "
 syn keyword pythonStatement	False, None, True
 syn keyword pythonStatement	as assert break continue del exec global
@@ -80,6 +81,7 @@ syn keyword pythonRepeat	for while
 syn keyword pythonOperator	and in is not or
 syn keyword pythonException	except finally raise try
 syn keyword pythonInclude	from import
+syn keyword pythonAsync		async await
 
 " Decorators (new in Python 2.4)
 syn match   pythonDecorator	"@" display nextgroup=pythonFunction skipwhite
@@ -230,6 +232,7 @@ if !exists("python_no_exception_highlight")
   syn keyword pythonExceptions	FileNotFoundError InterruptedError
   syn keyword pythonExceptions	IsADirectoryError NotADirectoryError
   syn keyword pythonExceptions	PermissionError ProcessLookupError
+  syn keyword pythonExceptions	RecursionError StopAsyncIteration
   syn keyword pythonExceptions	TimeoutError
   " builtin exceptions deprecated/removed in Python 3
   syn keyword pythonExceptions	IOError VMSError WindowsError
@@ -286,6 +289,7 @@ if version >= 508 || !exists("did_python_syn_inits")
   HiLink pythonOperator		Operator
   HiLink pythonException	Exception
   HiLink pythonInclude		Include
+  HiLink pythonAsync		Statement
   HiLink pythonDecorator	Define
   HiLink pythonFunction		Function
   HiLink pythonComment		Comment

@@ -1,7 +1,7 @@
 " Vim support file to detect file types
 "
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2015 Aug 11
+" Last Change:	2015 Sep 22
 
 " Listen very carefully, I will say this only once
 if exists("did_load_filetypes")
@@ -139,7 +139,7 @@ au BufNewFile,BufRead .arch-inventory,=tagging-method	setf arch
 au BufNewFile,BufRead *.art			setf art
 
 " AsciiDoc
-au BufNewFile,BufRead *.asciidoc		setf asciidoc
+au BufNewFile,BufRead *.asciidoc,*.adoc		setf asciidoc
 
 " ASN.1
 au BufNewFile,BufRead *.asn,*.asn1		setf asn
@@ -822,7 +822,7 @@ au BufNewFile,BufRead *.gs			setf grads
 au BufNewFile,BufRead *.gretl			setf gretl
 
 " Groovy
-au BufNewFile,BufRead *.groovy			setf groovy
+au BufNewFile,BufRead *.gradle,*.groovy		setf groovy
 
 " GNU Server Pages
 au BufNewFile,BufRead *.gsp			setf gsp
