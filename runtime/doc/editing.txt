@@ -1,4 +1,4 @@
-*editing.txt*   For Vim version 7.4.  Last change: 2015 Jul 28
+*editing.txt*   For Vim version 7.4.  Last change: 2015 Aug 25
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -381,6 +381,7 @@ Finds files:
 On Unix and a few other systems you can also use backticks for the file name
 argument, for example: >
 	:next `find . -name ver\\*.c -print`
+	:view `ls -t *.patch  \| head -n1`
 The backslashes before the star are required to prevent the shell from
 expanding "ver*.c" prior to execution of the find program.  The backslash
 before the shell pipe symbol "|" prevents Vim from parsing it as command
@@ -398,13 +399,11 @@ The expression can contain just about anything, thus this can also be used to
 avoid the special meaning of '"', '|', '%' and '#'.  However, 'wildignore'
 does apply like to other wildcards.
 
-Environment variables are expanded before evaluating the expression, thus this
-does not work: >
-	:e `=$HOME . '.vimrc'`
-Because $HOME is expanding early, resulting in: >
-	:e `=/home/user . '.vimrc'`
-This does work: >
-	:e `=expand('$HOME') . '.vimrc'`
+Environment variables in the expression are expanded when evaluating the
+expression, thus this works: >
+	:e `=$HOME . '/.vimrc'`
+This does not work, $HOME is inside a string and used literally: >
+	:e `='$HOME' . '/.vimrc'`
 
 If the expression returns a string then names are to be separated with line
 breaks.  When the result is a |List| then each item is used as a name.  Line

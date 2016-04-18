@@ -1,4 +1,4 @@
-*syntax.txt*	For Vim version 7.4.  Last change: 2015 Jul 21
+*syntax.txt*	For Vim version 7.4.  Last change: 2015 Aug 13
 
 
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
@@ -3430,7 +3430,7 @@ DEFINING KEYWORDS					*:syn-keyword*
   :syntax keyword   Type   contained int long char
   :syntax keyword   Type   int long contained char
   :syntax keyword   Type   int long char contained
-<								*E789*
+<								*E789* *E890*
 	When you have a keyword with an optional tail, like Ex commands in
 	Vim, you can put the optional characters inside [], to define all the
 	variations at once: >

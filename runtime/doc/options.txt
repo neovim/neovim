@@ -49,9 +49,12 @@ achieve special effects.  These options come in three forms:
 :se[t] {option}&vi	Reset option to its Vi default value.
 :se[t] {option}&vim	Reset option to its Vim default value.
 
-:se[t] all&		Set all options, except terminal options, to their
-			default value.  The values of 'lines' and 'columns'
-			are not changed.
+:se[t] all&		Set all options to their default value.  The values of
+			these options are not changed:
+			  'columns'
+			  'encoding'
+			  'lines'
+			Warning: This may have a lot of side effects.
 
 						*:set-args* *E487* *E521*
 :se[t] {option}={value}		or
