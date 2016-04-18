@@ -30,7 +30,7 @@ function! remote#define#CommandOnHost(host, method, sync, name, opts)
   exe s:GetCommandPrefix(a:name, a:opts)
         \ .' call remote#define#CommandBootstrap("'.a:host.'"'
         \ .                                ', "'.a:method.'"'
-        \ .                                ', "'.a:sync.'"'
+        \ .                                ', '.string(a:sync)
         \ .                                ', "'.a:name.'"'
         \ .                                ', '.string(a:opts).''
         \ .                                ', "'.join(forward_args, '').'"'
@@ -94,7 +94,7 @@ function! remote#define#AutocmdOnHost(host, method, sync, name, opts)
   let bootstrap_def = s:GetAutocmdPrefix(a:name, a:opts)
         \ .' call remote#define#AutocmdBootstrap("'.a:host.'"'
         \ .                                ', "'.a:method.'"'
-        \ .                                ', "'.a:sync.'"'
+        \ .                                ', '.string(a:sync)
         \ .                                ', "'.a:name.'"'
         \ .                                ', '.string(a:opts).''
         \ .                                ', "'.escape(forward, '"').'"'
@@ -133,7 +133,7 @@ function! remote#define#FunctionOnHost(host, method, sync, name, opts)
   exe 'autocmd! '.group.' FuncUndefined '.a:name
         \ .' call remote#define#FunctionBootstrap("'.a:host.'"'
         \ .                                 ', "'.a:method.'"'
-        \ .                                 ', "'.a:sync.'"'
+        \ .                                 ', '.string(a:sync)
         \ .                                 ', "'.a:name.'"'
         \ .                                 ', '.string(a:opts)
         \ .                                 ', "'.group.'"'
