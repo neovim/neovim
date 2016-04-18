@@ -311,14 +311,19 @@ local function function_specs_for(fn, sync, first_arg_factory, init)
       end)
 
       it('with range', function()
+        helpers.insert([[
+          foo
+          bar
+          baz
+          zub]])
         call(fn, args..[[, {'range': ''}]])
         local function on_setup()
-          command('%call TestFunction(1, "a", ["b", "c"])')
+          command('2,3call TestFunction(1, "a", ["b", "c"])')
         end
 
         local function handler(method, arguments)
           eq('test-handler', method)
-          eq({{1, 'a', {'b', 'c'}}, {1, 1}}, arguments)
+          eq({{1, 'a', {'b', 'c'}}, {2, 3}}, arguments)
           return 'rv'
         end
 
