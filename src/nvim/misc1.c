@@ -86,38 +86,32 @@ open_line (
     int second_line_indent
 )
 {
-  char_u      *saved_line;              /* copy of the original line */
-  char_u      *next_line = NULL;        /* copy of the next line */
-  char_u      *p_extra = NULL;          /* what goes to next line */
-  int less_cols = 0;                    /* less columns for mark in new line */
-  int less_cols_off = 0;                /* columns to skip for mark adjust */
-  pos_T old_cursor;                     /* old cursor position */
-  int newcol = 0;                       /* new cursor column */
-  int newindent = 0;                    /* auto-indent of the new line */
-  int n;
-  int trunc_line = FALSE;               /* truncate current line afterwards */
-  int retval = FALSE;                   /* return value, default is FAIL */
-  int extra_len = 0;                    /* length of p_extra string */
-  int lead_len;                         /* length of comment leader */
-  char_u      *lead_flags;      /* position in 'comments' for comment leader */
-  char_u      *leader = NULL;           /* copy of comment leader */
-  char_u      *allocated = NULL;        /* allocated memory */
-  char_u      *p;
-  int saved_char = NUL;                 /* init for GCC */
-  pos_T       *pos;
-  int do_si = (!p_paste && curbuf->b_p_si
-               && !curbuf->b_p_cin
-               );
-  int no_si = FALSE;                    /* reset did_si afterwards */
-  int first_char = NUL;                 /* init for GCC */
+  char_u *next_line = NULL;       // copy of the next line
+  char_u *p_extra = NULL;         // what goes to next line
+  colnr_T less_cols = 0;          // less columns for mark in new line
+  colnr_T less_cols_off = 0;      // columns to skip for mark adjust
+  pos_T old_cursor;               // old cursor position
+  colnr_T newcol = 0;             // new cursor column
+  int newindent = 0;              // auto-indent of the new line
+  bool trunc_line = false;        // truncate current line afterwards
+  bool retval = false;            // return value, default is false
+  int extra_len = 0;              // length of p_extra string
+  int lead_len;                   // length of comment leader
+  char_u *lead_flags;             // position in 'comments' for comment leader
+  char_u *leader = NULL;          // copy of comment leader
+  char_u *allocated = NULL;       // allocated memory
+  char_u *p;
+  char_u saved_char = NUL;        // init for GCC
+  pos_T *pos;
+  bool do_si = (!p_paste && curbuf->b_p_si && !curbuf->b_p_cin);
+  bool no_si = false;             // reset did_si afterwards
+  int first_char = NUL;           // init for GCC
   int vreplace_mode;
-  int did_append;                       /* appended a new line */
-  int saved_pi = curbuf->b_p_pi;           /* copy of preserveindent setting */
+  bool did_append;                // appended a new line
+  int saved_pi = curbuf->b_p_pi;  // copy of preserveindent setting
 
-  /*
-   * make a copy of the current line so we can mess with it
-   */
-  saved_line = vim_strsave(get_cursor_line_ptr());
+  // make a copy of the current line so we can mess with it
+  char_u *saved_line = vim_strsave(get_cursor_line_ptr());
 
   if (State & VREPLACE_FLAG) {
     /*
@@ -204,7 +198,7 @@ open_line (
       char_u  *ptr;
       char_u last_char;
 
-      old_cursor = curwin->w_cursor;
+      pos_T old_cursor = curwin->w_cursor;
       ptr = saved_line;
       if (flags & OPENLINE_DO_COM)
         lead_len = get_leader_len(ptr, NULL, FALSE, TRUE);
@@ -401,7 +395,7 @@ open_line (
             end_comment_pending = -1;             /* means we want to set it */
           ++p;
         }
-        n = copy_option_part(&p, lead_end, COM_MAX_LEN, ",");
+        size_t n = copy_option_part(&p, lead_end, COM_MAX_LEN, ",");
 
         if (end_comment_pending == -1)          /* we can set it now */
           end_comment_pending = lead_end[n - 1];
@@ -498,10 +492,11 @@ open_line (
       }
     }
     if (lead_len > 0) {
-      /* allocate buffer (may concatenate p_extra later) */
-      leader = xmalloc(lead_len + lead_repl_len + extra_space + extra_len
-          + (second_line_indent > 0 ? second_line_indent : 0) + 1);
-      allocated = leader;                   /* remember to free it later */
+      // allocate buffer (may concatenate p_extra later)
+      leader = xmalloc((size_t)(lead_len + lead_repl_len + extra_space
+                                + extra_len + (second_line_indent > 0
+                                               ? second_line_indent : 0) + 1));
+      allocated = leader;  // remember to free it later
 
       STRLCPY(leader, saved_line, lead_len + 1);
 
@@ -598,9 +593,8 @@ open_line (
             if (!ascii_iswhite(*p)) {
               /* Don't put a space before a TAB. */
               if (p + 1 < leader + lead_len && p[1] == TAB) {
-                --lead_len;
-                memmove(p, p + 1,
-                    (leader + lead_len) - p);
+                lead_len--;
+                memmove(p, p + 1, (size_t)(leader + lead_len - p));
               } else {
                 int l = (*mb_ptr2len)(p);
 
@@ -611,8 +605,7 @@ open_line (
                     --l;
                     *p++ = ' ';
                   }
-                  memmove(p + 1, p + l,
-                      (leader + lead_len) - p);
+                  memmove(p + 1, p + l, (size_t)(leader + lead_len - p));
                   lead_len -= l - 1;
                 }
                 *p = ' ';
@@ -813,9 +806,11 @@ open_line (
      * In REPLACE mode, for each character in the new indent, there must
      * be a NUL on the replace stack, for when it is deleted with BS
      */
-    if (REPLACE_NORMAL(State))
-      for (n = 0; n < (int)curwin->w_cursor.col; ++n)
+    if (REPLACE_NORMAL(State)) {
+      for (colnr_T n = 0; n < curwin->w_cursor.col; n++) {
         replace_push(NUL);
+      }
+    }
     newcol += curwin->w_cursor.col;
     if (no_si)
       did_si = FALSE;
@@ -1281,11 +1276,13 @@ int plines_win_nofold(win_T *wp, linenr_T lnum)
    * Add column offset for 'number', 'relativenumber' and 'foldcolumn'.
    */
   width = wp->w_width - win_col_off(wp);
-  if (width <= 0)
-    return 32000;
-  if (col <= (unsigned int)width)
+  if (width <= 0) {
+    return 32000;  // bigger than the number of lines of the screen
+  }
+  if (col <= (unsigned int)width) {
     return 1;
-  col -= width;
+  }
+  col -= (unsigned int)width;
   width += win_col_off2(wp);
   assert(col <= INT_MAX && (int)col < INT_MAX - (width -1));
   return ((int)col + (width - 1)) / width + 1;
@@ -1297,15 +1294,9 @@ int plines_win_nofold(win_T *wp, linenr_T lnum)
  */
 int plines_win_col(win_T *wp, linenr_T lnum, long column)
 {
-  long col;
-  char_u      *s;
-  int lines = 0;
-  int width;
-  char_u *line;
-
-  /* Check for filler lines above this buffer line.  When folded the result
-   * is one line anyway. */
-  lines = diff_check_fill(wp, lnum);
+  // Check for filler lines above this buffer line.  When folded the result
+  // is one line anyway.
+  int lines = diff_check_fill(wp, lnum);
 
   if (!wp->w_p_wrap)
     return lines + 1;
@@ -1313,30 +1304,29 @@ int plines_win_col(win_T *wp, linenr_T lnum, long column)
   if (wp->w_width == 0)
     return lines + 1;
 
-  line = s = ml_get_buf(wp->w_buffer, lnum, FALSE);
+  char_u *line = ml_get_buf(wp->w_buffer, lnum, false);
+  char_u *s = line;
 
-  col = 0;
+  colnr_T col = 0;
   while (*s != NUL && --column >= 0) {
-    col += win_lbr_chartabsize(wp, line, s, (colnr_T)col, NULL);
+    col += win_lbr_chartabsize(wp, line, s, col, NULL);
     mb_ptr_adv(s);
   }
 
-  /*
-   * If *s is a TAB, and the TAB is not displayed as ^I, and we're not in
-   * INSERT mode, then col must be adjusted so that it represents the last
-   * screen position of the TAB.  This only fixes an error when the TAB wraps
-   * from one screen line to the next (when 'columns' is not a multiple of
-   * 'ts') -- webb.
-   */
-  if (*s == TAB && (State & NORMAL) && (!wp->w_p_list || lcs_tab1))
-    col += win_lbr_chartabsize(wp, line, s, (colnr_T)col, NULL) - 1;
+  // If *s is a TAB, and the TAB is not displayed as ^I, and we're not in
+  // INSERT mode, then col must be adjusted so that it represents the last
+  // screen position of the TAB.  This only fixes an error when the TAB wraps
+  // from one screen line to the next (when 'columns' is not a multiple of
+  // 'ts') -- webb.
+  if (*s == TAB && (State & NORMAL) && (!wp->w_p_list || lcs_tab1)) {
+    col += win_lbr_chartabsize(wp, line, s, col, NULL) - 1;
+  }
 
-  /*
-   * Add column offset for 'number', 'relativenumber', 'foldcolumn', etc.
-   */
-  width = wp->w_width - win_col_off(wp);
-  if (width <= 0)
+  // Add column offset for 'number', 'relativenumber', 'foldcolumn', etc.
+  int width = wp->w_width - win_col_off(wp);
+  if (width <= 0) {
     return 9999;
+  }
 
   lines += 1;
   if (col > width)
@@ -1349,11 +1339,9 @@ int plines_m_win(win_T *wp, linenr_T first, linenr_T last)
   int count = 0;
 
   while (first <= last) {
-    int x;
-
-    /* Check if there are any really folded lines, but also included lines
-     * that are maybe folded. */
-    x = foldedCount(wp, first, NULL);
+    // Check if there are any really folded lines, but also included lines
+    // that are maybe folded.
+    linenr_T x = foldedCount(wp, first, NULL);
     if (x > 0) {
       ++count;              /* count 1 for "+-- folded" line */
       first += x;
@@ -1374,117 +1362,99 @@ int plines_m_win(win_T *wp, linenr_T first, linenr_T last)
  */
 void ins_bytes(char_u *p)
 {
-  ins_bytes_len(p, (int)STRLEN(p));
+  ins_bytes_len(p, STRLEN(p));
 }
 
-/*
- * Insert string "p" with length "len" at the cursor position.
- * Handles Replace mode and multi-byte characters.
- */
-void ins_bytes_len(char_u *p, int len)
+/// Insert string "p" with length "len" at the cursor position.
+/// Handles Replace mode and multi-byte characters.
+void ins_bytes_len(char_u *p, size_t len)
 {
-  int i;
-  int n;
-
-  if (has_mbyte)
-    for (i = 0; i < len; i += n) {
-      if (enc_utf8)
-        /* avoid reading past p[len] */
-        n = utfc_ptr2len_len(p + i, len - i);
-      else
-        n = (*mb_ptr2len)(p + i);
+  if (has_mbyte) {
+    size_t n;
+    for (size_t i = 0; i < len; i += n) {
+      if (enc_utf8) {
+        // avoid reading past p[len]
+        n = (size_t)utfc_ptr2len_len(p + i, (int)(len - i));
+      } else {
+        n = (size_t)(*mb_ptr2len)(p + i);
+      }
       ins_char_bytes(p + i, n);
     }
-  else
-    for (i = 0; i < len; ++i)
+  } else {
+    for (size_t i = 0; i < len; i++) {
       ins_char(p[i]);
+    }
+  }
 }
 
-/*
- * Insert or replace a single character at the cursor position.
- * When in REPLACE or VREPLACE mode, replace any existing character.
- * Caller must have prepared for undo.
- * For multi-byte characters we get the whole character, the caller must
- * convert bytes to a character.
- */
+/// Insert or replace a single character at the cursor position.
+/// When in REPLACE or VREPLACE mode, replace any existing character.
+/// Caller must have prepared for undo.
+/// For multi-byte characters we get the whole character, the caller must
+/// convert bytes to a character.
 void ins_char(int c)
 {
   char_u buf[MB_MAXBYTES + 1];
-  int n;
+  size_t n = (size_t)(*mb_char2bytes)(c, buf);
 
-  n = (*mb_char2bytes)(c, buf);
-
-  /* When "c" is 0x100, 0x200, etc. we don't want to insert a NUL byte.
-   * Happens for CTRL-Vu9900. */
-  if (buf[0] == 0)
+  // When "c" is 0x100, 0x200, etc. we don't want to insert a NUL byte.
+  // Happens for CTRL-Vu9900.
+  if (buf[0] == 0) {
     buf[0] = '\n';
-
+  }
   ins_char_bytes(buf, n);
 }
 
-void ins_char_bytes(char_u *buf, int charlen)
+void ins_char_bytes(char_u *buf, size_t charlen)
 {
-  int c = buf[0];
-  int newlen;                   /* nr of bytes inserted */
-  int oldlen;                   /* nr of bytes deleted (0 when not replacing) */
-  char_u      *p;
-  char_u      *newp;
-  char_u      *oldp;
-  int linelen;                  /* length of old line including NUL */
-  colnr_T col;
-  linenr_T lnum = curwin->w_cursor.lnum;
-  int i;
-
-  /* Break tabs if needed. */
-  if (virtual_active() && curwin->w_cursor.coladd > 0)
+  // Break tabs if needed.
+  if (virtual_active() && curwin->w_cursor.coladd > 0) {
     coladvance_force(getviscol());
+  }
 
-  col = curwin->w_cursor.col;
-  oldp = ml_get(lnum);
-  linelen = (int)STRLEN(oldp) + 1;
+  int c = buf[0];
+  size_t col = (size_t)curwin->w_cursor.col;
+  linenr_T lnum = curwin->w_cursor.lnum;
+  char_u *oldp = ml_get(lnum);
+  size_t linelen = STRLEN(oldp) + 1;  // length of old line including NUL
 
-  /* The lengths default to the values for when not replacing. */
-  oldlen = 0;
-  newlen = charlen;
+  // The lengths default to the values for when not replacing.
+  size_t oldlen = 0;        // nr of bytes inserted
+  size_t newlen = charlen;  // nr of bytes deleted (0 when not replacing)
 
   if (State & REPLACE_FLAG) {
     if (State & VREPLACE_FLAG) {
-      colnr_T new_vcol = 0;             /* init for GCC */
+      // Disable 'list' temporarily, unless 'cpo' contains the 'L' flag.
+      // Returns the old value of list, so when finished,
+      // curwin->w_p_list should be set back to this.
+      int old_list = curwin->w_p_list;
+      if (old_list && vim_strchr(p_cpo, CPO_LISTWM) == NULL) {
+        curwin->w_p_list = false;
+      }
+      // In virtual replace mode each character may replace one or more
+      // characters (zero if it's a TAB).  Count the number of bytes to
+      // be deleted to make room for the new character, counting screen
+      // cells.  May result in adding spaces to fill a gap.
       colnr_T vcol;
-      int old_list;
-
-      /*
-       * Disable 'list' temporarily, unless 'cpo' contains the 'L' flag.
-       * Returns the old value of list, so when finished,
-       * curwin->w_p_list should be set back to this.
-       */
-      old_list = curwin->w_p_list;
-      if (old_list && vim_strchr(p_cpo, CPO_LISTWM) == NULL)
-        curwin->w_p_list = FALSE;
-
-      /*
-       * In virtual replace mode each character may replace one or more
-       * characters (zero if it's a TAB).  Count the number of bytes to
-       * be deleted to make room for the new character, counting screen
-       * cells.  May result in adding spaces to fill a gap.
-       */
       getvcol(curwin, &curwin->w_cursor, NULL, &vcol, NULL);
-      new_vcol = vcol + chartabsize(buf, vcol);
+      colnr_T new_vcol = vcol + chartabsize(buf, vcol);
       while (oldp[col + oldlen] != NUL && vcol < new_vcol) {
         vcol += chartabsize(oldp + col + oldlen, vcol);
-        /* Don't need to remove a TAB that takes us to the right
-         * position. */
-        if (vcol > new_vcol && oldp[col + oldlen] == TAB)
+        // Don't need to remove a TAB that takes us to the right
+        // position.
+        if (vcol > new_vcol && oldp[col + oldlen] == TAB) {
           break;
-        oldlen += (*mb_ptr2len)(oldp + col + oldlen);
-        /* Deleted a bit too much, insert spaces. */
-        if (vcol > new_vcol)
-          newlen += vcol - new_vcol;
+        }
+        oldlen += (size_t)(*mb_ptr2len)(oldp + col + oldlen);
+        // Deleted a bit too much, insert spaces.
+        if (vcol > new_vcol) {
+          newlen += (size_t)(vcol - new_vcol);
+        }
       }
       curwin->w_p_list = old_list;
     } else if (oldp[col] != NUL)  {
-      /* normal replace */
-      oldlen = (*mb_ptr2len)(oldp + col);
+      // normal replace
+      oldlen = (size_t)(*mb_ptr2len)(oldp + col);
     }
 
 
@@ -1493,38 +1463,39 @@ void ins_char_bytes(char_u *buf, int charlen)
      * done the other way around, so that the first byte is popped off
      * first (it tells the byte length of the character). */
     replace_push(NUL);
-    for (i = 0; i < oldlen; ++i) {
-      if (has_mbyte)
-        i += replace_push_mb(oldp + col + i) - 1;
-      else
+    for (size_t i = 0; i < oldlen; i++) {
+      if (has_mbyte) {
+        i += (size_t)replace_push_mb(oldp + col + i) - 1;
+      } else {
         replace_push(oldp[col + i]);
+      }
     }
   }
 
-  newp = (char_u *) xmalloc((size_t)(linelen + newlen - oldlen));
+  char_u *newp = (char_u *) xmalloc((size_t)(linelen + newlen - oldlen));
 
-  /* Copy bytes before the cursor. */
-  if (col > 0)
+  // Copy bytes before the cursor.
+  if (col > 0) {
     memmove(newp, oldp, (size_t)col);
+  }
 
-  /* Copy bytes after the changed character(s). */
-  p = newp + col;
-  memmove(p + newlen, oldp + col + oldlen,
-      (size_t)(linelen - col - oldlen));
+  // Copy bytes after the changed character(s).
+  char_u *p = newp + col;
+  memmove(p + newlen, oldp + col + oldlen, (size_t)(linelen - col - oldlen));
 
-  /* Insert or overwrite the new character. */
+  // Insert or overwrite the new character.
   memmove(p, buf, charlen);
-  i = charlen;
 
-  /* Fill with spaces when necessary. */
-  while (i < newlen)
-    p[i++] = ' ';
+  // Fill with spaces when necessary.
+  for (size_t i = charlen; i < newlen; i++) {
+    p[i] = ' ';
+  }
 
   /* Replace the line in the buffer. */
   ml_replace(lnum, newp, FALSE);
 
-  /* mark the buffer as changed and prepare for displaying */
-  changed_bytes(lnum, col);
+  // mark the buffer as changed and prepare for displaying
+  changed_bytes(lnum, (colnr_T)col);
 
   /*
    * If we're in Insert or Replace mode and 'showmatch' is set, then briefly
@@ -1541,8 +1512,8 @@ void ins_char_bytes(char_u *buf, int charlen)
   }
 
   if (!p_ri || (State & REPLACE_FLAG)) {
-    /* Normal insert: move cursor right */
-    curwin->w_cursor.col += charlen;
+    // Normal insert: move cursor right
+    curwin->w_cursor.col += (int)charlen;
   }
   /*
    * TODO: should try to update w_row here, to avoid recomputing it later.
@@ -1595,7 +1566,7 @@ int del_char(int fixpos)
       return FAIL;
     return del_chars(1L, fixpos);
   }
-  return del_bytes(1L, fixpos, TRUE);
+  return del_bytes(1, fixpos, true);
 }
 
 /*
@@ -1603,7 +1574,7 @@ int del_char(int fixpos)
  */
 int del_chars(long count, int fixpos)
 {
-  long bytes = 0;
+  int bytes = 0;
   long i;
   char_u      *p;
   int l;
@@ -1617,30 +1588,22 @@ int del_chars(long count, int fixpos)
   return del_bytes(bytes, fixpos, TRUE);
 }
 
-/*
- * Delete "count" bytes under the cursor.
- * If "fixpos" is TRUE, don't leave the cursor on the NUL after the line.
- * Caller must have prepared for undo.
- *
- * return FAIL for failure, OK otherwise
- */
-int 
-del_bytes (
-    long count,
-    int fixpos_arg,
-    int use_delcombine                  /* 'delcombine' option applies */
-)
+/// Delete "count" bytes under the cursor.
+/// If "fixpos" is true, don't leave the cursor on the NUL after the line.
+/// Caller must have prepared for undo.
+///
+/// @param  count           number of bytes to be deleted
+/// @param  fixpos_arg      leave the cursor on the NUL after the line
+/// @param  use_delcombine  'delcombine' option applies
+///
+/// @return FAIL for failure, OK otherwise
+int del_bytes(colnr_T count, bool fixpos_arg, bool use_delcombine)
 {
-  char_u      *oldp, *newp;
-  colnr_T oldlen;
   linenr_T lnum = curwin->w_cursor.lnum;
   colnr_T col = curwin->w_cursor.col;
-  int was_alloced;
-  long movelen;
-  int fixpos = fixpos_arg;
-
-  oldp = ml_get(lnum);
-  oldlen = (int)STRLEN(oldp);
+  bool fixpos = fixpos_arg;
+  char_u *oldp = ml_get(lnum);
+  colnr_T oldlen = (colnr_T)STRLEN(oldp);
 
   /*
    * Can't do anything when the cursor is on the NUL after the line.
@@ -1664,14 +1627,12 @@ del_bytes (
         count = utf_ptr2len(oldp + n);
         n += count;
       } while (UTF_COMPOSINGLIKE(oldp + col, oldp + n));
-      fixpos = 0;
+      fixpos = false;
     }
   }
 
-  /*
-   * When count is too big, reduce it.
-   */
-  movelen = (long)oldlen - (long)col - count + 1;   /* includes trailing NUL */
+  // When count is too big, reduce it.
+  int movelen = oldlen - col - count + 1;  // includes trailing NUL
   if (movelen <= 1) {
     /*
      * If we just took off the last character of a non-blank line, and
@@ -1691,15 +1652,14 @@ del_bytes (
     movelen = 1;
   }
 
-  /*
-   * If the old line has been allocated the deletion can be done in the
-   * existing line. Otherwise a new line has to be allocated.
-   */
-  was_alloced = ml_line_alloced();          /* check if oldp was allocated */
-  if (was_alloced)
-    newp = oldp;                            /* use same allocated memory */
-  else {                                    /* need to allocate a new line */
-    newp = xmalloc(oldlen + 1 - count);
+  // If the old line has been allocated the deletion can be done in the
+  // existing line. Otherwise a new line has to be allocated.
+  bool was_alloced = ml_line_alloced();     // check if oldp was allocated
+  char_u *newp;
+  if (was_alloced) {
+    newp = oldp;                            // use same allocated memory
+  } else {                                  // need to allocate a new line
+    newp = xmalloc((size_t)(oldlen + 1 - count));
     memmove(newp, oldp, (size_t)col);
   }
   memmove(newp + col, oldp + col + count, (size_t)movelen);
@@ -1725,12 +1685,12 @@ truncate_line (
   linenr_T lnum = curwin->w_cursor.lnum;
   colnr_T col = curwin->w_cursor.col;
 
-  if (col == 0)
+  if (col == 0) {
     newp = vim_strsave((char_u *)"");
-  else
-    newp = vim_strnsave(ml_get(lnum), col);
-
-  ml_replace(lnum, newp, FALSE);
+  } else {
+    newp = vim_strnsave(ml_get(lnum), (size_t)col);
+  }
+  ml_replace(lnum, newp, false);
 
   /* mark the buffer as changed and prepare for displaying */
   changed_bytes(lnum, curwin->w_cursor.col);
@@ -2360,13 +2320,13 @@ int get_keystroke(void)
      * 5 chars plus NUL).  And fix_input_buffer() can triple the number of
      * bytes. */
     maxlen = (buflen - 6 - len) / 3;
-    if (buf == NULL)
-      buf = xmalloc(buflen);
-    else if (maxlen < 10) {
-      /* Need some more space. This might happen when receiving a long
-       * escape sequence. */
+    if (buf == NULL) {
+      buf = xmalloc((size_t)buflen);
+    } else if (maxlen < 10) {
+      // Need some more space. This might happen when receiving a long
+      // escape sequence.
       buflen += 100;
-      buf = xrealloc(buf, buflen);
+      buf = xrealloc(buf, (size_t)buflen);
       maxlen = (buflen - 6 - len) / 3;
     }
 
@@ -2729,38 +2689,33 @@ void fast_breakcheck(void)
   }
 }
 
-/*
- * Get the stdout of an external command.
- * If "ret_len" is NULL replace NUL characters with NL.  When "ret_len" is not
- * NULL store the length there.
- * Returns an allocated string, or NULL for error.
- */
-char_u *
-get_cmd_output (
-    char_u *cmd,
-    char_u *infile,            /* optional input file name */
-    int flags,                 // can be kShellOptSilent
-    size_t *ret_len
-)
+/// Get the stdout of an external command.
+/// If "ret_len" is NULL replace NUL characters with NL. When "ret_len" is not
+/// NULL store the length there.
+///
+/// @param  cmd      command to execute
+/// @param  infile   optional input file name
+/// @param  flags    can be kShellOptSilent or 0
+/// @param  ret_len  length of the stdout
+///
+/// @return an allocated string, or NULL for error.
+char_u *get_cmd_output(char_u *cmd, char_u *infile, ShellOpts flags,
+                       size_t *ret_len)
 {
-  char_u      *tempname;
-  char_u      *command;
-  char_u      *buffer = NULL;
-  int len;
-  int i = 0;
-  FILE        *fd;
+  char_u *buffer = NULL;
 
   if (check_restricted() || check_secure())
     return NULL;
 
-  /* get a name for the temp file */
-  if ((tempname = vim_tempname()) == NULL) {
+  // get a name for the temp file
+  char_u *tempname = vim_tempname();
+  if (tempname == NULL) {
     EMSG(_(e_notmp));
     return NULL;
   }
 
-  /* Add the redirection stuff */
-  command = make_filter_cmd(cmd, infile, tempname);
+  // Add the redirection stuff
+  char_u *command = make_filter_cmd(cmd, infile, tempname);
 
   /*
    * Call the shell to execute the command (errors are ignored).
@@ -2772,10 +2727,8 @@ get_cmd_output (
 
   xfree(command);
 
-  /*
-   * read the names from the file into memory
-   */
-  fd = mch_fopen((char *)tempname, READBIN);
+  // read the names from the file into memory
+  FILE *fd = mch_fopen((char *)tempname, READBIN);
 
   if (fd == NULL) {
     EMSG2(_(e_notopen), tempname);
@@ -2783,11 +2736,11 @@ get_cmd_output (
   }
 
   fseek(fd, 0L, SEEK_END);
-  len = ftell(fd);                  /* get size of temp file */
+  size_t len = (size_t)ftell(fd);  // get size of temp file
   fseek(fd, 0L, SEEK_SET);
 
   buffer = xmalloc(len + 1);
-  i = (int)fread((char *)buffer, (size_t)1, (size_t)len, fd);
+  size_t i = fread((char *)buffer, 1, len, fd);
   fclose(fd);
   os_remove((char *)tempname);
   if (i != len) {
