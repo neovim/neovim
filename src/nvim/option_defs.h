@@ -4,6 +4,7 @@
 #include <stdbool.h>
 
 #include "nvim/types.h"
+#include "nvim/macros.h"  // For EXTERN
 
 // option_defs.h: definition of global variables for settable options
 

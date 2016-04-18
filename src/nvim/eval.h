@@ -1,12 +1,17 @@
 #ifndef NVIM_EVAL_H
 #define NVIM_EVAL_H
 
-#include <msgpack.h>
-
 #include "nvim/profile.h"
+#include "nvim/hashtab.h"  // For hashtab_T
+#include "nvim/garray.h"  // For garray_T
+#include "nvim/buffer_defs.h"  // For scid_T
+#include "nvim/ex_cmds_defs.h"  // For exarg_T
+
+#define COPYID_INC 2
+#define COPYID_MASK (~0x1)
 
 // All user-defined functions are found in this hashtable.
-EXTERN hashtab_T func_hashtab;
+extern hashtab_T func_hashtab;
 
 // Structure to hold info for a user function.
 typedef struct ufunc ufunc_T;
@@ -46,8 +51,8 @@ EXTERN ufunc_T dumuf;
 #define HIKEY2UF(p)  ((ufunc_T *)(p - (dumuf.uf_name - (char_u *)&dumuf)))
 #define HI2UF(hi)    HIKEY2UF((hi)->hi_key)
 
-/* Defines for Vim variables.  These must match vimvars[] in eval.c! */
-enum {
+/// Defines for Vim variables
+typedef enum {
     VV_COUNT,
     VV_COUNT1,
     VV_PREVCOUNT,
@@ -114,14 +119,34 @@ enum {
     VV_ERRORS,
     VV_MSGPACK_TYPES,
     VV_EVENT,
-    VV_LEN,  // number of v: vars
-};
+    VV_FALSE,
+    VV_TRUE,
+    VV_NULL,
+    VV__NULL_LIST,  // List with NULL value. For test purposes only.
+    VV__NULL_DICT,  // Dictionary with NULL value. For test purposes only.
+} VimVarIndex;
+
+/// All recognized msgpack types
+typedef enum {
+  kMPNil,
+  kMPBoolean,
+  kMPInteger,
+  kMPFloat,
+  kMPString,
+  kMPBinary,
+  kMPArray,
+  kMPMap,
+  kMPExt,
+#define LAST_MSGPACK_TYPE kMPExt
+} MessagePackType;
+
+/// Array mapping values from MessagePackType to corresponding list pointers
+extern const list_T *eval_msgpack_type_lists[LAST_MSGPACK_TYPE + 1];
+
+#undef LAST_MSGPACK_TYPE
 
 /// Maximum number of function arguments
 #define MAX_FUNC_ARGS   20
-
-int vim_to_msgpack(msgpack_packer *const, typval_T *const,
-                   const char *const objname);
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "eval.h.generated.h"

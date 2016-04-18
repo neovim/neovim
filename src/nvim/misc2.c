@@ -327,9 +327,10 @@ int call_shell(char_u *cmd, ShellOpts opts, char_u *extra_shell_arg)
     }
   }
 
-  set_vim_var_nr(VV_SHELL_ERROR, (long)retval);
-  if (do_profiling == PROF_YES)
+  set_vim_var_nr(VV_SHELL_ERROR, (varnumber_T) retval);
+  if (do_profiling == PROF_YES) {
     prof_child_exit(&wait_time);
+  }
 
   return retval;
 }

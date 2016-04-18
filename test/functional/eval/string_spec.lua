@@ -28,6 +28,15 @@ describe('string() function', function()
       eq('0.0', eval('string(0.0)'))
     end)
 
+    it('dumps special v: values', function()
+      eq('v:true', eval('string(v:true)'))
+      eq('v:false', eval('string(v:false)'))
+      eq('v:null', eval('string(v:null)'))
+      eq('v:true', funcs.string(true))
+      eq('v:false', funcs.string(false))
+      eq('v:null', funcs.string(NIL))
+    end)
+
     it('dumps values with at most six digits after the decimal point',
     function()
       eq('1.234568e-20', funcs.string(1.23456789123456789123456789e-020))
@@ -77,6 +86,18 @@ describe('string() function', function()
       eq('\'a\'\'b\'\'\'\'\'', funcs.string('a\'b\'\''))
       eq('\'\'\'b\'\'\'\'d\'', funcs.string('\'b\'\'d'))
       eq('\'a\'\'b\'\'c\'\'d\'', funcs.string('a\'b\'c\'d'))
+    end)
+
+    it('dumps NULL strings', function()
+      eq('\'\'', eval('string($XXX_UNEXISTENT_VAR_XXX)'))
+    end)
+
+    it('dumps NULL lists', function()
+      eq('[]', eval('string(v:_null_list)'))
+    end)
+
+    it('dumps NULL dictionaries', function()
+      eq('{}', eval('string(v:_null_dict)'))
     end)
   end)
 

@@ -4,17 +4,7 @@
 #include <stdbool.h>
 #include <inttypes.h>
 
-// EXTERN is only defined in main.c. That's where global variables are
-// actually defined and initialized.
-#ifndef EXTERN
-# define EXTERN extern
-# define INIT(...)
-#else
-# ifndef INIT
-#  define INIT(...) __VA_ARGS__
-# endif
-#endif
-
+#include "nvim/macros.h"
 #include "nvim/ex_eval.h"
 #include "nvim/iconv.h"
 #include "nvim/mbyte.h"

@@ -199,7 +199,7 @@ typedef struct insert_state {
   int did_restart_edit;              // remember if insert mode was restarted
                                      // after a ctrl+o
   bool nomove;
-  uint8_t *ptr;
+  char_u *ptr;
 } InsertState;
 
 
@@ -270,8 +270,8 @@ static void insert_enter(InsertState *s)
       s->ptr = (char_u *)"i";
     }
 
-    set_vim_var_string(VV_INSERTMODE, s->ptr, 1);
-    set_vim_var_string(VV_CHAR, NULL, -1);      /* clear v:char */
+    set_vim_var_string(VV_INSERTMODE, (char *) s->ptr, 1);
+    set_vim_var_string(VV_CHAR, NULL, -1);
     apply_autocmds(EVENT_INSERTENTER, NULL, NULL, false, curbuf);
 
     // Make sure the cursor didn't move.  Do call check_cursor_col() in
@@ -7239,15 +7239,15 @@ static void ins_insert(int replaceState)
     return;
   }
 
-  set_vim_var_string(VV_INSERTMODE,
-      (char_u *)((State & REPLACE_FLAG) ? "i" :
-                 replaceState == VREPLACE ? "v" :
-                 "r"), 1);
-  apply_autocmds(EVENT_INSERTCHANGE, NULL, NULL, FALSE, curbuf);
-  if (State & REPLACE_FLAG)
+  set_vim_var_string(VV_INSERTMODE, ((State & REPLACE_FLAG) ? "i" :
+                                     replaceState == VREPLACE ? "v" :
+                                     "r"), 1);
+  apply_autocmds(EVENT_INSERTCHANGE, NULL, NULL, false, curbuf);
+  if (State & REPLACE_FLAG) {
     State = INSERT | (State & LANGMAP);
-  else
+  } else {
     State = replaceState | (State & LANGMAP);
+  }
   AppendCharToRedobuff(K_INS);
   showmode();
   ui_cursor_shape();            /* may show different cursor shape */
@@ -8480,22 +8480,22 @@ static colnr_T get_nolist_virtcol(void)
  */
 static char_u *do_insert_char_pre(int c)
 {
-  char_u buf[MB_MAXBYTES + 1];
+  char buf[MB_MAXBYTES + 1];
 
   // Return quickly when there is nothing to do.
   if (!has_event(EVENT_INSERTCHARPRE)) {
     return NULL;
   }
   if (has_mbyte) {
-    buf[(*mb_char2bytes)(c, buf)] = NUL;
+    buf[(*mb_char2bytes)(c, (char_u *) buf)] = NUL;
   } else {
     buf[0] = c;
     buf[1] = NUL;
   }
 
-  /* Lock the text to avoid weird things from happening. */
-  ++textlock;
-  set_vim_var_string(VV_CHAR, buf, -1);    /* set v:char */
+  // Lock the text to avoid weird things from happening.
+  textlock++;
+  set_vim_var_string(VV_CHAR, buf, -1);
 
   char_u *res = NULL;
   if (apply_autocmds(EVENT_INSERTCHARPRE, NULL, NULL, FALSE, curbuf)) {
@@ -8506,8 +8506,8 @@ static char_u *do_insert_char_pre(int c)
       res = vim_strsave(get_vim_var_str(VV_CHAR));
   }
 
-  set_vim_var_string(VV_CHAR, NULL, -1);    /* clear v:char */
-  --textlock;
+  set_vim_var_string(VV_CHAR, NULL, -1);
+  textlock--;
 
   return res;
 }

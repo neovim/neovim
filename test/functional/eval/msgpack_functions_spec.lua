@@ -1,5 +1,6 @@
 local helpers = require('test.functional.helpers')
 local clear = helpers.clear
+local funcs = helpers.funcs
 local eval, eq = helpers.eval, helpers.eq
 local execute = helpers.execute
 local nvim = helpers.nvim
@@ -382,30 +383,32 @@ describe('msgpack*() functions', function()
     eq({"\n"}, eval('parsed'))
     eq(1, eval('dumped ==# dumped2'))
   end)
+
+  it('dump and restore special mapping with floating-point value', function()
+    execute('let todump = {"_TYPE": v:msgpack_types.float, "_VAL": 0.125}')
+    eq({0.125}, eval('msgpackparse(msgpackdump([todump]))'))
+  end)
 end)
 
 describe('msgpackparse() function', function()
   before_each(clear)
 
-  it('restores nil as special dict', function()
+  it('restores nil as v:null', function()
     execute('let dumped = ["\\xC0"]')
     execute('let parsed = msgpackparse(dumped)')
-    eq({{_TYPE={}, _VAL=0}}, eval('parsed'))
-    eq(1, eval('g:parsed[0]._TYPE is v:msgpack_types.nil'))
+    eq('[v:null]', eval('string(parsed)'))
   end)
 
-  it('restores boolean false as zero', function()
+  it('restores boolean false as v:false', function()
     execute('let dumped = ["\\xC2"]')
     execute('let parsed = msgpackparse(dumped)')
-    eq({{_TYPE={}, _VAL=0}}, eval('parsed'))
-    eq(1, eval('g:parsed[0]._TYPE is v:msgpack_types.boolean'))
+    eq({false}, eval('parsed'))
   end)
 
-  it('restores boolean true as one', function()
+  it('restores boolean true as v:true', function()
     execute('let dumped = ["\\xC3"]')
     execute('let parsed = msgpackparse(dumped)')
-    eq({{_TYPE={}, _VAL=1}}, eval('parsed'))
-    eq(1, eval('g:parsed[0]._TYPE is v:msgpack_types.boolean'))
+    eq({true}, eval('parsed'))
   end)
 
   it('restores FIXSTR as special dict', function()
@@ -512,31 +515,53 @@ describe('msgpackdump() function', function()
     eq({'\129\128\128'}, eval('msgpackdump([todump])'))
   end)
 
-  it('can dump generic mapping with ext', function()
+  it('can dump v:true', function()
+    eq({'\195'}, funcs.msgpackdump({true}))
+  end)
+
+  it('can dump v:false', function()
+    eq({'\194'}, funcs.msgpackdump({false}))
+  end)
+
+  it('can v:null', function()
+    execute('let todump = v:null')
+  end)
+
+  it('can dump special bool mapping (true)', function()
+    execute('let todump = {"_TYPE": v:msgpack_types.boolean, "_VAL": 1}')
+    eq({'\195'}, eval('msgpackdump([todump])'))
+  end)
+
+  it('can dump special bool mapping (false)', function()
+    execute('let todump = {"_TYPE": v:msgpack_types.boolean, "_VAL": 0}')
+    eq({'\194'}, eval('msgpackdump([todump])'))
+  end)
+
+  it('can dump special nil mapping', function()
+    execute('let todump = {"_TYPE": v:msgpack_types.nil, "_VAL": 0}')
+    eq({'\192'}, eval('msgpackdump([todump])'))
+  end)
+
+  it('can dump special ext mapping', function()
     execute('let todump = {"_TYPE": v:msgpack_types.ext, "_VAL": [5, ["",""]]}')
     eq({'\212\005', ''}, eval('msgpackdump([todump])'))
   end)
 
-  it('can dump generic mapping with array', function()
+  it('can dump special array mapping', function()
     execute('let todump = {"_TYPE": v:msgpack_types.array, "_VAL": [5, [""]]}')
     eq({'\146\005\145\196\n'}, eval('msgpackdump([todump])'))
   end)
 
-  it('can dump generic mapping with UINT64_MAX', function()
+  it('can dump special UINT64_MAX mapping', function()
     execute('let todump = {"_TYPE": v:msgpack_types.integer}')
     execute('let todump._VAL = [1, 3, 0x7FFFFFFF, 0x7FFFFFFF]')
     eq({'\207\255\255\255\255\255\255\255\255'}, eval('msgpackdump([todump])'))
   end)
 
-  it('can dump generic mapping with INT64_MIN', function()
+  it('can dump special INT64_MIN mapping', function()
     execute('let todump = {"_TYPE": v:msgpack_types.integer}')
     execute('let todump._VAL = [-1, 2, 0, 0]')
     eq({'\211\128\n\n\n\n\n\n\n'}, eval('msgpackdump([todump])'))
-  end)
-
-  it('dump and restore generic mapping with floating-point value', function()
-    execute('let todump = {"_TYPE": v:msgpack_types.float, "_VAL": 0.125}')
-    eq({0.125}, eval('msgpackparse(msgpackdump([todump]))'))
   end)
 
   it('fails to dump a function reference', function()
@@ -653,5 +678,26 @@ describe('msgpackdump() function', function()
   it('fails to dump a float', function()
     eq('Vim(call):E686: Argument of msgpackdump() must be a List',
        exc_exec('call msgpackdump(0.0)'))
+  end)
+
+  it('fails to dump special value', function()
+    for _, val in ipairs({'v:true', 'v:false', 'v:null'}) do
+      eq('Vim(call):E686: Argument of msgpackdump() must be a List',
+        exc_exec('call msgpackdump(' .. val .. ')'))
+    end
+  end)
+
+  it('can dump NULL string', function()
+    eq({'\196\n'}, eval('msgpackdump([$XXX_UNEXISTENT_VAR_XXX])'))
+    eq({'\196\n'}, eval('msgpackdump([{"_TYPE": v:msgpack_types.binary, "_VAL": [$XXX_UNEXISTENT_VAR_XXX]}])'))
+    eq({'\160'}, eval('msgpackdump([{"_TYPE": v:msgpack_types.string, "_VAL": [$XXX_UNEXISTENT_VAR_XXX]}])'))
+  end)
+
+  it('can dump NULL list', function()
+    eq({'\144'}, eval('msgpackdump([v:_null_list])'))
+  end)
+
+  it('can dump NULL dictionary', function()
+    eq({'\128'}, eval('msgpackdump([v:_null_dict])'))
   end)
 end)

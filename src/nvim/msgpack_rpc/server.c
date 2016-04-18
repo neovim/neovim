@@ -59,7 +59,7 @@ static void set_vservername(garray_T *srvs)
   char *default_server = (srvs->ga_len > 0)
     ? ((SocketWatcher **)srvs->ga_data)[0]->addr
     : NULL;
-  set_vim_var_string(VV_SEND_SERVER, (char_u *)default_server, -1);
+  set_vim_var_string(VV_SEND_SERVER, default_server, -1);
 }
 
 /// Teardown the server module

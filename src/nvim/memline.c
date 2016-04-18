@@ -3194,7 +3194,7 @@ attention_message (
  */
 static int do_swapexists(buf_T *buf, char_u *fname)
 {
-  set_vim_var_string(VV_SWAPNAME, fname, -1);
+  set_vim_var_string(VV_SWAPNAME, (char *) fname, -1);
   set_vim_var_string(VV_SWAPCHOICE, NULL, -1);
 
   /* Trigger SwapExists autocommands with <afile> set to the file being

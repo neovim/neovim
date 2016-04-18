@@ -1448,7 +1448,7 @@ do_set (
             char_u      *oldval = NULL;         // previous value if *varp
             char_u      *newval;
             char_u      *origval = NULL;
-            char_u      *saved_origval = NULL;
+            char *saved_origval = NULL;
             unsigned newlen;
             int comma;
             int bs;
@@ -1725,7 +1725,7 @@ do_set (
             if (!starting && origval != NULL) {
               // origval may be freed by
               // did_set_string_option(), make a copy.
-              saved_origval = vim_strsave(origval);
+              saved_origval = xstrdup((char *) origval);
             }
 
             /* Handle side effects, and set the global value for
@@ -1740,11 +1740,10 @@ do_set (
             }
 
             if (saved_origval != NULL) {
-              char_u buf_type[7];
-              vim_snprintf((char *)buf_type, ARRAY_SIZE(buf_type), "%s",
+              char buf_type[7];
+              vim_snprintf(buf_type, ARRAY_SIZE(buf_type), "%s",
                            (opt_flags & OPT_LOCAL) ? "local" : "global");
-              set_vim_var_string(VV_OPTION_NEW,
-                                 *(char_u **)varp, -1);
+              set_vim_var_string(VV_OPTION_NEW, *(char **) varp, -1);
               set_vim_var_string(VV_OPTION_OLD, saved_origval, -1);
               set_vim_var_string(VV_OPTION_TYPE, buf_type, -1);
               apply_autocmds(EVENT_OPTIONSET,
@@ -2324,7 +2323,7 @@ set_string_option (
   char_u      *s;
   char_u      **varp;
   char_u      *oldval;
-  char_u      *saved_oldval = NULL;
+  char *saved_oldval = NULL;
   char_u      *r = NULL;
 
   if (options[opt_idx].var == NULL)     /* don't set hidden option */
@@ -2340,7 +2339,7 @@ set_string_option (
   *varp = s;
 
   if (!starting) {
-    saved_oldval = vim_strsave(oldval);
+    saved_oldval = xstrdup((char *) oldval);
   }
 
   if ((r = did_set_string_option(opt_idx, varp, (int)true, oldval, NULL,
@@ -2349,10 +2348,10 @@ set_string_option (
 
   // call autocommand after handling side effects
   if (saved_oldval != NULL) {
-    char_u buf_type[7];
-    vim_snprintf((char *)buf_type, ARRAY_SIZE(buf_type), "%s",
+    char buf_type[7];
+    vim_snprintf(buf_type, ARRAY_SIZE(buf_type), "%s",
                  (opt_flags & OPT_LOCAL) ? "local" : "global");
-    set_vim_var_string(VV_OPTION_NEW, *varp, -1);
+    set_vim_var_string(VV_OPTION_NEW, (char *) (*varp), -1);
     set_vim_var_string(VV_OPTION_OLD, saved_oldval, -1);
     set_vim_var_string(VV_OPTION_TYPE, buf_type, -1);
     apply_autocmds(EVENT_OPTIONSET,
@@ -3800,7 +3799,7 @@ set_bool_option (
 
         msg_source(hl_attr(HLF_W));
         MSG_ATTR(_(w_arabic), hl_attr(HLF_W));
-        set_vim_var_string(VV_WARNINGMSG, (char_u *)_(w_arabic), -1);
+        set_vim_var_string(VV_WARNINGMSG, _(w_arabic), -1);
       }
 
       /* set 'delcombine' */
@@ -3847,14 +3846,14 @@ set_bool_option (
   options[opt_idx].flags |= P_WAS_SET;
 
   if (!starting) {
-    char_u buf_old[2];
-    char_u buf_new[2];
-    char_u buf_type[7];
-    vim_snprintf((char *)buf_old, ARRAY_SIZE(buf_old), "%d",
+    char buf_old[2];
+    char buf_new[2];
+    char buf_type[7];
+    vim_snprintf(buf_old, ARRAY_SIZE(buf_old), "%d",
                  old_value ? true: false);
-    vim_snprintf((char *)buf_new, ARRAY_SIZE(buf_new), "%d",
+    vim_snprintf(buf_new, ARRAY_SIZE(buf_new), "%d",
                  value ? true: false);
-    vim_snprintf((char *)buf_type, ARRAY_SIZE(buf_type), "%s",
+    vim_snprintf(buf_type, ARRAY_SIZE(buf_type), "%s",
                  (opt_flags & OPT_LOCAL) ? "local" : "global");
     set_vim_var_string(VV_OPTION_NEW, buf_new, -1);
     set_vim_var_string(VV_OPTION_OLD, buf_old, -1);
@@ -4237,12 +4236,12 @@ set_num_option (
   options[opt_idx].flags |= P_WAS_SET;
 
   if (!starting && errmsg == NULL) {
-    char_u buf_old[NUMBUFLEN];
-    char_u buf_new[NUMBUFLEN];
-    char_u buf_type[7];
-    vim_snprintf((char *)buf_old, ARRAY_SIZE(buf_old), "%ld", old_value);
-    vim_snprintf((char *)buf_new, ARRAY_SIZE(buf_new), "%ld", value);
-    vim_snprintf((char *)buf_type, ARRAY_SIZE(buf_type), "%s",
+    char buf_old[NUMBUFLEN];
+    char buf_new[NUMBUFLEN];
+    char buf_type[7];
+    vim_snprintf(buf_old, ARRAY_SIZE(buf_old), "%ld", old_value);
+    vim_snprintf(buf_new, ARRAY_SIZE(buf_new), "%ld", value);
+    vim_snprintf(buf_type, ARRAY_SIZE(buf_type), "%s",
                  (opt_flags & OPT_LOCAL) ? "local" : "global");
     set_vim_var_string(VV_OPTION_NEW, buf_new, -1);
     set_vim_var_string(VV_OPTION_OLD, buf_old, -1);

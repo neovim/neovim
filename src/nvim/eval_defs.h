@@ -16,38 +16,51 @@ typedef double float_T;
 typedef struct listvar_S list_T;
 typedef struct dictvar_S dict_T;
 
-/*
- * Structure to hold an internal variable without a name.
- */
-typedef struct {
-  char v_type;              /* see below: VAR_NUMBER, VAR_STRING, etc. */
-  char v_lock;              /* see below: VAR_LOCKED, VAR_FIXED */
-  union {
-    varnumber_T v_number;               /* number value */
-    float_T v_float;                    /* floating number value */
-    char_u          *v_string;          /* string value (can be NULL!) */
-    list_T          *v_list;            /* list value (can be NULL!) */
-    dict_T          *v_dict;            /* dict value (can be NULL!) */
-  }           vval;
-} typval_T;
+/// Special variable values
+typedef enum {
+  kSpecialVarFalse,  ///< v:false
+  kSpecialVarTrue,   ///< v:true
+  kSpecialVarNull,   ///< v:null
+} SpecialVarValue;
 
-/* Values for "v_type". */
-#define VAR_UNKNOWN 0
-#define VAR_NUMBER  1   /* "v_number" is used */
-#define VAR_STRING  2   /* "v_string" is used */
-#define VAR_FUNC    3   /* "v_string" is function name */
-#define VAR_LIST    4   /* "v_list" is used */
-#define VAR_DICT    5   /* "v_dict" is used */
-#define VAR_FLOAT   6   /* "v_float" is used */
+/// Variable lock status for typval_T.v_lock
+typedef enum {
+  VAR_UNLOCKED = 0,  ///< Not locked.
+  VAR_LOCKED,        ///< User lock, can be unlocked.
+  VAR_FIXED,         ///< Locked forever.
+} VarLockStatus;
+
+/// VimL variable types, for use in typval_T.v_type
+typedef enum {
+  VAR_UNKNOWN = 0,  ///< Unknown (unspecified) value.
+  VAR_NUMBER,       ///< Number, .v_number is used.
+  VAR_STRING,       ///< String, .v_string is used.
+  VAR_FUNC,         ///< Function referene, .v_string is used for function name.
+  VAR_LIST,         ///< List, .v_list is used.
+  VAR_DICT,         ///< Dictionary, .v_dict is used.
+  VAR_FLOAT,        ///< Floating-point value, .v_float is used.
+  VAR_SPECIAL,      ///< Special value (true, false, null), .v_special
+                    ///< is used.
+} VarType;
+
+/// Structure that holds an internal variable value
+typedef struct {
+  VarType v_type;  ///< Variable type.
+  VarLockStatus v_lock;  ///< Variable lock status.
+  union {
+    varnumber_T v_number;  ///< Number, for VAR_NUMBER.
+    SpecialVarValue v_special;  ///< Special value, for VAR_SPECIAL.
+    float_T v_float;  ///< Floating-point number, for VAR_FLOAT.
+    char_u *v_string;  ///< String, for VAR_STRING and VAR_FUNC, can be NULL.
+    list_T *v_list;  ///< List for VAR_LIST, can be NULL.
+    dict_T *v_dict;  ///< Dictionary for VAR_DICT, can be NULL.
+  }           vval;  ///< Actual value.
+} typval_T;
 
 /* Values for "dv_scope". */
 #define VAR_SCOPE     1 /* a:, v:, s:, etc. scope dictionaries */
 #define VAR_DEF_SCOPE 2 /* l:, g: scope dictionaries: here funcrefs are not
                            allowed to mask existing functions */
-
-/* Values for "v_lock". */
-#define VAR_LOCKED  1   /* locked with lock(), can use unlock() */
-#define VAR_FIXED   2   /* locked forever */
 
 /*
  * Structure to hold an item of a list: an internal variable without a name.
@@ -107,19 +120,18 @@ typedef struct dictitem_S dictitem_T;
 #define DI_FLAGS_LOCK   8   // "di_flags" value: locked variable
 #define DI_FLAGS_ALLOC  16  // "di_flags" value: separately allocated
 
-/*
- * Structure to hold info about a Dictionary.
- */
+/// Structure representing a Dictionary
 struct dictvar_S {
-  char dv_lock;                 /* zero, VAR_LOCKED, VAR_FIXED */
-  char dv_scope;                /* zero, VAR_SCOPE, VAR_DEF_SCOPE */
-  int dv_refcount;              /* reference count */
-  int dv_copyID;                /* ID used by deepcopy() */
-  hashtab_T dv_hashtab;         /* hashtab that refers to the items */
-  dict_T      *dv_copydict;     /* copied dict used by deepcopy() */
-  dict_T      *dv_used_next;    /* next dict in used dicts list */
-  dict_T      *dv_used_prev;    /* previous dict in used dicts list */
-  QUEUE watchers;               // dictionary key watchers set by user code
+  VarLockStatus dv_lock;  ///< Whole dictionary lock status.
+  char dv_scope;          ///< Non-zero (#VAR_SCOPE, #VAR_DEF_SCOPE) if
+                          ///< dictionary represents a scope (i.e. g:, l: …).
+  int dv_refcount;        ///< Reference count.
+  int dv_copyID;          ///< ID used when recursivery traversing a value.
+  hashtab_T dv_hashtab;   ///< Hashtab containing all items.
+  dict_T *dv_copydict;    ///< Copied dict used by deepcopy().
+  dict_T *dv_used_next;   ///< Next dictionary in used dictionaries list.
+  dict_T *dv_used_prev;   ///< Previous dictionary in used dictionaries list.
+  QUEUE watchers;         ///< Dictionary key watchers set by user code.
 };
 
 // structure used for explicit stack while garbage collecting hash tables

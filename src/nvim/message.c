@@ -61,14 +61,8 @@ static int confirm_msg_used = FALSE;            /* displaying confirm_msg */
 static char_u   *confirm_msg = NULL;            /* ":confirm" message */
 static char_u   *confirm_msg_tail;              /* tail of confirm_msg */
 
-struct msg_hist {
-  struct msg_hist     *next;
-  char_u              *msg;
-  int attr;
-};
-
-static struct msg_hist *first_msg_hist = NULL;
-static struct msg_hist *last_msg_hist = NULL;
+MessageHistoryEntry *first_msg_hist = NULL;
+MessageHistoryEntry *last_msg_hist = NULL;
 static int msg_hist_len = 0;
 
 static FILE *verbose_fd = NULL;
@@ -149,10 +143,11 @@ msg_attr_keep (
 {
   static int entered = 0;
   int retval;
-  char_u      *buf = NULL;
+  char_u *buf = NULL;
 
-  if (attr == 0)
-    set_vim_var_string(VV_STATUSMSG, s, -1);
+  if (attr == 0) {
+    set_vim_var_string(VV_STATUSMSG, (char *) s, -1);
+  }
 
   /*
    * It is possible that displaying a messages causes a problem (e.g.,
@@ -503,8 +498,8 @@ int emsg(char_u *s)
       return TRUE;
     }
 
-    /* set "v:errmsg", also when using ":silent! cmd" */
-    set_vim_var_string(VV_ERRMSG, s, -1);
+    // set "v:errmsg", also when using ":silent! cmd"
+    set_vim_var_string(VV_ERRMSG, (char *) s, -1);
 
     /*
      * When using ":silent! cmd" ignore error messages.
@@ -563,49 +558,23 @@ int emsg(char_u *s)
   return msg_attr(s, attr);
 }
 
-/*
- * Print an error message with one "%s" and one string argument.
- */
-int emsg2(char_u *s, char_u *a1)
-{
-  return emsg3(s, a1, NULL);
-}
-
 void emsg_invreg(int name)
 {
   EMSG2(_("E354: Invalid register name: '%s'"), transchar(name));
 }
 
-/// Print an error message with one or two "%s" and one or two string arguments.
-int emsg3(char_u *s, char_u *a1, char_u *a2)
+/// Print an error message with unknown number of arguments
+bool emsgf(const char *const fmt, ...)
 {
   if (emsg_not_now()) {
-    return TRUE;                // no error messages at the moment
+    return true;
   }
 
-  vim_snprintf((char *)IObuff, IOSIZE, (char *)s, a1, a2);
-  return emsg(IObuff);
-}
+  va_list ap;
+  va_start(ap, fmt);
+  vim_vsnprintf((char *) IObuff, IOSIZE, fmt, ap, NULL);
+  va_end(ap);
 
-/// Print an error message with one "%" PRId64 and one (int64_t) argument.
-int emsgn(char_u *s, int64_t n)
-{
-  if (emsg_not_now()) {
-    return TRUE;                // no error messages at the moment
-  }
-
-  vim_snprintf((char *)IObuff, IOSIZE, (char *)s, n);
-  return emsg(IObuff);
-}
-
-/// Print an error message with one "%" PRIu64 and one (uint64_t) argument.
-int emsgu(char_u *s, uint64_t n)
-{
-  if (emsg_not_now()) {
-    return TRUE;                // no error messages at the moment
-  }
-
-  vim_snprintf((char *)IObuff, IOSIZE, (char *)s, n);
   return emsg(IObuff);
 }
 
@@ -1787,25 +1756,24 @@ static void msg_scroll_up(void)
 static void inc_msg_scrolled(void)
 {
   if (*get_vim_var_str(VV_SCROLLSTART) == NUL) {
-    char_u      *p = sourcing_name;
-    char_u      *tofree = NULL;
-    int len;
+    char *p = (char *) sourcing_name;
+    char *tofree = NULL;
 
-    /* v:scrollstart is empty, set it to the script/function name and line
-     * number */
-    if (p == NULL)
-      p = (char_u *)_("Unknown");
-    else {
-      len = (int)STRLEN(p) + 40;
+    // v:scrollstart is empty, set it to the script/function name and line
+    // number
+    if (p == NULL) {
+      p = _("Unknown");
+    } else {
+      size_t len = strlen(p) + 40;
       tofree = xmalloc(len);
-      vim_snprintf((char *)tofree, len, _("%s line %" PRId64),
-          p, (int64_t)sourcing_lnum);
+      vim_snprintf(tofree, len, _("%s line %" PRId64),
+                   p, (int64_t) sourcing_lnum);
       p = tofree;
     }
     set_vim_var_string(VV_SCROLLSTART, p, -1);
     xfree(tofree);
   }
-  ++msg_scrolled;
+  msg_scrolled++;
 }
 
 static msgchunk_T *last_msgchunk = NULL; /* last displayed text */
@@ -2572,7 +2540,7 @@ void give_warning(char_u *message, bool hl) FUNC_ATTR_NONNULL_ARG(1)
   /* Don't want a hit-enter prompt here. */
   ++no_wait_return;
 
-  set_vim_var_string(VV_WARNINGMSG, message, -1);
+  set_vim_var_string(VV_WARNINGMSG, (char *) message, -1);
   xfree(keep_msg);
   keep_msg = NULL;
   if (hl)
@@ -3086,7 +3054,7 @@ int vim_snprintf_add(char *str, size_t str_m, char *fmt, ...)
   return str_l;
 }
 
-int vim_snprintf(char *str, size_t str_m, char *fmt, ...)
+int vim_snprintf(char *str, size_t str_m, const char *fmt, ...)
 {
   va_list ap;
   int str_l;
@@ -3097,11 +3065,12 @@ int vim_snprintf(char *str, size_t str_m, char *fmt, ...)
   return str_l;
 }
 
-int vim_vsnprintf(char *str, size_t str_m, char *fmt, va_list ap, typval_T *tvs)
+int vim_vsnprintf(char *str, size_t str_m, const char *fmt, va_list ap,
+                  typval_T *tvs)
 {
   size_t str_l = 0;
   bool str_avail = str_l < str_m;
-  char *p = fmt;
+  const char *p = fmt;
   int arg_idx = 1;
 
   if (!p) {
@@ -3135,7 +3104,7 @@ int vim_vsnprintf(char *str, size_t str_m, char *fmt, va_list ap, typval_T *tvs)
       char tmp[TMP_LEN];
 
       // string address in case of string argument
-      char *str_arg;
+      const char *str_arg;
 
       // natural field width of arg without padding and sign
       size_t str_arg_l;

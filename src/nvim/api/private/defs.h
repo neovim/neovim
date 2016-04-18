@@ -99,4 +99,3 @@ struct key_value_pair {
 
 
 #endif  // NVIM_API_PRIVATE_DEFS_H
-

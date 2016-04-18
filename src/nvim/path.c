@@ -1495,13 +1495,12 @@ void simplify_filename(char_u *filename)
   } while (*p != NUL);
 }
 
-static char_u *eval_includeexpr(char_u *ptr, size_t len)
+static char *eval_includeexpr(const char *const ptr, const size_t len)
 {
-  assert(len <= INT_MAX);
-  set_vim_var_string(VV_FNAME, ptr, (int)len);
-  char_u *res = eval_to_string_safe(curbuf->b_p_inex, NULL,
-                                    was_set_insecurely((char_u *)"includeexpr",
-                                                       OPT_LOCAL));
+  set_vim_var_string(VV_FNAME, ptr, (ptrdiff_t) len);
+  char *res = (char *) eval_to_string_safe(
+      curbuf->b_p_inex, NULL, was_set_insecurely((char_u *)"includeexpr",
+                                                 OPT_LOCAL));
   set_vim_var_string(VV_FNAME, NULL, 0);
   return res;
 }
@@ -1523,7 +1522,7 @@ find_file_name_in_path (
   char_u *tofree = NULL;
 
   if ((options & FNAME_INCL) && *curbuf->b_p_inex != NUL) {
-    tofree = eval_includeexpr(ptr, len);
+    tofree = (char_u *) eval_includeexpr((char *) ptr, len);
     if (tofree != NULL) {
       ptr = tofree;
       len = STRLEN(ptr);
@@ -1540,7 +1539,7 @@ find_file_name_in_path (
      */
     if (file_name == NULL
         && !(options & FNAME_INCL) && *curbuf->b_p_inex != NUL) {
-      tofree = eval_includeexpr(ptr, len);
+      tofree = (char_u *) eval_includeexpr((char *) ptr, len);
       if (tofree != NULL) {
         ptr = tofree;
         len = STRLEN(ptr);

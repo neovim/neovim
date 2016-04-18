@@ -54,13 +54,16 @@ Object tabpage_get_var(Tabpage tabpage, String name, Error *err)
   return dict_get_value(tab->tp_vars, name, err);
 }
 
-/// Sets a tab-scoped (t:) variable. 'nil' value deletes the variable.
+/// Sets a tab-scoped (t:) variable
 ///
 /// @param tabpage handle
 /// @param name The variable name
 /// @param value The variable value
 /// @param[out] err Details of an error that may have occurred
-/// @return The tab page handle
+/// @return The old value or nil if there was no previous value.
+///
+///         @warning It may return nil if there was no previous value
+///                  or if previous value was `v:null`.
 Object tabpage_set_var(Tabpage tabpage, String name, Object value, Error *err)
 {
   tabpage_T *tab = find_tab_by_handle(tabpage, err);
@@ -69,7 +72,27 @@ Object tabpage_set_var(Tabpage tabpage, String name, Object value, Error *err)
     return (Object) OBJECT_INIT;
   }
 
-  return dict_set_value(tab->tp_vars, name, value, err);
+  return dict_set_value(tab->tp_vars, name, value, false, err);
+}
+
+/// Removes a tab-scoped (t:) variable
+///
+/// @param tabpage handle
+/// @param name The variable name
+/// @param[out] err Details of an error that may have occurred
+/// @return The old value or nil if there was no previous value.
+///
+///         @warning It may return nil if there was no previous value
+///                  or if previous value was `v:null`.
+Object tabpage_del_var(Tabpage tabpage, String name, Error *err)
+{
+  tabpage_T *tab = find_tab_by_handle(tabpage, err);
+
+  if (!tab) {
+    return (Object) OBJECT_INIT;
+  }
+
+  return dict_set_value(tab->tp_vars, name, NIL, true, err);
 }
 
 /// Gets the current window in a tab page

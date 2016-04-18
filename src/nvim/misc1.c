@@ -2250,7 +2250,7 @@ change_warning (
       msg_col = col;
     msg_source(hl_attr(HLF_W));
     MSG_PUTS_ATTR(_(w_readonly), hl_attr(HLF_W) | MSG_HIST);
-    set_vim_var_string(VV_WARNINGMSG, (char_u *)_(w_readonly), -1);
+    set_vim_var_string(VV_WARNINGMSG, _(w_readonly), -1);
     msg_clr_eos();
     (void)msg_end();
     if (msg_silent == 0 && !silent_mode) {

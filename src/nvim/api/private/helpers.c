@@ -90,14 +90,17 @@ Object dict_get_value(dict_T *dict, String key, Error *err)
 }
 
 /// Set a value in a dict. Objects are recursively expanded into their
-/// vimscript equivalents. Passing 'nil' as value deletes the key.
+/// vimscript equivalents.
 ///
 /// @param dict The vimscript dict
 /// @param key The key
 /// @param value The new value
+/// @param del Delete key in place of setting it. Argument `value` is ignored in
+///            this case.
 /// @param[out] err Details of an error that may have occurred
 /// @return the old value, if any
-Object dict_set_value(dict_T *dict, String key, Object value, Error *err)
+Object dict_set_value(dict_T *dict, String key, Object value, bool del,
+                      Error *err)
 {
   Object rv = OBJECT_INIT;
 
@@ -118,7 +121,7 @@ Object dict_set_value(dict_T *dict, String key, Object value, Error *err)
 
   dictitem_T *di = dict_find(dict, (uint8_t *)key.data, (int)key.size);
 
-  if (value.type == kObjectTypeNil) {
+  if (del) {
     // Delete the key
     if (di == NULL) {
       // Doesn't exist, fail
@@ -397,13 +400,13 @@ bool object_to_vim(Object obj, typval_T *tv, Error *err)
 
   switch (obj.type) {
     case kObjectTypeNil:
-      tv->v_type = VAR_NUMBER;
-      tv->vval.v_number = 0;
+      tv->v_type = VAR_SPECIAL;
+      tv->vval.v_special = kSpecialVarNull;
       break;
 
     case kObjectTypeBoolean:
-      tv->v_type = VAR_NUMBER;
-      tv->vval.v_number = obj.data.boolean;
+      tv->v_type = VAR_SPECIAL;
+      tv->vval.v_special = obj.data.boolean? kSpecialVarTrue: kSpecialVarFalse;
       break;
 
     case kObjectTypeBuffer:
@@ -651,6 +654,21 @@ static Object vim_to_object_rec(typval_T *obj, PMap(ptr_t) *lookup)
   }
 
   switch (obj->v_type) {
+    case VAR_SPECIAL:
+      switch (obj->vval.v_special) {
+        case kSpecialVarTrue:
+        case kSpecialVarFalse: {
+          rv.type = kObjectTypeBoolean;
+          rv.data.boolean = (obj->vval.v_special == kSpecialVarTrue);
+          break;
+        }
+        case kSpecialVarNull: {
+          rv.type = kObjectTypeNil;
+          break;
+        }
+      }
+      break;
+
     case VAR_STRING:
       rv.type = kObjectTypeString;
       rv.data.string = cstr_to_string((char *) obj->vval.v_string);
@@ -729,6 +747,10 @@ static Object vim_to_object_rec(typval_T *obj, PMap(ptr_t) *lookup)
           }
         }
       }
+      break;
+
+    case VAR_UNKNOWN:
+    case VAR_FUNC:
       break;
   }
 

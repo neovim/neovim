@@ -872,7 +872,7 @@ do_tag (
 
       /* Let the SwapExists event know what tag we are jumping to. */
       vim_snprintf((char *)IObuff, IOSIZE, ":ta %s\r", name);
-      set_vim_var_string(VV_SWAPCOMMAND, IObuff, -1);
+      set_vim_var_string(VV_SWAPCOMMAND, (char *) IObuff, -1);
 
       /*
        * Jump to the desired match.

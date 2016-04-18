@@ -3168,27 +3168,27 @@ static char_u *get_mess_env(void)
  */
 void set_lang_var(void)
 {
-  char_u      *loc;
+  const char *loc;
 
 # ifdef HAVE_GET_LOCALE_VAL
-  loc = (char_u *)get_locale_val(LC_CTYPE);
+  loc = get_locale_val(LC_CTYPE);
 # else
-  /* setlocale() not supported: use the default value */
-  loc = (char_u *)"C";
+  // setlocale() not supported: use the default value
+  loc = "C";
 # endif
   set_vim_var_string(VV_CTYPE, loc, -1);
 
   /* When LC_MESSAGES isn't defined use the value from $LC_MESSAGES, fall
    * back to LC_CTYPE if it's empty. */
 # ifdef HAVE_WORKING_LIBINTL
-  loc = get_mess_env();
+  loc = (char *) get_mess_env();
 # else
-  loc = (char_u *)get_locale_val(LC_MESSAGES);
+  loc = get_locale_val(LC_MESSAGES);
 # endif
   set_vim_var_string(VV_LANG, loc, -1);
 
 # ifdef HAVE_GET_LOCALE_VAL
-  loc = (char_u *)get_locale_val(LC_TIME);
+  loc = get_locale_val(LC_TIME);
 # endif
   set_vim_var_string(VV_LC_TIME, loc, -1);
 }
