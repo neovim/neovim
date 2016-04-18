@@ -862,7 +862,7 @@ static void fix_terminfo(TUIData *data)
     data->unibi_ext.enter_replace_mode = (int)unibi_add_ext_str(ut, NULL,
                                                                 "\x1b[3 q");
     data->unibi_ext.exit_insert_mode = (int)unibi_add_ext_str(ut, NULL,
-                                                              "\x1b[2 q");
+                                                              "\x1b[1 q");
   }
 
 end:
