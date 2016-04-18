@@ -184,10 +184,12 @@ typedef kvec_t(MPConvStackVal) MPConvStack;
 /// @param  copyID_attr  Name of the container attribute that holds copyID.
 ///                      After checking whether value of this attribute is
 ///                      copyID (variable) it is set to copyID.
+/// @param  conv_type  Type of the conversion, @see MPConvStackValType.
 #define _TYPVAL_ENCODE_CHECK_SELF_REFERENCE(val, copyID_attr, conv_type) \
     do { \
       if ((val)->copyID_attr == copyID) { \
         TYPVAL_ENCODE_CONV_RECURSE((val), conv_type); \
+        return OK; \
       } \
       (val)->copyID_attr = copyID; \
     } while (0)

@@ -3,6 +3,7 @@ local helpers = require('test.functional.helpers')(after_each)
 local eq, clear, eval, execute, nvim, next_message =
   helpers.eq, helpers.clear, helpers.eval, helpers.execute, helpers.nvim,
   helpers.next_message
+local meths = helpers.meths
 
 describe('notify', function()
   local channel
@@ -35,6 +36,18 @@ describe('notify', function()
       eval('rpcnotify(0, "event2", 10, 11, 12)')
       eval('rpcnotify(0, "event1", 13, 14, 15)')
       eq({'notification', 'event1', {13, 14, 15}}, next_message())
+    end)
+
+    it('does not crash for deeply nested variable', function()
+      meths.set_var('l', {})
+      local nest_level = 100000
+      meths.command(('call map(range(%u), "extend(g:, {\'l\': [g:l]})")'):format(nest_level))
+      local ret = {}
+      for i = 1, nest_level do
+        ret = {ret}
+      end
+      eval('rpcnotify('..channel..', "event", g:l)')
+      -- eq({'notification', 'event', ret}, next_message())
     end)
   end)
 end)

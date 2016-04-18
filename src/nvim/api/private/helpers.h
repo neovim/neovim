@@ -27,6 +27,10 @@
     .type = kObjectTypeInteger, \
     .data.integer = i })
 
+#define FLOATING_OBJ(f) ((Object) { \
+    .type = kObjectTypeFloat, \
+    .data.floating = f })
+
 #define STRING_OBJ(s) ((Object) { \
     .type = kObjectTypeString, \
     .data.string = s })
@@ -60,6 +64,13 @@
   kv_push(array, item)
 
 #define STATIC_CSTR_AS_STRING(s) ((String) {.data = s, .size = sizeof(s) - 1})
+
+/// Create a new String instance, putting data in allocated memory
+///
+/// @param[in]  s  String to work with. Must be a string literal.
+#define STATIC_CSTR_TO_STRING(s) ((String){ \
+    .data = xmemdupz(s, sizeof(s) - 1), \
+    .size = sizeof(s) - 1 })
 
 // Helpers used by the generated msgpack-rpc api wrappers
 #define api_init_boolean
