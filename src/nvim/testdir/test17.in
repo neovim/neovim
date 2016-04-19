@@ -41,17 +41,17 @@ STARTTEST
 :!mkdir Xdir1
 :!mkdir "Xdir1/dir2"
 :e! Xdir1/dir2/foo.a
-i#include   "bar.a"
+i#include   "bar.a":
 :w
 :e Xdir1/dir2/bar.a
-i#include      "baz.a"
+i#include      "baz.a":
 :w
 :e Xdir1/dir2/baz.a
-i#include            "foo.a"
+i#include            "foo.a":
 :w
 :e Xbase.a
 :set path=Xdir1/dir2
-i#include    <foo.a>
+i#include    <foo.a>:
 :w
 :redir! >>test.out
 :checkpath!
@@ -71,17 +71,17 @@ STARTTEST
 :endfunction
 :let &includeexpr='DotsToSlashes()'
 :e! Xdir1/dir2/foo.b
-i%inc   /bar/
+i%inc   /bar/:
 :w
 :e Xdir1/dir2/bar.b
-i%inc      /baz/
+i%inc      /baz/:
 :w
 :e Xdir1/dir2/baz.b
-i%inc            /foo/
+i%inc            /foo/:
 :w
 :e Xbase.b
 :set path=Xdir1/dir2
-i%inc    /foo/
+i%inc    /foo/:
 :w
 :redir! >>test.out
 :checkpath!
@@ -104,20 +104,20 @@ STARTTEST
 :endfunction
 :let &includeexpr='StripNewlineChar()'
 :e! Xdir1/dir2/foo.c
-i%inc   bar.c
+i%inc   bar.c:
 :w
 :e Xdir1/dir2/bar.c
-i%inc      baz.c
+i%inc      baz.c:
 :w
 :e Xdir1/dir2/baz.c
-i%inc            foo.c
+i%inc            foo.c:
 :w
 :e Xdir1/dir2/FALSE.c
-i%inc            foo.c
+i%inc            foo.c:
 :w
 :e Xbase.c
 :set path=Xdir1/dir2
-i%inc    FALSE.c foo.c
+i%inc    FALSE.c foo.c:
 :w
 :redir! >>test.out
 :checkpath!
