@@ -2,7 +2,7 @@
 " Language: reStructuredText documentation format
 " Maintainer: Marshall Ward <marshall.ward@gmail.com>
 " Previous Maintainer: Nikolai Weibull <now@bitwi.se>
-" Latest Revision: 2014-10-03
+" Latest Revision: 2015-09-07
 
 if exists("b:current_syntax")
   finish
@@ -81,7 +81,7 @@ syn region rstHyperlinkTarget matchgroup=rstDirective
 execute 'syn region rstExDirective contained matchgroup=rstDirective' .
       \ ' start=+' . s:ReferenceName . '::\_s+' .
       \ ' skip=+^$+' .
-      \ ' end=+^\s\@!+ contains=@rstCruft'
+      \ ' end=+^\s\@!+ contains=@rstCruft,rstLiteralBlock'
 
 execute 'syn match rstSubstitutionDefinition contained' .
       \ ' /|' . s:ReferenceName . '|\_s\+/ nextgroup=@rstDirectives'

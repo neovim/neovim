@@ -1,4 +1,4 @@
-*windows.txt*   For Vim version 7.4.  Last change: 2015 Jul 21
+*windows.txt*   For Vim version 7.4.  Last change: 2015 Aug 29
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -1099,13 +1099,13 @@ list of buffers. |unlisted-buffer|
 		the current buffer remains being edited.  See |:buffer-!| for
 		[!].  This will also edit a buffer that is not in the buffer
 		list, without setting the 'buflisted' flag.
-		Also see ||+cmd|.
+		Also see |+cmd|.
 
 :[N]b[uffer][!] [+cmd] {bufname}
 		Edit buffer for {bufname} from the buffer list.  See
 		|:buffer-!| for [!].  This will also edit a buffer that is not
 		in the buffer list, without setting the 'buflisted' flag.
-		Also see ||+cmd|.
+		Also see |+cmd|.
 
 :[N]sb[uffer] [+cmd] [N]				*:sb* *:sbuffer*
 		Split window and edit buffer [N] from the buffer list.  If [N]
@@ -1113,7 +1113,7 @@ list of buffers. |unlisted-buffer|
 		"useopen" setting of 'switchbuf' when splitting.  This will
 		also edit a buffer that is not in the buffer list, without
 		setting the 'buflisted' flag.
-		Also see ||+cmd|.
+		Also see |+cmd|.
 
 :[N]sb[uffer] [+cmd] {bufname}
 		Split window and edit buffer for {bufname} from the buffer
@@ -1122,13 +1122,13 @@ list of buffers. |unlisted-buffer|
 		Note: If what you want to do is split the buffer, make a copy
 		under another name, you can do it this way: >
 			:w foobar | sp #
-<		Also see ||+cmd|.
+<		Also see |+cmd|.
 
 :[N]bn[ext][!] [+cmd] [N]				*:bn* *:bnext* *E87*
 		Go to [N]th next buffer in buffer list.  [N] defaults to one.
 		Wraps around the end of the buffer list.
 		See |:buffer-!| for [!].
-		Also see ||+cmd|.
+		Also see |+cmd|.
 		If you are in a help buffer, this takes you to the next help
 		buffer (if there is one).  Similarly, if you are in a normal
 		(non-help) buffer, this takes you to the next normal buffer.
@@ -1141,21 +1141,21 @@ list of buffers. |unlisted-buffer|
 :[N]sbn[ext] [+cmd] [N]
 		Split window and go to [N]th next buffer in buffer list.
 		Wraps around the end of the buffer list.  Uses 'switchbuf'
-		Also see ||+cmd|.
+		Also see |+cmd|.
 
 :[N]bN[ext][!] [+cmd] [N]		*:bN* *:bNext* *:bp* *:bprevious* *E88*
 :[N]bp[revious][!] [+cmd] [N]
 		Go to [N]th previous buffer in buffer list.  [N] defaults to
 		one.  Wraps around the start of the buffer list.
 		See |:buffer-!| for [!] and 'switchbuf'.
-		Also see ||+cmd|.
+		Also see |+cmd|.
 
 :[N]sbN[ext] [+cmd] [N]			*:sbN* *:sbNext* *:sbp* *:sbprevious*
 :[N]sbp[revious] [+cmd] [N]
 		Split window and go to [N]th previous buffer in buffer list.
 		Wraps around the start of the buffer list.
 		Uses 'switchbuf'.
-		Also see ||+cmd|.
+		Also see |+cmd|.
 
 :br[ewind][!] [+cmd]					*:br* *:brewind*
 		Go to first buffer in buffer list.  If the buffer list is

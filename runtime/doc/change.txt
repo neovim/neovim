@@ -1,4 +1,4 @@
-*change.txt*    For Vim version 7.4.  Last change: 2015 Aug 04
+*change.txt*    For Vim version 7.4.  Last change: 2015 Sep 06
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -1102,7 +1102,7 @@ Rationale:	In Vi the "y" command followed by a backwards motion would
 With a linewise yank command the cursor is put in the first line, but the
 column is unmodified, thus it may not be on the first yanked character.
 
-There are nine types of registers:			*registers* *E354*
+There are ten types of registers:			*registers* *E354*
 1. The unnamed register ""
 2. 10 numbered registers "0 to "9
 3. The small delete register "-
