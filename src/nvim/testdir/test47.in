@@ -3,7 +3,6 @@ Tests for vertical splits and filler lines in diff mode
 Also tests restoration of saved options by :diffoff.
 
 STARTTEST
-:so small.vim
 :" Disable the title to avoid xterm keeping the wrong one.
 :set notitle noicon
 /^1

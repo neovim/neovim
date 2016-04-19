@@ -1,6 +1,6 @@
 Test for 'scrollbind'. <eralston@computer.org>   Do not add a line below!
 STARTTEST
-:so small.vim
+:
 :set noscrollbind
 :set scrollopt=ver,jump
 :set scrolloff=2

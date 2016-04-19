@@ -25,8 +25,8 @@ local measure_script = [[
     endfunc]]
 
 describe('regexp search', function()
-  -- The test cases rely on a small Vim script, which we source here, and also
-  -- on a temporary result file, which we prepare and write to disk.
+  -- The test cases rely on a temporary result file, which we prepare and write
+  -- to disk.
   setup(function()
     clear()
     source(measure_script)
