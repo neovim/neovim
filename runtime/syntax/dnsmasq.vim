@@ -4,8 +4,8 @@
 "		:3s+-foo++g
 " Description:	highlight dnsmasq configuration files
 " File:		runtime/syntax/dnsmasq.vim
-" Version:	2.70
-" Last Change:	2014 Apr 30
+" Version:	2.76
+" Last Change:	2015 Sep 27
 " Modeline:	vim: ts=8:sw=2:sts=2:
 "
 " License:	VIM License
@@ -131,10 +131,12 @@ syn match DnsmasqKeyword    "^\s*dhcp-sequential-ip\>"
 syn match DnsmasqKeyword    "^\s*dhcp-subscrid\>"
 syn match DnsmasqKeyword    "^\s*dhcp-userclass\>"
 syn match DnsmasqKeyword    "^\s*dhcp-vendorclass\>"
+syn match DnsmasqKeyword    "^\s*dhcp-hostsdir\>"
 syn match DnsmasqKeyword    "^\s*dns-rr\>"
 syn match DnsmasqKeyword    "^\s*dnssec\>"
 syn match DnsmasqKeyword    "^\s*dnssec-check-unsigned\>"
 syn match DnsmasqKeyword    "^\s*dnssec-no-timecheck\>"
+syn match DnsmasqKeyword    "^\s*dnssec-timestamp\>"
 syn match DnsmasqKeyword    "^\s*dns-forward-max\>"
 syn match DnsmasqKeyword    "^\s*domain\>"
 syn match DnsmasqKeyword    "^\s*domain-needed\>"
@@ -150,6 +152,7 @@ syn match DnsmasqKeyword    "^\s*host-record\>"
 syn match DnsmasqKeyword    "^\s*interface\>"
 syn match DnsmasqKeyword    "^\s*interface-name\>"
 syn match DnsmasqKeyword    "^\s*ipset\>"
+syn match DnsmasqKeyword    "^\s*ignore-address\>"
 syn match DnsmasqKeyword    "^\s*keep-in-foreground\>"
 syn match DnsmasqKeyword    "^\s*leasefile-ro\>"
 syn match DnsmasqKeyword    "^\s*listen-address\>"
@@ -164,6 +167,7 @@ syn match DnsmasqKeyword    "^\s*log-facility\>"
 syn match DnsmasqKeyword    "^\s*log-queries\>"
 syn match DnsmasqKeyword    "^\s*max-ttl\>"
 syn match DnsmasqKeyword    "^\s*max-cache-ttl\>"
+syn match DnsmasqKeyword    "^\s*min-cache-ttl\>"
 syn match DnsmasqKeyword    "^\s*min-port\>"
 syn match DnsmasqKeyword    "^\s*mx-host\>"
 syn match DnsmasqKeyword    "^\s*mx-target\>"
@@ -204,6 +208,7 @@ syn match DnsmasqKeyword    "^\s*test\>"
 syn match DnsmasqKeyword    "^\s*tftp-max\>"
 syn match DnsmasqKeyword    "^\s*tftp-lowercase\>"
 syn match DnsmasqKeyword    "^\s*tftp-no-blocksize\>"
+syn match DnsmasqKeyword    "^\s*tftp-no-fail\>"
 syn match DnsmasqKeyword    "^\s*tftp-port-range\>"
 syn match DnsmasqKeyword    "^\s*tftp-root\>"
 syn match DnsmasqKeyword    "^\s*tftp-secure\>"

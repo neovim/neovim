@@ -1,4 +1,4 @@
-*syntax.txt*	For Vim version 7.4.  Last change: 2015 Aug 13
+*syntax.txt*	For Vim version 7.4.  Last change: 2015 Sep 29
 
 
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
@@ -417,18 +417,19 @@ and last line to be converted.  Example, using the last set Visual area: >
 							*:TOhtml*
 :[range]TOhtml		The ":TOhtml" command is defined in a standard plugin.
 			This command will source |2html.vim| for you. When a
-			range is given, set |g:html_start_line| and
-			|g:html_end_line| to the start and end of the range,
-			respectively. Default range is the entire buffer.
+			range is given, this command sets |g:html_start_line|
+			and |g:html_end_line| to the start and end of the
+			range, respectively. Default range is the entire
+			buffer.
 
-                        If the current window is part of a |diff|, unless
-                        |g:html_diff_one_file| is set, :TOhtml will convert
-                        all windows which are part of the diff in the current
-                        tab and place them side-by-side in a <table> element
-                        in the generated HTML. With |g:html_line_ids| you can
-                        jump to lines in specific windows with (for example)
-                        #W1L42 for line 42 in the first diffed window, or
-                        #W3L87 for line 87 in the third.
+			If the current window is part of a |diff|, unless
+			|g:html_diff_one_file| is set, :TOhtml will convert
+			all windows which are part of the diff in the current
+			tab and place them side-by-side in a <table> element
+			in the generated HTML. With |g:html_line_ids| you can
+			jump to lines in specific windows with (for example)
+			#W1L42 for line 42 in the first diffed window, or
+			#W3L87 for line 87 in the third.
 
 			Examples: >
 
@@ -742,6 +743,22 @@ and UTF-32 instead, use: >
 Note that documents encoded in either UTF-32 or UTF-16 have known
 compatibility problems with some major browsers.
 
+								 *g:html_font*
+Default: "monospace"
+You can specify the font or fonts used in the converted document using
+g:html_font. If this option is set to a string, then the value will be
+surrounded with single quotes. If this option is set to a list then each list
+item is surrounded by single quotes and the list is joined with commas. Either
+way, "monospace" is added as the fallback generic family name and the entire
+result used as the font family (using CSS) or font face (if not using CSS).
+Examples: >
+
+   " font-family: 'Consolas', monospace;
+   :let g:html_font = "Consolas"
+
+   " font-family: 'DejaVu Sans Mono', 'Consolas', monospace;
+   :let g:html_font = ["DejaVu Sans Mono", "Consolas"]
+<
 			*convert-to-XML* *convert-to-XHTML* *g:html_use_xhtml*
 Default: 0.
 When 0, generate standard HTML 4.01 (strict when possible).

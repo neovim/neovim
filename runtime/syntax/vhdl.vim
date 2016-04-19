@@ -3,7 +3,7 @@
 " Maintainer:	Daniel Kho <daniel.kho@tauhop.com>
 " Previous Maintainer:	Czo <Olivier.Sirol@lip6.fr>
 " Credits:	Stephan Hegel <stephan.hegel@snc.siemens.com.cn>
-" Last Changed:	2015 Apr 25 by Daniel Kho
+" Last Changed:	2015 Oct 13 by Daniel Kho
 " $Id: vhdl.vim,v 1.1 2004/06/13 15:34:56 vimboss Exp $
 
 " VHSIC (Very High Speed Integrated Circuit) Hardware Description Language
@@ -72,6 +72,7 @@ syn keyword vhdlType boolean_vector integer_vector real_vector time_vector
 syn keyword vhdlType string severity_level
 " Predefined standard ieee VHDL types
 syn keyword vhdlType positive natural signed unsigned
+syn keyword vhdlType unresolved_signed unresolved_unsigned u_signed u_unsigned 
 syn keyword vhdlType line text
 syn keyword vhdlType std_logic std_logic_vector
 syn keyword vhdlType std_ulogic std_ulogic_vector
@@ -92,12 +93,12 @@ syn match vhdlAttribute "\'reverse_range"
 syn match vhdlAttribute "\'right"
 syn match vhdlAttribute "\'ascending"
 " block attributes
-syn match vhdlAttribute "\'behaviour"
-syn match vhdlAttribute "\'structure"
+"syn match vhdlAttribute "\'behaviour"	    " Non-standard VHDL
+"syn match vhdlAttribute "\'structure"	    " Non-standard VHDL
 syn match vhdlAttribute "\'simple_name"
 syn match vhdlAttribute "\'instance_name"
 syn match vhdlAttribute "\'path_name"
-syn match vhdlAttribute "\'foreign"
+syn match vhdlAttribute "\'foreign"	    " VHPI
 " signal attribute
 syn match vhdlAttribute "\'active"
 syn match vhdlAttribute "\'delayed"
@@ -112,10 +113,9 @@ syn match vhdlAttribute "\'driving"
 syn match vhdlAttribute "\'driving_value"
 " type attributes
 syn match vhdlAttribute "\'base"
-syn match vhdlAttribute "\'high"
-syn match vhdlAttribute "\'left"
+syn match vhdlAttribute "\'subtype"
+syn match vhdlAttribute "\'element"
 syn match vhdlAttribute "\'leftof"
-syn match vhdlAttribute "\'low"
 syn match vhdlAttribute "\'pos"
 syn match vhdlAttribute "\'pred"
 syn match vhdlAttribute "\'rightof"
@@ -150,34 +150,76 @@ syn match vhdlNumber "-\=\<\d\+\(E[+\-]\=\d\+\)\>"
 syn match vhdlNumber "-\=\<\d\+\>"
 syn match vhdlNumber "0*2#[01_]\+#\(E[+\-]\=\d\+\)\="
 syn match vhdlNumber "0*16#[0-9a-f_]\+#\(E[+\-]\=\d\+\)\="
+
 " operators
-syn keyword vhdlOperator and nand or nor xor xnor
-syn keyword vhdlOperator rol ror sla sll sra srl
-syn keyword vhdlOperator mod rem abs not
-syn match   vhdlOperator "[&><=:+\-*\/|]"
-syn match   vhdlSpecial  "[().,;]"
+syn keyword	vhdlOperator	and nand or nor xor xnor
+syn keyword	vhdlOperator	rol ror sla sll sra srl
+syn keyword	vhdlOperator	mod rem abs not
+" TODO remove the following line. You can't have a sequence of */=+ as an operator for example.
+"syn match	vhdlOperator	"[&><=:+\-*\/|]"
+" The following lines match valid and invalid operators.
+
+" Concatenation and math operators
+syn match	vhdlOperator	"&\|+\|-\|\*\|\/"
+
+" Equality and comparison operators
+syn match	vhdlOperator	"=\|\/=\|>\|<\|>="
+
+" Assignment operators
+syn match	vhdlOperator	"<=\|:="
+syn match	vhdlOperator	"=>"
+
+" VHDL-2008 conversion, matching equality/non-equality operators
+syn match	vhdlOperator	"??\|?=\|?\/=\|?<\|?<=\|?>\|?>="
+
+" Linting for illegal operators
+" '='
+syn match	vhdlError	"\(=\)[<=&+\-\*\/\\]\+"
+syn match	vhdlError	"[=&+\-\*\\]\+\(=\)"
+" '>', '<'
+syn match	vhdlError	"\(>\)[<>&+\-\/\\]\+"
+syn match	vhdlError	"[>&+\-\/\\]\+\(>\)"
+syn match	vhdlError	"\(<\)[<&+\-\/\\]\+"
+syn match	vhdlError	"[<>=&+\-\/\\]\+\(<\)"
+" Covers most operators
+syn match	vhdlError	"\(&\|+\|\-\|\*\*\|\/=\|??\|?=\|?\/=\|?<=\|?>=\|>=\|<=\|:=\|=>\)[<>=&+\-\*\\?:]\+"
+syn match	vhdlError	"[<>=&+\-\*\\:]\+\(&\|+\|\-\|\*\*\|\/=\|??\|?=\|?\/=\|?<\|?<=\|?>\|?>=\|>=\|<=\|:=\|=>\)"
+syn match	vhdlError	"\(?<\|?>\)[<>&+\-\*\/\\?:]\+"
+
+"syn match	vhdlError	"[?]\+\(&\|+\|\-\|\*\*\|??\|?=\|?\/=\|?<\|?<=\|?>\|?>=\|:=\|=>\)"
+" '/'
+syn match	vhdlError	"\(\/\)[<>&+\-\*\/\\?:]\+"
+syn match	vhdlError	"[<>=&+\-\*\/\\:]\+\(\/\)"
+
+syn match	vhdlSpecial	"<>"
+syn match	vhdlSpecial	"[().,;]"
+
+
 " time
 syn match vhdlTime "\<\d\+\s\+\(\([fpnum]s\)\|\(sec\)\|\(min\)\|\(hr\)\)\>"
 syn match vhdlTime "\<\d\+\.\d\+\s\+\(\([fpnum]s\)\|\(sec\)\|\(min\)\|\(hr\)\)\>"
 
+syn case match
 syn keyword vhdlTodo	contained TODO NOTE
 syn keyword vhdlFixme	contained FIXME
+syn case ignore
 
-" Regex for space is '\s'
-"   Any number of spaces: \s*
-"   At least one space:	  \s+
-syn region vhdlComment start="/\*" end="\*/" contains=vhdlTodo,vhdlFixme,@Spell
-syn match vhdlComment "--.*" contains=vhdlTodo,vhdlFixme,@Spell
+syn region  vhdlComment start="/\*" end="\*/"	contains=vhdlTodo,vhdlFixme,@Spell
+syn match   vhdlComment "\(^\|\s\)--.*"		contains=vhdlTodo,vhdlFixme,@Spell
+
+" Industry-standard directives. These are not standard VHDL, but are commonly
+" used in the industry.
 syn match vhdlPreProc "/\* synthesis .* \*/"
+"syn match vhdlPreProc "/\* simulation .* \*/"
 syn match vhdlPreProc "/\* pragma .* \*/"
 syn match vhdlPreProc "/\* synopsys .* \*/"
 syn match vhdlPreProc "--\s*synthesis .*"
+"syn match vhdlPreProc "--\s*simulation .*"
 syn match vhdlPreProc "--\s*pragma .*"
 syn match vhdlPreProc "--\s*synopsys .*"
-" syn match vhdlGlobal "[\'$#~!%@?\^\[\]{}\\]"
 
 "Modify the following as needed.  The trade-off is performance versus functionality.
-syn sync minlines=200
+syn sync minlines=600
 
 " Define the default highlighting.
 " For version 5.7 and earlier: only when not done already
@@ -203,7 +245,7 @@ if version >= 508 || !exists("did_vhdl_syntax_inits")
   HiLink vhdlTime	Number
   HiLink vhdlType	Type
   HiLink vhdlOperator	Operator
-"  HiLink vhdlGlobal    Error
+  HiLink vhdlError	Error
   HiLink vhdlAttribute	Special
   HiLink vhdlPreProc	PreProc
 
