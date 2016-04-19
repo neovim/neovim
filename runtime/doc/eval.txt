@@ -1763,7 +1763,8 @@ v:version	Version number of Vim: Major version number times 100 plus
 v:warningmsg	Last given warning message.  It's allowed to set this variable.
 
 					*v:windowid* *windowid-variable* {Nvim}
-v:windowid	Is a no-op at the moment; the value is always set to 0.
+v:windowid	Application-specific window ID ("window handle" in MS-Windows)
+		which may be set by any attached UI. Defaults to zero.
 		Note: for windows inside Vim use |winnr()|.
 
 ==============================================================================
