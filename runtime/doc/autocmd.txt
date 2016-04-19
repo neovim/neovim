@@ -770,13 +770,15 @@ OptionSet			After setting an option.  The pattern is
 				it's global or local scoped and |<amatch>|
 				indicates what option has been set.
 
-				Note: It's a bad idea, to reset an option
-				during this autocommand, since this will
-				probably break plugins. You can always use
-				|:noa| to prevent triggering this autocommand.
-				Could be used, to check for existence of the
-				'backupdir' and 'undodir' options and create
-				directories, if they don't exist yet.
+				Usage example: Check for the existence of the
+				directory in the 'backupdir' and 'undodir'
+				options, create the directory if it doesn't
+				exist yet.
+
+				Note: It's a bad idea to reset an option
+				during this autocommand, this may break a
+				plugin. You can always use `:noa` to prevent
+				triggering this autocommand.
 
 							*QuickFixCmdPre*
 QuickFixCmdPre			Before a quickfix command is run (|:make|,
