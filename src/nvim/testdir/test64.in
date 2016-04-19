@@ -5,7 +5,6 @@ A pattern that gives the expected result produces OK, so that we know it was
 actually tried.
 
 STARTTEST
-:so small.vim
 :" tl is a List of Lists with:
 :"    regexp engine
 :"    regexp pattern

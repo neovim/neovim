@@ -2,7 +2,6 @@ Tests for :[count]close! and :[count]hide     vim: set ft=vim :
 
 STARTTEST
 :let tests = []
-:so tiny.vim
 :for i in range(5)
 :new
 :endfor
@@ -46,7 +45,6 @@ ENDTEST
 
 STARTTEST
 :let tests = []
-:so tiny.vim
 :for i in range(5)
 :new
 :endfor
@@ -94,7 +92,6 @@ ENDTEST
 
 STARTTEST
 :let tests = []
-:so tiny.vim
 :set hidden
 :for i in range(5)
 :new
@@ -123,7 +120,6 @@ ENDTEST
 
 STARTTEST
 :let tests = []
-:so tiny.vim
 :set hidden
 :for i in range(5)
 :new

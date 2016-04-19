@@ -1,7 +1,6 @@
 Tests for List and Dictionary types.     vim: set ft=vim :
 
 STARTTEST
-:so small.vim
 :fun Test(...)
 :lang C
 :" Creating List directly with different types

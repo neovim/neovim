@@ -1,7 +1,6 @@
 Test for 'errorformat'.
 
 STARTTEST
-:so small.vim
 :/start of errorfile/,/end of errorfile/w! Xerrorfile
 :/start of testfile/,/end of testfile/w! Xtestfile
 :cf Xerrorfile

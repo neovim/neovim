@@ -1,7 +1,6 @@
 Test for linebreak and list option (non-utf8)
 
 STARTTEST
-:so small.vim
 :if !exists("+linebreak") | e! test.ok | w! test.out | qa! | endif
 :set wildchar=^E
 :10new|:vsp|:vert resize 20

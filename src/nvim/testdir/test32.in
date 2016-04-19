@@ -21,7 +21,6 @@ Test for insert expansion
 * t-expansion
 
 STARTTEST
-:so small.vim
 :se backspace=""
 :se cpt=.,w ff=unix | $-2,$w!Xtestfile | set ff&
 :se cot=

@@ -4,7 +4,6 @@ And test "ra" on multi-byte characters.
 Also test byteidx() and byteidxcomp()
 
 STARTTEST
-:so mbyte.vim
 ENDTEST
 
 Results of test69:
