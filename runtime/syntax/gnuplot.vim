@@ -1,8 +1,9 @@
 " Vim syntax file
 " Language:	gnuplot 4.7.0
-" Maintainer:	Andrew Rasmussen andyras@users.sourceforge.net
+" Maintainer:	Josh Wainwright <wainwright DOT ja AT gmail DOT com>
+" Last Maintainer:	Andrew Rasmussen andyras@users.sourceforge.net
 " Original Maintainer:	John Hoelzel johnh51@users.sourceforge.net
-" Last Change:	2014-02-24
+" Last Change:	2015-08-25
 " Filenames:	*.gnu *.plt *.gpi *.gih *.gp *.gnuplot scripts: #!*gnuplot
 " URL:		http://www.vim.org/scripts/script.php?script_id=4873
 " Original URL:	http://johnh51.get.to/vim/syntax/gnuplot.vim
@@ -364,18 +365,18 @@ syn keyword gnuplotKeyword	samples
 " set size
 syn keyword gnuplotKeyword	size square nosquare ratio noratio
 " set style
-syn keyword gnuplotKeyword	style function data noborder rectangle arrow
-syn keyword gnuplotKeyword	default nohead head heads size filled empty
-syn keyword gnuplotKeyword	nofilled front back boxplot range fraction
-syn keyword gnuplotKeyword	outliers nooutliers pointtype candlesticks
-syn keyword gnuplotKeyword	separation labels off auto x x2 sorted unsorted
-syn keyword gnuplotKeyword	fill empty transparent solid pattern border
-syn keyword gnuplotKeyword	increment userstyles financebars line default
-syn keyword gnuplotKeyword	linetype lt linecolor lc linewidth lw pointtype
-syn keyword gnuplotKeyword	pt pointsize ps pointinterval pi palette circle
-syn keyword gnuplotKeyword	radius graph screen wedge nowedge ellipse size
-syn keyword gnuplotKeyword	units xx xy yy histogram line textbox opaque
-syn keyword gnuplotKeyword	border noborder
+syn keyword gnuplotKeyword	style arrow auto back border boxplot
+syn keyword gnuplotKeyword	candlesticks circle clustered columnstacked data
+syn keyword gnuplotKeyword	default ellipse empty fill[ed] financebars
+syn keyword gnuplotKeyword	fraction front function gap graph head[s]
+syn keyword gnuplotKeyword	histogram increment labels lc line linecolor
+syn keyword gnuplotKeyword	linetype linewidth lt lw noborder nofilled
+syn keyword gnuplotKeyword	nohead nooutliers nowedge off opaque outliers
+syn keyword gnuplotKeyword	palette pattern pi pointinterval pointsize
+syn keyword gnuplotKeyword	pointtype ps pt radius range rectangle
+syn keyword gnuplotKeyword	rowstacked screen separation size solid sorted
+syn keyword gnuplotKeyword	textbox transparent units unsorted userstyles
+syn keyword gnuplotKeyword	wedge x x2 xx xy yy
 " set surface
 syn keyword gnuplotKeyword	surface implicit explicit
 " set table
@@ -496,8 +497,8 @@ syn keyword gnuplotTodo		contained TODO FIXME XXX
 syn keyword gnuplotStatement	cd call clear evaluate exit fit help history
 syn keyword gnuplotStatement	load lower pause plot p print pwd quit raise
 syn keyword gnuplotStatement	refresh replot rep reread reset save set show
-syn keyword gnuplotStatement	shell splot spstats system test undefine unset
-syn keyword gnuplotStatement	update
+syn keyword gnuplotStatement	shell splot spstats stats system test undefine
+syn keyword gnuplotStatement	unset update
 
 " ---- Define the default highlighting ---- "
 " For version 5.7 and earlier: only when not done already

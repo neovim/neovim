@@ -1,4 +1,4 @@
-*eval.txt*	For Vim version 7.4.  Last change: 2015 Jul 21
+*eval.txt*	For Vim version 7.4.  Last change: 2015 Sep 06
 
 
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
@@ -1800,7 +1800,7 @@ bufexists( {expr})		Number	TRUE if buffer {expr} exists
 buflisted( {expr})		Number	TRUE if buffer {expr} is listed
 bufloaded( {expr})		Number	TRUE if buffer {expr} is loaded
 bufname( {expr})		String	Name of the buffer {expr}
-bufnr( {expr})			Number	Number of the buffer {expr}
+bufnr( {expr} [, {create}])	Number	Number of the buffer {expr}
 bufwinnr( {expr})		Number	window number of buffer {expr}
 byte2line( {byte})		Number	line number at byte count {byte}
 byteidx( {expr}, {nr})		Number	byte index of {nr}'th char in {expr}
@@ -5776,7 +5776,7 @@ setbufvar({expr}, {varname}, {val})			*setbufvar()*
 			:call setbufvar("todo", "myvar", "foobar")
 <		This function is not available in the |sandbox|.
 
-setcharsearch()						*setcharsearch()*
+setcharsearch({dict})					*setcharsearch()*
 		Set the current character search information to {dict},
 		which contains one or more of the following entries:
 
@@ -6220,7 +6220,8 @@ split({expr} [, {pattern} [, {keepempty}]])			*split()*
 			:let words = split(getline('.'), '\W\+')
 <		To split a string in individual characters: >
 			:for c in split(mystring, '\zs')
-<		If you want to keep the separator you can also use '\zs': >
+<		If you want to keep the separator you can also use '\zs' at
+		the end of the pattern: >
 			:echo split('abc:def:ghi', ':\zs')
 <			['abc:', 'def:', 'ghi'] ~
 		Splitting a table where the first element can be empty: >
