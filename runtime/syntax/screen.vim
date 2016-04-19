@@ -1,7 +1,8 @@
 " Vim syntax file
-" Language:         screen(1) configuration file
-" Maintainer:       Nikolai Weibull <now@bitwi.se>
-" Latest Revision:  2010-01-03
+" Language:             screen(1) configuration file
+" Maintainer:           Dmitri Vereshchagin <dmitri.vereshchagin@gmail.com>
+" Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
+" Latest Revision:      2015-09-24
 
 if exists("b:current_syntax")
   finish
@@ -76,12 +77,16 @@ syn keyword screenCommands
                           \ break
                           \ breaktype
                           \ bufferfile
+                          \ bumpleft
+                          \ bumpright
                           \ c1
                           \ caption
                           \ chacl
                           \ charset
                           \ chdir
+                          \ cjkwidth
                           \ clear
+                          \ collapse
                           \ colon
                           \ command
                           \ compacthist
@@ -104,6 +109,7 @@ syn keyword screenCommands
                           \ deflogin
                           \ defmode
                           \ defmonitor
+                          \ defmousetrack
                           \ defnonblock
                           \ defobuflimit
                           \ defscrollback
@@ -113,6 +119,7 @@ syn keyword screenCommands
                           \ defutf8
                           \ defwrap
                           \ defwritelock
+                          \ defzombie
                           \ detach
                           \ digraph
                           \ dinfo
@@ -126,7 +133,9 @@ syn keyword screenCommands
                           \ fit
                           \ flow
                           \ focus
+                          \ focusminsize
                           \ gr
+                          \ group
                           \ hardcopy
                           \ hardcopy_append
                           \ hardcopydir
@@ -155,6 +164,7 @@ syn keyword screenCommands
                           \ maxwin
                           \ meta
                           \ monitor
+                          \ mousetrack
                           \ msgminwait
                           \ msgwait
                           \ multiuser
@@ -182,6 +192,7 @@ syn keyword screenCommands
                           \ register
                           \ remove
                           \ removebuf
+                          \ rendition
                           \ reset
                           \ resize
                           \ screen
@@ -197,6 +208,7 @@ syn keyword screenCommands
                           \ sleep
                           \ slowpaste
                           \ sorendition
+                          \ sort
                           \ source
                           \ split
                           \ startup_message
@@ -210,6 +222,7 @@ syn keyword screenCommands
                           \ time
                           \ title
                           \ umask
+                          \ unbindall
                           \ unsetenv
                           \ utf8
                           \ vbell
@@ -228,6 +241,7 @@ syn keyword screenCommands
                           \ xon
                           \ zmodem
                           \ zombie
+                          \ zombie_timeout
 
 hi def link screenEscape    Special
 hi def link screenComment   Comment

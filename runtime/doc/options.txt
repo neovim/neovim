@@ -707,7 +707,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	line.
 	When 'smartindent' or 'cindent' is on the indent is changed in
 	a different way.
-	The 'autoindent' option is reset when the 'paste' option is set.
+	The 'autoindent' option is reset when the 'paste' option is set and
+	restored when 'paste' is reset.
 	{small difference from Vi: After the indent is deleted when typing
 	<Esc> or <CR>, the cursor position when moving up or down is after the
 	deleted indent; Vi puts the cursor somewhere in the deleted indent}.
@@ -2276,6 +2277,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	<Tab>.  Spaces are used in indents with the '>' and '<' commands and
 	when 'autoindent' is on.  To insert a real tab when 'expandtab' is
 	on, use CTRL-V<Tab>.  See also |:retab| and |ins-expandtab|.
+	This option is reset when the 'paste' option is set and restored when
+	the 'paste' option is reset.
 
 					*'exrc'* *'ex'* *'noexrc'* *'noex'*
 'exrc' 'ex'		boolean (default off)
@@ -4520,19 +4523,21 @@ A jump table for the options with a short description can be found at |Q_op|.
 	When the 'paste' option is switched on (also when it was already on):
 		- mapping in Insert mode and Command-line mode is disabled
 		- abbreviations are disabled
-		- 'textwidth' is set to 0
-		- 'wrapmargin' is set to 0
 		- 'autoindent' is reset
-		- 'smartindent' is reset
-		- 'softtabstop' is set to 0
+		- 'expandtab' is reset
+		- 'formatoptions' is used like it is empty
 		- 'revins' is reset
 		- 'ruler' is reset
 		- 'showmatch' is reset
-		- 'formatoptions' is used like it is empty
+		- 'smartindent' is reset
+		- 'smarttab' is reset
+		- 'softtabstop' is set to 0
+		- 'textwidth' is set to 0
+		- 'wrapmargin' is set to 0
 	These options keep their value, but their effect is disabled:
-		- 'lisp'
-		- 'indentexpr'
 		- 'cindent'
+		- 'indentexpr'
+		- 'lisp'
 	NOTE: When you start editing another file while the 'paste' option is
 	on, settings from the modelines or autocommands may change the
 	settings again, causing trouble when pasting text.  You might want to
@@ -4855,7 +4860,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Inserting characters in Insert mode will work backwards.  See "typing
 	backwards" |ins-reverse|.  This option can be toggled with the CTRL-_
 	command in Insert mode, when 'allowrevins' is set.
-	NOTE: This option is reset when 'paste' is set.
+	This option is reset when 'paste' is set and restored when 'paste' is
+	reset.
 
 				 *'rightleft'* *'rl'* *'norightleft'* *'norl'*
 'rightleft' 'rl'	boolean	(default off)
@@ -4904,7 +4910,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	separated with a dash.
 	For an empty line "0-1" is shown.
 	For an empty buffer the line number will also be zero: "0,0-1".
-	This option is reset when the 'paste' option is set.
+	This option is reset when 'paste' is set and restored when 'paste' is
+	reset.
 	If you don't want to see the ruler all the time but want to know where
 	you are, use "g CTRL-G" |g_CTRL-G|.
 
@@ -5612,7 +5619,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 	jump is only done if the match can be seen on the screen.  The time to
 	show the match can be set with 'matchtime'.
 	A Beep is given if there is no match (no matter if the match can be
-	seen or not).  This option is reset when the 'paste' option is set.
+	seen or not).
+	This option is reset when 'paste' is set and restored when 'paste' is
+	reset.
 	When the 'm' flag is not included in 'cpoptions', typing a character
 	will immediately move the cursor back to where it belongs.
 	See the "sm" field in 'guicursor' for setting the cursor shape and
@@ -5711,7 +5720,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	mapping: ":inoremap # X^H#", where ^H is entered with CTRL-V CTRL-H.
 	When using the ">>" command, lines starting with '#' are not shifted
 	right.
-	NOTE: When 'paste' is set smart indenting is disabled.
+	This option is reset when 'paste' is set and restored when 'paste' is
+	reset.
 
 				 *'smarttab'* *'sta'* *'nosmarttab'* *'nosta'*
 'smarttab' 'sta'	boolean	(default on)
@@ -5726,6 +5736,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	What gets inserted (a <Tab> or spaces) depends on the 'expandtab'
 	option.  Also see |ins-expandtab|.  When 'expandtab' is not set, the
 	number of spaces is minimized by using <Tab>s.
+	This option is reset when 'paste' is set and restored when 'paste' is
+	reset.
 
 					*'softtabstop'* *'sts'*
 'softtabstop' 'sts'	number	(default 0)
@@ -5738,7 +5750,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	commands like "x" still work on the actual characters.
 	When 'sts' is zero, this feature is off.
 	When 'sts' is negative, the value of 'shiftwidth' is used.
-	'softtabstop' is set to 0 when the 'paste' option is set.
+	'softtabstop' is set to 0 when the 'paste' option is set and restored
+	when 'paste' is reset.
 	See also |ins-expandtab|.  When 'expandtab' is not set, the number of
 	spaces is minimized by using <Tab>s.
 	The 'L' flag in 'cpoptions' changes how tabs are used when 'list' is
@@ -6407,8 +6420,10 @@ A jump table for the options with a short description can be found at |Q_op|.
 			local to buffer
 	Maximum width of text that is being inserted.  A longer line will be
 	broken after white space to get this width.  A zero value disables
-	this.  'textwidth' is set to 0 when the 'paste' option is set.  When
-	'textwidth' is zero, 'wrapmargin' may be used.  See also
+	this.
+	'textwidth' is set to 0 when the 'paste' option is set and restored
+	when 'paste' is reset.
+	When 'textwidth' is zero, 'wrapmargin' may be used.  See also
 	'formatoptions' and |ins-textwidth|.
 	When 'formatexpr' is set it will be used to break the line.
 

@@ -1,4 +1,4 @@
-*cmdline.txt*   For Vim version 7.4.  Last change: 2015 Jul 28
+*cmdline.txt*   For Vim version 7.4.  Last change: 2015 Sep 25
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -779,12 +779,12 @@ Note: these are typed literally, they are not special keys!
 		   (for FileType, Syntax and SpellFileMissing events).
 	<sfile>    When executing a ":source" command, is replaced with the
 		   file name of the sourced file.  *E498*
-		   When executing a function, is replaced with
-		   "function {function-name}"; function call nesting is
-		   indicated like this:
-		   "function {function-name1}..{function-name2}".  Note that
-		   filename-modifiers are useless when <sfile> is used inside
-		   a function.
+		   When executing a function, is replaced with:
+		   "function {function-name}[{lnum}]"
+		   function call nesting is indicated like this:
+		   "function {function-name1}[{lnum}]..{function-name2}[{lnum}]"
+		   Note that filename-modifiers are useless when <sfile> is
+		   used inside a function.
 	<slnum>	   When executing a ":source" command, is replaced with the
 	           line number.  *E842*
 		   When executing a function it's the line number relative to

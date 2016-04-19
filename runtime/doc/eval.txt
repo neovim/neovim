@@ -1,4 +1,4 @@
-*eval.txt*	For Vim version 7.4.  Last change: 2015 Sep 06
+*eval.txt*	For Vim version 7.4.  Last change: 2015 Sep 19
 
 
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
@@ -6491,6 +6491,9 @@ synID({lnum}, {col}, {trans})				*synID()*
 
 		{col} is 1 for the leftmost column, {lnum} is 1 for the first
 		line.  'synmaxcol' applies, in a longer line zero is returned.
+		Note that when the position is after the last character,
+		that's where the cursor can be in Insert mode, synID() returns
+		zero.
 
 		When {trans} is non-zero, transparent items are reduced to the
 		item that they reveal.	This is useful when wanting to know

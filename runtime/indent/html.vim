@@ -2,7 +2,7 @@
 " Header: "{{{
 " Maintainer:	Bram Moolenaar
 " Original Author: Andy Wokula <anwoku@yahoo.de>
-" Last Change:	2015 Jun 12
+" Last Change:	2015 Sep 25
 " Version:	1.0
 " Description:	HTML indent script with cached state for faster indenting on a
 "		range of lines.
@@ -178,13 +178,15 @@ let s:countonly = 0
 " 3   "script"
 " 4   "style"
 " 5   comment start
+" 6   conditional comment start
 " -1  closing tag
 " -2  "/pre"
 " -3  "/script"
 " -4  "/style"
 " -5  comment end
+" -6  conditional comment end
 let s:indent_tags = {}
-let s:endtags = [0,0,0,0,0,0]   " long enough for the highest index
+let s:endtags = [0,0,0,0,0,0,0]   " long enough for the highest index
 "}}}
 
 " Add a list of tag names for a pair of <tag> </tag> to "tags".
@@ -257,6 +259,7 @@ call s:AddBlockTag('pre', 2)
 call s:AddBlockTag('script', 3)
 call s:AddBlockTag('style', 4)
 call s:AddBlockTag('<!--', 5, '-->')
+call s:AddBlockTag('<!--[', 6, '![endif]-->')
 "}}}
 
 " Return non-zero when "tagname" is an opening tag, not being a block tag, for
@@ -291,7 +294,7 @@ func! s:CountITags(text)
   let s:nextrel = 0  " relative indent steps for next line [unit &sw]:
   let s:block = 0		" assume starting outside of a block
   let s:countonly = 1	" don't change state
-  call substitute(a:text, '<\zs/\=\w\+\(-\w\+\)*\>\|<!--\|-->', '\=s:CheckTag(submatch(0))', 'g')
+  call substitute(a:text, '<\zs/\=\w\+\(-\w\+\)*\>\|<!--\[\|\[endif\]-->\|<!--\|-->', '\=s:CheckTag(submatch(0))', 'g')
   let s:countonly = 0
 endfunc "}}}
 
@@ -303,7 +306,7 @@ func! s:CountTagsAndState(text)
   let s:nextrel = 0  " relative indent steps for next line [unit &sw]:
 
   let s:block = b:hi_newstate.block
-  let tmp = substitute(a:text, '<\zs/\=\w\+\(-\w\+\)*\>\|<!--\|-->', '\=s:CheckTag(submatch(0))', 'g')
+  let tmp = substitute(a:text, '<\zs/\=\w\+\(-\w\+\)*\>\|<!--\[\|\[endif\]-->\|<!--\|-->', '\=s:CheckTag(submatch(0))', 'g')
   if s:block == 3
     let b:hi_newstate.scripttype = s:GetScriptType(matchstr(tmp, '\C.*<SCRIPT\>\zs[^>]*'))
   endif
@@ -425,7 +428,7 @@ func! s:FreshState(lnum)
   " State:
   "	lnum		last indented line == prevnonblank(a:lnum - 1)
   "	block = 0	a:lnum located within special tag: 0:none, 2:<pre>,
-  "			3:<script>, 4:<style>, 5:<!--
+  "			3:<script>, 4:<style>, 5:<!--, 6:<!--[
   "	baseindent	use this indent for line a:lnum as a start - kind of
   "			autoindent (if block==0)
   "	scripttype = ''	type attribute of a script tag (if block==3)
@@ -464,10 +467,13 @@ func! s:FreshState(lnum)
   " FI
 
   " look back for a blocktag
-  call cursor(a:lnum, 1)
-  let [stopline, stopcol] = searchpos('\c<\zs\/\=\%(pre\>\|script\>\|style\>\)', "bW")
-  if stopline > 0
-    " fugly ... why isn't there searchstr()
+  let stopline2 = v:lnum + 1
+  if has_key(b:hi_indent, 'block') && b:hi_indent.block > 5
+    let [stopline2, stopcol2] = searchpos('<!--', 'bnW')
+  endif
+  let [stopline, stopcol] = searchpos('\c<\zs\/\=\%(pre\>\|script\>\|style\>\)', "bnW")
+  if stopline > 0 && stopline < stopline2
+    " ugly ... why isn't there searchstr()
     let tagline = tolower(getline(stopline))
     let blocktag = matchstr(tagline, '\/\=\%(pre\>\|script\>\|style\>\)', stopcol - 1)
     if blocktag[0] != "/"
@@ -487,23 +493,29 @@ func! s:FreshState(lnum)
       " blocktag == "/..."
       let swendtag = match(tagline, '^\s*</') >= 0
       if !swendtag
-        let [bline, bcol] = searchpos('<'.blocktag[1:].'\>', "bW")
+        let [bline, bcol] = searchpos('<'.blocktag[1:].'\>', "bnW")
         call s:CountITags(tolower(getline(bline)[: bcol-2]))
         let state.baseindent = indent(bline) + (s:curind + s:nextrel) * s:ShiftWidth()
         return state
       endif
     endif
   endif
+  if stopline > stopline2
+    let stopline = stopline2
+    let stopcol = stopcol2
+  endif
 
   " else look back for comment
-  call cursor(a:lnum, 1)
-  let [comlnum, comcol, found] = searchpos('\(<!--\)\|-->', 'bpW', stopline)
-  if found == 2
+  let [comlnum, comcol, found] = searchpos('\(<!--\[\)\|\(<!--\)\|-->', 'bpnW', stopline)
+  if found == 2 || found == 3
     " comment opener found, assume a:lnum within comment
-    let state.block = 5
+    let state.block = (found == 3 ? 5 : 6)
     let state.blocklnr = comlnum
     " check preceding tags in the line:
     call s:CountITags(tolower(getline(comlnum)[: comcol-2]))
+    if found == 2
+      let state.baseindent = b:hi_indent.baseindent
+    endif
     let state.blocktagind = indent(comlnum) + (s:curind + s:nextrel) * s:ShiftWidth()
     return state
   endif
@@ -817,6 +829,20 @@ func! s:Alien5()
 
   " Align with the previous non-blank line.
   return indent(prevlnum)
+endfunc "}}}
+
+" Return the indent for conditional comment: <!--[ ![endif]-->
+func! s:Alien6()
+  "{{{
+  let curtext = getline(v:lnum)
+  if curtext =~ '\s*\zs<!\[endif\]-->'
+    " current line starts with end of comment, line up with comment start.
+    let lnum = search('<!--', 'bn')
+    if lnum > 0
+      return indent(lnum)
+    endif
+  endif
+  return b:hi_indent.baseindent + s:ShiftWidth()
 endfunc "}}}
 
 " When the "lnum" line ends in ">" find the line containing the matching "<".

@@ -1,7 +1,7 @@
 "python3complete.vim - Omni Completion for python
 " Maintainer: Aaron Griffin <aaronmgriffin@gmail.com>
 " Version: 0.9
-" Last Updated: 18 Jun 2009
+" Last Updated: 18 Jun 2009 (small fix 2015 Sep 14 from Debian)
 "
 " Roland Puntaier: this file contains adaptations for python3 and is parallel to pythoncomplete.vim
 "
@@ -359,6 +359,7 @@ class PyParser:
     def __init__(self):
         self.top = Scope('global',0)
         self.scope = self.top
+        self.parserline = 0
 
     def _parsedotname(self,pre=None):
         #returns (dottedname, nexttoken)

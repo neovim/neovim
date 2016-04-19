@@ -1,4 +1,4 @@
-*insert.txt*    For Vim version 7.4.  Last change: 2015 Sep 01
+*insert.txt*    For Vim version 7.4.  Last change: 2015 Sep 15
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -148,7 +148,7 @@ CTRL-R CTRL-R {0-9a-z"%#*+/:.-=}			*i_CTRL-R_CTRL-R*
 	CTRL-R a		results in "ac".
 	CTRL-R CTRL-R a		results in "ab^Hc".
 <		Options 'textwidth', 'formatoptions', etc. still apply.  If
-		you also want to avoid these, use "<C-R><C-O>r", see below.
+		you also want to avoid these, use CTRL-R CTRL-O, see below.
 		The '.' register (last inserted text) is still inserted as
 		typed.
 

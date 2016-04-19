@@ -4276,7 +4276,8 @@ msgstr ""
 "&Abrir para lectura únicamente\n"
 "&Editar de todas formas\n"
 "&Recuperar\n"
-"&Borrar&Salir\n"
+"&Borrar\n"
+"&Salir\n"
 "&Abortar"
 
 #.
