@@ -366,7 +366,7 @@ static struct vimvar {
   VV(VV_SEARCHFORWARD,  "searchforward",    VAR_NUMBER, 0),
   VV(VV_HLSEARCH,       "hlsearch",         VAR_NUMBER, 0),
   VV(VV_OLDFILES,       "oldfiles",         VAR_LIST, 0),
-  VV(VV_WINDOWID,       "windowid",         VAR_NUMBER, VV_RO),
+  VV(VV_WINDOWID,       "windowid",         VAR_NUMBER, VV_RO_SBX),
   VV(VV_PROGPATH,       "progpath",         VAR_STRING, VV_RO),
   VV(VV_COMMAND_OUTPUT, "command_output",   VAR_STRING, 0),
   VV(VV_COMPLETED_ITEM, "completed_item",   VAR_DICT, VV_RO),
