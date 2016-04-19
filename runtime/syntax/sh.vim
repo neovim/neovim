@@ -2,8 +2,8 @@
 " Language:		shell (sh) Korn shell (ksh) bash (sh)
 " Maintainer:		Charles E. Campbell  <NdrOchipS@PcampbellAfamily.Mbiz>
 " Previous Maintainer:	Lennart Schultz <Lennart.Schultz@ecmwf.int>
-" Last Change:		May 29, 2015
-" Version:		137
+" Last Change:		Oct 09, 2015
+" Version:		139
 " URL:		http://www.drchip.org/astronaut/vim/index.html#SYNTAX_SH
 " For options and settings, please use:      :help ft-sh-syntax
 " This file includes many ideas from ?ric Brunet (eric.brunet@ens.fr)
@@ -16,14 +16,14 @@ elseif exists("b:current_syntax")
   finish
 endif
 
-" AFAICT "." should be considered part of the iskeyword.  Using iskeywords in
-" syntax is dicey, so the following code permits the user to
+" AFAICT "." should be considered part of the iskeyword for ksh.  Using iskeywords
+" in syntax is dicey, so the following code permits the user to prevent/override
 "  g:sh_isk set to a string	: specify iskeyword.
 "  g:sh_noisk exists	: don't change iskeyword
-"  g:sh_noisk does not exist	: (default) append "." to iskeyword
+"  g:sh_noisk does not exist	: (default) append "." to iskeyword for kornshell
 if exists("g:sh_isk") && type(g:sh_isk) == 1	" user specifying iskeyword
  exe "setl isk=".g:sh_isk
-elseif !exists("g:sh_noisk")		" optionally prevent appending '.' to iskeyword
+elseif !exists("g:sh_noisk") && exists("b:is_kornshell") " append '.' to iskeyword
  setl isk+=.
 endif
 
@@ -128,7 +128,7 @@ syn cluster shIdList	contains=shCommandSub,shWrapLineOperator,shSetOption,shDere
 syn cluster shIfList	contains=@shLoopList,shDblBrace,shDblParen,shFunctionKey,shFunctionOne,shFunctionTwo
 syn cluster shLoopList	contains=@shCaseList,@shErrorList,shCaseEsac,shConditional,shDblBrace,shExpr,shFor,shForPP,shIf,shOption,shSet,shTest,shTestOpr
 syn cluster shSubShList	contains=@shCommandSubList,shCaseEsac,shColon,shCommandSub,shComment,shDo,shEcho,shExpr,shFor,shIf,shRedir,shSetList,shSource,shStatement,shVariable,shCtrlSeq,shOperator
-syn cluster shTestList	contains=shCharClass,shCommandSub,shComment,shCtrlSeq,shDeref,shDerefSimple,shDoubleQuote,shExDoubleQuote,shExpr,shExSingleQuote,shNumber,shOperator,shSingleQuote,shTest,shTestOpr
+syn cluster shTestList	contains=shCharClass,shCommandSub,shCtrlSeq,shDeref,shDerefSimple,shDoubleQuote,shExDoubleQuote,shExpr,shExSingleQuote,shNumber,shOperator,shSingleQuote,shTest,shTestOpr
 " Echo: {{{1
 " ====
 " This one is needed INSIDE a CommandSub, so that `echo bla` be correct
@@ -321,12 +321,11 @@ elseif !exists("g:sh_no_error")
 endif
 syn region  shSingleQuote	matchgroup=shQuote start=+'+ end=+'+		contains=@Spell
 syn region  shDoubleQuote	matchgroup=shQuote start=+\%(\%(\\\\\)*\\\)\@<!"+ skip=+\\"+ end=+"+	contains=@shDblQuoteList,shStringSpecial,@Spell
-syn region  shDoubleQuote	matchgroup=shQuote start=+"+ skip=+\\"+ end=+"+	contains=@shDblQuoteList,shStringSpecial,@Spell
 syn match   shStringSpecial	"[^[:print:] \t]"		contained
 syn match   shStringSpecial	"\%(\\\\\)*\\[\\"'`$()#]"
 " COMBAK: why is ,shComment on next line???
-syn match   shSpecial	"[^\\]\zs\%(\\\\\)*\\[\\"'`$()#]"	nextgroup=shMoreSpecial,shComment
-syn match   shSpecial	"^\%(\\\\\)*\\[\\"'`$()#]"		nextgroup=shComment
+syn match   shSpecial	"[^\\]\zs\%(\\\\\)*\\[\\"'`$()#]"
+syn match   shSpecial	"^\%(\\\\\)*\\[\\"'`$()#]"
 syn match   shMoreSpecial	"\%(\\\\\)*\\[\\"'`$()#]"		nextgroup=shMoreSpecial contained
 
 " Comments: {{{1
@@ -409,27 +408,27 @@ endif
 
 if exists("b:is_bash")
  if s:sh_fold_functions
-  syn region shFunctionOne	fold	matchgroup=shFunction start="^\s*\h[-a-zA-Z_0-9]*\s*()\_s*{"	end="}"	contains=@shFunctionList			skipwhite skipnl nextgroup=shFunctionStart,shQuickComment
-  syn region shFunctionTwo	fold	matchgroup=shFunction start="\h[-a-zA-Z_0-9]*\s*\%(()\)\=\_s*{"	end="}"	contains=shFunctionKey,@shFunctionList contained	skipwhite skipnl nextgroup=shFunctionStart,shQuickComment
-  syn region shFunctionThree	fold	matchgroup=shFunction start="^\s*\h[-a-zA-Z_0-9]*\s*()\_s*("	end=")"	contains=@shFunctionList			skipwhite skipnl nextgroup=shFunctionStart,shQuickComment
-  syn region shFunctionFour	fold	matchgroup=shFunction start="\h[-a-zA-Z_0-9]*\s*\%(()\)\=\_s*)"	end=")"	contains=shFunctionKey,@shFunctionList contained	skipwhite skipnl nextgroup=shFunctionStart,shQuickComment
+  syn region shFunctionOne	fold	matchgroup=shFunction start="^\s*\h[-a-zA-Z_0-9]*\s*()\_s*{"		end="}"	contains=@shFunctionList			skipwhite skipnl nextgroup=shFunctionStart,shQuickComment
+  syn region shFunctionTwo	fold	matchgroup=shFunction start="\<[^d][^o]\&\h[-a-zA-Z_0-9]*\s*\%(()\)\=\_s*{"	end="}"	contains=shFunctionKey,@shFunctionList contained	skipwhite skipnl nextgroup=shFunctionStart,shQuickComment
+  syn region shFunctionThree	fold	matchgroup=shFunction start="^\s*\h[-a-zA-Z_0-9]*\s*()\_s*("		end=")"	contains=@shFunctionList			skipwhite skipnl nextgroup=shFunctionStart,shQuickComment
+  syn region shFunctionFour	fold	matchgroup=shFunction start="\<[^d][^o]\&\h[-a-zA-Z_0-9]*\s*\%(()\)\=\_s*)"	end=")"	contains=shFunctionKey,@shFunctionList contained	skipwhite skipnl nextgroup=shFunctionStart,shQuickComment
  else
-  syn region shFunctionOne		matchgroup=shFunction start="^\s*\h[-a-zA-Z_0-9]*\s*()\_s*{"	end="}"	contains=@shFunctionList
-  syn region shFunctionTwo		matchgroup=shFunction start="\h[-a-zA-Z_0-9]*\s*\%(()\)\=\_s*{"	end="}"	contains=shFunctionKey,@shFunctionList contained
-  syn region shFunctionThree		matchgroup=shFunction start="^\s*\h[-a-zA-Z_0-9]*\s*()\_s*("	end=")"	contains=@shFunctionList
-  syn region shFunctionFour		matchgroup=shFunction start="\h[-a-zA-Z_0-9]*\s*\%(()\)\=\_s*("	end=")"	contains=shFunctionKey,@shFunctionList contained
+  syn region shFunctionOne		matchgroup=shFunction start="^\s*\h[-a-zA-Z_0-9]*\s*()\_s*{"		end="}"	contains=@shFunctionList
+  syn region shFunctionTwo		matchgroup=shFunction start="\<[^d][^o]\&\h[-a-zA-Z_0-9]*\s*\%(()\)\=\_s*{"	end="}"	contains=shFunctionKey,@shFunctionList contained
+  syn region shFunctionThree		matchgroup=shFunction start="^\s*\h[-a-zA-Z_0-9]*\s*()\_s*("		end=")"	contains=@shFunctionList
+  syn region shFunctionFour		matchgroup=shFunction start="\<[^d][^o]\&\h[-a-zA-Z_0-9]*\s*\%(()\)\=\_s*("	end=")"	contains=shFunctionKey,@shFunctionList contained
  endif
 else
  if s:sh_fold_functions
-  syn region shFunctionOne	fold	matchgroup=shFunction start="^\s*\h\w*\s*()\_s*{"	end="}"	contains=@shFunctionList	       skipwhite skipnl		nextgroup=shFunctionStart,shQuickComment
-  syn region shFunctionTwo	fold	matchgroup=shFunction start="\h\w*\s*\%(()\)\=\_s*{"	end="}"	contains=shFunctionKey,@shFunctionList contained skipwhite skipnl	nextgroup=shFunctionStart,shQuickComment
-  syn region shFunctionThree	fold	matchgroup=shFunction start="^\s*\h\w*\s*()\_s*("	end=")"	contains=@shFunctionList	       skipwhite skipnl		nextgroup=shFunctionStart,shQuickComment
-  syn region shFunctionFour	fold	matchgroup=shFunction start="\h\w*\s*\%(()\)\=\_s*("	end=")"	contains=shFunctionKey,@shFunctionList contained skipwhite skipnl	nextgroup=shFunctionStart,shQuickComment
+  syn region shFunctionOne	fold	matchgroup=shFunction start="^\s*\h\w*\s*()\_s*{"		end="}"	contains=@shFunctionList	       skipwhite skipnl		nextgroup=shFunctionStart,shQuickComment
+  syn region shFunctionTwo	fold	matchgroup=shFunction start="\<[^d][^o]\&\h\w*\s*\%(()\)\=\_s*{"	end="}"	contains=shFunctionKey,@shFunctionList contained skipwhite skipnl	nextgroup=shFunctionStart,shQuickComment
+  syn region shFunctionThree	fold	matchgroup=shFunction start="^\s*\h\w*\s*()\_s*("		end=")"	contains=@shFunctionList	       skipwhite skipnl		nextgroup=shFunctionStart,shQuickComment
+  syn region shFunctionFour	fold	matchgroup=shFunction start="\<[^d][^o]\&\h\w*\s*\%(()\)\=\_s*("	end=")"	contains=shFunctionKey,@shFunctionList contained skipwhite skipnl	nextgroup=shFunctionStart,shQuickComment
  else
-  syn region shFunctionOne		matchgroup=shFunction start="^\s*\h\w*\s*()\_s*{"	end="}"	contains=@shFunctionList
-  syn region shFunctionTwo		matchgroup=shFunction start="\h\w*\s*\%(()\)\=\_s*{"	end="}"	contains=shFunctionKey,@shFunctionList contained
-  syn region shFunctionThree		matchgroup=shFunction start="^\s*\h\w*\s*()\_s*("	end=")"	contains=@shFunctionList
-  syn region shFunctionFour		matchgroup=shFunction start="\h\w*\s*\%(()\)\=\_s*("	end=")"	contains=shFunctionKey,@shFunctionList contained
+  syn region shFunctionOne		matchgroup=shFunction start="^\s*\h\w*\s*()\_s*{"		end="}"	contains=@shFunctionList
+  syn region shFunctionTwo		matchgroup=shFunction start="\<[^d][^o]\&\h\w*\s*\%(()\)\=\_s*{"	end="}"	contains=shFunctionKey,@shFunctionList contained
+  syn region shFunctionThree		matchgroup=shFunction start="^\s*\h\w*\s*()\_s*("		end=")"	contains=@shFunctionList
+  syn region shFunctionFour		matchgroup=shFunction start="\<[^d][^o]\&\h\w*\s*\%(()\)\=\_s*("	end=")"	contains=shFunctionKey,@shFunctionList contained
  endif
 endif
 
