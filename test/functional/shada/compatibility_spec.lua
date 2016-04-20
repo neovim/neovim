@@ -270,9 +270,7 @@ describe('ShaDa forward compatibility support code', function()
   it('works with register item with type 10', function()
     wshada('\005\001\019\132\161na\162rX\194\162rc\145\196\001-\162rt\010')
     eq(0, exc_exec(sdrcmd(true)))
-    -- getreg may return empty list as list with NULL pointer which API 
-    -- translates into nil for some reason.
-    eq(NIL, funcs.getreg('a', 1, 1) or {})
+    eq({}, funcs.getreg('a', 1, 1))
     eq('', funcs.getregtype('a'))
     nvim_command('wshada ' .. shada_fname)
     local found = 0
