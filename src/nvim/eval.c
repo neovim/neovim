@@ -16986,9 +16986,9 @@ static char_u *find_name_end(char_u *arg, char_u **expr_start,
       }
     } else if (br_nest == 0 && mb_nest == 0 && *p == ':') {
       // "s:" is start of "s:var", but "n:" is not and can be used in
-      // slice "[n:]".  Also "xx:" is not a namespace.
+      // slice "[n:]".  Also "xx:" is not a namespace. But {ns}: is. */
       len = (int)(p - arg);
-      if (len > 1
+      if ((len > 1 && p[-1] != '}')
           || (len == 1 && vim_strchr(namespace_char, *arg) == NULL)) {
         break;
       }
