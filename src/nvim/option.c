@@ -2957,8 +2957,11 @@ did_set_string_option (
   }
   /* 'completeopt' */
   else if (varp == &p_cot) {
-    if (check_opt_strings(p_cot, p_cot_values, TRUE) != OK)
+    if (check_opt_strings(p_cot, p_cot_values, true) != OK) {
       errmsg = e_invarg;
+    } else {
+      completeopt_was_set();
+    }
   }
   /* 'pastetoggle': translate key codes like in a mapping */
   else if (varp == &p_pt) {
