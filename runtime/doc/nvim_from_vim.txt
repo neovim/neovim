@@ -12,7 +12,8 @@ good.
 To start the transition, link your previous configuration so Nvim can use
 it:
 >
-    mkdir -p ${XDG_CONFIG_HOME:=$HOME/.config}
+    XDG_CONFIG_HOME=${XDG_CONFIG_HOME:=$HOME/.config}
+    mkdir -p $XDG_CONFIG_HOME
     ln -s ~/.vim $XDG_CONFIG_HOME/nvim
     ln -s ~/.vimrc $XDG_CONFIG_HOME/nvim/init.vim
 <
