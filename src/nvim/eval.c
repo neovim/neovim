@@ -6749,7 +6749,7 @@ static struct fst {
   { "getcmdtype",        0, 0, f_getcmdtype },
   { "getcmdwintype",     0, 0, f_getcmdwintype },
   { "getcurpos",         0, 0, f_getcurpos },
-  { "getcwd",            0, 0, f_getcwd },
+  { "getcwd",            0, 2, f_getcwd },
   { "getfontname",       0, 1, f_getfontname },
   { "getfperm",          1, 1, f_getfperm },
   { "getfsize",          1, 1, f_getfsize },
@@ -6773,7 +6773,7 @@ static struct fst {
   { "globpath",          2, 5, f_globpath },
   { "has",               1, 1, f_has },
   { "has_key",           2, 2, f_has_key },
-  { "haslocaldir",       0, 0, f_haslocaldir },
+  { "haslocaldir",       0, 2, f_haslocaldir },
   { "hasmapto",          1, 3, f_hasmapto },
   { "highlightID",       1, 1, f_hlID },            // obsolete
   { "highlight_exists",  1, 1, f_hlexists },        // obsolete
@@ -7509,25 +7509,9 @@ static void f_argidx(typval_T *argvars, typval_T *rettv)
 static void f_arglistid(typval_T *argvars, typval_T *rettv)
 {
   rettv->vval.v_number = -1;
-  if (argvars[0].v_type != VAR_UNKNOWN) {
-    tabpage_T *tp = NULL;
-    if (argvars[1].v_type != VAR_UNKNOWN) {
-      long n = get_tv_number(&argvars[1]);
-      if (n >= 0) {
-        tp = find_tabpage(n);
-      }
-    } else {
-      tp = curtab;
-    }
-
-    if (tp != NULL) {
-      win_T *wp = find_win_by_nr(&argvars[0], tp);
-      if (wp != NULL) {
-        rettv->vval.v_number = wp->w_alist->id;
-      }
-    }
-  } else {
-    rettv->vval.v_number = curwin->w_alist->id;
+  win_T *wp = find_tabwin(&argvars[0], &argvars[1]);
+  if (wp != NULL) {
+    rettv->vval.v_number = wp->w_alist->id;
   }
 }
 
@@ -9758,23 +9742,31 @@ static void f_getcmdwintype(typval_T *argvars, typval_T *rettv)
   rettv->vval.v_string[0] = cmdwin_type;
 }
 
-/*
- * "getcwd()" function
- */
+// "getcwd()" function
 static void f_getcwd(typval_T *argvars, typval_T *rettv)
 {
-  char_u      *cwd;
-
   rettv->v_type = VAR_STRING;
   rettv->vval.v_string = NULL;
-  cwd = xmalloc(MAXPATHL);
-  if (os_dirname(cwd, MAXPATHL) != FAIL) {
-    rettv->vval.v_string = vim_strsave(cwd);
+
+  win_T *wp = find_tabwin(&argvars[0], &argvars[1]);
+  if (wp != NULL) {
+    if (wp->w_localdir != NULL) {
+      rettv->vval.v_string = vim_strsave(wp->w_localdir);
+    } else if (globaldir != NULL) {
+      rettv->vval.v_string = vim_strsave(globaldir);
+    } else {
+      char_u *cwd = xmalloc(MAXPATHL);
+      if (os_dirname(cwd, MAXPATHL) != FAIL) {
+        rettv->vval.v_string = vim_strsave(cwd);
+      }
+      xfree(cwd);
+    }
 #ifdef BACKSLASH_IN_FILENAME
-    slash_adjust(rettv->vval.v_string);
+    if (rettv->vval.v_string != NULL) {
+      slash_adjust(rettv->vval.v_string);
+    }
 #endif
   }
-  xfree(cwd);
 }
 
 /*
@@ -10232,6 +10224,35 @@ find_win_by_nr (
   return NULL;
 }
 
+// Find window specified by "wvp" in tabpage "tvp".
+// If "wvp" is VAR_UNKNOWN, it means the current window.
+// If "tvp" is VAR_UNKNOWN, it means the current tab page.
+static win_T *find_tabwin(typval_T *wvp, typval_T *tvp)
+{
+  win_T *wp = NULL;
+
+  if (wvp->v_type != VAR_UNKNOWN) {
+    tabpage_T *tp = NULL;
+
+    if (tvp->v_type != VAR_UNKNOWN) {
+      long n = get_tv_number(tvp);
+      if (n >= 0) {
+        tp = find_tabpage(n);
+      }
+    } else {
+      tp = curtab;
+    }
+
+    if (tp != NULL) {
+      wp = find_win_by_nr(wvp, tp);
+    }
+  } else {
+    wp = curwin;
+  }
+
+  return wp;
+}
+
 /*
  * "getwinvar()" function
  */
@@ -10592,12 +10613,11 @@ static void f_has_key(typval_T *argvars, typval_T *rettv)
       get_tv_string(&argvars[1]), -1) != NULL;
 }
 
-/*
- * "haslocaldir()" function
- */
+// "haslocaldir()" function
 static void f_haslocaldir(typval_T *argvars, typval_T *rettv)
 {
-  rettv->vval.v_number = (curwin->w_localdir != NULL);
+  win_T *wp = find_tabwin(&argvars[0], &argvars[1]);
+  rettv->vval.v_number = (wp != NULL && wp->w_localdir != NULL);
 }
 
 /*

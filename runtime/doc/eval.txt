@@ -1886,7 +1886,7 @@ getcmdpos()			Number	return cursor position in command-line
 getcmdtype()			String	return current command-line type
 getcmdwintype()			String	return current command-line window type
 getcurpos()			List	position of the cursor
-getcwd()			String	the current working directory
+getcwd( [{winnr} [, {tabnr}]])	String	get the current working directory
 getfontname( [{name}])		String	name of font being used
 getfperm( {fname})		String	file permissions of file {fname}
 getfsize( {fname})		Number	size in bytes of file {fname}
@@ -1917,7 +1917,8 @@ globpath( {path}, {expr} [, {nosuf} [, {list} [, {alllinks}]]])
 				String	do glob({expr}) for all dirs in {path}
 has( {feature})			Number	TRUE if feature {feature} supported
 has_key( {dict}, {key})		Number	TRUE if {dict} has entry {key}
-haslocaldir()			Number	TRUE if current window executed |:lcd|
+haslocaldir( [{winnr} [, {tabnr}]])
+				Number	TRUE if window executed |:lcd|
 hasmapto( {what} [, {mode} [, {abbr}]])
 				Number	TRUE if mapping to {what} exists
 histadd( {history},{item})	String	add an item to a history
@@ -3560,8 +3561,16 @@ getcurpos()	Get the position of the cursor.  This is like getpos('.'), but
 			call setpos('.', save_cursor)
 <
 							*getcwd()*
-getcwd()	The result is a String, which is the name of the current
+getcwd([{winnr} [, {tabnr}]])
+		The result is a String, which is the name of the current
 		working directory.
+		Without arguments, for the current window.
+
+		With {winnr} return the local current directory of this window
+		in the current tab page.
+		With {winnr} and {tabnr} return the local current directory of
+		the window in the specified tab page.
+		Return an empty string if the arguments are invalid.
 
 getfsize({fname})					*getfsize()*
 		The result is a Number, which is the size in bytes of the
@@ -3896,9 +3905,15 @@ has_key({dict}, {key})					*has_key()*
 		The result is a Number, which is 1 if |Dictionary| {dict} has
 		an entry with key {key}.  Zero otherwise.
 
-haslocaldir()						*haslocaldir()*
-		The result is a Number, which is 1 when the current
-		window has set a local path via |:lcd|, and 0 otherwise.
+haslocaldir([{winnr} [, {tabnr}]])			*haslocaldir()*
+		The result is a Number, which is 1 when the window has set a
+		local path via |:lcd|, and 0 otherwise.
+
+		Without arguments use the current window.
+		With {winnr} use this window in the current tab page.
+		With {winnr} and {tabnr} use the window in the specified tab
+		page.
+		Return 0 if the arguments are invalid.
 
 hasmapto({what} [, {mode} [, {abbr}]])			*hasmapto()*
 		The result is a Number, which is 1 if there is a mapping that
