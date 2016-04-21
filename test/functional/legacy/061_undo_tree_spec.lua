@@ -1,10 +1,9 @@
 -- Tests for undo tree and :earlier and :later.
 
 local helpers = require('test.functional.helpers')
-local feed, source, eq, eval, clear, execute, expect, wait, write_file =
-  helpers.feed, helpers.source, helpers.eq, helpers.eval,
-  helpers.clear, helpers.execute, helpers.expect, helpers.wait,
-  helpers.write_file
+local expect, feed, source = helpers.expect, helpers.feed, helpers.source
+local eval, clear, execute = helpers.eval, helpers.clear, helpers.execute
+local write_file, command, eq = helpers.write_file, helpers.command, helpers.eq
 
 local function expect_empty_buffer()
   -- The space will be removed by helpers.dedent but is needed because dedent
@@ -57,8 +56,7 @@ describe('undo tree:', function()
         -- Delete three other characters and go back in time step by step.
         feed('$xxx')
         expect_line('123456')
-        execute('sleep 1')
-        wait()
+        command('sleep 1')
         feed('g-')
         expect_line('1234567')
         feed('g-')
@@ -79,8 +77,7 @@ describe('undo tree:', function()
         expect_line('123456')
 
         -- Delay for two seconds and go some seconds forward and backward.
-        execute('sleep 2')
-        wait()
+        command('sleep 2')
         feed('Aa<esc>')
         feed('Ab<esc>')
         feed('Ac<esc>')

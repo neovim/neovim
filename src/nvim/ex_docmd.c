@@ -6989,10 +6989,10 @@ static void ex_sleep(exarg_T *eap)
  */
 void do_sleep(long msec)
 {
-  long done;
   ui_flush();  // flush before waiting
-  for (done = 0; !got_int && done < msec; done += 1000L) {
-    os_delay(msec - done > 1000L ? 1000L : msec - done, true);
+  for (long left = msec; !got_int && left > 0; left -= 1000L) {
+    int next = left > 1000l ? 1000 : (int)left;
+    LOOP_PROCESS_EVENTS_UNTIL(&loop, loop.events, (int)next, got_int);
     os_breakcheck();
   }
 }

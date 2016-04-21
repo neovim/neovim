@@ -79,6 +79,7 @@
 #include "nvim/event/pty_process.h"
 #include "nvim/event/rstream.h"
 #include "nvim/event/wstream.h"
+#include "nvim/event/time.h"
 #include "nvim/os/time.h"
 #include "nvim/msgpack_rpc/channel.h"
 #include "nvim/msgpack_rpc/server.h"
@@ -428,6 +429,14 @@ typedef struct {
   int status;
 } JobEvent;
 
+typedef struct {
+  TimeWatcher tw;
+  int timer_id;
+  int repeat_count;
+  bool stopped;
+  ufunc_T *callback;
+} timer_T;
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "eval.c.generated.h"
 #endif
@@ -437,6 +446,9 @@ typedef struct {
                                    valid character */
 static uint64_t current_job_id = 1;
 static PMap(uint64_t) *jobs = NULL; 
+
+static uint64_t last_timer_id = 0;
+static PMap(uint64_t) *timers = NULL;
 
 static const char *const msgpack_type_names[] = {
   [kMPNil] = "nil",
@@ -469,6 +481,7 @@ void eval_init(void)
   vimvars[VV_VERSION].vv_nr = VIM_VERSION_100;
 
   jobs = pmap_new(uint64_t)();
+  timers = pmap_new(uint64_t)();
   struct vimvar   *p;
 
   init_var_dict(&globvardict, &globvars_var, VAR_DEF_SCOPE);
@@ -6930,6 +6943,8 @@ static struct fst {
   { "tempname",          0, 0, f_tempname },
   { "termopen",          1, 2, f_termopen },
   { "test",              1, 1, f_test },
+  { "timer_start",       2, 3, f_timer_start },
+  { "timer_stop",        1, 1, f_timer_stop },
   { "tolower",           1, 1, f_tolower },
   { "toupper",           1, 1, f_toupper },
   { "tr",                3, 3, f_tr },
@@ -10688,6 +10703,7 @@ static void f_has(typval_T *argvars, typval_T *rettv)
     "termguicolors",
     "termresponse",
     "textobjects",
+    "timers",
     "title",
     "user-commands",        /* was accidentally included in 5.4 */
     "user_commands",
@@ -16439,6 +16455,116 @@ static void f_tan(typval_T *argvars, typval_T *rettv)
 static void f_tanh(typval_T *argvars, typval_T *rettv)
 {
   float_op_wrapper(argvars, rettv, &tanh);
+}
+
+
+/// "timer_start(timeout, callback, opts)" function
+static void f_timer_start(typval_T *argvars, typval_T *rettv)
+{
+  long timeout = get_tv_number(&argvars[0]);
+  timer_T *timer;
+  int repeat = 1;
+  dict_T *dict;
+
+  rettv->vval.v_number = -1;
+
+  if (argvars[2].v_type != VAR_UNKNOWN) {
+    if (argvars[2].v_type != VAR_DICT
+        || (dict = argvars[2].vval.v_dict) == NULL) {
+      EMSG2(_(e_invarg2), get_tv_string(&argvars[2]));
+      return;
+    }
+    if (dict_find(dict, (char_u *)"repeat", -1) != NULL) {
+      repeat = get_dict_number(dict, (char_u *)"repeat");
+    }
+  }
+
+  if (argvars[1].v_type != VAR_FUNC && argvars[1].v_type != VAR_STRING) {
+    EMSG2(e_invarg2, "funcref");
+    return;
+  }
+  ufunc_T *func = find_ufunc(argvars[1].vval.v_string);
+  if (!func) {
+    // Invalid function name. Error already reported by `find_ufunc`.
+    return;
+  }
+  func->uf_refcount++;
+
+  timer = xmalloc(sizeof *timer);
+  timer->stopped = false;
+  timer->repeat_count = repeat;
+  timer->timer_id = last_timer_id++;
+  timer->callback = func;
+
+  time_watcher_init(&loop, &timer->tw, timer);
+  timer->tw.events = queue_new_child(loop.events);
+  // if main loop is blocked, don't queue up multiple events
+  timer->tw.blockable = true;
+  time_watcher_start(&timer->tw, timer_due_cb, timeout,
+                     timeout * (repeat != 1));
+
+  pmap_put(uint64_t)(timers, timer->timer_id, timer);
+  rettv->vval.v_number = timer->timer_id;
+}
+
+
+// "timer_stop(timerid)" function
+static void f_timer_stop(typval_T *argvars, typval_T *rettv)
+{
+    if (argvars[0].v_type != VAR_NUMBER) {
+        EMSG(_(e_number_exp));
+        return;
+    }
+
+    timer_T *timer = pmap_get(uint64_t)(timers, get_tv_number(&argvars[0]));
+
+    if (timer == NULL) {
+      return;
+    }
+
+    timer_stop(timer);
+}
+
+// invoked on the main loop
+static void timer_due_cb(TimeWatcher *tw, void *data)
+{
+  timer_T *timer = (timer_T *)data;
+  // if repeat was negative repeat forever
+  if (timer->repeat_count >= 0 && --timer->repeat_count == 0) {
+    timer_stop(timer);
+  }
+
+  typval_T argv[1];
+  init_tv(argv);
+  argv[0].v_type = VAR_NUMBER;
+  argv[0].vval.v_number = timer->timer_id;
+  typval_T rettv;
+
+  init_tv(&rettv);
+  call_user_func(timer->callback, ARRAY_SIZE(argv), argv, &rettv,
+                 curwin->w_cursor.lnum, curwin->w_cursor.lnum, NULL);
+  clear_tv(&rettv);
+}
+
+static void timer_stop(timer_T *timer)
+{
+  if (timer->stopped) {
+    // avoid double free
+    return;
+  }
+  timer->stopped = true;
+  time_watcher_stop(&timer->tw);
+  time_watcher_close(&timer->tw, timer_free_cb);
+}
+
+// invoked on next event loop tick, so queue is empty
+static void timer_free_cb(TimeWatcher *tw, void *data)
+{
+  timer_T *timer = (timer_T *)data;
+  queue_free(timer->tw.events);
+  user_func_unref(timer->callback);
+  pmap_del(uint64_t)(timers, timer->timer_id);
+  xfree(timer);
 }
 
 /*

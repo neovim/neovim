@@ -2114,9 +2114,12 @@ tabpagewinnr({tabarg}[, {arg}])
 				Number	number of current window in tab page
 taglist({expr})		List	list of tags matching {expr}
 tagfiles()			List	tags files used
-tempname()			String	name for a temporary file
 tan({expr})			Float	tangent of {expr}
 tanh({expr})			Float	hyperbolic tangent of {expr}
+tempname()			String	name for a temporary file
+timer_start({time}, {callback} [, {options}])
+				Number	create a timer
+timer_stop({timer})		none	stop a timer
 tolower({expr})		String	the String {expr} switched to lowercase
 toupper({expr})		String	the String {expr} switched to uppercase
 tr({src}, {fromstr}, {tostr})	String	translate chars of {src} in {fromstr}
@@ -6840,6 +6843,37 @@ tanh({expr})						*tanh()*
 <			-0.761594
 
 
+							*timer_start()*
+timer_start({time}, {callback} [, {options}])
+		Create a timer and return the timer ID.
+
+		{time} is the waiting time in milliseconds. This is the
+		minimum time before invoking the callback.  When the system is
+		busy or Vim is not waiting for input the time will be longer.
+
+		{callback} is the function to call.  It can be the name of a
+		function or a Funcref.  It is called with one argument, which
+		is the timer ID.  The callback is only invoked when Vim is
+		waiting for input.
+
+		{options} is a dictionary.  Supported entries:
+		   "repeat"	Number of times to repeat calling the
+		   		callback.  -1 means forever.
+
+		Example: >
+			func MyHandler(timer)
+			  echo 'Handler called'
+			endfunc
+			let timer = timer_start(500, 'MyHandler',
+				\ {'repeat': 3})
+<		This will invoke MyHandler() three times at 500 msec
+		intervals.
+		{only available when compiled with the |+timers| feature}
+
+timer_stop({timer})					*timer_stop()*
+		Stop a timer.  {timer} is an ID returned by timer_start().
+		The timer callback will no longer be invoked.
+
 tolower({expr})						*tolower()*
 		The result is a copy of the String given, with all uppercase
 		characters turned into lowercase (just like applying |gu| to
@@ -7323,6 +7357,7 @@ termresponse		Compiled with support for |t_RV| and |v:termresponse|.
 textobjects		Compiled with support for |text-objects|.
 tgetent			Compiled with tgetent support, able to use a termcap
 			or terminfo file.
+timers			Compiled with |timer_start()| support.
 title			Compiled with window title support |'title'|.
 toolbar			Compiled with support for |gui-toolbar|.
 unix			Unix version of Vim.

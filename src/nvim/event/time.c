@@ -17,6 +17,7 @@ void time_watcher_init(Loop *loop, TimeWatcher *watcher, void *data)
   watcher->uv.data = watcher;
   watcher->data = data;
   watcher->events = loop->fast_events;
+  watcher->blockable = false;
 }
 
 void time_watcher_start(TimeWatcher *watcher, time_cb cb, uint64_t timeout,
@@ -50,6 +51,10 @@ static void time_watcher_cb(uv_timer_t *handle)
   FUNC_ATTR_NONNULL_ALL
 {
   TimeWatcher *watcher = handle->data;
+  if (watcher->blockable && !queue_empty(watcher->events)) {
+    // the timer blocked and there already is an unprocessed event waiting
+    return;
+  }
   CREATE_EVENT(watcher->events, time_event, 1, watcher);
 }
 
