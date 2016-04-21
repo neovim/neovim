@@ -2195,14 +2195,15 @@ void buflist_list(exarg_T *eap)
     len = vim_snprintf((char *)IObuff, IOSIZE - 20, "%3d%c%c%c%c%c \"%s\"",
         buf->b_fnum,
         buf->b_p_bl ? ' ' : 'u',
-        buf == curbuf ? '%' :
-        (curwin->w_alt_fnum == buf->b_fnum ? '#' : ' '),
-        buf->b_ml.ml_mfp == NULL ? ' ' :
-        (buf->b_nwindows == 0 ? 'h' : 'a'),
+        buf == curbuf ? '%' : (curwin->w_alt_fnum == buf->b_fnum ? '#' : ' '),
+        buf->b_ml.ml_mfp == NULL ? ' ' : (buf->b_nwindows == 0 ? 'h' : 'a'),
         !MODIFIABLE(buf) ? '-' : (buf->b_p_ro ? '=' : ' '),
-        (buf->b_flags & BF_READERR) ? 'x'
-        : (bufIsChanged(buf) ? '+' : ' '),
+        (buf->b_flags & BF_READERR) ? 'x' : (bufIsChanged(buf) ? '+' : ' '),
         NameBuff);
+
+    if (len > IOSIZE - 20) {
+        len = IOSIZE - 20;
+    }
 
     /* put "line 999" in column 40 or after the file name */
     i = 40 - vim_strsize(IObuff);
