@@ -9826,7 +9826,7 @@ static void f_getcwd(typval_T *argvars, typval_T *rettv)
     }
   }
 
-  // It the deepest scope number is `-1` advance the scope by one.
+  // If the deepest scope number is `-1` advance the scope.
   if (scope_number[scope] < 0) {
     scope++;
   }
@@ -9847,8 +9847,7 @@ static void f_getcwd(typval_T *argvars, typval_T *rettv)
     win = NULL;
   } else if (scope_number[kCdScopeWindow] >= 0) {
     if (!tp) {
-      EMSG(_("E5001: A higher-level scope cannot be -1 if a lower-level"
-             " scope is >= 0."));
+      EMSG(_("E5001: Higher scope cannot be -1 if lower scope is >= 0."));
       goto end;
     }
 
@@ -10782,8 +10781,7 @@ static void f_haslocaldir(typval_T *argvars, typval_T *rettv)
     win = NULL;
   } else if (scope_number[kCdScopeWindow] >= 0) {
     if (!tp) {
-      EMSG(_("E5001: A higher-level scope cannot be -1 if a lower-level"
-             " scope is >= 0."));
+      EMSG(_("E5001: Higher scope cannot be -1 if lower scope is >= 0."));
       return;
     }
 

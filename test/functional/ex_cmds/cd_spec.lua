@@ -110,34 +110,34 @@ end
 
 -- Test legal parameters for 'getcwd' and 'haslocaldir'
 for _, cmd in ipairs {'getcwd', 'haslocaldir'} do
-  describe('getcwd()', function()
+  describe(cmd..'()', function()
     -- Test invalid argument types
     local expected = 'Vim(call):E474: Invalid argument'
-    it('fails to parse a string', function()
+    it('fails on string', function()
       eq(expected, exc_exec('call ' .. cmd .. '("some string")'))
     end)
-    it('fails to parse a float', function()
+    it('fails on float', function()
       eq(expected, exc_exec('call ' .. cmd .. '(1.0)'))
     end)
-    it('fails to parse a list', function()
+    it('fails on list', function()
       eq(expected, exc_exec('call ' .. cmd .. '([1, 2])'))
     end)
-    it('fails to parse a dictionary', function()
+    it('fails on dictionary', function()
       eq(expected, exc_exec('call ' .. cmd .. '({"key": "value"})'))
     end)
-    it('fails to parse a funcref', function()
+    it('fails on funcref', function()
       eq(expected, exc_exec('call ' .. cmd .. '(function("tr"))'))
     end)
-  
+
     -- Test invalid numbers
-    it('fails to parse number less than -1', function()
+    it('fails on number less than -1', function()
       eq(expected, exc_exec('call ' .. cmd .. '(-2)'))
     end)
-    local expected = 'Vim(call):E5001: A higher-level scope cannot be -1 if a lower-level scope is >= 0.'
-    it('fails to parse arument -1 when previous arg was greater than -1', function()
+    local expected = 'Vim(call):E5001: Higher scope cannot be -1 if lower scope is >= 0.'
+    it('fails on -1 if previous arg is >=0', function()
       eq(expected, exc_exec('call ' .. cmd .. '(0, -1)'))
     end)
-  
+
     -- Test wrong number of arguments
     local expected = 'Vim(call):E118: Too many arguments for function: ' .. cmd
     it('fails to parse more than one argument', function()
