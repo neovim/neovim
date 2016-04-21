@@ -19,6 +19,18 @@
 #define EXMODE_NORMAL           1
 #define EXMODE_VIM              2
 
+/// The scope of a command.
+///
+/// The lower a number, the deeper the scope.
+typedef enum {
+  kCdScopeWindow,  ///< Affects one window.
+  kCdScopeTab,     ///< Affects one tab page.
+  kCdScopeGlobal,  ///< Affects the entire instance of NeoVim.
+} CdScope;
+
+/// Last `:cd` scope defined.
+#define MAX_CD_SCOPE  kCdScopeGlobal
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ex_docmd.h.generated.h"
 #endif

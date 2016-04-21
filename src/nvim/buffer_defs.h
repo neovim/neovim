@@ -816,10 +816,12 @@ struct tabpage_S {
                                        was set */
   diff_T          *tp_first_diff;
   buf_T           *(tp_diffbuf[DB_COUNT]);
-  int tp_diff_invalid;                  /* list of diffs is outdated */
-  frame_T         *(tp_snapshot[SNAP_COUNT]);    /* window layout snapshots */
-  dictitem_T tp_winvar;             /* variable for "t:" Dictionary */
-  dict_T          *tp_vars;         /* internal variables, local to tab page */
+  int tp_diff_invalid;              ///< list of diffs is outdated */
+  frame_T         *(tp_snapshot[SNAP_COUNT]);    ///< window layout snapshots
+  dictitem_T tp_winvar;             ///< variable for "t:" Dictionary
+  dict_T          *tp_vars;         ///< internal variables, local to tab page
+  char_u          *localdir;        ///< Absolute path of local directory or
+                                    ///< NULL
 };
 
 /*

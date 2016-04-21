@@ -2575,6 +2575,18 @@ return {
     func='ex_copymove',
   },
   {
+    command='tcd',
+    flags=bit.bor(BANG, FILE1, TRLBAR, CMDWIN),
+    addr_type=ADDR_LINES,
+    func='ex_cd',
+  },
+  {
+    command='tchdir',
+    flags=bit.bor(BANG, FILE1, TRLBAR, CMDWIN),
+    addr_type=ADDR_LINES,
+    func='ex_cd',
+  },
+  {
     command='tNext',
     flags=bit.bor(RANGE, NOTADR, BANG, TRLBAR, ZEROR),
     addr_type=ADDR_LINES,
