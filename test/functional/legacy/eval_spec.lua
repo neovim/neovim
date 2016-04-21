@@ -495,6 +495,28 @@ describe('eval', function()
       ' abcE4b10-4\000abcE4b10-4-2')
   end)
 
+  it('getreg("a",1,1) returns a valid list when "a is unset', function()
+    -- Precondition: "a is actually unset and "0 is nonempty
+    eq('', eval("getregtype('a')"))
+    eq('', eval("getreg('a')"))
+    execute("call setreg('0','text')")
+
+    -- This used to return a NULL list
+    -- which setreg didn't handle
+    execute("let x = getreg('a',1,1)")
+    execute("call setreg('0',x)")
+
+    -- nvim didn't crash and "0 was emptied
+    eq(2, eval("1+1"))
+    eq({}, eval("getreg('0',1,1)"))
+
+    -- x is a mutable list
+    execute("let y = x")
+    eq({}, eval("y"))
+    execute("call add(x, 'item')")
+    eq({'item'}, eval("y"))
+  end)
+
   it('search and expressions', function()
     execute('so test_eval_setup.vim')
     execute([=[call SetReg('/', ['abc/'])]=])
