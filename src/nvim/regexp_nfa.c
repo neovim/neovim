@@ -3466,6 +3466,8 @@ static char *pim_info(nfa_pim_T *pim)
 
 /* Used during execution: whether a match has been found. */
 static int nfa_match;
+static proftime_T *nfa_time_limit;
+static int nfa_time_count;
 
 
 /*
@@ -4851,8 +4853,12 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
   /* Some patterns may take a long time to match, especially when using
    * recursive_regmatch(). Allow interrupting them with CTRL-C. */
   fast_breakcheck();
-  if (got_int)
-    return FALSE;
+  if (got_int) {
+    return FALSE;  // NOLINT(readability/bool)
+  }
+  if (nfa_time_limit != NULL && profile_passed_limit(*nfa_time_limit)) {
+      return FALSE;  // NOLINT(readability/bool)
+  }
 
   nfa_match = FALSE;
 
@@ -6071,9 +6077,16 @@ nextchar:
       break;
 
     // Allow interrupting with CTRL-C.
-    fast_breakcheck();
+    line_breakcheck();
     if (got_int) {
       break;
+    }
+    // Check for timeout once in a twenty times to avoid overhead.
+    if (nfa_time_limit != NULL && ++nfa_time_count == 20) {
+      nfa_time_count = 0;
+      if (profile_passed_limit(*nfa_time_limit)) {
+        break;
+      }
     }
   }
 
@@ -6100,7 +6113,7 @@ theend:
  * Try match of "prog" with at regline["col"].
  * Returns <= 0 for failure, number of lines contained in the match otherwise.
  */
-static long nfa_regtry(nfa_regprog_T *prog, colnr_T col)
+static long nfa_regtry(nfa_regprog_T *prog, colnr_T col, proftime_T *tm)
 {
   int i;
   regsubs_T subs, m;
@@ -6110,6 +6123,9 @@ static long nfa_regtry(nfa_regprog_T *prog, colnr_T col)
 #endif
 
   reginput = regline + col;
+
+  nfa_time_limit = tm;
+  nfa_time_count = 0;
 
 #ifdef REGEXP_DEBUG
   f = fopen(NFA_REGEXP_RUN_LOG, "a");
@@ -6216,7 +6232,8 @@ static long nfa_regtry(nfa_regprog_T *prog, colnr_T col)
 static long 
 nfa_regexec_both (
     char_u *line,
-    colnr_T startcol               /* column to start looking for match */
+    colnr_T startcol,              // column to start looking for match
+    proftime_T *tm                 // timeout limit or NULL
 )
 {
   nfa_regprog_T   *prog;
@@ -6297,7 +6314,7 @@ nfa_regexec_both (
     prog->state[i].lastlist[1] = 0;
   }
 
-  retval = nfa_regtry(prog, col);
+  retval = nfa_regtry(prog, col, tm);
 
   nfa_regengine.expr = NULL;
 
@@ -6449,7 +6466,7 @@ nfa_regexec_nl (
   ireg_ic = rmp->rm_ic;
   ireg_icombine = FALSE;
   ireg_maxcol = 0;
-  return nfa_regexec_both(line, col);
+  return nfa_regexec_both(line, col, NULL);
 }
 
 /// Matches a regexp against multiple lines.
@@ -6500,5 +6517,5 @@ static long nfa_regexec_multi(regmmatch_T *rmp, win_T *win, buf_T *buf,
   ireg_icombine = FALSE;
   ireg_maxcol = rmp->rmm_maxcol;
 
-  return nfa_regexec_both(NULL, col);
+  return nfa_regexec_both(NULL, col, tm);
 }
