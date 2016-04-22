@@ -309,25 +309,70 @@ static void system_data_cb(Stream *stream, RBuffer *buf, size_t count,
   dbuf->len += nread;
 }
 
+/// Continue to append data to last screen line.
+///
+/// @param output       Data to append to screen lines.
+/// @param remaining    Size of data.
+/// @param new_line     If true, next data output will be on a new line.
+static void append_to_screen_end(char *output, size_t remaining, bool new_line)
+{
+  // Column of last row to start appending data to.
+  static colnr_T last_col = 0;
+
+  size_t off = 0;
+  int last_row = (int)Rows - 1;
+
+  while (off < remaining) {
+    // Found end of line?
+    if (output[off] == NL) {
+      // Can we start a new line or do we need to continue the last one?
+      if (last_col == 0) {
+        screen_del_lines(0, 0, 1, (int)Rows, NULL);
+      }
+      screen_puts_len((char_u *)output, (int)off, last_row, last_col, 0);
+      last_col = 0;
+
+      size_t skip = off + 1;
+      output += skip;
+      remaining -= skip;
+      off = 0;
+      continue;
+    }
+
+    // Translate NUL to SOH
+    if (output[off] == NUL) {
+      output[off] = 1;
+    }
+
+    off++;
+  }
+
+  if (remaining) {
+    if (last_col == 0) {
+      screen_del_lines(0, 0, 1, (int)Rows, NULL);
+    }
+    screen_puts_len((char_u *)output, (int)remaining, last_row, last_col, 0);
+    last_col += (colnr_T)remaining;
+  }
+
+  if (new_line) {
+    last_col = 0;
+  }
+
+  ui_flush();
+}
+
 static void out_data_cb(Stream *stream, RBuffer *buf, size_t count, void *data,
     bool eof)
 {
+  // We always output the whole buffer, so the buffer can never
+  // wrap around.
   size_t cnt;
   char *ptr = rbuffer_read_ptr(buf, &cnt);
 
-  if (!cnt) {
-    return;
-  }
-
-  size_t written = write_output(ptr, cnt, false, eof);
-  // No output written, force emptying the Rbuffer if it is full.
-  if (!written && rbuffer_size(buf) == rbuffer_capacity(buf)) {
-    screen_del_lines(0, 0, 1, (int)Rows, NULL);
-    screen_puts_len((char_u *)ptr, (int)cnt, (int)Rows - 1, 0, 0);
-    written = cnt;
-  }
-  if (written) {
-    rbuffer_consumed(buf, written);
+  append_to_screen_end(ptr, cnt, eof);
+  if (cnt) {
+    rbuffer_consumed(buf, cnt);
   }
 }
 
