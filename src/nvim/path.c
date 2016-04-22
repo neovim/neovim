@@ -604,7 +604,7 @@ static size_t do_path_expand(garray_T *gap, const char_u *path,
       starstar = true;
 
   // convert the file pattern to a regexp pattern
-  int starts_with_dot = (*s == '.');
+  int starts_with_dot = *s == '.';
   char_u *pat = file_pat_to_reg_pat(s, e, NULL, false);
   if (pat == NULL) {
     xfree(buf);
@@ -647,9 +647,12 @@ static size_t do_path_expand(garray_T *gap, const char_u *path,
   if (os_file_is_readable(dirpath) && os_scandir(&dir, dirpath)) {
     // Find all matching entries.
     char_u *name;
-    scandir_next_with_dots(NULL /* initialize */);
-    while((name = (char_u *) scandir_next_with_dots(&dir)) && name != NULL) {
-      if ((name[0] != '.' || starts_with_dot)
+    scandir_next_with_dots(NULL);  // initialize
+    while ((name = (char_u *) scandir_next_with_dots(&dir)) && name != NULL) {
+      if ((name[0] != '.'
+           || starts_with_dot
+           || ((flags & EW_DODOT)
+               && name[1] != NUL && (name[1] != '.' || name[2] != NUL)))
           && ((regmatch.regprog != NULL && vim_regexec(&regmatch, name, 0))
               || ((flags & EW_NOTWILD)
                   && fnamencmp(path + (s - buf), name, e - s) == 0))) {
@@ -1220,7 +1223,7 @@ int gen_expand_wildcards(int num_pat, char_u **pat, int *num_file,
 
   recursive = false;
 
-  return (ga.ga_data != NULL) ? OK : FAIL;
+  return ((flags & EW_EMPTYOK) || ga.ga_data != NULL) ? OK : FAIL;
 }
 
 

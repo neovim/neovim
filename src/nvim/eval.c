@@ -66,7 +66,6 @@
 #include "nvim/strings.h"
 #include "nvim/syntax.h"
 #include "nvim/tag.h"
-#include "nvim/tempfile.h"
 #include "nvim/ui.h"
 #include "nvim/mouse.h"
 #include "nvim/terminal.h"
@@ -6702,7 +6701,7 @@ static struct fst {
   { "cscope_connection", 0, 3, f_cscope_connection },
   { "cursor",            1, 3, f_cursor },
   { "deepcopy",          1, 2, f_deepcopy },
-  { "delete",            1, 1, f_delete },
+  { "delete",            1, 2, f_delete },
   { "dictwatcheradd",    3, 3, f_dictwatcheradd },
   { "dictwatcherdel",    3, 3, f_dictwatcherdel },
   { "did_filetype",      0, 0, f_did_filetype },
@@ -8374,15 +8373,42 @@ static void f_deepcopy(typval_T *argvars, typval_T *rettv)
   }
 }
 
-/*
- * "delete()" function
- */
+// "delete()" function
 static void f_delete(typval_T *argvars, typval_T *rettv)
 {
-  if (check_restricted() || check_secure())
-    rettv->vval.v_number = -1;
-  else
-    rettv->vval.v_number = os_remove((char *)get_tv_string(&argvars[0]));
+  char_u nbuf[NUMBUFLEN];
+  char_u *name;
+  char_u *flags;
+
+  rettv->vval.v_number = -1;
+  if (check_restricted() || check_secure()) {
+    return;
+  }
+
+  name = get_tv_string(&argvars[0]);
+  if (name == NULL || *name == NUL) {
+    EMSG(_(e_invarg));
+    return;
+  }
+
+  if (argvars[1].v_type != VAR_UNKNOWN) {
+    flags = get_tv_string_buf(&argvars[1], nbuf);
+  } else {
+    flags = (char_u *)"";
+  }
+
+  if (*flags == NUL) {
+    // delete a file
+    rettv->vval.v_number = os_remove((char *)name) == 0 ? 0 : -1;
+  } else if (STRCMP(flags, "d") == 0) {
+    // delete an empty directory
+    rettv->vval.v_number = os_rmdir((char *)name) == 0 ? 0 : -1;
+  } else if (STRCMP(flags, "rf") == 0) {
+    // delete a directory recursively
+    rettv->vval.v_number = delete_recursive(name);
+  } else {
+    EMSG2(_(e_invexpr2), flags);
+  }
 }
 
 // dictwatcheradd(dict, key, funcref) function

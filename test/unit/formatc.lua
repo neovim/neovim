@@ -238,7 +238,7 @@ local function standalone(...)  -- luacheck: ignore
 end
 -- uncomment this line (and comment the `return`) for standalone debugging
 -- example usage:
---    ../../.deps/usr/bin/luajit formatc.lua ../../include/tempfile.h.generated.h
+--    ../../.deps/usr/bin/luajit formatc.lua ../../include/fileio.h.generated.h
 --    ../../.deps/usr/bin/luajit formatc.lua /usr/include/malloc.h
 -- standalone(...)
 return formatc
