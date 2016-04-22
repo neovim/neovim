@@ -1946,18 +1946,20 @@ int expand_wildcards(int num_pat, char_u **pat, int *num_files, char_u ***files,
   if (*p_wig) {
     char_u  *ffname;
 
-    /* check all filess in (*files)[] */
-    for (i = 0; i < *num_files; ++i) {
-      ffname = (char_u *)FullName_save((char *)(*files)[i], FALSE);
-      if (ffname == NULL)               /* out of memory */
+    // check all filess in (*files)[]
+    for (i = 0; i < *num_files; i++) {
+      ffname = (char_u *)FullName_save((char *)(*files)[i], false);
+      if (ffname == NULL) {               // out of memory
         break;
+      }
       if (match_file_list(p_wig, (*files)[i], ffname)) {
-        /* remove this matching files from the list */
+        // remove this matching files from the list
         xfree((*files)[i]);
-        for (j = i; j + 1 < *num_files; ++j)
+        for (j = i; j + 1 < *num_files; j++) {
           (*files)[j] = (*files)[j + 1];
-        --*num_files;
-        --i;
+        }
+        (*num_files)--;
+        i--;
       }
       xfree(ffname);
     }
@@ -1968,15 +1970,16 @@ int expand_wildcards(int num_pat, char_u **pat, int *num_files, char_u ***files,
    */
   if (*num_files > 1) {
     non_suf_match = 0;
-    for (i = 0; i < *num_files; ++i) {
+    for (i = 0; i < *num_files; i++) {
       if (!match_suffix((*files)[i])) {
-        /*
-         * Move the name without matching suffix to the front
-         * of the list.
-         */
+        //
+        // Move the name without matching suffix to the front
+        // of the list.
+        //
         p = (*files)[i];
-        for (j = i; j > non_suf_match; --j)
+        for (j = i; j > non_suf_match; j--) {
           (*files)[j] = (*files)[j - 1];
+        }
         (*files)[non_suf_match++] = p;
       }
     }
