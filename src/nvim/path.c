@@ -1986,6 +1986,7 @@ int expand_wildcards(int num_pat, char_u **pat, int *num_files, char_u ***files,
   if (*num_files == 0) {
     xfree(*files);
     *files = NULL;
+    return FAIL;
   }
 
   return retval;
