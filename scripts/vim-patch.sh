@@ -86,6 +86,10 @@ commit_message() {
     "${vim_message}" "${vim_commit_url}"
 }
 
+find_git_remote() {
+  git remote -v | awk '/neovim\/neovim.*(fetch)/{print $1}'
+}
+
 assign_commit_details() {
   if [[ ${1} =~ [0-9]\.[0-9]\.[0-9]{3,4} ]]; then
     # Interpret parameter as version number (tag).
@@ -132,21 +136,23 @@ get_vim_patch() {
   local neovim_branch="${BRANCH_PREFIX}${vim_version}"
 
   cd "${NEOVIM_SOURCE_DIR}"
+  local git_remote=$(find_git_remote)
   local checked_out_branch="$(git rev-parse --abbrev-ref HEAD)"
+
   if [[ "${checked_out_branch}" == ${BRANCH_PREFIX}* ]]; then
     echo "✔ Current branch '${checked_out_branch}' seems to be a vim-patch"
     echo "  branch; not creating a new branch."
   else
     echo
-    echo "Fetching 'upstream/master'."
-    output="$(git fetch upstream master 2>&1)" &&
+    echo "Fetching '${git_remote}/master'."
+    output="$(git fetch "${git_remote}" master 2>&1)" &&
       echo "✔ ${output}" ||
       (echo "✘ ${output}"; false)
 
     echo
-    echo "Creating new branch '${neovim_branch}' based on 'upstream/master'."
+    echo "Creating new branch '${neovim_branch}' based on '${git_remote}/master'."
     cd "${NEOVIM_SOURCE_DIR}"
-    output="$(git checkout -b "${neovim_branch}" upstream/master 2>&1)" &&
+    output="$(git checkout -b "${neovim_branch}" "${git_remote}/master" 2>&1)" &&
       echo "✔ ${output}" ||
       (echo "✘ ${output}"; false)
   fi
@@ -195,8 +201,9 @@ submit_pr() {
     exit 1
   fi
 
-  local pr_body="$(git log --reverse --format='#### %s%n%n%b%n' upstream/master..HEAD)"
-  local patches=("$(git log --reverse --format='%s' upstream/master..HEAD)")
+  local git_remote=$(find_git_remote)
+  local pr_body="$(git log --reverse --format='#### %s%n%n%b%n' ${git_remote}/master..HEAD)"
+  local patches=("$(git log --reverse --format='%s' ${git_remote}/master..HEAD)")
   patches=(${patches[@]//vim-patch:}) # Remove 'vim-patch:' prefix for each item in array.
   local pr_title="${patches[@]}" # Create space-separated string from array.
   pr_title="${pr_title// /,}" # Replace spaces with commas.
