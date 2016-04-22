@@ -333,9 +333,47 @@ static void process_close(Process *proc)
   }
 }
 
+/// Flush output stream.
+///
+/// @param proc     Process, for which an output stream should be flushed.
+/// @param stream   Stream to flush.
+static void flush_stream(Process *proc, Stream *stream)
+  FUNC_ATTR_NONNULL_ARG(1)
+{
+  if (!stream || stream->closed) {
+    return;
+  }
+
+  // Limit amount of data we accept after process terminated.
+  size_t max_bytes = stream->num_bytes + rbuffer_capacity(stream->buffer);
+
+  while (!stream->closed && stream->num_bytes < max_bytes) {
+    // Remember number of bytes before polling
+    size_t num_bytes = stream->num_bytes;
+
+    // Poll for data and process the generated events.
+    loop_poll_events(&loop, 0);
+    if (proc->events && !queue_empty(proc->events)) {
+      queue_process_events(proc->events);
+    }
+
+    // Stream can be closed if it is empty.
+    if (num_bytes == stream->num_bytes) {
+      break;
+    }
+  }
+}
+
 static void process_close_handles(void **argv)
 {
   Process *proc = argv[0];
+
+  // Did our process forked a child that keeps the output streams open?
+  if (!process_is_tearing_down) {
+    flush_stream(proc, proc->out);
+    flush_stream(proc, proc->err);
+  }
+
   process_close_streams(proc);
   process_close(proc);
 }
