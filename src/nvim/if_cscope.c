@@ -1063,7 +1063,7 @@ static int cs_find_common(char *opt, char *pat, int forceit, int verbose,
               *qfpos == '-', cmdline) > 0) {
         if (postponed_split != 0) {
           (void)win_split(postponed_split > 0 ? postponed_split : 0,
-              postponed_split_flags);
+                          postponed_split_flags);
           RESET_BINDING(curwin);
           postponed_split = 0;
         }
