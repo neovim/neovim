@@ -97,7 +97,7 @@ do_window (
      * don't replicate the quickfix buffer. */
     if (bt_quickfix(curbuf))
       goto newwindow;
-    win_split((int)Prenum, 0);
+    (void)win_split((int)Prenum, 0);
     break;
 
   /* split current window in two parts, vertically */
@@ -108,7 +108,7 @@ do_window (
      * don't replicate the quickfix buffer. */
     if (bt_quickfix(curbuf))
       goto newwindow;
-    win_split((int)Prenum, WSP_VERT);
+    (void)win_split((int)Prenum, WSP_VERT);
     break;
 
   /* split current window and edit alternate file */

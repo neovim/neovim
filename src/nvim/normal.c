@@ -2598,10 +2598,8 @@ do_mouse (
         end_visual.col = leftcol;
       else
         end_visual.col = rightcol;
-      if (curwin->w_cursor.lnum <
+      if (curwin->w_cursor.lnum >=
           (start_visual.lnum + end_visual.lnum) / 2)
-        end_visual.lnum = end_visual.lnum;
-      else
         end_visual.lnum = start_visual.lnum;
 
       /* move VIsual to the right column */
@@ -3245,8 +3243,8 @@ void clear_showcmd(void)
       bot = VIsual.lnum;
     }
     /* Include closed folds as a whole. */
-    hasFolding(top, &top, NULL);
-    hasFolding(bot, NULL, &bot);
+    (void)hasFolding(top, &top, NULL);
+    (void)hasFolding(bot, NULL, &bot);
     lines = bot - top + 1;
 
     if (VIsual_mode == Ctrl_V) {
@@ -5154,7 +5152,7 @@ static void nv_gotofile(cmdarg_T *cap)
   if (ptr != NULL) {
     /* do autowrite if necessary */
     if (curbufIsChanged() && curbuf->b_nwindows <= 1 && !P_HID(curbuf))
-      autowrite(curbuf, false);
+      (void)autowrite(curbuf, false);
     setpcmark();
     (void)do_ecmd(0, ptr, NULL, NULL, ECMD_LAST,
         P_HID(curbuf) ? ECMD_HIDE : 0, curwin);

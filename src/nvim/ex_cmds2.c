@@ -2374,7 +2374,7 @@ static FILE *fopen_noinh_readbin(char *filename)
   {
     int fdflags = fcntl(fd_tmp, F_GETFD);
     if (fdflags >= 0 && (fdflags & FD_CLOEXEC) == 0)
-      fcntl(fd_tmp, F_SETFD, fdflags | FD_CLOEXEC);
+      (void)fcntl(fd_tmp, F_SETFD, fdflags | FD_CLOEXEC);
   }
 # endif
 
