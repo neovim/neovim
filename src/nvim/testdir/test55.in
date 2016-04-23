@@ -282,6 +282,177 @@ let l = [0, 1, 2, 3]
 :    $put =ps
 :  endfor
 :endfor
+:"
+:" Unletting locked variables
+:$put ='Unletting:'
+:for depth in range(5)
+:  $put ='depth is ' . depth
+:  for u in range(3)
+:    unlet l
+:    let l = [0, [1, [2, 3]], {4: 5, 6: {7: 8}}]
+:    exe "lockvar " . depth . " l"
+:    if u == 1
+:      exe "unlockvar l"
+:    elseif u == 2
+:      exe "unlockvar " . depth . " l"
+:    endif
+:    let ps = islocked("l").islocked("l[1]").islocked("l[1][1]").islocked("l[1][1][0]").'-'.islocked("l[2]").islocked("l[2]['6']").islocked("l[2]['6'][7]")
+:    $put =ps
+:    let ps = ''
+:    try
+:      unlet l[2]['6'][7]
+:      let ps .= 'p'
+:    catch
+:      let ps .= 'F'
+:    endtry
+:    try
+:      unlet l[2][6]
+:      let ps .= 'p'
+:    catch
+:      let ps .= 'F'
+:    endtry
+:    try
+:      unlet l[2]
+:      let ps .= 'p'
+:    catch
+:      let ps .= 'F'
+:    endtry
+:    try
+:      unlet l[1][1][0]
+:      let ps .= 'p'
+:    catch
+:      let ps .= 'F'
+:    endtry
+:    try
+:      unlet l[1][1]
+:      let ps .= 'p'
+:    catch
+:      let ps .= 'F'
+:    endtry
+:    try
+:      unlet l[1]
+:      let ps .= 'p'
+:    catch
+:      let ps .= 'F'
+:    endtry
+:    try
+:      unlet l
+:      let ps .= 'p'
+:    catch
+:      let ps .= 'F'
+:    endtry
+:    $put =ps
+:  endfor
+:endfor
+:"
+:" Locked variables and :unlet or list / dict functions
+:$put ='Locks and commands or functions:'
+:"
+:$put ='No :unlet after lock on dict:'
+:unlet! d
+:let d = {'a': 99, 'b': 100}
+:lockvar 1 d
+:try
+:  unlet d.a
+:  $put ='did :unlet'
+:catch
+:  $put =v:exception[:16]
+:endtry
+:$put =string(d)
+:"
+:$put =':unlet after lock on dict item:'
+:unlet! d
+:let d = {'a': 99, 'b': 100}
+:lockvar d.a
+:try
+:  unlet d.a
+:  $put ='did :unlet'
+:catch
+:  $put =v:exception[:16]
+:endtry
+:$put =string(d)
+:"
+:$put ='filter() after lock on dict item:'
+:unlet! d
+:let d = {'a': 99, 'b': 100}
+:lockvar d.a
+:try
+:  call filter(d, 'v:key != "a"')
+:  $put ='did filter()'
+:catch
+:  $put =v:exception[:16]
+:endtry
+:$put =string(d)
+:"
+:$put ='map() after lock on dict:'
+:unlet! d
+:let d = {'a': 99, 'b': 100}
+:lockvar 1 d
+:try
+:  call map(d, 'v:val + 200')
+:  $put ='did map()'
+:catch
+:  $put =v:exception[:16]
+:endtry
+:$put =string(d)
+:"
+:$put ='No extend() after lock on dict item:'
+:unlet! d
+:let d = {'a': 99, 'b': 100}
+:lockvar d.a
+:try
+:  $put =string(extend(d, {'a': 123}))
+:  $put ='did extend()'
+:catch
+:  $put =v:exception[:14]
+:endtry
+:$put =string(d)
+:"
+:$put ='No remove() of write-protected scope-level variable:'
+:fun! Tfunc(this_is_a_loooooooooong_parameter_name)
+:  try
+:    $put =string(remove(a:, 'this_is_a_loooooooooong_parameter_name'))
+:    $put ='did remove()'
+:  catch
+:    $put =v:exception[:14]
+:  endtry
+:endfun
+:call Tfunc('testval')
+:"
+:$put ='No extend() of write-protected scope-level variable:'
+:fun! Tfunc(this_is_a_loooooooooong_parameter_name)
+:  try
+:    $put =string(extend(a:, {'this_is_a_loooooooooong_parameter_name': 1234}))
+:    $put ='did extend()'
+:  catch
+:    $put =v:exception[:14]
+:  endtry
+:endfun
+:call Tfunc('testval')
+:"
+:$put ='No :unlet of variable in locked scope:'
+:let b:testvar = 123
+:lockvar 1 b:
+:try
+:  unlet b:testvar
+:  $put ='b:testvar was :unlet: '. (!exists('b:testvar'))
+:catch
+:  $put =v:exception[:16]
+:endtry
+:unlockvar 1 b:
+:unlet! b:testvar
+:"
+:$put ='No :let += of locked list variable:'
+:let l = ['a', 'b', 3]
+:lockvar 1 l
+:try
+:  let l += ['x']
+:  $put ='did :let +='
+:catch
+:  $put =v:exception[:14]
+:endtry
+:$put =string(l)
+:"
 :unlet l
 :let l = [1, 2, 3, 4]
 :lockvar! l

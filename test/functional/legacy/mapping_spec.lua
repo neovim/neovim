@@ -2,12 +2,12 @@
 
 local helpers = require('test.functional.helpers')
 local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
-local execute, expect = helpers.execute, helpers.expect
+local execute, expect, wait = helpers.execute, helpers.expect, helpers.wait
 
 describe('mapping', function()
   before_each(clear)
 
-  it('is working', function()
+  it('abbreviations with р (0x80)', function()
     insert([[
       test starts here:
       ]])
@@ -16,6 +16,46 @@ describe('mapping', function()
     execute('inoreab чкпр   vim')
     feed('GAчкпр <esc>')
 
+    expect([[
+      test starts here:
+      vim ]])
+  end)
+
+  it('Ctrl-c works in Insert mode', function()
+    -- Mapping of ctrl-c in insert mode
+    execute('set cpo-=< cpo-=k')
+    execute('inoremap <c-c> <ctrl-c>')
+    execute('cnoremap <c-c> dummy')
+    execute('cunmap <c-c>')
+    feed('GA<cr>')
+    feed('TEST2: CTRL-C |')
+    wait()
+    feed('<c-c>A|<cr><esc>')
+    wait()
+    execute('unmap <c-c>')
+    execute('unmap! <c-c>')
+
+    expect([[
+      
+      TEST2: CTRL-C |<ctrl-c>A|
+      ]])
+  end)
+
+  it('Ctrl-c works in Visual mode', function()
+    execute([[vnoremap <c-c> :<C-u>$put ='vmap works'<cr>]])
+    feed('GV')
+    -- XXX: For some reason the mapping is only triggered
+    -- when <C-c> is in a separate feed command.
+    wait()
+    feed('<c-c>')
+    execute('vunmap <c-c>')
+
+    expect([[
+      
+      vmap works]])
+  end)
+
+  it('langmap', function()
     -- langmap should not get remapped in insert mode.
     execute('inoremap { FAIL_ilangmap')
     execute('set langmap=+{ langnoremap')
@@ -37,12 +77,28 @@ describe('mapping', function()
 
     -- Assert buffer contents.
     expect([[
-      test starts here:
-      vim 
+      
       +
       +
       +
       +]])
+  end)
+
+  it('feedkeys', function()
+    insert([[
+      a b c d
+      a b c d
+      ]])
+
+    -- Vim's issue #212 (feedkeys insert mapping at current position)
+    execute('nnoremap . :call feedkeys(".", "in")<cr>')
+    feed('/^a b<cr>')
+    feed('0qqdw.ifoo<esc>qj0@q<esc>')
+    execute('unmap .')
+    expect([[
+      fooc d
+      fooc d
+      ]])
   end)
 
   it('i_CTRL-G_U', function()

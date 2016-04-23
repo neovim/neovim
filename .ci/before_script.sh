@@ -19,6 +19,10 @@ if [[ -n "${LLVM_SYMBOLIZER}" ]] && [[ ! $(type -P "${LLVM_SYMBOLIZER}") ]]; the
   echo "\$LLVM_SYMBOLIZER: '${LLVM_SYMBOLIZER}' is not executable."
   exit 1
 fi
+if [ "${BUILD_32BIT}" = ON ] && [ "${BUILD_MINGW}" = ON ]; then
+  >&2 echo "32-bit MinGW builds not supported."
+  exit 1
+fi
 
 if [[ "${TRAVIS_OS_NAME}" == osx ]]; then
   # Adds user to a dummy group.

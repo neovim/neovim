@@ -1,17 +1,8 @@
 /*
- * VIM - Vi IMproved	by Bram Moolenaar
- *
- * Do ":help uganda"  in Vim to read copying and usage conditions.
- * Do ":help credits" in Vim to see a list of people who contributed.
- * See README.txt for an overview of the Vim source code.
- */
-
-/*
  * ex_getln.c: Functions for entering and editing an Ex command line.
  */
 
 #include <assert.h>
-#include <errno.h>
 #include <stdbool.h>
 #include <string.h>
 #include <stdlib.h>
@@ -580,7 +571,7 @@ static int command_line_execute(VimState *state, int key)
         }
         if (vim_ispathsep(ccline.cmdbuff[s->j])
 #ifdef BACKSLASH_IN_FILENAME
-            && vim_strchr(" *?[{`$%#", ccline.cmdbuff[j + 1])
+            && vim_strchr(" *?[{`$%#", ccline.cmdbuff[s->j + 1])
             == NULL
 #endif
             ) {
@@ -605,7 +596,7 @@ static int command_line_execute(VimState *state, int key)
       }
 
       if (s->j > 0) {
-        // TODO(tarruda): this is only for DOS/UNIX systems - need to put in
+        // TODO(tarruda): this is only for DOS/Unix systems - need to put in
         // machine-specific stuff here and in upseg init
         cmdline_del(s->j);
         put_on_cmdline(upseg + 1, 3, false);
@@ -1139,7 +1130,7 @@ static int command_line_handle_key(CommandLineState *s)
     if (!mouse_has(MOUSE_COMMAND)) {
       return command_line_not_changed(s);                   // Ignore mouse
     }
-    cmdline_paste(0, true, true);
+    cmdline_paste(eval_has_provider("clipboard") ? '*' : 0, true, true);
     redrawcmd();
     return command_line_changed(s);
 
@@ -1446,6 +1437,14 @@ static int command_line_handle_key(CommandLineState *s)
       // Hebrew is default
       cmd_hkmap = !cmd_hkmap;
     }
+    return command_line_not_changed(s);
+
+  case K_FOCUSGAINED:  // Neovim has been given focus
+    apply_autocmds(EVENT_FOCUSGAINED, NULL, NULL, false, curbuf);
+    return command_line_not_changed(s);
+
+  case K_FOCUSLOST:   // Neovim has lost focus
+    apply_autocmds(EVENT_FOCUSLOST, NULL, NULL, false, curbuf);
     return command_line_not_changed(s);
 
   default:
@@ -2425,20 +2424,17 @@ void restore_cmdline_alloc(char_u *p)
   xfree(p);
 }
 
-/*
- * paste a yank register into the command line.
- * used by CTRL-R command in command-line mode
- * insert_reg() can't be used here, because special characters from the
- * register contents will be interpreted as commands.
- *
- * return FAIL for failure, OK otherwise
- */
-static int 
-cmdline_paste (
-    int regname,
-    int literally,          /* Insert text literally instead of "as typed" */
-    int remcr              /* remove trailing CR */
-)
+/// Paste a yank register into the command line.
+/// Used by CTRL-R command in command-line mode.
+/// insert_reg() can't be used here, because special characters from the
+/// register contents will be interpreted as commands.
+///
+/// @param regname   Register name.
+/// @param literally Insert text literally instead of "as typed".
+/// @param remcr     When true, remove trailing CR.
+///
+/// @returns FAIL for failure, OK otherwise
+static bool cmdline_paste(int regname, bool literally, bool remcr)
 {
   long i;
   char_u              *arg;
@@ -2958,20 +2954,37 @@ ExpandOne (
     }
   }
 
-  /* Find longest common part */
+  // Find longest common part
   if (mode == WILD_LONGEST && xp->xp_numfiles > 0) {
     size_t len;
-    for (len = 0; xp->xp_files[0][len]; ++len) {
-      for (i = 0; i < xp->xp_numfiles; ++i) {
+    size_t mb_len = 1;
+    int c0;
+    int ci;
+
+    for (len = 0; xp->xp_files[0][len]; len += mb_len) {
+      if (has_mbyte) {
+        mb_len = (* mb_ptr2len)(&xp->xp_files[0][len]);
+        c0 = (* mb_ptr2char)(&xp->xp_files[0][len]);
+      } else {
+        c0 = xp->xp_files[0][len];
+      }
+      for (i = 1; i < xp->xp_numfiles; ++i) {
+        if (has_mbyte) {
+          ci =(* mb_ptr2char)(&xp->xp_files[i][len]);
+        } else {
+          ci = xp->xp_files[i][len];
+        }
+
         if (p_fic && (xp->xp_context == EXPAND_DIRECTORIES
                       || xp->xp_context == EXPAND_FILES
                       || xp->xp_context == EXPAND_SHELLCMD
                       || xp->xp_context == EXPAND_BUFFERS)) {
-          if (TOLOWER_LOC(xp->xp_files[i][len]) !=
-              TOLOWER_LOC(xp->xp_files[0][len]))
+          if (vim_tolower(c0) != vim_tolower(ci)) {
             break;
-        } else if (xp->xp_files[i][len] != xp->xp_files[0][len])
+          }
+        } else if (c0 != ci) {
           break;
+        }
       }
       if (i < xp->xp_numfiles) {
         if (!(options & WILD_NO_BEEP)) {
@@ -2980,8 +2993,9 @@ ExpandOne (
         break;
       }
     }
+
     ss = (char_u *)xstrndup((char *)xp->xp_files[0], len);
-    findex = -1;                            /* next p_wc gets first one */
+    findex = -1;  // next p_wc gets first one
   }
 
   // Concatenate all matching names
@@ -3702,6 +3716,9 @@ ExpandFromContext (
     flags |= EW_KEEPALL;
   if (options & WILD_SILENT)
     flags |= EW_SILENT;
+  if (options & WILD_ALLLINKS) {
+    flags |= EW_ALLLINKS;
+  }
 
   if (xp->xp_context == EXPAND_FILES
       || xp->xp_context == EXPAND_DIRECTORIES
@@ -4768,35 +4785,40 @@ int del_history_idx(int histype, int idx)
   return TRUE;
 }
 
-/*
- * Get indices "num1,num2" that specify a range within a list (not a range of
- * text lines in a buffer!) from a string.  Used for ":history" and ":clist".
- * Returns OK if parsed successfully, otherwise FAIL.
- */
+/// Get indices that specify a range within a list (not a range of text lines
+/// in a buffer!) from a string.  Used for ":history" and ":clist".
+///
+/// @param str string to parse range from
+/// @param num1 from
+/// @param num2 to
+///
+/// @return OK if parsed successfully, otherwise FAIL.
 int get_list_range(char_u **str, int *num1, int *num2)
 {
   int len;
-  int first = FALSE;
+  int first = false;
   long num;
 
   *str = skipwhite(*str);
-  if (**str == '-' || ascii_isdigit(**str)) {  /* parse "from" part of range */
-    vim_str2nr(*str, NULL, &len, FALSE, FALSE, &num, NULL);
+  if (**str == '-' || ascii_isdigit(**str)) {  // parse "from" part of range
+    vim_str2nr(*str, NULL, &len, 0, &num, NULL, 0);
     *str += len;
     *num1 = (int)num;
-    first = TRUE;
+    first = true;
   }
   *str = skipwhite(*str);
-  if (**str == ',') {                   /* parse "to" part of range */
+  if (**str == ',') {                   // parse "to" part of range
     *str = skipwhite(*str + 1);
-    vim_str2nr(*str, NULL, &len, FALSE, FALSE, &num, NULL);
+    vim_str2nr(*str, NULL, &len, 0, &num, NULL, 0);
     if (len > 0) {
       *num2 = (int)num;
       *str = skipwhite(*str + len);
-    } else if (!first)                  /* no number given at all */
+    } else if (!first) {                  // no number given at all
       return FAIL;
-  } else if (first)                     /* only one number given */
+    }
+  } else if (first) {                     // only one number given
     *num2 = *num1;
+  }
   return OK;
 }
 
@@ -5129,6 +5151,8 @@ static int ex_window(void)
 
     /* Don't execute autocommands while deleting the window. */
     block_autocmds();
+    // Avoid command-line window first character being concealed
+    curwin->w_p_cole = 0;
     wp = curwin;
     bp = curbuf;
     win_goto(old_curwin);

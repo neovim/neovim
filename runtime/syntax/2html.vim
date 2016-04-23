@@ -1,6 +1,6 @@
 " Vim syntax support file
 " Maintainer: Ben Fritz <fritzophrenic@gmail.com>
-" Last Change: 2013 Jul 08
+" Last Change: 2015 Sep 08
 "
 " Additional contributors:
 "
@@ -26,7 +26,11 @@ let s:end=line('$')
 
 " Font
 if exists("g:html_font")
-  let s:htmlfont = "'". g:html_font . "', monospace"
+  if type(g:html_font) == type([])
+    let s:htmlfont = "'". join(g:html_font,"','") . "', monospace"
+  else
+    let s:htmlfont = "'". g:html_font . "', monospace"
+  endif
 else
   let s:htmlfont = "monospace"
 endif

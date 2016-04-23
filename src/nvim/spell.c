@@ -1,9 +1,3 @@
-// VIM - Vi IMproved    by Bram Moolenaar
-//
-// Do ":help uganda"  in Vim to read copying and usage conditions.
-// Do ":help credits" in Vim to see a list of people who contributed.
-// See README.txt for an overview of the Vim source code.
-
 // spell.c: code for spell checking
 //
 // The spell checking mechanism uses a tree (aka trie).  Each node in the tree
@@ -285,7 +279,6 @@
 //                          few bytes as possible, see offset2bytes())
 
 #include <assert.h>
-#include <errno.h>
 #include <inttypes.h>
 #include <limits.h>
 #include <stdbool.h>
@@ -326,7 +319,6 @@
 #include "nvim/strings.h"
 #include "nvim/syntax.h"
 #include "nvim/ui.h"
-#include "nvim/tempfile.h"
 #include "nvim/undo.h"
 #include "nvim/os/os.h"
 #include "nvim/os/input.h"
@@ -1070,8 +1062,7 @@ static char_u *repl_to = NULL;
 //
 // Returns the length of the word in bytes, also when it's OK, so that the
 // caller can skip over the word.
-size_t
-spell_check (
+size_t spell_check(
     win_T *wp,                // current window
     char_u *ptr,
     hlf_T *attrp,
@@ -1089,12 +1080,14 @@ spell_check (
 
   // A word never starts at a space or a control character. Return quickly
   // then, skipping over the character.
-  if (*ptr <= ' ')
+  if (*ptr <= ' ') {
     return 1;
+  }
 
   // Return here when loading language files failed.
-  if (GA_EMPTY(&wp->w_s->b_langp))
+  if (GA_EMPTY(&wp->w_s->b_langp)) {
     return 1;
+  }
 
   memset(&mi, 0, sizeof(matchinf_T));
 
@@ -1102,10 +1095,13 @@ spell_check (
   // 0X99FF.  But always do check spelling to find "3GPP" and "11
   // julifeest".
   if (*ptr >= '0' && *ptr <= '9') {
-    if (*ptr == '0' && (ptr[1] == 'x' || ptr[1] == 'X'))
+    if (*ptr == '0' && (ptr[1] == 'b' || ptr[1] == 'B')) {
+      mi.mi_end = (char_u*) skipbin((char*) ptr + 2);
+    } else if (*ptr == '0' && (ptr[1] == 'x' || ptr[1] == 'X')) {
       mi.mi_end = skiphex(ptr + 2);
-    else
+    } else {
       mi.mi_end = skipdigits(ptr);
+    }
     nrlen = (size_t)(mi.mi_end - ptr);
   }
 
@@ -1120,12 +1116,14 @@ spell_check (
     if (capcol != NULL && *capcol == 0 && wp->w_s->b_cap_prog != NULL) {
       // Check word starting with capital letter.
       c = PTR2CHAR(ptr);
-      if (!SPELL_ISUPPER(c))
+      if (!SPELL_ISUPPER(c)) {
         wrongcaplen = (size_t)(mi.mi_fend - ptr);
+      }
     }
   }
-  if (capcol != NULL)
+  if (capcol != NULL) {
     *capcol = -1;
+  }
 
   // We always use the characters up to the next non-word character,
   // also for bad words.
@@ -1138,8 +1136,9 @@ spell_check (
 
   // case-fold the word with one non-word character, so that we can check
   // for the word end.
-  if (*mi.mi_fend != NUL)
+  if (*mi.mi_fend != NUL) {
     mb_ptr_adv(mi.mi_fend);
+  }
 
   (void)spell_casefold(ptr, (int)(mi.mi_fend - ptr), mi.mi_fword, MAXWLEN + 1);
   mi.mi_fwordlen = (int)STRLEN(mi.mi_fword);
@@ -1156,8 +1155,9 @@ spell_check (
 
     // If reloading fails the language is still in the list but everything
     // has been cleared.
-    if (mi.mi_lp->lp_slang->sl_fidxs == NULL)
+    if (mi.mi_lp->lp_slang->sl_fidxs == NULL) {
       continue;
+    }
 
     // Check for a matching word in case-folded words.
     find_word(&mi, FIND_FOLDWORD);
@@ -1188,18 +1188,18 @@ spell_check (
     // If we found a number skip over it.  Allows for "42nd".  Do flag
     // rare and local words, e.g., "3GPP".
     if (nrlen > 0) {
-      if (mi.mi_result == SP_BAD || mi.mi_result == SP_BANNED)
+      if (mi.mi_result == SP_BAD || mi.mi_result == SP_BANNED) {
         return nrlen;
-    }
+      }
+    } else if (!spell_iswordp_nmw(ptr, wp)) {
     // When we are at a non-word character there is no error, just
     // skip over the character (try looking for a word after it).
-    else if (!spell_iswordp_nmw(ptr, wp)) {
       if (capcol != NULL && wp->w_s->b_cap_prog != NULL) {
         regmatch_T regmatch;
 
         // Check for end of sentence.
         regmatch.regprog = wp->w_s->b_cap_prog;
-        regmatch.rm_ic = FALSE;
+        regmatch.rm_ic = false;
         int r = vim_regexec(&regmatch, ptr, 0);
         wp->w_s->b_cap_prog = regmatch.regprog;
         if (r) {
@@ -1211,12 +1211,12 @@ spell_check (
         return (size_t)(*mb_ptr2len)(ptr);
       }
       return 1;
-    } else if (mi.mi_end == ptr)
+    } else if (mi.mi_end == ptr) {
       // Always include at least one character.  Required for when there
       // is a mixup in "midword".
       mb_ptr_adv(mi.mi_end);
-    else if (mi.mi_result == SP_BAD
-             && LANGP_ENTRY(wp->w_s->b_langp, 0)->lp_slang->sl_nobreak) {
+    } else if (mi.mi_result == SP_BAD
+               && LANGP_ENTRY(wp->w_s->b_langp, 0)->lp_slang->sl_nobreak) {
       char_u      *p, *fp;
       int save_result = mi.mi_result;
 
@@ -1226,11 +1226,12 @@ spell_check (
       if (mi.mi_lp->lp_slang->sl_fidxs != NULL) {
         p = mi.mi_word;
         fp = mi.mi_fword;
-        for (;; ) {
+        for (;;) {
           mb_ptr_adv(p);
           mb_ptr_adv(fp);
-          if (p >= mi.mi_end)
+          if (p >= mi.mi_end) {
             break;
+          }
           mi.mi_compoff = (int)(fp - mi.mi_fword);
           find_word(&mi, FIND_COMPOUND);
           if (mi.mi_result != SP_BAD) {
@@ -1242,12 +1243,13 @@ spell_check (
       }
     }
 
-    if (mi.mi_result == SP_BAD || mi.mi_result == SP_BANNED)
+    if (mi.mi_result == SP_BAD || mi.mi_result == SP_BANNED) {
       *attrp = HLF_SPB;
-    else if (mi.mi_result == SP_RARE)
+    } else if (mi.mi_result == SP_RARE) {
       *attrp = HLF_SPR;
-    else
+    } else {
       *attrp = HLF_SPL;
+    }
   }
 
   if (wrongcaplen > 0 && (mi.mi_result == SP_OK || mi.mi_result == SP_RARE)) {
@@ -2329,14 +2331,17 @@ static void spell_load_lang(char_u *lang)
 
   if (r == FAIL) {
     if (starting) {
-      // Some startup file sets &spell, but the necessary files don't exist:
-      // try to prompt the user at VimEnter. Also set spell again. #3027
-      do_cmdline_cmd(
-        "autocmd VimEnter * call spellfile#LoadFile(&spelllang)|set spell");
+      // Prompt the user at VimEnter if spell files are missing. #3027
+      // Plugins aren't loaded yet, so spellfile.vim cannot handle this case.
+      char autocmd_buf[128] = { 0 };
+      snprintf(autocmd_buf, sizeof(autocmd_buf),
+               "autocmd VimEnter * call spellfile#LoadFile('%s')|set spell",
+               lang);
+      do_cmdline_cmd(autocmd_buf);
     } else {
       smsg(
         _("Warning: Cannot find word list \"%s.%s.spl\" or \"%s.ascii.spl\""),
-	    lang, spell_enc(), lang);
+        lang, spell_enc(), lang);
     }
   } else if (sl.sl_slang != NULL) {
     // At least one file was loaded, now load ALL the additions.
@@ -12907,8 +12912,8 @@ void ex_spelldump(exarg_T *eap)
   do_cmdline_cmd("new");
 
   // enable spelling locally in the new window
-  set_option_value((char_u*)"spell", TRUE, (char_u*)"", OPT_LOCAL);
-  set_option_value((char_u*)"spl",  dummy,         spl, OPT_LOCAL);
+  set_option_value((char_u*)"spell", true, (char_u*)"", OPT_LOCAL);
+  set_option_value((char_u*)"spl",  dummy, spl, OPT_LOCAL);
   xfree(spl);
 
   if (!bufempty() || !buf_valid(curbuf))

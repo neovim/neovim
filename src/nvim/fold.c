@@ -1,11 +1,4 @@
-/* vim: set fdm=marker fdl=1 fdc=3
- *
- * VIM - Vi IMproved	by Bram Moolenaar
- *
- * Do ":help uganda"  in Vim to read copying and usage conditions.
- * Do ":help credits" in Vim to see a list of people who contributed.
- * See README.txt for an overview of the Vim source code.
- */
+// vim: set fdm=marker fdl=1 fdc=3
 
 /*
  * fold.c: code for folding
@@ -769,14 +762,18 @@ void clearFolding(win_T *win)
  */
 void foldUpdate(win_T *wp, linenr_T top, linenr_T bot)
 {
+  if (compl_busy) {
+    return;
+  }
+
   fold_T      *fp;
   if (wp->w_buffer->terminal) {
     return;
   }
 
-  /* Mark all folds from top to bot as maybe-small. */
-  (void)foldFind(&curwin->w_folds, top, &fp);
-  while (fp < (fold_T *)curwin->w_folds.ga_data + curwin->w_folds.ga_len
+  // Mark all folds from top to bot as maybe-small.
+  (void)foldFind(&wp->w_folds, top, &fp);
+  while (fp < (fold_T *)wp->w_folds.ga_data + wp->w_folds.ga_len
          && fp->fd_top < bot) {
     fp->fd_small = MAYBE;
     ++fp;
@@ -1702,14 +1699,14 @@ char_u *get_foldtext(win_T *wp, linenr_T lnum, linenr_T lnume,
     did_emsg = FALSE;
 
   if (*wp->w_p_fdt != NUL) {
-    char_u dashes[MAX_LEVEL + 2];
+    char dashes[MAX_LEVEL + 2];
     win_T   *save_curwin;
     int level;
     char_u  *p;
 
-    /* Set "v:foldstart" and "v:foldend". */
-    set_vim_var_nr(VV_FOLDSTART, lnum);
-    set_vim_var_nr(VV_FOLDEND, lnume);
+    // Set "v:foldstart" and "v:foldend".
+    set_vim_var_nr(VV_FOLDSTART, (varnumber_T) lnum);
+    set_vim_var_nr(VV_FOLDEND, (varnumber_T) lnume);
 
     /* Set "v:folddashes" to a string of "level" dashes. */
     /* Set "v:foldlevel" to "level". */
@@ -1719,7 +1716,7 @@ char_u *get_foldtext(win_T *wp, linenr_T lnum, linenr_T lnume,
     memset(dashes, '-', (size_t)level);
     dashes[level] = NUL;
     set_vim_var_string(VV_FOLDDASHES, dashes, -1);
-    set_vim_var_nr(VV_FOLDLEVEL, (long)level);
+    set_vim_var_nr(VV_FOLDLEVEL, (varnumber_T) level);
 
     /* skip evaluating foldtext on errors */
     if (!got_fdt_error) {
@@ -2679,7 +2676,7 @@ static void foldlevelExpr(fline_T *flp)
   win = curwin;
   curwin = flp->wp;
   curbuf = flp->wp->w_buffer;
-  set_vim_var_nr(VV_LNUM, lnum);
+  set_vim_var_nr(VV_LNUM, (varnumber_T) lnum);
 
   flp->start = 0;
   flp->had_end = flp->end;

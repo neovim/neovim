@@ -1,7 +1,5 @@
 local helpers = require('test.functional.helpers')
-local clear, nvim, buffer, curbuf, curwin, eq, neq, ok =
-  helpers.clear, helpers.nvim, helpers.buffer, helpers.curbuf, helpers.curwin,
-  helpers.eq, helpers.neq, helpers.ok
+local clear, nvim, eq = helpers.clear, helpers.nvim, helpers.eq
 
 describe('TabClosed', function()
     describe('au TabClosed', function()
@@ -20,7 +18,6 @@ describe('TabClosed', function()
         end)
         describe('with NR as <afile>', function()
             it('matches when  closing a tab whose index is NR', function()
-                tmp_path = nvim('eval', 'tempname()')
                 nvim('command', 'au! TabClosed 2 echom "tabclosed:match"')
                 repeat 
                     nvim('command',  'tabnew')

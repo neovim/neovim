@@ -1,4 +1,4 @@
-*usr_02.txt*	For Vim version 7.4.  Last change: 2010 Jul 20
+*usr_02.txt*	For Vim version 7.4.  Last change: 2015 Apr 12
 
 		     VIM USER MANUAL - by Bram Moolenaar
 
@@ -29,11 +29,10 @@ To start Vim, enter this command: >
 
 	gvim file.txt
 
-In UNIX you can type this at any command prompt.  If you are running Microsoft
-Windows, open an MS-DOS prompt window and enter the command.
-   In either case, Vim starts editing a file called file.txt.  Because this
-is a new file, you get a blank window. This is what your screen will look
-like:
+On Unix you can type this at any command prompt.  If you are running Windows,
+open a command prompt window and enter the command.  In either case, Vim
+starts editing a file called file.txt.  Because this is a new file, you get a
+blank window. This is what your screen will look like:
 
 	+---------------------------------------+
 	|#					|
@@ -61,10 +60,9 @@ use this command: >
 
 the editing occurs inside your command window.  In other words, if you are
 running inside an xterm, the editor uses your xterm window.  If you are using
-an MS-DOS command prompt window under Microsoft Windows, the editing occurs
-inside this window.  The text in the window will look the same for both
-versions, but with gvim you have extra features, like a menu bar.  More about
-that later.
+the command prompt under Microsoft Windows, the editing occurs inside this
+window.  The text in the window will look the same for both versions, but with
+gvim you have extra features, like a menu bar.  More about that later.
 
 ==============================================================================
 *02.2*	Inserting text
@@ -80,7 +78,7 @@ mistakes; you can correct them later.  To enter the following programmer's
 limerick, this is what you type: >
 
 	iA very intelligent turtle
-	Found programming UNIX a hurdle
+	Found programming Unix a hurdle
 
 After typing "turtle" you press the <Enter> key to start a new line.  Finally
 you press the <Esc> key to stop Insert mode and go back to Normal mode.  You
@@ -88,7 +86,7 @@ now have two lines of text in your Vim window:
 
 	+---------------------------------------+
 	|A very intelligent turtle		|
-	|Found programming UNIX a hurdle	|
+	|Found programming Unix a hurdle	|
 	|~					|
 	|~					|
 	|					|
@@ -110,7 +108,7 @@ of the window.  This indicates you are in Insert mode.
 
 	+---------------------------------------+
 	|A very intelligent turtle		|
-	|Found programming UNIX a hurdle	|
+	|Found programming Unix a hurdle	|
 	|~					|
 	|~					|
 	|-- INSERT --				|
@@ -187,7 +185,7 @@ look like this:
 
 	+---------------------------------------+
 	|intelligent turtle			|
-	|Found programming UNIX a hurdle	|
+	|Found programming Unix a hurdle	|
 	|~					|
 	|~					|
 	|					|
@@ -202,7 +200,7 @@ insert mode (the final <Esc>).	The result:
 
 	+---------------------------------------+
 	|A young intelligent turtle		|
-	|Found programming UNIX a hurdle	|
+	|Found programming Unix a hurdle	|
 	|~					|
 	|~					|
 	|					|
@@ -215,7 +213,7 @@ To delete a whole line use the "dd" command.  The following line will
 then move up to fill the gap:
 
 	+---------------------------------------+
-	|Found programming UNIX a hurdle	|
+	|Found programming Unix a hurdle	|
 	|~					|
 	|~					|
 	|~					|
@@ -332,7 +330,7 @@ Insert mode.  Then you can type the text for the new line.
    Suppose the cursor is somewhere in the first of these two lines:
 
 	A very intelligent turtle ~
-	Found programming UNIX a hurdle ~
+	Found programming Unix a hurdle ~
 
 If you now use the "o" command and type new text: >
 
@@ -342,7 +340,7 @@ The result is:
 
 	A very intelligent turtle ~
 	That liked using Vim ~
-	Found programming UNIX a hurdle ~
+	Found programming Unix a hurdle ~
 
 The "O" command (uppercase) opens a line above the cursor.
 
@@ -518,9 +516,11 @@ Summary: 					*help-summary*  >
 	:help subject()
 <		Function "subject". >
 	:help -subject
-<		Command-line option "-subject". >
+<		Command-line argument "-subject". >
 	:help +subject
 <		Compile-time feature "+subject". >
+	:help /*
+<		Regular expression item "*" >
 	:help EventName
 <		Autocommand event "EventName". >
 	:help digraphs.txt

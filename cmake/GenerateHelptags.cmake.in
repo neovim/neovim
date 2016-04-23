@@ -25,7 +25,7 @@ file(WRITE ${EMPTY_FILE} "")
 execute_process(
   COMMAND ${CMAKE_CURRENT_BINARY_DIR}/bin/nvim
     -u NONE
-    -esX
+    -es
     -c "helptags ++t ."
     -c quit
   WORKING_DIRECTORY ${HELPTAGS_WORKING_DIRECTORY}

@@ -106,9 +106,6 @@ o  Does not support reverse insert and rightleft modes on the command-line.
 o  Somewhat slower in right-to-left mode, because right-to-left motion is
    emulated inside Vim, not by the controlling terminal.
 
-o  When the Athena GUI is used, the bottom scrollbar works in the wrong
-   direction.  This is difficult to fix.
-
 o  When both 'rightleft' and 'revins' are on: 'textwidth' does not work.
    Lines do not wrap at all; you just get a single, long line.
 

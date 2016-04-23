@@ -362,7 +362,7 @@ zX		Undo manually opened and closed folds: re-apply 'foldlevel'.
 		Also forces recomputing folds, like |zx|.
 
 							*zm*
-zm		Fold more: Subtract one from 'foldlevel'.  If 'foldlevel' was
+zm		Fold more: Subtract |v:count1| from 'foldlevel'.  If 'foldlevel' was
 		already zero nothing happens.
 		'foldenable' will be set.
 
@@ -371,7 +371,7 @@ zM		Close all folds: set 'foldlevel' to 0.
 		'foldenable' will be set.
 
 							*zr*
-zr		Reduce folding: Add one to 'foldlevel'.
+zr		Reduce folding: Add |v:count1| to 'foldlevel'.
 
 							*zR*
 zR		Open all folds.  This sets 'foldlevel' to highest fold level.

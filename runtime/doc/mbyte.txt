@@ -43,16 +43,6 @@ features.  Unfortunately, every system has its own way to deal with multibyte
 languages and it is quite complicated.
 
 
-COMPILING
-
-If you already have a compiled Vim program, check if the |+multi_byte| feature
-is included.  The |:version| command can be used for this.
-
-If +multi_byte is not included, you should compile Vim with "normal", "big" or
-"huge" features.  You can further tune what features are included.  See the
-INSTALL files in the source directory.
-
-
 LOCALE
 
 First of all, you must make sure your current locale is set correctly.  If
@@ -106,14 +96,6 @@ For the GUI you must select fonts that work with the current 'encoding'.  This
 is the difficult part.  It depends on the system you are using, the locale and
 a few other things.  See the chapters on fonts: |mbyte-fonts-X11| for
 X-Windows and |mbyte-fonts-MSwin| for MS-Windows.
-
-For GTK+ 2, you can skip most of this section.  The option 'guifontset' does
-no longer exist.  You only need to set 'guifont' and everything should "just
-work".  If your system comes with Xft2 and fontconfig and the current font
-does not contain a certain glyph, a different font will be used automatically
-if available.  The 'guifontwide' option is still supported but usually you do
-not need to set it.  It is only necessary if the automatic font selection does
-not suit your needs.
 
 For X11 you can set the 'guifontset' option to a list of fonts that together
 cover the characters that are used.  Example for Korean: >
@@ -494,11 +476,6 @@ For Vim you may need to set 'encoding' to "utf-8".
 Unfortunately, using fonts in X11 is complicated.  The name of a single-byte
 font is a long string.  For multi-byte fonts we need several of these...
 
-Note: Most of this is no longer relevant for GTK+ 2.  Selecting a font via
-its XLFD is not supported; see 'guifont' for an example of how to
-set the font.  Do yourself a favor and ignore the |XLFD| and |xfontset|
-sections below.
-
 First of all, Vim only accepts fixed-width fonts for displaying text.  You
 cannot use proportionally spaced fonts.  This excludes many of the available
 (and nicer looking) fonts.  However, for menus and tooltips any font can be
@@ -628,52 +605,6 @@ highlighting: >
 If you use a wrong "font" argument you will get an error message.
 Also make sure that you set 'guifontset' before setting fonts for highlight
 groups.
-
-
-USING RESOURCE FILES
-
-Instead of specifying 'guifontset', you can set X11 resources and Vim will
-pick them up.  This is only for people who know how X resource files work.
-
-For Motif and Athena insert these three lines in your $HOME/.Xdefaults file:
-
-	Vim.font: |base_font_name_list|
-	Vim*fontSet: |base_font_name_list|
-	Vim*fontList: your_language_font
-
-Note: Vim.font is for text area.
-      Vim*fontSet is for menu.
-      Vim*fontList is for menu (for Motif GUI)
-
-For example, when you are using Japanese and a 14 dots font, >
-
-	Vim.font: -misc-fixed-medium-r-normal--14-*
-	Vim*fontSet: -misc-fixed-medium-r-normal--14-*
-	Vim*fontList: -misc-fixed-medium-r-normal--14-*
-<
-or: >
-
-	Vim*font: k14,r14
-	Vim*fontSet: k14,r14
-	Vim*fontList: k14,r14
-<
-To have them take effect immediately you will have to do >
-
-	xrdb -merge ~/.Xdefaults
-
-Otherwise you will have to stop and restart the X server before the changes
-take effect.
-
-
-The GTK+ version of GUI Vim does not use .Xdefaults, use ~/.gtkrc instead.
-The default mostly works OK.  But for the menus you might have to change
-it.  Example: >
-
-	style "default"
-	{
-		fontset="-*-*-medium-r-normal--14-*-*-*-c-*-*-*"
-	}
-	widget_class "*" style "default"
 
 ==============================================================================
 6.  Fonts on MS-Windows				*mbyte-fonts-MSwin*
@@ -847,20 +778,6 @@ For example, when you are using kinput2 as |IM-server| and sh, >
 	export XMODIFIERS="@im=kinput2"
 <
 
-FULLY CONTROLLED XIM
-
-You can fully control XIM, like with IME of MS-Windows (see |multibyte-ime|).
-This is currently only available for the GTK GUI.
-
-Before using fully controlled XIM, one setting is required.  Set the
-'imactivatekey' option to the key that is used for the activation of the input
-method.  For example, when you are using kinput2 + canna as IM Server, the
-activation key is probably Shift+Space: >
-
-	:set imactivatekey=S-space
-
-See 'imactivatekey' for the format.
-
 ==============================================================================
 8.  Input on MS-Windows					*mbyte-IME*
 
@@ -893,14 +810,11 @@ WHAT IS IME
     URL.
 
 WHAT IS GLOBAL IME					*global-ime*
-    Global IME makes capability to input Chinese, Japanese, and Korean text
-    into Vim buffer on any language version of Windows 98, Windows 95, and
-    Windows NT 4.0.
-    On Windows 2000 and XP it should work as well (without downloading).  On
-    Windows 2000 Professional, Global IME is built in, and the Input Locales
-    can be added through Control Panel/Regional Options/Input Locales.
-    Please see below URL for detail of Global IME.  You can also find various
-    language version of Global IME at same place.
+    Global IME enables input of Chinese, Japanese, and Korean text into Vim
+    buffer on any language version of Windows.  Global IME is built in, and
+    the Input Locales can be added through Control Panel/Regional
+    Options/Input Locales.  Please see below URL for detail of Global IME.
+    You can also find various language version of Global IME at same place.
 
     - Global IME detailed information.
 	http://search.microsoft.com/results.aspx?q=global+ime
@@ -1201,14 +1115,12 @@ internally.
 
 Vim has comprehensive UTF-8 support.  It works well in:
 - xterm with utf-8 support enabled
-- Athena, Motif and GTK GUI
 - MS-Windows GUI
 - several other platforms
 
 Double-width characters are supported.  This works best with 'guifontwide' or
 'guifontset'.  When using only 'guifont' the wide characters are drawn in the
-normal width and a space to fill the gap.  Note that the 'guifontset' option
-is no longer relevant in the GTK+ 2 GUI.
+normal width and a space to fill the gap.
 
 							*bom-bytes*
 When reading a file a BOM (Byte Order Mark) can be used to recognize the
@@ -1277,8 +1189,6 @@ doesn't always work.  See the system specific remarks below, and 'langmenu'.
 
 
 USING UTF-8 IN X-Windows				*utf-8-in-xwindows*
-
-Note: This section does not apply to the GTK+ 2 GUI.
 
 You need to specify a font to be used.  For double-wide characters another
 font is required, which is exactly twice as wide.  There are three ways to do

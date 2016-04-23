@@ -1,7 +1,7 @@
 -- ShaDa variables saving/reading support
 local helpers = require('test.functional.helpers')
-local meths, funcs, nvim_command, eq =
-  helpers.meths, helpers.funcs, helpers.command, helpers.eq
+local meths, funcs, nvim_command, eq, exc_exec =
+  helpers.meths, helpers.funcs, helpers.command, helpers.eq, helpers.exc_exec
 
 local shada_helpers = require('test.functional.shada.helpers')
 local reset, set_additional_cmd, clear =
@@ -22,12 +22,17 @@ describe('ShaDa support code', function()
     eq('foo', meths.get_var('STRVAR'))
   end)
 
-  local autotest = function(tname, varname, varval)
+  local autotest = function(tname, varname, varval, val_is_expr)
     it('is able to dump and read back ' .. tname .. ' variable automatically',
     function()
       set_additional_cmd('set shada+=!')
       reset()
-      meths.set_var(varname, varval)
+      if val_is_expr then
+        nvim_command('let g:' .. varname .. ' = ' .. varval)
+        varval = meths.get_var(varname)
+      else
+        meths.set_var(varname, varval)
+      end
       -- Exit during `reset` is not a regular exit: it does not write shada 
       -- automatically
       nvim_command('qall')
@@ -41,6 +46,10 @@ describe('ShaDa support code', function()
   autotest('float', 'FLTVAR', 42.5)
   autotest('dictionary', 'DCTVAR', {a=10})
   autotest('list', 'LSTVAR', {{a=10}, {b=10.5}, {c='str'}})
+  autotest('true', 'TRUEVAR', true)
+  autotest('false', 'FALSEVAR', false)
+  autotest('null', 'NULLVAR', 'v:null', true)
+  autotest('ext', 'EXTVAR', '{"_TYPE": v:msgpack_types.ext, "_VAL": [2, ["", ""]]}', true)
 
   it('does not read back variables without `!` in &shada', function()
     meths.set_var('STRVAR', 'foo')
@@ -135,5 +144,32 @@ describe('ShaDa support code', function()
     eq({['\171']='\171'}, meths.get_var('DCTVAR'))
     eq({['\171']={{'\171'}, {['\171']='\171'}, {a='Test'}}},
        meths.get_var('NESTEDVAR'))
+  end)
+
+  it('errors and writes when a funcref is stored in a variable',
+  function()
+    nvim_command('let F = function("tr")')
+    meths.set_var('U', '10')
+    nvim_command('set shada+=!')
+    set_additional_cmd('set shada+=!')
+    eq('Vim(wshada):E951: Error while dumping variable g:F, itself: attempt to dump function reference',
+       exc_exec('wshada'))
+    meths.set_option('shada', '')
+    reset()
+    eq('10', meths.get_var('U'))
+  end)
+
+  it('errors and writes when a self-referencing list is stored in a variable',
+  function()
+    meths.set_var('L', {})
+    nvim_command('call add(L, L)')
+    meths.set_var('U', '10')
+    nvim_command('set shada+=!')
+    eq('Vim(wshada):E952: Unable to dump variable g:L: container references itself in index 0',
+       exc_exec('wshada'))
+    meths.set_option('shada', '')
+    set_additional_cmd('set shada+=!')
+    reset()
+    eq('10', meths.get_var('U'))
   end)
 end)

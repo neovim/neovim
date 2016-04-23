@@ -60,7 +60,7 @@ Disadvantages:
 If you want to put swap files in a fixed place, put a command resembling the
 following ones in your vimrc:
 	:set dir=~/tmp		(for Unix)
-	:set dir=c:\\tmp	(for MS-DOS and Win32)
+	:set dir=c:\\tmp	(for Windows)
 This is also very handy when editing files on floppy.  Of course you will have
 to create that "tmp" directory for this to work!
 
@@ -92,10 +92,7 @@ changed, not when you only moved around.  The reason why it is not kept up to
 date all the time is that this would slow down normal work too much.  You can
 change the 200 character count with the 'updatecount' option.  You can set
 the time with the 'updatetime' option.  The time is given in milliseconds.
-After writing to the swap file Vim syncs the file to disk.  This takes some
-time, especially on busy Unix systems.  If you don't want this you can set the
-'swapsync' option to an empty string.  The risk of losing work becomes bigger
-though.
+After writing to the swap file Vim syncs the file to disk.
 
 If the writing to the swap file is not wanted, it can be switched off by
 setting the 'updatecount' option to 0.  The same is done when starting Vim

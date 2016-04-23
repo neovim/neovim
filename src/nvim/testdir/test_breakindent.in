@@ -101,7 +101,7 @@ fygjyl:let line2 = @0
 :$put =line2
 :"
 :let g:test="Test 14: breakindent + visual blockwise delete #1"
-:set all& breakindent
+:set all& breakindent shada+=nX-test-breakindent.shada
 :30vnew
 :normal! 3a1234567890
 :normal! a    abcde

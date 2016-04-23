@@ -4,6 +4,7 @@ local eq, clear, insert = helpers.eq, helpers.clear, helpers.insert
 local expect, write_file = helpers.expect, helpers.write_file
 
 do
+  clear()
   command('let [g:interp, g:errors] = provider#pythonx#Detect(3)')
   local errors = eval('g:errors')
   if errors ~= '' then

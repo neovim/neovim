@@ -8,7 +8,7 @@ local write_file, spawn, set_session, nvim_prog, exc_exec =
 local lfs = require('lfs')
 local paths = require('test.config.paths')
 
-local msgpack = require('MessagePack')
+local mpack = require('mpack')
 
 local shada_helpers = require('test.functional.shada.helpers')
 local reset, clear, get_shada_rw =
@@ -107,7 +107,7 @@ describe('ShaDa support code', function()
   end)
 
   it('reads correctly various timestamps', function()
-    local mpack = {
+    local msgpack = {
       '\100',  -- Positive fixnum 100
       '\204\255',  -- uint 8 255
       '\205\010\003',  -- uint 16 2563
@@ -116,23 +116,23 @@ describe('ShaDa support code', function()
     }
     local s = '\100'
     local e = '\001\192'
-    wshada(s .. table.concat(mpack, e .. s) .. e)
+    wshada(s .. table.concat(msgpack, e .. s) .. e)
     eq(0, exc_exec('wshada ' .. shada_fname))
     local found = 0
-    local typ = select(2, msgpack.unpacker(s)())
+    local typ = mpack.unpack(s)
     for _, v in ipairs(read_shada_file(shada_fname)) do
       if v.type == typ then
         found = found + 1
-        eq(select(2, msgpack.unpacker(mpack[found])()), v.timestamp)
+        eq(mpack.unpack(msgpack[found]), v.timestamp)
       end
     end
-    eq(#mpack, found)
+    eq(#msgpack, found)
   end)
 
   it('does not write NONE file', function()
     local session = spawn({nvim_prog, '-u', 'NONE', '-i', 'NONE', '--embed',
                            '--cmd', 'qall'}, true)
-    session:exit(0)
+    session:close()
     eq(nil, lfs.attributes('NONE'))
     eq(nil, lfs.attributes('NONE.tmp.a'))
   end)
@@ -143,7 +143,7 @@ describe('ShaDa support code', function()
                           true)
     set_session(session)
     eq('', funcs.getreg('a'))
-    session:exit(0)
+    session:close()
     os.remove('NONE')
   end)
 
@@ -174,6 +174,7 @@ describe('ShaDa support code', function()
     nvim_command('set shada+=%')
     nvim_command('wshada! ' .. shada_fname)
     local readme_fname = paths.test_source_path .. '/README.md'
+    readme_fname = helpers.eval( 'resolve("' .. readme_fname .. '")' )
     eq({[7]=1, [8]=2, [9]=1, [10]=4, [11]=1}, find_file(readme_fname))
     nvim_command('set shada+=r~')
     nvim_command('wshada! ' .. shada_fname)

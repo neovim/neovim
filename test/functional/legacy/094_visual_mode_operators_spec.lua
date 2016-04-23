@@ -24,6 +24,27 @@ local function source_user_functions()
   ]])
 end
 
+local function put_abc()
+  source([[
+    $put ='a'
+    $put ='b'
+    $put ='c']])
+end
+
+local function put_aaabbbccc()
+  source([[
+    $put ='aaa'
+    $put ='bbb'
+    $put ='ccc']])
+end
+
+local function define_select_mode_maps()
+  source([[
+    snoremap <lt>End> <End>
+    snoremap <lt>Down> <Down>
+    snoremap <lt>Del> <Del>]])
+end
+
 describe('Visual mode and operator', function()
   before_each(function()
     clear()
@@ -149,5 +170,229 @@ describe('Visual mode and operator', function()
       zzz
       ok
       ok]])
+  end)
+
+  describe('characterwise visual mode:', function()
+    it('replace last line', function()
+      source([[
+        $put ='a'
+        let @" = 'x']])
+      feed('v$p')
+
+      expect([[
+        
+        x]])
+    end)
+
+    it('delete middle line', function()
+      put_abc()
+      feed('kkv$d')
+
+      expect([[
+        
+        b
+        c]])
+    end)
+
+    it('delete middle two line', function()
+      put_abc()
+      feed('kkvj$d')
+
+      expect([[
+        
+        c]])
+    end)
+
+    it('delete last line', function()
+      put_abc()
+      feed('v$d')
+
+      expect([[
+        
+        a
+        b
+        ]])
+    end)
+
+    it('delete last two line', function()
+      put_abc()
+      feed('kvj$d')
+
+      expect([[
+        
+        a
+        ]])
+    end)
+  end)
+
+  describe('characterwise select mode:', function()
+    before_each(function()
+      define_select_mode_maps()
+    end)
+
+    it('delete middle line', function()
+      put_abc()
+      feed('kkgh<End><Del>')
+
+      expect([[
+        
+        b
+        c]])
+    end)
+
+    it('delete middle two line', function()
+      put_abc()
+      feed('kkgh<Down><End><Del>')
+
+      expect([[
+        
+        c]])
+    end)
+
+    it('delete last line', function()
+      put_abc()
+      feed('gh<End><Del>')
+
+      expect([[
+        
+        a
+        b
+        ]])
+    end)
+
+    it('delete last two line', function()
+      put_abc()
+      feed('kgh<Down><End><Del>')
+
+      expect([[
+        
+        a
+        ]])
+    end)
+  end)
+
+  describe('linewise select mode:', function()
+    before_each(function()
+      define_select_mode_maps()
+    end)
+
+    it('delete middle line', function()
+      put_abc()
+      feed(' kkgH<Del> ')
+
+      expect([[
+        
+        b
+        c]])
+    end)
+
+    it('delete middle two line', function()
+      put_abc()
+      feed('kkgH<Down><Del>')
+
+      expect([[
+        
+        c]])
+    end)
+
+    it('delete last line', function()
+      put_abc()
+      feed('gH<Del>')
+
+      expect([[
+        
+        a
+        b]])
+    end)
+
+    it('delete last two line', function()
+      put_abc()
+      feed('kgH<Down><Del>')
+
+      expect([[
+        
+        a]])
+    end)
+  end)
+
+  describe('v_p:', function()
+    it('replace last character with line register at middle line', function()
+      put_aaabbbccc()
+      execute('-2yank')
+      feed('k$vp')
+
+      expect([[
+        
+        aaa
+        bb
+        aaa
+        
+        ccc]])
+    end)
+
+    it('replace last character with line register at middle line selecting newline', function()
+      put_aaabbbccc()
+      execute('-2yank')
+      feed('k$v$p')
+
+      expect([[
+        
+        aaa
+        bb
+        aaa
+        ccc]])
+    end)
+
+    it('replace last character with line register at last line', function()
+      put_aaabbbccc()
+      execute('-2yank')
+      feed('$vp')
+
+      expect([[
+        
+        aaa
+        bbb
+        cc
+        aaa
+        ]])
+    end)
+
+    it('replace last character with line register at last line selecting newline', function()
+      put_aaabbbccc()
+      execute('-2yank')
+      feed('$v$p')
+
+      expect([[
+        
+        aaa
+        bbb
+        cc
+        aaa
+        ]])
+    end)
+  end)
+
+  it('gv in exclusive select mode after operation', function()
+    source([[
+      $put ='zzz '
+      $put ='Ã¤Ã '
+      set selection=exclusive]])
+    feed('kv3lyjv3lpgvcxxx<Esc>')
+
+    expect([[
+      
+      zzz 
+      xxx ]])
+  end)
+
+  it('gv in exclusive select mode without operation', function()
+    source([[
+      $put ='zzz '
+      set selection=exclusive]])
+    feed('0v3l<Esc>gvcxxx<Esc>')
+
+    expect([[
+      
+      xxx ]])
   end)
 end)

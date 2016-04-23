@@ -7,6 +7,12 @@ IMPORTANT to remember that this tutor is set up to teach by use. That means
 that you need to do the exercises to learn them properly. If you only read
 the text, you will soon forget what is most important!
 
+For now, make sure that your Shift-Lock key is NOT depressed and press the `j`{normal}
+key enough times to move the cursor so that Lesson 0 completely fills the
+screen.
+
+# Lesson 0
+
 NOTE: The commands in the lessons will modify the text, but those changes won't
 be saved. Don't worry about messing things up; just remember that pressing
 [<Esc>](<Esc>) and then [u](u) will undo the latest change.
@@ -30,9 +36,7 @@ or press a sequence of keys
 Text within <'s and >'s (like `<Enter>`{normal}) describes a key to press instead of text
 to type.
 
-Now, make sure that your Shift-Lock key is NOT depressed and press the `j`{normal}
-key enough times to move the cursor so that Lesson 1.1 completely fills the
-screen.
+Now, move to the next lesson (remember, use j).
 
 ## Lesson 1.1: MOVING THE CURSOR
 

@@ -28,6 +28,8 @@ typedef struct file_buffer buf_T; // Forward declaration
 #include "nvim/profile.h"
 // for String
 #include "nvim/api/private/defs.h"
+// for Map(K, V)
+#include "nvim/map.h"
 
 #define MODIFIABLE(buf) (!buf->terminal && buf->b_p_ma)
 
@@ -59,21 +61,21 @@ typedef struct file_buffer buf_T; // Forward declaration
 #define VALID_BOTLINE_AP 0x40   /* w_botine is approximated */
 #define VALID_TOPLINE   0x80    /* w_topline is valid (for cursor position) */
 
-/* flags for b_flags */
-#define BF_RECOVERED    0x01    /* buffer has been recovered */
-#define BF_CHECK_RO     0x02    /* need to check readonly when loading file
-                                   into buffer (set by ":e", may be reset by
-                                   ":buf" */
-#define BF_NEVERLOADED  0x04    /* file has never been loaded into buffer,
-                                   many variables still need to be set */
-#define BF_NOTEDITED    0x08    /* Set when file name is changed after
-                                   starting to edit, reset when file is
-                                   written out. */
-#define BF_NEW          0x10    /* file didn't exist when editing started */
-#define BF_NEW_W        0x20    /* Warned for BF_NEW and file created */
-#define BF_READERR      0x40    /* got errors while reading the file */
-#define BF_DUMMY        0x80    /* dummy buffer, only used internally */
-#define BF_PRESERVED    0x100   /* ":preserve" was used */
+// flags for b_flags
+#define BF_RECOVERED    0x01    // buffer has been recovered
+#define BF_CHECK_RO     0x02    // need to check readonly when loading file
+                                // into buffer (set by ":e", may be reset by
+                                // ":buf")
+#define BF_NEVERLOADED  0x04    // file has never been loaded into buffer,
+                                // many variables still need to be set
+#define BF_NOTEDITED    0x08    // Set when file name is changed after
+                                // starting to edit, reset when file is
+                                // written out.
+#define BF_NEW          0x10    // file didn't exist when editing started
+#define BF_NEW_W        0x20    // Warned for BF_NEW and file created
+#define BF_READERR      0x40    // got errors while reading the file
+#define BF_DUMMY        0x80    // dummy buffer, only used internally
+#define BF_PRESERVED    0x100   // ":preserve" was used
 
 /* Mask to check for flags that prevent normal writing */
 #define BF_WRITE_MASK   (BF_NOTEDITED + BF_NEW + BF_READERR)
@@ -100,6 +102,11 @@ typedef int scid_T;                     /* script ID */
 
 // for signlist_T
 #include "nvim/sign_defs.h"
+
+// for bufhl_*_T
+#include "nvim/bufhl_defs.h"
+
+typedef Map(linenr_T, bufhl_vec_T) bufhl_info_T;
 
 // for FileID
 #include "nvim/os/fs_defs.h"
@@ -526,9 +533,9 @@ struct file_buffer {
 
   /*
    * Character table, only used in charset.c for 'iskeyword'
-   * 32 bytes of 8 bits: 1 bit per character 0-255.
+   * bitset with 4*64=256 bits: 1 bit per character 0-255.
    */
-  char_u b_chartab[32];
+  uint64_t b_chartab[4];
 
   /* Table used for mappings local to a buffer. */
   mapblock_T  *(b_maphash[256]);
@@ -592,70 +599,72 @@ struct file_buffer {
 
   int b_p_scriptID[BV_COUNT];           /* SIDs for buffer-local options */
 
-  int b_p_ai;                   /* 'autoindent' */
-  int b_p_ai_nopaste;           /* b_p_ai saved for paste mode */
-  char_u      *b_p_bkc;         ///< 'backupcopy'
-  unsigned int b_bkc_flags;     ///< flags for 'backupcopy'
-  int b_p_ci;                   /* 'copyindent' */
-  int b_p_bin;                  /* 'binary' */
-  int b_p_bomb;                 /* 'bomb' */
-  char_u      *b_p_bh;          /* 'bufhidden' */
-  char_u      *b_p_bt;          /* 'buftype' */
-  int b_p_bl;                   /* 'buflisted' */
-  int b_p_cin;                  /* 'cindent' */
-  char_u      *b_p_cino;        /* 'cinoptions' */
-  char_u      *b_p_cink;        /* 'cinkeys' */
-  char_u      *b_p_cinw;        /* 'cinwords' */
-  char_u      *b_p_com;         /* 'comments' */
-  char_u      *b_p_cms;         /* 'commentstring' */
-  char_u      *b_p_cpt;         /* 'complete' */
-  char_u      *b_p_cfu;         /* 'completefunc' */
-  char_u      *b_p_ofu;         /* 'omnifunc' */
-  int b_p_eol;                  /* 'endofline' */
-  int b_p_et;                   /* 'expandtab' */
-  int b_p_et_nobin;             /* b_p_et saved for binary mode */
-  char_u      *b_p_fenc;        /* 'fileencoding' */
-  char_u      *b_p_ff;          /* 'fileformat' */
-  char_u      *b_p_ft;          /* 'filetype' */
-  char_u      *b_p_fo;          /* 'formatoptions' */
-  char_u      *b_p_flp;         /* 'formatlistpat' */
-  int b_p_inf;                  /* 'infercase' */
-  char_u      *b_p_isk;         /* 'iskeyword' */
-  char_u      *b_p_def;         /* 'define' local value */
-  char_u      *b_p_inc;         /* 'include' */
-  char_u      *b_p_inex;        /* 'includeexpr' */
-  uint32_t b_p_inex_flags;      /* flags for 'includeexpr' */
-  char_u      *b_p_inde;        /* 'indentexpr' */
-  uint32_t b_p_inde_flags;        /* flags for 'indentexpr' */
-  char_u      *b_p_indk;        /* 'indentkeys' */
-  char_u      *b_p_fex;         /* 'formatexpr' */
-  uint32_t b_p_fex_flags;       /* flags for 'formatexpr' */
-  char_u      *b_p_kp;          /* 'keywordprg' */
-  int b_p_lisp;                 /* 'lisp' */
-  char_u      *b_p_mps;         /* 'matchpairs' */
-  int b_p_ml;                   /* 'modeline' */
-  int b_p_ml_nobin;             /* b_p_ml saved for binary mode */
-  int b_p_ma;                   /* 'modifiable' */
-  char_u      *b_p_nf;          /* 'nrformats' */
-  int b_p_pi;                   /* 'preserveindent' */
-  char_u      *b_p_qe;          /* 'quoteescape' */
-  int b_p_ro;                   /* 'readonly' */
-  long b_p_sw;                  /* 'shiftwidth' */
-  int b_p_si;                   /* 'smartindent' */
-  long b_p_sts;                 /* 'softtabstop' */
-  long b_p_sts_nopaste;         /* b_p_sts saved for paste mode */
-  char_u      *b_p_sua;         /* 'suffixesadd' */
-  bool b_p_swf;                 /* 'swapfile' */
-  long b_p_smc;                 /* 'synmaxcol' */
-  char_u      *b_p_syn;         /* 'syntax' */
-  long b_p_ts;                  /* 'tabstop' */
-  long b_p_tw;                  /* 'textwidth' */
-  long b_p_tw_nobin;            /* b_p_tw saved for binary mode */
-  long b_p_tw_nopaste;          /* b_p_tw saved for paste mode */
-  long b_p_wm;                  /* 'wrapmargin' */
-  long b_p_wm_nobin;            /* b_p_wm saved for binary mode */
-  long b_p_wm_nopaste;          /* b_p_wm saved for paste mode */
-  char_u      *b_p_keymap;      /* 'keymap' */
+  int b_p_ai;                   ///< 'autoindent'
+  int b_p_ai_nopaste;           ///< b_p_ai saved for paste mode
+  char_u *b_p_bkc;              ///< 'backupco
+  unsigned int b_bkc_flags;     ///< flags for 'backupco
+  int b_p_ci;                   ///< 'copyindent'
+  int b_p_bin;                  ///< 'binary'
+  int b_p_bomb;                 ///< 'bomb'
+  char_u *b_p_bh;               ///< 'bufhidden'
+  char_u *b_p_bt;               ///< 'buftype'
+  int b_p_bl;                   ///< 'buflisted'
+  int b_p_cin;                  ///< 'cindent'
+  char_u *b_p_cino;             ///< 'cinoptions'
+  char_u *b_p_cink;             ///< 'cinkeys'
+  char_u *b_p_cinw;             ///< 'cinwords'
+  char_u *b_p_com;              ///< 'comments'
+  char_u *b_p_cms;              ///< 'commentstring'
+  char_u *b_p_cpt;              ///< 'complete'
+  char_u *b_p_cfu;              ///< 'completefunc'
+  char_u *b_p_ofu;              ///< 'omnifunc'
+  int b_p_eol;                  ///< 'endofline'
+  int b_p_fixeol;               ///< 'fixendofline'
+  int b_p_et;                   ///< 'expandtab'
+  int b_p_et_nobin;             ///< b_p_et saved for binary mode
+  int b_p_et_nopaste;           ///< b_p_et saved for paste mode
+  char_u *b_p_fenc;             ///< 'fileencoding'
+  char_u *b_p_ff;               ///< 'fileformat'
+  char_u *b_p_ft;               ///< 'filetype'
+  char_u *b_p_fo;               ///< 'formatoptions'
+  char_u *b_p_flp;              ///< 'formatlistpat'
+  int b_p_inf;                  ///< 'infercase'
+  char_u *b_p_isk;              ///< 'iskeyword'
+  char_u *b_p_def;              ///< 'define' local value
+  char_u *b_p_inc;              ///< 'include'
+  char_u *b_p_inex;             ///< 'includeexpr'
+  uint32_t b_p_inex_flags;      ///< flags for 'includeexpr'
+  char_u *b_p_inde;             ///< 'indentexpr'
+  uint32_t b_p_inde_flags;      ///< flags for 'indentexpr'
+  char_u *b_p_indk;             ///< 'indentkeys'
+  char_u *b_p_fex;              ///< 'formatexpr'
+  uint32_t b_p_fex_flags;       ///< flags for 'formatexpr'
+  char_u *b_p_kp;               ///< 'keywordprg'
+  int b_p_lisp;                 ///< 'lisp'
+  char_u *b_p_mps;              ///< 'matchpairs'
+  int b_p_ml;                   ///< 'modeline'
+  int b_p_ml_nobin;             ///< b_p_ml saved for binary mode
+  int b_p_ma;                   ///< 'modifiable'
+  char_u *b_p_nf;               ///< 'nrformats'
+  int b_p_pi;                   ///< 'preserveindent'
+  char_u *b_p_qe;               ///< 'quoteescape'
+  int b_p_ro;                   ///< 'readonly'
+  long b_p_sw;                  ///< 'shiftwidth'
+  int b_p_si;                   ///< 'smartindent'
+  long b_p_sts;                 ///< 'softtabstop'
+  long b_p_sts_nopaste;         ///< b_p_sts saved for paste mode
+  char_u *b_p_sua;              ///< 'suffixesadd'
+  bool b_p_swf;                 ///< 'swapfile'
+  long b_p_smc;                 ///< 'synmaxcol'
+  char_u *b_p_syn;              ///< 'syntax'
+  long b_p_ts;                  ///< 'tabstop'
+  long b_p_tw;                  ///< 'textwidth'
+  long b_p_tw_nobin;            ///< b_p_tw saved for binary mode
+  long b_p_tw_nopaste;          ///< b_p_tw saved for paste mode
+  long b_p_wm;                  ///< 'wrapmargin'
+  long b_p_wm_nobin;            ///< b_p_wm saved for binary mode
+  long b_p_wm_nopaste;          ///< b_p_wm saved for paste mode
+  char_u *b_p_keymap;           ///< 'keymap'
 
   /* local values for options which are normally global */
   char_u      *b_p_gp;          /* 'grepprg' local value */
@@ -750,6 +759,10 @@ struct file_buffer {
   Terminal *terminal;           // Terminal instance associated with the buffer
 
   dict_T *additional_data;      // Additional data from shada file if any.
+
+  int b_mapped_ctrl_c;          // modes where CTRL-C is mapped
+
+  bufhl_info_T *b_bufhl_info;   // buffer stored highlights
 };
 
 /*
@@ -803,10 +816,12 @@ struct tabpage_S {
                                        was set */
   diff_T          *tp_first_diff;
   buf_T           *(tp_diffbuf[DB_COUNT]);
-  int tp_diff_invalid;                  /* list of diffs is outdated */
-  frame_T         *(tp_snapshot[SNAP_COUNT]);    /* window layout snapshots */
-  dictitem_T tp_winvar;             /* variable for "t:" Dictionary */
-  dict_T          *tp_vars;         /* internal variables, local to tab page */
+  int tp_diff_invalid;              ///< list of diffs is outdated */
+  frame_T         *(tp_snapshot[SNAP_COUNT]);    ///< window layout snapshots
+  dictitem_T tp_winvar;             ///< variable for "t:" Dictionary
+  dict_T          *tp_vars;         ///< internal variables, local to tab page
+  char_u          *localdir;        ///< Absolute path of local directory or
+                                    ///< NULL
 };
 
 /*
@@ -901,13 +916,14 @@ struct posmatch
 typedef struct matchitem matchitem_T;
 struct matchitem {
   matchitem_T *next;
-  int id;                   /* match ID */
-  int priority;             /* match priority */
-  char_u      *pattern;     /* pattern to highlight */
-  int hlg_id;               /* highlight group ID */
-  regmmatch_T match;        /* regexp program for pattern */
-  posmatch_T pos;           // position matches
-  match_T hl;               /* struct for doing the actual highlighting */
+  int id;                   ///< match ID
+  int priority;             ///< match priority
+  char_u *pattern;          ///< pattern to highlight
+  int hlg_id;               ///< highlight group ID
+  regmmatch_T match;        ///< regexp program for pattern
+  posmatch_T pos;           ///< position matches
+  match_T hl;               ///< struct for doing the actual highlighting
+  int conceal_char;         ///< cchar for Conceal highlighting
 };
 
 /*

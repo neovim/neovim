@@ -13,7 +13,7 @@
 
 /// Sets the stream associated with `fd` to "blocking" mode.
 ///
-/// @return `0` on success, or `-errno` on failure.
+/// @return `0` on success, or libuv error code on failure.
 int stream_set_blocking(int fd, bool blocking)
 {
   // Private loop to avoid conflict with existing watcher(s):

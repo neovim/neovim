@@ -61,10 +61,6 @@ When the GUI starts up initializations are carried out, in this order:
     ~/.config).
   The name of the first file found is stored in $MYGVIMRC, unless it was
   already set.
-- If the 'exrc' option is set (which is NOT the default) the file ./.ngvimrc
-  is sourced, if it exists and isn't the same file as the system or user
-  gvimrc file.  If this file is not owned by you, some security restrictions
-  apply.  When ".ngvimrc" is not found, "_ngvimrc" is tried too.
 
 NOTE: All but the first one are not carried out if Vim was started with
 "-u NONE" and no "-U" argument was given, or when started with "-U NONE".
@@ -211,18 +207,6 @@ computation, and it has to be done every time something changes.  If this
 takes too much time or you don't like the cursor jumping to another line,
 include the 'h' flag in 'guioptions'.  Then the scrolling is limited by the
 text of the current cursor line.
-
-							*athena-intellimouse*
-If you have an Intellimouse and an X server that supports using the wheel,
-then you can use the wheel to scroll the text up and down in gvim.  This works
-with XFree86 4.0 and later, and with some older versions when you add patches.
-See |scroll-mouse-wheel|.
-
-For older versions of XFree86 you must patch your X server.  The following
-page has a bit of information about using the Intellimouse on Linux as well as
-links to the patches and X server binaries (may not have the one you need
-though):
-    http://www.inria.fr/koala/colas/mouse-wheel-scroll/
 
 ==============================================================================
 3. Mouse Control					*gui-mouse*
@@ -609,10 +593,6 @@ The default menus have these priorities:
 When no or zero priority is given, 500 is used.
 The priority for the PopUp menu is not used.
 
-The Help menu will be placed on the far right side of the menu bar on systems
-which support this (Motif and GTK+).  For GTK+ 2, this is not done anymore
-because right-aligning the Help menu is now discouraged UI design.
-
 You can use a priority higher than 9999, to make it go after the Help menu,
 but that is non-standard and is discouraged.  The highest possible priority is
 about 32000.  The lowest is 1.
@@ -681,10 +661,8 @@ level.  Vim interprets the items in this menu as follows:
     toolbar button image.  Note that the exact filename is OS-specific: For
     example, under Win32 the command >
 	:amenu ToolBar.Hello :echo "hello"<CR>
-<   would find the file 'hello.bmp'.  Under GTK+/X11 it is 'Hello.xpm'.  With
-    GTK+ 2 the files 'Hello.png', 'Hello.xpm' and 'Hello.bmp' are checked for
-    existence, and the first one found would be used.
-    For MS-Windows and GTK+ 2 the bitmap is scaled to fit the button.  For
+<   would find the file 'hello.bmp'.  Under X11 it is 'Hello.xpm'.
+    For MS-Windows and the bitmap is scaled to fit the button.  For
     MS-Windows a size of 18 by 18 pixels works best.
     For MS-Windows the bitmap should have 16 colors with the standard palette.
     The light grey pixels will be changed to the Window frame color and the
@@ -733,8 +711,8 @@ nr  Name		Normal action  ~
 30  WinMinWidth		make current window use few columns
 
 					*hidden-menus* *win32-hidden-menus*
-In the Win32 and GTK+ GUI, starting a menu name with ']' excludes that menu
-from the main menu bar.  You must then use the |:popup| command to display it.
+In the Win32 GUI, starting a menu name with ']' excludes that menu from the
+main menu bar.  You must then use the |:popup| command to display it.
 
 							*popup-menu*
 You can define the special menu "PopUp".  This is the menu that is displayed
@@ -887,9 +865,8 @@ a menu item - you don't need to do a :tunmenu as well.
 
 5.9 Popup Menus
 
-In the Win32 and GTK+ GUI, you can cause a menu to popup at the cursor.
-This behaves similarly to the PopUp menus except that any menu tree can
-be popped up.
+In the Win32 GUI, you can cause a menu to popup at the cursor.  This behaves
+similarly to the PopUp menus except that any menu tree can be popped up.
 
 This command is for backwards compatibility, using it is discouraged, because
 it behaves in a strange way.
@@ -898,7 +875,7 @@ it behaves in a strange way.
 :popu[p] {name}			Popup the menu {name}.  The menu named must
 				have at least one subentry, but need not
 				appear on the menu-bar (see |hidden-menus|).
-				{only available for Win32 and GTK GUI}
+				{only available for Win32 GUI}
 
 :popu[p]! {name}		Like above, but use the position of the mouse
 				pointer instead of the cursor.

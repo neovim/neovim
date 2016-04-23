@@ -22,10 +22,10 @@ static const char *xdg_env_vars[] = {
 static const char *const xdg_defaults[] = {
 #ifdef WIN32
   // Windows
-  [kXDGConfigHome] = "$LOCALAPPDATA\\nvim\\config",
-  [kXDGDataHome]   = "$LOCALAPPDATA\\nvim\\data",
-  [kXDGCacheHome]  = "$LOCALAPPDATA\\nvim\\cache",
-  [kXDGRuntimeDir] = "",
+  [kXDGConfigHome] = "$LOCALAPPDATA",
+  [kXDGDataHome]   = "$LOCALAPPDATA",
+  [kXDGCacheHome]  = "$TEMP",
+  [kXDGRuntimeDir] = NULL,
   [kXDGConfigDirs] = NULL,
   [kXDGDataDirs] = NULL,
 #else
@@ -33,7 +33,7 @@ static const char *const xdg_defaults[] = {
   [kXDGConfigHome] = "~/.config",
   [kXDGDataHome] = "~/.local/share",
   [kXDGCacheHome] = "~/.cache",
-  [kXDGRuntimeDir] = "",
+  [kXDGRuntimeDir] = NULL,
   [kXDGConfigDirs] = "/etc/xdg/",
   [kXDGDataDirs] = "/usr/local/share/:/usr/share/",
 #endif
@@ -66,12 +66,21 @@ char *stdpaths_get_xdg_var(const XDGVarType idx)
 /// @param[in]  idx  XDG directory to use.
 ///
 /// @return [allocated] `{xdg_directory}/nvim`
+///
+/// In WIN32 get_xdg_home(kXDGDataHome) returns `{xdg_directory}/nvim-data` to
+/// avoid storing configuration and data files in the same path.
 static char *get_xdg_home(const XDGVarType idx)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
   char *dir = stdpaths_get_xdg_var(idx);
   if (dir) {
+#if defined(WIN32)
+    dir = concat_fnames_realloc(dir,
+                                (idx == kXDGDataHome ? "nvim-data" : "nvim"),
+                                true);
+#else
     dir = concat_fnames_realloc(dir, "nvim", true);
+#endif
   }
   return dir;
 }
@@ -82,7 +91,7 @@ static char *get_xdg_home(const XDGVarType idx)
 ///
 /// @return [allocated] `$XDG_CONFIG_HOME/nvim/{fname}`
 char *stdpaths_user_conf_subpath(const char *fname)
-  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
 {
   return concat_fnames_realloc(get_xdg_home(kXDGConfigHome), fname, true);
 }
@@ -95,7 +104,7 @@ char *stdpaths_user_conf_subpath(const char *fname)
 /// @return [allocated] `$XDG_DATA_HOME/nvim/{fname}`
 char *stdpaths_user_data_subpath(const char *fname,
                                  const size_t trailing_pathseps)
-  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
 {
   char *ret = concat_fnames_realloc(get_xdg_home(kXDGDataHome), fname, true);
   if (trailing_pathseps) {

@@ -3,7 +3,7 @@
 -- characters.
 
 local helpers = require('test.functional.helpers')
-local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
+local clear = helpers.clear
 local execute, expect = helpers.execute, helpers.expect
 
 describe('glob() and globpath()', function()

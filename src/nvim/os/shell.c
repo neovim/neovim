@@ -36,7 +36,6 @@ typedef struct {
 # include "os/shell.c.generated.h"
 #endif
 
-
 /// Builds the argument vector for running the user-configured 'shell' (p_sh)
 /// with an optional command prefixed by 'shellcmdflag' (p_shcf).
 ///
@@ -45,9 +44,10 @@ typedef struct {
 /// @return A newly allocated argument vector. It must be freed with
 ///         `shell_free_argv` when no longer needed.
 char **shell_build_argv(const char *cmd, const char *extra_args)
+  FUNC_ATTR_NONNULL_RET FUNC_ATTR_MALLOC
 {
-  size_t argc = tokenize(p_sh, NULL) + tokenize(p_shcf, NULL);
-  char **rv = xmalloc((unsigned)((argc + 4) * sizeof(char *)));
+  size_t argc = tokenize(p_sh, NULL) + (cmd ? tokenize(p_shcf, NULL) : 0);
+  char **rv = xmalloc((argc + 4) * sizeof(*rv));
 
   // Split 'shell'
   size_t i = tokenize(p_sh, rv);
@@ -338,24 +338,22 @@ static void out_data_cb(Stream *stream, RBuffer *buf, size_t count, void *data,
 /// @param argv The vector that will be filled with copies of the parsed
 ///        words. It can be NULL if the caller only needs to count words.
 /// @return The number of words parsed.
-static size_t tokenize(const char_u *str, char **argv)
+static size_t tokenize(const char_u *const str, char **const argv)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
-  size_t argc = 0, len;
-  char_u *p = (char_u *) str;
+  size_t argc = 0;
+  const char *p = (const char *) str;
 
   while (*p != NUL) {
-    len = word_length(p);
+    const size_t len = word_length((const char_u *) p);
 
     if (argv != NULL) {
       // Fill the slot
-      argv[argc] = xmalloc(len + 1);
-      memcpy(argv[argc], p, len);
-      argv[argc][len] = NUL;
+      argv[argc] = vim_strnsave_unquoted(p, len);
     }
 
     argc++;
-    p += len;
-    p = skipwhite(p);
+    p = (const char *) skipwhite((char_u *) (p + len));
   }
 
   return argc;
@@ -377,6 +375,9 @@ static size_t word_length(const char_u *str)
     if (*p == '"') {
       // Found a quote character, switch the `inquote` flag
       inquote = !inquote;
+    } else if (*p == '\\' && inquote) {
+      p++;
+      length++;
     }
 
     p++;
@@ -418,7 +419,8 @@ static void read_input(DynamicBuffer *buf)
       // Finished a line, add a NL, unless this line should not have one.
       // FIXME need to make this more readable
       if (lnum != curbuf->b_op_end.lnum
-          || !curbuf->b_p_bin
+          || (!curbuf->b_p_bin
+            && curbuf->b_p_fixeol)
           || (lnum != curbuf->b_no_eol_lnum
             && (lnum !=
               curbuf->b_ml.ml_line_count

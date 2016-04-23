@@ -1,4 +1,4 @@
-*repeat.txt*    For Vim version 7.4.  Last change: 2015 Jan 07
+*repeat.txt*    For Vim version 7.4.  Last change: 2015 Apr 13
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -108,6 +108,12 @@ q{0-9a-zA-Z"}		Record typed characters into register {0-9a-zA-Z"}
 			(uppercase to append).  The 'q' command is disabled
 			while executing a register, and it doesn't work inside
 			a mapping and |:normal|.
+
+			Note: If the register being used for recording is also
+			used for |y| and |p| the result is most likely not
+			what is expected, because the put will paste the
+			recorded macro and the yank will overwrite the
+			recorded macro.
 
 q			Stops recording.
 			Implementation note: The 'q' that stops recording is
@@ -287,13 +293,13 @@ with CTRL-V followed by the three digit decimal code.  This does NOT work for
 the <t_xx> termcap codes, these can only be used in mappings.
 
 							*:source_crnl* *W15*
-MS-DOS and Win32: Files that are read with ":source" normally have
-<CR><NL> <EOL>s.  These always work.  If you are using a file with <NL> <EOL>s
-(for example, a file made on Unix), this will be recognized if 'fileformats'
-is not empty and the first line does not end in a <CR>.  This fails if the
-first line has something like ":map <F1> :help^M", where "^M" is a <CR>.  If
-the first line ends in a <CR>, but following ones don't, you will get an error
-message, because the <CR> from the first lines will be lost.
+Windows: Files that are read with ":source" normally have <CR><NL> <EOL>s.
+These always work.  If you are using a file with <NL> <EOL>s (for example, a
+file made on Unix), this will be recognized if 'fileformats' is not empty and
+the first line does not end in a <CR>.  This fails if the first line has
+something like ":map <F1> :help^M", where "^M" is a <CR>.  If the first line
+ends in a <CR>, but following ones don't, you will get an error message,
+because the <CR> from the first lines will be lost.
 
 Mac Classic: Files that are read with ":source" normally have <CR> <EOL>s.
 These always work.  If you are using a file with <NL> <EOL>s (for example, a
@@ -303,7 +309,7 @@ linebreaks which has a <CR> in first line.
 
 On other systems, Vim expects ":source"ed files to end in a <NL>.  These
 always work.  If you are using a file with <CR><NL> <EOL>s (for example, a
-file made on MS-DOS), all lines will have a trailing <CR>.  This may cause
+file made on Windows), all lines will have a trailing <CR>.  This may cause
 problems for some commands (e.g., mappings).  There is no automatic <EOL>
 detection, because it's common to start with a line that defines a mapping
 that ends in a <CR>, which will confuse the automaton.
@@ -390,7 +396,7 @@ To enter debugging mode use one of these methods:
    useful to find out what is happening when Vim is starting up.  A side
    effect is that Vim will switch the terminal mode before initialisations
    have finished, with unpredictable results.
-   For a GUI-only version (Windows, Macintosh) the debugging will start as
+   For a GUI-only version (Windows) the debugging will start as
    soon as the GUI window has been opened.  To make this happen early, add a
    ":gui" command in the vimrc file.
 								*:debug*
@@ -583,8 +589,12 @@ For example, to profile the one_script.vim script file: >
 
 :prof[ile] start {fname}			*:prof* *:profile* *E750*
 		Start profiling, write the output in {fname} upon exit.
+		"~/" and environment variables in {fname} will be expanded.
 		If {fname} already exists it will be silently overwritten.
 		The variable |v:profiling| is set to one.
+
+:prof[ile] stop
+		Write the logfile and stop profiling.
 
 :prof[ile] pause
 		Don't profile until the following ":profile continue".  Can be
@@ -609,6 +619,9 @@ For example, to profile the one_script.vim script file: >
 		after this command.  A :profile command in the script itself
 		won't work.
 
+:prof[ile] dump
+		Don't wait until exiting Vim and write the current state of
+		profiling to the log immediately.
 
 :profd[el] ...						*:profd* *:profdel*
 		Stop profiling for the arguments specified. See |:breakdel|
@@ -651,10 +664,6 @@ long you take to respond to the input() prompt is irrelevant.
 
 Profiling should give a good indication of where time is spent, but keep in
 mind there are various things that may clobber the results:
-
-- The accuracy of the time measured depends on the gettimeofday() system
-  function.  It may only be as accurate as 1/100 second, even though the times
-  are displayed in micro seconds.
 
 - Real elapsed time is measured, if other processes are busy they may cause
   delays at unpredictable moments.  You may want to run the profiling several

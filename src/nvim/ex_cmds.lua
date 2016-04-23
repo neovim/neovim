@@ -34,6 +34,7 @@ local ADDR_ARGUMENTS        =  2
 local ADDR_LOADED_BUFFERS   =  3
 local ADDR_BUFFERS          =  4
 local ADDR_TABS             =  5
+local ADDR_QUICKFIX         =  6
 
 -- The following table is described in ex_cmds_defs.h file.
 return {
@@ -267,7 +268,7 @@ return {
   },
   {
     command='buffers',
-    flags=bit.bor(BANG, TRLBAR, CMDWIN),
+    flags=bit.bor(BANG, EXTRA, TRLBAR, CMDWIN),
     addr_type=ADDR_LINES,
     func='buflist_list',
   },
@@ -374,6 +375,12 @@ return {
     func='ex_cd',
   },
   {
+    command='cdo',
+    flags=bit.bor(BANG, NEEDARG, EXTRA, NOTRLCOM, RANGE, NOTADR, DFLALL),
+    addr_type=ADDR_QUICKFIX,
+    func='ex_listdo',
+  },
+  {
     command='center',
     flags=bit.bor(TRLBAR, RANGE, WHOLEFOLD, EXTRA, CMDWIN, MODIFY),
     addr_type=ADDR_LINES,
@@ -390,6 +397,14 @@ return {
     flags=bit.bor(TRLBAR, FILE1, BANG),
     addr_type=ADDR_LINES,
     func='ex_cfile',
+  },
+  -- Even though 'cfdo' is alphabetically lower than 'cfile', it is after
+  -- 'cfile' in this cmd list to support the existing ":cf" abbreviation.
+  {
+    command='cfdo',
+    flags=bit.bor(BANG, NEEDARG, EXTRA, NOTRLCOM, RANGE, NOTADR, DFLALL),
+    addr_type=ADDR_QUICKFIX,
+    func='ex_listdo',
   },
   {
     command='cfirst',
@@ -885,7 +900,7 @@ return {
   },
   {
     command='files',
-    flags=bit.bor(BANG, TRLBAR, CMDWIN),
+    flags=bit.bor(BANG, EXTRA, TRLBAR, CMDWIN),
     addr_type=ADDR_LINES,
     func='buflist_list',
   },
@@ -989,13 +1004,13 @@ return {
     command='gui',
     flags=bit.bor(BANG, FILES, EDITCMD, ARGOPT, TRLBAR, CMDWIN),
     addr_type=ADDR_LINES,
-    func='ex_gui',
+    func='ex_nogui',
   },
   {
     command='gvim',
     flags=bit.bor(BANG, FILES, EDITCMD, ARGOPT, TRLBAR, CMDWIN),
     addr_type=ADDR_LINES,
-    func='ex_gui',
+    func='ex_nogui',
   },
   {
     command='help',
@@ -1008,12 +1023,6 @@ return {
     flags=bit.bor(RANGE, NOTADR, COUNT, TRLBAR),
     addr_type=ADDR_LINES,
     func='ex_helpclose',
-  },
-  {
-    command='helpfind',
-    flags=bit.bor(EXTRA, NOTRLCOM),
-    addr_type=ADDR_LINES,
-    func='ex_helpfind',
   },
   {
     command='helpgrep',
@@ -1286,6 +1295,12 @@ return {
     func='do_cscope',
   },
   {
+    command='ldo',
+    flags=bit.bor(BANG, NEEDARG, EXTRA, NOTRLCOM, RANGE, NOTADR, DFLALL),
+    addr_type=ADDR_QUICKFIX,
+    func='ex_listdo',
+  },
+  {
     command='left',
     flags=bit.bor(TRLBAR, RANGE, WHOLEFOLD, EXTRA, CMDWIN, MODIFY),
     addr_type=ADDR_LINES,
@@ -1314,6 +1329,14 @@ return {
     flags=bit.bor(TRLBAR, FILE1, BANG),
     addr_type=ADDR_LINES,
     func='ex_cfile',
+  },
+  -- Even though 'lfdo' is alphabetically lower than 'lfile', it is after
+  -- 'lfile' in this cmd list to support the existing ":lf" abbreviation.
+  {
+    command='lfdo',
+    flags=bit.bor(BANG, NEEDARG, EXTRA, NOTRLCOM, RANGE, NOTADR, DFLALL),
+    addr_type=ADDR_QUICKFIX,
+    func='ex_listdo',
   },
   {
     command='lfirst',
@@ -1521,7 +1544,7 @@ return {
   },
   {
     command='ls',
-    flags=bit.bor(BANG, TRLBAR, CMDWIN),
+    flags=bit.bor(BANG, EXTRA, TRLBAR, CMDWIN),
     addr_type=ADDR_LINES,
     func='buflist_list',
   },
@@ -1643,19 +1666,19 @@ return {
     command='nbkey',
     flags=bit.bor(EXTRA, NOTADR, NEEDARG),
     addr_type=ADDR_LINES,
-    func='ex_nbkey',
+    func='ex_ni',
   },
   {
     command='nbclose',
     flags=bit.bor(TRLBAR, CMDWIN),
     addr_type=ADDR_LINES,
-    func='ex_nbclose',
+    func='ex_ni',
   },
   {
     command='nbstart',
     flags=bit.bor(WORD1, TRLBAR, CMDWIN),
     addr_type=ADDR_LINES,
-    func='ex_nbstart',
+    func='ex_ni',
   },
   {
     command='new',
@@ -1752,12 +1775,6 @@ return {
     flags=bit.bor(EXTRA, TRLBAR, NOTRLCOM, USECTRLV, CMDWIN),
     addr_type=ADDR_LINES,
     func='ex_menu',
-  },
-  {
-    command='open',
-    flags=bit.bor(RANGE, BANG, EXTRA),
-    addr_type=ADDR_LINES,
-    func='ex_open',
   },
   {
     command='oldfiles',
@@ -1865,7 +1882,7 @@ return {
     command='popup',
     flags=bit.bor(NEEDARG, EXTRA, BANG, TRLBAR, NOTRLCOM, CMDWIN),
     addr_type=ADDR_LINES,
-    func='ex_popup',
+    func='ex_ni',
   },
   {
     command='ppop',
@@ -1889,13 +1906,13 @@ return {
     command='promptfind',
     flags=bit.bor(EXTRA, NOTRLCOM, CMDWIN),
     addr_type=ADDR_LINES,
-    func='gui_mch_find_dialog',
+    func='ex_ni',
   },
   {
     command='promptrepl',
     flags=bit.bor(EXTRA, NOTRLCOM, CMDWIN),
     addr_type=ADDR_LINES,
-    func='gui_mch_replace_dialog',
+    func='ex_ni',
   },
   {
     command='profile',
@@ -2309,7 +2326,7 @@ return {
     command='simalt',
     flags=bit.bor(NEEDARG, WORD1, TRLBAR, CMDWIN),
     addr_type=ADDR_LINES,
-    func='ex_simalt',
+    func='ex_ni',
   },
   {
     command='sign',
@@ -2556,6 +2573,18 @@ return {
     flags=bit.bor(RANGE, WHOLEFOLD, EXTRA, TRLBAR, CMDWIN, MODIFY),
     addr_type=ADDR_LINES,
     func='ex_copymove',
+  },
+  {
+    command='tcd',
+    flags=bit.bor(BANG, FILE1, TRLBAR, CMDWIN),
+    addr_type=ADDR_LINES,
+    func='ex_cd',
+  },
+  {
+    command='tchdir',
+    flags=bit.bor(BANG, FILE1, TRLBAR, CMDWIN),
+    addr_type=ADDR_LINES,
+    func='ex_cd',
   },
   {
     command='tNext',
@@ -3035,7 +3064,7 @@ return {
     command='wsverb',
     flags=bit.bor(EXTRA, NOTADR, NEEDARG),
     addr_type=ADDR_LINES,
-    func='ex_wsverb',
+    func='ex_ni',
   },
   {
     command='wshada',

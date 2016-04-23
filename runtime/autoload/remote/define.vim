@@ -1,7 +1,7 @@
 function! remote#define#CommandOnHost(host, method, sync, name, opts)
   let prefix = ''
 
-  if has_key(a:opts, 'range') 
+  if has_key(a:opts, 'range')
     if a:opts.range == '' || a:opts.range == '%'
       " -range or -range=%, pass the line range in a list
       let prefix = '<line1>,<line2>'
@@ -30,7 +30,7 @@ function! remote#define#CommandOnHost(host, method, sync, name, opts)
   exe s:GetCommandPrefix(a:name, a:opts)
         \ .' call remote#define#CommandBootstrap("'.a:host.'"'
         \ .                                ', "'.a:method.'"'
-        \ .                                ', "'.a:sync.'"'
+        \ .                                ', '.string(a:sync)
         \ .                                ', "'.a:name.'"'
         \ .                                ', '.string(a:opts).''
         \ .                                ', "'.join(forward_args, '').'"'
@@ -94,7 +94,7 @@ function! remote#define#AutocmdOnHost(host, method, sync, name, opts)
   let bootstrap_def = s:GetAutocmdPrefix(a:name, a:opts)
         \ .' call remote#define#AutocmdBootstrap("'.a:host.'"'
         \ .                                ', "'.a:method.'"'
-        \ .                                ', "'.a:sync.'"'
+        \ .                                ', '.string(a:sync)
         \ .                                ', "'.a:name.'"'
         \ .                                ', '.string(a:opts).''
         \ .                                ', "'.escape(forward, '"').'"'
@@ -133,7 +133,7 @@ function! remote#define#FunctionOnHost(host, method, sync, name, opts)
   exe 'autocmd! '.group.' FuncUndefined '.a:name
         \ .' call remote#define#FunctionBootstrap("'.a:host.'"'
         \ .                                 ', "'.a:method.'"'
-        \ .                                 ', "'.a:sync.'"'
+        \ .                                 ', '.string(a:sync)
         \ .                                 ', "'.a:name.'"'
         \ .                                 ', '.string(a:opts)
         \ .                                 ', "'.group.'"'
@@ -157,6 +157,9 @@ endfunction
 
 function! remote#define#FunctionOnChannel(channel, method, sync, name, opts)
   let rpcargs = [a:channel, '"'.a:method.'"', 'a:000']
+  if has_key(a:opts, 'range')
+    call add(rpcargs, '[a:firstline, a:lastline]')
+  endif
   call s:AddEval(rpcargs, a:opts)
 
   let function_def = s:GetFunctionPrefix(a:name, a:opts)
@@ -187,7 +190,7 @@ let s:next_gid = 1
 function! s:GetNextAutocmdGroup()
   let gid = s:next_gid
   let s:next_gid += 1
-  
+
   let group_name = 'RPC_DEFINE_AUTOCMD_GROUP_'.gid
   " Ensure the group is defined
   exe 'augroup '.group_name.' | augroup END'
@@ -218,7 +221,11 @@ endfunction
 
 
 function! s:GetFunctionPrefix(name, opts)
-  return "function! ".a:name."(...)\n"
+  let res = "function! ".a:name."(...)"
+  if has_key(a:opts, 'range')
+    let res = res." range"
+  endif
+  return res."\n"
 endfunction
 
 

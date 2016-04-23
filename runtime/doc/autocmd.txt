@@ -1,4 +1,4 @@
-*autocmd.txt*   For Vim version 7.4.  Last change: 2014 Sep 23
+*autocmd.txt*   For Vim version 7.4.  Last change: 2015 Aug 18
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -251,12 +251,14 @@ Name			triggered by ~
 
 |SwapExists|		detected an existing swap file
 |TermOpen|		when a terminal buffer is starting
+|TermClose|		when a terminal buffer ends
 
 	Options
 |FileType|		when the 'filetype' option has been set
 |Syntax|		when the 'syntax' option has been set
 |EncodingChanged|	after the 'encoding' option has been changed
 |TermChanged|		after the value of 'term' has changed
+|OptionSet|		after setting any option
 
 	Startup and exit
 |VimEnter|		after doing all the startup stuff
@@ -305,6 +307,8 @@ Name			triggered by ~
 |InsertLeave|		when leaving Insert mode
 |InsertCharPre|		when a character was typed in Insert mode, before
 			inserting it
+
+|TextYankPost|		when some text is yanked or deleted
 
 |TextChanged|		after a change was made to the text in Normal mode
 |TextChangedI|		after a change was made to the text in Insert mode
@@ -720,6 +724,18 @@ InsertCharPre			When a character is typed in Insert mode,
 				It is not allowed to change the text |textlock|.
 				The event is not triggered when 'paste' is
 				set.
+							*TextYankPost*
+TextYankPost			Just after a |yank| or |deleting| command, but not
+				if the black hole register |quote_| is used nor
+				for |setreg()|. Pattern must be * because its
+				meaning may change in the future.
+				Sets these |v:event| keys:
+					operator
+					regcontents
+					regname
+					regtype
+				Recursion is ignored.
+				It is not allowed to change the text |textlock|.
 							*InsertEnter*
 InsertEnter			Just before starting Insert mode.  Also for
 				Replace mode and Virtual Replace mode.  The
@@ -744,6 +760,26 @@ MenuPopup			Just before showing the popup menu (under the
 					o	Operator-pending
 					i	Insert
 					c	Command line
+							*OptionSet*
+OptionSet			After setting an option.  The pattern is
+				matched against the long option name.
+				The |v:option_old| variable indicates the
+				old option value, |v:option_new| variable
+				indicates the newly set value, the
+				|v:option_type| variable indicates whether
+				it's global or local scoped and |<amatch>|
+				indicates what option has been set.
+
+				Usage example: Check for the existence of the
+				directory in the 'backupdir' and 'undodir'
+				options, create the directory if it doesn't
+				exist yet.
+
+				Note: It's a bad idea to reset an option
+				during this autocommand, this may break a
+				plugin. You can always use `:noa` to prevent
+				triggering this autocommand.
+
 							*QuickFixCmdPre*
 QuickFixCmdPre			Before a quickfix command is run (|:make|,
 				|:lmake|, |:grep|, |:lgrep|, |:grepadd|,
@@ -871,6 +907,8 @@ TermChanged			After the value of 'term' has changed.  Useful
 				for re-loading the syntax file to update the
 				colors, fonts and other terminal-dependent
 				settings.  Executed for all loaded buffers.
+						 {Nvim} *TermClose*
+TermClose			When a terminal buffer ends.
 						 {Nvim} *TermOpen*
 TermOpen			When a terminal buffer is starting.  This can
 				be used to configure the terminal emulator by
@@ -951,6 +989,13 @@ WinLeave			Before leaving a window.  If the window to be
 ==============================================================================
 6. Patterns					*autocmd-patterns* *{pat}*
 
+The {pat} argument can be a comma separated list.  This works as if the
+command was given with each pattern separately.  Thus this command: >
+	:autocmd BufRead *.txt,*.info set et
+Is equivalent to: >
+	:autocmd BufRead *.txt set et
+	:autocmd BufRead *.info set et
+
 The file pattern {pat} is tested for a match against the file name in one of
 two ways:
 1. When there is no '/' in the pattern, Vim checks for a match against only
@@ -1019,7 +1064,7 @@ The pattern is interpreted like mostly used in file names:
 	[^ch]   match any character but 'c' and 'h'
 
 Note that for all systems the '/' character is used for path separator (even
-MS-DOS). This was done because the backslash is difficult to use in a pattern
+Windows). This was done because the backslash is difficult to use in a pattern
 and to make the autocommands portable across different systems.
 
 							*autocmd-changes*
@@ -1057,7 +1102,7 @@ Instead of a pattern buffer-local autocommands use one of these forms:
 Examples: >
     :au CursorHold <buffer>  echo 'hold'
     :au CursorHold <buffer=33>  echo 'hold'
-    :au CursorHold <buffer=abuf>  echo 'hold'
+    :au BufNewFile * au CursorHold <buffer=abuf>  echo 'hold'
 
 All the commands for autocommands also work with buffer-local autocommands,
 simply use the special string instead of the pattern.  Examples: >

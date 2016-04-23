@@ -1,4 +1,4 @@
-*change.txt*    For Vim version 7.4.  Last change: 2014 Jun 26
+*change.txt*    For Vim version 7.4.  Last change: 2015 Sep 06
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -366,13 +366,49 @@ Adding and subtracting ~
 CTRL-A			Add [count] to the number or alphabetic character at
 			or after the cursor.
 
+                                                       *v_CTRL-A*
+{Visual}CTRL-A		Add [count] to the number or alphabetic character in
+			the highlighted text.  {not in Vi}
+
+							*v_g_CTRL-A*
+{Visual}g CTRL-A	Add [count] to the number or alphabetic character in
+			the highlighted text. If several lines are
+		        highlighted, each one will be incremented by an
+			additional [count] (so effectively creating a
+			[count] incrementing sequence).  {not in Vi}
+			For Example, if you have this list of numbers:
+				1. ~
+				1. ~
+				1. ~
+				1. ~
+			Move to the second "1." and Visually select three
+			lines, pressing g CTRL-A results in:
+				1. ~
+				2. ~
+				3. ~
+				4. ~
+
 							*CTRL-X*
 CTRL-X			Subtract [count] from the number or alphabetic
 			character at or after the cursor.
 
+							*v_CTRL-X*
+{Visual}CTRL-X		Subtract [count] from the number or alphabetic
+			character in the highlighted text.  {not in Vi}
+
+							*v_g_CTRL-X*
+{Visual}g CTRL-X	Subtract [count] from the number or alphabetic
+			character in the highlighted text. If several lines
+			are highlighted, each value will be decremented by an
+			additional [count] (so effectively creating a [count]
+			decrementing sequence).  {not in Vi}
+
 The CTRL-A and CTRL-X commands work for (signed) decimal numbers, unsigned
-octal and hexadecimal numbers and alphabetic characters.  This depends on the
-'nrformats' option.
+binary/octal/hexadecimal numbers and alphabetic characters.
+
+This depends on the 'nrformats' option:
+- When 'nrformats' includes "bin", Vim assumes numbers starting with '0b' or
+  '0B' are binary.
 - When 'nrformats' includes "octal", Vim considers numbers starting with a '0'
   to be octal, unless the number includes a '8' or '9'.  Other numbers are
   decimal and may have a preceding minus sign.
@@ -386,6 +422,10 @@ octal and hexadecimal numbers and alphabetic characters.  This depends on the
   under or after the cursor.  This is useful to make lists with an alphabetic
   index.
 
+For decimals a leading negative sign is considered for incrementing or
+decrementing, for binary and octal and hex values, it won't be considered.  To
+ignore the sign Visually select the number before using CTRL-A or CTRL-X. 
+
 For numbers with leading zeros (including all octal and hexadecimal numbers),
 Vim preserves the number of characters in the number when possible.  CTRL-A on
 "0077" results in "0100", CTRL-X on "0x100" results in "0x0ff".
@@ -396,6 +436,10 @@ octal number.
 
 Note that when 'nrformats' includes "octal", decimal numbers with leading
 zeros cause mistakes, because they can be confused with octal numbers.
+
+Note similarly, when 'nrformats' includes "bin", binary numbers with a leading
+'0x' or '0X' can be interpreted as hexadecimal rather than binary since '0b'
+are valid hexadecimal digits.
 
 The CTRL-A command is very useful in a macro.  Example: Use the following
 steps to make a numbered list.
@@ -578,9 +622,9 @@ For MS-Windows: $TMP, $TEMP, $USERPROFILE, current-dir.
 			may add [flags], see |:s_flags|.
 			Note that after `:substitute` the '&' flag can't be
 			used, it's recognized as a pattern separator.
-			The space between `:substitute` and the 'c', 'g' and
-			'r' flags isn't required, but in scripts it's a good
-			idea to keep it to avoid confusion.
+			The space between `:substitute` and the 'c', 'g',
+			'i', 'I' and 'r' flags isn't required, but in scripts
+			it's a good idea to keep it to avoid confusion.
 
 :[range]~[&][flags] [count]					*:~*
 			Repeat last substitute with same substitute string
@@ -832,13 +876,13 @@ This replaces each 'E' character with a euro sign.  Read more in |<Char->|.
 :promptf[ind] [string]
 			Put up a Search dialog.  When [string] is given, it is
 			used as the initial search string.
-			{only for Win32, Motif and GTK GUI}
+			{only for Win32 GUI}
 
 						*:promptr* *:promptrepl*
 :promptr[epl] [string]
 			Put up a Search/Replace dialog.  When [string] is
 			given, it is used as the initial search string.
-			{only for Win32, Motif and GTK GUI}
+			{only for Win32 GUI}
 
 
 4.4 Changing tabs					*change-tabs*
@@ -1058,16 +1102,17 @@ Rationale:	In Vi the "y" command followed by a backwards motion would
 With a linewise yank command the cursor is put in the first line, but the
 column is unmodified, thus it may not be on the first yanked character.
 
-There are nine types of registers:			*registers* *E354*
+There are ten types of registers:			*registers* *E354*
 1. The unnamed register ""
 2. 10 numbered registers "0 to "9
 3. The small delete register "-
 4. 26 named registers "a to "z or "A to "Z
-5. four read-only registers ":, "., "% and "#
-6. the expression register "=
-7. The selection and drop registers "*, "+ and "~ 
-8. The black hole register "_
-9. Last search pattern register "/
+5. three read-only registers ":, "., "%
+6. alternate buffer register "#
+7. the expression register "=
+8. The selection and drop registers "*, "+ and "~ 
+9. The black hole register "_
+10. Last search pattern register "/
 
 1. Unnamed register ""				*quote_quote* *quotequote*
 Vim fills this register with text deleted with the "d", "c", "s", "x" commands
@@ -1109,7 +1154,7 @@ letters to replace their previous contents or as uppercase letters to append
 to their previous contents.  When the '>' flag is present in 'cpoptions' then
 a line break is inserted before the appended text.
 
-5. Read-only registers ":, "., "% and "#
+5. Read-only registers ":, ". and "%
 These are '%', '#', ':' and '.'.  You can use them only with the "p", "P",
 and ":put" commands and with CTRL-R.
 						*quote_.* *quote.* *E29*
@@ -1120,8 +1165,6 @@ and ":put" commands and with CTRL-R.
 		('textwidth' and other options affect what is inserted).
 							*quote_%* *quote%*
 	"%	Contains the name of the current file.
-							*quote_#* *quote#*
-	"#	Contains the name of the alternate file.
 						*quote_:* *quote:* *E30*
 	":	Contains the most recent executed command-line.  Example: Use
 		"@:" to repeat the previous command-line command.
@@ -1129,15 +1172,33 @@ and ":put" commands and with CTRL-R.
 		one character of it was typed.  Thus it remains unchanged if
 		the command was completely from a mapping.
 
-6. Expression register "=			*quote_=* *quote=* *@=*
+							*quote_#* *quote#*
+6. Alternate file register "#
+Contains the name of the alternate file for the current window.  It will
+change how the |CTRL-^| command works.
+This register is writable, mainly to allow for restoring it after a plugin has
+changed it.  It accepts buffer number: >
+    let altbuf = bufnr(@#)
+    ...
+    let @# = altbuf
+It will give error |E86| if you pass buffer number and this buffer does not
+exist.
+It can also accept a match with an existing buffer name: >
+    let @# = 'buffer_name'
+Error |E93| if there is more than one buffer matching the given name or |E94|
+if none of buffers matches the given name.
+
+7. Expression register "=			*quote_=* *quote=* *@=*
 This is not really a register that stores text, but is a way to use an
 expression in commands which use a register.  The expression register is
-read-only; you cannot put text into it.  After the '=', the cursor moves to
-the command-line, where you can enter any expression (see |expression|).  All
-normal command-line editing commands are available, including a special
-history for expressions.  When you end the command-line by typing <CR>, Vim
-computes the result of the expression.  If you end it with <Esc>, Vim abandons
-the expression.  If you do not enter an expression, Vim uses the previous
+read-write.
+
+When typing the '=' after " or CTRL-R the cursor moves to the command-line,
+where you can enter any expression (see |expression|).  All normal
+command-line editing commands are available, including a special history for
+expressions.  When you end the command-line by typing <CR>, Vim computes the
+result of the expression.  If you end it with <Esc>, Vim abandons the
+expression.  If you do not enter an expression, Vim uses the previous
 expression (like with the "/" command).
 
 The expression must evaluate to a String.  A Number is always automatically
@@ -1150,35 +1211,23 @@ If the "= register is used for the "p" command, the String is split up at <NL>
 characters.  If the String ends in a <NL>, it is regarded as a linewise
 register.
 
-7. Selection and drop registers "*, "+ and "~ 
+8. Selection and drop registers "*, "+ and "~ 
 Use these registers for storing and retrieving the selected text for the GUI.
 See |quotestar| and |quoteplus|.  When the clipboard is not available or not
 working, the unnamed register is used instead.  For Unix systems and Mac OS X,
 see |nvim-clipboard|.
 
-						*quote_~* *quote~* *<Drop>*
-The read-only "~ register stores the dropped text from the last drag'n'drop
-operation.  When something has been dropped onto Vim, the "~ register is
-filled in and the <Drop> pseudo key is sent for notification.  You can remap
-this key if you want; the default action (for all modes) is to insert the
-contents of the "~ register at the cursor position.
-{only available when compiled with the |+dnd| feature, currently only with the
-GTK GUI}
-
-Note: The "~ register is only used when dropping plain text onto Vim.
-Drag'n'drop of URI lists is handled internally.
-
-8. Black hole register "_				*quote_*
+9. Black hole register "_				*quote_*
 When writing to this register, nothing happens.  This can be used to delete
 text without affecting the normal registers.  When reading from this register,
 nothing is returned.
 
-9. Last search pattern register	"/			*quote_/* *quote/*
+10. Last search pattern register	"/		*quote_/* *quote/*
 Contains the most recent search-pattern.  This is used for "n" and 'hlsearch'.
 It is writable with `:let`, you can change it to have 'hlsearch' highlight
 other matches without actually searching.  You can't yank or delete into this
 register.  The search direction is available in |v:searchforward|.
-Note that the valued is restored when returning from a function
+Note that the value is restored when returning from a function
 |function-search-undo|.
 
 							*@/*
@@ -1390,10 +1439,10 @@ When you hit Return in a C-comment, Vim will insert the middle comment leader
 for the new line: " * ".  To close this comment you just have to type "/"
 before typing anything else on the new line.  This will replace the
 middle-comment leader with the end-comment leader and apply any specified
-alignment, leaving just " */".  There is no need to hit BackSpace first.
+alignment, leaving just " */".  There is no need to hit Backspace first.
 
-When there is a match with a middle part, but there also is a maching end part
-which is longer, the end part is used.  This makes a C style comment work
+When there is a match with a middle part, but there also is a matching end
+part which is longer, the end part is used.  This makes a C style comment work
 without requiring the middle part to end with a space.
 
 Here is an example of alignment flags at work to make a comment stand out
@@ -1597,7 +1646,7 @@ Vim has a sorting function and a sorting command.  The sorting function can be
 found here: |sort()|, |uniq()|.
 
 							*:sor* *:sort*
-:[range]sor[t][!] [i][u][r][n][x][o] [/{pattern}/]
+:[range]sor[t][!] [i][u][r][n][x][o][b] [/{pattern}/]
 			Sort lines in [range].  When no range is given all
 			lines are sorted.
 
@@ -1615,6 +1664,9 @@ found here: |sort()|, |uniq()|.
 			One leading '-' is included in the number.
 
 			With [o] sorting is done on the first octal number in
+			the line (after or inside a {pattern} match).
+
+			With [b] sorting is done on the first binary number in
 			the line (after or inside a {pattern} match).
 
 			With [u] only keep the first of a sequence of

@@ -1,4 +1,4 @@
-*term.txt*      For Vim version 7.4.  Last change: 2014 May 13
+*term.txt*      For Vim version 7.4.  Last change: 2015 Feb 23
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -357,7 +357,7 @@ adjust the various t_ codes.  This avoids the problem that the xterm can
 produce different codes, depending on the mode it is in (8-bit, VT102,
 VT220, etc.).  The result is that codes like <xF1> are no longer needed.
 Note: This is only done on startup.  If the xterm options are changed after
-Vim has started, the escape sequences may not be recognized any more.
+Vim has started, the escape sequences may not be recognized anymore.
 
 							*xterm-resize*
 Window resizing with xterm only works if the allowWindowOps resource is
@@ -425,11 +425,9 @@ cleared when scrolling).
 Unfortunately it is not possible to deduce from the termcap how cursor
 positioning should be done when using a scrolling region: Relative to the
 beginning of the screen or relative to the beginning of the scrolling region.
-Most terminals use the first method.  A known exception is the MS-DOS console
-(pcterm).  The 't_CS' option should be set to any string when cursor
-positioning is relative to the start of the scrolling region.  It should be
-set to an empty string otherwise.  It defaults to "yes" when 'term' is
-"pcterm".
+Most terminals use the first method.  The 't_CS' option should be set to any
+string when cursor positioning is relative to the start of the scrolling
+region.  It should be set to an empty string otherwise.
 
 Note for xterm users: The shifted cursor keys normally don't work.  You can
 	make them work with the xmodmap command and some mappings in Vim.
@@ -672,10 +670,9 @@ border, the text is scrolled.
 A selection can be started by pressing the left mouse button on the first
 character, moving the mouse to the last character, then releasing the mouse
 button.  You will not always see the selection until you release the button,
-only in some versions (GUI, MS-DOS, WIN32) will the dragging be shown
-immediately.  Note that you can make the text scroll by moving the mouse at
-least one character in the first/last line in the window when 'scrolloff' is
-non-zero.
+only in some versions (GUI, Windows) will the dragging be shown immediately.
+Note that you can make the text scroll by moving the mouse at least one
+character in the first/last line in the window when 'scrolloff' is non-zero.
 
 In Normal, Visual and Select mode clicking the right mouse button causes the
 Visual area to be extended.  When 'mousemodel' is "popup", the left button has
@@ -689,9 +686,9 @@ work on systems where the window manager consumes the mouse events when the
 alt key is pressed (it may move the window).
 
 							*double-click*
-Double, triple and quadruple clicks are supported when the GUI is active,
-for MS-DOS and Win32, and for an xterm (if the gettimeofday() function is
-available).  For selecting text, extra clicks extend the selection:
+Double, triple and quadruple clicks are supported when the GUI is active, for
+Windows and for an xterm.  For selecting text, extra clicks extend the
+selection:
 	click		select ~
 	double		word or % match		*<2-LeftMouse>*
 	triple		line			*<3-LeftMouse>*

@@ -1,7 +1,7 @@
 " Vim support file to detect file types
 "
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2015 Jan 07
+" Last Change:	2015 Oct 13
 
 " Listen very carefully, I will say this only once
 if exists("did_load_filetypes")
@@ -139,7 +139,7 @@ au BufNewFile,BufRead .arch-inventory,=tagging-method	setf arch
 au BufNewFile,BufRead *.art			setf art
 
 " AsciiDoc
-au BufNewFile,BufRead *.asciidoc		setf asciidoc
+au BufNewFile,BufRead *.asciidoc,*.adoc		setf asciidoc
 
 " ASN.1
 au BufNewFile,BufRead *.asn,*.asn1		setf asn
@@ -303,6 +303,9 @@ au BufNewFile,BufRead *.bl			setf blank
 
 " Blkid cache file
 au BufNewFile,BufRead */etc/blkid.tab,*/etc/blkid.tab.old   setf xml
+
+" Bazel (http://bazel.io)
+autocmd BufRead,BufNewFile *.bzl,BUILD,WORKSPACE setfiletype bzl
 
 " C or lpc
 au BufNewFile,BufRead *.c			call s:FTlpc()
@@ -495,7 +498,7 @@ au BufNewFile,BufRead *.prg
 	\ endif
 
 " Clojure
-au BufNewFile,BufRead *.clj,*.cljs		setf clojure
+au BufNewFile,BufRead *.clj,*.cljs,*.cljx,*.cljc		setf clojure
 
 " Cmake
 au BufNewFile,BufRead CMakeLists.txt,*.cmake,*.cmake.in		setf cmake
@@ -772,10 +775,9 @@ au BufNewFile,BufRead *.mo,*.gdmo		setf gdmo
 au BufNewFile,BufRead *.ged,lltxxxxx.txt	setf gedcom
 
 " Git
-au BufNewFile,BufRead *.git/COMMIT_EDITMSG	setf gitcommit
-au BufNewFile,BufRead *.git/MERGE_MSG		setf gitcommit
+au BufNewFile,BufRead COMMIT_EDITMSG		setf gitcommit
+au BufNewFile,BufRead MERGE_MSG			setf gitcommit
 au BufNewFile,BufRead *.git/config,.gitconfig,.gitmodules setf gitconfig
-au BufNewFile,BufRead *.git/modules/*/COMMIT_EDITMSG setf gitcommit
 au BufNewFile,BufRead *.git/modules/*/config	setf gitconfig
 au BufNewFile,BufRead */.config/git/config	setf gitconfig
 if !empty($XDG_CONFIG_HOME)
@@ -823,7 +825,7 @@ au BufNewFile,BufRead *.gs			setf grads
 au BufNewFile,BufRead *.gretl			setf gretl
 
 " Groovy
-au BufNewFile,BufRead *.groovy			setf groovy
+au BufNewFile,BufRead *.gradle,*.groovy		setf groovy
 
 " GNU Server Pages
 au BufNewFile,BufRead *.gsp			setf gsp
@@ -869,7 +871,7 @@ func! s:FThtml()
       setf xhtml
       return
     endif
-    if getline(n) =~ '{%\s*\(extends\|block\|load\)\>'
+    if getline(n) =~ '{%\s*\(extends\|block\|load\)\>\|{#\s\+'
       setf htmldjango
       return
     endif
@@ -1165,7 +1167,7 @@ func! s:FTm()
   let n = 1
   while n < 10
     let line = getline(n)
-    if line =~ '^\s*\(#\s*\(include\|import\)\>\|/\*\|//\)'
+    if line =~ '^\s*\(#\s*\(include\|import\)\>\|@import\>\|/\*\|//\)'
       setf objc
       return
     endif
@@ -1263,8 +1265,8 @@ au BufNewFile,BufRead */etc/modules.conf,*/etc/modules,*/etc/conf.modules setf m
 " Mplayer config
 au BufNewFile,BufRead mplayer.conf,*/.mplayer/config	setf mplayerconf
 
-" Moterola S record
-au BufNewFile,BufRead *.s19,*.s28,*.s37		setf srec
+" Motorola S record
+au BufNewFile,BufRead *.s19,*.s28,*.s37,*.mot,*.srec	setf srec
 
 " Mrxvtrc
 au BufNewFile,BufRead mrxvtrc,.mrxvtrc		setf mrxvtrc
@@ -1291,7 +1293,7 @@ au BufNewFile,BufRead *.mush			setf mush
 au BufNewFile,BufRead Mutt{ng,}rc		setf muttrc
 
 " Nano
-au BufNewFile,BufRead */etc/nanorc,.nanorc	setf nanorc
+au BufNewFile,BufRead */etc/nanorc,*.nanorc  	setf nanorc
 
 " Nastran input/DMAP
 "au BufNewFile,BufRead *.dat			setf nastran
@@ -1333,7 +1335,7 @@ func! s:FTmm()
   let n = 1
   while n < 10
     let line = getline(n)
-    if line =~ '^\s*\(#\s*\(include\|import\)\>\|/\*\)'
+    if line =~ '^\s*\(#\s*\(include\|import\)\>\|@import\>\|/\*\)'
       setf objcpp
       return
     endif
@@ -1394,7 +1396,7 @@ else
   au BufNewFile,BufRead *.pl			call s:FTpl()
 endif
 au BufNewFile,BufRead *.plx,*.al		setf perl
-au BufNewFile,BufRead *.p6,*.pm6		setf perl6
+au BufNewFile,BufRead *.p6,*.pm6,*.pl6	setf perl6
 
 func! s:FTpl()
   if exists("g:filetype_pl")
@@ -1423,6 +1425,7 @@ au BufNewFile,BufRead *.pm
 
 " Perl POD
 au BufNewFile,BufRead *.pod			setf pod
+au BufNewFile,BufRead *.pod6		setf pod6
 
 " Php, php3, php4, etc.
 " Also Phtml (was used for PHP 2 in the past)
@@ -1855,7 +1858,7 @@ au BufNewFile,BufRead sgml.catalog*		call s:StarSetf('catalog')
 
 " Shell scripts (sh, ksh, bash, bash2, csh); Allow .profile_foo etc.
 " Gentoo ebuilds and Arch Linux PKGBUILDs are actually bash scripts
-au BufNewFile,BufRead .bashrc*,bashrc,bash.bashrc,.bash_profile*,.bash_logout*,.bash_aliases*,*.bash,*.ebuild,PKGBUILD* call SetFileTypeSH("bash")
+au BufNewFile,BufRead .bashrc*,bashrc,bash.bashrc,.bash[_-]profile*,.bash[_-]logout*,.bash[_-]aliases*,*.bash,*/{,.}bash[_-]completion{,.d,.sh}{,/*},*.ebuild,*.eclass call SetFileTypeSH("bash")
 au BufNewFile,BufRead .kshrc*,*.ksh call SetFileTypeSH("ksh")
 au BufNewFile,BufRead */etc/profile,.profile*,*.sh,*.env call SetFileTypeSH(getline(1))
 
@@ -2033,6 +2036,10 @@ func! s:FTRules()
     setf conf  " Better than hog
     return
   endif
+  if path =~ '^/\(etc\|usr/share\)/polkit-1/rules\.d'
+    setf javascript
+    return
+  endif
   try
     let config_lines = readfile('/etc/udev/udev.conf')
   catch /^Vim\%((\a\+)\)\=:E484/
@@ -2115,6 +2122,9 @@ au BufNewFile,BufRead *.cm			setf voscm
 " Sysctl
 au BufNewFile,BufRead */etc/sysctl.conf,*/etc/sysctl.d/*.conf	setf sysctl
 
+" Systemd unit files
+au BufNewFile,BufRead */systemd/*.{automount,mount,path,service,socket,swap,target,timer}	setf systemd
+
 " Synopsys Design Constraints
 au BufNewFile,BufRead *.sdc			setf sdc
 
@@ -2169,6 +2179,9 @@ au BufNewFile,BufRead *.tli			setf tli
 
 " Telix Salt
 au BufNewFile,BufRead *.slt			setf tsalt
+
+" Tera Term Language
+au BufRead,BufNewFile *.ttl			setf teraterm
 
 " Terminfo
 au BufNewFile,BufRead *.ti			setf terminfo

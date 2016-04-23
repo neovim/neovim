@@ -41,24 +41,32 @@ include_directories(${GENERATED_DIR})
 include_directories(${GENERATED_INCLUDES_DIR})
 
 file(MAKE_DIRECTORY ${GENERATED_DIR})
-file(MAKE_DIRECTORY ${GENERATED_DIR}/os)
-file(MAKE_DIRECTORY ${GENERATED_DIR}/api)
-file(MAKE_DIRECTORY ${GENERATED_DIR}/api/private)
-file(MAKE_DIRECTORY ${GENERATED_DIR}/msgpack_rpc)
-file(MAKE_DIRECTORY ${GENERATED_DIR}/tui)
-file(MAKE_DIRECTORY ${GENERATED_DIR}/event)
 file(MAKE_DIRECTORY ${GENERATED_INCLUDES_DIR})
-file(MAKE_DIRECTORY ${GENERATED_INCLUDES_DIR}/os)
-file(MAKE_DIRECTORY ${GENERATED_INCLUDES_DIR}/api)
-file(MAKE_DIRECTORY ${GENERATED_INCLUDES_DIR}/api/private)
-file(MAKE_DIRECTORY ${GENERATED_INCLUDES_DIR}/msgpack_rpc)
-file(MAKE_DIRECTORY ${GENERATED_INCLUDES_DIR}/tui)
-file(MAKE_DIRECTORY ${GENERATED_INCLUDES_DIR}/event)
 
-file(GLOB NEOVIM_SOURCES *.c os/*.c api/*.c api/private/*.c msgpack_rpc/*.c
-  tui/*.c event/*.c)
+file(GLOB NEOVIM_SOURCES *.c)
+
+foreach(subdir
+        os
+        api
+        api/private
+        msgpack_rpc
+        tui
+        event
+        eval
+       )
+  file(MAKE_DIRECTORY ${GENERATED_DIR}/${subdir})
+  file(MAKE_DIRECTORY ${GENERATED_INCLUDES_DIR}/${subdir})
+  file(GLOB sources ${subdir}/*.c)
+  list(APPEND NEOVIM_SOURCES ${sources})
+endforeach()
+
 file(GLOB_RECURSE NEOVIM_HEADERS *.h)
 file(GLOB UNIT_TEST_FIXTURES ${PROJECT_SOURCE_DIR}/test/unit/fixtures/*.c)
+
+# Sort file lists to ensure generated files are created in the same order from
+# build to build.
+list(SORT NEOVIM_SOURCES)
+list(SORT NEOVIM_HEADERS)
 
 foreach(sfile ${NEOVIM_SOURCES})
   get_filename_component(f ${sfile} NAME)
@@ -72,11 +80,9 @@ list(REMOVE_ITEM NEOVIM_SOURCES ${to_remove})
 # Handle legacy files that don't yet pass -Wconversion.
 set(CONV_SOURCES
   buffer.c
-  charset.c
   diff.c
   edit.c
   eval.c
-  ex_cmds2.c
   ex_cmds.c
   ex_docmd.c
   ex_getln.c
@@ -85,10 +91,7 @@ set(CONV_SOURCES
   mbyte.c
   memline.c
   message.c
-  misc1.c
   ops.c
-  path.c
-  quickfix.c
   regexp.c
   screen.c
   search.c
@@ -106,6 +109,10 @@ endforeach()
 if(NOT MSVC)
   set_source_files_properties(
     ${CONV_SOURCES} PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} -Wno-conversion")
+endif()
+
+if(DEFINED MIN_LOG_LEVEL)
+  add_definitions(-DMIN_LOG_LEVEL=${MIN_LOG_LEVEL})
 endif()
 
 get_directory_property(gen_cdefs COMPILE_DEFINITIONS)

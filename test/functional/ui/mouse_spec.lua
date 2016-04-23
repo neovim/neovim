@@ -1,7 +1,8 @@
 local helpers = require('test.functional.helpers')
 local Screen = require('test.functional.ui.screen')
-local clear, feed, nvim = helpers.clear, helpers.feed, helpers.nvim
+local clear, feed, meths = helpers.clear, helpers.feed, helpers.meths
 local insert, execute = helpers.insert, helpers.execute
+local eq, funcs = helpers.eq, helpers.funcs
 
 describe('Mouse input', function()
   local screen
@@ -13,10 +14,11 @@ describe('Mouse input', function()
 
   before_each(function()
     clear()
-    nvim('set_option', 'mouse', 'a')
+    meths.set_option('mouse', 'a')
+    meths.set_option('listchars', 'eol:$')
     -- set mouset to very high value to ensure that even in valgrind/travis,
     -- nvim will still pick multiple clicks
-    nvim('set_option', 'mouset', 5000)
+    meths.set_option('mouset', 5000)
     screen = Screen.new(25, 5)
     screen:attach()
     screen:set_default_attr_ids({
@@ -57,31 +59,149 @@ describe('Mouse input', function()
     ]])
   end)
 
-  it('left click in tabline switches to tab', function()
+  describe('tabline', function()
     local tab_attrs = {
       tab  = { background=Screen.colors.LightGrey, underline=true },
       sel  = { bold=true },
       fill = { reverse=true }
     }
-    execute('%delete')
-    insert('this is foo')
-    execute('silent file foo | tabnew | file bar')
-    insert('this is bar')
-    screen:expect([[
-      {tab: + foo }{sel: + bar }{fill:          }{tab:X}|
-      this is ba^r              |
-      ~                        |
-      ~                        |
-                               |
-    ]], tab_attrs)
-    feed('<LeftMouse><4,0>')
-    screen:expect([[
-      {sel: + foo }{tab: + bar }{fill:          }{tab:X}|
-      this is fo^o              |
-      ~                        |
-      ~                        |
-                               |
-    ]], tab_attrs)
+
+    it('left click in default tabline (position 4) switches to tab', function()
+      execute('%delete')
+      insert('this is foo')
+      execute('silent file foo | tabnew | file bar')
+      insert('this is bar')
+      screen:expect([[
+        {tab: + foo }{sel: + bar }{fill:          }{tab:X}|
+        this is ba^r              |
+        ~                        |
+        ~                        |
+                                 |
+      ]], tab_attrs)
+      feed('<LeftMouse><4,0>')
+      screen:expect([[
+        {sel: + foo }{tab: + bar }{fill:          }{tab:X}|
+        this is fo^o              |
+        ~                        |
+        ~                        |
+                                 |
+      ]], tab_attrs)
+    end)
+
+    it('left click in default tabline (position 24) closes tab', function()
+      meths.set_option('hidden', true)
+      execute('%delete')
+      insert('this is foo')
+      execute('silent file foo | tabnew | file bar')
+      insert('this is bar')
+      screen:expect([[
+        {tab: + foo }{sel: + bar }{fill:          }{tab:X}|
+        this is ba^r              |
+        ~                        |
+        ~                        |
+                                 |
+      ]], tab_attrs)
+      feed('<LeftMouse><24,0>')
+      screen:expect([[
+        this is fo^o              |
+        ~                        |
+        ~                        |
+        ~                        |
+                                 |
+      ]], tab_attrs)
+    end)
+
+    it('double click in default tabline (position 4) opens new tab', function()
+      meths.set_option('hidden', true)
+      execute('%delete')
+      insert('this is foo')
+      execute('silent file foo | tabnew | file bar')
+      insert('this is bar')
+      screen:expect([[
+        {tab: + foo }{sel: + bar }{fill:          }{tab:X}|
+        this is ba^r              |
+        ~                        |
+        ~                        |
+                                 |
+      ]], tab_attrs)
+      feed('<2-LeftMouse><4,0>')
+      screen:expect([[
+        {sel:  Name] }{tab: + foo  + bar }{fill:  }{tab:X}|
+        ^                         |
+        ~                        |
+        ~                        |
+                                 |
+      ]], tab_attrs)
+    end)
+
+    describe('%@ label', function()
+      before_each(function()
+        execute([[
+          function Test(...)
+            let g:reply = a:000
+            return copy(a:000)  " Check for memory leaks: return should be freed
+          endfunction
+        ]])
+        execute([[
+          function Test2(...)
+            return call('Test', a:000 + [2])
+          endfunction
+        ]])
+        meths.set_option('tabline', '%@Test@test%X-%5@Test2@test2')
+        meths.set_option('showtabline', 2)
+        screen:expect([[
+          {fill:test-test2               }|
+          mouse                    |
+          support and selectio^n    |
+          ~                        |
+                                   |
+        ]], tab_attrs)
+        meths.set_var('reply', {})
+      end)
+
+      local check_reply = function(expected)
+        eq(expected, meths.get_var('reply'))
+        meths.set_var('reply', {})
+      end
+
+      local test_click = function(name, click_str, click_num, mouse_button,
+                                  modifiers)
+        it(name .. ' works', function()
+          eq(1, funcs.has('tablineat'))
+          feed(click_str .. '<3,0>')
+          check_reply({0, click_num, mouse_button, modifiers})
+          feed(click_str .. '<4,0>')
+          check_reply({})
+          feed(click_str .. '<6,0>')
+          check_reply({5, click_num, mouse_button, modifiers, 2})
+          feed(click_str .. '<13,0>')
+          check_reply({5, click_num, mouse_button, modifiers, 2})
+        end)
+      end
+
+      test_click('single left click', '<LeftMouse>', 1, 'l', '    ')
+      test_click('shifted single left click', '<S-LeftMouse>', 1, 'l', 's   ')
+      test_click('shifted single left click with alt modifier',
+                 '<S-A-LeftMouse>', 1, 'l', 's a ')
+      test_click('shifted single left click with alt and ctrl modifiers',
+                 '<S-C-A-LeftMouse>', 1, 'l', 'sca ')
+      -- <C-RightMouse> does not work
+      test_click('shifted single right click with alt modifier',
+                 '<S-A-RightMouse>', 1, 'r', 's a ')
+      -- Modifiers do not work with MiddleMouse
+      test_click('shifted single middle click with alt and ctrl modifiers',
+                 '<MiddleMouse>', 1, 'm', '    ')
+      -- Modifiers do not work with N-*Mouse
+      test_click('double left click', '<2-LeftMouse>', 2, 'l', '    ')
+      test_click('triple left click', '<3-LeftMouse>', 3, 'l', '    ')
+      test_click('quadruple left click', '<4-LeftMouse>', 4, 'l', '    ')
+      test_click('double right click', '<2-RightMouse>', 2, 'r', '    ')
+      test_click('triple right click', '<3-RightMouse>', 3, 'r', '    ')
+      test_click('quadruple right click', '<4-RightMouse>', 4, 'r', '    ')
+      test_click('double middle click', '<2-MiddleMouse>', 2, 'm', '    ')
+      test_click('triple middle click', '<3-MiddleMouse>', 3, 'm', '    ')
+      test_click('quadruple middle click', '<4-MiddleMouse>', 4, 'm', '    ')
+    end)
   end)
 
   it('left drag changes visual selection', function()
@@ -210,7 +330,7 @@ describe('Mouse input', function()
   end)
 
   it('ctrl + left click will search for a tag', function()
-    nvim('set_option', 'tags', './non-existent-tags-file')
+    meths.set_option('tags', './non-existent-tags-file')
     feed('<C-LeftMouse><0,0>')
     screen:expect([[
       E433: No tags file       |

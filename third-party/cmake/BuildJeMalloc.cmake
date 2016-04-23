@@ -19,6 +19,6 @@ ExternalProject_Add(jemalloc
   CONFIGURE_COMMAND ${DEPS_BUILD_DIR}/src/jemalloc/configure
      CC=${DEPS_C_COMPILER} --prefix=${DEPS_INSTALL_DIR}
   BUILD_COMMAND ""
-  INSTALL_COMMAND ${MAKE_PRG} install_include install_lib)
+  INSTALL_COMMAND ${MAKE_PRG} install_include install_lib_static)
 
 list(APPEND THIRD_PARTY_DEPS jemalloc)

@@ -1,5 +1,3 @@
-
-#include <errno.h>
 #include <inttypes.h>
 #include <stdbool.h>
 #include <string.h>
@@ -119,6 +117,54 @@ char_u *vim_strsave_escaped_ext(const char_u *string, const char_u *esc_chars,
   *p2 = NUL;
 
   return escaped_string;
+}
+
+/// Save a copy of an unquoted string
+///
+/// Turns string like `a\bc"def\"ghi\\\n"jkl` into `a\bcdef"ghi\\njkl`, for use
+/// in shell_build_argv: the only purpose of backslash is making next character
+/// be treated literally inside the double quotes, if this character is
+/// backslash or quote.
+///
+/// @param[in]  string  String to copy.
+/// @param[in]  length  Length of the string to copy.
+///
+/// @return [allocated] Copy of the string.
+char *vim_strnsave_unquoted(const char *const string, const size_t length)
+  FUNC_ATTR_MALLOC FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_RET
+{
+#define ESCAPE_COND(p, inquote, string_end) \
+  (*p == '\\' && inquote && p + 1 < string_end && (p[1] == '\\' || p[1] == '"'))
+  size_t ret_length = 0;
+  bool inquote = false;
+  const char *const string_end = string + length;
+  for (const char *p = string; p < string_end; p++) {
+    if (*p == '"') {
+      inquote = !inquote;
+    } else if (ESCAPE_COND(p, inquote, string_end)) {
+      ret_length++;
+      p++;
+    } else {
+      ret_length++;
+    }
+  }
+
+  char *const ret = xmallocz(ret_length);
+  char *rp = ret;
+  inquote = false;
+  for (const char *p = string; p < string_end; p++) {
+    if (*p == '"') {
+      inquote = !inquote;
+    } else if (ESCAPE_COND(p, inquote, string_end)) {
+      *rp++ = *(++p);
+    } else {
+      *rp++ = *p;
+    }
+  }
+#undef ESCAPE_COND
+
+  return ret;
 }
 
 /*
@@ -379,9 +425,13 @@ char_u *vim_strchr(const char_u *string, int c)
   const char_u *p = string;
   if (enc_utf8 && c >= 0x80) {
     while (*p != NUL) {
-      if (utf_ptr2char(p) == c)
+      int l = (*mb_ptr2len)(p);
+
+      // Avoid matching an illegal byte here.
+      if (l > 1 && utf_ptr2char(p) == c) {
         return (char_u *) p;
-      p += (*mb_ptr2len)(p);
+      }
+      p += l;
     }
     return NULL;
   }

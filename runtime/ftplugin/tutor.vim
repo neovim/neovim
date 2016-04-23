@@ -21,8 +21,9 @@ setlocal iskeyword=@,-,_
 
 setlocal foldmethod=expr
 setlocal foldexpr=tutor#TutorFolds()
-setlocal foldcolumn=3
+setlocal foldcolumn=1
 setlocal foldlevel=4
+setlocal nowrap
 
 setlocal statusline=%{toupper(expand('%:t:r'))}\ tutorial%=
 setlocal statusline+=%{tutor#InfoText()}

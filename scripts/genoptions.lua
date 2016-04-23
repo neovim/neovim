@@ -39,6 +39,7 @@ local redraw_flags={
 
 local list_flags={
   comma='P_COMMA',
+  onecomma='P_ONECOMMA',
   flags='P_FLAGLIST',
   flagscomma='P_COMMA|P_FLAGLIST',
 }

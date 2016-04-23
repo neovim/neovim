@@ -53,7 +53,7 @@ run_unittests() {
 }
 
 run_functionaltests() {
-  if ! ${MAKE_CMD} -C "${BUILD_DIR}" functionaltest; then
+  if ! ${MAKE_CMD} -C "${BUILD_DIR}" ${FUNCTIONALTEST}; then
     asan_check "${LOG_DIR}"
     valgrind_check "${LOG_DIR}"
     exit 1

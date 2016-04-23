@@ -3,7 +3,7 @@
 
 local helpers = require('test.functional.helpers')
 local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
-local execute, expect = helpers.execute, helpers.expect
+local expect = helpers.expect
 
 describe('source function', function()
   setup(clear)

@@ -7,28 +7,38 @@ export SHELL := sh
 VIMPROG := ../../../build/bin/nvim
 SCRIPTSOURCE := ../../../runtime
 
-SCRIPTS := test_eval.out                                               \
-                                   test8.out               test10.out  \
-           test11.out  test12.out  test13.out  test14.out              \
-                       test17.out                                      \
-                                               test24.out              \
-                                                           test30.out  \
-                       test32.out              test34.out              \
-           test36.out  test37.out              test39.out  test40.out  \
-                       test42.out                          test45.out  \
-                       test47.out  test48.out  test49.out              \
-                       test52.out  test53.out              test55.out  \
-                                               test64.out              \
-                                   test68.out  test69.out              \
-                                   test73.out                          \
-                                               test79.out              \
-                                   test83.out                          \
-                                   test88.out                          \
-           test_listlbr.out                                            \
-           test_breakindent.out                                        \
-           test_charsearch.out                                         \
-           test_close_count.out                                        \
-           test_command_count.out                                      \
+SCRIPTS := \
+           test8.out              \
+           test10.out             \
+           test12.out             \
+           test13.out             \
+           test14.out             \
+           test17.out             \
+           test24.out             \
+           test30.out             \
+           test32.out             \
+           test34.out             \
+           test37.out             \
+           test40.out             \
+           test42.out             \
+           test47.out             \
+           test48.out             \
+           test49.out             \
+           test52.out             \
+           test53.out             \
+           test55.out             \
+           test64.out             \
+           test68.out             \
+           test69.out             \
+           test73.out             \
+           test79.out             \
+           test_listlbr.out       \
+           test_breakindent.out   \
+           test_close_count.out   \
+           test_marks.out         \
+           test_match_conceal.out \
+
+NEW_TESTS = test_viml.res
 
 SCRIPTS_GUI := test16.out
 
@@ -61,9 +71,9 @@ ifdef TESTNUM
 	SCRIPTS := test$(TESTNUM).out
 endif
 
-nongui: nolog $(SCRIPTS) report
+nongui: nolog $(SCRIPTS) newtests report
 
-gui:    nolog $(SCRIPTS) $(SCRIPTS_GUI) report
+gui:    nolog $(SCRIPTS) $(SCRIPTS_GUI) newtests report
 
 .gdbinit:
 	echo 'set $$_exitcode = -1\nrun\nif $$_exitcode != -1\n  quit\nend' > .gdbinit
@@ -90,9 +100,11 @@ RUN_VIM     := VIMRUNTIME=$(SCRIPTSOURCE); export VIMRUNTIME; $(TOOL) $(VIMPROG)
 clean:
 	-rm -rf *.out          \
 	        *.failed       \
+	        *.res          \
 	        *.rej          \
 	        *.orig         \
 	        test.log       \
+	        messages       \
 	        $(RM_ON_RUN)   \
 	        $(RM_ON_START) \
 	        valgrind.*     \
@@ -128,7 +140,7 @@ test1.out: .gdbinit test1.in
 
 	# Check if the test.out file matches test.ok.
 	@/bin/sh -c "if test -f test.out; then                \
-	                 if diff test.out $*.ok; then         \
+	                 if diff -u test.out $*.ok; then         \
 	                     mv -f test.out $*.out;           \
 	                 else                                 \
 	                     echo $* FAILED >> test.log;      \
@@ -145,4 +157,20 @@ test1.out: .gdbinit test1.in
 test49.out: test49.vim
 
 nolog:
-	-rm -f test.log
+	-rm -f test.log messages
+
+
+# New style of tests uses Vim script with assert calls.  These are easier
+# to write and a lot easier to read and debug.
+# Limitation: Only works with the +eval feature.
+RUN_VIMTEST = VIMRUNTIME=$(SCRIPTSOURCE); export VIMRUNTIME; $(VALGRIND) $(VIMPROG) -u unix.vim -U NONE --noplugin
+
+newtests: newtestssilent
+	@/bin/sh -c "if test -f messages && grep -q 'FAILED' messages; then \
+	                 cat messages && cat test.log;                      \
+	             fi"
+
+newtestssilent: $(NEW_TESTS)
+
+%.res: %.vim .gdbinit
+	$(RUN_VIMTEST) -u NONE -S runtest.vim $*.vim

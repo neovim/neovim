@@ -1,4 +1,4 @@
-*diff.txt*      For Vim version 7.4.  Last change: 2015 Jan 19
+*diff.txt*      For Vim version 7.4.  Last change: 2015 Jul 03
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -124,8 +124,9 @@ file for a moment and come back to the same file and be in diff mode again.
 		if the current window does not have 'diff' set then no options
 		in it are changed.
 
-The ":diffoff" command resets the relevant options to the values they had when
-using |:diffsplit|, |:diffpatch| , |:diffthis|. or starting Vim in diff mode.
+The `:diffoff` command resets the relevant options to the values they had when
+using `:diffsplit`, `:diffpatch` , `:diffthis`. or starting Vim in diff mode.
+When using `:diffoff` twice the last saved values are restored.
 Otherwise they are set to their default value:
 
 	'diff'		off
@@ -305,6 +306,19 @@ name or a part of a buffer name.  Examples:
 5. Diff options						*diff-options*
 
 Also see |'diffopt'| and the "diff" item of |'fillchars'|.
+
+					    *diff-slow* *diff_translations*
+For very long lines, the diff syntax highlighting might be slow, especially
+since it tries to match all different kind of localisations. To disable
+localisations and speed up the syntax highlighting, set the global variable
+g:diff_translations to zero: >
+
+    let g:diff_translations = 0
+<
+After setting this variable, Reload the syntax script: >
+
+    set syntax=diff
+<
 
 
 FINDING THE DIFFERENCES					*diff-diffexpr*

@@ -169,8 +169,8 @@ local type_to_class = {
 -- find the best cc. If os.exec causes problems on windows (like popping up
 -- a console window) we might consider using something like this:
 -- http://scite-ru.googlecode.com/svn/trunk/pack/tools/LuaLib/shell.html#exec
-local function find_best_cc(ccs)
-  for _, meta in pairs(ccs) do
+local function find_best_cc(compilers)
+  for _, meta in pairs(compilers) do
     local version = io.popen(tostring(meta.path) .. " -v 2>&1")
     version:close()
     if version then

@@ -1,27 +1,10 @@
-/*
- * VIM - Vi IMproved	by Bram Moolenaar
- *
- * Do ":help uganda"  in Vim to read copying and usage conditions.
- * Do ":help credits" in Vim to see a list of people who contributed.
- */
-
 #ifndef NVIM_GLOBALS_H
 #define NVIM_GLOBALS_H
 
 #include <stdbool.h>
+#include <inttypes.h>
 
-// EXTERN is only defined in main.c. That's where global variables are
-// actually defined and initialized.
-#ifndef EXTERN
-# define EXTERN extern
-# define INIT(x)
-#else
-# ifndef INIT
-#  define INIT(x) x
-#  define DO_INIT
-# endif
-#endif
-
+#include "nvim/macros.h"
 #include "nvim/ex_eval.h"
 #include "nvim/iconv.h"
 #include "nvim/mbyte.h"
@@ -55,6 +38,63 @@
 # endif
 #endif
 
+#ifdef WIN32
+# define _PATHSEPSTR "\\"
+#else
+# define _PATHSEPSTR "/"
+#endif
+
+#ifndef FILETYPE_FILE
+# define FILETYPE_FILE  "filetype.vim"
+#endif
+
+#ifndef FTPLUGIN_FILE
+# define FTPLUGIN_FILE  "ftplugin.vim"
+#endif
+
+#ifndef INDENT_FILE
+# define INDENT_FILE    "indent.vim"
+#endif
+
+#ifndef FTOFF_FILE
+# define FTOFF_FILE     "ftoff.vim"
+#endif
+
+#ifndef FTPLUGOF_FILE
+# define FTPLUGOF_FILE  "ftplugof.vim"
+#endif
+
+#ifndef INDOFF_FILE
+# define INDOFF_FILE    "indoff.vim"
+#endif
+
+#define DFLT_ERRORFILE  "errors.err"
+
+#ifndef SYS_VIMRC_FILE
+# define SYS_VIMRC_FILE "$VIM" _PATHSEPSTR "sysinit.vim"
+#endif
+
+#ifndef DFLT_HELPFILE
+# define DFLT_HELPFILE  "$VIMRUNTIME" _PATHSEPSTR "doc" _PATHSEPSTR "help.txt"
+#endif
+
+#ifndef SYNTAX_FNAME
+# define SYNTAX_FNAME   "$VIMRUNTIME" _PATHSEPSTR "syntax" _PATHSEPSTR "%s.vim"
+#endif
+
+#ifndef EXRC_FILE
+# define EXRC_FILE      ".exrc"
+#endif
+
+#ifndef VIMRC_FILE
+# define VIMRC_FILE     ".nvimrc"
+#endif
+
+typedef enum {
+  kNone  = -1,
+  kFalse = 0,
+  kTrue  = 1,
+} TriState;
 
 /* Values for "starting" */
 #define NO_SCREEN       2       /* no screen updating yet */
@@ -72,12 +112,9 @@
 #define DFLT_COLS       80              /* default value for 'columns' */
 #define DFLT_ROWS       24              /* default value for 'lines' */
 
-EXTERN long Rows                        /* nr of rows in the screen */
-#ifdef DO_INIT
-  = DFLT_ROWS
-#endif
-;
-EXTERN long Columns INIT(= DFLT_COLS);         /* nr of columns in the screen */
+EXTERN long Rows INIT(= DFLT_ROWS);     // nr of rows in the screen
+
+EXTERN long Columns INIT(= DFLT_COLS);  // nr of columns in the screen
 
 /*
  * The characters and attributes cached for the screen.
@@ -117,15 +154,6 @@ EXTERN int Screen_mco INIT(= 0);                /* value of p_mco used when
 /* Only used for euc-jp: Second byte of a character that starts with 0x8e.
  * These are single-width. */
 EXTERN schar_T  *ScreenLines2 INIT(= NULL);
-
-/*
- * Indexes for tab page line:
- *	N > 0 for label of tab page N
- *	N == 0 for no label
- *	N < 0 for closing tab page -N
- *	N == -999 for closing current tab page
- */
-EXTERN short    *TabPageIdxs INIT(= NULL);
 
 EXTERN int screen_Rows INIT(= 0);           /* actual size of ScreenLines[] */
 EXTERN int screen_Columns INIT(= 0);        /* actual size of ScreenLines[] */
@@ -175,6 +203,10 @@ EXTERN int compl_length INIT(= 0);
 /* Set when character typed while looking for matches and it means we should
  * stop looking for matches. */
 EXTERN int compl_interrupted INIT(= FALSE);
+
+// Set when doing something for completion that may call edit() recursively,
+// which is not allowed. Also used to disable folding during completion
+EXTERN int compl_busy INIT(= false);
 
 /* List of flags for method of completion. */
 EXTERN int compl_cont_status INIT(= 0);
@@ -633,7 +665,7 @@ EXTERN int silent_mode INIT(= FALSE);
 /* set to TRUE when "-s" commandline argument
  * used for ex */
 
-// Set to true when sourcing of startup scripts (nvimrc) is done.
+// Set to true when sourcing of startup scripts (init.vim) is done.
 // Used for options that cannot be changed after startup scripts.
 EXTERN bool did_source_startup_scripts INIT(= false);
 
@@ -706,11 +738,8 @@ EXTERN int can_si INIT(= FALSE);
  */
 EXTERN int can_si_back INIT(= FALSE);
 
-EXTERN pos_T saved_cursor               /* w_cursor before formatting text. */
-#ifdef DO_INIT
-  = INIT_POS_T(0, 0, 0)
-#endif
-;
+// w_cursor before formatting text.
+EXTERN pos_T saved_cursor INIT(= INIT_POS_T(0, 0, 0));
 
 /*
  * Stuff for insert mode.
@@ -753,6 +782,8 @@ EXTERN bool enc_utf8 INIT(= false);             /* UTF-8 encoded Unicode */
 EXTERN int enc_latin1like INIT(= TRUE);         /* 'encoding' is latin1 comp. */
 EXTERN int has_mbyte INIT(= 0);                 /* any multi-byte encoding */
 
+/// Encoding used when 'fencs' is set to "default"
+EXTERN char_u *fenc_default INIT(= NULL);
 
 /*
  * To speed up BYTELEN() we fill a table with the byte lengths whenever
@@ -840,7 +871,7 @@ EXTERN int ctrl_x_mode INIT(= 0);       /* Which Ctrl-X mode are we in? */
 
 EXTERN int no_abbr INIT(= TRUE);        /* TRUE when no abbreviations loaded */
 
-EXTERN int mapped_ctrl_c INIT(= FALSE);      /* CTRL-C is mapped */
+EXTERN int mapped_ctrl_c INIT(= 0);  // Modes where CTRL-C is mapped.
 
 EXTERN cmdmod_T cmdmod;                 /* Ex command modifiers */
 
@@ -870,22 +901,19 @@ EXTERN int RedrawingDisabled INIT(= 0);
 EXTERN int readonlymode INIT(= FALSE);      /* Set to TRUE for "view" */
 EXTERN int recoverymode INIT(= FALSE);      /* Set to TRUE for "-r" option */
 
-EXTERN typebuf_T typebuf                /* typeahead buffer */
-#ifdef DO_INIT
-  = {NULL, NULL, 0, 0, 0, 0, 0, 0, 0}
-#endif
-;
-EXTERN int ex_normal_busy INIT(= 0);      /* recursiveness of ex_normal() */
-EXTERN int ex_normal_lock INIT(= 0);      /* forbid use of ex_normal() */
-EXTERN int ignore_script INIT(= FALSE);       /* ignore script input */
-EXTERN int stop_insert_mode;            /* for ":stopinsert" and 'insertmode' */
+// typeahead buffer
+EXTERN typebuf_T typebuf INIT(= { NULL, NULL, 0, 0, 0, 0, 0, 0, 0 });
 
-EXTERN int KeyTyped;                    /* TRUE if user typed current char */
-EXTERN int KeyStuffed;                  /* TRUE if current char from stuffbuf */
-EXTERN int maptick INIT(= 0);           /* tick for each non-mapped char */
+EXTERN int ex_normal_busy INIT(= 0);     // recursiveness of ex_normal()
+EXTERN int ex_normal_lock INIT(= 0);     // forbid use of ex_normal()
+EXTERN int ignore_script INIT(= false);  // ignore script input
+EXTERN int stop_insert_mode;             // for ":stopinsert" and 'insertmode'
+EXTERN int KeyTyped;                     // TRUE if user typed current char
+EXTERN int KeyStuffed;                   // TRUE if current char from stuffbuf
+EXTERN int maptick INIT(= 0);            // tick for each non-mapped char
 
-EXTERN char_u chartab[256];             /* table used in charset.c; See
-                                           init_chartab() for explanation */
+EXTERN uint8_t chartab[256];             // table used in charset.c; See
+                                         // init_chartab() for explanation
 
 EXTERN int must_redraw INIT(= 0);           /* type of redraw necessary */
 EXTERN int skip_redraw INIT(= FALSE);       /* skip redraw once */
@@ -912,30 +940,28 @@ EXTERN reg_extmatch_T *re_extmatch_in INIT(= NULL); /* Used by vim_regexec():
 EXTERN reg_extmatch_T *re_extmatch_out INIT(= NULL); /* Set by vim_regexec()
                                                       * to store \z\(...\) matches */
 
-EXTERN int did_outofmem_msg INIT(= FALSE);
-/* set after out of memory msg */
-EXTERN int did_swapwrite_msg INIT(= FALSE);
-/* set after swap write error msg */
-EXTERN int undo_off INIT(= FALSE);          /* undo switched off for now */
-EXTERN int global_busy INIT(= 0);           /* set when :global is executing */
-EXTERN int listcmd_busy INIT(= FALSE);      /* set when :argdo, :windo or
-                                               :bufdo is executing */
-EXTERN int need_start_insertmode INIT(= FALSE);
-/* start insert mode soon */
-EXTERN char_u   *last_cmdline INIT(= NULL); /* last command line (for ":) */
-EXTERN char_u   *repeat_cmdline INIT(= NULL); /* command line for "." */
-EXTERN char_u   *new_last_cmdline INIT(= NULL); /* new value for last_cmdline */
-EXTERN char_u   *autocmd_fname INIT(= NULL); /* fname for <afile> on cmdline */
-EXTERN int autocmd_fname_full;               /* autocmd_fname is full path */
-EXTERN int autocmd_bufnr INIT(= 0);          /* fnum for <abuf> on cmdline */
-EXTERN char_u   *autocmd_match INIT(= NULL); /* name for <amatch> on cmdline */
-EXTERN int did_cursorhold INIT(= FALSE);      /* set when CursorHold t'gerd */
-EXTERN pos_T last_cursormoved                 /* for CursorMoved event */
-# ifdef DO_INIT
-  = INIT_POS_T(0, 0, 0)
-# endif
-;
-EXTERN int last_changedtick INIT(= 0);        /* for TextChanged event */
+EXTERN int did_outofmem_msg INIT(= false);
+// set after out of memory msg
+EXTERN int did_swapwrite_msg INIT(= false);
+// set after swap write error msg
+EXTERN int undo_off INIT(= false);          // undo switched off for now
+EXTERN int global_busy INIT(= 0);           // set when :global is executing
+EXTERN int listcmd_busy INIT(= false);      // set when :argdo, :windo or
+                                            // :bufdo is executing
+EXTERN int need_start_insertmode INIT(= false);
+// start insert mode soon
+EXTERN char_u *last_cmdline INIT(= NULL);      // last command line (for ":)
+EXTERN char_u *repeat_cmdline INIT(= NULL);    // command line for "."
+EXTERN char_u *new_last_cmdline INIT(= NULL);  // new value for last_cmdline
+EXTERN char_u *autocmd_fname INIT(= NULL);     // fname for <afile> on cmdline
+EXTERN int autocmd_fname_full;                 // autocmd_fname is full path
+EXTERN int autocmd_bufnr INIT(= 0);            // fnum for <abuf> on cmdline
+EXTERN char_u *autocmd_match INIT(= NULL);     // name for <amatch> on cmdline
+EXTERN int did_cursorhold INIT(= false);       // set when CursorHold t'gerd
+// for CursorMoved event
+EXTERN pos_T last_cursormoved INIT(= INIT_POS_T(0, 0, 0));
+
+EXTERN int last_changedtick INIT(= 0);  // for TextChanged event
 EXTERN buf_T    *last_changedtick_buf INIT(= NULL);
 
 EXTERN int postponed_split INIT(= 0);       /* for CTRL-W CTRL-] command */
@@ -998,7 +1024,7 @@ EXTERN int lcs_space INIT(= NUL);
 EXTERN int lcs_tab1 INIT(= NUL);
 EXTERN int lcs_tab2 INIT(= NUL);
 EXTERN int lcs_trail INIT(= NUL);
-EXTERN int lcs_conceal INIT(= '-');
+EXTERN int lcs_conceal INIT(= ' ');
 
 /* Characters from 'fillchars' option */
 EXTERN int fill_stl INIT(= ' ');
@@ -1045,13 +1071,9 @@ EXTERN int typebuf_was_filled INIT(= FALSE);      /* received text from client
 
 
 #ifdef BACKSLASH_IN_FILENAME
-EXTERN char psepc INIT(= '\\');         /* normal path separator character */
-EXTERN char psepcN INIT(= '/');         /* abnormal path separator character */
-EXTERN char pseps[2]                    /* normal path separator string */
-# ifdef DO_INIT
-  = {'\\', 0}
-# endif
-;
+EXTERN char psepc INIT(= '\\');            // normal path separator character
+EXTERN char psepcN INIT(= '/');            // abnormal path separator character
+EXTERN char pseps[2] INIT(= { '\\', 0 });  // normal path separator string
 #endif
 
 /* Set to TRUE when an operator is being executed with virtual editing, MAYBE
@@ -1070,12 +1092,8 @@ EXTERN int need_cursor_line_redraw INIT(= FALSE);
 
 
 #ifdef USE_MCH_ERRMSG
-/* Grow array to collect error messages in until they can be displayed. */
-EXTERN garray_T error_ga
-# ifdef DO_INIT
-  = GA_EMPTY_INIT_VALUE
-# endif
-;
+// Grow array to collect error messages in until they can be displayed.
+EXTERN garray_T error_ga INIT(= GA_EMPTY_INIT_VALUE);
 #endif
 
 
@@ -1195,6 +1213,7 @@ EXTERN char_u e_intern2[] INIT(= N_("E685: Internal error: %s"));
 EXTERN char_u e_maxmempat[] INIT(= N_(
         "E363: pattern uses more memory than 'maxmempattern'"));
 EXTERN char_u e_emptybuf[] INIT(= N_("E749: empty buffer"));
+EXTERN char_u e_nobufnr[] INIT(= N_("E86: Buffer %" PRId64 " does not exist"));
 
 EXTERN char_u e_invalpat[] INIT(= N_(
         "E682: Invalid search pattern or delimiter"));

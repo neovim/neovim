@@ -2,7 +2,7 @@ local helpers = require('test.functional.helpers')
 local Screen = require('test.functional.ui.screen')
 local spawn, set_session, clear = helpers.spawn, helpers.set_session, helpers.clear
 local feed, execute = helpers.feed, helpers.execute
-local insert, wait = helpers.insert, helpers.wait
+local insert = helpers.insert
 
 describe('Initial screen', function()
   local screen
@@ -11,9 +11,6 @@ describe('Initial screen', function()
                      '--embed'}
 
   before_each(function()
-    if session then
-      session:exit(0)
-    end
     local screen_nvim = spawn(nvim_argv)
     set_session(screen_nvim)
     screen = Screen.new()

@@ -1,13 +1,14 @@
 " Vim syntax file
 " Language:		Innovation Data Processing upstream.dat file
 " Maintainer:		Rob Owens <rowens@fdrinnovation.com>
-" Latest Revision:	2013-06-17
+" Latest Revision:	2013-11-27
 
 " Quit when a syntax file was already loaded
 if exists("b:current_syntax")
   finish
 endif
 
+" Parameters:
 syn keyword upstreamdat_Parameter ACCEPTPCREMOTE 
 syn keyword upstreamdat_Parameter ACCEPTREMOTE 
 syn keyword upstreamdat_Parameter ACTION 
@@ -291,6 +292,14 @@ syn keyword upstreamdat_Parameter XFERECORDSIZE
 syn keyword upstreamdat_Parameter XFERRECSEP 
 syn keyword upstreamdat_Parameter XFERRECUSECR 
 
+" File Specs:
+syn match upstreamdat_Filespec /file spec\c \d\{1,3}.*/
+
+" Comments:
+syn match upstreamdat_Comment /^#.*/
+
 hi def link upstreamdat_Parameter Type
+"hi def link upstreamdat_Filespec Underlined
+hi def link upstreamdat_Comment Comment
 
 let b:current_syntax = "upstreamdat"

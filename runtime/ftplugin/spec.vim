@@ -2,7 +2,7 @@
 " Filename: spec.vim
 " Maintainer: Igor Gnatenko i.gnatenko.brain@gmail.com
 " Former Maintainer: Gustavo Niemeyer <niemeyer@conectiva.com> (until March 2014)
-" Last Change: Sun Mar 2 11:24 MSK 2014 Igor Gnatenko
+" Last Change: Mon Jun 01 21:15 MSK 2015 Igor Gnatenko
 
 if exists("b:did_ftplugin")
 	finish
@@ -18,13 +18,40 @@ if !exists("no_plugin_maps") && !exists("no_spec_maps")
 	endif
 endif
 
-noremap <buffer> <unique> <script> <Plug>SpecChangelog :call <SID>SpecChangelog("")<CR>
+if !hasmapto("call <SID>SpecChangelog(\"\")<CR>")
+       noremap <buffer> <unique> <script> <Plug>SpecChangelog :call <SID>SpecChangelog("")<CR>
+endif
+
+if !exists("*s:GetRelVer")
+	function! s:GetRelVer()
+		if has('python')
+python << PYEND
+import sys, datetime, shutil, tempfile
+import vim
+
+try:
+    import rpm
+except ImportError:
+    pass
+else:
+    specfile = vim.current.buffer.name
+    if specfile:
+        spec = rpm.spec(specfile)
+        headers = spec.packages[0].header
+        version = headers['Version']
+        release = ".".join(headers['Release'].split(".")[:-1])
+        vim.command("let ver = " + version)
+        vim.command("let rel = " + release)
+PYEND
+		endif
+	endfunction
+endif
 
 if !exists("*s:SpecChangelog")
 	function s:SpecChangelog(format)
 		if strlen(a:format) == 0
 			if !exists("g:spec_chglog_format")
-				let email = input("Email address: ")
+				let email = input("Name <email address>: ")
 				let g:spec_chglog_format = "%a %b %d %Y " . l:email
 				echo "\r"
 			endif
@@ -69,6 +96,9 @@ if !exists("*s:SpecChangelog")
 		else
 			let include_release_info = 0
 		endif
+
+		call s:GetRelVer()
+
 		if (chgline == -1)
 			let option = confirm("Can't find %changelog. Create one? ","&End of file\n&Here\n&Cancel",3)
 			if (option == 1)
@@ -83,7 +113,7 @@ if !exists("*s:SpecChangelog")
 			endif
 		endif
 		if (chgline != -1)
-			let parsed_format = "* ".strftime(format)
+			let parsed_format = "* ".strftime(format)." - ".ver."-".rel
 			let release_info = "+ ".name."-".ver."-".rel
 			let wrong_format = 0
 			let wrong_release = 0

@@ -1,7 +1,6 @@
  // Various routines dealing with allocation and deallocation of memory.
 
 #include <assert.h>
-#include <errno.h>
 #include <inttypes.h>
 #include <string.h>
 #include <stdbool.h>
@@ -42,8 +41,6 @@ void try_to_free_memory(void)
   clear_sb_text();
   // Try to save all buffers and release as many blocks as possible
   mf_release_all();
-  // cleanup recursive lists/dicts
-  garbage_collect();
 
   trying_to_free = false;
 }

@@ -19,7 +19,7 @@ describe("update_menu notification", function()
     screen:detach()
   end)
 
-  function expect_sent(expected)
+  local function expect_sent(expected)
     screen:wait(function()
       if screen.update_menu ~= expected then
         if expected then

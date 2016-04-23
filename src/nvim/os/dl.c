@@ -63,7 +63,7 @@ bool os_libcall(const char *libname,
 
   // call the library and save the result
   // TODO(aktau): catch signals and use jmp (if available) to handle
-  // exceptions. jmp's on UNIX seem to interact trickily with signals as
+  // exceptions. jmp's on Unix seem to interact trickily with signals as
   // well. So for now we only support those libraries that are well-behaved.
   if (str_out) {
     str_str_fn sfn = (str_str_fn) fn;

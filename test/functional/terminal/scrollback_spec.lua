@@ -340,7 +340,7 @@ describe('terminal prints more lines than the screen height and exits', function
       line8                                             |
       line9                                             |
                                                         |
-      [Program exited, press any key to close]          |
+      [Process exited 0]                                |
       -- TERMINAL --                                    |
     ]])
     feed('<cr>')

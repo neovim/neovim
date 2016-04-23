@@ -6,7 +6,7 @@
 "               Nikolai Weibull (Add CSS2 support)
 " Maintainer:   Jules Wang      <w.jq0722@gmail.com>
 " URL:          https://github.com/JulesWang/css.vim
-" Last Change:  2013 Nov.27
+" Last Change:  2015 Apr.17
 
 " For version 5.x: Clear all syntax items
 " For version 6.x: Quit when a syntax file was already loaded
@@ -26,18 +26,19 @@ set cpo&vim
 
 syn case ignore
 
-" All HTML4 tags
-syn keyword cssTagName abbr acronym address applet area a b base
-syn keyword cssTagName basefont bdo big blockquote body br button
-syn keyword cssTagName caption center cite code col colgroup dd del
-syn keyword cssTagName dfn dir div dl dt em fieldset font form frame
-syn keyword cssTagName frameset h1 h2 h3 h4 h5 h6 head hr html img i
-syn keyword cssTagName iframe img input ins isindex kbd label legend li
-syn keyword cssTagName link map menu meta noframes noscript ol optgroup
-syn keyword cssTagName option p param pre q s samp script select small
-syn keyword cssTagName span strike strong style sub sup table tbody td
-syn keyword cssTagName textarea tfoot th thead title tr tt ul u var
+" HTML4 tags
+syn keyword cssTagName abbr address area a b base
+syn keyword cssTagName bdo blockquote body br button
+syn keyword cssTagName caption cite code col colgroup dd del
+syn keyword cssTagName dfn div dl dt em fieldset form
+syn keyword cssTagName h1 h2 h3 h4 h5 h6 head hr html img i
+syn keyword cssTagName iframe input ins isindex kbd label legend li
+syn keyword cssTagName link map menu meta noscript ol optgroup
+syn keyword cssTagName option p param pre q s samp script small
+syn keyword cssTagName span strong sub sup tbody td
+syn keyword cssTagName textarea tfoot th thead title tr ul u var
 syn keyword cssTagName object svg
+syn match   cssTagName /\<select\>\|\<style\>\|\<table\>/
 
 " 34 HTML5 tags
 syn keyword cssTagName article aside audio bdi canvas command data
@@ -47,8 +48,8 @@ syn keyword cssTagName output progress rt rp ruby section
 syn keyword cssTagName source summary time track video wbr
 
 " Tags not supported in HTML5
-syn keyword cssDeprecated acronym applet basefont big center dir
-syn keyword cssDeprecated font frame frameset noframes strike tt
+" acronym applet basefont big center dir
+" font frame frameset noframes strike tt
 
 syn match cssTagName "\*"
 
@@ -70,13 +71,13 @@ endtry
 " digits
 syn match cssValueInteger contained "[-+]\=\d\+" contains=cssUnitDecorators
 syn match cssValueNumber contained "[-+]\=\d\+\(\.\d*\)\=" contains=cssUnitDecorators
-syn match cssValueLength contained "[-+]\=\d\+\(\.\d*\)\=\(%\|mm\|cm\|in\|pt\|pc\|em\|ex\|px\|rem\|dpi\|dppx\|dpcm\)" contains=cssUnitDecorators
-syn match cssValueAngle contained "[-+]\=\d\+\(\.\d*\)\=\(deg\|grad\|rad\)" contains=cssUnitDecorators
-syn match cssValueTime contained "+\=\d\+\(\.\d*\)\=\(ms\|s\)" contains=cssUnitDecorators
-syn match cssValueFrequency contained "+\=\d\+\(\.\d*\)\=\(Hz\|kHz\)" contains=cssUnitDecorators
+syn match cssValueLength contained "[-+]\=\d\+\(\.\d*\)\=\(%\|mm\|cm\|in\|pt\|pc\|em\|ex\|px\|rem\|dpi\|dppx\|dpcm\)\>" contains=cssUnitDecorators
+syn match cssValueAngle contained "[-+]\=\d\+\(\.\d*\)\=\(deg\|grad\|rad\)\>" contains=cssUnitDecorators
+syn match cssValueTime contained "+\=\d\+\(\.\d*\)\=\(ms\|s\)\>" contains=cssUnitDecorators
+syn match cssValueFrequency contained "+\=\d\+\(\.\d*\)\=\(Hz\|kHz\)\>" contains=cssUnitDecorators
 
 
-syn match cssIncludeKeyword /@\(-[a-z]+-\)\=\(media\|keyframes\|import\|charset\|namespace\|page\)/ contained
+syn match cssIncludeKeyword /@\(-[a-z]\+-\)\=\(media\|keyframes\|import\|charset\|namespace\|page\)/ contained
 " @media
 syn region cssInclude start=/@media\>/ end=/\ze{/ skipwhite skipnl contains=cssMediaProp,cssValueLength,cssMediaKeyword,cssValueInteger,cssMediaAttr,cssVendor,cssMediaType,cssIncludeKeyword,cssMediaComma,cssComment nextgroup=cssMediaBlock
 syn keyword cssMediaType contained screen print aural braille embossed handheld projection tty tv speech all contained skipwhite skipnl
@@ -86,7 +87,7 @@ syn match cssMediaComma "," skipwhite skipnl contained
 
 " Reference: http://www.w3.org/TR/css3-mediaqueries/
 syn keyword cssMediaProp contained width height orientation scan grid
-syn match cssMediaProp contained /\(\(device\)-\)\=aspect-ratio/
+syn match cssMediaProp contained /\(\(max\|min\)-\)\=\(\(device\)-\)\=aspect-ratio/
 syn match cssMediaProp contained /\(\(max\|min\)-\)\=device-pixel-ratio/
 syn match cssMediaProp contained /\(\(max\|min\)-\)\=device-\(height\|width\)/
 syn match cssMediaProp contained /\(\(max\|min\)-\)\=\(height\|width\|resolution\|monochrome\|color\(-index\)\=\)/
@@ -104,7 +105,7 @@ syn keyword cssPageProp contained orphans widows
 
 " @keyframe
 " http://www.w3.org/TR/css3-animations/#keyframes
-syn match cssKeyFrame "@\(-[a-z]+-\)\=keyframes\>[^{]*{\@=" nextgroup=cssKeyFrameWrap contains=cssVendor,cssIncludeKeyword skipwhite skipnl transparent
+syn match cssKeyFrame "@\(-[a-z]\+-\)\=keyframes\>[^{]*{\@=" nextgroup=cssKeyFrameWrap contains=cssVendor,cssIncludeKeyword skipwhite skipnl transparent
 syn region cssKeyFrameWrap contained transparent matchgroup=cssBraces start="{" end="}" contains=cssKeyFrameSelector
 syn match cssKeyFrameSelector /\(\d*%\|from\|to\)\=/  contained skipwhite skipnl nextgroup=cssDefinition
 
@@ -116,15 +117,27 @@ syn region cssInclude start=/@namespace\>/ end=/\ze;/ transparent contains=cssSt
 " @font-face
 " http://www.w3.org/TR/css3-fonts/#at-font-face-rule
 syn match cssFontDescriptor "@font-face\>" nextgroup=cssFontDescriptorBlock skipwhite skipnl
-syn region cssFontDescriptorBlock contained transparent matchgroup=cssBraces start="{" end="}" contains=cssComment,cssError,cssUnicodeEscape,cssFontProp,cssFontAttr,cssCommonAttr,cssStringQ,cssStringQQ,cssFontDescriptorProp,cssValue.*,cssFontDescriptorFunction,cssUnicodeRange,cssFontDescriptorAttr
-"syn match cssFontDescriptorProp contained "\<\(unicode-range\|unit-per-em\|panose-1\|cap-height\|x-height\|definition-src\)\>"
-"syn keyword cssFontDescriptorProp contained src stemv stemh slope ascent descent widths bbox baseline centerline mathline topline
+syn region cssFontDescriptorBlock contained transparent matchgroup=cssBraces start="{" end="}" contains=cssComment,cssError,cssUnicodeEscape,cssCommonAttr,cssFontDescriptorProp,cssValue.*,cssFontDescriptorFunction,cssFontDescriptorAttr,cssNoise
+
+syn match cssFontDescriptorProp contained "\<font-family\>"
 syn keyword cssFontDescriptorProp contained src
+syn match cssFontDescriptorProp contained "\<font-\(style\|weight\|stretch\)\>"
 syn match cssFontDescriptorProp contained "\<unicode-range\>"
-syn keyword cssFontDescriptorAttr contained all
+syn match cssFontDescriptorProp contained "\<font-\(variant\|feature-settings\)\>"
+
+" src functions
 syn region cssFontDescriptorFunction contained matchgroup=cssFunctionName start="\<\(uri\|url\|local\|format\)\s*(" end=")" contains=cssStringQ,cssStringQQ oneline keepend
-syn match cssUnicodeRange contained "U+[0-9A-Fa-f?]\+"
-syn match cssUnicodeRange contained "U+\x\+-\x\+"
+" font-sytle and font-weight attributes
+syn keyword cssFontDescriptorAttr contained normal italic oblique bold
+" font-stretch attributes
+syn match cssFontDescriptorAttr contained "\<\(\(ultra\|extra\|semi\)-\)\=\(condensed\|expanded\)\>"
+" unicode-range attributes
+syn match cssFontDescriptorAttr contained "U+[0-9A-Fa-f?]\+"
+syn match cssFontDescriptorAttr contained "U+\x\+-\x\+"
+" font-feature-settings attributes
+syn keyword cssFontDescriptorAttr contained on off
+
+
 
 " The 16 basic color names
 syn keyword cssColor contained aqua black blue fuchsia gray green lime maroon navy olive purple red silver teal yellow
@@ -133,23 +146,23 @@ syn keyword cssColor contained aqua black blue fuchsia gray green lime maroon na
 syn keyword cssColor contained aliceblue antiquewhite aquamarine azure
 syn keyword cssColor contained beige bisque blanchedalmond blueviolet brown burlywood
 syn keyword cssColor contained cadetblue chartreuse chocolate coral cornflowerblue cornsilk crimson cyan
-syn match cssColor contained /dark\(blue\|cyan\|goldenrod\|gray\|green\|grey\|khaki\)/
-syn match cssColor contained /dark\(magenta\|olivegreen\|orange\|orchid\|red\|salmon\|seagreen\)/
-syn match cssColor contained /darkslate\(blue\|gray\|grey\)/
-syn match cssColor contained /dark\(turquoise\|violet\)/
+syn match cssColor contained /\<dark\(blue\|cyan\|goldenrod\|gray\|green\|grey\|khaki\)\>/
+syn match cssColor contained /\<dark\(magenta\|olivegreen\|orange\|orchid\|red\|salmon\|seagreen\)\>/
+syn match cssColor contained /\<darkslate\(blue\|gray\|grey\)\>/
+syn match cssColor contained /\<dark\(turquoise\|violet\)\>/
 syn keyword cssColor contained deeppink deepskyblue dimgray dimgrey dodgerblue firebrick
 syn keyword cssColor contained floralwhite forestgreen gainsboro ghostwhite gold
 syn keyword cssColor contained goldenrod greenyellow grey honeydew hotpink
 syn keyword cssColor contained indianred indigo ivory khaki lavender lavenderblush lawngreen
 syn keyword cssColor contained lemonchiffon limegreen linen magenta
-syn match cssColor contained /light\(blue\|coral\|cyan\|goldenrodyellow\|gray\|green\)/
-syn match cssColor contained /light\(grey\|pink\|salmon\|seagreen\|skyblue\|yellow\)/
-syn match cssColor contained /light\(slategray\|slategrey\|steelblue\)/
-syn match cssColor contained /medium\(aquamarine\|blue\|orchid\|purple\|seagreen\)/
-syn match cssColor contained /medium\(slateblue\|springgreen\|turquoise\|violetred\)/
+syn match cssColor contained /\<light\(blue\|coral\|cyan\|goldenrodyellow\|gray\|green\)\>/
+syn match cssColor contained /\<light\(grey\|pink\|salmon\|seagreen\|skyblue\|yellow\)\>/
+syn match cssColor contained /\<light\(slategray\|slategrey\|steelblue\)\>/
+syn match cssColor contained /\<medium\(aquamarine\|blue\|orchid\|purple\|seagreen\)\>/
+syn match cssColor contained /\<medium\(slateblue\|springgreen\|turquoise\|violetred\)\>/
 syn keyword cssColor contained midnightblue mintcream mistyrose moccasin navajowhite
 syn keyword cssColor contained oldlace olivedrab orange orangered orchid
-syn match cssColor contained /pale\(goldenrod\|green\|turquoise\|violetred\)/
+syn match cssColor contained /\<pale\(goldenrod\|green\|turquoise\|violetred\)\>/
 syn keyword cssColor contained papayawhip peachpuff peru pink plum powderblue
 syn keyword cssColor contained rosybrown royalblue saddlebrown salmon sandybrown
 syn keyword cssColor contained seagreen seashell sienna skyblue slateblue
@@ -167,11 +180,12 @@ syn case ignore
 syn match cssImportant contained "!\s*important\>"
 
 syn match cssColor contained "\<transparent\>"
+syn match cssColor contained "\<currentColor\>"
 syn match cssColor contained "\<white\>"
 syn match cssColor contained "#[0-9A-Fa-f]\{3\}\>" contains=cssUnitDecorators
 syn match cssColor contained "#[0-9A-Fa-f]\{6\}\>" contains=cssUnitDecorators
 
-syn region cssURL contained matchgroup=cssFunctionName start="\<url\s*(" end=")" oneline extend
+syn region cssURL contained matchgroup=cssFunctionName start="\<url\s*(" end=")" contains=cssStringQ,cssStringQQ oneline
 syn region cssFunction contained matchgroup=cssFunctionName start="\<\(rgb\|clip\|attr\|counter\|rect\|cubic-bezier\|steps\)\s*(" end=")" oneline  contains=cssValueInteger,cssValueNumber,cssValueLength,cssFunctionComma
 syn region cssFunction contained matchgroup=cssFunctionName start="\<\(rgba\|hsl\|hsla\|color-stop\|from\|to\)\s*(" end=")" oneline  contains=cssColor,cssValueInteger,cssValueNumber,cssValueLength,cssFunctionComma,cssFunction
 syn region cssFunction contained matchgroup=cssFunctionName start="\<\(linear-\|radial-\)\=\gradient\s*(" end=")" oneline  contains=cssColor,cssValueInteger,cssValueNumber,cssValueLength,cssFunction,cssGradientAttr,cssFunctionComma
@@ -196,6 +210,9 @@ syn keyword cssAnimationAttr contained forwards backwards both
 
 " animation-play-state attributes
 syn keyword cssAnimationAttr contained running paused
+
+" animation-iteration-count attributes
+syn keyword cssAnimationAttr contained infinite
 "------------------------------------------------
 "  CSS Backgrounds and Borders Module Level 3
 "  http://www.w3.org/TR/css3-background/
@@ -253,7 +270,7 @@ syn keyword cssDimensionProp contained width
 syn match cssFlexibleBoxProp contained "\<box-\(align\|direction\|flex\|ordinal-group\|orient\|pack\|shadow\|sizing\)\>"
 syn keyword cssFlexibleBoxAttr contained start end baseline
 syn keyword cssFlexibleBoxAttr contained reverse
-syn keyword cssFlexibleBoxAttr contained single mulitple
+syn keyword cssFlexibleBoxAttr contained single multiple
 syn keyword cssFlexibleBoxAttr contained horizontal
 syn match cssFlexibleBoxAttr contained "\<vertical\(-align\)\@!\>" "escape vertical-align
 syn match cssFlexibleBoxAttr contained "\<\(inline\|block\)-axis\>"
@@ -261,6 +278,7 @@ syn match cssFlexibleBoxAttr contained "\<\(inline\|block\)-axis\>"
 " CSS Fonts Module Level 3
 " http://www.w3.org/TR/css-fonts-3/
 syn match cssFontProp contained "\<font\(-\(family\|\|feature-settings\|kerning\|language-override\|size\(-adjust\)\=\|stretch\|style\|synthesis\|variant\(-\(alternates\|caps\|east-asian\|ligatures\|numeric\|position\)\)\=\|weight\)\)\=\>"
+
 " font attributes
 syn keyword cssFontAttr contained icon menu caption
 syn match cssFontAttr contained "\<small-\(caps\|caption\)\>"
@@ -268,27 +286,21 @@ syn match cssFontAttr contained "\<message-box\>"
 syn match cssFontAttr contained "\<status-bar\>"
 syn keyword cssFontAttr contained larger smaller
 syn match cssFontAttr contained "\<\(x\{1,2\}-\)\=\(large\|small\)\>"
-
 " font-family attributes
 syn match cssFontAttr contained "\<\(sans-\)\=serif\>"
-syn keyword cssFontAttr contained Antiqua Arial Black Book Charcoal Comic Courier Dingbats Gadget Geneva Georgia Grande Helvetica Impact Linotype Lucida MS Monaco Neue New Palatino Roboto Roman Symbol Tahoma Times Trebuchet Unicode Verdana Webdings Wingdings York Zapf
+syn keyword cssFontAttr contained Antiqua Arial Black Book Charcoal Comic Courier Dingbats Gadget Geneva Georgia Grande Helvetica Impact Linotype Lucida MS Monaco Neue New Palatino Roboto Roman Symbol Tahoma Times Trebuchet Verdana Webdings Wingdings York Zapf
 syn keyword cssFontAttr contained cursive fantasy monospace
-
 " font-feature-settings attributes
 syn keyword cssFontAttr contained on off
-
 " font-stretch attributes
 syn match cssFontAttr contained "\<\(\(ultra\|extra\|semi\)-\)\=\(condensed\|expanded\)\>"
-
 " font-style attributes
 syn keyword cssFontAttr contained italic oblique
-
-" font-variant-caps attributes
-syn match cssFontAttr contained "\<\(all-\)\=\(small-\|petite-\|titling-\)caps\>"
-syn keyword cssFontAttr contained unicase
-
+" font-synthesis attributes
+syn keyword cssFontAttr contained weight style
 " font-weight attributes
 syn keyword cssFontAttr contained bold bolder lighter
+" TODO: font-variant-* attributes
 "------------------------------------------------
 
 " Webkit specific property/attributes
@@ -448,7 +460,7 @@ syn match cssMobileTextProp contained "\<text-size-adjust\>"
 
 syn match cssBraces contained "[{}]"
 syn match cssError contained "{@<>"
-syn region cssDefinition transparent matchgroup=cssBraces start='{' end='}' contains=cssAttrRegion,css.*Prop,cssComment,cssValue.*,cssColor,cssURL,cssImportant,cssError,cssStringQ,cssStringQQ,cssFunction,cssUnicodeEscape,cssVendor,cssDefinition,cssHacks keepend fold
+syn region cssDefinition transparent matchgroup=cssBraces start='{' end='}' contains=cssAttrRegion,css.*Prop,cssComment,cssValue.*,cssColor,cssURL,cssImportant,cssError,cssStringQ,cssStringQQ,cssFunction,cssUnicodeEscape,cssVendor,cssDefinition,cssHacks,cssNoise fold
 syn match cssBraceError "}"
 syn match cssAttrComma ","
 
@@ -466,6 +478,9 @@ syn match cssPseudoClassId contained  "\<selection\>"
 syn match cssPseudoClassId contained  "\<focus\(-inner\)\=\>"
 syn match cssPseudoClassId contained  "\<\(input-\)\=placeholder\>"
 
+" Misc highlight groups
+syntax match cssUnitDecorators /\(#\|-\|%\|mm\|cm\|in\|pt\|pc\|em\|ex\|px\|ch\|rem\|vh\|vw\|vmin\|vmax\|dpi\|dppx\|dpcm\|Hz\|kHz\|s\|ms\|deg\|grad\|rad\)/ contained
+syntax match cssNoise contained /\(:\|;\|\/\)/
 
 " Comment
 syn region cssComment start="/\*" end="\*/" contains=@Spell fold
@@ -487,17 +502,13 @@ syn match cssVendor contained "\(-\(webkit\|moz\|o\|ms\)-\)"
 " http://www.paulirish.com/2009/browser-specific-css-hacks/
 syn match cssHacks contained /\(_\|*\)/
 
-" Misc highlight groups
-syntax match cssUnitDecorators /\(#\|-\|%\|mm\|cm\|in\|pt\|pc\|em\|ex\|px\|rem\|dpi\|dppx\|dpcm\|Hz\|kHz\|s\|ms\|deg\|grad\|rad\)/ contained
-syntax match cssNoise contained /\(:\|;\|\/\)/
-
 " Attr Enhance
 " Some keywords are both Prop and Attr, so we have to handle them
-syn region cssAttrRegion start=/:/ end=/;/ contained keepend contains=css.*Attr,cssColor,cssImportant,cssValue.*,cssFunction,cssString.*,cssURL,cssComment,cssUnicodeEscape,cssVendor,cssError,cssAttrComma,cssNoise
+syn region cssAttrRegion start=/:/ end=/\ze\(;\|)\|}\)/ contained contains=css.*Attr,cssColor,cssImportant,cssValue.*,cssFunction,cssString.*,cssURL,cssComment,cssUnicodeEscape,cssVendor,cssError,cssAttrComma,cssNoise
 
 " Hack for transition
-" The 'transition' Prop has Props after ':'.
-syn region cssAttrRegion start=/transition\s*:/ end=/;/ contained keepend contains=css.*Prop,css.*Attr,cssColor,cssImportant,cssValue.*,cssFunction,cssString.*,cssURL,cssComment,cssUnicodeEscape,cssVendor,cssError,cssAttrComma,cssNoise
+" 'transition' has Props after ':'.
+syn region cssAttrRegion start=/transition\s*:/ end=/\ze\(;\|)\|}\)/ contained contains=css.*Prop,css.*Attr,cssColor,cssImportant,cssValue.*,cssFunction,cssString.*,cssURL,cssComment,cssUnicodeEscape,cssVendor,cssError,cssAttrComma,cssNoise
 
 
 if main_syntax == "css"
@@ -635,7 +646,7 @@ if version >= 508 || !exists("did_css_syn_inits")
   HiLink cssAttr Constant
   HiLink cssUnitDecorators Number
   HiLink cssNoise Noise
-  HiLink atKeyword Comment
+  HiLink atKeyword PreProc
   delcommand HiLink
 endif
 

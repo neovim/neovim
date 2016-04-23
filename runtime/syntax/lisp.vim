@@ -1,28 +1,23 @@
 " Vim syntax file
 " Language:    Lisp
-" Maintainer:  Dr. Charles E. Campbell, Jr. <NdrOchipS@PcampbellAfamily.Mbiz>
-" Last Change: Nov 16, 2010
-" Version:     22
-" URL:	       http://mysite.verizon.net/astronaut/vim/index.html#vimlinks_syntax
+" Maintainer:  Charles E. Campbell <NdrOchipS@PcampbellAfamily.Mbiz>
+" Last Change: Oct 06, 2014
+" Version:     23
+" URL:	       http://www.drchip.org/astronaut/vim/index.html#SYNTAX_LISP
 "
-"  Thanks to F Xavier Noria for a list of 978 Common Lisp symbols
-"  taken from the HyperSpec
+"  Thanks to F Xavier Noria for a list of 978 Common Lisp symbols taken from HyperSpec
 "  Clisp additions courtesy of http://clisp.cvs.sourceforge.net/*checkout*/clisp/clisp/emacs/lisp.vim
 
 " ---------------------------------------------------------------------
 "  Load Once: {{{1
-" For vim-version 5.x: Clear all syntax items
-" For vim-version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
-  finish
+if exists("b:current_syntax")
+ finish
 endif
 
-if version >= 600
- setlocal iskeyword=38,42,43,45,47-58,60-62,64-90,97-122,_
+if exists("g:lisp_isk")
+ exe "setl isk=".g:lisp_isk
 else
- set iskeyword=38,42,43,45,47-58,60-62,64-90,97-122,_
+ setl isk=38,42,43,45,47-58,60-62,64-90,97-122,_
 endif
 
 if exists("g:lispsyntax_ignorecase") || exists("g:lispsyntax_clisp")

@@ -1,10 +1,3 @@
-/*
- * VIM - Vi IMproved	by Bram Moolenaar
- *
- * Do ":help uganda"  in Vim to read copying and usage conditions.
- * Do ":help credits" in Vim to see a list of people who contributed.
- */
-
 #ifndef NVIM_KEYMAP_H
 #define NVIM_KEYMAP_H
 
@@ -119,11 +112,11 @@
 #define TO_SPECIAL(a, b)    ((a) == KS_SPECIAL ? K_SPECIAL : (a) == \
                              KS_ZERO ? K_ZERO : TERMCAP2KEY(a, b))
 
-/*
- * Codes for keys that do not have a termcap name.
- *
- * K_SPECIAL KS_EXTRA KE_xxx
- */
+// Codes for keys that do not have a termcap name.
+//
+// K_SPECIAL KS_EXTRA KE_xxx
+//
+// Entries must be in the range 0x02-0x7f (see comment at K_SPECIAL).
 enum key_extra {
   KE_NAME = 3           /* name of this terminal entry */
 
@@ -443,11 +436,12 @@ enum key_extra {
 /* 0x01 cannot be used, because the modifier must be 0x02 or higher */
 #define MOD_MASK_SHIFT      0x02
 #define MOD_MASK_CTRL       0x04
-#define MOD_MASK_ALT        0x08        /* aka META */
-#define MOD_MASK_META       0x10        /* META when it's different from ALT */
-#define MOD_MASK_2CLICK     0x20        /* use MOD_MASK_MULTI_CLICK */
-#define MOD_MASK_3CLICK     0x40        /* use MOD_MASK_MULTI_CLICK */
-#define MOD_MASK_4CLICK     0x60        /* use MOD_MASK_MULTI_CLICK */
+#define MOD_MASK_ALT        0x08        // aka META
+#define MOD_MASK_META       0x10        // META when it's different from ALT
+#define MOD_MASK_2CLICK     0x20        // use MOD_MASK_MULTI_CLICK
+#define MOD_MASK_3CLICK     0x40        // use MOD_MASK_MULTI_CLICK
+#define MOD_MASK_4CLICK     0x60        // use MOD_MASK_MULTI_CLICK
+#define MOD_MASK_CMD        0x80        // "super" key (OSX/Mac: command-key)
 
 #define MOD_MASK_MULTI_CLICK    (MOD_MASK_2CLICK|MOD_MASK_3CLICK| \
                                  MOD_MASK_4CLICK)
@@ -458,14 +452,13 @@ enum key_extra {
  */
 #define MAX_KEY_NAME_LEN    25
 
-/* Maximum length of a special key event as tokens.  This includes modifiers.
- * The longest event is something like <M-C-S-T-4-LeftDrag> which would be the
- * following string of tokens:
- *
- * <K_SPECIAL> <KS_MODIFIER> bitmask <K_SPECIAL> <KS_EXTRA> <KT_LEFTDRAG>.
- *
- * This is a total of 6 tokens, and is currently the longest one possible.
- */
+// Maximum length of a special key event as tokens.  This includes modifiers.
+// The longest event is something like <M-C-S-T-4-LeftDrag> which would be the
+// following string of tokens:
+//
+// <K_SPECIAL> <KS_MODIFIER> bitmask <K_SPECIAL> <KS_EXTRA> <KE_LEFTDRAG>.
+//
+// This is a total of 6 tokens, and is currently the longest one possible.
 #define MAX_KEY_CODE_LEN    6
 
 

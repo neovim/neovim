@@ -2,7 +2,7 @@
 " Language:	Diff (context or unified)
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
 "               Translations by Jakson Alves de Aquino.
-" Last Change:	2015 Jan 07
+" Last Change:	2015 Feb 03
 
 " Quit when a (custom) syntax file was already loaded
 if exists("b:current_syntax")
@@ -123,13 +123,17 @@ syn match diffNoEOL	"^\\ Non hai un salto de liña na fin da liña"
 syn match diffCommon	"^Subdirectorios comúns: .* e .*"
 
 " he
-syn match diffOnly	"^.*-ב קר אצמנ .*"
-syn match diffIdentical	"^םיהז םניה .*-ו .* םיצבקה$"
-syn match diffDiffer	"^הזמ הז םינוש `.*'-ו `.*' םיצבקה$"
-syn match diffBDiffer	"^הזמ הז םינוש `.*'-ו `.*' םיירניב םיצבק$"
-syn match diffIsA	"^.* .*-ל .* .* תוושהל ןתינ אל$"
-syn match diffNoEOL	"^\\ ץבוקה ףוסב השד.-הרוש ות רס."
-syn match diffCommon	"^.*-ו .* :תוהז תויקית-תת$"
+" ^.* are expansive patterns for long lines, so disabled unless we can match
+" some specific hebrew chars
+if search('\%u05d5\|\%u05d1', 'nw', '', 100)
+  syn match diffOnly	"^.*-ב קר אצמנ .*"
+  syn match diffIdentical	"^םיהז םניה .*-ו .* םיצבקה$"
+  syn match diffDiffer	"^הזמ הז םינוש `.*'-ו `.*' םיצבקה$"
+  syn match diffBDiffer	"^הזמ הז םינוש `.*'-ו `.*' םיירניב םיצבק$"
+  syn match diffIsA	"^.* .*-ל .* .* תוושהל ןתינ אל$"
+  syn match diffNoEOL	"^\\ ץבוקה ףוסב השד.-הרוש ות רס."
+  syn match diffCommon	"^.*-ו .* :תוהז תויקית-תת$"
+endif
 
 " hr
 syn match diffOnly	"^Samo u .*"

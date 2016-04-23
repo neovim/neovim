@@ -1,7 +1,7 @@
 local helpers = require('test.functional.helpers')
 local thelpers = require('test.functional.terminal.helpers')
-local feed, clear, nvim = helpers.feed, helpers.clear, helpers.nvim
-local wait, eq = helpers.wait, helpers.eq
+local feed, clear = helpers.feed, helpers.clear
+local wait = helpers.wait
 
 
 describe('terminal window', function()

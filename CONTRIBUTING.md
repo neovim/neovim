@@ -23,15 +23,10 @@ If your issue isn't mentioned there:
   your problem persists.
 - If you're experiencing compile or runtime warnings/failures, try searching for
   the error message(s) you received (if any) on [Neovim's issue tracker][github-issues].
-    - For build issues, see
-      [Troubleshooting#build-issues][wiki-troubleshooting-build-issues].
-    - For runtime issues, see
-      [Troubleshooting#runtime-issues][wiki-troubleshooting-runtime-issues].
-      If your issue isn't mentioned there, try to reproduce your it using
-      `nvim` with the smallest possible `nvimrc` (or none at all via `nvim -u
-      NONE`), to rule out bugs in plugins you're using.
-      If you're using a plugin manager, comment out your plugins, then add
-      them back in one by one.
+- For runtime issues, try reproducing it using `nvim` with the smallest
+  possible `vimrc` (or none at all via `nvim -u NONE`), to rule out bugs in
+  plugins you're using. If you're using a plugin manager, comment out your
+  plugins, then add them back in one by one.
 
 Include as much detail as possible; we generally need to know:
 
@@ -112,10 +107,9 @@ happen to be modifying anyway. Fix anything that looks outright
 otherwise prefer to leave things as they are.
 
 For new code, run `make lint` (which runs [clint.py][clint]) to detect style
-errors. Make sure that the file(s) you intend to be linted are not in
-`clint-ignored-files.txt`. It's not perfect, so some warnings may be false
-positives/negatives. To have `clint.py` ignore certain cases, put `// NOLINT`
-at the end of the line.
+errors. It's not perfect, so some warnings may be false positives/negatives.
+To have `clint.py` ignore certain cases, put `// NOLINT` at the end of the
+line.
 
 We also provide a configuration file for [`clang-format`][clang-format], which
 can be used to format code according to the style guidelines. Be aware that
@@ -196,6 +190,4 @@ such as [`tig`][tig].
 [wiki-contributing]: https://github.com/neovim/neovim/wiki/Contributing
 [wiki-faq]: https://github.com/neovim/neovim/wiki/FAQ
 [wiki-review-checklist]: https://github.com/neovim/neovim/wiki/Code-review-checklist
-[wiki-troubleshooting-build-issues]: https://github.com/neovim/neovim/wiki/Troubleshooting#build-issues
-[wiki-troubleshooting-runtime-issues]: https://github.com/neovim/neovim/wiki/Troubleshooting#runtime-issues
 [wiki-troubleshooting]: https://github.com/neovim/neovim/wiki/Troubleshooting

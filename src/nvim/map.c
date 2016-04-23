@@ -18,6 +18,9 @@
 #define uint32_t_eq kh_int_hash_equal
 #define int_hash kh_int_hash_func
 #define int_eq kh_int_hash_equal
+#define linenr_T_hash kh_int_hash_func
+#define linenr_T_eq kh_int_hash_equal
+
 
 #if defined(ARCH_64)
 #define ptr_t_hash(key) uint64_t_hash((uint64_t)key)
@@ -78,6 +81,25 @@
     return rv;                                                                \
   }                                                                           \
                                                                               \
+  U *map_##T##_##U##_ref(Map(T, U) *map, T key, bool put)                     \
+  {                                                                           \
+    int ret;                                                                  \
+    khiter_t k;                                                               \
+    if (put) {                                                                \
+      k = kh_put(T##_##U##_map, map->table, key, &ret);                       \
+      if (ret) {                                                              \
+        kh_val(map->table, k) = INITIALIZER(T, U);                            \
+      }                                                                       \
+    } else {                                                                  \
+      k = kh_get(T##_##U##_map, map->table, key);                             \
+      if (k == kh_end(map->table)) {                                          \
+        return NULL;                                                          \
+      }                                                                       \
+    }                                                                         \
+                                                                              \
+    return &kh_val(map->table, k);                                            \
+  }                                                                           \
+                                                                              \
   U map_##T##_##U##_del(Map(T, U) *map, T key)                                \
   {                                                                           \
     U rv = INITIALIZER(T, U);                                                 \
@@ -118,3 +140,5 @@ MAP_IMPL(ptr_t, ptr_t, DEFAULT_INITIALIZER)
 MAP_IMPL(uint64_t, ptr_t, DEFAULT_INITIALIZER)
 #define MSGPACK_HANDLER_INITIALIZER {.fn = NULL, .async = false}
 MAP_IMPL(String, MsgpackRpcRequestHandler, MSGPACK_HANDLER_INITIALIZER)
+#define KVEC_INITIALIZER { .size = 0, .capacity = 0, .items = NULL }
+MAP_IMPL(linenr_T, bufhl_vec_T, KVEC_INITIALIZER)

@@ -3,7 +3,7 @@
 
 local Screen = require('test.functional.ui.screen')
 local helpers = require('test.functional.helpers')
-local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
+local clear, feed = helpers.clear, helpers.feed
 local execute, expect = helpers.execute, helpers.expect
 local wait = helpers.wait
 

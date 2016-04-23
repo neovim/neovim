@@ -32,7 +32,31 @@ Sabbbbbb bla
 ~                   
 ~                   
 ~                   
+Test 6: set linebreak with visual block mode
 this not
 aaaaaaaaaaaaa
 REMOVE: 
 REMOVE: 
+Test 7: set linebreak with visual block mode and v_b_A
+long line: foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar TARGETx at end
+Test 8: set linebreak with visual char mode and changing block
+1111-2222-1111-11-1111-2222-1111
+Test 9: using redo after block visual mode
+
+AaA
+AaA
+A
+Test 10: using normal commands after block-visual
+
+abcdpqrs
+Test 11: using block replace mode after wrapping
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa0aaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa0aaa
+Test 12: set linebreak list listchars=space:_,tab:>-,tail:-,eol:$
+a aaaaaaaaaaaaaaaaaaaaaa	a 
+
+Test 12: set linebreak list listchars=space:_,tab:>-,tail:-,eol:$
+a_                  
+aaaaaaaaaaaaaaaaaaaa
+aa>-----a-$         
+~                   

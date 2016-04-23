@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:	po (gettext)
 " Maintainer:	Dwayne Bailey <dwayne@translate.org.za>
-" Last Change:	2012 Apr 30
+" Last Change:	2015 Jun 07
 " Contributors: Dwayne Bailey (Most advanced syntax highlighting)
 "               Leonardo Fontenelle (Spell checking)
 "               Nam SungHyun <namsh@kldp.org> (Original maintainer)
@@ -52,6 +52,9 @@ syn match     poCommentTranslator "^# .*$" contains=poCopyrightUnset
 syn match     poCommentAutomatic "^#\..*$" 
 syn match     poCommentSources	"^#:.*$"
 syn match     poCommentFlags "^#,.*$" contains=poFlagFuzzy
+syn match     poDiffOld '\(^#| "[^{]*+}\|{+[^}]*+}\|{+[^}]*\|"$\)' contained
+syn match     poDiffNew '\(^#| "[^{]*-}\|{-[^}]*-}\|{-[^}]*\|"$\)' contained
+syn match     poCommentDiff "^#|.*$" contains=poDiffOld,poDiffNew
 
 " Translations (also includes header fields as they appear in a translation msgstr)
 syn region poCommentKDE	  start=+"_: +ms=s+1 end="\\n" end="\"\n^msgstr"me=s-1 contained
@@ -94,8 +97,11 @@ if version >= 508 || !exists("did_po_syn_inits")
   HiLink poCommentAutomatic  Comment
   HiLink poCommentTranslator Comment
   HiLink poCommentFlags      Special
+  HiLink poCommentDiff       Comment
   HiLink poCopyrightUnset    Todo
   HiLink poFlagFuzzy         Todo
+  HiLink poDiffOld           Todo
+  HiLink poDiffNew          Special
   HiLink poObsolete         Comment
 
   HiLink poStatementMsgid   Statement

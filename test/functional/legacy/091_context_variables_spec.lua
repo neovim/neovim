@@ -1,8 +1,8 @@
 -- Tests for getbufvar(), getwinvar(), gettabvar() and gettabwinvar().
 
 local helpers = require('test.functional.helpers')
-local feed, insert, source = helpers.feed, helpers.insert, helpers.source
-local clear, execute, expect = helpers.clear, helpers.execute, helpers.expect
+local insert, source = helpers.insert, helpers.source
+local clear, expect = helpers.clear, helpers.expect
 
 describe('context variables', function()
   setup(clear)
@@ -13,6 +13,9 @@ describe('context variables', function()
     -- Test for getbufvar().
     -- Use strings to test for memory leaks.
     source([[
+      let t:testvar='abcd'
+      $put =string(gettabvar(1, 'testvar'))
+      $put =string(gettabvar(1, 'testvar'))
       let b:var_num = '1234'
       let def_num = '5678'
       $put =string(getbufvar(1, 'var_num'))
@@ -125,6 +128,8 @@ describe('context variables', function()
     -- Assert buffer contents.
     expect([[
       start:
+      'abcd'
+      'abcd'
       '1234'
       '1234'
       {'var_num': '1234'}

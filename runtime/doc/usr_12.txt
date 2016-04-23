@@ -309,7 +309,7 @@ matches can be found.
 ==============================================================================
 *12.8*	Find where a word is used
 
-If you are a UNIX user, you can use a combination of Vim and the grep command
+If you are a Unix user, you can use a combination of Vim and the grep command
 to edit all the files that contain a given word.  This is extremely useful if
 you are working on a program and want to view or edit all the files that
 contain a specific variable.
@@ -324,7 +324,7 @@ will only list the files containing the word and not print the matching lines.
 The word it is searching for is "frame_counter".  Actually, this can be any
 regular expression.  (Note: What grep uses for regular expressions is not
 exactly the same as what Vim uses.)
-   The entire command is enclosed in backticks (`).  This tells the UNIX shell
+   The entire command is enclosed in backticks (`).  This tells the Unix shell
 to run this command and pretend that the results were typed on the command
 line.  So what happens is that the grep command is run and produces a list of
 files, these files are put on the Vim command line.  This results in Vim

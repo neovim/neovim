@@ -1,4 +1,4 @@
-*windows.txt*   For Vim version 7.4.  Last change: 2014 Dec 05
+*windows.txt*   For Vim version 7.4.  Last change: 2015 Aug 29
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -681,7 +681,6 @@ can also get to them with the buffer list commands, like ":bnext".
 		When using the |:tab| modifier each argument is opened in a
 		tab page.  The last window is used if it's empty.
 		Also see |++opt| and |+cmd|.
-		{only available when compiled with a GUI}
 
 ==============================================================================
 8. Do a command in all buffers or windows			*list-repeat*
@@ -702,11 +701,12 @@ can also get to them with the buffer list commands, like ":bnext".
 			the current window.
 			{cmd} can contain '|' to concatenate several commands.
 			{cmd} must not open or close windows or reorder them.
-			Also see |:tabdo|, |:argdo| and |:bufdo|.
+			Also see |:tabdo|, |:argdo|, |:bufdo|, |:cdo|, |:ldo|,
+			|:cfdo| and |:lfdo|.
 
 							*:bufdo*
 :[range]bufdo[!] {cmd}	Execute {cmd} in each buffer in the buffer list or if
-			[range[ is given only for buffers for which their
+			[range] is given only for buffers for which their
 			buffer name is in the [range]. It works like doing
                         this: >
 				:bfirst
@@ -728,7 +728,8 @@ can also get to them with the buffer list commands, like ":bnext".
 			autocommand event is disabled by adding it to
 			'eventignore'.  This considerably speeds up editing
 			each buffer.
-			Also see |:tabdo|, |:argdo| and |:windo|.
+			Also see |:tabdo|, |:argdo|, |:windo|, |:cdo|, |:ldo|,
+			|:cfdo| and |:lfdo|.
 
 Examples: >
 
@@ -971,9 +972,10 @@ A buffer can also be unlisted.  This means it exists, but it is not in the
 list of buffers. |unlisted-buffer|
 
 
-:files[!]					*:files*
-:buffers[!]					*:buffers* *:ls*
-:ls[!]		Show all buffers.  Example:
+:files[!] [flags]				*:files*
+:buffers[!] [flags]				*:buffers* *:ls*
+:ls[!] [flags]
+		Show all buffers.  Example:
 
 			1 #h   "/test/text"		line 1 ~
 			2u     "asdf"			line 0 ~
@@ -983,8 +985,8 @@ list of buffers. |unlisted-buffer|
 		(the term "unlisted" is a bit confusing then...).
 
 		Each buffer has a unique number.  That number will not change,
-		so you can always go to a specific buffer with ":buffer N" or
-		"N CTRL-^", where N is the buffer number.
+		thus you can always go to a specific buffer with ":buffer N"
+		or "N CTRL-^", where N is the buffer number.
 
 		Indicators (chars in the same column are mutually exclusive):
 		u	an unlisted buffer (only displayed when [!] is used)
@@ -998,6 +1000,21 @@ list of buffers. |unlisted-buffer|
 		   =	a readonly buffer
 		    +	a modified buffer
 		    x   a buffer with read errors
+
+		[flags] can be a combination of the following characters,
+		which restrict the buffers to be listed:
+			+	modified buffers
+			-	buffers with 'modifiable' off
+			=	readonly buffers
+			a	active buffers
+			u	unlisted buffers (overrides the "!")
+			h	hidden buffers
+			x	buffers with a read error
+			%	current buffer
+			#	alternate buffer
+		Combining flags means they are "and"ed together, e.g.:
+			h+	hidden buffers which are modified
+			a+	active buffers which are modified
 
 						*:bad* *:badd*
 :bad[d]	[+lnum] {fname}
@@ -1082,13 +1099,13 @@ list of buffers. |unlisted-buffer|
 		the current buffer remains being edited.  See |:buffer-!| for
 		[!].  This will also edit a buffer that is not in the buffer
 		list, without setting the 'buflisted' flag.
-		Also see ||+cmd|.
+		Also see |+cmd|.
 
 :[N]b[uffer][!] [+cmd] {bufname}
 		Edit buffer for {bufname} from the buffer list.  See
 		|:buffer-!| for [!].  This will also edit a buffer that is not
 		in the buffer list, without setting the 'buflisted' flag.
-		Also see ||+cmd|.
+		Also see |+cmd|.
 
 :[N]sb[uffer] [+cmd] [N]				*:sb* *:sbuffer*
 		Split window and edit buffer [N] from the buffer list.  If [N]
@@ -1096,7 +1113,7 @@ list of buffers. |unlisted-buffer|
 		"useopen" setting of 'switchbuf' when splitting.  This will
 		also edit a buffer that is not in the buffer list, without
 		setting the 'buflisted' flag.
-		Also see ||+cmd|.
+		Also see |+cmd|.
 
 :[N]sb[uffer] [+cmd] {bufname}
 		Split window and edit buffer for {bufname} from the buffer
@@ -1105,13 +1122,13 @@ list of buffers. |unlisted-buffer|
 		Note: If what you want to do is split the buffer, make a copy
 		under another name, you can do it this way: >
 			:w foobar | sp #
-<		Also see ||+cmd|.
+<		Also see |+cmd|.
 
 :[N]bn[ext][!] [+cmd] [N]				*:bn* *:bnext* *E87*
 		Go to [N]th next buffer in buffer list.  [N] defaults to one.
 		Wraps around the end of the buffer list.
 		See |:buffer-!| for [!].
-		Also see ||+cmd|.
+		Also see |+cmd|.
 		If you are in a help buffer, this takes you to the next help
 		buffer (if there is one).  Similarly, if you are in a normal
 		(non-help) buffer, this takes you to the next normal buffer.
@@ -1124,21 +1141,21 @@ list of buffers. |unlisted-buffer|
 :[N]sbn[ext] [+cmd] [N]
 		Split window and go to [N]th next buffer in buffer list.
 		Wraps around the end of the buffer list.  Uses 'switchbuf'
-		Also see ||+cmd|.
+		Also see |+cmd|.
 
 :[N]bN[ext][!] [+cmd] [N]		*:bN* *:bNext* *:bp* *:bprevious* *E88*
 :[N]bp[revious][!] [+cmd] [N]
 		Go to [N]th previous buffer in buffer list.  [N] defaults to
 		one.  Wraps around the start of the buffer list.
 		See |:buffer-!| for [!] and 'switchbuf'.
-		Also see ||+cmd|.
+		Also see |+cmd|.
 
 :[N]sbN[ext] [+cmd] [N]			*:sbN* *:sbNext* *:sbp* *:sbprevious*
 :[N]sbp[revious] [+cmd] [N]
 		Split window and go to [N]th previous buffer in buffer list.
 		Wraps around the start of the buffer list.
 		Uses 'switchbuf'.
-		Also see ||+cmd|.
+		Also see |+cmd|.
 
 :br[ewind][!] [+cmd]					*:br* *:brewind*
 		Go to first buffer in buffer list.  If the buffer list is

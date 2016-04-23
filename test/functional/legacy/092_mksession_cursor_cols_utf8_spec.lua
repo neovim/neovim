@@ -4,7 +4,7 @@
 -- Same as legacy test 93 but using UTF-8 file encoding.
 
 local helpers = require('test.functional.helpers')
-local feed, insert, source = helpers.feed, helpers.insert, helpers.source
+local feed, insert = helpers.feed, helpers.insert
 local clear, execute, expect = helpers.clear, helpers.execute, helpers.expect
 
 describe('store cursor position in session file in UTF-8', function()

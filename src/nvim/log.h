@@ -19,7 +19,7 @@
 #define ELOGN(...)
 
 // Logging is disabled if NDEBUG or DISABLE_LOG is defined.
-#ifdef NDEBUG
+#if !defined(DISABLE_LOG) && defined(NDEBUG)
 #  define DISABLE_LOG
 #endif
 

@@ -1,27 +1,18 @@
 /*
- * VIM - Vi IMproved	by Bram Moolenaar
- *
- * Do ":help uganda"  in Vim to read copying and usage conditions.
- * Do ":help credits" in Vim to see a list of people who contributed.
- * See README.txt for an overview of the Vim source code.
- */
-
-/*
  * ex_cmds2.c: some more functions for command line commands
  */
 
 #include <assert.h>
-#include <errno.h>
 #include <inttypes.h>
 #include <stdbool.h>
 #include <string.h>
+#include <fcntl.h>
 
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
 #ifdef HAVE_LOCALE_H
 # include <locale.h>
 #endif
-#include "nvim/version.h"
 #include "nvim/ex_cmds2.h"
 #include "nvim/buffer.h"
 #include "nvim/charset.h"
@@ -66,23 +57,23 @@ typedef struct scriptitem_S {
   char_u      *sn_name;
   bool file_id_valid;
   FileID file_id;
-  int sn_prof_on;               /* TRUE when script is/was profiled */
-  int sn_pr_force;              /* forceit: profile functions in this script */
-  proftime_T sn_pr_child;       /* time set when going into first child */
-  int sn_pr_nest;               /* nesting for sn_pr_child */
-  /* profiling the script as a whole */
-  int sn_pr_count;              /* nr of times sourced */
-  proftime_T sn_pr_total;       /* time spent in script + children */
-  proftime_T sn_pr_self;        /* time spent in script itself */
-  proftime_T sn_pr_start;       /* time at script start */
-  proftime_T sn_pr_children;    /* time in children after script start */
-  /* profiling the script per line */
-  garray_T sn_prl_ga;           /* things stored for every line */
-  proftime_T sn_prl_start;      /* start time for current line */
-  proftime_T sn_prl_children;    /* time spent in children for this line */
-  proftime_T sn_prl_wait;       /* wait start time for current line */
-  int sn_prl_idx;               /* index of line being timed; -1 if none */
-  int sn_prl_execed;            /* line being timed was executed */
+  bool sn_prof_on;              ///< true when script is/was profiled
+  int sn_pr_force;              ///< forceit: profile functions in this script
+  proftime_T sn_pr_child;       ///< time set when going into first child
+  int sn_pr_nest;               ///< nesting for sn_pr_child
+  // profiling the script as a whole
+  int sn_pr_count;              ///< nr of times sourced
+  proftime_T sn_pr_total;       ///< time spent in script + children
+  proftime_T sn_pr_self;        ///< time spent in script itself
+  proftime_T sn_pr_start;       ///< time at script start
+  proftime_T sn_pr_children;    ///< time in children after script start
+  // profiling the script per line
+  garray_T sn_prl_ga;           ///< things stored for every line
+  proftime_T sn_prl_start;      ///< start time for current line
+  proftime_T sn_prl_children;   ///< time spent in children for this line
+  proftime_T sn_prl_wait;       ///< wait start time for current line
+  linenr_T sn_prl_idx;          ///< index of line being timed; -1 if none
+  int sn_prl_execed;            ///< line being timed was executed
 } scriptitem_T;
 
 static garray_T script_items = {0, 0, sizeof(scriptitem_T), 4, NULL};
@@ -90,9 +81,9 @@ static garray_T script_items = {0, 0, sizeof(scriptitem_T), 4, NULL};
 
 /* Struct used in sn_prl_ga for every line of a script. */
 typedef struct sn_prl_S {
-  int snp_count;                /* nr of times line was executed */
-  proftime_T sn_prl_total;      /* time spent in a line + children */
-  proftime_T sn_prl_self;       /* time spent in a line itself */
+  int snp_count;                ///< nr of times line was executed
+  proftime_T sn_prl_total;      ///< time spent in a line + children
+  proftime_T sn_prl_self;       ///< time spent in a line itself
 } sn_prl_T;
 
 /*
@@ -102,18 +93,18 @@ typedef struct sn_prl_S {
  * sourcing can be done recursively.
  */
 struct source_cookie {
-  FILE        *fp;              /* opened file for sourcing */
-  char_u      *nextline;        /* if not NULL: line that was read ahead */
-  int finished;                 /* ":finish" used */
+  FILE *fp;                     ///< opened file for sourcing
+  char_u *nextline;             ///< if not NULL: line that was read ahead
+  int finished;                 ///< ":finish" used
 #if defined(USE_CRNL)
-  int fileformat;               /* EOL_UNKNOWN, EOL_UNIX or EOL_DOS */
-  int error;                    /* TRUE if LF found after CR-LF */
+  int fileformat;               ///< EOL_UNKNOWN, EOL_UNIX or EOL_DOS
+  int error;                    ///< TRUE if LF found after CR-LF
 #endif
-  linenr_T breakpoint;          /* next line with breakpoint or zero */
-  char_u      *fname;           /* name of sourced file */
-  int dbg_tick;                 /* debug_tick when breakpoint was set */
-  int level;                    /* top nesting level of sourced file */
-  vimconv_T conv;               /* type of conversion */
+  linenr_T breakpoint;          ///< next line with breakpoint or zero
+  char_u *fname;                ///< name of sourced file
+  int dbg_tick;                 ///< debug_tick when breakpoint was set
+  int level;                    ///< top nesting level of sourced file
+  vimconv_T conv;               ///< type of conversion
 };
 
 #  define PRL_ITEM(si, idx)     (((sn_prl_T *)(si)->sn_prl_ga.ga_data)[(idx)])
@@ -281,7 +272,7 @@ void do_debug(char_u *cmd)
 
       xfree(cmdline);
     }
-    lines_left = Rows - 1;
+    lines_left = (int)(Rows - 1);
   }
   xfree(cmdline);
 
@@ -290,7 +281,7 @@ void do_debug(char_u *cmd)
   redraw_all_later(NOT_VALID);
   need_wait_return = FALSE;
   msg_scroll = save_msg_scroll;
-  lines_left = Rows - 1;
+  lines_left = (int)(Rows - 1);
   State = save_State;
   did_emsg = save_did_emsg;
   cmd_silent = save_cmd_silent;
@@ -401,12 +392,12 @@ int dbg_check_skipped(exarg_T *eap)
  * This is a grow-array of structs.
  */
 struct debuggy {
-  int dbg_nr;                   /* breakpoint number */
-  int dbg_type;                 /* DBG_FUNC or DBG_FILE */
-  char_u      *dbg_name;        /* function or file name */
-  regprog_T   *dbg_prog;        /* regexp program */
-  linenr_T dbg_lnum;            /* line number in function or file */
-  int dbg_forceit;              /* ! used */
+  int dbg_nr;                   ///< breakpoint number
+  int dbg_type;                 ///< DBG_FUNC or DBG_FILE
+  char_u *dbg_name;             ///< function or file name
+  regprog_T *dbg_prog;          ///< regexp program
+  linenr_T dbg_lnum;            ///< line number in function or file
+  int dbg_forceit;              ///< ! used
 };
 
 static garray_T dbg_breakp = {0, 0, sizeof(struct debuggy), 4, NULL};
@@ -572,13 +563,14 @@ void ex_breakdel(exarg_T *eap)
   }
 
   if (ascii_isdigit(*eap->arg)) {
-    /* ":breakdel {nr}" */
-    nr = atol((char *)eap->arg);
-    for (int i = 0; i < gap->ga_len; ++i)
+    // ":breakdel {nr}"
+    nr = atoi((char *)eap->arg);
+    for (int i = 0; i < gap->ga_len; ++i) {
       if (DEBUGGY(gap, i).dbg_nr == nr) {
         todel = i;
         break;
       }
+    }
   } else if (*eap->arg == '*') {
     todel = 0;
     del_all = TRUE;
@@ -611,11 +603,13 @@ void ex_breakdel(exarg_T *eap)
       --gap->ga_len;
       if (todel < gap->ga_len)
         memmove(&DEBUGGY(gap, todel), &DEBUGGY(gap, todel + 1),
-            (gap->ga_len - todel) * sizeof(struct debuggy));
-      if (eap->cmdidx == CMD_breakdel)
+                (size_t)(gap->ga_len - todel) * sizeof(struct debuggy));
+      if (eap->cmdidx == CMD_breakdel) {
         ++debug_tick;
-      if (!del_all)
+      }
+      if (!del_all) {
         break;
+      }
     }
 
     /* If all breakpoints were removed clear the array. */
@@ -762,9 +756,14 @@ void ex_profile(exarg_T *eap)
     do_profiling = PROF_YES;
     profile_set_wait(profile_zero());
     set_vim_var_nr(VV_PROFILING, 1L);
-  } else if (do_profiling == PROF_NONE)
+  } else if (do_profiling == PROF_NONE) {
     EMSG(_("E750: First use \":profile start {fname}\""));
-  else if (STRCMP(eap->arg, "pause") == 0) {
+  } else if (STRCMP(eap->arg, "stop") == 0) {
+    profile_dump();
+    do_profiling = PROF_NONE;
+    set_vim_var_nr(VV_PROFILING, 0L);
+    profile_reset();
+  } else if (STRCMP(eap->arg, "pause") == 0) {
     if (do_profiling == PROF_YES)
       pause_time = profile_start();
     do_profiling = PROF_PAUSED;
@@ -774,6 +773,8 @@ void ex_profile(exarg_T *eap)
       profile_set_wait(profile_add(profile_get_wait(), pause_time));
     }
     do_profiling = PROF_YES;
+  } else if (STRCMP(eap->arg, "dump") == 0) {
+    profile_dump();
   } else {
     /* The rest is similar to ":breakadd". */
     ex_breakadd(eap);
@@ -812,23 +813,19 @@ void ex_pydo3(exarg_T *eap)
 
 /* Command line expansion for :profile. */
 static enum {
-  PEXP_SUBCMD,          /* expand :profile sub-commands */
-  PEXP_FUNC             /* expand :profile func {funcname} */
+  PEXP_SUBCMD,          ///< expand :profile sub-commands
+  PEXP_FUNC             ///< expand :profile func {funcname}
 } pexpand_what;
 
 static char *pexpand_cmds[] = {
-  "start",
-#define PROFCMD_START   0
-  "pause",
-#define PROFCMD_PAUSE   1
   "continue",
-#define PROFCMD_CONTINUE 2
-  "func",
-#define PROFCMD_FUNC    3
+  "dump",
   "file",
-#define PROFCMD_FILE    4
+  "func",
+  "pause",
+  "start",
+  "stop",
   NULL
-#define PROFCMD_LAST    5
 };
 
 /*
@@ -891,10 +888,63 @@ void profile_dump(void)
   }
 }
 
-/*
- * Start profiling script "fp".
- */
-static void script_do_profile(scriptitem_T *si)
+/// Reset all profiling information.
+static void profile_reset(void)
+{
+  // Reset sourced files.
+  for (int id = 1; id <= script_items.ga_len; id++) {
+    scriptitem_T *si = &SCRIPT_ITEM(id);
+    if (si->sn_prof_on) {
+      si->sn_prof_on      = false;
+      si->sn_pr_force     = 0;
+      si->sn_pr_child     = profile_zero();
+      si->sn_pr_nest      = 0;
+      si->sn_pr_count     = 0;
+      si->sn_pr_total     = profile_zero();
+      si->sn_pr_self      = profile_zero();
+      si->sn_pr_start     = profile_zero();
+      si->sn_pr_children  = profile_zero();
+      ga_clear(&si->sn_prl_ga);
+      si->sn_prl_start    = profile_zero();
+      si->sn_prl_children = profile_zero();
+      si->sn_prl_wait     = profile_zero();
+      si->sn_prl_idx      = -1;
+      si->sn_prl_execed   = 0;
+    }
+  }
+
+  // Reset functions.
+  size_t      n  = func_hashtab.ht_used;
+  hashitem_T *hi = func_hashtab.ht_array;
+
+  for (; n > (size_t)0; hi++) {
+    if (!HASHITEM_EMPTY(hi)) {
+      n--;
+      ufunc_T *uf = HI2UF(hi);
+      if (uf->uf_profiling) {
+        uf->uf_profiling    = 0;
+        uf->uf_tm_count     = 0;
+        uf->uf_tm_total     = profile_zero();
+        uf->uf_tm_self      = profile_zero();
+        uf->uf_tm_children  = profile_zero();
+        uf->uf_tml_count    = NULL;
+        uf->uf_tml_total    = NULL;
+        uf->uf_tml_self     = NULL;
+        uf->uf_tml_start    = profile_zero();
+        uf->uf_tml_children = profile_zero();
+        uf->uf_tml_wait     = profile_zero();
+        uf->uf_tml_idx      = -1;
+        uf->uf_tml_execed   = 0;
+      }
+    }
+  }
+
+  xfree(profile_fname);
+  profile_fname = NULL;
+}
+
+/// Start profiling a script.
+static void profile_init(scriptitem_T *si)
 {
   si->sn_pr_count = 0;
   si->sn_pr_total = profile_zero();
@@ -902,7 +952,7 @@ static void script_do_profile(scriptitem_T *si)
 
   ga_init(&si->sn_prl_ga, sizeof(sn_prl_T), 100);
   si->sn_prl_idx = -1;
-  si->sn_prof_on = TRUE;
+  si->sn_prof_on = true;
   si->sn_pr_nest = 0;
 }
 
@@ -1208,7 +1258,7 @@ check_changed_any (
   int save;
   int i;
   int bufnum = 0;
-  int bufcount = 0;
+  size_t bufcount = 0;
   int         *bufnrs;
 
   FOR_ALL_BUFFERS(buf) {
@@ -1473,7 +1523,7 @@ do_arglist (
           didone = TRUE;
           xfree(ARGLIST[match].ae_fname);
           memmove(ARGLIST + match, ARGLIST + match + 1,
-              (ARGCOUNT - match - 1) * sizeof(aentry_T));
+                  (size_t)(ARGCOUNT - match - 1) * sizeof(aentry_T));
           --ALIST(curwin)->al_ga.ga_len;
           if (curwin->w_arg_idx > match)
             --curwin->w_arg_idx;
@@ -1490,9 +1540,7 @@ do_arglist (
     int i = expand_wildcards(new_ga.ga_len, (char_u **)new_ga.ga_data,
         &exp_count, &exp_files, EW_DIR|EW_FILE|EW_ADDSLASH|EW_NOTFOUND);
     ga_clear(&new_ga);
-    if (i == FAIL)
-      return FAIL;
-    if (exp_count == 0) {
+    if (i == FAIL || exp_count == 0) {
       EMSG(_(e_nomatch));
       return FAIL;
     }
@@ -1655,10 +1703,11 @@ void ex_argument(exarg_T *eap)
 {
   int i;
 
-  if (eap->addr_count > 0)
-    i = eap->line2 - 1;
-  else
+  if (eap->addr_count > 0) {
+    i = (int)eap->line2 - 1;
+  } else {
     i = curwin->w_arg_idx;
+  }
   do_argfile(eap, i);
 }
 
@@ -1797,22 +1846,25 @@ void ex_argadd(exarg_T *eap)
 void ex_argdelete(exarg_T *eap)
 {
   if (eap->addr_count > 0) {
-    /* ":1,4argdel": Delete all arguments in the range. */
-    if (eap->line2 > ARGCOUNT)
+    // ":1,4argdel": Delete all arguments in the range.
+    if (eap->line2 > ARGCOUNT) {
       eap->line2 = ARGCOUNT;
-    int n = eap->line2 - eap->line1 + 1;
-    if (*eap->arg != NUL || n <= 0)
+    }
+    linenr_T n = eap->line2 - eap->line1 + 1;
+    if (*eap->arg != NUL || n <= 0) {
       EMSG(_(e_invarg));
-    else {
-      for (int i = eap->line1; i <= eap->line2; ++i)
+    } else {
+      for (linenr_T i = eap->line1; i <= eap->line2; ++i) {
         xfree(ARGLIST[i - 1].ae_fname);
+      }
       memmove(ARGLIST + eap->line1 - 1, ARGLIST + eap->line2,
-          (size_t)((ARGCOUNT - eap->line2) * sizeof(aentry_T)));
-      ALIST(curwin)->al_ga.ga_len -= n;
-      if (curwin->w_arg_idx >= eap->line2)
-        curwin->w_arg_idx -= n;
-      else if (curwin->w_arg_idx > eap->line1)
-        curwin->w_arg_idx = eap->line1;
+              (size_t)(ARGCOUNT - eap->line2) * sizeof(aentry_T));
+      ALIST(curwin)->al_ga.ga_len -= (int)n;
+      if (curwin->w_arg_idx >= eap->line2) {
+        curwin->w_arg_idx -= (int)n;
+      } else if (curwin->w_arg_idx > eap->line1) {
+        curwin->w_arg_idx = (int)eap->line1;
+      }
     }
   } else if (*eap->arg == NUL)
     EMSG(_(e_argreq));
@@ -1822,7 +1874,7 @@ void ex_argdelete(exarg_T *eap)
 }
 
 /*
- * ":argdo", ":windo", ":bufdo", ":tabdo"
+ * ":argdo", ":windo", ":bufdo", ":tabdo", ":cdo", ":ldo", ":cfdo" and ":lfdo"
  */
 void ex_listdo(exarg_T *eap)
 {
@@ -1832,7 +1884,6 @@ void ex_listdo(exarg_T *eap)
   int next_fnum = 0;
   char_u      *save_ei = NULL;
   char_u      *p_shm_save;
-
 
   if (eap->cmdidx != CMD_windo && eap->cmdidx != CMD_tabdo)
     /* Don't do syntax HL autocommands.  Skipping the syntax file is a
@@ -1863,12 +1914,15 @@ void ex_listdo(exarg_T *eap)
         }
         break;
       case CMD_argdo:
-        i = eap->line1 - 1;
+        i = (int)eap->line1 - 1;
         break;
       default:
         break;
     }
+
     buf_T *buf = curbuf;
+    size_t qf_size = 0;
+
     /* set pcmark now */
     if (eap->cmdidx == CMD_bufdo) {
       /* Advance to the first listed buffer after "eap->line1". */
@@ -1882,6 +1936,23 @@ void ex_listdo(exarg_T *eap)
       }
       if (buf != NULL) {
         goto_buffer(eap, DOBUF_FIRST, FORWARD, buf->b_fnum);
+      }
+    } else if (eap->cmdidx == CMD_cdo || eap->cmdidx == CMD_ldo ||
+               eap->cmdidx == CMD_cfdo || eap->cmdidx == CMD_lfdo) {
+      qf_size = qf_get_size(eap);
+      assert(eap->line1 >= 0);
+      if (qf_size == 0 || (size_t)eap->line1 > qf_size) {
+        buf = NULL;
+      } else {
+        ex_cc(eap);
+
+        buf = curbuf;
+        i = (int)eap->line1 - 1;
+        if (eap->addr_count <= 0) {
+          // Default to all quickfix/location list entries.
+          assert(qf_size < MAXLNUM);
+          eap->line2 = (linenr_T)qf_size;
+        }
       }
     } else {
       setpcmark();
@@ -1963,9 +2034,27 @@ void ex_listdo(exarg_T *eap)
         set_option_value((char_u *)"shm", 0L, p_shm_save, 0);
         xfree(p_shm_save);
 
-        /* If autocommands took us elsewhere, quit here */
-        if (curbuf->b_fnum != next_fnum)
+        // If autocommands took us elsewhere, quit here.
+        if (curbuf->b_fnum != next_fnum) {
           break;
+        }
+      }
+
+      if (eap->cmdidx == CMD_cdo || eap->cmdidx == CMD_ldo ||
+          eap->cmdidx == CMD_cfdo || eap->cmdidx == CMD_lfdo) {
+        assert(i >= 0);
+        if ((size_t)i >= qf_size || i >= eap->line2) {
+          break;
+        }
+
+        size_t qf_idx = qf_get_cur_idx(eap);
+
+        ex_cnext(eap);
+
+        // If jumping to the next quickfix entry fails, quit here.
+        if (qf_get_cur_idx(eap) == qf_idx) {
+            break;
+        }
       }
 
       if (eap->cmdidx == CMD_windo) {
@@ -2015,7 +2104,7 @@ alist_add_list (
       after = ARGCOUNT;
     if (after < ARGCOUNT)
       memmove(&(ARGLIST[after + count]), &(ARGLIST[after]),
-          (ARGCOUNT - after) * sizeof(aentry_T));
+              (size_t)(ARGCOUNT - after) * sizeof(aentry_T));
     for (int i = 0; i < count; ++i) {
       ARGLIST[after + i].ae_fname = files[i];
       ARGLIST[after + i].ae_fnum = buflist_add(files[i], BLN_LISTED);
@@ -2357,9 +2446,7 @@ do_source (
      */
     p = path_tail(fname_exp);
     if ((*p == '.' || *p == '_')
-        && (STRICMP(p + 1, "nvimrc") == 0
-            || STRICMP(p + 1, "ngvimrc") == 0
-            || STRICMP(p + 1, "exrc") == 0)) {
+        && (STRICMP(p + 1, "nvimrc") == 0 || STRICMP(p + 1, "exrc") == 0)) {
       if (*p == '_')
         *p = '.';
       else
@@ -2490,7 +2577,7 @@ do_source (
     while (script_items.ga_len < current_SID) {
       ++script_items.ga_len;
       SCRIPT_ITEM(script_items.ga_len).sn_name = NULL;
-      SCRIPT_ITEM(script_items.ga_len).sn_prof_on = FALSE;
+      SCRIPT_ITEM(script_items.ga_len).sn_prof_on = false;
     }
     si = &SCRIPT_ITEM(current_SID);
     si->sn_name = fname_exp;
@@ -2510,8 +2597,8 @@ do_source (
     int forceit;
 
     /* Check if we do profiling for this script. */
-    if (!si->sn_prof_on && has_profiling(TRUE, si->sn_name, &forceit)) {
-      script_do_profile(si);
+    if (!si->sn_prof_on && has_profiling(true, si->sn_name, &forceit)) {
+      profile_init(si);
       si->sn_pr_force = forceit;
     }
     if (si->sn_prof_on) {
@@ -3081,27 +3168,27 @@ static char_u *get_mess_env(void)
  */
 void set_lang_var(void)
 {
-  char_u      *loc;
+  const char *loc;
 
 # ifdef HAVE_GET_LOCALE_VAL
-  loc = (char_u *)get_locale_val(LC_CTYPE);
+  loc = get_locale_val(LC_CTYPE);
 # else
-  /* setlocale() not supported: use the default value */
-  loc = (char_u *)"C";
+  // setlocale() not supported: use the default value
+  loc = "C";
 # endif
   set_vim_var_string(VV_CTYPE, loc, -1);
 
   /* When LC_MESSAGES isn't defined use the value from $LC_MESSAGES, fall
    * back to LC_CTYPE if it's empty. */
 # ifdef HAVE_WORKING_LIBINTL
-  loc = get_mess_env();
+  loc = (char *) get_mess_env();
 # else
-  loc = (char_u *)get_locale_val(LC_MESSAGES);
+  loc = get_locale_val(LC_MESSAGES);
 # endif
   set_vim_var_string(VV_LANG, loc, -1);
 
 # ifdef HAVE_GET_LOCALE_VAL
-  loc = (char_u *)get_locale_val(LC_TIME);
+  loc = get_locale_val(LC_TIME);
 # endif
   set_vim_var_string(VV_LC_TIME, loc, -1);
 }
@@ -3305,8 +3392,8 @@ static void script_host_execute(char *name, exarg_T *eap)
     // script
     list_append_string(args, script ? script : eap->arg, -1);
     // current range
-    list_append_number(args, eap->line1);
-    list_append_number(args, eap->line2);
+    list_append_number(args, (int)eap->line1);
+    list_append_number(args, (int)eap->line2);
     (void)eval_call_provider(name, "execute", args);
   }
 
@@ -3322,16 +3409,16 @@ static void script_host_execute_file(char *name, exarg_T *eap)
   // filename
   list_append_string(args, buffer, -1);
   // current range
-  list_append_number(args, eap->line1);
-  list_append_number(args, eap->line2);
+  list_append_number(args, (int)eap->line1);
+  list_append_number(args, (int)eap->line2);
   (void)eval_call_provider(name, "execute_file", args);
 }
 
 static void script_host_do_range(char *name, exarg_T *eap)
 {
   list_T *args = list_alloc();
-  list_append_number(args, eap->line1);
-  list_append_number(args, eap->line2);
+  list_append_number(args, (int)eap->line1);
+  list_append_number(args, (int)eap->line2);
   list_append_string(args, eap->arg, -1);
   (void)eval_call_provider(name, "do_range", args);
 }

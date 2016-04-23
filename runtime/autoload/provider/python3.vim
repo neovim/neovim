@@ -24,12 +24,10 @@ if s:prog == ''
   finish
 endif
 
-let s:plugin_path = expand('<sfile>:p:h').'/script_host.py'
-
 " The Python3 provider plugin will run in a separate instance of the Python3
 " host.
 call remote#host#RegisterClone('legacy-python3-provider', 'python3')
-call remote#host#RegisterPlugin('legacy-python3-provider', s:plugin_path, [])
+call remote#host#RegisterPlugin('legacy-python3-provider', 'script_host.py', [])
 
 function! provider#python3#Call(method, args)
   if s:err != ''
@@ -46,7 +44,7 @@ function! provider#python3#Call(method, args)
       echohl WarningMsg
       echomsg v:exception
       echohl None
-      finish
+      return
     endtry
   endif
   return call(s:rpcrequest, insert(insert(a:args, 'python_'.a:method), s:host))

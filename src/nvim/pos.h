@@ -2,7 +2,11 @@
 #define NVIM_POS_H
 
 typedef long linenr_T;         // line number type
-typedef int colnr_T;           // column number type
+
+/// Column number type
+typedef int colnr_T;
+/// Format used to print values which have colnr_T type
+#define PRIdCOLNR "d"
 
 #define MAXLNUM 0x7fffffff     // maximum (invalid) line number
 #define MAXCOL  0x7fffffff     // maximum column number, 31 bits

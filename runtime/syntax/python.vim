@@ -1,9 +1,8 @@
 " Vim syntax file
 " Language:	Python
-" Maintainer:	Neil Schemenauer <nas@python.ca>
-" Last Change:	2014 Jul 16
-" Credits:	Zvezdan Petkovic <zpetkovic@acm.org>
-"		Neil Schemenauer <nas@python.ca>
+" Maintainer:	Zvezdan Petkovic <zpetkovic@acm.org>
+" Last Change:	2015 Sep 15
+" Credits:	Neil Schemenauer <nas@python.ca>
 "		Dmitry Vasiliev
 "
 "		This version is a major rewrite by Zvezdan Petkovic.
@@ -52,24 +51,26 @@ set cpo&vim
 
 " Keep Python keywords in alphabetical order inside groups for easy
 " comparison with the table in the 'Python Language Reference'
-" http://docs.python.org/reference/lexical_analysis.html#keywords.
+" https://docs.python.org/2/reference/lexical_analysis.html#keywords,
+" https://docs.python.org/3/reference/lexical_analysis.html#keywords.
 " Groups are in the order presented in NAMING CONVENTIONS in syntax.txt.
 " Exceptions come last at the end of each group (class and def below).
 "
 " Keywords 'with' and 'as' are new in Python 2.6
 " (use 'from __future__ import with_statement' in Python 2.5).
 "
-" Some compromises had to be made to support both Python 3.0 and 2.6.
-" We include Python 3.0 features, but when a definition is duplicated,
+" Some compromises had to be made to support both Python 3 and 2.
+" We include Python 3 features, but when a definition is duplicated,
 " the last definition takes precedence.
 "
-" - 'False', 'None', and 'True' are keywords in Python 3.0 but they are
-"   built-ins in 2.6 and will be highlighted as built-ins below.
-" - 'exec' is a built-in in Python 3.0 and will be highlighted as
+" - 'False', 'None', and 'True' are keywords in Python 3 but they are
+"   built-ins in 2 and will be highlighted as built-ins below.
+" - 'exec' is a built-in in Python 3 and will be highlighted as
 "   built-in below.
-" - 'nonlocal' is a keyword in Python 3.0 and will be highlighted.
-" - 'print' is a built-in in Python 3.0 and will be highlighted as
-"   built-in below (use 'from __future__ import print_function' in 2.6)
+" - 'nonlocal' is a keyword in Python 3 and will be highlighted.
+" - 'print' is a built-in in Python 3 and will be highlighted as
+"   built-in below (use 'from __future__ import print_function' in 2)
+" - async and await were added in Python 3.5 and are soft keywords.
 "
 syn keyword pythonStatement	False, None, True
 syn keyword pythonStatement	as assert break continue del exec global
@@ -80,6 +81,7 @@ syn keyword pythonRepeat	for while
 syn keyword pythonOperator	and in is not or
 syn keyword pythonException	except finally raise try
 syn keyword pythonInclude	from import
+syn keyword pythonAsync		async await
 
 " Decorators (new in Python 2.4)
 syn match   pythonDecorator	"@" display nextgroup=pythonFunction skipwhite
@@ -95,16 +97,16 @@ syn match   pythonComment	"#.*$" contains=pythonTodo,@Spell
 syn keyword pythonTodo		FIXME NOTE NOTES TODO XXX contained
 
 " Triple-quoted strings can contain doctests.
-syn region  pythonString
+syn region  pythonString matchgroup=pythonQuotes
       \ start=+[uU]\=\z(['"]\)+ end="\z1" skip="\\\\\|\\\z1"
       \ contains=pythonEscape,@Spell
-syn region  pythonString
+syn region  pythonString matchgroup=pythonTripleQuotes
       \ start=+[uU]\=\z('''\|"""\)+ skip=+\\["']+ end="\z1" keepend
       \ contains=pythonEscape,pythonSpaceError,pythonDoctest,@Spell
-syn region  pythonRawString
+syn region  pythonRawString matchgroup=pythonQuotes
       \ start=+[uU]\=[rR]\z(['"]\)+ end="\z1" skip="\\\\\|\\\z1"
       \ contains=@Spell
-syn region  pythonRawString
+syn region  pythonRawString matchgroup=pythonTripleQuotes
       \ start=+[uU]\=[rR]\z('''\|"""\)+ end="\z1" keepend
       \ contains=pythonSpaceError,pythonDoctest,@Spell
 
@@ -113,7 +115,7 @@ syn match   pythonEscape	"\\\o\{1,3}" contained
 syn match   pythonEscape	"\\x\x\{2}" contained
 syn match   pythonEscape	"\%(\\u\x\{4}\|\\U\x\{8}\)" contained
 " Python allows case-insensitive Unicode IDs: http://www.unicode.org/charts/
-syn match   pythonEscape	"\\N{.\{-}}" contained
+syn match   pythonEscape	"\\N{\a\+\%(\s\a\+\)*}" contained
 syn match   pythonEscape	"\\$"
 
 if exists("python_highlight_all")
@@ -148,7 +150,8 @@ endif
 " - 08e0 or 08j are highlighted,
 "
 " and so on, as specified in the 'Python Language Reference'.
-" http://docs.python.org/reference/lexical_analysis.html#numeric-literals
+" https://docs.python.org/2/reference/lexical_analysis.html#numeric-literals
+" https://docs.python.org/3/reference/lexical_analysis.html#numeric-literals
 if !exists("python_no_number_highlight")
   " numbers (including longs and complex)
   syn match   pythonNumber	"\<0[oO]\=\o\+[Ll]\=\>"
@@ -160,54 +163,58 @@ if !exists("python_no_number_highlight")
   syn match   pythonNumber
 	\ "\<\d\+\.\%([eE][+-]\=\d\+\)\=[jJ]\=\%(\W\|$\)\@="
   syn match   pythonNumber
-	\ "\%(^\|\W\)\@<=\d*\.\d\+\%([eE][+-]\=\d\+\)\=[jJ]\=\>"
+	\ "\%(^\|\W\)\zs\d*\.\d\+\%([eE][+-]\=\d\+\)\=[jJ]\=\>"
 endif
 
 " Group the built-ins in the order in the 'Python Library Reference' for
 " easier comparison.
-" http://docs.python.org/library/constants.html
-" http://docs.python.org/library/functions.html
-" http://docs.python.org/library/functions.html#non-essential-built-in-functions
+" https://docs.python.org/2/library/constants.html
+" https://docs.python.org/3/library/constants.html
+" http://docs.python.org/2/library/functions.html
+" http://docs.python.org/3/library/functions.html
+" http://docs.python.org/2/library/functions.html#non-essential-built-in-functions
+" http://docs.python.org/3/library/functions.html#non-essential-built-in-functions
 " Python built-in functions are in alphabetical order.
 if !exists("python_no_builtin_highlight")
   " built-in constants
-  " 'False', 'True', and 'None' are also reserved words in Python 3.0
+  " 'False', 'True', and 'None' are also reserved words in Python 3
   syn keyword pythonBuiltin	False True None
   syn keyword pythonBuiltin	NotImplemented Ellipsis __debug__
   " built-in functions
-  syn keyword pythonBuiltin	abs all any bin bool chr classmethod
-  syn keyword pythonBuiltin	compile complex delattr dict dir divmod
-  syn keyword pythonBuiltin	enumerate eval filter float format
+  syn keyword pythonBuiltin	abs all any bin bool bytearray callable chr
+  syn keyword pythonBuiltin	classmethod compile complex delattr dict dir
+  syn keyword pythonBuiltin	divmod enumerate eval filter float format
   syn keyword pythonBuiltin	frozenset getattr globals hasattr hash
   syn keyword pythonBuiltin	help hex id input int isinstance
   syn keyword pythonBuiltin	issubclass iter len list locals map max
-  syn keyword pythonBuiltin	min next object oct open ord pow print
-  syn keyword pythonBuiltin	property range repr reversed round set
+  syn keyword pythonBuiltin	memoryview min next object oct open ord pow
+  syn keyword pythonBuiltin	print property range repr reversed round set
   syn keyword pythonBuiltin	setattr slice sorted staticmethod str
   syn keyword pythonBuiltin	sum super tuple type vars zip __import__
-  " Python 2.6 only
-  syn keyword pythonBuiltin	basestring callable cmp execfile file
+  " Python 2 only
+  syn keyword pythonBuiltin	basestring cmp execfile file
   syn keyword pythonBuiltin	long raw_input reduce reload unichr
   syn keyword pythonBuiltin	unicode xrange
-  " Python 3.0 only
-  syn keyword pythonBuiltin	ascii bytearray bytes exec memoryview
-  " non-essential built-in functions; Python 2.6 only
+  " Python 3 only
+  syn keyword pythonBuiltin	ascii bytes exec
+  " non-essential built-in functions; Python 2 only
   syn keyword pythonBuiltin	apply buffer coerce intern
 endif
 
 " From the 'Python Library Reference' class hierarchy at the bottom.
-" http://docs.python.org/library/exceptions.html
+" http://docs.python.org/2/library/exceptions.html
+" http://docs.python.org/3/library/exceptions.html
 if !exists("python_no_exception_highlight")
-  " builtin base exceptions (only used as base classes for other exceptions)
+  " builtin base exceptions (used mostly as base classes for other exceptions)
   syn keyword pythonExceptions	BaseException Exception
-  syn keyword pythonExceptions	ArithmeticError EnvironmentError
+  syn keyword pythonExceptions	ArithmeticError BufferError
   syn keyword pythonExceptions	LookupError
-  " builtin base exception removed in Python 3.0
-  syn keyword pythonExceptions	StandardError
+  " builtin base exceptions removed in Python 3
+  syn keyword pythonExceptions	EnvironmentError StandardError
   " builtin exceptions (actually raised)
-  syn keyword pythonExceptions	AssertionError AttributeError BufferError
+  syn keyword pythonExceptions	AssertionError AttributeError
   syn keyword pythonExceptions	EOFError FloatingPointError GeneratorExit
-  syn keyword pythonExceptions	IOError ImportError IndentationError
+  syn keyword pythonExceptions	ImportError IndentationError
   syn keyword pythonExceptions	IndexError KeyError KeyboardInterrupt
   syn keyword pythonExceptions	MemoryError NameError NotImplementedError
   syn keyword pythonExceptions	OSError OverflowError ReferenceError
@@ -215,13 +222,27 @@ if !exists("python_no_exception_highlight")
   syn keyword pythonExceptions	SystemError SystemExit TabError TypeError
   syn keyword pythonExceptions	UnboundLocalError UnicodeError
   syn keyword pythonExceptions	UnicodeDecodeError UnicodeEncodeError
-  syn keyword pythonExceptions	UnicodeTranslateError ValueError VMSError
-  syn keyword pythonExceptions	WindowsError ZeroDivisionError
+  syn keyword pythonExceptions	UnicodeTranslateError ValueError
+  syn keyword pythonExceptions	ZeroDivisionError
+  " builtin OS exceptions in Python 3
+  syn keyword pythonExceptions	BlockingIOError BrokenPipeError
+  syn keyword pythonExceptions	ChildProcessError ConnectionAbortedError
+  syn keyword pythonExceptions	ConnectionError ConnectionRefusedError
+  syn keyword pythonExceptions	ConnectionResetError FileExistsError
+  syn keyword pythonExceptions	FileNotFoundError InterruptedError
+  syn keyword pythonExceptions	IsADirectoryError NotADirectoryError
+  syn keyword pythonExceptions	PermissionError ProcessLookupError
+  syn keyword pythonExceptions	RecursionError StopAsyncIteration
+  syn keyword pythonExceptions	TimeoutError
+  " builtin exceptions deprecated/removed in Python 3
+  syn keyword pythonExceptions	IOError VMSError WindowsError
   " builtin warnings
   syn keyword pythonExceptions	BytesWarning DeprecationWarning FutureWarning
   syn keyword pythonExceptions	ImportWarning PendingDeprecationWarning
   syn keyword pythonExceptions	RuntimeWarning SyntaxWarning UnicodeWarning
   syn keyword pythonExceptions	UserWarning Warning
+  " builtin warnings in Python 3
+  syn keyword pythonExceptions	ResourceWarning
 endif
 
 if exists("python_space_error_highlight")
@@ -268,12 +289,15 @@ if version >= 508 || !exists("did_python_syn_inits")
   HiLink pythonOperator		Operator
   HiLink pythonException	Exception
   HiLink pythonInclude		Include
+  HiLink pythonAsync		Statement
   HiLink pythonDecorator	Define
   HiLink pythonFunction		Function
   HiLink pythonComment		Comment
   HiLink pythonTodo		Todo
   HiLink pythonString		String
   HiLink pythonRawString	String
+  HiLink pythonQuotes		String
+  HiLink pythonTripleQuotes	pythonQuotes
   HiLink pythonEscape		Special
   if !exists("python_no_number_highlight")
     HiLink pythonNumber		Number

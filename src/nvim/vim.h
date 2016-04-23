@@ -1,10 +1,3 @@
-/*
- * VIM - Vi IMproved	by Bram Moolenaar
- *
- * Do ":help uganda"  in Vim to read copying and usage conditions.
- * Do ":help credits" in Vim to see a list of people who contributed.
- */
-
 #ifndef NVIM_VIM_H
 #define NVIM_VIM_H
 
@@ -34,20 +27,21 @@ Error: configure did not run properly.Check auto/config.log.
 # endif
 #endif
 
-/* user ID of root is usually zero, but not for everybody */
-#define ROOT_UID 0
-
-
-/* Can't use "PACKAGE" here, conflicts with a Perl include file. */
-#ifndef VIMPACKAGE
-# define VIMPACKAGE     "vim"
-#endif
-
 #include "nvim/os/os_defs.h"       /* bring lots of system header files */
 
-#define NUMBUFLEN 30        /* length of a buffer to store a number in ASCII */
+/// length of a buffer to store a number in ASCII (64 bits binary + NUL)
+#define NUMBUFLEN 65
 
-# define MAX_TYPENR 65535
+// flags for vim_str2nr()
+#define STR2NR_BIN 1
+#define STR2NR_OCT 2
+#define STR2NR_HEX 4
+#define STR2NR_ALL (STR2NR_BIN + STR2NR_OCT + STR2NR_HEX)
+#define STR2NR_FORCE 8  // only when ONE of the above is used
+
+#define MAX_TYPENR 65535
+
+#define ROOT_UID 0
 
 #include "nvim/keymap.h"
 #include "nvim/macros.h"
@@ -239,15 +233,6 @@ enum {
 /* Size in bytes of the hash used in the undo file. */
 #define UNDO_HASH_SIZE 32
 
-#ifdef HAVE_FCNTL_H
-# include <fcntl.h>
-#endif
-
-
-#ifndef O_NOFOLLOW
-# define O_NOFOLLOW 0
-#endif
-
 /*
  * defines to avoid typecasts from (char_u *) to (char *) and back
  * (vim_strchr() and vim_strrchr() are now in alloc.c)
@@ -286,26 +271,11 @@ enum {
 
 # define vim_strpbrk(s, cs) (char_u *)strpbrk((char *)(s), (char *)(cs))
 
-#define MSG(s)                      msg((char_u *)(s))
-#define MSG_ATTR(s, attr)           msg_attr((char_u *)(s), (attr))
-#define EMSG(s)                     emsg((char_u *)(s))
-#define EMSG2(s, p)                 emsg2((char_u *)(s), (char_u *)(p))
-#define EMSG3(s, p, q)              emsg3((char_u *)(s), (char_u *)(p), \
-    (char_u *)(q))
-#define EMSGN(s, n)                 emsgn((char_u *)(s), (int64_t)(n))
-#define EMSGU(s, n)                 emsgu((char_u *)(s), (uint64_t)(n))
-#define OUT_STR(s)                  out_str((char_u *)(s))
-#define OUT_STR_NF(s)               out_str_nf((char_u *)(s))
-#define MSG_PUTS(s)                 msg_puts((char_u *)(s))
-#define MSG_PUTS_ATTR(s, a)         msg_puts_attr((char_u *)(s), (a))
-#define MSG_PUTS_TITLE(s)           msg_puts_title((char_u *)(s))
-#define MSG_PUTS_LONG(s)            msg_puts_long_attr((char_u *)(s), 0)
-#define MSG_PUTS_LONG_ATTR(s, a)    msg_puts_long_attr((char_u *)(s), (a))
+#include "nvim/message.h"
 
-/* Prefer using emsg3(), because perror() may send the output to the wrong
- * destination and mess up the screen. */
-#define PERROR(msg) \
-  (void) emsg3((char_u *) "%s: %s", (char_u *)msg, (char_u *)strerror(errno))
+// Prefer using emsgf(), because perror() may send the output to the wrong
+// destination and mess up the screen.
+#define PERROR(msg) (void) emsgf("%s: %s", msg, strerror(errno))
 
 #define SHOWCMD_COLS 10                 /* columns needed by shown command */
 #define STL_MAX_ITEM 80                 /* max nr of %<flag> in statusline */

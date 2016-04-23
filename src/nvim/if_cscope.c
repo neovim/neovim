@@ -4,14 +4,14 @@
  *
  * The basic idea/structure of cscope for Vim was borrowed from Nvi.  There
  * might be a few lines of code that look similar to what Nvi has.
- *
- * See README.txt for an overview of the Vim source code.
  */
+
 #include <stdbool.h>
 
 #include <assert.h>
 #include <errno.h>
 #include <inttypes.h>
+#include <fcntl.h>
 
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
@@ -27,7 +27,6 @@
 #include "nvim/quickfix.h"
 #include "nvim/strings.h"
 #include "nvim/tag.h"
-#include "nvim/tempfile.h"
 #include "nvim/window.h"
 #include "nvim/os/os.h"
 #include "nvim/os/input.h"
@@ -744,8 +743,16 @@ err_closing:
     (void)close(to_cs[1]);
     (void)close(from_cs[0]);
 #else
-  /* WIN32 */
-  /* Create pipes to communicate with cscope */
+  // Create pipes to communicate with cscope
+  int fd;
+  SECURITY_ATTRIBUTES sa;
+  PROCESS_INFORMATION pi;
+  BOOL pipe_stdin = FALSE, pipe_stdout = FALSE;  // NOLINT(readability/bool)
+  STARTUPINFO si;
+  HANDLE stdin_rd, stdout_rd;
+  HANDLE stdout_wr, stdin_wr;
+  BOOL created;
+
   sa.nLength = sizeof(SECURITY_ATTRIBUTES);
   sa.bInheritHandle = TRUE;
   sa.lpSecurityDescriptor = NULL;
@@ -862,17 +869,16 @@ err_closing:
     csinfo[i].hProc = pi.hProcess;
     CloseHandle(pi.hThread);
 
-    /* TODO - tidy up after failure to create files on pipe handles. */
-    if (((fd = _open_osfhandle((OPEN_OH_ARGTYPE)stdin_wr,
-              _O_TEXT|_O_APPEND)) < 0)
-        || ((csinfo[i].to_fp = _fdopen(fd, "w")) == NULL))
+    // TODO(neovim): tidy up after failure to create files on pipe handles.
+    if (((fd = _open_osfhandle((intptr_t)stdin_wr, _O_TEXT|_O_APPEND)) < 0)
+        || ((csinfo[i].to_fp = _fdopen(fd, "w")) == NULL)) {
       PERROR(_("cs_create_connection: fdopen for to_fp failed"));
-    if (((fd = _open_osfhandle((OPEN_OH_ARGTYPE)stdout_rd,
-              _O_TEXT|_O_RDONLY)) < 0)
-        || ((csinfo[i].fr_fp = _fdopen(fd, "r")) == NULL))
+    }
+    if (((fd = _open_osfhandle((intptr_t)stdout_rd,  _O_TEXT|_O_RDONLY)) < 0)
+        || ((csinfo[i].fr_fp = _fdopen(fd, "r")) == NULL)) {
       PERROR(_("cs_create_connection: fdopen for fr_fp failed"));
-
-    /* Close handles for file descriptors inherited by the cscope process */
+    }
+    // Close handles for file descriptors inherited by the cscope process.
     CloseHandle(stdin_rd);
     CloseHandle(stdout_wr);
 
@@ -1146,22 +1152,6 @@ static void clear_csinfo(size_t i)
   csinfo[i].fr_fp  = NULL;
   csinfo[i].to_fp  = NULL;
 }
-
-#ifndef UNIX
-static char *GetWin32Error(void)
-{
-  char *msg = NULL;
-  FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER|FORMAT_MESSAGE_FROM_SYSTEM,
-      NULL, GetLastError(), 0, (LPSTR)&msg, 0, NULL);
-  if (msg != NULL) {
-    /* remove trailing \r\n */
-    char *pcrlf = strstr(msg, "\r\n");
-    if (pcrlf != NULL)
-      *pcrlf = '\0';
-  }
-  return msg;
-}
-#endif
 
 /*
  * PRIVATE: cs_insert_filelist
@@ -1641,77 +1631,79 @@ static char *cs_pathcomponents(char *path)
   return s;
 }
 
-/*
- * PRIVATE: cs_print_tags_priv
- *
- * called from cs_manage_matches()
- */
+/// Print cscope output that was converted into ctags style entries.
+///
+/// Only called from cs_manage_matches().
+///
+/// @param matches     Array of cscope lines in ctags style. Every entry was
+//                     produced with a format string of the form
+//                          "%s\t%s\t%s;\"\t%s" or
+//                          "%s\t%s\t%s;\""
+//                     by cs_make_vim_style_matches().
+/// @param cntxts      Context for matches.
+/// @param num_matches Number of entries in matches/cntxts, always greater 0.
 static void cs_print_tags_priv(char **matches, char **cntxts,
-                                size_t num_matches)
+                               size_t num_matches) FUNC_ATTR_NONNULL_ALL
 {
-  char        *ptag;
-  char        *fname, *lno, *extra, *tbuf;
-  size_t      num;
-  char        *globalcntx = "GLOBAL";
-  char        *context;
-  char        *cstag_msg = _("Cscope tag: %s");
+  char *globalcntx = "GLOBAL";
+  char *cstag_msg = _("Cscope tag: %s");
 
-  assert (num_matches > 0);
+  assert(num_matches > 0);
+  assert(strcnt(matches[0], '\t') >= 2);
 
-  tbuf = xmalloc(strlen(matches[0]) + 1);
+  char *ptag = matches[0];
+  char *ptag_end = strchr(ptag, '\t');
+  assert(ptag_end >= ptag);
+  // NUL terminate tag string in matches[0].
+  *ptag_end = NUL;
 
-  strcpy(tbuf, matches[0]);
-  ptag = strtok(tbuf, "\t");
-
-  size_t newsize = strlen(cstag_msg) + strlen(ptag);
+  // The "%s" in cstag_msg won't appear in the result string, so we don't need
+  // extra memory for terminating NUL.
+  size_t newsize = strlen(cstag_msg) + (size_t)(ptag_end - ptag);
   char *buf = xmalloc(newsize);
   size_t bufsize = newsize;  // Track available bufsize
-  (void)sprintf(buf, cstag_msg, ptag);
+  (void)snprintf(buf, bufsize, cstag_msg, ptag);
   MSG_PUTS_ATTR(buf, hl_attr(HLF_T));
+  msg_clr_eos();
 
-  xfree(tbuf);
+  // restore matches[0]
+  *ptag_end = '\t';
 
-  MSG_PUTS_ATTR(_("\n   #   line"), hl_attr(HLF_T));      /* strlen is 7 */
+  // Column headers for match number, line number and filename.
+  MSG_PUTS_ATTR(_("\n   #   line"), hl_attr(HLF_T));
   msg_advance(msg_col + 2);
   MSG_PUTS_ATTR(_("filename / context / line\n"), hl_attr(HLF_T));
 
-  num = 1;
   for (size_t i = 0; i < num_matches; i++) {
-    size_t idx = i;
+    assert(strcnt(matches[i], '\t') >= 2);
 
-    /* if we really wanted to, we could avoid this malloc and strcpy
-     * by parsing matches[i] on the fly and placing stuff into buf
-     * directly, but that's too much of a hassle
-     */
-    tbuf = xmalloc(strlen(matches[idx]) + 1);
-    (void)strcpy(tbuf, matches[idx]);
+    // Parse filename, line number and optional part.
+    char *fname = strchr(matches[i], '\t') + 1;
+    char *fname_end = strchr(fname, '\t');
+    // Replace second '\t' in matches[i] with NUL to terminate fname.
+    *fname_end = NUL;
 
-    if (strtok(tbuf, (const char *)"\t") == NULL)
-      continue;
-    if ((fname = strtok(NULL, (const char *)"\t")) == NULL)
-      continue;
-    if ((lno = strtok(NULL, (const char *)"\t")) == NULL)
-      continue;
-    extra = strtok(NULL, (const char *)"\t");
-
-    lno[strlen(lno)-2] = '\0';      /* ignore ;" at the end */
+    char *lno = fname_end + 1;
+    char *extra = xstrchrnul(lno, '\t');
+    // Ignore ;" at the end of lno.
+    char *lno_end = extra - 2;
+    *lno_end = NUL;
+    // Do we have an optional part?
+    extra = *extra ? extra + 1 : NULL;
 
     const char *csfmt_str = "%4zu %6s  ";
-    /* hopefully 'num' (num of matches) will be less than 10^16 */
-    newsize = strlen(csfmt_str) + 16 + strlen(lno);
+    // hopefully num_matches will be less than 10^16
+    newsize = strlen(csfmt_str) + 16 + (size_t)(lno_end - lno);
     if (bufsize < newsize) {
       buf = xrealloc(buf, newsize);
       bufsize = newsize;
     }
-    (void)sprintf(buf, csfmt_str, num, lno);
+    (void)snprintf(buf, bufsize, csfmt_str, i + 1, lno);
     MSG_PUTS_ATTR(buf, hl_attr(HLF_CM));
     MSG_PUTS_LONG_ATTR(cs_pathcomponents(fname), hl_attr(HLF_CM));
 
-    /* compute the required space for the context */
-    if (cntxts[idx] != NULL)
-      context = cntxts[idx];
-    else
-      context = globalcntx;
+    // compute the required space for the context
+    char *context = cntxts[i] ? cntxts[i] : globalcntx;
 
     const char *cntxformat = " <<%s>>";
     // '%s' won't appear in result string, so:
@@ -1722,11 +1714,13 @@ static void cs_print_tags_priv(char **matches, char **cntxts,
       buf = xrealloc(buf, newsize);
       bufsize = newsize;
     }
-    (void)sprintf(buf, cntxformat, context);
+    int buf_len = snprintf(buf, bufsize, cntxformat, context);
+    assert(buf_len >= 0);
 
-    /* print the context only if it fits on the same line */
-    if (msg_col + (int)strlen(buf) >= (int)Columns)
+    // Print the context only if it fits on the same line.
+    if (msg_col + buf_len >= (int)Columns) {
       msg_putchar('\n');
+    }
     msg_advance(12);
     MSG_PUTS_LONG(buf);
     msg_putchar('\n');
@@ -1735,23 +1729,23 @@ static void cs_print_tags_priv(char **matches, char **cntxts,
       MSG_PUTS_LONG(extra);
     }
 
-    xfree(tbuf);     /* only after printing extra due to strtok use */
+    // restore matches[i]
+    *fname_end = '\t';
+    *lno_end = ';';
 
-    if (msg_col)
+    if (msg_col) {
       msg_putchar('\n');
+    }
 
     os_breakcheck();
     if (got_int) {
-      got_int = FALSE;          /* don't print any more matches */
+      got_int = false;  // don't print any more matches
       break;
     }
-
-    num++;
-  }   /* for all matches */
+  }
 
   xfree(buf);
-} /* cs_print_tags_priv */
-
+}
 
 /*
  * PRIVATE: cs_read_prompt
@@ -1851,9 +1845,7 @@ static void sig_handler(int s) {
  */
 static void cs_release_csp(size_t i, int freefnpp)
 {
-  /*
-   * Trying to exit normally (not sure whether it is fit to UNIX cscope
-   */
+  // Trying to exit normally (not sure whether it is fit to Unix cscope)
   if (csinfo[i].to_fp != NULL) {
     (void)fputs("q\n", csinfo[i].to_fp);
     (void)fflush(csinfo[i].to_fp);
@@ -2088,12 +2080,13 @@ static int cs_show(exarg_T *eap)
       if (csinfo[i].fname == NULL)
         continue;
 
-      if (csinfo[i].ppath != NULL)
-        (void)smsg("%2zu %-5" PRId64 "  %-34s  %-32s",
-            i, (long)csinfo[i].pid, csinfo[i].fname, csinfo[i].ppath);
-      else
-        (void)smsg("%2zu %-5" PRId64 "  %-34s  <none>",
-            i, (long)csinfo[i].pid, csinfo[i].fname);
+      if (csinfo[i].ppath != NULL) {
+        (void)smsg("%2zu %-5" PRId64 "  %-34s  %-32s", i,
+                   (int64_t)csinfo[i].pid, csinfo[i].fname, csinfo[i].ppath);
+      } else {
+        (void)smsg("%2zu %-5" PRId64 "  %-34s  <none>", i,
+                   (int64_t)csinfo[i].pid, csinfo[i].fname);
+      }
     }
   }
 

@@ -1,7 +1,7 @@
 local helpers = require('test.functional.helpers')
 local Screen = require('test.functional.ui.screen')
-local clear, feed, nvim, insert = helpers.clear, helpers.feed, helpers.nvim, helpers.insert
-local execute, request, eq = helpers.execute, helpers.request, helpers.eq
+local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
+local execute = helpers.execute
 
 describe('search highlighting', function()
   local screen

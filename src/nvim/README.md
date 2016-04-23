@@ -11,7 +11,7 @@ that are constantly changing. As the code becomes more organized and stable,
 this document will be updated to reflect the changes.
 
 If you are looking for module-specific details, it is best to read the source
-code. Some files are extensively commented at the top(eg: terminal.c,
+code. Some files are extensively commented at the top (e.g. terminal.c,
 screen.c).
 
 ### Top-level program loops
@@ -43,13 +43,13 @@ a typical editing session:
 
 Note that we have split user actions into sequences of inputs that change the
 state of the editor. While there's no documentation about a "g command
-mode"(step 16), internally it is implemented similarly to "operator-pending
+mode" (step 16), internally it is implemented similarly to "operator-pending
 mode".
 
 From this we can see that Vim has the behavior of a input-driven state
-machine(more specifically, a pushdown automaton since it requires a stack for
+machine (more specifically, a pushdown automaton since it requires a stack for
 transitioning back from states). Assuming each state has a callback responsible
-for handling keys, this pseudocode(a python-like language) shows a good
+for handling keys, this pseudocode (a python-like language) shows a good
 representation of the main program loop:
 
 ```py
@@ -129,20 +129,20 @@ def insert_state(data, key):
 While the actual code is much more complicated, the above gives an idea of how
 Neovim is organized internally. Some states like the `g_command_state` or
 `get_operator_count_state` do not have a dedicated `state_enter` callback, but
-are implicitly embedded into other states(this will change later as we continue
+are implicitly embedded into other states (this will change later as we continue
 the refactoring effort). To start reading the actual code, here's the
 recommended order:
 
-1. `state_enter()` function(state.c). This is the actual program loop,
+1. `state_enter()` function (state.c). This is the actual program loop,
    note that a `VimState` structure is used, which contains function pointers
    for the callback and state data.
-2. `main()` function(main.c). After all startup, `normal_enter` is called
+2. `main()` function (main.c). After all startup, `normal_enter` is called
    at the end of function to enter normal mode.
-3. `normal_enter()` function(normal.c) is a small wrapper for setting
+3. `normal_enter()` function (normal.c) is a small wrapper for setting
    up the NormalState structure and calling `state_enter`.
-4. `normal_check()` function(normal.c) is called before each iteration of
+4. `normal_check()` function (normal.c) is called before each iteration of
    normal mode.
-5. `normal_execute()` function(normal.c) is called when a key is read in normal
+5. `normal_execute()` function (normal.c) is called when a key is read in normal
    mode.
 
 The basic structure described for normal mode in 3, 4 and 5 is used for other
@@ -159,7 +159,7 @@ asynchronous events, which can include:
 
 - msgpack-rpc requests
 - job control callbacks
-- timers(not implemented yet but the support code is already there)
+- timers (not implemented yet but the support code is already there)
 
 Neovim implements this functionality by entering another event loop while
 waiting for characters, so instead of:
@@ -180,11 +180,11 @@ def state_enter(state_callback, data):
   while state_callback(data, event) # invoke the callback for the current state
 ```
 
-where `event` is something the operating system delivers to us, including(but
+where `event` is something the operating system delivers to us, including (but
 not limited to) user input. The `read_next_event()` part is internally
 implemented by libuv, the platform layer used by Neovim.
 
 Since Neovim inherited its code from Vim, the states are not prepared to receive
-"arbitrary events", so we use a special key to represent those(When a state
+"arbitrary events", so we use a special key to represent those (When a state
 receives an "arbitrary event", it normally doesn't do anything other update the
 screen).

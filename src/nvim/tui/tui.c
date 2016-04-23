@@ -43,7 +43,11 @@ typedef struct {
   TermInput input;
   uv_loop_t write_loop;
   unibi_term *ut;
-  uv_tty_t output_handle;
+  union {
+    uv_tty_t tty;
+    uv_pipe_t pipe;
+  } output_handle;
+  bool out_isatty;
   SignalWatcher winch_handle, cont_handle;
   bool cont_received;
   // Event scheduled by the ui bridge. Since the main thread suspends until
@@ -62,6 +66,7 @@ typedef struct {
     int enable_bracketed_paste, disable_bracketed_paste;
     int enter_insert_mode, enter_replace_mode, exit_insert_mode;
     int set_rgb_foreground, set_rgb_background;
+    int enable_focus_reporting, disable_focus_reporting;
   } unibi_ext;
 } TUIData;
 
@@ -116,8 +121,10 @@ static void terminfo_start(UI *ui)
   data->unibi_ext.enter_insert_mode = -1;
   data->unibi_ext.enter_replace_mode = -1;
   data->unibi_ext.exit_insert_mode = -1;
-  // write output to stderr if stdout is not a tty
-  data->out_fd = os_isatty(1) ? 1 : (os_isatty(2) ? 2 : 1);
+  data->unibi_ext.enable_focus_reporting = -1;
+  data->unibi_ext.disable_focus_reporting = -1;
+  data->out_fd = 1;
+  data->out_isatty = os_isatty(data->out_fd);
   // setup unibilium
   data->ut = unibi_from_env();
   if (!data->ut) {
@@ -131,9 +138,16 @@ static void terminfo_start(UI *ui)
   unibi_out(ui, unibi_clear_screen);
   // Enable bracketed paste
   unibi_out(ui, data->unibi_ext.enable_bracketed_paste);
+  // Enable focus reporting
+  unibi_out(ui, data->unibi_ext.enable_focus_reporting);
   uv_loop_init(&data->write_loop);
-  uv_tty_init(&data->write_loop, &data->output_handle, data->out_fd, 0);
-  uv_tty_set_mode(&data->output_handle, UV_TTY_MODE_RAW);
+  if (data->out_isatty) {
+    uv_tty_init(&data->write_loop, &data->output_handle.tty, data->out_fd, 0);
+    uv_tty_set_mode(&data->output_handle.tty, UV_TTY_MODE_RAW);
+  } else {
+    uv_pipe_init(&data->write_loop, &data->output_handle.pipe, 0);
+    uv_pipe_open(&data->output_handle.pipe, data->out_fd);
+  }
 }
 
 static void terminfo_stop(UI *ui)
@@ -148,6 +162,8 @@ static void terminfo_stop(UI *ui)
   unibi_out(ui, unibi_exit_ca_mode);
   // Disable bracketed paste
   unibi_out(ui, data->unibi_ext.disable_bracketed_paste);
+  // Disable focus reporting
+  unibi_out(ui, data->unibi_ext.disable_focus_reporting);
   flush_buf(ui);
   uv_tty_reset_mode();
   uv_close((uv_handle_t *)&data->output_handle, NULL);
@@ -210,6 +226,7 @@ static void tui_main(UIBridgeData *bridge, UI *ui)
     loop_poll_events(&tui_loop, -1);
   }
 
+  ui_bridge_stopped(bridge);
   term_input_destroy(&data->input);
   signal_watcher_stop(&data->cont_handle);
   signal_watcher_close(&data->cont_handle, NULL);
@@ -677,7 +694,8 @@ static void update_size(UI *ui)
   }
 
   // 2 - try from a system call(ioctl/TIOCGWINSZ on unix)
-  if (!uv_tty_get_winsize(&data->output_handle, &width, &height)) {
+  if (data->out_isatty &&
+      !uv_tty_get_winsize(&data->output_handle.tty, &width, &height)) {
     goto end;
   }
 
@@ -796,6 +814,11 @@ static void fix_terminfo(TUIData *data)
   data->unibi_ext.disable_bracketed_paste = (int)unibi_add_ext_str(ut, NULL,
       "\x1b[?2004l");
 
+  data->unibi_ext.enable_focus_reporting = (int)unibi_add_ext_str(ut, NULL,
+      "\x1b[?1004h");
+  data->unibi_ext.disable_focus_reporting = (int)unibi_add_ext_str(ut, NULL,
+      "\x1b[?1004l");
+
 #define XTERM_SETAF \
   "\x1b[%?%p1%{8}%<%t3%p1%d%e%p1%{16}%<%t9%p1%{8}%-%d%e38;5;%p1%d%;m"
 #define XTERM_SETAB \
@@ -822,7 +845,7 @@ static void fix_terminfo(TUIData *data)
   if ((term_prog && !strcmp(term_prog, "Konsole"))
       || os_getenv("KONSOLE_DBUS_SESSION") != NULL) {
     // Konsole uses a proprietary escape code to set the cursor shape
-    // and does not suppport DECSCUSR.
+    // and does not support DECSCUSR.
     data->unibi_ext.enter_insert_mode = (int)unibi_add_ext_str(ut, NULL,
         TMUX_WRAP("\x1b]50;CursorShape=1;BlinkingCursorEnabled=1\x07"));
     data->unibi_ext.enter_replace_mode = (int)unibi_add_ext_str(ut, NULL,
@@ -831,13 +854,15 @@ static void fix_terminfo(TUIData *data)
         TMUX_WRAP("\x1b]50;CursorShape=0;BlinkingCursorEnabled=0\x07"));
   } else if (!vte_version || atoi(vte_version) >= 3900) {
     // Assume that the terminal supports DECSCUSR unless it is an
-    // old VTE based terminal
+    // old VTE based terminal.  This should not get wrapped for tmux,
+    // which will handle it via its Ss/Se terminfo extension - usually
+    // according to its terminal-overrides.
     data->unibi_ext.enter_insert_mode = (int)unibi_add_ext_str(ut, NULL,
-        TMUX_WRAP("\x1b[5 q"));
+                                                               "\x1b[5 q");
     data->unibi_ext.enter_replace_mode = (int)unibi_add_ext_str(ut, NULL,
-        TMUX_WRAP("\x1b[3 q"));
+                                                                "\x1b[3 q");
     data->unibi_ext.exit_insert_mode = (int)unibi_add_ext_str(ut, NULL,
-        TMUX_WRAP("\x1b[2 q"));
+                                                              "\x1b[2 q");
   }
 
 end:

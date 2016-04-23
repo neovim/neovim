@@ -250,8 +250,8 @@ ignored if its owner differs from the owner of the edited file, except when
 the owner of the undo file is the current user.  Set 'verbose' to get a
 message about that when opening a file.
 
-Undo files are normally saved in the same directory as the file.  This can be
-changed with the 'undodir' option.
+Location of the undo files is controlled by the 'undodir' option, by default 
+they are saved to the dedicated directory in the application data folder.
 
 You can also save and restore undo histories by using ":wundo" and ":rundo"
 respectively:

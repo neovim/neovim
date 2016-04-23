@@ -2,8 +2,8 @@
 
 local helpers = require('test.functional.helpers')
 local Screen = require('test.functional.ui.screen')
-local feed, insert, source = helpers.feed, helpers.insert, helpers.source
-local clear, execute, expect = helpers.clear, helpers.execute, helpers.expect
+local insert = helpers.insert
+local clear, execute = helpers.clear, helpers.execute
 
 describe('107', function()
   setup(clear)

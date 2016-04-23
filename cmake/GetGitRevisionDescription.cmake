@@ -42,7 +42,13 @@ set(__get_git_revision_description YES)
 get_filename_component(_gitdescmoddir ${CMAKE_CURRENT_LIST_FILE} PATH)
 
 function(get_git_dir _gitdir)
-  # check GIT_DIR in environment first
+  # check FORCED_GIT_DIR first
+  if(FORCED_GIT_DIR)
+    set(${_gitdir} ${FORCED_GIT_DIR} PARENT_SCOPE)
+    return()
+  endif()
+
+  # check GIT_DIR in environment
   set(GIT_DIR $ENV{GIT_DIR})
   if(NOT GIT_DIR)
     set(GIT_PARENT_DIR ${CMAKE_CURRENT_SOURCE_DIR})

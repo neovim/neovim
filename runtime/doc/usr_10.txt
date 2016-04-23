@@ -698,10 +698,10 @@ still be something that an external command can do better or faster.
 through an external program.  In other words, it runs the system command
 represented by {program}, giving it the block of text represented by {motion}
 as input.  The output of this command then replaces the selected block.
-   Because this summarizes badly if you are unfamiliar with UNIX filters, take
+   Because this summarizes badly if you are unfamiliar with Unix filters, take
 a look at an example.  The sort command sorts a file.  If you execute the
 following command, the unsorted file input.txt will be sorted and written to
-output.txt.  (This works on both UNIX and Microsoft Windows.) >
+output.txt.  This works on both Unix and Windows. >
 
 	sort <input.txt >output.txt
 

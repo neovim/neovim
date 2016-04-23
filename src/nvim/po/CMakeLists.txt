@@ -73,7 +73,7 @@ if(HAVE_WORKING_LIBINTL AND GETTEXT_FOUND AND XGETTEXT_PRG AND ICONV_PRG)
     install_helper(
       FILES ${moFile}
       DESTINATION ${CMAKE_INSTALL_LOCALEDIR}/${name}/LC_MESSAGES
-      RENAME nvim.mo)
+      RENAME ${PROJECT_NAME}.mo)
 
     list(APPEND LANGUAGE_MO_FILES ${moFile})
   endmacro()
@@ -82,7 +82,7 @@ if(HAVE_WORKING_LIBINTL AND GETTEXT_FOUND AND XGETTEXT_PRG AND ICONV_PRG)
     set(poFile ${CMAKE_CURRENT_SOURCE_DIR}/${name}.po)
 
     add_custom_target(check-po-${name}
-      COMMAND $<TARGET_FILE:nvim> -u NONE -n -e -X
+      COMMAND $<TARGET_FILE:nvim> -u NONE -n -e
           -S ${CMAKE_CURRENT_SOURCE_DIR}/check.vim
           -c "if error == 0 | q | endif" -c cq ${poFile} ||
           ${CMAKE_COMMAND} -E echo "${name}.po failed the check."

@@ -19,6 +19,7 @@
 #include "nvim/getchar.h"
 #include "nvim/main.h"
 #include "nvim/misc1.h"
+#include "nvim/misc2.h"
 
 #define READ_BUFFER_SIZE 0xfff
 #define INPUT_BUFFER_SIZE (READ_BUFFER_SIZE * 4)
@@ -82,9 +83,11 @@ static void cursorhold_event(void **argv)
 
 static void create_cursorhold_event(void)
 {
-  // If the queue had any items, this function should not have been
-  // called(inbuf_poll would return kInputAvail)
-  assert(queue_empty(loop.events));
+  // If events are enabled and the queue has any items, this function should not
+  // have been called(inbuf_poll would return kInputAvail)
+  // TODO(tarruda): Cursorhold should be implemented as a timer set during the
+  // `state_check` callback for the states where it can be triggered.
+  assert(!events_enabled || queue_empty(loop.events));
   queue_put(loop.events, cursorhold_event, 0);
 }
 
@@ -247,6 +250,14 @@ static unsigned int handle_mouse_event(char **ptr, uint8_t *buf,
   int col, row, advance;
   if (sscanf(*ptr, "<%d,%d>%n", &col, &row, &advance) != EOF && advance) {
     if (col >= 0 && row >= 0) {
+      // Make sure the mouse position is valid.  Some terminals may
+      // return weird values.
+      if (col >= Columns) {
+        col = (int)Columns - 1;
+      }
+      if (row >= Rows) {
+        row = (int)Rows - 1;
+      }
       mouse_row = row;
       mouse_col = col;
     }
@@ -355,7 +366,7 @@ static void read_cb(Stream *stream, RBuffer *buf, size_t c, void *data,
 
 static void process_interrupts(void)
 {
-  if (mapped_ctrl_c) {
+  if ((mapped_ctrl_c | curbuf->b_mapped_ctrl_c) & get_real_state()) {
     return;
   }
 

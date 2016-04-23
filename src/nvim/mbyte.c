@@ -1,13 +1,6 @@
 /*
- * VIM - Vi IMproved	by Bram Moolenaar
- * Multibyte extensions partly by Sung-Hoon Baek
- *
- * Do ":help uganda"  in Vim to read copying and usage conditions.
- * Do ":help credits" in Vim to see a list of people who contributed.
- * See README.txt for an overview of the Vim source code.
- */
-/*
  * mbyte.c: Code specifically for handling multi-byte characters.
+ * Multibyte extensions partly by Sung-Hoon Baek
  *
  * The encoding used in the core is set with 'encoding'.  When 'encoding' is
  * changed, the following four variables are set (for speed).
@@ -71,7 +64,6 @@
  * some commands, like ":menutrans"
  */
 
-#include <errno.h>
 #include <inttypes.h>
 #include <stdbool.h>
 #include <string.h>
@@ -576,16 +568,11 @@ char_u * mb_init(void)
   /* When enc_utf8 is set or reset, (de)allocate ScreenLinesUC[] */
   screenalloc(false);
 
-  /* When using Unicode, set default for 'fileencodings'. */
-  if (enc_utf8 && !option_was_set((char_u *)"fencs"))
-    set_string_option_direct((char_u *)"fencs", -1,
-        (char_u *)"ucs-bom,utf-8,default,latin1", OPT_FREE, 0);
-
 #ifdef HAVE_WORKING_LIBINTL
   /* GNU gettext 0.10.37 supports this feature: set the codeset used for
    * translated messages independently from the current locale. */
-  (void)bind_textdomain_codeset(VIMPACKAGE,
-      enc_utf8 ? "utf-8" : (char *)p_enc);
+  (void)bind_textdomain_codeset(PROJECT_NAME,
+                                enc_utf8 ? "utf-8" : (char *)p_enc);
 #endif
 
 
@@ -1317,35 +1304,38 @@ int utfc_ptr2char(const char_u *p, int *pcc)
  */
 int utfc_ptr2char_len(const char_u *p, int *pcc, int maxlen)
 {
-  int len;
-  int c;
-  int cc;
+#define IS_COMPOSING(s1, s2, s3)                                               \
+  (i == 0 ? UTF_COMPOSINGLIKE((s1), (s2)) : utf_iscomposing((s3)))
+
+  assert(maxlen > 0);
+
   int i = 0;
 
-  c = utf_ptr2char(p);
-  len = utf_ptr2len_len(p, maxlen);
-  /* Only accept a composing char when the first char isn't illegal. */
-  if ((len > 1 || *p < 0x80)
-      && len < maxlen
-      && p[len] >= 0x80
-      && UTF_COMPOSINGLIKE(p, p + len)) {
-    cc = utf_ptr2char(p + len);
-    for (;; ) {
-      pcc[i++] = cc;
-      if (i == MAX_MCO)
+  int len = utf_ptr2len_len(p, maxlen);
+  // Is it safe to use utf_ptr2char()?
+  bool safe = len > 1 && len <= maxlen;
+  int c = safe ? utf_ptr2char(p) : *p;
+
+  // Only accept a composing char when the first char isn't illegal.
+  if ((safe || c < 0x80) && len < maxlen && p[len] >= 0x80) {
+    for (; i < MAX_MCO; i++) {
+      int len_cc = utf_ptr2len_len(p + len, maxlen - len);
+      safe = len_cc > 1 && len_cc <= maxlen - len;
+      if (!safe || (pcc[i] = utf_ptr2char(p + len)) < 0x80
+          || !IS_COMPOSING(p, p + len, pcc[i])) {
         break;
-      len += utf_ptr2len_len(p + len, maxlen - len);
-      if (len >= maxlen
-          || p[len] < 0x80
-          || !utf_iscomposing(cc = utf_ptr2char(p + len)))
-        break;
+      }
+      len += len_cc;
     }
   }
 
-  if (i < MAX_MCO)      /* last composing char must be 0 */
+  if (i < MAX_MCO) {
+    // last composing char must be 0
     pcc[i] = 0;
+  }
 
   return c;
+#undef ISCOMPOSING
 }
 
 /*
@@ -2425,11 +2415,8 @@ char_u *enc_canonize(char_u *enc) FUNC_ATTR_NONNULL_RET
   int i;
 
   if (STRCMP(enc, "default") == 0) {
-    /* Use the default encoding as it's found by set_init_1(). */
-    char_u *r = get_encoding_default();
-    if (r == NULL)
-      r = (char_u *)"latin1";
-    return vim_strsave(r);
+    // Use the default encoding as found by set_init_1().
+    return vim_strsave(fenc_default);
   }
 
   /* copy "enc" to allocated memory, with room for two '-' */

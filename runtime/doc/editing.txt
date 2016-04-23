@@ -1,4 +1,4 @@
-*editing.txt*   For Vim version 7.4.  Last change: 2015 Apr 18
+*editing.txt*   For Vim version 7.4.  Last change: 2015 Aug 25
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -130,9 +130,7 @@ You can use this file if you discover that you need the original file.  See
 also the 'patchmode' option.  The name of the backup file is normally the same
 as the original file with 'backupext' appended.  The default "~" is a bit
 strange to avoid accidentally overwriting existing files.  If you prefer ".bak"
-change the 'backupext' option.  Extra dots are replaced with '_' on MS-DOS
-machines, when Vim has detected that an MS-DOS-like filesystem is being used
-(e.g., messydos or crossdos).  The backup file can be placed in another
+change the 'backupext' option.  The backup file can be placed in another
 directory by setting 'backupdir'.
 
 When you started editing without giving a file name, "No File" is displayed in
@@ -276,7 +274,8 @@ CTRL-^			Edit the alternate file.  Mostly the alternate file is
 			Mnemonic: "goto file".
 			Uses the 'isfname' option to find out which characters
 			are supposed to be in a file name.  Trailing
-			punctuation characters ".,:;!" are ignored.
+			punctuation characters ".,:;!" are ignored. Escaped
+			spaces "\ " are reduced to a single space.
 			Uses the 'path' option as a list of directory names to
 			look for the file.  See the 'path' option for details
 			about relative directories and wildcards.
@@ -379,25 +378,38 @@ Finds files:
 	/usr/include/sys/types.h
 	/usr/inc_old/types.h
 					*backtick-expansion* *`-expansion*
-On Unix and a few other systems you can also use backticks in the file name,
-for example: >
-	:e `find . -name ver\\*.c -print`
-The backslashes before the star are required to prevent "ver*.c" to be
-expanded by the shell before executing the find program.
+On Unix and a few other systems you can also use backticks for the file name
+argument, for example: >
+	:next `find . -name ver\\*.c -print`
+	:view `ls -t *.patch  \| head -n1`
+The backslashes before the star are required to prevent the shell from
+expanding "ver*.c" prior to execution of the find program.  The backslash
+before the shell pipe symbol "|" prevents Vim from parsing it as command
+termination.
 This also works for most other systems, with the restriction that the
 backticks must be around the whole item.  It is not possible to have text
 directly before the first or just after the last backtick.
 
 							*`=*
-You can have the backticks expanded as a Vim expression, instead of an
-external command, by using the syntax `={expr}` e.g.: >
+You can have the backticks expanded as a Vim expression, instead of as an
+external command, by putting an equal sign right after the first backtick,
+e.g.: >
 	:e `=tempname()`
 The expression can contain just about anything, thus this can also be used to
 avoid the special meaning of '"', '|', '%' and '#'.  However, 'wildignore'
 does apply like to other wildcards.
+
+Environment variables in the expression are expanded when evaluating the
+expression, thus this works: >
+	:e `=$HOME . '/.vimrc'`
+This does not work, $HOME is inside a string and used literally: >
+	:e `='$HOME' . '/.vimrc'`
+
 If the expression returns a string then names are to be separated with line
 breaks.  When the result is a |List| then each item is used as a name.  Line
 breaks also separate names.
+Note that such expressions are only supported in places where a filename is
+expected as an argument to an Ex-command.
 
 							*++opt* *[++opt]*
 The [++opt] argument can be used to force the value of 'fileformat',
@@ -470,9 +482,9 @@ The 'fileformat' option sets the <EOL> style for a file:
   "mac"		<CR>		   Mac format		*Mac-format*
 
 When reading a file, the mentioned characters are interpreted as the <EOL>.
-In DOS format (default for MS-DOS and Win32), <CR><NL> and <NL> are both
-interpreted as the <EOL>. Note that when writing the file in DOS format,
-<CR> characters will be added for each single <NL>.  Also see |file-read|.
+In DOS format (default for Windows), <CR><NL> and <NL> are both interpreted as
+the <EOL>. Note that when writing the file in DOS format, <CR> characters will
+be added for each single <NL>.  Also see |file-read|.
 
 When writing a file, the mentioned characters are used for <EOL>.  For DOS
 format <CR><NL> is used.  Also see |DOS-format-write|.
@@ -493,13 +505,13 @@ If you start editing a new file and the 'fileformats' option is not empty
 (which is the default), Vim will try to detect whether the lines in the file
 are separated by the specified formats.  When set to "unix,dos", Vim will
 check for lines with a single <NL> (as used on Unix) or by a <CR><NL> pair
-(MS-DOS).  Only when ALL lines end in <CR><NL>, 'fileformat' is set to "dos",
+(Windows).  Only when ALL lines end in <CR><NL>, 'fileformat' is set to "dos",
 otherwise it is set to "unix".  When 'fileformats' includes "mac", and no <NL>
 characters are found in the file, 'fileformat' is set to "mac".
 
-If the 'fileformat' option is set to "dos" on non-MS-DOS systems the message
+If the 'fileformat' option is set to "dos" on non-Windows systems the message
 "[dos format]" is shown to remind you that something unusual is happening.  On
-MS-DOS systems you get the message "[unix format]" if 'fileformat' is set to
+Windows systems you get the message "[unix format]" if 'fileformat' is set to
 "unix".  On all systems but the Macintosh you get the message "[mac format]"
 if 'fileformat' is set to "mac".
 
@@ -795,7 +807,8 @@ USING THE ARGUMENT LIST
 			autocommand event is disabled by adding it to
 			'eventignore'.  This considerably speeds up editing
 			each file.
-			Also see |:windo|, |:tabdo| and |:bufdo|.
+			Also see |:windo|, |:tabdo|, |:bufdo|, |:cdo|, |:ldo|,
+			|:cfdo| and |:lfdo|.
 
 Example: >
 	:args *.c
@@ -964,10 +977,10 @@ lost the original file.
 
 						*DOS-format-write*
 If the 'fileformat' is "dos", <CR> <NL> is used for <EOL>.  This is default
-for MS-DOS and Win32. On other systems the message "[dos format]" is shown to
+for Windows. On other systems the message "[dos format]" is shown to
 remind you that an unusual <EOL> was used.
 						*Unix-format-write*
-If the 'fileformat' is "unix", <NL> is used for <EOL>.  On MS-DOS and Win32
+If the 'fileformat' is "unix", <NL> is used for <EOL>.  On Windows
 the message "[unix format]" is shown.
 						*Mac-format-write*
 If the 'fileformat' is "mac", <CR> is used for <EOL>.  On non-Mac systems the
@@ -997,11 +1010,11 @@ When the file name is actually a device name, Vim will not make a backup (that
 would be impossible).  You need to use "!", since the device already exists.
 Example for Unix: >
 	:w! /dev/lpt0
-and for MS-DOS or MS-Windows: >
+and Windows: >
 	:w! lpt0
 For Unix a device is detected when the name doesn't refer to a normal file or
 a directory.  A fifo or named pipe also looks like a device to Vim.
-For MS-DOS and MS-Windows the device is detected by its name:
+For Windows the device is detected by its name:
 	CON
 	CLOCK$
 	NUL
@@ -1141,10 +1154,10 @@ If you want to always use ":confirm", set the 'confirm' option.
 			|:mkvimrc|, |:mksession|, |:mkview|, |:split|,
 			|:vsplit|, |:tabe|, |:tabnew|, |:cfile|, |:cgetfile|,
 			|:caddfile|, |:lfile|, |:lgetfile|, |:laddfile|,
-			|:diffsplit|, |:diffpatch|, |:open|, |:pedit|,
-			|:redir|, |:source|, |:update|, |:visual|, |:vsplit|,
+			|:diffsplit|, |:diffpatch|, |:pedit|, |:redir|,
+			|:source|, |:update|, |:visual|, |:vsplit|,
 			and |:qall| if 'confirm' is set.
-			{only in Win32, Athena, Motif, GTK and Mac GUI}
+			{only in Win32 GUI}
 			When ":browse" is not possible you get an error
 			message.  If the |+browse| feature is missing or the
 			{command} doesn't support browsing, the {command} is
@@ -1172,16 +1185,13 @@ For versions of Vim where browsing is not supported, the command is executed
 unmodified.
 
 							*browsefilter*
-For MS Windows and GTK, you can modify the filters that are used in the browse
-dialog.  By setting the g:browsefilter or b:browsefilter variables, you can
-change the filters globally or locally to the buffer.  The variable is set to
-a string in the format "{filter label}\t{pattern};{pattern}\n" where {filter
-label} is the text that appears in the "Files of Type" comboBox, and {pattern}
-is the pattern which filters the filenames.  Several patterns can be given,
-separated by ';'.
-
-For Motif the same format is used, but only the very first pattern is actually
-used (Motif only offers one pattern, but you can edit it).
+For Windows you can modify the filters that are used in the browse dialog.  By
+setting the g:browsefilter or b:browsefilter variables, you can change the
+filters globally or locally to the buffer.  The variable is set to a string in
+the format "{filter label}\t{pattern};{pattern}\n" where {filter label} is the
+text that appears in the "Files of Type" comboBox, and {pattern} is the
+pattern which filters the filenames.  Several patterns can be given, separated
+by ';'.
 
 For example, to have only Vim files in the dialog, you could use the following
 command: >
@@ -1206,12 +1216,18 @@ use has("browsefilter"): >
 ==============================================================================
 7. The current directory				*current-directory*
 
-You may use the |:cd| and |:lcd| commands to change to another directory, so
-you will not have to type that directory name in front of the file names.  It
-also makes a difference for executing external commands, e.g. ":!ls".
+You can use |:cd|, |:tcd| and |:lcd| to change to another directory, so you
+will not have to type that directory name in front of the file names.  It also
+makes a difference for executing external commands, e.g. ":!ls" or ":te ls".
 
-Changing directory fails when the current buffer is modified, the '.' flag is
-present in 'cpoptions' and "!" is not used in the command.
+There are three current-directory "scopes": global, tab and window.  The
+window-local working directory takes precedence over the tab-local
+working directory, which in turn takes precedence over the global
+working directory.  If a local working directory (tab or window) does not
+exist, the next-higher scope in the hierarchy applies.
+
+Commands for changing the working directory can be suffixed with a bang "!"
+(e.g. |:cd!|) which is ignored, for compatibility with Vim.
 
 							*:cd* *E747* *E472*
 :cd[!]			On non-Unix systems: Print the current directory
@@ -1225,7 +1241,7 @@ present in 'cpoptions' and "!" is not used in the command.
 			Does not change the meaning of an already opened file,
 			because its full path name is remembered.  Files from
 			the |arglist| may change though!
-			On MS-DOS this also changes the active drive.
+			On Windows this also changes the active drive.
 			To change to the directory of the current file: >
 				:cd %:h
 <
@@ -1236,29 +1252,50 @@ present in 'cpoptions' and "!" is not used in the command.
 							*:chd* *:chdir*
 :chd[ir][!] [path]	Same as |:cd|.
 
+					*:tc* *:tcd* *E5000* *E5001* *E5002*
+:tc[d][!] {path}        Like |:cd|, but set the current directory for the
+			current tab and window.  The current directory for
+			other tabs and windows is not changed.
+
+							*:tcd-*
+:tcd[!] -		Change to the previous current directory (before the
+			previous ":tcd {path}" command).
+
+							*:tch* *:tchdir*
+:tch[dir][!]		Same as |:tcd|.
+
 							*:lc* *:lcd*
 :lc[d][!] {path}	Like |:cd|, but only set the current directory for the
 			current window.  The current directory for other
-			windows is not changed.
+			windows or any tabs is not changed.
 
 							*:lch* *:lchdir*
 :lch[dir][!]		Same as |:lcd|.
+
+							*:lcd-* 
+:lcd[!] -		Change to the previous current directory (before the
+			previous ":tcd {path}" command).
 
 							*:pw* *:pwd* *E187*
 :pw[d]			Print the current directory name.
 			Also see |getcwd()|.
 
-So long as no |:lcd| command has been used, all windows share the same current
-directory.  Using a command to jump to another window doesn't change anything
-for the current directory.
-When a |:lcd| command has been used for a window, the specified directory
-becomes the current directory for that window.  Windows where the |:lcd|
-command has not been used stick to the global current directory.  When jumping
-to another window the current directory will become the last specified local
-current directory.  If none was specified, the global current directory is
-used.
-When a |:cd| command is used, the current window will lose his local current
-directory and will use the global current directory from now on.
+So long as no |:tcd| or |:lcd| command has been used, all windows share the
+same "current directory".  Using a command to jump to another window doesn't
+change anything for the current directory.
+
+When |:lcd| has been used for a window, the specified directory becomes the
+current directory for that window.  Windows where the |:lcd| command has not
+been used stick to the global or tab-local directory.  When jumping to another
+window the current directory will become the last specified local current
+directory.  If none was specified, the global or tab-local directory is used.
+
+When changing tabs the same behaviour applies.  If the current tab has no
+local working directory the global working directory is used.  When a |:cd|
+command is used, the current window and tab will lose their local current
+directories and will use the global current directory from now on.  When
+a |:tcd| command is used, only the current window will lose its local working
+directory.
 
 After using |:cd| the full path name will be used for reading and writing
 files.  On some networked file systems this may cause problems.  The result of
@@ -1295,7 +1332,7 @@ There are a few things to remember when editing binary files:
   and when the file is written the <NL> will be replaced with <CR> <NL>.
 - <Nul> characters are shown on the screen as ^@.  You can enter them with
   "CTRL-V CTRL-@" or "CTRL-V 000".
-- To insert a <NL> character in the file split up a line.  When writing the
+- To insert a <NL> character in the file split a line.  When writing the
   buffer to a file a <NL> will be written for the <EOL>.
 - Vim normally appends an <EOL> at the end of the file if there is none.
   Setting the 'binary' option prevents this.  If you want to add the final
@@ -1307,9 +1344,7 @@ There are a few things to remember when editing binary files:
 9. Encryption						*encryption*
 
 					                *:X* *E817* *E818* *E819* *E820*
-Support for editing encrypted files has been removed, but may be added back in
-the future.  See the following discussions for more information:
-
+Support for editing encrypted files has been removed.
 	https://github.com/neovim/neovim/issues/694
 	https://github.com/neovim/neovim/issues/701
 

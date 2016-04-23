@@ -223,7 +223,7 @@ syn keyword vbStatement Explicit FileCopy For ForEach Function Get GoSub
 syn keyword vbStatement GoTo Gosub Implements Kill LSet Let Lib LineInput
 syn keyword vbStatement Load Lock Loop Mid MkDir Name Next On OnError Open
 syn keyword vbStatement Option Preserve Private Property Public Put RSet
-syn keyword vbStatement RaiseEvent Randomize ReDim Redim Rem Reset Resume
+syn keyword vbStatement RaiseEvent Randomize ReDim Redim Reset Resume
 syn keyword vbStatement Return RmDir SavePicture SaveSetting Seek SendKeys
 syn keyword vbStatement Sendkeys Set SetAttr Static Step Stop Sub Time
 syn keyword vbStatement Type Unload Unlock Until Wend While Width With

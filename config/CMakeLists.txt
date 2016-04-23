@@ -8,7 +8,6 @@ include(CheckCSourceCompiles)
 check_type_size("int" SIZEOF_INT)
 check_type_size("long" SIZEOF_LONG)
 check_type_size("intmax_t" SIZEOF_INTMAX_T)
-check_type_size("off_t" SIZEOF_OFF_T)
 check_type_size("size_t" SIZEOF_SIZE_T)
 check_type_size("long long" SIZEOF_LONG_LONG)
 check_type_size("void *" SIZEOF_VOID_PTR)
@@ -16,29 +15,21 @@ check_type_size("void *" SIZEOF_VOID_PTR)
 check_symbol_exists(_NSGetEnviron crt_externs.h HAVE__NSGETENVIRON)
 
 # Headers
-check_include_files(dirent.h HAVE_DIRENT_H)
-check_include_files(fcntl.h HAVE_FCNTL_H)
 check_include_files(iconv.h HAVE_ICONV_H)
 check_include_files(langinfo.h HAVE_LANGINFO_H)
-check_include_files(libgen.h HAVE_LIBGEN_H)
 check_include_files(locale.h HAVE_LOCALE_H)
 check_include_files(pwd.h HAVE_PWD_H)
 check_include_files(strings.h HAVE_STRINGS_H)
-check_include_files(stropts.h HAVE_STROPTS_H)
-check_include_files(sys/param.h HAVE_SYS_PARAM_H)
 check_include_files(sys/wait.h HAVE_SYS_WAIT_H)
 if(NOT HAVE_SYS_WAIT_H AND UNIX)
   # See if_cscope.c
-  message(SEND_ERROR "header sys/wait.h is required for UNIX")
+  message(SEND_ERROR "header sys/wait.h is required for Unix")
 endif()
 check_include_files(sys/utsname.h HAVE_SYS_UTSNAME_H)
-check_include_files(utime.h HAVE_UTIME_H)
-check_include_files(unistd.h HAVE_UNISTD_H)
 check_include_files(utime.h HAVE_UTIME_H)
 
 # Functions
 check_function_exists(fseeko HAVE_FSEEKO)
-check_function_exists(fsync HAVE_FSYNC)
 check_function_exists(getpwent HAVE_GETPWENT)
 check_function_exists(getpwnam HAVE_GETPWNAM)
 check_function_exists(getpwuid HAVE_GETPWUID)
@@ -51,7 +42,10 @@ if(JEMALLOC_FOUND)
   set(HAVE_JEMALLOC 1)
 endif()
 
-check_function_exists(putenv HAVE_PUTENV)
+check_function_exists(_putenv_s HAVE_PUTENV_S)
+if(WIN32 AND NOT HAVE_PUTENV_S)
+  message(SEND_ERROR "_putenv_s() function not found on your system.")
+endif()
 check_function_exists(opendir HAVE_OPENDIR)
 check_function_exists(readlink HAVE_READLINK)
 check_function_exists(setenv HAVE_SETENV)
@@ -98,10 +92,10 @@ endif()
 if (NOT "${HAVE_BE64TOH}")
   if (NOT "${CMAKE_CROSSCOMPILING}")
     # It is safe to make ORDER_BIG_ENDIAN not defined if
-    # - HAVE_BE64TOH is true. In this case be64toh will be used unconditionally in 
+    # - HAVE_BE64TOH is true. In this case be64toh will be used unconditionally in
     #   any case and ORDER_BIG_ENDIAN will not be examined.
-    # - CMAKE_CROSSCOMPILING *and* HAVE_BE64TOH are both false. In this case 
-    #   be64toh function which uses cycle and arithmetic operations is used which 
+    # - CMAKE_CROSSCOMPILING *and* HAVE_BE64TOH are both false. In this case
+    #   be64toh function which uses cycle and arithmetic operations is used which
     #   will work regardless of endianess. Function is sub-optimal though.
     check_c_source_runs("
       ${SI}

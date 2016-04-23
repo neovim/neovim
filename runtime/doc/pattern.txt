@@ -1,4 +1,4 @@
-*pattern.txt*   For Vim version 7.4.  Last change: 2014 Sep 06
+*pattern.txt*   For Vim version 7.4.  Last change: 2015 Mar 16
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -59,6 +59,8 @@ explanations are in chapter 27 |usr_27.txt|.
 
 							*n*
 n			Repeat the latest "/" or "?" [count] times.
+			If the cursor doesn't move the search is repeated with
+			count + 1.
 			|last-pattern|
 
 							*N*
@@ -129,7 +131,7 @@ gD			Goto global Declaration.  When the cursor is on a
 
 							*CTRL-C*
 CTRL-C			Interrupt current (search) command.  Use CTRL-Break on
-			MS-DOS |dos-CTRL-Break|.
+			Windows |dos-CTRL-Break|.
 			In Normal mode, any pending command is aborted.
 
 							*:noh* *:nohlsearch*
@@ -1050,7 +1052,10 @@ x	A single character, with no special meaning, matches itself
 								*E769*
 	When the ']' is not there Vim will not give an error message but
 	assume no collection is used.  Useful to search for '['.  However, you
-	do get E769 for internal searching.
+	do get E769 for internal searching.  And be aware that in a
+	`:substitute` command the whole command becomes the pattern.  E.g.
+	":s/[/x/" searches for "[/x" and replaces it with nothing.  It does
+	not search for "[" and replaces it with "x"!
 
 	If the sequence begins with "^", it matches any single character NOT
 	in the collection: "[^xyz]" matches anything but 'x', 'y' and 'z'.
@@ -1082,7 +1087,7 @@ x	A single character, with no special meaning, matches itself
 *[:backspace:]*		  [:backspace:]	the <BS> character
 	  The brackets in character class expressions are additional to the
 	  brackets delimiting a collection.  For example, the following is a
-	  plausible pattern for a UNIX filename: "[-./[:alnum:]_~]\+" That is,
+	  plausible pattern for a Unix filename: "[-./[:alnum:]_~]\+" That is,
 	  a list of at least one character, each of which is either '-', '.',
 	  '/', alphabetic, numeric, '_' or '~'.
 	  These items only work for 8-bit characters.

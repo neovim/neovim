@@ -4,7 +4,7 @@
 -- in the original test. These have been converted to "it" test cases here.
 
 local helpers = require('test.functional.helpers')
-local feed, insert, source = helpers.feed, helpers.insert, helpers.source
+local feed, insert = helpers.feed, helpers.insert
 local clear, execute, expect = helpers.clear, helpers.execute, helpers.expect
 
 -- Inserts text as usual, and additionally positions the cursor on line 1 and
@@ -674,6 +674,13 @@ describe('cindent', function()
       {
       }
       
+      A::A(int a, int b)
+      : aa(a),
+      bb(b),
+      cc(c)
+      {
+      }
+      
       class CAbc :
          public BaseClass1,
          protected BaseClass2
@@ -900,6 +907,72 @@ describe('cindent', function()
       namespace111111111
       {
         111111111111111111;
+      }
+      void getstring() {
+      /* Raw strings */
+      const char* s = R"(
+        test {
+          # comment
+          field: 123
+        }
+       )";
+           }
+      void getstring() {
+      const char* s = R"foo(
+        test {
+          # comment
+          field: 123
+        }
+          )foo";
+           }
+      
+      {
+      int a[4] = {
+      [0] = 0,
+      [1] = 1,
+      [2] = 2,
+      [3] = 3,
+      };
+      }
+      
+      {
+      a = b[2]
+      + 3;
+      }
+      
+      {
+      if (1)
+      /* aaaaa
+      * bbbbb
+      */
+      a = 1;
+      }
+      
+      void func()
+      {
+      switch (foo)
+      {
+      case (bar):
+      if (baz())
+      quux();
+      break;
+      case (shmoo):
+      if (!bar)
+      {
+      }
+      case (foo1):
+      switch (bar)
+      {
+      case baz:
+      baz_f();
+      break;
+      }
+      break;
+      default:
+      baz();
+      baz();
+      break;
+      }
       }
       
       /* end of AUTO */
@@ -1563,6 +1636,13 @@ describe('cindent', function()
       {
       }
       
+      A::A(int a, int b)
+      	: aa(a),
+      	bb(b),
+      	cc(c)
+      {
+      }
+      
       class CAbc :
       	public BaseClass1,
       	protected BaseClass2
@@ -1789,6 +1869,72 @@ describe('cindent', function()
       namespace111111111
       {
       	111111111111111111;
+      }
+      void getstring() {
+      	/* Raw strings */
+      	const char* s = R"(
+        test {
+          # comment
+          field: 123
+        }
+       )";
+      }
+      void getstring() {
+      	const char* s = R"foo(
+        test {
+          # comment
+          field: 123
+        }
+          )foo";
+      }
+      
+      {
+      	int a[4] = {
+      		[0] = 0,
+      		[1] = 1,
+      		[2] = 2,
+      		[3] = 3,
+      	};
+      }
+      
+      {
+      	a = b[2]
+      		+ 3;
+      }
+      
+      {
+      	if (1)
+      		/* aaaaa
+      		 * bbbbb
+      		 */
+      		a = 1;
+      }
+      
+      void func()
+      {
+      	switch (foo)
+      	{
+      		case (bar):
+      			if (baz())
+      				quux();
+      			break;
+      		case (shmoo):
+      			if (!bar)
+      			{
+      			}
+      		case (foo1):
+      			switch (bar)
+      			{
+      				case baz:
+      					baz_f();
+      					break;
+      			}
+      			break;
+      		default:
+      			baz();
+      			baz();
+      			break;
+      	}
       }
       
       /* end of AUTO */
@@ -4210,6 +4356,323 @@ describe('cindent', function()
       		}, options||{}));
       	}
       })(jQuery);
+      JSEND
+      ]=])
+  end)
+
+  it('javascript indent / vim-patch 7.4.670', function()
+    insert_([=[
+      
+      JSSTART
+      // Results of JavaScript indent
+      // 1
+      (function(){
+      var a = [
+      'a',
+      'b',
+      'c',
+      'd',
+      'e',
+      'f',
+      'g',
+      'h',
+      'i'
+      ];
+      }())
+      
+      // 2
+      (function(){
+      var a = [
+      0 +
+      5 *
+      9 *
+      'a',
+      'b',
+      0 +
+      5 *
+      9 *
+      'c',
+      'd',
+      'e',
+      'f',
+      'g',
+      'h',
+      'i'
+      ];
+      }())
+      
+      // 3
+      (function(){
+      var a = [
+      0 +
+      // comment 1
+      5 *
+      /* comment 2 */
+      9 *
+      'a',
+      'b',
+      0 +
+      5 *
+      9 *
+      'c',
+      'd',
+      'e',
+      'f',
+      'g',
+      'h',
+      'i'
+      ];
+      }())
+      
+      // 4
+      {
+      var a = [
+      0,
+      1
+      ];
+      var b;
+      var c;
+      }
+      
+      // 5
+      {
+      var a = [
+      [
+      0
+      ],
+      2,
+      3
+      ];
+      }
+      
+      // 6
+      {
+      var a = [
+      [
+      0,
+      1
+      ],
+      2,
+      3
+      ];
+      }
+      
+      // 7
+      {
+      var a = [
+      // [
+      0,
+      // 1
+      // ],
+      2,
+      3
+      ];
+      }
+      
+      // 8
+      var x = [
+      (function(){
+      var a,
+      b,
+      c,
+      d,
+      e,
+      f,
+      g,
+      h,
+      i;
+      })
+      ];
+      
+      // 9
+      var a = [
+      0 +
+      5 *
+      9 *
+      'a',
+      'b',
+      0 +
+      5 *
+      9 *
+      'c',
+      'd',
+      'e',
+      'f',
+      'g',
+      'h',
+      'i'
+      ];
+      
+      // 10
+      var a,
+      b,
+      c,
+      d,
+      e,
+      f,
+      g,
+      h,
+      i;
+      JSEND
+      ]=])
+
+    -- :set cino=j1,J1,+2
+    execute('set cino=j1,J1,+2')
+    execute('/^JSSTART')
+    feed('=/^JSEND<cr>')
+
+    expect([=[
+      
+      JSSTART
+      // Results of JavaScript indent
+      // 1
+      (function(){
+      	var a = [
+      	  'a',
+      	  'b',
+      	  'c',
+      	  'd',
+      	  'e',
+      	  'f',
+      	  'g',
+      	  'h',
+      	  'i'
+      	];
+      }())
+      
+      // 2
+      (function(){
+      	var a = [
+      	  0 +
+      		5 *
+      		9 *
+      		'a',
+      	  'b',
+      	  0 +
+      		5 *
+      		9 *
+      		'c',
+      	  'd',
+      	  'e',
+      	  'f',
+      	  'g',
+      	  'h',
+      	  'i'
+      	];
+      }())
+      
+      // 3
+      (function(){
+      	var a = [
+      	  0 +
+      		// comment 1
+      		5 *
+      		/* comment 2 */
+      		9 *
+      		'a',
+      	  'b',
+      	  0 +
+      		5 *
+      		9 *
+      		'c',
+      	  'd',
+      	  'e',
+      	  'f',
+      	  'g',
+      	  'h',
+      	  'i'
+      	];
+      }())
+      
+      // 4
+      {
+      	var a = [
+      	  0,
+      	  1
+      	];
+      	var b;
+      	var c;
+      }
+      
+      // 5
+      {
+      	var a = [
+      	  [
+      		0
+      	  ],
+      	  2,
+      	  3
+      	];
+      }
+      
+      // 6
+      {
+      	var a = [
+      	  [
+      		0,
+      		1
+      	  ],
+      	  2,
+      	  3
+      	];
+      }
+      
+      // 7
+      {
+      	var a = [
+      	  // [
+      	  0,
+      	  // 1
+      	  // ],
+      	  2,
+      	  3
+      	];
+      }
+      
+      // 8
+      var x = [
+        (function(){
+      	  var a,
+      	  b,
+      	  c,
+      	  d,
+      	  e,
+      	  f,
+      	  g,
+      	  h,
+      	  i;
+        })
+      ];
+      
+      // 9
+      var a = [
+        0 +
+        5 *
+        9 *
+        'a',
+        'b',
+        0 +
+        5 *
+        9 *
+        'c',
+        'd',
+        'e',
+        'f',
+        'g',
+        'h',
+        'i'
+      ];
+      
+      // 10
+      var a,
+      	b,
+      	c,
+      	d,
+      	e,
+      	f,
+      	g,
+      	h,
+      	i;
       JSEND
       ]=])
   end)

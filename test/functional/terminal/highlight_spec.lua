@@ -40,7 +40,7 @@ describe('terminal window highlighting', function()
     ]])
   end)
 
-  function descr(title, attr_num, set_attrs_fn)
+  local function descr(title, attr_num, set_attrs_fn)
     local function sub(s)
       return s:gsub('NUM', attr_num)
     end

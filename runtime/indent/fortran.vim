@@ -1,9 +1,11 @@
 " Vim indent file
-" Language:	Fortran95 (and Fortran90, Fortran77, F and elf90)
-" Version:	0.40
-" Last Change:	2011 Dec. 28
-" Maintainer:	Ajit J. Thakkar <ajit@unb.ca>; <http://www.unb.ca/chem/ajit/>
+" Language:	Fortran 2008 (and earlier versions: 2003, 95, 90, and 77)
+" Version:	0.41
+" Last Change:	2015 Jan. 15
+" Maintainer:	Ajit J. Thakkar <ajit@unb.ca>; <http://www2.unb.ca/~ajit/>
 " Usage:	Do :help fortran-indent from Vim
+" Credits:
+"  Useful suggestions were made by: Albert Oliver Serra.
 
 " Only load this indent file when no other was loaded.
 if exists("b:did_indent")
@@ -36,8 +38,8 @@ if !exists("b:fortran_fixed_source")
   else
     " f90 and f95 allow both fixed and free source form
     " assume fixed source form unless signs of free source form
-    " are detected in the first five columns of the first 250 lines
-    " Detection becomes more accurate and time-consuming if more lines
+    " are detected in the first five columns of the first s:lmax lines.
+    " Detection becomes more accurate and more time-consuming if more lines
     " are checked. Increase the limit below if you keep lots of comments at
     " the very top of each file and you have a fast computer
     let s:lmax = 500
@@ -129,7 +131,7 @@ function FortranGetIndent(lnum)
   if getline(v:lnum) =~? '^\s*\(\d\+\s\)\=\s*'
         \. '\(else\|else\s*if\|else\s*where\|case\|'
         \. 'end\s*\(if\|where\|select\|interface\|'
-        \. 'type\|forall\|associate\|enum\)\)\>'
+        \. 'type\|forall\|associate\|enum\|block\)\)\>'
     let ind = ind - &sw
     " Fix indent for case statement immediately after select
     if prevstat =~? '\<select\s\+\(case\|type\)\>'
@@ -141,8 +143,11 @@ function FortranGetIndent(lnum)
   if prevstat =~ '&\s*$' && prev2stat !~ '&\s*$'
     let ind = ind + &sw
   endif
+  if prevstat =~ '&\s*$' && prevstat =~ '\<else\s*if\>'
+    let ind = ind - &sw
+  endif
   "Line after last continuation line
-  if prevstat !~ '&\s*$' && prev2stat =~ '&\s*$'
+  if prevstat !~ '&\s*$' && prev2stat =~ '&\s*$' && prevstat !~? '\<then\>'
     let ind = ind - &sw
   endif
 

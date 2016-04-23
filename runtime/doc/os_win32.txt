@@ -7,17 +7,15 @@
 						*win32* *Win32* *MS-Windows*
 This file documents the idiosyncrasies of the Win32 version of Vim.
 
-The Win32 version of Vim works on Windows NT, XP, Vista and Windows 7.
+The Win32 version of Vim works on Windows XP, Vista and Windows 7.
 There are both console and GUI versions.
 
 The 32 bit version also runs on 64 bit MS-Windows systems.
 
 1. Known problems		|win32-problems|
 2. Startup			|win32-startup|
-3. Restore screen contents	|win32-restore|
-4. Using the mouse		|win32-mouse|
-5. Running under Windows 3.1	|win32-win3.1|
-6. Win32 mini FAQ		|win32-faq|
+3. Using the mouse		|win32-mouse|
+4. Win32 mini FAQ	        |win32-faq|
 
 Additionally, there are a number of common Win32 and DOS items:
 File locations			|dos-locations|
@@ -34,7 +32,6 @@ Win32 GUI			|gui-w32|
 
 Credits:
 The Win32 version was written by George V. Reilly <george@reilly.org>.
-The original Windows NT port was done by Roger Knobbe <RogerK@wonderware.com>.
 The GUI version was made by George V. Reilly and Robert Webb.
 
 ==============================================================================
@@ -79,14 +76,7 @@ make "!xxd" work, as it is in the Tools menu.  And it also means that when
 executable() returns 1 the executable can actually be executed.
 
 ==============================================================================
-3. Restore screen contents				*win32-restore*
-
-When 'restorescreen' is set (which is the default), Vim will restore the
-original contents of the console when exiting or when executing external
-commands.  If you don't want this, use ":set nors".	|'restorescreen'|
-
-==============================================================================
-4. Using the mouse					*win32-mouse*
+3. Using the mouse					*win32-mouse*
 
 The Win32 version of Vim supports using the mouse.  If you have a two-button
 mouse, the middle button can be emulated by pressing both left and right
@@ -98,49 +88,13 @@ When the mouse doesn't work, try disabling the "Quick Edit Mode" feature of
 the console.
 
 ==============================================================================
-5. Running under Windows 3.1				*win32-win3.1*
-
-						*win32s* *windows-3.1*
-There is a special version of Gvim that runs under Windows 3.1 and 3.11.  You
-need the gvim.exe that was compiled with Visual C++ 4.1.
-
-To run the Win32 version under Windows 3.1, you need to install Win32s.  You
-might have it already from another Win32 application which you have installed.
-If Vim doesn't seem to be running properly, get the latest version: 1.30c.
-You can find it at:
-
-	http://support.microsoft.com/download/support/mslfiles/pw1118.exe
-
-(Microsoft moved it again, we don't know where it is now :-( ).
-
-The reason for having two versions of gvim.exe is that the Win32s version was
-compiled with VC++ 4.1.  This is the last version of VC++ that supports Win32s
-programs.  VC++ 5.0 is better, so that one was used for the Win32 version.
-Apart from that, there is no difference between the programs.  If you are in a
-mixed environment, you can use the gvim.exe for Win32s on both.
-
-The Win32s version works the same way as the Win32 version under 95/NT.  When
-running under Win32s the following differences apply:
-- You cannot use long file names, because Windows 3.1 doesn't support them!
-- When executing an external command, it doesn't return an exit code.  After
-  doing ":make" you have to do ":cn" yourself.
-
-==============================================================================
-6. Win32 mini FAQ					*win32-faq*
+4. Win32 mini FAQ					*win32-faq*
 
 Q. How do I change the font?
 A. In the GUI version, you can use the 'guifont' option.  Example: >
 	:set guifont=Lucida_Console:h15:cDEFAULT
 <  In the console version, you need to set the font of the console itself.
    You cannot do this from within Vim.
-
-Q. How do I type dead keys on Windows NT?
-A. Dead keys work on NT 3.51.  Just type them as you would in any other
-   application.
-   On NT 4.0, you need to make sure that the default locale (set in the
-   Keyboard part of the Control Panel) is the same as the currently active
-   locale.  Otherwise the NT code will get confused and crash!  This is a NT
-   4.0 problem, not really a Vim problem.
 
 Q. I'm using Vim to edit a symbolically linked file on a Unix NFS file server.
    When I write the file, Vim does not "write through" the symlink.  Instead,
@@ -175,28 +129,6 @@ A. Basically what you need is to put a tee program that will copy its input
    When you do get a copy of tee, you'll need to add >
 	:set shellpipe=\|\ tee
 <  to your _vimrc.
-
-Q. I'm storing files on a remote machine that works with VisionFS, and files
-   disappear!
-A. VisionFS can't handle certain dot (.) three letter extension file names.
-   SCO declares this behavior required for backwards compatibility with 16bit
-   DOS/Windows environments.  The two commands below demonstrate the behavior:
->
-	echo Hello > file.bat~ 
-	dir > file.bat
-<
-   The result is that the "dir" command updates the "file.bat~" file, instead
-   of creating a new "file.bat" file.  This same behavior is exhibited in Vim
-   when editing an existing file named "foo.bat" because the default behavior
-   of Vim is to create a temporary file with a '~' character appended to the
-   name.  When the file is written, it winds up being deleted.
-
-   Solution: Add this command to your _vimrc file: >
-	:set backupext=.temporary
-
-Q. How do I change the blink rate of the cursor?
-A. You can't!  This is a limitation of the NT console.  NT 5.0 is reported to
-   be able to set the blink rate for all console windows at the same time.
 
 							*:!start*
 Q. How can I run an external command or program asynchronously?
@@ -239,28 +171,6 @@ A. You have two possible solutions depending on what you want:
         :!start /b notepad
 <  The first command runs notepad minimized and the second one runs it
    normally.
-
-Q. I'm using Win32s, and when I try to run an external command like "make",
-   Vim doesn't wait for it to finish!  Help!
-A. The problem is that a 32-bit application (Vim) can't get notification from
-   Windows that a 16-bit application (your DOS session) has finished.  Vim
-   includes a work-around for this, but you must set up your DOS commands to
-   run in a window, not full-screen.  Unfortunately the default when you
-   install Windows is full-screen.  To change this:
-   1) Start PIF editor (in the Main program group).
-   2) Open the file "_DEFAULT.PIF" in your Windows directory.
-   3) Changes the display option from "Full Screen" to "Windowed".
-   4) Save and exit.
-
-   To test, start Vim and type >
-	:!dir C:\<CR>".
-<  You should see a DOS box window appear briefly with the directory listing.
-
-Q. I use Vim under Win32s and NT.  In NT, I can define the console to default to
-   50 lines, so that I get a 80x50 shell when I ':sh'.  Can I do the same in
-   W3.1x, or am I stuck with 80x25?
-A. Edit SYSTEM.INI and add 'ScreenLines=50' to the [NonWindowsApp] section.  DOS
-   prompts and external DOS commands will now run in a 50-line window.
 
 						*windows-icon*
 Q. I don't like the Vim icon, can I change it?

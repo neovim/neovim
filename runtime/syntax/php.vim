@@ -1,8 +1,8 @@
 " Vim syntax file
 " Language: php PHP 3/4/5
 " Maintainer: Jason Woofenden <jason@jasonwoof.com>
-" Last Change: Sep 18, 2014
-" URL: https://gitorious.org/jasonwoof/vim-syntax/blobs/master/php.vim
+" Last Change: Mar 24, 2015
+" URL: https://jasonwoof.com/gitweb/?p=vim-syntax.git;a=blob;f=php.vim;hb=HEAD
 " Former Maintainers: Peter Hodge <toomuchphp-vim@yahoo.com>
 "         Debian VIM Maintainers <pkg-vim-maintainers@lists.alioth.debian.org>
 "

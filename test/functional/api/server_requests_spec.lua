@@ -32,6 +32,26 @@ describe('server -> client', function()
     end)
   end)
 
+  describe('empty string handling in arrays', function()
+    -- Because the msgpack encoding for an empty string was interpreted as an
+    -- error, msgpack arrays with an empty string looked like
+    -- [..., '', 0, ..., 0] after the conversion, regardless of the array
+    -- elements following the empty string.
+    it('works', function()
+      local function on_setup()
+        eq({1, 2, '', 3, 'asdf'}, eval('rpcrequest('..cid..', "nstring")'))
+        stop()
+      end
+
+      local function on_request()
+        -- No need to evaluate the args, we are only interested in
+        -- a response that contains an array with an empty string.
+        return {1, 2, '', 3, 'asdf'}
+      end
+      run(on_request, nil, on_setup)
+    end)
+  end)
+
   describe('recursive call', function()
     it('works', function()
       local function on_setup()
@@ -95,13 +115,13 @@ describe('server -> client', function()
         eq('notified!', eval('rpcrequest('..cid..', "notify")'))
       end
 
-      local function on_request(method, args)
+      local function on_request(method)
         eq('notify', method)
         eq(1, eval('rpcnotify('..cid..', "notification")'))
         return 'notified!'
       end
 
-      local function on_notification(method, args)
+      local function on_notification(method)
         eq('notification', method)
         if notified == expected then
           stop()
@@ -145,8 +165,8 @@ describe('server -> client', function()
 
       eq('SOME TEXT', eval("rpcrequest(vim, 'buffer_get_line', "..buf..", 0)"))
 
-      -- Call get_line_slice(buf, range [0,0], includes start, includes end)
-      eq({'SOME TEXT'}, eval("rpcrequest(vim, 'buffer_get_line_slice', "..buf..", 0, 0, 1, 1)"))
+      -- Call get_lines(buf, range [0,0], strict_indexing)
+      eq({'SOME TEXT'}, eval("rpcrequest(vim, 'buffer_get_lines', "..buf..", 0, 1, 1)"))
     end)
 
     it('returns an error if the request failed', function()

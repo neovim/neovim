@@ -1,4 +1,4 @@
-*help.txt*	For Vim version 7.4.  Last change: 2012 Dec 06
+*help.txt*	For Vim version 7.4.  Last change: 2015 Apr 15
 
 			VIM - main help file
 									 k
@@ -23,6 +23,7 @@ Get specific help:  It is possible to go directly to whatever you want help
 		      Command-line editing	  c_	   :help c_<Del>
 		      Vim command argument	  -	   :help -r
 		      Option			  '	   :help 'textwidth'
+		      Regular expression	  /	   :help /[
   Search for help:  Type ":help word", then hit CTRL-D to see matching
 		    help entries for "word".
 		    Or use ":helpgrep word". |:helpgrep|
@@ -94,7 +95,6 @@ General subjects ~
 |tips.txt|	various tips on using Vim
 |message.txt|	(error) messages and explanations
 |quotes.txt|	remarks from users of Vim
-|todo.txt|	known problems and desired extensions
 |develop.txt|	development of Vim
 |debug.txt|	debugging Vim itself
 |uganda.txt|	Vim distribution conditions and what to do with your money
@@ -160,12 +160,9 @@ Versions ~
 |vi_diff.txt|	Main differences between Vim and Vi
 						*sys-file-list*
 Remarks about specific systems ~
-|os_mac.txt|	Macintosh
-|os_unix.txt|	Unix
 |os_win32.txt|	MS-Windows
 						*standard-plugin-list*
 Standard plugins ~
-|pi_getscript.txt| Downloading latest version of Vim scripts
 |pi_gzip.txt|      Reading and writing compressed files
 |pi_netrw.txt|     Reading and writing files over a network
 |pi_paren.txt|     Highlight matching parens

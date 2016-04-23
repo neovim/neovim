@@ -1,3 +1,6 @@
+local lfs = require('lfs')
+local bit = require('bit')
+
 local helpers = require('test.unit.helpers')
 
 local cimport = helpers.cimport
@@ -6,15 +9,11 @@ local internalize = helpers.internalize
 local eq = helpers.eq
 local neq = helpers.neq
 local ffi = helpers.ffi
-local lib = helpers.lib
 local cstr = helpers.cstr
 local to_cstr = helpers.to_cstr
 local OK = helpers.OK
 local FAIL = helpers.FAIL
 local NULL = helpers.NULL
-
-require('lfs')
-require('bit')
 
 cimport('unistd.h')
 cimport('./src/nvim/os/shell.h')
@@ -23,11 +22,10 @@ cimport('./src/nvim/main.h')
 cimport('./src/nvim/fileio.h')
 local fs = cimport('./src/nvim/os/os.h')
 cppimport('sys/stat.h')
-cppimport('sys/fcntl.h')
-cppimport('sys/errno.h')
+cppimport('fcntl.h')
+cppimport('uv-errno.h')
 
-local len = 0
-local buf = ""
+local buffer = ""
 local directory = nil
 local absolute_executable = nil
 local executable_name = nil
@@ -85,24 +83,26 @@ describe('fs function', function()
   end)
 
   describe('os_dirname', function()
+    local length
+
     local function os_dirname(buf, len)
       return fs.os_dirname(buf, len)
     end
 
     before_each(function()
-      len = (string.len(lfs.currentdir())) + 1
-      buf = cstr(len, '')
+      length = (string.len(lfs.currentdir())) + 1
+      buffer = cstr(length, '')
     end)
 
     it('returns OK and writes current directory into the buffer if it is large\n    enough', function()
-      eq(OK, (os_dirname(buf, len)))
-      eq(lfs.currentdir(), (ffi.string(buf)))
+      eq(OK, (os_dirname(buffer, length)))
+      eq(lfs.currentdir(), (ffi.string(buffer)))
     end)
 
     -- What kind of other failing cases are possible?
     it('returns FAIL if the buffer is too small', function()
-      local buf = cstr((len - 1), '')
-      eq(FAIL, (os_dirname(buf, (len - 1))))
+      local buf = cstr((length - 1), '')
+      eq(FAIL, (os_dirname(buf, (length - 1))))
     end)
   end)
 
@@ -213,15 +213,6 @@ describe('fs function', function()
       os_setperm('unit-test-directory/test.file', orig_test_file_perm)
     end)
 
-    local function os_getperm(filename)
-      local perm = fs.os_getperm((to_cstr(filename)))
-      return tonumber(perm)
-    end
-
-    local function os_setperm(filename, perm)
-      return fs.os_setperm((to_cstr(filename)), perm)
-    end
-
     local function os_fchown(filename, user_id, group_id)
       local fd = ffi.C.open(filename, 0)
       local res = fs.os_fchown(fd, user_id, group_id)
@@ -242,8 +233,8 @@ describe('fs function', function()
     end
 
     describe('os_getperm', function()
-      it('returns -1 when the given file does not exist', function()
-        eq(-1, (os_getperm('non-existing-file')))
+      it('returns UV_ENOENT when the given file does not exist', function()
+        eq(ffi.C.UV_ENOENT, (os_getperm('non-existing-file')))
       end)
 
       it('returns a perm > 0 when given an existing file', function()
@@ -454,8 +445,8 @@ describe('fs function', function()
       local new_file = 'test_new_file'
       local existing_file = 'unit-test-directory/test_existing.file'
 
-      it('returns -ENOENT for O_RDWR on a non-existing file', function()
-        eq(-ffi.C.kENOENT, (os_open('non-existing-file', ffi.C.kO_RDWR, 0)))
+      it('returns UV_ENOENT for O_RDWR on a non-existing file', function()
+        eq(ffi.C.UV_ENOENT, (os_open('non-existing-file', ffi.C.kO_RDWR, 0)))
       end)
 
       it('returns non-negative for O_CREAT on a non-existing file', function()
@@ -468,9 +459,9 @@ describe('fs function', function()
         assert.is_true(0 <= (os_open(existing_file, ffi.C.kO_CREAT, 0)))
       end)
 
-      it('returns -EEXIST for O_CREAT|O_EXCL on a existing file', function()
+      it('returns UV_EEXIST for O_CREAT|O_EXCL on a existing file', function()
         assert_file_exists(existing_file)
-        eq(-ffi.C.kEEXIST, (os_open(existing_file, (bit.bor(ffi.C.kO_CREAT, ffi.C.kO_EXCL)), 0)))
+        eq(ffi.C.kUV_EEXIST, (os_open(existing_file, (bit.bor(ffi.C.kO_CREAT, ffi.C.kO_EXCL)), 0)))
       end)
 
       it('sets `rwx` permissions for O_CREAT 700', function()
@@ -611,7 +602,7 @@ describe('fs function', function()
 
       it('removes the given directory and returns 0', function()
         lfs.mkdir('unit-test-directory/new-dir')
-        eq(0, (os_rmdir('unit-test-directory/new-dir', mode)))
+        eq(0, os_rmdir('unit-test-directory/new-dir'))
         eq(false, (os_isdir('unit-test-directory/new-dir')))
       end)
     end)

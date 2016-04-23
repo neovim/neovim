@@ -93,7 +93,7 @@ struct tm *os_localtime_r(const time_t *restrict clock,
 #endif
 }
 
-/// Obtains the current UNIX timestamp and adjusts it to local time
+/// Obtains the current Unix timestamp and adjusts it to local time.
 ///
 /// @param result Pointer to a 'struct tm' where the result should be placed
 /// @return A pointer to a 'struct tm' in the current time zone (the 'result'
@@ -104,7 +104,7 @@ struct tm *os_get_localtime(struct tm *result) FUNC_ATTR_NONNULL_ALL
   return os_localtime_r(&rawtime, result);
 }
 
-/// Obtains the current UNIX timestamp
+/// Obtains the current Unix timestamp.
 ///
 /// @return Seconds since epoch.
 Timestamp os_time(void)

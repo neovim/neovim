@@ -1,26 +1,24 @@
 local helpers = require('test.unit.helpers')
 
 local cimport = helpers.cimport
-local internalize = helpers.internalize
 local eq = helpers.eq
 local ffi = helpers.ffi
 local lib = helpers.lib
-local cstr = helpers.cstr
 local NULL = helpers.NULL
 local OK = helpers.OK
 local FAIL = helpers.FAIL
 
 local users = cimport('./src/nvim/os/os.h', 'unistd.h')
 
-function garray_new()
+local function garray_new()
   return ffi.new('garray_T[1]')
 end
 
-function garray_get_len(array)
+local function garray_get_len(array)
   return array[0].ga_len
 end
 
-function garray_get_item(array, index)
+local function garray_get_item(array, index)
   return (ffi.cast('void **', array[0].ga_data))[index]
 end
 

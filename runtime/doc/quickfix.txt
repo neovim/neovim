@@ -1,4 +1,4 @@
-*quickfix.txt*  For Vim version 7.4.  Last change: 2014 Mar 27
+*quickfix.txt*  For Vim version 7.4.  Last change: 2015 Sep 08
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -291,6 +291,74 @@ use this code: >
 
 	au QuickfixCmdPost make call QfMakeConv()
 
+EXECUTE A COMMAND IN ALL THE BUFFERS IN QUICKFIX OR LOCATION LIST:
+							*:cdo*
+:cdo[!] {cmd}		Execute {cmd} in each valid entry in the quickfix list.
+			It works like doing this: >
+				:cfirst
+				:{cmd}
+				:cnext
+				:{cmd}
+				etc.
+<			When the current file can't be |abandon|ed and the [!]
+			is not present, the command fails.
+			When an error is detected excecution stops.
+			The last buffer (or where an error occurred) becomes
+			the current buffer.
+			{cmd} can contain '|' to concatenate several commands.
+
+			Only valid entries in the quickfix list are used.
+			A range can be used to select entries, e.g.: >
+				:10,$cdo cmd
+<			To skip entries 1 to 9.
+
+			Note: While this command is executing, the Syntax
+			autocommand event is disabled by adding it to
+			'eventignore'.  This considerably speeds up editing
+			each buffer.
+			{not in Vi} {not available when compiled without the
+			|+listcmds| feature}
+			Also see |:bufdo|, |:tabdo|, |:argdo|, |:windo|,
+			|:ldo|, |:cfdo| and |:lfdo|.
+
+							*:cfdo*
+:cfdo[!] {cmd}		Execute {cmd} in each file in the quickfix list.
+			It works like doing this: >
+				:cfirst
+				:{cmd}
+				:cnfile
+				:{cmd}
+				etc.
+<			Otherwise it works the same as `:cdo`.
+			{not in Vi} {not available when compiled without the
+			|+listcmds| feature}
+
+							*:ldo*
+:ld[o][!] {cmd}		Execute {cmd} in each valid entry in the location list
+			for the current window.
+			It works like doing this: >
+				:lfirst
+				:{cmd}
+				:lnext
+				:{cmd}
+				etc.
+<			Only valid entries in the location list are used.
+			Otherwise it works the same as `:cdo`.
+			{not in Vi} {not available when compiled without the
+			|+listcmds| feature}
+
+							*:lfdo*
+:lfdo[!] {cmd}		Execute {cmd} in each file in the location list for
+			the current window.
+			It works like doing this: >
+				:lfirst
+				:{cmd}
+				:lnfile
+				:{cmd}
+				etc.
+<			Otherwise it works the same as `:ldo`.
+			{not in Vi} {not available when compiled without the
+			|+listcmds| feature}
 
 =============================================================================
 2. The error window					*quickfix-window*
@@ -493,11 +561,11 @@ or simpler >
 "$*" can be given multiple times, for example: >
    :set makeprg=gcc\ -o\ $*\ $*
 
-The 'shellpipe' option defaults to ">" for MS-DOS and Win32.  This means that
-the output of the compiler is saved in a file and not shown on the screen
-directly.  For Unix "| tee" is used.  The compiler output is shown on the
-screen and saved in a file the same time.  Depending on the shell used "|&
-tee" or "2>&1| tee" is the default, so stderr output will be included.
+The 'shellpipe' option defaults to ">" on Windows.  This means that the output
+of the compiler is saved in a file and not shown on the screen directly.  For
+Unix "| tee" is used.  The compiler output is shown on the screen and saved in
+a file the same time.  Depending on the shell used "|& tee" or "2>&1| tee" is
+the default, so stderr output will be included.
 
 If 'shellpipe' is empty, the {errorfile} part will be omitted.  This is useful
 for compilers that write to an errorfile themselves.
@@ -905,9 +973,9 @@ normally happens by matching following characters and items.  When nothing is
 following the rest of the line is matched.  If "%f" is followed by a '%' or a
 backslash, it will look for a sequence of 'isfname' characters.
 
-On MS-DOS and MS-Windows a leading "C:" will be included in "%f", even when
-using "%f:".  This means that a file name which is a single alphabetical
-letter will not be detected.
+On Windows a leading "C:" will be included in "%f", even when using "%f:".
+This means that a file name which is a single alphabetical letter will not be
+detected.
 
 The "%p" conversion is normally followed by a "^".  It's used for compilers
 that output a line like: >

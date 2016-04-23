@@ -1,18 +1,9 @@
 /*
- * VIM - Vi IMproved	by Bram Moolenaar
- *
- * Do ":help uganda"  in Vim to read copying and usage conditions.
- * Do ":help credits" in Vim to see a list of people who contributed.
- * See README.txt for an overview of the Vim source code.
- */
-
-/*
  * syntax.c: code for syntax highlighting
  */
 
 #include <assert.h>
 #include <ctype.h>
-#include <errno.h>
 #include <inttypes.h>
 #include <stdbool.h>
 #include <string.h>
@@ -49,6 +40,8 @@
 #include "nvim/ui.h"
 #include "nvim/os/os.h"
 #include "nvim/os/time.h"
+
+static bool did_syntax_onoff = false;
 
 // Structure that stores information about a highlight group.
 // The ID of a highlight group is also called group ID.  It is the index in
@@ -3013,14 +3006,19 @@ static void syn_cmd_spell(exarg_T *eap, int syncing)
     return;
 
   next = skiptowhite(arg);
-  if (STRNICMP(arg, "toplevel", 8) == 0 && next - arg == 8)
+  if (STRNICMP(arg, "toplevel", 8) == 0 && next - arg == 8) {
     curwin->w_s->b_syn_spell = SYNSPL_TOP;
-  else if (STRNICMP(arg, "notoplevel", 10) == 0 && next - arg == 10)
+  } else if (STRNICMP(arg, "notoplevel", 10) == 0 && next - arg == 10) {
     curwin->w_s->b_syn_spell = SYNSPL_NOTOP;
-  else if (STRNICMP(arg, "default", 7) == 0 && next - arg == 7)
+  } else if (STRNICMP(arg, "default", 7) == 0 && next - arg == 7) {
     curwin->w_s->b_syn_spell = SYNSPL_DEFAULT;
-  else
+  } else {
     EMSG2(_("E390: Illegal argument: %s"), arg);
+    return;
+  }
+
+  // assume spell checking changed, force a redraw
+  redraw_win_later(curwin, NOT_VALID);
 }
 
 /*
@@ -3290,14 +3288,25 @@ static void syn_cmd_off(exarg_T *eap, int syncing)
 }
 
 static void syn_cmd_onoff(exarg_T *eap, char *name)
+  FUNC_ATTR_NONNULL_ALL
 {
-  char buf[100];
-
+  did_syntax_onoff = true;
   eap->nextcmd = check_nextcmd(eap->arg);
   if (!eap->skip) {
-    strcpy(buf, "so ");
+    char buf[100];
+    strncpy(buf, "so ", 4);
     vim_snprintf(buf + 3, sizeof(buf) - 3, SYNTAX_FNAME, name);
     do_cmdline_cmd(buf);
+  }
+}
+
+void syn_maybe_on(void)
+{
+  if (!did_syntax_onoff) {
+    exarg_T ea;
+    ea.arg = (char_u *)"";
+    ea.skip = false;
+    syn_cmd_onoff(&ea, "syntax");
   }
 }
 
@@ -4192,12 +4201,16 @@ static void syn_cmd_keyword(exarg_T *eap, int syncing)
             break;
           if (p[1] == NUL) {
             EMSG2(_("E789: Missing ']': %s"), kw);
-            kw = p + 2;                       /* skip over the NUL */
-            break;
+            goto error;
           }
           if (p[1] == ']') {
-            kw = p + 1;                       /* skip over the "]" */
-            break;
+            if (p[2] != NUL) {
+              EMSG3(_("E890: trailing char after ']': %s]%s"),
+                    kw, &p[2]);
+              goto error;
+            }
+            kw = p + 1;
+            break;   // skip over the "]"
           }
           if (has_mbyte) {
             int l = (*mb_ptr2len)(p + 1);
@@ -4212,6 +4225,7 @@ static void syn_cmd_keyword(exarg_T *eap, int syncing)
       }
     }
 
+error:
     xfree(keyword_copy);
     xfree(syn_opt_arg.cont_in_list);
     xfree(syn_opt_arg.next_list);
@@ -4852,9 +4866,10 @@ static char_u *get_syn_pattern(char_u *arg, synpat_T *ci)
   int idx;
   char_u      *cpo_save;
 
-  /* need at least three chars */
-  if (arg == NULL || arg[1] == NUL || arg[2] == NUL)
+  // need at least three chars
+  if (arg == NULL || arg[0] == NUL || arg[1] == NUL || arg[2] == NUL) {
     return NULL;
+  }
 
   end = skip_regexp(arg + 1, *arg, TRUE, NULL);
   if (*end != *arg) {                       /* end delimiter not found */
@@ -5404,8 +5419,10 @@ void ex_ownsyntax(exarg_T *eap)
   if (curwin->w_s == &curwin->w_buffer->b_s) {
     curwin->w_s = xmalloc(sizeof(synblock_T));
     memset(curwin->w_s, 0, sizeof(synblock_T));
-    // TODO: Keep the spell checking as it was.
-    curwin->w_p_spell = FALSE;          /* No spell checking */
+    hash_init(&curwin->w_s->b_keywtab);
+    hash_init(&curwin->w_s->b_keywtab_ic);
+    // TODO: Keep the spell checking as it was. NOLINT(readability/todo)
+    curwin->w_p_spell = false;  // No spell checking
     clear_string_option(&curwin->w_s->b_p_spc);
     clear_string_option(&curwin->w_s->b_p_spf);
     clear_string_option(&curwin->w_s->b_p_spl);
@@ -5516,25 +5533,29 @@ char_u *get_syntax_name(expand_T *xp, int idx)
 }
 
 
-/*
- * Function called for expression evaluation: get syntax ID at file position.
- */
-int 
-syn_get_id (
+// Function called for expression evaluation: get syntax ID at file position.
+int syn_get_id(
     win_T *wp,
     long lnum,
     colnr_T col,
-    int trans,                  /* remove transparency */
-    bool *spellp,               /* return: can do spell checking */
-    int keep_state              /* keep state of char at "col" */
+    int trans,      // remove transparency
+    bool *spellp,   // return: can do spell checking
+    int keep_state  // keep state of char at "col"
 )
 {
-  /* When the position is not after the current position and in the same
-   * line of the same buffer, need to restart parsing. */
+  // When the position is not after the current position and in the same
+  // line of the same buffer, need to restart parsing.
   if (wp->w_buffer != syn_buf
       || lnum != current_lnum
-      || col < current_col)
+      || col < current_col) {
     syntax_start(wp, lnum);
+  } else if (wp->w_buffer == syn_buf
+             && lnum == current_lnum
+             && col > current_col) {
+      // next_match may not be correct when moving around, e.g. with the
+      // "skip" expression in searchpair()
+      next_match_idx = -1;
+  }
 
   (void)get_syntax_attr(col, spellp, keep_state);
 
@@ -6374,7 +6395,7 @@ do_highlight (
             HL_TABLE()[idx].sg_cterm_bg = color + 1;
             if (is_normal_group) {
               cterm_normal_bg_color = color + 1;
-              {
+              if (!ui_rgb_attached()) {
                 must_redraw = CLEAR;
                 if (color >= 0) {
                   if (t_colors < 16)

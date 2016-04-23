@@ -2,7 +2,7 @@
 " Language:	J
 " Maintainer:	David Bürgin <676c7473@gmail.com>
 " URL:		https://github.com/glts/vim-j
-" Last Change:	2014-04-05
+" Last Change:	2015-01-11
 
 if exists('b:did_indent')
   finish
@@ -26,25 +26,25 @@ if !exists('g:j_indent_definitions')
 endif
 
 function GetJIndent() abort
-  let prevlnum = prevnonblank(v:lnum-1)
-  if prevlnum == 0
+  let l:prevlnum = prevnonblank(v:lnum - 1)
+  if l:prevlnum == 0
     return 0
   endif
-  let indent = indent(prevlnum)
-  let prevline = getline(prevlnum)
-  if prevline =~# '^\s*\%(case\|catch[dt]\=\|do\|else\%(if\)\=\|fcase\|for\%(_\a\k*\)\=\|if\|select\|try\|whil\%(e\|st\)\)\.\%(\%(\<end\.\)\@!.\)*$'
+  let l:indent = indent(l:prevlnum)
+  let l:prevline = getline(l:prevlnum)
+  if l:prevline =~# '^\s*\%(case\|catch[dt]\=\|do\|else\%(if\)\=\|fcase\|for\%(_\a\k*\)\=\|if\|select\|try\|whil\%(e\|st\)\)\.\%(\%(\<end\.\)\@!.\)*$'
     " Increase indentation after an initial control word that starts or
     " continues a block and is not terminated by "end."
-    let indent += shiftwidth()
-  elseif g:j_indent_definitions && (prevline =~# '\<\%([1-4]\|13\|adverb\|conjunction\|verb\|monad\|dyad\)\s\+\%(:\s*0\|def\s\+0\|define\)\>' || prevline =~# '^\s*:\s*$')
+    let l:indent += shiftwidth()
+  elseif g:j_indent_definitions && (l:prevline =~# '\<\%([1-4]\|13\|adverb\|conjunction\|verb\|monad\|dyad\)\s\+\%(:\s*0\|def\s\+0\|define\)\>' || l:prevline =~# '^\s*:\s*$')
     " Increase indentation in explicit definitions of adverbs, conjunctions,
     " and verbs
-    let indent += shiftwidth()
+    let l:indent += shiftwidth()
   endif
   " Decrease indentation in lines that start with either control words that
   " continue or end a block, or the special items ")" and ":"
   if getline(v:lnum) =~# '^\s*\%()\|:\|\%(case\|catch[dt]\=\|do\|else\%(if\)\=\|end\|fcase\)\.\)'
-    let indent -= shiftwidth()
+    let l:indent -= shiftwidth()
   endif
-  return indent
+  return l:indent
 endfunction

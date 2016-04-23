@@ -18,15 +18,6 @@ typedef struct {
   terminal_close_cb close_cb;
 } TerminalOptions;
 
-#define TERMINAL_OPTIONS_INIT ((TerminalOptions) {           \
-    .data = NULL,                                            \
-    .width = 80,                                             \
-    .height = 24,                                            \
-    .write_cb = NULL,                                        \
-    .resize_cb = NULL,                                       \
-    .close_cb = NULL                                         \
-    })
-
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "terminal.h.generated.h"
 #endif

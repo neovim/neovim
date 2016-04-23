@@ -18,17 +18,9 @@ local function trim(s)
 end
 
 -- a Set that keeps around the lines we've already seen
-if cdefs == nil then
-  cdefs = Set:new()
-end
-
-if imported == nil then
-  imported = Set:new()
-end
-
-if pragma_pack_id == nil then
-  pragma_pack_id = 1
-end
+local cdefs = Set:new()
+local imported = Set:new()
+local pragma_pack_id = 1
 
 -- some things are just too complex for the LuaJIT C parser to digest. We
 -- usually don't need them anyway.
@@ -36,8 +28,10 @@ local function filter_complex_blocks(body)
   local result = {}
 
   for line in body:gmatch("[^\r\n]+") do
-    if not (string.find(line, "(^)", 1, true) ~= nil or
-      string.find(line, "_ISwupper", 1, true)) then
+    if not (string.find(line, "(^)", 1, true) ~= nil
+            or string.find(line, "_ISwupper", 1, true)
+            or string.find(line, "msgpack_zone_push_finalizer")
+            or string.find(line, "msgpack_unpacker_reserve_buffer")) then
       result[#result + 1] = line
     end
   end
@@ -67,7 +61,7 @@ local function cimport(...)
   end
 
   local body = nil
-  for i=1, 10 do
+  for _ = 1, 10 do
     local stream = Preprocess.preprocess_stream(unpack(paths))
     body = stream:read("*a")
     stream:close()
@@ -111,6 +105,11 @@ local function cimport(...)
   -- request a sorted version of the new lines (same relative order as the
   -- original preprocessed file) and feed that to the LuaJIT ffi
   local new_lines = new_cdefs:to_table()
+  if os.getenv('NVIM_TEST_PRINT_CDEF') == '1' then
+    for lnum, line in ipairs(new_lines) do
+      print(lnum, line)
+    end
+  end
   ffi.cdef(table.concat(new_lines, "\n"))
 
   return libnvim

@@ -57,6 +57,7 @@ return {
     'InsertLeave',            -- when leaving Insert mode
     'JobActivity',            -- when job sent some data
     'MenuPopup',              -- just before popup menu is displayed
+    'OptionSet',              -- after setting any option
     'QuickFixCmdPost',        -- after :make, :grep etc.
     'QuickFixCmdPre',         -- before :make, :grep etc.
     'QuitPre',                -- before :quit
@@ -77,10 +78,12 @@ return {
     'TabNew',                 -- when creating a new tab
     'TabNewEntered',          -- after entering a new tab
     'TermChanged',            -- after changing 'term'
-    'TermResponse',           -- after setting "v:termresponse"
+    'TermClose',              -- after the processs exits
     'TermOpen',               -- after opening a terminal buffer
+    'TermResponse',           -- after setting "v:termresponse"
     'TextChanged',            -- text was modified
     'TextChangedI',           -- text was modified in Insert mode
+    'TextYankPost',           -- after a yank or delete was done (y, d, c)
     'User',                   -- user defined autocommand
     'VimEnter',               -- after starting Vim
     'VimLeave',               -- before exiting Vim
@@ -98,9 +101,10 @@ return {
   -- List of neovim-specific events or aliases for the purpose of generating 
   -- syntax file
   neovim_specific = {
+    TabClosed=true,
     TabNew=true,
     TabNewEntered=true,
-    TabClosed=true,
-    TermEnter=true,
+    TermClose=true,
+    TermOpen=true,
   },
 }

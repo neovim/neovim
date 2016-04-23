@@ -24,11 +24,11 @@ setlocal buftype=nofile noswapfile
 setlocal nomodifiable readonly bufhidden=hide nobuflisted tabstop=8
 
 if !exists("g:no_plugin_maps") && !exists("g:no_man_maps")
-  nnoremap <silent> <buffer> <C-]>    :call man#get_page(v:count)<CR>
+  nnoremap <silent> <buffer> <C-]>    :call man#get_page(v:count, expand('<cword>'))<CR>
   nnoremap <silent> <buffer> <C-T>    :call man#pop_page()<CR>
   nnoremap <silent> <nowait><buffer>  q <C-W>c
   if &keywordprg !=# ':Man'
-    nnoremap <silent> <buffer> K      :call man#get_page(v:count)<CR>
+    nnoremap <silent> <buffer> K      :call man#get_page(v:count, expand('<cword>'))<CR>
   endif
 endif
 

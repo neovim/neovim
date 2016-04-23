@@ -1,6 +1,6 @@
 local helpers = require('test.functional.helpers')
 local Screen = require('test.functional.ui.screen')
-local clear, feed, nvim = helpers.clear, helpers.feed, helpers.nvim
+local clear, feed = helpers.clear, helpers.feed
 local execute, request, eq = helpers.execute, helpers.request, helpers.eq
 
 
@@ -13,15 +13,6 @@ describe('color scheme compatibility', function()
     eq('256', request('vim_eval', '&t_Co'))
     request('vim_set_option', 't_Co', '88')
     eq('88', request('vim_eval', '&t_Co'))
-  end)
-
-  it('emulates gui_running when a rgb UI is attached', function()
-    eq(0, request('vim_eval', 'has("gui_running")'))
-    local screen = Screen.new()
-    screen:attach()
-    eq(1, request('vim_eval', 'has("gui_running")'))
-    screen:detach()
-    eq(0, request('vim_eval', 'has("gui_running")'))
   end)
 end)
 

@@ -1,9 +1,9 @@
 " Vim syntax file
 " Language:	Maple V (based on release 4)
-" Maintainer:	Dr. Charles E. Campbell, Jr. <NdrOchipS@PcampbellAfamily.Mbiz>
-" Last Change:	Jan 05, 2010
-" Version:	10
-" URL:	http://mysite.verizon.net/astronaut/vim/index.html#vimlinks_syntax
+" Maintainer:	Charles E. Campbell <NdrOchipS@PcampbellAfamily.Mbiz>
+" Last Change:	Oct 23, 2014
+" Version:	11
+" URL:	http://www.drchip.org/astronaut/vim/index.html#SYNTAX_MAPLE
 "
 " Package Function Selection: {{{1
 " Because there are a lot of packages, and because of the potential for namespace

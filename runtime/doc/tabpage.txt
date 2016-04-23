@@ -48,8 +48,8 @@ A double click with the mouse in the non-GUI tab pages line opens a new, empty
 tab page.  It is placed left of the position of the click.  The first click
 may select another tab page first, causing an extra screen update.
 
-This also works in a few GUI versions, esp. Win32 and Motif.  But only when
-clicking right of the labels.
+This also works in a few GUI versions, esp. Win32.  But only when clicking
+right of the labels.
 
 In the GUI tab pages line you can use the right mouse button to open menu.
 |tabline-menu|.
@@ -197,22 +197,29 @@ REORDERING TAB PAGES:
 		Move the current tab page to after tab page N.  Use zero to
 		make the current tab page the first one.  Without N the tab
 		page is made the last one. >
+		    :.tabmove   " do nothing
 		    :-tabmove   " move the tab page to the left
-		    :tabmove    " move the tab page to the right
-		    :.tabmove   " as above
-		    :+tabmove   " as above
+		    :+tabmove   " move the tab page to the right
 		    :0tabmove   " move the tab page to the beginning  of the tab
 				" list
-		    :$tabmove   " move the tab page to the end of the tab list
-<
+		    :tabmove 0	" as above
+		    :tabmove	" move the tab page to the last
+		    :$tabmove	" as above
+		    :tabmove $	" as above
+
 :tabm[ove] +[N]
 :tabm[ove] -[N]
 		Move the current tab page N places to the right (with +) or to
-		the left (with -).
+		the left (with -). >
+		    :tabmove -	" move the tab page to the left
+		    :tabmove -1	" as above
+		    :tabmove +	" move the tab page to the right
+		    :tabmove +1	" as above
+
 
 Note that although it is possible to move a tab behind the N-th one by using
-:Ntabmove, it is impossible to move it by N places by using :+Ntabmove. For
-clarification what +N means in this context see |[range]|.
+:Ntabmove. And move it by N places by using :+Ntabmove. For clarification what
++N means in this context see |[range]|.
 
 
 LOOPING OVER TAB PAGES:
@@ -234,7 +241,8 @@ LOOPING OVER TAB PAGES:
 		current tab page.
 		{cmd} can contain '|' to concatenate several commands.
 		{cmd} must not open or close tab pages or reorder them.
-		Also see |:windo|, |:argdo| and |:bufdo|.
+		Also see |:windo|, |:argdo|, |:bufdo|, |:cdo|, |:ldo|, |:cfdo|
+		and |:lfdo|.
 
 ==============================================================================
 3. Other items						*tab-page-other*
@@ -265,8 +273,8 @@ window on the same buffer and then edit another buffer.  Thus ":tabnew"
 triggers:
 	WinLeave		leave current window
 	TabLeave		leave current tab page
-	TabEnter		enter new tab page
 	WinEnter		enter window in new tab page
+	TabEnter		enter new tab page
 	BufLeave		leave current buffer
 	BufEnter		enter new empty buffer
 
@@ -274,8 +282,8 @@ When switching to another tab page the order is:
 	BufLeave
 	WinLeave
 	TabLeave
-	TabEnter
 	WinEnter
+	TabEnter
 	BufEnter
 
 When entering a new tab page (|:tabnew|), TabNew is triggered before TabEnter

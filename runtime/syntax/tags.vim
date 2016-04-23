@@ -1,8 +1,8 @@
 " Language:		tags
-" Maintainer:	Dr. Charles E. Campbell, Jr.  <NdrOchip@PcampbellAfamily.Mbiz>
-" Last Change:	Sep 06, 2005
-" Version:		3
-" URL:	http://mysite.verizon.net/astronaut/vim/index.html#vimlinks_syntax
+" Maintainer:	Charles E. Campbell  <NdrOchip@PcampbellAfamily.Mbiz>
+" Last Change:	Oct 23, 2014
+" Version:		4
+" URL:	http://www.drchip.org/astronaut/vim/index.html#SYNTAX_TAGS
 
 " For version 5.x: Clear all syntax items
 " For version 6.x: Quit when a syntax file was already loaded

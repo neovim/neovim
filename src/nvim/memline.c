@@ -1,11 +1,3 @@
-/*
- * VIM - Vi IMproved	by Bram Moolenaar
- *
- * Do ":help uganda"  in Vim to read copying and usage conditions.
- * Do ":help credits" in Vim to see a list of people who contributed.
- * See README.txt for an overview of the Vim source code.
- */
-
 /* for debugging */
 /* #define CHECK(c, s)	if (c) EMSG(s) */
 #define CHECK(c, s)
@@ -46,6 +38,7 @@
 #include <inttypes.h>
 #include <string.h>
 #include <stdbool.h>
+#include <fcntl.h>
 
 #include "nvim/ascii.h"
 #include "nvim/vim.h"
@@ -72,7 +65,6 @@
 #include "nvim/strings.h"
 #include "nvim/ui.h"
 #include "nvim/version.h"
-#include "nvim/tempfile.h"
 #include "nvim/undo.h"
 #include "nvim/window.h"
 #include "nvim/os/os.h"
@@ -433,10 +425,8 @@ void ml_setname(buf_T *buf)
     /* try to rename the swap file */
     if (vim_rename(mfp->mf_fname, fname) == 0) {
       success = TRUE;
-      xfree(mfp->mf_fname);
-      mfp->mf_fname = fname;
-      xfree(mfp->mf_ffname);
-      mf_set_ffname(mfp);
+      mf_free_fnames(mfp);
+      mf_set_fnames(mfp, fname);
       ml_upd_block0(buf, UB_SAME_DIR);
       break;
     }
@@ -2990,7 +2980,7 @@ static void ml_lineadd(buf_T *buf, int count)
  * If it worked returns OK and the resolved link in "buf[MAXPATHL]".
  * Otherwise returns FAIL.
  */
-int resolve_symlink(char_u *fname, char_u *buf)
+int resolve_symlink(const char_u *fname, char_u *buf)
 {
   char_u tmp[MAXPATHL];
   int ret;
@@ -3203,7 +3193,7 @@ attention_message (
  */
 static int do_swapexists(buf_T *buf, char_u *fname)
 {
-  set_vim_var_string(VV_SWAPNAME, fname, -1);
+  set_vim_var_string(VV_SWAPNAME, (char *) fname, -1);
   set_vim_var_string(VV_SWAPCHOICE, NULL, -1);
 
   /* Trigger SwapExists autocommands with <afile> set to the file being
@@ -3962,8 +3952,10 @@ long ml_find_line_or_offset(buf_T *buf, linenr_T lnum, long *offp)
     if (ffdos)
       size += lnum - 1;
 
-    /* Don't count the last line break if 'bin' and 'noeol'. */
-    if (buf->b_p_bin && !buf->b_p_eol && buf->b_ml.ml_line_count == lnum) {
+    /* Don't count the last line break if 'noeol' and ('bin' or
+     * 'nofixeol'). */
+    if ((!buf->b_p_fixeol || buf->b_p_bin) && !buf->b_p_eol
+        && buf->b_ml.ml_line_count == lnum) {
       size -= ffdos + 1;
     }
   }

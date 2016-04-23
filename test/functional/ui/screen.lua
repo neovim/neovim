@@ -106,8 +106,8 @@
 -- use `screen:snapshot_util({},true)`
 
 local helpers = require('test.functional.helpers')
-local request, run, stop = helpers.request, helpers.run, helpers.stop
-local eq, dedent = helpers.eq, helpers.dedent
+local request, run = helpers.request, helpers.run
+local dedent = helpers.dedent
 
 local Screen = {}
 Screen.__index = Screen
@@ -119,7 +119,7 @@ if os.getenv('VALGRIND') then
   default_screen_timeout = default_screen_timeout * 3
 end
 
-if os.getenv('CI_TARGET') then
+if os.getenv('CI') then
   default_screen_timeout = default_screen_timeout * 3
 end
 
@@ -138,7 +138,7 @@ do
     -- this is just a helper to get any canonical name of a color
     colornames[rgb] = name
   end
-  session:exit(0)
+  session:close()
   Screen.colors = colors
   Screen.colornames = colornames
 end
@@ -219,12 +219,23 @@ function Screen:expect(expected, attr_ids, attr_ignore)
   local ids = attr_ids or self._default_attr_ids
   local ignore = attr_ignore or self._default_attr_ignore
   self:wait(function()
+    local actual_rows = {}
     for i = 1, self._height do
-      local expected_row = expected_rows[i]
-      local actual_row = self:_row_repr(self._rows[i], ids, ignore)
-      if expected_row ~= actual_row then
-        return 'Row '..tostring(i)..' didn\'t match.\nExpected: "'..
-               expected_row..'"\nActual:   "'..actual_row..'"'
+      actual_rows[i] = self:_row_repr(self._rows[i], ids, ignore)
+    end
+    for i = 1, self._height do
+      if expected_rows[i] ~= actual_rows[i] then
+        local msg_expected_rows = {}
+        for j = 1, #expected_rows do
+          msg_expected_rows[j] = expected_rows[j]
+        end
+        msg_expected_rows[i] = '*' .. msg_expected_rows[i]
+        actual_rows[i] = '*' .. actual_rows[i]
+        return (
+          'Row ' .. tostring(i) .. ' didn\'t match.\n'
+          .. 'Expected:\n|' .. table.concat(msg_expected_rows, '|\n|') .. '|\n'
+          .. 'Actual:\n|' .. table.concat(actual_rows, '|\n|') .. '|'
+        )
       end
     end
   end)
@@ -241,7 +252,7 @@ function Screen:wait(check, timeout)
     checked = true
     if not err then
       success_seen = true
-      stop()
+      helpers.stop()
     elseif success_seen and #args > 0 then
       failure_after_success = true
       --print(require('inspect')(args))
@@ -294,9 +305,9 @@ end
 
 function Screen:_handle_resize(width, height)
   local rows = {}
-  for i = 1, height do
+  for _ = 1, height do
     local cols = {}
-    for j = 1, width do
+    for _ = 1, width do
       table.insert(cols, {text = ' ', attrs = {}})
     end
     table.insert(rows, cols)
@@ -448,7 +459,7 @@ function Screen:_row_repr(row, attr_ids, attr_ignore)
   local rv = {}
   local current_attr_id
   for i = 1, self._width do
-    local attr_id = get_attr_id(attr_ids, attr_ignore, row[i].attrs)
+    local attr_id = self:_get_attr_id(attr_ids, attr_ignore, row[i].attrs)
     if current_attr_id and attr_id ~= current_attr_id then
       -- close current attribute bracket, add it before any whitespace
       -- up to the current cell
@@ -524,8 +535,8 @@ function Screen:print_snapshot(attrs, ignore)
         local row = self._rows[i]
         for j = 1, self._width do
           local attr = row[j].attrs
-          if attr_index(attrs, attr) == nil and attr_index(ignore, attr) == nil then
-            if not equal_attrs(attr, {}) then
+          if self:_attr_index(attrs, attr) == nil and self:_attr_index(ignore, attr) == nil then
+            if not self:_equal_attrs(attr, {}) then
               table.insert(attrs, attr)
             end
           end
@@ -544,7 +555,7 @@ function Screen:print_snapshot(attrs, ignore)
     if self._default_attr_ids == nil or self._default_attr_ids[i] ~= a then
       alldefault = false
     end
-    local dict = "{"..pprint_attrs(a).."}"
+    local dict = "{"..self:_pprint_attrs(a).."}"
     table.insert(attrstrs, "["..tostring(i).."] = "..dict)
   end
   local attrstr = "{"..table.concat(attrstrs, ", ").."}"
@@ -558,7 +569,7 @@ function Screen:print_snapshot(attrs, ignore)
   io.stdout:flush()
 end
 
-function pprint_attrs(attrs)
+function Screen:_pprint_attrs(attrs)
     local items = {}
     for f, v in pairs(attrs) do
       local desc = tostring(v)
@@ -572,7 +583,7 @@ function pprint_attrs(attrs)
     return table.concat(items, ", ")
 end
 
-function backward_find_meaningful(tbl, from)
+function backward_find_meaningful(tbl, from)  -- luacheck: ignore
   for i = from or #tbl, 1, -1 do
     if tbl[i] ~= ' ' then
       return i + 1
@@ -581,24 +592,24 @@ function backward_find_meaningful(tbl, from)
   return from
 end
 
-function get_attr_id(attr_ids, ignore, attrs)
+function Screen:_get_attr_id(attr_ids, ignore, attrs)
   if not attr_ids then
     return
   end
   for id, a in pairs(attr_ids) do
-    if equal_attrs(a, attrs) then
+    if self:_equal_attrs(a, attrs) then
        return id
      end
   end
-  if equal_attrs(attrs, {}) or
-      ignore == true or attr_index(ignore, attrs) ~= nil then
+  if self:_equal_attrs(attrs, {}) or
+      ignore == true or self:_attr_index(ignore, attrs) ~= nil then
     -- ignore this attrs
     return nil
   end
-  return "UNEXPECTED "..pprint_attrs(attrs)
+  return "UNEXPECTED "..self:_pprint_attrs(attrs)
 end
 
-function equal_attrs(a, b)
+function Screen:_equal_attrs(a, b)
     return a.bold == b.bold and a.standout == b.standout and
        a.underline == b.underline and a.undercurl == b.undercurl and
        a.italic == b.italic and a.reverse == b.reverse and
@@ -606,12 +617,12 @@ function equal_attrs(a, b)
        a.background == b.background
 end
 
-function attr_index(attrs, attr)
+function Screen:_attr_index(attrs, attr)
   if not attrs then
     return nil
   end
   for i,a in pairs(attrs) do
-    if equal_attrs(a, attr) then
+    if self:_equal_attrs(a, attr) then
       return i
     end
   end

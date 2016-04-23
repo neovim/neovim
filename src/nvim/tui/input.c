@@ -10,6 +10,8 @@
 #include "nvim/event/rstream.h"
 
 #define PASTETOGGLE_KEY "<Paste>"
+#define FOCUSGAINED_KEY "<FocusGained>"
+#define FOCUSLOST_KEY   "<FocusLost>"
 #define KEY_BUFFER_SIZE 0xfff
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -252,6 +254,32 @@ static void timer_cb(TimeWatcher *watcher, void *data)
   flush_input(data, true);
 }
 
+/// Handle focus events.
+///
+/// If the upcoming sequence of bytes in the input stream matches either the
+/// escape code for focus gained `<ESC>[I` or focus lost `<ESC>[O` then consume
+/// that sequence and push the appropriate event into the input queue
+///
+/// @param input the input stream
+/// @return true iff handle_focus_event consumed some input
+static bool handle_focus_event(TermInput *input)
+{
+  if (rbuffer_size(input->read_stream.buffer) > 2
+      && (!rbuffer_cmp(input->read_stream.buffer, "\x1b[I", 3)
+          || !rbuffer_cmp(input->read_stream.buffer, "\x1b[O", 3))) {
+    // Advance past the sequence
+    bool focus_gained = *rbuffer_get(input->read_stream.buffer, 2) == 'I';
+    rbuffer_consumed(input->read_stream.buffer, 3);
+    if (focus_gained) {
+      enqueue_input(input, FOCUSGAINED_KEY, sizeof(FOCUSGAINED_KEY) - 1);
+    } else {
+      enqueue_input(input, FOCUSLOST_KEY, sizeof(FOCUSLOST_KEY) - 1);
+    }
+    return true;
+  }
+  return false;
+}
+
 static bool handle_bracketed_paste(TermInput *input)
 {
   if (rbuffer_size(input->read_stream.buffer) > 5 &&
@@ -314,7 +342,9 @@ static void read_cb(Stream *stream, RBuffer *buf, size_t c, void *data,
   }
 
   do {
-    if (handle_bracketed_paste(input) || handle_forced_escape(input)) {
+    if (handle_focus_event(input)
+        || handle_bracketed_paste(input)
+        || handle_forced_escape(input)) {
       continue;
     }
 

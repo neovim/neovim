@@ -197,13 +197,16 @@ Object window_get_var(Window window, String name, Error *err)
   return dict_get_value(win->w_vars, name, err);
 }
 
-/// Sets a window-scoped (w:) variable. 'nil' value deletes the variable.
+/// Sets a window-scoped (w:) variable
 ///
 /// @param window The window handle
 /// @param name The variable name
 /// @param value The variable value
 /// @param[out] err Details of an error that may have occurred
-/// @return The old value
+/// @return The old value or nil if there was no previous value.
+///
+///         @warning It may return nil if there was no previous value
+///                  or if previous value was `v:null`.
 Object window_set_var(Window window, String name, Object value, Error *err)
 {
   win_T *win = find_window_by_handle(window, err);
@@ -212,7 +215,27 @@ Object window_set_var(Window window, String name, Object value, Error *err)
     return (Object) OBJECT_INIT;
   }
 
-  return dict_set_value(win->w_vars, name, value, err);
+  return dict_set_value(win->w_vars, name, value, false, err);
+}
+
+/// Removes a window-scoped (w:) variable
+///
+/// @param window The window handle
+/// @param name The variable name
+/// @param[out] err Details of an error that may have occurred
+/// @return The old value or nil if there was no previous value.
+///
+///         @warning It may return nil if there was no previous value
+///                  or if previous value was `v:null`.
+Object window_del_var(Window window, String name, Error *err)
+{
+  win_T *win = find_window_by_handle(window, err);
+
+  if (!win) {
+    return (Object) OBJECT_INIT;
+  }
+
+  return dict_set_value(win->w_vars, name, NIL, true, err);
 }
 
 /// Gets a window option value

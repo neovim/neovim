@@ -4,6 +4,7 @@
 #include "nvim/window.h"
 #include "nvim/pos.h"  // for linenr_T
 #include "nvim/ex_cmds_defs.h"  // for exarg_T
+#include "nvim/screen.h"  // for StlClickRecord
 
 // Values for buflist_getfile()
 enum getf_values {

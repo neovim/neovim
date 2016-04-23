@@ -212,7 +212,7 @@ g8			Print the hex values of the bytes used in the
 			equivalent to: >
 
 			      :enew
-			      :call termopen([&sh, &shcf, '{cmd}'])
+			      :call termopen('{cmd}')
 			      :startinsert
 <
 			If no {cmd} is given, 'shellcmdflag' will not be sent
@@ -222,6 +222,10 @@ g8			Print the hex values of the bytes used in the
 			modified, but can be forced with "!".  See |termopen()|
 			and |nvim-terminal-emulator| for more information.
 
+			To switch to terminal mode automatically:
+>
+			      autocmd BufEnter term://* startinsert
+<
 							*:!cmd* *:!* *E34*
 :!{cmd}			Execute {cmd} with 'shell'. See also |:terminal|.
 
@@ -272,19 +276,15 @@ g8			Print the hex values of the bytes used in the
 :!!			Repeat last ":!{cmd}".
 
 							*:ve* *:version*
-:ve[rsion]		Print the version number of the editor.  If the
-			compiler used understands "__DATE__" the compilation
-			date is mentioned.  Otherwise a fixed release-date is
-			shown.
-			The following lines contain information about which
-			features were enabled when Vim was compiled.  When
-			there is a preceding '+', the feature is included,
-			when there is a '-' it is excluded.  To change this,
-			you have to edit feature.h and recompile Vim.
-			To check for this in an expression, see |has()|.
-			Here is an overview of the features.
-			The first column shows the smallest version in which
-			they are included:
+:ve[rsion]		Print the version number of the editor.  The following
+			lines contain information about which features were
+			enabled when Vim was compiled.  When there is a
+			preceding '+', the feature is included, when there is
+			a '-' it is excluded.  To change this, you have to
+			edit feature.h and recompile Vim.  To check for this
+			in an expression, see |has()|.  Here is an overview of
+			the features.  The first column shows the smallest
+			version in which they are included:
 			   T	tiny
 			   S	small
 			   N	normal
@@ -299,9 +299,6 @@ g8			Print the hex values of the bytes used in the
    *+acl*		|ACL| support included
 B  *+arabic*		|Arabic| language support
 N  *+autocmd*		|:autocmd|, automatic commands
-m  *+balloon_eval*	|balloon-eval| support. Included when compiling with
-			supported GUI (Motif, GTK, GUI) and either
-			Netbeans/Sun Workshop integration or |+eval| feature.
 N  *+browse*		|:browse| command
 N  *+byte_offset*	support for 'o' flag in 'statusline' option, "go"
 			and ":goto" commands.
@@ -321,7 +318,6 @@ N  *+dialog_gui*	Support for |:confirm| with GUI dialog.
 N  *+dialog_con*	Support for |:confirm| with console dialog.
 N  *+dialog_con_gui*	Support for |:confirm| with GUI and console dialog.
 N  *+digraphs*		|digraphs| *E196*
-   *+dnd*		Support for DnD into the "~ register |quote_~|.
 N  *+eval*		expression evaluation |eval.txt|
 N  *+ex_extra*		Vim's extra Ex commands: |:center|, |:left|,
 			|:normal|, |:retab| and |:right|
@@ -331,13 +327,7 @@ N  *+file_in_path*	|gf|, |CTRL-W_f| and |<cfile>|
 N  *+find_in_path*	include file searches: |[I|, |:isearch|,
 			|CTRL-W_CTRL-I|, |:checkpath|, etc.
 N  *+folding*		|folding|
-   *+footer*		|gui-footer|
-   *+fork*		Unix only: |fork| shell commands
 N  *+gettext*		message translations |multi-lang|
-   *+GUI_Athena*	Unix only: Athena |GUI|
-   *+GUI_neXtaw*	Unix only: neXtaw |GUI|
-   *+GUI_GTK*		Unix only: GTK+ |GUI|
-   *+GUI_Motif*		Unix only: Motif |GUI|
    *+iconv*		Compiled with the |iconv()| function
    *+iconv/dyn*		Likewise |iconv-dynamic| |/dyn|
 N  *+insert_expand*	|insert_expand| Insert mode completion
@@ -377,7 +367,7 @@ N  *+startuptime*	|--startuptime| argument
 N  *+statusline*	Options 'statusline', 'rulerformat' and special
 			formats of 'titlestring' and 'iconstring'
 N  *+syntax*		Syntax highlighting |syntax|
-   *+system()*		Unix only: opposite of |+fork|
+N  *+tablineat*		'tabline' option recognizing %@Func@ items.
 N  *+tag_binary*	binary searching in tags file |tag-binary-search|
 N  *+tag_old_static*	old method for static tags |tag-old-static|
 m  *+tag_any_white*	any white space allowed in tags file |tag-any-white|
@@ -578,16 +568,10 @@ which it was defined is reported.
 			     :5sleep	     "sleep for five seconds
 			     :sleep 100m     "sleep for a hundred milliseconds
 			     10gs	     "sleep for ten seconds
-<			Can be interrupted with CTRL-C (CTRL-Break on MS-DOS).
+<			Can be interrupted with CTRL-C (CTRL-Break on Windows).
 			"gs" stands for "goto sleep".
 			While sleeping the cursor is positioned in the text,
 			if at a visible position.
-
-
-							*g_CTRL-A*
-g CTRL-A		Only when Vim was compiled with MEM_PROFILING defined
-			(which is very rare): print memory usage statistics.
-			Only useful for debugging Vim.
 
 ==============================================================================
 2. Using Vim like less or more					*less*

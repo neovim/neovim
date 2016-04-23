@@ -21,6 +21,10 @@ option(USE_BUNDLED_LIBUV "Use the bundled libuv." ${USE_BUNDLED})
 option(USE_BUNDLED_MSGPACK "Use the bundled msgpack." ${USE_BUNDLED})
 option(USE_BUNDLED_LUAJIT "Use the bundled version of luajit." ${USE_BUNDLED})
 option(USE_BUNDLED_LUAROCKS "Use the bundled version of luarocks." ${USE_BUNDLED})
+option(USE_BUNDLED_LUV "Use the bundled version of luv." ${USE_BUNDLED})
+#XXX(tarruda): Lua is only used for debugging the functional test client, no
+# build it unless explicitly requested
+option(USE_BUNDLED_LUA "Use the bundled version of lua." OFF)
 
 option(USE_EXISTING_SRC_DIR "Skip download of deps sources in case of existing source directory." OFF)
 
@@ -55,7 +59,7 @@ endif()
 
 # Cross compiling: use these for dependencies built for the
 # HOST system, when not crosscompiling these should be the
-# same as DEPS_*. Except when targeting UNIX in which case
+# same as DEPS_*. Except when targeting Unix in which case
 # want all the dependencies to use the same compiler.
 if(CMAKE_CROSSCOMPILING AND NOT UNIX)
   set(HOSTDEPS_INSTALL_DIR "${CMAKE_BINARY_DIR}/host")
@@ -71,14 +75,17 @@ endif()
 
 include(ExternalProject)
 
-set(LIBUV_URL https://github.com/libuv/libuv/archive/v1.7.3.tar.gz)
-set(LIBUV_SHA256 db5d46318e18330c696d954747036e1be8e2346411d4f30236d7e2f499f0cfab)
+set(LIBUV_URL https://github.com/libuv/libuv/archive/v1.8.0.tar.gz)
+set(LIBUV_SHA256 906e1a5c673c95cb261adeacdb7308a65b4a8f7c9c50d85f3021364951fa9cde)
 
 set(MSGPACK_URL https://github.com/msgpack/msgpack-c/archive/cpp-1.0.0.tar.gz)
 set(MSGPACK_SHA256 afda64ca445203bb7092372b822bae8b2539fdcebbfc3f753f393628c2bcfe7d)
 
-set(LUAJIT_URL http://luajit.org/download/LuaJIT-2.0.4.tar.gz)
+set(LUAJIT_URL https://github.com/neovim/deps/raw/master/opt/LuaJIT-2.0.4.tar.gz)
 set(LUAJIT_SHA256 620fa4eb12375021bef6e4f237cbd2dd5d49e56beb414bee052c746beef1807d)
+
+set(LUA_URL https://github.com/lua/lua/archive/5.1.5.tar.gz)
+set(LUA_SHA256 1cd642c4c39778306a14e62ccddace5c7a4fb2257b0b06f43bc81cf305c7415f)
 
 set(LUAROCKS_URL https://github.com/keplerproject/luarocks/archive/5d8a16526573b36d5b22aa74866120c998466697.tar.gz)
 set(LUAROCKS_SHA256 cae709111c5701235770047dfd7169f66b82ae1c7b9b79207f9df0afb722bfd9)
@@ -89,11 +96,14 @@ set(UNIBILIUM_SHA256 623af1099515e673abfd3cae5f2fa808a09ca55dda1c65a7b5c9424eb30
 set(LIBTERMKEY_URL http://www.leonerd.org.uk/code/libtermkey/libtermkey-0.18.tar.gz)
 set(LIBTERMKEY_SHA256 239746de41c845af52bb3c14055558f743292dd6c24ac26c2d6567a5a6093926)
 
-set(LIBVTERM_URL https://github.com/neovim/libvterm/archive/1b745d29d45623aa8d22a7b9288c7b0e331c7088.tar.gz)
-set(LIBVTERM_SHA256 3fc75908256c0d158d6c2a32d39f34e86bfd26364f5404b7d9c03bb70cdc3611)
+set(LIBVTERM_URL https://github.com/neovim/libvterm/archive/a9c7c6fd20fa35e0ad3e0e98901ca12dfca9c25c.tar.gz)
+set(LIBVTERM_SHA256 1a4272be91d9614dc183a503786df83b6584e4afaab7feaaa5409f841afbd796)
 
 set(JEMALLOC_URL https://github.com/jemalloc/jemalloc/releases/download/4.0.2/jemalloc-4.0.2.tar.bz2)
 set(JEMALLOC_SHA256 0d8a9c8a98adb6983e0ccb521d45d9db1656ef3e71d0b14fb333f2c8138f4611)
+            
+set(LUV_URL https://github.com/luvit/luv/archive/146f1ce4c08c3b67f604c9ee1e124b1cf5c15cf3.tar.gz)
+set(LUV_SHA256 3d537f8eb9fa5adb146a083eae22af886aee324ec268e2aa0fa75f2f1c52ca7a)
 
 if(USE_BUNDLED_UNIBILIUM)
   include(BuildUnibilium)
@@ -119,12 +129,20 @@ if(USE_BUNDLED_LUAJIT)
   include(BuildLuajit)
 endif()
 
+if(USE_BUNDLED_LUA AND NOT CMAKE_CROSSCOMPILING)
+  include(BuildLua)
+endif()
+
 if(USE_BUNDLED_LUAROCKS)
   include(BuildLuarocks)
 endif()
 
 if(USE_BUNDLED_JEMALLOC)
   include(BuildJeMalloc)
+endif()
+
+if(USE_BUNDLED_LUV)
+  include(BuildLuv)
 endif()
 
 add_custom_target(clean-shared-libraries

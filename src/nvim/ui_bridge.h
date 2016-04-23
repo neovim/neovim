@@ -22,6 +22,10 @@ struct ui_bridge_data {
   // the call returns. This flag is used as a condition for the main
   // thread to continue.
   bool ready;
+  // When a stop request is sent from the main thread, it must wait until the UI
+  // thread finishes handling all events. This flag is set by the UI thread as a
+  // signal that it will no longer send messages to the main thread.
+  bool stopped;
 };
 
 #define CONTINUE(b)                                                    \

@@ -1,4 +1,4 @@
-*quickref.txt*  For Vim version 7.4.  Last change: 2014 Nov 19
+*quickref.txt*  For Vim version 7.4.  Last change: 2015 Jul 21
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -600,7 +600,6 @@ Short explanation of each option:		*option-list*
 'allowrevins'	  'ari'     allow CTRL-_ in Insert and Command-line mode
 'altkeymap'	  'akm'     for default second language (Farsi/Hebrew)
 'ambiwidth'	  'ambw'    what to do with Unicode chars of ambiguous width
-'antialias'	  'anti'    Mac OS X: use smooth, antialiased fonts
 'autochdir'	  'acd'     change directory to the file in the current window
 'arabic'	  'arab'    for Arabic as a default second language
 'arabicshape'	  'arshape' do shaping for Arabic characters
@@ -618,6 +617,7 @@ Short explanation of each option:		*option-list*
 'balloondelay'	  'bdlay'   delay in mS before a balloon may pop up
 'ballooneval'	  'beval'   switch on balloon evaluation
 'balloonexpr'	  'bexpr'   expression to show in balloon
+'belloff'	  'bo'	    do not ring the bell for these reasons
 'binary'	  'bin'     read/write/edit file in binary mode
 'bomb'			    prepend a Byte Order Mark to the file
 'breakat'	  'brk'     characters that may cause a line break
@@ -689,6 +689,7 @@ Short explanation of each option:		*option-list*
 'fileignorecase'  'fic'     ignore case when using file names
 'filetype'	  'ft'	    type of file, used for autocommands
 'fillchars'	  'fcs'     characters to use for displaying special items
+'fixendofline'	  'fixeol'  make sure last line in file has <EOL>
 'fkmap'		  'fk'	    Farsi keyboard mapping
 'foldclose'	  'fcl'     close a fold when the cursor leaves it
 'foldcolumn'	  'fdc'     width of the column used to indicate folds
@@ -703,10 +704,10 @@ Short explanation of each option:		*option-list*
 'foldnestmax'	  'fdn'     maximum fold depth
 'foldopen'	  'fdo'     for which commands a fold will be opened
 'foldtext'	  'fdt'     expression used to display for a closed fold
+'formatexpr'	  'fex'     expression used with "gq" command
 'formatlistpat'   'flp'     pattern used to recognize a list header
 'formatoptions'   'fo'	    how automatic formatting is to be done
 'formatprg'	  'fp'	    name of external program used with "gq" command
-'formatexpr'	  'fex'     expression used with "gq" command
 'fsync'		  'fs'	    whether to invoke fsync() after file write
 'gdefault'	  'gd'	    the ":substitute" flag 'g' is default on
 'grepformat'	  'gfm'     format of 'grepprg' output
@@ -731,13 +732,10 @@ Short explanation of each option:		*option-list*
 'icon'			    let Vim set the text of the window icon
 'iconstring'		    string to use for the Vim icon text
 'ignorecase'	  'ic'	    ignore case in search patterns
-'imactivatekey'   'imak'    key that activates the X input method
-'imactivatefunc'  'imaf'    function to enable/disable the X input method
 'imcmdline'	  'imc'     use IM when starting to edit a command line
 'imdisable'	  'imd'     do not use the IM in any mode
 'iminsert'	  'imi'     use :lmap or IM in Insert mode
 'imsearch'	  'ims'     use :lmap or IM when typing a search pattern
-'imstatusfunc'    'imsf'    function to obtain X input method status
 'include'	  'inc'     pattern to be used to find an include file
 'includeexpr'	  'inex'    expression used to process an include line
 'incsearch'	  'is'	    highlight match while typing search pattern
@@ -821,7 +819,6 @@ Short explanation of each option:		*option-list*
 'relativenumber'  'rnu'	    show relative line number in front of each line
 'remap'			    allow mappings to work recursively
 'report'		    threshold for reporting nr. of lines changed
-'restorescreen'   'rs'	    Win32: restore screen when exiting
 'revins'	  'ri'	    inserting characters will work backwards
 'rightleft'	  'rl'	    window is right-to-left oriented
 'rightleftcmd'	  'rlc'     commands for which editing works right-to-left
@@ -875,13 +872,12 @@ Short explanation of each option:		*option-list*
 'suffixes'	  'su'	    suffixes that are ignored with multiple match
 'suffixesadd'	  'sua'     suffixes added when searching for a file
 'swapfile'	  'swf'     whether to use a swapfile for a buffer
-'swapsync'	  'sws'     how to sync the swap file
 'switchbuf'	  'swb'     sets behavior when switching to another buffer
 'synmaxcol'	  'smc'     maximum column to find syntax items
 'syntax'	  'syn'     syntax to be loaded for current buffer
-'tabstop'	  'ts'	    number of spaces that <Tab> in file uses
 'tabline'	  'tal'     custom format for the console tab pages line
 'tabpagemax'	  'tpm'     maximum number of tab pages for |-p| and "tab all"
+'tabstop'	  'ts'	    number of spaces that <Tab> in file uses
 'tagbsearch'	  'tbs'     use binary searching in tags files
 'taglength'	  'tl'	    number of significant characters for a tag
 'tagrelative'	  'tr'	    file names in tag file are relative
@@ -986,11 +982,9 @@ Short explanation of each option:		*option-list*
 |g_CTRL-G|	   g CTRL-G	show cursor column, line, and character
 				   position
 |CTRL-C|	   CTRL-C	during searches: Interrupt the search
-|dos-CTRL-Break|   CTRL-Break	MS-DOS: during searches: Interrupt the search
+|dos-CTRL-Break|   CTRL-Break	Windows: during searches: Interrupt the search
 |<Del>|		   <Del>	while entering a count: delete last character
 |:version|	:ve[rsion]	show version information
-|:mode|		:mode N		MS-DOS: set screen mode to N (number, C80,
-				   C4350, etc.)
 |:normal|	:norm[al][!] {commands}
 				execute Normal mode commands
 |Q|		   Q		switch to "Ex" mode

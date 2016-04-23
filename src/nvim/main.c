@@ -1,14 +1,5 @@
-/*
- * VIM - Vi IMproved	by Bram Moolenaar
- *
- * Do ":help uganda"  in Vim to read copying and usage conditions.
- * Do ":help credits" in Vim to see a list of people who contributed.
- * See README.txt for an overview of the Vim source code.
- */
-
 #define EXTERN
 #include <assert.h>
-#include <errno.h>
 #include <stdint.h>
 #include <string.h>
 #include <stdbool.h>
@@ -228,9 +219,10 @@ int main(int argc, char **argv)
 {
   argv0 = (char *)path_tail((char_u *)argv[0]);
 
-  char_u      *fname = NULL;            /* file name from command line */
-  mparm_T params;                       /* various parameters passed between
-                                         * main() and other functions. */
+  char_u *fname = NULL;   // file name from command line
+  mparm_T params;         // various parameters passed between
+                          // main() and other functions.
+  char_u *cwd = NULL;     // current workding dir on startup
   time_init();
 
   /* Many variables are in "params" so that we can pass them to invoked
@@ -246,8 +238,8 @@ int main(int argc, char **argv)
   check_and_set_isatty(&params);
 
   // Get the name with which Nvim was invoked, with and without path.
-  set_vim_var_string(VV_PROGPATH, (char_u *)argv[0], -1);
-  set_vim_var_string(VV_PROGNAME, path_tail((char_u *)argv[0]), -1);
+  set_vim_var_string(VV_PROGPATH, argv[0], -1);
+  set_vim_var_string(VV_PROGNAME, (char *) path_tail((char_u *) argv[0]), -1);
 
   event_init();
   /*
@@ -325,20 +317,30 @@ int main(int argc, char **argv)
   }
 
   // open terminals when opening files that start with term://
-  do_cmdline_cmd("autocmd BufReadCmd term://* "
+#define PROTO "term://"
+  do_cmdline_cmd("autocmd BufReadCmd " PROTO "* nested "
                  ":call termopen( "
                  // Capture the command string
                  "matchstr(expand(\"<amatch>\"), "
-                 "'\\c\\mterm://\\%(.\\{-}//\\%(\\d\\+:\\)\\?\\)\\?\\zs.*'), "
+                 "'\\c\\m" PROTO "\\%(.\\{-}//\\%(\\d\\+:\\)\\?\\)\\?\\zs.*'), "
                  // capture the working directory
                  "{'cwd': get(matchlist(expand(\"<amatch>\"), "
-                 "'\\c\\mterm://\\(.\\{-}\\)//'), 1, '')})");
+                 "'\\c\\m" PROTO "\\(.\\{-}\\)//'), 1, '')})");
+#undef PROTO
 
   /* Execute --cmd arguments. */
   exe_pre_commands(&params);
 
   /* Source startup scripts. */
   source_startup_scripts(&params);
+
+  // If using the runtime (-u is not NONE), enable syntax & filetype plugins.
+  if (params.use_vimrc == NULL || strcmp(params.use_vimrc, "NONE") != 0) {
+    // Does ":filetype plugin indent on".
+    filetype_maybe_enable();
+    // Sources syntax/syntax.vim, which calls `:filetype on`.
+    syn_maybe_on();
+  }
 
   /*
    * Read all the plugin files.
@@ -470,11 +472,10 @@ int main(int argc, char **argv)
     TIME_MSG("jump to first error");
   }
 
-  /*
-   * If opened more than one window, start editing files in the other
-   * windows.
-   */
-  edit_buffers(&params);
+  // If opened more than one window, start editing files in the other
+  // windows.
+  edit_buffers(&params, cwd);
+  xfree(cwd);
 
   if (params.diff_mode) {
     /* set options in each window for "nvim -d". */
@@ -658,6 +659,9 @@ static void init_locale(void)
   setlocale(LC_NUMERIC, "C");
 # endif
 
+# ifdef LOCALE_INSTALL_DIR    // gnu/linux standard: $prefix/share/locale
+  bindtextdomain(PROJECT_NAME, LOCALE_INSTALL_DIR);
+# else                        // old vim style: $runtime/lang
   {
     char_u  *p;
 
@@ -666,11 +670,12 @@ static void init_locale(void)
     p = (char_u *)vim_getenv("VIMRUNTIME");
     if (p != NULL && *p != NUL) {
       vim_snprintf((char *)NameBuff, MAXPATHL, "%s/lang", p);
-      bindtextdomain(VIMPACKAGE, (char *)NameBuff);
+      bindtextdomain(PROJECT_NAME, (char *)NameBuff);
     }
     xfree(p);
-    textdomain(VIMPACKAGE);
   }
+# endif
+  textdomain(PROJECT_NAME);
   TIME_MSG("locale set");
 }
 #endif
@@ -748,6 +753,7 @@ static void command_line_scan(mparm_T *parmp)
               putchar(b->data[i]);
             }
 
+            msgpack_packer_free(p);
             mch_exit(0);
           } else if (STRICMP(argv[0] + argv_idx, "headless") == 0) {
             parmp->headless = true;
@@ -933,9 +939,6 @@ static void command_line_scan(mparm_T *parmp)
             break;
           }
           want_argument = TRUE;
-          break;
-
-        case 'X':                 /* "-X"  don't connect to X server */
           break;
 
         case 'Z':                 /* "-Z"  restricted mode */
@@ -1138,10 +1141,11 @@ scripterror:
   /* If there is a "+123" or "-c" command, set v:swapcommand to the first
    * one. */
   if (parmp->n_commands > 0) {
-    p = xmalloc(STRLEN(parmp->commands[0]) + 3);
-    sprintf((char *)p, ":%s\r", parmp->commands[0]);
-    set_vim_var_string(VV_SWAPCOMMAND, p, -1);
-    xfree(p);
+    const size_t swcmd_len = STRLEN(parmp->commands[0]) + 3;
+    char *const swcmd = xmalloc(swcmd_len);
+    snprintf(swcmd, swcmd_len, ":%s\r", parmp->commands[0]);
+    set_vim_var_string(VV_SWAPCOMMAND, swcmd, -1);
+    xfree(swcmd);
   }
   TIME_MSG("parsing arguments");
 }
@@ -1194,12 +1198,19 @@ static char_u *get_fname(mparm_T *parmp)
    * Expand wildcards in file names.
    */
   if (!parmp->literal) {
-    /* Temporarily add '(' and ')' to 'isfname'.  These are valid
-     * filename characters but are excluded from 'isfname' to make
-     * "gf" work on a file name in parenthesis (e.g.: see vim.h). */
+    cwd = xmalloc(MAXPATHL);
+    if (cwd != NULL) {
+      os_dirname(cwd, MAXPATHL);
+    }
+    // Temporarily add '(' and ')' to 'isfname'.  These are valid
+    // filename characters but are excluded from 'isfname' to make
+    // "gf" work on a file name in parenthesis (e.g.: see vim.h).
     do_cmdline_cmd(":set isf+=(,)");
     alist_expand(NULL, 0);
     do_cmdline_cmd(":set isf&");
+    if (cwd != NULL) {
+      os_chdir((char *)cwd);
+    }
   }
 #endif
   return alist_name(&GARGLIST[0]);
@@ -1429,11 +1440,9 @@ static void create_windows(mparm_T *parmp)
   }
 }
 
-/*
- * If opened more than one window, start editing files in the other
- * windows.  make_windows() has already opened the windows.
- */
-static void edit_buffers(mparm_T *parmp)
+/// If opened more than one window, start editing files in the other
+/// windows. make_windows() has already opened the windows.
+static void edit_buffers(mparm_T *parmp, char_u *cwd)
 {
   int arg_idx;                          /* index in argument list */
   int i;
@@ -1454,7 +1463,10 @@ static void edit_buffers(mparm_T *parmp)
 
   arg_idx = 1;
   for (i = 1; i < parmp->window_count; ++i) {
-    /* When w_arg_idx is -1 remove the window (see create_windows()). */
+    if (cwd != NULL) {
+      os_chdir((char *)cwd);
+    }
+    // When w_arg_idx is -1 remove the window (see create_windows()).
     if (curwin->w_arg_idx == -1) {
       ++arg_idx;
       win_close(curwin, TRUE);
@@ -1601,10 +1613,12 @@ static bool do_user_initialization(void)
 {
   bool do_exrc = p_exrc;
   if (process_env("VIMINIT", true) == OK) {
+    do_exrc = p_exrc;
     return do_exrc;
   }
   char_u *user_vimrc = (char_u *)stdpaths_user_conf_subpath("init.vim");
   if (do_source(user_vimrc, true, DOSO_VIMRC) != FAIL) {
+    do_exrc = p_exrc;
     if (do_exrc) {
       do_exrc = (path_full_compare((char_u *)VIMRC_FILE, user_vimrc, false)
                  != kEqualFiles);
@@ -1630,6 +1644,7 @@ static bool do_user_initialization(void)
       vimrc[dir_len] = PATHSEP;
       memmove(vimrc + dir_len + 1, path_tail, sizeof(path_tail));
       if (do_source((char_u *) vimrc, true, DOSO_VIMRC) != FAIL) {
+        do_exrc = p_exrc;
         if (do_exrc) {
           do_exrc = (path_full_compare((char_u *)VIMRC_FILE, (char_u *)vimrc,
                                       false) != kEqualFiles);
@@ -1643,6 +1658,7 @@ static bool do_user_initialization(void)
     xfree(config_dirs);
   }
   if (process_env("EXINIT", false) == OK) {
+    do_exrc = p_exrc;
     return do_exrc;
   }
   return do_exrc;
@@ -1829,7 +1845,7 @@ static void usage(void)
   mch_msg(_("  -n                    No swap file, use memory only\n"));
   mch_msg(_("  -r, -L                List swap files and exit\n"));
   mch_msg(_("  -r <file>             Recover crashed session\n"));
-  mch_msg(_("  -u <nvimrc>           Use <nvimrc> instead of the default\n"));
+  mch_msg(_("  -u <vimrc>            Use <vimrc> instead of the default\n"));
   mch_msg(_("  -i <shada>            Use <shada> instead of the default\n"));
   mch_msg(_("  --noplugin            Don't load plugin scripts\n"));
   mch_msg(_("  -o[N]                 Open N windows (default: one for each file)\n"));
@@ -1838,7 +1854,7 @@ static void usage(void)
   mch_msg(_("  +                     Start at end of file\n"));
   mch_msg(_("  +<linenum>            Start at line <linenum>\n"));
   mch_msg(_("  +/<pattern>           Start at first occurrence of <pattern>\n"));
-  mch_msg(_("  --cmd <command>       Execute <command> before loading any nvimrc\n"));
+  mch_msg(_("  --cmd <command>       Execute <command> before loading any vimrc\n"));
   mch_msg(_("  -c <command>          Execute <command> after loading the first file\n"));
   mch_msg(_("  -S <session>          Source <session> after loading the first file\n"));
   mch_msg(_("  -s <scriptin>         Read Normal mode commands from <scriptin>\n"));
@@ -1864,5 +1880,3 @@ static void check_swap_exists_action(void)
     getout(1);
   handle_swap_exists(NULL);
 }
-
-

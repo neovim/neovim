@@ -1,8 +1,9 @@
 " Vim syntax file
 " Language:	Asterisk config file
-" Maintainer:	brc007 
+" Maintainer: 	Jean Aunis <jean.aunis@yahoo.fr>
+" Previous Maintainer:	brc007
 " Updated for 1.2 by Tilghman Lesher (Corydon76)
-" Last Change:	2006 Mar 20 
+" Last Change:	2015 Feb 27
 " version 0.4
 "
 if version < 600
@@ -17,18 +18,19 @@ syn sync fromstart
 syn keyword     asteriskTodo    TODO contained
 syn match       asteriskComment         ";.*" contains=asteriskTodo
 syn match       asteriskContext         "\[.\{-}\]"
-syn match       asteriskExten           "^\s*exten\s*=>\?\s*[^,]\+" contains=asteriskPattern
+syn match       asteriskExten           "^\s*\zsexten\s*=>\?\s*[^,]\+\ze," contains=asteriskPattern nextgroup=asteriskPriority
+syn match       asteriskExten           "^\s*\zssame\s*=>\?\s*\ze" nextgroup=asteriskPriority
 syn match       asteriskExten           "^\s*\(register\|channel\|ignorepat\|include\|\(no\)\?load\)\s*=>\?"
 syn match       asteriskPattern         "_\(\[[[:alnum:]#*\-]\+\]\|[[:alnum:]#*]\)*\.\?" contained
 syn match       asteriskPattern         "[^A-Za-z0-9,]\zs[[:alnum:]#*]\+\ze" contained
 syn match       asteriskApp             ",\zs[a-zA-Z]\+\ze$"
 syn match       asteriskApp             ",\zs[a-zA-Z]\+\ze("
 " Digits plus oldlabel (newlabel)
-syn match       asteriskPriority        ",\zs[[:digit:]]\+\(+[[:alpha:]][[:alnum:]_]*\)\?\(([[:alpha:]][[:alnum:]_]*)\)\?\ze," contains=asteriskLabel
+syn match       asteriskPriority        "\zs[[:digit:]]\+\(+[[:alpha:]][[:alnum:]_]*\)\?\(([[:alpha:]][[:alnum:]_]*)\)\?\ze," contains=asteriskLabel
 " oldlabel plus digits (newlabel)
-syn match       asteriskPriority        ",\zs[[:alpha:]][[:alnum:]_]*+[[:digit:]]\+\(([[:alpha:]][[:alnum:]_]*)\)\?\ze," contains=asteriskLabel
+syn match       asteriskPriority        "\zs[[:alpha:]][[:alnum:]_]*+[[:digit:]]\+\(([[:alpha:]][[:alnum:]_]*)\)\?\ze," contains=asteriskLabel
 " s or n plus digits (newlabel)
-syn match       asteriskPriority        ",\zs[sn]\(+[[:digit:]]\+\)\?\(([[:alpha:]][[:alnum:]_]*)\)\?\ze," contains=asteriskLabel
+syn match       asteriskPriority        "\zs[sn]\(+[[:digit:]]\+\)\?\(([[:alpha:]][[:alnum:]_]*)\)\?\ze," contains=asteriskLabel
 syn match       asteriskLabel           "(\zs[[:alpha:]][[:alnum:]]*\ze)" contained
 syn match       asteriskError           "^\s*#\s*[[:alnum:]]*"
 syn match       asteriskInclude         "^\s*#\s*\(include\|exec\)\s.*"

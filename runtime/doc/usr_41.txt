@@ -1,4 +1,4 @@
-*usr_41.txt*	For Vim version 7.4.  Last change: 2014 Aug 16
+*usr_41.txt*	For Vim version 7.4.  Last change: 2015 Nov 30
 
 		     VIM USER MANUAL - by Bram Moolenaar
 
@@ -888,6 +888,11 @@ Mappings:				    *mapping-functions*
 	maparg()		get rhs of a mapping
 	wildmenumode()		check if the wildmode is active
 
+Testing:				    *test-functions*
+	assert_equal()       	assert that two expressions values are equal
+	assert_false()		assert that an expression is false
+	assert_true()		assert that an expression is true
+
 Various:					*various-functions*
 	mode()			get current editing mode
 	visualmode()		last visual mode used
@@ -1494,8 +1499,8 @@ Here is a summary of items that apply to Vim scripts.  They are also mentioned
 elsewhere, but form a nice checklist.
 
 The end-of-line character depends on the system.  For Unix a single <NL>
-character is used.  For MS-DOS, Windows and the like, <CR><LF> is used.
-This is important when using mappings that end in a <CR>.  See |:source_crnl|.
+character is used.  For Windows <CR><LF> is used.  This is important when
+using mappings that end in a <CR>.  See |:source_crnl|.
 
 
 WHITE SPACE
@@ -2464,8 +2469,6 @@ utility is recommended.
 
 For utmost portability use Vim itself to pack scripts together.  This can be
 done with the Vimball utility.  See |vimball|.
-
-It's good if you add a line to allow automatic updating.  See |glvs-plugins|.
 
 ==============================================================================
 

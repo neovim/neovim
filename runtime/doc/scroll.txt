@@ -245,26 +245,6 @@ dragging the scrollbar of the current window.  How many lines are scrolled
 depends on your mouse driver.  If the scroll action causes input focus
 problems, see |intellimouse-wheel-problems|.
 
-For the X11 GUIs (Motif, Athena and GTK) scrolling the wheel generates key
-presses <ScrollWheelUp>, <ScrollWheelDown>, <ScrollWheelLeft> and
-<ScrollWheelRight>.  For example, if you push the scroll wheel upwards a
-<ScrollWheelUp> key press is generated causing the window to scroll upwards
-(while the text is actually moving downwards).  The default action for these
-keys are:
-    <ScrollWheelUp>	    scroll three lines up	*<ScrollWheelUp>*
-    <S-ScrollWheelUp>	    scroll one page up		*<S-ScrollWheelUp>*
-    <C-ScrollWheelUp>	    scroll one page up		*<C-ScrollWheelUp>*
-    <ScrollWheelDown>	    scroll three lines down	*<ScrollWheelDown>*
-    <S-ScrollWheelDown>	    scroll one page down	*<S-ScrollWheelDown>*
-    <C-ScrollWheelDown>	    scroll one page down	*<C-ScrollWheelDown>*
-    <ScrollWheelLeft>	    scroll six columns left	*<ScrollWheelLeft>*
-    <S-ScrollWheelLeft>	    scroll one page left	*<S-ScrollWheelLeft>*
-    <C-ScrollWheelLeft>	    scroll one page left	*<C-ScrollWheelLeft>*
-    <ScrollWheelRight>	    scroll six columns right	*<ScrollWheelRight>*
-    <S-ScrollWheelRight>    scroll one page right	*<S-ScrollWheelRight>*
-    <C-ScrollWheelRight>    scroll one page right	*<C-ScrollWheelRight>*
-This should work in all modes, except when editing the command line.
-
 Note that horizontal scrolling only works if 'nowrap' is set.  Also, unless
 the "h" flag in 'guioptions' is set, the cursor moves to the longest visible
 line if the cursor line is about to be scrolled off the screen (similarly to
@@ -280,13 +260,6 @@ You can also use Alt and Ctrl modifiers.
 
 This only works when Vim gets the scroll wheel events, of course.  You can
 check if this works with the "xev" program.
-
-When using XFree86, the /etc/XF86Config file should have the correct entry for
-your mouse.  For FreeBSD, this entry works for a Logitech scrollmouse: >
-    Protocol     "MouseMan"
-    Device       "/dev/psm0"
-    ZAxisMapping 4 5
-See the XFree86 documentation for information.
 
 						*<MouseDown>* *<MouseUp>*
 The keys <MouseDown> and <MouseUp> have been deprecated.  Use <ScrollWheelUp>

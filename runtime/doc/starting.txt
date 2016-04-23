@@ -28,8 +28,6 @@ More generally, Vim is started with:
 Option arguments and file name arguments can be mixed, and any number of them
 can be given.  However, watch out for options that take an argument.
 
-For compatibility with various Vi versions, see	|cmdline-arguments|.
-
 Exactly one out of the following five items may be used to choose how to
 start editing:
 
@@ -219,7 +217,7 @@ argument.
 			:set      to display option values.
 		When 'verbose' is non-zero messages are printed (for
 		debugging, to stderr).
-		'term' and $TERM are not used.
+		$TERM is not used.
 		If Vim appears to be stuck try typing "qa!<Enter>".  You don't
 		get a prompt thus you can't see Vim is waiting for you to type
 		something.
@@ -317,9 +315,10 @@ argument.
 		When {vimrc} is equal to "NONE" (all uppercase), all
 		initializations from files and environment variables are
 		skipped, including reading the |ginit.vim| file when the GUI
-		starts.  Loading plugins is also skipped.
+		starts.  Plugins and syntax highlighting are also skipped.
 		When {vimrc} is equal to "NORC" (all uppercase), this has the
-		same effect as "NONE", but loading plugins is not skipped.
+		same effect as "NONE", but plugins and syntax highlighting are
+		not skipped.
 
 							*-i*
 -i {shada}	The file {shada} is used instead of the default ShaDa
@@ -356,13 +355,10 @@ argument.
 At startup, Vim checks environment variables and files and sets values
 accordingly.  Vim proceeds in this order:
 
-1. Set the 'shell' and 'term' option		*SHELL* *COMSPEC* *TERM*
+1. Set the 'shell' option		*SHELL* *COMSPEC* *TERM*
 	The environment variable SHELL, if it exists, is used to set the
-	'shell' option.  On MS-DOS and Win32, the COMSPEC variable is used
+	'shell' option.  On Windows, the COMSPEC variable is used
 	if SHELL is not set.
-	The environment variable TERM, if it exists, is used to set the 'term'
-	option.  However, 'term' will change later when starting the GUI (step
-	8 below).
 
 2. Process the arguments
 	The options and file names from the command that start Vim are
@@ -384,6 +380,8 @@ accordingly.  Vim proceeds in this order:
 	Places for your personal initializations:
 		Unix		$XDG_CONFIG_HOME/nvim/init.vim
 				(default for $XDG_CONFIG_HOME is ~/.config)
+		Windows		$XDG_CONFIG_HOME/nvim/init.vim
+				(default for $XDG_CONFIG_HOME is ~/AppData/Local)
 
 	The files are searched in the order specified above and only the first
 	one that is found is read.
@@ -396,16 +394,16 @@ accordingly.  Vim proceeds in this order:
 	All following initializations until 4. are skipped. $MYVIMRC is not
 	set.
 	"vim -u NORC" can be used to skip these initializations without
-	reading a file.  "vim -u NONE" also skips loading plugins.  |-u|
+	reading a file.  "vim -u NONE" also skips plugins and syntax
+	highlighting.  |-u|
 
 	If Vim was started in Ex mode with the "-s" argument, all following
 	initializations until 4. are skipped.  Only the "-u" option is
 	interpreted.
 							*system-vimrc*
-     a. For Unix, MS-DOS, MS-Windows, and Macintosh, the system vimrc file is
-	read for initializations.  The path of this file is shown with the
+     a. For Unix, MS-Windows, and Macintosh, the system vimrc file is read for
+	initializations.  The path of this file is shown with the
 	":version" command.  Mostly it's "$VIM/vimrc".
-	For the Macintosh the $VIMRUNTIME/macmap.vim is read.
 
 						*VIMINIT* *EXINIT* *$MYVIMRC*
      b. Four places are searched for initializations.  The first that exists
@@ -430,7 +428,22 @@ accordingly.  Vim proceeds in this order:
 	-  The file ".exrc"  (for Unix)
 		    "_exrc"  (for Win32)
 
-4. Load the plugin scripts.					*load-plugins*
+4. Enable filetype and indent plugins.
+	This does the same as the commands: >
+		:runtime! filetype.vim
+		:runtime! ftplugin.vim
+		:runtime! indent.vim
+<	This step is skipped if ":filetype ..." was called before now or if
+	the "-u NONE" command line argument was given.
+
+5. Enable syntax highlighting.
+	This does the same as the command: >
+		:runtime! syntax/syntax.vim
+<	Note: This enables filetype detection even if ":filetype off" was
+	called before now.
+	This step is skipped if the "-u NONE" command line argument was given.
+
+6. Load the plugin scripts.					*load-plugins*
 	This does the same as the command: >
 		:runtime! plugin/**/*.vim
 <	The result is that all directories in the 'runtimepath' option will be
@@ -446,31 +459,30 @@ accordingly.  Vim proceeds in this order:
 	commands from the command line have not been executed yet.  You can
 	use "--cmd 'set noloadplugins'" |--cmd|.
 
-5. Set 'shellpipe' and 'shellredir'
+7. Set 'shellpipe' and 'shellredir'
 	The 'shellpipe' and 'shellredir' options are set according to the
 	value of the 'shell' option, unless they have been set before.
 	This means that Vim will figure out the values of 'shellpipe' and
 	'shellredir' for you, unless you have set them yourself.
 
-6. Set 'updatecount' to zero, if "-n" command argument used
+8. Set 'updatecount' to zero, if "-n" command argument used
 
-7. Set binary options
+9. Set binary options
 	If the "-b" flag was given to Vim, the options for binary editing will
 	be set now.  See |-b|.
 
-8. Perform GUI initializations
+10. Perform GUI initializations
 	Only when starting "gvim", the GUI initializations will be done.  See
 	|gui-init|.
 
-9. Read the ShaDa file
-	If the 'shada' option is not empty, the ShaDa file is read.  See
-	|shada-file|.
+11. Read the ShaDa file
+	See |shada-file|.
 
-10. Read the quickfix file
+12. Read the quickfix file
 	If the "-q" flag was given to Vim, the quickfix file is read.  If this
 	fails, Vim exits.
 
-11. Open all windows
+13. Open all windows
 	When the |-o| flag was given, windows will be opened (but not
 	displayed yet).
 	When the |-p| flag was given, tab pages will be created (but not
@@ -479,7 +491,7 @@ accordingly.  Vim proceeds in this order:
 	If the "-q" flag was given to Vim, the first error is jumped to.
 	Buffers for all windows will be loaded.
 
-12. Execute startup commands
+14. Execute startup commands
 	If a "-t" flag was given to Vim, the tag is jumped to.
 	The commands given with the |-c| and |+cmd| arguments are executed.
 	The starting flag is reset, has("vim_starting") will now return zero.
@@ -497,7 +509,7 @@ sessions.  Put it in a place so that it will be found by 3b:
 Local setup:
 Put all commands that you need for editing a specific directory only into a
 vimrc file and place it in that directory under the name ".nvimrc" ("_nvimrc"
-for MS-DOS and Win32).  NOTE: To make Vim look for these special files you
+for Windows).  NOTE: To make Vim look for these special files you
 have to turn on the option 'exrc'.  See |trojan-horse| too.
 
 System setup:
@@ -519,10 +531,9 @@ interfere with Vi, then use the variable VIMINIT and the file init.vim
 instead.
 
 MS-DOS line separators:
-On MS-DOS-like systems (MS-DOS itself and Win32), Vim assumes that all
-the vimrc files have <CR> <NL> pairs as line separators.  This will give
-problems if you have a file with only <NL>s and have a line like
-":map xx yy^M".  The trailing ^M will be ignored.
+On Windows systems Vim assumes that all the vimrc files have <CR> <NL> pairs
+as line separators.  This will give problems if you have a file with only
+<NL>s and have a line like ":map xx yy^M".  The trailing ^M will be ignored.
 
 The $MYVIMRC or $MYGVIMRC file will be set to the first found vimrc and/or
 gvimrc file.
@@ -709,8 +720,8 @@ vimrc file.
 These commands will write ":map" and ":set" commands to a file, in such a way
 that when these commands are executed, the current key mappings and options
 will be set to the same values.  The options 'columns', 'endofline',
-'fileformat', 'lines', 'modified', 'scroll', and 'term' are not included,
-because these are terminal or file dependent.
+'fileformat', 'lines', 'modified', and 'scroll' are not included, because 
+these are terminal or file dependent.
 Note that the options 'binary', 'paste' and 'readonly' are included, this
 might not always be what you want.
 
@@ -950,7 +961,7 @@ about to abandon with ":bdel", use ":wsh".  The '[' and ']' marks are not
 stored, but the '"' mark is.  The '"' mark is very useful for jumping to the
 cursor position when the file was last exited.  No marks are saved for files
 that start with any string given with the "r" flag in 'shada'.  This can be
-used to avoid saving marks for files on removable media (for MS-DOS you would
+used to avoid saving marks for files on removable media (for Windows you would
 use "ra:,rb:".
 The |v:oldfiles| variable is filled with the file names that the ShaDa file
 has marks for.
@@ -1163,13 +1174,14 @@ running) you have additional options:
 						   *:wv* *:wviminfo*
 :wv[iminfo][!] [file]	Deprecated alias to |:wshada| command.
 
-						*:ol* *:oldfiles*
-:ol[dfiles]		List the files that have marks stored in the ShaDa
+						*:o* *:ol* *:oldfiles*
+:o[ldfiles][!]		List the files that have marks stored in the ShaDa
 			file.  This list is read on startup and only changes
 			afterwards with ":rshada!".  Also see |v:oldfiles|.
 			The number can be used with |c_#<|.
+			Use ! to get a file selection prompt.
 
-:bro[wse] ol[dfiles][!]
+:bro[wse] o[ldfiles][!]
 			List file names as with |:oldfiles|, and then prompt
 			for a number.  When the number is valid that file from
 			the list is edited.
@@ -1232,6 +1244,8 @@ exactly four MessagePack objects:
                                               With |shada-h| or 'nohlsearch' 
                                               this key is always false.
                        sp   Binary   N/A      Actual pattern.  Required.
+                       sb   Boolean  false    True if search direction is 
+                                              backward.
                        *    any      none     Other keys are allowed for 
                                               compatibility reasons, see 
                                               |shada-compatibility|.

@@ -1,4 +1,4 @@
-*syntax.txt*	For Vim version 7.4.  Last change: 2015 Jan 07
+*syntax.txt*	For Vim version 7.4.  Last change: 2015 Sep 29
 
 
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
@@ -71,10 +71,10 @@ with: >
 For a color terminal see |:hi-normal-cterm|.
 For setting up your own colors syntax highlighting see |syncolor|.
 
-NOTE: The syntax files on MS-DOS and Windows have lines that end in <CR><NL>.
-The files for Unix end in <NL>.  This means you should use the right type of
-file for your system.  Although on MS-DOS and Windows the right format is
-automatically selected if the 'fileformats' option is not empty.
+NOTE: The syntax files on Windows have lines that end in <CR><NL>.  The files
+for Unix end in <NL>.  This means you should use the right type of file for
+your system.  Although on Windows the right format is automatically selected
+if the 'fileformats' option is not empty.
 
 NOTE: When using reverse video ("gvim -fg white -bg black"), the default value
 of 'background' will not be set until the GUI window is opened, which is after
@@ -206,7 +206,8 @@ thing.  These are then linked to a highlight group that specifies the color.
 A syntax group name doesn't specify any color or attributes itself.
 
 The name for a highlight or syntax group must consist of ASCII letters, digits
-and the underscore.  As a regexp: "[a-zA-Z0-9_]*"
+and the underscore.  As a regexp: "[a-zA-Z0-9_]*".  However, Vim does not give
+an error when using other characters.
 
 To be able to allow each user to pick his favorite set of colors, there must
 be preferred names for highlight groups that are common for many languages.
@@ -416,18 +417,19 @@ and last line to be converted.  Example, using the last set Visual area: >
 							*:TOhtml*
 :[range]TOhtml		The ":TOhtml" command is defined in a standard plugin.
 			This command will source |2html.vim| for you. When a
-			range is given, set |g:html_start_line| and
-			|g:html_end_line| to the start and end of the range,
-			respectively. Default range is the entire buffer.
+			range is given, this command sets |g:html_start_line|
+			and |g:html_end_line| to the start and end of the
+			range, respectively. Default range is the entire
+			buffer.
 
-                        If the current window is part of a |diff|, unless
-                        |g:html_diff_one_file| is set, :TOhtml will convert
-                        all windows which are part of the diff in the current
-                        tab and place them side-by-side in a <table> element
-                        in the generated HTML. With |g:html_line_ids| you can
-                        jump to lines in specific windows with (for example)
-                        #W1L42 for line 42 in the first diffed window, or
-                        #W3L87 for line 87 in the third.
+			If the current window is part of a |diff|, unless
+			|g:html_diff_one_file| is set, :TOhtml will convert
+			all windows which are part of the diff in the current
+			tab and place them side-by-side in a <table> element
+			in the generated HTML. With |g:html_line_ids| you can
+			jump to lines in specific windows with (for example)
+			#W1L42 for line 42 in the first diffed window, or
+			#W3L87 for line 87 in the third.
 
 			Examples: >
 
@@ -741,6 +743,22 @@ and UTF-32 instead, use: >
 Note that documents encoded in either UTF-32 or UTF-16 have known
 compatibility problems with some major browsers.
 
+								 *g:html_font*
+Default: "monospace"
+You can specify the font or fonts used in the converted document using
+g:html_font. If this option is set to a string, then the value will be
+surrounded with single quotes. If this option is set to a list then each list
+item is surrounded by single quotes and the list is joined with commas. Either
+way, "monospace" is added as the fallback generic family name and the entire
+result used as the font family (using CSS) or font face (if not using CSS).
+Examples: >
+
+   " font-family: 'Consolas', monospace;
+   :let g:html_font = "Consolas"
+
+   " font-family: 'DejaVu Sans Mono', 'Consolas', monospace;
+   :let g:html_font = ["DejaVu Sans Mono", "Consolas"]
+<
 			*convert-to-XML* *convert-to-XHTML* *g:html_use_xhtml*
 Default: 0.
 When 0, generate standard HTML 4.01 (strict when possible).
@@ -1129,6 +1147,8 @@ The diff highlighting normally finds translated headers.  This can be slow if
 there are very long lines in the file.  To disable translations: >
 
 	:let diff_translations = 0
+
+Also see |diff-slow|.
 
 
 DIRCOLORS			       *dircolors.vim* *ft-dircolors-syntax*
@@ -3304,6 +3324,32 @@ must not click outside of the pixel strings, but feel free to improve it.
 It will look much better with a font in a quadratic cell size, e.g. for X: >
 	:set guifont=-*-clean-medium-r-*-*-8-*-*-*-*-80-*
 
+
+YAML						*yaml.vim* *ft-yaml-syntax*
+
+					*g:yaml_schema* *b:yaml_schema*
+A YAML schema is a combination of a set of tags and a mechanism for resolving 
+non-specific tags. For user this means that YAML parser may, depending on 
+plain scalar contents, treat plain scalar (which can actually be only string 
+and nothing else) as a value of the other type: null, boolean, floating-point, 
+integer. `g:yaml_schema` option determines according to which schema values 
+will be highlighted specially. Supported schemas are
+
+Schema		Description ~
+failsafe	No additional highlighting.
+json		Supports JSON-style numbers, booleans and null.
+core		Supports more number, boolean and null styles.
+pyyaml		In addition to core schema supports highlighting timestamps, 
+		but there are some differences in what is recognized as 
+		numbers and many additional boolean values not present in core 
+		schema.
+
+Default schema is `core`.
+
+Note that schemas are not actually limited to plain scalars, but this is the 
+only difference between schemas defined in YAML specification and the only 
+difference defined in the syntax file.
+
 ==============================================================================
 5. Defining a syntax					*:syn-define* *E410*
 
@@ -3401,7 +3447,7 @@ DEFINING KEYWORDS					*:syn-keyword*
   :syntax keyword   Type   contained int long char
   :syntax keyword   Type   int long contained char
   :syntax keyword   Type   int long char contained
-<								*E789*
+<								*E789* *E890*
 	When you have a keyword with an optional tail, like Ex commands in
 	Vim, you can put the optional characters inside [], to define all the
 	variations at once: >
@@ -3655,6 +3701,7 @@ Whether or not it is actually concealed depends on the value of the
 'conceallevel' option.  The 'concealcursor' option is used to decide whether
 concealable items in the current line are displayed unconcealed to be able to
 edit the line.
+Another way to conceal text with with |matchadd()|.
 
 concealends						*:syn-concealends*
 
@@ -4236,7 +4283,7 @@ If the "maxlines={N}" argument is given, the number of lines that are searched
 for a comment or syncing pattern is restricted to N lines backwards (after
 adding "minlines").  This is useful if you have few things to sync on and a
 slow machine.  Example: >
-   :syntax sync ccomment maxlines=500
+   :syntax sync maxlines=500 ccomment
 <
 						*:syn-sync-linebreaks*
 When using a pattern that matches multiple lines, a change in one line may
@@ -4504,7 +4551,7 @@ mentioned for the default values. See |:verbose-cmd| for more information.
 					*highlight-args* *E416* *E417* *E423*
 There are three types of terminals for highlighting:
 term	a normal terminal (vt100, xterm)
-cterm	a color terminal (MS-DOS console, color-xterm, these have the "Co"
+cterm	a color terminal (Windows console, color-xterm, these have the "Co"
 	termcap entry)
 gui	the GUI
 
@@ -4629,6 +4676,8 @@ ctermbg={color-nr}				*highlight-ctermbg*
 	Note that for some color terminals these names may result in the wrong
 	colors!
 
+	You can also use "NONE" to remove the color.
+
 							*:hi-normal-cterm*
 	When setting the "ctermfg" or "ctermbg" colors for the Normal group,
 	these will become the colors used for the non-highlighted text.
@@ -4650,7 +4699,7 @@ ctermbg={color-nr}				*highlight-ctermbg*
 							*E419* *E420*
 	When Vim knows the normal foreground and background colors, "fg" and
 	"bg" can be used as color names.  This only works after setting the
-	colors for the Normal group and for the MS-DOS console.  Example, for
+	colors for the Normal group and for the Windows console.  Example, for
 	reverse video: >
 	    :highlight Visual ctermfg=bg ctermbg=fg
 <	Note that the colors are used that are valid at the moment this
@@ -4676,7 +4725,7 @@ font={font-name}					*highlight-font*
 	When setting the font for the "Normal" group, this becomes the default
 	font (until the 'guifont' option is changed; the last one set is
 	used).
-	The following only works with Motif and Athena, not with other GUIs:
+	The following only works with Motif not with other GUIs:
 	When setting the font for the "Menu" group, the menus will be changed.
 	When setting the font for the "Tooltip" group, the tooltips will be
 	changed.
@@ -4864,11 +4913,6 @@ Menu		Current font, background and foreground colors of the menus.
 		Also used for the toolbar.
 		Applicable highlight arguments: font, guibg, guifg.
 
-		NOTE: For Motif and Athena the font argument actually
-		specifies a fontset at all times, no matter if 'guifontset' is
-		empty, and as such it is tied to the current |:language| when
-		set.
-
 							*hl-Scrollbar*
 Scrollbar	Current background and foreground of the main window's
 		scrollbars.
@@ -4877,11 +4921,6 @@ Scrollbar	Current background and foreground of the main window's
 							*hl-Tooltip*
 Tooltip		Current font, background and foreground of the tooltips.
 		Applicable highlight arguments: font, guibg, guifg.
-
-		NOTE: For Motif and Athena the font argument actually
-		specifies a fontset at all times, no matter if 'guifontset' is
-		empty, and as such it is tied to the current |:language| when
-		set.
 
 ==============================================================================
 13. Linking groups		*:hi-link* *:highlight-link* *E412* *E413*

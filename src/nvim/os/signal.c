@@ -32,9 +32,13 @@ void signal_init(void)
   signal_watcher_init(&loop, &shup, NULL);
   signal_watcher_init(&loop, &squit, NULL);
   signal_watcher_init(&loop, &sterm, NULL);
+#ifdef SIGPIPE
   signal_watcher_start(&spipe, on_signal, SIGPIPE);
+#endif
   signal_watcher_start(&shup, on_signal, SIGHUP);
+#ifdef SIGQUIT
   signal_watcher_start(&squit, on_signal, SIGQUIT);
+#endif
   signal_watcher_start(&sterm, on_signal, SIGTERM);
 #ifdef SIGPWR
   signal_watcher_init(&loop, &spwr, NULL);
@@ -82,12 +86,16 @@ static char * signal_name(int signum)
     case SIGPWR:
       return "SIGPWR";
 #endif
+#ifdef SIGPIPE
     case SIGPIPE:
       return "SIGPIPE";
+#endif
     case SIGTERM:
       return "SIGTERM";
+#ifdef SIGQUIT
     case SIGQUIT:
       return "SIGQUIT";
+#endif
     case SIGHUP:
       return "SIGHUP";
     default:
@@ -123,11 +131,15 @@ static void on_signal(SignalWatcher *handle, int signum, void *data)
       ml_sync_all(false, false);
       break;
 #endif
+#ifdef SIGPIPE
     case SIGPIPE:
       // Ignore
       break;
+#endif
     case SIGTERM:
+#ifdef SIGQUIT
     case SIGQUIT:
+#endif
     case SIGHUP:
       if (!rejecting_deadly) {
         deadly_signal(signum);

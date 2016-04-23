@@ -2,7 +2,8 @@
 " Language: Valgrind Memory Debugger Output
 " Maintainer: Roger Luethi <rl@hellgate.ch>
 " Program URL: http://devel-home.kde.org/~sewardj/
-" Last Change: 2014 Oct 02
+" Last Change: 2015 Jan 27
+" 		Included improvement by Dominique Pelle
 "
 " Notes: mostly based on strace.vim and xml.vim
 "
@@ -14,6 +15,9 @@ if exists("b:current_syntax")
 endif
 let s:keepcpo= &cpo
 set cpo&vim
+
+" Lines can be long with demangled c++ functions.
+setlocal synmaxcol=8000
 
 syn case match
 syn sync minlines=50
@@ -29,8 +33,8 @@ syn region valgrindRegion
 	\ contains=valgrindPidChunk,valgrindLine
 
 syn region valgrindPidChunk
-	\ start=+\(^==\)\@<=+
-	\ end=+\(==\)\@=+
+	\ start=+^==\zs+
+	\ end=+\ze==+
 	\ contained
 	\ contains=valgrindPid0,valgrindPid1,valgrindPid2,valgrindPid3,valgrindPid4,valgrindPid5,valgrindPid6,valgrindPid7,valgrindPid8,valgrindPid9
 	\ keepend
@@ -64,10 +68,11 @@ syn match valgrindSummary ".*SUMMARY:" contained
 syn match valgrindLoc "\s\+\(by\|at\|Address\).*$" contained
 	\ contains=valgrindAt,valgrindAddr,valgrindFunc,valgrindBin,valgrindSrc
 syn match valgrindAt "at\s\@=" contained
-syn match valgrindAddr "\(\W\)\@<=0x\x\+" contained
-syn match valgrindFunc "\(: \)\@<=\w\+" contained
-syn match valgrindBin "\((\(with\|\)in \)\@<=\S\+\()\)\@=" contained
-syn match valgrindSrc "\((\)\@<=[^)]*:\d\+\()\)\@=" contained
+syn match valgrindAddr "\W\zs0x\x\+" contained
+
+syn match valgrindFunc ": \zs\h[a-zA-Z0-9_:\[\]()<>&*+\-,=%!|^ ]*\ze([^)]*)$" contained
+syn match valgrindBin "(\(with\)\=in \zs\S\+)\@=" contained
+syn match valgrindSrc "(\zs[^)]*:\d\+)\@=" contained
 
 " Define the default highlighting
 

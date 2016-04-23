@@ -1,13 +1,13 @@
 require('coxpcall')
+NIL = require('mpack').NIL
+local lfs = require('lfs')
 local assert = require('luassert')
-local Loop = require('nvim.loop')
-local MsgpackStream = require('nvim.msgpack_stream')
-local AsyncSession = require('nvim.async_session')
+local ChildProcessStream = require('nvim.child_process_stream')
 local Session = require('nvim.session')
 
 local nvim_prog = os.getenv('NVIM_PROG') or 'build/bin/nvim'
 local nvim_argv = {nvim_prog, '-u', 'NONE', '-i', 'NONE', '-N',
-                   '--cmd', 'set shortmess+=I background=light noswapfile noautoindent laststatus=1 encoding=utf-8 undodir=. directory=. viewdir=. backupdir=.',
+                   '--cmd', 'set shortmess+=I background=light noswapfile noautoindent laststatus=1 undodir=. directory=. viewdir=. backupdir=.',
                    '--embed'}
 
 -- Formulate a path to the directory containing nvim.  We use this to
@@ -55,9 +55,12 @@ if prepend_argv then
   nvim_argv = new_nvim_argv
 end
 
-local session, loop_running, loop_stopped, last_error
+local session, loop_running, last_error
 
 local function set_session(s)
+  if session then
+    session:close()
+  end
   session = s
 end
 
@@ -79,7 +82,7 @@ local function next_message()
 end
 
 local function call_and_stop_on_error(...)
-  local status, result = copcall(...)
+  local status, result = copcall(...)  -- luacheck: ignore
   if not status then
     session:stop()
     last_error = result
@@ -109,7 +112,6 @@ local function run(request_cb, notification_cb, setup_cb, timeout)
     end
   end
 
-  loop_stopped = false
   loop_running = true
   session:run(on_request, on_notification, on_setup, timeout)
   loop_running = false
@@ -121,7 +123,6 @@ local function run(request_cb, notification_cb, setup_cb, timeout)
 end
 
 local function stop()
-  loop_stopped = true
   session:stop()
 end
 
@@ -132,6 +133,22 @@ end
 local function nvim_eval(expr)
   return request('vim_eval', expr)
 end
+
+local os_name = (function()
+  local name = nil
+  return (function()
+    if not name then
+      if nvim_eval('has("win32")') == 1 then
+        name = 'windows'
+      elseif nvim_eval('has("macunix")') == 1 then
+        name = 'osx'
+      else
+        name = 'unix'
+      end
+    end
+    return name
+  end)
+end)()
 
 local function nvim_call(name, ...)
   return request('vim_call_function', name, {...})
@@ -194,24 +211,17 @@ local function merge_args(...)
 end
 
 local function spawn(argv, merge)
-  local loop = Loop.new()
-  local msgpack_stream = MsgpackStream.new(loop)
-  local async_session = AsyncSession.new(msgpack_stream)
-  local session = Session.new(async_session)
-  loop:spawn(merge and merge_args(prepend_argv, argv) or argv)
-  return session
+  local child_stream = ChildProcessStream.spawn(merge and merge_args(prepend_argv, argv) or argv)
+  return Session.new(child_stream)
 end
 
 local function clear(extra_cmd)
-  if session then
-    session:exit(0)
-  end
   local args = {unpack(nvim_argv)}
   if extra_cmd ~= nil then
     table.insert(args, '--cmd')
     table.insert(args, extra_cmd)
   end
-  session = spawn(args)
+  set_session(spawn(args))
 end
 
 local function insert(...)
@@ -247,9 +257,13 @@ end
 
 local function source(code)
   local tmpname = os.tmpname()
+  if os_name() == 'osx' and string.match(tmpname, '^/tmp') then
+   tmpname = '/private'..tmpname
+  end
   write_file(tmpname, code)
   nvim_command('source '..tmpname)
   os.remove(tmpname)
+  return tmpname
 end
 
 local function eq(expected, actual)
@@ -301,7 +315,7 @@ local function curbuf_contents()
   -- previously sent keys are processed(vim_eval is a deferred function, and
   -- only processed after all input)
   wait()
-  return table.concat(curbuf('get_line_slice', 0, -1, true, true), '\n')
+  return table.concat(curbuf('get_lines', 0, -1, true), '\n')
 end
 
 local function curwin(method, ...)
@@ -329,17 +343,15 @@ local function rmdir(path)
     return nil
   end
   for file in lfs.dir(path) do
-    if file == '.' or file == '..' then
-      goto continue
+    if file ~= '.' and file ~= '..' then
+      local ret, err = os.remove(path..'/'..file)
+      if not ret then
+        error('os.remove: '..err)
+        return nil
+      end
     end
-    ret, err = os.remove(path..'/'..file)
-    if not ret then
-      error('os.remove: '..err)
-      return nil
-    end
-    ::continue::
   end
-  ret, err = os.remove(path)
+  local ret, err = os.remove(path)
   if not ret then
     error('os.remove: '..err)
   end
@@ -371,15 +383,15 @@ local function redir_exec(cmd)
 end
 
 local function create_callindex(func)
-  local tbl = {}
-  setmetatable(tbl, {
+  local table = {}
+  setmetatable(table, {
     __index = function(tbl, arg1)
-      ret = function(...) return func(arg1, ...) end
+      local ret = function(...) return func(arg1, ...) end
       tbl[arg1] = ret
       return ret
     end,
   })
-  return tbl
+  return table
 end
 
 local funcs = create_callindex(nvim_call)
@@ -426,6 +438,7 @@ return {
   wait = wait,
   set_session = set_session,
   write_file = write_file,
+  os_name = os_name,
   rmdir = rmdir,
   mkdir = lfs.mkdir,
   exc_exec = exc_exec,

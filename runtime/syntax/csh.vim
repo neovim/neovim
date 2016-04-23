@@ -1,9 +1,9 @@
 " Vim syntax file
 " Language:	C-shell (csh)
-" Maintainer:	Dr. Charles E. Campbell, Jr. <NdrOchipS@PcampbellAfamily.Mbiz>
-" Version:	10
-" Last Change:	Sep 11, 2006
-" URL:	http://mysite.verizon.net/astronaut/vim/index.html#vimlinks_syntax
+" Maintainer:	Charles E. Campbell <NdrOchipS@PcampbellAfamily.Mbiz>
+" Last Change:	Oct 23, 2014
+" Version:	11
+" URL:	http://www.drchip.org/astronaut/vim/index.html#SYNTAX_CSH
 
 " For version 5.x: Clear all syntax items
 " For version 6.x: Quit when a syntax file was already loaded

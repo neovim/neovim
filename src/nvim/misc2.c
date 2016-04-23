@@ -1,16 +1,7 @@
 /*
- * VIM - Vi IMproved	by Bram Moolenaar
- *
- * Do ":help uganda"  in Vim to read copying and usage conditions.
- * Do ":help credits" in Vim to see a list of people who contributed.
- * See README.txt for an overview of the Vim source code.
- */
-
-/*
  * misc2.c: Various functions.
  */
 #include <assert.h>
-#include <errno.h>
 #include <inttypes.h>
 #include <string.h>
 
@@ -336,9 +327,10 @@ int call_shell(char_u *cmd, ShellOpts opts, char_u *extra_shell_arg)
     }
   }
 
-  set_vim_var_nr(VV_SHELL_ERROR, (long)retval);
-  if (do_profiling == PROF_YES)
+  set_vim_var_nr(VV_SHELL_ERROR, (varnumber_T) retval);
+  if (do_profiling == PROF_YES) {
     prof_child_exit(&wait_time);
+  }
 
   return retval;
 }
@@ -479,7 +471,7 @@ void put_time(FILE *fd, time_t time_)
 {
   uint8_t buf[8];
   time_to_bytes(time_, buf);
-  fwrite(buf, sizeof(uint8_t), ARRAY_SIZE(buf), fd);
+  (void)fwrite(buf, sizeof(uint8_t), ARRAY_SIZE(buf), fd);
 }
 
 /// Writes time_t to "buf[8]".

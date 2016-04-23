@@ -1,5 +1,5 @@
 lpeg = require('lpeg')
-msgpack = require('MessagePack')
+mpack = require('mpack')
 
 -- lpeg grammar for building api metadata from a set of header files. It
 -- ignores comments and preprocessor commands and parses a very small subset
@@ -115,7 +115,7 @@ static const uint8_t msgpack_metadata[] = {
 ]])
 -- serialize the API metadata using msgpack and embed into the resulting
 -- binary for easy querying by clients
-packed = msgpack.pack(functions)
+packed = mpack.pack(functions)
 for i = 1, #packed do
   output:write(string.byte(packed, i)..', ')
   if i % 10 == 0 then

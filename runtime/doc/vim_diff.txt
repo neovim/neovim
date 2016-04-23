@@ -11,7 +11,7 @@ the "{Nvim}" tag.  This document is a complete and centralized list of all
 these differences.
 
 1. Configuration		|nvim-configuration|
-2. Option defaults		|nvim-option-defaults|
+2. Defaults			|nvim-defaults|
 3. Changed features		|nvim-features-changed|
 4. New features			|nvim-features-new|
 5. Missing legacy features	|nvim-features-missing|
@@ -21,14 +21,17 @@ these differences.
 ==============================================================================
 1. Configuration					    *nvim-configuration*
 
-- Use `$XDG_CONFIG_HOME/nvim/init.vim` instead of `.vimrc` for storing 
+- Use `$XDG_CONFIG_HOME/nvim/init.vim` instead of `.vimrc` for storing
   configuration.
 - Use `$XDG_CONFIG_HOME/nvim` instead of `.vim` to store configuration files.
-- Use `$XDG_DATA_HOME/shada/main.shada` instead of `.viminfo` for persistent 
+- Use `$XDG_DATA_HOME/nvim/shada/main.shada` instead of `.viminfo` for persistent
   session information.
 
 ==============================================================================
-2. Option defaults					  *nvim-option-defaults*
+2. Defaults					            *nvim-defaults*
+
+- Syntax highlighting is enabled by default
+- ":filetype plugin indent on" is enabled by default
 
 - 'autoindent' is set by default
 - 'autoread' is set by default
@@ -45,7 +48,7 @@ these differences.
 - 'listchars' defaults to "tab:> ,trail:-,nbsp:+"
 - 'mouse' defaults to "a"
 - 'nocompatible' is always set
-- 'nrformats' defaults to "hex"
+- 'nrformats' defaults to "bin,hex"
 - 'sessionoptions' doesn't include "options"
 - 'smarttab' is set by default
 - 'tabpagemax' defaults to 50
@@ -68,54 +71,74 @@ are always available and may be used simultaneously in separate plugins.  The
 |nvim-python|).
 
 |mkdir()| behaviour changed:
-1. Assuming /tmp/foo does not exist and /tmp can be written to 
+1. Assuming /tmp/foo does not exist and /tmp can be written to
    mkdir('/tmp/foo/bar', 'p', 0700) will create both /tmp/foo and /tmp/foo/bar 
    with 0700 permissions. Vim mkdir will create /tmp/foo with 0755.
-2. If you try to create an existing directory with `'p'` (e.g. mkdir('/', 
+2. If you try to create an existing directory with `'p'` (e.g. mkdir('/',
    'p')) mkdir() will silently exit. In Vim this was an error.
 3. mkdir() error messages now include strerror() text when mkdir fails.
 
 'encoding' cannot be changed after startup.
 
 |string()| and |:echo| behaviour changed:
-1. No maximum recursion depth limit is applied to nested container 
+1. No maximum recursion depth limit is applied to nested container
    structures.
-2. |string()| fails immediately on nested containers, not when recursion limit 
+2. |string()| fails immediately on nested containers, not when recursion limit
    was exceeded.
 2. When |:echo| encounters duplicate containers like >
 
        let l = []
        echo [l, l]
 <
-   it does not use "[...]" (was: "[[], [...]]", now: "[[], []]"). "..." is 
+   it does not use "[...]" (was: "[[], [...]]", now: "[[], []]"). "..." is
    only used for recursive containers.
-3. |:echo| printing nested containers adds "@level" after "..." designating 
-   the level at which recursive container was printed: |:echo-self-refer|.  
-   Same thing applies to |string()| (though it uses construct like 
-   "{E724@level}"), but this is not reliable because |string()| continues to 
+3. |:echo| printing nested containers adds "@level" after "..." designating
+   the level at which recursive container was printed: |:echo-self-refer|.
+   Same thing applies to |string()| (though it uses construct like
+   "{E724@level}"), but this is not reliable because |string()| continues to
    error out.
+4. Stringifyed infinite and NaN values now use |str2float()| and can be evaled
+   back.
+5. (internal) Trying to print or stringify VAR_UNKNOWN in Vim results in 
+   nothing, |E908|, in Neovim it is internal error.
 
-Viminfo text files were replaced with binary (messagepack) ShaDa files. 
+|json_decode()| behaviour changed:
+1. It may output |msgpack-special-dict|.
+2. |msgpack-special-dict| is emitted also in case of duplicate keys, while in 
+   Vim it errors out.
+3. It accepts only valid JSON.  Trailing commas are not accepted.
+
+|json_encode()| behaviour slightly changed: now |msgpack-special-dict| values 
+are accepted, but |v:none| is not.
+
+*v:none* variable is absent.  In Vim it represents “no value” in “js” strings 
+like "[,]" parsed as "[v:none]" by |js_decode()|.
+
+*js_encode()* and *js_decode()* functions are also absent.
+
+Viminfo text files were replaced with binary (messagepack) ShaDa files.
 Additional differences:
 
 - |shada-c| has no effect.
 - |shada-s| now limits size of every item and not just registers.
-- When reading ShaDa files items are merged according to the timestamp. 
+- When reading ShaDa files items are merged according to the timestamp.
   |shada-merging|
-- 'viminfo' option got renamed to 'shada'. Old option is kept as an alias for 
+- 'viminfo' option got renamed to 'shada'. Old option is kept as an alias for
   compatibility reasons.
-- |:wviminfo| was renamed to |:wshada|, |:rviminfo| to |:rshada|.  Old 
+- |:wviminfo| was renamed to |:wshada|, |:rviminfo| to |:rshada|.  Old
   commands are still kept.
-- When writing (|:wshada| without bang or at exit) it merges much more data, 
-  and does this according to the timestamp.  Vim merges only marks. 
+- |:oldfiles| supports !.
+- When writing (|:wshada| without bang or at exit) it merges much more data,
+  and does this according to the timestamp.  Vim merges only marks.
   |shada-merging|
-- ShaDa file format was designed with forward and backward compatibility in 
+- ShaDa file format was designed with forward and backward compatibility in
   mind. |shada-compatibility|
-- Some errors make ShaDa code keep temporary file in-place for user to decide 
-  what to do with it.  Vim deletes temporary file in these cases. 
+- Some errors make ShaDa code keep temporary file in-place for user to decide
+  what to do with it.  Vim deletes temporary file in these cases.
   |shada-error-handling|
-- Vim keeps no timestamps at all, neither in viminfo file nor in the instance 
+- Vim keeps no timestamps at all, neither in viminfo file nor in the instance
   itself.
+- ShaDa file keeps search direction (|v:searchforward|), viminfo does not.
 
 ==============================================================================
 4. New Features						     *nvim-features-new*
@@ -132,8 +155,8 @@ Meta (alt) chords are recognized (even in the terminal).
 
   Note: Meta chords are case-sensitive (<M-a> is distinguished from <M-A>).
 
-Some `CTRL-SHIFT-...` key chords are distinguished from `CTRL-...` variants (even in
-the terminal). Specifically, the following are known to work:
+Some `CTRL-SHIFT-...` key chords are distinguished from `CTRL-...` variants
+(even in the terminal). Specifically, the following are known to work:
   <C-Tab>, <C-S-Tab>
   <C-BS>, <C-S-BS>
   <C-Enter>, <C-S-Enter>
@@ -142,6 +165,8 @@ Events:
   |TabNew|
   |TabNewEntered|
   |TabClosed|
+  |TermOpen|
+  |TermClose|
 
 Highlight groups:
   |hl-EndOfBuffer|
@@ -191,31 +216,43 @@ Highlight groups:
   |hl-VisualNOS|
 
 Other options:
+  'antialias'
   'cpoptions' ('g', 'w', 'H', '*', '-', 'j', and all POSIX flags were removed)
   'guioptions' (only the 't' flag was removed)
   'guipty'
+  'imactivatefunc'
+  'imactivatekey'
+  'imstatusfunc'
   'macatsui'
+  'restorescreen'
   'shelltype'
   'shortname'
-  'termencoding'
+  'swapsync'
+  'term'
+  'termencoding' (Vim 7.4.852 also removed this for Windows)
   'textauto'
   'textmode'
   'toolbar'
   'toolbariconsize'
   'ttybuiltin'
   'ttymouse'
+  'ttyscroll'
+  'ttytype'
   'weirdinvert'
 
 Other commands:
   :Print
   :fixdel
+  :helpfind
   :mode (no longer accepts an argument)
+  :open
   :shell
   :tearoff
 
 Other compile-time features:
   EBCDIC
   Emacs tags support
+  X11 integration (see |x11-selection|)
 
 Nvim does not have a built-in GUI and hence the following aliases have been
 removed: gvim, gex, gview, rgvim, rgview

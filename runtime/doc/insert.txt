@@ -1,4 +1,4 @@
-*insert.txt*    For Vim version 7.4.  Last change: 2014 Aug 04
+*insert.txt*    For Vim version 7.4.  Last change: 2015 Sep 15
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -77,9 +77,11 @@ CTRL-W		Delete the word before the cursor (see |i_backspacing| about
 		joining lines).  See the section "word motions",
 		|word-motions|, for the definition of a word.
 						*i_CTRL-U*
-CTRL-U		Delete all entered characters in the current line (see
-		|i_backspacing| about joining lines).
-
+CTRL-U		Delete all entered characters before the cursor in the current
+		line.  If there are no newly entered characters and
+		'backspace' is not empty, delete all characters before the
+		cursor in the current line.
+		See |i_backspacing| about joining lines.
 						*i_CTRL-I* *i_<Tab>* *i_Tab*
 <Tab> or CTRL-I Insert a tab.  If the 'expandtab' option is on, the
 		equivalent number of spaces is inserted (use CTRL-V <Tab> to
@@ -146,7 +148,7 @@ CTRL-R CTRL-R {0-9a-z"%#*+/:.-=}			*i_CTRL-R_CTRL-R*
 	CTRL-R a		results in "ac".
 	CTRL-R CTRL-R a		results in "ab^Hc".
 <		Options 'textwidth', 'formatoptions', etc. still apply.  If
-		you also want to avoid these, use "<C-R><C-O>r", see below.
+		you also want to avoid these, use CTRL-R CTRL-O, see below.
 		The '.' register (last inserted text) is still inserted as
 		typed.
 
@@ -1939,9 +1941,9 @@ If the 'fileformats' option is not empty Vim tries to recognize the type of
 changed, the detected format is only used while reading the file.
 A similar thing happens with 'fileencodings'.
 
-On non-MS-DOS and Win32 systems the message "[dos format]" is shown if
+On non-Windows systems the message "[dos format]" is shown if
 a file is read in DOS format, to remind you that something unusual is done.
-On Macintosh, MS-DOS, and Win32 the message "[unix format]" is shown if
+On Macintosh and Windows the message "[unix format]" is shown if
 a file is read in Unix format.
 On non-Macintosh systems, the message "[Mac format]" is shown if a file is
 read in Mac format.

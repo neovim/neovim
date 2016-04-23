@@ -1,4 +1,4 @@
-*motion.txt*    For Vim version 7.4.  Last change: 2014 Feb 11
+*motion.txt*    For Vim version 7.4.  Last change: 2015 Jun 06
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -171,6 +171,8 @@ CTRL-H		or					*CTRL-H* *<BS>*
 l		or					*l*
 <Right>		or					*<Right>* *<Space>*
 <Space>			[count] characters to the right.  |exclusive| motion.
+			See the 'whichwrap' option for adjusting the behavior
+			at end of line
 
 							*0*
 0			To the first character of the line.  |exclusive|

@@ -59,6 +59,23 @@ int os_dirname(char_u *buf, size_t len)
   return OK;
 }
 
+/// Check if the given path is a directory and not a symlink to a directory.
+/// @return `true` if `name` is a directory and NOT a symlink to a directory.
+///         `false` if `name` is not a directory or if an error occurred.
+bool os_isrealdir(const char_u *name)
+  FUNC_ATTR_NONNULL_ALL
+{
+  uv_fs_t request;
+  if (uv_fs_lstat(&fs_loop, &request, (char *)name, NULL) != kLibuvSuccess) {
+    return false;
+  }
+  if (S_ISLNK(request.statbuf.st_mode)) {
+    return false;
+  } else {
+    return S_ISDIR(request.statbuf.st_mode);
+  }
+}
+
 /// Check if the given path is a directory or not.
 ///
 /// @return `true` if `fname` is a directory.
@@ -140,24 +157,33 @@ static bool is_executable(const char_u *name)
 static bool is_executable_in_path(const char_u *name, char_u **abspath)
   FUNC_ATTR_NONNULL_ARG(1)
 {
-  const char *path = getenv("PATH");
-  // PATH environment variable does not exist or is empty.
-  if (path == NULL || *path == NUL) {
+  const char *path = os_getenv("PATH");
+  if (path == NULL) {
     return false;
   }
 
   size_t buf_len = STRLEN(name) + STRLEN(path) + 2;
+
+#ifdef WIN32
+  const char *pathext = os_getenv("PATHEXT");
+  if (!pathext) {
+    pathext = ".com;.exe;.bat;.cmd";
+  }
+
+  buf_len += STRLEN(pathext);
+#endif
+
   char_u *buf = xmalloc(buf_len);
 
   // Walk through all entries in $PATH to check if "name" exists there and
   // is an executable file.
   for (;; ) {
-    const char *e = xstrchrnul(path, ':');
+    const char *e = xstrchrnul(path, ENV_SEPCHAR);
 
     // Glue together the given directory from $PATH with name and save into
     // buf.
     STRLCPY(buf, path, e - path + 1);
-    append_path((char *) buf, (const char *) name, (int)buf_len);
+    append_path((char *) buf, (const char *) name, buf_len);
 
     if (is_executable(buf)) {
       // Check if the caller asked for a copy of the path.
@@ -170,7 +196,39 @@ static bool is_executable_in_path(const char_u *name, char_u **abspath)
       return true;
     }
 
-    if (*e != ':') {
+#ifdef WIN32
+    // Try appending file extensions from $PATHEXT to the name.
+    char *buf_end = xstrchrnul((char *)buf, '\0');
+    for (const char *ext = pathext; *ext; ext++) {
+      // Skip the extension if there is no suffix after a '.'.
+      if (ext[0] == '.' && (ext[1] == '\0' || ext[1] == ';')) {
+        *ext++;
+
+        continue;
+      }
+
+      const char *ext_end = xstrchrnul(ext, ENV_SEPCHAR);
+      STRLCPY(buf_end, ext, ext_end - ext + 1);
+
+      if (is_executable(buf)) {
+        // Check if the caller asked for a copy of the path.
+        if (abspath != NULL) {
+          *abspath = save_absolute_path(buf);
+        }
+
+        xfree(buf);
+
+        return true;
+      }
+
+      if (*ext_end != ENV_SEPCHAR) {
+        break;
+      }
+      ext = ext_end;
+    }
+#endif
+
+    if (*e != ENV_SEPCHAR) {
       // End of $PATH without finding any executable called name.
       xfree(buf);
       return false;
@@ -186,13 +244,13 @@ static bool is_executable_in_path(const char_u *name, char_u **abspath)
 
 /// Opens or creates a file and returns a non-negative integer representing
 /// the lowest-numbered unused file descriptor, for use in subsequent system
-/// calls (read, write, lseek, fcntl, etc.). If the operation fails, `-errno`
-/// is returned, and no file is created or modified.
+/// calls (read, write, lseek, fcntl, etc.). If the operation fails, a libuv
+/// error code is returned, and no file is created or modified.
 ///
 /// @param flags Bitwise OR of flags defined in <fcntl.h>
 /// @param mode Permissions for the newly-created file (IGNORED if 'flags' is
 ///        not `O_CREAT` or `O_TMPFILE`), subject to the current umask
-/// @return file descriptor, or negative `errno` on failure
+/// @return file descriptor, or libuv error code on failure
 int os_open(const char* path, int flags, int mode)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -203,30 +261,44 @@ int os_open(const char* path, int flags, int mode)
   return r;
 }
 
+/// Flushes file modifications to disk.
+///
+/// @param fd the file descriptor of the file to flush to disk.
+///
+/// @return `0` on success, a libuv error code on failure.
+int os_fsync(int fd)
+{
+  uv_fs_t fsync_req;
+  int r = uv_fs_fsync(&fs_loop, &fsync_req, fd, NULL);
+  uv_fs_req_cleanup(&fsync_req);
+  return r;
+}
+
 /// Get stat information for a file.
 ///
-/// @return OK on success, FAIL if a failure occurred.
-static bool os_stat(const char *name, uv_stat_t *statbuf)
+/// @return libuv return code.
+static int os_stat(const char *name, uv_stat_t *statbuf)
   FUNC_ATTR_NONNULL_ALL
 {
   uv_fs_t request;
   int result = uv_fs_stat(&fs_loop, &request, name, NULL);
   *statbuf = request.statbuf;
   uv_fs_req_cleanup(&request);
-  return (result == kLibuvSuccess);
+  return result;
 }
 
 /// Get the file permissions for a given file.
 ///
-/// @return `-1` when `name` doesn't exist.
+/// @return libuv error code on error.
 int32_t os_getperm(const char_u *name)
   FUNC_ATTR_NONNULL_ALL
 {
   uv_stat_t statbuf;
-  if (os_stat((char *)name, &statbuf)) {
+  int stat_result = os_stat((char *)name, &statbuf);
+  if (stat_result == kLibuvSuccess) {
     return (int32_t)statbuf.st_mode;
   } else {
-    return -1;
+    return stat_result;
   }
 }
 
@@ -271,7 +343,7 @@ bool os_file_exists(const char_u *name)
   FUNC_ATTR_NONNULL_ALL
 {
   uv_stat_t statbuf;
-  return os_stat((char *)name, &statbuf);
+  return os_stat((char *)name, &statbuf) == kLibuvSuccess;
 }
 
 /// Check if a file is readable.
@@ -323,7 +395,7 @@ int os_rename(const char_u *path, const char_u *new_path)
 
 /// Make a directory.
 ///
-/// @return `0` for success, -errno for failure.
+/// @return `0` for success, libuv error code for failure.
 int os_mkdir(const char *path, int32_t mode)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -343,7 +415,7 @@ int os_mkdir(const char *path, int32_t mode)
 ///                          failed to create. I.e. it will contain dir or any
 ///                          of the higher level directories.
 ///
-/// @return `0` for success, -errno for failure.
+/// @return `0` for success, libuv error code for failure.
 int os_mkdir_recurse(const char *const dir, int32_t mode,
                      char **const failed_dir)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
@@ -471,7 +543,7 @@ int os_remove(const char *path)
 bool os_fileinfo(const char *path, FileInfo *file_info)
   FUNC_ATTR_NONNULL_ALL
 {
-  return os_stat(path, &(file_info->stat));
+  return os_stat(path, &(file_info->stat)) == kLibuvSuccess;
 }
 
 /// Get the file information for a given path without following links
@@ -573,7 +645,7 @@ bool os_fileid(const char *path, FileID *file_id)
   FUNC_ATTR_NONNULL_ALL
 {
   uv_stat_t statbuf;
-  if (os_stat(path, &statbuf)) {
+  if (os_stat(path, &statbuf) == kLibuvSuccess) {
     file_id->inode = statbuf.st_ino;
     file_id->device_id = statbuf.st_dev;
     return true;

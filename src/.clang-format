@@ -1,4 +1,4 @@
-BasedOnStyle: llvm
+BasedOnStyle:  Google
 Language: Cpp
 ColumnLimit: 80
 IndentWidth: 2
@@ -10,3 +10,9 @@ AlignEscapedNewlinesLeft: false
 AllowShortFunctionsOnASingleLine: false
 SpacesBeforeTrailingComments: 2
 PenaltyReturnTypeOnItsOwnLine: 200
+AllowAllParametersOfDeclarationOnNextLine: false
+AllowShortIfStatementsOnASingleLine: false
+AllowShortLoopsOnASingleLine: false
+BinPackParameters: false
+BreakBeforeBinaryOperators: true
+ContinuationIndentWidth: 4

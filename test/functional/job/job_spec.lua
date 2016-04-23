@@ -1,11 +1,11 @@
 
 local helpers = require('test.functional.helpers')
-local clear, eq, eval, execute, expect, feed, insert, neq, next_msg, nvim,
-  nvim_dir, ok, run, session, source, stop, wait, write_file = helpers.clear,
-  helpers.eq, helpers.eval, helpers.execute, helpers.expect, helpers.feed,
+local clear, eq, eval, execute, feed, insert, neq, next_msg, nvim,
+  nvim_dir, ok, source, write_file = helpers.clear,
+  helpers.eq, helpers.eval, helpers.execute, helpers.feed,
   helpers.insert, helpers.neq, helpers.next_message, helpers.nvim,
-  helpers.nvim_dir, helpers.ok, helpers.run, helpers.session, helpers.source,
-  helpers.stop, helpers.wait, helpers.write_file
+  helpers.nvim_dir, helpers.ok, helpers.source,
+  helpers.write_file
 local Screen = require('test.functional.ui.screen')
 
 
@@ -140,6 +140,35 @@ describe('jobs', function()
 
   it('will not cause a memory leak if we leave a job running', function()
     nvim('command', "call jobstart(['cat', '-'], g:job_opts)")
+  end)
+
+  it('can get the pid value using getpid', function()
+    nvim('command', "let j =  jobstart(['cat', '-'], g:job_opts)")
+    local pid = eval('jobpid(j)')
+    eq(0,os.execute('ps -p '..pid..' > /dev/null'))
+    nvim('command', 'call jobstop(j)')
+    eq({'notification', 'exit', {0, 0}}, next_msg())
+    neq(0,os.execute('ps -p '..pid..' > /dev/null'))
+  end)
+
+  it("doesn't survive the exit of nvim", function()
+    -- use sleep, which doesn't die on stdin close
+    nvim('command', "let j =  jobstart(['sleep', '1000'], g:job_opts)")
+    local pid = eval('jobpid(j)')
+    eq(0,os.execute('ps -p '..pid..' > /dev/null'))
+    clear()
+    neq(0,os.execute('ps -p '..pid..' > /dev/null'))
+  end)
+
+  it('can survive the exit of nvim with "detach"', function()
+    nvim('command', 'let g:job_opts.detach = 1')
+    nvim('command', "let j = jobstart(['sleep', '1000'], g:job_opts)")
+    local pid = eval('jobpid(j)')
+    eq(0,os.execute('ps -p '..pid..' > /dev/null'))
+    clear()
+    eq(0,os.execute('ps -p '..pid..' > /dev/null'))
+    -- clean up after ourselves
+    os.execute('kill -9 '..pid..' > /dev/null')
   end)
 
   it('can pass user data to the callback', function()
@@ -370,7 +399,7 @@ describe('jobs', function()
 
   describe('running tty-test program', function()
     local function next_chunk()
-      local rv = ''
+      local rv
       while true do
         local msg = next_msg()
         local data = msg[3][2]

@@ -47,10 +47,6 @@ If you want Vim to start with a maximized window, add this command to your
 vimrc or gvimrc file: >
 	au GUIEnter * simalt ~x
 <
-								*gui-w32s*
-There is a specific version of gvim.exe that runs under the Win32s subsystem
-of Windows 3.1 or 3.11.  See |win32s|.
-
 ==============================================================================
 2. Vim as default editor				*vim-default-editor*
 
@@ -88,7 +84,6 @@ when you have got a new version):
 You can also install Vim in the "Send To" menu:
 1. Start a Windows Explorer
 2. Navigate to your sendto directory:
-   Windows 95: %windir%\sendto (e.g. "c:\windows\sendto")
    Windows NT: %windir%\profiles\%user%\sendto (e.g.
 	       "c:\winnt\profiles\mattha\sendto").
 3. Right-click in the file pane and select New->Shortcut
@@ -243,7 +238,7 @@ selection.  You can use CTRL-Q instead.  You can also use CTRL-Q in Insert
 mode and Command-line mode to get the old meaning of CTRL-V.  But CTRL-Q
 doesn't work for terminals when it's used for control flow.
 
-NOTE: The clipboard support still has a number of bugs.  See |todo|.
+NOTE: The clipboard support still has a number of bugs.
 
 ==============================================================================
 4. Shell Commands					*gui-shell-win32*
@@ -262,17 +257,6 @@ WARNING: If you close this window with the "X" button, and confirm the
 question if you really want to kill the application, Vim may be killed too!
 (This does not apply to commands run asynchronously with ":!start".)
 
-							*msdos-mode*
-If you get a dialog that says "This program is set to run in MS-DOS mode..."
-when you run an external program, you can solve this by changing the
-properties of the associated shortcut:
-- Use a Windows Explorer to find the command.com that is used.  It can be
-  c:\command.com, c:\dos\command.com, c:\windows\command.com, etc.
-- With the right mouse button, select properties of this command.com.
-- In the Program tab select "Advanced".
-- Unselect "MS-DOS mode".
-- Click "OK" twice.
-
 							*win32-!start*
 Normally, Vim waits for a command to complete before continuing (this makes
 sense for most shell commands which produce output for Vim to use).  If you
@@ -280,10 +264,6 @@ want Vim to start a program and return immediately, you can use the following
 syntax on W95 & NT: >
 	:!start [/min] {command}
 The optional "/min" causes the window to be minimized.
-
-On Win32s, you will have to go to another window instead.  Don't forget that
-you must tell Windows 3.1x to keep executing a DOS command in the background
-while you switch back to Vim.
 
 ==============================================================================
 5. Special colors					*win32-colors*
@@ -293,7 +273,7 @@ On Win32, the normal DOS colors can be used.  See |dos-colors|.
 Additionally the system configured colors can also be used.  These are known
 by the names Sys_XXX, where XXX is the appropriate system color name, from the
 following list (see the Win32 documentation for full descriptions).  Case is
-ignored.  Note: On Win32s not all of these colors are supported.
+ignored.
 
 Sys_3DDKShadow		Sys_3DFace			Sys_BTNFace
 Sys_3DHilight		Sys_3DHighlight			Sys_BTNHilight

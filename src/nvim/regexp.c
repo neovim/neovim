@@ -796,13 +796,14 @@ static void reg_equi_class(int c)
   if (enc_utf8 || STRCMP(p_enc, "latin1") == 0
       || STRCMP(p_enc, "iso-8859-15") == 0) {
     switch (c) {
-    case 'A': case '\300': case '\301': case '\302':
+      // Do not use '\300' style, it results in a negative number.
+    case 'A': case 0xc0: case 0xc1: case 0xc2:
+    case 0xc3: case 0xc4: case 0xc5:
       CASEMBC(0x100) CASEMBC(0x102) CASEMBC(0x104) CASEMBC(0x1cd)
       CASEMBC(0x1de) CASEMBC(0x1e0) CASEMBC(0x1ea2)
-    case '\303': case '\304': case '\305':
-      regmbc('A'); regmbc('\300'); regmbc('\301');
-      regmbc('\302'); regmbc('\303'); regmbc('\304');
-      regmbc('\305');
+      regmbc('A'); regmbc(0xc0); regmbc(0xc1);
+      regmbc(0xc2); regmbc(0xc3); regmbc(0xc4);
+      regmbc(0xc5);
       REGMBC(0x100) REGMBC(0x102) REGMBC(0x104)
       REGMBC(0x1cd) REGMBC(0x1de) REGMBC(0x1e0)
       REGMBC(0x1ea2)
@@ -810,9 +811,9 @@ static void reg_equi_class(int c)
     case 'B': CASEMBC(0x1e02) CASEMBC(0x1e06)
       regmbc('B'); REGMBC(0x1e02) REGMBC(0x1e06)
       return;
-    case 'C': case '\307':
+    case 'C': case 0xc7:
       CASEMBC(0x106) CASEMBC(0x108) CASEMBC(0x10a) CASEMBC(0x10c)
-      regmbc('C'); regmbc('\307');
+      regmbc('C'); regmbc(0xc7);
       REGMBC(0x106) REGMBC(0x108) REGMBC(0x10a)
       REGMBC(0x10c)
       return;
@@ -821,11 +822,11 @@ static void reg_equi_class(int c)
       regmbc('D'); REGMBC(0x10e) REGMBC(0x110)
       REGMBC(0x1e0a) REGMBC(0x1e0e) REGMBC(0x1e10)
       return;
-    case 'E': case '\310': case '\311': case '\312': case '\313':
+    case 'E': case 0xc8: case 0xc9: case 0xca: case 0xcb:
       CASEMBC(0x112) CASEMBC(0x114) CASEMBC(0x116) CASEMBC(0x118)
       CASEMBC(0x11a) CASEMBC(0x1eba) CASEMBC(0x1ebc)
-      regmbc('E'); regmbc('\310'); regmbc('\311');
-      regmbc('\312'); regmbc('\313');
+      regmbc('E'); regmbc(0xc8); regmbc(0xc9);
+      regmbc(0xca); regmbc(0xcb);
       REGMBC(0x112) REGMBC(0x114) REGMBC(0x116)
       REGMBC(0x118) REGMBC(0x11a) REGMBC(0x1eba)
       REGMBC(0x1ebc)
@@ -845,11 +846,11 @@ static void reg_equi_class(int c)
       regmbc('H'); REGMBC(0x124) REGMBC(0x126)
       REGMBC(0x1e22) REGMBC(0x1e26) REGMBC(0x1e28)
       return;
-    case 'I': case '\314': case '\315': case '\316': case '\317':
+    case 'I': case 0xcc: case 0xcd: case 0xce: case 0xcf:
       CASEMBC(0x128) CASEMBC(0x12a) CASEMBC(0x12c) CASEMBC(0x12e)
       CASEMBC(0x130) CASEMBC(0x1cf) CASEMBC(0x1ec8)
-      regmbc('I'); regmbc('\314'); regmbc('\315');
-      regmbc('\316'); regmbc('\317');
+      regmbc('I'); regmbc(0xcc); regmbc(0xcd);
+      regmbc(0xce); regmbc(0xcf);
       REGMBC(0x128) REGMBC(0x12a) REGMBC(0x12c)
       REGMBC(0x12e) REGMBC(0x130) REGMBC(0x1cf)
       REGMBC(0x1ec8)
@@ -871,20 +872,20 @@ static void reg_equi_class(int c)
     case 'M': CASEMBC(0x1e3e) CASEMBC(0x1e40)
       regmbc('M'); REGMBC(0x1e3e) REGMBC(0x1e40)
       return;
-    case 'N': case '\321':
+    case 'N': case 0xd1:
       CASEMBC(0x143) CASEMBC(0x145) CASEMBC(0x147) CASEMBC(0x1e44)
       CASEMBC(0x1e48)
-      regmbc('N'); regmbc('\321');
+      regmbc('N'); regmbc(0xd1);
       REGMBC(0x143) REGMBC(0x145) REGMBC(0x147)
       REGMBC(0x1e44) REGMBC(0x1e48)
       return;
-    case 'O': case '\322': case '\323': case '\324': case '\325':
-    case '\326': case '\330':
+    case 'O': case 0xd2: case 0xd3: case 0xd4: case 0xd5:
+    case 0xd6: case 0xd8:
       CASEMBC(0x14c) CASEMBC(0x14e) CASEMBC(0x150) CASEMBC(0x1a0)
       CASEMBC(0x1d1) CASEMBC(0x1ea) CASEMBC(0x1ec) CASEMBC(0x1ece)
-      regmbc('O'); regmbc('\322'); regmbc('\323');
-      regmbc('\324'); regmbc('\325'); regmbc('\326');
-      regmbc('\330');
+      regmbc('O'); regmbc(0xd2); regmbc(0xd3);
+      regmbc(0xd4); regmbc(0xd5); regmbc(0xd6);
+      regmbc(0xd8);
       REGMBC(0x14c) REGMBC(0x14e) REGMBC(0x150)
       REGMBC(0x1a0) REGMBC(0x1d1) REGMBC(0x1ea)
       REGMBC(0x1ec) REGMBC(0x1ece)
@@ -907,12 +908,12 @@ static void reg_equi_class(int c)
       regmbc('T'); REGMBC(0x162) REGMBC(0x164)
       REGMBC(0x166) REGMBC(0x1e6a) REGMBC(0x1e6e)
       return;
-    case 'U': case '\331': case '\332': case '\333': case '\334':
+    case 'U': case 0xd9: case 0xda: case 0xdb: case 0xdc:
       CASEMBC(0x168) CASEMBC(0x16a) CASEMBC(0x16c) CASEMBC(0x16e)
       CASEMBC(0x170) CASEMBC(0x172) CASEMBC(0x1af) CASEMBC(0x1d3)
       CASEMBC(0x1ee6)
-      regmbc('U'); regmbc('\331'); regmbc('\332');
-      regmbc('\333'); regmbc('\334');
+      regmbc('U'); regmbc(0xd9); regmbc(0xda);
+      regmbc(0xdb); regmbc(0xdc);
       REGMBC(0x168) REGMBC(0x16a) REGMBC(0x16c)
       REGMBC(0x16e) REGMBC(0x170) REGMBC(0x172)
       REGMBC(0x1af) REGMBC(0x1d3) REGMBC(0x1ee6)
@@ -928,10 +929,10 @@ static void reg_equi_class(int c)
     case 'X': CASEMBC(0x1e8a) CASEMBC(0x1e8c)
       regmbc('X'); REGMBC(0x1e8a) REGMBC(0x1e8c)
       return;
-    case 'Y': case '\335':
+    case 'Y': case 0xdd:
       CASEMBC(0x176) CASEMBC(0x178) CASEMBC(0x1e8e) CASEMBC(0x1ef2)
       CASEMBC(0x1ef6) CASEMBC(0x1ef8)
-      regmbc('Y'); regmbc('\335');
+      regmbc('Y'); regmbc(0xdd);
       REGMBC(0x176) REGMBC(0x178) REGMBC(0x1e8e)
       REGMBC(0x1ef2) REGMBC(0x1ef6) REGMBC(0x1ef8)
       return;
@@ -941,13 +942,13 @@ static void reg_equi_class(int c)
       REGMBC(0x17d) REGMBC(0x1b5) REGMBC(0x1e90)
       REGMBC(0x1e94)
       return;
-    case 'a': case '\340': case '\341': case '\342':
-    case '\343': case '\344': case '\345':
+    case 'a': case 0xe0: case 0xe1: case 0xe2:
+    case 0xe3: case 0xe4: case 0xe5:
       CASEMBC(0x101) CASEMBC(0x103) CASEMBC(0x105) CASEMBC(0x1ce)
       CASEMBC(0x1df) CASEMBC(0x1e1) CASEMBC(0x1ea3)
-      regmbc('a'); regmbc('\340'); regmbc('\341');
-      regmbc('\342'); regmbc('\343'); regmbc('\344');
-      regmbc('\345');
+      regmbc('a'); regmbc(0xe0); regmbc(0xe1);
+      regmbc(0xe2); regmbc(0xe3); regmbc(0xe4);
+      regmbc(0xe5);
       REGMBC(0x101) REGMBC(0x103) REGMBC(0x105)
       REGMBC(0x1ce) REGMBC(0x1df) REGMBC(0x1e1)
       REGMBC(0x1ea3)
@@ -955,9 +956,9 @@ static void reg_equi_class(int c)
     case 'b': CASEMBC(0x1e03) CASEMBC(0x1e07)
       regmbc('b'); REGMBC(0x1e03) REGMBC(0x1e07)
       return;
-    case 'c': case '\347':
+    case 'c': case 0xe7:
       CASEMBC(0x107) CASEMBC(0x109) CASEMBC(0x10b) CASEMBC(0x10d)
-      regmbc('c'); regmbc('\347');
+      regmbc('c'); regmbc(0xe7);
       REGMBC(0x107) REGMBC(0x109) REGMBC(0x10b)
       REGMBC(0x10d)
       return;
@@ -966,11 +967,11 @@ static void reg_equi_class(int c)
       regmbc('d'); REGMBC(0x10f) REGMBC(0x111)
       REGMBC(0x1e0b) REGMBC(0x1e0f) REGMBC(0x1e11)
       return;
-    case 'e': case '\350': case '\351': case '\352': case '\353':
+    case 'e': case 0xe8: case 0xe9: case 0xea: case 0xeb:
       CASEMBC(0x113) CASEMBC(0x115) CASEMBC(0x117) CASEMBC(0x119)
       CASEMBC(0x11b) CASEMBC(0x1ebb) CASEMBC(0x1ebd)
-      regmbc('e'); regmbc('\350'); regmbc('\351');
-      regmbc('\352'); regmbc('\353');
+      regmbc('e'); regmbc(0xe8); regmbc(0xe9);
+      regmbc(0xea); regmbc(0xeb);
       REGMBC(0x113) REGMBC(0x115) REGMBC(0x117)
       REGMBC(0x119) REGMBC(0x11b) REGMBC(0x1ebb)
       REGMBC(0x1ebd)
@@ -991,11 +992,11 @@ static void reg_equi_class(int c)
       REGMBC(0x1e23) REGMBC(0x1e27) REGMBC(0x1e29)
       REGMBC(0x1e96)
       return;
-    case 'i': case '\354': case '\355': case '\356': case '\357':
+    case 'i': case 0xec: case 0xed: case 0xee: case 0xef:
       CASEMBC(0x129) CASEMBC(0x12b) CASEMBC(0x12d) CASEMBC(0x12f)
       CASEMBC(0x1d0) CASEMBC(0x1ec9)
-      regmbc('i'); regmbc('\354'); regmbc('\355');
-      regmbc('\356'); regmbc('\357');
+      regmbc('i'); regmbc(0xec); regmbc(0xed);
+      regmbc(0xee); regmbc(0xef);
       REGMBC(0x129) REGMBC(0x12b) REGMBC(0x12d)
       REGMBC(0x12f) REGMBC(0x1d0) REGMBC(0x1ec9)
       return;
@@ -1016,20 +1017,20 @@ static void reg_equi_class(int c)
     case 'm': CASEMBC(0x1e3f) CASEMBC(0x1e41)
       regmbc('m'); REGMBC(0x1e3f) REGMBC(0x1e41)
       return;
-    case 'n': case '\361':
+    case 'n': case 0xf1:
       CASEMBC(0x144) CASEMBC(0x146) CASEMBC(0x148) CASEMBC(0x149)
       CASEMBC(0x1e45) CASEMBC(0x1e49)
-      regmbc('n'); regmbc('\361');
+      regmbc('n'); regmbc(0xf1);
       REGMBC(0x144) REGMBC(0x146) REGMBC(0x148)
       REGMBC(0x149) REGMBC(0x1e45) REGMBC(0x1e49)
       return;
-    case 'o': case '\362': case '\363': case '\364': case '\365':
-    case '\366': case '\370':
+    case 'o': case 0xf2: case 0xf3: case 0xf4: case 0xf5:
+    case 0xf6: case 0xf8:
       CASEMBC(0x14d) CASEMBC(0x14f) CASEMBC(0x151) CASEMBC(0x1a1)
       CASEMBC(0x1d2) CASEMBC(0x1eb) CASEMBC(0x1ed) CASEMBC(0x1ecf)
-      regmbc('o'); regmbc('\362'); regmbc('\363');
-      regmbc('\364'); regmbc('\365'); regmbc('\366');
-      regmbc('\370');
+      regmbc('o'); regmbc(0xf2); regmbc(0xf3);
+      regmbc(0xf4); regmbc(0xf5); regmbc(0xf6);
+      regmbc(0xf8);
       REGMBC(0x14d) REGMBC(0x14f) REGMBC(0x151)
       REGMBC(0x1a1) REGMBC(0x1d2) REGMBC(0x1eb)
       REGMBC(0x1ed) REGMBC(0x1ecf)
@@ -1052,12 +1053,12 @@ static void reg_equi_class(int c)
       regmbc('t'); REGMBC(0x163) REGMBC(0x165) REGMBC(0x167)
       REGMBC(0x1e6b) REGMBC(0x1e6f) REGMBC(0x1e97)
       return;
-    case 'u': case '\371': case '\372': case '\373': case '\374':
+    case 'u': case 0xf9: case 0xfa: case 0xfb: case 0xfc:
       CASEMBC(0x169) CASEMBC(0x16b) CASEMBC(0x16d) CASEMBC(0x16f)
       CASEMBC(0x171) CASEMBC(0x173) CASEMBC(0x1b0) CASEMBC(0x1d4)
       CASEMBC(0x1ee7)
-      regmbc('u'); regmbc('\371'); regmbc('\372');
-      regmbc('\373'); regmbc('\374');
+      regmbc('u'); regmbc(0xf9); regmbc(0xfa);
+      regmbc(0xfb); regmbc(0xfc);
       REGMBC(0x169) REGMBC(0x16b) REGMBC(0x16d)
       REGMBC(0x16f) REGMBC(0x171) REGMBC(0x173)
       REGMBC(0x1b0) REGMBC(0x1d4) REGMBC(0x1ee7)
@@ -1074,10 +1075,10 @@ static void reg_equi_class(int c)
     case 'x': CASEMBC(0x1e8b) CASEMBC(0x1e8d)
       regmbc('x'); REGMBC(0x1e8b) REGMBC(0x1e8d)
       return;
-    case 'y': case '\375': case '\377':
+    case 'y': case 0xfd: case 0xff:
       CASEMBC(0x177) CASEMBC(0x1e8f) CASEMBC(0x1e99)
       CASEMBC(0x1ef3) CASEMBC(0x1ef7) CASEMBC(0x1ef9)
-      regmbc('y'); regmbc('\375'); regmbc('\377');
+      regmbc('y'); regmbc(0xfd); regmbc(0xff);
       REGMBC(0x177) REGMBC(0x1e8f) REGMBC(0x1e99)
       REGMBC(0x1ef3) REGMBC(0x1ef7) REGMBC(0x1ef9)
       return;
@@ -4186,7 +4187,7 @@ regmatch (
               /* When only a composing char is given match at any
                * position where that composing char appears. */
               status = RA_NOMATCH;
-              for (i = 0; reginput[i] != NUL; i += utf_char2len(inpc)) {
+              for (i = 0; reginput[i] != NUL; i += utf_ptr2len(reginput + i)) {
                 inpc = mb_ptr2char(reginput + i);
                 if (!utf_iscomposing(inpc)) {
                   if (i > 0)
@@ -5333,10 +5334,12 @@ do_class:
     if ((len = (*mb_ptr2len)(opnd)) > 1) {
       if (ireg_ic && enc_utf8)
         cf = utf_fold(utf_ptr2char(opnd));
-      while (count < maxcount) {
-        for (i = 0; i < len; ++i)
-          if (opnd[i] != scan[i])
+      while (count < maxcount && (*mb_ptr2len)(scan) >= len) {
+        for (i = 0; i < len; ++i) {
+          if (opnd[i] != scan[i]) {
             break;
+          }
+        }
         if (i < len && (!ireg_ic || !enc_utf8
                         || utf_fold(utf_ptr2char(scan)) != cf))
           break;

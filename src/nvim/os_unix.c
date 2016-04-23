@@ -1,12 +1,4 @@
 /*
- * VIM - Vi IMproved	by Bram Moolenaar
- *
- * Do ":help uganda"  in Vim to read copying and usage conditions.
- * Do ":help credits" in Vim to see a list of people who contributed.
- * See README.txt for an overview of the Vim source code.
- */
-
-/*
  * os_unix.c -- code for all flavors of Unix (BSD, SYSV, SVR4, POSIX, ...)
  *
  * A lot of this file was originally written by Juergen Weigert and later
@@ -42,7 +34,6 @@
 #include "nvim/screen.h"
 #include "nvim/strings.h"
 #include "nvim/syntax.h"
-#include "nvim/tempfile.h"
 #include "nvim/ui.h"
 #include "nvim/types.h"
 #include "nvim/os/os.h"
@@ -51,10 +42,6 @@
 #include "nvim/os/shell.h"
 #include "nvim/os/signal.h"
 #include "nvim/msgpack_rpc/helpers.h"
-
-#ifdef HAVE_STROPTS_H
-# include <stropts.h>
-#endif
 
 #ifdef HAVE_SELINUX
 # include <selinux/selinux.h>
@@ -186,13 +173,6 @@ void mch_exit(int r)
 
   exit(r);
 }
-
-#ifndef SEEK_SET
-# define SEEK_SET 0
-#endif
-#ifndef SEEK_END
-# define SEEK_END 2
-#endif
 
 #define SHELL_SPECIAL (char_u *)"\t \"&'$;<>()\\|"
 

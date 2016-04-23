@@ -59,11 +59,6 @@ if(HAVE_LIBDL)
   list(APPEND LIBUV_LIBRARIES dl)
 endif()
 
-check_library_exists(iphlpapi GetAdaptersAddresses "iphlpapi.h" HAVE_LIBIPHLPAPI)
-if(HAVE_LIBIPHLPAPI)
-  list(APPEND LIBUV_LIBRARIES iphlpapi)
-endif()
-
 check_library_exists(kstat kstat_lookup "kstat.h" HAVE_LIBKSTAT)
 if(HAVE_LIBKSTAT)
   list(APPEND LIBUV_LIBRARIES kstat)
@@ -84,11 +79,6 @@ if(HAVE_LIBPERFSTAT)
   list(APPEND LIBUV_LIBRARIES perfstat)
 endif()
 
-check_library_exists(psapi GetProcessMemoryInfo "psapi.h" HAVE_LIBPSAPI)
-if(HAVE_LIBPSAPI)
-  list(APPEND LIBUV_LIBRARIES psapi)
-endif()
-
 check_library_exists(rt clock_gettime "time.h" HAVE_LIBRT)
 if(HAVE_LIBRT)
   list(APPEND LIBUV_LIBRARIES rt)
@@ -99,13 +89,12 @@ if(HAVE_LIBSENDFILE)
   list(APPEND LIBUV_LIBRARIES sendfile)
 endif()
 
-check_library_exists(userenv GetUserProfileDirectoryW "userenv.h" HAVE_LIBUSERENV)
-if(HAVE_LIBUSERENV)
+if(WIN32)
+  # check_library_exists() does not work for Win32 API calls in X86 due to name
+  # mangling calling conventions
+  list(APPEND LIBUV_LIBRARIES iphlpapi)
+  list(APPEND LIBUV_LIBRARIES psapi)
   list(APPEND LIBUV_LIBRARIES userenv)
-endif()
-
-check_library_exists(ws2_32 WSAStartup "winsock2.h" HAVE_LIBWS232)
-if(HAVE_LIBWS232)
   list(APPEND LIBUV_LIBRARIES ws2_32)
 endif()
 

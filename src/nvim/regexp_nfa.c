@@ -1897,9 +1897,10 @@ static int nfa_regpiece(void)
       return OK;
     }
 
-    // The engine is very inefficient (uses too many states) when the maximum is
-    // much larger than the minimum. Bail out if we can use the other engine.
-    if ((nfa_re_flags & RE_AUTO) && maxval > minval + 200) {
+    // The engine is very inefficient (uses too many states) when the maximum
+    // is much larger than the minimum and when the maximum is large. Bail out
+    // if we can use the other engine.
+    if ((nfa_re_flags & RE_AUTO) && (maxval > minval + 200 || maxval > 500)) {
       return FAIL;
     }
 
@@ -4047,6 +4048,7 @@ skip_add:
         sub->list.multi[subidx].start_col =
           (colnr_T)(reginput - regline + off);
       }
+      sub->list.multi[subidx].end_lnum = -1;
     } else {
       if (subidx < sub->in_use) {
         save_ptr = sub->list.line[subidx].start;
@@ -4761,48 +4763,54 @@ static int skip_to_start(int c, colnr_T *colp)
  */
 static long find_match_text(colnr_T startcol, int regstart, char_u *match_text)
 {
-  colnr_T col = startcol;
-  int c1, c2;
-  int len1, len2;
-  int match;
+#define PTR2LEN(x) enc_utf8 ? utf_ptr2len(x) : MB_PTR2LEN(x)
 
-  for (;; ) {
-    match = TRUE;
-    len2 = MB_CHAR2LEN(regstart);     /* skip regstart */
-    for (len1 = 0; match_text[len1] != NUL; len1 += MB_CHAR2LEN(c1)) {
-      c1 = PTR2CHAR(match_text + len1);
-      c2 = PTR2CHAR(regline + col + len2);
-      if (c1 != c2 && (!ireg_ic || vim_tolower(c1) != vim_tolower(c2))) {
-        match = FALSE;
+  colnr_T col = startcol;
+  int regstart_len = PTR2LEN(regline + startcol);
+
+  for (;;) {
+    bool match = true;
+    char_u *s1 = match_text;
+    char_u *s2 = regline + col + regstart_len;  // skip regstart
+    while (*s1) {
+      int c1_len = PTR2LEN(s1);
+      int c1 = PTR2CHAR(s1);
+      int c2_len = PTR2LEN(s2);
+      int c2 = PTR2CHAR(s2);
+
+      if ((c1 != c2 && (!ireg_ic || vim_tolower(c1) != vim_tolower(c2))) ||
+          c1_len != c2_len) {
+        match = false;
         break;
       }
-      len2 += MB_CHAR2LEN(c2);
+      s1 += c1_len;
+      s2 += c2_len;
     }
     if (match
-        /* check that no composing char follows */
-        && !(enc_utf8
-             && STRLEN(regline) > (size_t)(col + len2)
-             && utf_iscomposing(PTR2CHAR(regline + col + len2)))
-        ) {
+        // check that no composing char follows
+        && !(enc_utf8 && utf_iscomposing(PTR2CHAR(s2)))) {
       cleanup_subexpr();
       if (REG_MULTI) {
         reg_startpos[0].lnum = reglnum;
         reg_startpos[0].col = col;
         reg_endpos[0].lnum = reglnum;
-        reg_endpos[0].col = col + len2;
+        reg_endpos[0].col = s2 - regline;
       } else {
         reg_startp[0] = regline + col;
-        reg_endp[0] = regline + col + len2;
+        reg_endp[0] = s2;
       }
       return 1L;
     }
 
-    /* Try finding regstart after the current match. */
-    col += MB_CHAR2LEN(regstart);     /* skip regstart */
-    if (skip_to_start(regstart, &col) == FAIL)
+    // Try finding regstart after the current match.
+    col += regstart_len;  // skip regstart
+    if (skip_to_start(regstart, &col) == FAIL) {
       break;
+    }
   }
   return 0L;
+
+#undef PTR2LEN
 }
 
 /*
@@ -5761,7 +5769,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
 
           // Bail out quickly when there can't be a match, avoid the overhead of
           // win_linetabsize() on long lines.
-          if (op != 1 && col > t->state->val) {
+          if (op != 1 && col > t->state->val * (has_mbyte ? MB_MAXBYTES : 1)) {
             break;
           }
 
@@ -5874,7 +5882,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
         // If ireg_icombine is not set only skip over the character
         // itself.  When it is set skip over composing characters.
         if (result && enc_utf8 && !ireg_icombine) {
-          clen = utf_char2len(curc);
+          clen = utf_ptr2len(reginput);
         }
 
         ADD_STATE_IF_MATCH(t->state);
@@ -6172,7 +6180,8 @@ static long nfa_regtry(nfa_regprog_T *prog, colnr_T col)
   if (prog->reghasz == REX_SET) {
     cleanup_zsubexpr();
     re_extmatch_out = make_extmatch();
-    for (i = 0; i < subs.synt.in_use; i++) {
+    // Loop over \z1, \z2, etc.  There is no \z0.
+    for (i = 1; i < subs.synt.in_use; i++) {
       if (REG_MULTI) {
         struct multipos *mpos = &subs.synt.list.multi[i];
 

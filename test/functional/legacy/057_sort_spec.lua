@@ -600,4 +600,72 @@ describe(':sort', function()
     eq('Vim(sort):E474: Invalid argument', eval('tmpvar'))
     expect(text)
   end)
+
+  it('binary', function()
+    insert([[
+      0b111000
+      0b101100
+      0b101001
+      0b101001
+      0b101000
+      0b000000
+      0b001000
+      0b010000
+      0b101000
+      0b100000
+      0b101010
+      0b100010
+      0b100100
+      0b100010]])
+    execute([[sort b]])
+    expect([[
+      0b000000
+      0b001000
+      0b010000
+      0b100000
+      0b100010
+      0b100010
+      0b100100
+      0b101000
+      0b101000
+      0b101001
+      0b101001
+      0b101010
+      0b101100
+      0b111000]])
+  end)
+
+  it('binary with leading characters', function()
+    insert([[
+      0b100010
+      0b010000
+       0b101001
+      b0b101100
+      0b100010
+       0b100100
+      a0b001000
+      0b101000
+      0b101000
+      a0b101001
+      ab0b100000
+      0b101010
+      0b000000
+      b0b111000]])
+    execute([[sort b]])
+    expect([[
+      0b000000
+      a0b001000
+      0b010000
+      ab0b100000
+      0b100010
+      0b100010
+       0b100100
+      0b101000
+      0b101000
+       0b101001
+      a0b101001
+      0b101010
+      b0b101100
+      b0b111000]])
+  end)
 end)

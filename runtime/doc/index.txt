@@ -1,4 +1,4 @@
-*index.txt*     For Vim version 7.4.  Last change: 2015 Jan 07
+*index.txt*     For Vim version 7.4.  Last change: 2015 Sep 08
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -700,12 +700,16 @@ tag		char	      note action in Normal mode	~
 |g'|		g'{mark}	1  like |'| but without changing the jumplist
 |g`|		g`{mark}	1  like |`| but without changing the jumplist
 |gstar|		g*		1  like "*", but without using "\<" and "\>"
+|g+|		g+		   go to newer text state N times
+|g,|		g,		1  go to N newer position in change list
+|g-|		g-		   go to older text state N times
 |g0|		g0		1  when 'wrap' off go to leftmost character of
 				   the current line that is on the screen;
 				   when 'wrap' on go to the leftmost character
 				   of the current screen line
 |g8|		g8		   print hex value of bytes used in UTF-8
 				   character under the cursor
+|g;|		g;		1  go to N older position in change list
 |g<|		g<		   display previous command output
 |g?|		g?		2  Rot13 encoding operator
 |g?g?|		g??		2  Rot13 encode current line
@@ -734,6 +738,7 @@ tag		char	      note action in Normal mode	~
 				   the screen; when 'wrap' on go to the
 				   leftmost non-white character of the current
 				   screen line
+|g_|		g_		1  cursor to the last CHAR N - 1 lines lower
 |ga|		ga		   print ascii value of character under the
 				   cursor
 |gd|		gd		1  go to definition of word under the cursor
@@ -1128,6 +1133,8 @@ tag	      command	      action ~
 |:cc|		:cc		go to specific error
 |:cclose|	:ccl[ose]	close quickfix window
 |:cd|		:cd		change directory
+|:cdo|		:cdo		execute command in each valid error list entry
+|:cfdo|		:cfdo		execute command in each file in error list
 |:center|	:ce[nter]	format lines at the center
 |:cexpr|	:cex[pr]	read errors from expr and jump to first
 |:cfile|	:cf[ile]	read file with error messages and jump to first
@@ -1239,7 +1246,6 @@ tag	      command	      action ~
 |:hardcopy|	:ha[rdcopy]	send text to the printer
 |:help|		:h[elp]		open a help window
 |:helpclose|	:helpc[lose]	close one help window
-|:helpfind|	:helpf[ind]	dialog to open a help window
 |:helpgrep|	:helpg[rep]	like ":grep" but searches help files
 |:helptags|	:helpt[ags]	generate help tags for a directory
 |:highlight|	:hi[ghlight]	specify highlighting methods
@@ -1285,6 +1291,8 @@ tag	      command	      action ~
 |:lchdir|	:lch[dir]	change directory locally
 |:lclose|	:lcl[ose]	close location window
 |:lcscope|	:lcs[cope]      like ":cscope" but uses location list
+|:ldo|		:ld[o]		execute command in valid location list entries
+|:lfdo|		:lfd[o]		execute command in each file in location list
 |:left|		:le[ft]		left align lines
 |:leftabove|	:lefta[bove]	make split window appear left or above
 |:let|		:let		assign a value to a variable or option
@@ -1359,8 +1367,7 @@ tag	      command	      action ~
 |:number|	:nu[mber]	print lines with line number
 |:nunmap|	:nun[map]	like ":unmap" but for Normal mode
 |:nunmenu|	:nunme[nu]	remove menu for Normal mode
-|:oldfiles|	:ol[dfiles]	list files that have marks in the ShaDa file
-|:open|		:o[pen]		start open mode (not implemented)
+|:oldfiles|	:o[ldfiles]	list files that have marks in the ShaDa file
 |:omap|		:om[ap]		like ":map" but for Operator-pending mode
 |:omapclear|	:omapc[lear]	remove all mappings for Operator-pending mode
 |:omenu|	:ome[nu]	add menu for Operator-pending mode

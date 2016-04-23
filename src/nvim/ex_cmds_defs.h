@@ -1,9 +1,3 @@
-/*
- * VIM - Vi IMproved	by Bram Moolenaar
- *
- * Do ":help uganda"  in Vim to read copying and usage conditions.
- * Do ":help credits" in Vim to see a list of people who contributed.
- */
 #ifndef NVIM_EX_CMDS_DEFS_H
 #define NVIM_EX_CMDS_DEFS_H
 
@@ -78,6 +72,7 @@
 #define ADDR_LOADED_BUFFERS     3
 #define ADDR_BUFFERS            4
 #define ADDR_TABS               5
+#define ADDR_QUICKFIX           6
 
 typedef struct exarg exarg_T;
 

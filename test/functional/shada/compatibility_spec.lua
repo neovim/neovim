@@ -4,9 +4,8 @@ local nvim_command, funcs, eq = helpers.command, helpers.funcs, helpers.eq
 local exc_exec = helpers.exc_exec
 
 local shada_helpers = require('test.functional.shada.helpers')
-local reset, set_additional_cmd, clear, get_shada_rw =
-  shada_helpers.reset, shada_helpers.set_additional_cmd,
-  shada_helpers.clear, shada_helpers.get_shada_rw
+local reset, clear, get_shada_rw = shada_helpers.reset, shada_helpers.clear,
+  shada_helpers.get_shada_rw
 local read_shada_file = shada_helpers.read_shada_file
 
 local wshada, sdrcmd, shada_fname = get_shada_rw('Xtest-functional-shada-compatibility.shada')
@@ -181,7 +180,7 @@ describe('ShaDa forward compatibility support code', function()
         end
         eq(3, found)
         nvim_command('wshada! ' .. shada_fname)
-        local found = 0
+        found = 0
         for i, subv in ipairs(read_shada_file(shada_fname)) do
           if i == 1 then
             eq(1, subv.type)
@@ -249,7 +248,7 @@ describe('ShaDa forward compatibility support code', function()
     end
     eq(1, found)
     nvim_command('wshada! ' .. shada_fname)
-    local found = 0
+    found = 0
     for i, v in ipairs(read_shada_file(shada_fname)) do
       if i == 1 then
         eq(1, v.type)
@@ -271,9 +270,7 @@ describe('ShaDa forward compatibility support code', function()
   it('works with register item with type 10', function()
     wshada('\005\001\019\132\161na\162rX\194\162rc\145\196\001-\162rt\010')
     eq(0, exc_exec(sdrcmd(true)))
-    -- getreg may return empty list as list with NULL pointer which API 
-    -- translates into nil for some reason.
-    eq({}, funcs.getreg('a', 1, 1) or {})
+    eq({}, funcs.getreg('a', 1, 1))
     eq('', funcs.getregtype('a'))
     nvim_command('wshada ' .. shada_fname)
     local found = 0
@@ -289,7 +286,7 @@ describe('ShaDa forward compatibility support code', function()
     end
     eq(1, found)
     nvim_command('wshada! ' .. shada_fname)
-    local found = 0
+    found = 0
     for i, v in ipairs(read_shada_file(shada_fname)) do
       if i == 1 then
         eq(1, v.type)
@@ -395,7 +392,7 @@ describe('ShaDa forward compatibility support code', function()
     end
     eq(1, found)
     nvim_command('wshada! ' .. shada_fname)
-    local found = 0
+    found = 0
     for i, v in ipairs(read_shada_file(shada_fname)) do
       if i == 1 then
         eq(1, v.type)
@@ -432,7 +429,7 @@ describe('ShaDa forward compatibility support code', function()
     end
     eq(1, found)
     nvim_command('wshada! ' .. shada_fname)
-    local found = 0
+    found = 0
     for i, v in ipairs(read_shada_file(shada_fname)) do
       if i == 1 then
         eq(1, v.type)

@@ -4,6 +4,7 @@ local helpers = require("test.unit.helpers")
 local eq      = helpers.eq
 local ffi     = helpers.ffi
 local to_cstr = helpers.to_cstr
+local NULL    = helpers.NULL
 
 local fileio = helpers.cimport("./src/nvim/fileio.h")
 

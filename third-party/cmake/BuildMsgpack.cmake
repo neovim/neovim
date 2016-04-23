@@ -53,7 +53,7 @@ if(MINGW AND CMAKE_CROSSCOMPILING)
     # Hack to avoid -rdynamic in Mingw
     -DCMAKE_SHARED_LIBRARY_LINK_C_FLAGS="")
 elseif(MSVC)
-  # Same as UNIX without fPIC
+  # Same as Unix without fPIC
   set(MSGPACK_CONFIGURE_COMMAND ${CMAKE_COMMAND} ${DEPS_BUILD_DIR}/src/msgpack
     -DMSGPACK_ENABLE_CXX=OFF
     -DMSGPACK_BUILD_TESTS=OFF

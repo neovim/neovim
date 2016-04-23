@@ -1,7 +1,7 @@
 " These commands create the option window.
 "
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2014 Nov 19
+" Last Change:	2015 Jul 22
 
 " If there already is an option window, jump to that one.
 if bufwinnr("option-window") > 0
@@ -540,10 +540,6 @@ if has("title")
   call append("$", "iconstring\twhen not empty, text for the icon of this window")
   call <SID>OptionG("iconstring", &iconstring)
 endif
-if has("win32")
-  call append("$", "restorescreen\trestore the screen contents when exiting Vim")
-  call <SID>BinOptionG("rs", &rs)
-endif
 
 
 call <SID>Header("using the mouse")
@@ -576,10 +572,6 @@ if has("gui")
   endif
   call append("$", "guifontwide\tlist of font names to be used for double-wide characters")
   call <SID>OptionG("gfw", &gfw)
-  if has("mac")
-    call append("$", "antialias\tuse smooth, antialiased fonts")
-    call <SID>BinOptionG("anti", &anti)
-  endif
   call append("$", "guioptions\tlist of flags that specify how the GUI works")
   call <SID>OptionG("go", &go)
   if has("gui_gtk")
@@ -681,6 +673,8 @@ call append("$", "errorbells\tring the bell for error messages")
 call <SID>BinOptionG("eb", &eb)
 call append("$", "visualbell\tuse a visual bell instead of beeping")
 call <SID>BinOptionG("vb", &vb)
+call append("$", "belloff\tdo not ring the bell for these reasons")
+call <SID>OptionG("belloff", &belloff)
 if has("multi_lang")
   call append("$", "helplang\tlist of preferred languages for finding help")
   call <SID>OptionG("hlg", &hlg)
@@ -930,6 +924,9 @@ call <SID>BinOptionL("bin")
 call append("$", "endofline\tlast line in the file has an end-of-line")
 call append("$", "\t(local to buffer)")
 call <SID>BinOptionL("eol")
+call append("$", "fixendofline\tfixes missing end-of-line at end of text file")
+call append("$", "\t(local to buffer)")
+call <SID>BinOptionL("fixeol")
 if has("multi_byte")
   call append("$", "bomb\tprepend a Byte Order Mark to the file")
   call append("$", "\t(local to buffer)")
@@ -977,8 +974,6 @@ call <SID>OptionG("dir", &dir)
 call append("$", "swapfile\tuse a swap file for this buffer")
 call append("$", "\t(local to buffer)")
 call <SID>BinOptionL("swf")
-call append("$", "swapsync\t\"sync\", \"fsync\" or empty; how to flush a swap file to disk")
-call <SID>OptionG("sws", &sws)
 call append("$", "updatecount\tnumber of characters typed to cause a swap file update")
 call append("$", " \tset uc=" . &uc)
 call append("$", "updatetime\ttime in msec after which the swap file will be updated")

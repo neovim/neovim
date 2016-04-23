@@ -1,11 +1,4 @@
 /*
- * VIM - Vi IMproved	by Bram Moolenaar
- *
- * Do ":help uganda"  in Vim to read copying and usage conditions.
- * Do ":help credits" in Vim to see a list of people who contributed.
- * See README.txt for an overview of the Vim source code.
- */
-/*
  * move.c: Functions for moving the cursor and scrolling text.
  *
  * There are two ways to move the cursor:
@@ -1295,9 +1288,10 @@ void scroll_cursor_top(int min_scroll, int always)
    * - at least 'scrolloff' lines above and below the cursor
    */
   validate_cheight();
-  int used = curwin->w_cline_height;
-  if (curwin->w_cursor.lnum < curwin->w_topline)
+  int used = curwin->w_cline_height;  // includes filler lines above
+  if (curwin->w_cursor.lnum < curwin->w_topline) {
     scrolled = used;
+  }
 
   if (hasFolding(curwin->w_cursor.lnum, &top, &bot)) {
     --top;
@@ -1308,9 +1302,10 @@ void scroll_cursor_top(int min_scroll, int always)
   }
   new_topline = top + 1;
 
-  /* count filler lines of the cursor window as context */
+  // "used" already contains the number of filler lines above, don't add it
+  // again.
+  // Hide filler lines above cursor line by adding them to "extra".
   int extra = diff_check_fill(curwin, curwin->w_cursor.lnum);
-  used += extra;
 
   /*
    * Check if the lines from "top" to "bot" fit in the window.  If they do,
@@ -1319,7 +1314,7 @@ void scroll_cursor_top(int min_scroll, int always)
   while (top > 0) {
     int i = hasFolding(top, &top, NULL)
             ? 1  // count one logical line for a sequence of folded lines
-            : plines(top);
+            : plines_nofill(top);
     used += i;
     if (extra + i <= off && bot < curbuf->b_ml.ml_line_count) {
       if (hasFolding(bot, NULL, &bot))

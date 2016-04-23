@@ -1,17 +1,8 @@
 /*
- * VIM - Vi IMproved	by Bram Moolenaar
- *
- * Do ":help uganda"  in Vim to read copying and usage conditions.
- * Do ":help credits" in Vim to see a list of people who contributed.
- * See README.txt for an overview of the Vim source code.
- */
-
-/*
  * hardcopy.c: printing to paper
  */
 
 #include <assert.h>
-#include <errno.h>
 #include <string.h>
 #include <inttypes.h>
 #include <stdint.h>
@@ -41,7 +32,6 @@
 #include "nvim/syntax.h"
 #include "nvim/ui.h"
 #include "nvim/version.h"
-#include "nvim/tempfile.h"
 #include "nvim/os/os.h"
 #include "nvim/os/input.h"
 
@@ -2789,11 +2779,13 @@ void mch_print_end(prt_settings_T *psettings)
     }
     prt_message((char_u *)_("Sending to printer..."));
 
-    /* Not printing to a file: use 'printexpr' to print the file. */
-    if (eval_printexpr(prt_ps_file_name, psettings->arguments) == FAIL)
+    // Not printing to a file: use 'printexpr' to print the file.
+    if (eval_printexpr((char *) prt_ps_file_name, (char *) psettings->arguments)
+        == FAIL) {
       EMSG(_("E365: Failed to print PostScript file"));
-    else
+    } else {
       prt_message((char_u *)_("Print job sent."));
+    }
   }
 
   mch_print_cleanup();

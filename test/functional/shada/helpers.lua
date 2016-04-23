@@ -3,32 +3,25 @@ local spawn, set_session, meths, nvim_prog =
   helpers.spawn, helpers.set_session, helpers.meths, helpers.nvim_prog
 local write_file, merge_args = helpers.write_file, helpers.merge_args
 
-local msgpack = require('MessagePack')
+local mpack = require('mpack')
 
 local tmpname = os.tmpname()
 local additional_cmd = ''
 
 local function nvim_argv()
-  local ret
-  local nvim_argv = {nvim_prog, '-u', 'NONE', '-i', tmpname, '-N',
-                     '--cmd', 'set shortmess+=I background=light noswapfile',
-                     '--cmd', additional_cmd,
-                     '--embed'}
+  local argv = {nvim_prog, '-u', 'NONE', '-i', tmpname, '-N',
+                '--cmd', 'set shortmess+=I background=light noswapfile',
+                '--cmd', additional_cmd,
+                '--embed'}
   if helpers.prepend_argv then
-    return merge_args(helpers.prepend_argv, nvim_argv)
+    return merge_args(helpers.prepend_argv, argv)
   else
-    return nvim_argv
+    return argv
   end
 end
 
-local session = nil
-
 local reset = function()
-  if session then
-    session:exit(0)
-  end
-  session = spawn(nvim_argv())
-  set_session(session)
+  set_session(spawn(nvim_argv()))
   meths.set_var('tmpname', tmpname)
 end
 
@@ -67,13 +60,13 @@ local read_shada_file = function(fname)
   local fd = io.open(fname, 'r')
   local mstring = fd:read('*a')
   fd:close()
-  local unpacker = msgpack.unpacker(mstring)
+  local unpack = mpack.Unpacker()
   local ret = {}
-  local cur
+  local cur, val
   local i = 0
-  while true do
-    local off, val = unpacker()
-    if not off then break end
+  local off = 1
+  while off <= #mstring do
+    val, off = unpack(mstring, off)
     if i % 4 == 0 then
       cur = {}
       ret[#ret + 1] = cur
@@ -88,7 +81,6 @@ return {
   reset=reset,
   set_additional_cmd=set_additional_cmd,
   clear=clear,
-  exc_exec=exc_exec,
   get_shada_rw=get_shada_rw,
   read_shada_file=read_shada_file,
 }

@@ -60,6 +60,7 @@ int main() {
 #define kv_pop(v) ((v).items[--(v).size])
 #define kv_size(v) ((v).size)
 #define kv_max(v) ((v).capacity)
+#define kv_last(v) kv_A(v, kv_size(v) - 1)
 
 #define kv_resize(type, v, s)  ((v).capacity = (s), (v).items = (type*)xrealloc((v).items, sizeof(type) * (v).capacity))
 
@@ -77,10 +78,10 @@ int main() {
 		(v).items[(v).size++] = (x);										\
 	} while (0)
 
-#define kv_pushp(type, v) (((v).size == (v).capacity)?							\
+#define kv_pushp(type, v) ((((v).size == (v).capacity)?							\
 						   ((v).capacity = ((v).capacity? (v).capacity<<1 : 8),				\
 							(v).items = (type*)xrealloc((v).items, sizeof(type) * (v).capacity), 0)	\
-						   : 0), ((v).items + ((v).size++))
+						   : 0), ((v).items + ((v).size++)))
 
 #define kv_a(type, v, i) (((v).capacity <= (size_t)(i)? \
 						  ((v).capacity = (v).size = (i) + 1, kv_roundup32((v).capacity), \

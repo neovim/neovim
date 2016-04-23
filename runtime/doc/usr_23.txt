@@ -25,7 +25,7 @@ Back in the early days, the old Teletype machines used two characters to
 start a new line.  One to move the carriage back to the first position
 (carriage return, <CR>), another to move the paper up (line feed, <LF>).
    When computers came out, storage was expensive.  Some people decided that
-they did not need two characters for end-of-line.  The UNIX people decided
+they did not need two characters for end-of-line.  The Unix people decided
 they could use <Line Feed> only for end-of-line.  The Apple people
 standardized on <CR>.  The MS-DOS (and Microsoft Windows) folks decided to
 keep the old <CR><LF>.
@@ -34,7 +34,7 @@ have line-break problems.  The Vim editor automatically recognizes the
 different file formats and handles things properly behind your back.
    The option 'fileformats' contains the various formats that will be tried
 when a new file is edited.  The following command, for example, tells Vim to
-try UNIX format first and MS-DOS format second: >
+try Unix format first and MS-DOS format second: >
 
 	:set fileformats=unix,dos
 
@@ -97,12 +97,12 @@ CONVERSION
 
 You can use the 'fileformat' option to convert from one file format to
 another.  Suppose, for example, that you have an MS-DOS file named README.TXT
-that you want to convert to UNIX format.  Start by editing the MS-DOS format
+that you want to convert to Unix format.  Start by editing the MS-DOS format
 file: >
 	vim README.TXT
 
 Vim will recognize this as a dos format file.  Now change the file format to
-UNIX: >
+Unix: >
 
 	:set fileformat=unix
 	:write

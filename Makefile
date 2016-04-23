@@ -45,6 +45,11 @@ ifneq (,$(USE_BUNDLED_DEPS))
   BUNDLED_CMAKE_FLAG := -DUSE_BUNDLED=$(USE_BUNDLED_DEPS)
 endif
 
+ifneq (,$(findstring functionaltest-lua,$(MAKECMDGOALS)))
+  BUNDLED_LUA_CMAKE_FLAG := -DUSE_BUNDLED_LUA=ON
+  $(shell [ -x .deps/usr/bin/lua ] || rm build/.ran-*)
+endif
+
 # For use where we want to make sure only a single job is run.  This does issue 
 # a warning, but we need to keep SCRIPTS argument.
 SINGLE_MAKE = export MAKEFLAGS= ; $(MAKE)
@@ -74,7 +79,7 @@ build/.ran-third-party-cmake:
 ifeq ($(call filter-true,$(USE_BUNDLED_DEPS)),)
 	mkdir -p .deps
 	cd .deps && \
-		cmake -G '$(BUILD_TYPE)' $(BUNDLED_CMAKE_FLAG) \
+		cmake -G '$(BUILD_TYPE)' $(BUNDLED_CMAKE_FLAG) $(BUNDLED_LUA_CMAKE_FLAG) \
 		$(DEPS_CMAKE_FLAGS) ../third-party
 endif
 	mkdir -p build
@@ -86,13 +91,19 @@ oldtest: | nvim
 functionaltest: | nvim
 	+$(BUILD_CMD) -C build functionaltest
 
-test: functionaltest
+functionaltest-lua: | nvim
+	+$(BUILD_CMD) -C build functionaltest-lua
+
+testlint: | nvim
+	$(BUILD_CMD) -C build testlint
 
 unittest: | nvim
 	+$(BUILD_CMD) -C build unittest
 
 benchmark: | nvim
 	+$(BUILD_CMD) -C build benchmark
+
+test: functionaltest unittest
 
 clean:
 	+test -d build && $(BUILD_CMD) -C build clean || true
@@ -110,4 +121,4 @@ lint:
 		-DLINT_SUPPRESS_URL="$(DOC_DOWNLOAD_URL_BASE)$(CLINT_ERRORS_FILE_PATH)" \
 		-P cmake/RunLint.cmake
 
-.PHONY: test functionaltest unittest lint clean distclean nvim libnvim cmake deps install
+.PHONY: test testlint functionaltest unittest lint clean distclean nvim libnvim cmake deps install

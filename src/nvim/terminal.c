@@ -1,5 +1,5 @@
-// VT220/xterm-like terminal emulator implementation for Neovim. Powered by
-// libvterm(http://www.leonerd.org.uk/code/libvterm/).
+// VT220/xterm-like terminal emulator implementation for nvim. Powered by
+// libvterm (http://www.leonerd.org.uk/code/libvterm/).
 //
 // libvterm is a pure C99 terminal emulation library with abstract input and
 // display. This means that the library needs to read data from the master fd
@@ -10,31 +10,31 @@
 // vterm_keyboard_key/vterm_keyboard_unichar, which generates byte streams that
 // must be fed back to the master fd.
 //
-// This implementation uses Neovim buffers as the display mechanism for both
+// This implementation uses nvim buffers as the display mechanism for both
 // the visible screen and the scrollback buffer. When focused, the window
 // "pins" to the bottom of the buffer and mirrors libvterm screen state.
 //
 // When a line becomes invisible due to a decrease in screen height or because
 // a line was pushed up during normal terminal output, we store the line
-// information in the scrollback buffer, which is mirrored in the Neovim buffer
+// information in the scrollback buffer, which is mirrored in the nvim buffer
 // by appending lines just above the visible part of the buffer.
 //
 // When the screen height increases, libvterm will ask for a row in the
-// scrollback buffer, which is mirrored in the Neovim buffer displaying lines
+// scrollback buffer, which is mirrored in the nvim buffer displaying lines
 // that were previously invisible.
 //
-// The vterm->Neovim synchronization is performed in intervals of 10
+// The vterm->nvim synchronization is performed in intervals of 10
 // milliseconds. This is done to minimize screen updates when receiving large
 // bursts of data.
 //
 // This module is decoupled from the processes that normally feed it data, so
-// it's possible to use it as a general purpose console buffer(possibly as a
-// log/display mechanism for Neovim in the future)
+// it's possible to use it as a general purpose console buffer (possibly as a
+// log/display mechanism for nvim in the future)
 //
-// Inspired by vimshell(http://www.wana.at/vimshell/) and
-// Conque(https://code.google.com/p/conque/).  Libvterm usage instructions (plus
+// Inspired by vimshell (http://www.wana.at/vimshell/) and
+// Conque (https://code.google.com/p/conque/). Libvterm usage instructions (plus
 // some extra code) were taken from
-// pangoterm(http://www.leonerd.org.uk/code/pangoterm/)
+// pangoterm (http://www.leonerd.org.uk/code/pangoterm/)
 #include <assert.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -77,9 +77,7 @@
 typedef struct terminal_state {
   VimState state;
   Terminal *term;
-  int save_state;           // saved value of State
   int save_rd;              // saved value of RedrawingDisabled
-  bool save_mapped_ctrl_c;  // saved value of mapped_ctrl_c;
   bool close;
   bool got_bs;              // if the last input was <C-\>
 } TerminalState;
@@ -143,10 +141,6 @@ struct terminal {
   int pressed_button;
   // pending width/height
   bool pending_resize;
-  // color palette. this isn't set directly in the vterm instance because
-  // the default values are used to obtain the color numbers passed to cterm
-  // colors
-  RgbValue colors[256];
   // With a reference count of 0 the terminal can be freed.
   size_t refcount;
 };
@@ -207,6 +201,7 @@ void terminal_teardown(void)
 
 Terminal *terminal_open(TerminalOptions opts)
 {
+  bool true_color = ui_rgb_attached();
   // Create a new terminal instance and configure it
   Terminal *rv = xcalloc(1, sizeof(Terminal));
   rv->opts = opts;
@@ -222,7 +217,7 @@ Terminal *terminal_open(TerminalOptions opts)
   // Set up screen
   rv->vts = vterm_obtain_screen(rv->vt);
   vterm_screen_enable_altscreen(rv->vts, true);
-    // delete empty lines at the end of the buffer
+  // delete empty lines at the end of the buffer
   vterm_screen_set_callbacks(rv->vts, &vterm_screen_callbacks, rv);
   vterm_screen_set_damage_merge(rv->vts, VTERM_DAMAGE_SCROLL);
   vterm_screen_reset(rv->vts, 1);
@@ -238,7 +233,7 @@ Terminal *terminal_open(TerminalOptions opts)
   set_option_value((uint8_t *)"relativenumber", false, NULL, OPT_LOCAL);
   RESET_BINDING(curwin);
   // Apply TermOpen autocmds so the user can configure the terminal
-  apply_autocmds(EVENT_TERMOPEN, NULL, NULL, true, curbuf);
+  apply_autocmds(EVENT_TERMOPEN, NULL, NULL, false, curbuf);
 
   // Configure the scrollback buffer. Try to get the size from:
   //
@@ -252,12 +247,18 @@ Terminal *terminal_open(TerminalOptions opts)
   rv->sb_size = MIN(rv->sb_size, 100000);
   rv->sb_buffer = xmalloc(sizeof(ScrollbackLine *) * rv->sb_size);
 
+  if (!true_color) {
+    return rv;
+  }
+
+  vterm_state_set_bold_highbright(state, true);
+
   // Configure the color palette. Try to get the color from:
   //
   // - b:terminal_color_{NUM}
   // - g:terminal_color_{NUM}
   // - the VTerm instance
-  for (int i = 0; i < (int)ARRAY_SIZE(rv->colors); i++) {
+  for (int i = 0; i < 16; i++) {
     RgbValue color_val = -1;
     char var[64];
     snprintf(var, sizeof(var), "terminal_color_%d", i);
@@ -267,15 +268,12 @@ Terminal *terminal_open(TerminalOptions opts)
       xfree(name);
 
       if (color_val != -1) {
-        rv->colors[i] = color_val;
+        VTermColor color;
+        color.red = (uint8_t)((color_val >> 16) & 0xFF);
+        color.green = (uint8_t)((color_val >> 8) & 0xFF);
+        color.blue = (uint8_t)((color_val >> 0) & 0xFF);
+        vterm_state_set_palette_color(state, i, &color);
       }
-    }
-
-    if (color_val == -1) {
-      // the default is taken from vterm
-      VTermColor color;
-      vterm_state_get_palette_color(state, i, &color);
-      rv->colors[i] = RGB(color.red, color.green, color.blue);
     }
   }
 
@@ -290,8 +288,9 @@ void terminal_close(Terminal *term, char *msg)
 
   term->forward_mouse = false;
   term->closed = true;
+  buf_T *buf = handle_get_buffer(term->buf_handle);
+
   if (!msg || exiting) {
-    buf_T *buf = handle_get_buffer(term->buf_handle);
     // If no msg was given, this was called by close_buffer(buffer.c).  Or if
     // exiting, we must inform the buffer the terminal no longer exists so that
     // close_buffer() doesn't call this again.
@@ -305,6 +304,10 @@ void terminal_close(Terminal *term, char *msg)
     }
   } else {
     terminal_receive(term, msg, strlen(msg));
+  }
+
+  if (buf) {
+    apply_autocmds(EVENT_TERMCLOSE, NULL, NULL, false, buf);
   }
 }
 
@@ -362,12 +365,11 @@ void terminal_enter(void)
 
   checkpcmark();
   setpcmark();
-  s->save_state = State;
+  int save_state = State;
   s->save_rd = RedrawingDisabled;
   State = TERM_FOCUS;
+  mapped_ctrl_c |= TERM_FOCUS;  // Always map CTRL-C to avoid interrupt.
   RedrawingDisabled = false;
-  s->save_mapped_ctrl_c = mapped_ctrl_c;
-  mapped_ctrl_c = true;
   // go to the bottom when the terminal is focused
   adjust_topline(s->term, buf, false);
   // erase the unfocused cursor
@@ -380,11 +382,10 @@ void terminal_enter(void)
   state_enter(&s->state);
 
   restart_edit = 0;
-  State = s->save_state;
+  State = save_state;
   RedrawingDisabled = s->save_rd;
   // draw the unfocused cursor
   invalidate_terminal(s->term, s->term->cursor.row, s->term->cursor.row + 1);
-  mapped_ctrl_c = s->save_mapped_ctrl_c;
   unshowmode(true);
   redraw(curbuf->handle != s->term->buf_handle);
   ui_busy_stop();
@@ -402,6 +403,18 @@ static int terminal_execute(VimState *state, int key)
   TerminalState *s = (TerminalState *)state;
 
   switch (key) {
+    case K_FOCUSGAINED:  // nvim has been given focus
+      apply_autocmds(EVENT_FOCUSGAINED, NULL, NULL, false, curbuf);
+      break;
+
+    case K_FOCUSLOST:   // nvim has lost focus
+      apply_autocmds(EVENT_FOCUSLOST, NULL, NULL, false, curbuf);
+      break;
+
+    // Temporary fix until paste events gets implemented
+    case K_PASTE:
+      break;
+
     case K_LEFTMOUSE:
     case K_LEFTDRAG:
     case K_LEFTRELEASE:
@@ -539,10 +552,6 @@ void terminal_get_line_attributes(Terminal *term, win_T *wp, int linenr,
                     map_get(int, int)(color_indexes, vt_fg) : 0;
     int vt_bg_idx = vt_bg != default_vt_bg ?
                     map_get(int, int)(color_indexes, vt_bg) : 0;
-    // The index is now used to get the final rgb value from the
-    // user-customizable palette.
-    int vt_fg_rgb = vt_fg_idx != 0 ? term->colors[vt_fg_idx - 1] : -1;
-    int vt_bg_rgb = vt_bg_idx != 0 ? term->colors[vt_bg_idx - 1] : -1;
 
     int hl_attrs = (cell.attrs.bold ? HL_BOLD : 0)
                  | (cell.attrs.italic ? HL_ITALIC : 0)
@@ -557,8 +566,8 @@ void terminal_get_line_attributes(Terminal *term, win_T *wp, int linenr,
         .cterm_fg_color = vt_fg_idx,
         .cterm_bg_color = vt_bg_idx,
         .rgb_ae_attr = (int16_t)hl_attrs,
-        .rgb_fg_color = vt_fg_rgb,
-        .rgb_bg_color = vt_bg_rgb,
+        .rgb_fg_color = vt_fg,
+        .rgb_bg_color = vt_bg,
       });
     }
 
@@ -618,6 +627,7 @@ static int term_settermprop(VTermProp prop, VTermValue *val, void *data)
       api_free_object(dict_set_value(buf->b_vars,
                                      cstr_as_string("term_title"),
                                      STRING_OBJ(cstr_as_string(val->string)),
+                                     false,
                                      &err));
       break;
     }
