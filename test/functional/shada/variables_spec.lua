@@ -1,5 +1,5 @@
 -- ShaDa variables saving/reading support
-local helpers = require('test.functional.helpers')
+local helpers = require('test.functional.helpers')(after_each)
 local meths, funcs, nvim_command, eq, exc_exec =
   helpers.meths, helpers.funcs, helpers.command, helpers.eq, helpers.exc_exec
 

@@ -1,4 +1,5 @@
-local helpers, lfs = require('test.functional.helpers'), require('lfs')
+local helpers = require('test.functional.helpers')(after_each)
+local lfs = require('lfs')
 local execute, eq, neq, spawn, nvim_prog, set_session, wait, write_file
   = helpers.execute, helpers.eq, helpers.neq, helpers.spawn,
   helpers.nvim_prog, helpers.set_session, helpers.wait, helpers.write_file

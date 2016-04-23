@@ -1,6 +1,6 @@
 -- Tests for the exists() and has() functions.
 
-local helpers = require('test.functional.helpers')
+local helpers = require('test.functional.helpers')(after_each)
 local source = helpers.source
 local clear, expect = helpers.clear, helpers.expect
 local write_file = helpers.write_file

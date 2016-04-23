@@ -1,6 +1,6 @@
 local paths = require('test.config.paths')
 
-local helpers = require('test.functional.helpers')
+local helpers = require('test.functional.helpers')(nil)
 local spawn, set_session, nvim_prog, merge_args =
   helpers.spawn, helpers.set_session, helpers.nvim_prog, helpers.merge_args
 

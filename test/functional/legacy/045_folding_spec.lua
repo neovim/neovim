@@ -1,6 +1,6 @@
 -- Tests for folding.
 
-local helpers = require('test.functional.helpers')
+local helpers = require('test.functional.helpers')(after_each)
 local feed, insert, clear, execute, expect =
   helpers.feed, helpers.insert, helpers.clear, helpers.execute, helpers.expect
 

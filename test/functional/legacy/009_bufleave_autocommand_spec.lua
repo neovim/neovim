@@ -1,6 +1,6 @@
 -- Test for Bufleave autocommand that deletes the buffer we are about to edit.
 
-local helpers = require('test.functional.helpers')
+local helpers = require('test.functional.helpers')(after_each)
 local clear, insert = helpers.clear, helpers.insert
 local execute, expect = helpers.execute, helpers.expect
 

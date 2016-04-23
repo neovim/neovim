@@ -1,9 +1,12 @@
-local assert = require('luassert')
 local ffi = require('ffi')
 local formatc = require('test.unit.formatc')
 local Set = require('test.unit.set')
 local Preprocess = require('test.unit.preprocess')
 local Paths = require('test.config.paths')
+local global_helpers = require('test.helpers')
+
+local neq = global_helpers.neq
+local eq = global_helpers.eq
 
 -- add some standard header locations
 for _, p in ipairs(Paths.include_paths) do
@@ -153,12 +156,8 @@ return {
   cimport = cimport,
   cppimport = cppimport,
   internalize = internalize,
-  eq = function(expected, actual)
-    return assert.are.same(expected, actual)
-  end,
-  neq = function(expected, actual)
-    return assert.are_not.same(expected, actual)
-  end,
+  eq = eq,
+  neq = neq,
   ffi = ffi,
   lib = libnvim,
   cstr = cstr,

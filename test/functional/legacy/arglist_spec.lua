@@ -1,6 +1,6 @@
 -- Test argument list commands
 
-local helpers = require('test.functional.helpers')
+local helpers = require('test.functional.helpers')(after_each)
 local clear, execute, eq = helpers.clear, helpers.execute, helpers.eq
 local eval, exc_exec, neq = helpers.eval, helpers.exc_exec, helpers.neq
 

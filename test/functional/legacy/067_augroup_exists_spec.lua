@@ -1,7 +1,7 @@
 -- Test that groups and patterns are tested correctly when calling exists() for
 -- autocommands.
 
-local helpers = require('test.functional.helpers')
+local helpers = require('test.functional.helpers')(after_each)
 local clear = helpers.clear
 local execute, expect = helpers.execute, helpers.expect
 

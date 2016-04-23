@@ -1,7 +1,7 @@
 require('os')
 local lfs = require('lfs')
 
-local helpers  = require('test.functional.helpers')
+local helpers  = require('test.functional.helpers')(after_each)
 local eval     = helpers.eval
 local command  = helpers.command
 local eq, neq  = helpers.eq, helpers.neq

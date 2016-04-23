@@ -1,6 +1,6 @@
 -- Test for matchadd() and conceal feature
 
-local helpers = require('test.functional.helpers')
+local helpers = require('test.functional.helpers')(after_each)
 local clear = helpers.clear
 local expect = helpers.expect
 local source = helpers.source

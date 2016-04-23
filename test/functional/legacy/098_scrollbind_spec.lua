@@ -1,6 +1,6 @@
 -- Test for 'scrollbind' causing an unexpected scroll of one of the windows.
 
-local helpers = require('test.functional.helpers')
+local helpers = require('test.functional.helpers')(after_each)
 local source = helpers.source
 local clear, expect = helpers.clear, helpers.expect
 

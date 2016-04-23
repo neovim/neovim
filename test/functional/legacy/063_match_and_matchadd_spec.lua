@@ -1,6 +1,6 @@
 -- Tests for adjusting window and contents
 
-local helpers = require('test.functional.helpers')
+local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 local feed, insert = helpers.feed, helpers.insert
 local eval, clear, execute = helpers.eval, helpers.clear, helpers.execute

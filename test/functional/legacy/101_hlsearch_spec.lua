@@ -1,6 +1,6 @@
 -- Test for v:hlsearch
 
-local helpers = require('test.functional.helpers')
+local helpers = require('test.functional.helpers')(after_each)
 local clear, feed = helpers.clear, helpers.feed
 local execute, expect = helpers.execute, helpers.expect
 

@@ -1,4 +1,4 @@
-local helpers = require('test.functional.helpers')
+local helpers = require('test.functional.helpers')(nil)
 local spawn, set_session, meths, nvim_prog =
   helpers.spawn, helpers.set_session, helpers.meths, helpers.nvim_prog
 local write_file, merge_args = helpers.write_file, helpers.merge_args

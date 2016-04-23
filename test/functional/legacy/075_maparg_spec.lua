@@ -1,7 +1,7 @@
 -- Tests for maparg().
 -- Also test utf8 map with a 0x80 byte.
 
-local helpers = require('test.functional.helpers')
+local helpers = require('test.functional.helpers')(after_each)
 local clear, feed = helpers.clear, helpers.feed
 local execute, expect = helpers.execute, helpers.expect
 

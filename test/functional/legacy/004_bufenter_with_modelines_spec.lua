@@ -2,7 +2,7 @@
 -- Test for autocommand that changes current buffer on BufEnter event.
 -- Check if modelines are interpreted for the correct buffer.
 
-local helpers = require('test.functional.helpers')
+local helpers = require('test.functional.helpers')(after_each)
 local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
 local execute, expect = helpers.execute, helpers.expect
 

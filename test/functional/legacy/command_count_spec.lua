@@ -1,6 +1,6 @@
 -- Test for user command counts
 
-local helpers = require('test.functional.helpers')
+local helpers = require('test.functional.helpers')(after_each)
 local clear, source, expect = helpers.clear, helpers.source, helpers.expect
 local execute, spawn = helpers.execute, helpers.spawn
 local nvim_prog = helpers.nvim_prog

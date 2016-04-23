@@ -1,7 +1,7 @@
 -- Test Visual block mode commands
 -- And test "U" in Visual mode, also on German sharp S.
 
-local helpers = require('test.functional.helpers')
+local helpers = require('test.functional.helpers')(after_each)
 local nvim, eq = helpers.meths, helpers.eq
 local insert, feed = helpers.insert, helpers.feed
 local clear, expect = helpers.clear, helpers.expect

@@ -1,7 +1,7 @@
 -- Tests for some server->client RPC scenarios. Note that unlike with
 -- `rpcnotify`, to evaluate `rpcrequest` calls we need the client event loop to
 -- be running.
-local helpers = require('test.functional.helpers')
+local helpers = require('test.functional.helpers')(after_each)
 local clear, nvim, eval = helpers.clear, helpers.nvim, helpers.eval
 local eq, neq, run, stop = helpers.eq, helpers.neq, helpers.run, helpers.stop
 local nvim_prog = helpers.nvim_prog

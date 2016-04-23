@@ -1,6 +1,6 @@
 -- Tests for tab pages
 
-local helpers = require('test.functional.helpers')
+local helpers = require('test.functional.helpers')(after_each)
 local feed, insert, source, clear, execute, expect, eval, eq =
   helpers.feed, helpers.insert, helpers.source, helpers.clear,
   helpers.execute, helpers.expect, helpers.eval, helpers.eq

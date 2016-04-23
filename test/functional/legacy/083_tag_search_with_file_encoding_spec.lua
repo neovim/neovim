@@ -1,6 +1,6 @@
 -- Tests for tag search with !_TAG_FILE_ENCODING.
 
-local helpers = require('test.functional.helpers')
+local helpers = require('test.functional.helpers')(after_each)
 local insert, source, clear, expect, write_file = helpers.insert,
   helpers.source, helpers.clear, helpers.expect, helpers.write_file
 

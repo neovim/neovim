@@ -1,6 +1,6 @@
 -- Some sanity checks for the TUI using the builtin terminal emulator
 -- as a simple way to send keys and assert screen state.
-local helpers = require('test.functional.helpers')
+local helpers = require('test.functional.helpers')(after_each)
 local thelpers = require('test.functional.terminal.helpers')
 local feed = thelpers.feed_data
 local execute = helpers.execute

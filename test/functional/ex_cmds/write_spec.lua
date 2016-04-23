@@ -1,6 +1,6 @@
 -- Specs for :write
 
-local helpers = require('test.functional.helpers')
+local helpers = require('test.functional.helpers')(after_each)
 local eq, eval, clear, write_file, execute, source =
 	helpers.eq, helpers.eval, helpers.clear, helpers.write_file,
 	helpers.execute, helpers.source

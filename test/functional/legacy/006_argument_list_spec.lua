@@ -1,6 +1,6 @@
 -- Test for autocommand that redefines the argument list, when doing ":all".
 
-local helpers = require('test.functional.helpers')
+local helpers = require('test.functional.helpers')(after_each)
 local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
 local execute, dedent, eq = helpers.execute, helpers.dedent, helpers.eq
 local curbuf_contents = helpers.curbuf_contents

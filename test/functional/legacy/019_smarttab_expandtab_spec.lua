@@ -1,7 +1,7 @@
 -- Tests for "r<Tab>" with 'smarttab' and 'expandtab' set/not set.
 -- Also test that dv_ works correctly
 
-local helpers = require('test.functional.helpers')
+local helpers = require('test.functional.helpers')(after_each)
 local feed, insert = helpers.feed, helpers.insert
 local clear, execute, expect = helpers.clear, helpers.execute, helpers.expect
 

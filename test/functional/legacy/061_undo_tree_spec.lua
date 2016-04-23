@@ -1,9 +1,15 @@
 -- Tests for undo tree and :earlier and :later.
+local helpers = require('test.functional.helpers')(after_each)
 
-local helpers = require('test.functional.helpers')
-local expect, feed, source = helpers.expect, helpers.feed, helpers.source
-local eval, clear, execute = helpers.eval, helpers.clear, helpers.execute
-local write_file, command, eq = helpers.write_file, helpers.command, helpers.eq
+local write_file = helpers.write_file
+local execute = helpers.execute
+local command = helpers.command
+local source = helpers.source
+local expect = helpers.expect
+local clear = helpers.clear
+local feed = helpers.feed
+local eval = helpers.eval
+local eq = helpers.eq
 
 local function expect_empty_buffer()
   -- The space will be removed by helpers.dedent but is needed because dedent

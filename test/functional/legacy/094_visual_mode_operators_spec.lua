@@ -4,7 +4,7 @@
 -- followed by an operator and those executed via Operator-pending mode. Also
 -- part of the test are mappings, counts, and repetition with the . command.
 
-local helpers = require('test.functional.helpers')
+local helpers = require('test.functional.helpers')(after_each)
 local feed, insert, source = helpers.feed, helpers.insert, helpers.source
 local clear, execute, expect = helpers.clear, helpers.execute, helpers.expect
 

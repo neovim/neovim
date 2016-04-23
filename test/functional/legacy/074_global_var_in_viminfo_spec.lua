@@ -1,6 +1,7 @@
 -- Tests for storing global variables in the .shada file
 
-local helpers, lfs = require('test.functional.helpers'), require('lfs')
+local helpers = require('test.functional.helpers')(after_each)
+local lfs = require('lfs')
 local clear, execute, eq, neq, eval, wait, spawn =
   helpers.clear, helpers.execute, helpers.eq, helpers.neq, helpers.eval,
   helpers.wait, helpers.spawn
