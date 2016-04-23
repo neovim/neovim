@@ -425,6 +425,10 @@ function Screen:_handle_update_bg(bg)
   self._bg = bg
 end
 
+function Screen:_handle_update_sp(sp)
+  self._sp = sp
+end
+
 function Screen:_handle_suspend()
   self.suspended = true
 end
