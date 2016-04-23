@@ -503,6 +503,7 @@ EXTERN int cterm_normal_fg_bold INIT(= 0);
 EXTERN int cterm_normal_bg_color INIT(= 0);
 EXTERN RgbValue normal_fg INIT(= -1);
 EXTERN RgbValue normal_bg INIT(= -1);
+EXTERN RgbValue normal_sp INIT(= -1);
 
 EXTERN int autocmd_busy INIT(= FALSE);          /* Is apply_autocmds() busy? */
 EXTERN int autocmd_no_enter INIT(= FALSE);      /* *Enter autocmds disabled */

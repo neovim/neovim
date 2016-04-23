@@ -62,8 +62,10 @@ struct hl_group {
   int sg_gui;                   // "gui=" highlighting attributes
   RgbValue sg_rgb_fg;           // RGB foreground color
   RgbValue sg_rgb_bg;           // RGB background color
+  RgbValue sg_rgb_sp;           // RGB special color
   uint8_t *sg_rgb_fg_name;      // RGB foreground color name
   uint8_t *sg_rgb_bg_name;      // RGB background color name
+  uint8_t *sg_rgb_sp_name;      // RGB special color name
 };
 
 #define SG_CTERM        2       // cterm has been set
@@ -6170,8 +6172,8 @@ do_highlight (
       }
 
       /*
-       * Isolate the key ("term", "ctermfg", "ctermbg", "font", "guifg" or
-       * "guibg").
+       * Isolate the key ("term", "ctermfg", "ctermbg", "font", "guifg",
+       * "guibg" or "guisp").
        */
       while (*linep && !ascii_iswhite(*linep) && *linep != '=')
         ++linep;
@@ -6456,7 +6458,23 @@ do_highlight (
           normal_bg = HL_TABLE()[idx].sg_rgb_bg;
         }
       } else if (STRCMP(key, "GUISP") == 0)   {
-        // Ignored for now
+        if (!init || !(HL_TABLE()[idx].sg_set & SG_GUI)) {
+          if (!init)
+            HL_TABLE()[idx].sg_set |= SG_GUI;
+
+          xfree(HL_TABLE()[idx].sg_rgb_sp_name);
+          if (STRCMP(arg, "NONE") != 0) {
+            HL_TABLE()[idx].sg_rgb_sp_name = (uint8_t *)xstrdup((char *)arg);
+            HL_TABLE()[idx].sg_rgb_sp = name_to_color(arg);
+          } else {
+            HL_TABLE()[idx].sg_rgb_sp_name = NULL;
+            HL_TABLE()[idx].sg_rgb_sp = -1;
+          }
+        }
+
+        if (is_normal_group) {
+          normal_sp = HL_TABLE()[idx].sg_rgb_sp;
+        }
       } else if (STRCMP(key, "START") == 0 || STRCMP(key, "STOP") == 0)   {
         // Ignored for now
       } else {
@@ -6520,6 +6538,7 @@ void restore_cterm_colors(void)
 {
   normal_fg = -1;
   normal_bg = -1;
+  normal_sp = -1;
   cterm_normal_fg_color = 0;
   cterm_normal_fg_bold = 0;
   cterm_normal_bg_color = 0;
@@ -6536,6 +6555,7 @@ static int hl_has_settings(int idx, int check_link)
          || HL_TABLE()[idx].sg_cterm_bg != 0
          || HL_TABLE()[idx].sg_rgb_fg_name != NULL
          || HL_TABLE()[idx].sg_rgb_bg_name != NULL
+         || HL_TABLE()[idx].sg_rgb_sp_name != NULL
          || (check_link && (HL_TABLE()[idx].sg_set & SG_LINK));
 }
 
@@ -6552,10 +6572,13 @@ static void highlight_clear(int idx)
   HL_TABLE()[idx].sg_gui = 0;
   HL_TABLE()[idx].sg_rgb_fg = -1;
   HL_TABLE()[idx].sg_rgb_bg = -1;
+  HL_TABLE()[idx].sg_rgb_sp = -1;
   xfree(HL_TABLE()[idx].sg_rgb_fg_name);
   HL_TABLE()[idx].sg_rgb_fg_name = NULL;
   xfree(HL_TABLE()[idx].sg_rgb_bg_name);
   HL_TABLE()[idx].sg_rgb_bg_name = NULL;
+  xfree(HL_TABLE()[idx].sg_rgb_sp_name);
+  HL_TABLE()[idx].sg_rgb_sp_name = NULL;
   /* Clear the script ID only when there is no link, since that is not
    * cleared. */
   if (HL_TABLE()[idx].sg_link == 0)
@@ -6601,7 +6624,8 @@ int get_attr_entry(attrentry_T *aep)
         && aep->cterm_bg_color == taep->cterm_bg_color
         && aep->rgb_ae_attr == taep->rgb_ae_attr
         && aep->rgb_fg_color == taep->rgb_fg_color
-        && aep->rgb_bg_color == taep->rgb_bg_color) {
+        && aep->rgb_bg_color == taep->rgb_bg_color
+        && aep->rgb_sp_color == taep->rgb_sp_color) {
       return i + ATTR_OFF;
     }
   }
@@ -6639,6 +6663,7 @@ int get_attr_entry(attrentry_T *aep)
   taep->rgb_ae_attr = aep->rgb_ae_attr;
   taep->rgb_fg_color = aep->rgb_fg_color;
   taep->rgb_bg_color = aep->rgb_bg_color;
+  taep->rgb_sp_color = aep->rgb_sp_color;
 
   return table->ga_len - 1 + ATTR_OFF;
 }
@@ -6700,6 +6725,10 @@ int hl_combine_attr(int char_attr, int prim_attr)
     if (spell_aep->rgb_bg_color >= 0) {
       new_en.rgb_bg_color = spell_aep->rgb_bg_color;
     }
+
+    if (spell_aep->rgb_sp_color >= 0) {
+      new_en.rgb_sp_color = spell_aep->rgb_sp_color;
+    }
   }
   return get_attr_entry(&new_en);
 }
@@ -6737,7 +6766,7 @@ static void highlight_list_one(int id)
   didh = highlight_list_arg(id, didh, LIST_STRING,
       0, sgp->sg_rgb_bg_name, "guibg");
   didh = highlight_list_arg(id, didh, LIST_STRING,
-      0, NULL, "guisp");
+      0, sgp->sg_rgb_sp_name, "guisp");
 
   if (sgp->sg_link && !got_int) {
     (void)syn_list_header(didh, 9999, id);
@@ -6852,7 +6881,7 @@ highlight_color (
     if (fg)
       return HL_TABLE()[id - 1].sg_rgb_fg_name;
     if (sp)
-      return NULL;
+      return HL_TABLE()[id - 1].sg_rgb_sp_name;
     return HL_TABLE()[id - 1].sg_rgb_bg_name;
   }
   if (font || sp)
@@ -6939,10 +6968,12 @@ set_hl_attr (
   // before setting attr_entry->{f,g}g_color to a other than -1
   at_en.rgb_fg_color = sgp->sg_rgb_fg_name ? sgp->sg_rgb_fg : -1;
   at_en.rgb_bg_color = sgp->sg_rgb_bg_name ? sgp->sg_rgb_bg : -1;
+  at_en.rgb_sp_color = sgp->sg_rgb_sp_name ? sgp->sg_rgb_sp : -1;
 
   if (at_en.cterm_fg_color != 0 || at_en.cterm_bg_color != 0
       || at_en.rgb_fg_color != -1 || at_en.rgb_bg_color != -1
-      || at_en.cterm_ae_attr != 0 || at_en.rgb_ae_attr != 0) {
+      || at_en.rgb_sp_color != -1 || at_en.cterm_ae_attr != 0
+      || at_en.rgb_ae_attr != 0) {
     sgp->sg_attr = get_attr_entry(&at_en);
   }
 }
@@ -7273,6 +7304,10 @@ int highlight_changed(void)
 
       if (hlt[id - 1].sg_rgb_bg != hlt[id_S - 1].sg_rgb_bg) {
         hlt[hlcnt + i].sg_rgb_bg = hlt[id - 1].sg_rgb_bg;
+      }
+
+      if (hlt[id - 1].sg_rgb_sp != hlt[id_S - 1].sg_rgb_sp) {
+        hlt[hlcnt + i].sg_rgb_sp = hlt[id - 1].sg_rgb_sp;
       }
 
       highlight_ga.ga_len = hlcnt + i + 1;

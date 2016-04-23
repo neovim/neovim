@@ -155,6 +155,7 @@ void ui_resize(int new_width, int new_height)
 
   UI_CALL(update_fg, (ui->rgb ? normal_fg : cterm_normal_fg_color - 1));
   UI_CALL(update_bg, (ui->rgb ? normal_bg : cterm_normal_bg_color - 1));
+  UI_CALL(update_sp, (ui->rgb ? normal_sp : -1));
 
   sr.top = 0;
   sr.bot = height - 1;
@@ -388,7 +389,7 @@ static void parse_control_character(uint8_t c)
 
 static void set_highlight_args(int attr_code)
 {
-  HlAttrs rgb_attrs = { false, false, false, false, false, -1, -1 };
+  HlAttrs rgb_attrs = { false, false, false, false, false, -1, -1, -1 };
   HlAttrs cterm_attrs = rgb_attrs;
 
   if (attr_code == HL_NORMAL) {
@@ -423,6 +424,10 @@ static void set_highlight_args(int attr_code)
 
   if (aep->rgb_bg_color != normal_bg) {
     rgb_attrs.background = aep->rgb_bg_color;
+  }
+
+  if (aep->rgb_sp_color != normal_sp) {
+    rgb_attrs.special = aep->rgb_sp_color;
   }
 
   if (cterm_normal_fg_color != aep->cterm_fg_color) {
