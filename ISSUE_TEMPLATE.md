@@ -1,6 +1,5 @@
 - Neovim version:
-- [ ] Vim behaves differently?
-    - Vim version:
+- [ ] Vim behaves differently? Vim version:
 - Operating system/version:
 - Terminal name/version:
 - `$TERM`:
@@ -9,7 +8,9 @@
 
 ### Expected behaviour
 
-### Steps to reproduce using `nvim -u NONE`
+### Steps to reproduce using `nvim -u NORC`
 
-1. `nvim -u NONE`
-2. 
+```
+nvim -u NORC
+
+```
