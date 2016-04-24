@@ -36,12 +36,6 @@ typedef int (*IndentGetter)(void);
 #define INSCHAR_NO_FEX  8       /* don't use 'formatexpr' */
 #define INSCHAR_COM_LIST 16     /* format comments with list/2nd line indent */
 
-/* direction for nv_mousescroll() and ins_mousescroll() */
-#define MSCR_DOWN       0       /* DOWN must be FALSE */
-#define MSCR_UP         1
-#define MSCR_LEFT       -1
-#define MSCR_RIGHT      -2
-
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "edit.h.generated.h"
 #endif

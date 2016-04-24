@@ -3928,22 +3928,7 @@ static void nv_mousescroll(cmdarg_T *cap)
       nv_scroll_line(cap);
     }
   } else {
-    /* Horizontal scroll - only allowed when 'wrap' is disabled */
-    if (!curwin->w_p_wrap) {
-      int val;
-      int step = 6;
-
-      if (mod_mask & (MOD_MASK_SHIFT | MOD_MASK_CTRL)) {
-          step = curwin->w_width;
-      }
-
-      val = curwin->w_leftcol + (cap->arg == MSCR_RIGHT ? -step : +step);
-      if (val < 0) {
-          val = 0;
-      }
-
-      gui_do_horiz_scroll(val, true);
-    }
+    mouse_scroll_horiz(cap->arg);
   }
 
   curwin->w_redr_status = true;
@@ -4016,101 +4001,6 @@ void scroll_redraw(int up, long count)
     coladvance(curwin->w_curswant);
   redraw_later(VALID);
 }
-
-///
-/// Return length of line "lnum" for horizontal scrolling.
-///
-static colnr_T scroll_line_len(linenr_T lnum)
-{
-  char_u *p = ml_get(lnum);
-  colnr_T col = 0;
-  if (*p != NUL) {
-    for (;;) {
-      int w = chartabsize(p, col);
-      mb_ptr_adv(p);
-      if (*p == NUL) {    // don't count the last character
-        break;
-      }
-      col += w;
-    }
-  }
-  return col;
-}
-
-///
-/// Find longest visible line number.  If this is not possible (or not desired,
-/// by setting 'h' in "guioptions") then the current line number is returned.
-///
-static linenr_T gui_find_longest_lnum(void)
-{
-  linenr_T ret = 0;
-
-  // Calculate maximum for horizontal scrollbar.  Check for reasonable
-  // line numbers, topline and botline can be invalid when displaying is
-  // postponed.
-  if (curwin->w_topline <= curwin->w_cursor.lnum &&
-      curwin->w_botline > curwin->w_cursor.lnum &&
-      curwin->w_botline <= curbuf->b_ml.ml_line_count + 1) {
-    linenr_T    lnum;
-    long      max = 0;
-
-    // Use maximum of all visible lines.  Remember the lnum of the
-    // longest line, closest to the cursor line.  Used when scrolling
-    // below.
-    for (lnum = curwin->w_topline; lnum < curwin->w_botline; ++lnum) {
-      colnr_T n = scroll_line_len(lnum);
-      if (n > (colnr_T)max) {
-        max = n;
-        ret = lnum;
-      } else if (n == (colnr_T)max
-          && abs((int)(lnum - curwin->w_cursor.lnum))
-          < abs((int)(ret - curwin->w_cursor.lnum))) {
-        ret = lnum;
-      }
-    }
-  } else {
-    // Use cursor line only.
-    ret = curwin->w_cursor.lnum;
-  }
-
-  return ret;
-}
-
-static linenr_T longest_lnum;
-///
-/// Do a horizontal scroll.  Return TRUE if the cursor moved, FALSE otherwise.
-///
-int gui_do_horiz_scroll(int leftcol, bool compute_longest_lnum)
-{
-  // no wrapping, no scrolling
-  if (curwin->w_p_wrap) {
-    return false;
-  }
-
-  if (curwin->w_leftcol == (colnr_T)leftcol) {
-    return false;
-  }
-
-  curwin->w_leftcol = (colnr_T)leftcol;
-
-  // When the line of the cursor is too short, move the cursor to the
-  // longest visible line.
-  if (!virtual_active()
-      && (colnr_T)leftcol > scroll_line_len(curwin->w_cursor.lnum)) {
-    if (compute_longest_lnum) {
-      curwin->w_cursor.lnum = gui_find_longest_lnum();
-      curwin->w_cursor.col = 0;
-    } else if (longest_lnum >= curwin->w_topline
-        && longest_lnum < curwin->w_botline) {
-      // Do a sanity check on "longest_lnum", just in case.
-      curwin->w_cursor.lnum = longest_lnum;
-      curwin->w_cursor.col = 0;
-    }
-  }
-
-  return leftcol_changed();
-}
-
 
 /*
  * Commands that start with "z".

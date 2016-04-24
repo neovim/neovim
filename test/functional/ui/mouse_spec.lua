@@ -428,7 +428,7 @@ describe('Mouse input', function()
   end)
 
   it('horizontal scrolling', function()
-    nvim("command", "set nowrap")
+    feed("<esc>:set nowrap<cr>")
 
     feed("a <esc>20Ab<esc>")
     screen:expect([[
