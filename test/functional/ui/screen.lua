@@ -577,7 +577,7 @@ function Screen:_pprint_attrs(attrs)
     local items = {}
     for f, v in pairs(attrs) do
       local desc = tostring(v)
-      if f == "foreground" or f == "background" then
+      if f == "foreground" or f == "background" or f == "special" then
         if Screen.colornames[v] ~= nil then
           desc = "Screen.colors."..Screen.colornames[v]
         end
