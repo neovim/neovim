@@ -40,7 +40,7 @@ describe('notify', function()
 
     it('does not crash for deeply nested variable', function()
       meths.set_var('l', {})
-      local nest_level = 100000
+      local nest_level = 1000
       meths.command(('call map(range(%u), "extend(g:, {\'l\': [g:l]})")'):format(nest_level))
       local ret = {}
       for i = 1, nest_level do
