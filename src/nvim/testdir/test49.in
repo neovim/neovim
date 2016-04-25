@@ -8,7 +8,9 @@ STARTTEST
 :se nomore
 :lang mess C
 :so test49.vim
-GGGGGGGGGGGGGG"rp:.-,$w! test.out
+:" Go back to this file and append the results from register r.
+:buf test49.in
+G"rp:/^Results/,$w! test.out
 :"
 :" make valgrind happy
 :redir => funclist
