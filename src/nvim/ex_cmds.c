@@ -5048,7 +5048,9 @@ helptags_one (
     /*
      * Sort the tags.
      */
-    sort_strings((char_u **)ga.ga_data, ga.ga_len);
+    if (ga.ga_data != NULL) {
+      sort_strings((char_u **)ga.ga_data, ga.ga_len);
+    }
 
     /*
      * Check for duplicates.

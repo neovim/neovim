@@ -2598,11 +2598,10 @@ do_mouse (
         end_visual.col = leftcol;
       else
         end_visual.col = rightcol;
-      if (curwin->w_cursor.lnum <
-          (start_visual.lnum + end_visual.lnum) / 2)
-        end_visual.lnum = end_visual.lnum;
-      else
+      if (curwin->w_cursor.lnum >=
+          (start_visual.lnum + end_visual.lnum) / 2) {
         end_visual.lnum = start_visual.lnum;
+      }
 
       /* move VIsual to the right column */
       start_visual = curwin->w_cursor;              /* save the cursor pos */
@@ -3244,9 +3243,9 @@ void clear_showcmd(void)
       top = curwin->w_cursor.lnum;
       bot = VIsual.lnum;
     }
-    /* Include closed folds as a whole. */
-    hasFolding(top, &top, NULL);
-    hasFolding(bot, NULL, &bot);
+    // Include closed folds as a whole.
+    (void)hasFolding(top, &top, NULL);
+    (void)hasFolding(bot, NULL, &bot);
     lines = bot - top + 1;
 
     if (VIsual_mode == Ctrl_V) {
@@ -5154,9 +5153,10 @@ static void nv_gotofile(cmdarg_T *cap)
   ptr = grab_file_name(cap->count1, &lnum);
 
   if (ptr != NULL) {
-    /* do autowrite if necessary */
-    if (curbufIsChanged() && curbuf->b_nwindows <= 1 && !P_HID(curbuf))
-      autowrite(curbuf, false);
+    // do autowrite if necessary
+    if (curbufIsChanged() && curbuf->b_nwindows <= 1 && !P_HID(curbuf)) {
+      (void)autowrite(curbuf, false);
+    }
     setpcmark();
     (void)do_ecmd(0, ptr, NULL, NULL, ECMD_LAST,
         P_HID(curbuf) ? ECMD_HIDE : 0, curwin);

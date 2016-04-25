@@ -1062,8 +1062,8 @@ static int cs_find_common(char *opt, char *pat, int forceit, int verbose,
       if (qf_init(wp, tmp, (char_u *)"%f%*\\t%l%*\\t%m",
               *qfpos == '-', cmdline) > 0) {
         if (postponed_split != 0) {
-          win_split(postponed_split > 0 ? postponed_split : 0,
-              postponed_split_flags);
+          (void)win_split(postponed_split > 0 ? postponed_split : 0,
+                          postponed_split_flags);
           RESET_BINDING(curwin);
           postponed_split = 0;
         }

@@ -2110,10 +2110,11 @@ static linenr_T foldUpdateIEMSRecurse(garray_T *gap, int level,
    */
   if (getlevel == foldlevelMarker && flp->start <= flp->lvl - level
       && flp->lvl > 0) {
-    foldFind(gap, startlnum - 1, &fp);
+    (void)foldFind(gap, startlnum - 1, &fp);
     if (fp >= ((fold_T *)gap->ga_data) + gap->ga_len
-        || fp->fd_top >= startlnum)
+        || fp->fd_top >= startlnum) {
       fp = NULL;
+    }
   }
 
   /*
@@ -2167,13 +2168,15 @@ static linenr_T foldUpdateIEMSRecurse(garray_T *gap, int level,
         }
       }
       if (lvl < level + i) {
-        foldFind(&fp->fd_nested, flp->lnum - fp->fd_top, &fp2);
-        if (fp2 != NULL)
+        (void)foldFind(&fp->fd_nested, flp->lnum - fp->fd_top, &fp2);
+        if (fp2 != NULL) {
           bot = fp2->fd_top + fp2->fd_len - 1 + fp->fd_top;
-      } else if (fp->fd_top + fp->fd_len <= flp->lnum && lvl >= level)
-        finish = TRUE;
-      else
+        }
+      } else if (fp->fd_top + fp->fd_len <= flp->lnum && lvl >= level) {
+        finish = true;
+      } else {
         break;
+      }
     }
 
     /* At the start of the first nested fold and at the end of the current
