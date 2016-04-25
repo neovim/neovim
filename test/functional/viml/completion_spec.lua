@@ -3,6 +3,7 @@ local helpers = require('test.functional.helpers')
 local Screen = require('test.functional.ui.screen')
 local clear, feed = helpers.clear, helpers.feed
 local eval, eq, neq = helpers.eval, helpers.eq, helpers.neq
+local insert = helpers.insert
 local execute, source, expect = helpers.execute, helpers.source, helpers.expect
 
 describe('completion', function()
@@ -714,6 +715,53 @@ describe('completion', function()
       {3:-- Keyword completion (^N^P) }{4:match 2 of 2}                   |
     ]])
   end)
+  
+  describe('from the commandline window', function()
 
+    it('is cleared after CTRL-C', function ()
+      feed('q:')
+      feed('ifoo faa fee f')
+      screen:expect([[
+                                                                    |
+        {8:[No Name]                                                   }|
+        :foo faa fee f^                                              |
+        :~                                                          |
+        :~                                                          |
+        :~                                                          |
+        {9:[Command Line]                                              }|
+        {3:-- INSERT --}                                                |
+      ]], {[3] = {bold = true},
+           [4] = {bold = true, foreground = Screen.colors.SeaGreen},
+           [8] = {reverse = true},
+           [9] = {bold = true, reverse = true}})
+      feed('<c-x><c-n>')
+      screen:expect([[
+                                                                    |
+        {8:[No Name]                                                   }|
+        :foo faa fee foo^                                            |
+        :~          {2: foo            }                                |
+        :~          {1: faa            }                                |
+        :~          {1: fee            }                                |
+        {9:[Command Line]                                              }|
+        {3:-- Keyword Local completion (^N^P) }{4:match 1 of 3}             |
+      ]],{[1] = {background = Screen.colors.LightMagenta},
+          [2] = {background = Screen.colors.Grey},
+          [3] = {bold = true},
+          [4] = {bold = true, foreground = Screen.colors.SeaGreen},
+          [8] = {reverse = true},
+          [9] = {bold = true, reverse = true}})
+      feed('<c-c>')
+      screen:expect([[
+                                                                    |
+        {8:[No Name]                                                   }|
+        :foo faa fee foo                                            |
+        :~                                                          |
+        :~                                                          |
+        :~                                                          |
+        {9:[Command Line]                                              }|
+        :foo faa fee foo^                                            |
+      ]], {[8] = {reverse = true}, [9] = {bold = true, reverse = true}})
+    end)
+  end)
 end)
 
