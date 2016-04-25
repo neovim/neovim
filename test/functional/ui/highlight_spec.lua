@@ -312,8 +312,7 @@ describe('New special highlight color attribute', function()
     screen = Screen.new(25,10)
     screen:attach()
     screen:set_default_attr_ignore({
-      [1] = {bold=true},
-      [2] = {bold=true, foreground=Screen.colors.Blue}
+      {bold=true, foreground=Screen.colors.Blue}
     })
   end)
 
@@ -350,12 +349,13 @@ describe('New special highlight color attribute', function()
                                |
               {1:neovim} tabbed^    |
       ~                        |
-      -- INSERT --             |
-      ]],{
+      {4:-- INSERT --}             |
+    ]],{
       [1] = {background = Screen.colors.Yellow, foreground = Screen.colors.Red,
              special = Screen.colors.Red},
       [2] = {special = Screen.colors.Red, background = Screen.colors.Yellow},
-      [3] = {foreground = Screen.colors.Red, special = Screen.colors.Red}
+      [3] = {foreground = Screen.colors.Red, special = Screen.colors.Red},
+      [4] = {bold = true}
     })
 
   end)
