@@ -1147,6 +1147,22 @@ find_tags (
   int get_it_again = FALSE;
   int use_cscope = (flags & TAG_CSCOPE);
   int verbose = (flags & TAG_VERBOSE);
+  int save_p_ic = p_ic;
+
+  // Change the value of 'ignorecase' according to 'tagcase' for the
+  // duration of this function.
+  switch (curbuf->b_tc_flags ? curbuf->b_tc_flags : tc_flags) {
+    case TC_FOLLOWIC:
+      break;
+    case TC_IGNORE:
+      p_ic = true;
+      break;
+    case TC_MATCH:
+      p_ic = false;
+      break;
+    default:
+      assert(false);
+  }
 
   help_save = curbuf->b_help;
   orgpat.pat = pat;
@@ -1954,6 +1970,8 @@ findtag_end:
 
   curbuf->b_help = help_save;
   xfree(saved_pat);
+
+  p_ic = save_p_ic;
 
   return retval;
 }

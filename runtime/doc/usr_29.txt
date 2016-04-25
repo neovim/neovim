@@ -255,7 +255,8 @@ function.
 
 RELATED ITEMS
 
-You can set 'ignorecase' to make case in tag names be ignored.
+To make case in tag names be ignored, you can set 'ignorecase' while leaving
+'tagcase' as "followic", or set 'tagcase' to "ignore".
 
 The 'tagbsearch' option tells if the tags file is sorted or not.  The default
 is to assume a sorted tags file, which makes a tags search a lot faster, but

@@ -666,19 +666,21 @@ struct file_buffer {
   long b_p_wm_nopaste;          ///< b_p_wm saved for paste mode
   char_u *b_p_keymap;           ///< 'keymap'
 
-  /* local values for options which are normally global */
-  char_u      *b_p_gp;          /* 'grepprg' local value */
-  char_u      *b_p_mp;          /* 'makeprg' local value */
-  char_u      *b_p_efm;         /* 'errorformat' local value */
-  char_u      *b_p_ep;          /* 'equalprg' local value */
-  char_u      *b_p_path;        /* 'path' local value */
-  int b_p_ar;                   /* 'autoread' local value */
-  char_u      *b_p_tags;        /* 'tags' local value */
-  char_u      *b_p_dict;        /* 'dictionary' local value */
-  char_u      *b_p_tsr;         /* 'thesaurus' local value */
-  long b_p_ul;                  /* 'undolevels' local value */
-  int b_p_udf;                  /* 'undofile' */
-  char_u      *b_p_lw;          // 'lispwords' local value
+  // local values for options which are normally global
+  char_u *b_p_gp;               ///< 'grepprg' local value
+  char_u *b_p_mp;               ///< 'makeprg' local value
+  char_u *b_p_efm;              ///< 'errorformat' local value
+  char_u *b_p_ep;               ///< 'equalprg' local value
+  char_u *b_p_path;             ///< 'path' local value
+  int b_p_ar;                   ///< 'autoread' local value
+  char_u *b_p_tags;             ///< 'tags' local value
+  char_u *b_p_tc;               ///< 'tagcase' local value
+  unsigned b_tc_flags;          ///< flags for 'tagcase'
+  char_u *b_p_dict;             ///< 'dictionary' local value
+  char_u *b_p_tsr;              ///< 'thesaurus' local value
+  long b_p_ul;                  ///< 'undolevels' local value
+  int b_p_udf;                  ///< 'undofile'
+  char_u *b_p_lw;               ///< 'lispwords' local value
 
   /* end of buffer options */
 
@@ -955,16 +957,14 @@ struct window_S {
                                        time through cursupdate() to the
                                        current virtual column */
 
-  /*
-   * the next six are used to update the visual part
-   */
-  char w_old_visual_mode;           /* last known VIsual_mode */
-  linenr_T w_old_cursor_lnum;       /* last known end of visual part */
-  colnr_T w_old_cursor_fcol;        /* first column for block visual part */
-  colnr_T w_old_cursor_lcol;        /* last column for block visual part */
-  linenr_T w_old_visual_lnum;       /* last known start of visual part */
-  colnr_T w_old_visual_col;         /* last known start of visual part */
-  colnr_T w_old_curswant;           /* last known value of Curswant */
+  // the next seven are used to update the visual part
+  char w_old_visual_mode;           ///< last known VIsual_mode
+  linenr_T w_old_cursor_lnum;       ///< last known end of visual part
+  colnr_T w_old_cursor_fcol;        ///< first column for block visual part
+  colnr_T w_old_cursor_lcol;        ///< last column for block visual part
+  linenr_T w_old_visual_lnum;       ///< last known start of visual part
+  colnr_T w_old_visual_col;         ///< last known start of visual part
+  colnr_T w_old_curswant;           ///< last known value of Curswant
 
   /*
    * "w_topline", "w_leftcol" and "w_skipcol" specify the offsets for

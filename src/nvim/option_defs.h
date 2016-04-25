@@ -597,6 +597,14 @@ static char *(p_swb_values[]) =
 #define SWB_NEWTAB              0x008
 #define SWB_VSPLIT              0x010
 EXTERN int p_tbs;               ///< 'tagbsearch'
+EXTERN char_u *p_tc;            ///< 'tagcase'
+EXTERN unsigned tc_flags;       ///< flags from 'tagcase'
+#ifdef IN_OPTION_C
+static char *(p_tc_values[]) = { "followic", "ignore", "match", NULL };
+#endif
+#define TC_FOLLOWIC             0x01
+#define TC_IGNORE               0x02
+#define TC_MATCH                0x04
 EXTERN long p_tl;               ///< 'taglength'
 EXTERN int p_tr;                ///< 'tagrelative'
 EXTERN char_u *p_tags;          ///< 'tags'
@@ -737,6 +745,7 @@ enum {
   , BV_SW
   , BV_SWF
   , BV_TAGS
+  , BV_TC
   , BV_TS
   , BV_TW
   , BV_TX

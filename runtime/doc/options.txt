@@ -3410,7 +3410,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 			global
 	Ignore case in search patterns.  Also used when searching in the tags
 	file.
-	Also see 'smartcase'.
+	Also see 'smartcase' and 'tagcase'.
 	Can be overruled by using "\c" or "\C" in the pattern, see
 	|/ignorecase|.
 
@@ -6321,19 +6321,22 @@ A jump table for the options with a short description can be found at |Q_op|.
 <	[The whitespace before and after the '0' must be a single <Tab>]
 
 	When a binary search was done and no match was found in any of the
-	files listed in 'tags', and 'ignorecase' is set or a pattern is used
+	files listed in 'tags', and case is ignored or a pattern is used
 	instead of a normal tag name, a retry is done with a linear search.
 	Tags in unsorted tags files, and matches with different case will only
 	be found in the retry.
 
 	If a tag file indicates that it is case-fold sorted, the second,
-	linear search can be avoided for the 'ignorecase' case.  Use a value
-	of '2' in the "!_TAG_FILE_SORTED" line for this.  A tag file can be
-	case-fold sorted with the -f switch to "sort" in most unices, as in
-	the command: "sort -f -o tags tags".  For "Exuberant ctags" version
-	5.x or higher (at least 5.5) the --sort=foldcase switch can be used
-	for this as well.  Note that case must be folded to uppercase for this
-	to work.
+	linear search can be avoided when case is ignored.  Use a value of '2'
+	in the "!_TAG_FILE_SORTED" line for this.  A tag file can be case-fold
+	sorted with the -f switch to "sort" in most unices, as in the command:
+	"sort -f -o tags tags".  For "Exuberant ctags" version 5.x or higher
+	(at least 5.5) the --sort=foldcase switch can be used for this as
+	well.  Note that case must be folded to uppercase for this to work.
+
+	By default, tag searches are case-sensitive.  Case is ignored when
+	'ignorecase' is set and 'tagcase' is "followic", or when 'tagcase' is
+	"ignore".
 
 	When 'tagbsearch' is off, tags searching is slower when a full match
 	exists, but faster when no full match exists.  Tags in unsorted tags
@@ -6343,6 +6346,16 @@ A jump table for the options with a short description can be found at |Q_op|.
 	must be included in the tags file.
 	This option doesn't affect commands that find all matching tags (e.g.,
 	command-line completion and ":help").
+
+							*'tagcase'* *'tc'*
+'tagcase' 'tc'		string	(default "followic")
+			global or local to buffer |global-local|
+			{not in Vi}
+	This option specifies how case is handled when searching the tags
+	file:
+	   followic	Follow the 'ignorecase' option
+	   ignore	Ignore case
+	   match	Match case
 
 						*'taglength'* *'tl'*
 'taglength' 'tl'	number	(default 0)

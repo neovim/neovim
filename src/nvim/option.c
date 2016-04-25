@@ -2057,6 +2057,7 @@ static void didset_options(void)
   (void)opt_strings_flags(p_vop, p_ssop_values, &vop_flags, true);
   (void)opt_strings_flags(p_fdo, p_fdo_values, &fdo_flags, true);
   (void)opt_strings_flags(p_dy, p_dy_values, &dy_flags, true);
+  (void)opt_strings_flags(p_tc, p_tc_values, &tc_flags, false);
   (void)opt_strings_flags(p_ve, p_ve_values, &ve_flags, true);
   (void)spell_check_msm();
   (void)spell_check_sps();
@@ -2144,6 +2145,7 @@ void check_buf_options(buf_T *buf)
   check_string_option(&buf->b_p_ep);
   check_string_option(&buf->b_p_path);
   check_string_option(&buf->b_p_tags);
+  check_string_option(&buf->b_p_tc);
   check_string_option(&buf->b_p_dict);
   check_string_option(&buf->b_p_tsr);
   check_string_option(&buf->b_p_lw);
@@ -2981,6 +2983,24 @@ did_set_string_option (
       errmsg = e_invarg;
   } else if (varp == &p_bo) {
     if (opt_strings_flags(p_bo, p_bo_values, &bo_flags, true) != OK) {
+      errmsg = e_invarg;
+    }
+  } else if (gvarp == &p_tc) {  // 'tagcase'
+    unsigned int *flags;
+
+    if (opt_flags & OPT_LOCAL) {
+      p = curbuf->b_p_tc;
+      flags = &curbuf->b_tc_flags;
+    } else {
+      p = p_tc;
+      flags = &tc_flags;
+    }
+
+    if ((opt_flags & OPT_LOCAL) && *p == NUL) {
+      // make the local value empty: use the global value
+      *flags = 0;
+    } else if (*p == NUL
+               || opt_strings_flags(p, p_tc_values, flags, false) != OK) {
       errmsg = e_invarg;
     }
   } else if (varp == &p_cmp) {  // 'casemap'
@@ -5111,6 +5131,10 @@ void unset_global_local_option(char *name, void *from)
     case PV_TAGS:
       clear_string_option(&buf->b_p_tags);
       break;
+    case PV_TC:
+      clear_string_option(&buf->b_p_tc);
+      buf->b_tc_flags = 0;
+      break;
     case PV_DEF:
       clear_string_option(&buf->b_p_def);
       break;
@@ -5164,6 +5188,7 @@ static char_u *get_varp_scope(vimoption_T *p, int opt_flags)
     case PV_PATH: return (char_u *)&(curbuf->b_p_path);
     case PV_AR:   return (char_u *)&(curbuf->b_p_ar);
     case PV_TAGS: return (char_u *)&(curbuf->b_p_tags);
+    case PV_TC:   return (char_u *)&(curbuf->b_p_tc);
     case PV_DEF:  return (char_u *)&(curbuf->b_p_def);
     case PV_INC:  return (char_u *)&(curbuf->b_p_inc);
     case PV_DICT: return (char_u *)&(curbuf->b_p_dict);
@@ -5201,6 +5226,8 @@ static char_u *get_varp(vimoption_T *p)
            ? (char_u *)&(curbuf->b_p_ar) : p->var;
   case PV_TAGS:   return *curbuf->b_p_tags != NUL
            ? (char_u *)&(curbuf->b_p_tags) : p->var;
+  case PV_TC:     return *curbuf->b_p_tc != NUL
+           ? (char_u *)&(curbuf->b_p_tc) : p->var;
   case PV_BKC:    return *curbuf->b_p_bkc != NUL
            ? (char_u *)&(curbuf->b_p_bkc) : p->var;
   case PV_DEF:    return *curbuf->b_p_def != NUL
@@ -5580,6 +5607,8 @@ void buf_copy_options(buf_T *buf, int flags)
       buf->b_p_kp = empty_option;
       buf->b_p_path = empty_option;
       buf->b_p_tags = empty_option;
+      buf->b_p_tc = empty_option;
+      buf->b_tc_flags = 0;
       buf->b_p_def = empty_option;
       buf->b_p_inc = empty_option;
       buf->b_p_inex = vim_strsave(p_inex);
