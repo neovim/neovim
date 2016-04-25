@@ -140,6 +140,7 @@ do
   local time = cimport('./src/nvim/os/time.h')
   time.time_init()
   main.early_init()
+  main.event_init()
 end
 
 -- C constants.

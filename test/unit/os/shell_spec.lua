@@ -11,7 +11,7 @@ if allowed_os[jit.os] ~= true then
 end
 
 local helpers = require('test.unit.helpers')
-local shell = helpers.cimport(
+local cimported = helpers.cimport(
   './src/nvim/os/shell.h',
   './src/nvim/option_defs.h',
   './src/nvim/main.h',
@@ -25,18 +25,17 @@ local NULL = ffi.cast('void *', 0)
 
 describe('shell functions', function()
   setup(function()
-    shell.event_init()
     -- os_system() can't work when the p_sh and p_shcf variables are unset
-    shell.p_sh = to_cstr('/bin/bash')
-    shell.p_shcf = to_cstr('-c')
+    cimported.p_sh = to_cstr('/bin/bash')
+    cimported.p_shcf = to_cstr('-c')
   end)
 
   teardown(function()
-    shell.event_teardown()
+    cimported.event_teardown()
   end)
 
   local function shell_build_argv(cmd, extra_args)
-    local res = shell.shell_build_argv(
+    local res = cimported.shell_build_argv(
         cmd and to_cstr(cmd),
         extra_args and to_cstr(extra_args))
     local argc = 0
@@ -45,10 +44,10 @@ describe('shell functions', function()
     -- crash.
     while res[argc] ~= nil do
       ret[#ret + 1] = ffi.string(res[argc])
-      shell.xfree(res[argc])
+      cimported.xfree(res[argc])
       argc = argc + 1
     end
-    shell.xfree(res)
+    cimported.xfree(res)
     return ret
   end
 
@@ -59,8 +58,8 @@ describe('shell functions', function()
     local nread = ffi.new('size_t[1]')
 
     local argv = ffi.cast('char**',
-                          shell.shell_build_argv(to_cstr(cmd), nil))
-    local status = shell.os_system(argv, input_or, input_len, output, nread)
+                          cimported.shell_build_argv(to_cstr(cmd), nil))
+    local status = cimported.os_system(argv, input_or, input_len, output, nread)
 
     return status, intern(output[0], nread[0])
   end
@@ -97,13 +96,13 @@ describe('shell functions', function()
     local saved_opts = {}
 
     setup(function()
-      saved_opts.p_sh = shell.p_sh
-      saved_opts.p_shcf = shell.p_shcf
+      saved_opts.p_sh = cimported.p_sh
+      saved_opts.p_shcf = cimported.p_shcf
     end)
 
     teardown(function()
-      shell.p_sh = saved_opts.p_sh
-      shell.p_shcf = saved_opts.p_shcf
+      cimported.p_sh = saved_opts.p_sh
+      cimported.p_shcf = saved_opts.p_shcf
     end)
 
     it('works with NULL arguments', function()
@@ -123,8 +122,8 @@ describe('shell functions', function()
     end)
 
     it('splits and unquotes &shell and &shellcmdflag', function()
-      shell.p_sh = to_cstr('/Program" "Files/zsh -f')
-      shell.p_shcf = to_cstr('-x -o "sh word split" "-"c')
+      cimported.p_sh = to_cstr('/Program" "Files/zsh -f')
+      cimported.p_shcf = to_cstr('-x -o "sh word split" "-"c')
       eq({'/Program Files/zsh', '-f',
           'ghi  jkl',
           '-x', '-o', 'sh word split',
