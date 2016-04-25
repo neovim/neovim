@@ -6171,12 +6171,11 @@ do_highlight (
         break;
       }
 
-      /*
-       * Isolate the key ("term", "ctermfg", "ctermbg", "font", "guifg",
-       * "guibg" or "guisp").
-       */
-      while (*linep && !ascii_iswhite(*linep) && *linep != '=')
-        ++linep;
+      // Isolate the key ("term", "ctermfg", "ctermbg", "font", "guifg",
+      // "guibg" or "guisp").
+      while (*linep && !ascii_iswhite(*linep) && *linep != '=') {
+        linep++;
+      }
       xfree(key);
       key = vim_strnsave_up(key_start, (int)(linep - key_start));
       linep = skipwhite(linep);
@@ -6579,10 +6578,11 @@ static void highlight_clear(int idx)
   HL_TABLE()[idx].sg_rgb_bg_name = NULL;
   xfree(HL_TABLE()[idx].sg_rgb_sp_name);
   HL_TABLE()[idx].sg_rgb_sp_name = NULL;
-  /* Clear the script ID only when there is no link, since that is not
-   * cleared. */
-  if (HL_TABLE()[idx].sg_link == 0)
+  // Clear the script ID only when there is no link, since that is not
+  // cleared.
+  if (HL_TABLE()[idx].sg_link == 0) {
     HL_TABLE()[idx].sg_scriptID = 0;
+  }
 }
 
 
@@ -6766,7 +6766,7 @@ static void highlight_list_one(int id)
   didh = highlight_list_arg(id, didh, LIST_STRING,
       0, sgp->sg_rgb_bg_name, "guibg");
   didh = highlight_list_arg(id, didh, LIST_STRING,
-      0, sgp->sg_rgb_sp_name, "guisp");
+                            0, sgp->sg_rgb_sp_name, "guisp");
 
   if (sgp->sg_link && !got_int) {
     (void)syn_list_header(didh, 9999, id);
@@ -6880,8 +6880,9 @@ highlight_color (
   if (modec == 'g') {
     if (fg)
       return HL_TABLE()[id - 1].sg_rgb_fg_name;
-    if (sp)
+    if (sp) {
       return HL_TABLE()[id - 1].sg_rgb_sp_name;
+    }
     return HL_TABLE()[id - 1].sg_rgb_bg_name;
   }
   if (font || sp)
