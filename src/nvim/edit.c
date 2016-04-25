@@ -3306,6 +3306,12 @@ static bool ins_compl_prep(int c)
         showmode();
       }
 
+      // Avoid the popup menu remains displayed when leaving the
+      // command line window.
+      if (c == Ctrl_C && cmdwin_type != 0) {
+        update_screen(0);
+      }
+
       /*
        * Indent now if a key was typed that is in 'cinkeys'.
        */
