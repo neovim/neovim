@@ -14947,6 +14947,8 @@ typedef struct {
 
 static int item_compare_ic;
 static bool item_compare_numeric;
+static bool item_compare_numbers;
+static bool item_compare_float;
 static char_u   *item_compare_func;
 static dict_T   *item_compare_selfdict;
 static int item_compare_func_err;
@@ -14968,6 +14970,21 @@ static int item_compare(const void *s1, const void *s2, bool keep_zero)
   si2 = (sortItem_T *)s2;
   typval_T *tv1 = &si1->item->li_tv;
   typval_T *tv2 = &si2->item->li_tv;
+
+  if (item_compare_numbers) {
+    long v1 = get_tv_number(tv1);
+    long v2 = get_tv_number(tv2);
+
+    return v1 == v2 ? 0 : v1 > v2 ? 1 : -1;
+  }
+
+  if (item_compare_float) {
+    float_T v1 = get_tv_float(tv1);
+    float_T v2 = get_tv_float(tv2);
+
+    return v1 == v2 ? 0 : v1 > v2 ? 1 : -1;
+  }
+
   // encode_tv2string() puts quotes around a string and allocates memory.  Don't
   // do that for string variables. Use a single quote when comparing with
   // a non-string to do what the docs promise.
@@ -15114,6 +15131,8 @@ static void do_sort_uniq(typval_T *argvars, typval_T *rettv, bool sort)
 
     item_compare_ic = FALSE;
     item_compare_numeric = false;
+    item_compare_numbers = false;
+    item_compare_float = false;
     item_compare_func = NULL;
     item_compare_selfdict = NULL;
 
@@ -15135,6 +15154,12 @@ static void do_sort_uniq(typval_T *argvars, typval_T *rettv, bool sort)
           if (STRCMP(item_compare_func, "n") == 0) {
             item_compare_func = NULL;
             item_compare_numeric = true;
+          } else if (STRCMP(item_compare_func, "N") == 0) {
+            item_compare_func = NULL;
+            item_compare_numbers = true;
+          } else if (STRCMP(item_compare_func, "f") == 0) {
+            item_compare_func = NULL;
+            item_compare_float = true;
           } else if (STRCMP(item_compare_func, "i") == 0) {
             item_compare_func = NULL;
             item_compare_ic = TRUE;
@@ -17834,6 +17859,33 @@ long get_tv_number_chk(typval_T *varp, int *denote)
     *denote = true;
   }
   return n;
+}
+
+static float_T get_tv_float(typval_T *varp)
+{
+  switch (varp->v_type) {
+    case VAR_NUMBER:
+      return (float_T)(varp->vval.v_number);
+    case VAR_FLOAT:
+      return varp->vval.v_float;
+      break;
+    case VAR_FUNC:
+      EMSG(_("E891: Using a Funcref as a Float"));
+      break;
+    case VAR_STRING:
+      EMSG(_("E892: Using a String as a Float"));
+      break;
+    case VAR_LIST:
+      EMSG(_("E893: Using a List as a Float"));
+      break;
+    case VAR_DICT:
+      EMSG(_("E894: Using a Dictionary as a Float"));
+      break;
+    default:
+      EMSG2(_(e_intern2), "get_tv_float()");
+      break;
+  }
+  return 0;
 }
 
 /*

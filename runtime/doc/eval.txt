@@ -6144,6 +6144,10 @@ sort({list} [, {func} [, {dict}]])			*sort()* *E702*
 		strtod() function to parse numbers, Strings, Lists, Dicts and
 		Funcrefs will be considered as being 0).
 
+		When {func} is given and it is 'N' then all items will be
+		sorted numerical. This is like 'n' but a string containing
+		digits will be used as the number they represent.
+
 		When {func} is a |Funcref| or a function name, this function
 		is called to compare items.  The function is invoked with two
 		items as argument and must return zero if they are equal, 1 or
@@ -6152,6 +6156,11 @@ sort({list} [, {func} [, {dict}]])			*sort()* *E702*
 
 		{dict} is for functions with the "dict" attribute.  It will be
 		used to set the local variable "self". |Dictionary-function|
+
+		The sort is stable, items which compare equal (as number or as
+		string) will keep their relative position. E.g., when sorting
+		on numbers, text strings will sort next to each other, in the
+		same order as they were originally.
 
 		The sort is stable, items which compare equal (as number or as
 		string) will keep their relative position. E.g., when sorting

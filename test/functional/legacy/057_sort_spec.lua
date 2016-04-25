@@ -668,4 +668,22 @@ describe(':sort', function()
       b0b101100
       b0b111000]])
   end)
+
+  it('float', function()
+    insert([[
+      1.234
+      0.88
+      123.456
+      1.15e-6
+      -1.1e3
+      -1.01e3]])
+    execute([[sort f]])
+    expect([[
+      -1.1e3
+      -1.01e3
+      1.15e-6
+      0.88
+      1.234
+      123.456]])
+  end)
 end)

@@ -36,9 +36,12 @@ SCRIPTS := \
            test_breakindent.out   \
            test_close_count.out   \
            test_marks.out         \
-           test_match_conceal.out \
 
-NEW_TESTS = test_viml.res
+# Tests using runtest.vim.vim.
+# Keep test_alot*.res as the last one, sort the others.
+NEW_TESTS = \
+	    test_viml.res \
+	    test_alot.res
 
 SCRIPTS_GUI := test16.out
 

@@ -3,6 +3,7 @@
  */
 
 #include <assert.h>
+#include <float.h>
 #include <stdbool.h>
 #include <string.h>
 #include <stdlib.h>
@@ -273,17 +274,26 @@ static int linelen(int *has_tab)
 static char_u   *sortbuf1;
 static char_u   *sortbuf2;
 
-static int sort_ic;                     /* ignore case */
-static int sort_nr;                     /* sort on number */
-static int sort_rx;                     /* sort on regex instead of skipping it */
+static int sort_ic;       ///< ignore case
+static int sort_nr;       ///< sort on number
+static int sort_rx;       ///< sort on regex instead of skipping it
+static int sort_flt;      ///< sort on floating number
 
-static int sort_abort;                  /* flag to indicate if sorting has been interrupted */
+static int sort_abort;    ///< flag to indicate if sorting has been interrupted
 
-/* Struct to store info to be sorted. */
+/// Struct to store info to be sorted.
 typedef struct {
-  linenr_T lnum;                        /* line number */
-  long start_col_nr;                    /* starting column number or number */
-  long end_col_nr;                      /* ending column number */
+  linenr_T lnum;          ///< line number
+  long start_col_nr;      ///< starting column number or number
+  long end_col_nr;        ///< ending column number
+  union {
+    struct {
+      long start_col_nr;  ///< starting column number
+      long end_col_nr;    ///< ending column number
+    } line;
+    long value;           ///< value if sorting by integer
+    float_T value_flt;    ///< value if sorting by float
+  } st_u;
 } sorti_T;
 
 
@@ -302,21 +312,26 @@ static int sort_compare(const void *s1, const void *s2)
   if (got_int)
     sort_abort = TRUE;
 
-  /* When sorting numbers "start_col_nr" is the number, not the column
-   * number. */
-  if (sort_nr)
-    result = l1.start_col_nr == l2.start_col_nr ? 0
-             : l1.start_col_nr > l2.start_col_nr ? 1 : -1;
-  else {
-    /* We need to copy one line into "sortbuf1", because there is no
-     * guarantee that the first pointer becomes invalid when obtaining the
-     * second one. */
-    STRNCPY(sortbuf1, ml_get(l1.lnum) + l1.start_col_nr,
-        l1.end_col_nr - l1.start_col_nr + 1);
-    sortbuf1[l1.end_col_nr - l1.start_col_nr] = 0;
-    STRNCPY(sortbuf2, ml_get(l2.lnum) + l2.start_col_nr,
-        l2.end_col_nr - l2.start_col_nr + 1);
-    sortbuf2[l2.end_col_nr - l2.start_col_nr] = 0;
+  // When sorting numbers "start_col_nr" is the number, not the column
+  // number.
+  if (sort_nr) {
+    result = l1.st_u.value == l2.st_u.value
+             ? 0 : l1.st_u.value > l2.st_u.value
+             ? 1 : -1;
+  } else if (sort_flt) {
+    result = l1.st_u.value_flt == l2.st_u.value_flt
+             ? 0 : l1.st_u.value_flt > l2.st_u.value_flt
+             ? 1 : -1;
+  } else {
+    // We need to copy one line into "sortbuf1", because there is no
+    // guarantee that the first pointer becomes invalid when obtaining the
+    // second one.
+    STRNCPY(sortbuf1, ml_get(l1.lnum) + l1.st_u.line.start_col_nr,
+            l1.st_u.line.end_col_nr - l1.st_u.line.start_col_nr + 1);
+    sortbuf1[l1.st_u.line.end_col_nr - l1.st_u.line.start_col_nr] = 0;
+    STRNCPY(sortbuf2, ml_get(l2.lnum) + l2.st_u.line.start_col_nr,
+            l2.st_u.line.end_col_nr - l2.st_u.line.start_col_nr + 1);
+    sortbuf2[l2.st_u.line.end_col_nr - l2.st_u.line.start_col_nr] = 0;
 
     result = sort_ic ? STRICMP(sortbuf1, sortbuf2)
              : STRCMP(sortbuf1, sortbuf2);
@@ -360,7 +375,7 @@ void ex_sort(exarg_T *eap)
   regmatch.regprog = NULL;
   sorti_T *nrs = xmalloc(count * sizeof(sorti_T));
 
-  sort_abort = sort_ic = sort_rx = sort_nr = 0;
+  sort_abort = sort_ic = sort_rx = sort_nr = sort_flt = 0;
   size_t format_found = 0;
 
   for (p = eap->arg; *p != NUL; ++p) {
@@ -370,7 +385,10 @@ void ex_sort(exarg_T *eap)
     } else if (*p == 'r') {
       sort_rx = true;
     } else if (*p == 'n') {
-      sort_nr = 2;
+      sort_nr = 1;
+      format_found++;
+    } else if (*p == 'f') {
+      sort_flt = 1;
       format_found++;
     } else if (*p == 'b') {
       sort_what = STR2NR_BIN + STR2NR_FORCE;
@@ -423,7 +441,8 @@ void ex_sort(exarg_T *eap)
     goto sortend;
   }
 
-  // From here on "sort_nr" is used as a flag for any number sorting.
+  // From here on "sort_nr" is used as a flag for any integer number
+  // sorting.
   sort_nr += sort_what;
 
   // Make an array with all line numbers.  This avoids having to copy all
@@ -452,7 +471,7 @@ void ex_sort(exarg_T *eap)
       end_col = 0;
     }
 
-    if (sort_nr) {
+    if (sort_nr || sort_flt) {
       // Make sure vim_str2nr doesn't read any digits past the end
       // of the match, by temporarily terminating the string there
       s2 = s + end_col;
@@ -460,29 +479,42 @@ void ex_sort(exarg_T *eap)
       *s2 = NUL;
       // Sorting on number: Store the number itself.
       p = s + start_col;
-      if (sort_what & STR2NR_HEX) {
-        s = skiptohex(p);
-      } else if (sort_what & STR2NR_BIN) {
-        s = (char_u*) skiptobin((char*) p);
+      if (sort_nr) {
+        if (sort_what & STR2NR_HEX) {
+          s = skiptohex(p);
+        } else if (sort_what & STR2NR_BIN) {
+          s = (char_u *)skiptobin((char *)p);
+        } else {
+          s = skiptodigit(p);
+        }
+        if (s > p && s[-1] == '-') {
+          s--;  // include preceding negative sign
+        }
+        if (*s == NUL) {
+          // empty line should sort before any number
+          nrs[lnum - eap->line1].st_u.value = -MAXLNUM;
+        } else {
+          vim_str2nr(s, NULL, NULL, sort_what,
+                     &nrs[lnum - eap->line1].st_u.value, NULL, 0);
+        }
       } else {
-        s = skiptodigit(p);
-      }
-      if (s > p && s[-1] == '-') {
-        // include preceding negative sign
-        s--;
-      }
-      if (*s == NUL) {
-        // empty line should sort before any number
-        nrs[lnum - eap->line1].start_col_nr = -MAXLNUM;
-      } else {
-        vim_str2nr(s, NULL, NULL, sort_what,
-                   &nrs[lnum - eap->line1].start_col_nr, NULL, 0);
+        s = skipwhite(p);
+        if (*s == '+') {
+          s = skipwhite(s + 1);
+        }
+
+        if (*s == NUL) {
+          // empty line should sort before any number
+          nrs[lnum - eap->line1].st_u.value_flt = -DBL_MAX;
+        } else {
+          nrs[lnum - eap->line1].st_u.value_flt = strtod((char *)s, NULL);
+        }
       }
       *s2 = c;
     } else {
       // Store the column to sort at.
-      nrs[lnum - eap->line1].start_col_nr = start_col;
-      nrs[lnum - eap->line1].end_col_nr = end_col;
+      nrs[lnum - eap->line1].st_u.line.start_col_nr = start_col;
+      nrs[lnum - eap->line1].st_u.line.end_col_nr = end_col;
     }
 
     nrs[lnum - eap->line1].lnum = lnum;
