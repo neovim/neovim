@@ -2380,7 +2380,7 @@ static void source_pack_plugin(char_u *fname, void *cookie)
   char_u *p6, *p5, *p4, *p3, *p2, *p1, *p;
   char_u *new_rtp;
 
-  p4 = p3 = p2 = p1 = get_past_head(fname);
+  p6 = p5 = p4 = p3 = p2 = p1 = get_past_head(fname);
   for (p = p1; *p; mb_ptr_adv(p)) {
     if (vim_ispathsep_nocolon(*p)) {
       p6 = p5; p5 = p4; p4 = p3; p3 = p2; p2 = p1; p1 = p;
