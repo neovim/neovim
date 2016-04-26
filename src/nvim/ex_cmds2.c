@@ -2375,6 +2375,21 @@ int do_in_runtimepath(char_u *name, bool all, DoInRuntimepathCB callback,
   return do_in_path(p_rtp, name, all, callback, cookie);
 }
 
+// Source filetype detection scripts, if filetype.vim was already done.
+static void may_do_filetypes(char_u *pat)
+{
+  char_u *cmd = vim_strsave((char_u *)"did_load_filetypes");
+
+  // If runtime/filetype.vim wasn't loaded yet, the scripts will be found
+  // when it loads.
+  if (cmd != NULL && eval_to_number(cmd) > 0) {
+    do_cmdline_cmd("augroup filetypedetect");
+    source_runtime(pat, TRUE);
+    do_cmdline_cmd("augroup END");
+  }
+  xfree(cmd);
+}
+
 static void source_pack_plugin(char_u *fname, void *cookie)
 {
   char_u *p6, *p5, *p4, *p3, *p2, *p1, *p;
@@ -2436,17 +2451,23 @@ void source_packages(void)
 {
   do_in_path(p_pp, (char_u *)"pack/*/ever/*/plugin/*.vim",
              true, source_pack_plugin, NULL);
+  may_do_filetypes((char_u *)"pack/*/ever/*/ftdetect/*.vim");
 }
 
 // ":loadplugin {name}"
 void ex_loadplugin(exarg_T *eap)
 {
-  static const char *pattern = "pack/*/opt/%s/plugin/*.vim";
+  static const char *plugpat = "pack/*/opt/%s/plugin/*.vim";
+  static const char *ftpat = "pack/*/opt/%s/ftdetect/*.vim";
 
-  size_t len = STRLEN(pattern) + STRLEN(eap->arg);
+  size_t len = STRLEN(ftpat) + STRLEN(eap->arg);
   char *pat = xmallocz(len);
-  vim_snprintf(pat, len, pattern, eap->arg);
+  vim_snprintf(pat, len, plugpat, eap->arg);
   do_in_path(p_pp, (char_u *)pat, true, source_pack_plugin, NULL);
+
+  vim_snprintf(pat, len, ftpat, eap->arg);
+  may_do_filetypes((char_u *)pat);
+
   xfree(pat);
 }
 
