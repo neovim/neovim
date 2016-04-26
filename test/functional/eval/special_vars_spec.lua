@@ -1,12 +1,12 @@
 local helpers = require('test.functional.helpers')
 local exc_exec = helpers.exc_exec
 local execute = helpers.execute
-local meths = helpers.meths
 local funcs = helpers.funcs
-local meths = helpers.meths
 local clear = helpers.clear
 local eval = helpers.eval
 local eq = helpers.eq
+local meths = helpers.meths
+local NIL = helpers.NIL
 
 describe('Special values', function()
   before_each(clear)

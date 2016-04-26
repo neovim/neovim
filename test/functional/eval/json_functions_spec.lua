@@ -7,6 +7,7 @@ local eval = helpers.eval
 local execute = helpers.execute
 local exc_exec = helpers.exc_exec
 local redir_exec = helpers.redir_exec
+local NIL = helpers.NIL
 
 describe('json_decode() function', function()
   local restart = function(cmd)

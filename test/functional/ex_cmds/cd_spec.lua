@@ -3,7 +3,7 @@
 local helpers = require('test.functional.helpers')
 local execute, eq, clear, eval, exc_exec =
   helpers.execute, helpers.eq, helpers.clear, helpers.eval, helpers.exc_exec
-
+local lfs = require('lfs')
 
 -- These directories will be created for testing
 local directories = {
@@ -16,13 +16,13 @@ local directories = {
 local  cwd = function() return eval('getcwd(      )') end  -- effective working dir
 local wcwd = function() return eval('getcwd( 0    )') end  -- window dir
 local tcwd = function() return eval('getcwd(-1,  0)') end  -- tab dir
-local gcwd = function() return eval('getcwd(-1, -1)') end  -- global dir
+--local gcwd = function() return eval('getcwd(-1, -1)') end  -- global dir
 
 -- Same, except these tell us if there is a working directory at all
-local  lwd = function() return eval('haslocaldir(      )') end  -- effective working dir
+--local  lwd = function() return eval('haslocaldir(      )') end  -- effective working dir
 local wlwd = function() return eval('haslocaldir( 0    )') end  -- window dir
 local tlwd = function() return eval('haslocaldir(-1,  0)') end  -- tab dir
-local glwd = function() return eval('haslocaldir(-1, -1)') end  -- global dir
+--local glwd = function() return eval('haslocaldir(-1, -1)') end  -- global dir
 
 -- Test both the `cd` and `chdir` variants
 for _, cmd in ipairs {'cd', 'chdir'} do
@@ -112,36 +112,36 @@ end
 for _, cmd in ipairs {'getcwd', 'haslocaldir'} do
   describe(cmd..'()', function()
     -- Test invalid argument types
-    local expected = 'Vim(call):E474: Invalid argument'
+    local err474 = 'Vim(call):E474: Invalid argument'
     it('fails on string', function()
-      eq(expected, exc_exec('call ' .. cmd .. '("some string")'))
+      eq(err474, exc_exec('call ' .. cmd .. '("some string")'))
     end)
     it('fails on float', function()
-      eq(expected, exc_exec('call ' .. cmd .. '(1.0)'))
+      eq(err474, exc_exec('call ' .. cmd .. '(1.0)'))
     end)
     it('fails on list', function()
-      eq(expected, exc_exec('call ' .. cmd .. '([1, 2])'))
+      eq(err474, exc_exec('call ' .. cmd .. '([1, 2])'))
     end)
     it('fails on dictionary', function()
-      eq(expected, exc_exec('call ' .. cmd .. '({"key": "value"})'))
+      eq(err474, exc_exec('call ' .. cmd .. '({"key": "value"})'))
     end)
     it('fails on funcref', function()
-      eq(expected, exc_exec('call ' .. cmd .. '(function("tr"))'))
+      eq(err474, exc_exec('call ' .. cmd .. '(function("tr"))'))
     end)
 
     -- Test invalid numbers
     it('fails on number less than -1', function()
-      eq(expected, exc_exec('call ' .. cmd .. '(-2)'))
+      eq(err474, exc_exec('call ' .. cmd .. '(-2)'))
     end)
-    local expected = 'Vim(call):E5001: Higher scope cannot be -1 if lower scope is >= 0.'
+    local err5001 = 'Vim(call):E5001: Higher scope cannot be -1 if lower scope is >= 0.'
     it('fails on -1 if previous arg is >=0', function()
-      eq(expected, exc_exec('call ' .. cmd .. '(0, -1)'))
+      eq(err5001, exc_exec('call ' .. cmd .. '(0, -1)'))
     end)
 
     -- Test wrong number of arguments
-    local expected = 'Vim(call):E118: Too many arguments for function: ' .. cmd
+    local err118 = 'Vim(call):E118: Too many arguments for function: ' .. cmd
     it('fails to parse more than one argument', function()
-      eq(expected, exc_exec('call ' .. cmd .. '(0, 0, 0)'))
+      eq(err118, exc_exec('call ' .. cmd .. '(0, 0, 0)'))
     end)
   end)
 end

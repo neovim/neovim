@@ -1,6 +1,6 @@
 local helpers = require('test.functional.helpers')
 local Screen = require('test.functional.ui.screen')
-local clear, feed, execute = helpers.clear, helpers.feed, helpers.execute
+local clear, execute = helpers.clear, helpers.execute
 
 describe("'shortmess'", function()
   local screen

@@ -1,6 +1,7 @@
 -- Sanity checks for vim_* API calls via msgpack-rpc
 local helpers = require('test.functional.helpers')
 local Screen = require('test.functional.ui.screen')
+local NIL = helpers.NIL
 local clear, nvim, eq, neq = helpers.clear, helpers.nvim, helpers.eq, helpers.neq
 local ok, nvim_async, feed = helpers.ok, helpers.nvim_async, helpers.feed
 local os_name = helpers.os_name

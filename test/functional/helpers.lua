@@ -1,5 +1,4 @@
 require('coxpcall')
-NIL = require('mpack').NIL
 local lfs = require('lfs')
 local assert = require('luassert')
 local ChildProcessStream = require('nvim.child_process_stream')
@@ -9,6 +8,8 @@ local nvim_prog = os.getenv('NVIM_PROG') or 'build/bin/nvim'
 local nvim_argv = {nvim_prog, '-u', 'NONE', '-i', 'NONE', '-N',
                    '--cmd', 'set shortmess+=I background=light noswapfile noautoindent laststatus=1 undodir=. directory=. viewdir=. backupdir=.',
                    '--embed'}
+
+local mpack = require('mpack')
 
 -- Formulate a path to the directory containing nvim.  We use this to
 -- help run test executables.  It helps to keep the tests working, even
@@ -452,4 +453,5 @@ return {
   curbufmeths = curbufmeths,
   curwinmeths = curwinmeths,
   curtabmeths = curtabmeths,
+  NIL = mpack.NIL
 }
