@@ -1640,6 +1640,16 @@ return {
       defaults={if_true={vi=""}}
     },
     {
+      full_name='packpath', abbreviation='pp',
+      type='string', list='onecomma', scope={'global'},
+      deny_duplicates=true,
+      secure=true,
+      vi_def=true,
+      expand=true,
+      varname='p_pp',
+      defaults={if_true={vi=''}}
+    },
+    {
       full_name='paragraphs', abbreviation='para',
       type='string', scope={'global'},
       vi_def=true,

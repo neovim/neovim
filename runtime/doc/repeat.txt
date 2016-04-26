@@ -1,4 +1,4 @@
-*repeat.txt*    For Vim version 7.4.  Last change: 2016 Feb 12
+*repeat.txt*    For Vim version 7.4.  Last change: 2016 Feb 21
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -12,8 +12,9 @@ Chapter 26 of the user manual introduces repeating |usr_26.txt|.
 2. Multiple repeats	|multi-repeat|
 3. Complex repeats	|complex-repeat|
 4. Using Vim scripts	|using-scripts|
-5. Debugging scripts	|debug-scripts|
-6. Profiling		|profiling|
+5. Using Vim packages	|packages|
+6. Debugging scripts	|debug-scripts|
+7. Profiling		|profiling|
 
 ==============================================================================
 1. Single repeats					*single-repeat*
@@ -203,6 +204,22 @@ For writing a Vim script, see chapter 41 of the user manual |usr_41.txt|.
 			When 'verbose' is two or higher, there is a message
 			about each searched file.
 
+							*:loadp* *:loadplugin*
+:loadp[lugin] {name}	Search for an optional plugin directory and source the
+			plugin files found.  It is similar to: >
+				:runtime pack/*/opt/{name}/plugin/*.vim
+<			However, `:loadplugin` uses 'packpath' instead of
+			'runtimepath'.  And the directory found is added to
+			'runtimepath'.
+
+			Note that {name} is the directory name, not the name
+			of the .vim file.  If the "{name}/plugin" directory
+			contains more than one file they are all sourced.
+
+			Also see |load-plugin|.
+
+			{not available without the |+packages| feature}
+
 :scripte[ncoding] [encoding]		*:scripte* *:scriptencoding* *E167*
 			Specify the character encoding used in the script.
 			The following lines will be converted from [encoding]
@@ -373,7 +390,56 @@ Rationale:
 <	Therefore the unusual leading backslash is used.
 
 ==============================================================================
-5. Debugging scripts					*debug-scripts*
+5. Using Vim packages					*packages*
+
+A Vim package is a directory that contains one or more plugins.  The
+advantages over normal plugins:
+- A package can be downloaded as an archive and unpacked in its own directory.
+  That makes it easy to updated and/or remove.
+- A package can be a git, mercurial, etc. respository.  That makes it really
+  easy to update.
+- A package can contain multiple plugins that depend on each other.
+- A package can contain plugins that are automatically loaded on startup and
+  ones that are only loaded when needed with `:loadplugin`.
+
+Let's assume your Vim files are in the "~/.local/share/nvim/site" directory
+and you want to add a package from a zip archive "/tmp/mypack.zip":
+	% mkdir -p ~/.local/share/nvim/site/pack/my
+	% cd ~/.local/share/nvim/site/pack/my
+	% unzip /tmp/mypack.zip
+
+The directory name "my" is arbitrary, you can pick anything you like.
+
+You would now have these files under ~/.local/share/nvim/site:
+	pack/my/README.txt
+	pack/my/ever/always/plugin/always.vim
+	pack/my/ever/always/syntax/always.vim
+	pack/my/opt/mydebug/plugin/debugger.vim
+
+When Vim starts up it scans all directories in 'packpath' for plugins under the
+"ever" directory and loads them.  When found that directory is added to
+'runtimepath'.
+
+In the example Vim will find "my/ever/always/plugin/always.vim" and adds 
+"~/.local/share/nvim/site/pack/my/ever/always" to 'runtimepath'.
+
+If the "always" plugin kicks in and sets the 'filetype' to "always", Vim will
+find the syntax/always.vim file, because its directory is in 'runtimepath'.
+
+							*load-plugin*
+To load an optional plugin from a pack use the `:loadplugin` command: >
+	:loadplugin mydebug
+This could be done inside always.vim, if some conditions are met.
+Or you could add this command to your |.vimrc|.
+
+It is perfectly normal for a package to only have files in the "opt"
+directory.  You then need to load each plugin when you want to use it.
+
+Loading packages will not happen if loading plugins is disabled, see
+|load-plugins|.
+
+==============================================================================
+6. Debugging scripts					*debug-scripts*
 
 Besides the obvious messages that you can add to your scripts to find out what
 they are doing, Vim offers a debug mode.  This allows you to step through a
@@ -597,7 +663,7 @@ OBSCURE
 		user, don't use typeahead for debug commands.
 
 ==============================================================================
-6. Profiling						*profile* *profiling*
+7. Profiling						*profile* *profiling*
 
 Profiling means that Vim measures the time that is spent on executing
 functions and/or scripts.  The |+profile| feature is required for this.

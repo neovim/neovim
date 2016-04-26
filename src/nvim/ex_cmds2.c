@@ -2284,21 +2284,9 @@ int source_runtime(char_u *name, int all)
   return do_in_runtimepath(name, all, source_callback, NULL);
 }
 
-/// Find "name" in 'runtimepath'.  When found, invoke the callback function for
-/// it: callback(fname, "cookie")
-/// When "all" is true repeat for all matches, otherwise only the first one is
-/// used.
-/// Returns OK when at least one match found, FAIL otherwise.
-/// If "name" is NULL calls callback for each entry in runtimepath. Cookie is
-/// passed by reference in this case, setting it to NULL indicates that callback
-/// has done its job.
-int do_in_runtimepath(char_u *name, int all, DoInRuntimepathCB callback,
-                      void *cookie)
+static int do_in_path(char_u *path, char_u *name, bool all,
+                      DoInRuntimepathCB callback, void *cookie)
 {
-  char_u      *rtp;
-  char_u      *np;
-  char_u      *buf;
-  char_u      *rtp_copy;
   char_u      *tail;
   int num_files;
   char_u      **files;
@@ -2307,18 +2295,18 @@ int do_in_runtimepath(char_u *name, int all, DoInRuntimepathCB callback,
 
   // Make a copy of 'runtimepath'.  Invoking the callback may change the
   // value.
-  rtp_copy = vim_strsave(p_rtp);
-  buf = xmallocz(MAXPATHL);
+  char_u *rtp_copy = vim_strsave(path);
+  char_u *buf = xmallocz(MAXPATHL);
   {
     if (p_verbose > 1 && name != NULL) {
       verbose_enter();
       smsg(_("Searching for \"%s\" in \"%s\""),
-           (char *)name, (char *)p_rtp);
+          (char *)name, (char *)path);
       verbose_leave();
     }
 
     // Loop over all entries in 'runtimepath'.
-    rtp = rtp_copy;
+    char_u *rtp = rtp_copy;
     while (*rtp != NUL && (all || !did_one)) {
       // Copy the path from 'runtimepath' to buf[].
       copy_option_part(&rtp, buf, MAXPATHL, ",");
@@ -2332,7 +2320,7 @@ int do_in_runtimepath(char_u *name, int all, DoInRuntimepathCB callback,
         tail = buf + STRLEN(buf);
 
         // Loop over all patterns in "name"
-        np = name;
+        char_u *np = name;
         while (*np != NUL && (all || !did_one)) {
           // Append the pattern from "name" to buf[].
           assert(MAXPATHL >= (tail - buf));
@@ -2371,6 +2359,95 @@ int do_in_runtimepath(char_u *name, int all, DoInRuntimepathCB callback,
 
 
   return did_one ? OK : FAIL;
+}
+
+/// Find "name" in 'runtimepath'.  When found, invoke the callback function for
+/// it: callback(fname, "cookie")
+/// When "all" is true repeat for all matches, otherwise only the first one is
+/// used.
+/// Returns OK when at least one match found, FAIL otherwise.
+/// If "name" is NULL calls callback for each entry in runtimepath. Cookie is
+/// passed by reference in this case, setting it to NULL indicates that callback
+/// has done its job.
+int do_in_runtimepath(char_u *name, bool all, DoInRuntimepathCB callback,
+                      void *cookie)
+{
+  return do_in_path(p_rtp, name, all, callback, cookie);
+}
+
+static void source_pack_plugin(char_u *fname, void *cookie)
+{
+  char_u *p6, *p5, *p4, *p3, *p2, *p1, *p;
+  char_u *new_rtp;
+
+  p4 = p3 = p2 = p1 = get_past_head(fname);
+  for (p = p1; *p; mb_ptr_adv(p)) {
+    if (vim_ispathsep_nocolon(*p)) {
+      p6 = p5; p5 = p4; p4 = p3; p3 = p2; p2 = p1; p1 = p;
+    }
+  }
+
+  // now we have:
+  // rtp/pack/name/ever/name/plugin/name.vim
+  //    p6   p5   p4   p3   p2     p1
+
+  // find the part up to "pack" in 'runtimepath'
+  char_u c = *p6;
+  *p6 = NUL;
+  p = (char_u *)strstr((char *)p_rtp, (char *)fname);
+  if (p == NULL) {
+    // not found, append at the end
+    p = p_rtp + STRLEN(p_rtp);
+  } else {
+    // append after the matching directory.
+    p += STRLEN(fname);
+  }
+  *p6 = c;
+
+  c = *p2;
+  *p2 = NUL;
+  if (strstr((char *)p_rtp, (char *)fname) == NULL) {
+    // directory not in 'runtimepath', add it
+    size_t oldlen = STRLEN(p_rtp);
+    size_t addlen = STRLEN(fname);
+    new_rtp = try_malloc(oldlen + addlen + 1);
+    if (new_rtp == NULL) {
+      *p2 = c;
+      return;
+    }
+    uintptr_t keep = (uintptr_t)(p - p_rtp);
+    memmove(new_rtp, p_rtp, keep);
+    new_rtp[keep] = ',';
+    memmove(new_rtp + keep + 1, fname, addlen + 1);
+    if (p_rtp[keep] != NUL) {
+      memmove(new_rtp + keep + 1 + addlen, p_rtp + keep,
+              oldlen - keep + 1);
+    }
+    free_string_option(p_rtp);
+    p_rtp = new_rtp;
+  }
+  *p2 = c;
+
+  (void)do_source(fname, false, DOSO_NONE);
+}
+
+// Source the plugins in the package directories.
+void source_packages(void)
+{
+  do_in_path(p_pp, (char_u *)"pack/*/ever/*/plugin/*.vim",
+             true, source_pack_plugin, NULL);
+}
+
+// ":loadplugin {name}"
+void ex_loadplugin(exarg_T *eap)
+{
+  static const char *pattern = "pack/*/opt/%s/plugin/*.vim";
+
+  size_t len = STRLEN(pattern) + STRLEN(eap->arg);
+  char *pat = xmallocz(len);
+  vim_snprintf(pat, len, pattern, eap->arg);
+  do_in_path(p_pp, (char_u *)pat, true, source_pack_plugin, NULL);
+  xfree(pat);
 }
 
 /// ":options"

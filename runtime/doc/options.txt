@@ -1,4 +1,4 @@
-*options.txt*	For Vim version 7.4.  Last change: 2016 Feb 20
+*options.txt*	For Vim version 7.4.  Last change: 2016 Feb 21
 
 
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
@@ -4498,6 +4498,13 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 	This option cannot be set from a |modeline| or in the |sandbox|, for
 	security reasons.
+
+				*'packpath'* *'pp'*
+'packpath' 'pp'		string	(default: see 'runtimepath')
+			{not in Vi}
+			{not available without the |+packages| feature}
+	Directories used to find packages.  See |packages|.
+
 
 						*'paragraphs'* *'para'*
 'paragraphs' 'para'	string	(default "IPLPPPQPP TPHPLIPpLpItpplpipbp")

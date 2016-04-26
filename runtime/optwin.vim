@@ -1,7 +1,7 @@
 " These commands create the option window.
 "
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2015 Jul 22
+" Last Change:	2016 Feb 21
 
 " If there already is an option window, jump to that one.
 if bufwinnr("option-window") > 0
@@ -228,6 +228,8 @@ else
 endif
 call append("$", "runtimepath\tlist of directories used for runtime files and plugins")
 call <SID>OptionG("rtp", &rtp)
+call append("$", "packpath\tlist of directories used for plugin packages")
+call <SID>OptionG("pp", &pp)
 call append("$", "helpfile\tname of the main help file")
 call <SID>OptionG("hf", &hf)
 

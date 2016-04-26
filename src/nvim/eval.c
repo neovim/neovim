@@ -10782,6 +10782,7 @@ static void f_has(typval_T *argvars, typval_T *rettv)
     "mouse",
     "multi_byte",
     "multi_lang",
+    "packages",
     "path_extra",
     "persistent_undo",
     "postscript",

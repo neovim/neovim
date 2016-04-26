@@ -1243,6 +1243,9 @@ static void load_plugins(void)
   if (p_lpl) {
     source_runtime((char_u *)"plugin/**/*.vim", TRUE);
     TIME_MSG("loading plugins");
+
+    source_packages();
+    TIME_MSG("loading packages");
   }
 }
 

@@ -1,4 +1,4 @@
-*starting.txt*  For Vim version 7.4.  Last change: 2016 Feb 18
+*starting.txt*  For Vim version 7.4.  Last change: 2016 Feb 21
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -462,6 +462,10 @@ accordingly.  Vim proceeds in this order:
 	Note that using "-c 'set noloadplugins'" doesn't work, because the
 	commands from the command line have not been executed yet.  You can
 	use "--cmd 'set noloadplugins'" |--cmd|.
+
+	Plugin packs are loaded.  These are plugins, as above, but found in
+	'packpath' directories.  Every plugin directory found is added in
+	'runtimepath'.  See |packages|.
 
 7. Set 'shellpipe' and 'shellredir'
 	The 'shellpipe' and 'shellredir' options are set according to the

@@ -521,6 +521,7 @@ EXTERN int p_ari;               /* 'allowrevins' */
 EXTERN int p_ri;                /* 'revins' */
 EXTERN int p_ru;                /* 'ruler' */
 EXTERN char_u   *p_ruf;         /* 'rulerformat' */
+EXTERN char_u   *p_pp;          /* 'packpath' */
 EXTERN char_u   *p_rtp;         /* 'runtimepath' */
 EXTERN long p_sj;               /* 'scrolljump' */
 EXTERN long p_so;               /* 'scrolloff' */

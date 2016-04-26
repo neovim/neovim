@@ -5839,6 +5839,7 @@ set_context_in_set_cmd (
     if (p == (char_u *)&p_bdir
         || p == (char_u *)&p_dir
         || p == (char_u *)&p_path
+        || p == (char_u *)&p_pp
         || p == (char_u *)&p_rtp
         || p == (char_u *)&p_cdpath
         || p == (char_u *)&p_vdir
