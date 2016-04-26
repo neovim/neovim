@@ -19,16 +19,18 @@
 #define EXMODE_NORMAL           1
 #define EXMODE_VIM              2
 
-/// The scope of a command.
+/// The scope of a working-directory command like `:cd`.
 ///
-/// The lower a number, the deeper the scope.
+/// Scopes are enumerated from lowest to highest. When adding a scope make sure
+/// to update all functions using scopes as well, such as the implementation of
+/// `getcwd()`. When using scopes as limits (e.g. in loops) don't use the scopes
+/// directly, use `MIN_CD_SCOPE` and `MAX_CD_SCOPE` instead.
 typedef enum {
   kCdScopeWindow,  ///< Affects one window.
   kCdScopeTab,     ///< Affects one tab page.
-  kCdScopeGlobal,  ///< Affects the entire instance of NeoVim.
+  kCdScopeGlobal,  ///< Affects the entire instance of Neovim.
 } CdScope;
-
-/// Last `:cd` scope defined.
+#define MIN_CD_SCOPE  kCdScopeWindow
 #define MAX_CD_SCOPE  kCdScopeGlobal
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
