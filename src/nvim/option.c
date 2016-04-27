@@ -1177,28 +1177,27 @@ do_set (
           errmsg = e_invarg;
           goto skip;
         }
-        arg[len] = NUL;                             /* put NUL after name */
-        if (arg[1] == 't' && arg[2] == '_')         /* could be term code */
-          opt_idx = findoption(arg + 1);
-        arg[len++] = '>';                           /* restore '>' */
-        if (opt_idx == -1)
+        if (arg[1] == 't' && arg[2] == '_') {  // could be term code
+          opt_idx = findoption_len(arg + 1, (size_t) (len - 1));
+        }
+        len++;
+        if (opt_idx == -1) {
           key = find_key_option(arg + 1);
+        }
       } else {
         len = 0;
-        /*
-         * The two characters after "t_" may not be alphanumeric.
-         */
-        if (arg[0] == 't' && arg[1] == '_' && arg[2] && arg[3])
+        // The two characters after "t_" may not be alphanumeric.
+        if (arg[0] == 't' && arg[1] == '_' && arg[2] && arg[3]) {
           len = 4;
-        else
-          while (ASCII_ISALNUM(arg[len]) || arg[len] == '_')
-            ++len;
-        nextchar = arg[len];
-        arg[len] = NUL;                             /* put NUL after name */
-        opt_idx = findoption(arg);
-        arg[len] = nextchar;                        /* restore nextchar */
-        if (opt_idx == -1)
+        } else {
+          while (ASCII_ISALNUM(arg[len]) || arg[len] == '_') {
+            len++;
+          }
+        }
+        opt_idx = findoption_len(arg, (size_t) len);
+        if (opt_idx == -1) {
           key = find_key_option(arg);
+        }
       }
 
       /* remember character after option name */
@@ -2965,7 +2964,8 @@ did_set_string_option (
   /* 'pastetoggle': translate key codes like in a mapping */
   else if (varp == &p_pt) {
     if (*p_pt) {
-      (void)replace_termcodes(p_pt, &p, TRUE, TRUE, FALSE);
+      (void)replace_termcodes(p_pt, STRLEN(p_pt), &p, true, true, false,
+                              CPO_TO_CPO_FLAGS);
       if (p != NULL) {
         if (new_value_alloced)
           free_string_option(p_pt);
@@ -4303,14 +4303,16 @@ static void check_redraw(uint32_t flags)
     redraw_all_later(NOT_VALID);
 }
 
-/*
- * Find index for option 'arg'.
- * Return -1 if not found.
- */
-static int findoption(char_u *arg)
+/// Find index for named option
+///
+/// @param[in]  arg  Option to find index for.
+/// @param[in]  len  Length of the option.
+///
+/// @return Index of the option or -1 if option was not found.
+int findoption_len(const char_u *const arg, const size_t len)
 {
-  char            *s, *p;
-  static short quick_tab[27] = {0, 0};          /* quick access table */
+  char *s, *p;
+  static int quick_tab[27] = { 0, 0 };  // quick access table
   int is_term_opt;
 
   /*
@@ -4334,25 +4336,31 @@ static int findoption(char_u *arg)
   /*
    * Check for name starting with an illegal character.
    */
-  if (arg[0] < 'a' || arg[0] > 'z')
+  if (len == 0 || arg[0] < 'a' || arg[0] > 'z') {
     return -1;
+  }
 
   int opt_idx;
-  is_term_opt = (arg[0] == 't' && arg[1] == '_');
-  if (is_term_opt)
+  is_term_opt = (len > 2 && arg[0] == 't' && arg[1] == '_');
+  if (is_term_opt) {
     opt_idx = quick_tab[26];
-  else
+  } else {
     opt_idx = quick_tab[CharOrdLow(arg[0])];
+  }
+  // Match full name
   for (; (s = options[opt_idx].fullname) != NULL; opt_idx++) {
-    if (STRCMP(arg, s) == 0)                        /* match full name */
+    if (STRNCMP(arg, s, len) == 0 && s[len] == NUL) {
       break;
+    }
   }
   if (s == NULL && !is_term_opt) {
     opt_idx = quick_tab[CharOrdLow(arg[0])];
+    // Match short name
     for (; options[opt_idx].fullname != NULL; opt_idx++) {
       s = options[opt_idx].shortname;
-      if (s != NULL && STRCMP(arg, s) == 0)         /* match short name */
+      if (s != NULL && STRNCMP(arg, s, len) == 0 && s[len] == NUL) {
         break;
+      }
       s = NULL;
     }
   }
@@ -4417,6 +4425,15 @@ bool set_tty_option(char *name, char *value)
 
   return is_tty_option(name) || !strcmp(name, "term")
     || !strcmp(name, "ttytype");
+}
+
+/*
+ * Find index for option 'arg'.
+ * Return -1 if not found.
+ */
+static int findoption(char_u *arg)
+{
+  return findoption_len(arg, STRLEN(arg));
 }
 
 /*
@@ -4675,26 +4692,31 @@ char_u *get_highlight_default(void)
 /*
  * Translate a string like "t_xx", "<t_xx>" or "<S-Tab>" to a key number.
  */
-static int find_key_option(char_u *arg)
+int find_key_option_len(const char_u *arg, size_t len)
 {
   int key;
   int modifiers;
 
-  /*
-   * Don't use get_special_key_code() for t_xx, we don't want it to call
-   * add_termcap_entry().
-   */
-  if (arg[0] == 't' && arg[1] == '_' && arg[2] && arg[3])
+  // Don't use get_special_key_code() for t_xx, we don't want it to call
+  // add_termcap_entry().
+  if (len >= 4 && arg[0] == 't' && arg[1] == '_') {
     key = TERMCAP2KEY(arg[2], arg[3]);
-  else {
-    --arg;                          /* put arg at the '<' */
+  } else {
+    arg--;  // put arg at the '<'
     modifiers = 0;
-    key = find_special_key(&arg, &modifiers, TRUE, TRUE);
-    if (modifiers)                  /* can't handle modifiers here */
+    key = find_special_key(&arg, len + 1, &modifiers, true, true);
+    if (modifiers) {  // can't handle modifiers here
       key = 0;
+    }
   }
   return key;
 }
+
+static int find_key_option(const char_u *arg)
+{
+  return find_key_option_len(arg, STRLEN(arg));
+}
+
 
 /*
  * if 'all' == 0: show changed options

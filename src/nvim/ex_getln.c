@@ -4272,20 +4272,33 @@ void globpath(char_u *path, char_u *file, garray_T *ga, int expand_options)
 *  Command line history stuff	 *
 *********************************/
 
-/*
- * Translate a history character to the associated type number.
- */
-static int hist_char2type(int c)
+/// Translate a history character to the associated type number
+static HistoryType hist_char2type(const int c)
+  FUNC_ATTR_CONST FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  if (c == ':')
-    return HIST_CMD;
-  if (c == '=')
-    return HIST_EXPR;
-  if (c == '@')
-    return HIST_INPUT;
-  if (c == '>')
-    return HIST_DEBUG;
-  return HIST_SEARCH;       /* must be '?' or '/' */
+  switch (c) {
+    case ':': {
+      return HIST_CMD;
+    }
+    case '=': {
+      return HIST_EXPR;
+    }
+    case '@': {
+      return HIST_INPUT;
+    }
+    case '>': {
+      return HIST_DEBUG;
+    }
+    case '/':
+    case '?': {
+      return HIST_SEARCH;
+    }
+    default: {
+      assert(false);
+    }
+  }
+  // Silence -Wreturn-type
+  return 0;
 }
 
 /*
@@ -4454,28 +4467,38 @@ in_history (
   return false;
 }
 
-/*
- * Convert history name (from table above) to its HIST_ equivalent.
- * When "name" is empty, return "cmd" history.
- * Returns -1 for unknown history name.
- */
-int get_histtype(char_u *name)
+/// Convert history name to its HIST_ equivalent
+///
+/// Names are taken from the table above. When `name` is empty returns currently
+/// active history or HIST_DEFAULT, depending on `return_default` argument.
+///
+/// @param[in]  name            Converted name.
+/// @param[in]  len             Name length.
+/// @param[in]  return_default  Determines whether HIST_DEFAULT should be
+///                             returned or value based on `ccline.cmdfirstc`.
+///
+/// @return Any value from HistoryType enum, including HIST_INVALID. May not
+///         return HIST_DEFAULT unless return_default is true.
+HistoryType get_histtype(const char_u *const name, const size_t len,
+                         const bool return_default)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  int i;
-  int len = (int)STRLEN(name);
+  // No argument: use current history.
+  if (len == 0) {
+    return return_default ? HIST_DEFAULT :hist_char2type(ccline.cmdfirstc);
+  }
 
-  /* No argument: use current history. */
-  if (len == 0)
-    return hist_char2type(ccline.cmdfirstc);
-
-  for (i = 0; history_names[i] != NULL; ++i)
-    if (STRNICMP(name, history_names[i], len) == 0)
+  for (HistoryType i = 0; history_names[i] != NULL; i++) {
+    if (STRNICMP(name, history_names[i], len) == 0) {
       return i;
+    }
+  }
 
-  if (vim_strchr((char_u *)":=@>?/", name[0]) != NULL && name[1] == NUL)
+  if (vim_strchr((char_u *)":=@>?/", name[0]) != NULL && len == 1) {
     return hist_char2type(name[0]);
+  }
 
-  return -1;
+  return HIST_INVALID;
 }
 
 static int last_maptick = -1;           /* last seen maptick */
@@ -4847,23 +4870,20 @@ void ex_history(exarg_T *eap)
     while (ASCII_ISALPHA(*end)
            || vim_strchr((char_u *)":=@>/?", *end) != NULL)
       end++;
-    i = *end;
-    *end = NUL;
-    histype1 = get_histtype(arg);
-    if (histype1 == -1) {
-      if (STRNICMP(arg, "all", STRLEN(arg)) == 0) {
+    histype1 = get_histtype(arg, end - arg, false);
+    if (histype1 == HIST_INVALID) {
+      if (STRNICMP(arg, "all", end - arg) == 0) {
         histype1 = 0;
         histype2 = HIST_COUNT-1;
       } else {
-        *end = i;
         EMSG(_(e_trailing));
         return;
       }
     } else
       histype2 = histype1;
-    *end = i;
-  } else
+  } else {
     end = arg;
+  }
   if (!get_list_range(&end, &hisidx1, &hisidx2) || *end != NUL) {
     EMSG(_(e_trailing));
     return;

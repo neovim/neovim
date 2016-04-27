@@ -175,8 +175,9 @@ size_t input_enqueue(String keys)
   char *ptr = keys.data, *end = ptr + keys.size;
 
   while (rbuffer_space(input_buffer) >= 6 && ptr < end) {
-    uint8_t buf[6] = {0};
-    unsigned int new_size = trans_special((uint8_t **)&ptr, buf, true);
+    uint8_t buf[6] = { 0 };
+    unsigned int new_size = trans_special((const uint8_t **)&ptr, keys.size,
+                                          buf, true);
 
     if (new_size) {
       new_size = handle_mouse_event(&ptr, buf, new_size);

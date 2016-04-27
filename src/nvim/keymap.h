@@ -1,6 +1,8 @@
 #ifndef NVIM_KEYMAP_H
 #define NVIM_KEYMAP_H
 
+#include "nvim/strings.h"
+
 /*
  * Keycode definitions for special keys.
  *
@@ -461,6 +463,14 @@ enum key_extra {
 // This is a total of 6 tokens, and is currently the longest one possible.
 #define MAX_KEY_CODE_LEN    6
 
+#define FLAG_CPO_BSLASH    0x01
+#define FLAG_CPO_SPECI     0x02
+#define CPO_TO_CPO_FLAGS   (((vim_strchr(p_cpo, CPO_BSLASH) == NULL) \
+                             ? 0 \
+                             : FLAG_CPO_BSLASH)| \
+                            (vim_strchr(p_cpo, CPO_SPECI) == NULL \
+                             ? 0 \
+                             : FLAG_CPO_SPECI))
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "keymap.h.generated.h"
