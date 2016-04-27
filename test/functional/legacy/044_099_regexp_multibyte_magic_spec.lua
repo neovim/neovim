@@ -31,7 +31,8 @@ local function run_test_with_regexpengine(regexpengine)
     h AÀÁÂÃÄÅĀĂĄǍǞǠẢ BḂḆ CÇĆĈĊČ DĎĐḊḎḐ EÈÉÊËĒĔĖĘĚẺẼ FḞ GĜĞĠĢǤǦǴḠ HĤĦḢḦḨ IÌÍÎÏĨĪĬĮİǏỈ JĴ KĶǨḰḴ LĹĻĽĿŁḺ MḾṀ NÑŃŅŇṄṈ OÒÓÔÕÖØŌŎŐƠǑǪǬỎ PṔṖ Q RŔŖŘṘṞ SŚŜŞŠṠ TŢŤŦṪṮ UÙÚÛÜŨŪŬŮŰŲƯǓỦ VṼ WŴẀẂẄẆ XẊẌ YÝŶŸẎỲỶỸ ZŹŻŽƵẐẔ
     i aàáâãäåāăąǎǟǡả bḃḇ cçćĉċč dďđḋḏḑ eèéêëēĕėęěẻẽ fḟ gĝğġģǥǧǵḡ hĥħḣḧḩẖ iìíîïĩīĭįǐỉ jĵǰ kķǩḱḵ lĺļľŀłḻ mḿṁ nñńņňŉṅṉ oòóôõöøōŏőơǒǫǭỏ pṕṗ q rŕŗřṙṟ sśŝşšṡ tţťŧṫṯẗ uùúûüũūŭůűųưǔủ vṽ wŵẁẃẅẇẘ xẋẍ yýÿŷẏẙỳỷỹ zźżžƶẑẕ
     j 0123❤x
-    k combinations]])
+    k combinations
+    l ä ö ü ᾱ̆́]])
 
   execute('set re=' .. regexpengine)
 
@@ -85,6 +86,11 @@ local function run_test_with_regexpengine(regexpengine)
   execute([[let @w=':%s#comb[i]nations#œ̄ṣ́m̥̄ᾱ̆́#g']])
   execute('@w')
 
+  -- Line l. Ex command ":s/ \?/ /g" should NOT split multi-byte characters
+  -- into bytes (fixed by vim-7.3.192).
+  feed('/^l')
+  feed('s/ \?/ /g)
+
   -- Additional tests. Test matchstr() with multi-byte characters.
   feed('G')
   execute([[put =matchstr(\"אבגד\", \".\", 0, 2)]])   -- ב
@@ -123,6 +129,7 @@ local function run_test_with_regexpengine(regexpengine)
     i aàáâãäåāăąǎǟǡả bḃḇ cçćĉċč dďđḋḏḑ eèéêëēĕėęěẻẽ fḟ gĝğġģǥǧǵḡ hĥħḣḧḩẖ iìíîïĩīĭįǐỉ jĵǰ kķǩḱḵ lĺļľŀłḻ mḿṁ nñńņňŉṅṉ oòóôõöøōŏőơǒǫǭỏ pṕṗ q rŕŗřṙṟ sśŝşšṡ tţťŧṫṯẗ uùúûüũūŭůűųưǔủ vṽ wŵẁẃẅẇẘ xẋẍ yýÿŷẏẙỳỷỹ zźżžƶẑ
     j 012❤
     k œ̄ṣ́m̥̄ᾱ̆́
+    l ä ö ü ᾱ̆́
     ב
     בג
     א
