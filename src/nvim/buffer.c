@@ -1294,14 +1294,15 @@ void enter_buffer(buf_T *buf)
   redraw_later(NOT_VALID);
 }
 
-/*
- * Change to the directory of the current buffer.
- */
+// Change to the directory of the current buffer.
+// Don't do this while still starting up.
 void do_autochdir(void)
 {
   if (p_acd) {
-    if (curbuf->b_ffname != NULL && vim_chdirfile(curbuf->b_ffname) == OK) {
-      shorten_fnames(TRUE);
+    if (starting == 0
+        && curbuf->b_ffname != NULL
+        && vim_chdirfile(curbuf->b_ffname) == OK) {
+      shorten_fnames(true);
     }
   }
 }
