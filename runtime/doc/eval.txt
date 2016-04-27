@@ -1839,7 +1839,6 @@ dictwatcherdel( {dict}, {pattern}, {callback})
 did_filetype()			Number	TRUE if FileType autocommand event used
 diff_filler( {lnum})		Number	diff filler lines about {lnum}
 diff_hlID( {lnum}, {col})	Number	diff highlighting at {lnum}/{col}
-disable_char_avail_for_testing({expr})  none  test without typeahead
 empty( {expr})			Number	TRUE if {expr} is empty
 escape( {string}, {chars})	String	escape {chars} in {string} with '\'
 eval( {string})			any	evaluate {string} into its value
@@ -2867,13 +2866,6 @@ diff_hlID({lnum}, {col})				*diff_hlID()*
 		line.
 		The highlight ID can be used with |synIDattr()| to obtain
 		syntax information about the highlighting.
-
-disable_char_avail_for_testing({expr})
-		When {expr} is 1 the internal char_avail() function will
-		return FALSE.  When {expr} is 0 the char_avail() function will
-		function normally.
-		Only use this for a test where typeahead causes the test not
-		to work.  E.g., to trigger the CursorMovedI autocommand event.
 
 empty({expr})						*empty()*
 		Return the Number 1 if {expr} is empty, zero otherwise.
