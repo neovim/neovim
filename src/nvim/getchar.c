@@ -1562,7 +1562,7 @@ int char_avail(void)
 {
   int retval;
 
-  ++no_mapping;
+  no_mapping++;
   retval = vpeekc();
   --no_mapping;
   return retval != NUL;

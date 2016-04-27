@@ -1788,9 +1788,10 @@ arglistid( [{winnr} [, {tabnr}]])
 				Number	argument list id
 argv( {nr})			String	{nr} entry of the argument list
 argv( )				List	the argument list
-assert_equal( {exp}, {act} [, {msg}]) none    assert that {exp} equals {act}
-assert_false( {actual} [, {msg}])     none    assert that {actual} is false
-assert_true( {actual} [, {msg}])      none    assert that {actual} is true
+assert_equal( {exp}, {act} [, {msg}]) none  assert {exp} equals {act}
+assert_exception({error} [, {msg}])   none  assert {error} is in v:exception
+assert_false( {actual} [, {msg}])     none  assert {actual} is false
+assert_true( {actual} [, {msg}])      none  assert {actual} is true
 asin( {expr})			Float	arc sine of {expr}
 atan( {expr})			Float	arc tangent of {expr}
 atan2( {expr}, {expr})		Float   arc tangent of {expr1} / {expr2}
@@ -2244,7 +2245,20 @@ assert_equal({expected}, {actual}, [, {msg}])
 <		Will result in a string to be added to |v:errors|:
 	test.vim line 12: Expected 'foo' but got 'bar' ~
 
-assert_false({actual}, [, {msg}])				*assert_false()*
+assert_exception({error} [, {msg}])			*assert_exception()*
+		When v:exception does not contain the string {error} an error
+		message is added to |v:errors|.
+		This can be used to assert that a command throws an exception.
+		Using the error number, followed by a colon, avoids problems
+		with translations: >
+			try
+			  commandthatfails
+			  call assert_false(1, 'command should have failed')
+			catch
+			  call assert_exception('E492:')
+			endtry
+
+assert_false({actual} [, {msg}])				*assert_false()*
 		When {actual} is not false an error message is added to
 		|v:errors|, like with |assert_equal()|.
 		A value is false when it is zero or |v:false|. When "{actual}" 
@@ -2252,7 +2266,7 @@ assert_false({actual}, [, {msg}])				*assert_false()*
 		When {msg} is omitted an error in the form "Expected False but
 		got {actual}" is produced.
 
-assert_true({actual}, [, {msg}])				*assert_true()*
+assert_true({actual} [, {msg}])					*assert_true()*
 		When {actual} is not true an error message is added to
 		|v:errors|, like with |assert_equal()|.
 		A value is true when it is a non-zero number or |v:true|.  

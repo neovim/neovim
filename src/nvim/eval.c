@@ -6666,6 +6666,7 @@ static struct fst {
   { "argv",              0, 1, f_argv },
   { "asin",              1, 1, f_asin },    // WJMc
   { "assert_equal",      2, 3, f_assert_equal },
+  { "assert_exception",  1, 2, f_assert_exception },
   { "assert_false",      1, 2, f_assert_false },
   { "assert_true",       1, 2, f_assert_true },
   { "atan",              1, 1, f_atan },
@@ -7623,6 +7624,26 @@ static void f_assert_equal(typval_T *argvars, typval_T *rettv)
     prepare_assert_error(&ga);
     fill_assert_error(&ga, &argvars[2], NULL,
                       &argvars[0], &argvars[1]);
+    assert_error(&ga);
+    ga_clear(&ga);
+  }
+}
+
+/// "assert_exception(string[, msg])" function
+static void f_assert_exception(typval_T *argvars, typval_T *rettv)
+{
+  garray_T ga;
+
+  char *error = (char *)get_tv_string_chk(&argvars[0]);
+  if (vimvars[VV_EXCEPTION].vv_str == NULL) {
+    prepare_assert_error(&ga);
+    ga_concat(&ga, (char_u *)"v:exception is not set");
+    assert_error(&ga);
+    ga_clear(&ga);
+  } else if (strstr((char *)vimvars[VV_EXCEPTION].vv_str, error) == NULL) {
+    prepare_assert_error(&ga);
+    fill_assert_error(&ga, &argvars[1], NULL, &argvars[0],
+                      &vimvars[VV_EXCEPTION].vv_tv);
     assert_error(&ga);
     ga_clear(&ga);
   }
@@ -10174,6 +10195,7 @@ static void getpos_both(typval_T *argvars, typval_T *rettv, bool getcurpos)
   list_append_number(l,
                      (fp != NULL) ? (varnumber_T)fp->coladd : (varnumber_T)0);
   if (getcurpos) {
+    update_curswant();
     list_append_number(l, curwin->w_curswant == MAXCOL
                               ? (varnumber_T)MAXCOL
                               : (varnumber_T)curwin->w_curswant + 1);
