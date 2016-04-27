@@ -1562,7 +1562,12 @@ int char_avail(void)
 {
   int retval;
 
-  ++no_mapping;
+  // When disable_char_avail_for_testing(1) was called pretend
+  // there is no typeahead
+  if (disable_char_avail_for_testing) {
+    return false;
+  }
+  no_mapping++;
   retval = vpeekc();
   --no_mapping;
   return retval != NUL;

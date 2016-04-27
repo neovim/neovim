@@ -6708,6 +6708,7 @@ static struct fst {
   { "did_filetype",      0, 0, f_did_filetype },
   { "diff_filler",       1, 1, f_diff_filler },
   { "diff_hlID",         2, 2, f_diff_hlID },
+  { "disable_char_avail_for_testing", 1, 1, f_disable_char_avail_for_testing },
   { "empty",             1, 1, f_empty },
   { "escape",            2, 2, f_escape },
   { "eval",              1, 1, f_eval },
@@ -8583,6 +8584,15 @@ static void f_diff_hlID(typval_T *argvars, typval_T *rettv)
   rettv->vval.v_number = hlID == (hlf_T)0 ? 0 : (int)hlID;
 }
 
+//
+// "disable_char_avail_for_testing({expr})" function
+//
+static void f_disable_char_avail_for_testing(typval_T *argvars, typval_T *rettv)
+  FUNC_ATTR_NONNULL_ARG(1)
+{
+    disable_char_avail_for_testing = get_tv_number(&argvars[0]);
+}
+
 /*
  * "empty({expr})" function
  */
@@ -10174,6 +10184,7 @@ static void getpos_both(typval_T *argvars, typval_T *rettv, bool getcurpos)
   list_append_number(l,
                      (fp != NULL) ? (varnumber_T)fp->coladd : (varnumber_T)0);
   if (getcurpos) {
+    update_curswant();
     list_append_number(l, curwin->w_curswant == MAXCOL
                               ? (varnumber_T)MAXCOL
                               : (varnumber_T)curwin->w_curswant + 1);
