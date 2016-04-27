@@ -5503,7 +5503,8 @@ int parse_addr_type_arg(char_u *value, int vallen, uint32_t *argt,
                         int *addr_type_arg)
 {
   int i, a, b;
-  for (i = 0; addr_type_complete[i].expand != -1; ++i) {
+
+  for (i = 0; addr_type_complete[i].expand != -1; i++) {
     a = (int)STRLEN(addr_type_complete[i].name) == vallen;
     b = STRNCMP(value, addr_type_complete[i].name, vallen) == 0;
     if (a && b) {
@@ -5514,8 +5515,8 @@ int parse_addr_type_arg(char_u *value, int vallen, uint32_t *argt,
 
   if (addr_type_complete[i].expand == -1) {
     char_u *err = value;
-    for (i = 0; err[i] == NUL || !ascii_iswhite(err[i]); i++)
-      ;
+
+    for (i = 0; err[i] != NUL && !ascii_iswhite(err[i]); i++) {}
     err[i] = NUL;
     EMSG2(_("E180: Invalid address type value: %s"), err);
     return FAIL;
