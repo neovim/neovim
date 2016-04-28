@@ -1826,9 +1826,10 @@ static char_u * do_one_cmd(char_u **cmdlinep,
 
   correct_range(&ea);
 
-  if (((ea.argt & WHOLEFOLD) || ea.addr_count >= 2) && !global_busy) {
-    /* Put the first line at the start of a closed fold, put the last line
-     * at the end of a closed fold. */
+  if (((ea.argt & WHOLEFOLD) || ea.addr_count >= 2) && !global_busy
+      && ea.addr_type == ADDR_LINES) {
+    // Put the first line at the start of a closed fold, put the last line
+    // at the end of a closed fold.
     (void)hasFolding(ea.line1, &ea.line1, NULL);
     (void)hasFolding(ea.line2, NULL, &ea.line2);
   }
