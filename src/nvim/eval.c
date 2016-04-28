@@ -9820,7 +9820,7 @@ static void f_getcmdwintype(typval_T *argvars, typval_T *rettv)
 static void f_getcwd(typval_T *argvars, typval_T *rettv)
 {
   // Possible scope of working directory to return.
-  CdScope scope = kCdScopeWindow;
+  CdScope scope = MIN_CD_SCOPE;
 
   // Numbers of the scope objects (window, tab) we want the working directory
   // of. A `-1` means to skip this scope, a `0` means the current object.
@@ -9839,7 +9839,8 @@ static void f_getcwd(typval_T *argvars, typval_T *rettv)
   rettv->vval.v_string = NULL;
 
   // Pre-conditions and scope extraction together
-  for (int i = 0; i < kCdScopeGlobal; i++) {
+  for (int i = MIN_CD_SCOPE; i < MAX_CD_SCOPE; i++) {
+    // If there is no argument there are no more scopes after it, break out.
     if (argvars[i].v_type == VAR_UNKNOWN) {
       break;
     }
@@ -9850,34 +9851,17 @@ static void f_getcwd(typval_T *argvars, typval_T *rettv)
     scope_number[i] = argvars[i].vval.v_number;
     // The scope is the current iteration step.
     scope = i;
-
+    // It is an error for the scope number to be less than `-1`.
     if (scope_number[i] < -1) {
       EMSG(_(e_invarg));
       return;
     }
   }
 
-  // Allocate and initialize the string to return.
-  cwd = xmalloc(MAXPATHL);
-
-  // Get the scope and numbers from the arguments
-  for (int i = 0; i < MAX_CD_SCOPE; i++) {
-    // If there is no argument there are no more scopes after it, break out.
-    if (argvars[i].v_type == VAR_UNKNOWN) {
-      break;
-    }
-    scope_number[i] = argvars[i].vval.v_number;
-    // The scope is the current iteration step.
-    scope = i;
-    // It is an error for the scope number to be less than `-1`.
-    if (scope_number[i] < -1) {
-      EMSG(_(e_invarg));
-      goto end;
-    }
-  }
-
-  // If the deepest scope number is `-1` advance the scope.
+  // Normalize scope, the number of the new scope will be 0.
   if (scope_number[scope] < 0) {
+    // Arguments to `getcwd` always end at second-highest scope, so scope will
+    // always be <= `MAX_CD_SCOPE`.
     scope++;
   }
 
@@ -9888,7 +9872,7 @@ static void f_getcwd(typval_T *argvars, typval_T *rettv)
     tp = find_tabpage(scope_number[kCdScopeTab]);
     if (!tp) {
       EMSG(_("E5000: Cannot find tab number."));
-      goto end;
+      return;
     }
   }
 
@@ -9898,25 +9882,29 @@ static void f_getcwd(typval_T *argvars, typval_T *rettv)
   } else if (scope_number[kCdScopeWindow] >= 0) {
     if (!tp) {
       EMSG(_("E5001: Higher scope cannot be -1 if lower scope is >= 0."));
-      goto end;
+      return;
     }
 
     if (scope_number[kCdScopeWindow] > 0) {
       win = find_win_by_nr(&argvars[0], curtab);
       if (!win) {
         EMSG(_("E5002: Cannot find window number."));
-        goto end;
+        return;
       }
     }
   }
 
+  cwd = xmalloc(MAXPATHL);
+
   switch (scope) {
     case kCdScopeWindow:
+      assert(win);
       from = win->w_localdir;
       if (from) {
         break;
       }
     case kCdScopeTab:  // FALLTHROUGH
+      assert(tp);
       from = tp->localdir;
       if (from) {
         break;
@@ -9926,7 +9914,7 @@ static void f_getcwd(typval_T *argvars, typval_T *rettv)
       if (globaldir) {
         from = globaldir;
       } else {
-        // Copy the OS path directly into output string and jump to the end.
+        // We have to copy the OS path directly into output string.
         if (os_dirname(cwd, MAXPATHL) == FAIL) {
           EMSG(_("E41: Could not display path."));
           goto end;
@@ -9943,7 +9931,6 @@ static void f_getcwd(typval_T *argvars, typval_T *rettv)
 #ifdef BACKSLASH_IN_FILENAME
   slash_adjust(rettv->vval.v_string);
 #endif
-
 end:
   xfree(cwd);
 }
@@ -10779,7 +10766,7 @@ static void f_has_key(typval_T *argvars, typval_T *rettv)
 static void f_haslocaldir(typval_T *argvars, typval_T *rettv)
 {
   // Possible scope of working directory to return.
-  CdScope scope = kCdScopeWindow;
+  CdScope scope = MIN_CD_SCOPE;
 
   // Numbers of the scope objects (window, tab) we want the working directory
   // of. A `-1` means to skip this scope, a `0` means the current object.
@@ -10795,7 +10782,7 @@ static void f_haslocaldir(typval_T *argvars, typval_T *rettv)
   rettv->vval.v_number = 0;
 
   // Pre-conditions and scope extraction together
-  for (int i = 0; i < kCdScopeGlobal; i++) {
+  for (int i = MIN_CD_SCOPE; i < MAX_CD_SCOPE; i++) {
     if (argvars[i].v_type == VAR_UNKNOWN) {
       break;
     }
@@ -10812,9 +10799,11 @@ static void f_haslocaldir(typval_T *argvars, typval_T *rettv)
     }
   }
 
-  // It the deepest scope number is `-1` advance the scope by one.
+  // Normalize scope, the number of the new scope will be 0.
   if (scope_number[scope] < 0) {
-    ++scope;
+    // Arguments to `haslocaldir` always end at second-highest scope, so scope
+    // will always be <= `MAX_CD_SCOPE`.
+    scope++;
   }
 
   // Find the tabpage by number
@@ -10848,13 +10837,16 @@ static void f_haslocaldir(typval_T *argvars, typval_T *rettv)
 
   switch (scope) {
     case kCdScopeWindow:
+      assert(win);
       rettv->vval.v_number = win->w_localdir ? 1 : 0;
       break;
     case kCdScopeTab:
+      assert(tp);
       rettv->vval.v_number = tp->localdir ? 1 : 0;
       break;
     case kCdScopeGlobal:
-      assert(0);
+      // The global scope never has a local directory
+      rettv->vval.v_number = 0;
       break;
   }
 }
