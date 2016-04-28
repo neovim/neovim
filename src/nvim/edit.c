@@ -2319,6 +2319,22 @@ static int ins_compl_make_cyclic(void)
   return count;
 }
 
+
+// Set variables that store noselect and noinsert behavior from the
+// 'completeopt' value.
+void completeopt_was_set(void)
+{
+  compl_no_insert = false;
+  compl_no_select = false;
+  if (strstr((char *)p_cot, "noselect") != NULL) {
+    compl_no_select = true;
+  }
+  if (strstr((char *)p_cot, "noinsert") != NULL) {
+    compl_no_insert = true;
+  }
+}
+
+
 /*
  * Start completion for the complete() function.
  * "startcol" is where the matched text starts (1 is first column).
@@ -3095,17 +3111,6 @@ static bool ins_compl_prep(int c)
     compl_get_longest = (strstr((char *)p_cot, "longest") != NULL);
     compl_used_match = TRUE;
 
-  }
-
-  if (strstr((char *)p_cot, "noselect") != NULL) {
-    compl_no_insert = FALSE;
-    compl_no_select = TRUE;
-  } else if (strstr((char *)p_cot, "noinsert") != NULL) {
-    compl_no_insert = TRUE;
-    compl_no_select = FALSE;
-  } else {
-    compl_no_insert = FALSE;
-    compl_no_select = FALSE;
   }
 
   if (ctrl_x_mode == CTRL_X_NOT_DEFINED_YET) {

@@ -71,6 +71,7 @@ static char *features[] = {
 static int included_patches[] = {
   1757,
   1755,
+  1753,
   1654,
   1652,
   1643,
