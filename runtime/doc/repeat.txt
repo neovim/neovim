@@ -398,7 +398,7 @@ A Vim package is a directory that contains one or more plugins.  The
 advantages over normal plugins:
 - A package can be downloaded as an archive and unpacked in its own directory.
   That makes it easy to updated and/or remove.
-- A package can be a git, mercurial, etc. respository.  That makes it really
+- A package can be a git, mercurial, etc. repository.  That makes it really
   easy to update.
 - A package can contain multiple plugins that depend on each other.
 - A package can contain plugins that are automatically loaded on startup and
@@ -427,6 +427,8 @@ In the example Vim will find "my/ever/always/plugin/always.vim" and adds
 
 If the "always" plugin kicks in and sets the 'filetype' to "always", Vim will
 find the syntax/always.vim file, because its directory is in 'runtimepath'.
+
+Vim will also load ftdetect files, like with |:loadplugin|.
 
 							*load-plugin*
 To load an optional plugin from a pack use the `:loadplugin` command: >
