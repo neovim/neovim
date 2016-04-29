@@ -418,6 +418,12 @@ You would now have these files under ~/.local/share/nvim/site:
 	pack/my/ever/always/syntax/always.vim
 	pack/my/opt/mydebug/plugin/debugger.vim
 
+If you don't have a package but a single plugin, you need to create the extra
+directory level:
+	% mkdir -p ~/.local/share/nvim/site/pack/my/ever/always
+	% cd ~/.local/share/nvim/site/pack/my/ever/always
+	% unzip /tmp/myplugin.zip
+
 When Vim starts up it scans all directories in 'packpath' for plugins under the
 "ever" directory and loads them.  When found that directory is added to
 'runtimepath'.
@@ -428,11 +434,11 @@ In the example Vim will find "my/ever/always/plugin/always.vim" and adds
 If the "always" plugin kicks in and sets the 'filetype' to "always", Vim will
 find the syntax/always.vim file, because its directory is in 'runtimepath'.
 
-Vim will also load ftdetect files, like with |:loadplugin|.
+Vim will also load ftdetect files, like with |:packadd|.
 
-							*load-plugin*
-To load an optional plugin from a pack use the `:loadplugin` command: >
-	:loadplugin mydebug
+							*pack-add*
+To load an optional plugin from a pack use the `:packadd` command: >
+	:packadd mydebug
 This could be done inside always.vim, if some conditions are met.
 Or you could add this command to your |.vimrc|.
 

@@ -1453,12 +1453,6 @@ return {
     func='ex_loadkeymap',
   },
   {
-    command='loadplugin',
-    flags=bit.bor(BANG, FILE1, TRLBAR, SBOXOK, CMDWIN),
-    addr_type=ADDR_LINES,
-    func='ex_loadplugin',
-  },
-  {
     command='lockmarks',
     flags=bit.bor(NEEDARG, EXTRA, NOTRLCOM),
     addr_type=ADDR_LINES,

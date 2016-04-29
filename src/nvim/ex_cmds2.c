@@ -2381,76 +2381,67 @@ int do_in_runtimepath(char_u *name, bool all, DoInRuntimepathCB callback,
   return do_in_path(p_rtp, name, all ? DIP_ALL : 0, callback, cookie);
 }
 
-// Source filetype detection scripts, if filetype.vim was already done.
-static void may_do_filetypes(char_u *pat)
+// Expand wildcards in "pat" and invoke do_source() for each match.
+static void source_all_matches(char_u *pat)
 {
-  char_u *cmd = vim_strsave((char_u *)"g:did_load_filetypes");
+  int num_files;
+  char_u **files;
 
-  // If runtime/filetype.vim wasn't loaded yet, the scripts will be found
-  // when it loads.
-  if (cmd != NULL && eval_to_number(cmd) > 0) {
-    do_cmdline_cmd("augroup filetypedetect");
-    do_in_path(p_pp, pat, DIP_ALL, source_callback, NULL);
-    do_cmdline_cmd("augroup END");
+  if (gen_expand_wildcards(1, &pat, &num_files, &files, EW_FILE) == OK) {
+    for (int i = 0; i < num_files; i++) {
+      (void)do_source(files[i], false, DOSO_NONE);
+    }
+    FreeWild(num_files, files);
   }
-  xfree(cmd);
 }
 
 static void add_pack_plugin(char_u *fname, void *cookie)
 {
-  char_u *p6, *p5, *p4, *p3, *p2, *p1, *p;
+  char_u *p4, *p3, *p2, *p1, *p;
   char_u *new_rtp;
   char_u *ffname = (char_u *)fix_fname((char *)fname);
-  bool load_file = cookie != NULL;
+  bool load_files = cookie != NULL;
 
   if (ffname == NULL) {
     return;
   }
-  p6 = p5 = p4 = p3 = p2 = p1 = get_past_head(ffname);
-  for (p = p1; *p; mb_ptr_adv(p)) {
-    if (vim_ispathsep_nocolon(*p)) {
-      p6 = p5; p5 = p4; p4 = p3; p3 = p2; p2 = p1; p1 = p;
-    }
-  }
 
-  // now we have: load_file == true
-  // rtp/pack/name/ever/name/plugin/name.vim
-  //    p6   p5   p4   p3   p2     p1
-  //
-  // with load_file == false
-  // rtp/pack/name/ever/name
-  //    p4   p3   p2   p1
-  if (load_file) {
-    p4 = p6;
-  }
-
-  // find the part up to "pack" in 'runtimepath'
-  char_u c = *p4;
-  *p4 = NUL;
-  p = (char_u *)strstr((char *)p_rtp, (char *)ffname);
-  if (p == NULL) {
-    // not found, append at the end
-    p = p_rtp + STRLEN(p_rtp);
-  } else {
-    // append after the matching directory.
-    p += STRLEN(ffname);
-  }
-  *p4 = c;
-
-  if (load_file) {
-    c = *p2;
-    *p2 = NUL;
-  }
   if (strstr((char *)p_rtp, (char *)ffname) == NULL) {
     // directory not in 'runtimepath', add it
+    p4 = p3 = p2 = p1 = get_past_head(ffname);
+    for (p = p1; *p; mb_ptr_adv(p)) {
+      if (vim_ispathsep_nocolon(*p)) {
+        p4 = p3; p3 = p2; p2 = p1; p1 = p;
+      }
+    }
+
+    // now we have:
+    // rtp/pack/name/ever/name
+    //    p4   p3   p2   p1
+    //
+    // find the part up to "pack" in 'runtimepath'
+    char_u c = *p4;
+    *p4 = NUL;
+    char_u *insp = (char_u *)strstr((char *)p_rtp, (char *)ffname);
+    if (insp == NULL) {
+      // not found, append at the end
+      insp = p_rtp + STRLEN(p_rtp);
+    } else {
+      // append after the matching directory.
+      insp += STRLEN(ffname);
+      while (*insp != NUL && *insp != ',') {
+        insp++;
+      }
+    }
+    *p4 = c;
+
     size_t oldlen = STRLEN(p_rtp);
     size_t addlen = STRLEN(ffname);
     new_rtp = try_malloc(oldlen + addlen + 1);
     if (new_rtp == NULL) {
-      *p2 = c;
-      return;
+      goto theend;
     }
-    uintptr_t keep = (uintptr_t)(p - p_rtp);
+    uintptr_t keep = (uintptr_t)(insp - p_rtp);
     memmove(new_rtp, p_rtp, keep);
     new_rtp[keep] = ',';
     memmove(new_rtp + keep + 1, ffname, addlen + 1);
@@ -2461,39 +2452,44 @@ static void add_pack_plugin(char_u *fname, void *cookie)
     set_option_value((char_u *)"rtp", 0L, new_rtp, 0);
     xfree(new_rtp);
   }
-  xfree(ffname);
 
-  if (load_file) {
-    (void)do_source(fname, false, DOSO_NONE);
+  if (load_files) {
+    static const char *plugpat = "%s/plugin/*.vim";
+    static const char *ftpat = "%s/ftdetect/*.vim";
+
+    size_t len = STRLEN(ffname) + STRLEN(ftpat);
+    char_u *pat = try_malloc(len + 1);
+    if (pat == NULL) {
+      goto theend;
+    }
+    vim_snprintf((char *)pat, len, plugpat, ffname);
+    source_all_matches(pat);
+
+    char_u *cmd = vim_strsave((char_u *)"g:did_load_filetypes");
+
+    // If runtime/filetype.vim wasn't loaded yet, the scripts will be
+    // found when it loads.
+    if (eval_to_number(cmd) > 0) {
+      do_cmdline_cmd("augroup filetypedetect");
+      vim_snprintf((char *)pat, len, ftpat, ffname);
+      source_all_matches(pat);
+      do_cmdline_cmd("augroup END");
+    }
+    xfree(cmd);
   }
+
+theend:
+  xfree(ffname);
 }
 
-// Source the plugins in the package directories.
+// Find plugins in the package directories and source them.
 void source_packages(void)
 {
-  do_in_path(p_pp, (char_u *)"pack/*/ever/*/plugin/*.vim",
-             DIP_ALL, add_pack_plugin, p_pp);
-  may_do_filetypes((char_u *)"pack/*/ever/*/ftdetect/*.vim");
+  do_in_path(p_pp, (char_u *)"pack/*/ever/*", DIP_ALL + DIP_DIR,
+             add_pack_plugin, p_pp);
 }
 
-// ":loadplugin {name}"
-void ex_loadplugin(exarg_T *eap)
-{
-  static const char *plugpat = "pack/*/opt/%s/plugin/*.vim";
-  static const char *ftpat = "pack/*/opt/%s/ftdetect/*.vim";
-
-  size_t len = STRLEN(ftpat) + STRLEN(eap->arg);
-  char *pat = xmallocz(len);
-  vim_snprintf(pat, len, plugpat, eap->arg);
-  do_in_path(p_pp, (char_u *)pat, DIP_ALL, add_pack_plugin, p_pp);
-
-  vim_snprintf(pat, len, ftpat, eap->arg);
-  may_do_filetypes((char_u *)pat);
-
-  xfree(pat);
-}
-
-/// ":packadd {name}"
+/// ":packadd[!] {name}"
 void ex_packadd(exarg_T *eap)
 {
   static const char *plugpat = "pack/*/opt/%s";
@@ -2501,7 +2497,8 @@ void ex_packadd(exarg_T *eap)
   size_t len = STRLEN(plugpat) + STRLEN(eap->arg);
   char *pat = (char *)xmallocz(len);
   vim_snprintf(pat, len, plugpat, eap->arg);
-  do_in_path(p_pp, (char_u *)pat, DIP_ALL + DIP_DIR, add_pack_plugin, NULL);
+  do_in_path(p_pp, (char_u *)pat, DIP_ALL + DIP_DIR, add_pack_plugin,
+             eap->forceit ? NULL : p_pp);
   xfree(pat);
 }
 
