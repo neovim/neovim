@@ -150,8 +150,10 @@ int mch_nodetype(char_u *name)
     return NODE_NORMAL;
   if (S_ISREG(st.st_mode) || S_ISDIR(st.st_mode))
     return NODE_NORMAL;
+#ifdef UNIX
   if (S_ISBLK(st.st_mode))      /* block device isn't writable */
     return NODE_OTHER;
+#endif
   /* Everything else is writable? */
   return NODE_WRITABLE;
 }
