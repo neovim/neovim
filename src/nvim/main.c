@@ -44,6 +44,7 @@
 #include "nvim/path.h"
 #include "nvim/profile.h"
 #include "nvim/quickfix.h"
+#include "nvim/ex_getln.h"
 #include "nvim/screen.h"
 #include "nvim/state.h"
 #include "nvim/strings.h"
@@ -286,7 +287,7 @@ int main(int argc, char **argv)
     diff_win_options(firstwin, FALSE);
 
   assert(p_ch >= 0 && Rows >= p_ch && Rows - p_ch <= INT_MAX);
-  cmdline_row = (int)(Rows - p_ch);
+  cmdline_row = default_cmd_row();
   msg_row = cmdline_row;
   screenalloc(false);           /* allocate screen buffers */
   set_init_2();

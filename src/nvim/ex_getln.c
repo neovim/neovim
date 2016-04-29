@@ -2044,7 +2044,7 @@ redraw:
   /* make following messages go to the next line */
   msg_didout = FALSE;
   msg_col = 0;
-  if (msg_row < Rows - 1)
+  if (msg_row < default_msg_row())
     ++msg_row;
   emsg_on_display = FALSE;              /* don't want os_delay() */
 
@@ -2616,13 +2616,44 @@ void redrawcmd(void)
   skip_redraw = FALSE;
 }
 
+int default_cmd_row(void)
+{
+  int row = Rows - p_ch;
+  if (p_stf && p_ls)
+    --row; // if a statusline exist, move cmdline up
+  return row;
+}
+
+int default_msg_row(void)
+{
+  return default_cmd_row();
+}
+
+int default_status_row(win_T *wp)
+{
+  if (!p_ls)
+    return Rows; // statusline disabled
+
+  const int statusline_delta = p_stf
+    ? 1  // swap location of the status- and command line
+    : 2; // default: command line on bottom row
+
+  if (wp && wp->w_height + wp->w_winrow < (Rows - 3 + statusline_delta))
+    return wp->w_winrow + wp->w_height;
+  return Rows - statusline_delta;
+}
+
 void compute_cmdrow(void)
 {
   if (exmode_active || msg_scrolled != 0)
-    cmdline_row = Rows - 1;
-  else
-    cmdline_row = lastwin->w_winrow + lastwin->w_height
-                  + lastwin->w_status_height;
+    cmdline_row = default_cmd_row();
+  else {
+    cmdline_row =
+      lastwin->w_winrow + lastwin->w_height + lastwin->w_status_height;
+    if (p_stf && p_ls) // the statusline occupies the bottom row
+      --cmdline_row;
+  }
+
 }
 
 static void cursorcmd(void)
@@ -2634,12 +2665,12 @@ static void cursorcmd(void)
     msg_row = cmdline_row  + (ccline.cmdspos / (int)(Columns - 1));
     msg_col = (int)Columns - (ccline.cmdspos % (int)(Columns - 1)) - 1;
     if (msg_row <= 0)
-      msg_row = Rows - 1;
+      msg_row = default_msg_row();
   } else {
     msg_row = cmdline_row + (ccline.cmdspos / (int)Columns);
     msg_col = ccline.cmdspos % (int)Columns;
     if (msg_row >= Rows)
-      msg_row = Rows - 1;
+      msg_row = default_msg_row();
   }
 
   ui_cursor_goto(msg_row, msg_col);

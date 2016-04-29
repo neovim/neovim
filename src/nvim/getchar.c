@@ -1888,7 +1888,7 @@ static int vgetorpeek(int advance)
                   (long)!p_paste, NULL, 0);
               if (!(State & INSERT)) {
                 msg_col = 0;
-                msg_row = Rows - 1;
+                msg_row = default_msg_row();
                 msg_clr_eos();                          /* clear ruler */
               }
               status_redraw_all();
