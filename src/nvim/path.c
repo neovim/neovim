@@ -981,12 +981,12 @@ static void uniquefy_paths(garray_T *gap, char_u *pattern)
  * "/path/file", "/path/dir/", "/path//dir", "/file"
  *	 ^	       ^	     ^	      ^
  */
-static char_u *gettail_dir(char_u *fname)
+char_u *gettail_dir(const char_u *fname)
 {
-  char_u      *dir_end = fname;
-  char_u      *next_dir_end = fname;
+  const char_u      *dir_end = fname;
+  const char_u      *next_dir_end = fname;
   bool look_for_sep = true;
-  char_u      *p;
+  const char_u      *p;
 
   for (p = fname; *p != NUL; ) {
     if (vim_ispathsep(*p)) {
@@ -1001,7 +1001,7 @@ static char_u *gettail_dir(char_u *fname)
     }
     mb_ptr_adv(p);
   }
-  return dir_end;
+  return (char_u *)dir_end;
 }
 
 
@@ -1318,8 +1318,10 @@ void addfile(
   if ((isdir && !(flags & EW_DIR)) || (!isdir && !(flags & EW_FILE)))
     return;
 
-  /* If the file isn't executable, may not add it.  Do accept directories. */
-  if (!isdir && (flags & EW_EXEC) && !os_can_exe(f, NULL))
+  // If the file isn't executable, may not add it.  Do accept directories.
+  // When invoked from expand_shellcmd() do not use $PATH.
+  if (!isdir && (flags & EW_EXEC)
+      && !os_can_exe(f, NULL, !(flags & EW_SHELLCMD)))
     return;
 
   char_u *p = xmalloc(STRLEN(f) + 1 + isdir);

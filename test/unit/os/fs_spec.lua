@@ -148,7 +148,7 @@ describe('fs function', function()
     local function os_can_exe(name)
       local buf = ffi.new('char *[1]')
       buf[0] = NULL
-      local ok = fs.os_can_exe(to_cstr(name), buf)
+      local ok = fs.os_can_exe(to_cstr(name), buf, true)
 
       -- When os_can_exe returns true, it must set the path.
       -- When it returns false, the path must be NULL.

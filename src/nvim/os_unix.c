@@ -577,7 +577,8 @@ int mch_expand_wildcards(int num_pat, char_u **pat, int *num_file,
       continue;
 
     /* Skip files that are not executable if we check for that. */
-    if (!dir && (flags & EW_EXEC) && !os_can_exe((*file)[i], NULL))
+    if (!dir && (flags & EW_EXEC)
+        && !os_can_exe((*file)[i], NULL, !(flags & EW_SHELLCMD)))
       continue;
 
     p = xmalloc(STRLEN((*file)[i]) + 1 + dir);

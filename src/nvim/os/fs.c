@@ -164,6 +164,7 @@ int os_nodetype(const char *name)
 ///
 /// @param[in]  name     Name of the executable.
 /// @param[out] abspath  Path of the executable, if found and not `NULL`.
+/// @param[in] use_path  If 'false', only check if "name" is executable
 ///
 /// @return `true` if `name` is executable and
 ///   - can be found in $PATH,
@@ -171,15 +172,18 @@ int os_nodetype(const char *name)
 ///   - is absolute.
 ///
 /// @return `false` otherwise.
-bool os_can_exe(const char_u *name, char_u **abspath)
+bool os_can_exe(const char_u *name, char_u **abspath, bool use_path)
   FUNC_ATTR_NONNULL_ARG(1)
 {
-  // If it's an absolute or relative path don't need to use $PATH.
-  if (path_is_absolute_path(name)
+  // when use_path is false or if it's an absolute or relative path don't
+  // need to use $PATH.
+  if (!use_path || path_is_absolute_path(name)
       || (name[0] == '.'
           && (name[1] == '/'
               || (name[1] == '.' && name[2] == '/')))) {
-    if (is_executable(name)) {
+    // There must be a path separator, files in the current directory
+    // can't be executed
+    if (gettail_dir(name) != name && is_executable(name)) {
       if (abspath != NULL) {
         *abspath = save_absolute_path(name);
       }
