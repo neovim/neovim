@@ -2,6 +2,7 @@
 #include <stdbool.h>
 
 #include <assert.h>
+#include <fcntl.h>
 
 #include "nvim/os/os.h"
 #include "nvim/os/os_defs.h"
