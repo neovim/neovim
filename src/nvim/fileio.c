@@ -2576,7 +2576,7 @@ buf_write (
         errmsg = (char_u *)_("is a directory");
         goto fail;
       }
-      if (mch_nodetype(fname) != NODE_WRITABLE) {
+      if (os_nodetype((char *)fname) != NODE_WRITABLE) {
         errnum = (char_u *)"E503: ";
         errmsg = (char_u *)_("is not a file or writable device");
         goto fail;
@@ -2588,11 +2588,11 @@ buf_write (
       perm = -1;
     }
   }
-#else /* !UNIX */
+#else /* win32 */
       /*
        * Check for a writable device name.
        */
-  c = mch_nodetype(fname);
+  c = os_nodetype((char *)fname);
   if (c == NODE_OTHER) {
     errnum = (char_u *)"E503: ";
     errmsg = (char_u *)_("is not a file or writable device");
