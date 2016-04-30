@@ -289,7 +289,9 @@ static uint8_t *command_line_enter(int firstc, long count, int indent)
 
   if (ccline.cmdbuff != NULL) {
     // Put line in history buffer (":" and "=" only when it was typed).
-    if (ccline.cmdlen && s->firstc != NUL
+    if (s->histype != HIST_INVALID
+        && ccline.cmdlen
+        && s->firstc != NUL
         && (s->some_key_typed || s->histype == HIST_SEARCH)) {
       add_to_history(s->histype, ccline.cmdbuff, true,
           s->histype == HIST_SEARCH ? s->firstc : NUL);
@@ -1268,7 +1270,7 @@ static int command_line_handle_key(CommandLineState *s)
   case K_KPAGEUP:
   case K_PAGEDOWN:
   case K_KPAGEDOWN:
-    if (hislen == 0 || s->firstc == NUL) {
+    if (s->histype == HIST_INVALID || hislen == 0 || s->firstc == NUL) {
       // no history
       return command_line_not_changed(s);
     }
@@ -4294,7 +4296,7 @@ static HistoryType hist_char2type(const int c)
       return HIST_SEARCH;
     }
     default: {
-      assert(false);
+      return HIST_INVALID;
     }
   }
   // Silence -Wreturn-type
@@ -4485,7 +4487,7 @@ HistoryType get_histtype(const char_u *const name, const size_t len,
 {
   // No argument: use current history.
   if (len == 0) {
-    return return_default ? HIST_DEFAULT :hist_char2type(ccline.cmdfirstc);
+    return return_default ? HIST_DEFAULT : hist_char2type(ccline.cmdfirstc);
   }
 
   for (HistoryType i = 0; history_names[i] != NULL; i++) {
@@ -4519,8 +4521,10 @@ add_to_history (
   histentry_T *hisptr;
   int len;
 
-  if (hislen == 0)              /* no history */
+  if (hislen == 0 || histype == HIST_INVALID) {  // no history
     return;
+  }
+  assert(histype != HIST_DEFAULT);
 
   if (cmdmod.keeppatterns && histype == HIST_SEARCH)
     return;
@@ -4991,7 +4995,6 @@ static int ex_window(void)
   win_T               *wp;
   int i;
   linenr_T lnum;
-  int histtype;
   garray_T winsizes;
   char_u typestr[2];
   int save_restart_edit = restart_edit;
@@ -5040,7 +5043,7 @@ static int ex_window(void)
   /* Showing the prompt may have set need_wait_return, reset it. */
   need_wait_return = FALSE;
 
-  histtype = hist_char2type(cmdwin_type);
+  const int histtype = hist_char2type(cmdwin_type);
   if (histtype == HIST_CMD || histtype == HIST_DEBUG) {
     if (p_wc == TAB) {
       add_map((char_u *)"<buffer> <Tab> <C-X><C-V>", INSERT);
@@ -5055,7 +5058,7 @@ static int ex_window(void)
 
   /* Fill the buffer with the history. */
   init_history();
-  if (hislen > 0) {
+  if (hislen > 0 && histtype != HIST_INVALID) {
     i = hisidx[histtype];
     if (i >= 0) {
       lnum = 0;
