@@ -285,8 +285,9 @@ static char *(p_bs_values[]) =        { "indent", "eol", "start", NULL };
 static char *(p_fdm_values[]) =       { "manual", "expr", "marker", "indent",
                                         "syntax",  "diff", NULL };
 static char *(p_fcl_values[]) =       { "all", NULL };
-static char *(p_cot_values[]) =       { "menu", "menuone", "longest", "preview",
-                                        "noinsert", "noselect", NULL };
+static char *(p_cot_values[]) =       { "menu", "menuone", "longest",
+                                        "preview", "noinsert", "noselect",
+                                        "iequal", NULL };
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "option.c.generated.h"

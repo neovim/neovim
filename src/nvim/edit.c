@@ -2211,9 +2211,13 @@ static bool ins_compl_equal(compl_T *match, char_u *str, size_t len)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   if (match->cp_icase) {
-    return STRNICMP(match->cp_str, str, len) == 0;
+    return STRNICMP(match->cp_str, str, len) == 0
+            && (strstr((char *)p_cot, "iequal") == NULL
+                || STRCMP(match->cp_str, str) != 0);
   }
-  return STRNCMP(match->cp_str, str, len) == 0;
+  return STRNCMP(match->cp_str, str, len) == 0
+          && (strstr((char *)p_cot, "iequal") == NULL
+              || STRCMP(match->cp_str, str) != 0);
 }
 
 /*

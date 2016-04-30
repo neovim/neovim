@@ -312,6 +312,51 @@ describe('completion', function()
       feed('i<C-r>=TestComplete()<CR><ESC>')
       eq(0, eval('&l:modified'))
     end)
+    it('does not ignores the generated candidates if iequal', function()
+      execute('set completeopt+=menuone,iequal')
+      execute('set ignorecase')
+      feed('ifoo<ESC>ofoo<C-x><C-n>')
+      screen:expect([[
+        foo                                                         |
+        foo^                                                         |
+        {2:foo            }                                             |
+        ~                                                           |
+        ~                                                           |
+        ~                                                           |
+        ~                                                           |
+        {3:-- Keyword Local completion (^N^P) The only match}           |
+      ]])
+    end)
+    it('ignores the same candidate if iequal', function()
+      execute('set completeopt+=menuone,iequal')
+      execute('set ignorecase')
+      feed('ifoo<ESC>of<C-x><C-n><C-p>oo')
+      screen:expect([[
+        foo                                                         |
+        foo^                                                         |
+        ~                                                           |
+        ~                                                           |
+        ~                                                           |
+        ~                                                           |
+        ~                                                           |
+        {3:-- Keyword Local completion (^N^P) }{5:Back at original}         |
+      ]])
+    end)
+    it('does not ignore the case if iequal', function()
+      execute('set completeopt+=menuone,iequal')
+      execute('set ignorecase')
+      feed('ifoo<ESC>oF<C-x><C-n><C-p>oo')
+      screen:expect([[
+        foo                                                         |
+        Foo^                                                         |
+        {1:foo            }                                             |
+        ~                                                           |
+        ~                                                           |
+        ~                                                           |
+        ~                                                           |
+        {3:-- Keyword Local completion (^N^P) }{5:Back at original}         |
+      ]])
+    end)
   end)
 
   describe("refresh:always", function()
@@ -644,7 +689,6 @@ describe('completion', function()
       ]])
     end)
   end)
-
 
   it('disables folding during completion', function ()
     execute("set foldmethod=indent")
