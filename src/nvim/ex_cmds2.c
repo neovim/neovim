@@ -3183,8 +3183,11 @@ void set_lang_var(void)
    * back to LC_CTYPE if it's empty. */
 # ifdef HAVE_WORKING_LIBINTL
   loc = (char *) get_mess_env();
-# else
+# elif defined(LC_MESSAGES)
   loc = get_locale_val(LC_MESSAGES);
+# else
+  // In Windows LC_MESSAGES is not defined fallback to LC_CTYPE
+  loc = get_locale_val(LC_CTYPE);
 # endif
   set_vim_var_string(VV_LANG, loc, -1);
 
