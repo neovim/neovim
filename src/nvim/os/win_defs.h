@@ -46,6 +46,8 @@
 # endif
 #endif
 
+#define BACKSLASH_IN_FILENAME
+
 #ifdef _MSC_VER
 typedef SSIZE_T ssize_t;
 #endif
