@@ -1,7 +1,8 @@
 " Vim syntax file
 " Language:         AutoHotkey script file
-" Maintainer:       Nikolai Weibull <now@bitwi.se>
-" Latest Revision:  2008-06-22
+" Maintainer:       SungHyun Nam <goweol@gmail.com>
+" Previous Maintainer:       Nikolai Weibull <now@bitwi.se>
+" Latest Revision:  2015-10-29
 
 if exists("b:current_syntax")
   finish
@@ -179,6 +180,7 @@ syn keyword autohotkeyRepeat
 
 syn keyword autohotkeyConditional
       \ IfExist IfNotExist If IfEqual IfLess IfGreater Else
+      \ IfWinExist IfWinNotExist
 
 syn match   autohotkeyPreProcStart
       \ nextgroup=

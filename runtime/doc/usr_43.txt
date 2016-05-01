@@ -1,4 +1,4 @@
-*usr_43.txt*	For Vim version 7.4.  Last change: 2008 Dec 28
+*usr_43.txt*	For Vim version 7.4.  Last change: 2015 Oct 23
 
 		     VIM USER MANUAL - by Bram Moolenaar
 
@@ -45,6 +45,7 @@ three-line comment.  You do this with only two steps:
 
 	setlocal softtabstop=4
 	noremap <buffer> <LocalLeader>c o/**************<CR><CR>/<Esc>
+	let b:undo_ftplugin = "setl softtabstop< | unmap <buffer> <LocalLeader>c"
 
 Try editing a C file.  You should notice that the 'softtabstop' option is set
 to 4.  But when you edit another file it's reset to the default zero.  That is
@@ -58,6 +59,11 @@ The ":map <buffer>" command creates a mapping that is local to the current
 buffer.  This works with any mapping command: ":map!", ":vmap", etc.  The
 |<LocalLeader>| in the mapping is replaced with the value of the
 "maplocalleader" variable.
+
+The line to set b:undo_ftplugin is for when the filetype is set to another
+value.  In that case you will want to undo your preferences.  The
+b:undo_ftplugin variable is executed as a command. Watch out for characters
+with a special meaning inside a string, such as a backslash.
 
 You can find examples for filetype plugins in this directory: >
 
