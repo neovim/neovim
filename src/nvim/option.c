@@ -4782,9 +4782,10 @@ showoptions (
           option_value2string(p, opt_flags);
           len = (int)STRLEN(p->fullname) + vim_strsize(NameBuff) + 1;
         }
-        if ((len <= INC - GAP && run == 1) ||
-            (len > INC - GAP && run == 2))
+        if ((len <= INC - GAP && run == 1)
+            || (len > INC - GAP && run == 2)) {
           items[item_count++] = p;
+        }
       }
     }
 
@@ -4973,18 +4974,15 @@ int makeset(FILE *fd, int opt_flags, int local_only)
           } else {    /* P_STRING */
             int do_endif = FALSE;
 
-            /* Don't set 'syntax' and 'filetype' again if the value is
-             * already right, avoids reloading the syntax file. */
-            if (
-              p->indir == PV_SYN
-              ||
-              p->indir == PV_FT
-              ) {
+            // Don't set 'syntax' and 'filetype' again if the value is
+            // already right, avoids reloading the syntax file.
+            if (p->indir == PV_SYN || p->indir == PV_FT) {
               if (fprintf(fd, "if &%s != '%s'", p->fullname,
-                      *(char_u **)(varp)) < 0
-                  || put_eol(fd) < 0)
+                          *(char_u **)(varp)) < 0
+                  || put_eol(fd) < 0) {
                 return FAIL;
-              do_endif = TRUE;
+              }
+              do_endif = true;
             }
             if (put_setstring(fd, cmd, p->fullname, (char_u **)varp,
                     (p->flags & P_EXPAND) != 0) == FAIL)
@@ -6225,10 +6223,10 @@ int has_format_option(int x)
 /// 'shortmess' contains 'a' and "x" is present in SHM_ALL_ABBREVIATIONS.
 bool shortmess(int x)
 {
-  return p_shm != NULL &&
-         (vim_strchr(p_shm, x) != NULL
-          || (vim_strchr(p_shm, 'a') != NULL
-              && vim_strchr((char_u *)SHM_ALL_ABBREVIATIONS, x) != NULL));
+  return (p_shm != NULL
+          && (vim_strchr(p_shm, x) != NULL
+              || (vim_strchr(p_shm, 'a') != NULL
+                  && vim_strchr((char_u *)SHM_ALL_ABBREVIATIONS, x) != NULL)));
 }
 
 /*

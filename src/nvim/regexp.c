@@ -3445,13 +3445,14 @@ static long bt_regexec_both(char_u *line,
       c = regline[col];
     if (prog->regstart == NUL
         || prog->regstart == c
-        || (ireg_ic && ((
-                          (enc_utf8 && utf_fold(prog->regstart) == utf_fold(c)))
-                        || (c < 255 && prog->regstart < 255 &&
-                            vim_tolower(prog->regstart) == vim_tolower(c)))))
+        || (ireg_ic
+            && (((enc_utf8 && utf_fold(prog->regstart) == utf_fold(c)))
+                || (c < 255 && prog->regstart < 255
+                    && vim_tolower(prog->regstart) == vim_tolower(c))))) {
       retval = regtry(prog, col);
-    else
+    } else {
       retval = 0;
+    }
   } else {
     int tm_count = 0;
     /* Messy cases:  unanchored match. */
@@ -4121,15 +4122,15 @@ regmatch (
           char_u  *opnd;
 
           opnd = OPERAND(scan);
-          /* Inline the first byte, for speed. */
+          // Inline the first byte, for speed.
           if (*opnd != *reginput
-              && (!ireg_ic || (
-                    !enc_utf8 &&
-                    vim_tolower(*opnd) != vim_tolower(*reginput))))
+              && (!ireg_ic
+                  || (!enc_utf8
+                      && vim_tolower(*opnd) != vim_tolower(*reginput)))) {
             status = RA_NOMATCH;
-          else if (*opnd == NUL) {
-            /* match empty string always works; happens when "~" is
-             * empty. */
+          } else if (*opnd == NUL) {
+            // match empty string always works; happens when "~" is
+            // empty.
           } else {
             if (opnd[1] == NUL && !(enc_utf8 && ireg_ic)) {
               len = 1; /* matched a single byte above */

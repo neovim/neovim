@@ -2876,9 +2876,7 @@ static char_u *u_save_line(linenr_T lnum)
 /// @return true if the buffer has changed
 bool bufIsChanged(buf_T *buf)
 {
-  return
-    !bt_dontwrite(buf) &&
-    (buf->b_changed || file_ff_differs(buf, true));
+  return !bt_dontwrite(buf) && (buf->b_changed || file_ff_differs(buf, true));
 }
 
 /// Check if the 'modified' flag is set, or 'ff' has changed (only need to
@@ -2888,9 +2886,8 @@ bool bufIsChanged(buf_T *buf)
 /// @return true if the current buffer has changed
 bool curbufIsChanged(void)
 {
-  return
-    !bt_dontwrite(curbuf) &&
-    (curbuf->b_changed || file_ff_differs(curbuf, true));
+  return (!bt_dontwrite(curbuf)
+          && (curbuf->b_changed || file_ff_differs(curbuf, true)));
 }
 
 /*

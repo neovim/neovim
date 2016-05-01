@@ -4424,11 +4424,10 @@ static int ins_complete(int c, bool enable_pum)
           prefix = (char_u *)"";
         STRCPY((char *)compl_pattern, prefix);
         (void)quote_meta(compl_pattern + STRLEN(prefix),
-            line + compl_col, compl_length);
-      } else if (--startcol < 0 ||
-                 !vim_iswordp(mb_prevptr(line, line + startcol + 1))
-                 ) {
-        /* Match any word of at least two chars */
+                         line + compl_col, compl_length);
+      } else if (--startcol < 0
+                 || !vim_iswordp(mb_prevptr(line, line + startcol + 1))) {
+        // Match any word of at least two chars
         compl_pattern = vim_strsave((char_u *)"\\<\\k\\k");
         compl_col += curs_col;
         compl_length = 0;
@@ -6684,8 +6683,8 @@ bool in_cinkeys(int keytyped, int when, bool line_is_empty)
     } else if (*look == 'e') {
       if (try_match && keytyped == 'e' && curwin->w_cursor.col >= 4) {
         p = get_cursor_line_ptr();
-        if (skipwhite(p) == p + curwin->w_cursor.col - 4 &&
-            STRNCMP(p + curwin->w_cursor.col - 4, "else", 4) == 0) {
+        if (skipwhite(p) == p + curwin->w_cursor.col - 4
+            && STRNCMP(p + curwin->w_cursor.col - 4, "else", 4) == 0) {
           return true;
         }
       }
@@ -7384,17 +7383,16 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
    * can't backup past starting point unless 'backspace' > 1
    * can backup to a previous line if 'backspace' == 0
    */
-  if (       bufempty()
-             || (
-               !revins_on &&
-               ((curwin->w_cursor.lnum == 1 && curwin->w_cursor.col == 0)
-                || (!can_bs(BS_START)
-                    && (arrow_used
-                        || (curwin->w_cursor.lnum == Insstart_orig.lnum
-                            && curwin->w_cursor.col <= Insstart_orig.col)))
-                || (!can_bs(BS_INDENT) && !arrow_used && ai_col > 0
-                    && curwin->w_cursor.col <= ai_col)
-                || (!can_bs(BS_EOL) && curwin->w_cursor.col == 0)))) {
+  if (bufempty()
+      || (!revins_on
+          && ((curwin->w_cursor.lnum == 1 && curwin->w_cursor.col == 0)
+              || (!can_bs(BS_START)
+                  && (arrow_used
+                      || (curwin->w_cursor.lnum == Insstart_orig.lnum
+                          && curwin->w_cursor.col <= Insstart_orig.col)))
+              || (!can_bs(BS_INDENT) && !arrow_used && ai_col > 0
+                  && curwin->w_cursor.col <= ai_col)
+              || (!can_bs(BS_EOL) && curwin->w_cursor.col == 0)))) {
     vim_beep(BO_BS);
     return false;
   }
@@ -7640,14 +7638,14 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
           if (revins_on && gchar_cursor() == NUL)
             break;
         }
-        /* Just a single backspace?: */
-        if (mode == BACKSPACE_CHAR)
+        // Just a single backspace?:
+        if (mode == BACKSPACE_CHAR) {
           break;
-      } while (
-        revins_on ||
-        (curwin->w_cursor.col > mincol
-         && (curwin->w_cursor.lnum != Insstart_orig.lnum
-             || curwin->w_cursor.col != Insstart_orig.col)));
+        }
+      } while (revins_on
+               || (curwin->w_cursor.col > mincol
+                   && (curwin->w_cursor.lnum != Insstart_orig.lnum
+                       || curwin->w_cursor.col != Insstart_orig.col)));
     }
     did_backspace = true;
   }

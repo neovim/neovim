@@ -526,19 +526,17 @@ do_tag (
         taglen_advance(taglen);
         MSG_PUTS_ATTR(_("file\n"), hl_attr(HLF_T));
 
-        for (i = 0; i < num_matches && !got_int; ++i) {
+        for (i = 0; i < num_matches && !got_int; i++) {
           parse_match(matches[i], &tagp);
-          if (!new_tag && (
-                (g_do_tagpreview != 0
-                 && i == ptag_entry.cur_match) ||
-                (use_tagstack
-                 && i == tagstack[tagstackidx].cur_match)))
+          if (!new_tag && ((g_do_tagpreview != 0 && i == ptag_entry.cur_match)
+                           || (use_tagstack
+                               && i == tagstack[tagstackidx].cur_match))) {
             *IObuff = '>';
-          else
+          } else {
             *IObuff = ' ';
-          vim_snprintf((char *)IObuff + 1, IOSIZE - 1,
-              "%2d %s ", i + 1,
-              mt_names[matches[i][0] & MT_MASK]);
+          }
+          vim_snprintf((char *)IObuff + 1, IOSIZE - 1, "%2d %s ", i + 1,
+                       mt_names[matches[i][0] & MT_MASK]);
           msg_puts(IObuff);
           if (tagp.tagkind != NULL)
             msg_outtrans_len(tagp.tagkind,
@@ -1226,20 +1224,15 @@ find_tags (
   for (round = 1; round <= 2; ++round) {
     linear = (orgpat.headlen == 0 || !p_tbs || round == 2);
 
-    /*
-     * Try tag file names from tags option one by one.
-     */
-    for (first_file = TRUE;
-         use_cscope ||
-         get_tagfname(&tn, first_file, tag_fname) == OK;
-         first_file = FALSE) {
-      /*
-       * A file that doesn't exist is silently ignored.  Only when not a
-       * single file is found, an error message is given (further on).
-       */
-      if (use_cscope)
-        fp = NULL;          /* avoid GCC warning */
-      else {
+    // Try tag file names from tags option one by one.
+    for (first_file = true;
+         use_cscope || get_tagfname(&tn, first_file, tag_fname) == OK;
+         first_file = false) {
+      // A file that doesn't exist is silently ignored.  Only when not a
+      // single file is found, an error message is given (further on).
+      if (use_cscope) {
+        fp = NULL;  // avoid GCC warning
+      } else {
         if (curbuf->b_help) {
           /* Prefer help tags according to 'helplang'.  Put the
            * two-letter language name in help_lang[]. */

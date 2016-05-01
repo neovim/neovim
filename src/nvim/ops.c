@@ -2046,8 +2046,8 @@ void op_insert(oparg_T *oap, long count1)
   // When a tab was inserted, and the characters in front of the tab
   // have been converted to a tab as well, the column of the cursor
   // might have actually been reduced, so need to adjust here. */
-  if (t1.lnum == curbuf->b_op_start_orig.lnum &&
-      lt(curbuf->b_op_start_orig, t1)) {
+  if (t1.lnum == curbuf->b_op_start_orig.lnum
+      && lt(curbuf->b_op_start_orig, t1)) {
     oap->start = curbuf->b_op_start_orig;
   }
 
@@ -3189,11 +3189,9 @@ void adjust_cursor_eol(void)
  */
 int preprocs_left(void)
 {
-  return
-    (curbuf->b_p_si && !curbuf->b_p_cin) ||
-    (curbuf->b_p_cin && in_cinkeys('#', ' ', TRUE)
-     && curbuf->b_ind_hash_comment == 0)
-  ;
+  return ((curbuf->b_p_si && !curbuf->b_p_cin)
+          || (curbuf->b_p_cin && in_cinkeys('#', ' ', true)
+              && curbuf->b_ind_hash_comment == 0));
 }
 
 /* Return the character name of the register with the given number */
@@ -4399,8 +4397,7 @@ int do_addsub(int op_type, pos_T *pos, int length, linenr_T Prenum1)
     if (dobin
         && dohex
         && !((col > 0
-              && (ptr[col] == 'X' ||
-                  ptr[col] == 'x')
+              && (ptr[col] == 'X' || ptr[col] == 'x')
               && ptr[col - 1] == '0'
               && ascii_isxdigit(ptr[col + 1])))) {
         // In case of binary/hexadecimal pattern overlap match, rescan
@@ -4414,17 +4411,15 @@ int do_addsub(int op_type, pos_T *pos, int length, linenr_T Prenum1)
 
     if ((dohex
          && col > 0
-         && (ptr[col] == 'X'
-             || ptr[col] == 'x')
+         && (ptr[col] == 'X' || ptr[col] == 'x')
          && ptr[col - 1] == '0'
-         && ascii_isxdigit(ptr[col + 1])) ||
-        (dobin
-         && col > 0
-         && (ptr[col] == 'B'
-             || ptr[col] == 'b')
-         && ptr[col - 1] == '0'
-         && ascii_isbdigit(ptr[col + 1]))) {
-         // Found hexadecimal or binary number, move to its start.
+         && ascii_isxdigit(ptr[col + 1]))
+        || (dobin
+            && col > 0
+            && (ptr[col] == 'B' || ptr[col] == 'b')
+            && ptr[col - 1] == '0'
+            && ascii_isbdigit(ptr[col + 1]))) {
+      // Found hexadecimal or binary number, move to its start.
         col--;
     } else {
       // Search forward and then backward to find the start of number.
@@ -4445,8 +4440,8 @@ int do_addsub(int op_type, pos_T *pos, int length, linenr_T Prenum1)
   }
 
   if (visual) {
-    while (ptr[col] != NUL && length > 0 && !ascii_isdigit(ptr[col]) &&
-           !(doalp && ASCII_ISALPHA(ptr[col]))) {
+    while (ptr[col] != NUL && length > 0 && !ascii_isdigit(ptr[col])
+           && !(doalp && ASCII_ISALPHA(ptr[col]))) {
       col++;
       length--;
     }
@@ -4608,8 +4603,7 @@ int do_addsub(int op_type, pos_T *pos, int length, linenr_T Prenum1)
       *ptr++ = '0';
       length--;
     }
-    if (pre == 'b' || pre == 'B' ||
-        pre == 'x' || pre == 'X') {
+    if (pre == 'b' || pre == 'B' || pre == 'x' || pre == 'X') {
       *ptr++ = pre;
       length--;
     }
@@ -5035,8 +5029,8 @@ static void str_to_reg(yankreg_T *y_ptr, MotionType yank_type,
   }
 
   if (yank_type == kMTUnknown) {
-    yank_type = ((str_list ||
-                  (len > 0 && (str[len - 1] == NL || str[len - 1] == CAR)))
+    yank_type = ((str_list
+                  || (len > 0 && (str[len - 1] == NL || str[len - 1] == CAR)))
                  ? kMTLineWise : kMTCharWise);
   }
 

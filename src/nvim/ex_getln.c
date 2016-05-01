@@ -624,8 +624,8 @@ static int command_line_execute(VimState *state, int key)
     // CTRL-\ e doesn't work when obtaining an expression, unless it
     // is in a mapping.
     if (s->c != Ctrl_N && s->c != Ctrl_G && (s->c != 'e'
-                                       || (ccline.cmdfirstc == '=' &&
-                                           KeyTyped))) {
+                                             || (ccline.cmdfirstc == '='
+                                                 && KeyTyped))) {
       vungetc(s->c);
       s->c = Ctrl_BSL;
     } else if (s->c == 'e') {

@@ -1654,16 +1654,15 @@ static char_u * do_one_cmd(char_u **cmdlinep,
    * If we got a line, but no command, then go to the line.
    * If we find a '|' or '\n' we set ea.nextcmd.
    */
-  if (*ea.cmd == NUL || *ea.cmd == '"' ||
-      (ea.nextcmd = check_nextcmd(ea.cmd)) != NULL) {
-    /*
-     * strange vi behaviour:
-     * ":3"		jumps to line 3
-     * ":3|..."	prints line 3
-     * ":|"		prints current line
-     */
-    if (ea.skip)            /* skip this if inside :if */
+  if (*ea.cmd == NUL || *ea.cmd == '"'
+      || (ea.nextcmd = check_nextcmd(ea.cmd)) != NULL) {
+    // strange vi behaviour:
+    // ":3"     jumps to line 3
+    // ":3|..." prints line 3
+    // ":|"     prints current line
+    if (ea.skip) {  // skip this if inside :if
       goto doend;
+    }
     if (*ea.cmd == '|' || (exmode_active && ea.line1 != ea.line2)) {
       ea.cmdidx = CMD_print;
       ea.argt = RANGE | COUNT | TRLBAR;
@@ -2824,10 +2823,11 @@ set_one_cmd_context (
     }
   }
 
-  /* no arguments allowed */
-  if (!(ea.argt & EXTRA) && *arg != NUL &&
-      vim_strchr((char_u *)"|\"", *arg) == NULL)
+  // no arguments allowed
+  if (!(ea.argt & EXTRA) && *arg != NUL
+      && vim_strchr((char_u *)"|\"", *arg) == NULL) {
     return NULL;
+  }
 
   /* Find start of last argument (argument just before cursor): */
   p = buff;
@@ -4772,14 +4772,15 @@ static void uc_list(char_u *name, size_t name_len)
         IObuff[len++] = ' ';
       } while (len < 11);
 
-      /* Address Type */
-      for (j = 0; addr_type_complete[j].expand != -1; ++j)
-        if (addr_type_complete[j].expand != ADDR_LINES &&
-            addr_type_complete[j].expand == cmd->uc_addr_type) {
+      // Address Type
+      for (j = 0; addr_type_complete[j].expand != -1; j++) {
+        if (addr_type_complete[j].expand != ADDR_LINES
+            && addr_type_complete[j].expand == cmd->uc_addr_type) {
           STRCPY(IObuff + len, addr_type_complete[j].name);
           len += (int)STRLEN(IObuff + len);
           break;
         }
+      }
 
       do {
         IObuff[len++] = ' ';
@@ -5654,12 +5655,13 @@ static void ex_quit(exarg_T *eap)
     wp = curwin;
   }
 
-  apply_autocmds(EVENT_QUITPRE, NULL, NULL, FALSE, curbuf);
-  /* Refuse to quit when locked or when the buffer in the last window is
-   * being closed (can only happen in autocommands). */
-  if (curbuf_locked() ||
-      (wp->w_buffer->b_nwindows == 1 && wp->w_buffer->b_closing))
+  apply_autocmds(EVENT_QUITPRE, NULL, NULL, false, curbuf);
+  // Refuse to quit when locked or when the buffer in the last window is
+  // being closed (can only happen in autocommands).
+  if (curbuf_locked()
+      || (wp->w_buffer->b_nwindows == 1 && wp->w_buffer->b_closing)) {
     return;
+  }
 
 
   /*
@@ -9185,16 +9187,15 @@ static char *get_view_file(int c)
  */
 int put_eol(FILE *fd)
 {
-  if (
-#ifdef USE_CRNL
-    (
-# ifdef MKSESSION_NL
-      !mksession_nl &&
-# endif
-      (putc('\r', fd) < 0)) ||
+#if defined(USE_CRNL) && defined(MKSESSION_NL)
+  if ((!mksession_nl && putc('\r', fd) < 0) || putc('\n', fd) < 0) {
+#elif defined(USE_CRNL)
+  if (putc('\r', fd) < 0 || putc('\n', fd) < 0) {
+#else
+  if (putc('\n', fd) < 0) {
 #endif
-    (putc('\n', fd) < 0))
     return FAIL;
+  }
   return OK;
 }
 

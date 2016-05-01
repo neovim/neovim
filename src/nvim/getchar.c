@@ -2669,13 +2669,14 @@ do_map (
   p = keys;
   do_backslash = (vim_strchr(p_cpo, CPO_BSLASH) == NULL);
   while (*p && (maptype == 1 || !ascii_iswhite(*p))) {
-    if ((p[0] == Ctrl_V || (do_backslash && p[0] == '\\')) &&
-        p[1] != NUL)
-      ++p;                      /* skip CTRL-V or backslash */
-    ++p;
+    if ((p[0] == Ctrl_V || (do_backslash && p[0] == '\\')) && p[1] != NUL) {
+      p++;  // skip CTRL-V or backslash
+    }
+    p++;
   }
-  if (*p != NUL)
+  if (*p != NUL) {
     *p++ = NUL;
+  }
 
   p = skipwhite(p);
   rhs = p;

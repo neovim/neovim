@@ -2282,15 +2282,14 @@ int get_c_indent(void)
          * location for b_ind_open_extra.
          */
 
-        if (start_brace == BRACE_IN_COL0) {         /* '{' is in column 0 */
+        if (start_brace == BRACE_IN_COL0) {     // '{' is in column 0
           amount = curbuf->b_ind_open_left_imag;
-          lookfor_cpp_namespace = TRUE;
-        } else if (start_brace == BRACE_AT_START &&
-                   lookfor_cpp_namespace) {       /* '{' is at start */
-
-          lookfor_cpp_namespace = TRUE;
+          lookfor_cpp_namespace = true;
+        } else if (start_brace == BRACE_AT_START
+                   && lookfor_cpp_namespace) {  // '{' is at start
+          lookfor_cpp_namespace = true;
         } else {
-          if (start_brace == BRACE_AT_END) {        /* '{' is at end of line */
+          if (start_brace == BRACE_AT_END) {    // '{' is at end of line
             amount += curbuf->b_ind_open_imag;
 
             l = skipwhite(get_cursor_line_ptr());

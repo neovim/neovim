@@ -224,9 +224,9 @@ static void tk_getkeys(TermInput *input, bool force)
   while ((result = tk_getkey(input->tk, &key, force)) == TERMKEY_RES_KEY) {
     if (key.type == TERMKEY_TYPE_UNICODE && !key.modifiers) {
       forward_simple_utf8(input, &key);
-    } else if (key.type == TERMKEY_TYPE_UNICODE ||
-               key.type == TERMKEY_TYPE_FUNCTION ||
-               key.type == TERMKEY_TYPE_KEYSYM) {
+    } else if (key.type == TERMKEY_TYPE_UNICODE
+               || key.type == TERMKEY_TYPE_FUNCTION
+               || key.type == TERMKEY_TYPE_KEYSYM) {
       forward_modified_utf8(input, &key);
     } else if (key.type == TERMKEY_TYPE_MOUSE) {
       forward_mouse_event(input, &key);
@@ -282,9 +282,9 @@ static bool handle_focus_event(TermInput *input)
 
 static bool handle_bracketed_paste(TermInput *input)
 {
-  if (rbuffer_size(input->read_stream.buffer) > 5 &&
-      (!rbuffer_cmp(input->read_stream.buffer, "\x1b[200~", 6) ||
-       !rbuffer_cmp(input->read_stream.buffer, "\x1b[201~", 6))) {
+  if (rbuffer_size(input->read_stream.buffer) > 5
+      && (!rbuffer_cmp(input->read_stream.buffer, "\x1b[200~", 6)
+          || !rbuffer_cmp(input->read_stream.buffer, "\x1b[201~", 6))) {
     bool enable = *rbuffer_get(input->read_stream.buffer, 4) == '0';
     // Advance past the sequence
     rbuffer_consumed(input->read_stream.buffer, 6);

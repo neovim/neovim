@@ -535,9 +535,9 @@ static linenr_T find_longest_lnum(void)
   // Calculate maximum for horizontal scrollbar.  Check for reasonable
   // line numbers, topline and botline can be invalid when displaying is
   // postponed.
-  if (curwin->w_topline <= curwin->w_cursor.lnum &&
-      curwin->w_botline > curwin->w_cursor.lnum &&
-      curwin->w_botline <= curbuf->b_ml.ml_line_count + 1) {
+  if (curwin->w_topline <= curwin->w_cursor.lnum
+      && curwin->w_botline > curwin->w_cursor.lnum
+      && curwin->w_botline <= curbuf->b_ml.ml_line_count + 1) {
     long max = 0;
 
     // Use maximum of all visible lines.  Remember the lnum of the

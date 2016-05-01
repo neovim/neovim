@@ -187,9 +187,9 @@ int process_wait(Process *proc, int ms, Queue *events) FUNC_ATTR_NONNULL_ARG(1)
   // being freed) before we have a chance to get the status.
   proc->refcount++;
   LOOP_PROCESS_EVENTS_UNTIL(proc->loop, events, ms,
-      // Until...
-      got_int ||             // interrupted by the user
-      proc->refcount == 1);  // job exited
+                            // Until...
+                            got_int                   // interrupted by the user
+                            || proc->refcount == 1);  // job exited
 
   // we'll assume that a user frantically hitting interrupt doesn't like
   // the current job. Signal that it has to be killed.

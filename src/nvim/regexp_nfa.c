@@ -4777,8 +4777,8 @@ static long find_match_text(colnr_T startcol, int regstart, char_u *match_text)
       int c2_len = PTR2LEN(s2);
       int c2 = PTR2CHAR(s2);
 
-      if ((c1 != c2 && (!ireg_ic || vim_tolower(c1) != vim_tolower(c2))) ||
-          c1_len != c2_len) {
+      if ((c1 != c2 && (!ireg_ic || vim_tolower(c1) != vim_tolower(c2)))
+          || c1_len != c2_len) {
         match = false;
         break;
       }

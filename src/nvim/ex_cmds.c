@@ -650,13 +650,13 @@ void ex_retab(exarg_T *eap)
             num_tabs += num_spaces / new_ts;
             num_spaces -= (num_spaces / new_ts) * new_ts;
           }
-          if (curbuf->b_p_et || got_tab ||
-              (num_spaces + num_tabs < len)) {
-            if (did_undo == FALSE) {
-              did_undo = TRUE;
+          if (curbuf->b_p_et || got_tab
+              || (num_spaces + num_tabs < len)) {
+            if (did_undo == false) {
+              did_undo = true;
               if (u_save((linenr_T)(lnum - 1),
-                      (linenr_T)(lnum + 1)) == FAIL) {
-                new_line = NULL;                        /* flag out-of-memory */
+                         (linenr_T)(lnum + 1)) == FAIL) {
+                new_line = NULL;  // flag out-of-memory
                 break;
               }
             }
@@ -1623,15 +1623,14 @@ int do_write(exarg_T *eap)
     }
   }
 
-  /*
-   * Writing to the current file is not allowed in readonly mode
-   * and a file name is required.
-   * "nofile" and "nowrite" buffers cannot be written implicitly either.
-   */
-  if (!other && (
-        bt_dontwrite_msg(curbuf) ||
-        check_fname() == FAIL || check_readonly(&eap->forceit, curbuf)))
+  // Writing to the current file is not allowed in readonly mode
+  // and a file name is required.
+  // "nofile" and "nowrite" buffers cannot be written implicitly either.
+  if (!other && (bt_dontwrite_msg(curbuf)
+                 || check_fname() == FAIL
+                 || check_readonly(&eap->forceit, curbuf))) {
     goto theend;
+  }
 
   if (!other) {
     ffname = curbuf->b_ffname;
@@ -2258,16 +2257,15 @@ do_ecmd (
           delbuf_msg(new_name);                 /* frees new_name */
           goto theend;
         }
-        if (buf == curbuf)                      /* already in new buffer */
-          auto_buf = TRUE;
-        else {
-          /*
-           * <VN> We could instead free the synblock
-           * and re-attach to buffer, perhaps.
-           */
-          if (curwin->w_buffer != NULL &&
-              curwin->w_s == &(curwin->w_buffer->b_s))
+        if (buf == curbuf) {  // already in new buffer
+          auto_buf = true;
+        } else {
+          // <VN> We could instead free the synblock
+          // and re-attach to buffer, perhaps.
+          if (curwin->w_buffer != NULL
+              && curwin->w_s == &(curwin->w_buffer->b_s)) {
             curwin->w_s = &(buf->b_s);
+          }
 
           curwin->w_buffer = buf;
           curbuf = buf;
@@ -2294,11 +2292,11 @@ do_ecmd (
 
     curwin->w_pcmark.lnum = 1;
     curwin->w_pcmark.col = 0;
-  } else { /* !other_file */
-    if (
-      (flags & ECMD_ADDBUF) ||
-      check_fname() == FAIL)
+  } else {  // !other_file
+    if ((flags & ECMD_ADDBUF)
+        || check_fname() == FAIL) {
       goto theend;
+    }
     oldbuf = (flags & ECMD_OLDBUF);
   }
 
@@ -5818,13 +5816,14 @@ void set_context_in_sign_cmd(expand_T *xp, char_u *arg)
     switch (cmd_idx)
     {
       case SIGNCMD_DEFINE:
-        if (STRNCMP(last, "texthl", p - last) == 0 ||
-            STRNCMP(last, "linehl", p - last) == 0)
+        if (STRNCMP(last, "texthl", p - last) == 0
+            || STRNCMP(last, "linehl", p - last) == 0) {
           xp->xp_context = EXPAND_HIGHLIGHT;
-        else if (STRNCMP(last, "icon", p - last) == 0)
+        } else if (STRNCMP(last, "icon", p - last) == 0) {
           xp->xp_context = EXPAND_FILES;
-        else
+        } else {
           xp->xp_context = EXPAND_NOTHING;
+        }
         break;
       case SIGNCMD_PLACE:
         if (STRNCMP(last, "name", p - last) == 0)

@@ -1010,12 +1010,9 @@ scrollup (
     int byfold              /* true: count a closed fold as one line */
 )
 {
-  if (
-    (byfold && hasAnyFolding(curwin))
-    ||
-    curwin->w_p_diff
-    ) {
-    /* count each sequence of folded lines as one logical line */
+  if ((byfold && hasAnyFolding(curwin))
+      || curwin->w_p_diff) {
+    // count each sequence of folded lines as one logical line
     linenr_T lnum = curwin->w_topline;
     while (line_count--) {
       if (curwin->w_topfill > 0)

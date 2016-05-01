@@ -2266,8 +2266,8 @@ static void set_var_lval(lval_T *lp, char_u *endp, typval_T *rettv, int copy, ch
         if (get_var_tv(lp->ll_name, (int)STRLEN(lp->ll_name),
                        &tv, &di, true, false) == OK) {
           if ((di == NULL
-               || (!var_check_ro(di->di_flags, lp->ll_name, false) &&
-                   !tv_check_lock(di->di_tv.v_lock, lp->ll_name, false)))
+               || (!var_check_ro(di->di_flags, lp->ll_name, false)
+                   && !tv_check_lock(di->di_tv.v_lock, lp->ll_name, false)))
               && tv_op(&tv, rettv, op) == OK) {
             set_var(lp->ll_name, &tv, false);
           }
@@ -7655,8 +7655,9 @@ static void assert_bool(typval_T *argvars, bool is_true)
   int error = (int)false;
   garray_T ga;
 
-  if ((argvars[0].v_type != VAR_NUMBER ||
-       (get_tv_number_chk(&argvars[0], &error) == 0) == is_true || error)
+  if ((argvars[0].v_type != VAR_NUMBER
+       || (get_tv_number_chk(&argvars[0], &error) == 0) == is_true
+       || error)
       && (argvars[0].v_type != VAR_SPECIAL
           || (argvars[0].vval.v_special
               != (SpecialVarValue) (is_true
@@ -15140,12 +15141,12 @@ static void do_sort_uniq(typval_T *argvars, typval_T *rettv, bool sort)
     EMSG2(_(e_listarg), sort ? "sort()" : "uniq()");
   } else {
     l = argvars[0].vval.v_list;
-    if (l == NULL ||
-        tv_check_lock(l->lv_lock,
-                      (char_u *)(sort
-                                 ? N_("sort() argument")
-                                 : N_("uniq() argument")),
-                      true)) {
+    if (l == NULL
+        || tv_check_lock(l->lv_lock,
+                         (char_u *)(sort
+                                    ? N_("sort() argument")
+                                    : N_("uniq() argument")),
+                         true)) {
       return;
     }
     rettv->vval.v_list = l;
@@ -19265,9 +19266,10 @@ void ex_function(exarg_T *eap)
       if ((p[0] == 'a' && (!ASCII_ISALPHA(p[1]) || p[1] == 'p'))
           || (p[0] == 'i'
               && (!ASCII_ISALPHA(p[1]) || (p[1] == 'n'
-                                           && (!ASCII_ISALPHA(p[2]) ||
-                                               (p[2] == 's'))))))
+                                           && (!ASCII_ISALPHA(p[2])
+                                               || (p[2] == 's')))))) {
         skip_until = vim_strsave((char_u *)".");
+      }
 
       // Check for ":python <<EOF", ":lua <<EOF", etc.
       arg = skipwhite(skiptowhite(p));
@@ -19534,11 +19536,12 @@ trans_function_name (
       *pp = end;
     } else {
       if (!skip && !(flags & TFN_QUIET) && (fdp == NULL
-                                            || lv.ll_dict == NULL ||
-                                            fdp->fd_newkey == NULL))
+                                            || lv.ll_dict == NULL
+                                            || fdp->fd_newkey == NULL)) {
         EMSG(_(e_funcref));
-      else
+      } else {
         *pp = end;
+      }
       name = NULL;
     }
     goto theend;
@@ -20438,9 +20441,9 @@ call_user_func (
 
   --RedrawingDisabled;
 
-  /* when the function was aborted because of an error, return -1 */
-  if ((did_emsg &&
-       (fp->uf_flags & FC_ABORT)) || rettv->v_type == VAR_UNKNOWN) {
+  // when the function was aborted because of an error, return -1
+  if ((did_emsg
+       && (fp->uf_flags & FC_ABORT)) || rettv->v_type == VAR_UNKNOWN) {
     clear_tv(rettv);
     rettv->v_type = VAR_NUMBER;
     rettv->vval.v_number = -1;

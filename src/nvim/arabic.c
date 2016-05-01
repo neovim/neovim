@@ -1367,8 +1367,8 @@ int arabic_shape(int c, int *ccp, int *c1p, int prev_c, int prev_c1,
   int prev_laa = A_firstc_laa(prev_c, prev_c1);
 
   if (curr_laa) {
-    if (A_is_valid(prev_c) && !A_is_f(shape_c) && !A_is_s(shape_c) &&
-        !prev_laa) {
+    if (A_is_valid(prev_c) && !A_is_f(shape_c) && !A_is_s(shape_c)
+        && !prev_laa) {
       curr_c = chg_c_laa2f(curr_laa);
     } else {
       curr_c = chg_c_laa2i(curr_laa);
@@ -1454,19 +1454,19 @@ static bool A_is_harakat(int c)
 //     (alphabet/number/punctuation)
 static bool A_is_iso(int c)
 {
-  return (c >= a_HAMZA && c <= a_GHAIN) ||
-         (c >= a_TATWEEL && c <= a_HAMZA_BELOW) ||
-         c == a_MINI_ALEF;
+  return ((c >= a_HAMZA && c <= a_GHAIN)
+          || (c >= a_TATWEEL && c <= a_HAMZA_BELOW)
+          || c == a_MINI_ALEF);
 }
 
 // A_is_formb returns true if 'c' is an Arabic 10646-1 FormB character.
 //     (alphabet/number/punctuation)
 static bool A_is_formb(int c)
 {
-  return (c >= a_s_FATHATAN && c <= a_s_DAMMATAN) ||
-         c == a_s_KASRATAN ||
-         (c >= a_s_FATHA && c <= a_f_LAM_ALEF) ||
-         c == a_BYTE_ORDER_MARK;
+  return ((c >= a_s_FATHATAN && c <= a_s_DAMMATAN)
+          || c == a_s_KASRATAN
+          || (c >= a_s_FATHA && c <= a_f_LAM_ALEF)
+          || c == a_BYTE_ORDER_MARK);
 }
 
 // A_is_ok returns true if 'c' is an Arabic 10646 (8859-6 or Form-B).

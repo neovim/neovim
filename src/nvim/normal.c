@@ -569,36 +569,33 @@ static bool normal_need_aditional_char(NormalState *s)
 static bool normal_need_redraw_mode_message(NormalState *s)
 {
   return (
-      (
       // 'showmode' is set and messages can be printed
-      p_smd && msg_silent == 0
-      // must restart insert mode(ctrl+o or ctrl+l) or we just entered visual
-      // mode
-      && (restart_edit != 0 || (VIsual_active
-            && s->old_pos.lnum == curwin->w_cursor.lnum
-            && s->old_pos.col == curwin->w_cursor.col))
-      // command-line must be cleared or redrawn
-      && (clear_cmdline || redraw_cmdline)
-      // some message was printed or scrolled
-      && (msg_didout || (msg_didany && msg_scroll))
-      // it is fine to remove the current message
-      && !msg_nowait
-      // the command was the result of direct user input and not a mapping
-      && KeyTyped
-      )
-    ||
-      // must restart insert mode, not in visual mode and error message is
-      // being shown
-      (restart_edit != 0 && !VIsual_active && (msg_scroll && emsg_on_display))
-  )
-  // no register was used
-  && s->oa.regname == 0
-  && !(s->ca.retval & CA_COMMAND_BUSY)
-  && stuff_empty()
-  && typebuf_typed()
-  && emsg_silent == 0
-  && !did_wait_return
-  && s->oa.op_type == OP_NOP;
+      ((p_smd && msg_silent == 0
+        // must restart insert mode(ctrl+o or ctrl+l) or we just entered visual
+        // mode
+        && (restart_edit != 0 || (VIsual_active
+                                  && s->old_pos.lnum == curwin->w_cursor.lnum
+                                  && s->old_pos.col == curwin->w_cursor.col))
+        // command-line must be cleared or redrawn
+        && (clear_cmdline || redraw_cmdline)
+        // some message was printed or scrolled
+        && (msg_didout || (msg_didany && msg_scroll))
+        // it is fine to remove the current message
+        && !msg_nowait
+        // the command was the result of direct user input and not a mapping
+        && KeyTyped)
+       // must restart insert mode, not in visual mode and error message is
+       // being shown
+       || (restart_edit != 0 && !VIsual_active && msg_scroll
+           && emsg_on_display))
+      // no register was used
+      && s->oa.regname == 0
+      && !(s->ca.retval & CA_COMMAND_BUSY)
+      && stuff_empty()
+      && typebuf_typed()
+      && emsg_silent == 0
+      && !did_wait_return
+      && s->oa.op_type == OP_NOP);
 }
 
 static void normal_redraw_mode_message(NormalState *s)
@@ -4060,16 +4057,15 @@ static void nv_zet(cmdarg_T *cap)
   }
 
 dozet:
-  if (
-    /* "zf" and "zF" are always an operator, "zd", "zo", "zO", "zc"
-     * and "zC" only in Visual mode.  "zj" and "zk" are motion
-     * commands. */
-    cap->nchar != 'f' && cap->nchar != 'F'
-    && !(VIsual_active && vim_strchr((char_u *)"dcCoO", cap->nchar))
-    && cap->nchar != 'j' && cap->nchar != 'k'
-    &&
-    checkclearop(cap->oap))
+  // "zf" and "zF" are always an operator, "zd", "zo", "zO", "zc"
+  // and "zC" only in Visual mode.  "zj" and "zk" are motion
+  // commands. */
+  if (cap->nchar != 'f' && cap->nchar != 'F'
+      && !(VIsual_active && vim_strchr((char_u *)"dcCoO", cap->nchar))
+      && cap->nchar != 'j' && cap->nchar != 'k'
+      && checkclearop(cap->oap)) {
     return;
+  }
 
   /*
    * For "z+", "z<CR>", "zt", "z.", "zz", "z^", "z-", "zb":
@@ -5817,14 +5813,11 @@ static void nv_replace(cmdarg_T *cap)
     return;
   }
 
-  /*
-   * Replacing with a TAB is done by edit() when it is complicated because
-   * 'expandtab' or 'smarttab' is set.  CTRL-V TAB inserts a literal TAB.
-   * Other characters are done below to avoid problems with things like
-   * CTRL-V 048 (for edit() this would be R CTRL-V 0 ESC).
-   */
-  if (had_ctrl_v != Ctrl_V && cap->nchar == '\t' &&
-      (curbuf->b_p_et || p_sta)) {
+  // Replacing with a TAB is done by edit() when it is complicated because
+  // 'expandtab' or 'smarttab' is set.  CTRL-V TAB inserts a literal TAB.
+  // Other characters are done below to avoid problems with things like
+  // CTRL-V 048 (for edit() this would be R CTRL-V 0 ESC).
+  if (had_ctrl_v != Ctrl_V && cap->nchar == '\t' && (curbuf->b_p_et || p_sta)) {
     stuffnumReadbuff(cap->count1);
     stuffcharReadbuff('R');
     stuffcharReadbuff('\t');

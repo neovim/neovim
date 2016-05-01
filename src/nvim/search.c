@@ -638,9 +638,9 @@ int searchit(
                 break;
               }
 
-              if (ptr[matchcol] == NUL ||
-                  (nmatched = vim_regexec_multi(&regmatch, win, buf, lnum,
-                                                matchcol, tm)) == 0) {
+              if (ptr[matchcol] == NUL
+                  || (nmatched = vim_regexec_multi(&regmatch, win, buf, lnum,
+                                                   matchcol, tm)) == 0) {
                 match_ok = false;
                 break;
               }
@@ -1027,19 +1027,18 @@ int do_search(
       spats[0].off.line = FALSE;
       spats[0].off.end = FALSE;
       spats[0].off.off = 0;
-      /*
-       * Check for a line offset or a character offset.
-       * For get_address (echo off) we don't check for a character
-       * offset, because it is meaningless and the 's' could be a
-       * substitute command.
-       */
-      if (*p == '+' || *p == '-' || ascii_isdigit(*p))
-        spats[0].off.line = TRUE;
-      else if ((options & SEARCH_OPT) &&
-               (*p == 'e' || *p == 's' || *p == 'b')) {
-        if (*p == 'e')                  /* end */
+      // Check for a line offset or a character offset.
+      // For get_address (echo off) we don't check for a character
+      // offset, because it is meaningless and the 's' could be a
+      // substitute command.
+      if (*p == '+' || *p == '-' || ascii_isdigit(*p)) {
+        spats[0].off.line = true;
+      } else if ((options & SEARCH_OPT)
+                 && (*p == 'e' || *p == 's' || *p == 'b')) {
+        if (*p == 'e') {  // end
           spats[0].off.end = true;
-        ++p;
+        }
+        p++;
       }
       if (ascii_isdigit(*p) || *p == '+' || *p == '-') {      /* got an offset */
         /* 'nr' or '+nr' or '-nr' */
@@ -1784,14 +1783,13 @@ pos_T *findmatchlimit(oparg_T *oap, int initc, int flags, int64_t maxtravel)
       }
     }
 
-    /*
-     * If FM_BLOCKSTOP given, stop at a '{' or '}' in column 0.
-     */
-    if (pos.col == 0 && (flags & FM_BLOCKSTOP) &&
-        (linep[0] == '{' || linep[0] == '}')) {
-      if (linep[0] == findc && count == 0)              /* match! */
+    // If FM_BLOCKSTOP given, stop at a '{' or '}' in column 0.
+    if (pos.col == 0 && (flags & FM_BLOCKSTOP)
+        && (linep[0] == '{' || linep[0] == '}')) {
+      if (linep[0] == findc && count == 0) {  // match!
         return &pos;
-      break;                                            /* out of scope */
+      }
+      break;  // out of scope
     }
 
     if (comment_dir) {
@@ -1960,15 +1958,15 @@ pos_T *findmatchlimit(oparg_T *oap, int initc, int flags, int64_t maxtravel)
             if (linep[pos.col - 2] == '\'') {
               pos.col -= 2;
               break;
-            } else if (linep[pos.col - 2] == '\\' &&
-                       pos.col > 2 && linep[pos.col - 3] == '\'') {
+            } else if (linep[pos.col - 2] == '\\'
+                       && pos.col > 2 && linep[pos.col - 3] == '\'') {
               pos.col -= 3;
               break;
             }
           }
-        } else if (linep[pos.col + 1]) {      /* forward search */
-          if (linep[pos.col + 1] == '\\' &&
-              linep[pos.col + 2] && linep[pos.col + 3] == '\'') {
+        } else if (linep[pos.col + 1]) {  // forward search
+          if (linep[pos.col + 1] == '\\'
+              && linep[pos.col + 2] && linep[pos.col + 3] == '\'') {
             pos.col += 3;
             break;
           } else if (linep[pos.col + 2] == '\'') {
@@ -2185,30 +2183,32 @@ int findsent(int dir, long count)
      * if on an empty line, skip up to a non-empty line
      */
     if (gchar_pos(&pos) == NUL) {
-      do
-        if ((*func)(&pos) == -1)
+      do {
+        if ((*func)(&pos) == -1) {
           break;
-      while (gchar_pos(&pos) == NUL);
-      if (dir == FORWARD)
+        }
+      } while (gchar_pos(&pos) == NUL);
+      if (dir == FORWARD) {
         goto found;
-    }
-    /*
-     * if on the start of a paragraph or a section and searching forward,
-     * go to the next line
-     */
-    else if (dir == FORWARD && pos.col == 0 &&
-             startPS(pos.lnum, NUL, FALSE)) {
-      if (pos.lnum == curbuf->b_ml.ml_line_count)
+      }
+    // if on the start of a paragraph or a section and searching forward,
+    // go to the next line
+    } else if (dir == FORWARD && pos.col == 0
+               && startPS(pos.lnum, NUL, false)) {
+      if (pos.lnum == curbuf->b_ml.ml_line_count) {
         return FAIL;
-      ++pos.lnum;
+      }
+      pos.lnum++;
       goto found;
-    } else if (dir == BACKWARD)
+    } else if (dir == BACKWARD) {
       decl(&pos);
+    }
 
-    /* go back to the previous non-blank char */
-    found_dot = FALSE;
-    while ((c = gchar_pos(&pos)) == ' ' || c == '\t' ||
-           (dir == BACKWARD && vim_strchr((char_u *)".!?)]\"'", c) != NULL)) {
+    // go back to the previous non-blank char
+    found_dot = false;
+    while ((c = gchar_pos(&pos)) == ' ' || c == '\t'
+           || (dir == BACKWARD
+               && vim_strchr((char_u *)".!?)]\"'", c) != NULL)) {
       if (vim_strchr((char_u *)".!?", c) != NULL) {
         /* Only skip over a '.', '!' and '?' once. */
         if (found_dot)
@@ -2372,12 +2372,14 @@ int startPS(linenr_T lnum, int para, int both)
   char_u      *s;
 
   s = ml_get(lnum);
-  if (*s == para || *s == '\f' || (both && *s == '}'))
-    return TRUE;
-  if (*s == '.' && (inmacro(p_sections, s + 1) ||
-                    (!para && inmacro(p_para, s + 1))))
-    return TRUE;
-  return FALSE;
+  if (*s == para || *s == '\f' || (both && *s == '}')) {
+    return true;
+  }
+  if (*s == '.' && (inmacro(p_sections, s + 1)
+                    || (!para && inmacro(p_para, s + 1)))) {
+    return true;
+  }
+  return false;
 }
 
 /*
@@ -4151,19 +4153,20 @@ find_pattern_in_path (
             FNAME_EXP|FNAME_INCL|FNAME_REL, 1L, p_fname, NULL);
       already_searched = FALSE;
       if (new_fname != NULL) {
-        /* Check whether we have already searched in this file */
+        // Check whether we have already searched in this file
         for (i = 0;; i++) {
-          if (i == depth + 1)
+          if (i == depth + 1) {
             i = old_files;
-          if (i == max_path_depth)
+          }
+          if (i == max_path_depth) {
             break;
-          if (path_full_compare(new_fname, files[i].name, TRUE) & kEqualFiles) {
-            if (type != CHECK_PATH &&
-                action == ACTION_SHOW_ALL && files[i].matched) {
-              msg_putchar('\n');                    /* cursor below last one */
-              if (!got_int) {                       /* don't display if 'q'
-                                                       typed at "--more--"
-                                                       message */
+          }
+          if (path_full_compare(new_fname, files[i].name, true) & kEqualFiles) {
+            if (type != CHECK_PATH
+                && action == ACTION_SHOW_ALL && files[i].matched) {
+              msg_putchar('\n');  // cursor below last one */
+              if (!got_int) {  // don't display if 'q' typed at "--more--"
+                               // message
                 msg_home_replace_hl(new_fname);
                 MSG_PUTS(_(" (includes previously listed match)"));
                 prev_fname = NULL;
@@ -4178,15 +4181,15 @@ find_pattern_in_path (
       }
 
       if (type == CHECK_PATH && (action == ACTION_SHOW_ALL
-                                 || (new_fname == NULL &&
-                                     !already_searched))) {
-        if (did_show)
-          msg_putchar('\n');                /* cursor below last one */
-        else {
-          gotocmdline(TRUE);                /* cursor at status line */
+                                 || (new_fname == NULL && !already_searched))) {
+        if (did_show) {
+          msg_putchar('\n');  // cursor below last one
+        } else {
+          gotocmdline(true);  // cursor at status line
           MSG_PUTS_TITLE(_("--- Included files "));
-          if (action != ACTION_SHOW_ALL)
+          if (action != ACTION_SHOW_ALL) {
             MSG_PUTS_TITLE(_("not found "));
+          }
           MSG_PUTS_TITLE(_("in path ---\n"));
         }
         did_show = TRUE;
@@ -4345,16 +4348,15 @@ search_line:
                    && vim_regexec(&regmatch, line, (colnr_T)(p - line))) {
           matched = TRUE;
           startp = regmatch.startp[0];
-          /*
-           * Check if the line is not a comment line (unless we are
-           * looking for a define).  A line starting with "# define"
-           * is not considered to be a comment line.
-           */
+          // Check if the line is not a comment line (unless we are
+          // looking for a define).  A line starting with "# define"
+          // is not considered to be a comment line.
           if (skip_comments) {
-            if ((*line != '#' ||
-                 STRNCMP(skipwhite(line + 1), "define", 6) != 0)
-                && get_leader_len(line, NULL, FALSE, TRUE))
-              matched = FALSE;
+            if ((*line != '#'
+                 || STRNCMP(skipwhite(line + 1), "define", 6) != 0)
+                && get_leader_len(line, NULL, false, true)) {
+              matched = false;
+            }
 
             /*
              * Also check for a "/ *" or "/ /" before the match.
