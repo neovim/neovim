@@ -628,10 +628,8 @@ int json_decode_string(const char *const buf, const size_t buf_len,
   convert_setup(&conv, (char_u *) "utf-8", p_enc);
   conv.vc_fail = true;
   int ret = OK;
-  ValuesStack stack;
-  kv_init(stack);
-  ContainerStack container_stack;
-  kv_init(container_stack);
+  ValuesStack stack = KV_INITIAL_VALUE;
+  ContainerStack container_stack = KV_INITIAL_VALUE;
   rettv->v_type = VAR_UNKNOWN;
   bool didcomma = false;
   bool didcolon = false;

@@ -574,8 +574,7 @@ static void send_event(Channel *channel,
 
 static void broadcast_event(char *name, Array args)
 {
-  kvec_t(Channel *) subscribed;
-  kv_init(subscribed);
+  kvec_t(Channel *) subscribed = KV_INITIAL_VALUE;
   Channel *channel;
 
   map_foreach_value(channels, channel, {

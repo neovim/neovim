@@ -28,8 +28,7 @@
 
 #include "kvec.h"
 int main() {
-  kvec_t(int) array;
-  kv_init(array);
+  kvec_t(int) array = KV_INITIAL_VALUE;
   kv_push(array, 10); // append
   kv_a(array, 20) = 5; // dynamic
   kv_A(array, 20) = 4; // static
@@ -53,7 +52,14 @@ int main() {
 
 #define kv_roundup32(x) (--(x), (x)|=(x)>>1, (x)|=(x)>>2, (x)|=(x)>>4, (x)|=(x)>>8, (x)|=(x)>>16, ++(x))
 
-#define kvec_t(type) struct { size_t size, capacity; type *items; }
+#define KV_INITIAL_VALUE { .size = 0, .capacity = 0, .items = NULL }
+
+#define kvec_t(type) \
+    struct { \
+      size_t size; \
+      size_t capacity; \
+      type *items; \
+    }
 #define kv_init(v) ((v).size = (v).capacity = 0, (v).items = 0)
 #define kv_destroy(v) xfree((v).items)
 #define kv_A(v, i) ((v).items[(i)])
