@@ -46,10 +46,10 @@
 
 #define STATIC_ASSERT_PRAGMA_START
 #define STATIC_ASSERT_PRAGMA_END
-#define STATIC_ASSERT(...) \
+#define STATIC_ASSERT(cond, msg) \
     do { \
       STATIC_ASSERT_PRAGMA_START \
-      STATIC_ASSERT_STATEMENT(__VA_ARGS__); \
+      STATIC_ASSERT_STATEMENT(cond, msg); \
       STATIC_ASSERT_PRAGMA_END \
     } while (0)
 
