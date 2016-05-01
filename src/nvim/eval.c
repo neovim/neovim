@@ -10684,6 +10684,7 @@ static void f_has(typval_T *argvars, typval_T *rettv)
     "tablineat",
     "tag_binary",
     "tag_old_static",
+    "termguicolors",
     "termresponse",
     "textobjects",
     "title",

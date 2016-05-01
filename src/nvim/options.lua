@@ -2383,6 +2383,14 @@ return {
       defaults={if_true={vi=""}}
     },
     {
+      full_name='termguicolors', abbreviation='tgc',
+      type='bool', scope={'global'},
+      vi_def=false,
+      redraw={'everything'},
+      varname='p_tgc',
+      defaults={if_true={vi=false}}
+    },
+    {
       full_name='terse',
       type='bool', scope={'global'},
       vi_def=true,
