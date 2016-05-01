@@ -403,9 +403,9 @@ static int push_event_key(uint8_t *buf, int maxlen)
 // Check if there's pending input
 static bool input_ready(void)
 {
-  return typebuf_was_filled ||                 // API call filled typeahead
-         rbuffer_size(input_buffer) ||         // Input buffer filled
-         pending_events();                     // Events must be processed
+  return (typebuf_was_filled             // API call filled typeahead
+          || rbuffer_size(input_buffer)  // Input buffer filled
+          || pending_events());          // Events must be processed
 }
 
 // Exit because of an input read error.

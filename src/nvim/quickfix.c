@@ -2757,8 +2757,8 @@ void ex_cc(exarg_T *eap)
 
   // For cdo and ldo commands, jump to the nth valid error.
   // For cfdo and lfdo commands, jump to the nth valid file entry.
-  if (eap->cmdidx == CMD_cdo || eap->cmdidx == CMD_ldo ||
-      eap->cmdidx == CMD_cfdo || eap->cmdidx == CMD_lfdo) {
+  if (eap->cmdidx == CMD_cdo || eap->cmdidx == CMD_ldo
+      || eap->cmdidx == CMD_cfdo || eap->cmdidx == CMD_lfdo) {
     size_t n;
     if (eap->addr_count > 0) {
       assert(eap->line1 >= 0);
@@ -2801,9 +2801,9 @@ void ex_cnext(exarg_T *eap)
   }
 
   int errornr;
-  if (eap->addr_count > 0 &&
-        (eap->cmdidx != CMD_cdo && eap->cmdidx != CMD_ldo &&
-         eap->cmdidx != CMD_cfdo && eap->cmdidx != CMD_lfdo)) {
+  if (eap->addr_count > 0
+      && (eap->cmdidx != CMD_cdo && eap->cmdidx != CMD_ldo
+          && eap->cmdidx != CMD_cfdo && eap->cmdidx != CMD_lfdo)) {
     errornr = (int)eap->line2;
   } else {
     errornr = 1;
@@ -2972,16 +2972,18 @@ void ex_vimgrep(exarg_T *eap)
     goto theend;
   }
 
-  if ((eap->cmdidx != CMD_grepadd && eap->cmdidx != CMD_lgrepadd &&
-       eap->cmdidx != CMD_vimgrepadd && eap->cmdidx != CMD_lvimgrepadd)
-      || qi->qf_curlist == qi->qf_listcount)
-    /* make place for a new list */
+  if ((eap->cmdidx != CMD_grepadd && eap->cmdidx != CMD_lgrepadd
+       && eap->cmdidx != CMD_vimgrepadd && eap->cmdidx != CMD_lvimgrepadd)
+      || qi->qf_curlist == qi->qf_listcount) {
+    // make place for a new list
     qf_new_list(qi, *eap->cmdlinep);
-  else if (qi->qf_lists[qi->qf_curlist].qf_count > 0)
-    /* Adding to existing list, find last entry. */
+  } else if (qi->qf_lists[qi->qf_curlist].qf_count > 0) {
+    // Adding to existing list, find last entry.
     for (prevp = qi->qf_lists[qi->qf_curlist].qf_start;
-         prevp->qf_next != prevp; prevp = prevp->qf_next)
-      ;
+         prevp->qf_next != prevp;
+         prevp = prevp->qf_next) {
+    }
+  }
 
   /* parse the list of arguments */
   if (get_arglist_exp(p, &fcount, &fnames, true) == FAIL)

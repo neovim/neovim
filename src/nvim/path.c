@@ -1301,9 +1301,10 @@ void addfile(
   FileInfo file_info;
 
   // if the file/dir/link doesn't exist, may not add it
-  if (!(flags & EW_NOTFOUND) &&
-      ((flags & EW_ALLLINKS) ?
-       !os_fileinfo_link((char *)f, &file_info) : !os_file_exists(f))) {
+  if (!(flags & EW_NOTFOUND)
+      && ((flags & EW_ALLLINKS)
+          ? !os_fileinfo_link((char *)f, &file_info)
+          : !os_file_exists(f))) {
     return;
   }
 
@@ -1383,9 +1384,9 @@ void simplify_filename(char_u *filename)
           --p;                          /* strip preceding path separator */
         STRMOVE(p, tail);
       }
-    } else if (p[0] == '.' && p[1] == '.' &&
-               (vim_ispathsep(p[2]) || p[2] == NUL)) {
-      /* Skip to after ".." or "../" or "..///". */
+    } else if (p[0] == '.' && p[1] == '.'
+               && (vim_ispathsep(p[2]) || p[2] == NUL)) {
+      // Skip to after ".." or "../" or "..///".
       tail = p + 2;
       while (vim_ispathsep(*tail))
         mb_ptr_adv(tail);
@@ -2016,8 +2017,8 @@ int match_suffix(char_u *fname)
         break;
       }
     } else {
-      if (fnamelen >= setsuflen &&
-          fnamencmp(suf_buf, fname + fnamelen - setsuflen, setsuflen) == 0) {
+      if (fnamelen >= setsuflen
+          && fnamencmp(suf_buf, fname + fnamelen - setsuflen, setsuflen) == 0) {
         break;
       }
       setsuflen = 0;

@@ -4478,12 +4478,10 @@ syn_cmd_region (
   if (illegal || not_enough)
     rest = NULL;
 
-  /*
-   * Must have a "start" and "end" pattern.
-   */
-  if (rest != NULL && (pat_ptrs[ITEM_START] == NULL ||
-                       pat_ptrs[ITEM_END] == NULL)) {
-    not_enough = TRUE;
+  // Must have a "start" and "end" pattern.
+  if (rest != NULL && (pat_ptrs[ITEM_START] == NULL
+                       || pat_ptrs[ITEM_END] == NULL)) {
+    not_enough = true;
     rest = NULL;
   }
 

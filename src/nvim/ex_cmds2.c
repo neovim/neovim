@@ -432,14 +432,12 @@ dbg_parsearg (
 
   bp = &DEBUGGY(gap, gap->ga_len);
 
-  /* Find "func" or "file". */
-  if (STRNCMP(p, "func", 4) == 0)
+  // Find "func" or "file".
+  if (STRNCMP(p, "func", 4) == 0) {
     bp->dbg_type = DBG_FUNC;
-  else if (STRNCMP(p, "file", 4) == 0)
+  } else if (STRNCMP(p, "file", 4) == 0) {
     bp->dbg_type = DBG_FILE;
-  else if (
-    gap != &prof_ga &&
-    STRNCMP(p, "here", 4) == 0) {
+  } else if (gap != &prof_ga && STRNCMP(p, "here", 4) == 0) {
     if (curbuf->b_ffname == NULL) {
       EMSG(_(e_noname));
       return FAIL;
@@ -452,16 +450,15 @@ dbg_parsearg (
   }
   p = skipwhite(p + 4);
 
-  /* Find optional line number. */
-  if (here)
+  // Find optional line number.
+  if (here) {
     bp->dbg_lnum = curwin->w_cursor.lnum;
-  else if (
-    gap != &prof_ga &&
-    ascii_isdigit(*p)) {
+  } else if (gap != &prof_ga && ascii_isdigit(*p)) {
     bp->dbg_lnum = getdigits_long(&p);
     p = skipwhite(p);
-  } else
+  } else {
     bp->dbg_lnum = 0;
+  }
 
   /* Find the function or file name.  Don't accept a function name with (). */
   if ((!here && *p == NUL)
@@ -700,14 +697,13 @@ debuggy_find (
     /* Skip entries that are not useful or are for a line that is beyond
      * an already found breakpoint. */
     bp = &DEBUGGY(gap, i);
-    if (((bp->dbg_type == DBG_FILE) == file && (
-           gap == &prof_ga ||
-           (bp->dbg_lnum > after && (lnum == 0 || bp->dbg_lnum < lnum))))) {
-      /*
-       * Save the value of got_int and reset it.  We don't want a
-       * previous interruption cancel matching, only hitting CTRL-C
-       * while matching should abort it.
-       */
+    if (((bp->dbg_type == DBG_FILE) == file
+         && (gap == &prof_ga
+             || (bp->dbg_lnum > after
+                 && (lnum == 0 || bp->dbg_lnum < lnum))))) {
+      // Save the value of got_int and reset it.  We don't want a
+      // previous interruption cancel matching, only hitting CTRL-C
+      // while matching should abort it.
       prev_got_int = got_int;
       got_int = FALSE;
       if (vim_regexec_prog(&bp->dbg_prog, false, name, (colnr_T)0)) {
@@ -1937,8 +1933,8 @@ void ex_listdo(exarg_T *eap)
       if (buf != NULL) {
         goto_buffer(eap, DOBUF_FIRST, FORWARD, buf->b_fnum);
       }
-    } else if (eap->cmdidx == CMD_cdo || eap->cmdidx == CMD_ldo ||
-               eap->cmdidx == CMD_cfdo || eap->cmdidx == CMD_lfdo) {
+    } else if (eap->cmdidx == CMD_cdo || eap->cmdidx == CMD_ldo
+               || eap->cmdidx == CMD_cfdo || eap->cmdidx == CMD_lfdo) {
       qf_size = qf_get_size(eap);
       assert(eap->line1 >= 0);
       if (qf_size == 0 || (size_t)eap->line1 > qf_size) {
@@ -2040,8 +2036,8 @@ void ex_listdo(exarg_T *eap)
         }
       }
 
-      if (eap->cmdidx == CMD_cdo || eap->cmdidx == CMD_ldo ||
-          eap->cmdidx == CMD_cfdo || eap->cmdidx == CMD_lfdo) {
+      if (eap->cmdidx == CMD_cdo || eap->cmdidx == CMD_ldo
+          || eap->cmdidx == CMD_cfdo || eap->cmdidx == CMD_lfdo) {
         assert(i >= 0);
         if ((size_t)i >= qf_size || i >= eap->line2) {
           break;

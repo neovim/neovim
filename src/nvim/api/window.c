@@ -57,8 +57,8 @@ void window_set_cursor(Window window, ArrayOf(Integer, 2) pos, Error *err)
 {
   win_T *win = find_window_by_handle(window, err);
 
-  if (pos.size != 2 || pos.items[0].type != kObjectTypeInteger ||
-      pos.items[1].type != kObjectTypeInteger) {
+  if (pos.size != 2 || pos.items[0].type != kObjectTypeInteger
+      || pos.items[1].type != kObjectTypeInteger) {
     api_set_error(err,
                   Validation,
                   _("Argument \"pos\" must be a [row, col] array"));

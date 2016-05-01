@@ -403,14 +403,15 @@ char_u *get_exception_string(void *value, int type, char_u *cmdname, int *should
                       && (p[3] == ':'
                           || (ascii_isdigit(p[3])
                               && p[4] == ':')))))) {
-        if (*p == NUL || p == mesg)
-          STRCAT(val, mesg);            /* 'E123' missing or at beginning */
-        else {
-          /* '"filename" E123: message text' */
-          if (mesg[0] != '"' || p-2 < &mesg[1] ||
-              p[-2] != '"' || p[-1] != ' ')
-            /* "E123:" is part of the file name. */
+        if (*p == NUL || p == mesg) {
+          STRCAT(val, mesg);  // 'E123' missing or at beginning
+        } else {
+          // '"filename" E123: message text'
+          if (mesg[0] != '"' || p-2 < &mesg[1]
+              || p[-2] != '"' || p[-1] != ' ') {
+            // "E123:" is part of the file name.
             continue;
+          }
 
           STRCAT(val, p);
           p[-2] = NUL;
@@ -1565,22 +1566,21 @@ void ex_endtry(exarg_T *eap)
   void        *rettv = NULL;
   struct condstack    *cstack = eap->cstack;
 
-  if (cstack->cs_trylevel <= 0 || cstack->cs_idx < 0)
+  if (cstack->cs_trylevel <= 0 || cstack->cs_idx < 0) {
     eap->errmsg = (char_u *)N_("E602: :endtry without :try");
-  else {
-    /*
-     * Don't do something after an error, interrupt or throw in the try
-     * block, catch clause, or finally clause preceding this ":endtry" or
-     * when an error or interrupt occurred after a ":continue", ":break",
-     * ":return", or ":finish" in a try block or catch clause preceding this
-     * ":endtry" or when the try block never got active (because of an
-     * inactive surrounding conditional or after an error or interrupt or
-     * throw) or when there is a surrounding conditional and it has been
-     * made inactive by a ":continue", ":break", ":return", or ":finish" in
-     * the finally clause.  The latter case need not be tested since then
-     * anything pending has already been discarded. */
-    skip = did_emsg || got_int || did_throw ||
-           !(cstack->cs_flags[cstack->cs_idx] & CSF_TRUE);
+  } else {
+    // Don't do something after an error, interrupt or throw in the try
+    // block, catch clause, or finally clause preceding this ":endtry" or
+    // when an error or interrupt occurred after a ":continue", ":break",
+    // ":return", or ":finish" in a try block or catch clause preceding this
+    // ":endtry" or when the try block never got active (because of an
+    // inactive surrounding conditional or after an error or interrupt or
+    // throw) or when there is a surrounding conditional and it has been
+    // made inactive by a ":continue", ":break", ":return", or ":finish" in
+    // the finally clause.  The latter case need not be tested since then
+    // anything pending has already been discarded.
+    skip = (did_emsg || got_int || did_throw
+            || !(cstack->cs_flags[cstack->cs_idx] & CSF_TRUE));
 
     if (!(cstack->cs_flags[cstack->cs_idx] & CSF_TRY)) {
       eap->errmsg = get_end_emsg(cstack);

@@ -2305,6 +2305,13 @@ def CheckSpacing(filename, clean_lines, linenum, nesting_state, error):
     if match:
         error(filename, linenum, 'whitespace/operators', 3,
               'Missing spaces around %s' % match.group(1))
+
+    # Boolean operators should be placed on the next line.
+    if Search(r'(?:&&|\|\|)$', line):
+        error(filename, linenum, 'whitespace/operators', 4,
+              'Boolean operator should be placed on the same line as the start '
+              'of its right operand')
+
     # We allow no-spaces around << when used like this: 10<<20, but
     # not otherwise (particularly, not when used as streams)
     # Also ignore using ns::operator<<;

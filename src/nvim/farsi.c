@@ -100,8 +100,9 @@ static char_u toF_Xor_X_(int c)
     case F_HE   :
       tempc = _HE;
 
-      if (p_ri &&
-          (curwin->w_cursor.col + 1 < (colnr_T)STRLEN(get_cursor_line_ptr()))) {
+      if (p_ri
+          && (curwin->w_cursor.col + 1
+              < (colnr_T)STRLEN(get_cursor_line_ptr()))) {
         inc_cursor();
         if (F_is_TyB_TyC_TyD(SRC_EDT, AT_CURSOR)) {
           tempc = _HE_;
@@ -526,8 +527,8 @@ static void chg_l_toXor_X(void)
 {
   char_u tempc;
 
-  if ((curwin->w_cursor.col != 0) &&
-      (curwin->w_cursor.col + 1 == (colnr_T)STRLEN(get_cursor_line_ptr()))) {
+  if ((curwin->w_cursor.col != 0)
+      && (curwin->w_cursor.col + 1 == (colnr_T)STRLEN(get_cursor_line_ptr()))) {
     return;
   }
 
@@ -680,17 +681,17 @@ int fkmap(int c)
     }
   }
 
-  if ((c < 0x100) &&
-      (isalpha(c) ||
-       (c == '&') ||
-       (c == '^') ||
-       (c == ';') ||
-       (c == '\'') ||
-       (c == ',') ||
-       (c == '[') ||
-       (c == ']') ||
-       (c == '{') ||
-       (c == '}'))) {
+  if ((c < 0x100)
+      && (isalpha(c)
+          || (c == '&')
+          || (c == '^')
+          || (c == ';')
+          || (c == '\'')
+          || (c == ',')
+          || (c == '[')
+          || (c == ']')
+          || (c == '{')
+          || (c == '}'))) {
     chg_r_to_Xor_X_();
   }
 

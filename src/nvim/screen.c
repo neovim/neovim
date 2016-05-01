@@ -387,14 +387,15 @@ void update_screen(int type)
     if (wp->w_buffer->b_mod_set) {
       win_T       *wwp;
 
-      /* Check if we already did this buffer. */
-      for (wwp = firstwin; wwp != wp; wwp = wwp->w_next)
-        if (wwp->w_buffer == wp->w_buffer)
+      // Check if we already did this buffer.
+      for (wwp = firstwin; wwp != wp; wwp = wwp->w_next) {
+        if (wwp->w_buffer == wp->w_buffer) {
           break;
-      if (
-        wwp == wp &&
-        syntax_present(wp))
+        }
+      }
+      if (wwp == wp && syntax_present(wp)) {
         syn_stack_apply_changes(wp->w_buffer);
+      }
     }
   }
 
@@ -1231,16 +1232,16 @@ static void win_update(win_T *wp)
                         || did_update == DID_FOLD
                         || (did_update == DID_LINE
                             && syntax_present(wp)
-                            && (
-                              (foldmethodIsSyntax(wp)
-                               && hasAnyFolding(wp)) ||
-                              syntax_check_changed(lnum)))
+                            && ((foldmethodIsSyntax(wp)
+                                 && hasAnyFolding(wp))
+                                || syntax_check_changed(lnum)))
                         // match in fixed position might need redraw
                         // if lines were inserted or deleted
-                        || (wp->w_match_head != NULL && buf->b_mod_xlines != 0)
-                        ))))) {
-      if (lnum == mod_top)
-        top_to_mod = FALSE;
+                        || (wp->w_match_head != NULL
+                            && buf->b_mod_xlines != 0)))))) {
+      if (lnum == mod_top) {
+        top_to_mod = false;
+      }
 
       /*
        * When at start of changed lines: May scroll following lines
@@ -2472,21 +2473,16 @@ win_line (
       mb_ptr_adv(ptr);
     }
 
-    /* When:
-     * - 'cuc' is set, or
-     * - 'colorcolumn' is set, or
-     * - 'virtualedit' is set, or
-     * - the visual mode is active,
-     * the end of the line may be before the start of the displayed part.
-     */
-    if (vcol < v && (
-          wp->w_p_cuc
-          || draw_color_col
-          ||
-          virtual_active()
-          ||
-          (VIsual_active && wp->w_buffer == curwin->w_buffer)
-          )) {
+    // When:
+    // - 'cuc' is set, or
+    // - 'colorcolumn' is set, or
+    // - 'virtualedit' is set, or
+    // - the visual mode is active,
+    // the end of the line may be before the start of the displayed part.
+    if (vcol < v && (wp->w_p_cuc
+                     || draw_color_col
+                     || virtual_active()
+                     || (VIsual_active && wp->w_buffer == curwin->w_buffer))) {
       vcol = v;
     }
 
@@ -3273,12 +3269,12 @@ win_line (
          * contains the @Spell cluster. */
         if (has_spell && v >= word_end && v > cur_checked_col) {
           spell_attr = 0;
-          if (!attr_pri)
+          if (!attr_pri) {
             char_attr = syntax_attr;
-          if (c != 0 && (
-                !has_syntax ||
-                can_spell)) {
-            char_u  *prev_ptr, *p;
+          }
+          if (c != 0 && (!has_syntax || can_spell)) {
+            char_u *prev_ptr;
+            char_u *p;
             int len;
             hlf_T spell_hlf = HLF_COUNT;
             if (has_mbyte) {
@@ -3607,25 +3603,22 @@ win_line (
                      wp->w_p_rl ? (col >= 0) :
                      (col < wp->w_width))) {
           c = ' ';
-          --ptr;                    /* put it back at the NUL */
-        } else if ((
-                   diff_hlf != (hlf_T)0 ||
-                   line_attr != 0
-                   ) && (
-                   wp->w_p_rl ? (col >= 0) :
-                   (col
-                    - boguscols
-                    < wp->w_width))) {
-          /* Highlight until the right side of the window */
+          ptr--;  // put it back at the NUL
+        } else if ((diff_hlf != (hlf_T)0 || line_attr != 0)
+                   && (wp->w_p_rl
+                       ? (col >= 0)
+                       : (col - boguscols < wp->w_width))) {
+          // Highlight until the right side of the window
           c = ' ';
-          --ptr;                    /* put it back at the NUL */
+          ptr--;  // put it back at the NUL
 
-          /* Remember we do the char for line highlighting. */
-          ++did_line_attr;
+          // Remember we do the char for line highlighting.
+          did_line_attr++;
 
-          /* don't do search HL for the rest of the line */
-          if (line_attr != 0 && char_attr == search_attr && col > 0)
+          // don't do search HL for the rest of the line
+          if (line_attr != 0 && char_attr == search_attr && col > 0) {
             char_attr = line_attr;
+          }
           if (diff_hlf == HLF_TXD) {
             diff_hlf = HLF_CHD;
             if (attr == 0 || char_attr != attr) {
@@ -3639,8 +3632,8 @@ win_line (
       }
 
       if (wp->w_p_cole > 0
-          && (wp != curwin || lnum != wp->w_cursor.lnum ||
-              conceal_cursor_line(wp))
+          && (wp != curwin || lnum != wp->w_cursor.lnum
+              || conceal_cursor_line(wp))
           && ((syntax_flags & HL_CONCEAL) != 0 || has_match_conc)
           && !(lnum_in_visual_area
                && vim_strchr(wp->w_p_cocu, 'v') == NULL)) {

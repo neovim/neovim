@@ -605,13 +605,14 @@ readfile (
    * Don't do this for a "nofile" or "nowrite" buffer type. */
   if (!bt_dontwrite(curbuf)) {
     check_need_swap(newfile);
-    if (!read_stdin && (curbuf != old_curbuf
-                        || (using_b_ffname && (old_b_ffname != curbuf->b_ffname))
-                        || (using_b_fname &&
-                            (old_b_fname != curbuf->b_fname)))) {
+    if (!read_stdin
+        && (curbuf != old_curbuf
+            || (using_b_ffname && (old_b_ffname != curbuf->b_ffname))
+            || (using_b_fname && (old_b_fname != curbuf->b_fname)))) {
       EMSG(_(e_auchangedbuf));
-      if (!read_buffer)
+      if (!read_buffer) {
         close(fd);
+      }
       return FAIL;
     }
 #ifdef UNIX
@@ -4369,8 +4370,8 @@ char *modname(const char *fname, const char *ext, bool prepend_dot)
   // (we need the full path in case :cd is used).
   if (fname == NULL || *fname == NUL) {
     retval = xmalloc(MAXPATHL + extlen + 3);  // +3 for PATHSEP, "_" (Win), NUL
-    if (os_dirname((char_u *)retval, MAXPATHL) == FAIL ||
-        (fnamelen = strlen(retval)) == 0) {
+    if (os_dirname((char_u *)retval, MAXPATHL) == FAIL
+        || (fnamelen = strlen(retval)) == 0) {
       xfree(retval);
       return NULL;
     }

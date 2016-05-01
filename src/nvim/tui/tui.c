@@ -628,8 +628,8 @@ static void tui_suspend(UI *ui)
 static void tui_set_title(UI *ui, char *title)
 {
   TUIData *data = ui->data;
-  if (!(title && unibi_get_str(data->ut, unibi_to_status_line) &&
-        unibi_get_str(data->ut, unibi_from_status_line))) {
+  if (!(title && unibi_get_str(data->ut, unibi_to_status_line)
+        && unibi_get_str(data->ut, unibi_from_status_line))) {
     return;
   }
   unibi_out(ui, unibi_to_status_line);
@@ -694,8 +694,8 @@ static void update_size(UI *ui)
   }
 
   // 2 - try from a system call(ioctl/TIOCGWINSZ on unix)
-  if (data->out_isatty &&
-      !uv_tty_get_winsize(&data->output_handle.tty, &width, &height)) {
+  if (data->out_isatty
+      && !uv_tty_get_winsize(&data->output_handle.tty, &width, &height)) {
     goto end;
   }
 

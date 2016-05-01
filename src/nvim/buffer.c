@@ -407,10 +407,9 @@ close_buffer (
   buf->b_nwindows = nwindows;
 
   buf_freeall(buf, (del_buf ? BFA_DEL : 0) + (wipe_buf ? BFA_WIPE : 0));
-  if (
-    win_valid(win) &&
-    win->w_buffer == buf)
-    win->w_buffer = NULL;      /* make sure we don't use the buffer now */
+  if (win_valid(win) && win->w_buffer == buf) {
+    win->w_buffer = NULL;  // make sure we don't use the buffer now
+  }
 
   /* Autocommands may have deleted the buffer. */
   if (!buf_valid(buf))
@@ -1340,8 +1339,8 @@ buflist_new (
   /* We can use inode numbers when the file exists.  Works better
    * for hard links. */
   FileID file_id;
-  bool file_id_valid = (sfname != NULL &&
-                        os_fileid((char *)sfname, &file_id));
+  bool file_id_valid = (sfname != NULL
+                        && os_fileid((char *)sfname, &file_id));
   if (ffname != NULL && !(flags & BLN_DUMMY)
       && (buf = buflist_findname_file_id(ffname, &file_id,
                                          file_id_valid)) != NULL) {

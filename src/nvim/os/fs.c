@@ -175,9 +175,10 @@ bool os_can_exe(const char_u *name, char_u **abspath)
   FUNC_ATTR_NONNULL_ARG(1)
 {
   // If it's an absolute or relative path don't need to use $PATH.
-  if (path_is_absolute_path(name) ||
-     (name[0] == '.' && (name[1] == '/' ||
-                        (name[1] == '.' && name[2] == '/')))) {
+  if (path_is_absolute_path(name)
+      || (name[0] == '.'
+          && (name[1] == '/'
+              || (name[1] == '.' && name[2] == '/')))) {
     if (is_executable(name)) {
       if (abspath != NULL) {
         *abspath = save_absolute_path(name);

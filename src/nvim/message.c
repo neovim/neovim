@@ -1570,39 +1570,31 @@ static void msg_puts_display(char_u *str, int maxlen, int attr, int recurse)
   int wrap;
   int did_last_char;
 
-  did_wait_return = FALSE;
+  did_wait_return = false;
   while ((maxlen < 0 || (int)(s - str) < maxlen) && *s != NUL) {
-    /*
-     * We are at the end of the screen line when:
-     * - When outputting a newline.
-     * - When outputting a character in the last column.
-     */
-    if (!recurse && msg_row >= Rows - 1 && (*s == '\n' || (
-                                              cmdmsg_rl
-                                              ? (
-                                                msg_col <= 1
-                                                || (*s == TAB && msg_col <= 7)
-                                                || (has_mbyte &&
-                                                    (*mb_ptr2cells)(s) > 1 &&
-                                                    msg_col <= 2)
-                                                )
-                                              :
-                                              (msg_col + t_col >= Columns - 1
-                                               || (*s == TAB && msg_col +
-                                                   t_col >= ((Columns - 1) & ~7))
-                                               || (has_mbyte &&
-                                                   (*mb_ptr2cells)(s) > 1
-                                                   && msg_col + t_col >=
-                                                   Columns - 2)
-                                              )))) {
-      /*
-       * The screen is scrolled up when at the last row (some terminals
-       * scroll automatically, some don't.  To avoid problems we scroll
-       * ourselves).
-       */
-      if (t_col > 0)
-        /* output postponed text */
+    // We are at the end of the screen line when:
+    // - When outputting a newline.
+    // - When outputting a character in the last column.
+    if (!recurse && msg_row >= Rows - 1
+        && (*s == '\n' || (cmdmsg_rl
+                           ? (msg_col <= 1
+                              || (*s == TAB && msg_col <= 7)
+                              || (has_mbyte
+                                  && (*mb_ptr2cells)(s) > 1
+                                  && msg_col <= 2))
+                           : (msg_col + t_col >= Columns - 1
+                              || (*s == TAB
+                                  && msg_col + t_col >= ((Columns - 1) & ~7))
+                              || (has_mbyte
+                                  && (*mb_ptr2cells)(s) > 1
+                                  && msg_col + t_col >= Columns - 2))))) {
+      // The screen is scrolled up when at the last row (some terminals
+      // scroll automatically, some don't.  To avoid problems we scroll
+      // ourselves).
+      if (t_col > 0) {
+        // output postponed text
         t_puts(&t_col, t_s, s, attr);
+      }
 
       /* When no more prompt and no more room, truncate here */
       if (msg_no_more && lines_left == 0)
@@ -1709,18 +1701,15 @@ static void msg_puts_display(char_u *str, int maxlen, int attr, int recurse)
         cw = 1;
         l = 1;
       }
-      /* When drawing from right to left or when a double-wide character
-       * doesn't fit, draw a single character here.  Otherwise collect
-       * characters and draw them all at once later. */
-      if (
-        cmdmsg_rl
-        ||
-        (cw > 1 && msg_col + t_col >= Columns - 1)
-        ) {
-        if (l > 1)
+      // When drawing from right to left or when a double-wide character
+      // doesn't fit, draw a single character here.  Otherwise collect
+      // characters and draw them all at once later.
+      if (cmdmsg_rl || (cw > 1 && msg_col + t_col >= Columns - 1)) {
+        if (l > 1) {
           s = screen_puts_mbyte(s, l, attr) - 1;
-        else
+        } else {
           msg_screen_putchar(*s, attr);
+        }
       } else {
         /* postpone this character until later */
         if (t_col == 0)
@@ -3382,8 +3371,8 @@ int vim_vsnprintf(char *str, size_t str_m, const char *fmt, va_list ap,
           // leave negative numbers for sprintf to handle, to
           // avoid handling tricky cases like (short int)-32768
         } else if (alternate_form) {
-          if (arg_sign != 0 && (fmt_spec == 'x' || fmt_spec == 'X' ||
-                                fmt_spec == 'b' || fmt_spec == 'B')) {
+          if (arg_sign != 0 && (fmt_spec == 'x' || fmt_spec == 'X'
+                                || fmt_spec == 'b' || fmt_spec == 'B')) {
             tmp[str_arg_l++] = '0';
             tmp[str_arg_l++] = fmt_spec;
           }

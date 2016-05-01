@@ -786,9 +786,8 @@ void ml_recover(void)
   if (fname == NULL)                /* When there is no file name */
     fname = (char_u *)"";
   len = (int)STRLEN(fname);
-  if (len >= 4 &&
-      STRNICMP(fname + len - 4, ".s", 2)
-      == 0
+  if (len >= 4
+      && STRNICMP(fname + len - 4, ".s", 2) == 0
       && vim_strchr((char_u *)"UVWuvw", fname[len - 2]) != NULL
       && ASCII_ISALPHA(fname[len - 1])) {
     directly = TRUE;

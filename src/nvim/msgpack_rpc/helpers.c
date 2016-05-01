@@ -419,8 +419,8 @@ void msgpack_rpc_validate(uint64_t *response_id,
     return;
   }
 
-  if ((type == kMessageTypeRequest && req->via.array.size != 4) ||
-      (type == kMessageTypeNotification && req->via.array.size != 3)) {
+  if ((type == kMessageTypeRequest && req->via.array.size != 4)
+      || (type == kMessageTypeNotification && req->via.array.size != 3)) {
     api_set_error(err, Validation, _("Request array size should be 4 (request) "
                                      "or 3 (notification)"));
     return;

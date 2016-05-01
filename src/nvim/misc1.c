@@ -204,15 +204,12 @@ open_line (
       else
         lead_len = 0;
       if (dir == FORWARD) {
-        /*
-         * Skip preprocessor directives, unless they are
-         * recognised as comments.
-         */
-        if (
-          lead_len == 0 &&
-          ptr[0] == '#') {
-          while (ptr[0] == '#' && curwin->w_cursor.lnum > 1)
+        // Skip preprocessor directives, unless they are
+        // recognised as comments.
+        if (lead_len == 0 && ptr[0] == '#') {
+          while (ptr[0] == '#' && curwin->w_cursor.lnum > 1) {
             ptr = ml_get(--curwin->w_cursor.lnum);
+          }
           newindent = get_indent();
         }
         if (flags & OPENLINE_DO_COM)
@@ -296,28 +293,26 @@ open_line (
                    && cin_is_cinword(ptr))
             did_si = TRUE;
         }
-      } else { /* dir == BACKWARD */
-                 /*
-                  * Skip preprocessor directives, unless they are
-                  * recognised as comments.
-                  */
-        if (
-          lead_len == 0 &&
-          ptr[0] == '#') {
-          int was_backslashed = FALSE;
+      } else {  // dir == BACKWARD
+        // Skip preprocessor directives, unless they are
+        // recognised as comments.
+        if (lead_len == 0 && ptr[0] == '#') {
+          bool was_backslashed = false;
 
-          while ((ptr[0] == '#' || was_backslashed) &&
-                 curwin->w_cursor.lnum < curbuf->b_ml.ml_line_count) {
-            if (*ptr && ptr[STRLEN(ptr) - 1] == '\\')
-              was_backslashed = TRUE;
-            else
-              was_backslashed = FALSE;
+          while ((ptr[0] == '#' || was_backslashed)
+                 && curwin->w_cursor.lnum < curbuf->b_ml.ml_line_count) {
+            if (*ptr && ptr[STRLEN(ptr) - 1] == '\\') {
+              was_backslashed = true;
+            } else {
+              was_backslashed = false;
+            }
             ptr = ml_get(++curwin->w_cursor.lnum);
           }
-          if (was_backslashed)
-            newindent = 0;                  /* Got to end of file */
-          else
+          if (was_backslashed) {
+            newindent = 0;  // Got to end of file
+          } else {
             newindent = get_indent();
+          }
         }
         p = skipwhite(ptr);
         if (*p == '}')              /* if line starts with '}': do indent */
@@ -667,16 +662,12 @@ open_line (
 
       did_si = can_si = FALSE;
     } else if (comment_end != NULL) {
-      /*
-       * We have finished a comment, so we don't use the leader.
-       * If this was a C-comment and 'ai' or 'si' is set do a normal
-       * indent to align with the line containing the start of the
-       * comment.
-       */
-      if (comment_end[0] == '*' && comment_end[1] == '/' &&
-          (curbuf->b_p_ai
-           || do_si
-          )) {
+      // We have finished a comment, so we don't use the leader.
+      // If this was a C-comment and 'ai' or 'si' is set do a normal
+      // indent to align with the line containing the start of the
+      // comment.
+      if (comment_end[0] == '*' && comment_end[1] == '/'
+          && (curbuf->b_p_ai || do_si)) {
         old_cursor = curwin->w_cursor;
         curwin->w_cursor.col = (colnr_T)(comment_end - saved_line);
         if ((pos = findmatch(NULL, NUL)) != NULL) {
