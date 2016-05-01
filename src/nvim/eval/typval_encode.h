@@ -168,13 +168,13 @@ typedef struct {
 } MPConvStackVal;
 
 /// Stack used to convert VimL values to messagepack.
-typedef kvec_t(MPConvStackVal) MPConvStack;
+typedef kvec_withinit_t(MPConvStackVal, 8) MPConvStack;
 
 // Defines for MPConvStack
 #define _mp_size kv_size
-#define _mp_init kv_init
-#define _mp_destroy kv_destroy
-#define _mp_push kv_push
+#define _mp_init kvi_init
+#define _mp_destroy kvi_destroy
+#define _mp_push kvi_push
 #define _mp_pop kv_pop
 #define _mp_last kv_last
 
