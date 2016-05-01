@@ -44,24 +44,24 @@ highlight default link dircolorsExtension Identifier
 highlight default link dircolorsEscape    Special
 
 function! s:set_guicolors() abort
-    let s:guicolors = {}
+    let s:termguicolors = {}
 
-    let s:guicolors[0]  = "Black"
-    let s:guicolors[1]  = "DarkRed"
-    let s:guicolors[2]  = "DarkGreen"
-    let s:guicolors[3]  = "DarkYellow"
-    let s:guicolors[4]  = "DarkBlue"
-    let s:guicolors[5]  = "DarkMagenta"
-    let s:guicolors[6]  = "DarkCyan"
-    let s:guicolors[7]  = "Gray"
-    let s:guicolors[8]  = "DarkGray"
-    let s:guicolors[9]  = "Red"
-    let s:guicolors[10] = "Green"
-    let s:guicolors[11] = "Yellow"
-    let s:guicolors[12] = "Blue"
-    let s:guicolors[13] = "Magenta"
-    let s:guicolors[14] = "Cyan"
-    let s:guicolors[15] = "White"
+    let s:termguicolors[0]  = "Black"
+    let s:termguicolors[1]  = "DarkRed"
+    let s:termguicolors[2]  = "DarkGreen"
+    let s:termguicolors[3]  = "DarkYellow"
+    let s:termguicolors[4]  = "DarkBlue"
+    let s:termguicolors[5]  = "DarkMagenta"
+    let s:termguicolors[6]  = "DarkCyan"
+    let s:termguicolors[7]  = "Gray"
+    let s:termguicolors[8]  = "DarkGray"
+    let s:termguicolors[9]  = "Red"
+    let s:termguicolors[10] = "Green"
+    let s:termguicolors[11] = "Yellow"
+    let s:termguicolors[12] = "Blue"
+    let s:termguicolors[13] = "Magenta"
+    let s:termguicolors[14] = "Cyan"
+    let s:termguicolors[15] = "White"
 
     let xterm_palette = ["00", "5f", "87", "af", "d7", "ff"]
 
@@ -70,7 +70,7 @@ function! s:set_guicolors() abort
     for r in xterm_palette
         for g in xterm_palette
             for b in xterm_palette
-                let s:guicolors[cur_col] = '#' . r . g . b
+                let s:termguicolors[cur_col] = '#' . r . g . b
                 let cur_col += 1
             endfor
         endfor
@@ -78,14 +78,14 @@ function! s:set_guicolors() abort
 
     for i in range(24)
         let g = i * 0xa + 8
-        let s:guicolors[i + 232] = '#' . g . g . g
+        let s:termguicolors[i + 232] = '#' . g . g . g
     endfor
 endfunction
 
 function! s:get_hi_str(color, place) abort
     if a:color >= 0 && a:color <= 255
         if has('gui_running')
-            return ' gui' . a:place . '=' . s:guicolors[a:color]
+            return ' gui' . a:place . '=' . s:termguicolors[a:color]
         elseif a:color <= 7 || &t_Co == 256 || &t_Co == 88
             return ' cterm' . a:place . '=' . a:color
         endif

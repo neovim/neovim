@@ -81,7 +81,7 @@ UI *tui_start(void)
 {
   UI *ui = xcalloc(1, sizeof(UI));
   ui->stop = tui_stop;
-  ui->rgb = os_getenv("NVIM_TUI_ENABLE_TRUE_COLOR") != NULL;
+  ui->rgb = p_tgc;
   ui->resize = tui_resize;
   ui->clear = tui_clear;
   ui->eol_clear = tui_eol_clear;
