@@ -168,7 +168,15 @@ typedef struct {
 } MPConvStackVal;
 
 /// Stack used to convert VimL values to messagepack.
-typedef kvec_t(MPConvStackVal) MPConvStack;
+typedef kvec_withinit_t(MPConvStackVal, 8) MPConvStack;
+
+// Defines for MPConvStack
+#define _mp_size kv_size
+#define _mp_init kvi_init
+#define _mp_destroy kvi_destroy
+#define _mp_push kvi_push
+#define _mp_pop kv_pop
+#define _mp_last kv_last
 
 /// Code for checking whether container references itself
 ///
@@ -245,7 +253,7 @@ static int name##_convert_one_value(firstargtype firstargname, \
       _TYPVAL_ENCODE_CHECK_SELF_REFERENCE(tv->vval.v_list, lv_copyID, \
                                           kMPConvList); \
       TYPVAL_ENCODE_CONV_LIST_START(tv->vval.v_list->lv_len); \
-      kv_push(*mpstack, ((MPConvStackVal) { \
+      _mp_push(*mpstack, ((MPConvStackVal) { \
         .type = kMPConvList, \
         .data = { \
           .l = { \
@@ -376,7 +384,7 @@ static int name##_convert_one_value(firstargtype firstargname, \
             _TYPVAL_ENCODE_CHECK_SELF_REFERENCE(val_di->di_tv.vval.v_list, \
                                                 lv_copyID, kMPConvList); \
             TYPVAL_ENCODE_CONV_LIST_START(val_di->di_tv.vval.v_list->lv_len); \
-            kv_push(*mpstack, ((MPConvStackVal) { \
+            _mp_push(*mpstack, ((MPConvStackVal) { \
               .type = kMPConvList, \
               .data = { \
                 .l = { \
@@ -406,7 +414,7 @@ static int name##_convert_one_value(firstargtype firstargname, \
             _TYPVAL_ENCODE_CHECK_SELF_REFERENCE(val_list, lv_copyID, \
                                                 kMPConvPairs); \
             TYPVAL_ENCODE_CONV_DICT_START(val_list->lv_len); \
-            kv_push(*mpstack, ((MPConvStackVal) { \
+            _mp_push(*mpstack, ((MPConvStackVal) { \
               .type = kMPConvPairs, \
               .data = { \
                 .l = { \
@@ -446,7 +454,7 @@ name##_convert_one_value_regular_dict: \
       _TYPVAL_ENCODE_CHECK_SELF_REFERENCE(tv->vval.v_dict, dv_copyID, \
                                           kMPConvDict); \
       TYPVAL_ENCODE_CONV_DICT_START(tv->vval.v_dict->dv_hashtab.ht_used); \
-      kv_push(*mpstack, ((MPConvStackVal) { \
+      _mp_push(*mpstack, ((MPConvStackVal) { \
         .type = kMPConvDict, \
         .data = { \
           .d = { \
@@ -472,18 +480,18 @@ scope int encode_vim_to_##name(firstargtype firstargname, typval_T *const tv, \
 { \
   const int copyID = get_copyID(); \
   MPConvStack mpstack; \
-  kv_init(mpstack); \
+  _mp_init(mpstack); \
   if (name##_convert_one_value(firstargname, &mpstack, tv, copyID, objname) \
       == FAIL) { \
     goto encode_vim_to_##name##_error_ret; \
   } \
-  while (kv_size(mpstack)) { \
-    MPConvStackVal *cur_mpsv = &kv_A(mpstack, kv_size(mpstack) - 1); \
+  while (_mp_size(mpstack)) { \
+    MPConvStackVal *cur_mpsv = &_mp_last(mpstack); \
     typval_T *cur_tv = NULL; \
     switch (cur_mpsv->type) { \
       case kMPConvDict: { \
         if (!cur_mpsv->data.d.todo) { \
-          (void) kv_pop(mpstack); \
+          (void) _mp_pop(mpstack); \
           cur_mpsv->data.d.dict->dv_copyID = copyID - 1; \
           TYPVAL_ENCODE_CONV_DICT_END(); \
           continue; \
@@ -505,7 +513,7 @@ scope int encode_vim_to_##name(firstargtype firstargname, typval_T *const tv, \
       } \
       case kMPConvList: { \
         if (cur_mpsv->data.l.li == NULL) { \
-          (void) kv_pop(mpstack); \
+          (void) _mp_pop(mpstack); \
           cur_mpsv->data.l.list->lv_copyID = copyID - 1; \
           TYPVAL_ENCODE_CONV_LIST_END(); \
           continue; \
@@ -518,7 +526,7 @@ scope int encode_vim_to_##name(firstargtype firstargname, typval_T *const tv, \
       } \
       case kMPConvPairs: { \
         if (cur_mpsv->data.l.li == NULL) { \
-          (void) kv_pop(mpstack); \
+          (void) _mp_pop(mpstack); \
           cur_mpsv->data.l.list->lv_copyID = copyID - 1; \
           TYPVAL_ENCODE_CONV_DICT_END(); \
           continue; \
@@ -545,10 +553,10 @@ scope int encode_vim_to_##name(firstargtype firstargname, typval_T *const tv, \
       goto encode_vim_to_##name##_error_ret; \
     } \
   } \
-  kv_destroy(mpstack); \
+  _mp_destroy(mpstack); \
   return OK; \
 encode_vim_to_##name##_error_ret: \
-  kv_destroy(mpstack); \
+  _mp_destroy(mpstack); \
   return FAIL; \
 }
 
