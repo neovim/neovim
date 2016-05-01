@@ -101,7 +101,7 @@ static inline int json_decoder_pop(ValuesStackItem obj,
   FUNC_ATTR_NONNULL_ALL
 {
   if (kv_size(*container_stack) == 0) {
-    kv_push(ValuesStackItem, *stack, obj);
+    kv_push(*stack, obj);
     return OK;
   }
   ContainerStackItem last_container = kv_last(*container_stack);
@@ -190,7 +190,7 @@ static inline int json_decoder_pop(ValuesStackItem obj,
       *next_map_special = true;
       return OK;
     }
-    kv_push(ValuesStackItem, *stack, obj);
+    kv_push(*stack, obj);
   }
   return OK;
 }
@@ -815,13 +815,13 @@ json_decode_string_cycle_start:
           .v_lock = VAR_UNLOCKED,
           .vval = { .v_list = list },
         };
-        kv_push(ContainerStackItem, container_stack, ((ContainerStackItem) {
+        kv_push(container_stack, ((ContainerStackItem) {
           .stack_index = kv_size(stack),
           .s = p,
           .container = tv,
           .special_val = NULL,
         }));
-        kv_push(ValuesStackItem, stack, OBJ(tv, false, didcomma, didcolon));
+        kv_push(stack, OBJ(tv, false, didcomma, didcolon));
         break;
       }
       case '{': {
@@ -845,13 +845,13 @@ json_decode_string_cycle_start:
             .vval = { .v_dict = dict },
           };
         }
-        kv_push(ContainerStackItem, container_stack, ((ContainerStackItem) {
+        kv_push(container_stack, ((ContainerStackItem) {
           .stack_index = kv_size(stack),
           .s = p,
           .container = tv,
           .special_val = val_list,
         }));
-        kv_push(ValuesStackItem, stack, OBJ(tv, false, didcomma, didcolon));
+        kv_push(stack, OBJ(tv, false, didcomma, didcolon));
         break;
       }
       default: {

@@ -681,7 +681,7 @@ static void invalidate(UI *ui, int top, int bot, int left, int right)
     intersects->right = MAX(right, intersects->right);
   } else {
     // Else just add a new entry;
-    kv_push(Rect, data->invalid_regions, ((Rect){top, bot, left, right}));
+    kv_push(data->invalid_regions, ((Rect) { top, bot, left, right }));
   }
 }
 

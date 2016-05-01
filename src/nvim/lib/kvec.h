@@ -28,20 +28,20 @@
 
 #include "kvec.h"
 int main() {
-	kvec_t(int) array;
-	kv_init(array);
-	kv_push(int, array, 10); // append
-	kv_a(int, array, 20) = 5; // dynamic
-	kv_A(array, 20) = 4; // static
-	kv_destroy(array);
-	return 0;
+  kvec_t(int) array;
+  kv_init(array);
+  kv_push(array, 10); // append
+  kv_a(array, 20) = 5; // dynamic
+  kv_A(array, 20) = 4; // static
+  kv_destroy(array);
+  return 0;
 }
 */
 
 /*
   2008-09-22 (0.1.0):
 
-	* The initial version.
+  * The initial version.
 
 */
 
@@ -62,31 +62,47 @@ int main() {
 #define kv_max(v) ((v).capacity)
 #define kv_last(v) kv_A(v, kv_size(v) - 1)
 
-#define kv_resize(type, v, s)  ((v).capacity = (s), (v).items = (type*)xrealloc((v).items, sizeof(type) * (v).capacity))
+#define kv_resize(v, s) \
+    do { \
+      (v).capacity = (s); \
+      (v).items = xrealloc((v).items, sizeof((v).items[0]) * (v).capacity); \
+    } while (0)
 
-#define kv_copy(type, v1, v0) do {							\
-		if ((v1).capacity < (v0).size) kv_resize(type, v1, (v0).size);	\
-		(v1).size = (v0).size;									\
-		memcpy((v1).items, (v0).items, sizeof(type) * (v0).size);		\
-	} while (0)												\
+#define kv_copy(v1, v0) \
+    do { \
+      if ((v1).capacity < (v0).size) { \
+        kv_resize(v1, (v0).size); \
+      } \
+      (v1).size = (v0).size; \
+      memcpy((v1).items, (v0).items, sizeof((v1).items[0]) * (v0).size); \
+    } while (0) \
 
-#define kv_push(type, v, x) do {									\
-		if ((v).size == (v).capacity) {										\
-			(v).capacity = (v).capacity? (v).capacity<<1 : 8;							\
-			(v).items = (type*)xrealloc((v).items, sizeof(type) * (v).capacity);	\
-		}															\
-		(v).items[(v).size++] = (x);										\
-	} while (0)
+#define kv_push(v, x) \
+    do { \
+      if ((v).size == (v).capacity) { \
+        (v).capacity = (v).capacity ? (v).capacity << 1 : 8; \
+        (v).items = xrealloc((v).items, sizeof((v).items[0]) * (v).capacity); \
+      } \
+      (v).items[(v).size++] = (x); \
+    } while (0)
 
-#define kv_pushp(type, v) ((((v).size == (v).capacity)?							\
-						   ((v).capacity = ((v).capacity? (v).capacity<<1 : 8),				\
-							(v).items = (type*)xrealloc((v).items, sizeof(type) * (v).capacity), 0)	\
-						   : 0), ((v).items + ((v).size++)))
+#define kv_pushp(v) \
+    ((((v).size == (v).capacity) \
+      ? ((v).capacity = ((v).capacity ? (v).capacity << 1 : 8), \
+         (v).items = xrealloc((v).items, sizeof((v).items[0]) * (v).capacity), \
+         0) \
+      : 0), \
+     ((v).items + ((v).size++)))
 
-#define kv_a(type, v, i) (((v).capacity <= (size_t)(i)? \
-						  ((v).capacity = (v).size = (i) + 1, kv_roundup32((v).capacity), \
-						   (v).items = (type*)xrealloc((v).items, sizeof(type) * (v).capacity), 0) \
-						  : (v).size <= (size_t)(i)? (v).size = (i) + 1 \
-						  : 0), (v).items[(i)])
+#define kv_a(v, i) \
+    (((v).capacity <= (size_t) (i) \
+      ? ((v).capacity = (v).size = (i) + 1, \
+         kv_roundup32((v).capacity), \
+         (v).items = xrealloc((v).items, sizeof((v).items[0]) * (v).capacity), \
+         0) \
+      : ((v).size <= (size_t)(i) \
+         ? (v).size = (i) + 1 \
+         : 0)), \
+     (v).items[(i)])
 
 #endif
