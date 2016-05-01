@@ -48,6 +48,7 @@ int main() {
 #define AC_KVEC_H
 
 #include <stdlib.h>
+
 #include "nvim/memory.h"
 
 #define kv_roundup32(x) (--(x), (x)|=(x)>>1, (x)|=(x)>>2, (x)|=(x)>>4, (x)|=(x)>>8, (x)|=(x)>>16, ++(x))
@@ -60,6 +61,7 @@ int main() {
       size_t capacity; \
       type *items; \
     }
+
 #define kv_init(v) ((v).size = (v).capacity = 0, (v).items = 0)
 #define kv_destroy(v) xfree((v).items)
 #define kv_A(v, i) ((v).items[(i)])
@@ -69,10 +71,11 @@ int main() {
 #define kv_last(v) kv_A(v, kv_size(v) - 1)
 
 #define kv_resize(v, s) \
-    do { \
-      (v).capacity = (s); \
-      (v).items = xrealloc((v).items, sizeof((v).items[0]) * (v).capacity); \
-    } while (0)
+    ((v).capacity = (s), \
+     (v).items = xrealloc((v).items, sizeof((v).items[0]) * (v).capacity))
+
+#define kv_resize_full(v) \
+    kv_resize(v, (v).capacity ? (v).capacity << 1 : 8)
 
 #define kv_copy(v1, v0) \
     do { \
@@ -83,30 +86,19 @@ int main() {
       memcpy((v1).items, (v0).items, sizeof((v1).items[0]) * (v0).size); \
     } while (0) \
 
-#define kv_push(v, x) \
-    do { \
-      if ((v).size == (v).capacity) { \
-        (v).capacity = (v).capacity ? (v).capacity << 1 : 8; \
-        (v).items = xrealloc((v).items, sizeof((v).items[0]) * (v).capacity); \
-      } \
-      (v).items[(v).size++] = (x); \
-    } while (0)
-
 #define kv_pushp(v) \
-    ((((v).size == (v).capacity) \
-      ? ((v).capacity = ((v).capacity ? (v).capacity << 1 : 8), \
-         (v).items = xrealloc((v).items, sizeof((v).items[0]) * (v).capacity), \
-         0) \
-      : 0), \
+    ((((v).size == (v).capacity) ? (kv_resize_full(v), 0) : 0), \
      ((v).items + ((v).size++)))
+
+#define kv_push(v, x) \
+    (*kv_pushp(v) = (x))
 
 #define kv_a(v, i) \
     (((v).capacity <= (size_t) (i) \
       ? ((v).capacity = (v).size = (i) + 1, \
          kv_roundup32((v).capacity), \
-         (v).items = xrealloc((v).items, sizeof((v).items[0]) * (v).capacity), \
-         0) \
-      : ((v).size <= (size_t)(i) \
+         kv_resize((v), (v).capacity), 0) \
+      : ((v).size <= (size_t) (i) \
          ? (v).size = (i) + 1 \
          : 0)), \
      (v).items[(i)])
