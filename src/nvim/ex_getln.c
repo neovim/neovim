@@ -4017,20 +4017,19 @@ static void expand_shellcmd(char_u *filepat, int *num_file, char_u ***file,
    */
   ga_init(&ga, (int)sizeof(char *), 10);
   for (s = path; ; s = e) {
-    if (*s == NUL)
-	{
-	    if (did_curdir) {
-		  break;
-        }
-	    // Find directories in the current directory, path is empty.
-	    did_curdir = true;
-	}
-	else if (*s == '.') {
-	    did_curdir = true;
+    if (*s == NUL) {
+      if (did_curdir) {
+        break;
+      }
+      // Find directories in the current directory, path is empty.
+      did_curdir = true;
+    } else if (*s == '.') {
+      did_curdir = true;
     }
 
-    if (*s == ' ')
-      ++s;              /* Skip space used for absolute path name. */
+    if (*s == ' ') {
+      s++;              // Skip space used for absolute path name.
+    }
 
     e = vim_strchr(s, ':');
     if (e == NULL)
