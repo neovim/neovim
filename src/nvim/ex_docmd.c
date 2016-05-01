@@ -7071,9 +7071,9 @@ static void ex_operators(exarg_T *eap)
   oa.start.lnum = eap->line1;
   oa.end.lnum = eap->line2;
   oa.line_count = eap->line2 - eap->line1 + 1;
-  oa.motion_type = MLINE;
-  virtual_op = FALSE;
-  if (eap->cmdidx != CMD_yank) {        /* position cursor for undo */
+  oa.motion_type = kMTLineWise;
+  virtual_op = false;
+  if (eap->cmdidx != CMD_yank) {  // position cursor for undo
     setpcmark();
     curwin->w_cursor.lnum = eap->line1;
     beginline(BL_SOL | BL_FIX);

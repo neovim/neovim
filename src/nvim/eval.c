@@ -10290,7 +10290,7 @@ static void f_getregtype(typval_T *argvars, typval_T *rettv)
 
   colnr_T reglen = 0;
   char buf[NUMBUFLEN + 2];
-  char_u reg_type = get_reg_type(regname, &reglen);
+  MotionType reg_type = get_reg_type(regname, &reglen);
   format_reg_type(reg_type, reglen, buf, ARRAY_SIZE(buf));
 
   rettv->v_type = VAR_STRING;
@@ -14717,11 +14717,11 @@ static void f_setreg(typval_T *argvars, typval_T *rettv)
   char_u      *strregname;
   char_u      *stropt;
   bool append = false;
-  char_u yank_type;
+  MotionType yank_type;
   long block_len;
 
   block_len = -1;
-  yank_type = MAUTO;
+  yank_type = kMTUnknown;
 
   strregname = get_tv_string_chk(argvars);
   rettv->vval.v_number = 1;             /* FAIL is default */
@@ -14738,17 +14738,17 @@ static void f_setreg(typval_T *argvars, typval_T *rettv)
       return;                   /* type error */
     for (; *stropt != NUL; ++stropt)
       switch (*stropt) {
-      case 'a': case 'A':               /* append */
+      case 'a': case 'A':  // append
         append = true;
         break;
-      case 'v': case 'c':               /* character-wise selection */
-        yank_type = MCHAR;
+      case 'v': case 'c':  // character-wise selection
+        yank_type = kMTCharWise;
         break;
-      case 'V': case 'l':               /* line-wise selection */
-        yank_type = MLINE;
+      case 'V': case 'l':  // line-wise selection
+        yank_type = kMTLineWise;
         break;
-      case 'b': case Ctrl_V:            /* block-wise selection */
-        yank_type = MBLOCK;
+      case 'b': case Ctrl_V:  // block-wise selection
+        yank_type = kMTBlockWise;
         if (ascii_isdigit(stropt[1])) {
           ++stropt;
           block_len = getdigits_long(&stropt) - 1;
