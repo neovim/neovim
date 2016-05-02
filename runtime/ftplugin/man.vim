@@ -32,6 +32,10 @@ if !exists("g:no_plugin_maps") && !exists("g:no_man_maps")
   endif
 endif
 
+if exists('g:ft_man_folding_enable') && (g:ft_man_folding_enable == 1)
+  setlocal foldmethod=indent foldnestmax=1 foldenable
+endif
+
 let b:undo_ftplugin = 'setlocal iskeyword<'
 
 " vim: set sw=2:
