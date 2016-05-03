@@ -1,4 +1,4 @@
-*pi_netrw.txt*  For Vim version 7.4.  Last change: 2015 Oct 30
+*pi_netrw.txt*  For Vim version 7.4.  Last change: 2015 Oct 31
 
 	    ------------------------------------------------
 	    NETRW REFERENCE MANUAL    by Charles E. Campbell
@@ -3436,7 +3436,7 @@ Example: Clear netrw's marked file list via a mapping on gu >
 	     You probably want netrw running as in a side window.  If so, you
 	     will likely find that ":[N]Lexplore" does what you want.  The
 	     optional "[N]" allows you to select the quantity of columns you
-	     wish the Lexplorer window to start with (see |g:netrw_winsize|
+	     wish the |:Lexplore|r window to start with (see |g:netrw_winsize|
 	     for how this parameter works).
 
 	     Previous solution:
