@@ -1,4 +1,4 @@
-*usr_03.txt*	For Vim version 7.4.  Last change: 2006 Jun 21
+*usr_03.txt*	For Vim version 7.4.  Last change: 2015 Dec 12
 
 		     VIM USER MANUAL - by Bram Moolenaar
 
@@ -57,8 +57,11 @@ paragraph, much faster than using "l".  "b" does the same in the other
 direction.
 
 A word ends at a non-word character, such as a ".", "-" or ")".  To change
-what Vim considers to be a word, see the 'iskeyword' option.
-   It is also possible to move by white-space separated WORDs.  This is not a
+what Vim considers to be a word, see the 'iskeyword' option.  If you try this
+out in the help directly, 'iskeyword' needs to be reset for the examples to
+work: >
+	:set iskeyword&
+It is also possible to move by white-space separated WORDs.  This is not a
 word in the normal sense, that's why the uppercase is used.  The commands for
 moving by WORDs are also uppercase, as this figure shows:
 

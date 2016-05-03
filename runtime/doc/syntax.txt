@@ -1,4 +1,4 @@
-*syntax.txt*	For Vim version 7.4.  Last change: 2015 Nov 05
+*syntax.txt*	For Vim version 7.4.  Last change: 2015 Dec 19
 
 
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
@@ -1433,34 +1433,28 @@ form, then >
     :let fortran_fixed_source=1
 in your vimrc prior to the :syntax on command.
 
-If the form of the source code depends upon the file extension, then it is
-most convenient to set fortran_free_source in a ftplugin file.  For more
-information on ftplugin files, see |ftplugin|.  For example, if all your
-fortran files with an .f90 extension are written in free source form and the
-rest in fixed source form, add the following code to your ftplugin file >
-    let s:extfname = expand("%:e")
-    if s:extfname ==? "f90"
-	let fortran_free_source=1
-	unlet! fortran_fixed_source
-    else
-	let fortran_fixed_source=1
-	unlet! fortran_free_source
-    endif
-Note that this will work only if the "filetype plugin indent on" command
-precedes the "syntax on" command in your vimrc file.
+If the form of the source code depends, in a non-standard way, upon the file
+extension, then it is most convenient to set fortran_free_source in a ftplugin
+file.  For more information on ftplugin files, see |ftplugin|. Note that this
+will work only if the "filetype plugin indent on" command precedes the "syntax
+on" command in your .vimrc file.
+
 
 When you edit an existing fortran file, the syntax script will assume free
 source form if the fortran_free_source variable has been set, and assumes
 fixed source form if the fortran_fixed_source variable has been set.  If
 neither of these variables have been set, the syntax script attempts to
-determine which source form has been used by examining the first five columns
-of the first 250 lines of your file.  If no signs of free source form are
-detected, then the file is assumed to be in fixed source form.  The algorithm
-should work in the vast majority of cases.  In some cases, such as a file that
-begins with 250 or more full-line comments, the script may incorrectly decide
-that the fortran code is in fixed form.  If that happens, just add a
-non-comment statement beginning anywhere in the first five columns of the
-first twenty five lines, save (:w) and then reload (:e!) the file.
+determine which source form has been used by examining the file extension
+using conventions common to the ifort, gfortran, Cray, NAG, and PathScale
+compilers (.f, .for, .f77 for fixed-source, .f90, .f95, .f03, .f08 for
+free-source). If none of this works, then the script examines the first five
+columns of the first 500 lines of your file.  If no signs of free source form
+are detected, then the file is assumed to be in fixed source form.  The
+algorithm should work in the vast majority of cases.  In some cases, such as a
+file that begins with 500 or more full-line comments, the script may
+incorrectly decide that the fortran code is in fixed form.  If that happens,
+just add a non-comment statement beginning anywhere in the first five columns
+of the first twenty five lines, save (:w) and then reload (:e!) the file.
 
 Tabs in fortran files ~
 Tabs are not recognized by the Fortran standards.  Tabs are not a good idea in

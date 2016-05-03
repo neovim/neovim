@@ -1,4 +1,4 @@
-*filetype.txt*  For Vim version 7.4.  Last change: 2015 Nov 28
+*filetype.txt*  For Vim version 7.4.  Last change: 2015 Dec 06
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -539,6 +539,9 @@ q		Same as ":quit"
 
 To enable folding use this: >
   	let g:ft_man_folding_enable = 1
+If you do not like the default folding, use an autocommand to add your desired
+folding style instead.  For example: >
+        autocmd FileType man setlocal foldmethod=indent foldenable
 
 
 PDF							*ft-pdf-plugin*

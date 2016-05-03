@@ -1,4 +1,4 @@
-*cmdline.txt*   For Vim version 7.4.  Last change: 2015 Sep 25
+*cmdline.txt*   For Vim version 7.4.  Last change: 2015 Dec 17
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -96,6 +96,11 @@ CTRL-E or <End>					*c_CTRL-E* *c_<End>* *c_End*
 
 							*c_<LeftMouse>*
 <LeftMouse>	Move the cursor to the position of the mouse click.
+
+							*c_<MiddleMouse>*
+<MiddleMouse>	Paste the contents of the clipboard (for X11 the primary
+		selection).  This is similar to using CTRL-R *, but no CR
+		characters are inserted between lines.
 
 CTRL-H						*c_<BS>* *c_CTRL-H* *c_BS*
 <BS>		Delete the character in front of the cursor.

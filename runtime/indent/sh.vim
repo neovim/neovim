@@ -3,7 +3,7 @@
 " Maintainer:          Christian Brabandt <cb@256bit.org>
 " Previous Maintainer: Peter Aronoff <telemachus@arpinum.org>
 " Original Author:     Nikolai Weibull <now@bitwi.se>
-" Latest Revision:     2015-07-28
+" Latest Revision:     2015-12-15
 " License:             Vim (see :h license)
 " Repository:          https://github.com/chrisbra/vim-sh-indent
 
@@ -11,6 +11,8 @@ if exists("b:did_indent")
   finish
 endif
 let b:did_indent = 1
+
+let b:undo_indent = 'setlocal indentexpr< indentkeys< smartindent<'
 
 setlocal indentexpr=GetShIndent()
 setlocal indentkeys+=0=then,0=do,0=else,0=elif,0=fi,0=esac,0=done,0=end,),0=;;,0=;&

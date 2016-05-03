@@ -1,11 +1,12 @@
 " Vim syntax file
 " Language:	OpenSSH server configuration file (sshd_config)
-" Maintainer:	David Necas (Yeti)
-" Maintainer:   Leonard Ehrenfried <leonard.ehrenfried@web.de>	
-" Modified By:	Thilo Six
+" Author:	David Necas (Yeti)
+" Maintainer:	Dominik Fischer <d dot f dot fischer at web dot de>
+" Contributor:	Thilo Six
+" Contributor:  Leonard Ehrenfried <leonard.ehrenfried@web.de>	
 " Originally:	2009-07-09
-" Last Change:	2011 Oct 31 
-" SSH Version:	5.9p1
+" Last Change:	2015 Dec 3 
+" SSH Version:	7.0
 "
 
 " Setup
@@ -39,6 +40,12 @@ syn keyword sshdconfigYesNo yes no none
 
 syn keyword sshdconfigAddressFamily any inet inet6
 
+syn keyword sshdconfigPrivilegeSeparation sandbox
+
+syn keyword sshdconfigTcpForwarding local remote
+
+syn keyword sshdconfigRootLogin prohibit-password without-password forced-commands-only
+
 syn keyword sshdconfigCipher aes128-cbc 3des-cbc blowfish-cbc cast128-cbc
 syn keyword sshdconfigCipher aes192-cbc aes256-cbc aes128-ctr aes192-ctr aes256-ctr
 syn keyword sshdconfigCipher arcfour arcfour128 arcfour256 cast128-cbc
@@ -49,7 +56,7 @@ syn keyword sshdconfigMAC hmac-sha2-256 hmac-sha256-96 hmac-sha2-512
 syn keyword sshdconfigMAC hmac-sha2-512-96
 syn match   sshdconfigMAC "\<umac-64@openssh\.com\>"
 
-syn keyword sshdconfigRootLogin without-password forced-commands-only
+syn keyword sshdconfigRootLogin prohibit-password without-password forced-commands-only
 
 syn keyword sshdconfigLogLevel QUIET FATAL ERROR INFO VERBOSE
 syn keyword sshdconfigLogLevel DEBUG DEBUG1 DEBUG2 DEBUG3
@@ -99,9 +106,12 @@ syn keyword sshdconfigKeyword AcceptEnv
 syn keyword sshdconfigKeyword AddressFamily
 syn keyword sshdconfigKeyword AllowAgentForwarding
 syn keyword sshdconfigKeyword AllowGroups
+syn keyword sshdconfigKeyword AllowStreamLocalForwarding
 syn keyword sshdconfigKeyword AllowTcpForwarding
 syn keyword sshdconfigKeyword AllowUsers
 syn keyword sshdconfigKeyword AuthorizedKeysFile
+syn keyword sshdconfigKeyword AuthorizedKeysCommand
+syn keyword sshdconfigKeyword AuthorizedKeysCommandUser
 syn keyword sshdconfigKeyword AuthorizedPrincipalsFile
 syn keyword sshdconfigKeyword Banner
 syn keyword sshdconfigKeyword ChallengeResponseAuthentication
@@ -122,6 +132,8 @@ syn keyword sshdconfigKeyword GSSAPIStrictAcceptorCheck
 syn keyword sshdconfigKeyword GatewayPorts
 syn keyword sshdconfigKeyword HostCertificate
 syn keyword sshdconfigKeyword HostKey
+syn keyword sshdconfigKeyword HostKeyAlgorithms
+syn keyword sshdconfigKeyword HostbasedAcceptedKeyTypes
 syn keyword sshdconfigKeyword HostbasedAuthentication
 syn keyword sshdconfigKeyword HostbasedUsesNameFromPacketOnly
 syn keyword sshdconfigKeyword IPQoS
@@ -147,15 +159,19 @@ syn keyword sshdconfigKeyword PermitBlacklistedKeys
 syn keyword sshdconfigKeyword PermitEmptyPasswords
 syn keyword sshdconfigKeyword PermitOpen
 syn keyword sshdconfigKeyword PermitRootLogin
+syn keyword sshdconfigKeyword PermitTTY
 syn keyword sshdconfigKeyword PermitTunnel
 syn keyword sshdconfigKeyword PermitUserEnvironment
+syn keyword sshdconfigKeyword PermitUserRC
 syn keyword sshdconfigKeyword PidFile
 syn keyword sshdconfigKeyword Port
 syn keyword sshdconfigKeyword PrintLastLog
 syn keyword sshdconfigKeyword PrintMotd
 syn keyword sshdconfigKeyword Protocol
+syn keyword sshdconfigKeyword PubkeyAcceptedKeyTypes
 syn keyword sshdconfigKeyword PubkeyAuthentication
 syn keyword sshdconfigKeyword RSAAuthentication
+syn keyword sshdconfigKeyword RekeyLimit
 syn keyword sshdconfigKeyword RevokedKeys
 syn keyword sshdconfigKeyword RhostsRSAAuthentication
 syn keyword sshdconfigKeyword ServerKeyBits
@@ -169,6 +185,7 @@ syn keyword sshdconfigKeyword UseDNS
 syn keyword sshdconfigKeyword UseLogin
 syn keyword sshdconfigKeyword UsePAM
 syn keyword sshdconfigKeyword UsePrivilegeSeparation
+syn keyword sshdconfigKeyword VersionAddendum
 syn keyword sshdconfigKeyword X11DisplayOffset
 syn keyword sshdconfigKeyword X11Forwarding
 syn keyword sshdconfigKeyword X11UseLocalhost
@@ -184,29 +201,32 @@ if version >= 508 || !exists("did_sshdconfig_syntax_inits")
     command -nargs=+ HiLink hi def link <args>
   endif
 
-  HiLink sshdconfigComment        Comment
-  HiLink sshdconfigTodo           Todo
-  HiLink sshdconfigHostPort       sshdconfigConstant
-  HiLink sshdconfigTime           sshdconfigConstant
-  HiLink sshdconfigNumber         sshdconfigConstant
-  HiLink sshdconfigConstant       Constant
-  HiLink sshdconfigYesNo          sshdconfigEnum
-  HiLink sshdconfigAddressFamily  sshdconfigEnum
-  HiLink sshdconfigCipher         sshdconfigEnum
-  HiLink sshdconfigMAC            sshdconfigEnum
-  HiLink sshdconfigRootLogin      sshdconfigEnum
-  HiLink sshdconfigLogLevel       sshdconfigEnum
-  HiLink sshdconfigSysLogFacility sshdconfigEnum
-  HiLink sshdconfigVar		  sshdconfigEnum
-  HiLink sshdconfigCompression    sshdconfigEnum
-  HiLink sshdconfigIPQoS	  sshdconfigEnum
-  HiLink sshdconfigKexAlgo	  sshdconfigEnum
-  HiLink sshdconfigTunnel	  sshdconfigEnum
-  HiLink sshdconfigSubsystem	  sshdconfigEnum
-  HiLink sshdconfigEnum           Function
-  HiLink sshdconfigSpecial        Special
-  HiLink sshdconfigKeyword        Keyword
-  HiLink sshdconfigMatch          Type
+  HiLink sshdconfigComment              Comment
+  HiLink sshdconfigTodo                 Todo
+  HiLink sshdconfigHostPort             sshdconfigConstant
+  HiLink sshdconfigTime                 sshdconfigConstant
+  HiLink sshdconfigNumber               sshdconfigConstant
+  HiLink sshdconfigConstant             Constant
+  HiLink sshdconfigYesNo                sshdconfigEnum
+  HiLink sshdconfigAddressFamily        sshdconfigEnum
+  HiLink sshdconfigPrivilegeSeparation  sshdconfigEnum
+  HiLink sshdconfigTcpForwarding        sshdconfigEnum
+  HiLink sshdconfigRootLogin            sshdconfigEnum
+  HiLink sshdconfigCipher               sshdconfigEnum
+  HiLink sshdconfigMAC                  sshdconfigEnum
+  HiLink sshdconfigRootLogin            sshdconfigEnum
+  HiLink sshdconfigLogLevel             sshdconfigEnum
+  HiLink sshdconfigSysLogFacility       sshdconfigEnum
+  HiLink sshdconfigVar                  sshdconfigEnum
+  HiLink sshdconfigCompression          sshdconfigEnum
+  HiLink sshdconfigIPQoS                sshdconfigEnum
+  HiLink sshdconfigKexAlgo              sshdconfigEnum
+  HiLink sshdconfigTunnel               sshdconfigEnum
+  HiLink sshdconfigSubsystem            sshdconfigEnum
+  HiLink sshdconfigEnum                 Function
+  HiLink sshdconfigSpecial              Special
+  HiLink sshdconfigKeyword              Keyword
+  HiLink sshdconfigMatch                Type
   delcommand HiLink
 endif
 
