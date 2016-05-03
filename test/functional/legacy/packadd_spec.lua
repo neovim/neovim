@@ -1,8 +1,9 @@
 -- Tests for 'packpath' and :packadd
 
 local helpers = require('test.functional.helpers')(after_each)
-local clear, source = helpers.clear, helpers.source
+local clear, source, execute = helpers.clear, helpers.source, helpers.execute
 local call, eq, nvim = helpers.call, helpers.eq, helpers.meths
+local feed = helpers.feed
 
 local function expected_empty()
   eq({}, nvim.get_vvar('errors'))
@@ -84,5 +85,66 @@ describe('packadd', function()
   it('works with packadd!', function()
     call('Test_packadd_noload')
     expected_empty()
+  end)
+
+  describe('command line completion', function()
+    local Screen = require('test.functional.ui.screen')
+    local screen
+
+    before_each(function()
+      screen = Screen.new(30, 5)
+      screen:attach()
+      screen:set_default_attr_ids({
+        [1] = {
+          foreground = Screen.colors.Black,
+          background = Screen.colors.Yellow,
+        },
+        [2] = {bold = true, reverse = true}
+      })
+      local NonText = Screen.colors.Blue
+      screen:set_default_attr_ignore({{}, {bold=true, foreground=NonText}})
+
+      execute([[let optdir1 = &packpath . '/pack/mine/opt']])
+      execute([[let optdir2 = &packpath . '/pack/candidate/opt']])
+      execute([[call mkdir(optdir1 . '/pluginA', 'p')]])
+      execute([[call mkdir(optdir1 . '/pluginC', 'p')]])
+      execute([[call mkdir(optdir2 . '/pluginB', 'p')]])
+      execute([[call mkdir(optdir2 . '/pluginC', 'p')]])
+    end)
+
+    it('works', function()
+      feed(':packadd <Tab>')
+      screen:expect([=[
+                                      |
+        ~                             |
+        ~                             |
+        {1:pluginA}{2:  pluginB  pluginC     }|
+        :packadd pluginA^              |
+      ]=])
+      feed('<Tab>')
+      screen:expect([=[
+                                      |
+        ~                             |
+        ~                             |
+        {2:pluginA  }{1:pluginB}{2:  pluginC     }|
+        :packadd pluginB^              |
+      ]=])
+      feed('<Tab>')
+      screen:expect([=[
+                                      |
+        ~                             |
+        ~                             |
+        {2:pluginA  pluginB  }{1:pluginC}{2:     }|
+        :packadd pluginC^              |
+      ]=])
+      feed('<Tab>')
+      screen:expect([=[
+                                      |
+        ~                             |
+        ~                             |
+        {2:pluginA  pluginB  pluginC     }|
+        :packadd ^                     |
+      ]=])
+    end)
   end)
 end)

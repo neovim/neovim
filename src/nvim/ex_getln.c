@@ -3440,6 +3440,7 @@ addstar (
         || context == EXPAND_COMPILER
         || context == EXPAND_OWNSYNTAX
         || context == EXPAND_FILETYPE
+        || context == EXPAND_PACKADD
         || (context == EXPAND_TAGS && fname[0] == '/'))
       retval = vim_strnsave(fname, len);
     else {
@@ -3809,8 +3810,12 @@ ExpandFromContext (
     char *directories[] = {"syntax", "indent", "ftplugin", NULL};
     return ExpandRTDir(pat, num_file, file, directories);
   }
-  if (xp->xp_context == EXPAND_USER_LIST)
+  if (xp->xp_context == EXPAND_USER_LIST) {
     return ExpandUserList(xp, num_file, file);
+  }
+  if (xp->xp_context == EXPAND_PACKADD) {
+    return ExpandPackAddDir(pat, num_file, file);
+  }
 
   regmatch.regprog = vim_regcomp(pat, p_magic ? RE_MAGIC : 0);
   if (regmatch.regprog == NULL)
@@ -4234,6 +4239,42 @@ static int ExpandRTDir(char_u *pat, int *num_file, char_u ***file, char *dirname
 
   /* Sort and remove duplicates which can happen when specifying multiple
    * directories in dirnames. */
+  ga_remove_duplicate_strings(&ga);
+
+  *file = ga.ga_data;
+  *num_file = ga.ga_len;
+  return OK;
+}
+
+/// Expand loadplugin names:
+/// 'packpath'/pack/ * /opt/{pat}
+static int ExpandPackAddDir(char_u *pat, int *num_file, char_u ***file)
+{
+  garray_T ga;
+
+  *num_file = 0;
+  *file = NULL;
+  size_t pat_len = STRLEN(pat);
+  ga_init(&ga, (int)sizeof(char *), 10);
+
+  char_u *s = xmalloc((unsigned)(pat_len + 26));
+  sprintf((char *)s, "pack/*/opt/%s*", pat);
+  globpath(p_pp, s, &ga, 0);
+  xfree(s);
+
+  for (int i = 0; i < ga.ga_len; ++i) {
+    char_u *match = ((char_u **)ga.ga_data)[i];
+    s = path_tail(match);
+    char_u *e = s + STRLEN(s);
+    memmove(match, s, e - s + 1);
+  }
+
+  if (GA_EMPTY(&ga)) {
+    return FAIL;
+  }
+
+  // Sort and remove duplicates which can happen when specifying multiple
+  // directories in dirnames.
   ga_remove_duplicate_strings(&ga);
 
   *file = ga.ga_data;

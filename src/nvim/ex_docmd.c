@@ -3316,6 +3316,11 @@ set_one_cmd_context (
     xp->xp_pattern = arg;
     break;
 
+  case CMD_packadd:
+    xp->xp_context = EXPAND_PACKADD;
+    xp->xp_pattern = arg;
+    break;
+
 #ifdef HAVE_WORKING_LIBINTL
   case CMD_language:
     p = skiptowhite(arg);
@@ -4688,6 +4693,7 @@ static struct {
   {EXPAND_OWNSYNTAX, "syntax"},
   {EXPAND_SYNTIME, "syntime"},
   {EXPAND_SETTINGS, "option"},
+  {EXPAND_PACKADD, "packadd"},
   {EXPAND_SHELLCMD, "shellcmd"},
   {EXPAND_SIGN, "sign"},
   {EXPAND_TAGS, "tag"},
