@@ -1,4 +1,4 @@
-*options.txt*	For Vim version 7.4.  Last change: 2015 Oct 15
+*options.txt*	For Vim version 7.4.  Last change: 2015 Nov 11
 
 
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
@@ -6085,7 +6085,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	become empty.  This will make a group like the following disappear
 	completely from the statusline when none of the flags are set. >
 		:set statusline=...%(\ [%M%R%H]%)...
-<
+<							*g:actual_curbuf*
 	Beware that an expression is evaluated each and every time the status
 	line is displayed.  The current buffer and current window will be set
 	temporarily to that of the window (and buffer) whose statusline is
