@@ -1,7 +1,8 @@
 " Vim filetype plugin file
-" Language:         generic Changelog file
-" Maintainer:       Nikolai Weibull <now@bitwi.se>
-" Latest Revision:  2014-01-10
+" Language:             generic Changelog file
+" Maintainer:           Martin Florian <marfl@posteo.de>
+" Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
+" Latest Revision:      2015-10-25
 " Variables:
 "   g:changelog_timeformat (deprecated: use g:changelog_dateformat instead) -
 "       description: the timeformat used in ChangeLog entries.
@@ -167,7 +168,7 @@ if &filetype == 'changelog'
       let cursor = stridx(line, '{cursor}')
       call setline(lnum, substitute(line, '{cursor}', '', ''))
     endif
-    startinsert!
+    startinsert
   endfunction
 
   " Internal function to create a new entry in the ChangeLog.
@@ -223,7 +224,8 @@ if &filetype == 'changelog'
   endfunction
 
   if exists(":NewChangelogEntry") != 2
-    noremap <buffer> <silent> <Leader>o <Esc>:call <SID>new_changelog_entry('')<CR>
+    nnoremap <buffer> <silent> <Leader>o :<C-u>call <SID>new_changelog_entry('')<CR>
+    xnoremap <buffer> <silent> <Leader>o :<C-u>call <SID>new_changelog_entry('')<CR>
     command! -nargs=0 NewChangelogEntry call s:new_changelog_entry('')
   endif
 
