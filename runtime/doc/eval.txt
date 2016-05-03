@@ -6183,11 +6183,6 @@ sort({list} [, {func} [, {dict}]])			*sort()* *E702*
 		on numbers, text strings will sort next to each other, in the
 		same order as they were originally.
 
-		The sort is stable, items which compare equal (as number or as
-		string) will keep their relative position. E.g., when sorting
-		on numbers, text strings will sort next to each other, in the
-		same order as they were originally.
-
 		Also see |uniq()|.
 
 		Example: >

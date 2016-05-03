@@ -1,4 +1,4 @@
-*filetype.txt*  For Vim version 7.4.  Last change: 2015 Nov 24
+*filetype.txt*  For Vim version 7.4.  Last change: 2015 Nov 28
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -510,7 +510,7 @@ Local mappings:
 	to the end of the file in Normal mode.  This means "> " is inserted in
 	each line.
 
-MAN							*ft-man-plugin* *:Man*
+MAN					*ft-man-plugin* *:Man* *man.vim*
 
 Displays a manual page in a nice way.  Also see the user manual
 |find-manpage|.
