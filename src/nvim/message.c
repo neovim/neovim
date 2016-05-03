@@ -2389,6 +2389,19 @@ static void redir_write(char_u *str, int maxlen)
   char_u      *s = str;
   static int cur_col = 0;
 
+  if (maxlen == 0) {
+    return;
+  }
+
+  // Append output to capture().
+  if (capture_ga) {
+    size_t len = 0;
+    while (str[len] && (maxlen < 0 ? 1 : (len < (size_t)maxlen))) {
+      len++;
+    }
+    ga_concat_len(capture_ga, (const char *)str, len);
+  }
+
   /* Don't do anything for displaying prompts and the like. */
   if (redir_off)
     return;

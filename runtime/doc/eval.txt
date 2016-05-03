@@ -1808,6 +1808,7 @@ byteidx({expr}, {nr})		Number	byte index of {nr}'th char in {expr}
 byteidxcomp({expr}, {nr})	Number	byte index of {nr}'th char in {expr}
 call({func}, {arglist} [, {dict}])
 				any	call {func} with arguments {arglist}
+capture({command})		String	capture output of {command}
 ceil({expr})			Float	round {expr} up
 changenr()			Number	current change number
 char2nr({expr}[, {utf8}])	Number	ASCII/UTF8 value of first char in {expr}
@@ -2480,6 +2481,26 @@ call({func}, {arglist} [, {dict}])			*call()* *E699*
 		Returns the return value of the called function.
 		{dict} is for functions with the "dict" attribute.  It will be
 		used to set the local variable "self". |Dictionary-function|
+
+capture({command})					*capture()*
+		Capture output of {command}.
+		If {command} is a |String|, it returns {command} output.
+		If {command} is a |List|, it returns concatenated outputs of
+		each item.
+		Examples: >
+			let a = capture('echon "foo"')
+			echo a
+<			foo >
+			let a = capture(['echon "foo"', 'echon "bar"'])
+			echo a
+<			foobar
+		This function is not available in the |sandbox|.
+		Note: The commands are run as if they were prepended with
+		|:silent| modifier.  |:redir| and |capture()| work together.
+		Unlike nested |:redir|s, outer capture will not catch
+		commands' output of the inner one, but the inner capture will
+		not cancel the outer.
+		Note: highlighting is ignored.
 
 ceil({expr})							*ceil()*
 		Return the smallest integral value greater than or equal to
