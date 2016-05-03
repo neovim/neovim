@@ -1,4 +1,4 @@
-*filetype.txt*  For Vim version 7.4.  Last change: 2013 Dec 15
+*filetype.txt*  For Vim version 7.4.  Last change: 2015 Nov 24
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -535,6 +535,10 @@ Global mapping:
 Local mappings:
 CTRL-]		Jump to the manual page for the word under the cursor.
 CTRL-T		Jump back to the previous manual page.
+q		Same as ":quit"
+
+To enable folding use this: >
+  	let g:ft_man_folding_enable = 1
 
 
 PDF							*ft-pdf-plugin*

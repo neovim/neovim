@@ -94,9 +94,9 @@ These are the conditions with which the expression is evaluated:
 			lowest.
   "="			use fold level from the previous line
   "a1", "a2", ..	add one, two, .. to the fold level of the previous
-			line
+			line, use the result for the current line
   "s1", "s2", ..	subtract one, two, .. from the fold level of the
-			previous line
+			previous line, use the result for the next line
   "<1", "<2", ..	a fold with this level ends at this line
   ">1", ">2", ..	a fold with this level starts at this line
 
@@ -118,6 +118,18 @@ method can be very slow!
 
 Try to avoid the "=", "a" and "s" return values, since Vim often has to search
 backwards for a line for which the fold level is defined.  This can be slow.
+
+An example of using "a1" and "s1": For a multi-line C comment, a line
+containing "/*" would return "a1" to start a fold, and a line containing "*/"
+would return "s1" to end the fold after that line: >
+  if match(thisline, '/\*') >= 0
+    return 'a1'
+  elseif match(thisline, '\*/') >= 0
+    return 's1'
+  else
+    return '='
+  endif
+However, this won't work for single line comments, strings, etc.
 
 |foldlevel()| can be useful to compute a fold level relative to a previous
 fold level.  But note that foldlevel() may return -1 if the level is not known
