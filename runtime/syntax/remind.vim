@@ -1,13 +1,17 @@
 " Vim syntax file
 " Language:	Remind
-" Maintainer:	Davide Alberani <alberanid@libero.it>
-" Last Change:	18 Sep 2009
-" Version:	0.5
-" URL:		http://erlug.linux.it/~da/vim/syntax/remind.vim
+" Maintainer:	Davide Alberani <da@erlug.linux.it>
+" Last Change:	02 Nov 2015
+" Version:	0.7
+" URL:		http://ismito.it/vim/syntax/remind.vim
 "
-" remind is a sophisticated reminder service
-" you can download remind from:
-"   http://www.roaringpenguin.com/penguin/open_source_remind.php
+" Remind is a sophisticated calendar and alarm program.
+" You can download remind from:
+"   https://www.roaringpenguin.com/products/remind
+"
+" Changelog
+" version 0.7: updated email and link
+" version 0.6: added THROUGH keyword (courtesy of Ben Orchard)
 
 if version < 600
   syntax clear
@@ -19,7 +23,7 @@ endif
 syn case ignore
 
 syn keyword remindCommands	REM OMIT SET FSET UNSET
-syn keyword remindExpiry	UNTIL FROM SCANFROM SCAN WARN SCHED
+syn keyword remindExpiry	UNTIL FROM SCANFROM SCAN WARN SCHED THROUGH
 syn keyword remindTag		PRIORITY TAG
 syn keyword remindTimed		AT DURATION
 syn keyword remindMove		ONCE SKIP BEFORE AFTER

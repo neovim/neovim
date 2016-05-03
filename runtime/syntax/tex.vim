@@ -62,11 +62,6 @@ if version >= 508 || !exists("did_tex_syntax_inits")
   command -nargs=+ HiLink hi def link <args>
  endif
 endif
-if exists("g:tex_no_error") && g:tex_no_error
- let s:tex_no_error= 1
-else
- let s:tex_no_error= 0
-endif
 
 " by default, enable all region-based highlighting
 let s:tex_fast= "bcmMprsSvV"
@@ -78,8 +73,6 @@ if exists("g:tex_fast")
  else
   let s:tex_fast= g:tex_fast
  endif
-else
- let s:tex_fast= "bcmMprsSvV"
 endif
 
 " let user determine which classes of concealment will be supported
@@ -114,13 +107,20 @@ endif
 
 " handle folding {{{1
 if !exists("g:tex_fold_enabled")
- let g:tex_fold_enabled= 0
+ let s:tex_fold_enabled= 0
 elseif g:tex_fold_enabled && !has("folding")
- let g:tex_fold_enabled= 0
+ let s:tex_fold_enabled= 0
  echomsg "Ignoring g:tex_fold_enabled=".g:tex_fold_enabled."; need to re-compile vim for +fold support"
+else
+  let s:tex_fold_enabled= 1
 endif
-if g:tex_fold_enabled && &fdm == "manual"
+if s:tex_fold_enabled && &fdm == "manual"
  setl fdm=syntax
+endif
+if s:tex_fold_enabled && has("folding")
+ com! -nargs=* TexFold <args> fold 
+else
+ com! -nargs=* TexFold <args> 
 endif
 
 " (La)TeX keywords: uses the characters 0-9,a-z,A-Z,192-255 only... {{{1
@@ -135,8 +135,20 @@ endif
 if b:tex_stylish
   setlocal isk+=@-@
 endif
-if exists("g:tex_nospell") && g:tex_nospell && !exists("g:tex_comment_nospell")
- let g:tex_comment_nospell= 1
+if exists("g:tex_no_error") && g:tex_no_error
+ let s:tex_no_error= 1
+else
+ let s:tex_no_error= 0
+endif
+if exists("g:tex_comment_nospell") && g:tex_comment_nospell
+ let s:tex_comment_nospell= 1
+else
+ let s:tex_comment_nospell= 0
+endif
+if exists("g:tex_nospell") && g:tex_nospell
+ let s:tex_nospell = 1
+else
+ let s:tex_nospell = 0
 endif
 
 " Clusters: {{{1
@@ -149,7 +161,7 @@ syn cluster texEnvGroup		contains=texMatcher,texMathDelim,texSpecialChar,texStat
 syn cluster texFoldGroup	contains=texAccent,texBadMath,texComment,texDefCmd,texDelimiter,texDocType,texInput,texInputFile,texLength,texLigature,texMatcher,texMathZoneV,texMathZoneW,texMathZoneX,texMathZoneY,texMathZoneZ,texNewCmd,texNewEnv,texOnlyMath,texOption,texParen,texRefZone,texSection,texBeginEnd,texSectionZone,texSpaceCode,texSpecialChar,texStatement,texString,texTypeSize,texTypeStyle,texZone,@texMathZones,texTitle,texAbstract,texBoldStyle,texItalStyle,texNoSpell
 syn cluster texBoldGroup	contains=texAccent,texBadMath,texComment,texDefCmd,texDelimiter,texDocType,texInput,texInputFile,texLength,texLigature,texMatcher,texMathZoneV,texMathZoneW,texMathZoneX,texMathZoneY,texMathZoneZ,texNewCmd,texNewEnv,texOnlyMath,texOption,texParen,texRefZone,texSection,texBeginEnd,texSectionZone,texSpaceCode,texSpecialChar,texStatement,texString,texTypeSize,texTypeStyle,texZone,@texMathZones,texTitle,texAbstract,texBoldStyle,texBoldItalStyle,texNoSpell
 syn cluster texItalGroup	contains=texAccent,texBadMath,texComment,texDefCmd,texDelimiter,texDocType,texInput,texInputFile,texLength,texLigature,texMatcher,texMathZoneV,texMathZoneW,texMathZoneX,texMathZoneY,texMathZoneZ,texNewCmd,texNewEnv,texOnlyMath,texOption,texParen,texRefZone,texSection,texBeginEnd,texSectionZone,texSpaceCode,texSpecialChar,texStatement,texString,texTypeSize,texTypeStyle,texZone,@texMathZones,texTitle,texAbstract,texItalStyle,texItalBoldStyle,texNoSpell
-if !exists("g:tex_nospell") || !g:tex_nospell
+if !exists("s:tex_nospell") || !s:tex_nospell
  syn cluster texMatchGroup	contains=texAccent,texBadMath,texComment,texDefCmd,texDelimiter,texDocType,texInput,texLength,texLigature,texMatcher,texNewCmd,texNewEnv,texOnlyMath,texParen,texRefZone,texSection,texSpecialChar,texStatement,texString,texTypeSize,texTypeStyle,texZone,texInputFile,texOption,@Spell
  syn cluster texStyleGroup	contains=texAccent,texBadMath,texComment,texDefCmd,texDelimiter,texDocType,texInput,texLength,texLigature,texNewCmd,texNewEnv,texOnlyMath,texParen,texRefZone,texSection,texSpecialChar,texStatement,texString,texTypeSize,texTypeStyle,texZone,texInputFile,texOption,texStyleStatement,@Spell,texStyleMatcher
 else
@@ -187,16 +199,16 @@ endif
 " Try to flag {} and () mismatches: {{{1
 if s:tex_fast =~ 'm'
   if !exists("s:tex_no_error") || !s:tex_no_error
-   syn region texMatcher		matchgroup=Delimiter start="{" skip="\\\\\|\\[{}]"	end="}"		contains=@texMatchGroup,texError
-   syn region texMatcher		matchgroup=Delimiter start="\["				end="]"		contains=@texMatchGroup,texError,@NoSpell
+   syn region texMatcher		matchgroup=Delimiter start="{" skip="\\\\\|\\[{}]"	end="}"		transparent contains=@texMatchGroup,texError
+   syn region texMatcher		matchgroup=Delimiter start="\["				end="]"		transparent contains=@texMatchGroup,texError,@NoSpell
   else
-   syn region texMatcher		matchgroup=Delimiter start="{" skip="\\\\\|\\[{}]"	end="}"		contains=@texMatchGroup
-   syn region texMatcher		matchgroup=Delimiter start="\["				end="]"		contains=@texMatchGroup
+   syn region texMatcher		matchgroup=Delimiter start="{" skip="\\\\\|\\[{}]"	end="}"		transparent contains=@texMatchGroup
+   syn region texMatcher		matchgroup=Delimiter start="\["				end="]"		transparent contains=@texMatchGroup
   endif
   if !exists("g:tex_nospell") || !g:tex_nospell
-   syn region texParen		start="("						end=")"		contains=@texMatchGroup,@Spell
+   syn region texParen		start="("						end=")"		transparent contains=@texMatchGroup,@Spell
   else
-   syn region texParen		start="("						end=")"		contains=@texMatchGroup
+   syn region texParen		start="("						end=")"		transparent contains=@texMatchGroup
   endif
 endif
 if !exists("s:tex_no_error") || !s:tex_no_error
@@ -207,7 +219,7 @@ if s:tex_fast =~ 'M'
    if !exists("s:tex_no_error") || !s:tex_no_error
     syn match  texMathError	"}"	contained
    endif
-   syn region texMathMatcher	matchgroup=Delimiter	start="{"          skip="\(\\\\\)*\\}"     end="}" end="%stopzone\>"	contained contains=@texMathMatchGroup
+   syn region texMathMatcher	matchgroup=Delimiter	start="{"          skip="\%(\\\\\)*\\}"     end="}" end="%stopzone\>"	contained contains=@texMathMatchGroup
   endif
 endif
 
@@ -258,7 +270,7 @@ if s:tex_fast =~ 'm'
 endif
 
 " Preamble syntax-based folding support: {{{1
-if g:tex_fold_enabled && has("folding")
+if s:tex_fold_enabled && has("folding")
  syn region texPreamble	transparent fold	start='\zs\\documentclass\>' end='\ze\\begin{document}'	contains=texStyle,@texPreambleMatchGroup
 endif
 
@@ -336,7 +348,7 @@ syn match texSpaceCodeChar    "`\\\=.\(\^.\)\==\(\d\|\"\x\{1,6}\|`.\)"	contained
 
 " Sections, subsections, etc: {{{1
 if s:tex_fast =~ 'p'
-  if !exists("g:tex_nospell") || !g:tex_nospell
+  if !s:tex_nospell
    if g:tex_fold_enabled && has("folding")
     syn region texDocZone		matchgroup=texSection start='\\begin\s*{\s*document\s*}' end='\\end\s*{\s*document\s*}'											fold contains=@texFoldGroup,@texDocGroup,@Spell
     syn region texPartZone		matchgroup=texSection start='\\part\>'			 end='\ze\s*\\\%(part\>\|end\s*{\s*document\s*}\)'								fold contains=@texFoldGroup,@texPartGroup,@Spell
@@ -421,7 +433,7 @@ if !exists("g:tex_no_math")
  fun! TexNewMathZone(sfx,mathzone,starform)
    let grpname  = "texMathZone".a:sfx
    let syncname = "texSyncMathZone".a:sfx
-   if g:tex_fold_enabled
+   if s:tex_fold_enabled
     let foldcmd= " fold"
    else
     let foldcmd= ""
@@ -469,7 +481,7 @@ if !exists("g:tex_no_math")
   else
    syn region texMathZoneV	matchgroup=Delimiter start="\\("			matchgroup=Delimiter	end="\\)\|%stopzone\>"			keepend contains=@texMathZoneGroup
    syn region texMathZoneW	matchgroup=Delimiter start="\\\["			matchgroup=Delimiter	end="\\]\|%stopzone\>"			keepend contains=@texMathZoneGroup
-   syn region texMathZoneX	matchgroup=Delimiter start="\$" skip="\\\\\|\\\$"	matchgroup=Delimiter	end="\$"	end="%stopzone\>"		contains=@texMathZoneGroup
+   syn region texMathZoneX	matchgroup=Delimiter start="\$" skip="\%(\\\\\)*\\\$"	matchgroup=Delimiter	end="\$"	end="%stopzone\>"		contains=@texMathZoneGroup
    syn region texMathZoneY	matchgroup=Delimiter start="\$\$" 			matchgroup=Delimiter	end="\$\$"	end="%stopzone\>"	keepend	contains=@texMathZoneGroup
   endif
   syn region texMathZoneZ	matchgroup=texStatement start="\\ensuremath\s*{"	matchgroup=texStatement	end="}"		end="%stopzone\>"	contains=@texMathZoneGroup
@@ -564,7 +576,7 @@ endif
 " Comments: {{{1
 "    Normal TeX LaTeX     :   %....
 "    Documented TeX Format:  ^^A...	-and-	leading %s (only)
-if !exists("g:tex_comment_nospell") || !g:tex_comment_nospell
+if !s:tex_comment_nospell
  syn cluster texCommentGroup	contains=texTodo,@Spell
 else
  syn cluster texCommentGroup	contains=texTodo,@NoSpell
@@ -576,12 +588,12 @@ if s:extfname == "dtx"
   syn match texComment		"\^\^A.*$"	contains=@texCommentGroup
   syn match texComment		"^%\+"		contains=@texCommentGroup
 else
-  if g:tex_fold_enabled
+  if s:tex_fold_enabled
    " allows syntax-folding of 2 or more contiguous comment lines
    " single-line comments are not folded
    syn match  texComment	"%.*$"			contains=@texCommentGroup
    if s:tex_fast =~ 'c'
-    syn region texComment	start="^\zs\s*%.*\_s*%"	skip="^\s*%"	end='^\ze\s*[^%]' fold
+    syn region texComment	start="^\zs\s*%.*\_s*%"	skip="^\s*%"	end='^\ze\s*[^%]' fold                                               contains=@texCommentGroup
     syn region texNoSpell	contained		matchgroup=texComment start="%\s*nospell\s*{"		end="%\s*nospell\s*}"	fold contains=@texFoldGroup,@NoSpell
     syn region texSpellZone		 		matchgroup=texComment start="%\s*spellzone_start"	end="%\s*spellzone_end"	fold contains=@Spell,@texFoldGroup
    endif
