@@ -4,7 +4,6 @@
 " Previous Maintainer:	Czo <Olivier.Sirol@lip6.fr>
 " Credits:	Stephan Hegel <stephan.hegel@snc.siemens.com.cn>
 " Last Changed:	2015 Oct 13 by Daniel Kho
-" $Id: vhdl.vim,v 1.1 2004/06/13 15:34:56 vimboss Exp $
 
 " VHSIC (Very High Speed Integrated Circuit) Hardware Description Language
 
