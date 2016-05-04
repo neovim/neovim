@@ -1,4 +1,4 @@
-*term.txt*      For Vim version 7.4.  Last change: 2015 Feb 23
+*term.txt*      For Vim version 7.4.  Last change: 2015 Nov 24
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -744,7 +744,7 @@ Mouse clicks can be mapped.  The codes for mouse clicks are:
 
 The X1 and X2 buttons refer to the extra buttons found on some mice.  The
 'Microsoft Explorer' mouse has these buttons available to the right thumb.
-Currently X1 and X2 only work on Win32 environments.
+Currently X1 and X2 only work on Win32 and X11 environments.
 
 Examples: >
 	:noremap <MiddleMouse> <LeftMouse><MiddleMouse>

@@ -1,12 +1,12 @@
 " Vim syntax file
-" Language:	Fortran 2008 (and earlier versions: 2003, 95, 90, and 77)
-" Version:	0.95
-" Last Change:	2015 Jan. 15
+" Language:	Fortran 2008 (and older: Fortran 2003, 95, 90, and 77)
+" Version:	0.96
+" Last Change:	2015 Nov. 30
 " Maintainer:	Ajit J. Thakkar <ajit@unb.ca>; <http://www2.unb.ca/~ajit/>
 " Usage:	For instructions, do :help fortran-syntax from Vim
 " Credits:
 "  Version 0.1 was based on the fortran 77 syntax file by Mario Eusebio and
-"  Preben Guldberg. Useful suggestions were made by: Andrej Panjkov,
+"  Preben Guldberg. Useful suggestions and contributions were made by: Andrej Panjkov,
 "  Bram Moolenaar, Thomas Olsen, Michael Sternberg, Christian Reile,
 "  Walter Dieudonné, Alexander Wagner, Roman Bertle, Charles Rendleman,
 "  Andrew Griffiths, Joe Krahn, Hendrik Merx, and Matt Thompson.
@@ -19,8 +19,8 @@ let s:cpo_save = &cpo
 set cpo&vim
 
 " Choose fortran_dialect using the priority:
-" source file directive > buffer-local value > global value > default
-" try using directive in first three lines of file
+" source file directive > buffer-local value > global value > file extension
+" first try using directive in first three lines of file
 let b:fortran_retype = getline(1)." ".getline(2)." ".getline(3)
 if b:fortran_retype =~? '\<fortran_dialect\s*=\s*F\>'
   let b:fortran_dialect = "F"
@@ -51,6 +51,12 @@ if !exists("b:fortran_fixed_source")
   elseif exists("fortran_fixed_source")
     " User guarantees fixed source form for all fortran files
     let b:fortran_fixed_source = 1
+  elseif expand("%:e") ==? "f\<90\|95\|03\|08\>"
+    " Free-form file extension defaults as in Intel ifort, gcc(gfortran), NAG, Pathscale, and Cray compilers
+    let b:fortran_fixed_source = 0
+  elseif expand("%:e") ==? "f\|f77\|for"
+    " Fixed-form file extension defaults
+    let b:fortran_fixed_source = 1
   else
     " Modern fortran still allows both free and fixed source form.
     " Assume fixed source form unless signs of free source form
@@ -67,8 +73,8 @@ if !exists("b:fortran_fixed_source")
     while s:ln <= s:lmax
       let s:test = strpart(getline(s:ln),0,5)
       if s:test !~ '^[Cc*]' && s:test !~ '^ *[!#]' && s:test =~ '[^ 0-9\t]' && s:test !~ '^[ 0-9]*\t'
-	let b:fortran_fixed_source = 0
-	break
+        let b:fortran_fixed_source = 0
+        break
       endif
       let s:ln = s:ln + 1
     endwhile

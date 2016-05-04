@@ -1,9 +1,9 @@
 " Vim indent file
-" Language:	Fortran 2008 (and earlier versions: 2003, 95, 90, and 77)
-" Version:	0.41
-" Last Change:	2015 Jan. 15
+" Language:	Fortran 2008 (and older: Fortran 2003, 95, 90, and 77)
+" Version:	0.42
+" Last Change:	2015 Nov. 30
 " Maintainer:	Ajit J. Thakkar <ajit@unb.ca>; <http://www2.unb.ca/~ajit/>
-" Usage:	Do :help fortran-indent from Vim
+" Usage:	For instructions, do :help fortran-indent from Vim
 " Credits:
 "  Useful suggestions were made by: Albert Oliver Serra.
 
@@ -27,7 +27,10 @@ if exists("b:fortran_indent_more") || exists("g:fortran_indent_more")
 endif
 
 " Determine whether this is a fixed or free format source file
-" if this hasn't been done yet
+" if this hasn't been done yet using the priority:
+" buffer-local value
+" > global value
+" > file extension as in Intel ifort, gcc (gfortran), NAG, Pathscale, and Cray compilers
 if !exists("b:fortran_fixed_source")
   if exists("fortran_free_source")
     " User guarantees free source form
@@ -35,13 +38,19 @@ if !exists("b:fortran_fixed_source")
   elseif exists("fortran_fixed_source")
     " User guarantees fixed source form
     let b:fortran_fixed_source = 1
+  elseif expand("%:e") ==? "f\<90\|95\|03\|08\>"
+    " Free-form file extension defaults as in Intel ifort, gcc(gfortran), NAG, Pathscale, and Cray compilers
+    let b:fortran_fixed_source = 0
+  elseif expand("%:e") ==? "f\|f77\|for"
+    " Fixed-form file extension defaults
+    let b:fortran_fixed_source = 1
   else
-    " f90 and f95 allow both fixed and free source form
-    " assume fixed source form unless signs of free source form
+    " Modern fortran still allows both fixed and free source form
+    " Assume fixed source form unless signs of free source form
     " are detected in the first five columns of the first s:lmax lines.
-    " Detection becomes more accurate and more time-consuming if more lines
+    " Detection becomes more accurate and time-consuming if more lines
     " are checked. Increase the limit below if you keep lots of comments at
-    " the very top of each file and you have a fast computer
+    " the very top of each file and you have a fast computer.
     let s:lmax = 500
     if ( s:lmax > line("$") )
       let s:lmax = line("$")

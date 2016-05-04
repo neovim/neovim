@@ -3,8 +3,8 @@
 " Maintainer:  Debian Vim Maintainers <pkg-vim-maintainers@lists.alioth.debian.org>
 " Former Maintainers: Gerfried Fuchs <alfie@ist.org>
 "                     Wichert Akkerman <wakkerma@debian.org>
-" Last Change: 2015 Apr 30
-" URL: http://anonscm.debian.org/hg/pkg-vim/vim/raw-file/unstable/runtime/syntax/debchangelog.vim
+" Last Change: 2015 Oct 24
+" URL: https://anonscm.debian.org/cgit/pkg-vim/vim.git/plain/runtime/syntax/debchangelog.vim
 
 " Standard syntax initialization
 if version < 600
@@ -23,7 +23,7 @@ let binNMU='binary-only=yes'
 syn match debchangelogName	contained "^[[:alnum:]][[:alnum:].+-]\+ "
 exe 'syn match debchangelogFirstKV	contained "; \('.urgency.'\|'.binNMU.'\)"'
 exe 'syn match debchangelogOtherKV	contained ", \('.urgency.'\|'.binNMU.'\)"'
-syn match debchangelogTarget	contained "\v %(frozen|unstable|sid|%(testing|%(old)=stable)%(-proposed-updates|-security)=|experimental|squeeze-%(backports%(-sloppy)=|volatile|lts|security)|wheezy-%(backports%(-sloppy)=|security)|jessie%(-backports|-security)=|stretch|%(devel|lucid|precise|trusty|utopic)%(-%(security|proposed|updates|backports|commercial|partner))=)+"
+syn match debchangelogTarget	contained "\v %(frozen|unstable|sid|%(testing|%(old)=stable)%(-proposed-updates|-security)=|experimental|squeeze-%(backports%(-sloppy)=|volatile|lts|security)|wheezy-%(backports%(-sloppy)=|security)|jessie%(-backports|-security)=|stretch|%(devel|precise|trusty|vivid|wily|xenial)%(-%(security|proposed|updates|backports|commercial|partner))=)+"
 syn match debchangelogVersion	contained "(.\{-})"
 syn match debchangelogCloses	contained "closes:\_s*\(bug\)\=#\=\_s\=\d\+\(,\_s*\(bug\)\=#\=\_s\=\d\+\)*"
 syn match debchangelogLP	contained "\clp:\s\+#\d\+\(,\s*#\d\+\)*"

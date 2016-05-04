@@ -1,4 +1,4 @@
-*various.txt*   For Vim version 7.4.  Last change: 2014 Aug 06
+*various.txt*   For Vim version 7.4.  Last change: 2015 Nov 15
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -589,5 +589,13 @@ the whole screen.  But it works good enough for most uses, and you get syntax
 highlighting.
 
 The "h" key will give you a short overview of the available commands.
+
+If you want to set options differently when using less, define the
+LessInitFunc in your vimrc, for example: >
+
+	func LessInitFunc()
+	  set nocursorcolumn nocursorline
+	endfunc
+<
 
  vim:tw=78:ts=8:ft=help:norl:

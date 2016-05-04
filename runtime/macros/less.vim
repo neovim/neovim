@@ -1,6 +1,6 @@
 " Vim script to work like "less"
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2014 May 13
+" Last Change:	2015 Nov 15
 
 " Avoid loading this file twice, allow the user to define his own script.
 if exists("loaded_less")
@@ -47,6 +47,12 @@ set nows
 " Inhibit screen updates while searching
 let s:lz = &lz
 set lz
+
+" Allow the user to define a function, which can set options specifically for
+" this script.
+if exists('*LessInitFunc')
+  call LessInitFunc()
+endif
 
 " Used after each command: put cursor at end and display position
 if &wrap

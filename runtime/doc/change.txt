@@ -1,4 +1,4 @@
-*change.txt*    For Vim version 7.4.  Last change: 2015 Sep 06
+*change.txt*    For Vim version 7.4.  Last change: 2015 Oct 17
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -832,6 +832,36 @@ either the first or second pattern in parentheses did not match, so either
 \1 or \2 is empty.  Example: >
   :s/\([ab]\)\|\([cd]\)/\1x/g   modifies "a b c d"  to "ax bx x x"
 <
+
+		*:sc* *:sce* *:scg* *:sci* *:scI* *:scl* *:scp* *:sg* *:sgc*
+		*:sge* *:sgi* *:sgI* *:sgl* *:sgn* *:sgp* *:sgr* *:sI* *:si*
+		*:sic* *:sIc* *:sie* *:sIe* *:sIg* *:sIl* *:sin* *:sIn* *:sIp*
+		*:sip* *:sIr* *:sir* *:sr* *:src* *:srg* *:sri* *:srI* *:srl*
+		*:srn* *:srp*
+2-letter and 3-letter :substitute commands ~
+
+     List of :substitute commands
+     |      c    e    g    i    I    n    p    l    r
+     | c  :sc  :sce :scg :sci :scI :scn :scp :scl  ---
+     | e
+     | g  :sgc :sge :sg  :sgi :sgI :sgn :sgp :sgl :sgr
+     | i  :sic :sie  --- :si  :siI :sin :sip  --- :sir
+     | I  :sIc :sIe :sIg :sIi :sI  :sIn :sIp :sIl :sIr
+     | n
+     | p
+     | l
+     | r  :src  --- :srg :sri :srI :srn :srp :srl :sr
+
+Exceptions:
+     :scr  is  `:scriptnames`
+     :se   is  `:set`
+     :sig  is  `:sign`
+     :sil  is  `:silent`
+     :sn   is  `:snext`
+     :sp   is  `:split`
+     :sl   is  `:sleep`
+     :sre  is  `:srewind`
+
 
 Substitute with an expression			*sub-replace-expression*
 						*sub-replace-\=* *s/\=*

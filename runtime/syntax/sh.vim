@@ -2,11 +2,11 @@
 " Language:		shell (sh) Korn shell (ksh) bash (sh)
 " Maintainer:		Charles E. Campbell  <NdrOchipS@PcampbellAfamily.Mbiz>
 " Previous Maintainer:	Lennart Schultz <Lennart.Schultz@ecmwf.int>
-" Last Change:		Oct 09, 2015
-" Version:		139
+" Last Change:		Nov 09, 2015
+" Version:		142
 " URL:		http://www.drchip.org/astronaut/vim/index.html#SYNTAX_SH
 " For options and settings, please use:      :help ft-sh-syntax
-" This file includes many ideas from ?ric Brunet (eric.brunet@ens.fr)
+" This file includes many ideas from Eric Brunet (eric.brunet@ens.fr)
 
 " For version 5.x: Clear all syntax items {{{1
 " For version 6.x: Quit when a syntax file was already loaded
@@ -14,17 +14,6 @@ if version < 600
   syntax clear
 elseif exists("b:current_syntax")
   finish
-endif
-
-" AFAICT "." should be considered part of the iskeyword for ksh.  Using iskeywords
-" in syntax is dicey, so the following code permits the user to prevent/override
-"  g:sh_isk set to a string	: specify iskeyword.
-"  g:sh_noisk exists	: don't change iskeyword
-"  g:sh_noisk does not exist	: (default) append "." to iskeyword for kornshell
-if exists("g:sh_isk") && type(g:sh_isk) == 1	" user specifying iskeyword
- exe "setl isk=".g:sh_isk
-elseif !exists("g:sh_noisk") && exists("b:is_kornshell") " append '.' to iskeyword
- setl isk+=.
 endif
 
 " trying to answer the question: which shell is /bin/sh, really?
@@ -73,6 +62,7 @@ if !exists("b:is_kornshell") && !exists("b:is_bash")
 endif
 
 " set up default g:sh_fold_enabled {{{1
+" ================================
 if !exists("g:sh_fold_enabled")
  let g:sh_fold_enabled= 0
 elseif g:sh_fold_enabled != 0 && !has("folding")
@@ -95,6 +85,24 @@ if g:sh_fold_enabled && &fdm == "manual"
  setl fdm=syntax
 endif
 
+" Set up folding commands for shell {{{1
+" =================================
+if s:sh_fold_functions
+ com! -nargs=* ShFoldFunctions <args> fold
+else
+ com! -nargs=* ShFoldFunctions <args>
+endif
+if s:sh_fold_heredoc
+ com! -nargs=* ShFoldHereDoc <args> fold
+else
+ com! -nargs=* ShFoldHereDoc <args>
+endif
+if s:sh_fold_ifdofor
+ com! -nargs=* ShFoldIfDoFor <args> fold
+else
+ com! -nargs=* ShFoldIfDoFor <args>
+endif
+
 " sh syntax is case sensitive {{{1
 syn case match
 
@@ -108,7 +116,7 @@ syn cluster shArithParenList	contains=shArithmetic,shCaseEsac,shComment,shDeref,
 syn cluster shArithList	contains=@shArithParenList,shParenError
 syn cluster shCaseEsacList	contains=shCaseStart,shCase,shCaseBar,shCaseIn,shComment,shDeref,shDerefSimple,shCaseCommandSub,shCaseExSingleQuote,shCaseSingleQuote,shCaseDoubleQuote,shCtrlSeq,@shErrorList,shStringSpecial,shCaseRange
 syn cluster shCaseList	contains=@shCommandSubList,shCaseEsac,shColon,shCommandSub,shComment,shDo,shEcho,shExpr,shFor,shHereDoc,shIf,shRedir,shSetList,shSource,shStatement,shVariable,shCtrlSeq
-syn cluster shCommandSubList	contains=shAlias,shArithmetic,shCmdParenRegion,shCtrlSeq,shDeref,shDerefSimple,shDoubleQuote,shEcho,shEscape,shExDoubleQuote,shExpr,shExSingleQuote,shNumber,shOperator,shOption,shPosnParm,shSingleQuote,shSpecial,shStatement,shSubSh,shTest,shVariable
+syn cluster shCommandSubList	contains=shAlias,shArithmetic,shComment,shCmdParenRegion,shCtrlSeq,shDeref,shDerefSimple,shDoubleQuote,shEcho,shEscape,shExDoubleQuote,shExpr,shExSingleQuote,shNumber,shOperator,shOption,shPosnParm,shSingleQuote,shSpecial,shStatement,shSubSh,shTest,shVariable
 syn cluster shCurlyList	contains=shNumber,shComma,shDeref,shDerefSimple,shDerefSpecial
 syn cluster shDblQuoteList	contains=shCommandSub,shDeref,shDerefSimple,shEscape,shPosnParm,shCtrlSeq,shSpecial
 syn cluster shDerefList	contains=shDeref,shDerefSimple,shDerefVar,shDerefSpecial,shDerefWordError,shDerefPPS
@@ -126,9 +134,10 @@ syn cluster shHereList	contains=shBeginHere,shHerePayload
 syn cluster shHereListDQ	contains=shBeginHere,@shDblQuoteList,shHerePayload
 syn cluster shIdList	contains=shCommandSub,shWrapLineOperator,shSetOption,shDeref,shDerefSimple,shRedir,shExSingleQuote,shExDoubleQuote,shSingleQuote,shDoubleQuote,shExpr,shCtrlSeq,shStringSpecial,shAtExpr
 syn cluster shIfList	contains=@shLoopList,shDblBrace,shDblParen,shFunctionKey,shFunctionOne,shFunctionTwo
-syn cluster shLoopList	contains=@shCaseList,@shErrorList,shCaseEsac,shConditional,shDblBrace,shExpr,shFor,shForPP,shIf,shOption,shSet,shTest,shTestOpr
+syn cluster shLoopList	contains=@shCaseList,@shErrorList,shCaseEsac,shConditional,shDblBrace,shExpr,shFor,shForPP,shIf,shOption,shSet,shTest,shTestOpr,shTouch
 syn cluster shSubShList	contains=@shCommandSubList,shCaseEsac,shColon,shCommandSub,shComment,shDo,shEcho,shExpr,shFor,shIf,shRedir,shSetList,shSource,shStatement,shVariable,shCtrlSeq,shOperator
 syn cluster shTestList	contains=shCharClass,shCommandSub,shCtrlSeq,shDeref,shDerefSimple,shDoubleQuote,shExDoubleQuote,shExpr,shExSingleQuote,shNumber,shOperator,shSingleQuote,shTest,shTestOpr
+
 " Echo: {{{1
 " ====
 " This one is needed INSIDE a CommandSub, so that `echo bla` be correct
@@ -145,6 +154,11 @@ if exists("b:is_kornshell") || exists("b:is_bash")
  syn match shStatement "\<alias\>"
  syn region shAlias matchgroup=shStatement start="\<alias\>\s\+\(\h[-._[:alnum:]]\+\)\@="  skip="\\$" end="\>\|`"
  syn region shAlias matchgroup=shStatement start="\<alias\>\s\+\(\h[-._[:alnum:]]\+=\)\@=" skip="\\$" end="="
+
+ " Touch: {{{1
+ " =====
+ syn match shTouch	'\<touch\>[^;#]*'	skipwhite nextgroup=shTouchList contains=shTouchCmd
+ syn match shTouchCmd	'\<touch\>'		contained
 endif
 
 " Error Codes: {{{1
@@ -193,15 +207,16 @@ syn region shSubSh transparent matchgroup=shSubShRegion start="[^(]\zs(" end=")"
 "=======
 syn region shExpr	matchgroup=shRange start="\[" skip=+\\\\\|\\$\|\[+ end="\]" contains=@shTestList,shSpecial
 syn region shTest	transparent matchgroup=shStatement start="\<test\s" skip=+\\\\\|\\$+ matchgroup=NONE end="[;&|]"me=e-1 end="$" contains=@shExprList1
+syn region shNoQuote	start='\S'	skip='\%(\\\\\)*\\.'	end='\ze\s'	contained
 syn match  shTestOpr	contained	'[^-+/%]\zs=' skipwhite nextgroup=shTestDoubleQuote,shTestSingleQuote,shTestPattern
-syn match  shTestOpr	contained	"<=\|>=\|!=\|==\|-.\>\|-\(nt\|ot\|ef\|eq\|ne\|lt\|le\|gt\|ge\)\>\|[!<>]"
+syn match  shTestOpr	contained	"<=\|>=\|!=\|==\|=\~\|-.\>\|-\(nt\|ot\|ef\|eq\|ne\|lt\|le\|gt\|ge\)\>\|[!<>]"
 syn match  shTestPattern	contained	'\w\+'
 syn region shTestDoubleQuote	contained	start='\%(\%(\\\\\)*\\\)\@<!"' skip=+\\\\\|\\"+ end='"'
 syn match  shTestSingleQuote	contained	'\\.'
 syn match  shTestSingleQuote	contained	"'[^']*'"
 if exists("b:is_kornshell") || exists("b:is_bash")
- syn region  shDblBrace matchgroup=Delimiter start="\[\[" skip=+\\\\\|\\$+ end="\]\]"	contains=@shTestList,shComment
- syn region  shDblParen matchgroup=Delimiter start="((" skip=+\\\\\|\\$+ end="))"	contains=@shTestList,shComment
+ syn region  shDblBrace matchgroup=Delimiter start="\[\["	skip=+\%(\\\\\)*\\$+ end="\]\]"	contains=@shTestList,shNoQuote,shComment
+ syn region  shDblParen matchgroup=Delimiter start="(("	skip=+\%(\\\\\)*\\$+ end="))"	contains=@shTestList,shComment
 endif
 
 " Character Class In Range: {{{1
@@ -210,17 +225,11 @@ syn match   shCharClass	contained	"\[:\(backspace\|escape\|return\|xdigit\|alnum
 
 " Loops: do, if, while, until {{{1
 " ======
-if s:sh_fold_ifdofor
- syn region shDo	fold transparent matchgroup=shConditional start="\<do\>" matchgroup=shConditional end="\<done\>"			contains=@shLoopList
- syn region shIf	fold transparent matchgroup=shConditional start="\<if\_s" matchgroup=shConditional skip=+-fi\>+ end="\<;\_s*then\>" end="\<fi\>"	contains=@shIfList
- syn region shFor	fold matchgroup=shLoop start="\<for\ze\_s\s*\%(((\)\@!" end="\<in\_s" end="\<do\>"me=e-2				contains=@shLoopList,shDblParen skipwhite nextgroup=shCurlyIn
- syn region shForPP	fold matchgroup=shLoop start='\<for\>\_s*((' end='))' contains=shTestOpr
-else
- syn region shDo	transparent matchgroup=shConditional start="\<do\>" matchgroup=shConditional end="\<done\>"			contains=@shLoopList
- syn region shIf	transparent matchgroup=shConditional start="\<if\_s" matchgroup=shConditional skip=+-fi\>+ end="\<;\_s*then\>" end="\<fi\>"	contains=@shIfList
- syn region shFor	matchgroup=shLoop start="\<for\ze\_s\s*\%(((\)\@!" end="\<in\>" end="\<do\>"me=e-2			contains=@shLoopList,shDblParen skipwhite nextgroup=shCurlyIn
- syn region shForPP	matchgroup=shLoop start='\<for\>\_s*((' end='))' contains=shTestOpr
-endif
+ShFoldIfDoFor syn region shDo	transparent	matchgroup=shConditional start="\<do\>" matchgroup=shConditional end="\<done\>"			contains=@shLoopList
+ShFoldIfDoFor syn region shIf	transparent	matchgroup=shConditional start="\<if\_s" matchgroup=shConditional skip=+-fi\>+ end="\<;\_s*then\>" end="\<fi\>"	contains=@shIfList
+ShFoldIfDoFor syn region shFor		matchgroup=shLoop start="\<for\ze\_s\s*\%(((\)\@!" end="\<in\>" end="\<do\>"me=e-2			contains=@shLoopList,shDblParen skipwhite nextgroup=shCurlyIn
+ShFoldIfDoFor syn region shForPP	matchgroup=shLoop start='\<for\>\_s*((' end='))' contains=shTestOpr
+
 if exists("b:is_kornshell") || exists("b:is_bash")
  syn cluster shCaseList	add=shRepeat
  syn cluster shFunctionList	add=shRepeat
@@ -238,13 +247,9 @@ syn match  shComma     contained	","
 " ====
 syn match   shCaseBar	contained skipwhite "\(^\|[^\\]\)\(\\\\\)*\zs|"		nextgroup=shCase,shCaseStart,shCaseBar,shComment,shCaseExSingleQuote,shCaseSingleQuote,shCaseDoubleQuote
 syn match   shCaseStart	contained skipwhite skipnl "("			nextgroup=shCase,shCaseBar
-if s:sh_fold_ifdofor
- syn region  shCase	fold contained skipwhite skipnl matchgroup=shSnglCase start="\%(\\.\|[^#$()'" \t]\)\{-}\zs)"  end=";;" end="esac"me=s-1 contains=@shCaseList nextgroup=shCaseStart,shCase,shComment
- syn region  shCaseEsac	fold matchgroup=shConditional start="\<case\>" end="\<esac\>"	contains=@shCaseEsacList
-else
- syn region  shCase	contained skipwhite skipnl matchgroup=shSnglCase start="\%(\\.\|[^#$()'" \t]\)\{-}\zs)"  end=";;" end="esac"me=s-1 contains=@shCaseList nextgroup=shCaseStart,shCase,shComment
- syn region  shCaseEsac	matchgroup=shConditional start="\<case\>" end="\<esac\>"	contains=@shCaseEsacList
-endif
+ShFoldIfDoFor syn region  shCase	contained skipwhite skipnl matchgroup=shSnglCase start="\%(\\.\|[^#$()'" \t]\)\{-}\zs)"  end=";;" end="esac"me=s-1 contains=@shCaseList nextgroup=shCaseStart,shCase,shComment
+ShFoldIfDoFor syn region  shCaseEsac	matchgroup=shConditional start="\<case\>" end="\<esac\>"	contains=@shCaseEsacList
+
 syn keyword shCaseIn	contained skipwhite skipnl in			nextgroup=shCase,shCaseStart,shCaseBar,shComment,shCaseExSingleQuote,shCaseSingleQuote,shCaseDoubleQuote
 if exists("b:is_bash")
  syn region  shCaseExSingleQuote	matchgroup=shQuote start=+\$'+ skip=+\\\\\|\\.+ end=+'+	contains=shStringSpecial,shSpecial	skipwhite skipnl nextgroup=shCaseBar	contained
@@ -286,7 +291,7 @@ if exists("b:is_bash")
  syn cluster shCommandSubList add=bashSpecialVariables,bashStatement
  syn cluster shCaseList add=bashAdminStatement,bashStatement
  syn keyword bashSpecialVariables contained auto_resume BASH BASH_ALIASES BASH_ALIASES BASH_ARGC BASH_ARGC BASH_ARGV BASH_ARGV BASH_CMDS BASH_CMDS BASH_COMMAND BASH_COMMAND BASH_ENV BASH_EXECUTION_STRING BASH_EXECUTION_STRING BASH_LINENO BASH_LINENO BASHOPTS BASHOPTS BASHPID BASHPID BASH_REMATCH BASH_REMATCH BASH_SOURCE BASH_SOURCE BASH_SUBSHELL BASH_SUBSHELL BASH_VERSINFO BASH_VERSION BASH_XTRACEFD BASH_XTRACEFD CDPATH COLUMNS COLUMNS COMP_CWORD COMP_CWORD COMP_KEY COMP_KEY COMP_LINE COMP_LINE COMP_POINT COMP_POINT COMPREPLY COMPREPLY COMP_TYPE COMP_TYPE COMP_WORDBREAKS COMP_WORDBREAKS COMP_WORDS COMP_WORDS COPROC COPROC DIRSTACK EMACS EMACS ENV ENV EUID FCEDIT FIGNORE FUNCNAME FUNCNAME FUNCNEST FUNCNEST GLOBIGNORE GROUPS histchars HISTCMD HISTCONTROL HISTFILE HISTFILESIZE HISTIGNORE HISTSIZE HISTTIMEFORMAT HISTTIMEFORMAT HOME HOSTFILE HOSTNAME HOSTTYPE IFS IGNOREEOF INPUTRC LANG LC_ALL LC_COLLATE LC_CTYPE LC_CTYPE LC_MESSAGES LC_NUMERIC LC_NUMERIC LINENO LINES LINES MACHTYPE MAIL MAILCHECK MAILPATH MAPFILE MAPFILE OLDPWD OPTARG OPTERR OPTIND OSTYPE PATH PIPESTATUS POSIXLY_CORRECT POSIXLY_CORRECT PPID PROMPT_COMMAND PS1 PS2 PS3 PS4 PWD RANDOM READLINE_LINE READLINE_LINE READLINE_POINT READLINE_POINT REPLY SECONDS SHELL SHELL SHELLOPTS SHLVL TIMEFORMAT TIMEOUT TMPDIR TMPDIR UID
- syn keyword bashStatement chmod clear complete du egrep expr fgrep find gnufind gnugrep grep less ls mkdir mv rm rmdir rpm sed sleep sort strip tail touch
+ syn keyword bashStatement chmod clear complete du egrep expr fgrep find gnufind gnugrep grep less ls mkdir mv rm rmdir rpm sed sleep sort strip tail 
  syn keyword bashAdminStatement daemon killall killproc nice reload restart start status stop
  syn keyword bashStatement	command compgen
 endif
@@ -295,7 +300,7 @@ if exists("b:is_kornshell")
  syn cluster shCommandSubList add=kshSpecialVariables,kshStatement
  syn cluster shCaseList add=kshStatement
  syn keyword kshSpecialVariables contained CDPATH COLUMNS EDITOR ENV ERRNO FCEDIT FPATH HISTFILE HISTSIZE HOME IFS LINENO LINES MAIL MAILCHECK MAILPATH OLDPWD OPTARG OPTIND PATH PPID PS1 PS2 PS3 PS4 PWD RANDOM REPLY SECONDS SHELL TMOUT VISUAL
- syn keyword kshStatement cat chmod clear cp du egrep expr fgrep find grep killall less ls mkdir mv nice printenv rm rmdir sed sort strip stty tail touch tput
+ syn keyword kshStatement cat chmod clear cp du egrep expr fgrep find grep killall less ls mkdir mv nice printenv rm rmdir sed sort strip stty tail tput
  syn keyword kshStatement command setgroups setsenv
 endif
 
@@ -323,7 +328,6 @@ syn region  shSingleQuote	matchgroup=shQuote start=+'+ end=+'+		contains=@Spell
 syn region  shDoubleQuote	matchgroup=shQuote start=+\%(\%(\\\\\)*\\\)\@<!"+ skip=+\\"+ end=+"+	contains=@shDblQuoteList,shStringSpecial,@Spell
 syn match   shStringSpecial	"[^[:print:] \t]"		contained
 syn match   shStringSpecial	"\%(\\\\\)*\\[\\"'`$()#]"
-" COMBAK: why is ,shComment on next line???
 syn match   shSpecial	"[^\\]\zs\%(\\\\\)*\\[\\"'`$()#]"
 syn match   shSpecial	"^\%(\\\\\)*\\[\\"'`$()#]"
 syn match   shMoreSpecial	"\%(\\\\\)*\\[\\"'`$()#]"		nextgroup=shMoreSpecial contained
@@ -347,35 +351,22 @@ if version < 600
  syn region shHereDoc matchgroup=shHereDoc05 start="<<\s*\**\.\**"		matchgroup=shHereDoc05 end="^\.$"	contains=@shDblQuoteList
  syn region shHereDoc matchgroup=shHereDoc06 start="<<-\s*\**\.\**"		matchgroup=shHereDoc06 end="^\s*\.$"	contains=@shDblQuoteList
 
-elseif s:sh_fold_heredoc
- syn region shHereDoc matchgroup=shHereDoc07 fold start="<<\s*\z([^ \t|]*\)"		matchgroup=shHereDoc07 end="^\z1\s*$"	contains=@shDblQuoteList
- syn region shHereDoc matchgroup=shHereDoc08 fold start="<<\s*\"\z([^ \t|]*\)\""	matchgroup=shHereDoc08 end="^\z1\s*$"
- syn region shHereDoc matchgroup=shHereDoc09 fold start="<<\s*'\z([^ \t|]*\)'"		matchgroup=shHereDoc09 end="^\z1\s*$"
- syn region shHereDoc matchgroup=shHereDoc10 fold start="<<-\s*\z([^ \t|]*\)"		matchgroup=shHereDoc10 end="^\s*\z1\s*$"	contains=@shDblQuoteList
- syn region shHereDoc matchgroup=shHereDoc11 fold start="<<-\s*\"\z([^ \t|]*\)\""	matchgroup=shHereDoc11 end="^\s*\z1\s*$"
- syn region shHereDoc matchgroup=shHereDoc12 fold start="<<-\s*'\z([^ \t|]*\)'"		matchgroup=shHereDoc12 end="^\s*\z1\s*$"
- syn region shHereDoc matchgroup=shHereDoc13 fold start="<<\s*\\\_$\_s*\z([^ \t|]*\)"	matchgroup=shHereDoc13 end="^\z1\s*$"
- syn region shHereDoc matchgroup=shHereDoc14 fold start="<<\s*\\\_$\_s*\"\z([^ \t|]*\)\""	matchgroup=shHereDoc14 end="^\z1\s*$"
- syn region shHereDoc matchgroup=shHereDoc15 fold start="<<-\s*\\\_$\_s*'\z([^ \t|]*\)'"	matchgroup=shHereDoc15 end="^\s*\z1\s*$"
- syn region shHereDoc matchgroup=shHereDoc16 fold start="<<-\s*\\\_$\_s*\z([^ \t|]*\)"	matchgroup=shHereDoc16 end="^\s*\z1\s*$"
- syn region shHereDoc matchgroup=shHereDoc17 fold start="<<-\s*\\\_$\_s*\"\z([^ \t|]*\)\""	matchgroup=shHereDoc17 end="^\s*\z1\s*$"
- syn region shHereDoc matchgroup=shHereDoc18 fold start="<<\s*\\\_$\_s*'\z([^ \t|]*\)'"	matchgroup=shHereDoc18 end="^\z1\s*$"
- syn region shHereDoc matchgroup=shHereDoc19 fold start="<<\\\z([^ \t|]*\)"		matchgroup=shHereDoc19 end="^\z1\s*$"
-
 else
- syn region shHereDoc matchgroup=shHereDoc20 start="<<\s*\\\=\z([^ \t|]*\)"		matchgroup=shHereDoc20 end="^\z1\s*$"    contains=@shDblQuoteList
- syn region shHereDoc matchgroup=shHereDoc21 start="<<\s*\"\z([^ \t|]*\)\""		matchgroup=shHereDoc21 end="^\z1\s*$"
- syn region shHereDoc matchgroup=shHereDoc22 start="<<-\s*\z([^ \t|]*\)"		matchgroup=shHereDoc22 end="^\s*\z1\s*$" contains=@shDblQuoteList
- syn region shHereDoc matchgroup=shHereDoc23 start="<<-\s*'\z([^ \t|]*\)'"		matchgroup=shHereDoc23 end="^\s*\z1\s*$"
- syn region shHereDoc matchgroup=shHereDoc24 start="<<\s*'\z([^ \t|]*\)'"		matchgroup=shHereDoc24 end="^\z1\s*$"
- syn region shHereDoc matchgroup=shHereDoc25 start="<<-\s*\"\z([^ \t|]*\)\""		matchgroup=shHereDoc25 end="^\s*\z1\s*$"
- syn region shHereDoc matchgroup=shHereDoc26 start="<<\s*\\\_$\_s*\z([^ \t|]*\)"	matchgroup=shHereDoc26 end="^\z1\s*$"
- syn region shHereDoc matchgroup=shHereDoc27 start="<<-\s*\\\_$\_s*\z([^ \t|]*\)"	matchgroup=shHereDoc27 end="^\s*\z1\s*$"
- syn region shHereDoc matchgroup=shHereDoc28 start="<<-\s*\\\_$\_s*'\z([^ \t|]*\)'"	matchgroup=shHereDoc28 end="^\s*\z1\s*$"
- syn region shHereDoc matchgroup=shHereDoc29 start="<<\s*\\\_$\_s*'\z([^ \t|]*\)'"	matchgroup=shHereDoc29 end="^\z1\s*$"
- syn region shHereDoc matchgroup=shHereDoc30 start="<<\s*\\\_$\_s*\"\z([^ \t|]*\)\""	matchgroup=shHereDoc30 end="^\z1\s*$"
- syn region shHereDoc matchgroup=shHereDoc31 start="<<-\s*\\\_$\_s*\"\z([^ \t|]*\)\""	matchgroup=shHereDoc31 end="^\s*\z1\s*$"
- syn region shHereDoc matchgroup=shHereDoc32 start="<<\\\z([^ \t|]*\)"		matchgroup=shHereDoc32 end="^\z1\s*$"
+ ShFoldHereDoc syn region shHereDoc matchgroup=shHereDoc07 start="<<\s*\\\=\z([^ \t|]\+\)"		matchgroup=shHereDoc07 end="^\z1\s*$"	contains=@shDblQuoteList
+ ShFoldHereDoc syn region shHereDoc matchgroup=shHereDoc08 start="<<\s*\"\z([^ \t|]\+\)\""		matchgroup=shHereDoc08 end="^\z1\s*$"
+ ShFoldHereDoc syn region shHereDoc matchgroup=shHereDoc09 start="<<-\s*\z([^ \t|]\+\)"		matchgroup=shHereDoc09 end="^\s*\z1\s*$"	contains=@shDblQuoteList
+ ShFoldHereDoc syn region shHereDoc matchgroup=shHereDoc10 start="<<-\s*'\z([^ \t|]\+\)'"		matchgroup=shHereDoc10 end="^\s*\z1\s*$"
+ ShFoldHereDoc syn region shHereDoc matchgroup=shHereDoc11 start="<<\s*'\z([^ \t|]\+\)'"		matchgroup=shHereDoc11 end="^\z1\s*$"
+ ShFoldHereDoc syn region shHereDoc matchgroup=shHereDoc12 start="<<-\s*\"\z([^ \t|]\+\)\""		matchgroup=shHereDoc12 end="^\s*\z1\s*$"
+ ShFoldHereDoc syn region shHereDoc matchgroup=shHereDoc13 start="<<\s*\\\_$\_s*\z([^ \t|]\+\)"		matchgroup=shHereDoc13 end="^\z1\s*$"           contains=@shDblQuoteList
+ ShFoldHereDoc syn region shHereDoc matchgroup=shHereDoc14 start="<<\s*\\\_$\_s*'\z([^ \t|]\+\)'"	matchgroup=shHereDoc14 end="^\z1\s*$"
+ ShFoldHereDoc syn region shHereDoc matchgroup=shHereDoc15 start="<<\s*\\\_$\_s*\"\z([^ \t|]\+\)\""	matchgroup=shHereDoc15 end="^\z1\s*$"
+ ShFoldHereDoc syn region shHereDoc matchgroup=shHereDoc16 start="<<-\s*\\\_$\_s*\z([^ \t|]\+\)"	matchgroup=shHereDoc16 end="^\s*\z1\s*$"	
+ ShFoldHereDoc syn region shHereDoc matchgroup=shHereDoc17 start="<<-\s*\\\_$\_s*\\\z([^ \t|]\+\)"	matchgroup=shHereDoc17 end="^\s*\z1\s*$"	
+ ShFoldHereDoc syn region shHereDoc matchgroup=shHereDoc18 start="<<-\s*\\\_$\_s*'\z([^ \t|]\+\)'"	matchgroup=shHereDoc18 end="^\s*\z1\s*$"
+ ShFoldHereDoc syn region shHereDoc matchgroup=shHereDoc19 start="<<-\s*\\\_$\_s*\"\z([^ \t|]\+\)\""	matchgroup=shHereDoc19 end="^\s*\z1\s*$"
+ ShFoldHereDoc syn region shHereDoc matchgroup=shHereDoc20 start="<<\\\z([^ \t|]\+\)"		matchgroup=shHereDoc20 end="^\z1\s*$"
+ ShFoldHereDoc syn region shHereDoc matchgroup=shHereDoc21 start="<<-\s*\\\z([^ \t|]\+\)"		matchgroup=shHereDoc21 end="^\s*\z1\s*$"
 endif
 
 " Here Strings: {{{1
@@ -407,43 +398,35 @@ if !exists("g:is_posix")
 endif
 
 if exists("b:is_bash")
- if s:sh_fold_functions
-  syn region shFunctionOne	fold	matchgroup=shFunction start="^\s*\h[-a-zA-Z_0-9]*\s*()\_s*{"		end="}"	contains=@shFunctionList			skipwhite skipnl nextgroup=shFunctionStart,shQuickComment
-  syn region shFunctionTwo	fold	matchgroup=shFunction start="\<[^d][^o]\&\h[-a-zA-Z_0-9]*\s*\%(()\)\=\_s*{"	end="}"	contains=shFunctionKey,@shFunctionList contained	skipwhite skipnl nextgroup=shFunctionStart,shQuickComment
-  syn region shFunctionThree	fold	matchgroup=shFunction start="^\s*\h[-a-zA-Z_0-9]*\s*()\_s*("		end=")"	contains=@shFunctionList			skipwhite skipnl nextgroup=shFunctionStart,shQuickComment
-  syn region shFunctionFour	fold	matchgroup=shFunction start="\<[^d][^o]\&\h[-a-zA-Z_0-9]*\s*\%(()\)\=\_s*)"	end=")"	contains=shFunctionKey,@shFunctionList contained	skipwhite skipnl nextgroup=shFunctionStart,shQuickComment
- else
-  syn region shFunctionOne		matchgroup=shFunction start="^\s*\h[-a-zA-Z_0-9]*\s*()\_s*{"		end="}"	contains=@shFunctionList
-  syn region shFunctionTwo		matchgroup=shFunction start="\<[^d][^o]\&\h[-a-zA-Z_0-9]*\s*\%(()\)\=\_s*{"	end="}"	contains=shFunctionKey,@shFunctionList contained
-  syn region shFunctionThree		matchgroup=shFunction start="^\s*\h[-a-zA-Z_0-9]*\s*()\_s*("		end=")"	contains=@shFunctionList
-  syn region shFunctionFour		matchgroup=shFunction start="\<[^d][^o]\&\h[-a-zA-Z_0-9]*\s*\%(()\)\=\_s*("	end=")"	contains=shFunctionKey,@shFunctionList contained
- endif
+ ShFoldFunctions syn region shFunctionOne	matchgroup=shFunction start="^\s*\h[-a-zA-Z_0-9]*\s*()\_s*{"		end="}"	contains=@shFunctionList			skipwhite skipnl nextgroup=shFunctionStart,shQuickComment
+ ShFoldFunctions syn region shFunctionTwo	matchgroup=shFunction start="\<[^d][^o]\&\h[-a-zA-Z_0-9]*\s*\%(()\)\=\_s*{"	end="}"	contains=shFunctionKey,@shFunctionList contained	skipwhite skipnl nextgroup=shFunctionStart,shQuickComment
+ ShFoldFunctions syn region shFunctionThree	matchgroup=shFunction start="^\s*\h[-a-zA-Z_0-9]*\s*()\_s*("		end=")"	contains=@shFunctionList			skipwhite skipnl nextgroup=shFunctionStart,shQuickComment
+ ShFoldFunctions syn region shFunctionFour	matchgroup=shFunction start="\<[^d][^o]\&\h[-a-zA-Z_0-9]*\s*\%(()\)\=\_s*)"	end=")"	contains=shFunctionKey,@shFunctionList contained	skipwhite skipnl nextgroup=shFunctionStart,shQuickComment
 else
- if s:sh_fold_functions
-  syn region shFunctionOne	fold	matchgroup=shFunction start="^\s*\h\w*\s*()\_s*{"		end="}"	contains=@shFunctionList	       skipwhite skipnl		nextgroup=shFunctionStart,shQuickComment
-  syn region shFunctionTwo	fold	matchgroup=shFunction start="\<[^d][^o]\&\h\w*\s*\%(()\)\=\_s*{"	end="}"	contains=shFunctionKey,@shFunctionList contained skipwhite skipnl	nextgroup=shFunctionStart,shQuickComment
-  syn region shFunctionThree	fold	matchgroup=shFunction start="^\s*\h\w*\s*()\_s*("		end=")"	contains=@shFunctionList	       skipwhite skipnl		nextgroup=shFunctionStart,shQuickComment
-  syn region shFunctionFour	fold	matchgroup=shFunction start="\<[^d][^o]\&\h\w*\s*\%(()\)\=\_s*("	end=")"	contains=shFunctionKey,@shFunctionList contained skipwhite skipnl	nextgroup=shFunctionStart,shQuickComment
- else
-  syn region shFunctionOne		matchgroup=shFunction start="^\s*\h\w*\s*()\_s*{"		end="}"	contains=@shFunctionList
-  syn region shFunctionTwo		matchgroup=shFunction start="\<[^d][^o]\&\h\w*\s*\%(()\)\=\_s*{"	end="}"	contains=shFunctionKey,@shFunctionList contained
-  syn region shFunctionThree		matchgroup=shFunction start="^\s*\h\w*\s*()\_s*("		end=")"	contains=@shFunctionList
-  syn region shFunctionFour		matchgroup=shFunction start="\<[^d][^o]\&\h\w*\s*\%(()\)\=\_s*("	end=")"	contains=shFunctionKey,@shFunctionList contained
- endif
+ ShFoldFunctions syn region shFunctionOne	matchgroup=shFunction start="^\s*\h\w*\s*()\_s*{"		end="}"	contains=@shFunctionList	       skipwhite skipnl		nextgroup=shFunctionStart,shQuickComment
+ ShFoldFunctions syn region shFunctionTwo	matchgroup=shFunction start="\<[^d][^o]\&\h\w*\s*\%(()\)\=\_s*{"	end="}"	contains=shFunctionKey,@shFunctionList contained skipwhite skipnl	nextgroup=shFunctionStart,shQuickComment
+ ShFoldFunctions syn region shFunctionThree	matchgroup=shFunction start="^\s*\h\w*\s*()\_s*("		end=")"	contains=@shFunctionList	       skipwhite skipnl		nextgroup=shFunctionStart,shQuickComment
+ ShFoldFunctions syn region shFunctionFour	matchgroup=shFunction start="\<[^d][^o]\&\h\w*\s*\%(()\)\=\_s*("	end=")"	contains=shFunctionKey,@shFunctionList contained skipwhite skipnl	nextgroup=shFunctionStart,shQuickComment
 endif
 
 " Parameter Dereferencing: {{{1
 " ========================
-syn match  shDerefSimple	"\$\%(\k\+\|\d\)"
-syn region shDeref	matchgroup=PreProc start="\${" end="}"	contains=@shDerefList,shDerefVarArray
 if !exists("g:sh_no_error")
  syn match  shDerefWordError	"[^}$[]"	contained
 endif
+syn match  shDerefSimple	"\$\%(\k\+\|\d\)"
+syn region shDeref	matchgroup=PreProc start="\${" end="}"	contains=@shDerefList,shDerefVarArray
 syn match  shDerefSimple	"\$[-#*@!?]"
 syn match  shDerefSimple	"\$\$"
 if exists("b:is_bash") || exists("b:is_kornshell")
  syn region shDeref	matchgroup=PreProc start="\${##\=" end="}"	contains=@shDerefList
  syn region shDeref	matchgroup=PreProc start="\${\$\$" end="}"	contains=@shDerefList
+endif
+
+" ksh: ${!var[*]} array index list syntax: {{{1
+" ========================================
+if exists("b:is_kornshell")
+ syn region shDeref	matchgroup=PreProc start="\${!" end="}"	contains=@shDerefVarArray
 endif
 
 " bash: ${!prefix*} and ${#parameter}: {{{1
@@ -452,10 +435,16 @@ if exists("b:is_bash")
  syn region shDeref	matchgroup=PreProc start="\${!" end="\*\=}"	contains=@shDerefList,shDerefOp
  syn match  shDerefVar	contained	"{\@<=!\k\+"		nextgroup=@shDerefVarList
 endif
+if exists("b:is_kornshell")
+ syn match  shDerefVar	contained	"{\@<=!\k[[:alnum:]_.]*"	nextgroup=@shDerefVarList
+endif
 
 syn match  shDerefSpecial	contained	"{\@<=[-*@?0]"		nextgroup=shDerefOp,shDerefOpError
 syn match  shDerefSpecial	contained	"\({[#!]\)\@<=[[:alnum:]*@_]\+"	nextgroup=@shDerefVarList,shDerefOp
 syn match  shDerefVar	contained	"{\@<=\k\+"		nextgroup=@shDerefVarList
+if exists("b:is_kornshell")
+  syn match  shDerefVar	contained	"{\@<=\k[[:alnum:]_.]*"	nextgroup=@shDerefVarList
+endif
 
 " sh ksh bash : ${var[... ]...}  array reference: {{{1
 syn region  shDerefVarArray   contained	matchgroup=shDeref start="\[" end="]"	contains=@shCommandSubList nextgroup=shDerefOp,shDerefOpError
@@ -594,6 +583,7 @@ hi def link shHereDoc	shString
 hi def link shHerePayload	shHereDoc
 hi def link shLoop	shStatement
 hi def link shMoreSpecial	shSpecial
+hi def link shNoQuote	shDoubleQuote
 hi def link shOption	shCommandSub
 hi def link shPattern	shString
 hi def link shParen	shArithmetic
@@ -611,6 +601,7 @@ hi def link shTestOpr	shConditional
 hi def link shTestPattern	shString
 hi def link shTestDoubleQuote	shString
 hi def link shTestSingleQuote	shString
+hi def link shTouchCmd	shStatement
 hi def link shVariable	shSetList
 hi def link shWrapLineOperator	shOperator
 
@@ -688,17 +679,12 @@ hi def link shHereDoc18		shRedir
 hi def link shHereDoc19		shRedir
 hi def link shHereDoc20		shRedir
 hi def link shHereDoc21		shRedir
-hi def link shHereDoc22		shRedir
-hi def link shHereDoc23		shRedir
-hi def link shHereDoc24		shRedir
-hi def link shHereDoc25		shRedir
-hi def link shHereDoc26		shRedir
-hi def link shHereDoc27		shRedir
-hi def link shHereDoc28		shRedir
-hi def link shHereDoc29		shRedir
-hi def link shHereDoc30		shRedir
-hi def link shHereDoc31		shRedir
-hi def link shHereDoc32		shRedir
+
+" Delete shell folding commands {{{1
+" =============================
+delc ShFoldFunctions
+delc ShFoldHereDoc
+delc ShFoldIfDoFor
 
 " Set Current Syntax: {{{1
 " ===================

@@ -1,4 +1,4 @@
-*quickref.txt*  For Vim version 7.4.  Last change: 2015 Jul 21
+*quickref.txt*  For Vim version 7.4.  Last change: 2015 Nov 10
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -800,6 +800,7 @@ Short explanation of each option:		*option-list*
 'patchexpr'	  'pex'     expression used to patch a file
 'patchmode'	  'pm'	    keep the oldest version of a file
 'path'		  'pa'	    list of directories searched with "gf" et.al.
+'perldll'		    name of the Perl dynamic library
 'preserveindent'  'pi'	    preserve the indent structure when reindenting
 'previewheight'   'pvh'     height of the preview window
 'previewwindow'   'pvw'     identifies the preview window
@@ -812,6 +813,8 @@ Short explanation of each option:		*option-list*
 'printmbfont'	  'pmbfn'   font names to be used for CJK output of :hardcopy
 'printoptions'	  'popt'    controls the format of :hardcopy output
 'pumheight'	  'ph'	    maximum height of the popup menu
+'pythondll'		    name of the Python 2 dynamic library
+'pythonthreedll'	    name of the Python 3 dynamic library
 'quoteescape'	  'qe'	    escape characters used in a string
 'readonly'	  'ro'	    disallow writing the buffer
 'redrawtime'	  'rdt'     timeout for 'hlsearch' and |:match| highlighting
@@ -822,6 +825,7 @@ Short explanation of each option:		*option-list*
 'revins'	  'ri'	    inserting characters will work backwards
 'rightleft'	  'rl'	    window is right-to-left oriented
 'rightleftcmd'	  'rlc'     commands for which editing works right-to-left
+'rubydll'		    name of the Ruby dynamic library
 'ruler'		  'ru'	    show cursor line and column in the status line
 'rulerformat'	  'ruf'     custom format for the ruler
 'runtimepath'	  'rtp'     list of directories used for runtime files

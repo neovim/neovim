@@ -55,14 +55,19 @@ function! s:Highlight_Matching_Pair()
   let before = 0
 
   let text = getline(c_lnum)
-  let c = text[c_col - 1]
+  let matches = matchlist(text, '\(.\)\=\%'.c_col.'c\(.\)')
+  if empty(matches)
+    let [c_before, c] = ['', '']
+  else
+    let [c_before, c] = matches[1:2]
+  endif
   let plist = split(&matchpairs, '.\zs[:,]')
   let i = index(plist, c)
   if i < 0
     " not found, in Insert mode try character before the cursor
     if c_col > 1 && (mode() == 'i' || mode() == 'R')
-      let before = 1
-      let c = text[c_col - 2]
+      let before = strlen(c_before)
+      let c = c_before
       let i = index(plist, c)
     endif
     if i < 0

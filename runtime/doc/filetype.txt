@@ -1,4 +1,4 @@
-*filetype.txt*  For Vim version 7.4.  Last change: 2013 Dec 15
+*filetype.txt*  For Vim version 7.4.  Last change: 2015 Dec 06
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -510,7 +510,7 @@ Local mappings:
 	to the end of the file in Normal mode.  This means "> " is inserted in
 	each line.
 
-MAN							*ft-man-plugin* *:Man*
+MAN					*ft-man-plugin* *:Man* *man.vim*
 
 Displays a manual page in a nice way.  Also see the user manual
 |find-manpage|.
@@ -535,6 +535,13 @@ Global mapping:
 Local mappings:
 CTRL-]		Jump to the manual page for the word under the cursor.
 CTRL-T		Jump back to the previous manual page.
+q		Same as ":quit"
+
+To enable folding use this: >
+  	let g:ft_man_folding_enable = 1
+If you do not like the default folding, use an autocommand to add your desired
+folding style instead.  For example: >
+        autocmd FileType man setlocal foldmethod=indent foldenable
 
 
 PDF							*ft-pdf-plugin*

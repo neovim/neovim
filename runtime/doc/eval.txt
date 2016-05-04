@@ -864,8 +864,8 @@ expr1'th single byte from expr8.  expr8 is used as a String, expr1 as a
 Number.  This doesn't recognize multi-byte encodings, see |byteidx()| for
 an alternative.
 
-Index zero gives the first character.  This is like it works in C.  Careful:
-text column numbers start with one!  Example, to get the character under the
+Index zero gives the first byte.  This is like it works in C.  Careful:
+text column numbers start with one!  Example, to get the byte under the
 cursor: >
 	:let c = getline(".")[col(".") - 1]
 
@@ -6177,11 +6177,6 @@ sort({list} [, {func} [, {dict}]])			*sort()* *E702*
 
 		{dict} is for functions with the "dict" attribute.  It will be
 		used to set the local variable "self". |Dictionary-function|
-
-		The sort is stable, items which compare equal (as number or as
-		string) will keep their relative position. E.g., when sorting
-		on numbers, text strings will sort next to each other, in the
-		same order as they were originally.
 
 		The sort is stable, items which compare equal (as number or as
 		string) will keep their relative position. E.g., when sorting

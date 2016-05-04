@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language: php PHP 3/4/5
 " Maintainer: Jason Woofenden <jason@jasonwoof.com>
-" Last Change: Mar 24, 2015
+" Last Change: Dec 26, 2015
 " URL: https://jasonwoof.com/gitweb/?p=vim-syntax.git;a=blob;f=php.vim;hb=HEAD
 " Former Maintainers: Peter Hodge <toomuchphp-vim@yahoo.com>
 "         Debian VIM Maintainers <pkg-vim-maintainers@lists.alioth.debian.org>
@@ -280,7 +280,7 @@ syn keyword phpStatement  return break continue exit goto  contained
 syn keyword phpKeyword  var const contained
 
 " Type
-syn keyword phpType bool[ean] int[eger] real double float string array object NULL  contained
+syn keyword phpType bool boolean int integer real double float string array object NULL  contained
 
 " Structure
 syn keyword phpStructure  namespace extends implements instanceof parent self contained
@@ -393,13 +393,13 @@ endif
 
 " String
 if exists("php_parent_error_open")
-  syn region  phpStringDouble matchgroup=None start=+"+ skip=+\\\\\|\\"+ end=+"+  contains=@phpAddStrings,phpBackslashSequences,phpBackslashDoubleQuote,@phpInterpDouble contained keepend
-  syn region  phpBacktick matchgroup=None start=+`+ skip=+\\\\\|\\"+ end=+`+  contains=@phpAddStrings,phpIdentifier,phpBackslashSequences,phpIdentifierSimply,phpIdentifierComplex contained keepend
-  syn region  phpStringSingle matchgroup=None start=+'+ skip=+\\\\\|\\'+ end=+'+  contains=@phpAddStrings,phpBackslashSingleQuote contained keepend
+  syn region  phpStringDouble matchgroup=phpStringDouble start=+"+ skip=+\\\\\|\\"+ end=+"+  contains=@phpAddStrings,phpBackslashSequences,phpBackslashDoubleQuote,@phpInterpDouble contained keepend
+  syn region  phpBacktick matchgroup=phpBacktick start=+`+ skip=+\\\\\|\\"+ end=+`+  contains=@phpAddStrings,phpIdentifier,phpBackslashSequences,phpIdentifierSimply,phpIdentifierComplex contained keepend
+  syn region  phpStringSingle matchgroup=phpStringSingle start=+'+ skip=+\\\\\|\\'+ end=+'+  contains=@phpAddStrings,phpBackslashSingleQuote contained keepend
 else
-  syn region  phpStringDouble matchgroup=None start=+"+ skip=+\\\\\|\\"+ end=+"+  contains=@phpAddStrings,phpBackslashSequences,phpBackslashDoubleQuote,@phpInterpDouble contained extend keepend
-  syn region  phpBacktick matchgroup=None start=+`+ skip=+\\\\\|\\"+ end=+`+  contains=@phpAddStrings,phpIdentifier,phpBackslashSequences,phpIdentifierSimply,phpIdentifierComplex contained extend keepend
-  syn region  phpStringSingle matchgroup=None start=+'+ skip=+\\\\\|\\'+ end=+'+  contains=@phpAddStrings,phpBackslashSingleQuote contained keepend extend
+  syn region  phpStringDouble matchgroup=phpStringDouble start=+"+ skip=+\\\\\|\\"+ end=+"+  contains=@phpAddStrings,phpBackslashSequences,phpBackslashDoubleQuote,@phpInterpDouble contained extend keepend
+  syn region  phpBacktick matchgroup=phpBacktick start=+`+ skip=+\\\\\|\\"+ end=+`+  contains=@phpAddStrings,phpIdentifier,phpBackslashSequences,phpIdentifierSimply,phpIdentifierComplex contained extend keepend
+  syn region  phpStringSingle matchgroup=phpStringSingle start=+'+ skip=+\\\\\|\\'+ end=+'+  contains=@phpAddStrings,phpBackslashSingleQuote contained keepend extend
 endif
 
 " HereDoc and NowDoc
@@ -515,7 +515,7 @@ syntax keyword phpStatement die contained
 
 " Highlighting for PHP5's user-definable magic class methods
 syntax keyword phpSpecialFunction containedin=ALLBUT,phpComment,phpStringDouble,phpStringSingle,phpIdentifier
-  \ __construct __destruct __call __toString __sleep __wakeup __set __get __unset __isset __clone __set_state
+  \  __construct __destruct __call __callStatic __get __set __isset __unset __sleep __wakeup __toString __invoke __set_state __clone __debugInfo
 " Highlighting for __autoload slightly different from line above
 syntax keyword phpSpecialFunction containedin=ALLBUT,phpComment,phpStringDouble,phpStringSingle,phpIdentifier,phpMethodsVar
   \ __autoload

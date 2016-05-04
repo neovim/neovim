@@ -1,4 +1,4 @@
-*pattern.txt*   For Vim version 7.4.  Last change: 2015 Mar 16
+*pattern.txt*   For Vim version 7.4.  Last change: 2015 Dec 26
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -392,8 +392,8 @@ Use of "\M" makes the pattern after it be interpreted as if 'nomagic' is used.
 Use of "\v" means that in the pattern after it all ASCII characters except
 '0'-'9', 'a'-'z', 'A'-'Z' and '_' have a special meaning.  "very magic"
 
-Use of "\V" means that in the pattern after it only the backslash has a
-special meaning.  "very nomagic"
+Use of "\V" means that in the pattern after it only the backslash and the
+terminating character (/ or ?) has a special meaning.  "very nomagic"
 
 Examples:
 after:	  \v	   \m	    \M	     \V		matches ~
@@ -401,6 +401,7 @@ after:	  \v	   \m	    \M	     \V		matches ~
 	  $	   $	    $	     \$		matches end-of-line
 	  .	   .	    \.	     \.		matches any character
 	  *	   *	    \*	     \*		any number of the previous atom
+	  ~	   ~	    \~	     \~		latest substitute string
 	  ()	   \(\)     \(\)     \(\)	grouping into an atom
 	  |	   \|	    \|	     \|		separating alternatives
 	  \a	   \a	    \a	     \a		alphabetic character
@@ -477,6 +478,7 @@ More explanation and examples below, follow the links.
 |/\%v|	\%23v	\%23v	in virtual column 23 |/zero-width|
 
 Character classes:					*/character-classes*
+      magic   nomagic	matches ~
 |/\i|	\i	\i	identifier character (see 'isident' option)
 |/\I|	\I	\I	like "\i", but excluding digits
 |/\k|	\k	\k	keyword character (see 'iskeyword' option)
@@ -507,6 +509,7 @@ Character classes:					*/character-classes*
 			class with end-of-line included
 (end of character classes)
 
+      magic   nomagic	matches ~
 |/\e|	\e	\e	<Esc>
 |/\t|	\t	\t	<Tab>
 |/\r|	\r	\r	<CR>
@@ -532,6 +535,7 @@ Character classes:					*/character-classes*
 |/\Z|	\Z	\Z	ignore differences in Unicode "combining characters".
 			Useful when searching voweled Hebrew or Arabic text.
 
+      magic   nomagic	matches ~
 |/\m|	\m	\m	'magic' on for the following chars in the pattern
 |/\M|	\M	\M	'magic' off for the following chars in the pattern
 |/\v|	\v	\v	the following chars in the pattern are "very magic"

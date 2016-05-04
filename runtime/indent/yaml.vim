@@ -1,7 +1,7 @@
 " Vim indent file
 " Language:         YAML
 " Maintainer:       Nikolai Pavlov <zyx.vim@gmail.com>
-" Last Change:	    2015 Sep 25
+" Last Change:	    2015 Nov 01
 
 " Only load this indent file when no other was loaded.
 if exists('b:did_indent')
@@ -14,7 +14,7 @@ set cpo&vim
 let b:did_indent = 1
 
 setlocal indentexpr=GetYAMLIndent(v:lnum)
-setlocal indentkeys=!^F,o,O,0#,0},0],<:>,-
+setlocal indentkeys=!^F,o,O,0#,0},0],<:>,0-
 setlocal nosmartindent
 
 let b:undo_indent = 'setlocal indentexpr< indentkeys< smartindent<'

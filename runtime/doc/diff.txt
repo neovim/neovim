@@ -1,4 +1,4 @@
-*diff.txt*      For Vim version 7.4.  Last change: 2015 Jul 03
+*diff.txt*      For Vim version 7.4.  Last change: 2015 Nov 01
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -174,8 +174,8 @@ hidden buffers.  You can use ":hide" to close a window without unloading the
 buffer.  If you don't want a buffer to remain used for the diff do ":set
 nodiff" before hiding it.
 
-							*:diffu* *:diffupdate*
-:diffu[pdate][!]		Update the diff highlighting and folds.
+							*:dif* *:diffupdate*
+:dif[fupdate][!]		Update the diff highlighting and folds.
 
 Vim attempts to keep the differences updated when you make changes to the
 text.  This mostly takes care of inserted and deleted lines.  Changes within a

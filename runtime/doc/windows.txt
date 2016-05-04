@@ -1,4 +1,4 @@
-*windows.txt*   For Vim version 7.4.  Last change: 2015 Aug 29
+*windows.txt*   For Vim version 7.4.  Last change: 2015 Nov 14
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
