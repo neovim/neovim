@@ -1281,29 +1281,32 @@ exactly four MessagePack objects:
    5 (Register)        Map describing one register (|registers|).  If key 
                        value is equal to default then it is normally not 
                        present.  Keys:
-                       Key  Type             Def  Description ~
-                       rt   UInteger         0    Register type:
-                                                  No  Description ~
-                                                  0   |characterwise-register|
-                                                  1   |linewise-register|
-                                                  2   |blockwise-register|
-                       rw   UInteger         0    Register width. Only valid 
-                                                  for |blockwise-register|s.
-                       rc   Array of binary  N/A  Register contents.  Each 
-                                                  entry in the array 
-                                                  represents its own line.  
-                                                  NUL characters inside the 
-                                                  line should be represented 
-                                                  as NL according to 
-                                                  |NL-used-for-Nul|.
-                       n    UInteger         N/A  Register name: character 
-                                                  code in range [1, 255].  
-                                                  Example: |quote0| register 
-                                                  has name 48 (ASCII code for 
-                                                  zero character).
-                       *    any              none Other keys are allowed 
-                                                  for compatibility reasons, 
-                                                  see |shada-compatibility|.
+                       Key  Type             Def   Description ~
+                       rt   UInteger         0     Register type:
+                                                   No  Description ~
+                                                   0   |characterwise-register|
+                                                   1   |linewise-register|
+                                                   2   |blockwise-register|
+                       rw   UInteger         0     Register width. Only valid
+                                                   for |blockwise-register|s.
+                       rc   Array of binary  N/A   Register contents.  Each
+                                                   entry in the array
+                                                   represents its own line.
+                                                   NUL characters inside the
+                                                   line should be represented
+                                                   as NL according to
+                                                   |NL-used-for-Nul|.
+                       ru   Boolean          false Unnamed register. Whether
+                                                   the unnamed register had
+                                                   pointed to this register.
+                       n    UInteger         N/A   Register name: character
+                                                   code in range [1, 255].
+                                                   Example: |quote0| register
+                                                   has name 48 (ASCII code for
+                                                   zero character).
+                       *    any              none  Other keys are allowed
+                                                   for compatibility reasons,
+                                                   see |shada-compatibility|.
    6 (Variable)        Array containing two items: variable name (binary) and 
                        variable value (any object).  Values are converted 
                        using the same code |msgpackparse()| uses when reading, 

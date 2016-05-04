@@ -98,6 +98,7 @@ KHASH_SET_INIT_STR(strset)
 #define REG_KEY_TYPE "rt"
 #define REG_KEY_WIDTH "rw"
 #define REG_KEY_CONTENTS "rc"
+#define REG_KEY_UNNAMED "ru"
 
 #define KEY_LNUM "l"
 #define KEY_COL "c"
@@ -286,6 +287,7 @@ typedef struct {
       char **contents;
       size_t contents_size;
       size_t width;
+      bool is_unnamed;
       dict_T *additional_data;
     } reg;
     struct global_var {
@@ -1335,7 +1337,7 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
           .y_width = (colnr_T) cur_entry.data.reg.width,
           .timestamp = cur_entry.timestamp,
           .additional_data = cur_entry.data.reg.additional_data,
-        })) {
+        }, cur_entry.data.reg.is_unnamed)) {
           shada_free_shada_entry(&cur_entry);
         }
         // Do not free shada entry: its allocated memory was saved above.
@@ -1780,6 +1782,7 @@ static ShaDaWriteResult shada_pack_entry(msgpack_packer *const packer,
           2  // Register contents and name
           + ONE_IF_NOT_DEFAULT(entry, reg.type)
           + ONE_IF_NOT_DEFAULT(entry, reg.width)
+          + ONE_IF_NOT_DEFAULT(entry, reg.is_unnamed)
           // Additional entries, if any:
           + (size_t) (entry.data.reg.additional_data == NULL
                       ? 0
@@ -1799,6 +1802,14 @@ static ShaDaWriteResult shada_pack_entry(msgpack_packer *const packer,
       if (!CHECK_DEFAULT(entry, reg.width)) {
         PACK_STATIC_STR(REG_KEY_WIDTH);
         msgpack_pack_uint64(spacker, (uint64_t) entry.data.reg.width);
+      }
+      if (!CHECK_DEFAULT(entry, reg.is_unnamed)) {
+        PACK_STATIC_STR(REG_KEY_UNNAMED);
+        if (entry.data.reg.is_unnamed) {
+          msgpack_pack_true(spacker);
+        } else {
+          msgpack_pack_false(spacker);
+        }
       }
       DUMP_ADDITIONAL_DATA(entry.data.reg.additional_data, "register item");
       break;
@@ -2591,7 +2602,8 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer,
     do {
       yankreg_T reg;
       char name = NUL;
-      reg_iter = op_register_iter(reg_iter, &name, &reg);
+      bool is_unnamed = false;
+      reg_iter = op_register_iter(reg_iter, &name, &reg, &is_unnamed);
       if (name == NUL) {
         break;
       }
@@ -2611,6 +2623,7 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer,
               .width = (size_t) (reg.y_type == kMTBlockWise ? reg.y_width : 0),
               .additional_data = reg.additional_data,
               .name = name,
+              .is_unnamed = is_unnamed,
             }
           }
         }
@@ -3594,6 +3607,7 @@ shada_read_next_item_start:
             entry->data.reg.contents[i] = BIN_CONVERTED(arr.ptr[i].via.bin);
           }
         }
+        BOOLEAN_KEY("register", REG_KEY_UNNAMED, entry->data.reg.is_unnamed)
         TYPED_KEY("register", REG_KEY_TYPE, "an unsigned integer",
                   entry->data.reg.type, POSITIVE_INTEGER, u64, TOU8)
         TYPED_KEY("register", KEY_NAME_CHAR, "an unsigned integer",
