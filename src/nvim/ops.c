@@ -5853,3 +5853,19 @@ const yankreg_T *op_register_get(const char name)
   }
   return &y_regs[i];
 }
+
+/// Set the previous yank register
+///
+/// @param[in]  name  Register name.
+///
+/// @return true on success, false on failure.
+bool op_register_set_previous(const char name)
+{
+  int i = op_reg_index(name);
+  if (i == -1) {
+    return false;
+  }
+
+  y_previous = &y_regs[i];
+  return true;
+}
