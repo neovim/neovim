@@ -385,7 +385,7 @@ detailed elsewhere: see |'mouse'|, |win32-hidden-menus|.
 You can drag and drop one or more files into the Vim window, where they will
 be opened as normal.  See |drag-n-drop|.
 
-							*:simalt* *:si*
+							*:simalt* *:sim*
 :sim[alt] {key}		simulate pressing {key} while holding Alt pressed.
 			{only for Win32 versions}
 
