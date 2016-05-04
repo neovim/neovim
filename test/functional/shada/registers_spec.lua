@@ -148,10 +148,23 @@ describe('ShaDa support code', function()
     eq({{'\171«'}, 'v'}, getreg('e'))
   end)
 
-  it('remembers which register was the unnamed register when loading',
+  it('defaults the unnamed register to register 0 if it wasn\'t set',
   function()
     setreg('0', {'zero'}, 'c')
     setreg('1', {'one'}, 'c')
+    setreg('2', {'two'}, 'c')
+    nvim_command('qall')
+    reset()
+    eq({{'zero'}, 'v'}, getreg('0'))
+    eq({{'one'}, 'v'}, getreg('1'))
+    eq({{'zero'}, 'v'}, getreg('"'))
+  end)
+
+  it('remembers which register was the unnamed register when loading',
+  function()
+    setreg('0', {'zero'}, 'c')
+    setreg('1', {'one'}, 'cu')
+    setreg('2', {'two'}, 'c')
     nvim_command('qall')
     reset()
     eq({{'zero'}, 'v'}, getreg('0'))

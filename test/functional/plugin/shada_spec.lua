@@ -636,6 +636,7 @@ describe('In autoload/shada.vim', function()
         '  # Required key missing: rc',
         '  + rw   block width  0',
         '  + rt   type         CHARACTERWISE',
+        '  + ru   is_unnamed   FALSE',
       }, ([[ [{'type': 5, 'timestamp': 0, 'data': {
       }}] ]]):gsub('\n', ''))
       sd2strings_eq({
@@ -645,6 +646,7 @@ describe('In autoload/shada.vim', function()
         '  # Required key missing: rc',
         '  + rw   block width  0',
         '  + rt   type         CHARACTERWISE',
+        '  + ru   is_unnamed   FALSE',
       }, ([[ [{'type': 5, 'timestamp': 0, 'data': {
         'n': 0x20,
       }}] ]]):gsub('\n', ''))
@@ -655,9 +657,11 @@ describe('In autoload/shada.vim', function()
         '  + rc   contents     ["abc", "def"]',
         '  + rw   block width  0',
         '  + rt   type         CHARACTERWISE',
+        '  + ru   is_unnamed   FALSE',
       }, ([[ [{'type': 5, 'timestamp': 0, 'data': {
         'n': 0x20,
         'rc': ["abc", "def"],
+        'ru': {'_TYPE': v:msgpack_types.boolean, '_VAL': 0},
       }}] ]]):gsub('\n', ''))
       sd2strings_eq({
         'Register with timestamp ' .. epoch .. ':',
@@ -668,9 +672,11 @@ describe('In autoload/shada.vim', function()
         '  | - "abcdefghijklmnopqrstuvwxyz"',
         '  + rw   block width  0',
         '  + rt   type         CHARACTERWISE',
+        '  + ru   is_unnamed   TRUE',
       }, ([[ [{'type': 5, 'timestamp': 0, 'data': {
         'n': 0x20,
         'rc': ['abcdefghijklmnopqrstuvwxyz', 'abcdefghijklmnopqrstuvwxyz'],
+        'ru': {'_TYPE': v:msgpack_types.boolean, '_VAL': 1},
       }}] ]]):gsub('\n', ''))
       sd2strings_eq({
         'Register with timestamp ' .. epoch .. ':',
@@ -681,6 +687,7 @@ describe('In autoload/shada.vim', function()
         '  | - "abcdefghijklmnopqrstuvwxyz"',
         '  + rw   block width  0',
         '  + rt   type         CHARACTERWISE',
+        '  + ru   is_unnamed   FALSE',
       }, ([[ [{'type': 5, 'timestamp': 0, 'data': {
         'n': 0x20,
         'rc': ['abcdefghijklmnopqrstuvwxyz', 'abcdefghijklmnopqrstuvwxyz'],
@@ -696,6 +703,7 @@ describe('In autoload/shada.vim', function()
         '  | - "abcdefghijklmnopqrstuvwxyz"',
         '  + rw   block width  5',
         '  + rt   type         LINEWISE',
+        '  + ru   is_unnamed   FALSE',
       }, ([[ [{'type': 5, 'timestamp': 0, 'data': {
         'n': 0x20,
         'rc': ['abcdefghijklmnopqrstuvwxyz', 'abcdefghijklmnopqrstuvwxyz'],
@@ -712,6 +720,7 @@ describe('In autoload/shada.vim', function()
         '  # Expected integer',
         '  + rw   block width  ""',
         '  + rt   type         BLOCKWISE',
+        '  + ru   is_unnamed   FALSE',
       }, ([[ [{'type': 5, 'timestamp': 0, 'data': {
         'n': 0x20,
         'rc': ['abcdefghijklmnopqrstuvwxyz', 'abcdefghijklmnopqrstuvwxyz'],
@@ -729,11 +738,30 @@ describe('In autoload/shada.vim', function()
         '  # Unexpected enum value: expected one of 0 (CHARACTERWISE), '
         .. '1 (LINEWISE), 2 (BLOCKWISE)',
         '  + rt   type         10',
+        '  + ru   is_unnamed   FALSE',
       }, ([[ [{'type': 5, 'timestamp': 0, 'data': {
         'n': 0x20,
         'rc': 0,
         'rw': -1,
         'rt': 10,
+      }}] ]]):gsub('\n', ''))
+      sd2strings_eq({
+        'Register with timestamp ' .. epoch .. ':',
+        '  % Key  Description  Value',
+        '  + n    name         \' \'',
+        '  + rc   contents     @',
+        '  | - "abcdefghijklmnopqrstuvwxyz"',
+        '  | - "abcdefghijklmnopqrstuvwxyz"',
+        '  + rw   block width  5',
+        '  + rt   type         LINEWISE',
+        '  # Expected boolean',
+        '  + ru   is_unnamed   0',
+      }, ([[ [{'type': 5, 'timestamp': 0, 'data': {
+        'n': 0x20,
+        'rc': ['abcdefghijklmnopqrstuvwxyz', 'abcdefghijklmnopqrstuvwxyz'],
+        'rw': 5,
+        'rt': 1,
+        'ru': 0,
       }}] ]]):gsub('\n', ''))
     end)
 
