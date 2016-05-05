@@ -1,4 +1,3 @@
-
 local helpers = require('test.functional.helpers')
 local Screen = require('test.functional.ui.screen')
 local clear, feed = helpers.clear, helpers.feed
@@ -716,4 +715,3 @@ describe('completion', function()
   end)
 
 end)
-

@@ -8692,7 +8692,11 @@ static void f_eventhandler(typval_T *argvars, typval_T *rettv)
  */
 static void f_executable(typval_T *argvars, typval_T *rettv)
 {
-  rettv->vval.v_number = os_can_exe(get_tv_string(&argvars[0]), NULL);
+  char_u *name = get_tv_string(&argvars[0]);
+
+  // Check in $PATH and also check directly if there is a directory name
+  rettv->vval.v_number = os_can_exe(name, NULL, true)
+           || (gettail_dir(name) != name && os_can_exe(name, NULL, false));
 }
 
 /// "exepath()" function
@@ -8701,7 +8705,7 @@ static void f_exepath(typval_T *argvars, typval_T *rettv)
   char_u *arg = get_tv_string(&argvars[0]);
   char_u *path = NULL;
 
-  (void)os_can_exe(arg, &path);
+  (void)os_can_exe(arg, &path, true);
 
   rettv->v_type = VAR_STRING;
   rettv->vval.v_string = path;
@@ -11606,7 +11610,7 @@ static char **tv_to_argv(typval_T *cmd_tv, char **cmd)
   assert(argl->lv_first);
 
   const char_u *exe = get_tv_string_chk(&argl->lv_first->li_tv);
-  if (!exe || !os_can_exe(exe, NULL)) {
+  if (!exe || !os_can_exe(exe, NULL, true)) {
     // String is not executable
     if (exe) {
       EMSG2(e_jobexe, exe);

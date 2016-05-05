@@ -3983,6 +3983,7 @@ static void expand_shellcmd(char_u *filepat, int *num_file, char_u ***file,
   char_u      *s, *e;
   int flags = flagsarg;
   int ret;
+  bool did_curdir = false;
 
   /* for ":set path=" and ":set tags=" halve backslashes for escaped
    * space */
@@ -3991,7 +3992,7 @@ static void expand_shellcmd(char_u *filepat, int *num_file, char_u ***file,
     if (pat[i] == '\\' && pat[i + 1] == ' ')
       STRMOVE(pat + i, pat + i + 1);
 
-  flags |= EW_FILE | EW_EXEC;
+  flags |= EW_FILE | EW_EXEC | EW_SHELLCMD;
 
   bool mustfree = false;  // Track memory allocation for *path.
   /* For an absolute name we don't use $PATH. */
@@ -4011,12 +4012,24 @@ static void expand_shellcmd(char_u *filepat, int *num_file, char_u ***file,
 
   /*
    * Go over all directories in $PATH.  Expand matches in that directory and
-   * collect them in "ga".
+   * collect them in "ga". When "." is not in $PATH also expaned for the
+   * current directory, to find "subdir/cmd".
    */
   ga_init(&ga, (int)sizeof(char *), 10);
-  for (s = path; *s != NUL; s = e) {
-    if (*s == ' ')
-      ++s;              /* Skip space used for absolute path name. */
+  for (s = path; ; s = e) {
+    if (*s == NUL) {
+      if (did_curdir) {
+        break;
+      }
+      // Find directories in the current directory, path is empty.
+      did_curdir = true;
+    } else if (*s == '.') {
+      did_curdir = true;
+    }
+
+    if (*s == ' ') {
+      s++;              // Skip space used for absolute path name.
+    }
 
     e = vim_strchr(s, ':');
     if (e == NULL)
