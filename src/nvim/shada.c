@@ -2329,6 +2329,46 @@ static inline void add_search_pattern(PossiblyFreedShadaEntry *const ret_pse,
   }
 }
 
+/// Initializes registers for writing to the ShaDa file
+///
+/// @param[in]  wms  The WriteMergerState used when writing.
+/// @param[in]  max_reg_lines The maximum number of register lines.
+static void shada_initialize_registers(WriteMergerState *const wms,
+                                       int max_reg_lines) {
+  const void *reg_iter = NULL;
+  const bool limit_reg_lines = max_reg_lines >= 0;
+  do {
+    yankreg_T reg;
+    char name = NUL;
+    bool is_unnamed = false;
+    reg_iter = op_register_iter(reg_iter, &name, &reg, &is_unnamed);
+    if (name == NUL) {
+      break;
+    }
+    if (limit_reg_lines && reg.y_size > max_reg_lines) {
+      continue;
+    }
+    wms->registers[op_reg_index(name)] = (PossiblyFreedShadaEntry) {
+      .can_free_entry = false,
+      .data = {
+        .type = kSDItemRegister,
+        .timestamp = reg.timestamp,
+        .data = {
+          .reg = {
+            .contents = (char **) reg.y_array,
+            .contents_size = (size_t) reg.y_size,
+            .type = reg.y_type,
+            .width = (size_t) (reg.y_type == kMTBlockWise ? reg.y_width : 0),
+            .additional_data = reg.additional_data,
+            .name = name,
+            .is_unnamed = is_unnamed,
+          }
+        }
+      }
+    };
+  } while (reg_iter != NULL);
+}
+
 /// Write ShaDa file
 ///
 /// @param[in]  sd_writer  Structure containing file writer definition.
@@ -2355,7 +2395,6 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer,
   if (max_reg_lines < 0) {
     max_reg_lines = get_shada_parameter('"');
   }
-  const bool limit_reg_lines = max_reg_lines >= 0;
   const bool dump_registers = (max_reg_lines != 0);
   khash_t(bufset) removable_bufs = KHASH_EMPTY_TABLE(bufset);
   const size_t max_kbyte = (size_t) max_kbyte_i;
@@ -2598,37 +2637,7 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer,
 
   // Initialize registers
   if (dump_registers) {
-    const void *reg_iter = NULL;
-    do {
-      yankreg_T reg;
-      char name = NUL;
-      bool is_unnamed = false;
-      reg_iter = op_register_iter(reg_iter, &name, &reg, &is_unnamed);
-      if (name == NUL) {
-        break;
-      }
-      if (limit_reg_lines && reg.y_size > (size_t)max_reg_lines) {
-        continue;
-      }
-      wms->registers[op_reg_index(name)] = (PossiblyFreedShadaEntry) {
-        .can_free_entry = false,
-        .data = {
-          .type = kSDItemRegister,
-          .timestamp = reg.timestamp,
-          .data = {
-            .reg = {
-              .contents = (char **) reg.y_array,
-              .contents_size = (size_t) reg.y_size,
-              .type = reg.y_type,
-              .width = (size_t) (reg.y_type == kMTBlockWise ? reg.y_width : 0),
-              .additional_data = reg.additional_data,
-              .name = name,
-              .is_unnamed = is_unnamed,
-            }
-          }
-        }
-      };
-    } while (reg_iter != NULL);
+    shada_initialize_registers(wms, max_reg_lines);
   }
 
   // Initialize buffers
