@@ -175,7 +175,16 @@ void terminal_init(void)
 
   for (int color_index = 0; color_index < 256; color_index++) {
     VTermColor color;
-    vterm_state_get_palette_color(state, color_index, &color);
+    // Some of the default 16 colors has the same color as the later
+    // 240 colors. To avoid collisions, we will use the custom colors
+    // below in non true color mode.
+    if (color_index < 16) {
+      color.red = 0;
+      color.green = 0;
+      color.blue = (uint8_t)(color_index + 1);
+    } else {
+      vterm_state_get_palette_color(state, color_index, &color);
+    }
     map_put(int, int)(color_indexes,
         RGB(color.red, color.green, color.blue), color_index + 1);
   }
@@ -248,6 +257,15 @@ Terminal *terminal_open(TerminalOptions opts)
   rv->sb_buffer = xmalloc(sizeof(ScrollbackLine *) * rv->sb_size);
 
   if (!true_color) {
+    // Change the first 16 colors so we can easily get the correct color
+    // index from them.
+    for (int i = 0; i < 16; i++) {
+      VTermColor color;
+      color.red = 0;
+      color.green = 0;
+      color.blue = (uint8_t)(i + 1);
+      vterm_state_set_palette_color(state, i, &color);
+    }
     return rv;
   }
 
@@ -548,9 +566,9 @@ void terminal_get_line_attributes(Terminal *term, win_T *wp, int linenr,
     // Since libvterm does not expose the color index used by the program, we
     // use the rgb value to find the appropriate index in the cache computed by
     // `terminal_init`.
-    int vt_fg_idx = vt_fg != default_vt_fg ?
+    int vt_fg_idx = vt_fg != -1 ?
                     map_get(int, int)(color_indexes, vt_fg) : 0;
-    int vt_bg_idx = vt_bg != default_vt_bg ?
+    int vt_bg_idx = vt_bg != -1 ?
                     map_get(int, int)(color_indexes, vt_bg) : 0;
 
     int hl_attrs = (cell.attrs.bold ? HL_BOLD : 0)
