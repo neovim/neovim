@@ -144,7 +144,7 @@ static int KeyNoremap = 0;                  /* remapping flags */
 static char_u typebuf_init[TYPELEN_INIT];       /* initial typebuf.tb_buf */
 static char_u noremapbuf_init[TYPELEN_INIT];    /* initial typebuf.tb_noremap */
 
-static unsigned int last_recorded_len = 0;      // number of last recorded chars
+static size_t last_recorded_len = 0;      // number of last recorded chars
 static const uint8_t ui_toggle[] = { K_SPECIAL, KS_EXTRA, KE_PASTE, 0 };
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -265,18 +265,19 @@ add_buff (
         STRLEN(buf->bh_first.b_next->b_str + buf->bh_index) + 1);
   buf->bh_index = 0;
 
-  ssize_t len;
-  if (buf->bh_space >= slen) {
-    len = (ssize_t)STRLEN(buf->bh_curr->b_str);
+  size_t len;
+  if (buf->bh_space >= (size_t)slen) {
+    len = STRLEN(buf->bh_curr->b_str);
     STRLCPY(buf->bh_curr->b_str + len, s, slen + 1);
-    buf->bh_space -= (int)slen;
+    buf->bh_space -= (size_t)slen;
   } else {
-    if (slen < MINIMAL_SIZE)
+    if (slen < MINIMAL_SIZE) {
       len = MINIMAL_SIZE;
-    else
-      len = slen;
-    buffblock_T *p = xmalloc(sizeof(buffblock_T) + (size_t)len);
-    buf->bh_space = (int)(len - slen);
+    } else {
+      len = (size_t)slen;
+    }
+    buffblock_T *p = xmalloc(sizeof(buffblock_T) + len);
+    buf->bh_space = len - (size_t)slen;
     STRLCPY(p->b_str, s, slen + 1);
 
     p->b_next = buf->bh_curr->b_next;
@@ -1086,22 +1087,20 @@ void del_typebuf(int len, int offset)
  * Write typed characters to script file.
  * If recording is on put the character in the recordbuffer.
  */
-static void gotchars(char_u *chars, int len)
+static void gotchars(char_u *chars, size_t len)
 {
   char_u      *s = chars;
   int c;
   char_u buf[2];
-  int todo = len;
 
   // remember how many chars were last recorded
   if (Recording) {
-    assert(len >= 0);
-    last_recorded_len += (unsigned int)len;
+    last_recorded_len += len;
   }
 
   buf[1] = NUL;
-  while (todo--) {
-    /* Handle one byte at a time; no translation to be done. */
+  while (len--) {
+    // Handle one byte at a time; no translation to be done.
     c = *s++;
     updatescript(c);
 
@@ -1882,11 +1881,11 @@ static int vgetorpeek(int advance)
               match = typebuf_match_len(p_pt, &mlen);
             }
             if (match) {
-              /* write chars to script file(s) */
-              if (mlen > typebuf.tb_maplen)
-                gotchars(typebuf.tb_buf + typebuf.tb_off
-                    + typebuf.tb_maplen,
-                    mlen - typebuf.tb_maplen);
+              // write chars to script file(s)
+              if (mlen > typebuf.tb_maplen) {
+                gotchars(typebuf.tb_buf + typebuf.tb_off + typebuf.tb_maplen,
+                         (size_t)(mlen - typebuf.tb_maplen));
+              }
 
               del_typebuf(mlen, 0);               /* remove the chars */
               set_option_value((char_u *)"paste",
@@ -1980,11 +1979,11 @@ static int vgetorpeek(int advance)
             char_u *save_m_keys;
             char_u *save_m_str;
 
-            /* write chars to script file(s) */
-            if (keylen > typebuf.tb_maplen)
-              gotchars(typebuf.tb_buf + typebuf.tb_off
-                  + typebuf.tb_maplen,
-                  keylen - typebuf.tb_maplen);
+            // write chars to script file(s)
+            if (keylen > typebuf.tb_maplen) {
+              gotchars(typebuf.tb_buf + typebuf.tb_off + typebuf.tb_maplen,
+                       (size_t)(keylen - typebuf.tb_maplen));
+            }
 
             cmd_silent = (typebuf.tb_silent > 0);
             del_typebuf(keylen, 0);             /* remove the mapped keys */
