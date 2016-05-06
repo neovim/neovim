@@ -28,6 +28,7 @@ tags
 /src/nvim/testdir/tiny.vim
 /src/nvim/testdir/test*.out
 /src/nvim/testdir/test.log
+/src/nvim/testdir/messages
 /src/nvim/testdir/viminfo
 /src/nvim/testdir/test.ok
 /src/nvim/testdir/*.failed
