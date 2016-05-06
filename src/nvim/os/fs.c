@@ -149,7 +149,7 @@ int os_nodetype(const char *name)
     case UV_UNKNOWN_HANDLE:
     default:
 #ifdef WIN32
-      nodetype = NODE_OTHER;
+      nodetype = NODE_NORMAL;
 #else
       nodetype = NODE_WRITABLE;  // Everything else is writable?
 #endif
