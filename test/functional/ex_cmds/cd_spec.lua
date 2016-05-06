@@ -111,6 +111,10 @@ end
 -- Test legal parameters for 'getcwd' and 'haslocaldir'
 for _, cmd in ipairs {'getcwd', 'haslocaldir'} do
   describe(cmd..'()', function()
+    before_each(function()
+      clear()
+    end)
+
     -- Test invalid argument types
     local err474 = 'Vim(call):E474: Invalid argument'
     it('fails on string', function()
