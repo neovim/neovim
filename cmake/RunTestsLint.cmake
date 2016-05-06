@@ -1,5 +1,7 @@
+set(IGNORE_FILES "${TEST_DIR}/*/preload.lua")
+
 execute_process(
-  COMMAND ${LUACHECK_PRG} -q ${TEST_DIR}
+  COMMAND ${LUACHECK_PRG} -q ${TEST_DIR} --exclude-files ${IGNORE_FILES}
   WORKING_DIRECTORY ${TEST_DIR}
   ERROR_VARIABLE err
   RESULT_VARIABLE res

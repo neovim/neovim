@@ -3,7 +3,6 @@ local helpers = require('test.functional.helpers')
 local clear, nvim, tabpage, curtab, eq, ok =
   helpers.clear, helpers.nvim, helpers.tabpage, helpers.curtab, helpers.eq,
   helpers.ok
-local wait = helpers.wait
 local curtabmeths = helpers.curtabmeths
 local funcs = helpers.funcs
 

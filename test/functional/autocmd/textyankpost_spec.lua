@@ -1,5 +1,5 @@
 local helpers = require('test.functional.helpers')
-local clear, eval, eq, insert = helpers.clear, helpers.eval, helpers.eq, helpers.insert
+local clear, eval, eq = helpers.clear, helpers.eval, helpers.eq
 local feed, execute, expect, command = helpers.feed, helpers.execute, helpers.expect, helpers.command
 local curbufmeths, funcs, neq = helpers.curbufmeths, helpers.funcs, helpers.neq
 

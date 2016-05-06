@@ -12,7 +12,7 @@ local null_list = {[true]='NULL list'}
 local type_key = {[true]='type key'}
 local list_type = {[true]='list type'}
 
-local list = function(...)
+local function list(...)
   local ret = ffi.gc(eval.list_alloc(), eval.list_unref)
   eq(0, ret.lv_refcount)
   ret.lv_refcount = 1
@@ -47,7 +47,7 @@ local lst2tbl = function(l)
   while li ~= nil do
     local typ = li.li_tv.v_type
     if typ == eval.VAR_STRING then
-      str = li.li_tv.vval.v_string
+      local str = li.li_tv.vval.v_string
       if str == nil then
         ret[#ret + 1] = null_string
       else

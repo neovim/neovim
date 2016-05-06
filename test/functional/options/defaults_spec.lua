@@ -1,8 +1,7 @@
 local helpers = require('test.functional.helpers')
 local Screen = require('test.functional.ui.screen')
-local clear, feed = helpers.clear, helpers.feed
-local eval, eq, neq = helpers.eval, helpers.eq, helpers.neq
-local execute, source, expect = helpers.execute, helpers.source, helpers.expect
+local clear, eval, eq  = helpers.clear, helpers.eval, helpers.eq
+local execute = helpers.execute
 
 local function init_session(...)
   local args = { helpers.nvim_prog, '-i', 'NONE', '--embed',
