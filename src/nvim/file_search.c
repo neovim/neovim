@@ -1402,6 +1402,12 @@ find_file_in_path_option (
   if (vim_isAbsName(ff_file_to_find)
       /* "..", "../path", "." and "./path": don't use the path_option */
       || rel_to_curdir
+#if defined(WIN32)
+	    /* handle "\tmp" as absolute path */
+	    || vim_ispathsep(ff_file_to_find[0])
+	    /* handle "c:name" as absolute path */
+	    || (ff_file_to_find[0] != NUL && ff_file_to_find[1] == ':')
+#endif
       ) {
     /*
      * Absolute path, no need to use "path_option".
