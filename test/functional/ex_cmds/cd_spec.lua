@@ -53,7 +53,7 @@ for _, cmd in ipairs {'cd', 'chdir'} do
       eq(0, wlwd())
 
       -- Change tab-local working directory and verify it is different
-      execute('t' .. cmd .. ' ' .. directories[1])
+      execute('silent t' .. cmd .. ' ' .. directories[1])
       eq(globalDir .. '/' .. directories[1], cwd())
       eq(cwd(), tcwd())  -- working directory maches tab directory
       eq(1, tlwd())
@@ -65,7 +65,7 @@ for _, cmd in ipairs {'cd', 'chdir'} do
       eq(1, tlwd())  -- Still tab-local working directory
       eq(0, wlwd())  -- Still no window-local working directory
       eq(globalDir .. '/' .. directories[1], cwd())
-      execute('l' .. cmd .. ' ../' .. directories[2])
+      execute('silent l' .. cmd .. ' ../' .. directories[2])
       eq(globalDir .. '/' .. directories[2], cwd())
       eq(globalDir .. '/' .. directories[1], tcwd())
       eq(1, wlwd())
@@ -83,7 +83,7 @@ for _, cmd in ipairs {'cd', 'chdir'} do
       eq(0, wlwd())
 
       -- Verify global changes don't affect local ones
-      execute('' .. cmd .. ' ' .. directories[3])
+      execute('silent ' .. cmd .. ' ' .. directories[3])
       eq(globalDir .. '/' .. directories[3], cwd())
       execute('tabnext')
       eq(globalDir .. '/' .. directories[1],  cwd())
@@ -91,7 +91,7 @@ for _, cmd in ipairs {'cd', 'chdir'} do
       eq(0, wlwd())  -- Still no window-local directory in this window
 
       -- Unless the global change happened in a tab with local directory
-      execute('' .. cmd .. ' ..')
+      execute('silent ' .. cmd .. ' ..')
       eq(globalDir, cwd() )
       eq(0 , tlwd())
       eq(0 , wlwd())
