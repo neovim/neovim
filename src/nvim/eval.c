@@ -8359,24 +8359,28 @@ static void f_cursor(typval_T *argvars, typval_T *rettv)
   } else {
     line = get_tv_lnum(argvars);
     col = get_tv_number_chk(&argvars[1], NULL);
-    if (argvars[2].v_type != VAR_UNKNOWN)
+    if (argvars[2].v_type != VAR_UNKNOWN) {
       coladd = get_tv_number_chk(&argvars[2], NULL);
+    }
   }
   if (line < 0 || col < 0
-      || coladd < 0
-      )
-    return;             /* type error; errmsg already given */
-  if (line > 0)
+      || coladd < 0) {
+    return;             // type error; errmsg already given
+  }
+  if (line > 0) {
     curwin->w_cursor.lnum = line;
-  if (col > 0)
+  }
+  if (col > 0) {
     curwin->w_cursor.col = col - 1;
+  }
   curwin->w_cursor.coladd = coladd;
 
-  /* Make sure the cursor is in a valid position. */
+  // Make sure the cursor is in a valid position.
   check_cursor();
-  /* Correct cursor for multi-byte character. */
-  if (has_mbyte)
+  // Correct cursor for multi-byte character.
+  if (has_mbyte) {
     mb_adjust_cursor();
+  }
 
   curwin->w_set_curswant = set_curswant;
   rettv->vval.v_number = 0;
@@ -14684,10 +14688,11 @@ static void f_setpos(typval_T *argvars, typval_T *rettv)
   name = get_tv_string_chk(argvars);
   if (name != NULL) {
     if (list2fpos(&argvars[1], &pos, &fnum, &curswant) == OK) {
-      if (--pos.col < 0)
+      if (--pos.col < 0) {
         pos.col = 0;
+      }
       if (name[0] == '.' && name[1] == NUL) {
-        /* set cursor */
+        // set cursor
         if (fnum == curbuf->b_fnum) {
           curwin->w_cursor = pos;
           if (curswant >= 0) {
@@ -14696,14 +14701,17 @@ static void f_setpos(typval_T *argvars, typval_T *rettv)
           }
           check_cursor();
           rettv->vval.v_number = 0;
-        } else
+        } else {
           EMSG(_(e_invarg));
+        }
       } else if (name[0] == '\'' && name[1] != NUL && name[2] == NUL)   {
-        /* set mark */
-        if (setmark_pos(name[1], &pos, fnum) == OK)
+        // set mark
+        if (setmark_pos(name[1], &pos, fnum) == OK) {
           rettv->vval.v_number = 0;
-      } else
+        }
+      } else {
         EMSG(_(e_invarg));
+      }
     }
   }
 }
