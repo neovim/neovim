@@ -2139,6 +2139,7 @@ winrestcmd()			String	returns command to restore window sizes
 winrestview( {dict})		none	restore view of current window
 winsaveview()			Dict	save view of current window
 winwidth( {nr})			Number	width of window {nr}
+wordcount()			Dict	get byte/char/word statistics
 writefile( {list}, {fname} [, {flags}])
 				Number	write list of lines to file {fname}
 xor( {expr}, {expr})		Number  bitwise XOR
@@ -7113,6 +7114,28 @@ winwidth({nr})						*winwidth()*
   :  exe "normal 50\<C-W>|"
   :endif
 <
+wordcount()						*wordcount()*
+		The result is a dictionary of byte/chars/word statistics for
+		the current buffer.  This is the same info as provided by
+		|g_CTRL-G|
+		The return value includes:
+			bytes		Number of bytes in the buffer
+			chars		Number of chars in the buffer
+			words		Number of words in the buffer
+			cursor_bytes    Number of bytes before cursor position
+					(not in Visual mode)
+			cursor_chars    Number of chars before cursor position
+					(not in Visual mode)
+			cursor_words    Number of words before cursor position
+					(not in Visual mode)
+			visual_bytes    Number of bytes visually selected
+			                (only in Visual mode)
+			visual_chars    Number of chars visually selected
+			                (only in Visual mode)
+			visual_words    Number of chars visually selected
+			                (only in Visual mode)
+
+
 							*writefile()*
 writefile({list}, {fname} [, {flags}])
 		Write |List| {list} to file {fname}.  Each list item is

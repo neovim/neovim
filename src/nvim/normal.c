@@ -6737,16 +6737,12 @@ static void nv_g_cmd(cmdarg_T *cap)
       clearopbeep(oap);
     break;
 
-  /*
-   * "g CTRL-G": display info about cursor position
-   */
+  // "g CTRL-G": display info about cursor position
   case Ctrl_G:
-    cursor_pos_info();
+    cursor_pos_info(NULL);
     break;
 
-  /*
-   * "gi": start Insert at the last position.
-   */
+  // "gi": start Insert at the last position.
   case 'i':
     if (curbuf->b_last_insert.mark.lnum != 0) {
       curwin->w_cursor = curbuf->b_last_insert.mark;

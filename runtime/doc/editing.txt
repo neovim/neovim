@@ -77,7 +77,8 @@ g CTRL-G		Prints the current position of the cursor in five
 			than one position on the screen (<Tab> or special
 			character), both the "real" column and the screen
 			column are shown, separated with a dash.
-			See also 'ruler' option.
+			Also see the 'ruler' option and the |wordcount()|
+			function.
 
 							*v_g_CTRL-G*
 {Visual}g CTRL-G	Similar to "g CTRL-G", but Word, Character, Line, and
