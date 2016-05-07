@@ -144,7 +144,7 @@ static int KeyNoremap = 0;                  /* remapping flags */
 static char_u typebuf_init[TYPELEN_INIT];       /* initial typebuf.tb_buf */
 static char_u noremapbuf_init[TYPELEN_INIT];    /* initial typebuf.tb_noremap */
 
-static int last_recorded_len = 0;       /* number of last recorded chars */
+static size_t last_recorded_len = 0;      // number of last recorded chars
 static const uint8_t ui_toggle[] = { K_SPECIAL, KS_EXTRA, KE_PASTE, 0 };
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -211,7 +211,7 @@ char_u *get_recorded(void)
    * (possibly mapped) characters that stopped the recording.
    */
   len = STRLEN(p);
-  if ((int)len >= last_recorded_len) {
+  if (len >= last_recorded_len) {
     len -= last_recorded_len;
     p[len] = NUL;
   }
@@ -243,13 +243,15 @@ static void
 add_buff (
     buffheader_T *buf,
     char_u *s,
-    long slen                      /* length of "s" or -1 */
+    ssize_t slen                      // length of "s" or -1
 )
 {
-  if (slen < 0)
-    slen = (long)STRLEN(s);
-  if (slen == 0)                                /* don't add empty strings */
+  if (slen < 0) {
+    slen = (ssize_t)STRLEN(s);
+  }
+  if (slen == 0) {                              // don't add empty strings
     return;
+  }
 
   if (buf->bh_first.b_next == NULL) {   /* first add to list */
     buf->bh_space = 0;
@@ -263,18 +265,19 @@ add_buff (
         STRLEN(buf->bh_first.b_next->b_str + buf->bh_index) + 1);
   buf->bh_index = 0;
 
-  ssize_t len;
-  if (buf->bh_space >= (int)slen) {
+  size_t len;
+  if (buf->bh_space >= (size_t)slen) {
     len = STRLEN(buf->bh_curr->b_str);
     STRLCPY(buf->bh_curr->b_str + len, s, slen + 1);
-    buf->bh_space -= slen;
+    buf->bh_space -= (size_t)slen;
   } else {
-    if (slen < MINIMAL_SIZE)
+    if (slen < MINIMAL_SIZE) {
       len = MINIMAL_SIZE;
-    else
-      len = slen;
+    } else {
+      len = (size_t)slen;
+    }
     buffblock_T *p = xmalloc(sizeof(buffblock_T) + len);
-    buf->bh_space = (int)(len - slen);
+    buf->bh_space = len - (size_t)slen;
     STRLCPY(p->b_str, s, slen + 1);
 
     p->b_next = buf->bh_curr->b_next;
@@ -317,11 +320,11 @@ static void add_char_buff(buffheader_T *buf, int c)
     if (IS_SPECIAL(c) || c == K_SPECIAL || c == NUL) {
       /* translate special key code into three byte sequence */
       temp[0] = K_SPECIAL;
-      temp[1] = K_SECOND(c);
-      temp[2] = K_THIRD(c);
+      temp[1] = (char_u)K_SECOND(c);
+      temp[2] = (char_u)K_THIRD(c);
       temp[3] = NUL;
     } else {
-      temp[0] = c;
+      temp[0] = (char_u)c;
       temp[1] = NUL;
     }
     add_buff(buf, temp, -1L);
@@ -694,10 +697,11 @@ static int read_redo(int init, int old_redo)
       bp = bp->b_next;
       p = bp->b_str;
     }
-    buf[i] = c;
-    if (i == n - 1) {         /* last byte of a character */
-      if (n != 1)
+    buf[i] = (char_u)c;
+    if (i == n - 1) {         // last byte of a character
+      if (n != 1) {
         c = (*mb_ptr2char)(buf);
+      }
       break;
     }
     c = *p;
@@ -882,8 +886,8 @@ int ins_typebuf(char_u *str, int noremap, int offset, int nottyped, bool silent)
       setcursor();
       return FAIL;
     }
-    s1 = xmalloc(newlen);
-    s2 = xmalloc(newlen);
+    s1 = xmalloc((size_t)newlen);
+    s2 = xmalloc((size_t)newlen);
     typebuf.tb_buflen = newlen;
 
     /* copy the old chars, before the insertion point */
@@ -937,7 +941,7 @@ int ins_typebuf(char_u *str, int noremap, int offset, int nottyped, bool silent)
     nrm = noremap;
   for (i = 0; i < addlen; ++i)
     typebuf.tb_noremap[typebuf.tb_off + i + offset] =
-      (--nrm >= 0) ? val : RM_YES;
+     (char_u)((--nrm >= 0) ? val : RM_YES);
 
   /* tb_maplen and tb_silent only remember the length of mapped and/or
    * silent mappings at the start of the buffer, assuming that a mapped
@@ -965,8 +969,8 @@ void ins_char_typebuf(int c)
   char_u buf[MB_MAXBYTES + 1];
   if (IS_SPECIAL(c)) {
     buf[0] = K_SPECIAL;
-    buf[1] = K_SECOND(c);
-    buf[2] = K_THIRD(c);
+    buf[1] = (char_u)K_SECOND(c);
+    buf[2] = (char_u)K_THIRD(c);
     buf[3] = NUL;
   } else {
     buf[(*mb_char2bytes)(c, buf)] = NUL;
@@ -1083,25 +1087,25 @@ void del_typebuf(int len, int offset)
  * Write typed characters to script file.
  * If recording is on put the character in the recordbuffer.
  */
-static void gotchars(char_u *chars, int len)
+static void gotchars(char_u *chars, size_t len)
 {
   char_u      *s = chars;
   int c;
   char_u buf[2];
-  int todo = len;
 
-  /* remember how many chars were last recorded */
-  if (Recording)
+  // remember how many chars were last recorded
+  if (Recording) {
     last_recorded_len += len;
+  }
 
   buf[1] = NUL;
-  while (todo--) {
-    /* Handle one byte at a time; no translation to be done. */
+  while (len--) {
+    // Handle one byte at a time; no translation to be done.
     c = *s++;
     updatescript(c);
 
     if (Recording) {
-      buf[0] = c;
+      buf[0] = (char_u)c;
       add_buff(&recordbuff, buf, 1L);
     }
   }
@@ -1465,10 +1469,10 @@ int vgetc(void)
        * Note: This will loop until enough bytes are received!
        */
       if (has_mbyte && (n = MB_BYTE2LEN_CHECK(c)) > 1) {
-        ++no_mapping;
-        buf[0] = c;
-        for (i = 1; i < n; ++i) {
-          buf[i] = vgetorpeek(TRUE);
+        no_mapping++;
+        buf[0] = (char_u)c;
+        for (i = 1; i < n; i++) {
+          buf[i] = (char_u)vgetorpeek(true);
           if (buf[i] == K_SPECIAL
               ) {
             /* Must be a K_SPECIAL - KS_SPECIAL - KE_FILLER sequence,
@@ -1711,7 +1715,7 @@ static int vgetorpeek(int advance)
           if (advance) {
             /* Also record this character, it might be needed to
              * get out of Insert mode. */
-            *typebuf.tb_buf = c;
+            *typebuf.tb_buf = (char_u)c;
             gotchars(typebuf.tb_buf, 1);
           }
           cmd_silent = FALSE;
@@ -1877,19 +1881,19 @@ static int vgetorpeek(int advance)
               match = typebuf_match_len(p_pt, &mlen);
             }
             if (match) {
-              /* write chars to script file(s) */
-              if (mlen > typebuf.tb_maplen)
-                gotchars(typebuf.tb_buf + typebuf.tb_off
-                    + typebuf.tb_maplen,
-                    mlen - typebuf.tb_maplen);
+              // write chars to script file(s)
+              if (mlen > typebuf.tb_maplen) {
+                gotchars(typebuf.tb_buf + typebuf.tb_off + typebuf.tb_maplen,
+                         (size_t)(mlen - typebuf.tb_maplen));
+              }
 
               del_typebuf(mlen, 0);               /* remove the chars */
               set_option_value((char_u *)"paste",
                   (long)!p_paste, NULL, 0);
               if (!(State & INSERT)) {
                 msg_col = 0;
-                msg_row = Rows - 1;
-                msg_clr_eos();                          /* clear ruler */
+                msg_row = (int)Rows - 1;
+                msg_clr_eos();                          // clear ruler
               }
               status_redraw_all();
               redraw_statuslines();
@@ -1975,11 +1979,11 @@ static int vgetorpeek(int advance)
             char_u *save_m_keys;
             char_u *save_m_str;
 
-            /* write chars to script file(s) */
-            if (keylen > typebuf.tb_maplen)
-              gotchars(typebuf.tb_buf + typebuf.tb_off
-                  + typebuf.tb_maplen,
-                  keylen - typebuf.tb_maplen);
+            // write chars to script file(s)
+            if (keylen > typebuf.tb_maplen) {
+              gotchars(typebuf.tb_buf + typebuf.tb_off + typebuf.tb_maplen,
+                       (size_t)(keylen - typebuf.tb_maplen));
+            }
 
             cmd_silent = (typebuf.tb_silent > 0);
             del_typebuf(keylen, 0);             /* remove the mapped keys */
@@ -2417,7 +2421,7 @@ inchar (
       else
         return -1;
     } else {
-      buf[0] = script_char;
+      buf[0] = (char_u)script_char;
       len = 1;
     }
   }
@@ -2453,7 +2457,7 @@ inchar (
      * Fill up to a third of the buffer, because each character may be
      * tripled below.
      */
-    len = os_inchar(buf, maxlen / 3, wait_time, tb_change_cnt);
+    len = os_inchar(buf, maxlen / 3, (int)wait_time, tb_change_cnt);
   }
 
   if (typebuf_changed(tb_change_cnt))
@@ -2496,8 +2500,8 @@ fix_input_buffer (
           && !script
           && (i < 2 || p[1] != KS_EXTRA))) {
       memmove(p + 3, p + 1, (size_t)i);
-      p[2] = K_THIRD(p[0]);
-      p[1] = K_SECOND(p[0]);
+      p[2] = (char_u)K_THIRD(p[0]);
+      p[1] = (char_u)K_SECOND(p[0]);
       p[0] = K_SPECIAL;
       p += 2;
       len += 2;
@@ -2573,11 +2577,11 @@ do_map (
   int new_hash;
   mapblock_T  **abbr_table;
   mapblock_T  **map_table;
-  int unique = FALSE;
-  int nowait = FALSE;
-  int silent = FALSE;
-  int special = FALSE;
-  int expr = FALSE;
+  bool unique = false;
+  bool nowait = false;
+  bool silent = false;
+  bool special = false;
+  bool expr = false;
   int noremap;
   char_u      *orig_rhs;
 
@@ -2609,7 +2613,7 @@ do_map (
      */
     if (STRNCMP(keys, "<nowait>", 8) == 0) {
       keys = skipwhite(keys + 8);
-      nowait = TRUE;
+      nowait = true;
       continue;
     }
 
@@ -2618,7 +2622,7 @@ do_map (
      */
     if (STRNCMP(keys, "<silent>", 8) == 0) {
       keys = skipwhite(keys + 8);
-      silent = TRUE;
+      silent = true;
       continue;
     }
 
@@ -2627,7 +2631,7 @@ do_map (
      */
     if (STRNCMP(keys, "<special>", 9) == 0) {
       keys = skipwhite(keys + 9);
-      special = TRUE;
+      special = true;
       continue;
     }
 
@@ -2645,7 +2649,7 @@ do_map (
      */
     if (STRNCMP(keys, "<expr>", 6) == 0) {
       keys = skipwhite(keys + 6);
-      expr = TRUE;
+      expr = true;
       continue;
     }
     /*
@@ -2653,7 +2657,7 @@ do_map (
      */
     if (STRNCMP(keys, "<unique>", 8) == 0) {
       keys = skipwhite(keys + 8);
-      unique = TRUE;
+      unique = true;
       continue;
     }
     break;
@@ -3487,7 +3491,7 @@ int ExpandMappings(regmatch_T *regmatch, int *num_file, char_u ***file)
       break;       /* for (round) */
 
     if (round == 1) {
-      *file = (char_u **)xmalloc(count * sizeof(char_u *));
+      *file = (char_u **)xmalloc((size_t)count * sizeof(char_u *));
     }
   }   /* for (round) */
 
@@ -3651,8 +3655,8 @@ int check_abbr(int c, char_u *ptr, int col, int mincol)
         /* special key code, split up */
         if (IS_SPECIAL(c) || c == K_SPECIAL) {
           tb[j++] = K_SPECIAL;
-          tb[j++] = K_SECOND(c);
-          tb[j++] = K_THIRD(c);
+          tb[j++] = (char_u)K_SECOND(c);
+          tb[j++] = (char_u)K_THIRD(c);
         } else {
           if (c < ABBR_OFF && (c < ' ' || c > '~'))
             tb[j++] = Ctrl_V;                   /* special char needs CTRL-V */
@@ -3661,8 +3665,9 @@ int check_abbr(int c, char_u *ptr, int col, int mincol)
             if (c >= ABBR_OFF)
               c -= ABBR_OFF;
             j += (*mb_char2bytes)(c, tb + j);
-          } else
-            tb[j++] = c;
+          } else {
+            tb[j++] = (char_u)c;
+          }
         }
         tb[j] = NUL;
         /* insert the last typed char */

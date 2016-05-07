@@ -141,8 +141,8 @@ struct buffblock {
 struct buffheader {
   buffblock_T bh_first;  // first (dummy) block of list
   buffblock_T *bh_curr;  // buffblock for appending
-  int bh_index;          // index for reading
-  int bh_space;          // space in bh_curr for appending
+  size_t bh_index;          // index for reading
+  size_t bh_space;          // space in bh_curr for appending
 };
 
 /*
