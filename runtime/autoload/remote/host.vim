@@ -1,7 +1,8 @@
 let s:hosts = {}
 let s:plugin_patterns = {}
 let s:remote_plugins_manifest = fnamemodify(expand($MYVIMRC, 1), ':h')
-      \.'/.'.fnamemodify($MYVIMRC, ':t').'-rplugin~'
+      \.(has('win32') || has('win64') ? '\.' : '/.').fnamemodify($MYVIMRC, ':t')
+      \.'-rplugin~'
 let s:plugins_for_host = {}
 
 
