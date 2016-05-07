@@ -8337,6 +8337,7 @@ static void f_cursor(typval_T *argvars, typval_T *rettv)
 {
   long line, col;
   long coladd = 0;
+  bool set_curswant = true;
 
   rettv->vval.v_number = -1;
   if (argvars[1].v_type == VAR_UNKNOWN) {
@@ -8353,6 +8354,7 @@ static void f_cursor(typval_T *argvars, typval_T *rettv)
     coladd = pos.coladd;
     if (curswant >= 0) {
       curwin->w_curswant = curswant - 1;
+      set_curswant = false;
     }
   } else {
     line = get_tv_lnum(argvars);
@@ -8376,7 +8378,7 @@ static void f_cursor(typval_T *argvars, typval_T *rettv)
   if (has_mbyte)
     mb_adjust_cursor();
 
-  curwin->w_set_curswant = TRUE;
+  curwin->w_set_curswant = set_curswant;
   rettv->vval.v_number = 0;
 }
 
@@ -14690,6 +14692,7 @@ static void f_setpos(typval_T *argvars, typval_T *rettv)
           curwin->w_cursor = pos;
           if (curswant >= 0) {
             curwin->w_curswant = curswant - 1;
+            curwin->w_set_curswant = false;
           }
           check_cursor();
           rettv->vval.v_number = 0;

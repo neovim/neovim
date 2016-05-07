@@ -1,6 +1,6 @@
 " Vim plugin for showing matching parens
 " Maintainer:  Bram Moolenaar <Bram@vim.org>
-" Last Change: 2014 Jul 19
+" Last Change: 2015 Dec 31
 
 " Exit quickly when:
 " - this plugin was already loaded (or disabled)
@@ -55,7 +55,7 @@ function! s:Highlight_Matching_Pair()
   let before = 0
 
   let text = getline(c_lnum)
-  let matches = matchlist(text, '\(.\)\=\%'.c_col.'c\(.\)')
+  let matches = matchlist(text, '\(.\)\=\%'.c_col.'c\(.\=\)')
   if empty(matches)
     let [c_before, c] = ['', '']
   else
