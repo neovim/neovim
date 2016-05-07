@@ -5,6 +5,9 @@ local os = helpers.cimport './src/nvim/os/os.h'
 local tempfile = helpers.cimport './src/nvim/fileio.h'
 
 describe('tempfile related functions', function()
+  before_each(function()
+    tempfile.vim_deltempdir()
+  end)
   after_each(function()
     tempfile.vim_deltempdir()
   end)
@@ -16,10 +19,18 @@ describe('tempfile related functions', function()
   describe('vim_gettempdir', function()
     it('returns path to Neovim own temp directory', function()
       local dir = vim_gettempdir()
+      print("lfs.dir(dir): ")
+      for entry in lfs.dir(dir) do
+        print("entry: " .. entry)
+      end
       assert.True(dir ~= nil and dir:len() > 0)
       -- os_file_is_writable returns 2 for a directory which we have rights
       -- to write into.
       assert.equals(os.os_file_is_writable(helpers.to_cstr(dir)), 2)
+      print("lfs.dir(dir): ")
+      for entry in lfs.dir(dir) do
+        print("entry: " .. entry)
+      end
       for entry in lfs.dir(dir) do
         assert.True(entry == '.' or entry == '..')
       end
