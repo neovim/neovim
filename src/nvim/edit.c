@@ -6952,8 +6952,8 @@ static void ins_reg(void)
       AppendCharToRedobuff(literally);
       AppendCharToRedobuff(regname);
 
-      do_put(regname, NULL, BACKWARD, 1L,
-          (literally == Ctrl_P ? PUT_FIXINDENT : 0) | PUT_CURSEND);
+      do_put(regname, NULL, BACKWARD, 1,
+             (literally == Ctrl_P ? PUT_FIXINDENT : 0) | PUT_CURSEND);
     } else if (insert_reg(regname, literally) == FAIL) {
       vim_beep(BO_REG);
       need_redraw = true;  // remove the '"'
@@ -7701,7 +7701,7 @@ static void ins_mouse(int c)
 
   undisplay_dollar();
   tpos = curwin->w_cursor;
-  if (do_mouse(NULL, c, BACKWARD, 1L, 0)) {
+  if (do_mouse(NULL, c, BACKWARD, 1, 0)) {
     win_T   *new_curwin = curwin;
 
     if (curwin != old_curwin && win_valid(old_curwin)) {

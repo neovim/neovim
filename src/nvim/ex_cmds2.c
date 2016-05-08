@@ -2010,9 +2010,7 @@ void ex_argdelete(exarg_T *eap)
   maketitle();
 }
 
-/*
- * ":argdo", ":windo", ":bufdo", ":tabdo", ":cdo", ":ldo", ":cfdo" and ":lfdo"
- */
+/// ":argdo", ":windo", ":bufdo", ":tabdo", ":cdo", ":ldo", ":cfdo" and ":lfdo"
 void ex_listdo(exarg_T *eap)
 {
   int i;
@@ -2060,9 +2058,9 @@ void ex_listdo(exarg_T *eap)
     buf_T *buf = curbuf;
     size_t qf_size = 0;
 
-    /* set pcmark now */
+    // set pcmark now
     if (eap->cmdidx == CMD_bufdo) {
-      /* Advance to the first listed buffer after "eap->line1". */
+      // Advance to the first listed buffer after "eap->line1".
       for (buf = firstbuf;
            buf != NULL && (buf->b_fnum < eap->line1 || !buf->b_p_bl);
            buf = buf->b_next) {

@@ -1536,8 +1536,9 @@ static char_u * do_one_cmd(char_u **cmdlinep,
     }
     ea.cmd = skipwhite(ea.cmd);
     lnum = get_address(&ea, &ea.cmd, ea.addr_type, ea.skip, ea.addr_count == 0);
-    if (ea.cmd == NULL)                     /* error detected */
+    if (ea.cmd == NULL) {  // error detected
       goto doend;
+    }
     if (lnum == MAXLNUM) {
       if (*ea.cmd == '%') {                 /* '%' - all lines */
         ++ea.cmd;
@@ -4640,14 +4641,14 @@ static struct {
   char *name;
 } addr_type_complete[] =
 {
-  {ADDR_ARGUMENTS, "arguments"},
-  {ADDR_LINES, "lines"},
-  {ADDR_LOADED_BUFFERS, "loaded_buffers"},
-  {ADDR_TABS, "tabs"},
-  {ADDR_BUFFERS, "buffers"},
-  {ADDR_WINDOWS, "windows"},
-  {ADDR_QUICKFIX, "quickfix"},
-  {-1, NULL}
+  { ADDR_ARGUMENTS, "arguments" },
+  { ADDR_LINES, "lines" },
+  { ADDR_LOADED_BUFFERS, "loaded_buffers" },
+  { ADDR_TABS, "tabs" },
+  { ADDR_BUFFERS, "buffers" },
+  { ADDR_WINDOWS, "windows" },
+  { ADDR_QUICKFIX, "quickfix" },
+  { -1, NULL }
 };
 
 /*
@@ -7122,8 +7123,8 @@ static void ex_put(exarg_T *eap)
     eap->forceit = TRUE;
   }
   curwin->w_cursor.lnum = eap->line2;
-  do_put(eap->regname, NULL, eap->forceit ? BACKWARD : FORWARD, 1L,
-      PUT_LINE|PUT_CURSLINE);
+  do_put(eap->regname, NULL, eap->forceit ? BACKWARD : FORWARD, 1,
+         PUT_LINE|PUT_CURSLINE);
 }
 
 /*
@@ -7132,7 +7133,7 @@ static void ex_put(exarg_T *eap)
 static void ex_copymove(exarg_T *eap)
 {
   long n = get_address(eap, &eap->arg, eap->addr_type, false, false);
-  if (eap->arg == NULL) {           /* error detected */
+  if (eap->arg == NULL) {  // error detected
     eap->nextcmd = NULL;
     return;
   }
@@ -7351,10 +7352,11 @@ static void ex_redir(exarg_T *eap)
           /* Can use both "@a" and "@a>". */
           if (*arg == '>')
             arg++;
-          /* Make register empty when not using @A-@Z and the
-           * command is valid. */
-          if (*arg == NUL && !isupper(redir_reg))
-            write_reg_contents(redir_reg, (char_u *)"", -1, FALSE);
+          // Make register empty when not using @A-@Z and the
+          // command is valid.
+          if (*arg == NUL && !isupper(redir_reg)) {
+            write_reg_contents(redir_reg, (char_u *)"", 0, false);
+          }
         }
       }
       if (*arg != NUL) {

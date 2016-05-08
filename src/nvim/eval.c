@@ -1889,7 +1889,7 @@ ex_let_one (
         }
       }
       if (p != NULL) {
-        write_reg_contents(*arg == '@' ? '"' : *arg, p, -1, FALSE);
+        write_reg_contents(*arg == '@' ? '"' : *arg, p, STRLEN(p), false);
         arg_end = arg + 1;
       }
       xfree(ptofree);
@@ -14891,7 +14891,8 @@ static void f_setreg(typval_T *argvars, typval_T *rettv)
     }
     *curval++ = NULL;
 
-    write_reg_contents_lst(regname, lstval, -1, append, yank_type, block_len);
+    write_reg_contents_lst(regname, lstval, STRLEN(lstval),
+                           append, yank_type, block_len);
 
 free_lstval:
     while (curallocval > allocval)
@@ -14902,7 +14903,8 @@ free_lstval:
     if (strval == NULL) {
       return;
     }
-    write_reg_contents_ex(regname, strval, -1, append, yank_type, block_len);
+    write_reg_contents_ex(regname, strval, STRLEN(strval),
+                          append, yank_type, block_len);
   }
   rettv->vval.v_number = 0;
 }

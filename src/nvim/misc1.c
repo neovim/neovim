@@ -178,12 +178,11 @@ open_line (
   if (curbuf->b_p_ai
       || do_si
       ) {
-    /*
-     * count white space on current line
-     */
-    newindent = get_indent_str(saved_line, (int)curbuf->b_p_ts, FALSE);
-    if (newindent == 0 && !(flags & OPENLINE_COM_LIST))
-      newindent = second_line_indent;       /* for ^^D command in insert mode */
+    // count white space on current line
+    newindent = get_indent_str(saved_line, (int)curbuf->b_p_ts, false);
+    if (newindent == 0 && !(flags & OPENLINE_COM_LIST)) {
+      newindent = second_line_indent;  // for ^^D command in insert mode
+    }
 
     /*
      * Do smart indenting.
@@ -612,7 +611,7 @@ open_line (
         if (curbuf->b_p_ai
             || do_si
             )
-          newindent = get_indent_str(leader, (int)curbuf->b_p_ts, FALSE);
+          newindent = get_indent_str(leader, (int)curbuf->b_p_ts, false);
 
         /* Add the indent offset */
         if (newindent + off < 0) {

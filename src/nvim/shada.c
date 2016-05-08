@@ -1422,7 +1422,7 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
         }
         if (!op_register_set(cur_entry.data.reg.name, (yankreg_T) {
           .y_array = (char_u **) cur_entry.data.reg.contents,
-          .y_size = (linenr_T) cur_entry.data.reg.contents_size,
+          .y_size = cur_entry.data.reg.contents_size,
           .y_type = cur_entry.data.reg.type,
           .y_width = (colnr_T) cur_entry.data.reg.width,
           .timestamp = cur_entry.timestamp,
@@ -2745,7 +2745,7 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer,
       if (name == NUL) {
         break;
       }
-      if (limit_reg_lines && reg.y_size > max_reg_lines) {
+      if (limit_reg_lines && reg.y_size > (size_t)max_reg_lines) {
         continue;
       }
       wms->registers[op_reg_index(name)] = (PossiblyFreedShadaEntry) {

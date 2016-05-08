@@ -493,10 +493,11 @@ int emsg(char_u *s)
      * when the message should be ignored completely (used for the
      * interrupt message).
      */
-    if (cause_errthrow(s, severe, &ignore) == TRUE) {
-      if (!ignore)
-        did_emsg = TRUE;
-      return TRUE;
+    if (cause_errthrow(s, severe, &ignore) == true) {
+      if (!ignore) {
+        did_emsg = true;
+      }
+      return true;
     }
 
     // set "v:errmsg", also when using ":silent! cmd"
@@ -511,41 +512,43 @@ int emsg(char_u *s)
       p = get_emsg_source();
       if (p != NULL) {
         STRCAT(p, "\n");
-        redir_write(p, -1);
+        redir_write(p, STRLEN(p));
         xfree(p);
       }
       p = get_emsg_lnum();
       if (p != NULL) {
         STRCAT(p, "\n");
-        redir_write(p, -1);
+        redir_write(p, STRLEN(p));
         xfree(p);
       }
-      redir_write(s, -1);
-      return TRUE;
+      redir_write(s, STRLEN(s));
+      return true;
     }
 
-    /* Reset msg_silent, an error causes messages to be switched back on. */
+    // Reset msg_silent, an error causes messages to be switched back on.
     msg_silent = 0;
     cmd_silent = FALSE;
 
-    if (global_busy)                    /* break :global command */
-      ++global_busy;
+    if (global_busy) {        // break :global command
+      global_busy++;
+    }
 
-    if (p_eb)
-      beep_flush();                     /* also includes flush_buffers() */
-    else
-      flush_buffers(FALSE);             /* flush internal buffers */
-    did_emsg = TRUE;                    /* flag for DoOneCmd() */
+    if (p_eb) {
+      beep_flush();           // also includes flush_buffers()
+    } else {
+      flush_buffers(false);   // flush internal buffers
+    }
+    did_emsg = true;          // flag for DoOneCmd()
   }
 
-  emsg_on_display = TRUE;       /* remember there is an error message */
-  ++msg_scroll;                 /* don't overwrite a previous message */
-  attr = hl_attr(HLF_E);        /* set highlight mode for error messages */
-  if (msg_scrolled != 0)
-    need_wait_return = TRUE;        /* needed in case emsg() is called after
-                                     * wait_return has reset need_wait_return
-                                     * and a redraw is expected because
-                                     * msg_scrolled is non-zero */
+  emsg_on_display = true;     // remember there is an error message
+  msg_scroll++;               // don't overwrite a previous message
+  attr = hl_attr(HLF_E);      // set highlight mode for error messages
+  if (msg_scrolled != 0) {
+    need_wait_return = true;  // needed in case emsg() is called after
+  }                           // wait_return has reset need_wait_return
+                              // and a redraw is expected because
+                              // msg_scrolled is non-zero
 
   /*
    * Display name and line number for the source of the error.
@@ -2401,22 +2404,27 @@ static void redir_write(char_u *str, int maxlen)
     /* If the string doesn't start with CR or NL, go to msg_col */
     if (*s != '\n' && *s != '\r') {
       while (cur_col < msg_col) {
-        if (redir_reg)
-          write_reg_contents(redir_reg, (char_u *)" ", -1, TRUE);
-        else if (redir_vname)
+        if (redir_reg) {
+          write_reg_contents(redir_reg, (char_u *)" ", 1, true);
+        } else if (redir_vname) {
           var_redir_str((char_u *)" ", -1);
-        else if (redir_fd != NULL)
+        } else if (redir_fd != NULL) {
           fputs(" ", redir_fd);
-        if (verbose_fd != NULL)
+        }
+        if (verbose_fd != NULL) {
           fputs(" ", verbose_fd);
-        ++cur_col;
+        }
+        cur_col++;
       }
     }
 
-    if (redir_reg)
-      write_reg_contents(redir_reg, s, maxlen, TRUE);
-    if (redir_vname)
+    if (redir_reg) {
+      size_t len = maxlen == -1 ? STRLEN(s) : (size_t)maxlen;
+      write_reg_contents(redir_reg, s, len, true);
+    }
+    if (redir_vname) {
       var_redir_str(s, maxlen);
+    }
 
     /* Write and adjust the current column. */
     while (*s != NUL && (maxlen < 0 || (int)(s - str) < maxlen)) {
