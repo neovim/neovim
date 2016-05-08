@@ -8,8 +8,6 @@ function(check_lua_module LUA_PRG_PATH MODULE RESULT_VAR)
     RESULT_VARIABLE module_missing
     ERROR_QUIET)
   if(module_missing)
-    message(STATUS
-      "[${LUA_PRG_PATH}] The '${MODULE}' lua package is required for building Neovim")
     set(${RESULT_VAR} False PARENT_SCOPE)
   else()
     set(${RESULT_VAR} True PARENT_SCOPE)
@@ -29,6 +27,8 @@ function(check_lua_deps LUA_PRG_PATH MODULES RESULT_VAR)
   foreach(module ${MODULES})
     check_lua_module(${LUA_PRG_PATH} ${module} has_module)
     if(NOT has_module)
+      message(STATUS
+        "[${LUA_PRG_PATH}] The '${module}' lua package is required for building Neovim")
       set(${RESULT_VAR} False PARENT_SCOPE)
       return()
     endif()
