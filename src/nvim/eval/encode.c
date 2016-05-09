@@ -344,7 +344,7 @@ int encode_read_from_list(ListReaderState *const state, char *const buf,
 #define TYPVAL_ENCODE_CONV_DICT_BETWEEN_ITEMS() \
     ga_concat(gap, ", ")
 
-#define TYPVAL_ENCODE_CONV_SPECIAL_DICT_KEY_CHECK(label, kv_pair)
+#define TYPVAL_ENCODE_CONV_SPECIAL_DICT_KEY_CHECK(label, key)
 
 #define TYPVAL_ENCODE_CONV_LIST_END() \
     ga_append(gap, ']')
@@ -696,9 +696,9 @@ bool encode_check_json_key(const typval_T *const tv)
 }
 
 #undef TYPVAL_ENCODE_CONV_SPECIAL_DICT_KEY_CHECK
-#define TYPVAL_ENCODE_CONV_SPECIAL_DICT_KEY_CHECK(label, kv_pair) \
+#define TYPVAL_ENCODE_CONV_SPECIAL_DICT_KEY_CHECK(label, key) \
     do { \
-      if (!encode_check_json_key(&kv_pair->lv_first->li_tv)) { \
+      if (!encode_check_json_key(&key)) { \
         EMSG(_("E474: Invalid key in special dictionary")); \
         goto label; \
       } \
@@ -873,7 +873,7 @@ char *encode_tv2json(typval_T *tv, size_t *len)
 
 #define TYPVAL_ENCODE_CONV_DICT_BETWEEN_ITEMS()
 
-#define TYPVAL_ENCODE_CONV_SPECIAL_DICT_KEY_CHECK(label, kv_pair)
+#define TYPVAL_ENCODE_CONV_SPECIAL_DICT_KEY_CHECK(label, key)
 
 #define TYPVAL_ENCODE_CONV_LIST_END()
 
