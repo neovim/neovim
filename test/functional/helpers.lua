@@ -176,7 +176,7 @@ local function dedent(str)
     return str
   end
   -- create a pattern for the indent
-  indent = indent:gsub('%s', '%%s')
+  indent = indent:gsub('%s', '[ \t]')
   -- strip it from the first line
   str = str:gsub('^'..indent, '')
   -- strip it from the remaining lines
