@@ -350,7 +350,7 @@ argument.
 -W {scriptout}	Like -w, but do not append, overwrite an existing file.
 
 ==============================================================================
-3. Initialization				*initialization* *startup*
+2. Initialization				*initialization* *startup*
 
 At startup, Vim checks environment variables and files and sets values
 accordingly.  Vim proceeds in this order:
@@ -601,7 +601,7 @@ This still won't work for systems where gvim does not use stdout at all
 though.
 
 ==============================================================================
-4. $VIM and $VIMRUNTIME
+3. $VIM and $VIMRUNTIME
 								*$VIM*
 The environment variable "$VIM" is used to locate various user files for Vim,
 such as the user startup script |init.vim|.  This depends on the system, see
@@ -663,7 +663,7 @@ greps in the help files) you might be able to use this: >
 	VIMRUNTIME="$(nvim -e --cmd 'echo $VIMRUNTIME|quit' 2>&1)"
 
 ==============================================================================
-5. Suspending						*suspend*
+4. Suspending						*suspend*
 
 					*iconize* *iconise* *CTRL-Z* *v_CTRL-Z*
 CTRL-Z			Suspend Vim, like ":stop".
@@ -696,7 +696,7 @@ can't paste it in another application (since Vim is going to sleep an attempt
 to get the selection would make the program hang).
 
 ==============================================================================
-6. Saving settings					*save-settings*
+5. Saving settings					*save-settings*
 
 Mostly you will edit your vimrc files manually.  This gives you the greatest
 flexibility.  There are a few commands to generate a vimrc file automatically.
@@ -753,7 +753,7 @@ these steps:
    You need to escape special characters, esp. spaces.
 
 ==============================================================================
-7. Views and Sessions					*views-sessions*
+6. Views and Sessions					*views-sessions*
 
 This is introduced in sections |21.4| and |21.5| of the user manual.
 
@@ -897,7 +897,7 @@ To automatically save and restore views for *.c files: >
 	au BufWinEnter *.c silent loadview
 
 ==============================================================================
-8. The ShaDa file				*shada* *shada-file*
+7. The ShaDa file				*shada* *shada-file*
 
 If you exit Vim and later start it again, you would normally lose a lot of
 information.  The ShaDa file can be used to remember that information, which
