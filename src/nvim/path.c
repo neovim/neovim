@@ -1284,6 +1284,29 @@ static int expand_backtick(
   return cnt;
 }
 
+#ifdef BACKSLASH_IN_FILENAME
+/// Replace all slashes by backslashes.
+/// This used to be the other way around, but MS-DOS sometimes has problems
+/// with slashes (e.g. in a command name).  We can't have mixed slashes and
+/// backslashes, because comparing file names will not work correctly.  The
+/// commands that use a file name should try to avoid the need to type a
+/// backslash twice.
+/// When 'shellslash' set do it the other way around.
+/// When the path looks like a URL leave it unmodified.
+void slash_adjust(char_u *p)
+{
+  if (path_with_url(p)) {
+    return;
+  }
+  while (*p) {
+    if (*p == psepcN) {
+      *p = psepc;
+    }
+    mb_ptr_adv(p);
+  }
+}
+#endif
+
 // Add a file to a file list.  Accepted flags:
 // EW_DIR      add directories
 // EW_FILE     add files
