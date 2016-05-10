@@ -1,0 +1,176 @@
+-- Tests for backtrace debug commands.
+
+local helpers = require('test.functional.helpers')
+local feed, insert, source = helpers.feed, helpers.insert, helpers.source
+local clear, execute, expect = helpers.clear, helpers.execute, helpers.expect
+
+describe('108', function()
+  before_each(clear)
+
+  it('is working', function()
+    execute('function! Foo()')
+    execute('   let var1 = 1')
+    execute('   let var2 = Bar(var1) + 9')
+    execute('   return var2')
+    execute('endfunction')
+    execute('function! Bar(var)')
+    execute('    let var1 = 2 + a:var')
+    execute('    let var2 = Bazz(var1) + 4')
+    execute('    return var2')
+    execute('endfunction')
+    execute('function! Bazz(var)')
+    execute('    let var1 = 3 + a:var')
+    execute('    let var3 = "another var"')
+    execute('    return var1')
+    execute('endfunction')
+    execute('new')
+    execute('debuggreedy')
+    execute('redir => out')
+    execute('debug echo Foo()')
+    feed('step<cr>')
+    feed('step<cr>')
+    feed('step<cr>')
+    feed('step<cr>')
+    feed('step<cr>')
+    feed('step<cr>')
+    feed([[echo "- show backtrace:\n"<cr>]])
+    feed('backtrace<cr>')
+    feed([[echo "\nshow variables on different levels:\n"<cr>]])
+    feed('echo var1<cr>')
+    feed('up<cr>')
+    feed('back<cr>')
+    feed('echo var1<cr>')
+    feed('u<cr>')
+    feed('bt<cr>')
+    feed('echo var1<cr>')
+    feed([[echo "\n- undefined vars:\n"<cr>]])
+    feed('step<cr>')
+    feed('frame 2<cr>')
+    feed('echo "undefined var3 on former level:"<cr>')
+    feed('echo var3<cr>')
+    feed('fr 0<cr>')
+    feed([[echo "here var3 is defined with \"another var\":"<cr>]])
+    feed('echo var3<cr>')
+    feed('step<cr>')
+    feed('step<cr>')
+    feed('step<cr>')
+    feed('up<cr>')
+    feed([[echo "\nundefined var2 on former level"<cr>]])
+    feed('echo var2<cr>')
+    feed('down<cr>')
+    feed('echo "here var2 is defined with 10:"<cr>')
+    feed('echo var2<cr>')
+    feed([[echo "\n- backtrace movements:\n"<cr>]])
+    feed('b<cr>')
+    feed([[echo "\nnext command cannot go down, we are on bottom\n"<cr>]])
+    feed('down<cr>')
+    feed('up<cr>')
+    feed([[echo "\nnext command cannot go up, we are on top\n"<cr>]])
+    feed('up<cr>')
+    feed('b<cr>')
+    feed('echo "fil is not frame or finish, it is file"<cr>')
+    feed('fil<cr>')
+    feed([[echo "\n- relative backtrace movement\n"<cr>]])
+    feed('fr -1<cr>')
+    feed('frame<cr>')
+    feed('fra +1<cr>')
+    feed('fram<cr>')
+    feed([[echo "\n- go beyond limits does not crash\n"<cr>]])
+    feed('fr 100<cr>')
+    feed('fra<cr>')
+    feed('frame -40<cr>')
+    feed('fram<cr>')
+    feed([[echo "\n- final result 19:"<cr>]])
+    feed('cont<cr>')
+    execute('0debuggreedy')
+    execute('redir END')
+    execute('$put =out')
+
+    -- Assert buffer contents.
+    expect([=[
+      
+      
+      
+      - show backtrace:
+      
+        2 function Foo[2]
+        1 Bar[2]
+      ->0 Bazz
+      line 2: let var3 = "another var"
+      
+      show variables on different levels:
+      
+      6
+        2 function Foo[2]
+      ->1 Bar[2]
+        0 Bazz
+      line 2: let var3 = "another var"
+      3
+      ->2 function Foo[2]
+        1 Bar[2]
+        0 Bazz
+      line 2: let var3 = "another var"
+      1
+      
+      - undefined vars:
+      
+      undefined var3 on former level:
+      Error detected while processing function Foo[2]..Bar[2]..Bazz:
+      line    3:
+      E121: Undefined variable: var3
+      E15: Invalid expression: var3
+      here var3 is defined with "another var":
+      another var
+      
+      undefined var2 on former level
+      Error detected while processing function Foo[2]..Bar:
+      line    3:
+      E121: Undefined variable: var2
+      E15: Invalid expression: var2
+      here var2 is defined with 10:
+      10
+      
+      - backtrace movements:
+      
+        1 function Foo[2]
+      ->0 Bar
+      line 3: End of function
+      
+      next command cannot go down, we are on bottom
+      
+      frame is zero
+      
+      next command cannot go up, we are on top
+      
+      frame at highest level: 1
+      ->1 function Foo[2]
+        0 Bar
+      line 3: End of function
+      fil is not frame or finish, it is file
+      "[No Name]" --No lines in buffer--
+      
+      - relative backtrace movement
+      
+        1 function Foo[2]
+      ->0 Bar
+      line 3: End of function
+      ->1 function Foo[2]
+        0 Bar
+      line 3: End of function
+      
+      - go beyond limits does not crash
+      
+      frame at highest level: 1
+      ->1 function Foo[2]
+        0 Bar
+      line 3: End of function
+      frame is zero
+        1 function Foo[2]
+      ->0 Bar
+      line 3: End of function
+      
+      - final result 19:
+      19
+      ]=])
+  end)
+end)
