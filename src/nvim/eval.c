@@ -6949,6 +6949,7 @@ static struct fst {
   { "winrestview",       1, 1, f_winrestview },
   { "winsaveview",       0, 0, f_winsaveview },
   { "winwidth",          1, 1, f_winwidth },
+  { "wordcount",         0, 0, f_wordcount },
   { "writefile",         2, 3, f_writefile },
   { "xor",               2, 2, f_xor },
 };
@@ -16919,6 +16920,13 @@ static void f_winwidth(typval_T *argvars, typval_T *rettv)
     rettv->vval.v_number = -1;
   else
     rettv->vval.v_number = wp->w_width;
+}
+
+/// "wordcount()" function
+static void f_wordcount(typval_T *argvars, typval_T *rettv)
+{
+  rettv_dict_alloc(rettv);
+  cursor_pos_info(rettv->vval.v_dict);
 }
 
 /// "writefile()" function

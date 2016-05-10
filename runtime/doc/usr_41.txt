@@ -921,6 +921,7 @@ Various:					*various-functions*
 
 	py3eval()		evaluate Python expression (|+python3|)
 	pyeval()		evaluate Python expression (|+python|)
+	wordcount()		get byte/word/char count of buffer
 
 ==============================================================================
 *41.7*	Defining a function
