@@ -1,0 +1,50 @@
+						*'textwidth'* *'tw'*
+'textwidth' 'tw'	number	(default 0)
+			local to buffer
+			{not in Vi}
+	Maximum width of text that is being inserted.  A longer line will be
+	broken after white space to get this width.  A zero value disables
+	this.
+	'textwidth' is set to 0 when the 'paste' option is set and restored
+	when 'paste' is reset.
+	When 'textwidth' is zero, 'wrapmargin' may be used.  See also
+	'formatoptions' and |ins-textwidth|.
+	When 'formatexpr' is set it will be used to break the line.
+	NOTE: This option is set to 0 when 'compatible' is set.
+
+			*'buflisted'* *'bl'* *'nobuflisted'* *'nobl'* *E85*
+'buflisted' 'bl'	boolean (default: on)
+			local to buffer
+			{not in Vi}
+	When this option is set, the buffer shows up in the buffer list.  If
+	it is reset it is not used for ":bnext", "ls", the Buffers menu, etc.
+	This option is reset by Vim for buffers that are only used to remember
+	a file name or marks.  Vim sets it when starting to edit a buffer.
+	But not when moving to a buffer with ":buffer".
+
+abs({expr})							*abs()*
+		Return the absolute value of {expr}.  When {expr} evaluates to
+		a |Float| abs() returns a |Float|.  When {expr} can be
+		converted to a |Number| abs() returns a |Number|.  Otherwise
+		abs() gives an error message and returns -1.
+		Examples: >
+			echo abs(1.456)
+<			1.456  >
+			echo abs(-5.456)
+<			5.456  >
+			echo abs(-4)
+<			4
+		{only available when compiled with the |+float| feature}
+
+							*arglistid()*
+arglistid([{winnr} [, {tabnr}]])
+		Return the argument list ID.  This is a number which
+		identifies the argument list being used.  Zero is used for the
+		global argument list.  See |arglist|.
+		Return -1 if the arguments are invalid.
+
+		Without arguments use the current window.
+		With {winnr} only use this window in the current tab page.
+		With {winnr} and {tabnr} use the window in the specified tab
+		page.
+

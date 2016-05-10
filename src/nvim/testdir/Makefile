@@ -40,8 +40,9 @@ SCRIPTS := \
 # Tests using runtest.vim.vim.
 # Keep test_alot*.res as the last one, sort the others.
 NEW_TESTS = \
-	    test_viml.res \
 	    test_cursor_func.res \
+	    test_help_tagjump.res \
+	    test_viml.res \
 	    test_alot.res
 
 SCRIPTS_GUI := test16.out
