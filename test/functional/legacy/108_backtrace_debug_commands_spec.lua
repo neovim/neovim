@@ -8,6 +8,7 @@ describe('108', function()
   before_each(clear)
 
   it('is working', function()
+    execute('lang mess C')
     execute('function! Foo()')
     execute('   let var1 = 1')
     execute('   let var2 = Bar(var1) + 9')
