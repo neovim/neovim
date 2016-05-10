@@ -4487,6 +4487,12 @@ int find_help_tags(char_u *arg, int *num_matches, char_u ***matches, int keep_la
 
         *d++ = *s;
 
+        // If tag contains "({" or "([", tag terminates at the "(".
+        // This is for help on functions, e.g.: abs({expr}).
+        if (*s == '(' && (s[1] == '{' || s[1] =='[')) {
+          break;
+        }
+
         /*
          * If tag starts with ', toss everything after a second '. Fixes
          * CTRL-] on 'option'. (would include the trailing '.').
