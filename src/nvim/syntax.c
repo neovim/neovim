@@ -6931,7 +6931,12 @@ set_hl_attr (
   // before setting attr_entry->{f,g}g_color to a other than -1
   at_en.rgb_fg_color = sgp->sg_rgb_fg_name ? sgp->sg_rgb_fg : -1;
   at_en.rgb_bg_color = sgp->sg_rgb_bg_name ? sgp->sg_rgb_bg : -1;
-  sgp->sg_attr = get_attr_entry(&at_en);
+
+  if (at_en.cterm_fg_color != 0 || at_en.cterm_bg_color != 0
+      || at_en.rgb_fg_color != -1 || at_en.rgb_bg_color != -1
+      || at_en.cterm_ae_attr != 0 || at_en.rgb_ae_attr != 0) {
+    sgp->sg_attr = get_attr_entry(&at_en);
+  }
 }
 
 /*
