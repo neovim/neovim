@@ -2009,6 +2009,7 @@ range( {expr} [, {max} [, {stride}]])
 readfile( {fname} [, {binary} [, {max}]])
 				List	get list of lines from file {fname}
 reltime( [{start} [, {end}]])	List	get time value
+reltimefloat( {time})		Float	turn the time value into a Float
 reltimestr( {time})		String	turn time value into a String
 remote_expr( {server}, {string} [, {idvar}])
 				String	send expression
@@ -5320,7 +5321,8 @@ readfile({fname} [, {binary} [, {max}]])
 reltime([{start} [, {end}]])				*reltime()*
 		Return an item that represents a time value.  The format of
 		the item depends on the system.  It can be passed to
-		|reltimestr()| to convert it to a string.
+		|reltimestr()| to convert it to a string or |reltimefloat()| 
+		to convert to a float.
 		Without an argument it returns the current time.
 		With one argument is returns the time passed since the time
 		specified in the argument.
@@ -5328,7 +5330,16 @@ reltime([{start} [, {end}]])				*reltime()*
 		and {end}.
 		The {start} and {end} arguments must be values returned by
 		reltime().
-		{only available when compiled with the |+reltime| feature}
+
+reltimefloat({time})				*reltimefloat()*
+		Return a Float that represents the time value of {time}.
+		Unit of time is seconds.
+		Example:
+			let start = reltime()
+			call MyFunction()
+			let seconds = reltimefloat(reltime(start))
+		See the note of reltimestr() about overhead.
+ 		Also see |profiling|.
 
 reltimestr({time})				*reltimestr()*
 		Return a String that represents the time value of {time}.
@@ -5338,12 +5349,10 @@ reltimestr({time})				*reltimestr()*
 			call MyFunction()
 			echo reltimestr(reltime(start))
 <		Note that overhead for the commands will be added to the time.
-		The accuracy depends on the system.
 		Leading spaces are used to make the string align nicely.  You
 		can use split() to remove it. >
 			echo split(reltimestr(reltime(start)))[0]
 <		Also see |profiling|.
-		{only available when compiled with the |+reltime| feature}
 
 							*remote_expr()* *E449*
 remote_expr({server}, {string} [, {idvar}])
