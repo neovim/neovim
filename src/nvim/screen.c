@@ -3693,9 +3693,13 @@ win_line (
         && wp == curwin && lnum == wp->w_cursor.lnum
         && conceal_cursor_line(wp)
         && (int)wp->w_virtcol <= vcol + n_skip) {
-      wp->w_wcol = col - boguscols;
+      if (wp->w_p_rl) {
+        wp->w_wcol = wp->w_width - col + boguscols - 1;
+      } else {
+        wp->w_wcol = col - boguscols;
+      }
       wp->w_wrow = row;
-      did_wcol = TRUE;
+      did_wcol = true;
     }
 
     /* Don't override visual selection highlighting. */
