@@ -467,22 +467,23 @@ int emsg(char_u *s)
 {
   int attr;
   char_u      *p;
-  int ignore = FALSE;
+  int ignore = false;
   int severe;
 
-  /* Skip this if not giving error messages at the moment. */
-  if (emsg_not_now())
-    return TRUE;
+  // Skip this if not giving error messages at the moment.
+  if (emsg_not_now()) {
+    return true;
+  }
 
-  called_emsg = TRUE;
-  ex_exitval = 1;
+  called_emsg = true;
+  if (emsg_silent == 0) {
+    ex_exitval = 1;
+  }
 
-  /*
-   * If "emsg_severe" is TRUE: When an error exception is to be thrown,
-   * prefer this message over previous messages for the same command.
-   */
+  // If "emsg_severe" is TRUE: When an error exception is to be thrown,
+  // prefer this message over previous messages for the same command.
   severe = emsg_severe;
-  emsg_severe = FALSE;
+  emsg_severe = false;
 
   if (!emsg_off || vim_strchr(p_debug, 't') != NULL) {
     /*
