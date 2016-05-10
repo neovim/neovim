@@ -262,4 +262,44 @@ describe('Default highlight groups', function()
     ]], {[1] = {bold = true, foreground = hlgroup_colors.Question}})
     feed('<cr>') --  skip the "Press ENTER..." state or tests will hang
   end)
+  it('can be cleared and linked to other highlight groups', function()
+    execute('highlight clear ModeMsg')
+    feed('i')
+    screen:expect([[
+      ^                                                     |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      -- INSERT --                                         |
+    ]], {})
+    feed('<esc>')
+    execute('highlight CustomHLGroup guifg=red guibg=green')
+    execute('highlight link ModeMsg CustomHLGroup')
+    feed('i')
+    screen:expect([[
+      ^                                                     |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      {1:-- INSERT --}                                         |
+    ]], {[1] = {foreground = Screen.colors.Red, background = Screen.colors.Green}})
+  end)
 end)
