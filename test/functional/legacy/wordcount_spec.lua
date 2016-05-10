@@ -10,6 +10,7 @@ describe('wordcount', function()
 
   it('is working', function()
     execute('set selection=inclusive')
+    execute('fileformat=unix')
     insert([=[
       RESULT test:]=])
 
