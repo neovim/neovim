@@ -2,7 +2,6 @@ local helpers = require('test.functional.helpers')
 local Screen = require('test.functional.ui.screen')
 local clear, feed = helpers.clear, helpers.feed
 local eval, eq, neq = helpers.eval, helpers.eq, helpers.neq
-local insert = helpers.insert
 local execute, source, expect = helpers.execute, helpers.source, helpers.expect
 
 describe('completion', function()
