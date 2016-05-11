@@ -141,6 +141,18 @@ describe('assert function:', function()
         tmpname_two .. " line 1: 'file two'",
       })
     end)
+
+    it('is reset to a list by assert functions', function()
+      source([[
+        let save_verrors = v:errors
+        let v:['errors'] = {'foo': 3}
+        call assert_equal('yes', 'no')
+        let verrors = v:errors
+        let v:errors = save_verrors
+        call assert_equal(type([]), type(verrors))
+      ]])
+      expected_empty()
+    end)
   end)
 
   -- assert_fails({cmd}, [, {error}])

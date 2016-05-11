@@ -508,6 +508,7 @@ void eval_init(void)
       /* add to compat scope dict */
       hash_add(&compat_hashtab, p->vv_di.di_key);
   }
+  vimvars[VV_VERSION].vv_nr = VIM_VERSION_100;
 
   dict_T *const msgpack_types_dict = dict_alloc();
   for (size_t i = 0; i < ARRAY_SIZE(msgpack_type_names); i++) {
@@ -17720,7 +17721,8 @@ void set_vim_var_special(const VimVarIndex idx, const SpecialVarValue val)
 void set_vim_var_string(const VimVarIndex idx, const char *const val,
                         const ptrdiff_t len)
 {
-  xfree(vimvars[idx].vv_str);
+  clear_tv(&vimvars[idx].vv_di.di_tv);
+  vimvars[idx].vv_type = VAR_STRING;
   if (val == NULL) {
     vimvars[idx].vv_str = NULL;
   } else if (len == -1) {
@@ -17736,7 +17738,8 @@ void set_vim_var_string(const VimVarIndex idx, const char *const val,
 /// @param[in,out]  val  Value to set to. Reference count will be incremented.
 void set_vim_var_list(const VimVarIndex idx, list_T *const val)
 {
-  list_unref(vimvars[idx].vv_list);
+  clear_tv(&vimvars[idx].vv_di.di_tv);
+  vimvars[idx].vv_type = VAR_LIST;
   vimvars[idx].vv_list = val;
   if (val != NULL) {
     val->lv_refcount++;
@@ -17750,7 +17753,8 @@ void set_vim_var_list(const VimVarIndex idx, list_T *const val)
 ///                      Also keys of the dictionary will be made read-only.
 void set_vim_var_dict(const VimVarIndex idx, dict_T *const val)
 {
-  dict_unref(vimvars[idx].vv_dict);
+  clear_tv(&vimvars[idx].vv_di.di_tv);
+  vimvars[idx].vv_type = VAR_DICT;
   vimvars[idx].vv_dict = val;
 
   if (val != NULL) {
