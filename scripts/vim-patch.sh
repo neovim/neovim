@@ -47,14 +47,14 @@ clean_files() {
   echo
   echo "Created files:"
   local file
-  for file in ${CREATED_FILES[@]}; do
+  for file in "${CREATED_FILES[@]}"; do
     echo "  • ${file}"
   done
 
   read -p "Delete these files (Y/n)? " -n 1 -r reply
   echo
   if [[ "${reply}" =~ ^[Yy]$ ]]; then
-    rm -- ${CREATED_FILES[@]}
+    rm -- "${CREATED_FILES[@]}"
   else
     echo "You can use 'git clean' to remove these files when you're done."
   fi
@@ -97,13 +97,13 @@ assign_commit_details() {
     vim_version="${1}"
     vim_tag="v${1}"
     vim_commit=$(cd "${VIM_SOURCE_DIR}" \
-      && git log -1 --format="%H" ${vim_tag})
+      && git log -1 --format="%H" "${vim_tag}")
     local strip_commit_line=true
   else
     # Interpret parameter as commit hash.
     vim_version="${1:0:7}"
     vim_commit=$(cd "${VIM_SOURCE_DIR}" \
-      && git log -1 --format="%H" ${vim_version})
+      && git log -1 --format="%H" "${vim_version}")
     local strip_commit_line=false
   fi
 
@@ -132,13 +132,16 @@ get_vim_patch() {
 
   # Patch surgery: preprocess the patch.
   #   - transform src/ paths to src/nvim/
-  local vim_full="$(git show -1 --pretty=medium "${vim_commit}" \
+  local vim_full
+  vim_full="$(git show -1 --pretty=medium "${vim_commit}" \
     | LC_ALL=C sed -e 's/\( [ab]\/src\)/\1\/nvim/g')"
   local neovim_branch="${BRANCH_PREFIX}${vim_version}"
 
   cd "${NEOVIM_SOURCE_DIR}"
-  local git_remote=$(find_git_remote)
-  local checked_out_branch="$(git rev-parse --abbrev-ref HEAD)"
+  local git_remote
+  git_remote="$(find_git_remote)"
+  local checked_out_branch
+  checked_out_branch="$(git rev-parse --abbrev-ref HEAD)"
 
   if [[ "${checked_out_branch}" == ${BRANCH_PREFIX}* ]]; then
     echo "✔ Current branch '${checked_out_branch}' seems to be a vim-patch"
@@ -196,20 +199,25 @@ submit_pr() {
   check_executable hub
 
   cd "${NEOVIM_SOURCE_DIR}"
-  local checked_out_branch="$(git rev-parse --abbrev-ref HEAD)"
+  local checked_out_branch
+  checked_out_branch="$(git rev-parse --abbrev-ref HEAD)"
   if [[ "${checked_out_branch}" != ${BRANCH_PREFIX}* ]]; then
     echo "✘ Current branch '${checked_out_branch}' doesn't seem to be a vim-patch branch."
     exit 1
   fi
 
-  local git_remote=$(find_git_remote)
-  local pr_body="$(git log --reverse --format='#### %s%n%n%b%n' ${git_remote}/master..HEAD)"
-  local patches=("$(git log --reverse --format='%s' ${git_remote}/master..HEAD)")
+  local git_remote
+  git_remote="$(find_git_remote)"
+  local pr_body
+  pr_body="$(git log --reverse --format='#### %s%n%n%b%n' "${git_remote}"/master..HEAD)"
+  local patches
+  patches=("$(git log --reverse --format='%s' "${git_remote}"/master..HEAD)")
   patches=(${patches[@]//vim-patch:}) # Remove 'vim-patch:' prefix for each item in array.
-  local pr_title="${patches[@]}" # Create space-separated string from array.
+  local pr_title="${patches[*]}" # Create space-separated string from array.
   pr_title="${pr_title// /,}" # Replace spaces with commas.
 
-  local pr_message="$(printf '[RFC] vim-patch:%s\n\n%s\n' "${pr_title#,}" "${pr_body}")"
+  local pr_message
+  pr_message="$(printf '[RFC] vim-patch:%s\n\n%s\n' "${pr_title#,}" "${pr_body}")"
 
   echo "Pushing to 'origin/${checked_out_branch}'."
   output="$(git push origin "${checked_out_branch}" 2>&1)" &&
@@ -225,7 +233,7 @@ submit_pr() {
   echo
   echo "Cleaning up files."
   local patch_file
-  for patch_file in ${patches[@]}; do
+  for patch_file in "${patches[@]}"; do
     patch_file="vim-${patch_file}.patch"
     if [[ ! -f "${NEOVIM_SOURCE_DIR}/${patch_file}" ]]; then
       continue
@@ -241,12 +249,14 @@ list_vim_patches() {
   printf "\nVim patches missing from Neovim:\n"
 
   # Get commits since 7.4.602.
-  local vim_commits=$(cd "${VIM_SOURCE_DIR}" && git log --reverse --format='%H' v7.4.602..HEAD)
+  local vim_commits
+  vim_commits="$(cd "${VIM_SOURCE_DIR}" && git log --reverse --format='%H' v7.4.602..HEAD)"
 
   local vim_commit
   for vim_commit in ${vim_commits}; do
     local is_missing
-    local vim_tag=$(cd "${VIM_SOURCE_DIR}" && git describe --tags --exact-match "${vim_commit}" 2>/dev/null)
+    local vim_tag
+    vim_tag="$(cd "${VIM_SOURCE_DIR}" && git describe --tags --exact-match "${vim_commit}" 2>/dev/null)"
     if [[ -n "${vim_tag}" ]]; then
       local patch_number="${vim_tag:5}" # Remove prefix like "v7.4."
       # Tagged Vim patch, check version.c:
@@ -283,8 +293,10 @@ review_commit() {
   local neovim_patch_url="${neovim_commit_url}.patch"
 
   local git_patch_prefix='Subject: \[PATCH\] '
-  local neovim_patch="$(curl -Ssf "${neovim_patch_url}")"
-  local vim_version="$(head -n 4 <<< "${neovim_patch}" | sed -n "s/${git_patch_prefix}vim-patch:\([a-z0-9.]*\)$/\1/p")"
+  local neovim_patch
+  neovim_patch="$(curl -Ssf "${neovim_patch_url}")"
+  local vim_version
+  vim_version="$(head -n 4 <<< "${neovim_patch}" | sed -n "s/${git_patch_prefix}vim-patch:\([a-z0-9.]*\)$/\1/p")"
 
   echo
   if [[ -n "${vim_version}" ]]; then
@@ -300,9 +312,12 @@ review_commit() {
 
   local vim_patch_url="${vim_commit_url}.patch"
 
-  local expected_commit_message="$(commit_message)"
-  local message_length="$(wc -l <<< "${expected_commit_message}")"
-  local commit_message="$(tail -n +4 <<< "${neovim_patch}" | head -n "${message_length}")"
+  local expected_commit_message
+  expected_commit_message="$(commit_message)"
+  local message_length
+  message_length="$(wc -l <<< "${expected_commit_message}")"
+  local commit_message
+  commit_message="$(tail -n +4 <<< "${neovim_patch}" | head -n "${message_length}")"
   if [[ "${commit_message#${git_patch_prefix}}" == "${expected_commit_message}" ]]; then
     echo "✔ Found expected commit message."
   else
@@ -347,7 +362,7 @@ review_pr() {
 
   local pr_commit_url
   local reply
-  for pr_commit_url in ${pr_commit_urls[@]}; do
+  for pr_commit_url in "${pr_commit_urls[@]}"; do
     review_commit "${pr_commit_url}"
     if [[ "${pr_commit_url}" != "${pr_commit_urls[-1]}" ]]; then
       read -p "Continue with next commit (Y/n)? " -n 1 -r reply
