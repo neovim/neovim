@@ -10,7 +10,7 @@
 -- :edit
 
 local helpers = require('test.functional.helpers')
-local feed, insert = helpers.feed, helpers.insert
+local feed, insert, source = helpers.feed, helpers.insert, helpers.source
 local clear, execute, expect = helpers.clear, helpers.execute, helpers.expect
 
 describe('Commands that close windows and/or buffers', function()
@@ -84,6 +84,28 @@ describe('Commands that close windows and/or buffers', function()
     feed('GA 4<Esc>:all!<CR>')
     execute('1wincmd w')
     expect('testtext 2 2 2')
+
+    -- Test ":q!" and hidden buffer.
+    execute('bw! Xtest1 Xtest2 Xtest3 Xtest4')
+    execute('sp Xtest1')
+    execute('wincmd w')
+    execute('bw!')
+    execute('set modified')
+    execute('bot sp Xtest2')
+    execute('set modified')
+    execute('bot sp Xtest3')
+    execute('set modified')
+    execute('wincmd t')
+    execute('hide')
+    execute('q!')
+    expect('testtext 3')
+    execute('q!')
+    feed('<CR>')
+    expect('testtext 1')
+    source([[
+      q!
+      " Now nvim should have exited
+      throw "Oh, Not finished yet."]])
   end)
 
   teardown(function()

@@ -5674,7 +5674,7 @@ static void ex_quit(exarg_T *eap)
            | (eap->forceit ? CCGD_FORCEIT : 0)
            | CCGD_EXCMD))
       || check_more(TRUE, eap->forceit) == FAIL
-      || (only_one_window() && check_changed_any(eap->forceit))) {
+      || (only_one_window() && check_changed_any(eap->forceit, true))) {
     not_exiting();
   } else {
     // quit last window
@@ -5723,9 +5723,10 @@ static void ex_quit_all(exarg_T *eap)
   if (curbuf_locked() || (curbuf->b_nwindows == 1 && curbuf->b_closing))
     return;
 
-  exiting = TRUE;
-  if (eap->forceit || !check_changed_any(FALSE))
+  exiting = true;
+  if (eap->forceit || !check_changed_any(false, false)) {
     getout(0);
+  }
   not_exiting();
 }
 
@@ -6019,7 +6020,7 @@ static void ex_exit(exarg_T *eap)
                || curbufIsChanged())
               && do_write(eap) == FAIL)
              || check_more(TRUE, eap->forceit) == FAIL
-             || (only_one_window() && check_changed_any(eap->forceit))) {
+             || (only_one_window() && check_changed_any(eap->forceit, false))) {
     not_exiting();
   } else {
     if (only_one_window())          /* quit last window, exit Vim */
