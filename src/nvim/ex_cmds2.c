@@ -1263,8 +1263,9 @@ int check_changed_any(bool hidden, bool unload)
     ++bufcount;
   }
 
-  if (bufcount == 0)
-    return FALSE;
+  if (bufcount == 0) {
+    return false;
+  }
 
   bufnrs = xmalloc(sizeof(*bufnrs) * bufcount);
 
