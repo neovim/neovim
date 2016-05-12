@@ -408,6 +408,7 @@ typedef struct {
   Terminal *term;
   bool stopped;
   bool exited;
+  bool rpc;
   int refcount;
   ufunc_T *on_stdout, *on_stderr, *on_exit;
   dict_T *self;
@@ -448,8 +449,7 @@ typedef struct {
 #define FNE_INCL_BR     1       /* find_name_end(): include [] in name */
 #define FNE_CHECK_START 2       /* find_name_end(): check name starts with
                                    valid character */
-static uint64_t current_job_id = 1;
-static PMap(uint64_t) *jobs = NULL; 
+static PMap(uint64_t) *jobs = NULL;
 
 static uint64_t last_timer_id = 0;
 static PMap(uint64_t) *timers = NULL;
@@ -11724,16 +11724,35 @@ static void f_jobclose(typval_T *argvars, typval_T *rettv)
   if (argvars[1].v_type == VAR_STRING) {
     char *stream = (char *)argvars[1].vval.v_string;
     if (!strcmp(stream, "stdin")) {
-      process_close_in(proc);
+      if (data->rpc) {
+        EMSG(_("Invalid stream on rpc job, use jobclose(id, 'rpc')"));
+      } else {
+        process_close_in(proc);
+      }
     } else if (!strcmp(stream, "stdout")) {
-      process_close_out(proc);
+      if (data->rpc) {
+        EMSG(_("Invalid stream on rpc job, use jobclose(id, 'rpc')"));
+      } else {
+        process_close_out(proc);
+      }
     } else if (!strcmp(stream, "stderr")) {
       process_close_err(proc);
+    } else if (!strcmp(stream, "rpc")) {
+      if (data->rpc) {
+        channel_close(data->id);
+      } else {
+        EMSG(_("Invalid job stream: Not an rpc job"));
+      }
     } else {
       EMSG2(_("Invalid job stream \"%s\""), stream);
     }
   } else {
-    process_close_streams(proc);
+    if (data->rpc) {
+      channel_close(data->id);
+      process_close_err(proc);
+    } else {
+      process_close_streams(proc);
+    }
   }
 }
 
@@ -11787,6 +11806,11 @@ static void f_jobsend(typval_T *argvars, typval_T *rettv)
 
   if (((Process *)&data->proc)->in->closed) {
     EMSG(_("Can't send data to the job: stdin is closed"));
+    return;
+  }
+
+  if (data->rpc) {
+    EMSG(_("Can't send raw data to rpc channel"));
     return;
   }
 
@@ -11911,11 +11935,22 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv)
     return;
   }
 
+
   dict_T *job_opts = NULL;
+  bool detach = false, rpc = false, pty = false;
   ufunc_T *on_stdout = NULL, *on_stderr = NULL, *on_exit = NULL;
   char *cwd = NULL;
   if (argvars[1].v_type == VAR_DICT) {
     job_opts = argvars[1].vval.v_dict;
+
+    detach = get_dict_number(job_opts, (uint8_t *)"detach") != 0;
+    rpc = get_dict_number(job_opts, (uint8_t *)"rpc") != 0;
+    pty = get_dict_number(job_opts, (uint8_t *)"pty") != 0;
+    if (pty && rpc) {
+      EMSG2(_(e_invarg2), "job cannot have both 'pty' and 'rpc' options set");
+      shell_free_argv(argv);
+      return;
+    }
 
     char *new_cwd = (char *)get_dict_string(job_opts, (char_u *)"cwd", false);
     if (new_cwd && strlen(new_cwd) > 0) {
@@ -11934,10 +11969,8 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv)
     }
   }
 
-  bool pty = job_opts && get_dict_number(job_opts, (uint8_t *)"pty") != 0;
-  bool detach = job_opts && get_dict_number(job_opts, (uint8_t *)"detach") != 0;
   TerminalJobData *data = common_job_init(argv, on_stdout, on_stderr, on_exit,
-                                          job_opts, pty, detach, cwd);
+                                          job_opts, pty, rpc, detach, cwd);
   Process *proc = (Process *)&data->proc;
 
   if (pty) {
@@ -11955,7 +11988,7 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv)
     }
   }
 
-  if (!on_stdout) {
+  if (!rpc && !on_stdout) {
     proc->out = NULL;
   }
   if (!on_stderr) {
@@ -14105,7 +14138,7 @@ end:
   api_free_object(result);
 }
 
-// "rpcstart()" function
+// "rpcstart()" function (DEPRECATED)
 static void f_rpcstart(typval_T *argvars, typval_T *rettv)
 {
   rettv->v_type = VAR_NUMBER;
@@ -14158,32 +14191,27 @@ static void f_rpcstart(typval_T *argvars, typval_T *rettv)
 
   // The last item of argv must be NULL
   argv[i] = NULL;
-  uint64_t channel_id = channel_from_process(argv);
 
-  if (!channel_id) {
-    EMSG(_(e_api_spawn_failed));
-  }
-
-  rettv->vval.v_number = (varnumber_T)channel_id;
+  TerminalJobData *data = common_job_init(argv, NULL, NULL, NULL,
+                                          NULL, false, true, false, NULL);
+  common_job_start(data, rettv);
 }
 
 // "rpcstop()" function
 static void f_rpcstop(typval_T *argvars, typval_T *rettv)
 {
-  rettv->v_type = VAR_NUMBER;
-  rettv->vval.v_number = 0;
-
-  if (check_restricted() || check_secure()) {
-    return;
-  }
-
   if (argvars[0].v_type != VAR_NUMBER) {
     // Wrong argument types
     EMSG(_(e_invarg));
     return;
   }
 
-  rettv->vval.v_number = channel_close(argvars[0].vval.v_number);
+  // if called with a job, stop it, else closes the channel
+  if (pmap_get(uint64_t)(jobs, argvars[0].vval.v_number)) {
+    f_jobstop(argvars, rettv);
+  } else {
+    rettv->vval.v_number = channel_close(argvars[0].vval.v_number);
+  }
 }
 
 /*
@@ -16677,7 +16705,7 @@ static void f_termopen(typval_T *argvars, typval_T *rettv)
   }
 
   TerminalJobData *data = common_job_init(argv, on_stdout, on_stderr, on_exit,
-                                          job_opts, true, false, cwd);
+                                          job_opts, true, false, false, cwd);
   data->proc.pty.width = curwin->w_width;
   data->proc.pty.height = curwin->w_height;
   data->proc.pty.term_name = xstrdup("xterm-256color");
@@ -22101,6 +22129,7 @@ static inline TerminalJobData *common_job_init(char **argv,
                                                ufunc_T *on_exit,
                                                dict_T *self,
                                                bool pty,
+                                               bool rpc,
                                                bool detach,
                                                char *cwd)
 {
@@ -22111,6 +22140,7 @@ static inline TerminalJobData *common_job_init(char **argv,
   data->on_exit = on_exit;
   data->self = self;
   data->events = queue_new_child(main_loop.events);
+  data->rpc = rpc;
   if (pty) {
     data->proc.pty = pty_process_init(&main_loop, data);
   } else {
@@ -22130,7 +22160,9 @@ static inline TerminalJobData *common_job_init(char **argv,
   return data;
 }
 
-/// Return true/false on success/failure.
+/// common code for getting job callbacks for jobstart, termopen and rpcstart
+///
+/// @return true/false on success/failure.
 static inline bool common_job_callbacks(dict_T *vopts, ufunc_T **on_stdout,
                                         ufunc_T **on_stderr, ufunc_T **on_exit)
 {
@@ -22174,12 +22206,19 @@ static inline bool common_job_start(TerminalJobData *data, typval_T *rettv)
   }
   xfree(cmd);
 
-  data->id = current_job_id++;
-  wstream_init(proc->in, 0);
-  if (proc->out) {
-    rstream_init(proc->out, 0);
-    rstream_start(proc->out, on_job_stdout, data);
+  data->id = next_chan_id++;
+
+  if (data->rpc) {
+    // the rpc channel takes over the in and out streams
+    channel_from_process(proc, data->id);
+  } else {
+    wstream_init(proc->in, 0);
+    if (proc->out) {
+      rstream_init(proc->out, 0);
+      rstream_start(proc->out, on_job_stdout, data);
+    }
   }
+
   if (proc->err) {
     rstream_init(proc->err, 0);
     rstream_start(proc->err, on_job_stderr, data);
@@ -22302,12 +22341,18 @@ static void on_process_exit(Process *proc, int status, void *d)
     snprintf(msg, sizeof msg, "\r\n[Process exited %d]", proc->status);
     terminal_close(data->term, msg);
   }
+  if (data->rpc) {
+    channel_process_exit(data->id, status);
+  }
 
   if (data->status_ptr) {
     *data->status_ptr = status;
   }
 
   process_job_event(data, data->on_exit, "exit", NULL, 0, status);
+
+  pmap_del(uint64_t)(jobs, data->id);
+  term_job_data_decref(data);
 }
 
 static void term_write(char *buf, size_t size, void *d)
@@ -22355,7 +22400,7 @@ static void term_job_data_decref(TerminalJobData *data)
 static void on_job_event(JobEvent *ev)
 {
   if (!ev->callback) {
-    goto end;
+    return;
   }
 
   typval_T argv[3];
@@ -22391,13 +22436,6 @@ static void on_job_event(JobEvent *ev)
   call_user_func(ev->callback, argc, argv, &rettv, curwin->w_cursor.lnum,
       curwin->w_cursor.lnum, ev->data->self);
   clear_tv(&rettv);
-
-end:
-  if (!ev->received) {
-    // exit event, safe to free job data now
-    pmap_del(uint64_t)(jobs, ev->data->id);
-    term_job_data_decref(ev->data);
-  }
 }
 
 static TerminalJobData *find_job(uint64_t id)

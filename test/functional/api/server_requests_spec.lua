@@ -4,7 +4,9 @@
 local helpers = require('test.functional.helpers')(after_each)
 local clear, nvim, eval = helpers.clear, helpers.nvim, helpers.eval
 local eq, neq, run, stop = helpers.eq, helpers.neq, helpers.run, helpers.stop
-local nvim_prog = helpers.nvim_prog
+local nvim_prog, command, funcs = helpers.nvim_prog, helpers.command, helpers.funcs
+local source, next_message = helpers.source, helpers.next_message
+local meths = helpers.meths
 
 
 describe('server -> client', function()
@@ -144,11 +146,11 @@ describe('server -> client', function()
     end
 
     before_each(function()
-      nvim('command', "let vim = rpcstart('"..nvim_prog.."', ['-u', 'NONE', '-i', 'NONE', '--cmd', 'set noswapfile', '--embed'])")
+      command("let vim = rpcstart('"..nvim_prog.."', ['-u', 'NONE', '-i', 'NONE', '--cmd', 'set noswapfile', '--embed'])")
       neq(0, eval('vim'))
     end)
 
-    after_each(function() nvim('command', 'call rpcstop(vim)') end)
+    after_each(function() command('call rpcstop(vim)') end)
 
     it('can send/recieve notifications and make requests', function()
       nvim('command', "call rpcnotify(vim, 'vim_set_current_line', 'SOME TEXT')")
@@ -181,4 +183,42 @@ describe('server -> client', function()
       eq(true, string.match(err, ': (.*)') == 'Failed to evaluate expression')
     end)
   end)
+
+  describe('when using jobstart', function()
+    local jobid
+    before_each(function()
+      local channel = nvim('get_api_info')[1]
+      nvim('set_var', 'channel', channel)
+      source([[
+        function! s:OnEvent(id, data, event)
+          call rpcnotify(g:channel, a:event, 0, a:data)
+        endfunction
+        let g:job_opts = {
+        \ 'on_stderr': function('s:OnEvent'),
+        \ 'on_exit': function('s:OnEvent'),
+        \ 'user': 0,
+        \ 'rpc': v:true
+        \ }
+      ]])
+      local lua_prog = arg[-1]
+      meths.set_var("args", {lua_prog, 'test/functional/api/rpc_fixture.lua'})
+      jobid = eval("jobstart(g:args, g:job_opts)")
+      neq(0, 'jobid')
+    end)
+
+    after_each(function()
+      funcs.jobstop(jobid)
+    end)
+
+    it('rpc and text stderr can be combined', function()
+      eq("ok",funcs.rpcrequest(jobid, "poll"))
+      funcs.rpcnotify(jobid, "ping")
+      eq({'notification', 'pong', {}}, next_message())
+      eq("done!",funcs.rpcrequest(jobid, "write_stderr", "fluff\n"))
+      eq({'notification', 'stderr', {0, {'fluff', ''}}}, next_message())
+      funcs.rpcrequest(jobid, "exit")
+      eq({'notification', 'exit', {0, 0}}, next_message())
+    end)
+  end)
+
 end)

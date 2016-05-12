@@ -5,6 +5,7 @@ local clear, eq, eval, execute, feed, insert, neq, next_msg, nvim,
   helpers.insert, helpers.neq, helpers.next_message, helpers.nvim,
   helpers.nvim_dir, helpers.ok, helpers.source,
   helpers.write_file, helpers.mkdir, helpers.rmdir
+local command = helpers.command
 local Screen = require('test.functional.ui.screen')
 
 
@@ -427,6 +428,13 @@ describe('jobs', function()
     nvim('eval', 'jobstop(j)')
     eq({'notification', 'j', {0, {jobid, 'stdout', {'abcdef'}}}}, next_msg())
     eq({'notification', 'j', {0, {jobid, 'exit'}}}, next_msg())
+  end)
+
+  it('cannot have both rpc and pty options', function()
+    command("let g:job_opts.pty = v:true")
+    command("let g:job_opts.rpc = v:true")
+    local _, err = pcall(command, "let j = jobstart(['cat', '-'], g:job_opts)")
+    ok(string.find(err, "E475: Invalid argument: job cannot have both 'pty' and 'rpc' options set") ~= nil)
   end)
 
   describe('running tty-test program', function()

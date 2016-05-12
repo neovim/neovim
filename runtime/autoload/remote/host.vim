@@ -261,9 +261,8 @@ function! remote#host#LoadErrorForHost(host, log) abort
         \ 'You can try to see what happened '.
         \ 'by starting Neovim with the environment variable '.
         \ a:log . ' set to a file and opening the generated '.
-        \ 'log file. Also, the host stderr will be available '.
-        \ 'in Neovim log, so it may contain useful information. '.
-        \ 'See also ~/.nvimlog.'
+        \ 'log file. Also, the host stderr is available '.
+        \ 'in messages.'
 endfunction
 
 
