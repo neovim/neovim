@@ -3402,11 +3402,9 @@ win_line (
 
         if (trailcol != MAXCOL && ptr > line + trailcol && c == ' ') {
           c = lcs_trail;
-          if (!attr_pri) {
-            n_attr = 1;
-            extra_attr = hl_attr(HLF_8);
-            saved_attr2 = char_attr;             /* save current attr */
-          }
+          n_attr = 1;
+          extra_attr = hl_attr(HLF_8);
+          saved_attr2 = char_attr;             /* save current attr */
           mb_c = c;
           if (enc_utf8 && (*mb_char2len)(c) > 1) {
             mb_utf8 = TRUE;
@@ -3555,10 +3553,8 @@ win_line (
           }
           lcs_eol_one = -1;
           --ptr;                    /* put it back at the NUL */
-          if (!attr_pri) {
-            extra_attr = hl_attr(HLF_AT);
-            n_attr = 1;
-          }
+          extra_attr = hl_attr(HLF_AT);
+          n_attr = 1;
           mb_c = c;
           if (enc_utf8 && (*mb_char2len)(c) > 1) {
             mb_utf8 = TRUE;
@@ -3587,11 +3583,9 @@ win_line (
             n_extra = byte2cells(c) - 1;
             c = *p_extra++;
           }
-          if (!attr_pri) {
-            n_attr = n_extra + 1;
-            extra_attr = hl_attr(HLF_8);
-            saved_attr2 = char_attr;             /* save current attr */
-          }
+          n_attr = n_extra + 1;
+          extra_attr = hl_attr(HLF_8);
+          saved_attr2 = char_attr;             /* save current attr */
           mb_utf8 = FALSE;              /* don't draw as UTF-8 */
         } else if (VIsual_active
                    && (VIsual_mode == Ctrl_V
@@ -3703,10 +3697,8 @@ win_line (
     }
 
     /* Don't override visual selection highlighting. */
-    if (n_attr > 0
-        && draw_state == WL_LINE
-        && !attr_pri)
-      char_attr = extra_attr;
+    if (n_attr > 0 && draw_state == WL_LINE)
+      char_attr = hl_combine_attr(char_attr, extra_attr);
 
     /*
      * Handle the case where we are in column 0 but not on the first
