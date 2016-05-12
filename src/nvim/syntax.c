@@ -5004,6 +5004,10 @@ static void syn_cmd_sync(exarg_T *eap, int syncing)
         curwin->w_s->b_syn_sync_maxlines = 0;
       }
     } else if (STRCMP(key, "LINECONT") == 0)   {
+      if (*next_arg == NUL) {  // missing pattern
+        illegal = true;
+        break;
+      }
       if (curwin->w_s->b_syn_linecont_pat != NULL) {
         EMSG(_("E403: syntax sync: line continuations pattern specified twice"));
         finished = TRUE;
