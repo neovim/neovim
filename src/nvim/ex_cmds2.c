@@ -116,11 +116,6 @@ struct source_cookie {
 static int debug_greedy = FALSE;        /* batch mode debugging: don't save
                                            and restore typeahead. */
 
-static int get_maxbacktrace_level(void);
-static void do_setdebugtracelevel(char_u *arg);
-static void do_checkbacktracelevel(void);
-static void do_showbacktrace(char_u *cmd);
-
 /*
  * do_debug(): Debug mode.
  * Repeatedly get Ex commands, until told to continue normal execution.
