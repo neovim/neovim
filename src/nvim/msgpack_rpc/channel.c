@@ -136,9 +136,9 @@ uint64_t channel_from_process(char **argv)
   incref(channel);  // process channels are only closed by the exit_cb
   wstream_init(proc->in, 0);
   rstream_init(proc->out, 0);
-  rstream_start(proc->out, parse_msgpack);
+  rstream_start(proc->out, parse_msgpack, channel);
   rstream_init(proc->err, 0);
-  rstream_start(proc->err, forward_stderr);
+  rstream_start(proc->err, forward_stderr, channel);
 
   return channel->id;
 }
@@ -149,13 +149,13 @@ uint64_t channel_from_process(char **argv)
 void channel_from_connection(SocketWatcher *watcher)
 {
   Channel *channel = register_channel(kChannelTypeSocket);
-  socket_watcher_accept(watcher, &channel->data.stream, channel);
+  socket_watcher_accept(watcher, &channel->data.stream);
   incref(channel);  // close channel only after the stream is closed
   channel->data.stream.internal_close_cb = close_cb;
   channel->data.stream.internal_data = channel;
   wstream_init(&channel->data.stream, 0);
   rstream_init(&channel->data.stream, CHANNEL_BUFFER_SIZE);
-  rstream_start(&channel->data.stream, parse_msgpack);
+  rstream_start(&channel->data.stream, parse_msgpack, channel);
 }
 
 /// Sends event/arguments to channel
@@ -317,11 +317,10 @@ void channel_from_stdio(void)
   Channel *channel = register_channel(kChannelTypeStdio);
   incref(channel);  // stdio channels are only closed on exit
   // read stream
-  rstream_init_fd(&main_loop, &channel->data.std.in, 0, CHANNEL_BUFFER_SIZE,
-                  channel);
-  rstream_start(&channel->data.std.in, parse_msgpack);
+  rstream_init_fd(&main_loop, &channel->data.std.in, 0, CHANNEL_BUFFER_SIZE);
+  rstream_start(&channel->data.std.in, parse_msgpack, channel);
   // write stream
-  wstream_init_fd(&main_loop, &channel->data.std.out, 1, 0, NULL);
+  wstream_init_fd(&main_loop, &channel->data.std.out, 1, 0);
 }
 
 static void forward_stderr(Stream *stream, RBuffer *rbuf, size_t count,
@@ -637,7 +636,7 @@ static void close_channel(Channel *channel)
 
   switch (channel->type) {
     case kChannelTypeSocket:
-      stream_close(&channel->data.stream, NULL);
+      stream_close(&channel->data.stream, NULL, NULL);
       break;
     case kChannelTypeProc:
       if (!channel->data.process.uvproc.process.closed) {
@@ -645,8 +644,8 @@ static void close_channel(Channel *channel)
       }
       break;
     case kChannelTypeStdio:
-      stream_close(&channel->data.std.in, NULL);
-      stream_close(&channel->data.std.out, NULL);
+      stream_close(&channel->data.std.in, NULL, NULL);
+      stream_close(&channel->data.std.out, NULL, NULL);
       queue_put(main_loop.fast_events, exit_event, 1, channel);
       return;
     default:

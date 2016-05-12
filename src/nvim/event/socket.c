@@ -113,7 +113,7 @@ int socket_watcher_start(SocketWatcher *watcher, int backlog, socket_cb cb)
   return 0;
 }
 
-int socket_watcher_accept(SocketWatcher *watcher, Stream *stream, void *data)
+int socket_watcher_accept(SocketWatcher *watcher, Stream *stream)
   FUNC_ATTR_NONNULL_ARG(1) FUNC_ATTR_NONNULL_ARG(2)
 {
   uv_stream_t *client;
@@ -133,7 +133,7 @@ int socket_watcher_accept(SocketWatcher *watcher, Stream *stream, void *data)
     return result;
   }
 
-  stream_init(NULL, stream, -1, client, data);
+  stream_init(NULL, stream, -1, client);
   return 0;
 }
 

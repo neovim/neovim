@@ -22178,11 +22178,11 @@ static inline bool common_job_start(TerminalJobData *data, typval_T *rettv)
   wstream_init(proc->in, 0);
   if (proc->out) {
     rstream_init(proc->out, 0);
-    rstream_start(proc->out, on_job_stdout);
+    rstream_start(proc->out, on_job_stdout, data);
   }
   if (proc->err) {
     rstream_init(proc->err, 0);
-    rstream_start(proc->err, on_job_stderr);
+    rstream_start(proc->err, on_job_stderr, data);
   }
   pmap_put(uint64_t)(jobs, data->id, data);
   rettv->vval.v_number = data->id;
