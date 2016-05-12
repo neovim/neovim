@@ -1,8 +1,8 @@
 -- Tests for backtrace debug commands.
 
 local helpers = require('test.functional.helpers')
-local feed, insert, source = helpers.feed, helpers.insert, helpers.source
-local clear, execute, expect = helpers.clear, helpers.execute, helpers.expect
+local feed, clear = helpers.feed, helpers.clear
+local execute, expect = helpers.execute, helpers.expect
 
 describe('108', function()
   before_each(clear)
