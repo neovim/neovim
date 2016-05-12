@@ -2615,33 +2615,37 @@ find_endpos (
                           IF_SYN_TIME(&spp_skip->sp_time));
       spp_skip->sp_prog = regmatch.regprog;
       if (r && regmatch.startpos[0].col <= best_regmatch.startpos[0].col) {
-        /* Add offset to skip pattern match */
+        // Add offset to skip pattern match
         syn_add_end_off(&pos, &regmatch, spp_skip, SPO_ME_OFF, 1);
 
-        /* If the skip pattern goes on to the next line, there is no
-         * match with an end pattern in this line. */
-        if (pos.lnum > startpos->lnum)
+        // If the skip pattern goes on to the next line, there is no
+        // match with an end pattern in this line.
+        if (pos.lnum > startpos->lnum) {
           break;
+        }
 
-        line = ml_get_buf(syn_buf, startpos->lnum, FALSE);
+        line = ml_get_buf(syn_buf, startpos->lnum, false);
+        int line_len = (int)STRLEN(line);
 
-        /* take care of an empty match or negative offset */
-        if (pos.col <= matchcol)
-          ++matchcol;
-        else if (pos.col <= regmatch.endpos[0].col)
+        // take care of an empty match or negative offset
+        if (pos.col <= matchcol) {
+          matchcol++;
+        } else if (pos.col <= regmatch.endpos[0].col) {
           matchcol = pos.col;
-        else
-          /* Be careful not to jump over the NUL at the end-of-line */
+        } else {
+          // Be careful not to jump over the NUL at the end-of-line
           for (matchcol = regmatch.endpos[0].col;
-               line[matchcol] != NUL && matchcol < pos.col;
-               ++matchcol)
-            ;
+               matchcol < line_len && matchcol < pos.col;
+               matchcol++) {
+          }
+        }
 
-        /* if the skip pattern includes end-of-line, break here */
-        if (line[matchcol] == NUL)
+        // if the skip pattern includes end-of-line, break here
+        if (matchcol >= line_len) {
           break;
+        }
 
-        continue;                   /* start with first end pattern again */
+        continue;  // start with first end pattern again
       }
     }
 
