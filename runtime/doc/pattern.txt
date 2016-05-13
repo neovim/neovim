@@ -1,4 +1,4 @@
-*pattern.txt*   For Vim version 7.4.  Last change: 2015 Dec 26
+*pattern.txt*   For Vim version 7.4.  Last change: 2016 Jan 03
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -1094,7 +1094,10 @@ x	A single character, with no special meaning, matches itself
 	  plausible pattern for a Unix filename: "[-./[:alnum:]_~]\+" That is,
 	  a list of at least one character, each of which is either '-', '.',
 	  '/', alphabetic, numeric, '_' or '~'.
-	  These items only work for 8-bit characters.
+	  These items only work for 8-bit characters, except [:lower:] and
+	  [:upper:] also work for multi-byte characters when using the new
+	  regexp engine.  In the future these items may work for multi-byte
+	  characters.
 							*/[[=* *[==]*
 	- An equivalence class.  This means that characters are matched that
 	  have almost the same meaning, e.g., when ignoring accents.  This

@@ -1,4 +1,4 @@
-*options.txt*	For Vim version 7.4.  Last change: 2015 Nov 23
+*options.txt*	For Vim version 7.4.  Last change: 2016 Jan 03
 
 
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
@@ -3785,7 +3785,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 			feature}
 	This option allows switching your keyboard into a special language
 	mode.  When you are typing text in Insert mode the characters are
-	inserted directly.  When in command mode the 'langmap' option takes
+	inserted directly.  When in Normal mode the 'langmap' option takes
 	care of translating these special characters to the original meaning
 	of the key.  This means you don't have to change the keyboard mode to
 	be able to execute Normal mode commands.
@@ -4152,8 +4152,11 @@ A jump table for the options with a short description can be found at |Q_op|.
 			global
 	Maximum amount of memory in Kbyte to use for all buffers together.
 	The maximum usable value is about 2000000 (2 Gbyte).  Use this to work
-	without a limit.  On 64 bit machines higher values might work.  But
-	hey, do you really need more than 2 Gbyte for text editing?
+	without a limit.
+	On 64 bit machines higher values might work.  But hey, do you really
+	need more than 2 Gbyte for text editing?  Keep in mind that text is
+	stored in the swap file, one can edit files > 2 Gbyte anyway.  We do
+	need the memory to store undo info.
 	Also see 'maxmem'.
 
 						*'menuitems'* *'mis'*
@@ -5823,7 +5826,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	the two-letter, lower case region name.  You can use more than one
 	region by listing them: "en_us,en_ca" supports both US and Canadian
 	English, but not words specific for Australia, New Zealand or Great
-	Britain.
+	Britain. (Note: currently en_au and en_nz dictionaries are older than
+	en_ca, en_gb and en_us).
 	If the name "cjk" is included East Asian characters are excluded from
 	spell checking.  This is useful when editing text that also has Asian
 	words.
