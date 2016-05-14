@@ -15085,13 +15085,13 @@ typedef struct {
 
 /// struct storing information about current sort
 typedef struct {
-   int item_compare_ic;
-   bool item_compare_numeric;
-   bool item_compare_numbers;
-   bool item_compare_float;
-   char_u *item_compare_func;
-   dict_T *item_compare_selfdict;
-   int item_compare_func_err;
+  int item_compare_ic;
+  bool item_compare_numeric;
+  bool item_compare_numbers;
+  bool item_compare_float;
+  char_u *item_compare_func;
+  dict_T *item_compare_selfdict;
+  int item_compare_func_err;
 } sortinfo_T;
 static sortinfo_T *sortinfo = NULL;
 
@@ -15213,7 +15213,7 @@ static int item_compare2(const void *s1, const void *s2, bool keep_zero)
   rettv.v_type = VAR_UNKNOWN;  // clear_tv() uses this
   res = call_func(sortinfo->item_compare_func,
                   (int)STRLEN(sortinfo->item_compare_func),
-                  &rettv, 2, argv, 0L, 0L, &dummy, TRUE,
+                  &rettv, 2, argv, 0L, 0L, &dummy, true,
                   sortinfo->item_compare_selfdict);
   clear_tv(&argv[0]);
   clear_tv(&argv[1]);
@@ -15362,8 +15362,9 @@ static void do_sort_uniq(typval_T *argvars, typval_T *rettv, bool sort)
       } else {
         // Sort the array with item pointers.
         qsort(ptrs, (size_t)len, sizeof (sortItem_T),
-              info.item_compare_func == NULL ? item_compare_not_keeping_zero :
-                                               item_compare2_not_keeping_zero);
+              (info.item_compare_func == NULL ?
+               item_compare_not_keeping_zero :
+               item_compare2_not_keeping_zero));
 
         if (!info.item_compare_func_err) {
           // Clear the list and append the items in the sorted order.
