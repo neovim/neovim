@@ -15305,11 +15305,17 @@ static void do_sort_uniq(typval_T *argvars, typval_T *rettv, bool sort)
         }
         if (i == 1) {
           info.item_compare_ic = true;
-        } else {
+        } else if (argvars[1].v_type != VAR_NUMBER) {
           info.item_compare_func = get_tv_string(&argvars[1]);
+        } else if (i != 0) {
+          EMSG(_(e_invarg));
+          goto theend;
         }
         if (info.item_compare_func != NULL) {
-          if (STRCMP(info.item_compare_func, "n") == 0) {
+          if (*info.item_compare_func == NUL) {
+            // empty string means default sort
+            info.item_compare_func = NULL;
+          } else if (STRCMP(info.item_compare_func, "n") == 0) {
             info.item_compare_func = NULL;
             info.item_compare_numeric = true;
           } else if (STRCMP(info.item_compare_func, "N") == 0) {

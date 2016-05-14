@@ -3,6 +3,8 @@ local clear = helpers.clear
 local eq = helpers.eq
 local eval = helpers.eval
 local execute = helpers.execute
+local exc_exec = helpers.exc_exec
+local neq = helpers.neq
 
 describe('sort', function()
   before_each(clear)
@@ -38,5 +40,13 @@ describe('sort', function()
     execute('return a:a - a:b')
     execute('endfunc')
     eq({1, 3, 5}, eval("sort([3, 1, 5], 'Compare1')"))
+  end)
+
+  it('default sort', function()
+    -- docs say omitted, empty or zero argument sorts on string representation
+    eq({'2', 1, 3.3}, eval('sort([3.3, 1, "2"])'))
+    eq({'2', 1, 3.3}, eval([[sort([3.3, 1, "2"], '')]]))
+    eq({'2', 1, 3.3}, eval('sort([3.3, 1, "2"], 0)'))
+    neq(exc_exec('call sort([3.3, 1, "2"], 3)'):find('E474:'), nil)
   end)
 end)
