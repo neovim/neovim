@@ -361,3 +361,147 @@ describe('guisp (special/undercurl)', function()
 
   end)
 end)
+
+describe("'cursorline' with 'listchars'", function()
+  local screen
+
+  local hlgroup_colors = {
+    NonText = Screen.colors.Blue,
+    Cursorline = Screen.colors.Grey90,
+    SpecialKey = Screen.colors.Red,
+  }
+
+  before_each(function()
+    clear()
+    screen = Screen.new(20,5)
+    screen:attach()
+  end)
+
+  after_each(function()
+    screen:detach()
+  end)
+
+  it("'cursorline' and 'cursorcolumn'", function()
+    screen:set_default_attr_ids({[1] = {background=hlgroup_colors.Cursorline}})
+    screen:set_default_attr_ignore( {{bold=true, foreground=hlgroup_colors.NonText}} )
+    execute('highlight clear ModeMsg')
+    execute('set cursorline')
+    feed('i')
+    screen:expect([[
+      {1:^                    }|
+      ~                   |
+      ~                   |
+      ~                   |
+      -- INSERT --        |
+    ]])
+    feed('abcdefg<cr>kkasdf')
+    screen:expect([[
+      abcdefg             |
+      {1:kkasdf^              }|
+      ~                   |
+      ~                   |
+      -- INSERT --        |
+    ]])
+    feed('<esc>')
+    screen:expect([[
+      abcdefg             |
+      {1:kkasd^f              }|
+      ~                   |
+      ~                   |
+                          |
+    ]])
+    execute('set nocursorline')
+    screen:expect([[
+      abcdefg             |
+      kkasd^f              |
+      ~                   |
+      ~                   |
+      :set nocursorline   |
+    ]])
+    feed('k')
+    screen:expect([[
+      abcde^fg             |
+      kkasdf              |
+      ~                   |
+      ~                   |
+      :set nocursorline   |
+    ]])
+    feed('jjji<cr><cr><cr><esc>')
+    screen:expect([[
+      kkasd               |
+                          |
+                          |
+      ^f                   |
+                          |
+    ]])
+    execute('set cursorline')
+    execute('set cursorcolumn')
+    feed('kkiabcdefghijk<esc>hh')
+    screen:expect([[
+      kkasd   {1: }           |
+      {1:abcdefgh^ijk         }|
+              {1: }           |
+      f       {1: }           |
+                          |
+    ]])
+    feed('khh')
+    screen:expect([[
+      {1:kk^asd               }|
+      ab{1:c}defghijk         |
+        {1: }                 |
+      f {1: }                 |
+                          |
+    ]])
+  end)
+
+  it("'cursorline' and with 'listchar' option: space, eol, tab, and trail", function()
+    screen:set_default_attr_ids({
+      [1] = {background=hlgroup_colors.Cursorline},
+      [2] = {
+        foreground=hlgroup_colors.SpecialKey,
+        background=hlgroup_colors.Cursorline,
+      },
+      [3] = {
+        background=hlgroup_colors.Cursorline,
+        foreground=hlgroup_colors.NonText,
+        bold=true,
+      },
+      [4] = {
+        foreground=hlgroup_colors.NonText,
+        bold=true,
+      },
+      [5] = {
+        foreground=hlgroup_colors.SpecialKey,
+      },
+    })
+    execute('highlight clear ModeMsg')
+    execute('highlight SpecialKey guifg=#FF0000')
+    execute('set cursorline')
+    execute('set tabstop=8')
+    execute('set listchars=space:.,eol:¬,tab:>-,extends:],precedes:[,trail:* list')
+    feed('i\t abcd <cr>\t abcd <cr><esc>k')
+    screen:expect([[
+      {5:>-------.}abcd{5:*}{4:¬}     |
+      {2:^>-------.}{1:abcd}{2:*}{3:¬}{1:     }|
+      {4:¬}                   |
+      {4:~                   }|
+                          |
+    ]])
+    feed('k')
+    screen:expect([[
+      {2:^>-------.}{1:abcd}{2:*}{3:¬}{1:     }|
+      {5:>-------.}abcd{5:*}{4:¬}     |
+      {4:¬}                   |
+      {4:~                   }|
+                          |
+    ]])
+    execute('set nocursorline')
+    screen:expect([[
+      {5:^>-------.}abcd{5:*}{4:¬}     |
+      {5:>-------.}abcd{5:*}{4:¬}     |
+      {4:¬}                   |
+      {4:~                   }|
+      :set nocursorline   |
+    ]])
+  end)
+end)
