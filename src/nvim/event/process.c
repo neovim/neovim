@@ -364,8 +364,10 @@ static void flush_stream(Process *proc, Stream *stream)
     size_t num_bytes = stream->num_bytes;
 
     // Poll for data and process the generated events.
-    loop_poll_events(&loop, 0);
-    queue_process_events(proc->events);
+    loop_poll_events(proc->loop, 0);
+    if (proc->events) {
+        queue_process_events(proc->events);
+    }
 
     // Stream can be closed if it is empty.
     if (num_bytes == stream->num_bytes) {
@@ -400,11 +402,12 @@ static void on_process_exit(Process *proc)
     uv_timer_stop(&loop->children_kill_timer);
   }
 
-  // Process handles are closed in the next event loop tick. This is done to
-  // give libuv more time to read data from the OS after the process exits(If
-  // process_close_streams is called with data still in the OS buffer, we lose
-  // it)
-  CREATE_EVENT(proc->events, process_close_handles, 1, proc);
+  // Process has terminated, but there could still be data to be read from the
+  // OS. We are still in the libuv loop, so we cannot call code that polls for
+  // more data directly. Instead delay the reading after the libuv loop by
+  // queueing process_close_handles() as an event.
+  Queue *queue = proc->events ? proc->events : loop->events;
+  CREATE_EVENT(queue, process_close_handles, 1, proc);
 }
 
 static void on_process_stream_close(Stream *stream, void *data)
