@@ -1,29 +1,22 @@
 -- Test argument list commands
 
 local helpers = require('test.functional.helpers')
-local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
-local execute, expect = helpers.execute, helpers.expect
-local eq, eval, neq = helpers.eq, helpers.eval, helpers.neq
-local exc_exec = helpers.exc_exec
+local clear, execute, eq = helpers.clear, helpers.execute, helpers.eq
+local eval, exc_exec, neq = helpers.eval, helpers.exc_exec, helpers.neq
 
 describe('argument list commands', function()
   before_each(clear)
 
-  function assert_argc(l)
-    eq(#l, eval('argc()'))
-    eq(l, eval('argv()'))
-  end
-
-  function init_abc()
+  local function init_abc()
     execute('args a b c')
     execute('next')
   end
 
-  function reset_arglist()
+  local function reset_arglist()
     execute('arga a | %argd')
   end
 
-  function assert_fails(cmd, err)
+  local function assert_fails(cmd, err)
     neq(exc_exec(cmd):find(err), nil)
   end
 
@@ -61,28 +54,28 @@ describe('argument list commands', function()
 
     init_abc()
     execute('argadd x')
-    assert_argc({'a', 'b', 'x', 'c'})
+    eq({'a', 'b', 'x', 'c'}, eval('argv()'))
     eq(1, eval('argidx()'))
 
     init_abc()
     execute('0argadd x')
-    assert_argc({'x', 'a', 'b', 'c'})
+    eq({'x', 'a', 'b', 'c'}, eval('argv()'))
     eq(2, eval('argidx()'))
 
     init_abc()
     execute('1argadd x')
-    assert_argc({'a', 'x', 'b', 'c'})
+    eq({'a', 'x', 'b', 'c'}, eval('argv()'))
     eq(2, eval('argidx()'))
 
     init_abc()
     execute('$argadd x')
-    assert_argc({'a', 'b', 'c', 'x'})
+    eq({'a', 'b', 'c', 'x'}, eval('argv()'))
     eq(1, eval('argidx()'))
 
     init_abc()
     execute('$argadd x')
     execute('+2argadd y')
-    assert_argc({'a', 'b', 'c', 'x', 'y'})
+    eq({'a', 'b', 'c', 'x', 'y'}, eval('argv()'))
     eq(1, eval('argidx()'))
 
     execute('%argd')
