@@ -3404,7 +3404,7 @@ win_line (
           c = lcs_trail;
           n_attr = 1;
           extra_attr = hl_attr(HLF_8);
-          saved_attr2 = char_attr;             /* save current attr */
+          saved_attr2 = char_attr;  // save current attr
           mb_c = c;
           if (enc_utf8 && (*mb_char2len)(c) > 1) {
             mb_utf8 = TRUE;
@@ -3552,7 +3552,7 @@ win_line (
             c = ' ';
           }
           lcs_eol_one = -1;
-          --ptr;                    /* put it back at the NUL */
+          ptr--;  // put it back at the NUL
           extra_attr = hl_attr(HLF_AT);
           n_attr = 1;
           mb_c = c;
@@ -3585,8 +3585,8 @@ win_line (
           }
           n_attr = n_extra + 1;
           extra_attr = hl_attr(HLF_8);
-          saved_attr2 = char_attr;             /* save current attr */
-          mb_utf8 = FALSE;              /* don't draw as UTF-8 */
+          saved_attr2 = char_attr;  // save current attr
+          mb_utf8 = false;   // don't draw as UTF-8
         } else if (VIsual_active
                    && (VIsual_mode == Ctrl_V
                        || VIsual_mode == 'v')
@@ -3696,9 +3696,10 @@ win_line (
       did_wcol = true;
     }
 
-    /* Don't override visual selection highlighting. */
-    if (n_attr > 0 && draw_state == WL_LINE)
+    // Don't override visual selection highlighting.
+    if (n_attr > 0 && draw_state == WL_LINE) {
       char_attr = hl_combine_attr(char_attr, extra_attr);
+    }
 
     /*
      * Handle the case where we are in column 0 but not on the first
