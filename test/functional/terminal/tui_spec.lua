@@ -154,9 +154,7 @@ describe('tui', function()
     for i = 1, 3000 do
       t[i] = 'item ' .. tostring(i)
     end
-    feed('i\027[200~')
-    feed(table.concat(t, '\n'))
-    feed('\027[201~')
+    feed('i\027[200~'..table.concat(t, '\n')..'\027[201~')
     screen:expect([[
       item 2997                                         |
       item 2998                                         |
