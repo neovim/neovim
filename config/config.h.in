@@ -57,5 +57,6 @@
 
 #cmakedefine HAVE_BE64TOH
 #cmakedefine ORDER_BIG_ENDIAN
+#define ENDIAN_INCLUDE_FILE <@ENDIAN_INCLUDE_FILE@>
 
 #endif  // AUTO_CONFIG_H
