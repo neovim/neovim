@@ -344,21 +344,36 @@ static void flush_stream(Process *proc, Stream *stream)
     return;
   }
 
-  // Limit amount of data we accept after process terminated.
-  size_t max_bytes = stream->num_bytes + rbuffer_capacity(stream->buffer);
+  // Maximal remaining data size of terminated process is system
+  // buffer size.
+  // Also helps with a child process that keeps the output streams open. If it
+  // keeps sending data, we only accept as much data as the system buffer size.
+  // Otherwise this would block cleanup/teardown.
+  int system_buffer_size = 0;
+  int err = uv_recv_buffer_size((uv_handle_t *)&stream->uv.pipe,
+                                &system_buffer_size);
+  if (err) {
+    system_buffer_size = (int)rbuffer_capacity(stream->buffer);
+  }
 
+  size_t max_bytes = stream->num_bytes + (size_t)system_buffer_size;
+
+  // Read remaining data.
   while (!stream->closed && stream->num_bytes < max_bytes) {
     // Remember number of bytes before polling
     size_t num_bytes = stream->num_bytes;
 
     // Poll for data and process the generated events.
     loop_poll_events(&loop, 0);
-    if (proc->events && !queue_empty(proc->events)) {
-      queue_process_events(proc->events);
-    }
+    queue_process_events(proc->events);
 
     // Stream can be closed if it is empty.
     if (num_bytes == stream->num_bytes) {
+      if (stream->read_cb) {
+        // Stream callback could miss EOF handling if a child keeps the stream
+        // open.
+        stream->read_cb(stream, stream->buffer, 0, stream->data, true);
+      }
       break;
     }
   }
@@ -368,11 +383,8 @@ static void process_close_handles(void **argv)
 {
   Process *proc = argv[0];
 
-  // Did our process forked a child that keeps the output streams open?
-  if (!process_is_tearing_down) {
-    flush_stream(proc, proc->out);
-    flush_stream(proc, proc->err);
-  }
+  flush_stream(proc, proc->out);
+  flush_stream(proc, proc->err);
 
   process_close_streams(proc);
   process_close(proc);
