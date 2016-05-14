@@ -1487,9 +1487,15 @@ do_arglist (
   char_u      *p;
   int match;
 
-  /*
-   * Collect all file name arguments in "new_ga".
-   */
+  // Set default argument for ":argadd" command.
+  if (what == AL_ADD && *str == NUL) {
+    if (curbuf->b_ffname == NULL) {
+      return FAIL;
+    }
+    str = curbuf->b_fname;
+  }
+
+  // Collect all file name arguments in "new_ga".
   get_arglist(&new_ga, str);
 
   if (what == AL_DEL) {

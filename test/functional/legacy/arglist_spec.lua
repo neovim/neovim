@@ -84,6 +84,17 @@ describe('argument list commands', function()
     execute('+2argadd y')
     assert_argc({'a', 'b', 'c', 'x', 'y'})
     eq(1, eval('argidx()'))
+
+    execute('%argd')
+    execute('edit d')
+    execute('arga')
+    eq(1, eval('len(argv())'))
+    eq('d', eval('get(argv(), 0, "")'))
+
+    execute('%argd')
+    execute('new')
+    execute('arga')
+    eq(0, eval('len(argv())'))
   end)
 
   it('test for [count]argument and [count]argdelete commands', function()
