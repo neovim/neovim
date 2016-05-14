@@ -708,6 +708,25 @@ describe('Ctrl-A/Ctrl-X on visual selections', function()
         call assert_equal(["20"], getline(1, '$'))
         call assert_equal([0, 1, 2, 0], getpos('.'))
       endfunc
+
+      " Test what patch 7.3.414 fixed. Ctrl-A on "000" drops the leading zeros.
+      func Test_normal_increment_01()
+          call setline(1, "000")
+        exec "norm! gg0\<C-A>"
+        call assert_equal("001", getline(1))
+
+        call setline(1, "000")
+        exec "norm! gg$\<C-A>"
+        call assert_equal("001", getline(1))
+
+        call setline(1, "001")
+        exec "norm! gg0\<C-A>"
+        call assert_equal("002", getline(1))
+
+        call setline(1, "001")
+        exec "norm! gg$\<C-A>"
+        call assert_equal("002", getline(1))
+      endfunc
     ]=])
   end)
 
@@ -720,4 +739,10 @@ describe('Ctrl-A/Ctrl-X on visual selections', function()
       eq({}, nvim.get_vvar('errors'))
     end)
   end
+
+  it('does not drop leading zeroes', function()
+    execute('set nrformats&vi') -- &vi makes Vim compatible
+    call('Test_normal_increment_01')
+    eq({}, nvim.get_vvar('errors'))
+  end)
 end)
