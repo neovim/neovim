@@ -24,6 +24,8 @@ is found in your `$PATH`.
 - pbcopy/pbpaste (only for Mac OS X)
 - lemonade (useful for SSH machine)
   https://github.com/pocke/lemonade
+- doitclient (another option for SSH setups from the maintainer of PuTTY)
+  http://www.chiark.greenend.org.uk/~sgtatham/doit/
 
 The presence of a suitable clipboard tool implicitly enables the '+' and '*'
 registers.
