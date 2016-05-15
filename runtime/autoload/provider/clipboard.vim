@@ -52,6 +52,11 @@ elseif executable('lemonade')
   let s:paste['+'] = 'lemonade paste'
   let s:copy['*'] = 'lemonade copy'
   let s:paste['*'] = 'lemonade paste'
+elseif executable('doitclient')
+  let s:copy['+'] = 'doitclient wclip'
+  let s:paste['+'] = 'doitclient wclip -r'
+  let s:copy['*'] = s:copy['+']
+  let s:paste['*'] = s:paste['+']
 else
   echom 'clipboard: No clipboard tool available. See :help nvim-clipboard'
   finish
