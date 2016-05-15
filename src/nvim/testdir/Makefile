@@ -28,7 +28,6 @@ SCRIPTS := \
            test53.out             \
            test55.out             \
            test64.out             \
-           test68.out             \
            test69.out             \
            test73.out             \
            test79.out             \
