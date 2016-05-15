@@ -65,9 +65,16 @@
 # define STATIC_ASSERT_STATEMENT(cond, msg) _Static_assert(cond, msg)
 
 # undef STATIC_ASSERT_PRAGMA_START
+
+#if __GNUC__ >= 6
 # define STATIC_ASSERT_PRAGMA_START \
     _Pragma("GCC diagnostic push") \
-    _Pragma("GCC diagnostic ignored \"-pedantic\"") \
+    _Pragma("GCC diagnostic ignored \"-Wpedantic\"")
+#else
+# define STATIC_ASSERT_PRAGMA_START \
+    _Pragma("GCC diagnostic push") \
+    _Pragma("GCC diagnostic ignored \"-pedantic\"")
+#endif
 
 # undef STATIC_ASSERT_PRAGMA_END
 # define STATIC_ASSERT_PRAGMA_END \

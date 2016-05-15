@@ -3816,16 +3816,17 @@ skip:
       EMSG2(_(e_patnotf2), get_search_pat());
   }
 
-  if (do_ask && hasAnyFolding(curwin))
-    /* Cursor position may require updating */
+  if (do_ask && hasAnyFolding(curwin)) {
+    // Cursor position may require updating
     changed_window_setting();
-
-    vim_regfree(regmatch.regprog);
-
-    // Restore the flag values, they can be used for ":&&".
-    do_all = save_do_all;
-    do_ask = save_do_ask;
   }
+
+  vim_regfree(regmatch.regprog);
+
+  // Restore the flag values, they can be used for ":&&".
+  do_all = save_do_all;
+  do_ask = save_do_ask;
+}
 
 /*
  * Give message for number of substitutions.
