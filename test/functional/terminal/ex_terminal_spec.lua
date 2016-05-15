@@ -1,7 +1,7 @@
 local helpers = require('test.functional.helpers')
 local Screen = require('test.functional.ui.screen')
 local clear, wait, nvim = helpers.clear, helpers.wait, helpers.nvim
-local nvim_dir, source, ok = helpers.nvim_dir, helpers.source, helpers.ok
+local nvim_dir, source, eq = helpers.nvim_dir, helpers.source, helpers.eq
 local execute, eval = helpers.execute, helpers.eval
 
 describe(':terminal', function()
@@ -53,7 +53,7 @@ describe(':terminal', function()
     source([[
       autocmd BufNew * set shell=foo
       terminal]])
-      -- Verify that BufNew actually fired (else the test is useless).
-    ok('foo' == eval('&shell'))
+      -- Verify that BufNew actually fired (else the test is invalid).
+    eq('foo', eval('&shell'))
   end)
 end)
