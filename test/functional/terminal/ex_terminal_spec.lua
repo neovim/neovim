@@ -1,7 +1,7 @@
 local helpers = require('test.functional.helpers')
 local Screen = require('test.functional.ui.screen')
 local clear, wait, nvim = helpers.clear, helpers.wait, helpers.nvim
-local nvim_dir = helpers.nvim_dir
+local nvim_dir, source = helpers.nvim_dir, helpers.source
 local execute = helpers.execute
 
 describe(':terminal', function()
@@ -9,7 +9,7 @@ describe(':terminal', function()
 
   before_each(function()
     clear()
-    screen = Screen.new(50, 7)
+    screen = Screen.new(50, 4)
     screen:attach(false)
     nvim('set_option', 'shell', nvim_dir..'/shell-test')
     nvim('set_option', 'shellcmdflag', 'EXE')
@@ -23,9 +23,6 @@ describe(':terminal', function()
       ready $                                           |
       [Process exited 0]                                |
                                                         |
-                                                        |
-                                                        |
-                                                        |
       -- TERMINAL --                                    |
     ]])
   end)
@@ -37,9 +34,6 @@ describe(':terminal', function()
       ready $ echo hi                                   |
                                                         |
       [Process exited 0]                                |
-                                                        |
-                                                        |
-                                                        |
       -- TERMINAL --                                    |
     ]])
   end)
@@ -51,10 +45,13 @@ describe(':terminal', function()
       ready $ echo 'hello' \ "world"                    |
                                                         |
       [Process exited 0]                                |
-                                                        |
-                                                        |
-                                                        |
       -- TERMINAL --                                    |
     ]])
+  end)
+
+  it('ex_terminal() double-free #4554', function()
+    source([[
+      autocmd BufNew * set shell=foo
+      terminal]])
   end)
 end)
