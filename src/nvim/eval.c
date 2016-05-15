@@ -21701,6 +21701,18 @@ static void term_resize(uint16_t width, uint16_t height, void *d)
   pty_process_resize(&data->proc.pty, width, height);
 }
 
+static inline void term_delayed_free(void **argv)
+{
+  TerminalJobData *j = argv[0];
+  if (j->in.pending_reqs || j->out.pending_reqs || j->err.pending_reqs) {
+    queue_put(j->events, term_delayed_free, 1, j);
+    return;
+  }
+
+  terminal_destroy(j->term);
+  term_job_data_decref(j);
+}
+
 static void term_close(void *d)
 {
   TerminalJobData *data = d;
@@ -21708,8 +21720,7 @@ static void term_close(void *d)
     data->exited = true;
     process_stop((Process *)&data->proc);
   }
-  terminal_destroy(data->term);
-  term_job_data_decref(d);
+  queue_put(data->events, term_delayed_free, 1, data);
 }
 
 static void term_job_data_decref(TerminalJobData *data)
