@@ -9497,12 +9497,14 @@ static void ex_folddo(exarg_T *eap)
 
 static void ex_terminal(exarg_T *eap)
 {
-  // We will call termopen() with ['shell'] if not given a {cmd}.
-  char *name = (char *)p_sh;
+  char *name = (char *)p_sh;  // Default to 'shell' if {cmd} is not given.
+  bool mustfree = false;
   char *lquote = "['";
   char *rquote = "']";
+
   if (*eap->arg != NUL) {
     name = (char *)vim_strsave_escaped(eap->arg, (char_u *)"\"\\");
+    mustfree = true;
     lquote = rquote = "\"";
   }
 
@@ -9512,7 +9514,7 @@ static void ex_terminal(exarg_T *eap)
            eap->forceit==TRUE ? "!" : "", lquote, name, rquote);
   do_cmdline_cmd(ex_cmd);
 
-  if (name != (char *)p_sh) {
+  if (mustfree) {
     xfree(name);
   }
 }
