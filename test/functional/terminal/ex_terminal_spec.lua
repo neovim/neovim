@@ -56,4 +56,15 @@ describe(':terminal', function()
       -- Verify that BufNew actually fired (else the test is invalid).
     eq('foo', eval('&shell'))
   end)
+
+  it('with bufhidden=delete #3958', function()
+    execute('set hidden')
+    eq(1, eval('&hidden'))
+    execute('autocmd BufNew * setlocal bufhidden=delete')
+    for _ = 1, 5 do
+      source([[
+        execute 'edit '.reltimestr(reltime())
+        terminal]])
+    end
+  end)
 end)
