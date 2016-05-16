@@ -3385,11 +3385,9 @@ win_line (
                  && lcs_nbsp)
                 || (c == ' ' && lcs_space && ptr - line <= trailcol))) {
           c = (c == ' ') ? lcs_space : lcs_nbsp;
-          if (area_attr == 0 && search_attr == 0) {
-            n_attr = 1;
-            extra_attr = hl_attr(HLF_8);
-            saved_attr2 = char_attr;  // save current attr
-          }
+          n_attr = 1;
+          extra_attr = hl_attr(HLF_8);
+          saved_attr2 = char_attr;  // save current attr
           mb_c = c;
           if (enc_utf8 && (*mb_char2len)(c) > 1) {
             mb_utf8 = true;
