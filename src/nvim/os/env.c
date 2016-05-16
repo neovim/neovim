@@ -147,7 +147,7 @@ static char_u   *homedir = NULL;
 
 void init_homedir(void)
 {
-  /* In case we are called a second time (when 'encoding' changes). */
+  // In case we are called a second time (when 'encoding' changes).
   xfree(homedir);
   homedir = NULL;
 
@@ -176,16 +176,16 @@ void init_homedir(void)
 
   if (var != NULL) {
 #ifdef UNIX
-    /*
-     * Change to the directory and get the actual path.  This resolves
-     * links.  Don't do it when we can't return.
-     */
+    // Change to the directory and get the actual path.  This resolves
+    // links.  Don't do it when we can't return.
     if (os_dirname(NameBuff, MAXPATHL) == OK
         && os_chdir((char *)NameBuff) == 0) {
-      if (!os_chdir((char *)var) && os_dirname(IObuff, IOSIZE) == OK)
+      if (!os_chdir((char *)var) && os_dirname(IObuff, IOSIZE) == OK) {
         var = IObuff;
-      if (os_chdir((char *)NameBuff) != 0)
+      }
+      if (os_chdir((char *)NameBuff) != 0) {
         EMSG(_(e_prev_dir));
+      }
     }
 #endif
     homedir = vim_strsave(var);
@@ -239,29 +239,29 @@ void expand_env(char_u *src, char_u *dst, int dstlen)
 /// "~/" is also expanded, using $HOME. For Unix "~user/" is expanded.
 /// Skips over "\ ", "\~" and "\$" (not for Win32 though).
 /// If anything fails no expansion is done and dst equals src.
-/// startstr recognize the start of a new name, for '~' expansion.
+/// prefix recognize the start of a new name, for '~' expansion.
 /// @param srcp Input string e.g. "$HOME/vim.hlp"
 /// @param dst Where to put the result
 /// @param dstlen Maximum length of the result
 /// @param esc Should we escape spaces in expanded variables?
 /// @param one Should we expand more than one '~'?
-/// @param startstr Common prefix for paths, can be NULL
-void expand_env_esc(char_u *srcp, char_u *dst, int dstlen, bool esc, bool one,
-                    char_u *startstr)
+/// @param prefix Common prefix for paths, can be NULL
+void expand_env_esc(char_u *restrict srcp,
+                    char_u *restrict dst,
+                    int dstlen,
+                    bool esc,
+                    bool one,
+                    char_u *prefix)
 {
-  char_u      *src;
   char_u      *tail;
-  int c;
   char_u      *var;
   bool copy_char;
   bool mustfree;  // var was allocated, need to free it later
   bool at_start = true;  // at start of a name
-  int startstr_len = 0;
 
-  if (startstr != NULL)
-    startstr_len = (int)STRLEN(startstr);
+  int prefix_len = (prefix == NULL) ? 0 : (int)STRLEN(prefix);
 
-  src = skipwhite(srcp);
+  char_u *src = skipwhite(srcp);
   dstlen--;  // leave one char space for "\,"
   while (*src && dstlen > 0) {
     // Skip over `=expr`.
@@ -281,6 +281,7 @@ void expand_env_esc(char_u *srcp, char_u *dst, int dstlen, bool esc, bool one,
       dstlen -= (int)len;
       continue;
     }
+
     copy_char = true;
     if ((*src == '$') || (*src == '~' && at_start)) {
       mustfree = false;
@@ -290,14 +291,15 @@ void expand_env_esc(char_u *srcp, char_u *dst, int dstlen, bool esc, bool one,
       if (*src != '~') {  // environment var
         tail = src + 1;
         var = dst;
-        c = dstlen - 1;
+        int c = dstlen - 1;
 
 #ifdef UNIX
         // Unix has ${var-name} type environment vars
         if (*tail == '{' && !vim_isIDc('{')) {
-          tail++;               /* ignore '{' */
-          while (c-- > 0 && *tail && *tail != '}')
+          tail++;               // ignore '{'
+          while (c-- > 0 && *tail != NUL && *tail != '}') {
             *var++ = *tail++;
+          }
         } else // NOLINT
 #endif
         {
@@ -321,7 +323,7 @@ void expand_env_esc(char_u *srcp, char_u *dst, int dstlen, bool esc, bool one,
 #if defined(UNIX)
         }
 #endif
-      } else if (  src[1] == NUL /* home directory */
+      } else if (src[1] == NUL  // home directory
                  || vim_ispathsep(src[1])
                  || vim_strchr((char_u *)" ,\t\n", src[1]) != NULL) {
         var = homedir;
@@ -331,12 +333,13 @@ void expand_env_esc(char_u *srcp, char_u *dst, int dstlen, bool esc, bool one,
         // Copy ~user to dst[], so we can put a NUL after it.
         tail = src;
         var = dst;
-        c = dstlen - 1;
-        while (    c-- > 0
-                   && *tail
-                   && vim_isfilec(*tail)
-                   && !vim_ispathsep(*tail))
+        int c = dstlen - 1;
+        while (c-- > 0
+               && *tail
+               && vim_isfilec(*tail)
+               && !vim_ispathsep(*tail)) {
           *var++ = *tail++;
+        }
         *var = NUL;
         // Use os_get_user_directory() to get the user directory.
         // If this function fails, the shell is used to
@@ -344,8 +347,7 @@ void expand_env_esc(char_u *srcp, char_u *dst, int dstlen, bool esc, bool one,
         // does not support ~user (old versions of /bin/sh).
         var = (char_u *)os_get_user_directory((char *)dst + 1);
         mustfree = true;
-        if (var == NULL)
-        {
+        if (var == NULL) {
           expand_T xpc;
 
           ExpandInit(&xpc);
@@ -381,8 +383,9 @@ void expand_env_esc(char_u *srcp, char_u *dst, int dstlen, bool esc, bool one,
       if (esc && var != NULL && vim_strpbrk(var, (char_u *)" \t") != NULL) {
         char_u  *p = vim_strsave_escaped(var, (char_u *)" \t");
 
-        if (mustfree)
+        if (mustfree) {
           xfree(var);
+        }
         var = p;
         mustfree = true;
       }
@@ -391,7 +394,7 @@ void expand_env_esc(char_u *srcp, char_u *dst, int dstlen, bool esc, bool one,
           && (STRLEN(var) + STRLEN(tail) + 1 < (unsigned)dstlen)) {
         STRCPY(dst, var);
         dstlen -= (int)STRLEN(var);
-        c = (int)STRLEN(var);
+        int c = (int)STRLEN(var);
         // if var[] ends in a path separator and tail[] starts
         // with it, skip a character
         if (*var != NUL && after_pathsep((char *)dst, (char *)dst + c)
@@ -404,8 +407,9 @@ void expand_env_esc(char_u *srcp, char_u *dst, int dstlen, bool esc, bool one,
         src = tail;
         copy_char = false;
       }
-      if (mustfree)
+      if (mustfree) {
         xfree(var);
+      }
     }
 
     if (copy_char) {  // copy at least one char
@@ -422,9 +426,10 @@ void expand_env_esc(char_u *srcp, char_u *dst, int dstlen, bool esc, bool one,
       *dst++ = *src++;
       --dstlen;
 
-      if (startstr != NULL && src - startstr_len >= srcp
-          && STRNCMP(src - startstr_len, startstr, startstr_len) == 0)
+      if (prefix != NULL && src - prefix_len >= srcp
+          && STRNCMP(src - prefix_len, prefix, prefix_len) == 0) {
         at_start = true;
+      }
     }
   }
   *dst = NUL;
@@ -451,17 +456,37 @@ static char *vim_version_dir(const char *vimdir)
   return NULL;
 }
 
-/// If the string between "p" and "pend" ends in "name/", return "pend" minus
-/// the length of "name/".  Otherwise return "pend".
-static char *remove_tail(char *p, char *pend, char *name)
+/// If `dirname + "/"` precedes `pend` in the path, return the pointer to
+/// `dirname + "/" + pend`.  Otherwise return `pend`.
+///
+/// Examples (path = /usr/local/share/nvim/runtime/doc/help.txt):
+///
+///   pend    = help.txt
+///   dirname = doc
+///   -> doc/help.txt
+///
+///   pend    = doc/help.txt
+///   dirname = runtime
+///   -> runtime/doc/help.txt
+///
+///   pend    = runtime/doc/help.txt
+///   dirname = vim74
+///   -> runtime/doc/help.txt
+///
+/// @param path    Path to a file
+/// @param pend    A suffix of the path
+/// @param dirname The immediate path fragment before the pend
+/// @return The new pend including dirname or just pend
+static char *remove_tail(char *path, char *pend, char *dirname)
 {
-  size_t len = STRLEN(name) + 1;
-  char *newend = pend - len;
+  size_t len = STRLEN(dirname);
+  char *new_tail = pend - len - 1;
 
-  if (newend >= p
-      && fnamencmp((char_u *)newend, (char_u *)name, len - 1) == 0
-      && (newend == p || after_pathsep(p, newend)))
-    return newend;
+  if (new_tail >= path
+      && fnamencmp((char_u *)new_tail, (char_u *)dirname, len) == 0
+      && (new_tail == path || after_pathsep(path, new_tail))) {
+    return new_tail;
+  }
   return pend;
 }
 
@@ -745,9 +770,10 @@ void home_replace(buf_T *buf, char_u *src, char_u *dst, int dstlen, bool one)
 /// @param src Input file name
 char_u * home_replace_save(buf_T *buf, char_u *src) FUNC_ATTR_NONNULL_RET
 {
-  size_t len = 3;                      /* space for "~/" and trailing NUL */
-  if (src != NULL)              /* just in case */
+  size_t len = 3;             // space for "~/" and trailing NUL
+  if (src != NULL) {          // just in case
     len += STRLEN(src);
+  }
   char_u *dst = xmalloc(len);
   home_replace(buf, src, dst, (int)len, true);
   return dst;
@@ -783,8 +809,7 @@ char_u *get_env_name(expand_T *xp, int idx)
     STRLCPY(name, envname, ENVNAMELEN);
     xfree(envname);
     return name;
-  } else {
-    return NULL;
   }
+  return NULL;
 }
 
