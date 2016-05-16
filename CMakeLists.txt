@@ -451,6 +451,14 @@ if(BUSTED_PRG)
     get_target_property(TEST_LIBNVIM_PATH nvim-test LOCATION)
   endif()
 
+  # When running tests from 'ninja' we need to use the
+  # console pool: to do so we need to use the USES_TERMINAL
+  # option, but this is only available in CMake 3.2
+  set(TEST_TARGET_ARGS)
+  if(NOT (${CMAKE_VERSION} VERSION_LESS 3.2.0))
+    list(APPEND TEST_TARGET_ARGS "USES_TERMINAL")
+  endif()
+
   configure_file(
     test/config/paths.lua.in
     ${CMAKE_BINARY_DIR}/test/config/paths.lua)
@@ -479,7 +487,8 @@ if(BUSTED_PRG)
       -DBUILD_DIR=${CMAKE_BINARY_DIR}
       -DTEST_TYPE=unit
       -P ${PROJECT_SOURCE_DIR}/cmake/RunTests.cmake
-    DEPENDS ${UNITTEST_PREREQS})
+    DEPENDS ${UNITTEST_PREREQS}
+    ${TEST_TARGET_ARGS})
 
   add_custom_target(functionaltest
     COMMAND ${CMAKE_COMMAND}
@@ -491,7 +500,8 @@ if(BUSTED_PRG)
       -DBUILD_DIR=${CMAKE_BINARY_DIR}
       -DTEST_TYPE=functional
       -P ${PROJECT_SOURCE_DIR}/cmake/RunTests.cmake
-    DEPENDS ${FUNCTIONALTEST_PREREQS})
+    DEPENDS ${FUNCTIONALTEST_PREREQS}
+    ${TEST_TARGET_ARGS})
 
   add_custom_target(benchmark
     COMMAND ${CMAKE_COMMAND}
@@ -503,7 +513,8 @@ if(BUSTED_PRG)
       -DBUILD_DIR=${CMAKE_BINARY_DIR}
       -DTEST_TYPE=benchmark
       -P ${PROJECT_SOURCE_DIR}/cmake/RunTests.cmake
-    DEPENDS ${BENCHMARK_PREREQS})
+    DEPENDS ${BENCHMARK_PREREQS}
+    ${TEST_TARGET_ARGS})
 endif()
 
 if(BUSTED_LUA_PRG)
@@ -517,7 +528,8 @@ if(BUSTED_LUA_PRG)
       -DBUILD_DIR=${CMAKE_BINARY_DIR}
       -DTEST_TYPE=functional
       -P ${PROJECT_SOURCE_DIR}/cmake/RunTests.cmake
-    DEPENDS ${FUNCTIONALTEST_PREREQS})
+    DEPENDS ${FUNCTIONALTEST_PREREQS}
+    ${TEST_TARGET_ARGS})
 endif()
 
 if(LUACHECK_PRG)
