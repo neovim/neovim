@@ -1,4 +1,5 @@
 include(CheckLibraryExists)
+include(CheckCCompilerFlag)
 
 option(USE_GCOV "Enable gcov support" OFF)
 
@@ -258,8 +259,14 @@ install_helper(TARGETS nvim)
 
 if(CLANG_ASAN_UBSAN)
   message(STATUS "Enabling Clang address sanitizer and undefined behavior sanitizer for nvim.")
+  check_c_compiler_flag(-fno-sanitize-recover=all SANITIZE_RECOVER_ALL)
+  if(SANITIZE_RECOVER_ALL)
+    set(SANITIZE_RECOVER -fno-sanitize-recover=all)     # Clang 3.6+
+  else()
+    set(SANITIZE_RECOVER -fno-sanitize-recover)         # Clang 3.5-
+  endif()
   set_property(TARGET nvim APPEND_STRING PROPERTY COMPILE_FLAGS "-DEXITFREE ")
-  set_property(TARGET nvim APPEND_STRING PROPERTY COMPILE_FLAGS "-fno-sanitize-recover -fno-omit-frame-pointer -fno-optimize-sibling-calls -fsanitize=address -fsanitize=undefined -fsanitize-blacklist=${PROJECT_SOURCE_DIR}/.asan-blacklist")
+  set_property(TARGET nvim APPEND_STRING PROPERTY COMPILE_FLAGS "${SANITIZE_RECOVER} -fno-omit-frame-pointer -fno-optimize-sibling-calls -fsanitize=address -fsanitize=undefined -fsanitize-blacklist=${PROJECT_SOURCE_DIR}/.asan-blacklist")
   set_property(TARGET nvim APPEND_STRING PROPERTY LINK_FLAGS "-fsanitize=address -fsanitize=undefined ")
 elseif(CLANG_MSAN)
   message(STATUS "Enabling Clang memory sanitizer for nvim.")
