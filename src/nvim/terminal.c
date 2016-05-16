@@ -491,7 +491,7 @@ void terminal_destroy(Terminal *term)
     buf->terminal = NULL;
   }
 
-  if (!term->refcount) {
+  // if (!term->refcount) {
     if (pmap_has(ptr_t)(invalidated_terminals, term)) {
       // flush any pending changes to the buffer
       block_autocmds();
@@ -505,7 +505,7 @@ void terminal_destroy(Terminal *term)
     xfree(term->sb_buffer);
     vterm_free(term->vt);
     xfree(term);
-  }
+  // }
 }
 
 void terminal_send(Terminal *term, char *data, size_t size)
