@@ -158,8 +158,7 @@ describe('terminal buffer', function()
   end)
 
   it('handles loss of focus gracefully', function()
-    -- Temporarily change the statusline to avoid printing the file name, which
-    -- varies be where the test is run.
+    -- Change the statusline to avoid printing the file name, which varies.
     nvim('set_option', 'statusline', '==========')
     execute('set laststatus=0')
 
@@ -194,6 +193,16 @@ describe('terminal buffer', function()
     eq(tbuf, eval('bufnr("%")'))
 
     execute('set laststatus=1')  -- Restore laststatus to the default.
+  end)
+
+  it('term_close() use-after-free #4393', function()
+    if eval("executable('yes')") == 0 then
+      pending('missing "yes" command')
+      return
+    end
+    execute('terminal yes')
+    feed([[<C-\><C-n>]])
+    execute('bdelete!')
   end)
 end)
 
