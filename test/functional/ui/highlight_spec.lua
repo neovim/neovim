@@ -304,9 +304,7 @@ describe('Default highlight groups', function()
   end)
 end)
 
-describe('Cursorline highlight', function()
-  -- Test the default attributes for highlight groups shown by the :highlight
-  -- command
+describe("'cursorline' with 'listchars'", function()
   local screen
 
   local hlgroup_colors = {
@@ -317,7 +315,7 @@ describe('Cursorline highlight', function()
 
   before_each(function()
     clear()
-    screen = Screen.new()
+    screen = Screen.new(20,5)
     screen:attach()
   end)
 
@@ -325,152 +323,80 @@ describe('Cursorline highlight', function()
     screen:detach()
   end)
 
-  it('cursorline and cursorcolumn', function()
+  it("'cursorline' and 'cursorcolumn'", function()
     screen:set_default_attr_ids({[1] = {background=hlgroup_colors.Cursorline}})
     screen:set_default_attr_ignore( {{bold=true, foreground=hlgroup_colors.NonText}} )
     execute('highlight clear ModeMsg')
     execute('set cursorline')
     feed('i')
     screen:expect([[
-      {1:^                                                     }|
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
-      -- INSERT --                                         |
+      {1:^                    }|
+      ~                   |
+      ~                   |
+      ~                   |
+      -- INSERT --        |
     ]])
     feed('abcdefg<cr>kkasdf')
     screen:expect([[
-      abcdefg                                              |
-      {1:kkasdf^                                               }|
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
-      -- INSERT --                                         |
+      abcdefg             |
+      {1:kkasdf^              }|
+      ~                   |
+      ~                   |
+      -- INSERT --        |
     ]])
     feed('<esc>')
     screen:expect([[
-      abcdefg                                              |
-      {1:kkasd^f                                               }|
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
-                                                           |
+      abcdefg             |
+      {1:kkasd^f              }|
+      ~                   |
+      ~                   |
+                          |
     ]])
     execute('set nocursorline')
     screen:expect([[
-      abcdefg                                              |
-      kkasd^f                                               |
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
-      :set nocursorline                                    |
+      abcdefg             |
+      kkasd^f              |
+      ~                   |
+      ~                   |
+      :set nocursorline   |
     ]])
     feed('k')
     screen:expect([[
-      abcde^fg                                              |
-      kkasdf                                               |
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
-      :set nocursorline                                    |
+      abcde^fg             |
+      kkasdf              |
+      ~                   |
+      ~                   |
+      :set nocursorline   |
     ]])
     feed('jjji<cr><cr><cr><esc>')
     screen:expect([[
-      abcdefg                                              |
-      kkasd                                                |
-                                                           |
-                                                           |
-      ^f                                                    |
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
-                                                           |
+      kkasd               |
+                          |
+                          |
+      ^f                   |
+                          |
     ]])
     execute('set cursorline')
     execute('set cursorcolumn')
     feed('kkiabcdefghijk<esc>hh')
     screen:expect([[
-      abcdefg {1: }                                            |
-      kkasd   {1: }                                            |
-      {1:abcdefgh^ijk                                          }|
-              {1: }                                            |
-      f       {1: }                                            |
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
-                                                           |
+      kkasd   {1: }           |
+      {1:abcdefgh^ijk         }|
+              {1: }           |
+      f       {1: }           |
+                          |
     ]])
     feed('khh')
     screen:expect([[
-      ab{1:c}defg                                              |
-      {1:kk^asd                                                }|
-      ab{1:c}defghijk                                          |
-        {1: }                                                  |
-      f {1: }                                                  |
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
-                                                           |
+      {1:kk^asd               }|
+      ab{1:c}defghijk         |
+        {1: }                 |
+      f {1: }                 |
+                          |
     ]])
   end)
 
-  it('cursorline and listchar', function()
+  it("'cursorline' and with 'listchar' option: space, eol, tab, and trail", function()
     screen:set_default_attr_ids({
       [1] = {background=hlgroup_colors.Cursorline},
       [2] = {
@@ -495,56 +421,29 @@ describe('Cursorline highlight', function()
     execute('set cursorline')
     execute('set tabstop=8')
     execute('set listchars=space:.,eol:¬,tab:>-,extends:],precedes:[,trail:* list')
-    feed('i\t\t    abcd    <cr>\t\t    abcd    <cr><esc>k')
+    feed('i\t abcd <cr>\t abcd <cr><esc>k')
     screen:expect([[
-      {5:>------->-------....}abcd{5:****}{4:¬}                        |
-      {2:^>------->-------....}{1:abcd}{2:****}{3:¬}{1:                        }|
-      {4:¬}                                                    |
-      {4:~                                                    }|
-      {4:~                                                    }|
-      {4:~                                                    }|
-      {4:~                                                    }|
-      {4:~                                                    }|
-      {4:~                                                    }|
-      {4:~                                                    }|
-      {4:~                                                    }|
-      {4:~                                                    }|
-      {4:~                                                    }|
-                                                           |
+      {5:>-------.}abcd{5:*}{4:¬}     |
+      {2:^>-------.}{1:abcd}{2:*}{3:¬}{1:     }|
+      {4:¬}                   |
+      {4:~                   }|
+                          |
     ]])
     feed('k')
     screen:expect([[
-      {2:^>------->-------....}{1:abcd}{2:****}{3:¬}{1:                        }|
-      {5:>------->-------....}abcd{5:****}{4:¬}                        |
-      {4:¬}                                                    |
-      {4:~                                                    }|
-      {4:~                                                    }|
-      {4:~                                                    }|
-      {4:~                                                    }|
-      {4:~                                                    }|
-      {4:~                                                    }|
-      {4:~                                                    }|
-      {4:~                                                    }|
-      {4:~                                                    }|
-      {4:~                                                    }|
-                                                           |
+      {2:^>-------.}{1:abcd}{2:*}{3:¬}{1:     }|
+      {5:>-------.}abcd{5:*}{4:¬}     |
+      {4:¬}                   |
+      {4:~                   }|
+                          |
     ]])
     execute('set nocursorline')
     screen:expect([[
-      {5:^>------->-------....}abcd{5:****}{4:¬}                        |
-      {5:>------->-------....}abcd{5:****}{4:¬}                        |
-      {4:¬}                                                    |
-      {4:~                                                    }|
-      {4:~                                                    }|
-      {4:~                                                    }|
-      {4:~                                                    }|
-      {4:~                                                    }|
-      {4:~                                                    }|
-      {4:~                                                    }|
-      {4:~                                                    }|
-      {4:~                                                    }|
-      {4:~                                                    }|
-      :set nocursorline                                    |
+      {5:^>-------.}abcd{5:*}{4:¬}     |
+      {5:>-------.}abcd{5:*}{4:¬}     |
+      {4:¬}                   |
+      {4:~                   }|
+      :set nocursorline   |
     ]])
   end)
 end)
