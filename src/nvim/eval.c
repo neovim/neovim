@@ -21720,7 +21720,12 @@ static void term_close(void *d)
     data->exited = true;
     process_stop((Process *)&data->proc);
   }
-  queue_put(data->events, term_delayed_free, 1, data);
+  if (exiting) {
+    terminal_destroy(data->term);
+    term_job_data_decref(d);
+  } else {
+    queue_put(data->events, term_delayed_free, 1, data);
+  }
 }
 
 static void term_job_data_decref(TerminalJobData *data)

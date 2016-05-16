@@ -309,7 +309,7 @@ void terminal_close(Terminal *term, char *msg)
   buf_T *buf = handle_get_buffer(term->buf_handle);
 
   if (!msg || exiting) {
-    // If no msg was given, this was called by close_buffer(buffer.c).  Or if
+    // If no msg was given, this was called by buffer.c/close_buffer().  Or if
     // exiting, we must inform the buffer the terminal no longer exists so that
     // close_buffer() doesn't call this again.
     term->buf_handle = 0;
