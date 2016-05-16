@@ -1241,16 +1241,18 @@ static void add_bufnum(int *bufnrs, int *bufnump, int nr)
   *bufnump = *bufnump + 1;
 }
 
-/*
- * Return TRUE if any buffer was changed and cannot be abandoned.
- * That changed buffer becomes the current buffer.
- */
-int 
-check_changed_any (
-    int hidden                     /* Only check hidden buffers */
-)
+/// Check if any buffer was changed and cannot be abandoned.
+/// That changed buffer becomes the current buffer.
+/// When "unload" is true the current buffer is unloaded instead of making it
+/// hidden.  This is used for ":q!".
+///
+/// @param[in] hidden specifies whether to check only hidden buffers.
+/// @param[in] unload specifies whether to unload, instead of hide, the buffer.
+///
+/// @returns          true if any buffer is changed and cannot be abandoned
+int check_changed_any(bool hidden, bool unload)
 {
-  int ret = FALSE;
+  bool ret = false;
   int save;
   int i;
   int bufnum = 0;
@@ -1261,8 +1263,9 @@ check_changed_any (
     ++bufcount;
   }
 
-  if (bufcount == 0)
-    return FALSE;
+  if (bufcount == 0) {
+    return false;
+  }
 
   bufnrs = xmalloc(sizeof(*bufnrs) * bufcount);
 
@@ -1346,9 +1349,10 @@ check_changed_any (
   }
 buf_found:
 
-  /* Open the changed buffer in the current window. */
-  if (buf != curbuf)
-    set_curbuf(buf, DOBUF_GOTO);
+  // Open the changed buffer in the current window.
+  if (buf != curbuf) {
+    set_curbuf(buf, unload ? DOBUF_UNLOAD : DOBUF_GOTO);
+  }
 
 theend:
   xfree(bufnrs);

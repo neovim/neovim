@@ -1,4 +1,4 @@
-*editing.txt*   For Vim version 7.4.  Last change: 2015 Aug 25
+*editing.txt*   For Vim version 7.4.  Last change: 2016 Jan 03
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -1042,10 +1042,10 @@ The names can be in upper- or lowercase.
 			the last file in the argument list has not been
 			edited.  See |:confirm| and 'confirm'.
 
-:q[uit]!		Quit without writing, also when currently visible
-			buffers have changes.  Does not exit when this is the
-			last window and there is a changed hidden buffer.
-			In this case, the first changed hidden buffer becomes
+:q[uit]!		Quit without writing, also when the current buffer has
+			changes.  If this is the last window and there is a
+			modified hidden buffer, the current buffer is
+			abandoned and the first changed hidden buffer becomes
 			the current buffer.
 			Use ":qall!" to exit always.
 

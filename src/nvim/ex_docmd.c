@@ -5671,10 +5671,10 @@ static void ex_quit(exarg_T *eap)
     exiting = TRUE;
   if ((!P_HID(curbuf)
        && check_changed(curbuf, (p_awa ? CCGD_AW : 0)
-           | (eap->forceit ? CCGD_FORCEIT : 0)
-           | CCGD_EXCMD))
-      || check_more(TRUE, eap->forceit) == FAIL
-      || (only_one_window() && check_changed_any(eap->forceit))) {
+                        | (eap->forceit ? CCGD_FORCEIT : 0)
+                        | CCGD_EXCMD))
+      || check_more(true, eap->forceit) == FAIL
+      || (only_one_window() && check_changed_any(eap->forceit, true))) {
     not_exiting();
   } else {
     // quit last window
@@ -5723,9 +5723,10 @@ static void ex_quit_all(exarg_T *eap)
   if (curbuf_locked() || (curbuf->b_nwindows == 1 && curbuf->b_closing))
     return;
 
-  exiting = TRUE;
-  if (eap->forceit || !check_changed_any(FALSE))
+  exiting = true;
+  if (eap->forceit || !check_changed_any(false, false)) {
     getout(0);
+  }
   not_exiting();
 }
 
@@ -6010,21 +6011,22 @@ static void ex_exit(exarg_T *eap)
   if (curbuf_locked() || (curbuf->b_nwindows == 1 && curbuf->b_closing))
     return;
 
-  /*
-   * if more files or windows we won't exit
-   */
-  if (check_more(FALSE, eap->forceit) == OK && only_one_window())
-    exiting = TRUE;
-  if (       ((eap->cmdidx == CMD_wq
-               || curbufIsChanged())
-              && do_write(eap) == FAIL)
-             || check_more(TRUE, eap->forceit) == FAIL
-             || (only_one_window() && check_changed_any(eap->forceit))) {
+  // if more files or windows we won't exit
+  if (check_more(false, eap->forceit) == OK && only_one_window()) {
+    exiting = true;
+  }
+  if (((eap->cmdidx == CMD_wq
+        || curbufIsChanged())
+       && do_write(eap) == FAIL)
+      || check_more(true, eap->forceit) == FAIL
+      || (only_one_window() && check_changed_any(eap->forceit, false))) {
     not_exiting();
   } else {
-    if (only_one_window())          /* quit last window, exit Vim */
+    if (only_one_window()) {
+      // quit last window, exit Vim
       getout(0);
-    /* Quit current window, may free the buffer. */
+    }
+    // Quit current window, may free the buffer.
     win_close(curwin, !P_HID(curwin->w_buffer));
   }
 }
