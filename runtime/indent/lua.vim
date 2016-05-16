@@ -54,7 +54,7 @@ function! GetLuaIndent()
 
   " Subtract a 'shiftwidth' on end, else (and elseif), until and '}'
   " This is the part that requires 'indentkeys'.
-  let midx = match(getline(v:lnum), '^\s*\%(end\>\|else\>\|until\>\|}\)')
+  let midx = match(getline(v:lnum), '^\s*\%(end\>\|else\>\|elseif\>\|until\>\|}\)')
   if midx != -1 && synIDattr(synID(v:lnum, midx + 1, 1), "name") != "luaComment"
     let ind = ind - &shiftwidth
   endif
