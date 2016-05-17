@@ -3727,11 +3727,9 @@ win_line (
         c = 0xc0;
       } else
         mb_utf8 = FALSE;                /* don't draw as UTF-8 */
-      if (!attr_pri) {
-        saved_attr3 = char_attr;         /* save current attr */
-        char_attr = hl_attr(HLF_AT);         /* later copied to char_attr */
-        n_attr3 = 1;
-      }
+      saved_attr3 = char_attr;  // save current attr
+      char_attr = hl_attr(HLF_AT);  // later copied to char_attr
+      n_attr3 = 1;
     }
 
     /*
