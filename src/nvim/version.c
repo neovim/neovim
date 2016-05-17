@@ -69,6 +69,7 @@ static char *features[] = {
 
 // clang-format off
 static int included_patches[] = {
+  1832,
   1809,
   1808,
   1806,

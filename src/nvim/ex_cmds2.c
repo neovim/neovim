@@ -189,6 +189,7 @@ void do_debug(char_u *cmd)
       ignore_script = TRUE;
     }
 
+    xfree(cmdline);
     cmdline = getcmdline_prompt('>', NULL, 0, EXPAND_NOTHING, NULL);
 
     if (typeahead_saved) {
@@ -294,7 +295,6 @@ void do_debug(char_u *cmd)
           break;
         case CMD_BACKTRACE:
           do_showbacktrace(cmd);
-          xfree(cmdline);  // free cmdline before next loop iteration
           continue;
         case CMD_FRAME:
           if (*p == NUL) {
@@ -303,17 +303,14 @@ void do_debug(char_u *cmd)
             p = skipwhite(p);
             do_setdebugtracelevel(p);
           }
-          xfree(cmdline);
           continue;
         case CMD_UP:
           debug_backtrace_level++;
           do_checkbacktracelevel();
-          xfree(cmdline);
           continue;
         case CMD_DOWN:
           debug_backtrace_level--;
           do_checkbacktracelevel();
-          xfree(cmdline);
           continue;
         }
         // Going out reset backtrace_level
@@ -327,8 +324,6 @@ void do_debug(char_u *cmd)
       (void)do_cmdline(cmdline, getexline, NULL,
           DOCMD_VERBOSE|DOCMD_EXCRESET);
       debug_break_level = n;
-
-      xfree(cmdline);
     }
     lines_left = (int)(Rows - 1);
   }
