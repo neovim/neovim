@@ -85,8 +85,11 @@ endif
 	mkdir -p build
 	touch $@
 
-oldtest: | nvim
+oldtest: | nvim tags
 	+$(SINGLE_MAKE) -C src/nvim/testdir $(MAKEOVERRIDES)
+
+tags: | nvim
+	+$(BUILD_CMD) -C build runtime/doc/tags
 
 functionaltest: | nvim
 	+$(BUILD_CMD) -C build functionaltest
