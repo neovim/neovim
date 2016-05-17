@@ -312,11 +312,12 @@ describe('New special highlight color attribute', function()
     screen = Screen.new(25,10)
     screen:attach()
     screen:set_default_attr_ignore({
-      {bold=true, foreground=Screen.colors.Blue}
+      [1] = {bold = true, foreground = Screen.colors.Blue},
+      [2] = {bold = true}
     })
   end)
 
-  it('used for undercurls', function()
+  it('can be set and is applied like foreground or background', function()
     execute('syntax on')
     execute('syn keyword TmpKeyword neovim')
     execute('syn keyword TmpKeyword1 special')
@@ -343,19 +344,19 @@ describe('New special highlight color attribute', function()
       {1:neovim}                   |
       awesome {1:neovim}           |
       wordcontainingneovim     |
-      special                  |
-      {2:specialwithbg}            |
-      {3:specialwithfg}            |
+      {2:special}                  |
+      {3:specialwithbg}            |
+      {4:specialwithfg}            |
                                |
               {1:neovim} tabbed^    |
       ~                        |
-      {4:-- INSERT --}             |
+      -- INSERT --             |
     ]],{
       [1] = {background = Screen.colors.Yellow, foreground = Screen.colors.Red,
              special = Screen.colors.Red},
-      [2] = {special = Screen.colors.Red, background = Screen.colors.Yellow},
-      [3] = {foreground = Screen.colors.Red, special = Screen.colors.Red},
-      [4] = {bold = true}
+      [2] = {special = Screen.colors.Red},
+      [3] = {special = Screen.colors.Red, background = Screen.colors.Yellow},
+      [4] = {foreground = Screen.colors.Red, special = Screen.colors.Red},
     })
 
   end)

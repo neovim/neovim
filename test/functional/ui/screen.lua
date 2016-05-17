@@ -618,7 +618,8 @@ function Screen:_equal_attrs(a, b)
        a.underline == b.underline and a.undercurl == b.undercurl and
        a.italic == b.italic and a.reverse == b.reverse and
        a.foreground == b.foreground and
-       a.background == b.background
+       a.background == b.background and
+       a.special == b.special
 end
 
 function Screen:_attr_index(attrs, attr)
