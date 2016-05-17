@@ -256,7 +256,8 @@ list_vim_patches() {
   for vim_commit in ${vim_commits}; do
     local is_missing
     local vim_tag
-    vim_tag="$(cd "${VIM_SOURCE_DIR}" && git describe --tags --exact-match "${vim_commit}" 2>/dev/null)"
+    # This fails for untagged commits (e.g., runtime file updates) so mask the return status
+    vim_tag="$(cd "${VIM_SOURCE_DIR}" && git describe --tags --exact-match "${vim_commit}" 2>/dev/null)" || true
     if [[ -n "${vim_tag}" ]]; then
       local patch_number="${vim_tag:5}" # Remove prefix like "v7.4."
       # Tagged Vim patch, check version.c:
