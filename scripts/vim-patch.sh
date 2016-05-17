@@ -33,7 +33,11 @@ usage() {
 
 # Checks if a program is in the user's PATH, and is executable.
 check_executable() {
-  if [[ ! -x $(command -v "${1}") ]]; then
+  test -x "$(command -v "${1}")"
+}
+
+require_executable() {
+  if ! check_executable "${1}"; then
     >&2 echo "${BASENAME}: '${1}' not found in PATH or not executable."
     exit 1
   fi
@@ -61,7 +65,7 @@ clean_files() {
 }
 
 get_vim_sources() {
-  check_executable git
+  require_executable git
 
   if [[ ! -d ${VIM_SOURCE_DIR} ]]; then
     echo "Cloning Vim sources into '${VIM_SOURCE_DIR}'."
@@ -195,8 +199,8 @@ get_vim_patch() {
 }
 
 submit_pr() {
-  check_executable git
-  check_executable hub
+  require_executable git
+  require_executable hub
 
   cd "${NEOVIM_SOURCE_DIR}"
   local checked_out_branch
@@ -346,9 +350,9 @@ review_commit() {
 }
 
 review_pr() {
-  check_executable curl
-  check_executable nvim
-  check_executable jq
+  require_executable curl
+  require_executable nvim
+  require_executable jq
 
   get_vim_sources
 
