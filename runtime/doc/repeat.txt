@@ -1,4 +1,4 @@
-*repeat.txt*    For Vim version 7.4.  Last change: 2015 Apr 13
+*repeat.txt*    For Vim version 7.4.  Last change: 2016 Jan 16
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -467,15 +467,43 @@ Additionally, these commands can be used:
 	finish		Finish the current script or user function and come
 			back to debug mode for the command after the one that
 			sourced or called it.
+							*>bt*
+							*>backtrace*
+							*>where*
+	backtrace	Show the call stacktrace for current debugging session.
+	bt
+	where
+							*>frame*
+	frame N		Goes to N backtrace level. + and - signs make movement
+			relative.  E.g., ":frame +3" goes three frames up.
+							*>up*
+	up		Goes one level up from call stacktrace.
+							*>down*
+	down		Goes one level down from call stacktrace.
 
 About the additional commands in debug mode:
 - There is no command-line completion for them, you get the completion for the
   normal Ex commands only.
-- You can shorten them, up to a single character: "c", "n", "s" and "f".
+- You can shorten them, up to a single character, unless more then one command
+  starts with the same letter.  "f" stands for "finish", use "fr" for "frame".
 - Hitting <CR> will repeat the previous one.  When doing another command, this
   is reset (because it's not clear what you want to repeat).
 - When you want to use the Ex command with the same name, prepend a colon:
   ":cont", ":next", ":finish" (or shorter).
+
+The backtrace shows the hierarchy of function calls, e.g.:
+	>bt ~
+	  3 function One[3] ~
+	  2 Two[3] ~
+	->1 Three[3] ~
+	  0 Four ~
+	line 1: let four = 4 ~
+
+The "->" points to the current frame.  Use "up", "down" and "frame N" to
+select another frame.
+
+In the current frame you can evaluate the local function variables.  There is
+no way to see the command at the current line yet.
 
 
 DEFINING BREAKPOINTS
