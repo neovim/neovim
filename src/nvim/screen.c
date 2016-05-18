@@ -3725,8 +3725,9 @@ win_line (
         mb_utf8 = TRUE;
         u8cc[0] = 0;
         c = 0xc0;
-      } else
-        mb_utf8 = FALSE;                /* don't draw as UTF-8 */
+      } else {
+        mb_utf8 = false;  // don't draw as UTF-8
+      }
       saved_attr3 = char_attr;  // save current attr
       char_attr = hl_attr(HLF_AT);  // later copied to char_attr
       n_attr3 = 1;
