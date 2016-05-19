@@ -2051,6 +2051,7 @@ serverlist()			String	get a list of available servers
 setbufvar({expr}, {varname}, {val})	set {varname} in buffer {expr} to {val}
 setcharsearch({dict})		Dict	set character search from {dict}
 setcmdpos({pos})		Number	set cursor position in command-line
+setfperm({fname}, {mode}	Number	set {fname} file permissions to {mode}
 setline({lnum}, {line})	Number	set line {lnum} to {line}
 setloclist({nr}, {list}[, {action}[, {title}]])
 				Number	modify location list using {list}
@@ -3627,6 +3628,8 @@ getfperm({fname})					*getfperm()*
 			:echo getfperm(expand("~/.config/nvim/init.vim"))
 <		This will hopefully (from a security point of view) display
 		the string "rw-r--r--" or even "rw-------".
+
+		For setting permissions use |setfperm()|.
 
 getftime({fname})					*getftime()*
 		The result is a Number, which is the last modification time of
@@ -5865,6 +5868,23 @@ setcmdpos({pos})					*setcmdpos()*
 		line.  A number smaller than one has undefined results.
 		Returns 0 when successful, 1 when not editing the command
 		line.
+
+setfperm({fname}, {mode})				*setfperm()* *chmod*
+		Set the file permissions for {fname} to {mode}.
+		{mode} must be a string with 9 characters.  It is of the form
+		"rwxrwxrwx", where each group of "rwx" flags represent, in
+		turn, the permissions of the owner of the file, the group the
+		file belongs to, and other users.  A '-' character means the
+		permission is off, any other character means on.  Multi-byte
+		characters are not supported.
+
+		For example "rw-r-----" means read-write for the user,
+		readable by the group, not accessible by others.  "xx-x-----"
+		would do the same thing.
+
+		Returns non-zero for success, zero for failure.
+
+		To read permissions see |getfperm()|.
 
 setline({lnum}, {text})					*setline()*
 		Set line {lnum} of the current buffer to {text}.  To insert

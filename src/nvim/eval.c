@@ -6877,6 +6877,7 @@ static struct fst {
   { "setbufvar",         3, 3, f_setbufvar },
   { "setcharsearch",     1, 1, f_setcharsearch },
   { "setcmdpos",         1, 1, f_setcmdpos },
+  { "setfperm",          2, 2, f_setfperm },
   { "setline",           2, 2, f_setline },
   { "setloclist",        2, 4, f_setloclist },
   { "setmatches",        1, 1, f_setmatches },
@@ -14444,6 +14445,38 @@ static void f_setcmdpos(typval_T *argvars, typval_T *rettv)
 
   if (pos >= 0)
     rettv->vval.v_number = set_cmdline_pos(pos);
+}
+
+
+/// "setfperm({fname}, {mode})" function
+static void f_setfperm(typval_T *argvars, typval_T *rettv)
+{
+  rettv->vval.v_number = 0;
+
+  char_u *fname = get_tv_string_chk(&argvars[0]);
+  if (fname == NULL) {
+    return;
+  }
+
+  char_u modebuf[NUMBUFLEN];
+  char_u *mode_str = get_tv_string_buf_chk(&argvars[1], modebuf);
+  if (mode_str == NULL) {
+    return;
+  }
+  if (STRLEN(mode_str) != 9) {
+    EMSG2(_(e_invarg2), mode_str);
+    return;
+  }
+
+  int mask = 1;
+  int mode = 0;
+  for (int i = 8; i >= 0; i--) {
+    if (mode_str[i] != '-') {
+      mode |= mask;
+    }
+    mask = mask << 1;
+  }
+  rettv->vval.v_number = os_setperm(fname, mode) == OK;
 }
 
 /*
