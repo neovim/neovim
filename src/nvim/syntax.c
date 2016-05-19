@@ -6370,18 +6370,14 @@ do_highlight (
                   } else
                     HL_TABLE()[idx].sg_cterm &= ~HL_BOLD;
                 }
-                color &= 7;             /* truncate to 8 colors */
-              } else if (t_colors == 16 || t_colors == 88 || t_colors == 256) {
-                switch (t_colors) {
-                case 16:
-                  color = color_numbers_8[i];
-                  break;
-                case 88:
-                  color = color_numbers_88[i];
-                  break;
-                case 256:
-                  color = color_numbers_256[i];
-                  break;
+                color &= 7;             // truncate to 8 colors
+              } else if (t_colors == 16 || t_colors == 88 || t_colors >= 256) {
+                if (t_colors == 88) {
+                    color = color_numbers_88[i];
+                } else if (t_colors >= 256) {
+                    color = color_numbers_256[i];
+                } else {
+                    color = color_numbers_8[i];
                 }
               }
             }
