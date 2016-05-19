@@ -5372,11 +5372,10 @@ void cursor_pos_info(dict_T *dict)
       }
     }
 
-    // Don't shorten this message, the user asked for it.
     bom_count = bomb_size();
     if (bom_count > 0) {
-      vim_snprintf((char *)IObuff + STRLEN(IObuff), IOSIZE - STRLEN(IObuff),
-                   _("(+%" PRId64 " for BOM)"), (int64_t)byte_count);
+      vim_snprintf((char *)IObuff + STRLEN(IObuff), IOSIZE,
+                   _("(+%" PRId64 " for BOM)"), (int64_t)bom_count);
     }
     if (dict == NULL) {
       p = p_shm;
@@ -5387,20 +5386,18 @@ void cursor_pos_info(dict_T *dict)
   }
 
   if (dict != NULL) {
+    // Don't shorten this message, the user asked for it.
     dict_add_nr_str(dict, "words", word_count, NULL);
     dict_add_nr_str(dict, "chars", char_count, NULL);
     dict_add_nr_str(dict, "bytes", byte_count + bom_count, NULL);
 
-    if (l_VIsual_active) {
-      dict_add_nr_str(dict, "visual_bytes", byte_count_cursor, NULL);
-      dict_add_nr_str(dict, "visual_chars", char_count_cursor, NULL);
-      dict_add_nr_str(dict, "visual_words", word_count_cursor, NULL);
-    } else {
-      dict_add_nr_str(dict, "cursor_bytes", byte_count_cursor, NULL);
-      dict_add_nr_str(dict, "cursor_chars", char_count_cursor, NULL);
-      dict_add_nr_str(dict, "cursor_words", word_count_cursor, NULL);
+    dict_add_nr_str(dict, l_VIsual_active ? "visual_bytes" : "cursor_bytes",
+                    (long)byte_count_cursor, NULL);
+    dict_add_nr_str(dict, l_VIsual_active ? "visual_chars" : "cursor_chars",
+                    (long)char_count_cursor, NULL);
+    dict_add_nr_str(dict, l_VIsual_active ? "visual_words" : "cursor_words",
+                    (long)word_count_cursor, NULL);
     }
-  }
 }
 
 /// Check if the default register (used in an unnamed paste) should be a
