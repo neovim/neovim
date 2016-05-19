@@ -237,7 +237,7 @@ static void tui_main(UIBridgeData *bridge, UI *ui)
   signal_watcher_stop(&data->cont_handle);
   signal_watcher_close(&data->cont_handle, NULL);
   signal_watcher_close(&data->winch_handle, NULL);
-  loop_close(&tui_loop);
+  loop_close(&tui_loop, false);
   kv_destroy(data->invalid_regions);
   xfree(data);
   xfree(ui);

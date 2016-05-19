@@ -165,7 +165,7 @@ void event_teardown(void)
   signal_teardown();
   terminal_teardown();
 
-  loop_close(&main_loop);
+  loop_close(&main_loop, true);
 }
 
 /// Performs early initialization.

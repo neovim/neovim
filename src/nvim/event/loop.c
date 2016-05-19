@@ -76,7 +76,7 @@ void loop_on_put(Queue *queue, void *data)
   uv_stop(&loop->uv);
 }
 
-void loop_close(Loop *loop)
+void loop_close(Loop *loop, bool wait)
 {
   uv_mutex_destroy(&loop->mutex);
   uv_close((uv_handle_t *)&loop->children_watcher, NULL);
@@ -84,8 +84,8 @@ void loop_close(Loop *loop)
   uv_close((uv_handle_t *)&loop->poll_timer, NULL);
   uv_close((uv_handle_t *)&loop->async, NULL);
   do {
-    uv_run(&loop->uv, UV_RUN_DEFAULT);
-  } while (uv_loop_close(&loop->uv));
+    uv_run(&loop->uv, wait ? UV_RUN_DEFAULT : UV_RUN_NOWAIT);
+  } while (uv_loop_close(&loop->uv) && wait);
   queue_free(loop->fast_events);
   queue_free(loop->thread_events);
   queue_free(loop->events);
