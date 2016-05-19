@@ -290,6 +290,9 @@ list_vim_patches() {
       is_missing="$(sed -n '/static int included_patches/,/}/p' "${NEOVIM_SOURCE_DIR}/src/nvim/version.c" |
         grep -x -e "[[:space:]]*//[[:space:]]${patch_number} NA.*" -e "[[:space:]]*${patch_number}," >/dev/null && echo "false" || echo "true")"
       vim_commit="${vim_tag#v}"
+      if (cd "${VIM_SOURCE_DIR}" && git show --name-only "v${vim_commit}" 2>/dev/null) | grep -q ^runtime; then
+        vim_commit="${vim_commit} (+runtime)"
+      fi
     else
       # Untagged Vim patch (e.g. runtime updates), check the Neovim git log:
       is_missing="$(cd "${NEOVIM_SOURCE_DIR}" &&
