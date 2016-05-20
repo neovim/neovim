@@ -22,7 +22,7 @@ describe('Test getting and setting file permissions', function()
 
     eq(1, call('setfperm', tempfile, 'rwx------'))
     if helpers.os_name == 'windows' then
-      eq('rwx------', call('getfperm', tempfile))
+      eq('rw-rw-rw-', call('getfperm', tempfile))
     else
       eq('rwx------', call('getfperm', tempfile))
     end
