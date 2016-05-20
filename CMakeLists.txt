@@ -300,9 +300,6 @@ include_directories(SYSTEM ${LIBUV_INCLUDE_DIRS})
 find_package(Msgpack 1.0.0 REQUIRED)
 include_directories(SYSTEM ${MSGPACK_INCLUDE_DIRS})
 
-find_package(LuaJit REQUIRED)
-include_directories(SYSTEM ${LUAJIT_INCLUDE_DIRS})
-
 find_package(Unibilium REQUIRED)
 include_directories(SYSTEM ${UNIBILIUM_INCLUDE_DIRS})
 
@@ -477,18 +474,24 @@ if(BUSTED_PRG)
   add_custom_target(benchmark-prereqs
     DEPENDS ${BENCHMARK_PREREQS})
 
-  add_custom_target(unittest
-    COMMAND ${CMAKE_COMMAND}
-      -DBUSTED_PRG=${BUSTED_PRG}
-      -DLUA_PRG=${LUA_PRG}
-      -DWORKING_DIR=${CMAKE_CURRENT_SOURCE_DIR}
-      -DBUSTED_OUTPUT_TYPE=${BUSTED_OUTPUT_TYPE}
-      -DTEST_DIR=${CMAKE_CURRENT_SOURCE_DIR}/test
-      -DBUILD_DIR=${CMAKE_BINARY_DIR}
-      -DTEST_TYPE=unit
-      -P ${PROJECT_SOURCE_DIR}/cmake/RunTests.cmake
-    DEPENDS ${UNITTEST_PREREQS}
-    ${TEST_TARGET_ARGS})
+  check_lua_module(${LUA_PRG} "ffi" LUA_HAS_FFI)
+  if(LUA_HAS_FFI)
+    add_custom_target(unittest
+      COMMAND ${CMAKE_COMMAND}
+        -DBUSTED_PRG=${BUSTED_PRG}
+        -DLUA_PRG=${LUA_PRG}
+        -DWORKING_DIR=${CMAKE_CURRENT_SOURCE_DIR}
+        -DBUSTED_OUTPUT_TYPE=${BUSTED_OUTPUT_TYPE}
+        -DTEST_DIR=${CMAKE_CURRENT_SOURCE_DIR}/test
+        -DBUILD_DIR=${CMAKE_BINARY_DIR}
+        -DTEST_TYPE=unit
+        -P ${PROJECT_SOURCE_DIR}/cmake/RunTests.cmake
+      DEPENDS ${UNITTEST_PREREQS}
+      ${TEST_TARGET_ARGS})
+  else()
+    message(WARNING "The Luajit ffi is not available in ${LUA_PRG}"
+	    ", disabling unit tests")
+  endif()
 
   add_custom_target(functionaltest
     COMMAND ${CMAKE_COMMAND}
