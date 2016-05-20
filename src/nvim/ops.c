@@ -5374,7 +5374,7 @@ void cursor_pos_info(dict_T *dict)
 
     bom_count = bomb_size();
     if (bom_count > 0) {
-      vim_snprintf((char *)IObuff + STRLEN(IObuff), IOSIZE,
+      vim_snprintf((char *)IObuff + STRLEN(IObuff), IOSIZE - STRLEN(IObuff),
                    _("(+%" PRId64 " for BOM)"), (int64_t)bom_count);
     }
     if (dict == NULL) {
@@ -5392,11 +5392,11 @@ void cursor_pos_info(dict_T *dict)
     dict_add_nr_str(dict, "bytes", byte_count + bom_count, NULL);
 
     dict_add_nr_str(dict, l_VIsual_active ? "visual_bytes" : "cursor_bytes",
-                    (long)byte_count_cursor, NULL);
+                    byte_count_cursor, NULL);
     dict_add_nr_str(dict, l_VIsual_active ? "visual_chars" : "cursor_chars",
-                    (long)char_count_cursor, NULL);
+                    char_count_cursor, NULL);
     dict_add_nr_str(dict, l_VIsual_active ? "visual_words" : "cursor_words",
-                    (long)word_count_cursor, NULL);
+                    word_count_cursor, NULL);
     }
 }
 
