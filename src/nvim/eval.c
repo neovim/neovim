@@ -2959,13 +2959,11 @@ int do_unlet(char_u *name, int forceit)
   ht = find_var_ht_dict(name, &varname, &dict);
 
   if (ht != NULL && *varname != NUL) {
-    
     hi = hash_find(ht, varname);
     if (!HASHITEM_EMPTY(hi)) {
       di = HI2DI(hi);
       if (var_check_fixed(di->di_flags, name, false)
           || var_check_ro(di->di_flags, name, false)) {
-
         return FAIL;
 
         if (ht == &globvarht) {
@@ -2980,7 +2978,6 @@ int do_unlet(char_u *name, int forceit)
         if (d == NULL || tv_check_lock(d->dv_lock, name, false)) {
           return FAIL;
         }
-
       }
       typval_T oldtv;
       bool watched = is_watched(dict);
