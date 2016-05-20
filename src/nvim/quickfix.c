@@ -160,9 +160,6 @@ qf_init (
 {
   qf_info_T       *qi = &ql_info;
 
-  if (efile == NULL)
-    return FAIL;
-
   if (wp != NULL) {
     qi = ll_get_or_alloc_list(wp);
   }
