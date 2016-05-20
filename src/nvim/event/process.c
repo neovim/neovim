@@ -116,18 +116,13 @@ void process_teardown(Loop *loop) FUNC_ATTR_NONNULL_ALL
   process_is_tearing_down = true;
   kl_iter(WatcherPtr, loop->children, current) {
     Process *proc = (*current)->data;
-    if (proc->detach) {
+    if (proc->detach || proc->type == kProcessTypePty) {
       // Close handles to process without killing it.
       CREATE_EVENT(loop->events, process_close_handles, 1, proc);
     } else {
-      if (proc->type == kProcessTypeUv) {
-        uv_kill(proc->pid, SIGTERM);
-        proc->term_sent = true;
-        process_stop(proc);
-      } else {  // kProcessTypePty
-        process_close_streams(proc);
-        pty_process_close_master((PtyProcess *)proc);
-      }
+      uv_kill(proc->pid, SIGTERM);
+      proc->term_sent = true;
+      process_stop(proc);
     }
   }
 
@@ -315,8 +310,10 @@ static void decref(Process *proc)
 static void process_close(Process *proc)
   FUNC_ATTR_NONNULL_ARG(1)
 {
-  if (process_is_tearing_down && proc->detach && proc->closed) {
-    // If a detached process dies while tearing down it might get closed twice.
+  if (process_is_tearing_down && (proc->detach || proc->type == kProcessTypePty)
+      && proc->closed) {
+    // If a detached/pty process dies while tearing down it might get closed
+    // twice.
     return;
   }
   assert(!proc->closed);
