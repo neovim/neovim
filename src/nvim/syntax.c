@@ -6972,6 +6972,9 @@ set_hl_attr (
       || at_en.rgb_sp_color != -1 || at_en.cterm_ae_attr != 0
       || at_en.rgb_ae_attr != 0) {
     sgp->sg_attr = get_attr_entry(&at_en);
+  } else {
+    // If all the fields are cleared, clear the attr field back to default value
+    sgp->sg_attr = 0;
   }
 }
 
