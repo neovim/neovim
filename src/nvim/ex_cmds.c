@@ -3825,6 +3825,10 @@ skip:
     // Restore the flag values, they can be used for ":&&".
     do_all = save_do_all;
     do_ask = save_do_ask;
+
+
+    // live_sub
+    ex_window_live_sub(eap);
   }
 
 /*
@@ -5836,3 +5840,137 @@ void set_context_in_sign_cmd(expand_T *xp, char_u *arg)
     }
   }
 }
+
+/*
+ * live_sub()
+ * Open a window for future displaying of the live_sub mode.
+ * Does not allow editing in the window.  
+ * Returns when the window is closed.
+ * Returns:
+ *	CR	 if the command is to be executed
+ *	Ctrl_C	 if it is to be abandoned
+ *	K_IGNORE if editing continues
+ */
+int ex_window_live_sub(exarg_T *eap)
+{
+  int i;
+  garray_T winsizes;
+  char_u typestr[2];
+  int save_restart_edit = restart_edit;
+  int save_State = State;
+  int save_exmode = exmode_active;
+  int save_cmdmsg_rl = cmdmsg_rl;
+  
+  /* Can't do this recursively.  Can't do it when typing a password. */
+  if (cmdwin_type != 0
+      || cmdline_star > 0
+      ) {
+    beep_flush();
+    return K_IGNORE;
+  }
+  
+  /* Save current window sizes. */
+  win_size_save(&winsizes);
+  
+  /* Save the current window to restore it later */
+  win_T* oldwin = curwin;
+  
+  /* Don't execute autocommands while creating the window. */
+  block_autocmds();
+  /* don't use a new tab page */
+  cmdmod.tab = 0;
+  
+  /* close last buffer used for ex_window_live_sub() */
+  buf_T* oldbuf;
+  if((oldbuf = buflist_findname_exp((char_u *)"[live_sub]"))!=NULL) {
+    close_windows (oldbuf, FALSE);
+    close_buffer (NULL, oldbuf, DOBUF_WIPE, FALSE);
+  }
+  
+  /* Create a window for the command-line buffer. */
+  if (win_split((int)p_cwh, WSP_BOT) == FAIL) {
+    beep_flush();
+    unblock_autocmds();
+    return K_IGNORE;
+  }
+  cmdwin_type = get_cmdline_type();
+  
+  /* Create the command-line buffer empty. */
+  (void)do_ecmd(0, NULL, NULL, NULL, ECMD_ONE, ECMD_HIDE, NULL);
+  (void)setfname(curbuf, (char_u *)"[live_sub]", NULL, TRUE);
+  set_option_value((char_u *)"bt", 0L, (char_u *)"nofile", OPT_LOCAL);
+  set_option_value((char_u *)"swf", 0L, NULL, OPT_LOCAL);
+  curbuf->b_p_ma = FALSE; // Not Modifiable
+  curwin->w_p_fen = FALSE;
+  curwin->w_p_rl = cmdmsg_rl;
+  cmdmsg_rl = FALSE;
+  RESET_BINDING(curwin);
+  
+  /* Do execute autocommands for setting the filetype (load syntax). */
+  unblock_autocmds();
+  
+  /* Showing the prompt may have set need_wait_return, reset it. */
+  need_wait_return = FALSE;
+  
+  /* Reset 'textwidth' after setting 'filetype' (the Vim filetype plugin
+   * sets 'textwidth' to 78). */
+  curbuf->b_p_tw = 0;
+  
+  /* Fill the buffer with a message. */
+  int line = 0;
+  ml_append(line++,(char_u *)"TEST live_sub",
+            (colnr_T)0, FALSE);
+  ml_append(line++,eap->arg+1,
+            (colnr_T)0, FALSE);
+
+  redraw_later(SOME_VALID);
+  
+  /* No Ex mode here! */
+  exmode_active = 0;
+  
+  State = NORMAL;
+  setmouse();
+  
+  /* Trigger CmdwinEnter autocommands. */
+  typestr[0] = cmdwin_type;
+  typestr[1] = NUL;
+  apply_autocmds(EVENT_CMDWINENTER, typestr, typestr, FALSE, curbuf);
+  if (restart_edit != 0)        /* autocmd with ":startinsert" */
+    stuffcharReadbuff(K_NOP);
+  
+  i = RedrawingDisabled;
+  RedrawingDisabled = 0;
+  
+  /* Restore the old window */
+  win_enter(oldwin, FALSE);
+  
+  /*
+   * Call the main loop until <CR> or CTRL-C is typed.
+   */
+  cmdwin_result = 0;
+  normal_enter(true, false);
+  
+  RedrawingDisabled = i;
+  
+  int save_KeyTyped = KeyTyped;
+  
+  /* Trigger CmdwinLeave autocommands. */
+  apply_autocmds(EVENT_CMDWINLEAVE, typestr, typestr, FALSE, curbuf);
+  
+  /* Restore KeyTyped in case it is modified by autocommands */
+  KeyTyped = save_KeyTyped;
+  
+  exmode_active = save_exmode;
+  
+  ga_clear(&winsizes);
+  restart_edit = save_restart_edit;
+  cmdmsg_rl = save_cmdmsg_rl;
+  
+  State = save_State;
+  setmouse();
+  
+  return cmdwin_result;
+}
+
+
+
