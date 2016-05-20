@@ -26,7 +26,6 @@ SCRIPTS := \
            test49.out             \
            test52.out             \
            test53.out             \
-           test55.out             \
            test64.out             \
            test69.out             \
            test73.out             \
@@ -41,6 +40,7 @@ NEW_TESTS = \
 	    test_cursor_func.res \
 	    test_help_tagjump.res \
 	    test_menu.res \
+	    test_unlet.res \
 	    test_viml.res \
 	    test_alot.res
 
