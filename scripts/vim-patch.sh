@@ -33,7 +33,11 @@ usage() {
 
 # Checks if a program is in the user's PATH, and is executable.
 check_executable() {
-  if [[ ! -x $(command -v "${1}") ]]; then
+  test -x "$(command -v "${1}")"
+}
+
+require_executable() {
+  if ! check_executable "${1}"; then
     >&2 echo "${BASENAME}: '${1}' not found in PATH or not executable."
     exit 1
   fi
@@ -61,7 +65,7 @@ clean_files() {
 }
 
 get_vim_sources() {
-  check_executable git
+  require_executable git
 
   if [[ ! -d ${VIM_SOURCE_DIR} ]]; then
     echo "Cloning Vim sources into '${VIM_SOURCE_DIR}'."
@@ -194,9 +198,28 @@ get_vim_patch() {
   echo "  for more information."
 }
 
+hub_pr() {
+  hub pull-request -m "$1"
+}
+
+git_hub_pr() {
+  git hub pull new -m "$1"
+}
+
 submit_pr() {
-  check_executable git
-  check_executable hub
+  require_executable git
+  local push_first
+  push_first=1
+  local submit_fn
+  if check_executable hub; then
+    submit_fn="hub_pr"
+  elif check_executable git-hub; then
+    push_first=0
+    submit_fn="git_hub_pr"
+  else
+    >&2 echo "${BASENAME}: 'hub' or 'git-hub' not found in PATH or not executable."
+    exit 1
+  fi
 
   cd "${NEOVIM_SOURCE_DIR}"
   local checked_out_branch
@@ -219,14 +242,17 @@ submit_pr() {
   local pr_message
   pr_message="$(printf '[RFC] vim-patch:%s\n\n%s\n' "${pr_title#,}" "${pr_body}")"
 
-  echo "Pushing to 'origin/${checked_out_branch}'."
-  output="$(git push origin "${checked_out_branch}" 2>&1)" &&
-    echo "✔ ${output}" ||
-    (echo "✘ ${output}"; git reset --soft HEAD^1; false)
+  if [[ $push_first -ne 0 ]]; then
+    echo "Pushing to 'origin/${checked_out_branch}'."
+    output="$(git push origin "${checked_out_branch}" 2>&1)" &&
+      echo "✔ ${output}" ||
+      (echo "✘ ${output}"; git reset --soft HEAD^1; false)
 
-  echo
+    echo
+  fi
+
   echo "Creating pull request."
-  output="$(hub pull-request -F - 2>&1 <<< "${pr_message}")" &&
+  output="$(${submit_fn} "${pr_message}" 2>&1)" &&
     echo "✔ ${output}" ||
     (echo "✘ ${output}"; false)
 
@@ -264,6 +290,9 @@ list_vim_patches() {
       is_missing="$(sed -n '/static int included_patches/,/}/p' "${NEOVIM_SOURCE_DIR}/src/nvim/version.c" |
         grep -x -e "[[:space:]]*//[[:space:]]${patch_number} NA.*" -e "[[:space:]]*${patch_number}," >/dev/null && echo "false" || echo "true")"
       vim_commit="${vim_tag#v}"
+      if (cd "${VIM_SOURCE_DIR}" && git show --name-only "v${vim_commit}" 2>/dev/null) | grep -q ^runtime; then
+        vim_commit="${vim_commit} (+runtime)"
+      fi
     else
       # Untagged Vim patch (e.g. runtime updates), check the Neovim git log:
       is_missing="$(cd "${NEOVIM_SOURCE_DIR}" &&
@@ -346,9 +375,9 @@ review_commit() {
 }
 
 review_pr() {
-  check_executable curl
-  check_executable nvim
-  check_executable jq
+  require_executable curl
+  require_executable nvim
+  require_executable jq
 
   get_vim_sources
 
