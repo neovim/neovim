@@ -100,6 +100,7 @@ UI *tui_start(void)
   ui->visual_bell = tui_visual_bell;
   ui->update_fg = tui_update_fg;
   ui->update_bg = tui_update_bg;
+  ui->update_sp = tui_update_sp;
   ui->flush = tui_flush;
   ui->suspend = tui_suspend;
   ui->set_title = tui_set_title;
@@ -571,6 +572,11 @@ static void tui_update_fg(UI *ui, int fg)
 static void tui_update_bg(UI *ui, int bg)
 {
   ((TUIData *)ui->data)->grid.bg = bg;
+}
+
+static void tui_update_sp(UI *ui, int sp)
+{
+  // Do nothing; 'special' color is for GUI only
 }
 
 static void tui_flush(UI *ui)

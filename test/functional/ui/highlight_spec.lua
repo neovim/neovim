@@ -1,7 +1,7 @@
 local helpers = require('test.functional.helpers')
 local Screen = require('test.functional.ui.screen')
 local os = require('os')
-local clear, feed = helpers.clear, helpers.feed
+local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
 local execute, request, eq = helpers.execute, helpers.request, helpers.eq
 
 
@@ -301,5 +301,63 @@ describe('Default highlight groups', function()
       ~                                                    |
       {1:-- INSERT --}                                         |
     ]], {[1] = {foreground = Screen.colors.Red, background = Screen.colors.Green}})
+  end)
+end)
+
+describe('guisp (special/undercurl)', function()
+  local screen
+
+  before_each(function()
+    clear()
+    screen = Screen.new(25,10)
+    screen:attach()
+    screen:set_default_attr_ignore({
+      [1] = {bold = true, foreground = Screen.colors.Blue},
+      [2] = {bold = true}
+    })
+  end)
+
+  it('can be set and is applied like foreground or background', function()
+    execute('syntax on')
+    execute('syn keyword TmpKeyword neovim')
+    execute('syn keyword TmpKeyword1 special')
+    execute('syn keyword TmpKeyword2 specialwithbg')
+    execute('syn keyword TmpKeyword3 specialwithfg')
+    execute('hi! Awesome guifg=red guibg=yellow guisp=red')
+    execute('hi! Awesome1 guisp=red')
+    execute('hi! Awesome2 guibg=yellow guisp=red')
+    execute('hi! Awesome3 guifg=red guisp=red')
+    execute('hi link TmpKeyword Awesome')
+    execute('hi link TmpKeyword1 Awesome1')
+    execute('hi link TmpKeyword2 Awesome2')
+    execute('hi link TmpKeyword3 Awesome3')
+    insert([[
+      neovim
+      awesome neovim
+      wordcontainingneovim
+      special
+      specialwithbg
+      specialwithfg
+      ]])
+    feed('Go<tab>neovim tabbed')
+    screen:expect([[
+      {1:neovim}                   |
+      awesome {1:neovim}           |
+      wordcontainingneovim     |
+      {2:special}                  |
+      {3:specialwithbg}            |
+      {4:specialwithfg}            |
+                               |
+              {1:neovim} tabbed^    |
+      ~                        |
+      -- INSERT --             |
+    ]],{
+      [1] = {background = Screen.colors.Yellow, foreground = Screen.colors.Red,
+             special = Screen.colors.Red},
+      [2] = {special = Screen.colors.Red},
+      [3] = {special = Screen.colors.Red, background = Screen.colors.Yellow},
+      [4] = {foreground = Screen.colors.Red, special = Screen.colors.Red},
+    })
+
   end)
 end)
