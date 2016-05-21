@@ -302,6 +302,47 @@ describe('Default highlight groups', function()
       {1:-- INSERT --}                                         |
     ]], {[1] = {foreground = Screen.colors.Red, background = Screen.colors.Green}})
   end)
+  it('can be cleared by manually clearing their fields', function()
+    execute('syn keyword TmpKeyword neovim')
+    execute('hi link TmpKeyword ErrorMsg')
+    insert('neovim')
+    screen:expect([[
+      {1:neovi^m}                                               |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+                                                           |
+    ]], {
+      [1] = {foreground = Screen.colors.White, background = Screen.colors.Red}
+    })
+    execute("hi ErrorMsg term=NONE cterm=NONE ctermfg=NONE ctermbg=NONE"
+            .. " gui=NONE guifg=NONE guibg=NONE guisp=NONE")
+    screen:expect([[
+      neovi^m                                               |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+                                                           |
+    ]], {})
+  end)
 end)
 
 describe('guisp (special/undercurl)', function()
