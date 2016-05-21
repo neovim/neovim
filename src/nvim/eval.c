@@ -2973,23 +2973,30 @@ int do_unlet(char_u *name, int forceit)
   ht = find_var_ht_dict(name, &varname, &dict);
 
   if (ht != NULL && *varname != NUL) {
+    if (ht == &globvarht) {
+      d = &globvardict;
+    } else if (current_funccal != NULL
+               && ht == &current_funccal->l_vars.dv_hashtab) {
+      d = &current_funccal->l_vars;
+    } else if (ht == &compat_hashtab) {
+        d = &vimvardict;
+    } else {
+      di = find_var_in_ht(ht, *name, (char_u *)"", false);
+      d = di->di_tv.vval.v_dict;
+    }
+    if (d == NULL) {
+      EMSG2(_(e_intern2), "do_unlet()");
+      return FAIL;
+    }
     hi = hash_find(ht, varname);
     if (!HASHITEM_EMPTY(hi)) {
       di = HI2DI(hi);
       if (var_check_fixed(di->di_flags, name, false)
-          || var_check_ro(di->di_flags, name, false)) {
+          || var_check_ro(di->di_flags, name, false)
+          || tv_check_lock(d->dv_lock, name, false)) {
         return FAIL;
       }
 
-      if (ht == &globvarht) {
-        d = &globvardict;
-      } else if (current_funccal != NULL
-                 && ht == &current_funccal->l_vars.dv_hashtab) {
-        d = &current_funccal->l_vars;
-      } else {
-        di = find_var_in_ht(ht, *name, (char_u *)"", false);
-        d = di->di_tv.vval.v_dict;
-      }
       if (d == NULL || tv_check_lock(d->dv_lock, name, false)) {
         return FAIL;
       }
