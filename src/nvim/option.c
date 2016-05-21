@@ -1639,18 +1639,21 @@ do_set (
                       && STRNCMP(s, newval, i) == 0
                       && (!(flags & P_COMMA)
                           || s[i] == ','
-                          || s[i] == NUL))
+                          || s[i] == NUL)) {
                     break;
-                  /* Count backslashes.  Only a comma with an
-                   * even number of backslashes before it is
-                   * recognized as a separator */
-                  if (s > origval && s[-1] == '\\')
-                    ++bs;
-                  else
+                  }
+                  // Count backslashes.  Only a comma with an even number of
+                  // backslashes or a single backslash preceded by a comma
+                  // before it is recognized as a separator
+                  if ((s > origval + 1 && s[-1] == '\\' && s[-2] != ',')
+                      || (s == origval + 1 && s[-1] == '\\')) {
+                    bs++;
+                  } else {
                     bs = 0;
+                  }
                 }
 
-                /* do not add if already there */
+                // do not add if already there
                 if ((adding || prepending) && *s) {
                   prepending = FALSE;
                   adding = FALSE;
