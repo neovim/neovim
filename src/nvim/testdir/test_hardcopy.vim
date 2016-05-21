@@ -45,12 +45,14 @@ endfunc
 " Test that :hardcopy produces a non-empty file.
 " We don't check much of the contents.
 func Test_with_syntax()
-  set printoptions=syntax:y
-  syn on
-  hardcopy > Xhardcopy
-  let lines = readfile('Xhardcopy')
-  call assert_true(len(lines) > 20)
-  call assert_true(lines[0] =~ 'PS-Adobe')
-  call delete('Xhardcopy')
-  set printoptions&
+  if has('postscript')
+    set printoptions=syntax:y
+    syn on
+    hardcopy > Xhardcopy
+    let lines = readfile('Xhardcopy')
+    call assert_true(len(lines) > 20)
+    call assert_true(lines[0] =~ 'PS-Adobe')
+    call delete('Xhardcopy')
+    set printoptions&
+  endif
 endfunc
