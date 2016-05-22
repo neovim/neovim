@@ -65,6 +65,14 @@ extern ArrayOf(String) buffer_get_lines(Buffer buffer,
                                  Integer end,
                                  Boolean strict_indexing,
                                  Error *err);
+
+extern Integer buffer_add_highlight(Buffer buffer,
+                             Integer src_id,
+                             String hl_group,
+                             Integer line,
+                             Integer col_start,
+                             Integer col_end,
+                             Error *err);
 /*
  * Struct to hold the sign properties.
  */
@@ -73,6 +81,8 @@ typedef struct sign sign_T;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ex_cmds.c.generated.h"
+#include "ex_cmds_defs.h"
+
 #endif
 
 /*
@@ -2952,6 +2962,8 @@ void do_sub(exarg_T *eap)
   int start_nsubs;
   int save_ma = 0;
 
+  klist_t(matchedline_T) *lmatch = kl_init(matchedline_T);  /*  list to save matched lines */
+
   cmd = eap->arg;
   if (!global_busy) {
     sub_nsubs = 0;
@@ -3257,6 +3269,7 @@ void do_sub(exarg_T *eap)
       sub_firstlnum = lnum;
       copycol = 0;
       matchcol = 0;
+      matchedline_T cmatch = {0, 0, NULL};          /* the current match */
 
       /* At first match, remember current cursor position. */
       if (!got_match) {
@@ -3292,6 +3305,9 @@ void do_sub(exarg_T *eap)
          * cursor position (just like Vi). */
         curwin->w_cursor.lnum = lnum;
         do_again = FALSE;
+
+        /* increment number of match on the line */
+        cmatch.nmatch++;
 
         /*
          * 1. Match empty string does not count, except for first
@@ -3775,6 +3791,11 @@ skip:
       xfree(new_start);              /* for when substitute was cancelled */
       xfree(sub_firstline);          /* free the copy of the original line */
       sub_firstline = NULL;
+
+      /* saving info about the matched line */
+      cmatch.lnum = lnum;
+      cmatch.line = vim_strsave(ml_get(lnum));
+      kl_push(matchedline_T, lmatch, cmatch);
     }
 
     line_breakcheck();
@@ -3834,7 +3855,7 @@ skip:
 
 
     // live_sub
-    ex_window_live_sub(eap);
+    ex_window_live_sub(eap, lmatch);
   }
 
 /*
@@ -5857,7 +5878,7 @@ void set_context_in_sign_cmd(expand_T *xp, char_u *arg)
  *	Ctrl_C	 if it is to be abandoned
  *	K_IGNORE if editing continues
  */
-int ex_window_live_sub(exarg_T *eap)
+int ex_window_live_sub(exarg_T *eap, klist_t(matchedline_T) *lmatch)
 {
   int i;
   garray_T winsizes;
@@ -5866,7 +5887,7 @@ int ex_window_live_sub(exarg_T *eap)
   int save_State = State;
   int save_exmode = exmode_active;
   int save_cmdmsg_rl = cmdmsg_rl;
-  
+
   /* Can't do this recursively.  Can't do it when typing a password. */
   if (cmdwin_type != 0
       || cmdline_star > 0
@@ -5874,28 +5895,28 @@ int ex_window_live_sub(exarg_T *eap)
     beep_flush();
     return K_IGNORE;
   }
-  
+
   /* Save current window sizes. */
   win_size_save(&winsizes);
-  
+
   /* Save the current window to restore it later */
   win_T* oldwin = curwin;
-  
+
   /* Save the current buff in order to fetch lines from it */
   buf_T* displayBuff = curbuf;
-  
+
   /* Don't execute autocommands while creating the window. */
   block_autocmds();
   /* don't use a new tab page */
   cmdmod.tab = 0;
-  
+
   /* close last buffer used for ex_window_live_sub() */
   buf_T* oldbuf;
   if((oldbuf = buflist_findname_exp((char_u *)"[live_sub]"))!=NULL) {
     close_windows (oldbuf, FALSE);
     close_buffer (NULL, oldbuf, DOBUF_WIPE, FALSE);
   }
-  
+
   /* Create a window for the command-line buffer. */
   if (win_split((int)p_cwh, WSP_BOT) == FAIL) {
     beep_flush();
@@ -5903,7 +5924,7 @@ int ex_window_live_sub(exarg_T *eap)
     return K_IGNORE;
   }
   cmdwin_type = get_cmdline_type();
-  
+
   /* Create the command-line buffer empty. */
   (void)do_ecmd(0, NULL, NULL, NULL, ECMD_ONE, ECMD_HIDE, NULL);
   (void)setfname(curbuf, (char_u *)"[live_sub]", NULL, TRUE);
@@ -5914,87 +5935,97 @@ int ex_window_live_sub(exarg_T *eap)
   curwin->w_p_rl = cmdmsg_rl;
   cmdmsg_rl = FALSE;
   RESET_BINDING(curwin);
-  
+
   /* Do execute autocommands for setting the filetype (load syntax). */
   unblock_autocmds();
-  
+
   /* Showing the prompt may have set need_wait_return, reset it. */
   need_wait_return = FALSE;
-  
+
   /* Reset 'textwidth' after setting 'filetype' (the Vim filetype plugin
    * sets 'textwidth' to 78). */
   curbuf->b_p_tw = 0;
-  
+
   /* Fill the buffer with a message. */
   int line = 0;
-  ml_append(line++,(char_u *)"TEST live_sub",
-            (colnr_T)0, FALSE);
-  ml_append(line++,eap->arg+1,
-            (colnr_T)0, FALSE);
-  
+
   /* Gather the line we want to display */
-  Error err = ERROR_INIT;
-  int num_line = 1;
-  
-  ArrayOf(String) strs = buffer_get_lines(displayBuff->handle, num_line, num_line+1, FALSE, &err);
-  
+  /*Error err = ERROR_INIT;
+  int num_line = 1;*/
+
+  //ArrayOf(String) strs = buffer_get_lines(displayBuff->handle, num_line, num_line+1, FALSE, &err);
+
   /* Add to this line its line number */
-  char c = num_line + 1 + '0';
+  /*char c = num_line + 1 + '0';
   char* str = (char *)concat_str((char_u*)&c, (char_u*)": ");
   str = (char *)concat_str((char_u*) str, (char_u*) strs.items[0].data.string.data);
+  ml_append(line++,(char_u*) str,
+            (colnr_T)0, false);*/
 
   /* Append the line to our buffer */
-  ml_append(line++,(char_u*) str,
-            (colnr_T)0, FALSE);
-  
+  kl_iter(matchedline_T, lmatch, current) {
+    matchedline_T mat = (*current)->data;
+    char *str = malloc(sizeof(char)*strlen((char*)mat.line+25));
+    sprintf(str, "l.%ld > %s", mat.lnum, (char*)mat.line);
+    ml_append(line++, (char_u *)str,
+              (colnr_T) 0, false);
+  }
+
+  /* Highlight a part of the line */
+//  Integer src_id_highlight = 0;
+//  String hl_group_Name;
+//  hl_group_Name.data = "hg 0";
+//  hl_group_Name.size = 4;
+//  src_id_highlight = buffer_add_highlight(live_sub_buff->handle,
+//                                          src_id_highlight,
+//                                          hl_group_Name, line-1,
+//                                          5, 10, &err);
+
   redraw_later(SOME_VALID);
-  
+
   /* No Ex mode here! */
   exmode_active = 0;
-  
+
   State = NORMAL;
   setmouse();
-  
+
   /* Trigger CmdwinEnter autocommands. */
   typestr[0] = cmdwin_type;
   typestr[1] = NUL;
   apply_autocmds(EVENT_CMDWINENTER, typestr, typestr, FALSE, curbuf);
   if (restart_edit != 0)        /* autocmd with ":startinsert" */
     stuffcharReadbuff(K_NOP);
-  
+
   i = RedrawingDisabled;
   RedrawingDisabled = 0;
-  
+
   /* Restore the old window */
   win_enter(oldwin, FALSE);
-  
+
   /*
    * Call the main loop until <CR> or CTRL-C is typed.
    */
   cmdwin_result = 0;
   normal_enter(true, false);
-  
+
   RedrawingDisabled = i;
-  
+
   int save_KeyTyped = KeyTyped;
-  
+
   /* Trigger CmdwinLeave autocommands. */
   apply_autocmds(EVENT_CMDWINLEAVE, typestr, typestr, FALSE, curbuf);
-  
+
   /* Restore KeyTyped in case it is modified by autocommands */
   KeyTyped = save_KeyTyped;
-  
+
   exmode_active = save_exmode;
-  
+
   ga_clear(&winsizes);
   restart_edit = save_restart_edit;
   cmdmsg_rl = save_cmdmsg_rl;
-  
+
   State = save_State;
   setmouse();
-  
+
   return cmdwin_result;
 }
-
-
-
