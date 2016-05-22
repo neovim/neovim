@@ -59,6 +59,12 @@
 #include "nvim/os/input.h"
 #include "nvim/os/time.h"
 
+//#include "nvim/buffer.c"
+extern ArrayOf(String) buffer_get_lines(Buffer buffer,
+                                 Integer start,
+                                 Integer end,
+                                 Boolean strict_indexing,
+                                 Error *err);
 /*
  * Struct to hold the sign properties.
  */
@@ -5875,6 +5881,9 @@ int ex_window_live_sub(exarg_T *eap)
   /* Save the current window to restore it later */
   win_T* oldwin = curwin;
   
+  /* Save the current buff in order to fetch lines from it */
+  buf_T* displayBuff = curbuf;
+  
   /* Don't execute autocommands while creating the window. */
   block_autocmds();
   /* don't use a new tab page */
@@ -5922,7 +5931,11 @@ int ex_window_live_sub(exarg_T *eap)
             (colnr_T)0, FALSE);
   ml_append(line++,eap->arg+1,
             (colnr_T)0, FALSE);
-
+  Error err = ERROR_INIT;
+  ArrayOf(String) strs = buffer_get_lines(displayBuff->handle, 1, 2, FALSE, &err);
+  ml_append(line++,(char_u*) strs.items[0].data.string.data,
+            (colnr_T)0, FALSE);
+  
   redraw_later(SOME_VALID);
   
   /* No Ex mode here! */
