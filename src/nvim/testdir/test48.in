@@ -1,7 +1,6 @@
 This is a test of 'virtualedit'.
 
 STARTTEST
-:so small.vim
 :set noswf
 :set ve=all
 j-dgg

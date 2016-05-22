@@ -1,7 +1,6 @@
 Tests for reading and writing files with conversion for Win32.
 
 STARTTEST
-:so mbyte.vim
 :" make this a dummy test for non-Win32 systems
 :if !has("win32") | e! test.ok | wq! test.out | endif
 :"
@@ -61,5 +60,5 @@ STARTTEST
 ENDTEST
 
 1 utf-8 text: Р”Р»СЏ Vim version 6.2.  РџРѕСЃР»РµРґРЅРµРµ РёР·РјРµРЅРµРЅРёРµ: 1970 Jan 01
-2 cp1251 text: Для Vim version 6.2.  Последнее изменение: 1970 Jan 01
-3 cp866 text: „«п Vim version 6.2.  Џ®б«Ґ¤­ҐҐ Ё§¬Ґ­Ґ­ЁҐ: 1970 Jan 01
+2 cp1251 text: Г„Г«Гї Vim version 6.2.  ГЏГ®Г±Г«ГҐГ¤Г­ГҐГҐ ГЁГ§Г¬ГҐГ­ГҐГ­ГЁГҐ: 1970 Jan 01
+3 cp866 text: вЂћВ«ГЇ Vim version 6.2.  ВЏВ®ГЎВ«ВҐВ¤В­ВҐВҐ ВЁВ§В¬ВҐВ­ВҐВ­ВЁВҐ: 1970 Jan 01

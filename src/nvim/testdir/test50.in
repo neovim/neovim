@@ -2,7 +2,6 @@ Test for shortpathname ':8' extension.
 Only for use on Win32 systems!
 
 STARTTEST
-:so small.vim
 :fun! TestIt(file, bits, expected)
 	let res=fnamemodify(a:file,a:bits)
 	if a:expected == ''

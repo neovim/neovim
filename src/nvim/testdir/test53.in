@@ -7,7 +7,6 @@ Also test match() and matchstr()
 Also test the gn command and repeating it.
 
 STARTTEST
-:so small.vim
 /^start:/
 da"
 0va'a'rx

@@ -5,7 +5,6 @@ Also test "[m", "]m", "[M" and "]M"
 Also test search()
 
 STARTTEST
-:so small.vim
 /Start cursor here
 vaBiBD:?Bug?,/Piece/-2w! test.out
 /^- Bug

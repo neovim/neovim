@@ -2,7 +2,6 @@ Test for BufWritePre autocommand that deletes or unloads the buffer.
 Test for BufUnload autocommand that unloads all other buffers.
 
 STARTTEST
-:so small.vim
 :au BufWritePre Xxx1 bunload
 :au BufWritePre Xxx2 bwipe
 /^start of
@@ -35,8 +34,6 @@ endfunc
 :set shada='100
 :au BufUnload * call CloseAll()
 :au VimLeave * call WriteToOut()
-:e small.vim
-:sp mbyte.vim
 :q
 :qa!
 ENDTEST

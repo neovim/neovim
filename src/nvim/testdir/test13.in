@@ -11,7 +11,6 @@ Also test changing buffers in a BufDel autocommand.  If this goes wrong there
 are ml_line errors and/or a Crash.
 
 STARTTEST
-:so small.vim
 :/^start of testfile/,/^end of testfile/w! Xtestje1
 :/^start of testfile/,/^end of testfile/w! Xtestje2
 :/^start of testfile/,/^end of testfile/w! Xtestje3

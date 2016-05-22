@@ -4,7 +4,6 @@ Also test that a builtin function cannot be replaced.
 Also test for regression when calling arbitrary expression.
 
 STARTTEST
-:so small.vim
 :function Table(title, ...)
 :  let ret = a:title
 :  let idx = 1
