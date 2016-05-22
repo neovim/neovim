@@ -7863,7 +7863,10 @@ void exec_normal_cmd(char_u *cmd, int remap, bool silent)
   exec_normal(false);
 }
 
-void exec_normal(int was_typed)
+/// Execute normal_cmd() until there is no typeahead left.
+///
+/// @param was_typed whether or not something was typed
+void exec_normal(bool was_typed)
 {
   oparg_T oa;
 

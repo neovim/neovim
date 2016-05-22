@@ -57,6 +57,7 @@ void vim_feedkeys(String keys, String mode, Boolean escape_csi)
   bool remap = true;
   bool insert = false;
   bool typed = false;
+  bool execute = false;
 
   if (keys.size == 0) {
     return;
@@ -68,6 +69,7 @@ void vim_feedkeys(String keys, String mode, Boolean escape_csi)
     case 'm': remap = true; break;
     case 't': typed = true; break;
     case 'i': insert = true; break;
+    case 'x': execute = true; break;
     }
   }
 
@@ -86,8 +88,12 @@ void vim_feedkeys(String keys, String mode, Boolean escape_csi)
       xfree(keys_esc);
   }
 
-  if (vgetc_busy)
+  if (vgetc_busy) {
     typebuf_was_filled = true;
+  }
+  if (execute) {
+    exec_normal(true);
+  }
 }
 
 /// Passes input keys to Neovim. Unlike `vim_feedkeys`, this will use a

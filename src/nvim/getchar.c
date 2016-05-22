@@ -1754,9 +1754,9 @@ static int vgetorpeek(int advance)
                    || ((compl_cont_status & CONT_LOCAL)
                        && (c1 == Ctrl_N || c1 == Ctrl_P)))
               ) {
-            if (c1 == K_SPECIAL)
+            if (c1 == K_SPECIAL) {
               nolmaplen = 2;
-            else {
+            } else {
               LANGMAP_ADJUST(c1, (State & (CMDLINE | INSERT)) == 0
                              && get_real_state() != SELECTMODE);
               nolmaplen = 0;
