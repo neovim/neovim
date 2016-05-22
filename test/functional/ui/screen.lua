@@ -290,6 +290,10 @@ If everything else fails, use Screen:redraw_debug to help investigate what is
   end
 end
 
+function Screen:sleep(ms)
+  pcall(function() self:wait(function() return "error" end, ms) end)
+end
+
 function Screen:_redraw(updates)
   for _, update in ipairs(updates) do
     -- print('--')
@@ -501,7 +505,7 @@ end
 
 function Screen:snapshot_util(attrs, ignore)
   -- util to generate screen test
-  pcall(function() self:wait(function() return "error" end, 250) end)
+  self:sleep(250)
   self:print_snapshot(attrs, ignore)
 end
 

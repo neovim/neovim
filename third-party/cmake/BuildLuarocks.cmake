@@ -114,6 +114,15 @@ add_custom_target(lpeg
 
 list(APPEND THIRD_PARTY_DEPS lpeg)
 
+add_custom_command(OUTPUT ${HOSTDEPS_LIB_DIR}/luarocks/rocks/inspect
+  COMMAND ${LUAROCKS_BINARY}
+  ARGS build inspect ${LUAROCKS_BUILDARGS}
+  DEPENDS mpack)
+add_custom_target(inspect
+  DEPENDS ${HOSTDEPS_LIB_DIR}/luarocks/rocks/inspect)
+
+list(APPEND THIRD_PARTY_DEPS inspect)
+
 if(USE_BUNDLED_BUSTED)
   add_custom_command(OUTPUT ${HOSTDEPS_BIN_DIR}/busted
     COMMAND ${LUAROCKS_BINARY}

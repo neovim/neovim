@@ -1,4 +1,5 @@
 local helpers = require('test.functional.helpers')
+local Screen = require('test.functional.ui.screen')
 local ok, feed, eq, eval = helpers.ok, helpers.feed, helpers.eq, helpers.eval
 local source, nvim_async, run = helpers.source, helpers.nvim_async, helpers.run
 local clear, execute, funcs = helpers.clear, helpers.execute, helpers.funcs
@@ -101,6 +102,28 @@ describe('timers', function()
     run(nil, nil, nil, 300)
     eq(3,eval("g:val"))
     eq(2,eval("g:val2"))
+  end)
+
+  it("doesn't mess up the cmdline", function()
+    local screen = Screen.new(40, 6)
+    screen:attach()
+    screen:set_default_attr_ignore({{bold=true, foreground=Screen.colors.Blue}})
+    source([[
+      func! MyHandler(timer)
+        echo "evil"
+      endfunc
+    ]])
+    execute("call timer_start(100,  'MyHandler', {'repeat': 1})")
+    feed(":good")
+    screen:sleep(200)
+    screen:expect([[
+                                              |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      :good^                                   |
+    ]])
   end)
 
 end)
