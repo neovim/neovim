@@ -1500,8 +1500,9 @@ static void ins_redraw(
     curbuf->b_changed_invalid = false;
   }
 
-  if (curwin->w_p_cole > 0 && conceal_cursor_line(curwin)
-      && conceal_cursor_moved) {
+  // TODO: NO!
+  if ((curwin->w_p_cole > 0 && conceal_cursor_line(curwin)
+      && conceal_cursor_moved) || curwin->w_cursor.lnum == 3) {
     redrawWinline(curwin, curwin->w_cursor.lnum);
   }
 
