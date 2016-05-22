@@ -14,6 +14,8 @@ local to_cstr = helpers.to_cstr
 local OK = helpers.OK
 local FAIL = helpers.FAIL
 local NULL = helpers.NULL
+local NODE_NORMAL = 0
+local NODE_WRITABLE = 1
 
 cimport('unistd.h')
 cimport('./src/nvim/os/shell.h')
@@ -357,15 +359,12 @@ describe('fs function', function()
     local function os_file_exists(filename)
       return fs.os_file_exists((to_cstr(filename)))
     end
-
     local function os_rename(path, new_path)
       return fs.os_rename((to_cstr(path)), (to_cstr(new_path)))
     end
-
     local function os_remove(path)
       return fs.os_remove((to_cstr(path)))
     end
-
     local function os_open(path, flags, mode)
       return fs.os_open((to_cstr(path)), flags, mode)
     end
@@ -482,6 +481,20 @@ describe('fs function', function()
 
       it('returns a non-negative file descriptor for an existing file', function()
         assert.is_true(0 <= (os_open(existing_file, ffi.C.kO_RDWR, 0)))
+      end)
+    end)
+
+    describe('os_nodetype', function()
+      before_each(function()
+        os.remove('non-existing-file')
+      end)
+
+      it('returns NODE_NORMAL for non-existing file', function()
+        eq(NODE_NORMAL, fs.os_nodetype(to_cstr('non-existing-file')))
+      end)
+
+      it('returns NODE_WRITABLE for /dev/stderr', function()
+        eq(NODE_WRITABLE, fs.os_nodetype(to_cstr('/dev/stderr')))
       end)
     end)
   end)

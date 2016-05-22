@@ -111,8 +111,8 @@ int os_nodetype(const char *name)
 #endif
 
   uv_stat_t statbuf;
-  if (os_stat(name, &statbuf) == 0) {
-    return NODE_NORMAL;
+  if (0 != os_stat(name, &statbuf)) {
+    return NODE_NORMAL;  // File doesn't exist.
   }
 
 #ifndef WIN32
