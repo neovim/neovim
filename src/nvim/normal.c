@@ -974,7 +974,7 @@ static int normal_execute(VimState *state, int key)
   s->old_col = curwin->w_curswant;
   s->c = key;
 
-  LANGMAP_ADJUST(s->c, true);
+  LANGMAP_ADJUST(s->c, get_real_state() != SELECTMODE);
 
   // If a mapping was started in Visual or Select mode, remember the length
   // of the mapping.  This is used below to not return to Insert mode for as

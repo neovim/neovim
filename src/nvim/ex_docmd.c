@@ -7858,19 +7858,21 @@ static void ex_stopinsert(exarg_T *eap)
  */
 void exec_normal_cmd(char_u *cmd, int remap, bool silent)
 {
+  // Stuff the argument into the typeahead buffer.
+  ins_typebuf(cmd, remap, 0, true, silent);
+  exec_normal(false);
+}
+
+void exec_normal(int was_typed)
+{
   oparg_T oa;
 
-  /*
-   * Stuff the argument into the typeahead buffer.
-   * Execute normal_cmd() until there is no typeahead left.
-   */
   clear_oparg(&oa);
-  finish_op = FALSE;
-  ins_typebuf(cmd, remap, 0, TRUE, silent);
-  while ((!stuff_empty() || (!typebuf_typed() && typebuf.tb_len > 0))
-         && !got_int) {
+  finish_op = false;
+  while ((!stuff_empty() || ((was_typed || !typebuf_typed())
+         && typebuf.tb_len > 0)) && !got_int) {
     update_topline_cursor();
-    normal_cmd(&oa, TRUE);      /* execute a Normal mode cmd */
+    normal_cmd(&oa, true);      // execute a Normal mode cmd
   }
 }
 

@@ -3171,6 +3171,11 @@ feedkeys({string} [, {mode}])				*feedkeys()*
 			if coming from a mapping.  This matters for undo,
 			opening folds, etc.
 		'i'	Insert the string instead of appending (see above).
+		'x'	Execute commands until typeahead is empty.  This is
+			similar to using ":normal!".  You can call feedkeys()
+			several times without 'x' and then one time with 'x'
+			(possibly with an empty {string}) to execute all the
+			typeahead.
 		Return value is always 0.
 
 filereadable({file})					*filereadable()*
