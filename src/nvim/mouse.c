@@ -623,8 +623,10 @@ bool mouse_scroll_horiz(int dir)
 /// Adjusts the clicked column position when 'conceallevel' > 0
 static int mouse_adjust_click(win_T *wp, int row, int col)
 {
-  if (!(wp->w_p_cole > 0 && curbuf->b_p_smc > 0
-        && wp->w_leftcol < curbuf->b_p_smc && conceal_cursor_line(wp))) {
+  linenr_T lnum = wp->w_cursor.lnum;
+
+  if (!(((wp->w_p_cole > 0 && conceal_cursor_line(wp)) || lnum == 3) && curbuf->b_p_smc > 0
+        && wp->w_leftcol < curbuf->b_p_smc)) {
     return col;
   }
 
@@ -638,7 +640,6 @@ static int mouse_adjust_click(win_T *wp, int row, int col)
   // starts with a tab that's 8 columns wide, we would want the cursor to be
   // highlighting the second byte, not the ninth.
 
-  linenr_T lnum = wp->w_cursor.lnum;
   char_u *line = ml_get(lnum);
   char_u *ptr = line;
   char_u *ptr_end;
@@ -680,6 +681,8 @@ static int mouse_adjust_click(win_T *wp, int row, int col)
   int nudge = 0;
   int cwidth = 0;
 
+  int to_anticonceal = 4;
+
   vcol = offset;
 
 #define INCR() nudge++; ptr_end += utfc_ptr2len(ptr_end)
@@ -719,6 +722,17 @@ static int mouse_adjust_click(win_T *wp, int row, int col)
         }
 
         continue;
+      }
+    }
+
+    if ((colnr_T)(ptr - line) >= 10) {
+      if (to_anticonceal > 0) {
+        nudge--; to_anticonceal--;
+      } else if (to_anticonceal == 0) {
+        for (int i = 0; i < 4; i++) {
+          ptr_end -= utfc_ptr2len(ptr_end);
+        }
+        to_anticonceal = -1;
       }
     }
 
