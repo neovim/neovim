@@ -65,6 +65,14 @@ extern ArrayOf(String) buffer_get_lines(Buffer buffer,
                                  Integer end,
                                  Boolean strict_indexing,
                                  Error *err);
+
+extern Integer buffer_add_highlight(Buffer buffer,
+                             Integer src_id,
+                             String hl_group,
+                             Integer line,
+                             Integer col_start,
+                             Integer col_end,
+                             Error *err);
 /*
  * Struct to hold the sign properties.
  */
@@ -5915,6 +5923,9 @@ int ex_window_live_sub(exarg_T *eap)
   cmdmsg_rl = FALSE;
   RESET_BINDING(curwin);
   
+  /* Save the live_sub_buff for immediate use */
+  buf_T* live_sub_buff = curbuf;
+  
   /* Do execute autocommands for setting the filetype (load syntax). */
   unblock_autocmds();
   
@@ -5946,6 +5957,16 @@ int ex_window_live_sub(exarg_T *eap)
   /* Append the line to our buffer */
   ml_append(line++,(char_u*) str,
             (colnr_T)0, FALSE);
+  
+  /* Highlight a part of the line */
+//  Integer src_id_highlight = 0;
+//  String hl_group_Name;
+//  hl_group_Name.data = "hg 0";
+//  hl_group_Name.size = 4;
+//  src_id_highlight = buffer_add_highlight(live_sub_buff->handle,
+//                                          src_id_highlight,
+//                                          hl_group_Name, line-1,
+//                                          5, 10, &err);
   
   redraw_later(SOME_VALID);
   
