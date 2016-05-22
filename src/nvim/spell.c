@@ -156,6 +156,8 @@
 //
 // sectionID == SN_NOSPLITSUGS: nothing
 //
+// sectionID == SN_NOCOMPOUNDSUGS: nothing
+//
 // sectionID == SN_WORDS: <word> ...
 // <word>        N bytes    NUL terminated common word
 //
@@ -495,7 +497,8 @@ struct slang_S {
                                 // "sl_sal" is a list of wide char lists.
   garray_T sl_repsal;           // list of fromto_T entries from REPSAL lines
   short sl_repsal_first[256];   // sl_rep_first for REPSAL lines
-  bool sl_nosplitsugs;           // don't suggest splitting a word
+  bool sl_nosplitsugs;          // don't suggest splitting a word
+  bool sl_nocompoundsugs;       // don't suggest compounding
 
   // Info from the .sug file.  Loaded on demand.
   time_t sl_sugtime;            // timestamp for .sug file
@@ -558,6 +561,7 @@ typedef struct langp_S {
 #define SN_WORDS        13      // common words
 #define SN_NOSPLITSUGS  14      // don't split word for suggestions
 #define SN_INFO         15      // info section
+#define SN_NOCOMPOUNDSUGS 16    // don't compound for suggestions
 #define SN_END          255     // end of sections
 
 #define SNF_REQUIRED    1       // <sectionflags>: required section
@@ -948,6 +952,7 @@ typedef struct spellinfo_S {
   char_u      *si_sofoto;       // SOFOTO text
   int si_nosugfile;             // NOSUGFILE item found
   int si_nosplitsugs;           // NOSPLITSUGS item found
+  int si_nocompoundsugs;        // NOCOMPOUNDSUGS item found
   int si_followup;              // soundsalike: ?
   int si_collapse;              // soundsalike: ?
   hashtab_T si_commonwords;     // hashtable for common words
@@ -2669,6 +2674,10 @@ spell_load_file (
       lp->sl_nosplitsugs = true;                        // <timestamp>
       break;
 
+    case SN_NOCOMPOUNDSUGS:
+      lp->sl_nocompoundsugs = true;
+      break;
+
     case SN_COMPOUND:
       res = read_compound(fd, lp, len);
       break;
@@ -4266,9 +4275,9 @@ static void spell_print_node(wordnode_T *node, int depth)
     PRINTSOME(line1, depth, "(%d)", node->wn_nr, 0);
     PRINTSOME(line2, depth, "    ", 0, 0);
     PRINTSOME(line3, depth, "    ", 0, 0);
-    msg(line1);
-    msg(line2);
-    msg(line3);
+    msg((char_u *)line1);
+    msg((char_u *)line2);
+    msg((char_u *)line3);
   } else {
     node->wn_u1.index = TRUE;
 
@@ -4289,9 +4298,9 @@ static void spell_print_node(wordnode_T *node, int depth)
       PRINTSOME(line3, depth, "      ", 0, 0);
 
     if (node->wn_byte == NUL) {
-      msg(line1);
-      msg(line2);
-      msg(line3);
+      msg((char_u *)line1);
+      msg((char_u *)line2);
+      msg((char_u *)line3);
     }
 
     // do the children
@@ -4633,6 +4642,8 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
         spin->si_nobreak = true;
       } else if (is_aff_rule(items, itemcnt, "NOSPLITSUGS", 1))   {
         spin->si_nosplitsugs = true;
+      } else if (is_aff_rule(items, itemcnt, "NOCOMPOUNDSUGS", 1)) {
+        spin->si_nocompoundsugs = true;
       } else if (is_aff_rule(items, itemcnt, "NOSUGFILE", 1))   {
         spin->si_nosugfile = true;
       } else if (is_aff_rule(items, itemcnt, "PFXPOSTPONE", 1))   {
@@ -6289,7 +6300,7 @@ static int tree_add_word(spellinfo_T *spin, char_u *word, wordnode_T *root, int 
     node = *prev;
   }
 #ifdef SPELL_PRINTTREE
-  smsg("Added \"%s\"", word);
+  smsg((char_u *)"Added \"%s\"", word);
   spell_print_tree(root->wn_sibling);
 #endif
 
@@ -6312,7 +6323,7 @@ static int tree_add_word(spellinfo_T *spin, char_u *word, wordnode_T *root, int 
   // 3. When compressed before, added "compress_added" words
   //    (si_compress_cnt == 1) and the number of free nodes drops below the
   //    maximum word length.
-#ifndef SPELL_PRINTTREE
+#ifndef SPELL_COMPRESS_ALLWAYS
   if (spin->si_compress_cnt == 1
       ? spin->si_free_count < MAXWLEN
                               : spin->si_blocks_cnt >= compress_start)
@@ -6855,6 +6866,15 @@ static int write_vim_spell(spellinfo_T *spin, char_u *fname)
     putc(SN_NOSPLITSUGS, fd);                           // <sectionID>
     putc(0, fd);                                        // <sectionflags>
     put_bytes(fd, 0, 4);                                // <sectionlen>
+  }
+
+  // SN_NOCOMPUNDSUGS: nothing
+  // This is used to notify that no suggestions with compounds are to be
+  // made.
+  if (spin->si_nocompoundsugs) {
+    putc(SN_NOCOMPOUNDSUGS, fd);                        // <sectionID>
+    putc(0, fd);                                        // <sectionflags>
+    put_bytes(fd, 0, 4);                        // <sectionlen>
   }
 
   // SN_COMPOUND: compound info.
@@ -9771,6 +9791,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
         //    be possible to compound another (short) word.
         try_compound = false;
         if (!soundfold
+            && !slang->sl_nocompoundsugs
             && slang->sl_compprog != NULL
             && ((unsigned)flags >> 24) != 0
             && sp->ts_twordlen - sp->ts_splitoff
@@ -9791,8 +9812,9 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
 
         // For NOBREAK we never try splitting, it won't make any word
         // valid.
-        if (slang->sl_nobreak)
+        if (slang->sl_nobreak && !slang->sl_nocompoundsugs) {
           try_compound = true;
+        }
 
         // If we could add a compound word, and it's also possible to
         // split at this point, do the split first and set
@@ -9804,8 +9826,9 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
           sp->ts_flags |= TSF_DIDSPLIT;
           --sp->ts_curi;                    // do the same NUL again
           compflags[sp->ts_complen] = NUL;
-        } else
+        } else {
           sp->ts_flags &= ~TSF_DIDSPLIT;
+        }
 
         if (try_split || try_compound) {
           if (!try_compound && (!fword_ends || !goodword_ends)) {

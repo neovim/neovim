@@ -1373,6 +1373,14 @@ the item name.  Case is always ignored.
 
 The Hunspell feature to use three arguments and flags is not supported.
 
+							*spell-NOCOMPOUNDSUGS*
+This item indicates that using compounding to make suggestions is not a good
+idea.  Use this when compounding is used with very short or one-character
+words.  E.g. to make numbers out of digits.  Without this flag creating
+suggestions would spend most time trying all kind of weird compound words.
+
+	NOCOMPOUNDSUGS ~
+
 							*spell-SYLLABLE*
 The SYLLABLE item defines characters or character sequences that are used to
 count the number of syllables in a word.  Example:
