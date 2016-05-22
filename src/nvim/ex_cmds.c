@@ -5931,9 +5931,20 @@ int ex_window_live_sub(exarg_T *eap)
             (colnr_T)0, FALSE);
   ml_append(line++,eap->arg+1,
             (colnr_T)0, FALSE);
+  
+  /* Gather the line we want to display */
   Error err = ERROR_INIT;
-  ArrayOf(String) strs = buffer_get_lines(displayBuff->handle, 1, 2, FALSE, &err);
-  ml_append(line++,(char_u*) strs.items[0].data.string.data,
+  int num_line = 1;
+  
+  ArrayOf(String) strs = buffer_get_lines(displayBuff->handle, num_line, num_line+1, FALSE, &err);
+  
+  /* Add to this line its line number */
+  char c = num_line + 1 + '0';
+  char* str = (char *)concat_str((char_u*)&c, (char_u*)": ");
+  str = (char *)concat_str((char_u*) str, (char_u*) strs.items[0].data.string.data);
+
+  /* Append the line to our buffer */
+  ml_append(line++,(char_u*) str,
             (colnr_T)0, FALSE);
   
   redraw_later(SOME_VALID);
