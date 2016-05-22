@@ -4,7 +4,6 @@ Tests for 'directory' option.
 - "dir", in directory relative to current dir
 
 STARTTEST
-:so small.vim
 :set dir=.,~
 :/start of testfile/,/end of testfile/w! Xtest1
 :" do an ls of the current dir to find the swap file (should not be there)

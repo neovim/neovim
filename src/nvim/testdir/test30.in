@@ -3,7 +3,6 @@ Test for a lot of variations of the 'fileformats' option
 Note: This test will fail if "cat" is not available.
 
 STARTTEST
-:so small.vim
 :" first write three test files, one in each format
 :set fileformat=unix
 :set fileformats=

@@ -3,7 +3,6 @@ Tests for:
 - ":checkpath!" with various 'include' settings.
 
 STARTTEST
-:so small.vim
 :set isfname=@,48-57,/,.,-,_,+,,,$,:,~,{,}
 :function! DeleteDirectory(dir)
 : if has("win16") || has("win32") || has("win64") || has("dos16") || has("dos32")

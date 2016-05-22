@@ -1,7 +1,6 @@
 Tests for reading and writing files with conversion for Win32.
 
 STARTTEST
-:so mbyte.vim
 :" make this a dummy test for non-Win32 systems
 :if !has("win32") | e! test.ok | wq! test.out | endif
 :"
