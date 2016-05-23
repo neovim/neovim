@@ -3859,7 +3859,7 @@ skip:
 
 
     // live_sub
-    ex_window_live_sub(eap, lmatch);
+    ex_window_live_sub(sub, lmatch);
   }
 
 /*
@@ -5877,12 +5877,15 @@ void set_context_in_sign_cmd(expand_T *xp, char_u *arg)
  * Open a window for future displaying of the live_sub mode.
  * Does not allow editing in the window.  
  * Returns when the window is closed.
+ * Arguments:
+ *  sub is the replacement word
+ *  lmatch is the list containing our data
  * Returns:
  *	CR	 if the command is to be executed
  *	Ctrl_C	 if it is to be abandoned
  *	K_IGNORE if editing continues
  */
-int ex_window_live_sub(exarg_T *eap, klist_t(matchedline_T) *lmatch)
+int ex_window_live_sub(char* sub, klist_t(matchedline_T) *lmatch)
 {
   int i;
   garray_T winsizes;
@@ -5947,25 +5950,41 @@ int ex_window_live_sub(exarg_T *eap, klist_t(matchedline_T) *lmatch)
    * sets 'textwidth' to 78). */
   curbuf->b_p_tw = 0;
 
-  /* Fill the buffer with a message. */
+  /* Initialize line and highliht variables */
   int line = 0;
-
+  int src_id_highlight = 0;
+  int match_size = strlen(sub);
+  
   // allocate a line sized for the window
   char *str = xmalloc((size_t )curwin->w_frame->fr_width);
-
+  
   // Append the lines to our buffer
   kl_iter(matchedline_T, lmatch, current) {
     matchedline_T mat = (*current)->data;
     size_t line_size = sizeof(mat.line) + sizeof(long) + 5;
 
-    // reallocation if str not long enough
+    // Reallocation if str not long enough
     if (line_size > curwin->w_frame->fr_width*sizeof(char))
-      xrealloc(str, line_size);
+      assert(xrealloc(str, line_size) != NULL);
 
+    // Add the line number to the string
     sprintf(str, "l.%ld > %s", mat.lnum, (char*)mat.line);
     ml_append(line++, (char_u *)str,
               (colnr_T)0, false);
-
+    
+    int prefix_size = strlen(str) - strlen((char*)mat.line);
+    
+    kl_iter(colnr_T, mat.start_col, col) {
+    src_id_highlight = bufhl_add_hl(curbuf,
+                                    src_id_highlight,
+                                    curbuf->handle,
+                                    line,                        // line in curbuf
+                                    (*col)->data + prefix_size + 1,             // beginning of word
+                                    (*col)->data + prefix_size + match_size // end of word
+                                    );
+    
+    }
+    
     // free of the saved line
     xfree(mat.line);
   }
