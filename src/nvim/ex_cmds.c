@@ -5861,6 +5861,9 @@ int ex_window_live_sub(exarg_T *eap)
   int save_exmode = exmode_active;
   int save_cmdmsg_rl = cmdmsg_rl;
   
+  /* Assert eap is not null */
+  assert(eap != NULL);
+  
   /* Can't do this recursively.  Can't do it when typing a password. */
   if (cmdwin_type != 0
       || cmdline_star > 0
