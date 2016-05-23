@@ -180,15 +180,19 @@ typedef struct {
   char_u      *save_ei;                 /* saved value of 'eventignore' */
 } cmdmod_T;
 
+#define _noop(x)
+/* initializer for a list of match in a line */
+KLIST_INIT(colnr_T, colnr_T,_noop)
+
 /* structure to backup and display matched lines in live_substitution */
 typedef struct {
   linenr_T lnum;
   long nmatch;
   char_u *line;
+  klist_t(colnr_T) *start_col;
 } matchedline_T;
 
 /* initializer for a list of matched lines */
-#define _noop(x)
 KLIST_INIT(matchedline_T, matchedline_T, _noop)
 
 #endif  // NVIM_EX_CMDS_DEFS_H
