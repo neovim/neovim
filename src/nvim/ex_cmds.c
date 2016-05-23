@@ -5902,9 +5902,6 @@ int ex_window_live_sub(exarg_T *eap, klist_t(matchedline_T) *lmatch)
   /* Save the current window to restore it later */
   win_T* oldwin = curwin;
 
-  /* Save the current buff in order to fetch lines from it */
-  buf_T* displayBuff = curbuf;
-
   /* Don't execute autocommands while creating the window. */
   block_autocmds();
   /* don't use a new tab page */
@@ -5949,22 +5946,10 @@ int ex_window_live_sub(exarg_T *eap, klist_t(matchedline_T) *lmatch)
   /* Fill the buffer with a message. */
   int line = 0;
 
-  /* Gather the line we want to display */
-  /*Error err = ERROR_INIT;
-  int num_line = 1;*/
-
-  //ArrayOf(String) strs = buffer_get_lines(displayBuff->handle, num_line, num_line+1, FALSE, &err);
-
-  /* Add to this line its line number */
-  /*char c = num_line + 1 + '0';
-  char* str = (char *)concat_str((char_u*)&c, (char_u*)": ");
-  str = (char *)concat_str((char_u*) str, (char_u*) strs.items[0].data.string.data);
-  ml_append(line++,(char_u*) str,
-            (colnr_T)0, false);*/
-
-  /* Append the line to our buffer */
+  // allocate a line sized for the window
   char *str = xmalloc((size_t )curwin->w_frame->fr_width);
 
+  // Append the lines to our buffer
   kl_iter(matchedline_T, lmatch, current) {
     matchedline_T mat = (*current)->data;
     size_t line_size = sizeof(mat.line) + sizeof(long) + 5;
@@ -5981,16 +5966,6 @@ int ex_window_live_sub(exarg_T *eap, klist_t(matchedline_T) *lmatch)
     xfree(mat.line);
   }
   xfree(str);
-
-  /* Highlight a part of the line */
-//  Integer src_id_highlight = 0;
-//  String hl_group_Name;
-//  hl_group_Name.data = "hg 0";
-//  hl_group_Name.size = 4;
-//  src_id_highlight = buffer_add_highlight(live_sub_buff->handle,
-//                                          src_id_highlight,
-//                                          hl_group_Name, line-1,
-//                                          5, 10, &err);
 
   redraw_later(SOME_VALID);
 
