@@ -5963,16 +5963,17 @@ int ex_window_live_sub(exarg_T *eap, klist_t(matchedline_T) *lmatch)
             (colnr_T)0, false);*/
 
   /* Append the line to our buffer */
+  char *str = xmalloc((size_t )curwin->w_frame->fr_width-1);
+
   kl_iter(matchedline_T, lmatch, current) {
     matchedline_T mat = (*current)->data;
-    char *str = xmalloc(sizeof(char)*strlen((char*)mat.line+25));
-    sprintf(str, "l.%ld > %s", mat.lnum, (char*)mat.line);
+    snprintf(str, (size_t )curwin->w_frame->fr_width-1, "l.%ld > %s", mat.lnum, (char*)mat.line);
     ml_append(line++, (char_u *)str,
-              (colnr_T) 0, false);
-    // free of structures
-    xfree(str);
+              (colnr_T)curwin->w_frame->fr_width-1, false);
+    // free of the saved line
     xfree(mat.line);
   }
+  xfree(str);
 
   /* Highlight a part of the line */
 //  Integer src_id_highlight = 0;
