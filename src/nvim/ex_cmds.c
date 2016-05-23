@@ -2960,6 +2960,8 @@ void do_sub(exarg_T *eap)
   int start_nsubs;
   int save_ma = 0;
 
+  klist_t(regmmatch_T) *lmatch = kl_init(regmmatch_T);  /*  list to save matched lines */
+
   cmd = eap->arg;
   if (!global_busy) {
     sub_nsubs = 0;
@@ -3265,6 +3267,9 @@ void do_sub(exarg_T *eap)
       sub_firstlnum = lnum;
       copycol = 0;
       matchcol = 0;
+
+      /* saving info about the matched line */
+      kl_push(regmmatch_T, lmatch, regmatch);
 
       /* At first match, remember current cursor position. */
       if (!got_match) {
@@ -3842,7 +3847,7 @@ skip:
 
 
     // live_sub
-    ex_window_live_sub(eap);
+    ex_window_live_sub(eap, lmatch);
   }
 
 /*
@@ -5865,7 +5870,7 @@ void set_context_in_sign_cmd(expand_T *xp, char_u *arg)
  *	Ctrl_C	 if it is to be abandoned
  *	K_IGNORE if editing continues
  */
-int ex_window_live_sub(exarg_T *eap)
+int ex_window_live_sub(exarg_T *eap, klist_t(regmmatch_T) *lmatch)
 {
   int i;
   garray_T winsizes;
@@ -5957,6 +5962,18 @@ int ex_window_live_sub(exarg_T *eap)
   /* Append the line to our buffer */
   ml_append(line++,(char_u*) str,
             (colnr_T)0, FALSE);
+
+  char str2[15];
+  kl_iter(regmmatch_T, lmatch, current) {
+    regmmatch_T reg = (*current)->data;
+    sprintf(str2, "%ld", reg.startpos[0].lnum); //TODO
+    ml_append(line++, (char_u *)str2,
+              (colnr_T) 0, FALSE);
+    ml_append(line++, (char_u *) "TEST live_sub",
+              (colnr_T) 0, FALSE);
+    ml_append(line++, eap->arg + 1,
+              (colnr_T) 0, FALSE);
+  }
   
   /* Highlight a part of the line */
 //  Integer src_id_highlight = 0;

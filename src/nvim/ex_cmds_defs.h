@@ -6,6 +6,7 @@
 
 #include "nvim/pos.h"      // for linenr_T
 #include "nvim/normal.h"
+#include "nvim/lib/klist.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ex_cmds_enum.generated.h"
@@ -178,5 +179,9 @@ typedef struct {
   bool noswapfile;                      /* true when ":noswapfile" was used */
   char_u      *save_ei;                 /* saved value of 'eventignore' */
 } cmdmod_T;
+
+/* initilaizer for a list of matched lines */
+#define _noop(x)
+KLIST_INIT(regmmatch_T, regmmatch_T, _noop)
 
 #endif  // NVIM_EX_CMDS_DEFS_H
