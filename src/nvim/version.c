@@ -64,6 +64,12 @@ static char *features[] = {
 #else
   "-jemalloc",
 #endif
+
+#ifdef FEAT_TUI
+  "+tui",
+#else
+  "-tui",
+#endif
   NULL
 };
 

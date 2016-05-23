@@ -50,6 +50,7 @@
 #cmakedefine USE_FNAME_CASE
 
 #define FEAT_CSCOPE
+#cmakedefine FEAT_TUI
 
 #ifndef UNIT_TESTING
 #cmakedefine HAVE_JEMALLOC

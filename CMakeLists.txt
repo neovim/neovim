@@ -300,11 +300,19 @@ include_directories(SYSTEM ${LIBUV_INCLUDE_DIRS})
 find_package(Msgpack 1.0.0 REQUIRED)
 include_directories(SYSTEM ${MSGPACK_INCLUDE_DIRS})
 
-find_package(Unibilium REQUIRED)
-include_directories(SYSTEM ${UNIBILIUM_INCLUDE_DIRS})
+if(UNIX)
+  option(FEAT_TUI "Enable the Terminal UI" ON)
+else()
+  option(FEAT_TUI "Enable the Terminal UI" OFF)
+endif()
 
-find_package(LibTermkey REQUIRED)
-include_directories(SYSTEM ${LIBTERMKEY_INCLUDE_DIRS})
+if(FEAT_TUI)
+  find_package(Unibilium REQUIRED)
+  include_directories(SYSTEM ${UNIBILIUM_INCLUDE_DIRS})
+
+  find_package(LibTermkey REQUIRED)
+  include_directories(SYSTEM ${LIBTERMKEY_INCLUDE_DIRS})
+endif()
 
 find_package(LibVterm REQUIRED)
 include_directories(SYSTEM ${LIBVTERM_INCLUDE_DIRS})
