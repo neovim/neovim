@@ -5963,13 +5963,20 @@ int ex_window_live_sub(exarg_T *eap, klist_t(matchedline_T) *lmatch)
             (colnr_T)0, false);*/
 
   /* Append the line to our buffer */
-  char *str = xmalloc((size_t )curwin->w_frame->fr_width-1);
+  char *str = xmalloc((size_t )curwin->w_frame->fr_width);
 
   kl_iter(matchedline_T, lmatch, current) {
     matchedline_T mat = (*current)->data;
-    snprintf(str, (size_t )curwin->w_frame->fr_width-1, "l.%ld > %s", mat.lnum, (char*)mat.line);
+    size_t line_size = sizeof(mat.line) + sizeof(long) + 5;
+
+    // reallocation if str not long enough
+    if (line_size > curwin->w_frame->fr_width*sizeof(char))
+      xrealloc(str, line_size);
+
+    sprintf(str, "l.%ld > %s", mat.lnum, (char*)mat.line);
     ml_append(line++, (char_u *)str,
-              (colnr_T)curwin->w_frame->fr_width-1, false);
+              (colnr_T)0, false);
+
     // free of the saved line
     xfree(mat.line);
   }
