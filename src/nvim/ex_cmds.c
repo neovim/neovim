@@ -5965,10 +5965,13 @@ int ex_window_live_sub(exarg_T *eap, klist_t(matchedline_T) *lmatch)
   /* Append the line to our buffer */
   kl_iter(matchedline_T, lmatch, current) {
     matchedline_T mat = (*current)->data;
-    char *str = malloc(sizeof(char)*strlen((char*)mat.line+25));
+    char *str = xmalloc(sizeof(char)*strlen((char*)mat.line+25));
     sprintf(str, "l.%ld > %s", mat.lnum, (char*)mat.line);
     ml_append(line++, (char_u *)str,
               (colnr_T) 0, false);
+    // free of structures
+    xfree(str);
+    xfree(mat.line);
   }
 
   /* Highlight a part of the line */
