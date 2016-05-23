@@ -82,6 +82,8 @@ typedef struct sign sign_T;
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ex_cmds.c.generated.h"
 #include "ex_cmds_defs.h"
+#include "regexp_defs.h"
+#include "pos.h"
 
 #endif
 
@@ -3269,7 +3271,7 @@ void do_sub(exarg_T *eap)
       sub_firstlnum = lnum;
       copycol = 0;
       matchcol = 0;
-      matchedline_T cmatch = {0, 0, NULL};          /* the current match */
+      matchedline_T cmatch = {0, 0, NULL, kl_init(colnr_T)}; /* the current match */
 
       /* At first match, remember current cursor position. */
       if (!got_match) {
@@ -3306,8 +3308,9 @@ void do_sub(exarg_T *eap)
         curwin->w_cursor.lnum = lnum;
         do_again = FALSE;
 
-        /* increment number of match on the line */
+        /* increment number of match on the line and store the column */
         cmatch.nmatch++;
+        kl_push(colnr_T, cmatch.start_col, regmatch.startpos[0].col);
 
         /*
          * 1. Match empty string does not count, except for first
@@ -3795,6 +3798,7 @@ skip:
       /* saving info about the matched line */
       cmatch.lnum = lnum;
       cmatch.line = vim_strsave(ml_get(lnum));
+
       kl_push(matchedline_T, lmatch, cmatch);
     }
 
