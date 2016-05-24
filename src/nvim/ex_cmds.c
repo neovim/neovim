@@ -5874,7 +5874,6 @@ void set_context_in_sign_cmd(expand_T *xp, char_u *arg)
   }
 }
 
-
 /// live_sub()
 /// Open a window for future displaying of the live_sub mode.
 /// 
