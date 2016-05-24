@@ -3858,9 +3858,11 @@ skip:
     do_ask = save_do_ask;
 
 
-    // live_sub
+  // live_sub if sub on the whole file and there are results to display
+  if (eap[0].cmdlinep[0][0] == '%' && !kl_empty(lmatch))
     ex_window_live_sub(sub, lmatch);
-  }
+
+}
 
 /*
  * Give message for number of substitutions.
@@ -5886,7 +5888,7 @@ void set_context_in_sign_cmd(expand_T *xp, char_u *arg)
 ///           Ctrl_C    if it is to be abandoned
 ///           K_IGNORE  if editing continues
 
-int ex_window_live_sub(char* sub, klist_t(matchedline_T) *lmatch)
+int ex_window_live_sub(char_u* sub, klist_t(matchedline_T) *lmatch)
 {
   int i;
   garray_T winsizes;
