@@ -5872,19 +5872,20 @@ void set_context_in_sign_cmd(expand_T *xp, char_u *arg)
   }
 }
 
-/*
- * live_sub()
- * Open a window for future displaying of the live_sub mode.
- * Does not allow editing in the window.  
- * Returns when the window is closed.
- * Arguments:
- *  sub is the replacement word
- *  lmatch is the list containing our data
- * Returns:
- *	CR	 if the command is to be executed
- *	Ctrl_C	 if it is to be abandoned
- *	K_IGNORE if editing continues
- */
+
+/// live_sub()
+/// Open a window for future displaying of the live_sub mode.
+/// 
+/// Does not allow editing in the window. 
+/// Returns when the window is closed.
+///
+/// @param sub the replacement word
+/// @param lmatch the list containing our data
+///
+/// @returns  CR	      if the command is to be executed
+///           Ctrl_C    if it is to be abandoned
+///           K_IGNORE  if editing continues
+
 int ex_window_live_sub(char* sub, klist_t(matchedline_T) *lmatch)
 {
   int i;
@@ -5895,7 +5896,7 @@ int ex_window_live_sub(char* sub, klist_t(matchedline_T) *lmatch)
   int save_exmode = exmode_active;
   int save_cmdmsg_rl = cmdmsg_rl;
 
-  /* Can't do this recursively.  Can't do it when typing a password. */
+  // Can't do this recursively.  Can't do it when typing a password. 
   if (cmdwin_type != 0
       || cmdline_star > 0
       ) {
@@ -5903,25 +5904,25 @@ int ex_window_live_sub(char* sub, klist_t(matchedline_T) *lmatch)
     return K_IGNORE;
   }
 
-  /* Save current window sizes. */
+  // Save current window sizes. 
   win_size_save(&winsizes);
 
-  /* Save the current window to restore it later */
+  // Save the current window to restore it later 
   win_T* oldwin = curwin;
 
-  /* Don't execute autocommands while creating the window. */
+  // Don't execute autocommands while creating the window. 
   block_autocmds();
-  /* don't use a new tab page */
+  // don't use a new tab page 
   cmdmod.tab = 0;
 
-  /* close last buffer used for ex_window_live_sub() */
+  // close last buffer used for ex_window_live_sub() 
   buf_T* oldbuf;
   if((oldbuf = buflist_findname_exp((char_u *)"[live_sub]"))!=NULL) {
     close_windows (oldbuf, FALSE);
     close_buffer (NULL, oldbuf, DOBUF_WIPE, FALSE);
   }
 
-  /* Create a window for the command-line buffer. */
+  // Create a window for the command-line buffer. 
   if (win_split((int)p_cwh, WSP_BOT) == FAIL) {
     beep_flush();
     unblock_autocmds();
@@ -5929,7 +5930,7 @@ int ex_window_live_sub(char* sub, klist_t(matchedline_T) *lmatch)
   }
   cmdwin_type = get_cmdline_type();
 
-  /* Create the command-line buffer empty. */
+  // Create the command-line buffer empty. 
   (void)do_ecmd(0, NULL, NULL, NULL, ECMD_ONE, ECMD_HIDE, NULL);
   (void)setfname(curbuf, (char_u *)"[live_sub]", NULL, TRUE);
   set_option_value((char_u *)"bt", 0L, (char_u *)"nofile", OPT_LOCAL);
@@ -5940,17 +5941,16 @@ int ex_window_live_sub(char* sub, klist_t(matchedline_T) *lmatch)
   cmdmsg_rl = FALSE;
   RESET_BINDING(curwin);
 
-  /* Do execute autocommands for setting the filetype (load syntax). */
+  // Do execute autocommands for setting the filetype (load syntax). 
   unblock_autocmds();
 
-  /* Showing the prompt may have set need_wait_return, reset it. */
+  // Showing the prompt may have set need_wait_return, reset it. 
   need_wait_return = FALSE;
 
-  /* Reset 'textwidth' after setting 'filetype' (the Vim filetype plugin
-   * sets 'textwidth' to 78). */
+  // Reset 'textwidth' after setting 'filetype' (the Vim filetype plugin sets 'textwidth' to 78). 
   curbuf->b_p_tw = 0;
 
-  /* Initialize line and highliht variables */
+  // Initialize line and highliht variables 
   int line = 0;
   int src_id_highlight = 0;
   int match_size = strlen(sub);
@@ -5968,20 +5968,19 @@ int ex_window_live_sub(char* sub, klist_t(matchedline_T) *lmatch)
       assert(xrealloc(str, line_size) != NULL);
 
     // Add the line number to the string
+    // TODO : enhance the display of the line number 
     sprintf(str, "l.%ld > %s", mat.lnum, (char*)mat.line);
-    ml_append(line++, (char_u *)str,
-              (colnr_T)0, false);
+    ml_append(line++, (char_u *)str, (colnr_T)0, false);
     
     int prefix_size = strlen(str) - strlen((char*)mat.line);
     
     kl_iter(colnr_T, mat.start_col, col) {
-    src_id_highlight = bufhl_add_hl(curbuf,
-                                    src_id_highlight,
-                                    curbuf->handle,
-                                    line,                        // line in curbuf
-                                    (*col)->data + prefix_size + 1,             // beginning of word
-                                    (*col)->data + prefix_size + match_size // end of word
-                                    );
+      src_id_highlight = bufhl_add_hl(curbuf, 
+                                      src_id_highlight,
+                                      curbuf->handle,
+                                      line,                                     // line in curbuf
+                                      (*col)->data + prefix_size + 1,           // beginning of word
+                                      (*col)->data + prefix_size + match_size); // end of word
     
     }
     
@@ -5992,28 +5991,26 @@ int ex_window_live_sub(char* sub, klist_t(matchedline_T) *lmatch)
 
   redraw_later(SOME_VALID);
 
-  /* No Ex mode here! */
+  // No Ex mode here! 
   exmode_active = 0;
 
   State = NORMAL;
   setmouse();
 
-  /* Trigger CmdwinEnter autocommands. */
+  // Trigger CmdwinEnter autocommands. 
   typestr[0] = cmdwin_type;
   typestr[1] = NUL;
   apply_autocmds(EVENT_CMDWINENTER, typestr, typestr, FALSE, curbuf);
-  if (restart_edit != 0)        /* autocmd with ":startinsert" */
+  if (restart_edit != 0)        // autocmd with ":startinsert" 
     stuffcharReadbuff(K_NOP);
 
   i = RedrawingDisabled;
   RedrawingDisabled = 0;
 
-  /* Restore the old window */
+  // Restore the old window 
   win_enter(oldwin, FALSE);
 
-  /*
-   * Call the main loop until <CR> or CTRL-C is typed.
-   */
+  // Call the main loop until <CR> or CTRL-C is typed.
   cmdwin_result = 0;
   normal_enter(true, false);
 
@@ -6021,10 +6018,10 @@ int ex_window_live_sub(char* sub, klist_t(matchedline_T) *lmatch)
 
   int save_KeyTyped = KeyTyped;
 
-  /* Trigger CmdwinLeave autocommands. */
+  // Trigger CmdwinLeave autocommands. 
   apply_autocmds(EVENT_CMDWINLEAVE, typestr, typestr, FALSE, curbuf);
 
-  /* Restore KeyTyped in case it is modified by autocommands */
+  // Restore KeyTyped in case it is modified by autocommands 
   KeyTyped = save_KeyTyped;
 
   exmode_active = save_exmode;
