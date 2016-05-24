@@ -5955,7 +5955,7 @@ int ex_window_live_sub(char_u* sub, klist_t(matchedline_T) *lmatch)
   /* Initialize line and highliht variables */
   int line = 0;
   int src_id_highlight = 0;
-  int match_size = strlen(sub);
+  long match_size = strlen((char*)sub);
   
   // allocate a line sized for the window
   char *str = xmalloc((size_t )curwin->w_frame->fr_width);
