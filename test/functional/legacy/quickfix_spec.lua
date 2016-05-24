@@ -76,7 +76,7 @@ describe('helpgrep', function()
 
       " Tests for the :colder, :cnewer, :lolder and :lnewer commands
       " Note that this test assumes that a quickfix/location list is
-      " already set by previous tests
+      " already set by the caller
       function XageTests(cchar)
         let Xolder = a:cchar . 'older'
         let Xnewer = a:cchar . 'newer'
@@ -268,15 +268,20 @@ describe('helpgrep', function()
     ]])
   end)
 
-  it('[cl]list/[cl]older/[cl]newer work', function()
+  it('clist/llist work', function()
     call('XlistTests', 'c')
     expected_empty()
     call('XlistTests', 'l')
     expected_empty()
-    -- The XageTests require existing quickfix lists, so bundle
-    -- them with the XlistTests
+  end)
+
+  it('colder/cnewer and lolder/lnewer work', function()
+    local list = {{bufnr = 1, lnum = 1}}
+    call('setqflist', list)
     call('XageTests', 'c')
     expected_empty()
+
+    call('setloclist', 0, list)
     call('XageTests', 'l')
     expected_empty()
   end)
