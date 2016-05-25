@@ -65,7 +65,8 @@ function /^Test_
 redir END
 let tests = split(substitute(@q, 'function \(\k*()\)', '\1', 'g'))
 
-for test in tests
+" Execute the tests in alphabetical order.
+for test in sort(tests)
   if exists("*SetUp")
     call SetUp()
   endif
