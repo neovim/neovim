@@ -16529,6 +16529,9 @@ static void f_timer_stop(typval_T *argvars, typval_T *rettv)
 static void timer_due_cb(TimeWatcher *tw, void *data)
 {
   timer_T *timer = (timer_T *)data;
+  if (timer->stopped) {
+      return;
+  }
   // if repeat was negative repeat forever
   if (timer->repeat_count >= 0 && --timer->repeat_count == 0) {
     timer_stop(timer);
