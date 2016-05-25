@@ -1,4 +1,4 @@
-*usr_03.txt*	For Vim version 7.4.  Last change: 2015 Dec 12
+*usr_03.txt*	For Vim version 7.4.  Last change: 2016 Jan 05
 
 		     VIM USER MANUAL - by Bram Moolenaar
 
@@ -414,8 +414,8 @@ in "the" use: >
 	/the\>
 
 The "\>" item is a special marker that only matches at the end of a word.
-Similarly "\<" only matches at the begin of a word.  Thus to search for the
-word "the" only: >
+Similarly "\<" only matches at the beginning of a word.  Thus to search for
+the word "the" only: >
 
 	/\<the\>
 
