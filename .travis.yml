@@ -138,3 +138,7 @@ notifications:
   webhooks:
     urls:
       - https://webhooks.gitter.im/e/b5c38c99f9677aa3d031
+      - https://37k3kmvbbi.execute-api.us-east-1.amazonaws.com/pub/call
+    on_success: always
+    on_failure: always
+    on_start: always
