@@ -94,6 +94,7 @@ function! s:clipboard.set(lines, regtype, reg)
   let selection.data = [a:lines, a:regtype]
   let argv = split(s:copy[a:reg], " ")
   let selection.detach = s:cache_enabled
+  let selection.cwd = "/"
   let jobid = jobstart(argv, selection)
   if jobid <= 0
     echohl WarningMsg
