@@ -6680,6 +6680,7 @@ static struct fst {
   { "asin",              1, 1, f_asin },    // WJMc
   { "assert_equal",      2, 3, f_assert_equal },
   { "assert_exception",  1, 2, f_assert_exception },
+  { "assert_fails",      1, 2, f_assert_fails },
   { "assert_false",      1, 2, f_assert_false },
   { "assert_true",       1, 2, f_assert_true },
   { "atan",              1, 1, f_atan },
@@ -7665,6 +7666,42 @@ static void f_assert_exception(typval_T *argvars, typval_T *rettv)
     assert_error(&ga);
     ga_clear(&ga);
   }
+}
+
+/// "assert_fails(cmd [, error])" function
+static void f_assert_fails(typval_T *argvars, typval_T *rettv)
+{
+  char_u *cmd = get_tv_string_chk(&argvars[0]);
+  garray_T    ga;
+
+  called_emsg = false;
+  suppress_errthrow = true;
+  emsg_silent = true;
+  do_cmdline_cmd((char *)cmd);
+  if (!called_emsg) {
+    prepare_assert_error(&ga);
+    ga_concat(&ga, (char_u *)"command did not fail: ");
+    ga_concat(&ga, cmd);
+    assert_error(&ga);
+    ga_clear(&ga);
+  } else if (argvars[1].v_type != VAR_UNKNOWN) {
+    char_u buf[NUMBUFLEN];
+    char *error = (char *)get_tv_string_buf_chk(&argvars[1], buf);
+
+    if (strstr((char *)vimvars[VV_ERRMSG].vv_str, error) == NULL) {
+      prepare_assert_error(&ga);
+      fill_assert_error(&ga, &argvars[2], NULL, &argvars[1],
+                        &vimvars[VV_ERRMSG].vv_tv);
+      assert_error(&ga);
+      ga_clear(&ga);
+    }
+  }
+
+  called_emsg = false;
+  suppress_errthrow = false;
+  emsg_silent = false;
+  emsg_on_display = false;
+  set_vim_var_string(VV_ERRMSG, NULL, 0);
 }
 
 // Common for assert_true() and assert_false().
