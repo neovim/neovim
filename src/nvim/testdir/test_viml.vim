@@ -922,6 +922,45 @@ func Test_curlies()
     call assert_equal(77, g:a['t'])
 endfunc
 
+"-------------------------------------------------------------------------------
+" Test 91:  using type().					    {{{1
+"-------------------------------------------------------------------------------
+
+func Test_type()
+    call assert_equal(0, type(0))
+    call assert_equal(1, type(""))
+    call assert_equal(2, type(function("tr")))
+    call assert_equal(3, type([]))
+    call assert_equal(4, type({}))
+    call assert_equal(5, type(0.0))
+    call assert_equal(6, type(v:false))
+    call assert_equal(6, type(v:true))
+    call assert_equal(7, type(v:null))
+endfunc
+
+"-------------------------------------------------------------------------------
+" Test 92:  skipping code                       {{{1
+"-------------------------------------------------------------------------------
+
+func Test_skip()
+    let Fn = function('Test_type')
+    call assert_false(0 && Fn[1])
+    call assert_false(0 && string(Fn))
+    call assert_false(0 && len(Fn))
+    let l = []
+    call assert_false(0 && l[1])
+    call assert_false(0 && string(l))
+    call assert_false(0 && len(l))
+    let f = 1.0
+    call assert_false(0 && f[1])
+    call assert_false(0 && string(f))
+    call assert_false(0 && len(f))
+    let sp = v:null
+    call assert_false(0 && sp[1])
+    call assert_false(0 && string(sp))
+    call assert_false(0 && len(sp))
+
+endfunc
 
 "-------------------------------------------------------------------------------
 " Modelines								    {{{1
