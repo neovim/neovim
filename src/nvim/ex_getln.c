@@ -359,6 +359,7 @@ static int command_line_execute(VimState *state, int key)
 
   if (s->c == K_EVENT) {
     queue_process_events(loop.events);
+    redrawcmdline();
     return 1;
   }
 

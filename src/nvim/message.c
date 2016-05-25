@@ -785,11 +785,13 @@ void wait_return(int redraw)
 
     State = HITRETURN;
     setmouse();
-    /* Avoid the sequence that the user types ":" at the hit-return prompt
-     * to start an Ex command, but the file-changed dialog gets in the
-     * way. */
-    if (need_check_timestamps)
-      check_timestamps(FALSE);
+    cmdline_row = msg_row;
+    // Avoid the sequence that the user types ":" at the hit-return prompt
+    // to start an Ex command, but the file-changed dialog gets in the
+    // way.
+    if (need_check_timestamps) {
+      check_timestamps(false);
+    }
 
     hit_return_msg();
 
@@ -1970,6 +1972,7 @@ static void msg_puts_printf(char *str, int maxlen)
  */
 static int do_more_prompt(int typed_char)
 {
+  static bool entered = false;
   int used_typed_char = typed_char;
   int oldState = State;
   int c;
@@ -1978,6 +1981,13 @@ static int do_more_prompt(int typed_char)
   msgchunk_T  *mp_last = NULL;
   msgchunk_T  *mp;
   int i;
+
+  // We get called recursively when a timer callback outputs a message. In
+  // that case don't show another prompt. Also when at the hit-Enter prompt.
+  if (entered || State == HITRETURN) {
+      return false;
+  }
+  entered = true;
 
   if (typed_char == 'G') {
     /* "g<": Find first line on the last page. */
@@ -2153,9 +2163,11 @@ static int do_more_prompt(int typed_char)
   if (quit_more) {
     msg_row = Rows - 1;
     msg_col = 0;
-  } else if (cmdmsg_rl)
+  } else if (cmdmsg_rl) {
     msg_col = Columns - 1;
+  }
 
+  entered = false;
   return retval;
 }
 

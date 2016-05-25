@@ -40,6 +40,7 @@ NEW_TESTS = \
 	    test_cursor_func.res \
 	    test_help_tagjump.res \
 	    test_menu.res \
+	    test_timers.res \
 	    test_viml.res \
 	    test_alot.res
 

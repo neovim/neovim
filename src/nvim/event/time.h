@@ -13,6 +13,7 @@ struct time_watcher {
   void *data;
   time_cb cb, close_cb;
   Queue *events;
+  bool blockable;
 };
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
