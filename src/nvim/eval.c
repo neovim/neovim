@@ -7688,7 +7688,8 @@ static void f_assert_fails(typval_T *argvars, typval_T *rettv)
     char_u buf[NUMBUFLEN];
     char *error = (char *)get_tv_string_buf_chk(&argvars[1], buf);
 
-    if (strstr((char *)vimvars[VV_ERRMSG].vv_str, error) == NULL) {
+    if (error == NULL
+        || strstr((char *)vimvars[VV_ERRMSG].vv_str, error) == NULL) {
       prepare_assert_error(&ga);
       fill_assert_error(&ga, &argvars[2], NULL, &argvars[1],
                         &vimvars[VV_ERRMSG].vv_tv);
