@@ -2,7 +2,7 @@
 " Language:	Lua script
 " Maintainer:	Marcus Aurelius Farias <marcus.cf 'at' bol.com.br>
 " First Author:	Max Ischenko <mfi 'at' ukr.net>
-" Last Change:	2014 Nov 12
+" Last Change:	2016 Jan 10
 
 " Only load this indent file when no other was loaded.
 if exists("b:did_indent")
@@ -52,7 +52,7 @@ function! GetLuaIndent()
     endif
   endif
 
-  " Subtract a 'shiftwidth' on end, else (and elseif), until and '}'
+  " Subtract a 'shiftwidth' on end, else, elseif, until and '}'
   " This is the part that requires 'indentkeys'.
   let midx = match(getline(v:lnum), '^\s*\%(end\>\|else\>\|elseif\>\|until\>\|}\)')
   if midx != -1 && synIDattr(synID(v:lnum, midx + 1, 1), "name") != "luaComment"
