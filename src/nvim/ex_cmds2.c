@@ -2482,7 +2482,7 @@ int source_level(void *cookie)
 }
 
 
-#if (defined(WIN32) && defined(FEAT_CSCOPE)) || defined(HAVE_FD_CLOEXEC)
+#if defined(WIN32) || defined(HAVE_FD_CLOEXEC)
 # define USE_FOPEN_NOINH
 /*
  * Special function to open a file without handle inheritance.
