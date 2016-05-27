@@ -21983,7 +21983,8 @@ static void script_host_eval(char *name, typval_T *argvars, typval_T *rettv)
   }
 
   list_T *args = list_alloc();
-  list_append_string(args, argvars[0].vval.v_string, -1);
+  char_u *str = get_tv_string(&argvars[0]);
+  list_append_string(args, str, -1);
   *rettv = eval_call_provider(name, "eval", args);
 }
 
