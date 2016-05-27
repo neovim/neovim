@@ -2482,12 +2482,8 @@ int source_level(void *cookie)
 }
 
 
-#if (defined(WIN32) && defined(FEAT_CSCOPE)) || defined(HAVE_FD_CLOEXEC)
-# define USE_FOPEN_NOINH
-/*
- * Special function to open a file without handle inheritance.
- * When possible the handle is closed on exec().
- */
+/// Special function to open a file without handle inheritance.
+/// If possible the handle is closed on exec().
 static FILE *fopen_noinh_readbin(char *filename)
 {
   int fd_tmp = os_open(filename, O_RDONLY, 0);
@@ -2506,7 +2502,6 @@ static FILE *fopen_noinh_readbin(char *filename)
 
   return fdopen(fd_tmp, READBIN);
 }
-#endif
 
 
 /*
@@ -2560,11 +2555,7 @@ do_source (
   /* Apply SourcePre autocommands, they may get the file. */
   apply_autocmds(EVENT_SOURCEPRE, fname_exp, fname_exp, FALSE, curbuf);
 
-#ifdef USE_FOPEN_NOINH
   cookie.fp = fopen_noinh_readbin((char *)fname_exp);
-#else
-  cookie.fp = mch_fopen((char *)fname_exp, READBIN);
-#endif
   if (cookie.fp == NULL && check_other) {
     /*
      * Try again, replacing file name ".vimrc" by "_vimrc" or vice versa,
@@ -2573,15 +2564,8 @@ do_source (
     p = path_tail(fname_exp);
     if ((*p == '.' || *p == '_')
         && (STRICMP(p + 1, "nvimrc") == 0 || STRICMP(p + 1, "exrc") == 0)) {
-      if (*p == '_')
-        *p = '.';
-      else
-        *p = '_';
-#ifdef USE_FOPEN_NOINH
+      *p = (*p == '_') ? '.' : '_';
       cookie.fp = fopen_noinh_readbin((char *)fname_exp);
-#else
-      cookie.fp = mch_fopen((char *)fname_exp, READBIN);
-#endif
     }
   }
 
