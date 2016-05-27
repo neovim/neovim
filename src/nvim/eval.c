@@ -22018,6 +22018,7 @@ static void script_host_eval(char *name, typval_T *argvars, typval_T *rettv)
 
   if (argvars[0].v_type != VAR_STRING) {
     EMSG(_(e_invarg));
+    return;
   }
 
   list_T *args = list_alloc();
