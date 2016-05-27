@@ -1,4 +1,4 @@
-*map.txt*       For Vim version 7.4.  Last change: 2014 Dec 08
+*map.txt*       For Vim version 7.4.  Last change: 2016 Jan 10
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -481,7 +481,7 @@ internal code is written to the script file.
 
 
 1.6 SPECIAL CHARACTERS					*:map-special-chars*
-							*map_backslash*
+						*map_backslash* *map-backslash*
 Note that only CTRL-V is mentioned here as a special character for mappings
 and abbreviations.  When 'cpoptions' does not contain 'B', a backslash can
 also be used like CTRL-V.  The <> notation can be fully used then |<>|.  But
@@ -492,21 +492,21 @@ To map a backslash, or use a backslash literally in the {rhs}, the special
 sequence "<Bslash>" can be used.  This avoids the need to double backslashes
 when using nested mappings.
 
-							*map_CTRL-C*
+						*map_CTRL-C* *map-CTRL-C*
 Using CTRL-C in the {lhs} is possible, but it will only work when Vim is
 waiting for a key, not when Vim is busy with something.  When Vim is busy
 CTRL-C interrupts/breaks the command.
 When using the GUI version on MS-Windows CTRL-C can be mapped to allow a Copy
 command to the clipboard.  Use CTRL-Break to interrupt Vim.
 
-							*map_space_in_lhs*
+					*map_space_in_lhs* *map-space_in_lhs*
 To include a space in {lhs} precede it with a CTRL-V (type two CTRL-Vs for
 each space).
-							*map_space_in_rhs*
+					*map_space_in_rhs* *map-space_in_rhs*
 If you want a {rhs} that starts with a space, use "<Space>".  To be fully Vi
 compatible (but unreadable) don't use the |<>| notation, precede {rhs} with a
 single CTRL-V (you have to type CTRL-V two times).
-							*map_empty_rhs*
+						*map_empty_rhs* *map-empty-rhs*
 You can create an empty {rhs} by typing nothing after a single CTRL-V (you
 have to type CTRL-V two times).  Unfortunately, you cannot do this in a vimrc
 file.
@@ -581,7 +581,7 @@ Upper and lowercase differences are ignored.
 It is not possible to put a comment after these commands, because the '"'
 character is considered to be part of the {lhs} or {rhs}.
 
-							*map_bar*
+							*map_bar* *map-bar*
 Since the '|' character is used to separate a map command from the next
 command, you will have to do something special to include  a '|' in {rhs}.
 There are three methods:
@@ -599,7 +599,7 @@ When 'b' is present in 'cpoptions', "\|" will be recognized as a mapping
 ending in a '\' and then another command.  This is Vi compatible, but
 illogical when compared to other commands.
 
-							*map_return*
+						*map_return* *map-return*
 When you have a mapping that contains an Ex command, you need to put a line
 terminator after it to have it executed.  The use of <CR> is recommended for
 this (see |<>|).  Example: >

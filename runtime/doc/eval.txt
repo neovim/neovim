@@ -3582,7 +3582,7 @@ getcmdwintype()						*getcmdwintype()*
 							*getcurpos()*
 getcurpos()	Get the position of the cursor.  This is like getpos('.'), but
 		includes an extra item in the list:
-		    [bufnum, lnum, col, off, curswant]
+		    [bufnum, lnum, col, off, curswant] ~
 		The "curswant" number is the preferred column when moving the
 		cursor vertically.
 		This can be used to save and restore the cursor position: >

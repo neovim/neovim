@@ -4,9 +4,10 @@
 " Maintainer:	Dominik Fischer <d dot f dot fischer at web dot de>
 " Contributor:	Thilo Six
 " Contributor:  Leonard Ehrenfried <leonard.ehrenfried@web.de>	
+" Contributor:  Karsten Hopp <karsten@redhat.com>
 " Originally:	2009-07-09
-" Last Change:	2015 Dec 3 
-" SSH Version:	7.0
+" Last Change:	2016 Jan 12
+" SSH Version:	7.1
 "
 
 " Setup
@@ -65,8 +66,8 @@ syn keyword sshdconfigSysLogFacility LOCAL2 LOCAL3 LOCAL4 LOCAL5 LOCAL6 LOCAL7
 
 syn keyword sshdconfigCompression    delayed
 
-syn match   sshdconfigIPQoS	"af1[1234]"
-syn match   sshdconfigIPQoS	"af2[23]"
+syn match   sshdconfigIPQoS	"af1[123]"
+syn match   sshdconfigIPQoS	"af2[123]"
 syn match   sshdconfigIPQoS	"af3[123]"
 syn match   sshdconfigIPQoS	"af4[123]"
 syn match   sshdconfigIPQoS	"cs[0-7]"
@@ -109,6 +110,7 @@ syn keyword sshdconfigKeyword AllowGroups
 syn keyword sshdconfigKeyword AllowStreamLocalForwarding
 syn keyword sshdconfigKeyword AllowTcpForwarding
 syn keyword sshdconfigKeyword AllowUsers
+syn keyword sshdconfigKeyword AuthenticationMethods
 syn keyword sshdconfigKeyword AuthorizedKeysFile
 syn keyword sshdconfigKeyword AuthorizedKeysCommand
 syn keyword sshdconfigKeyword AuthorizedKeysCommandUser
@@ -132,6 +134,7 @@ syn keyword sshdconfigKeyword GSSAPIStrictAcceptorCheck
 syn keyword sshdconfigKeyword GatewayPorts
 syn keyword sshdconfigKeyword HostCertificate
 syn keyword sshdconfigKeyword HostKey
+syn keyword sshdconfigKeyword HostKeyAgent
 syn keyword sshdconfigKeyword HostKeyAlgorithms
 syn keyword sshdconfigKeyword HostbasedAcceptedKeyTypes
 syn keyword sshdconfigKeyword HostbasedAuthentication

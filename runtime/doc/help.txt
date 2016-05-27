@@ -1,4 +1,4 @@
-*help.txt*	For Vim version 7.4.  Last change: 2016 Jan 09
+*help.txt*	For Vim version 7.4.  Last change: 2016 Jan 10
 
 			VIM - main help file
 									 k
@@ -9,14 +9,14 @@ Close this window:  Use ":q<Enter>".
 
 Jump to a subject:  Position the cursor on a tag (e.g. |bars|) and hit CTRL-].
    With the mouse:  Double-click the left mouse button on a tag, e.g. |bars|.
-	Jump back:  Type CTRL-T or CTRL-O (repeat to go further back).
+	Jump back:  Type CTRL-T or CTRL-O.  Repeat to go further back.
 
 Get specific help:  It is possible to go directly to whatever you want help
 		    on, by giving an argument to the |:help| command.
-		    It is possible to further specify the context:
-							*help-context*
+		    Prepend something to specify the context:  *help-context*
+
 			  WHAT			PREPEND    EXAMPLE	~
-		      Normal mode command      (nothing)   :help x
+		      Normal mode command		   :help x
 		      Visual mode command	  v_	   :help v_u
 		      Insert mode command	  i_	   :help i_<Esc>
 		      Command-line command	  :	   :help :quit
@@ -24,7 +24,7 @@ Get specific help:  It is possible to go directly to whatever you want help
 		      Vim command argument	  -	   :help -r
 		      Option			  '	   :help 'textwidth'
 		      Regular expression	  /	   :help /[
-		    Also see |help-summary| for a verbose explanation.
+		    See |help-summary| for more contexts and an explanation.
 
   Search for help:  Type ":help word", then hit CTRL-D to see matching
 		    help entries for "word".
