@@ -126,8 +126,10 @@ void process_teardown(Loop *loop) FUNC_ATTR_NONNULL_ALL
     }
   }
 
-  // Wait until all children exit
-  LOOP_PROCESS_EVENTS_UNTIL(loop, loop->events, -1, kl_empty(loop->children));
+  // Wait until all children exit and all close events are processed.
+  LOOP_PROCESS_EVENTS_UNTIL(
+      loop, loop->events, -1,
+      kl_empty(loop->children) && queue_empty(loop->events));
   pty_process_teardown(loop);
 }
 
