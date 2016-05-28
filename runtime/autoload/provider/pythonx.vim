@@ -18,9 +18,9 @@ function! provider#pythonx#Require(host) abort
   endfor
 
   try
-    let channel_id = rpcstart((ver == '2' ?
+    let channel_id = rpcstart((ver ==# '2' ?
           \ provider#python#Prog() : provider#python3#Prog()), args)
-    if rpcrequest(channel_id, 'poll') == 'ok'
+    if rpcrequest(channel_id, 'poll') ==# 'ok'
       return channel_id
     endif
   catch
@@ -70,7 +70,7 @@ endfunction
 
 function! s:check_interpreter(prog, major_ver, skip) abort
   let prog_path = exepath(a:prog)
-  if prog_path == ''
+  if prog_path ==# ''
     return [0, a:prog . ' not found in search path or not executable.']
   endif
 
