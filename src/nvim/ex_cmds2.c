@@ -2481,24 +2481,28 @@ int source_level(void *cookie)
   return ((struct source_cookie *)cookie)->level;
 }
 
-
 /// Special function to open a file without handle inheritance.
 /// If possible the handle is closed on exec().
 static FILE *fopen_noinh_readbin(char *filename)
 {
+#ifdef WIN32
+  int fd_tmp = os_open(filename, O_RDONLY | O_BINARY | O_NOINHERIT, 0);
+#else
   int fd_tmp = os_open(filename, O_RDONLY, 0);
+#endif
 
-  if (fd_tmp < 0)
+  if (fd_tmp < 0) {
     return NULL;
+  }
 
-# ifdef HAVE_FD_CLOEXEC
+#ifdef HAVE_FD_CLOEXEC
   {
     int fdflags = fcntl(fd_tmp, F_GETFD);
     if (fdflags >= 0 && (fdflags & FD_CLOEXEC) == 0) {
       (void)fcntl(fd_tmp, F_SETFD, fdflags | FD_CLOEXEC);
     }
   }
-# endif
+#endif
 
   return fdopen(fd_tmp, READBIN);
 }
