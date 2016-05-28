@@ -83,8 +83,8 @@ function! s:check_interpreter(prog, major_ver, skip) abort
   " Try to load neovim module, and output Python version.
   " Return codes:
   "   0  Neovim module can be loaded.
-  "   1  Something else went wrong.
   "   2  Neovim module cannot be loaded.
+  "   Otherwise something else went wrong (e.g. 1 or 127).
   let prog_ver = system([ a:prog , '-c' ,
         \ 'import sys; ' .
         \ 'sys.path.remove(""); ' .
@@ -93,7 +93,8 @@ function! s:check_interpreter(prog, major_ver, skip) abort
         \ 'exit(2*int(pkgutil.get_loader("neovim") is None))'
         \ ])
 
-  if prog_ver
+  if v:shell_error == 2 || v:shell_error == 0
+    " Check version only for expected return codes.
     if prog_ver !~ '^' . a:major_ver
       return [0, prog_path . ' is Python ' . prog_ver . ' and cannot provide Python '
             \ . a:major_ver . '.']
@@ -103,12 +104,16 @@ function! s:check_interpreter(prog, major_ver, skip) abort
     endif
   endif
 
-  if v:shell_error == 1
-    return [0, 'Checking ' . prog_path . ' caused an unknown error. '
-          \ . 'Please report this at github.com/neovim/neovim.']
-  elseif v:shell_error == 2
-    return [0, prog_path . ' does have not have the neovim module installed. '
+  if v:shell_error == 2
+    return [0, prog_path . ' does not have the neovim module installed. '
           \ . 'See ":help nvim-python".']
+  elseif v:shell_error == 127
+    " This can happen with pyenv's shims.
+    return [0, prog_path . ' does not exist: ' . prog_ver]
+  elseif v:shell_error
+    return [0, 'Checking ' . prog_path . ' caused an unknown error. '
+          \ . '(' . v:shell_error . ', output: ' . prog_ver . ')'
+          \ . ' Please report this at github.com/neovim/neovim.']
   endif
 
   return [1, '']
