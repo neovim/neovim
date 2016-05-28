@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:	APT config file
 " Maintainer:	Yann Amar <quidame@poivron.org>
-" Last Change:	2013 Apr 12
+" Last Change:	2015 Dec 22
 
 " For version 5.x: Clear all syntax items
 " For version 6.x and 7.x: Quit when a syntax file was already loaded
@@ -38,22 +38,22 @@ setlocal iskeyword+=/,-,.,_,+
 
 " Incomplete keywords will be treated differently than completely bad strings:
 syn keyword	aptconfGroupIncomplete
-	\ a[cquire] a[ptitude] d[ebtags] d[ebug] d[ir] d[pkg] d[select]
-	\ o[rderlist] p[ackagemanager] p[kgcachegen] q[uiet] r[pm]
-	\ u[nattended-upgrade]
+	\ a[cquire] a[dequate] a[ptitude] a[ptlistbugs] d[ebtags] d[ebug]
+	\ d[ir] d[pkg] d[select] o[rderlist] p[ackagemanager] p[kgcachegen]
+	\ q[uiet] r[pm] s[ynaptic] u[nattended-upgrade] w[hatmaps]
 
 " Only the following keywords can be used at toplevel (to begin an option):
 syn keyword	aptconfGroup
-	\ acquire apt aptitude debtags debug dir dpkg dselect
-	\ orderlist packagemanager pkgcachegen quiet rpm
-	\ unattended-upgrade
+	\ acquire adequate apt aptitude aptlistbugs debtags debug
+	\ dir dpkg dselect orderlist packagemanager pkgcachegen
+	\ quiet rpm synaptic unattended-upgrade whatmaps
 
 " Possible options for each group:
 " Acquire: {{{
 syn keyword	aptconfAcquire contained
-	\ cdrom Check-Valid-Until CompressionTypes ForceHash ftp gpgv
-	\ GzipIndexes http https Languages Max-ValidTime Min-ValidTime PDiffs
-	\ Queue-Mode Retries Source-Symlinks
+	\ cdrom Check-Valid-Until CompressionTypes ForceHash ForceIPv4
+	\ ForceIPv6 ftp gpgv GzipIndexes http https Languages Max-ValidTime
+	\ Min-ValidTime PDiffs Queue-Mode Retries Source-Symlinks
 
 syn keyword	aptconfAcquireCDROM contained
 	\ AutoDetect CdromOnly Mount UMount
@@ -62,14 +62,15 @@ syn keyword	aptconfAcquireCompressionTypes contained
 	\ bz2 lzma gz Order
 
 syn keyword	aptconfAcquireFTP contained
-	\ Passive Proxy ProxyLogin Timeout
+	\ ForceExtended Passive Proxy ProxyLogin Timeout
 
 syn keyword	aptconfAcquireHTTP contained
 	\ AllowRedirect Dl-Limit Max-Age No-Cache No-Store Pipeline-Depth
-	\ Proxy Timeout User-Agent
+	\ Proxy ProxyAutoDetect Proxy-Auto-Detect Timeout User-Agent
 
 syn keyword	aptconfAcquireHTTPS contained
-	\ CaInfo CaPath CrlFile IssuerCert SslCert SslForceVersion SslKey
+	\ AllowRedirect CaInfo CaPath CrlFile Dl-Limit IssuerCert Max-Age
+	\ No-Cache No-Store Proxy SslCert SslForceVersion SslKey Timeout
 	\ Verify-Host Verify-Peer
 
 syn keyword	aptconfAcquireMaxValidTime contained
@@ -83,14 +84,21 @@ syn cluster	aptconfAcquire_ contains=aptconfAcquire,
 	\ aptconfAcquireHTTP,aptconfAcquireHTTPS,aptconfAcquireMaxValidTime,
 	\ aptconfAcquirePDiffs
 " }}}
+" Adequate: {{{
+syn keyword	aptconfAdequate contained
+	\ Enabled
+
+syn cluster	aptconfAdequate_ contains=aptconfAdequate
+" }}}
 " Apt: {{{
 syn keyword	aptconfApt contained
 	\ Architecture Architectures Archive Authentication AutoRemove
-	\ Build-Essential Cache Cache-Grow Cache-Limit Cache-Start CDROM
-	\ Changelogs Clean-Installed Compressor Default-Release
-	\ Force-LoopBreak Get Ignore-Hold Immediate-Configure
+	\ Build-Essential Build-Profiles Cache Cache-Grow Cache-Limit
+	\ Cache-Start CDROM Changelogs Clean-Installed Compressor
+	\ Default-Release Force-LoopBreak Get Ignore-Hold Immediate-Configure
 	\ Install-Recommends Install-Suggests Keep-Fds List-Cleanup
-	\ NeverAutoRemove Never-MarkAuto-Sections Periodic Status-Fd Update
+	\ Move-Autobit-Sections NeverAutoRemove Never-MarkAuto-Sections
+	\ Periodic Status-Fd Update VersionedKernelPackages
 
 syn keyword	aptconfAptAuthentication contained
 	\ TrustCDROM
@@ -124,11 +132,12 @@ syn keyword	aptconfAptGet contained
 
 syn keyword	aptconfAptPeriodic contained
 	\ AutocleanInterval BackupArchiveInterval BackupLevel
-	\ Download-Upgradeable-Packages MaxAge MaxSize MinAge
-	\ Unattended-Upgrade Update-Package-Lists Verbose
+	\ Download-Upgradeable-Packages Download-Upgradeable-Packages-Debdelta
+	\ Enable MaxAge MaxSize MinAge Unattended-Upgrade Update-Package-Lists
+	\ Verbose
 
 syn keyword	aptconfAptUpdate contained
-	\ Pre-Invoke Post-Invoke Post-Invoke-Success
+	\ List-Refresh Pre-Invoke Post-Invoke Post-Invoke-Success
 
 syn cluster	aptconfApt_ contains=aptconfApt,
 	\ aptconfAptAuthentication,aptconfAptAutoRemove,aptconfAptCache,
@@ -240,6 +249,12 @@ syn cluster	aptconfAptitude_ contains=aptconfAptitude,
 	\ aptconfAptitudeUIKeyBindings,aptconfAptitudeUIStyles,
 	\ aptconfAptitudeUIStylesElements
 " }}}
+" AptListbugs: {{{
+syn keyword	aptconfAptListbugs contained
+	\ IgnoreRegexp Severities
+
+syn cluster	aptconfAptListbugs_ contains=aptconfAptListbugs
+" }}}
 " DebTags: {{{
 syn keyword	aptconfDebTags contained
 	\ Vocabulary
@@ -251,7 +266,8 @@ syn keyword	aptconfDebug contained
 	\ Acquire aptcdrom BuildDeps Hashes IdentCdrom Nolocking
 	\ pkgAcquire pkgAutoRemove pkgCacheGen pkgDepCache pkgDPkgPM
 	\ pkgDPkgProgressReporting pkgInitialize pkgOrderList
-	\ pkgPackageManager pkgPolicy pkgProblemResolver sourceList
+	\ pkgPackageManager pkgPolicy pkgProblemResolver RunScripts
+	\ sourceList
 
 syn keyword	aptconfDebugAcquire contained
 	\ cdrom Ftp gpgv Http Https netrc
@@ -295,7 +311,7 @@ syn keyword	aptconfDirMedia contained
 	\ MountPath
 
 syn keyword	aptconfDirState contained
-	\ cdroms extended_states Lists mirrors status
+	\ cdroms extended_states Lists mirrors preferences status
 
 syn cluster	aptconfDir_ contains=aptconfDir,
 	\ aptconfDirAptitude,aptconfDirBin,aptconfDirCache,aptconfDirEtc,
@@ -303,15 +319,16 @@ syn cluster	aptconfDir_ contains=aptconfDir,
 " }}}
 " DPkg: {{{
 syn keyword	aptconfDPkg contained
-	\ Build-Options Chroot-Directory ConfigurePending FlushSTDIN MaxArgs
-	\ MaxBytes NoTriggers options Pre-Install-Pkgs Pre-Invoke Post-Invoke
+	\ Build-Options Chroot-Directory ConfigurePending FlushSTDIN
+	\ MaxArgBytes MaxArgs MaxBytes NoTriggers options
+	\ Pre-Install-Pkgs Pre-Invoke Post-Invoke
 	\ Run-Directory StopOnError Tools TriggersPending
 
 syn keyword	aptconfDPkgTools contained
-	\ Options Version
+	\ adequate InfoFD Options Version
 
 syn cluster	aptconfDPkg_ contains=aptconfDPkg,
-	\ aptconfDPkgOrderList,aptconfDPkgOrderListScore,aptconfDPkgTools
+	\ aptconfDPkgTools
 " }}}
 " DSelect: {{{
 syn keyword	aptconfDSelect contained
@@ -353,23 +370,59 @@ syn keyword	aptconfRpm contained
 
 syn cluster	aptconfRpm_ contains=aptconfRpm
 " }}}
-" Unattened Upgrade: {{{
+" Synaptic: {{{
+syn keyword	aptconfSynaptic contained
+	\ AskQuitOnProceed AskRelated AutoCleanCache CleanCache DefaultDistro
+	\ delAction delHistory Download-Only ftpProxy ftpProxyPort httpProxy
+	\ httpProxyPort Install-Recommends LastSearchType Maximized noProxy
+	\ OneClickOnStatusActions ShowAllPkgInfoInMain showWelcomeDialog
+	\ ToolbarState undoStackSize update upgradeType useProxy UseStatusColors
+	\ UseTerminal useUserFont useUserTerminalFont ViewMode
+	\ availVerColumnPos availVerColumnVisible componentColumnPos
+	\ componentColumnVisible descrColumnPos descrColumnVisible
+	\ downloadSizeColumnPos downloadSizeColumnVisible hpanedPos
+	\ instVerColumnPos instVerColumnVisible instSizeColumnPos
+	\ instSizeColumnVisible nameColumnPos nameColumnVisible
+	\ sectionColumnPos sectionColumnVisible statusColumnPos
+	\ statusColumnVisible supportedColumnPos supportedColumnVisible
+	\ vpanedPos windowWidth windowHeight windowX windowY closeZvt
+	\ color-available color-available-locked color-broken color-downgrade
+	\ color-install color-installed-locked color-installed-outdated
+	\ color-installed-updated color-new color-purge color-reinstall
+	\ color-remove color-upgrade
+
+syn keyword	aptconfSynapticUpdate contained
+	\ last type
+
+syn cluster	aptconfSynaptic_ contains=aptconfSynaptic,
+	\ aptconfSynapticUpdate
+" }}}
+" Unattended Upgrade: {{{
 syn keyword	aptconfUnattendedUpgrade contained
-	\ AutoFixInterruptedDpkg Automatic-Reboot InstallOnShutdown Mail
-	\ MailOnlyOnError MinimalSteps Origins-Pattern Package-Blacklist
+	\ AutoFixInterruptedDpkg Automatic-Reboot Automatic-Reboot-Time
+	\ Automatic-Reboot-WithUsers InstallOnShutdown Mail MailOnlyOnError
+	\ MinimalSteps Origins-Pattern Package-Blacklist
 	\ Remove-Unused-Dependencies
 
 syn cluster	aptconfUnattendedUpgrade_ contains=aptconfUnattendedUpgrade
+" }}}
+" Whatmaps: {{{
+syn keyword	aptconfWhatmaps contained
+	\ Enable-Restart Security-Update-Origins
+
+syn cluster	aptconfWhatmaps_ contains=aptconfWhatmaps
 " }}}
 
 syn case	match
 
 " Now put all the keywords (and 'valid' options) in a single cluster:
 syn cluster	aptconfOptions contains=aptconfRegexpOpt,
-	\ @aptconfAcquire_,@aptconfApt_,@aptconfAptitude_,@aptconfDebTags_,
-	\ @aptconfDebug_,@aptconfDir_,@aptconfDPkg_,@aptconfDSelect_,
-	\ @aptconfOrderList_,@aptconfPackageManager_,@aptconfPkgCacheGen_,
-	\ @aptconfQuiet_,@aptconfRpm_,@aptconfUnattendedUpgrade_
+	\ @aptconfAcquire_,@aptconfAdequate_,@aptconfApt_,@aptconfAptitude_,
+	\ @aptconfAptListbugs_,@aptconfDebTags_,@aptconfDebug_,@aptconfDir_,
+	\ @aptconfDPkg_,@aptconfDSelect_,@aptconfOrderList_,
+	\ @aptconfPackageManager_,@aptconfPkgCacheGen_,@aptconfQuiet_,
+	\ @aptconfRpm_,@aptconfSynaptic_,@aptconfUnattendedUpgrade_,
+	\ @aptconfWhatmaps_
 
 " Syntax:
 syn match	aptconfSemiColon	';'
@@ -382,8 +435,11 @@ syn region	aptconfInclude		matchgroup=aptconfOperator start='::' end='::\|\s'me=
 
 " Basic Syntax Errors: XXX avoid to generate false positives !!!
 "
-" * Invalid comment format (seems to not cause errors, but...):
-syn match	aptconfAsError		display '^#.*'
+" * Undocumented inline comment. Since it is currently largely used, and does
+" not seem to cause trouble ('apt-config dump' never complains when # is used
+" the same way than //) it has been moved to aptconfComment group. But it
+" still needs to be defined here (i.e. before #clear and #include directives)
+syn match	aptconfComment		'#.*' contains=@aptconfCommentSpecial
 "
 " * When a semicolon is missing after a double-quoted string:
 " There are some cases (for example in the Dir group of options, but not only)
@@ -445,6 +501,8 @@ hi def link aptconfAcquireHTTPS			aptconfOption
 hi def link aptconfAcquireMaxValidTime		aptconfOption
 hi def link aptconfAcquirePDiffs		aptconfOption
 
+hi def link aptconfAdequate			aptconfOption
+
 hi def link aptconfApt				aptconfOption
 hi def link aptconfAptAuthentication		aptconfOption
 hi def link aptconfAptAutoRemove		aptconfOption
@@ -470,6 +528,8 @@ hi def link aptconfAptitudeUI			aptconfOption
 hi def link aptconfAptitudeUIKeyBindings	aptconfOption
 hi def link aptconfAptitudeUIStyles		aptconfOption
 hi def link aptconfAptitudeUIStylesElements	aptconfOption
+
+hi def link aptconfAptListbugs			aptconfOption
 
 hi def link aptconfDebTags			aptconfOption
 
@@ -504,7 +564,12 @@ hi def link aptconfQuiet			aptconfOption
 
 hi def link aptconfRpm				aptconfOption
 
+hi def link aptconfSynaptic			aptconfOption
+hi def link aptconfSynapticUpdate		aptconfOption
+
 hi def link aptconfUnattendedUpgrade		aptconfOption
+
+hi def link aptconfWhatmaps			aptconfOption
 
 let b:current_syntax = "aptconf"
 
