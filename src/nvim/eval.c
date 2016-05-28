@@ -16569,7 +16569,7 @@ static void timer_due_cb(TimeWatcher *tw, void *data)
 {
   timer_T *timer = (timer_T *)data;
   if (timer->stopped) {
-      return;
+    return;
   }
   // if repeat was negative repeat forever
   if (timer->repeat_count >= 0 && --timer->repeat_count == 0) {
@@ -16607,6 +16607,14 @@ static void timer_free_cb(TimeWatcher *tw, void *data)
   user_func_unref(timer->callback);
   pmap_del(uint64_t)(timers, timer->timer_id);
   xfree(timer);
+}
+
+void timer_teardown(void)
+{
+  timer_T *timer;
+  map_foreach_value(timers, timer, {
+    timer_stop(timer);
+  })
 }
 
 /*
