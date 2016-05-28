@@ -92,7 +92,7 @@ commit_message() {
 
 find_git_remote() {
   git remote -v \
-    | awk '$2 ~ /github.com[:/]neovim\/neovim/ && $3 == "(fetch)" {print $1}'
+    | awk '$2 ~ /github.com[:/]neovim\/neovim/ && $3 == "(fetch)" {print $1; exit}'
 }
 
 assign_commit_details() {
