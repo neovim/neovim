@@ -30,7 +30,11 @@
 #include "nvim/screen.h"
 #include "nvim/syntax.h"
 #include "nvim/window.h"
-#include "nvim/tui/tui.h"
+#ifdef FEAT_TUI
+# include "nvim/tui/tui.h"
+#else
+# include "nvim/msgpack_rpc/server.h"
+#endif
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ui.c.generated.h"
@@ -83,7 +87,22 @@ static int height, width;
 
 void ui_builtin_start(void)
 {
+#ifdef FEAT_TUI
   tui_start();
+#else
+  fprintf(stderr, "Neovim was built without a Terminal UI," \
+          "press Ctrl+C to exit\n");
+
+  size_t len;
+  char **addrs = server_address_list(&len);
+  if (addrs != NULL) {
+    fprintf(stderr, "currently listening on the following address(es)\n");
+    for (size_t i = 0; i < len; i++) {
+      fprintf(stderr, "\t%s\n", addrs[i]);
+    }
+    xfree(addrs);
+  }
+#endif
 }
 
 void ui_builtin_stop(void)
