@@ -207,7 +207,7 @@ void ui_mouse_off(void)
   UI_CALL(mouse_off);
 }
 
-void ui_attach(UI *ui)
+void ui_attach_impl(UI *ui)
 {
   if (ui_count == MAX_UI_COUNT) {
     abort();
@@ -217,7 +217,7 @@ void ui_attach(UI *ui)
   ui_refresh();
 }
 
-void ui_detach(UI *ui)
+void ui_detach_impl(UI *ui)
 {
   size_t shift_index = MAX_UI_COUNT;
 

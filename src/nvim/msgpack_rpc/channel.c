@@ -7,8 +7,8 @@
 
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/vim.h"
+#include "nvim/api/ui.h"
 #include "nvim/msgpack_rpc/channel.h"
-#include "nvim/msgpack_rpc/remote_ui.h"
 #include "nvim/event/loop.h"
 #include "nvim/event/libuv_process.h"
 #include "nvim/event/rstream.h"

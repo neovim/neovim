@@ -98,7 +98,7 @@ void vim_feedkeys(String keys, String mode, Boolean escape_csi)
 /// @return The number of bytes actually written, which can be lower than
 ///         requested if the buffer becomes full.
 Integer vim_input(String keys)
-  FUNC_ATTR_ASYNC
+    FUNC_API_ASYNC
 {
   return (Integer)input_enqueue(keys);
 }
@@ -618,7 +618,7 @@ Dictionary vim_get_color_map(void)
 
 
 Array vim_get_api_info(uint64_t channel_id)
-  FUNC_ATTR_ASYNC
+    FUNC_API_ASYNC
 {
   Array rv = ARRAY_DICT_INIT;
 

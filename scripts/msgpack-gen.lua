@@ -35,7 +35,8 @@ c_proto = Ct(
   Cg(c_type, 'return_type') * Cg(c_id, 'name') *
   fill * P('(') * fill * Cg(c_params, 'parameters') * fill * P(')') *
   Cg(Cc(false), 'async') *
-  (fill * Cg((P('FUNC_ATTR_ASYNC') * Cc(true)), 'async') ^ -1) *
+  (fill * Cg((P('FUNC_API_ASYNC') * Cc(true)), 'async') ^ -1) *
+  (fill * Cg((P('FUNC_API_NOEXPORT') * Cc(true)), 'noexport') ^ -1) *
   fill * P(';')
   )
 grammar = Ct((c_proto + c_comment + c_preproc + ws) ^ 1)
@@ -62,8 +63,11 @@ for i = 1, #arg - 1 do
   local input = io.open(full_path, 'rb')
   local tmp = grammar:match(input:read('*all'))
   for i = 1, #tmp do
-    functions[#functions + 1] = tmp[i]
     local fn = tmp[i]
+    if fn.noexport then
+      goto continue
+    end
+    functions[#functions + 1] = tmp[i]
     if #fn.parameters ~= 0 and fn.parameters[1][2] == 'channel_id' then
       -- this function should receive the channel id
       fn.receives_channel_id = true
@@ -77,6 +81,7 @@ for i = 1, #arg - 1 do
       -- for specifying errors
       fn.parameters[#fn.parameters] = nil
     end
+    ::continue::
   end
   input:close()
 end
@@ -217,7 +222,7 @@ for i = 1, #functions do
 
   if fn.receives_channel_id then
     -- if the function receives the channel id, pass it as first argument
-    if #args > 0 then
+    if #args > 0 or fn.can_fail then
       output:write('channel_id, '..call_args)
     else
       output:write('channel_id')
