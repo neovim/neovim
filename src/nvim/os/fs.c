@@ -922,7 +922,7 @@ bool os_fileid_equal(const FileID *file_id_1, const FileID *file_id_2)
 /// @param file_info Pointer to a `FileInfo`
 /// @return `true` if the `FileID` and the `FileInfo` represent te same file.
 bool os_fileid_equal_fileinfo(const FileID *file_id,
-                                const FileInfo *file_info)
+                              const FileInfo *file_info)
   FUNC_ATTR_NONNULL_ALL
 {
   return file_id->inode == file_info->stat.st_ino
@@ -931,6 +931,49 @@ bool os_fileid_equal_fileinfo(const FileID *file_id,
 
 #ifdef WIN32
 # include <shlobj.h>
+#ifndef CP_UTF8
+# define CP_UTF8 65001	/* magic number from winnls.h */
+#endif
+
+static int utf8_to_utf16(const char *path, const WCHAR **pathw)
+  FUNC_ATTR_NONNULL_ALL
+{
+  ssize_t buf_sz = 0, path_len, pathw_len = 0;
+
+  // Compute the length needed to store the converted widechar string.
+  pathw_len = MultiByteToWideChar(CP_UTF8,
+                                  0,     // dwFlags: must be 0 for utf8
+                                  path,  // lpMultiByteStr: string to convert
+                                  -1,
+                                  NULL,  // lpWideCharStr: converted string
+                                  0);    // 0 => return length, don't convert
+  if (pathw_len == 0) {
+    return GetLastError();
+  }
+
+  buf_sz += pathw_len * sizeof(WCHAR);
+
+  if (buf_sz == 0) {
+    *pathw = NULL;
+    return 0;
+  }
+
+  char* buf = xmalloc(buf_sz);
+  char* pos = buf;
+
+  DWORD r = MultiByteToWideChar(CP_UTF8,
+                                0,
+                                path,
+                                -1,
+                                (WCHAR*) pos,
+                                pathw_len);
+  assert(r == (DWORD) pathw_len);
+  *pathw = (WCHAR*) pos;
+  pos += r * sizeof(WCHAR);
+
+  return 0;
+}
+
 /// When "fname" is the name of a shortcut (*.lnk) resolve the file it points
 /// to and return that name in allocated memory.
 /// Otherwise NULL is returned.
@@ -962,19 +1005,19 @@ char_u * os_resolve_shortcut(char_u *fname)
 # ifdef FEAT_MBYTE
   if (enc_codepage >= 0 && (int)GetACP() != enc_codepage) {
     // create a link manager object and request its interface
-    hr = CoCreateInstance(
-        &CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER,
-        &IID_IShellLinkW, (void**)&pslw);
-    if (hr == S_OK)
-    {
-      WCHAR	*p = enc_to_utf16(fname, NULL);
+    hr = CoCreateInstance(&CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER,
+                          &IID_IShellLinkW, (void**)&pslw);
+    if (hr == S_OK) {
+      WCHAR **p;
+      int len = utf8_to_utf16((char *)fname, p);
 
       if (p != NULL) {
         // Get a pointer to the IPersistFile interface.
         hr = pslw->lpVtbl->QueryInterface(
             pslw, &IID_IPersistFile, (void**)&ppf);
-        if (hr != S_OK)
+        if (hr != S_OK) {
           goto shortcut_errorw;
+        }
 
         // "load" the name and resolve the link
         hr = ppf->lpVtbl->Load(ppf, p, STGM_READ);
