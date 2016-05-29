@@ -935,41 +935,40 @@ bool os_fileid_equal_fileinfo(const FileID *file_id,
 # define CP_UTF8 65001	/* magic number from winnls.h */
 #endif
 
-static int utf8_to_utf16(const char *path, const WCHAR **pathw)
+static int utf8_to_utf16(const char *str, WCHAR **strw)
   FUNC_ATTR_NONNULL_ALL
 {
-  ssize_t buf_sz = 0, path_len, pathw_len = 0;
+  ssize_t wchar_len = 0;
 
   // Compute the length needed to store the converted widechar string.
-  pathw_len = MultiByteToWideChar(CP_UTF8,
+  wchar_len = MultiByteToWideChar(CP_UTF8,
                                   0,     // dwFlags: must be 0 for utf8
-                                  path,  // lpMultiByteStr: string to convert
-                                  -1,
+                                  str,   // lpMultiByteStr: string to convert
+                                  -1,    // -1 => process up to NUL
                                   NULL,  // lpWideCharStr: converted string
-                                  0);    // 0 => return length, don't convert
-  if (pathw_len == 0) {
+                                  0);    // 0  => return length, don't convert
+  if (wchar_len == 0) {
     return GetLastError();
   }
 
-  buf_sz += pathw_len * sizeof(WCHAR);
+  ssize_t buf_sz = wchar_len * sizeof(WCHAR);
 
   if (buf_sz == 0) {
-    *pathw = NULL;
+    *strw = NULL;
     return 0;
   }
 
   char* buf = xmalloc(buf_sz);
   char* pos = buf;
 
-  DWORD r = MultiByteToWideChar(CP_UTF8,
+  int r = MultiByteToWideChar(CP_UTF8,
                                 0,
-                                path,
+                                str,
                                 -1,
                                 (WCHAR*) pos,
-                                pathw_len);
-  assert(r == (DWORD) pathw_len);
-  *pathw = (WCHAR*) pos;
-  pos += r * sizeof(WCHAR);
+                                wchar_len);
+  assert(r == wchar_len);
+  *strw = (WCHAR*) pos;
 
   return 0;
 }
@@ -982,12 +981,10 @@ char_u * os_resolve_shortcut(char_u *fname)
   HRESULT hr;
   IPersistFile *ppf = NULL;
   OLECHAR wsz[MAX_PATH];
-  WIN32_FIND_DATA ffd;     // we get those free of charge
-  CHAR buf[MAX_PATH];      // could have simply reused 'wsz'...
   char_u *rfname = NULL;
   int len;
   IShellLinkW *pslw = NULL;
-  WIN32_FIND_DATAW	ffdw;  // we get those free of charge
+  WIN32_FIND_DATAW ffdw;
 
   // Check if the file name ends in ".lnk". Avoid calling CoCreateInstance(),
   // it's quite slow.
@@ -1001,61 +998,56 @@ char_u * os_resolve_shortcut(char_u *fname)
 
   CoInitialize(NULL);
 
-# ifdef FEAT_MBYTE
-  if (enc_codepage >= 0 && (int)GetACP() != enc_codepage) {
-    // create a link manager object and request its interface
-    hr = CoCreateInstance(&CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER,
-                          &IID_IShellLinkW, (void**)&pslw);
-    if (hr == S_OK) {
-      WCHAR **p;
-      int len = utf8_to_utf16((char *)fname, p);
+  // create a link manager object and request its interface
+  hr = CoCreateInstance(&CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER,
+                        &IID_IShellLinkW, (void**)&pslw);
+  if (hr == S_OK) {
+    WCHAR **p;
+    //TODO(jkeyes): if this returns non-zero, report the error
+    (void)utf8_to_utf16((char *)fname, p);
 
-      if (p != NULL) {
-        // Get a pointer to the IPersistFile interface.
-        hr = pslw->lpVtbl->QueryInterface(
-            pslw, &IID_IPersistFile, (void**)&ppf);
-        if (hr != S_OK) {
-          goto shortcut_errorw;
-        }
+    if (p != NULL) {
+      // Get a pointer to the IPersistFile interface.
+      hr = pslw->lpVtbl->QueryInterface(
+          pslw, &IID_IPersistFile, (void**)&ppf);
+      if (hr != S_OK) {
+        goto shortcut_errorw;
+      }
 
-        // "load" the name and resolve the link
-        hr = ppf->lpVtbl->Load(ppf, p, STGM_READ);
-        if (hr != S_OK) {
-          goto shortcut_errorw;
-        }
+      // "load" the name and resolve the link
+      hr = ppf->lpVtbl->Load(ppf, p, STGM_READ);
+      if (hr != S_OK) {
+        goto shortcut_errorw;
+      }
 
 #  if 0  // This makes Vim wait a long time if the target does not exist.
-        hr = pslw->lpVtbl->Resolve(pslw, NULL, SLR_NO_UI);
-        if (hr != S_OK) {
-          goto shortcut_errorw;
-        }
+      hr = pslw->lpVtbl->Resolve(pslw, NULL, SLR_NO_UI);
+      if (hr != S_OK) {
+        goto shortcut_errorw;
+      }
 #  endif
 
-        // Get the path to the link target.
-        ZeroMemory(wsz, MAX_PATH * sizeof(WCHAR));
-        hr = pslw->lpVtbl->GetPath(pslw, wsz, MAX_PATH, &ffdw, 0);
-        if (hr == S_OK && wsz[0] != NUL) {
-          rfname = utf16_to_enc(wsz, NULL);
-        }
+      // Get the path to the link target.
+      ZeroMemory(wsz, MAX_PATH * sizeof(WCHAR));
+      hr = pslw->lpVtbl->GetPath(pslw, wsz, MAX_PATH, &ffdw, 0);
+      if (hr == S_OK && wsz[0] != NUL) {
+        rfname = utf16_to_enc(wsz, NULL);
+      }
 
 shortcut_errorw:
-        xfree(p);
-        goto shortcut_end;
-      }
+      xfree(p);
+      goto shortcut_end;
     }
   }
-# endif
 
 shortcut_end:
   // Release all interface pointers (both belong to the same object)
   if (ppf != NULL) {
     ppf->lpVtbl->Release(ppf);
   }
-# ifdef FEAT_MBYTE
   if (pslw != NULL) {
     pslw->lpVtbl->Release(pslw);
   }
-# endif
 
   CoUninitialize();
   return rfname;
