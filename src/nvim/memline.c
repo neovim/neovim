@@ -443,8 +443,9 @@ void ml_setname(buf_T *buf)
 #ifdef HAVE_FD_CLOEXEC
     {
       int fdflags = fcntl(mfp->mf_fd, F_GETFD);
-      if (fdflags >= 0 && (fdflags & FD_CLOEXEC) == 0)
-        fcntl(mfp->mf_fd, F_SETFD, fdflags | FD_CLOEXEC);
+      if (fdflags >= 0 && (fdflags & FD_CLOEXEC) == 0) {
+        (void)fcntl(mfp->mf_fd, F_SETFD, fdflags | FD_CLOEXEC);
+      }
     }
 #endif
   }
