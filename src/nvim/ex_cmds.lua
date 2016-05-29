@@ -88,7 +88,7 @@ return {
   },
   {
     command='argadd',
-    flags=bit.bor(BANG, NEEDARG, RANGE, NOTADR, ZEROR, FILES, TRLBAR),
+    flags=bit.bor(BANG, RANGE, NOTADR, ZEROR, FILES, TRLBAR),
     addr_type=ADDR_ARGUMENTS,
     func='ex_argadd',
   },

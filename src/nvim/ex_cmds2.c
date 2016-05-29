@@ -1616,9 +1616,15 @@ do_arglist (
   char_u      *p;
   int match;
 
-  /*
-   * Collect all file name arguments in "new_ga".
-   */
+  // Set default argument for ":argadd" command.
+  if (what == AL_ADD && *str == NUL) {
+    if (curbuf->b_ffname == NULL) {
+      return FAIL;
+    }
+    str = curbuf->b_fname;
+  }
+
+  // Collect all file name arguments in "new_ga".
   get_arglist(&new_ga, str);
 
   if (what == AL_DEL) {
@@ -1990,11 +1996,17 @@ void ex_argdelete(exarg_T *eap)
       } else if (curwin->w_arg_idx > eap->line1) {
         curwin->w_arg_idx = (int)eap->line1;
       }
+      if (ARGCOUNT == 0) {
+          curwin->w_arg_idx = 0;
+      } else if (curwin->w_arg_idx >= ARGCOUNT) {
+          curwin->w_arg_idx = ARGCOUNT - 1;
+      }
     }
-  } else if (*eap->arg == NUL)
+  } else if (*eap->arg == NUL) {
     EMSG(_(e_argreq));
-  else
+  } else {
     do_arglist(eap->arg, AL_DEL, 0);
+  }
   maketitle();
 }
 
@@ -2221,6 +2233,7 @@ alist_add_list (
     int after                  /* where to add: 0 = before first one */
 )
 {
+  int old_argcount = ARGCOUNT;
   ga_grow(&ALIST(curwin)->al_ga, count);
   {
     if (after < 0)
@@ -2235,8 +2248,9 @@ alist_add_list (
       ARGLIST[after + i].ae_fnum = buflist_add(files[i], BLN_LISTED);
     }
     ALIST(curwin)->al_ga.ga_len += count;
-    if (curwin->w_arg_idx >= after)
-      ++curwin->w_arg_idx;
+    if (old_argcount > 0 && curwin->w_arg_idx >= after) {
+      curwin->w_arg_idx += count;
+    }
     return after;
   }
 }
