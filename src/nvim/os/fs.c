@@ -973,6 +973,41 @@ static int utf8_to_utf16(const char *str, WCHAR **strw)
   return 0;
 }
 
+static int utf16_to_utf8(const WCHAR *strw, char **str)
+  FUNC_ATTR_NONNULL_ALL
+{
+  // Compute the space required to store the string as UTF-8.
+  ssize_t utf8_len = WideCharToMultiByte(CP_UTF8,
+                                         0,
+                                         strw,
+                                         -1,
+                                         NULL,
+                                         0,
+                                         NULL,
+                                         NULL);
+  if (utf8_len == 0) {
+    return GetLastError();
+  }
+
+  ssize_t buf_sz = utf8_len * sizeof(char);
+  char* buf = xmalloc(buf_sz);
+  char* pos = buf;
+
+  // Convert string to UTF-8.
+  int r = WideCharToMultiByte(CP_UTF8,
+                              0,
+                              strw,
+                              -1,
+                              (LPSTR*) pos,
+                              utf8_len,
+                              NULL,
+                              NULL);
+  assert(r == utf8_len);
+  *str = pos;
+
+  return 0;
+}
+
 /// When "fname" is the name of a shortcut (*.lnk) resolve the file it points
 /// to and return that name in allocated memory.
 /// Otherwise NULL is returned.
@@ -1002,9 +1037,9 @@ char_u * os_resolve_shortcut(char_u *fname)
   hr = CoCreateInstance(&CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER,
                         &IID_IShellLinkW, (void**)&pslw);
   if (hr == S_OK) {
-    WCHAR **p;
+    WCHAR *p;
     //TODO(jkeyes): if this returns non-zero, report the error
-    (void)utf8_to_utf16((char *)fname, p);
+    (void)utf8_to_utf16((char *)fname, &p);
 
     if (p != NULL) {
       // Get a pointer to the IPersistFile interface.
@@ -1031,7 +1066,8 @@ char_u * os_resolve_shortcut(char_u *fname)
       ZeroMemory(wsz, MAX_PATH * sizeof(WCHAR));
       hr = pslw->lpVtbl->GetPath(pslw, wsz, MAX_PATH, &ffdw, 0);
       if (hr == S_OK && wsz[0] != NUL) {
-        rfname = utf16_to_enc(wsz, NULL);
+        //TODO(jkeyes): if this returns non-zero, report the error
+        (void)utf16_to_utf8(wsz, &rfname);
       }
 
 shortcut_errorw:
