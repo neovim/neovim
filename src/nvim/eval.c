@@ -13592,11 +13592,12 @@ static void f_resolve(typval_T *argvars, typval_T *rettv)
   {
     char_u  *v = NULL;
 
-    v = mch_resolve_shortcut(p);
-    if (v != NULL)
+    v = os_resolve_shortcut(p);
+    if (v != NULL) {
       rettv->vval.v_string = v;
-    else
+    } else {
       rettv->vval.v_string = vim_strsave(p);
+    }
   }
 #else
 # ifdef HAVE_READLINK

@@ -4030,8 +4030,8 @@ void fname_expand(buf_T *buf, char_u **ffname, char_u **sfname)
   if (!buf->b_p_bin) {
     char_u  *rfname;
 
-    /* If the file name is a shortcut file, use the file it links to. */
-    rfname = mch_resolve_shortcut(*ffname);
+    // If the file name is a shortcut file, use the file it links to.
+    rfname = os_resolve_shortcut(*ffname);
     if (rfname != NULL) {
       xfree(*ffname);
       *ffname = rfname;
