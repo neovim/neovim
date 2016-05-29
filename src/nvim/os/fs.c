@@ -980,14 +980,13 @@ static int utf8_to_utf16(const char *path, const WCHAR **pathw)
 char_u * os_resolve_shortcut(char_u *fname)
 {
   HRESULT hr;
-  IShellLink *psl = NULL;
   IPersistFile *ppf = NULL;
   OLECHAR wsz[MAX_PATH];
   WIN32_FIND_DATA ffd;     // we get those free of charge
   CHAR buf[MAX_PATH];      // could have simply reused 'wsz'...
   char_u *rfname = NULL;
   int len;
-  IShellLinkW		*pslw = NULL;
+  IShellLinkW *pslw = NULL;
   WIN32_FIND_DATAW	ffdw;  // we get those free of charge
 
   // Check if the file name ends in ".lnk". Avoid calling CoCreateInstance(),
@@ -1044,53 +1043,13 @@ shortcut_errorw:
         goto shortcut_end;
       }
     }
-    /* Retry with non-wide function (for Windows 98). */
   }
 # endif
-
-  // create a link manager object and request its interface
-  hr = CoCreateInstance(&CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER,
-                        &IID_IShellLink, (void**)&psl);
-  if (hr != S_OK) {
-    goto shortcut_end;
-  }
-
-  // Get a pointer to the IPersistFile interface.
-  hr = psl->lpVtbl->QueryInterface(psl, &IID_IPersistFile, (void**)&ppf);
-  if (hr != S_OK) {
-    goto shortcut_end;
-  }
-
-  // full path string must be in Unicode.
-  MultiByteToWideChar(CP_ACP, 0, (LPCSTR)fname, -1, wsz, MAX_PATH);
-
-  // "load" the name and resolve the link
-  hr = ppf->lpVtbl->Load(ppf, wsz, STGM_READ);
-  if (hr != S_OK) {
-    goto shortcut_end;
-  }
-
-# if 0  // This makes Vim wait a long time if the target doesn't exist.
-  hr = psl->lpVtbl->Resolve(psl, NULL, SLR_NO_UI);
-  if (hr != S_OK) {
-    goto shortcut_end;
-  }
-# endif
-
-  // Get the path to the link target.
-  ZeroMemory(buf, MAX_PATH);
-  hr = psl->lpVtbl->GetPath(psl, buf, MAX_PATH, &ffd, 0);
-  if (hr == S_OK && buf[0] != NUL) {
-    rfname = vim_strsave((char_u *)buf);
-  }
 
 shortcut_end:
   // Release all interface pointers (both belong to the same object)
   if (ppf != NULL) {
     ppf->lpVtbl->Release(ppf);
-  }
-  if (psl != NULL) {
-    psl->lpVtbl->Release(psl);
   }
 # ifdef FEAT_MBYTE
   if (pslw != NULL) {
