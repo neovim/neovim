@@ -333,7 +333,7 @@ static int name##_convert_one_value(firstargtype firstargname, \
       } \
       CHECK_SELF_REFERENCE(tv->vval.v_list, lv_copyID, kMPConvList); \
       CONV_LIST_START(tv->vval.v_list); \
-      kv_push(MPConvStackVal, *mpstack, ((MPConvStackVal) { \
+      kv_push(*mpstack, ((MPConvStackVal) { \
         .type = kMPConvList, \
         .data = { \
           .l = { \
@@ -464,7 +464,7 @@ static int name##_convert_one_value(firstargtype firstargname, \
             CHECK_SELF_REFERENCE(val_di->di_tv.vval.v_list, lv_copyID, \
                                  kMPConvList); \
             CONV_LIST_START(val_di->di_tv.vval.v_list); \
-            kv_push(MPConvStackVal, *mpstack, ((MPConvStackVal) { \
+            kv_push(*mpstack, ((MPConvStackVal) { \
               .type = kMPConvList, \
               .data = { \
                 .l = { \
@@ -493,7 +493,7 @@ static int name##_convert_one_value(firstargtype firstargname, \
             } \
             CHECK_SELF_REFERENCE(val_list, lv_copyID, kMPConvPairs); \
             CONV_DICT_START(val_list->lv_len); \
-            kv_push(MPConvStackVal, *mpstack, ((MPConvStackVal) { \
+            kv_push(*mpstack, ((MPConvStackVal) { \
               .type = kMPConvPairs, \
               .data = { \
                 .l = { \
@@ -532,7 +532,7 @@ static int name##_convert_one_value(firstargtype firstargname, \
 name##_convert_one_value_regular_dict: \
       CHECK_SELF_REFERENCE(tv->vval.v_dict, dv_copyID, kMPConvDict); \
       CONV_DICT_START(tv->vval.v_dict->dv_hashtab.ht_used); \
-      kv_push(MPConvStackVal, *mpstack, ((MPConvStackVal) { \
+      kv_push(*mpstack, ((MPConvStackVal) { \
         .type = kMPConvDict, \
         .data = { \
           .d = { \

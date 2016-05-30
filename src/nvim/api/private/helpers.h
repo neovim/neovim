@@ -62,12 +62,10 @@
 #define NIL ((Object) {.type = kObjectTypeNil})
 
 #define PUT(dict, k, v)                                                       \
-  kv_push(KeyValuePair,                                                       \
-          dict,                                                               \
-          ((KeyValuePair) {.key = cstr_to_string(k), .value = v}))
+  kv_push(dict, ((KeyValuePair) { .key = cstr_to_string(k), .value = v }))
 
 #define ADD(array, item)                                                      \
-  kv_push(Object, array, item)
+  kv_push(array, item)
 
 #define STATIC_CSTR_AS_STRING(s) ((String) {.data = s, .size = sizeof(s) - 1})
 

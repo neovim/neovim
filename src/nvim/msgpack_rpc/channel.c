@@ -179,7 +179,7 @@ bool channel_send_event(uint64_t id, char *name, Array args)
       // Pending request, queue the notification for later sending.
       String method = cstr_as_string(name);
       WBuffer *buffer = serialize_request(id, 0, method, args, &out_buffer, 1);
-      kv_push(WBuffer *, channel->delayed_notifications, buffer);
+      kv_push(channel->delayed_notifications, buffer);
     } else {
       send_event(channel, name, args);
     }
@@ -217,8 +217,8 @@ Object channel_send_call(uint64_t id,
   send_request(channel, request_id, method_name, args);
 
   // Push the frame
-  ChannelCallFrame frame = {request_id, false, false, NIL};
-  kv_push(ChannelCallFrame *, channel->call_stack, &frame);
+  ChannelCallFrame frame = { request_id, false, false, NIL };
+  kv_push(channel->call_stack, &frame);
   channel->pending_requests++;
   LOOP_PROCESS_EVENTS_UNTIL(&loop, channel->events, -1, frame.returned);
   (void)kv_pop(channel->call_stack);
@@ -574,13 +574,12 @@ static void send_event(Channel *channel,
 
 static void broadcast_event(char *name, Array args)
 {
-  kvec_t(Channel *) subscribed;
-  kv_init(subscribed);
+  kvec_t(Channel *) subscribed = KV_INITIAL_VALUE;
   Channel *channel;
 
   map_foreach_value(channels, channel, {
     if (pmap_has(cstr_t)(channel->subscribed_events, name)) {
-      kv_push(Channel *, subscribed, channel);
+      kv_push(subscribed, channel);
     }
   });
 
@@ -600,7 +599,7 @@ static void broadcast_event(char *name, Array args)
   for (size_t i = 0; i < kv_size(subscribed); i++) {
     Channel *channel = kv_A(subscribed, i);
     if (channel->pending_requests) {
-      kv_push(WBuffer *, channel->delayed_notifications, buffer);
+      kv_push(channel->delayed_notifications, buffer);
     } else {
       channel_write(channel, buffer);
     }

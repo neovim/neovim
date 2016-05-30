@@ -4950,7 +4950,7 @@ int bufhl_add_hl(buf_T *buf,
   bufhl_vec_T* lineinfo = map_ref(linenr_T, bufhl_vec_T)(buf->b_bufhl_info,
                                                          lnum, true);
 
-  bufhl_hl_item_T *hlentry = kv_pushp(bufhl_hl_item_T, *lineinfo);
+  bufhl_hl_item_T *hlentry = kv_pushp(*lineinfo);
   hlentry->src_id = src_id;
   hlentry->hl_id = hl_id;
   hlentry->start = col_start;
