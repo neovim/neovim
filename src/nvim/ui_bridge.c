@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <limits.h>
 
+#include "nvim/main.h"
 #include "nvim/vim.h"
 #include "nvim/ui.h"
 #include "nvim/memory.h"
@@ -100,7 +101,7 @@ static void ui_bridge_stop(UI *b)
     if (stopped) {
       break;
     }
-    loop_poll_events(&loop, 10);
+    loop_poll_events(&main_loop, 10);
   }
   uv_thread_join(&bridge->ui_thread);
   uv_mutex_destroy(&bridge->mutex);

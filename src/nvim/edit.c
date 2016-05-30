@@ -961,7 +961,7 @@ static int insert_handle_key(InsertState *s)
     break;
 
   case K_EVENT:       // some event
-    queue_process_events(loop.events);
+    queue_process_events(main_loop.events);
     break;
 
   case K_FOCUSGAINED:  // Neovim has been given focus

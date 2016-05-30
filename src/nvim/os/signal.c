@@ -8,6 +8,7 @@
 #include "nvim/globals.h"
 #include "nvim/memline.h"
 #include "nvim/eval.h"
+#include "nvim/main.h"
 #include "nvim/memory.h"
 #include "nvim/misc1.h"
 #include "nvim/misc2.h"
@@ -28,10 +29,10 @@ static bool rejecting_deadly;
 
 void signal_init(void)
 {
-  signal_watcher_init(&loop, &spipe, NULL);
-  signal_watcher_init(&loop, &shup, NULL);
-  signal_watcher_init(&loop, &squit, NULL);
-  signal_watcher_init(&loop, &sterm, NULL);
+  signal_watcher_init(&main_loop, &spipe, NULL);
+  signal_watcher_init(&main_loop, &shup, NULL);
+  signal_watcher_init(&main_loop, &squit, NULL);
+  signal_watcher_init(&main_loop, &sterm, NULL);
 #ifdef SIGPIPE
   signal_watcher_start(&spipe, on_signal, SIGPIPE);
 #endif
@@ -41,7 +42,7 @@ void signal_init(void)
 #endif
   signal_watcher_start(&sterm, on_signal, SIGTERM);
 #ifdef SIGPWR
-  signal_watcher_init(&loop, &spwr, NULL);
+  signal_watcher_init(&main_loop, &spwr, NULL);
   signal_watcher_start(&spwr, on_signal, SIGPWR);
 #endif
 }

@@ -60,7 +60,7 @@ void input_start(int fd)
   }
 
   global_fd = fd;
-  rstream_init_fd(&loop, &read_stream, fd, READ_BUFFER_SIZE, NULL);
+  rstream_init_fd(&main_loop, &read_stream, fd, READ_BUFFER_SIZE, NULL);
   rstream_start(&read_stream, read_cb);
 }
 
@@ -87,8 +87,8 @@ static void create_cursorhold_event(void)
   // have been called(inbuf_poll would return kInputAvail)
   // TODO(tarruda): Cursorhold should be implemented as a timer set during the
   // `state_check` callback for the states where it can be triggered.
-  assert(!events_enabled || queue_empty(loop.events));
-  queue_put(loop.events, cursorhold_event, 0);
+  assert(!events_enabled || queue_empty(main_loop.events));
+  queue_put(main_loop.events, cursorhold_event, 0);
 }
 
 // Low level input function
@@ -147,7 +147,7 @@ bool os_char_avail(void)
 void os_breakcheck(void)
 {
   if (!got_int) {
-    loop_poll_events(&loop, 0);
+    loop_poll_events(&main_loop, 0);
   }
 }
 
@@ -322,7 +322,7 @@ static bool input_poll(int ms)
     prof_inchar_enter();
   }
 
-  LOOP_PROCESS_EVENTS_UNTIL(&loop, NULL, ms, input_ready() || input_eof);
+  LOOP_PROCESS_EVENTS_UNTIL(&main_loop, NULL, ms, input_ready() || input_eof);
 
   if (do_profiling == PROF_YES && ms) {
     prof_inchar_exit();
@@ -419,5 +419,5 @@ static void read_error_exit(void)
 
 static bool pending_events(void)
 {
-  return events_enabled && !queue_empty(loop.events);
+  return events_enabled && !queue_empty(main_loop.events);
 }

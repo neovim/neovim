@@ -63,6 +63,7 @@
 #include "nvim/map.h"
 #include "nvim/misc1.h"
 #include "nvim/move.h"
+#include "nvim/main.h"
 #include "nvim/state.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/ex_cmds.h"
@@ -163,9 +164,9 @@ static VTermColor default_vt_bg_rgb;
 void terminal_init(void)
 {
   invalidated_terminals = pmap_new(ptr_t)();
-  time_watcher_init(&loop, &refresh_timer, NULL);
+  time_watcher_init(&main_loop, &refresh_timer, NULL);
   // refresh_timer_cb will redraw the screen which can call vimscript
-  refresh_timer.events = queue_new_child(loop.events);
+  refresh_timer.events = queue_new_child(main_loop.events);
 
   // initialize a rgb->color index map for cterm attributes(VTermScreenCell
   // only has RGB information and we need color indexes for terminal UIs)
@@ -452,7 +453,7 @@ static int terminal_execute(VimState *state, int key)
     case K_EVENT:
       // We cannot let an event free the terminal yet. It is still needed.
       s->term->refcount++;
-      queue_process_events(loop.events);
+      queue_process_events(main_loop.events);
       s->term->refcount--;
       if (s->term->buf_handle == 0) {
         s->close = true;
