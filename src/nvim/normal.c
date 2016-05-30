@@ -1795,9 +1795,9 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
       if (oap->line_count < 2)
         oap->line_count = 2;
       if (curwin->w_cursor.lnum + oap->line_count - 1 >
-          curbuf->b_ml.ml_line_count)
+          curbuf->b_ml.ml_line_count) {
         beep_flush();
-      else {
+      } else {
         do_join((size_t)oap->line_count, oap->op_type == OP_JOIN,
                 true, true, true);
         auto_format(false, true);

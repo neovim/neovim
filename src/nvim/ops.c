@@ -1007,10 +1007,9 @@ do_execreg (
     put_reedit_in_typebuf(silent);
     char_u *escaped;
     for (size_t i = reg->y_size; i-- > 0;) {  // from y_size - 1 to 0 included
-
       // insert NL between lines and after last line if type is kMTLineWise
       if (reg->y_type == kMTLineWise || i < reg->y_size - 1 || addcr) {
-        if (ins_typebuf((char_u *)"\n", remap, 0, TRUE, silent) == FAIL) {
+        if (ins_typebuf((char_u *)"\n", remap, 0, true, silent) == FAIL) {
           return FAIL;
         }
       }
@@ -2318,15 +2317,14 @@ static void op_yank_reg(oparg_T *oap, bool message, yankreg_T *reg, bool append)
 
   yankreg_T *curr = reg;  // copy of current register
   // append to existing contents
-  if (append && reg->y_array != NULL)
+  if (append && reg->y_array != NULL) {
     reg = &newreg;
-  else
-    free_register(reg);                /* free previously yanked lines */
+  } else {
+    free_register(reg);  // free previously yanked lines
+  }
 
-  /*
-   * If the cursor was in column 1 before and after the movement, and the
-   * operator is not inclusive, the yank is always linewise.
-   */
+  // If the cursor was in column 1 before and after the movement, and the
+  // operator is not inclusive, the yank is always linewise.
   if (oap->motion_type == kMTCharWise
       && oap->start.col == 0
       && !oap->inclusive
@@ -2506,7 +2504,6 @@ static void op_yank_reg(oparg_T *oap, bool message, yankreg_T *reg, bool append)
 
 static void yank_copy_line(yankreg_T *reg, struct block_def *bd, size_t y_idx)
 {
-  assert(bd->startspaces + bd->endspaces + bd->textlen >= 0);
   char_u *pnew = xmallocz((size_t)(bd->startspaces + bd->endspaces
                                    + bd->textlen));
   reg->y_array[y_idx] = pnew;
@@ -2756,10 +2753,12 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
 
   if (y_type == kMTBlockWise) {
     lnum = curwin->w_cursor.lnum + (linenr_T)y_size + 1;
-    if (lnum > curbuf->b_ml.ml_line_count)
+    if (lnum > curbuf->b_ml.ml_line_count) {
       lnum = curbuf->b_ml.ml_line_count + 1;
-    if (u_save(curwin->w_cursor.lnum - 1, lnum) == FAIL)
+    }
+    if (u_save(curwin->w_cursor.lnum - 1, lnum) == FAIL) {
       goto end;
+    }
   } else if (y_type == kMTLineWise) {
     lnum = curwin->w_cursor.lnum;
     /* Correct line number for closed fold.  Don't move the cursor yet,
@@ -2920,11 +2919,10 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
       /* may insert some spaces after the new text */
       memset(ptr, ' ', (size_t)bd.endspaces);
       ptr += bd.endspaces;
-      /* move the text after the cursor to the end of the line. */
-      assert(oldlen <= INT_MAX);
+      // move the text after the cursor to the end of the line.
       memmove(ptr, oldp + bd.textcol + delcount,
               (size_t)((int)oldlen - bd.textcol - delcount + 1));
-      ml_replace(curwin->w_cursor.lnum, newp, FALSE);
+      ml_replace(curwin->w_cursor.lnum, newp, false);
 
       ++curwin->w_cursor.lnum;
       if (i == 0)
@@ -3458,19 +3456,17 @@ int do_join(size_t count,
                           curwin->w_cursor.lnum + (linenr_T)count) == FAIL) {
     return FAIL;
   }
-  /* Allocate an array to store the number of spaces inserted before each
-   * line.  We will use it to pre-compute the length of the new line and the
-   * proper placement of each original line in the new one. */
+  // Allocate an array to store the number of spaces inserted before each
+  // line.  We will use it to pre-compute the length of the new line and the
+  // proper placement of each original line in the new one.
   spaces = xcalloc(count, 1);
   if (remove_comments) {
     comments = xcalloc(count, sizeof(*comments));
   }
 
-  /*
-   * Don't move anything, just compute the final line length
-   * and setup the array of space strings lengths
-   */
-  for (t = 0; t < (linenr_T)count; ++t) {
+  // Don't move anything, just compute the final line length
+  // and setup the array of space strings lengths
+  for (t = 0; t < (linenr_T)count; t++) {
     curr = curr_start = ml_get((linenr_T)(curwin->w_cursor.lnum + t));
     if (t == 0 && setmark) {
       // Set the '[ mark.
@@ -4903,7 +4899,8 @@ void write_reg_contents_lst(int name, char_u **strings, int maxlen,
     return;
   }
 
-  str_to_reg(reg, yank_type, (char_u *)strings, STRLEN((char_u *)strings), block_len, true);
+  str_to_reg(reg, yank_type, (char_u *)strings, STRLEN((char_u *)strings),
+             block_len, true);
   finish_write_reg(name, reg, old_y_previous);
 }
 
@@ -5511,7 +5508,6 @@ static bool get_clipboard(int name, yankreg_T **target, bool quiet)
     reg->y_type = kMTUnknown;
   }
 
-  assert(lines->lv_len >= 0);
   reg->y_array = xcalloc((size_t)lines->lv_len, sizeof(uint8_t *));
   reg->y_size = (size_t)lines->lv_len;
   reg->additional_data = NULL;
