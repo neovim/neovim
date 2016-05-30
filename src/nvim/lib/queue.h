@@ -24,77 +24,71 @@ typedef struct _queue {
   struct _queue *prev;
 } QUEUE;
 
-// Private macros.
-#define _QUEUE_NEXT(q)       ((q)->next)
-#define _QUEUE_PREV(q)       ((q)->prev)
-#define _QUEUE_PREV_NEXT(q)  (_QUEUE_NEXT(_QUEUE_PREV(q)))
-#define _QUEUE_NEXT_PREV(q)  (_QUEUE_PREV(_QUEUE_NEXT(q)))
-
 // Public macros.
 #define QUEUE_DATA(ptr, type, field)  \
   ((type *)((char *)(ptr) - offsetof(type, field)))
 
 #define QUEUE_FOREACH(q, h) \
   for (  /* NOLINT(readability/braces) */ \
-      (q) = _QUEUE_NEXT(h); (q) != (h); (q) = _QUEUE_NEXT(q))
+      (q) = (h)->next; (q) != (h); (q) = (q)->next)
 
 // ffi.cdef is unable to swallow `bool` in place of `int` here.
 static inline int QUEUE_EMPTY(const QUEUE *const q)
   FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  return q == _QUEUE_NEXT(q);
+  return q == q->next;
 }
 
-#define QUEUE_HEAD _QUEUE_NEXT
+#define QUEUE_HEAD(q) (q)->next
 
 static inline void QUEUE_INIT(QUEUE *const q) FUNC_ATTR_ALWAYS_INLINE
 {
-  _QUEUE_NEXT(q) = q;
-  _QUEUE_PREV(q) = q;
+  q->next = q;
+  q->prev = q;
 }
 
 static inline void QUEUE_ADD(QUEUE *const h, QUEUE *const n)
   FUNC_ATTR_ALWAYS_INLINE
 {
-  _QUEUE_PREV_NEXT(h) = _QUEUE_NEXT(n);
-  _QUEUE_NEXT_PREV(n) = _QUEUE_PREV(h);
-  _QUEUE_PREV(h) = _QUEUE_PREV(n);
-  _QUEUE_PREV_NEXT(h) = h;
+  h->prev->next = n->next;
+  n->next->prev = h->prev;
+  h->prev = n->prev;
+  h->prev->next = h;
 }
 
 static inline void QUEUE_SPLIT(QUEUE *const h, QUEUE *const q, QUEUE *const n)
   FUNC_ATTR_ALWAYS_INLINE
 {
-  _QUEUE_PREV(n) = _QUEUE_PREV(h);
-  _QUEUE_PREV_NEXT(n) = n;
-  _QUEUE_NEXT(n) = q;
-  _QUEUE_PREV(h) = _QUEUE_PREV(q);
-  _QUEUE_PREV_NEXT(h) = h;
-  _QUEUE_PREV(q) = n;
+  n->prev = h->prev;
+  n->prev->next = n;
+  n->next = q;
+  h->prev = q->prev;
+  h->prev->next = h;
+  q->prev = n;
 }
 
 static inline void QUEUE_INSERT_HEAD(QUEUE *const h, QUEUE *const q)
   FUNC_ATTR_ALWAYS_INLINE
 {
-  _QUEUE_NEXT(q) = _QUEUE_NEXT(h);
-  _QUEUE_PREV(q) = h;
-  _QUEUE_NEXT_PREV(q) = q;
-  _QUEUE_NEXT(h) = q;
+  q->next = h->next;
+  q->prev = h;
+  q->next->prev = q;
+  h->next = q;
 }
 
 static inline void QUEUE_INSERT_TAIL(QUEUE *const h, QUEUE *const q)
   FUNC_ATTR_ALWAYS_INLINE
 {
-  _QUEUE_NEXT(q) = h;
-  _QUEUE_PREV(q) = _QUEUE_PREV(h);
-  _QUEUE_PREV_NEXT(q) = q;
-  _QUEUE_PREV(h) = q;
+  q->next = h;
+  q->prev = h->prev;
+  q->prev->next = q;
+  h->prev = q;
 }
 
 static inline void QUEUE_REMOVE(QUEUE *const q) FUNC_ATTR_ALWAYS_INLINE
 {
-  _QUEUE_PREV_NEXT(q) = _QUEUE_NEXT(q);
-  _QUEUE_NEXT_PREV(q) = _QUEUE_PREV(q);
+  q->prev->next = q->next;
+  q->next->prev = q->prev;
 }
 
 #endif  // NVIM_LIB_QUEUE_H
