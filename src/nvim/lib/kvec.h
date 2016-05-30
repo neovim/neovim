@@ -1,57 +1,50 @@
-/* The MIT License
+// The MIT License
+//
+// Copyright (c) 2008, by Attractive Chaos <attractor@live.co.uk>
+//
+// Permission is hereby granted, free of charge, to any person obtaining
+// a copy of this software and associated documentation files (the
+// "Software"), to deal in the Software without restriction, including
+// without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to
+// permit persons to whom the Software is furnished to do so, subject to
+// the following conditions:
+//
+// The above copyright notice and this permission notice shall be
+// included in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+// EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+// NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS
+// BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
+// ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+// CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
 
-   Copyright (c) 2008, by Attractive Chaos <attractor@live.co.uk>
+// An example:
+//
+//     #include "kvec.h"
+//     int main() {
+//       kvec_t(int) array = KV_INITIAL_VALUE;
+//       kv_push(array, 10); // append
+//       kv_a(array, 20) = 5; // dynamic
+//       kv_A(array, 20) = 4; // static
+//       kv_destroy(array);
+//       return 0;
+//     }
 
-   Permission is hereby granted, free of charge, to any person obtaining
-   a copy of this software and associated documentation files (the
-   "Software"), to deal in the Software without restriction, including
-   without limitation the rights to use, copy, modify, merge, publish,
-   distribute, sublicense, and/or sell copies of the Software, and to
-   permit persons to whom the Software is furnished to do so, subject to
-   the following conditions:
-
-   The above copyright notice and this permission notice shall be
-   included in all copies or substantial portions of the Software.
-
-   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-   EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-   MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-   NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS
-   BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
-   ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
-   CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-   SOFTWARE.
-*/
-
-/*
-  An example:
-
-#include "kvec.h"
-int main() {
-  kvec_t(int) array = KV_INITIAL_VALUE;
-  kv_push(array, 10); // append
-  kv_a(array, 20) = 5; // dynamic
-  kv_A(array, 20) = 4; // static
-  kv_destroy(array);
-  return 0;
-}
-*/
-
-/*
-  2008-09-22 (0.1.0):
-
-  * The initial version.
-
-*/
-
-#ifndef AC_KVEC_H
-#define AC_KVEC_H
+#ifndef NVIM_LIB_KVEC_H
+#define NVIM_LIB_KVEC_H
 
 #include <stdlib.h>
 
 #include "nvim/memory.h"
 
-#define kv_roundup32(x) (--(x), (x)|=(x)>>1, (x)|=(x)>>2, (x)|=(x)>>4, (x)|=(x)>>8, (x)|=(x)>>16, ++(x))
+#define kv_roundup32(x) \
+    ((--(x)), \
+     ((x)|=(x)>>1, (x)|=(x)>>2, (x)|=(x)>>4, (x)|=(x)>>8, (x)|=(x)>>16), \
+     (++(x)))
 
 #define KV_INITIAL_VALUE { .size = 0, .capacity = 0, .items = NULL }
 
@@ -103,4 +96,4 @@ int main() {
          : 0)), \
      (v).items[(i)])
 
-#endif
+#endif  // NVIM_LIB_KVEC_H
