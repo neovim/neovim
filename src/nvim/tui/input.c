@@ -4,6 +4,7 @@
 #include "nvim/api/vim.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/ascii.h"
+#include "nvim/main.h"
 #include "nvim/misc2.h"
 #include "nvim/os/os.h"
 #include "nvim/os/input.h"
@@ -92,7 +93,7 @@ static void flush_input(TermInput *input, bool wait_until_empty)
   size_t drain_boundary = wait_until_empty ? 0 : 0xff;
   do {
     uv_mutex_lock(&input->key_buffer_mutex);
-    loop_schedule(&loop, event_create(1, wait_input_enqueue, 1, input));
+    loop_schedule(&main_loop, event_create(1, wait_input_enqueue, 1, input));
     input->waiting = true;
     while (input->waiting) {
       uv_cond_wait(&input->key_buffer_cond, &input->key_buffer_mutex);
@@ -336,7 +337,7 @@ static void read_cb(Stream *stream, RBuffer *buf, size_t c, void *data,
       stream_close(&input->read_stream, NULL);
       queue_put(input->loop->fast_events, restart_reading, 1, input);
     } else {
-      loop_schedule(&loop, event_create(1, input_done_event, 0));
+      loop_schedule(&main_loop, event_create(1, input_done_event, 0));
     }
     return;
   }

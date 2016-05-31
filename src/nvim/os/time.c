@@ -9,6 +9,7 @@
 #include "nvim/os/time.h"
 #include "nvim/event/loop.h"
 #include "nvim/vim.h"
+#include "nvim/main.h"
 
 static uv_mutex_t delay_mutex;
 static uv_cond_t delay_cond;
@@ -43,7 +44,7 @@ void os_delay(uint64_t milliseconds, bool ignoreinput)
     if (milliseconds > INT_MAX) {
       milliseconds = INT_MAX;
     }
-    LOOP_PROCESS_EVENTS_UNTIL(&loop, NULL, (int)milliseconds, got_int);
+    LOOP_PROCESS_EVENTS_UNTIL(&main_loop, NULL, (int)milliseconds, got_int);
   } else {
     os_microdelay(milliseconds * 1000);
   }

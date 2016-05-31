@@ -16,6 +16,7 @@
 #include "nvim/event/socket.h"
 #include "nvim/msgpack_rpc/helpers.h"
 #include "nvim/vim.h"
+#include "nvim/main.h"
 #include "nvim/ascii.h"
 #include "nvim/memory.h"
 #include "nvim/os_unix.h"
@@ -119,7 +120,7 @@ void channel_teardown(void)
 uint64_t channel_from_process(char **argv)
 {
   Channel *channel = register_channel(kChannelTypeProc);
-  channel->data.process.uvproc = libuv_process_init(&loop, channel);
+  channel->data.process.uvproc = libuv_process_init(&main_loop, channel);
   Process *proc = &channel->data.process.uvproc.process;
   proc->argv = argv;
   proc->in = &channel->data.process.in;
@@ -127,7 +128,7 @@ uint64_t channel_from_process(char **argv)
   proc->err = &channel->data.process.err;
   proc->cb = process_exit;
   if (!process_spawn(proc)) {
-    loop_poll_events(&loop, 0);
+    loop_poll_events(&main_loop, 0);
     decref(channel);
     return 0;
   }
@@ -220,7 +221,7 @@ Object channel_send_call(uint64_t id,
   ChannelCallFrame frame = { request_id, false, false, NIL };
   kv_push(channel->call_stack, &frame);
   channel->pending_requests++;
-  LOOP_PROCESS_EVENTS_UNTIL(&loop, channel->events, -1, frame.returned);
+  LOOP_PROCESS_EVENTS_UNTIL(&main_loop, channel->events, -1, frame.returned);
   (void)kv_pop(channel->call_stack);
   channel->pending_requests--;
 
@@ -316,11 +317,11 @@ void channel_from_stdio(void)
   Channel *channel = register_channel(kChannelTypeStdio);
   incref(channel);  // stdio channels are only closed on exit
   // read stream
-  rstream_init_fd(&loop, &channel->data.std.in, 0, CHANNEL_BUFFER_SIZE,
-      channel);
+  rstream_init_fd(&main_loop, &channel->data.std.in, 0, CHANNEL_BUFFER_SIZE,
+                  channel);
   rstream_start(&channel->data.std.in, parse_msgpack);
   // write stream
-  wstream_init_fd(&loop, &channel->data.std.out, 1, 0, NULL);
+  wstream_init_fd(&main_loop, &channel->data.std.out, 1, 0, NULL);
 }
 
 static void forward_stderr(Stream *stream, RBuffer *rbuf, size_t count,
@@ -646,7 +647,7 @@ static void close_channel(Channel *channel)
     case kChannelTypeStdio:
       stream_close(&channel->data.std.in, NULL);
       stream_close(&channel->data.std.out, NULL);
-      queue_put(loop.fast_events, exit_event, 1, channel);
+      queue_put(main_loop.fast_events, exit_event, 1, channel);
       return;
     default:
       abort();
@@ -691,7 +692,7 @@ static void close_cb(Stream *stream, void *data)
 static Channel *register_channel(ChannelType type)
 {
   Channel *rv = xmalloc(sizeof(Channel));
-  rv->events = queue_new_child(loop.events);
+  rv->events = queue_new_child(main_loop.events);
   rv->type = type;
   rv->refcount = 1;
   rv->closed = false;

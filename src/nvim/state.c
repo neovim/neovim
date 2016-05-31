@@ -4,6 +4,7 @@
 
 #include "nvim/state.h"
 #include "nvim/vim.h"
+#include "nvim/main.h"
 #include "nvim/getchar.h"
 #include "nvim/ui.h"
 #include "nvim/os/input.h"
@@ -32,7 +33,7 @@ getkey:
       // processing. Characters can come from mappings, scripts and other
       // sources, so this scenario is very common.
       key = safe_vgetc();
-    } else if (!queue_empty(loop.events)) {
+    } else if (!queue_empty(main_loop.events)) {
       // Event was made available after the last queue_process_events call
       key = K_EVENT;
     } else {
@@ -45,7 +46,7 @@ getkey:
       // directly.
       (void)os_inchar(NULL, 0, -1, 0);
       input_disable_events();
-      key = !queue_empty(loop.events) ? K_EVENT : safe_vgetc();
+      key = !queue_empty(main_loop.events) ? K_EVENT : safe_vgetc();
     }
 
     if (key == K_EVENT) {

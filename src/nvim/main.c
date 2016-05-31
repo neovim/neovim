@@ -120,6 +120,8 @@ typedef struct {
 # include "main.c.generated.h"
 #endif
 
+Loop main_loop;
+
 static char *argv0;
 
 // Error messages
@@ -133,7 +135,7 @@ static const char *err_extra_cmd =
 
 void event_init(void)
 {
-  loop_init(&loop, NULL);
+  loop_init(&main_loop, NULL);
   // early msgpack-rpc initialization
   msgpack_rpc_init_method_table();
   msgpack_rpc_helpers_init();
@@ -151,19 +153,19 @@ void event_init(void)
 
 void event_teardown(void)
 {
-  if (!loop.events) {
+  if (!main_loop.events) {
     return;
   }
 
-  queue_process_events(loop.events);
+  queue_process_events(main_loop.events);
   input_stop();
   channel_teardown();
-  process_teardown(&loop);
+  process_teardown(&main_loop);
   server_teardown();
   signal_teardown();
   terminal_teardown();
 
-  loop_close(&loop);
+  loop_close(&main_loop);
 }
 
 /// Performs early initialization.

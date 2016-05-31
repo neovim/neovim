@@ -11,6 +11,7 @@
 #include "nvim/vim.h"
 #include "nvim/ui.h"
 #include "nvim/map.h"
+#include "nvim/main.h"
 #include "nvim/memory.h"
 #include "nvim/api/vim.h"
 #include "nvim/api/private/helpers.h"
@@ -261,7 +262,7 @@ static void sigwinch_cb(SignalWatcher *watcher, int signum, void *data)
   UI *ui = data;
   update_size(ui);
   // run refresh_event in nvim main loop
-  loop_schedule(&loop, event_create(1, refresh_event, 0));
+  loop_schedule(&main_loop, event_create(1, refresh_event, 0));
 }
 
 static bool attrs_differ(HlAttrs a1, HlAttrs a2)

@@ -14,6 +14,7 @@
 #include "nvim/os/shell.h"
 #include "nvim/os/signal.h"
 #include "nvim/types.h"
+#include "nvim/main.h"
 #include "nvim/vim.h"
 #include "nvim/message.h"
 #include "nvim/memory.h"
@@ -205,16 +206,16 @@ static int do_os_system(char **argv,
   xstrlcpy(prog, argv[0], MAXPATHL);
 
   Stream in, out, err;
-  LibuvProcess uvproc = libuv_process_init(&loop, &buf);
+  LibuvProcess uvproc = libuv_process_init(&main_loop, &buf);
   Process *proc = &uvproc.process;
-  Queue *events = queue_new_child(loop.events);
+  Queue *events = queue_new_child(main_loop.events);
   proc->events = events;
   proc->argv = argv;
   proc->in = input != NULL ? &in : NULL;
   proc->out = &out;
   proc->err = &err;
   if (!process_spawn(proc)) {
-    loop_poll_events(&loop, 0);
+    loop_poll_events(&main_loop, 0);
     // Failed, probably due to `sh` not being executable
     if (!silent) {
       MSG_PUTS(_("\nCannot execute "));

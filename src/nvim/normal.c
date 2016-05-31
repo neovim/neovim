@@ -7879,7 +7879,7 @@ static void nv_event(cmdarg_T *cap)
   // not safe to perform garbage collection because there could be unreferenced
   // lists or dicts being used.
   may_garbage_collect = false;
-  queue_process_events(loop.events);
+  queue_process_events(main_loop.events);
   cap->retval |= CA_COMMAND_BUSY;       // don't call edit() now
 }
 

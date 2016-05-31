@@ -1243,7 +1243,6 @@ EXTERN char *ignoredp;
 
 // If a msgpack-rpc channel should be started over stdin/stdout
 EXTERN bool embedded_mode INIT(= false);
-EXTERN Loop loop;
 
 /// Used to track the status of external functions.
 /// Currently only used for iconv().
