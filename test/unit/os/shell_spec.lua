@@ -30,10 +30,6 @@ describe('shell functions', function()
     cimported.p_shcf = to_cstr('-c')
   end)
 
-  teardown(function()
-    cimported.event_teardown()
-  end)
-
   local function shell_build_argv(cmd, extra_args)
     local res = cimported.shell_build_argv(
         cmd and to_cstr(cmd),
