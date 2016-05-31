@@ -374,7 +374,7 @@ endforeach()
 include(LuaHelpers)
 set(LUA_DEPENDENCIES lpeg mpack bit)
 if(NOT LUA_PRG)
-  foreach(CURRENT_LUA_PRG luajit lua)
+  foreach(CURRENT_LUA_PRG luajit lua5.1 lua5.2 lua)
     # If LUA_PRG is set find_program() will not search
     unset(LUA_PRG CACHE)
     unset(LUA_PRG_WORKS)
