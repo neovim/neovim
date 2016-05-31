@@ -45,7 +45,7 @@ grammar = Ct((c_proto + c_comment + c_preproc + ws) ^ 1)
 assert(#arg >= 1)
 functions = {}
 
--- names of all headers relative to the source root(for inclusion in the
+-- names of all headers relative to the source root (for inclusion in the
 -- generated file)
 headers = {}
 -- output file(dispatch function + metadata serialized with msgpack)
@@ -64,24 +64,22 @@ for i = 1, #arg - 1 do
   local tmp = grammar:match(input:read('*all'))
   for i = 1, #tmp do
     local fn = tmp[i]
-    if fn.noexport then
-      goto continue
+    if not fn.noexport then
+      functions[#functions + 1] = tmp[i]
+      if #fn.parameters ~= 0 and fn.parameters[1][2] == 'channel_id' then
+        -- this function should receive the channel id
+        fn.receives_channel_id = true
+        -- remove the parameter since it won't be passed by the api client
+        table.remove(fn.parameters, 1)
+      end
+      if #fn.parameters ~= 0 and fn.parameters[#fn.parameters][1] == 'error' then
+        -- function can fail if the last parameter type is 'Error'
+        fn.can_fail = true
+        -- remove the error parameter, msgpack has it's own special field
+        -- for specifying errors
+        fn.parameters[#fn.parameters] = nil
+      end
     end
-    functions[#functions + 1] = tmp[i]
-    if #fn.parameters ~= 0 and fn.parameters[1][2] == 'channel_id' then
-      -- this function should receive the channel id
-      fn.receives_channel_id = true
-      -- remove the parameter since it won't be passed by the api client
-      table.remove(fn.parameters, 1)
-    end
-    if #fn.parameters ~= 0 and fn.parameters[#fn.parameters][1] == 'error' then
-      -- function can fail if the last parameter type is 'Error'
-      fn.can_fail = true
-      -- remove the error parameter, msgpack has it's own special field
-      -- for specifying errors
-      fn.parameters[#fn.parameters] = nil
-    end
-    ::continue::
   end
   input:close()
 end
