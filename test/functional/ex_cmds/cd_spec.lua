@@ -35,6 +35,7 @@ for _, cmd in ipairs {'cd', 'chdir'} do
       for _, d in pairs(directories) do
         lfs.mkdir(d)
       end
+      directories.start = cwd()
     end)
 
     after_each(function()
@@ -43,10 +44,83 @@ for _, cmd in ipairs {'cd', 'chdir'} do
       end
     end)
 
-    it('works', function()
-      -- Store the initial working directory
-      local globalDir = cwd()
+    describe('using explicit scope', function()
+      it('for window', function()
+        local globalDir = directories.start
+        local globalwin = call('winnr')
+        local tabnr = call('tabpagenr')
 
+        -- Everything matches globalDir to start
+        eq(globalDir, cwd(globalwin))
+        eq(globalDir, cwd(globalwin, tabnr))
+        eq(0, lwd(globalwin))
+        eq(0, lwd(globalwin, tabnr))
+
+        execute('bot split')
+        local localwin = call('winnr')
+        -- Initial window is still using globalDir
+        eq(globalDir, cwd(localwin))
+        eq(globalDir, cwd(localwin, tabnr))
+        eq(0, lwd(globalwin))
+        eq(0, lwd(globalwin, tabnr))
+
+        execute('silent l' .. cmd .. ' ' .. directories.window)
+        -- From window with local dir, the original window
+        -- is still reporting the global dir
+        eq(globalDir, cwd(globalwin))
+        eq(globalDir, cwd(globalwin, tabnr))
+        eq(0, lwd(globalwin))
+        eq(0, lwd(globalwin, tabnr))
+
+        -- Window with local dir reports as such
+        eq(globalDir .. '/' .. directories.window, cwd(localwin))
+        eq(globalDir .. '/' .. directories.window, cwd(localwin, tabnr))
+        eq(1, lwd(localwin))
+        eq(1, lwd(localwin, tabnr))
+
+        execute('tabnew')
+        -- From new tab page, original window reports global dir
+        eq(globalDir, cwd(globalwin, tabnr))
+        eq(0, lwd(globalwin, tabnr))
+
+        -- From new tab page, local window reports as such
+        eq(globalDir .. '/' .. directories.window, cwd(localwin, tabnr))
+        eq(1, lwd(localwin, tabnr))
+      end)
+
+      it('for tab page', function()
+        local globalDir = directories.start
+        local globaltab = call('tabpagenr')
+
+        -- Everything matches globalDir to start
+        eq(globalDir, cwd(-1, 0))
+        eq(globalDir, cwd(-1, globaltab))
+        eq(0, lwd(-1, 0))
+        eq(0, lwd(-1, globaltab))
+
+        execute('tabnew')
+        execute('silent t' .. cmd .. ' ' .. directories.tab)
+        local localtab = call('tabpagenr')
+
+        -- From local tab page, original tab reports globalDir
+        eq(globalDir, cwd(-1, globaltab))
+        eq(0, lwd(-1, globaltab))
+
+        -- new tab reports local
+        eq(globalDir .. '/' .. directories.tab, cwd(-1, 0))
+        eq(globalDir .. '/' .. directories.tab, cwd(-1, localtab))
+        eq(1, lwd(-1, 0))
+        eq(1, lwd(-1, localtab))
+
+        execute('tabnext')
+        -- From original tab page, local reports as such
+        eq(globalDir .. '/' .. directories.tab, cwd(-1, localtab))
+        eq(1, lwd(-1, localtab))
+      end)
+    end)
+
+    it('works', function()
+      local globalDir = directories.start
       -- Create a new tab first and verify that is has the same working dir
       execute('tabnew')
       eq(globalDir, cwd())
