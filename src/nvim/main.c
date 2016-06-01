@@ -161,6 +161,7 @@ void event_teardown(void)
   input_stop();
   channel_teardown();
   process_teardown(&main_loop);
+  timer_teardown();
   server_teardown();
   signal_teardown();
   terminal_teardown();
