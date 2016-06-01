@@ -9954,7 +9954,7 @@ static void f_getcwd(typval_T *argvars, typval_T *rettv)
     }
 
     if (scope_number[kCdScopeWindow] > 0) {
-      win = find_win_by_nr(&argvars[0], curtab);
+      win = find_win_by_nr(&argvars[0], tp);
       if (!win) {
         EMSG(_("E5002: Cannot find window number."));
         return;
@@ -10897,7 +10897,7 @@ static void f_haslocaldir(typval_T *argvars, typval_T *rettv)
     }
 
     if (scope_number[kCdScopeWindow] > 0) {
-      win = find_win_by_nr(&argvars[0], curtab);
+      win = find_win_by_nr(&argvars[0], tp);
       if (!win) {
         EMSG(_("E5002: Cannot find window number."));
         return;
