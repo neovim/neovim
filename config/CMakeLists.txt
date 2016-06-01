@@ -33,6 +33,7 @@ check_function_exists(fseeko HAVE_FSEEKO)
 check_function_exists(getpwent HAVE_GETPWENT)
 check_function_exists(getpwnam HAVE_GETPWNAM)
 check_function_exists(getpwuid HAVE_GETPWUID)
+check_function_exists(uv_translate_sys_error HAVE_UV_TRANSLATE_SYS_ERROR)
 
 if(Iconv_FOUND)
   set(HAVE_ICONV 1)

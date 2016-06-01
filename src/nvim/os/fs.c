@@ -1,14 +1,20 @@
 // fs.c -- filesystem access
 #include <stdbool.h>
-
+#include <stddef.h>
 #include <assert.h>
+#include <limits.h>
+#include <unistd.h>
 #include <fcntl.h>
+#include <errno.h>
+
+#include <uv.h>
 
 #include "nvim/os/os.h"
 #include "nvim/os/os_defs.h"
 #include "nvim/ascii.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
+#include "nvim/assert.h"
 #include "nvim/misc1.h"
 #include "nvim/misc2.h"
 #include "nvim/path.h"
@@ -17,6 +23,20 @@
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "os/fs.c.generated.h"
 #endif
+
+#define RUN_UV_FS_FUNC(ret, func, ...) \
+    do { \
+      bool did_try_to_free = false; \
+uv_call_start: {} \
+      uv_fs_t req; \
+      ret = func(&fs_loop, &req, __VA_ARGS__); \
+      uv_fs_req_cleanup(&req); \
+      if (ret == UV_ENOMEM && !did_try_to_free) { \
+        try_to_free_memory(); \
+        did_try_to_free = true; \
+        goto uv_call_start; \
+      } \
+    } while (0)
 
 // Many fs functions from libuv return that value on success.
 static const int kLibuvSuccess = 0;
@@ -325,11 +345,121 @@ static bool is_executable_in_path(const char_u *name, char_u **abspath)
 int os_open(const char* path, int flags, int mode)
   FUNC_ATTR_NONNULL_ALL
 {
-  uv_fs_t open_req;
-  int r = uv_fs_open(&fs_loop, &open_req, path, flags, mode, NULL);
-  uv_fs_req_cleanup(&open_req);
-  // r is the same as open_req.result (except for OOM: then only r is set).
+  int r;
+  RUN_UV_FS_FUNC(r, uv_fs_open, path, flags, mode, NULL);
   return r;
+}
+
+/// Close a file
+///
+/// @return 0 or libuv error code on failure.
+int os_close(const int fd)
+{
+  int r;
+  RUN_UV_FS_FUNC(r, uv_fs_close, fd, NULL);
+  return r;
+}
+
+/// Read from a file
+///
+/// Handles EINTR and ENOMEM, but not other errors.
+///
+/// @param[in]  fd  File descriptor to read from.
+/// @param[out]  ret_eof  Is set to true if EOF was encountered, otherwise set
+///                       to false. Initial value is ignored.
+/// @param[out]  ret_buf  Buffer to write to. May be NULL if size is zero.
+/// @param[in]  size  Amount of bytes to read.
+///
+/// @return Number of bytes read or libuv error code (< 0).
+ptrdiff_t os_read(const int fd, bool *ret_eof, char *const ret_buf,
+                  const size_t size)
+  FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  *ret_eof = false;
+  if (ret_buf == NULL) {
+    assert(size == 0);
+    return 0;
+  }
+  size_t read_bytes = 0;
+  bool did_try_to_free = false;
+  while (read_bytes != size) {
+    const ptrdiff_t cur_read_bytes = read(fd, ret_buf + read_bytes,
+                                          size - read_bytes);
+    if (cur_read_bytes > 0) {
+      read_bytes += (size_t) cur_read_bytes;
+      assert(read_bytes <= size);
+    }
+    if (cur_read_bytes < 0) {
+#ifdef HAVE_UV_TRANSLATE_SYS_ERROR
+      const int error = uv_translate_sys_error(errno);
+#else
+      const int error = -errno;
+      STATIC_ASSERT(-EINTR == UV_EINTR, "Need to translate error codes");
+      STATIC_ASSERT(-EAGAIN == UV_EAGAIN, "Need to translate error codes");
+      STATIC_ASSERT(-ENOMEM == UV_ENOMEM, "Need to translate error codes");
+#endif
+      errno = 0;
+      if (error == UV_EINTR || error == UV_EAGAIN) {
+        continue;
+      } else if (error == UV_ENOMEM && !did_try_to_free) {
+        try_to_free_memory();
+        did_try_to_free = true;
+        continue;
+      } else {
+        return (ptrdiff_t) error;
+      }
+    }
+    if (cur_read_bytes == 0) {
+      *ret_eof = true;
+      break;
+    }
+  }
+  return (ptrdiff_t) read_bytes;
+}
+
+/// Write to a file
+///
+/// @param[in]  fd  File descriptor to write to.
+/// @param[in]  buf  Data to write. May be NULL if size is zero.
+/// @param[in]  size  Amount of bytes to write.
+///
+/// @return Number of bytes written or libuv error code (< 0).
+ptrdiff_t os_write(const int fd, const char *const buf, const size_t size)
+  FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  if (buf == NULL) {
+    assert(size == 0);
+    return 0;
+  }
+  size_t written_bytes = 0;
+  while (written_bytes != size) {
+    const ptrdiff_t cur_written_bytes = write(fd, buf + written_bytes,
+                                              size - written_bytes);
+    if (cur_written_bytes > 0) {
+      written_bytes += (size_t) cur_written_bytes;
+    }
+    if (cur_written_bytes < 0) {
+#ifdef HAVE_UV_TRANSLATE_SYS_ERROR
+      const int error = uv_translate_sys_error(errno);
+#else
+      const int error = -errno;
+      STATIC_ASSERT(-EINTR == UV_EINTR, "Need to translate error codes");
+      STATIC_ASSERT(-EAGAIN == UV_EAGAIN, "Need to translate error codes");
+      // According to the man page open() may fail with ENOMEM, but write()
+      // can’t.
+#endif
+      errno = 0;
+      if (error == UV_EINTR || error == UV_EAGAIN) {
+        continue;
+      } else {
+        return error;
+      }
+    }
+    if (cur_written_bytes == 0) {
+      return UV_UNKNOWN;
+    }
+  }
+  return (ptrdiff_t) written_bytes;
 }
 
 /// Flushes file modifications to disk.
@@ -339,9 +469,8 @@ int os_open(const char* path, int flags, int mode)
 /// @return `0` on success, a libuv error code on failure.
 int os_fsync(int fd)
 {
-  uv_fs_t fsync_req;
-  int r = uv_fs_fsync(&fs_loop, &fsync_req, fd, NULL);
-  uv_fs_req_cleanup(&fsync_req);
+  int r;
+  RUN_UV_FS_FUNC(r, uv_fs_fsync, fd, NULL);
   return r;
 }
 
@@ -379,16 +508,9 @@ int32_t os_getperm(const char_u *name)
 int os_setperm(const char_u *name, int perm)
   FUNC_ATTR_NONNULL_ALL
 {
-  uv_fs_t request;
-  int result = uv_fs_chmod(&fs_loop, &request,
-                           (const char*)name, perm, NULL);
-  uv_fs_req_cleanup(&request);
-
-  if (result == kLibuvSuccess) {
-    return OK;
-  }
-
-  return FAIL;
+  int r;
+  RUN_UV_FS_FUNC(r, uv_fs_chmod, (const char *)name, perm, NULL);
+  return (r == kLibuvSuccess ? OK : FAIL);
 }
 
 /// Changes the ownership of the file referred to by the open file descriptor.
@@ -397,13 +519,11 @@ int os_setperm(const char_u *name, int perm)
 ///
 /// @note If the `owner` or `group` is specified as `-1`, then that ID is not
 /// changed.
-int os_fchown(int file_descriptor, uv_uid_t owner, uv_gid_t group)
+int os_fchown(int fd, uv_uid_t owner, uv_gid_t group)
 {
-  uv_fs_t request;
-  int result = uv_fs_fchown(&fs_loop, &request, file_descriptor,
-                            owner, group, NULL);
-  uv_fs_req_cleanup(&request);
-  return result;
+  int r;
+  RUN_UV_FS_FUNC(r, uv_fs_fchown, fd, owner, group, NULL);
+  return r;
 }
 
 /// Check if a file exists.
@@ -422,9 +542,8 @@ bool os_file_exists(const char_u *name)
 bool os_file_is_readable(const char *name)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  uv_fs_t req;
-  int r = uv_fs_access(&fs_loop, &req, name, R_OK, NULL);
-  uv_fs_req_cleanup(&req);
+  int r;
+  RUN_UV_FS_FUNC(r, uv_fs_access, name, R_OK, NULL);
   return (r == 0);
 }
 
@@ -436,9 +555,8 @@ bool os_file_is_readable(const char *name)
 int os_file_is_writable(const char *name)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  uv_fs_t req;
-  int r = uv_fs_access(&fs_loop, &req, name, W_OK, NULL);
-  uv_fs_req_cleanup(&req);
+  int r;
+  RUN_UV_FS_FUNC(r, uv_fs_access, name, W_OK, NULL);
   if (r == 0) {
     return os_isdir((char_u *)name) ? 2 : 1;
   }
@@ -451,16 +569,10 @@ int os_file_is_writable(const char *name)
 int os_rename(const char_u *path, const char_u *new_path)
   FUNC_ATTR_NONNULL_ALL
 {
-  uv_fs_t request;
-  int result = uv_fs_rename(&fs_loop, &request,
-                            (const char *)path, (const char *)new_path, NULL);
-  uv_fs_req_cleanup(&request);
-
-  if (result == kLibuvSuccess) {
-    return OK;
-  }
-
-  return FAIL;
+  int r;
+  RUN_UV_FS_FUNC(r, uv_fs_rename, (const char *)path, (const char *)new_path,
+                 NULL);
+  return (r == kLibuvSuccess ? OK : FAIL);
 }
 
 /// Make a directory.
@@ -469,10 +581,9 @@ int os_rename(const char_u *path, const char_u *new_path)
 int os_mkdir(const char *path, int32_t mode)
   FUNC_ATTR_NONNULL_ALL
 {
-  uv_fs_t request;
-  int result = uv_fs_mkdir(&fs_loop, &request, path, mode, NULL);
-  uv_fs_req_cleanup(&request);
-  return result;
+  int r;
+  RUN_UV_FS_FUNC(r, uv_fs_mkdir, path, mode, NULL);
+  return r;
 }
 
 /// Make a directory, with higher levels when needed
@@ -554,10 +665,9 @@ int os_mkdtemp(const char *template, char *path)
 int os_rmdir(const char *path)
   FUNC_ATTR_NONNULL_ALL
 {
-  uv_fs_t request;
-  int result = uv_fs_rmdir(&fs_loop, &request, path, NULL);
-  uv_fs_req_cleanup(&request);
-  return result;
+  int r;
+  RUN_UV_FS_FUNC(r, uv_fs_rmdir, path, NULL);
+  return r;
 }
 
 /// Opens a directory.
@@ -599,10 +709,9 @@ void os_closedir(Directory *dir)
 int os_remove(const char *path)
   FUNC_ATTR_NONNULL_ALL
 {
-  uv_fs_t request;
-  int result = uv_fs_unlink(&fs_loop, &request, path, NULL);
-  uv_fs_req_cleanup(&request);
-  return result;
+  int r;
+  RUN_UV_FS_FUNC(r, uv_fs_unlink, path, NULL);
+  return r;
 }
 
 /// Get the file information for a given path
