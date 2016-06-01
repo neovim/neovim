@@ -26,6 +26,7 @@
 /// `getcwd()`. When using scopes as limits (e.g. in loops) don't use the scopes
 /// directly, use `MIN_CD_SCOPE` and `MAX_CD_SCOPE` instead.
 typedef enum {
+  kCdScopeInvalid = -1,
   kCdScopeWindow,  ///< Affects one window.
   kCdScopeTab,     ///< Affects one tab page.
   kCdScopeGlobal,  ///< Affects the entire instance of Neovim.
