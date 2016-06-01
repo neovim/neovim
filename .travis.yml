@@ -11,7 +11,7 @@ env:
     # Update PATH for pip and MinGW.
     - PATH="$(python2.7 -c 'import site; print(site.getuserbase())')/bin:$HOME/.local/mingw32/bin:$PATH"
     # LLVM symbolizer path.
-    - LLVM_SYMBOLIZER="$(which llvm-symbolizer-3.6)"
+    - LLVM_SYMBOLIZER="$(which llvm-symbolizer-3.4)"
     # Build directory for Neovim.
     - BUILD_DIR="$TRAVIS_BUILD_DIR/build"
     # Build directory for third-party dependencies.
@@ -72,13 +72,13 @@ matrix:
       compiler: gcc-5 -m32
       env: BUILD_32BIT=ON
     - os: linux
-      compiler: clang-3.6
-      env: GCOV=llvm-cov-3.6 CLANG_SANITIZER=ASAN_UBSAN CMAKE_FLAGS="$CMAKE_FLAGS -DUSE_GCOV=ON"
+      compiler: clang
+      env: GCOV=llvm-cov CLANG_SANITIZER=ASAN_UBSAN CMAKE_FLAGS="$CMAKE_FLAGS -DUSE_GCOV=ON"
     - os: linux
-      compiler: clang-3.6
+      compiler: clang
       env: CLANG_SANITIZER=MSAN
     - os: linux
-      compiler: clang-3.6
+      compiler: clang
       env: CLANG_SANITIZER=TSAN
     - os: osx
       compiler: clang
@@ -103,13 +103,12 @@ addons:
     sources:
       # TODO: Remove PPA when Travis gets Python >=3.3.
       - deadsnakes
-      - llvm-toolchain-precise-3.6
       - ubuntu-toolchain-r-test
     packages:
       - autoconf
       - automake
       - build-essential
-      - clang-3.6
+      - clang-3.4
       - cmake
       - g++-5-multilib
       - g++-multilib
@@ -118,7 +117,7 @@ addons:
       - gdb
       - libc6-dev-i386
       - libtool
-      - llvm-3.6-dev
+      - llvm-3.4-dev
       - pkg-config
       - python3.3-dev
       - unzip
