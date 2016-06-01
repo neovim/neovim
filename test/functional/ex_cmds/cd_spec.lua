@@ -11,9 +11,9 @@ local exc_exec = helpers.exc_exec
 
 -- These directories will be created for testing
 local directories = {
-  'Xtest-functional-ex_cmds-cd_spec.1', -- Tab
-  'Xtest-functional-ex_cmds-cd_spec.2', -- Window
-  'Xtest-functional-ex_cmds-cd_spec.3', -- New global
+  tab = 'Xtest-functional-ex_cmds-cd_spec.tab', -- Tab
+  window = 'Xtest-functional-ex_cmds-cd_spec.window', -- Window
+  global = 'Xtest-functional-ex_cmds-cd_spec.global', -- New global
 }
 
 -- Shorthand writing to get the current working directory
@@ -29,16 +29,16 @@ local tlwd = function() return lwd(-1,  0) end  -- tab dir
 
 -- Test both the `cd` and `chdir` variants
 for _, cmd in ipairs {'cd', 'chdir'} do
-  describe(':*' .. cmd, function()
+  describe(':' .. cmd, function()
     before_each(function()
       clear()
-      for _, d in ipairs(directories) do
+      for _, d in pairs(directories) do
         lfs.mkdir(d)
       end
     end)
 
     after_each(function()
-      for _, d in ipairs(directories) do
+      for _, d in pairs(directories) do
         lfs.rmdir(d)
       end
     end)
@@ -56,8 +56,8 @@ for _, cmd in ipairs {'cd', 'chdir'} do
       eq(0, wlwd())
 
       -- Change tab-local working directory and verify it is different
-      execute('silent t' .. cmd .. ' ' .. directories[1])
-      eq(globalDir .. '/' .. directories[1], cwd())
+      execute('silent t' .. cmd .. ' ' .. directories.tab)
+      eq(globalDir .. '/' .. directories.tab, cwd())
       eq(cwd(), tcwd())  -- working directory maches tab directory
       eq(1, tlwd())
       eq(cwd(), wcwd())  -- still no window-directory
@@ -67,16 +67,16 @@ for _, cmd in ipairs {'cd', 'chdir'} do
       execute('new')
       eq(1, tlwd())  -- Still tab-local working directory
       eq(0, wlwd())  -- Still no window-local working directory
-      eq(globalDir .. '/' .. directories[1], cwd())
-      execute('silent l' .. cmd .. ' ../' .. directories[2])
-      eq(globalDir .. '/' .. directories[2], cwd())
-      eq(globalDir .. '/' .. directories[1], tcwd())
+      eq(globalDir .. '/' .. directories.tab, cwd())
+      execute('silent l' .. cmd .. ' ../' .. directories.window)
+      eq(globalDir .. '/' .. directories.window, cwd())
+      eq(globalDir .. '/' .. directories.tab, tcwd())
       eq(1, wlwd())
 
       -- Verify the first window still has the tab local directory
       execute('wincmd w')
-      eq(globalDir .. '/' .. directories[1],  cwd())
-      eq(globalDir .. '/' .. directories[1], tcwd())
+      eq(globalDir .. '/' .. directories.tab,  cwd())
+      eq(globalDir .. '/' .. directories.tab, tcwd())
       eq(0, wlwd())  -- No window-local directory
 
       -- Change back to initial tab and verify working directory has stayed
@@ -86,11 +86,11 @@ for _, cmd in ipairs {'cd', 'chdir'} do
       eq(0, wlwd())
 
       -- Verify global changes don't affect local ones
-      execute('silent ' .. cmd .. ' ' .. directories[3])
-      eq(globalDir .. '/' .. directories[3], cwd())
+      execute('silent ' .. cmd .. ' ' .. directories.global)
+      eq(globalDir .. '/' .. directories.global, cwd())
       execute('tabnext')
-      eq(globalDir .. '/' .. directories[1],  cwd())
-      eq(globalDir .. '/' .. directories[1], tcwd())
+      eq(globalDir .. '/' .. directories.tab,  cwd())
+      eq(globalDir .. '/' .. directories.tab, tcwd())
       eq(0, wlwd())  -- Still no window-local directory in this window
 
       -- Unless the global change happened in a tab with local directory
@@ -104,9 +104,9 @@ for _, cmd in ipairs {'cd', 'chdir'} do
 
       -- But not in a window with its own local directory
       execute('tabnext | wincmd w')
-      eq(globalDir .. '/' .. directories[2], cwd() )
+      eq(globalDir .. '/' .. directories.window, cwd() )
       eq(0 , tlwd())
-      eq(globalDir .. '/' .. directories[2], wcwd())
+      eq(globalDir .. '/' .. directories.window, wcwd())
     end)
   end)
 end
