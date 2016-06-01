@@ -119,6 +119,25 @@ for _, cmd in ipairs {'cd', 'chdir'} do
       end)
     end)
 
+    describe('getcwd(-1, -1)', function()
+      it('works', function()
+        eq(directories.start, cwd(-1, -1))
+        eq(0, lwd(-1, -1))
+      end)
+
+      it('works with tab-local pwd', function()
+        execute('silent t' .. cmd .. ' ' .. directories.tab)
+        eq(directories.start, cwd(-1, -1))
+        eq(0, lwd(-1, -1))
+      end)
+
+      it('works with window-local pwd', function()
+        execute('silent l' .. cmd .. ' ' .. directories.window)
+        eq(directories.start, cwd(-1, -1))
+        eq(0, lwd(-1, -1))
+      end)
+    end)
+
     it('works', function()
       local globalDir = directories.start
       -- Create a new tab first and verify that is has the same working dir
