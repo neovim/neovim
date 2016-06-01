@@ -8,6 +8,11 @@
 #include "nvim/ui.h"
 #include "nvim/os/input.h"
 
+#include "nvim/ex_getln.h"
+#include "nvim/ex_docmd.h"
+#include "nvim/window.h"
+#include "nvim/buffer.h"
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "state.c.generated.h"
 #endif
@@ -15,6 +20,11 @@
 
 void state_enter(VimState *s)
 {
+  // a string to save the command.
+  // TODO: temporary, we'll get it directly from the cmdline in the future
+  char_u live_cmd[255] = ""; //TODO : check size
+  int i = 0;
+
   for (;;) {
     int check_result = s->check ? s->check(s) : 1;
 
@@ -26,7 +36,7 @@ void state_enter(VimState *s)
 
     int key;
 
-getkey:
+    getkey:
     if (char_avail() || using_script() || input_available()) {
       // Don't block for events if there's a character already available for
       // processing. Characters can come from mappings, scripts and other
@@ -48,15 +58,37 @@ getkey:
       key = !queue_empty(loop.events) ? K_EVENT : safe_vgetc();
     }
 
-    if (key == K_EVENT) {
-      may_sync_undo();
+    // append key to cmd_line, ignoring DEL. Other ignored char will be
+    // parsed when cmdline will be gotten directly
+    if(key == K_DEL || key == K_KDEL || key == K_BS) {
+      if(i != 0) i--;
+      live_cmd[i] = '\0';
+    } else { // Not the good way of doing things
+      live_cmd[i++] = (char_u)key;
+      live_cmd[i] = '\0';
     }
 
+    if (key == K_EVENT)
+      may_sync_undo();
+
     int execute_result = s->execute(s, key);
+
+    // close buffer and windows if we leave the live_sub mode
+    if (!EVENT_COLON) {
+      if (livebuf != NULL) {
+        close_windows(livebuf, false);
+        close_buffer(NULL, livebuf, DOBUF_WIPE, false);
+      }
+      update_screen(0);
+    }
+
     if (!execute_result) {
       break;
     } else if (execute_result == -1) {
       goto getkey;
+    } else if (EVENT_COLON == 1 && is_live(live_cmd) == 1){ // compute a live action
+      do_cmdline(live_cmd, NULL, NULL, DOCMD_KEEPLINE);
     }
+
   }
 }

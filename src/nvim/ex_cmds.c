@@ -59,32 +59,16 @@
 #include "nvim/os/input.h"
 #include "nvim/os/time.h"
 
-//#include "nvim/buffer.c"
-extern ArrayOf(String) buffer_get_lines(Buffer buffer,
-                                 Integer start,
-                                 Integer end,
-                                 Boolean strict_indexing,
-                                 Error *err);
-
-extern Integer buffer_add_highlight(Buffer buffer,
-                             Integer src_id,
-                             String hl_group,
-                             Integer line,
-                             Integer col_start,
-                             Integer col_end,
-                             Error *err);
 /*
  * Struct to hold the sign properties.
  */
 typedef struct sign sign_T;
 
+static int EVENT_SLASH = 0; // for live sub, we need to know if the user has already enter a slash
+
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ex_cmds.c.generated.h"
-#include "ex_cmds_defs.h"
-#include "regexp_defs.h"
-#include "pos.h"
-
 #endif
 
 /*
@@ -1276,7 +1260,7 @@ filterend:
  * Call a shell to execute a command.
  * When "cmd" is NULL start an interactive shell.
  */
-void 
+void
 do_shell (
     char_u *cmd,
     int flags              /* may be SHELL_DOOUT when output is redirected */
@@ -1749,7 +1733,7 @@ theend:
  * May set eap->forceit if a dialog says it's OK to overwrite.
  * Return OK if it's OK, FAIL if it is not.
  */
-int 
+int
 check_overwrite (
     exarg_T *eap,
     buf_T *buf,
@@ -2052,7 +2036,7 @@ theend:
  *
  * return FAIL for failure, OK otherwise
  */
-int 
+int
 do_ecmd (
     int fnum,
     char_u *ffname,
@@ -2936,7 +2920,9 @@ void do_sub(exarg_T *eap)
   static int do_all = FALSE;            /* do multiple substitutions per line */
   static int do_ask = FALSE;            /* ask for confirmation */
   static bool do_count = false;         /* count only */
-  static int do_error = TRUE;           /* if false, ignore errors */
+  //static int do_error = TRUE;           /* if false, ignore errors */
+  // if live mode, ignore errors
+  static int do_error = FALSE;           /* if false, ignore errors */
   static int do_print = FALSE;          /* print last line with subs. */
   static int do_list = FALSE;           /* list last line with subs. */
   static int do_number = FALSE;         /* list last line with line nr*/
@@ -3099,7 +3085,7 @@ void do_sub(exarg_T *eap)
     do_all = p_gd ? TRUE : FALSE;
 
     do_ask = FALSE;
-    do_error = TRUE;
+    do_error = (EVENT_COLON == 1) ? FALSE : TRUE;
     do_print = FALSE;
     do_count = false;
     do_number = FALSE;
@@ -3832,8 +3818,10 @@ skip:
         else
           beginline(BL_WHITE | BL_FIX);
       }
-      if (!do_sub_msg(do_count) && do_ask)
-        MSG("");
+      if(EVENT_COLON != 1) { // live_mode : no message in command line 
+        if (!do_sub_msg(do_count) && do_ask)
+          MSG("");
+      }
     } else
       global_need_beginline = TRUE;
     if (do_print)
@@ -3859,7 +3847,7 @@ skip:
 
 
   // live_sub if sub on the whole file and there are results to display
-  if (eap[0].cmdlinep[0][0] == '%' && !kl_empty(lmatch))
+  if (eap[0].cmdlinep[0][0] != 's' && !kl_empty(lmatch))
     ex_window_live_sub(sub, lmatch);
 
 }
@@ -4330,7 +4318,7 @@ char_u *check_help_lang(char_u *arg)
  * Assumption is made that the matched_string passed has already been found to
  * match some string for which help is requested.  webb.
  */
-int 
+int
 help_heuristic (
     char_u *matched_string,
     int offset,                             /* offset for match */
@@ -4932,7 +4920,7 @@ void ex_helptags(exarg_T *eap)
   xfree(dirname);
 }
 
-static void 
+static void
 helptags_one (
     char_u *dir,               /* doc directory */
     char_u *ext,               /* suffix, ".txt", ".itx", ".frx", etc. */
@@ -5874,10 +5862,37 @@ void set_context_in_sign_cmd(expand_T *xp, char_u *arg)
   }
 }
 
-/// live_sub()
+/// return the size of a long in term of digit
+int width_long(long nb) {
+  int res = 1;
+  long cpy = nb;
+  while (cpy  > 9) {
+    cpy /= 10 ;
+    res++;
+  }
+  return res;
+}
+
+/// used in ex_window_live_sub for creating the column which contains the number
+/// of the line.
+char* compute_number_line(int col_size, linenr_T number) {
+  char *s = xcalloc((size_t)col_size, sizeof(char));
+  char *r = xcalloc((size_t)col_size, sizeof(char));
+  strcat(r, " [");
+
+  for (int i=2 ; i < col_size-width_long(number) - 2 ; i++)
+    r[i] = ' ';
+
+  sprintf(s, "%s%ld] ", r, number);
+  xfree(r);
+
+  return s;
+}
+
+/// ex_window_live_sub()
 /// Open a window for future displaying of the live_sub mode.
-/// 
-/// Does not allow editing in the window. 
+///
+/// Does not allow editing in the window.
 /// Returns when the window is closed.
 ///
 /// @param sub the replacement word
@@ -5886,44 +5901,44 @@ void set_context_in_sign_cmd(expand_T *xp, char_u *arg)
 /// @returns  CR	      if the command is to be executed
 ///           Ctrl_C    if it is to be abandoned
 ///           K_IGNORE  if editing continues
-
 int ex_window_live_sub(char_u* sub, klist_t(matchedline_T) *lmatch)
 {
-  int i;
+  assert(lmatch != NULL);
+  assert(sub != NULL);
+
   garray_T winsizes;
   char_u typestr[2];
-  int save_restart_edit = restart_edit;
-  int save_State = State;
-  int save_exmode = exmode_active;
-  int save_cmdmsg_rl = cmdmsg_rl;
+  //int i;
+  //int save_restart_edit = restart_edit;
+  //int save_State = State;
+  //int save_exmode = exmode_active;
+  //int save_cmdmsg_rl = cmdmsg_rl;
 
-  // Can't do this recursively.  Can't do it when typing a password. 
-  if (cmdwin_type != 0
-      || cmdline_star > 0
-      ) {
+  // Can't do this recursively.  Can't do it when typing a password.
+  if (cmdline_star > 0) {
     beep_flush();
     return K_IGNORE;
   }
 
-  // Save current window sizes. 
+  // Save current window sizes.
   win_size_save(&winsizes);
 
-  // Save the current window to restore it later 
-  win_T* oldwin = curwin;
+  // Save the current window to restore it later
+  win_T *oldwin = curwin;
 
-  // Don't execute autocommands while creating the window. 
+  // Don't execute autocommands while creating the window.
   block_autocmds();
-  // don't use a new tab page 
+  // don't use a new tab page
   cmdmod.tab = 0;
 
-  // close last buffer used for ex_window_live_sub() 
+  // close last buffer used for ex_window_live_sub()
   buf_T* oldbuf;
-  if((oldbuf = buflist_findname_exp((char_u *)"[live_sub]"))!=NULL) {
+  if ((oldbuf = buflist_findname_exp((char_u *)"[live_sub]")) != NULL) {
     close_windows (oldbuf, FALSE);
     close_buffer (NULL, oldbuf, DOBUF_WIPE, FALSE);
   }
 
-  // Create a window for the command-line buffer. 
+  // Create a window for the command-line buffer.
   if (win_split((int)p_cwh, WSP_BOT) == FAIL) {
     beep_flush();
     unblock_autocmds();
@@ -5931,7 +5946,7 @@ int ex_window_live_sub(char_u* sub, klist_t(matchedline_T) *lmatch)
   }
   cmdwin_type = get_cmdline_type();
 
-  // Create the command-line buffer empty. 
+  // Create the command-line buffer empty.
   (void)do_ecmd(0, NULL, NULL, NULL, ECMD_ONE, ECMD_HIDE, NULL);
   (void)setfname(curbuf, (char_u *)"[live_sub]", NULL, TRUE);
   set_option_value((char_u *)"bt", 0L, (char_u *)"nofile", OPT_LOCAL);
@@ -5942,97 +5957,194 @@ int ex_window_live_sub(char_u* sub, klist_t(matchedline_T) *lmatch)
   cmdmsg_rl = FALSE;
   RESET_BINDING(curwin);
 
-  // Do execute autocommands for setting the filetype (load syntax). 
+  // Do execute autocommands for setting the filetype (load syntax).
   unblock_autocmds();
 
-  // Showing the prompt may have set need_wait_return, reset it. 
+  // Showing the prompt may have set need_wait_return, reset it.
   need_wait_return = FALSE;
 
-  // Reset 'textwidth' after setting 'filetype' (the Vim filetype plugin sets 'textwidth' to 78). 
+  // Reset 'textwidth' after setting 'filetype' (the Vim filetype plugin sets 'textwidth' to 78).
   curbuf->b_p_tw = 0;
 
-  // Initialize line and highliht variables 
+  // Save the buffer used in the split
+  livebuf = curbuf;
+
+  // Initialize line and highlight variables
   int line = 0;
   int src_id_highlight = 0;
-  long match_size = strlen((char*)sub);
-  
+  long sub_size = strlen((char*)sub);
+
+  // Get the width of the column which display the number of the line
+  long highest_num_line;
+  kl_iter(matchedline_T, lmatch, current)
+    highest_num_line = (*current)->data.lnum;
+
+  int col_width = width_long(highest_num_line) + 4;
+
   // allocate a line sized for the window
   char *str = xmalloc((size_t )curwin->w_frame->fr_width);
-  
+
   // Append the lines to our buffer
   kl_iter(matchedline_T, lmatch, current) {
     matchedline_T mat = (*current)->data;
-    size_t line_size = sizeof(mat.line) + sizeof(long) + 5;
+    size_t line_size = STRLEN(mat.line) + col_width*sizeof(char);
 
     // Reallocation if str not long enough
     if (line_size > curwin->w_frame->fr_width*sizeof(char))
-      assert(xrealloc(str, line_size) != NULL);
+      str = xrealloc(str, line_size);
 
     // Add the line number to the string
-    // TODO : enhance the display of the line number 
-    sprintf(str, "l.%ld > %s", mat.lnum, (char*)mat.line);
+    char *col = compute_number_line(col_width,mat.lnum);
+    sprintf(str, "%s%s", col, mat.line); //TODO : strcat
     ml_append(line++, (char_u *)str, (colnr_T)0, false);
-    
-    int prefix_size = strlen(str) - strlen((char*)mat.line);
-    
+
+    int prefix_size = col_width;
+
     kl_iter(colnr_T, mat.start_col, col) {
-      src_id_highlight = bufhl_add_hl(curbuf, 
+      src_id_highlight = bufhl_add_hl(curbuf,
                                       src_id_highlight,
-                                      curbuf->handle,
+                                      2, // id of our highlight TODO : allow the user to change it
                                       line,                                     // line in curbuf
                                       (*col)->data + prefix_size + 1,           // beginning of word
-                                      (*col)->data + prefix_size + match_size); // end of word
-    
+                                      (*col)->data + prefix_size + sub_size); // end of word
+
     }
-    
-    // free of the saved line
+
+    src_id_highlight = bufhl_add_hl(curbuf, src_id_highlight,
+                                    2, // id of our highlight TODO : allow the user to change it
+                                    line,           // line in curbuf
+                                    3,           // beginning of word
+                                    col_width - 2); // end of word
+
+    // free of the saved line and the allocated column
+    xfree(col);
     xfree(mat.line);
   }
   xfree(str);
 
   redraw_later(SOME_VALID);
 
-  // No Ex mode here! 
+  // No Ex mode here!
   exmode_active = 0;
 
-  State = NORMAL;
   setmouse();
 
-  // Trigger CmdwinEnter autocommands. 
+  // Trigger CmdwinEnter autocommands.
   typestr[0] = cmdwin_type;
   typestr[1] = NUL;
   apply_autocmds(EVENT_CMDWINENTER, typestr, typestr, FALSE, curbuf);
-  if (restart_edit != 0)        // autocmd with ":startinsert" 
+  if (restart_edit != 0)        // autocmd with ":startinsert"
     stuffcharReadbuff(K_NOP);
 
-  i = RedrawingDisabled;
+  //i = RedrawingDisabled;
   RedrawingDisabled = 0;
 
-  // Restore the old window 
+  // Restore the old window
   win_enter(oldwin, FALSE);
 
-  // Call the main loop until <CR> or CTRL-C is typed.
-  cmdwin_result = 0;
-  normal_enter(true, false);
-
-  RedrawingDisabled = i;
-
-  int save_KeyTyped = KeyTyped;
-
-  // Trigger CmdwinLeave autocommands. 
-  apply_autocmds(EVENT_CMDWINLEAVE, typestr, typestr, FALSE, curbuf);
-
-  // Restore KeyTyped in case it is modified by autocommands 
-  KeyTyped = save_KeyTyped;
-
-  exmode_active = save_exmode;
-
-  ga_clear(&winsizes);
-  restart_edit = save_restart_edit;
-  cmdmsg_rl = save_cmdmsg_rl;
-
-  State = save_State;
-  setmouse();
-
   return cmdwin_result;
+}
+
+int count_slash (exarg_T *eap) {
+  int i = 0, cmdl_progress;
+  
+  if (eap->arg[i++] != '/')
+    return -1;
+  
+  if (eap->arg[i++] == 0){
+    cmdl_progress = LS_NO_WD;
+  } else {
+    cmdl_progress = LS_ONE_WD;
+    while (eap->arg[i] != 0){
+      if (eap->arg[i] == '/' && eap->arg[i-1] != '\\') {
+        cmdl_progress = (eap->arg[i+1]==0) ? LS_TWO_SLASH_ONE_WD : LS_TWO_WD;
+        break;
+      }
+      i++;
+    }
+  }
+  
+  return cmdl_progress;
+}
+
+/// This function is called when CMD_SUBSTITUTE is detected
+/// It will then proceed to launch do_sub() and ':u'
+/// at every new character typed in the cmdbuff according to the
+/// actual state of the live_substitution
+void do_live_sub(exarg_T *eap) {
+  //count the number of '/' to know how many words can be parsed
+  int cmdl_progress = count_slash(eap);
+  
+  if (cmdl_progress == -1) {
+    return;
+  }
+  
+  char_u *arg;
+  char_u *tmp;
+
+  switch (cmdl_progress) {
+    case LS_NO_WD: // do_sub will then do the last substitution if the user writes :[%]s/ and presses enter
+      if (EVENT_COLON == 0) {
+        do_sub(eap);
+      }
+      EVENT_SLASH = 0;
+      break;
+      
+    case LS_ONE_WD: // live_sub will replace the arg by itself in order to display it until the user presses enter
+      if(EVENT_COLON == 1) {
+        //The lengh of the new arg is lower than twice the lengh of the command
+        arg = xcalloc(2 * STRLEN(eap->arg), sizeof(char_u));
+        
+        //Save the state of eap
+        tmp = eap->arg;
+        
+        //Change the argument of the command
+        sprintf((char*)arg, "%s%s", (char*)eap->arg, (char*)eap->arg);
+        eap->arg = arg;
+        
+        //Hightligh the word and open the split
+        do_sub(eap);
+        
+        //Put back eap in first state
+        eap->arg = tmp;
+        
+        xfree(arg);
+        
+      } else if (EVENT_COLON == 0) {
+        do_sub(eap);
+      }
+      
+      EVENT_SLASH = 0;
+      break;
+      
+    case LS_TWO_SLASH_ONE_WD: // live_sub will remove the arg
+      if (EVENT_SLASH == 1) do_cmdline_cmd(":u"); // we need to undo if we come from the LS_TWO_WD case
+      do_sub(eap);
+      EVENT_SLASH = 1;
+      break;
+      
+    case LS_TWO_WD: // live_sub needs to undo
+      do_cmdline_cmd(":u");
+      do_sub(eap);
+      EVENT_SLASH = 1;
+      break;
+      
+    default:
+      break;
+  }
+
+  // close buffer and windows if we leave the live_sub mode
+  if (EVENT_COLON == 0) {
+    if (livebuf != NULL) {
+      close_windows(livebuf, false);
+      close_buffer(NULL, livebuf, DOBUF_WIPE, false);
+      normal_enter(false, true);
+    }
+  }
+
+  update_screen(0);
+  cmdwin_result = 0;
+  RedrawingDisabled = 0;
+  char_u typestr[2];
+  //apply_autocmds(EVENT_CMDWINLEAVE, typestr, typestr, false, curbuf);
 }

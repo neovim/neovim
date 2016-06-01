@@ -271,6 +271,12 @@ do_exmode (
  */
 int do_cmdline_cmd(char *cmd)
 {
+  // TODO(aym7) find a better way to remove verbose
+  // if live, no verbose
+  if(EVENT_COLON == 1) {
+    return do_cmdline((char_u *)cmd, NULL, NULL,
+        DOCMD_NOWAIT|DOCMD_KEYTYPED);
+  }
   return do_cmdline((char_u *)cmd, NULL, NULL,
       DOCMD_VERBOSE|DOCMD_NOWAIT|DOCMD_KEYTYPED);
 }
@@ -324,7 +330,7 @@ int do_cmdline(char_u *cmdline, LineGetter fgetline,
   void        *real_cookie;
   int getline_is_func;
   static int call_depth = 0;            /* recursiveness */
-
+  
   /* For every pair of do_cmdline()/do_one_cmd() calls, use an extra memory
    * location for storing error messages to be converted to an exception.
    * This ensures that the do_errthrow() call in do_one_cmd() does not
@@ -598,9 +604,15 @@ int do_cmdline(char_u *cmdline, LineGetter fgetline,
      *    "cmdline_copy" can change, e.g. for '%' and '#' expansion.
      */
     ++recursive;
-    next_cmdline = do_one_cmd(&cmdline_copy, flags & DOCMD_VERBOSE,
-        &cstack,
-        cmd_getline, cmd_cookie);
+    if(EVENT_COLON == 1) { // in live mode, no verbose
+      next_cmdline = do_one_cmd(&cmdline_copy, flags,
+          &cstack,
+          cmd_getline, cmd_cookie);
+    } else {
+      next_cmdline = do_one_cmd(&cmdline_copy, flags & DOCMD_VERBOSE,
+          &cstack,
+          cmd_getline, cmd_cookie);
+    }
     --recursive;
 
     if (cmd_cookie == (void *)&cmd_loop_cookie)
@@ -1473,6 +1485,8 @@ static char_u * do_one_cmd(char_u **cmdlinep,
   }
   p = find_command(&ea, NULL);
 
+  
+  
   /*
    * 4. Parse a range specifier of the form: addr [,addr] [;addr] ..
    *
@@ -9519,4 +9533,29 @@ static void ex_terminal(exarg_T *eap)
   if (mustfree) {
     xfree(name);
   }
+}
+    
+/// is_live()
+/// Returns 1 if cmd corresponds
+/// to a live command.
+/// At the moment, only substitute has a live command.
+    
+int is_live (char_u *cmd_live)
+{
+  exarg_T ea;
+  ea.cmd = access_cmdline();
+  int full;
+
+  if (ea.cmd == NULL)
+    return 0;
+  else
+    strcpy((char*)cmd_live, (char*)ea.cmd);
+  
+  ea.cmd = skip_range(ea.cmd, NULL);
+  if (*ea.cmd == '*') {
+    ea.cmd = skipwhite(ea.cmd + 1);
+  }
+  find_command(&ea, &full);
+
+  return (ea.cmdidx == CMD_substitute);
 }

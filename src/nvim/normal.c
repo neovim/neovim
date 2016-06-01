@@ -448,7 +448,7 @@ static int find_command(int cmdchar)
 // Normal state entry point. This is called on:
 //
 // - Startup, In this case the function never returns.
-// - The command-line window is opened(`q:`). Returns when `cmdwin_result` != 0.
+// - The command-line window is opened(`q:`) or the live_sub split. Returns when `cmdwin_result` != 0.
 // - The :visual command is called from :global in ex mode, `:global/PAT/visual`
 //   for example. Returns when re-entering ex mode(because ex mode recursion is
 //   not allowed)
@@ -4462,6 +4462,9 @@ static void nv_colon(cmdarg_T *cap)
   int old_p_im;
   bool cmd_result;
 
+  // starting the live actions (eg : for live sub)
+  EVENT_COLON = 1;
+
   if (VIsual_active)
     nv_operator(cap);
   else {
@@ -5195,7 +5198,7 @@ static void nv_dollar(cmdarg_T *cap)
   cap->oap->motion_type = kMTCharWise;
   cap->oap->inclusive = true;
   /* In virtual mode when off the edge of a line and an operator
-   * is pending (whew!) keep the cursor where it is.
+   * is pending (whew!) keep the cursor wdo_shere it is.
    * Otherwise, send it to the end of the line. */
   if (!virtual_active() || gchar_cursor() != NUL
       || cap->oap->op_type == OP_NOP)
