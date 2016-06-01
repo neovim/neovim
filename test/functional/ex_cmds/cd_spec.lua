@@ -1,9 +1,13 @@
 -- Specs for :cd, :tcd, :lcd and getcwd()
 
-local helpers = require('test.functional.helpers')
-local execute, eq, clear, eval, exc_exec =
-  helpers.execute, helpers.eq, helpers.clear, helpers.eval, helpers.exc_exec
 local lfs = require('lfs')
+local helpers = require('test.functional.helpers')
+
+local eq = helpers.eq
+local call = helpers.call
+local clear = helpers.clear
+local execute = helpers.execute
+local exc_exec = helpers.exc_exec
 
 -- These directories will be created for testing
 local directories = {
@@ -13,15 +17,14 @@ local directories = {
 }
 
 -- Shorthand writing to get the current working directory
-local  cwd = function() return eval('getcwd(      )') end  -- effective working dir
-local wcwd = function() return eval('getcwd( 0    )') end  -- window dir
-local tcwd = function() return eval('getcwd(-1,  0)') end  -- tab dir
---local gcwd = function() return eval('getcwd(-1, -1)') end  -- global dir
+local  cwd = function(...) return call('getcwd', ...) end  -- effective working dir
+local wcwd = function() return cwd(0) end  -- window dir
+local tcwd = function() return cwd(-1, 0) end  -- tab dir
 
 -- Same, except these tell us if there is a working directory at all
---local  lwd = function() return eval('haslocaldir(      )') end  -- effective working dir
-local wlwd = function() return eval('haslocaldir( 0    )') end  -- window dir
-local tlwd = function() return eval('haslocaldir(-1,  0)') end  -- tab dir
+local  lwd = function(...) return call('haslocaldir', ...) end  -- effective working dir
+local wlwd = function() return lwd(0) end  -- window dir
+local tlwd = function() return lwd(-1,  0) end  -- tab dir
 --local glwd = function() return eval('haslocaldir(-1, -1)') end  -- global dir
 
 -- Test both the `cd` and `chdir` variants
