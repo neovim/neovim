@@ -870,7 +870,7 @@ cursor: >
 	:let c = getline(".")[col(".") - 1]
 
 If the length of the String is less than the index, the result is an empty
-String.  A negative index always results in an empty string (reason: backwards
+String.  A negative index always results in an empty string (reason: backward
 compatibility).  Use [-1:] to get the last byte.
 
 If expr8 is a |List| then it results the item at index expr1.  See |list-index|
@@ -4746,8 +4746,8 @@ matchadd({group}, {pattern}[, {priority}[, {id} [, {dict}]]])
 		respectively.  If the {id} argument is not specified or -1,
 		|matchadd()| automatically chooses a free ID.
 
-		The optional {dict} argmument allows for further custom
-		values. Currently this is used to specify a match specifc
+		The optional {dict} argument allows for further custom
+		values. Currently this is used to specify a match specific
 		conceal character that will be shown for |hl-Conceal|
 		highlighted matches. The dict can have the following members:
 
@@ -5600,7 +5600,7 @@ search({pattern} [, {flags} [, {stopline} [, {timeout}]]])	*search()*
 
 		'ignorecase', 'smartcase' and 'magic' are used.
 		
-		When the 'z' flag is not given seaching always starts in
+		When the 'z' flag is not given, searching always starts in
 		column zero and then matches before the cursor are skipped.
 		When the 'c' flag is present in 'cpo' the next search starts
 		after the match.  Without the 'c' flag the next search starts
@@ -7994,7 +7994,7 @@ This does NOT work: >
 			From Vim version 4.5 until 5.0, every Ex command in
 			between the ":if" and ":endif" is ignored.  These two
 			commands were just to allow for future expansions in a
-			backwards compatible way.  Nesting was allowed.  Note
+			backward compatible way.  Nesting was allowed.  Note
 			that any ":else" or ":elseif" was ignored, the "else"
 			part was not executed either.
 

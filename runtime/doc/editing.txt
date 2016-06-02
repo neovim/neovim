@@ -1,4 +1,4 @@
-*editing.txt*   For Vim version 7.4.  Last change: 2016 Jan 03
+*editing.txt*   For Vim version 7.4.  Last change: 2016 Jan 17
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -596,6 +596,7 @@ list of the current window.
 				:0argadd x	x a b c
 				:1argadd x	a x b c
 				:$argadd x	a b c x
+			And after the last one:
 				:+2argadd y	a b c x y
 			There is no check for duplicates, it is possible to
 			add a file to the argument list twice.
