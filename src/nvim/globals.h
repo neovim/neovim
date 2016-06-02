@@ -435,9 +435,11 @@ EXTERN int no_check_timestamps INIT(= 0);       /* Don't check timestamps */
 
 /*
  * When doing a live action (eg: substitution), need to know when to start
- * it and end it
+ * it (=1) and end it (=0)
  */
 EXTERN int EVENT_COLON INIT(= 0);
+// TODO : DELETE IT !!
+EXTERN int p_sub INIT(= 0);
 
 /*
  * Values for index in highlight_attr[].
