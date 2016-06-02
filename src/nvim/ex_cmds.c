@@ -6084,6 +6084,13 @@ void do_live_sub(exarg_T *eap) {
   char_u *tmp;
 
   switch (cmdl_progress) {
+    case -1: // no word and no slash
+      if (livebuf != NULL) {
+        close_windows(livebuf, false);
+        close_buffer(NULL, livebuf, DOBUF_WIPE, false);
+      }
+      break;
+      
     case LS_NO_WD: // do_sub will then do the last substitution if the user writes :[%]s/ and presses enter
       if (LIVE_MODE == 0) {
         do_sub(eap);
@@ -6092,6 +6099,9 @@ void do_live_sub(exarg_T *eap) {
       break;
       
     case LS_ONE_WD: // live_sub will replace the arg by itself in order to display it until the user presses enter
+      if (EVENT_SLASH == 1) {
+        do_cmdline_cmd(":u");
+      }
       if(LIVE_MODE == 1) {
         //The lengh of the new arg is lower than twice the lengh of the command
         arg = xcalloc(2 * STRLEN(eap->arg), sizeof(char_u));
