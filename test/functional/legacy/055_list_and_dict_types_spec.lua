@@ -15,9 +15,9 @@ describe('list and dictionary types', function()
       $put =string(l[-1])
       $put =string(l[-4])
       try
-	$put =string(l[-5])
+        $put =string(l[-5])
       catch
-	$put =v:exception[:14]
+        $put =v:exception[:14]
       endtry]])
     expect([[
       
@@ -54,10 +54,10 @@ describe('list and dictionary types', function()
       let ll = l
       let lx = copy(l)
       try
-	$put =(l == ll) . (l isnot ll) . (l is ll) . (l == lx) .
-	  \ (l is lx) . (l isnot lx)
+	      $put =(l == ll) . (l isnot ll) . (l is ll) . (l == lx) .
+	        \ (l is lx) . (l isnot lx)
       catch
-	$put =v:exception
+	      $put =v:exception
       endtry]])
     expect('\n101101')
   end)
@@ -70,15 +70,15 @@ describe('list and dictionary types', function()
       $put =string(sort(keys(d)))
       $put =string (values(d))
       for [key, val] in items(d)
-	$put =key . ':' . string(val)
-	unlet key val
+	      $put =key . ':' . string(val)
+	      unlet key val
       endfor
       call extend  (d, {3:33, 1:99})
       call extend(d, {'b':'bbb', 'c':'ccc'}, "keep")
       try
-	call extend(d, {3:333,4:444}, "error")
+	      call extend(d, {3:333,4:444}, "error")
       catch
-	$put =v:exception[:15] . v:exception[-1:-1]
+	      $put =v:exception[:15] . v:exception[-1:-1]
       endtry
       $put =string(d)
       call filter(d, 'v:key =~ ''[ac391]''')
@@ -104,10 +104,10 @@ describe('list and dictionary types', function()
       let dd = d
       let dx = copy(d)
       try
-	$put =(d == dd) . (d isnot dd) . (d is dd) . (d == dx) . (d is dx) .
-	  \ (d isnot dx)
+	      $put =(d == dd) . (d isnot dd) . (d is dd) . (d == dx) . (d is dx) .
+	        \ (d isnot dx)
       catch
-	$put =v:exception
+	      $put =v:exception
       endtry]])
     expect('\n101101')
   end)
@@ -120,14 +120,14 @@ describe('list and dictionary types', function()
       " The dict from the first test repeated after splitting the tests.
       let d = {'c': 'ccc', '1': 99, '3': 33, '-1': {'a': 1}}
       try
-	let d = []
+	      let d = []
       catch
-	$put =v:exception[:14] . v:exception[-1:-1]
+	      $put =v:exception[:14] . v:exception[-1:-1]
       endtry
       try
-	let l = {}
+	      let l = {}
       catch
-	$put =v:exception[:14] . v:exception[-1:-1]
+	      $put =v:exception[:14] . v:exception[-1:-1]
       endtry]])
     expect([[
       
@@ -146,10 +146,10 @@ describe('list and dictionary types', function()
       $put =string(l)
       let l = range(8)
       try
-	unlet l[:3]
-	unlet l[1:]
+	      unlet l[:3]
+	      unlet l[1:]
       catch
-	$put =v:exception
+	      $put =v:exception
       endtry
       $put =string(l)
 
@@ -221,14 +221,14 @@ describe('list and dictionary types', function()
       $put =va
       $put =vb
       try
-	let [va, vb] = l
+	      let [va, vb] = l
       catch
-	$put =v:exception[:14]
+	      $put =v:exception[:14]
       endtry
       try
-	let [va, vb] = l[1:1]
+	      let [va, vb] = l[1:1]
       catch
-	$put =v:exception[:14]
+	      $put =v:exception[:14]
       endtry]])
     expect([[
       
@@ -244,38 +244,38 @@ describe('list and dictionary types', function()
     source([[
       let d = {}
       for i in range(1500)
-	let d[i] = 3000 - i
+	      let d[i] = 3000 - i
       endfor
       $put =d[0] . ' ' . d[100] . ' ' . d[999] . ' ' . d[1400] . ' ' .
-	\ d[1499]
+	      \ d[1499]
       try
-	let n = d[1500]
+	      let n = d[1500]
       catch
-	$put =substitute(v:exception, '\v(.{14}).*( \d{4}).*', '\1\2', '')
+	      $put =substitute(v:exception, '\v(.{14}).*( \d{4}).*', '\1\2', '')
       endtry
       " Lookup each items.
       for i in range(1500)
-	if d[i] != 3000 - i
-	  $put =d[i]
-	endif
+	      if d[i] != 3000 - i
+	        $put =d[i]
+	      endif
       endfor
       let i += 1
       " Delete even items.
       while i >= 2
-	let i -= 2
-	unlet d[i]
+	      let i -= 2
+	      unlet d[i]
       endwhile
       $put =get(d, 1500 - 100, 'NONE') . ' ' . d[1]
       " Delete odd items, checking value, one intentionally wrong.
       let d[33] = 999
       let i = 1
       while i < 1500
-	if d[i] != 3000 - i
-	  $put =i . '=' . d[i]
-	else
-	  unlet d[i]
-	endif
-	let i += 2
+	      if d[i] != 3000 - i
+	        $put =i . '=' . d[i]
+	      else
+	        unlet d[i]
+	      endif
+	      let i += 2
       endwhile
       " Must be almost empty now.
       $put =string(d)]])
@@ -292,16 +292,16 @@ describe('list and dictionary types', function()
     source([[
       let dict = {}
       func dict.func(a) dict
-	$put =a:a . len(self.data)
+	      $put =a:a . len(self.data)
       endfunc
       let dict.data = [1,2,3]
       call dict.func("len: ")
       let x = dict.func("again: ")
       try
-	let Fn = dict.func
-	call Fn('xxx')
+	      let Fn = dict.func
+	      call Fn('xxx')
       catch
-	$put =v:exception[:15]
+	      $put =v:exception[:15]
       endtry]])
     expect([[
       
@@ -314,7 +314,7 @@ describe('list and dictionary types', function()
     source([[
       let g:dict = {}
       function g:dict.func() dict
-	$put ='g:dict.func'.self.foo[1].self.foo[0]('asdf')
+	      $put ='g:dict.func'.self.foo[1].self.foo[0]('asdf')
       endfunc
       let g:dict.foo = ['-', 2, 3]
       call insert(g:dict.foo, function('strlen'))
@@ -326,7 +326,7 @@ describe('list and dictionary types', function()
     source([[
       let d = {1:1}
       func d.func(a)
-	return "a:". a:a
+	      return "a:". a:a
       endfunc
       $put =d.func(string(remove(d, 'func')))]])
     -- The function number changed from 3 to 1 because we split the test.
@@ -342,9 +342,9 @@ describe('list and dictionary types', function()
       let d[3] = l
       let dc = deepcopy(d)
       try
-	let dc = deepcopy(d, 1)
-	catch
-	$put =v:exception[:14]
+	      let dc = deepcopy(d, 1)
+      catch
+	      $put =v:exception[:14]
       endtry
       let l2 = [0, l, l, 3]
       let l[1] = l2
@@ -360,65 +360,65 @@ describe('list and dictionary types', function()
     source([=[
       let l = []
       for depth in range(5)
-	$put ='depth is ' . depth
-	for u in range(3)
-	  unlet l
-	  let l = [0, [1, [2, 3]], {4: 5, 6: {7: 8}}]
-	  exe "lockvar " . depth . " l"
-	  if u == 1
-	    exe "unlockvar l"
-	  elseif u == 2
-	    exe "unlockvar " . depth . " l"
-	  endif
-	  let ps = islocked("l") . islocked("l[1]") . islocked("l[1][1]") .
-	    \ islocked("l[1][1][0]") . '-' . islocked("l[2]") .
-	    \ islocked("l[2]['6']") . islocked("l[2]['6'][7]")
-	  $put =ps
-	  let ps = ''
-	  try
-	    let l[1][1][0] = 99
-	    let ps .= 'p'
-	  catch
-	    let ps .= 'F'
-	  endtry
-	  try
-	    let l[1][1] = [99]
-	    let ps .= 'p'
-	  catch
-	    let ps .= 'F'
-	  endtry
-	  try
-	    let l[1] = [99]
-	    let ps .= 'p'
-	  catch
-	    let ps .= 'F'
-	  endtry
-	  try
-	    let l[2]['6'][7] = 99
-	    let ps .= 'p'
-	  catch
-	    let ps .= 'F'
-	  endtry
-	  try
-	    let l[2][6] = {99: 99}
-	    let ps .= 'p'
-	  catch
-	    let ps .= 'F'
-	  endtry
-	  try
-	    let l[2] = {99: 99}
-	    let ps .= 'p'
-	  catch
-	    let ps .= 'F'
-	  endtry
-	  try
-	    let l = [99]
-	    let ps .= 'p'
-	  catch
-	    let ps .= 'F'
-	  endtry
-	  $put =ps
-	endfor
+	      $put ='depth is ' . depth
+	      for u in range(3)
+	        unlet l
+	        let l = [0, [1, [2, 3]], {4: 5, 6: {7: 8}}]
+	        exe "lockvar " . depth . " l"
+	        if u == 1
+	          exe "unlockvar l"
+	        elseif u == 2
+	          exe "unlockvar " . depth . " l"
+	        endif
+	        let ps = islocked("l") . islocked("l[1]") . islocked("l[1][1]") .
+	          \ islocked("l[1][1][0]") . '-' . islocked("l[2]") .
+	          \ islocked("l[2]['6']") . islocked("l[2]['6'][7]")
+	        $put =ps
+	        let ps = ''
+	        try
+	          let l[1][1][0] = 99
+	          let ps .= 'p'
+	        catch
+	          let ps .= 'F'
+	        endtry
+	        try
+	          let l[1][1] = [99]
+	          let ps .= 'p'
+	        catch
+	          let ps .= 'F'
+	        endtry
+	        try
+	          let l[1] = [99]
+	          let ps .= 'p'
+	        catch
+	          let ps .= 'F'
+	        endtry
+	        try
+	          let l[2]['6'][7] = 99
+	          let ps .= 'p'
+	        catch
+	          let ps .= 'F'
+	        endtry
+	        try
+	          let l[2][6] = {99: 99}
+	          let ps .= 'p'
+	        catch
+	          let ps .= 'F'
+	        endtry
+	        try
+	          let l[2] = {99: 99}
+	          let ps .= 'p'
+	        catch
+	          let ps .= 'F'
+	        endtry
+	        try
+	          let l = [99]
+	          let ps .= 'p'
+	        catch
+	          let ps .= 'F'
+	        endtry
+	        $put =ps
+	      endfor
       endfor]=])
     expect([[
       
@@ -476,8 +476,8 @@ describe('list and dictionary types', function()
             exe "unlockvar " . depth . " l"
           endif
           let ps = islocked("l") . islocked("l[1]") . islocked("l[1][1]") .
-	    \ islocked("l[1][1][0]") . '-' . islocked("l[2]") .
-	    \ islocked("l[2]['6']") . islocked("l[2]['6'][7]")
+	          \ islocked("l[1][1][0]") . '-' . islocked("l[2]") .
+	          \ islocked("l[2]['6']") . islocked("l[2]['6'][7]")
           $put =ps
           let ps = ''
           try
@@ -744,37 +744,37 @@ describe('list and dictionary types', function()
   it('a:000 function argument', function()
     source([[
       function Test(...)
-	" First the tests that should fail.
-	try
-	  let a:000 = [1, 2]
-	catch
-	  $put ='caught a:000'
-	endtry
-	try
-	  let a:000[0] = 9
-	catch
-	  $put ='caught a:000[0]'
-	endtry
-	try
-	  let a:000[2] = [9, 10]
-	catch
-	  $put ='caught a:000[2]'
-	endtry
-	try
-	  let a:000[3] = {9: 10}
-	catch
-	  $put ='caught a:000[3]'
-	endtry
-	" Now the tests that should pass.
-	try
-	  let a:000[2][1] = 9
-	  call extend(a:000[2], [5, 6])
-	  let a:000[3][5] = 8
-	  let a:000[3]['a'] = 12
-	  $put =string(a:000)
-	catch
-	  $put ='caught ' . v:exception
-	endtry
+        " First the tests that should fail.
+        try
+          let a:000 = [1, 2]
+        catch
+          $put ='caught a:000'
+        endtry
+        try
+          let a:000[0] = 9
+        catch
+          $put ='caught a:000[0]'
+        endtry
+        try
+          let a:000[2] = [9, 10]
+        catch
+          $put ='caught a:000[2]'
+        endtry
+        try
+          let a:000[3] = {9: 10}
+        catch
+          $put ='caught a:000[3]'
+        endtry
+        " Now the tests that should pass.
+        try
+          let a:000[2][1] = 9
+          call extend(a:000[2], [5, 6])
+          let a:000[3][5] = 8
+          let a:000[3]['a'] = 12
+          $put =string(a:000)
+        catch
+          $put ='caught ' . v:exception
+        endtry
       endfunction]])
     execute('call Test(1, 2, [3, 4], {5: 6})')
     expect([=[
@@ -789,7 +789,7 @@ describe('list and dictionary types', function()
   it('reverse(), sort(), uniq()', function()
     source([=[
       let l = ['-0', 'A11', 2, 2, 'xaaa', 4, 'foo', 'foo6', 'foo',
-	\ [0, 1, 2], 'x8', [0, 1, 2], 1.5]
+	      \ [0, 1, 2], 'x8', [0, 1, 2], 1.5]
       $put =string(uniq(copy(l)))
       $put =string(reverse(l))
       $put =string(reverse(reverse(l)))
@@ -798,10 +798,10 @@ describe('list and dictionary types', function()
       $put =string(sort(reverse(sort(l))))
       $put =string(uniq(sort(l)))
       let l=[7, 9, 'one', 18, 12, 22, 'two', 10.0e-16, -1, 'three', 0xff,
-	\ 0.22, 'four']
+	      \ 0.22, 'four']
       $put =string(sort(copy(l), 'n'))
       let l=[7, 9, 18, 12, 22, 10.0e-16, -1, 0xff, 0, -0, 0.22, 'bar',
-	\ 'BAR', 'Bar', 'Foo', 'FOO', 'foo', 'FOOBAR', {}, []]
+	      \ 'BAR', 'Bar', 'Foo', 'FOO', 'foo', 'FOOBAR', {}, []]
       $put =string(sort(copy(l), 1))
       $put =string(sort(copy(l), 'i'))
       $put =string(sort(copy(l)))]=])
@@ -902,9 +902,9 @@ describe('list and dictionary types', function()
       " Copy dict from previous test.
       let d = { 'a': {'b': 'B'}}
       try
-	call extend(d, d, "error")
+	      call extend(d, d, "error")
       catch
-	$put =v:exception[:15] . v:exception[-1:-1]
+	      $put =v:exception[:15] . v:exception[-1:-1]
       endtry
       $put =string(d)]])
     expect([[
