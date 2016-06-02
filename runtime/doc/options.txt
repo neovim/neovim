@@ -1,4 +1,4 @@
-*options.txt*	For Vim version 7.4.  Last change: 2016 Jan 03
+*options.txt*	For Vim version 7.4.  Last change: 2016 Jan 19
 
 
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
@@ -3696,6 +3696,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	'*', '"' and '|' (so that CTRL-] on a command finds the help for that
 	command).
 	When the 'lisp' option is on the '-' character is always included.
+	This option also influences syntax highlighting, unless the syntax
+	uses |:syn-iskeyword|.
 
 						*'isprint'* *'isp'*
 'isprint' 'isp'	string	(default: "@,161-255")

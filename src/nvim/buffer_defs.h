@@ -447,6 +447,8 @@ typedef struct {
   char_u      *b_p_spf;         /* 'spellfile' */
   char_u      *b_p_spl;         /* 'spelllang' */
   int b_cjk;                    /* all CJK letters as OK */
+  char_u b_syn_chartab[32];     // syntax iskeyword option
+  char_u *b_syn_isk;            // iskeyword option
 } synblock_T;
 
 

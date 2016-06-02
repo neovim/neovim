@@ -1,4 +1,4 @@
-*syntax.txt*	For Vim version 7.4.  Last change: 2015 Dec 19
+*syntax.txt*	For Vim version 7.4.  Last change: 2016 Jan 19
 
 
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
@@ -3422,6 +3422,32 @@ SPELL CHECKING						*:syn-spell*
 
 	To activate spell checking the 'spell' option must be set.
 
+SYNTAX ISKEYWORD SETTING				*:syn-iskeyword*
+
+:sy[ntax] iskeyword [clear | {option}]
+	This defines the keyword characters.  It's like the 'iskeyword' option
+	for but only applies to syntax highlighting.
+
+	clear:		Syntax specific iskeyword setting is disabled and the
+			buffer-local 'iskeyword' setting is used.
+	{option}        Set the syntax 'iskeyword' option to a new value. 
+
+	Example: >
+  :syntax iskeyword @,48-57,192-255,$,_
+<
+	This would set the syntax specific iskeyword option to include all
+	alphabetic characters, plus the numeric characters, all accented
+	characters and also includes the "_" and the "$".
+
+	If no argument is given, the current value will be output.
+
+	Setting this option influences what |/\k| matches in syntax patterns
+	and also determines where |:syn-keywords| will be checked for a new
+	match.
+
+	It is recommended when writing syntax files, to use this command
+	to the correct value for the specific syntax language and not change
+	the 'iskeyword' option.
 
 DEFINING KEYWORDS					*:syn-keyword*
 
@@ -3453,6 +3479,7 @@ DEFINING KEYWORDS					*:syn-keyword*
 	isn't, the keyword will never be recognized.
 	Multi-byte characters can also be used.  These do not have to be in
 	'iskeyword'.
+	See |:syn-iskeyword| for defining syntax specific iskeyword settings.
 
 	A keyword always has higher priority than a match or region, the
 	keyword is used if more than one item matches.	Keywords do not nest

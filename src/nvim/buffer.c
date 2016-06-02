@@ -1534,6 +1534,7 @@ void free_buf_options(buf_T *buf, int free_p_ff)
   clear_string_option(&buf->b_p_cms);
   clear_string_option(&buf->b_p_nf);
   clear_string_option(&buf->b_p_syn);
+  clear_string_option(&buf->b_s.b_syn_isk);
   clear_string_option(&buf->b_s.b_p_spc);
   clear_string_option(&buf->b_s.b_p_spf);
   vim_regfree(buf->b_s.b_cap_prog);
