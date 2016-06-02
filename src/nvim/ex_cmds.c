@@ -5910,7 +5910,7 @@ int ex_window_live_sub(char_u* sub, klist_t(matchedline_T) *lmatch)
   char_u typestr[2];
   //int i;
   //int save_restart_edit = restart_edit;
-  //int save_State = State;
+  int save_State = State;
   //int save_exmode = exmode_active;
   //int save_cmdmsg_rl = cmdmsg_rl;
 
@@ -6027,6 +6027,13 @@ int ex_window_live_sub(char_u* sub, klist_t(matchedline_T) *lmatch)
   // No Ex mode here!
   exmode_active = 0;
 
+  //i = RedrawingDisabled;
+  RedrawingDisabled = 0;
+
+  // Restore the old window
+  win_enter(oldwin, FALSE);
+
+  State = save_State;
   setmouse();
 
   // Trigger CmdwinEnter autocommands.
@@ -6035,12 +6042,6 @@ int ex_window_live_sub(char_u* sub, klist_t(matchedline_T) *lmatch)
   apply_autocmds(EVENT_CMDWINENTER, typestr, typestr, FALSE, curbuf);
   if (restart_edit != 0)        // autocmd with ":startinsert"
     stuffcharReadbuff(K_NOP);
-
-  //i = RedrawingDisabled;
-  RedrawingDisabled = 0;
-
-  // Restore the old window
-  win_enter(oldwin, FALSE);
 
   return cmdwin_result;
 }
@@ -6138,13 +6139,13 @@ void do_live_sub(exarg_T *eap) {
     if (livebuf != NULL) {
       close_windows(livebuf, false);
       close_buffer(NULL, livebuf, DOBUF_WIPE, false);
-      normal_enter(false, true);
+      //normal_enter(false, true);
     }
   }
 
   update_screen(0);
   cmdwin_result = 0;
   RedrawingDisabled = 0;
-  char_u typestr[2];
+  //char_u typestr[2];
   //apply_autocmds(EVENT_CMDWINLEAVE, typestr, typestr, false, curbuf);
 }
