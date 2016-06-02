@@ -1,4 +1,4 @@
-*usr_02.txt*	For Vim version 7.4.  Last change: 2016 Jan 15
+*usr_02.txt*	For Vim version 7.4.  Last change: 2016 Jan 16
 
 		     VIM USER MANUAL - by Bram Moolenaar
 
@@ -543,38 +543,42 @@ Summary: 					*help-summary*  >
 8) Ex-commands always start with ":", so to go to the :s command help: >
 	:help :s
 
-9) Key combinations.  They usually start with a single letter indicating
-   the mode for which they can be used.  E.g.: >
-   	:help i_CTRL-X
-<   takes you to the family of Ctrl-X commands for insert mode which can be
-   used to auto complete different things.  Note, that certain keys will
-   always be written the same, e.g. Control will always be CTRL.
-   For normal mode commands there is no prefix and the topic is available at
-   :h CTRL-<Letter>. E.g.  >
-   	:help CTRL-W
-<   In contrast >
-	:help c_CTRL-R
-<   will describe what the Ctrl-R does when entering commands in the Command
-   line and >
-   	:help v_Ctrl-A
-<   talks about incrementing numbers in visual mode and >
-	:help g_CTRL-A
-<   talks about the g<C-A> command (e.g. you have to press "g" then <Ctrl-A>).
-   Here the "g" stand for the normal command "g" which always expects a second
-   key before doing something similar to the commands starting with "z"
+9) Commands specifically for debugging start with ">".  To go to to the help
+   for the "cont" debug command: >
+	:help >cont
 
-10) Regexp items always start with /.  So to get help for the "\+" quantifier
+10) Key combinations.  They usually start with a single letter indicating
+    the mode for which they can be used.  E.g.: >
+   	:help i_CTRL-X
+<    takes you to the family of Ctrl-X commands for insert mode which can be
+    used to auto complete different things.  Note, that certain keys will
+    always be written the same, e.g. Control will always be CTRL.
+    For normal mode commands there is no prefix and the topic is available at
+    :h CTRL-<Letter>. E.g.  >
+   	:help CTRL-W
+<    In contrast >
+	:help c_CTRL-R
+<    will describe what the Ctrl-R does when entering commands in the Command
+    line and >
+   	:help v_Ctrl-A
+<    talks about incrementing numbers in visual mode and >
+	:help g_CTRL-A
+<    talks about the g<C-A> command (e.g. you have to press "g" then <Ctrl-A>).
+    Here the "g" stand for the normal command "g" which always expects a second
+    key before doing something similar to the commands starting with "z"
+
+11) Regexp items always start with /.  So to get help for the "\+" quantifier
     in Vim regexes: >
    	:help /\+
-<   If you need to know everything about regular expressions, start reading
-   at: >
+<    If you need to know everything about regular expressions, start reading
+    at: >
    	:help pattern.txt
 
-11) Registers always start with "quote". To find out about the special ":"
+12) Registers always start with "quote". To find out about the special ":"
     register: >
    	:help quote:
 
-12) Vim Script (VimL) is available at >
+13) Vim Script (VimL) is available at >
 	:help eval.txt
 <   Certain aspects of the language are available at :h expr-X where "X" is a
    single letter. E.g.  >
@@ -589,7 +593,7 @@ Summary: 					*help-summary*  >
 <   talks about the append VimL function rather than how to append text in the
    current buffer.
 
-13) Mappings are talked about in the help page :h |map.txt|. Use >
+14) Mappings are talked about in the help page :h |map.txt|. Use >
     	:help mapmode-i
 <    to find out about the |:imap| command.  Also use :map-topic
     to find out about certain subtopics particular for mappings.  e.g: >
@@ -598,19 +602,19 @@ Summary: 					*help-summary*  >
 	:help map-bar
 <    for how the '|' is handled in mappings.
 
-14) Command definitions are talked about :h command-topic, so use >
+15) Command definitions are talked about :h command-topic, so use >
 	:help command-bar
 <    to find out about the '!' argument for custom commands.
 
-15) Window management commands always start with CTRL-W, so you find the
+16) Window management commands always start with CTRL-W, so you find the
     corresponding help at :h CTRL-W_letter.  E.g. >
    	:help CTRL-W_p
-<    for moving the previous accessed window).  You can also access >
+<    for moving the previous accessed window.  You can also access >
 	:help windows.txt
 <    and read your way through if you are looking for window handling
     commands.
 
-16) Use |:helpgrep| to search in all help pages (and also of any installed
+17) Use |:helpgrep| to search in all help pages (and also of any installed
     plugins).  See |:helpgrep| for how to use it.
     To search for a topic: >
     	:helpgrep topic
@@ -621,7 +625,7 @@ Summary: 					*help-summary*  >
     	:copen
 <    Move around to the match you like and press Enter to jump to that help.
 
-17) The user manual.  This describes help topics for beginners in a rather
+18) The user manual.  This describes help topics for beginners in a rather
     friendly way.  Start at |usr_toc.txt| to find the table of content (as you
     might have guessed): >
     	:help usr_toc.txt
@@ -634,31 +638,31 @@ Summary: 					*help-summary*  >
     	:help 10.1
 <    goes to chapter 10.1 in |usr_10.txt| and talks about recording macros.
 
-18) Highlighting groups.  Always start with hl-groupname.  E.g. >
+19) Highlighting groups.  Always start with hl-groupname.  E.g. >
     	:help hl-WarningMsg
 <    talks about the WarningMsg highlighting group.
 
-19) Syntax highlighting is namespaced to :syn-topic e.g. >
+20) Syntax highlighting is namespaced to :syn-topic e.g. >
 	:help :syn-conceal
 <    talks about the conceal argument for the :syn command.
 
-20) Quickfix commands usually start with :c while location list commands
+21) Quickfix commands usually start with :c while location list commands
     usually start with :l
 
-21) Autocommand events can be found by their name: >
+22) Autocommand events can be found by their name: >
      	:help BufWinLeave
 <    To see all possible events: >
 	:help autocommands-events
 
-22) Command-line switches always start with "-".  So for the help of the -f
+23) Command-line switches always start with "-".  So for the help of the -f
     command switch of Vim use: >
     	:help -f
 
-23) Optional features always start with "+".  To find out about the
+24) Optional features always start with "+".  To find out about the
     conceal feature use: >
     	:help +conceal
 
-24) Documentation for included filetype specific functionality is usually
+25) Documentation for included filetype specific functionality is usually
     available  in the form ft-<filetype>-<functionality>.  So >
     	:help ft-c-syntax
 <    talks about the C syntax file and the option it provides.  Sometimes,
@@ -668,7 +672,7 @@ Summary: 					*help-summary*  >
 	:help ft-tex-plugin
 <    are available.
 
-25) Error and Warning codes can be looked up directly in the help.  So >
+26) Error and Warning codes can be looked up directly in the help.  So >
 	:help E297
 <    takes you exactly to the description of the swap error message and >
 	:help W10

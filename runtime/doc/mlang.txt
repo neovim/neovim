@@ -1,4 +1,4 @@
-*mlang.txt*     For Vim version 7.4.  Last change: 2012 Jan 15
+*mlang.txt*     For Vim version 7.4.  Last change: 2016 Jan 16
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -94,13 +94,15 @@ If you used the self-installing .exe file, message translations should work
 already.  Otherwise get the libintl.dll file if you don't have it yet:
 
 	http://sourceforge.net/projects/gettext
+Or:
+	https://mlocati.github.io/gettext-iconv-windows/
 
 This also contains tools xgettext, msgformat and others.
 
 libintl.dll should be placed in same directory with (g)vim.exe, or some
-place where PATH environment value describe.  Message files (vim.mo)
-have to be placed in "$VIMRUNTIME/lang/xx/LC_MESSAGES", where "xx" is the
-abbreviation of the language (mostly two letters).
+place where PATH environment value describe.  Vim also finds libintl-8.dll.
+Message files (vim.mo) have to be placed in "$VIMRUNTIME/lang/xx/LC_MESSAGES",
+where "xx" is the abbreviation of the language (mostly two letters).
 
 If you write your own translations you need to generate the .po file and
 convert it to a .mo file.  You need to get the source distribution and read
