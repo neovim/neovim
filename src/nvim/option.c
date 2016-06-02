@@ -2129,6 +2129,7 @@ void check_buf_options(buf_T *buf)
   check_string_option(&buf->b_p_nf);
   check_string_option(&buf->b_p_qe);
   check_string_option(&buf->b_p_syn);
+  check_string_option(&buf->b_s.b_syn_isk);
   check_string_option(&buf->b_s.b_p_spc);
   check_string_option(&buf->b_s.b_p_spf);
   check_string_option(&buf->b_s.b_p_spl);
@@ -5606,6 +5607,7 @@ void buf_copy_options(buf_T *buf, int flags)
       /* Don't copy 'syntax', it must be set */
       buf->b_p_syn = empty_option;
       buf->b_p_smc = p_smc;
+      buf->b_s.b_syn_isk = empty_option;
       buf->b_s.b_p_spc = vim_strsave(p_spc);
       (void)compile_cap_prog(&buf->b_s);
       buf->b_s.b_p_spf = vim_strsave(p_spf);

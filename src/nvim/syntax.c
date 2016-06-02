@@ -812,19 +812,39 @@ static void syn_sync(win_T *wp, linenr_T start_lnum, synstate_T *last_valid)
   validate_current_state();
 }
 
+static void save_chartab(char_u *chartab)
+{
+  if (syn_block->b_syn_isk != empty_option) {
+    memmove(chartab, syn_buf->b_chartab, (size_t)32);
+    memmove(syn_buf->b_chartab, syn_win->w_s->b_syn_chartab, (size_t)32);
+  }
+}
+
+static void restore_chartab(char_u *chartab)
+{
+  if (syn_win->w_s->b_syn_isk != empty_option) {
+    memmove(syn_buf->b_chartab, chartab, (size_t)32);
+  }
+}
+
 /*
  * Return TRUE if the line-continuation pattern matches in line "lnum".
  */
 static int syn_match_linecont(linenr_T lnum)
 {
-  regmmatch_T regmatch;
-
   if (syn_block->b_syn_linecont_prog != NULL) {
+    regmmatch_T regmatch;
+    // chartab array for syn iskeyword
+    char_u buf_chartab[32];
+    save_chartab(buf_chartab);
+
     regmatch.rmm_ic = syn_block->b_syn_linecont_ic;
     regmatch.regprog = syn_block->b_syn_linecont_prog;
     int r = syn_regexec(&regmatch, lnum, (colnr_T)0,
                         IF_SYN_TIME(&syn_block->b_syn_linecont_time));
     syn_block->b_syn_linecont_prog = regmatch.regprog;
+
+    restore_chartab(buf_chartab);
     return r;
   }
   return FALSE;
@@ -1617,8 +1637,9 @@ syn_current_attr (
   lpos_T pos;
   int lc_col;
   reg_extmatch_T *cur_extmatch = NULL;
-  char_u      *line;            /* current line.  NOTE: becomes invalid after
-                                   looking for a pattern match! */
+  char_u      buf_chartab[32];  // chartab array for syn iskeyword
+  char_u      *line;            // current line.  NOTE: becomes invalid after
+                                // looking for a pattern match!
 
   /* variables for zero-width matches that have a "nextgroup" argument */
   int keep_next_list;
@@ -1667,6 +1688,9 @@ syn_current_attr (
   /* Init the list of zero-width matches with a nextlist.  This is used to
    * avoid matching the same item in the same position twice. */
   ga_init(&zero_width_next_ga, (int)sizeof(int), 10);
+
+  // use syntax iskeyword option
+  save_chartab(buf_chartab);
 
   /*
    * Repeat matching keywords and patterns, to find contained items at the
@@ -1991,6 +2015,8 @@ syn_current_attr (
     }
 
   } while (found_match);
+
+  restore_chartab(buf_chartab);
 
   /*
    * Use attributes from the current state, if within its highlighting.
@@ -2522,7 +2548,8 @@ find_endpos (
   regmmatch_T best_regmatch;        /* startpos/endpos of best match */
   lpos_T pos;
   char_u      *line;
-  int had_match = FALSE;
+  int had_match = false;
+  char_u buf_chartab[32];  // chartab array for syn option iskeyword
 
   /* just in case we are invoked for a keyword */
   if (idx < 0)
@@ -2562,9 +2589,13 @@ find_endpos (
   unref_extmatch(re_extmatch_in);
   re_extmatch_in = ref_extmatch(start_ext);
 
-  matchcol = startpos->col;     /* start looking for a match at sstart */
-  start_idx = idx;              /* remember the first END pattern. */
-  best_regmatch.startpos[0].col = 0;            /* avoid compiler warning */
+  matchcol = startpos->col;     // start looking for a match at sstart
+  start_idx = idx;              // remember the first END pattern.
+  best_regmatch.startpos[0].col = 0;            // avoid compiler warning
+
+  // use syntax iskeyword option
+  save_chartab(buf_chartab);
+
   for (;; ) {
     /*
      * Find end pattern that matches first after "matchcol".
@@ -2706,6 +2737,8 @@ find_endpos (
   /* no match for an END pattern in this line */
   if (!had_match)
     m_endpos->lnum = 0;
+
+  restore_chartab(buf_chartab);
 
   /* Remove external matches. */
   unref_extmatch(re_extmatch_in);
@@ -3027,6 +3060,46 @@ static void syn_cmd_spell(exarg_T *eap, int syncing)
   redraw_win_later(curwin, NOT_VALID);
 }
 
+/// Handle ":syntax iskeyword" command.
+static void syn_cmd_iskeyword(exarg_T *eap, int syncing)
+{
+  char_u *arg = eap->arg;
+  char_u save_chartab[32];
+  char_u *save_isk;
+
+  if (eap->skip) {
+    return;
+  }
+
+  arg = skipwhite(arg);
+  if (*arg == NUL) {
+    MSG_PUTS("\n");
+    MSG_PUTS(_("syntax iskeyword "));
+    if (curwin->w_s->b_syn_isk != empty_option) {
+      msg_outtrans(curwin->w_s->b_syn_isk);
+    } else {
+      msg_outtrans((char_u *)"not set");
+    }
+  } else {
+    if (STRNICMP(arg, "clear", 5) == 0) {
+      memmove(curwin->w_s->b_syn_chartab, curbuf->b_chartab, (size_t)32);
+      clear_string_option(&curwin->w_s->b_syn_isk);
+    } else {
+      memmove(save_chartab, curbuf->b_chartab, (size_t)32);
+      save_isk = curbuf->b_p_isk;
+      curbuf->b_p_isk = vim_strsave(arg);
+
+      buf_init_chartab(curbuf, false);
+      memmove(curwin->w_s->b_syn_chartab, curbuf->b_chartab, (size_t)32);
+      memmove(curbuf->b_chartab, save_chartab, (size_t)32);
+      clear_string_option(&curwin->w_s->b_syn_isk);
+      curwin->w_s->b_syn_isk = curbuf->b_p_isk;
+      curbuf->b_p_isk = save_isk;
+    }
+  }
+  redraw_win_later(curwin, NOT_VALID);
+}
+
 /*
  * Clear all syntax info for one buffer.
  */
@@ -3065,6 +3138,7 @@ void syntax_clear(synblock_T *block)
   xfree(block->b_syn_linecont_pat);
   block->b_syn_linecont_pat = NULL;
   block->b_syn_folditems = 0;
+  clear_string_option(&block->b_syn_isk);
 
   /* free the stored states */
   syn_stack_free_all(block);
@@ -3107,6 +3181,7 @@ static void syntax_sync_clear(void)
   curwin->w_s->b_syn_linecont_prog = NULL;
   xfree(curwin->w_s->b_syn_linecont_pat);
   curwin->w_s->b_syn_linecont_pat = NULL;
+  clear_string_option(&curwin->w_s->b_syn_isk);
 
   syn_stack_free_all(curwin->w_s);              /* Need to recompute all syntax. */
 }
@@ -3266,6 +3341,7 @@ static void syn_cmd_enable(exarg_T *eap, int syncing)
 
 /*
  * Handle ":syntax reset" command.
+ * It actually resets highlighting, not syntax.
  */
 static void syn_cmd_reset(exarg_T *eap, int syncing)
 {
@@ -5363,24 +5439,25 @@ struct subcommand {
 
 static struct subcommand subcommands[] =
 {
-  {"case",            syn_cmd_case},
-  {"clear",           syn_cmd_clear},
-  {"cluster",         syn_cmd_cluster},
-  {"conceal",         syn_cmd_conceal},
-  {"enable",          syn_cmd_enable},
-  {"include",         syn_cmd_include},
-  {"keyword",         syn_cmd_keyword},
-  {"list",            syn_cmd_list},
-  {"manual",          syn_cmd_manual},
-  {"match",           syn_cmd_match},
-  {"on",              syn_cmd_on},
-  {"off",             syn_cmd_off},
-  {"region",          syn_cmd_region},
-  {"reset",           syn_cmd_reset},
-  {"spell",           syn_cmd_spell},
-  {"sync",            syn_cmd_sync},
-  {"",                syn_cmd_list},
-  {NULL, NULL}
+  { "case",      syn_cmd_case },
+  { "clear",     syn_cmd_clear },
+  { "cluster",   syn_cmd_cluster },
+  { "conceal",   syn_cmd_conceal },
+  { "enable",    syn_cmd_enable },
+  { "include",   syn_cmd_include },
+  { "iskeyword", syn_cmd_iskeyword },
+  { "keyword",   syn_cmd_keyword },
+  { "list",      syn_cmd_list },
+  { "manual",    syn_cmd_manual },
+  { "match",     syn_cmd_match },
+  { "on",        syn_cmd_on },
+  { "off",       syn_cmd_off },
+  { "region",    syn_cmd_region },
+  { "reset",     syn_cmd_reset },
+  { "spell",     syn_cmd_spell },
+  { "sync",      syn_cmd_sync },
+  { "",          syn_cmd_list },
+  { NULL, NULL }
 };
 
 /*
@@ -5434,6 +5511,7 @@ void ex_ownsyntax(exarg_T *eap)
     clear_string_option(&curwin->w_s->b_p_spc);
     clear_string_option(&curwin->w_s->b_p_spf);
     clear_string_option(&curwin->w_s->b_p_spl);
+    clear_string_option(&curwin->w_s->b_syn_isk);
   }
 
   /* save value of b:current_syntax */
