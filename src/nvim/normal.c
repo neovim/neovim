@@ -4463,7 +4463,7 @@ static void nv_colon(cmdarg_T *cap)
   bool cmd_result;
 
   // starting the live actions (eg : for live sub)
-  EVENT_COLON = 1;
+  LIVE_MODE = 1;
 
   if (VIsual_active)
     nv_operator(cap);

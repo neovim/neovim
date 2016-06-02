@@ -3085,7 +3085,7 @@ void do_sub(exarg_T *eap)
     do_all = p_gd ? TRUE : FALSE;
 
     do_ask = FALSE;
-    do_error = (EVENT_COLON == 1) ? FALSE : TRUE;
+    do_error = (LIVE_MODE == 1) ? FALSE : TRUE;
     do_print = FALSE;
     do_count = false;
     do_number = FALSE;
@@ -3818,7 +3818,7 @@ skip:
         else
           beginline(BL_WHITE | BL_FIX);
       }
-      if(EVENT_COLON != 1) { // live_mode : no message in command line 
+      if(LIVE_MODE != 1) { // live_mode : no message in command line
         if (!do_sub_msg(do_count) && do_ask)
           MSG("");
       }
@@ -6084,14 +6084,14 @@ void do_live_sub(exarg_T *eap) {
 
   switch (cmdl_progress) {
     case LS_NO_WD: // do_sub will then do the last substitution if the user writes :[%]s/ and presses enter
-      if (EVENT_COLON == 0) {
+      if (LIVE_MODE == 0) {
         do_sub(eap);
       }
       EVENT_SLASH = 0;
       break;
       
     case LS_ONE_WD: // live_sub will replace the arg by itself in order to display it until the user presses enter
-      if(EVENT_COLON == 1) {
+      if(LIVE_MODE == 1) {
         //The lengh of the new arg is lower than twice the lengh of the command
         arg = xcalloc(2 * STRLEN(eap->arg), sizeof(char_u));
         
@@ -6110,7 +6110,7 @@ void do_live_sub(exarg_T *eap) {
         
         xfree(arg);
         
-      } else if (EVENT_COLON == 0) {
+      } else if (LIVE_MODE == 0) {
         do_sub(eap);
       }
       
@@ -6134,7 +6134,7 @@ void do_live_sub(exarg_T *eap) {
   }
 
   // close buffer and windows if we leave the live_sub mode
-  if (EVENT_COLON == 0) {
+  if (LIVE_MODE == 0) {
     if (livebuf != NULL) {
       close_windows(livebuf, false);
       close_buffer(NULL, livebuf, DOBUF_WIPE, false);

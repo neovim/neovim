@@ -706,7 +706,7 @@ static int command_line_execute(VimState *state, int key)
       || (s->c == ESC
         && (!KeyTyped || vim_strchr(p_cpo, CPO_ESC) != NULL))) {
     // End any live action
-    EVENT_COLON = 0;
+    LIVE_MODE = 0;
     // In Ex mode a backslash escapes a newline.
     if (exmode_active
         && s->c != ESC
@@ -1001,7 +1001,7 @@ static int command_line_handle_key(CommandLineState *s)
 
   case ESC:           // get here if p_wc != ESC or when ESC typed twice
     // End any live action
-    EVENT_COLON = 0;
+    LIVE_MODE = 0;
   case Ctrl_C:
     // In exmode it doesn't make sense to return.  Except when
     // ":normal" runs out of characters.

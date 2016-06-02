@@ -74,7 +74,7 @@ void state_enter(VimState *s)
     int execute_result = s->execute(s, key);
 
     // close buffer and windows if we leave the live_sub mode
-    if (!EVENT_COLON) {
+    if (!LIVE_MODE) {
       if (livebuf != NULL) {
         close_windows(livebuf, false);
         close_buffer(NULL, livebuf, DOBUF_WIPE, false);
@@ -86,7 +86,7 @@ void state_enter(VimState *s)
       break;
     } else if (execute_result == -1) {
       goto getkey;
-    } else if (EVENT_COLON == 1 && is_live(live_cmd) == 1){ // compute a live action
+    } else if (LIVE_MODE == 1 && is_live(live_cmd) == 1){ // compute a live action
       do_cmdline(live_cmd, NULL, NULL, DOCMD_KEEPLINE);
     }
 
