@@ -438,15 +438,15 @@ typedef struct {
   linenr_T b_sst_check_lnum;
   uint16_t b_sst_lasttick;      /* last display tick */
 
-  /* for spell checking */
-  garray_T b_langp;             /* list of pointers to slang_T, see spell.c */
-  bool b_spell_ismw[256];       /* flags: is midword char */
-  char_u      *b_spell_ismw_mb;   /* multi-byte midword chars */
-  char_u      *b_p_spc;         /* 'spellcapcheck' */
-  regprog_T   *b_cap_prog;      /* program for 'spellcapcheck' */
-  char_u      *b_p_spf;         /* 'spellfile' */
-  char_u      *b_p_spl;         /* 'spelllang' */
-  int b_cjk;                    /* all CJK letters as OK */
+  // for spell checking
+  garray_T b_langp;             // list of pointers to slang_T, see spell.c
+  bool b_spell_ismw[256];       // flags: is midword char
+  char_u      *b_spell_ismw_mb;  // multi-byte midword chars
+  char_u      *b_p_spc;         // 'spellcapcheck'
+  regprog_T   *b_cap_prog;      // program for 'spellcapcheck'
+  char_u      *b_p_spf;         // 'spellfile'
+  char_u      *b_p_spl;         // 'spelllang'
+  int b_cjk;                    // all CJK letters as OK
   char_u b_syn_chartab[32];     // syntax iskeyword option
   char_u *b_syn_isk;            // iskeyword option
 } synblock_T;

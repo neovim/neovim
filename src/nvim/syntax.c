@@ -1638,8 +1638,8 @@ syn_current_attr (
   int lc_col;
   reg_extmatch_T *cur_extmatch = NULL;
   char_u      buf_chartab[32];  // chartab array for syn iskeyword
-  char_u      *line;            /* current line.  NOTE: becomes invalid after
-                                   looking for a pattern match! */
+  char_u      *line;            // current line.  NOTE: becomes invalid after
+                                // looking for a pattern match!
 
   /* variables for zero-width matches that have a "nextgroup" argument */
   int keep_next_list;
@@ -2548,7 +2548,7 @@ find_endpos (
   regmmatch_T best_regmatch;        /* startpos/endpos of best match */
   lpos_T pos;
   char_u      *line;
-  int had_match = FALSE;
+  int had_match = false;
   char_u buf_chartab[32];  // chartab array for syn option iskeyword
 
   /* just in case we are invoked for a keyword */
@@ -2589,9 +2589,9 @@ find_endpos (
   unref_extmatch(re_extmatch_in);
   re_extmatch_in = ref_extmatch(start_ext);
 
-  matchcol = startpos->col;     /* start looking for a match at sstart */
-  start_idx = idx;              /* remember the first END pattern. */
-  best_regmatch.startpos[0].col = 0;            /* avoid compiler warning */
+  matchcol = startpos->col;     // start looking for a match at sstart
+  start_idx = idx;              // remember the first END pattern.
+  best_regmatch.startpos[0].col = 0;            // avoid compiler warning
 
   // use syntax iskeyword option
   save_chartab(buf_chartab);
@@ -5439,25 +5439,25 @@ struct subcommand {
 
 static struct subcommand subcommands[] =
 {
-  {"case",            syn_cmd_case},
-  {"clear",           syn_cmd_clear},
-  {"cluster",         syn_cmd_cluster},
-  {"conceal",         syn_cmd_conceal},
-  {"enable",          syn_cmd_enable},
-  {"include",         syn_cmd_include},
-  {"iskeyword",       syn_cmd_iskeyword},
-  {"keyword",         syn_cmd_keyword},
-  {"list",            syn_cmd_list},
-  {"manual",          syn_cmd_manual},
-  {"match",           syn_cmd_match},
-  {"on",              syn_cmd_on},
-  {"off",             syn_cmd_off},
-  {"region",          syn_cmd_region},
-  {"reset",           syn_cmd_reset},
-  {"spell",           syn_cmd_spell},
-  {"sync",            syn_cmd_sync},
-  {"",                syn_cmd_list},
-  {NULL, NULL}
+  { "case",      syn_cmd_case },
+  { "clear",     syn_cmd_clear },
+  { "cluster",   syn_cmd_cluster },
+  { "conceal",   syn_cmd_conceal },
+  { "enable",    syn_cmd_enable },
+  { "include",   syn_cmd_include },
+  { "iskeyword", syn_cmd_iskeyword },
+  { "keyword",   syn_cmd_keyword },
+  { "list",      syn_cmd_list },
+  { "manual",    syn_cmd_manual },
+  { "match",     syn_cmd_match },
+  { "on",        syn_cmd_on },
+  { "off",       syn_cmd_off },
+  { "region",    syn_cmd_region },
+  { "reset",     syn_cmd_reset },
+  { "spell",     syn_cmd_spell },
+  { "sync",      syn_cmd_sync },
+  { "",          syn_cmd_list },
+  { NULL, NULL }
 };
 
 /*
