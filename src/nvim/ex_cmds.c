@@ -5974,7 +5974,7 @@ void ex_window_live_sub(char_u* sub, klist_t(matchedline_T) *lmatch)
   }
 
   // Create a window for the command-line buffer.
-  if (win_split((int)p_cwh, WSP_BOT) == FAIL) {
+  if (win_split((int)p_subh, WSP_BOT) == FAIL) {
     beep_flush();
     unblock_autocmds();
     return;
@@ -6030,7 +6030,7 @@ void ex_window_live_sub(char_u* sub, klist_t(matchedline_T) *lmatch)
 
     // Add the line number to the string
     char *col = compute_number_line(col_width,mat.lnum);
-    sprintf(str, "%s%s", col, mat.line); //TODO : strcat
+    sprintf(str, "%s%s", col, mat.line);
     ml_append(line++, (char_u *)str, (colnr_T)0, false);
 
     int prefix_size = col_width;
@@ -6086,10 +6086,10 @@ void ex_window_live_sub(char_u* sub, klist_t(matchedline_T) *lmatch)
 
 int count_slash (exarg_T *eap) {
   int i = 0, cmdl_progress;
-  
+
   if (eap->arg[i++] != '/')
     return -1;
-  
+
   if (eap->arg[i++] == 0){
     cmdl_progress = LS_NO_WD;
   } else {
@@ -6102,7 +6102,7 @@ int count_slash (exarg_T *eap) {
       i++;
     }
   }
-  
+
   return cmdl_progress;
 }
 
