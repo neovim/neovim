@@ -22111,9 +22111,8 @@ bool eval_has_provider(char *name)
   return false;
 }
 
-// Compute the `DictWatcher` address from a QUEUE node. This only exists because
-// ASAN doesn't handle `QUEUE_DATA` pointer arithmetic, and we blacklist this
-// function on .asan-blacklist.
+// Compute the `DictWatcher` address from a QUEUE node. This only exists for
+// .asan-blacklist (ASAN doesn't handle QUEUE_DATA pointer arithmetic).
 static DictWatcher *dictwatcher_node_data(QUEUE *q)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
 {
