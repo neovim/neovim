@@ -9545,12 +9545,8 @@ int is_live (char_u *cmd_live)
   exarg_T ea;
   ea.cmd = access_cmdline();
   int full;
-
-  if (ea.cmd == NULL)
-    return 0;
-  else
-    strcpy((char*)cmd_live, (char*)ea.cmd);
   
+  // parse the command line
   ea.cmd = skip_range(ea.cmd, NULL);
   if (*ea.cmd == '*') {
     ea.cmd = skipwhite(ea.cmd + 1);

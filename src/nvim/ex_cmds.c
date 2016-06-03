@@ -6080,20 +6080,20 @@ void do_live_sub(exarg_T *eap) {
     return;
   }
   
+  
   char_u *arg;
   char_u *tmp;
 
   switch (cmdl_progress) {
+    case LS_NO_WD: // do_sub will then do the last substitution if the user writes :[%]s/ and presses enter
+      if (LIVE_MODE == 0) {
+        do_sub(eap);
+      }
+      
     case -1: // no word and no slash
       if (livebuf != NULL) {
         close_windows(livebuf, false);
         close_buffer(NULL, livebuf, DOBUF_WIPE, false);
-      }
-      break;
-      
-    case LS_NO_WD: // do_sub will then do the last substitution if the user writes :[%]s/ and presses enter
-      if (LIVE_MODE == 0) {
-        do_sub(eap);
       }
       EVENT_SLASH = 0;
       break;
