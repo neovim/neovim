@@ -3847,8 +3847,14 @@ skip:
 
 
   // live_sub if sub on the whole file and there are results to display
-  if (eap[0].cmdlinep[0][0] != 's' && !kl_empty(lmatch))
+  if (eap[0].cmdlinep[0][0] != 's' && !kl_empty(lmatch)) {
     ex_window_live_sub(sub, lmatch);
+    // after used, free the list
+    kl_iter(matchedline_T, lmatch, current) {
+      kl_destroy(colnr_T, (*current)->data.start_col);
+    }
+    kl_destroy(matchedline_T, lmatch);
+  }
 
 }
 
