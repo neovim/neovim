@@ -586,7 +586,6 @@ EXTERN int p_spr;               // 'splitright'
 EXTERN int p_sol;               // 'startofline'
 EXTERN char_u   *p_su;          // 'suffixes'
 EXTERN char_u   *p_swb;         // 'switchbuf'
-EXTERN int p_sub;               // 'live_sub'
 EXTERN unsigned swb_flags;
 #ifdef IN_OPTION_C
 static char *(p_swb_values[]) =
