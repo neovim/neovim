@@ -1,5 +1,5 @@
-- Neovim version:
-- [ ] Vim behaves differently? Vim version:
+- `nvim --version`:
+- Vim (version: ) behaves differently?
 - Operating system/version:
 - Terminal name/version:
 - `$TERM`:

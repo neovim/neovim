@@ -18,7 +18,7 @@
 
 Neovim is a project that seeks to aggressively refactor Vim in order to:
 
-- Simplify maintenance and encourage [contributions](https://github.com/neovim/neovim/wiki/Contributing)
+- Simplify maintenance and encourage [contributions](CONTRIBUTING.md)
 - Split the work between multiple developers
 - Enable the implementation of new/modern user interfaces without any
   modifications to the core source
@@ -42,7 +42,7 @@ See the [progress page](https://github.com/neovim/neovim/wiki/Progress) for a co
 
 ### What's being worked on now
 
-- Port all IO to [libuv](https://github.com/libuv/libuv/blob/master/README.md)
+- Port all IO to [libuv](https://github.com/libuv/libuv/)
 - Convert legacy tests to Lua tests
 - VimL => Lua translator
 
@@ -50,10 +50,6 @@ See the [progress page](https://github.com/neovim/neovim/wiki/Progress) for a co
 
 There is a formula for OSX/homebrew, a PKGBUILD for Arch Linux, RPM, deb, and
 more. See [the wiki](https://github.com/neovim/neovim/wiki/Installing-Neovim)!
-
-### Contributing
-
-...would be awesome! See [the wiki](https://github.com/neovim/neovim/wiki/Contributing) for more details.
 
 ### License
 
