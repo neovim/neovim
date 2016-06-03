@@ -66,7 +66,6 @@ typedef struct sign sign_T;
 
 static int EVENT_SLASH = 0; // for live sub, we need to know if the user has already enter a slash
 
-
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ex_cmds.c.generated.h"
 #endif
@@ -5999,22 +5998,22 @@ int ex_window_live_sub(char_u* sub, klist_t(matchedline_T) *lmatch)
     ml_append(line++, (char_u *)str, (colnr_T)0, false);
 
     int prefix_size = col_width;
-
-    kl_iter(colnr_T, mat.start_col, col) {
-      src_id_highlight = bufhl_add_hl(curbuf,
-                                      src_id_highlight,
-                                      2, // id of our highlight TODO : allow the user to change it
-                                      line,                                     // line in curbuf
-                                      (*col)->data + prefix_size + 1,           // beginning of word
-                                      (*col)->data + prefix_size + sub_size); // end of word
-
-    }
-
-    src_id_highlight = bufhl_add_hl(curbuf, src_id_highlight,
-                                    2, // id of our highlight TODO : allow the user to change it
-                                    line,           // line in curbuf
-                                    3,           // beginning of word
-                                    col_width - 2); // end of word
+    
+//    kl_iter(colnr_T, mat.start_col, col) {
+//      src_id_highlight = bufhl_add_hl(curbuf,
+//                                      src_id_highlight,
+//                                      2, // id of our highlight TODO : allow the user to change it
+//                                      line,                                     // line in curbuf
+//                                      (*col)->data + prefix_size + 1,           // beginning of word
+//                                      (*col)->data + prefix_size + sub_size); // end of word
+//
+//    }
+//
+//    src_id_highlight = bufhl_add_hl(curbuf, src_id_highlight,
+//                                    2, // id of our highlight TODO : allow the user to change it
+//                                    line,           // line in curbuf
+//                                    3,           // beginning of word
+//                                    col_width - 2); // end of word
 
     // free of the saved line and the allocated column
     xfree(col);
