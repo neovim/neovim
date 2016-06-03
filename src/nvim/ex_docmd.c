@@ -9547,11 +9547,15 @@ int is_live (char_u *cmd_live)
   int full;
   
   // parse the command line
-  ea.cmd = skip_range(ea.cmd, NULL);
-  if (*ea.cmd == '*') {
-    ea.cmd = skipwhite(ea.cmd + 1);
+  if(ea.cmd != NULL) {
+    ea.cmd = skip_range(ea.cmd, NULL);
+    if (*ea.cmd == '*') {
+      ea.cmd = skipwhite(ea.cmd + 1);
+    }
+    find_command(&ea, &full);
   }
-  find_command(&ea, &full);
 
-  return (ea.cmdidx == CMD_substitute);
+  if (ea.cmdidx == CMD_substitute) return 1;
+  
+  return 0;
 }
