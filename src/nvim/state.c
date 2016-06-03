@@ -21,9 +21,6 @@
 void state_enter(VimState *s)
 {
   // a string to save the command.
-  // TODO: temporary, we'll get it directly from the cmdline in the future
-  char_u live_cmd[255] = ""; //TODO : check size
-  int i = 0;
 
   for (;;) {
     int check_result = s->check ? s->check(s) : 1;
@@ -58,21 +55,11 @@ void state_enter(VimState *s)
       key = !queue_empty(loop.events) ? K_EVENT : safe_vgetc();
     }
 
-    // append key to cmd_line, ignoring DEL. Other ignored char will be
-    // parsed when cmdline will be gotten directly
-    if(key == K_DEL || key == K_KDEL || key == K_BS) {
-      if(i != 0) i--;
-      live_cmd[i] = '\0';
-    } else { // Not the good way of doing things
-      live_cmd[i++] = (char_u)key;
-      live_cmd[i] = '\0';
-    }
-
     if (key == K_EVENT)
       may_sync_undo();
 
     int execute_result = s->execute(s, key);
-
+    // here, we'd like to get ccline.cmdbuf
     // close buffer and windows if we leave the live_sub mode
     if (!LIVE_MODE) {
       if (livebuf != NULL) {
@@ -86,8 +73,8 @@ void state_enter(VimState *s)
       break;
     } else if (execute_result == -1) {
       goto getkey;
-    } else if (LIVE_MODE == 1 && is_live(live_cmd) == 1){ // compute a live action
-      do_cmdline(live_cmd, NULL, NULL, DOCMD_KEEPLINE);
+    } else if (LIVE_MODE == 1 && is_live(access_cmdline()) == 1){ // compute a live action
+      do_cmdline(access_cmdline(), NULL, NULL, DOCMD_KEEPLINE);
     }
 
   }
