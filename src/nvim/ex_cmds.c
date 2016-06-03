@@ -3847,7 +3847,7 @@ skip:
 
 
   // live_sub if sub on the whole file and there are results to display
-  if (eap[0].cmdlinep[0][0] != 's' && !kl_empty(lmatch)) {
+  if (eap[0].cmdlinep[0][0] != 's') {
     ex_window_live_sub(sub, lmatch);
     // after used, free the list
     kl_iter(matchedline_T, lmatch, current) {
@@ -5979,6 +5979,9 @@ void ex_window_live_sub(char_u* sub, klist_t(matchedline_T) *lmatch)
     close_buffer (NULL, oldbuf, DOBUF_WIPE, FALSE);
   }
 
+  if (kl_empty(lmatch))
+    return;
+
   // Create a window for the command-line buffer.
   if (win_split((int)p_cwh, WSP_BOT) == FAIL) {
     beep_flush();
@@ -6137,7 +6140,7 @@ void do_live_sub(exarg_T *eap) {
       if (livebuf != NULL) {
         close_windows(livebuf, false);
         close_buffer(NULL, livebuf, DOBUF_WIPE, false);
-      }
+      } //TODO: doesn't work
       break;
 
     case LS_ONE_WD: // live_sub will replace the arg by itself in order to display it until the user presses enter
@@ -6187,5 +6190,5 @@ void do_live_sub(exarg_T *eap) {
   }
 
   if (!LIVE_MODE)
-    normal_enter(false, true);
+    normal_enter(false, false);
 }

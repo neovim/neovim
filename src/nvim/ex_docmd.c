@@ -9539,7 +9539,7 @@ static void ex_terminal(exarg_T *eap)
 /// Returns 1 if cmd corresponds
 /// to a live command.
 /// At the moment, only substitute has a live command.
-    
+
 int is_live (char_u *cmd_live)
 {
   exarg_T ea;

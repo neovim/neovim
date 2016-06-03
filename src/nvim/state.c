@@ -68,6 +68,7 @@ void state_enter(VimState *s)
         close_windows(livebuf, false);
         close_buffer(NULL, livebuf, DOBUF_WIPE, false);
       }
+      do_cmdline_cmd(":u");
       finish_live_cmd(NORMAL, NULL, 0, 0, 0);
       normal_enter(true, true);
     }
