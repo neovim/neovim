@@ -60,7 +60,7 @@ ifdef USE_VALGRIND
 	TOOL := valgrind -q                                     \
 	                 -q                                     \
 	                 $(VALGRIND_TOOL)                       \
-	                 --suppressions=../../../.valgrind.supp \
+	                 --suppressions=../../.valgrind.supp \
 	                 --error-exitcode=123                   \
 	                 --log-file=valgrind.\%p.$*             \
 	                 $(VGDB)                                \

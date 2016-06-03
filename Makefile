@@ -119,7 +119,7 @@ install: | nvim
 	+$(BUILD_CMD) -C build install
 
 clint:
-	cmake -DLINT_PRG=./clint.py \
+	cmake -DLINT_PRG=./src/clint.py \
 		-DLINT_DIR=src \
 		-DLINT_SUPPRESS_URL="$(DOC_DOWNLOAD_URL_BASE)$(CLINT_ERRORS_FILE_PATH)" \
 		-P cmake/RunLint.cmake
