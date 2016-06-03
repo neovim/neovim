@@ -3419,6 +3419,25 @@ def PrintCategories():
     sys.exit(0)
 
 
+def PrintSuppressionNote():
+    """Print a warning about suppressions
+
+    Used to remove questions like "I have not edited the line, why linter errors
+    out?".
+    """
+    sys.stderr.write('Error suppression activated.\n')
+    sys.stderr.write(
+        'NOTE that error suppression works on clusters of three lines: line\n')
+    sys.stderr.write(
+        '     with error, previous line and next line.  Should you edit any\n')
+    sys.stderr.write(
+        '     of these lines error will be shown, even if you have not\n')
+    sys.stderr.write(
+        '     edited line which contains the error itself.  Feel free to fix\n')
+    sys.stderr.write(
+        '     the error in this case.\n')
+
+
 def ParseArguments(args):
     """Parses the command line arguments.
 
@@ -3486,6 +3505,7 @@ def ParseArguments(args):
             record_errors_file = val
         elif opt == '--suppress-errors':
             suppress_errors_file = val
+            PrintSuppressionNote()
 
     if not filenames:
         PrintUsage('No files were specified.')
