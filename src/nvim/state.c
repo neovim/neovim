@@ -12,6 +12,7 @@
 #include "nvim/ex_docmd.h"
 #include "nvim/window.h"
 #include "nvim/buffer.h"
+#include "nvim/ascii.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "state.c.generated.h"
@@ -61,12 +62,14 @@ void state_enter(VimState *s)
     int execute_result = s->execute(s, key);
     // here, we'd like to get ccline.cmdbuf
     // close buffer and windows if we leave the live_sub mode
-    if (!LIVE_MODE) {
+    if (LIVE_MODE && (key == ESC || key == Ctrl_C)) {
+      LIVE_MODE = 0;
       if (livebuf != NULL) {
         close_windows(livebuf, false);
         close_buffer(NULL, livebuf, DOBUF_WIPE, false);
       }
-      update_screen(0);
+      finish_live_cmd(NORMAL, NULL, 0, 0, 0);
+      normal_enter(true, true);
     }
 
     if (!execute_result) {

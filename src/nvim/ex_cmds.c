@@ -66,6 +66,7 @@ typedef struct sign sign_T;
 
 static int EVENT_SLASH = 0; // for live sub, we need to know if the user has already enter a slash
 
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ex_cmds.c.generated.h"
 #endif
@@ -5888,6 +5889,45 @@ char* compute_number_line(int col_size, linenr_T number) {
   return s;
 }
 
+/// function called after a live command to get back to
+/// a normal state
+void finish_live_cmd(int save_state,
+                     garray_T *winsizes,
+                     int save_exmode,
+                     int save_restart_edit,
+                     int save_cmdmsg_rl) {
+  block_autocmds();
+
+  // close buffer and windows when we quit the live mode
+  if (LIVE_MODE == 0 && livebuf != NULL) {
+    close_windows(livebuf, false);
+    close_buffer(NULL, livebuf, DOBUF_WIPE, false);
+  }
+
+  /* Restore window sizes. */
+  if (winsizes != NULL) {
+    win_size_restore(winsizes);
+    ga_clear(winsizes);
+  }
+
+  unblock_autocmds();
+
+  char_u typestr[2];
+  typestr[0] = cmdwin_type;
+  typestr[1] = NUL;
+  apply_autocmds(EVENT_CMDWINLEAVE, typestr, typestr, false, curbuf);
+
+  exmode_active = save_exmode;
+  restart_edit = save_restart_edit;
+  cmdmsg_rl = save_cmdmsg_rl;
+
+  RedrawingDisabled = 0;
+
+  State = save_state;
+  setmouse();
+  update_screen(0);
+}
+
 /// ex_window_live_sub()
 /// Open a window for future displaying of the live_sub mode.
 ///
@@ -5896,11 +5936,7 @@ char* compute_number_line(int col_size, linenr_T number) {
 ///
 /// @param sub the replacement word
 /// @param lmatch the list containing our data
-///
-/// @returns  CR	      if the command is to be executed
-///           Ctrl_C    if it is to be abandoned
-///           K_IGNORE  if editing continues
-int ex_window_live_sub(char_u* sub, klist_t(matchedline_T) *lmatch)
+void ex_window_live_sub(char_u* sub, klist_t(matchedline_T) *lmatch)
 {
   assert(lmatch != NULL);
   assert(sub != NULL);
@@ -5908,15 +5944,15 @@ int ex_window_live_sub(char_u* sub, klist_t(matchedline_T) *lmatch)
   garray_T winsizes;
   char_u typestr[2];
   //int i;
-  //int save_restart_edit = restart_edit;
+  int save_restart_edit = restart_edit;
   int save_State = State;
-  //int save_exmode = exmode_active;
-  //int save_cmdmsg_rl = cmdmsg_rl;
+  int save_exmode = exmode_active;
+  int save_cmdmsg_rl = cmdmsg_rl;
 
   // Can't do this recursively.  Can't do it when typing a password.
   if (cmdline_star > 0) {
     beep_flush();
-    return K_IGNORE;
+    return;
   }
 
   // Save current window sizes.
@@ -5941,7 +5977,7 @@ int ex_window_live_sub(char_u* sub, klist_t(matchedline_T) *lmatch)
   if (win_split((int)p_cwh, WSP_BOT) == FAIL) {
     beep_flush();
     unblock_autocmds();
-    return K_IGNORE;
+    return;
   }
   cmdwin_type = get_cmdline_type();
 
@@ -5998,7 +6034,7 @@ int ex_window_live_sub(char_u* sub, klist_t(matchedline_T) *lmatch)
     ml_append(line++, (char_u *)str, (colnr_T)0, false);
 
     int prefix_size = col_width;
-    
+
 //    kl_iter(colnr_T, mat.start_col, col) {
 //      src_id_highlight = bufhl_add_hl(curbuf,
 //                                      src_id_highlight,
@@ -6023,14 +6059,17 @@ int ex_window_live_sub(char_u* sub, klist_t(matchedline_T) *lmatch)
 
   redraw_later(SOME_VALID);
 
-  // No Ex mode here!
+  // Restore the old window
+  win_enter(oldwin, FALSE);
+
+  finish_live_cmd(save_State, &winsizes, save_exmode,
+                  save_restart_edit, save_cmdmsg_rl);
+
+  /*// No Ex mode here!
   exmode_active = 0;
 
   //i = RedrawingDisabled;
   RedrawingDisabled = 0;
-
-  // Restore the old window
-  win_enter(oldwin, FALSE);
 
   State = save_State;
   setmouse();
@@ -6040,9 +6079,9 @@ int ex_window_live_sub(char_u* sub, klist_t(matchedline_T) *lmatch)
   typestr[1] = NUL;
   apply_autocmds(EVENT_CMDWINENTER, typestr, typestr, FALSE, curbuf);
   if (restart_edit != 0)        // autocmd with ":startinsert"
-    stuffcharReadbuff(K_NOP);
+    stuffcharReadbuff(K_NOP);*/
 
-  return cmdwin_result;
+  return;
 }
 
 int count_slash (exarg_T *eap) {
@@ -6074,12 +6113,11 @@ int count_slash (exarg_T *eap) {
 void do_live_sub(exarg_T *eap) {
   //count the number of '/' to know how many words can be parsed
   int cmdl_progress = count_slash(eap);
-  
+
   if (cmdl_progress == -1) {
     return;
   }
-  
-  
+
   char_u *arg;
   char_u *tmp;
 
@@ -6088,73 +6126,60 @@ void do_live_sub(exarg_T *eap) {
       if (LIVE_MODE == 0) {
         do_sub(eap);
       }
-      
+
     case -1: // no word and no slash
       if (livebuf != NULL) {
         close_windows(livebuf, false);
         close_buffer(NULL, livebuf, DOBUF_WIPE, false);
       }
-      EVENT_SLASH = 0;
       break;
-      
+
     case LS_ONE_WD: // live_sub will replace the arg by itself in order to display it until the user presses enter
       if (EVENT_SLASH == 1) {
         do_cmdline_cmd(":u");
       }
-      if(LIVE_MODE == 1) {
+      if (LIVE_MODE == 1) {
         //The lengh of the new arg is lower than twice the lengh of the command
         arg = xcalloc(2 * STRLEN(eap->arg), sizeof(char_u));
-        
+
         //Save the state of eap
         tmp = eap->arg;
-        
+
         //Change the argument of the command
-        sprintf((char*)arg, "%s%s", (char*)eap->arg, (char*)eap->arg);
+        sprintf((char *) arg, "%s%s", (char *) eap->arg, (char *) eap->arg);
         eap->arg = arg;
-        
+
         //Hightligh the word and open the split
         do_sub(eap);
-        
+
         //Put back eap in first state
         eap->arg = tmp;
-        
+
         xfree(arg);
-        
+
       } else if (LIVE_MODE == 0) {
         do_sub(eap);
       }
-      
+
       EVENT_SLASH = 0;
       break;
-      
+
     case LS_TWO_SLASH_ONE_WD: // live_sub will remove the arg
       if (EVENT_SLASH == 1) do_cmdline_cmd(":u"); // we need to undo if we come from the LS_TWO_WD case
       do_sub(eap);
       EVENT_SLASH = 1;
       break;
-      
+
     case LS_TWO_WD: // live_sub needs to undo
       do_cmdline_cmd(":u");
       do_sub(eap);
       EVENT_SLASH = 1;
       break;
-      
+
     default:
       break;
   }
 
-  // close buffer and windows if we leave the live_sub mode
-  if (LIVE_MODE == 0) {
-    if (livebuf != NULL) {
-      close_windows(livebuf, false);
-      close_buffer(NULL, livebuf, DOBUF_WIPE, false);
-      //normal_enter(false, true);
-    }
-  }
-
-  update_screen(0);
-  cmdwin_result = 0;
-  RedrawingDisabled = 0;
-  //char_u typestr[2];
-  //apply_autocmds(EVENT_CMDWINLEAVE, typestr, typestr, false, curbuf);
+  if (!LIVE_MODE)
+    normal_enter(false, true);
 }
