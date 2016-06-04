@@ -1,4 +1,4 @@
-*index.txt*     For Vim version 7.4.  Last change: 2016 Jan 10
+*index.txt*     For Vim version 7.4.  Last change: 2016 Jan 19
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -1515,14 +1515,14 @@ tag	      command	      action ~
 |:tabdo|	:tabdo		execute command in each tab page
 |:tabedit|	:tabe[dit]	edit a file in a new tab page
 |:tabfind|	:tabf[ind]	find file in 'path', edit it in a new tab page
-|:tabfirst|	:tabfir[st]	got to first tab page
-|:tablast|	:tabl[ast]	got to last tab page
+|:tabfirst|	:tabfir[st]	go to first tab page
+|:tablast|	:tabl[ast]	go to last tab page
 |:tabmove|	:tabm[ove]	move tab page to other position
 |:tabnew|	:tabnew		edit a file in a new tab page
 |:tabnext|	:tabn[ext]	go to next tab page
 |:tabonly|	:tabo[nly]	close all tab pages except the current one
 |:tabprevious|	:tabp[revious]	go to previous tab page
-|:tabrewind|	:tabr[ewind]	got to first tab page
+|:tabrewind|	:tabr[ewind]	go to first tab page
 |:tabs|		:tabs		list the tab pages and what they contain
 |:tab|		:tab		create new tab when opening new window
 |:tag|		:ta[g]		jump to tag

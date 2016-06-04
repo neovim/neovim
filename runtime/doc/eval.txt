@@ -1,4 +1,4 @@
-*eval.txt*	For Vim version 7.4.  Last change: 2016 Jan 16
+*eval.txt*	For Vim version 7.4.  Last change: 2016 Jan 21
 
 
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
@@ -99,6 +99,9 @@ List, Dictionary and Funcref types are not automatically converted.
 When mixing Number and Float the Number is converted to Float.	Otherwise
 there is no automatic conversion of Float.  You can use str2float() for String
 to Float, printf() for Float to String and float2nr() for Float to Number.
+
+						*E891* *E892* *E893* *E894*
+When expecting a Float a Number can also be used, but nothing else.
 
 						*E706* *sticky-type-checking*
 You will get an error if you try to change the type of a variable.  You need
@@ -3665,7 +3668,8 @@ getftype({fname})					*getftype()*
 			getftype("/home")
 <		Note that a type such as "link" will only be returned on
 		systems that support it.  On some systems only "dir" and
-		"file" are returned.
+		"file" are returned.  On MS-Windows a symbolic link to a
+		directory returns "dir" instead of "link".
 
 							*getline()*
 getline({lnum} [, {end}])
@@ -6206,6 +6210,9 @@ sort({list} [, {func} [, {dict}]])			*sort()* *E702*
 		When {func} is given and it is 'N' then all items will be
 		sorted numerical. This is like 'n' but a string containing
 		digits will be used as the number they represent.
+
+		When {func} is given and it is 'f' then all items will be
+		sorted numerical. All values must be a Number or a Float.
 
 		When {func} is a |Funcref| or a function name, this function
 		is called to compare items.  The function is invoked with two
