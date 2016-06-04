@@ -154,7 +154,8 @@ static void forward_mouse_event(TermInput *input, TermKeyKey *key)
   TermKeyMouseEvent ev;
   termkey_interpret_mouse(input->tk, key, &ev, &button, &row, &col);
 
-  if (ev != TERMKEY_MOUSE_PRESS && ev != TERMKEY_MOUSE_DRAG) {
+  if (ev != TERMKEY_MOUSE_PRESS && ev != TERMKEY_MOUSE_DRAG
+      && ev != TERMKEY_MOUSE_RELEASE) {
     return;
   }
 
@@ -191,6 +192,8 @@ static void forward_mouse_event(TermInput *input, TermKeyKey *key)
     }
   } else if (ev == TERMKEY_MOUSE_DRAG) {
     len += (size_t)snprintf(buf + len, sizeof(buf) - len, "Drag");
+  } else if (ev == TERMKEY_MOUSE_RELEASE) {
+    len += (size_t)snprintf(buf + len, sizeof(buf) - len, "Release");
   }
 
   len += (size_t)snprintf(buf + len, sizeof(buf) - len, "><%d,%d>", col, row);
