@@ -1378,7 +1378,7 @@ find_file_in_path_option (
     /* copy file name into NameBuff, expanding environment variables */
     save_char = ptr[len];
     ptr[len] = NUL;
-    expand_env(ptr, NameBuff, MAXPATHL);
+    expand_env_esc(ptr, NameBuff, MAXPATHL, false, true, NULL);
     ptr[len] = save_char;
 
     xfree(ff_file_to_find);
