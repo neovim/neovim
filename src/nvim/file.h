@@ -6,10 +6,14 @@
 #include <fcntl.h>
 
 #include "nvim/func_attr.h"
+#include "nvim/rbuffer.h"
 
 /// Structure used to read from/write to file
 typedef struct {
   int fd;  ///< File descriptor.
+  int _error;  ///< Error code for use with RBuffer callbacks or zero.
+  RBuffer *rv;  ///< Read or write buffer.
+  bool wr;  ///< True if file is in write mode.
   bool eof;  ///< True if end of file was encountered.
 } FileDescriptor;
 

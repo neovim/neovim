@@ -153,7 +153,7 @@ void rbuffer_consumed(RBuffer *buf, size_t count)
 
 // Higher level functions for copying from/to RBuffer instances and data
 // pointers
-size_t rbuffer_write(RBuffer *buf, char *src, size_t src_size)
+size_t rbuffer_write(RBuffer *buf, const char *src, size_t src_size)
   FUNC_ATTR_NONNULL_ALL
 {
   size_t size = src_size;

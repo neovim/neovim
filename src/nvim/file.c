@@ -5,8 +5,15 @@
 /// replacement.
 
 #include <unistd.h>
+#include <assert.h>
 #include <stddef.h>
 #include <stdbool.h>
+
+#include "auto/config.h"
+
+#ifdef HAVE_SYS_UIO_H
+# include <sys/uio.h>
+#endif
 
 #include <uv.h>
 
@@ -14,17 +21,23 @@
 #include "nvim/memory.h"
 #include "nvim/os/os.h"
 #include "nvim/globals.h"
+#include "nvim/rbuffer.h"
+#include "nvim/macros.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "file.c.generated.h"
 #endif
+
+#define RWBUFSIZE (IOSIZE - 1)
 
 /// Open file
 ///
 /// @param[out]  ret_fp  Address where information needed for reading from or
 ///                      writing to a file is saved
 /// @param[in]  fname  File name to open.
-/// @param[in]  flags  Flags, @see FileOpenFlags.
+/// @param[in]  flags  Flags, @see FileOpenFlags. Currently reading from and
+///                    writing to the file at once is not supported, so either
+///                    FILE_WRITE_ONLY or FILE_READ_ONLY is required.
 /// @param[in]  mode  Permissions for the newly created file (ignored if flags
 ///                   does not have FILE_CREATE\*).
 ///
@@ -41,8 +54,15 @@ int file_open(FileDescriptor *const ret_fp, const char *const fname,
     return fd;
   }
 
+  ret_fp->wr = (bool)(!!(flags & FILE_WRITE_ONLY));
   ret_fp->fd = fd;
   ret_fp->eof = false;
+  ret_fp->rv = rbuffer_new(RWBUFSIZE);
+  ret_fp->_error = 0;
+  if (ret_fp->wr) {
+    ret_fp->rv->data = ret_fp;
+    ret_fp->rv->full_cb = (rbuffer_callback)&file_rb_write_full_cb;
+  }
   return 0;
 }
 
@@ -68,7 +88,7 @@ FileDescriptor *file_open_new(int *const error, const char *const fname,
   return fp;
 }
 
-/// Close file
+/// Close file and free its buffer
 ///
 /// @param[in,out]  fp  File to close.
 ///
@@ -77,6 +97,7 @@ int file_close(FileDescriptor *const fp) FUNC_ATTR_NONNULL_ALL
 {
   const int error = file_fsync(fp);
   const int error2 = os_close(fp->fd);
+  rbuffer_free(fp->rv);
   if (error2 != 0) {
     return error2;
   }
@@ -103,7 +124,43 @@ int file_free(FileDescriptor *const fp) FUNC_ATTR_NONNULL_ALL
 int file_fsync(FileDescriptor *const fp)
   FUNC_ATTR_NONNULL_ALL
 {
+  if (!fp->wr) {
+    return 0;
+  }
+  file_rb_write_full_cb(fp->rv, fp);
+  if (fp->_error != 0) {
+    const int error = fp->_error;
+    fp->_error = 0;
+    return error;
+  }
   return os_fsync(fp->fd);
+}
+
+/// Buffer used for writing
+///
+/// Like IObuff, but allows file_\* callers not to care about spoiling it.
+static char writebuf[RWBUFSIZE];
+
+/// Function run when RBuffer is full when writing to a file
+///
+/// Actually does writing to the file, may also be invoked directly.
+///
+/// @param[in,out]  rv  RBuffer instance used.
+/// @param[in,out]  fp  File to work with.
+static void file_rb_write_full_cb(RBuffer *const rv, FileDescriptor *const fp)
+  FUNC_ATTR_NONNULL_ALL
+{
+  assert(fp->wr);
+  assert(rv->data == (void *)fp);
+  const size_t read_bytes = rbuffer_read(rv, writebuf, RWBUFSIZE);
+  const ptrdiff_t wres = os_write(fp->fd, writebuf, read_bytes);
+  if (wres != (ptrdiff_t)read_bytes) {
+    if (wres >= 0) {
+      fp->_error = UV_EIO;
+    } else {
+      fp->_error = (int)wres;
+    }
+  }
 }
 
 /// Read from file
@@ -118,7 +175,69 @@ ptrdiff_t file_read(FileDescriptor *const fp, char *const ret_buf,
                     const size_t size)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  return os_read(fp->fd, &fp->eof, ret_buf, size);
+  assert(!fp->wr);
+  char *buf = ret_buf;
+  size_t read_remaining = size;
+  RBuffer *const rv = fp->rv;
+  while (read_remaining) {
+    const size_t rv_size = rbuffer_size(rv);
+    if (rv_size > 0) {
+      const size_t rsize = rbuffer_read(rv, buf, MIN(rv_size, read_remaining));
+      buf += rsize;
+      read_remaining -= rsize;
+    }
+    if (fp->eof) {
+      break;
+    }
+    if (read_remaining) {
+      assert(rbuffer_size(rv) == 0);
+      rbuffer_reset(rv);
+      if (read_remaining >= RWBUFSIZE) {
+#ifdef HAVE_READV
+        // If there is readv() syscall, then take an opportunity to populate
+        // both target buffer and RBuffer at once, …
+        size_t read_count;
+        struct iovec iov[] = {
+          { .iov_base = buf, .iov_len = read_remaining },
+          { .iov_base = rbuffer_read_ptr(rv, &read_count), .iov_len = RWBUFSIZE
+          },
+        };
+        assert(read_count == RWBUFSIZE);
+        const ptrdiff_t r_ret = os_readv(fp->fd, &fp->eof, iov,
+                                         ARRAY_SIZE(iov));
+        if (r_ret > 0) {
+          if (r_ret > (ptrdiff_t)read_remaining) {
+            rbuffer_produced(rv, (size_t)(r_ret - (ptrdiff_t)read_remaining));
+          }
+        } else if (r_ret < 0) {
+          return r_ret;
+        }
+#else
+        // …otherwise leave RBuffer empty and populate only target buffer,
+        // because filtering information through rbuffer will be more syscalls.
+        const ptrdiff_t r_ret = os_read(fp->fd, &fp->eof, buf, read_remaining);
+        if (r_ret >= 0) {
+          read_remaining -= (size_t)r_ret;
+          return (ptrdiff_t)(size - read_remaining);
+        } else if (r_ret < 0) {
+          return r_ret;
+        }
+#endif
+      } else {
+        size_t write_count;
+        const ptrdiff_t r_ret = os_read(fp->fd, &fp->eof,
+                                        rbuffer_write_ptr(rv, &write_count),
+                                        RWBUFSIZE);
+        assert(write_count == RWBUFSIZE);
+        if (r_ret > 0) {
+          rbuffer_produced(rv, (size_t)r_ret);
+        } else if (r_ret < 0) {
+          return r_ret;
+        }
+      }
+    }
+  }
+  return (ptrdiff_t)(size - read_remaining);
 }
 
 /// Write to a file
@@ -132,12 +251,21 @@ ptrdiff_t file_write(FileDescriptor *const fp, const char *const buf,
                      const size_t size)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ARG(1)
 {
-  return os_write(fp->fd, buf, size);
+  assert(fp->wr);
+  const size_t written = rbuffer_write(fp->rv, buf, size);
+  if (fp->_error != 0) {
+    const int error = fp->_error;
+    fp->_error = 0;
+    return error;
+  } else if (written != size) {
+    return UV_EIO;
+  }
+  return (ptrdiff_t)written;
 }
 
 /// Buffer used for skipping. Its contents is undefined and should never be
 /// used.
-static char skipbuf[IOSIZE];
+static char skipbuf[RWBUFSIZE];
 
 /// Skip some bytes
 ///
@@ -146,6 +274,7 @@ static char skipbuf[IOSIZE];
 ptrdiff_t file_skip(FileDescriptor *const fp, const size_t size)
   FUNC_ATTR_NONNULL_ALL
 {
+  assert(!fp->wr);
   size_t read_bytes = 0;
   do {
     ptrdiff_t new_read_bytes = file_read(

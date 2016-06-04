@@ -715,11 +715,6 @@ static void close_sd_reader(ShaDaReadDef *const sd_reader)
 static void close_sd_writer(ShaDaWriteDef *const sd_writer)
   FUNC_ATTR_NONNULL_ALL
 {
-  const int error = file_fsync(sd_writer->cookie);
-  if (error < 0) {
-    emsgf(_(SERR "System error while synchronizing ShaDa file: %s"),
-          os_strerror(error));
-  }
   close_file(sd_writer->cookie);
 }
 
@@ -2995,15 +2990,11 @@ shada_write_file_nomerge: {}
                                                            ? NULL
                                                            : &sd_reader));
   assert(sw_ret != kSDWriteIgnError);
-#ifndef UNIX
-  sd_writer.close(&sd_writer);
-#endif
   if (!nomerge) {
     sd_reader.close(&sd_reader);
     bool did_remove = false;
     if (sw_ret == kSDWriteSuccessfull) {
 #ifdef UNIX
-      bool closed = false;
       // For Unix we check the owner of the file.  It's not very nice to
       // overwrite a user’s viminfo file after a "su root", with a
       // viminfo file that the user can't read.
@@ -3016,13 +3007,11 @@ shada_write_file_nomerge: {}
             const uv_gid_t old_gid = (uv_gid_t) old_info.stat.st_gid;
             const int fchown_ret = os_fchown(file_fd(sd_writer.cookie),
                                              old_uid, old_gid);
-            sd_writer.close(&sd_writer);
             if (fchown_ret != 0) {
               EMSG3(_(RNERR "Failed setting uid and gid for file %s: %s"),
                     tempname, os_strerror(fchown_ret));
               goto shada_write_file_did_not_remove;
             }
-            closed = true;
           }
         } else if (!(old_info.stat.st_uid == getuid()
                      ? (old_info.stat.st_mode & 0200)
@@ -3030,12 +3019,8 @@ shada_write_file_nomerge: {}
                         ? (old_info.stat.st_mode & 0020)
                         : (old_info.stat.st_mode & 0002)))) {
           EMSG2(_("E137: ShaDa file is not writable: %s"), fname);
-          sd_writer.close(&sd_writer);
           goto shada_write_file_did_not_remove;
         }
-      }
-      if (!closed) {
-        sd_writer.close(&sd_writer);
       }
 #endif
       if (vim_rename(tempname, fname) == -1) {
@@ -3063,6 +3048,7 @@ shada_write_file_did_not_remove:
     }
     xfree(tempname);
   }
+  sd_writer.close(&sd_writer);
 
   xfree(fname);
   return OK;
@@ -3192,20 +3178,20 @@ static ShaDaReadResult fread_len(ShaDaReadDef *const sd_reader,
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   const ptrdiff_t read_bytes = sd_reader->read(sd_reader, buffer, length);
-  (void) read_bytes;
 
-  if (sd_reader->error != NULL) {
-    emsgf(_(SERR "System error while reading ShaDa file: %s"),
-          sd_reader->error);
-    return kSDReadStatusReadError;
-  } else if (sd_reader->eof) {
-    emsgf(_(RCERR "Error while reading ShaDa file: "
-            "last entry specified that it occupies %" PRIu64 " bytes, "
-            "but file ended earlier"),
-          (uint64_t) length);
-    return kSDReadStatusNotShaDa;
+  if (read_bytes != (ptrdiff_t)length) {
+    if (sd_reader->error != NULL) {
+      emsgf(_(SERR "System error while reading ShaDa file: %s"),
+            sd_reader->error);
+      return kSDReadStatusReadError;
+    } else {
+      emsgf(_(RCERR "Error while reading ShaDa file: "
+              "last entry specified that it occupies %" PRIu64 " bytes, "
+              "but file ended earlier"),
+            (uint64_t) length);
+      return kSDReadStatusNotShaDa;
+    }
   }
-  assert(read_bytes >= 0 && (size_t) read_bytes == length);
   return kSDReadStatusSuccess;
 }
 

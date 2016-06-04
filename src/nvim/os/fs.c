@@ -7,6 +7,12 @@
 #include <fcntl.h>
 #include <errno.h>
 
+#include "auto/config.h"
+
+#ifdef HAVE_SYS_UIO_H
+# include <sys/uio.h>
+#endif
+
 #include <uv.h>
 
 #include "nvim/os/os.h"
@@ -416,6 +422,73 @@ ptrdiff_t os_read(const int fd, bool *ret_eof, char *const ret_buf,
   }
   return (ptrdiff_t) read_bytes;
 }
+
+#ifdef HAVE_READV
+/// Read from a file to a multiple buffers at once
+///
+/// Wrapper for readv().
+///
+/// @param[in]  fd  File descriptor to read from.
+/// @param[out]  ret_eof  Is set to true if EOF was encountered, otherwise set
+///                       to false. Initial value is ignored.
+/// @param[out]  iov  Description of buffers to write to. Note: this description
+///                   may change, it is incorrect to use data it points to after
+///                   os_readv().
+/// @param[in]  iov_size  Number of buffers in iov.
+ptrdiff_t os_readv(int fd, bool *ret_eof, struct iovec *iov, size_t iov_size)
+  FUNC_ATTR_NONNULL_ALL
+{
+  *ret_eof = false;
+  size_t read_bytes = 0;
+  bool did_try_to_free = false;
+  size_t toread = 0;
+  for (size_t i = 0; i < iov_size; i++) {
+    // Overflow, trying to read too much data
+    assert(toread <= SIZE_MAX - iov[i].iov_len);
+    toread += iov[i].iov_len;
+  }
+  while (read_bytes < toread && iov_size && !*ret_eof) {
+    ptrdiff_t cur_read_bytes = readv(fd, iov, (int)iov_size);
+    if (toread && cur_read_bytes == 0) {
+      *ret_eof = true;
+    }
+    if (cur_read_bytes > 0) {
+      read_bytes += (size_t)cur_read_bytes;
+      while (iov_size && cur_read_bytes) {
+        if (cur_read_bytes < (ptrdiff_t) iov->iov_len) {
+          iov->iov_len -= (size_t)cur_read_bytes;
+          iov->iov_base = (char *)iov->iov_base + cur_read_bytes;
+          cur_read_bytes = 0;
+        } else {
+          cur_read_bytes -= (ptrdiff_t)iov->iov_len;
+          iov_size--;
+          iov++;
+        }
+      }
+    } else if (cur_read_bytes < 0) {
+#ifdef HAVE_UV_TRANSLATE_SYS_ERROR
+      const int error = uv_translate_sys_error(errno);
+#else
+      const int error = -errno;
+      STATIC_ASSERT(-EINTR == UV_EINTR, "Need to translate error codes");
+      STATIC_ASSERT(-EAGAIN == UV_EAGAIN, "Need to translate error codes");
+      STATIC_ASSERT(-ENOMEM == UV_ENOMEM, "Need to translate error codes");
+#endif
+      errno = 0;
+      if (error == UV_EINTR || error == UV_EAGAIN) {
+        continue;
+      } else if (error == UV_ENOMEM && !did_try_to_free) {
+        try_to_free_memory();
+        did_try_to_free = true;
+        continue;
+      } else {
+        return (ptrdiff_t)error;
+      }
+    }
+  }
+  return (ptrdiff_t)read_bytes;
+}
+#endif  // HAVE_READV
 
 /// Write to a file
 ///

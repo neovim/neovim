@@ -27,6 +27,7 @@ if(NOT HAVE_SYS_WAIT_H AND UNIX)
 endif()
 check_include_files(sys/utsname.h HAVE_SYS_UTSNAME_H)
 check_include_files(utime.h HAVE_UTIME_H)
+check_include_files(sys/uio.h HAVE_SYS_UIO_H)
 
 # Functions
 check_function_exists(fseeko HAVE_FSEEKO)
@@ -34,6 +35,7 @@ check_function_exists(getpwent HAVE_GETPWENT)
 check_function_exists(getpwnam HAVE_GETPWNAM)
 check_function_exists(getpwuid HAVE_GETPWUID)
 check_function_exists(uv_translate_sys_error HAVE_UV_TRANSLATE_SYS_ERROR)
+check_function_exists(readv HAVE_READV)
 
 if(Iconv_FOUND)
   set(HAVE_ICONV 1)
