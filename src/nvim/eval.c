@@ -9888,7 +9888,7 @@ static void f_getcmdwintype(typval_T *argvars, typval_T *rettv)
 static void f_getcwd(typval_T *argvars, typval_T *rettv)
 {
   // Possible scope of working directory to return.
-  CdScope scope = MIN_CD_SCOPE;
+  CdScope scope = kCdScopeInvalid;
 
   // Numbers of the scope objects (window, tab) we want the working directory
   // of. A `-1` means to skip this scope, a `0` means the current object.
@@ -9917,26 +9917,27 @@ static void f_getcwd(typval_T *argvars, typval_T *rettv)
       return;
     }
     scope_number[i] = argvars[i].vval.v_number;
-    // The scope is the current iteration step.
-    scope = i;
     // It is an error for the scope number to be less than `-1`.
     if (scope_number[i] < -1) {
       EMSG(_(e_invarg));
       return;
     }
+    // Use the narrowest scope the user requested
+    if (scope_number[i] >= 0 && scope == kCdScopeInvalid) {
+      // The scope is the current iteration step.
+      scope = i;
+    } else if (scope_number[i] < 0) {
+      scope = i + 1;
+    }
   }
 
-  // Normalize scope, the number of the new scope will be 0.
-  if (scope_number[scope] < 0) {
-    // Arguments to `getcwd` always end at second-highest scope, so scope will
-    // always be <= `MAX_CD_SCOPE`.
-    scope++;
+  // If the user didn't specify anything, default to window scope
+  if (scope == kCdScopeInvalid) {
+    scope = MIN_CD_SCOPE;
   }
 
   // Find the tabpage by number
-  if (scope_number[kCdScopeTab] == -1) {
-    tp = NULL;
-  } else if (scope_number[kCdScopeTab] > 0) {
+  if (scope_number[kCdScopeTab] > 0) {
     tp = find_tabpage(scope_number[kCdScopeTab]);
     if (!tp) {
       EMSG(_("E5000: Cannot find tab number."));
@@ -9945,16 +9946,14 @@ static void f_getcwd(typval_T *argvars, typval_T *rettv)
   }
 
   // Find the window in `tp` by number, `NULL` if none.
-  if (scope_number[kCdScopeWindow] == -1) {
-    win = NULL;
-  } else if (scope_number[kCdScopeWindow] >= 0) {
-    if (!tp) {
+  if (scope_number[kCdScopeWindow] >= 0) {
+    if (scope_number[kCdScopeTab] < 0) {
       EMSG(_("E5001: Higher scope cannot be -1 if lower scope is >= 0."));
       return;
     }
 
     if (scope_number[kCdScopeWindow] > 0) {
-      win = find_win_by_nr(&argvars[0], curtab);
+      win = find_win_by_nr(&argvars[0], tp);
       if (!win) {
         EMSG(_("E5002: Cannot find window number."));
         return;
@@ -9989,6 +9988,9 @@ static void f_getcwd(typval_T *argvars, typval_T *rettv)
         }
       }
       break;
+    case kCdScopeInvalid:
+      // We should never get here
+      assert(false);
   }
 
   if (from) {
@@ -10836,7 +10838,7 @@ static void f_has_key(typval_T *argvars, typval_T *rettv)
 static void f_haslocaldir(typval_T *argvars, typval_T *rettv)
 {
   // Possible scope of working directory to return.
-  CdScope scope = MIN_CD_SCOPE;
+  CdScope scope = kCdScopeInvalid;
 
   // Numbers of the scope objects (window, tab) we want the working directory
   // of. A `-1` means to skip this scope, a `0` means the current object.
@@ -10861,25 +10863,26 @@ static void f_haslocaldir(typval_T *argvars, typval_T *rettv)
       return;
     }
     scope_number[i] = argvars[i].vval.v_number;
-    // The scope is the current iteration step.
-    scope = i;
     if (scope_number[i] < -1) {
       EMSG(_(e_invarg));
       return;
     }
+    // Use the narrowest scope the user requested
+    if (scope_number[i] >= 0 && scope == kCdScopeInvalid) {
+      // The scope is the current iteration step.
+      scope = i;
+    } else if (scope_number[i] < 0) {
+      scope = i + 1;
+    }
   }
 
-  // Normalize scope, the number of the new scope will be 0.
-  if (scope_number[scope] < 0) {
-    // Arguments to `haslocaldir` always end at second-highest scope, so scope
-    // will always be <= `MAX_CD_SCOPE`.
-    scope++;
+  // If the user didn't specify anything, default to window scope
+  if (scope == kCdScopeInvalid) {
+    scope = MIN_CD_SCOPE;
   }
 
   // Find the tabpage by number
-  if (scope_number[kCdScopeTab] == -1) {
-    tp = NULL;
-  } else if (scope_number[kCdScopeTab] > 0) {
+  if (scope_number[kCdScopeTab] > 0) {
     tp = find_tabpage(scope_number[kCdScopeTab]);
     if (!tp) {
       EMSG(_("5000: Cannot find tab number."));
@@ -10888,16 +10891,14 @@ static void f_haslocaldir(typval_T *argvars, typval_T *rettv)
   }
 
   // Find the window in `tp` by number, `NULL` if none.
-  if (scope_number[kCdScopeWindow] == -1) {
-    win = NULL;
-  } else if (scope_number[kCdScopeWindow] >= 0) {
-    if (!tp) {
+  if (scope_number[kCdScopeWindow] >= 0) {
+    if (scope_number[kCdScopeTab] < 0) {
       EMSG(_("E5001: Higher scope cannot be -1 if lower scope is >= 0."));
       return;
     }
 
     if (scope_number[kCdScopeWindow] > 0) {
-      win = find_win_by_nr(&argvars[0], curtab);
+      win = find_win_by_nr(&argvars[0], tp);
       if (!win) {
         EMSG(_("E5002: Cannot find window number."));
         return;
@@ -10918,6 +10919,9 @@ static void f_haslocaldir(typval_T *argvars, typval_T *rettv)
       // The global scope never has a local directory
       rettv->vval.v_number = 0;
       break;
+    case kCdScopeInvalid:
+      // We should never get here
+      assert(false);
   }
 }
 

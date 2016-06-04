@@ -6865,6 +6865,9 @@ void post_chdir(CdScope scope)
       curwin->w_localdir = vim_strsave(NameBuff);
     }
     break;
+  case kCdScopeInvalid:
+    // We should never get here
+    assert(false);
   }
 
   shorten_fnames(TRUE);
