@@ -1,9 +1,9 @@
-" Vim syntax file for the D programming language (version 1.076 and 2.063).
+" Vim syntax file for the D programming language (version 1.076 and 2.069).
 "
 " Language:     D
 " Maintainer:   Jesse Phillips <Jesse.K.Phillips+D@gmail.com>
-" Last Change:  2013 October 5
-" Version:      0.26
+" Last Change:  2016 Feb 2
+" Version:      0.28
 "
 " Contributors:
 "   - Jason Mills: original Maintainer
@@ -15,6 +15,7 @@
 "   - Steven N. Oliver
 "   - Sohgo Takeuchi
 "   - Robert Clipsham
+"   - Petar Kirov
 "
 " Please submit bugs/comments/suggestions to the github repo: 
 " https://github.com/JesseKPhillips/d.vim
@@ -114,17 +115,19 @@ syn keyword dTraitsIdentifier      contained isIntegral isScalar isStaticArray
 syn keyword dTraitsIdentifier      contained isUnsigned isVirtualFunction
 syn keyword dTraitsIdentifier      contained isVirtualMethod isAbstractFunction
 syn keyword dTraitsIdentifier      contained isFinalFunction isStaticFunction
+syn keyword dTraitsIdentifier      contained isOverrideFunction isTemplate
 syn keyword dTraitsIdentifier      contained isRef isOut isLazy hasMember
-syn keyword dTraitsIdentifier      contained identifier getAttributes getMember
-syn keyword dTraitsIdentifier      contained getOverloads getProtection
-syn keyword dTraitsIdentifier      contained getVirtualFunctions
-syn keyword dTraitsIdentifier      contained getVirtualMethods parent
-syn keyword dTraitsIdentifier      contained classInstanceSize allMembers
+syn keyword dTraitsIdentifier      contained identifier getAliasThis
+syn keyword dTraitsIdentifier      contained getAttributes getFunctionAttributes getMember
+syn keyword dTraitsIdentifier      contained getOverloads getPointerBitmap getProtection
+syn keyword dTraitsIdentifier      contained getVirtualFunctions getVirtualIndex
+syn keyword dTraitsIdentifier      contained getVirtualMethods getUnitTests
+syn keyword dTraitsIdentifier      contained parent classInstanceSize allMembers
 syn keyword dTraitsIdentifier      contained derivedMembers isSame compiles
-syn keyword dPragmaIdentifier      contained lib msg startaddress GNU_asm
-syn keyword dExternIdentifier      contained Windows Pascal Java System D
+syn keyword dPragmaIdentifier      contained inline lib mangle msg startaddress GNU_asm
+syn keyword dExternIdentifier      contained C C++ D Windows Pascal System Objective-C
 syn keyword dAttribute             contained safe trusted system
-syn keyword dAttribute             contained property disable
+syn keyword dAttribute             contained property disable nogc
 syn keyword dVersionIdentifier     contained DigitalMars GNU LDC SDC D_NET
 syn keyword dVersionIdentifier     contained X86 X86_64 ARM PPC PPC64 IA64 MIPS MIPS64 Alpha
 syn keyword dVersionIdentifier     contained SPARC SPARC64 S390 S390X HPPA HPPA64 SH SH64
@@ -134,7 +137,7 @@ syn keyword dVersionIdentifier     contained Cygwin MinGW
 syn keyword dVersionIdentifier     contained LittleEndian BigEndian
 syn keyword dVersionIdentifier     contained D_InlineAsm_X86 D_InlineAsm_X86_64
 syn keyword dVersionIdentifier     contained D_Version2 D_Coverage D_Ddoc D_LP64 D_PIC
-syn keyword dVersionIdentifier     contained unittest none all
+syn keyword dVersionIdentifier     contained unittest assert none all
 
 syn cluster dComment contains=dNestedComment,dBlockComment,dLineComment
 
@@ -168,10 +171,10 @@ syn match dExternal     "\<extern\>"
 syn match dExtern       "\<extern\s*([_a-zA-Z][_a-zA-Z0-9\+]*\>"he=s+6 contains=dExternIdentifier
 
 " Make import a region to prevent highlighting keywords
-syn region dImport start="import\_s" end=";" contains=dExternal,@dComment
+syn region dImport start="\<import\_s" end=";" contains=dExternal,@dComment
 
 " Make module a region to prevent highlighting keywords
-syn region dImport start="module\_s" end=";" contains=dExternal,@dComment
+syn region dImport start="\<module\_s" end=";" contains=dExternal,@dComment
 
 " dTokens is used by the token string highlighting
 syn cluster dTokens contains=dExternal,dConditional,dBranch,dRepeat,dBoolean
@@ -246,12 +249,16 @@ syn match dUnicode "\\u\d\{4\}"
 
 " String.
 "
-syn region dString	start=+"+ end=+"[cwd]\=+ skip=+\\\\\|\\"+ contains=dEscSequence,@Spell
+syn match	dFormat		display "%\(\d\+\$\)\=[-+' #0*]*\(\d*\|\*\|\*\d\+\$\)\(\.\(\d*\|\*\|\*\d\+\$\)\)\=\([hlL]\|ll\)\=\([bdiuoxXDOUfeEgGcCsSpn]\|\[\^\=.[^]]*\]\)" contained
+syn match	dFormat		display "%%" contained
+
+syn region dString	start=+"+ end=+"[cwd]\=+ skip=+\\\\\|\\"+ contains=dFormat,dEscSequence,@Spell
 syn region dRawString	start=+`+ end=+`[cwd]\=+ contains=@Spell
 syn region dRawString	start=+r"+ end=+"[cwd]\=+ contains=@Spell
 syn region dHexString	start=+x"+ end=+"[cwd]\=+ contains=@Spell
 syn region dDelimString	start=+q"\z(.\)+ end=+\z1"+ contains=@Spell
 syn region dHereString	start=+q"\z(\I\i*\)\n+ end=+^\z1"+ contains=@Spell
+
 
 " Nesting delimited string contents
 "
@@ -276,8 +283,8 @@ syn cluster dTokens add=dString,dRawString,dHexString,dDelimString,dNestString
 
 " Token strings
 "
-syn region dNestTokenString start=+{+ end=+}+ contained contains=dNestTokenString,@dTokens
-syn region dTokenString matchgroup=dTokenStringBrack transparent start=+q{+ end=+}+ contains=dNestTokenString,@dTokens
+syn region dNestTokenString start=+{+ end=+}+ contained contains=dNestTokenString,@dTokens,dFormat
+syn region dTokenString matchgroup=dTokenStringBrack transparent start=+q{+ end=+}+ contains=dNestTokenString,@dTokens,dFormat
 
 syn cluster dTokens add=dTokenString
 
@@ -357,6 +364,7 @@ hi def link dString              String
 hi def link dHexString           String
 hi def link dCharacter           Character
 hi def link dEscSequence         SpecialChar
+hi def link dFormat              SpecialChar
 hi def link dSpecialCharError    Error
 hi def link dOctalError          Error
 hi def link dOperator            Operator

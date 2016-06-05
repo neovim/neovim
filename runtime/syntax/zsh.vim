@@ -2,7 +2,7 @@
 " Language:             Zsh shell script
 " Maintainer:           Christian Brabandt <cb@256bit.org>
 " Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
-" Latest Revision:      2015-12-25
+" Latest Revision:      2016-01-25
 " License:              Vim (see :h license)
 " Repository:		https://github.com/chrisbra/vim-zsh
 
@@ -14,6 +14,7 @@ let s:cpo_save = &cpo
 set cpo&vim
 
 setlocal iskeyword+=-
+setlocal foldmethod=syntax
 
 syn keyword zshTodo             contained TODO FIXME XXX NOTE
 
@@ -307,19 +308,19 @@ syn match   zshNumber           '[+-]\=\d\+\.\d\+\>'
 " TODO: $[...] is the same as $((...)), so add that as well.
 syn cluster zshSubst            contains=zshSubst,zshOldSubst,zshMathSubst
 syn region  zshSubst            matchgroup=zshSubstDelim transparent
-                                \ start='\$(' skip='\\)' end=')' contains=TOP
-syn region  zshParentheses      transparent start='(' skip='\\)' end=')'
+                                \ start='\$(' skip='\\)' end=')' contains=TOP fold
+syn region  zshParentheses      transparent start='(' skip='\\)' end=')' fold
 syn region  zshMathSubst        matchgroup=zshSubstDelim transparent
                                 \ start='\$((' skip='\\)'
                                 \ matchgroup=zshSubstDelim end='))'
                                 \ contains=zshParentheses,@zshSubst,zshNumber,
-                                \ @zshDerefs,zshString keepend
+                                \ @zshDerefs,zshString keepend fold
 syn region  zshBrackets         contained transparent start='{' skip='\\}'
-                                \ end='}'
+                                \ end='}' fold
 syn region  zshSubst            matchgroup=zshSubstDelim start='\${' skip='\\}'
-                                \ end='}' contains=@zshSubst,zshBrackets,zshQuoted,zshString
+                                \ end='}' contains=@zshSubst,zshBrackets,zshQuoted,zshString fold
 syn region  zshOldSubst         matchgroup=zshSubstDelim start=+`+ skip=+\\`+
-                                \ end=+`+ contains=TOP,zshOldSubst
+                                \ end=+`+ contains=TOP,zshOldSubst fold
 
 syn sync    minlines=50 maxlines=90
 syn sync    match zshHereDocSync    grouphere   NONE '<<-\=\s*\%(\\\=\S\+\|\(["']\)\S\+\1\)'
