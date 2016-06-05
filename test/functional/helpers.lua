@@ -345,10 +345,18 @@ local function rmdir(path)
   end
   for file in lfs.dir(path) do
     if file ~= '.' and file ~= '..' then
-      local ret, err = os.remove(path..'/'..file)
-      if not ret then
-        error('os.remove: '..err)
-        return nil
+      local abspath = path..'/'..file
+      if lfs.attributes(abspath, 'mode') == 'directory' then
+        local ret = rmdir(abspath)  -- recurse
+        if not ret then
+          return nil
+        end
+      else
+        local ret, err = os.remove(abspath)
+        if not ret then
+          error('os.remove: '..err)
+          return nil
+        end
       end
     end
   end
