@@ -1,11 +1,11 @@
-# Japanese translation for Vim			vim:set foldmethod=marker:
+# Japanese translation for Vim
 #
 # Do ":help uganda"  in Vim to read copying and usage conditions.
 # Do ":help credits" in Vim to see a list of people who contributed.
 #
-# Last Change: 2013 Jul 06
+# Copyright (C) 2001-2016 MURAOKA Taro <koron.kaoriya@gmail.com>,
+# 			  vim-jp (http://vim-jp.org/)
 #
-# Copyright (C) 2001-13 MURAOKA Taro <koron.kaoriya@gmail.com>
 # THIS FILE IS DISTRIBUTED UNDER THE VIM LICENSE.
 #
 # Generated from ja.po, DO NOT EDIT.
@@ -14,10 +14,10 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Vim 7.4\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-05-26 14:21+0200\n"
-"PO-Revision-Date: 2013-07-06 15:00+0900\n"
+"POT-Creation-Date: 2016-02-01 09:02+0900\n"
+"PO-Revision-Date: 2016-02-01 09:08+0900\n"
 "Last-Translator: MURAOKA Taro <koron.kaoriya@gmail.com>\n"
-"Language-Team: MURAOKA Taro <koron.kaoriya@gmail.com>\n"
+"Language-Team: vim-jp (https://github.com/vim-jp/lang-ja)\n"
 "Language: Japanese\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=euc-jp\n"
@@ -34,7 +34,7 @@ msgstr "内部エラー: 未知のオプション型です"
 
 #: ../buffer.c:92
 msgid "[Location List]"
-msgstr "[場所リスト]"
+msgstr "[ロケーションリスト]"
 
 #: ../buffer.c:93
 msgid "[Quickfix List]"
@@ -277,7 +277,7 @@ msgstr "E810: 一時ファイルの読込もしくは書込ができません"
 
 #: ../diff.c:755
 msgid "E97: Cannot create diffs"
-msgstr "E97: 差分を作成できません "
+msgstr "E97: 差分を作成できません"
 
 #: ../diff.c:966
 msgid "E816: Cannot read patch output"
@@ -293,7 +293,7 @@ msgstr "E99: 現在のバッファは差分モードではありません"
 
 #: ../diff.c:2100
 msgid "E793: No other buffer in diff mode is modifiable"
-msgstr "E793: 差分モードである他のバッファは変更可能です"
+msgstr "E793: 差分モードである他のバッファは変更できません"
 
 #: ../diff.c:2102
 msgid "E100: No other buffer in diff mode"
@@ -349,7 +349,7 @@ msgstr " 行(全体)補完 (^L^N^P)"
 
 #: ../edit.c:86
 msgid " File name completion (^F^N^P)"
-msgstr "ファイル名補完 (^F^N^P)"
+msgstr " ファイル名補完 (^F^N^P)"
 
 #: ../edit.c:87
 msgid " Tag completion (^]^N^P)"
@@ -377,7 +377,7 @@ msgstr " コマンドライン補完 (^V^N^P)"
 
 #: ../edit.c:94
 msgid " User defined completion (^U^N^P)"
-msgstr " ユーザ定義補完 (^U^N^P)"
+msgstr " ユーザー定義補完 (^U^N^P)"
 
 #: ../edit.c:95
 msgid " Omni completion (^O^N^P)"
@@ -679,6 +679,11 @@ msgstr "E696: リスト型にカンマがありません: %s"
 msgid "E697: Missing end of List ']': %s"
 msgstr "E697: リスト型の最後に ']' がありません: %s"
 
+#: ../eval.c:5807
+msgid "Not enough memory to set references, garbage collection aborted!"
+msgstr ""
+"ガーベッジコレクションを中止しました! 参照を作成するのにメモリが不足しました"
+
 #: ../eval.c:6475
 #, c-format
 msgid "E720: Missing colon in Dictionary: %s"
@@ -721,7 +726,7 @@ msgstr "E117: 未知の関数です: %s"
 #: ../eval.c:7383
 #, c-format
 msgid "E119: Not enough arguments for function: %s"
-msgstr "E119: 関数の引数が少な過ぎます: %s"
+msgstr "E119: 関数の引数が足りません: %s"
 
 #: ../eval.c:7387
 #, c-format
@@ -826,18 +831,16 @@ msgid "sort() argument"
 msgstr "sort() の引数"
 
 #: ../eval.c:13721
-#, fuzzy
 msgid "uniq() argument"
-msgstr "add() の引数"
+msgstr "uniq() の引数"
 
 #: ../eval.c:13776
 msgid "E702: Sort compare function failed"
 msgstr "E702: ソートの比較関数が失敗しました"
 
 #: ../eval.c:13806
-#, fuzzy
 msgid "E882: Uniq compare function failed"
-msgstr "E702: ソートの比較関数が失敗しました"
+msgstr "E882: Uniq の比較関数が失敗しました"
 
 #: ../eval.c:14085
 msgid "(Invalid)"
@@ -862,6 +865,18 @@ msgstr "E745: リスト型を数値として扱っています"
 #: ../eval.c:16173
 msgid "E728: Using a Dictionary as a Number"
 msgstr "E728: 辞書型を数値として扱っています"
+
+msgid "E891: Using a Funcref as a Float"
+msgstr "E891: 関数参照型を浮動小数点数として扱っています。"
+
+msgid "E892: Using a String as a Float"
+msgstr "E892: 文字列を浮動小数点数として扱っています"
+
+msgid "E893: Using a List as a Float"
+msgstr "E893: リスト型を浮動小数点数として扱っています"
+
+msgid "E894: Using a Dictionary as a Float"
+msgstr "E894: 辞書型を浮動小数点数として扱っています"
 
 #: ../eval.c:16259
 msgid "E729: using Funcref as a String"
@@ -961,14 +976,14 @@ msgid "E129: Function name required"
 msgstr "E129: 関数名が要求されます"
 
 #: ../eval.c:17824
-#, fuzzy, c-format
+#, c-format
 msgid "E128: Function name must start with a capital or \"s:\": %s"
-msgstr "E128: 関数名は大文字で始まるかコロンを含まなければなりません: %s"
+msgstr "E128: 関数名は大文字か \"s:\" で始まらなければなりません: %s"
 
 #: ../eval.c:17833
-#, fuzzy, c-format
+#, c-format
 msgid "E884: Function name cannot contain a colon: %s"
-msgstr "E128: 関数名は大文字で始まるかコロンを含まなければなりません: %s"
+msgstr "E884: 関数名にはコロンは含められません: %s"
 
 #: ../eval.c:18336
 #, c-format
@@ -1081,7 +1096,7 @@ msgstr "E136: viminfo: エラーが多過ぎるので, 以降はスキップします"
 #: ../ex_cmds.c:1458
 #, c-format
 msgid "Reading viminfo file \"%s\"%s%s%s"
-msgstr "viminfoファイル \"%s\"%s%s%s を読込み中 "
+msgstr "viminfoファイル \"%s\"%s%s%s を読込み中"
 
 #: ../ex_cmds.c:1460
 msgid " info"
@@ -1357,6 +1372,10 @@ msgstr "E158: 無効なバッファ名です: %s"
 msgid "E157: Invalid sign ID: %<PRId64>"
 msgstr "E157: 無効なsign識別子です: %<PRId64>"
 
+#, c-format
+msgid "E885: Not possible to change sign %s"
+msgstr "E885: 変更できない sign です: %s"
+
 #: ../ex_cmds.c:6066
 msgid " (not supported)"
 msgstr " (非サポート)"
@@ -1378,6 +1397,13 @@ msgstr "行 %<PRId64>: %s"
 #, c-format
 msgid "cmd: %s"
 msgstr "コマンド: %s"
+
+msgid "frame is zero"
+msgstr "フレームが 0 です"
+
+#, c-format
+msgid "frame at highest level: %d"
+msgstr "最高レベルのフレーム: %d"
 
 #: ../ex_cmds2.c:322
 #, c-format
@@ -1528,7 +1554,8 @@ msgstr "E197: 言語を \"%s\" に設定できません"
 #. don't wait for return
 #: ../ex_docmd.c:387
 msgid "Entering Ex mode.  Type \"visual\" to go to Normal mode."
-msgstr "Exモードに入ります. ノーマルに戻るには\"visual\"と入力してください."
+msgstr ""
+"Exモードに入ります. ノーマルモードに戻るには\"visual\"と入力してください."
 
 #: ../ex_docmd.c:428
 msgid "E501: At end-of-file"
@@ -1553,7 +1580,7 @@ msgstr "関数の最後です"
 
 #: ../ex_docmd.c:1628
 msgid "E464: Ambiguous use of user-defined command"
-msgstr "E464: ユーザ定義コマンドのあいまいな使用です"
+msgstr "E464: ユーザー定義コマンドのあいまいな使用です"
 
 #: ../ex_docmd.c:1638
 msgid "E492: Not an editor command"
@@ -1606,14 +1633,14 @@ msgstr "E174: コマンドが既にあります: 再定義するには ! を追加してください"
 #: ../ex_docmd.c:4432
 msgid ""
 "\n"
-"    Name        Args Range Complete  Definition"
+"    Name        Args       Address   Complete  Definition"
 msgstr ""
 "\n"
-"    名前        引数 範囲  補完      定義"
+"    名前        引数       アドレス  補完      定義"
 
 #: ../ex_docmd.c:4516
 msgid "No user-defined commands found"
-msgstr "ユーザ定義コマンドが見つかりませんでした"
+msgstr "ユーザー定義コマンドが見つかりませんでした"
 
 #: ../ex_docmd.c:4538
 msgid "E175: No attribute specified"
@@ -1633,7 +1660,10 @@ msgstr "E178: カウントの省略値が無効です"
 
 #: ../ex_docmd.c:4625
 msgid "E179: argument required for -complete"
-msgstr "E179: -補完のための引数が必要です"
+msgstr "E179: -complete には引数が必要です"
+
+msgid "E179: argument required for -addr"
+msgstr "E179: -addr には引数が必要です"
 
 #: ../ex_docmd.c:4635
 #, c-format
@@ -1650,12 +1680,16 @@ msgstr "E183: ユーザ定義コマンドは英大文字で始まらなければなりません"
 
 #: ../ex_docmd.c:4696
 msgid "E841: Reserved name, cannot be used for user defined command"
-msgstr "E841: 予約名なので, ユーザ定義コマンドに利用できません"
+msgstr "E841: 予約名なので, ユーザー定義コマンドに利用できません"
 
 #: ../ex_docmd.c:4751
 #, c-format
 msgid "E184: No such user-defined command: %s"
-msgstr "E184: そのユーザ定義コマンドはありません: %s"
+msgstr "E184: そのユーザー定義コマンドはありません: %s"
+
+#, c-format
+msgid "E180: Invalid address type value: %s"
+msgstr "E180: 無効なアドレスタイプ値です: %s"
 
 #: ../ex_docmd.c:5219
 #, c-format
@@ -2019,11 +2053,11 @@ msgstr "不正なファイル名"
 
 #: ../fileio.c:395 ../fileio.c:476 ../fileio.c:2543 ../fileio.c:2578
 msgid "is a directory"
-msgstr " はディレクトリです"
+msgstr "はディレクトリです"
 
 #: ../fileio.c:397
 msgid "is not a file"
-msgstr " はファイルではありません"
+msgstr "はファイルではありません"
 
 #: ../fileio.c:508 ../fileio.c:3522
 msgid "[New File]"
@@ -2039,7 +2073,7 @@ msgstr "[ファイル過大]"
 
 #: ../fileio.c:534
 msgid "[Permission Denied]"
-msgstr "[認可がありません]"
+msgstr "[権限がありません]"
 
 #: ../fileio.c:653
 msgid "E200: *ReadPre autocommands made the file unreadable"
@@ -2210,7 +2244,7 @@ msgstr " 変換エラー"
 #: ../fileio.c:3509
 #, c-format
 msgid " in line %<PRId64>;"
-msgstr "行 %<PRId64>;"
+msgstr " 行 %<PRId64>;"
 
 #: ../fileio.c:3519
 msgid "[Device]"
@@ -2766,9 +2800,8 @@ msgid "E37: No write since last change (add ! to override)"
 msgstr "E37: 最後の変更が保存されていません (! を追加で変更を破棄)"
 
 #: ../globals.h:1055
-#, fuzzy
 msgid "E37: No write since last change"
-msgstr "[最後の変更が保存されていません]\n"
+msgstr "E37: 最後の変更が保存されていません"
 
 #: ../globals.h:1056
 msgid "E38: Null argument"
@@ -2810,7 +2843,7 @@ msgstr "E42: エラーはありません"
 
 #: ../globals.h:1067
 msgid "E776: No location list"
-msgstr "E776: 場所リストはありません"
+msgstr "E776: ロケーションリストはありません"
 
 #: ../globals.h:1068
 msgid "E43: Damaged match string"
@@ -3831,7 +3864,7 @@ msgid ""
 "\n"
 msgstr ""
 "\n"
-"それから.swpファイルを削除してください\n"
+"元の.swpファイルは削除しても構いません\n"
 "\n"
 
 #. use msg() to start the scrolling properly
@@ -3845,7 +3878,7 @@ msgstr "   現在のディレクトリ:\n"
 
 #: ../memline.c:1448
 msgid "   Using specified name:\n"
-msgstr "   ある名前を使用中:\n"
+msgstr "   以下の名前を使用中:\n"
 
 #: ../memline.c:1450
 msgid "   In directory "
@@ -3901,7 +3934,7 @@ msgid ""
 "         user name: "
 msgstr ""
 "\n"
-"          ユーザ名: "
+"        ユーザー名: "
 
 #: ../memline.c:1568
 msgid "   host name: "
@@ -4050,12 +4083,12 @@ msgid ""
 msgstr ""
 "\n"
 "(1) 別のプログラムが同じファイルを編集しているかもしれません.\n"
-"    この場合には, 変更をした際に最終的に, 同じファイルの異なる\n"
-"    2つのインスタンスができてしまうことに注意してください."
+"    この場合には, 変更をしてしまうと1つのファイルに対して異なる2つの\n"
+"    インスタンスができてしまうので, そうしないように気をつけてください."
 
 #: ../memline.c:3245
 msgid "  Quit, or continue with caution.\n"
-msgstr "  終了するか, 注意しながら続けてください.\n"
+msgstr "    終了するか, 注意しながら続けてください.\n"
 
 #: ../memline.c:3246
 msgid "(2) An edit session for this file crashed.\n"
@@ -4479,6 +4512,11 @@ msgstr ""
 msgid "E574: Unknown register type %d"
 msgstr "E574: 未知のレジスタ型 %d です"
 
+msgid ""
+"E883: search pattern and expression register may not contain two or more "
+"lines"
+msgstr "E883: 検索パターンと式レジスタには2行以上を含められません"
+
 #: ../ops.c:5089
 #, c-format
 msgid "%<PRId64> Cols; "
@@ -4562,6 +4600,10 @@ msgstr "E522: termcap 内に見つかりません"
 #, c-format
 msgid "E539: Illegal character <%s>"
 msgstr "E539: 不正な文字です <%s>"
+
+#, c-format
+msgid "For option %s"
+msgstr "オプション: %s"
 
 #: ../option.c:3862
 msgid "E529: Cannot set 'term' to empty string"
@@ -4739,6 +4781,14 @@ msgid ""
 msgstr ""
 "\n"
 "セキュリティコンテキストを設定できません "
+
+#, c-format
+msgid "Could not set security context %s for %s"
+msgstr "セキュリティコンテキスト %s を %s に設定できません"
+
+#, c-format
+msgid "Could not get security context %s for %s. Removing it!"
+msgstr "セキュリティコンテキスト %s を %s から取得できません. 削除します!"
 
 #: ../os_unix.c:1558 ../os_unix.c:1647
 #, c-format
@@ -4960,6 +5010,10 @@ msgstr "E554: %s{...} 内に文法エラーがあります"
 msgid "External submatches:\n"
 msgstr "外部の部分該当:\n"
 
+#, c-format
+msgid "E888: (NFA regexp) cannot repeat %s"
+msgstr "E888: (NFA 正規表現) 繰り返せません %s"
+
 #: ../regexp.c:7022
 msgid ""
 "E864: \\%#= can only be followed by 0, 1, or 2. The automatic engine will be "
@@ -4967,6 +5021,9 @@ msgid ""
 msgstr ""
 "E864: \\%#= には 0, 1 もしくは 2 のみが続けられます。正規表現エンジンは自動選"
 "択されます。"
+
+msgid "Switching to backtracking RE engine for pattern: "
+msgstr "次のパターンにバックトラッキング RE エンジンを適用します: "
 
 #: ../regexp_nfa.c:239
 msgid "E865: (NFA) Regexp end encountered prematurely"
@@ -4980,7 +5037,7 @@ msgstr "E866: (NFA 正規表現) 位置が誤っています: %c"
 #: ../regexp_nfa.c:242
 #, c-format
 msgid "E877: (NFA regexp) Invalid character class: %<PRId64>"
-msgstr ""
+msgstr "E877: (NFA 正規表現) 無効な文字クラス: %<PRId64>"
 
 #: ../regexp_nfa.c:1261
 #, c-format
@@ -5590,14 +5647,14 @@ msgid "E765: 'spellfile' does not have %<PRId64> entries"
 msgstr "E765: 'spellfile' には %<PRId64> 個のエントリはありません"
 
 #: ../spell.c:8074
-#, fuzzy, c-format
+#, c-format
 msgid "Word '%.*s' removed from %s"
-msgstr "%s から単語が削除されました"
+msgstr "単語 '%.*s' が %s から削除されました"
 
 #: ../spell.c:8117
-#, fuzzy, c-format
+#, c-format
 msgid "Word '%.*s' added to %s"
-msgstr "%s に単語が追加されました"
+msgstr "単語 '%.*s' が %s へ追加されました"
 
 #: ../spell.c:8381
 msgid "E763: Word characters differ between spell files"
@@ -5672,6 +5729,9 @@ msgstr "このバッファに定義された構文要素はありません"
 #, c-format
 msgid "E390: Illegal argument: %s"
 msgstr "E390: 不正な引数です: %s"
+
+msgid "syntax iskeyword "
+msgstr "シンタックス用 iskeyword "
 
 #: ../syntax.c:3299
 #, c-format
@@ -5768,6 +5828,10 @@ msgstr "E847: 構文の取り込み(include)が多過ぎます"
 #, c-format
 msgid "E789: Missing ']': %s"
 msgstr "E789: ']' がありません: %s"
+
+#, c-format
+msgid "E890: trailing char after ']': %s]%s"
+msgstr "E890: ']' の後ろに余分な文字があります: %s]%s"
 
 #: ../syntax.c:4531
 #, c-format
@@ -5874,7 +5938,7 @@ msgstr "E415: 予期せぬ等号です: %s"
 #: ../syntax.c:6395
 #, c-format
 msgid "E416: missing equal sign: %s"
-msgstr "E416: 等号ががありません: %s"
+msgstr "E416: 等号がありません: %s"
 
 #: ../syntax.c:6418
 #, c-format
@@ -6078,9 +6142,8 @@ msgstr "Vim: 入力を読込み中のエラーにより終了します...\n"
 #. This happens when the FileChangedRO autocommand changes the
 #. * file in a way it becomes shorter.
 #: ../undo.c:379
-#, fuzzy
 msgid "E881: Line count changed unexpectedly"
-msgstr "E834: 予期せず行カウントが変わりました"
+msgstr "E881: 予期せず行カウントが変わりました"
 
 #: ../undo.c:627
 #, c-format
@@ -6287,23 +6350,23 @@ msgstr "      システム vimrc: \""
 
 #: ../version.c:672
 msgid "     user vimrc file: \""
-msgstr "        ユーザ vimrc: \""
+msgstr "      ユーザー vimrc: \""
 
 #: ../version.c:677
 msgid " 2nd user vimrc file: \""
-msgstr "     第2ユーザ vimrc: \""
+msgstr "   第2ユーザー vimrc: \""
 
 #: ../version.c:682
 msgid " 3rd user vimrc file: \""
-msgstr "     第3ユーザ vimrc: \""
+msgstr "   第3ユーザー vimrc: \""
 
 #: ../version.c:687
 msgid "      user exrc file: \""
-msgstr "         ユーザ exrc: \""
+msgstr "       ユーザー exrc: \""
 
 #: ../version.c:692
 msgid "  2nd user exrc file: \""
-msgstr "      第2ユーザ exrc: \""
+msgstr "    第2ユーザー exrc: \""
 
 #: ../version.c:699
 msgid "  fall-back for $VIM: \""
@@ -6379,7 +6442,7 @@ msgstr "Vimの開発を応援してください!"
 
 #: ../version.c:828
 msgid "Become a registered Vim user!"
-msgstr "Vimの登録ユーザになってください!"
+msgstr "Vimの登録ユーザーになってください!"
 
 #: ../version.c:831
 msgid "type  :help sponsor<Enter>    for information "
@@ -6391,7 +6454,7 @@ msgstr "詳細な情報は           :help register<Enter>  "
 
 #: ../version.c:834
 msgid "menu  Help->Sponsor/Register  for information    "
-msgstr "詳細はメニューの ヘルプ→スポンサー/登録 を参照して下さい   "
+msgstr "詳細はメニューの ヘルプ->スポンサー/登録 を参照して下さい"
 
 #: ../window.c:119
 msgid "Already only one window"
@@ -6428,6 +6491,9 @@ msgstr "E445: 他のウィンドウには変更があります"
 #: ../window.c:4805
 msgid "E446: No file name under cursor"
 msgstr "E446: カーソルの下にファイル名がありません"
+
+msgid "List or number required"
+msgstr "リストか数値が必要です"
 
 #~ msgid "E831: bf_key_init() called with empty password"
 #~ msgstr "E831: bf_key_init() が空パスワードで呼び出されました"

@@ -7294,7 +7294,7 @@ dialog_gui		Compiled with GUI dialog support.
 digraphs		Compiled with support for digraphs.
 eval			Compiled with expression evaluation support.  Always
 			true, of course!
-ex_extra		Compiled with extra Ex commands |+ex_extra|.
+ex_extra		|+ex_extra|, always true now
 extra_search		Compiled with support for |'incsearch'| and
 			|'hlsearch'|
 farsi			Compiled with Farsi support |farsi|.
