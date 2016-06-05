@@ -37,6 +37,13 @@ describe('timers', function()
     eq(2,eval("g:val"))
   end)
 
+  it('works with zero timeout', function()
+    -- timer_start does still not invoke the callback immediately
+    eq(0,eval("[timer_start(0, 'MyHandler', {'repeat': 1000}), g:val][1]"))
+    run(nil, nil, nil, 300)
+    eq(1000,eval("g:val"))
+  end)
+
   it('can be started during sleep', function()
     nvim_async("command", "sleep 10")
     -- this also tests that remote requests works during sleep
