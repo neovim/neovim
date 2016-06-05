@@ -10,13 +10,49 @@
 #include "nvim/os/os.h"
 #include "nvim/os/time.h"
 
-#define USR_LOG_FILE "$HOME" _PATHSEPSTR ".nvimlog"
+/// First location of the log file used by log_path_init()
+#define USR_LOG_FILE "$NVIM_LOG_FILE"
+
+/// Fall back location of the log file used by log_path_init()
+#define USR_LOG_FILE_2 "$HOME" _PATHSEPSTR ".nvimlog"
+
+/// Cached location of the log file set by log_path_init()
+static char expanded_log_file_path[MAXPATHL + 1] = { 0 };
 
 static uv_mutex_t mutex;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "log.c.generated.h"
 #endif
+
+/// Initialize path to log file
+///
+/// Tries to use #USR_LOG_FILE, then falls back #USR_LOG_FILE_2. Path to log
+/// file is cached, so only the first call has effect, unless first call was not
+/// successful. To make initialization not succeed either a bug in expand_env()
+/// is needed or both `$NVIM_LOG_FILE` and `$HOME` environment variables
+/// undefined.
+///
+/// @return true if path was initialized, false otherwise.
+static bool log_path_init(void)
+{
+  if (expanded_log_file_path[0]) {
+    return true;
+  }
+  expand_env((char_u *)USR_LOG_FILE, (char_u *)expanded_log_file_path,
+             sizeof(expanded_log_file_path) - 1);
+  // if the log file path expansion failed then fall back to stderr
+  if (strcmp(USR_LOG_FILE, expanded_log_file_path) == 0) {
+    memset(expanded_log_file_path, 0, sizeof(expanded_log_file_path));
+    expand_env((char_u *)USR_LOG_FILE_2, (char_u *)expanded_log_file_path,
+               sizeof(expanded_log_file_path) - 1);
+    if (strcmp(USR_LOG_FILE_2, expanded_log_file_path) == 0) {
+      memset(expanded_log_file_path, 0, sizeof(expanded_log_file_path));
+      return false;
+    }
+  }
+  return true;
+}
 
 void log_init(void)
 {
@@ -73,30 +109,17 @@ FILE *open_log_file(void)
     return stderr;
   }
 
-  // expand USR_LOG_FILE and open the file
-  FILE *log_file;
+  // expand USR_LOG_FILE if needed and open the file
+  FILE *log_file = NULL;
   opening_log_file = true;
-  {
-    static char expanded_log_file_path[MAXPATHL + 1];
-
-    expand_env((char_u *)USR_LOG_FILE, (char_u *)expanded_log_file_path,
-               MAXPATHL);
-    // if the log file path expansion failed then fall back to stderr
-    if (strcmp(USR_LOG_FILE, expanded_log_file_path) == 0) {
-      goto open_log_file_error;
-    }
-
+  if (log_path_init()) {
     log_file = fopen(expanded_log_file_path, "a");
-    if (log_file == NULL) {
-      goto open_log_file_error;
-    }
   }
   opening_log_file = false;
 
-  return log_file;
-
-open_log_file_error:
-  opening_log_file = false;
+  if (log_file != NULL) {
+    return log_file;
+  }
 
   do_log_to_file(stderr, ERROR_LOG_LEVEL, __func__, __LINE__, true,
                  "Couldn't open USR_LOG_FILE, logging to stderr! This may be "
