@@ -2,8 +2,8 @@
 -- disabled.
 
 local helpers = require('test.functional.helpers')
-local feed, insert, source = helpers.feed, helpers.insert, helpers.source
-local clear, execute, expect, write_file = helpers.clear, helpers.execute, helpers.expect, helpers.write_file
+local feed, clear, execute = helpers.feed, helpers.clear, helpers.execute
+local expect, write_file = helpers.expect, helpers.write_file
 
 describe('errorformat', function()
   setup(function()
