@@ -11,7 +11,7 @@
 #include "nvim/os/time.h"
 
 /// First location of the log file used by log_path_init()
-#define USR_LOG_FILE "$NVIM_LOG_FILE_PATH"
+#define USR_LOG_FILE "$NVIM_LOG_FILE"
 
 /// Fall back location of the log file used by log_path_init()
 #define USR_LOG_FILE_2 "$HOME" _PATHSEPSTR ".nvimlog"
@@ -29,8 +29,8 @@ static uv_mutex_t mutex;
 ///
 /// Tries to use #USR_LOG_FILE, then falls back #USR_LOG_FILE_2. Path to log
 /// file is cached, so only the first call has effect, unless first call was not
-/// successfull. To make initialization not succeed either a bug in expand_env()
-/// is needed or both `$NVIM_LOG_FILE_PATH` and `$HOME` environment variables
+/// successful. To make initialization not succeed either a bug in expand_env()
+/// is needed or both `$NVIM_LOG_FILE` and `$HOME` environment variables
 /// undefined.
 ///
 /// @return true if path was initialized, false otherwise.
