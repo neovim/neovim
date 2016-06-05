@@ -6,32 +6,14 @@
 
 AWK = awk
 
-# Set to $(VIMTARGET) when executed from src/Makefile.
-VIMEXE = vim
-
 DOCS = $(wildcard *.txt)
 HTMLS = $(DOCS:.txt=.html)
 
 .SUFFIXES:
 .SUFFIXES: .c .o .txt .html
 
-all: tags html
-
-# Use Vim to generate the tags file.  Can only be used when Vim has been
-# compiled and installed.  Supports multiple languages.
-vimtags: $(DOCS)
-	$(VIMEXE) -u NONE -es -c "helptags ++t ." -c quit
-
-# Use "doctags" to generate the tags file.  Only works for English!
-tags: doctags $(DOCS)
-	./doctags $(DOCS) | LANG=C LC_ALL=C sort >tags
-	uniq -d -2 tags
-
-doctags: doctags.c
-	$(CC) doctags.c -o doctags
-
 # Awk version of .txt to .html conversion.
-html: noerrors tags $(HTMLS)
+html: noerrors $(HTMLS)
 	@if test -f errors.log; then cat errors.log; fi
 
 noerrors:
@@ -54,5 +36,5 @@ tags.ref tags.html: tags
 	$(AWK) -f maketags.awk tags >tags.html
 
 clean:
-	-rm -f doctags *.html tags.ref $(HTMLS) errors.log
+	-rm -f *.html tags.ref $(HTMLS) errors.log
 

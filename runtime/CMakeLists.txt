@@ -45,6 +45,13 @@ add_custom_command(OUTPUT ${GENERATED_HELP_TAGS}
   WORKING_DIRECTORY "${GENERATED_RUNTIME_DIR}/doc"
 )
 
+add_custom_target(doc_html
+  COMMAND make html
+  DEPENDS
+    ${GENERATED_HELP_TAGS}
+  WORKING_DIRECTORY "${GENERATED_RUNTIME_DIR}/doc"
+)
+
 add_custom_target(
   runtime ALL
   DEPENDS
