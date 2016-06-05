@@ -22,6 +22,14 @@ describe('timers', function()
     eq(1,eval("g:val"))
   end)
 
+  it('works one-shot when repeat=0', function()
+    execute("call timer_start(50, 'MyHandler', {'repeat': 0})")
+    eq(0,eval("g:val"))
+    run(nil, nil, nil, 200)
+    eq(1,eval("g:val"))
+  end)
+
+
   it('works with repeat two', function()
     execute("call timer_start(50, 'MyHandler', {'repeat': 2})")
     eq(0,eval("g:val"))

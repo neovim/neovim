@@ -16639,6 +16639,9 @@ static void f_timer_start(typval_T *argvars, typval_T *rettv)
     }
     if (dict_find(dict, (char_u *)"repeat", -1) != NULL) {
       repeat = get_dict_number(dict, (char_u *)"repeat");
+      if (repeat == 0) {
+        repeat = 1;
+      }
     }
   }
 
