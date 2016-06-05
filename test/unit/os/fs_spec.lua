@@ -17,6 +17,10 @@ local NULL = helpers.NULL
 local NODE_NORMAL = 0
 local NODE_WRITABLE = 1
 
+local function ok(expr)
+  assert.is_true(expr)
+end
+
 cimport('unistd.h')
 cimport('./src/nvim/os/shell.h')
 cimport('./src/nvim/option_defs.h')
@@ -150,11 +154,11 @@ describe('fs function', function()
     local function os_can_exe(name)
       local buf = ffi.new('char *[1]')
       buf[0] = NULL
-      local ok = fs.os_can_exe(to_cstr(name), buf, true)
+      local ce_ret = fs.os_can_exe(to_cstr(name), buf, true)
 
       -- When os_can_exe returns true, it must set the path.
       -- When it returns false, the path must be NULL.
-      if ok then
+      if ce_ret then
         neq(NULL, buf[0])
         return internalize(buf[0])
       else
@@ -368,6 +372,44 @@ describe('fs function', function()
     local function os_open(path, flags, mode)
       return fs.os_open((to_cstr(path)), flags, mode)
     end
+    local function os_close(fd)
+      return fs.os_close(fd)
+    end
+    local function os_read(fd, size)
+      local buf = nil
+      if size == nil then
+        size = 0
+      else
+        buf = ffi.new('char[?]', size, ('\0'):rep(size))
+      end
+      local eof = ffi.new('bool[?]', 1, {true})
+      local ret2 = fs.os_read(fd, eof, buf, size)
+      local ret1 = eof[0]
+      local ret3 = ''
+      if buf ~= nil then
+        ret3 = ffi.string(buf, size)
+      end
+      return ret1, ret2, ret3
+    end
+    local function os_readv(fd, sizes)
+      local bufs = {}
+      for i, size in ipairs(sizes) do
+        bufs[i] = {
+          iov_base=ffi.new('char[?]', size, ('\0'):rep(size)),
+          iov_len=size,
+        }
+      end
+      local iov = ffi.new('struct iovec[?]', #sizes, bufs)
+      local eof = ffi.new('bool[?]', 1, {true})
+      local ret2 = fs.os_readv(fd, eof, iov, #sizes)
+      local ret1 = eof[0]
+      local ret3 = {}
+      for i = 1,#sizes do
+        -- Warning: iov may not be used.
+        ret3[i] = ffi.string(bufs[i].iov_base, bufs[i].iov_len)
+      end
+      return ret1, ret2, ret3
+    end
 
     describe('os_file_exists', function()
       it('returns false when given a non-existing file', function()
@@ -432,30 +474,34 @@ describe('fs function', function()
     end)
 
     describe('os_open', function()
+      local new_file = 'test_new_file'
+      local existing_file = 'unit-test-directory/test_existing.file'
+
       before_each(function()
-        io.open('unit-test-directory/test_existing.file', 'w').close()
+        (io.open(existing_file, 'w')):close()
       end)
 
       after_each(function()
-        os.remove('unit-test-directory/test_existing.file')
-        os.remove('test_new_file')
+        os.remove(existing_file)
+        os.remove(new_file)
       end)
-
-      local new_file = 'test_new_file'
-      local existing_file = 'unit-test-directory/test_existing.file'
 
       it('returns UV_ENOENT for O_RDWR on a non-existing file', function()
         eq(ffi.C.UV_ENOENT, (os_open('non-existing-file', ffi.C.kO_RDWR, 0)))
       end)
 
-      it('returns non-negative for O_CREAT on a non-existing file', function()
+      it('returns non-negative for O_CREAT on a non-existing file which then can be closed', function()
         assert_file_does_not_exist(new_file)
-        assert.is_true(0 <= (os_open(new_file, ffi.C.kO_CREAT, 0)))
+        local fd = os_open(new_file, ffi.C.kO_CREAT, 0)
+        assert.is_true(0 <= fd)
+        eq(0, os_close(fd))
       end)
 
-      it('returns non-negative for O_CREAT on a existing file', function()
+      it('returns non-negative for O_CREAT on a existing file which then can be closed', function()
         assert_file_exists(existing_file)
-        assert.is_true(0 <= (os_open(existing_file, ffi.C.kO_CREAT, 0)))
+        local fd = os_open(existing_file, ffi.C.kO_CREAT, 0)
+        assert.is_true(0 <= fd)
+        eq(0, os_close(fd))
       end)
 
       it('returns UV_EEXIST for O_CREAT|O_EXCL on a existing file', function()
@@ -463,24 +509,160 @@ describe('fs function', function()
         eq(ffi.C.kUV_EEXIST, (os_open(existing_file, (bit.bor(ffi.C.kO_CREAT, ffi.C.kO_EXCL)), 0)))
       end)
 
-      it('sets `rwx` permissions for O_CREAT 700', function()
+      it('sets `rwx` permissions for O_CREAT 700 which then can be closed', function()
         assert_file_does_not_exist(new_file)
         --create the file
-        os_open(new_file, ffi.C.kO_CREAT, tonumber("700", 8))
+        local fd = os_open(new_file, ffi.C.kO_CREAT, tonumber("700", 8))
         --verify permissions
         eq('rwx------', lfs.attributes(new_file)['permissions'])
+        eq(0, os_close(fd))
       end)
 
-      it('sets `rw` permissions for O_CREAT 600', function()
+      it('sets `rw` permissions for O_CREAT 600 which then can be closed', function()
         assert_file_does_not_exist(new_file)
         --create the file
-        os_open(new_file, ffi.C.kO_CREAT, tonumber("600", 8))
+        local fd = os_open(new_file, ffi.C.kO_CREAT, tonumber("600", 8))
         --verify permissions
         eq('rw-------', lfs.attributes(new_file)['permissions'])
+        eq(0, os_close(fd))
       end)
 
-      it('returns a non-negative file descriptor for an existing file', function()
-        assert.is_true(0 <= (os_open(existing_file, ffi.C.kO_RDWR, 0)))
+      it('returns a non-negative file descriptor for an existing file which then can be closed', function()
+        local fd = os_open(existing_file, ffi.C.kO_RDWR, 0)
+        assert.is_true(0 <= fd)
+        eq(0, os_close(fd))
+      end)
+    end)
+
+    describe('os_close', function()
+      it('returns EBADF for negative file descriptors', function()
+        eq(ffi.C.UV_EBADF, os_close(-1))
+        eq(ffi.C.UV_EBADF, os_close(-1000))
+      end)
+    end)
+
+    describe('os_read', function()
+      local file = 'test-unit-os-fs_spec-os_read.dat'
+
+      local s = ''
+      for i = 0, 255 do
+        s = s .. (i == 0 and '\0' or ('%c'):format(i))
+      end
+      local fcontents = s:rep(16)
+
+      before_each(function()
+        local f = io.open(file, 'w')
+        f:write(fcontents)
+        f:close()
+      end)
+
+      after_each(function()
+        os.remove(file)
+      end)
+
+      it('can read zero bytes from a file', function()
+        local fd = os_open(file, ffi.C.kO_RDONLY, 0)
+        ok(fd >= 0)
+        eq({false, 0, ''}, {os_read(fd, nil)})
+        eq({false, 0, ''}, {os_read(fd, 0)})
+        eq(0, os_close(fd))
+      end)
+
+      it('can read from a file multiple times', function()
+        local fd = os_open(file, ffi.C.kO_RDONLY, 0)
+        ok(fd >= 0)
+        eq({false, 2, '\000\001'}, {os_read(fd, 2)})
+        eq({false, 2, '\002\003'}, {os_read(fd, 2)})
+        eq(0, os_close(fd))
+      end)
+
+      it('can read the whole file at once and then report eof', function()
+        local fd = os_open(file, ffi.C.kO_RDONLY, 0)
+        ok(fd >= 0)
+        eq({false, #fcontents, fcontents}, {os_read(fd, #fcontents)})
+        eq({true, 0, ('\0'):rep(#fcontents)}, {os_read(fd, #fcontents)})
+        eq(0, os_close(fd))
+      end)
+
+      it('can read the whole file in two calls, one partially', function()
+        local fd = os_open(file, ffi.C.kO_RDONLY, 0)
+        ok(fd >= 0)
+        eq({false, #fcontents * 3/4, fcontents:sub(1, #fcontents * 3/4)},
+           {os_read(fd, #fcontents * 3/4)})
+        eq({true,
+            (#fcontents * 1/4),
+            fcontents:sub(#fcontents * 3/4 + 1) .. ('\0'):rep(#fcontents * 2/4)},
+           {os_read(fd, #fcontents * 3/4)})
+        eq(0, os_close(fd))
+      end)
+    end)
+
+    describe('os_readv', function()
+      -- Function may be absent
+      if not pcall(function() return fs.os_readv end) then
+        return
+      end
+      local file = 'test-unit-os-fs_spec-os_readv.dat'
+
+      local s = ''
+      for i = 0, 255 do
+        s = s .. (i == 0 and '\0' or ('%c'):format(i))
+      end
+      local fcontents = s:rep(16)
+
+      before_each(function()
+        local f = io.open(file, 'w')
+        f:write(fcontents)
+        f:close()
+      end)
+
+      after_each(function()
+        os.remove(file)
+      end)
+
+      it('can read zero bytes from a file', function()
+        local fd = os_open(file, ffi.C.kO_RDONLY, 0)
+        ok(fd >= 0)
+        eq({false, 0, {}}, {os_readv(fd, {})})
+        eq({false, 0, {'', '', ''}}, {os_readv(fd, {0, 0, 0})})
+        eq(0, os_close(fd))
+      end)
+
+      it('can read from a file multiple times to a differently-sized buffers', function()
+        local fd = os_open(file, ffi.C.kO_RDONLY, 0)
+        ok(fd >= 0)
+        eq({false, 2, {'\000\001'}}, {os_readv(fd, {2})})
+        eq({false, 5, {'\002\003', '\004\005\006'}}, {os_readv(fd, {2, 3})})
+        eq(0, os_close(fd))
+      end)
+
+      it('can read the whole file at once and then report eof', function()
+        local fd = os_open(file, ffi.C.kO_RDONLY, 0)
+        ok(fd >= 0)
+        eq({false,
+            #fcontents,
+            {fcontents:sub(1, #fcontents * 1/4),
+             fcontents:sub(#fcontents * 1/4 + 1, #fcontents * 3/4),
+             fcontents:sub(#fcontents * 3/4 + 1, #fcontents * 15/16),
+             fcontents:sub(#fcontents * 15/16 + 1, #fcontents)}},
+           {os_readv(fd, {#fcontents * 1/4,
+                          #fcontents * 2/4,
+                          #fcontents * 3/16,
+                          #fcontents * 1/16})})
+        eq({true, 0, {'\0'}}, {os_readv(fd, {1})})
+        eq(0, os_close(fd))
+      end)
+
+      it('can read the whole file in two calls, one partially', function()
+        local fd = os_open(file, ffi.C.kO_RDONLY, 0)
+        ok(fd >= 0)
+        eq({false, #fcontents * 3/4, {fcontents:sub(1, #fcontents * 3/4)}},
+           {os_readv(fd, {#fcontents * 3/4})})
+        eq({true,
+            (#fcontents * 1/4),
+            {fcontents:sub(#fcontents * 3/4 + 1) .. ('\0'):rep(#fcontents * 2/4)}},
+           {os_readv(fd, {#fcontents * 3/4})})
+        eq(0, os_close(fd))
       end)
     end)
 
