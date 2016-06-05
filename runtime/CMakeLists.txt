@@ -31,7 +31,7 @@ add_custom_command(OUTPUT copy_docfiles
     ${PROJECT_SOURCE_DIR}/runtime/doc ${GENERATED_RUNTIME_DIR}/doc
 )
 
-add_custom_command(OUTPUT ${GENERATED_HELP_TAGS}
+add_custom_target(helptags
   COMMAND "${PROJECT_BINARY_DIR}/bin/nvim"
     -u NONE
     -i NONE
@@ -43,6 +43,11 @@ add_custom_command(OUTPUT ${GENERATED_HELP_TAGS}
     copy_docfiles
     nvim
   WORKING_DIRECTORY "${GENERATED_RUNTIME_DIR}/doc"
+)
+
+add_custom_command(OUTPUT ${GENERATED_HELP_TAGS}
+  DEPENDS
+    helptags
 )
 
 add_custom_target(doc_html
