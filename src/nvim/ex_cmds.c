@@ -8,6 +8,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <inttypes.h>
+#include <math.h>
 
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
@@ -5868,17 +5869,6 @@ void set_context_in_sign_cmd(expand_T *xp, char_u *arg)
   }
 }
 
-/// return the size of a long in term of digit
-int width_long(long nb) {
-  int res = 1;
-  long cpy = nb;
-  while (cpy  > 9) {
-    cpy /= 10 ;
-    res++;
-  }
-  return res;
-}
-
 /// used in ex_window_live_sub for creating the column which contains the number
 /// of the line.
 char* compute_number_line(int col_size, linenr_T number) {
@@ -5886,7 +5876,7 @@ char* compute_number_line(int col_size, linenr_T number) {
   char *r = xcalloc((size_t)col_size, sizeof(char));
   strcat(r, " [");
 
-  for (int i=2 ; i < col_size-width_long(number) - 2 ; i++)
+  for (int i=2 ; i < col_size-(log10(number)+1) - 2 ; i++)
     r[i] = ' ';
 
   sprintf(s, "%s%ld] ", r, number);
@@ -6023,7 +6013,7 @@ void ex_window_live_sub(char_u* sub, klist_t(matchedline_T) *lmatch)
   kl_iter(matchedline_T, lmatch, current)
     highest_num_line = (*current)->data.lnum;
 
-  int col_width = width_long(highest_num_line) + 4;
+  int col_width = log10(highest_num_line) + 1 + 4;
 
   // allocate a line sized for the window
   char *str = xmalloc((size_t )curwin->w_frame->fr_width);
@@ -6042,15 +6032,13 @@ void ex_window_live_sub(char_u* sub, klist_t(matchedline_T) *lmatch)
     sprintf(str, "%s%s", col, mat.line); //TODO : strcat
     ml_append(line++, (char_u *)str, (colnr_T)0, false);
 
-    int prefix_size = col_width;
-
 //    kl_iter(colnr_T, mat.start_col, col) {
 //      src_id_highlight = bufhl_add_hl(curbuf,
 //                                      src_id_highlight,
 //                                      2, // id of our highlight TODO : allow the user to change it
 //                                      line,                                     // line in curbuf
-//                                      (*col)->data + prefix_size + 1,           // beginning of word
-//                                      (*col)->data + prefix_size + sub_size); // end of word
+//                                      (*col)->data + col_width + 1,           // beginning of word
+//                                      (*col)->data + col_width + sub_size); // end of word
 //
 //    }
 //
