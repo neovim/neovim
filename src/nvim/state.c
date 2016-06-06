@@ -77,7 +77,7 @@ void state_enter(VimState *s)
       break;
     } else if (execute_result == -1) {
       goto getkey;
-    } else if (p_sub && LIVE_MODE == 1 && is_live(access_cmdline()) == 1){ // compute a live action
+    } else if (p_sub && LIVE_MODE == 1 && is_live(access_cmdline())){ // compute a live action
       do_cmdline(access_cmdline(), NULL, NULL, DOCMD_KEEPLINE);
     }
 

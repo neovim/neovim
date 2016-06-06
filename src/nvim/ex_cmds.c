@@ -6093,11 +6093,17 @@ void ex_window_live_sub(char_u* sub, klist_t(matchedline_T) *lmatch)
   return;
 }
 
-int count_slash (exarg_T *eap) {
-  int i = 0, cmdl_progress;
+/// Parse the substitution command line 
+//
+/// @param eap arguments of the substitution
+/// @return cmdl_progress
+/// @see LiveSub_state definition  
+LiveSub_state parse_sub_cmd (exarg_T *eap) {
+  int i = 0;
+  LiveSub_state cmdl_progress;
   
   if (eap->arg[i++] != '/')
-    return -1;
+    return LS_NO_SLASH;
   
   if (eap->arg[i++] == 0){
     cmdl_progress = LS_NO_WD;
@@ -6120,37 +6126,34 @@ int count_slash (exarg_T *eap) {
 /// at every new character typed in the cmdbuff according to the
 /// actual state of the live_substitution
 void do_live_sub(exarg_T *eap) {
-  //count the number of '/' to know how many words can be parsed
-  int cmdl_progress = count_slash(eap);
-
+ 
+  //If livesub disable
   if (!p_sub) {
     do_sub(eap);
     return;
   }
-  if (cmdl_progress == -1) {
-    return;
-  }
+
+  //count the number of '/' to know how many words can be parsed
+  LiveSub_state cmdl_progress = parse_sub_cmd(eap);
 
   char_u *arg;
   char_u *tmp;
 
   switch (cmdl_progress) {
-    case LS_NO_WD: // do_sub will then do the last substitution if the user writes :[%]s/ and presses enter
-      if (LIVE_MODE == 0) {
-        do_sub(eap);
-      }
-
-    case -1: // no word and no slash
+    case LS_NO_SLASH: 
       if (livebuf != NULL) {
         close_windows(livebuf, false);
         close_buffer(NULL, livebuf, DOBUF_WIPE, false);
-      } //TODO: doesn't work
-      break;
-
-    case LS_ONE_WD: // live_sub will replace the arg by itself in order to display it until the user presses enter
-      if (EVENT_SLASH == 1) {
-        do_cmdline_cmd(":u");
       }
+  //    return; 
+      break;
+    case LS_NO_WD: // do_sub will then do the last substitution if the user writes :[%]s/ and presses enter
+      if (LIVE_MODE == 0) 
+        do_sub(eap);
+      break;
+    case LS_ONE_WD: // live_sub will replace the arg by itself in order to display it until the user presses enter
+      if (EVENT_SLASH == 1)
+        do_cmdline_cmd(":u");
       if (LIVE_MODE == 1) {
         //The lengh of the new arg is lower than twice the lengh of the command
         arg = xcalloc(2 * STRLEN(eap->arg) + 1, sizeof(char_u));
@@ -6162,7 +6165,7 @@ void do_live_sub(exarg_T *eap) {
         sprintf((char *) arg, "%s%s", (char *) eap->arg, (char *) eap->arg);
         eap->arg = arg;
 
-        //Hightligh the word and open the split
+        //Highlight the word and open the split
         do_sub(eap);
 
         //Put back eap in first state
@@ -6178,7 +6181,8 @@ void do_live_sub(exarg_T *eap) {
       break;
 
     case LS_TWO_SLASH_ONE_WD: // live_sub will remove the arg
-      if (EVENT_SLASH == 1) do_cmdline_cmd(":u"); // we need to undo if we come from the LS_TWO_WD case
+      if (EVENT_SLASH == 1) 
+        do_cmdline_cmd(":u"); // we need to undo if we come from the LS_TWO_WD case
       do_sub(eap);
       EVENT_SLASH = 1;
       break;
