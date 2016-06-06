@@ -560,4 +560,3 @@ char_u *concat_str(const char_u *restrict str1, const char_u *restrict str2)
   STRCPY(dest + l, str2);
   return dest;
 }
-

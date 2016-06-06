@@ -6150,7 +6150,7 @@ void do_live_sub(exarg_T *eap) {
         do_cmdline_cmd(":u");
       if (LIVE_MODE == 1) {
         //The lengh of the new arg is lower than twice the lengh of the command
-        arg = xcalloc(2 * STRLEN(eap->arg), sizeof(char_u));
+        arg = xcalloc(2 * STRLEN(eap->arg) + 1, sizeof(char_u));
 
         //Save the state of eap
         tmp = eap->arg;
