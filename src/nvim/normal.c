@@ -5198,7 +5198,7 @@ static void nv_dollar(cmdarg_T *cap)
   cap->oap->motion_type = kMTCharWise;
   cap->oap->inclusive = true;
   /* In virtual mode when off the edge of a line and an operator
-   * is pending (whew!) keep the cursor wdo_shere it is.
+   * is pending (whew!) keep the cursor where it is.
    * Otherwise, send it to the end of the line. */
   if (!virtual_active() || gchar_cursor() != NUL
       || cap->oap->op_type == OP_NOP)

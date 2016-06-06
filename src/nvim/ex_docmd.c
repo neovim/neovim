@@ -9536,11 +9536,11 @@ static void ex_terminal(exarg_T *eap)
 }
     
 /// is_live()
-/// Returns 1 if cmd corresponds
+/// Returns true if cmd corresponds
 /// to a live command.
 /// At the moment, only substitute has a live command.
 
-int is_live (char_u *cmd_live)
+bool is_live (char_u *cmd_live)
 {
   exarg_T ea;
   ea.cmd = access_cmdline();
@@ -9555,7 +9555,5 @@ int is_live (char_u *cmd_live)
     find_command(&ea, &full);
   }
 
-  if (ea.cmdidx == CMD_substitute) return 1;
-  
-  return 0;
+  return (ea.cmdidx == CMD_substitute);
 }
