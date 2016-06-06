@@ -60,7 +60,6 @@ void state_enter(VimState *s)
       may_sync_undo();
 
     int execute_result = s->execute(s, key);
-    // here, we'd like to get ccline.cmdbuf
 
     // close buffer and windows if we leave the live_sub mode
     // and undo
@@ -73,7 +72,8 @@ void state_enter(VimState *s)
       do_cmdline_cmd(":u");
       finish_live_cmd(NORMAL, NULL, 0, 0, 0);
       //normal_enter(true, true);
-      do_cmdline(":%s/a/a", NULL, NULL, 0);
+      // TODO : a temporary solution to get back to a normal state
+      do_cmdline((char_u *)":s/a/a", NULL, NULL, 0);
       redraw_later(SOME_VALID);
       return;
     }
@@ -85,7 +85,5 @@ void state_enter(VimState *s)
       // compute a live action
       do_cmdline(access_cmdline(), NULL, NULL, DOCMD_KEEPLINE);
     }
-
-
   }
 }
