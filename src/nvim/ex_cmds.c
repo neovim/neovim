@@ -6123,6 +6123,10 @@ void do_live_sub(exarg_T *eap) {
   //count the number of '/' to know how many words can be parsed
   int cmdl_progress = count_slash(eap);
 
+  if (!p_sub) {
+    do_sub(eap);
+    return;
+  }
   if (cmdl_progress == -1) {
     return;
   }

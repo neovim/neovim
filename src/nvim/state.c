@@ -62,7 +62,7 @@ void state_enter(VimState *s)
     int execute_result = s->execute(s, key);
     // here, we'd like to get ccline.cmdbuf
     // close buffer and windows if we leave the live_sub mode
-    if (LIVE_MODE && (key == ESC || key == Ctrl_C)) {
+    if (p_sub && LIVE_MODE && (key == ESC || key == Ctrl_C)) {
       LIVE_MODE = 0;
       if (livebuf != NULL) {
         close_windows(livebuf, false);
@@ -77,7 +77,7 @@ void state_enter(VimState *s)
       break;
     } else if (execute_result == -1) {
       goto getkey;
-    } else if (LIVE_MODE == 1 && is_live(access_cmdline()) == 1){ // compute a live action
+    } else if (p_sub && LIVE_MODE == 1 && is_live(access_cmdline()) == 1){ // compute a live action
       do_cmdline(access_cmdline(), NULL, NULL, DOCMD_KEEPLINE);
     }
 
