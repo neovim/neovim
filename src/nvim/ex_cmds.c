@@ -5938,7 +5938,7 @@ void ex_window_live_sub(char_u* sub, klist_t(matchedline_T) *lmatch)
   assert(sub != NULL);
 
   garray_T winsizes;
-  char_u typestr[2];
+  //char_u typestr[2];
   //int i;
   int save_restart_edit = restart_edit;
   int save_State = State;
@@ -6005,8 +6005,8 @@ void ex_window_live_sub(char_u* sub, klist_t(matchedline_T) *lmatch)
 
   // Initialize line and highlight variables
   int line = 0;
-  int src_id_highlight = 0;
-  long sub_size = strlen((char*)sub);
+  //int src_id_highlight = 0;
+  //long sub_size = strlen((char*)sub);
 
   // Get the width of the column which display the number of the line
   long highest_num_line;
