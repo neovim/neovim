@@ -2766,14 +2766,14 @@ return {
       varname='p_wd',
       defaults={if_true={vi=0}}
     },
-    --{
-      --full_name='livesub', abbreviation='lsu',
-      --type='bool', scope={'global'},
-      --vi_def=true,
-      --redraw={'everything'},
-      --varname='p_sub',
-      --defaults={if_true={vi=false}}
-    --},
+    {
+      full_name='livesub', abbreviation='lsu',
+      type='bool', scope={'global'},
+      vi_def=true,
+      redraw={'everything'},
+      varname='p_sub',
+      defaults={if_true={vi=false, vim=false}}
+    },
 
   }
 }

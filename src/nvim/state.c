@@ -21,7 +21,6 @@
 
 void state_enter(VimState *s)
 {
-  p_sub = false;
   // a string to save the command.
 
   for (;;) {
