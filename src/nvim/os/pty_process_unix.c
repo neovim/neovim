@@ -28,6 +28,7 @@
 #include "nvim/event/process.h"
 #include "nvim/os/pty_process_unix.h"
 #include "nvim/log.h"
+#include "nvim/os/os.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "os/pty_process_unix.c.generated.h"
@@ -130,6 +131,12 @@ static void init_child(PtyProcess *ptyproc) FUNC_ATTR_NONNULL_ALL
   signal(SIGQUIT, SIG_DFL);
   signal(SIGTERM, SIG_DFL);
   signal(SIGALRM, SIG_DFL);
+
+  Process *proc = (Process *)ptyproc;
+  if (proc->cwd && os_chdir(proc->cwd) != 0) {
+    fprintf(stderr, "chdir failed: %s\n", strerror(errno));
+    return;
+  }
 
   setenv("TERM", ptyproc->term_name ? ptyproc->term_name : "ansi", 1);
   execvp(ptyproc->process.argv[0], ptyproc->process.argv);
