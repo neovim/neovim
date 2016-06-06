@@ -2766,5 +2766,14 @@ return {
       varname='p_wd',
       defaults={if_true={vi=0}}
     },
+    {
+      full_name='livesub', abbreviation='lsu',
+      type='number', scope={'global'},
+      vi_def=true,
+      redraw={'all_windows'},
+      varname='p_sub',
+      defaults={if_true={vi=0}}
+    },
+
   }
 }
