@@ -8,6 +8,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <inttypes.h>
+#include <math.h>
 
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
@@ -5868,17 +5869,6 @@ void set_context_in_sign_cmd(expand_T *xp, char_u *arg)
   }
 }
 
-/// return the size of a long in term of digit
-int width_long(long nb) {
-  int res = 1;
-  long cpy = nb;
-  while (cpy  > 9) {
-    cpy /= 10 ;
-    res++;
-  }
-  return res;
-}
-
 /// used in ex_window_live_sub for creating the column which contains the number
 /// of the line.
 char* compute_number_line(int col_size, linenr_T number) {
@@ -5886,7 +5876,7 @@ char* compute_number_line(int col_size, linenr_T number) {
   char *r = xcalloc((size_t)col_size, sizeof(char));
   strcat(r, " [");
 
-  for (int i=2 ; i < col_size-width_long(number) - 2 ; i++)
+  for (int i=2 ; i < col_size-(log10(number)+1) - 2 ; i++)
     r[i] = ' ';
 
   sprintf(s, "%s%ld] ", r, number);
