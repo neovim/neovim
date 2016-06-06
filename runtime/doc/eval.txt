@@ -4305,6 +4305,9 @@ jobstart({cmd}[, {opts}])				{Nvim} *jobstart()*
 		  - on_stdout: stdout event handler
 		  - on_stderr: stderr event handler
 		  - on_exit: exit event handler
+		  - cwd: Working directory the job will be started from
+		    (defaults to the current working directory of nvim, as given
+		    by |getcwd()|).
 		  - pty: If set, the job will be connected to a new pseudo
 		    terminal, and the job streams are connected to the master
 		    file descriptor.
