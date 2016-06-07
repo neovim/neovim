@@ -3854,7 +3854,7 @@ skip:
   // live_sub if sub on the whole file and there are results to display
   if (eap[0].cmdlinep[0][0] != 's' && !kl_empty(lmatch)) {
     sub_done = 1;
-    ex_window_live_sub(sub, lmatch);
+    ex_window_live_sub(pat, sub, lmatch);
     // after used, free the list
     kl_iter(matchedline_T, lmatch, current) {
       kl_destroy(colnr_T, (*current)->data.start_col);
@@ -5935,10 +5935,12 @@ void finish_live_cmd(int save_state,
 /// Does not allow editing in the window.
 /// Returns when the window is closed.
 ///
+/// @param pat the pattern word
 /// @param sub the replacement word
 /// @param lmatch the list containing our data
-void ex_window_live_sub(char_u* sub, klist_t(matchedline_T) *lmatch)
+void ex_window_live_sub( char_u* pat, char_u* sub, klist_t(matchedline_T) *lmatch)
 {
+  assert(pat != NULL);
   assert(lmatch != NULL);
   assert(sub != NULL);
 
@@ -6000,6 +6002,7 @@ void ex_window_live_sub(char_u* sub, klist_t(matchedline_T) *lmatch)
   int line = 0;
   int src_id_highlight = 0;
   long sub_size = STRLEN(sub);
+  long pat_size = STRLEN(pat);
 
   // Get the width of the column which display the number of the line
   long highest_num_line;
@@ -6025,7 +6028,8 @@ void ex_window_live_sub(char_u* sub, klist_t(matchedline_T) *lmatch)
     char *col = compute_number_line(col_width, mat.lnum);
     snprintf(str, line_size, "%s%s", col, mat.line); //TODO : strcat
     ml_append(line++, (char_u *)str, (colnr_T)0, false);
-
+    
+    int i=0;
     kl_iter(colnr_T, mat.start_col, col) {
       // highlight the replaced part
       if (sub_size > 0)
@@ -6033,9 +6037,9 @@ void ex_window_live_sub(char_u* sub, klist_t(matchedline_T) *lmatch)
                                         src_id_highlight,
                                         2, // id of our highlight TODO : allow the user to change it
                                         line,                                   // line in curbuf
-                                        (*col)->data + col_width,           // beginning of word
-                                        (*col)->data + col_width + sub_size - 1);   // end of word
-
+                                        (*col)->data + col_width + i*(sub_size-pat_size),           // beginning of word
+                                        (*col)->data + col_width + i*(sub_size-pat_size) + sub_size - 1);   // end of word
+      ++i;
     }
 
     // highlighting line number TODO : segfault in kmp map
