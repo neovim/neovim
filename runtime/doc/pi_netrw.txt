@@ -1,4 +1,4 @@
-*pi_netrw.txt*  For Vim version 7.4.  Last change: 2015 Oct 31
+*pi_netrw.txt*  For Vim version 7.4.  Last change: 2016 Feb 16
 
 	    ------------------------------------------------
 	    NETRW REFERENCE MANUAL    by Charles E. Campbell
@@ -6,7 +6,7 @@
 Author:  Charles E. Campbell  <NdrOchip@ScampbellPfamily.AbizM>
 	  (remove NOSPAM from Campbell's email first)
 
-Copyright: Copyright (C) 1999-2015 Charles E Campbell    *netrw-copyright*
+Copyright: Copyright (C) 2016 Charles E Campbell    *netrw-copyright*
 	The VIM LICENSE applies to the files in this package, including
 	netrw.vim, pi_netrw.txt, netrwFileHandlers.vim, netrwSettings.vim, and
 	syntax/netrw.vim.  Like anything else that's free, netrw.vim and its
@@ -48,9 +48,10 @@ Copyright: Copyright (C) 1999-2015 Charles E Campbell    *netrw-copyright*
       Introduction To Browsing............................|netrw-intro-browse|
       Quick Reference: Maps...............................|netrw-browse-maps|
       Quick Reference: Commands...........................|netrw-browse-cmds|
+      Banner Display......................................|netrw-I|
       Bookmarking A Directory.............................|netrw-mb|
       Browsing............................................|netrw-cr|
-        Squeezing the Current Tree-Listing Directory......|:netrw-s-cr|
+      Squeezing the Current Tree-Listing Directory........|netrw-s-cr|
       Browsing With A Horizontally Split Window...........|netrw-o|
       Browsing With A New Tab.............................|netrw-t|
       Browsing With A Vertically Split Window.............|netrw-v|
@@ -75,11 +76,13 @@ Copyright: Copyright (C) 1999-2015 Charles E Campbell    *netrw-copyright*
       Making The Browsing Directory The Current Directory.|netrw-c|
       Marking Files.......................................|netrw-mf|
       Unmarking Files.....................................|netrw-mF|
+      Marking Files By Location List......................|netrw-qL|
       Marking Files By QuickFix List......................|netrw-qF|
       Marking Files By Regular Expression.................|netrw-mr|
       Marked Files: Arbitrary Shell Command...............|netrw-mx|
       Marked Files: Arbitrary Shell Command, En Bloc......|netrw-mX|
       Marked Files: Arbitrary Vim Command.................|netrw-mv|
+      Marked Files: Argument List.........................|netrw-ma| |netrw-mA|
       Marked Files: Compression And Decompression.........|netrw-mz|
       Marked Files: Copying...............................|netrw-mc|
       Marked Files: Diff..................................|netrw-md|
@@ -1111,6 +1114,7 @@ QUICK REFERENCE: MAPS				*netrw-browse-maps* {{{2
 	   qb	List bookmarked directories and history              |netrw-qb|
 	   qf	Display information on file                          |netrw-qf|
 	   qF	Mark files using a quickfix list                     |netrw-qF|
+	   qL	Mark files using a |location-list|                     |netrw-qL|
 	   r	Reverse sorting order                                |netrw-r|
 	   R	Rename the designated file(s)/directory(ies)         |netrw-R|
 	   s	Select sorting style: by name, time, or file size    |netrw-s|
@@ -1160,6 +1164,14 @@ QUICK REFERENCE: COMMANDS	*netrw-explore-cmds* *netrw-browse-cmds* {{{2
      :Texplore[!] [dir] Tab & Explore..........................|netrw-explore|
      :Vexplore[!] [dir] Vertical Split & Explore...............|netrw-explore|
 
+
+BANNER DISPLAY						*netrw-I*
+
+One may toggle the banner display on and off by pressing "I".
+
+Also See: |g:netrw_banner|
+
+
 BOOKMARKING A DIRECTORY *netrw-mb* *netrw-bookmark* *netrw-bookmarks* {{{2
 
 One may easily "bookmark" the currently browsed directory by using >
@@ -1201,7 +1213,7 @@ Related Topics:
 	|g:netrw_home| controls where .netrwbook is kept
 
 
-BROWSING						*netrw-cr* {{{2
+BROWSING					*netrw-enter*	*netrw-cr* {{{2
 
 Browsing is simple: move the cursor onto a file or directory of interest.
 Hitting the <cr> (the return key) will select the file or directory.
@@ -1242,11 +1254,21 @@ The price for such re-use is that when changes are made (such as new files
 are introduced into a directory), the listing may become out-of-date.  One may
 always refresh directory listing buffers by pressing ctrl-L (see
 |netrw-ctrl-l|).
-								*:netrw-s-cr*
-    Squeezing the Current Tree-Listing Directory~
-    When the tree listing style is enabled (see |netrw-i|) and one is using
-    gvim, then the <s-cr> mapping may be used to squeeze (close) the
-    directory currently containing the cursor.
+
+								*netrw-s-cr*
+Squeezing the Current Tree-Listing Directory~
+
+When the tree listing style is enabled (see |netrw-i|) and one is using
+gvim, then the <s-cr> mapping may be used to squeeze (close) the
+directory currently containing the cursor.
+
+Otherwise, one may remap a key combination of one's own choice to get
+this effect: >
+
+    nmap <buffer> <silent> <nowait> YOURKEYCOMBO  <Plug>NetrwTreeSqueeze
+<
+Put this line in $HOME/ftplugin/netrw/netrw.vim; it needs to be generated
+for netrw buffers only.
 
 Related topics:
 	|netrw-ctrl-r|	|netrw-o|	|netrw-p|
@@ -1495,7 +1517,8 @@ One may also use visual mode (see |visual-start|) to select the text that the
 special handler will use.  Normally gx uses expand("<cfile>") to pick up the
 text under the cursor; one may change what |expand()| uses via the
 |g:netrw_gx| variable.  Alternatively, one may select the text to be used by
-gx via first making a visual selection (see |visual-block|).
+gx via first making a visual selection (see |visual-block|) or by changing
+the |'isfname'| option (which is global, so netrw doesn't modify it).
 
 Associated setting variables:
 	|g:netrw_gx|	control how gx picks up the text under the cursor
@@ -1713,8 +1736,9 @@ Also see: |g:netrw_alto| |g:netrw_altv| |g:netrw_winsize|
 EXPLORING WITH STARS AND PATTERNS {{{2
 
 When Explore, Sexplore, Hexplore, or Vexplore are used with one of the
-following four patterns Explore generates a list of files which satisfy
-the request. >
+following four patterns Explore generates a list of files which satisfy the
+request for the local file system.  These exploration patterns will not work
+with remote file browsing.
 
     */filepat	files in current directory which satisfy filepat
     **/filepat	files in current directory or below which satisfy the
@@ -2079,15 +2103,22 @@ Netrw provides several ways to mark files:
 
 		:MF *.c
 <
-	* Note that :MF uses |<f-args>| to break the line
-	  at spaces.
+	  (Note that :MF uses |<f-args>| to break the line
+	  at spaces)
+
+	* Mark files using the |argument-list| (|netrw-mA|)
+
+	* Mark files based upon a |location-list| (|netrw-qL|)
 
 	* Mark files based upon the quickfix list (|netrw-qF|)
+	  (|quickfix-error-lists|)
 
 The following netrw maps make use of marked files:
 
     |netrw-a|	Hide marked files/directories
     |netrw-D|	Delete marked files/directories
+    |netrw-ma|	Move marked files' names to |arglist|
+    |netrw-mA|	Move |arglist| filenames to marked file list
     |netrw-mb|	Append marked files to bookmarks
     |netrw-mB|	Delete marked files from bookmarks
     |netrw-mc|	Copy marked files to target
@@ -2146,8 +2177,14 @@ UNMARKING FILES							*netrw-mF* {{{2
 The "mF" command will unmark all files in the current buffer.  One may also use
 mf (|netrw-mf|) on a specific, already marked, file to unmark just that file.
 
+MARKING FILES BY LOCATION LIST					*netrw-qL* {{{2
+	(also see |netrw-mf|)
 
-MARKING FILES BY QUICKFIX LIST				*netrw-qF* {{{2
+One may convert |location-list|s into a marked file list using "qL".
+You may then proceed with commands such as me (|netrw-me|) to edit them.
+
+
+MARKING FILES BY QUICKFIX LIST					*netrw-qF* {{{2
 	(also see |netrw-mf|)
 
 One may convert |quickfix-error-lists| into a marked file list using "qF".
@@ -2223,6 +2260,16 @@ The command that will be run with this example:
 	tar cf mynewtarball.tar 'file1' 'file2' ...
 
 
+MARKED FILES: ARGUMENT LIST				*netrw-ma* *netrw-mA*
+	    (See |netrw-mf| and |netrw-mr| for how to mark files)
+		      (uses the global marked-file list)
+
+Using ma, one moves filenames from the marked file list to the argument list.
+Using mA, one moves filenames from the argument list to the marked file list.
+
+See Also: |netrw-qF| |argument-list| |:args|
+
+
 MARKED FILES: COMPRESSION AND DECOMPRESSION		*netrw-mz* {{{2
 	    (See |netrw-mf| and |netrw-mr| for how to mark files)
 		      (uses the local marked file list)
@@ -2232,7 +2279,7 @@ If any marked files are decompressed, then "mz" will compress them
 using the command specified by |g:netrw_compress|; by default,
 that's "gzip".
 
-For decompression, netrw provides a |Dictionary| of suffices and their
+For decompression, netrw uses a |Dictionary| of suffices and their
 associated decompressing utilities; see |g:netrw_decompress|.
 
 Remember that one can mark multiple files by regular expression
@@ -2287,7 +2334,7 @@ The command will ask for the requested pattern; one may then enter: >
 	pattern
 <
 With /pattern/, editing will start with the first item on the |quickfix| list
-that vimgrep sets up (see |:copen|, |:cnext|, |:cprevious|).  The |:vimgrep|
+that vimgrep sets up (see |:copen|, |:cnext|, |:cprevious|, |:cclose|).  The |:vimgrep|
 command is in use, so without 'g' each line is added to quickfix list only
 once; with 'g' every match is included.
 
@@ -2756,6 +2803,16 @@ your browsing preferences.  (see also: |netrw-settings|)
 				evaluation will be suppressed
 				(see |'ballooneval'|)
 
+ *g:netrw_sizestyle*		not defined: actual bytes (default)
+ 				="b" : actual bytes       (default)
+ 				="h" : human-readable (ex. 5k, 4m, 3g)
+				       uses 1000 base
+ 				="H" : human-readable (ex. 5K, 4M, 3G)
+				       uses 1024 base
+				The long listing (|netrw-i|) and query-file
+				maps (|netrw-qf|) will display file size
+				using the specified style.
+
   *g:netrw_usetab*		if this variable exists and is non-zero, then
 				the <tab> map supporting shrinking/expanding a
 				Lexplore or netrw window will be enabled.
@@ -3024,14 +3081,14 @@ These will:
 	Related: if you like this idea, you may also find :Lexplore
 	         (|netrw-:Lexplore|) or |g:netrw_chgwin| of interest
 
-Also see: |g:netrw_chgwin| |netrw-P| |'previewwindow'|
+Also see: |g:netrw_chgwin| |netrw-P| |'previewwindow'| |CTRL-W_z| |:pclose|
 
 
 PREVIOUS WINDOW					*netrw-P* *netrw-prvwin* {{{2
 
-To edit a file or directory in the previously used (last accessed) window (see
-:he |CTRL-W_p|), press a "P".  If there's only one window, then the one window
-will be horizontally split (by default).
+To edit a file or directory under the cursor in the previously used (last
+accessed) window (see :he |CTRL-W_p|), press a "P".  If there's only one
+window, then the one window will be horizontally split (by default).
 
 If there's more than one window, the previous window will be re-used on
 the selected file/directory.  If the previous window's associated buffer
@@ -3170,7 +3227,7 @@ only if your terminal supports differentiating <c-tab> from a plain
   * Else bring up a |:Lexplore| window
 
 If |g:netrw_usetab| exists or is zero, or if there is a pre-existing mapping
-for <c-tab>, then the <tab> will not be mapped.  One may map something other
+for <c-tab>, then the <c-tab> will not be mapped.  One may map something other
 than a <c-tab>, too: (but you'll still need to have had g:netrw_usetab set) >
 
 	nmap <unique> (whatever)	<Plug>NetrwShrink
@@ -3637,13 +3694,13 @@ called netrw.vimrc with the following contents: >
 <
 Then run netrw as follows: >
 
-	vim -u netrw.vimrc --noplugins [some path here]
+	vim -u netrw.vimrc --noplugins -i NONE [some path here]
 <
 Perform whatever netrw commands you need to, and check that the problem is
 still present.  This procedure sidesteps any issues due to personal .vimrc
-settings and other plugins.  If the problem does not appear, then you need
-to determine what setting in your .vimrc is causing the conflict with netrw
-or which plugin.
+settings, .viminfo file, and other plugins.  If the problem does not appear,
+then you need to determine which setting in your .vimrc is causing the
+conflict with netrw or which plugin(s) is/are involved.
 
 Step 3: If the problem still is present, then get a debugging trace from
 netrw:
@@ -3698,6 +3755,37 @@ netrw:
 ==============================================================================
 12. History						*netrw-history* {{{1
 
+	v155:	Oct 29, 2015	* (Timur Fayzrakhmanov) reported that netrw's
+				  mapping of ctrl-l was not allowing refresh of
+				  other windows when it was done in a netrw
+				  window.
+		Nov 05, 2015	* Improved s:TreeSqueezeDir() to use search()
+				  instead of a loop
+				* NetrwBrowse() will return line to
+				  w:netrw_bannercnt if cursor ended up in
+				  banner
+		Nov 16, 2015	* Added a <Plug>NetrwTreeSqueeze (|netrw-s-cr|)
+		Nov 17, 2015	* Commented out imaps -- perhaps someone can
+				  tell me how they're useful and should be
+				  retained?
+		Nov 20, 2015	* Added |netrw-ma| and |netrw-mA| support
+		Nov 20, 2015	* gx (|netrw-gx|) on an url downloaded the
+				  file in addition to simply bringing up the
+				  url in a browser.  Fixed.
+		Nov 23, 2015	* Added |g:netrw_sizestyle| support
+		Nov 27, 2015	* Inserted a lot of <c-u>s into various netrw
+				  maps.
+		Jan 05, 2016	* |netrw-qL| implemented to mark files based
+				  upon |location-list|s; similar to |netrw-qF|.
+		Jan 19, 2016	* using - call delete(directoryname,"d") -
+				  instead of using g:netrw_localrmdir if
+				  v7.4 + patch#1107 is available
+		Jan 28, 2016	* changed to using |winsaveview()| and
+				  |winrestview()|
+		Jan 28, 2016	* s:NetrwTreePath() now does a save and
+				  restore of view
+		Feb 08, 2016	* Fixed a tree-listing problem with remote
+				  directories
 	v154:	Feb 26, 2015	* (Yuri Kanivetsky) reported a situation where
 				  a file was not treated properly as a file
 				  due to g:netrw_keepdir == 1
@@ -3858,7 +3946,7 @@ netrw:
 				  handling.
 				* |:Lexplore| path: will be used to update
 				  a left-side netrw browsing directory.
-		Mar 12, 2014	* |:netrw-s-cr|: use <s-cr>  to close
+		Mar 12, 2014	* |netrw-s-cr|: use <s-cr>  to close
 				  tree directory implemented
 		Mar 13, 2014	* (Tony Mechylynck) reported that using
 				  the browser with ftp on a directory,

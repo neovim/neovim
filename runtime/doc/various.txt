@@ -1,4 +1,4 @@
-*various.txt*   For Vim version 7.4.  Last change: 2016 Feb 15
+*various.txt*   For Vim version 7.4.  Last change: 2016 Feb 18
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -454,7 +454,7 @@ m  *+xpm_w32*		Win32 GUI only: pixmap support |w32-xpm-support|
 
 :redi[r] END		End redirecting messages.
 
-						*:sil* *:silent*
+						*:sil* *:silent* *:silent!*
 :sil[ent][!] {command}	Execute {command} silently.  Normal messages will not
 			be given or added to the message history.
 			When [!] is added, error messages will also be

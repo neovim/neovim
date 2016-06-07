@@ -1,4 +1,4 @@
-*editing.txt*   For Vim version 7.4.  Last change: 2016 Feb 11
+*editing.txt*   For Vim version 7.4.  Last change: 2016 Feb 16
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -952,7 +952,7 @@ the newly written file (it might be there but contain bogus data).  In that
 case try recovery, because the swap file is synced to disk and might still be
 there. |:recover|
 
-The directories given with the 'backupdir' option is used to put the backup
+The directories given with the 'backupdir' option are used to put the backup
 file in.  (default: same directory as the written file).
 
 Whether the backup is a new file, which is a copy of the original file, or the

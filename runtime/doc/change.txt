@@ -396,6 +396,11 @@ CTRL-X			Subtract [count] from the number or alphabetic
 {Visual}CTRL-X		Subtract [count] from the number or alphabetic
 			character in the highlighted text.  {not in Vi}
 
+			On MS-Windows, this is mapped to cut Visual text
+			|dos-standard-mappings|.  If you want to disable the
+			mapping, use this: >
+				silent! vunmap <C-X>
+<
 							*v_g_CTRL-X*
 {Visual}g CTRL-X	Subtract [count] from the number or alphabetic
 			character in the highlighted text. If several lines

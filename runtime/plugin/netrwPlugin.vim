@@ -1,6 +1,6 @@
 " netrwPlugin.vim: Handles file transfer and remote directory listing across a network
 "            PLUGIN SECTION
-" Date:		Nov 07, 2014
+" Date:		Feb 08, 2016
 " Maintainer:	Charles E Campbell <NdrOchip@ScampbellPfamily.AbizM-NOSPAM>
 " GetLatestVimScripts: 1075 1 :AutoInstall: netrw.vim
 " Copyright:    Copyright (C) 1999-2013 Charles E. Campbell {{{1
@@ -20,7 +20,7 @@
 if &cp || exists("g:loaded_netrwPlugin")
  finish
 endif
-let g:loaded_netrwPlugin = "v154"
+let g:loaded_netrwPlugin = "v155"
 let s:keepcpo = &cpo
 set cpo&vim
 "DechoRemOn
@@ -55,10 +55,10 @@ augroup Network
 augroup END
 
 " Commands: :Nread, :Nwrite, :NetUserPass {{{2
-com! -count=1 -nargs=*	Nread		call netrw#SavePosn()<bar>call netrw#NetRead(<count>,<f-args>)<bar>call netrw#RestorePosn()
-com! -range=% -nargs=*	Nwrite		call netrw#SavePosn()<bar><line1>,<line2>call netrw#NetWrite(<f-args>)<bar>call netrw#RestorePosn()
+com! -count=1 -nargs=*	Nread		let s:svpos= winsaveview()<bar>call netrw#NetRead(<count>,<f-args>)<bar>call winrestview(s:svpos)
+com! -range=% -nargs=*	Nwrite		let s:svpos= winsaveview()<bar><line1>,<line2>call netrw#NetWrite(<f-args>)<bar>call winrestview(s:svpos)
 com! -nargs=*		NetUserPass	call NetUserPass(<f-args>)
-com! -nargs=*	        Nsource		call netrw#SavePosn()<bar>call netrw#NetSource(<f-args>)<bar>call netrw#RestorePosn()
+com! -nargs=*	        Nsource		let s:svpos= winsaveview()<bar>call netrw#NetSource(<f-args>)<bar>call winrestview(s:svpos)
 com! -nargs=?		Ntree		call netrw#SetTreetop(<q-args>)
 
 " Commands: :Explore, :Sexplore, Hexplore, Vexplore, Lexplore {{{2

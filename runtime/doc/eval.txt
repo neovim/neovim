@@ -1,4 +1,4 @@
-*eval.txt*	For Vim version 7.4.  Last change: 2016 Feb 04
+*eval.txt*	For Vim version 7.4.  Last change: 2016 Feb 19
 
 
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
@@ -1791,8 +1791,8 @@ arglistid([{winnr} [, {tabnr}]]) Number	argument list id
 argv({nr})			String	{nr} entry of the argument list
 argv()				List	the argument list
 assert_equal({exp}, {act} [, {msg}]) none  assert {exp} equals {act}
-assert_exception({error} [, {msg}])   none  assert {error} is in v:exception
-assert_fails( {cmd} [, {error}])      none  assert {cmd} fails
+assert_exception( {error} [, {msg}]) none  assert {error} is in v:exception
+assert_fails( {cmd} [, {error}])     none  assert {cmd} fails
 assert_false({actual} [, {msg}])     none  assert {actual} is false
 assert_true({actual} [, {msg}])      none  assert {actual} is true
 asin({expr})			Float	arc sine of {expr}
@@ -1924,7 +1924,7 @@ has_key({dict}, {key})		Number	TRUE if {dict} has entry {key}
 haslocaldir()			Number	TRUE if current window executed |:lcd|
 hasmapto({what} [, {mode} [, {abbr}]])
 				Number	TRUE if mapping to {what} exists
-histadd({history},{item})	String	add an item to a history
+histadd({history}, {item})	String	add an item to a history
 histdel({history} [, {item}])	String	remove an item from a history
 histget({history} [, {index}])	String	get the item {index} from a history
 histnr({history})		Number	highest index of a history
@@ -2215,7 +2215,7 @@ argidx()	The result is the current index in the argument list.  0 is
 		the first file.  argc() - 1 is the last one.  See |arglist|.
 
 							*arglistid()*
-arglistid([{winnr}, [ {tabnr} ]])
+arglistid([{winnr} [, {tabnr}]])
 		Return the argument list ID.  This is a number which
 		identifies the argument list being used.  Zero is used for the
 		global argument list.  See |arglist|.
@@ -6030,7 +6030,7 @@ setqflist({list} [, {action}[, {title}]])		*setqflist()*
 
 
 							*setreg()*
-setreg({regname}, {value} [,{options}])
+setreg({regname}, {value} [, {options}])
 		Set the register {regname} to {value}.
 		{value} may be any value returned by |getreg()|, including 
 		a |List|.
