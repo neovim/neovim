@@ -5938,8 +5938,6 @@ void ex_window_live_sub(char_u* sub, klist_t(matchedline_T) *lmatch)
   assert(sub != NULL);
 
   garray_T winsizes;
-  //char_u typestr[2];
-  //int i;
   int save_restart_edit = restart_edit;
   int save_State = State;
   int save_exmode = exmode_active;
@@ -6132,40 +6130,37 @@ void do_live_sub(exarg_T *eap) {
       if (livebuf != NULL) {
         close_windows(livebuf, false);
         close_buffer(NULL, livebuf, DOBUF_WIPE, false);
+        update_screen(0);
       }
-  //    return; 
       break;
-    case LS_NO_WD: // do_sub will then do the last substitution if the user writes :[%]s/ and presses enter
-      if (LIVE_MODE == 0) 
-        do_sub(eap);
+    case LS_NO_WD:
+      if (EVENT_SLASH==2){
+        do_cmdline_cmd(":u");
+        update_screen(0);
+      }
       break;
     case LS_ONE_WD: // live_sub will replace the arg by itself in order to display it until the user presses enter
       if (EVENT_SLASH == 1)
         do_cmdline_cmd(":u");
-      if (LIVE_MODE == 1) {
-        //The lengh of the new arg is lower than twice the lengh of the command
-        arg = xcalloc(2 * STRLEN(eap->arg) + 1, sizeof(char_u));
+      //The lengh of the new arg is lower than twice the lengh of the command
+      arg = xcalloc(2 * STRLEN(eap->arg) + 1, sizeof(char_u));
 
-        //Save the state of eap
-        tmp = eap->arg;
+      //Save the state of eap
+      tmp = eap->arg;
 
-        //Change the argument of the command
-        sprintf((char *) arg, "%s%s", (char *) eap->arg, (char *) eap->arg);
-        eap->arg = arg;
+      //Change the argument of the command
+      sprintf((char *) arg, "%s%s", (char *) eap->arg, (char *) eap->arg);
+      eap->arg = arg;
 
-        //Highlight the word and open the split
-        do_sub(eap);
+      //Highlight the word and open the split
+      do_sub(eap);
 
-        //Put back eap in first state
-        eap->arg = tmp;
+      //Put back eap in first state
+      eap->arg = tmp;
 
-        xfree(arg);
+      xfree(arg);
 
-      } else if (LIVE_MODE == 0) {
-        do_sub(eap);
-      }
-
-      EVENT_SLASH = 0;
+      EVENT_SLASH = 2;
       break;
 
     case LS_TWO_SLASH_ONE_WD: // live_sub will remove the arg
