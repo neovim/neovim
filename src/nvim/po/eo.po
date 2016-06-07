@@ -23,8 +23,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Vim(Esperanto)\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-07-30 17:54+0200\n"
-"PO-Revision-Date: 2015-07-30 18:00+0200\n"
+"POT-Creation-Date: 2016-02-13 23:42+0100\n"
+"PO-Revision-Date: 2016-02-13 23:45+0100\n"
 "Last-Translator: Dominique PELLÉ <dominique.pelle@gmail.com>\n"
 "Language-Team: \n"
 "Language: eo\n"
@@ -504,10 +504,6 @@ msgstr "E686: Argumento de %s devas esti Listo"
 msgid "E712: Argument of %s must be a List or Dictionary"
 msgstr "E712: Argumento de %s devas esti Listo aŭ Vortaro"
 
-#: ../eval.c:144
-msgid "E713: Cannot use empty key for Dictionary"
-msgstr "E713: Ne eblas uzi malplenan ŝlosilon de Vortaro"
-
 #: ../eval.c:145
 msgid "E714: List required"
 msgstr "E714: Listo bezonata"
@@ -657,6 +653,9 @@ msgstr "E110: Mankas ')'"
 msgid "E695: Cannot index a Funcref"
 msgstr "E695: Ne eblas indeksi Funcref"
 
+msgid "E909: Cannot index a special variable"
+msgstr "E909: Ne eblas indeksi specialan variablon"
+
 #: ../eval.c:4839
 #, c-format
 msgid "E112: Option name missing: %s"
@@ -689,7 +688,7 @@ msgstr "E697: Mankas fino de Listo ']': %s"
 
 #: ../eval.c:5750
 msgid "Not enough memory to set references, garbage collection aborted!"
-msgstr "Ne sufiĉa memory por valorigi referencojn, senrubigado ĉesigita!"
+msgstr "Ne sufiĉa memoro por valorigi referencojn, senrubigado ĉesigita!"
 
 #: ../eval.c:6475
 #, c-format
@@ -874,6 +873,18 @@ msgstr "E745: Uzo de Listo kiel Nombro"
 msgid "E728: Using a Dictionary as a Number"
 msgstr "E728: Uzo de Vortaro kiel Nombro"
 
+msgid "E891: Using a Funcref as a Float"
+msgstr "E891: Uzo de Funcref kiel Glitpunktnombro"
+
+msgid "E892: Using a String as a Float"
+msgstr "E892: Uzo de Ĉeno kiel Glitpunktnombro"
+
+msgid "E893: Using a List as a Float"
+msgstr "E893: Uzo de Listo kiel Glitpunktnombro"
+
+msgid "E894: Using a Dictionary as a Float"
+msgstr "E894: Uzo de Vortaro kiel Glitpunktnombro"
+
 #: ../eval.c:16259
 msgid "E729: using Funcref as a String"
 msgstr "E729: uzo de Funcref kiel Ĉeno"
@@ -885,6 +896,9 @@ msgstr "E730: uzo de Listo kiel Ĉeno"
 #: ../eval.c:16265
 msgid "E731: using Dictionary as a String"
 msgstr "E731: uzo de Vortaro kiel Ĉeno"
+
+msgid "E908: using an invalid value as a String"
+msgstr "E908: uzo de nevalida valoro kiel Ĉeno"
 
 #: ../eval.c:16619
 #, c-format
@@ -1390,6 +1404,13 @@ msgstr "linio %<PRId64>: %s"
 #, c-format
 msgid "cmd: %s"
 msgstr "kmd: %s"
+
+msgid "frame is zero"
+msgstr "kadro estas nul"
+
+#, c-format
+msgid "frame at highest level: %d"
+msgstr "kadro je la plej alta nivelo: %d"
 
 #: ../ex_cmds2.c:322
 #, c-format
@@ -2861,6 +2882,9 @@ msgstr "E46: Ne eblas ŝanĝi nurlegeblan variablon \"%s\""
 msgid "E794: Cannot set variable in the sandbox: \"%s\""
 msgstr "E794: Ne eblas agordi variablon en la sabloludejo: \"%s\""
 
+msgid "E713: Cannot use empty key for Dictionary"
+msgstr "E713: Ne eblas uzi malplenan ŝlosilon de Vortaro"
+
 #: ../globals.h:1076
 msgid "E47: Error while reading errorfile"
 msgstr "E47: Eraro dum legado de erardosiero"
@@ -4090,12 +4114,12 @@ msgid ""
 "\n"
 "(1) Another program may be editing the same file.  If this is the case,\n"
 "    be careful not to end up with two different instances of the same\n"
-"    file when making changes."
+"    file when making changes.  Quit, or continue with caution.\n"
 msgstr ""
 "\n"
-"(1) Alia programo eble redaktas la saman dosieron.\n"
-"    Se jes, estu singarda por ne havi du malsamajn\n"
-"    aperojn de la sama dosiero, kiam vi faros ŝanĝojn."
+"(1) Alia programo eble redaktas la saman dosieron. Se jes, estu singarda\n"
+"    por ne havi du malsamajn aperojn de la sama dosiero, kiam vi faros\n"
+"    ŝanĝojn. Eliru aŭ daŭrigu singarde.\n"
 
 #: ../memline.c:3245
 msgid "  Quit, or continue with caution.\n"
@@ -4791,6 +4815,15 @@ msgid ""
 msgstr ""
 "\n"
 "Ne povis ŝalti kuntekston de sekureco por "
+
+#, c-format
+msgid "Could not set security context %s for %s"
+msgstr "Ne povis ŝalti kuntekston de sekureco %s por %s"
+
+#, c-format
+msgid "Could not get security context %s for %s. Removing it!"
+msgstr ""
+"Ne povis akiri kuntekston de sekureco %s por %s. Gi nun estas forigata!"
 
 #: ../os_unix.c:1558 ../os_unix.c:1647
 #, c-format
@@ -5717,6 +5750,9 @@ msgstr "Neniu sintaksa elemento difinita por tiu bufro"
 msgid "E390: Illegal argument: %s"
 msgstr "E390: Nevalida argumento: %s"
 
+msgid "syntax iskeyword "
+msgstr "sintakso iskeyword "
+
 #: ../syntax.c:3299
 #, c-format
 msgid "E391: No such syntax cluster: %s"
@@ -5812,6 +5848,10 @@ msgstr "E847: Tro da sintaksaj inkluzivoj"
 #, c-format
 msgid "E789: Missing ']': %s"
 msgstr "E789: Mankas ']': %s"
+
+#, c-format
+msgid "E890: trailing char after ']': %s]%s"
+msgstr "E890: vosta signo post ']': %s]%s"
 
 #: ../syntax.c:4531
 #, c-format

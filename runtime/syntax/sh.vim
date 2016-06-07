@@ -2,8 +2,8 @@
 " Language:		shell (sh) Korn shell (ksh) bash (sh)
 " Maintainer:		Charles E. Campbell  <NdrOchipS@PcampbellAfamily.Mbiz>
 " Previous Maintainer:	Lennart Schultz <Lennart.Schultz@ecmwf.int>
-" Last Change:		Dec 11, 2015
-" Version:		143
+" Last Change:		Feb 16, 2016
+" Version:		144
 " URL:		http://www.drchip.org/astronaut/vim/index.html#SYNTAX_SH
 " For options and settings, please use:      :help ft-sh-syntax
 " This file includes many ideas from Eric Brunet (eric.brunet@ens.fr)
@@ -83,6 +83,11 @@ if g:sh_fold_enabled && &fdm == "manual"
  " 	AND	g:sh_fold_enabled is manual (usual default)
  " 	implies	a desire for syntax-based folding
  setl fdm=syntax
+endif
+
+" set up the syntax-highlighting iskeyword
+if has("patch-7.4.1141")
+ exe "syn iskeyword ".&iskeyword.",-"
 endif
 
 " Set up folding commands for shell {{{1

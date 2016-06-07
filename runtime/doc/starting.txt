@@ -1,4 +1,4 @@
-*starting.txt*  For Vim version 7.4.  Last change: 2015 Jan 15
+*starting.txt*  For Vim version 7.4.  Last change: 2016 Feb 18
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -10,9 +10,10 @@ Starting Vim						*starting*
 2. Initialization		|initialization|
 3. $VIM and $VIMRUNTIME		|$VIM|
 4. Suspending			|suspend|
-5. Saving settings		|save-settings|
-6. Views and Sessions		|views-sessions|
-7. The ShaDa file		|shada-file|
+5. Exiting			|exiting|
+6. Saving settings		|save-settings|
+7. Views and Sessions		|views-sessions|
+8. The ShaDa file		|shada-file|
 
 ==============================================================================
 1. Vim arguments					*vim-arguments*
@@ -696,7 +697,20 @@ can't paste it in another application (since Vim is going to sleep an attempt
 to get the selection would make the program hang).
 
 ==============================================================================
-5. Saving settings					*save-settings*
+5. Exiting						*exiting*
+
+There are several ways to exit Vim:
+- Close the last window with `:quit`.  Only when there are no changes.
+- Close the last window with `:quit!`.  Also when there are changes.
+- Close all windows with `:qall`.  Only when there are no changes.
+- Close all windows with `:qall!`.  Also when there are changes.
+- Use `:cquit`.  Also when there are changes.
+
+When using `:cquit` or when there was an error message Vim exits with exit
+code 1.  Errors can be avoide by using `:silent!`.
+
+==============================================================================
+6. Saving settings					*save-settings*
 
 Mostly you will edit your vimrc files manually.  This gives you the greatest
 flexibility.  There are a few commands to generate a vimrc file automatically.
@@ -753,7 +767,7 @@ these steps:
    You need to escape special characters, esp. spaces.
 
 ==============================================================================
-6. Views and Sessions					*views-sessions*
+7. Views and Sessions					*views-sessions*
 
 This is introduced in sections |21.4| and |21.5| of the user manual.
 
@@ -897,7 +911,7 @@ To automatically save and restore views for *.c files: >
 	au BufWinEnter *.c silent loadview
 
 ==============================================================================
-7. The ShaDa file				*shada* *shada-file*
+8. The ShaDa file				*shada* *shada-file*
 
 If you exit Vim and later start it again, you would normally lose a lot of
 information.  The ShaDa file can be used to remember that information, which
