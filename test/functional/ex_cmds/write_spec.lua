@@ -6,10 +6,13 @@ local eq, eval, clear, write_file, execute, source =
 	helpers.execute, helpers.source
 
 describe(':write', function()
-  it('&backupcopy=auto preserves symlinks', function()
-    clear('set backupcopy=auto')
+  after_each(function()
     os.remove('test_bkc_file.txt')
     os.remove('test_bkc_link.txt')
+  end)
+
+  it('&backupcopy=auto preserves symlinks', function()
+    clear('set backupcopy=auto')
     write_file('test_bkc_file.txt', 'content0')
     execute("silent !ln -s test_bkc_file.txt test_bkc_link.txt")
     source([[
@@ -23,8 +26,6 @@ describe(':write', function()
 
   it('&backupcopy=no replaces symlink with new file', function()
     clear('set backupcopy=no')
-    os.remove('test_bkc_file.txt')
-    os.remove('test_bkc_link.txt')
     write_file('test_bkc_file.txt', 'content0')
     execute("silent !ln -s test_bkc_file.txt test_bkc_link.txt")
     source([[
