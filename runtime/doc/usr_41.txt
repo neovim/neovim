@@ -1,4 +1,4 @@
-*usr_41.txt*	For Vim version 7.4.  Last change: 2016 Feb 02
+*usr_41.txt*	For Vim version 7.4.  Last change: 2016 Feb 14
 
 		     VIM USER MANUAL - by Bram Moolenaar
 
@@ -2224,7 +2224,7 @@ This construct makes sure the function is only defined once: >
 	:endif
 <
 
-UNDO							*undo_ftplugin*
+UNDO						*undo_indent* *undo_ftplugin*
 
 When the user does ":setfiletype xyz" the effect of the previous filetype
 should be undone.  Set the b:undo_ftplugin variable to the commands that will
@@ -2238,6 +2238,9 @@ global value.  That is mostly the best way to reset the option value.
 
 This does require removing the "C" flag from 'cpoptions' to allow line
 continuation, as mentioned above |use-cpo-save|.
+
+For undoing the effect of an indent script, the b:undo_indent variable should
+be set accordingly.
 
 
 FILE NAME

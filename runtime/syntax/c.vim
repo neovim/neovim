@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:	C
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2015 Mar 05
+" Last Change:	2016 Feb 08
 
 " Quit when a (custom) syntax file was already loaded
 if exists("b:current_syntax")
@@ -264,7 +264,7 @@ syn keyword	cStorageClass	static register auto volatile extern const
 if exists("c_gnu")
   syn keyword	cStorageClass	inline __attribute__
 endif
-if !exists("c_no_c99")
+if !exists("c_no_c99") && s:ft !=# 'cpp'
   syn keyword	cStorageClass	inline restrict
 endif
 if !exists("c_no_c11")

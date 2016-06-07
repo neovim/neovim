@@ -1,4 +1,4 @@
-*change.txt*    For Vim version 7.4.  Last change: 2016 Jan 31
+*change.txt*    For Vim version 7.4.  Last change: 2016 Feb 10
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -97,10 +97,10 @@ These commands delete text.  You can repeat them with the `.` command
 
 An exception for the d{motion} command: If the motion is not linewise, the
 start and end of the motion are not in the same line, and there are only
-blanks before the start and after the end of the motion, the delete becomes
-linewise.  This means that the delete also removes the line of blanks that you
-might expect to remain. Use the |o_v| operator to force the motion to be
-characterwise.
+blanks before the start and there are no non-blanks after the end of the
+motion, the delete becomes linewise.  This means that the delete also removes
+the line of blanks that you might expect to remain. Use the |o_v| operator to
+force the motion to be characterwise.
 
 Trying to delete an empty region of text (e.g., "d0" in the first column)
 is an error when 'cpoptions' includes the 'E' flag.

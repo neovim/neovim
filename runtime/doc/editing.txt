@@ -1,4 +1,4 @@
-*editing.txt*   For Vim version 7.4.  Last change: 2016 Feb 01
+*editing.txt*   For Vim version 7.4.  Last change: 2016 Feb 11
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -368,16 +368,21 @@ Note there are some commands where this works slightly differently, see
 Example: >
 	:n **/*.txt
 Finds files:
-	ttt.txt
-	subdir/ttt.txt
-	a/b/c/d/ttt.txt
-When non-wildcard characters are used these are only matched in the first
-directory.  Example: >
-	:n /usr/inc**/*.h
+	aaa.txt ~
+	subdir/bbb.txt ~
+	a/b/c/d/ccc.txt ~
+When non-wildcard characters are used right before or after "**" these are
+only matched in the top directory.  They are not used for directories further
+down in the tree. For example: >
+	:n /usr/inc**/types.h
 Finds files:
-	/usr/include/types.h
-	/usr/include/sys/types.h
-	/usr/inc_old/types.h
+	/usr/include/types.h ~
+	/usr/include/sys/types.h ~
+	/usr/inc/old/types.h ~
+Note that the path with "/sys" is included because it does not need to match
+"/inc".  Thus it's like matching "/usr/inc*/*/*...", not
+"/usr/inc*/inc*/inc*".
+
 					*backtick-expansion* *`-expansion*
 On Unix and a few other systems you can also use backticks for the file name
 argument, for example: >

@@ -1,6 +1,6 @@
 " Vim plugin for showing matching parens
 " Maintainer:  Bram Moolenaar <Bram@vim.org>
-" Last Change: 2015 Dec 31
+" Last Change: 2016 Feb 09
 
 " Exit quickly when:
 " - this plugin was already loaded (or disabled)
@@ -97,6 +97,7 @@ function! s:Highlight_Matching_Pair()
     if has_getcurpos
       " getcurpos() is more efficient but doesn't exist before 7.4.313.
       let save_cursor = getcurpos()
+let g:saved_cursor = save_cursor
     else
       let save_cursor = winsaveview()
     endif

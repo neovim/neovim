@@ -1,4 +1,4 @@
-*options.txt*	For Vim version 7.4.  Last change: 2016 Feb 01
+*options.txt*	For Vim version 7.4.  Last change: 2016 Feb 12
 
 
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
@@ -2515,17 +2515,17 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 	  item		default		Used for ~
 	  stl:c		' ' or '^'	statusline of the current window
-	  stlnc:c	' ' or '-'	statusline of the non-current windows
+	  stlnc:c	' ' or '='	statusline of the non-current windows
 	  vert:c	'|'		vertical separators |:vsplit|
 	  fold:c	'-'		filling 'foldtext'
 	  diff:c	'-'		deleted lines of the 'diff' option
 
 	Any one that is omitted will fall back to the default.  For "stl" and
-	"stlnc" the space will be used when there is highlighting, '^' or '-'
+	"stlnc" the space will be used when there is highlighting, '^' or '='
 	otherwise.
 
 	Example: >
-	    :set fillchars=stl:^,stlnc:-,vert:\|,fold:-,diff:-
+	    :set fillchars=stl:^,stlnc:=,vert:\|,fold:-,diff:-
 <	This is similar to the default, except that these characters will also
 	be used when there is highlighting.
 
@@ -6463,6 +6463,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	non-keyword characters (white space is preferred).  Maximum line
 	length is 510 bytes.
 	To obtain a file to be used here, check out this ftp site:
+	[Sorry this link doesn't work anymore, do you know the right one?] 
 	ftp://ftp.ox.ac.uk/pub/wordlists/  First get the README file.
 	To include a comma in a file name precede it with a backslash.  Spaces
 	after a comma are ignored, otherwise spaces are included in the file
