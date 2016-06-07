@@ -12,6 +12,13 @@ local function expected_empty()
 end
 
 describe('expand file name', function()
+  after_each(function()
+    helpers.rmdir('Xdir1')
+    helpers.rmdir('Xdir2')
+    helpers.rmdir('Xdir3')
+    helpers.rmdir('Xdir4')
+  end)
+
   before_each(function()
     clear()
 
