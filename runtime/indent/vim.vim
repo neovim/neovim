@@ -1,7 +1,7 @@
 " Vim indent file
 " Language:	Vim script
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2014 Dec 12
+" Last Change:	2016 Jan 24
 
 " Only load this indent file when no other was loaded.
 if exists("b:did_indent")
@@ -58,19 +58,19 @@ function GetVimIndentIntern()
     if exists("g:vim_indent_cont")
       let ind = ind + g:vim_indent_cont
     else
-      let ind = ind + &sw * 3
+      let ind = ind + shiftwidth() * 3
     endif
   elseif prev_text =~ '^\s*aug\%[roup]' && prev_text !~ '^\s*aug\%[roup]\s*!\=\s\+END'
-    let ind = ind + &sw
+    let ind = ind + shiftwidth()
   else
     " A line starting with :au does not increment/decrement indent.
     if prev_text !~ '^\s*au\%[tocmd]'
       let i = match(prev_text, '\(^\||\)\s*\(if\|wh\%[ile]\|for\|try\|cat\%[ch]\|fina\%[lly]\|fu\%[nction]\|el\%[seif]\)\>')
       if i >= 0
-	let ind += &sw
+	let ind += shiftwidth()
 	if strpart(prev_text, i, 1) == '|' && has('syntax_items')
 	      \ && synIDattr(synID(lnum, i, 1), "name") =~ '\(Comment\|String\)$'
-	  let ind -= &sw
+	  let ind -= shiftwidth()
 	endif
       endif
     endif
@@ -82,7 +82,7 @@ function GetVimIndentIntern()
   let i = match(prev_text, '[^\\]|\s*\(ene\@!\)')
   if i > 0 && prev_text !~ '^\s*au\%[tocmd]'
     if !has('syntax_items') || synIDattr(synID(lnum, i + 2, 1), "name") !~ '\(Comment\|String\)$'
-      let ind = ind - &sw
+      let ind = ind - shiftwidth()
     endif
   endif
 
@@ -90,7 +90,7 @@ function GetVimIndentIntern()
   " Subtract a 'shiftwidth' on a :endif, :endwhile, :catch, :finally, :endtry,
   " :endfun, :else and :augroup END.
   if cur_text =~ '^\s*\(ene\@!\|cat\|fina\|el\|aug\%[roup]\s*!\=\s\+[eE][nN][dD]\)'
-    let ind = ind - &sw
+    let ind = ind - shiftwidth()
   endif
 
   return ind

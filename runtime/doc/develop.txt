@@ -1,4 +1,4 @@
-*develop.txt*   For Vim version 7.4.  Last change: 2014 Mar 27
+*develop.txt*   For Vim version 7.4.  Last change: 2016 Jan 31
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar

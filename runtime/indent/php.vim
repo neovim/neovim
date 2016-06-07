@@ -3,8 +3,8 @@
 " Author:	John Wellesz <John.wellesz (AT) teaser (DOT) fr>
 " URL:		http://www.2072productions.com/vim/indent/php.vim
 " Home:		https://github.com/2072/PHP-Indenting-for-VIm
-" Last Change:	2014 November 26th
-" Version:	1.57
+" Last Change:	2015 September 8th
+" Version:	1.60
 "
 "
 "	Type :help php-indent for available options
@@ -50,16 +50,25 @@ let b:did_indent = 1
 
 let g:php_sync_method = 0
 
+if exists('*shiftwidth')
+  function! s:sw()
+    return shiftwidth()
+  endfunction
+else
+  function! s:sw()
+    return &shiftwidth
+  endfunction
+endif
 
 
 if exists("PHP_default_indenting")
-    let b:PHP_default_indenting = PHP_default_indenting * &sw
+    let b:PHP_default_indenting = PHP_default_indenting * s:sw()
 else
     let b:PHP_default_indenting = 0
 endif
 
 if exists("PHP_outdentSLComments")
-    let b:PHP_outdentSLComments = PHP_outdentSLComments * &sw
+    let b:PHP_outdentSLComments = PHP_outdentSLComments * s:sw()
 else
     let b:PHP_outdentSLComments = 0
 endif
@@ -124,7 +133,7 @@ endif
 
 if exists("*GetPhpIndent")
     call ResetPhpOptions()
-    finish " XXX -- comment this line for easy dev
+    finish
 endif
 
 
@@ -135,7 +144,7 @@ let s:functionDecl = '\<function\>\%(\s\+'.s:PHP_validVariable.'\)\=\s*(.*'
 let s:endline= '\s*\%(//.*\|#.*\|/\*.*\*/\s*\)\=$'
 
 
-let s:terminated = '\%(\%(;\%(\s*\%(?>\|}\)\)\=\|<<<''\=\a\w*''\=$\|^\s*}\|^\s*'.s:PHP_validVariable.':\)'.s:endline.'\)\|^[^''"`]*[''"`]$'
+let s:terminated = '\%(\%(;\%(\s*\%(?>\|}\)\)\=\|<<<\s*[''"]\=\a\w*[''"]\=$\|^\s*}\|^\s*'.s:PHP_validVariable.':\)'.s:endline.'\)\|^[^''"`]*[''"`]$'
 let s:PHP_startindenttag = '<?\%(.*?>\)\@!\|<script[^>]*>\%(.*<\/script>\)\@!'
 
 
@@ -200,7 +209,7 @@ function! GetLastRealCodeLNum(startline) " {{{
 
 
 	elseif lastline =~? '^\a\w*;\=$' && lastline !~? s:notPhpHereDoc
-	    let tofind=substitute( lastline, '\(\a\w*\);\=', '<<<''\\=\1''\\=$', '')
+	    let tofind=substitute( lastline, '\(\a\w*\);\=', '<<<\\s*[''"]\\=\1[''"]\\=$', '')
 	    while getline(lnum) !~? tofind && lnum > 1
 		let lnum = lnum - 1
 	    endwhile
@@ -314,7 +323,7 @@ function! FindTheSwitchIndent (lnum) " {{{
     let test = GetLastRealCodeLNum(a:lnum - 1)
 
     if test <= 1
-	return indent(1) - &sw * b:PHP_vintage_case_default_indent
+	return indent(1) - s:sw() * b:PHP_vintage_case_default_indent
     end
 
     while getline(test) =~ '^\s*}' && test > 1
@@ -328,7 +337,7 @@ function! FindTheSwitchIndent (lnum) " {{{
     if getline(test) =~# '^\s*switch\>'
 	return indent(test)
     elseif getline(test) =~# s:defaultORcase
-	return indent(test) - &sw * b:PHP_vintage_case_default_indent
+	return indent(test) - s:sw() * b:PHP_vintage_case_default_indent
     else
 	return FindTheSwitchIndent(test)
     endif
@@ -401,7 +410,7 @@ function! GetPhpIndent()
     endif
 
     if b:PHP_default_indenting
-	let b:PHP_default_indenting = g:PHP_default_indenting * &sw
+	let b:PHP_default_indenting = g:PHP_default_indenting * s:sw()
     endif
 
     let cline = getline(v:lnum)
@@ -439,6 +448,7 @@ function! GetPhpIndent()
 
     if !b:InPHPcode_checked " {{{ One time check
 	let b:InPHPcode_checked = 1
+	let b:UserIsTypingComment = 0
 
 	let synname = ""
 	if cline !~ '<?.*?>'
@@ -447,8 +457,7 @@ function! GetPhpIndent()
 
 	if synname!=""
 	    if synname == "SpecStringEntrails"
-		let b:InPHPcode = -1 " thumb down
-		let b:UserIsTypingComment = 0
+		let b:InPHPcode = -1
 		let b:InPHPcode_tofind = ""
 	    elseif synname != "phpHereDoc" && synname != "phpHereDocDelimiter"
 		let b:InPHPcode = 1
@@ -456,8 +465,7 @@ function! GetPhpIndent()
 
 		if synname =~# '^php\%(Doc\)\?Comment'
 		    let b:UserIsTypingComment = 1
-		else
-		    let b:UserIsTypingComment = 0
+		    let b:InPHPcode_checked = 0
 		endif
 
 		if synname =~? '^javaScript'
@@ -466,18 +474,16 @@ function! GetPhpIndent()
 
 	    else
 		let b:InPHPcode = 0
-		let b:UserIsTypingComment = 0
 
 		let lnum = v:lnum - 1
-		while getline(lnum) !~? '<<<''\=\a\w*''\=$' && lnum > 1
+		while getline(lnum) !~? '<<<\s*[''"]\=\a\w*[''"]\=$' && lnum > 1
 		    let lnum = lnum - 1
 		endwhile
 
-		let b:InPHPcode_tofind = substitute( getline(lnum), '^.*<<<''\=\(\a\w*\)''\=$', '^\\s*\1;\\=$', '')
+		let b:InPHPcode_tofind = substitute( getline(lnum), '^.*<<<\s*[''"]\=\(\a\w*\)[''"]\=$', '^\\s*\1;\\=$', '')
 	    endif
 	else
 	    let b:InPHPcode = 0
-	    let b:UserIsTypingComment = 0
 	    let b:InPHPcode_tofind = s:PHP_startindenttag
 	endif
     endif "!b:InPHPcode_checked }}}
@@ -537,9 +543,9 @@ function! GetPhpIndent()
 	elseif last_line =~ '^[^''"`]\+[''"`]$'
 	    let b:InPHPcode = -1
 	    let b:InPHPcode_tofind = substitute( last_line, '^.*\([''"`]\).*$', '^[^\1]*\1[;,]$', '')
-	elseif last_line =~? '<<<''\=\a\w*''\=$'
+	elseif last_line =~? '<<<\s*[''"]\=\a\w*[''"]\=$'
 	    let b:InPHPcode = 0
-	    let b:InPHPcode_tofind = substitute( last_line, '^.*<<<''\=\(\a\w*\)''\=$', '^\\s*\1;\\=$', '')
+	    let b:InPHPcode_tofind = substitute( last_line, '^.*<<<\s*[''"]\=\(\a\w*\)[''"]\=$', '^\\s*\1;\\=$', '')
 
 	elseif !UserIsEditing && cline =~ '^\s*/\*\%(.*\*/\)\@!' && getline(v:lnum + 1) !~ '^\s*\*'
 	    let b:InPHPcode = 0
@@ -660,7 +666,7 @@ function! GetPhpIndent()
 	let b:PHP_CurrentIndentLevel = b:PHP_default_indenting
 	return indent(FindTheIfOfAnElse(v:lnum, 1))
     elseif cline =~# s:defaultORcase
-	return FindTheSwitchIndent(v:lnum) + &sw * b:PHP_vintage_case_default_indent
+	return FindTheSwitchIndent(v:lnum) + s:sw() * b:PHP_vintage_case_default_indent
     elseif cline =~ '^\s*)\=\s*{'
 	let previous_line = last_line
 	let last_line_num = lnum
@@ -672,7 +678,7 @@ function! GetPhpIndent()
 		let ind = indent(last_line_num)
 
 		if  b:PHP_BracesAtCodeLevel
-		    let ind = ind + &sw
+		    let ind = ind + s:sw()
 		endif
 
 		return ind
@@ -683,7 +689,7 @@ function! GetPhpIndent()
 	endwhile
 
     elseif last_line =~# unstated && cline !~ '^\s*);\='.endline
-	let ind = ind + &sw
+	let ind = ind + s:sw()
 	return ind + addSpecial
 
     elseif (ind != b:PHP_default_indenting || last_line =~ '^[)\]]' ) && last_line =~ terminated
@@ -782,7 +788,7 @@ function! GetPhpIndent()
 	    endif
 
 	    if !dontIndent && (!b:PHP_BracesAtCodeLevel || last_line !~# '^\s*{')
-		let ind = ind + &sw
+		let ind = ind + s:sw()
 	    endif
 
 	    if b:PHP_BracesAtCodeLevel || b:PHP_vintage_case_default_indent == 1
@@ -800,17 +806,17 @@ function! GetPhpIndent()
 	    endif
 
 	elseif last_line =~ '^\s*'.s:blockstart
-	    let ind = ind + &sw
+	    let ind = ind + s:sw()
 
 
     elseif AntepenultimateLine =~ '{'.endline || AntepenultimateLine =~ terminated || AntepenultimateLine =~# s:defaultORcase
-	    let ind = ind + &sw
+	    let ind = ind + s:sw()
 	endif
 
     endif
 
     if cline =~  '^\s*[)\]];\='
-	let ind = ind - &sw
+	let ind = ind - s:sw()
     endif
 
     let b:PHP_CurrentIndentLevel = ind

@@ -1,11 +1,11 @@
 " Vim indent file
 " Language:	Fortran 2008 (and older: Fortran 2003, 95, 90, and 77)
-" Version:	0.42
-" Last Change:	2015 Nov. 30
+" Version:	0.44
+" Last Change:	2016 Jan. 26
 " Maintainer:	Ajit J. Thakkar <ajit@unb.ca>; <http://www2.unb.ca/~ajit/>
 " Usage:	For instructions, do :help fortran-indent from Vim
 " Credits:
-"  Useful suggestions were made by: Albert Oliver Serra.
+"  Useful suggestions were made by: Albert Oliver Serra and Takuya Fujiwara.
 
 " Only load this indent file when no other was loaded.
 if exists("b:did_indent")
@@ -92,10 +92,10 @@ function FortranGetIndent(lnum)
   "Indent do loops only if they are all guaranteed to be of do/end do type
   if exists("b:fortran_do_enddo") || exists("g:fortran_do_enddo")
     if prevstat =~? '^\s*\(\d\+\s\)\=\s*\(\a\w*\s*:\)\=\s*do\>'
-      let ind = ind + &sw
+      let ind = ind + shiftwidth()
     endif
     if getline(v:lnum) =~? '^\s*\(\d\+\s\)\=\s*end\s*do\>'
-      let ind = ind - &sw
+      let ind = ind - shiftwidth()
     endif
   endif
 
@@ -105,14 +105,14 @@ function FortranGetIndent(lnum)
 	\ ||prevstat=~? '^\s*\(type\|interface\|associate\|enum\)\>'
 	\ ||prevstat=~?'^\s*\(\d\+\s\)\=\s*\(\a\w*\s*:\)\=\s*\(forall\|where\|block\)\>'
 	\ ||prevstat=~? '^\s*\(\d\+\s\)\=\s*\(\a\w*\s*:\)\=\s*if\>'
-     let ind = ind + &sw
+     let ind = ind + shiftwidth()
     " Remove unwanted indent after logical and arithmetic ifs
     if prevstat =~? '\<if\>' && prevstat !~? '\<then\>'
-      let ind = ind - &sw
+      let ind = ind - shiftwidth()
     endif
     " Remove unwanted indent after type( statements
     if prevstat =~? '^\s*type\s*('
-      let ind = ind - &sw
+      let ind = ind - shiftwidth()
     endif
   endif
 
@@ -125,12 +125,12 @@ function FortranGetIndent(lnum)
             \ ||prevstat =~? '^\s*'.prefix.'subroutine\>'
             \ ||prevstat =~? '^\s*'.prefix.type.'function\>'
             \ ||prevstat =~? '^\s*'.type.prefix.'function\>'
-      let ind = ind + &sw
+      let ind = ind + shiftwidth()
     endif
     if getline(v:lnum) =~? '^\s*contains\>'
           \ ||getline(v:lnum)=~? '^\s*end\s*'
           \ .'\(function\|subroutine\|module\|program\)\>'
-      let ind = ind - &sw
+      let ind = ind - shiftwidth()
     endif
   endif
 
@@ -141,23 +141,23 @@ function FortranGetIndent(lnum)
         \. '\(else\|else\s*if\|else\s*where\|case\|'
         \. 'end\s*\(if\|where\|select\|interface\|'
         \. 'type\|forall\|associate\|enum\|block\)\)\>'
-    let ind = ind - &sw
+    let ind = ind - shiftwidth()
     " Fix indent for case statement immediately after select
     if prevstat =~? '\<select\s\+\(case\|type\)\>'
-      let ind = ind + &sw
+      let ind = ind + shiftwidth()
     endif
   endif
 
   "First continuation line
   if prevstat =~ '&\s*$' && prev2stat !~ '&\s*$'
-    let ind = ind + &sw
+    let ind = ind + shiftwidth()
   endif
   if prevstat =~ '&\s*$' && prevstat =~ '\<else\s*if\>'
-    let ind = ind - &sw
+    let ind = ind - shiftwidth()
   endif
   "Line after last continuation line
   if prevstat !~ '&\s*$' && prev2stat =~ '&\s*$' && prevstat !~? '\<then\>'
-    let ind = ind - &sw
+    let ind = ind - shiftwidth()
   endif
 
   return ind

@@ -3,7 +3,7 @@
 " Maintainer:          Christian Brabandt <cb@256bit.org>
 " Previous Maintainer: Peter Aronoff <telemachus@arpinum.org>
 " Original Author:     Nikolai Weibull <now@bitwi.se>
-" Latest Revision:     2015-12-15
+" Latest Revision:     2016-01-15
 " License:             Vim (see :h license)
 " Repository:          https://github.com/chrisbra/vim-sh-indent
 
@@ -28,7 +28,7 @@ let s:cpo_save = &cpo
 set cpo&vim
 
 function s:buffer_shiftwidth()
-  return &shiftwidth
+  return shiftwidth()
 endfunction
 
 let s:sh_indent_defaults = {

@@ -1,4 +1,4 @@
-*various.txt*   For Vim version 7.4.  Last change: 2016 Jan 10
+*various.txt*   For Vim version 7.4.  Last change: 2016 Jan 31
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -319,8 +319,7 @@ N  *+dialog_con*	Support for |:confirm| with console dialog.
 N  *+dialog_con_gui*	Support for |:confirm| with GUI and console dialog.
 N  *+digraphs*		|digraphs| *E196*
 N  *+eval*		expression evaluation |eval.txt|
-N  *+ex_extra*		Vim's extra Ex commands: |:center|, |:left|,
-			|:normal|, |:retab| and |:right|
+N  *+ex_extra*		always on now, used to be for Vim's extra Ex commands
 N  *+extra_search*	|'hlsearch'| and |'incsearch'| options.
 B  *+farsi*		|farsi| language
 N  *+file_in_path*	|gf|, |CTRL-W_f| and |<cfile>|

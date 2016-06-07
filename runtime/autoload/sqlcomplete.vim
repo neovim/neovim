@@ -1,8 +1,8 @@
 " Vim OMNI completion script for SQL
 " Language:    SQL
 " Maintainer:  David Fishburn <dfishburn dot vim at gmail dot com>
-" Version:     15.0
-" Last Change: 2013 May 13
+" Version:     16.0
+" Last Change: 2015 Dec 29
 " Homepage:    http://www.vim.org/scripts/script.php?script_id=1572
 " Usage:       For detailed help
 "              ":help sql.txt"
@@ -15,6 +15,12 @@
 "     - Jonas Enberg - if no table is found when using column completion
 "       look backwards to a FROM clause and find the first table
 "       and complete it.
+"
+" Version 16.0 (Dec 2015)
+"     - NF: If reseting the cache and table, procedure or view completion
+"           had been used via dbext, have dbext delete or recreate the 
+"           dictionary so that new objects are picked up for the 
+"           next completion.
 "
 " Version 15.0 (May 2013)
 "     - NF: Changed the SQL precached syntax items, omni_sql_precache_syntax_groups,
@@ -103,7 +109,7 @@ endif
 if exists('g:loaded_sql_completion')
     finish
 endif
-let g:loaded_sql_completion = 150
+let g:loaded_sql_completion = 160
 let s:keepcpo= &cpo
 set cpo&vim
 
@@ -459,6 +465,29 @@ function! sqlcomplete#Complete(findstart, base)
         let s:tbl_cols           = []
         let s:syn_list           = []
         let s:syn_value          = []
+
+        if s:sql_file_table != ""
+            if g:loaded_dbext >= 2300
+                call DB_DictionaryDelete("table")
+            else
+                DBCompleteTables!
+            endif
+        endif
+        if s:sql_file_procedure != ""
+            if g:loaded_dbext >= 2300
+                call DB_DictionaryDelete("procedure")
+            else
+                DBCompleteProcedures!
+            endif
+        endif
+        if s:sql_file_view != ""
+            if g:loaded_dbext >= 2300
+                call DB_DictionaryDelete("view")
+            else
+                DBCompleteViews!
+            endif
+        endif
+
         let s:sql_file_table     = ""
         let s:sql_file_procedure = ""
         let s:sql_file_view      = ""

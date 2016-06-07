@@ -1,4 +1,4 @@
-*syntax.txt*	For Vim version 7.4.  Last change: 2016 Jan 19
+*syntax.txt*	For Vim version 7.4.  Last change: 2016 Jan 28
 
 
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
@@ -3442,7 +3442,7 @@ SYNTAX ISKEYWORD SETTING				*:syn-iskeyword*
 	If no argument is given, the current value will be output.
 
 	Setting this option influences what |/\k| matches in syntax patterns
-	and also determines where |:syn-keywords| will be checked for a new
+	and also determines where |:syn-keyword| will be checked for a new
 	match.
 
 	It is recommended when writing syntax files, to use this command

@@ -1,4 +1,4 @@
-*quickfix.txt*  For Vim version 7.4.  Last change: 2015 Sep 08
+*quickfix.txt*  For Vim version 7.4.  Last change: 2016 Jan 21
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
