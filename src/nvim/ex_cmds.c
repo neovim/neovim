@@ -5879,7 +5879,7 @@ char* compute_number_line(int col_size, linenr_T number) {
   for (int i=2 ; i < col_size-(log10(number)+1) - 2 ; i++)
     r[i] = ' ';
 
-  sprintf(s, "%s%ld] ", r, number);
+  snprintf(s, col_size,"%s%ld] ", r, number);
   xfree(r);
 
   return s;
@@ -6005,48 +6005,55 @@ void ex_window_live_sub(char_u* sub, klist_t(matchedline_T) *lmatch)
 
   // Initialize line and highlight variables
   int line = 0;
-  //int src_id_highlight = 0;
-  //long sub_size = strlen((char*)sub);
+  int src_id_highlight = 0;
+  long sub_size = STRLEN(sub);
 
   // Get the width of the column which display the number of the line
   long highest_num_line;
   kl_iter(matchedline_T, lmatch, current)
     highest_num_line = (*current)->data.lnum;
 
+  // computing the length of the column that will display line number
   int col_width = log10(highest_num_line) + 1 + 4;
 
   // allocate a line sized for the window
-  char *str = xmalloc((size_t )curwin->w_frame->fr_width);
+  char *str = xcalloc((size_t )curwin->w_frame->fr_width, sizeof(char));
 
   // Append the lines to our buffer
   kl_iter(matchedline_T, lmatch, current) {
     matchedline_T mat = (*current)->data;
-    size_t line_size = STRLEN(mat.line) + col_width*sizeof(char);
+    size_t line_size = STRLEN(mat.line) + col_width + 1;
 
     // Reallocation if str not long enough
     if (line_size > curwin->w_frame->fr_width*sizeof(char))
-      str = xrealloc(str, line_size);
+      str = xrealloc(str, line_size*sizeof(char));
 
     // Add the line number to the string
-    char *col = compute_number_line(col_width,mat.lnum);
-    sprintf(str, "%s%s", col, mat.line); //TODO : strcat
+    char *col = compute_number_line(col_width, mat.lnum);
+    snprintf(str, line_size, "%s%s", col, mat.line); //TODO : strcat
     ml_append(line++, (char_u *)str, (colnr_T)0, false);
 
-//    kl_iter(colnr_T, mat.start_col, col) {
-//      src_id_highlight = bufhl_add_hl(curbuf,
-//                                      src_id_highlight,
-//                                      2, // id of our highlight TODO : allow the user to change it
-//                                      line,                                     // line in curbuf
-//                                      (*col)->data + col_width + 1,           // beginning of word
-//                                      (*col)->data + col_width + sub_size); // end of word
-//
-//    }
-//
-//    src_id_highlight = bufhl_add_hl(curbuf, src_id_highlight,
-//                                    2, // id of our highlight TODO : allow the user to change it
-//                                    line,           // line in curbuf
-//                                    3,           // beginning of word
-//                                    col_width - 2); // end of word
+    kl_iter(colnr_T, mat.start_col, col) {
+      // highlight the replaced part
+      if (sub_size > 1)
+        src_id_highlight = bufhl_add_hl(curbuf,
+                                        src_id_highlight,
+                                        2, // id of our highlight TODO : allow the user to change it
+                                        line,                                   // line in curbuf
+                                        (*col)->data + col_width,           // beginning of word
+                                        (*col)->data + col_width + sub_size - 1);   // end of word
+
+    }
+
+    // highlighting line number TODO : segfault in kmp map
+    /*if (col_width > 5)
+      bufhl_add_hl(curbuf,
+                   0,
+                   2, // id of our highlight TODO : allow the user to change it
+                   line,           // line in curbuf
+                   3,           // beginning of word
+                   col_width - 2); // end of word
+                   */
 
     // free of the saved line and the allocated column
     xfree(col);
@@ -6184,6 +6191,8 @@ void do_live_sub(exarg_T *eap) {
     default:
       break;
   }
+
+  redraw_later(SOME_VALID);
 
   if (!LIVE_MODE)
     normal_enter(false, false);
