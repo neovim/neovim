@@ -80,10 +80,6 @@ matrix:
     - os: linux
       compiler: clang
       env: CLANG_SANITIZER=TSAN
-    - os: osx
-      compiler: clang
-    - os: osx
-      compiler: gcc-4.9
     - os: linux
       env: BUILD_MINGW=ON
   fast_finish: true
