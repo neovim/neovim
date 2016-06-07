@@ -6135,13 +6135,13 @@ void do_live_sub(exarg_T *eap) {
       if (EVENT_SUB == 1)
         do_cmdline_cmd(":u");
       //The lengh of the new arg is lower than twice the length of the command
-      arg = xcalloc(2 * STRLEN(eap->arg) + 1, sizeof(char_u));
+      arg = xcalloc(2*STRLEN(eap->arg) + 1, sizeof(char_u));
 
       //Save the state of eap
       tmp = eap->arg;
 
       //Change the argument of the command
-      sprintf((char *) arg, "%s%s", (char *) eap->arg, (char *) eap->arg);
+      snprintf((char *) arg, 2*STRLEN(eap->arg) + 1,"%s%s", (char *) eap->arg, (char *) eap->arg);
       eap->arg = arg;
 
       //Highlight the word and open the split
