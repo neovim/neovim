@@ -6033,7 +6033,7 @@ void ex_window_live_sub(char_u* sub, klist_t(matchedline_T) *lmatch)
 
     kl_iter(colnr_T, mat.start_col, col) {
       // highlight the replaced part
-      if (sub_size > 1)
+      if (sub_size > 0)
         src_id_highlight = bufhl_add_hl(curbuf,
                                         src_id_highlight,
                                         2, // id of our highlight TODO : allow the user to change it
@@ -6133,23 +6133,18 @@ void do_live_sub(exarg_T *eap) {
   char_u *tmp;
 
   switch (cmdl_progress) {
-    case LS_NO_SLASH: 
-      if (livebuf != NULL) {
-        close_windows(livebuf, false);
-        close_buffer(NULL, livebuf, DOBUF_WIPE, false);
-        update_screen(0);
-      }
+    case LS_NO_SLASH:
       break;
     case LS_NO_WD:
       if (EVENT_SLASH==2){
         do_cmdline_cmd(":u");
-        update_screen(0);
       }
       break;
     case LS_ONE_WD: // live_sub will replace the arg by itself in order to display it until the user presses enter
-      if (EVENT_SLASH == 1)
+      if (EVENT_SLASH == 1) {
         do_cmdline_cmd(":u");
-      //The lengh of the new arg is lower than twice the lengh of the command
+      }
+      //The lengh of the new arg is lower than twice the length of the command
       arg = xcalloc(2 * STRLEN(eap->arg) + 1, sizeof(char_u));
 
       //Save the state of eap
@@ -6171,8 +6166,9 @@ void do_live_sub(exarg_T *eap) {
       break;
 
     case LS_TWO_SLASH_ONE_WD: // live_sub will remove the arg
-      if (EVENT_SLASH == 1) 
-        do_cmdline_cmd(":u"); // we need to undo if we come from the LS_TWO_WD case
+      if (EVENT_SLASH == 1) {
+        do_cmdline_cmd(":u");
+      } // we need to undo if we come from the LS_TWO_WD case
       do_sub(eap);
       EVENT_SLASH = 1;
       break;
@@ -6187,6 +6183,12 @@ void do_live_sub(exarg_T *eap) {
       break;
   }
 
+  update_screen(0);
+
+  if (livebuf != NULL) {
+    close_windows(livebuf, false);
+    close_buffer(NULL, livebuf, DOBUF_WIPE, false);
+  }
   redraw_later(SOME_VALID);
 
   if (!LIVE_MODE) {
