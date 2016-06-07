@@ -20,6 +20,7 @@ describe('Live Substitution', function()
     before_each(function()
         clear()
         execute("syntax on")
+        execute("set livesub")
         screen = Screen.new(40, 8)  -- 8 lines of 40 char
         screen:attach()
         screen:set_default_attr_ignore( {{bold=true, foreground=hl_colors.NonText}} )
@@ -303,23 +304,24 @@ describe('Live Substitution', function()
 --    ]])
 --    end)
 --
---    it('works with multibyte text', function()
---        insert([[
---      Ta båten över sjön!]])
---        add_hl(-1, "Identifier", 0, 3, 9)
---        add_hl(-1, "String", 0, 16, 21)
---
---        screen:expect([[
---      Ta {5:båten} över {1:sjön}^!                     |
---      ~                                       |
---      ~                                       |
---      ~                                       |
---      ~                                       |
---      ~                                       |
---      ~                                       |
---                                              |
---    ]])
---    end)
+    it('works with multibyte text', function()
+        insert([[
+      Ta båten över sjön!]])
+        add_hl(-1, "Identifier", 0, 3, 9)
+        add_hl(-1, "String", 0, 16, 21)
+
+        screen:expect([[
+      Ta {5:båten} över {1:sjön}^!                     |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+                                              |
+    ]])
+    end)
+
     it('split if :%s/a', function()
         insert([[
       these are some lines
@@ -327,15 +329,14 @@ describe('Live Substitution', function()
         feed(':%s/are')
 
         screen:expect([[
-      ^with colorful text (ARE)                |
-      {UNEXPECTED bold = true, reverse = true:[No Name] [+]                           }|
-      {UNEXPECTED reverse = true:[live_sub]                              }|
-       [1] these ARE some lines               |
-       [2] with colorful text (ARE)           |
-                                              |
-      ~                                       |
-      {UNEXPECTED reverse = true:[live_sub]                              }|
-      :%s/are                             |
+:with colorful text ({UNEXPECTED background = Screen.colors.Yellow:are})               |
+{UNEXPECTED bold = true, reverse = true:[No Name] [+]                           }|
+ [1]these {UNEXPECTED background = Screen.colors.Yellow:are} some lines                |
+ [2]with colorful text ({UNEXPECTED background = Screen.colors.Yellow:are})            |
+                                        |
+~                                       |
+{UNEXPECTED reverse = true:[live_sub]                              }|
+       ^                                 |
     ]])
     end)
 
@@ -346,15 +347,34 @@ describe('Live Substitution', function()
         feed(':%s/are/')
 
         screen:expect([[
-^with colorful text ()                |
+:with colorful text ()                  |
 {UNEXPECTED bold = true, reverse = true:[No Name] [+]                           }|
- [1] these  some lines               |
- [2] with colorful text ()           |
+
+ [1]these  some lines                   |
+ [2]with colorful text ()               |
                                         |
 ~                                       |
-:%s/are                          |
+{UNEXPECTED reverse = true:[live_sub]                              }|
+:%s/are/^                                |
     ]])
 end)
 
 
+  it('split if :%s/a', function()
+        insert([[
+      these are some lines
+      with colorful text (are)]])
+        feed(':%s/are/to')
+
+        screen:expect([[
+:with colorful text (to)                |
+{UNEXPECTED bold = true, reverse = true:[No Name] [+]                           }|
+ [1]these to some lines                 |
+ [2]with colorful text (to)             |
+                                        |
+~                                       |
+{UNEXPECTED reverse = true:[live_sub]                              }|
+:%s/are/to^                              |
+    ]])
+end)
 end)
