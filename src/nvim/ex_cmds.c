@@ -3849,7 +3849,7 @@ skip:
 
 
   // live_sub if sub on the whole file and there are results to display
-  if (eap[0].cmdlinep[0][0] != 's') {
+  if (eap[0].cmdlinep[0][0] != 's' && !kl_empty(lmatch)) {
     ex_window_live_sub(sub, lmatch);
     // after used, free the list
     kl_iter(matchedline_T, lmatch, current) {
@@ -5960,16 +5960,6 @@ void ex_window_live_sub(char_u* sub, klist_t(matchedline_T) *lmatch)
   block_autocmds();
   // don't use a new tab page
   cmdmod.tab = 0;
-
-  // close last buffer used for ex_window_live_sub()
-  buf_T* oldbuf;
-  if ((oldbuf = buflist_findname_exp((char_u *)"[live_sub]")) != NULL) {
-    close_windows (oldbuf, FALSE);
-    close_buffer (NULL, oldbuf, DOBUF_WIPE, FALSE);
-  }
-
-  if (kl_empty(lmatch))
-    return;
 
   // Create a window for the command-line buffer.
   if (win_split((int)p_cwh, WSP_BOT) == FAIL) {
