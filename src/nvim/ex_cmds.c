@@ -6180,6 +6180,8 @@ void do_live_sub(exarg_T *eap) {
       break;
   }
 
-  if (!LIVE_MODE)
-    normal_enter(false, false);
+  if (LIVE_MODE == 0) {
+    EVENT_SLASH = 0;
+    normal_enter(false, true);
+  }
 }
