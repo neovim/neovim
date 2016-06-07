@@ -3960,6 +3960,12 @@ A jump table for the options with a short description can be found at |Q_op|.
 			global
 	Strings to use in 'list' mode and for the |:list| command.  It is a
 	comma separated list of string settings.
+						*'livesub'* *'lsu'* *'nolivesub'* *'nlsu'*
+'Livesub' 'lsu'		boolean	(default off)
+			global
+					If sets, substitution become dynamics. It also opens a
+					split which displays the line of the occurences of the search.
+
 							*lcs-eol*
 	  eol:c		Character to show at the end of each line.  When
 			omitted, there is no extra character at the end of the
