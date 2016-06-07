@@ -66,7 +66,8 @@
 typedef struct sign sign_T;
 
 //boolean to know if we have to undo
-static int EVENT_SUB = 0; 
+static int EVENT_SUB = 0;
+static int sub_done;
 
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -2954,6 +2955,8 @@ void do_sub(exarg_T *eap)
 
   klist_t(matchedline_T) *lmatch = kl_init(matchedline_T);  /*  list to save matched lines */
 
+  sub_done = 0;
+  
   cmd = eap->arg;
   if (!global_busy) {
     sub_nsubs = 0;
@@ -3850,6 +3853,7 @@ skip:
 
   // live_sub if sub on the whole file and there are results to display
   if (eap[0].cmdlinep[0][0] != 's' && !kl_empty(lmatch)) {
+    sub_done = 1;
     ex_window_live_sub(sub, lmatch);
     // after used, free the list
     kl_iter(matchedline_T, lmatch, current) {
@@ -6115,7 +6119,7 @@ void do_live_sub(exarg_T *eap) {
     do_sub(eap);
     return;
   }
-
+  
   //count the number of '/' to know how many words can be parsed
   LiveSub_state cmdl_progress = parse_sub_cmd(eap);
 
@@ -6132,8 +6136,10 @@ void do_live_sub(exarg_T *eap) {
       }*/
       break;
     case LS_ONE_WD: 
-      if (EVENT_SUB == 1)
+      if (EVENT_SUB == 1) {
         do_cmdline_cmd(":u");
+        EVENT_SUB = 0;
+      }
       //The lengh of the new arg is lower than twice the length of the command
       arg = xcalloc(2 * STRLEN(eap->arg) + 1, sizeof(char_u));
 
@@ -6146,7 +6152,8 @@ void do_live_sub(exarg_T *eap) {
 
       //Highlight the word and open the split
       do_sub(eap);
-
+      if(sub_done == 1)
+        do_cmdline_cmd(":u"); // to not polue the undo history
       //Put back eap in first state
       eap->arg = tmp;
 
@@ -6155,14 +6162,15 @@ void do_live_sub(exarg_T *eap) {
       break;
 
     case LS_TWO_SLASH_ONE_WD: // live_sub will remove the arg
-      if (EVENT_SUB == 1) 
+      if (EVENT_SUB == 1)
         do_cmdline_cmd(":u"); // we need to undo if we come from the LS_TWO_WD case
       do_sub(eap);
       EVENT_SUB = 1;
       break;
 
     case LS_TWO_WD: // live_sub needs to undo
-      do_cmdline_cmd(":u");
+      if (EVENT_SUB == 1)
+        do_cmdline_cmd(":u");
       do_sub(eap);
       EVENT_SUB = 1;
       break;
