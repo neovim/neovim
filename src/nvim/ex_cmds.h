@@ -21,9 +21,8 @@
 
 /// for cmdl_progress in live substitution
 typedef enum {
-  LS_NO_SLASH,              /// begining of the cmd_line : ":%s"
   LS_NO_WD,                 /// state of the command line when none of the words are typed : 
-                              /// ":%s/"
+                              /// ":%s" or ":%s/"
   LS_ONE_WD,                /// state of the command line when only the pattern word has began 
                               /// to be typed : ":%s/patt"
   LS_TWO_SLASH_ONE_WD,      /// sentry case : the second slash has been typed on but not the second

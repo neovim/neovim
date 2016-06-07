@@ -65,7 +65,8 @@
  */
 typedef struct sign sign_T;
 
-static int EVENT_SLASH = 0; // for live sub, we need to know if the user has already enter a slash
+//boolean to know if we have to undo
+static int EVENT_SUB = 0; 
 
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -6089,10 +6090,10 @@ LiveSub_state parse_sub_cmd (exarg_T *eap) {
   LiveSub_state cmdl_progress;
   
   if (eap->arg[i++] != '/')
-    return LS_NO_SLASH;
+    return LS_NO_WD;
   
   if (eap->arg[i++] == 0){
-    cmdl_progress = LS_NO_WD;
+    return LS_NO_WD;
   } else {
     cmdl_progress = LS_ONE_WD;
     while (eap->arg[i] != 0){
@@ -6102,8 +6103,7 @@ LiveSub_state parse_sub_cmd (exarg_T *eap) {
       }
       i++;
     }
-  }
-  
+  } 
   return cmdl_progress;
 }
 
@@ -6125,22 +6125,17 @@ void do_live_sub(exarg_T *eap) {
   char_u *arg;
   char_u *tmp;
 
+
   switch (cmdl_progress) {
-    case LS_NO_SLASH: 
+    case LS_NO_WD: 
       if (livebuf != NULL) {
         close_windows(livebuf, false);
         close_buffer(NULL, livebuf, DOBUF_WIPE, false);
         update_screen(0);
       }
       break;
-    case LS_NO_WD:
-      if (EVENT_SLASH==2){
-        do_cmdline_cmd(":u");
-        update_screen(0);
-      }
-      break;
-    case LS_ONE_WD: // live_sub will replace the arg by itself in order to display it until the user presses enter
-      if (EVENT_SLASH == 1)
+    case LS_ONE_WD: 
+      if (EVENT_SUB == 1)
         do_cmdline_cmd(":u");
       //The lengh of the new arg is lower than twice the lengh of the command
       arg = xcalloc(2 * STRLEN(eap->arg) + 1, sizeof(char_u));
@@ -6160,20 +6155,19 @@ void do_live_sub(exarg_T *eap) {
 
       xfree(arg);
 
-      EVENT_SLASH = 2;
       break;
 
     case LS_TWO_SLASH_ONE_WD: // live_sub will remove the arg
-      if (EVENT_SLASH == 1) 
+      if (EVENT_SUB == 1) 
         do_cmdline_cmd(":u"); // we need to undo if we come from the LS_TWO_WD case
       do_sub(eap);
-      EVENT_SLASH = 1;
+      EVENT_SUB = 1;
       break;
 
     case LS_TWO_WD: // live_sub needs to undo
       do_cmdline_cmd(":u");
       do_sub(eap);
-      EVENT_SLASH = 1;
+      EVENT_SUB = 1;
       break;
 
     default:
@@ -6181,7 +6175,7 @@ void do_live_sub(exarg_T *eap) {
   }
 
   if (LIVE_MODE == 0) {
-    EVENT_SLASH = 0;
+    EVENT_SUB = 0;
     normal_enter(false, true);
   }
 }
