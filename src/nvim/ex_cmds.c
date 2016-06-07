@@ -6129,11 +6129,8 @@ void do_live_sub(exarg_T *eap) {
 
   switch (cmdl_progress) {
     case LS_NO_WD: 
-    /*  if (livebuf != NULL) {
-        close_windows(livebuf, false);
-        close_buffer(NULL, livebuf, DOBUF_WIPE, false);
-        update_screen(0);
-      }*/
+      if (!LIVE_MODE)
+        do_sub(eap); 
       break;
     case LS_ONE_WD: 
       if (EVENT_SUB == 1) {
