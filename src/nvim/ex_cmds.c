@@ -5888,18 +5888,20 @@ void set_context_in_sign_cmd(expand_T *xp, char_u *arg)
 
 /// used in ex_window_live_sub for creating the column which contains the number
 /// of the line.
-char* compute_number_line(int col_size, linenr_T number) {
-  char *s = xcalloc((size_t)col_size, sizeof(char));
-  char *r = xcalloc((size_t)col_size, sizeof(char));
-  strcat(r, " [");
+char* compute_line_number(int col_size, linenr_T number) {
+    assert(col_size > log10(number)+3);
+    char *s = (char*)calloc((size_t)col_size+1, sizeof(char));
+    char *r = (char*)calloc((size_t)col_size+1, sizeof(char));
+    strcat(r, " [");
 
-  for (int i=2 ; i < col_size-(log10(number)+1) - 2 ; i++)
-    r[i] = ' ';
+    for (int i=2 ; i < col_size-(log10(number)+1) - 1 ; i++)
+        r[i] = ' ';
 
-  snprintf(s, col_size,"%s%ld] ", r, number);
-  xfree(r);
+    snprintf(s, col_size,"%s%ld", r, number);
+    strcat(s,"]");
+    free(r);
 
-  return s;
+    return s;
 }
 
 /// function called after a live command to get back to
@@ -6020,7 +6022,7 @@ void ex_window_live_sub(char_u* sub, klist_t(matchedline_T) *lmatch)
     highest_num_line = (*current)->data.lnum;
 
   // computing the length of the column that will display line number
-  int col_width = log10(highest_num_line) + 1 + 4;
+  int col_width = log10(highest_num_line) + 1 + 3;
 
   // allocate a line sized for the window
   char *str = xcalloc((size_t )curwin->w_frame->fr_width, sizeof(char));
@@ -6035,7 +6037,7 @@ void ex_window_live_sub(char_u* sub, klist_t(matchedline_T) *lmatch)
       str = xrealloc(str, line_size*sizeof(char));
 
     // Add the line number to the string
-    char *col = compute_number_line(col_width, mat.lnum);
+    char *col = compute_line_number(col_width, mat.lnum);
     snprintf(str, line_size, "%s%s", col, mat.line); //TODO : strcat
     ml_append(line++, (char_u *)str, (colnr_T)0, false);
 
@@ -6046,8 +6048,8 @@ void ex_window_live_sub(char_u* sub, klist_t(matchedline_T) *lmatch)
                                         src_id_highlight,
                                         2, // id of our highlight TODO : allow the user to change it
                                         line,                                   // line in curbuf
-                                        (*col)->data + col_width,           // beginning of word
-                                        (*col)->data + col_width + sub_size - 1);   // end of word
+                                        (*col)->data + col_width +1,           // beginning of word
+                                        (*col)->data + col_width + sub_size);   // end of word
 
     }
 
