@@ -67,8 +67,7 @@ typedef struct sign sign_T;
 
 //boolean to know if we have to undo
 static int EVENT_SUB = 0;
-static int sub_done;
-
+static int sub_done = 0;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ex_cmds.c.generated.h"
@@ -3096,7 +3095,7 @@ void do_sub(exarg_T *eap)
     do_all = p_gd ? TRUE : FALSE;
 
     do_ask = FALSE;
-    do_error = (LIVE_MODE == 1) ? FALSE : TRUE;
+    do_error = (EVENT_COLON == 1) ? FALSE : TRUE;
     do_print = FALSE;
     do_count = false;
     do_number = FALSE;
@@ -3533,7 +3532,7 @@ void do_sub(exarg_T *eap)
          * 3. substitute the string. don't do this while live_substitution and
          *    there's no word to replace by eg : ":%s/pattern"
          */
-        if (!(LIVE_MODE && sub[0] == '\0' && !last_is_slash))
+        if (!(EVENT_COLON && sub[0] == '\0' && !last_is_slash))
         {
           if (do_count) {
             /* prevent accidentally changing the buffer by a function */
@@ -3833,7 +3832,7 @@ skip:
         else
           beginline(BL_WHITE | BL_FIX);
       }
-      if(LIVE_MODE != 1) { // live_mode : no message in command line
+      if(EVENT_COLON != 1) { // live_mode : no message in command line
         if (!do_sub_msg(do_count) && do_ask)
           MSG("");
       }
@@ -3864,9 +3863,10 @@ skip:
   // live_sub if sub on the whole file and there are results to display
   if (eap[0].cmdlinep[0][0] != 's' && !kl_empty(lmatch)) {
     // we did a livesub only if we had no word to replace by and no slash to end
-    if (!(LIVE_MODE && sub[0] == '\0' && !last_is_slash))
+    if (!(EVENT_COLON && sub[0] == '\0' && !last_is_slash))
       sub_done = 1;
-    ex_window_live_sub(pat, sub, lmatch);
+    if (p_sub)
+      ex_window_live_sub(pat, sub, lmatch);
     // after used, free the list
     kl_iter(matchedline_T, lmatch, current) {
       kl_destroy(colnr_T, (*current)->data.start_col);
@@ -6126,7 +6126,7 @@ void do_live_sub(exarg_T *eap) {
 
   switch (cmdl_progress) {
     case LS_NO_WD: 
-      if (!LIVE_MODE)
+      if (!EVENT_COLON)
         do_sub(eap); 
       break;
     case LS_ONE_WD: 
@@ -6175,7 +6175,7 @@ void do_live_sub(exarg_T *eap) {
   }
   redraw_later(SOME_VALID);
 
-  if (!LIVE_MODE) {
+  if (!EVENT_COLON) {
     EVENT_SUB = 0;
     normal_enter(false, false);
   }
