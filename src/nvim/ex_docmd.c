@@ -7,7 +7,6 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <inttypes.h>
-
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
 #include "nvim/ex_docmd.h"
@@ -271,14 +270,13 @@ do_exmode (
  */
 int do_cmdline_cmd(char *cmd)
 {
-  // TODO(aym7) find a better way to remove verbose
-  // if live, no verbose
   if(EVENT_COLON == 1) {
     return do_cmdline((char_u *)cmd, NULL, NULL,
         DOCMD_NOWAIT|DOCMD_KEYTYPED);
-  }
+  } else {
   return do_cmdline((char_u *)cmd, NULL, NULL,
       DOCMD_VERBOSE|DOCMD_NOWAIT|DOCMD_KEYTYPED);
+  }
 }
 
 /*
