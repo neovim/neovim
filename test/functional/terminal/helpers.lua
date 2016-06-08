@@ -53,7 +53,7 @@ local function screen_setup(extra_height, command)
     [9] = {foreground = 4},
   })
 
-  screen:attach(false)
+  screen:attach({rgb=false})
   -- tty-test puts the terminal into raw mode and echoes all input. tests are
   -- done by feeding it with terminfo codes to control the display and
   -- verifying output with screen:expect.

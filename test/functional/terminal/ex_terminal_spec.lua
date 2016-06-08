@@ -10,7 +10,7 @@ describe(':terminal', function()
   before_each(function()
     clear()
     screen = Screen.new(50, 4)
-    screen:attach(false)
+    screen:attach({rgb=false})
     nvim('set_option', 'shell', nvim_dir..'/shell-test')
     nvim('set_option', 'shellcmdflag', 'EXE')
 

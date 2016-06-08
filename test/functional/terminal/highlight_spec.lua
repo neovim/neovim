@@ -25,7 +25,7 @@ describe('terminal window highlighting', function()
       [10] = {reverse = true},
       [11] = {background = 11},
     })
-    screen:attach(false)
+    screen:attach({rgb=false})
     execute('enew | call termopen(["'..nvim_dir..'/tty-test"]) | startinsert')
     screen:expect([[
       tty ready                                         |
@@ -127,7 +127,7 @@ describe('terminal window highlighting with custom palette', function()
       [8] = {background = 11},
       [9] = {bold = true},
     })
-    screen:attach(true)
+    screen:attach({rgb=true})
     nvim('set_var', 'terminal_color_3', '#123456')
     execute('enew | call termopen(["'..nvim_dir..'/tty-test"]) | startinsert')
     screen:expect([[
@@ -185,7 +185,7 @@ describe('synIDattr()', function()
   end)
 
   it('returns gui-color if RGB-capable UI is attached', function()
-    screen:attach(true)
+    screen:attach({rgb=true})
     eq('#ff0000', eval('synIDattr(hlID("Normal"),  "fg")'))
     eq('Black',   eval('synIDattr(hlID("Normal"),  "bg")'))
     eq('Salmon',  eval('synIDattr(hlID("Keyword"), "fg")'))
@@ -193,7 +193,7 @@ describe('synIDattr()', function()
   end)
 
   it('returns #RRGGBB value for fg#/bg#/sp#', function()
-    screen:attach(true)
+    screen:attach({rgb=true})
     eq('#ff0000', eval('synIDattr(hlID("Normal"), "fg#")'))
     eq('#000000', eval('synIDattr(hlID("Normal"), "bg#")'))
     eq('#fa8072', eval('synIDattr(hlID("Keyword"), "fg#")'))
@@ -201,7 +201,7 @@ describe('synIDattr()', function()
   end)
 
   it('returns color number if non-GUI', function()
-    screen:attach(false)
+    screen:attach({rgb=false})
     eq('252', eval('synIDattr(hlID("Normal"), "fg")'))
     eq('79', eval('synIDattr(hlID("Keyword"), "fg")'))
   end)

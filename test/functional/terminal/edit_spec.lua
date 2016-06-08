@@ -12,7 +12,7 @@ local eq = helpers.eq
 describe(':edit term://*', function()
   local get_screen = function(columns, lines)
     local scr = screen.new(columns, lines)
-    scr:attach(false)
+    scr:attach({rgb=false})
     return scr
   end
 

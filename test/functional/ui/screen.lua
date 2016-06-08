@@ -106,7 +106,7 @@
 -- use `screen:snapshot_util({},true)`
 
 local helpers = require('test.functional.helpers')(nil)
-local request, run = helpers.request, helpers.run
+local request, run, uimeths = helpers.request, helpers.run, helpers.uimeths
 local dedent = helpers.dedent
 
 local Screen = {}
@@ -192,22 +192,22 @@ function Screen:set_default_attr_ignore(attr_ignore)
   self._default_attr_ignore = attr_ignore
 end
 
-function Screen:attach(rgb)
-  if rgb == nil then
-    rgb = true
+function Screen:attach(options)
+  if options == nil then
+    options = {rgb=true}
   end
-  request('ui_attach', self._width, self._height, rgb)
+  uimeths.attach(self._width, self._height, options)
 end
 
 function Screen:detach()
-  request('ui_detach')
+  uimeths.detach()
 end
 
 function Screen:try_resize(columns, rows)
-  request('ui_try_resize', columns, rows)
+  uimeths.try_resize(columns, rows)
 end
 
-function Screen:expect(expected, attr_ids, attr_ignore)
+function Screen:expect(expected, attr_ids, attr_ignore, condition)
   -- remove the last line and dedent
   expected = dedent(expected:gsub('\n[ ]+$', ''))
   local expected_rows = {}
@@ -219,6 +219,12 @@ function Screen:expect(expected, attr_ids, attr_ignore)
   local ids = attr_ids or self._default_attr_ids
   local ignore = attr_ignore or self._default_attr_ignore
   self:wait(function()
+    if condition ~= nil then
+      local status, res = pcall(condition)
+      if not status then
+        return tostring(res)
+      end
+    end
     local actual_rows = {}
     for i = 1, self._height do
       actual_rows[i] = self:_row_repr(self._rows[i], ids, ignore)
@@ -303,10 +309,18 @@ function Screen:_redraw(updates)
     local method = update[1]
     for i = 2, #update do
       local handler = self['_handle_'..method]
-      handler(self, unpack(update[i]))
+      if handler ~= nil then
+        handler(self, unpack(update[i]))
+      else
+        self._on_event(method, update[i])
+      end
     end
     -- print(self:_current_screen())
   end
+end
+
+function Screen:set_on_event_handler(callback)
+  self._on_event = callback
 end
 
 function Screen:_handle_resize(width, height)

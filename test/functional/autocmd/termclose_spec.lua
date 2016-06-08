@@ -12,7 +12,7 @@ describe('TermClose event', function()
     nvim('set_option', 'shell', nvim_dir .. '/shell-test')
     nvim('set_option', 'shellcmdflag', 'EXE')
     screen = Screen.new(20, 4)
-    screen:attach(false)
+    screen:attach({rgb=false})
   end)
 
   it('works as expected', function()
