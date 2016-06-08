@@ -3865,7 +3865,8 @@ skip:
     // we did a livesub only if we had no word to replace by and no slash to end
     if (!(EVENT_COLON && sub[0] == '\0' && !last_is_slash))
       sub_done = 1;
-    ex_window_live_sub(pat, sub, lmatch);
+    if (p_sub)
+      ex_window_live_sub(pat, sub, lmatch);
     // after used, free the list
     kl_iter(matchedline_T, lmatch, current) {
       kl_destroy(colnr_T, (*current)->data.start_col);
