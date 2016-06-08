@@ -6156,14 +6156,8 @@ void do_live_sub(exarg_T *eap) {
       break;
 
     case LS_TWO_SLASH_ONE_WD: // live_sub will remove the arg
-      if (EVENT_SUB == 1)
-        do_cmdline_cmd(":u"); // we need to undo if we come from the LS_TWO_WD case
-      do_sub(eap);
-      EVENT_SUB = 1;
-      break;
-
     case LS_TWO_WD: // live_sub needs to undo
-      if (EVENT_SUB == 1)
+      if (EVENT_SUB == 1 && sub_done == 1)
         do_cmdline_cmd(":u");
       do_sub(eap);
       EVENT_SUB = 1;
