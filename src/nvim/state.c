@@ -76,6 +76,7 @@ void state_enter(VimState *s)
     } else if (p_sub && EVENT_COLON == 1 && is_live(access_cmdline())){
       // compute a live action
       do_cmdline(access_cmdline(), NULL, NULL, DOCMD_KEEPLINE);
+      redrawcmdline();
     }
   }
 }

@@ -6167,7 +6167,6 @@ void do_live_sub(exarg_T *eap) {
       break;
   }
 
-  redrawcmdline();
   update_screen(0);
   if (livebuf != NULL && buf_valid(livebuf)) {
     close_windows(livebuf, false);
