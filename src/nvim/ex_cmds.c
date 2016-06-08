@@ -3172,7 +3172,8 @@ void do_sub(exarg_T *eap)
     return;
   }
 
-  if (search_regcomp(pat, RE_SUBST, which_pat, SEARCH_HIS,
+  int searchRC_option = (EVENT_COLON) ? 0 : SEARCH_HIS;
+  if (search_regcomp(pat, RE_SUBST, which_pat, searchRC_option,
           &regmatch) == FAIL) {
     if (do_error)
       EMSG(_(e_invcmd));
@@ -3865,8 +3866,9 @@ skip:
     // we did a livesub only if we had no word to replace by and no slash to end
     if (!(EVENT_COLON && sub[0] == '\0' && !last_is_slash))
       sub_done = 1;
-    if (p_sub)
+    if(pat != NULL && p_sub) {
       ex_window_live_sub(pat, sub, lmatch);
+    }
     // after used, free the list
     kl_iter(matchedline_T, lmatch, current) {
       kl_destroy(colnr_T, (*current)->data.start_col);
