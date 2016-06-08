@@ -329,14 +329,14 @@ describe('Live Substitution', function()
         feed(':%s/are')
 
         screen:expect([[
-:with colorful text ({UNEXPECTED background = Screen.colors.Yellow:are})               |
+with colorful text ({UNEXPECTED background = Screen.colors.Yellow:are})                |
 {UNEXPECTED bold = true, reverse = true:[No Name] [+]                           }|
  [1]these {UNEXPECTED background = Screen.colors.Yellow:are} some lines                |
  [2]with colorful text ({UNEXPECTED background = Screen.colors.Yellow:are})            |
                                         |
 ~                                       |
 {UNEXPECTED reverse = true:[live_sub]                              }|
-       ^                                 |
+:%s/are^                                 |
     ]])
     end)
 
@@ -347,9 +347,8 @@ describe('Live Substitution', function()
         feed(':%s/are/')
 
         screen:expect([[
-:with colorful text ()                  |
+with colorful text ()                   |
 {UNEXPECTED bold = true, reverse = true:[No Name] [+]                           }|
-
  [1]these  some lines                   |
  [2]with colorful text ()               |
                                         |
@@ -367,7 +366,7 @@ end)
         feed(':%s/are/to')
 
         screen:expect([[
-:with colorful text (to)                |
+with colorful text (to)                 |
 {UNEXPECTED bold = true, reverse = true:[No Name] [+]                           }|
  [1]these to some lines                 |
  [2]with colorful text (to)             |
