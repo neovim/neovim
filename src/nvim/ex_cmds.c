@@ -3850,15 +3850,16 @@ skip:
       EMSG2(_(e_patnotf2), get_search_pat());
   }
 
-  if (do_ask && hasAnyFolding(curwin))
-    /* Cursor position may require updating */
+  if (do_ask && hasAnyFolding(curwin)) {
+    // Cursor position may require updating
     changed_window_setting();
+  }
 
-    vim_regfree(regmatch.regprog);
+  vim_regfree(regmatch.regprog);
 
-    // Restore the flag values, they can be used for ":&&".
-    do_all = save_do_all;
-    do_ask = save_do_ask;
+  // Restore the flag values, they can be used for ":&&".
+  do_all = save_do_all;
+  do_ask = save_do_ask;
 
 
   // live_sub if sub on the whole file and there are results to display
@@ -4464,17 +4465,20 @@ int find_help_tags(char_u *arg, int *num_matches, char_u ***matches, int keep_la
           || (arg[0] == '\\' && arg[1] == '{'))
         *d++ = '\\';
 
-      for (s = arg; *s; ++s) {
-        /*
-         * Replace "|" with "bar" and '"' with "quote" to match the name of
-         * the tags for these commands.
-         * Replace "*" with ".*" and "?" with "." to match command line
-         * completion.
-         * Insert a backslash before '~', '$' and '.' to avoid their
-         * special meaning.
-         */
-        if (d - IObuff > IOSIZE - 10)           /* getting too long!? */
+      // If tag starts with "('", skip the "(". Fixes CTRL-] on ('option'.
+      if (*arg == '(' && arg[1] == '\'') {
+          arg++;
+      }
+      for (s = arg; *s; s++) {
+        // Replace "|" with "bar" and '"' with "quote" to match the name of
+        // the tags for these commands.
+        // Replace "*" with ".*" and "?" with "." to match command line
+        // completion.
+        // Insert a backslash before '~', '$' and '.' to avoid their
+        // special meaning.
+        if (d - IObuff > IOSIZE - 10) {           // getting too long!?
           break;
+        }
         switch (*s) {
         case '|':   STRCPY(d, "bar");
           d += 3;
@@ -4534,6 +4538,12 @@ int find_help_tags(char_u *arg, int *num_matches, char_u ***matches, int keep_la
         }
 
         *d++ = *s;
+
+        // If tag contains "({" or "([", tag terminates at the "(".
+        // This is for help on functions, e.g.: abs({expr}).
+        if (*s == '(' && (s[1] == '{' || s[1] =='[')) {
+          break;
+        }
 
         /*
          * If tag starts with ', toss everything after a second '. Fixes

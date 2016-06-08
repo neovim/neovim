@@ -23,7 +23,12 @@ describe('Mouse input', function()
     screen:attach()
     screen:set_default_attr_ids({
       [1] = {background = hlgroup_colors.Visual},
-      [2] = {bold = true}
+      [2] = {bold = true},
+      [3] = {
+        foreground = hlgroup_colors.NonText,
+        background = hlgroup_colors.Visual,
+        bold = true,
+      },
     })
     screen:set_default_attr_ignore( {{bold=true, foreground=hlgroup_colors.NonText}} )
     feed('itesting<cr>mouse<cr>support and selection<esc>')
@@ -225,14 +230,14 @@ describe('Mouse input', function()
     feed('<LeftDrag><2,2>')
     screen:expect([[
       testing                  |
-      mo{1:use }                   |
+      mo{1:use}{3: }                   |
       {1:su}^pport and selection    |
       ~                        |
       {2:-- VISUAL --}             |
     ]])
     feed('<LeftDrag><0,0>')
     screen:expect([[
-      ^t{1:esting }                 |
+      ^t{1:esting}{3: }                 |
       {1:mou}se                    |
       support and selection    |
       ~                        |
@@ -293,7 +298,7 @@ describe('Mouse input', function()
     screen:expect([[
       testing                  |
       mouse                    |
-      {1:su}^p{1:port and selection }   |
+      {1:su}^p{1:port and selection}{3: }   |
       ~                        |
       {2:-- VISUAL LINE --}        |
     ]])
@@ -321,8 +326,8 @@ describe('Mouse input', function()
     ]])
     feed('<RightMouse><2,2>')
     screen:expect([[
-      {1:testing }                 |
-      {1:mouse }                   |
+      {1:testing}{3: }                 |
+      {1:mouse}{3: }                   |
       {1:su}^pport and selection    |
       ~                        |
       {2:-- VISUAL --}             |
