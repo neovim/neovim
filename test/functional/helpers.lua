@@ -30,7 +30,7 @@ if os.getenv('VALGRIND') then
   prepend_argv = {'valgrind', '-q', '--tool=memcheck',
                   '--leak-check=yes', '--track-origins=yes',
                   '--show-possibly-lost=no',
-                  '--suppressions=.valgrind.supp',
+                  '--suppressions=src/.valgrind.supp',
                   '--log-file='..log_file}
   if os.getenv('GDB') then
     table.insert(prepend_argv, '--vgdb=yes')
