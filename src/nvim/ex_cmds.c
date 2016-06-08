@@ -5890,8 +5890,8 @@ void set_context_in_sign_cmd(expand_T *xp, char_u *arg)
 /// of the line.
 char* compute_line_number(int col_size, linenr_T number) {
     assert(col_size > log10(number)+3);
-    char *s = (char*)calloc((size_t)col_size+1, sizeof(char));
-    char *r = (char*)calloc((size_t)col_size+1, sizeof(char));
+    char *s = (char*)xcalloc((size_t)col_size+1, sizeof(char));
+    char *r = (char*)xcalloc((size_t)col_size+1, sizeof(char));
     strcat(r, " [");
 
     for (int i=2 ; i < col_size-(log10(number)+1) - 1 ; i++)
@@ -5899,7 +5899,7 @@ char* compute_line_number(int col_size, linenr_T number) {
 
     snprintf(s, col_size,"%s%ld", r, number);
     strcat(s,"]");
-    free(r);
+    xfree(r);
 
     return s;
 }
