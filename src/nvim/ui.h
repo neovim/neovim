@@ -7,7 +7,7 @@
 
 typedef struct {
   bool bold, underline, undercurl, italic, reverse;
-  int foreground, background;
+  int foreground, background, special;
 } HlAttrs;
 
 typedef struct ui_t UI;
@@ -35,6 +35,7 @@ struct ui_t {
   void (*flush)(UI *ui);
   void (*update_fg)(UI *ui, int fg);
   void (*update_bg)(UI *ui, int bg);
+  void (*update_sp)(UI *ui, int sp);
   void (*suspend)(UI *ui);
   void (*set_title)(UI *ui, char *title);
   void (*set_icon)(UI *ui, char *icon);

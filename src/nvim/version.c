@@ -69,6 +69,7 @@ static char *features[] = {
 
 // clang-format off
 static int included_patches[] = {
+  1832,
   1809,
   1808,
   1806,
@@ -76,6 +77,7 @@ static int included_patches[] = {
   1757,
   1755,
   1753,
+  1728,
   1654,
   1652,
   1643,
@@ -111,10 +113,10 @@ static int included_patches[] = {
   1574,
   // 1573,
   // 1572 NA
-  // 1571,
+  1571,
   1570,
   1569,
-  // 1568,
+  1568,
   // 1567,
   // 1566 NA
   // 1565,
@@ -169,7 +171,7 @@ static int included_patches[] = {
   // 1516,
   // 1515 NA
   // 1514 NA
-  // 1513,
+  1513,
   // 1512 NA
   1511,
   // 1510 NA
@@ -572,7 +574,7 @@ static int included_patches[] = {
   1113,
   1112,
   // 1111,
-  // 1110,
+  1110,
   // 1109 NA
   // 1108,
   1107,
@@ -580,7 +582,7 @@ static int included_patches[] = {
   1105,
   // 1104 NA
   // 1103 NA
-  // 1102,
+  1102,
   1101,
   // 1100 NA
   // 1099 NA
@@ -623,9 +625,9 @@ static int included_patches[] = {
   // 1062 NA
   // 1061,
   // 1060 NA
-  // 1059,
+  1059,
   // 1058,
-  // 1057,
+  1057,
   // 1056,
   1055,
   1054,
@@ -636,7 +638,7 @@ static int included_patches[] = {
   1049,
   1048,
   1047,
-  // 1046,
+  1046,
   // 1045 NA
   // 1044 NA
   // 1043 NA
@@ -646,7 +648,7 @@ static int included_patches[] = {
   // 1039,
   // 1038 NA
   1037,
-  // 1036,
+  1036,
   1035,
   // 1034,
   // 1033 NA

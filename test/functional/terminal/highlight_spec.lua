@@ -25,7 +25,7 @@ describe('terminal window highlighting', function()
       [5] = {background = 11},
       [6] = {foreground = 130},
       [7] = {reverse = true},
-      [8] = {background = 11}
+      [8] = {background = 11},
     })
     screen:attach(false)
     execute('enew | call termopen(["'..nvim_dir..'/tty-test"]) | startinsert')
@@ -121,7 +121,7 @@ describe('terminal window highlighting with custom palette', function()
     clear()
     screen = Screen.new(50, 7)
     screen:set_default_attr_ids({
-      [1] = {foreground = 1193046}
+      [1] = {foreground = 1193046, special = Screen.colors.Black}
     })
     screen:set_default_attr_ignore({
       [1] = {bold = true},
@@ -130,7 +130,7 @@ describe('terminal window highlighting with custom palette', function()
       [5] = {background = 11},
       [6] = {foreground = 130},
       [7] = {reverse = true},
-      [8] = {background = 11}
+      [8] = {background = 11},
     })
     screen:attach(true)
     nvim('set_var', 'terminal_color_3', '#123456')

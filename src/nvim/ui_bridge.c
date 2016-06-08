@@ -49,6 +49,7 @@ UI *ui_bridge_attach(UI *ui, ui_main_fn ui_main, event_scheduler scheduler)
   rv->bridge.visual_bell = ui_bridge_visual_bell;
   rv->bridge.update_fg = ui_bridge_update_fg;
   rv->bridge.update_bg = ui_bridge_update_bg;
+  rv->bridge.update_sp = ui_bridge_update_sp;
   rv->bridge.flush = ui_bridge_flush;
   rv->bridge.suspend = ui_bridge_suspend;
   rv->bridge.set_title = ui_bridge_set_title;
@@ -303,6 +304,16 @@ static void ui_bridge_update_bg_event(void **argv)
 {
   UI *ui = UI(argv[0]);
   ui->update_bg(ui, PTR2INT(argv[1]));
+}
+
+static void ui_bridge_update_sp(UI *b, int sp)
+{
+  UI_CALL(b, update_sp, 2, b, INT2PTR(sp));
+}
+static void ui_bridge_update_sp_event(void **argv)
+{
+  UI *ui = UI(argv[0]);
+  ui->update_sp(ui, PTR2INT(argv[1]));
 }
 
 static void ui_bridge_flush(UI *b)
