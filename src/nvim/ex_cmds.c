@@ -6130,7 +6130,7 @@ void do_live_sub(exarg_T *eap) {
         do_sub(eap); 
       break;
     case LS_ONE_WD: 
-      if (EVENT_SUB == 1) {
+      if (EVENT_SUB == 1 && sub_done == 1) {
         do_cmdline_cmd(":u");
         EVENT_SUB = 0;
       }
