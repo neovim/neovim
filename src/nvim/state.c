@@ -67,10 +67,10 @@ void state_enter(VimState *s)
       LIVE_MODE = 0;
       do_cmdline_cmd(":u");
       finish_live_cmd(NORMAL, NULL, 0, 0, 0);
-      //normal_enter(true, true);
-      // TODO : a temporary solution to get back to a normal state
-      do_cmdline((char_u *)":s/a/a", NULL, NULL, 0);
-      redraw_later(SOME_VALID);
+//      //normal_enter(true, true);
+//      // TODO : a temporary solution to get back to a normal state
+//      do_cmdline((char_u *)":s/a/a", NULL, NULL, 0);
+//      redraw_later(SOME_VALID);
       return;
     }
     if (!execute_result) {

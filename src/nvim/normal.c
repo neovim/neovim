@@ -1144,6 +1144,10 @@ static int normal_execute(VimState *state, int key)
   (nv_cmds[s->idx].cmd_func)(&s->ca);
 
 finish:
+  if(LIVE_MODE) {
+    LIVE_MODE = 0;
+    finish_live_cmd(NORMAL, NULL, 0, 0, 0);
+  }
   normal_finish_command(s);
   return 1;
 }
