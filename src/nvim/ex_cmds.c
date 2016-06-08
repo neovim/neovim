@@ -5908,13 +5908,22 @@ char* compute_line_number(int col_size, linenr_T number) {
 
 /// function called after a live command to get back to
 /// a normal state
+/// validate can take two values :
+///     0 if the live_command has not been validated
+///     1 if the user has validated the command
 void finish_live_cmd(int save_state,
                      garray_T *winsizes,
                      int save_exmode,
                      int save_restart_edit,
-                     int save_cmdmsg_rl) {
+                     int save_cmdmsg_rl,
+                     int validate) {
   block_autocmds();
 
+  if(validate == 0 && sub_done == 1) {
+    do_cmdline_cmd(":u");
+    sub_done = 0;
+  }
+  
   /* Restore window sizes. */
   if (winsizes != NULL) {
     win_size_restore(winsizes);
@@ -6073,10 +6082,9 @@ void ex_window_live_sub( char_u* pat, char_u* sub, klist_t(matchedline_T) *lmatc
 
   // Restore the old window
   win_enter(oldwin, FALSE);
-
   finish_live_cmd(save_State, &winsizes, save_exmode,
-                  save_restart_edit, save_cmdmsg_rl);
-
+                  save_restart_edit, save_cmdmsg_rl, 1);
+  
   return;
 }
 
@@ -6129,11 +6137,12 @@ void do_live_sub(exarg_T *eap) {
   switch (cmdl_progress) {
     case LS_NO_WD: 
       if (!EVENT_COLON)
-        do_sub(eap); 
+        do_sub(eap);
       break;
     case LS_ONE_WD: 
       if (EVENT_SUB == 1 && sub_done == 1) {
         do_cmdline_cmd(":u");
+        sub_done = 0;
         EVENT_SUB = 0;
       }
       //The lengh of the new arg is lower than twice the length of the command
@@ -6148,8 +6157,10 @@ void do_live_sub(exarg_T *eap) {
 
       //Highlight the word and open the split
       do_sub(eap);
-      if(sub_done == 1)
+      if(sub_done == 1) {
         do_cmdline_cmd(":u"); // to not polue the undo history
+        sub_done = 0;
+      }
       //Put back eap in first state
       eap->arg = tmp;
 
@@ -6159,8 +6170,10 @@ void do_live_sub(exarg_T *eap) {
 
     case LS_TWO_SLASH_ONE_WD: // live_sub will remove the arg
     case LS_TWO_WD: // live_sub needs to undo
-      if (EVENT_SUB == 1 && sub_done == 1)
+      if (EVENT_SUB == 1 && sub_done == 1) {
         do_cmdline_cmd(":u");
+        sub_done = 0;
+      }
       do_sub(eap);
       EVENT_SUB = 1;
       break;
@@ -6169,6 +6182,7 @@ void do_live_sub(exarg_T *eap) {
       break;
   }
 
+  
   update_screen(0);
   if (livebuf != NULL && buf_valid(livebuf)) {
     close_windows(livebuf, false);

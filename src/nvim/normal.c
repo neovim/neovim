@@ -1146,7 +1146,7 @@ static int normal_execute(VimState *state, int key)
 finish:
   if(EVENT_COLON) {
     EVENT_COLON = 0;
-    finish_live_cmd(NORMAL, NULL, 0, 0, 0);
+    finish_live_cmd(NORMAL, NULL, 0, 0, 0, 1);
   }
   normal_finish_command(s);
   return 1;
