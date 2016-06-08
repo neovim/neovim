@@ -3358,7 +3358,7 @@ void do_sub(exarg_T *eap)
             goto skip;
         }
 
-        if (do_ask) {
+        if (do_ask && !EVENT_COLON) {
           int typed = 0;
 
           /* change State to CONFIRM, so that the mouse works
@@ -6037,7 +6037,7 @@ void ex_window_live_sub( char_u* pat, char_u* sub, klist_t(matchedline_T) *lmatc
 
     // Add the line number to the string
     char *col = compute_line_number(col_width, mat.lnum);
-    snprintf(str, line_size, "%s%s", col, mat.line); //TODO : strcat
+    snprintf(str, line_size, "%s%s", col, mat.line);
     ml_append(line++, (char_u *)str, (colnr_T)0, false);
     
     int i=0;
