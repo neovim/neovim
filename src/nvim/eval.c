@@ -18123,6 +18123,25 @@ static dictitem_T *find_var_in_ht(hashtab_T *ht, int htname, char_u *varname, in
   return HI2DI(hi);
 }
 
+// Get function call environment based on backtrace debug level
+static funccall_T *get_funccal(void)
+{
+  funccall_T *funccal = current_funccal;
+  if (debug_backtrace_level > 0) {
+    for (int i = 0; i < debug_backtrace_level; i++) {
+      funccall_T *temp_funccal = funccal->caller;
+      if (temp_funccal) {
+        funccal = temp_funccal;
+      } else {
+        // backtrace level overflow. reset to max
+        debug_backtrace_level = i;
+      }
+    }
+  }
+
+  return funccal;
+}
+
 // Find the dict and hashtable used for a variable name.  Set "varname" to the
 // start of name without ':'.
 static hashtab_T *find_var_ht_dict(char_u *name, uint8_t **varname, dict_T **d)
@@ -18147,7 +18166,11 @@ static hashtab_T *find_var_ht_dict(char_u *name, uint8_t **varname, dict_T **d)
       return &compat_hashtab;
     }
 
-    *d = current_funccal ? &current_funccal->l_vars : &globvardict;
+    if (current_funccal == NULL) {
+      *d = &globvardict;
+    } else {
+      *d = &get_funccal()->l_vars;  // l: variable
+    }
     goto end;
   }
 
@@ -18169,9 +18192,9 @@ static hashtab_T *find_var_ht_dict(char_u *name, uint8_t **varname, dict_T **d)
   } else if (*name == 'v') {                    // v: variable
     *d = &vimvardict;
   } else if (*name == 'a' && current_funccal != NULL) {  // function argument
-    *d = &current_funccal->l_avars;
+    *d = &get_funccal()->l_avars;
   } else if (*name == 'l' && current_funccal != NULL) {  // local variable
-    *d = &current_funccal->l_vars;
+    *d = &get_funccal()->l_vars;
   } else if (*name == 's'                       // script variable
       && current_SID > 0 && current_SID <= ga_scripts.ga_len) {
     *d = &SCRIPT_SV(current_SID)->sv_dict;

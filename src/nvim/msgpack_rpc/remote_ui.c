@@ -96,6 +96,7 @@ static Object remote_ui_attach(uint64_t channel_id, uint64_t request_id,
   ui->visual_bell = remote_ui_visual_bell;
   ui->update_fg = remote_ui_update_fg;
   ui->update_bg = remote_ui_update_bg;
+  ui->update_sp = remote_ui_update_sp;
   ui->flush = remote_ui_flush;
   ui->suspend = remote_ui_suspend;
   ui->set_title = remote_ui_set_title;
@@ -285,6 +286,10 @@ static void remote_ui_highlight_set(UI *ui, HlAttrs attrs)
     PUT(hl, "background", INTEGER_OBJ(attrs.background));
   }
 
+  if (attrs.special != -1) {
+    PUT(hl, "special", INTEGER_OBJ(attrs.special));
+  }
+
   ADD(args, DICTIONARY_OBJ(hl));
   push_call(ui, "highlight_set", args);
 }
@@ -321,6 +326,13 @@ static void remote_ui_update_bg(UI *ui, int bg)
   Array args = ARRAY_DICT_INIT;
   ADD(args, INTEGER_OBJ(bg));
   push_call(ui, "update_bg", args);
+}
+
+static void remote_ui_update_sp(UI *ui, int sp)
+{
+  Array args = ARRAY_DICT_INIT;
+  ADD(args, INTEGER_OBJ(sp));
+  push_call(ui, "update_sp", args);
 }
 
 static void remote_ui_flush(UI *ui)

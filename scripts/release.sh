@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/sh
 
 # Performs steps to tag a release.
 #
@@ -45,11 +45,11 @@ echo "Most recent tag: ${__LAST_TAG}"
 echo "Release version: ${__VERSION}"
 sed -i -r 's/(NVIM_VERSION_PRERELEASE) "-dev"/\1 ""/' CMakeLists.txt
 echo "Building changelog since ${__LAST_TAG}..."
-__CHANGELOG="$(./scripts/git-log-pretty-since.sh $__LAST_TAG 'vim-patch:\S')"
+__CHANGELOG="$(./scripts/git-log-pretty-since.sh "$__LAST_TAG" 'vim-patch:\S')"
 
 git add CMakeLists.txt
 git commit --edit -m "${__RELEASE_MSG} ${__CHANGELOG}"
-git tag -a v${__VERSION} -m "NVIM v${__VERSION}"
+git tag -a v"${__VERSION}" -m "NVIM v${__VERSION}"
 
 sed -i -r 's/(NVIM_VERSION_PRERELEASE) ""/\1 "-dev"/' CMakeLists.txt
 nvim -c '/NVIM_VERSION' -c 'echo "Update version numbers"' CMakeLists.txt

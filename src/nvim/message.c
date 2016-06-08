@@ -1508,51 +1508,44 @@ void msg_puts_attr(char_u *s, int attr)
   msg_puts_attr_len(s, -1, attr);
 }
 
-/*
- * Like msg_puts_attr(), but with a maximum length "maxlen" (in bytes).
- * When "maxlen" is -1 there is no maximum length.
- * When "maxlen" is >= 0 the message is not put in the history.
- */
+/// Like msg_puts_attr(), but with a maximum length "maxlen" (in bytes).
+/// When "maxlen" is -1 there is no maximum length.
+/// When "maxlen" is >= 0 the message is not put in the history.
 static void msg_puts_attr_len(char_u *str, int maxlen, int attr)
 {
-  /*
-   * If redirection is on, also write to the redirection file.
-   */
+  // If redirection is on, also write to the redirection file.
   redir_write(str, maxlen);
 
-  /*
-   * Don't print anything when using ":silent cmd".
-   */
-  if (msg_silent != 0)
+  // Don't print anything when using ":silent cmd".
+  if (msg_silent != 0) {
     return;
+  }
 
-  /* if MSG_HIST flag set, add message to history */
+  // if MSG_HIST flag set, add message to history
   if ((attr & MSG_HIST) && maxlen < 0) {
     add_msg_hist(str, -1, attr);
     attr &= ~MSG_HIST;
   }
 
-  /*
-   * When writing something to the screen after it has scrolled, requires a
-   * wait-return prompt later.  Needed when scrolling, resetting
-   * need_wait_return after some prompt, and then outputting something
-   * without scrolling
-   */
-  if (msg_scrolled != 0 && !msg_scrolled_ign)
-    need_wait_return = TRUE;
-  msg_didany = TRUE;            /* remember that something was outputted */
+  // When writing something to the screen after it has scrolled, requires a
+  // wait-return prompt later.  Needed when scrolling, resetting
+  // need_wait_return after some prompt, and then outputting something
+  // without scrolling
+  if (msg_scrolled != 0 && !msg_scrolled_ign) {
+    need_wait_return = true;
+  }
+  msg_didany = true;  // remember that something was outputted
 
-  /*
-   * If there is no valid screen, use fprintf so we can see error messages.
-   * If termcap is not active, we may be writing in an alternate console
-   * window, cursor positioning may not work correctly (window size may be
-   * different, e.g. for Win32 console) or we just don't know where the
-   * cursor is.
-   */
-  if (msg_use_printf())
-    msg_puts_printf(str, maxlen);
-  else
-    msg_puts_display(str, maxlen, attr, FALSE);
+  // If there is no valid screen, use fprintf so we can see error messages.
+  // If termcap is not active, we may be writing in an alternate console
+  // window, cursor positioning may not work correctly (window size may be
+  // different, e.g. for Win32 console) or we just don't know where the
+  // cursor is.
+  if (msg_use_printf()) {
+    msg_puts_printf((char *)str, maxlen);
+  } else {
+    msg_puts_display(str, maxlen, attr, false);
+  }
 }
 
 /*
@@ -1926,46 +1919,46 @@ int msg_use_printf(void)
   return !embedded_mode && !ui_active();
 }
 
-/*
- * Print a message when there is no valid screen.
- */
-static void msg_puts_printf(char_u *str, int maxlen)
+/// Print a message when there is no valid screen.
+static void msg_puts_printf(char *str, int maxlen)
 {
-  char_u      *s = str;
-  char_u buf[4];
-  char_u      *p;
+  char *s = str;
+  char buf[4];
+  char *p;
 
   while (*s != NUL && (maxlen < 0 || (int)(s - str) < maxlen)) {
     if (!(silent_mode && p_verbose == 0)) {
-      /* NL --> CR NL translation (for Unix, not for "--version") */
-      /* NL --> CR translation (for Mac) */
+      // NL --> CR NL translation (for Unix, not for "--version")
       p = &buf[0];
-      if (*s == '\n' && !info_message)
+      if (*s == '\n' && !info_message) {
         *p++ = '\r';
+      }
       *p++ = *s;
       *p = '\0';
-      if (info_message)         /* informative message, not an error */
-        mch_msg((char *)buf);
-      else
-        mch_errmsg((char *)buf);
+      if (info_message) {
+        mch_msg(buf);
+      } else {
+        mch_errmsg(buf);
+      }
     }
 
-    /* primitive way to compute the current column */
+    // primitive way to compute the current column
     if (cmdmsg_rl) {
-      if (*s == '\r' || *s == '\n')
+      if (*s == '\r' || *s == '\n') {
         msg_col = Columns - 1;
-      else
-        --msg_col;
+      } else {
+        msg_col--;
+      }
     } else {
-      if (*s == '\r' || *s == '\n')
+      if (*s == '\r' || *s == '\n') {
         msg_col = 0;
-      else
-        ++msg_col;
+      } else {
+        msg_col++;
+      }
     }
-    ++s;
+    s++;
   }
-  msg_didout = TRUE;        /* assume that line is not empty */
-
+  msg_didout = true;  // assume that line is not empty
 }
 
 /*
