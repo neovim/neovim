@@ -109,6 +109,222 @@ describe('Mouse input', function()
     ]])
   end)
 
+  describe('tab drag', function()
+    local tab_attrs = {
+      tab  = { background=Screen.colors.LightGrey, underline=true },
+      sel  = { bold=true },
+      fill = { reverse=true }
+    }
+
+    before_each(function()
+      screen.timeout = 15000
+    end)
+
+    it('in tabline on filler space moves tab to the end', function()
+      execute('%delete')
+      insert('this is foo')
+      execute('silent file foo | tabnew | file bar')
+      insert('this is bar')
+      screen:expect([[
+        {tab: + foo }{sel: + bar }{fill:          }{tab:X}|
+        this is ba^r              |
+        ~                        |
+        ~                        |
+                                 |
+      ]], tab_attrs)
+      feed('<LeftMouse><4,0>')
+      screen:expect([[
+        {sel: + foo }{tab: + bar }{fill:          }{tab:X}|
+        this is fo^o              |
+        ~                        |
+        ~                        |
+                                 |
+      ]], tab_attrs)
+      feed('<LeftDrag><14,0>')
+      screen:expect([[
+        {tab: + bar }{sel: + foo }{fill:          }{tab:X}|
+        this is fo^o              |
+        ~                        |
+        ~                        |
+                                 |
+      ]], tab_attrs)
+    end)
+
+    it('in tabline to the left moves tab left', function()
+      execute('%delete')
+      insert('this is foo')
+      execute('silent file foo | tabnew | file bar')
+      insert('this is bar')
+      screen:expect([[
+        {tab: + foo }{sel: + bar }{fill:          }{tab:X}|
+        this is ba^r              |
+        ~                        |
+        ~                        |
+                                 |
+      ]], tab_attrs)
+      feed('<LeftMouse><11,0>')
+      screen:expect([[
+        {tab: + foo }{sel: + bar }{fill:          }{tab:X}|
+        this is ba^r              |
+        ~                        |
+        ~                        |
+                                 |
+      ]], tab_attrs)
+      feed('<LeftDrag><6,0>')
+      screen:expect([[
+        {sel: + bar }{tab: + foo }{fill:          }{tab:X}|
+        this is ba^r              |
+        ~                        |
+        ~                        |
+                                 |
+      ]], tab_attrs)
+    end)
+
+    it('in tabline to the right moves tab right', function()
+      execute('%delete')
+      insert('this is foo')
+      execute('silent file foo | tabnew | file bar')
+      insert('this is bar')
+      screen:expect([[
+        {tab: + foo }{sel: + bar }{fill:          }{tab:X}|
+        this is ba^r              |
+        ~                        |
+        ~                        |
+                                 |
+      ]], tab_attrs)
+      feed('<LeftMouse><4,0>')
+      screen:expect([[
+        {sel: + foo }{tab: + bar }{fill:          }{tab:X}|
+        this is fo^o              |
+        ~                        |
+        ~                        |
+                                 |
+      ]], tab_attrs)
+      feed('<LeftDrag><7,0>')
+      screen:expect([[
+        {tab: + bar }{sel: + foo }{fill:          }{tab:X}|
+        this is fo^o              |
+        ~                        |
+        ~                        |
+                                 |
+      ]], tab_attrs)
+    end)
+
+    it('out of tabline under filler space moves tab to the end', function()
+      execute('%delete')
+      insert('this is foo')
+      execute('silent file foo | tabnew | file bar')
+      insert('this is bar')
+      screen:expect([[
+        {tab: + foo }{sel: + bar }{fill:          }{tab:X}|
+        this is ba^r              |
+        ~                        |
+        ~                        |
+                                 |
+      ]], tab_attrs)
+      feed('<LeftMouse><4,0>')
+      screen:expect([[
+        {sel: + foo }{tab: + bar }{fill:          }{tab:X}|
+        this is fo^o              |
+        ~                        |
+        ~                        |
+                                 |
+      ]], tab_attrs)
+      feed('<LeftDrag><4,1>')
+      screen:expect([[
+        {sel: + foo }{tab: + bar }{fill:          }{tab:X}|
+        this is fo^o              |
+        ~                        |
+        ~                        |
+                                 |
+      ]], tab_attrs)
+      feed('<LeftDrag><14,1>')
+      screen:expect([[
+        {tab: + bar }{sel: + foo }{fill:          }{tab:X}|
+        this is fo^o              |
+        ~                        |
+        ~                        |
+                                 |
+      ]], tab_attrs)
+    end)
+
+    it('out of tabline to the left moves tab left', function()
+      execute('%delete')
+      insert('this is foo')
+      execute('silent file foo | tabnew | file bar')
+      insert('this is bar')
+      screen:expect([[
+        {tab: + foo }{sel: + bar }{fill:          }{tab:X}|
+        this is ba^r              |
+        ~                        |
+        ~                        |
+                                 |
+      ]], tab_attrs)
+      feed('<LeftMouse><11,0>')
+      screen:expect([[
+        {tab: + foo }{sel: + bar }{fill:          }{tab:X}|
+        this is ba^r              |
+        ~                        |
+        ~                        |
+                                 |
+      ]], tab_attrs)
+      feed('<LeftDrag><11,1>')
+      screen:expect([[
+        {tab: + foo }{sel: + bar }{fill:          }{tab:X}|
+        this is ba^r              |
+        ~                        |
+        ~                        |
+                                 |
+      ]], tab_attrs)
+      feed('<LeftDrag><6,1>')
+      screen:expect([[
+        {sel: + bar }{tab: + foo }{fill:          }{tab:X}|
+        this is ba^r              |
+        ~                        |
+        ~                        |
+                                 |
+      ]], tab_attrs)
+    end)
+
+    it('out of tabline to the right moves tab right', function()
+      execute('%delete')
+      insert('this is foo')
+      execute('silent file foo | tabnew | file bar')
+      insert('this is bar')
+      screen:expect([[
+        {tab: + foo }{sel: + bar }{fill:          }{tab:X}|
+        this is ba^r              |
+        ~                        |
+        ~                        |
+                                 |
+      ]], tab_attrs)
+      feed('<LeftMouse><4,0>')
+      screen:expect([[
+        {sel: + foo }{tab: + bar }{fill:          }{tab:X}|
+        this is fo^o              |
+        ~                        |
+        ~                        |
+                                 |
+      ]], tab_attrs)
+      feed('<LeftDrag><4,1>')
+      screen:expect([[
+        {sel: + foo }{tab: + bar }{fill:          }{tab:X}|
+        this is fo^o              |
+        ~                        |
+        ~                        |
+                                 |
+      ]], tab_attrs)
+      feed('<LeftDrag><7,1>')
+      screen:expect([[
+        {tab: + bar }{sel: + foo }{fill:          }{tab:X}|
+        this is fo^o              |
+        ~                        |
+        ~                        |
+                                 |
+      ]], tab_attrs)
+    end)
+  end)
+
   describe('tabline', function()
     before_each(function()
       screen:set_default_attr_ids( {
