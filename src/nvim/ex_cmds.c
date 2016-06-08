@@ -5913,13 +5913,6 @@ void finish_live_cmd(int save_state,
                      int save_cmdmsg_rl) {
   block_autocmds();
 
-  // close buffer and windows when we quit the live mode
-  // TODO if valgrind's ok, remove it
-  if (LIVE_MODE == 0 && livebuf != NULL) {
-    close_windows(livebuf, false);
-    close_buffer(NULL, livebuf, DOBUF_WIPE, false);
-  }
-
   /* Restore window sizes. */
   if (winsizes != NULL) {
     win_size_restore(winsizes);
@@ -5937,6 +5930,7 @@ void finish_live_cmd(int save_state,
   restart_edit = save_restart_edit;
   cmdmsg_rl = save_cmdmsg_rl;
 
+  cmdwin_type = 0;
   RedrawingDisabled = 0;
 
   State = save_state;
@@ -6175,6 +6169,7 @@ void do_live_sub(exarg_T *eap) {
       break;
   }
 
+  redrawcmdline();
   update_screen(0);
   if (livebuf != NULL && buf_valid(livebuf)) {
     close_windows(livebuf, false);
