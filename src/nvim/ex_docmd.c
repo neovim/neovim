@@ -6,8 +6,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include <stdint.h>
-#incÏlude <inttypes.h>
-
+#include <inttypes.h>
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
 #include "nvim/ex_docmd.h"
