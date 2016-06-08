@@ -434,10 +434,10 @@ EXTERN int did_check_timestamps INIT(= FALSE);      /* did check timestamps
 EXTERN int no_check_timestamps INIT(= 0);       /* Don't check timestamps */
 
 /*
- * When doing a live action (eg: substitution), need to know when to start
- * it (=1) and end it (=0)
+ * When typing a live action starting by a ':' (eg: substitution), need to know
+ * when to start check for a live command (=1) and end it (=0)
  */
-EXTERN int LIVE_MODE INIT(= 0);
+EXTERN int EVENT_COLON INIT(= 0);
 
 /*
  * Values for index in highlight_attr[].

@@ -273,7 +273,7 @@ int do_cmdline_cmd(char *cmd)
 {
   // TODO(aym7) find a better way to remove verbose
   // if live, no verbose
-  if(LIVE_MODE == 1) {
+  if(EVENT_COLON == 1) {
     return do_cmdline((char_u *)cmd, NULL, NULL,
         DOCMD_NOWAIT|DOCMD_KEYTYPED);
   }
@@ -604,7 +604,7 @@ int do_cmdline(char_u *cmdline, LineGetter fgetline,
      *    "cmdline_copy" can change, e.g. for '%' and '#' expansion.
      */
     ++recursive;
-    if(LIVE_MODE == 1) { // in live mode, no verbose
+    if(EVENT_COLON == 1) { // in live mode, no verbose
       next_cmdline = do_one_cmd(&cmdline_copy, flags,
           &cstack,
           cmd_getline, cmd_cookie);

@@ -706,7 +706,7 @@ static int command_line_execute(VimState *state, int key)
       || (s->c == ESC
         && (!KeyTyped || vim_strchr(p_cpo, CPO_ESC) != NULL))) {
     // End any live action
-    LIVE_MODE = 0;
+    EVENT_COLON = 0;
     // In Ex mode a backslash escapes a newline.
     if (exmode_active
         && s->c != ESC

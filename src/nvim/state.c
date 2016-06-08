@@ -63,8 +63,8 @@ void state_enter(VimState *s)
 
     // close buffer and windows if we leave the live_sub mode
     // and undo
-    if (p_sub && LIVE_MODE && (key == ESC || key == Ctrl_C) && is_live(access_cmdline())) {
-      LIVE_MODE = 0;
+    if (p_sub && EVENT_COLON && (key == ESC || key == Ctrl_C) && is_live(access_cmdline())) {
+      EVENT_COLON = 0;
       do_cmdline_cmd(":u");
       finish_live_cmd(NORMAL, NULL, 0, 0, 0);
       return;
@@ -73,7 +73,7 @@ void state_enter(VimState *s)
       break;
     } else if (execute_result == -1) {
       goto getkey;
-    } else if (p_sub && LIVE_MODE == 1 && is_live(access_cmdline())){
+    } else if (p_sub && EVENT_COLON == 1 && is_live(access_cmdline())){
       // compute a live action
       do_cmdline(access_cmdline(), NULL, NULL, DOCMD_KEEPLINE);
     }
