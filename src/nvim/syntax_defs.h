@@ -69,8 +69,8 @@ struct syn_state {
 
 // Structure shared between syntax.c, screen.c
 typedef struct attr_entry {
-  short rgb_ae_attr, cterm_ae_attr;  // HL_BOLD, etc.
-  RgbValue rgb_fg_color, rgb_bg_color;
+  int16_t rgb_ae_attr, cterm_ae_attr;  // HL_BOLD, etc.
+  RgbValue rgb_fg_color, rgb_bg_color, rgb_sp_color;
   int cterm_fg_color, cterm_bg_color;
 } attrentry_T;
 

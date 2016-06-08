@@ -3172,7 +3172,8 @@ void do_sub(exarg_T *eap)
     return;
   }
 
-  if (search_regcomp(pat, RE_SUBST, which_pat, SEARCH_HIS,
+  int searchRC_option = (EVENT_COLON) ? 0 : SEARCH_HIS;
+  if (search_regcomp(pat, RE_SUBST, which_pat, searchRC_option,
           &regmatch) == FAIL) {
     if (do_error)
       EMSG(_(e_invcmd));
@@ -3357,7 +3358,7 @@ void do_sub(exarg_T *eap)
             goto skip;
         }
 
-        if (do_ask) {
+        if (do_ask && !EVENT_COLON) {
           int typed = 0;
 
           /* change State to CONFIRM, so that the mouse works
@@ -3849,15 +3850,16 @@ skip:
       EMSG2(_(e_patnotf2), get_search_pat());
   }
 
-  if (do_ask && hasAnyFolding(curwin))
-    /* Cursor position may require updating */
+  if (do_ask && hasAnyFolding(curwin)) {
+    // Cursor position may require updating
     changed_window_setting();
+  }
 
-    vim_regfree(regmatch.regprog);
+  vim_regfree(regmatch.regprog);
 
-    // Restore the flag values, they can be used for ":&&".
-    do_all = save_do_all;
-    do_ask = save_do_ask;
+  // Restore the flag values, they can be used for ":&&".
+  do_all = save_do_all;
+  do_ask = save_do_ask;
 
 
   // live_sub if sub on the whole file and there are results to display
@@ -3865,8 +3867,9 @@ skip:
     // we did a livesub only if we had no word to replace by and no slash to end
     if (!(EVENT_COLON && sub[0] == '\0' && !last_is_slash))
       sub_done = 1;
-    if (p_sub)
+    if(pat != NULL && p_sub) {
       ex_window_live_sub(pat, sub, lmatch);
+    }
     // after used, free the list
     kl_iter(matchedline_T, lmatch, current) {
       kl_destroy(colnr_T, (*current)->data.start_col);
@@ -4462,17 +4465,20 @@ int find_help_tags(char_u *arg, int *num_matches, char_u ***matches, int keep_la
           || (arg[0] == '\\' && arg[1] == '{'))
         *d++ = '\\';
 
-      for (s = arg; *s; ++s) {
-        /*
-         * Replace "|" with "bar" and '"' with "quote" to match the name of
-         * the tags for these commands.
-         * Replace "*" with ".*" and "?" with "." to match command line
-         * completion.
-         * Insert a backslash before '~', '$' and '.' to avoid their
-         * special meaning.
-         */
-        if (d - IObuff > IOSIZE - 10)           /* getting too long!? */
+      // If tag starts with "('", skip the "(". Fixes CTRL-] on ('option'.
+      if (*arg == '(' && arg[1] == '\'') {
+          arg++;
+      }
+      for (s = arg; *s; s++) {
+        // Replace "|" with "bar" and '"' with "quote" to match the name of
+        // the tags for these commands.
+        // Replace "*" with ".*" and "?" with "." to match command line
+        // completion.
+        // Insert a backslash before '~', '$' and '.' to avoid their
+        // special meaning.
+        if (d - IObuff > IOSIZE - 10) {           // getting too long!?
           break;
+        }
         switch (*s) {
         case '|':   STRCPY(d, "bar");
           d += 3;
@@ -4532,6 +4538,12 @@ int find_help_tags(char_u *arg, int *num_matches, char_u ***matches, int keep_la
         }
 
         *d++ = *s;
+
+        // If tag contains "({" or "([", tag terminates at the "(".
+        // This is for help on functions, e.g.: abs({expr}).
+        if (*s == '(' && (s[1] == '{' || s[1] =='[')) {
+          break;
+        }
 
         /*
          * If tag starts with ', toss everything after a second '. Fixes
@@ -5906,13 +5918,22 @@ char* compute_line_number(int col_size, linenr_T number) {
 
 /// function called after a live command to get back to
 /// a normal state
+/// validate can take two values :
+///     0 if the live_command has not been validated
+///     1 if the user has validated the command
 void finish_live_cmd(int save_state,
                      garray_T *winsizes,
                      int save_exmode,
                      int save_restart_edit,
-                     int save_cmdmsg_rl) {
+                     int save_cmdmsg_rl,
+                     int validate) {
   block_autocmds();
 
+  if(validate == 0 && sub_done == 1) {
+    do_cmdline_cmd(":u");
+    sub_done = 0;
+  }
+  
   /* Restore window sizes. */
   if (winsizes != NULL) {
     win_size_restore(winsizes);
@@ -6014,7 +6035,7 @@ void ex_window_live_sub( char_u* pat, char_u* sub, klist_t(matchedline_T) *lmatc
   long pat_size = STRLEN(pat);
 
   // Get the width of the column which display the number of the line
-  long highest_num_line;
+  long highest_num_line = 0;
   kl_iter(matchedline_T, lmatch, current)
     highest_num_line = (*current)->data.lnum;
 
@@ -6035,7 +6056,7 @@ void ex_window_live_sub( char_u* pat, char_u* sub, klist_t(matchedline_T) *lmatc
 
     // Add the line number to the string
     char *col = compute_line_number(col_width, mat.lnum);
-    snprintf(str, line_size, "%s%s", col, mat.line); //TODO : strcat
+    snprintf(str, line_size, "%s%s", col, mat.line);
     ml_append(line++, (char_u *)str, (colnr_T)0, false);
     
     int i=0;
@@ -6071,10 +6092,9 @@ void ex_window_live_sub( char_u* pat, char_u* sub, klist_t(matchedline_T) *lmatc
 
   // Restore the old window
   win_enter(oldwin, FALSE);
-
   finish_live_cmd(save_State, &winsizes, save_exmode,
-                  save_restart_edit, save_cmdmsg_rl);
-
+                  save_restart_edit, save_cmdmsg_rl, 1);
+  
   return;
 }
 
@@ -6127,11 +6147,12 @@ void do_live_sub(exarg_T *eap) {
   switch (cmdl_progress) {
     case LS_NO_WD: 
       if (!EVENT_COLON)
-        do_sub(eap); 
+        do_sub(eap);
       break;
     case LS_ONE_WD: 
-      if (EVENT_SUB == 1) {
+      if (EVENT_SUB == 1 && sub_done == 1) {
         do_cmdline_cmd(":u");
+        sub_done = 0;
         EVENT_SUB = 0;
       }
       //The lengh of the new arg is lower than twice the length of the command
@@ -6146,8 +6167,10 @@ void do_live_sub(exarg_T *eap) {
 
       //Highlight the word and open the split
       do_sub(eap);
-      if(sub_done == 1)
+      if(sub_done == 1) {
         do_cmdline_cmd(":u"); // to not polue the undo history
+        sub_done = 0;
+      }
       //Put back eap in first state
       eap->arg = tmp;
 
@@ -6156,15 +6179,11 @@ void do_live_sub(exarg_T *eap) {
       break;
 
     case LS_TWO_SLASH_ONE_WD: // live_sub will remove the arg
-      if (EVENT_SUB == 1)
-        do_cmdline_cmd(":u"); // we need to undo if we come from the LS_TWO_WD case
-      do_sub(eap);
-      EVENT_SUB = 1;
-      break;
-
     case LS_TWO_WD: // live_sub needs to undo
-      if (EVENT_SUB == 1)
+      if (EVENT_SUB == 1 && sub_done == 1) {
         do_cmdline_cmd(":u");
+        sub_done = 0;
+      }
       do_sub(eap);
       EVENT_SUB = 1;
       break;
@@ -6173,7 +6192,7 @@ void do_live_sub(exarg_T *eap) {
       break;
   }
 
-  redrawcmdline();
+  
   update_screen(0);
   if (livebuf != NULL && buf_valid(livebuf)) {
     close_windows(livebuf, false);

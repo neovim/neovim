@@ -18,7 +18,6 @@
 # include "state.c.generated.h"
 #endif
 
-
 void state_enter(VimState *s)
 {
   // a string to save the command.
@@ -65,8 +64,7 @@ void state_enter(VimState *s)
     // and undo
     if (p_sub && EVENT_COLON && (key == ESC || key == Ctrl_C) && is_live(access_cmdline())) {
       EVENT_COLON = 0;
-      do_cmdline_cmd(":u");
-      finish_live_cmd(NORMAL, NULL, 0, 0, 0);
+      finish_live_cmd(NORMAL, NULL, 0, 0, 0, 0);
       return;
     }
     if (!execute_result) {
@@ -76,6 +74,7 @@ void state_enter(VimState *s)
     } else if (p_sub && EVENT_COLON == 1 && is_live(access_cmdline())){
       // compute a live action
       do_cmdline(access_cmdline(), NULL, NULL, DOCMD_KEEPLINE);
+      redrawcmdline();
     }
   }
 }
