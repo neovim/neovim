@@ -3,6 +3,8 @@ local Screen = require('test.functional.ui.screen')
 local clear, feed = helpers.clear, helpers.feed
 local source = helpers.source
 local insert = helpers.insert
+local meths = helpers.meths
+local command = helpers.command
 
 describe('ui/ext_popupmenu', function()
   local screen
@@ -15,22 +17,25 @@ describe('ui/ext_popupmenu', function()
       [2] = {bold = true},
       [3] = {reverse = true},
       [4] = {bold = true, reverse = true},
-      [5] = {bold = true, foreground = Screen.colors.SeaGreen}
+      [5] = {bold = true, foreground = Screen.colors.SeaGreen},
+      [6] = {background = Screen.colors.WebGray},
+      [7] = {background = Screen.colors.LightMagenta},
     })
-  end)
-
-  it('works', function()
     source([[
       function! TestComplete() abort
-        call complete(1, ['foo', 'bar', 'spam'])
+        call complete(1, [{'word':'foo', 'abbr':'fo', 'menu':'the foo', 'info':'foo-y', 'kind':'x'}, 'bar', 'spam'])
         return ''
       endfunction
     ]])
-    local expected = {
-      {'foo', '', '', ''},
-      {'bar', '', '', ''},
-      {'spam', '', '', ''},
-    }
+  end)
+
+  local expected = {
+    {'fo', 'x', 'the foo', 'foo-y'},
+    {'bar', '', '', ''},
+    {'spam', '', '', ''},
+  }
+
+  it('works', function()
     feed('o<C-r>=TestComplete()<CR>')
     screen:expect{grid=[[
                                                                   |
@@ -92,7 +97,276 @@ describe('ui/ext_popupmenu', function()
       {2:-- INSERT --}                                                |
     ]]}
   end)
+
+  it('can be controlled by API', function()
+    feed('o<C-r>=TestComplete()<CR>')
+    screen:expect{grid=[[
+                                                                  |
+      foo^                                                         |
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {2:-- INSERT --}                                                |
+    ]], popupmenu={
+      items=expected,
+      pos=0,
+      anchor={1,0},
+    }}
+
+    meths.select_popupmenu_item(1,false,false,{})
+    screen:expect{grid=[[
+                                                                  |
+      foo^                                                         |
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {2:-- INSERT --}                                                |
+    ]], popupmenu={
+      items=expected,
+      pos=1,
+      anchor={1,0},
+    }}
+
+    meths.select_popupmenu_item(2,true,false,{})
+    screen:expect{grid=[[
+                                                                  |
+      spam^                                                        |
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {2:-- INSERT --}                                                |
+    ]], popupmenu={
+      items=expected,
+      pos=2,
+      anchor={1,0},
+    }}
+
+    meths.select_popupmenu_item(0,true,true,{})
+    screen:expect([[
+                                                                  |
+      foo^                                                         |
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {2:-- INSERT --}                                                |
+    ]])
+
+
+    feed('<c-w><C-r>=TestComplete()<CR>')
+    screen:expect{grid=[[
+                                                                  |
+      foo^                                                         |
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {2:-- INSERT --}                                                |
+    ]], popupmenu={
+      items=expected,
+      pos=0,
+      anchor={1,0},
+    }}
+
+    meths.select_popupmenu_item(-1,false,false,{})
+    screen:expect{grid=[[
+                                                                  |
+      foo^                                                         |
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {2:-- INSERT --}                                                |
+    ]], popupmenu={
+      items=expected,
+      pos=-1,
+      anchor={1,0},
+    }}
+
+    meths.select_popupmenu_item(1,true,false,{})
+    screen:expect{grid=[[
+                                                                  |
+      bar^                                                         |
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {2:-- INSERT --}                                                |
+    ]], popupmenu={
+      items=expected,
+      pos=1,
+      anchor={1,0},
+    }}
+
+    meths.select_popupmenu_item(-1,true,false,{})
+    screen:expect{grid=[[
+                                                                  |
+      ^                                                            |
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {2:-- INSERT --}                                                |
+    ]], popupmenu={
+      items=expected,
+      pos=-1,
+      anchor={1,0},
+    }}
+
+    meths.select_popupmenu_item(0,true,false,{})
+    screen:expect{grid=[[
+                                                                  |
+      foo^                                                         |
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {2:-- INSERT --}                                                |
+    ]], popupmenu={
+      items=expected,
+      pos=0,
+      anchor={1,0},
+    }}
+
+    meths.select_popupmenu_item(-1,true,true,{})
+    screen:expect([[
+                                                                  |
+      ^                                                            |
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {2:-- INSERT --}                                                |
+    ]])
+
+    command('imap <f1> <cmd>call nvim_select_popupmenu_item(2,v:true,v:false,{})<cr>')
+    command('imap <f2> <cmd>call nvim_select_popupmenu_item(-1,v:false,v:false,{})<cr>')
+    command('imap <f3> <cmd>call nvim_select_popupmenu_item(1,v:false,v:true,{})<cr>')
+    feed('<C-r>=TestComplete()<CR>')
+    screen:expect{grid=[[
+                                                                  |
+      foo^                                                         |
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {2:-- INSERT --}                                                |
+    ]], popupmenu={
+      items=expected,
+      pos=0,
+      anchor={1,0},
+    }}
+
+    feed('<f1>')
+    screen:expect{grid=[[
+                                                                  |
+      spam^                                                        |
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {2:-- INSERT --}                                                |
+    ]], popupmenu={
+      items=expected,
+      pos=2,
+      anchor={1,0},
+    }}
+
+    feed('<f2>')
+    screen:expect{grid=[[
+                                                                  |
+      spam^                                                        |
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {2:-- INSERT --}                                                |
+    ]], popupmenu={
+      items=expected,
+      pos=-1,
+      anchor={1,0},
+    }}
+
+    feed('<f3>')
+    screen:expect([[
+                                                                  |
+      bar^                                                         |
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {2:-- INSERT --}                                                |
+    ]])
+
+    -- also should work for builtin popupmenu
+    screen:set_option('ext_popupmenu', false)
+    feed('<C-r>=TestComplete()<CR>')
+    screen:expect([[
+                                                                  |
+      foo^                                                         |
+      {6:fo   x the foo }{1:                                             }|
+      {7:bar            }{1:                                             }|
+      {7:spam           }{1:                                             }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {2:-- INSERT --}                                                |
+    ]])
+
+    feed('<f1>')
+    screen:expect([[
+                                                                  |
+      spam^                                                        |
+      {7:fo   x the foo }{1:                                             }|
+      {7:bar            }{1:                                             }|
+      {6:spam           }{1:                                             }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {2:-- INSERT --}                                                |
+    ]])
+
+    feed('<f2>')
+    screen:expect([[
+                                                                  |
+      spam^                                                        |
+      {7:fo   x the foo }{1:                                             }|
+      {7:bar            }{1:                                             }|
+      {7:spam           }{1:                                             }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {2:-- INSERT --}                                                |
+    ]])
+
+    feed('<f3>')
+    screen:expect([[
+                                                                  |
+      bar^                                                         |
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {2:-- INSERT --}                                                |
+    ]])
+  end)
 end)
+
 
 describe('popup placement', function()
   local screen

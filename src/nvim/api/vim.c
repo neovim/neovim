@@ -28,6 +28,7 @@
 #include "nvim/screen.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
+#include "nvim/edit.h"
 #include "nvim/eval.h"
 #include "nvim/eval/typval.h"
 #include "nvim/option.h"
@@ -1913,6 +1914,35 @@ Object nvim_get_proc(Integer pid, Error *err)
   }
 #endif
   return rvobj;
+}
+
+/// Selects an item in the completion popupmenu
+///
+/// When insert completion is not active, this API call is silently ignored.
+/// It is mostly useful for an external UI using |ui-popupmenu| for instance
+/// to control the popupmenu with the mouse. But it can also be used in an
+/// insert mode mapping, use <cmd> mapping |:map-cmd| to ensure the mapping
+/// doesn't end completion mode.
+///
+/// @param item   Index of the item to select, starting with zero. Pass in "-1"
+///               to select no item (restore original text).
+/// @param insert Whether the selection should be inserted in the buffer.
+/// @param finish If true, completion will be finished with this item, and the
+///               popupmenu dissmissed. Implies `insert`.
+void nvim_select_popupmenu_item(Integer item, Boolean insert, Boolean finish,
+                                Dictionary opts, Error *err)
+  FUNC_API_SINCE(6)
+{
+  if (opts.size > 0) {
+    api_set_error(err, kErrorTypeValidation, "opts dict isn't empty");
+    return;
+  }
+
+  if (finish) {
+    insert = true;
+  }
+
+  pum_ext_select_item((int)item, insert, finish);
 }
 
 /// NB: if your UI doesn't use hlstate, this will not return hlstate first time
