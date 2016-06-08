@@ -3,6 +3,8 @@
 local helpers = require('test.functional.helpers')
 local source, clear = helpers.source, helpers.clear
 local eq, nvim, call = helpers.eq, helpers.meths, helpers.call
+local eval = helpers.eval
+local execute = helpers.execute
 
 local function expected_empty()
   eq({}, nvim.get_vvar('errors'))
@@ -305,5 +307,12 @@ describe('helpgrep', function()
     expected_empty()
     call('XbufferTests', 'l')
     expected_empty()
+  end)
+
+  it('autocommands triggered by quickfix can get title', function()
+    execute('au FileType qf let g:foo = get(w:, "quickfix_title", "NONE")')
+    execute('call setqflist([])')
+    execute('copen')
+    eq(':setqflist()', eval('g:foo'))
   end)
 end)
