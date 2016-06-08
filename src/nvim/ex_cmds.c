@@ -6016,7 +6016,7 @@ void ex_window_live_sub( char_u* pat, char_u* sub, klist_t(matchedline_T) *lmatc
   long pat_size = STRLEN(pat);
 
   // Get the width of the column which display the number of the line
-  long highest_num_line;
+  long highest_num_line = 0;
   kl_iter(matchedline_T, lmatch, current)
     highest_num_line = (*current)->data.lnum;
 
