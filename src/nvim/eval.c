@@ -15083,13 +15083,18 @@ typedef struct {
   int idx;
 } sortItem_T;
 
-static int item_compare_ic;
-static bool item_compare_numeric;
-static bool item_compare_numbers;
-static bool item_compare_float;
-static char_u   *item_compare_func;
-static dict_T   *item_compare_selfdict;
-static int item_compare_func_err;
+/// struct storing information about current sort
+typedef struct {
+  int item_compare_ic;
+  bool item_compare_numeric;
+  bool item_compare_numbers;
+  bool item_compare_float;
+  char_u *item_compare_func;
+  dict_T *item_compare_selfdict;
+  int item_compare_func_err;
+} sortinfo_T;
+static sortinfo_T *sortinfo = NULL;
+
 #define ITEM_COMPARE_FAIL 999
 
 /*
@@ -15109,14 +15114,14 @@ static int item_compare(const void *s1, const void *s2, bool keep_zero)
   typval_T *tv1 = &si1->item->li_tv;
   typval_T *tv2 = &si2->item->li_tv;
 
-  if (item_compare_numbers) {
+  if (sortinfo->item_compare_numbers) {
     long v1 = get_tv_number(tv1);
     long v2 = get_tv_number(tv2);
 
     return v1 == v2 ? 0 : v1 > v2 ? 1 : -1;
   }
 
-  if (item_compare_float) {
+  if (sortinfo->item_compare_float) {
     float_T v1 = get_tv_float(tv1);
     float_T v2 = get_tv_float(tv2);
 
@@ -15127,7 +15132,7 @@ static int item_compare(const void *s1, const void *s2, bool keep_zero)
   // do that for string variables. Use a single quote when comparing with
   // a non-string to do what the docs promise.
   if (tv1->v_type == VAR_STRING) {
-    if (tv2->v_type != VAR_STRING || item_compare_numeric) {
+    if (tv2->v_type != VAR_STRING || sortinfo->item_compare_numeric) {
       p1 = (char_u *)"'";
     } else {
       p1 = tv1->vval.v_string;
@@ -15136,7 +15141,7 @@ static int item_compare(const void *s1, const void *s2, bool keep_zero)
     tofree1 = p1 = (char_u *) encode_tv2string(tv1, NULL);
   }
   if (tv2->v_type == VAR_STRING) {
-    if (tv1->v_type != VAR_STRING || item_compare_numeric) {
+    if (tv1->v_type != VAR_STRING || sortinfo->item_compare_numeric) {
       p2 = (char_u *)"'";
     } else {
       p2 = tv2->vval.v_string;
@@ -15144,12 +15149,14 @@ static int item_compare(const void *s1, const void *s2, bool keep_zero)
   } else {
     tofree2 = p2 = (char_u *) encode_tv2string(tv2, NULL);
   }
-  if (p1 == NULL)
+  if (p1 == NULL) {
     p1 = (char_u *)"";
-  if (p2 == NULL)
+  }
+  if (p2 == NULL) {
     p2 = (char_u *)"";
-  if (!item_compare_numeric) {
-    if (item_compare_ic) {
+  }
+  if (!sortinfo->item_compare_numeric) {
+    if (sortinfo->item_compare_ic) {
       res = STRICMP(p1, p2);
     } else {
       res = STRCMP(p1, p2);
@@ -15190,9 +15197,10 @@ static int item_compare2(const void *s1, const void *s2, bool keep_zero)
   typval_T argv[3];
   int dummy;
 
-  /* shortcut after failure in previous call; compare all items equal */
-  if (item_compare_func_err)
+  // shortcut after failure in previous call; compare all items equal
+  if (sortinfo->item_compare_func_err) {
     return 0;
+  }
 
   si1 = (sortItem_T *)s1;
   si2 = (sortItem_T *)s2;
@@ -15202,19 +15210,22 @@ static int item_compare2(const void *s1, const void *s2, bool keep_zero)
   copy_tv(&si1->item->li_tv, &argv[0]);
   copy_tv(&si2->item->li_tv, &argv[1]);
 
-  rettv.v_type = VAR_UNKNOWN;           /* clear_tv() uses this */
-  res = call_func(item_compare_func, (int)STRLEN(item_compare_func),
-      &rettv, 2, argv, 0L, 0L, &dummy, TRUE,
-      item_compare_selfdict);
+  rettv.v_type = VAR_UNKNOWN;  // clear_tv() uses this
+  res = call_func(sortinfo->item_compare_func,
+                  (int)STRLEN(sortinfo->item_compare_func),
+                  &rettv, 2, argv, 0L, 0L, &dummy, true,
+                  sortinfo->item_compare_selfdict);
   clear_tv(&argv[0]);
   clear_tv(&argv[1]);
 
-  if (res == FAIL)
+  if (res == FAIL) {
     res = ITEM_COMPARE_FAIL;
-  else
-    res = get_tv_number_chk(&rettv, &item_compare_func_err);
-  if (item_compare_func_err)
-    res = ITEM_COMPARE_FAIL;      /* return value has wrong type */
+  } else {
+    res = get_tv_number_chk(&rettv, &sortinfo->item_compare_func_err);
+  }
+  if (sortinfo->item_compare_func_err) {
+    res = ITEM_COMPARE_FAIL;  // return value has wrong type
+  }
   clear_tv(&rettv);
 
   // When the result would be zero, compare the pointers themselves.  Makes
@@ -15247,6 +15258,12 @@ static void do_sort_uniq(typval_T *argvars, typval_T *rettv, bool sort)
   long len;
   long i;
 
+  // Pointer to current info struct used in compare function. Save and restore
+  // the current one for nested calls.
+  sortinfo_T info;
+  sortinfo_T *old_sortinfo = sortinfo;
+  sortinfo = &info;
+
   if (argvars[0].v_type != VAR_LIST) {
     EMSG2(_(e_listarg), sort ? "sort()" : "uniq()");
   } else {
@@ -15257,61 +15274,70 @@ static void do_sort_uniq(typval_T *argvars, typval_T *rettv, bool sort)
                                     ? N_("sort() argument")
                                     : N_("uniq() argument")),
                          true)) {
-      return;
+        goto theend;
     }
     rettv->vval.v_list = l;
     rettv->v_type = VAR_LIST;
     ++l->lv_refcount;
 
     len = list_len(l);
-    if (len <= 1)
-      return;           /* short list sorts pretty quickly */
+    if (len <= 1) {
+      goto theend;  // short list sorts pretty quickly
+    }
 
-    item_compare_ic = FALSE;
-    item_compare_numeric = false;
-    item_compare_numbers = false;
-    item_compare_float = false;
-    item_compare_func = NULL;
-    item_compare_selfdict = NULL;
+    info.item_compare_ic = false;
+    info.item_compare_numeric = false;
+    info.item_compare_numbers = false;
+    info.item_compare_float = false;
+    info.item_compare_func = NULL;
+    info.item_compare_selfdict = NULL;
 
     if (argvars[1].v_type != VAR_UNKNOWN) {
       /* optional second argument: {func} */
       if (argvars[1].v_type == VAR_FUNC) {
-        item_compare_func = argvars[1].vval.v_string;
+        info.item_compare_func = argvars[1].vval.v_string;
       } else {
         int error = FALSE;
 
         i = get_tv_number_chk(&argvars[1], &error);
-        if (error)
-          return;                       /* type error; errmsg already given */
-        if (i == 1)
-          item_compare_ic = TRUE;
-        else
-          item_compare_func = get_tv_string(&argvars[1]);
-        if (item_compare_func != NULL) {
-          if (STRCMP(item_compare_func, "n") == 0) {
-            item_compare_func = NULL;
-            item_compare_numeric = true;
-          } else if (STRCMP(item_compare_func, "N") == 0) {
-            item_compare_func = NULL;
-            item_compare_numbers = true;
-          } else if (STRCMP(item_compare_func, "f") == 0) {
-            item_compare_func = NULL;
-            item_compare_float = true;
-          } else if (STRCMP(item_compare_func, "i") == 0) {
-            item_compare_func = NULL;
-            item_compare_ic = TRUE;
+        if (error) {
+          goto theend;  // type error; errmsg already given
+        }
+        if (i == 1) {
+          info.item_compare_ic = true;
+        } else if (argvars[1].v_type != VAR_NUMBER) {
+          info.item_compare_func = get_tv_string(&argvars[1]);
+        } else if (i != 0) {
+          EMSG(_(e_invarg));
+          goto theend;
+        }
+        if (info.item_compare_func != NULL) {
+          if (*info.item_compare_func == NUL) {
+            // empty string means default sort
+            info.item_compare_func = NULL;
+          } else if (STRCMP(info.item_compare_func, "n") == 0) {
+            info.item_compare_func = NULL;
+            info.item_compare_numeric = true;
+          } else if (STRCMP(info.item_compare_func, "N") == 0) {
+            info.item_compare_func = NULL;
+            info.item_compare_numbers = true;
+          } else if (STRCMP(info.item_compare_func, "f") == 0) {
+            info.item_compare_func = NULL;
+            info.item_compare_float = true;
+          } else if (STRCMP(info.item_compare_func, "i") == 0) {
+            info.item_compare_func = NULL;
+            info.item_compare_ic = true;
           }
         }
       }
 
       if (argvars[2].v_type != VAR_UNKNOWN) {
-        /* optional third argument: {dict} */
+        // optional third argument: {dict}
         if (argvars[2].v_type != VAR_DICT) {
           EMSG(_(e_dictreq));
-          return;
+          goto theend;
         }
-        item_compare_selfdict = argvars[2].vval.v_dict;
+        info.item_compare_selfdict = argvars[2].vval.v_dict;
       }
     }
 
@@ -15327,19 +15353,20 @@ static void do_sort_uniq(typval_T *argvars, typval_T *rettv, bool sort)
         i++;
       }
 
-      item_compare_func_err = FALSE;
+      info.item_compare_func_err = false;
       // Test the compare function.
-      if (item_compare_func != NULL
+      if (info.item_compare_func != NULL
           && item_compare2_not_keeping_zero(&ptrs[0], &ptrs[1])
              == ITEM_COMPARE_FAIL) {
         EMSG(_("E702: Sort compare function failed"));
       } else {
         // Sort the array with item pointers.
         qsort(ptrs, (size_t)len, sizeof (sortItem_T),
-              item_compare_func == NULL ? item_compare_not_keeping_zero :
-                                          item_compare2_not_keeping_zero);
+              (info.item_compare_func == NULL ?
+               item_compare_not_keeping_zero :
+               item_compare2_not_keeping_zero));
 
-        if (!item_compare_func_err) {
+        if (!info.item_compare_func_err) {
           // Clear the list and append the items in the sorted order.
           l->lv_first    = NULL;
           l->lv_last     = NULL;
@@ -15355,21 +15382,24 @@ static void do_sort_uniq(typval_T *argvars, typval_T *rettv, bool sort)
       int (*item_compare_func_ptr)(const void *, const void *);
 
       // f_uniq(): ptrs will be a stack of items to remove.
-      item_compare_func_err = FALSE;
-      item_compare_func_ptr = item_compare_func ? item_compare2_keeping_zero :
-                                                  item_compare_keeping_zero;
+      info.item_compare_func_err = false;
+      if (info.item_compare_func != NULL) {
+          item_compare_func_ptr = item_compare2_keeping_zero;
+      } else {
+          item_compare_func_ptr = item_compare_keeping_zero;
+      }
 
       for (li = l->lv_first; li != NULL && li->li_next != NULL; li = li->li_next) {
         if (item_compare_func_ptr(&li, &li->li_next) == 0) {
           ptrs[i++].item = li;
         }
-        if (item_compare_func_err) {
+        if (info.item_compare_func_err) {
           EMSG(_("E882: Uniq compare function failed"));
           break;
         }
       }
 
-      if (!item_compare_func_err) {
+      if (!info.item_compare_func_err) {
         while (--i >= 0) {
           assert(ptrs[i].item->li_next);
           li = ptrs[i].item->li_next;
@@ -15388,6 +15418,9 @@ static void do_sort_uniq(typval_T *argvars, typval_T *rettv, bool sort)
 
     xfree(ptrs);
   }
+
+theend:
+  sortinfo = old_sortinfo;
 }
 
 /// "sort"({list})" function
