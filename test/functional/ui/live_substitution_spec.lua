@@ -364,12 +364,13 @@ describe('Live Substitution', function()
 
         feed('gg')
         feed('2yy')
-        feed('10000p')
+        feed('1000p')
 
-        feed(':%s/are/ARE')     -- simple sub, aborted
+        execute('set nohlsearch')
+
+        execute(':%s/are/ARE')     -- simple sub
 
         screen:expect([[
-            with colorful text (ARE)                |
             these ARE some lines                    |
             with colorful text (ARE)                |
             these ARE some lines                    |
@@ -398,154 +399,108 @@ describe('Live Substitution', function()
             with colorful text (ARE)                |
             these ARE some lines                    |
             with colorful text (ARE)                |
+            these ARE some lines                    |
             with colorful text (ARE)                |
-            {UNEXPECTED bold = true, reverse = true:[No Name] [+]                           }|
-             [    1]these ARE some lines            |
-             [    2]these ARE some lines            |
-             [    3]with colorful text (ARE)        |
-             [    4]these ARE some lines            |
-             [    5]with colorful text (ARE)        |
-             [    6]these ARE some lines            |
-             [    7]with colorful text (ARE)        |
-            {UNEXPECTED reverse = true:[live_sub]                              }|
-            :%s/are/ARE^                             |
+            these ARE some lines                    |
+            with colorful text (ARE)                |
+            these ARE some lines                    |
+            with colorful text (ARE)                |
+            these ARE some lines                    |
+            with colorful text (ARE)                |
+            these ARE some lines                    |
+            with colorful text (ARE)                |
+            ^with colorful text (ARE)                |
+            2002 substitutions on 2002 lines        |
       ]])
-        
-        feed('\27')
-        feed(':%s/some.*/nothing')      -- regex sub, aborted
+
+        execute(':%s/some.*/nothing')      -- regex sub
 
         screen:expect([[
-            these are nothing                       |
-            with colorful text (are)                |
-            these are nothing                       |
-            with colorful text (are)                |
-            these are nothing                       |
-            with colorful text (are)                |
-            these are nothing                       |
-            with colorful text (are)                |
-            these are nothing                       |
-            with colorful text (are)                |
-            these are nothing                       |
-            with colorful text (are)                |
-            these are nothing                       |
-            with colorful text (are)                |
-            these are nothing                       |
-            with colorful text (are)                |
-            these are nothing                       |
-            with colorful text (are)                |
-            these are nothing                       |
-            with colorful text (are)                |
-            these are nothing                       |
-            with colorful text (are)                |
-            these are nothing                       |
-            with colorful text (are)                |
-            these are nothing                       |
-            with colorful text (are)                |
-            these are nothing                       |
-            with colorful text (are)                |
-            these are nothing                       |
-            with colorful text (are)                |
-            {UNEXPECTED bold = true, reverse = true:[No Name] [+]                           }|
-             [    1]these are nothing               |
-             [    2]these are nothing               |
-             [    4]these are nothing               |
-             [    6]these are nothing               |
-             [    8]these are nothing               |
-             [   10]these are nothing               |
-             [   12]these are nothing               |
-            {UNEXPECTED reverse = true:[live_sub]                              }|
-            :%s/some.*/nothing^                      |
-       ]])
-
-        feed('\27')
-        feed(':%s/some.*/nothing\n')      -- regex sub, validated
-
-        screen:expect([[
-            these are nothing                       |
-            with colorful text (are)                |
-            these are nothing                       |
-            with colorful text (are)                |
-            these are nothing                       |
-            with colorful text (are)                |
-            these are nothing                       |
-            with colorful text (are)                |
-            these are nothing                       |
-            with colorful text (are)                |
-            these are nothing                       |
-            with colorful text (are)                |
-            these are nothing                       |
-            with colorful text (are)                |
-            these are nothing                       |
-            with colorful text (are)                |
-            these are nothing                       |
-            with colorful text (are)                |
-            these are nothing                       |
-            with colorful text (are)                |
-            these are nothing                       |
-            with colorful text (are)                |
-            these are nothing                       |
-            with colorful text (are)                |
-            these are nothing                       |
-            with colorful text (are)                |
-            these are nothing                       |
-            with colorful text (are)                |
-            these are nothing                       |
-            with colorful text (are)                |
-            these are nothing                       |
-            with colorful text (are)                |
-            these are nothing                       |
-            with colorful text (are)                |
-            these are nothing                       |
-            with colorful text (are)                |
-            these are nothing                       |
-            with colorful text (are)                |
-            ^these are nothing                       |
-                                                    |
+        these ARE nothing                       |
+        with colorful text (ARE)                |
+        these ARE nothing                       |
+        with colorful text (ARE)                |
+        these ARE nothing                       |
+        with colorful text (ARE)                |
+        these ARE nothing                       |
+        with colorful text (ARE)                |
+        these ARE nothing                       |
+        with colorful text (ARE)                |
+        these ARE nothing                       |
+        with colorful text (ARE)                |
+        these ARE nothing                       |
+        with colorful text (ARE)                |
+        these ARE nothing                       |
+        with colorful text (ARE)                |
+        these ARE nothing                       |
+        with colorful text (ARE)                |
+        these ARE nothing                       |
+        with colorful text (ARE)                |
+        these ARE nothing                       |
+        with colorful text (ARE)                |
+        these ARE nothing                       |
+        with colorful text (ARE)                |
+        these ARE nothing                       |
+        with colorful text (ARE)                |
+        these ARE nothing                       |
+        with colorful text (ARE)                |
+        these ARE nothing                       |
+        with colorful text (ARE)                |
+        these ARE nothing                       |
+        with colorful text (ARE)                |
+        these ARE nothing                       |
+        with colorful text (ARE)                |
+        these ARE nothing                       |
+        with colorful text (ARE)                |
+        ^these ARE nothing                       |
+        with colorful text (ARE)                |
+        with colorful text (ARE)                |
+        1001 substitutions on 1001 lines        |
        ]])
 
         feed('i')
         feed('example of insertion')
 
         screen:expect([[
-            these are nothing                       |
-            with colorful text (are)                |
-            these are nothing                       |
-            with colorful text (are)                |
-            these are nothing                       |
-            with colorful text (are)                |
-            these are nothing                       |
-            with colorful text (are)                |
-            these are nothing                       |
-            with colorful text (are)                |
-            these are nothing                       |
-            with colorful text (are)                |
-            these are nothing                       |
-            with colorful text (are)                |
-            these are nothing                       |
-            with colorful text (are)                |
-            these are nothing                       |
-            with colorful text (are)                |
-            these are nothing                       |
-            with colorful text (are)                |
-            these are nothing                       |
-            with colorful text (are)                |
-            these are nothing                       |
-            with colorful text (are)                |
-            these are nothing                       |
-            with colorful text (are)                |
-            these are nothing                       |
-            with colorful text (are)                |
-            these are nothing                       |
-            with colorful text (are)                |
-            these are nothing                       |
-            with colorful text (are)                |
-            these are nothing                       |
-            with colorful text (are)                |
-            these are nothing                       |
-            with colorful text (are)                |
-            these are nothing                       |
-            with colorful text (are)                |
-            example of insertion^these are nothing   |
+            these ARE nothing                       |
+            with colorful text (ARE)                |
+            these ARE nothing                       |
+            with colorful text (ARE)                |
+            these ARE nothing                       |
+            with colorful text (ARE)                |
+            these ARE nothing                       |
+            with colorful text (ARE)                |
+            these ARE nothing                       |
+            with colorful text (ARE)                |
+            these ARE nothing                       |
+            with colorful text (ARE)                |
+            these ARE nothing                       |
+            with colorful text (ARE)                |
+            these ARE nothing                       |
+            with colorful text (ARE)                |
+            these ARE nothing                       |
+            with colorful text (ARE)                |
+            these ARE nothing                       |
+            with colorful text (ARE)                |
+            these ARE nothing                       |
+            with colorful text (ARE)                |
+            these ARE nothing                       |
+            with colorful text (ARE)                |
+            these ARE nothing                       |
+            with colorful text (ARE)                |
+            these ARE nothing                       |
+            with colorful text (ARE)                |
+            these ARE nothing                       |
+            with colorful text (ARE)                |
+            these ARE nothing                       |
+            with colorful text (ARE)                |
+            these ARE nothing                       |
+            with colorful text (ARE)                |
+            these ARE nothing                       |
+            with colorful text (ARE)                |
+            example of insertion^these ARE nothing   |
+            with colorful text (ARE)                |
+            with colorful text (ARE)                |
             {6:-- INSERT --}                            |
        ]])
         
