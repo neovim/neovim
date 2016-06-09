@@ -23,6 +23,7 @@ describe('Live Substitution', function()
         clear()
         execute("syntax on")
         execute("set livesub")
+        execute('set nohlsearch')
         screen = Screen.new(40, 40)  -- 40 lines of 40 char
         screen:attach()
         screen:set_default_attr_ignore( {{bold=true, foreground=hl_colors.NonText}} )
@@ -160,7 +161,7 @@ describe('Live Substitution', function()
 
         screen:expect([[
       these are some lines                    |
-      with colorful text (are)                |
+      with colorful text (ARE)                |
       ~                                       |
       ~                                       |
       ~                                       |
@@ -206,6 +207,7 @@ describe('Live Substitution', function()
         insert([[
       these are some lines
       without colorful text (are)]])
+        execute('set hlsearch')
         feed(':%s/are')
 
         screen:expect([[
