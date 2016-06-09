@@ -5909,15 +5909,15 @@ char *compute_line_number(int col_size, linenr_T number) {
   char *s = (char *)xcalloc((size_t)col_size+1, sizeof(char));
   char *r = (char *)xcalloc((size_t)col_size+1, sizeof(char));
   strcat(r, " [");
-  
-  for (int i=2 ; i < col_size-(log10(number)+1) - 1 ; i++) {
+
+  for (int i = 2; i < col_size-(log10(number)+1) - 1; i++) {
     r[i] = ' ';
   }
-  
+
   snprintf(s, col_size, "%s%ld", r, number);
   strcat(s, "]");
   xfree(r);
-  
+
   return s;
 }
 
@@ -6016,8 +6016,8 @@ void ex_window_live_sub(char_u * pat,
   (void)setfname(curbuf, (char_u *)"[live_sub]", NULL, true);
   set_option_value((char_u *)"bt", 0L, (char_u *)"nofile", OPT_LOCAL);
   set_option_value((char_u *)"swf", 0L, NULL, OPT_LOCAL);
-  curbuf->b_p_ma = FALSE;  // Not Modifiable
-  curwin->w_p_fen = FALSE;
+  curbuf->b_p_ma = false;  // Not Modifiable
+  curwin->w_p_fen = false;
   curwin->w_p_rl = cmdmsg_rl;
   cmdmsg_rl = false;
   RESET_BINDING(curwin);
@@ -6058,8 +6058,9 @@ void ex_window_live_sub(char_u * pat,
     size_t line_size = STRLEN(mat.line) + col_width + 1;
 
     // Reallocation if str not long enough
-    if (line_size > curwin->w_frame->fr_width * sizeof(char))
+    if (line_size > curwin->w_frame->fr_width * sizeof(char)) {
       str = xrealloc(str, line_size * sizeof(char));
+    }
 
     // Add the line number to the string
     char *col = compute_line_number(col_width, mat.lnum);
@@ -6071,13 +6072,13 @@ void ex_window_live_sub(char_u * pat,
       // highlight the replaced part
       if (sub_size > 0) {
         src_id_highlight =
-          bufhl_add_hl(curbuf,
-                       src_id_highlight,
-                       2,  // id of our highlight
-                       line,
-                       (*col)->data + col_width + i*(sub_size-pat_size) + 1,
-                       (*col)->data + col_width + i*(sub_size-pat_size) +
-                       sub_size);
+        bufhl_add_hl(curbuf,
+                     src_id_highlight,
+                     2,  // id of our highlight
+                     line,
+                     (*col)->data + col_width + i * (sub_size-pat_size) + 1,
+                     (*col)->data + col_width + i * (sub_size-pat_size) +
+                     sub_size);
       }
       i++;
     }
@@ -6106,11 +6107,11 @@ void ex_window_live_sub(char_u * pat,
 LiveSub_state parse_sub_cmd(exarg_T *eap) {
   int i = 0;
   LiveSub_state cmdl_progress;
-  
+
   if (eap->arg[i++] != '/') {
     return LS_NO_WD;
   }
-  
+
   if (eap->arg[i++] == 0) {
     return LS_NO_WD;
   } else {
@@ -6131,14 +6132,13 @@ LiveSub_state parse_sub_cmd(exarg_T *eap) {
 /// at every new character typed in the cmdbuff according to the
 /// actual state of the live_substitution
 void do_live_sub(exarg_T *eap) {
-
   // if livesub disabled, do it the classical way
   if (!p_sub) {
     do_sub(eap);
     return;
   }
 
-  //count the number of '/' to know how many words can be parsed
+  // count the number of '/' to know how many words can be parsed
   LiveSub_state cmdl_progress = parse_sub_cmd(eap);
 
   char_u *arg;
@@ -6157,7 +6157,7 @@ void do_live_sub(exarg_T *eap) {
         EVENT_SUB = 0;
       }
       // The lengh of the new arg is lower than twice the length of the command
-      arg = xcalloc(2*STRLEN(eap->arg) + 1, sizeof(char_u));
+      arg = xcalloc(2 * STRLEN(eap->arg) + 1, sizeof(char_u));
 
       // Save the state of eap
       tmp = eap->arg;
