@@ -21,14 +21,14 @@
 
 /// for cmdl_progress in live substitution
 typedef enum {
-  LS_NO_WD,                 /// state of the command line when none of the words are typed : 
+  LS_NO_WD,                 /// state of cmdline when none words are typed
                               /// ":%s" or ":%s/"
-  LS_ONE_WD,                /// state of the command line when only the pattern word has began 
+  LS_ONE_WD,                /// state of cmd line when only pattern word began
                               /// to be typed : ":%s/patt"
-  LS_TWO_SLASH_ONE_WD,      /// sentry case : the second slash has been typed on but not the second
+  LS_TWO_SLASH_ONE_WD,      /// Second / has been typed but not the second
                               /// word yet : "%s/pattern/"
-  LS_TWO_WD                /// state of the command line when the pattern has been completed 
-                            /// and the substitue is being typed : ":%s/pattern/subs"
+  LS_TWO_WD                /// state of cmd line when pattern has been completed
+                            /// and substitue is being typed : ":%s/pattern/sub"
 } LiveSub_state;
 
 /// Previous :substitute replacement string definition
@@ -41,7 +41,7 @@ typedef struct {
 /// Defs for live_sub functionality
 #define _noop(x)
 /// initializer for a list of match in a line
-KLIST_INIT(colnr_T, colnr_T,_noop)
+KLIST_INIT(colnr_T, colnr_T, _noop)
 
 /// structure to backup and display matched lines in live_substitution
 typedef struct {

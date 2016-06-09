@@ -65,7 +65,7 @@
  */
 typedef struct sign sign_T;
 
-//boolean to know if we have to undo
+// boolean to know if we have to undo
 static int EVENT_SUB = 0;
 static int sub_done = 0;
 
@@ -2919,19 +2919,19 @@ void do_sub(exarg_T *eap)
   linenr_T lnum;
   long i = 0;
   regmmatch_T regmatch;
-  static int do_all = FALSE;            /* do multiple substitutions per line */
-  static int do_ask = FALSE;            /* ask for confirmation */
-  static bool do_count = false;         /* count only */
-  //static int do_error = TRUE;           /* if false, ignore errors */
+  static int do_all = FALSE;            // do multiple substitutions per line
+  static int do_ask = FALSE;            // ask for confirmation
+  static bool do_count = false;         // count only */
+  //static int do_error = TRUE;         // if false, ignore errors
   // if live mode, ignore errors
-  static int do_error = FALSE;           /* if false, ignore errors */
-  static int do_print = FALSE;          /* print last line with subs. */
-  static int do_list = FALSE;           /* list last line with subs. */
-  static int do_number = FALSE;         /* list last line with line nr*/
-  static int do_ic = 0;                 /* ignore case flag */
+  static int do_error = FALSE;          // if false, ignore errors
+  static int do_print = FALSE;          // print last line with subs.
+  static int do_list = FALSE;           // list last line with subs.
+  static int do_number = FALSE;         // list last line with line nr
+  static int do_ic = 0;                 // ignore case flag
   int save_do_all;                      // remember user specified 'g' flag
   int save_do_ask;                      // remember user specified 'c' flag
-  char_u      *pat = NULL, *sub = NULL;         /* init for GCC */
+  char_u      *pat = NULL, *sub = NULL;         // init for GCC
   int delimiter;
   int sublen;
   int got_quit = FALSE;
@@ -2945,21 +2945,23 @@ void do_sub(exarg_T *eap)
                                          * change */
   linenr_T old_line_count = curbuf->b_ml.ml_line_count;
   linenr_T line2;
-  long nmatch;                          /* number of lines in match */
-  char_u      *sub_firstline;           /* allocated copy of first sub line */
+  long nmatch;                          // number of lines in match
+  char_u      *sub_firstline;           // allocated copy of first sub line
   int endcolumn = FALSE;                /* cursor in last column when done */
   pos_T old_cursor = curwin->w_cursor;
   int start_nsubs;
   int save_ma = 0;
 
-  klist_t(matchedline_T) *lmatch = kl_init(matchedline_T);  /*  list to save matched lines */
+  //  list to save matched lines
+  klist_t(matchedline_T) *lmatch = kl_init(matchedline_T);
   sub_done = 0;
   bool last_is_slash = false;
   char_u *c = eap->arg;
 
-  /* checking if the last char of the cmdline is a '/' */
-  while (*c != '\0')
+  // checking if the last char of the cmdline is a '/'
+  while (*c != '\0') {
     c++;
+  }
   last_is_slash = (*(c-1) == '/');
 
   cmd = eap->arg;
@@ -3174,7 +3176,7 @@ void do_sub(exarg_T *eap)
 
   int searchRC_option = (EVENT_COLON) ? 0 : SEARCH_HIS;
   if (search_regcomp(pat, RE_SUBST, which_pat, searchRC_option,
-          &regmatch) == FAIL) {
+      &regmatch) == FAIL) {
     if (do_error)
       EMSG(_(e_invcmd));
     return;
@@ -3218,7 +3220,7 @@ void do_sub(exarg_T *eap)
       long nmatch_tl = 0;               /* nr of lines matched below lnum */
       int do_again;                     /* do it again after joining lines */
       int skip_match = FALSE;
-      linenr_T sub_firstlnum;           /* nr of first sub line */
+      linenr_T sub_firstlnum;           // nr of first sub line
 
       /*
        * The new text is build up step by step, to avoid too much
@@ -3268,7 +3270,8 @@ void do_sub(exarg_T *eap)
       sub_firstlnum = lnum;
       copycol = 0;
       matchcol = 0;
-      matchedline_T cmatch = {0, 0, NULL, kl_init(colnr_T)}; /* the current match */
+      // the current match
+      matchedline_T cmatch = { 0, 0, NULL, kl_init(colnr_T) };
 
       /* At first match, remember current cursor position. */
       if (!got_match) {
@@ -3305,7 +3308,7 @@ void do_sub(exarg_T *eap)
         curwin->w_cursor.lnum = lnum;
         do_again = FALSE;
 
-        /* increment number of match on the line and store the column */
+        // increment number of match on the line and store the column
         cmatch.nmatch++;
         kl_push(colnr_T, cmatch.start_col, regmatch.startpos[0].col);
 
@@ -3317,11 +3320,11 @@ void do_sub(exarg_T *eap)
         if (matchcol == prev_matchcol
             && regmatch.endpos[0].lnum == 0
             && matchcol == regmatch.endpos[0].col) {
-          if (sub_firstline[matchcol] == NUL)
+          if (sub_firstline[matchcol] == NUL) {
             /* We already were at the end of the line.  Don't look
              * for a match in this line again. */
             skip_match = TRUE;
-          else {
+          } else {
             /* search for a match at next column */
             if (has_mbyte)
               matchcol += mb_ptr2len(sub_firstline + matchcol);
@@ -3352,8 +3355,8 @@ void do_sub(exarg_T *eap)
           }
           sub_nsubs++;
           did_sub = TRUE;
-          /* Skip the substitution, unless an expression is used,
-           * then it is evaluated in the sandbox. */
+          // Skip the substitution, unless an expression is used,
+          // then it is evaluated in the sandbox.
           if (!(sub[0] == '\\' && sub[1] == '='))
             goto skip;
         }
@@ -3450,8 +3453,8 @@ void do_sub(exarg_T *eap)
               msg_scroll = 0;                           /* truncate msg when
                                                            needed */
               msg_no_more = TRUE;
-              /* write message same highlighting as for
-               * wait_return */
+              // write message same highlighting as for
+              // wait_return
               smsg_attr(hl_attr(HLF_R),
                         _("replace with %s (y/n/a/q/l/^E/^Y)?"), sub);
               msg_no_more = FALSE;
@@ -3533,15 +3536,14 @@ void do_sub(exarg_T *eap)
          * 3. substitute the string. don't do this while live_substitution and
          *    there's no word to replace by eg : ":%s/pattern"
          */
-        if (!(EVENT_COLON && sub[0] == '\0' && !last_is_slash))
-        {
+        if (!(EVENT_COLON && sub[0] == '\0' && !last_is_slash)) {
           if (do_count) {
-            /* prevent accidentally changing the buffer by a function */
+            // prevent accidentally changing the buffer by a function
             save_ma = curbuf->b_p_ma;
             curbuf->b_p_ma = FALSE;
             sandbox++;
           }
-          /* get length of substitution part */
+          // get length of substitution part
           sublen = vim_regsub_multi(&regmatch,
                                     sub_firstlnum - regmatch.startpos[0].lnum,
                                     sub, sub_firstline, FALSE, p_magic, TRUE);
@@ -3833,14 +3835,17 @@ skip:
         else
           beginline(BL_WHITE | BL_FIX);
       }
-      if(EVENT_COLON != 1) { // live_mode : no message in command line
-        if (!do_sub_msg(do_count) && do_ask)
+      if (EVENT_COLON != 1) {  // live_mode : no message in command line
+        if (!do_sub_msg(do_count) && do_ask) {
           MSG("");
+        }
       }
-    } else
+    } else {
       global_need_beginline = TRUE;
-    if (do_print)
+    }
+    if (do_print) {
       print_line(curwin->w_cursor.lnum, do_number, do_list);
+    }
   } else if (!global_busy) {
     if (got_int)                /* interrupted */
       EMSG(_(e_interr));
@@ -3867,7 +3872,7 @@ skip:
     // we did a livesub only if we had no word to replace by and no slash to end
     if (!(EVENT_COLON && sub[0] == '\0' && !last_is_slash))
       sub_done = 1;
-    if(pat != NULL && p_sub) {
+    if (pat != NULL && p_sub) {
       ex_window_live_sub(pat, sub, lmatch);
     }
     // after used, free the list
@@ -3876,7 +3881,6 @@ skip:
     }
     kl_destroy(matchedline_T, lmatch);
   }
-
 }
 
 /*
@@ -5901,19 +5905,19 @@ void set_context_in_sign_cmd(expand_T *xp, char_u *arg)
 /// used in ex_window_live_sub for creating the column which contains the number
 /// of the line.
 char* compute_line_number(int col_size, linenr_T number) {
-    assert(col_size > log10(number)+3);
-    char *s = (char*)xcalloc((size_t)col_size+1, sizeof(char));
-    char *r = (char*)xcalloc((size_t)col_size+1, sizeof(char));
-    strcat(r, " [");
+  assert(col_size > log10(number)+3);
+  char *s = (char*)xcalloc((size_t)col_size+1, sizeof(char));
+  char *r = (char*)xcalloc((size_t)col_size+1, sizeof(char));
+  strcat(r, " [");
 
-    for (int i=2 ; i < col_size-(log10(number)+1) - 1 ; i++)
-        r[i] = ' ';
+  for (int i = 2 ; i < col_size-(log10(number)+1) - 1 ; i++)
+    r[i] = ' ';
 
-    snprintf(s, col_size,"%s%ld", r, number);
-    strcat(s,"]");
-    xfree(r);
+  snprintf(s, col_size,"%s%ld", r, number);
+  strcat(s, "]");
+  xfree(r);
 
-    return s;
+  return s;
 }
 
 /// function called after a live command to get back to
@@ -6010,7 +6014,7 @@ void ex_window_live_sub( char_u* pat, char_u* sub, klist_t(matchedline_T) *lmatc
   (void)setfname(curbuf, (char_u *)"[live_sub]", NULL, TRUE);
   set_option_value((char_u *)"bt", 0L, (char_u *)"nofile", OPT_LOCAL);
   set_option_value((char_u *)"swf", 0L, NULL, OPT_LOCAL);
-  curbuf->b_p_ma = FALSE; // Not Modifiable
+  curbuf->b_p_ma = FALSE;  // Not Modifiable
   curwin->w_p_fen = FALSE;
   curwin->w_p_rl = cmdmsg_rl;
   cmdmsg_rl = FALSE;
@@ -6051,14 +6055,14 @@ void ex_window_live_sub( char_u* pat, char_u* sub, klist_t(matchedline_T) *lmatc
     size_t line_size = STRLEN(mat.line) + col_width + 1;
 
     // Reallocation if str not long enough
-    if (line_size > curwin->w_frame->fr_width*sizeof(char))
-      str = xrealloc(str, line_size*sizeof(char));
+    if (line_size > curwin->w_frame->fr_width * sizeof(char))
+      str = xrealloc(str, line_size * sizeof(char));
 
     // Add the line number to the string
     char *col = compute_line_number(col_width, mat.lnum);
     snprintf(str, line_size, "%s%s", col, mat.line);
     ml_append(line++, (char_u *)str, (colnr_T)0, false);
-    
+
     int i=0;
     kl_iter(colnr_T, mat.start_col, col) {
       // highlight the replaced part
@@ -6066,10 +6070,13 @@ void ex_window_live_sub( char_u* pat, char_u* sub, klist_t(matchedline_T) *lmatc
         src_id_highlight = bufhl_add_hl(curbuf,
                                         src_id_highlight,
                                         2, // id of our highlight TODO : allow the user to change it
-                                        line,                                   // line in curbuf
-                                        (*col)->data + col_width + i*(sub_size-pat_size) +1,           // beginning of word
-                                        (*col)->data + col_width + i*(sub_size-pat_size) + sub_size);   // end of word
-      ++i;
+                                        line,  // line in curbuf
+                                        (*col)->data + 
+                                          col_width + 
+                                          i * (sub_size-pat_size) + 1,
+                                        (*col)->data + col_width + 
+                                        i * (sub_size-pat_size) + sub_size);  
+      i++;
     }
 
     // highlighting line number TODO : segfault in kmp map
@@ -6093,8 +6100,8 @@ void ex_window_live_sub( char_u* pat, char_u* sub, klist_t(matchedline_T) *lmatc
   // Restore the old window
   win_enter(oldwin, FALSE);
   finish_live_cmd(save_State, &winsizes, save_exmode,
-                  save_restart_edit, save_cmdmsg_rl, 1);
-  
+      save_restart_edit, save_cmdmsg_rl, 1);
+
   return;
 }
 
@@ -6103,25 +6110,25 @@ void ex_window_live_sub( char_u* pat, char_u* sub, klist_t(matchedline_T) *lmatc
 /// @param eap arguments of the substitution
 /// @return cmdl_progress
 /// @see LiveSub_state definition  
-LiveSub_state parse_sub_cmd (exarg_T *eap) {
+LiveSub_state parse_sub_cmd(exarg_T *eap) {
   int i = 0;
   LiveSub_state cmdl_progress;
-  
+
   if (eap->arg[i++] != '/')
     return LS_NO_WD;
-  
-  if (eap->arg[i++] == 0){
+
+  if (eap->arg[i++] == 0) {
     return LS_NO_WD;
   } else {
     cmdl_progress = LS_ONE_WD;
-    while (eap->arg[i] != 0){
+    while (eap->arg[i] != 0) {
       if (eap->arg[i] == '/' && eap->arg[i-1] != '\\') {
-        cmdl_progress = (eap->arg[i+1]==0) ? LS_TWO_SLASH_ONE_WD : LS_TWO_WD;
+        cmdl_progress = (eap->arg[i+1] == 0) ? LS_TWO_SLASH_ONE_WD : LS_TWO_WD;
         break;
       }
       i++;
     }
-  } 
+  }
   return cmdl_progress;
 }
 
@@ -6130,56 +6137,55 @@ LiveSub_state parse_sub_cmd (exarg_T *eap) {
 /// at every new character typed in the cmdbuff according to the
 /// actual state of the live_substitution
 void do_live_sub(exarg_T *eap) {
- 
+
   // if livesub disabled, do it the classical way
   if (!p_sub) {
     do_sub(eap);
     return;
   }
-  
+
   //count the number of '/' to know how many words can be parsed
   LiveSub_state cmdl_progress = parse_sub_cmd(eap);
 
   char_u *arg;
   char_u *tmp;
 
-
   switch (cmdl_progress) {
-    case LS_NO_WD: 
+    case LS_NO_WD:
       if (!EVENT_COLON)
         do_sub(eap);
       break;
-    case LS_ONE_WD: 
+    case LS_ONE_WD:
       if (EVENT_SUB == 1 && sub_done == 1) {
         do_cmdline_cmd(":u");
         sub_done = 0;
         EVENT_SUB = 0;
       }
-      //The lengh of the new arg is lower than twice the length of the command
+      // The lengh of the new arg is lower than twice the length of the command
       arg = xcalloc(2*STRLEN(eap->arg) + 1, sizeof(char_u));
 
-      //Save the state of eap
+      // Save the state of eap
       tmp = eap->arg;
 
-      //Change the argument of the command
-      //snprintf((char *) arg, 2*STRLEN(eap->arg) + 1,"%s%s", (char *) eap->arg, (char *) eap->arg);
-      //eap->arg = arg;
+      // Change the argument of the command
+      // snprintf((char *) arg, 2*STRLEN(eap->arg) + 1,"%s%s", (char *) eap->arg, (char *) eap->arg);
+      // eap->arg = arg;
 
-      //Highlight the word and open the split
+      // Highlight the word and open the split
       do_sub(eap);
-      if(sub_done == 1) {
-        do_cmdline_cmd(":u"); // to not polue the undo history
+      if (sub_done == 1) {
+        do_cmdline_cmd(":u");  // to not polue the undo history
         sub_done = 0;
       }
-      //Put back eap in first state
+      // Put back eap in first state
       eap->arg = tmp;
 
       xfree(arg);
 
       break;
 
-    case LS_TWO_SLASH_ONE_WD: // live_sub will remove the arg
-    case LS_TWO_WD: // live_sub needs to undo
+    case LS_TWO_SLASH_ONE_WD:  // live_sub will remove the arg
+    case LS_TWO_WD:  // live_sub needs to undo
       if (EVENT_SUB == 1 && sub_done == 1) {
         do_cmdline_cmd(":u");
         sub_done = 0;
@@ -6192,7 +6198,7 @@ void do_live_sub(exarg_T *eap) {
       break;
   }
 
-  
+
   update_screen(0);
   if (livebuf != NULL && buf_valid(livebuf)) {
     close_windows(livebuf, false);
