@@ -2316,10 +2316,11 @@ u_undo_end (
   if ((fdo_flags & FDO_UNDO) && KeyTyped)
     foldOpenCursor();
 
-  if (global_busy           /* no messages now, wait until global is finished */
-      || !messaging()        /* 'lazyredraw' set, don't do messages now */
-      || EVENT_COLON == 1)  // livemode dont show messages
+  if (global_busy           // no messages now, wait until global is finished
+      || !messaging()       // 'lazyredraw' set, don't do messages now
+      || EVENT_COLON == 1) {  // livemode doesn't show messages
     return;
+  }
 
   if (curbuf->b_ml.ml_flags & ML_EMPTY)
     --u_newcount;

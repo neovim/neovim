@@ -55,14 +55,16 @@ void state_enter(VimState *s)
       key = !queue_empty(loop.events) ? K_EVENT : safe_vgetc();
     }
 
-    if (key == K_EVENT)
+    if (key == K_EVENT) {
       may_sync_undo();
+    }
 
     int execute_result = s->execute(s, key);
 
     // close buffer and windows if we leave the live_sub mode
     // and undo
-    if (p_sub && EVENT_COLON && (key == ESC || key == Ctrl_C) && is_live(access_cmdline())) {
+    if (p_sub && EVENT_COLON && (key == ESC || key == Ctrl_C) 
+        && is_live(access_cmdline())) {
       EVENT_COLON = 0;
       finish_live_cmd(NORMAL, NULL, 0, 0, 0, 0);
       return;
@@ -71,7 +73,7 @@ void state_enter(VimState *s)
       break;
     } else if (execute_result == -1) {
       goto getkey;
-    } else if (p_sub && EVENT_COLON == 1 && is_live(access_cmdline())){
+    } else if (p_sub && EVENT_COLON == 1 && is_live(access_cmdline())) {
       // compute a live action
       do_cmdline(access_cmdline(), NULL, NULL, DOCMD_KEEPLINE);
       redrawcmdline();

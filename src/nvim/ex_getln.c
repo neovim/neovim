@@ -356,7 +356,7 @@ static int command_line_execute(VimState *state, int key)
 
   CommandLineState *s = (CommandLineState *)state;
   s->c = key;
-  
+
   if (s->c == K_EVENT) {
     queue_process_events(loop.events);
     return 1;
@@ -704,7 +704,7 @@ static int command_line_execute(VimState *state, int key)
       || s->c == '\r'
       || s->c == K_KENTER
       || (s->c == ESC
-        && (!KeyTyped || vim_strchr(p_cpo, CPO_ESC) != NULL))) {
+          && (!KeyTyped || vim_strchr(p_cpo, CPO_ESC) != NULL))) {
     // End any live action
     EVENT_COLON = 0;
     // In Ex mode a backslash escapes a newline.
@@ -5344,6 +5344,6 @@ histentry_T *hist_get_array(const uint8_t history_type, int **const new_hisidx,
   return history[history_type];
 }
 
-char_u* access_cmdline (void) {
+char_u *access_cmdline(void) {
   return ccline.cmdbuff;
 }

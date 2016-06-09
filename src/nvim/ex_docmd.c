@@ -270,7 +270,7 @@ do_exmode (
  */
 int do_cmdline_cmd(char *cmd)
 {
-  if(EVENT_COLON == 1) {
+  if (EVENT_COLON == 1) {
     return do_cmdline((char_u *)cmd, NULL, NULL,
         DOCMD_NOWAIT|DOCMD_KEYTYPED);
   } else {
@@ -327,14 +327,14 @@ int do_cmdline(char_u *cmdline, LineGetter fgetline,
   struct loop_cookie cmd_loop_cookie;
   void        *real_cookie;
   int getline_is_func;
-  static int call_depth = 0;            /* recursiveness */
+  static int call_depth = 0;  // recursiveness
   
-  /* For every pair of do_cmdline()/do_one_cmd() calls, use an extra memory
-   * location for storing error messages to be converted to an exception.
-   * This ensures that the do_errthrow() call in do_one_cmd() does not
-   * combine the messages stored by an earlier invocation of do_one_cmd()
-   * with the command name of the later one.  This would happen when
-   * BufWritePost autocommands are executed after a write error. */
+  // For every pair of do_cmdline()/do_one_cmd() calls, use an extra memory
+  // location for storing error messages to be converted to an exception.
+  // This ensures that the do_errthrow() call in do_one_cmd() does not
+  // combine the messages stored by an earlier invocation of do_one_cmd()
+  // with the command name of the later one.  This would happen when
+  // BufWritePost autocommands are executed after a write error.
   saved_msg_list = msg_list;
   msg_list = &private_msg_list;
   private_msg_list = NULL;
@@ -601,17 +601,17 @@ int do_cmdline(char_u *cmdline, LineGetter fgetline,
      *    do_one_cmd() will return NULL if there is no trailing '|'.
      *    "cmdline_copy" can change, e.g. for '%' and '#' expansion.
      */
-    ++recursive;
-    if(EVENT_COLON == 1) { // in live mode, no verbose
+    recursive++;
+    if (EVENT_COLON == 1) {  // in live mode, no verbose
       next_cmdline = do_one_cmd(&cmdline_copy, flags,
-          &cstack,
-          cmd_getline, cmd_cookie);
-    } else {
+                                &cstack,
+                                cmd_getline, cmd_cookie);
+      } else {
       next_cmdline = do_one_cmd(&cmdline_copy, flags & DOCMD_VERBOSE,
-          &cstack,
-          cmd_getline, cmd_cookie);
+                                &cstack,
+                                cmd_getline, cmd_cookie);
     }
-    --recursive;
+    recursive--;
 
     if (cmd_cookie == (void *)&cmd_loop_cookie)
       /* Use "current_line" from "cmd_loop_cookie", it may have been
@@ -1483,24 +1483,23 @@ static char_u * do_one_cmd(char_u **cmdlinep,
   }
   p = find_command(&ea, NULL);
 
-  
-  
-  /*
-   * 4. Parse a range specifier of the form: addr [,addr] [;addr] ..
-   *
-   * where 'addr' is:
-   *
-   * %	      (entire file)
-   * $  [+-NUM]
-   * 'x [+-NUM] (where x denotes a currently defined mark)
-   * .  [+-NUM]
-   * [+-NUM]..
-   * NUM
-   *
-   * The ea.cmd pointer is updated to point to the first character following the
-   * range spec. If an initial address is found, but no second, the upper bound
-   * is equal to the lower.
-   */
+
+
+  //
+  // 4. Parse a range specifier of the form: addr [,addr] [;addr] ..
+  //
+  // where 'addr' is:
+  //
+  // %	      (entire file)
+  // $  [+-NUM]
+  // 'x [+-NUM] (where x denotes a currently defined mark)
+  // .  [+-NUM]
+  // [+-NUM]..
+  // NUM
+  //
+  // The ea.cmd pointer is updated to point to the first character following the
+  // range spec. If an initial address is found, but no second, the upper bound
+  // is equal to the lower.
 
   // ea.addr_type for user commands is set by find_ucmd
   if (!IS_USER_CMDIDX(ea.cmdidx)) {
@@ -7886,7 +7885,7 @@ void exec_normal_cmd(char_u *cmd, int remap, bool silent)
 static void ex_checkpath(exarg_T *eap)
 {
   find_pattern_in_path(NULL, 0, 0, FALSE, FALSE, CHECK_PATH, 1L,
-                       eap->forceit ? ACTION_SHOW_ALL : ACTION_SHOW,
+                        eap->forceit ? ACTION_SHOW_ALL : ACTION_SHOW,
                        (linenr_T)1, (linenr_T)MAXLNUM);
 }
 
@@ -9545,7 +9544,7 @@ bool is_live (char_u *cmd_live)
   int full;
   
   // parse the command line
-  if(ea.cmd != NULL) {
+  if (ea.cmd != NULL) {
     ea.cmd = skip_range(ea.cmd, NULL);
     if (*ea.cmd == '*') {
       ea.cmd = skipwhite(ea.cmd + 1);

@@ -1,3 +1,5 @@
+-- Test the good behavior of the live action : substitution
+
 local helpers = require('test.functional.helpers')
 local Screen = require('test.functional.ui.screen')
 local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
@@ -21,7 +23,7 @@ describe('Live Substitution', function()
         clear()
         execute("syntax on")
         execute("set livesub")
-        screen = Screen.new(40, 8)  -- 8 lines of 40 char
+        screen = Screen.new(40, 40)  -- 40 lines of 40 char
         screen:attach()
         screen:set_default_attr_ignore( {{bold=true, foreground=hl_colors.NonText}} )
         screen:set_default_attr_ids({
@@ -49,331 +51,504 @@ describe('Live Substitution', function()
         return request('buffer_clear_highlight', curbuf, ...)
     end
 
+    -- ----------------------------------------------------------------------
+    -- simple tests
+    -- ----------------------------------------------------------------------
 
---    it('no split if :s', function()
---        insert([[
---      these are some lines
---      with colorful text (are)]])
---        feed(':set nohlsearch\n')
---        feed(':s/are/ARE\n')
---
---        screen:expect([[
---      these are some lines                    |
---      ^with colorful text (ARE)                |
---      ~                                       |
---      ~                                       |
---      ~                                       |
---      ~                                       |
---      ~                                       |
---      :s/are/ARE                              |
---    ]])
---    end)
-
---    it('split if :%s', function()
---        insert([[
---      these are some lines
---      with colorful text (are)]])
---        --feed(':set nohlsearch\n')
---        feed(':%s/are/ARE\n')
---
---        screen:expect([[
---      ^with colorful text (ARE)                |
---      {UNEXPECTED bold = true, reverse = true:[No Name] [+]                           }|
---       [1] these ARE some lines               |
---       [2] with colorful text (ARE)           |
---                                              |
---      ~                                       |
---      {UNEXPECTED reverse = true:[live_sub]                              }|
---      :%s/are/ARE                             |
---    ]])
---    end)
---
---    it('split if :2,4s', function()
---        insert([[
---      these are some lines
---      with colorful text (are)
---      we are proud to announce you
---      our product : areXareXare
---      and don't you dare to discuss
---      ]])
---        feed(':set nohlsearch\n')
---        feed(':2,4s/are/ARE/g\n')
---
---        screen:expect([[
---      ^our product : AREXAREXARE               |
---      {UNEXPECTED bold = true, reverse = true:[No Name] [+]                           }|
---       [2] with colorful text (ARE)           |
---       [3] we ARE proud to announce you       |
---       [4] our product : AREXAREXARE          |
---                                              |
---      {UNEXPECTED reverse = true:[live_sub]                              }|
---      5 substitutions on 3 lines              |
---    ]])
---    end)
-
-
---    it('EXAMPLE', function()
---        insert([[
---      these are some lines
---      with colorful text]])
---        feed('+')
---
---        screen:expect([[
---      these are some lines                    |
---      with colorful tex^t                     |
---      ~                                       |
---      ~                                       |
---      ~                                       |
---      ~                                       |
---      ~                                       |
---                                              |
---    ]])
---
---        add_hl(-1, "String", 0 , 10, 14)
---        add_hl(-1, "Statement", 1 , 5, -1)
---
---        screen:expect([[
---      these are {1:some} lines                    |
---      with {2:colorful tex^t}                      |
---      ~                                       |
---      ~                                       |
---      ~                                       |
---      ~                                       |
---      ~                                       |
---                                              |
---    ]])
---
---        feed("ggo<esc>")
---        screen:expect([[
---      these are {1:some} lines                    |
---      ^                                        |
---      with {2:colorful text}                      |
---      ~                                       |
---      ~                                       |
---      ~                                       |
---      ~                                       |
---                                              |
---    ]])
---
---        clear_hl(-1, 0 , -1)
---        screen:expect([[
---      these are some lines                    |
---      ^                                        |
---      with colorful text                      |
---      ~                                       |
---      ~                                       |
---      ~                                       |
---      ~                                       |
---                                              |
---    ]])
---    end)
---
---    describe('support adding multiple sources', function()
---        local id1, id2
---        before_each(function()
---            insert([[
---        a longer example
---        in order to demonstrate
---        combining highlights
---        from different sources]])
---
---            execute("hi ImportantWord gui=bold cterm=bold")
---            id1 = add_hl(0, "ImportantWord", 0, 2, 8)
---            add_hl(id1, "ImportantWord", 1, 12, -1)
---            add_hl(id1, "ImportantWord", 2, 0, 9)
---            add_hl(id1, "ImportantWord", 3, 5, 14)
---
---            id2 = add_hl(0, "Special", 0, 2, 8)
---            add_hl(id2, "Identifier", 1, 3, 8)
---            add_hl(id2, "Special", 1, 14, 20)
---            add_hl(id2, "Underlined", 2, 6, 12)
---            add_hl(id2, "Underlined", 3, 0, 9)
---            neq(id1, id2)
---
---            screen:expect([[
---        a {4:longer} example                        |
---        in {5:order} to {6:de}{4:monstr}{6:ate}                 |
---        {6:combin}{7:ing}{8: hi}ghlights                    |
---        {8:from }{7:diff}{6:erent} source^s                  |
---        ~                                       |
---        ~                                       |
---        ~                                       |
---        :hi ImportantWord gui=bold cterm=bold   |
---      ]])
---        end)
---
---        it('and clearing the first added', function()
---            clear_hl(id1, 0, -1)
---            screen:expect([[
---        a {3:longer} example                        |
---        in {5:order} to de{3:monstr}ate                 |
---        combin{8:ing hi}ghlights                    |
---        {8:from diff}erent source^s                  |
---        ~                                       |
---        ~                                       |
---        ~                                       |
---        :hi ImportantWord gui=bold cterm=bold   |
---      ]])
---        end)
---
---        it('and clearing the second added', function()
---            clear_hl(id2, 0, -1)
---            screen:expect([[
---        a {6:longer} example                        |
---        in order to {6:demonstrate}                 |
---        {6:combining} highlights                    |
---        from {6:different} source^s                  |
---        ~                                       |
---        ~                                       |
---        ~                                       |
---        :hi ImportantWord gui=bold cterm=bold   |
---      ]])
---        end)
---
---        it('and clearing line ranges', function()
---            clear_hl(-1, 0, 1)
---            clear_hl(id1, 1, 2)
---            clear_hl(id2, 2, -1)
---            screen:expect([[
---        a longer example                        |
---        in {5:order} to de{3:monstr}ate                 |
---        {6:combining} highlights                    |
---        from {6:different} source^s                  |
---        ~                                       |
---        ~                                       |
---        ~                                       |
---        :hi ImportantWord gui=bold cterm=bold   |
---      ]])
---        end)
---
---        it('and renumbering lines', function()
---            feed('3Gddggo<esc>')
---            screen:expect([[
---        a {4:longer} example                        |
---        ^                                        |
---        in {5:order} to {6:de}{4:monstr}{6:ate}                 |
---        {8:from }{7:diff}{6:erent} sources                  |
---        ~                                       |
---        ~                                       |
---        ~                                       |
---                                                |
---      ]])
---
---            execute(':3move 4')
---            screen:expect([[
---        a {4:longer} example                        |
---                                                |
---        {8:from }{7:diff}{6:erent} sources                  |
---        ^in {5:order} to {6:de}{4:monstr}{6:ate}                 |
---        ~                                       |
---        ~                                       |
---        ~                                       |
---        ::3move 4                               |
---      ]])
---        end)
---    end)
---
---    it('prioritizes latest added highlight', function()
---        insert([[
---      three overlapping colors]])
---        add_hl(0, "Identifier", 0, 6, 17)
---        add_hl(0, "String", 0, 14, 23)
---        local id = add_hl(0, "Special", 0, 0, 9)
---
---        screen:expect([[
---      {3:three ove}{5:rlapp}{1:ing color}^s                |
---      ~                                       |
---      ~                                       |
---      ~                                       |
---      ~                                       |
---      ~                                       |
---      ~                                       |
---                                              |
---    ]])
---
---        clear_hl(id, 0, 1)
---        screen:expect([[
---      three {5:overlapp}{1:ing color}^s                |
---      ~                                       |
---      ~                                       |
---      ~                                       |
---      ~                                       |
---      ~                                       |
---      ~                                       |
---                                              |
---    ]])
---    end)
---
-    it('works with multibyte text', function()
-        insert([[
-      Ta båten över sjön!]])
-        add_hl(-1, "Identifier", 0, 3, 9)
-        add_hl(-1, "String", 0, 16, 21)
-
-        screen:expect([[
-      Ta {5:båten} över {1:sjön}^!                     |
-      ~                                       |
-      ~                                       |
-      ~                                       |
-      ~                                       |
-      ~                                       |
-      ~                                       |
-                                              |
-    ]])
-    end)
-
-    it('split if :%s/a', function()
+    it('old behavior if :set nolivesub', function()
         insert([[
       these are some lines
       with colorful text (are)]])
-        feed(':%s/are')
+        feed(':set nolivesub\n')
+        feed(':%s/are/ARE')
 
         screen:expect([[
-with colorful text ({UNEXPECTED background = Screen.colors.Yellow:are})                |
-{UNEXPECTED bold = true, reverse = true:[No Name] [+]                           }|
- [1]these {UNEXPECTED background = Screen.colors.Yellow:are} some lines                |
- [2]with colorful text ({UNEXPECTED background = Screen.colors.Yellow:are})            |
-                                        |
-~                                       |
-{UNEXPECTED reverse = true:[live_sub]                              }|
-:%s/are^                                 |
+      these are some lines                    |
+      with colorful text (are)                |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      :%s/are/ARE^                             |
+    ]])
+
+        feed('\27')     -- ESC
+        feed(':%s/are/ARE\n')
+
+        screen:expect([[
+          these ARE some lines                    |
+          ^with colorful text (ARE)                |
+          ~                                       |
+          ~                                       |
+          ~                                       |
+          ~                                       |
+          ~                                       |
+          ~                                       |
+          ~                                       |
+          ~                                       |
+          ~                                       |
+          ~                                       |
+          ~                                       |
+          ~                                       |
+          ~                                       |
+          ~                                       |
+          ~                                       |
+          ~                                       |
+          ~                                       |
+          ~                                       |
+          ~                                       |
+          ~                                       |
+          ~                                       |
+          ~                                       |
+          ~                                       |
+          ~                                       |
+          ~                                       |
+          ~                                       |
+          ~                                       |
+          ~                                       |
+          ~                                       |
+          ~                                       |
+          ~                                       |
+          ~                                       |
+          ~                                       |
+          ~                                       |
+          ~                                       |
+          ~                                       |
+          ~                                       |
+          :%s/are/ARE                             |
     ]])
     end)
 
-  it('split if :%s/a', function()
+    it('no split if :s', function()
+        insert([[
+      these are some lines
+      with colorful text (are)]])
+        feed(':s/are/ARE')
+
+        screen:expect([[
+      these are some lines                    |
+      with colorful text (are)                |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      :s/are/ARE^                              |
+    ]])
+    end)
+
+    it('split if :%s/are', function()
+        insert([[
+      these are some lines
+      without colorful text (are)]])
+        feed(':%s/are')
+
+        screen:expect([[
+        these {UNEXPECTED background = Screen.colors.Yellow:are} some lines                    |
+        without colorful text ({UNEXPECTED background = Screen.colors.Yellow:are})             |
+        ~                                       |
+        ~                                       |
+        ~                                       |
+        ~                                       |
+        ~                                       |
+        ~                                       |
+        ~                                       |
+        ~                                       |
+        ~                                       |
+        ~                                       |
+        ~                                       |
+        ~                                       |
+        ~                                       |
+        ~                                       |
+        ~                                       |
+        ~                                       |
+        ~                                       |
+        ~                                       |
+        ~                                       |
+        ~                                       |
+        ~                                       |
+        ~                                       |
+        ~                                       |
+        ~                                       |
+        ~                                       |
+        ~                                       |
+        ~                                       |
+        ~                                       |
+        {UNEXPECTED bold = true, reverse = true:[No Name] [+]                           }|
+         [1]these {UNEXPECTED background = Screen.colors.Yellow:are} some lines                |
+         [2]without colorful text ({UNEXPECTED background = Screen.colors.Yellow:are})         |
+                                                |
+        ~                                       |
+        ~                                       |
+        ~                                       |
+        ~                                       |
+        {UNEXPECTED reverse = true:[live_sub]                              }|
+        :%s/are^                                 |
+    ]])
+    end)
+
+    it('split if :%s/are/', function()
         insert([[
       these are some lines
       with colorful text (are)]])
         feed(':%s/are/')
 
         screen:expect([[
-with colorful text ()                   |
-{UNEXPECTED bold = true, reverse = true:[No Name] [+]                           }|
- [1]these  some lines                   |
- [2]with colorful text ()               |
-                                        |
-~                                       |
-{UNEXPECTED reverse = true:[live_sub]                              }|
-:%s/are/^                                |
+        these  some lines                       |
+        with colorful text ()                   |
+        ~                                       |
+        ~                                       |
+        ~                                       |
+        ~                                       |
+        ~                                       |
+        ~                                       |
+        ~                                       |
+        ~                                       |
+        ~                                       |
+        ~                                       |
+        ~                                       |
+        ~                                       |
+        ~                                       |
+        ~                                       |
+        ~                                       |
+        ~                                       |
+        ~                                       |
+        ~                                       |
+        ~                                       |
+        ~                                       |
+        ~                                       |
+        ~                                       |
+        ~                                       |
+        ~                                       |
+        ~                                       |
+        ~                                       |
+        ~                                       |
+        ~                                       |
+        {UNEXPECTED bold = true, reverse = true:[No Name] [+]                           }|
+         [1]these  some lines                   |
+         [2]with colorful text ()               |
+                                                |
+        ~                                       |
+        ~                                       |
+        ~                                       |
+        ~                                       |
+        {UNEXPECTED reverse = true:[live_sub]                              }|
+        :%s/are/^                                |
     ]])
-end)
+    end)
 
 
-  it('split if :%s/a', function()
+    it('split if :%s/are/to', function()
         insert([[
       these are some lines
       with colorful text (are)]])
         feed(':%s/are/to')
 
         screen:expect([[
-with colorful text (to)                 |
-{UNEXPECTED bold = true, reverse = true:[No Name] [+]                           }|
- [1]these to some lines                 |
- [2]with colorful text (to)             |
-                                        |
-~                                       |
-{UNEXPECTED reverse = true:[live_sub]                              }|
-:%s/are/to^                              |
-    ]])
-end)
+        these to some lines                     |
+        with colorful text (to)                 |
+        ~                                       |
+        ~                                       |
+        ~                                       |
+        ~                                       |
+        ~                                       |
+        ~                                       |
+        ~                                       |
+        ~                                       |
+        ~                                       |
+        ~                                       |
+        ~                                       |
+        ~                                       |
+        ~                                       |
+        ~                                       |
+        ~                                       |
+        ~                                       |
+        ~                                       |
+        ~                                       |
+        ~                                       |
+        ~                                       |
+        ~                                       |
+        ~                                       |
+        ~                                       |
+        ~                                       |
+        ~                                       |
+        ~                                       |
+        ~                                       |
+        ~                                       |
+        {UNEXPECTED bold = true, reverse = true:[No Name] [+]                           }|
+         [1]these to some lines                 |
+         [2]with colorful text (to)             |
+                                                |
+        ~                                       |
+        ~                                       |
+        ~                                       |
+        ~                                       |
+        {UNEXPECTED reverse = true:[live_sub]                              }|
+        :%s/are/to^                              |
+   ]])
+    end)
+
+    -- ----------------------------------------------------------------------
+    -- complex tests
+    -- ----------------------------------------------------------------------
+
+    it('scenario', function()
+        insert([[
+      these are some lines
+      with colorful text (are)]])
+
+        feed('gg')
+        feed('2yy')
+        feed('10000p')
+
+        feed(':%s/are/ARE')     -- simple sub, aborted
+
+        screen:expect([[
+            with colorful text (ARE)                |
+            these ARE some lines                    |
+            with colorful text (ARE)                |
+            these ARE some lines                    |
+            with colorful text (ARE)                |
+            these ARE some lines                    |
+            with colorful text (ARE)                |
+            these ARE some lines                    |
+            with colorful text (ARE)                |
+            these ARE some lines                    |
+            with colorful text (ARE)                |
+            these ARE some lines                    |
+            with colorful text (ARE)                |
+            these ARE some lines                    |
+            with colorful text (ARE)                |
+            these ARE some lines                    |
+            with colorful text (ARE)                |
+            these ARE some lines                    |
+            with colorful text (ARE)                |
+            these ARE some lines                    |
+            with colorful text (ARE)                |
+            these ARE some lines                    |
+            with colorful text (ARE)                |
+            these ARE some lines                    |
+            with colorful text (ARE)                |
+            these ARE some lines                    |
+            with colorful text (ARE)                |
+            these ARE some lines                    |
+            with colorful text (ARE)                |
+            with colorful text (ARE)                |
+            {UNEXPECTED bold = true, reverse = true:[No Name] [+]                           }|
+             [    1]these ARE some lines            |
+             [    2]these ARE some lines            |
+             [    3]with colorful text (ARE)        |
+             [    4]these ARE some lines            |
+             [    5]with colorful text (ARE)        |
+             [    6]these ARE some lines            |
+             [    7]with colorful text (ARE)        |
+            {UNEXPECTED reverse = true:[live_sub]                              }|
+            :%s/are/ARE^                             |
+      ]])
+        
+        feed('\27')
+        feed(':%s/some.*/nothing')      -- regex sub, aborted
+
+        screen:expect([[
+            these are nothing                       |
+            with colorful text (are)                |
+            these are nothing                       |
+            with colorful text (are)                |
+            these are nothing                       |
+            with colorful text (are)                |
+            these are nothing                       |
+            with colorful text (are)                |
+            these are nothing                       |
+            with colorful text (are)                |
+            these are nothing                       |
+            with colorful text (are)                |
+            these are nothing                       |
+            with colorful text (are)                |
+            these are nothing                       |
+            with colorful text (are)                |
+            these are nothing                       |
+            with colorful text (are)                |
+            these are nothing                       |
+            with colorful text (are)                |
+            these are nothing                       |
+            with colorful text (are)                |
+            these are nothing                       |
+            with colorful text (are)                |
+            these are nothing                       |
+            with colorful text (are)                |
+            these are nothing                       |
+            with colorful text (are)                |
+            these are nothing                       |
+            with colorful text (are)                |
+            {UNEXPECTED bold = true, reverse = true:[No Name] [+]                           }|
+             [    1]these are nothing               |
+             [    2]these are nothing               |
+             [    4]these are nothing               |
+             [    6]these are nothing               |
+             [    8]these are nothing               |
+             [   10]these are nothing               |
+             [   12]these are nothing               |
+            {UNEXPECTED reverse = true:[live_sub]                              }|
+            :%s/some.*/nothing^                      |
+       ]])
+
+        feed('\27')
+        feed(':%s/some.*/nothing\n')      -- regex sub, validated
+
+        screen:expect([[
+            these are nothing                       |
+            with colorful text (are)                |
+            these are nothing                       |
+            with colorful text (are)                |
+            these are nothing                       |
+            with colorful text (are)                |
+            these are nothing                       |
+            with colorful text (are)                |
+            these are nothing                       |
+            with colorful text (are)                |
+            these are nothing                       |
+            with colorful text (are)                |
+            these are nothing                       |
+            with colorful text (are)                |
+            these are nothing                       |
+            with colorful text (are)                |
+            these are nothing                       |
+            with colorful text (are)                |
+            these are nothing                       |
+            with colorful text (are)                |
+            these are nothing                       |
+            with colorful text (are)                |
+            these are nothing                       |
+            with colorful text (are)                |
+            these are nothing                       |
+            with colorful text (are)                |
+            these are nothing                       |
+            with colorful text (are)                |
+            these are nothing                       |
+            with colorful text (are)                |
+            these are nothing                       |
+            with colorful text (are)                |
+            these are nothing                       |
+            with colorful text (are)                |
+            these are nothing                       |
+            with colorful text (are)                |
+            these are nothing                       |
+            with colorful text (are)                |
+            ^these are nothing                       |
+                                                    |
+       ]])
+
+        feed('i')
+        feed('example of insertion')
+
+        screen:expect([[
+            these are nothing                       |
+            with colorful text (are)                |
+            these are nothing                       |
+            with colorful text (are)                |
+            these are nothing                       |
+            with colorful text (are)                |
+            these are nothing                       |
+            with colorful text (are)                |
+            these are nothing                       |
+            with colorful text (are)                |
+            these are nothing                       |
+            with colorful text (are)                |
+            these are nothing                       |
+            with colorful text (are)                |
+            these are nothing                       |
+            with colorful text (are)                |
+            these are nothing                       |
+            with colorful text (are)                |
+            these are nothing                       |
+            with colorful text (are)                |
+            these are nothing                       |
+            with colorful text (are)                |
+            these are nothing                       |
+            with colorful text (are)                |
+            these are nothing                       |
+            with colorful text (are)                |
+            these are nothing                       |
+            with colorful text (are)                |
+            these are nothing                       |
+            with colorful text (are)                |
+            these are nothing                       |
+            with colorful text (are)                |
+            these are nothing                       |
+            with colorful text (are)                |
+            these are nothing                       |
+            with colorful text (are)                |
+            these are nothing                       |
+            with colorful text (are)                |
+            example of insertion^these are nothing   |
+            {6:-- INSERT --}                            |
+       ]])
+        
+    end)
+
 end)
