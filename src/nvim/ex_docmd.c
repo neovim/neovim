@@ -272,10 +272,10 @@ int do_cmdline_cmd(char *cmd)
 {
   if (EVENT_COLON == 1) {
     return do_cmdline((char_u *)cmd, NULL, NULL,
-        DOCMD_NOWAIT|DOCMD_KEYTYPED);
+                      DOCMD_NOWAIT|DOCMD_KEYTYPED);
   } else {
   return do_cmdline((char_u *)cmd, NULL, NULL,
-      DOCMD_VERBOSE|DOCMD_NOWAIT|DOCMD_KEYTYPED);
+                    DOCMD_VERBOSE|DOCMD_NOWAIT|DOCMD_KEYTYPED);
   }
 }
 
@@ -328,7 +328,7 @@ int do_cmdline(char_u *cmdline, LineGetter fgetline,
   void        *real_cookie;
   int getline_is_func;
   static int call_depth = 0;  // recursiveness
-  
+
   // For every pair of do_cmdline()/do_one_cmd() calls, use an extra memory
   // location for storing error messages to be converted to an exception.
   // This ensures that the do_errthrow() call in do_one_cmd() does not
@@ -1490,7 +1490,7 @@ static char_u * do_one_cmd(char_u **cmdlinep,
   //
   // where 'addr' is:
   //
-  // %	      (entire file)
+  // % (entire file)
   // $  [+-NUM]
   // 'x [+-NUM] (where x denotes a currently defined mark)
   // .  [+-NUM]
@@ -7885,7 +7885,7 @@ void exec_normal_cmd(char_u *cmd, int remap, bool silent)
 static void ex_checkpath(exarg_T *eap)
 {
   find_pattern_in_path(NULL, 0, 0, FALSE, FALSE, CHECK_PATH, 1L,
-                        eap->forceit ? ACTION_SHOW_ALL : ACTION_SHOW,
+                       eap->forceit ? ACTION_SHOW_ALL : ACTION_SHOW,
                        (linenr_T)1, (linenr_T)MAXLNUM);
 }
 
@@ -9542,7 +9542,7 @@ bool is_live (char_u *cmd_live)
   exarg_T ea;
   ea.cmd = access_cmdline();
   int full;
-  
+
   // parse the command line
   if (ea.cmd != NULL) {
     ea.cmd = skip_range(ea.cmd, NULL);

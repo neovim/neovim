@@ -63,7 +63,7 @@ void state_enter(VimState *s)
 
     // close buffer and windows if we leave the live_sub mode
     // and undo
-    if (p_sub && EVENT_COLON && (key == ESC || key == Ctrl_C) 
+    if (p_sub && EVENT_COLON && (key == ESC || key == Ctrl_C)
         && is_live(access_cmdline())) {
       EVENT_COLON = 0;
       finish_live_cmd(NORMAL, NULL, 0, 0, 0, 0);
