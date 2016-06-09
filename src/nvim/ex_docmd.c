@@ -7872,8 +7872,10 @@ void exec_normal(bool was_typed)
 
   clear_oparg(&oa);
   finish_op = false;
-  while ((!stuff_empty() || ((was_typed || !typebuf_typed())
-         && typebuf.tb_len > 0)) && !got_int) {
+  while ((!stuff_empty()
+          || ((was_typed || !typebuf_typed())
+              && typebuf.tb_len > 0))
+         && !got_int) {
     update_topline_cursor();
     normal_cmd(&oa, true);      // execute a Normal mode cmd
   }
