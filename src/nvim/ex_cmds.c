@@ -2919,15 +2919,15 @@ void do_sub(exarg_T *eap)
   linenr_T lnum;
   long i = 0;
   regmmatch_T regmatch;
-  static int do_all = FALSE;            // do multiple substitutions per line
-  static int do_ask = FALSE;            // ask for confirmation
+  static int do_all = false;            // do multiple substitutions per line
+  static int do_ask = false;            // ask for confirmation
   static bool do_count = false;         // count only */
-  //static int do_error = TRUE;         // if false, ignore errors
+  // static int do_error = TRUE;         // if false, ignore errors
   // if live mode, ignore errors
-  static int do_error = FALSE;          // if false, ignore errors
-  static int do_print = FALSE;          // print last line with subs.
-  static int do_list = FALSE;           // list last line with subs.
-  static int do_number = FALSE;         // list last line with line nr
+  static int do_error = false;          // if false, ignore errors
+  static int do_print = false;          // print last line with subs.
+  static int do_list = false;           // list last line with subs.
+  static int do_number = false;         // list last line with line nr
   static int do_ic = 0;                 // ignore case flag
   int save_do_all;                      // remember user specified 'g' flag
   int save_do_ask;                      // remember user specified 'c' flag
@@ -2947,7 +2947,7 @@ void do_sub(exarg_T *eap)
   linenr_T line2;
   long nmatch;                          // number of lines in match
   char_u      *sub_firstline;           // allocated copy of first sub line
-  int endcolumn = FALSE;                /* cursor in last column when done */
+  int endcolumn = false;                // cursor in last column when done
   pos_T old_cursor = curwin->w_cursor;
   int start_nsubs;
   int save_ma = 0;
@@ -3176,9 +3176,10 @@ void do_sub(exarg_T *eap)
 
   int searchRC_option = (EVENT_COLON) ? 0 : SEARCH_HIS;
   if (search_regcomp(pat, RE_SUBST, which_pat, searchRC_option,
-      &regmatch) == FAIL) {
-    if (do_error)
+                     &regmatch) == FAIL) {
+    if (do_error) {
       EMSG(_(e_invcmd));
+    }
     return;
   }
 
@@ -3219,7 +3220,7 @@ void do_sub(exarg_T *eap)
       int len, copy_len, needed_len;
       long nmatch_tl = 0;               /* nr of lines matched below lnum */
       int do_again;                     /* do it again after joining lines */
-      int skip_match = FALSE;
+      int skip_match = false;
       linenr_T sub_firstlnum;           // nr of first sub line
 
       /*
@@ -3321,11 +3322,11 @@ void do_sub(exarg_T *eap)
             && regmatch.endpos[0].lnum == 0
             && matchcol == regmatch.endpos[0].col) {
           if (sub_firstline[matchcol] == NUL) {
-            /* We already were at the end of the line.  Don't look
-             * for a match in this line again. */
-            skip_match = TRUE;
+            // We already were at the end of the line.  Don't look
+            // for a match in this line again.
+            skip_match = true;
           } else {
-            /* search for a match at next column */
+            // search for a match at next column
             if (has_mbyte)
               matchcol += mb_ptr2len(sub_firstline + matchcol);
             else
@@ -3354,11 +3355,12 @@ void do_sub(exarg_T *eap)
             skip_match = true;
           }
           sub_nsubs++;
-          did_sub = TRUE;
+          did_sub = true;
           // Skip the substitution, unless an expression is used,
           // then it is evaluated in the sandbox.
-          if (!(sub[0] == '\\' && sub[1] == '='))
+          if (!(sub[0] == '\\' && sub[1] == '=')) {
             goto skip;
+          }
         }
 
         if (do_ask && !EVENT_COLON) {
@@ -3447,11 +3449,10 @@ void do_sub(exarg_T *eap)
 
               curwin->w_p_fen = save_p_fen;
               if (msg_row == Rows - 1)
-                msg_didout = false;                     /* avoid a scroll-up */
+                msg_didout = false;                     // avoid a scroll-up
               msg_starthere();
               i = msg_scroll;
-              msg_scroll = 0;                           /* truncate msg when
-                                                           needed */
+              msg_scroll = 0;        // truncate msg when needed
               msg_no_more = TRUE;
               // write message same highlighting as for
               // wait_return
@@ -3469,7 +3470,7 @@ void do_sub(exarg_T *eap)
               --allow_keys;
               --no_mapping;
 
-              /* clear the question */
+              // clear the question
               msg_didout = false;               /* don't scroll up */
               msg_col = 0;
               gotocmdline(true);
@@ -3648,12 +3649,12 @@ void do_sub(exarg_T *eap)
            * they must be doubled in the string and are halved here.
            * That is Vi compatible.
            */
-          for (p1 = new_end; *p1; ++p1) {
+          for (p1 = new_end; *p1; p1++) {
             if (p1[0] == '\\' && p1[1] != NUL)            /* remove backslash */
               STRMOVE(p1, p1 + 1);
             else if (*p1 == CAR) {
               if (u_inssub(lnum) == OK) {             /* prepare for undo */
-                *p1 = NUL;                            /* truncate up to the CR */
+                *p1 = NUL;                            // truncate up to the CR
                 ml_append(lnum - 1, new_start,
                           (colnr_T)(p1 - new_start + 1), false);
                 mark_adjust(lnum + 1, (linenr_T) MAXLNUM, 1L, 0L);
@@ -3841,7 +3842,7 @@ skip:
         }
       }
     } else {
-      global_need_beginline = TRUE;
+      global_need_beginline = true;
     }
     if (do_print) {
       print_line(curwin->w_cursor.lnum, do_number, do_list);
@@ -3870,8 +3871,9 @@ skip:
   // live_sub if sub on the whole file and there are results to display
   if (eap[0].cmdlinep[0][0] != 's' && !kl_empty(lmatch)) {
     // we did a livesub only if we had no word to replace by and no slash to end
-    if (!(EVENT_COLON && sub[0] == '\0' && !last_is_slash))
+    if (!(EVENT_COLON && sub[0] == '\0' && !last_is_slash)) {
       sub_done = 1;
+    }
     if (pat != NULL && p_sub) {
       ex_window_live_sub(pat, sub, lmatch);
     }
@@ -4140,8 +4142,7 @@ prepare_tagpreview (
         return false;
       curwin->w_p_pvw = true;
       curwin->w_p_wfh = true;
-      RESET_BINDING(curwin);                /* don't take over 'scrollbind'
-                                               and 'cursorbind' */
+      RESET_BINDING(curwin);  // don't take over 'scrollbind' and 'cursorbind'
       curwin->w_p_diff = false;             /* no 'diff' */
       curwin->w_p_fdc = 0;                  /* no 'foldcolumn' */
       return true;
@@ -5909,15 +5910,15 @@ char *compute_line_number(int col_size, linenr_T number) {
   char *s = (char *)xcalloc((size_t)col_size+1, sizeof(char));
   char *r = (char *)xcalloc((size_t)col_size+1, sizeof(char));
   strcat(r, " [");
-  
-  for (int i=2 ; i < col_size-(log10(number)+1) - 1 ; i++) {
+
+  for (int i = 2; i < col_size-(log10(number)+1) - 1; i++) {
     r[i] = ' ';
   }
-  
+
   snprintf(s, col_size, "%s%ld", r, number);
   strcat(s, "]");
   xfree(r);
-  
+
   return s;
 }
 
@@ -6016,8 +6017,8 @@ void ex_window_live_sub(char_u * pat,
   (void)setfname(curbuf, (char_u *)"[live_sub]", NULL, true);
   set_option_value((char_u *)"bt", 0L, (char_u *)"nofile", OPT_LOCAL);
   set_option_value((char_u *)"swf", 0L, NULL, OPT_LOCAL);
-  curbuf->b_p_ma = FALSE;  // Not Modifiable
-  curwin->w_p_fen = FALSE;
+  curbuf->b_p_ma = false;  // Not Modifiable
+  curwin->w_p_fen = false;
   curwin->w_p_rl = cmdmsg_rl;
   cmdmsg_rl = false;
   RESET_BINDING(curwin);
@@ -6058,8 +6059,9 @@ void ex_window_live_sub(char_u * pat,
     size_t line_size = STRLEN(mat.line) + col_width + 1;
 
     // Reallocation if str not long enough
-    if (line_size > curwin->w_frame->fr_width * sizeof(char))
+    if (line_size > curwin->w_frame->fr_width * sizeof(char)) {
       str = xrealloc(str, line_size * sizeof(char));
+    }
 
     // Add the line number to the string
     char *col = compute_line_number(col_width, mat.lnum);
@@ -6071,13 +6073,13 @@ void ex_window_live_sub(char_u * pat,
       // highlight the replaced part
       if (sub_size > 0) {
         src_id_highlight =
-          bufhl_add_hl(curbuf,
-                       src_id_highlight,
-                       2,  // id of our highlight
-                       line,
-                       (*col)->data + col_width + i*(sub_size-pat_size) + 1,
-                       (*col)->data + col_width + i*(sub_size-pat_size) +
-                       sub_size);
+        bufhl_add_hl(curbuf,
+                     src_id_highlight,
+                     2,  // id of our highlight
+                     line,
+                     (*col)->data + col_width + i * (sub_size-pat_size) + 1,
+                     (*col)->data + col_width + i * (sub_size-pat_size) +
+                     sub_size);
       }
       i++;
     }
@@ -6106,11 +6108,11 @@ void ex_window_live_sub(char_u * pat,
 LiveSub_state parse_sub_cmd(exarg_T *eap) {
   int i = 0;
   LiveSub_state cmdl_progress;
-  
+
   if (eap->arg[i++] != '/') {
     return LS_NO_WD;
   }
-  
+
   if (eap->arg[i++] == 0) {
     return LS_NO_WD;
   } else {
@@ -6131,14 +6133,13 @@ LiveSub_state parse_sub_cmd(exarg_T *eap) {
 /// at every new character typed in the cmdbuff according to the
 /// actual state of the live_substitution
 void do_live_sub(exarg_T *eap) {
-
   // if livesub disabled, do it the classical way
   if (!p_sub) {
     do_sub(eap);
     return;
   }
 
-  //count the number of '/' to know how many words can be parsed
+  // count the number of '/' to know how many words can be parsed
   LiveSub_state cmdl_progress = parse_sub_cmd(eap);
 
   char_u *arg;
@@ -6157,7 +6158,7 @@ void do_live_sub(exarg_T *eap) {
         EVENT_SUB = 0;
       }
       // The lengh of the new arg is lower than twice the length of the command
-      arg = xcalloc(2*STRLEN(eap->arg) + 1, sizeof(char_u));
+      arg = xcalloc(2 * STRLEN(eap->arg) + 1, sizeof(char_u));
 
       // Save the state of eap
       tmp = eap->arg;

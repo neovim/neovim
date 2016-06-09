@@ -448,7 +448,7 @@ static int find_command(int cmdchar)
 // Normal state entry point. This is called on:
 //
 // - Startup, In this case the function never returns.
-// - The command-line window is opened(`q:`) or the live_sub split. 
+// - The command-line window is opened(`q:`) or the live_sub split.
 //    Returns when `cmdwin_result` != 0.
 // - The :visual command is called from :global in ex mode, `:global/PAT/visual`
 //   for example. Returns when re-entering ex mode(because ex mode recursion is
