@@ -3869,13 +3869,13 @@ skip:
 
 
   // live_sub if sub on the whole file and there are results to display
-  if (eap[0].cmdlinep[0][0] != 's' && !kl_empty(lmatch)) {
+  if (!kl_empty(lmatch)) {
     // we did a livesub only if we had no word to replace by and no slash to end
     if (!(EVENT_COLON && sub[0] == '\0' && !last_is_slash)) {
       sub_done = 1;
     }
     if (pat != NULL && p_sub) {
-      ex_window_live_sub(pat, sub, lmatch);
+      ex_window_live_sub(pat, sub, lmatch, eap[0].cmdlinep[0][0] != 's');
     }
     // after used, free the list
     kl_iter(matchedline_T, lmatch, current) {
@@ -5939,7 +5939,7 @@ void finish_live_cmd(int save_state,
     do_cmdline_cmd(":u");
     sub_done = 0;
   }
-  
+
   // Restore window sizes.
   if (winsizes != NULL) {
     win_size_restore(winsizes);
@@ -5976,7 +5976,8 @@ void finish_live_cmd(int save_state,
 /// @param lmatch the list containing our data
 void ex_window_live_sub(char_u * pat,
                         char_u * sub,
-                        klist_t(matchedline_T) *lmatch) {
+                        klist_t(matchedline_T) *lmatch,
+                        bool split) {
   assert(pat != NULL);
   assert(lmatch != NULL);
   assert(sub != NULL);
@@ -5999,112 +6000,115 @@ void ex_window_live_sub(char_u * pat,
   // Save the current window to restore it later
   win_T *oldwin = curwin;
 
-  // Don't execute autocommands while creating the window.
-  block_autocmds();
-  // don't use a new tab page
-  cmdmod.tab = 0;
+  if (split) {
 
-  // Create a window for the command-line buffer.
-  if (win_split((int)p_cwh, WSP_BOT) == FAIL) {
-    beep_flush();
+    // Don't execute autocommands while creating the window.
+    block_autocmds();
+    // don't use a new tab page
+    cmdmod.tab = 0;
+
+    // Create a window for the command-line buffer.
+    if (win_split((int) p_cwh, WSP_BOT) == FAIL) {
+      beep_flush();
+      unblock_autocmds();
+      return;
+    }
+    cmdwin_type = get_cmdline_type();
+
+    // Create the command-line buffer empty.
+    (void) do_ecmd(0, NULL, NULL, NULL, ECMD_ONE, ECMD_HIDE, NULL);
+    (void) setfname(curbuf, (char_u *) "[live_sub]", NULL, true);
+    set_option_value((char_u *) "bt", 0L, (char_u *) "nofile", OPT_LOCAL);
+    set_option_value((char_u *) "swf", 0L, NULL, OPT_LOCAL);
+    curbuf->b_p_ma = false;  // Not Modifiable
+    curwin->w_p_fen = false;
+    curwin->w_p_rl = cmdmsg_rl;
+    cmdmsg_rl = false;
+    RESET_BINDING(curwin);
+
+    // Do execute autocommands for setting the filetype (load syntax).
     unblock_autocmds();
-    return;
-  }
-  cmdwin_type = get_cmdline_type();
 
-  // Create the command-line buffer empty.
-  (void)do_ecmd(0, NULL, NULL, NULL, ECMD_ONE, ECMD_HIDE, NULL);
-  (void)setfname(curbuf, (char_u *)"[live_sub]", NULL, true);
-  set_option_value((char_u *)"bt", 0L, (char_u *)"nofile", OPT_LOCAL);
-  set_option_value((char_u *)"swf", 0L, NULL, OPT_LOCAL);
-  curbuf->b_p_ma = false;  // Not Modifiable
-  curwin->w_p_fen = false;
-  curwin->w_p_rl = cmdmsg_rl;
-  cmdmsg_rl = false;
-  RESET_BINDING(curwin);
+    // Showing the prompt may have set need_wait_return, reset it.
+    need_wait_return = false;
 
-  // Do execute autocommands for setting the filetype (load syntax).
-  unblock_autocmds();
+    // Reset 'textwidth' after setting 'filetype'
+    // (the Vim filetype plugin sets 'textwidth' to 78).
+    curbuf->b_p_tw = 0;
 
-  // Showing the prompt may have set need_wait_return, reset it.
-  need_wait_return = false;
+    // Save the buffer used in the split
+    livebuf = curbuf;
 
-  // Reset 'textwidth' after setting 'filetype'
-  // (the Vim filetype plugin sets 'textwidth' to 78).
-  curbuf->b_p_tw = 0;
+    // Initialize line and highlight variables
+    int line = 0;
+    int src_id_highlight = 0;
+    long sub_size = STRLEN(sub);
+    long pat_size = STRLEN(pat);
 
-  // Save the buffer used in the split
-  livebuf = curbuf;
+    // Get the width of the column which display the number of the line
+    long highest_num_line = 0;
+    kl_iter(matchedline_T, lmatch, current)
+      highest_num_line = (*current)->data.lnum;
 
-  // Initialize line and highlight variables
-  int line = 0;
-  int src_id_highlight = 0;
-  long sub_size = STRLEN(sub);
-  long pat_size = STRLEN(pat);
+    // computing the length of the column that will display line number
+    int col_width = log10(highest_num_line) + 1 + 3;
 
-  // Get the width of the column which display the number of the line
-  long highest_num_line = 0;
-  kl_iter(matchedline_T, lmatch, current)
-    highest_num_line = (*current)->data.lnum;
+    // allocate a line sized for the window
+    char *str = xcalloc((size_t) curwin->w_frame->fr_width, sizeof(char));
 
-  // computing the length of the column that will display line number
-  int col_width = log10(highest_num_line) + 1 + 3;
+    // Append the lines to our buffer
+    kl_iter(matchedline_T, lmatch, current) {
+      matchedline_T mat = (*current)->data;
+      size_t line_size = STRLEN(mat.line) + col_width + 1;
 
-  // allocate a line sized for the window
-  char *str = xcalloc((size_t )curwin->w_frame->fr_width, sizeof(char));
-
-  // Append the lines to our buffer
-  kl_iter(matchedline_T, lmatch, current) {
-    matchedline_T mat = (*current)->data;
-    size_t line_size = STRLEN(mat.line) + col_width + 1;
-
-    // Reallocation if str not long enough
-    if (line_size > curwin->w_frame->fr_width * sizeof(char)) {
-      str = xrealloc(str, line_size * sizeof(char));
-    }
-
-    // Add the line number to the string
-    char *col = compute_line_number(col_width, mat.lnum);
-    snprintf(str, line_size, "%s%s", col, mat.line);
-    ml_append(line++, (char_u *)str, (colnr_T)0, false);
-
-    int i = 0;
-    kl_iter(colnr_T, mat.start_col, col) {
-      // highlight the replaced part
-      if (sub_size > 0) {
-        src_id_highlight =
-        bufhl_add_hl(curbuf,
-                     src_id_highlight,
-                     2,  // id of our highlight
-                     line,
-                     (*col)->data + col_width + i * (sub_size-pat_size) + 1,
-                     (*col)->data + col_width + i * (sub_size-pat_size) +
-                     sub_size);
+      // Reallocation if str not long enough
+      if (line_size > curwin->w_frame->fr_width * sizeof(char)) {
+        str = xrealloc(str, line_size * sizeof(char));
       }
-      i++;
-    }
 
-    // free of the saved line and the allocated column
-    xfree(col);
-    xfree(mat.line);
+      // Add the line number to the string
+      char *col = compute_line_number(col_width, mat.lnum);
+      snprintf(str, line_size, "%s%s", col, mat.line);
+      ml_append(line++, (char_u *) str, (colnr_T) 0, false);
+
+      int i = 0;
+      kl_iter(colnr_T, mat.start_col, col) {
+        // highlight the replaced part
+        if (sub_size > 0) {
+          src_id_highlight =
+            bufhl_add_hl(curbuf,
+                         src_id_highlight,
+                         2,  // id of our highlight
+                         line,
+                         (*col)->data + col_width + i * (sub_size - pat_size) + 1,
+                         (*col)->data + col_width + i * (sub_size - pat_size) +
+                         sub_size);
+        }
+        i++;
+      }
+
+      // free of the saved line and the allocated column
+      xfree(col);
+      xfree(mat.line);
+    }
+    xfree(str);
   }
-  xfree(str);
 
   redraw_later(SOME_VALID);
 
   // Restore the old window
   win_enter(oldwin, false);
   finish_live_cmd(save_State, &winsizes, save_exmode,
-      save_restart_edit, save_cmdmsg_rl, 1);
+                  save_restart_edit, save_cmdmsg_rl, 1);
 
   return;
 }
 
-/// Parse the substitution command line 
+/// Parse the substitution command line
 //
 /// @param eap arguments of the substitution
 /// @return cmdl_progress
-/// @see LiveSub_state definition  
+/// @see LiveSub_state definition
 LiveSub_state parse_sub_cmd(exarg_T *eap) {
   int i = 0;
   LiveSub_state cmdl_progress;
