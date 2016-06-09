@@ -5939,7 +5939,7 @@ void finish_live_cmd(int save_state,
     do_cmdline_cmd(":u");
     sub_done = 0;
   }
-  
+
   // Restore window sizes.
   if (winsizes != NULL) {
     win_size_restore(winsizes);
@@ -6099,16 +6099,16 @@ void ex_window_live_sub(char_u * pat,
   // Restore the old window
   win_enter(oldwin, false);
   finish_live_cmd(save_State, &winsizes, save_exmode,
-      save_restart_edit, save_cmdmsg_rl, 1);
+                  save_restart_edit, save_cmdmsg_rl, 1);
 
   return;
 }
 
-/// Parse the substitution command line 
+/// Parse the substitution command line
 //
 /// @param eap arguments of the substitution
 /// @return cmdl_progress
-/// @see LiveSub_state definition  
+/// @see LiveSub_state definition
 LiveSub_state parse_sub_cmd(exarg_T *eap) {
   int i = 0;
   LiveSub_state cmdl_progress;
