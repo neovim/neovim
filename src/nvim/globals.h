@@ -434,10 +434,10 @@ EXTERN int did_check_timestamps INIT(= FALSE);      /* did check timestamps
                                                        recently */
 EXTERN int no_check_timestamps INIT(= 0);       /* Don't check timestamps */
 
-/*
- * When typing a live action starting by a ':' (eg: substitution), need to know
- * when to start check for a live command (=1) and end it (=0)
- */
+
+// When typing a live action starting by a ':'
+// (eg: substitution), need to know when to start
+// checking for a live command (=1) and end it (=0)
 EXTERN int EVENT_COLON INIT(= 0);
 
 /*
@@ -607,8 +607,8 @@ EXTERN int redraw_tabline INIT(= FALSE);           /* need to redraw tabline */
  */
 EXTERN buf_T    *firstbuf INIT(= NULL); /* first buffer */
 EXTERN buf_T    *lastbuf INIT(= NULL);  /* last buffer */
-EXTERN buf_T    *curbuf INIT(= NULL);   /* currently active buffer */
-EXTERN buf_T    *livebuf INIT(= NULL);  // buffer used for live actions (while typing a cmd)
+EXTERN buf_T    *curbuf INIT(= NULL);   // currently active buffer
+EXTERN buf_T    *livebuf INIT(= NULL);  // buffer used for live actions
 
 // Iterates over all buffers in the buffer list.
 # define FOR_ALL_BUFFERS(buf) for (buf_T *buf = firstbuf; buf != NULL; buf = buf->b_next)
