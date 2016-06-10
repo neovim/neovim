@@ -2849,7 +2849,7 @@ typedef enum {
 /// is "curwin".
 ///
 /// Items are drawn interspersed with the text that surrounds it
-/// Specials: %-<wid>(xxx%) => group, %= => middle marker, %< => truncation
+/// Specials: %-<wid>(xxx%) => group, %= => separation marker, %< => truncation
 /// Item: %-<minwid>.<maxwid><itemch> All but <itemch> are optional
 ///
 /// If maxwidth is not zero, the string will be filled at any middle marker
@@ -2893,7 +2893,7 @@ int build_stl_str_hl(
       Normal,
       Empty,
       Group,
-      Middle,
+      Separate,
       Highlight,
       TabPage,
       ClickFunc,
@@ -2994,14 +2994,14 @@ int build_stl_str_hl(
       continue;
     }
 
-    // STL_MIDDLEMARK: Separation place between left and right aligned items.
-    if (*fmt_p == STL_MIDDLEMARK) {
+    // STL_SEPARATE: Separation place between left and right aligned items.
+    if (*fmt_p == STL_SEPARATE) {
       fmt_p++;
       // Ignored when we are inside of a grouping
       if (groupdepth > 0) {
         continue;
       }
-      item[curitem].type = Middle;
+      item[curitem].type = Separate;
       item[curitem++].start = out_p;
       continue;
     }
@@ -3840,27 +3840,53 @@ int build_stl_str_hl(
     width = maxwidth;
 
   // If there is room left in our statusline, and room left in our buffer,
-  // add characters at the middle marker (if there is one) to
+  // add characters at the separate marker (if there is one) to
   // fill up the available space.
   } else if (width < maxwidth
-               && STRLEN(out) + maxwidth - width + 1 < outlen) {
-    for (int item_idx = 0; item_idx < itemcnt; item_idx++) {
-      if (item[item_idx].type == Middle) {
-        // Move the statusline to make room for the middle characters
-        char_u *middle_end = item[item_idx].start + (maxwidth - width);
-        STRMOVE(middle_end, item[item_idx].start);
-
-        // Fill the middle section with our fill character
-        for (char_u *s = item[item_idx].start; s < middle_end; s++)
-          *s = fillchar;
-
-        // Adjust the offset of any items after the middle
-        for (item_idx++; item_idx < itemcnt; item_idx++)
-          item[item_idx].start += maxwidth - width;
-
-        width = maxwidth;
-        break;
+             && STRLEN(out) + maxwidth - width + 1 < outlen) {
+    // Find how many separators there are, which we will use when
+    // figuring out how many groups there are.
+    int num_separators = 0;
+    for (int i = 0; i < itemcnt; i++) {
+      if (item[i].type == Separate) {
+        num_separators++;
       }
+    }
+
+    // If we have separated groups, then we deal with it now
+    if (num_separators) {
+      // Create an array of the start location for each
+      // separator mark.
+      int separator_locations[STL_MAX_ITEM];
+      int index = 0;
+      for (int i = 0; i < itemcnt; i++) {
+        if (item[i].type == Separate) {
+          separator_locations[index] = i;
+          index++;
+        }
+      }
+
+      int standard_spaces = (maxwidth - width) / num_separators;
+      int final_spaces = (maxwidth - width) -
+        standard_spaces * (num_separators - 1);
+
+      for (int i = 0; i < num_separators; i++) {
+        int dislocation = (i == (num_separators - 1)) ?
+          final_spaces : standard_spaces;
+        char_u *sep_loc = item[separator_locations[i]].start + dislocation;
+        STRMOVE(sep_loc, item[separator_locations[i]].start);
+        for (char_u *s = item[separator_locations[i]].start; s < sep_loc; s++) {
+          *s = fillchar;
+        }
+
+        for (int item_idx = separator_locations[i] + 1;
+             item_idx < itemcnt;
+             item_idx++) {
+          item[item_idx].start += dislocation;
+        }
+      }
+
+      width = maxwidth;
     }
   }
 

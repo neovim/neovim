@@ -1,10 +1,9 @@
 
-local assert = require("luassert")
 local helpers = require("test.unit.helpers")
 
 local to_cstr = helpers.to_cstr
+local get_str = helpers.ffi.string
 local eq      = helpers.eq
-local neq     = helpers.neq
 local NULL    = helpers.NULL
 
 local globals = helpers.cimport("./src/nvim/globals.h")
@@ -211,93 +210,246 @@ describe('buffer functions', function()
   end)
 
   describe('build_stl_str_hl', function()
+    local buffer_byte_size = 100
+    local STL_MAX_ITEM = 80
+    local output_buffer = ''
 
-    local output_buffer = to_cstr(string.rep(" ", 100))
+    -- This function builds the statusline
+    --
+    -- @param arg Optional arguments are:
+    --    .pat The statusline format string
+    --    .fillchar The fill character used in the statusline
+    --    .maximum_cell_count The number of cells available in the statusline
+    local function build_stl_str_hl(arg)
+      output_buffer = to_cstr(string.rep(" ", buffer_byte_size))
 
-    local build_stl_str_hl = function(pat)
+      local pat = arg.pat or ''
+      local fillchar = arg.fillchar or (' '):byte()
+      local maximum_cell_count = arg.maximum_cell_count or buffer_byte_size
+
       return buffer.build_stl_str_hl(globals.curwin,
                                      output_buffer,
-                                     100,
+                                     buffer_byte_size,
                                      to_cstr(pat),
                                      false,
-                                     32,
-                                     80,
+                                     fillchar,
+                                     maximum_cell_count,
                                      NULL,
                                      NULL)
     end
 
-    it('should copy plain text', function()
-      local width = build_stl_str_hl("this is a test")
+    -- Use this function to simplify testing the comparison between
+    --  the format string and the resulting statusline.
+    --
+    -- @param description The description of what the test should be doing
+    -- @param statusline_cell_count The number of cells available in the statusline
+    -- @param input_stl The format string for the statusline
+    -- @param expected_stl The expected result string for the statusline
+    --
+    -- @param arg Options can be placed in an optional dictionary as the last parameter
+    --    .expected_cell_count The expected number of cells build_stl_str_hl will return
+    --    .expected_byte_length The expected byte length of the string
+    --    .file_name The name of the file to be tested (useful in %f type tests)
+    --    .fillchar The character that will be used to fill any 'extra' space in the stl
+    local function statusline_test (description,
+                                    statusline_cell_count,
+                                    input_stl,
+                                    expected_stl,
+                                    arg)
 
-      eq(14, width)
-      eq("this is a test", helpers.ffi.string(output_buffer, width))
+      -- arg is the optional parameter
+      -- so we either fill in option with arg or an empty dictionary
+      local option = arg or {}
 
-    end)
+      local fillchar = option.fillchar or (' '):byte()
+      local expected_cell_count = option.expected_cell_count or statusline_cell_count
+      local expected_byte_length = option.expected_byte_length or expected_cell_count
 
-    it('should print no file name', function()
-      local width = build_stl_str_hl("%f")
+      it(description, function()
+        if option.file_name then
+          buffer.setfname(globals.curbuf, to_cstr(option.file_name), NULL, 1)
+        else
+          buffer.setfname(globals.curbuf, nil, NULL, 1)
+        end
 
-      eq(9, width)
-      eq("[No Name]", helpers.ffi.string(output_buffer, width))
+        local result_cell_count = build_stl_str_hl{pat=input_stl,
+                                                   maximum_cell_count=statusline_cell_count,
+                                                   fillchar=fillchar}
 
-    end)
+        eq(expected_stl, get_str(output_buffer, expected_byte_length))
+        eq(expected_cell_count, result_cell_count)
+      end)
+    end
 
-    it('should print the relative file name', function()
-      buffer.setfname(globals.curbuf, to_cstr("Makefile"), NULL, 1)
-      local width = build_stl_str_hl("%f")
+    -- file name testing
+    statusline_test('should print no file name', 10,
+      '%f',                  '[No Name]',
+      {expected_cell_count=9})
+    statusline_test('should print the relative file name', 30,
+      '%f',                  'test/unit/buffer_spec.lua',
+      {file_name='test/unit/buffer_spec.lua', expected_cell_count=25})
+    statusline_test('should print the full file name', 40,
+      '%F',                  '/test/unit/buffer_spec.lua',
+      {file_name='/test/unit/buffer_spec.lua', expected_cell_count=26})
 
-      eq(8, width)
-      eq("Makefile", helpers.ffi.string(output_buffer, width))
+    -- fillchar testing
+    statusline_test('should handle `!` as a fillchar', 10,
+      'abcde%=',             'abcde!!!!!',
+      {fillchar=('!'):byte()})
+    statusline_test('should handle `~` as a fillchar', 10,
+      '%=abcde',             '~~~~~abcde',
+      {fillchar=('~'):byte()})
+    statusline_test('should put fillchar `!` in between text', 10,
+      'abc%=def',            'abc!!!!def',
+      {fillchar=('!'):byte()})
+    statusline_test('should put fillchar `~` in between text', 10,
+      'abc%=def',            'abc~~~~def',
+      {fillchar=('~'):byte()})
+    statusline_test('should print the tail file name', 80,
+      '%t',                  'buffer_spec.lua',
+      {file_name='test/unit/buffer_spec.lua', expected_cell_count=15})
 
-    end)
+    -- standard text testing
+    statusline_test('should copy plain text', 80,
+      'this is a test',      'this is a test',
+      {expected_cell_count=14})
 
-    it('should print the full file name', function()
-      buffer.setfname(globals.curbuf, to_cstr("Makefile"), NULL, 1)
+    -- line number testing
+    statusline_test('should print the buffer number', 80,
+      '%n',                  '1',
+      {expected_cell_count=1})
+    statusline_test('should print the current line number in the buffer', 80,
+      '%l',                  '0',
+      {expected_cell_count=1})
+    statusline_test('should print the number of lines in the buffer', 80,
+      '%L',                  '1',
+      {expected_cell_count=1})
 
-      local width = build_stl_str_hl("%F")
+    -- truncation testing
+    statusline_test('should truncate when standard text pattern is too long', 10,
+      '0123456789abcde',     '<6789abcde')
+    statusline_test('should truncate when using =', 10,
+      'abcdef%=ghijkl',      'abcdef<jkl')
+    statusline_test('should truncate centered text when using ==', 10,
+      'abcde%=gone%=fghij',  'abcde<ghij')
+    statusline_test('should respect the `<` marker', 10,
+      'abc%<defghijkl',      'abc<ghijkl')
+    statusline_test('should truncate at `<` with one `=`, test 1', 10,
+      'abc%<def%=ghijklmno', 'abc<jklmno')
+    statusline_test('should truncate at `<` with one `=`, test 2', 10,
+      'abcdef%=ghijkl%<mno', 'abcdefghi>')
+    statusline_test('should truncate at `<` with one `=`, test 3', 10,
+      'abc%<def%=ghijklmno', 'abc<jklmno')
+    statusline_test('should truncate at `<` with one `=`, test 4', 10,
+      'abc%<def%=ghij',     'abcdefghij')
+    statusline_test('should truncate at `<` with one `=`, test 4', 10,
+      'abc%<def%=ghijk',     'abc<fghijk')
 
-      assert.is_true(8 < width)
-      neq(NULL, string.find(helpers.ffi.string(output_buffer, width), "Makefile"))
+    statusline_test('should truncate at `<` with many `=`, test 4', 10,
+      'ab%<cdef%=g%=h%=ijk', 'ab<efghijk')
 
-    end)
+    statusline_test('should truncate at the first `<`', 10,
+      'abc%<def%<ghijklm',   'abc<hijklm')
 
-    it('should print the tail file name', function()
-      buffer.setfname(globals.curbuf, to_cstr("src/nvim/buffer.c"), NULL, 1)
+    -- alignment testing
+    statusline_test('should right align when using =', 20,
+      'neo%=vim',            'neo              vim')
+    statusline_test('should, when possible, center text when using %=text%=', 20,
+      'abc%=neovim%=def',    'abc    neovim    def')
+    statusline_test('should handle uneven spacing in the buffer when using %=text%=', 20,
+      'abc%=neo_vim%=def',   'abc   neo_vim    def')
+    statusline_test('should have equal spaces even with non-equal sides when using =', 20,
+      'foobar%=test%=baz',   'foobar   test    baz')
+    statusline_test('should have equal spaces even with longer right side when using =', 20,
+      'a%=test%=longtext',   'a   test    longtext')
+    statusline_test('should handle an empty left side when using ==', 20,
+      '%=test%=baz',         '      test       baz')
+    statusline_test('should handle an empty right side when using ==', 20,
+      'foobar%=test%=',      'foobar     test     ')
+    statusline_test('should handle consecutive empty ==', 20,
+      '%=%=test%=',          '          test      ')
+    statusline_test('should handle an = alone', 20,
+      '%=',                  '                    ')
+    statusline_test('should right align text when it is alone with =', 20,
+      '%=foo',               '                 foo')
+    statusline_test('should left align text when it is alone with =', 20,
+      'foo%=',               'foo                 ')
 
-      local width = build_stl_str_hl("%t")
+    statusline_test('should approximately center text when using %=text%=', 21,
+      'abc%=neovim%=def',    'abc    neovim     def')
+    statusline_test('should completely fill the buffer when using %=text%=', 21,
+      'abc%=neo_vim%=def',   'abc    neo_vim    def')
+    statusline_test('should have equal spaces even with non-equal sides when using =', 21,
+      'foobar%=test%=baz',   'foobar    test    baz')
+    statusline_test('should have equal spaces even with longer right side when using =', 21,
+      'a%=test%=longtext',   'a    test    longtext')
+    statusline_test('should handle an empty left side when using ==', 21,
+      '%=test%=baz',         '       test       baz')
+    statusline_test('should handle an empty right side when using ==', 21,
+      'foobar%=test%=',      'foobar     test      ')
 
-      eq(8, width)
-      eq("buffer.c", helpers.ffi.string(output_buffer, width))
+    statusline_test('should quadrant the text when using 3 %=', 40,
+      'abcd%=n%=eovim%=ef',  'abcd         n         eovim          ef')
+    statusline_test('should work well with %t', 40,
+      '%t%=right_aligned',   'buffer_spec.lua            right_aligned',
+      {file_name='test/unit/buffer_spec.lua'})
+    statusline_test('should work well with %t and regular text', 40,
+      'l%=m_l %t m_r%=r',    'l       m_l buffer_spec.lua m_r        r',
+      {file_name='test/unit/buffer_spec.lua'})
+    statusline_test('should work well with %=, %t, %L, and %l', 40,
+      '%t %= %L %= %l',      'buffer_spec.lua           1            0',
+      {file_name='test/unit/buffer_spec.lua'})
 
-    end)
+    statusline_test('should quadrant the text when using 3 %=', 41,
+      'abcd%=n%=eovim%=ef',  'abcd         n         eovim           ef')
+    statusline_test('should work well with %t', 41,
+      '%t%=right_aligned',   'buffer_spec.lua             right_aligned',
+      {file_name='test/unit/buffer_spec.lua'})
+    statusline_test('should work well with %t and regular text', 41,
+      'l%=m_l %t m_r%=r',    'l        m_l buffer_spec.lua m_r        r',
+      {file_name='test/unit/buffer_spec.lua'})
+    statusline_test('should work well with %=, %t, %L, and %l', 41,
+      '%t %= %L %= %l',      'buffer_spec.lua            1            0',
+      {file_name='test/unit/buffer_spec.lua'})
 
-    it('should print the buffer number', function()
-      buffer.setfname(globals.curbuf, to_cstr("src/nvim/buffer.c"), NULL, 1)
+    statusline_test('should work with 10 %=', 50,
+      'aaaa%=b%=c%=d%=e%=fg%=hi%=jk%=lmnop%=qrstuv%=wxyz',
+      'aaaa  b  c  d  e  fg  hi  jk  lmnop  qrstuv   wxyz')
 
-      local width = build_stl_str_hl("%n")
+    -- maximum stl item testing
+    statusline_test('should handle a much larger amount of = than buffer locations', 20,
+      ('%='):rep(STL_MAX_ITEM - 1),
+      '                    ') -- Should be fine, because within limit
+    statusline_test('should handle a much larger amount of = than stl max item', 20,
+      ('%='):rep(STL_MAX_ITEM + 1),
+      '                E541') -- Should show the VIM error
+    statusline_test('should handle many extra characters', 20,
+      'a' .. ('a'):rep(STL_MAX_ITEM * 4),
+      '<aaaaaaaaaaaaaaaaaaa') -- Does not show the error because there are no items
+    statusline_test('should handle almost maximum of characters and flags', 20,
+      'a' .. ('%=a'):rep(STL_MAX_ITEM - 1),
+      'a<aaaaaaaaaaaaaaaaaa') -- Should not show the VIM error
+    statusline_test('should handle many extra characters and flags', 20,
+      'a' .. ('%=a'):rep(STL_MAX_ITEM),
+      'a<aaaaaaaaaaaaa E541') -- Should show the VIM error
+    statusline_test('should handle many extra characters and flags', 20,
+      'a' .. ('%=a'):rep(STL_MAX_ITEM * 2),
+      'a<aaaaaaaaaaaaa E541') -- Should show the VIM error
+    statusline_test('should handle many extra characters and flags with truncation', 20,
+      'aaa%<' .. ('%=a'):rep(STL_MAX_ITEM),
+      'aaa<aaaaaaaaaaa E541') -- Should show the VIM error
+    statusline_test('should handle many characters and flags before and after truncation', 20,
+      'a%=a%=a%<' .. ('%=a'):rep(STL_MAX_ITEM),
+      'aaa<aaaaaaaaaaa E541') -- Should show the VIM error
 
-      eq(1, width)
-      eq("1", helpers.ffi.string(output_buffer, width))
-    end)
 
-    it('should print the current line number in the buffer', function()
-      buffer.setfname(globals.curbuf, to_cstr("test/unit/buffer_spec.lua"), NULL, 1)
+    -- multi-byte testing
+    statusline_test('should handle multibyte characters', 10,
+      'Ĉ%=x',                'Ĉ        x',
+      {expected_byte_length=11})
+    statusline_test('should handle multibyte characters and different fillchars', 10,
+      'Ą%=mid%=end',         'Ą@mid@@end',
+      {fillchar=('@'):byte(), expected_byte_length=11})
 
-      local width = build_stl_str_hl("%l")
-
-      eq(1, width)
-      eq("0", helpers.ffi.string(output_buffer, width))
-
-    end)
-
-    it('should print the number of lines in the buffer', function()
-      buffer.setfname(globals.curbuf, to_cstr("test/unit/buffer_spec.lua"), NULL, 1)
-
-      local width = build_stl_str_hl("%L")
-
-      eq(1, width)
-      eq("1", helpers.ffi.string(output_buffer, width))
-
-    end)
   end)
 end)
