@@ -21,6 +21,7 @@ struct process {
   int pid, status, refcount;
   // set to the hrtime of when process_stop was called for the process.
   uint64_t stopped_time;
+  char *cwd;
   char **argv;
   Stream *in, *out, *err;
   process_exit_cb cb;
@@ -40,6 +41,7 @@ static inline Process process_init(Loop *loop, ProcessType type, void *data)
     .status = 0,
     .refcount = 0,
     .stopped_time = 0,
+    .cwd = NULL,
     .argv = NULL,
     .in = NULL,
     .out = NULL,

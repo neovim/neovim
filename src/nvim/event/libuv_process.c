@@ -25,7 +25,7 @@ bool libuv_process_spawn(LibuvProcess *uvproc)
       uvproc->uvopts.flags |= UV_PROCESS_DETACHED;
   }
   uvproc->uvopts.exit_cb = exit_cb;
-  uvproc->uvopts.cwd = NULL;
+  uvproc->uvopts.cwd = proc->cwd;
   uvproc->uvopts.env = NULL;
   uvproc->uvopts.stdio = uvproc->uvstdio;
   uvproc->uvopts.stdio_count = 3;

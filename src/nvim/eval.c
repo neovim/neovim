@@ -11742,8 +11742,21 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv)
 
   dict_T *job_opts = NULL;
   ufunc_T *on_stdout = NULL, *on_stderr = NULL, *on_exit = NULL;
+  char *cwd = NULL;
   if (argvars[1].v_type == VAR_DICT) {
     job_opts = argvars[1].vval.v_dict;
+
+    char *new_cwd = (char *)get_dict_string(job_opts, (char_u *)"cwd", false);
+    if (new_cwd && strlen(new_cwd) > 0) {
+      cwd = new_cwd;
+      // The new cwd must be a directory.
+      if (!os_isdir((char_u *)cwd)) {
+        EMSG2(_(e_invarg2), "expected valid directory");
+        shell_free_argv(argv);
+        return;
+      }
+    }
+
     if (!common_job_callbacks(job_opts, &on_stdout, &on_stderr, &on_exit)) {
       shell_free_argv(argv);
       return;
@@ -11753,7 +11766,7 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv)
   bool pty = job_opts && get_dict_number(job_opts, (uint8_t *)"pty") != 0;
   bool detach = job_opts && get_dict_number(job_opts, (uint8_t *)"detach") != 0;
   TerminalJobData *data = common_job_init(argv, on_stdout, on_stderr, on_exit,
-                                          job_opts, pty, detach);
+                                          job_opts, pty, detach, cwd);
   Process *proc = (Process *)&data->proc;
 
   if (pty) {
@@ -16468,8 +16481,21 @@ static void f_termopen(typval_T *argvars, typval_T *rettv)
 
   ufunc_T *on_stdout = NULL, *on_stderr = NULL, *on_exit = NULL;
   dict_T *job_opts = NULL;
+  char *cwd = ".";
   if (argvars[1].v_type == VAR_DICT) {
     job_opts = argvars[1].vval.v_dict;
+
+    char *new_cwd = (char *)get_dict_string(job_opts, (char_u *)"cwd", false);
+    if (new_cwd && strlen(new_cwd) > 0) {
+      cwd = new_cwd;
+      // The new cwd must be a directory.
+      if (!os_isdir((char_u *)cwd)) {
+        EMSG2(_(e_invarg2), "expected valid directory");
+        shell_free_argv(argv);
+        return;
+      }
+    }
+
     if (!common_job_callbacks(job_opts, &on_stdout, &on_stderr, &on_exit)) {
       shell_free_argv(argv);
       return;
@@ -16477,7 +16503,7 @@ static void f_termopen(typval_T *argvars, typval_T *rettv)
   }
 
   TerminalJobData *data = common_job_init(argv, on_stdout, on_stderr, on_exit,
-                                          job_opts, true, false);
+                                          job_opts, true, false, cwd);
   data->proc.pty.width = curwin->w_width;
   data->proc.pty.height = curwin->w_height;
   data->proc.pty.term_name = xstrdup("xterm-256color");
@@ -16492,11 +16518,6 @@ static void f_termopen(typval_T *argvars, typval_T *rettv)
   topts.resize_cb = term_resize;
   topts.close_cb = term_close;
 
-  char *cwd = ".";
-  if (argvars[1].v_type == VAR_STRING
-      && os_isdir(argvars[1].vval.v_string)) {
-    cwd = (char *)argvars[1].vval.v_string;
-  }
   int pid = data->proc.pty.process.pid;
 
   char buf[1024];
@@ -21764,7 +21785,8 @@ static inline TerminalJobData *common_job_init(char **argv,
                                                ufunc_T *on_exit,
                                                dict_T *self,
                                                bool pty,
-                                               bool detach)
+                                               bool detach,
+                                               char *cwd)
 {
   TerminalJobData *data = xcalloc(1, sizeof(TerminalJobData));
   data->stopped = false;
@@ -21788,6 +21810,7 @@ static inline TerminalJobData *common_job_init(char **argv,
   proc->cb = on_process_exit;
   proc->events = data->events;
   proc->detach = detach;
+  proc->cwd = cwd;
   return data;
 }
 

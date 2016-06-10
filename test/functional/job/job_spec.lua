@@ -1,11 +1,11 @@
 
 local helpers = require('test.functional.helpers')
 local clear, eq, eval, execute, feed, insert, neq, next_msg, nvim,
-  nvim_dir, ok, source, write_file = helpers.clear,
+  nvim_dir, ok, source, write_file, mkdir, rmdir = helpers.clear,
   helpers.eq, helpers.eval, helpers.execute, helpers.feed,
   helpers.insert, helpers.neq, helpers.next_message, helpers.nvim,
   helpers.nvim_dir, helpers.ok, helpers.source,
-  helpers.write_file
+  helpers.write_file, helpers.mkdir, helpers.rmdir
 local Screen = require('test.functional.ui.screen')
 
 
@@ -35,6 +35,32 @@ describe('jobs', function()
     nvim('command', "let j = jobstart('echo $VAR', g:job_opts)")
     eq({'notification', 'stdout', {0, {'abc', ''}}}, next_msg())
     eq({'notification', 'exit', {0, 0}}, next_msg())
+  end)
+
+  it('changes to given / directory', function()
+    nvim('command', "let g:job_opts.cwd = '/'")
+    nvim('command', "let j = jobstart('pwd', g:job_opts)")
+    eq({'notification', 'stdout', {0, {'/', ''}}}, next_msg())
+    eq({'notification', 'exit', {0, 0}}, next_msg())
+  end)
+
+  it('changes to given `cwd` directory', function()
+    local dir = eval('resolve(tempname())')
+    mkdir(dir)
+    nvim('command', "let g:job_opts.cwd = '" .. dir .. "'")
+    nvim('command', "let j = jobstart('pwd', g:job_opts)")
+    eq({'notification', 'stdout', {0, {dir, ''}}}, next_msg())
+    eq({'notification', 'exit', {0, 0}}, next_msg())
+    rmdir(dir)
+  end)
+
+  it('fails to change to invalid `cwd`', function()
+    local dir = eval('resolve(tempname())."-bogus"')
+    local _, err = pcall(function()
+      nvim('command', "let g:job_opts.cwd = '" .. dir .. "'")
+      nvim('command', "let j = jobstart('pwd', g:job_opts)")
+    end)
+    ok(string.find(err, "E475: Invalid argument: expected valid directory$") ~= nil)
   end)
 
   it('returns 0 when it fails to start', function()

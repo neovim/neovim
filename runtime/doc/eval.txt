@@ -4309,21 +4309,24 @@ jobstart({cmd}[, {opts}])				{Nvim} *jobstart()*
 		with 'shell' or 'shellcmdflag' options.  The above call is 
 		only written to show the idea, one needs to perform unquoting 
 		and do split taking quotes into account.
-		If passed, {opts} must be a dictionary with any of the
-		following keys:
-		  - on_stdout: stdout event handler
-		  - on_stderr: stderr event handler
-		  - on_exit: exit event handler
-		  - pty: If set, the job will be connected to a new pseudo
-		    terminal, and the job streams are connected to the master
-		    file descriptor.
-		  - width: Width of the terminal screen(only if pty is set)
-		  - height: Height of the terminal screen(only if pty is set)
-		  - TERM: $TERM environment variable(only if pty is set)
-		  - detach: Detach the job process from the nvim process. The
-		    process won't get killed when nvim exists. If the process
-		    dies before nvim exits, on_exit will still be invoked.
-		    This option is only allowed for non-pty jobs.
+
+		{opts} is a dictionary with these keys:
+		  on_stdout: stdout event handler
+		  on_stderr: stderr event handler
+		  on_exit  : exit event handler
+		  cwd      : Working directory of the job; defaults to
+		             |current-directory|.
+		  pty      : If set, the job will be connected to a new pseudo
+		             terminal, and the job streams are connected to
+		             the master file descriptor.
+		  width    : (pty only) Width of the terminal screen
+		  height   : (pty only) Height of the terminal screen
+		  TERM     : (pty only) $TERM environment variable
+		  detach   : (non-pty only) Detach the job process from the
+			     nvim process. The process will not get killed
+			     when nvim exits. If the process dies before
+			     nvim exits, on_exit will still be invoked.
+
 		Either funcrefs or function names can be passed as event
 		handlers. The {opts} object is also used as the "self"
 		argument for the callback, so the caller may pass arbitrary
