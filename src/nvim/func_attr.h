@@ -41,6 +41,10 @@
 // $ gcc -E -dM - </dev/null
 // $ echo | clang -dM -E -
 
+#ifndef NVIM_FUNC_ATTR_H
+#define NVIM_FUNC_ATTR_H
+#undef NVIM_FUNC_ATTR_H
+
 #ifdef FUNC_ATTR_MALLOC
 # undef FUNC_ATTR_MALLOC
 #endif
@@ -92,12 +96,12 @@
 #ifndef DID_REAL_ATTR
 # define DID_REAL_ATTR
 # ifdef __GNUC__
-   // place defines for all gnulikes here, for now that's gcc, clang and
-   // intel.
+// place defines for all gnulikes here, for now that's gcc, clang and
+// intel.
 
-   // place these after the argument list of the function declaration
-   // (not definition), like so:
-   // void myfunc(void) REAL_FATTR_ALWAYS_INLINE;
+// place these after the argument list of the function declaration
+// (not definition), like so:
+// void myfunc(void) REAL_FATTR_ALWAYS_INLINE;
 #  define REAL_FATTR_MALLOC __attribute__((malloc))
 #  define REAL_FATTR_ALLOC_ALIGN(x) __attribute__((alloc_align(x)))
 #  define REAL_FATTR_PURE __attribute__ ((pure))
@@ -109,25 +113,25 @@
 #  define REAL_FATTR_NONNULL_ARG(...) __attribute__((nonnull(__VA_ARGS__)))
 
 #  ifdef __clang__
-    // clang only
+// clang only
 #  elif defined(__INTEL_COMPILER)
-    // intel only
+// intel only
 #  else
 #   define GCC_VERSION \
             (__GNUC__ * 10000 + \
              __GNUC_MINOR__ * 100 + \
              __GNUC_PATCHLEVEL__)
-    // gcc only
+// gcc only
 #   define REAL_FATTR_ALLOC_SIZE(x) __attribute__((alloc_size(x)))
-#   define REAL_FATTR_ALLOC_SIZE_PROD(x,y) __attribute__((alloc_size(x,y)))
+#   define REAL_FATTR_ALLOC_SIZE_PROD(x, y) __attribute__((alloc_size(x, y)))
 #   if GCC_VERSION >= 40900
 #    define REAL_FATTR_NONNULL_RET __attribute__((returns_nonnull))
 #   endif
 #  endif
 # endif
 
-  // define function attributes that haven't been defined for this specific
-  // compiler.
+// define function attributes that haven't been defined for this specific
+// compiler.
 
 # ifndef REAL_FATTR_MALLOC
 #  define REAL_FATTR_MALLOC
@@ -138,7 +142,7 @@
 # endif
 
 # ifndef REAL_FATTR_ALLOC_SIZE_PROD
-#  define REAL_FATTR_ALLOC_SIZE_PROD(x,y)
+#  define REAL_FATTR_ALLOC_SIZE_PROD(x, y)
 # endif
 
 # ifndef REAL_FATTR_ALLOC_ALIGN
@@ -183,7 +187,7 @@
 # define FUNC_API_NOEXPORT
 # define FUNC_ATTR_MALLOC REAL_FATTR_MALLOC
 # define FUNC_ATTR_ALLOC_SIZE(x) REAL_FATTR_ALLOC_SIZE(x)
-# define FUNC_ATTR_ALLOC_SIZE_PROD(x,y) REAL_FATTR_ALLOC_SIZE_PROD(x,y)
+# define FUNC_ATTR_ALLOC_SIZE_PROD(x, y) REAL_FATTR_ALLOC_SIZE_PROD(x, y)
 # define FUNC_ATTR_ALLOC_ALIGN(x) REAL_FATTR_ALLOC_ALIGN(x)
 # define FUNC_ATTR_PURE REAL_FATTR_PURE
 # define FUNC_ATTR_CONST REAL_FATTR_CONST
@@ -196,7 +200,7 @@
 #elif !defined(DO_NOT_DEFINE_EMPTY_ATTRIBUTES)
 # define FUNC_ATTR_MALLOC
 # define FUNC_ATTR_ALLOC_SIZE(x)
-# define FUNC_ATTR_ALLOC_SIZE_PROD(x,y)
+# define FUNC_ATTR_ALLOC_SIZE_PROD(x, y)
 # define FUNC_ATTR_ALLOC_ALIGN(x)
 # define FUNC_ATTR_PURE
 # define FUNC_ATTR_CONST
@@ -207,3 +211,4 @@
 # define FUNC_ATTR_NONNULL_ARG(...)
 # define FUNC_ATTR_NONNULL_RET
 #endif
+#endif  // NVIM_FUNC_ATTR_H
