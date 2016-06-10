@@ -45,20 +45,22 @@
         REAL_FATTR_UNUSED; \
     static inline void kmp_destroy_##name(kmp_##name##_t *mp) { \
         size_t k; \
-        for (k = 0; k < mp->n; ++k) { \
+        for (k = 0; k < mp->n; k++) { \
             kmpfree_f(mp->buf[k]); xfree(mp->buf[k]); \
         } \
         xfree(mp->buf); xfree(mp); \
     } \
     static inline kmptype_t *kmp_alloc_##name(kmp_##name##_t *mp) { \
-        ++mp->cnt; \
-        if (mp->n == 0) return xcalloc(1, sizeof(kmptype_t)); \
+        mp->cnt++; \
+        if (mp->n == 0) { \
+          return xcalloc(1, sizeof(kmptype_t)); \
+        } \
         return mp->buf[--mp->n]; \
     } \
     static inline void kmp_free_##name(kmp_##name##_t *mp, kmptype_t *p) { \
-        --mp->cnt; \
+        mp->cnt--; \
         if (mp->n == mp->max) { \
-            mp->max = mp->max? mp->max<<1 : 16; \
+            mp->max = mp->max ? (mp->max << 1) : 16; \
             mp->buf = xrealloc(mp->buf, sizeof(kmptype_t *) * mp->max); \
         } \
         mp->buf[mp->n++] = p; \
@@ -93,8 +95,9 @@
         REAL_FATTR_UNUSED; \
     static inline void kl_destroy_##name(kl_##name##_t *kl) { \
         kl1_##name *p; \
-        for (p = kl->head; p != kl->tail; p = p->next) \
+        for (p = kl->head; p != kl->tail; p = p->next) { \
             kmp_free(name, kl->mp, p); \
+        } \
         kmp_free(name, kl->mp, p); \
         kmp_destroy(name, kl->mp); \
         xfree(kl); \
@@ -102,22 +105,23 @@
     static inline void kl_push_##name(kl_##name##_t *kl, kltype_t d) { \
         kl1_##name *q, *p = kmp_alloc(name, kl->mp); \
         q = kl->tail; p->next = 0; kl->tail->next = p; kl->tail = p; \
-        ++kl->size; \
+        kl->size++; \
         q->data = d; \
     } \
     static inline kltype_t kl_shift_at_##name(kl_##name##_t *kl, \
                                               kl1_##name **n) { \
         assert((*n)->next); \
         kl1_##name *p; \
-        --kl->size; \
+        kl->size--; \
         p = *n; \
         *n = (*n)->next; \
-        if (p == kl->head) kl->head = *n; \
+        if (p == kl->head) { \
+          kl->head = *n; \
+        } \
         kltype_t d = p->data; \
         kmp_free(name, kl->mp, p); \
         return d; \
-    } \
-    
+    }
 
 #define kliter_t(name) kl1_##name
 #define klist_t(name) kl_##name##_t

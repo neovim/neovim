@@ -31,7 +31,7 @@ typedef struct loop {
     if (queue) { \
       queue_put((queue), (handler), argc, __VA_ARGS__); \
     } else { \
-      void *argv[argc] = {__VA_ARGS__}; \
+      void *argv[argc] = { __VA_ARGS__ }; \
       (handler)(argv); \
     } \
   } while (0)

@@ -20,44 +20,36 @@
 #define OBJECT_OBJ(o) o
 
 #define BOOLEAN_OBJ(b) ((Object) { \
-  .type = kObjectTypeBoolean, \
-  .data.boolean = b \
-  })
+    .type = kObjectTypeBoolean, \
+    .data.boolean = b })
 
 #define INTEGER_OBJ(i) ((Object) { \
-  .type = kObjectTypeInteger, \
-  .data.integer = i \
-  })
+    .type = kObjectTypeInteger, \
+    .data.integer = i })
 
 #define STRING_OBJ(s) ((Object) { \
-  .type = kObjectTypeString, \
-  .data.string = s \
-  })
+    .type = kObjectTypeString, \
+    .data.string = s })
 
 #define BUFFER_OBJ(s) ((Object) { \
-  .type = kObjectTypeBuffer, \
-  .data.buffer = s \
-  })
+    .type = kObjectTypeBuffer, \
+    .data.buffer = s })
 
 #define WINDOW_OBJ(s) ((Object) { \
-  .type = kObjectTypeWindow, \
-  .data.window = s \
-  })
+    .type = kObjectTypeWindow, \
+    .data.window = s })
 
 #define TABPAGE_OBJ(s) ((Object) { \
-  .type = kObjectTypeTabpage, \
-  .data.tabpage = s \
-  })
+    .type = kObjectTypeTabpage, \
+    .data.tabpage = s })
 
 #define ARRAY_OBJ(a) ((Object) { \
-  .type = kObjectTypeArray, \
-  .data.array = a \
-  })
+    .type = kObjectTypeArray, \
+    .data.array = a })
 
 #define DICTIONARY_OBJ(d) ((Object) { \
-  .type = kObjectTypeDictionary, \
-  .data.dictionary = d \
-  })
+    .type = kObjectTypeDictionary, \
+    .data.dictionary = d })
 
 #define NIL ((Object) {.type = kObjectTypeNil})
 

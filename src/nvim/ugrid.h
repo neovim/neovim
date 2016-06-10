@@ -25,9 +25,9 @@ struct ugrid {
 
 #define UGRID_FOREACH_CELL(grid, top, bot, left, right, code) \
   do { \
-    for (int row = top; row <= bot; ++row) { \
+    for (int row = top; row <= bot; row++) { \
       UCell *row_cells = (grid)->cells[row]; \
-      for (int col = left; col <= right; ++col) { \
+      for (int col = left; col <= right; col++) { \
         UCell *cell = row_cells + col; \
         (void)(cell); \
         code; \
