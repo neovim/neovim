@@ -219,6 +219,7 @@ _ERROR_CATEGORIES = [
     'whitespace/tab',
     'whitespace/todo',
     'whitespace/line_continuation',
+    'whitespace/cast',
 ]
 
 # The default state of the category filter. This is overrided by the --filter=
@@ -2512,6 +2513,15 @@ def CheckSpacing(filename, clean_lines, linenum, nesting_state, error):
         error(filename, linenum, 'whitespace/indent', 5,
               'Must not indent preprocessor directives, use 1-space indent '
               'after the hash')
+
+    cast_line = re.sub(r'^# *define +\w+\([^)]*\)', '', line)
+    match = Search(r'\((?:const )?(?:struct )?[a-zA-Z_]\w*(?: *\*(?:const)?)*\)'
+                   r' +'
+                   r'-?(?:\*+|&)?(?:\w+|\+\+|--|\()', cast_line)
+    if match and line[0] == ' ':
+        error(filename, linenum, 'whitespace/cast', 2,
+              'Should leave no spaces after a cast: {!r}'.format(
+                  match.group(0)))
 
 
 def GetPreviousNonBlankLine(clean_lines, linenum):
