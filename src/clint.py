@@ -2508,6 +2508,11 @@ def CheckSpacing(filename, clean_lines, linenum, nesting_state, error):
               'it is preferred to use the same amount of spaces as preceding '
               'indent')
 
+    if Match(r'^ +#', line):
+        error(filename, linenum, 'whitespace/indent', 5,
+              'Must not indent preprocessor directives, use 1-space indent '
+              'after the hash')
+
 
 def GetPreviousNonBlankLine(clean_lines, linenum):
     """Return the most recent non-blank line and its line number.
