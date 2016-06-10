@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# vim: set fileencoding=utf-8
 #
 # Copyright (c) 2009 Google Inc. All rights reserved.
 #
@@ -217,6 +218,7 @@ _ERROR_CATEGORIES = [
     'whitespace/semicolon',
     'whitespace/tab',
     'whitespace/todo',
+    'whitespace/line_continuation',
 ]
 
 # The default state of the category filter. This is overrided by the --filter=
@@ -2498,6 +2500,13 @@ def CheckSpacing(filename, clean_lines, linenum, nesting_state, error):
     if Search(r'\S(?<!\{)\}', line):
         error(filename, linenum, 'whitespace/braces', 5,
               'Missing space before }')
+
+    if Search(r'\S {2,}\\$', line):
+        error(filename, linenum, 'whitespace/line_continuation', 5,
+              'Too many spaces before \\, line continuation character must be '
+              'preceded by exactly one space. For “blank lines” '
+              'it is preferred to use the same amount of spaces as preceding '
+              'indent')
 
 
 def GetPreviousNonBlankLine(clean_lines, linenum):
