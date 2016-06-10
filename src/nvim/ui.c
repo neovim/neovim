@@ -60,7 +60,7 @@ static int height, width;
 // See http://stackoverflow.com/a/11172679 for a better explanation of how it
 // works.
 #ifdef _MSC_VER
-  #define UI_CALL(funname, ...) \
+# define UI_CALL(funname, ...) \
     do { \
       flush_cursor_update(); \
       for (size_t i = 0; i < ui_count; i++) { \
@@ -69,7 +69,7 @@ static int height, width;
       } \
     } while (0)
 #else
-  #define UI_CALL(...) \
+# define UI_CALL(...) \
     do { \
       flush_cursor_update(); \
       for (size_t i = 0; i < ui_count; i++) { \
