@@ -6070,7 +6070,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	            feature use `has('tablineat')`.
 	< -   Where to truncate line if too long.  Default is at the start.
 	      No width fields allowed.
-	= -   Separation point between left and right aligned items.
+	= -   Separation point between alignment sections. Each section will
+	      be separated by an equal number of spaces.
 	      No width fields allowed.
 	# -   Set highlight group.  The name must follow and then a # again.
 	      Thus use %#HLname# for highlight group HLname.  The same
