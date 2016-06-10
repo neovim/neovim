@@ -1,0 +1,13 @@
+diff --git a/src/nvim/screen.c b/src/nvim/screen.c
+index 34eef83..4c6ec65 100644
+--- a/src/nvim/screen.c
++++ b/src/nvim/screen.c
+@@ -2233,7 +2233,7 @@ win_line (
+    * To speed up the loop below, set extra_check when there is linebreak,
+    * trailing white space and/or syntax processing to be done.
+    */
+-  extra_check = wp->w_p_lbr;
++  extra_check = !wp->w_p_lbr;
+   if (syntax_present(wp) && !wp->w_s->b_syn_error) {
+     /* Prepare for syntax highlighting in this line.  When there is an
+      * error, stop syntax highlighting. */

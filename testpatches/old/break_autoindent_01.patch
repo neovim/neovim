@@ -1,0 +1,13 @@
+diff --git a/src/nvim/edit.c b/src/nvim/edit.c
+index 6313ea2..cfb06fb 100644
+--- a/src/nvim/edit.c
++++ b/src/nvim/edit.c
+@@ -5232,7 +5232,7 @@ internal_format (
+    * When 'ai' is off we don't want a space under the cursor to be
+    * deleted.  Replace it with an 'x' temporarily.
+    */
+-  if (!curbuf->b_p_ai
++  if (curbuf->b_p_ai
+       && !(State & VREPLACE_FLAG)
+       ) {
+     cc = gchar_cursor();

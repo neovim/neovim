@@ -1,0 +1,13 @@
+diff --git a/src/nvim/screen.c b/src/nvim/screen.c
+index 34eef83..0a87ebc 100644
+--- a/src/nvim/screen.c
++++ b/src/nvim/screen.c
+@@ -3568,7 +3568,7 @@ win_line (
+           if ((dy_flags & DY_UHEX) && wp->w_p_rl)
+             rl_mirror(p_extra);                 /* reverse "<12>" */
+           c_extra = NUL;
+-          if (wp->w_p_lbr) {
++          if (!wp->w_p_lbr) {
+             char_u *p;
+ 
+             c = *p_extra;

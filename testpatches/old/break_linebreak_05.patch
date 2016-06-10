@@ -1,0 +1,13 @@
+diff --git a/src/nvim/normal.c b/src/nvim/normal.c
+index 382c494..0a134de 100644
+--- a/src/nvim/normal.c
++++ b/src/nvim/normal.c
+@@ -1428,7 +1428,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
+        || VIsual_active
+        ) && oap->op_type != OP_NOP) {
+     // Avoid a problem with unwanted linebreaks in block mode
+-    if (curwin->w_p_lbr) {
++    if (!curwin->w_p_lbr) {
+       curwin->w_valid &= ~VALID_VIRTCOL;
+     }
+     curwin->w_p_lbr = false;

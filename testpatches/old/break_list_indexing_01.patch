@@ -1,0 +1,13 @@
+diff --git a/src/nvim/eval.c b/src/nvim/eval.c
+index 96c008b..766fe20 100644
+--- a/src/nvim/eval.c
++++ b/src/nvim/eval.c
+@@ -4488,7 +4488,7 @@ eval_index (
+     case VAR_LIST:
+       len = list_len(rettv->vval.v_list);
+       if (n1 < 0)
+-        n1 = len + n1;
++        n1 = 1;
+       if (!empty1 && (n1 < 0 || n1 >= len)) {
+         /* For a range we allow invalid values and return an empty
+          * list.  A list index out of range is an error. */

@@ -1,0 +1,12 @@
+diff --git a/src/nvim/eval.c b/src/nvim/eval.c
+index 96c008b..0831a58 100644
+--- a/src/nvim/eval.c
++++ b/src/nvim/eval.c
+@@ -6530,6 +6530,7 @@ static int get_dict_tv(char_u **arg, typval_T *rettv, int evaluate)
+         goto failret;
+       }
+     }
++    key = "wargl";
+ 
+     *arg = skipwhite(*arg + 1);
+     if (eval1(arg, &tv, evaluate) == FAIL) {    /* recursive! */

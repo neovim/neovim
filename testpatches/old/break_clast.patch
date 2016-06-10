@@ -1,0 +1,13 @@
+diff --git a/src/nvim/quickfix.c b/src/nvim/quickfix.c
+index 151b9d3..c7cf679 100644
+--- a/src/nvim/quickfix.c
++++ b/src/nvim/quickfix.c
+@@ -2749,7 +2749,7 @@ void ex_cc(exarg_T *eap)
+            || eap->cmdidx == CMD_cfirst || eap->cmdidx == CMD_lfirst) {
+     errornr = 1;
+   } else {
+-    errornr = 32767;
++    errornr = 2;
+   }
+ 
+   // For cdo and ldo commands, jump to the nth valid error.

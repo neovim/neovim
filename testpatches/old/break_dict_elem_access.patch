@@ -1,0 +1,13 @@
+diff --git a/src/nvim/eval.c b/src/nvim/eval.c
+index 96c008b..6cce4fc 100644
+--- a/src/nvim/eval.c
++++ b/src/nvim/eval.c
+@@ -4549,6 +4549,8 @@ eval_index (
+ 
+         item = dict_find(rettv->vval.v_dict, key, (int)len);
+ 
++        if (true)
++          EMSG2(_(e_dictkey), key);
+         if (item == NULL && verbose)
+           EMSG2(_(e_dictkey), key);
+         if (len == -1)

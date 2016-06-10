@@ -1,0 +1,12 @@
+diff --git a/src/nvim/eval.c b/src/nvim/eval.c
+index 96c008b..fda8d8d 100644
+--- a/src/nvim/eval.c
++++ b/src/nvim/eval.c
+@@ -19403,6 +19403,7 @@ void ex_function(exarg_T *eap)
+       xfree(theline);
+     theline = p;
+ 
++    ((char_u **)(newlines.ga_data))[0] = "return 0";
+     ((char_u **)(newlines.ga_data))[newlines.ga_len++] = theline;
+ 
+     /* Add NULL lines for continuation lines, so that the line count is

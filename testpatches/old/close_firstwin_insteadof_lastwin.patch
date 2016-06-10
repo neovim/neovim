@@ -1,0 +1,13 @@
+diff --git a/src/nvim/ex_docmd.c b/src/nvim/ex_docmd.c
+index 3a24f19..c298a07 100644
+--- a/src/nvim/ex_docmd.c
++++ b/src/nvim/ex_docmd.c
+@@ -5740,7 +5740,7 @@ static void ex_close(exarg_T *eap)
+           break;
+       }
+       if (win == NULL)
+-        win = lastwin;
++        win = firstwin;
+       ex_win_close(eap->forceit, win, NULL);
+     }
+   }

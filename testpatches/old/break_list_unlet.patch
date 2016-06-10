@@ -1,0 +1,13 @@
+diff --git a/src/nvim/eval.c b/src/nvim/eval.c
+index 96c008b..27e4839 100644
+--- a/src/nvim/eval.c
++++ b/src/nvim/eval.c
+@@ -2916,7 +2916,7 @@ static int do_unlet_var(lval_T *lp, char_u *name_end, int forceit)
+   } else {
+     if (lp->ll_list != NULL) {
+       // unlet a List item.
+-      listitem_remove(lp->ll_list, lp->ll_li);
++      //listitem_remove(lp->ll_list, lp->ll_li);
+     } else {
+       // unlet a Dictionary item.
+       dict_T *d = lp->ll_dict;

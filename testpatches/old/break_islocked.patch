@@ -1,0 +1,13 @@
+diff --git a/src/nvim/eval.c b/src/nvim/eval.c
+index 96c008b..7e507bf 100644
+--- a/src/nvim/eval.c
++++ b/src/nvim/eval.c
+@@ -3128,7 +3128,7 @@ static void item_lock(typval_T *tv, int deep, int lock)
+  */
+ static int tv_islocked(typval_T *tv)
+ {
+-  return (tv->v_lock & VAR_LOCKED)
++  return !(tv->v_lock & VAR_LOCKED)
+          || (tv->v_type == VAR_LIST
+              && tv->vval.v_list != NULL
+              && (tv->vval.v_list->lv_lock & VAR_LOCKED))

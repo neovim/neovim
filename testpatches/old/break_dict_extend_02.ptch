@@ -1,0 +1,13 @@
+diff --git a/src/nvim/eval.c b/src/nvim/eval.c
+index 96c008b..f612a6e 100644
+--- a/src/nvim/eval.c
++++ b/src/nvim/eval.c
+@@ -8892,7 +8892,7 @@ void dict_extend(dict_T *d1, dict_T *d2, char_u *action)
+         if (watched) {
+           dictwatcher_notify(d1, (char *)di1->di_key, &di1->di_tv, NULL);
+         }
+-      } else if (*action == 'e') {
++      } else if (*action == 'x') {
+         EMSG2(_("E737: Key already exists: %s"), hi2->hi_key);
+         break;
+       } else if (*action == 'f' && HI2DI(hi2) != di1) {

@@ -1,0 +1,13 @@
+diff --git a/src/nvim/charset.c b/src/nvim/charset.c
+index d0dc7b6..4e15d93 100644
+--- a/src/nvim/charset.c
++++ b/src/nvim/charset.c
+@@ -734,7 +734,7 @@ int vim_strnsize(char_u *s, int len)
+ ///
+ /// @return Number of characters.
+ #define RET_WIN_BUF_CHARTABSIZE(wp, buf, p, col) \
+-  if (*(p) == TAB && (!(wp)->w_p_list || lcs_tab1)) { \
++  if (*(p) == TAB && ((wp)->w_p_list || lcs_tab1)) { \
+     const int ts = (int) (buf)->b_p_ts; \
+     return (ts - (int)(col % ts)); \
+   } else { \

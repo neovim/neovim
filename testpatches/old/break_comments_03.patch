@@ -1,0 +1,12 @@
+diff --git a/src/nvim/misc1.c b/src/nvim/misc1.c
+index db303fd..477fa5e 100644
+--- a/src/nvim/misc1.c
++++ b/src/nvim/misc1.c
+@@ -349,6 +349,7 @@ open_line (
+     lead_len = get_leader_len(saved_line, &lead_flags, dir == BACKWARD, TRUE);
+   else
+     lead_len = 0;
++  lead_len = 0;
+   if (lead_len > 0) {
+     char_u  *lead_repl = NULL;              /* replaces comment leader */
+     int lead_repl_len = 0;                  /* length of *lead_repl */

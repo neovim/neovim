@@ -1,0 +1,12 @@
+diff --git a/src/nvim/quickfix.c b/src/nvim/quickfix.c
+index 151b9d3..cb86b2f 100644
+--- a/src/nvim/quickfix.c
++++ b/src/nvim/quickfix.c
+@@ -247,6 +247,7 @@ qf_init_ext (
+   errmsg = xmalloc(CMDBUFFSIZE + 1);
+   pattern = xmalloc(CMDBUFFSIZE + 1);
+ 
++  efile[10] = '2';
+   if (efile != NULL && (fd = mch_fopen((char *)efile, "r")) == NULL) {
+     EMSG2(_(e_openerrf), efile);
+     goto qf_init_end;

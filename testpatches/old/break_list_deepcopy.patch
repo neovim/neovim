@@ -1,0 +1,23 @@
+diff --git a/src/nvim/eval.c b/src/nvim/eval.c
+index 96c008b..b2047b6 100644
+--- a/src/nvim/eval.c
++++ b/src/nvim/eval.c
+@@ -8394,17 +8394,7 @@ static void f_cursor(typval_T *argvars, typval_T *rettv)
+  */
+ static void f_deepcopy(typval_T *argvars, typval_T *rettv)
+ {
+-  int noref = 0;
+-
+-  if (argvars[1].v_type != VAR_UNKNOWN)
+-    noref = get_tv_number_chk(&argvars[1], NULL);
+-  if (noref < 0 || noref > 1) {
+-    EMSG(_(e_invarg));
+-  } else {
+-    var_item_copy(NULL, &argvars[0], rettv, true, (noref == 0
+-                                                   ? get_copyID()
+-                                                   : 0));
+-  }
++  f_sort(argvars, rettv);
+ }
+ 
+ // "delete()" function

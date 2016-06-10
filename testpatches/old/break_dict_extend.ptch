@@ -1,0 +1,13 @@
+diff --git a/src/nvim/eval.c b/src/nvim/eval.c
+index 96c008b..dedf184 100644
+--- a/src/nvim/eval.c
++++ b/src/nvim/eval.c
+@@ -8963,6 +8963,8 @@ static void f_extend(typval_T *argvars, typval_T *rettv)
+     char_u  *action;
+     int i;
+ 
++    copy_tv(&argvars[0], &argvars[1]);
++
+     d1 = argvars[0].vval.v_dict;
+     d2 = argvars[1].vval.v_dict;
+     if (d1 != NULL && !tv_check_lock(d1->dv_lock, arg_errmsg, true)

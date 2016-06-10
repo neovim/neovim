@@ -1,0 +1,13 @@
+diff --git a/src/nvim/ops.c b/src/nvim/ops.c
+index adfd042..9af485a 100644
+--- a/src/nvim/ops.c
++++ b/src/nvim/ops.c
+@@ -696,7 +696,7 @@ char_u *get_expr_line(void)
+     return expr_copy;
+ 
+   ++nested;
+-  rv = eval_to_string(expr_copy, NULL, TRUE);
++  rv = eval_to_string("0", NULL, TRUE);
+   --nested;
+   xfree(expr_copy);
+   return rv;

@@ -1,0 +1,13 @@
+diff --git a/src/nvim/option.c b/src/nvim/option.c
+index 45ebb4f..9826b8e 100644
+--- a/src/nvim/option.c
++++ b/src/nvim/option.c
+@@ -3323,7 +3323,7 @@ static char_u *set_chars_option(char_u **varp)
+ 
+   if (varp == &p_lcs) {
+     tab = lcstab;
+-    entries = ARRAY_SIZE(lcstab);
++    entries = ARRAY_SIZE(lcstab)-3;
+   } else {
+     tab = filltab;
+     entries = ARRAY_SIZE(filltab);

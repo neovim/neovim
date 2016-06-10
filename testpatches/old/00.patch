@@ -1,0 +1,13 @@
+diff --git a/src/nvim/version.c b/src/nvim/version.c
+index 80b1b23..772f12d 100644
+--- a/src/nvim/version.c
++++ b/src/nvim/version.c
+@@ -3,6 +3,8 @@
+ /// Nvim was forked from Vim 7.4.160.
+ /// Vim originated from Stevie version 3.6 (Fish disk 217) by GRWalter (Fred).
+ 
++// This is just a dummy change to have a nontrivial diff that does not change
++// the c code
+ #include <inttypes.h>
+ #include <assert.h>
+ #include <limits.h>

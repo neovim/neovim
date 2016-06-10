@@ -1,0 +1,13 @@
+diff --git a/src/nvim/normal.c b/src/nvim/normal.c
+index e064d34..73c9196 100644
+--- a/src/nvim/normal.c
++++ b/src/nvim/normal.c
+@@ -5972,7 +5972,7 @@ static void nv_Replace(cmdarg_T *cap)
+     } else {
+       if (virtual_active())
+         coladvance(getviscol());
+-      invoke_edit(cap, false, cap->arg ? 'V' : 'R', false);
++      invoke_edit(cap, false, !cap->arg ? 'V' : 'R', false);
+     }
+   }
+ }

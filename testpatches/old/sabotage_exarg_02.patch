@@ -1,0 +1,12 @@
+diff --git a/src/nvim/ex_docmd.c b/src/nvim/ex_docmd.c
+index 3a24f19..48fb583 100644
+--- a/src/nvim/ex_docmd.c
++++ b/src/nvim/ex_docmd.c
+@@ -2188,6 +2188,7 @@ static char_u * do_one_cmd(char_u **cmdlinep,
+      * Call the function to execute the command.
+      */
+     ea.errmsg = NULL;
++    ea.line2 = 0;
+     (cmdnames[ea.cmdidx].cmd_func)(&ea);
+     if (ea.errmsg != NULL)
+       errormsg = (char_u *)_(ea.errmsg);

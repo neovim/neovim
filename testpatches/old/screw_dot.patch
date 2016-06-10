@@ -1,0 +1,13 @@
+diff --git a/src/nvim/ex_docmd.c b/src/nvim/ex_docmd.c
+index 3a24f19..7ff99d3 100644
+--- a/src/nvim/ex_docmd.c
++++ b/src/nvim/ex_docmd.c
+@@ -3427,7 +3427,7 @@ static linenr_T get_address(exarg_T *eap,
+           lnum = curwin->w_cursor.lnum;
+           break;
+         case ADDR_WINDOWS:
+-          lnum = CURRENT_WIN_NR;
++          lnum = LAST_WIN_NR;
+           break;
+         case ADDR_ARGUMENTS:
+           lnum = curwin->w_arg_idx + 1;

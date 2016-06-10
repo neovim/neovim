@@ -1,0 +1,13 @@
+diff --git a/src/nvim/screen.c b/src/nvim/screen.c
+index cd440fe..3811fc9 100644
+--- a/src/nvim/screen.c
++++ b/src/nvim/screen.c
+@@ -2768,7 +2768,7 @@ win_line (
+       // draw 'breakindent': indent wrapped text accodringly
+       if (draw_state == WL_BRI - 1 && n_extra == 0) {
+         draw_state = WL_BRI;
+-        if (wp->w_p_bri && n_extra == 0 && row != startrow && filler_lines == 0) {
++        if (!wp->w_p_bri && n_extra == 0 && row != startrow && filler_lines == 0) {
+           char_attr = 0; // was: hl_attr(HLF_AT);
+ 
+           if (diff_hlf != (hlf_T)0) {

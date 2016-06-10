@@ -1,0 +1,13 @@
+diff --git a/src/nvim/eval.c b/src/nvim/eval.c
+index 96c008b..49f9943 100644
+--- a/src/nvim/eval.c
++++ b/src/nvim/eval.c
+@@ -2931,7 +2931,7 @@ static int do_unlet_var(lval_T *lp, char_u *name_end, int forceit)
+         key = xstrdup((char *)di->di_key);
+       }
+ 
+-      dictitem_remove(d, di);
++      //dictitem_remove(d, di);
+ 
+       if (watched) {
+         dictwatcher_notify(d, key, NULL, &oldtv);

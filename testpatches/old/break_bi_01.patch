@@ -1,0 +1,14 @@
+diff --git a/src/nvim/indent.c b/src/nvim/indent.c
+index d300818..0f046c2 100644
+--- a/src/nvim/indent.c
++++ b/src/nvim/indent.c
+@@ -490,7 +490,8 @@ int get_breakindent_win(win_T *wp, char_u *line) {
+     bri = (eff_wwidth - wp->w_p_brimin < 0)
+       ? 0 : eff_wwidth - wp->w_p_brimin;
+ 
+-  return bri;
++  //return bri;
++  return 0;
+ }
+ 
+ // When extra == 0: Return true if the cursor is before or on the first

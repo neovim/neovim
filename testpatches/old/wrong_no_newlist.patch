@@ -1,0 +1,13 @@
+diff --git a/src/nvim/quickfix.c b/src/nvim/quickfix.c
+index 151b9d3..08e6e97 100644
+--- a/src/nvim/quickfix.c
++++ b/src/nvim/quickfix.c
+@@ -252,7 +252,7 @@ qf_init_ext (
+     goto qf_init_end;
+   }
+ 
+-  if (newlist || qi->qf_curlist == qi->qf_listcount)
++  if (!newlist || qi->qf_curlist == qi->qf_listcount)
+     /* make place for a new list */
+     qf_new_list(qi, qf_title);
+   else if (qi->qf_lists[qi->qf_curlist].qf_count > 0)

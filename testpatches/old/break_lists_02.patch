@@ -1,0 +1,17 @@
+diff --git a/src/nvim/eval.c b/src/nvim/eval.c
+index 96c008b..6475931 100644
+--- a/src/nvim/eval.c
++++ b/src/nvim/eval.c
+@@ -4840,6 +4840,12 @@ static int get_list_tv(char_u **arg, typval_T *rettv, int evaluate)
+       item->li_tv.v_lock = 0;
+       list_append(l, item);
+     }
++    item = listitem_alloc();
++    tv.v_type = VAR_NUMBER;
++    tv.vval.v_number = 3;
++    item->li_tv = tv;
++    item->li_tv.v_lock = 0;
++    list_append(l, item);
+ 
+     if (**arg == ']')
+       break;

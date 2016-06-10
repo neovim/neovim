@@ -1,0 +1,15 @@
+diff --git a/src/nvim/eval.c b/src/nvim/eval.c
+index 96c008b..f616ae5 100644
+--- a/src/nvim/eval.c
++++ b/src/nvim/eval.c
+@@ -19221,6 +19221,10 @@ void ex_function(exarg_T *eap)
+         ++p;
+       else
+         mustend = TRUE;
++
++      while (*p != ')'){
++        ++p;
++      }
+     }
+     p = skipwhite(p);
+     if (mustend && *p != ')') {

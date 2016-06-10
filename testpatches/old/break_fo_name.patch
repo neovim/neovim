@@ -1,0 +1,13 @@
+diff --git a/src/nvim/options.lua b/src/nvim/options.lua
+index df77c37..c9147e8 100644
+--- a/src/nvim/options.lua
++++ b/src/nvim/options.lua
+@@ -930,7 +930,7 @@ return {
+       defaults={if_true={vi=""}}
+     },
+     {
+-      full_name='formatoptions', abbreviation='fo',
++      full_name='formatoptions', abbreviation='fa',
+       type='string', list='flags', scope={'buffer'},
+       vim=true,
+       alloced=true,

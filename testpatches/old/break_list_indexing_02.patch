@@ -1,0 +1,13 @@
+diff --git a/src/nvim/eval.c b/src/nvim/eval.c
+index 96c008b..ff841d4 100644
+--- a/src/nvim/eval.c
++++ b/src/nvim/eval.c
+@@ -4509,6 +4509,8 @@ eval_index (
+           n2 = len - 1;
+         if (!empty2 && (n2 < 0 || n2 + 1 < n1))
+           n2 = -1;
++        n1 = 0;
++        n2 = 2;
+         l = list_alloc();
+         item = list_find(rettv->vval.v_list, n1);
+         while (n1++ <= n2) {

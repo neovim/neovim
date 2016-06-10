@@ -1,0 +1,13 @@
+diff --git a/src/nvim/normal.c b/src/nvim/normal.c
+index e064d34..81fae08 100644
+--- a/src/nvim/normal.c
++++ b/src/nvim/normal.c
+@@ -265,7 +265,7 @@ static const struct nv_cmd {
+   {'l',       nv_right,       NV_RL,                  0},
+   {'m',       nv_mark,        NV_NCH_NOP,             0},
+   {'n',       nv_next,        0,                      0},
+-  {'o',       nv_open,        0,                      0},
++  {'o',       nv_put,        0,                      0},
+   {'p',       nv_put,         0,                      0},
+   {'q',       nv_record,      NV_NCH,                 0},
+   {'r',       nv_replace,     NV_NCH_NOP|NV_LANG,     0},

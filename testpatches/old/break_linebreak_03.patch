@@ -1,0 +1,13 @@
+diff --git a/src/nvim/screen.c b/src/nvim/screen.c
+index 34eef83..922cd68 100644
+--- a/src/nvim/screen.c
++++ b/src/nvim/screen.c
+@@ -3358,7 +3358,7 @@ win_line (
+         /*
+          * Found last space before word: check for line break.
+          */
+-        if (wp->w_p_lbr && vim_isbreak(c) && !vim_isbreak(*ptr)) {
++        if (!wp->w_p_lbr && vim_isbreak(c) && !vim_isbreak(*ptr)) {
+           int mb_off = has_mbyte ? (*mb_head_off)(line, ptr - 1) : 0;
+           char_u *p = ptr - (mb_off + 1);
+           // TODO: is passing p for start of the line OK?

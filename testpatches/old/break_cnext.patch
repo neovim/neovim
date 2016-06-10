@@ -1,0 +1,13 @@
+diff --git a/src/nvim/quickfix.c b/src/nvim/quickfix.c
+index 151b9d3..6c8031d 100644
+--- a/src/nvim/quickfix.c
++++ b/src/nvim/quickfix.c
+@@ -2808,7 +2808,7 @@ void ex_cnext(exarg_T *eap)
+ 
+   qf_jump(qi, (eap->cmdidx == CMD_cnext || eap->cmdidx == CMD_lnext
+                || eap->cmdidx == CMD_cdo || eap->cmdidx == CMD_ldo)
+-      ? FORWARD
++      ? BACKWARD
+       : (eap->cmdidx == CMD_cnfile || eap->cmdidx == CMD_lnfile
+         || eap->cmdidx == CMD_cfdo || eap->cmdidx == CMD_lfdo)
+       ? FORWARD_FILE

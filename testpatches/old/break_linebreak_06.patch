@@ -1,0 +1,13 @@
+diff --git a/src/nvim/normal.c b/src/nvim/normal.c
+index 382c494..b6cbab2 100644
+--- a/src/nvim/normal.c
++++ b/src/nvim/normal.c
+@@ -1408,7 +1408,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
+   pos_T old_cursor;
+   bool empty_region_error;
+   int restart_edit_save;
+-  int lbr_saved = curwin->w_p_lbr;
++  int lbr_saved = !curwin->w_p_lbr;
+ 
+ 
+   // The visual area is remembered for redo

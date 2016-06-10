@@ -1,0 +1,13 @@
+diff --git a/src/nvim/charset.c b/src/nvim/charset.c
+index d0dc7b6..b5f3f75 100644
+--- a/src/nvim/charset.c
++++ b/src/nvim/charset.c
+@@ -987,7 +987,7 @@ int win_lbr_chartabsize(win_T *wp, char_u *line, char_u *s, colnr_T col, int *he
+   int n;
+ 
+   // No 'linebreak', 'showbreak' and 'breakindent': return quickly.
+-  if (!wp->w_p_lbr && !wp->w_p_bri && (*p_sbr == NUL)) {
++  if (wp->w_p_lbr && !wp->w_p_bri && (*p_sbr == NUL)) {
+     if (wp->w_p_wrap) {
+       return win_nolbr_chartabsize(wp, s, col, headp);
+     }

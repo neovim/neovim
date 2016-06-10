@@ -1,0 +1,14 @@
+diff --git a/src/nvim/screen.c b/src/nvim/screen.c
+index cd440fe..ab0d57f 100644
+--- a/src/nvim/screen.c
++++ b/src/nvim/screen.c
+@@ -2806,6 +2806,9 @@ win_line (
+           p_extra = p_sbr;
+           c_extra = NUL;
+           n_extra = (int)STRLEN(p_sbr);
++          if (n_extra == 1) {
++            p_extra = "-";
++          };
+           char_attr = hl_attr(HLF_AT);
+           need_showbreak = FALSE;
+           vcol_sbr = vcol + MB_CHARLEN(p_sbr);
