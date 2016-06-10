@@ -2979,11 +2979,16 @@ int do_unlet(char_u *name, int forceit)
     } else if (current_funccal != NULL
                && ht == &current_funccal->l_vars.dv_hashtab) {
       d = &current_funccal->l_vars;
+    } else if (ht == &compat_hashtab) {
+        d = &vimvardict;
     } else {
       di = find_var_in_ht(ht, *name, (char_u *)"", false);
       d = di->di_tv.vval.v_dict;
     }
-
+    if (d == NULL) {
+      EMSG2(_(e_intern2), "do_unlet()");
+      return FAIL;
+    }
     hi = hash_find(ht, varname);
     if (!HASHITEM_EMPTY(hi)) {
       di = HI2DI(hi);
@@ -2992,6 +2997,11 @@ int do_unlet(char_u *name, int forceit)
           || tv_check_lock(d->dv_lock, name, false)) {
         return FAIL;
       }
+
+      if (d == NULL || tv_check_lock(d->dv_lock, name, false)) {
+        return FAIL;
+      }
+
       typval_T oldtv;
       bool watched = is_watched(dict);
 

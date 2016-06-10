@@ -39,6 +39,7 @@ NEW_TESTS = \
 	    test_menu.res \
 	    test_syntax.res \
 	    test_timers.res \
+	    test_unlet.res \
 	    test_viml.res \
 	    test_alot.res
 
