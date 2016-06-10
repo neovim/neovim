@@ -23,16 +23,16 @@ struct ugrid {
 
 #define EMPTY_ATTRS ((HlAttrs){ false, false, false, false, false, -1, -1, -1 })
 
-#define UGRID_FOREACH_CELL(grid, top, bot, left, right, code)           \
-  do {                                                                  \
-    for (int row = top; row <= bot; ++row) {                            \
-      UCell *row_cells = (grid)->cells[row];                            \
-      for (int col = left; col <= right; ++col) {                       \
-        UCell *cell = row_cells + col;                                  \
-        (void)(cell);                                                   \
-        code;                                                           \
-      }                                                                 \
-    }                                                                   \
+#define UGRID_FOREACH_CELL(grid, top, bot, left, right, code) \
+  do { \
+    for (int row = top; row <= bot; ++row) { \
+      UCell *row_cells = (grid)->cells[row]; \
+      for (int col = left; col <= right; ++col) { \
+        UCell *cell = row_cells + col; \
+        (void)(cell); \
+        code; \
+      } \
+    } \
   } while (0)
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

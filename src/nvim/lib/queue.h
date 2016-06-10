@@ -25,7 +25,7 @@ typedef struct _queue {
 } QUEUE;
 
 // Public macros.
-#define QUEUE_DATA(ptr, type, field)  \
+#define QUEUE_DATA(ptr, type, field) \
   ((type *)((char *)(ptr) - offsetof(type, field)))
 
 #define QUEUE_FOREACH(q, h) \

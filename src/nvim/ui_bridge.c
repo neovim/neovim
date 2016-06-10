@@ -19,8 +19,8 @@
 #define UI(b) (((UIBridgeData *)b)->ui)
 
 // Call a function in the UI thread
-#define UI_CALL(ui, name, argc, ...)                                      \
-  ((UIBridgeData *)ui)->scheduler(                                        \
+#define UI_CALL(ui, name, argc, ...) \
+  ((UIBridgeData *)ui)->scheduler( \
     event_create(1, ui_bridge_##name##_event, argc, __VA_ARGS__), UI(ui))
 
 #define INT2PTR(i) ((void *)(uintptr_t)i)

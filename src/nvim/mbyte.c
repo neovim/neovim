@@ -1304,7 +1304,7 @@ int utfc_ptr2char(const char_u *p, int *pcc)
  */
 int utfc_ptr2char_len(const char_u *p, int *pcc, int maxlen)
 {
-#define IS_COMPOSING(s1, s2, s3)                                               \
+#define IS_COMPOSING(s1, s2, s3) \
   (i == 0 ? UTF_COMPOSINGLIKE((s1), (s2)) : utf_iscomposing((s3)))
 
   assert(maxlen > 0);

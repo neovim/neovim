@@ -28,13 +28,13 @@ struct ui_bridge_data {
   bool stopped;
 };
 
-#define CONTINUE(b)                                                    \
-  do {                                                                 \
-    UIBridgeData *d = (UIBridgeData *)b;                               \
-    uv_mutex_lock(&d->mutex);                                          \
-    d->ready = true;                                                   \
-    uv_cond_signal(&d->cond);                                          \
-    uv_mutex_unlock(&d->mutex);                                        \
+#define CONTINUE(b) \
+  do { \
+    UIBridgeData *d = (UIBridgeData *)b; \
+    uv_mutex_lock(&d->mutex); \
+    d->ready = true; \
+    uv_cond_signal(&d->cond); \
+    uv_mutex_unlock(&d->mutex); \
   } while (0)
 
 
