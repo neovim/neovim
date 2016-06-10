@@ -1582,7 +1582,7 @@ static char_u latin1lower[257] =
 ///
 /// @param  c  character to check
 bool vim_islower(int c)
-  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (c <= '@') {
     return false;
@@ -1613,7 +1613,7 @@ bool vim_islower(int c)
 ///
 /// @param  c  character to check
 bool vim_isupper(int c)
-  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (c <= '@') {
     return false;
