@@ -71,6 +71,8 @@ static int sub_done = 0;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ex_cmds.c.generated.h"
+#include "ex_cmds.h"
+
 #endif
 
 /*
@@ -2922,7 +2924,6 @@ void do_sub(exarg_T *eap)
   static int do_all = false;            // do multiple substitutions per line
   static int do_ask = false;            // ask for confirmation
   static bool do_count = false;         // count only */
-  // static int do_error = TRUE;         // if false, ignore errors
   // if live mode, ignore errors
   static int do_error = false;          // if false, ignore errors
   static int do_print = false;          // print last line with subs.
@@ -6089,7 +6090,7 @@ void ex_window_live_sub(char_u * pat,
 
       // free of the saved line and the allocated column
       xfree(col);
-      xfree(mat.line);
+      xfree((*current)->data.line);
     }
     xfree(str);
   }
