@@ -41,13 +41,29 @@ describe('notify', function()
     it('does not crash for deeply nested variable', function()
       meths.set_var('l', {})
       local nest_level = 1000
-      meths.command(('call map(range(%u), "extend(g:, {\'l\': [g:l]})")'):format(nest_level))
-      local ret = {}
-      for i = 1, nest_level do
-        ret = {ret}
-      end
+      meths.command(('call map(range(%u), "extend(g:, {\'l\': [g:l]})")'):format(nest_level - 1))
       eval('rpcnotify('..channel..', "event", g:l)')
-      -- eq({'notification', 'event', ret}, next_message())
+      local msg = next_message()
+      eq('notification', msg[1])
+      eq('event', msg[2])
+      local act_ret = msg[3]
+      local act_nest_level = 0
+      while act_ret do
+        if type(act_ret) == 'table' then
+          local cur_act_ret = nil
+          for k, v in pairs(act_ret) do
+            eq(1, k)
+            cur_act_ret = v
+          end
+          if cur_act_ret then
+            act_nest_level = act_nest_level + 1
+          end
+          act_ret = cur_act_ret
+        else
+          eq(nil, act_ret)
+        end
+      end
+      eq(nest_level, act_nest_level)
     end)
   end)
 end)
