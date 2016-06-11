@@ -1,7 +1,7 @@
 -- Test if URLs are recognized as filenames by commands such as "gf". Here
 -- we'll use `expand("<cfile>")` since "gf" would need to open the file.
 
-local helpers = require('test.functional.helpers')
+local helpers = require('test.functional.helpers')(after_each)
 local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
 local execute, expect = helpers.execute, helpers.expect
 

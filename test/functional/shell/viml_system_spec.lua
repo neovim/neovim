@@ -2,7 +2,7 @@
 -- - `system()`
 -- - `systemlist()`
 
-local helpers = require('test.functional.helpers')
+local helpers = require('test.functional.helpers')(after_each)
 local eq, clear, eval, feed, nvim =
   helpers.eq, helpers.clear, helpers.eval, helpers.feed, helpers.nvim
 
@@ -151,8 +151,8 @@ describe('system()', function()
   describe('with output containing NULs', function()
     local fname = 'Xtest'
 
-    setup(create_file_with_nuls(fname))
-    teardown(delete_file(fname))
+    before_each(create_file_with_nuls(fname))
+    after_each(delete_file(fname))
 
     it('replaces NULs by SOH characters', function()
       eq('part1\001part2\001part3\n', eval('system("cat '..fname..'")'))
@@ -310,8 +310,8 @@ describe('systemlist()', function()
   describe('with output containing NULs', function()
     local fname = 'Xtest'
 
-    setup(create_file_with_nuls(fname))
-    teardown(delete_file(fname))
+    before_each(create_file_with_nuls(fname))
+    after_each(delete_file(fname))
 
     it('replaces NULs by newline characters', function()
       eq({'part1\npart2\npart3'}, eval('systemlist("cat '..fname..'")'))

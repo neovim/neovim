@@ -1,6 +1,6 @@
 -- Test Virtual replace mode.
 
-local helpers = require('test.functional.helpers')
+local helpers = require('test.functional.helpers')(after_each)
 local feed = helpers.feed
 local clear, execute, expect = helpers.clear, helpers.execute, helpers.expect
 

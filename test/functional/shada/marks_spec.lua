@@ -1,5 +1,5 @@
 -- ShaDa marks saving/reading support
-local helpers = require('test.functional.helpers')
+local helpers = require('test.functional.helpers')(after_each)
 local meths, curwinmeths, curbufmeths, nvim_command, funcs, eq =
   helpers.meths, helpers.curwinmeths, helpers.curbufmeths, helpers.command,
   helpers.funcs, helpers.eq

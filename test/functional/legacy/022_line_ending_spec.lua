@@ -1,6 +1,6 @@
 -- Tests for file with some lines ending in CTRL-M, some not
 
-local helpers = require('test.functional.helpers')
+local helpers = require('test.functional.helpers')(after_each)
 local clear, feed = helpers.clear, helpers.feed
 local execute, expect = helpers.execute, helpers.expect
 

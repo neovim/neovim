@@ -1,6 +1,6 @@
 -- Tests for :sort command.
 
-local helpers = require('test.functional.helpers')
+local helpers = require('test.functional.helpers')(after_each)
 local insert, execute, clear, expect, eq, eval, source = helpers.insert,
   helpers.execute, helpers.clear, helpers.expect, helpers.eq, helpers.eval,
   helpers.source

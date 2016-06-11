@@ -1,5 +1,5 @@
 local Screen = require('test.functional.ui.screen')
-local helpers = require('test.functional.helpers')
+local helpers = require('test.functional.helpers')(after_each)
 local thelpers = require('test.functional.terminal.helpers')
 local clear, eq, curbuf = helpers.clear, helpers.eq, helpers.curbuf
 local feed, nvim_dir, execute = helpers.feed, helpers.nvim_dir, helpers.execute

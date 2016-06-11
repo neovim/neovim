@@ -3,7 +3,7 @@
 -- A pattern that gives the expected result produces OK, so that we know it was
 -- actually tried.
 
-local helpers = require('test.functional.helpers')
+local helpers = require('test.functional.helpers')(after_each)
 local insert, source = helpers.insert, helpers.source
 local clear, expect = helpers.clear, helpers.expect
 

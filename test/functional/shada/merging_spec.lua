@@ -1,5 +1,5 @@
 -- ShaDa merging data support
-local helpers = require('test.functional.helpers')
+local helpers = require('test.functional.helpers')(after_each)
 local nvim_command, funcs, curbufmeths, eq =
   helpers.command, helpers.funcs,
   helpers.curbufmeths, helpers.eq

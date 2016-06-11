@@ -2,7 +2,7 @@
 --   This is not all that useful now that the options are no longer reset when
 --   setting the other.
 
-local helpers = require('test.functional.helpers')
+local helpers = require('test.functional.helpers')(after_each)
 local feed = helpers.feed
 local clear, expect, source = helpers.clear, helpers.expect, helpers.source
 

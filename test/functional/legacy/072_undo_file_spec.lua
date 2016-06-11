@@ -2,7 +2,7 @@
 -- Since this script is sourced we need to explicitly break changes up in
 -- undo-able pieces.  Do that by setting 'undolevels'.
 
-local helpers = require('test.functional.helpers')
+local helpers = require('test.functional.helpers')(after_each)
 local feed, insert = helpers.feed, helpers.insert
 local clear, execute, expect = helpers.clear, helpers.execute, helpers.expect
 

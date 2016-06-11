@@ -1,7 +1,7 @@
 -- Tests for correct display (cursor column position) with +conceal and
 -- tabulators.
 
-local helpers = require('test.functional.helpers')
+local helpers = require('test.functional.helpers')(after_each)
 local feed, insert, clear, execute =
   helpers.feed, helpers.insert, helpers.clear, helpers.execute
 

@@ -1,7 +1,7 @@
 -- vim: set foldmethod=marker foldmarker=[[,]] :
 -- Tests for setting the '[,'] marks when joining lines.
 
-local helpers = require('test.functional.helpers')
+local helpers = require('test.functional.helpers')(after_each)
 local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
 local execute, expect = helpers.execute, helpers.expect
 

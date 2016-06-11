@@ -1,6 +1,6 @@
 -- Tests for errorformat.
 
-local helpers = require('test.functional.helpers')
+local helpers = require('test.functional.helpers')(after_each)
 local clear = helpers.clear
 local execute, expect = helpers.execute, helpers.expect
 

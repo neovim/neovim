@@ -12,7 +12,8 @@
 -- Use a FileChangedShell autocommand to avoid a prompt for "Xtestfile.gz"
 -- being modified outside of Vim (noticed on Solaris).
 
-local helpers, lfs = require('test.functional.helpers'), require('lfs')
+local helpers= require('test.functional.helpers')(after_each)
+local lfs = require('lfs')
 local clear, execute, expect, eq, neq, dedent, write_file, feed =
   helpers.clear, helpers.execute, helpers.expect, helpers.eq, helpers.neq,
   helpers.dedent, helpers.write_file, helpers.feed

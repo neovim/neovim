@@ -1,7 +1,7 @@
 -- Test for 'errorformat'.  This will fail if the quickfix feature was
 -- disabled.
 
-local helpers = require('test.functional.helpers')
+local helpers = require('test.functional.helpers')(after_each)
 local feed, clear, execute = helpers.feed, helpers.clear, helpers.execute
 local expect, write_file = helpers.expect, helpers.write_file
 

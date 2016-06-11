@@ -1,6 +1,6 @@
 -- " Test for expression comparators.
 
-local helpers = require('test.functional.helpers')
+local helpers = require('test.functional.helpers')(after_each)
 local clear, eq = helpers.clear, helpers.eq
 local eval, execute = helpers.eval, helpers.execute
 

@@ -1,6 +1,6 @@
 -- Some tests for buffer-local autocommands
 
-local helpers = require('test.functional.helpers')
+local helpers = require('test.functional.helpers')(after_each)
 local clear, execute, eq = helpers.clear, helpers.execute, helpers.eq
 local curbuf_contents = helpers.curbuf_contents
 

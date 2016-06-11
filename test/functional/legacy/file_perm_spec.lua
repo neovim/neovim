@@ -1,7 +1,7 @@
 -- Test getting and setting file permissions.
 require('os')
 
-local helpers = require('test.functional.helpers')
+local helpers = require('test.functional.helpers')(after_each)
 local clear, call, eq = helpers.clear, helpers.call, helpers.eq
 local neq, exc_exec = helpers.neq, helpers.exc_exec
 

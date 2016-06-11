@@ -1,6 +1,6 @@
 -- Tests for :[count]close! and :[count]hide
 
-local helpers = require('test.functional.helpers')
+local helpers = require('test.functional.helpers')(after_each)
 local feed, eval, eq, clear, execute =
   helpers.feed, helpers.eval, helpers.eq, helpers.clear, helpers.execute
 

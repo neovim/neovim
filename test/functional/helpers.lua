@@ -1,8 +1,13 @@
 require('coxpcall')
 local lfs = require('lfs')
-local assert = require('luassert')
 local ChildProcessStream = require('nvim.child_process_stream')
 local Session = require('nvim.session')
+local global_helpers = require('test.helpers')
+
+local check_logs = global_helpers.check_logs
+local neq = global_helpers.neq
+local eq = global_helpers.eq
+local ok = global_helpers.ok
 
 local nvim_prog = os.getenv('NVIM_PROG') or 'build/bin/nvim'
 local nvim_argv = {nvim_prog, '-u', 'NONE', '-i', 'NONE', '-N',
@@ -267,18 +272,6 @@ local function source(code)
   return tmpname
 end
 
-local function eq(expected, actual)
-  return assert.are.same(expected, actual)
-end
-
-local function neq(expected, actual)
-  return assert.are_not.same(expected, actual)
-end
-
-local function ok(expr)
-  assert.is_true(expr)
-end
-
 local function nvim(method, ...)
   return request('vim_'..method, ...)
 end
@@ -412,54 +405,59 @@ local curbufmeths = create_callindex(curbuf)
 local curwinmeths = create_callindex(curwin)
 local curtabmeths = create_callindex(curtab)
 
-return {
-  prepend_argv = prepend_argv,
-  clear = clear,
-  spawn = spawn,
-  dedent = dedent,
-  source = source,
-  rawfeed = rawfeed,
-  insert = insert,
-  feed = feed,
-  execute = execute,
-  eval = nvim_eval,
-  call = nvim_call,
-  command = nvim_command,
-  request = request,
-  next_message = next_message,
-  run = run,
-  stop = stop,
-  eq = eq,
-  neq = neq,
-  expect = expect,
-  ok = ok,
-  nvim = nvim,
-  nvim_async = nvim_async,
-  nvim_prog = nvim_prog,
-  nvim_dir = nvim_dir,
-  buffer = buffer,
-  window = window,
-  tabpage = tabpage,
-  curbuf = curbuf,
-  curwin = curwin,
-  curtab = curtab,
-  curbuf_contents = curbuf_contents,
-  wait = wait,
-  set_session = set_session,
-  write_file = write_file,
-  os_name = os_name,
-  rmdir = rmdir,
-  mkdir = lfs.mkdir,
-  exc_exec = exc_exec,
-  redir_exec = redir_exec,
-  merge_args = merge_args,
-  funcs = funcs,
-  meths = meths,
-  bufmeths = bufmeths,
-  winmeths = winmeths,
-  tabmeths = tabmeths,
-  curbufmeths = curbufmeths,
-  curwinmeths = curwinmeths,
-  curtabmeths = curtabmeths,
-  NIL = mpack.NIL
-}
+return function(after_each)
+  if after_each then
+    after_each(check_logs)
+  end
+  return {
+    prepend_argv = prepend_argv,
+    clear = clear,
+    spawn = spawn,
+    dedent = dedent,
+    source = source,
+    rawfeed = rawfeed,
+    insert = insert,
+    feed = feed,
+    execute = execute,
+    eval = nvim_eval,
+    call = nvim_call,
+    command = nvim_command,
+    request = request,
+    next_message = next_message,
+    run = run,
+    stop = stop,
+    eq = eq,
+    neq = neq,
+    expect = expect,
+    ok = ok,
+    nvim = nvim,
+    nvim_async = nvim_async,
+    nvim_prog = nvim_prog,
+    nvim_dir = nvim_dir,
+    buffer = buffer,
+    window = window,
+    tabpage = tabpage,
+    curbuf = curbuf,
+    curwin = curwin,
+    curtab = curtab,
+    curbuf_contents = curbuf_contents,
+    wait = wait,
+    set_session = set_session,
+    write_file = write_file,
+    os_name = os_name,
+    rmdir = rmdir,
+    mkdir = lfs.mkdir,
+    exc_exec = exc_exec,
+    redir_exec = redir_exec,
+    merge_args = merge_args,
+    funcs = funcs,
+    meths = meths,
+    bufmeths = bufmeths,
+    winmeths = winmeths,
+    tabmeths = tabmeths,
+    curbufmeths = curbufmeths,
+    curwinmeths = curwinmeths,
+    curtabmeths = curtabmeths,
+    NIL = mpack.NIL,
+  }
+end

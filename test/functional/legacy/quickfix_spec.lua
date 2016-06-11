@@ -1,6 +1,6 @@
 -- Test for the quickfix commands.
 
-local helpers = require('test.functional.helpers')
+local helpers = require('test.functional.helpers')(after_each)
 local source, clear = helpers.source, helpers.clear
 local eq, nvim, call = helpers.eq, helpers.meths, helpers.call
 local eval = helpers.eval

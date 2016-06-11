@@ -9,9 +9,14 @@
 -- :buf
 -- :edit
 
-local helpers = require('test.functional.helpers')
-local feed, insert, source = helpers.feed, helpers.insert, helpers.source
-local clear, execute, expect = helpers.clear, helpers.execute, helpers.expect
+local helpers = require('test.functional.helpers')(after_each)
+
+local feed = helpers.feed
+local clear = helpers.clear
+local source = helpers.source
+local insert = helpers.insert
+local expect = helpers.expect
+local execute = helpers.execute
 
 describe('Commands that close windows and/or buffers', function()
   setup(clear)

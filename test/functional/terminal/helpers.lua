@@ -1,4 +1,4 @@
-local helpers = require('test.functional.helpers')
+local helpers = require('test.functional.helpers')(nil)
 local Screen = require('test.functional.ui.screen')
 local nvim_dir = helpers.nvim_dir
 local execute, nvim, wait = helpers.execute, helpers.nvim, helpers.wait

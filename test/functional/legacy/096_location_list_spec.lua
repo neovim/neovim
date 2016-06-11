@@ -6,7 +6,7 @@
 -- C. make sure that the location list window is not reused instead of the window
 --    it belongs to.
 
-local helpers = require('test.functional.helpers')
+local helpers = require('test.functional.helpers')(after_each)
 local source = helpers.source
 local clear, execute, expect = helpers.clear, helpers.execute, helpers.expect
 

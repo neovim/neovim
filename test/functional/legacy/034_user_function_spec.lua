@@ -3,7 +3,7 @@
 -- Also test that a builtin function cannot be replaced.
 -- Also test for regression when calling arbitrary expression.
 
-local helpers = require('test.functional.helpers')
+local helpers = require('test.functional.helpers')(after_each)
 local feed, insert, source = helpers.feed, helpers.insert, helpers.source
 local clear, execute, expect = helpers.clear, helpers.execute, helpers.expect
 

@@ -105,7 +105,7 @@
 -- To generate a text-only test without highlight checks,
 -- use `screen:snapshot_util({},true)`
 
-local helpers = require('test.functional.helpers')
+local helpers = require('test.functional.helpers')(nil)
 local request, run = helpers.request, helpers.run
 local dedent = helpers.dedent
 

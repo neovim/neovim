@@ -2,7 +2,7 @@
 -- Test for 'lisp'
 -- If the lisp feature is not enabled, this will fail!
 
-local helpers = require('test.functional.helpers')
+local helpers = require('test.functional.helpers')(after_each)
 local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
 local execute, expect = helpers.execute, helpers.expect
 

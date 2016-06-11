@@ -1,7 +1,7 @@
 -- Specs for :cd, :tcd, :lcd and getcwd()
 
 local lfs = require('lfs')
-local helpers = require('test.functional.helpers')
+local helpers = require('test.functional.helpers')(after_each)
 
 local eq = helpers.eq
 local call = helpers.call

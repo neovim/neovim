@@ -1,6 +1,6 @@
 -- Test for expanding file names
 
-local helpers = require('test.functional.helpers')
+local helpers = require('test.functional.helpers')(after_each)
 local eq = helpers.eq
 local call = helpers.call
 local nvim = helpers.meths
