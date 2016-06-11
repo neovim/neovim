@@ -16,6 +16,8 @@ local func_type = {[true]='func type'}
 local int_type = {[true]='int type'}
 local flt_type = {[true]='flt type'}
 
+local nil_value = {[true]='nil'}
+
 local function list(...)
   local ret = ffi.gc(eval.list_alloc(), eval.list_unref)
   eq(0, ret.lv_refcount)
@@ -43,7 +45,7 @@ end
 
 local special_tab = {
   [eval.kSpecialVarFalse] = false,
-  [eval.kSpecialVarNull] = NIL,
+  [eval.kSpecialVarNull] = nil_value,
   [eval.kSpecialVarTrue] = true,
 }
 
@@ -163,7 +165,9 @@ local lua2typvalt_type_tab = {
 
 lua2typvalt = function(l, processed)
   processed = processed or {}
-  if type(l) == 'table' then
+  if l == nil or l == nil_value then
+    return typvalt(eval.VAR_SPECIAL, {v_special=eval.kSpecialVarNull})
+  elseif type(l) == 'table' then
     if l[type_key] then
       return lua2typvalt_type_tab[l[type_key]](l, processed)
     else
@@ -181,8 +185,6 @@ lua2typvalt = function(l, processed)
     })
   elseif type(l) == 'string' then
     return typvalt(eval.VAR_STRING, {v_string=eval.xmemdupz(to_cstr(l), #l)})
-  elseif l == nil or l == NIL then
-    return typvalt(eval.VAR_SPECIAL, {v_special=eval.kSpecialVarNull})
   end
 end
 
@@ -194,6 +196,9 @@ return {
   func_type=func_type,
   int_type=int_type,
   flt_type=flt_type,
+
+  nil_value=nil_value,
+
   type_key=type_key,
 
   list=list,
