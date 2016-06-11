@@ -4007,7 +4007,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	|hl-NonText| |hl-SpecialKey|
 
 						*'livesub'* *'lsu'* *'nolivesub'* *'nolsu'*
-'Livesub' 'lsu'		boolean	(default off)
+'livesub' 'lsu'		boolean	(default off)
 			global
 			
 	If set, substitutions (|:s|) are updated live while the user types the 
