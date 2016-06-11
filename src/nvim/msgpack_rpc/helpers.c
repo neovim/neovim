@@ -18,39 +18,39 @@
 static msgpack_zone zone;
 static msgpack_sbuffer sbuffer;
 
-#define HANDLE_TYPE_CONVERSION_IMPL(t, lt)                                  \
-  bool msgpack_rpc_to_##lt(msgpack_object *obj, t *arg)                     \
-    FUNC_ATTR_NONNULL_ALL                                                   \
-  {                                                                         \
-    if (obj->type != MSGPACK_OBJECT_EXT                                     \
-        || obj->via.ext.type != kObjectType##t) {                           \
-      return false;                                                         \
-    }                                                                       \
-                                                                            \
-    msgpack_object data;                                                    \
-    msgpack_unpack_return ret = msgpack_unpack(obj->via.ext.ptr,            \
-                                               obj->via.ext.size,           \
-                                               NULL,                        \
-                                               &zone,                       \
-                                               &data);                      \
-                                                                            \
-    if (ret != MSGPACK_UNPACK_SUCCESS) {                                    \
-      return false;                                                         \
-    }                                                                       \
-                                                                            \
-    *arg = data.via.u64;                                                    \
-    return true;                                                            \
-  }                                                                         \
-                                                                            \
-  void msgpack_rpc_from_##lt(t o, msgpack_packer *res)                      \
-    FUNC_ATTR_NONNULL_ARG(2)                                                \
-  {                                                                         \
-    msgpack_packer pac;                                                     \
-    msgpack_packer_init(&pac, &sbuffer, msgpack_sbuffer_write);             \
-    msgpack_pack_uint64(&pac, o);                                           \
-    msgpack_pack_ext(res, sbuffer.size, kObjectType##t);                    \
-    msgpack_pack_ext_body(res, sbuffer.data, sbuffer.size);                 \
-    msgpack_sbuffer_clear(&sbuffer);                                        \
+#define HANDLE_TYPE_CONVERSION_IMPL(t, lt) \
+  bool msgpack_rpc_to_##lt(msgpack_object *obj, t *arg) \
+    FUNC_ATTR_NONNULL_ALL \
+  { \
+    if (obj->type != MSGPACK_OBJECT_EXT \
+        || obj->via.ext.type != kObjectType##t) { \
+      return false; \
+    } \
+    \
+    msgpack_object data; \
+    msgpack_unpack_return ret = msgpack_unpack(obj->via.ext.ptr, \
+                                               obj->via.ext.size, \
+                                               NULL, \
+                                               &zone, \
+                                               &data); \
+    \
+    if (ret != MSGPACK_UNPACK_SUCCESS) { \
+      return false; \
+    } \
+    \
+    *arg = data.via.u64; \
+    return true; \
+  } \
+  \
+  void msgpack_rpc_from_##lt(t o, msgpack_packer *res) \
+    FUNC_ATTR_NONNULL_ARG(2) \
+  { \
+    msgpack_packer pac; \
+    msgpack_packer_init(&pac, &sbuffer, msgpack_sbuffer_write); \
+    msgpack_pack_uint64(&pac, o); \
+    msgpack_pack_ext(res, sbuffer.size, kObjectType##t); \
+    msgpack_pack_ext_body(res, sbuffer.data, sbuffer.size); \
+    msgpack_sbuffer_clear(&sbuffer); \
   }
 
 void msgpack_rpc_helpers_init(void)

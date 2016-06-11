@@ -21,10 +21,10 @@ typedef struct growarray {
 
 #define GA_EMPTY(ga_ptr) ((ga_ptr)->ga_len <= 0)
 
-#define GA_APPEND(item_type, gap, item)                                    \
-  do {                                                                     \
-    ga_grow(gap, 1);                                                       \
-    ((item_type *)(gap)->ga_data)[(gap)->ga_len++] = (item);               \
+#define GA_APPEND(item_type, gap, item) \
+  do { \
+    ga_grow(gap, 1); \
+    ((item_type *)(gap)->ga_data)[(gap)->ga_len++] = (item); \
   } while (0)
 
 #define GA_APPEND_VIA_PTR(item_type, gap) \
@@ -49,16 +49,16 @@ static inline void *ga_append_via_ptr(garray_T *gap, size_t item_size)
 /// @param gap the garray to be freed
 /// @param item_type type of the item in the garray
 /// @param free_item_fn free function that takes (*item_type) as parameter
-#define GA_DEEP_CLEAR(gap, item_type, free_item_fn)             \
-  do {                                                          \
-    garray_T *_gap = (gap);                                     \
-    if (_gap->ga_data != NULL) {                                \
-      for (int i = 0; i < _gap->ga_len; i++) {                  \
-        item_type *_item = &(((item_type *)_gap->ga_data)[i]);  \
-        free_item_fn(_item);                                    \
-      }                                                         \
-    }                                                           \
-    ga_clear(_gap);                                             \
+#define GA_DEEP_CLEAR(gap, item_type, free_item_fn) \
+  do { \
+    garray_T *_gap = (gap); \
+    if (_gap->ga_data != NULL) { \
+      for (int i = 0; i < _gap->ga_len; i++) { \
+        item_type *_item = &(((item_type *)_gap->ga_data)[i]); \
+        free_item_fn(_item); \
+      } \
+    } \
+    ga_clear(_gap); \
   } while (false)
 
 #define FREE_PTR_PTR(ptr) xfree(*(ptr))

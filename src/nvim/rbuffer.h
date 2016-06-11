@@ -36,30 +36,36 @@
 //
 // Note that the rbuffer_{produced,consumed} calls are necessary or these macros
 // create infinite loops
-#define RBUFFER_UNTIL_EMPTY(buf, rptr, rcnt)                                 \
-  for (size_t rcnt = 0, _r = 1; _r; _r = 0)                                  \
-    for (char *rptr = rbuffer_read_ptr(buf, &rcnt);                          \
-         buf->size;                                                          \
-         rptr = rbuffer_read_ptr(buf, &rcnt))
+#define RBUFFER_UNTIL_EMPTY(buf, rptr, rcnt) \
+  for (size_t rcnt = 0, _r = 1; _r; _r = 0)  /* NOLINT(readability/braces) */ \
+    for (  /* NOLINT(readability/braces) */ \
+        char *rptr = rbuffer_read_ptr(buf, &rcnt); \
+        buf->size; \
+        rptr = rbuffer_read_ptr(buf, &rcnt))
 
-#define RBUFFER_UNTIL_FULL(buf, wptr, wcnt)                                  \
-  for (size_t wcnt = 0, _r = 1; _r; _r = 0)                                  \
-    for (char *wptr = rbuffer_write_ptr(buf, &wcnt);                         \
-         rbuffer_space(buf);                                                 \
-         wptr = rbuffer_write_ptr(buf, &wcnt))
+#define RBUFFER_UNTIL_FULL(buf, wptr, wcnt) \
+  for (size_t wcnt = 0, _r = 1; _r; _r = 0)  /* NOLINT(readability/braces) */ \
+    for (  /* NOLINT(readability/braces) */ \
+        char *wptr = rbuffer_write_ptr(buf, &wcnt); \
+        rbuffer_space(buf); \
+        wptr = rbuffer_write_ptr(buf, &wcnt))
 
 
 // Iteration
-#define RBUFFER_EACH(buf, c, i)                                              \
-  for (size_t i = 0; i < buf->size; i = buf->size)                           \
-      for (char c = 0;                                                       \
-           i < buf->size ? ((int)(c = *rbuffer_get(buf, i))) || 1 : 0;       \
+#define RBUFFER_EACH(buf, c, i) \
+  for (size_t i = 0;  /* NOLINT(readability/braces) */ \
+       i < buf->size; \
+       i = buf->size) \
+      for (char c = 0;  /* NOLINT(readability/braces) */ \
+           i < buf->size ? ((int)(c = *rbuffer_get(buf, i))) || 1 : 0; \
            i++)
 
-#define RBUFFER_EACH_REVERSE(buf, c, i)                                      \
-  for (size_t i = buf->size; i != SIZE_MAX; i = SIZE_MAX)                    \
-      for (char c = 0;                                                       \
-           i-- > 0 ? ((int)(c = *rbuffer_get(buf, i))) || 1 : 0;             \
+#define RBUFFER_EACH_REVERSE(buf, c, i) \
+  for (size_t i = buf->size;  /* NOLINT(readability/braces) */ \
+       i != SIZE_MAX; \
+       i = SIZE_MAX) \
+      for (char c = 0;  /* NOLINT(readability/braces) */ \
+           i-- > 0 ? ((int)(c = *rbuffer_get(buf, i))) || 1 : 0; \
            )
 
 typedef struct rbuffer RBuffer;

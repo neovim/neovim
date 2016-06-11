@@ -22,11 +22,11 @@
 #define TERM_TIMEOUT 1000000000
 #define KILL_TIMEOUT (TERM_TIMEOUT * 2)
 
-#define CLOSE_PROC_STREAM(proc, stream)                             \
-  do {                                                              \
-    if (proc->stream && !proc->stream->closed) {                    \
-      stream_close(proc->stream, NULL);                             \
-    }                                                               \
+#define CLOSE_PROC_STREAM(proc, stream) \
+  do { \
+    if (proc->stream && !proc->stream->closed) { \
+      stream_close(proc->stream, NULL); \
+    } \
   } while (0)
 
 static bool process_is_tearing_down = false;

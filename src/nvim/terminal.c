@@ -1159,15 +1159,15 @@ static bool is_focused(Terminal *term)
   return State & TERM_FOCUS && curbuf->terminal == term;
 }
 
-#define GET_CONFIG_VALUE(k, o)                                           \
-  do {                                                                   \
-    Error err;                                                           \
-    /* Only called from terminal_open where curbuf->terminal is the */   \
-    /* context  */                                                       \
-    o = dict_get_value(curbuf->b_vars, cstr_as_string(k), &err);         \
-    if (o.type == kObjectTypeNil) {                                      \
-      o = dict_get_value(&globvardict, cstr_as_string(k), &err);         \
-    }                                                                    \
+#define GET_CONFIG_VALUE(k, o) \
+  do { \
+    Error err; \
+    /* Only called from terminal_open where curbuf->terminal is the */ \
+    /* context  */ \
+    o = dict_get_value(curbuf->b_vars, cstr_as_string(k), &err); \
+    if (o.type == kObjectTypeNil) { \
+      o = dict_get_value(&globvardict, cstr_as_string(k), &err); \
+    } \
   } while (0)
 
 static char *get_config_string(char *key)

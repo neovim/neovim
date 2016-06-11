@@ -22159,14 +22159,13 @@ typval_T eval_call_provider(char *provider, char *method, list_T *arguments)
 
 bool eval_has_provider(char *name)
 {
-
-#define check_provider(name)                                              \
-  if (has_##name == -1) {                                                 \
-    has_##name = !!find_func((uint8_t *)"provider#" #name "#Call");       \
-    if (!has_##name) {                                                    \
-      script_autoload((uint8_t *)"provider#" #name "#Call", false);       \
-      has_##name = !!find_func((uint8_t *)"provider#" #name "#Call");     \
-    }                                                                     \
+#define check_provider(name) \
+  if (has_##name == -1) { \
+    has_##name = !!find_func((uint8_t *)"provider#" #name "#Call"); \
+    if (!has_##name) { \
+      script_autoload((uint8_t *)"provider#" #name "#Call", false); \
+      has_##name = !!find_func((uint8_t *)"provider#" #name "#Call"); \
+    } \
   }
 
   static int has_clipboard = -1, has_python = -1, has_python3 = -1;

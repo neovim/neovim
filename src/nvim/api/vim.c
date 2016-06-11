@@ -647,14 +647,14 @@ static void write_msg(String message, bool to_err)
   static size_t out_pos = 0, err_pos = 0;
   static char out_line_buf[LINE_BUFFER_SIZE], err_line_buf[LINE_BUFFER_SIZE];
 
-#define PUSH_CHAR(i, pos, line_buf, msg)                                      \
-  if (message.data[i] == NL || pos == LINE_BUFFER_SIZE - 1) {                 \
-    line_buf[pos] = NUL;                                                      \
-    msg((uint8_t *)line_buf);                                                 \
-    pos = 0;                                                                  \
-    continue;                                                                 \
-  }                                                                           \
-                                                                              \
+#define PUSH_CHAR(i, pos, line_buf, msg) \
+  if (message.data[i] == NL || pos == LINE_BUFFER_SIZE - 1) { \
+    line_buf[pos] = NUL; \
+    msg((uint8_t *)line_buf); \
+    pos = 0; \
+    continue; \
+  } \
+  \
   line_buf[pos++] = message.data[i];
 
   ++no_wait_return;

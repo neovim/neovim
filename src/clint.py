@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# vim: set fileencoding=utf-8
 #
 # Copyright (c) 2009 Google Inc. All rights reserved.
 #
@@ -217,6 +218,8 @@ _ERROR_CATEGORIES = [
     'whitespace/semicolon',
     'whitespace/tab',
     'whitespace/todo',
+    'whitespace/line_continuation',
+    'whitespace/cast',
 ]
 
 # The default state of the category filter. This is overrided by the --filter=
@@ -2498,6 +2501,27 @@ def CheckSpacing(filename, clean_lines, linenum, nesting_state, error):
     if Search(r'\S(?<!\{)\}', line):
         error(filename, linenum, 'whitespace/braces', 5,
               'Missing space before }')
+
+    if Search(r'\S {2,}\\$', line):
+        error(filename, linenum, 'whitespace/line_continuation', 5,
+              'Too many spaces before \\, line continuation character must be '
+              'preceded by exactly one space. For “blank lines” '
+              'it is preferred to use the same amount of spaces as preceding '
+              'indent')
+
+    if Match(r'^ +#', line):
+        error(filename, linenum, 'whitespace/indent', 5,
+              'Must not indent preprocessor directives, use 1-space indent '
+              'after the hash')
+
+    cast_line = re.sub(r'^# *define +\w+\([^)]*\)', '', line)
+    match = Search(r'\((?:const )?(?:struct )?[a-zA-Z_]\w*(?: *\*(?:const)?)*\)'
+                   r' +'
+                   r'-?(?:\*+|&)?(?:\w+|\+\+|--|\()', cast_line)
+    if match and line[0] == ' ':
+        error(filename, linenum, 'whitespace/cast', 2,
+              'Should leave no spaces after a cast: {!r}'.format(
+                  match.group(0)))
 
 
 def GetPreviousNonBlankLine(clean_lines, linenum):

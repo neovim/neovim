@@ -60,22 +60,22 @@ static int height, width;
 // See http://stackoverflow.com/a/11172679 for a better explanation of how it
 // works.
 #ifdef _MSC_VER
-  #define UI_CALL(funname, ...)                                     \
-    do {                                                            \
-      flush_cursor_update();                                        \
-      for (size_t i = 0; i < ui_count; i++) {                       \
-        UI *ui = uis[i];                                            \
-        UI_CALL_MORE(funname, __VA_ARGS__);                         \
-      }                                                             \
+# define UI_CALL(funname, ...) \
+    do { \
+      flush_cursor_update(); \
+      for (size_t i = 0; i < ui_count; i++) { \
+        UI *ui = uis[i]; \
+        UI_CALL_MORE(funname, __VA_ARGS__); \
+      } \
     } while (0)
 #else
-  #define UI_CALL(...)                                              \
-    do {                                                            \
-      flush_cursor_update();                                        \
-      for (size_t i = 0; i < ui_count; i++) {                       \
-        UI *ui = uis[i];                                            \
-        UI_CALL_HELPER(CNT(__VA_ARGS__), __VA_ARGS__);              \
-      }                                                             \
+# define UI_CALL(...) \
+    do { \
+      flush_cursor_update(); \
+      for (size_t i = 0; i < ui_count; i++) { \
+        UI *ui = uis[i]; \
+        UI_CALL_HELPER(CNT(__VA_ARGS__), __VA_ARGS__); \
+      } \
     } while (0)
 #endif
 #define CNT(...) SELECT_NTH(__VA_ARGS__, MORE, MORE, MORE, MORE, ZERO, ignore)

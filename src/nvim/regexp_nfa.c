@@ -357,13 +357,14 @@ static int nfa_ll_index = 0;
 # include "regexp_nfa.c.generated.h"
 #endif
 
-/* helper functions used when doing re2post() ... regatom() parsing */
-#define EMIT(c) do {                            \
-    if (post_ptr >= post_end) {                 \
-      realloc_post_list();                      \
-    }                                           \
-    *post_ptr++ = c;                            \
-} while (0)
+// Helper functions used when doing re2post() ... regatom() parsing
+#define EMIT(c) \
+    do { \
+      if (post_ptr >= post_end) { \
+        realloc_post_list(); \
+      } \
+      *post_ptr++ = c; \
+    } while (0)
 
 /*
  * Initialize internal variables before NFA compilation.
@@ -2892,12 +2893,11 @@ static nfa_state_T *post2nfa(int *postfix, int *end, int nfa_calc_size)
     return NULL;
 
 #define PUSH(s)     st_push((s), &stackp, stack_end)
-#define POP()       st_pop(&stackp, stack);             \
-  if (stackp < stack)                 \
-  {                                   \
-    st_error(postfix, end, p);      \
-    xfree(stack);                    \
-    return NULL;                    \
+#define POP()       st_pop(&stackp, stack); \
+  if (stackp < stack) { \
+    st_error(postfix, end, p); \
+    xfree(stack); \
+    return NULL; \
   }
 
   if (nfa_calc_size == FALSE) {
@@ -4904,10 +4904,10 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start,
   } else
     addstate(thislist, start, m, NULL, 0);
 
-#define ADD_STATE_IF_MATCH(state)                       \
-  if (result) {                                       \
-    add_state = state->out;                         \
-    add_off = clen;                                 \
+#define ADD_STATE_IF_MATCH(state) \
+  if (result) { \
+    add_state = state->out; \
+    add_off = clen; \
   }
 
   /*
