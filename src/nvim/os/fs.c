@@ -398,7 +398,6 @@ int os_setperm(const char_u *name, int perm)
 /// @note If the `owner` or `group` is specified as `-1`, then that ID is not
 /// changed.
 int os_fchown(int file_descriptor, uv_uid_t owner, uv_gid_t group)
-  FUNC_ATTR_NONNULL_ALL
 {
   uv_fs_t request;
   int result = uv_fs_fchown(&fs_loop, &request, file_descriptor,
