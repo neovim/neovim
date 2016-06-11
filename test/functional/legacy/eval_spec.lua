@@ -5,11 +5,6 @@ local feed, insert, source = helpers.feed, helpers.insert, helpers.source
 local clear, execute, expect = helpers.clear, helpers.execute, helpers.expect
 local eq, eval, write_file = helpers.eq, helpers.eval, helpers.write_file
 
-local function has_clipboard()
-  clear()
-  return 1 == eval("has('clipboard')")
-end
-
 describe('eval', function()
   setup(function()
     write_file('test_eval_setup.vim', [[
@@ -539,8 +534,13 @@ describe('eval', function()
       =: type v; value: abc/]].."\000 (['abc/\000"..[[']), expr: "abc/]]..'\000'..[[" (['"abc/]]..'\000'..[["'])]])
   end)
 
-  if has_clipboard() then
-    it('system clipboard', function()
+  describe('system clipboard', function()
+    before_each(function()
+      execute('let &runtimepath = "test/functional/fixtures,".&runtimepath')
+      execute('call getreg("*")') -- force load of provider
+    end)
+
+    it('works', function()
       insert([[
 	Some first line (this text was at the top of the old test_eval.in).
 	
@@ -570,9 +570,7 @@ describe('eval', function()
 	*: type V; value: clipboard contents]]..'\00'..[[ (['clipboard contents']), expr: clipboard contents]]..'\00'..[[ (['clipboard contents'])
 	*: type V; value: something else]]..'\00'..[[ (['something else']), expr: something else]]..'\00'..[[ (['something else'])]])
     end)
-  else
-    pending('system clipboard not available', function() end)
-  end
+  end)
 
   it('errors', function()
     source([[
