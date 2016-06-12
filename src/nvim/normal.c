@@ -1214,6 +1214,8 @@ static void normal_check_cursor_moved(NormalState *s)
       s->conceal_update_lines = true;
     }
 
+    autoselect_test();
+
     last_cursormoved = curwin->w_cursor;
   }
 }
@@ -1398,6 +1400,108 @@ static void set_vcount_ca(cmdarg_T *cap, bool *set_prevcount)
   set_vcount(count, count == 0 ? 1 : count, *set_prevcount);
   *set_prevcount = false;    /* only set v:prevcount once */
 }
+
+bool get_visual_selection_bounds(oparg_T *oap)
+{
+  if (!VIsual_active) {
+    return false;
+  }
+  oap->is_VIsual = true;
+
+  oap->start = VIsual;
+  if (VIsual_mode == 'V') {
+    oap->start.col = 0;
+    oap->motion_type = MLINE;
+  } else {
+    oap->motion_type = MCHAR;
+  }
+
+  if (lt(oap->start, curwin->w_cursor)) {
+    oap->end = curwin->w_cursor;
+  } else {
+    oap->end = oap->start;
+    oap->start = curwin->w_cursor;
+  }
+
+  oap->line_count = oap->end.lnum - oap->start.lnum + 1;
+
+  if (VIsual_mode == Ctrl_V) {      /* block mode */
+    colnr_T start, end;
+
+    oap->motion_type = MBLOCK;
+
+    getvvcol(curwin, &(oap->start),
+        &oap->start_vcol, NULL, &oap->end_vcol);
+    getvvcol(curwin, &(oap->end), &start, NULL, &end);
+
+    if (start < oap->start_vcol)
+      oap->start_vcol = start;
+    if (end > oap->end_vcol) {
+      if (*p_sel == 'e' && start >= 1
+          && start - 1 >= oap->end_vcol)
+        oap->end_vcol = start - 1;
+      else
+        oap->end_vcol = end;
+    }
+
+    /* if '$' was used, get oap->end_vcol from longest line */
+    if (curwin->w_curswant == MAXCOL) {
+      pos_T cursor;
+      cursor.col = MAXCOL;
+      oap->end_vcol = 0;
+      for (cursor.lnum = oap->start.lnum;
+          cursor.lnum <= oap->end.lnum;
+          ++cursor.lnum) {
+        getvvcol(curwin, &cursor, NULL, NULL, &end);
+        if (end > oap->end_vcol)
+          oap->end_vcol = end;
+      }
+    }
+  }
+
+  /*
+   * oap->inclusive defaults to true.
+   * If oap->end is on a NUL (empty line) oap->inclusive becomes
+   * false.  This makes "d}P" and "v}dP" work the same.
+   */
+  oap->inclusive = true;
+    /* If 'selection' is "exclusive", backup one character for
+     * charwise selections. */
+  if (VIsual_mode == 'v' && *ml_get_pos(&(oap->end)) == NUL
+      && (unadjust_for_sel() || !virtual_op)) {
+    oap->inclusive = false;
+    /* Try to include the newline, unless it's an operator
+     * that works on lines only. */
+    if (*p_sel != 'o' && !op_on_lines(oap->op_type)) {
+      if (oap->end.lnum < curbuf->b_ml.ml_line_count) {
+        // XXX: only for yank, kill this branch?
+        ++oap->end.lnum;
+        oap->end.col = 0;
+        oap->end.coladd = 0;
+        ++oap->line_count;
+      } else {
+        /* Cannot move below the last line, make the op
+         * inclusive to tell the operation to include the
+         * line break. */
+        oap->inclusive = true;
+      }
+    }
+  }
+
+  /* Include the trailing byte of a multi-byte char. */
+  if (has_mbyte && oap->inclusive) {
+    int l;
+
+    l = (*mb_ptr2len)(ml_get_pos(&oap->end));
+    if (l > 1)
+      oap->end.col += l - 1;
+  }
+
+  oap->empty = false;
+
+  return true;
+}
+
 
 /*
  * Handle an operator after visual mode or when the movement is finished
@@ -2547,6 +2651,11 @@ do_mouse (
   in_status_line = (jump_flags & IN_STATUS_LINE);
   in_sep_line = (jump_flags & IN_SEP_LINE);
 
+  // TODO: doesn't work, no release events
+  if (!is_click && !is_drag) {
+    autoselect_test();
+  }
+
 
   /* When jumping to another window, clear a pending operator.  That's a bit
    * friendlier than beeping and not jumping to that window. */
@@ -2927,6 +3036,8 @@ void check_visual_highlight(void)
  */
 void end_visual_mode(void)
 {
+
+  autoselect_test();
 
   VIsual_active = false;
   setmouse();
@@ -6344,6 +6455,7 @@ static void nv_visual(cmdarg_T *cap)
       }
     }
   }
+  autoselect_test();
 }
 
 /*

@@ -365,11 +365,16 @@ EXTERN char_u   *p_cedit;       /* 'cedit' */
 EXTERN char_u   *p_cb;          /* 'clipboard' */
 EXTERN unsigned cb_flags;
 #ifdef IN_OPTION_C
-static char *(p_cb_values[]) = {"unnamed", "unnamedplus", NULL};
+static char *(p_cb_values[]) = {"unnamed", "unnamedplus", "autoselect",
+                                "autoselectplus", "autoselectml", NULL};
 #endif
 # define CB_UNNAMED             0x001
 # define CB_UNNAMEDPLUS         0x002
-# define CB_UNNAMEDMASK         (CB_UNNAMED | CB_UNNAMEDPLUS)
+# define CB_AUTOSELECT          0x004
+# define CB_AUTOSELECTPLUS      0x008
+# define CB_AUTOSELECTML        0x00a
+# define CB_UNNAMEDMASK    (CB_UNNAMED | CB_UNNAMEDPLUS)
+# define CB_AUTOSELECTMASK (CB_AUTOSELECT | CB_AUTOSELECTPLUS | CB_AUTOSELECTML)
 EXTERN long p_cwh;              /* 'cmdwinheight' */
 EXTERN long p_ch;               /* 'cmdheight' */
 EXTERN int p_confirm;           /* 'confirm' */

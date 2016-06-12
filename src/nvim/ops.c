@@ -2512,6 +2512,35 @@ static void op_yank_reg(oparg_T *oap, bool message, yankreg_T *reg, bool append)
   return;
 }
 
+static bool get_visual_selection(yankreg_T* out)
+{
+  oparg_T oap = {0};
+  if(!get_visual_selection_bounds(&oap)) {
+    return false;
+  }
+  op_yank_reg(&oap, false, out, false);
+  return true;
+}
+
+void autoselect_test(void)
+{
+  if (cb_flags & CB_AUTOSELECTPLUS) {
+    yankreg_T *reg = &y_regs[PLUS_REGISTER];
+    if (get_visual_selection(reg)) {
+      set_clipboard('+', reg);
+      if (cb_flags & CB_AUTOSELECT) {
+        set_clipboard('*', reg);
+      }
+    }
+  } else if (cb_flags & CB_AUTOSELECT) {
+    yankreg_T *reg = &y_regs[STAR_REGISTER];
+    if (get_visual_selection(reg)) {
+      set_clipboard('*', reg);
+    }
+  }
+}
+
+
 static void yank_copy_line(yankreg_T *reg, struct block_def *bd, long y_idx)
 {
   char_u *pnew = xmallocz(bd->startspaces + bd->endspaces + bd->textlen);
