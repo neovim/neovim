@@ -4030,15 +4030,16 @@ set_num_option (
       errmsg = e_invarg;
       curwin->w_p_fdc = 12;
     }
-  }
-  /* 'shiftwidth' or 'tabstop' */
-  else if (pp == &curbuf->b_p_sw || pp == &curbuf->b_p_ts) {
-    if (foldmethodIsIndent(curwin))
+  // 'shiftwidth' or 'tabstop'
+  } else if (pp == &curbuf->b_p_sw || pp == (long *)&curbuf->b_p_ts) {
+    if (foldmethodIsIndent(curwin)) {
       foldUpdateAll(curwin);
-    /* When 'shiftwidth' changes, or it's zero and 'tabstop' changes:
-     * parse 'cinoptions'. */
-    if (pp == &curbuf->b_p_sw || curbuf->b_p_sw == 0)
+    }
+    // When 'shiftwidth' changes, or it's zero and 'tabstop' changes:
+    // parse 'cinoptions'.
+    if (pp == &curbuf->b_p_sw || curbuf->b_p_sw == 0) {
       parse_cino(curbuf);
+    }
   }
   /* 'maxcombine' */
   else if (pp == &p_mco) {
@@ -5657,7 +5658,7 @@ void buf_copy_options(buf_T *buf, int flags)
         buf->b_p_isk = save_p_isk;
       else {
         buf->b_p_isk = vim_strsave(p_isk);
-        did_isk = TRUE;
+        did_isk = true;
         buf->b_p_ts = p_ts;
         buf->b_help = false;
         if (buf->b_p_bt[0] == 'h')

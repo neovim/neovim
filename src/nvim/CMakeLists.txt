@@ -98,7 +98,6 @@ set(CONV_SOURCES
   mbyte.c
   memline.c
   message.c
-  ops.c
   regexp.c
   screen.c
   search.c
