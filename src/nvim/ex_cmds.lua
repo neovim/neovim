@@ -2182,7 +2182,7 @@ return {
     command='substitute',
     flags=bit.bor(RANGE, WHOLEFOLD, EXTRA, CMDWIN),
     addr_type=ADDR_LINES,
-    func='do_sub',
+    func='do_live_sub',
   },
   {
     command='sNext',

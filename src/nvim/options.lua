@@ -17,7 +17,7 @@
 -- types: bool, number, string
 -- lists: (nil), comma, onecomma, flags, flagscomma
 -- scopes: global, buffer, window
--- redraw options: statuslines, current_window, current_buffer, all_windows, 
+-- redraw options: statuslines, current_window, current_buffer, all_windows,
 --                 everything, curswant
 -- default: {vi=…[, vim=…]}
 -- defaults: {condition=#if condition, if_true=default, if_false=default}
@@ -1408,6 +1408,14 @@ return {
       defaults={if_true={vi="eol:$", vim="tab:> ,trail:-,nbsp:+"}}
     },
     {
+      full_name='livesub', abbreviation='lsu',
+      type='bool', scope={'global'},
+      vi_def=true,
+      redraw={'everything'},
+      varname='p_sub',
+      defaults={if_true={vi=false, vim=false}}
+    },
+    {
       full_name='loadplugins', abbreviation='lpl',
       type='bool', scope={'global'},
       vi_def=true,
@@ -2766,5 +2774,6 @@ return {
       varname='p_wd',
       defaults={if_true={vi=0}}
     },
+
   }
 }

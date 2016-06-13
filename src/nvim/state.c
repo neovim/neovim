@@ -9,13 +9,20 @@
 #include "nvim/ui.h"
 #include "nvim/os/input.h"
 
+#include "nvim/ex_getln.h"
+#include "nvim/ex_docmd.h"
+#include "nvim/window.h"
+#include "nvim/buffer.h"
+#include "nvim/ascii.h"
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "state.c.generated.h"
 #endif
 
-
 void state_enter(VimState *s)
 {
+  // a string to save the command.
+
   for (;;) {
     int check_result = s->check ? s->check(s) : 1;
 
@@ -27,7 +34,7 @@ void state_enter(VimState *s)
 
     int key;
 
-getkey:
+    getkey:
     if (char_avail() || using_script() || input_available()) {
       // Don't block for events if there's a character already available for
       // processing. Characters can come from mappings, scripts and other
@@ -54,10 +61,23 @@ getkey:
     }
 
     int execute_result = s->execute(s, key);
+
+    // close buffer and windows if we leave the live_sub mode
+    // and undo
+    if (p_sub && EVENT_COLON && (key == ESC || key == Ctrl_C)
+        && is_live(access_cmdline())) {
+      EVENT_COLON = 0;
+      finish_live_cmd(NORMAL, NULL, 0, 0, 0, 0);
+      return;
+    }
     if (!execute_result) {
       break;
     } else if (execute_result == -1) {
       goto getkey;
+    } else if (p_sub && EVENT_COLON == 1 && is_live(access_cmdline())) {
+      // compute a live action
+      do_cmdline(access_cmdline(), NULL, NULL, DOCMD_KEEPLINE);
+      redrawcmdline();
     }
   }
 }

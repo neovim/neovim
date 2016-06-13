@@ -3962,6 +3962,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 			global
 	Strings to use in 'list' mode and for the |:list| command.  It is a
 	comma separated list of string settings.
+
 							*lcs-eol*
 	  eol:c		Character to show at the end of each line.  When
 			omitted, there is no extra character at the end of the
@@ -4006,6 +4007,15 @@ A jump table for the options with a short description can be found at |Q_op|.
 <	The "NonText" highlighting will be used for "eol", "extends" and
 	"precedes".  "SpecialKey" for "nbsp", "space", "tab" and "trail".
 	|hl-NonText| |hl-SpecialKey|
+
+						*'livesub'* *'lsu'* *'nolivesub'* *'nolsu'*
+'livesub' 'lsu'		boolean	(default off)
+			global
+			
+	If set, substitutions (|:s|) are updated live while the user types the 
+	command.  A split is open which displays the lines where the search 
+	matches.
+
 
 			*'lpl'* *'nolpl'* *'loadplugins'* *'noloadplugins'*
 'loadplugins' 'lpl'	boolean	(default on)

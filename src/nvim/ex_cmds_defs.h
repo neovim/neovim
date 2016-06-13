@@ -6,6 +6,7 @@
 
 #include "nvim/pos.h"      // for linenr_T
 #include "nvim/normal.h"
+#include "nvim/lib/klist.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ex_cmds_enum.generated.h"
