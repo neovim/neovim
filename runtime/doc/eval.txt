@@ -1653,9 +1653,9 @@ v:scrollstart	String describing the script or function that caused the
 		hit-enter prompt.
 
 					*v:servername* *servername-variable*
+					*$NVIM_LISTEN_ADDRESS*
 v:servername	Default {Nvim} server address. Equivalent to
-		|$NVIM_LISTEN_ADDRESS| on startup, but may differ if the
-		latter is modified or unset. |serverstop()|
+		|$NVIM_LISTEN_ADDRESS| on startup. |serverstop()|
 		Read-only.
 
 		
@@ -2030,11 +2030,11 @@ resolve({filename})		String	get filename a shortcut points to
 reverse({list})		List	reverse {list} in-place
 round({expr})			Float	round off {expr}
 rpcnotify({channel}, {event}[, {args}...])
-				Sends a |msgpack-rpc| notification to {channel}
+				Sends a |rpc| notification to {channel}
 rpcrequest({channel}, {method}[, {args}...])
-				Sends a |msgpack-rpc| request to {channel}
-rpcstart({prog}[, {argv}])	Spawns {prog} and opens a |msgpack-rpc| channel
-rpcstop({channel})		Closes a |msgpack-rpc| {channel}
+				Sends a |rpc| request to {channel}
+rpcstart({prog}[, {argv}])	Spawns {prog} and opens a |rpc| channel
+rpcstop({channel})		Closes a |rpc| {channel}
 screenattr({row}, {col})	Number	attribute at screen position
 screenchar({row}, {col})	Number	character at screen position
 screencol()			Number	current cursor column
@@ -5525,31 +5525,31 @@ round({expr})							*round()*
 <			-5.0
 
 rpcnotify({channel}, {event}[, {args}...])		  {Nvim} *rpcnotify()*
-		Sends {event} to {channel} via |msgpack-rpc| and returns
-		immediately. If {channel} is 0, the event is broadcast to all
-		channels. Example: >
+		Sends {event} to {channel} via |rpc| and returns immediately.
+		If {channel} is 0, the event is broadcast to all channels.
+		Example: >
 			:au VimLeave call rpcnotify(0, "leaving")
 
 rpcrequest({channel}, {method}[, {args}...])		 {Nvim} *rpcrequest()*
 		Sends a request to {channel} to invoke {method} via
-		|msgpack-rpc| and blocks until a response is received.
+		|rpc| and blocks until a response is received.
 		Example: >
 			:let result = rpcrequest(rpc_chan, "func", 1, 2, 3)
 
 rpcstart({prog}[, {argv}])				   {Nvim} *rpcstart()*
 		Spawns {prog} as a job (optionally passing the list {argv}),
-		and opens a |msgpack-rpc| channel with the spawned process's
-		stdin/stdout. It returns:
-		  - The channel id on success, which is used by |rpcrequest()|,
+		and opens an |rpc| channel with the spawned process's
+		stdin/stdout. Returns:
+		  - channel id on success, which is used by |rpcrequest()|,
 		    |rpcnotify()| and |rpcstop()|
-		  - 0 on failure.
+		  - 0 on failure
 		Example: >
 			:let rpc_chan = rpcstart('prog', ['arg1', 'arg2'])
 
 rpcstop({channel})					    {Nvim} *rpcstop()*
-		Closes a |msgpack-rpc| {channel}, possibly created via
+		Closes an |rpc| {channel}, possibly created via
 		|rpcstart()|. Also closes channels created by connections to
-		|$NVIM_LISTEN_ADDRESS|.
+		|v:servername|.
 
 screenattr(row, col)						*screenattr()*
 		Like screenchar(), but return the attribute.  This is a rather

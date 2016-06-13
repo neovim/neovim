@@ -14,7 +14,7 @@ The C API of Nvim						     *nvim-api*
 1. Introduction			*nvim-api-intro*
 
 Nvim defines a C API as the primary way for external code to interact with
-the NVim core. In the present version of Nvim the API is primarily used by
+the Nvim core. In the present version of Nvim the API is primarily used by
 external processes to interact with Nvim using the msgpack-rpc protocol, see
 |msgpack-rpc|. The API will also be used from vimscript to access new Nvim core
 features, but this is not implemented yet. Later on, Nvim might be embeddable
@@ -54,8 +54,8 @@ functions  	calling signature of the API functions
 types		The custom handle types defined by Nvim
 error_types	The possible kinds of errors an API function can exit with.
 
-This metadata is mostly useful for external programs accessing the api over
-msgpack-api, see |msgpack-rpc-api|.
+This metadata is mostly useful for external programs accessing the API via
+RPC, see |rpc-api|.
 
 ==============================================================================
 4. Buffer highlighting					  *nvim-api-highlights*

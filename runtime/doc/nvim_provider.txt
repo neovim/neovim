@@ -6,10 +6,9 @@
 
 Nvim provider infrastructure			       *nvim-provider*
 
-First of all, this document is meant to be read by developers interested in
-contributing to the refactoring effort. If you are a normal user or plugin
-developer looking to learn about Nvim |msgpack-rpc| infrastructure for
-implementing plugins in other programming languages, see |remote-plugin|.
+This document is written for developers. If you are a normal user or plugin
+developer looking to learn about Nvim |rpc| infrastructure for implementing
+plugins in other programming languages, see |remote-plugin|.
 For instructions on how to enable Python plugins, see |nvim-python|. For
 clipboard, see |nvim-clipboard|.
 
@@ -58,8 +57,8 @@ What these functions do is simple:
   features are available.
 
 The basic idea is that the provider#(name)#Call function should implement
-integration with an external system, because calling shell commands and
-|msgpack-rpc| clients (Nvim only) is easier to do in vimscript.
+integration with an external system, because calling shell commands and |rpc|
+clients (Nvim only) is easier to do in vimscript.
 
 Now, back to the Python example. Instead of modifying vimscript to allow for
 the definition of lowercase functions and commands (for the |:python|,
