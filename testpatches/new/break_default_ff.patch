@@ -1,0 +1,13 @@
+diff --git a/src/nvim/misc2.c b/src/nvim/misc2.c
+index 368f83c..8db1dc6 100644
+--- a/src/nvim/misc2.c
++++ b/src/nvim/misc2.c
+@@ -275,7 +275,7 @@ int default_fileformat(void)
+   case 'm':   return EOL_MAC;
+   case 'd':   return EOL_DOS;
+   }
+-  return EOL_UNIX;
++  return EOL_DOS;
+ }
+ 
+ // Call shell. Calls os_call_shell, with 'shellxquote' added.
