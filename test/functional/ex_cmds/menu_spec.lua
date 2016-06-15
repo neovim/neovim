@@ -39,7 +39,7 @@ describe(':emenu', function()
   end)
 
   it('executes correct bindings in command mode', function()
-      feed('ithis is a sentence<esc>^"+yiwo<esc>')
+      feed('ithis is a sentence<esc>^yiwo<esc>')
 
       -- Invoke "Edit.Paste" in normal-mode.
       nvim('command', 'emenu Edit.Paste')
