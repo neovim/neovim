@@ -12,7 +12,7 @@ Nvim delegates some features to dynamic "providers".
 Python integration		    	      *provider-python*
 
 Nvim supports the Vim legacy |python-vim| and |python3| interfaces via
-external Python interpreters connected via |rpc|,
+external Python interpreters connected via |RPC|,
 
 Note: Only the Vim 7.3 API is supported; bindeval (Vim 7.4) is not.
 

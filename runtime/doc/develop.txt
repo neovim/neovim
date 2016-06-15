@@ -171,8 +171,8 @@ functions in eval.c:
   (vimscript) to check if features are available.
 
 The provider#(name)#Call function implements integration with an external
-system, because calling shell commands and |rpc| clients are easier to work
-with in vimscript.
+system, because shell commands and |RPC| clients are easier to work with in
+vimscript.
 
 For example, the Python provider is implemented by the
 autoload/provider/python.vim script; the provider#python#Call function is only

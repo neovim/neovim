@@ -2030,11 +2030,11 @@ resolve({filename})		String	get filename a shortcut points to
 reverse({list})		List	reverse {list} in-place
 round({expr})			Float	round off {expr}
 rpcnotify({channel}, {event}[, {args}...])
-				Sends a |rpc| notification to {channel}
+				Sends an |RPC| notification to {channel}
 rpcrequest({channel}, {method}[, {args}...])
-				Sends a |rpc| request to {channel}
-rpcstart({prog}[, {argv}])	Spawns {prog} and opens a |rpc| channel
-rpcstop({channel})		Closes a |rpc| {channel}
+				Sends an |RPC| request to {channel}
+rpcstart({prog}[, {argv}])	Spawns {prog} and opens an |RPC| channel
+rpcstop({channel})		Closes an |RPC| {channel}
 screenattr({row}, {col})	Number	attribute at screen position
 screenchar({row}, {col})	Number	character at screen position
 screencol()			Number	current cursor column
@@ -5525,20 +5525,20 @@ round({expr})							*round()*
 <			-5.0
 
 rpcnotify({channel}, {event}[, {args}...])		  {Nvim} *rpcnotify()*
-		Sends {event} to {channel} via |rpc| and returns immediately.
+		Sends {event} to {channel} via |RPC| and returns immediately.
 		If {channel} is 0, the event is broadcast to all channels.
 		Example: >
 			:au VimLeave call rpcnotify(0, "leaving")
 
 rpcrequest({channel}, {method}[, {args}...])		 {Nvim} *rpcrequest()*
 		Sends a request to {channel} to invoke {method} via
-		|rpc| and blocks until a response is received.
+		|RPC| and blocks until a response is received.
 		Example: >
 			:let result = rpcrequest(rpc_chan, "func", 1, 2, 3)
 
 rpcstart({prog}[, {argv}])				   {Nvim} *rpcstart()*
 		Spawns {prog} as a job (optionally passing the list {argv}),
-		and opens an |rpc| channel with the spawned process's
+		and opens an |RPC| channel with the spawned process's
 		stdin/stdout. Returns:
 		  - channel id on success, which is used by |rpcrequest()|,
 		    |rpcnotify()| and |rpcstop()|
@@ -5547,7 +5547,7 @@ rpcstart({prog}[, {argv}])				   {Nvim} *rpcstart()*
 			:let rpc_chan = rpcstart('prog', ['arg1', 'arg2'])
 
 rpcstop({channel})					    {Nvim} *rpcstop()*
-		Closes an |rpc| {channel}, possibly created via
+		Closes an |RPC| {channel}, possibly created via
 		|rpcstart()|. Also closes channels created by connections to
 		|v:servername|.
 

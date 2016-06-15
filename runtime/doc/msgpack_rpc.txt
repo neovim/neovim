@@ -4,7 +4,7 @@
 		 NVIM REFERENCE MANUAL    by Thiago de Arruda
 
 
-RPC API for Nvim					  *rpc*  *msgpack-rpc*
+RPC API for Nvim				     *RPC* *rpc* *msgpack-rpc*
 
 1. Introduction			|rpc-intro|
 2. API mapping			|rpc-api|
