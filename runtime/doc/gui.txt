@@ -395,9 +395,9 @@ You may make selections with the mouse (see |gui-mouse-select|), or by using
 Vim's Visual mode (see |v|).  If 'a' is present in 'guioptions', then
 whenever a selection is started (Visual or Select mode), or when the selection
 is changed, Vim becomes the owner of the windowing system's primary selection
-(on MS-Windows the |gui-clipboard| is used).
+(on MS-Windows the |clipboard| is used).
 
-							*clipboard*
+							*primary-selection*
 There is a special register for storing this selection, it is the "*
 register.  Nothing is put in here unless the information about what text is
 selected is about to change (e.g. with a left mouse click somewhere), or when

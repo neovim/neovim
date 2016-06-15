@@ -1353,7 +1353,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 			used regardless of whether "unnamed" is in 'clipboard'
 			or not.  The clipboard register can always be
 			explicitly accessed using the "* notation.  Also see
-			|gui-clipboard|.
+			|clipboard|.
 
 						*clipboard-unnamedplus*
 	unnamedplus	A variant of the "unnamed" flag which uses the
@@ -1363,7 +1363,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 			register.  When "unnamed" is also included to the
 			option, yank and delete operations (but not put)
 			will additionally copy the text into register
-			'*'. See |nvim-clipboard|.
+			'*'. See |clipboard|.
 
 						*clipboard-autoselect*
 	autoselect	Works like the 'a' flag in 'guioptions': If present,

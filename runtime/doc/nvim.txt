@@ -15,7 +15,7 @@ see |help.txt|.
 3. Msgpack-RPC			 |msgpack-rpc|
 4. Job control			 |job-control|
 5. Python plugins		 |nvim-python|
-6. Clipboard integration	 |nvim-clipboard|
+6. Clipboard integration	 |clipboard|
 7. Remote plugins		 |remote-plugin|
 8. Provider infrastructure	 |nvim-provider|
 9. Integrated terminal emulator	 |nvim-terminal-emulator|

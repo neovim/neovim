@@ -16,8 +16,8 @@ it:
     ln -s ~/.vim $XDG_CONFIG_HOME/nvim
     ln -s ~/.vimrc $XDG_CONFIG_HOME/nvim/init.vim
 <
-See |nvim-intro|, especially |nvim-python| and |nvim-clipboard|, for
-additional software you might need to install to use all of Nvim's features.
+See |nvim-intro|, especially |nvim-python| and |clipboard|, for additional
+software you might need to install to use all of Nvim's features.
 
 Your Vim configuration might not be entirely compatible with Nvim. For a
 full list of differences between Vim and Nvim, see |vim-differences|.

@@ -4,28 +4,26 @@
 		 NVIM REFERENCE MANUAL    by Thiago de Arruda
 
 
-Clipboard integration for Nvim					*nvim-clipboard*
+Clipboard integration for Nvim					     *clipboard*
 
-1. Intro			|nvim-clipboard-intro|
-2. X11 selection mechanism	|nvim-clipboard-x11|
+1. Intro			|clipboard-intro|
+2. X11 selection mechanism	|clipboard-x11|
 
 ==============================================================================
-1. Intro						  *nvim-clipboard-intro*
+1. Intro						       *clipboard-intro*
 
-Nvim has no direct connection to the system clipboard. Instead, it is
-accessible through the |nvim-provider| infrastructure, which transparently
-uses shell commands for communicating with the clipboard.
+Nvim has no direct connection to the system clipboard. Instead it is
+accessible through a |provider| which transparently uses shell commands for
+communicating with the clipboard.
 
 Clipboard access is implicitly enabled if any of the following clipboard tools
-is found in your `$PATH`.
+are found in your `$PATH`.
 
-- xclip
-- xsel (newer alternative to xclip)
-- pbcopy/pbpaste (only for Mac OS X)
-- lemonade (useful for SSH machine)
-  https://github.com/pocke/lemonade
-- doitclient (another option for SSH setups from the maintainer of PuTTY)
-  http://www.chiark.greenend.org.uk/~sgtatham/doit/
+  - xclip
+  - xsel (newer alternative to xclip)
+  - pbcopy/pbpaste (Mac OS X)
+  - lemonade (for SSH) https://github.com/pocke/lemonade
+  - doitclient (for SSH) http://www.chiark.greenend.org.uk/~sgtatham/doit/
 
 The presence of a suitable clipboard tool implicitly enables the '+' and '*'
 registers.
@@ -39,7 +37,7 @@ following option:
 See 'clipboard' for details and more options.
 
 ==============================================================================
-2. X11 selection mechanism		      *nvim-clipboard-x11* *x11-selection*
+2. X11 selection mechanism			   *clipboard-x11* *x11-selection*
 
 The clipboard providers for X11 store text in what is known as "selections".
 Selections are "owned" by an application, so when the application is closed,

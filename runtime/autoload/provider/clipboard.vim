@@ -58,7 +58,7 @@ elseif executable('doitclient')
   let s:copy['*'] = s:copy['+']
   let s:paste['*'] = s:paste['+']
 else
-  echom 'clipboard: No clipboard tool available. See :help nvim-clipboard'
+  echom 'clipboard: No clipboard tool available. See :help clipboard'
   finish
 endif
 

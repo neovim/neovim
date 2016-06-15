@@ -1250,7 +1250,7 @@ register.
 Use these registers for storing and retrieving the selected text for the GUI.
 See |quotestar| and |quoteplus|.  When the clipboard is not available or not
 working, the unnamed register is used instead.  For Unix systems and Mac OS X,
-see |nvim-clipboard|.
+see |primary-selection|.
 
 9. Black hole register "_				*quote_*
 When writing to this register, nothing happens.  This can be used to delete

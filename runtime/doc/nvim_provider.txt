@@ -6,11 +6,10 @@
 
 Nvim provider infrastructure			       *nvim-provider*
 
-This document is written for developers. If you are a normal user or plugin
-developer looking to learn about Nvim |rpc| infrastructure for implementing
-plugins in other programming languages, see |remote-plugin|.
-For instructions on how to enable Python plugins, see |nvim-python|. For
-clipboard, see |nvim-clipboard|.
+This document is for developers. If you are a normal user or plugin developer
+looking to learn about Nvim |rpc| for implementing plugins in other
+programming languages, see |remote-plugin|. For instructions on how to enable
+Python plugins, see |nvim-python|. For clipboard, see |clipboard|.
 
 Instead of doing everything by itself, Nvim aims to simplify its own
 maintenance by delegating as much work as possible to external systems. But
