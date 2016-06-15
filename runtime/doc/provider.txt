@@ -4,71 +4,57 @@
 		 NVIM REFERENCE MANUAL    by Thiago de Arruda
 
 
-Nvim provider infrastructure					    *provider*
+Providers	 						    *provider*
 
-This document is for developers. If you are a normal user or plugin developer
-looking to learn about Nvim |rpc| for implementing plugins in other
-programming languages, see |remote-plugin|. For instructions on how to enable
-Python plugins, see |nvim-python|. For clipboard, see |clipboard|.
+Nvim delegates some features to dynamic "providers".
 
-Instead of doing everything by itself, Nvim aims to simplify its own
-maintenance by delegating as much work as possible to external systems. But
-some Vim components are too tightly coupled and in some cases the refactoring
-work necessary to swap in-house implementations by code that integrates to
-other systems is too great. Nvim provider infrastructure is a facility that
-aims to make this task simpler.
+==============================================================================
+Clipboard integration 						   *clipboard*
 
-To understand why the provider infrastructure is useful, let us consider two
-examples of integration with external systems that are implemented in Vim and
-are now decoupled from Nvim core as providers:
+Nvim has no direct connection to the system clipboard. Instead it is
+accessible through a |provider| which transparently uses shell commands for
+communicating with the clipboard.
 
-The first example is clipboard integration: in the original Vim source code,
-clipboard functions account for more than 1k lines of C source code (and that
-is just on ui.c), all to perform two tasks that are now accomplished with
-simple shell commands such as xclip or pbcopy/pbpaste.
+Clipboard access is implicitly enabled if any of the following clipboard tools
+are found in your `$PATH`.
 
-The other example is Python scripting support: Vim has three files dedicated to
-embedding the Python interpreter: if_python.c, if_python3.c and if_py_both.h.
-Together these files sum about 9.5k lines of C source code. On Nvim, Python
-scripting is performed by an external host process that is running 2k sloc
-Python program.
+  - xclip
+  - xsel (newer alternative to xclip)
+  - pbcopy/pbpaste (Mac OS X)
+  - lemonade (for SSH) https://github.com/pocke/lemonade
+  - doitclient (for SSH) http://www.chiark.greenend.org.uk/~sgtatham/doit/
 
-In a perfect world, we would implement Python and clipboard integration in
-pure vimscript and without touching the C code. Unfortunately we can't achieve
-these goals without severely compromising backwards compatibility with Vim.
-That's where providers come to the rescue.
+The presence of a suitable clipboard tool implicitly enables the '+' and '*'
+registers.
 
-In essence, this infrastructure is a simple framework that simplifies the task
-of calling vimscript from C code, making it simpler to rewrite C functions that
-interact with external systems in pure vimscript. It is composed of two
-functions in eval.c:
+If you want to ALWAYS use the clipboard for ALL operations (as opposed
+to interacting with the '+' and/or '*' registers explicitly), set the
+following option:
+>
+    set clipboard+=unnamedplus
+<
+See 'clipboard' for details and more options.
 
-- eval_call_provider(name, method, arguments): Call a provider(name) method
-  with arguments
-- eval_has_provider(name): Checks if a provider is implemented
+==============================================================================
+X11 selection mechanism			       *clipboard-x11* *x11-selection*
 
-What these functions do is simple:
+The clipboard providers for X11 store text in what is known as "selections".
+Selections are "owned" by an application, so when the application is closed,
+the selection text is lost.
 
-- eval_call_provider will call the provider#(name)#Call function passing in
-  the method and arguments.
-- eval_has_provider will return true if the provider#(name)#Call function is
-  implemented, and is called by the "has" vimscript function to check if
-  features are available.
+The contents of selections are held by the originating application (e.g., upon
+a copy), and only passed on to another application when that other application
+asks for them (e.g., upon a paste).
 
-The basic idea is that the provider#(name)#Call function should implement
-integration with an external system, because calling shell commands and |rpc|
-clients (Nvim only) is easier to do in vimscript.
+							      *quoteplus* *quote+*
 
-Now, back to the Python example. Instead of modifying vimscript to allow for
-the definition of lowercase functions and commands (for the |:python|,
-|:pyfile|, and |:pydo| commands, and the |pyeval()| function), which would
-break backwards compatibility with Vim, we implemented the
-autoload/provider/python.vim script and the provider#python#Call function
-that is only defined if an external Python host is started successfully.
+There are three documented X11 selections: `PRIMARY`, `SECONDARY`, and `CLIPBOARD`.
+`CLIPBOARD` is typically used in X11 applications for copy/paste operations
+(`Ctrl-c`/`v`), while `PRIMARY` is used for the last selected text, which is
+generally inserted with the middle mouse button.
 
-That works well with the `has('python')` expression (normally used by Python
-plugins) because if the Python host isn't installed then the plugin will
-"think" it is running in a Vim compiled without |+python| feature.
+Nvim's X11 clipboard providers only utilize the `PRIMARY` and `CLIPBOARD`
+selections, used for the '*' and '+' registers, respectively.
 
 ==============================================================================
  vim:tw=78:ts=8:noet:ft=help:norl:
