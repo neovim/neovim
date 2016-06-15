@@ -17,7 +17,7 @@ see |help.txt|.
 5. Python plugins		 |nvim-python|
 6. Clipboard integration	 |clipboard|
 7. Remote plugins		 |remote-plugin|
-8. Provider infrastructure	 |nvim-provider|
+8. Provider infrastructure	 |provider|
 9. Integrated terminal emulator	 |terminal-emulator|
 
 ==============================================================================

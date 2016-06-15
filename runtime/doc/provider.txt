@@ -1,10 +1,10 @@
-*nvim_provider.txt*    For Nvim.					{Nvim}
+*provider.txt*								{Nvim}
 
 
 		 NVIM REFERENCE MANUAL    by Thiago de Arruda
 
 
-Nvim provider infrastructure			       *nvim-provider*
+Nvim provider infrastructure					    *provider*
 
 This document is for developers. If you are a normal user or plugin developer
 looking to learn about Nvim |rpc| for implementing plugins in other
