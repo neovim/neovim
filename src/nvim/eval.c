@@ -6684,6 +6684,7 @@ static struct fst {
   { "acos",              1, 1, f_acos },  // WJMc
   { "add",               2, 2, f_add },
   { "and",               2, 2, f_and },
+  { "api_info",          0, 0, f_api_info },
   { "append",            2, 2, f_append },
   { "argc",              0, 0, f_argc },
   { "argidx",            0, 0, f_argidx },
@@ -7464,6 +7465,15 @@ static void f_and(typval_T *argvars, typval_T *rettv)
 {
   rettv->vval.v_number = get_tv_number_chk(&argvars[0], NULL)
                          & get_tv_number_chk(&argvars[1], NULL);
+}
+
+
+/// "api_info()" function
+static void f_api_info(typval_T *argvars, typval_T *rettv)
+{
+  Dictionary metadata = api_metadata();
+  object_to_vim(DICTIONARY_OBJ(metadata), rettv, NULL);
+  api_free_dictionary(metadata);
 }
 
 /*

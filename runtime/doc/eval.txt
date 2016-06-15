@@ -1783,6 +1783,7 @@ abs({expr})			Float or Number  absolute value of {expr}
 acos({expr})			Float	arc cosine of {expr}
 add({list}, {item})		List	append {item} to |List| {list}
 and({expr}, {expr})		Number  bitwise AND
+api_info()			Dict	api metadata
 append({lnum}, {string})	Number	append {string} below line {lnum}
 append({lnum}, {list})		Number	append lines {list} below line {lnum}
 argc()				Number	number of files in the argument list
@@ -2194,6 +2195,11 @@ and({expr}, {expr})					*and()*
 		to a number.  A List, Dict or Float argument causes an error.
 		Example: >
 			:let flag = and(bits, 0x80)
+
+
+api_info()						*api_info()*
+		Return Dictionary containing api metadata.
+		See |api-metadata|.
 
 
 append({lnum}, {expr})					*append()*
