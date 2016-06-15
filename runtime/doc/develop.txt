@@ -9,11 +9,11 @@ Development of Nvim.					*development*
 1. Design goals		|design-goals|
 2. Design decisions	|design-decisions|
 
-See src/nvim/README.md for a high-level overview of the source code:
-    https://github.com/neovim/neovim/blob/master/src/nvim/README.md
-
 Nvim is open source software.  Everybody is encouraged to contribute.
     https://github.com/neovim/neovim/blob/master/CONTRIBUTING.md
+
+See src/nvim/README.md for a high-level overview of the source code:
+    https://github.com/neovim/neovim/blob/master/src/nvim/README.md
 
 ==============================================================================
 1. Design goals						*design-goals*
@@ -72,6 +72,9 @@ NVIM IS... WELL DOCUMENTED				*design-documented*
   recommended.
 - Don't make the text unnecessarily long.  Less documentation means that an
   item is easier to find.
+- Do not prefix doc-tags with "nvim-". Use |vim_diff.txt| to document
+  differences from Vim. The {Nvim} annotation is also available
+  to mark a specific feature. No other distinction is necessary.
 
 
 NVIM IS... HIGH SPEED AND SMALL IN SIZE			*design-speed-size*
@@ -85,8 +88,6 @@ fast.
   possible.  Useful commands may take longer.
 - Don't forget that some people use Vim over a slow connection.  Minimize the
   communication overhead.
-- Items that add considerably to the size and are not used by many people
-  should be a feature that can be disabled.
 - Vim is a component among other components.  Don't turn it into a massive
   application, but have it work well together with other programs.
 
@@ -113,24 +114,13 @@ be used to adjust Vim to the desire of the user and its environment.
 
 NVIM IS... NOT						*design-not*
 
-Nvim is not an operating system—instead it should be composed with other tools
-or hosted as a component. Marvim once said: "Unlike Emacs, Nvim does not
+Nvim is not an operating system; instead it should be composed with other
+tools or hosted as a component. Marvim once said: "Unlike Emacs, Nvim does not
 include the kitchen sink... but you can use it for plumbing."
 
 
 ==============================================================================
 2. Design decisions					*design-decisions*
-
-Folding
-
-Several forms of folding should be possible for the same buffer.  For example,
-have one window that shows the text with function bodies folded, another
-window that shows a function body.
-
-Folding is a way to display the text.  It should not change the text itself.
-Therefore the folding has been implemented as a filter between the text stored
-in a buffer (buffer lines) and the text displayed in a window (logical lines).
-
 
 Naming the window
 
@@ -147,6 +137,8 @@ window		View on a buffer.  There can be several windows in Vim,
 		together with the command line, menubar, toolbar, etc. they
 		fit in the shell.
 
-
+RPC API
+API client
+remote plugin
 
  vim:tw=78:ts=8:ft=help:norl:

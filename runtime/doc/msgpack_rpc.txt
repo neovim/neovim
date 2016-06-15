@@ -35,10 +35,10 @@ The RPC API is like a more powerful version of Vim's `clientserver` feature.
 ==============================================================================
  2. API mapping							    *rpc-api*
 
-The Nvim C API, see |nvim-api|, is automatically exposed to the RPC API by the
-build system, which parses headers at src/nvim/api/*. A dispatch function is
-generated which matches RPC API method names with public API functions,
-converting/validating arguments and return values back to msgpack.
+The Nvim C |API| is automatically exposed to the RPC API by the build system,
+which parses headers at src/nvim/api/*. A dispatch function is generated which
+matches RPC API method names with public API functions, converting/validating
+arguments and return values back to msgpack.
 
 Client libraries (|api-client|s) normally provide wrappers that hide
 msgpack-rpc details from application developers. The wrappers can be
@@ -184,7 +184,7 @@ Vim class with methods mapped to functions prefixed with `vim_`.
 ==============================================================================
 5. Types							    *rpc-types*
 
-The Nvim C API uses custom types for all functions. |nvim-api-types|
+The Nvim C API uses custom types for all functions. |api-types|
 For the purpose of mapping to msgpack, the types can be split into two groups:
 
   - Basic types that map natively to msgpack (and probably have a default
