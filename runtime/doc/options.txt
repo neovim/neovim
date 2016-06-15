@@ -1172,8 +1172,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	  help		help buffer (you are not supposed to set this
 			manually)
 	  terminal	terminal buffer, this is set automatically when a 
-			terminal is created. See |nvim-terminal-emulator| for
-			more information.
+			terminal is created. |terminal-emulator|
 
 	This option is used together with 'bufhidden' and 'swapfile' to
 	specify special kinds of buffers.   See |special-buffers|.

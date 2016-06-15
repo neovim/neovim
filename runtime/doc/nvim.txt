@@ -18,7 +18,7 @@ see |help.txt|.
 6. Clipboard integration	 |clipboard|
 7. Remote plugins		 |remote-plugin|
 8. Provider infrastructure	 |nvim-provider|
-9. Integrated terminal emulator	 |nvim-terminal-emulator|
+9. Integrated terminal emulator	 |terminal-emulator|
 
 ==============================================================================
  vim:tw=78:ts=8:noet:ft=help:norl:

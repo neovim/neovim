@@ -220,7 +220,7 @@ g8			Print the hex values of the bytes used in the
 
 			Like |:enew|, it will fail if the current buffer is
 			modified, but can be forced with "!".  See |termopen()|
-			and |nvim-terminal-emulator| for more information.
+			and |terminal-emulator|.
 
 			To switch to terminal mode automatically:
 >
