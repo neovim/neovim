@@ -7541,25 +7541,9 @@ static void f_argidx(typval_T *argvars, typval_T *rettv)
 static void f_arglistid(typval_T *argvars, typval_T *rettv)
 {
   rettv->vval.v_number = -1;
-  if (argvars[0].v_type != VAR_UNKNOWN) {
-    tabpage_T *tp = NULL;
-    if (argvars[1].v_type != VAR_UNKNOWN) {
-      long n = get_tv_number(&argvars[1]);
-      if (n >= 0) {
-        tp = find_tabpage(n);
-      }
-    } else {
-      tp = curtab;
-    }
-
-    if (tp != NULL) {
-      win_T *wp = find_win_by_nr(&argvars[0], tp);
-      if (wp != NULL) {
-        rettv->vval.v_number = wp->w_alist->id;
-      }
-    }
-  } else {
-    rettv->vval.v_number = curwin->w_alist->id;
+  win_T *wp = find_tabwin(&argvars[0], &argvars[1]);
+  if (wp != NULL) {
+    rettv->vval.v_number = wp->w_alist->id;
   }
 }
 
@@ -10473,9 +10457,33 @@ find_win_by_nr (
   return NULL;
 }
 
-/*
- * "getwinvar()" function
- */
+/// Find window specified by "wvp" in tabpage "tvp".
+static win_T *find_tabwin(typval_T *wvp, typval_T *tvp)
+{
+  win_T *wp = NULL;
+  tabpage_T *tp = NULL;
+
+  if (wvp->v_type != VAR_UNKNOWN) {
+    if (tvp->v_type != VAR_UNKNOWN) {
+      long n = get_tv_number(tvp);
+      if (n >= 0) {
+        tp = find_tabpage(n);
+      }
+    } else {
+      tp = curtab;
+    }
+
+    if (tp != NULL) {
+      wp = find_win_by_nr(wvp, tp);
+    }
+  } else {
+    wp = curwin;
+  }
+
+  return wp;
+}
+
+/// "getwinvar()" function
 static void f_getwinvar(typval_T *argvars, typval_T *rettv)
 {
   getwinvar(argvars, rettv, 0);
