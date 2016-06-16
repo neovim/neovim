@@ -2009,7 +2009,6 @@ get_tagfname (
 )
 {
   char_u              *fname = NULL;
-  char_u              *r_ptr;
 
   if (first)
     memset(tnp, 0, sizeof(tagname_T));
@@ -2079,7 +2078,6 @@ get_tagfname (
       buf[0] = NUL;
       (void)copy_option_part(&tnp->tn_np, buf, MAXPATHL - 1, " ,");
 
-      r_ptr = vim_findfile_stopdir(buf);
       /* move the filename one char forward and truncate the
        * filepath with a NUL */
       filename = path_tail(buf);
@@ -2087,8 +2085,6 @@ get_tagfname (
       *filename++ = NUL;
 
       tnp->tn_search_ctx = vim_findfile_init(buf, filename,
-          r_ptr, 100,
-          FALSE,                   /* don't free visited list */
           FINDFILE_FILE,           /* we search for a file */
           tnp->tn_search_ctx, TRUE, curbuf->b_ffname);
       if (tnp->tn_search_ctx != NULL)
