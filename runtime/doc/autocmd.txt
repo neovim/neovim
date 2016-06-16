@@ -912,8 +912,7 @@ TermClose			When a terminal buffer ends.
 						 {Nvim} *TermOpen*
 TermOpen			When a terminal buffer is starting.  This can
 				be used to configure the terminal emulator by
-				setting buffer variables.
-				See |nvim-terminal-emulator| for details.
+				setting buffer variables. |terminal-emulator|
 							*TermResponse*
 TermResponse			After the response to |t_RV| is received from
 				the terminal.  The value of |v:termresponse|

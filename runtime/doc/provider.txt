@@ -1,0 +1,139 @@
+*provider.txt*								{Nvim}
+
+
+		 NVIM REFERENCE MANUAL    by Thiago de Arruda
+
+
+Providers	 						    *provider*
+
+Nvim delegates some features to dynamic "providers".
+
+==============================================================================
+Python integration		    	      *provider-python*
+
+Nvim supports the Vim legacy |python-vim| and |python3| interfaces via
+external Python interpreters connected via |RPC|,
+
+Note: Only the Vim 7.3 API is supported; bindeval (Vim 7.4) is not.
+
+
+PYTHON QUICKSTART ~
+
+If you used a package manager to install Nvim there's a good chance that
+it also provides the `neovim` Python package. If it doesn't, follow these
+steps to install the package with Python's package manager, `pip`.
+
+Note: Depending on your system, `pip` might refer to Python 2 or Python 3,
+      which is why the following instructions mention `pip2` or `pip3`
+      explicitly. If one of these is not available, try `pip`.
+
+To use Vim Python 2/3 plugins with Nvim:
+
+- For Python 2 plugins, make sure an interpreter for Python 2.6 or 2.7 is
+  available in your `$PATH`, then install the `neovim` Python package systemwide: >
+    $ sudo pip2 install --upgrade neovim
+<
+  or for the current user: >
+    $ pip2 install --user --upgrade neovim
+<
+- For Python 3 plugins, make sure an interpreter for Python 3.3 or above is
+  available in your `$PATH`, then install the `neovim` Python package systemwide: >
+    $ sudo pip3 install --upgrade neovim
+<
+  or for the current user: >
+    $ pip3 install --user --upgrade neovim
+<
+Note: The `--upgrade` flag ensures you have the latest version even if
+      a previous version was already installed.
+
+PYTHON PROVIDER CONFIGURATION ~
+						*g:python_host_prog*
+Set `g:python_host_prog` to point Nvim to a specific Python 2 interpreter: >
+    let g:python_host_prog = '/path/to/python'
+<
+						*g:python3_host_prog*
+Set `g:python3_host_prog` to point Nvim to a specific Python 3 interpreter: >
+    let g:python3_host_prog = '/path/to/python3'
+<
+						*g:loaded_python_provider*
+To disable Python 2 support: >
+    let g:loaded_python_provider = 1
+<
+						*g:loaded_python3_provider*
+To disable Python 3 support: >
+    let g:loaded_python3_provider = 1
+<
+						*g:python_host_skip_check*
+Set `g:python_host_skip_check` to disable the Python 2 interpreter check.
+Note: This requires you to install the python-neovim module properly. >
+    let g:python_host_skip_check = 1
+<
+						*g:python3_host_skip_check*
+Set `g:python3_host_skip_check` to disable the Python 3 interpreter check.
+Note: This requires you to install the python3-neovim module properly. >
+    let g:python3_host_skip_check = 1
+
+
+TROUBLESHOOTING					*python-trouble*
+
+If you have trouble with a plugin that uses the `neovim` Python client, use
+the |:CheckHealth| command to diagnose your setup.
+
+								 *:CheckHealth*
+:CheckHealth[!]	  Check your setup for common problems that may be keeping a
+		  plugin from functioning correctly.  Include the output of
+		  this command in bug reports to help reduce the amount of
+		  time it takes to address your issue.  With "!" the output
+		  will be placed in a new buffer which can make it easier to
+		  save to a file or copy to the clipboard.
+
+==============================================================================
+Clipboard integration 			      *provider-clipboard* *clipboard*
+
+Nvim has no direct connection to the system clipboard. Instead it is
+accessible through a |provider| which transparently uses shell commands for
+communicating with the clipboard.
+
+Clipboard access is implicitly enabled if any of the following clipboard tools
+are found in your `$PATH`.
+
+  - xclip
+  - xsel (newer alternative to xclip)
+  - pbcopy/pbpaste (Mac OS X)
+  - lemonade (for SSH) https://github.com/pocke/lemonade
+  - doitclient (for SSH) http://www.chiark.greenend.org.uk/~sgtatham/doit/
+
+The presence of a suitable clipboard tool implicitly enables the '+' and '*'
+registers.
+
+If you want to ALWAYS use the clipboard for ALL operations (as opposed
+to interacting with the '+' and/or '*' registers explicitly), set the
+following option:
+>
+    set clipboard+=unnamedplus
+<
+See 'clipboard' for details and more options.
+
+==============================================================================
+X11 selection mechanism			      *clipboard-x11* *x11-selection*
+
+The clipboard providers for X11 store text in what is known as "selections".
+Selections are "owned" by an application, so when the application is closed,
+the selection text is lost.
+
+The contents of selections are held by the originating application (e.g., upon
+a copy), and only passed on to another application when that other application
+asks for them (e.g., upon a paste).
+
+							      *quoteplus* *quote+*
+
+There are three documented X11 selections: `PRIMARY`, `SECONDARY`, and `CLIPBOARD`.
+`CLIPBOARD` is typically used in X11 applications for copy/paste operations
+(`Ctrl-c`/`v`), while `PRIMARY` is used for the last selected text, which is
+generally inserted with the middle mouse button.
+
+Nvim's X11 clipboard providers only utilize the `PRIMARY` and `CLIPBOARD`
+selections, used for the '*' and '+' registers, respectively.
+
+==============================================================================
+ vim:tw=78:ts=8:noet:ft=help:norl:

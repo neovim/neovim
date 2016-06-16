@@ -12,8 +12,8 @@ these differences.
 
 1. Configuration		|nvim-configuration|
 2. Defaults			|nvim-defaults|
-3. Changed features		|nvim-features-changed|
-4. New features			|nvim-features-new|
+3. New features			|nvim-features|
+4. Changed features		|nvim-features-changed|
 5. Missing legacy features	|nvim-features-missing|
 6. Removed features		|nvim-features-removed|
 
@@ -58,7 +58,58 @@ these differences.
 - 'wildmenu' is set by default
 
 ==============================================================================
-3. Changed features					 *nvim-features-changed*
+3. New Features						       *nvim-features*
+
+
+MAJOR FEATURES ~
+
+Embedded terminal emulator	|terminal-emulator|
+Shared data			|shada|
+RPC API				|RPC|
+Job control			|job-control|
+Remote plugins			|remote-plugin|
+Python plugins			|provider-python|
+Clipboard integration		|provider-clipboard|
+
+
+OTHER FEATURES ~
+
+|bracketed-paste-mode| is built-in and enabled by default.
+
+Meta (alt) chords are recognized (even in the terminal).
+  <M-1>, <M-2>, ...
+  <M-BS>, <M-Del>, <M-Ins>, ...
+  <M-/>, <M-\>, ...
+  <M-Space>, <M-Enter>, <M-=>, <M-->, <M-?>, <M-$>, ...
+
+  Note: Meta chords are case-sensitive (<M-a> is distinguished from <M-A>).
+
+Some `CTRL-SHIFT-...` key chords are distinguished from `CTRL-...` variants
+(even in the terminal). Specifically, the following are known to work:
+  <C-Tab>, <C-S-Tab>
+  <C-BS>, <C-S-BS>
+  <C-Enter>, <C-S-Enter>
+
+Options:
+  'statusline' supports unlimited alignment sections
+
+Commands:
+  |:CheckHealth|
+
+Events:
+  |TabNew|
+  |TabNewEntered|
+  |TabClosed|
+  |TermOpen|
+  |TermClose|
+
+Highlight groups:
+  |hl-EndOfBuffer|
+  |hl-TermCursor|
+  |hl-TermCursorNC|
+
+==============================================================================
+4. Changed features					 *nvim-features-changed*
 
 Nvim always builds with all features, in contrast to Vim which may have
 certain features removed/added at compile-time.  This is like if Vim's "HUGE"
@@ -68,7 +119,7 @@ build).
 If a Python interpreter is available on your `$PATH`, |:python| and |:python3|
 are always available and may be used simultaneously in separate plugins.  The
 `neovim` pip package must be installed to use Python plugins in Nvim (see
-|nvim-python|).
+|provider-python|).
 
 |mkdir()| behaviour changed:
 1. Assuming /tmp/foo does not exist and /tmp can be written to
@@ -139,39 +190,6 @@ Additional differences:
 - Vim keeps no timestamps at all, neither in viminfo file nor in the instance
   itself.
 - ShaDa file keeps search direction (|v:searchforward|), viminfo does not.
-
-==============================================================================
-4. New Features						     *nvim-features-new*
-
-See |nvim-intro| for a list of Nvim's largest new features.
-
-|bracketed-paste-mode| is built-in and enabled by default.
-
-Meta (alt) chords are recognized (even in the terminal).
-  <M-1>, <M-2>, ...
-  <M-BS>, <M-Del>, <M-Ins>, ...
-  <M-/>, <M-\>, ...
-  <M-Space>, <M-Enter>, <M-=>, <M-->, <M-?>, <M-$>, ...
-
-  Note: Meta chords are case-sensitive (<M-a> is distinguished from <M-A>).
-
-Some `CTRL-SHIFT-...` key chords are distinguished from `CTRL-...` variants
-(even in the terminal). Specifically, the following are known to work:
-  <C-Tab>, <C-S-Tab>
-  <C-BS>, <C-S-BS>
-  <C-Enter>, <C-S-Enter>
-
-Events:
-  |TabNew|
-  |TabNewEntered|
-  |TabClosed|
-  |TermOpen|
-  |TermClose|
-
-Highlight groups:
-  |hl-EndOfBuffer|
-  |hl-TermCursor|
-  |hl-TermCursorNC|
 
 ==============================================================================
 5. Missing legacy features				 *nvim-features-missing*

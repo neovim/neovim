@@ -16,7 +16,7 @@ The Python Interface to Vim				*python* *Python*
 8. pyeval(), py3eval() Vim functions		|python-pyeval|
 9. Python 3					|python3|
 
-See |nvim-python| for more information. {Nvim}
+See |provider-python| for more information. {Nvim}
 
 ==============================================================================
 1. Commands						*python-commands*

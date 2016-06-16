@@ -16,8 +16,8 @@ Nvim support for remote plugins 		  *remote-plugin*
 
 Extensibility is a primary goal of Nvim. Any programming language may be used
 to extend Nvim without changes to Nvim itself. This is achieved with remote
-plugins, coprocesses that have a direct communication channel (via
-|msgpack-rpc|) with the Nvim process.
+plugins, coprocesses that have a direct communication channel (via |RPC|) with
+the Nvim process.
 
 Even though these plugins run in separate processes they can call, be called,
 and receive events just as if the plugin's code were executed in the main
@@ -33,9 +33,9 @@ check whether a plugin host is available for their chosen programming language.
 
 Plugin hosts are programs that provide a high-level environment for plugins,
 taking care of most boilerplate involved in defining commands, autocmds, and
-functions that are implemented over |msgpack-rpc| connections. Hosts are
-loaded only when one of their registered plugins require it, keeping Nvim's
-startup as fast as possible, even if many plugins/hosts are installed.
+functions that are implemented over |RPC| connections. Hosts are loaded only
+when one of their registered plugins require it, keeping Nvim's startup as
+fast as possible, even if many plugins/hosts are installed.
 
 ==============================================================================
 3. Example					    *remote-plugin-example*
