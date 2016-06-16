@@ -5,7 +5,7 @@
 
 #include "nvim/map_defs.h"
 #include "nvim/api/private/defs.h"
-#include "nvim/msgpack_rpc/defs.h"
+#include "nvim/api/private/dispatch.h"
 #include "nvim/bufhl_defs.h"
 
 #define MAP_DECLS(T, U) \

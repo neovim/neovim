@@ -4,9 +4,9 @@
 
 #include <msgpack.h>
 
+#include "nvim/api/private/dispatch.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/msgpack_rpc/helpers.h"
-#include "nvim/msgpack_rpc/defs.h"
 #include "nvim/lib/kvec.h"
 #include "nvim/vim.h"
 #include "nvim/log.h"

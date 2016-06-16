@@ -11,12 +11,12 @@ endif()
 endif()
 
 set(GENERATED_DIR ${PROJECT_BINARY_DIR}/src/nvim/auto)
-set(DISPATCH_GENERATOR ${PROJECT_SOURCE_DIR}/scripts/msgpack-gen.lua)
+set(DISPATCH_GENERATOR ${PROJECT_SOURCE_DIR}/scripts/gendispatch.lua)
 file(GLOB API_HEADERS api/*.h)
 file(GLOB MSGPACK_RPC_HEADERS msgpack_rpc/*.h)
-set(MSGPACK_DISPATCH ${GENERATED_DIR}/msgpack_dispatch.c)
 set(HEADER_GENERATOR ${PROJECT_SOURCE_DIR}/scripts/gendeclarations.lua)
 set(GENERATED_INCLUDES_DIR ${PROJECT_BINARY_DIR}/include)
+set(GENERATED_API_DISPATCH ${GENERATED_DIR}/api/private/dispatch.c)
 set(GENERATED_EX_CMDS_ENUM ${GENERATED_INCLUDES_DIR}/ex_cmds_enum.generated.h)
 set(GENERATED_EX_CMDS_DEFS ${GENERATED_DIR}/ex_cmds_defs.generated.h)
 set(GENERATED_FUNCS_HASH_INPUT ${GENERATED_DIR}/funcs.generated.h.hsh)
@@ -143,9 +143,13 @@ separate_arguments(C_FLAGS_${build_type}_ARRAY UNIX_COMMAND ${CMAKE_C_FLAGS_${bu
 set(gen_cflags ${gen_cflags} ${C_FLAGS_${build_type}_ARRAY} ${C_FLAGS_ARRAY})
 
 foreach(sfile ${NEOVIM_SOURCES}
-              "${PROJECT_SOURCE_DIR}/src/nvim/regexp_nfa.c")
+              "${PROJECT_SOURCE_DIR}/src/nvim/regexp_nfa.c"
+              ${GENERATED_API_DISPATCH})
   get_filename_component(full_d ${sfile} PATH)
   file(RELATIVE_PATH d "${PROJECT_SOURCE_DIR}/src/nvim" "${full_d}")
+  if(${d} MATCHES "^[.][.]")
+    file(RELATIVE_PATH d "${GENERATED_DIR}" "${full_d}")
+  endif()
   get_filename_component(f ${sfile} NAME)
   get_filename_component(r ${sfile} NAME_WE)
   if(NOT ${d} EQUAL ".")
@@ -188,8 +192,8 @@ add_custom_command(OUTPUT ${GENERATED_UNICODE_TABLES}
     ${EASTASIANWIDTH_FILE}
 )
 
-add_custom_command(OUTPUT ${MSGPACK_DISPATCH}
-  COMMAND ${LUA_PRG} ${DISPATCH_GENERATOR} ${API_HEADERS} ${MSGPACK_DISPATCH}
+add_custom_command(OUTPUT ${GENERATED_API_DISPATCH}
+  COMMAND ${LUA_PRG} ${DISPATCH_GENERATOR} ${API_HEADERS} ${GENERATED_API_DISPATCH}
   DEPENDS
     ${API_HEADERS}
     ${MSGPACK_RPC_HEADERS}
@@ -198,7 +202,7 @@ add_custom_command(OUTPUT ${MSGPACK_DISPATCH}
 
 list(APPEND NEOVIM_GENERATED_SOURCES
   "${PROJECT_BINARY_DIR}/config/auto/pathdef.c"
-  "${MSGPACK_DISPATCH}"
+  "${GENERATED_API_DISPATCH}"
   "${GENERATED_EX_CMDS_ENUM}"
   "${GENERATED_EX_CMDS_DEFS}"
   "${GENERATED_EVENTS_ENUM}"

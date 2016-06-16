@@ -58,13 +58,13 @@
 #include "nvim/event/loop.h"
 #include "nvim/os/signal.h"
 #include "nvim/event/process.h"
-#include "nvim/msgpack_rpc/defs.h"
 #include "nvim/msgpack_rpc/helpers.h"
 #include "nvim/msgpack_rpc/server.h"
 #include "nvim/msgpack_rpc/channel.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/private/handle.h"
+#include "nvim/api/private/dispatch.h"
 
 /* Maximum number of commands from + or -c arguments. */
 #define MAX_ARG_CMDS 10
