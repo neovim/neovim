@@ -1,3 +1,36 @@
+
+" Dictionary where we keep all of the healtch check functions we've found.
+" They will only be run if they are true
+let v:health#checkers = {
+            \ 'nvim#health#check': v:true,
+            \ }
+
+function! health#check() abort
+  echo 'Checking health'
+
+  for l:doctor in g:enabled_doctors
+      echo 'Doctor ' . l:doctor. 'says:'
+  endfor
+
+endfunction
+
+" Report functions
+
+function! g:dictate(sender, msg) abort
+  echo a:sender . ' dictates ' . a:msg
+endfunction
+
+function! g:prescribe(sender, msg) abort
+  echo a:sender . ' prescribes ' . a:msg
+endfunction
+
+function! g:suggest(sender, msg) abort
+  echo a:sender . ' suggests ' . a:msg
+endfunction
+
+
+" Original Health Check File
+
 function! s:trim(s) abort
   return substitute(a:s, '^\_s*\|\_s*$', '', 'g')
 endfunction
@@ -49,7 +82,7 @@ endfunction
 
 " Get the latest Neovim Python client version from PyPI.  The result is
 " cached.
-function! s:latest_pypi_version()
+function! s:latest_pypi_version() abort
   if exists('s:pypi_version')
     return s:pypi_version
   endif
@@ -133,9 +166,9 @@ function! s:echo_notes(notes) abort
 
   echo '  Messages:'
   for msg in a:notes
-    if msg =~# "\n"
+    if msg =~# '\n'
       let msg_lines = []
-      for msgl in filter(split(msg, "\n"), 'v:val !~# ''^\s*$''')
+      for msgl in filter(split(msg, '\n'), 'v:val !~# ''^\s*$''')
         call extend(msg_lines, s:textwrap(msgl, 74))
       endfor
     else
@@ -147,7 +180,7 @@ function! s:echo_notes(notes) abort
     endif
     echo '    *' msg_lines[0]
     if len(msg_lines) > 1
-      echo join(map(msg_lines[1:], '"      ".v:val'), "\n")
+      echo join(map(msg_lines[1:], '"      ".v:val'), '\n')
     endif
   endfor
 endfunction
@@ -169,7 +202,7 @@ function! s:diagnose_manifest() abort
   let require_update = 0
   let notes = []
 
-  for path in map(split(&rtp, ','), 'resolve(v:val)')
+  for path in map(split(&runtimepath, ','), 'resolve(v:val)')
     let python_glob = glob(path.'/rplugin/python*', 1, 1)
     if empty(python_glob)
       continue
@@ -459,10 +492,10 @@ function! health#check(bang) abort
     setlocal nomodified
   else
     echo report
-    echo "\nTip: Use "
+    echo '\nTip: Use '
     echohl Identifier
-    echon ":CheckHealth!"
+    echon ':CheckHealth!'
     echohl None
-    echon " to open this in a new buffer."
+    echon ' to open this in a new buffer.'
   endif
 endfunction
