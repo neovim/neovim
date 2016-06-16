@@ -75,6 +75,8 @@ NVIM IS... WELL DOCUMENTED				*design-documented*
 - Do not prefix doc-tags with "nvim-". Use |vim_diff.txt| to document
   differences from Vim. The {Nvim} annotation is also available
   to mark a specific feature. No other distinction is necessary.
+- If a feature is removed, delete its doc entry and move its tag to
+  |vim_diff.txt|.
 
 
 NVIM IS... HIGH SPEED AND SMALL IN SIZE			*design-speed-size*
