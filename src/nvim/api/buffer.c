@@ -60,7 +60,7 @@ String buffer_get_line(Buffer buffer, Integer index, Error *err)
   String rv = { .size = 0 };
 
   index = convert_index(index);
-  Array slice = buffer_get_lines(buffer, index, index+1, true, err);
+  Array slice = buffer_get_lines(0, buffer, index, index+1, true, err);
 
   if (!err->set && slice.size) {
     rv = slice.items[0].data.string;
@@ -88,7 +88,7 @@ void buffer_set_line(Buffer buffer, Integer index, String line, Error *err)
   Object l = STRING_OBJ(line);
   Array array = { .items = &l, .size = 1 };
   index = convert_index(index);
-  buffer_set_lines(buffer, index, index+1, true,  array, err);
+  buffer_set_lines(0, buffer, index, index+1, true,  array, err);
 }
 
 /// Deletes a buffer line
@@ -105,7 +105,7 @@ void buffer_del_line(Buffer buffer, Integer index, Error *err)
 {
   Array array = ARRAY_DICT_INIT;
   index = convert_index(index);
-  buffer_set_lines(buffer, index, index+1, true, array, err);
+  buffer_set_lines(0, buffer, index, index+1, true, array, err);
 }
 
 /// Retrieves a line range from the buffer
@@ -130,7 +130,7 @@ ArrayOf(String) buffer_get_line_slice(Buffer buffer,
 {
   start = convert_index(start) + !include_start;
   end = convert_index(end) + include_end;
-  return buffer_get_lines(buffer, start , end, false, err);
+  return buffer_get_lines(0, buffer, start , end, false, err);
 }
 
 
@@ -149,7 +149,8 @@ ArrayOf(String) buffer_get_line_slice(Buffer buffer,
 /// @param strict_indexing whether out-of-bounds should be an error.
 /// @param[out] err Details of an error that may have occurred
 /// @return An array of lines
-ArrayOf(String) buffer_get_lines(Buffer buffer,
+ArrayOf(String) buffer_get_lines(uint64_t channel_id,
+                                 Buffer buffer,
                                  Integer start,
                                  Integer end,
                                  Boolean strict_indexing,
@@ -191,7 +192,9 @@ ArrayOf(String) buffer_get_lines(Buffer buffer,
     Object str = STRING_OBJ(cstr_to_string(bufstr));
 
     // Vim represents NULs as NLs, but this may confuse clients.
-    strchrsub(str.data.string.data, '\n', '\0');
+    if (channel_id != INVALID_CHANNEL) {
+      strchrsub(str.data.string.data, '\n', '\0');
+    }
 
     rv.items[i] = str;
   }
@@ -235,7 +238,7 @@ void buffer_set_line_slice(Buffer buffer,
 {
   start = convert_index(start) + !include_start;
   end = convert_index(end) + include_end;
-  buffer_set_lines(buffer, start, end, false, replacement, err);
+  buffer_set_lines(0, buffer, start, end, false, replacement, err);
 }
 
 
@@ -257,7 +260,8 @@ void buffer_set_line_slice(Buffer buffer,
 /// @param strict_indexing whether out-of-bounds should be an error.
 /// @param replacement An array of lines to use as replacement
 /// @param[out] err Details of an error that may have occurred
-void buffer_set_lines(Buffer buffer,
+void buffer_set_lines(uint64_t channel_id,
+                      Buffer buffer,
                       Integer start,
                       Integer end,
                       Boolean strict_indexing,
@@ -309,7 +313,7 @@ void buffer_set_lines(Buffer buffer,
     // line and convert NULs to newlines to avoid truncation.
     lines[i] = xmallocz(l.size);
     for (size_t j = 0; j < l.size; j++) {
-      if (l.data[j] == '\n') {
+      if (l.data[j] == '\n' && channel_id != INVALID_CHANNEL) {
         api_set_error(err, Exception, _("string cannot contain newlines"));
         new_len = i + 1;
         goto end;
@@ -589,7 +593,7 @@ void buffer_insert(Buffer buffer,
 {
   // "lnum" will be the index of the line after inserting,
   // no matter if it is negative or not
-  buffer_set_lines(buffer, lnum, lnum, true, lines, err);
+  buffer_set_lines(0, buffer, lnum, lnum, true, lines, err);
 }
 
 /// Return a tuple (row,col) representing the position of the named mark

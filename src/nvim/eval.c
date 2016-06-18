@@ -7125,7 +7125,7 @@ static void api_wrapper(typval_T *argvars, typval_T *rettv, void *data)
   }
 
   Error err = ERROR_INIT;
-  Object result = fn(-1, -1, args, &err);
+  Object result = fn(INVALID_CHANNEL, NO_RESPONSE, args, &err);
 
   if (err.set) {
     vim_report_error(cstr_as_string(err.msg));

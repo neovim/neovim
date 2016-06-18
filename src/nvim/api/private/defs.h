@@ -33,6 +33,9 @@ typedef enum {
 /// Used as the message ID of notifications.
 #define NO_RESPONSE UINT64_MAX
 
+/// Used as channel_id when the call is local
+#define INVALID_CHANNEL UINT64_MAX
+
 typedef struct {
   ErrorType type;
   char msg[1024];
