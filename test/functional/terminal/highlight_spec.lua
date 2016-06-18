@@ -165,24 +165,49 @@ end)
 
 describe('synIDattr()', function()
   local screen
-
   before_each(function()
     clear()
     screen = Screen.new(50, 7)
-    execute('highlight Normal ctermfg=1 guifg=#ff0000')
+    execute('highlight Normal ctermfg=1 guifg=#ff0000 guibg=Black')
+    -- Salmon #fa8072 Maroon #800000
+    execute('highlight Keyword ctermfg=2 guifg=Salmon guisp=Maroon')
   end)
 
   after_each(function()
     screen:detach()
   end)
 
-  it('returns RGB number if GUI', function()
+  it('returns gui-color if GUI', function()
+    eq('1', eval('synIDattr(hlID("Normal"), "fg")'))
+    eq('-1', eval('synIDattr(hlID("Normal"), "bg")'))
+
+    eq('2', eval('synIDattr(hlID("Keyword"), "fg")'))
+    eq('', eval('synIDattr(hlID("Keyword"), "sp")'))
     screen:attach(true)
     eq('#ff0000', eval('synIDattr(hlID("Normal"), "fg")'))
+    eq('Black', eval('synIDattr(hlID("Normal"), "bg")'))
+
+    eq('Salmon', eval('synIDattr(hlID("Keyword"), "fg")'))
+    eq('Maroon', eval('synIDattr(hlID("Keyword"), "sp")'))
+  end)
+
+  it('returns #RRGGBB value for [fg|bg|sp]#', function()
+    eq('1', eval('synIDattr(hlID("Normal"), "fg#")'))
+    eq('-1', eval('synIDattr(hlID("Normal"), "bg#")'))
+
+    eq('2', eval('synIDattr(hlID("Keyword"), "fg#")'))
+    eq('', eval('synIDattr(hlID("Keyword"), "sp#")'))
+    screen:attach(true)
+    eq('#ff0000', eval('synIDattr(hlID("Normal"), "fg#")'))
+    eq('#000000', eval('synIDattr(hlID("Normal"), "bg#")'))
+
+    eq('#fa8072', eval('synIDattr(hlID("Keyword"), "fg#")'))
+    eq('#800000', eval('synIDattr(hlID("Keyword"), "sp#")'))
   end)
 
   it('returns color number if non-GUI', function()
     screen:attach(false)
     eq('1', eval('synIDattr(hlID("Normal"), "fg")'))
+    eq('2', eval('synIDattr(hlID("Keyword"), "fg")'))
   end)
 end)
