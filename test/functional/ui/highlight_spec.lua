@@ -38,7 +38,6 @@ describe('manual syntax highlight', function()
     os.remove('Xtest-functional-ui-highlight.tmp.vim')
   end)
 
-  -- test with "set hidden" even if the bug did not occur this way
   it("works with buffer switch and 'hidden'", function()
     execute('e tmp1.vim')
     execute('e Xtest-functional-ui-highlight.tmp.vim')

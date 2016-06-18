@@ -6952,8 +6952,23 @@ highlight_color (
   else if (!(TOLOWER_ASC(what[0]) == 'b' && TOLOWER_ASC(what[1]) == 'g'))
     return NULL;
   if (modec == 'g') {
-    if (fg)
+    if (what[2] == '#' && ui_rgb_attached()) {
+      if (fg) {
+          n = HL_TABLE()[id - 1].sg_rgb_fg;
+      } else if (sp) {
+          n = HL_TABLE()[id - 1].sg_rgb_sp;
+      } else {
+          n = HL_TABLE()[id - 1].sg_rgb_bg;
+      }
+      if (n < 0 || n > 0xffffff) {
+        return NULL;
+      }
+      snprintf((char *)name, sizeof(name), "#%06x", n);
+      return name;
+    }
+    if (fg) {
       return HL_TABLE()[id - 1].sg_rgb_fg_name;
+    }
     if (sp) {
       return HL_TABLE()[id - 1].sg_rgb_sp_name;
     }
