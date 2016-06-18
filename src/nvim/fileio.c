@@ -5239,7 +5239,13 @@ int delete_recursive(char_u *name)
   int result = 0;
 
   if (os_isrealdir(name)) {
-    snprintf((char *)NameBuff, MAXPATHL, "%s/*", name);  // NOLINT
+    char_u *esc_name;
+    // Escape some regexp chars in file names as these probably will be
+    // interpreted as ill-formed regular expressions in gen_expand_wildcards.
+    esc_name = vim_strsave_escaped_ext(name, "[", '[', false);
+    esc_name = vim_strsave_escaped_ext(esc_name, "{}", '\\', false);
+    snprintf((char *)NameBuff, MAXPATHL, "%s/*", esc_name);  // NOLINT
+    xfree(esc_name);
 
     char_u **files;
     int file_count;

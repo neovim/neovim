@@ -98,4 +98,50 @@ describe('Test for delete()', function()
     eq(0, eval("delete('Xdir4/Xfile')"))
     eq(0, eval("delete('Xdir4', 'd')"))
   end)
+
+  it('complicated name delete', function()
+    source([[
+      call mkdir('Xcomplicated')
+      call mkdir('Xcomplicated/[complicated-1 ]')
+      call mkdir('Xcomplicated/{complicated,2 }')
+      split Xcomplicated/Xfile
+      call setline(1, ['a', 'b'])
+      w
+      w Xcomplicated/\[complicated-1\ \]/Xfile
+      w Xcomplicated/\{complicated,2\ \}/Xfile
+      close
+    ]])
+
+    eq(1, eval("isdirectory('Xcomplicated')"))
+    eq(eval("['a', 'b']"), eval("readfile('Xcomplicated/Xfile')"))
+    eq(1, eval("isdirectory('Xcomplicated/[complicated-1 ]')"))
+    eq(eval("['a', 'b']"), eval("readfile('Xcomplicated/[complicated-1 ]/Xfile')"))
+    eq(1, eval("isdirectory('Xcomplicated/{complicated,2 }')"))
+    eq(eval("['a', 'b']"), eval("readfile('Xcomplicated/{complicated,2 }/Xfile')"))
+
+    eq(0, eval("delete('Xcomplicated', 'rf')"))
+    eq(0, eval("isdirectory('Xcomplicated')"))
+    eq(-1, eval("delete('Xcomplicated', 'd')"))
+  end)
+
+  it('complicated name delete in unix', function()
+    source([[
+      call mkdir('Xcomplicated')
+      call mkdir('Xcomplicated/[complicated-1 ?')
+      split Xcomplicated/Xfile
+      call setline(1, ['a', 'b'])
+      w
+      w Xcomplicated/\[complicated-1\ \?/Xfile
+      close
+    ]])
+
+    eq(1, eval("isdirectory('Xcomplicated')"))
+    eq(eval("['a', 'b']"), eval("readfile('Xcomplicated/Xfile')"))
+    eq(1, eval("isdirectory('Xcomplicated/[complicated-1 ?')"))
+    eq(eval("['a', 'b']"), eval("readfile('Xcomplicated/[complicated-1 ?/Xfile')"))
+
+    eq(0, eval("delete('Xcomplicated', 'rf')"))
+    eq(0, eval("isdirectory('Xcomplicated')"))
+    eq(-1, eval("delete('Xcomplicated', 'd')"))
+  end)
 end)
