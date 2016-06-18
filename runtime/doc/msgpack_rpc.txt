@@ -9,7 +9,7 @@ RPC API for Nvim				     *RPC* *rpc* *msgpack-rpc*
 1. Introduction			|rpc-intro|
 2. API mapping			|rpc-api|
 3. Connecting			|rpc-connecting|
-4. Clients			|rpc-client|
+4. Clients			|rpc-api-client|
 5. Types			|rpc-types|
 6. Vimscript functions		|rpc-vim-functions|
 
@@ -51,11 +51,10 @@ There are three ways to obtain API metadata:
      msgpack-rpc. This is best for clients written in dynamic languages which
      can define functions at runtime.
 
-  2. Start Nvim with the `--api-info` command-line option, which dumps a blob
-     of msgpack metadata to standard output. This is useful for clients
-     written in statically-compiled languages.
+  2. Start Nvim with the |--api-info| option. Useful for clients written in
+     statically-compiled languages.
 
-3. In vimscript the metadata is available as |api_info()|.
+  3. Use the |api_info()| vimscript function.
 
 To get a human-readable list of API functions: >
     :new|put =map(api_info().functions, 'v:val.name')

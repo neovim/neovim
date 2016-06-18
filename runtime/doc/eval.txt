@@ -2198,8 +2198,7 @@ and({expr}, {expr})					*and()*
 
 
 api_info()						*api_info()*
-		Return Dictionary containing api metadata.
-		See |api-metadata|.
+		Returns Dictionary of |api-metadata|.
 
 
 append({lnum}, {expr})					*append()*

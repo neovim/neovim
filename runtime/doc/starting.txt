@@ -350,6 +350,9 @@ argument.
 							*-W*
 -W {scriptout}	Like -w, but do not append, overwrite an existing file.
 
+							*--api-info*
+--api-info 	Print msgpack-encoded |api-metadata| and exit.
+
 ==============================================================================
 2. Initialization				*initialization* *startup*
 
