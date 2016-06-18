@@ -1,7 +1,5 @@
 let s:hosts = {}
 let s:plugin_patterns = {}
-let s:remote_plugins_manifest = fnamemodify(expand($MYVIMRC, 1), ':h')
-      \.'/.'.fnamemodify($MYVIMRC, ':t').'-rplugin~'
 let s:plugins_for_host = {}
 
 
@@ -120,9 +118,18 @@ function! remote#host#RegisterPlugin(host, path, specs) abort
 endfunction
 
 
+function! s:GetManifest() abort
+  let prefix = exists('$MYVIMRC')
+        \ ? $MYVIMRC
+        \ : matchstr(get(split(capture('scriptnames'), '\n'), 0, ''), '\f\+$')
+  return fnamemodify(expand(prefix, 1), ':h')
+        \.'/.'.fnamemodify(prefix, ':t').'-rplugin~'
+endfunction
+
+
 function! remote#host#LoadRemotePlugins() abort
-  if filereadable(s:remote_plugins_manifest)
-    exe 'source '.s:remote_plugins_manifest
+  if filereadable(s:GetManifest())
+    exe 'source '.s:GetManifest()
   endif
 endfunction
 
@@ -194,9 +201,9 @@ function! remote#host#UpdateRemotePlugins() abort
       endtry
     endif
   endfor
-  call writefile(commands, s:remote_plugins_manifest)
+  call writefile(commands, s:GetManifest())
   echomsg printf('remote/host: generated the manifest file in "%s"',
-        \ s:remote_plugins_manifest)
+        \ s:GetManifest())
 endfunction
 
 
@@ -210,12 +217,12 @@ endfunction
 
 function! remote#host#LoadErrorForHost(host, log) abort
   return 'Failed to load '. a:host . ' host. '.
-    \ 'You can try to see what happened '.
-    \ 'by starting Neovim with the environment variable '.
-    \ a:log . ' set to a file and opening the generated '.
-    \ 'log file. Also, the host stderr will be available '.
-    \ 'in Neovim log, so it may contain useful information. '.
-    \ 'See also ~/.nvimlog.'
+        \ 'You can try to see what happened '.
+        \ 'by starting Neovim with the environment variable '.
+        \ a:log . ' set to a file and opening the generated '.
+        \ 'log file. Also, the host stderr will be available '.
+        \ 'in Neovim log, so it may contain useful information. '.
+        \ 'See also ~/.nvimlog.'
 endfunction
 
 
