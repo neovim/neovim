@@ -7472,7 +7472,7 @@ static void f_and(typval_T *argvars, typval_T *rettv)
 static void f_api_info(typval_T *argvars, typval_T *rettv)
 {
   Dictionary metadata = api_metadata();
-  object_to_vim(DICTIONARY_OBJ(metadata), rettv, NULL);
+  (void)object_to_vim(DICTIONARY_OBJ(metadata), rettv, NULL);
   api_free_dictionary(metadata);
 }
 
