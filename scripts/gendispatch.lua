@@ -41,18 +41,20 @@ c_proto = Ct(
   )
 grammar = Ct((c_proto + c_comment + c_preproc + ws) ^ 1)
 
--- we need at least 2 arguments since the last one is the output file
-assert(#arg >= 1)
+-- we need at least 3 arguments since the last two are output files
+assert(#arg >= 2)
 functions = {}
 
 -- names of all headers relative to the source root (for inclusion in the
 -- generated file)
 headers = {}
--- output file(dispatch function + metadata serialized with msgpack)
-outputf = arg[#arg]
+-- output c file(dispatch function + metadata serialized with msgpack)
+outputf = arg[#arg-1]
+-- output mpack file (metadata)
+mpack_outputf = arg[#arg]
 
 -- read each input file, parse and append to the api metadata
-for i = 1, #arg - 1 do
+for i = 1, #arg - 2 do
   local full_path = arg[i]
   local parts = {}
   for part in string.gmatch(full_path, '[^/]+') do
@@ -165,7 +167,7 @@ for i = 1, #functions do
   local fn = functions[i]
   local args = {}
 
-  output:write('static Object handle_'..fn.name..'(uint64_t channel_id, uint64_t request_id, Array args, Error *error)')
+  output:write('Object handle_'..fn.name..'(uint64_t channel_id, uint64_t request_id, Array args, Error *error)')
   output:write('\n{')
   output:write('\n  Object ret = NIL;')
   -- Declare/initialize variables that will hold converted arguments
@@ -311,3 +313,7 @@ MsgpackRpcRequestHandler msgpack_rpc_get_handler_for(const char *name,
 ]])
 
 output:close()
+
+mpack_output = io.open(mpack_outputf, 'wb')
+mpack_output:write(packed)
+mpack_output:close()

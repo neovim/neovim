@@ -33,7 +33,7 @@ return {
     assert_notequal={args={2, 3}},
     assert_notmatch={args={2, 3}},
     assert_true={args={1, 2}},
-    atan={args=1},
+    atan={args=1, func="float_op_wrapper", data="atan"},
     atan2={args=2},
     browse={args=4},
     browsedir={args=2},

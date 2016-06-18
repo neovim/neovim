@@ -445,13 +445,14 @@ typedef struct {
 } timer_T;
 
 /// Prototype of C function that implements VimL function
-typedef void (*VimLFunc)(typval_T *args, typval_T *rvar);
+typedef void (*VimLFunc)(typval_T *args, typval_T *rvar, void *data);
 
 /// Structure holding VimL function definition
 typedef struct fst {
   uint8_t min_argc;  ///< Minimal number of arguments.
   uint8_t max_argc;  ///< Maximal number of arguments.
   VimLFunc func;     ///< Function implementation.
+  void *data;        ///< Userdata for function implementation.
 } VimLFuncDef;
 
 KHASH_MAP_INIT_STR(functions, VimLFuncDef)
@@ -6981,7 +6982,7 @@ call_func (
       }
     } else {
       // Find the function name in the table, call its implementation.
-      VimLFuncDef *const fdef = find_internal_func((char *) fname);
+      VimLFuncDef *const fdef = find_internal_func((char *)fname);
       if (fdef != NULL) {
         if (argcount < fdef->min_argc) {
           error = ERROR_TOOFEW;
@@ -6989,7 +6990,7 @@ call_func (
           error = ERROR_TOOMANY;
         } else {
           argvars[argcount].v_type = VAR_UNKNOWN;
-          fdef->func(argvars, rettv);
+          fdef->func(argvars, rettv, fdef->data);
           error = ERROR_NONE;
         }
       }
@@ -7100,13 +7101,10 @@ static inline int get_float_arg(typval_T *argvars, float_T *f)
 // Some versions of glibc on i386 have an optimization that makes it harder to
 // call math functions indirectly from inside an inlined function, causing
 // compile-time errors. Avoid `inline` in that case. #3072
-#ifndef ARCH_32
-inline
-#endif
-static void float_op_wrapper(typval_T *argvars, typval_T *rettv,
-                             float_T (*function)(float_T))
+static void float_op_wrapper(typval_T *argvars, typval_T *rettv, void *data)
 {
   float_T f;
+  float_T (*function)(float_T) = data;
 
   rettv->v_type = VAR_FLOAT;
   if (get_float_arg(argvars, &f) == OK) {
@@ -7114,6 +7112,34 @@ static void float_op_wrapper(typval_T *argvars, typval_T *rettv,
   } else {
     rettv->vval.v_float = 0.0;
   }
+}
+
+static void api_wrapper(typval_T *argvars, typval_T *rettv, void *data)
+{
+  ApiDispatchWrapper fn = data;
+
+  Array args = ARRAY_DICT_INIT;
+
+  for (typval_T *tv = argvars; tv->v_type != VAR_UNKNOWN; tv++) {
+    ADD(args, vim_to_object(tv));
+  }
+
+  Error err = ERROR_INIT;
+  Object result = fn(-1, -1, args, &err);
+
+  if (err.set) {
+    vim_report_error(cstr_as_string(err.msg));
+    goto end;
+  }
+
+  if (!object_to_vim(result, rettv, &err)) {
+    EMSG2(_("Error converting the call result: %s"), err.msg);
+  }
+
+end:
+  // All arguments were freed already, but we still need to free the array
+  xfree(args.items);
+  api_free_object(result);
 }
 
 /*
@@ -7513,14 +7539,6 @@ static void f_assert_true(typval_T *argvars, typval_T *rettv)
 static void f_asin(typval_T *argvars, typval_T *rettv)
 {
   float_op_wrapper(argvars, rettv, &asin);
-}
-
-/*
- * "atan()" function
- */
-static void f_atan(typval_T *argvars, typval_T *rettv)
-{
-  float_op_wrapper(argvars, rettv, &atan);
 }
 
 /*
@@ -20115,7 +20133,7 @@ void free_all_functions(void)
 int translated_function_exists(char_u *name)
 {
   if (builtin_function(name, -1)) {
-    return find_internal_func((char *) name) != NULL;
+    return find_internal_func((char *)name) != NULL;
   }
   return find_func(name) != NULL;
 }
