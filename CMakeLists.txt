@@ -407,6 +407,8 @@ endif()
 
 find_program(LUACHECK_PRG luacheck)
 
+find_program(GPERF_PRG gperf)
+
 include(InstallHelpers)
 
 file(GLOB MANPAGES

@@ -15,12 +15,13 @@ set(DISPATCH_GENERATOR ${PROJECT_SOURCE_DIR}/scripts/gendispatch.lua)
 file(GLOB API_HEADERS api/*.h)
 file(GLOB MSGPACK_RPC_HEADERS msgpack_rpc/*.h)
 set(API_METADATA ${PROJECT_BINARY_DIR}/api_metadata.mpack)
+set(FUNCS_DATA ${PROJECT_BINARY_DIR}/funcs_data.mpack)
 set(HEADER_GENERATOR ${PROJECT_SOURCE_DIR}/scripts/gendeclarations.lua)
 set(GENERATED_INCLUDES_DIR ${PROJECT_BINARY_DIR}/include)
 set(GENERATED_API_DISPATCH ${GENERATED_DIR}/api/private/dispatch.c)
 set(GENERATED_EX_CMDS_ENUM ${GENERATED_INCLUDES_DIR}/ex_cmds_enum.generated.h)
 set(GENERATED_EX_CMDS_DEFS ${GENERATED_DIR}/ex_cmds_defs.generated.h)
-set(GENERATED_FUNCS_HASH_INPUT ${GENERATED_DIR}/funcs.generated.h.hsh)
+set(GENERATED_FUNCS_HASH_INPUT ${GENERATED_DIR}/funcs.generated.h.gperf)
 set(GENERATED_FUNCS ${GENERATED_DIR}/funcs.generated.h)
 set(GENERATED_EVENTS_ENUM ${GENERATED_INCLUDES_DIR}/auevents_enum.generated.h)
 set(GENERATED_EVENTS_NAMES_MAP ${GENERATED_DIR}/auevents_name_map.generated.h)
@@ -39,9 +40,9 @@ set(UNICODEDATA_FILE ${UNICODE_DIR}/UnicodeData.txt)
 set(CASEFOLDING_FILE ${UNICODE_DIR}/CaseFolding.txt)
 set(EASTASIANWIDTH_FILE ${UNICODE_DIR}/EastAsianWidth.txt)
 set(GENERATED_UNICODE_TABLES ${GENERATED_DIR}/unicode_tables.generated.h)
-set(GENHASH_SOURCE ${PROJECT_SOURCE_DIR}/src/genhash.c)
 
 include_directories(${GENERATED_DIR})
+include_directories(${CACHED_GENERATED_DIR})
 include_directories(${GENERATED_INCLUDES_DIR})
 
 file(MAKE_DIRECTORY ${GENERATED_DIR})
@@ -118,6 +119,10 @@ endforeach()
 if(NOT MSVC)
   set_source_files_properties(
     ${CONV_SOURCES} PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} -Wno-conversion")
+  # gperf generates ANSI-C with incorrect linkage, ignore it.
+  set_source_files_properties(
+    eval.c PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} -Wno-static-in-inline -Wno-conversion")
+
 endif()
 
 if(DEFINED MIN_LOG_LEVEL)
@@ -210,7 +215,6 @@ list(APPEND NEOVIM_GENERATED_SOURCES
   "${GENERATED_EVENTS_NAMES_MAP}"
   "${GENERATED_OPTIONS}"
   "${GENERATED_UNICODE_TABLES}"
-  "${GENERATED_FUNCS}"
 )
 
 add_custom_command(OUTPUT ${GENERATED_EX_CMDS_ENUM} ${GENERATED_EX_CMDS_DEFS}
@@ -219,13 +223,18 @@ add_custom_command(OUTPUT ${GENERATED_EX_CMDS_ENUM} ${GENERATED_EX_CMDS_DEFS}
   DEPENDS ${EX_CMDS_GENERATOR} ${EX_CMDS_DEFS_FILE}
 )
 
-add_custom_command(OUTPUT ${GENERATED_FUNCS}
+if(NOT GPERF_PRG)
+  message(FATAL_ERROR "gperf was not found.")
+endif()
+add_custom_command(OUTPUT ${GENERATED_FUNCS} ${FUNCS_DATA}
   COMMAND ${LUA_PRG} ${FUNCS_GENERATOR}
-    ${PROJECT_SOURCE_DIR}/src/nvim ${GENERATED_DIR} ${API_METADATA}
-  COMMAND $<TARGET_FILE:genhash>
-    ${GENERATED_FUNCS_HASH_INPUT} ${GENERATED_FUNCS} functions functions VimLFuncDef "NOFUNC"
-    DEPENDS ${FUNCS_GENERATOR} ${EVAL_DEFS_FILE} ${API_METADATA} genhash
+  ${PROJECT_SOURCE_DIR}/src/nvim ${GENERATED_DIR} ${API_METADATA} ${FUNCS_DATA}
+  COMMAND ${GPERF_PRG}
+    ${GENERATED_FUNCS_HASH_INPUT} --output-file=${GENERATED_FUNCS}
+    DEPENDS ${FUNCS_GENERATOR} ${EVAL_DEFS_FILE} ${API_METADATA}
 )
+list(APPEND NEOVIM_GENERATED_SOURCES
+  "${GENERATED_FUNCS}")
 
 add_custom_command(OUTPUT ${GENERATED_EVENTS_ENUM} ${GENERATED_EVENTS_NAMES_MAP}
   COMMAND ${LUA_PRG} ${EVENTS_GENERATOR}
@@ -292,8 +301,6 @@ if(WIN32)
   install(DIRECTORY ${PROJECT_BINARY_DIR}/windows_runtime_deps/
     DESTINATION ${CMAKE_INSTALL_BINDIR})
 endif()
-
-add_executable(genhash ${GENHASH_SOURCE} ${NEOVIM_HEADERS})
 
 if(CLANG_ASAN_UBSAN)
   message(STATUS "Enabling Clang address sanitizer and undefined behavior sanitizer for nvim.")

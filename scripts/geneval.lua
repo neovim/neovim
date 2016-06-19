@@ -3,6 +3,7 @@ mpack = require('mpack')
 local nvimsrcdir = arg[1]
 local autodir = arg[2]
 local metadata_file = arg[3]
+local funcs_file = arg[4]
 
 if nvimsrcdir == '--help' then
   print([[
@@ -19,20 +20,34 @@ package.path = nvimsrcdir .. '/?.lua;' .. package.path
 
 local funcsfname = autodir .. '/funcs.generated.h'
 
-local funcspipe = io.open(funcsfname .. '.hsh', 'w')
+local gperfpipe = io.open(funcsfname .. '.gperf', 'wb')
 
 local funcs = require('eval').funcs
-
 local metadata = mpack.unpack(io.open(arg[3], 'rb'):read("*all"))
-
 for i,fun in ipairs(metadata) do
   funcs['api_'..fun.name] = {
     args=#fun.parameters,
     func='api_wrapper',
-    data='handle_'..fun.name,
+    data='&handle_'..fun.name,
   }
 end
 
+local funcsdata = io.open(funcs_file, 'w')
+funcsdata:write(mpack.pack(funcs))
+funcsdata:close()
+
+gperfpipe:write([[
+%language=ANSI-C
+%global-table
+%define initializer-suffix ,0,0,NULL,NULL
+%define word-array-name functions
+%define hash-function-name hash_internal_func_gperf
+%define lookup-function-name find_internal_func_gperf
+%omit-struct-type
+%struct-type
+VimLFuncDef;
+%%
+]])
 
 for name, def in pairs(funcs) do
   args = def.args or 0
@@ -43,7 +58,7 @@ for name, def in pairs(funcs) do
   end
   func = def.func or ('f_' .. name)
   data = def.data or "NULL"
-  local val = ('{ %s, %s, &%s, %s }'):format(args[1], args[2], func, data)
-  funcspipe:write(name .. '\n' .. val .. '\n')
+  gperfpipe:write(('%s,  %s, %s, &%s, (FunPtr)%s\n')
+                  :format(name, args[1], args[2], func, data))
 end
-funcspipe:close()
+gperfpipe:close()
