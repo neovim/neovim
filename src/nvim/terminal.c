@@ -241,6 +241,7 @@ Terminal *terminal_open(TerminalOptions opts)
   set_option_value((uint8_t *)"wrap", false, NULL, OPT_LOCAL);
   set_option_value((uint8_t *)"number", false, NULL, OPT_LOCAL);
   set_option_value((uint8_t *)"relativenumber", false, NULL, OPT_LOCAL);
+  set_option_value((uint8_t *)"hybridnumberalign", false, NULL, OPT_LOCAL);
   RESET_BINDING(curwin);
   // Apply TermOpen autocmds so the user can configure the terminal
   apply_autocmds(EVENT_TERMOPEN, NULL, NULL, false, curbuf);

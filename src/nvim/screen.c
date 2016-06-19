@@ -2725,7 +2725,12 @@ win_line (
               if (num == 0 && wp->w_p_nu && wp->w_p_rnu) {
                 /* 'number' + 'relativenumber' */
                 num = lnum;
-                fmt = "%-*ld ";
+                /* if relative numbers are aligned (right justified) */
+                if (wp->w_p_hnua) 
+                  fmt = "%*ld ";
+                /* if relative numbers are not aligned (left justified) */
+                else
+                  fmt = "%-*ld ";
               }
             }
 

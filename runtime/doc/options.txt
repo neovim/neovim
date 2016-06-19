@@ -4450,6 +4450,20 @@ A jump table for the options with a short description can be found at |Q_op|.
 	    |nobody         |  3 nobody     |  0 nobody     |3   nobody
 	    |there          |  4 there      |  1 there      |  1 there
 
+						*number_hybridnumberalign*
+	The 'hybridnumberalign' option aligns the absolute number with the
+	relativenumber when both 'number' and 'relativenumber' are set
+	This combination is shown below (cursor in line 3):
+
+              	'nu'
+		'rnu'
+		'hnua'
+
+             |  2 apple
+             |  1 pear
+             |  3 nobody
+             |  1 there
+
 						*'numberwidth'* *'nuw'*
 'numberwidth' 'nuw'	number	(Vim default: 4  Vi default: 8)
 			local to window
@@ -4836,6 +4850,13 @@ A jump table for the options with a short description can be found at |Q_op|.
 	The number in front of the cursor line also depends on the value of
 	'number', see |number_relativenumber| for all combinations of the two
 	options.
+
+		*'hybridnumberalign'* *'hnua'* *'nohybridnumberalign'* *'nohnua'*
+'hybridnumberalign' 'hnua'  boolean (default off)
+			    local to window
+	Show the absolute line number align with the relative line numbers
+	when both 'number' and 'relativenumber' are set. See 
+	|number_hybridnumberalign| for an example.
 
 						*'remap'* *'noremap'*
 'remap'			boolean	(default on)

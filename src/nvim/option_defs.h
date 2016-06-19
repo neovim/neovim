@@ -780,6 +780,7 @@ enum {
   , WV_FDE
   , WV_FDT
   , WV_FMR
+  , WV_HNUA
   , WV_LBR
   , WV_NU
   , WV_RNU

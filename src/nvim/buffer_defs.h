@@ -187,6 +187,8 @@ typedef struct {
 #  define w_p_fdt w_onebuf_opt.wo_fdt   /* 'foldtext' */
   char_u      *wo_fmr;
 # define w_p_fmr w_onebuf_opt.wo_fmr    /* 'foldmarker' */
+  int wo_hnua;
+#define w_p_hnua w_onebuf_opt.wo_hnua   /* 'hybridnumberalign' */
   int wo_lbr;
 # define w_p_lbr w_onebuf_opt.wo_lbr    /* 'linebreak' */
   int wo_list;

@@ -1123,6 +1123,13 @@ return {
       defaults={if_true={vi=false, vim=true}}
     },
     {
+      full_name='hybridnumberalign', abbreviation='hnua',
+      type='bool', scope={'window'},
+      vi_def=true,
+      redraw={'current_window'},
+      defaults={if_true={vi=false}}
+    },
+    {
       full_name='icon',
       type='bool', scope={'global'},
       vi_def=true,
