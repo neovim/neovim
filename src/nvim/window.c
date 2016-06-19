@@ -2926,7 +2926,9 @@ void win_init_size(void)
  */
 static tabpage_T *alloc_tabpage(void)
 {
+  static int last_tp_handle = 0;
   tabpage_T *tp = xcalloc(1, sizeof(tabpage_T));
+  tp->handle = ++last_tp_handle;
   handle_register_tabpage(tp);
 
   /* init t: variables */
@@ -3683,21 +3685,20 @@ win_T *buf_jump_open_tab(buf_T *buf)
   return NULL;
 }
 
-static int last_win_id = 0;
-
 /*
  * Allocate a window structure and link it in the window list when "hidden" is
  * FALSE.
  */
 static win_T *win_alloc(win_T *after, int hidden)
 {
-  /*
-   * allocate window structure and linesizes arrays
-   */
+  static int last_win_id = 0;
+
+  // allocate window structure and linesizes arrays
   win_T *new_wp = xcalloc(1, sizeof(win_T));
-  handle_register_window(new_wp);
   win_alloc_lines(new_wp);
-  new_wp->w_id = ++last_win_id;
+
+  new_wp->handle = ++last_win_id;
+  handle_register_window(new_wp);
 
   /* init w: variables */
   new_wp->w_vars = dict_alloc();
@@ -5681,7 +5682,7 @@ static bool frame_check_width(frame_T *topfrp, int width)
 int win_getid(typval_T *argvars)
 {
   if (argvars[0].v_type == VAR_UNKNOWN) {
-    return curwin->w_id;
+    return curwin->handle;
   }
   int winnr = get_tv_number(&argvars[0]);
   win_T *wp;
@@ -5703,7 +5704,7 @@ int win_getid(typval_T *argvars)
     }
     for ( ; wp != NULL; wp = wp->w_next) {
       if (--winnr == 0) {
-        return wp->w_id;
+        return wp->handle;
       }
     }
   }
@@ -5719,7 +5720,7 @@ int win_gotoid(typval_T *argvars)
   for (tp = first_tabpage; tp != NULL; tp = tp->tp_next) {
     for (wp = tp == curtab ? firstwin : tp->tp_firstwin;
          wp != NULL; wp = wp->w_next) {
-      if (wp->w_id == id) {
+      if (wp->handle == id) {
         goto_tabpage_win(tp, wp);
         return 1;
       }
@@ -5739,7 +5740,7 @@ void win_id2tabwin(typval_T *argvars, list_T *list)
   for (tp = first_tabpage; tp != NULL; tp = tp->tp_next) {
     for (wp = tp == curtab ? firstwin : tp->tp_firstwin;
          wp != NULL; wp = wp->w_next) {
-      if (wp->w_id == id) {
+      if (wp->handle == id) {
         list_append_number(list, tabnr);
         list_append_number(list, winnr);
         return;
@@ -5760,7 +5761,7 @@ int win_id2win(typval_T *argvars)
   int id = get_tv_number(&argvars[0]);
 
   for (wp = firstwin; wp != NULL; wp = wp->w_next) {
-    if (wp->w_id == id) {
+    if (wp->handle == id) {
       return nr;
     }
     nr++;

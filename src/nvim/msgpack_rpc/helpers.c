@@ -40,7 +40,7 @@ static msgpack_sbuffer sbuffer;
       return false; \
     } \
     \
-    *arg = data.via.u64; \
+    *arg = (handle_T)data.via.i64; \
     return true; \
   } \
   \
@@ -49,7 +49,7 @@ static msgpack_sbuffer sbuffer;
   { \
     msgpack_packer pac; \
     msgpack_packer_init(&pac, &sbuffer, msgpack_sbuffer_write); \
-    msgpack_pack_uint64(&pac, o); \
+    msgpack_pack_int64(&pac, o); \
     msgpack_pack_ext(res, sbuffer.size, kObjectType##t); \
     msgpack_pack_ext_body(res, sbuffer.data, sbuffer.size); \
     msgpack_sbuffer_clear(&sbuffer); \

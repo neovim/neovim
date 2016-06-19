@@ -163,11 +163,11 @@ describe('server -> client', function()
     end)
 
     it('can communicate buffers, tabpages, and windows', function()
-      eq({3}, eval("rpcrequest(vim, 'vim_get_tabpages')"))
+      eq({1}, eval("rpcrequest(vim, 'vim_get_tabpages')"))
       eq({1}, eval("rpcrequest(vim, 'vim_get_windows')"))
 
       local buf = eval("rpcrequest(vim, 'vim_get_buffers')")[1]
-      eq(2, buf)
+      eq(1, buf)
 
       eval("rpcnotify(vim, 'buffer_set_line', "..buf..", 0, 'SOME TEXT')")
       nvim('command', "call rpcrequest(vim, 'vim_eval', '0')")  -- wait

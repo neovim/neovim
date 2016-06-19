@@ -193,9 +193,9 @@ for i = 1, #functions do
       output:write('\n  if (args.items['..(j - 1)..'].type == kObjectType'..rt..') {')
       output:write('\n    '..converted..' = args.items['..(j - 1)..'].data.'..rt:lower()..';')
       if rt:match('^Buffer$') or rt:match('^Window$') or rt:match('^Tabpage$') or rt:match('^Boolean$') then
-        -- accept positive integers for Buffers, Windows and Tabpages
-        output:write('\n  } else if (args.items['..(j - 1)..'].type == kObjectTypeInteger && args.items['..(j - 1)..'].data.integer > 0) {')
-        output:write('\n    '..converted..' = (unsigned)args.items['..(j - 1)..'].data.integer;')
+        -- accept nonnegative integers for Booleans, Buffers, Windows and Tabpages
+        output:write('\n  } else if (args.items['..(j - 1)..'].type == kObjectTypeInteger && args.items['..(j - 1)..'].data.integer >= 0) {')
+        output:write('\n    '..converted..' = (handle_T)args.items['..(j - 1)..'].data.integer;')
       end
       output:write('\n  } else {')
       output:write('\n    snprintf(error->msg, sizeof(error->msg), "Wrong type for argument '..j..', expecting '..param[1]..'");')

@@ -472,7 +472,7 @@ void vim_set_current_buffer(Buffer buffer, Error *err)
   if (!try_end(err) && result == FAIL) {
     api_set_error(err,
                   Exception,
-                  _("Failed to switch to buffer %" PRIu64),
+                  _("Failed to switch to buffer %d"),
                   buffer);
   }
 }
@@ -522,7 +522,7 @@ void vim_set_current_window(Window window, Error *err)
   if (!try_end(err) && win != curwin) {
     api_set_error(err,
                   Exception,
-                  _("Failed to switch to window %" PRIu64),
+                  _("Failed to switch to window %d"),
                   window);
   }
 }
@@ -573,7 +573,7 @@ void vim_set_current_tabpage(Tabpage tabpage, Error *err)
   if (!try_end(err) && tp != curtab) {
     api_set_error(err,
                   Exception,
-                  _("Failed to switch to tabpage %" PRIu64),
+                  _("Failed to switch to tabpage %d"),
                   tabpage);
   }
 }
