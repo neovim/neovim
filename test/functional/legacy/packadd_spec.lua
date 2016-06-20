@@ -45,6 +45,10 @@ describe('packadd', function()
         call assert_true(17, g:ftdetect_works)
         call assert_true(len(&rtp) > len(rtp))
         call assert_true(&rtp =~ (s:plugdir . '\($\|,\)'))
+
+        " Check exception
+        call assert_fails("packadd directorynotfound", 'E919:')
+        call assert_fails("packadd", 'E471:')
       endfunc
 
       func Test_packadd_noload()

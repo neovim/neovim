@@ -1850,7 +1850,7 @@ return {
   },
   {
     command='packadd',
-    flags=bit.bor(BANG, FILE1, TRLBAR, SBOXOK, CMDWIN),
+    flags=bit.bor(BANG, FILE1, NEEDARG, TRLBAR, SBOXOK, CMDWIN),
     addr_type=ADDR_LINES,
     func='ex_packadd',
   },

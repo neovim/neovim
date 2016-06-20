@@ -204,7 +204,7 @@ For writing a Vim script, see chapter 41 of the user manual |usr_41.txt|.
 			When 'verbose' is two or higher, there is a message
 			about each searched file.
 
-							*:pa* *:packadd*
+							*:pa* *:packadd* *E919*
 :pa[ckadd][!] {name}	Search for an optional plugin directory in 'packpath'
 			and source any plugin files found.  The directory must
 			match:

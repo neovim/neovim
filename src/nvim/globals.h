@@ -1223,6 +1223,7 @@ EXTERN char_u e_invalpat[] INIT(= N_(
 EXTERN char_u e_bufloaded[] INIT(= N_("E139: File is loaded in another buffer"));
 EXTERN char_u e_notset[] INIT(= N_("E764: Option '%s' is not set"));
 EXTERN char_u e_invalidreg[] INIT(= N_("E850: Invalid register name"));
+EXTERN char_u e_dirnotf[] INIT(= N_("E919: Directory not found in '%s': \"%s\""));
 EXTERN char_u e_unsupportedoption[] INIT(= N_("E519: Option not supported"));
 
 
