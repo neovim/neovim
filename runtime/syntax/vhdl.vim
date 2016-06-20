@@ -54,37 +54,37 @@ syn match	vhdlError	"\<else\s\+if\>"
 
 " Types and type qualifiers
 " Predefined standard VHDL types
-syn match	vhdlType	"bit[\']*"
-syn match	vhdlType	"boolean[\']*"
-syn match	vhdlType	"natural[\']*"
-syn match	vhdlType	"positive[\']*"
-syn match	vhdlType	"integer[\']*"
-syn match	vhdlType	"real[\']*"
-syn match	vhdlType	"time[\']*"
+syn match	vhdlType	"\<bit\>\'\="
+syn match	vhdlType	"\<boolean\>\'\="
+syn match	vhdlType	"\<natural\>\'\="
+syn match	vhdlType	"\<positive\>\'\="
+syn match	vhdlType	"\<integer\>\'\="
+syn match	vhdlType	"\<real\>\'\="
+syn match	vhdlType	"\<time\>\'\="
 
-syn match	vhdlType	"bit_vector[\']*"
-syn match	vhdlType	"boolean_vector[\']*"
-syn match	vhdlType	"integer_vector[\']*"
-syn match	vhdlType	"real_vector[\']*"
-syn match	vhdlType	"time_vector[\']*"
+syn match	vhdlType	"\<bit_vector\>\'\="
+syn match	vhdlType	"\<boolean_vector\>\'\="
+syn match	vhdlType	"\<integer_vector\>\'\="
+syn match	vhdlType	"\<real_vector\>\'\="
+syn match	vhdlType	"\<time_vector\>\'\="
 
-syn match	vhdlType	"character[\']*"
-syn match	vhdlType	"string[\']*"
+syn match	vhdlType	"\<character\>\'\="
+syn match	vhdlType	"\<string\>\'\="
 "syn keyword	vhdlType	severity_level
-syn match	vhdlType	"line[\']*"
-syn match	vhdlType	"text[\']*"
+syn keyword	vhdlType	line
+syn keyword	vhdlType	text
 
 " Predefined standard IEEE VHDL types
-syn match	vhdlType	"std_ulogic[\']*"
-syn match	vhdlType	"std_logic[\']*"
-syn match	vhdlType	"std_ulogic_vector[\']*"
-syn match	vhdlType	"std_logic_vector[\']*"
-syn match	vhdlType	"unresolved_signed[\']*"
-syn match	vhdlType	"unresolved_unsigned[\']*"
-syn match	vhdlType	"u_signed[\']*"
-syn match	vhdlType	"u_unsigned[\']*"
-syn match	vhdlType	"signed[\']*"
-syn match	vhdlType	"unsigned[\']*"
+syn match	vhdlType	"\<std_ulogic\>\'\="
+syn match	vhdlType	"\<std_logic\>\'\="
+syn match	vhdlType	"\<std_ulogic_vector\>\'\="
+syn match	vhdlType	"\<std_logic_vector\>\'\="
+syn match	vhdlType	"\<unresolved_signed\>\'\="
+syn match	vhdlType	"\<unresolved_unsigned\>\'\="
+syn match	vhdlType	"\<u_signed\>\'\="
+syn match	vhdlType	"\<u_unsigned\>\'\="
+syn match	vhdlType	"\<signed\>\'\="
+syn match	vhdlType	"\<unsigned\>\'\="
 
 
 " array attributes

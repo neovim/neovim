@@ -1,4 +1,4 @@
-*change.txt*    For Vim version 7.4.  Last change: 2016 Feb 10
+*change.txt*    For Vim version 7.4.  Last change: 2016 Mar 08
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -108,7 +108,9 @@ is an error when 'cpoptions' includes the 'E' flag.
 							*J*
 J			Join [count] lines, with a minimum of two lines.
 			Remove the indent and insert up to two spaces (see
-			below).
+			below).  Fails when on the last line of the buffer.
+			If [count] is too big it is reduce to the number of
+			lines available.
 
 							*v_J*
 {Visual}J		Join the highlighted lines, with a minimum of two

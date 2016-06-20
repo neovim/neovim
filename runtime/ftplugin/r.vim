@@ -1,7 +1,8 @@
 " Vim filetype plugin file
 " Language: R
 " Maintainer: Jakson Alves de Aquino <jalvesaq@gmail.com>
-" Last Change:	Sun Feb 23, 2014  04:07PM
+" Homepage: https://github.com/jalvesaq/R-Vim-runtime
+" Last Change:	Tue Apr 07, 2015  04:38PM
 
 " Only do this when not yet done for this buffer
 if exists("b:did_ftplugin")

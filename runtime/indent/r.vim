@@ -1,7 +1,8 @@
 " Vim indent file
 " Language:	R
 " Author:	Jakson Alves de Aquino <jalvesaq@gmail.com>
-" Last Change:	Thu Mar 26, 2015  05:36PM
+" Homepage:     https://github.com/jalvesaq/R-Vim-runtime
+" Last Change:	Thu Feb 18, 2016  06:32AM
 
 
 " Only load this indent file when no other was loaded.
@@ -32,7 +33,7 @@ if ! exists("g:r_indent_ess_compatible")
   let g:r_indent_ess_compatible = 0
 endif
 if ! exists("g:r_indent_op_pattern")
-  let g:r_indent_op_pattern = '\(+\|-\|\*\|/\|=\|\~\|%\)$'
+  let g:r_indent_op_pattern = '\(&\||\|+\|-\|\*\|/\|=\|\~\|%\|->\)\s*$'
 endif
 
 function s:RDelete_quotes(line)
@@ -265,7 +266,7 @@ function GetRIndent()
     return 0
   endif
 
-  if cline =~ '^\s*{'
+  if cline =~ '^\s*{' && s:Get_paren_balance(cline, '{', '}') > 0
     if g:r_indent_ess_compatible && line =~ ')$'
       let nlnum = lnum
       let nline = line
@@ -283,7 +284,7 @@ function GetRIndent()
   endif
 
   " line is an incomplete command:
-  if line =~ '\<\(if\|while\|for\|function\)\s*()$' || line =~ '\<else$' || line =~ '<-$'
+  if line =~ '\<\(if\|while\|for\|function\)\s*()$' || line =~ '\<else$' || line =~ '<-$' || line =~ '->$'
     return indent(lnum) + &sw
   endif
 
@@ -344,7 +345,7 @@ function GetRIndent()
   endif
 
   let post_block = 0
-  if line =~ '}$'
+  if line =~ '}$' && s:Get_paren_balance(line, '{', '}') < 0
     let lnum = s:Get_matching_brace(lnum, '{', '}', 0)
     let line = SanitizeRLine(getline(lnum))
     if lnum > 0 && line =~ '^\s*{'
@@ -359,14 +360,14 @@ function GetRIndent()
   let olnum = s:Get_prev_line(lnum)
   let oline = getline(olnum)
   if olnum > 0
-    if line =~ g:r_indent_op_pattern
-      if oline =~ g:r_indent_op_pattern
+    if line =~ g:r_indent_op_pattern && s:Get_paren_balance(line, "(", ")") == 0
+      if oline =~ g:r_indent_op_pattern && s:Get_paren_balance(line, "(", ")") == 0
         return indent(lnum)
       else
         return indent(lnum) + &sw
       endif
     else
-      if oline =~ g:r_indent_op_pattern
+      if oline =~ g:r_indent_op_pattern && s:Get_paren_balance(line, "(", ")") == 0
         return indent(lnum) - &sw
       endif
     endif
@@ -471,7 +472,6 @@ function GetRIndent()
   endif
 
   let ind = indent(lnum)
-  let pind = indent(plnum)
 
   if g:r_indent_align_args == 0 && pb != 0
     let ind += pb * &sw
@@ -481,6 +481,12 @@ function GetRIndent()
   if g:r_indent_align_args == 0 && bb != 0
     let ind += bb * &sw
     return ind
+  endif
+
+  if plnum > 0
+    let pind = indent(plnum)
+  else
+    let pind = 0
   endif
 
   if ind == pind || (ind == (pind  + &sw) && pline =~ '{$' && ppost_else == 0)
