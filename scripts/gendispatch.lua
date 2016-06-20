@@ -37,6 +37,7 @@ c_proto = Ct(
   Cg(Cc(false), 'async') *
   (fill * Cg((P('FUNC_API_ASYNC') * Cc(true)), 'async') ^ -1) *
   (fill * Cg((P('FUNC_API_NOEXPORT') * Cc(true)), 'noexport') ^ -1) *
+  (fill * Cg((P('FUNC_API_NOEVAL') * Cc(true)), 'noeval') ^ -1) *
   fill * P(';')
   )
 grammar = Ct((c_proto + c_comment + c_preproc + ws) ^ 1)

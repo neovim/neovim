@@ -583,6 +583,7 @@ void vim_set_current_tabpage(Tabpage tabpage, Error *err)
 /// @param channel_id The channel id (passed automatically by the dispatcher)
 /// @param event The event type string
 void vim_subscribe(uint64_t channel_id, String event)
+    FUNC_API_NOEVAL
 {
   size_t length = (event.size < METHOD_MAXLEN ? event.size : METHOD_MAXLEN);
   char e[METHOD_MAXLEN + 1];
@@ -596,6 +597,7 @@ void vim_subscribe(uint64_t channel_id, String event)
 /// @param channel_id The channel id (passed automatically by the dispatcher)
 /// @param event The event type string
 void vim_unsubscribe(uint64_t channel_id, String event)
+    FUNC_API_NOEVAL
 {
   size_t length = (event.size < METHOD_MAXLEN ?
                    event.size :
@@ -624,7 +626,7 @@ Dictionary vim_get_color_map(void)
 
 
 Array vim_get_api_info(uint64_t channel_id)
-    FUNC_API_ASYNC
+    FUNC_API_ASYNC FUNC_API_NOEVAL
 {
   Array rv = ARRAY_DICT_INIT;
 

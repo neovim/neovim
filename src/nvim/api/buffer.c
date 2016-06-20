@@ -56,6 +56,7 @@ Integer buffer_line_count(Buffer buffer, Error *err)
 /// @param[out] err Details of an error that may have occurred
 /// @return The line string
 String buffer_get_line(Buffer buffer, Integer index, Error *err)
+    FUNC_API_NOEVAL
 {
   String rv = { .size = 0 };
 
@@ -84,6 +85,7 @@ String buffer_get_line(Buffer buffer, Integer index, Error *err)
 /// @param line The new line.
 /// @param[out] err Details of an error that may have occurred
 void buffer_set_line(Buffer buffer, Integer index, String line, Error *err)
+    FUNC_API_NOEVAL
 {
   Object l = STRING_OBJ(line);
   Array array = { .items = &l, .size = 1 };
@@ -102,6 +104,7 @@ void buffer_set_line(Buffer buffer, Integer index, String line, Error *err)
 /// @param index The line index
 /// @param[out] err Details of an error that may have occurred
 void buffer_del_line(Buffer buffer, Integer index, Error *err)
+    FUNC_API_NOEVAL
 {
   Array array = ARRAY_DICT_INIT;
   index = convert_index(index);
@@ -122,11 +125,12 @@ void buffer_del_line(Buffer buffer, Integer index, Error *err)
 /// @param[out] err Details of an error that may have occurred
 /// @return An array of lines
 ArrayOf(String) buffer_get_line_slice(Buffer buffer,
-                                 Integer start,
-                                 Integer end,
-                                 Boolean include_start,
-                                 Boolean include_end,
-                                 Error *err)
+                                      Integer start,
+                                      Integer end,
+                                      Boolean include_start,
+                                      Boolean include_end,
+                                      Error *err)
+    FUNC_API_NOEVAL
 {
   start = convert_index(start) + !include_start;
   end = convert_index(end) + include_end;
@@ -229,12 +233,13 @@ end:
 //         array will simply delete the line range)
 /// @param[out] err Details of an error that may have occurred
 void buffer_set_line_slice(Buffer buffer,
-                      Integer start,
-                      Integer end,
-                      Boolean include_start,
-                      Boolean include_end,
-                      ArrayOf(String) replacement,
-                      Error *err)
+                           Integer start,
+                           Integer end,
+                           Boolean include_start,
+                           Boolean include_end,
+                           ArrayOf(String) replacement,
+                           Error *err)
+    FUNC_API_NOEVAL
 {
   start = convert_index(start) + !include_start;
   end = convert_index(end) + include_end;
@@ -590,6 +595,7 @@ void buffer_insert(Buffer buffer,
                    Integer lnum,
                    ArrayOf(String) lines,
                    Error *err)
+    FUNC_API_NOEVAL
 {
   // "lnum" will be the index of the line after inserting,
   // no matter if it is negative or not
