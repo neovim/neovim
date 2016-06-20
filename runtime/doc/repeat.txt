@@ -1,4 +1,4 @@
-*repeat.txt*    For Vim version 7.4.  Last change: 2016 Mar 04
+*repeat.txt*    For Vim version 7.4.  Last change: 2016 Mar 07
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -405,56 +405,79 @@ Rationale:
 A Vim package is a directory that contains one or more plugins.  The
 advantages over normal plugins:
 - A package can be downloaded as an archive and unpacked in its own directory.
-  That makes it easy to updated and/or remove.
+  Thus the files are not mixed with files of other plugins.  That makes it
+  easy to update and remove.
 - A package can be a git, mercurial, etc. repository.  That makes it really
   easy to update.
 - A package can contain multiple plugins that depend on each other.
 - A package can contain plugins that are automatically loaded on startup and
-  ones that are only loaded when needed with `:loadplugin`.
+  ones that are only loaded when needed with `:packadd`.
+
+
+Using a package and loading automatically ~
 
 Let's assume your Vim files are in the "~/.local/share/nvim/site" directory
-and you want to add a package from a zip archive "/tmp/mypack.zip":
-	% mkdir -p ~/.local/share/nvim/site/pack/my
-	% cd ~/.local/share/nvim/site/pack/my
-	% unzip /tmp/mypack.zip
+and you want to add a package from a zip archive "/tmp/foopack.zip":
+	% mkdir -p ~/.local/share/nvim/site/pack/foo
+	% cd ~/.local/share/nvim/site/pack/foo
+	% unzip /tmp/foopack.zip
 
-The directory name "my" is arbitrary, you can pick anything you like.
+The directory name "foo" is arbitrary, you can pick anything you like.
 
 You would now have these files under ~/.local/share/nvim/site:
-	pack/my/README.txt
-	pack/my/ever/always/plugin/always.vim
-	pack/my/ever/always/syntax/always.vim
-	pack/my/opt/mydebug/plugin/debugger.vim
+	pack/foo/README.txt
+	pack/foo/ever/foobar/plugin/foo.vim
+	pack/foo/ever/foobar/syntax/some.vim
+	pack/foo/opt/foodebug/plugin/debugger.vim
 
-If you don't have a package but a single plugin, you need to create the extra
-directory level:
-	% mkdir -p ~/.local/share/nvim/site/pack/my/ever/always
-	% cd ~/.local/share/nvim/site/pack/my/ever/always
-	% unzip /tmp/myplugin.zip
+When Vim starts up, after processing your .vimrc, it scans all directories in
+'packpath' for plugins under the "pack/*/ever" directory and loads them.  The
+directory is added to 'runtimepath'.
 
-When Vim starts up it scans all directories in 'packpath' for plugins under the
-"ever" directory and loads them.  When found that directory is added to
-'runtimepath'.
+In the example Vim will find "pack/foo/ever/foobar/plugin/foo.vim" and adds 
+"~/.local/share/nvim/site/pack/foo/ever/foobar" to 'runtimepath'.
 
-In the example Vim will find "my/ever/always/plugin/always.vim" and adds 
-"~/.local/share/nvim/site/pack/my/ever/always" to 'runtimepath'.
+If the "foobar" plugin kicks in and sets the 'filetype' to "some", Vim will
+find the syntax/some.vim file, because its directory is in 'runtimepath'.
 
-If the "always" plugin kicks in and sets the 'filetype' to "always", Vim will
-find the syntax/always.vim file, because its directory is in 'runtimepath'.
+Vim will also load ftdetect files, if there are any.
 
-Vim will also load ftdetect files, like with |:packadd|.
-
-							*pack-add*
-To load an optional plugin from a pack use the `:packadd` command: >
-	:packadd mydebug
-This could be done inside always.vim, if some conditions are met.
-Or you could add this command to your |.vimrc|.
-
-It is perfectly normal for a package to only have files in the "opt"
-directory.  You then need to load each plugin when you want to use it.
+Note that the files under "pack/foo/opt" or not loaded automatically, only the
+ones under "pack/foo/ever".  See |pack-add| below for how the "opt" directory
+is used.
 
 Loading packages will not happen if loading plugins is disabled, see
 |load-plugins|.
+
+
+Using a single plugin and loading it automatically ~
+
+If you don't have a package but a single plugin, you need to create the extra
+directory level:
+	% mkdir -p ~/.local/share/nvim/site/pack/foo/ever/foobar
+	% cd ~/.local/share/nvim/site/pack/foo/ever/foobar
+	% unzip /tmp/someplugin.zip
+
+You would now have these files:
+	pack/foo/ever/foobar/plugin/foo.vim
+	pack/foo/ever/foobar/syntax/some.vim
+
+From here it works like above.
+
+
+Optional plugins ~
+							*pack-add*
+To load an optional plugin from a pack use the `:packadd` command: >
+	:packadd foodebug
+This searches for "pack/*/opt/foodebug" in 'packpath' and will find
+~/.local/share/nvim/site/pack/foo/opt/foodebug/plugin/debugger.vim and source
+it.
+
+This could be done inside always.vim, if some conditions are met.  Or you
+could add this command to your |.vimrc|.
+
+It is perfectly normal for a package to only have files in the "opt"
+directory.  You then need to load each plugin when you want to use it.
 
 ==============================================================================
 6. Debugging scripts					*debug-scripts*

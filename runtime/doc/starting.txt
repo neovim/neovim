@@ -1,4 +1,4 @@
-*starting.txt*  For Vim version 7.4.  Last change: 2016 Mar 03
+*starting.txt*  For Vim version 7.4.  Last change: 2016 Mar 05
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -41,6 +41,7 @@ filename	One or more file names.  The first one will be the current
 			nvim -- -filename
 <		All arguments after the "--" will be interpreted as file names,
 		no other options or "+command" argument can follow.
+		For behavior of quotes on MS-Windows, see |win32-quotes|.
 
 							*--*
 -		This argument can mean two things, depending on whether Ex
