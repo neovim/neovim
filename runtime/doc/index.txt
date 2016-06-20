@@ -1,4 +1,4 @@
-*index.txt*     For Vim version 7.4.  Last change: 2016 Jan 19
+*index.txt*     For Vim version 7.4.  Last change: 2016 Feb 24
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -1317,6 +1317,7 @@ tag	      command	      action ~
 |:lnfile|	:lnf[ile]	go to first location in next file
 |:lnoremap|	:ln[oremap]	like ":noremap!" but includes Lang-Arg mode
 |:loadkeymap|	:loadk[eymap]	load the following keymaps until EOF
+|:loadplugin|	:loadp[lugin]	load a plugin from 'packpath'
 |:loadview|	:lo[adview]	load view for current window from a file
 |:lockmarks|	:loc[kmarks]	following command keeps marks where they are
 |:lockvar|	:lockv[ar]	lock variables

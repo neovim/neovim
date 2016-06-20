@@ -2,7 +2,7 @@
 " Language:             Zsh shell script
 " Maintainer:           Christian Brabandt <cb@256bit.org>
 " Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
-" Latest Revision:      2016-01-25
+" Latest Revision:      2016-02-15
 " License:              Vim (see :h license)
 " Repository:		https://github.com/chrisbra/vim-zsh
 
@@ -13,20 +13,29 @@ endif
 let s:cpo_save = &cpo
 set cpo&vim
 
-setlocal iskeyword+=-
-setlocal foldmethod=syntax
+if v:version > 704 || (v:version == 704 && has("patch1142"))
+    syn iskeyword @,48-57,_,192-255,#,-
+else
+    setlocal iskeyword+=-
+endif
+if get(g:, 'zsh_fold_enable', 0)
+    setlocal foldmethod=syntax
+endif
 
 syn keyword zshTodo             contained TODO FIXME XXX NOTE
 
 syn region  zshComment          oneline start='\%(^\|\s*\)#' end='$'
-                                \ contains=zshTodo,@Spell
+                                \ contains=zshTodo,@Spell fold
+
+syn region  zshComment          start='^\s*#' end='^\%(\s*#\)\@!'
+                                \ contains=zshTodo,@Spell fold
 
 syn match   zshPreProc          '^\%1l#\%(!\|compdef\|autoload\).*$'
 
 syn match   zshQuoted           '\\.'
 syn region  zshString           matchgroup=zshStringDelimiter start=+"+ end=+"+
-                                \ contains=zshQuoted,@zshDerefs,@zshSubst
-syn region  zshString           matchgroup=zshStringDelimiter start=+'+ end=+'+
+                                \ contains=zshQuoted,@zshDerefs,@zshSubst fold
+syn region  zshString           matchgroup=zshStringDelimiter start=+'+ end=+'+ fold
 " XXX: This should probably be more precise, but Zsh seems a bit confused about it itself
 syn region  zshPOSIXString      matchgroup=zshStringDelimiter start=+\$'+
                                 \ end=+'+ contains=zshQuoted
@@ -46,7 +55,7 @@ syn keyword zshException        always
 
 syn keyword zshKeyword          function nextgroup=zshKSHFunction skipwhite
 
-syn match   zshKSHFunction      contained '\k\+'
+syn match   zshKSHFunction      contained '\w\S\+'
 syn match   zshFunction         '^\s*\k\+\ze\s*()'
 
 syn match   zshOperator         '||\|&&\|;\|&!\='
@@ -317,6 +326,8 @@ syn region  zshMathSubst        matchgroup=zshSubstDelim transparent
                                 \ @zshDerefs,zshString keepend fold
 syn region  zshBrackets         contained transparent start='{' skip='\\}'
                                 \ end='}' fold
+syn region  zshBrackets         transparent start='{' skip='\\}'
+                                \ end='}' contains=TOP fold
 syn region  zshSubst            matchgroup=zshSubstDelim start='\${' skip='\\}'
                                 \ end='}' contains=@zshSubst,zshBrackets,zshQuoted,zshString fold
 syn region  zshOldSubst         matchgroup=zshSubstDelim start=+`+ skip=+\\`+

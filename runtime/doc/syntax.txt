@@ -1,4 +1,4 @@
-*syntax.txt*	For Vim version 7.4.  Last change: 2016 Jan 28
+*syntax.txt*	For Vim version 7.4.  Last change: 2016 Feb 24
 
 
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
@@ -3344,6 +3344,13 @@ Default schema is `core`.
 Note that schemas are not actually limited to plain scalars, but this is the 
 only difference between schemas defined in YAML specification and the only 
 difference defined in the syntax file.
+
+
+ZSH						    *zsh.vim* *ft-zsh-syntax*
+
+The syntax script for zsh allows for syntax-based folding: >
+
+	:let g:zsh_fold_enable = 1
 
 ==============================================================================
 5. Defining a syntax					*:syn-define* *E410*
