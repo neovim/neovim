@@ -126,7 +126,7 @@ endfunction
 
 
 " Echo wrapped notes
-function! s:echo_notes(notes) abort
+function! s:report_notes(notes) abort
   if empty(a:notes)
     return
   endif
@@ -407,7 +407,6 @@ endfunction
 function! health#nvim#check(bang) abort
   redir => report
   try
-    silent echo 'this is changed'
     silent call s:diagnose_python(2)
     silent echo ''
     silent call s:diagnose_python(3)
