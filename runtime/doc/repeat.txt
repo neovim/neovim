@@ -1,4 +1,4 @@
-*repeat.txt*    For Vim version 7.4.  Last change: 2016 Feb 24
+*repeat.txt*    For Vim version 7.4.  Last change: 2016 Feb 26
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -211,6 +211,10 @@ For writing a Vim script, see chapter 41 of the user manual |usr_41.txt|.
 <			However, `:loadplugin` uses 'packpath' instead of
 			'runtimepath'.  And the directory found is added to
 			'runtimepath'.
+
+			If you have a directory under 'packpath' that doesn't
+			actually have a plugin file, just create an empty one.
+			This will still add the directory to 'runtimepath'.
 
 			Note that {name} is the directory name, not the name
 			of the .vim file.  If the "{name}/plugin" directory
@@ -548,7 +552,7 @@ Additionally, these commands can be used:
 About the additional commands in debug mode:
 - There is no command-line completion for them, you get the completion for the
   normal Ex commands only.
-- You can shorten them, up to a single character, unless more then one command
+- You can shorten them, up to a single character, unless more than one command
   starts with the same letter.  "f" stands for "finish", use "fr" for "frame".
 - Hitting <CR> will repeat the previous one.  When doing another command, this
   is reset (because it's not clear what you want to repeat).

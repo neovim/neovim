@@ -1,4 +1,4 @@
-*syntax.txt*	For Vim version 7.4.  Last change: 2016 Feb 24
+*syntax.txt*	For Vim version 7.4.  Last change: 2016 Feb 25
 
 
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
@@ -2886,7 +2886,7 @@ You may wish to embed languages into sh.  I'll give an example courtesy of
 Lorance Stinson on how to do this with awk as an example. Put the following
 file into $HOME/.config/nvim/after/syntax/sh/awkembed.vim: >
 
-    " AWK Embedding: {{{1
+    " AWK Embedding:
     " ==============
     " Shamelessly ripped from aspperl.vim by Aaron Hope.
     if exists("b:current_syntax")
