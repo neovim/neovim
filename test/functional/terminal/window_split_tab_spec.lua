@@ -2,6 +2,7 @@ local helpers = require('test.functional.helpers')(after_each)
 local thelpers = require('test.functional.terminal.helpers')
 local clear = helpers.clear
 local feed, nvim = helpers.feed, helpers.nvim
+local execute = helpers.execute
 
 describe('terminal', function()
   local screen
@@ -19,6 +20,49 @@ describe('terminal', function()
 
   after_each(function()
     screen:detach()
+  end)
+
+  it('resets its size when entering terminal window', function()
+    feed('<c-\\><c-n>')
+    execute('2split')
+    screen:expect([[
+      tty ready                                         |
+      ^rows: 2, cols: 50                                 |
+      ==========                                        |
+      tty ready                                         |
+      rows: 2, cols: 50                                 |
+      {2: }                                                 |
+      ~                                                 |
+      ~                                                 |
+      ==========                                        |
+                                                        |
+    ]])
+    execute('wincmd p')
+    screen:expect([[
+      tty ready                                         |
+      rows: 2, cols: 50                                 |
+      ==========                                        |
+      tty ready                                         |
+      rows: 2, cols: 50                                 |
+      rows: 5, cols: 50                                 |
+      {2: }                                                 |
+      ^                                                  |
+      ==========                                        |
+      :wincmd p                                         |
+    ]])
+    execute('wincmd p')
+    screen:expect([[
+      rows: 5, cols: 50                                 |
+      ^rows: 2, cols: 50                                 |
+      ==========                                        |
+      rows: 5, cols: 50                                 |
+      rows: 2, cols: 50                                 |
+      {2: }                                                 |
+      ~                                                 |
+      ~                                                 |
+      ==========                                        |
+      :wincmd p                                         |
+    ]])
   end)
 
   describe('when the screen is resized', function()
