@@ -1813,6 +1813,7 @@ byteidx({expr}, {nr})		Number	byte index of {nr}'th char in {expr}
 byteidxcomp({expr}, {nr})	Number	byte index of {nr}'th char in {expr}
 call({func}, {arglist} [, {dict}])
 				any	call {func} with arguments {arglist}
+capture({command})		String	capture output of {command}
 ceil({expr})			Float	round {expr} up
 changenr()			Number	current change number
 char2nr({expr}[, {utf8}])	Number	ASCII/UTF8 value of first char in {expr}
@@ -2495,6 +2496,23 @@ call({func}, {arglist} [, {dict}])			*call()* *E699*
 		Returns the return value of the called function.
 		{dict} is for functions with the "dict" attribute.  It will be
 		used to set the local variable "self". |Dictionary-function|
+
+capture({command})					*capture()*
+		Capture output of {command}.
+		If {command} is a |String|, returns {command} output.
+		If {command} is a |List|, returns concatenated outputs.
+		Examples: >
+			echo capture('echon "foo"')
+<			foo >
+			echo capture(['echon "foo"', 'echon "bar"'])
+<			foobar
+		This function is not available in the |sandbox|.
+		Note: {command}s run as if prepended with |:silent| (output is
+		captured, but not displayed).  If multiple capture() calls are
+		nested, the outer capture() will not catch the command output
+		of the inner capture(); the inner capture will not cancel the
+		outer.
+		Note: Text attributes (highlights) are not captured.
 
 ceil({expr})							*ceil()*
 		Return the smallest integral value greater than or equal to

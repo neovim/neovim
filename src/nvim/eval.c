@@ -6713,6 +6713,7 @@ static struct fst {
   { "byteidx",           2, 2, f_byteidx },
   { "byteidxcomp",       2, 2, f_byteidxcomp },
   { "call",              2, 3, f_call },
+  { "capture",           1, 1, f_capture },
   { "ceil",              1, 1, f_ceil },
   { "changenr",          0, 0, f_changenr },
   { "char2nr",           1, 2, f_char2nr },
@@ -8081,6 +8082,38 @@ static void f_call(typval_T *argvars, typval_T *rettv)
   }
 
   (void)func_call(func, &argvars[1], selfdict, rettv);
+}
+
+// "capture(command)" function
+static void f_capture(typval_T *argvars, typval_T *rettv)
+{
+    int save_msg_silent = msg_silent;
+    garray_T *save_capture_ga = capture_ga;
+
+    if (check_secure()) {
+      return;
+    }
+
+    garray_T capture_local;
+    capture_ga = &capture_local;
+    ga_init(capture_ga, (int)sizeof(char), 80);
+
+    msg_silent++;
+    if (argvars[0].v_type != VAR_LIST) {
+      do_cmdline_cmd((char *)get_tv_string(&argvars[0]));
+    } else if (argvars[0].vval.v_list != NULL) {
+      for (listitem_T *li = argvars[0].vval.v_list->lv_first;
+           li != NULL; li = li->li_next) {
+        do_cmdline_cmd((char *)get_tv_string(&li->li_tv));
+      }
+    }
+    msg_silent = save_msg_silent;
+
+    ga_append(capture_ga, NUL);
+    rettv->v_type = VAR_STRING;
+    rettv->vval.v_string = capture_ga->ga_data;
+
+    capture_ga = save_capture_ga;
 }
 
 /*
