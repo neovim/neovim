@@ -214,7 +214,7 @@ function! s:diagnose_manifest() abort
     echon 'Up to date'
   endif
 
-  call s:echo_notes(notes)
+  call s:report_notes(notes)
 endfunction
 
 
@@ -229,14 +229,21 @@ function! s:diagnose_python(version) abort
   let python_multiple = []
   let notes = []
 
+  call health#report_start('Python ' . a:version . ' Configuration')
+
   if exists('g:'.host_prog_var)
-    call add(notes, printf('Using: g:%s = "%s"', host_prog_var, get(g:, host_prog_var)))
+    " call add(notes, printf('Using: g:%s = "%s"', host_prog_var, get(g:, host_prog_var)))
+    call health#report_info(printf('Using: g:%s = "%s"', host_prog_var, get(g:, host_prog_var)))
   endif
 
   let [python_bin_name, pythonx_errs] = provider#pythonx#Detect(a:version)
   if empty(python_bin_name)
-    call add(notes, 'Warning: No Python interpreter was found with the neovim '
-          \ . 'module.  Using the first available for diagnostics.')
+    " call add(notes, 'Warning: No Python interpreter was found with the neovim '
+    "       \ . 'module.  Using the first available for diagnostics.')
+    call health#report_warn('No Python interpreter was found with the neovim '
+            \ . 'module.  Using the first available for diagnostics.')
+
+    " TODO: Not sure what to do about these errors
     if !empty(pythonx_errs)
       call add(notes, pythonx_errs)
     endif
@@ -259,7 +266,7 @@ function! s:diagnose_python(version) abort
 
   if !empty(python_bin_name) && empty(python_bin) && empty(pythonx_errs)
     if !exists('g:'.host_prog_var)
-      call add(notes, printf('Warning: "g:%s" is not set.  Searching for '
+      call health#report_warn(printf("g:%s" is not set.  Searching for '
             \ . '%s in the environment.', host_prog_var, python_bin_name))
     endif
 
@@ -357,9 +364,13 @@ function! s:diagnose_python(version) abort
   endif
 
   if virtualenv_inactive
-    call add(notes, 'Warning: $VIRTUAL_ENV exists but appears to be '
-          \ . 'inactive.  This could lead to unexpected results.  If you are '
-          \ . 'using Zsh, see: http://vi.stackexchange.com/a/7654/5229')
+    suggestions = [
+          \ 'If you are using Zsh, see: http://vi.stackexchange.com/a/7654/5229',
+          \ ]
+    call health#report_warn(
+          \ '$VIRTUAL_ENV exists but appears to be inactive. '
+          \ . 'This could lead to unexpected results.',
+          \ suggestions)
   endif
 
   " Diagnostic output
@@ -379,18 +390,23 @@ function! s:diagnose_python(version) abort
             \ . 'consider this before reporting bugs to plugin developers.')
     endif
     if a:version == 3 && str2float(pyversion) < 3.3
-      call add(notes, 'Warning: Python 3.3+ is recommended.')
+      call health#report_warn('Python 3.3+ is recommended.')
     endif
 
-    echo '  Python Version:' pyversion
-    echo printf('  %s-neovim Version: %s', python_bin_name, current)
+    call health#report_info('Python Version: ' . pyversion)
+    call health#report_info(printf('%s-neovim Version: %s', python_bin_name, current))
 
     if current == 'not found'
-      call add(notes, 'Error: Neovim Python client is not installed.')
+      suggestions = [
+            \ 'Use the command `pip' . a:version . 'install neovim`',
+            \ ]
+      call health#report_error(
+            \ 'Neovim Python client is not installed.',
+            \ suggestions)
     endif
 
     if latest == 'unknown'
-      call add(notes, 'Warning: Unable to fetch latest Neovim Python client version.')
+      call health#report_warn('Unable to fetch latest Neovim Python client version.')
     endif
 
     if status == 'outdated'
@@ -400,7 +416,7 @@ function! s:diagnose_python(version) abort
     endif
   endif
 
-  call s:echo_notes(notes)
+  call s:report_notes(notes)
 endfunction
 
 
