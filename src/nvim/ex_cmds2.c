@@ -2430,7 +2430,7 @@ static void add_pack_plugin(char_u *fname, void *cookie)
     }
 
     // now we have:
-    // rtp/pack/name/ever/name
+    // rtp/pack/name/start/name
     //    p4   p3   p2   p1
     //
     // find the part up to "pack" in 'runtimepath'
@@ -2499,7 +2499,7 @@ theend:
 // Find plugins in the package directories and source them.
 void source_packages(void)
 {
-  do_in_path(p_pp, (char_u *)"pack/*/ever/*", DIP_ALL + DIP_DIR,
+  do_in_path(p_pp, (char_u *)"pack/*/start/*", DIP_ALL + DIP_DIR,
              add_pack_plugin, p_pp);
 }
 
