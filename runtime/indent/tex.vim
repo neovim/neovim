@@ -2,10 +2,9 @@
 " Language:     LaTeX
 " Maintainer:   YiChao Zhou <broken.zhou AT gmail.com>
 " Created:      Sat, 16 Feb 2002 16:50:19 +0100
-" Last Change:	2012 Mar 18 19:19:50
-" Version: 0.7
-"   Please email me if you found something we can do.  Bug report and
-"   feature request is welcome.
+" Version: 0.9.2
+"   Please email me if you found something I can do.  Comments, bug report and
+"   feature request are welcome.
 
 " Last Update:  {{{
 "               25th Sep 2002, by LH :
@@ -41,7 +40,7 @@
 "               (*) Trust user when in "verbatim" and "lstlisting"
 "               2012/03/11 by Zhou Yichao <broken.zhou AT gmail.com>
 "               (*) Modify "&" so that only indent when current line start with
-"               "&".
+"                   "&".
 "               2012/03/12 by Zhou Yichao <broken.zhou AT gmail.com>
 "               (*) Modify indentkeys.
 "               2012/03/18 by Zhou Yichao <broken.zhou AT gmail.com>
@@ -49,6 +48,17 @@
 "               2013/05/02 by Zhou Yichao <broken.zhou AT gmail.com>
 "               (*) Fix problem about GetTeXIndent checker. Thank Albert Netymk
 "                   for reporting this.
+"               2014/06/23 by Zhou Yichao <broken.zhou AT gmail.com>
+"               (*) Remove the feature g:tex_indent_and because it is buggy.
+"               (*) If there is not any obvious indentation hints, we do not
+"                   alert our user's current indentation.
+"               (*) g:tex_indent_brace now only works if the open brace is the
+"                   last character of that line.
+"               2014/08/03 by Zhou Yichao <broken.zhou AT gmail.com>
+"               (*) Indent current line if last line has larger indentation
+"               2014/08/09 by Zhou Yichao <broken.zhou AT gmail.com>
+"               (*) Add missing return value for s:GetEndIndentation(...)
+"
 " }}}
 
 " Document: {{{
@@ -60,7 +70,17 @@
 " * g:tex_indent_brace
 "
 "   If this variable is unset or non-zero, it will use smartindent-like style
-"   for "{}" and "[]"
+"   for "{}" and "[]".  Now this only works if the open brace is the last
+"   character of that line.
+"
+"         % Example 1
+"         \usetikzlibrary{
+"           external
+"         }
+"
+"         % Example 2
+"         \tikzexternalize[
+"           prefix=tikz]
 "   
 " * g:tex_indent_items
 "
@@ -98,14 +118,6 @@
 "
 "   A list of environment names. separated with '\|', where no indentation is 
 "   required. The default is 'document\|verbatim'.
-"
-" * g:tex_indent_and
-"
-"   If this variable is unset or zero, vim will try to align the line with first
-"   "&". This is pretty useful when you use environment like table or align.
-"   Note that this feature need to search back some line, so vim may become
-"   a little slow.
-"
 " }}} 
 
 " Only define the function once
@@ -126,8 +138,8 @@ endif
 if !exists("g:tex_indent_brace")
     let g:tex_indent_brace = 1
 endif
-if !exists("g:tex_indent_and")
-    let g:tex_indent_and = 1
+if !exists("g:tex_max_scan_line")
+    let g:tex_max_scan_line = 60
 endif
 if g:tex_indent_items
     if !exists("g:tex_itemize_env")
@@ -138,10 +150,6 @@ if g:tex_indent_items
     endif
 else
     let g:tex_items = ''
-endif
-
-if !exists("g:tex_indent_paretheses")
-    let g:tex_indent_paretheses = 1
 endif
 
 if !exists("g:tex_noindent_env")
@@ -160,6 +168,7 @@ let g:tex_items = '^\s*' . substitute(g:tex_items, '^\(\^\\s\*\)*', '', '')
 function! GetTeXIndent() " {{{
     " Find a non-blank line above the current line.
     let lnum = prevnonblank(v:lnum - 1)
+    let cnum = v:lnum
 
     " Comment line is not what we need.
     while lnum != 0 && getline(lnum) =~ '^\s*%'
@@ -171,8 +180,8 @@ function! GetTeXIndent() " {{{
         return 0 
     endif
 
-    let line = substitute(getline(lnum), '%.*', ' ','g')     " last line
-    let cline = substitute(getline(v:lnum), '%.*', ' ', 'g') " current line
+    let line = substitute(getline(lnum), '\s*%.*', '','g')     " last line
+    let cline = substitute(getline(v:lnum), '\s*%.*', '', 'g') " current line
 
     "  We are in verbatim, so do what our user what.
     if synIDattr(synID(v:lnum, indent(v:lnum), 1), "name") == "texZone"
@@ -183,26 +192,12 @@ function! GetTeXIndent() " {{{
         end
     endif
     
-    " You want to align with "&"
-    if g:tex_indent_and
-        " Align only when current line start with "&"
-        if line =~ '&.*\\\\' && cline =~ '^\s*&'
-            return indent(v:lnum) + stridx(line, "&") - stridx(cline, "&")
-        endif
-
-        " set line & lnum to the line which doesn't contain "&"
-        while lnum != 0 && (stridx(line, "&") != -1 || line =~ '^\s*%')
-            let lnum = prevnonblank(lnum - 1)
-            let line = getline(lnum)
-        endwhile
-    endif
-
-
     if lnum == 0
         return 0 
     endif
 
     let ind = indent(lnum)
+    let stay = 1
 
     " New code for comment: retain the indent of current line
     if cline =~ '^\s*%'
@@ -216,77 +211,197 @@ function! GetTeXIndent() " {{{
     " ZYC modification : \end after \begin won't cause wrong indent anymore
     if line =~ '\\begin{.*}' && line !~ g:tex_noindent_env
         let ind = ind + &sw
+        let stay = 0
 
         if g:tex_indent_items
             " Add another sw for item-environments
             if line =~ g:tex_itemize_env
                 let ind = ind + &sw
+                let stay = 0
             endif
         endif
     endif
 
+    if cline =~ '\\end{.*}'
+        let retn = s:GetEndIndentation(v:lnum)
+        if retn != -1
+            return retn
+        endif
+    end
     " Subtract a 'shiftwidth' when an environment ends
-    if cline =~ '\\end{.*}' && cline !~ g:tex_noindent_env
-
+    if cline =~ '\\end{.*}'
+                \ && cline !~ g:tex_noindent_env
+                \ && cline !~ '\\begin{.*}.*\\end{.*}'
         if g:tex_indent_items
             " Remove another sw for item-environments
             if cline =~ g:tex_itemize_env
                 let ind = ind - &sw
+                let stay = 0
             endif
         endif
 
         let ind = ind - &sw
+        let stay = 0
     endif
 
     if g:tex_indent_brace
-        let sum1 = 0
-        for i in range(0, strlen(line)-1)
-            if line[i] == "}" || line[i] == "]" ||
-                        \ strpart(line, i, 7) == '\right)'
-                let sum1 = max([0, sum1-1])
-            endif
-            if line[i] == "{" || line[i] == "[" ||
-                        \ strpart(line, i, 6) == '\left('
-                let sum1 += 1
+        let char = line[strlen(line)-1]
+        if char == '[' || char == '{'
+            let ind += &sw
+            let stay = 0
+        endif
+
+        let cind = indent(v:lnum)
+        let char = cline[cind]
+        if (char == ']' || char == '}') &&
+                    \ s:CheckPairedIsLastCharacter(v:lnum, cind)
+            let ind -= &sw
+            let stay = 0
+        endif
+
+        for i in range(indent(lnum)+1, strlen(line)-1)
+            let char = line[i]
+            if char == ']' || char == '}'
+                if s:CheckPairedIsLastCharacter(lnum, i)
+                    let ind -= &sw
+                    let stay = 0
+                endif
             endif
         endfor
-
-        let sum2 = 0
-        for i in reverse(range(0, strlen(cline)-1))
-            if cline[i] == "{" || cline[i] == "[" ||
-                        \ strpart(cline, i, 6) == '\left('
-                let sum2 = max([0, sum2-1])
-            endif
-            if cline[i] == "}" || cline[i] == "]" ||
-                        \ strpart(cline, i, 7) == '\right)'
-                let sum2 += 1
-            endif
-        endfor
-
-        let ind += (sum1 - sum2) * &sw
-    endif
-
-    if g:tex_indent_paretheses
     endif
 
     " Special treatment for 'item'
     " ----------------------------
 
     if g:tex_indent_items
-
         " '\item' or '\bibitem' itself:
         if cline =~ g:tex_items
             let ind = ind - &sw
+            let stay = 0
         endif
-
         " lines following to '\item' are intented once again:
         if line =~ g:tex_items
             let ind = ind + &sw
+            let stay = 0
         endif
-
     endif
 
-    return ind
+    if stay
+        " If there is no obvious indentation hint, we trust our user.
+        if empty(cline)
+            return ind
+        else
+            return max([indent(v:lnum), s:GetLastBeginIndentation(v:lnum)])
+        endif
+    else
+        return ind
+    endif
+endfunction "}}}
+
+function! s:GetLastBeginIndentation(lnum) " {{{
+    let matchend = 1
+    for lnum in range(a:lnum-1, max([a:lnum - g:tex_max_scan_line, 1]), -1)
+        let line = getline(lnum)
+        if line =~ '\\end{.*}'
+            let matchend += 1
+        endif
+        if line =~ '\\begin{.*}'
+            let matchend -= 1
+        endif
+        if matchend == 0
+            if line =~ g:tex_itemize_env
+                return indent(lnum) + 2 * &sw
+            endif
+            if line =~ g:tex_noindent_env
+                return indent(lnum)
+            endif
+            return indent(lnum) + &sw
+        endif
+    endfor
+    return -1
+endfunction
+
+function! s:GetEndIndentation(lnum) " {{{
+    if getline(a:lnum) =~ '\\begin{.*}.*\\end{.*}'
+        return -1
+    endif
+
+    let min_indent = 100
+    let matchend = 1
+    for lnum in range(a:lnum-1, max([a:lnum-g:tex_max_scan_line, 1]), -1)
+        let line = getline(lnum)
+        if line =~ '\\end{.*}'
+            let matchend += 1
+        endif
+        if line =~ '\\begin{.*}'
+            let matchend -= 1
+        endif
+        if matchend == 0
+            return indent(lnum)
+        endif
+        if !empty(line)
+            let min_indent = min([min_indent, indent(lnum)])
+        endif
+    endfor
+    return min_indent - &sw
+endfunction
+
+" Most of the code is from matchparen.vim
+function! s:CheckPairedIsLastCharacter(lnum, col) "{{{
+    " Get the character under the cursor and check if it's in 'matchpairs'.
+    let c_lnum = a:lnum
+    let c_col = a:col+1
+
+
+    let c = getline(c_lnum)[c_col-1]
+    let plist = split(&matchpairs, '.\zs[:,]')
+    let i = index(plist, c)
+    if i < 0
+        return 0
+    endif
+
+    " Figure out the arguments for searchpairpos().
+    if i % 2 == 0
+        let s_flags = 'nW'
+        let c2 = plist[i + 1]
+    else
+        let s_flags = 'nbW'
+        let c2 = c
+        let c = plist[i - 1]
+    endif
+    if c == '['
+        let c = '\['
+        let c2 = '\]'
+    endif
+
+    " Find the match.  When it was just before the cursor move it there for a
+    " moment.
+    let save_cursor = winsaveview()
+    call cursor(c_lnum, c_col)
+
+    " When not in a string or comment ignore matches inside them.
+    " We match "escape" for special items, such as lispEscapeSpecial.
+    let s_skip ='synIDattr(synID(line("."), col("."), 0), "name") ' .
+                \ '=~?  "string\\|character\\|singlequote\\|escape\\|comment"'
+    execute 'if' s_skip '| let s_skip = 0 | endif'
+
+    let stopline = max([0, c_lnum - g:tex_max_scan_line])
+
+    " Limit the search time to 300 msec to avoid a hang on very long lines.
+    " This fails when a timeout is not supported.
+    try
+        let [m_lnum, m_col] = searchpairpos(c, '', c2, s_flags, s_skip, stopline, 100)
+    catch /E118/
+    endtry
+
+    call winrestview(save_cursor)
+
+    if m_lnum > 0
+        let line = getline(m_lnum)
+        return strlen(line) == m_col
+    endif
+
+    return 0
 endfunction "}}}
 
 let &cpo = s:cpo_save

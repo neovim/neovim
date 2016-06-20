@@ -6,8 +6,8 @@
 " Contributor:  Leonard Ehrenfried <leonard.ehrenfried@web.de>	
 " Contributor:  Karsten Hopp <karsten@redhat.com>
 " Originally:	2009-07-09
-" Last Change:	2016 Jan 12
-" SSH Version:	7.1
+" Last Change:	2016 Mar 1
+" SSH Version:	7.2
 "
 
 " Setup
@@ -47,15 +47,55 @@ syn keyword sshdconfigTcpForwarding local remote
 
 syn keyword sshdconfigRootLogin prohibit-password without-password forced-commands-only
 
-syn keyword sshdconfigCipher aes128-cbc 3des-cbc blowfish-cbc cast128-cbc
-syn keyword sshdconfigCipher aes192-cbc aes256-cbc aes128-ctr aes192-ctr aes256-ctr
-syn keyword sshdconfigCipher arcfour arcfour128 arcfour256 cast128-cbc
+syn keyword sshdconfigCiphers 3des-cbc
+syn keyword sshdconfigCiphers blowfish-cbc
+syn keyword sshdconfigCiphers cast128-cbc
+syn keyword sshdconfigCiphers arcfour
+syn keyword sshdconfigCiphers arcfour128
+syn keyword sshdconfigCiphers arcfour256
+syn keyword sshdconfigCiphers aes128-cbc
+syn keyword sshdconfigCiphers aes192-cbc
+syn keyword sshdconfigCiphers aes256-cbc
+syn match sshdconfigCiphers "\<rijndael-cbc@lysator\.liu.se\>"
+syn keyword sshdconfigCiphers aes128-ctr
+syn keyword sshdconfigCiphers aes192-ctr
+syn keyword sshdconfigCiphers aes256-ctr
+syn match sshdconfigCiphers "\<aes128-gcm@openssh\.com\>"
+syn match sshdconfigCiphers "\<aes256-gcm@openssh\.com\>"
+syn match sshdconfigCiphers "\<chacha20-poly1305@openssh\.com\>"
 
-syn keyword sshdconfigMAC hmac-md5 hmac-sha1 hmac-ripemd160 hmac-sha1-96
-syn keyword sshdconfigMAC hmac-md5-96
-syn keyword sshdconfigMAC hmac-sha2-256 hmac-sha256-96 hmac-sha2-512
-syn keyword sshdconfigMAC hmac-sha2-512-96
+syn keyword sshdconfigMAC hmac-sha1
+syn keyword sshdconfigMAC mac-sha1-96
+syn keyword sshdconfigMAC mac-sha2-256
+syn keyword sshdconfigMAC mac-sha2-512
+syn keyword sshdconfigMAC mac-md5
+syn keyword sshdconfigMAC mac-md5-96
+syn keyword sshdconfigMAC mac-ripemd160
+syn match   sshdconfigMAC "\<hmac-ripemd160@openssh\.com\>"
 syn match   sshdconfigMAC "\<umac-64@openssh\.com\>"
+syn match   sshdconfigMAC "\<umac-128@openssh\.com\>"
+syn match   sshdconfigMAC "\<hmac-sha1-etm@openssh\.com\>"
+syn match   sshdconfigMAC "\<hmac-sha1-96-etm@openssh\.com\>"
+syn match   sshdconfigMAC "\<hmac-sha2-256-etm@openssh\.com\>"
+syn match   sshdconfigMAC "\<hmac-sha2-512-etm@openssh\.com\>"
+syn match   sshdconfigMAC "\<hmac-md5-etm@openssh\.com\>"
+syn match   sshdconfigMAC "\<hmac-md5-96-etm@openssh\.com\>"
+syn match   sshdconfigMAC "\<hmac-ripemd160-etm@openssh\.com\>"
+syn match   sshdconfigMAC "\<umac-64-etm@openssh\.com\>"
+syn match   sshdconfigMAC "\<umac-128-etm@openssh\.com\>"
+
+syn keyword sshdconfigHostKeyAlgo ssh-ed25519
+syn match sshdconfigHostKeyAlgo "\<ssh-ed25519-cert-v01@openssh\.com\>"
+syn keyword sshdconfigHostKeyAlgo ssh-rsa
+syn keyword sshdconfigHostKeyAlgo ssh-dss
+syn keyword sshdconfigHostKeyAlgo ecdsa-sha2-nistp256
+syn keyword sshdconfigHostKeyAlgo ecdsa-sha2-nistp384
+syn keyword sshdconfigHostKeyAlgo ecdsa-sha2-nistp521
+syn match sshdconfigHostKeyAlgo "\<ssh-rsa-cert-v01@openssh\.com\>"
+syn match sshdconfigHostKeyAlgo "\<ssh-dss-cert-v01@openssh\.com\>"
+syn match sshdconfigHostKeyAlgo "\<ecdsa-sha2-nistp256-cert-v01@openssh\.com\>"
+syn match sshdconfigHostKeyAlgo "\<ecdsa-sha2-nistp384-cert-v01@openssh\.com\>"
+syn match sshdconfigHostKeyAlgo "\<ecdsa-sha2-nistp521-cert-v01@openssh\.com\>"
 
 syn keyword sshdconfigRootLogin prohibit-password without-password forced-commands-only
 
@@ -73,11 +113,14 @@ syn match   sshdconfigIPQoS	"af4[123]"
 syn match   sshdconfigIPQoS	"cs[0-7]"
 syn keyword sshdconfigIPQoS	ef lowdelay throughput reliability
 
-syn keyword sshdconfigKexAlgo	ecdh-sha2-nistp256 ecdh-sha2-nistp384 ecdh-sha2-nistp521
-syn keyword sshdconfigKexAlgo	diffie-hellman-group-exchange-sha256
-syn keyword sshdconfigKexAlgo	diffie-hellman-group-exchange-sha1
-syn keyword sshdconfigKexAlgo	diffie-hellman-group14-sha1
-syn keyword sshdconfigKexAlgo	diffie-hellman-group1-sha1
+syn keyword sshdconfigKexAlgo diffie-hellman-group1-sha1
+syn keyword sshdconfigKexAlgo diffie-hellman-group14-sha1
+syn keyword sshdconfigKexAlgo diffie-hellman-group-exchange-sha1
+syn keyword sshdconfigKexAlgo diffie-hellman-group-exchange-sha256
+syn keyword sshdconfigKexAlgo ecdh-sha2-nistp256
+syn keyword sshdconfigKexAlgo ecdh-sha2-nistp384
+syn keyword sshdconfigKexAlgo ecdh-sha2-nistp521
+syn match sshdconfigKexAlgo "\<curve25519-sha256@libssh\.org\>"
 
 syn keyword sshdconfigTunnel	point-to-point ethernet
 
@@ -215,8 +258,9 @@ if version >= 508 || !exists("did_sshdconfig_syntax_inits")
   HiLink sshdconfigPrivilegeSeparation  sshdconfigEnum
   HiLink sshdconfigTcpForwarding        sshdconfigEnum
   HiLink sshdconfigRootLogin            sshdconfigEnum
-  HiLink sshdconfigCipher               sshdconfigEnum
+  HiLink sshdconfigCiphers              sshdconfigEnum
   HiLink sshdconfigMAC                  sshdconfigEnum
+  HiLink sshdconfigHostKeyAlgo          sshdconfigEnum
   HiLink sshdconfigRootLogin            sshdconfigEnum
   HiLink sshdconfigLogLevel             sshdconfigEnum
   HiLink sshdconfigSysLogFacility       sshdconfigEnum

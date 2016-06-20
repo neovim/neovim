@@ -1,4 +1,4 @@
-*repeat.txt*    For Vim version 7.4.  Last change: 2016 Feb 26
+*repeat.txt*    For Vim version 7.4.  Last change: 2016 Mar 04
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -204,23 +204,31 @@ For writing a Vim script, see chapter 41 of the user manual |usr_41.txt|.
 			When 'verbose' is two or higher, there is a message
 			about each searched file.
 
-							*:loadp* *:loadplugin*
-:loadp[lugin] {name}	Search for an optional plugin directory and source the
-			plugin files found.  It is similar to: >
-				:runtime pack/*/opt/{name}/plugin/*.vim
-<			However, `:loadplugin` uses 'packpath' instead of
-			'runtimepath'.  And the directory found is added to
-			'runtimepath'.
-
-			If you have a directory under 'packpath' that doesn't
-			actually have a plugin file, just create an empty one.
-			This will still add the directory to 'runtimepath'.
+							*:pa* *:packadd*
+:pa[ckadd][!] {name}	Search for an optional plugin directory in 'packpath'
+			and source any plugin files found.  The directory must
+			match:
+				pack/*/opt/{name} ~
+			The directory is added to 'runtimepath' if it wasn't
+			there yet.
 
 			Note that {name} is the directory name, not the name
 			of the .vim file.  If the "{name}/plugin" directory
 			contains more than one file they are all sourced.
 
-			Also see |load-plugin|.
+			If the filetype detection was not enabled yet (this
+			is usually done with a "syntax enable" or "filetype
+			on" command in your .vimrc file), this will also look
+			for "{name}/ftdetect/*.vim" files.
+
+			When the optional ! is added no plugin files or
+			ftdetect scripts are loaded, only the matching
+			directories are added to 'runtimepath'.  This is
+			useful in your .vimrc.  The plugins will then be
+			loaded during initialization, see |load-plugins|.
+
+			Also see |pack-add|.
+
 
 :scripte[ncoding] [encoding]		*:scripte* *:scriptencoding* *E167*
 			Specify the character encoding used in the script.
