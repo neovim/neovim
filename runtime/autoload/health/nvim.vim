@@ -175,7 +175,7 @@ function! s:diagnose_manifest() abort
   if require_update
     call health#report_warn('Out of date', ['Run `:UpdateRemotePlugins`'])
   else
-    call health#report_info('Up to date')
+    call health#report_ok('Up to date')
   endif
 
   call health#report_notes(notes)
@@ -242,7 +242,7 @@ function! s:diagnose_python(version) abort
               \ ['Did you follow the final install instructions?']
               \ )
       else
-        call health#report_info(printf('pyenv found: "%s"', pyenv))
+        call health#report_ok(printf('pyenv found: "%s"', pyenv))
       endif
 
       let python_bin = s:trim(system(
@@ -381,9 +381,9 @@ function! s:diagnose_python(version) abort
     endif
 
     if status == 'outdated'
-      call health#report_warn('Latest Neovim Python client versions: '.latest.')')
+      call health#report_warn('Latest Neovim Python client versions: ('.latest.')')
     else
-      call health#report_info('Latest Neovim Python client is installed: ('.status.')')
+      call health#report_ok('Latest Neovim Python client is installed: ('.status.')')
     endif
   endif
 
