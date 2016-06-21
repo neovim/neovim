@@ -4796,115 +4796,7 @@ void ex_viusage(exarg_T *eap)
 }
 
 
-/*
- * ":helptags"
- */
-void ex_helptags(exarg_T *eap)
-{
-  garray_T ga;
-  int len;
-  char_u lang[2];
-  expand_T xpc;
-  char_u      *dirname;
-  char_u ext[5];
-  char_u fname[8];
-  int filecount;
-  char_u      **files;
-  int add_help_tags = FALSE;
-
-  /* Check for ":helptags ++t {dir}". */
-  if (STRNCMP(eap->arg, "++t", 3) == 0 && ascii_iswhite(eap->arg[3])) {
-    add_help_tags = TRUE;
-    eap->arg = skipwhite(eap->arg + 3);
-  }
-
-  ExpandInit(&xpc);
-  xpc.xp_context = EXPAND_DIRECTORIES;
-  dirname = ExpandOne(&xpc, eap->arg, NULL,
-      WILD_LIST_NOTFOUND|WILD_SILENT, WILD_EXPAND_FREE);
-  if (dirname == NULL || !os_isdir(dirname)) {
-    EMSG2(_("E150: Not a directory: %s"), eap->arg);
-    xfree(dirname);
-    return;
-  }
-
-  /* Get a list of all files in the help directory and in subdirectories. */
-  STRCPY(NameBuff, dirname);
-  add_pathsep((char *)NameBuff);
-  STRCAT(NameBuff, "**");
-
-  // Note: We cannot just do `&NameBuff` because it is a statically sized array
-  //       so `NameBuff == &NameBuff` according to C semantics.
-  char_u *buff_list[1] = {NameBuff};
-  if (gen_expand_wildcards(1, buff_list, &filecount, &files,
-          EW_FILE|EW_SILENT) == FAIL
-      || filecount == 0) {
-    EMSG2("E151: No match: %s", NameBuff);
-    xfree(dirname);
-    return;
-  }
-
-  /* Go over all files in the directory to find out what languages are
-   * present. */
-  ga_init(&ga, 1, 10);
-  for (int i = 0; i < filecount; ++i) {
-    len = (int)STRLEN(files[i]);
-    if (len <= 4) {
-      continue;
-    }
-    if (STRICMP(files[i] + len - 4, ".txt") == 0) {
-      /* ".txt" -> language "en" */
-      lang[0] = 'e';
-      lang[1] = 'n';
-    } else if (files[i][len - 4] == '.'
-               && ASCII_ISALPHA(files[i][len - 3])
-               && ASCII_ISALPHA(files[i][len - 2])
-               && TOLOWER_ASC(files[i][len - 1]) == 'x') {
-      /* ".abx" -> language "ab" */
-      lang[0] = TOLOWER_ASC(files[i][len - 3]);
-      lang[1] = TOLOWER_ASC(files[i][len - 2]);
-    } else
-      continue;
-
-    int j;
-    /* Did we find this language already? */
-    for (j = 0; j < ga.ga_len; j += 2)
-      if (STRNCMP(lang, ((char_u *)ga.ga_data) + j, 2) == 0)
-        break;
-    if (j == ga.ga_len) {
-      /* New language, add it. */
-      ga_grow(&ga, 2);
-      ((char_u *)ga.ga_data)[ga.ga_len++] = lang[0];
-      ((char_u *)ga.ga_data)[ga.ga_len++] = lang[1];
-    }
-  }
-
-  /*
-   * Loop over the found languages to generate a tags file for each one.
-   */
-  for (int j = 0; j < ga.ga_len; j += 2) {
-    STRCPY(fname, "tags-xx");
-    fname[5] = ((char_u *)ga.ga_data)[j];
-    fname[6] = ((char_u *)ga.ga_data)[j + 1];
-    if (fname[5] == 'e' && fname[6] == 'n') {
-      /* English is an exception: use ".txt" and "tags". */
-      fname[4] = NUL;
-      STRCPY(ext, ".txt");
-    } else {
-      /* Language "ab" uses ".abx" and "tags-ab". */
-      STRCPY(ext, ".xxx");
-      ext[1] = fname[5];
-      ext[2] = fname[6];
-    }
-    helptags_one(dirname, ext, fname, add_help_tags);
-  }
-
-  ga_clear(&ga);
-  FreeWild(filecount, files);
-
-  xfree(dirname);
-}
-
+/// Generate tags in one help directory
 static void 
 helptags_one (
     char_u *dir,               /* doc directory */
@@ -5109,6 +5001,132 @@ helptags_one (
 
   GA_DEEP_CLEAR_PTR(&ga);
   fclose(fd_tags);          /* there is no check for an error... */
+}
+
+/// Generate tags in one help directory, taking care of translations.
+static void do_helptags(char_u *dirname, int add_help_tags)
+{
+  int len;
+  garray_T ga;
+  char_u lang[2];
+  char_u ext[5];
+  char_u fname[8];
+  int filecount;
+  char_u **files;
+
+  // Get a list of all files in the help directory and in subdirectories.
+  STRCPY(NameBuff, dirname);
+  add_pathsep((char *)NameBuff);
+  STRCAT(NameBuff, "**");
+
+  // Note: We cannot just do `&NameBuff` because it is a statically sized array
+  //       so `NameBuff == &NameBuff` according to C semantics.
+  char_u *buff_list[1] = {NameBuff};
+  if (gen_expand_wildcards(1, buff_list, &filecount, &files,
+                           EW_FILE|EW_SILENT) == FAIL
+      || filecount == 0) {
+    EMSG2("E151: No match: %s", NameBuff);
+    xfree(dirname);
+    return;
+  }
+
+  /* Go over all files in the directory to find out what languages are
+   * present. */
+  int j;
+  ga_init(&ga, 1, 10);
+  for (int i = 0; i < filecount; ++i)
+  {
+    len = (int)STRLEN(files[i]);
+    if (len <= 4) {
+      continue;
+    }
+    if (STRICMP(files[i] + len - 4, ".txt") == 0) {
+      /* ".txt" -> language "en" */
+      lang[0] = 'e';
+      lang[1] = 'n';
+    } else if (files[i][len - 4] == '.'
+               && ASCII_ISALPHA(files[i][len - 3])
+               && ASCII_ISALPHA(files[i][len - 2])
+               && TOLOWER_ASC(files[i][len - 1]) == 'x') {
+      /* ".abx" -> language "ab" */
+      lang[0] = TOLOWER_ASC(files[i][len - 3]);
+      lang[1] = TOLOWER_ASC(files[i][len - 2]);
+    } else
+      continue;
+
+    /* Did we find this language already? */
+    for (j = 0; j < ga.ga_len; j += 2)
+      if (STRNCMP(lang, ((char_u *)ga.ga_data) + j, 2) == 0)
+        break;
+    if (j == ga.ga_len)
+    {
+      /* New language, add it. */
+      ga_grow(&ga, 2);
+      ((char_u *)ga.ga_data)[ga.ga_len++] = lang[0];
+      ((char_u *)ga.ga_data)[ga.ga_len++] = lang[1];
+    }
+  }
+
+  /*
+   * Loop over the found languages to generate a tags file for each one.
+   */
+  for (j = 0; j < ga.ga_len; j += 2) {
+    STRCPY(fname, "tags-xx");
+    fname[5] = ((char_u *)ga.ga_data)[j];
+    fname[6] = ((char_u *)ga.ga_data)[j + 1];
+    if (fname[5] == 'e' && fname[6] == 'n') {
+      /* English is an exception: use ".txt" and "tags". */
+      fname[4] = NUL;
+      STRCPY(ext, ".txt");
+    } else {
+      /* Language "ab" uses ".abx" and "tags-ab". */
+      STRCPY(ext, ".xxx");
+      ext[1] = fname[5];
+      ext[2] = fname[6];
+    }
+    helptags_one(dirname, ext, fname, add_help_tags);
+  }
+
+  ga_clear(&ga);
+  FreeWild(filecount, files);
+}
+
+    static void
+helptags_cb(char_u *fname, void *cookie)
+{
+    do_helptags(fname, *(bool *)cookie);
+}
+
+/*
+ * ":helptags"
+ */
+void ex_helptags(exarg_T *eap)
+{
+  expand_T xpc;
+  char_u *dirname;
+  bool add_help_tags = false;
+
+  /* Check for ":helptags ++t {dir}". */
+  if (STRNCMP(eap->arg, "++t", 3) == 0 && ascii_iswhite(eap->arg[3])) {
+    add_help_tags = true;
+    eap->arg = skipwhite(eap->arg + 3);
+  }
+
+  if (STRCMP(eap->arg, "ALL") == 0) {
+    do_in_path(p_rtp, (char_u *)"doc", DIP_ALL + DIP_DIR,
+               helptags_cb, &add_help_tags);
+  } else {
+    ExpandInit(&xpc);
+    xpc.xp_context = EXPAND_DIRECTORIES;
+    dirname = ExpandOne(&xpc, eap->arg, NULL,
+                        WILD_LIST_NOTFOUND|WILD_SILENT, WILD_EXPAND_FREE);
+    if (dirname == NULL || !os_isdir(dirname)) {
+      EMSG2(_("E150: Not a directory: %s"), eap->arg);
+    } else {
+      do_helptags(dirname, add_help_tags);
+    }
+    xfree(dirname);
+  }
 }
 
 struct sign

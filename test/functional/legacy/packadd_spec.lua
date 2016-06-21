@@ -90,6 +90,23 @@ describe('packadd', function()
         packloadall!
         call assert_equal(4321, g:plugin_bar_number)
       endfunc
+
+      func Test_helptags()
+        let docdir1 = &packpath . '/pack/mine/start/foo/doc'
+        let docdir2 = &packpath . '/pack/mine/start/bar/doc'
+        call mkdir(docdir1, 'p')
+        call mkdir(docdir2, 'p')
+        call writefile(['look here: *look-here*'], docdir1 . '/bar.txt')
+        call writefile(['look away: *look-away*'], docdir2 . '/foo.txt')
+        exe 'set rtp=' . &packpath . '/pack/mine/start/foo,' . &packpath . '/pack/mine/start/bar'
+
+        helptags ALL
+
+        let tags1 = readfile(docdir1 . '/tags') 
+        call assert_true(tags1[0] =~ 'look-here')
+        let tags2 = readfile(docdir2 . '/tags') 
+        call assert_true(tags2[0] =~ 'look-away')
+      endfunc
     ]=])
     call('SetUp')
   end)
@@ -110,6 +127,11 @@ describe('packadd', function()
 
   it('works with :packloadall', function()
     call('Test_packloadall')
+    expected_empty()
+  end)
+
+  it('works with helptags', function()
+    call('Test_helptags')
     expected_empty()
   end)
 
