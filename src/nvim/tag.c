@@ -2023,9 +2023,8 @@ get_tagfname (
     if (first) {
       ga_clear_strings(&tag_fnames);
       ga_init(&tag_fnames, (int)sizeof(char_u *), 10);
-      do_in_runtimepath((char_u *)
-          "doc/tags doc/tags-??"
-          , TRUE, found_tagfile_cb, NULL);
+      do_in_runtimepath((char_u *)"doc/tags doc/tags-??", DIP_ALL,
+                        found_tagfile_cb, NULL);
     }
 
     if (tnp->tn_hf_idx >= tag_fnames.ga_len) {

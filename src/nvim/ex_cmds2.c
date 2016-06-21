@@ -2237,7 +2237,7 @@ void ex_compiler(exarg_T *eap)
     do_unlet((char_u *)"b:current_compiler", true);
 
     snprintf((char *)buf, bufsize, "compiler/%s.vim", eap->arg);
-    if (source_runtime(buf, true) == FAIL) {
+    if (source_runtime(buf, DIP_ALL) == FAIL) {
       EMSG2(_("E666: compiler not supported: %s"), eap->arg);
     }
     xfree(buf);
@@ -2266,7 +2266,7 @@ void ex_compiler(exarg_T *eap)
 /// ":runtime {name}"
 void ex_runtime(exarg_T *eap)
 {
-  source_runtime(eap->arg, eap->forceit);
+  source_runtime(eap->arg, eap->forceit ? DIP_ALL : 0);
 }
 
 
@@ -2277,12 +2277,12 @@ static void source_callback(char_u *fname, void *cookie)
 
 /// Source the file "name" from all directories in 'runtimepath'.
 /// "name" can contain wildcards.
-/// When "all" is true: source all files, otherwise only the first one.
+/// When "flags" has DIP_ALL: source all files, otherwise only the first one.
 ///
 /// return FAIL when no file could be sourced, OK otherwise.
-int source_runtime(char_u *name, int all)
+int source_runtime(char_u *name, int flags)
 {
-  return do_in_runtimepath(name, all, source_callback, NULL);
+  return do_in_runtimepath(name, flags, source_callback, NULL);
 }
 
 /// Find the file "name" in all directories in "path" and invoke
@@ -2379,16 +2379,40 @@ int do_in_path(char_u *path, char_u *name, int flags,
 
 /// Find "name" in 'runtimepath'.  When found, invoke the callback function for
 /// it: callback(fname, "cookie")
-/// When "all" is true repeat for all matches, otherwise only the first one is
-/// used.
+/// When "flags" has DIP_ALL repeat for all matches, otherwise only the first
+/// one is used.
 /// Returns OK when at least one match found, FAIL otherwise.
 /// If "name" is NULL calls callback for each entry in runtimepath. Cookie is
 /// passed by reference in this case, setting it to NULL indicates that callback
 /// has done its job.
-int do_in_runtimepath(char_u *name, bool all, DoInRuntimepathCB callback,
+int do_in_runtimepath(char_u *name, int flags, DoInRuntimepathCB callback,
                       void *cookie)
 {
-  return do_in_path(p_rtp, name, all ? DIP_ALL : 0, callback, cookie);
+  int done = do_in_path(p_rtp, name, flags, callback, cookie);
+
+  if (done == FAIL && (flags & DIP_START)) {
+    char *start_dir = "pack/*/start/*/%s";
+    size_t len = STRLEN(start_dir) + STRLEN(name);
+    char_u *s = xmallocz(len);
+
+    vim_snprintf((char *)s, len, start_dir, name);
+    done = do_in_path(p_pp, s, flags, callback, cookie);
+
+    xfree(s);
+  }
+
+  if (done == FAIL && (flags & DIP_OPT)) {
+    char *opt_dir = "pack/*/opt/*/%s";
+    size_t len = STRLEN(opt_dir) + STRLEN(name);
+    char_u *s = xmallocz(len);
+
+    vim_snprintf((char *)s, len, opt_dir, name);
+    done = do_in_path(p_pp, s, flags, callback, cookie);
+
+    xfree(s);
+  }
+
+  return done;
 }
 
 // Expand wildcards in "pat" and invoke do_source() for each match.

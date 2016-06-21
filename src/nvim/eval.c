@@ -20499,7 +20499,7 @@ script_autoload (
     }
 
     /* Try loading the package from $VIMRUNTIME/autoload/<name>.vim */
-    if (source_runtime(scriptname, FALSE) == OK)
+    if (source_runtime(scriptname, 0) == OK)
       ret = TRUE;
   }
 

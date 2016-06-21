@@ -4208,7 +4208,7 @@ static void syn_cmd_include(exarg_T *eap, int syncing)
   prev_toplvl_grp = curwin->w_s->b_syn_topgrp;
   curwin->w_s->b_syn_topgrp = sgl_id;
   if (source ? do_source(eap->arg, FALSE, DOSO_NONE) == FAIL
-      : source_runtime(eap->arg, TRUE) == FAIL)
+      : source_runtime(eap->arg, DIP_ALL) == FAIL)
     EMSG2(_(e_notopen), eap->arg);
   curwin->w_s->b_syn_topgrp = prev_toplvl_grp;
   current_syn_inc_tag = prev_syn_inc_tag;
@@ -6027,7 +6027,7 @@ init_highlight (
       EMSG(_("E679: recursive loop loading syncolor.vim"));
     else {
       ++recursive;
-      (void)source_runtime((char_u *)"syntax/syncolor.vim", TRUE);
+      (void)source_runtime((char_u *)"syntax/syncolor.vim", DIP_ALL);
       --recursive;
     }
   }
@@ -6052,7 +6052,7 @@ int load_colors(char_u *name)
   recursive = TRUE;
   buf = xmalloc(STRLEN(name) + 12);
   sprintf((char *)buf, "colors/%s.vim", name);
-  retval = source_runtime(buf, FALSE);
+  retval = source_runtime(buf, DIP_START + DIP_OPT);
   xfree(buf);
   apply_autocmds(EVENT_COLORSCHEME, name, curbuf->b_fname, FALSE, curbuf);
 

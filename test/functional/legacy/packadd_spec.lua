@@ -107,6 +107,26 @@ describe('packadd', function()
         let tags2 = readfile(docdir2 . '/tags') 
         call assert_true(tags2[0] =~ 'look-away')
       endfunc
+
+      func Test_colorscheme()
+        let colordirrun = &packpath . '/runtime/colors'
+        let colordirstart = &packpath . '/pack/mine/start/foo/colors'
+        let colordiropt = &packpath . '/pack/mine/opt/bar/colors'
+        call mkdir(colordirrun, 'p')
+        call mkdir(colordirstart, 'p')
+        call mkdir(colordiropt, 'p')
+        call writefile(['let g:found_one = 1'], colordirrun . '/one.vim')
+        call writefile(['let g:found_two = 1'], colordirstart . '/two.vim')
+        call writefile(['let g:found_three = 1'], colordiropt . '/three.vim')
+        exe 'set rtp=' . &packpath . '/runtime'
+
+        colorscheme one
+        call assert_equal(1, g:found_one)
+        colorscheme two
+        call assert_equal(1, g:found_two)
+        colorscheme three
+        call assert_equal(1, g:found_three)
+      endfunc
     ]=])
     call('SetUp')
   end)
@@ -132,6 +152,11 @@ describe('packadd', function()
 
   it('works with helptags', function()
     call('Test_helptags')
+    expected_empty()
+  end)
+
+  it('works with colorschemes', function()
+    call('Test_colorscheme')
     expected_empty()
   end)
 
