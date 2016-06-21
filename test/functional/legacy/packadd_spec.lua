@@ -73,6 +73,23 @@ describe('packadd', function()
         packadd! mytest
         call assert_equal(new_rtp, &rtp)
       endfunc
+
+      func Test_packloadall()
+        let plugindir = &packpath . '/pack/mine/start/foo/plugin'
+        call mkdir(plugindir, 'p')
+        call writefile(['let g:plugin_foo_number = 1234'], plugindir . '/bar.vim')
+        packloadall
+        call assert_equal(1234, g:plugin_foo_number)
+
+        " only works once
+        call writefile(['let g:plugin_bar_number = 4321'], plugindir . '/bar2.vim')
+        packloadall
+        call assert_false(exists('g:plugin_bar_number'))
+
+        " works when ! used
+        packloadall!
+        call assert_equal(4321, g:plugin_bar_number)
+      endfunc
     ]=])
     call('SetUp')
   end)
@@ -88,6 +105,11 @@ describe('packadd', function()
 
   it('works with packadd!', function()
     call('Test_packadd_noload')
+    expected_empty()
+  end)
+
+  it('works with :packloadall', function()
+    call('Test_packloadall')
     expected_empty()
   end)
 

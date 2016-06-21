@@ -1244,7 +1244,7 @@ static void load_plugins(void)
     source_runtime((char_u *)"plugin/**/*.vim", TRUE);
     TIME_MSG("loading plugins");
 
-    source_packages();
+    ex_packloadall(NULL);
     TIME_MSG("loading packages");
   }
 }
