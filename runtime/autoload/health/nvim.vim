@@ -2,7 +2,6 @@ function! s:trim(s) abort
   return substitute(a:s, '^\_s*\|\_s*$', '', 'g')
 endfunction
 
-
 " Simple version comparison.
 function! s:version_cmp(a, b) abort
   let a = split(a:a, '\.')
@@ -118,44 +117,11 @@ function! s:check_bin(bin, notes) abort
 endfunction
 
 
-" Text wrapping that returns a list of lines
-function! s:textwrap(text, width) abort
-  let pattern = '.*\%(\s\+\|\_$\)\zs\%<'.a:width.'c'
-  return map(split(a:text, pattern), 's:trim(v:val)')
-endfunction
-
-
-" Echo wrapped notes
-function! s:report_notes(notes) abort
-  if empty(a:notes)
-    return
-  endif
-
-  echo '  Messages:'
-  for msg in a:notes
-    if msg =~# '\n'
-      let msg_lines = []
-      for msgl in filter(split(msg, '\n'), 'v:val !~# ''^\s*$''')
-        call extend(msg_lines, s:textwrap(msgl, 74))
-      endfor
-    else
-      let msg_lines = s:textwrap(msg, 74)
-    endif
-
-    if !len(msg_lines)
-      continue
-    endif
-    echo '    *' msg_lines[0]
-    if len(msg_lines) > 1
-      echo join(map(msg_lines[1:], '"      ".v:val'), '\n')
-    endif
-  endfor
-endfunction
 
 
 " Load the remote plugin manifest file and check for unregistered plugins
 function! s:diagnose_manifest() abort
-  echo 'Checking: Remote Plugins'
+  call health#report_start('Remote Plugins')
   let existing_rplugins = {}
 
   for item in remote#host#PluginsForHost('python')
@@ -206,15 +172,13 @@ function! s:diagnose_manifest() abort
     endfor
   endfor
 
-  echo '  Status: '
   if require_update
-    echon 'Out of date'
-    call add(notes, 'Run :UpdateRemotePlugins')
+    call health#report_warn('Out of date', ['Run `:UpdateRemotePlugins`'])
   else
-    echon 'Up to date'
+    call health#report_info('Up to date')
   endif
 
-  call s:report_notes(notes)
+  call health#report_notes(notes)
 endfunction
 
 
@@ -243,9 +207,10 @@ function! s:diagnose_python(version) abort
     call health#report_warn('No Python interpreter was found with the neovim '
             \ . 'module.  Using the first available for diagnostics.')
 
-    " TODO: Not sure what to do about these errors
+    " TODO: Not sure what to do about these errors, or if this is the right
+    " type.
     if !empty(pythonx_errs)
-      call add(notes, pythonx_errs)
+      call health#report_warn(pythonx_errs)
     endif
     let old_skip = get(g:, host_skip_var, 0)
     let g:[host_skip_var] = 1
@@ -266,24 +231,25 @@ function! s:diagnose_python(version) abort
 
   if !empty(python_bin_name) && empty(python_bin) && empty(pythonx_errs)
     if !exists('g:'.host_prog_var)
-      call health#report_warn(printf("g:%s" is not set.  Searching for '
+      call health#report_warn(printf('"g:%s" is not set.  Searching for '
             \ . '%s in the environment.', host_prog_var, python_bin_name))
     endif
 
     if !empty(pyenv)
       if empty(pyenv_root)
-        call add(notes, 'Warning: pyenv was found, but $PYENV_ROOT '
-              \ . 'is not set.  Did you follow the final install '
-              \ . 'instructions?')
+        call health#report_warn(
+              \ 'pyenv was found, but $PYENV_ROOT is not set.'
+              \ ['Did you follow the final install instructions?']
+              \ )
       else
-        call add(notes, printf('Notice: pyenv found: "%s"', pyenv))
+        call health#report_info(printf('pyenv found: "%s"', pyenv))
       endif
 
       let python_bin = s:trim(system(
             \ printf('"%s" which %s 2>/dev/null', pyenv, python_bin_name)))
 
       if empty(python_bin)
-        call add(notes, printf('Warning: pyenv couldn''t find %s.', python_bin_name))
+        call health#report_warn(printf('pyenv couldn''t find %s.', python_bin_name))
       endif
     endif
 
@@ -302,16 +268,16 @@ function! s:diagnose_python(version) abort
         if len(python_multiple)
           " This is worth noting since the user may install something
           " that changes $PATH, like homebrew.
-          call add(notes, printf('Suggestion: There are multiple %s executables found.  '
+          call health#report_info(printf('There are multiple %s executables found.  '
                 \ . 'Set "g:%s" to avoid surprises.', python_bin_name, host_prog_var))
         endif
 
         if python_bin =~# '\<shims\>'
-          call add(notes, printf('Warning: "%s" appears to be a pyenv shim.  '
-                \ . 'This could mean that a) the "pyenv" executable is not in '
-                \ . '$PATH, b) your pyenv installation is broken.  '
-                \ . 'You should set "g:%s" to avoid surprises.',
-                \ python_bin, host_prog_var))
+          call health#report_warn(printf('"%s" appears to be a pyenv shim.', python_bin), [
+                      \ 'The "pyenv" executable is not in $PATH,',
+                      \ 'Your pyenv installation is broken. You should set '
+                      \ . '"g:'.host_prog_var.'" to avoid surprises.',
+                      \ ])
         endif
       endif
     endif
@@ -320,10 +286,12 @@ function! s:diagnose_python(version) abort
   if !empty(python_bin)
     if !empty(pyenv) && !exists('g:'.host_prog_var) && !empty(pyenv_root)
           \ && resolve(python_bin) !~# '^'.pyenv_root.'/'
-      call add(notes, printf('Suggestion: Create a virtualenv specifically '
+      call health#report_warn('Your virtualenv is not set up optimally.', [
+            \ printf('Suggestion: Create a virtualenv specifically '
             \ . 'for Neovim using pyenv and use "g:%s".  This will avoid '
             \ . 'the need to install Neovim''s Python client in each '
-            \ . 'version/virtualenv.', host_prog_var))
+            \ . 'version/virtualenv.', host_prog_var)
+            \ ])
     endif
 
     if !empty(venv) && exists('g:'.host_prog_var)
@@ -334,17 +302,19 @@ function! s:diagnose_python(version) abort
       endif
 
       if resolve(python_bin) !~# '^'.venv_root.'/'
-        call add(notes, printf('Suggestion: Create a virtualenv specifically '
+        call health#report_warn('Your virtualenv is not set up optimatlly.', [
+              \ printf('Suggestion: Create a virtualenv specifically '
               \ . 'for Neovim and use "g:%s".  This will avoid '
               \ . 'the need to install Neovim''s Python client in each '
-              \ . 'virtualenv.', host_prog_var))
+              \ . 'virtualenv.', host_prog_var)
+              \ ])
       endif
     endif
   endif
 
   if empty(python_bin) && !empty(python_bin_name)
     " An error message should have already printed.
-    call add(notes, printf('Error: "%s" was not found.', python_bin_name))
+    call health#report_error(printf('"%s" was not found.', python_bin_name))
   elseif !empty(python_bin) && !s:check_bin(python_bin, notes)
     let python_bin = ''
   endif
@@ -374,20 +344,21 @@ function! s:diagnose_python(version) abort
   endif
 
   " Diagnostic output
-  echo 'Checking: Python' a:version
-  echo '  Executable:' (empty(python_bin) ? 'Not found' : python_bin)
+  call health#report_info('Executable:' . (empty(python_bin) ? 'Not found' : python_bin))
   if len(python_multiple)
     for path_bin in python_multiple
-      echo '     (other):' path_bin
+      call health#report_info('Other python executable: ' . path_bin)
     endfor
   endif
 
   if !empty(python_bin)
     let [pyversion, current, latest, status] = s:version_info(python_bin)
     if a:version != str2nr(pyversion)
-      call add(notes, 'Warning: Got an unexpected version of Python.  '
-            \ . 'This could lead to confusing error messages.  Please '
-            \ . 'consider this before reporting bugs to plugin developers.')
+      " call add(notes, 'Warning: Got an unexpected version of Python.  '
+      "       \ . 'This could lead to confusing error messages.  Please '
+      "       \ . 'consider this before reporting bugs to plugin developers.')
+      call health#report_warn('Got an unexpected version of Python.' .
+                  \ ' This could lead to confusing error messages.')
     endif
     if a:version == 3 && str2float(pyversion) < 3.3
       call health#report_warn('Python 3.3+ is recommended.')
@@ -410,17 +381,17 @@ function! s:diagnose_python(version) abort
     endif
 
     if status == 'outdated'
-      echon ' (latest: '.latest.')'
+      call health#report_warn('Latest Neovim Python client versions: '.latest.')')
     else
-      echon ' ('.status.')'
+      call health#report_info('Latest Neovim Python client is installed: ('.status.')')
     endif
   endif
 
-  call s:report_notes(notes)
+  call health#report_notes(notes)
 endfunction
 
 
-function! health#nvim#check(bang) abort
+function! health#nvim#check() abort
   redir => report
   try
     silent call s:diagnose_python(2)
@@ -433,17 +404,5 @@ function! health#nvim#check(bang) abort
     redir END
   endtry
 
-  if a:bang
-    new
-    setlocal bufhidden=wipe
-    call setline(1, split(report, "\n"))
-    setlocal nomodified
-  else
-    echo report
-    echo '\nTip: Use '
-    echohl Identifier
-    echon ':CheckHealth!'
-    echohl None
-    echon ' to open this in a new buffer.'
-  endif
+  return report
 endfunction

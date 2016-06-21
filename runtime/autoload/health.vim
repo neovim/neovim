@@ -5,17 +5,33 @@ let g:health_checkers = get(g:, 'health_checkers', {})
 let s:current_checker = get(s:, 'current_checker', '')
 
 function! health#check(bang) abort
-  echom 'Checking health'
+  let l:report = 'Checking health'
+
 
   for l:checker in items(g:health_checkers)
     " Disabled checkers will not run their registered check functions
     if l:checker[1]
       let s:current_checker = l:checker[0]
-      echo 'Checker ' . s:current_checker . 'says: ' . l:checker[1]
+      let l:report .= printf("\nChecker %s says: %s", s:current_checker, l:checker[1])
 
-      call {l:checker[0]}(a:bang)
+      let l:report .= {l:checker[0]}()
+
     endif
   endfor
+
+  if a:bang
+    new
+    setlocal bufhidden=wipe
+    call setline(1, split(report, "\n"))
+    setlocal nomodified
+  else
+    echo report
+    echo "\nTip: Use "
+    echohl Identifier
+    echon ':CheckHealth!'
+    echohl None
+    echon ' to open this in a new buffer.'
+  endif
 
 endfunction
 
@@ -61,9 +77,9 @@ endfunction
 function! health#report_warn(msg, ...) abort
   " Optional argument of suggestions
   if type(a:0) == type([])
-    l:suggestions = a:0
+    let l:suggestions = a:0
   else
-    l:suggestions = []
+    let l:suggestions = []
   endif
 
   echo '    - WARNING: ' . a:msg
@@ -81,14 +97,52 @@ endfunction
 function! health#report_error(msg, ...) abort
   " Optional argument of suggestions
   if type(a:0) == type([])
-    l:suggestions = a:0
+    let l:suggestions = a:0
   else
-    l:suggestions = []
+    let l:suggestions = []
   endif
 
   echo '    - ERROR  : ' . a:msg
   for l:suggestion in l:suggestions
     echo '      - SUGGESTION: ' . l:suggestion
+  endfor
+endfunction
+
+function! s:trim(s) abort
+  return substitute(a:s, '^\_s*\|\_s*$', '', 'g')
+endfunction
+
+" Text wrapping that returns a list of lines
+function! s:textwrap(text, width) abort
+  let pattern = '.*\%(\s\+\|\_$\)\zs\%<'.a:width.'c'
+  return map(split(a:text, pattern), 's:trim(v:val)')
+endfunction
+
+""
+" Echo wrapped notes
+function! health#report_notes(notes) abort
+  if empty(a:notes)
+    return
+  endif
+
+  echo '    - NOTE:'
+  for msg in a:notes
+    if msg =~# '\n'
+      let msg_lines = []
+      for msgl in filter(split(msg, '\n'), 'v:val !~# ''^\s*$''')
+        call extend(msg_lines, s:textwrap(msgl, 74))
+      endfor
+    else
+      let msg_lines = s:textwrap(msg, 74)
+    endif
+
+    if !len(msg_lines)
+      continue
+    endif
+    echo '    - ' msg_lines[0]
+    if len(msg_lines) > 1
+      echo join(map(msg_lines[1:], '"      ".v:val'), "\n")
+    endif
   endfor
 endfunction
 
