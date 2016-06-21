@@ -6,6 +6,7 @@ local helpers = require('test.unit.helpers')
 local cimport = helpers.cimport
 local cppimport = helpers.cppimport
 local internalize = helpers.internalize
+local ok = helpers.ok
 local eq = helpers.eq
 local neq = helpers.neq
 local ffi = helpers.ffi
@@ -17,10 +18,6 @@ local NULL = helpers.NULL
 local NODE_NORMAL = 0
 local NODE_WRITABLE = 1
 
-local function ok(expr)
-  assert.is_true(expr)
-end
-
 cimport('unistd.h')
 cimport('./src/nvim/os/shell.h')
 cimport('./src/nvim/option_defs.h')
@@ -30,6 +27,12 @@ local fs = cimport('./src/nvim/os/os.h')
 cppimport('sys/stat.h')
 cppimport('fcntl.h')
 cppimport('uv-errno.h')
+
+local s = ''
+for i = 0, 255 do
+  s = s .. (i == 0 and '\0' or ('%c'):format(i))
+end
+local fcontents = s:rep(16)
 
 local buffer = ""
 local directory = nil
@@ -547,12 +550,6 @@ describe('fs function', function()
     describe('os_read', function()
       local file = 'test-unit-os-fs_spec-os_read.dat'
 
-      local s = ''
-      for i = 0, 255 do
-        s = s .. (i == 0 and '\0' or ('%c'):format(i))
-      end
-      local fcontents = s:rep(16)
-
       before_each(function()
         local f = io.open(file, 'w')
         f:write(fcontents)
@@ -606,12 +603,6 @@ describe('fs function', function()
         return
       end
       local file = 'test-unit-os-fs_spec-os_readv.dat'
-
-      local s = ''
-      for i = 0, 255 do
-        s = s .. (i == 0 and '\0' or ('%c'):format(i))
-      end
-      local fcontents = s:rep(16)
 
       before_each(function()
         local f = io.open(file, 'w')
@@ -672,12 +663,6 @@ describe('fs function', function()
     describe('os_write', function()
       -- Function may be absent
       local file = 'test-unit-os-fs_spec-os_write.dat'
-
-      local s = ''
-      for i = 0, 255 do
-        s = s .. (i == 0 and '\0' or ('%c'):format(i))
-      end
-      local fcontents = s:rep(16)
 
       before_each(function()
         local f = io.open(file, 'w')

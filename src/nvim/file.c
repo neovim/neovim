@@ -29,8 +29,6 @@
 # include "file.c.generated.h"
 #endif
 
-#define RWBUFSIZE (IOSIZE - 1)
-
 /// Open file
 ///
 /// @param[out]  ret_fp  Address where information needed for reading from or
@@ -80,7 +78,7 @@ int file_open(FileDescriptor *const ret_fp, const char *const fname,
   ret_fp->wr = (wr == kTrue);
   ret_fp->fd = fd;
   ret_fp->eof = false;
-  ret_fp->rv = rbuffer_new(RWBUFSIZE);
+  ret_fp->rv = rbuffer_new(kRWBufferSize);
   ret_fp->_error = 0;
   if (ret_fp->wr) {
     ret_fp->rv->data = ret_fp;
@@ -162,7 +160,7 @@ int file_fsync(FileDescriptor *const fp)
 /// Buffer used for writing
 ///
 /// Like IObuff, but allows file_\* callers not to care about spoiling it.
-static char writebuf[RWBUFSIZE];
+static char writebuf[kRWBufferSize];
 
 /// Function run when RBuffer is full when writing to a file
 ///
@@ -175,7 +173,10 @@ static void file_rb_write_full_cb(RBuffer *const rv, FileDescriptor *const fp)
 {
   assert(fp->wr);
   assert(rv->data == (void *)fp);
-  const size_t read_bytes = rbuffer_read(rv, writebuf, RWBUFSIZE);
+  if (rbuffer_size(rv) == 0) {
+    return;
+  }
+  const size_t read_bytes = rbuffer_read(rv, writebuf, kRWBufferSize);
   const ptrdiff_t wres = os_write(fp->fd, writebuf, read_bytes);
   if (wres != (ptrdiff_t)read_bytes) {
     if (wres >= 0) {
@@ -215,22 +216,25 @@ ptrdiff_t file_read(FileDescriptor *const fp, char *const ret_buf,
     if (read_remaining) {
       assert(rbuffer_size(rv) == 0);
       rbuffer_reset(rv);
-      if (read_remaining >= RWBUFSIZE) {
+      if (read_remaining >= kRWBufferSize) {
 #ifdef HAVE_READV
         // If there is readv() syscall, then take an opportunity to populate
         // both target buffer and RBuffer at once, …
-        size_t read_count;
+        size_t write_count;
         struct iovec iov[] = {
           { .iov_base = buf, .iov_len = read_remaining },
-          { .iov_base = rbuffer_read_ptr(rv, &read_count), .iov_len = RWBUFSIZE
-          },
+          { .iov_base = rbuffer_write_ptr(rv, &write_count),
+            .iov_len = kRWBufferSize },
         };
-        assert(read_count == RWBUFSIZE);
+        assert(write_count == kRWBufferSize);
         const ptrdiff_t r_ret = os_readv(fp->fd, &fp->eof, iov,
                                          ARRAY_SIZE(iov));
         if (r_ret > 0) {
           if (r_ret > (ptrdiff_t)read_remaining) {
+            read_remaining = 0;
             rbuffer_produced(rv, (size_t)(r_ret - (ptrdiff_t)read_remaining));
+          } else {
+            read_remaining -= (size_t)r_ret;
           }
         } else if (r_ret < 0) {
           return r_ret;
@@ -250,8 +254,8 @@ ptrdiff_t file_read(FileDescriptor *const fp, char *const ret_buf,
         size_t write_count;
         const ptrdiff_t r_ret = os_read(fp->fd, &fp->eof,
                                         rbuffer_write_ptr(rv, &write_count),
-                                        RWBUFSIZE);
-        assert(write_count == RWBUFSIZE);
+                                        kRWBufferSize);
+        assert(write_count == kRWBufferSize);
         if (r_ret > 0) {
           rbuffer_produced(rv, (size_t)r_ret);
         } else if (r_ret < 0) {
@@ -288,7 +292,7 @@ ptrdiff_t file_write(FileDescriptor *const fp, const char *const buf,
 
 /// Buffer used for skipping. Its contents is undefined and should never be
 /// used.
-static char skipbuf[RWBUFSIZE];
+static char skipbuf[kRWBufferSize];
 
 /// Skip some bytes
 ///
@@ -300,10 +304,8 @@ ptrdiff_t file_skip(FileDescriptor *const fp, const size_t size)
   assert(!fp->wr);
   size_t read_bytes = 0;
   do {
-    ptrdiff_t new_read_bytes = file_read(
-        fp, skipbuf, (size_t)(size - read_bytes > sizeof(skipbuf)
-                              ? sizeof(skipbuf)
-                              : size - read_bytes));
+    const ptrdiff_t new_read_bytes = file_read(
+        fp, skipbuf, MIN(size - read_bytes, sizeof(skipbuf)));
     if (new_read_bytes < 0) {
       return new_read_bytes;
     } else if (new_read_bytes == 0) {

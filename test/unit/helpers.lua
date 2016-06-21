@@ -7,6 +7,7 @@ local global_helpers = require('test.helpers')
 
 local neq = global_helpers.neq
 local eq = global_helpers.eq
+local ok = global_helpers.ok
 
 -- add some standard header locations
 for _, p in ipairs(Paths.include_paths) do
@@ -34,7 +35,8 @@ local function filter_complex_blocks(body)
     if not (string.find(line, "(^)", 1, true) ~= nil
             or string.find(line, "_ISwupper", 1, true)
             or string.find(line, "msgpack_zone_push_finalizer")
-            or string.find(line, "msgpack_unpacker_reserve_buffer")) then
+            or string.find(line, "msgpack_unpacker_reserve_buffer")
+            or string.find(line, "inline _Bool")) then
       result[#result + 1] = line
     end
   end
@@ -156,6 +158,7 @@ return {
   cimport = cimport,
   cppimport = cppimport,
   internalize = internalize,
+  ok = ok,
   eq = eq,
   neq = neq,
   ffi = ffi,

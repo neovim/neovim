@@ -32,6 +32,9 @@ typedef enum {
                        ///< kFileCreateOnly.
 } FileOpenFlags;
 
+static inline bool file_eof(const FileDescriptor *const fp)
+  REAL_FATTR_PURE REAL_FATTR_WARN_UNUSED_RESULT REAL_FATTR_NONNULL_ALL;
+
 /// Check whether end of file was encountered
 ///
 /// @param[in]  fp  File to check.
@@ -39,11 +42,12 @@ typedef enum {
 /// @return true if it was, false if it was not or read operation was never
 ///         performed.
 static inline bool file_eof(const FileDescriptor *const fp)
-  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
-  FUNC_ATTR_ALWAYS_INLINE
 {
   return fp->eof && rbuffer_size(fp->rv) == 0;
 }
+
+static inline int file_fd(const FileDescriptor *const fp)
+  REAL_FATTR_PURE REAL_FATTR_WARN_UNUSED_RESULT REAL_FATTR_NONNULL_ALL;
 
 /// Return the file descriptor associated with the FileDescriptor structure
 ///
@@ -51,11 +55,16 @@ static inline bool file_eof(const FileDescriptor *const fp)
 ///
 /// @return File descriptor.
 static inline int file_fd(const FileDescriptor *const fp)
-  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
-  FUNC_ATTR_ALWAYS_INLINE
 {
   return fp->fd;
 }
+
+enum {
+  /// Read or write buffer size
+  ///
+  /// Currently equal to (IOSIZE - 1), but they do not need to be connected.
+  kRWBufferSize = 1024
+};
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "file.h.generated.h"
