@@ -2883,12 +2883,12 @@ int shada_write_file(const char *const file, bool nomerge)
 
   char *const fname = shada_filename(file);
   char *tempname = NULL;
-  ShaDaWriteDef sd_writer = (ShaDaWriteDef) {
+  ShaDaWriteDef sd_writer = {
     .write = &write_file,
     .close = &close_sd_writer,
     .error = NULL,
   };
-  ShaDaReadDef sd_reader;
+  ShaDaReadDef sd_reader = { .close = NULL };
 
   if (!nomerge) {
     int error;
@@ -2931,6 +2931,8 @@ shada_write_file_open: {}
                 fname);
           xfree(fname);
           xfree(tempname);
+          assert(sd_reader.close != NULL);
+          sd_reader.close(&sd_reader);
           return FAIL;
         } else {
           (*wp)++;
@@ -2974,6 +2976,9 @@ shada_write_file_nomerge: {}
   if (sd_writer.cookie == NULL) {
     xfree(fname);
     xfree(tempname);
+    if (sd_reader.close != NULL) {
+      sd_reader.close(&sd_reader);
+    }
     return FAIL;
   }
 

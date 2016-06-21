@@ -310,7 +310,7 @@ ptrdiff_t file_skip(FileDescriptor *const fp, const size_t size)
       break;
     }
     read_bytes += (size_t)new_read_bytes;
-  } while (read_bytes < size && !fp->eof);
+  } while (read_bytes < size && !file_eof(fp));
 
   return (ptrdiff_t)read_bytes;
 }
