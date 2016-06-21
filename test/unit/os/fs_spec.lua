@@ -410,6 +410,9 @@ describe('fs function', function()
       end
       return ret1, ret2, ret3
     end
+    local function os_write(fd, data)
+      return fs.os_write(fd, data, data and #data or 0)
+    end
 
     describe('os_file_exists', function()
       it('returns false when given a non-existing file', function()
@@ -662,6 +665,45 @@ describe('fs function', function()
             (#fcontents * 1/4),
             {fcontents:sub(#fcontents * 3/4 + 1) .. ('\0'):rep(#fcontents * 2/4)}},
            {os_readv(fd, {#fcontents * 3/4})})
+        eq(0, os_close(fd))
+      end)
+    end)
+
+    describe('os_write', function()
+      -- Function may be absent
+      local file = 'test-unit-os-fs_spec-os_write.dat'
+
+      local s = ''
+      for i = 0, 255 do
+        s = s .. (i == 0 and '\0' or ('%c'):format(i))
+      end
+      local fcontents = s:rep(16)
+
+      before_each(function()
+        local f = io.open(file, 'w')
+        f:write(fcontents)
+        f:close()
+      end)
+
+      after_each(function()
+        os.remove(file)
+      end)
+
+      it('can write zero bytes to a file', function()
+        local fd = os_open(file, ffi.C.kO_WRONLY, 0)
+        ok(fd >= 0)
+        eq(0, os_write(fd, ''))
+        eq(0, os_write(fd, nil))
+        eq(fcontents, io.open(file, 'r'):read('*a'))
+        eq(0, os_close(fd))
+      end)
+
+      it('can write some data to a file', function()
+        local fd = os_open(file, ffi.C.kO_WRONLY, 0)
+        ok(fd >= 0)
+        eq(3, os_write(fd, 'abc'))
+        eq(4, os_write(fd, ' def'))
+        eq('abc def' .. fcontents:sub(8), io.open(file, 'r'):read('*a'))
         eq(0, os_close(fd))
       end)
     end)
