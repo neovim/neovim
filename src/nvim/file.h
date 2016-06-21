@@ -3,7 +3,6 @@
 
 #include <stdbool.h>
 #include <stddef.h>
-#include <fcntl.h>
 
 #include "nvim/func_attr.h"
 #include "nvim/rbuffer.h"
@@ -19,17 +18,18 @@ typedef struct {
 
 /// file_open() flags
 typedef enum {
-  FILE_READ_ONLY = O_RDONLY,  ///< Open file read-only.
-  FILE_CREATE = O_CREAT,  ///< Create file if it does not exist yet.
-  FILE_WRITE_ONLY = O_WRONLY,  ///< Open file for writing only.
-#ifdef O_NOFOLLOW
-  FILE_NOSYMLINK = O_NOFOLLOW,  ///< Do not allow symbolic links.
-#else
-  FILE_NOSYMLINK = 0,
-#endif
-  FILE_CREATE_ONLY = O_CREAT|O_EXCL,  ///< Only create the file, failing
-                                      ///< if it already exists.
-  FILE_TRUNCATE = O_TRUNC,  ///< Truncate the file if it exists.
+  kFileReadOnly = 1,  ///< Open file read-only. Default.
+  kFileCreate = 2,  ///< Create file if it does not exist yet.
+                    ///< Implies kFileWriteOnly.
+  kFileWriteOnly = 4,  ///< Open file for writing only.
+                       ///< Cannot be used with kFileReadOnly.
+  kFileNoSymlink = 8,  ///< Do not allow symbolic links.
+  kFileCreateOnly = 16,  ///< Only create the file, failing if it already
+                         ///< exists. Implies kFileWriteOnly. Cannot be used
+                         ///< with kFileCreate.
+  kFileTruncate = 32,  ///< Truncate the file if it exists.
+                       ///< Implies kFileWriteOnly. Cannot be used with
+                       ///< kFileCreateOnly.
 } FileOpenFlags;
 
 /// Check whether end of file was encountered

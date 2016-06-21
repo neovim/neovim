@@ -672,7 +672,7 @@ static ptrdiff_t read_file(ShaDaReadDef *const sd_reader, void *const dest,
     sd_reader->error = os_strerror((int)ret);
     return -1;
   }
-  sd_reader->fpos += (size_t) ret;
+  sd_reader->fpos += (size_t)ret;
   return ret;
 }
 
@@ -796,7 +796,7 @@ static int open_shada_file_for_reading(const char *const fname,
     .error = NULL,
     .eof = false,
     .fpos = 0,
-    .cookie = file_open_new(&error, fname, FILE_READ_ONLY, 0),
+    .cookie = file_open_new(&error, fname, kFileReadOnly, 0),
   };
   if (sd_reader->cookie == NULL) {
     return error;
@@ -1336,7 +1336,7 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
           }
         }
         if (!op_register_set(cur_entry.data.reg.name, (yankreg_T) {
-          .y_array = (char_u **) cur_entry.data.reg.contents,
+          .y_array = (char_u **)cur_entry.data.reg.contents,
           .y_size = cur_entry.data.reg.contents_size,
           .y_type = cur_entry.data.reg.type,
           .y_width = (colnr_T) cur_entry.data.reg.width,
@@ -2919,8 +2919,7 @@ int shada_write_file(const char *const file, bool nomerge)
     //    reading use u=rw permissions.
 shada_write_file_open: {}
     sd_writer.cookie = file_open_new(
-        &error, tempname, FILE_CREATE_ONLY|FILE_NOSYMLINK|FILE_WRITE_ONLY,
-        perm);
+        &error, tempname, kFileCreateOnly|kFileNoSymlink, perm);
     if (sd_writer.cookie == NULL) {
       if (error == UV_EEXIST || error == UV_ELOOP) {
         // File already exists, try another name
@@ -2964,8 +2963,8 @@ shada_write_file_nomerge: {}
       *tail = tail_save;
     }
     int error;
-    sd_writer.cookie = file_open_new(
-        &error, fname, FILE_CREATE|FILE_WRITE_ONLY|FILE_TRUNCATE, 0600);
+    sd_writer.cookie = file_open_new(&error, fname, kFileCreate|kFileTruncate,
+                                     0600);
     if (sd_writer.cookie == NULL) {
       emsgf(_(SERR "System error while opening ShaDa file %s for writing: %s"),
             fname, os_strerror(error));

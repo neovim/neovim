@@ -8,6 +8,7 @@
 #include <assert.h>
 #include <stddef.h>
 #include <stdbool.h>
+#include <fcntl.h>
 
 #include "auto/config.h"
 
@@ -46,15 +47,37 @@ int file_open(FileDescriptor *const ret_fp, const char *const fname,
               const int flags, const int mode)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
+  int os_open_flags = 0;
   int fd;
+  TriState wr = kNone;
+#define FLAG(flags, flag, fcntl_flags, wrval, cond) \
+  do { \
+    if (flags & flag) { \
+      os_open_flags |= fcntl_flags; \
+      assert(cond); \
+      if (wrval != kNone) { \
+        wr = wrval; \
+      } \
+    } \
+  } while (0)
+  FLAG(flags, kFileWriteOnly, O_WRONLY, kTrue, true);
+  FLAG(flags, kFileCreateOnly, O_CREAT|O_EXCL|O_WRONLY, kTrue, true);
+  FLAG(flags, kFileCreate, O_CREAT|O_WRONLY, kTrue, !(flags & kFileCreateOnly));
+  FLAG(flags, kFileTruncate, O_TRUNC|O_WRONLY, kTrue,
+       !(flags & kFileCreateOnly));
+  FLAG(flags, kFileReadOnly, O_RDONLY, kFalse, wr != kTrue);
+#ifdef O_NOFOLLOW
+  FLAG(flags, kFileNoSymlink, O_NOFOLLOW, kNone, true);
+#endif
+#undef FLAG
 
-  fd = os_open(fname, flags, mode);
+  fd = os_open(fname, os_open_flags, mode);
 
   if (fd < 0) {
     return fd;
   }
 
-  ret_fp->wr = (bool)(!!(flags & FILE_WRITE_ONLY));
+  ret_fp->wr = (wr == kTrue);
   ret_fp->fd = fd;
   ret_fp->eof = false;
   ret_fp->rv = rbuffer_new(RWBUFSIZE);
