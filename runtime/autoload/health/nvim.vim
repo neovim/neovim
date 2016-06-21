@@ -302,7 +302,7 @@ function! s:diagnose_python(version) abort
       endif
 
       if resolve(python_bin) !~# '^'.venv_root.'/'
-        call health#report_warn('Your virtualenv is not set up optimatlly.', [
+        call health#report_warn('Your virtualenv is not set up optimally.', [
               \ printf('Suggestion: Create a virtualenv specifically '
               \ . 'for Neovim and use "g:%s".  This will avoid '
               \ . 'the need to install Neovim''s Python client in each '
