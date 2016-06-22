@@ -291,9 +291,6 @@ endif()
 include_directories("${PROJECT_BINARY_DIR}/config")
 include_directories("${PROJECT_SOURCE_DIR}/src")
 
-# Modules used by platform auto-detection
-include(CheckLibraryExists)
-
 find_package(LibUV REQUIRED)
 include_directories(SYSTEM ${LIBUV_INCLUDE_DIRS})
 

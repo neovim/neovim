@@ -1,6 +1,3 @@
-include(CheckLibraryExists)
-include(CheckCCompilerFlag)
-
 option(USE_GCOV "Enable gcov support" OFF)
 
 if(NOT CLANG_TSAN)
