@@ -2,6 +2,7 @@ local helpers = require('test.functional.helpers')(after_each)
 local thelpers = require('test.functional.terminal.helpers')
 local clear = helpers.clear
 local feed, nvim = helpers.feed, helpers.nvim
+local execute = helpers.execute
 
 describe('terminal', function()
   local screen
@@ -19,6 +20,49 @@ describe('terminal', function()
 
   after_each(function()
     screen:detach()
+  end)
+
+  it('resets its size when entering terminal window', function()
+    feed('<c-\\><c-n>')
+    execute('2split')
+    screen:expect([[
+      tty ready                                         |
+      ^rows: 2, cols: 50                                 |
+      ==========                                        |
+      tty ready                                         |
+      rows: 2, cols: 50                                 |
+      {2: }                                                 |
+      ~                                                 |
+      ~                                                 |
+      ==========                                        |
+                                                        |
+    ]])
+    execute('wincmd p')
+    screen:expect([[
+      tty ready                                         |
+      rows: 2, cols: 50                                 |
+      ==========                                        |
+      tty ready                                         |
+      rows: 2, cols: 50                                 |
+      rows: 5, cols: 50                                 |
+      {2: }                                                 |
+      ^                                                  |
+      ==========                                        |
+      :wincmd p                                         |
+    ]])
+    execute('wincmd p')
+    screen:expect([[
+      rows: 5, cols: 50                                 |
+      ^rows: 2, cols: 50                                 |
+      ==========                                        |
+      rows: 5, cols: 50                                 |
+      rows: 2, cols: 50                                 |
+      {2: }                                                 |
+      ~                                                 |
+      ~                                                 |
+      ==========                                        |
+      :wincmd p                                         |
+    ]])
   end)
 
   describe('when the screen is resized', function()
@@ -49,89 +93,6 @@ describe('terminal', function()
         {1: }                                              |
         -- TERMINAL --                                 |
       ]])
-    end)
-  end)
-
-  describe('split horizontally', function()
-    before_each(function()
-      nvim('command', 'sp')
-    end)
-
-    local function reduce_height()
-      screen:expect([[
-        tty ready                                         |
-        rows: 3, cols: 50                                 |
-        {1: }                                                 |
-        ~                                                 |
-        ==========                                        |
-        tty ready                                         |
-        rows: 3, cols: 50                                 |
-        {2: }                                                 |
-        ==========                                        |
-        -- TERMINAL --                                    |
-      ]])
-    end
-
-    it('uses the minimum height of all window displaying it', reduce_height)
-
-    describe('and then vertically', function()
-      before_each(function()
-        reduce_height()
-        nvim('command', 'vsp')
-      end)
-
-      local function reduce_width()
-        screen:expect([[
-          rows: 3, cols: 50        |rows: 3, cols: 50       |
-          rows: 3, cols: 24        |rows: 3, cols: 24       |
-          {1: }                        |{2: }                       |
-          ~                        |~                       |
-          ==========                ==========              |
-          rows: 3, cols: 50                                 |
-          rows: 3, cols: 24                                 |
-          {2: }                                                 |
-          ==========                                        |
-          -- TERMINAL --                                    |
-        ]])
-        feed('<c-\\><c-n>gg')
-        screen:expect([[
-          ^tty ready                |rows: 3, cols: 50       |
-          rows: 3, cols: 50        |rows: 3, cols: 24       |
-          rows: 3, cols: 24        |{2: }                       |
-          {2: }                        |~                       |
-          ==========                ==========              |
-          rows: 3, cols: 50                                 |
-          rows: 3, cols: 24                                 |
-          {2: }                                                 |
-          ==========                                        |
-                                                            |
-        ]])
-      end
-
-      it('uses the minimum width of all window displaying it', reduce_width)
-
-      describe('and then closes one of the vertical splits with q:', function()
-        before_each(function()
-          reduce_width()
-          nvim('command', 'q')
-          feed('<c-w>ja')
-        end)
-
-        it('will restore the width', function()
-          screen:expect([[
-            rows: 3, cols: 24                                 |
-            rows: 3, cols: 50                                 |
-            {2: }                                                 |
-            ~                                                 |
-            ==========                                        |
-            rows: 3, cols: 24                                 |
-            rows: 3, cols: 50                                 |
-            {1: }                                                 |
-            ==========                                        |
-            -- TERMINAL --                                    |
-          ]])
-        end)
-      end)
     end)
   end)
 end)

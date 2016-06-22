@@ -415,8 +415,9 @@ m  *+xpm_w32*		Win32 GUI only: pixmap support |w32-xpm-support|
 			To stop the messages and commands from being echoed to
 			the screen, put the commands in a function and call it
 			with ":silent call Function()".
-			An alternative is to use the 'verbosefile' option,
-			this can be used in combination with ":redir".
+			Alternatives are the 'verbosefile' option or
+			|capture()| function, these can be used in combination
+			with ":redir".
 
 :redi[r] >> {file}	Redirect messages to file {file}.  Append if {file}
 			already exists.
