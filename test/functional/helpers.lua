@@ -300,14 +300,18 @@ local function curbuf(method, ...)
 end
 
 local function wait()
+  -- Execute 'vim_eval' (a deferred function) to block
+  -- until all pending input is processed.
   session:request('vim_eval', '1')
 end
 
+-- sleeps the test runner (_not_ the nvim instance)
+local function sleep(timeout)
+  run(nil, nil, nil, timeout)
+end
+
 local function curbuf_contents()
-  -- Before inspecting the buffer, execute 'vim_eval' to wait until all
-  -- previously sent keys are processed(vim_eval is a deferred function, and
-  -- only processed after all input)
-  wait()
+  wait()  -- Before inspecting the buffer, process all input.
   return table.concat(curbuf('get_lines', 0, -1, true), '\n')
 end
 
@@ -441,6 +445,7 @@ return function(after_each)
     curtab = curtab,
     curbuf_contents = curbuf_contents,
     wait = wait,
+    sleep = sleep,
     set_session = set_session,
     write_file = write_file,
     os_name = os_name,
