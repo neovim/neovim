@@ -2263,10 +2263,29 @@ void ex_compiler(exarg_T *eap)
   }
 }
 
-/// ":runtime {name}"
+/// ":runtime [what] {name}"
 void ex_runtime(exarg_T *eap)
 {
-  source_runtime(eap->arg, eap->forceit ? DIP_ALL : 0);
+  char_u *arg = eap->arg;
+  char_u *p = skiptowhite(arg);
+  ptrdiff_t len = p - arg;
+  int flags = eap->forceit ? DIP_ALL : 0;
+
+  if (STRNCMP(arg, "START", len) == 0) {
+    flags += DIP_START + DIP_NORTP;
+    arg = skipwhite(arg + len);
+  } else if (STRNCMP(arg, "OPT", len) == 0) {
+    flags += DIP_OPT + DIP_NORTP;
+    arg = skipwhite(arg + len);
+  } else if (STRNCMP(arg, "PACK", len) == 0) {
+    flags += DIP_START + DIP_OPT + DIP_NORTP;
+    arg = skipwhite(arg + len);
+  } else if (STRNCMP(arg, "ALL", len) == 0) {
+    flags += DIP_START + DIP_OPT;
+    arg = skipwhite(arg + len);
+  }
+
+  source_runtime(arg, flags);
 }
 
 
@@ -2388,9 +2407,13 @@ int do_in_path(char_u *path, char_u *name, int flags,
 int do_in_runtimepath(char_u *name, int flags, DoInRuntimepathCB callback,
                       void *cookie)
 {
-  int done = do_in_path(p_rtp, name, flags, callback, cookie);
+  int done = FAIL;
 
-  if (done == FAIL && (flags & DIP_START)) {
+  if ((flags & DIP_NORTP) == 0) {
+    done = do_in_path(p_rtp, name, flags, callback, cookie);
+  }
+
+  if ((done == FAIL || (flags & DIP_ALL)) && (flags & DIP_START)) {
     char *start_dir = "pack/*/start/*/%s";
     size_t len = STRLEN(start_dir) + STRLEN(name);
     char_u *s = xmallocz(len);
@@ -2401,7 +2424,7 @@ int do_in_runtimepath(char_u *name, int flags, DoInRuntimepathCB callback,
     xfree(s);
   }
 
-  if (done == FAIL && (flags & DIP_OPT)) {
+  if ((done == FAIL || (flags & DIP_ALL)) && (flags & DIP_OPT)) {
     char *opt_dir = "pack/*/opt/*/%s";
     size_t len = STRLEN(opt_dir) + STRLEN(name);
     char_u *s = xmallocz(len);

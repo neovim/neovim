@@ -174,10 +174,12 @@ For writing a Vim script, see chapter 41 of the user manual |usr_41.txt|.
 			commands.
 
 							*:ru* *:runtime*
-:ru[ntime][!] {file} ..
+:ru[ntime][!] [where] {file} ..
 			Read Ex commands from {file} in each directory given
-			by 'runtimepath'.  There is no error for non-existing
-			files.  Example: >
+			by 'runtimepath' and/or 'packpath'.  There is no error
+			for non-existing files.
+			
+			Example: >
 				:runtime syntax/c.vim
 
 <			There can be multiple {file} arguments, separated by
@@ -190,6 +192,15 @@ For writing a Vim script, see chapter 41 of the user manual |usr_41.txt|.
 			When [!] is included, all found files are sourced.
 			When it is not included only the first found file is
 			sourced.
+
+			When [where] is omitted only 'runtimepath' is used.
+			Other values:
+				START	search under "start" in 'packpath'
+				OPT 	search under "opt" in 'packpath'
+				PACK	search under "start" and "opt" in
+					'packpath'
+				ALL	first use 'runtimepath', then search
+					under "start" and "opt" in 'packpath'
 
 			When {file} contains wildcards it is expanded to all
 			matching files.  Example: >
@@ -229,6 +240,16 @@ For writing a Vim script, see chapter 41 of the user manual |usr_41.txt|.
 
 			Also see |pack-add|.
 
+:packloadall[!]		Load all packages in the "start" directories under
+			'packpath'.  The directories found are added to
+			'runtimepath'.
+			This normally done during startup, after loading your
+			.vimrc file.  With this command it can be done
+			earlier.
+			Packages will be loaded only once.  After this command
+			it won't happen again.  When the optional ! is added
+			this command will load packages even when done before.
+			See |packages|.
 
 :scripte[ncoding] [encoding]		*:scripte* *:scriptencoding* *E167*
 			Specify the character encoding used in the script.
@@ -446,8 +467,13 @@ Note that the files under "pack/foo/opt" or not loaded automatically, only the
 ones under "pack/foo/start".  See |pack-add| below for how the "opt" directory
 is used.
 
-Loading packages will not happen if loading plugins is disabled, see
-|load-plugins|.
+Loading packages automatically will not happen if loading plugins is disabled,
+see |load-plugins|.
+
+To load packages earlier, so that 'runtimepath' gets updated: >
+	:packloadall
+This also works when loading plugins is disabled.  The automatic loading will
+only happen once.
 
 
 Using a single plugin and loading it automatically ~

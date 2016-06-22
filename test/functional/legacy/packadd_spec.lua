@@ -127,6 +127,53 @@ describe('packadd', function()
         colorscheme three
         call assert_equal(1, g:found_three)
       endfunc
+
+      func Test_runtime()
+        let rundir = &packpath . '/runtime/extra'
+        let startdir = &packpath . '/pack/mine/start/foo/extra'
+        let optdir = &packpath . '/pack/mine/opt/bar/extra'
+        call mkdir(rundir, 'p')
+        call mkdir(startdir, 'p')
+        call mkdir(optdir, 'p')
+        call writefile(['let g:sequence .= "run"'], rundir . '/bar.vim')
+        call writefile(['let g:sequence .= "start"'], startdir . '/bar.vim')
+        call writefile(['let g:sequence .= "foostart"'], startdir . '/foo.vim')
+        call writefile(['let g:sequence .= "opt"'], optdir . '/bar.vim')
+        call writefile(['let g:sequence .= "xxxopt"'], optdir . '/xxx.vim')
+        exe 'set rtp=' . &packpath . '/runtime'
+
+        let g:sequence = ''
+        runtime extra/bar.vim
+        call assert_equal('run', g:sequence)
+        let g:sequence = ''
+        runtime START extra/bar.vim
+        call assert_equal('start', g:sequence)
+        let g:sequence = ''
+        runtime OPT extra/bar.vim
+        call assert_equal('opt', g:sequence)
+        let g:sequence = ''
+        runtime PACK extra/bar.vim
+        call assert_equal('start', g:sequence)
+        let g:sequence = ''
+        runtime! PACK extra/bar.vim
+        call assert_equal('startopt', g:sequence)
+        let g:sequence = ''
+        runtime PACK extra/xxx.vim
+        call assert_equal('xxxopt', g:sequence)
+
+        let g:sequence = ''
+        runtime ALL extra/bar.vim
+        call assert_equal('run', g:sequence)
+        let g:sequence = ''
+        runtime ALL extra/foo.vim
+        call assert_equal('foostart', g:sequence)
+        let g:sequence = ''
+        runtime! ALL extra/xxx.vim
+        call assert_equal('xxxopt', g:sequence)
+        let g:sequence = ''
+        runtime! ALL extra/bar.vim
+        call assert_equal('runstartopt', g:sequence)
+      endfunc
     ]=])
     call('SetUp')
   end)
@@ -157,6 +204,11 @@ describe('packadd', function()
 
   it('works with colorschemes', function()
     call('Test_colorscheme')
+    expected_empty()
+  end)
+
+  it('works with :runtime [what]', function()
+    call('Test_runtime')
     expected_empty()
   end)
 
