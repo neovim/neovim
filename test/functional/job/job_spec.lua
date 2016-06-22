@@ -1,4 +1,3 @@
-
 local helpers = require('test.functional.helpers')(after_each)
 local clear, eq, eval, execute, feed, insert, neq, next_msg, nvim,
   nvim_dir, ok, source, write_file, mkdir, rmdir = helpers.clear,
@@ -120,7 +119,7 @@ describe('jobs', function()
       {0, {'a', '', 'c', '', '', '', 'b', '', ''}}}, next_msg())
   end)
 
-  it('can preserve nuls', function()
+  it('can preserve NULs', function()
     nvim('command', "let j = jobstart(['cat', '-'], g:job_opts)")
     nvim('command', 'call jobsend(j, ["\n123\n", "abc\\nxyz\n", ""])')
     eq({'notification', 'stdout', {0, {'\n123\n', 'abc\nxyz\n', ''}}},
@@ -144,7 +143,7 @@ describe('jobs', function()
     eq({'notification', 'exit', {0, 0}}, next_msg())
   end)
 
-  it("won't allow jobsend with a job that closed stdin", function()
+  it("disallows jobsend on a job that closed stdin", function()
     nvim('command', "let j = jobstart(['cat', '-'], g:job_opts)")
     nvim('command', 'call jobclose(j, "stdin")')
     eq(false, pcall(function()
@@ -152,12 +151,12 @@ describe('jobs', function()
     end))
   end)
 
-  it('will not allow jobsend/stop on a non-existent job', function()
+  it('disallows jobsend/stop on a non-existent job', function()
     eq(false, pcall(eval, "jobsend(-1, 'lol')"))
     eq(false, pcall(eval, "jobstop(-1)"))
   end)
 
-  it('will not allow jobstop twice on the same job', function()
+  it('disallows jobstop twice on the same job', function()
     nvim('command', "let j = jobstart(['cat', '-'], g:job_opts)")
     neq(0, eval('j'))
     eq(true, pcall(eval, "jobstop(j)"))
@@ -244,7 +243,7 @@ describe('jobs', function()
     eq({'notification', 'exit', {45, 10}}, next_msg())
   end)
 
-  it('cant redefine callbacks being used by a job', function()
+  it('cannot redefine callbacks being used by a job', function()
     local screen = Screen.new()
     screen:attach()
     local script = [[
