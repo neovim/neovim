@@ -14,7 +14,7 @@ function! health#check(bang) abort
       let s:current_checker = l:checker[0]
       let l:report .= printf("\nChecker %s says: %s", s:current_checker, l:checker[1])
 
-      let l:report .= {l:checker[0]}()
+      let l:report .= capture('call ' . l:checker[0] . '()')
 
     endif
   endfor

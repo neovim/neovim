@@ -392,17 +392,10 @@ endfunction
 
 
 function! health#nvim#check() abort
-  redir => report
-  try
-    silent call s:diagnose_python(2)
-    silent echo ''
-    silent call s:diagnose_python(3)
-    silent echo ''
-    silent call s:diagnose_manifest()
-    silent echo ''
-  finally
-    redir END
-  endtry
-
-  return report
+  silent call s:diagnose_python(2)
+  silent echo ''
+  silent call s:diagnose_python(3)
+  silent echo ''
+  silent call s:diagnose_manifest()
+  silent echo ''
 endfunction
