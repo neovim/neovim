@@ -3796,19 +3796,19 @@ ExpandFromContext (
     return expand_tags(xp->xp_context == EXPAND_TAGS, pat, num_file, file);
   if (xp->xp_context == EXPAND_COLORS) {
     char *directories[] = {"colors", NULL};
-    return ExpandRTDir(pat, num_file, file, directories);
+    return ExpandRTDir(pat, DIP_START + DIP_OPT, num_file, file, directories);
   }
   if (xp->xp_context == EXPAND_COMPILER) {
     char *directories[] = {"compiler", NULL};
-    return ExpandRTDir(pat, num_file, file, directories);
+    return ExpandRTDir(pat, 0, num_file, file, directories);
   }
   if (xp->xp_context == EXPAND_OWNSYNTAX) {
     char *directories[] = {"syntax", NULL};
-    return ExpandRTDir(pat, num_file, file, directories);
+    return ExpandRTDir(pat, 0, num_file, file, directories);
   }
   if (xp->xp_context == EXPAND_FILETYPE) {
     char *directories[] = {"syntax", "indent", "ftplugin", NULL};
-    return ExpandRTDir(pat, num_file, file, directories);
+    return ExpandRTDir(pat, 0, num_file, file, directories);
   }
   if (xp->xp_context == EXPAND_USER_LIST) {
     return ExpandUserList(xp, num_file, file);
@@ -4195,12 +4195,16 @@ static int ExpandUserList(expand_T *xp, int *num_file, char_u ***file)
   return OK;
 }
 
-/*
- * Expand color scheme, compiler or filetype names:
- * 'runtimepath'/{dirnames}/{pat}.vim
- * "dirnames" is an array with one or more directory names.
- */
-static int ExpandRTDir(char_u *pat, int *num_file, char_u ***file, char *dirnames[])
+/// Expand color scheme, compiler or filetype names.
+/// Search from 'runtimepath':
+///   'runtimepath'/{dirnames}/{pat}.vim
+/// When "flags" has DIP_START: search also from 'start' of 'packpath':
+///   'packpath'/pack/ * /start/ * /{dirnames}/{pat}.vim
+/// When "flags" has DIP_OPT: search also from 'opt' of 'packpath':
+///   'packpath'/pack/ * /opt/ * /{dirnames}/{pat}.vim
+/// "dirnames" is an array with one or more directory names.
+static int ExpandRTDir(char_u *pat, int flags, int *num_file, char_u ***file,
+                       char *dirnames[])
 {
   *num_file = 0;
   *file = NULL;
@@ -4215,6 +4219,26 @@ static int ExpandRTDir(char_u *pat, int *num_file, char_u ***file, char *dirname
     snprintf((char *)s, size, "%s/%s*.vim", dirnames[i], pat);
     globpath(p_rtp, s, &ga, 0);
     xfree(s);
+  }
+
+  if (flags & DIP_START) {
+    for (int i = 0; dirnames[i] != NULL; i++) {
+      size_t size = STRLEN(dirnames[i]) + pat_len + 22;
+      char_u *s = xmalloc(size);
+      snprintf((char *)s, size, "pack/*/start/*/%s/%s*.vim", dirnames[i], pat);
+      globpath(p_pp, s, &ga, 0);
+      xfree(s);
+    }
+  }
+
+  if (flags & DIP_OPT) {
+    for (int i = 0; dirnames[i] != NULL; i++) {
+      size_t size = STRLEN(dirnames[i]) + pat_len + 20;
+      char_u *s = xmalloc(size);
+      snprintf((char *)s, size, "pack/*/opt/*/%s/%s*.vim", dirnames[i], pat);
+      globpath(p_pp, s, &ga, 0);
+      xfree(s);
+    }
   }
 
   for (int i = 0; i < ga.ga_len; i++) {

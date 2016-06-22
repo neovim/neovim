@@ -271,5 +271,52 @@ describe('packadd', function()
         :packadd ^                     |
       ]=])
     end)
+
+    it('works for colorschemes', function()
+      source([[
+        let colordirrun = &packpath . '/runtime/colors'
+        let colordirstart = &packpath . '/pack/mine/start/foo/colors'
+        let colordiropt = &packpath . '/pack/mine/opt/bar/colors'
+        call mkdir(colordirrun, 'p')
+        call mkdir(colordirstart, 'p')
+        call mkdir(colordiropt, 'p')
+        call writefile(['let g:found_one = 1'], colordirrun . '/one.vim')
+        call writefile(['let g:found_two = 1'], colordirstart . '/two.vim')
+        call writefile(['let g:found_three = 1'], colordiropt . '/three.vim')
+        exe 'set rtp=' . &packpath . '/runtime']])
+
+      feed(':colorscheme <Tab>')
+      screen:expect([=[
+                                      |
+        ~                             |
+        ~                             |
+        {1:one}{2:  three  two               }|
+        :colorscheme one^              |
+      ]=])
+      feed('<Tab>')
+      screen:expect([=[
+                                      |
+        ~                             |
+        ~                             |
+        {2:one  }{1:three}{2:  two               }|
+        :colorscheme three^            |
+      ]=])
+      feed('<Tab>')
+      screen:expect([=[
+                                      |
+        ~                             |
+        ~                             |
+        {2:one  three  }{1:two}{2:               }|
+        :colorscheme two^              |
+      ]=])
+      feed('<Tab>')
+      screen:expect([=[
+                                      |
+        ~                             |
+        ~                             |
+        {2:one  three  two               }|
+        :colorscheme ^                 |
+      ]=])
+    end)
   end)
 end)
