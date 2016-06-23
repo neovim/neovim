@@ -392,7 +392,7 @@ ptrdiff_t os_read(const int fd, bool *ret_eof, char *const ret_buf,
     const ptrdiff_t cur_read_bytes = read(fd, ret_buf + read_bytes,
                                           size - read_bytes);
     if (cur_read_bytes > 0) {
-      read_bytes += (size_t) cur_read_bytes;
+      read_bytes += (size_t)cur_read_bytes;
       assert(read_bytes <= size);
     }
     if (cur_read_bytes < 0) {
@@ -412,7 +412,7 @@ ptrdiff_t os_read(const int fd, bool *ret_eof, char *const ret_buf,
         did_try_to_free = true;
         continue;
       } else {
-        return (ptrdiff_t) error;
+        return (ptrdiff_t)error;
       }
     }
     if (cur_read_bytes == 0) {
@@ -420,11 +420,11 @@ ptrdiff_t os_read(const int fd, bool *ret_eof, char *const ret_buf,
       break;
     }
   }
-  return (ptrdiff_t) read_bytes;
+  return (ptrdiff_t)read_bytes;
 }
 
 #ifdef HAVE_READV
-/// Read from a file to a multiple buffers at once
+/// Read from a file to multiple buffers at once
 ///
 /// Wrapper for readv().
 ///
@@ -455,7 +455,7 @@ ptrdiff_t os_readv(int fd, bool *ret_eof, struct iovec *iov, size_t iov_size)
     if (cur_read_bytes > 0) {
       read_bytes += (size_t)cur_read_bytes;
       while (iov_size && cur_read_bytes) {
-        if (cur_read_bytes < (ptrdiff_t) iov->iov_len) {
+        if (cur_read_bytes < (ptrdiff_t)iov->iov_len) {
           iov->iov_len -= (size_t)cur_read_bytes;
           iov->iov_base = (char *)iov->iov_base + cur_read_bytes;
           cur_read_bytes = 0;
@@ -509,7 +509,7 @@ ptrdiff_t os_write(const int fd, const char *const buf, const size_t size)
     const ptrdiff_t cur_written_bytes = write(fd, buf + written_bytes,
                                               size - written_bytes);
     if (cur_written_bytes > 0) {
-      written_bytes += (size_t) cur_written_bytes;
+      written_bytes += (size_t)cur_written_bytes;
     }
     if (cur_written_bytes < 0) {
 #ifdef HAVE_UV_TRANSLATE_SYS_ERROR
@@ -532,7 +532,7 @@ ptrdiff_t os_write(const int fd, const char *const buf, const size_t size)
       return UV_UNKNOWN;
     }
   }
-  return (ptrdiff_t) written_bytes;
+  return (ptrdiff_t)written_bytes;
 }
 
 /// Flushes file modifications to disk.

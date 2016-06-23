@@ -3007,8 +3007,8 @@ shada_write_file_nomerge: {}
         if (getuid() == ROOT_UID) {
           if (old_info.stat.st_uid != ROOT_UID
               || old_info.stat.st_gid != getgid()) {
-            const uv_uid_t old_uid = (uv_uid_t) old_info.stat.st_uid;
-            const uv_gid_t old_gid = (uv_gid_t) old_info.stat.st_gid;
+            const uv_uid_t old_uid = (uv_uid_t)old_info.stat.st_uid;
+            const uv_gid_t old_gid = (uv_gid_t)old_info.stat.st_gid;
             const int fchown_ret = os_fchown(file_fd(sd_writer.cookie),
                                              old_uid, old_gid);
             if (fchown_ret != 0) {
@@ -3192,7 +3192,7 @@ static ShaDaReadResult fread_len(ShaDaReadDef *const sd_reader,
       emsgf(_(RCERR "Error while reading ShaDa file: "
               "last entry specified that it occupies %" PRIu64 " bytes, "
               "but file ended earlier"),
-            (uint64_t) length);
+            (uint64_t)length);
       return kSDReadStatusNotShaDa;
     }
   }
