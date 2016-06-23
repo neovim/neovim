@@ -1,4 +1,4 @@
-*index.txt*     For Vim version 7.4.  Last change: 2016 Mar 04
+*index.txt*     For Vim version 7.4.  Last change: 2016 Mar 12
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -1379,6 +1379,7 @@ tag	      command	      action ~
 |:ounmenu|	:ounme[nu]	remove menu for Operator-pending mode
 |:ownsyntax|	:ow[nsyntax]	set new local syntax highlight for this window
 |:packadd|	:pa[ckadd]	add a plugin from 'packpath'
+|:packloadall|	:packl[oadall]	load all packages under 'packpath'
 |:pclose|	:pc[lose]	close preview window
 |:pedit|	:ped[it]	edit file in the preview window
 |:print|	:p[rint]	print lines

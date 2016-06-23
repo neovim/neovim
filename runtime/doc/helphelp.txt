@@ -1,4 +1,4 @@
-*helphelp.txt*	For Vim version 7.4.  Last change: 2014 Sep 19
+*helphelp.txt*	For Vim version 7.4.  Last change: 2016 Mar 12
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -188,6 +188,9 @@ command: >
 				*E154* *E150* *E151* *E152* *E153* *E670*
 :helpt[ags] [++t] {dir}
 			Generate the help tags file(s) for directory {dir}.
+			When {dir} is ALL then all "doc" directories in
+			'runtimepath' will be used.
+
 			All "*.txt" and "*.??x" files in the directory and
 			sub-directories are scanned for a help tag definition
 			in between stars.  The "*.??x" files are for

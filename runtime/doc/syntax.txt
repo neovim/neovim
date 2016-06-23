@@ -1,4 +1,4 @@
-*syntax.txt*	For Vim version 7.4.  Last change: 2016 Feb 25
+*syntax.txt*	For Vim version 7.4.  Last change: 2016 Mar 12
 
 
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
@@ -4518,9 +4518,9 @@ in their own color.
 :colo[rscheme] {name}	Load color scheme {name}.  This searches 'runtimepath'
 			for the file "colors/{name}.vim".  The first one that
 			is found is loaded.
-			To see the name of the currently active color scheme: >
-				:colo
-<			The name is also stored in the g:colors_name variable.
+			Also searches all plugins in 'packpath', first below
+			"start" and then under "opt".
+
 			Doesn't work recursively, thus you can't use
 			":colorscheme" in a color scheme script.
 			After the color scheme has been loaded the
