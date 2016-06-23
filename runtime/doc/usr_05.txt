@@ -1,4 +1,4 @@
-*usr_05.txt*	For Vim version 7.4.  Last change: 2012 Nov 20
+*usr_05.txt*	For Vim version 7.4.  Last change: 2016 Mar 25
 
 		     VIM USER MANUAL - by Bram Moolenaar
 
@@ -12,10 +12,11 @@ Vim's capabilities.  Or define your own macros.
 |05.1|	The vimrc file
 |05.2|	The example vimrc file explained
 |05.3|	Simple mappings
-|05.4|	Adding a plugin
-|05.5|	Adding a help file
-|05.6|	The option window
-|05.7|	Often used options
+|05.4|	Adding a package
+|05.5|	Adding a plugin
+|05.6|	Adding a help file
+|05.7|	The option window
+|05.8|	Often used options
 
      Next chapter: |usr_06.txt|  Using syntax highlighting
  Previous chapter: |usr_04.txt|  Making small changes
@@ -245,7 +246,46 @@ The ":map" command (with no arguments) lists your current mappings.  At
 least the ones for Normal mode.  More about mappings in section |40.1|.
 
 ==============================================================================
-*05.4*	Adding a plugin					*add-plugin* *plugin*
+*05.4*	Adding a package			*add-package* *matchit-install*
+
+A package is a set of files that you can add to Vim.  There are two kinds of
+packages: optional and automatically loaded on startup.
+
+The Vim distribution comes with a few packages that you can optionally use.
+For example, the matchit plugin.  This plugin makes the "%" command jump to
+matching HTML tags, if/else/endif in Vim scripts, etc.  Very useful, although
+it's not backwards compatible (that's why it is not enabled by default).
+
+To start using the matchit plugin, add one line to your vimrc file: >
+	packadd matchit
+
+That's all!  You can also type the command to try it out.  Now you can find
+help about this plugin: >
+	:help matchit
+
+This works, because when `:packadd` loaded the plugin it also added the
+package directory in 'runtimepath', so that the help file can be found.
+
+You can find packages on the Internet in various places.  It usually comes as
+an archive or as a repository.  For an archive you can follow these steps:
+	1. create the package directory: >
+		mkdir -p ~/.local/share/nvim/site/pack/fancy
+<	   "fancy" can be any name of your liking.  Use one that describes the
+	   package.
+	2. unpack the archive in that directory.  This assumes the top
+	   directory in the archive is "start": >
+	   	cd ~/.local/share/nvim/site/pack/fancy
+		unzip /tmp/fancy.zip
+<	   If the archive layout is different make sure that you end up with a
+	   path like this:
+		~/.local/share/nvim/site/pack/fancy/start/fancytext/plugin/fancy.vim ~
+	   Here "fancytext" is the name of the package, it can be anything
+	   else.
+
+More information about packages can be found here: |packages|.
+
+==============================================================================
+*05.5*	Adding a plugin					*add-plugin* *plugin*
 
 Vim's functionality can be extended by adding plugins.  A plugin is nothing
 more than a Vim script file that is loaded automatically when Vim starts.  You
@@ -384,7 +424,7 @@ Further reading:
 |new-filetype|		How to detect a new file type.
 
 ==============================================================================
-*05.5*	Adding a help file		                   *add-local-help*
+*05.6*	Adding a help file		                   *add-local-help*
 
 If you are lucky, the plugin you installed also comes with a help file.  We
 will explain how to install the help file, so that you can easily find help
@@ -417,7 +457,7 @@ them through the tag.
 For writing a local help file, see |write-local-help|.
 
 ==============================================================================
-*05.6*	The option window
+*05.7*	The option window
 
 If you are looking for an option that does what you want, you can search in
 the help files here: |options|.  Another way is by using this command: >
@@ -456,7 +496,7 @@ border.  This is what the 'scrolloff' option does, it specifies an offset
 from the window border where scrolling starts.
 
 ==============================================================================
-*05.7*	Often used options
+*05.8*	Often used options
 
 There are an awful lot of options.  Most of them you will hardly ever use.
 Some of the more useful ones will be mentioned here.  Don't forget you can
