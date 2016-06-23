@@ -35,7 +35,7 @@
 #include "nvim/version.h"
 #include "nvim/path.h"
 #include "nvim/fileio.h"
-#include "nvim/file.h"
+#include "nvim/os/fileio.h"
 #include "nvim/strings.h"
 #include "nvim/quickfix.h"
 #include "nvim/eval/encode.h"

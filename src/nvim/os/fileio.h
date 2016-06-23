@@ -1,5 +1,5 @@
-#ifndef NVIM_FILE_H
-#define NVIM_FILE_H
+#ifndef NVIM_OS_FILEIO_H
+#define NVIM_OS_FILEIO_H
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -67,6 +67,6 @@ enum {
 };
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "file.h.generated.h"
+# include "os/fileio.h.generated.h"
 #endif
-#endif  // NVIM_FILE_H
+#endif  // NVIM_OS_FILEIO_H

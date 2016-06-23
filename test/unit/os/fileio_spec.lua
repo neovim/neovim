@@ -7,7 +7,7 @@ local ok = helpers.ok
 local ffi = helpers.ffi
 local cimport = helpers.cimport
 
-local m = cimport('./src/nvim/file.h')
+local m = cimport('./src/nvim/os/fileio.h')
 
 local s = ''
 for i = 0, 255 do

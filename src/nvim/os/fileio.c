@@ -1,4 +1,4 @@
-/// @file file.c
+/// @file fileio.c
 ///
 /// Buffered reading/writing to a file. Unlike fileio.c this is not dealing with
 /// Neovim stuctures for buffer, with autocommands, etc: just fopen/fread/fwrite
@@ -18,7 +18,7 @@
 
 #include <uv.h>
 
-#include "nvim/file.h"
+#include "nvim/os/fileio.h"
 #include "nvim/memory.h"
 #include "nvim/os/os.h"
 #include "nvim/globals.h"
@@ -26,7 +26,7 @@
 #include "nvim/macros.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "file.c.generated.h"
+# include "os/fileio.c.generated.h"
 #endif
 
 /// Open file
