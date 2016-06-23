@@ -128,7 +128,9 @@ describe('file_open', function()
 
   it('fails to open an symlink with kFileNoSymlink', function()
     local err, fp = file_open(linkf, m.kFileNoSymlink, 384)
-    eq(m.UV_ELOOP, err)
+    -- err is UV_EMLINK in FreeBSD, but if I use `ok(err == m.UV_ELOOP or err ==
+    -- m.UV_EMLINK)`, then I loose the ability to see actual `err` value.
+    if err ~= m.UV_ELOOP then eq(m.UV_EMLINK, err) end
   end)
 
   it('can open an existing file write-only with kFileCreate', function()
