@@ -1576,14 +1576,23 @@ win_found:
        * set b_p_ro flag). */
       if (!can_abandon(curbuf, forceit)) {
         EMSG(_(e_nowrtmsg));
-        ok = FALSE;
-      } else
+        ok = false;
+      } else {
         ok = do_ecmd(qf_ptr->qf_fnum, NULL, NULL, NULL, (linenr_T)1,
-            ECMD_HIDE + ECMD_SET_HELP,
-            oldwin == curwin ? curwin : NULL);
-    } else
-      ok = buflist_getfile(qf_ptr->qf_fnum,
-          (linenr_T)1, GETF_SETMARK | GETF_SWITCH, forceit);
+                     ECMD_HIDE + ECMD_SET_HELP,
+                     oldwin == curwin ? curwin : NULL);
+      }
+    } else {
+      ok = buflist_getfile(qf_ptr->qf_fnum, (linenr_T)1,
+                           GETF_SETMARK | GETF_SWITCH, forceit);
+      if (qi != &ql_info && !win_valid(oldwin)) {
+        EMSG(_("E924: Current window was closed"));
+        ok = false;
+        qi = NULL;
+        qf_ptr = NULL;
+        opened_window = false;
+      }
+    }
   }
 
   if (ok == OK) {
@@ -1663,21 +1672,22 @@ win_found:
       msg_scroll = (int)i;
     }
   } else {
-    if (opened_window)
-      win_close(curwin, TRUE);          /* Close opened window */
-    if (qf_ptr->qf_fnum != 0) {
-      /*
-       * Couldn't open file, so put index back where it was.  This could
-       * happen if the file was readonly and we changed something.
-       */
+    if (opened_window) {
+      win_close(curwin, true);          // Close opened window
+    }
+    if (qf_ptr != NULL && qf_ptr->qf_fnum != 0) {
+       // Couldn't open file, so put index back where it was.  This could
+       // happen if the file was readonly and we changed something.
 failed:
       qf_ptr = old_qf_ptr;
       qf_index = old_qf_index;
     }
   }
 theend:
-  qi->qf_lists[qi->qf_curlist].qf_ptr = qf_ptr;
-  qi->qf_lists[qi->qf_curlist].qf_index = qf_index;
+  if (qi != NULL) {
+    qi->qf_lists[qi->qf_curlist].qf_ptr = qf_ptr;
+    qi->qf_lists[qi->qf_curlist].qf_index = qf_index;
+  }
   if (p_swb != old_swb && opened_window) {
     /* Restore old 'switchbuf' value, but not when an autocommand or
      * modeline has changed the value. */
