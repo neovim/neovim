@@ -284,17 +284,15 @@ function! s:diagnose_python(version) abort
   endif
 
   if !empty(python_bin)
-    if !empty(pyenv) && !exists('g:'.host_prog_var) && !empty(pyenv_root)
-          \ && resolve(python_bin) !~# '^'.pyenv_root.'/'
-      call health#report_warn('Your virtualenv is not set up optimally.', [
+    if empty(venv) && !empty(pyenv) && !exists('g:'.host_prog_var)
+          \ && !empty(pyenv_root) && resolve(python_bin) !~# '^'.pyenv_root.'/'
+      call health#report_warn('pyenv is not set up optimally.', [
             \ printf('Suggestion: Create a virtualenv specifically '
             \ . 'for Neovim using pyenv and use "g:%s".  This will avoid '
             \ . 'the need to install Neovim''s Python client in each '
             \ . 'version/virtualenv.', host_prog_var)
             \ ])
-    endif
-
-    if !empty(venv) && exists('g:'.host_prog_var)
+    elseif !empty(venv) && exists('g:'.host_prog_var)
       if !empty(pyenv_root)
         let venv_root = pyenv_root
       else
