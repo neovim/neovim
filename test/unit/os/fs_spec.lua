@@ -378,12 +378,16 @@ describe('fs function', function()
     local function os_close(fd)
       return fs.os_close(fd)
     end
+    -- For some reason if length of NUL-bytes-string is the same as `char[?]`
+    -- size luajit crashes. Though it does not do so in this test suite, better
+    -- be cautios and allocate more elements then needed. I only did this to
+    -- strings.
     local function os_read(fd, size)
       local buf = nil
       if size == nil then
         size = 0
       else
-        buf = ffi.new('char[?]', size, ('\0'):rep(size))
+        buf = ffi.new('char[?]', size + 1, ('\0'):rep(size))
       end
       local eof = ffi.new('bool[?]', 1, {true})
       local ret2 = fs.os_read(fd, eof, buf, size)
@@ -398,7 +402,7 @@ describe('fs function', function()
       local bufs = {}
       for i, size in ipairs(sizes) do
         bufs[i] = {
-          iov_base=ffi.new('char[?]', size, ('\0'):rep(size)),
+          iov_base=ffi.new('char[?]', size + 1, ('\0'):rep(size)),
           iov_len=size,
         }
       end

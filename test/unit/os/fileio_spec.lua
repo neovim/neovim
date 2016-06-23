@@ -67,7 +67,10 @@ local function file_read(fp, size)
   if size == nil then
     size = 0
   else
-    buf = ffi.new('char[?]', size, ('\0'):rep(size))
+    -- For some reason if length of NUL-bytes-string is the same as `char[?]`
+    -- size luajit garbage collector crashes. But it does not do so in
+    -- os_read[v] tests in os/fs_spec.lua.
+    buf = ffi.new('char[?]', size + 1, ('\0'):rep(size))
   end
   local ret1 = m.file_read(fp, buf, size)
   local ret2 = ''
