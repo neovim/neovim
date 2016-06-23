@@ -105,12 +105,12 @@ endfunction
 
 
 " Check the Python interpreter's usability.
-function! s:check_bin(bin, notes) abort
+function! s:check_bin(bin) abort
   if !filereadable(a:bin)
-    call add(a:notes, printf('Error: "%s" was not found.', a:bin))
+    call health#report_error(printf('"%s" was not found.', a:bin))
     return 0
   elseif executable(a:bin) != 1
-    call add(a:notes, printf('Error: "%s" is not executable.', a:bin))
+    call health#report_error(printf('"%s" is not executable.', a:bin))
     return 0
   endif
   return 1
@@ -196,14 +196,11 @@ function! s:diagnose_python(version) abort
   call health#report_start('Python ' . a:version . ' Configuration')
 
   if exists('g:'.host_prog_var)
-    " call add(notes, printf('Using: g:%s = "%s"', host_prog_var, get(g:, host_prog_var)))
     call health#report_info(printf('Using: g:%s = "%s"', host_prog_var, get(g:, host_prog_var)))
   endif
 
   let [python_bin_name, pythonx_errs] = provider#pythonx#Detect(a:version)
   if empty(python_bin_name)
-    " call add(notes, 'Warning: No Python interpreter was found with the neovim '
-    "       \ . 'module.  Using the first available for diagnostics.')
     call health#report_warn('No Python interpreter was found with the neovim '
             \ . 'module.  Using the first available for diagnostics.')
 
@@ -313,7 +310,7 @@ function! s:diagnose_python(version) abort
   if empty(python_bin) && !empty(python_bin_name)
     " An error message should have already printed.
     call health#report_error(printf('"%s" was not found.', python_bin_name))
-  elseif !empty(python_bin) && !s:check_bin(python_bin, notes)
+  elseif !empty(python_bin) && !s:check_bin(python_bin)
     let python_bin = ''
   endif
 
@@ -352,9 +349,6 @@ function! s:diagnose_python(version) abort
   if !empty(python_bin)
     let [pyversion, current, latest, status] = s:version_info(python_bin)
     if a:version != str2nr(pyversion)
-      " call add(notes, 'Warning: Got an unexpected version of Python.  '
-      "       \ . 'This could lead to confusing error messages.  Please '
-      "       \ . 'consider this before reporting bugs to plugin developers.')
       call health#report_warn('Got an unexpected version of Python.' .
                   \ ' This could lead to confusing error messages.')
     endif
