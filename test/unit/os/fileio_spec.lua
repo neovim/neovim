@@ -3,17 +3,16 @@ local lfs = require('lfs')
 local helpers = require('test.unit.helpers')
 
 local eq = helpers.eq
-local ok = helpers.ok
 local ffi = helpers.ffi
 local cimport = helpers.cimport
 
 local m = cimport('./src/nvim/os/fileio.h')
 
-local s = ''
+local fcontents = ''
 for i = 0, 255 do
-  s = s .. (i == 0 and '\0' or ('%c'):format(i))
+  fcontents = fcontents .. (i == 0 and '\0' or ('%c'):format(i))
 end
-local fcontents = s:rep(16)
+fcontents = fcontents:rep(16)
 
 local dir = 'Xtest-unit-file_spec.d'
 local file1 = dir .. '/file1.dat'
@@ -122,12 +121,12 @@ describe('file_open', function()
   end)
 
   it('fails to open an existing file with kFileCreateOnly', function()
-    local err, fp = file_open(file1, m.kFileCreateOnly, 384)
+    local err, _ = file_open(file1, m.kFileCreateOnly, 384)
     eq(m.UV_EEXIST, err)
   end)
 
   it('fails to open an symlink with kFileNoSymlink', function()
-    local err, fp = file_open(linkf, m.kFileNoSymlink, 384)
+    local err, _ = file_open(linkf, m.kFileNoSymlink, 384)
     -- err is UV_EMLINK in FreeBSD, but if I use `ok(err == m.UV_ELOOP or err ==
     -- m.UV_EMLINK)`, then I loose the ability to see actual `err` value.
     if err ~= m.UV_ELOOP then eq(m.UV_EMLINK, err) end
@@ -180,7 +179,7 @@ describe('file_open', function()
   end)
 
   it('fails to create a file with just kFileWriteOnly', function()
-    local err, fp = file_open(filec, m.kFileWriteOnly, 384)
+    local err, _ = file_open(filec, m.kFileWriteOnly, 384)
     eq(m.UV_ENOENT, err)
     local attrs = lfs.attributes(filec)
     eq(nil, attrs)
@@ -197,17 +196,17 @@ describe('file_open', function()
   end)
 
   it('fails to open a directory write-only', function()
-    local err, fp = file_open(dir, m.kFileWriteOnly, 384)
+    local err, _ = file_open(dir, m.kFileWriteOnly, 384)
     eq(m.UV_EISDIR, err)
   end)
 
   it('fails to open a broken symbolic link write-only', function()
-    local err, fp = file_open(linkb, m.kFileWriteOnly, 384)
+    local err, _ = file_open(linkb, m.kFileWriteOnly, 384)
     eq(m.UV_ENOENT, err)
   end)
 
   it('fails to open a broken symbolic link read-only', function()
-    local err, fp = file_open(linkb, m.kFileReadOnly, 384)
+    local err, _ = file_open(linkb, m.kFileReadOnly, 384)
     eq(m.UV_ENOENT, err)
   end)
 end)
@@ -310,10 +309,10 @@ describe('file_write', function()
     local err, fp = file_open(filec, m.kFileCreateOnly, 384)
     eq(0, err)
     eq(true, fp.wr)
-    local err = file_write(fp, fcontents)
-    eq(#fcontents, err)
+    local wr = file_write(fp, fcontents)
+    eq(#fcontents, wr)
     eq(0, m.file_close(fp))
-    eq(err, lfs.attributes(filec).size)
+    eq(wr, lfs.attributes(filec).size)
     eq(fcontents, io.open(filec):read('*a'))
   end)
 
@@ -325,8 +324,8 @@ describe('file_write', function()
     while shift < #fcontents do
       local size = 3
       local s = fcontents:sub(shift + 1, shift + size)
-      local err = file_write(fp, s)
-      eq(err, #s)
+      local wr = file_write(fp, s)
+      eq(wr, #s)
       shift = shift + size
     end
     eq(0, m.file_close(fp))
@@ -342,8 +341,8 @@ describe('file_write', function()
     while shift < #fcontents do
       local size = 768
       local s = fcontents:sub(shift + 1, shift + size)
-      local err = file_write(fp, s)
-      eq(err, #s)
+      local wr = file_write(fp, s)
+      eq(wr, #s)
       shift = shift + size
     end
     eq(0, m.file_close(fp))
@@ -358,8 +357,8 @@ describe('file_skip', function()
     eq(0, err)
     eq(false, fp.wr)
     eq(3, file_skip(fp, 3))
-    local err, s = file_read(fp, 3)
-    eq(3, err)
+    local rd, s = file_read(fp, 3)
+    eq(3, rd)
     eq(fcontents:sub(4, 6), s)
     eq(0, m.file_close(fp))
   end)
