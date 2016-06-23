@@ -2533,6 +2533,7 @@ static void add_pack_plugin(char_u *fname, void *cookie)
       do_cmdline_cmd("augroup END");
     }
     xfree(cmd);
+    xfree(pat);
   }
 
 theend:
