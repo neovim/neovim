@@ -1,4 +1,4 @@
-*starting.txt*  For Vim version 7.4.  Last change: 2016 Mar 05
+*starting.txt*  For Vim version 7.4.  Last change: 2016 Mar 26
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -465,8 +465,8 @@ accordingly.  Vim proceeds in this order:
 	use "--cmd 'set noloadplugins'" |--cmd|.
 
 	Plugin packs are loaded.  These are plugins, as above, but found in
-	'packpath' directories.  Every plugin directory found is added in
-	'runtimepath'.  See |packages|.
+	'packpath' "start" directories.  Every plugin directory found is added
+	in 'runtimepath'.  See |packages|.
 
 7. Set 'shellpipe' and 'shellredir'
 	The 'shellpipe' and 'shellredir' options are set according to the
@@ -503,8 +503,9 @@ accordingly.  Vim proceeds in this order:
 14. Execute startup commands
 	If a "-t" flag was given to Vim, the tag is jumped to.
 	The commands given with the |-c| and |+cmd| arguments are executed.
-	The starting flag is reset, has("vim_starting") will now return zero.
 	If the 'insertmode' option is set, Insert mode is entered.
+	The starting flag is reset, has("vim_starting") will now return zero.
+	The |v:vim_did_enter| variable is set to 1.
 	The |VimEnter| autocommands are executed.
 
 Some hints on using initializations:

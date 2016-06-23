@@ -1,4 +1,4 @@
-*helphelp.txt*	For Vim version 7.4.  Last change: 2016 Mar 12
+*helphelp.txt*	For Vim version 7.4.  Last change: 2016 Mar 26
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -199,9 +199,11 @@ command: >
 			sorted.
 			When there are duplicates an error message is given.
 			An existing tags file is silently overwritten.
+
 			The optional "++t" argument forces adding the
 			"help-tags" tag.  This is also done when the {dir} is
 			equal to $VIMRUNTIME/doc.
+
 			To rebuild the help tags in the runtime directory
 			(requires write permission there): >
 				:helptags $VIMRUNTIME/doc
