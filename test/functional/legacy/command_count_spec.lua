@@ -2,24 +2,19 @@
 
 local helpers = require('test.functional.helpers')(after_each)
 local clear, source, expect = helpers.clear, helpers.source, helpers.expect
-local execute, spawn = helpers.execute, helpers.spawn
-local nvim_prog = helpers.nvim_prog
+local execute = helpers.execute
 
 describe('command_count', function()
-  setup(clear)
-  teardown(function()
-    os.remove('test.out')
-  end)
-
   it('is working', function()
     -- It is relevant for the test to load a file initially.  If this is
     -- emulated with :arg the buffer count is wrong as nvim creates an empty
     -- buffer if it was started without a filename.
-    local nvim2 = spawn({nvim_prog, '-u', 'NONE', '-i', 'NONE', '--embed',
-				    'test_command_count.in'})
-    helpers.set_session(nvim2)
+    clear('test_command_count.in')
 
     source([[
+      let g:tmpname = tempname()
+      call mkdir(g:tmpname)
+      execute "cd ".g:tmpname
       lang C
       let g:lines = []
       com -range=% RangeLines
@@ -239,5 +234,10 @@ describe('command_count', function()
       bufdo: 2 3 4 5 6 7 8 9 10 15
       bufdo: 4 5 6 7
       tabdo: 2 3 4]])
+
+    source([[
+      cd ..
+      call delete(g:tmpname, 'rf')
+    ]])
   end)
 end)
