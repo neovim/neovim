@@ -10,8 +10,8 @@ local redir_exec = helpers.redir_exec
 local NIL = helpers.NIL
 
 describe('json_decode() function', function()
-  local restart = function(cmd)
-    clear(cmd)
+  local restart = function(...)
+    clear(...)
     execute('language C')
     execute([[
       function Eq(exp, act)
@@ -490,13 +490,13 @@ describe('json_decode() function', function()
   end)
 
   it('converts strings to latin1 when &encoding is latin1', function()
-    restart('set encoding=latin1')
+    restart('--cmd', 'set encoding=latin1')
     eq('\171', funcs.json_decode('"\\u00AB"'))
     sp_decode_eq({_TYPE='string', _VAL={'\n\171\n'}}, '"\\u0000\\u00AB\\u0000"')
   end)
 
   it('fails to convert string to latin1 if it is impossible', function()
-    restart('set encoding=latin1')
+    restart('--cmd', 'set encoding=latin1')
     eq('Vim(call):E474: Failed to convert string "ꯍ" from UTF-8',
        exc_exec('call json_decode(\'"\\uABCD"\')'))
   end)
@@ -532,7 +532,7 @@ describe('json_decode() function', function()
     -- When &encoding is latin1 string "«" is U+00C2 U+00AB U+00C2: Â«Â. So if
     -- '"«"' was parsed as latin1 json_decode would return three characters, and
     -- only one U+00AB when this string is parsed as latin1.
-    restart('set encoding=latin1')
+    restart('--cmd', 'set encoding=latin1')
     eq(('%c'):format(0xAB), funcs.json_decode('"«"'))
   end)
 
@@ -763,7 +763,7 @@ describe('json_encode() function', function()
   end)
 
   it('converts strings from latin1 when &encoding is latin1', function()
-    clear('set encoding=latin1')
+    clear('--cmd', 'set encoding=latin1')
     eq('"\\u00AB"', funcs.json_encode('\171'))
     eq('"\\u0000\\u00AB\\u0000"', eval('json_encode({"_TYPE": v:msgpack_types.string, "_VAL": ["\\n\171\\n"]})'))
   end)
