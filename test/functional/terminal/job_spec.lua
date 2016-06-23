@@ -6,7 +6,6 @@ describe('job handler', function()
   local screen
   local script_file = 'Xtest_job_4569.vim'
   local input_file = 'test/functional/fixtures/job_spec_124KB.txt'
-  local expected_bytes = '125769'  -- Length of `input_file`.
 
   before_each(function()
     helpers.clear()
@@ -31,9 +30,6 @@ describe('job handler', function()
         elseif 'stderr' ==# a:event
           put =join(a:data,"\n")
         elseif 'exit' ==# a:event
-          " Length of received data.
-          call setline('.', 'bytes: '.len(join(g:job_stdout[0:-2],"\n")))
-
           put =g:job_stdout[0]    " First line of received data.
           put =g:job_stdout[-2]   " Last line of received data.
         endif
@@ -57,7 +53,7 @@ describe('job handler', function()
     end
 
     screen:expect([[
-      bytes: ]]..expected_bytes..[[                                     |
+                                                        |
            1 HelloWorld:qa                              |
         5989 HelloWorld:qa                              |
       ~                                                 |
