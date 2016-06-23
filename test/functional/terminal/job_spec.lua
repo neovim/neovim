@@ -7,21 +7,20 @@ describe('job handler', function()
   local script_file = 'Xtest_job_4569.vim'
   local input_file = 'test/functional/fixtures/job_spec_124KB.txt'
 
-  before_each(function()
-    helpers.clear()
-    screen = thelpers.screen_setup(0, '["'..helpers.nvim_prog..
-      '", "-u", "NONE", "-i", "NONE", "--cmd", "set noswapfile"]')
-    screen:set_default_attr_ids({})
-    screen:set_default_attr_ignore(true)
-  end)
   after_each(function()
     os.remove(script_file)
   end)
 
   -- Note: This convoluted approach (spawned child nvim hosted in :terminal) is
   -- the only way #4569 could be reproduced in a test. See also #4646.
-  it('does not lose data (#4569)', function()
+  function test_job_output_collection()
+    helpers.clear()
+    screen = thelpers.screen_setup(0, '["'..helpers.nvim_prog..
+    '", "-u", "NONE", "-i", "NONE", "--cmd", "set noswapfile"]')
+    screen:set_default_attr_ids({})
+    screen:set_default_attr_ignore(true)
     screen.timeout = 15000
+
     helpers.write_file(script_file, [=[
       let g:job_stdout = []
       function! s:JobHandler(job_id, data, event)
@@ -61,6 +60,12 @@ describe('job handler', function()
                                                         |
       -- TERMINAL --                                    |
     ]])
+  end
+
+  it('does not lose data (#4569)', function()
+    test_job_output_collection()
+    test_job_output_collection()
+    test_job_output_collection()
   end)
 end)
 
