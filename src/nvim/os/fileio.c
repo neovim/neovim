@@ -216,30 +216,31 @@ ptrdiff_t file_read(FileDescriptor *const fp, char *const ret_buf,
     if (read_remaining) {
       assert(rbuffer_size(rv) == 0);
       rbuffer_reset(rv);
-      if (read_remaining >= kRWBufferSize) {
 #ifdef HAVE_READV
-        // If there is readv() syscall, then take an opportunity to populate
-        // both target buffer and RBuffer at once, …
-        size_t write_count;
-        struct iovec iov[] = {
-          { .iov_base = buf, .iov_len = read_remaining },
-          { .iov_base = rbuffer_write_ptr(rv, &write_count),
-            .iov_len = kRWBufferSize },
-        };
-        assert(write_count == kRWBufferSize);
-        const ptrdiff_t r_ret = os_readv(fp->fd, &fp->eof, iov,
-                                         ARRAY_SIZE(iov));
-        if (r_ret > 0) {
-          if (r_ret > (ptrdiff_t)read_remaining) {
-            read_remaining = 0;
-            rbuffer_produced(rv, (size_t)(r_ret - (ptrdiff_t)read_remaining));
-          } else {
-            read_remaining -= (size_t)r_ret;
-          }
-        } else if (r_ret < 0) {
-          return r_ret;
+      // If there is readv() syscall, then take an opportunity to populate
+      // both target buffer and RBuffer at once, …
+      size_t write_count;
+      struct iovec iov[] = {
+        { .iov_base = buf, .iov_len = read_remaining },
+        { .iov_base = rbuffer_write_ptr(rv, &write_count),
+          .iov_len = kRWBufferSize },
+      };
+      assert(write_count == kRWBufferSize);
+      const ptrdiff_t r_ret = os_readv(fp->fd, &fp->eof, iov,
+                                       ARRAY_SIZE(iov));
+      if (r_ret > 0) {
+        if (r_ret > (ptrdiff_t)read_remaining) {
+          rbuffer_produced(rv, (size_t)(r_ret - (ptrdiff_t)read_remaining));
+          read_remaining = 0;
+        } else {
+          buf += (size_t)r_ret;
+          read_remaining -= (size_t)r_ret;
         }
+      } else if (r_ret < 0) {
+        return r_ret;
+      }
 #else
+      if (read_remaining >= kRWBufferSize) {
         // …otherwise leave RBuffer empty and populate only target buffer,
         // because filtering information through rbuffer will be more syscalls.
         const ptrdiff_t r_ret = os_read(fp->fd, &fp->eof, buf, read_remaining);
@@ -249,7 +250,6 @@ ptrdiff_t file_read(FileDescriptor *const fp, char *const ret_buf,
         } else if (r_ret < 0) {
           return r_ret;
         }
-#endif
       } else {
         size_t write_count;
         const ptrdiff_t r_ret = os_read(fp->fd, &fp->eof,
@@ -262,6 +262,7 @@ ptrdiff_t file_read(FileDescriptor *const fp, char *const ret_buf,
           return r_ret;
         }
       }
+#endif
     }
   }
   return (ptrdiff_t)(size - read_remaining);
