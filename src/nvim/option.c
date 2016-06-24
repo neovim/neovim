@@ -2340,15 +2340,11 @@ static char *set_string_option(const int opt_idx, const char *const value,
   char *const oldval = *varp;
   *varp = s;
 
-  char *saved_oldval = NULL;
-  if (!starting) {
-    saved_oldval = xstrdup(oldval);
-  }
+  char *const saved_oldval = (starting ? NULL : xstrdup(oldval));
 
-  char *r = NULL;
-  if ((r = (char *)did_set_string_option(opt_idx, (char_u **)varp, (int)true,
-                                         (char_u *)oldval, NULL, opt_flags))
-      == NULL) {
+  char *const r = (char *)did_set_string_option(
+      opt_idx, (char_u **)varp, (int)true, (char_u *)oldval, NULL, opt_flags);
+  if (r == NULL) {
     did_set_option(opt_idx, opt_flags, true);
   }
 
@@ -2357,7 +2353,7 @@ static char *set_string_option(const int opt_idx, const char *const value,
     char buf_type[7];
     vim_snprintf(buf_type, ARRAY_SIZE(buf_type), "%s",
                  (opt_flags & OPT_LOCAL) ? "local" : "global");
-    set_vim_var_string(VV_OPTION_NEW, (char *) (*varp), -1);
+    set_vim_var_string(VV_OPTION_NEW, (char *)(*varp), -1);
     set_vim_var_string(VV_OPTION_OLD, saved_oldval, -1);
     set_vim_var_string(VV_OPTION_TYPE, buf_type, -1);
     apply_autocmds(EVENT_OPTIONSET,
