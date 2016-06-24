@@ -229,7 +229,7 @@ describe('jobs', function()
 
   it('will pass return code with the exit event', function()
     nvim('command', 'let g:job_opts.user = 5')
-    nvim('command', "call jobstart([&sh, '-c', 'exit 55'], g:job_opts)")
+    nvim('command', "call jobstart([&sh, &shellcmdflag, 'exit 55'], g:job_opts)")
     eq({'notification', 'exit', {5, 55}}, next_msg())
   end)
 
@@ -239,7 +239,7 @@ describe('jobs', function()
     function g:dict.on_exit(id, code, event)
       call rpcnotify(g:channel, a:event, a:code, self.id)
     endfunction
-    call jobstart([&sh, '-c', 'exit 45'], g:dict)
+    call jobstart([&sh, &shellcmdflag, 'exit 45'], g:dict)
     ]])
     eq({'notification', 'exit', {45, 10}}, next_msg())
   end)
@@ -283,10 +283,10 @@ describe('jobs', function()
     it('returns a list of status codes', function()
       source([[
       call rpcnotify(g:channel, 'wait', jobwait([
-      \  jobstart([&sh, '-c', 'sleep 0.10; exit 4']),
-      \  jobstart([&sh, '-c', 'sleep 0.110; exit 5']),
-      \  jobstart([&sh, '-c', 'sleep 0.210; exit 6']),
-      \  jobstart([&sh, '-c', 'sleep 0.310; exit 7'])
+      \  jobstart([&sh, &shellcmdflag, 'sleep 0.10; exit 4']),
+      \  jobstart([&sh, &shellcmdflag, 'sleep 0.110; exit 5']),
+      \  jobstart([&sh, &shellcmdflag, 'sleep 0.210; exit 6']),
+      \  jobstart([&sh, &shellcmdflag, 'sleep 0.310; exit 7'])
       \  ]))
       ]])
       eq({'notification', 'wait', {{4, 5, 6, 7}}}, next_msg())
@@ -303,10 +303,10 @@ describe('jobs', function()
         let g:exits += 1
       endfunction
       call jobwait([
-      \  jobstart([&sh, '-c', 'sleep 0.010; exit 5'], g:dict),
-      \  jobstart([&sh, '-c', 'sleep 0.030; exit 5'], g:dict),
-      \  jobstart([&sh, '-c', 'sleep 0.050; exit 5'], g:dict),
-      \  jobstart([&sh, '-c', 'sleep 0.070; exit 5'], g:dict)
+      \  jobstart([&sh, &shellcmdflag, 'sleep 0.010; exit 5'], g:dict),
+      \  jobstart([&sh, &shellcmdflag, 'sleep 0.030; exit 5'], g:dict),
+      \  jobstart([&sh, &shellcmdflag, 'sleep 0.050; exit 5'], g:dict),
+      \  jobstart([&sh, &shellcmdflag, 'sleep 0.070; exit 5'], g:dict)
       \  ])
       call rpcnotify(g:channel, 'wait', g:exits)
       ]])
@@ -316,10 +316,10 @@ describe('jobs', function()
     it('will return status codes in the order of passed ids', function()
       source([[
       call rpcnotify(g:channel, 'wait', jobwait([
-      \  jobstart([&sh, '-c', 'sleep 0.070; exit 4']),
-      \  jobstart([&sh, '-c', 'sleep 0.050; exit 5']),
-      \  jobstart([&sh, '-c', 'sleep 0.030; exit 6']),
-      \  jobstart([&sh, '-c', 'sleep 0.010; exit 7'])
+      \  jobstart([&sh, &shellcmdflag, 'sleep 0.070; exit 4']),
+      \  jobstart([&sh, &shellcmdflag, 'sleep 0.050; exit 5']),
+      \  jobstart([&sh, &shellcmdflag, 'sleep 0.030; exit 6']),
+      \  jobstart([&sh, &shellcmdflag, 'sleep 0.010; exit 7'])
       \  ]))
       ]])
       eq({'notification', 'wait', {{4, 5, 6, 7}}}, next_msg())
@@ -329,7 +329,7 @@ describe('jobs', function()
       source([[
       call rpcnotify(g:channel, 'wait', jobwait([
       \  -10,
-      \  jobstart([&sh, '-c', 'sleep 0.01; exit 5']),
+      \  jobstart([&sh, &shellcmdflag, 'sleep 0.01; exit 5']),
       \  ]))
       ]])
       eq({'notification', 'wait', {{-3, 5}}}, next_msg())
@@ -375,7 +375,7 @@ describe('jobs', function()
         let j.state = 0
         let j.counter = g:counter
         call jobwait([
-        \   jobstart([&sh, '-c', 'echo ready; cat -'], j),
+        \   jobstart([&sh, &shellcmdflag, 'echo ready; cat -'], j),
         \ ])
       endfunction
       ]])
@@ -394,8 +394,8 @@ describe('jobs', function()
       it('will return -1 if the wait timed out', function()
         source([[
         call rpcnotify(g:channel, 'wait', jobwait([
-        \  jobstart([&sh, '-c', 'exit 4']),
-        \  jobstart([&sh, '-c', 'sleep 10; exit 5']),
+        \  jobstart([&sh, &shellcmdflag, 'exit 4']),
+        \  jobstart([&sh, &shellcmdflag, 'sleep 10; exit 5']),
         \  ], 100))
         ]])
         eq({'notification', 'wait', {{4, -1}}}, next_msg())
@@ -404,8 +404,8 @@ describe('jobs', function()
       it('can pass 0 to check if a job exists', function()
         source([[
         call rpcnotify(g:channel, 'wait', jobwait([
-        \  jobstart([&sh, '-c', 'sleep 0.05; exit 4']),
-        \  jobstart([&sh, '-c', 'sleep 0.3; exit 5']),
+        \  jobstart([&sh, &shellcmdflag, 'sleep 0.05; exit 4']),
+        \  jobstart([&sh, &shellcmdflag, 'sleep 0.3; exit 5']),
         \  ], 0))
         ]])
         eq({'notification', 'wait', {{-1, -1}}}, next_msg())
