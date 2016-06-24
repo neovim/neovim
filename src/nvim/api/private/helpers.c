@@ -323,20 +323,20 @@ void set_option_to(void *to, int type, String name, Object value, Error *err)
     kv_push(edata->stack, NIL)
 
 #define TYPVAL_ENCODE_CONV_BOOL(num) \
-    kv_push(edata->stack, BOOLEAN_OBJ((Boolean) (num)))
+    kv_push(edata->stack, BOOLEAN_OBJ((Boolean)(num)))
 
 #define TYPVAL_ENCODE_CONV_NUMBER(num) \
-    kv_push(edata->stack, INTEGER_OBJ((Integer) (num)))
+    kv_push(edata->stack, INTEGER_OBJ((Integer)(num)))
 
 #define TYPVAL_ENCODE_CONV_UNSIGNED_NUMBER TYPVAL_ENCODE_CONV_NUMBER
 
 #define TYPVAL_ENCODE_CONV_FLOAT(flt) \
-    kv_push(edata->stack, FLOATING_OBJ((Float) (flt)))
+    kv_push(edata->stack, FLOATING_OBJ((Float)(flt)))
 
 #define TYPVAL_ENCODE_CONV_STRING(str, len) \
     do { \
-      const size_t len_ = (size_t) (len); \
-      const char *const str_ = (const char *) (str); \
+      const size_t len_ = (size_t)(len); \
+      const char *const str_ = (const char *)(str); \
       assert(len_ == 0 || str_ != NULL); \
       kv_push(edata->stack, STRING_OBJ(((String) { \
         .data = xmemdupz((len_?str_:""), len_), \
@@ -372,7 +372,7 @@ static inline void typval_encode_list_start(EncodedData *const edata,
 }
 
 #define TYPVAL_ENCODE_CONV_LIST_START(len) \
-    typval_encode_list_start(edata, (size_t) (len))
+    typval_encode_list_start(edata, (size_t)(len))
 
 static inline void typval_encode_between_list_items(EncodedData *const edata)
   FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_NONNULL_ALL
@@ -413,7 +413,7 @@ static inline void typval_encode_dict_start(EncodedData *const edata,
 }
 
 #define TYPVAL_ENCODE_CONV_DICT_START(len) \
-    typval_encode_dict_start(edata, (size_t) (len))
+    typval_encode_dict_start(edata, (size_t)(len))
 
 #define TYPVAL_ENCODE_CONV_SPECIAL_DICT_KEY_CHECK(label, kv_pair)
 

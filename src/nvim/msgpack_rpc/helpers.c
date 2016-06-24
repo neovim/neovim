@@ -109,7 +109,7 @@ bool msgpack_rpc_to_object(const msgpack_object *const obj, Object *const arg)
         if (cur.mobj->via.u64 > API_INTEGER_MAX) {
           ret = false;
         } else {
-          *cur.aobj = INTEGER_OBJ((Integer) cur.mobj->via.u64);
+          *cur.aobj = INTEGER_OBJ((Integer)cur.mobj->via.u64);
         }
         break;
       }
@@ -135,7 +135,7 @@ bool msgpack_rpc_to_object(const msgpack_object *const obj, Object *const arg)
         const size_t size = cur.mobj->via.array.size;
         if (cur.container) {
           if (cur.idx >= size) {
-            (void) kv_pop(stack);
+            (void)kv_pop(stack);
           } else {
             const size_t idx = cur.idx;
             cur.idx++;
@@ -163,7 +163,7 @@ bool msgpack_rpc_to_object(const msgpack_object *const obj, Object *const arg)
         const size_t size = cur.mobj->via.map.size;
         if (cur.container) {
           if (cur.idx >= size) {
-            (void) kv_pop(stack);
+            (void)kv_pop(stack);
           } else {
             const size_t idx = cur.idx;
             cur.idx++;
@@ -232,7 +232,7 @@ bool msgpack_rpc_to_object(const msgpack_object *const obj, Object *const arg)
 #undef STR_CASE
     }
     if (!cur.container) {
-      (void) kv_pop(stack);
+      (void)kv_pop(stack);
     }
   }
   kv_destroy(stack);
@@ -384,7 +384,7 @@ void msgpack_rpc_from_object(const Object result, msgpack_packer *const res)
         const size_t size = cur.aobj->data.array.size;
         if (cur.container) {
           if (cur.idx >= size) {
-            (void) kv_pop(stack);
+            (void)kv_pop(stack);
           } else {
             const size_t idx = cur.idx;
             cur.idx++;
@@ -405,7 +405,7 @@ void msgpack_rpc_from_object(const Object result, msgpack_packer *const res)
         const size_t size = cur.aobj->data.dictionary.size;
         if (cur.container) {
           if (cur.idx >= size) {
-            (void) kv_pop(stack);
+            (void)kv_pop(stack);
           } else {
             const size_t idx = cur.idx;
             cur.idx++;
@@ -426,7 +426,7 @@ void msgpack_rpc_from_object(const Object result, msgpack_packer *const res)
       }
     }
     if (!cur.container) {
-      (void) kv_pop(stack);
+      (void)kv_pop(stack);
     }
   }
   kv_destroy(stack);

@@ -4656,7 +4656,7 @@ set_option_value (
       return NULL;
     }
     if (flags & P_STRING) {
-      const char *s = (char *) string;
+      const char *s = (const char *)string;
       if (s == NULL) {
         s = "";
       }

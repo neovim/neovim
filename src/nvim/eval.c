@@ -18162,7 +18162,7 @@ void free_tv(typval_T *varp)
 
 #define TYPVAL_ENCODE_CONV_NUMBER(ignored) \
     do { \
-      (void) ignored; \
+      (void)ignored; \
       tv->vval.v_number = 0; \
       tv->v_lock = VAR_UNLOCKED; \
     } while (0)

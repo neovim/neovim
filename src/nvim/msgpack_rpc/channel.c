@@ -857,8 +857,8 @@ static void log_server_msg(uint64_t channel_id,
       log_msg_close(f, (msgpack_object) {
           .type = MSGPACK_OBJECT_STR,
           .via.str = {
-              .ptr = (char *) msgpack_error_messages[result + MUR_OFF],
-              .size = (uint32_t) strlen(
+              .ptr = (char *)msgpack_error_messages[result + MUR_OFF],
+              .size = (uint32_t)strlen(
                   msgpack_error_messages[result + MUR_OFF]),
           },
       });
