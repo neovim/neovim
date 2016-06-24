@@ -45,7 +45,7 @@ local obj2lua_tab = {
       return true
     end
   end,
-  [tonumber(api.kObjectTypeNil)] = function(obj)
+  [tonumber(api.kObjectTypeNil)] = function(_)
     return nil_value
   end,
   [tonumber(api.kObjectTypeFloat)] = function(obj)
@@ -60,8 +60,8 @@ local obj2lua_tab = {
 }
 
 obj2lua = function(obj)
-  return ((obj2lua_tab[tonumber(obj['type'])] or function(obj)
-    assert(false, 'Converting ' .. tostring(tonumber(obj['type'])) .. ' is not implementing yet')
+  return ((obj2lua_tab[tonumber(obj['type'])] or function(obj_inner)
+    assert(false, 'Converting ' .. tostring(tonumber(obj_inner['type'])) .. ' is not implementing yet')
   end)(obj))
 end
 
@@ -69,6 +69,8 @@ local obj = function(typ, data)
   return ffi.gc(ffi.new('Object', {['type']=typ, data=data}),
                 api.api_free_object)
 end
+
+local lua2obj
 
 local lua2obj_type_tab = {
   [int_type] = function(l)
@@ -104,7 +106,7 @@ local lua2obj_type_tab = {
                      api.xmalloc(len * ffi.sizeof('KeyValuePair'))),
     }})
     for i = 1, len do
-      local key, value = table.unpack(kvs[i])
+      local key, val = table.unpack(kvs[i])
       dct.data.dictionary.items[i - 1] = ffi.new(
           'KeyValuePair', {key=ffi.gc(lua2obj(key), nil).data.string,
                            value=ffi.gc(lua2obj(val), nil)})
@@ -131,7 +133,7 @@ lua2obj = function(l)
   elseif type(l) == 'string' then
     return obj(api.kObjectTypeString, {string={
       size=#l,
-      data=eval.xmemdupz(to_cstr(l), #l),
+      data=api.xmemdupz(to_cstr(l), #l),
     }})
   elseif l == nil or l == nil_value then
     return obj(api.kObjectTypeNil, {integer=0})

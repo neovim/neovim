@@ -52,7 +52,9 @@ local special_tab = {
 local lst2tbl
 local dct2tbl
 
-local typvalt2lua_tab = {
+local typvalt2lua_tab
+
+typvalt2lua_tab = {
   [tonumber(eval.VAR_SPECIAL)] = function(t)
     return special_tab[t.vval.v_special]
   end,
@@ -63,7 +65,7 @@ local typvalt2lua_tab = {
     return tonumber(t.vval.v_float)
   end,
   [tonumber(eval.VAR_STRING)] = function(t)
-    str = t.vval.v_string
+    local str = t.vval.v_string
     if str == nil then
       return null_string
     else
@@ -82,8 +84,8 @@ local typvalt2lua_tab = {
 }
 
 local typvalt2lua = function(t)
-  return ((typvalt2lua_tab[tonumber(t.v_type)] or function(t)
-    assert(false, 'Converting ' .. tonumber(t.v_type) .. ' was not implemented yet')
+  return ((typvalt2lua_tab[tonumber(t.v_type)] or function(t_inner)
+    assert(false, 'Converting ' .. tonumber(t_inner.v_type) .. ' was not implemented yet')
   end)(t))
 end
 
@@ -105,8 +107,9 @@ lst2tbl = function(l)
 end
 
 dct2tbl = function(d)
-  local ret = {}
+  local ret = {d=d}
   assert(false, 'Converting dictionaries is not implemented yet')
+  return ret
 end
 
 local lua2typvalt
@@ -119,7 +122,7 @@ local typvalt = function(typ, vval)
 end
 
 local lua2typvalt_type_tab = {
-  [int_type] = function(l, processed)
+  [int_type] = function(l, _)
     return typvalt(eval.VAR_NUMBER, {v_number=l.value})
   end,
   [flt_type] = function(l, processed)
