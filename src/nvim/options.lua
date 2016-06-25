@@ -165,7 +165,7 @@ return {
       deny_duplicates=true,
       secure=true,
       vi_def=true,
-      expand=true,
+      expand='nodefault',
       varname='p_bdir',
       defaults={if_true={vi=''}}
     },
@@ -616,7 +616,7 @@ return {
       deny_duplicates=true,
       secure=true,
       vi_def=true,
-      expand=true,
+      expand='nodefault',
       varname='p_dir',
       defaults={if_true={vi=''}}
     },
@@ -1891,7 +1891,7 @@ return {
       deny_duplicates=true,
       secure=true,
       vi_def=true,
-      expand=true,
+      expand='nodefault',
       varname='p_rtp',
       defaults={if_true={vi=''}}
     },
@@ -2507,7 +2507,7 @@ return {
       deny_duplicates=true,
       secure=true,
       vi_def=true,
-      expand=true,
+      expand='nodefault',
       varname='p_udir',
       defaults={if_true={vi=''}}
     },
@@ -2568,7 +2568,7 @@ return {
       type='string', scope={'global'},
       secure=true,
       vi_def=true,
-      expand=true,
+      expand='nodefault',
       varname='p_vdir',
       defaults={if_true={vi=''}}
     },

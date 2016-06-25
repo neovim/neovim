@@ -76,5 +76,3 @@ describe('startup defaults', function()
     end)
   end)
 end)
-
-
