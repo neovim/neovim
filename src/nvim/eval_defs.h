@@ -155,6 +155,10 @@ typedef struct list_stack_S {
 /// Convert a hashitem key pointer to a dictitem pointer
 #define HIKEY2DI(p)  ((dictitem_T *)(p - offsetof(dictitem_T, di_key)))
 
+/// Convert a hashitem value pointer to a dictitem pointer
+#define HIVAL2DI(p) \
+    ((dictitem_T *)(((char *)p) - offsetof(dictitem_T, di_tv)))
+
 /// Convert a hashitem pointer to a dictitem pointer
 #define HI2DI(hi)     HIKEY2DI((hi)->hi_key)
 

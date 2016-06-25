@@ -104,7 +104,7 @@
 /// @brief Macros used to check special dictionary key
 ///
 /// @param  label  Label for goto in case check was not successfull.
-/// @param  kv_pair  List with two elements: key and value.
+/// @param  key  typval_T key to check.
 
 /// @def TYPVAL_ENCODE_CONV_DICT_AFTER_KEY
 /// @brief Macros used after finishing converting dictionary key
@@ -154,6 +154,7 @@ typedef enum {
 /// Structure representing current VimL to messagepack conversion state
 typedef struct {
   MPConvStackValType type;  ///< Type of the stack entry.
+  typval_T *tv;  ///< Currently converted typval_T.
   union {
     struct {
       dict_T *dict;    ///< Currently converted dictionary.
@@ -168,13 +169,13 @@ typedef struct {
 } MPConvStackVal;
 
 /// Stack used to convert VimL values to messagepack.
-typedef kvec_t(MPConvStackVal) MPConvStack;
+typedef kvec_withinit_t(MPConvStackVal, 8) MPConvStack;
 
 // Defines for MPConvStack
 #define _mp_size kv_size
-#define _mp_init kv_init
-#define _mp_destroy kv_destroy
-#define _mp_push kv_push
+#define _mp_init kvi_init
+#define _mp_destroy kvi_destroy
+#define _mp_push kvi_push
 #define _mp_pop kv_pop
 #define _mp_last kv_last
 
@@ -184,10 +185,12 @@ typedef kvec_t(MPConvStackVal) MPConvStack;
 /// @param  copyID_attr  Name of the container attribute that holds copyID.
 ///                      After checking whether value of this attribute is
 ///                      copyID (variable) it is set to copyID.
+/// @param  conv_type  Type of the conversion, @see MPConvStackValType.
 #define _TYPVAL_ENCODE_CHECK_SELF_REFERENCE(val, copyID_attr, conv_type) \
     do { \
       if ((val)->copyID_attr == copyID) { \
         TYPVAL_ENCODE_CONV_RECURSE((val), conv_type); \
+        return OK; \
       } \
       (val)->copyID_attr = copyID; \
     } while (0)
@@ -215,10 +218,10 @@ static inline size_t tv_strlen(const typval_T *const tv)
 /// tv)` which returns OK or FAIL and helper functions.
 ///
 /// @param  scope  Scope of the main function: either nothing or `static`.
+/// @param  name  Name of the target converter.
 /// @param  firstargtype  Type of the first argument. It will be used to return
 ///                       the results.
 /// @param  firstargname  Name of the first argument.
-/// @param  name  Name of the target converter.
 #define TYPVAL_ENCODE_DEFINE_CONV_FUNCTIONS(scope, name, firstargtype, \
                                             firstargname) \
 static int name##_convert_one_value(firstargtype firstargname, \
@@ -255,6 +258,7 @@ static int name##_convert_one_value(firstargtype firstargname, \
       TYPVAL_ENCODE_CONV_LIST_START(tv->vval.v_list->lv_len); \
       _mp_push(*mpstack, ((MPConvStackVal) { \
         .type = kMPConvList, \
+        .tv = tv, \
         .data = { \
           .l = { \
             .list = tv->vval.v_list, \
@@ -385,6 +389,7 @@ static int name##_convert_one_value(firstargtype firstargname, \
                                                 lv_copyID, kMPConvList); \
             TYPVAL_ENCODE_CONV_LIST_START(val_di->di_tv.vval.v_list->lv_len); \
             _mp_push(*mpstack, ((MPConvStackVal) { \
+              .tv = tv, \
               .type = kMPConvList, \
               .data = { \
                 .l = { \
@@ -415,6 +420,7 @@ static int name##_convert_one_value(firstargtype firstargname, \
                                                 kMPConvPairs); \
             TYPVAL_ENCODE_CONV_DICT_START(val_list->lv_len); \
             _mp_push(*mpstack, ((MPConvStackVal) { \
+              .tv = tv, \
               .type = kMPConvPairs, \
               .data = { \
                 .l = { \
@@ -455,6 +461,7 @@ name##_convert_one_value_regular_dict: \
                                           kMPConvDict); \
       TYPVAL_ENCODE_CONV_DICT_START(tv->vval.v_dict->dv_hashtab.ht_used); \
       _mp_push(*mpstack, ((MPConvStackVal) { \
+        .tv = tv, \
         .type = kMPConvDict, \
         .data = { \
           .d = { \
@@ -535,7 +542,7 @@ scope int encode_vim_to_##name(firstargtype firstargname, typval_T *const tv, \
         } \
         const list_T *const kv_pair = cur_mpsv->data.l.li->li_tv.vval.v_list; \
         TYPVAL_ENCODE_CONV_SPECIAL_DICT_KEY_CHECK( \
-            encode_vim_to_##name##_error_ret, kv_pair); \
+            encode_vim_to_##name##_error_ret, kv_pair->lv_first->li_tv); \
         if (name##_convert_one_value(firstargname, &mpstack, \
                                      &kv_pair->lv_first->li_tv, copyID, \
                                      objname) == FAIL) { \
