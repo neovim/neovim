@@ -57,9 +57,14 @@ local get_flags = function(o)
       add_flag(redraw_flags[r_flag])
     end
   end
+  if o.expand then
+    add_flag('P_EXPAND')
+    if o.expand == 'nodefault' then
+      add_flag('P_NO_DEF_EXP')
+    end
+  end
   for _, flag_desc in ipairs({
     {'alloced'},
-    {'expand'},
     {'nodefault'},
     {'no_mkrc'},
     {'vi_def'},
