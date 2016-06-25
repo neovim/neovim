@@ -50,13 +50,6 @@
 #include "nvim/api/private/defs.h"
 
 
-#ifdef WIN32
-#define os_strtok_r strtok_s
-#else
-#define os_strtok_r strtok_r
-#endif
-
-
 /// Growarray to store info about already sourced scripts.
 /// Also store the dev/ino, so that we don't have to stat() each
 /// script when going through the list.
@@ -121,10 +114,8 @@ struct source_cookie {
 /// batch mode debugging: don't save and restore typeahead.
 static bool debug_greedy = false;
 
-/// Repeatedly get Ex commands, until told to continue normal execution.
-/// Handles debug mode.
-///
-/// @param cmd
+/// Debug mode. Repeatedly get Ex commands, until told to continue normal
+/// execution.
 void do_debug(char_u *cmd)
 {
   int save_msg_scroll = msg_scroll;
@@ -425,8 +416,6 @@ static void do_showbacktrace(char_u *cmd)
 
 
 /// ":debug".
-///
-/// @param eap
 void ex_debug(exarg_T *eap)
 {
   int debug_break_level_save = debug_break_level;
@@ -452,8 +441,6 @@ static char_u   *debug_skipped_name;
 /// executed.  Return true and set breakpoint_name for skipped commands that
 /// decide to execute something themselves.
 /// Called from do_one_cmd() before executing a command.
-///
-/// @param eap
 void dbg_check_breakpoint(exarg_T *eap)
 {
   char_u      *p;
@@ -493,12 +480,10 @@ void dbg_check_breakpoint(exarg_T *eap)
 /// Go to debug mode if skipped by dbg_check_breakpoint() because eap->skip was
 /// set.
 ///
-/// @param eap
-///
 /// @return true when the debug mode is entered this time.
 bool dbg_check_skipped(exarg_T *eap)
 {
-  bool prev_got_int;
+  int prev_got_int;
 
   if (debug_skipped) {
     // Save the value of got_int and reset it.  We don't want a previous
@@ -545,8 +530,6 @@ static garray_T prof_ga = { 0, 0, sizeof(struct debuggy), 4, NULL };
 ///
 /// @param arg
 /// @param gap  either &dbg_breakp or &prof_ga
-///
-/// @return
 static int dbg_parsearg(char_u *arg, garray_T *gap)
 {
   char_u      *p = arg;
@@ -771,17 +754,17 @@ void ex_breaklist(exarg_T *eap)
 /// Returns line number at which to break; zero when no matching breakpoint.
 linenr_T
 dbg_find_breakpoint(
-    bool file,                   // true for a file, false for a function
+    bool file,             // true for a file, false for a function
     char_u *fname,         // file or function name
-    linenr_T after             // after this line number
+    linenr_T after         // after this line number
 )
 {
   return debuggy_find(file, fname, after, &dbg_breakp, NULL);
 }
 
-/// @param file: true for a file, false for a function
-/// @param fname: file or function name
-/// @param[out] fp: forceit
+/// @param file     true for a file, false for a function
+/// @param fname    file or function name
+/// @param fp[out]  forceit
 ///
 /// @returns true if profiling is on for a function or sourced file.
 bool has_profiling(bool file, char_u *fname, bool *fp)
@@ -793,11 +776,11 @@ bool has_profiling(bool file, char_u *fname, bool *fp)
 /// Common code for dbg_find_breakpoint() and has_profiling().
 static linenr_T
 debuggy_find(
-    bool file,                   // true for a file, false for a function
-    char_u *fname,         // file or function name
-    linenr_T after,             // after this line number
-    garray_T *gap,           // either &dbg_breakp or &prof_ga
-    bool *fp            // if not NULL: return forceit
+    bool file,            // true for a file, false for a function
+    char_u *fname,        // file or function name
+    linenr_T after,       // after this line number
+    garray_T *gap,        // either &dbg_breakp or &prof_ga
+    bool *fp              // if not NULL: return forceit
 )
 {
   struct debuggy *bp;
@@ -980,7 +963,7 @@ void set_context_in_profile_cmd(expand_T *xp, char_u *arg)
     return;
   }
 
-  // TODO(tarruda): expand function names after "func
+  // TODO(tarruda): expand function names after "func"
   xp->xp_context = EXPAND_NOTHING;
 }
 
@@ -1179,7 +1162,8 @@ bool prof_def_func(void)
 
 /// If 'autowrite' option set, try to write the file.
 /// Careful: autocommands may make "buf" invalid!
-/// return FAIL for failure, OK otherwise
+///
+/// @return FAIL for failure, OK otherwise
 int autowrite(buf_T *buf, int forceit)
 {
   int r;
@@ -1450,7 +1434,7 @@ bool check_changed_any(bool hidden, bool unload)
     FOR_ALL_TAB_WINDOWS(tp, wp) {
       if (wp->w_buffer == buf) {
         goto_tabpage_win(tp, wp);
-        // Paranoia: did autocms wipe out the buffer with changes?
+        // Paranoia: did autocmds wipe out the buffer with changes?
         if (!buf_valid(buf)) {
           goto theend;
         }
@@ -1470,8 +1454,8 @@ theend:
   return ret;
 }
 
-/// return FAIL if there is no file name, OK if there is one
-/// give error message for FAIL
+/// Return FAIL if there is no file name, OK if there is one.
+/// Give error message for FAIL.
 int check_fname(void)
 {
   if (curbuf->b_ffname == NULL) {
@@ -1481,8 +1465,9 @@ int check_fname(void)
   return OK;
 }
 
-/// flush the contents of a buffer, unless it has no file name
-/// return FAIL for failure, OK otherwise
+/// Flush the contents of a buffer, unless it has no file name.
+///
+/// @return FAIL for failure, OK otherwise
 int buf_write_all(buf_T *buf, int forceit)
 {
   int retval;
@@ -1551,7 +1536,8 @@ void get_arglist(garray_T *gap, char_u *str)
 
 /// Parse a list of arguments (file names), expand them and return in
 /// "fnames[fcountp]".  When "wig" is true, removes files matching 'wildignore'.
-/// Return FAIL or OK.
+///
+/// @return FAIL or OK.
 int get_arglist_exp(char_u *str, int *fcountp, char_u ***fnamesp, bool wig)
 {
   garray_T ga;
@@ -1897,7 +1883,6 @@ void ex_argedit(exarg_T *eap)
   int fnum;
   int i;
   char_u      *s;
-  int after;
 
   // Add the argument to the buffer list and get the buffer number.
   fnum = buflist_add(eap->arg, BLN_LISTED);
@@ -1911,7 +1896,7 @@ void ex_argedit(exarg_T *eap)
   if (i == ARGCOUNT) {
     // Can't find it, add it to the argument list.
     s = vim_strsave(eap->arg);
-    after = eap->addr_count > 0 ? (int)eap->line2 : curwin->w_arg_idx + 1;
+    int after = eap->addr_count > 0 ? (int)eap->line2 : curwin->w_arg_idx + 1;
     i = alist_add_list(1, &s, after);
     curwin->w_arg_idx = i;
   }
@@ -2225,14 +2210,12 @@ void ex_compiler(exarg_T *eap)
   char_u      *buf;
   char_u      *old_cur_comp = NULL;
   char_u      *p;
-  size_t bufsize;
 
   if (*eap->arg == NUL) {
     // List all compiler scripts.
-    do_cmdline_cmd("echo globpath(&rtp, 'compiler//.vim')");
-    // ) keep the indenter happy...
+    do_cmdline_cmd("echo globpath(&rtp, 'compiler/*.vim')");  // NOLINT
   } else {
-    bufsize = STRLEN(eap->arg) + 14;
+    size_t bufsize = STRLEN(eap->arg) + 14;
     buf = xmalloc(bufsize);
     if (eap->forceit) {
       // ":compiler! {name}" sets global options
@@ -2416,17 +2399,16 @@ static void cmd_source(char_u *fname, exarg_T *eap)
     // - inside a loop
     openscript(fname, global_busy || listcmd_busy || eap->nextcmd != NULL
                || eap->cstack->cs_idx >= 0);
-  } else if (do_source(fname, false, DOSO_NONE) == FAIL) {
+
     // ":source" read ex commands
+  } else if (do_source(fname, false, DOSO_NONE) == FAIL) {
     EMSG2(_(e_notopen), fname);
   }
 }
 
 /// ":source" and associated commands.
 ///
-/// @param cookie
-///
-/// @return the address holding the next breakpoint line for a source cookie.
+/// @return address holding the next breakpoint line for a source cookie
 linenr_T *source_breakpoint(void *cookie)
 {
   return &((struct source_cookie *)cookie)->breakpoint;
@@ -2797,8 +2779,9 @@ void free_scriptnames(void)
 
 /// Get one full line from a sourced file.
 /// Called by do_cmdline() when it's called from do_source().
-/// Return a pointer to the line in allocated memory.
-/// Return NULL for end-of-file or some error.
+///
+/// @return pointer to the line in allocated memory, or NULL for end-of-file or
+///         some error.
 char_u *getsourceline(int c, void *cookie, int indent)
 {
   struct source_cookie *sp = (struct source_cookie *)cookie;
@@ -3388,12 +3371,12 @@ static char_u **find_locales(void)
 
   // Transform locale_a string where each locale is separated by "\n"
   // into an array of locale strings.
-  loc = (char_u *)os_strtok_r((char *)locale_a, "\n", &saveptr);
+  loc = (char_u *)os_strtok((char *)locale_a, "\n", &saveptr);
 
   while (loc != NULL) {
     loc = vim_strsave(loc);
     GA_APPEND(char_u *, &locales_ga, loc);
-    loc = (char_u *)os_strtok_r(NULL, "\n", &saveptr);
+    loc = (char_u *)os_strtok(NULL, "\n", &saveptr);
   }
   xfree(locale_a);
   // Guarantee that .ga_data is NULL terminated

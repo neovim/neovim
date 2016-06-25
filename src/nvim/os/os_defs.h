@@ -46,4 +46,10 @@
 /// negative libuv error codes are returned by a number of os functions.
 #define os_strerror uv_strerror
 
+#ifdef WIN32
+# define os_strtok strtok_s
+#else
+# define os_strtok strtok_r
+#endif
+
 #endif  // NVIM_OS_OS_DEFS_H
