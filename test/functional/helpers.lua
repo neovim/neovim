@@ -216,17 +216,47 @@ local function merge_args(...)
   return argv
 end
 
-local function spawn(argv, merge)
-  local child_stream = ChildProcessStream.spawn(merge and merge_args(prepend_argv, argv) or argv)
+local function spawn(argv, merge, env)
+  local child_stream = ChildProcessStream.spawn(
+      merge and merge_args(prepend_argv, argv) or argv,
+      env)
   return Session.new(child_stream)
 end
 
 local function clear(...)
   local args = {unpack(nvim_argv)}
-  for _, arg in ipairs({...}) do
+  local new_args
+  local env = nil
+  local opts = select(1, ...)
+  if type(opts) == 'table' then
+    if opts.env then
+      local env_tbl = {}
+      for k, v in pairs(opts.env) do
+        assert(type(k) == 'string')
+        assert(type(v) == 'string')
+        env_tbl[k] = v
+      end
+      for _, k in ipairs({
+        'HOME',
+        'ASAN_OPTIONS',
+        'LD_LIBRARY_PATH', 'PATH',
+        'NVIM_LOG_FILE',
+      }) do
+        env_tbl[k] = os.getenv(k)
+      end
+      env = {}
+      for k, v in pairs(env_tbl) do
+        env[#env + 1] = k .. '=' .. v
+      end
+    end
+    new_args = opts.args or {}
+  else
+    new_args = {...}
+  end
+  for _, arg in ipairs(new_args) do
     table.insert(args, arg)
   end
-  set_session(spawn(args))
+  set_session(spawn(args, nil, env))
 end
 
 local function insert(...)
