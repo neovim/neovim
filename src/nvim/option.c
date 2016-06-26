@@ -1477,15 +1477,18 @@ do_set (
                * default value was already expanded, only
                * required when an environment variable was set
                * later */
-              if (newval == NULL)
+              new_value_alloced = true;
+              if (newval == NULL) {
                 newval = empty_option;
-              else {
+              } else if (!(options[opt_idx].flags | P_NO_DEF_EXP)) {
                 s = option_expand(opt_idx, newval);
-                if (s == NULL)
+                if (s == NULL) {
                   s = newval;
+                }
                 newval = vim_strsave(s);
+              } else {
+                newval = (char_u *)xstrdup((char *)newval);
               }
-              new_value_alloced = TRUE;
             } else if (nextchar == '<') {             /* set to global val */
               newval = vim_strsave(*(char_u **)get_varp_scope(
                       &(options[opt_idx]), OPT_GLOBAL));
