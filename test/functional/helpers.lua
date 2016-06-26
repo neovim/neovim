@@ -1,6 +1,8 @@
 require('coxpcall')
 local lfs = require('lfs')
 local ChildProcessStream = require('nvim.child_process_stream')
+local SocketStream = require('nvim.socket_stream')
+local TcpStream = require('nvim.tcp_stream')
 local Session = require('nvim.session')
 local global_helpers = require('test.helpers')
 
@@ -223,6 +225,14 @@ local function spawn(argv, merge, env)
   return Session.new(child_stream)
 end
 
+-- Creates a new Session connected by domain socket (named pipe) or TCP.
+local function connect(file_or_address)
+  local addr, port = string.match(file_or_address, "(.*):(%d+)")
+  local stream = (addr and port) and TcpStream.open(addr, port) or
+    SocketStream.open(file_or_address)
+  return Session.new(stream)
+end
+
 local function clear(...)
   local args = {unpack(nvim_argv)}
   local new_args
@@ -291,8 +301,7 @@ local function write_file(name, text, dont_dedent)
   file:close()
 end
 
--- Tries to get platform name, from $SYSTEM_NAME, uname,
--- fallback is 'Windows'
+-- Tries to get platform name from $SYSTEM_NAME, uname; fallback is "Windows".
 local uname = (function()
   local platform = nil
   return (function()
@@ -508,6 +517,7 @@ return function(after_each)
   return {
     prepend_argv = prepend_argv,
     clear = clear,
+    connect = connect,
     spawn = spawn,
     dedent = dedent,
     source = source,
