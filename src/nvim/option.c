@@ -1492,7 +1492,7 @@ do_set (
               } else {
                 newval = (char_u *)xstrdup((char *)newval);
               }
-            } else if (nextchar == '<') {             /* set to global val */
+            } else if (nextchar == '<') {  // set to global val
               newval = vim_strsave(*(char_u **)get_varp_scope(
                       &(options[opt_idx]), OPT_GLOBAL));
               new_value_alloced = TRUE;
