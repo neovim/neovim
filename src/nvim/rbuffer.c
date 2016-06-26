@@ -15,7 +15,7 @@ RBuffer *rbuffer_new(size_t capacity)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_RET
 {
   if (!capacity) {
-    capacity = 0xffff;
+    capacity = 0x10000;
   }
 
   RBuffer *rv = xmalloc(sizeof(RBuffer) + capacity);
