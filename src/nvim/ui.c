@@ -53,12 +53,10 @@ static bool pending_cursor_update = false;
 static int busy = 0;
 static int height, width;
 
-// This set of macros allow us to use UI_CALL to invoke any function on
-// registered UI instances. The functions can have 0-5 arguments(configurable
-// by SELECT_NTH)
+// UI_CALL invokes a function on all registered UI instances. The functions can
+// have 0-5 arguments (configurable by SELECT_NTH).
 //
-// See http://stackoverflow.com/a/11172679 for a better explanation of how it
-// works.
+// See http://stackoverflow.com/a/11172679 for how it works.
 #ifdef _MSC_VER
 # define UI_CALL(funname, ...) \
     do { \
@@ -169,14 +167,24 @@ void ui_refresh(void)
 
   for (size_t i = 0; i < ui_count; i++) {
     UI *ui = uis[i];
-    width = ui->width < width ? ui->width : width;
-    height = ui->height < height ? ui->height : height;
+    width = MIN(ui->width, width);
+    height = MIN(ui->height, height);
     pum_external &= ui->pum_external;
   }
 
   row = col = 0;
   screen_resize(width, height);
   pum_set_external(pum_external);
+}
+
+static void ui_refresh_handler(void **argv)
+{
+  ui_refresh();
+}
+
+void ui_schedule_refresh(void)
+{
+  loop_schedule(&main_loop, event_create(1, ui_refresh_handler, 0));
 }
 
 void ui_resize(int new_width, int new_height)
@@ -252,7 +260,7 @@ void ui_detach_impl(UI *ui)
   }
 
   if (--ui_count) {
-    ui_refresh();
+    ui_schedule_refresh();
   }
 }
 
