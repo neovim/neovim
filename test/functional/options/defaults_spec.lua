@@ -189,6 +189,21 @@ describe('XDG-based defaults', function()
       eq('$XDG_CONFIG_HOME/nvim/swap//', meths.get_option('directory'))
       eq('$XDG_CONFIG_HOME/nvim/undo', meths.get_option('undodir'))
       eq('$XDG_CONFIG_HOME/nvim/view', meths.get_option('viewdir'))
+      meths.command('set all&')
+      eq(('$XDG_DATA_HOME/nvim'
+          .. ',$XDG_DATA_DIRS/nvim'
+          .. ',$XDG_CONFIG_HOME/nvim/site'
+          .. ',$XDG_CONFIG_DIRS/nvim/site'
+          .. ',' .. eval('$VIMRUNTIME')
+          .. ',$XDG_CONFIG_DIRS/nvim/site/after'
+          .. ',$XDG_CONFIG_HOME/nvim/site/after'
+          .. ',$XDG_DATA_DIRS/nvim/after'
+          .. ',$XDG_DATA_HOME/nvim/after'
+      ), meths.get_option('runtimepath'))
+      eq('.,$XDG_CONFIG_HOME/nvim/backup', meths.get_option('backupdir'))
+      eq('$XDG_CONFIG_HOME/nvim/swap//', meths.get_option('directory'))
+      eq('$XDG_CONFIG_HOME/nvim/undo', meths.get_option('undodir'))
+      eq('$XDG_CONFIG_HOME/nvim/view', meths.get_option('viewdir'))
     end)
   end)
 
