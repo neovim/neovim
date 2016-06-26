@@ -246,25 +246,26 @@ The ":map" command (with no arguments) lists your current mappings.  At
 least the ones for Normal mode.  More about mappings in section |40.1|.
 
 ==============================================================================
-*05.4*	Adding a package			*add-package* *matchit-install*
+*05.4*	Adding a package			*add-package* *vimball-install*
 
 A package is a set of files that you can add to Vim.  There are two kinds of
 packages: optional and automatically loaded on startup.
 
 The Vim distribution comes with a few packages that you can optionally use.
-For example, the matchit plugin.  This plugin makes the "%" command jump to
-matching HTML tags, if/else/endif in Vim scripts, etc.  Very useful, although
-it's not backwards compatible (that's why it is not enabled by default).
+For example, the vimball plugin.  This plugin supports creating and using
+vimballs (self-installing Vim plugin archives).
 
-To start using the matchit plugin, add one line to your vimrc file: >
-	packadd matchit
+To start using the vimball plugin, add one line to your vimrc file: >
+	packadd vimball
 
 That's all!  You can also type the command to try it out.  Now you can find
 help about this plugin: >
-	:help matchit
+	:help vimball
 
 This works, because when `:packadd` loaded the plugin it also added the
-package directory in 'runtimepath', so that the help file can be found.
+package directory in 'runtimepath', so that the help file can be found.  The
+tags for vimball's help are already created.  If you need to generate the help
+tags for a package, see the `:helptags` command.
 
 You can find packages on the Internet in various places.  It usually comes as
 an archive or as a repository.  For an archive you can follow these steps:
