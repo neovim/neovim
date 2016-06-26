@@ -40,7 +40,7 @@ for details.
 Job control is achieved by calling a combination of the |jobstart()|,
 |jobsend()| and |jobstop()| functions. Here's an example:
 >
-    function s:JobHandler(job_id, data, event)
+    function! s:JobHandler(job_id, data, event)
       if a:event == 'stdout'
         let str = self.shell.' stdout: '.join(a:data)
       elseif a:event == 'stderr'
@@ -83,6 +83,19 @@ Here's what is happening:
      corresponding stream. For "exit", it is the status returned by the
      program.
   2: The event type, which is "stdout", "stderr" or "exit".
+
+  Note: Buffered stdout/stderr data which has not been flushed by the sender
+        will not trigger the "stdout" callback (but if the process ends, the
+        "exit" callback will be triggered).
+        For example, "ruby -e" buffers output, so small strings will be
+        buffered unless "auto-flushing" ($stdout.sync=true) is enabled. >
+          function! Receive(job_id, data, event)
+            echom printf('%s: %s',a:event,string(a:data))
+          endfunction
+          call jobstart(['ruby', '-e',
+            \ '$stdout.sync = true; 5.times do sleep 1 and puts "Hello Ruby!" end'],
+            \ {'on_stdout': 'Receive'})
+<       https://github.com/neovim/neovim/issues/1592
 
 The options dictionary is passed as the "self" variable to the callback
 function. Here's a more object-oriented version of the above:

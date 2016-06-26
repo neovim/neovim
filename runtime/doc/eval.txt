@@ -2507,11 +2507,9 @@ capture({command})					*capture()*
 			echo capture(['echon "foo"', 'echon "bar"'])
 <			foobar
 		This function is not available in the |sandbox|.
-		Note: {command}s run as if prepended with |:silent| (output is
-		captured, but not displayed).  If multiple capture() calls are
-		nested, the outer capture() will not catch the command output
-		of the inner capture(); the inner capture will not cancel the
-		outer.
+		Note: {command} executes as if prepended with |:silent|
+		(output is collected, but not displayed).  If nested, an outer
+		capture() will not observe the output of inner calls.
 		Note: Text attributes (highlights) are not captured.
 
 ceil({expr})							*ceil()*
@@ -2847,6 +2845,13 @@ dictwatcheradd({dict}, {pattern}, {callback})		      *dictwatcheradd()*
 		After this is called, every change on {dict} and on keys
 		matching {pattern} will result in {callback} being invoked.
 
+		For example, to watch all global variables: >
+			silent! call dictwatcherdel(g:, '*', 'OnDictChanged')
+			function! OnDictChanged(d,k,z)
+			  echomsg string(a:k) string(a:z)
+			endfunction
+			call dictwatcheradd(g:, '*', 'OnDictChanged')
+<
 		For now {pattern} only accepts very simple patterns that can
 		contain a '*' at the end of the string, in which case it will
 		match every key that begins with the substring before the '*'.
@@ -2857,7 +2862,7 @@ dictwatcheradd({dict}, {pattern}, {callback})		      *dictwatcheradd()*
 
 		- The dictionary being watched.
 		- The key which changed.
-		- A dictionary containg the new and old values for the key.
+		- A dictionary containing the new and old values for the key.
 
 		The type of change can be determined by examining the keys
 		present on the third argument:
@@ -4325,19 +4330,18 @@ jobsend({job}, {data})					{Nvim} *jobsend()*
 < 		will send "abc<NL>123<NUL>456<NL>".
 
 jobstart({cmd}[, {opts}])				{Nvim} *jobstart()*
-		Spawns {cmd} as a job.  If {cmd} is a |List|, it will be run
-		directly.  If {cmd} is a |string|, it will be roughly 
-		equivalent to >
-			:call jobstart(split(&shell) + split(&shellcmdflag) + ['{cmd}'])
+		Spawns {cmd} as a job.  If {cmd} is a |List| it is run
+		directly.  If {cmd} is a |String| it is processed like this: >
+		  :call jobstart(split(&shell) + split(&shellcmdflag) + ['{cmd}'])
 <		NOTE: read |shell-unquoting| before constructing any lists 
 		with 'shell' or 'shellcmdflag' options.  The above call is 
 		only written to show the idea, one needs to perform unquoting 
 		and do split taking quotes into account.
 
 		{opts} is a dictionary with these keys:
-		  on_stdout: stdout event handler
-		  on_stderr: stderr event handler
-		  on_exit  : exit event handler
+		  on_stdout: stdout event handler (function name or |Funcref|)
+		  on_stderr: stderr event handler (function name or |Funcref|)
+		  on_exit  : exit event handler (function name or |Funcref|)
 		  cwd      : Working directory of the job; defaults to
 		             |current-directory|.
 		  pty      : If set, the job will be connected to a new pseudo
@@ -4351,17 +4355,12 @@ jobstart({cmd}[, {opts}])				{Nvim} *jobstart()*
 			     when nvim exits. If the process dies before
 			     nvim exits, on_exit will still be invoked.
 
-		Either funcrefs or function names can be passed as event
-		handlers. The {opts} object is also used as the "self"
-		argument for the callback, so the caller may pass arbitrary
-		data by setting other key.(see |Dictionary-function| for more
-		information).
+		{opts} is passed as |self| to the callback; the caller may
+		pass arbitrary data by setting other keys.
 		Returns:
-		  - The job ID on success, which is used by |jobsend()| and
-		    |jobstop()|
-		  - 0 when the job table is full or on invalid arguments
-		  - -1 when {cmd}[0] is not executable.  Will never fail if
-		    {cmd} is a string unless 'shell' is not executable.
+		  - job ID on success, used by |jobsend()| and |jobstop()|
+		  - 0 on invalid arguments or if the job table is full
+		  - -1 if {cmd}[0] is not executable.
 		See |job-control| for more information.
 
 jobstop({job})						{Nvim} *jobstop()*

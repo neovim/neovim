@@ -70,6 +70,7 @@ Job control			|job-control|
 Remote plugins			|remote-plugin|
 Python plugins			|provider-python|
 Clipboard integration		|provider-clipboard|
+XDG support
 
 
 OTHER FEATURES ~
@@ -96,6 +97,9 @@ Options:
 Commands:
   |:CheckHealth|
 
+Functions:
+  |capture()|
+
 Events:
   |TabNew|
   |TabNewEntered|
@@ -120,6 +124,11 @@ If a Python interpreter is available on your `$PATH`, |:python| and |:python3|
 are always available and may be used simultaneously in separate plugins.  The
 `neovim` pip package must be installed to use Python plugins in Nvim (see
 |provider-python|).
+
+|:!| and |system()| do not support "interactive" commands; use |:terminal| for
+that instead. Terminal Vim supports interactive |:!| and |system()|, but gui
+Vim does not. See ":help gui-pty" in Vim:
+   http://vimdoc.sourceforge.net/htmldoc/gui_x11.html#gui-pty
 
 |mkdir()| behaviour changed:
 1. Assuming /tmp/foo does not exist and /tmp can be written to
