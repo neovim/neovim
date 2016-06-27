@@ -336,7 +336,7 @@ function! s:diagnose_python(version) abort
 
   if exists('$VIRTUAL_ENV')
     if !empty(pyenv)
-      let pyenv_prefix = resolve(s:trim(system(printf('"%s" prefix', pyenv))))
+      let pyenv_prefix = resolve(s:trim(system(['"' . pyenv . '"', 'prefix'])))
       if $VIRTUAL_ENV != pyenv_prefix
         let virtualenv_inactive = 1
       endif
