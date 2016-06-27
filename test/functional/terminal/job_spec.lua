@@ -16,7 +16,7 @@ describe('job handler', function()
   function test_job_output_collection()
     helpers.clear()
     screen = thelpers.screen_setup(0, '["'..helpers.nvim_prog..
-      '", "-u", "NONE", "-i", "NONE", "--cmd", "set noswapfile"]')
+      '", "-u", "NORC", "-i", "NONE", "--cmd", "set noswapfile"]')
     screen:set_default_attr_ids({})
     screen:set_default_attr_ignore(true)
     screen.timeout = 15000
@@ -39,17 +39,19 @@ describe('job handler', function()
           \ 'on_stderr': function('s:JobHandler'),
           \ 'on_exit'  : function('s:JobHandler')
           \ }
+
+      call jobstart(['sh', '-c', 'cat ]=]..input_file..[=['], g:callbacks)
     ]=])
 
     -- Source the script in the child nvim.
-    thelpers.feed_data(':source Xtest_job_4569.vim\n')
+    thelpers.feed_data(":edit Xtest_job_4569.vim|source %|filetype detect\n")
 
     -- Start the job in the child nvim.
-    if helpers.os_name == 'windows' then
-      thelpers.feed_data(":call jobstart(['powershell', '-c', 'cat \""..input_file.."\"], g:callbacks)\n")
-    else
-      thelpers.feed_data(":call jobstart(['sh', '-c', 'cat "..input_file.."'], g:callbacks)\n")
-    end
+    -- if helpers.os_name == 'windows' then
+    --   thelpers.feed_data(":call jobstart(['powershell', '-c', 'cat \""..input_file.."\"], g:callbacks)\n")
+    -- else
+    --   thelpers.feed_data(":call jobstart(['sh', '-c', 'cat "..input_file.."'], g:callbacks)\n")
+    -- end
 
     screen:expect([[
                                                         |
@@ -62,11 +64,11 @@ describe('job handler', function()
     ]])
   end
 
-  -- it('does not lose data (#4569)', function()
-  --   test_job_output_collection()
-  --   test_job_output_collection()
-  --   test_job_output_collection()
-  -- end)
+  it('does not lose data (#4569)', function()
+    test_job_output_collection()
+    test_job_output_collection()
+    test_job_output_collection()
+  end)
 end)
 
 describe('job handler', function()
