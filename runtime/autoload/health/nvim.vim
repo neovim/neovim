@@ -1,3 +1,6 @@
+" Script variables
+let s:bad_responses = ['unknown', 'unable to parse', 'unable to get pypi response', 'unable to get neovim executable']
+
 function! s:trim(s) abort
   return substitute(a:s, '^\_s*\|\_s*$', '', 'g')
 endfunction
@@ -23,7 +26,7 @@ endfunction
 function! s:download(url) abort
   let content = ''
   if executable('curl')
-    let content = system('curl -sL "'.a:url.'"')
+    let content = system(['curl', '-sL', "'", a:url, "'"])
   endif
 
   if empty(content) && executable('python')
@@ -39,7 +42,7 @@ function! s:download(url) abort
           \except Exception:\n
           \    pass\n
           \"
-    let content = system('python -c "'.script.'" 2>/dev/null')
+    let content = system(['python', '-c', "'", script, "'", '2>/dev/null')
   endif
 
   return content
@@ -53,32 +56,46 @@ function! s:latest_pypi_version() abort
     return s:pypi_version
   endif
 
-  let s:pypi_version = 'unknown'
+  let s:pypi_version = 'unable to get pypi response'
   let pypi_info = s:download('https://pypi.python.org/pypi/neovim/json')
   if !empty(pypi_info)
     let pypi_data = json_decode(pypi_info)
-    let s:pypi_version = get(get(pypi_data, 'info', {}), 'version', 'unknown')
+    let s:pypi_version = get(get(pypi_data, 'info', {}), 'version', 'unable to parse')
     return s:pypi_version
   endif
 endfunction
 
 
+""
 " Get version information using the specified interpreter.  The interpreter is
 " used directly in case breaking changes were introduced since the last time
 " Neovim's Python client was updated.
+"
+" Returns [
+"           python executable version,
+"           current nvim version,
+"           current pypi nvim status,
+"           installed version status
+"         ]
 function! s:version_info(python) abort
   let pypi_version = s:latest_pypi_version()
-  let python_version = s:trim(system(
-        \ printf('"%s" -c "import sys; print(''.''.join(str(x) '
-        \ . 'for x in sys.version_info[:3]))"', a:python)))
+  let python_version = s:trim(system([
+        \ a:python,
+        \ '-c',
+        \ '"import sys; print(\".\".join(str(x) for x in sys.version_info[:3]))"']))
+
   if empty(python_version)
     let python_version = 'unknown'
   endif
 
-  let nvim_path = s:trim(system(printf('"%s" -c "import sys, neovim;'
-        \ . 'print(neovim.__file__)" 2>/dev/null', a:python)))
+  let nvim_path = s:trim(system([
+        \ a:python,
+        \ '-c',
+        \ '"import sys, neovim; print(neovim.__file__)"',
+        \ '2>/dev/null']))
+
   if empty(nvim_path)
-    return [python_version, 'not found', pypi_version, 'unknown']
+    return [python_version, 'not found', pypi_version, 'unable to get neovim executable']
   endif
 
   let nvim_version = 'unknown'
@@ -185,7 +202,7 @@ endfunction
 function! s:diagnose_python(version) abort
   let python_bin_name = 'python'.(a:version == 2 ? '' : '3')
   let pyenv = resolve(exepath('pyenv'))
-  let pyenv_root = exists('$PYENV_ROOT') ? resolve($PYENV_ROOT) : ''
+  let pyenv_root = exists('$PYENV_ROOT') ? resolve($PYENV_ROOT) : 'n'
   let venv = exists('$VIRTUAL_ENV') ? resolve($VIRTUAL_ENV) : ''
   let host_prog_var = python_bin_name.'_host_prog'
   let host_skip_var = python_bin_name.'_host_skip_check'
@@ -329,7 +346,7 @@ function! s:diagnose_python(version) abort
   endif
 
   if virtualenv_inactive
-    suggestions = [
+    let suggestions = [
           \ 'If you are using Zsh, see: http://vi.stackexchange.com/a/7654/5229',
           \ ]
     call health#report_warn(
@@ -360,7 +377,7 @@ function! s:diagnose_python(version) abort
     call health#report_info(printf('%s-neovim Version: %s', python_bin_name, current))
 
     if current == 'not found'
-      suggestions = [
+      let suggestions = [
             \ 'Use the command `pip' . a:version . 'install neovim`',
             \ ]
       call health#report_error(
