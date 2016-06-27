@@ -705,7 +705,7 @@ static int command_line_execute(VimState *state, int key)
       || s->c == '\r'
       || s->c == K_KENTER
       || (s->c == ESC
-        && (!KeyTyped || vim_strchr(p_cpo, CPO_ESC) != NULL))) {
+          && (!KeyTyped || vim_strchr(p_cpo, CPO_ESC) != NULL))) {
     // In Ex mode a backslash escapes a newline.
     if (exmode_active
         && s->c != ESC

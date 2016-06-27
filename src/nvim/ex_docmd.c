@@ -1248,7 +1248,7 @@ static char_u * do_one_cmd(char_u **cmdlinep,
   ea.line1 = 1;
   ea.line2 = 1;
   ea.is_live = flags & DOCMD_LIVE_PREVIEW;
-  ++ex_nesting_level;
+  ex_nesting_level++;
 
   /* When the last file has not been edited :q has to be typed twice. */
   if (quitmore
@@ -1721,8 +1721,9 @@ static char_u * do_one_cmd(char_u **cmdlinep,
   if (ea.cmdidx == CMD_SIZE) {
     if (!ea.skip) {
       STRCPY(IObuff, _("E492: Not an editor command"));
-      if (!(flags & DOCMD_VERBOSE))
+      if (!(flags & DOCMD_VERBOSE)) {
         append_command(*cmdlinep);
+      }
       errormsg = IObuff;
       did_emsg_syntax = TRUE;
     }
