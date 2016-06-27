@@ -14,7 +14,7 @@ function! health#check(bang) abort
       let s:current_checker = l:checker[0]
       let l:report .= printf("\nChecker %s says: %s", s:current_checker, l:checker[1])
 
-      let l:report .= capture('call ' . l:checker[0] . '()')
+      let l:report .= capture('silent! call ' . l:checker[0] . '()')
 
     endif
   endfor
@@ -161,7 +161,7 @@ function! s:add_single_checker(checker_name) abort
 endfunction
 
 ""
-" health#add_checker is a function to register a (or several) healthcheckers.
+" health#add_checker is a function to register at least one healthcheckers.
 " {checker_name} can be specified by either a list of strings or a single string.
 " The string should be the name of the function to check, which should follow
 " the naming convention of `health#plugin_name#check`
