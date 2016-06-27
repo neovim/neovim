@@ -2,6 +2,7 @@ set(SYN_VIM_GENERATOR ${PROJECT_SOURCE_DIR}/scripts/genvimvim.lua)
 set(GENERATED_RUNTIME_DIR ${PROJECT_BINARY_DIR}/runtime)
 set(GENERATED_SYN_VIM ${GENERATED_RUNTIME_DIR}/syntax/vim/generated.vim)
 set(GENERATED_HELP_TAGS ${GENERATED_RUNTIME_DIR}/doc/tags)
+set(GENERATED_PACKAGE_DIR ${GENERATED_RUNTIME_DIR}/pack/dist/opt)
 
 file(MAKE_DIRECTORY ${GENERATED_RUNTIME_DIR})
 file(MAKE_DIRECTORY ${GENERATED_RUNTIME_DIR}/syntax)
@@ -17,6 +18,47 @@ add_custom_command(OUTPUT ${GENERATED_SYN_VIM}
     ${PROJECT_SOURCE_DIR}/src/nvim/options.lua
     ${PROJECT_SOURCE_DIR}/src/nvim/eval.c
 )
+
+if(POLICY CMP0054)
+  cmake_policy(SET CMP0054 OLD)
+endif()
+
+file(GLOB PACKAGES ${PROJECT_SOURCE_DIR}/runtime/pack/dist/opt/*)
+
+set(GENERATED_PACKAGE_TAGS)
+foreach(PACKAGE ${PACKAGES})
+  get_filename_component(PACKNAME ${PACKAGE} NAME)
+  file(GLOB "${PACKNAME}_DOC_FILES" ${PACKAGE}/doc/*.txt)
+  if("${PACKNAME}_DOC_FILES")
+    file(MAKE_DIRECTORY ${GENERATED_PACKAGE_DIR}/${PACKNAME})
+    add_custom_target("${PACKNAME}-tags"
+      COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${PACKAGE} ${GENERATED_PACKAGE_DIR}/${PACKNAME}
+      COMMAND "${PROJECT_BINARY_DIR}/bin/nvim"
+        -u NONE -i NONE -e --headless -c "helptags doc" -c quit
+      DEPENDS
+        nvim
+      WORKING_DIRECTORY "${GENERATED_PACKAGE_DIR}/${PACKNAME}"
+    )
+
+    add_custom_command(OUTPUT "${GENERATED_PACKAGE_DIR}/${PACKNAME}/doc/tags"
+      DEPENDS
+        "${PACKNAME}-tags"
+      )
+
+    set("${PACKNAME}_DOC_NAMES")
+    foreach(DF "${${PACKNAME}_DOC_FILES}")
+      get_filename_component(F ${DF} NAME)
+      list(APPEND "${PACKNAME}_DOC_NAMES" ${GENERATED_PACKAGE_DIR}/${PACKNAME}/doc/${F})
+    endforeach()
+
+    install_helper(
+      FILES ${GENERATED_PACKAGE_DIR}/${PACKNAME}/doc/tags "${${PACKNAME}_DOC_NAMES}"
+      DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/nvim/runtime/pack/dist/opt/${PACKNAME}/doc)
+
+    list(APPEND GENERATED_PACKAGE_TAGS "${GENERATED_PACKAGE_DIR}/${PACKNAME}/doc/tags")
+  endif()
+endforeach()
 
 file(GLOB DOCFILES ${PROJECT_SOURCE_DIR}/runtime/doc/*.txt)
 
@@ -53,6 +95,7 @@ add_custom_target(
   DEPENDS
     ${GENERATED_SYN_VIM}
     ${GENERATED_HELP_TAGS}
+    ${GENERATED_PACKAGE_TAGS}
 )
 
 # CMake is painful here.  It will create the destination using the user's
