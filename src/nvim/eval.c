@@ -7131,7 +7131,7 @@ static void api_wrapper(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   Object result = fn(INVALID_CHANNEL, NO_RESPONSE, args, &err);
 
   if (err.set) {
-    vim_report_error(cstr_as_string(err.msg));
+    nvim_report_error(cstr_as_string(err.msg));
     goto end;
   }
 
@@ -8837,8 +8837,8 @@ static void f_feedkeys(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       flags = get_tv_string_buf(&argvars[1], nbuf);
     }
 
-    vim_feedkeys(cstr_as_string((char *)keys),
-                 cstr_as_string((char *)flags), true);
+    nvim_feedkeys(cstr_as_string((char *)keys),
+                  cstr_as_string((char *)flags), true);
   }
 }
 
@@ -13751,7 +13751,7 @@ static void f_rpcrequest(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   if (err.set) {
-    vim_report_error(cstr_as_string(err.msg));
+    nvim_report_error(cstr_as_string(err.msg));
     goto end;
   }
 

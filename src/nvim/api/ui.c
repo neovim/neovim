@@ -127,11 +127,6 @@ void nvim_ui_detach(uint64_t channel_id, Error *err)
   remote_ui_disconnect(channel_id);
 }
 
-/// @deprecated
-void ui_detach(uint64_t channel_id, Error *err)
-{
-  nvim_ui_detach(channel_id, err);
-}
 
 void nvim_ui_try_resize(uint64_t channel_id, Integer width,
                         Integer height, Error *err)
@@ -152,13 +147,6 @@ void nvim_ui_try_resize(uint64_t channel_id, Integer width,
   ui->width = (int)width;
   ui->height = (int)height;
   ui_refresh();
-}
-
-/// @deprecated
-void ui_try_resize(uint64_t channel_id, Integer width,
-                   Integer height, Error *err)
-{
-  nvim_ui_try_resize(channel_id, width, height, err);
 }
 
 void nvim_ui_set_option(uint64_t channel_id, String name,

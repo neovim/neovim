@@ -2009,6 +2009,7 @@ msgpackdump({list})		List	dump a list of objects to msgpack
 msgpackparse({list})		List	parse msgpack to a list of objects
 nextnonblank({lnum})		Number	line nr of non-blank line >= {lnum}
 nr2char({expr}[, {utf8}])	String	single char with ASCII/UTF8 value {expr}
+nvim_...({args}...)		any	call nvim |api| functions
 or({expr}, {expr})		Number  bitwise OR
 pathshorten({expr})		String	shorten directory names in a path
 pow({x}, {y})			Float	{x} to the power of {y}
@@ -2208,10 +2209,8 @@ and({expr}, {expr})					*and()*
 		Example: >
 			:let flag = and(bits, 0x80)
 
-
 api_info()						*api_info()*
 		Returns Dictionary of |api-metadata|.
-
 
 append({lnum}, {expr})					*append()*
 		When {expr} is a |List|: Append each item of the |List| as a
@@ -5171,6 +5170,17 @@ nr2char({expr}[, {utf8}])				*nr2char()*
 		nr2char(10), because NULs are represented with newline
 		characters.  nr2char(0) is a real NUL and terminates the
 		string, thus results in an empty string.
+
+nvim_...({...})						*nvim_...()* *eval-api*
+		Call nvim |api| functions. The type checking of arguments will
+		be stricter than for most other builtins. For instance,
+		if Integer is expected, a |Number| must be passed in, a
+		|String| will not be autoconverted.
+		Buffer numbers, as returned by |bufnr()| could be used as
+		first argument to nvim_buf_... functions.  All functions
+		expecting an object (buffer, window or tabpage) can
+		also take the numerical value 0 to indicate the current
+		(focused) object.
 
 or({expr}, {expr})					*or()*
 		Bitwise OR on the two arguments.  The arguments are converted

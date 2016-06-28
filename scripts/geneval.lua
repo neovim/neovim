@@ -26,7 +26,7 @@ local funcs = require('eval').funcs
 local metadata = mpack.unpack(io.open(arg[3], 'rb'):read("*all"))
 for i,fun in ipairs(metadata) do
   if not fun.noeval then
-    funcs['api_'..fun.name] = {
+    funcs[fun.name] = {
       args=#fun.parameters,
       func='api_wrapper',
       data='&handle_'..fun.name,

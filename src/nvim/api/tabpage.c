@@ -14,7 +14,7 @@
 /// @param tabpage The tabpage
 /// @param[out] err Details of an error that may have occurred
 /// @return The windows in `tabpage`
-ArrayOf(Window) tabpage_get_windows(Tabpage tabpage, Error *err)
+ArrayOf(Window) nvim_tabpage_get_windows(Tabpage tabpage, Error *err)
 {
   Array rv = ARRAY_DICT_INIT;
   tabpage_T *tab = find_tab_by_handle(tabpage, err);
@@ -43,7 +43,7 @@ ArrayOf(Window) tabpage_get_windows(Tabpage tabpage, Error *err)
 /// @param name The variable name
 /// @param[out] err Details of an error that may have occurred
 /// @return The variable value
-Object tabpage_get_var(Tabpage tabpage, String name, Error *err)
+Object nvim_tabpage_get_var(Tabpage tabpage, String name, Error *err)
 {
   tabpage_T *tab = find_tab_by_handle(tabpage, err);
 
@@ -64,7 +64,10 @@ Object tabpage_get_var(Tabpage tabpage, String name, Error *err)
 ///
 ///         @warning It may return nil if there was no previous value
 ///                  or if previous value was `v:null`.
-Object tabpage_set_var(Tabpage tabpage, String name, Object value, Error *err)
+Object nvim_tabpage_set_var(Tabpage tabpage,
+                            String name,
+                            Object value,
+                            Error *err)
 {
   tabpage_T *tab = find_tab_by_handle(tabpage, err);
 
@@ -84,7 +87,7 @@ Object tabpage_set_var(Tabpage tabpage, String name, Object value, Error *err)
 ///
 ///         @warning It may return nil if there was no previous value
 ///                  or if previous value was `v:null`.
-Object tabpage_del_var(Tabpage tabpage, String name, Error *err)
+Object nvim_tabpage_del_var(Tabpage tabpage, String name, Error *err)
 {
   tabpage_T *tab = find_tab_by_handle(tabpage, err);
 
@@ -100,7 +103,7 @@ Object tabpage_del_var(Tabpage tabpage, String name, Error *err)
 /// @param tabpage The tab page handle
 /// @param[out] err Details of an error that may have occurred
 /// @return The Window handle
-Window tabpage_get_window(Tabpage tabpage, Error *err)
+Window nvim_tabpage_get_window(Tabpage tabpage, Error *err)
 {
   Window rv = 0;
   tabpage_T *tab = find_tab_by_handle(tabpage, err);
@@ -110,7 +113,7 @@ Window tabpage_get_window(Tabpage tabpage, Error *err)
   }
 
   if (tab == curtab) {
-    return vim_get_current_window();
+    return nvim_get_current_window();
   } else {
     FOR_ALL_WINDOWS_IN_TAB(wp, tab) {
       if (wp == tab->tp_curwin) {
@@ -126,7 +129,7 @@ Window tabpage_get_window(Tabpage tabpage, Error *err)
 ///
 /// @param tabpage The tab page handle
 /// @return true if the tab page is valid, false otherwise
-Boolean tabpage_is_valid(Tabpage tabpage)
+Boolean nvim_tabpage_is_valid(Tabpage tabpage)
 {
   Error stub = ERROR_INIT;
   return find_tab_by_handle(tabpage, &stub) != NULL;
