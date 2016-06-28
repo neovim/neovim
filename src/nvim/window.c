@@ -251,11 +251,14 @@ newwindow:
       if (win_new_tabpage((int)Prenum, NULL) == OK
           && valid_tabpage(oldtab)) {
         newtab = curtab;
-        goto_tabpage_tp(oldtab, TRUE, TRUE);
-        if (curwin == wp)
-          win_close(curwin, FALSE);
-        if (valid_tabpage(newtab))
-          goto_tabpage_tp(newtab, TRUE, TRUE);
+        goto_tabpage_tp(oldtab, true, true);
+        if (curwin == wp) {
+          win_close(curwin, false);
+        }
+        if (valid_tabpage(newtab)) {
+          goto_tabpage_tp(newtab, true, true);
+          apply_autocmds(EVENT_TABNEWENTERED, NULL, NULL, false, curbuf);
+        }
       }
     }
     break;
