@@ -40,18 +40,13 @@ describe('job handler', function()
           \ 'on_exit'  : function('s:JobHandler')
           \ }
 
+      "let g:shell = has('win32') ? 'powershell' : 'sh'
       call jobstart(['sh', '-c', 'cat ]=]..input_file..[=['], g:callbacks)
     ]=])
 
     -- Source the script in the child nvim.
-    thelpers.feed_data(":edit Xtest_job_4569.vim|source %|filetype detect\n")
-
-    -- Start the job in the child nvim.
-    -- if helpers.os_name == 'windows' then
-    --   thelpers.feed_data(":call jobstart(['powershell', '-c', 'cat \""..input_file.."\"], g:callbacks)\n")
-    -- else
-    --   thelpers.feed_data(":call jobstart(['sh', '-c', 'cat "..input_file.."'], g:callbacks)\n")
-    -- end
+    thelpers.feed_data(":edit "..script_file.."|enew|source #|filetype detect|"..
+      "let g:foo=1|for g:foo2 in range(1,99999)|let g:foo+=g:foo2|endfor\n")
 
     screen:expect([[
                                                         |
@@ -59,14 +54,12 @@ describe('job handler', function()
         5989 HelloWorld:qa                              |
       ~                                                 |
       [No Name] [+]                                     |
-                                                        |
+      "Xtest_job_4569.vim" 20L, 687C                    |
       -- TERMINAL --                                    |
     ]])
   end
 
   it('does not lose data (#4569)', function()
-    test_job_output_collection()
-    test_job_output_collection()
     test_job_output_collection()
   end)
 end)
