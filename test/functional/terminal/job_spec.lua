@@ -46,7 +46,7 @@ describe('job handler', function()
 
     -- Source the script in the child nvim.
     thelpers.feed_data(":edit "..script_file.."|enew|source #|filetype detect|"..
-      "let g:foo=1|for g:foo2 in range(1,99999)|let g:foo+=g:foo2|endfor\n")
+      "let g:foo=1|for g:foo2 in range(1,300000)|let g:foo+=g:foo2|endfor\n")
 
     screen:expect([[
                                                         |
