@@ -3327,8 +3327,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 		-	no highlighting
 		:	use a highlight group
 	The default is used for occasions that are not included.
-	If you want to change what the display modes do, see |dos-colors|
-	for an example.
 	When using the ':' display mode, this must be followed by the name of
 	a highlight group.  A highlight group can be used to define any type
 	of highlighting, including using color.  See |:highlight| on how to
