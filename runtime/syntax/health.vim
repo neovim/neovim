@@ -5,7 +5,13 @@ endif
 syntax keyword healthError ERROR
 highlight link healthError Error
 
+syntax keyword healthWarning WARNING
+highlight link healthWarning Todo
+
 syntax keyword healthInfo INFO
 highlight link healthInfo Identifier
+
+syntax keyword healthSuccess SUCCESS
+highlight link healthSuccess Function
 
 let b:current_syntax = "health"

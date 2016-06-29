@@ -12,7 +12,7 @@ function! health#check(bang) abort
     " Disabled checkers will not run their registered check functions
     if l:checker[1]
       let s:current_checker = l:checker[0]
-      let l:report .= printf("\nChecker %s says: %s", s:current_checker, l:checker[1])
+      let l:report .= printf("\nChecker %s says:\n", s:current_checker)
 
       let l:report .= capture('silent! call ' . l:checker[0] . '()')
 
