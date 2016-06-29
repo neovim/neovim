@@ -45,6 +45,15 @@ endfunction
 
 " Report functions {{{
 
+" Pass arguments through
+" fun! Foo(arg, ...)
+"     if a:0
+"         exe 'call Bar(a:arg1, a:arg2, ' . join(map(range(a:0), '"a:000[" . v:val . "]"'), ', ') . ')'
+"     else
+"         call Bar(a:arg, "foo")
+"     endif
+" endfunction
+
 ""
 " This function starts a report.
 " It should represent a general area of tests that can be understood
