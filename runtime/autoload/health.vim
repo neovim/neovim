@@ -1,9 +1,11 @@
-
 " Dictionary where we keep all of the healtch check functions we've found.
 " They will only be run if they are true
 let g:health_checkers = get(g:, 'health_checkers', {})
 let s:current_checker = get(s:, 'current_checker', '')
 
+""
+" Function to run the health checkers
+" It manages the output and any file local settings
 function! health#check(bang) abort
   let l:report = 'Checking health'
 
@@ -34,18 +36,9 @@ function! health#check(bang) abort
     echohl None
     echon ' to open this in a new buffer.'
   endif
-
 endfunction
 
-" Report functions
-function! health#report(msg) abort
-  if s:current_checker
-    echo s:current_checker . ' reports ' . a:msg
-  elseif
-    " TODO: Not sure what to do if it's called without one, maybe just this?
-    echo 'Reports ' . a:msg
-  endif
-endfunction
+" Report functions {{{
 
 ""
 " This function starts a report.
@@ -110,6 +103,8 @@ function! health#report_error(msg, ...) abort
   endfor
 endfunction
 
+" }}}
+" {{{ Utility functions
 function! s:trim(s) abort
   return substitute(a:s, '^\_s*\|\_s*$', '', 'g')
 endfunction
@@ -148,7 +143,8 @@ function! health#report_notes(notes) abort
   endfor
 endfunction
 
-" Health checker management
+" }}}
+" Health checker management {{{
 
 ""
 " s:add_single_checker is a function to handle adding a checker of name
@@ -194,3 +190,5 @@ function! health#disable_checker(checker_name) abort
     return
   endif
 endfunction
+
+" }}}
