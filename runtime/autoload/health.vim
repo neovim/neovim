@@ -60,7 +60,7 @@ endfunction
 " from the argument {name}
 " To start a new report, use this function again
 function! health#report_start(name) abort
-  echo '  - Diagnosing: ' . a:name
+  echo '  - Checking: ' . a:name
 endfunction
 
 ""
