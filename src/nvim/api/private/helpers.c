@@ -17,6 +17,13 @@
 #include "nvim/map.h"
 #include "nvim/option.h"
 #include "nvim/option_defs.h"
+#include "nvim/eval/typval_encode.h"
+#include "nvim/lib/kvec.h"
+
+/// Helper structure for vim_to_object
+typedef struct {
+  kvec_t(Object) stack;  ///< Object stack.
+} EncodedData;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "api/private/helpers.c.generated.h"
@@ -310,6 +317,179 @@ void set_option_to(void *to, int type, String name, Object value, Error *err)
   }
 }
 
+#define TYPVAL_ENCODE_ALLOW_SPECIALS false
+
+#define TYPVAL_ENCODE_CONV_NIL() \
+    kv_push(edata->stack, NIL)
+
+#define TYPVAL_ENCODE_CONV_BOOL(num) \
+    kv_push(edata->stack, BOOLEAN_OBJ((Boolean)(num)))
+
+#define TYPVAL_ENCODE_CONV_NUMBER(num) \
+    kv_push(edata->stack, INTEGER_OBJ((Integer)(num)))
+
+#define TYPVAL_ENCODE_CONV_UNSIGNED_NUMBER TYPVAL_ENCODE_CONV_NUMBER
+
+#define TYPVAL_ENCODE_CONV_FLOAT(flt) \
+    kv_push(edata->stack, FLOATING_OBJ((Float)(flt)))
+
+#define TYPVAL_ENCODE_CONV_STRING(str, len) \
+    do { \
+      const size_t len_ = (size_t)(len); \
+      const char *const str_ = (const char *)(str); \
+      assert(len_ == 0 || str_ != NULL); \
+      kv_push(edata->stack, STRING_OBJ(((String) { \
+        .data = xmemdupz((len_?str_:""), len_), \
+        .size = len_ \
+      }))); \
+    } while (0)
+
+#define TYPVAL_ENCODE_CONV_STR_STRING TYPVAL_ENCODE_CONV_STRING
+
+#define TYPVAL_ENCODE_CONV_EXT_STRING(str, len, type) \
+    TYPVAL_ENCODE_CONV_NIL()
+
+#define TYPVAL_ENCODE_CONV_FUNC(fun) \
+    TYPVAL_ENCODE_CONV_NIL()
+
+#define TYPVAL_ENCODE_CONV_EMPTY_LIST() \
+    kv_push(edata->stack, ARRAY_OBJ(((Array) { .capacity = 0, .size = 0 })))
+
+#define TYPVAL_ENCODE_CONV_EMPTY_DICT() \
+    kv_push(edata->stack, \
+            DICTIONARY_OBJ(((Dictionary) { .capacity = 0, .size = 0 })))
+
+static inline void typval_encode_list_start(EncodedData *const edata,
+                                            const size_t len)
+  FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_NONNULL_ALL
+{
+  const Object obj = OBJECT_INIT;
+  kv_push(edata->stack, ARRAY_OBJ(((Array) {
+    .capacity = len,
+    .size = 0,
+    .items = xmalloc(len * sizeof(*obj.data.array.items)),
+  })));
+}
+
+#define TYPVAL_ENCODE_CONV_LIST_START(len) \
+    typval_encode_list_start(edata, (size_t)(len))
+
+static inline void typval_encode_between_list_items(EncodedData *const edata)
+  FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_NONNULL_ALL
+{
+  Object item = kv_pop(edata->stack);
+  Object *const list = &kv_last(edata->stack);
+  assert(list->type == kObjectTypeArray);
+  assert(list->data.array.size < list->data.array.capacity);
+  list->data.array.items[list->data.array.size++] = item;
+}
+
+#define TYPVAL_ENCODE_CONV_LIST_BETWEEN_ITEMS() \
+    typval_encode_between_list_items(edata)
+
+static inline void typval_encode_list_end(EncodedData *const edata)
+  FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_NONNULL_ALL
+{
+  typval_encode_between_list_items(edata);
+#ifndef NDEBUG
+  const Object *const list = &kv_last(edata->stack);
+  assert(list->data.array.size == list->data.array.capacity);
+#endif
+}
+
+#define TYPVAL_ENCODE_CONV_LIST_END() \
+    typval_encode_list_end(edata)
+
+static inline void typval_encode_dict_start(EncodedData *const edata,
+                                            const size_t len)
+  FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_NONNULL_ALL
+{
+  const Object obj = OBJECT_INIT;
+  kv_push(edata->stack, DICTIONARY_OBJ(((Dictionary) {
+    .capacity = len,
+    .size = 0,
+    .items = xmalloc(len * sizeof(*obj.data.dictionary.items)),
+  })));
+}
+
+#define TYPVAL_ENCODE_CONV_DICT_START(len) \
+    typval_encode_dict_start(edata, (size_t)(len))
+
+#define TYPVAL_ENCODE_CONV_SPECIAL_DICT_KEY_CHECK(label, kv_pair)
+
+static inline void typval_encode_after_key(EncodedData *const edata)
+  FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_NONNULL_ALL
+{
+  Object key = kv_pop(edata->stack);
+  Object *const dict = &kv_last(edata->stack);
+  assert(dict->type == kObjectTypeDictionary);
+  assert(dict->data.dictionary.size < dict->data.dictionary.capacity);
+  if (key.type == kObjectTypeString) {
+    dict->data.dictionary.items[dict->data.dictionary.size].key
+        = key.data.string;
+  } else {
+    api_free_object(key);
+    dict->data.dictionary.items[dict->data.dictionary.size].key
+        = STATIC_CSTR_TO_STRING("__INVALID_KEY__");
+  }
+}
+
+#define TYPVAL_ENCODE_CONV_DICT_AFTER_KEY() \
+    typval_encode_after_key(edata)
+
+static inline void typval_encode_between_dict_items(EncodedData *const edata)
+  FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_NONNULL_ALL
+{
+  Object val = kv_pop(edata->stack);
+  Object *const dict = &kv_last(edata->stack);
+  assert(dict->type == kObjectTypeDictionary);
+  assert(dict->data.dictionary.size < dict->data.dictionary.capacity);
+  dict->data.dictionary.items[dict->data.dictionary.size++].value = val;
+}
+
+#define TYPVAL_ENCODE_CONV_DICT_BETWEEN_ITEMS() \
+    typval_encode_between_dict_items(edata)
+
+static inline void typval_encode_dict_end(EncodedData *const edata)
+  FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_NONNULL_ALL
+{
+  typval_encode_between_dict_items(edata);
+#ifndef NDEBUG
+  const Object *const dict = &kv_last(edata->stack);
+  assert(dict->data.dictionary.size == dict->data.dictionary.capacity);
+#endif
+}
+
+#define TYPVAL_ENCODE_CONV_DICT_END() \
+    typval_encode_dict_end(edata)
+
+#define TYPVAL_ENCODE_CONV_RECURSE(val, conv_type) \
+    TYPVAL_ENCODE_CONV_NIL()
+
+TYPVAL_ENCODE_DEFINE_CONV_FUNCTIONS(static, object, EncodedData *const, edata)
+
+#undef TYPVAL_ENCODE_CONV_STRING
+#undef TYPVAL_ENCODE_CONV_STR_STRING
+#undef TYPVAL_ENCODE_CONV_EXT_STRING
+#undef TYPVAL_ENCODE_CONV_NUMBER
+#undef TYPVAL_ENCODE_CONV_FLOAT
+#undef TYPVAL_ENCODE_CONV_FUNC
+#undef TYPVAL_ENCODE_CONV_EMPTY_LIST
+#undef TYPVAL_ENCODE_CONV_LIST_START
+#undef TYPVAL_ENCODE_CONV_EMPTY_DICT
+#undef TYPVAL_ENCODE_CONV_NIL
+#undef TYPVAL_ENCODE_CONV_BOOL
+#undef TYPVAL_ENCODE_CONV_UNSIGNED_NUMBER
+#undef TYPVAL_ENCODE_CONV_DICT_START
+#undef TYPVAL_ENCODE_CONV_DICT_END
+#undef TYPVAL_ENCODE_CONV_DICT_AFTER_KEY
+#undef TYPVAL_ENCODE_CONV_DICT_BETWEEN_ITEMS
+#undef TYPVAL_ENCODE_CONV_SPECIAL_DICT_KEY_CHECK
+#undef TYPVAL_ENCODE_CONV_LIST_END
+#undef TYPVAL_ENCODE_CONV_LIST_BETWEEN_ITEMS
+#undef TYPVAL_ENCODE_CONV_RECURSE
+#undef TYPVAL_ENCODE_ALLOW_SPECIALS
+
 /// Convert a vim object to an `Object` instance, recursively expanding
 /// Arrays/Dictionaries.
 ///
@@ -317,13 +497,12 @@ void set_option_to(void *to, int type, String name, Object value, Error *err)
 /// @return The converted value
 Object vim_to_object(typval_T *obj)
 {
-  Object rv;
-  // We use a lookup table to break out of cyclic references
-  PMap(ptr_t) *lookup = pmap_new(ptr_t)();
-  rv = vim_to_object_rec(obj, lookup);
-  // Free the table
-  pmap_free(ptr_t)(lookup);
-  return rv;
+  EncodedData edata = { .stack = KV_INITIAL_VALUE };
+  encode_vim_to_object(&edata, obj, "vim_to_object argument");
+  Object ret = kv_A(edata.stack, 0);
+  assert(kv_size(edata.stack) == 1);
+  kv_destroy(edata.stack);
+  return ret;
 }
 
 buf_T *find_buffer_by_handle(Buffer buffer, Error *err)
@@ -632,131 +811,6 @@ Object copy_object(Object obj)
       abort();
   }
 }
-
-/// Recursion helper for the `vim_to_object`. This uses a pointer table
-/// to avoid infinite recursion due to cyclic references
-///
-/// @param obj The source object
-/// @param lookup Lookup table containing pointers to all processed objects
-/// @return The converted value
-static Object vim_to_object_rec(typval_T *obj, PMap(ptr_t) *lookup)
-{
-  Object rv = OBJECT_INIT;
-
-  if (obj->v_type == VAR_LIST || obj->v_type == VAR_DICT) {
-    // Container object, add it to the lookup table
-    if (pmap_has(ptr_t)(lookup, obj)) {
-      // It's already present, meaning we alredy processed it so just return
-      // nil instead.
-      return rv;
-    }
-    pmap_put(ptr_t)(lookup, obj, NULL);
-  }
-
-  switch (obj->v_type) {
-    case VAR_SPECIAL:
-      switch (obj->vval.v_special) {
-        case kSpecialVarTrue:
-        case kSpecialVarFalse: {
-          rv.type = kObjectTypeBoolean;
-          rv.data.boolean = (obj->vval.v_special == kSpecialVarTrue);
-          break;
-        }
-        case kSpecialVarNull: {
-          rv.type = kObjectTypeNil;
-          break;
-        }
-      }
-      break;
-
-    case VAR_STRING:
-      rv.type = kObjectTypeString;
-      rv.data.string = cstr_to_string((char *) obj->vval.v_string);
-      break;
-
-    case VAR_NUMBER:
-      rv.type = kObjectTypeInteger;
-      rv.data.integer = obj->vval.v_number;
-      break;
-
-    case VAR_FLOAT:
-      rv.type = kObjectTypeFloat;
-      rv.data.floating = obj->vval.v_float;
-      break;
-
-    case VAR_LIST:
-      {
-        list_T *list = obj->vval.v_list;
-        listitem_T *item;
-
-        if (list != NULL) {
-          rv.type = kObjectTypeArray;
-          assert(list->lv_len >= 0);
-          rv.data.array.size = (size_t)list->lv_len;
-          rv.data.array.items = xmalloc(rv.data.array.size * sizeof(Object));
-
-          uint32_t i = 0;
-          for (item = list->lv_first; item != NULL; item = item->li_next) {
-            rv.data.array.items[i] = vim_to_object_rec(&item->li_tv, lookup);
-            i++;
-          }
-        }
-      }
-      break;
-
-    case VAR_DICT:
-      {
-        dict_T *dict = obj->vval.v_dict;
-        hashtab_T *ht;
-        uint64_t todo;
-        hashitem_T *hi;
-        dictitem_T *di;
-
-        if (dict != NULL) {
-          ht = &obj->vval.v_dict->dv_hashtab;
-          todo = ht->ht_used;
-          rv.type = kObjectTypeDictionary;
-
-          // Count items
-          rv.data.dictionary.size = 0;
-          for (hi = ht->ht_array; todo > 0; ++hi) {
-            if (!HASHITEM_EMPTY(hi)) {
-              todo--;
-              rv.data.dictionary.size++;
-            }
-          }
-
-          rv.data.dictionary.items =
-            xmalloc(rv.data.dictionary.size * sizeof(KeyValuePair));
-          todo = ht->ht_used;
-          uint32_t i = 0;
-
-          // Convert all
-          for (hi = ht->ht_array; todo > 0; ++hi) {
-            if (!HASHITEM_EMPTY(hi)) {
-              di = dict_lookup(hi);
-              // Convert key
-              rv.data.dictionary.items[i].key =
-                cstr_to_string((char *) hi->hi_key);
-              // Convert value
-              rv.data.dictionary.items[i].value =
-                vim_to_object_rec(&di->di_tv, lookup);
-              todo--;
-              i++;
-            }
-          }
-        }
-      }
-      break;
-
-    case VAR_UNKNOWN:
-    case VAR_FUNC:
-      break;
-  }
-
-  return rv;
-}
-
 
 static void set_option_value_for(char *key,
                                  int numval,

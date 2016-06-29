@@ -2314,50 +2314,46 @@ set_string_option_global (
   }
 }
 
-/*
- * Set a string option to a new value, and handle the effects.
- *
- * Returns NULL on success or error message on error.
- */
-static char_u *
-set_string_option (
-    int opt_idx,
-    char_u *value,
-    int opt_flags                  /* OPT_LOCAL and/or OPT_GLOBAL */
-)
+/// Set a string option to a new value, handling the effects
+///
+/// @param[in]  opt_idx  Option to set.
+/// @param[in]  value  New value.
+/// @param[in]  opt_flags  Option flags: expected to contain #OPT_LOCAL and/or
+///                        #OPT_GLOBAL.
+///
+/// @return NULL on success, error message on error.
+static char *set_string_option(const int opt_idx, const char *const value,
+                               const int opt_flags)
+  FUNC_ATTR_NONNULL_ARG(2) FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  char_u      *s;
-  char_u      **varp;
-  char_u      *oldval;
-  char *saved_oldval = NULL;
-  char_u      *r = NULL;
-
-  if (options[opt_idx].var == NULL)     /* don't set hidden option */
+  if (options[opt_idx].var == NULL) {  // don't set hidden option
     return NULL;
-
-  s = vim_strsave(value);
-  varp = (char_u **)get_varp_scope(&(options[opt_idx]),
-      (opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0
-      ? (((int)options[opt_idx].indir & PV_BOTH)
-        ? OPT_GLOBAL : OPT_LOCAL)
-      : opt_flags);
-  oldval = *varp;
-  *varp = s;
-
-  if (!starting) {
-    saved_oldval = xstrdup((char *) oldval);
   }
 
-  if ((r = did_set_string_option(opt_idx, varp, (int)true, oldval, NULL,
-          opt_flags)) == NULL)
-    did_set_option(opt_idx, opt_flags, TRUE);
+  char *const s = xstrdup(value);
+  char **const varp = (char **)get_varp_scope(
+      &(options[opt_idx]),
+      ((opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0
+       ? (((int)options[opt_idx].indir & PV_BOTH)
+          ? OPT_GLOBAL : OPT_LOCAL)
+       : opt_flags));
+  char *const oldval = *varp;
+  *varp = s;
+
+  char *const saved_oldval = (starting ? NULL : xstrdup(oldval));
+
+  char *const r = (char *)did_set_string_option(
+      opt_idx, (char_u **)varp, (int)true, (char_u *)oldval, NULL, opt_flags);
+  if (r == NULL) {
+    did_set_option(opt_idx, opt_flags, true);
+  }
 
   // call autocommand after handling side effects
   if (saved_oldval != NULL) {
     char buf_type[7];
     vim_snprintf(buf_type, ARRAY_SIZE(buf_type), "%s",
                  (opt_flags & OPT_LOCAL) ? "local" : "global");
-    set_vim_var_string(VV_OPTION_NEW, (char *) (*varp), -1);
+    set_vim_var_string(VV_OPTION_NEW, (char *)(*varp), -1);
     set_vim_var_string(VV_OPTION_OLD, saved_oldval, -1);
     set_vim_var_string(VV_OPTION_TYPE, buf_type, -1);
     apply_autocmds(EVENT_OPTIONSET,
@@ -4655,26 +4651,28 @@ set_option_value (
       EMSG(_(e_sandbox));
       return NULL;
     }
-    if (flags & P_STRING)
-      return set_string_option(opt_idx, string, opt_flags);
-    else {
+    if (flags & P_STRING) {
+      const char *s = (const char *)string;
+      if (s == NULL) {
+        s = "";
+      }
+      return (char_u *)set_string_option(opt_idx, s, opt_flags);
+    } else {
       varp = get_varp_scope(&(options[opt_idx]), opt_flags);
       if (varp != NULL) {       /* hidden option is not changed */
         if (number == 0 && string != NULL) {
           int idx;
 
-          /* Either we are given a string or we are setting option
-           * to zero. */
-          for (idx = 0; string[idx] == '0'; ++idx)
-            ;
+          // Either we are given a string or we are setting option
+          // to zero.
+          for (idx = 0; string[idx] == '0'; idx++) {}
           if (string[idx] != NUL || idx == 0) {
-            /* There's another character after zeros or the string
-             * is empty.  In both cases, we are trying to set a
-             * num option using a string. */
+            // There's another character after zeros or the string
+            // is empty.  In both cases, we are trying to set a
+            // num option using a string.
             EMSG3(_("E521: Number required: &%s = '%s'"),
-                name, string);
-            return NULL;                 /* do nothing as we hit an error */
-
+                  name, string);
+            return NULL;  // do nothing as we hit an error
           }
         }
         if (flags & P_NUM)

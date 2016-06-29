@@ -3,7 +3,7 @@ local clear = helpers.clear
 
 describe(':qa', function()
   before_each(function() 
-    clear('qa')
+    clear('--cmd', 'qa')
   end)
 
   it('verify #3334', function()

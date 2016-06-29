@@ -816,20 +816,55 @@ static void decref(Channel *channel)
 #define REQ "[request]      "
 #define RES "[response]     "
 #define NOT "[notification] "
+#define ERR "[error]        "
+
+// Cannot define array with negative offsets, so this one is needed to be added
+// to MSGPACK_UNPACK_\* values.
+#define MUR_OFF 2
+
+static const char *const msgpack_error_messages[] = {
+  [MSGPACK_UNPACK_EXTRA_BYTES + MUR_OFF] = "extra bytes found",
+  [MSGPACK_UNPACK_CONTINUE + MUR_OFF] = "incomplete string",
+  [MSGPACK_UNPACK_PARSE_ERROR + MUR_OFF] = "parse error",
+  [MSGPACK_UNPACK_NOMEM_ERROR + MUR_OFF] = "not enough memory",
+};
 
 static void log_server_msg(uint64_t channel_id,
                            msgpack_sbuffer *packed)
 {
   msgpack_unpacked unpacked;
   msgpack_unpacked_init(&unpacked);
-  msgpack_unpack_next(&unpacked, packed->data, packed->size, NULL);
-  uint64_t type = unpacked.data.via.array.ptr[0].via.u64;
   DLOGN("[msgpack-rpc] nvim -> client(%" PRIu64 ") ", channel_id);
-  log_lock();
-  FILE *f = open_log_file();
-  fprintf(f, type ? (type == 1 ? RES : NOT) : REQ);
-  log_msg_close(f, unpacked.data);
-  msgpack_unpacked_destroy(&unpacked);
+  const msgpack_unpack_return result =
+      msgpack_unpack_next(&unpacked, packed->data, packed->size, NULL);
+  switch (result) {
+    case MSGPACK_UNPACK_SUCCESS: {
+      uint64_t type = unpacked.data.via.array.ptr[0].via.u64;
+      log_lock();
+      FILE *f = open_log_file();
+      fprintf(f, type ? (type == 1 ? RES : NOT) : REQ);
+      log_msg_close(f, unpacked.data);
+      msgpack_unpacked_destroy(&unpacked);
+      break;
+    }
+    case MSGPACK_UNPACK_EXTRA_BYTES:
+    case MSGPACK_UNPACK_CONTINUE:
+    case MSGPACK_UNPACK_PARSE_ERROR:
+    case MSGPACK_UNPACK_NOMEM_ERROR: {
+      log_lock();
+      FILE *f = open_log_file();
+      fprintf(f, ERR);
+      log_msg_close(f, (msgpack_object) {
+          .type = MSGPACK_OBJECT_STR,
+          .via.str = {
+              .ptr = (char *)msgpack_error_messages[result + MUR_OFF],
+              .size = (uint32_t)strlen(
+                  msgpack_error_messages[result + MUR_OFF]),
+          },
+      });
+      break;
+    }
+  }
 }
 
 static void log_client_msg(uint64_t channel_id,

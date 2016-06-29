@@ -100,6 +100,10 @@ static void read_cb(uv_stream_t *uvstream, ssize_t cnt, const uv_buf_t *buf)
 {
   Stream *stream = uvstream->data;
 
+  if (cnt > 0) {
+    stream->num_bytes += (size_t)cnt;
+  }
+
   if (cnt <= 0) {
     if (cnt != UV_ENOBUFS
         // cnt == 0 means libuv asked for a buffer and decided it wasn't needed:
@@ -185,10 +189,6 @@ static void read_event(void **argv)
 
 static void invoke_read_cb(Stream *stream, size_t count, bool eof)
 {
-  if (stream->closed) {
-    return;
-  }
-
   // Don't let the stream be closed before the event is processed.
   stream->pending_reqs++;
 

@@ -71,6 +71,7 @@ void stream_init(Loop *loop, Stream *stream, int fd, uv_stream_t *uvstream,
   stream->closed = false;
   stream->buffer = NULL;
   stream->events = NULL;
+  stream->num_bytes = 0;
 }
 
 void stream_close(Stream *stream, stream_close_cb on_stream_close)
