@@ -14,4 +14,7 @@ highlight link healthInfo Identifier
 syntax keyword healthSuccess SUCCESS
 highlight link healthSuccess Function
 
+syntax keyword healthSuggestion SUGGESTION
+highlight link healthSuggestion String
+
 let b:current_syntax = "health"
