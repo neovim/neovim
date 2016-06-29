@@ -22,6 +22,8 @@ function! health#check(bang) abort
   if a:bang
     new
     setlocal bufhidden=wipe
+    set syntax=health
+    set filetype=health
     call setline(1, split(report, "\n"))
     setlocal nomodified
   else
@@ -83,7 +85,6 @@ function! health#report_warn(msg, ...) abort
   endif
 
   echo '    - WARNING: ' . a:msg
-  " echon '    - ' | echohl Error | echon 'WARNING ' | echohl None | echo ': ' . a:msg
   for l:suggestion in l:suggestions
     echo '      - SUGGESTION: ' . l:suggestion
   endfor
@@ -103,9 +104,7 @@ function! health#report_error(msg, ...) abort
     let l:suggestions = []
   endif
 
-  " echo '    - ERROR  : ' . a:msg
-  echon '    - '
-  echohl Identifier | echon 'ERROR ' | echohl None | echon ': ' . a:msg
+  echo '    - ERROR  : ' . a:msg
   for l:suggestion in l:suggestions
     echo '      - SUGGESTION: ' . l:suggestion
   endfor
