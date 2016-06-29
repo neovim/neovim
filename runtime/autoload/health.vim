@@ -7,19 +7,24 @@ let s:current_checker = get(s:, 'current_checker', '')
 " Function to run the health checkers
 " It manages the output and any file local settings
 function! health#check(bang) abort
-  let l:report = 'Checking health'
+  let l:report = '# Checking health'
 
+  if g:health_checkers == {}
+    call health#add_checker(health#_default_checkers())
+  endif
 
   for l:checker in items(g:health_checkers)
     " Disabled checkers will not run their registered check functions
     if l:checker[1]
       let s:current_checker = l:checker[0]
+      let l:report .= "\n\n--------------------------------------------------------------------------------\n"
       let l:report .= printf("\nChecker %s says:\n", s:current_checker)
 
       let l:report .= capture('silent! call ' . l:checker[0] . '()')
-
     endif
   endfor
+
+  let l:report .= "\n--------------------------------------------------------------------------------\n"
 
   if a:bang
     new
@@ -50,18 +55,37 @@ function! health#report_start(name) abort
 endfunction
 
 ""
+" Format a message for a specific report item
+function! s:format_report_message(status, msg, ...) abort
+  let l:output = '    - ' . a:status . ': ' . a:msg
+
+  " Check optional parameters
+  if a:0 > 0
+    " Suggestions go in the first optional parameter and must be a list.
+    if type(a:1) == type([])
+      " Report each suggestion
+      for l:suggestion in a:1
+        let l:output .= "\n      - SUGGESTION: " . l:suggestion
+      endfor
+    endif
+  endif
+
+  return output
+endfunction
+
+""
 " This function reports general information about the state of the environment
 " Use {msg} to represent the information you wish to record about the
 " environment
 function! health#report_info(msg) abort
-  echo '    - INFO: ' . a:msg
+  echo s:format_report_message('INFO', a:msg)
 endfunction
 
 ""
 " This function reports a succesful check within a report
 " Use {msg} to represent the check that has passed
 function! health#report_ok(msg) abort
-  echo '    - SUCCESS: ' . a:msg
+  echo s:format_report_message('SUCCESS', a:msg)
 endfunction
 
 ""
@@ -70,18 +94,11 @@ endfunction
 " checking other health items. Use {msg} to represent the failed health check
 " and optionally a list of suggestions on how to fix it.
 function! health#report_warn(msg, ...) abort
-  " Optional argument of suggestions
-  if type(a:0) == type([])
-    let l:suggestions = a:0
+  if a:0 > 0 && type(a:1) == type([])
+    echo s:format_report_message('WARNING', a:msg, a:1)
   else
-    let l:suggestions = []
+    echo s:format_report_message('WARNING', a:msg)
   endif
-
-  echo '    - WARNING: ' . a:msg
-  for l:suggestion in l:suggestions
-    echo '      - SUGGESTION: ' . l:suggestion
-  endfor
-
 endfunction
 
 ""
@@ -90,17 +107,11 @@ endfunction
 " You can optionally give a list of suggestions as a second argument on how to
 " fix it where applicable.
 function! health#report_error(msg, ...) abort
-  " Optional argument of suggestions
-  if type(a:0) == type([])
-    let l:suggestions = a:0
+  if a:0 > 0 && type(a:1) == type([])
+    echo s:format_report_message('ERROR', a:msg, a:1)
   else
-    let l:suggestions = []
+    echo s:format_report_message('ERROR', a:msg)
   endif
-
-  echo '    - ERROR  : ' . a:msg
-  for l:suggestion in l:suggestions
-    echo '      - SUGGESTION: ' . l:suggestion
-  endfor
 endfunction
 
 " }}}
@@ -154,7 +165,7 @@ function! s:add_single_checker(checker_name) abort
     " TODO: What to do if it's already there?
     return
   else
-    let g:health_checkers[a:checker_name] = v:true
+    call health#enable_checker(a:checker_name)
   endif
 endfunction
 
@@ -174,21 +185,32 @@ function! health#add_checker(checker_name) abort
 endfunction
 
 function! health#enable_checker(checker_name) abort
-  if has_key(g:health_checkers, a:checker_name)
-    let g:health_checkers[a:checker_name] = v:true
-  else
-    " TODO: What to do if it's not already there?
-    return
-  endif
+  let g:health_checkers[a:checker_name] = v:true
 endfunction
 
-function! health#disable_checker(checker_name) abort
+function! health#disable_checker(checker_name) abort " {{{
   if has_key(g:health_checkers, a:checker_name)
     let g:health_checkers[a:checker_name] = v:false
   else
     " TODO: What to do if it's not already there?
     return
   endif
-endfunction
+endfunction " }}}
 
+function! s:change_file_name_to_health_checker(name) abort " {{{
+  return substitute(substitute(substitute(a:name, ".*autoload/", "", ""), "\\.vim", "#check", ""), "/", "#", "g")
+endfunction " }}}
+
+function! health#_default_checkers() abort " {{{
+  " Get all of the files that are in autoload/health/ folders with a vim
+  " suffix
+  let checker_files = globpath(&runtimepath, 'autoload/health/*.vim', 0, 1)
+  let temp = checker_files[0]
+
+  let checkers_to_source = []
+  for file_name in checker_files
+    call add(checkers_to_source, s:change_file_name_to_health_checker(file_name))
+  endfor
+  return checkers_to_source
+endfunction " }}}
 " }}}
