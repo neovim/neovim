@@ -10,7 +10,7 @@ function! health#check(bang) abort
   let l:report = '# Checking health'
 
   if g:health_checkers == {}
-    call health#add_checker(health#_default_checkers())
+    call s:add_checker(health#_default_checkers())
   endif
 
   for l:checker in items(g:health_checkers)
@@ -124,46 +124,6 @@ function! health#report_error(msg, ...) abort
 endfunction
 
 " }}}
-" {{{ Utility functions
-function! s:trim(s) abort
-  return substitute(a:s, '^\_s*\|\_s*$', '', 'g')
-endfunction
-
-" Text wrapping that returns a list of lines
-function! s:textwrap(text, width) abort
-  let pattern = '.*\%(\s\+\|\_$\)\zs\%<'.a:width.'c'
-  return map(split(a:text, pattern), 's:trim(v:val)')
-endfunction
-
-""
-" Echo wrapped notes
-function! health#report_notes(notes) abort
-  if empty(a:notes)
-    return
-  endif
-
-  echo '    - NOTE:'
-  for msg in a:notes
-    if msg =~# '\n'
-      let msg_lines = []
-      for msgl in filter(split(msg, '\n'), 'v:val !~# ''^\s*$''')
-        call extend(msg_lines, s:textwrap(msgl, 74))
-      endfor
-    else
-      let msg_lines = s:textwrap(msg, 74)
-    endif
-
-    if !len(msg_lines)
-      continue
-    endif
-    echo '    - ' msg_lines[0]
-    if len(msg_lines) > 1
-      echo join(map(msg_lines[1:], '"      ".v:val'), "\n")
-    endif
-  endfor
-endfunction
-
-" }}}
 " Health checker management {{{
 
 ""
@@ -174,16 +134,16 @@ function! s:add_single_checker(checker_name) abort
     " TODO: What to do if it's already there?
     return
   else
-    call health#enable_checker(a:checker_name)
+      let g:health_checkers[a:checker_name] = v:true
   endif
 endfunction
 
 ""
-" health#add_checker is a function to register at least one healthcheckers.
+" s:add_checker is a function to register at least one healthcheckers.
 " {checker_name} can be specified by either a list of strings or a single string.
 " The string should be the name of the function to check, which should follow
 " the naming convention of `health#plugin_name#check`
-function! health#add_checker(checker_name) abort
+function! s:add_checker(checker_name) abort " {{{
   if type(a:checker_name) == type('')
     call s:add_single_checker(a:checker_name)
   elseif type(a:checker_name) == type([])
@@ -191,11 +151,7 @@ function! health#add_checker(checker_name) abort
       call s:add_single_checker(checker)
     endfor
   endif
-endfunction
-
-function! health#enable_checker(checker_name) abort
-  let g:health_checkers[a:checker_name] = v:true
-endfunction
+endfunction " }}}
 
 function! health#disable_checker(checker_name) abort " {{{
   if has_key(g:health_checkers, a:checker_name)

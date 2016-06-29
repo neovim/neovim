@@ -137,7 +137,7 @@ endfunction
 
 
 " Load the remote plugin manifest file and check for unregistered plugins
-function! s:diagnose_manifest() abort
+function! s:check_manifest() abort
   call health#report_start('Remote Plugins')
   let existing_rplugins = {}
 
@@ -150,7 +150,6 @@ function! s:diagnose_manifest() abort
   endfor
 
   let require_update = 0
-  let notes = []
 
   for path in map(split(&runtimepath, ','), 'resolve(v:val)')
     let python_glob = glob(path.'/rplugin/python*', 1, 1)
@@ -181,7 +180,7 @@ function! s:diagnose_manifest() abort
             let require_update = 1
           endif
 
-          call add(notes, msg)
+          call health#report_warn(msg)
         endif
 
         break
@@ -194,12 +193,10 @@ function! s:diagnose_manifest() abort
   else
     call health#report_ok('Up to date')
   endif
-
-  call health#report_notes(notes)
 endfunction
 
 
-function! s:diagnose_python(version) abort
+function! s:check_python(version) abort
   let python_bin_name = 'python'.(a:version == 2 ? '' : '3')
   let pyenv = resolve(exepath('pyenv'))
   let pyenv_root = exists('$PYENV_ROOT') ? resolve($PYENV_ROOT) : 'n'
@@ -208,7 +205,6 @@ function! s:diagnose_python(version) abort
   let host_skip_var = python_bin_name.'_host_skip_check'
   let python_bin = ''
   let python_multiple = []
-  let notes = []
 
   call health#report_start('Python ' . a:version . ' Configuration')
 
@@ -240,7 +236,7 @@ function! s:diagnose_python(version) abort
   endif
 
   if !empty(pythonx_errs)
-    call add(notes, pythonx_errs)
+    call health#report_error('Provier python has reported errors:', pythonx_errs)
   endif
 
   if !empty(python_bin_name) && empty(python_bin) && empty(pythonx_errs)
@@ -378,7 +374,7 @@ function! s:diagnose_python(version) abort
 
     if current == 'not found'
       let suggestions = [
-            \ 'Use the command `pip' . a:version . 'install neovim`',
+            \ 'Use the command `pip ' . a:version . ' install neovim`',
             \ ]
       call health#report_error(
             \ 'Neovim Python client is not installed.',
@@ -396,15 +392,14 @@ function! s:diagnose_python(version) abort
     endif
   endif
 
-  call health#report_notes(notes)
 endfunction
 
 
 function! health#nvim#check() abort
-  silent call s:diagnose_python(2)
+  silent call s:check_python(2)
   silent echo ''
-  silent call s:diagnose_python(3)
+  silent call s:check_python(3)
   silent echo ''
-  silent call s:diagnose_manifest()
+  silent call s:check_manifest()
   silent echo ''
 endfunction
