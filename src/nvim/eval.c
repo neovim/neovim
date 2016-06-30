@@ -7668,7 +7668,7 @@ static void f_assert_exception(typval_T *argvars, typval_T *rettv)
     assert_error(&ga);
     ga_clear(&ga);
   } else if (error != NULL
-          && strstr((char *)vimvars[VV_EXCEPTION].vv_str, error) == NULL) {
+             && strstr((char *)vimvars[VV_EXCEPTION].vv_str, error) == NULL) {
     prepare_assert_error(&ga);
     fill_assert_error(&ga, &argvars[1], NULL, &argvars[0],
                       &vimvars[VV_EXCEPTION].vv_tv);
