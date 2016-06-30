@@ -55,17 +55,17 @@ endfunction
 " endfunction
 
 ""
-" This function starts a report.
+" Start a report section.
 " It should represent a general area of tests that can be understood
 " from the argument {name}
-" To start a new report, use this function again
-function! health#report_start(name) abort
+" To start a new report section, use this function again
+function! health#report_start(name) abort " {{{
   echo '  - Checking: ' . a:name
-endfunction
+endfunction " }}}
 
 ""
 " Format a message for a specific report item
-function! s:format_report_message(status, msg, ...) abort
+function! s:format_report_message(status, msg, ...) abort " {{{
   let l:output = '    - ' . a:status . ': ' . a:msg
 
   " Check optional parameters
@@ -80,69 +80,57 @@ function! s:format_report_message(status, msg, ...) abort
   endif
 
   return output
-endfunction
+endfunction " }}}
 
 ""
-" This function reports general information about the state of the environment
-" Use {msg} to represent the information you wish to record about the
-" environment
-function! health#report_info(msg) abort
+" Report informative text
+function! health#report_info(msg) abort " {{{
   echo s:format_report_message('INFO', a:msg)
-endfunction
+endfunction " }}}
 
 ""
-" This function reports a succesful check within a report
 " Use {msg} to represent the check that has passed
-function! health#report_ok(msg) abort
+function! health#report_ok(msg) abort " {{{
   echo s:format_report_message('SUCCESS', a:msg)
-endfunction
+endfunction " }}}
 
 ""
-" This function represents a check that has not gone correctly within a report
-" However, even with the unsuccesful check, it makes sense to continue
-" checking other health items. Use {msg} to represent the failed health check
-" and optionally a list of suggestions on how to fix it.
-function! health#report_warn(msg, ...) abort
+" Use {msg} to represent a failed health check and optionally a list of suggestions on how to fix it.
+function! health#report_warn(msg, ...) abort " {{{
   if a:0 > 0 && type(a:1) == type([])
     echo s:format_report_message('WARNING', a:msg, a:1)
   else
     echo s:format_report_message('WARNING', a:msg)
   endif
-endfunction
+endfunction " }}}
 
 ""
-" This function represents a check that has failed and because of it does not
-" make sense to continue testing the health of the health checker.
-" You can optionally give a list of suggestions as a second argument on how to
-" fix it where applicable.
-function! health#report_error(msg, ...) abort
+" Use {msg} to represent a critically failed health check and optionally a list of suggestions on how to fix it.
+function! health#report_error(msg, ...) abort " {{{
   if a:0 > 0 && type(a:1) == type([])
     echo s:format_report_message('ERROR', a:msg, a:1)
   else
     echo s:format_report_message('ERROR', a:msg)
   endif
-endfunction
+endfunction " }}}
 
 " }}}
 " Health checker management {{{
 
 ""
-" s:add_single_checker is a function to handle adding a checker of name
-" {checker_name} to the list of health_checkers. It also enables it.
-function! s:add_single_checker(checker_name) abort
+" Register a single health checker
+function! s:add_single_checker(checker_name) abort " {{{
   if has_key(g:health_checkers, a:checker_name)
     " TODO: What to do if it's already there?
     return
   else
       let g:health_checkers[a:checker_name] = v:true
   endif
-endfunction
+endfunction " }}}
 
 ""
-" s:add_checker is a function to register at least one healthcheckers.
+" Register at least one healthcheckers.
 " {checker_name} can be specified by either a list of strings or a single string.
-" The string should be the name of the function to check, which should follow
-" the naming convention of `health#plugin_name#check`
 function! s:add_checker(checker_name) abort " {{{
   if type(a:checker_name) == type('')
     call s:add_single_checker(a:checker_name)

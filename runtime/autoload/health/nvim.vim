@@ -1,5 +1,10 @@
 " Script variables
-let s:bad_responses = ['unknown', 'unable to parse', 'unable to get pypi response', 'unable to get neovim executable']
+let s:bad_responses = [
+            \ 'unable to parse python response',
+            \ 'unable to parse',
+            \ 'unable to get pypi response',
+            \ 'unable to get neovim executable'
+            \ ]
 
 function! s:trim(s) abort
   return substitute(a:s, '^\_s*\|\_s*$', '', 'g')
@@ -85,7 +90,7 @@ function! s:version_info(python) abort
         \ '"import sys; print(\".\".join(str(x) for x in sys.version_info[:3]))"']))
 
   if empty(python_version)
-    let python_version = 'unknown'
+    let python_version = 'unable to parse python response'
   endif
 
   let nvim_path = s:trim(system([
