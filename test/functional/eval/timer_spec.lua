@@ -22,6 +22,14 @@ describe('timers', function()
     eq(1,eval("g:val"))
   end)
 
+  it('works one-shot when repeat=0', function()
+    execute("call timer_start(50, 'MyHandler', {'repeat': 0})")
+    eq(0,eval("g:val"))
+    run(nil, nil, nil, 200)
+    eq(1,eval("g:val"))
+  end)
+
+
   it('works with repeat two', function()
     execute("call timer_start(50, 'MyHandler', {'repeat': 2})")
     eq(0,eval("g:val"))
@@ -35,6 +43,13 @@ describe('timers', function()
     eq(0,eval("g:val"))
     run(nil, nil, nil, 300)
     eq(2,eval("g:val"))
+  end)
+
+  it('works with zero timeout', function()
+    -- timer_start does still not invoke the callback immediately
+    eq(0,eval("[timer_start(0, 'MyHandler', {'repeat': 1000}), g:val][1]"))
+    run(nil, nil, nil, 300)
+    eq(1000,eval("g:val"))
   end)
 
   it('can be started during sleep', function()

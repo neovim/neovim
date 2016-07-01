@@ -435,6 +435,7 @@ typedef struct {
   TimeWatcher tw;
   int timer_id;
   int repeat_count;
+  long timeout;
   bool stopped;
   ufunc_T *callback;
 } timer_T;
@@ -16639,6 +16640,9 @@ static void f_timer_start(typval_T *argvars, typval_T *rettv)
     }
     if (dict_find(dict, (char_u *)"repeat", -1) != NULL) {
       repeat = get_dict_number(dict, (char_u *)"repeat");
+      if (repeat == 0) {
+        repeat = 1;
+      }
     }
   }
 
@@ -16656,6 +16660,7 @@ static void f_timer_start(typval_T *argvars, typval_T *rettv)
   timer = xmalloc(sizeof *timer);
   timer->stopped = false;
   timer->repeat_count = repeat;
+  timer->timeout = timeout;
   timer->timer_id = last_timer_id++;
   timer->callback = func;
 
@@ -16710,6 +16715,14 @@ static void timer_due_cb(TimeWatcher *tw, void *data)
   call_user_func(timer->callback, ARRAY_SIZE(argv), argv, &rettv,
                  curwin->w_cursor.lnum, curwin->w_cursor.lnum, NULL);
   clear_tv(&rettv);
+
+  if (!timer->stopped && timer->timeout == 0) {
+    // special case: timeout=0 means the callback will be
+    // invoked again on the next event loop tick.
+    // we don't use uv_idle_t to not spin the event loop
+    // when the main loop is blocked.
+    time_watcher_start(&timer->tw, timer_due_cb, 0, 0);
+  }
 }
 
 static void timer_stop(timer_T *timer)
