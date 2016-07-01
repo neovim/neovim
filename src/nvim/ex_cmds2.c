@@ -3533,5 +3533,6 @@ void ex_drop(exarg_T   *eap)
     } else {
       eap->cmdidx = CMD_first;
     }
+    ex_rewind(eap);
   }
 }

@@ -172,4 +172,34 @@ describe('assert function:', function()
       expected_errors({'command did not fail: call empty("")'})
     end)
   end)
+
+  -- assert_exception({cmd}, [, {error}])
+  describe('assert_exception()', function()
+    it('should assert thrown exceptions properly', function()
+      source([[
+        try
+          nocommand
+        catch
+          call assert_exception('E492')
+        endtry
+      ]])
+      expected_empty()
+    end)
+
+    it('should work properly when nested', function()
+      source([[
+        try
+          nocommand
+        catch
+          try
+            " illegal argument, get NULL for error
+            call assert_exception([])
+          catch
+            call assert_exception('E730')
+          endtry
+        endtry
+      ]])
+      expected_empty()
+    end)
+  end)
 end)
