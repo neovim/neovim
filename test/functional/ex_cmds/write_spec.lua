@@ -12,7 +12,7 @@ describe(':write', function()
   end)
 
   it('&backupcopy=auto preserves symlinks', function()
-    clear('set backupcopy=auto')
+    clear('--cmd', 'set backupcopy=auto')
     write_file('test_bkc_file.txt', 'content0')
     execute("silent !ln -s test_bkc_file.txt test_bkc_link.txt")
     source([[
@@ -25,7 +25,7 @@ describe(':write', function()
   end)
 
   it('&backupcopy=no replaces symlink with new file', function()
-    clear('set backupcopy=no')
+    clear('--cmd', 'set backupcopy=no')
     write_file('test_bkc_file.txt', 'content0')
     execute("silent !ln -s test_bkc_file.txt test_bkc_link.txt")
     source([[

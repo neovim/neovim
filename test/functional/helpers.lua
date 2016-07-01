@@ -221,11 +221,10 @@ local function spawn(argv, merge)
   return Session.new(child_stream)
 end
 
-local function clear(extra_cmd)
+local function clear(...)
   local args = {unpack(nvim_argv)}
-  if extra_cmd ~= nil then
-    table.insert(args, '--cmd')
-    table.insert(args, extra_cmd)
+  for _, arg in ipairs({...}) do
+    table.insert(args, arg)
   end
   set_session(spawn(args))
 end

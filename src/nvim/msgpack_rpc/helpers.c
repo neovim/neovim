@@ -7,9 +7,11 @@
 #include "nvim/api/private/helpers.h"
 #include "nvim/msgpack_rpc/helpers.h"
 #include "nvim/msgpack_rpc/defs.h"
+#include "nvim/lib/kvec.h"
 #include "nvim/vim.h"
 #include "nvim/log.h"
 #include "nvim/memory.h"
+#include "nvim/assert.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "msgpack_rpc/helpers.c.generated.h"
@@ -19,7 +21,7 @@ static msgpack_zone zone;
 static msgpack_sbuffer sbuffer;
 
 #define HANDLE_TYPE_CONVERSION_IMPL(t, lt) \
-  bool msgpack_rpc_to_##lt(msgpack_object *obj, t *arg) \
+  bool msgpack_rpc_to_##lt(const msgpack_object *const obj, t *const arg) \
     FUNC_ATTR_NONNULL_ALL \
   { \
     if (obj->type != MSGPACK_OBJECT_EXT \
@@ -63,34 +65,182 @@ HANDLE_TYPE_CONVERSION_IMPL(Buffer, buffer)
 HANDLE_TYPE_CONVERSION_IMPL(Window, window)
 HANDLE_TYPE_CONVERSION_IMPL(Tabpage, tabpage)
 
-bool msgpack_rpc_to_boolean(msgpack_object *obj, Boolean *arg)
-  FUNC_ATTR_NONNULL_ALL
-{
-  *arg = obj->via.boolean;
-  return obj->type == MSGPACK_OBJECT_BOOLEAN;
-}
+typedef struct {
+  const msgpack_object *mobj;
+  Object *aobj;
+  bool container;
+  size_t idx;
+} MPToAPIObjectStackItem;
 
-bool msgpack_rpc_to_integer(msgpack_object *obj, Integer *arg)
+/// Convert type used by msgpack parser to Neovim own API type
+///
+/// @param[in]  obj  Msgpack value to convert.
+/// @param[out]  arg  Location where result of conversion will be saved.
+///
+/// @return true in case of success, false otherwise.
+bool msgpack_rpc_to_object(const msgpack_object *const obj, Object *const arg)
   FUNC_ATTR_NONNULL_ALL
 {
-  if (obj->type == MSGPACK_OBJECT_POSITIVE_INTEGER
-      && obj->via.u64 <= INT64_MAX) {
-    *arg = (int64_t)obj->via.u64;
-    return true;
+  bool ret = true;
+  kvec_t(MPToAPIObjectStackItem) stack = KV_INITIAL_VALUE;
+  kv_push(stack, ((MPToAPIObjectStackItem) { obj, arg, false, 0 }));
+  while (ret && kv_size(stack)) {
+    MPToAPIObjectStackItem cur = kv_last(stack);
+    if (!cur.container) {
+      *cur.aobj = NIL;
+    }
+    switch (cur.mobj->type) {
+      case MSGPACK_OBJECT_NIL: {
+        break;
+      }
+      case MSGPACK_OBJECT_BOOLEAN: {
+        *cur.aobj = BOOLEAN_OBJ(cur.mobj->via.boolean);
+        break;
+      }
+      case MSGPACK_OBJECT_NEGATIVE_INTEGER: {
+        STATIC_ASSERT(sizeof(Integer) == sizeof(cur.mobj->via.i64),
+                      "Msgpack integer size does not match API integer");
+        *cur.aobj = INTEGER_OBJ(cur.mobj->via.i64);
+        break;
+      }
+      case MSGPACK_OBJECT_POSITIVE_INTEGER: {
+        STATIC_ASSERT(sizeof(Integer) == sizeof(cur.mobj->via.u64),
+                      "Msgpack integer size does not match API integer");
+        if (cur.mobj->via.u64 > API_INTEGER_MAX) {
+          ret = false;
+        } else {
+          *cur.aobj = INTEGER_OBJ((Integer)cur.mobj->via.u64);
+        }
+        break;
+      }
+      case MSGPACK_OBJECT_FLOAT: {
+        STATIC_ASSERT(sizeof(Float) == sizeof(cur.mobj->via.f64),
+                      "Msgpack floating-point size does not match API integer");
+        *cur.aobj = FLOATING_OBJ(cur.mobj->via.f64);
+        break;
+      }
+#define STR_CASE(type, attr, obj, dest, conv) \
+      case type: { \
+        dest = conv(((String) { \
+          .size = obj->via.attr.size, \
+          .data = (obj->via.attr.ptr == NULL || obj->via.attr.size == 0 \
+                   ? NULL \
+                   : xmemdupz(obj->via.attr.ptr, obj->via.attr.size)), \
+        })); \
+        break; \
+      }
+      STR_CASE(MSGPACK_OBJECT_STR, str, cur.mobj, *cur.aobj, STRING_OBJ)
+      STR_CASE(MSGPACK_OBJECT_BIN, bin, cur.mobj, *cur.aobj, STRING_OBJ)
+      case MSGPACK_OBJECT_ARRAY: {
+        const size_t size = cur.mobj->via.array.size;
+        if (cur.container) {
+          if (cur.idx >= size) {
+            (void)kv_pop(stack);
+          } else {
+            const size_t idx = cur.idx;
+            cur.idx++;
+            kv_last(stack) = cur;
+            kv_push(stack, ((MPToAPIObjectStackItem) {
+              .mobj = &cur.mobj->via.array.ptr[idx],
+              .aobj = &cur.aobj->data.array.items[idx],
+              .container = false,
+            }));
+          }
+        } else {
+          *cur.aobj = ARRAY_OBJ(((Array) {
+            .size = size,
+            .capacity = size,
+            .items = (size > 0
+                      ? xcalloc(size, sizeof(*cur.aobj->data.array.items))
+                      : NULL),
+          }));
+          cur.container = true;
+          kv_last(stack) = cur;
+        }
+        break;
+      }
+      case MSGPACK_OBJECT_MAP: {
+        const size_t size = cur.mobj->via.map.size;
+        if (cur.container) {
+          if (cur.idx >= size) {
+            (void)kv_pop(stack);
+          } else {
+            const size_t idx = cur.idx;
+            cur.idx++;
+            kv_last(stack) = cur;
+            const msgpack_object *const key = &cur.mobj->via.map.ptr[idx].key;
+            switch (key->type) {
+#define ID(x) x
+              STR_CASE(MSGPACK_OBJECT_STR, str, key,
+                       cur.aobj->data.dictionary.items[idx].key, ID)
+              STR_CASE(MSGPACK_OBJECT_BIN, bin, key,
+                       cur.aobj->data.dictionary.items[idx].key, ID)
+#undef ID
+              case MSGPACK_OBJECT_NIL:
+              case MSGPACK_OBJECT_BOOLEAN:
+              case MSGPACK_OBJECT_POSITIVE_INTEGER:
+              case MSGPACK_OBJECT_NEGATIVE_INTEGER:
+              case MSGPACK_OBJECT_FLOAT:
+              case MSGPACK_OBJECT_EXT:
+              case MSGPACK_OBJECT_MAP:
+              case MSGPACK_OBJECT_ARRAY: {
+                ret = false;
+                break;
+              }
+            }
+            if (ret) {
+              kv_push(stack, ((MPToAPIObjectStackItem) {
+                .mobj = &cur.mobj->via.map.ptr[idx].val,
+                .aobj = &cur.aobj->data.dictionary.items[idx].value,
+                .container = false,
+              }));
+            }
+          }
+        } else {
+          *cur.aobj = DICTIONARY_OBJ(((Dictionary) {
+            .size = size,
+            .capacity = size,
+            .items = (size > 0
+                      ? xcalloc(size, sizeof(*cur.aobj->data.dictionary.items))
+                      : NULL),
+          }));
+          cur.container = true;
+          kv_last(stack) = cur;
+        }
+        break;
+      }
+      case MSGPACK_OBJECT_EXT: {
+        switch (cur.mobj->via.ext.type) {
+          case kObjectTypeBuffer: {
+            cur.aobj->type = kObjectTypeBuffer;
+            ret = msgpack_rpc_to_buffer(cur.mobj, &cur.aobj->data.buffer);
+            break;
+          }
+          case kObjectTypeWindow: {
+            cur.aobj->type = kObjectTypeWindow;
+            ret = msgpack_rpc_to_window(cur.mobj, &cur.aobj->data.window);
+            break;
+          }
+          case kObjectTypeTabpage: {
+            cur.aobj->type = kObjectTypeTabpage;
+            ret = msgpack_rpc_to_tabpage(cur.mobj, &cur.aobj->data.tabpage);
+            break;
+          }
+        }
+        break;
+      }
+#undef STR_CASE
+    }
+    if (!cur.container) {
+      (void)kv_pop(stack);
+    }
   }
-
-  *arg = obj->via.i64;
-  return obj->type == MSGPACK_OBJECT_NEGATIVE_INTEGER;
+  kv_destroy(stack);
+  return ret;
 }
 
-bool msgpack_rpc_to_float(msgpack_object *obj, Float *arg)
-  FUNC_ATTR_NONNULL_ALL
-{
-  *arg = obj->via.f64;
-  return obj->type == MSGPACK_OBJECT_FLOAT;
-}
-
-bool msgpack_rpc_to_string(msgpack_object *obj, String *arg)
+static bool msgpack_rpc_to_string(const msgpack_object *const obj,
+                                  String *const arg)
   FUNC_ATTR_NONNULL_ALL
 {
   if (obj->type == MSGPACK_OBJECT_BIN || obj->type == MSGPACK_OBJECT_STR) {
@@ -103,58 +253,7 @@ bool msgpack_rpc_to_string(msgpack_object *obj, String *arg)
   return false;
 }
 
-bool msgpack_rpc_to_object(msgpack_object *obj, Object *arg)
-  FUNC_ATTR_NONNULL_ALL
-{
-  switch (obj->type) {
-    case MSGPACK_OBJECT_NIL:
-      arg->type = kObjectTypeNil;
-      return true;
-
-    case MSGPACK_OBJECT_BOOLEAN:
-      arg->type = kObjectTypeBoolean;
-      return msgpack_rpc_to_boolean(obj, &arg->data.boolean);
-
-    case MSGPACK_OBJECT_POSITIVE_INTEGER:
-    case MSGPACK_OBJECT_NEGATIVE_INTEGER:
-      arg->type = kObjectTypeInteger;
-      return msgpack_rpc_to_integer(obj, &arg->data.integer);
-
-    case MSGPACK_OBJECT_FLOAT:
-      arg->type = kObjectTypeFloat;
-      return msgpack_rpc_to_float(obj, &arg->data.floating);
-
-    case MSGPACK_OBJECT_BIN:
-    case MSGPACK_OBJECT_STR:
-      arg->type = kObjectTypeString;
-      return msgpack_rpc_to_string(obj, &arg->data.string);
-
-    case MSGPACK_OBJECT_ARRAY:
-      arg->type = kObjectTypeArray;
-      return msgpack_rpc_to_array(obj, &arg->data.array);
-
-    case MSGPACK_OBJECT_MAP:
-      arg->type = kObjectTypeDictionary;
-      return msgpack_rpc_to_dictionary(obj, &arg->data.dictionary);
-
-    case MSGPACK_OBJECT_EXT:
-      switch (obj->via.ext.type) {
-        case kObjectTypeBuffer:
-          arg->type = kObjectTypeBuffer;
-          return msgpack_rpc_to_buffer(obj, &arg->data.buffer);
-        case kObjectTypeWindow:
-          arg->type = kObjectTypeWindow;
-          return msgpack_rpc_to_window(obj, &arg->data.window);
-        case kObjectTypeTabpage:
-          arg->type = kObjectTypeTabpage;
-          return msgpack_rpc_to_tabpage(obj, &arg->data.tabpage);
-      }
-    default:
-      return false;
-  }
-}
-
-bool msgpack_rpc_to_array(msgpack_object *obj, Array *arg)
+bool msgpack_rpc_to_array(const msgpack_object *const obj, Array *const arg)
   FUNC_ATTR_NONNULL_ALL
 {
   if (obj->type != MSGPACK_OBJECT_ARRAY) {
@@ -173,7 +272,8 @@ bool msgpack_rpc_to_array(msgpack_object *obj, Array *arg)
   return true;
 }
 
-bool msgpack_rpc_to_dictionary(msgpack_object *obj, Dictionary *arg)
+bool msgpack_rpc_to_dictionary(const msgpack_object *const obj,
+                               Dictionary *const arg)
   FUNC_ATTR_NONNULL_ALL
 {
   if (obj->type != MSGPACK_OBJECT_MAP) {
@@ -228,50 +328,108 @@ void msgpack_rpc_from_string(String result, msgpack_packer *res)
   msgpack_pack_str_body(res, result.data, result.size);
 }
 
-void msgpack_rpc_from_object(Object result, msgpack_packer *res)
+typedef struct {
+  const Object *aobj;
+  bool container;
+  size_t idx;
+} APIToMPObjectStackItem;
+
+/// Convert type used by Neovim API to msgpack
+///
+/// @param[in]  result  Object to convert.
+/// @param[out]  res  Structure that defines where conversion results are saved.
+///
+/// @return true in case of success, false otherwise.
+void msgpack_rpc_from_object(const Object result, msgpack_packer *const res)
   FUNC_ATTR_NONNULL_ARG(2)
 {
-  switch (result.type) {
-    case kObjectTypeNil:
-      msgpack_pack_nil(res);
-      break;
-
-    case kObjectTypeBoolean:
-      msgpack_rpc_from_boolean(result.data.boolean, res);
-      break;
-
-    case kObjectTypeInteger:
-      msgpack_rpc_from_integer(result.data.integer, res);
-      break;
-
-    case kObjectTypeFloat:
-      msgpack_rpc_from_float(result.data.floating, res);
-      break;
-
-    case kObjectTypeString:
-      msgpack_rpc_from_string(result.data.string, res);
-      break;
-
-    case kObjectTypeArray:
-      msgpack_rpc_from_array(result.data.array, res);
-      break;
-
-    case kObjectTypeBuffer:
-      msgpack_rpc_from_buffer(result.data.buffer, res);
-      break;
-
-    case kObjectTypeWindow:
-      msgpack_rpc_from_window(result.data.window, res);
-      break;
-
-    case kObjectTypeTabpage:
-      msgpack_rpc_from_tabpage(result.data.tabpage, res);
-      break;
-
-    case kObjectTypeDictionary:
-      msgpack_rpc_from_dictionary(result.data.dictionary, res);
-      break;
+  kvec_t(APIToMPObjectStackItem) stack = KV_INITIAL_VALUE;
+  kv_push(stack, ((APIToMPObjectStackItem) { &result, false, 0 }));
+  while (kv_size(stack)) {
+    APIToMPObjectStackItem cur = kv_last(stack);
+    switch (cur.aobj->type) {
+      case kObjectTypeNil: {
+        msgpack_pack_nil(res);
+        break;
+      }
+      case kObjectTypeBoolean: {
+        msgpack_rpc_from_boolean(cur.aobj->data.boolean, res);
+        break;
+      }
+      case kObjectTypeInteger: {
+        msgpack_rpc_from_integer(cur.aobj->data.integer, res);
+        break;
+      }
+      case kObjectTypeFloat: {
+        msgpack_rpc_from_float(cur.aobj->data.floating, res);
+        break;
+      }
+      case kObjectTypeString: {
+        msgpack_rpc_from_string(cur.aobj->data.string, res);
+        break;
+      }
+      case kObjectTypeBuffer: {
+        msgpack_rpc_from_buffer(cur.aobj->data.buffer, res);
+        break;
+      }
+      case kObjectTypeWindow: {
+        msgpack_rpc_from_window(cur.aobj->data.window, res);
+        break;
+      }
+      case kObjectTypeTabpage: {
+        msgpack_rpc_from_tabpage(cur.aobj->data.tabpage, res);
+        break;
+      }
+      case kObjectTypeArray: {
+        const size_t size = cur.aobj->data.array.size;
+        if (cur.container) {
+          if (cur.idx >= size) {
+            (void)kv_pop(stack);
+          } else {
+            const size_t idx = cur.idx;
+            cur.idx++;
+            kv_last(stack) = cur;
+            kv_push(stack, ((APIToMPObjectStackItem) {
+              .aobj = &cur.aobj->data.array.items[idx],
+              .container = false,
+            }));
+          }
+        } else {
+          msgpack_pack_array(res, size);
+          cur.container = true;
+          kv_last(stack) = cur;
+        }
+        break;
+      }
+      case kObjectTypeDictionary: {
+        const size_t size = cur.aobj->data.dictionary.size;
+        if (cur.container) {
+          if (cur.idx >= size) {
+            (void)kv_pop(stack);
+          } else {
+            const size_t idx = cur.idx;
+            cur.idx++;
+            kv_last(stack) = cur;
+            msgpack_rpc_from_string(cur.aobj->data.dictionary.items[idx].key,
+                                    res);
+            kv_push(stack, ((APIToMPObjectStackItem) {
+              .aobj = &cur.aobj->data.dictionary.items[idx].value,
+              .container = false,
+            }));
+          }
+        } else {
+          msgpack_pack_map(res, size);
+          cur.container = true;
+          kv_last(stack) = cur;
+        }
+        break;
+      }
+    }
+    if (!cur.container) {
+      (void)kv_pop(stack);
+    }
   }
+  kv_destroy(stack);
 }
 
 void msgpack_rpc_from_array(Array result, msgpack_packer *res)

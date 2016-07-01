@@ -91,6 +91,7 @@
 #include "nvim/os/input.h"
 #include "nvim/event/loop.h"
 #include "nvim/lib/queue.h"
+#include "nvim/eval/typval_encode.h"
 
 #define DICT_MAXNEST 100        /* maximum nesting of lists and dicts */
 
@@ -18148,45 +18149,147 @@ void free_tv(typval_T *varp)
   }
 }
 
-/*
- * Free the memory for a variable value and set the value to NULL or 0.
- */
+#define TYPVAL_ENCODE_ALLOW_SPECIALS false
+
+#define TYPVAL_ENCODE_CONV_NIL() \
+    do { \
+      tv->vval.v_special = kSpecialVarFalse; \
+      tv->v_lock = VAR_UNLOCKED; \
+    } while (0)
+
+#define TYPVAL_ENCODE_CONV_BOOL(ignored) \
+    TYPVAL_ENCODE_CONV_NIL()
+
+#define TYPVAL_ENCODE_CONV_NUMBER(ignored) \
+    do { \
+      (void)ignored; \
+      tv->vval.v_number = 0; \
+      tv->v_lock = VAR_UNLOCKED; \
+    } while (0)
+
+#define TYPVAL_ENCODE_CONV_UNSIGNED_NUMBER(ignored) \
+    assert(false)
+
+#define TYPVAL_ENCODE_CONV_FLOAT(ignored) \
+    do { \
+      tv->vval.v_float = 0; \
+      tv->v_lock = VAR_UNLOCKED; \
+    } while (0)
+
+#define TYPVAL_ENCODE_CONV_STRING(str, ignored) \
+    do { \
+      xfree(str); \
+      tv->vval.v_string = NULL; \
+      tv->v_lock = VAR_UNLOCKED; \
+    } while (0)
+
+#define TYPVAL_ENCODE_CONV_STR_STRING(ignored1, ignored2)
+
+#define TYPVAL_ENCODE_CONV_EXT_STRING(ignored1, ignored2, ignored3)
+
+#define TYPVAL_ENCODE_CONV_FUNC(fun) \
+    do { \
+      func_unref(fun); \
+      if (fun != empty_string) { \
+        xfree(fun); \
+      } \
+      tv->vval.v_string = NULL; \
+      tv->v_lock = VAR_UNLOCKED; \
+    } while (0)
+
+#define TYPVAL_ENCODE_CONV_EMPTY_LIST() \
+    do { \
+      list_unref(tv->vval.v_list); \
+      tv->vval.v_list = NULL; \
+      tv->v_lock = VAR_UNLOCKED; \
+    } while (0)
+
+#define TYPVAL_ENCODE_CONV_EMPTY_DICT() \
+    do { \
+      dict_unref(tv->vval.v_dict); \
+      tv->vval.v_dict = NULL; \
+      tv->v_lock = VAR_UNLOCKED; \
+    } while (0)
+
+#define TYPVAL_ENCODE_CONV_LIST_START(ignored) \
+    do { \
+      if (tv->vval.v_list->lv_refcount > 1) { \
+        tv->vval.v_list->lv_refcount--; \
+        tv->vval.v_list = NULL; \
+        tv->v_lock = VAR_UNLOCKED; \
+        return OK; \
+      } \
+    } while (0)
+
+#define TYPVAL_ENCODE_CONV_LIST_BETWEEN_ITEMS()
+
+#define TYPVAL_ENCODE_CONV_LIST_END() \
+    do { \
+      typval_T *const cur_tv = cur_mpsv->tv; \
+      assert(cur_tv->v_type == VAR_LIST); \
+      list_unref(cur_tv->vval.v_list); \
+      cur_tv->vval.v_list = NULL; \
+      cur_tv->v_lock = VAR_UNLOCKED; \
+    } while (0)
+
+#define TYPVAL_ENCODE_CONV_DICT_START(ignored) \
+    do { \
+      if (tv->vval.v_dict->dv_refcount > 1) { \
+        tv->vval.v_dict->dv_refcount--; \
+        tv->vval.v_dict = NULL; \
+        tv->v_lock = VAR_UNLOCKED; \
+        return OK; \
+      } \
+    } while (0)
+
+#define TYPVAL_ENCODE_CONV_SPECIAL_DICT_KEY_CHECK(ignored1, ignored2)
+
+#define TYPVAL_ENCODE_CONV_DICT_AFTER_KEY()
+
+#define TYPVAL_ENCODE_CONV_DICT_BETWEEN_ITEMS()
+
+#define TYPVAL_ENCODE_CONV_DICT_END() \
+    do { \
+      typval_T *const cur_tv = cur_mpsv->tv; \
+      assert(cur_tv->v_type == VAR_DICT); \
+      dict_unref(cur_tv->vval.v_dict); \
+      cur_tv->vval.v_dict = NULL; \
+      cur_tv->v_lock = VAR_UNLOCKED; \
+    } while (0)
+
+#define TYPVAL_ENCODE_CONV_RECURSE(ignored1, ignored2)
+
+TYPVAL_ENCODE_DEFINE_CONV_FUNCTIONS(static, nothing, void *, ignored)
+
+#undef TYPVAL_ENCODE_ALLOW_SPECIALS
+#undef TYPVAL_ENCODE_CONV_NIL
+#undef TYPVAL_ENCODE_CONV_BOOL
+#undef TYPVAL_ENCODE_CONV_NUMBER
+#undef TYPVAL_ENCODE_CONV_UNSIGNED_NUMBER
+#undef TYPVAL_ENCODE_CONV_FLOAT
+#undef TYPVAL_ENCODE_CONV_STRING
+#undef TYPVAL_ENCODE_CONV_STR_STRING
+#undef TYPVAL_ENCODE_CONV_EXT_STRING
+#undef TYPVAL_ENCODE_CONV_FUNC
+#undef TYPVAL_ENCODE_CONV_EMPTY_LIST
+#undef TYPVAL_ENCODE_CONV_EMPTY_DICT
+#undef TYPVAL_ENCODE_CONV_LIST_START
+#undef TYPVAL_ENCODE_CONV_LIST_BETWEEN_ITEMS
+#undef TYPVAL_ENCODE_CONV_LIST_END
+#undef TYPVAL_ENCODE_CONV_DICT_START
+#undef TYPVAL_ENCODE_CONV_SPECIAL_DICT_KEY_CHECK
+#undef TYPVAL_ENCODE_CONV_DICT_AFTER_KEY
+#undef TYPVAL_ENCODE_CONV_DICT_BETWEEN_ITEMS
+#undef TYPVAL_ENCODE_CONV_DICT_END
+#undef TYPVAL_ENCODE_CONV_RECURSE
+
+/// Free memory for a variable value and set the value to NULL or 0
+///
+/// @param[in,out]  varp  Value to free.
 void clear_tv(typval_T *varp)
 {
-  if (varp != NULL) {
-    switch (varp->v_type) {
-    case VAR_FUNC:
-      func_unref(varp->vval.v_string);
-      if (varp->vval.v_string != empty_string) {
-        xfree(varp->vval.v_string);
-      }
-      varp->vval.v_string = NULL;
-      break;
-    case VAR_STRING:
-      xfree(varp->vval.v_string);
-      varp->vval.v_string = NULL;
-      break;
-    case VAR_LIST:
-      list_unref(varp->vval.v_list);
-      varp->vval.v_list = NULL;
-      break;
-    case VAR_DICT:
-      dict_unref(varp->vval.v_dict);
-      varp->vval.v_dict = NULL;
-      break;
-    case VAR_NUMBER:
-      varp->vval.v_number = 0;
-      break;
-    case VAR_FLOAT:
-      varp->vval.v_float = 0.0;
-      break;
-    case VAR_SPECIAL:
-      varp->vval.v_special = kSpecialVarFalse;
-      break;
-    case VAR_UNKNOWN:
-      break;
-    }
-    varp->v_lock = 0;
+  if (varp != NULL && varp->v_type != VAR_UNKNOWN) {
+    encode_vim_to_nothing(varp, varp, "clear_tv argument");
   }
 }
 

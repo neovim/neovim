@@ -134,6 +134,9 @@ static inline void *_memcpy_free(void *const restrict dest,
 
 /// Resize vector with preallocated array
 ///
+/// @note May not resize to an array smaller then init_array: if requested,
+///       init_array will be used.
+///
 /// @param[out]  v  Vector to resize.
 /// @param[in]  s  New size.
 #define kvi_resize(v, s) \
@@ -159,10 +162,10 @@ static inline void *_memcpy_free(void *const restrict dest,
     /* ARRAY_SIZE((v).init_array) is the minimal capacity of this vector. */ \
     /* Thus when vector is full capacity may not be zero and it is safe */ \
     /* not to bother with checking whether (v).capacity is 0. But now */ \
-    /* capacity is not guaranteed to have size that is a power of 2. */ \
-    kvi_resize(v, ((v).capacity == ARRAY_SIZE((v).init_array) \
-                   ? ((v).capacity++, kv_roundup32((v).capacity)) \
-                   : (v).capacity << 1))
+    /* capacity is not guaranteed to have size that is a power of 2, it is */ \
+    /* hard to fix this here and is not very necessary if users will use */ \
+    /* 2^x initial array size. */ \
+    kvi_resize(v, (v).capacity << 1)
 
 /// Get location where to store new element to a vector with preallocated array
 ///

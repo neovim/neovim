@@ -49,6 +49,7 @@ struct stream {
   size_t curmem;
   size_t maxmem;
   size_t pending_reqs;
+  size_t num_bytes;
   void *data, *internal_data;
   bool closed;
   Queue *events;

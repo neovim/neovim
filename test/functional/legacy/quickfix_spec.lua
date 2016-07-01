@@ -258,6 +258,25 @@ describe('helpgrep', function()
         \ l[3].lnum == 750 && l[3].col == 25 && l[3].text ==# 'Line 750')
 
       endfunction
+
+      function Test_locationlist_curwin_was_closed()
+          augroup testgroup
+            au!
+            autocmd BufReadCmd t call R(expand("<amatch>"))
+          augroup END
+
+          function R(n)
+            quit
+          endfunc
+
+          new
+          let q = []
+          call add(q, {'filename': 't' })
+          call setloclist(0, q)
+          call assert_fails('lrewind', 'E924:')
+
+          augroup! testgroup
+      endfunction
       ]])
   end)
 
@@ -314,5 +333,10 @@ describe('helpgrep', function()
     execute('call setqflist([])')
     execute('copen')
     eq(':setqflist()', eval('g:foo'))
+  end)
+
+  it('errors when an autocommand closes the location list\'s window', function()
+    call('Test_locationlist_curwin_was_closed')
+    expected_empty()
   end)
 end)

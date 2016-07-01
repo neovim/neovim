@@ -39,7 +39,6 @@ env:
     # Environment variables for Clang sanitizers.
     - ASAN_OPTIONS="detect_leaks=1:check_initialization_order=1:log_path=$LOG_DIR/asan"
     - ASAN_SYMBOLIZER_PATH="$LLVM_SYMBOLIZER"
-    - MSAN_SYMBOLIZER_PATH="$LLVM_SYMBOLIZER"
     - TSAN_OPTIONS="external_symbolizer_path=$LLVM_SYMBOLIZER log_path=$LOG_DIR/tsan"
     - UBSAN_OPTIONS="log_path=$LOG_DIR/ubsan"
     # Environment variables for Valgrind.
@@ -76,9 +75,6 @@ matrix:
       env: GCOV=llvm-cov CLANG_SANITIZER=ASAN_UBSAN CMAKE_FLAGS="$CMAKE_FLAGS -DUSE_GCOV=ON"
     - os: linux
       compiler: clang
-      env: CLANG_SANITIZER=MSAN
-    - os: linux
-      compiler: clang
       env: CLANG_SANITIZER=TSAN
     - os: osx
       compiler: clang
@@ -87,9 +83,6 @@ matrix:
     - os: linux
       env: BUILD_MINGW=ON
   fast_finish: true
-  allow_failures:
-    # TODO: Remove when all MSan errors have been fixed.
-    - env: CLANG_SANITIZER=MSAN
 
 before_install: .ci/before_install.sh
 install:        .ci/install.sh

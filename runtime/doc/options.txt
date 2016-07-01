@@ -3327,8 +3327,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 		-	no highlighting
 		:	use a highlight group
 	The default is used for occasions that are not included.
-	If you want to change what the display modes do, see |dos-colors|
-	for an example.
 	When using the ':' display mode, this must be followed by the name of
 	a highlight group.  A highlight group can be used to define any type
 	of highlighting, including using color.  See |:highlight| on how to
@@ -4938,7 +4936,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 					       $XDG_CONFIG_DIRS[1]/nvim,
 					       $XDG_CONFIG_DIRS[2]/nvim,
 					       …
-					       $XDG_DATA_HOME/nvim,
+					       $XDG_DATA_HOME/nvim/site,
 					       $XDG_DATA_DIRS[1]/nvim/site,
 					       $XDG_DATA_DIRS[2]/nvim/site,
 					       …
@@ -4946,7 +4944,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 					       …
 					       $XDG_DATA_DIRS[2]/nvim/site/after,
 					       $XDG_DATA_DIRS[1]/nvim/site/after,
-					       $XDG_DATA_HOME/nvim/after,
+					       $XDG_DATA_HOME/nvim/site/after,
 					       …
 					       $XDG_CONFIG_DIRS[2]/nvim/after,
 					       $XDG_CONFIG_DIRS[1]/nvim/after,

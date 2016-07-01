@@ -41,6 +41,12 @@ typedef bool Boolean;
 typedef int64_t Integer;
 typedef double Float;
 
+/// Maximum value of an Integer
+#define API_INTEGER_MAX INT64_MAX
+
+/// Minimum value of an Integer
+#define API_INTEGER_MIN INT64_MIN
+
 typedef struct {
   char *data;
   size_t size;
