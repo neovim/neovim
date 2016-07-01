@@ -226,6 +226,7 @@ int main(int argc, char **argv)
   mparm_T params;         // various parameters passed between
                           // main() and other functions.
   char_u *cwd = NULL;     // current workding dir on startup
+  char *term = getenv("TERM");
   time_init();
 
   /* Many variables are in "params" so that we can pass them to invoked
@@ -277,6 +278,10 @@ int main(int argc, char **argv)
 
   full_screen = true;
   t_colors = 256;
+  if (term && strcmp(term, "linux")==0) {
+    // TODO: instead, in tui.c detect if `tput colors`==8, then scramble to translate 256->16 colors?
+    t_colors = 8;
+  }
   check_tty(&params);
 
   /*
