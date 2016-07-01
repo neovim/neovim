@@ -20155,11 +20155,15 @@ theend:
  */
 static int eval_fname_script(char_u *p)
 {
-  if (p[0] == '<' && (STRNICMP(p + 1, "SID>", 4) == 0
-                      || STRNICMP(p + 1, "SNR>", 4) == 0))
+  // Use mb_stricmp() because in Turkish comparing the "I" may not work with
+  // the standard library function.
+  if (p[0] == '<' && (mb_strnicmp(p + 1, (char_u *)"SID>", 4) == 0
+                      || mb_strnicmp(p + 1, (char_u *)"SNR>", 4) == 0)) {
     return 5;
-  if (p[0] == 's' && p[1] == ':')
+  }
+  if (p[0] == 's' && p[1] == ':') {
     return 2;
+  }
   return 0;
 }
 
