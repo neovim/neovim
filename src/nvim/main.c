@@ -507,6 +507,9 @@ int main(int argc, char **argv)
   no_wait_return = FALSE;
   starting = 0;
 
+  // 'autochdir' has been postponed.
+  do_autochdir();
+
   /* start in insert mode */
   if (p_im)
     need_start_insertmode = TRUE;
