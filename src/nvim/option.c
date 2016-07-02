@@ -4404,6 +4404,7 @@ bool get_tty_option(char *name, char **value)
 
   if (is_tty_option(name)) {
     if (value) {
+      // XXX: All other t_* options were removed in 3baba1e7.
       *value = xstrdup("");
     }
     return true;
