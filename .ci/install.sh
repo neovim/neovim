@@ -19,14 +19,13 @@ elif [[ "${BUILD_MINGW}" == ON ]]; then
   
 fi
 
-# Set CC to default to avoid compilation problems
-# when installing Python modules.
+# Use default CC to avoid compilation problems when installing Python modules.
 echo "Install neovim module and coveralls for Python 2."
-CC=cc pip2.7 install --user --upgrade neovim cpp-coveralls
+CC=cc pip2.7 -q install --user --upgrade neovim cpp-coveralls
 
 echo "Install neovim module for Python 3."
 if [[ "${TRAVIS_OS_NAME}" == osx ]]; then
-  CC=cc pip3 install --user --upgrade neovim
+  CC=cc pip3 -q install --user --upgrade neovim
 else
-  CC=cc pip3.3 install --user --upgrade neovim
+  CC=cc pip3.3 -q install --user --upgrade neovim
 fi
