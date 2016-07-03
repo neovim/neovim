@@ -2158,19 +2158,19 @@ return {
     command='ruby',
     flags=bit.bor(RANGE, EXTRA, NEEDARG, CMDWIN),
     addr_type=ADDR_LINES,
-    func='ex_script_ni',
+    func='ex_ruby',
   },
   {
     command='rubydo',
     flags=bit.bor(RANGE, DFLALL, EXTRA, NEEDARG, CMDWIN),
     addr_type=ADDR_LINES,
-    func='ex_ni',
+    func='ex_rubydo',
   },
   {
     command='rubyfile',
     flags=bit.bor(RANGE, FILE1, NEEDARG, CMDWIN),
     addr_type=ADDR_LINES,
-    func='ex_ni',
+    func='ex_rubyfile',
   },
   {
     command='rviminfo',

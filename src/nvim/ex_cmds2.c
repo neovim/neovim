@@ -897,6 +897,21 @@ void ex_pydo(exarg_T *eap)
   script_host_do_range("python", eap);
 }
 
+void ex_ruby(exarg_T *eap)
+{
+  script_host_execute("ruby", eap);
+}
+
+void ex_rubyfile(exarg_T *eap)
+{
+  script_host_execute_file("ruby", eap);
+}
+
+void ex_rubydo(exarg_T *eap)
+{
+  script_host_do_range("ruby", eap);
+}
+
 void ex_python3(exarg_T *eap)
 {
   script_host_execute("python3", eap);
