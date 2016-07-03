@@ -404,12 +404,47 @@ function! s:diagnose_python(version) abort
 endfunction
 
 
+function! s:diagnose_ruby() abort
+  echo 'Checking: Ruby'
+  let ruby_vers = systemlist('ruby -v')[0]
+  let ruby_prog = provider#ruby#Detect()
+  let notes = []
+
+  if empty(ruby_prog)
+    let ruby_prog = 'not found'
+    let prog_vers = 'not found'
+    call add(notes, 'Suggestion: Install the neovim RubyGem using ' .
+          \ '`gem install neovim`.')
+  else
+    silent let prog_vers = systemlist(ruby_prog . ' --version')[0]
+
+    if v:shell_error
+      let prog_vers = 'outdated'
+      call add(notes, 'Suggestion: Install the latest neovim RubyGem using ' .
+            \ '`gem install neovim`.')
+    elseif s:version_cmp(prog_vers, "0.2.0") == -1
+      let prog_vers .= ' (outdated)'
+      call add(notes, 'Suggestion: Install the latest neovim RubyGem using ' .
+            \ '`gem install neovim`.')
+    endif
+  endif
+
+  echo '  Ruby Version: ' . ruby_vers
+  echo '  Host Executable: ' . ruby_prog
+  echo '  Host Version: ' . prog_vers
+
+  call s:echo_notes(notes)
+endfunction
+
+
 function! health#check(bang) abort
   redir => report
   try
     silent call s:diagnose_python(2)
     silent echo ''
     silent call s:diagnose_python(3)
+    silent echo ''
+    silent call s:diagnose_ruby()
     silent echo ''
     silent call s:diagnose_manifest()
     silent echo ''
