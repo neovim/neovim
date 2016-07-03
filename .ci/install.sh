@@ -30,3 +30,6 @@ if [[ "${TRAVIS_OS_NAME}" == osx ]]; then
 else
   CC=cc pip3.3 install --user --upgrade neovim
 fi
+
+echo "Install neovim RubyGem."
+gem install --no-document --version ">= 0.2.0" neovim
