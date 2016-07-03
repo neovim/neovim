@@ -414,7 +414,7 @@ EXTERN int provider_call_nesting INIT(= 0);
 EXTERN char_u hash_removed;
 
 
-EXTERN int t_colors INIT(= 0);              /* int value of T_CCO */
+EXTERN int t_colors INIT(= 256);                // int value of T_CCO
 
 /*
  * When highlight_match is TRUE, highlight a match, starting at the cursor

@@ -276,7 +276,6 @@ int main(int argc, char **argv)
     printf(_("%d files to edit\n"), GARGCOUNT);
 
   full_screen = true;
-  t_colors = 256;
   check_tty(&params);
 
   /*
@@ -1671,8 +1670,6 @@ static bool do_user_initialization(void)
 }
 
 /// Source startup scripts
-///
-/// @param[in]
 static void source_startup_scripts(const mparm_T *const parmp)
   FUNC_ATTR_NONNULL_ALL
 {

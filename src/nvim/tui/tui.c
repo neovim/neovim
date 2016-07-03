@@ -135,6 +135,8 @@ static void terminfo_start(UI *ui)
     data->ut = unibi_dummy();
   }
   fix_terminfo(data);
+  // Set 't_Co' from the result of unibilium & fix_terminfo.
+  t_colors = unibi_get_num(data->ut, unibi_max_colors);
   // Enter alternate screen and clear
   unibi_out(ui, unibi_enter_ca_mode);
   unibi_out(ui, unibi_clear_screen);
@@ -786,6 +788,7 @@ static void fix_terminfo(TUIData *data)
   unibi_term *ut = data->ut;
 
   const char *term = os_getenv("TERM");
+  const char *colorterm = os_getenv("COLORTERM");
   if (!term) {
     goto end;
   }
@@ -831,10 +834,10 @@ static void fix_terminfo(TUIData *data)
 #define XTERM_SETAB \
   "\x1b[%?%p1%{8}%<%t4%p1%d%e%p1%{16}%<%t10%p1%{8}%-%d%e48;5;%p1%d%;m"
 
-  if (os_getenv("COLORTERM") != NULL
-      && (!strcmp(term, "xterm") || !strcmp(term, "screen"))) {
-    // probably every modern terminal that sets TERM=xterm supports 256
-    // colors(eg: gnome-terminal). Also do it when TERM=screen.
+  if ((colorterm && strstr(colorterm, "256"))
+      || strstr(term, "256")
+      || strstr(term, "xterm")) {
+    // Assume TERM~=xterm or COLORTERM~=256 supports 256 colors.
     unibi_set_num(ut, unibi_max_colors, 256);
     unibi_set_str(ut, unibi_set_a_foreground, XTERM_SETAF);
     unibi_set_str(ut, unibi_set_a_background, XTERM_SETAB);
