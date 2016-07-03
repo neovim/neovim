@@ -124,8 +124,14 @@ include the kitchen sink... but you can use it for plumbing."
 ==============================================================================
 2. Design decisions					*design-decisions*
 
-Window
+Jargon	 							*dev-jargon*
 
+Host ~
+A plugin "host" is both a client (of the Nvim API) and a server (of an
+external platform, e.g. python). It is a remote plugin that hosts other
+plugins.
+
+Window ~
 The word "window" is commonly used for several things: A window on the screen,
 the xterm window, a window inside Vim to view a buffer.
 To avoid confusion, other items that are sometimes called window have been
@@ -138,7 +144,6 @@ shell		The Vim application.  This can cover the whole screen (e.g.,
 window		View on a buffer.  There can be several windows in Vim,
 		together with the command line, menubar, toolbar, etc. they
 		fit in the shell.
-
 
 Providers 							*dev-provider*
 

@@ -33,9 +33,15 @@ There are 3 ways to create a terminal buffer:
 - By editing a file with a name matching `term://(.{-}//(\d+:)?)?\zs.*`.
   For example:
 >
-    :e term://bash
-    :vsp term://top
+    :edit term://bash
+    :vsplit term://top
 <
+    Note: The "term://" pattern is handled by a BufReadCmd handler, so the
+    |autocmd-nested| modifier is required to use it in an autocmd. >
+        autocmd VimEnter * nested split term://sh
+<    This is only mentioned for reference; you should use the |:terminal|
+    command instead.
+
 When the terminal spawns the program, the buffer will start to mirror the
 terminal display and change its name to `term://$CWD//$PID:$COMMAND`.
 Note that |:mksession| will "save" the terminal buffers by restarting all
