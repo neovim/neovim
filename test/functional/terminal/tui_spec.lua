@@ -301,3 +301,63 @@ describe('tui focus event handling', function()
     ]])
   end)
 end)
+
+-- These tests require `thelpers` because --headless/--embed
+-- does not initialize the TUI.
+describe("tui 't_Co' (terminal colors)", function()
+  local screen
+
+  local function assert_term_colors(term, colorterm, maxcolors)
+    helpers.clear({env={TERM=term}, args={}})
+    -- This is ugly because :term/termopen() forces TERM=xterm-256color.
+    -- TODO: Revisit this after jobstart/termopen accept `env` dict.
+    screen = thelpers.screen_setup(0, string.format(
+      [=[['sh', '-c', 'TERM=%s %s %s -u NONE -i NONE --cmd "silent set noswapfile"']]=],
+      term,
+      (colorterm ~= nil and "COLORTERM="..colorterm or ""),
+      helpers.nvim_prog))
+
+    thelpers.feed_data(":echo &t_Co\n")
+    screen:expect(string.format([[
+      {1: }                                                 |
+      ~                                                 |
+      ~                                                 |
+      ~                                                 |
+      [No Name]                                         |
+      %-3s                                               |
+      -- TERMINAL --                                    |
+    ]], tostring(maxcolors and maxcolors or "")))
+  end
+
+  it("unknown TERM sets empty 't_Co'", function()
+    assert_term_colors("yet-another-term", nil, nil)
+  end)
+
+  it("unknown TERM with COLORTERM=screen-256color uses 256 colors", function()
+    assert_term_colors("yet-another-term", "screen-256color", 256)
+  end)
+
+  it("TERM=linux uses 8 colors", function()
+    assert_term_colors("linux", nil, 8)
+  end)
+
+  it("TERM=screen uses 8 colors", function()
+    assert_term_colors("screen", nil, 8)
+  end)
+
+  it("TERM=screen COLORTERM=screen-256color uses 256 colors", function()
+    assert_term_colors("screen", "screen-256color", 256)
+  end)
+
+  it("TERM=yet-another-term COLORTERM=screen-256color uses 256 colors", function()
+    assert_term_colors("screen", "screen-256color", 256)
+  end)
+
+  it("TERM=xterm uses 256 colors", function()
+    assert_term_colors("xterm", nil, 256)
+  end)
+
+  it("TERM=xterm-256color uses 256 colors", function()
+    assert_term_colors("xterm-256color", nil, 256)
+  end)
+end)

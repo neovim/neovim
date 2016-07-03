@@ -1,6 +1,6 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
-local clear, eval, eq  = helpers.clear, helpers.eval, helpers.eq
+local eval, eq = helpers.eval, helpers.eq
 local execute = helpers.execute
 
 local function init_session(...)
@@ -15,10 +15,6 @@ local function init_session(...)
 end
 
 describe('startup defaults', function()
-  before_each(function()
-    clear()
-  end)
-
   describe(':filetype', function()
     local function expect_filetype(expected)
       local screen = Screen.new(48, 4)
