@@ -39,6 +39,9 @@ set nomore
 " Output all messages in English.
 lang mess C
 
+" Always use forward slashes.
+set shellslash
+
 " Source the test script.  First grab the file name, in case the script
 " navigates away.
 let testname = expand('%')
