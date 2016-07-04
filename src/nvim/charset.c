@@ -43,20 +43,29 @@ static bool chartab_initialized = false;
 #define GET_CHARTAB(buf, c) \
     ((buf)->b_chartab[(unsigned)(c) >> 6] & (1ull << ((c) & 0x3f)))
 
-/// Fill chartab[].  Also fills curbuf->b_chartab[] with flags for keyword
+// Table used below, see init_chartab() for an explanation
+static char_u g_chartab[256];
+
+// Flags for g_chartab[].
+#define CT_CELL_MASK  0x07  ///< mask: nr of display cells (1, 2 or 4)
+#define CT_PRINT_CHAR 0x10  ///< flag: set for printable chars
+#define CT_ID_CHAR    0x20  ///< flag: set for ID chars
+#define CT_FNAME_CHAR 0x40  ///< flag: set for file name chars
+
+/// Fill g_chartab[].  Also fills curbuf->b_chartab[] with flags for keyword
 /// characters for current buffer.
 ///
 /// Depends on the option settings 'iskeyword', 'isident', 'isfname',
 /// 'isprint' and 'encoding'.
 ///
-/// The index in chartab[] depends on 'encoding':
+/// The index in g_chartab[] depends on 'encoding':
 /// - For non-multi-byte index with the byte (same as the character).
 /// - For DBCS index with the first byte.
 /// - For UTF-8 index with the character (when first byte is up to 0x80 it is
 ///   the same as the character, if the first byte is 0x80 and above it depends
 ///   on further bytes).
 ///
-/// The contents of chartab[]:
+/// The contents of g_chartab[]:
 /// - The lower two bits, masked by CT_CELL_MASK, give the number of display
 ///   cells the character occupies (1 or 2).  Not valid for UTF-8 above 0x80.
 /// - CT_PRINT_CHAR bit is set when the character is printable (no need to
@@ -94,32 +103,32 @@ int buf_init_chartab(buf_T *buf, int global)
     c = 0;
 
     while (c < ' ') {
-      chartab[c++] = (dy_flags & DY_UHEX) ? 4 : 2;
+      g_chartab[c++] = (dy_flags & DY_UHEX) ? 4 : 2;
     }
 
     while (c <= '~') {
-      chartab[c++] = 1 + CT_PRINT_CHAR;
+      g_chartab[c++] = 1 + CT_PRINT_CHAR;
     }
 
     if (p_altkeymap) {
       while (c < YE) {
-        chartab[c++] = 1 + CT_PRINT_CHAR;
+        g_chartab[c++] = 1 + CT_PRINT_CHAR;
       }
     }
 
     while (c < 256) {
       if (enc_utf8 && (c >= 0xa0)) {
         // UTF-8: bytes 0xa0 - 0xff are printable (latin1)
-        chartab[c++] = CT_PRINT_CHAR + 1;
+        g_chartab[c++] = CT_PRINT_CHAR + 1;
       } else if ((enc_dbcs == DBCS_JPNU) && (c == 0x8e)) {
         // euc-jp characters starting with 0x8e are single width
-        chartab[c++] = CT_PRINT_CHAR + 1;
+        g_chartab[c++] = CT_PRINT_CHAR + 1;
       } else if ((enc_dbcs != 0) && (MB_BYTE2LEN(c) == 2)) {
         // other double-byte chars can be printable AND double-width
-        chartab[c++] = CT_PRINT_CHAR + 2;
+        g_chartab[c++] = CT_PRINT_CHAR + 2;
       } else {
         // the rest is unprintable by default
-        chartab[c++] = (dy_flags & DY_UHEX) ? 4 : 2;
+        g_chartab[c++] = (dy_flags & DY_UHEX) ? 4 : 2;
       }
     }
 
@@ -128,7 +137,7 @@ int buf_init_chartab(buf_T *buf, int global)
       if (((enc_dbcs != 0) && (MB_BYTE2LEN(c) > 1))
           || ((enc_dbcs == DBCS_JPNU) && (c == 0x8e))
           || (enc_utf8 && (c >= 0xa0))) {
-        chartab[c] |= CT_FNAME_CHAR;
+        g_chartab[c] |= CT_FNAME_CHAR;
       }
     }
   }
@@ -231,9 +240,9 @@ int buf_init_chartab(buf_T *buf, int global)
           if (i == 0) {
             // (re)set ID flag
             if (tilde) {
-              chartab[c] &= (uint8_t)~CT_ID_CHAR;
+              g_chartab[c] &= (uint8_t)~CT_ID_CHAR;
             } else {
-              chartab[c] |= CT_ID_CHAR;
+              g_chartab[c] |= CT_ID_CHAR;
             }
           } else if (i == 1) {
             // (re)set printable
@@ -244,20 +253,20 @@ int buf_init_chartab(buf_T *buf, int global)
                  || (p_altkeymap && (F_isalpha(c) || F_isdigit(c))))
                 && !(enc_dbcs && (MB_BYTE2LEN(c) == 2))) {
               if (tilde) {
-                chartab[c] = (uint8_t)((chartab[c] & ~CT_CELL_MASK)
-                                       + ((dy_flags & DY_UHEX) ? 4 : 2));
-                chartab[c] &= (uint8_t)~CT_PRINT_CHAR;
+                g_chartab[c] = (uint8_t)((g_chartab[c] & ~CT_CELL_MASK)
+                                         + ((dy_flags & DY_UHEX) ? 4 : 2));
+                g_chartab[c] &= (uint8_t)~CT_PRINT_CHAR;
               } else {
-                chartab[c] = (uint8_t)((chartab[c] & ~CT_CELL_MASK) + 1);
-                chartab[c] |= CT_PRINT_CHAR;
+                g_chartab[c] = (uint8_t)((g_chartab[c] & ~CT_CELL_MASK) + 1);
+                g_chartab[c] |= CT_PRINT_CHAR;
               }
             }
           } else if (i == 2) {
             // (re)set fname flag
             if (tilde) {
-              chartab[c] &= (uint8_t)~CT_FNAME_CHAR;
+              g_chartab[c] &= (uint8_t)~CT_FNAME_CHAR;
             } else {
-              chartab[c] |= CT_FNAME_CHAR;
+              g_chartab[c] |= CT_FNAME_CHAR;
             }
           } else {  // i == 3
             // (re)set keyword flag
@@ -492,9 +501,9 @@ char_u* str_foldcase(char_u *str, int orglen, char_u *buf, int buflen)
   return buf;
 }
 
-// Catch 22: chartab[] can't be initialized before the options are
+// Catch 22: g_chartab[] can't be initialized before the options are
 // initialized, and initializing options may cause transchar() to be called!
-// When chartab_initialized == false don't use chartab[].
+// When chartab_initialized == false don't use g_chartab[].
 // Does NOT work for multi-byte characters, c must be <= 255.
 // Also doesn't work for the first byte of a multi-byte, "c" must be a
 // character!
@@ -633,7 +642,7 @@ int byte2cells(int b)
   if (enc_utf8 && (b >= 0x80)) {
     return 0;
   }
-  return chartab[b] & CT_CELL_MASK;
+  return g_chartab[b] & CT_CELL_MASK;
 }
 
 /// Return number of display cells occupied by character "c".
@@ -665,7 +674,7 @@ int char2cells(int c)
       return 2;
     }
   }
-  return chartab[c & 0xff] & CT_CELL_MASK;
+  return g_chartab[c & 0xff] & CT_CELL_MASK;
 }
 
 /// Return number of display cells occupied by character at "*p".
@@ -682,7 +691,7 @@ int ptr2cells(char_u *p)
   }
 
   // For DBCS we can tell the cell count from the first byte.
-  return chartab[*p] & CT_CELL_MASK;
+  return g_chartab[*p] & CT_CELL_MASK;
 }
 
 /// Return the number of character cells string "s" will take on the screen,
@@ -806,7 +815,7 @@ unsigned int win_linetabsize(win_T *wp, char_u *line, colnr_T len)
 bool vim_isIDc(int c)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  return c > 0 && c < 0x100 && (chartab[c] & CT_ID_CHAR);
+  return c > 0 && c < 0x100 && (g_chartab[c] & CT_ID_CHAR);
 }
 
 /// Check that "c" is a keyword character:
@@ -878,7 +887,7 @@ bool vim_iswordp_buf(char_u *p, buf_T *buf)
 bool vim_isfilec(int c)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  return c >= 0x100 || (c > 0 && (chartab[c] & CT_FNAME_CHAR));
+  return c >= 0x100 || (c > 0 && (g_chartab[c] & CT_FNAME_CHAR));
 }
 
 /// Check that "c" is a valid file-name character or a wildcard character
@@ -906,7 +915,7 @@ bool vim_isprintc(int c)
   if (enc_utf8 && (c >= 0x100)) {
     return utf_printable(c);
   }
-  return c >= 0x100 || (c > 0 && (chartab[c] & CT_PRINT_CHAR));
+  return c >= 0x100 || (c > 0 && (g_chartab[c] & CT_PRINT_CHAR));
 }
 
 /// Strict version of vim_isprintc(c), don't return true if "c" is the head
@@ -925,7 +934,7 @@ bool vim_isprintc_strict(int c)
   if (enc_utf8 && (c >= 0x100)) {
     return utf_printable(c);
   }
-  return c >= 0x100 || (c > 0 && (chartab[c] & CT_PRINT_CHAR));
+  return c >= 0x100 || (c > 0 && (g_chartab[c] & CT_PRINT_CHAR));
 }
 
 /// like chartabsize(), but also check for line breaks on the screen
@@ -1247,7 +1256,7 @@ void getvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor,
           if (enc_utf8 && (c >= 0x80)) {
             incr = utf_ptr2cells(ptr);
           } else {
-            incr = CHARSIZE(c);
+            incr = g_chartab[c] & CT_CELL_MASK;
           }
 
           // If a double-cell char doesn't fit at the end of a line
@@ -1261,7 +1270,7 @@ void getvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor,
             head = 1;
           }
         } else {
-          incr = CHARSIZE(c);
+          incr = g_chartab[c] & CT_CELL_MASK;
         }
       }
 

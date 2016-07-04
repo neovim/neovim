@@ -3416,12 +3416,10 @@ win_line (
       /*
        * Handling of non-printable characters.
        */
-      if (!(chartab[c & 0xff] & CT_PRINT_CHAR)) {
-        /*
-         * when getting a character from the file, we may have to
-         * turn it into something else on the way to putting it
-         * into "ScreenLines".
-         */
+      if (!vim_isprintc(c)) {
+        // when getting a character from the file, we may have to
+        // turn it into something else on the way to putting it
+        // into "ScreenLines".
         if (c == TAB && (!wp->w_p_list || lcs_tab1)) {
           int tab_len = 0;
           long vcol_adjusted = vcol;  // removed showbreak length
