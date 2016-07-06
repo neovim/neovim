@@ -306,6 +306,7 @@ end)
 -- does not initialize the TUI.
 describe("tui 't_Co' (terminal colors)", function()
   local screen
+  local is_linux = (helpers.eval("system('uname') =~? 'linux'") == 1)
 
   local function assert_term_colors(term, colorterm, maxcolors)
     helpers.clear({env={TERM=term}, args={}})
@@ -338,11 +339,19 @@ describe("tui 't_Co' (terminal colors)", function()
   end)
 
   it("TERM=linux uses 8 colors", function()
-    assert_term_colors("linux", nil, 8)
+    if is_linux then
+      assert_term_colors("linux", nil, 8)
+    else
+      pending()
+    end
   end)
 
   it("TERM=screen uses 8 colors", function()
-    assert_term_colors("screen", nil, 8)
+    if is_linux then
+      assert_term_colors("screen", nil, 8)
+    else
+      pending()
+    end
   end)
 
   it("TERM=screen COLORTERM=screen-256color uses 256 colors", function()
