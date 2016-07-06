@@ -39,8 +39,10 @@ describe('expand file name', function()
 
         next Xdir?/*/file
         call assert_equal('Xdir3/Xdir4/file', expand('%'))
-        next! Xdir?/*/nofile
-        call assert_equal('Xdir?/*/nofile', expand('%'))
+				if has('unix')
+					next! Xdir?/*/nofile
+					call assert_equal('Xdir?/*/nofile', expand('%'))
+				endif
         " Edit another file, on MS-Windows the swap file would be in use and can't
         " be deleted
         edit foo
