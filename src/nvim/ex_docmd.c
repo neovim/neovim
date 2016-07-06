@@ -7650,7 +7650,7 @@ open_exfile (
     return NULL;
   }
 #endif
-  if (!forceit && *mode != 'a' && os_file_exists(fname)) {
+  if (!forceit && *mode != 'a' && os_path_exists(fname)) {
     EMSG2(_("E189: \"%s\" exists (add ! to override)"), fname);
     return NULL;
   }

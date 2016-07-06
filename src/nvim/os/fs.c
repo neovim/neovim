@@ -599,14 +599,14 @@ int os_fchown(int fd, uv_uid_t owner, uv_gid_t group)
   return r;
 }
 
-/// Check if a file exists.
+/// Check if a path exists.
 ///
-/// @return `true` if `name` exists.
-bool os_file_exists(const char_u *name)
+/// @return `true` if `path` exists
+bool os_path_exists(const char_u *path)
   FUNC_ATTR_NONNULL_ALL
 {
   uv_stat_t statbuf;
-  return os_stat((char *)name, &statbuf) == kLibuvSuccess;
+  return os_stat((char *)path, &statbuf) == kLibuvSuccess;
 }
 
 /// Check if a file is readable.

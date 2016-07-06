@@ -1745,14 +1745,14 @@ check_overwrite (
    * write to other file or b_flags set or not writing the whole file:
    * overwriting only allowed with '!'
    */
-  if (       (other
-              || (buf->b_flags & BF_NOTEDITED)
-              || ((buf->b_flags & BF_NEW)
-                  && vim_strchr(p_cpo, CPO_OVERNEW) == NULL)
-              || (buf->b_flags & BF_READERR))
-             && !p_wa
-             && !bt_nofile(buf)
-             && os_file_exists(ffname)) {
+  if ((other
+       || (buf->b_flags & BF_NOTEDITED)
+       || ((buf->b_flags & BF_NEW)
+           && vim_strchr(p_cpo, CPO_OVERNEW) == NULL)
+       || (buf->b_flags & BF_READERR))
+      && !p_wa
+      && !bt_nofile(buf)
+      && os_path_exists(ffname)) {
     if (!eap->forceit && !eap->append) {
 #ifdef UNIX
       // It is possible to open a directory on Unix.
@@ -1795,7 +1795,7 @@ check_overwrite (
       }
       swapname = makeswapname(fname, ffname, curbuf, dir);
       xfree(dir);
-      if (os_file_exists(swapname)) {
+      if (os_path_exists(swapname)) {
         if (p_confirm || cmdmod.confirm) {
           char_u buff[DIALOG_MSG_SIZE];
 
@@ -1909,7 +1909,7 @@ static int check_readonly(int *forceit, buf_T *buf)
   /* Handle a file being readonly when the 'readonly' option is set or when
    * the file exists and permissions are read-only. */
   if (!*forceit && (buf->b_p_ro
-                    || (os_file_exists(buf->b_ffname)
+                    || (os_path_exists(buf->b_ffname)
                         && !os_file_is_writable((char *)buf->b_ffname)))) {
     if ((p_confirm || cmdmod.confirm) && buf->b_fname != NULL) {
       char_u buff[DIALOG_MSG_SIZE];

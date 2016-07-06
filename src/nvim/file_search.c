@@ -791,7 +791,7 @@ char_u *vim_findfile(void *search_ctx_arg)
             for (;; ) {
               /* if file exists and we didn't already find it */
               if ((path_with_url((char *)file_path)
-                   || (os_file_exists(file_path)
+                   || (os_path_exists(file_path)
                        && (search_ctx->ffsc_find_what
                            == FINDFILE_BOTH
                            || ((search_ctx->ffsc_find_what
@@ -1442,12 +1442,12 @@ find_file_in_path_option (
         buf = suffixes;
         for (;; ) {
           if (
-            (os_file_exists(NameBuff)
-             && (find_what == FINDFILE_BOTH
-                 || ((find_what == FINDFILE_DIR)
-                     == os_isdir(NameBuff))))) {
-            file_name = vim_strsave(NameBuff);
-            goto theend;
+              (os_path_exists(NameBuff)
+               && (find_what == FINDFILE_BOTH
+                   || ((find_what == FINDFILE_DIR)
+                       == os_isdir(NameBuff))))) {
+              file_name = vim_strsave(NameBuff);
+              goto theend;
           }
           if (*buf == NUL)
             break;

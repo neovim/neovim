@@ -684,7 +684,7 @@ static size_t do_path_expand(garray_T *gap, const char_u *path,
           }
           // add existing file or symbolic link
           if ((flags & EW_ALLLINKS) ? os_fileinfo_link((char *)buf, &file_info)
-              : os_file_exists(buf)) {
+              : os_path_exists(buf)) {
             addfile(gap, buf, flags);
           }
         }
@@ -1205,10 +1205,11 @@ int gen_expand_wildcards(int num_pat, char_u **pat, int *num_file,
 
       /* When EW_NOTFOUND is used, always add files and dirs.  Makes
        * "vim c:/" work. */
-      if (flags & EW_NOTFOUND)
+      if (flags & EW_NOTFOUND) {
         addfile(&ga, t, flags | EW_DIR | EW_FILE);
-      else if (os_file_exists(t))
+      } else if (os_path_exists(t)) {
         addfile(&ga, t, flags);
+      }
       xfree(t);
     }
 
@@ -1327,7 +1328,7 @@ void addfile(
   if (!(flags & EW_NOTFOUND)
       && ((flags & EW_ALLLINKS)
           ? !os_fileinfo_link((char *)f, &file_info)
-          : !os_file_exists(f))) {
+          : !os_path_exists(f))) {
     return;
   }
 

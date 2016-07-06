@@ -7630,7 +7630,7 @@ mkspell (
   else {
     // Check for overwriting before doing things that may take a lot of
     // time.
-    if (!over_write && os_file_exists(wfname)) {
+    if (!over_write && os_path_exists(wfname)) {
       EMSG(_(e_exists));
       goto theend;
     }
@@ -7686,7 +7686,7 @@ mkspell (
       spin.si_region = 1 << i;
 
       vim_snprintf((char *)fname, MAXPATHL, "%s.aff", innames[i]);
-      if (os_file_exists(fname)) {
+      if (os_path_exists(fname)) {
         // Read the .aff file.  Will init "spin->si_conv" based on the
         // "SET" line.
         afile[i] = spell_read_aff(&spin, fname);

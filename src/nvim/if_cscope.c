@@ -480,8 +480,9 @@ staterr:
   if (arg2 != NULL) {
     ppath = xmalloc(MAXPATHL + 1);
     expand_env((char_u *)arg2, (char_u *)ppath, MAXPATHL);
-    if (!os_file_exists((char_u *)ppath))
+    if (!os_path_exists((char_u *)ppath)) {
       goto staterr;
+    }
   }
 
   int i;
