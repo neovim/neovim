@@ -2990,14 +2990,15 @@ nobackup:
            * delete an existing one, try to use another name.
            * Change one character, just before the extension.
            */
-          if (!p_bk && os_file_exists(backup)) {
+          if (!p_bk && os_path_exists(backup)) {
             p = backup + STRLEN(backup) - 1 - STRLEN(backup_ext);
             if (p < backup)             /* empty file name ??? */
               p = backup;
             *p = 'z';
-            while (*p > 'a' && os_file_exists(backup))
-              --*p;
-            /* They all exist??? Must be something wrong! */
+            while (*p > 'a' && os_path_exists(backup)) {
+              (*p)--;
+            }
+            // They all exist??? Must be something wrong!
             if (*p == 'a') {
               xfree(backup);
               backup = NULL;
@@ -3224,12 +3225,12 @@ restore_backup:
            * This may not work if the vim_rename() fails.
            * In that case we leave the copy around.
            */
-          /* If file does not exist, put the copy in its place */
-          if (!os_file_exists(fname)) {
+          // If file does not exist, put the copy in its place
+          if (!os_path_exists(fname)) {
             vim_rename(backup, fname);
           }
-          /* if original file does exist throw away the copy */
-          if (os_file_exists(fname)) {
+          // if original file does exist throw away the copy
+          if (os_path_exists(fname)) {
             os_remove((char *)backup);
           }
         } else {
@@ -3238,8 +3239,8 @@ restore_backup:
         }
       }
 
-      /* if original file no longer exists give an extra warning */
-      if (!newfile && !os_file_exists(fname)) {
+      // if original file no longer exists give an extra warning
+      if (!newfile && !os_path_exists(fname)) {
         end = 0;
       }
     }
@@ -3597,9 +3598,9 @@ restore_backup:
        * If the original file does not exist yet
        * the current backup file becomes the original file
        */
-      if (org == NULL)
+      if (org == NULL) {
         EMSG(_("E205: Patchmode: can't save original file"));
-      else if (!os_file_exists((char_u *)org)) {
+      } else if (!os_path_exists((char_u *)org)) {
         vim_rename(backup, (char_u *)org);
         xfree(backup);                   /* don't delete the file */
         backup = NULL;
@@ -4514,9 +4515,11 @@ int vim_rename(char_u *from, char_u *to)
     if (STRLEN(from) >= MAXPATHL - 5)
       return -1;
     STRCPY(tempname, from);
-    for (n = 123; n < 99999; ++n) {
-      sprintf((char *)path_tail(tempname), "%d", n);
-      if (!os_file_exists(tempname)) {
+    for (n = 123; n < 99999; n++) {
+      char * tail = (char *)path_tail(tempname);
+      snprintf(tail, (MAXPATHL + 1) - (tail - (char *)tempname - 1), "%d", n);
+
+      if (!os_path_exists(tempname)) {
         if (os_rename(from, tempname) == OK) {
           if (os_rename(tempname, to) == OK)
             return 0;
@@ -4863,7 +4866,7 @@ buf_check_timestamp (
     }
 
   } else if ((buf->b_flags & BF_NEW) && !(buf->b_flags & BF_NEW_W)
-             && os_file_exists(buf->b_ffname)) {
+             && os_path_exists(buf->b_ffname)) {
     retval = 1;
     mesg = _("W13: Warning: File \"%s\" has been created after editing started");
     buf->b_flags |= BF_NEW_W;

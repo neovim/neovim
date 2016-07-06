@@ -566,10 +566,11 @@ int mch_expand_wildcards(int num_pat, char_u **pat, int *num_file,
   /*
    * Move the file names to allocated memory.
    */
-  for (j = 0, i = 0; i < *num_file; ++i) {
-    /* Require the files to exist.	Helps when using /bin/sh */
-    if (!(flags & EW_NOTFOUND) && !os_file_exists((*file)[i]))
+  for (j = 0, i = 0; i < *num_file; i++) {
+    // Require the files to exist. Helps when using /bin/sh
+    if (!(flags & EW_NOTFOUND) && !os_path_exists((*file)[i])) {
       continue;
+    }
 
     /* check if this entry should be included */
     dir = (os_isdir((*file)[i]));

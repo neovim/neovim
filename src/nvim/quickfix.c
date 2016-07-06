@@ -571,8 +571,9 @@ restofline:
           *regmatch.endp[i] = c;
 
           if (vim_strchr((char_u *)"OPQ", idx) != NULL
-              && !os_file_exists(namebuf))
+              && !os_path_exists(namebuf)) {
             continue;
+          }
         }
         if ((i = (int)fmt_ptr->addr[1]) > 0) {                  /* %n */
           if (regmatch.startp[i] == NULL)
@@ -706,11 +707,12 @@ restofline:
       } else if (vim_strchr((char_u *)"OPQ", idx) != NULL) {
         // global file names
         valid = false;
-        if (*namebuf == NUL || os_file_exists(namebuf)) {
-          if (*namebuf && idx == 'P')
+        if (*namebuf == NUL || os_path_exists(namebuf)) {
+          if (*namebuf && idx == 'P') {
             currfile = qf_push_dir(namebuf, &file_stack);
-          else if (idx == 'Q')
+          } else if (idx == 'Q') {
             currfile = qf_pop_dir(&file_stack);
+          }
           *namebuf = NUL;
           if (tail && *tail) {
             STRMOVE(IObuff, skipwhite(tail));
@@ -1080,7 +1082,7 @@ static int qf_get_fnum(char_u *directory, char_u *fname)
        * "leaving directory"-messages we might have missed a
        * directory change.
        */
-      if (!os_file_exists(ptr)) {
+      if (!os_path_exists(ptr)) {
         xfree(ptr);
         directory = qf_guess_filepath(fname);
         if (directory)
@@ -1232,8 +1234,9 @@ static char_u *qf_guess_filepath(char_u *filename)
     xfree(fullname);
     fullname = (char_u *)concat_fnames((char *)ds_ptr->dirname, (char *)filename, TRUE);
 
-    if (os_file_exists(fullname))
+    if (os_path_exists(fullname)) {
       break;
+    }
 
     ds_ptr = ds_ptr->next;
   }

@@ -1359,7 +1359,7 @@ recover_names (
     if (*dirp == NUL && file_count + num_files == 0 && fname != NULL) {
       char_u *swapname = (char_u *)modname((char *)fname_res, ".swp", TRUE);
       if (swapname != NULL) {
-        if (os_file_exists(swapname)) {
+        if (os_path_exists(swapname)) {
           files = xmalloc(sizeof(char_u *));
           files[0] = swapname;
           swapname = NULL;
@@ -3426,11 +3426,11 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname,
               break;
             }
 
-            /* If the file was deleted this fname can be used. */
-            if (!os_file_exists((char_u *) fname))
+            // If the file was deleted this fname can be used.
+            if (!os_path_exists((char_u *)fname)) {
               break;
-          } else
-          {
+            }
+          } else {
             MSG_PUTS("\n");
             if (msg_silent == 0)
               /* call wait_return() later */

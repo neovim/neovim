@@ -103,7 +103,7 @@ int socket_watcher_start(SocketWatcher *watcher, int backlog, socket_cb cb)
       // Libuv converts ENOENT to EACCES for Windows compatibility, but if
       // the parent directory does not exist, ENOENT would be more accurate.
       *path_tail((char_u *)watcher->addr) = NUL;
-      if (!os_file_exists((char_u *)watcher->addr)) {
+      if (!os_path_exists((char_u *)watcher->addr)) {
         result = -ENOENT;
       }
     }

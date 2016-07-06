@@ -712,7 +712,7 @@ char *u_get_undo_file_name(const char *const buf_ffname, const bool reading)
 
     // When reading check if the file exists.
     if (undo_file_name != NULL
-        && (!reading || os_file_exists((char_u *)undo_file_name))) {
+        && (!reading || os_path_exists((char_u *)undo_file_name))) {
       break;
     }
     xfree(undo_file_name);
@@ -1094,7 +1094,7 @@ void u_write_undo(const char *const name, const bool forceit, buf_T *const buf,
 
   /* If the undo file already exists, verify that it actually is an undo
    * file, and delete it. */
-  if (os_file_exists((char_u *)file_name)) {
+  if (os_path_exists((char_u *)file_name)) {
     if (name == NULL || !forceit) {
       /* Check we can read it and it's an undo file. */
       fd = os_open(file_name, O_RDONLY, 0);

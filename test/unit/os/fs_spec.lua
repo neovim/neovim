@@ -75,6 +75,8 @@ describe('fs function', function()
 
     io.open('unit-test-directory/test_2.file', 'w').close()
     lfs.link('test.file', 'unit-test-directory/test_link.file', true)
+
+    lfs.link('non_existing_file.file', 'unit-test-directory/test_broken_link.file', true)
     -- Since the tests are executed, they are called by an executable. We use
     -- that executable for several asserts.
     absolute_executable = arg[0]
@@ -88,6 +90,7 @@ describe('fs function', function()
     os.remove('unit-test-directory/test_2.file')
     os.remove('unit-test-directory/test_link.file')
     os.remove('unit-test-directory/test_hlink.file')
+    os.remove('unit-test-directory/test_broken_link.file')
     lfs.rmdir('unit-test-directory')
   end)
 
@@ -363,8 +366,8 @@ describe('fs function', function()
   end)
 
   describe('file operations', function()
-    local function os_file_exists(filename)
-      return fs.os_file_exists((to_cstr(filename)))
+    local function os_path_exists(filename)
+      return fs.os_path_exists((to_cstr(filename)))
     end
     local function os_rename(path, new_path)
       return fs.os_rename((to_cstr(path)), (to_cstr(new_path)))
@@ -421,13 +424,21 @@ describe('fs function', function()
       return fs.os_write(fd, data, data and #data or 0)
     end
 
-    describe('os_file_exists', function()
+    describe('os_path_exists', function()
       it('returns false when given a non-existing file', function()
-        eq(false, (os_file_exists('non-existing-file')))
+        eq(false, (os_path_exists('non-existing-file')))
       end)
 
       it('returns true when given an existing file', function()
-        eq(true, (os_file_exists('unit-test-directory/test.file')))
+        eq(true, (os_path_exists('unit-test-directory/test.file')))
+      end)
+
+      it('returns false when given a broken symlink', function()
+        eq(false, (os_path_exists('unit-test-directory/test_broken_link.file')))
+      end)
+
+      it('returns true when given a directory', function()
+        eq(true, (os_path_exists('unit-test-directory')))
       end)
     end)
 
@@ -437,8 +448,8 @@ describe('fs function', function()
 
       it('can rename file if destination file does not exist', function()
         eq(OK, (os_rename(test, not_exist)))
-        eq(false, (os_file_exists(test)))
-        eq(true, (os_file_exists(not_exist)))
+        eq(false, (os_path_exists(test)))
+        eq(true, (os_path_exists(not_exist)))
         eq(OK, (os_rename(not_exist, test)))  -- restore test file
       end)
 
@@ -454,8 +465,8 @@ describe('fs function', function()
         file:close()
 
         eq(OK, (os_rename(other, test)))
-        eq(false, (os_file_exists(other)))
-        eq(true, (os_file_exists(test)))
+        eq(false, (os_path_exists(other)))
+        eq(true, (os_path_exists(test)))
         file = io.open(test, 'r')
         eq('other', (file:read('*all')))
         file:close()
