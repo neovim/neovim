@@ -72,11 +72,11 @@ function! s:format_report_message(status, msg, ...) abort " {{{
   if a:0 > 0
     " Suggestions go in the first optional parameter can be a string or list
     if type(a:1) == type("")
-      let l:output .= "\n      - SUGGESTIONS:
+      let l:output .= "\n      - SUGGESTIONS:"
       let l:output .= "\n        - " . a:1
     elseif type(a:1) == type([])
       " Report each suggestion
-      let l:output .= "\n      - SUGGESTIONS:
+      let l:output .= "\n      - SUGGESTIONS:"
       for l:suggestion in a:1
         let l:output .= "\n        - " . l:suggestion
       endfor
