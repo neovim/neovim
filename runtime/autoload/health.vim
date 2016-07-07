@@ -10,7 +10,7 @@ function! health#check(bang) abort
   let l:report = '# Checking health'
 
   if g:health_checkers == {}
-    call s:add_checker(health#_default_checkers())
+    call s:add_checker(s:_default_checkers())
   endif
 
   for l:checker in items(g:health_checkers)
@@ -160,10 +160,10 @@ function! s:change_file_name_to_health_checker(name) abort " {{{
   return substitute(substitute(substitute(a:name, ".*autoload/", "", ""), "\\.vim", "#check", ""), "/", "#", "g")
 endfunction " }}}
 
-function! health#_default_checkers() abort " {{{
+function! s:_default_checkers() abort " {{{
   " Get all of the files that are in autoload/health/ folders with a vim
   " suffix
-  let checker_files = globpath(&runtimepath, 'autoload/health/*.vim', 0, 1)
+  let checker_files = globpath(&runtimepath, 'autoload/health/*.vim', 1, 1)
   let temp = checker_files[0]
 
   let checkers_to_source = []
