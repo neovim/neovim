@@ -2452,18 +2452,22 @@ static void source_all_matches(char_u *pat)
   }
 }
 
+// used for "cookie" of add_pack_plugin()
+static int APP_ADD_DIR;
+static int APP_LOAD;
+static int APP_BOTH;
+
 static void add_pack_plugin(char_u *fname, void *cookie)
 {
   char_u *p4, *p3, *p2, *p1, *p;
   char_u *new_rtp;
   char_u *ffname = (char_u *)fix_fname((char *)fname);
-  bool load_files = cookie != NULL;
 
   if (ffname == NULL) {
     return;
   }
 
-  if (strstr((char *)p_rtp, (char *)ffname) == NULL) {
+  if (cookie != &APP_LOAD && strstr((char *)p_rtp, (char *)ffname) == NULL) {
     // directory not in 'runtimepath', add it
     p4 = p3 = p2 = p1 = get_past_head(ffname);
     for (p = p1; *p; mb_ptr_adv(p)) {
@@ -2510,7 +2514,7 @@ static void add_pack_plugin(char_u *fname, void *cookie)
     xfree(new_rtp);
   }
 
-  if (load_files) {
+  if (cookie != &APP_ADD_DIR) {
     static const char *plugpat = "%s/plugin/*.vim";
     static const char *ftpat = "%s/ftdetect/*.vim";
 
@@ -2548,8 +2552,14 @@ void ex_packloadall(exarg_T *eap)
 {
   if (!did_source_packages || (eap != NULL && eap->forceit)) {
     did_source_packages = true;
+
+    // First do a round to add all directories to 'runtimepath', then load
+    // the plugins. This allows for plugins to use an autoload directory
+    // of another plugin.
     do_in_path(p_pp, (char_u *)"pack/*/start/*", DIP_ALL + DIP_DIR,
-               add_pack_plugin, p_pp);
+               add_pack_plugin, &APP_ADD_DIR);
+    do_in_path(p_pp, (char_u *)"pack/*/start/*", DIP_ALL + DIP_DIR,
+               add_pack_plugin, &APP_LOAD);
   }
 }
 
@@ -2562,7 +2572,7 @@ void ex_packadd(exarg_T *eap)
   char *pat = (char *)xmallocz(len);
   vim_snprintf(pat, len, plugpat, eap->arg);
   do_in_path(p_pp, (char_u *)pat, DIP_ALL + DIP_DIR + DIP_ERR, add_pack_plugin,
-             eap->forceit ? NULL : p_pp);
+             eap->forceit ? &APP_ADD_DIR : &APP_BOTH);
   xfree(pat);
 }
 
