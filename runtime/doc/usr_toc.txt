@@ -1,4 +1,4 @@
-*usr_toc.txt*	For Vim version 7.4.  Last change: 2010 Jul 20
+*usr_toc.txt*	For Vim version 7.4.  Last change: 2016 Mar 25
 
 		     VIM USER MANUAL - by Bram Moolenaar
 
@@ -101,10 +101,11 @@ Read this from start to end to learn the essential commands.
 		|05.1|	The vimrc file
 		|05.2|	The example vimrc file explained
 		|05.3|	Simple mappings
-		|05.4|	Adding a plugin
-		|05.5|	Adding a help file
-		|05.6|	The option window
-		|05.7|	Often used options
+		|05.4|	Adding a package
+		|05.5|	Adding a plugin
+		|05.6|	Adding a help file
+		|05.7|	The option window
+		|05.8|	Often used options
 
 |usr_06.txt|  Using syntax highlighting
 		|06.1|	Switching it on
