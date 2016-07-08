@@ -27,6 +27,7 @@ describe('packadd', function()
       func Test_packadd()
         call mkdir(s:plugdir . '/plugin', 'p')
         call mkdir(s:plugdir . '/ftdetect', 'p')
+        call mkdir(s:plugdir . '/after', 'p')
         set rtp&
         let rtp = &rtp
         filetype on
@@ -45,6 +46,7 @@ describe('packadd', function()
         call assert_true(17, g:ftdetect_works)
         call assert_true(len(&rtp) > len(rtp))
         call assert_true(&rtp =~ (s:plugdir . '\($\|,\)'))
+        call assert_true(&rtp =~ (s:plugdir . '/after$'))
 
         " Check exception
         call assert_fails("packadd directorynotfound", 'E919:')

@@ -2468,7 +2468,7 @@ static void add_pack_plugin(char_u *fname, void *cookie)
   }
 
   if (cookie != &APP_LOAD && strstr((char *)p_rtp, (char *)ffname) == NULL) {
-    // directory not in 'runtimepath', add it
+    // directory is not yet in 'runtimepath', add it
     p4 = p3 = p2 = p1 = get_past_head(ffname);
     for (p = p1; *p; mb_ptr_adv(p)) {
       if (vim_ispathsep_nocolon(*p)) {
@@ -2496,22 +2496,34 @@ static void add_pack_plugin(char_u *fname, void *cookie)
     }
     *p4 = c;
 
+    // check if rtp/pack/name/start/name/after exists
+    char *afterdir = concat_fnames((char *)ffname, "after", true);
+    size_t afterlen = 0;
+    if (os_isdir((char_u *)afterdir)) {
+      afterlen = STRLEN(afterdir) + 1;  // add one for comma
+    }
+
     size_t oldlen = STRLEN(p_rtp);
-    size_t addlen = STRLEN(ffname);
-    new_rtp = try_malloc(oldlen + addlen + 1);
+    size_t addlen = STRLEN(ffname) + 1;  // add one for comma
+    new_rtp = try_malloc(oldlen + addlen + afterlen + 1);  // add one for NUL
     if (new_rtp == NULL) {
       goto theend;
     }
     uintptr_t keep = (uintptr_t)(insp - p_rtp);
     memmove(new_rtp, p_rtp, keep);
     new_rtp[keep] = ',';
-    memmove(new_rtp + keep + 1, ffname, addlen + 1);
+    memmove(new_rtp + keep + 1, ffname, addlen);
     if (p_rtp[keep] != NUL) {
-      memmove(new_rtp + keep + 1 + addlen, p_rtp + keep,
+      memmove(new_rtp + keep + addlen, p_rtp + keep,
               oldlen - keep + 1);
+    }
+    if (afterlen > 0) {
+      STRCAT(new_rtp, ",");
+      STRCAT(new_rtp, afterdir);
     }
     set_option_value((char_u *)"rtp", 0L, new_rtp, 0);
     xfree(new_rtp);
+    xfree(afterdir);
   }
 
   if (cookie != &APP_ADD_DIR) {
