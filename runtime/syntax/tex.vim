@@ -1,8 +1,8 @@
 " Vim syntax file
 " Language:	TeX
 " Maintainer:	Charles E. Campbell <NdrchipO@ScampbellPfamily.AbizM>
-" Last Change:	Feb 18, 2016
-" Version:	92
+" Last Change:	Mar 07, 2016
+" Version:	93
 " URL:		http://www.drchip.org/astronaut/vim/index.html#SYNTAX_TEX
 "
 " Notes: {{{1
@@ -296,7 +296,7 @@ syn match texTypeStyle		"\\sc\>"
 syn match texTypeStyle		"\\tt\>"
 
 " Type Styles: attributes, commands, families, etc (LaTeX2E): {{{1
-if s:tex_conceal !~ 'b'
+if s:tex_conceal !~# 'b'
  syn match texTypeStyle		"\\textbf\>"
  syn match texTypeStyle		"\\textit\>"
 endif
@@ -541,7 +541,7 @@ if !exists("g:tex_no_math")
  syn match texOnlyMath		"[_^]"
 endif
 syn match texSpecialChar	"\^\^[0-9a-f]\{2}\|\^\^\S"
-if s:tex_conceal !~ 'S'
+if s:tex_conceal !~# 'S'
  syn match texSpecialChar	'\\glq\>'	contained conceal cchar=‚
  syn match texSpecialChar	'\\grq\>'	contained conceal cchar=‘
  syn match texSpecialChar	'\\glqq\>'	contained conceal cchar=„

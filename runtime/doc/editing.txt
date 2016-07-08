@@ -1,4 +1,4 @@
-*editing.txt*   For Vim version 7.4.  Last change: 2016 Feb 16
+*editing.txt*   For Vim version 7.4.  Last change: 2016 Mar 28
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -358,7 +358,7 @@ These are the common ones:
 To avoid the special meaning of the wildcards prepend a backslash.  However,
 on MS-Windows the backslash is a path separator and "path\[abc]" is still seen
 as a wildcard when "[" is in the 'isfname' option.  A simple way to avoid this
-is to use "path\[[]abc]".  Then the file "path[abc]" literally.
+is to use "path\[[]abc]", this matches the file "path\[abc]".
 
 					*starstar-wildcard*
 Expanding "**" is possible on Unix, Win32, Mac OS/X and a few other systems.

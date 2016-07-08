@@ -1,4 +1,4 @@
-*usr_41.txt*	For Vim version 7.4.  Last change: 2016 Mar 15
+*usr_41.txt*	For Vim version 7.4.  Last change: 2016 Mar 27
 
 		     VIM USER MANUAL - by Bram Moolenaar
 
@@ -890,6 +890,7 @@ Mappings:				    *mapping-functions*
 
 Testing:				    *test-functions*
 	assert_equal()		assert that two expressions values are equal
+	assert_match()		assert that a pattern matches the value
 	assert_false()		assert that an expression is false
 	assert_true()		assert that an expression is true
 	assert_exception()	assert that a command throws an exception

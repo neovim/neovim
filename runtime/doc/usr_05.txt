@@ -1,4 +1,4 @@
-*usr_05.txt*	For Vim version 7.4.  Last change: 2016 Mar 25
+*usr_05.txt*	For Vim version 7.4.  Last change: 2016 Mar 28
 
 		     VIM USER MANUAL - by Bram Moolenaar
 
@@ -340,10 +340,9 @@ Then copy the file to your plugin directory:
 Example for Unix (assuming you didn't have a plugin directory yet): >
 
 	mkdir -p ~/.local/share/nvim/site/plugin
-	cp /usr/local/share/vim/vim60/macros/justify.vim ~/.local/share/nvim/site/plugin
+	cp /tmp/yourplugin.vim ~/.local/share/nvim/site/plugin
 
-That's all!  Now you can use the commands defined in this plugin to justify
-text.
+That's all!  Now you can use the commands defined in this plugin.
 
 Instead of putting plugins directly into the plugin/ directory, you may
 better organize them by putting them into subdirectories under plugin/.

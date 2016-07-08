@@ -1,4 +1,4 @@
-*repeat.txt*    For Vim version 7.4.  Last change: 2016 Mar 26
+*repeat.txt*    For Vim version 7.4.  Last change: 2016 Mar 27
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -251,7 +251,7 @@ For writing a Vim script, see chapter 41 of the user manual |usr_41.txt|.
 			Packages will be loaded only once.  After this command
 			it won't happen again.  When the optional ! is added
 			this command will load packages even when done before.
-			An Error only causes sourcing the script where it
+			An error only causes sourcing the script where it
 			happens to be aborted, further plugins will be loaded.
 			See |packages|.
 
