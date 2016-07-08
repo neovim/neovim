@@ -2329,7 +2329,7 @@ int do_in_path(char_u *path, char_u *name, int flags,
     if (p_verbose > 1 && name != NULL) {
       verbose_enter();
       smsg(_("Searching for \"%s\" in \"%s\""),
-          (char *)name, (char *)path);
+           (char *)name, (char *)path);
       verbose_leave();
     }
 
@@ -2365,7 +2365,7 @@ int do_in_path(char_u *path, char_u *name, int flags,
           if (gen_expand_wildcards(1, &buf, &num_files, &files,
                                    (flags & DIP_DIR) ? EW_DIR
                                                      : EW_FILE) == OK) {
-            for (i = 0; i < num_files; ++i) {
+            for (i = 0; i < num_files; i++) {
               (*callback)(files[i], cookie);
               did_one = true;
               if (!(flags & DIP_ALL)) {
@@ -2414,7 +2414,7 @@ int do_in_runtimepath(char_u *name, int flags, DoInRuntimepathCB callback,
   }
 
   if ((done == FAIL || (flags & DIP_ALL)) && (flags & DIP_START)) {
-    char *start_dir = "pack/*/start/*/%s";
+    char *start_dir = "pack/*/start/*/%s";  // NOLINT
     size_t len = STRLEN(start_dir) + STRLEN(name);
     char_u *s = xmallocz(len);
 
@@ -2425,7 +2425,7 @@ int do_in_runtimepath(char_u *name, int flags, DoInRuntimepathCB callback,
   }
 
   if ((done == FAIL || (flags & DIP_ALL)) && (flags & DIP_OPT)) {
-    char *opt_dir = "pack/*/opt/*/%s";
+    char *opt_dir = "pack/*/opt/*/%s";  // NOLINT
     size_t len = STRLEN(opt_dir) + STRLEN(name);
     char_u *s = xmallocz(len);
 
@@ -2541,8 +2541,8 @@ static void add_pack_plugin(char_u *fname, void *cookie)
   }
 
   if (cookie != &APP_ADD_DIR) {
-    static const char *plugpat = "%s/plugin/*.vim";
-    static const char *ftpat = "%s/ftdetect/*.vim";
+    static const char *plugpat = "%s/plugin/*.vim";  // NOLINT
+    static const char *ftpat = "%s/ftdetect/*.vim";  // NOLINT
 
     size_t len = STRLEN(ffname) + STRLEN(ftpat);
     char_u *pat = try_malloc(len + 1);
@@ -2582,9 +2582,9 @@ void ex_packloadall(exarg_T *eap)
     // First do a round to add all directories to 'runtimepath', then load
     // the plugins. This allows for plugins to use an autoload directory
     // of another plugin.
-    do_in_path(p_pp, (char_u *)"pack/*/start/*", DIP_ALL + DIP_DIR,
+    do_in_path(p_pp, (char_u *)"pack/*/start/*", DIP_ALL + DIP_DIR,  // NOLINT
                add_pack_plugin, &APP_ADD_DIR);
-    do_in_path(p_pp, (char_u *)"pack/*/start/*", DIP_ALL + DIP_DIR,
+    do_in_path(p_pp, (char_u *)"pack/*/start/*", DIP_ALL + DIP_DIR,  // NOLINT
                add_pack_plugin, &APP_LOAD);
   }
 }
@@ -2592,7 +2592,7 @@ void ex_packloadall(exarg_T *eap)
 /// ":packadd[!] {name}"
 void ex_packadd(exarg_T *eap)
 {
-  static const char *plugpat = "pack/*/opt/%s";
+  static const char *plugpat = "pack/*/opt/%s";  // NOLINT
 
   size_t len = STRLEN(plugpat) + STRLEN(eap->arg);
   char *pat = (char *)xmallocz(len);

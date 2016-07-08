@@ -4207,9 +4207,10 @@ static void syn_cmd_include(exarg_T *eap, int syncing)
   current_syn_inc_tag = ++running_syn_inc_tag;
   prev_toplvl_grp = curwin->w_s->b_syn_topgrp;
   curwin->w_s->b_syn_topgrp = sgl_id;
-  if (source ? do_source(eap->arg, FALSE, DOSO_NONE) == FAIL
-      : source_runtime(eap->arg, DIP_ALL) == FAIL)
+  if (source ? do_source(eap->arg, false, DOSO_NONE) == FAIL
+             : source_runtime(eap->arg, DIP_ALL) == FAIL) {
     EMSG2(_(e_notopen), eap->arg);
+  }
   curwin->w_s->b_syn_topgrp = prev_toplvl_grp;
   current_syn_inc_tag = prev_syn_inc_tag;
 }
@@ -6023,12 +6024,12 @@ init_highlight (
   if (get_var_value((char_u *)"g:syntax_on") != NULL) {
     static int recursive = 0;
 
-    if (recursive >= 5)
+    if (recursive >= 5) {
       EMSG(_("E679: recursive loop loading syncolor.vim"));
-    else {
-      ++recursive;
+    } else {
+      recursive++;
       (void)source_runtime((char_u *)"syntax/syncolor.vim", DIP_ALL);
-      --recursive;
+      recursive--;
     }
   }
 }
@@ -6041,22 +6042,24 @@ int load_colors(char_u *name)
 {
   char_u      *buf;
   int retval = FAIL;
-  static int recursive = FALSE;
+  static int recursive = false;
 
-  /* When being called recursively, this is probably because setting
-   * 'background' caused the highlighting to be reloaded.  This means it is
-   * working, thus we should return OK. */
-  if (recursive)
+  // When being called recursively, this is probably because setting
+  // 'background' caused the highlighting to be reloaded.  This means it is
+  // working, thus we should return OK.
+  if (recursive) {
     return OK;
+  }
 
-  recursive = TRUE;
-  buf = xmalloc(STRLEN(name) + 12);
-  sprintf((char *)buf, "colors/%s.vim", name);
+  recursive = true;
+  size_t buflen = STRLEN(name) + 12;
+  buf = xmalloc(buflen);
+  snprintf((char *)buf, buflen, "colors/%s.vim", name);
   retval = source_runtime(buf, DIP_START + DIP_OPT);
   xfree(buf);
   apply_autocmds(EVENT_COLORSCHEME, name, curbuf->b_fname, FALSE, curbuf);
 
-  recursive = FALSE;
+  recursive = false;
   ui_refresh();
 
   return retval;

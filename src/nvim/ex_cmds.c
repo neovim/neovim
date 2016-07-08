@@ -4797,13 +4797,14 @@ void ex_viusage(exarg_T *eap)
 
 
 /// Generate tags in one help directory
-static void 
-helptags_one (
-    char_u *dir,               /* doc directory */
-    char_u *ext,               /* suffix, ".txt", ".itx", ".frx", etc. */
-    char_u *tagfname,          /* "tags" for English, "tags-fr" for French. */
-    int add_help_tags              /* add "help-tags" tag */
-)
+///
+/// @param dir  Path to the doc directory
+/// @param ext  Suffix of the help files (".txt", ".itx", ".frx", etc.)
+/// @param tagname  Name of the tags file ("tags" for English, "tags-fr" for
+///                 French)
+/// @param add_help_tags  Whether to add the "help-tags" tag
+static void helptags_one(char_u *dir, char_u *ext, char_u *tagfname,
+                         bool add_help_tags)
 {
   FILE        *fd_tags;
   FILE        *fd;
@@ -5004,7 +5005,7 @@ helptags_one (
 }
 
 /// Generate tags in one help directory, taking care of translations.
-static void do_helptags(char_u *dirname, int add_help_tags)
+static void do_helptags(char_u *dirname, bool add_help_tags)
 {
   int len;
   garray_T ga;
@@ -5034,8 +5035,7 @@ static void do_helptags(char_u *dirname, int add_help_tags)
    * present. */
   int j;
   ga_init(&ga, 1, 10);
-  for (int i = 0; i < filecount; ++i)
-  {
+  for (int i = 0; i < filecount; i++) {
     len = (int)STRLEN(files[i]);
     if (len <= 4) {
       continue;
@@ -5054,13 +5054,14 @@ static void do_helptags(char_u *dirname, int add_help_tags)
     } else
       continue;
 
-    /* Did we find this language already? */
-    for (j = 0; j < ga.ga_len; j += 2)
-      if (STRNCMP(lang, ((char_u *)ga.ga_data) + j, 2) == 0)
+    // Did we find this language already?
+    for (j = 0; j < ga.ga_len; j += 2) {
+      if (STRNCMP(lang, ((char_u *)ga.ga_data) + j, 2) == 0) {
         break;
-    if (j == ga.ga_len)
-    {
-      /* New language, add it. */
+      }
+    }
+    if (j == ga.ga_len) {
+      // New language, add it.
       ga_grow(&ga, 2);
       ((char_u *)ga.ga_data)[ga.ga_len++] = lang[0];
       ((char_u *)ga.ga_data)[ga.ga_len++] = lang[1];

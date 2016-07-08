@@ -3187,7 +3187,8 @@ did_set_string_option (
       for (p = q; *p != NUL; ++p)
         if (vim_strchr((char_u *)"_.,", *p) != NULL)
           break;
-      vim_snprintf((char *)fname, 200, "spell/%.*s.vim", (int)(p - q), q);
+      vim_snprintf((char *)fname, sizeof(fname), "spell/%.*s.vim",
+                   (int)(p - q), q);
       source_runtime(fname, DIP_ALL);
     }
   }

@@ -2317,15 +2317,13 @@ static void spell_load_lang(char_u *lang)
   for (round = 1; round <= 2; ++round) {
     // Find the first spell file for "lang" in 'runtimepath' and load it.
     vim_snprintf((char *)fname_enc, sizeof(fname_enc) - 5,
-        "spell/%s.%s.spl",
-        lang, spell_enc());
+                 "spell/%s.%s.spl", lang, spell_enc());
     r = do_in_runtimepath(fname_enc, 0, spell_load_cb, &sl);
 
     if (r == FAIL && *sl.sl_lang != NUL) {
       // Try loading the ASCII version.
       vim_snprintf((char *)fname_enc, sizeof(fname_enc) - 5,
-          "spell/%s.ascii.spl",
-          lang);
+                   "spell/%s.ascii.spl", lang);
       r = do_in_runtimepath(fname_enc, 0, spell_load_cb, &sl);
 
       if (r == FAIL && *sl.sl_lang != NUL && round == 1

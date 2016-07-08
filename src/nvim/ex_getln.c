@@ -3795,19 +3795,19 @@ ExpandFromContext (
       || xp->xp_context == EXPAND_TAGS_LISTFILES)
     return expand_tags(xp->xp_context == EXPAND_TAGS, pat, num_file, file);
   if (xp->xp_context == EXPAND_COLORS) {
-    char *directories[] = {"colors", NULL};
+    char *directories[] = { "colors", NULL };
     return ExpandRTDir(pat, DIP_START + DIP_OPT, num_file, file, directories);
   }
   if (xp->xp_context == EXPAND_COMPILER) {
-    char *directories[] = {"compiler", NULL};
+    char *directories[] = { "compiler", NULL };
     return ExpandRTDir(pat, 0, num_file, file, directories);
   }
   if (xp->xp_context == EXPAND_OWNSYNTAX) {
-    char *directories[] = {"syntax", NULL};
+    char *directories[] = { "syntax", NULL };
     return ExpandRTDir(pat, 0, num_file, file, directories);
   }
   if (xp->xp_context == EXPAND_FILETYPE) {
-    char *directories[] = {"syntax", "indent", "ftplugin", NULL};
+    char *directories[] = { "syntax", "indent", "ftplugin", NULL };
     return ExpandRTDir(pat, 0, num_file, file, directories);
   }
   if (xp->xp_context == EXPAND_USER_LIST) {
@@ -4225,7 +4225,7 @@ static int ExpandRTDir(char_u *pat, int flags, int *num_file, char_u ***file,
     for (int i = 0; dirnames[i] != NULL; i++) {
       size_t size = STRLEN(dirnames[i]) + pat_len + 22;
       char_u *s = xmalloc(size);
-      snprintf((char *)s, size, "pack/*/start/*/%s/%s*.vim", dirnames[i], pat);
+      snprintf((char *)s, size, "pack/*/start/*/%s/%s*.vim", dirnames[i], pat);  // NOLINT
       globpath(p_pp, s, &ga, 0);
       xfree(s);
     }
@@ -4235,7 +4235,7 @@ static int ExpandRTDir(char_u *pat, int flags, int *num_file, char_u ***file,
     for (int i = 0; dirnames[i] != NULL; i++) {
       size_t size = STRLEN(dirnames[i]) + pat_len + 20;
       char_u *s = xmalloc(size);
-      snprintf((char *)s, size, "pack/*/opt/*/%s/%s*.vim", dirnames[i], pat);
+      snprintf((char *)s, size, "pack/*/opt/*/%s/%s*.vim", dirnames[i], pat);  // NOLINT
       globpath(p_pp, s, &ga, 0);
       xfree(s);
     }
@@ -4281,12 +4281,13 @@ static int ExpandPackAddDir(char_u *pat, int *num_file, char_u ***file)
   size_t pat_len = STRLEN(pat);
   ga_init(&ga, (int)sizeof(char *), 10);
 
-  char_u *s = xmalloc((unsigned)(pat_len + 26));
-  sprintf((char *)s, "pack/*/opt/%s*", pat);
+  size_t buflen = pat_len + 26;
+  char_u *s = xmalloc(buflen);
+  snprintf((char *)s, buflen, "pack/*/opt/%s*", pat);  // NOLINT
   globpath(p_pp, s, &ga, 0);
   xfree(s);
 
-  for (int i = 0; i < ga.ga_len; ++i) {
+  for (int i = 0; i < ga.ga_len; i++) {
     char_u *match = ((char_u **)ga.ga_data)[i];
     s = path_tail(match);
     char_u *e = s + STRLEN(s);

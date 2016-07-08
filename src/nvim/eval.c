@@ -20498,9 +20498,10 @@ script_autoload (
       tofree = NULL;
     }
 
-    /* Try loading the package from $VIMRUNTIME/autoload/<name>.vim */
-    if (source_runtime(scriptname, 0) == OK)
-      ret = TRUE;
+    // Try loading the package from $VIMRUNTIME/autoload/<name>.vim
+    if (source_runtime(scriptname, 0) == OK) {
+      ret = true;
+    }
   }
 
   xfree(tofree);
