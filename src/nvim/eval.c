@@ -6707,6 +6707,8 @@ static struct fst {
   { "assert_fails",      1, 2, f_assert_fails },
   { "assert_false",      1, 2, f_assert_false },
   { "assert_match",      2, 3, f_assert_match },
+  { "assert_notequal",   2, 3, f_assert_notequal },
+  { "assert_notmatch",   2, 3, f_assert_notmatch },
   { "assert_true",       1, 2, f_assert_true },
   { "atan",              1, 1, f_atan },
   { "atan2",             2, 2, f_atan2 },
@@ -7616,7 +7618,7 @@ static void prepare_assert_error(garray_T *gap)
 // Fill "gap" with information about an assert error.
 static void fill_assert_error(garray_T *gap, typval_T *opt_msg_tv,
                               char_u *exp_str, typval_T *exp_tv,
-                              typval_T *got_tv, bool is_match)
+                              typval_T *got_tv, assert_type_T atype)
 {
   char_u *tofree;
 
@@ -7625,7 +7627,7 @@ static void fill_assert_error(garray_T *gap, typval_T *opt_msg_tv,
     ga_concat(gap, tofree);
     xfree(tofree);
   } else {
-    if (is_match) {
+    if (atype == ASSERT_MATCH || atype == ASSERT_NOTMATCH) {
       ga_concat(gap, (char_u *)"Pattern ");
     } else {
       ga_concat(gap, (char_u *)"Expected ");
@@ -7638,8 +7640,12 @@ static void fill_assert_error(garray_T *gap, typval_T *opt_msg_tv,
       ga_concat(gap, exp_str);
     }
     tofree = (char_u *) encode_tv2string(got_tv, NULL);
-    if (is_match) {
+    if (atype == ASSERT_MATCH) {
       ga_concat(gap, (char_u *)" does not match ");
+    } else if (atype == ASSERT_NOTMATCH) {
+      ga_concat(gap, (char_u *)" does match ");
+    } else if (atype == ASSERT_NOTEQUAL) {
+      ga_concat(gap, (char_u *)" differs from ");
     } else {
       ga_concat(gap, (char_u *)" but got ");
     }
@@ -7661,18 +7667,30 @@ static void assert_error(garray_T *gap)
                      gap->ga_data, gap->ga_len);
 }
 
-// "assert_equal(expected, actual[, msg])" function
-static void f_assert_equal(typval_T *argvars, typval_T *rettv)
+static void assert_equal_common(typval_T *argvars, assert_type_T atype)
 {
   garray_T ga;
 
-  if (!tv_equal(&argvars[0], &argvars[1], false, false)) {
+  if (tv_equal(&argvars[0], &argvars[1], false, false)
+      != (atype == ASSERT_EQUAL)) {
     prepare_assert_error(&ga);
     fill_assert_error(&ga, &argvars[2], NULL,
-                      &argvars[0], &argvars[1], false);
+                      &argvars[0], &argvars[1], atype);
     assert_error(&ga);
     ga_clear(&ga);
   }
+}
+
+// "assert_equal(expected, actual[, msg])" function
+static void f_assert_equal(typval_T *argvars, typval_T *rettv)
+{
+  assert_equal_common(argvars, ASSERT_EQUAL);
+}
+
+// "assert_notequal(expected, actual[, msg])" function
+static void f_assert_notequal(typval_T *argvars, typval_T *rettv)
+{
+  assert_equal_common(argvars, ASSERT_NOTEQUAL);
 }
 
 /// "assert_exception(string[, msg])" function
@@ -7690,7 +7708,7 @@ static void f_assert_exception(typval_T *argvars, typval_T *rettv)
              && strstr((char *)vimvars[VV_EXCEPTION].vv_str, error) == NULL) {
     prepare_assert_error(&ga);
     fill_assert_error(&ga, &argvars[1], NULL, &argvars[0],
-                      &vimvars[VV_EXCEPTION].vv_tv, false);
+                      &vimvars[VV_EXCEPTION].vv_tv, ASSERT_OTHER);
     assert_error(&ga);
     ga_clear(&ga);
   }
@@ -7720,7 +7738,7 @@ static void f_assert_fails(typval_T *argvars, typval_T *rettv)
         || strstr((char *)vimvars[VV_ERRMSG].vv_str, error) == NULL) {
       prepare_assert_error(&ga);
       fill_assert_error(&ga, &argvars[2], NULL, &argvars[1],
-                        &vimvars[VV_ERRMSG].vv_tv, false);
+                        &vimvars[VV_ERRMSG].vv_tv, ASSERT_OTHER);
       assert_error(&ga);
       ga_clear(&ga);
     }
@@ -7750,7 +7768,7 @@ static void assert_bool(typval_T *argvars, bool is_true)
     prepare_assert_error(&ga);
     fill_assert_error(&ga, &argvars[1],
                       (char_u *)(is_true ? "True" : "False"),
-                      NULL, &argvars[0], false);
+                      NULL, &argvars[0], ASSERT_OTHER);
     assert_error(&ga);
     ga_clear(&ga);
   }
@@ -7762,8 +7780,7 @@ static void f_assert_false(typval_T *argvars, typval_T *rettv)
   assert_bool(argvars, false);
 }
 
-/// "assert_match(pattern, actual[, msg])" function
-static void f_assert_match(typval_T *argvars, typval_T *rettv)
+static void assert_match_common(typval_T *argvars, assert_type_T atype)
 {
   char_u buf1[NUMBUFLEN];
   char_u buf2[NUMBUFLEN];
@@ -7772,13 +7789,25 @@ static void f_assert_match(typval_T *argvars, typval_T *rettv)
 
   if (pat == NULL || text == NULL) {
     EMSG(_(e_invarg));
-  } else if (!pattern_match(pat, text, false)) {
+  } else if (pattern_match(pat, text, false) != (atype == ASSERT_MATCH)) {
     garray_T ga;
     prepare_assert_error(&ga);
-    fill_assert_error(&ga, &argvars[2], NULL, &argvars[0], &argvars[1], true);
+    fill_assert_error(&ga, &argvars[2], NULL, &argvars[0], &argvars[1], atype);
     assert_error(&ga);
     ga_clear(&ga);
   }
+}
+
+/// "assert_match(pattern, actual[, msg])" function
+static void f_assert_match(typval_T *argvars, typval_T *rettv)
+{
+  assert_match_common(argvars, ASSERT_MATCH);
+}
+
+/// "assert_notmatch(pattern, actual[, msg])" function
+static void f_assert_notmatch(typval_T *argvars, typval_T *rettv)
+{
+  assert_match_common(argvars, ASSERT_NOTMATCH);
 }
 
 // "assert_true(actual[, msg])" function
