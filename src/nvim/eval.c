@@ -7770,7 +7770,9 @@ static void f_assert_match(typval_T *argvars, typval_T *rettv)
   char_u *pat = get_tv_string_buf_chk(&argvars[0], buf1);
   char_u *text = get_tv_string_buf_chk(&argvars[1], buf2);
 
-  if (!pattern_match(pat, text, false)) {
+  if (pat == NULL || text == NULL) {
+    EMSG(_(e_invarg));
+  } else if (!pattern_match(pat, text, false)) {
     garray_T ga;
     prepare_assert_error(&ga);
     fill_assert_error(&ga, &argvars[2], NULL, &argvars[0], &argvars[1], true);
