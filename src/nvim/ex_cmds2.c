@@ -2485,7 +2485,7 @@ static void add_pack_plugin(char_u *fname, void *cookie)
     *p4 = NUL;
 
     // Find "ffname" in "p_rtp", ignoring '/' vs '\' differences
-    int fname_len = STRLEN(ffname);
+    size_t fname_len = STRLEN(ffname);
     char_u *insp = p_rtp;
     for (;;) {
       if (vim_fnamencmp(insp, ffname, fname_len) == 0) {
