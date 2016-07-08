@@ -1,4 +1,4 @@
-*pattern.txt*   For Vim version 7.4.  Last change: 2016 Jan 03
+*pattern.txt*   For Vim version 7.4.  Last change: 2016 Apr 03
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -1096,8 +1096,8 @@ x	A single character, with no special meaning, matches itself
 	  '/', alphabetic, numeric, '_' or '~'.
 	  These items only work for 8-bit characters, except [:lower:] and
 	  [:upper:] also work for multi-byte characters when using the new
-	  regexp engine.  In the future these items may work for multi-byte
-	  characters.
+	  regexp engine.  See |two-engines|.  In the future these items may
+	  work for multi-byte characters.
 							*/[[=* *[==]*
 	- An equivalence class.  This means that characters are matched that
 	  have almost the same meaning, e.g., when ignoring accents.  This

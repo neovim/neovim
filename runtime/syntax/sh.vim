@@ -2,8 +2,8 @@
 " Language:		shell (sh) Korn shell (ksh) bash (sh)
 " Maintainer:		Charles E. Campbell  <NdrOchipS@PcampbellAfamily.Mbiz>
 " Previous Maintainer:	Lennart Schultz <Lennart.Schultz@ecmwf.int>
-" Last Change:		Mar 12, 2016
-" Version:		146
+" Last Change:		Apr 11, 2016
+" Version:		147
 " URL:		http://www.drchip.org/astronaut/vim/index.html#SYNTAX_SH
 " For options and settings, please use:      :help ft-sh-syntax
 " This file includes many ideas from Eric Brunet (eric.brunet@ens.fr)
@@ -539,13 +539,20 @@ endif
 
 " Synchronization: {{{1
 " ================
-if !exists("sh_minlines")
-  let sh_minlines = 200
+if !exists("g:sh_minlines")
+ let s:sh_minlines = 200
+else
+ let s:sh_minlines= g:sh_minlines
 endif
-if !exists("sh_maxlines")
-  let sh_maxlines = 2 * sh_minlines
+if !exists("g:sh_maxlines")
+ let s:sh_maxlines = 2*s:sh_minlines
+ if s:sh_maxlines < 25
+  let s:sh_maxlines= 25
+ endif
+else
+ let s:sh_maxlines= g:sh_maxlines
 endif
-exec "syn sync minlines=" . sh_minlines . " maxlines=" . sh_maxlines
+exec "syn sync minlines=" . s:sh_minlines . " maxlines=" . s:sh_maxlines
 syn sync match shCaseEsacSync	grouphere	shCaseEsac	"\<case\>"
 syn sync match shCaseEsacSync	groupthere	shCaseEsac	"\<esac\>"
 syn sync match shDoSync	grouphere	shDo	"\<do\>"

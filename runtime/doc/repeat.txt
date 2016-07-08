@@ -1,4 +1,4 @@
-*repeat.txt*    For Vim version 7.4.  Last change: 2016 Mar 27
+*repeat.txt*    For Vim version 7.4.  Last change: 2016 Apr 05
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -70,8 +70,8 @@ examples.
 The global commands work by first scanning through the [range] lines and
 marking each line where a match occurs (for a multi-line pattern, only the
 start of the match matters).
-In a second scan the [cmd] is executed for each marked line with its line
-number prepended.  For ":v" and ":g!" the command is executed for each not
+In a second scan the [cmd] is executed for each marked line, as if the cursor
+was in that line.  For ":v" and ":g!" the command is executed for each not
 marked line.  If a line is deleted its mark disappears.
 The default for [range] is the whole buffer (1,$).  Use "CTRL-C" to interrupt
 the command.  If an error message is given for a line, the command for that
@@ -225,8 +225,11 @@ For writing a Vim script, see chapter 41 of the user manual |usr_41.txt|.
 			there yet.
 
 			Note that {name} is the directory name, not the name
-			of the .vim file.  If the "{name}/plugin" directory
-			contains more than one file they are all sourced.
+			of the .vim file.  All the files matching the pattern
+				pack/*/opt/{name}/plugin/**/*.vim ~
+			will be sourced.  This allows for using subdirectories
+			below "plugin", just like with plugins in
+			'runtimepath'.
 
 			If the filetype detection was not enabled yet (this
 			is usually done with a "syntax enable" or "filetype
@@ -242,15 +245,24 @@ For writing a Vim script, see chapter 41 of the user manual |usr_41.txt|.
 			Also see |pack-add|.
 
 						*:packl* *:packloadall*
-:packloadall[!]		Load all packages in the "start" directories under
-			'packpath'.  The directories found are added to
-			'runtimepath'.
+:packl[oadall][!]	Load all packages in the "start" directory under each
+			entry in 'packpath'.
+			
+			First all the directories found are added to
+			'runtimepath', then the plugins found in the
+			directories are sourced.  This allows for a plugin to
+			depend on something of another plugin, e.g. an
+			"autoload" directory.  See |packload-two-steps| for
+			how this can be useful.
+
 			This is normally done automatically during startup,
 			after loading your .vimrc file.  With this command it
 			can be done earlier.
+
 			Packages will be loaded only once.  After this command
 			it won't happen again.  When the optional ! is added
 			this command will load packages even when done before.
+
 			An error only causes sourcing the script where it
 			happens to be aborted, further plugins will be loaded.
 			See |packages|.
@@ -456,8 +468,9 @@ You would now have these files under ~/.local/share/nvim/site:
 	pack/foo/opt/foodebug/plugin/debugger.vim
 
 When Vim starts up, after processing your .vimrc, it scans all directories in
-'packpath' for plugins under the "pack/*/start" directory and loads them.  The
-directory is added to 'runtimepath'.
+'packpath' for plugins under the "pack/*/start" directory.  First all those
+directories are added to 'runtimepath'.  Then all the plugins are loaded.
+See |packload-two-steps| for how these two steps can be useful.
 
 In the example Vim will find "pack/foo/start/foobar/plugin/foo.vim" and adds 
 "~/.local/share/nvim/site/pack/foo/start/foobar" to 'runtimepath'.
@@ -584,6 +597,23 @@ pack directory and the help command works right away.  Don't forget to re-run
 the command after changing the plugin help: >
 	:helptags path/start/foobar/doc
 	:helptags path/opt/fooextra/doc
+
+
+Dependencies between plugins ~
+							*packload-two-steps*
+Suppose you have a two plugins that depend on the same functionality. You can
+put the common functionality in an autoload directory, so that it will be
+found automatically.  Your package would have these files:
+
+	pack/foo/start/one/plugin/one.vim  >
+		call foolib#getit()
+<	pack/foo/start/two/plugin/two.vim >
+		call foolib#getit()
+<	pack/foo/start/lib/autoload/foolib.vim >
+		func foolib#getit()
+
+This works, because loading packages will first add all found directories to
+'runtimepath' before sourcing the plugins.
 
 ==============================================================================
 7. Debugging scripts					*debug-scripts*

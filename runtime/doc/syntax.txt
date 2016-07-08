@@ -1,4 +1,4 @@
-*syntax.txt*	For Vim version 7.4.  Last change: 2016 Mar 12
+*syntax.txt*	For Vim version 7.4.  Last change: 2016 Apr 10
 
 
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
@@ -936,26 +936,27 @@ To disable them use ":unlet".  Example: >
 	:unlet c_comment_strings
 
 Variable		Highlight ~
-c_gnu			GNU gcc specific items
-c_comment_strings	strings and numbers inside a comment
-c_space_errors		trailing white space and spaces before a <Tab>
-c_no_trail_space_error	 ... but no trailing spaces
-c_no_tab_space_error	 ... but no spaces before a <Tab>
-c_no_bracket_error	don't highlight {}; inside [] as errors
-c_no_curly_error	don't highlight {}; inside [] and () as errors;
+*c_gnu*			GNU gcc specific items
+*c_comment_strings*	strings and numbers inside a comment
+*c_space_errors*		trailing white space and spaces before a <Tab>
+*c_no_trail_space_error*	 ... but no trailing spaces
+*c_no_tab_space_error*	 ... but no spaces before a <Tab>
+*c_no_bracket_error*	don't highlight {}; inside [] as errors
+*c_no_curly_error*	don't highlight {}; inside [] and () as errors;
 				except { and } in first column
-c_curly_error		highlight a missing }; this forces syncing from the
+*c_curly_error*		highlight a missing }; this forces syncing from the
 			start of the file, can be slow
-c_no_ansi		don't do standard ANSI types and constants
-c_ansi_typedefs		 ... but do standard ANSI types
-c_ansi_constants	 ... but do standard ANSI constants
-c_no_utf		don't highlight \u and \U in strings
-c_syntax_for_h		for *.h files use C syntax instead of C++ and use objc
+*c_no_ansi*		don't do standard ANSI types and constants
+*c_ansi_typedefs*		 ... but do standard ANSI types
+*c_ansi_constants*	 ... but do standard ANSI constants
+*c_no_utf*		don't highlight \u and \U in strings
+*c_syntax_for_h*		for *.h files use C syntax instead of C++ and use objc
 			syntax instead of objcpp
-c_no_if0		don't highlight "#if 0" blocks as comments
-c_no_cformat		don't highlight %-formats in strings
-c_no_c99		don't highlight C99 standard items
-c_no_c11		don't highlight C11 standard items
+*c_no_if0*		don't highlight "#if 0" blocks as comments
+*c_no_cformat*		don't highlight %-formats in strings
+*c_no_c99*		don't highlight C99 standard items
+*c_no_c11*		don't highlight C11 standard items
+*c_no_bsd*		don't highlight BSD specific types
 
 When 'foldmethod' is set to "syntax" then /* */ comments and { } blocks will
 become a fold.  If you don't want comments to become a fold use: >
@@ -5025,6 +5026,9 @@ If you have changed the colors and messed them up, use this command to get the
 defaults back: >
 
   :syntax reset
+
+It is a bit of a wrong name, since it does not reset any syntax items, it only
+affects the highlighting.
 
 This doesn't change the colors for the 'highlight' option.
 

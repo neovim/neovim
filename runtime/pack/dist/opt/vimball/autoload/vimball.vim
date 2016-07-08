@@ -1,9 +1,9 @@
 " vimball.vim : construct a file containing both paths and files
-" Author:	Charles E. Campbell, Jr.
-" Date:		Jan 17, 2012
-" Version:	35
+" Author:	Charles E. Campbell
+" Date:		Apr 11, 2016
+" Version:	37
 " GetLatestVimScripts: 1502 1 :AutoInstall: vimball.vim
-" Copyright: (c) 2004-2011 by Charles E. Campbell, Jr.
+" Copyright: (c) 2004-2011 by Charles E. Campbell
 "            The VIM LICENSE applies to Vimball.vim, and Vimball.txt
 "            (see |copyright|) except use "Vimball" instead of "Vim".
 "            No warranty, express or implied.
@@ -14,7 +14,7 @@
 if &cp || exists("g:loaded_vimball")
  finish
 endif
-let g:loaded_vimball = "v35"
+let g:loaded_vimball = "v37"
 if v:version < 702
  echohl WarningMsg
  echo "***warning*** this version of vimball needs vim 7.2"
@@ -142,7 +142,7 @@ fun! vimball#MkVimball(line1,line2,writelevel,...) range
  
    let lastline= line("$") + 1
    if lastline == 2 && getline("$") == ""
-	call setline(1,'" Vimball Archiver by Charles E. Campbell, Jr., Ph.D.')
+	call setline(1,'" Vimball Archiver by Charles E. Campbell')
 	call setline(2,'UseVimball')
 	call setline(3,'finish')
 	let lastline= line("$") + 1
@@ -179,7 +179,7 @@ fun! vimball#MkVimball(line1,line2,writelevel,...) range
   " remove the evidence
   setlocal nomod bh=wipe
   exe "tabn ".curtabnr
-  exe "tabc ".vbtabnr
+  exe "tabc! ".vbtabnr
 
   " restore options
   call vimball#RestoreSettings()
@@ -280,7 +280,7 @@ fun! vimball#Vimball(really,...)
    " when AsNeeded/filename is filereadable or was present in VimballRecord
    if fname =~ '\<plugin/'
    	let anfname= substitute(fname,'\<plugin/','AsNeeded/','')
-	if filereadable(anfname) || (exists("s:VBRstring") && s:VBRstring =~ anfname)
+	if filereadable(anfname) || (exists("s:VBRstring") && s:VBRstring =~# anfname)
 "	 call Decho("using anfname<".anfname."> instead of <".fname.">")
 	 let fname= anfname
 	endif
@@ -379,10 +379,10 @@ fun! vimball#Vimball(really,...)
   call s:RecordInFile(home)
 
   " restore events, delete tab and buffer
-  exe "tabn ".vbtabnr
+  exe "sil! tabn ".vbtabnr
   setlocal nomod bh=wipe
-  exe "tabn ".curtabnr
-  exe "tabc ".vbtabnr
+  exe "sil! tabn ".curtabnr
+  exe "sil! tabc! ".vbtabnr
   call vimball#RestoreSettings()
   call s:ChgDir(curdir)
 
@@ -555,7 +555,7 @@ fun! vimball#ShowMesg(level,msg)
   set noruler noshowcmd
   redraw!
 
-  if &fo =~ '[ta]'
+  if &fo =~# '[ta]'
    echomsg "***vimball*** ".a:msg
   else
    if a:level == s:WARNING || a:level == s:USAGE
@@ -715,7 +715,7 @@ fun! vimball#SaveSettings()
 "  call Dfunc("SaveSettings()")
   let s:makeep  = getpos("'a")
   let s:regakeep= @a
-  if exists("&acd")
+  if exists("+acd")
    let s:acdkeep = &acd
   endif
   let s:eikeep  = &ei
@@ -728,7 +728,7 @@ fun! vimball#SaveSettings()
   let s:vekeep  = &ve
   let s:ffkeep  = &l:ff
   let s:swfkeep = &l:swf
-  if exists("&acd")
+  if exists("+acd")
    setlocal ei=all ve=all noacd nofen noic report=999 nohid bt= ma lz pm= ff=unix noswf
   else
    setlocal ei=all ve=all       nofen noic report=999 nohid bt= ma lz pm= ff=unix noswf
@@ -743,7 +743,7 @@ endfun
 fun! vimball#RestoreSettings()
 "  call Dfunc("RestoreSettings()")
   let @a      = s:regakeep
-  if exists("&acd")
+  if exists("+acd")
    let &acd   = s:acdkeep
   endif
   let &l:fen  = s:fenkeep
@@ -760,7 +760,7 @@ fun! vimball#RestoreSettings()
 "   call Decho("restore mark-a: makeep=".string(makeep))
    call setpos("'a",s:makeep)
   endif
-  if exists("&acd")
+  if exists("+acd")
    unlet s:acdkeep
   endif
   unlet s:regakeep s:eikeep s:fenkeep s:hidkeep s:ickeep s:repkeep s:vekeep s:makeep s:lzkeep s:pmkeep s:ffkeep

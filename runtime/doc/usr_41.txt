@@ -1,4 +1,4 @@
-*usr_41.txt*	For Vim version 7.4.  Last change: 2016 Mar 27
+*usr_41.txt*	For Vim version 7.4.  Last change: 2016 Apr 12
 
 		     VIM USER MANUAL - by Bram Moolenaar
 
@@ -768,6 +768,7 @@ Date and Time:				*date-functions* *time-functions*
 	strftime()		convert time to a string
 	reltime()		get the current or elapsed time accurately
 	reltimestr()		convert reltime() result to a string
+	reltimefloat()		convert reltime() result to a Float
 
 			*buffer-functions* *window-functions* *arg-functions*
 Buffers, windows and the argument list:
@@ -890,7 +891,9 @@ Mappings:				    *mapping-functions*
 
 Testing:				    *test-functions*
 	assert_equal()		assert that two expressions values are equal
+	assert_notequal()	assert that two expressions values are not equal
 	assert_match()		assert that a pattern matches the value
+	assert_notmatch()	assert that a pattern does not match the value
 	assert_false()		assert that an expression is false
 	assert_true()		assert that an expression is true
 	assert_exception()	assert that a command throws an exception

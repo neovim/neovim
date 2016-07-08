@@ -1,8 +1,8 @@
 " Vim syntax file
 " Language:	TeX
 " Maintainer:	Charles E. Campbell <NdrchipO@ScampbellPfamily.AbizM>
-" Last Change:	Mar 07, 2016
-" Version:	93
+" Last Change:	Apr 11, 2016
+" Version:	94
 " URL:		http://www.drchip.org/astronaut/vim/index.html#SYNTAX_TEX
 "
 " Notes: {{{1
@@ -83,10 +83,14 @@ else
  let s:tex_conceal= g:tex_conceal
 endif
 if !exists("g:tex_superscripts")
- let g:tex_superscripts= "[0-9a-zA-W.,:;+-<>/()=]"
+ let s:tex_superscripts= "[0-9a-zA-W.,:;+-<>/()=]"
+else
+ let s:tex_superscripts= g:tex_superscripts
 endif
 if !exists("g:tex_subscripts")
- let g:tex_subscripts= "[0-9aehijklmnoprstuvx,+-/().]"
+ let s:tex_subscripts= "[0-9aehijklmnoprstuvx,+-/().]"
+else
+ let s:tex_subscripts= g:tex_subscripts
 endif
 
 " Determine whether or not to use "*.sty" mode {{{1
@@ -1049,7 +1053,7 @@ if has("conceal") && &enc == 'utf-8'
   endif
   " s:SuperSub:
   fun! s:SuperSub(group,leader,pat,cchar)
-    if a:pat =~# '^\\' || (a:leader == '\^' && a:pat =~# g:tex_superscripts) || (a:leader == '_' && a:pat =~# g:tex_subscripts)
+    if a:pat =~# '^\\' || (a:leader == '\^' && a:pat =~# s:tex_superscripts) || (a:leader == '_' && a:pat =~# s:tex_subscripts)
 "     call Decho("SuperSub: group<".a:group."> leader<".a:leader."> pat<".a:pat."> cchar<".a:cchar.">")
      exe 'syn match '.a:group." '".a:leader.a:pat."' contained conceal cchar=".a:cchar
      exe 'syn match '.a:group."s '".a:pat        ."' contained conceal cchar=".a:cchar.' nextgroup='.a:group.'s'

@@ -1,4 +1,4 @@
-*quickref.txt*  For Vim version 7.4.  Last change: 2016 Feb 24
+*quickref.txt*  For Vim version 7.4.  Last change: 2016 Mar 30
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar

@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:     mysql
 " Maintainer:   Kenneth J. Pronovici <pronovic@ieee.org>
-" Last Change:  $LastChangedDate: 2010-04-22 09:48:02 -0500 (Thu, 22 Apr 2010) $
+" Last Change:  $LastChangedDate: 2016-04-11 10:31:04 -0500 (Mon, 11 Apr 2016) $
 " Filenames:    *.mysql
 " URL:          ftp://cedar-solutions.com/software/mysql.vim
 " Note:         The definitions below are taken from the mysql user manual as of April 2002, for version 3.23
@@ -18,7 +18,7 @@ endif
 syn case ignore
 
 " General keywords which don't fall into other categories
-syn keyword mysqlKeyword         action add after aggregate all alter as asc auto_increment avg avg_row_length
+syn keyword mysqlKeyword         action add after aggregate all alter as asc auto_increment avg_row_length
 syn keyword mysqlKeyword         both by
 syn keyword mysqlKeyword         cascade change character check checksum column columns comment constraint create cross
 syn keyword mysqlKeyword         current_date current_time current_timestamp
@@ -30,7 +30,7 @@ syn keyword mysqlKeyword         global grant grants group
 syn keyword mysqlKeyword         having heap high_priority hosts hour hour_minute hour_second
 syn keyword mysqlKeyword         identified ignore index infile inner insert insert_id into isam
 syn keyword mysqlKeyword         join
-syn keyword mysqlKeyword         key keys kill last_insert_id leading left limit lines load local lock logs long 
+syn keyword mysqlKeyword         key keys kill last_insert_id leading left limit lines load local lock logs long
 syn keyword mysqlKeyword         low_priority
 syn keyword mysqlKeyword         match max_rows middleint min_rows minute minute_second modify month myisam
 syn keyword mysqlKeyword         natural no
@@ -64,6 +64,9 @@ syn match mysqlNumber            "\<0x[abcdefABCDEF0-9]*\>"
 " User variables
 syn match mysqlVariable          "@\a*[A-Za-z0-9]*\([._]*[A-Za-z0-9]\)*"
 
+" Escaped column names
+syn match mysqlEscaped           "`[^`]*`"
+
 " Comments (c-style, mysql-style and modified sql-style)
 syn region mysqlComment          start="/\*"  end="\*/"
 syn match mysqlComment           "#.*"
@@ -84,14 +87,14 @@ syn sync ccomment mysqlComment
 " The second problem is that some of these keywords are included in
 " function names.  For instance, year() is part of the name of the
 " dayofyear() function, and the dec keyword (no parenthesis) is part of
-" the name of the decode() function. 
+" the name of the decode() function.
 
-syn keyword mysqlType            tinyint smallint mediumint int integer bigint 
-syn keyword mysqlType            date datetime time bit bool 
+syn keyword mysqlType            tinyint smallint mediumint int integer bigint
+syn keyword mysqlType            date datetime time bit bool
 syn keyword mysqlType            tinytext mediumtext longtext text
 syn keyword mysqlType            tinyblob mediumblob longblob blob
-syn region mysqlType             start="float\W" end="."me=s-1 
-syn region mysqlType             start="float$" end="."me=s-1 
+syn region mysqlType             start="float\W" end="."me=s-1
+syn region mysqlType             start="float$" end="."me=s-1
 syn region mysqlType             start="float(" end=")" contains=mysqlNumber,mysqlVariable
 syn region mysqlType             start="double\W" end="."me=s-1
 syn region mysqlType             start="double$" end="."me=s-1
@@ -139,12 +142,12 @@ syn region mysqlFlow             start="if("       end=")"  contains=ALL
 "
 " I'm leery of just defining keywords for functions, since according to the MySQL manual:
 "
-"     Function names do not clash with table or column names. For example, ABS is a 
-"     valid column name. The only restriction is that for a function call, no spaces 
-"     are allowed between the function name and the `(' that follows it. 
+"     Function names do not clash with table or column names. For example, ABS is a
+"     valid column name. The only restriction is that for a function call, no spaces
+"     are allowed between the function name and the `(' that follows it.
 "
-" This means that if I want to highlight function names properly, I have to use a 
-" region to define them, not just a keyword.  This will probably cause the syntax file 
+" This means that if I want to highlight function names properly, I have to use a
+" region to define them, not just a keyword.  This will probably cause the syntax file
 " to load more slowly, but at least it will be 'correct'.
 
 syn region mysqlFunction         start="abs(" end=")" contains=ALL
@@ -154,6 +157,7 @@ syn region mysqlFunction         start="ascii(" end=")" contains=ALL
 syn region mysqlFunction         start="asin(" end=")" contains=ALL
 syn region mysqlFunction         start="atan(" end=")" contains=ALL
 syn region mysqlFunction         start="atan2(" end=")" contains=ALL
+syn region mysqlFunction         start="avg(" end=")" contains=ALL
 syn region mysqlFunction         start="benchmark(" end=")" contains=ALL
 syn region mysqlFunction         start="bin(" end=")" contains=ALL
 syn region mysqlFunction         start="bit_and(" end=")" contains=ALL

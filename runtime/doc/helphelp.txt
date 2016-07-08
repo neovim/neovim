@@ -1,4 +1,4 @@
-*helphelp.txt*	For Vim version 7.4.  Last change: 2016 Mar 28
+*helphelp.txt*	For Vim version 7.4.  Last change: 2016 Apr 01
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -312,6 +312,10 @@ aligned on a line.
 
 When referring to an existing help tag and to create a hot-link, place the
 name between two bars (|) eg. |help-writing|.
+
+When referring to a Vim command and to create a hot-link, place the
+name between two backticks, eg. inside `:filetype`.  You will see this is
+highlighted as a command, like a code block (see below).
 
 When referring to a Vim option in the help file, place the option name between
 two single quotes, eg. 'statusline'
