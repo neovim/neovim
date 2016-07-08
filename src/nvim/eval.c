@@ -7639,7 +7639,7 @@ static void fill_assert_error(garray_T *gap, typval_T *opt_msg_tv,
     } else {
       ga_concat(gap, exp_str);
     }
-    tofree = (char_u *) encode_tv2string(got_tv, NULL);
+    tofree = (char_u *)encode_tv2string(got_tv, NULL);
     if (atype == ASSERT_MATCH) {
       ga_concat(gap, (char_u *)" does not match ");
     } else if (atype == ASSERT_NOTMATCH) {
