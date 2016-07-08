@@ -2483,7 +2483,21 @@ static void add_pack_plugin(char_u *fname, void *cookie)
     // find the part up to "pack" in 'runtimepath'
     char_u c = *p4;
     *p4 = NUL;
-    char_u *insp = (char_u *)strstr((char *)p_rtp, (char *)ffname);
+
+    // Find "ffname" in "p_rtp", ignoring '/' vs '\' differences
+    int fname_len = STRLEN(ffname);
+    char_u *insp = p_rtp;
+    for (;;) {
+      if (vim_fnamencmp(insp, ffname, fname_len) == 0) {
+        break;
+      }
+      insp = vim_strchr(insp, ',');
+      if (insp == NULL) {
+        break;
+      }
+      insp++;
+    }
+
     if (insp == NULL) {
       // not found, append at the end
       insp = p_rtp + STRLEN(p_rtp);
