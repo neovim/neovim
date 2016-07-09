@@ -1613,7 +1613,7 @@ int op_replace(oparg_T *oap, int c)
   int n, numc;
   int num_chars;
   char_u              *newp, *oldp;
-  size_t oldlen;
+  colnr_T oldlen;
   struct block_def bd;
   char_u              *after_p = NULL;
   int had_ctrl_v_cr = (c == -1 || c == -2);
@@ -1681,14 +1681,19 @@ int op_replace(oparg_T *oap, int c)
       /* Compute bytes needed, move character count to num_chars. */
       num_chars = numc;
       numc *= (*mb_char2len)(c);
-      /* oldlen includes textlen, so don't double count */
-      n += numc - bd.textlen;
 
       oldp = get_cursor_line_ptr();
-      oldlen = STRLEN(oldp);
-      assert(n >= 0);
-      newp = (char_u *)xmalloc(oldlen + 1 + (size_t)n);
-      memset(newp, NUL, oldlen + 1 + (size_t)n);
+      oldlen = (int)STRLEN(oldp);
+
+      size_t newp_size = (size_t)(bd.textcol + bd.startspaces);
+      if (had_ctrl_v_cr || (c != '\r' && c != '\n')) {
+        newp_size += (size_t)numc;
+        if (!bd.is_short) {
+          newp_size += (size_t)(bd.endspaces + oldlen
+                                - bd.textcol - bd.textlen);
+        }
+      }
+      newp = xmallocz(newp_size);
       // copy up to deleted part
       memmove(newp, oldp, (size_t)bd.textcol);
       oldp += bd.textcol + bd.textlen;
@@ -1696,28 +1701,36 @@ int op_replace(oparg_T *oap, int c)
       memset(newp + bd.textcol, ' ', (size_t)bd.startspaces);
       // insert replacement chars CHECK FOR ALLOCATED SPACE
       // -1/-2 is used for entering CR literally.
+      size_t after_p_len = 0;
       if (had_ctrl_v_cr || (c != '\r' && c != '\n')) {
-        if (has_mbyte) {
-          n = (int)STRLEN(newp);
-          while (--num_chars >= 0)
-            n += (*mb_char2bytes)(c, newp + n);
-        } else
-          memset(newp + STRLEN(newp), c, (size_t)numc);
-        if (!bd.is_short) {
-          /* insert post-spaces */
-          memset(newp + STRLEN(newp), ' ', (size_t)bd.endspaces);
-          /* copy the part after the changed part */
-          STRMOVE(newp + STRLEN(newp), oldp);
+          // strlen(newp) at this point
+          int newp_len = bd.textcol + bd.startspaces;
+          if (has_mbyte) {
+            while (--num_chars >= 0) {
+              newp_len += (*mb_char2bytes)(c, newp + newp_len);
+            }
+          } else {
+            memset(newp + newp_len, c, (size_t)numc);
+            newp_len += numc;
+          }
+          if (!bd.is_short) {
+            // insert post-spaces
+            memset(newp + newp_len, ' ', (size_t)bd.endspaces);
+            newp_len += bd.endspaces;
+            // copy the part after the changed part
+            memmove(newp + newp_len, oldp,
+                    (size_t)(oldlen - bd.textcol - bd.textlen + 1));
         }
       } else {
         // Replacing with \r or \n means splitting the line.
-        after_p = (char_u *)xmalloc(oldlen + 1 + (size_t)n - STRLEN(newp));
-        STRMOVE(after_p, oldp);
+        after_p_len = (size_t)(oldlen - bd.textcol - bd.textlen + 1);
+        after_p = (char_u *)xmalloc(after_p_len);
+        memmove(after_p, oldp, after_p_len);
       }
       /* replace the line */
       ml_replace(curwin->w_cursor.lnum, newp, FALSE);
       if (after_p != NULL) {
-        ml_append(curwin->w_cursor.lnum++, after_p, 0, FALSE);
+        ml_append(curwin->w_cursor.lnum++, after_p, (int)after_p_len, false);
         appended_lines_mark(curwin->w_cursor.lnum, 1L);
         oap->end.lnum++;
         xfree(after_p);
