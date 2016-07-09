@@ -1,4 +1,4 @@
-*quickfix.txt*  For Vim version 7.4.  Last change: 2016 Jan 21
+*quickfix.txt*  For Vim version 7.4.  Last change: 2016 Mar 19
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -48,6 +48,10 @@ list is destroyed.
 The following quickfix commands can be used.  The location list commands are
 similar to the quickfix commands, replacing the 'c' prefix in the quickfix
 command with 'l'.
+
+							*E924*
+If the current window was closed by an |autocommand| while processing a
+location list command, it will be aborted.
 
 							*:cc*
 :cc[!] [nr]		Display error [nr].  If [nr] is omitted, the same

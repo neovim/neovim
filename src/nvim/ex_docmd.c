@@ -3316,6 +3316,11 @@ set_one_cmd_context (
     xp->xp_pattern = arg;
     break;
 
+  case CMD_packadd:
+    xp->xp_context = EXPAND_PACKADD;
+    xp->xp_pattern = arg;
+    break;
+
 #ifdef HAVE_WORKING_LIBINTL
   case CMD_language:
     p = skiptowhite(arg);
@@ -4660,41 +4665,42 @@ static struct {
   char    *name;
 } command_complete[] =
 {
-  {EXPAND_AUGROUP, "augroup"},
-  {EXPAND_BEHAVE, "behave"},
-  {EXPAND_BUFFERS, "buffer"},
-  {EXPAND_COLORS, "color"},
-  {EXPAND_COMMANDS, "command"},
-  {EXPAND_COMPILER, "compiler"},
-  {EXPAND_CSCOPE, "cscope"},
-  {EXPAND_USER_DEFINED, "custom"},
-  {EXPAND_USER_LIST, "customlist"},
-  {EXPAND_DIRECTORIES, "dir"},
-  {EXPAND_ENV_VARS, "environment"},
-  {EXPAND_EVENTS, "event"},
-  {EXPAND_EXPRESSION, "expression"},
-  {EXPAND_FILES, "file"},
-  {EXPAND_FILES_IN_PATH, "file_in_path"},
-  {EXPAND_FILETYPE, "filetype"},
-  {EXPAND_FUNCTIONS, "function"},
-  {EXPAND_HELP, "help"},
-  {EXPAND_HIGHLIGHT, "highlight"},
-  {EXPAND_HISTORY, "history"},
+  { EXPAND_AUGROUP, "augroup" },
+  { EXPAND_BEHAVE, "behave" },
+  { EXPAND_BUFFERS, "buffer" },
+  { EXPAND_COLORS, "color" },
+  { EXPAND_COMMANDS, "command" },
+  { EXPAND_COMPILER, "compiler" },
+  { EXPAND_CSCOPE, "cscope" },
+  { EXPAND_USER_DEFINED, "custom" },
+  { EXPAND_USER_LIST, "customlist" },
+  { EXPAND_DIRECTORIES, "dir" },
+  { EXPAND_ENV_VARS, "environment" },
+  { EXPAND_EVENTS, "event" },
+  { EXPAND_EXPRESSION, "expression" },
+  { EXPAND_FILES, "file" },
+  { EXPAND_FILES_IN_PATH, "file_in_path" },
+  { EXPAND_FILETYPE, "filetype" },
+  { EXPAND_FUNCTIONS, "function" },
+  { EXPAND_HELP, "help" },
+  { EXPAND_HIGHLIGHT, "highlight" },
+  { EXPAND_HISTORY, "history" },
 #ifdef HAVE_WORKING_LIBINTL
-  {EXPAND_LOCALES, "locale"},
+  { EXPAND_LOCALES, "locale" },
 #endif
-  {EXPAND_MAPPINGS, "mapping"},
-  {EXPAND_MENUS, "menu"},
-  {EXPAND_OWNSYNTAX, "syntax"},
-  {EXPAND_SYNTIME, "syntime"},
-  {EXPAND_SETTINGS, "option"},
-  {EXPAND_SHELLCMD, "shellcmd"},
-  {EXPAND_SIGN, "sign"},
-  {EXPAND_TAGS, "tag"},
-  {EXPAND_TAGS_LISTFILES, "tag_listfiles"},
-  {EXPAND_USER, "user"},
-  {EXPAND_USER_VARS, "var"},
-  {0, NULL}
+  { EXPAND_MAPPINGS, "mapping" },
+  { EXPAND_MENUS, "menu" },
+  { EXPAND_OWNSYNTAX, "syntax" },
+  { EXPAND_SYNTIME, "syntime" },
+  { EXPAND_SETTINGS, "option" },
+  { EXPAND_PACKADD, "packadd" },
+  { EXPAND_SHELLCMD, "shellcmd" },
+  { EXPAND_SIGN, "sign" },
+  { EXPAND_TAGS, "tag" },
+  { EXPAND_TAGS_LISTFILES, "tag_listfiles" },
+  { EXPAND_USER, "user" },
+  { EXPAND_USER_VARS, "var" },
+  { 0, NULL }
 };
 
 static void uc_list(char_u *name, size_t name_len)
@@ -9330,14 +9336,14 @@ static void ex_filetype(exarg_T *eap)
   }
   if (STRCMP(arg, "on") == 0 || STRCMP(arg, "detect") == 0) {
     if (*arg == 'o' || !filetype_detect) {
-      source_runtime((char_u *)FILETYPE_FILE, true);
+      source_runtime((char_u *)FILETYPE_FILE, DIP_ALL);
       filetype_detect = kTrue;
       if (plugin) {
-        source_runtime((char_u *)FTPLUGIN_FILE, true);
+        source_runtime((char_u *)FTPLUGIN_FILE, DIP_ALL);
         filetype_plugin = kTrue;
       }
       if (indent) {
-        source_runtime((char_u *)INDENT_FILE, true);
+        source_runtime((char_u *)INDENT_FILE, DIP_ALL);
         filetype_indent = kTrue;
       }
     }
@@ -9348,15 +9354,15 @@ static void ex_filetype(exarg_T *eap)
   } else if (STRCMP(arg, "off") == 0) {
     if (plugin || indent) {
       if (plugin) {
-        source_runtime((char_u *)FTPLUGOF_FILE, true);
+        source_runtime((char_u *)FTPLUGOF_FILE, DIP_ALL);
         filetype_plugin = kFalse;
       }
       if (indent) {
-        source_runtime((char_u *)INDOFF_FILE, true);
+        source_runtime((char_u *)INDOFF_FILE, DIP_ALL);
         filetype_indent = kFalse;
       }
     } else {
-      source_runtime((char_u *)FTOFF_FILE, true);
+      source_runtime((char_u *)FTOFF_FILE, DIP_ALL);
       filetype_detect = kFalse;
     }
   } else

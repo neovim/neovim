@@ -1,4 +1,4 @@
-*os_win32.txt*  For Vim version 7.4.  Last change: 2014 Sep 25
+*os_win32.txt*  For Vim version 7.4.  Last change: 2016 Mar 05
 
 
 		  VIM REFERENCE MANUAL    by George Reilly
@@ -74,6 +74,31 @@ $PATH							*win32-PATH*
 The directory of the Vim executable is appended to $PATH.  This is mostly to
 make "!xxd" work, as it is in the Tools menu.  And it also means that when
 executable() returns 1 the executable can actually be executed.
+
+Quotes in file names					*win32-quotes*
+
+Quotes inside a file name (or any other command line argument) can be escaped
+with a backslash.  E.g. >
+	vim -c "echo 'foo\"bar'"
+
+Alternatively use three quotes to get one: >
+	vim -c "echo 'foo"""bar'"
+
+The quotation rules are:
+
+1. A `"` starts quotation.
+2. Another `"` or `""` ends quotation. If the quotation ends with `""`, a `"`
+   is produced at the end of the quoted string.
+
+Examples, with [] around an argument:
+        "foo"           -> [foo]
+        "foo""          -> [foo"]
+        "foo"bar        -> [foobar]
+        "foo" bar       -> [foo], [bar]
+        "foo""bar       -> [foo"bar]
+        "foo"" bar      -> [foo"], [bar]
+        "foo"""bar"     -> [foo"bar]
+
 
 ==============================================================================
 3. Using the mouse					*win32-mouse*

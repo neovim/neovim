@@ -1,4 +1,4 @@
-*various.txt*   For Vim version 7.4.  Last change: 2016 Feb 18
+*various.txt*   For Vim version 7.4.  Last change: 2016 Mar 20
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -375,6 +375,7 @@ B  *+termguicolors*	24-bit color in xterm-compatible terminals support
 N  *+termresponse*	support for |t_RV| and |v:termresponse|
 N  *+textobjects*	|text-objects| selection
    *+tgetent*		non-Unix only: able to use external termcap
+N  *+timers*		the |timer_start()| function
 N  *+title*		Setting the window 'title' and 'icon'
 N  *+toolbar*		|gui-toolbar|
 N  *+user_commands*	User-defined commands. |user-commands|

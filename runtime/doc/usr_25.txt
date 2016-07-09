@@ -1,4 +1,4 @@
-*usr_25.txt*	For Vim version 7.4.  Last change: 2014 Oct 29
+*usr_25.txt*	For Vim version 7.4.  Last change: 2016 Mar 28
 
 		     VIM USER MANUAL - by Bram Moolenaar
 
@@ -196,12 +196,16 @@ Vim has no built-in way of justifying text.  However, there is a neat macro
 package that does the job.  To use this package, execute the following
 command: >
 
-	:runtime macros/justify.vim
+	:packadd justify
+
+Or put this line in your |vimrc|: >
+
+	packadd! justify
 
 This Vim script file defines a new visual command "_j".  To justify a block of
 text, highlight the text in Visual mode and then execute "_j".
    Look in the file for more explanations.  To go there, do "gf" on this name:
-$VIMRUNTIME/macros/justify.vim.
+$VIMRUNTIME/pack/dist/opt/justify/plugin/justify.vim.
 
 An alternative is to filter the text through an external program.  Example: >
 

@@ -1,4 +1,4 @@
-*helphelp.txt*	For Vim version 7.4.  Last change: 2014 Sep 19
+*helphelp.txt*	For Vim version 7.4.  Last change: 2016 Apr 01
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -188,6 +188,9 @@ command: >
 				*E154* *E150* *E151* *E152* *E153* *E670*
 :helpt[ags] [++t] {dir}
 			Generate the help tags file(s) for directory {dir}.
+			When {dir} is ALL then all "doc" directories in
+			'runtimepath' will be used.
+
 			All "*.txt" and "*.??x" files in the directory and
 			sub-directories are scanned for a help tag definition
 			in between stars.  The "*.??x" files are for
@@ -196,9 +199,11 @@ command: >
 			sorted.
 			When there are duplicates an error message is given.
 			An existing tags file is silently overwritten.
+
 			The optional "++t" argument forces adding the
 			"help-tags" tag.  This is also done when the {dir} is
 			equal to $VIMRUNTIME/doc.
+
 			To rebuild the help tags in the runtime directory
 			(requires write permission there): >
 				:helptags $VIMRUNTIME/doc
@@ -249,7 +254,9 @@ The second one finds the English user manual, even when 'helplang' is set to
 
 When using command-line completion for the ":help" command, the "@en"
 extension is only shown when a tag exists for multiple languages.  When the
-tag only exists for English "@en" is omitted.
+tag only exists for English "@en" is omitted.  When the first candidate has an
+"@ab" extension and it matches the first language in 'helplang' "@ab" is also
+omitted.
 
 When using |CTRL-]| or ":help!" in a non-English help file Vim will try to
 find the tag in the same language.  If not found then 'helplang' will be used
@@ -305,6 +312,10 @@ aligned on a line.
 
 When referring to an existing help tag and to create a hot-link, place the
 name between two bars (|) eg. |help-writing|.
+
+When referring to a Vim command and to create a hot-link, place the
+name between two backticks, eg. inside `:filetype`.  You will see this is
+highlighted as a command, like a code block (see below).
 
 When referring to a Vim option in the help file, place the option name between
 two single quotes, eg. 'statusline'

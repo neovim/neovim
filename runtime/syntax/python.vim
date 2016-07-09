@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:	Python
 " Maintainer:	Zvezdan Petkovic <zpetkovic@acm.org>
-" Last Change:	2015 Sep 15
+" Last Change:	2016 Feb 20
 " Credits:	Neil Schemenauer <nas@python.ca>
 "		Dmitry Vasiliev
 "
@@ -199,6 +199,8 @@ if !exists("python_no_builtin_highlight")
   syn keyword pythonBuiltin	ascii bytes exec
   " non-essential built-in functions; Python 2 only
   syn keyword pythonBuiltin	apply buffer coerce intern
+  " avoid highlighting attributes as builtins
+  syn match   pythonAttribute	/\.\h\w*/hs=s+1 contains=ALLBUT,pythonBuiltin transparent
 endif
 
 " From the 'Python Library Reference' class hierarchy at the bottom.

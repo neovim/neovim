@@ -1526,8 +1526,7 @@ static int prt_find_resource(char *name, struct prt_ps_resource_S *resource)
   vim_strcat(buffer, (char_u *)name, MAXPATHL);
   vim_strcat(buffer, (char_u *)".ps", MAXPATHL);
   resource->filename[0] = NUL;
-  retval = (do_in_runtimepath(buffer, FALSE, prt_resource_name,
-                resource->filename)
+  retval = (do_in_runtimepath(buffer, 0, prt_resource_name, resource->filename)
             && resource->filename[0] != NUL);
   xfree(buffer);
   return retval;

@@ -1241,8 +1241,11 @@ static void set_window_layout(mparm_T *paramp)
 static void load_plugins(void)
 {
   if (p_lpl) {
-    source_runtime((char_u *)"plugin/**/*.vim", TRUE);
+    source_runtime((char_u *)"plugin/**/*.vim", DIP_ALL);  // NOLINT
     TIME_MSG("loading plugins");
+
+    ex_packloadall(NULL);
+    TIME_MSG("loading packages");
   }
 }
 

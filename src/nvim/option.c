@@ -3187,8 +3187,9 @@ did_set_string_option (
       for (p = q; *p != NUL; ++p)
         if (vim_strchr((char_u *)"_.,", *p) != NULL)
           break;
-      vim_snprintf((char *)fname, 200, "spell/%.*s.vim", (int)(p - q), q);
-      source_runtime(fname, TRUE);
+      vim_snprintf((char *)fname, sizeof(fname), "spell/%.*s.vim",
+                   (int)(p - q), q);
+      source_runtime(fname, DIP_ALL);
     }
   }
 
@@ -5839,6 +5840,7 @@ set_context_in_set_cmd (
     if (p == (char_u *)&p_bdir
         || p == (char_u *)&p_dir
         || p == (char_u *)&p_path
+        || p == (char_u *)&p_pp
         || p == (char_u *)&p_rtp
         || p == (char_u *)&p_cdpath
         || p == (char_u *)&p_vdir

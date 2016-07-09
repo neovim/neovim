@@ -10782,6 +10782,7 @@ static void f_has(typval_T *argvars, typval_T *rettv)
     "mouse",
     "multi_byte",
     "multi_lang",
+    "packages",
     "path_extra",
     "persistent_undo",
     "postscript",
@@ -20497,9 +20498,10 @@ script_autoload (
       tofree = NULL;
     }
 
-    /* Try loading the package from $VIMRUNTIME/autoload/<name>.vim */
-    if (source_runtime(scriptname, FALSE) == OK)
-      ret = TRUE;
+    // Try loading the package from $VIMRUNTIME/autoload/<name>.vim
+    if (source_runtime(scriptname, 0) == OK) {
+      ret = true;
+    }
   }
 
   xfree(tofree);

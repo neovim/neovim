@@ -1,4 +1,4 @@
-*eval.txt*	For Vim version 7.4.  Last change: 2016 Feb 19
+*eval.txt*	For Vim version 7.4.  Last change: 2016 Apr 12
 
 
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
@@ -413,7 +413,8 @@ only appear once.  Examples: >
 A key is always a String.  You can use a Number, it will be converted to a
 String automatically.  Thus the String '4' and the number 4 will find the same
 entry.	Note that the String '04' and the Number 04 are different, since the
-Number will be converted to the String '4'.
+Number will be converted to the String '4'.  The empty string can be used as a
+key.
 
 A value can be any expression.	Using a Dictionary for a value creates a
 nested Dictionary: >
@@ -861,11 +862,12 @@ These three can be repeated and mixed.	Examples:
 expr8							*expr8*
 -----
 expr8[expr1]		item of String or |List|	*expr-[]* *E111*
+							*subscript*
 
 If expr8 is a Number or String this results in a String that contains the
 expr1'th single byte from expr8.  expr8 is used as a String, expr1 as a
 Number.  This doesn't recognize multi-byte encodings, see |byteidx()| for
-an alternative.
+an alternative, or use `split()` to turn the string into a list of characters.
 
 Index zero gives the first byte.  This is like it works in C.  Careful:
 text column numbers start with one!  Example, to get the byte under the
@@ -2155,6 +2157,7 @@ writefile({list}, {fname} [, {flags}])
 				Number	write list of lines to file {fname}
 xor({expr}, {expr})		Number  bitwise XOR
 
+
 abs({expr})							*abs()*
 		Return the absolute value of {expr}.  When {expr} evaluates to
 		a |Float| abs() returns a |Float|.  When {expr} can be
@@ -2779,6 +2782,7 @@ cursor({list})
 
 		When there is one argument {list} this is used as a |List|
 		with two, three or four item:
+			[{lnum}, {col}]
 			[{lnum}, {col}, {off}]
 			[{lnum}, {col}, {off}, {curswant}]
 		This is like the return value of |getpos()| or |getcurpos()|,
@@ -3207,7 +3211,10 @@ feedkeys({string} [, {mode}])				*feedkeys()*
 			similar to using ":normal!".  You can call feedkeys()
 			several times without 'x' and then one time with 'x'
 			(possibly with an empty {string}) to execute all the
-			typeahead.
+			typeahead.  Note that when Vim ends in Insert mode it
+			will behave as if <Esc> is typed, to avoid getting
+			stuck, waiting for a character to be typed before the
+			script continues.
 		Return value is always 0.
 
 filereadable({file})					*filereadable()*
@@ -7408,6 +7415,7 @@ unix			Unix version of Vim.
 user_commands		User-defined commands.
 vertsplit		Compiled with vertically split windows |:vsplit|.
 vim_starting		True while initial source'ing takes place. |startup|
+			*vim_starting*
 virtualedit		Compiled with 'virtualedit' option.
 visual			Compiled with Visual mode.
 visualextra		Compiled with extra Visual mode commands.

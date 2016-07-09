@@ -4,8 +4,8 @@
 " Maintainer:	Dominik Fischer <d dot f dot fischer at web dot de>
 " Contributor:  Leonard Ehrenfried <leonard.ehrenfried@web.de>
 " Contributor:  Karsten Hopp <karsten@redhat.com>
-" Last Change:	2016 Jan 15
-" SSH Version:	7.1
+" Last Change:	2016 Mar 1
+" SSH Version:	7.2
 "
 
 " Setup
@@ -40,26 +40,57 @@ syn keyword sshconfigYesNo yes no ask
 syn keyword sshconfigYesNo any auto
 syn keyword sshconfigYesNo force autoask none
 
-syn keyword sshconfigCipher  3des blowfish
-syn keyword sshconfigCiphers aes128-cbc 3des-cbc blowfish blowfish-cbc cast128-cbc
-syn keyword sshconfigCiphers aes192-cbc aes256-cbc aes128-ctr aes192-ctr aes256-ctr
-syn keyword sshconfigCiphers arcfour arcfour128 arcfour256 cast128-cbc
+syn keyword sshconfigCipher 3des blowfish
 
-syn keyword sshconfigMAC hmac-md5 hmac-sha1 hmac-ripemd160 hmac-sha1-96
-syn keyword sshconfigMAC hmac-md5-96
-syn keyword sshconfigMAC hmac-sha2-256 hmac-sha2-256-96 hmac-sha2-512
-syn keyword sshconfigMAC hmac-sha2-512-96
+syn keyword sshconfigCiphers 3des-cbc
+syn keyword sshconfigCiphers blowfish-cbc
+syn keyword sshconfigCiphers cast128-cbc
+syn keyword sshconfigCiphers arcfour
+syn keyword sshconfigCiphers arcfour128
+syn keyword sshconfigCiphers arcfour256
+syn keyword sshconfigCiphers aes128-cbc
+syn keyword sshconfigCiphers aes192-cbc
+syn keyword sshconfigCiphers aes256-cbc
+syn match sshconfigCiphers "\<rijndael-cbc@lysator\.liu.se\>"
+syn keyword sshconfigCiphers aes128-ctr
+syn keyword sshconfigCiphers aes192-ctr
+syn keyword sshconfigCiphers aes256-ctr
+syn match sshconfigCiphers "\<aes128-gcm@openssh\.com\>"
+syn match sshconfigCiphers "\<aes256-gcm@openssh\.com\>"
+syn match sshconfigCiphers "\<chacha20-poly1305@openssh\.com\>"
+
+syn keyword sshconfigMAC hmac-sha1
+syn keyword sshconfigMAC mac-sha1-96
+syn keyword sshconfigMAC mac-sha2-256
+syn keyword sshconfigMAC mac-sha2-512
+syn keyword sshconfigMAC mac-md5
+syn keyword sshconfigMAC mac-md5-96
+syn keyword sshconfigMAC mac-ripemd160
+syn match   sshconfigMAC "\<hmac-ripemd160@openssh\.com\>"
 syn match   sshconfigMAC "\<umac-64@openssh\.com\>"
+syn match   sshconfigMAC "\<umac-128@openssh\.com\>"
+syn match   sshconfigMAC "\<hmac-sha1-etm@openssh\.com\>"
+syn match   sshconfigMAC "\<hmac-sha1-96-etm@openssh\.com\>"
+syn match   sshconfigMAC "\<hmac-sha2-256-etm@openssh\.com\>"
+syn match   sshconfigMAC "\<hmac-sha2-512-etm@openssh\.com\>"
+syn match   sshconfigMAC "\<hmac-md5-etm@openssh\.com\>"
+syn match   sshconfigMAC "\<hmac-md5-96-etm@openssh\.com\>"
+syn match   sshconfigMAC "\<hmac-ripemd160-etm@openssh\.com\>"
+syn match   sshconfigMAC "\<umac-64-etm@openssh\.com\>"
+syn match   sshconfigMAC "\<umac-128-etm@openssh\.com\>"
 
-syn keyword sshconfigHostKeyAlg ssh-rsa ssh-dss
-syn match   sshconfigHostKeyAlg "\<ecdsa-sha2-nistp256-cert-v01@openssh\.com\>"
-syn match   sshconfigHostKeyAlg "\<ecdsa-sha2-nistp384-cert-v01@openssh\.com\>"
-syn match   sshconfigHostKeyAlg "\<ecdsa-sha2-nistp521-cert-v01@openssh\.com\>"
-syn match   sshconfigHostKeyAlg "\<ssh-rsa-cert-v01@openssh\.com\>"
-syn match   sshconfigHostKeyAlg "\<ssh-dss-cert-v01@openssh\.com\>"
-syn match   sshconfigHostKeyAlg "\<ssh-rsa-cert-v00@openssh\.com\>"
-syn match   sshconfigHostKeyAlg "\<ssh-dss-cert-v00@openssh\.com\>"
-syn keyword sshconfigHostKeyAlg ecdsa-sha2-nistp256 ecdsa-sha2-nistp384 ecdsa-sha2-nistp521
+syn keyword sshconfigHostKeyAlgo ssh-ed25519
+syn match sshconfigHostKeyAlgo "\<ssh-ed25519-cert-v01@openssh\.com\>"
+syn keyword sshconfigHostKeyAlgo ssh-rsa
+syn keyword sshconfigHostKeyAlgo ssh-dss
+syn keyword sshconfigHostKeyAlgo ecdsa-sha2-nistp256
+syn keyword sshconfigHostKeyAlgo ecdsa-sha2-nistp384
+syn keyword sshconfigHostKeyAlgo ecdsa-sha2-nistp521
+syn match sshconfigHostKeyAlgo "\<ssh-rsa-cert-v01@openssh\.com\>"
+syn match sshconfigHostKeyAlgo "\<ssh-dss-cert-v01@openssh\.com\>"
+syn match sshconfigHostKeyAlgo "\<ecdsa-sha2-nistp256-cert-v01@openssh\.com\>"
+syn match sshconfigHostKeyAlgo "\<ecdsa-sha2-nistp384-cert-v01@openssh\.com\>"
+syn match sshconfigHostKeyAlgo "\<ecdsa-sha2-nistp521-cert-v01@openssh\.com\>"
 
 syn keyword sshconfigPreferredAuth hostbased publickey password gssapi-with-mic
 syn keyword sshconfigPreferredAuth keyboard-interactive
@@ -78,11 +109,14 @@ syn match   sshconfigIPQoS	"cs[0-7]"
 syn keyword sshconfigIPQoS	ef lowdelay throughput reliability
 syn keyword sshconfigKbdInteractive bsdauth pam skey
 
-syn keyword sshconfigKexAlgo	ecdh-sha2-nistp256 ecdh-sha2-nistp384 ecdh-sha2-nistp521
-syn keyword sshconfigKexAlgo	diffie-hellman-group-exchange-sha256
-syn keyword sshconfigKexAlgo	diffie-hellman-group-exchange-sha1
-syn keyword sshconfigKexAlgo	diffie-hellman-group14-sha1
-syn keyword sshconfigKexAlgo	diffie-hellman-group1-sha1
+syn keyword sshconfigKexAlgo diffie-hellman-group1-sha1
+syn keyword sshconfigKexAlgo diffie-hellman-group14-sha1
+syn keyword sshconfigKexAlgo diffie-hellman-group-exchange-sha1
+syn keyword sshconfigKexAlgo diffie-hellman-group-exchange-sha256
+syn keyword sshconfigKexAlgo ecdh-sha2-nistp256
+syn keyword sshconfigKexAlgo ecdh-sha2-nistp384
+syn keyword sshconfigKexAlgo ecdh-sha2-nistp521
+syn match sshconfigKexAlgo "\<curve25519-sha256@libssh\.org\>"
 
 syn keyword sshconfigTunnel	point-to-point ethernet
 
@@ -111,6 +145,7 @@ syn keyword sshconfigKeyword CanonicalDomains
 syn keyword sshconfigKeyword CanonicalizeFallbackLocal
 syn keyword sshconfigKeyword CanonicalizeHostname
 syn keyword sshconfigKeyword CanonicalizeMaxDots
+syn keyword sshconfigKeyword CertificateFile
 syn keyword sshconfigKeyword ChallengeResponseAuthentication
 syn keyword sshconfigKeyword CheckHostIP
 syn keyword sshconfigKeyword Cipher
@@ -212,7 +247,7 @@ if version >= 508 || !exists("did_sshconfig_syntax_inits")
   HiLink sshconfigCipher         sshconfigEnum
   HiLink sshconfigCiphers	 sshconfigEnum
   HiLink sshconfigMAC            sshconfigEnum
-  HiLink sshconfigHostKeyAlg     sshconfigEnum
+  HiLink sshconfigHostKeyAlgo    sshconfigEnum
   HiLink sshconfigLogLevel       sshconfigEnum
   HiLink sshconfigSysLogFacility sshconfigEnum
   HiLink sshconfigAddressFamily  sshconfigEnum

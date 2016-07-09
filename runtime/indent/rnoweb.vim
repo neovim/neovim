@@ -1,7 +1,8 @@
 " Vim indent file
 " Language:	Rnoweb
 " Author:	Jakson Alves de Aquino <jalvesaq@gmail.com>
-" Last Change:	Sun Mar 22, 2015  09:28AM
+" Homepage:     https://github.com/jalvesaq/R-Vim-runtime
+" Last Change:	Tue Apr 07, 2015  04:38PM
 
 
 " Only load this indent file when no other was loaded.

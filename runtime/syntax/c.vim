@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:	C
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2016 Feb 08
+" Last Change:	2016 Apr 10
 
 " Quit when a (custom) syntax file was already loaded
 if exists("b:current_syntax")
@@ -248,6 +248,10 @@ if !exists("c_no_c99") " ISO C99
   syn keyword	cType		_Bool bool _Complex complex _Imaginary imaginary
   syn keyword	cType		int8_t int16_t int32_t int64_t
   syn keyword	cType		uint8_t uint16_t uint32_t uint64_t
+  if !exists("c_no_bsd")
+    " These are BSD specific.
+    syn keyword	cType		u_int8_t u_int16_t u_int32_t u_int64_t
+  endif
   syn keyword	cType		int_least8_t int_least16_t int_least32_t int_least64_t
   syn keyword	cType		uint_least8_t uint_least16_t uint_least32_t uint_least64_t
   syn keyword	cType		int_fast8_t int_fast16_t int_fast32_t int_fast64_t

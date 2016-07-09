@@ -1849,6 +1849,18 @@ return {
     func='ex_print',
   },
   {
+    command='packadd',
+    flags=bit.bor(BANG, FILE1, NEEDARG, TRLBAR, SBOXOK, CMDWIN),
+    addr_type=ADDR_LINES,
+    func='ex_packadd',
+  },
+  {
+    command='packloadall',
+    flags=bit.bor(BANG, TRLBAR, SBOXOK, CMDWIN),
+    addr_type=ADDR_LINES,
+    func='ex_packloadall',
+  },
+  {
     command='pclose',
     flags=bit.bor(BANG, TRLBAR),
     addr_type=ADDR_LINES,
