@@ -796,6 +796,7 @@ static VTermKey convert_key(int key, VTermModifier *statep)
 
   switch (key) {
     case K_BS:        return VTERM_KEY_BACKSPACE;
+    case K_S_TAB:     *statep |= VTERM_MOD_SHIFT;
     case TAB:         return VTERM_KEY_TAB;
     case Ctrl_M:      return VTERM_KEY_ENTER;
     case ESC:         return VTERM_KEY_ESCAPE;
@@ -834,6 +835,57 @@ static VTermKey convert_key(int key, VTermModifier *statep)
     case K_KMINUS:    return VTERM_KEY_KP_MINUS;
     case K_KMULTIPLY: return VTERM_KEY_KP_MULT;
     case K_KDIVIDE:   return VTERM_KEY_KP_DIVIDE;
+
+    case K_S_F1:      *statep |= VTERM_MOD_SHIFT;
+    case K_F1:        return VTERM_KEY_FUNCTION(1);
+    case K_S_F2:      *statep |= VTERM_MOD_SHIFT;
+    case K_F2:        return VTERM_KEY_FUNCTION(2);
+    case K_S_F3:      *statep |= VTERM_MOD_SHIFT;
+    case K_F3:        return VTERM_KEY_FUNCTION(3);
+    case K_S_F4:      *statep |= VTERM_MOD_SHIFT;
+    case K_F4:        return VTERM_KEY_FUNCTION(4);
+    case K_S_F5:      *statep |= VTERM_MOD_SHIFT;
+    case K_F5:        return VTERM_KEY_FUNCTION(5);
+    case K_S_F6:      *statep |= VTERM_MOD_SHIFT;
+    case K_F6:        return VTERM_KEY_FUNCTION(6);
+    case K_S_F7:      *statep |= VTERM_MOD_SHIFT;
+    case K_F7:        return VTERM_KEY_FUNCTION(7);
+    case K_S_F8:      *statep |= VTERM_MOD_SHIFT;
+    case K_F8:        return VTERM_KEY_FUNCTION(8);
+    case K_S_F9:      *statep |= VTERM_MOD_SHIFT;
+    case K_F9:        return VTERM_KEY_FUNCTION(9);
+    case K_S_F10:     *statep |= VTERM_MOD_SHIFT;
+    case K_F10:       return VTERM_KEY_FUNCTION(10);
+    case K_S_F11:     *statep |= VTERM_MOD_SHIFT;
+    case K_F11:       return VTERM_KEY_FUNCTION(11);
+    case K_S_F12:     *statep |= VTERM_MOD_SHIFT;
+    case K_F12:       return VTERM_KEY_FUNCTION(12);
+
+    case K_F13:       return VTERM_KEY_FUNCTION(13);
+    case K_F14:       return VTERM_KEY_FUNCTION(14);
+    case K_F15:       return VTERM_KEY_FUNCTION(15);
+    case K_F16:       return VTERM_KEY_FUNCTION(16);
+    case K_F17:       return VTERM_KEY_FUNCTION(17);
+    case K_F18:       return VTERM_KEY_FUNCTION(18);
+    case K_F19:       return VTERM_KEY_FUNCTION(19);
+    case K_F20:       return VTERM_KEY_FUNCTION(20);
+    case K_F21:       return VTERM_KEY_FUNCTION(21);
+    case K_F22:       return VTERM_KEY_FUNCTION(22);
+    case K_F23:       return VTERM_KEY_FUNCTION(23);
+    case K_F24:       return VTERM_KEY_FUNCTION(24);
+    case K_F25:       return VTERM_KEY_FUNCTION(25);
+    case K_F26:       return VTERM_KEY_FUNCTION(26);
+    case K_F27:       return VTERM_KEY_FUNCTION(27);
+    case K_F28:       return VTERM_KEY_FUNCTION(28);
+    case K_F29:       return VTERM_KEY_FUNCTION(29);
+    case K_F30:       return VTERM_KEY_FUNCTION(30);
+    case K_F31:       return VTERM_KEY_FUNCTION(31);
+    case K_F32:       return VTERM_KEY_FUNCTION(32);
+    case K_F33:       return VTERM_KEY_FUNCTION(33);
+    case K_F34:       return VTERM_KEY_FUNCTION(34);
+    case K_F35:       return VTERM_KEY_FUNCTION(35);
+    case K_F36:       return VTERM_KEY_FUNCTION(36);
+    case K_F37:       return VTERM_KEY_FUNCTION(37);
 
     default:          return VTERM_KEY_NONE;
   }
