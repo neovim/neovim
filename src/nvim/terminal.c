@@ -783,27 +783,56 @@ static int term_sb_pop(int cols, VTermScreenCell *cells, void *data)
 // }}}
 // input handling {{{
 
-static void convert_modifiers(VTermModifier *statep)
+static void convert_modifiers(int key, VTermModifier *statep)
 {
   if (mod_mask & MOD_MASK_SHIFT) { *statep |= VTERM_MOD_SHIFT; }
   if (mod_mask & MOD_MASK_CTRL)  { *statep |= VTERM_MOD_CTRL; }
   if (mod_mask & MOD_MASK_ALT)   { *statep |= VTERM_MOD_ALT; }
+
+  switch(key) {
+    case K_S_TAB:
+    case K_S_LEFT:
+    case K_S_RIGHT:
+    case K_S_F1:
+    case K_S_F2:
+    case K_S_F3:
+    case K_S_F4:
+    case K_S_F5:
+    case K_S_F6:
+    case K_S_F7:
+    case K_S_F8:
+    case K_S_F9:
+    case K_S_F10:
+    case K_S_F11:
+    case K_S_F12:
+      *statep |= VTERM_MOD_SHIFT;
+      break;
+
+    case K_C_LEFT:
+    case K_C_RIGHT:
+      *statep |= VTERM_MOD_CTRL;
+      break;
+  }
 }
 
 static VTermKey convert_key(int key, VTermModifier *statep)
 {
-  convert_modifiers(statep);
+  convert_modifiers(key, statep);
 
   switch (key) {
     case K_BS:        return VTERM_KEY_BACKSPACE;
-    case K_S_TAB:     *statep |= VTERM_MOD_SHIFT;
+    case K_S_TAB:
     case TAB:         return VTERM_KEY_TAB;
     case Ctrl_M:      return VTERM_KEY_ENTER;
     case ESC:         return VTERM_KEY_ESCAPE;
 
     case K_UP:        return VTERM_KEY_UP;
     case K_DOWN:      return VTERM_KEY_DOWN;
+    case K_S_LEFT:
+    case K_C_LEFT:
     case K_LEFT:      return VTERM_KEY_LEFT;
+    case K_S_RIGHT:
+    case K_C_RIGHT:
     case K_RIGHT:     return VTERM_KEY_RIGHT;
 
     case K_INS:       return VTERM_KEY_INS;
@@ -836,29 +865,29 @@ static VTermKey convert_key(int key, VTermModifier *statep)
     case K_KMULTIPLY: return VTERM_KEY_KP_MULT;
     case K_KDIVIDE:   return VTERM_KEY_KP_DIVIDE;
 
-    case K_S_F1:      *statep |= VTERM_MOD_SHIFT;
+    case K_S_F1:
     case K_F1:        return VTERM_KEY_FUNCTION(1);
-    case K_S_F2:      *statep |= VTERM_MOD_SHIFT;
+    case K_S_F2:
     case K_F2:        return VTERM_KEY_FUNCTION(2);
-    case K_S_F3:      *statep |= VTERM_MOD_SHIFT;
+    case K_S_F3:
     case K_F3:        return VTERM_KEY_FUNCTION(3);
-    case K_S_F4:      *statep |= VTERM_MOD_SHIFT;
+    case K_S_F4:
     case K_F4:        return VTERM_KEY_FUNCTION(4);
-    case K_S_F5:      *statep |= VTERM_MOD_SHIFT;
+    case K_S_F5:
     case K_F5:        return VTERM_KEY_FUNCTION(5);
-    case K_S_F6:      *statep |= VTERM_MOD_SHIFT;
+    case K_S_F6:
     case K_F6:        return VTERM_KEY_FUNCTION(6);
-    case K_S_F7:      *statep |= VTERM_MOD_SHIFT;
+    case K_S_F7:
     case K_F7:        return VTERM_KEY_FUNCTION(7);
-    case K_S_F8:      *statep |= VTERM_MOD_SHIFT;
+    case K_S_F8:
     case K_F8:        return VTERM_KEY_FUNCTION(8);
-    case K_S_F9:      *statep |= VTERM_MOD_SHIFT;
+    case K_S_F9:
     case K_F9:        return VTERM_KEY_FUNCTION(9);
-    case K_S_F10:     *statep |= VTERM_MOD_SHIFT;
+    case K_S_F10:
     case K_F10:       return VTERM_KEY_FUNCTION(10);
-    case K_S_F11:     *statep |= VTERM_MOD_SHIFT;
+    case K_S_F11:
     case K_F11:       return VTERM_KEY_FUNCTION(11);
-    case K_S_F12:     *statep |= VTERM_MOD_SHIFT;
+    case K_S_F12:
     case K_F12:       return VTERM_KEY_FUNCTION(12);
 
     case K_F13:       return VTERM_KEY_FUNCTION(13);
