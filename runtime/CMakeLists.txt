@@ -124,7 +124,7 @@ endforeach()
 
 file(GLOB_RECURSE RUNTIME_FILES
   RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
-  *.vim *.dict *.py *.ps *.tutor)
+  *.vim *.dict *.py *.rb *.ps *.tutor)
 
 foreach(F ${RUNTIME_FILES})
   get_filename_component(BASEDIR ${F} PATH)
