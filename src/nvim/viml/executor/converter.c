@@ -2,12 +2,24 @@
 #include <lualib.h>
 #include <lauxlib.h>
 #include <assert.h>
+#include <stdint.h>
+#include <stdbool.h>
 
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/func_attr.h"
 #include "nvim/memory.h"
 #include "nvim/assert.h"
+// FIXME: vim.h is not actually needed, but otherwise it states MAXPATHL is
+//        redefined
+#include "nvim/vim.h"
+#include "nvim/globals.h"
+#include "nvim/message.h"
+#include "nvim/eval_defs.h"
+#include "nvim/ascii.h"
+
+#include "nvim/lib/kvec.h"
+#include "nvim/eval/decode.h"
 
 #include "nvim/viml/executor/converter.h"
 #include "nvim/viml/executor/executor.h"
@@ -15,6 +27,382 @@
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "viml/executor/converter.c.generated.h"
 #endif
+
+/// Helper structure for nlua_pop_typval
+typedef struct {
+  typval_T *tv;  ///< Location where conversion result is saved.
+  bool container;  ///< True if tv is a container.
+  bool special;  ///< If true then tv is a _VAL part of special dictionary
+                 ///< that represents mapping.
+} PopStackItem;
+
+/// Convert lua object to VimL typval_T
+///
+/// Should pop exactly one value from lua stack.
+///
+/// @param  lstate  Lua state.
+/// @param[out]  ret_tv Where to put the result.
+///
+/// @return `true` in case of success, `false` in case of failure. Error is
+///         reported automatically.
+bool nlua_pop_typval(lua_State *lstate, typval_T *ret_tv)
+{
+  bool ret = true;
+#ifndef NDEBUG
+  const int initial_size = lua_gettop(lstate);
+#endif
+  kvec_t(PopStackItem) stack = KV_INITIAL_VALUE;
+  kv_push(stack, ((PopStackItem) { ret_tv, false, false }));
+  while (ret && kv_size(stack)) {
+    if (!lua_checkstack(lstate, lua_gettop(lstate) + 3)) {
+      emsgf(_("E1502: Lua failed to grow stack to %i"), lua_gettop(lstate) + 3);
+      ret = false;
+      break;
+    }
+    PopStackItem cur = kv_pop(stack);
+    if (cur.container) {
+      if (cur.special || cur.tv->v_type == VAR_DICT) {
+        assert(cur.tv->v_type == (cur.special ? VAR_LIST : VAR_DICT));
+        if (lua_next(lstate, -2)) {
+          assert(lua_type(lstate, -2) == LUA_TSTRING);
+          size_t len;
+          const char *s = lua_tolstring(lstate, -2, &len);
+          if (cur.special) {
+            list_T *const kv_pair = list_alloc();
+            list_append_list(cur.tv->vval.v_list, kv_pair);
+            listitem_T *const key = listitem_alloc();
+            key->li_tv = decode_string(s, len, kTrue, false);
+            list_append(kv_pair, key);
+            if (key->li_tv.v_type == VAR_UNKNOWN) {
+              ret = false;
+              list_unref(kv_pair);
+              continue;
+            }
+            listitem_T *const  val = listitem_alloc();
+            list_append(kv_pair, val);
+            kv_push(stack, cur);
+            cur = (PopStackItem) { &val->li_tv, false, false };
+          } else {
+            dictitem_T *const di = dictitem_alloc_len(s, len);
+            if (dict_add(cur.tv->vval.v_dict, di) == FAIL) {
+              assert(false);
+            }
+            kv_push(stack, cur);
+            cur = (PopStackItem) { &di->di_tv, false, false };
+          }
+        } else {
+          lua_pop(lstate, 1);
+          continue;
+        }
+      } else {
+        assert(cur.tv->v_type == VAR_LIST);
+        lua_rawgeti(lstate, -1, cur.tv->vval.v_list->lv_len + 1);
+        if (lua_isnil(lstate, -1)) {
+          lua_pop(lstate, 1);
+          lua_pop(lstate, 1);
+          continue;
+        }
+        listitem_T *li = listitem_alloc();
+        list_append(cur.tv->vval.v_list, li);
+        kv_push(stack, cur);
+        cur = (PopStackItem) { &li->li_tv, false, false };
+      }
+    }
+    assert(!cur.container);
+    memset(cur.tv, 0, sizeof(*cur.tv));
+    switch (lua_type(lstate, -1)) {
+      case LUA_TNIL: {
+        cur.tv->v_type = VAR_SPECIAL;
+        cur.tv->vval.v_special = kSpecialVarNull;
+        break;
+      }
+      case LUA_TBOOLEAN: {
+        cur.tv->v_type = VAR_SPECIAL;
+        cur.tv->vval.v_special = (lua_toboolean(lstate, -1)
+                                  ? kSpecialVarTrue
+                                  : kSpecialVarFalse);
+        break;
+      }
+      case LUA_TSTRING: {
+        size_t len;
+        const char *s = lua_tolstring(lstate, -1, &len);
+        *cur.tv = decode_string(s, len, kNone, true);
+        if (cur.tv->v_type == VAR_UNKNOWN) {
+          ret = false;
+        }
+        break;
+      }
+      case LUA_TNUMBER: {
+        const lua_Number n = lua_tonumber(lstate, -1);
+        if (n > (lua_Number)VARNUMBER_MAX || n < (lua_Number)VARNUMBER_MIN
+            || ((lua_Number)((varnumber_T)n)) != n) {
+          cur.tv->v_type = VAR_FLOAT;
+          cur.tv->vval.v_float = (float_T)n;
+        } else {
+          cur.tv->v_type = VAR_NUMBER;
+          cur.tv->vval.v_number = (varnumber_T)n;
+        }
+        break;
+      }
+      case LUA_TTABLE: {
+        bool has_string = false;
+        bool has_string_with_nul = false;
+        bool has_other = false;
+        size_t maxidx = 0;
+        size_t tsize = 0;
+        lua_pushnil(lstate);
+        while (lua_next(lstate, -2)) {
+          switch (lua_type(lstate, -2)) {
+            case LUA_TSTRING: {
+              size_t len;
+              const char *s = lua_tolstring(lstate, -2, &len);
+              if (memchr(s, NUL, len) != NULL) {
+                has_string_with_nul = true;
+              }
+              has_string = true;
+              break;
+            }
+            case LUA_TNUMBER: {
+              const lua_Number n = lua_tonumber(lstate, -2);
+              if (n > (lua_Number)SIZE_MAX || n <= 0
+                  || ((lua_Number)((size_t)n)) != n) {
+                has_other = true;
+              } else {
+                const size_t idx = (size_t)n;
+                if (idx > maxidx) {
+                  maxidx = idx;
+                }
+              }
+              break;
+            }
+            default: {
+              has_other = true;
+              break;
+            }
+          }
+          tsize++;
+          lua_pop(lstate, 1);
+        }
+
+        if (tsize == 0) {
+          // Assuming empty list
+          cur.tv->v_type = VAR_LIST;
+          cur.tv->vval.v_list = list_alloc();
+          cur.tv->vval.v_list->lv_refcount++;
+        } else if (tsize == maxidx && !has_other && !has_string) {
+          // Assuming array
+          cur.tv->v_type = VAR_LIST;
+          cur.tv->vval.v_list = list_alloc();
+          cur.tv->vval.v_list->lv_refcount++;
+          cur.container = true;
+          kv_push(stack, cur);
+        } else if (has_string && !has_other && maxidx == 0) {
+          // Assuming dictionary
+          cur.special = has_string_with_nul;
+          if (has_string_with_nul) {
+            decode_create_map_special_dict(cur.tv);
+            assert(cur.tv->v_type = VAR_DICT);
+            dictitem_T *const val_di = dict_find(cur.tv->vval.v_dict,
+                                                 (char_u *)"_VAL", 4);
+            assert(val_di != NULL);
+            cur.tv = &val_di->di_tv;
+            assert(cur.tv->v_type == VAR_LIST);
+          } else {
+            cur.tv->v_type = VAR_DICT;
+            cur.tv->vval.v_dict = dict_alloc();
+            cur.tv->vval.v_dict->dv_refcount++;
+          }
+          cur.container = true;
+          kv_push(stack, cur);
+          lua_pushnil(lstate);
+        } else {
+          EMSG(_("E5100: Cannot convert given lua table: table "
+                 "should either have a sequence of positive integer keys "
+                 "or contain only string keys"));
+          ret = false;
+        }
+        break;
+      }
+      default: {
+        EMSG(_("E5101: Cannot convert given lua type"));
+        ret = false;
+        break;
+      }
+    }
+    if (!cur.container) {
+      lua_pop(lstate, 1);
+    }
+  }
+  kv_destroy(stack);
+  if (!ret) {
+    clear_tv(ret_tv);
+    memset(ret_tv, 0, sizeof(*ret_tv));
+    lua_pop(lstate, lua_gettop(lstate) - initial_size + 1);
+  }
+  assert(lua_gettop(lstate) == initial_size - 1);
+  return ret;
+}
+
+#define TYPVAL_ENCODE_ALLOW_SPECIALS true
+
+#define TYPVAL_ENCODE_CONV_NIL(tv) \
+    lua_pushnil(lstate)
+
+#define TYPVAL_ENCODE_CONV_BOOL(tv, num) \
+    lua_pushboolean(lstate, (bool)(num))
+
+#define TYPVAL_ENCODE_CONV_NUMBER(tv, num) \
+    lua_pushnumber(lstate, (lua_Number)(num))
+
+#define TYPVAL_ENCODE_CONV_UNSIGNED_NUMBER TYPVAL_ENCODE_CONV_NUMBER
+
+#define TYPVAL_ENCODE_CONV_FLOAT(tv, flt) \
+    TYPVAL_ENCODE_CONV_NUMBER(tv, flt)
+
+#define TYPVAL_ENCODE_CONV_STRING(tv, str, len) \
+    lua_pushlstring(lstate, (const char *)(str), (len))
+
+#define TYPVAL_ENCODE_CONV_STR_STRING TYPVAL_ENCODE_CONV_STRING
+
+#define TYPVAL_ENCODE_CONV_EXT_STRING(tv, str, len, type) \
+    TYPVAL_ENCODE_CONV_NIL()
+
+#define TYPVAL_ENCODE_CONV_FUNC_START(tv, fun) \
+    do { \
+      TYPVAL_ENCODE_CONV_NIL(tv); \
+      goto typval_encode_stop_converting_one_item; \
+    } while (0)
+
+#define TYPVAL_ENCODE_CONV_FUNC_BEFORE_ARGS(tv, len)
+#define TYPVAL_ENCODE_CONV_FUNC_BEFORE_SELF(tv, len)
+#define TYPVAL_ENCODE_CONV_FUNC_END(tv)
+
+#define TYPVAL_ENCODE_CONV_EMPTY_LIST(tv) \
+    lua_createtable(lstate, 0, 0)
+
+#define TYPVAL_ENCODE_CONV_EMPTY_DICT(tv, dict) \
+    TYPVAL_ENCODE_CONV_EMPTY_LIST()
+
+#define TYPVAL_ENCODE_CONV_LIST_START(tv, len) \
+    do { \
+      if (!lua_checkstack(lstate, lua_gettop(lstate) + 3)) { \
+        emsgf(_("E5102: Lua failed to grow stack to %i"), \
+              lua_gettop(lstate) + 3); \
+        return false; \
+      } \
+      lua_createtable(lstate, (int)(len), 0); \
+      lua_pushnumber(lstate, 1); \
+    } while (0)
+
+#define TYPVAL_ENCODE_CONV_REAL_LIST_AFTER_START(tv, mpsv)
+
+#define TYPVAL_ENCODE_CONV_LIST_BETWEEN_ITEMS(tv) \
+    do { \
+      lua_Number idx = lua_tonumber(lstate, -2); \
+      lua_rawset(lstate, -3); \
+      lua_pushnumber(lstate, idx + 1); \
+    } while (0)
+
+#define TYPVAL_ENCODE_CONV_LIST_END(tv) \
+    lua_rawset(lstate, -3)
+
+#define TYPVAL_ENCODE_CONV_DICT_START(tv, dict, len) \
+    do { \
+      if (!lua_checkstack(lstate, lua_gettop(lstate) + 3)) { \
+        emsgf(_("E5102: Lua failed to grow stack to %i"), \
+              lua_gettop(lstate) + 3); \
+        return false; \
+      } \
+      lua_createtable(lstate, 0, (int)(len)); \
+    } while (0)
+
+#define TYPVAL_ENCODE_SPECIAL_DICT_KEY_CHECK(label, kv_pair)
+
+#define TYPVAL_ENCODE_CONV_REAL_DICT_AFTER_START(tv, dict, mpsv)
+
+#define TYPVAL_ENCODE_CONV_DICT_AFTER_KEY(tv, dict)
+
+#define TYPVAL_ENCODE_CONV_DICT_BETWEEN_ITEMS(tv, dict) \
+    lua_rawset(lstate, -3)
+
+#define TYPVAL_ENCODE_CONV_DICT_END(tv, dict) \
+    TYPVAL_ENCODE_CONV_DICT_BETWEEN_ITEMS(tv, dict)
+
+#define TYPVAL_ENCODE_CONV_RECURSE(val, conv_type) \
+    do { \
+      for (size_t backref = kv_size(*mpstack); backref; backref--) { \
+        const MPConvStackVal mpval = kv_A(*mpstack, backref - 1); \
+        if (mpval.type == conv_type) { \
+          if (conv_type == kMPConvDict \
+              ? (void *) mpval.data.d.dict == (void *) (val) \
+              : (void *) mpval.data.l.list == (void *) (val)) { \
+            lua_pushvalue(lstate, \
+                          1 - ((int)((kv_size(*mpstack) - backref + 1) * 2))); \
+            break; \
+          } \
+        } \
+      } \
+    } while (0)
+
+#define TYPVAL_ENCODE_SCOPE static
+#define TYPVAL_ENCODE_NAME lua
+#define TYPVAL_ENCODE_FIRST_ARG_TYPE lua_State *const
+#define TYPVAL_ENCODE_FIRST_ARG_NAME lstate
+#include "nvim/eval/typval_encode.c.h"
+#undef TYPVAL_ENCODE_SCOPE
+#undef TYPVAL_ENCODE_NAME
+#undef TYPVAL_ENCODE_FIRST_ARG_TYPE
+#undef TYPVAL_ENCODE_FIRST_ARG_NAME
+
+#undef TYPVAL_ENCODE_CONV_STRING
+#undef TYPVAL_ENCODE_CONV_STR_STRING
+#undef TYPVAL_ENCODE_CONV_EXT_STRING
+#undef TYPVAL_ENCODE_CONV_NUMBER
+#undef TYPVAL_ENCODE_CONV_FLOAT
+#undef TYPVAL_ENCODE_CONV_FUNC_START
+#undef TYPVAL_ENCODE_CONV_FUNC_BEFORE_ARGS
+#undef TYPVAL_ENCODE_CONV_FUNC_BEFORE_SELF
+#undef TYPVAL_ENCODE_CONV_FUNC_END
+#undef TYPVAL_ENCODE_CONV_EMPTY_LIST
+#undef TYPVAL_ENCODE_CONV_LIST_START
+#undef TYPVAL_ENCODE_CONV_REAL_LIST_AFTER_START
+#undef TYPVAL_ENCODE_CONV_EMPTY_DICT
+#undef TYPVAL_ENCODE_CONV_NIL
+#undef TYPVAL_ENCODE_CONV_BOOL
+#undef TYPVAL_ENCODE_CONV_UNSIGNED_NUMBER
+#undef TYPVAL_ENCODE_CONV_DICT_START
+#undef TYPVAL_ENCODE_CONV_REAL_DICT_AFTER_START
+#undef TYPVAL_ENCODE_CONV_DICT_END
+#undef TYPVAL_ENCODE_CONV_DICT_AFTER_KEY
+#undef TYPVAL_ENCODE_CONV_DICT_BETWEEN_ITEMS
+#undef TYPVAL_ENCODE_SPECIAL_DICT_KEY_CHECK
+#undef TYPVAL_ENCODE_CONV_LIST_END
+#undef TYPVAL_ENCODE_CONV_LIST_BETWEEN_ITEMS
+#undef TYPVAL_ENCODE_CONV_RECURSE
+#undef TYPVAL_ENCODE_ALLOW_SPECIALS
+
+/// Convert VimL typval_T to lua value
+///
+/// Should leave single value in lua stack. May only fail if lua failed to grow
+/// stack.
+///
+/// @param  lstate  Lua interpreter state.
+/// @param[in]  tv  typval_T to convert.
+///
+/// @return true in case of success, false otherwise.
+bool nlua_push_typval(lua_State *lstate, typval_T *const tv)
+{
+  const int initial_size = lua_gettop(lstate);
+  if (!lua_checkstack(lstate, initial_size + 1)) {
+    emsgf(_("E1502: Lua failed to grow stack to %i"), initial_size + 4);
+    return false;
+  }
+  if (encode_vim_to_lua(lstate, tv, "nlua_push_typval argument") == FAIL) {
+    return false;
+  }
+  assert(lua_gettop(lstate) == initial_size + 1);
+  return true;
+}
 
 #define NLUA_PUSH_IDX(lstate, type, idx) \
   do { \

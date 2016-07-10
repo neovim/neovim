@@ -6480,26 +6480,42 @@ static void dict_free_dict(dict_T *d) {
   xfree(d);
 }
 
-void dict_free(dict_T *d) {
+void dict_free(dict_T *d)
+{
   if (!in_free_unref_items) {
     dict_free_contents(d);
     dict_free_dict(d);
   }
 }
 
-/*
- * Allocate a Dictionary item.
- * The "key" is copied to the new item.
- * Note that the value of the item "di_tv" still needs to be initialized!
- */
-dictitem_T *dictitem_alloc(char_u *key) FUNC_ATTR_NONNULL_RET
+/// Allocate a dictionary item
+///
+/// @note that the value of the item di_tv still needs to be initialized.
+///
+/// @param[in]  key  Item key.
+/// @param[in]  len  Key length.
+///
+/// @return [allocated] New dictionary item.
+dictitem_T *dictitem_alloc_len(const char *const key, const size_t len)
+  FUNC_ATTR_NONNULL_RET FUNC_ATTR_MALLOC FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  dictitem_T *di = xmalloc(offsetof(dictitem_T, di_key) + STRLEN(key) + 1);
-#ifndef __clang_analyzer__
-  STRCPY(di->di_key, key);
-#endif
+  dictitem_T *const di = xmallocz(offsetof(dictitem_T, di_key) + len);
+  memcpy(di->di_key, key, len);
   di->di_flags = DI_FLAGS_ALLOC;
   return di;
+}
+
+/// Allocate a dictionary item
+///
+/// @note that the value of the item di_tv still needs to be initialized.
+///
+/// @param[in]  key  Item key, NUL-terminated string.
+///
+/// @return [allocated] New dictionary item.
+dictitem_T *dictitem_alloc(const char_u *const key)
+  FUNC_ATTR_NONNULL_RET FUNC_ATTR_MALLOC FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  return dictitem_alloc_len((const char *)key, STRLEN(key));
 }
 
 /*
@@ -13386,37 +13402,7 @@ static void f_luaeval(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     return;
   }
 
-  Object arg;
-  if (argvars[1].v_type == VAR_UNKNOWN) {
-    arg = NIL;
-  } else {
-    arg = vim_to_object(&argvars[1]);
-  }
-
-  // TODO(ZyX-I): Create function which converts lua objects directly to VimL
-  //              objects, not to API objects.
-  Error err;
-  String err_str;
-  Object ret = executor_eval_lua(cstr_as_string(str), arg, &err, &err_str);
-  if (err.set) {
-    if (err_str.size) {
-      EMSG3(_("E971: Failed to eval lua string: %s (%s)"), err.msg,
-            err_str.data);
-    } else {
-      EMSG2(_("E971: Failed to eval lua string: %s"), err.msg);
-    }
-  }
-
-  api_free_string(err_str);
-
-  if (!err.set) {
-    if (!object_to_vim(ret, rettv, &err)) {
-      EMSG2(_("E972: Failed to convert resulting API object to VimL: %s"),
-            err.msg);
-    }
-  }
-
-  api_free_object(ret);
+  executor_eval_lua(cstr_as_string(str), &argvars[1], rettv);
 }
 
 /*
