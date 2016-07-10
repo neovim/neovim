@@ -333,7 +333,6 @@ static void process_close(Process *proc)
   }
 }
 
-/*
 /// Flush output stream.
 ///
 /// @param proc     Process, for which an output stream should be flushed.
@@ -381,14 +380,13 @@ static void flush_stream(Process *proc, Stream *stream)
     }
   }
 }
-*/
 
 static void process_close_handles(void **argv)
 {
   Process *proc = argv[0];
 
-  //flush_stream(proc, proc->out);
-  //flush_stream(proc, proc->err);
+  flush_stream(proc, proc->out);
+  flush_stream(proc, proc->err);
 
   process_close_streams(proc);
   process_close(proc);
