@@ -334,8 +334,8 @@ bool nlua_pop_typval(lua_State *lstate, typval_T *ret_tv)
         const MPConvStackVal mpval = kv_A(*mpstack, backref - 1); \
         if (mpval.type == conv_type) { \
           if (conv_type == kMPConvDict \
-              ? (void *) mpval.data.d.dict == (void *) (val) \
-              : (void *) mpval.data.l.list == (void *) (val)) { \
+              ? (void *)mpval.data.d.dict == (void *)(val) \
+              : (void *)mpval.data.l.list == (void *)(val)) { \
             lua_pushvalue(lstate, \
                           1 - ((int)((kv_size(*mpstack) - backref + 1) * 2))); \
             break; \
@@ -450,7 +450,7 @@ static inline void nlua_push_locks_idx(lua_State *lstate)
 static inline void nlua_push_val_idx(lua_State *lstate)
   FUNC_ATTR_NONNULL_ALL
 {
-  lua_pushnumber(lstate, (lua_Number) 0);
+  lua_pushnumber(lstate, (lua_Number)0);
 }
 
 /// Push type
@@ -480,7 +480,7 @@ static inline void nlua_create_typed_table(lua_State *lstate,
                                            const char *const type)
   FUNC_ATTR_NONNULL_ALL
 {
-  lua_createtable(lstate, (int) narr, (int) (1 + nrec));
+  lua_createtable(lstate, (int)narr, (int)(1 + nrec));
   nlua_push_type_idx(lstate);
   nlua_push_type(lstate, type);
   lua_rawset(lstate, -3);
@@ -502,7 +502,7 @@ void nlua_push_String(lua_State *lstate, const String s)
 void nlua_push_Integer(lua_State *lstate, const Integer n)
   FUNC_ATTR_NONNULL_ALL
 {
-  lua_pushnumber(lstate, (lua_Number) n);
+  lua_pushnumber(lstate, (lua_Number)n);
 }
 
 /// Convert given Float to lua table
@@ -513,7 +513,7 @@ void nlua_push_Float(lua_State *lstate, const Float f)
 {
   nlua_create_typed_table(lstate, 0, 1, "float");
   nlua_push_val_idx(lstate);
-  lua_pushnumber(lstate, (lua_Number) f);
+  lua_pushnumber(lstate, (lua_Number)f);
   lua_rawset(lstate, -3);
 }
 
@@ -558,7 +558,7 @@ void nlua_push_Array(lua_State *lstate, const Array array)
   nlua_add_locks_table(lstate);
   for (size_t i = 0; i < array.size; i++) {
     nlua_push_Object(lstate, array.items[i]);
-    lua_rawseti(lstate, -3, (int) i + 1);
+    lua_rawseti(lstate, -3, (int)i + 1);
   }
 }
 
@@ -619,7 +619,7 @@ String nlua_pop_String(lua_State *lstate, Error *err)
 {
   String ret;
 
-  ret.data = (char *) lua_tolstring(lstate, -1, &(ret.size));
+  ret.data = (char *)lua_tolstring(lstate, -1, &(ret.size));
 
   if (ret.data == NULL) {
     lua_pop(lstate, 1);
@@ -646,7 +646,7 @@ Integer nlua_pop_Integer(lua_State *lstate, Error *err)
     set_api_error("Expected lua integer", err);
     return ret;
   }
-  ret = (Integer) lua_tonumber(lstate, -1);
+  ret = (Integer)lua_tonumber(lstate, -1);
   lua_pop(lstate, 1);
 
   return ret;
@@ -744,7 +744,7 @@ Array nlua_pop_Array(lua_State *lstate, Error *err)
   for (size_t i = 1; i <= ret.size; i++) {
     Object val;
 
-    lua_rawgeti(lstate, -1, (int) i);
+    lua_rawgeti(lstate, -1, (int)i);
 
     val = nlua_pop_Object(lstate, err);
     if (err->set) {

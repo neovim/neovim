@@ -104,7 +104,7 @@ static int nlua_stricmp(lua_State *lstate) FUNC_ATTR_NONNULL_ALL
   const char *s2 = luaL_checklstring(lstate, 2, NULL);
   const int ret = STRICMP(s1, s2);
   lua_pop(lstate, 2);
-  lua_pushnumber(lstate, (lua_Number) ((ret > 0) - (ret < 0)));
+  lua_pushnumber(lstate, (lua_Number)((ret > 0) - (ret < 0)));
   return 1;
 }
 
@@ -140,7 +140,7 @@ static int nlua_state_init(lua_State *lstate) FUNC_ATTR_NONNULL_ALL
 {
   lua_pushcfunction(lstate, &nlua_stricmp);
   lua_setglobal(lstate, "stricmp");
-  if (luaL_dostring(lstate, (char *) &vim_module[0])) {
+  if (luaL_dostring(lstate, (char *)&vim_module[0])) {
     nlua_error(lstate, _("E5106: Error while creating vim module: %s"));
     return 1;
   }

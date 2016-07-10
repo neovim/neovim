@@ -13397,7 +13397,7 @@ static void get_maparg(typval_T *argvars, typval_T *rettv, int exact)
 static void f_luaeval(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   FUNC_ATTR_NONNULL_ALL
 {
-  char *const str = (char *) get_tv_string(&argvars[0]);
+  const char *const str = (const char *)get_tv_string(&argvars[0]);
   if (str == NULL) {
     return;
   }
