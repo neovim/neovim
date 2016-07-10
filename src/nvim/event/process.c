@@ -349,12 +349,7 @@ static void flush_stream(Process *proc, Stream *stream)
   // Also helps with a child process that keeps the output streams open. If it
   // keeps sending data, we only accept as much data as the system buffer size.
   // Otherwise this would block cleanup/teardown.
-  int system_buffer_size = 0;
-  int err = uv_recv_buffer_size((uv_handle_t *)&stream->uv.pipe,
-                                &system_buffer_size);
-  if (err) {
-    system_buffer_size = (int)rbuffer_capacity(stream->buffer);
-  }
+  int system_buffer_size = (int)rbuffer_capacity(stream->buffer);
 
   size_t max_bytes = stream->num_bytes + (size_t)system_buffer_size;
 
