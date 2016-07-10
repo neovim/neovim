@@ -202,13 +202,12 @@ Additional differences:
 
 ==============================================================================
 5. Missing legacy features				 *nvim-features-missing*
-				     *if_ruby* *if_lua* *if_perl* *if_mzscheme* *if_tcl*
+				     *if_lua* *if_perl* *if_mzscheme* *if_tcl*
 
 These legacy Vim features may be implemented in the future, but they are not
 planned for the current milestone.
 
 - vim.bindeval() (new feature in Vim 7.4 Python interface)
-- |if_ruby|
 - |if_lua|
 - |if_perl|
 - |if_mzscheme|
