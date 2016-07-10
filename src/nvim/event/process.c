@@ -373,6 +373,7 @@ static void flush_stream(Process *proc, Stream *stream)
       }
       break;
     }
+    break;
   }
 }
 
