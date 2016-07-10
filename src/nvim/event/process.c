@@ -359,7 +359,7 @@ static void flush_stream(Process *proc, Stream *stream)
     size_t num_bytes = stream->num_bytes;
 
     // Poll for data and process the generated events.
-    loop_poll_events(proc->loop, 0);
+    //loop_poll_events(proc->loop, 0);
     if (proc->events) {
         queue_process_events(proc->events);
     }
@@ -373,7 +373,6 @@ static void flush_stream(Process *proc, Stream *stream)
       }
       break;
     }
-    break;
   }
 }
 
