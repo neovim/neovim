@@ -789,8 +789,10 @@ static void convert_modifiers(int key, VTermModifier *statep)
   if (mod_mask & MOD_MASK_CTRL)  { *statep |= VTERM_MOD_CTRL; }
   if (mod_mask & MOD_MASK_ALT)   { *statep |= VTERM_MOD_ALT; }
 
-  switch(key) {
+  switch (key) {
     case K_S_TAB:
+    case K_S_UP:
+    case K_S_DOWN:
     case K_S_LEFT:
     case K_S_RIGHT:
     case K_S_F1:
@@ -826,7 +828,9 @@ static VTermKey convert_key(int key, VTermModifier *statep)
     case Ctrl_M:      return VTERM_KEY_ENTER;
     case ESC:         return VTERM_KEY_ESCAPE;
 
+    case K_S_UP:
     case K_UP:        return VTERM_KEY_UP;
+    case K_S_DOWN:
     case K_DOWN:      return VTERM_KEY_DOWN;
     case K_S_LEFT:
     case K_C_LEFT:
