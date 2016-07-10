@@ -670,8 +670,8 @@ static void init_locale(void)
   {
     char_u  *p;
 
-    /* expand_env() doesn't work yet, because chartab[] is not initialized
-     * yet, call vim_getenv() directly */
+    // expand_env() doesn't work yet, because g_chartab[] is not
+    // initialized yet, call vim_getenv() directly
     p = (char_u *)vim_getenv("VIMRUNTIME");
     if (p != NULL && *p != NUL) {
       vim_snprintf((char *)NameBuff, MAXPATHL, "%s/lang", p);

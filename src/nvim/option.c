@@ -2439,16 +2439,13 @@ did_set_string_option (
   else if (varp == &curwin->w_p_briopt) {
     if (briopt_check(curwin) == FAIL)
       errmsg = e_invarg;
-  }
-  /*
-   * 'isident', 'iskeyword', 'isprint or 'isfname' option: refill chartab[]
-   * If the new option is invalid, use old value.  'lisp' option: refill
-   * chartab[] for '-' char
-   */
-  else if (  varp == &p_isi
+  } else if (varp == &p_isi
              || varp == &(curbuf->b_p_isk)
              || varp == &p_isp
              || varp == &p_isf) {
+    // 'isident', 'iskeyword', 'isprint or 'isfname' option: refill g_chartab[]
+    // If the new option is invalid, use old value.  'lisp' option: refill
+    // g_chartab[] for '-' char
     if (init_chartab() == FAIL) {
       did_chartab = TRUE;           /* need to restore it below */
       errmsg = e_invarg;            /* error in value */
