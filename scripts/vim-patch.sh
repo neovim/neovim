@@ -137,7 +137,7 @@ get_vim_patch() {
   # Patch surgery: preprocess the patch.
   #   - transform src/ paths to src/nvim/
   local vim_full
-  vim_full="$(git show -1 --pretty=medium "${vim_commit}" \
+  vim_full="$(git --no-pager show --color=never -1 --pretty=medium "${vim_commit}" \
     | LC_ALL=C sed -e 's/\( [ab]\/src\)/\1\/nvim/g')"
   local neovim_branch="${BRANCH_PREFIX}${vim_version}"
 
@@ -290,7 +290,7 @@ list_vim_patches() {
       is_missing="$(sed -n '/static int included_patches/,/}/p' "${NEOVIM_SOURCE_DIR}/src/nvim/version.c" |
         grep -x -e "[[:space:]]*//[[:space:]]${patch_number} NA.*" -e "[[:space:]]*${patch_number}," >/dev/null && echo "false" || echo "true")"
       vim_commit="${vim_tag#v}"
-      if (cd "${VIM_SOURCE_DIR}" && git show --name-only "v${vim_commit}" 2>/dev/null) | grep -q ^runtime; then
+      if (cd "${VIM_SOURCE_DIR}" && git --no-pager  show --color=never --name-only "v${vim_commit}" 2>/dev/null) | grep -q ^runtime; then
         vim_commit="${vim_commit} (+runtime)"
       fi
     else
