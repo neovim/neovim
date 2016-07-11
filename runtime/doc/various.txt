@@ -15,13 +15,16 @@ Various commands					*various*
 							*CTRL-L*
 CTRL-L			Clear and redraw the screen.  The redraw may happen
 			later, after processing typeahead.
+			If the current buffer is a terminal buffer, resize the
+			terminal to its window.
 
 							*:redr* *:redraw*
-:redr[aw][!]		Redraw the screen right now.  When ! is included it is
-			cleared first.
-			Useful to update the screen halfway through executing
-			a script or function (or a mapping if 'lazyredraw'
-			set).
+:redr[aw][!]		Redraw the screen right now.  Useful to update the
+			screen halfway through executing a script or function
+			(or a mapping if 'lazyredraw' set).
+			When ! is included, the screen is cleared first and,
+			if the current buffer is a terminal buffer, the
+			terminal is resized to its window.
 
 						*:redraws* *:redrawstatus*
 :redraws[tatus][!]	Redraw the status line of the current window.  When !
