@@ -340,8 +340,11 @@ void update_screen(int type)
   if (need_highlight_changed)
     highlight_changed();
 
-  if (type == CLEAR) {          /* first clear screen */
-    screenclear();              /* will reset clear_cmdline */
+  if (type == CLEAR) {          // first clear screen
+    screenclear();              // will reset clear_cmdline
+    if (curbuf->terminal) {
+      terminal_resize(curbuf->terminal, curwin->w_width, curwin->w_height, true);
+    }
     type = NOT_VALID;
   }
 
