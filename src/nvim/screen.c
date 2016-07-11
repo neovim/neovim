@@ -343,7 +343,8 @@ void update_screen(int type)
   if (type == CLEAR) {          // first clear screen
     screenclear();              // will reset clear_cmdline
     if (curbuf->terminal) {
-      terminal_resize(curbuf->terminal, curwin->w_width, curwin->w_height, true);
+      terminal_resize(curbuf->terminal, curwin->w_width - curwin_col_off(),
+                      curwin->w_height, true);
     }
     type = NOT_VALID;
   }
