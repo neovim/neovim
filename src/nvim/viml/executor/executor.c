@@ -145,6 +145,7 @@ static int nlua_state_init(lua_State *lstate) FUNC_ATTR_NONNULL_ALL
     return 1;
   }
   nlua_add_api_functions(lstate);
+  nlua_init_types(lstate);
   lua_setglobal(lstate, "vim");
   return 0;
 }

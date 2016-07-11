@@ -197,7 +197,21 @@ Object nvim_eval(String expr, Error *err)
   return rv;
 }
 
-/// Calls a VimL function with the given arguments.
+/// Returns object given as argument
+///
+/// This API function is used for testing. One should not rely on its presence
+/// in plugins.
+///
+/// @param[in]  obj  Object to return.
+///
+/// @return its argument.
+Object _vim_id(Object obj)
+{
+  return obj;
+}
+
+/// Calls a VimL function with the given arguments
+///
 /// On VimL error: Returns a generic error; v:errmsg is not updated.
 ///
 /// @param fname    Function to call

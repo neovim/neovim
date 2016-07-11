@@ -8,7 +8,7 @@ local clear = helpers.clear
 local funcs = helpers.funcs
 local meths = helpers.meths
 local exc_exec = helpers.exc_exec
-local curbufmeths = helpers.curbufmeths
+local redir_exec = helpers.redir_exec
 
 local function startswith(expected, actual)
   eq(expected, actual:sub(1, #expected))
@@ -139,5 +139,97 @@ describe('luaeval() function', function()
     -- The following should not crash: conversion error happens inside
     eq("Vim(call):E5101: Cannot convert given lua type",
        exc_exec('call luaeval("vim.api")'))
+    -- The following should not show internal error
+    eq("\nE5101: Cannot convert given lua type\n0",
+       redir_exec('echo luaeval("vim.api")'))
   end)
+
+  it('correctly converts containers with type_idx', function()
+    eq(5, eval('type(luaeval("{[vim.type_idx]=vim.types.float, [vim.val_idx]=0}"))'))
+    eq(4, eval([[type(luaeval('{[vim.type_idx]=vim.types.dictionary}'))]]))
+    eq(3, eval([[type(luaeval('{[vim.type_idx]=vim.types.array}'))]]))
+
+    eq({}, funcs.luaeval('{[vim.type_idx]=vim.types.array}'))
+
+    -- Presence of type_idx makes Vim ignore some keys
+    eq({42}, funcs.luaeval('{[vim.type_idx]=vim.types.array, [vim.val_idx]=10, [5]=1, foo=2, [1]=42}'))
+    eq({foo=2}, funcs.luaeval('{[vim.type_idx]=vim.types.dictionary, [vim.val_idx]=10, [5]=1, foo=2, [1]=42}'))
+    eq(10, funcs.luaeval('{[vim.type_idx]=vim.types.float, [vim.val_idx]=10, [5]=1, foo=2, [1]=42}'))
+
+    -- The following should not crash
+    eq({}, funcs.luaeval('{[vim.type_idx]=vim.types.dictionary}'))
+  end)
+
+  it('correctly converts from API objects', function()
+    eq(1, funcs.luaeval('vim.api.vim_eval("1")'))
+    eq('1', funcs.luaeval([[vim.api.vim_eval('"1"')]]))
+    eq({}, funcs.luaeval('vim.api.vim_eval("[]")'))
+    eq({}, funcs.luaeval('vim.api.vim_eval("{}")'))
+    eq(1, funcs.luaeval('vim.api.vim_eval("1.0")'))
+    eq(true, funcs.luaeval('vim.api.vim_eval("v:true")'))
+    eq(false, funcs.luaeval('vim.api.vim_eval("v:false")'))
+    eq(NIL, funcs.luaeval('vim.api.vim_eval("v:null")'))
+
+    eq(0, eval([[type(luaeval('vim.api.vim_eval("1")'))]]))
+    eq(1, eval([[type(luaeval('vim.api.vim_eval("''1''")'))]]))
+    eq(3, eval([[type(luaeval('vim.api.vim_eval("[]")'))]]))
+    eq(4, eval([[type(luaeval('vim.api.vim_eval("{}")'))]]))
+    eq(5, eval([[type(luaeval('vim.api.vim_eval("1.0")'))]]))
+    eq(6, eval([[type(luaeval('vim.api.vim_eval("v:true")'))]]))
+    eq(6, eval([[type(luaeval('vim.api.vim_eval("v:false")'))]]))
+    eq(7, eval([[type(luaeval('vim.api.vim_eval("v:null")'))]]))
+
+    eq({foo=42}, funcs.luaeval([[vim.api.vim_eval('{"foo": 42}')]]))
+    eq({42}, funcs.luaeval([[vim.api.vim_eval('[42]')]]))
+
+    eq({foo={bar=42}, baz=50}, funcs.luaeval([[vim.api.vim_eval('{"foo": {"bar": 42}, "baz": 50}')]]))
+    eq({{42}, {}}, funcs.luaeval([=[vim.api.vim_eval('[[42], []]')]=]))
+  end)
+
+  it('correctly converts to API objects', function()
+    eq(1, funcs.luaeval('vim.api._vim_id(1)'))
+    eq('1', funcs.luaeval('vim.api._vim_id("1")'))
+    eq({1}, funcs.luaeval('vim.api._vim_id({1})'))
+    eq({foo=1}, funcs.luaeval('vim.api._vim_id({foo=1})'))
+    eq(1.5, funcs.luaeval('vim.api._vim_id(1.5)'))
+    eq(true, funcs.luaeval('vim.api._vim_id(true)'))
+    eq(false, funcs.luaeval('vim.api._vim_id(false)'))
+    eq(NIL, funcs.luaeval('vim.api._vim_id(nil)'))
+
+    eq(0, eval([[type(luaeval('vim.api._vim_id(1)'))]]))
+    eq(1, eval([[type(luaeval('vim.api._vim_id("1")'))]]))
+    eq(3, eval([[type(luaeval('vim.api._vim_id({1})'))]]))
+    eq(4, eval([[type(luaeval('vim.api._vim_id({foo=1})'))]]))
+    eq(5, eval([[type(luaeval('vim.api._vim_id(1.5)'))]]))
+    eq(6, eval([[type(luaeval('vim.api._vim_id(true)'))]]))
+    eq(6, eval([[type(luaeval('vim.api._vim_id(false)'))]]))
+    eq(7, eval([[type(luaeval('vim.api._vim_id(nil)'))]]))
+
+    eq({foo=1, bar={42, {{baz=true}, 5}}}, funcs.luaeval('vim.api._vim_id({foo=1, bar={42, {{baz=true}, 5}}})'))
+  end)
+
+  it('correctly converts containers with type_idx to API objects', function()
+    -- TODO: Similar tests with _vim_array_id and _vim_dictionary_id, that will
+    -- follow slightly different code paths.
+    eq(5, eval('type(luaeval("vim.api._vim_id({[vim.type_idx]=vim.types.float, [vim.val_idx]=0})"))'))
+    eq(4, eval([[type(luaeval('vim.api._vim_id({[vim.type_idx]=vim.types.dictionary})'))]]))
+    eq(3, eval([[type(luaeval('vim.api._vim_id({[vim.type_idx]=vim.types.array})'))]]))
+
+    eq({}, funcs.luaeval('vim.api._vim_id({[vim.type_idx]=vim.types.array})'))
+
+    -- Presence of type_idx makes Vim ignore some keys
+    -- FIXME
+    -- eq({42}, funcs.luaeval('vim.api._vim_id({[vim.type_idx]=vim.types.array, [vim.val_idx]=10, [5]=1, foo=2, [1]=42})'))
+    eq({foo=2}, funcs.luaeval('vim.api._vim_id({[vim.type_idx]=vim.types.dictionary, [vim.val_idx]=10, [5]=1, foo=2, [1]=42})'))
+    eq(10, funcs.luaeval('vim.api._vim_id({[vim.type_idx]=vim.types.float, [vim.val_idx]=10, [5]=1, foo=2, [1]=42})'))
+  end)
+  -- TODO: check what happens when it errors out on second list item
+--[[FIXME
+   [ 
+   [   it('correctly converts self-containing containers', function()
+   [     meths.set_var('l', {})
+   [     eval('add(l, l)')
+   [     eq(true, eval('luaeval("_A == _A[1]", l)'))
+   [   end)
+   ]]
 end)
