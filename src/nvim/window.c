@@ -3616,10 +3616,6 @@ static void win_enter_ext(win_T *wp, bool undo_sync, int curwin_invalid, int tri
 
   /* Change directories when the 'acd' option is set. */
   do_autochdir();
-
-  if (curbuf->terminal) {
-    terminal_resize(curbuf->terminal, curwin->w_width, curwin->w_height);
-  }
 }
 
 
