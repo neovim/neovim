@@ -530,6 +530,12 @@ void terminal_send(Terminal *term, char *data, size_t size)
 void terminal_send_key(Terminal *term, int c)
 {
   VTermModifier mod = VTERM_MOD_NONE;
+
+  // Convert K_ZERO back to ASCII
+  if (c == K_ZERO) {
+    c = Ctrl_AT;
+  }
+
   VTermKey key = convert_key(c, &mod);
 
   if (key) {
