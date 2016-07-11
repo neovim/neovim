@@ -2,6 +2,11 @@
 " When the script is successful the .res file will be created.
 " Errors are appended to the test.log file.
 "
+" To execute only specific test functions, add a second argument.  It will be
+" matched against the names of the Test_ function.  E.g.:
+"   ../vim -u NONE -S runtest.vim test_channel.vim open_delay
+" The output can be found in the "messages" file.
+"
 " The test script may contain anything, only functions that start with
 " "Test_" are special.  These will be invoked and should contain assert
 " functions.  See test_assert.vim for an example.
@@ -67,6 +72,11 @@ redir @q
 silent function /^Test_
 redir END
 let tests = split(substitute(@q, 'function \(\k*()\)', '\1', 'g'))
+
+" If there is an extra argument filter the function names against it.
+if argc() > 1
+  let tests = filter(tests, 'v:val =~ argv(1)')
+endif
 
 " Execute the tests in alphabetical order.
 for test in sort(tests)
