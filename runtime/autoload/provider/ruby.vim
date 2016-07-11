@@ -5,7 +5,8 @@ endif
 let g:loaded_ruby_provider = 1
 
 function! provider#ruby#Detect() abort
-  return exepath('neovim-ruby-host')
+  let host_var = get(g:, 'ruby_host_prog', 'neovim-ruby-host')
+  return exepath(host_var)
 endfunction
 
 function! provider#ruby#Prog()
