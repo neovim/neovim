@@ -339,10 +339,16 @@ static void shift_block(oparg_T *oap, int amount)
     total += bd.pre_whitesp;     /* all virtual WS up to & incl a split TAB */
     ws_vcol = bd.start_vcol - bd.pre_whitesp;
     if (bd.startspaces) {
-      if (has_mbyte)
-        bd.textstart += (*mb_ptr2len)(bd.textstart);
-      else
-        ++bd.textstart;
+      if (has_mbyte) {
+        if ((*mb_ptr2len)(bd.textstart) == 1) {
+          bd.textstart++;
+        } else {
+          ws_vcol = 0;
+          bd.startspaces = 0;
+        }
+      } else {
+        bd.textstart++;
+      }
     }
     for (; ascii_iswhite(*bd.textstart); ) {
       // TODO: is passing bd.textstart for start of the line OK?

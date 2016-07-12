@@ -39,6 +39,7 @@ NEW_TESTS = \
 	    test_syntax.res \
 	    test_timers.res \
 	    test_viml.res \
+	    test_visual.res \
 	    test_alot.res
 
 SCRIPTS_GUI := test16.out
