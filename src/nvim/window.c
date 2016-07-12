@@ -3296,8 +3296,11 @@ void tabpage_move(int nr)
   tabpage_T *tp;
   tabpage_T *tp_dst;
 
-  if (first_tabpage->tp_next == NULL)
+  assert(curtab != NULL);
+
+  if (first_tabpage->tp_next == NULL) {
     return;
+  }
 
   for (tp = first_tabpage; tp->tp_next != NULL && n < nr; tp = tp->tp_next) {
     ++n;
