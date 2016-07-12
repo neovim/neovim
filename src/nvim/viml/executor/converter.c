@@ -54,8 +54,8 @@ static LuaTableProps nlua_traverse_table(lua_State *const lstate)
   int val_type = 0;  // If has_val_key: lua type of the value.
   bool has_val_key = false;  // True if val key was found,
                              // @see nlua_push_val_idx().
-  bool has_other = false;  // True if there are keys that are not strings
-                           // or positive integral values.
+  size_t other_keys_num = 0;  // Number of keys that are not string, integral
+                              // or type keys.
   LuaTableProps ret;
   memset(&ret, 0, sizeof(ret));
   if (!lua_checkstack(lstate, lua_gettop(lstate) + 2)) {
@@ -79,7 +79,7 @@ static LuaTableProps nlua_traverse_table(lua_State *const lstate)
         const lua_Number n = lua_tonumber(lstate, -2);
         if (n > (lua_Number)SIZE_MAX || n <= 0
             || ((lua_Number)((size_t)n)) != n) {
-          has_other = true;
+          other_keys_num++;
         } else {
           const size_t idx = (size_t)n;
           if (idx > ret.maxidx) {
@@ -99,10 +99,10 @@ static LuaTableProps nlua_traverse_table(lua_State *const lstate)
               has_type_key = true;
               ret.type = (ObjectType)n;
             } else {
-              has_other = true;
+              other_keys_num++;
             }
           } else {
-            has_other = true;
+            other_keys_num++;
           }
         } else {
           has_val_key = true;
@@ -114,7 +114,7 @@ static LuaTableProps nlua_traverse_table(lua_State *const lstate)
         break;
       }
       default: {
-        has_other = true;
+        other_keys_num++;
         break;
       }
     }
@@ -125,10 +125,33 @@ static LuaTableProps nlua_traverse_table(lua_State *const lstate)
     if (ret.type == kObjectTypeFloat
         && (!has_val_key || val_type != LUA_TNUMBER)) {
       ret.type = kObjectTypeNil;
+    } else if (ret.type == kObjectTypeArray) {
+      // Determine what is the last number in a *sequence* of keys.
+      // This condition makes sure that Neovim will not crash when it gets table
+      // {[vim.type_idx]=vim.types.array, [SIZE_MAX]=1}: without it maxidx will
+      // be SIZE_MAX, with this condition it should be zero and [SIZE_MAX] key
+      // should be ignored.
+      if (ret.maxidx != 0
+          && ret.maxidx != (tsize
+                            - has_type_key
+                            - other_keys_num
+                            - has_val_key
+                            - ret.string_keys_num)) {
+        for (ret.maxidx = 0;; ret.maxidx++) {
+          lua_rawgeti(lstate, -1, (int)ret.maxidx + 1);
+          if (lua_isnil(lstate, -1)) {
+            lua_pop(lstate, 1);
+            break;
+          }
+          lua_pop(lstate, 1);
+        }
+      }
     }
   } else {
     if (tsize == 0
-        || (tsize == ret.maxidx && !has_other && ret.string_keys_num == 0)) {
+        || (tsize == ret.maxidx
+            && other_keys_num == 0
+            && ret.string_keys_num == 0)) {
       ret.type = kObjectTypeArray;
     } else if (ret.string_keys_num == tsize) {
       ret.type = kObjectTypeDictionary;

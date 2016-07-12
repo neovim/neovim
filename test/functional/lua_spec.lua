@@ -218,10 +218,10 @@ describe('luaeval() function', function()
     eq({}, funcs.luaeval('vim.api._vim_id({[vim.type_idx]=vim.types.array})'))
 
     -- Presence of type_idx makes Vim ignore some keys
-    -- FIXME
-    -- eq({42}, funcs.luaeval('vim.api._vim_id({[vim.type_idx]=vim.types.array, [vim.val_idx]=10, [5]=1, foo=2, [1]=42})'))
+    eq({42}, funcs.luaeval('vim.api._vim_id({[vim.type_idx]=vim.types.array, [vim.val_idx]=10, [5]=1, foo=2, [1]=42})'))
     eq({foo=2}, funcs.luaeval('vim.api._vim_id({[vim.type_idx]=vim.types.dictionary, [vim.val_idx]=10, [5]=1, foo=2, [1]=42})'))
     eq(10, funcs.luaeval('vim.api._vim_id({[vim.type_idx]=vim.types.float, [vim.val_idx]=10, [5]=1, foo=2, [1]=42})'))
+    eq({}, funcs.luaeval('vim.api._vim_id({[vim.type_idx]=vim.types.array, [vim.val_idx]=10, [5]=1, foo=2})'))
   end)
   -- TODO: check what happens when it errors out on second list item
   -- TODO: check what happens if API function receives wrong number of
