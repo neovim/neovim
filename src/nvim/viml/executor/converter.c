@@ -446,7 +446,7 @@ bool nlua_pop_typval(lua_State *lstate, typval_T *ret_tv)
               ? (void *)mpval.data.d.dict == (void *)(val) \
               : (void *)mpval.data.l.list == (void *)(val)) { \
             lua_pushvalue(lstate, \
-                          1 - ((int)((kv_size(*mpstack) - backref + 1) * 2))); \
+                          -((int)((kv_size(*mpstack) - backref + 1) * 2))); \
             break; \
           } \
         } \

@@ -224,12 +224,23 @@ describe('luaeval() function', function()
     eq(10, funcs.luaeval('vim.api._vim_id({[vim.type_idx]=vim.types.float, [vim.val_idx]=10, [5]=1, foo=2, [1]=42})'))
   end)
   -- TODO: check what happens when it errors out on second list item
---[[FIXME
-   [ 
-   [   it('correctly converts self-containing containers', function()
-   [     meths.set_var('l', {})
-   [     eval('add(l, l)')
-   [     eq(true, eval('luaeval("_A == _A[1]", l)'))
-   [   end)
-   ]]
+  -- TODO: check what happens if API function receives wrong number of
+  -- arguments.
+  -- TODO: check what happens if API function receives wrong argument types.
+
+  it('correctly converts self-containing containers', function()
+    meths.set_var('l', {})
+    eval('add(l, l)')
+    eq(true, eval('luaeval("_A == _A[1]", l)'))
+    eq(true, eval('luaeval("_A[1] == _A[1][1]", [l])'))
+    eq(true, eval('luaeval("_A.d == _A.d[1]", {"d": l})'))
+    eq(true, eval('luaeval("_A ~= _A[1]", [l])'))
+
+    meths.set_var('d', {foo=42})
+    eval('extend(d, {"d": d})')
+    eq(true, eval('luaeval("_A == _A.d", d)'))
+    eq(true, eval('luaeval("_A[1] == _A[1].d", [d])'))
+    eq(true, eval('luaeval("_A.d == _A.d.d", {"d": d})'))
+    eq(true, eval('luaeval("_A ~= _A.d", {"d": d})'))
+  end)
 end)
