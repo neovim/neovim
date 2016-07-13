@@ -9,13 +9,12 @@ function! s:methods.get(reg)
   if g:cliperror
     return 0
   end
-  let reg = a:reg == '"' ? '+' : a:reg
   if g:cliplossy
     " behave like pure text clipboard
-    return g:test_clip[reg][0]
+    return g:test_clip[a:reg][0]
   else
     " behave like VIMENC clipboard
-    return g:test_clip[reg]
+    return g:test_clip[a:reg]
   end
 endfunction
 
