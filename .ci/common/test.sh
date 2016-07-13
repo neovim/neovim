@@ -83,8 +83,9 @@ install_nvim() {
     exit 1
   }
 
+  local genvimsynf=syntax/vim/generated.vim
   # Check that all runtime files were installed
-  for file in doc/tags syntax/vim/generated.vim $(
+  for file in doc/tags $genvimsynf $(
     cd runtime ; git ls-files | grep -e '.vim$' -e '.ps$' -e '.dict$' -e '.py$' -e '.tutor$'
   ) ; do
     if ! test -e "${INSTALL_PREFIX}/share/nvim/runtime/$file" ; then
@@ -92,6 +93,13 @@ install_nvim() {
       exit 1
     fi
   done
+
+  # Check that generated syntax file has function names, #5060.
+  local gpat='syn keyword vimFuncName .*eval'
+  if ! grep -q "$gpat" $genvimsynf ; then
+    echo "It appears that $genvimsynf does not contain $gpat."
+    exit 1
+  fi
 
   for file in $(
     cd runtime ; git ls-files | grep -e '.awk$' -e '.sh$' -e '.bat$'

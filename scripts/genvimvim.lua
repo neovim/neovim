@@ -124,11 +124,12 @@ for line in eval_fd:lines() do
       break
     end
     local func_name = line:match('^  { "([%w_]+)",')
-    assert(func_name, 'Did not find a function in line: '..line)
-    if lld.line_length > 850 then
-      w('\n' .. vimfun_start)
+    if func_name then
+      if lld.line_length > 850 then
+        w('\n' .. vimfun_start)
+      end
+      w(' ' .. func_name)
     end
-    w(' ' .. func_name)
   end
 end
 eval_fd:close()
