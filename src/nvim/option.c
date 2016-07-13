@@ -874,7 +874,7 @@ set_options_default (
 /// @param name The name of the option
 /// @param val The value of the option
 /// @param allocated If true, do not copy default as it was already allocated.
-static void set_string_default(const char *name, char *val, bool allocated)
+void set_string_default(const char *name, char *val, bool allocated)
   FUNC_ATTR_NONNULL_ALL
 {
   int opt_idx = findoption((char_u *)name);

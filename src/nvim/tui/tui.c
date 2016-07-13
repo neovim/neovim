@@ -68,6 +68,7 @@ typedef struct {
     int enter_insert_mode, enter_replace_mode, exit_insert_mode;
     int set_rgb_foreground, set_rgb_background;
     int enable_focus_reporting, disable_focus_reporting;
+    int get_bg;
   } unibi_ext;
 } TUIData;
 
@@ -125,6 +126,7 @@ static void terminfo_start(UI *ui)
   data->unibi_ext.exit_insert_mode = -1;
   data->unibi_ext.enable_focus_reporting = -1;
   data->unibi_ext.disable_focus_reporting = -1;
+  data->unibi_ext.get_bg = -1;
   data->out_fd = 1;
   data->out_isatty = os_isatty(data->out_fd);
   // setup unibilium
@@ -140,6 +142,8 @@ static void terminfo_start(UI *ui)
   // Enter alternate screen and clear
   unibi_out(ui, unibi_enter_ca_mode);
   unibi_out(ui, unibi_clear_screen);
+  // Ask the terminal to send us the background color
+  unibi_out(ui, data->unibi_ext.get_bg);
   // Enable bracketed paste
   unibi_out(ui, data->unibi_ext.enable_bracketed_paste);
   // Enable focus reporting
@@ -828,6 +832,8 @@ static void fix_terminfo(TUIData *data)
       "\x1b[?1004h");
   data->unibi_ext.disable_focus_reporting = (int)unibi_add_ext_str(ut, NULL,
       "\x1b[?1004l");
+
+  data->unibi_ext.get_bg = (int)unibi_add_ext_str(ut, NULL, "\x1b]11;?\x07");
 
 #define XTERM_SETAF \
   "\x1b[%?%p1%{8}%<%t3%p1%d%e%p1%{16}%<%t9%p1%{8}%-%d%e38;5;%p1%d%;m"
