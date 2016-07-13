@@ -27,7 +27,7 @@ endif()
 
 execute_process(
   COMMAND ${BUSTED_PRG} ${TEST_TAG} ${TEST_FILTER} -v -o ${BUSTED_OUTPUT_TYPE}
-    --lazy --helper=${TEST_DIR}/${TEST_TYPE}/preload.lua
+    --lua=${LUA_PRG} --lazy --helper=${TEST_DIR}/${TEST_TYPE}/preload.lua
     --lpath=${BUILD_DIR}/?.lua ${TEST_PATH}
   WORKING_DIRECTORY ${WORKING_DIR}
   ERROR_VARIABLE err
