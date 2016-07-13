@@ -18886,19 +18886,6 @@ set_var (
         || tv_check_lock(v->di_tv.v_lock, name, false)) {
       return;
     }
-    if (v->di_tv.v_type != tv->v_type
-        && !((v->di_tv.v_type == VAR_STRING
-              || v->di_tv.v_type == VAR_NUMBER)
-             && (tv->v_type == VAR_STRING
-                 || tv->v_type == VAR_NUMBER))
-        && !((v->di_tv.v_type == VAR_NUMBER
-              || v->di_tv.v_type == VAR_FLOAT)
-             && (tv->v_type == VAR_NUMBER
-                 || tv->v_type == VAR_FLOAT))
-        ) {
-      EMSG2(_("E706: Variable type mismatch for: %s"), name);
-      return;
-    }
 
     // Handle setting internal v: variables separately where needed to
     // prevent changing the type.
@@ -18908,7 +18895,7 @@ set_var (
         if (copy || tv->v_type != VAR_STRING)
           v->di_tv.vval.v_string = vim_strsave(get_tv_string(tv));
         else {
-          /* Take over the string to avoid an extra alloc/free. */
+          // Take over the string to avoid an extra alloc/free.
           v->di_tv.vval.v_string = tv->vval.v_string;
           tv->vval.v_string = NULL;
         }

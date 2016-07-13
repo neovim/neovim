@@ -103,18 +103,9 @@ to Float, printf() for Float to String and float2nr() for Float to Number.
 						*E891* *E892* *E893* *E894*
 When expecting a Float a Number can also be used, but nothing else.
 
-						*E706* *sticky-type-checking*
-You will get an error if you try to change the type of a variable.  You need
-to |:unlet| it first to avoid this error.  String and Number are considered
-equivalent though, as well are Float and Number.  Consider this sequence of
-commands: >
-	:let l = "string"
-	:let l = 44		" changes type from String to Number
-	:let l = [1, 2, 3]	" error!  l is still a Number
-	:let l = 4.4		" changes type from Number to Float
-	:let l = "string"	" error!
-
-
+					*no-type-checking*
+You will not get an error if you try to change the type of a variable.
+	
 1.2 Function references ~
 					*Funcref* *E695* *E718*
 A Funcref variable is obtained with the |function()| function.	It can be used
