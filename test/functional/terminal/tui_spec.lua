@@ -370,3 +370,66 @@ describe("tui 't_Co' (terminal colors)", function()
     assert_term_colors("xterm-256color", nil, 256)
   end)
 end)
+
+describe('tui background handling', function()
+  local screen
+
+  before_each(function()
+    helpers.clear()
+    screen = thelpers.screen_setup(0, '["'..helpers.nvim_prog..'", "-u", "NONE", "-i", "NONE", "--cmd", "set noswapfile"]')
+  end)
+
+  local function assert_bg(color, bg)
+    it('handles '..color..' as '..bg, function()
+      thelpers.feed_data('\027]11;rgb:'..color..'\007:echo &background\n')
+      screen:expect(string.format([[
+        {1: }                                                 |
+        ~                                                 |
+        ~                                                 |
+        ~                                                 |
+        [No Name]                                         |
+        %-5s                                             |
+        -- TERMINAL --                                    |
+      ]], bg))
+    end)
+  end
+
+  assert_bg('0000/0000/0000', 'dark')
+  assert_bg('ffff/ffff/ffff', 'light')
+  assert_bg('000/000/000', 'dark')
+  assert_bg('fff/fff/fff', 'light')
+  assert_bg('00/00/00', 'dark')
+  assert_bg('ff/ff/ff', 'light')
+  assert_bg('0/0/0', 'dark')
+  assert_bg('f/f/f', 'light')
+
+  assert_bg('f/0/0', 'dark')
+  assert_bg('0/f/0', 'light')
+  assert_bg('0/0/f', 'dark')
+
+  assert_bg('1/1/1', 'dark')
+  assert_bg('2/2/2', 'dark')
+  assert_bg('3/3/3', 'dark')
+  assert_bg('4/4/4', 'dark')
+  assert_bg('5/5/5', 'dark')
+  assert_bg('6/6/6', 'dark')
+  assert_bg('7/7/7', 'dark')
+  assert_bg('8/8/8', 'light')
+  assert_bg('9/9/9', 'light')
+  assert_bg('a/a/a', 'light')
+  assert_bg('b/b/b', 'light')
+  assert_bg('c/c/c', 'light')
+  assert_bg('d/d/d', 'light')
+  assert_bg('e/e/e', 'light')
+
+  assert_bg('0/e/0', 'light')
+  assert_bg('0/d/0', 'light')
+  assert_bg('0/c/0', 'dark')
+  assert_bg('0/b/0', 'dark')
+
+  assert_bg('f/0/f', 'dark')
+  assert_bg('f/1/f', 'dark')
+  assert_bg('f/2/f', 'dark')
+  assert_bg('f/3/f', 'light')
+  assert_bg('f/4/f', 'light')
+end)
