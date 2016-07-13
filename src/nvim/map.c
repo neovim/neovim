@@ -129,7 +129,10 @@ static inline khint_t String_hash(String s)
 
 static inline bool String_eq(String a, String b)
 {
-  return strncmp(a.data, b.data, MIN(a.size, b.size)) == 0;
+  if (a.size != b.size) {
+    return false;
+  }
+  return memcmp(a.data, b.data, a.size) == 0;
 }
 
 
