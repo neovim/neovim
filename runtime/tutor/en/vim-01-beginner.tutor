@@ -18,9 +18,9 @@ be saved. Don't worry about messing things up; just remember that pressing
 [<Esc>](<Esc>) and then [u](u) will undo the latest change.
 
 This tutorial is interactive, and there are a few things you should know.
-Pressing [<Enter>](<Enter>) over text highlighted [like this](holy-grail) will take you to some relevant
-help (hopefully), and pressing K over any word will try to do so too. Sometimes
-you will be required to modify text like
+Pressing [<Enter>](<Enter>) over text highlighted [like this](holy-grail) will take you to some 
+relevant help (hopefully), and pressing K over any word will try to do so too.
+Sometimes you will be required to modify text like
 --->  this here {expect:this here}
 Once you have done the changes correctly, the ✗ sign at the left will change
 to ✓. I imagine you can already see how neat Vim can be ;)
@@ -947,6 +947,7 @@ There are many resources online to learn more about vim. Here's a bunch of them:
 - Vim Video-Tutorials by Derek Wyatt: http://derekwyatt.org/vim/tutorials/
 - *Learn Vimscript the Hard Way*: http://learnvimscriptthehardway.stevelosh.com/
 - *7 Habits of Effective Text Editing*: http://www.moolenaar.net/habits.html
+- *vim-galore*: https://github.com/mhinz/vim-galore
 
 If you prefer a book, *Practival Vim* by Drew Neil is recommended often.
 
