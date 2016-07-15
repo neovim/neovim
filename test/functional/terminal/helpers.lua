@@ -5,7 +5,7 @@ local execute, nvim, wait = helpers.execute, helpers.nvim, helpers.wait
 
 local function feed_data(data)
   nvim('set_var', 'term_data', data)
-  nvim('command', 'call jobsend(b:terminal_job_id, term_data)')
+  nvim('command', 'call jobsend(b:terminal_job_id, g:term_data)')
 end
 
 local function feed_termcode(data)

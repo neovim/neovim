@@ -73,6 +73,7 @@ endif
 
 ifdef TESTNUM
 	SCRIPTS := test$(TESTNUM).out
+	NEW_TESTS := test$(TESTNUM).res
 endif
 
 nongui: nolog $(SCRIPTS) newtests report
