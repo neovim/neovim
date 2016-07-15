@@ -2,7 +2,6 @@ local helpers = require('test.functional.helpers')(after_each)
 
 local clear = helpers.clear
 local eq = helpers.eq
-local eval = helpers.eval
 local exc_exec = helpers.exc_exec
 
 describe('Up to MAX_FUNC_ARGS arguments are handled by', function()
@@ -26,13 +25,5 @@ describe('Up to MAX_FUNC_ARGS arguments are handled by', function()
     eq(1, ret)
     ret = exc_exec('call rpcnotify(0, "foo", 3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21)')
     eq('Vim(call):E740: Too many arguments for function rpcnotify', ret)
-  end)
-end)
-
-describe('api_info()', function()
-  before_each(clear)
-  it('has the right keys', function()
-    local api_keys = eval("sort(keys(api_info()))")
-    eq({'error_types', 'functions', 'types'}, api_keys)
   end)
 end)
