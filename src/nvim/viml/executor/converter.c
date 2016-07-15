@@ -724,16 +724,15 @@ void nlua_push_Object(lua_State *lstate, const Object obj)
 String nlua_pop_String(lua_State *lstate, Error *err)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
+  if (lua_type(lstate, -1) != LUA_TSTRING) {
+    lua_pop(lstate, 1);
+    api_set_error(err, Validation, "Expected lua string");
+    return (String) { .size = 0, .data = NULL };
+  }
   String ret;
 
   ret.data = (char *)lua_tolstring(lstate, -1, &(ret.size));
-
-  if (ret.data == NULL) {
-    lua_pop(lstate, 1);
-    set_api_error("Expected lua string", err);
-    return (String) { .size = 0, .data = NULL };
-  }
-
+  assert(ret.data != NULL);
   ret.data = xmemdupz(ret.data, ret.size);
   lua_pop(lstate, 1);
 
@@ -746,17 +745,19 @@ String nlua_pop_String(lua_State *lstate, Error *err)
 Integer nlua_pop_Integer(lua_State *lstate, Error *err)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  Integer ret = 0;
-
-  if (!lua_isnumber(lstate, -1)) {
+  if (lua_type(lstate, -1) != LUA_TNUMBER) {
     lua_pop(lstate, 1);
-    set_api_error("Expected lua integer", err);
-    return ret;
+    api_set_error(err, Validation, "Expected lua number");
+    return 0;
   }
-  ret = (Integer)lua_tonumber(lstate, -1);
+  const lua_Number n = lua_tonumber(lstate, -1);
   lua_pop(lstate, 1);
-
-  return ret;
+  if (n > (lua_Number)API_INTEGER_MAX || n < (lua_Number)API_INTEGER_MIN
+      || ((lua_Number)((Integer)n)) != n) {
+    api_set_error(err, Exception, "Number is not integral");
+    return 0;
+  }
+  return (Integer)n;
 }
 
 /// Convert lua value to boolean
@@ -765,7 +766,7 @@ Integer nlua_pop_Integer(lua_State *lstate, Error *err)
 Boolean nlua_pop_Boolean(lua_State *lstate, Error *err)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  Boolean ret = lua_toboolean(lstate, -1);
+  const Boolean ret = lua_toboolean(lstate, -1);
   lua_pop(lstate, 1);
   return ret;
 }
@@ -784,7 +785,7 @@ static inline LuaTableProps nlua_check_type(lua_State *const lstate,
 {
   if (lua_type(lstate, -1) != LUA_TTABLE) {
     if (err) {
-      set_api_error("Expected lua table", err);
+      api_set_error(err, Validation, "Expected lua table");
     }
     return (LuaTableProps) { .type = kObjectTypeNil };
   }
@@ -797,7 +798,7 @@ static inline LuaTableProps nlua_check_type(lua_State *const lstate,
 
   if (table_props.type != type) {
     if (err) {
-      set_api_error("Unexpected type", err);
+      api_set_error(err, Validation, "Unexpected type");
     }
   }
 
@@ -1050,7 +1051,7 @@ Object nlua_pop_Object(lua_State *const lstate, Error *const err)
         const lua_Number n = lua_tonumber(lstate, -1);
         if (n > (lua_Number)API_INTEGER_MAX || n < (lua_Number)API_INTEGER_MIN
             || ((lua_Number)((Integer)n)) != n) {
-          *cur.obj = FLOATING_OBJ((Float)n);
+          *cur.obj = FLOAT_OBJ((Float)n);
         } else {
           *cur.obj = INTEGER_OBJ((Integer)n);
         }
@@ -1094,7 +1095,7 @@ Object nlua_pop_Object(lua_State *const lstate, Error *const err)
             break;
           }
           case kObjectTypeFloat: {
-            *cur.obj = FLOATING_OBJ((Float)table_props.val);
+            *cur.obj = FLOAT_OBJ((Float)table_props.val);
             break;
           }
           case kObjectTypeNil: {

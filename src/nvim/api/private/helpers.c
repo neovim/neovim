@@ -351,7 +351,7 @@ void set_option_to(void *to, int type, String name, Object value, Error *err)
 #define TYPVAL_ENCODE_CONV_UNSIGNED_NUMBER TYPVAL_ENCODE_CONV_NUMBER
 
 #define TYPVAL_ENCODE_CONV_FLOAT(tv, flt) \
-    kv_push(edata->stack, FLOATING_OBJ((Float)(flt)))
+    kv_push(edata->stack, FLOAT_OBJ((Float)(flt)))
 
 #define TYPVAL_ENCODE_CONV_STRING(tv, str, len) \
     do { \

@@ -139,7 +139,7 @@ String nvim_replace_termcodes(String str, Boolean from_part, Boolean do_lt,
 {
   if (str.size == 0) {
     // Empty string
-    return str;
+    return (String) { .data = NULL, .size = 0 };
   }
 
   char *ptr = NULL;
@@ -843,7 +843,7 @@ static void write_msg(String message, bool to_err)
 /// @return its argument.
 Object _vim_id(Object obj)
 {
-  return obj;
+  return copy_object(obj);
 }
 
 /// Returns array given as argument
@@ -856,7 +856,7 @@ Object _vim_id(Object obj)
 /// @return its argument.
 Array _vim_id_array(Array arr)
 {
-  return arr;
+  return copy_object(ARRAY_OBJ(arr)).data.array;
 }
 
 /// Returns dictionary given as argument
@@ -869,5 +869,18 @@ Array _vim_id_array(Array arr)
 /// @return its argument.
 Dictionary _vim_id_dictionary(Dictionary dct)
 {
-  return dct;
+  return copy_object(DICTIONARY_OBJ(dct)).data.dictionary;
+}
+
+/// Returns floating-point value given as argument
+///
+/// This API function is used for testing. One should not rely on its presence
+/// in plugins.
+///
+/// @param[in]  flt  Value to return.
+///
+/// @return its argument.
+Float _vim_id_float(Float flt)
+{
+  return flt;
 }

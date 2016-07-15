@@ -117,7 +117,7 @@ bool msgpack_rpc_to_object(const msgpack_object *const obj, Object *const arg)
       case MSGPACK_OBJECT_FLOAT: {
         STATIC_ASSERT(sizeof(Float) == sizeof(cur.mobj->via.f64),
                       "Msgpack floating-point size does not match API integer");
-        *cur.aobj = FLOATING_OBJ(cur.mobj->via.f64);
+        *cur.aobj = FLOAT_OBJ(cur.mobj->via.f64);
         break;
       }
 #define STR_CASE(type, attr, obj, dest, conv) \

@@ -276,12 +276,53 @@ describe('luaeval() function', function()
   end)
 
   it('errors out correctly when working with API', function()
-    eq(0, exc_exec([[call luaeval("vim.api.id")]]))
+    -- Conversion errors
+    eq('Vim(call):E5108: Error while calling lua chunk for luaeval(): Cannot convert given lua type',
+       exc_exec([[call luaeval("vim.api._vim_id(vim.api._vim_id)")]]))
+    eq('Vim(call):E5108: Error while calling lua chunk for luaeval(): Cannot convert given lua table',
+       exc_exec([[call luaeval("vim.api._vim_id({1, foo=42})")]]))
+    eq('Vim(call):E5108: Error while calling lua chunk for luaeval(): Cannot convert given lua type',
+       exc_exec([[call luaeval("vim.api._vim_id({42, vim.api._vim_id})")]]))
+    -- Errors in number of arguments
+    eq('Vim(call):E5108: Error while calling lua chunk for luaeval(): Expected 1 argument',
+       exc_exec([[call luaeval("vim.api._vim_id()")]]))
+    eq('Vim(call):E5108: Error while calling lua chunk for luaeval(): Expected 1 argument',
+       exc_exec([[call luaeval("vim.api._vim_id(1, 2)")]]))
+    eq('Vim(call):E5108: Error while calling lua chunk for luaeval(): Expected 2 arguments',
+       exc_exec([[call luaeval("vim.api.vim_set_var(1, 2, 3)")]]))
+    -- Error in argument types
+    eq('Vim(call):E5108: Error while calling lua chunk for luaeval(): Expected lua string',
+       exc_exec([[call luaeval("vim.api.vim_set_var(1, 2)")]]))
+
+    eq('Vim(call):E5108: Error while calling lua chunk for luaeval(): Expected lua number',
+       exc_exec([[call luaeval("vim.api.buffer_get_line(0, 'test')")]]))
+    eq('Vim(call):E5108: Error while calling lua chunk for luaeval(): Number is not integral',
+       exc_exec([[call luaeval("vim.api.buffer_get_line(0, 1.5)")]]))
+
+    eq('Vim(call):E5108: Error while calling lua chunk for luaeval(): Expected lua table',
+       exc_exec([[call luaeval("vim.api._vim_id_float('test')")]]))
+    eq('Vim(call):E5108: Error while calling lua chunk for luaeval(): Unexpected type',
+       exc_exec([[call luaeval("vim.api._vim_id_float({[vim.type_idx]=vim.types.dictionary})")]]))
+
+    eq('Vim(call):E5108: Error while calling lua chunk for luaeval(): Expected lua table',
+       exc_exec([[call luaeval("vim.api._vim_id_array(1)")]]))
+    eq('Vim(call):E5108: Error while calling lua chunk for luaeval(): Unexpected type',
+       exc_exec([[call luaeval("vim.api._vim_id_array({[vim.type_idx]=vim.types.dictionary})")]]))
+
+    eq('Vim(call):E5108: Error while calling lua chunk for luaeval(): Expected lua table',
+       exc_exec([[call luaeval("vim.api._vim_id_dictionary(1)")]]))
+    eq('Vim(call):E5108: Error while calling lua chunk for luaeval(): Unexpected type',
+       exc_exec([[call luaeval("vim.api._vim_id_dictionary({[vim.type_idx]=vim.types.array})")]]))
+    -- TODO: check for errors with Tabpage argument
+    -- TODO: check for errors with Window argument
+    -- TODO: check for errors with Buffer argument
+  end)
+
+  it('accepts any value as API Boolean', function()
+    eq('', funcs.luaeval('vim.api.vim_replace_termcodes("", vim, false, nil)'))
+    eq('', funcs.luaeval('vim.api.vim_replace_termcodes("", 0, 1.5, "test")'))
+    eq('', funcs.luaeval('vim.api.vim_replace_termcodes("", true, {}, {[vim.type_idx]=vim.types.array})'))
   end)
 
   -- TODO: check buffer/window/etc.
-  -- TODO: check what happens when it errors out on second list item
-  -- TODO: check what happens if API function receives wrong number of
-  -- arguments.
-  -- TODO: check what happens if API function receives wrong argument types.
 end)

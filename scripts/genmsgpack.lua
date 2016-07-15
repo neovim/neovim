@@ -216,6 +216,14 @@ local function real_type(type)
   return rv
 end
 
+local function attr_name(rt)
+  if rt == 'Float' then
+    return 'floating'
+  else
+    return rt:lower()
+  end
+end
+
 -- start the handler functions. Visit each function metadata to build the
 -- handler function with code generated for validating arguments and calling to
 -- the real API.
@@ -253,7 +261,7 @@ for i = 1, #functions do
           output:write('\n    '..converted..' = (handle_T)args.items['..(j - 1)..'].data.integer;')
         else
           output:write('\n  if (args.items['..(j - 1)..'].type == kObjectType'..rt..') {')
-          output:write('\n    '..converted..' = args.items['..(j - 1)..'].data.'..rt:lower()..';')
+          output:write('\n    '..converted..' = args.items['..(j - 1)..'].data.'..attr_name(rt)..';')
         end
         if rt:match('^Buffer$') or rt:match('^Window$') or rt:match('^Tabpage$') or rt:match('^Boolean$') then
           -- accept nonnegative integers for Booleans, Buffers, Windows and Tabpages
@@ -368,6 +376,7 @@ output:write([[
 
 #include "nvim/func_attr.h"
 #include "nvim/api/private/defs.h"
+#include "nvim/api/private/helpers.h"
 #include "nvim/viml/executor/converter.h"
 ]])
 include_headers(output, headers)
@@ -382,27 +391,35 @@ local function process_function(fn)
   static int %s(lua_State *lstate)
   {
     Error err = {.set = false};
-  ]], lua_c_function_name))
+    if (lua_gettop(lstate) != %i) {
+      api_set_error(&err, Validation, "Expected %i argument%s");
+      lua_pushstring(lstate, err.msg);
+      return lua_error(lstate);
+    }
+  ]], lua_c_function_name, #fn.parameters, #fn.parameters,
+      (#fn.parameters == 1) and '' or 's'))
   lua_c_functions[#lua_c_functions + 1] = {
     binding=lua_c_function_name,
     api=fn.name
   }
-  cparams = ''
-  for j, param in ipairs(fn.parameters) do
+  local cparams = ''
+  local free_code = {}
+  for j = #fn.parameters,1,-1 do
+    param = fn.parameters[j]
     cparam = string.format('arg%u', j)
-    if param[1]:match('^ArrayOf') then
-      param_type = 'Array'
-    else
-      param_type = param[1]
-    end
+    param_type = real_type(param[1])
+    lc_param_type = param_type:lower()
     write_shifted_output(output, string.format([[
-    %s %s = nlua_pop_%s(lstate, &err);
+    const %s %s = nlua_pop_%s(lstate, &err);
+
     if (err.set) {
+      %s
       lua_pushstring(lstate, err.msg);
       return lua_error(lstate);
     }
-    ]], param[1], cparam, param_type))
-    cparams = cparams .. cparam .. ', '
+    ]], param[1], cparam, param_type, table.concat(free_code, '\n      ')))
+    free_code[#free_code + 1] = ('api_free_%s(%s);'):format(lc_param_type, cparam)
+    cparams = cparam .. ', ' .. cparams
   end
   if fn.receives_channel_id then
     cparams = 'INTERNAL_CALL, ' .. cparams
@@ -412,7 +429,7 @@ local function process_function(fn)
   else
     cparams = cparams:gsub(', $', '')
   end
-  local name = fn.impl_name or fn.name
+  free_at_exit_code = table.concat(free_code, '\n    ')
   if fn.return_type ~= 'void' then
     if fn.return_type:match('^ArrayOf') then
       return_type = 'Array'
@@ -420,23 +437,27 @@ local function process_function(fn)
       return_type = fn.return_type
     end
     write_shifted_output(output, string.format([[
-    %s ret = %s(%s);
+    const %s ret = %s(%s);
+    %s
     if (err.set) {
       lua_pushstring(lstate, err.msg);
       return lua_error(lstate);
     }
     nlua_push_%s(lstate, ret);
+    api_free_%s(ret);
     return 1;
-    ]], fn.return_type, name, cparams, return_type))
+    ]], fn.return_type, fn.name, cparams, free_at_exit_code, return_type,
+        return_type:lower()))
   else
     write_shifted_output(output, string.format([[
     %s(%s);
+    %s
     if (err.set) {
       lua_pushstring(lstate, err.msg);
       return lua_error(lstate);
     }
     return 0;
-    ]], name, cparams))
+    ]], fn.name, cparams, free_at_exit_code))
   end
   write_shifted_output(output, [[
   }
@@ -457,11 +478,12 @@ void nlua_add_api_functions(lua_State *lstate)
 ]], #lua_c_functions))
 for _, func in ipairs(lua_c_functions) do
   output:write(string.format([[
+
   lua_pushcfunction(lstate, &%s);
-  lua_setfield(lstate, -2, "%s");
-  ]], func.binding, func.api))
+  lua_setfield(lstate, -2, "%s");]], func.binding, func.api))
 end
 output:write([[
+
   lua_setfield(lstate, -2, "api");
 }
 ]])
