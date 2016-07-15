@@ -3,8 +3,19 @@ let s:bad_responses = [
             \ 'unable to parse python response',
             \ 'unable to parse',
             \ 'unable to get pypi response',
-            \ 'unable to get neovim executable'
+            \ 'unable to get neovim executable',
+            \ 'unable to find neovim version'
             \ ]
+
+""
+" Check if the string is a bad response
+function! s:is_bad_response(s) abort
+    if index(s:bad_responses, a:s) >= 0
+        return v:true
+    else
+        return v:false
+    endif
+endfunction
 
 function! s:trim(s) abort
   return substitute(a:s, '^\_s*\|\_s*$', '', 'g')
@@ -47,7 +58,7 @@ function! s:download(url) abort
           \except Exception:\n
           \    pass\n
           \"
-    let content = system(['python', '-c', "'", script, "'", '2>/dev/null')
+    let content = system(['python', '-c', "'", script, "'", '2>/dev/null'])
   endif
 
   return content
@@ -87,7 +98,8 @@ function! s:version_info(python) abort
   let python_version = s:trim(system([
         \ a:python,
         \ '-c',
-        \ '"import sys; print(\".\".join(str(x) for x in sys.version_info[:3]))"']))
+        \ 'import sys; print(".".join(str(x) for x in sys.version_info[:3]))',
+        \ ]))
 
   if empty(python_version)
     let python_version = 'unable to parse python response'
@@ -96,25 +108,30 @@ function! s:version_info(python) abort
   let nvim_path = s:trim(system([
         \ a:python,
         \ '-c',
-        \ '"import sys, neovim; print(neovim.__file__)"',
+        \ 'import neovim; print(neovim.__file__)',
         \ '2>/dev/null']))
 
+  let nvim_path = s:trim(system([
+        \ 'python3',
+        \ '-c',
+        \ 'import neovim; print(neovim.__file__)'
+        \ ]))
+        " \ '2>/dev/null']))
+
   if empty(nvim_path)
-    return [python_version, 'not found', pypi_version, 'unable to get neovim executable']
+    return [python_version, 'unable to find neovim executable', pypi_version, 'unable to get neovim executable']
   endif
 
-  let nvim_version = 'unknown'
+  let nvim_version = 'unable to find neovim version'
   let base = fnamemodify(nvim_path, ':h')
-  for meta in glob(base.'-*/METADATA', 1, 1) + glob(base.'-*/PKG-INFO', 1, 1)
-    for meta_line in readfile(meta)
-      if meta_line =~# '^Version:'
-        let nvim_version = matchstr(meta_line, '^Version: \zs\S\+')
-      endif
-    endfor
+  for meta_line in readfile(base.'/../EGG-INFO/PKG-INFO')
+    if meta_line =~# '^Version:'
+      let nvim_version = matchstr(meta_line, '^Version: \zs\S\+')
+    endif
   endfor
 
   let version_status = 'unknown'
-  if nvim_version != 'unknown' && pypi_version != 'unknown'
+  if !s:is_bad_response(nvim_version) && !s:is_bad_response(pypi_version)
     if s:version_cmp(nvim_version, pypi_version) == -1
       let version_status = 'outdated'
     else
@@ -175,7 +192,7 @@ function! s:check_manifest() abort
 
         if !has_key(existing_rplugins, script)
           let msg = printf('"%s" is not registered.', fnamemodify(path, ':t'))
-          if python_version == 'pythonx'
+          if python_version ==# 'pythonx'
             if !has('python2') && !has('python3')
               let msg .= ' (python2 and python3 not available)'
             endif
@@ -202,7 +219,7 @@ endfunction
 
 
 function! s:check_python(version) abort
-  let python_bin_name = 'python'.(a:version == 2 ? '' : '3')
+  let python_bin_name = 'python'.(a:version == 2 ? '2' : '3')
   let pyenv = resolve(exepath('pyenv'))
   let pyenv_root = exists('$PYENV_ROOT') ? resolve($PYENV_ROOT) : 'n'
   let venv = exists('$VIRTUAL_ENV') ? resolve($VIRTUAL_ENV) : ''
@@ -253,7 +270,7 @@ function! s:check_python(version) abort
     if !empty(pyenv)
       if empty(pyenv_root)
         call health#report_warn(
-              \ 'pyenv was found, but $PYENV_ROOT is not set.'
+              \ 'pyenv was found, but $PYENV_ROOT is not set.',
               \ ['Did you follow the final install instructions?']
               \ )
       else
@@ -377,20 +394,21 @@ function! s:check_python(version) abort
     call health#report_info('Python Version: ' . pyversion)
     call health#report_info(printf('%s-neovim Version: %s', python_bin_name, current))
 
-    if current == 'not found'
+    if s:is_bad_response(current)
       let suggestions = [
-            \ 'Use the command `pip ' . a:version . ' install neovim`',
+            \ 'Error found was: ' . current,
+            \ 'Use the command `$ pip' . a:version . ' install neovim`',
             \ ]
       call health#report_error(
             \ 'Neovim Python client is not installed.',
             \ suggestions)
     endif
 
-    if latest == 'unknown'
+    if s:is_bad_response(latest)
       call health#report_warn('Unable to fetch latest Neovim Python client version.')
     endif
 
-    if status == 'outdated'
+    if s:is_bad_response(status)
       call health#report_warn('Latest Neovim Python client versions: ('.latest.')')
     else
       call health#report_ok('Latest Neovim Python client is installed: ('.status.')')
