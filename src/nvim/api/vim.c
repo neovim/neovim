@@ -197,19 +197,6 @@ Object nvim_eval(String expr, Error *err)
   return rv;
 }
 
-/// Returns object given as argument
-///
-/// This API function is used for testing. One should not rely on its presence
-/// in plugins.
-///
-/// @param[in]  obj  Object to return.
-///
-/// @return its argument.
-Object _vim_id(Object obj)
-{
-  return obj;
-}
-
 /// Calls a VimL function with the given arguments
 ///
 /// On VimL error: Returns a generic error; v:errmsg is not updated.
@@ -842,4 +829,45 @@ static void write_msg(String message, bool to_err)
   }
   --no_wait_return;
   msg_end();
+}
+
+// Functions used for testing purposes
+
+/// Returns object given as argument
+///
+/// This API function is used for testing. One should not rely on its presence
+/// in plugins.
+///
+/// @param[in]  obj  Object to return.
+///
+/// @return its argument.
+Object _vim_id(Object obj)
+{
+  return obj;
+}
+
+/// Returns array given as argument
+///
+/// This API function is used for testing. One should not rely on its presence
+/// in plugins.
+///
+/// @param[in]  arr  Array to return.
+///
+/// @return its argument.
+Array _vim_id_array(Array arr)
+{
+  return arr;
+}
+
+/// Returns dictionary given as argument
+///
+/// This API function is used for testing. One should not rely on its presence
+/// in plugins.
+///
+/// @param[in]  dct  Dictionary to return.
+///
+/// @return its argument.
+Dictionary _vim_id_dictionary(Dictionary dct)
+{
+  return dct;
 }

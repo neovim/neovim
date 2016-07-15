@@ -76,10 +76,10 @@ typedef struct {
 } Dictionary;
 
 typedef enum {
+  kObjectTypeNil = 0,
   kObjectTypeBuffer,
   kObjectTypeWindow,
   kObjectTypeTabpage,
-  kObjectTypeNil,
   kObjectTypeBoolean,
   kObjectTypeInteger,
   kObjectTypeFloat,

@@ -31,6 +31,9 @@ describe('luaeval() function', function()
     nested_by_level[i] = {o=nested, s=nested_s}
   end
 
+  -- Not checked: funcrefs converted to NIL. To be altered to something more
+  -- meaningful later.
+
   it('correctly evaluates scalars', function()
     eq(1, funcs.luaeval('1'))
     eq(0, eval('type(luaeval("1"))'))
@@ -135,6 +138,10 @@ describe('luaeval() function', function()
                exc_exec('call luaeval("1, 2, 3")'))
     startswith("Vim(call):E5108: Error while calling lua chunk for luaeval(): ",
                exc_exec('call luaeval("(nil)()")'))
+    eq("Vim(call):E5101: Cannot convert given lua type",
+       exc_exec('call luaeval("{42, vim.api}")'))
+    eq("Vim(call):E5101: Cannot convert given lua type",
+       exc_exec('call luaeval("{foo=42, baz=vim.api}")'))
 
     -- The following should not crash: conversion error happens inside
     eq("Vim(call):E5101: Cannot convert given lua type",
@@ -208,9 +215,7 @@ describe('luaeval() function', function()
     eq({foo=1, bar={42, {{baz=true}, 5}}}, funcs.luaeval('vim.api._vim_id({foo=1, bar={42, {{baz=true}, 5}}})'))
   end)
 
-  it('correctly converts containers with type_idx to API objects', function()
-    -- TODO: Similar tests with _vim_array_id and _vim_dictionary_id, that will
-    -- follow slightly different code paths.
+  it('correctly converts container objects with type_idx to API objects', function()
     eq(5, eval('type(luaeval("vim.api._vim_id({[vim.type_idx]=vim.types.float, [vim.val_idx]=0})"))'))
     eq(4, eval([[type(luaeval('vim.api._vim_id({[vim.type_idx]=vim.types.dictionary})'))]]))
     eq(3, eval([[type(luaeval('vim.api._vim_id({[vim.type_idx]=vim.types.array})'))]]))
@@ -223,10 +228,18 @@ describe('luaeval() function', function()
     eq(10, funcs.luaeval('vim.api._vim_id({[vim.type_idx]=vim.types.float, [vim.val_idx]=10, [5]=1, foo=2, [1]=42})'))
     eq({}, funcs.luaeval('vim.api._vim_id({[vim.type_idx]=vim.types.array, [vim.val_idx]=10, [5]=1, foo=2})'))
   end)
-  -- TODO: check what happens when it errors out on second list item
-  -- TODO: check what happens if API function receives wrong number of
-  -- arguments.
-  -- TODO: check what happens if API function receives wrong argument types.
+
+  it('correctly converts arrays with type_idx to API objects', function()
+    eq(3, eval([[type(luaeval('vim.api._vim_id_array({[vim.type_idx]=vim.types.array})'))]]))
+
+    eq({}, funcs.luaeval('vim.api._vim_id_array({[vim.type_idx]=vim.types.array})'))
+
+    -- Presence of type_idx makes Vim ignore some keys
+    eq({42}, funcs.luaeval('vim.api._vim_id_array({[vim.type_idx]=vim.types.array, [vim.val_idx]=10, [5]=1, foo=2, [1]=42})'))
+    eq({{foo=2}}, funcs.luaeval('vim.api._vim_id_array({{[vim.type_idx]=vim.types.dictionary, [vim.val_idx]=10, [5]=1, foo=2, [1]=42}})'))
+    eq({10}, funcs.luaeval('vim.api._vim_id_array({{[vim.type_idx]=vim.types.float, [vim.val_idx]=10, [5]=1, foo=2, [1]=42}})'))
+    eq({}, funcs.luaeval('vim.api._vim_id_array({[vim.type_idx]=vim.types.array, [vim.val_idx]=10, [5]=1, foo=2})'))
+  end)
 
   it('correctly converts self-containing containers', function()
     meths.set_var('l', {})
@@ -243,4 +256,14 @@ describe('luaeval() function', function()
     eq(true, eval('luaeval("_A.d == _A.d.d", {"d": d})'))
     eq(true, eval('luaeval("_A ~= _A.d", {"d": d})'))
   end)
+
+  it('errors out correctly when working with API', function()
+    eq(0, exc_exec([[call luaeval("vim.api.id")]]))
+  end)
+
+  -- TODO: check buffer/window/etc.
+  -- TODO: check what happens when it errors out on second list item
+  -- TODO: check what happens if API function receives wrong number of
+  -- arguments.
+  -- TODO: check what happens if API function receives wrong argument types.
 end)
