@@ -33,6 +33,7 @@ typedef struct {
                     ///< either kObjectTypeNil, kObjectTypeDictionary or
                     ///< kObjectTypeArray, depending on other properties.
   lua_Number val;  ///< If has_val_key and val_type == LUA_TNUMBER: value.
+  bool has_type_key;  ///< True if type key is present.
 } LuaTableProps;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -48,8 +49,6 @@ typedef struct {
 static LuaTableProps nlua_traverse_table(lua_State *const lstate)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  bool has_type_key = false;  // True if type key was found,
-                              // @see nlua_push_type_idx().
   size_t tsize = 0;  // Total number of keys.
   int val_type = 0;  // If has_val_key: lua type of the value.
   bool has_val_key = false;  // True if val key was found,
@@ -96,7 +95,7 @@ static LuaTableProps nlua_traverse_table(lua_State *const lstate)
             if (n == (lua_Number)kObjectTypeFloat
                 || n == (lua_Number)kObjectTypeArray
                 || n == (lua_Number)kObjectTypeDictionary) {
-              has_type_key = true;
+              ret.has_type_key = true;
               ret.type = (ObjectType)n;
             } else {
               other_keys_num++;
@@ -121,7 +120,7 @@ static LuaTableProps nlua_traverse_table(lua_State *const lstate)
     tsize++;
     lua_pop(lstate, 1);
   }
-  if (has_type_key) {
+  if (ret.has_type_key) {
     if (ret.type == kObjectTypeFloat
         && (!has_val_key || val_type != LUA_TNUMBER)) {
       ret.type = kObjectTypeNil;
@@ -133,7 +132,7 @@ static LuaTableProps nlua_traverse_table(lua_State *const lstate)
       // should be ignored.
       if (ret.maxidx != 0
           && ret.maxidx != (tsize
-                            - has_type_key
+                            - ret.has_type_key
                             - other_keys_num
                             - has_val_key
                             - ret.string_keys_num)) {
@@ -789,7 +788,12 @@ static inline LuaTableProps nlua_check_type(lua_State *const lstate,
     }
     return (LuaTableProps) { .type = kObjectTypeNil };
   }
-  const LuaTableProps table_props = nlua_traverse_table(lstate);
+  LuaTableProps table_props = nlua_traverse_table(lstate);
+
+  if (type == kObjectTypeDictionary && table_props.type == kObjectTypeArray
+      && table_props.maxidx == 0 && !table_props.has_type_key) {
+    table_props.type = kObjectTypeDictionary;
+  }
 
   if (table_props.type != type) {
     if (err) {

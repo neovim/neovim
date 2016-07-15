@@ -234,11 +234,29 @@ describe('luaeval() function', function()
 
     eq({}, funcs.luaeval('vim.api._vim_id_array({[vim.type_idx]=vim.types.array})'))
 
-    -- Presence of type_idx makes Vim ignore some keys
     eq({42}, funcs.luaeval('vim.api._vim_id_array({[vim.type_idx]=vim.types.array, [vim.val_idx]=10, [5]=1, foo=2, [1]=42})'))
     eq({{foo=2}}, funcs.luaeval('vim.api._vim_id_array({{[vim.type_idx]=vim.types.dictionary, [vim.val_idx]=10, [5]=1, foo=2, [1]=42}})'))
     eq({10}, funcs.luaeval('vim.api._vim_id_array({{[vim.type_idx]=vim.types.float, [vim.val_idx]=10, [5]=1, foo=2, [1]=42}})'))
     eq({}, funcs.luaeval('vim.api._vim_id_array({[vim.type_idx]=vim.types.array, [vim.val_idx]=10, [5]=1, foo=2})'))
+
+    eq({}, funcs.luaeval('vim.api._vim_id_array({})'))
+    eq(3, eval([[type(luaeval('vim.api._vim_id_array({})'))]]))
+  end)
+
+  it('correctly converts dictionaries with type_idx to API objects', function()
+    eq(4, eval([[type(luaeval('vim.api._vim_id_dictionary({[vim.type_idx]=vim.types.dictionary})'))]]))
+
+    eq({}, funcs.luaeval('vim.api._vim_id_dictionary({[vim.type_idx]=vim.types.dictionary})'))
+
+    eq({v={42}}, funcs.luaeval('vim.api._vim_id_dictionary({v={[vim.type_idx]=vim.types.array, [vim.val_idx]=10, [5]=1, foo=2, [1]=42}})'))
+    eq({foo=2}, funcs.luaeval('vim.api._vim_id_dictionary({[vim.type_idx]=vim.types.dictionary, [vim.val_idx]=10, [5]=1, foo=2, [1]=42})'))
+    eq({v=10}, funcs.luaeval('vim.api._vim_id_dictionary({v={[vim.type_idx]=vim.types.float, [vim.val_idx]=10, [5]=1, foo=2, [1]=42}})'))
+    eq({v={}}, funcs.luaeval('vim.api._vim_id_dictionary({v={[vim.type_idx]=vim.types.array, [vim.val_idx]=10, [5]=1, foo=2}})'))
+
+    -- If API requests dictionary, then empty table will be the one. This is not
+    -- the case normally because empty table is an empty arrray.
+    eq({}, funcs.luaeval('vim.api._vim_id_dictionary({})'))
+    eq(4, eval([[type(luaeval('vim.api._vim_id_dictionary({})'))]]))
   end)
 
   it('correctly converts self-containing containers', function()
