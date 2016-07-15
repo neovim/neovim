@@ -10,11 +10,7 @@ let s:bad_responses = [
 ""
 " Check if the string is a bad response
 function! s:is_bad_response(s) abort
-    if index(s:bad_responses, a:s) >= 0
-        return v:true
-    else
-        return v:false
-    endif
+    return index(s:bad_responses, a:s) >= 0
 endfunction
 
 function! s:trim(s) abort
