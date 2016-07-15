@@ -241,6 +241,7 @@ Terminal *terminal_open(TerminalOptions opts)
   set_option_value((uint8_t *)"wrap", false, NULL, OPT_LOCAL);
   set_option_value((uint8_t *)"number", false, NULL, OPT_LOCAL);
   set_option_value((uint8_t *)"relativenumber", false, NULL, OPT_LOCAL);
+  buf_set_term_title(curbuf, (char *)curbuf->b_ffname);
   RESET_BINDING(curwin);
   // Apply TermOpen autocmds so the user can configure the terminal
   apply_autocmds(EVENT_TERMOPEN, NULL, NULL, false, curbuf);
@@ -618,6 +619,17 @@ static int term_movecursor(VTermPos new, VTermPos old, int visible,
   return 1;
 }
 
+static void buf_set_term_title(buf_T *buf, char *title)
+    FUNC_ATTR_NONNULL_ALL
+{
+  Error err;
+  api_free_object(dict_set_value(buf->b_vars,
+                                 cstr_as_string("term_title"),
+                                 STRING_OBJ(cstr_as_string(title)),
+                                 false,
+                                 &err));
+}
+
 static int term_settermprop(VTermProp prop, VTermValue *val, void *data)
 {
   Terminal *term = data;
@@ -633,12 +645,7 @@ static int term_settermprop(VTermProp prop, VTermValue *val, void *data)
 
     case VTERM_PROP_TITLE: {
       buf_T *buf = handle_get_buffer(term->buf_handle);
-      Error err;
-      api_free_object(dict_set_value(buf->b_vars,
-                                     cstr_as_string("term_title"),
-                                     STRING_OBJ(cstr_as_string(val->string)),
-                                     false,
-                                     &err));
+      buf_set_term_title(buf, val->string);
       break;
     }
 

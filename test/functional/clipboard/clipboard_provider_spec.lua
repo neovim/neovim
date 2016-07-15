@@ -308,6 +308,7 @@ describe('clipboard usage', function()
     end)
 
     it('links the "+ and unnamed registers', function()
+      eq('+', eval('v:register'))
       insert("one two")
       feed('^"+dwdw"+P')
       expect('two')
@@ -335,6 +336,7 @@ describe('clipboard usage', function()
       eq({{'really unnamed', ''}, 'V'}, eval("g:test_clip['*']"))
 
       -- unnamedplus takes predecence when pasting
+      eq('+', eval('v:register'))
       execute("let g:test_clip['+'] = ['the plus','']")
       execute("let g:test_clip['*'] = ['the star','']")
       feed("p")

@@ -5653,7 +5653,7 @@ msgstr "単語 '%.*s' が %s から削除されました"
 #: ../spell.c:8117
 #, c-format
 msgid "Word '%.*s' added to %s"
-msgstr "%s に単語が追加されました"
+msgstr "単語 '%.*s' が %s へ追加されました"
 
 #: ../spell.c:8381
 msgid "E763: Word characters differ between spell files"
