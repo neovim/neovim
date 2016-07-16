@@ -465,8 +465,7 @@ static void on_request_event(void **argv)
   } else {
     api_free_object(result);
   }
-  // All arguments were freed already, but we still need to free the array
-  xfree(args.items);
+  api_free_array(args);
   decref(channel);
   xfree(e);
 }

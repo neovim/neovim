@@ -293,14 +293,8 @@ for i = 1, #functions do
     if fn.return_type ~= 'void' then
       output:write('\n  ret = '..string.upper(real_type(fn.return_type))..'_OBJ(rv);')
     end
-    -- Now generate the cleanup label for freeing memory allocated for the
-    -- arguments
     output:write('\n\ncleanup:');
 
-    for j = 1, #fn.parameters do
-      local param = fn.parameters[j]
-      output:write('\n  api_free_'..string.lower(real_type(param[1]))..'(arg_'..j..');')
-    end
     output:write('\n  return ret;\n}\n\n');
   end
 end

@@ -303,4 +303,11 @@ describe('vim_* functions', function()
     eq(false, status)
     ok(err:match('Invalid option name') ~= nil)
   end)
+
+  it("doesn't leak memory on incorrect argument types", function()
+    local status, err = pcall(nvim, 'change_directory',{'not', 'a', 'dir'})
+    eq(false, status)
+    ok(err:match(': Wrong type for argument 1, expecting String') ~= nil)
+  end)
+
 end)

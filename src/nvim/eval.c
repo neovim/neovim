@@ -7140,8 +7140,7 @@ static void api_wrapper(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
 end:
-  // All arguments were freed already, but we still need to free the array
-  xfree(args.items);
+  api_free_array(args);
   api_free_object(result);
 }
 
