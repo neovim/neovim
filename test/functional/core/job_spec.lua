@@ -466,3 +466,41 @@ describe('jobs', function()
     end)
   end)
 end)
+
+describe("pty process teardown", function()
+  local screen
+  before_each(function()
+    clear()
+    screen = Screen.new(30, 6)
+    screen:attach()
+    screen:expect([[
+      ^                              |
+      ~                             |
+      ~                             |
+      ~                             |
+      ~                             |
+                                    |
+    ]])
+  end)
+  after_each(function()
+    screen:detach()
+  end)
+
+  it("does not prevent/delay exit. #4798 #4900", function()
+    -- Use a nested nvim (in :term) to test without --headless.
+    execute(":terminal '"..helpers.nvim_prog
+      -- Use :term again in the _nested_ nvim to get a PTY process.
+      -- Use `sleep` to simulate a long-running child of the PTY.
+      .."' +terminal +'!(sleep 300 &)' +qa")
+
+    -- Exiting should terminate all descendants (PTY, its children, ...).
+    screen:expect([[
+                                    |
+      [Process exited 0]            |
+                                    |
+                                    |
+                                    |
+      -- TERMINAL --                |
+    ]])
+  end)
+end)
