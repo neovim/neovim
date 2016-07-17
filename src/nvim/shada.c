@@ -2591,9 +2591,12 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer,
   // Initialize jump list
   const void *jump_iter = NULL;
   do {
-    xfmark_T fm;
+    setpcmark();
     cleanup_jumplist();
+
+    xfmark_T fm;
     jump_iter = mark_jumplist_iter(jump_iter, curwin, &fm);
+
     const buf_T *const buf = (fm.fmark.fnum == 0
                               ? NULL
                               : buflist_findnr(fm.fmark.fnum));
