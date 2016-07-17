@@ -206,46 +206,40 @@ typedef enum {
 
 /// Flags for shada_read_next_item
 enum SRNIFlags {
-  kSDReadHeader = (1 << kSDItemHeader),  ///< Determines whether header should
-                                         ///< be read (it is usually ignored).
-  kSDReadUndisableableData = (
-      (1 << kSDItemSearchPattern)
-      | (1 << kSDItemSubString)
-      | (1 << kSDItemJump)),  ///< Data reading which cannot be disabled by
-                              ///< &shada or other options except for disabling
-                              ///< reading ShaDa as a whole.
-  kSDReadRegisters = (1 << kSDItemRegister),  ///< Determines whether registers
-                                              ///< should be read (may only be
-                                              ///< disabled when writing, but
-                                              ///< not when reading).
-  kSDReadHistory = (1 << kSDItemHistoryEntry),  ///< Determines whether history
-                                                ///< should be read (can only be
-                                                ///< disabled by &history).
-  kSDReadVariables = (1 << kSDItemVariable),  ///< Determines whether variables
-                                              ///< should be read (disabled by
-                                              ///< removing ! from &shada).
-  kSDReadBufferList = (1 << kSDItemBufferList),  ///< Determines whether buffer
-                                                 ///< list should be read
-                                                 ///< (disabled by removing
-                                                 ///< % entry from &shada).
-  kSDReadUnknown = (1 << (SHADA_LAST_ENTRY + 1)),  ///< Determines whether
-                                                   ///< unknown items should be
-                                                   ///< read (usually disabled).
-  kSDReadGlobalMarks = (1 << kSDItemGlobalMark),  ///< Determines whether global
-                                                  ///< marks should be read. Can
-                                                  ///< only be disabled by
-                                                  ///< having f0 in &shada when
-                                                  ///< writing.
-  kSDReadLocalMarks = (1 << kSDItemLocalMark),  ///< Determines whether local
-                                                ///< marks should be read. Can
-                                                ///< only be disabled by
-                                                ///< disabling &shada or putting
-                                                ///< '0 there. Is also used for
-                                                ///< v:oldfiles.
-  kSDReadChanges = (1 << kSDItemChange),  ///< Determines whether change list
-                                          ///< should be read. Can only be
-                                          ///< disabled by disabling &shada or
-                                          ///< putting '0 there.
+  /// Determines whether header should be read (it is usually ignored).
+  kSDReadHeader = (1 << kSDItemHeader),
+  /// Determines whether :substitute replacement string should be read (can be
+  /// disabled by :keeppatterns).
+  kSDReadSubString = (1 << kSDItemSubString),
+  /// Determines whether search pattern should be read (may be disabled by
+  /// :keeppatterns).
+  kSDReadSearchPattern = (1 << kSDItemSearchPattern),
+  /// Determines whether jumps should be read (may be disabled by :keepjumps).
+  kSDReadJumps = (1 << kSDItemJump),
+  /// Determines whether registers should be read (may only be disabled when
+  /// writing, but not when reading).
+  kSDReadRegisters = (1 << kSDItemRegister),
+  /// Determines whether history should be read (can only be disabled by
+  /// &history).
+  kSDReadHistory = (1 << kSDItemHistoryEntry),
+  /// Determines whether variables should be read (disabled by removing ! from
+  /// &shada).
+  kSDReadVariables = (1 << kSDItemVariable),
+  /// Determines whether buffer list should be read (disabled by removing
+  /// % entry from &shada).
+  kSDReadBufferList = (1 << kSDItemBufferList),
+  /// Determines whether global marks should be read. Can only be disabled by
+  /// having f0 in &shada when writing.
+  kSDReadGlobalMarks = (1 << kSDItemGlobalMark),
+  /// Determines whether local marks should be read. Can only be disabled by
+  /// disabling &shada or putting '0 there. Is also used for v:oldfiles.
+  kSDReadLocalMarks = (1 << kSDItemLocalMark),
+  /// Determines whether change list should be read. Can be disabled by
+  /// disabling &shada or putting '0 there and also by using :keepjumps.
+  kSDReadChanges = (1 << kSDItemChange),
+  /// Determines whether unknown items should be read (usually disabled, enabled
+  /// when writing).
+  kSDReadUnknown = (1 << (SHADA_LAST_ENTRY + 1)),
 };
 // Note: SRNIFlags enum name was created only to make it possible to reference
 // it. This name is not actually used anywhere outside of the documentation.
@@ -1187,20 +1181,29 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
   const bool want_marks = flags & kShaDaWantMarks;
   const unsigned srni_flags = (unsigned) (
       (flags & kShaDaWantInfo
-       ? (kSDReadUndisableableData
+       ? (0
+          | (cmdmod.keepjumps
+             ? 0
+             : kSDReadJumps)
+          | (cmdmod.keeppatterns
+             ? 0
+             : kSDReadSearchPattern | kSDReadSubString)
           | kSDReadRegisters
           | kSDReadGlobalMarks
           | (p_hi ? kSDReadHistory : 0)
           | (find_shada_parameter('!') != NULL
              ? kSDReadVariables
              : 0)
-          | (find_shada_parameter('%') != NULL
-             && ARGCOUNT == 0
+          | ((find_shada_parameter('%') != NULL
+              && ARGCOUNT == 0)
              ? kSDReadBufferList
              : 0))
        : 0)
       | (want_marks && get_shada_parameter('\'') > 0
-         ? kSDReadLocalMarks | kSDReadChanges
+         ? (kSDReadLocalMarks
+            | (cmdmod.keepjumps
+               ? 0
+               : kSDReadChanges))
          : 0)
       | (get_old_files
          ? kSDReadLocalMarks
@@ -1312,7 +1315,9 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
         break;
       }
       case kSDItemHistoryEntry: {
-        if (cur_entry.data.history_item.histtype >= HIST_COUNT) {
+        if (cur_entry.data.history_item.histtype >= HIST_COUNT
+            || (cmdmod.keeppatterns
+                && cur_entry.data.history_item.histtype == HIST_SEARCH)) {
           shada_free_shada_entry(&cur_entry);
           break;
         }
@@ -1439,7 +1444,9 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
             cur_entry.data.filemark.fname = NULL;
           }
         }
-        if (!want_marks) {
+        if (!want_marks
+            || (cmdmod.keepjumps && cur_entry.type == kSDItemLocalMark
+                && strchr("'.^", cur_entry.data.filemark.name) != NULL)) {
           shada_free_shada_entry(&cur_entry);
           break;
         }
@@ -2367,7 +2374,10 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer,
   }
 
   const unsigned srni_flags = (unsigned) (
-      kSDReadUndisableableData
+      0
+      | kSDReadSubString
+      | kSDReadSearchPattern
+      | kSDReadJumps
       | kSDReadUnknown
       | (dump_history ? kSDReadHistory : 0)
       | (dump_registers ? kSDReadRegisters : 0)
