@@ -61,6 +61,7 @@ matrix:
       env: CI_TARGET=lint
     - os: linux
       compiler: gcc-5
+      env: GCOV=gcov-5 CMAKE_FLAGS="$CMAKE_FLAGS -DUSE_GCOV=ON"
     - os: linux
       compiler: gcc-5
       env: FUNCTIONALTEST=functionaltest-lua
@@ -72,7 +73,7 @@ matrix:
       env: BUILD_32BIT=ON
     - os: linux
       compiler: clang
-      env: GCOV=llvm-cov CLANG_SANITIZER=ASAN_UBSAN CMAKE_FLAGS="$CMAKE_FLAGS -DUSE_GCOV=ON"
+      env: CLANG_SANITIZER=ASAN_UBSAN
     - os: linux
       compiler: clang
       env: CLANG_SANITIZER=TSAN
