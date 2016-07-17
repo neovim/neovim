@@ -31,7 +31,7 @@ build_deps() {
   # update CMake configuration and update to newer deps versions.
   cd "${DEPS_BUILD_DIR}"
   echo "Configuring with '${DEPS_CMAKE_FLAGS}'."
-  cmake ${DEPS_CMAKE_FLAGS} "${TRAVIS_BUILD_DIR}/third-party/"
+  CC= cmake ${DEPS_CMAKE_FLAGS} "${TRAVIS_BUILD_DIR}/third-party/"
 
   if ! ${MAKE_CMD}; then
     exit 1
