@@ -49,11 +49,11 @@ asan_check() {
 }
 
 run_unittests() {
-  ${MAKE_CMD} unittest
+  ${MAKE_CMD} -C "${BUILD_DIR}" unittest
 }
 
 run_functionaltests() {
-  if ! ${MAKE_CMD} ${FUNCTIONALTEST}; then
+  if ! ${MAKE_CMD} -C "${BUILD_DIR}" ${FUNCTIONALTEST}; then
     asan_check "${LOG_DIR}"
     valgrind_check "${LOG_DIR}"
     exit 1
@@ -63,7 +63,8 @@ run_functionaltests() {
 }
 
 run_oldtests() {
-  if ! make oldtest; then
+  ${MAKE_CMD} -C "${BUILD_DIR}" helptags
+  if ! make -C "${TRAVIS_BUILD_DIR}/src/nvim/testdir"; then
     reset
     asan_check "${LOG_DIR}"
     valgrind_check "${LOG_DIR}"

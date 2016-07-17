@@ -89,7 +89,7 @@ oldtest: | nvim helptags
 	+$(SINGLE_MAKE) -C src/nvim/testdir $(MAKEOVERRIDES)
 
 helptags: | nvim
-	+$(BUILD_CMD) -C build runtime/doc/tags
+	+$(BUILD_CMD) -C build helptags
 
 functionaltest: | nvim
 	+$(BUILD_CMD) -C build functionaltest
