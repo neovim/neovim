@@ -40,6 +40,10 @@ bool server_init(void)
     listen_address = server_address_new();
   }
 
+  if (!listen_address) {
+    return false;
+  }
+
   bool ok = (server_start(listen_address) == 0);
   if (must_free) {
     xfree((char *) listen_address);
