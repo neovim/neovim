@@ -120,7 +120,16 @@ function! s:version_info(python) abort
 
   let nvim_version = 'unable to find neovim version'
   let base = fnamemodify(nvim_path, ':h')
-  for meta_line in readfile(base.'/../EGG-INFO/PKG-INFO')
+
+  " It seems that sometimes the PKG_INFO is stored in different places
+  " Try a different combination of reading the files
+  try
+    let pkg_info = readfile(base.'/../EGG-INFO/PKG_INFO')
+  catch
+    let pkg_info = readfile(glob(base.'/../neovim-*/PKG-INFO'))
+  endtry
+
+  for meta_line in pkg_info
     if meta_line =~# '^Version:'
       let nvim_version = matchstr(meta_line, '^Version: \zs\S\+')
     endif
