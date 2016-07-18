@@ -1,5 +1,5 @@
 " Dictionary where we keep all of the healtch check functions we've found.
-" They will only be run if they are true
+" They will only be run if the value is true
 let g:health_checkers = get(g:, 'health_checkers', {})
 let s:current_checker = get(s:, 'current_checker', '')
 
@@ -45,15 +45,6 @@ endfunction
 
 " Report functions {{{
 
-" Pass arguments through
-" fun! Foo(arg, ...)
-"     if a:0
-"         exe 'call Bar(a:arg1, a:arg2, ' . join(map(range(a:0), '"a:000[" . v:val . "]"'), ', ') . ')'
-"     else
-"         call Bar(a:arg, "foo")
-"     endif
-" endfunction
-
 ""
 " Start a report section.
 " It should represent a general area of tests that can be understood
@@ -89,7 +80,7 @@ function! s:format_report_message(status, msg, ...) abort " {{{
 endfunction " }}}
 
 ""
-" Report informative text
+" Use {msg} to report information in the current section
 function! health#report_info(msg) abort " {{{
   echo s:format_report_message('INFO', a:msg)
 endfunction " }}}
@@ -148,12 +139,7 @@ function! s:add_checker(checker_name) abort " {{{
 endfunction " }}}
 
 function! health#disable_checker(checker_name) abort " {{{
-  if has_key(g:health_checkers, a:checker_name)
-    let g:health_checkers[a:checker_name] = v:false
-  else
-    " TODO: What to do if it's not already there?
-    return
-  endif
+  let g:health_checkers[a:checker_name] = v:false
 endfunction " }}}
 
 function! s:change_file_name_to_health_checker(name) abort " {{{
