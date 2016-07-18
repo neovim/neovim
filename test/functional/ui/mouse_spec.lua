@@ -462,4 +462,321 @@ describe('Mouse input', function()
                                |
     ]])
   end)
+
+  describe('on concealed text', function()
+    -- Helpful for reading the test expectations:
+    -- :match Error /\^/
+    local concealed = {
+      c = { foreground = Screen.colors.LightGrey, background = Screen.colors.DarkGray }
+    }
+
+    before_each(function()
+      screen:try_resize(25, 7)
+      feed('ggdG')
+
+      execute('set concealcursor=n')
+      execute('set nowrap')
+      execute('syntax match NonText "\\<amet\\>" conceal')
+      execute('syntax match NonText "\\cs\\|g." conceal cchar=X')
+      execute('syntax match NonText "\\%(lo\\|cl\\)." conceal')
+      execute('syntax match NonText "Lo" conceal cchar=Y')
+
+      insert([[
+      Lorem ipsum dolor sit amet, consetetur sadipscing elitr.
+      Stet clita kasd gubergren, no sea takimata sanctus est.
+      ]])
+
+      feed('gg')
+    end)
+
+    it('(level 1) click on non-wrapped lines', function()
+      execute('let &conceallevel=1', 'echo')
+
+      feed('<esc><LeftMouse><0,0>')
+      screen:expect([[
+        {c:^Y}rem ip{c:X}um do{c: } {c:X}it {c: }, con|
+        {c:X}tet {c: }ta ka{c:X}d {c:X}ber{c:X}en, no|
+                                 |
+        ~                        |
+        ~                        |
+        ~                        |
+                                 |
+      ]], concealed)
+
+      feed('<esc><LeftMouse><1,0>')
+      screen:expect([[
+        {c:Y}^rem ip{c:X}um do{c: } {c:X}it {c: }, con|
+        {c:X}tet {c: }ta ka{c:X}d {c:X}ber{c:X}en, no|
+                                 |
+        ~                        |
+        ~                        |
+        ~                        |
+                                 |
+      ]], concealed)
+
+      feed('<esc><LeftMouse><15,0>')
+      screen:expect([[
+        {c:Y}rem ip{c:X}um do{c: } {c:^X}it {c: }, con|
+        {c:X}tet {c: }ta ka{c:X}d {c:X}ber{c:X}en, no|
+                                 |
+        ~                        |
+        ~                        |
+        ~                        |
+                                 |
+      ]], concealed)
+
+      feed('<esc><LeftMouse><15,1>')
+      screen:expect([[
+        {c:Y}rem ip{c:X}um do{c: } {c:X}it {c: }, con|
+        {c:X}tet {c: }ta ka{c:X}d {c:X}^ber{c:X}en, no|
+                                 |
+        ~                        |
+        ~                        |
+        ~                        |
+                                 |
+      ]], concealed)
+    end) -- level 1 - non wrapped
+
+    it('(level 1) click on wrapped lines', function()
+      execute('let &conceallevel=1', 'let &wrap=1', 'echo')
+
+      feed('<esc><LeftMouse><0,0>')
+      screen:expect([[
+        {c:^Y}rem ip{c:X}um do{c: } {c:X}it {c: }     |
+        , con{c:X}etetur {c:X}adip{c:X}cin{c:X}  |
+        elitr.                   |
+        {c:X}tet {c: }ta ka{c:X}d {c:X}ber{c:X}en    |
+        , no {c:X}ea takimata {c:X}anctu{c:X}|
+         e{c:X}t.                    |
+                                 |
+      ]], concealed)
+
+      feed('<esc><LeftMouse><6,1>')
+      screen:expect([[
+        {c:Y}rem ip{c:X}um do{c: } {c:X}it {c: }     |
+        , con{c:X}^etetur {c:X}adip{c:X}cin{c:X}  |
+        elitr.                   |
+        {c:X}tet {c: }ta ka{c:X}d {c:X}ber{c:X}en    |
+        , no {c:X}ea takimata {c:X}anctu{c:X}|
+         e{c:X}t.                    |
+                                 |
+      ]], concealed)
+
+      feed('<esc><LeftMouse><15,1>')
+      screen:expect([[
+        {c:Y}rem ip{c:X}um do{c: } {c:X}it {c: }     |
+        , con{c:X}etetur {c:X}a^dip{c:X}cin{c:X}  |
+        elitr.                   |
+        {c:X}tet {c: }ta ka{c:X}d {c:X}ber{c:X}en    |
+        , no {c:X}ea takimata {c:X}anctu{c:X}|
+         e{c:X}t.                    |
+                                 |
+      ]], concealed)
+
+      feed('<esc><LeftMouse><15,3>')
+      screen:expect([[
+        {c:Y}rem ip{c:X}um do{c: } {c:X}it {c: }     |
+        , con{c:X}etetur {c:X}adip{c:X}cin{c:X}  |
+        elitr.                   |
+        {c:X}tet {c: }ta ka{c:X}d {c:X}^ber{c:X}en    |
+        , no {c:X}ea takimata {c:X}anctu{c:X}|
+         e{c:X}t.                    |
+                                 |
+      ]], concealed)
+    end) -- level 1 - wrapped
+
+
+    it('(level 2) click on non-wrapped lines', function()
+      execute('let &conceallevel=2', 'echo')
+
+      feed('<esc><LeftMouse><0,0>')
+      screen:expect([[
+        {c:^Y}rem ip{c:X}um do {c:X}it , con{c:X}e|
+        {c:X}tet ta ka{c:X}d {c:X}ber{c:X}en, no |
+                                 |
+        ~                        |
+        ~                        |
+        ~                        |
+                                 |
+      ]], concealed)
+
+      feed('<esc><LeftMouse><1,0>')
+      screen:expect([[
+        {c:Y}^rem ip{c:X}um do {c:X}it , con{c:X}e|
+        {c:X}tet ta ka{c:X}d {c:X}ber{c:X}en, no |
+                                 |
+        ~                        |
+        ~                        |
+        ~                        |
+                                 |
+      ]], concealed)
+
+      feed('<esc><LeftMouse><15,0>')
+      screen:expect([[
+        {c:Y}rem ip{c:X}um do {c:X}^it , con{c:X}e|
+        {c:X}tet ta ka{c:X}d {c:X}ber{c:X}en, no |
+                                 |
+        ~                        |
+        ~                        |
+        ~                        |
+                                 |
+      ]], concealed)
+
+      feed('<esc><LeftMouse><15,1>')
+      screen:expect([[
+        {c:Y}rem ip{c:X}um do {c:X}it , con{c:X}e|
+        {c:X}tet ta ka{c:X}d {c:X}b^er{c:X}en, no |
+                                 |
+        ~                        |
+        ~                        |
+        ~                        |
+                                 |
+      ]], concealed)
+    end) -- level 2 - non wrapped
+
+    it('(level 2) click on wrapped lines', function()
+      execute('let &conceallevel=2', 'let &wrap=1', 'echo')
+
+      feed('<esc><LeftMouse><0,0>')
+      screen:expect([[
+        {c:^Y}rem ip{c:X}um do {c:X}it        |
+        , con{c:X}etetur {c:X}adip{c:X}cin{c:X}  |
+        elitr.                   |
+        {c:X}tet ta ka{c:X}d {c:X}ber{c:X}en     |
+        , no {c:X}ea takimata {c:X}anctu{c:X}|
+         e{c:X}t.                    |
+                                 |
+      ]], concealed)
+
+      feed('<esc><LeftMouse><6,1>')
+      screen:expect([[
+        {c:Y}rem ip{c:X}um do {c:X}it        |
+        , con{c:X}^etetur {c:X}adip{c:X}cin{c:X}  |
+        elitr.                   |
+        {c:X}tet ta ka{c:X}d {c:X}ber{c:X}en     |
+        , no {c:X}ea takimata {c:X}anctu{c:X}|
+         e{c:X}t.                    |
+                                 |
+      ]], concealed)
+
+      feed('<esc><LeftMouse><15,1>')
+      screen:expect([[
+        {c:Y}rem ip{c:X}um do {c:X}it        |
+        , con{c:X}etetur {c:X}a^dip{c:X}cin{c:X}  |
+        elitr.                   |
+        {c:X}tet ta ka{c:X}d {c:X}ber{c:X}en     |
+        , no {c:X}ea takimata {c:X}anctu{c:X}|
+         e{c:X}t.                    |
+                                 |
+      ]], concealed)
+
+      feed('<esc><LeftMouse><15,3>')
+      screen:expect([[
+        {c:Y}rem ip{c:X}um do {c:X}it        |
+        , con{c:X}etetur {c:X}adip{c:X}cin{c:X}  |
+        elitr.                   |
+        {c:X}tet ta ka{c:X}d {c:X}b^er{c:X}en     |
+        , no {c:X}ea takimata {c:X}anctu{c:X}|
+         e{c:X}t.                    |
+                                 |
+      ]], concealed)
+    end) -- level 2 - wrapped
+
+
+    it('(level 3) click on non-wrapped lines', function()
+      execute('let &conceallevel=3', 'echo')
+
+      feed('<esc><LeftMouse><0,0>')
+      screen:expect([[
+        ^rem ipum do it , conetetu|
+        tet ta kad beren, no ea t|
+                                 |
+        ~                        |
+        ~                        |
+        ~                        |
+                                 |
+      ]], concealed)
+
+      feed('<esc><LeftMouse><1,0>')
+      screen:expect([[
+        r^em ipum do it , conetetu|
+        tet ta kad beren, no ea t|
+                                 |
+        ~                        |
+        ~                        |
+        ~                        |
+                                 |
+      ]], concealed)
+
+      feed('<esc><LeftMouse><15,0>')
+      screen:expect([[
+        rem ipum do it ^, conetetu|
+        tet ta kad beren, no ea t|
+                                 |
+        ~                        |
+        ~                        |
+        ~                        |
+                                 |
+      ]], concealed)
+
+      feed('<esc><LeftMouse><15,1>')
+      screen:expect([[
+        rem ipum do it , conetetu|
+        tet ta kad bere^n, no ea t|
+                                 |
+        ~                        |
+        ~                        |
+        ~                        |
+                                 |
+      ]], concealed)
+    end) -- level 3 - non wrapped
+
+    it('(level 3) click on wrapped lines', function()
+      execute('let &conceallevel=3', 'let &wrap=1', 'echo')
+
+      feed('<esc><LeftMouse><0,0>')
+      screen:expect([[
+        ^rem ipum do it           |
+        , conetetur adipcin      |
+        elitr.                   |
+        tet ta kad beren         |
+        , no ea takimata anctu   |
+         et.                     |
+                                 |
+      ]], concealed)
+
+      feed('<esc><LeftMouse><6,1>')
+      screen:expect([[
+        rem ipum do it           |
+        , cone^tetur adipcin      |
+        elitr.                   |
+        tet ta kad beren         |
+        , no ea takimata anctu   |
+         et.                     |
+                                 |
+      ]], concealed)
+
+      feed('<esc><LeftMouse><15,1>')
+      screen:expect([[
+        rem ipum do it           |
+        , conetetur adi^pcin      |
+        elitr.                   |
+        tet ta kad beren         |
+        , no ea takimata anctu   |
+         et.                     |
+                                 |
+      ]], concealed)
+
+      feed('<esc><LeftMouse><15,3>')
+      screen:expect([[
+        rem ipum do it           |
+        , conetetur adipcin      |
+        elitr.                   |
+        tet ta kad bere^n         |
+        , no ea takimata anctu   |
+         et.                     |
+                                 |
+      ]], concealed)
+    end) -- level 3 - wrapped
+  end)
 end)
