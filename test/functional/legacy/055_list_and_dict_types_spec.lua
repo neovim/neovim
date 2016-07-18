@@ -112,29 +112,6 @@ describe('list and dictionary types', function()
     expect('\n101101')
   end)
 
-  it('changing var type should fail', function()
-    source([[
-      lang C
-      " The list from the first test repeated after splitting the tests.
-      let l = [1, 'as''d', [1, 2, function("strlen")], {'a': 1},]
-      " The dict from the first test repeated after splitting the tests.
-      let d = {'c': 'ccc', '1': 99, '3': 33, '-1': {'a': 1}}
-      try
-	      let d = []
-      catch
-	      $put =v:exception[:14] . v:exception[-1:-1]
-      endtry
-      try
-	      let l = {}
-      catch
-	      $put =v:exception[:14] . v:exception[-1:-1]
-      endtry]])
-    expect([[
-      
-      Vim(let):E706: d
-      Vim(let):E706: l]])
-  end)
-
   it('removing items with :unlet', function()
     source([[
       lang C
