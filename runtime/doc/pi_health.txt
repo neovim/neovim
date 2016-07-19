@@ -1,0 +1,18 @@
+*pi_health.txt*   Check the status of your neovim system
+
+Author: TJ DeVries <devries.timothyj@gmail.com>
+
+==============================================================================
+1. Usage
+
+The health checker system is a way to get a snapshot of the important
+information in a system.
+
+1.1 Commands
+------------
+
+                                                                  *:CheckHealth
+:CheckHealth<bang> Run all health checkers found in g:health_checkers
+==============================================================================
+
+vim:tw=78:ts=8:ft=help:fdm=marker
