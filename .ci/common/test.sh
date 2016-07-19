@@ -96,7 +96,7 @@ install_nvim() {
 
   # Check that generated syntax file has function names, #5060.
   local gpat='syn keyword vimFuncName .*eval'
-  if ! grep -q "$gpat" $genvimsynf ; then
+  if ! grep -q "$gpat" "${INSTALL_PREFIX}/share/nvim/runtime/$genvimsynf"; then
     echo "It appears that $genvimsynf does not contain $gpat."
     exit 1
   fi
