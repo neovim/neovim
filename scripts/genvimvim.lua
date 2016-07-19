@@ -123,7 +123,7 @@ for line in eval_fd:lines() do
     if line == '};' then
       break
     end
-    local func_name = line:match('^  {"(%w+)",')
+    local func_name = line:match('^  { "([%w_]+)",')
     if func_name then
       if lld.line_length > 850 then
         w('\n' .. vimfun_start)
