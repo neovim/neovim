@@ -10,7 +10,7 @@ function! health#check(bang) abort
   let l:report = '# Checking health'
 
   if g:health_checkers == {}
-    call s:add_checker(s:_default_checkers())
+    call health#add_checker(s:_default_checkers())
   endif
 
   for l:checker in items(g:health_checkers)
@@ -20,7 +20,7 @@ function! health#check(bang) abort
       let l:report .= "\n\n--------------------------------------------------------------------------------\n"
       let l:report .= printf("\n## Checker %s says:\n", s:current_checker)
 
-      let l:report .= capture('silent! call ' . l:checker[0] . '()')
+      let l:report .= capture('call ' . l:checker[0] . '()')
     endif
   endfor
 
@@ -115,10 +115,10 @@ endfunction " }}}
 " Health checker management {{{
 
 ""
-" Register a single health checker
+" Add a single health checker
+" It does not modify any values if the checker already exists
 function! s:add_single_checker(checker_name) abort " {{{
   if has_key(g:health_checkers, a:checker_name)
-    " TODO: What to do if it's already there?
     return
   else
       let g:health_checkers[a:checker_name] = v:true
@@ -126,9 +126,25 @@ function! s:add_single_checker(checker_name) abort " {{{
 endfunction " }}}
 
 ""
-" Register at least one healthcheckers.
+" Enable a single health checker
+" It will modify the values if the checker already exists
+function! s:enable_single_checker(checker_name) abort " {{{
+  let g:health_checkers[a:checker_name] = v:true
+endfunction " }}}
+
+""
+" Disable a single health checker
+" It will modify the values if the checker already exists
+function! s:disable_single_checker(checker_name) abort " {{{
+  let g:health_checkers[a:checker_name] = v:false
+endfunction " }}}
+
+
+""
+" Add at least one health checker
 " {checker_name} can be specified by either a list of strings or a single string.
-function! s:add_checker(checker_name) abort " {{{
+" It does not modify any values if the checker already exists
+function! health#add_checker(checker_name) abort " {{{
   if type(a:checker_name) == type('')
     call s:add_single_checker(a:checker_name)
   elseif type(a:checker_name) == type([])
@@ -138,8 +154,30 @@ function! s:add_checker(checker_name) abort " {{{
   endif
 endfunction " }}}
 
+""
+" Enable at least one health checker
+" {checker_name} can be specified by either a list of strings or a single string.
+function! health#enable_checker(checker_name) abort " {{{
+  if type(a:checker_name) == type('')
+    call s:enable_single_checker(a:checker_name)
+  elseif type(a:checker_name) == type([])
+    for checker in a:checker_name
+      call s:enable_single_checker(checker)
+    endfor
+  endif
+endfunction " }}}
+
+""
+" Disable at least one health checker
+" {checker_name} can be specified by either a list of strings or a single string.
 function! health#disable_checker(checker_name) abort " {{{
-  let g:health_checkers[a:checker_name] = v:false
+  if type(a:checker_name) == type('')
+    call s:disable_single_checker(a:checker_name)
+  elseif type(a:checker_name) == type([])
+    for checker in a:checker_name
+      call s:disable_single_checker(checker)
+    endfor
+  endif
 endfunction " }}}
 
 function! s:change_file_name_to_health_checker(name) abort " {{{
