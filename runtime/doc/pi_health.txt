@@ -5,10 +5,10 @@ Author: TJ DeVries <devries.timothyj@gmail.com>
 ==============================================================================
 1. Contents					 *health.vim-contents*
 
-	1. Contents ..: |health.vim-contents|
-	2. Health.vim introduction ..: |health.vim-intro|
-	3. Health.vim manual ..: |health.vim-manual|
-		3.1 Health.vim commands ..: |health.vim-commands|
+	1. Contents				: |health.vim-contents|
+	2. Health.vim introduction		: |health.vim-intro|
+	3. Health.vim manual			: |health.vim-manual|
+		3.1 Health.vim commands		: |health.vim-commands|
 
 ==============================================================================
 2. Health.vim introduction			*health.vim-intro*
