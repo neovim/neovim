@@ -40,21 +40,28 @@ The second aim is to provide maintainers a way of automating the answering of
 frequently encountered questsion. A common occurence with Neovim is that the
 user has not installed the necessary Python modules to interact with Python
 remote plugins.  So a simple check of whhether the neovim remote plugin is
-installed can lead to a suggestion of:
+installed can lead to a suggestion of >
 
 	You have not installed the neovim Python module
 	You might want to try `$ pip install neovim`
 
+< something else here.
+
 
 ==============================================================================
-3. Health.vim manual				*health.vim-manul*
+3. Health.vim manual				*health.vim-manual*
 
 3.1 Commands
 ------------
 
-							*:CheckHealth*
-:CheckHealth<bang>					*:CheckHealth*
+:CheckHealth[!]							*:CheckHealth*
 	Run all health checkers found in g:health_checkers
+
+	It will check your setup for common problems that may be keeping a
+	plugin from functioning correctly.  Include the output of this command
+	in bug reports to help reduce the amount of time it takes to address
+	your issue.  With "!" the output will be placed in a new buffer which
+	can make it easier to save to a file or copy to the clipboard.
 
 
 3.2 Functions
