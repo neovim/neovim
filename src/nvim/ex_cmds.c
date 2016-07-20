@@ -4821,9 +4821,8 @@ static void helptags_one(char_u *dir, char_u *ext, char_u *tagfname,
   int mix = FALSE;              /* detected mixed encodings */
 
   // Find all *.txt files.
-  size_t dirlen = STRLEN(dir);
-  STRCPY(NameBuff, dir);
-  STRCAT(NameBuff, "/**/*");
+  size_t dirlen = STRLCPY(NameBuff, dir, sizeof(NameBuff));
+  STRCAT(NameBuff, "/**/*");  // NOLINT
   STRCAT(NameBuff, ext);
 
   // Note: We cannot just do `&NameBuff` because it is a statically sized array
@@ -4841,7 +4840,7 @@ static void helptags_one(char_u *dir, char_u *ext, char_u *tagfname,
    * Open the tags file for writing.
    * Do this before scanning through all the files.
    */
-  STRCPY(NameBuff, dir);
+  STRLCPY(NameBuff, dir, sizeof(NameBuff));
   add_pathsep((char *)NameBuff);
   STRNCAT(NameBuff, tagfname, sizeof(NameBuff) - dirlen - 2);
   fd_tags = mch_fopen((char *)NameBuff, "w");
@@ -5016,7 +5015,7 @@ static void do_helptags(char_u *dirname, bool add_help_tags)
   char_u **files;
 
   // Get a list of all files in the help directory and in subdirectories.
-  STRCPY(NameBuff, dirname);
+  STRLCPY(NameBuff, dirname, sizeof(NameBuff));
   add_pathsep((char *)NameBuff);
   STRCAT(NameBuff, "**");
 
