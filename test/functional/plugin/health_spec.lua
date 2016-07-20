@@ -38,7 +38,6 @@ describe('health.vim', function()
     local health_checkers = helpers.redir_exec("echo g:health_checkers")
 
     it('should find the default checker upon execution', function()
-      -- helpers.execute([[CheckHealth!]])
       assert(string.find(health_checkers, "'health#nvim#check': v:true"))
     end)
 
@@ -47,5 +46,13 @@ describe('health.vim', function()
       assert(string.find(report, 'Checker health#nvim#check says:'))
       assert(string.find(report, 'Checking:'))
     end)
+  end)
+
+  it('should allow users to disable checkers', function()
+    helpers.execute("call health#disable_checker('health#nvim#check')")
+    helpers.execute("CheckHealth!")
+    local health_checkers = helpers.redir_exec("echo g:health_checkers")
+
+    assert(string.find(health_checkers, "'health#nvim#check': v:false"))
   end)
 end)
