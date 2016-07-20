@@ -1,4 +1,4 @@
-*pi_health.txt*   Check the status of your neovim system
+*pi_health.txt*   Check the status of your Neovim system
 
 Author: TJ DeVries <devries.timothyj@gmail.com>
 
@@ -9,6 +9,7 @@ Author: TJ DeVries <devries.timothyj@gmail.com>
 	2. Health.vim introduction		: |health.vim-intro|
 	3. Health.vim manual			: |health.vim-manual|
 		3.1 Health.vim commands		: |health.vim-commands|
+	4. Making a new checker			: |health.vim-checkers|
 
 ==============================================================================
 2. Health.vim introduction			*health.vim-intro*
@@ -23,38 +24,38 @@ take without knowing some information about their system.
 Health.vim aims to solve this problem in two ways for both core and plugin
 maintainers.
 
-The way this is done is to provide an interface for that users will know to
-check first before posting questsion in the issue tracker, dev list, etc. This
+The way this is done is to provide an interface that users will know to check
+first before posting question in the issue tracker, dev channels, etc.  This
 is similar to how |:help| functions currently. The user experiencing
-difficulty can run |:CheckHealth| to view the status of her system.
+difficulty can run |:CheckHealth| to view the status of one's system.
 
 The aim of |:CheckHealth| is two-fold.
 
-The first aim is to provide maintainers with an overview of the state of the
-user's system. This skips large amounts of time where the maintainer must
-instruct the user what steps to take to get debug information, and allows the
-maintainer to extend existing health scripts as more helpful debug information
-is found.
+The first aim is to provide maintainers with an overview of the user's working
+environment. This skips large amounts of time where the maintainer must
+instruct the user on which steps to take to get debug information, and allows
+the maintainer to extend existing health scripts as more helpful debug
+information is found.
 
 The second aim is to provide maintainers a way of automating the answering of
-frequently encountered questsion. A common occurence with Neovim is that the
+frequently encountered question. A common occurrence with Neovim is that the
 user has not installed the necessary Python modules to interact with Python
-remote plugins.  So a simple check of whhether the neovim remote plugin is
+remote plugins. A simple check of whether the Neovim remote plugin is
 installed can lead to a suggestion of >
 
-	You have not installed the neovim Python module
-	You might want to try `$ pip install neovim`
+	You have not installed the Neovim Python module
+	You might want to try `$ pip install Neovim`
 
 < something else here.
 
 
 ==============================================================================
-3. Health.vim manual				*health.vim-manual*
+3. Health.vim manual					*health.vim-manual*
 
 3.1 Commands
 ------------
 
-:CheckHealth[!]							*:CheckHealth*
+:CheckHealth[!]						*:CheckHealth*
 	Run all health checkers found in g:health_checkers
 
 	It will check your setup for common problems that may be keeping a
@@ -64,8 +65,78 @@ installed can lead to a suggestion of >
 	can make it easier to save to a file or copy to the clipboard.
 
 
-3.2 Functions
+3.2 Functions						*health.functions*
 -------------
+
+3.2.1 Report Functions					*health.report_functions*
+----------------------
+
+The |health.report_functions| are used by the plugin maintainer to remove the
+hassle of formatting multiple different levels of output. Not only does it
+remove the hassle of formatting, but it also provides users with a consistent
+interface for viewing the health information about the system.
+
+These functions are also expected to have the capability to produce output in
+multiple different formats. For example, if parsing of the results were to be
+done by a remote plugin, the results could be output in a valid JSON format
+and then the remote plugin could parse the results easily.
+
+health#report_start({name})				*health.funcs.report_start*
+	Start a report section.  It should represent a general area of tests
+	that can be understood from the argument {name} To start a new report
+	section, use this function again
+
+health#report_info({msg})				*health.funcs.report_info*
+	Use {msg} to report information in the current section
+
+health#report_ok({msg})					*health.funcs.report_ok*
+	Use {msg} to represent the check that has passed
+
+health#report_warn({msg}, ...)				*health.funcs.report_warn*
+	Use {msg} to represent a failed health check and optionally a list of
+	suggestions on how to fix it.
+
+health#report_error({msg}, ...)				*health.funcs.report_error*
+	Use {msg} to represent a critically failed health check and optionally
+	a list of suggestions on how to fix it.
+
+3.3 User Functions					*health.user_functions*
+------------------
+
+health#{my_plug}#check()				*health.user_checker*
+	A user defined function to run all of the checks that are required for
+	either debugging or suggestion making. An example might be something
+	like: >
+
+	function! health#my_plug#check() abort
+		silent call s:check_environment_vars()
+		silent call s:check_python_configuration()
+	endfunction
+<
+	This function will be found, sourced, and automatically called when
+	the user invokes |:CheckHealth|.
+
+	All output will be captured from the health checker. It is recommended
+	that the plugin maintainer uses the calls described in
+	|health.report_functions|. The benefits these functions provide are
+	described in the same section.
+
+
+==============================================================================
+4. Making a new checker				*health.vim-checkers*
+
+Health checkers are the scripts that check the health of the system. Neovim
+has built in checkers, which can be found in `runtime/autoload/health/`. To
+add a checker for a plugin, add a `health` folder in the `autoload` directory
+of your plugin. It is then suggested that the name of your script be
+`{plug_name}.vim`. For example, the health checker for `my_plug` might be
+placed in: >
+
+	$PLUGIN_BASE/autoload/health/my_plug.vim
+>
+
+Inside this script, a function must be specified to run. This function is
+described in |health.user_checker|.
 
 
 ==============================================================================
