@@ -3,16 +3,64 @@
 Author: TJ DeVries <devries.timothyj@gmail.com>
 
 ==============================================================================
-1. Usage
+1. Contents					 *health.vim-contents*
 
-The health checker system is a way to get a snapshot of the important
-information in a system.
+	1. Contents ..: |health.vim-contents|
+	2. Health.vim introduction ..: |health.vim-intro|
+	3. Health.vim manual ..: |health.vim-manual|
+		3.1 Health.vim commands ..: |health.vim-commands|
 
-1.1 Commands
+==============================================================================
+2. Health.vim introduction			*health.vim-intro*
+
+Debugging common issues is a time consuming task that many developers would
+like to eliminate, and where elimination is impossible, minimize. Many common
+questions and difficulties could be answered by a simple check of an
+environment variable or a setting that the user has made. However, even with
+FAQs and other manuals, it can be difficult to suggest the path a user should
+take without knowing some information about their system.
+
+Health.vim aims to solve this problem in two ways for both core and plugin
+maintainers.
+
+The way this is done is to provide an interface for that users will know to
+check first before posting questsion in the issue tracker, dev list, etc. This
+is similar to how |:help| functions currently. The user experiencing
+difficulty can run |:CheckHealth| to view the status of her system.
+
+The aim of |:CheckHealth| is two-fold.
+
+The first aim is to provide maintainers with an overview of the state of the
+user's system. This skips large amounts of time where the maintainer must
+instruct the user what steps to take to get debug information, and allows the
+maintainer to extend existing health scripts as more helpful debug information
+is found.
+
+The second aim is to provide maintainers a way of automating the answering of
+frequently encountered questsion. A common occurence with Neovim is that the
+user has not installed the necessary Python modules to interact with Python
+remote plugins.  So a simple check of whhether the neovim remote plugin is
+installed can lead to a suggestion of:
+
+	You have not installed the neovim Python module
+	You might want to try `$ pip install neovim`
+
+
+==============================================================================
+3. Health.vim manual				*health.vim-manul*
+
+3.1 Commands
 ------------
 
-                                                                  *:CheckHealth
-:CheckHealth<bang> Run all health checkers found in g:health_checkers
+							*:CheckHealth*
+:CheckHealth<bang>					*:CheckHealth*
+	Run all health checkers found in g:health_checkers
+
+
+3.2 Functions
+-------------
+
+
 ==============================================================================
 
 vim:tw=78:ts=8:ft=help:fdm=marker
