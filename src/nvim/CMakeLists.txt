@@ -1,15 +1,5 @@
 option(USE_GCOV "Enable gcov support" OFF)
 
-if(NOT CLANG_TSAN)
-# GCOV and TSAN results in false data race reports
-if(USE_GCOV)
-  message(STATUS "Enabling gcov support")
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} --coverage")
-  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --coverage")
-  set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} --coverage")
-endif()
-endif()
-
 set(GENERATED_DIR ${PROJECT_BINARY_DIR}/src/nvim/auto)
 set(DISPATCH_GENERATOR ${PROJECT_SOURCE_DIR}/scripts/gendispatch.lua)
 file(GLOB API_HEADERS api/*.h)
@@ -81,12 +71,22 @@ foreach(sfile ${NEOVIM_SOURCES})
   if(${f} MATCHES "^(regexp_nfa.c)$")
     list(APPEND to_remove ${sfile})
   endif()
-  if(WIN32 AND ${f} MATCHES "^(pty_process_unix.c)$")
+  if(WIN32 AND ${f} MATCHES "^(pty_process_unix(_child)?.c)$")
     list(APPEND to_remove ${sfile})
   endif()
 endforeach()
 
 list(REMOVE_ITEM NEOVIM_SOURCES ${to_remove})
+
+if(USE_GCOV AND NOT CLANG_TSAN)
+# GCOV and TSAN results in false data race reports
+  message(STATUS "Enabling gcov support")
+  set(GCOV_FLAG "--coverage")
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --coverage")
+  set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} --coverage")
+else()
+  set(GCOV_FLAG "")
+endif()
 
 # Legacy files that do not yet pass -Wconversion.
 set(CONV_SOURCES
@@ -115,6 +115,9 @@ foreach(sfile ${CONV_SOURCES})
   endif()
 endforeach()
 
+set_source_files_properties(
+  ${NEOVIM_SOURCES} PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} ${GCOV_FLAG}")
+
 if(NOT MSVC)
   set_source_files_properties(
     ${CONV_SOURCES} PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} -Wno-conversion")
@@ -122,12 +125,15 @@ if(NOT MSVC)
   check_c_compiler_flag(-Wno-static-in-inline HAS_WNO_STATIC_IN_INLINE_FLAG)
   if(HAS_WNO_STATIC_IN_INLINE_FLAG)
     set_source_files_properties(
-      eval.c PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} -Wno-static-in-inline -Wno-conversion")
+        eval.c PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} ${GCOV_FLAG} -Wno-static-in-inline -Wno-conversion")
   else()
     set_source_files_properties(
-      eval.c PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} -Wno-conversion")
+        eval.c PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} ${GCOV_FLAG} -Wno-conversion")
   endif()
 endif()
+
+set_source_files_properties(
+  "os/pty_process_unix_child.c" PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS}")
 
 if(DEFINED MIN_LOG_LEVEL)
   add_definitions(-DMIN_LOG_LEVEL=${MIN_LOG_LEVEL})

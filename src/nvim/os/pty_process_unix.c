@@ -26,6 +26,7 @@
 #include "nvim/event/wstream.h"
 #include "nvim/event/process.h"
 #include "nvim/os/pty_process_unix.h"
+#include "nvim/os/pty_process_unix_child.h"
 #include "nvim/log.h"
 #include "nvim/os/os.h"
 
@@ -53,7 +54,7 @@ bool pty_process_spawn(PtyProcess *ptyproc)
     ELOG("forkpty failed: %s", strerror(errno));
     return false;
   } else if (pid == 0) {
-    init_child(ptyproc);
+    pty_process_child_init(ptyproc);
     abort();
   }
 
@@ -114,32 +115,6 @@ void pty_process_close_master(PtyProcess *ptyproc) FUNC_ATTR_NONNULL_ALL
 void pty_process_teardown(Loop *loop)
 {
   uv_signal_stop(&loop->children_watcher);
-}
-
-static void init_child(PtyProcess *ptyproc) FUNC_ATTR_NONNULL_ALL
-{
-  unsetenv("COLUMNS");
-  unsetenv("LINES");
-  unsetenv("TERMCAP");
-  unsetenv("COLORTERM");
-  unsetenv("COLORFGBG");
-
-  signal(SIGCHLD, SIG_DFL);
-  signal(SIGHUP, SIG_DFL);
-  signal(SIGINT, SIG_DFL);
-  signal(SIGQUIT, SIG_DFL);
-  signal(SIGTERM, SIG_DFL);
-  signal(SIGALRM, SIG_DFL);
-
-  Process *proc = (Process *)ptyproc;
-  if (proc->cwd && os_chdir(proc->cwd) != 0) {
-    fprintf(stderr, "chdir failed: %s\n", strerror(errno));
-    return;
-  }
-
-  setenv("TERM", ptyproc->term_name ? ptyproc->term_name : "ansi", 1);
-  execvp(ptyproc->process.argv[0], ptyproc->process.argv);
-  fprintf(stderr, "execvp failed: %s\n", strerror(errno));
 }
 
 static void init_termios(struct termios *termios) FUNC_ATTR_NONNULL_ALL
