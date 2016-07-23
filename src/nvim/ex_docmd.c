@@ -5597,6 +5597,17 @@ int parse_compl_arg(char_u *value, int vallen, int *complp,
   return OK;
 }
 
+int cmdcomplete_str_to_type(char_u *complete_str)
+{
+    for (int i = 0; command_complete[i].expand != 0; i++) {
+      if (STRCMP(complete_str, command_complete[i].name) == 0) {
+        return command_complete[i].expand;
+      }
+    }
+
+    return EXPAND_NOTHING;
+}
+
 static void ex_colorscheme(exarg_T *eap)
 {
   if (*eap->arg == NUL) {
