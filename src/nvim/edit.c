@@ -2385,6 +2385,7 @@ void set_completion(colnr_T startcol, list_T *list)
   } else {
     ins_complete(Ctrl_N, false);
   }
+  compl_enter_selects = compl_no_insert;
 
   // Lazily show the popup menu, unless we got interrupted.
   if (!compl_interrupted) {
@@ -3989,6 +3990,7 @@ static void ins_compl_insert(void)
   dict_add_nr_str(dict, "info", 0L,
                   EMPTY_IF_NULL(compl_shown_match->cp_text[CPT_INFO]));
   set_vim_var_dict(VV_COMPLETED_ITEM, dict);
+  compl_curr_match = compl_shown_match;
 }
 
 /*

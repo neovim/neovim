@@ -4,4 +4,5 @@
 source test_assign.vim
 source test_cursor_func.vim
 source test_menu.vim
+source test_popup.vim
 source test_unlet.vim
