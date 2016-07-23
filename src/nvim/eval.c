@@ -6779,6 +6779,7 @@ static struct fst {
   { "getcmdpos",         0, 0, f_getcmdpos },
   { "getcmdtype",        0, 0, f_getcmdtype },
   { "getcmdwintype",     0, 0, f_getcmdwintype },
+  { "getcompletion",     2, 2, f_getcompletion },
   { "getcurpos",         0, 0, f_getcurpos },
   { "getcwd",            0, 2, f_getcwd },
   { "getfontname",       0, 1, f_getfontname },
@@ -9915,6 +9916,50 @@ static void f_getcmdwintype(typval_T *argvars, typval_T *rettv)
   rettv->vval.v_string = NULL;
   rettv->vval.v_string = xmallocz(1);
   rettv->vval.v_string[0] = cmdwin_type;
+}
+
+// "getcompletion()" function
+static void f_getcompletion(typval_T *argvars, typval_T *rettv)
+{
+  char_u        *pat;
+  expand_T      xpc;
+  int           options = WILD_KEEP_ALL | WILD_SILENT | WILD_USE_NL
+    | WILD_LIST_NOTFOUND | WILD_NO_BEEP;
+
+  if (p_wic) {
+    options |= WILD_ICASE;
+  }
+
+  ExpandInit(&xpc);
+  xpc.xp_pattern = get_tv_string(&argvars[0]);
+  xpc.xp_pattern_len = STRLEN(xpc.xp_pattern);
+  xpc.xp_context = cmdcomplete_str_to_type(get_tv_string(&argvars[1]));
+  if (xpc.xp_context == EXPAND_NOTHING) {
+    if (argvars[1].v_type == VAR_STRING) {
+      EMSG2(_(e_invarg2), argvars[1].vval.v_string);
+    } else {
+      EMSG(_(e_invarg));
+    }
+    return;
+  }
+
+  if (xpc.xp_context == EXPAND_MENUS) {
+    set_context_in_menu_cmd(&xpc, (char_u *)"menu", xpc.xp_pattern, false);
+    xpc.xp_pattern_len = STRLEN(xpc.xp_pattern);
+  }
+
+  pat = addstar(xpc.xp_pattern, xpc.xp_pattern_len, xpc.xp_context);
+  if ((rettv_list_alloc(rettv) != FAIL) && (pat != NULL)) {
+    int i;
+
+    ExpandOne(&xpc, pat, NULL, options, WILD_ALL_KEEP);
+
+    for (i = 0; i < xpc.xp_numfiles; i++) {
+      list_append_string(rettv->vval.v_list, xpc.xp_files[i], -1);
+    }
+  }
+  xfree(pat);
+  ExpandCleanup(&xpc);
 }
 
 /// `getcwd([{win}[, {tab}]])` function
