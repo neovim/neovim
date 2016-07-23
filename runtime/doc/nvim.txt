@@ -18,7 +18,9 @@ Transitioning from Vim				*nvim-from-vim*
 
 To start the transition, link your previous configuration so Nvim can use it:
 >
-    mkdir -p ${XDG_CONFIG_HOME:=$HOME/.config}
+    if [[ -n $XDG_CONFIG_HOME ]]
+        mkdir -p ${XDG_CONFIG_HOME:=$HOME/.config}
+    fi
     ln -s ~/.vim $XDG_CONFIG_HOME/nvim
     ln -s ~/.vimrc $XDG_CONFIG_HOME/nvim/init.vim
 <
