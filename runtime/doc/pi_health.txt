@@ -46,8 +46,10 @@ installed can lead to a suggestion of >
 	You have not installed the Neovim Python module
 	You might want to try `$ pip install Neovim`
 
-< something else here.
-
+< 
+With these possibilities, it allows the maintainer of a plugin to spend more
+time on active development, rather than trying to spend time on debugging
+common issues many times.
 
 ==============================================================================
 3. Health.vim manual					*health.vim-manual*
