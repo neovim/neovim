@@ -162,4 +162,14 @@ typedef struct list_stack_S {
 /// Convert a hashitem pointer to a dictitem pointer
 #define HI2DI(hi)     HIKEY2DI((hi)->hi_key)
 
+/// Type of assert_* check being performed
+typedef enum
+{
+  ASSERT_EQUAL,
+  ASSERT_NOTEQUAL,
+  ASSERT_MATCH,
+  ASSERT_NOTMATCH,
+  ASSERT_OTHER,
+} assert_type_T;
+
 #endif  // NVIM_EVAL_DEFS_H

@@ -1,4 +1,4 @@
-*eval.txt*	For Vim version 7.4.  Last change: 2016 Apr 12
+*eval.txt*	For Vim version 7.4.  Last change: 2016 Mar 27
 
 
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
@@ -1784,10 +1784,13 @@ argidx()			Number	current index in the argument list
 arglistid([{winnr} [, {tabnr}]]) Number	argument list id
 argv({nr})			String	{nr} entry of the argument list
 argv()				List	the argument list
-assert_equal({exp}, {act} [, {msg}]) none  assert {exp} equals {act}
+assert_equal({exp}, {act} [, {msg}]) none  assert {exp} is equal to {act}
 assert_exception( {error} [, {msg}]) none  assert {error} is in v:exception
 assert_fails( {cmd} [, {error}])     none  assert {cmd} fails
 assert_false({actual} [, {msg}])     none  assert {actual} is false
+assert_match( {pat}, {text} [, {msg}]) none  assert {pat} matches {text}
+assert_notequal( {exp}, {act} [, {msg}]) none  assert {exp} is not equal {act}
+assert_notmatch( {pat}, {text} [, {msg}]) none  assert {pat} not matches {text}
 assert_true({actual} [, {msg}])      none  assert {actual} is true
 asin({expr})			Float	arc sine of {expr}
 atan({expr})			Float	arc tangent of {expr}
@@ -2280,6 +2283,36 @@ assert_false({actual} [, {msg}])				*assert_false()*
 		is not a number or |v:false| the assert fails.
 		When {msg} is omitted an error in the form "Expected False but
 		got {actual}" is produced.
+
+								*assert_match()*
+assert_match({pattern}, {actual} [, {msg}])
+		When {pattern} does not match {actual} an error message is
+		added to |v:errors|.
+
+		{pattern} is used as with |=~|: The matching is always done
+		like 'magic' was set and 'cpoptions' is empty, no matter what
+		the actual value of 'magic' or 'cpoptions' is.
+
+		{actual} is used as a string, automatic conversion applies.
+		Use "^" and "$" to match with the start and end of the text.
+		Use both to match the whole text.
+
+		When {msg} is omitted an error in the form "Pattern {pattern}
+		does not match {actual}" is produced.
+		Example: >
+	assert_match('^f.*o$', 'foobar')
+<		Will result in a string to be added to |v:errors|:
+	test.vim line 12: Pattern '^f.*o$' does not match 'foobar' ~
+
+							*assert_notequal()*
+assert_notequal({expected}, {actual} [, {msg}])
+		The opposite of `assert_equal()`: add an error message to
+		|v:errors| when {expected} and {actual} are equal.
+
+							*assert_notmatch()*
+assert_notmatch({pattern}, {actual} [, {msg}])
+		The opposite of `assert_match()`: add an error message to
+		|v:errors| when {pattern} matches {actual}.
 
 assert_true({actual} [, {msg}])					*assert_true()*
 		When {actual} is not true an error message is added to
