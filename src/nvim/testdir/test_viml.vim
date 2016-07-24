@@ -55,15 +55,25 @@ endfunction
 " ExecAsScript - Source a temporary script made from a function.	    {{{2
 "
 " Make a temporary script file from the function a:funcname, ":source" it, and
-" delete it afterwards.
+" delete it afterwards.  However, if an exception is thrown the file may remain,
+" the caller should call DeleteTheScript() afterwards.
+let s:script_name = ''
 function! ExecAsScript(funcname)
     " Make a script from the function passed as argument.
-    let script = MakeScript(a:funcname)
+    let s:script_name = MakeScript(a:funcname)
 
     " Source and delete the script.
-    exec "source" script
-    call delete(script)
+    exec "source" s:script_name
+    call delete(s:script_name)
+    let s:script_name = ''
 endfunction
+
+function! DeleteTheScript()
+    if s:script_name
+	call delete(s:script_name)
+	let s:script_name = ''
+    endif
+endfunc
 
 com! -nargs=1 -bar ExecAsScript call ExecAsScript(<f-args>)
 
@@ -143,6 +153,7 @@ func Test_endwhile_script()
   XpathINIT
   ExecAsScript T1_F
   Xpath 'F'
+  call DeleteTheScript()
 
   try
     ExecAsScript T1_G
@@ -152,6 +163,7 @@ func Test_endwhile_script()
     Xpath 'x'
   endtry
   Xpath 'G'
+  call DeleteTheScript()
 
   call assert_equal('abcFhijxG', g:Xpath)
 endfunc
@@ -260,6 +272,7 @@ function Test_finish()
     XpathINIT
     ExecAsScript T4_F
     Xpath '5'
+    call DeleteTheScript()
 
     call assert_equal('ab3e3b2c25', g:Xpath)
 endfunction

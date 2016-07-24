@@ -17,6 +17,7 @@ describe('writefile', function()
     execute('bwipeout!')
     execute('$put =readfile(f)')
     execute('1 delete _')
+    execute('call delete(f)')
 
     -- Assert buffer contents.
     expect([[
