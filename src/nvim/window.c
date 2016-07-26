@@ -5494,7 +5494,7 @@ int match_add(win_T *wp, char_u *grp, char_u *pat,
       int	  len = 1;
       list_T	  *subl;
       listitem_T  *subli;
-      int	  error = false;
+      bool error = false;
 
       if (li->li_tv.v_type == VAR_LIST) {
         subl = li->li_tv.vval.v_list;
@@ -5506,7 +5506,7 @@ int match_add(win_T *wp, char_u *grp, char_u *pat,
           goto fail;
         }
         lnum = get_tv_number_chk(&subli->li_tv, &error);
-        if (error == true) {
+        if (error) {
           goto fail;
         }
         if (lnum == 0) {
@@ -5517,12 +5517,13 @@ int match_add(win_T *wp, char_u *grp, char_u *pat,
         subli = subli->li_next;
         if (subli != NULL) {
           col = get_tv_number_chk(&subli->li_tv, &error);
-          if (error == true)
+          if (error) {
             goto fail;
+          }
           subli = subli->li_next;
           if (subli != NULL) {
             len = get_tv_number_chk(&subli->li_tv, &error);
-            if (error == true) {
+            if (error) {
               goto fail;
             }
           }
@@ -5788,8 +5789,8 @@ void win_id2tabwin(typval_T *argvars, list_T *list)
   int id = get_tv_number(&argvars[0]);
 
   win_get_tabwin(id, &tabnr, &winnr);
-  list_append_number(list, tabnr);
-  list_append_number(list, winnr);
+  tv_list_append_number(list, tabnr);
+  tv_list_append_number(list, winnr);
 }
 
 int win_id2win(typval_T *argvars)
@@ -5815,7 +5816,7 @@ void win_findbuf(typval_T *argvars, list_T *list)
     for (win_T *wp = tp == curtab ? firstwin : tp->tp_firstwin;
          wp != NULL; wp = wp->w_next) {
       if (wp->w_buffer->b_fnum == bufnr) {
-        list_append_number(list, wp->handle);
+        tv_list_append_number(list, wp->handle);
       }
     }
   }

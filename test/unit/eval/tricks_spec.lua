@@ -9,7 +9,7 @@ local eval = cimport('./src/nvim/eval.h', './src/nvim/memory.h')
 
 local eval_expr = function(expr)
   return ffi.gc(eval.eval_expr(to_cstr(expr), nil), function(tv)
-    eval.clear_tv(tv)
+    eval.tv_clear(tv)
     eval.xfree(tv)
   end)
 end

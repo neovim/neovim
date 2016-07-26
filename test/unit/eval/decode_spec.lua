@@ -6,7 +6,7 @@ local eq = helpers.eq
 local neq = helpers.neq
 local ffi = helpers.ffi
 
-local decode = cimport('./src/nvim/eval/decode.h', './src/nvim/eval_defs.h',
+local decode = cimport('./src/nvim/eval/decode.h', './src/nvim/eval/typval.h',
                        './src/nvim/globals.h', './src/nvim/memory.h',
                        './src/nvim/message.h')
 

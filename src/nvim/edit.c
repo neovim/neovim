@@ -3449,7 +3449,7 @@ expand_by_function (
       break;
     default:
       /* TODO: Give error message? */
-      clear_tv(&rettv);
+      tv_clear(&rettv);
       break;
     }
   }
@@ -3474,7 +3474,7 @@ theend:
   if (matchdict != NULL)
     dict_unref(matchdict);
   if (matchlist != NULL)
-    list_unref(matchlist);
+    tv_list_unref(matchlist);
 }
 
 /*

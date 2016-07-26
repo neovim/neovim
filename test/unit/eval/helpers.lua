@@ -5,7 +5,7 @@ local to_cstr = helpers.to_cstr
 local ffi = helpers.ffi
 local eq = helpers.eq
 
-local eval = cimport('./src/nvim/eval.h', './src/nvim/eval_defs.h')
+local eval = cimport('./src/nvim/eval.h', './src/nvim/eval/typval.h')
 
 local null_string = {[true]='NULL string'}
 local null_list = {[true]='NULL list'}
@@ -19,23 +19,23 @@ local flt_type = {[true]='flt type'}
 local nil_value = {[true]='nil'}
 
 local function list(...)
-  local ret = ffi.gc(eval.list_alloc(), eval.list_unref)
+  local ret = ffi.gc(eval.tv_list_alloc(), eval.tv_list_unref)
   eq(0, ret.lv_refcount)
   ret.lv_refcount = 1
   for i = 1, select('#', ...) do
     local val = select(i, ...)
     local typ = type(val)
     if typ == 'string' then
-      eval.list_append_string(ret, to_cstr(val))
+      eval.tv_list_append_string(ret, to_cstr(val))
     elseif typ == 'table' and val == null_string then
-      eval.list_append_string(ret, nil)
+      eval.tv_list_append_string(ret, nil)
     elseif typ == 'table' and val == null_list then
-      eval.list_append_list(ret, nil)
+      eval.tv_list_append_list(ret, nil)
     elseif typ == 'table' and val[type_key] == list_type then
       local itemlist = ffi.gc(list(table.unpack(val)), nil)
       eq(1, itemlist.lv_refcount)
       itemlist.lv_refcount = 0
-      eval.list_append_list(ret, itemlist)
+      eval.tv_list_append_list(ret, itemlist)
     else
       assert(false, 'Not implemented yet')
     end
@@ -118,7 +118,7 @@ local typvalt = function(typ, vval)
   if type(typ) == 'string' then
     typ = eval[typ]
   end
-  return ffi.gc(ffi.new('typval_T', {v_type=typ, vval=vval}), eval.clear_tv)
+  return ffi.gc(ffi.new('typval_T', {v_type=typ, vval=vval}), eval.tv_clear)
 end
 
 local lua2typvalt_type_tab = {
@@ -133,14 +133,14 @@ local lua2typvalt_type_tab = {
       processed[l].lv_refcount = processed[l].lv_refcount + 1
       return typvalt(eval.VAR_LIST, {v_list=processed[l]})
     end
-    local lst = eval.list_alloc()
+    local lst = eval.tv_list_alloc()
     lst.lv_refcount = 1
     processed[l] = lst
     local ret = typvalt(eval.VAR_LIST, {v_list=lst})
     for i = 1, #l do
       local item_tv = ffi.gc(lua2typvalt(l[i], processed), nil)
-      eval.list_append_tv(lst, item_tv)
-      eval.clear_tv(item_tv)
+      eval.tv_list_append_tv(lst, item_tv)
+      eval.tv_clear(item_tv)
     end
     return ret
   end,
@@ -158,7 +158,7 @@ local lua2typvalt_type_tab = {
         local di = eval.dictitem_alloc(to_cstr(k))
         local val_tv = ffi.gc(lua2typvalt(v, processed), nil)
         eval.copy_tv(val_tv, di.di_tv)
-        eval.clear_tv(val_tv)
+        eval.tv_clear(val_tv)
         eval.dict_add(dct, di)
       end
     end

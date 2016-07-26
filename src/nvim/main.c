@@ -389,7 +389,7 @@ int main(int argc, char **argv)
   }
   /* It's better to make v:oldfiles an empty list than NULL. */
   if (get_vim_var_list(VV_OLDFILES) == NULL)
-    set_vim_var_list(VV_OLDFILES, list_alloc());
+    set_vim_var_list(VV_OLDFILES, tv_list_alloc());
 
   /*
    * "-q errorfile": Load the error file now.

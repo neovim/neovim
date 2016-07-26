@@ -2949,15 +2949,16 @@ static long tv_nr(typval_T *tvs, int *idxp)
 {
   int idx = *idxp - 1;
   long n = 0;
-  int err = FALSE;
 
   if (tvs[idx].v_type == VAR_UNKNOWN)
     EMSG(_(e_printf));
   else {
-    ++*idxp;
+    (*idxp)++;
+    bool err = false;
     n = get_tv_number_chk(&tvs[idx], &err);
-    if (err)
+    if (err) {
       n = 0;
+    }
   }
   return n;
 }

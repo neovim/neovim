@@ -1,10 +1,12 @@
-#ifndef NVIM_EVAL_DEFS_H
-#define NVIM_EVAL_DEFS_H
+#ifndef NVIM_EVAL_TYPVAL_H
+#define NVIM_EVAL_TYPVAL_H
 
 #include <limits.h>
 #include <stddef.h>
 
 #include "nvim/hashtab.h"
+#include "nvim/garray.h"
+#include "nvim/mbyte.h"
 #include "nvim/lib/queue.h"
 
 typedef int varnumber_T;
@@ -57,83 +59,82 @@ typedef struct {
   }           vval;  ///< Actual value.
 } typval_T;
 
-/* Values for "dv_scope". */
-#define VAR_SCOPE     1 /* a:, v:, s:, etc. scope dictionaries */
-#define VAR_DEF_SCOPE 2 /* l:, g: scope dictionaries: here funcrefs are not
-                           allowed to mask existing functions */
+/// Values for (struct dictvar_S).dv_scope
+typedef enum {
+  VAR_NO_SCOPE = 0,  ///< Not a scope dictionary.
+  VAR_SCOPE = 1,  ///< Scope dictionary which requires prefix (a:, v:, …).
+  VAR_DEF_SCOPE = 2,  ///< Scope dictionary which may be accessed without prefix
+                      ///< (l:, g:).
+} ScopeType;
 
-/*
- * Structure to hold an item of a list: an internal variable without a name.
- */
+/// Structure to hold an item of a list
 typedef struct listitem_S listitem_T;
 
 struct listitem_S {
-  listitem_T  *li_next;         /* next item in list */
-  listitem_T  *li_prev;         /* previous item in list */
-  typval_T li_tv;               /* type and value of the variable */
+  listitem_T  *li_next;  ///< Next item in list.
+  listitem_T  *li_prev;  ///< Previous item in list.
+  typval_T li_tv;  ///< Item value.
 };
 
-/*
- * Struct used by those that are using an item in a list.
- */
+/// Structure used by those that are using an item in a list
 typedef struct listwatch_S listwatch_T;
 
 struct listwatch_S {
-  listitem_T          *lw_item;         /* item being watched */
-  listwatch_T         *lw_next;         /* next watcher */
+  listitem_T *lw_item;  ///< Item being watched.
+  listwatch_T *lw_next;  ///< Next watcher.
 };
 
-/*
- * Structure to hold info about a list.
- */
+/// Structure to hold info about a list
 struct listvar_S {
-  listitem_T  *lv_first;        /* first item, NULL if none */
-  listitem_T  *lv_last;         /* last item, NULL if none */
-  int lv_refcount;              /* reference count */
-  int lv_len;                   /* number of items */
-  listwatch_T *lv_watch;        /* first watcher, NULL if none */
-  int lv_idx;                   /* cached index of an item */
-  listitem_T  *lv_idx_item;     /* when not NULL item at index "lv_idx" */
-  int lv_copyID;                /* ID used by deepcopy() */
-  list_T      *lv_copylist;     /* copied list used by deepcopy() */
-  char lv_lock;                 /* zero, VAR_LOCKED, VAR_FIXED */
-  list_T      *lv_used_next;    /* next list in used lists list */
-  list_T      *lv_used_prev;    /* previous list in used lists list */
+  listitem_T  *lv_first;        ///< First item, NULL if none.
+  listitem_T  *lv_last;         ///< Last item, NULL if none.
+  int lv_refcount;              ///< Reference count.
+  int lv_len;                   ///< Number of items.
+  listwatch_T *lv_watch;        ///< First watcher, NULL if none.
+  int lv_idx;                   ///< Cached index of an item.
+  listitem_T  *lv_idx_item;     ///< When not NULL item at index "lv_idx"..
+  int lv_copyID;                ///< ID used by deepcopy().
+  list_T      *lv_copylist;     ///< Copied list used by deepcopy().
+  VarLockStatus lv_lock;        ///< Zero, VAR_LOCKED, VAR_FIXED.
+  list_T      *lv_used_next;    ///< Next list in used lists list.
+  list_T      *lv_used_prev;    ///< Previous list in used lists list.
 };
 
-/*
- * Structure to hold an item of a Dictionary.
- * Also used for a variable.
- * The key is copied into "di_key" to avoid an extra alloc/free for it.
- */
-struct dictitem_S {
-  typval_T di_tv;               /* type and value of the variable */
-  char_u di_flags;              /* flags (only used for variable) */
-  char_u di_key[1];             /* key (actually longer!) */
-};
+#define TV_DICTITEM_STRUCT(key_len) \
+    struct { \
+      typval_T di_tv;  /* Structure that holds scope dictionary itself. */ \
+      uint8_t di_flags;  /* Flags. */ \
+      char_u di_key[key_len];  /* NUL. */ \
+    }
 
-typedef struct dictitem_S dictitem_T;
+/// Structure to hold a scope dictionary
+///
+/// @warning Must be compatible with dictitem_T.
+///
+/// For use in find_var_in_ht to pretend that it found dictionary item when it
+/// finds scope dictionary.
+typedef TV_DICTITEM_STRUCT(1) ScopeDictDictItem;
 
-/// A dictitem with a 16 character key (plus NUL)
-struct dictitem16_S {
-  typval_T di_tv;     ///< type and value of the variable
-  char_u di_flags;    ///< flags (only used for variable)
-  char_u di_key[17];  ///< key
-};
+/// Structure to hold an item of a Dictionary
+///
+/// @warning Must be compatible with ScopeDictDictItem.
+///
+/// Also used for a variable.
+typedef TV_DICTITEM_STRUCT() dictitem_T;
 
-typedef struct dictitem16_S dictitem16_T;
-
-
-#define DI_FLAGS_RO     1   // "di_flags" value: read-only variable
-#define DI_FLAGS_RO_SBX 2   // "di_flags" value: read-only in the sandbox
-#define DI_FLAGS_FIX    4   // "di_flags" value: fixed: no :unlet or remove()
-#define DI_FLAGS_LOCK   8   // "di_flags" value: locked variable
-#define DI_FLAGS_ALLOC  16  // "di_flags" value: separately allocated
+/// Flags for dictitem_T.di_flags
+typedef enum {
+  DI_FLAGS_RO = 1,  ///< Read-only value
+  DI_FLAGS_RO_SBX = 2,  ///< Value, read-only in the sandbox
+  DI_FLAGS_FIX = 4,  ///< Fixed value: cannot be :unlet or remove()d.
+  DI_FLAGS_LOCK = 8,  ///< Locked value.
+  DI_FLAGS_ALLOC = 16,  ///< Separately allocated.
+} DictItemFlags;
 
 /// Structure representing a Dictionary
 struct dictvar_S {
   VarLockStatus dv_lock;  ///< Whole dictionary lock status.
-  char dv_scope;          ///< Non-zero (#VAR_SCOPE, #VAR_DEF_SCOPE) if
+  ScopeType dv_scope;     ///< Non-zero (#VAR_SCOPE, #VAR_DEF_SCOPE) if
                           ///< dictionary represents a scope (i.e. g:, l: …).
   int dv_refcount;        ///< Reference count.
   int dv_copyID;          ///< ID used when recursivery traversing a value.
@@ -144,13 +145,13 @@ struct dictvar_S {
   QUEUE watchers;         ///< Dictionary key watchers set by user code.
 };
 
-// structure used for explicit stack while garbage collecting hash tables
+/// Structure used for explicit stack while garbage collecting hash tables
 typedef struct ht_stack_S {
   hashtab_T *ht;
   struct ht_stack_S *prev;
 } ht_stack_T;
 
-// structure used for explicit stack while garbage collecting lists
+/// Structure used for explicit stack while garbage collecting lists
 typedef struct list_stack_S {
   list_T *list;
   struct list_stack_S *prev;
@@ -172,14 +173,21 @@ typedef struct list_stack_S {
 /// Convert a hashitem pointer to a dictitem pointer
 #define HI2DI(hi)     HIKEY2DI((hi)->hi_key)
 
-/// Type of assert_* check being performed
-typedef enum
+/// Get the number of items in a list
+///
+/// @param[in]  l  List to check.
+static inline long tv_list_len(list_T *const l)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  ASSERT_EQUAL,
-  ASSERT_NOTEQUAL,
-  ASSERT_MATCH,
-  ASSERT_NOTMATCH,
-  ASSERT_OTHER,
-} assert_type_T;
+  if (l == NULL) {
+    return 0;
+  }
+  return l->lv_len;
+}
 
-#endif  // NVIM_EVAL_DEFS_H
+extern const char *const tv_empty_string;
+
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "eval/typval.h.generated.h"
+#endif
+#endif  // NVIM_EVAL_TYPVAL_H

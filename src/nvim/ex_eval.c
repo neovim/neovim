@@ -1,6 +1,8 @@
-/*
- * ex_eval.c: functions for Ex command line for the +eval feature.
- */
+// TODO(ZyX-I): move to eval/executor
+
+/// @file ex_eval.c
+///
+/// Functions for Ex command line for the +eval feature.
 #include <assert.h>
 #include <stdbool.h>
 #include <stdint.h>
@@ -777,7 +779,6 @@ void report_discard_pending(int pending, void *value)
  */
 void ex_if(exarg_T *eap)
 {
-  int error;
   int skip;
   int result;
   struct condstack    *cstack = eap->cstack;
@@ -798,6 +799,7 @@ void ex_if(exarg_T *eap)
                                                                       1] &
                                                      CSF_ACTIVE));
 
+    bool error;
     result = eval_to_bool(eap->arg, &error, &eap->nextcmd, skip);
 
     if (!skip && !error) {
@@ -842,7 +844,6 @@ void ex_endif(exarg_T *eap)
  */
 void ex_else(exarg_T *eap)
 {
-  int error;
   int skip;
   int result;
   struct condstack    *cstack = eap->cstack;
@@ -899,6 +900,7 @@ void ex_else(exarg_T *eap)
   }
 
   if (eap->cmdidx == CMD_elseif) {
+    bool error;
     result = eval_to_bool(eap->arg, &error, &eap->nextcmd, skip);
     /* When throwing error exceptions, we want to throw always the first
      * of several errors in a row.  This is what actually happens when
@@ -923,7 +925,7 @@ void ex_else(exarg_T *eap)
  */
 void ex_while(exarg_T *eap)
 {
-  int error;
+  bool error;
   int skip;
   int result;
   struct condstack    *cstack = eap->cstack;

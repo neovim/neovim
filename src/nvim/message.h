@@ -3,7 +3,7 @@
 
 #include <stdbool.h>
 #include <stdarg.h>
-#include "nvim/eval_defs.h"  // for typval_T
+#include "nvim/eval/typval.h"  // for typval_T
 #include "nvim/ex_cmds_defs.h"  // for exarg_T
 
 /*

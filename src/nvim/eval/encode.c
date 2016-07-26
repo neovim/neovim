@@ -13,7 +13,7 @@
 #include "nvim/eval/encode.h"
 #include "nvim/buffer_defs.h"  // vimconv_T
 #include "nvim/eval.h"
-#include "nvim/eval_defs.h"
+#include "nvim/eval/typval.h"
 #include "nvim/garray.h"
 #include "nvim/mbyte.h"
 #include "nvim/message.h"
@@ -45,7 +45,8 @@ const char *const encode_special_var_names[] = {
 #endif
 
 /// Msgpack callback for writing to readfile()-style list
-int encode_list_write(void *data, const char *buf, size_t len)
+int encode_list_write(void *const data, const char *const buf, const size_t len)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
   if (len == 0) {
     return 0;
@@ -80,11 +81,11 @@ int encode_list_write(void *data, const char *buf, size_t len)
       str = xmemdupz(line_start, line_length);
       memchrsub(str, NUL, NL, line_length);
     }
-    list_append_allocated_string(list, str);
+    tv_list_append_allocated_string(list, str);
     line_end++;
   }
   if (line_end == end) {
-    list_append_allocated_string(list, NULL);
+    tv_list_append_allocated_string(list, NULL);
   }
   return 0;
 }

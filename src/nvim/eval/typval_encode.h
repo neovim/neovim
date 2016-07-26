@@ -140,7 +140,7 @@
 #include <assert.h>
 
 #include "nvim/lib/kvec.h"
-#include "nvim/eval_defs.h"
+#include "nvim/eval/typval.h"
 #include "nvim/eval/encode.h"
 #include "nvim/func_attr.h"
 

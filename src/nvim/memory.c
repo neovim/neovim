@@ -374,8 +374,22 @@ size_t xstrlcpy(char *restrict dst, const char *restrict src, size_t size)
 /// @return pointer to a copy of the string
 char *xstrdup(const char *str)
   FUNC_ATTR_MALLOC FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_RET
+  FUNC_ATTR_NONNULL_ALL
 {
   return xmemdupz(str, strlen(str));
+}
+
+/// strdup() wrapper
+///
+/// Unlike xstrdup() allocates a new empty string if it receives NULL.
+char *xstrdupnul(const char *const str)
+  FUNC_ATTR_MALLOC FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_RET
+{
+  if (str == NULL) {
+    return xmallocz(0);
+  } else {
+    return xstrdup(str);
+  }
 }
 
 /// A version of memchr that starts the search at `src + len`.
@@ -404,6 +418,7 @@ void *xmemrchr(const void *src, uint8_t c, size_t len)
 /// @return pointer to a copy of the string
 char *xstrndup(const char *str, size_t len)
   FUNC_ATTR_MALLOC FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_RET
+  FUNC_ATTR_NONNULL_ALL
 {
   char *p = memchr(str, '\0', len);
   return xmemdupz(str, p ? (size_t)(p - str) : len);

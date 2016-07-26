@@ -326,7 +326,9 @@ void msgpack_rpc_from_string(String result, msgpack_packer *res)
   FUNC_ATTR_NONNULL_ARG(2)
 {
   msgpack_pack_str(res, result.size);
-  msgpack_pack_str_body(res, result.data, result.size);
+  if (result.size) {
+    msgpack_pack_str_body(res, result.data, result.size);
+  }
 }
 
 typedef struct {

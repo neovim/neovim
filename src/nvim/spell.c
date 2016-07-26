@@ -8908,7 +8908,7 @@ static void spell_suggest_expr(suginfo_T *su, char_u *expr)
           add_suggestion(su, &su->su_ga, p, su->su_badlen,
               score, 0, true, su->su_sallang, false);
       }
-    list_unref(list);
+    tv_list_unref(list);
   }
 
   // Remove bogus suggestions, sort and truncate at "maxcount".

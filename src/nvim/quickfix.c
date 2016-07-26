@@ -3458,7 +3458,7 @@ int get_errorlist(win_T *wp, list_T *list)
       bufnum = 0;
 
     dict = dict_alloc();
-    list_append_dict(list, dict);
+    tv_list_append_dict(list, dict);
 
     buf[0] = qfp->qf_type;
     buf[1] = NUL;

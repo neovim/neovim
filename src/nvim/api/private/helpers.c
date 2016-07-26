@@ -88,7 +88,7 @@ bool try_end(Error *err)
 /// @param[out] err Details of an error that may have occurred
 Object dict_get_value(dict_T *dict, String key, Error *err)
 {
-  hashitem_T *hi = hash_find(&dict->dv_hashtab, (uint8_t *) key.data);
+  hashitem_T *hi = hash_find(&dict->dv_hashtab, (char_u *)key.data);
 
   if (HASHITEM_EMPTY(hi)) {
     api_set_error(err, Validation, _("Key not found"));
@@ -165,13 +165,13 @@ Object dict_set_value(dict_T *dict, String key, Object value, bool del,
       if (retval) {
         rv = vim_to_object(&di->di_tv);
       }
-      clear_tv(&di->di_tv);
+      tv_clear(&di->di_tv);
     }
 
     // Update the value
     copy_tv(&tv, &di->di_tv);
     // Clear the temporary variable
-    clear_tv(&tv);
+    tv_clear(&tv);
   }
 
   return rv;
@@ -642,20 +642,20 @@ bool object_to_vim(Object obj, typval_T *tv, Error *err)
       break;
 
     case kObjectTypeArray: {
-      list_T *list = list_alloc();
+      list_T *const list = tv_list_alloc();
 
       for (uint32_t i = 0; i < obj.data.array.size; i++) {
         Object item = obj.data.array.items[i];
-        listitem_T *li = listitem_alloc();
+        listitem_T *li = tv_list_item_alloc();
 
         if (!object_to_vim(item, &li->li_tv, err)) {
           // cleanup
-          listitem_free(li);
-          list_free(list, true);
+          tv_list_item_free(li);
+          tv_list_free(list, true);
           return false;
         }
 
-        list_append(list, li);
+        tv_list_append(list, li);
       }
       list->lv_refcount++;
 

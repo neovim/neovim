@@ -3679,12 +3679,12 @@ static void script_host_execute(char *name, exarg_T *eap)
   uint8_t *script = script_get(eap, eap->arg);
 
   if (!eap->skip) {
-    list_T *args = list_alloc();
+    list_T *args = tv_list_alloc();
     // script
-    list_append_string(args, script ? script : eap->arg, -1);
+    tv_list_append_string(args, (const char *)(script ? script : eap->arg), -1);
     // current range
-    list_append_number(args, (int)eap->line1);
-    list_append_number(args, (int)eap->line2);
+    tv_list_append_number(args, (int)eap->line1);
+    tv_list_append_number(args, (int)eap->line2);
     (void)eval_call_provider(name, "execute", args);
   }
 
@@ -3696,21 +3696,21 @@ static void script_host_execute_file(char *name, exarg_T *eap)
   uint8_t buffer[MAXPATHL];
   vim_FullName((char *)eap->arg, (char *)buffer, sizeof(buffer), false);
 
-  list_T *args = list_alloc();
+  list_T *args = tv_list_alloc();
   // filename
-  list_append_string(args, buffer, -1);
+  tv_list_append_string(args, (const char *)buffer, -1);
   // current range
-  list_append_number(args, (int)eap->line1);
-  list_append_number(args, (int)eap->line2);
+  tv_list_append_number(args, (int)eap->line1);
+  tv_list_append_number(args, (int)eap->line2);
   (void)eval_call_provider(name, "execute_file", args);
 }
 
 static void script_host_do_range(char *name, exarg_T *eap)
 {
-  list_T *args = list_alloc();
-  list_append_number(args, (int)eap->line1);
-  list_append_number(args, (int)eap->line2);
-  list_append_string(args, eap->arg, -1);
+  list_T *args = tv_list_alloc();
+  tv_list_append_number(args, (int)eap->line1);
+  tv_list_append_number(args, (int)eap->line2);
+  tv_list_append_string(args, (const char *)eap->arg, -1);
   (void)eval_call_provider(name, "do_range", args);
 }
 
