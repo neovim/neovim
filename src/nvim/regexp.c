@@ -3650,9 +3650,11 @@ static long regtry(bt_regprog_T *prog, colnr_T col)
  */
 static int reg_prev_class(void)
 {
-  if (reginput > regline)
-    return mb_get_class_buf(reginput - 1
-        - (*mb_head_off)(regline, reginput - 1), reg_buf);
+  if (reginput > regline) {
+    return mb_get_class_tab(reginput - 1 - (*mb_head_off)(regline,
+                                                          reginput - 1),
+                            reg_buf->b_chartab);
+  }
   return -1;
 }
 
@@ -3918,12 +3920,13 @@ regmatch (
           else if (has_mbyte) {
             int this_class;
 
-            /* Get class of current and previous char (if it exists). */
-            this_class = mb_get_class_buf(reginput, reg_buf);
-            if (this_class <= 1)
-              status = RA_NOMATCH;        /* not on a word at all */
-            else if (reg_prev_class() == this_class)
-              status = RA_NOMATCH;        /* previous char is in same word */
+            // Get class of current and previous char (if it exists).
+            this_class = mb_get_class_tab(reginput, reg_buf->b_chartab);
+            if (this_class <= 1) {
+              status = RA_NOMATCH;  // Not on a word at all.
+            } else if (reg_prev_class() == this_class) {
+              status = RA_NOMATCH;  // Previous char is in same word.
+            }
           } else {
             if (!vim_iswordc_buf(c, reg_buf) || (reginput > regline
                                                  && vim_iswordc_buf(reginput[-1
@@ -3938,8 +3941,8 @@ regmatch (
           else if (has_mbyte) {
             int this_class, prev_class;
 
-            /* Get class of current and previous char (if it exists). */
-            this_class = mb_get_class_buf(reginput, reg_buf);
+            // Get class of current and previous char (if it exists).
+            this_class = mb_get_class_tab(reginput, reg_buf->b_chartab);
             prev_class = reg_prev_class();
             if (this_class == prev_class
                 || prev_class == 0 || prev_class == 1)
@@ -6617,7 +6620,7 @@ static int vim_regsub_both(char_u *source, typval_T *expr, char_u *dest,
         if (eval_result != NULL) {
           eval_result = vim_strsave(eval_result);
         }
-        clear_tv(&rettv);
+        tv_clear(&rettv);
       } else {
         eval_result = eval_to_string(source + 2, NULL, true);
       }
@@ -6976,7 +6979,7 @@ list_T *reg_submatch_list(int no)
   linenr_T slnum;
   linenr_T elnum;
   list_T *list;
-  char_u *s;
+  const char *s;
 
   if (submatch_match == NULL) {
     slnum = submatch_mmatch->startpos[no].lnum;
@@ -6988,27 +6991,27 @@ list_T *reg_submatch_list(int no)
     colnr_T scol = submatch_mmatch->startpos[no].col;
     colnr_T ecol = submatch_mmatch->endpos[no].col;
 
-    list = list_alloc();
+    list = tv_list_alloc();
 
-    s = reg_getline_submatch(slnum) + scol;
+    s = (const char *)reg_getline_submatch(slnum) + scol;
     if (slnum == elnum) {
-      list_append_string(list, s, ecol - scol);
+      tv_list_append_string(list, s, ecol - scol);
     } else {
-      list_append_string(list, s, -1);
+      tv_list_append_string(list, s, -1);
       for (int i = 1; i < elnum - slnum; i++) {
-        s = reg_getline_submatch(slnum + i);
-        list_append_string(list, s, -1);
+        s = (const char *)reg_getline_submatch(slnum + i);
+        tv_list_append_string(list, s, -1);
       }
-      s = reg_getline_submatch(elnum);
-      list_append_string(list, s, ecol);
+      s = (const char *)reg_getline_submatch(elnum);
+      tv_list_append_string(list, s, ecol);
     }
   } else {
-    s = submatch_match->startp[no];
+    s = (const char *)submatch_match->startp[no];
     if (s == NULL || submatch_match->endp[no] == NULL) {
       return NULL;
     }
-    list = list_alloc();
-    list_append_string(list, s, (int)(submatch_match->endp[no] - s));
+    list = tv_list_alloc();
+    tv_list_append_string(list, s, (const char *)submatch_match->endp[no] - s);
   }
 
   return list;

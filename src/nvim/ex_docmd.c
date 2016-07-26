@@ -8416,8 +8416,8 @@ eval_vars (
           *usedlen = 1;
           return NULL;
         }
-        result = list_find_str(get_vim_var_list(VV_OLDFILES),
-            (long)i);
+        result = (char_u *)tv_list_find_str(get_vim_var_list(VV_OLDFILES),
+                                            (long)i);
         if (result == NULL) {
           *errormsg = (char_u *)"";
           return NULL;

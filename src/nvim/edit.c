@@ -15,6 +15,7 @@
 #include "nvim/cursor.h"
 #include "nvim/digraph.h"
 #include "nvim/eval.h"
+#include "nvim/eval/typval.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/ex_getln.h"
 #include "nvim/farsi.h"
@@ -3461,8 +3462,8 @@ expand_by_function (
       matchdict = rettv.vval.v_dict;
       break;
     default:
-      /* TODO: Give error message? */
-      clear_tv(&rettv);
+      // TODO(brammool): Give error message?
+      tv_clear(&rettv);
       break;
     }
   }
@@ -3484,10 +3485,12 @@ expand_by_function (
     ins_compl_add_dict(matchdict);
 
 theend:
-  if (matchdict != NULL)
+  if (matchdict != NULL) {
     dict_unref(matchdict);
-  if (matchlist != NULL)
-    list_unref(matchlist);
+  }
+  if (matchlist != NULL) {
+    tv_list_unref(matchlist);
+  }
 }
 
 /*

@@ -2465,7 +2465,7 @@ do_mouse (
                           &rettv, ARRAY_SIZE(argv), argv, NULL,
                           curwin->w_cursor.lnum, curwin->w_cursor.lnum,
                           &doesrange, true, NULL, NULL);
-          clear_tv(&rettv);
+          tv_clear(&rettv);
           break;
         }
       }
@@ -7290,11 +7290,11 @@ static bool unadjust_for_sel(void)
       pp = &curwin->w_cursor;
     else
       pp = &VIsual;
-    if (pp->coladd > 0)
-      --pp->coladd;
-    else if (pp->col > 0) {
-      --pp->col;
-      mb_adjustpos(curbuf, pp);
+    if (pp->coladd > 0) {
+      pp->coladd--;
+    } else if (pp->col > 0) {
+      pp->col--;
+      mark_mb_adjustpos(curbuf, pp);
     } else if (pp->lnum > 1) {
       --pp->lnum;
       pp->col = (colnr_T)STRLEN(ml_get(pp->lnum));
@@ -7829,7 +7829,7 @@ static void get_op_vcol(
 
   // prevent from moving onto a trail byte
   if (has_mbyte) {
-    mb_adjustpos(curwin->w_buffer, &oap->end);
+    mark_mb_adjustpos(curwin->w_buffer, &oap->end);
   }
 
   getvvcol(curwin, &(oap->start), &oap->start_vcol, NULL, &oap->end_vcol);

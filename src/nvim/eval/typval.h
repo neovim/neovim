@@ -1,21 +1,31 @@
-#ifndef NVIM_EVAL_DEFS_H
-#define NVIM_EVAL_DEFS_H
+#ifndef NVIM_EVAL_TYPVAL_H
+#define NVIM_EVAL_TYPVAL_H
 
 #include <limits.h>
 #include <stddef.h>
 #include <stdbool.h>
 
 #include "nvim/hashtab.h"
+#include "nvim/garray.h"
+#include "nvim/mbyte.h"
 #include "nvim/lib/queue.h"
-#include "nvim/garray.h"   // for garray_T
 #include "nvim/profile.h"  // for proftime_T
 #include "nvim/pos.h"      // for linenr_T
 
+/// Type used for VimL VAR_NUMBER values
 typedef int varnumber_T;
+
+/// Type used for VimL VAR_FLOAT values
 typedef double float_T;
 
+/// Maximal possible value of varnumber_T variable
 #define VARNUMBER_MAX INT_MAX
+
+/// Mimimal possible value of varnumber_T variable
 #define VARNUMBER_MIN INT_MIN
+
+/// %d printf format specifier for varnumber_T
+#define PRIdVARNUMBER "d"
 
 typedef struct listvar_S list_T;
 typedef struct dictvar_S dict_T;
@@ -64,35 +74,32 @@ typedef struct {
   }           vval;  ///< Actual value.
 } typval_T;
 
-/* Values for "dv_scope". */
-#define VAR_SCOPE     1 /* a:, v:, s:, etc. scope dictionaries */
-#define VAR_DEF_SCOPE 2 /* l:, g: scope dictionaries: here funcrefs are not
-                           allowed to mask existing functions */
+/// Values for (struct dictvar_S).dv_scope
+typedef enum {
+  VAR_NO_SCOPE = 0,  ///< Not a scope dictionary.
+  VAR_SCOPE = 1,  ///< Scope dictionary which requires prefix (a:, v:, …).
+  VAR_DEF_SCOPE = 2,  ///< Scope dictionary which may be accessed without prefix
+                      ///< (l:, g:).
+} ScopeType;
 
-/*
- * Structure to hold an item of a list: an internal variable without a name.
- */
+/// Structure to hold an item of a list
 typedef struct listitem_S listitem_T;
 
 struct listitem_S {
-  listitem_T  *li_next;         /* next item in list */
-  listitem_T  *li_prev;         /* previous item in list */
-  typval_T li_tv;               /* type and value of the variable */
+  listitem_T  *li_next;  ///< Next item in list.
+  listitem_T  *li_prev;  ///< Previous item in list.
+  typval_T li_tv;  ///< Item value.
 };
 
-/*
- * Struct used by those that are using an item in a list.
- */
+/// Structure used by those that are using an item in a list
 typedef struct listwatch_S listwatch_T;
 
 struct listwatch_S {
-  listitem_T          *lw_item;         /* item being watched */
-  listwatch_T         *lw_next;         /* next watcher */
+  listitem_T *lw_item;  ///< Item being watched.
+  listwatch_T *lw_next;  ///< Next watcher.
 };
 
-/*
- * Structure to hold info about a list.
- */
+/// Structure to hold info about a list
 struct listvar_S {
   listitem_T *lv_first;  ///< First item, NULL if none.
   listitem_T *lv_last;  ///< Last item, NULL if none.
@@ -123,28 +130,41 @@ struct dictitem_S {
   char_u di_key[1];             ///< key (actually longer!)
 };
 
-typedef struct dictitem_S dictitem_T;
+#define TV_DICTITEM_STRUCT(KEY_LEN) \
+    struct { \
+      typval_T di_tv;  /* Structure that holds scope dictionary itself. */ \
+      uint8_t di_flags;  /* Flags. */ \
+      char_u di_key[KEY_LEN];  /* NUL. */ \
+    }
 
-/// A dictitem with a 16 character key (plus NUL)
-struct dictitem16_S {
-  typval_T di_tv;     ///< type and value of the variable
-  char_u di_flags;    ///< flags (only used for variable)
-  char_u di_key[17];  ///< key
-};
+/// Structure to hold a scope dictionary
+///
+/// @warning Must be compatible with dictitem_T.
+///
+/// For use in find_var_in_ht to pretend that it found dictionary item when it
+/// finds scope dictionary.
+typedef TV_DICTITEM_STRUCT(1) ScopeDictDictItem;
 
-typedef struct dictitem16_S dictitem16_T;
+/// Structure to hold an item of a Dictionary
+///
+/// @warning Must be compatible with ScopeDictDictItem.
+///
+/// Also used for a variable.
+typedef TV_DICTITEM_STRUCT() dictitem_T;
 
-
-#define DI_FLAGS_RO     1   // "di_flags" value: read-only variable
-#define DI_FLAGS_RO_SBX 2   // "di_flags" value: read-only in the sandbox
-#define DI_FLAGS_FIX    4   // "di_flags" value: fixed: no :unlet or remove()
-#define DI_FLAGS_LOCK   8   // "di_flags" value: locked variable
-#define DI_FLAGS_ALLOC  16  // "di_flags" value: separately allocated
+/// Flags for dictitem_T.di_flags
+typedef enum {
+  DI_FLAGS_RO = 1,  ///< Read-only value
+  DI_FLAGS_RO_SBX = 2,  ///< Value, read-only in the sandbox
+  DI_FLAGS_FIX = 4,  ///< Fixed value: cannot be :unlet or remove()d.
+  DI_FLAGS_LOCK = 8,  ///< Locked value.
+  DI_FLAGS_ALLOC = 16,  ///< Separately allocated.
+} DictItemFlags;
 
 /// Structure representing a Dictionary
 struct dictvar_S {
   VarLockStatus dv_lock;  ///< Whole dictionary lock status.
-  char dv_scope;          ///< Non-zero (#VAR_SCOPE, #VAR_DEF_SCOPE) if
+  ScopeType dv_scope;     ///< Non-zero (#VAR_SCOPE, #VAR_DEF_SCOPE) if
                           ///< dictionary represents a scope (i.e. g:, l: …).
   int dv_refcount;        ///< Reference count.
   int dv_copyID;          ///< ID used when recursivery traversing a value.
@@ -155,7 +175,10 @@ struct dictvar_S {
   QUEUE watchers;         ///< Dictionary key watchers set by user code.
 };
 
-typedef int scid_T;                     // script ID
+/// Type used for script ID
+typedef int scid_T;
+
+// Structure to hold info for a function that is currently being executed.
 typedef struct funccall_S funccall_T;
 
 // Structure to hold info for a user function.
@@ -194,63 +217,26 @@ struct ufunc {
 
 /// Maximum number of function arguments
 #define MAX_FUNC_ARGS   20
-#define VAR_SHORT_LEN   20      // short variable name length
-#define FIXVAR_CNT      12      // number of fixed variables
-
-// structure to hold info for a function that is currently being executed.
-struct funccall_S {
-  ufunc_T     *func;            ///< function being called
-  int linenr;                   ///< next line to be executed
-  int returned;                 ///< ":return" used
-  struct {                      ///< fixed variables for arguments
-    dictitem_T var;                     ///< variable (without room for name)
-    char_u room[VAR_SHORT_LEN];         ///< room for the name
-  } fixvar[FIXVAR_CNT];
-  dict_T l_vars;                ///< l: local function variables
-  dictitem_T l_vars_var;        ///< variable for l: scope
-  dict_T l_avars;               ///< a: argument variables
-  dictitem_T l_avars_var;       ///< variable for a: scope
-  list_T l_varlist;             ///< list for a:000
-  listitem_T l_listitems[MAX_FUNC_ARGS];        ///< listitems for a:000
-  typval_T    *rettv;           ///< return value
-  linenr_T breakpoint;          ///< next line with breakpoint or zero
-  int dbg_tick;                 ///< debug_tick when breakpoint was set
-  int level;                    ///< top nesting level of executed function
-  proftime_T prof_child;        ///< time spent in a child
-  funccall_T  *caller;          ///< calling function or NULL
-  int fc_refcount;              ///< number of user functions that reference
-                                // this funccal
-  int fc_copyID;                ///< for garbage collection
-  garray_T fc_funcs;            ///< list of ufunc_T* which keep a reference
-                                // to "func"
-};
-
-// structure used by trans_function_name()
-typedef struct {
-  dict_T      *fd_dict;         ///< Dictionary used.
-  char_u      *fd_newkey;       ///< New key in "dict" in allocated memory.
-  dictitem_T  *fd_di;           ///< Dictionary item used.
-} funcdict_T;
 
 struct partial_S {
-  int pt_refcount;        ///< Reference count.
-  char_u *pt_name;        ///< Function name; when NULL use pt_func->name.
-  ufunc_T *pt_func;       ///< Function pointer; when NULL lookup function
-                          ///< with pt_name.
-  bool pt_auto;           ///< when true the partial was created for using
-                          ///< dict.member in handle_subscript().
-  int pt_argc;            ///< Number of arguments.
-  typval_T *pt_argv;      ///< Arguments in allocated array.
-  dict_T *pt_dict;        ///< Dict for "self".
+  int pt_refcount;  ///< Reference count.
+  char_u *pt_name;  ///< Function name; when NULL use pt_func->name.
+  ufunc_T *pt_func;  ///< Function pointer; when NULL lookup function with
+                     ///< pt_name.
+  bool pt_auto;  ///< When true the partial was created by using dict.member
+                 ///< in handle_subscript().
+  int pt_argc;  ///< Number of arguments.
+  typval_T *pt_argv;  ///< Arguments in allocated array.
+  dict_T *pt_dict;  ///< Dict for "self".
 };
 
-// structure used for explicit stack while garbage collecting hash tables
+/// Structure used for explicit stack while garbage collecting hash tables
 typedef struct ht_stack_S {
   hashtab_T *ht;
   struct ht_stack_S *prev;
 } ht_stack_T;
 
-// structure used for explicit stack while garbage collecting lists
+/// Structure used for explicit stack while garbage collecting lists
 typedef struct list_stack_S {
   list_T *list;
   struct list_stack_S *prev;
@@ -272,15 +258,28 @@ typedef struct list_stack_S {
 /// Convert a hashitem pointer to a dictitem pointer
 #define HI2DI(hi)     HIKEY2DI((hi)->hi_key)
 
-/// Type of assert_* check being performed
-typedef enum
+/// Get the number of items in a list
+///
+/// @param[in]  l  List to check.
+static inline long tv_list_len(list_T *const l)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  ASSERT_EQUAL,
-  ASSERT_NOTEQUAL,
-  ASSERT_MATCH,
-  ASSERT_NOTMATCH,
-  ASSERT_INRANGE,
-  ASSERT_OTHER,
-} assert_type_T;
+  if (l == NULL) {
+    return 0;
+  }
+  return l->lv_len;
+}
 
-#endif  // NVIM_EVAL_DEFS_H
+/// Empty string
+///
+/// Needed for hack which allows not allocating empty string and still not
+/// crashing when freeing it.
+extern const char *const tv_empty_string;
+
+/// Specifies that free_unref_items() function has (not) been entered
+extern bool tv_in_free_unref_items;
+
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "eval/typval.h.generated.h"
+#endif
+#endif  // NVIM_EVAL_TYPVAL_H

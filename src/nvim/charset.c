@@ -41,8 +41,10 @@ static bool chartab_initialized = false;
     (buf)->b_chartab[(unsigned)(c) >> 6] |= (1ull << ((c) & 0x3f))
 #define RESET_CHARTAB(buf, c) \
     (buf)->b_chartab[(unsigned)(c) >> 6] &= ~(1ull << ((c) & 0x3f))
+#define GET_CHARTAB_TAB(chartab, c) \
+    ((chartab)[(unsigned)(c) >> 6] & (1ull << ((c) & 0x3f)))
 #define GET_CHARTAB(buf, c) \
-    ((buf)->b_chartab[(unsigned)(c) >> 6] & (1ull << ((c) & 0x3f)))
+    GET_CHARTAB_TAB((buf)->b_chartab, c)
 
 // Table used below, see init_chartab() for an explanation
 static char_u g_chartab[256];
@@ -634,7 +636,7 @@ int char2cells(int c)
 /// @param p
 ///
 /// @return number of display cells.
-int ptr2cells(char_u *p)
+int ptr2cells(const char_u *p)
 {
   // For UTF-8 we need to look at more bytes if the first byte is >= 0x80.
   if (*p >= 0x80) {
@@ -776,6 +778,21 @@ bool vim_iswordc(int c)
   return vim_iswordc_buf(c, curbuf);
 }
 
+/// Check that "c" is a keyword character
+/// Letters and characters from 'iskeyword' option for given buffer.
+/// For multi-byte characters mb_get_class() is used (builtin rules).
+///
+/// @param[in]  c  Character to check.
+/// @param[in]  chartab  Buffer chartab.
+bool vim_iswordc_tab(const int c, const uint64_t *const chartab)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
+{
+  if (c >= 0x100) {
+    return utf_class(c) >= 2;
+  }
+  return c > 0 && c < 0x100 && GET_CHARTAB_TAB(chartab, c) != 0;
+}
+
 /// Check that "c" is a keyword character:
 /// Letters and characters from 'iskeyword' option for given buffer.
 /// For multi-byte characters mb_get_class() is used (builtin rules).
@@ -785,10 +802,7 @@ bool vim_iswordc(int c)
 bool vim_iswordc_buf(int c, buf_T *buf)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ARG(2)
 {
-  if (c >= 0x100) {
-    return utf_class(c) >= 2;
-  }
-  return c > 0 && c < 0x100 && GET_CHARTAB(buf, c) != 0;
+  return vim_iswordc_tab(c, buf->b_chartab);
 }
 
 /// Just like vim_iswordc() but uses a pointer to the (multi-byte) character.

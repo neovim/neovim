@@ -21,8 +21,6 @@ typedef struct {
 #include "nvim/pos.h"
 // for the number window-local and buffer-local options
 #include "nvim/option_defs.h"
-// for optional iconv support
-#include "nvim/iconv.h"
 // for jump list and tag stack sizes in a buffer and mark types
 #include "nvim/mark_defs.h"
 // for u_header_T; needs buf_T.
@@ -30,7 +28,9 @@ typedef struct {
 // for hashtab_T
 #include "nvim/hashtab.h"
 // for dict_T
-#include "nvim/eval_defs.h"
+#include "nvim/eval/typval.h"
+// for proftime_T
+#include "nvim/profile.h"
 // for String
 #include "nvim/api/private/defs.h"
 // for Map(K, V)
@@ -319,25 +319,6 @@ typedef struct {
 } tasave_T;
 
 /*
- * Used for conversion of terminal I/O and script files.
- */
-typedef struct {
-  int vc_type;                  /* zero or one of the CONV_ values */
-  int vc_factor;                /* max. expansion factor */
-# ifdef USE_ICONV
-  iconv_t vc_fd;                /* for CONV_ICONV */
-# endif
-  bool vc_fail;                 /* fail for invalid char, don't use '?' */
-} vimconv_T;
-
-#define CONV_NONE               0
-#define CONV_TO_UTF8            1
-#define CONV_9_TO_UTF8          2
-#define CONV_TO_LATIN1          3
-#define CONV_TO_LATIN9          4
-#define CONV_ICONV              5
-
-/*
  * Structure used for mappings and abbreviations.
  */
 typedef struct mapblock mapblock_T;
@@ -447,6 +428,10 @@ typedef struct {
   char_u *b_syn_isk;            // iskeyword option
 } synblock_T;
 
+/// Type used for changedtick_di member in buf_T
+///
+/// Primary exists so that literals of relevant type can be made.
+typedef TV_DICTITEM_STRUCT(sizeof("changedtick")) ChangedtickDictItem;
 
 #define BUF_HAS_QF_ENTRY 1
 #define BUF_HAS_LL_ENTRY 2
@@ -491,7 +476,7 @@ struct file_buffer {
                                 // file has been changed and not written out.
 /// Change identifier incremented for each change, including undo
 #define b_changedtick changedtick_di.di_tv.vval.v_number
-  dictitem16_T changedtick_di;  // b:changedtick dictionary item.
+  ChangedtickDictItem changedtick_di;  // b:changedtick dictionary item.
 
   bool b_saving;                /* Set to true if we are in the middle of
                                    saving the buffer. */
@@ -735,8 +720,8 @@ struct file_buffer {
   int b_bad_char;               /* "++bad=" argument when edit started or 0 */
   int b_start_bomb;             /* 'bomb' when it was read */
 
-  dictitem_T b_bufvar;          /* variable for "b:" Dictionary */
-  dict_T      *b_vars;          /* internal variables, local to buffer */
+  ScopeDictDictItem b_bufvar;  ///< Variable for "b:" Dictionary.
+  dict_T *b_vars;  ///< b: scope dictionary.
 
   /* When a buffer is created, it starts without a swap file.  b_may_swap is
    * then set to indicate that a swap file may be opened later.  It is reset
@@ -824,9 +809,9 @@ struct tabpage_S {
   buf_T           *(tp_diffbuf[DB_COUNT]);
   int tp_diff_invalid;              ///< list of diffs is outdated
   frame_T         *(tp_snapshot[SNAP_COUNT]);    ///< window layout snapshots
-  dictitem_T tp_winvar;             ///< variable for "t:" Dictionary
-  dict_T          *tp_vars;         ///< internal variables, local to tab page
-  char_u          *tp_localdir;     ///< Absolute path of local CWD or NULL
+  ScopeDictDictItem tp_winvar;      ///< Variable for "t:" Dictionary.
+  dict_T          *tp_vars;         ///< Internal variables, local to tab page.
+  char_u          *tp_localdir;     ///< Absolute path of local cwd or NULL.
 };
 
 /*
@@ -1118,8 +1103,8 @@ struct window_S {
 
   long w_scbind_pos;
 
-  dictitem_T w_winvar;          /* variable for "w:" Dictionary */
-  dict_T      *w_vars;          /* internal variables, local to window */
+  ScopeDictDictItem w_winvar;  ///< Variable for "w:" dictionary.
+  dict_T *w_vars;  ///< Dictionary with w: variables.
 
   int w_farsi;                  /* for the window dependent Farsi functions */
 

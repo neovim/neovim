@@ -5,7 +5,7 @@
 #include <stdarg.h>
 
 #include "nvim/types.h"
-#include "nvim/eval_defs.h"
+#include "nvim/eval/typval.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "strings.h.generated.h"

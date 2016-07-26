@@ -22,6 +22,7 @@
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/eval.h"
+#include "nvim/eval/typval.h"
 #include "nvim/option.h"
 #include "nvim/syntax.h"
 #include "nvim/getchar.h"
@@ -237,11 +238,11 @@ Object nvim_call_function(String fname, Array args, Error *err)
   if (!try_end(err)) {
     rv = vim_to_object(&rettv);
   }
-  clear_tv(&rettv);
+  tv_clear(&rettv);
 
 free_vim_args:
   while (i > 0) {
-    clear_tv(&vim_args[--i]);
+    tv_clear(&vim_args[--i]);
   }
 
   return rv;

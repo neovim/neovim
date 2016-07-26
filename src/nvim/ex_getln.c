@@ -4249,7 +4249,7 @@ static int ExpandUserList(expand_T *xp, int *num_file, char_u ***file)
 
     GA_APPEND(char_u *, &ga, vim_strsave(li->li_tv.vval.v_string));
   }
-  list_unref(retlist);
+  tv_list_unref(retlist);
 
   *file = ga.ga_data;
   *num_file = ga.ga_len;
@@ -4545,7 +4545,7 @@ static inline void hist_free_entry(histentry_T *hisptr)
   FUNC_ATTR_NONNULL_ALL
 {
   xfree(hisptr->hisstr);
-  list_unref(hisptr->additional_elements);
+  tv_list_unref(hisptr->additional_elements);
   clear_hist_entry(hisptr);
 }
 
@@ -4601,7 +4601,7 @@ in_history (
       history[type][last_i] = history[type][i];
       last_i = i;
     }
-    list_unref(list);
+    tv_list_unref(list);
     history[type][i].hisnum = ++hisnum[type];
     history[type][i].hisstr = str;
     history[type][i].timestamp = os_time();

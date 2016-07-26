@@ -12,6 +12,7 @@
 #include "nvim/syntax_defs.h"
 #include "nvim/types.h"
 #include "nvim/event/loop.h"
+#include "nvim/os/os_defs.h"
 
 #define IOSIZE         (1024+1)          // file I/O and sprintf buffer size
 
@@ -20,16 +21,6 @@
 # define MSG_BUF_LEN 480                 // length of buffer for small messages
 # define MSG_BUF_CLEN  (MSG_BUF_LEN / 6) // cell length (worst case: utf-8
                                          // takes 6 bytes for one cell)
-
-// Maximum length of a file path.  Make it a bit long, to stay
-// on the safe side.  But not too long to put on the stack.
-#ifndef MAXPATHL
-# ifdef MAXPATHLEN
-#  define MAXPATHL  MAXPATHLEN
-# else
-#  define MAXPATHL  256
-# endif
-#endif
 
 #ifdef WIN32
 # define _PATHSEPSTR "\\"
@@ -1225,11 +1216,6 @@ EXTERN FILE *time_fd INIT(= NULL);  /* where to write startup timing */
  */
 EXTERN int ignored;
 EXTERN char *ignoredp;
-
-EXTERN bool in_free_unref_items INIT(= false);
-
-// Used for checking if local variables or arguments used in a lambda.
-EXTERN int *eval_lavars_used INIT(= NULL);
 
 // If a msgpack-rpc channel should be started over stdin/stdout
 EXTERN bool embedded_mode INIT(= false);

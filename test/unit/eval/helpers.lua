@@ -5,7 +5,7 @@ local to_cstr = helpers.to_cstr
 local ffi = helpers.ffi
 local eq = helpers.eq
 
-local eval = cimport('./src/nvim/eval.h', './src/nvim/eval_defs.h',
+local eval = cimport('./src/nvim/eval.h', './src/nvim/eval/typval.h',
                      './src/nvim/hashtab.h')
 
 local null_string = {[true]='NULL string'}
@@ -33,7 +33,7 @@ local function li_alloc(nogc)
 end
 
 local function list(...)
-  local ret = ffi.gc(eval.list_alloc(), eval.list_unref)
+  local ret = ffi.gc(eval.tv_list_alloc(), eval.tv_list_unref)
   eq(0, ret.lv_refcount)
   ret.lv_refcount = 1
   for i = 1, select('#', ...) do
@@ -241,7 +241,7 @@ local typvalt = function(typ, vval)
   elseif type(typ) == 'string' then
     typ = eval[typ]
   end
-  return ffi.gc(ffi.new('typval_T', {v_type=typ, vval=vval}), eval.clear_tv)
+  return ffi.gc(ffi.new('typval_T', {v_type=typ, vval=vval}), eval.tv_clear)
 end
 
 local lua2typvalt_type_tab = {
@@ -256,14 +256,14 @@ local lua2typvalt_type_tab = {
       processed[l].lv_refcount = processed[l].lv_refcount + 1
       return typvalt(eval.VAR_LIST, {v_list=processed[l]})
     end
-    local lst = eval.list_alloc()
+    local lst = eval.tv_list_alloc()
     lst.lv_refcount = 1
     processed[l] = lst
     local ret = typvalt(eval.VAR_LIST, {v_list=lst})
     for i = 1, #l do
       local item_tv = ffi.gc(lua2typvalt(l[i], processed), nil)
-      eval.list_append_tv(lst, item_tv)
-      eval.clear_tv(item_tv)
+      eval.tv_list_append_tv(lst, item_tv)
+      eval.tv_clear(item_tv)
     end
     return ret
   end,
@@ -281,7 +281,7 @@ local lua2typvalt_type_tab = {
         local di = eval.dictitem_alloc(to_cstr(k))
         local val_tv = ffi.gc(lua2typvalt(v, processed), nil)
         eval.copy_tv(val_tv, di.di_tv)
-        eval.clear_tv(val_tv)
+        eval.tv_clear(val_tv)
         eval.dict_add(dct, di)
       end
     end
@@ -301,7 +301,7 @@ local lua2typvalt_type_tab = {
         for i, arg in ipairs(l.args) do
           local arg_tv = ffi.gc(lua2typvalt(arg, processed), nil)
           eval.copy_tv(arg_tv, argv[i - 1])
-          eval.clear_tv(arg_tv)
+          eval.tv_clear(arg_tv)
         end
       end
       local dict = nil

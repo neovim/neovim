@@ -571,7 +571,7 @@ static varnumber_T tv_nr(typval_T *tvs, int *idxp)
     EMSG(_(e_printf));
   } else {
     (*idxp)++;
-    int err = false;
+    bool err = false;
     n = (varnumber_T)get_tv_number_chk(&tvs[idx], &err);
     if (err) {
       n = 0;

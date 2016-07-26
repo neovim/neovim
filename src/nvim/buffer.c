@@ -1472,7 +1472,7 @@ static inline void buf_init_changedtick(buf_T *const buf)
 {
   STATIC_ASSERT(sizeof("changedtick") <= sizeof(buf->changedtick_di.di_key),
                 "buf->changedtick_di cannot hold large enough keys");
-  buf->changedtick_di = (dictitem16_T) {
+  buf->changedtick_di = (ChangedtickDictItem) {
     .di_flags = DI_FLAGS_RO|DI_FLAGS_FIX,  // Must not include DI_FLAGS_ALLOC.
     .di_tv = (typval_T) {
       .v_type = VAR_NUMBER,
