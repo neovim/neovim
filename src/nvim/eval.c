@@ -6987,6 +6987,10 @@ static struct fst {
   { "virtcol",           1, 1, f_virtcol },
   { "visualmode",        0, 1, f_visualmode },
   { "wildmenumode",      0, 0, f_wildmenumode },
+  { "win_getid",         0, 2, f_win_getid },
+  { "win_gotoid",        1, 1, f_win_gotoid },
+  { "win_id2tabwin",     1, 1, f_win_id2tabwin },
+  { "win_id2win",        1, 1, f_win_id2win },
   { "winbufnr",          1, 1, f_winbufnr },
   { "wincol",            0, 0, f_wincol },
   { "winheight",         1, 1, f_winheight },
@@ -17150,6 +17154,32 @@ static void f_wildmenumode(typval_T *argvars, typval_T *rettv)
     rettv->vval.v_number = 1;
 }
 
+/// "win_getid()" function
+static void f_win_getid(typval_T *argvars, typval_T *rettv)
+{
+  rettv->vval.v_number = win_getid(argvars);
+}
+
+/// "win_gotoid()" function
+static void f_win_gotoid(typval_T *argvars, typval_T *rettv)
+{
+  rettv->vval.v_number = win_gotoid(argvars);
+}
+
+/// "win_id2tabwin()" function
+static void f_win_id2tabwin(typval_T *argvars, typval_T *rettv)
+{
+  if (rettv_list_alloc(rettv) != FAIL) {
+    win_id2tabwin(argvars, rettv->vval.v_list);
+  }
+}
+
+/// "win_id2win()" function
+static void f_win_id2win(typval_T *argvars, typval_T *rettv)
+{
+  rettv->vval.v_number = win_id2win(argvars);
+}
+
 /*
  * "winbufnr(nr)" function
  */
@@ -18437,7 +18467,7 @@ static void init_tv(typval_T *varp)
  * caller of incompatible types: it sets *denote to TRUE if "denote"
  * is not NULL or returns -1 otherwise.
  */
-static long get_tv_number(typval_T *varp)
+long get_tv_number(typval_T *varp)
 {
   int error = FALSE;
 
