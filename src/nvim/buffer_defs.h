@@ -106,8 +106,6 @@ typedef struct frame_S frame_T;
 // for bufhl_*_T
 #include "nvim/bufhl_defs.h"
 
-typedef Map(linenr_T, bufhl_vec_T) bufhl_info_T;
-
 #include "nvim/os/fs_defs.h"    // for FileID
 #include "nvim/terminal.h"      // for Terminal
 
