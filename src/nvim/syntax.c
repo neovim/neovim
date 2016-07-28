@@ -5661,6 +5661,24 @@ int get_syntax_info(int *seqnrp)
   return current_flags;
 }
 
+
+/// Get the sequence number of the concealed file position.
+///
+/// @return seqnr if the file position is concealed, 0 otherwise.
+int syn_get_concealed_id(win_T *wp, linenr_T lnum, colnr_T col)
+{
+  int seqnr;
+  int syntax_flags;
+
+  (void)syn_get_id(wp, lnum, col, false, NULL, false);
+  syntax_flags = get_syntax_info(&seqnr);
+
+  if (syntax_flags & HL_CONCEAL) {
+    return seqnr;
+  }
+  return 0;
+}
+
 /*
  * Return conceal substitution character
  */
