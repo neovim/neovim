@@ -43,6 +43,9 @@ set(CROSS_TARGET ${MINGW_TRIPLET})
 set(HOST_C_COMPILER cc)
 set(HOST_EXE_LINKER ld)
 
+# Point pkg-config to the sysroot
+set(ENV{PKG_CONFIG_LIBDIR} ${CMAKE_FIND_ROOT_PATH}/lib/pkgconfig/)
+
 if (MINGW_TRIPLET MATCHES "^x86_64")
   set(HOST_C_FLAGS)
   set(HOST_EXE_LINKER_FLAGS)
