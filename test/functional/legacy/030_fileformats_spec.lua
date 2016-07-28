@@ -1,10 +1,8 @@
 -- Test for a lot of variations of the 'fileformats' option
 
 local helpers = require('test.functional.helpers')
-local feed, insert, source, clear, execute, expect, eq, eval, write_file =
-  helpers.feed, helpers.insert, helpers.source, helpers.clear,
-  helpers.execute, helpers.expect, helpers.eq, helpers.eval,
-  helpers.write_file
+local feed, clear, execute = helpers.feed, helpers.clear, helpers.execute
+local eq, write_file = helpers.eq, helpers.write_file
 
 describe('fileformats option', function()
   setup(function()
@@ -23,6 +21,7 @@ describe('fileformats option', function()
     write_file('XXUxDsMc', unix..dos..mac)
     write_file('XXUxMac', unix..mac)
   end)
+
   teardown(function()
     os.remove('test.out')
     os.remove('XXDos')
@@ -36,7 +35,7 @@ describe('fileformats option', function()
     os.remove('XXUxMac')
     for i = 0, 9 do
       for j = 1, 4 do
-	os.remove('XXtt'..i..j)
+        os.remove('XXtt'..i..j)
       end
     end
   end)
@@ -156,7 +155,8 @@ describe('fileformats option', function()
     execute('e! XXUxDsMc')
     execute('w! XXtt93')
 
-    -- Append "END" to each file so that we can see what the last written char was.
+    -- Append "END" to each file so that we can see what the last written
+    -- char was.
     execute('set fileformat=unix nobin')
     feed('ggdGaEND<esc>')
     execute('w >>XXtt01')
