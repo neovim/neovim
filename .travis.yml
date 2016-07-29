@@ -8,8 +8,8 @@ env:
     # Travis has 1.5 virtual cores according to
     # http://docs.travis-ci.com/user/speeding-up-the-build/#Paralellizing-your-build-on-one-VM
     - MAKE_CMD="make -j2"
-    # Update PATH for pip and MinGW.
-    - PATH="$(python2.7 -c 'import site; print(site.getuserbase())')/bin:$HOME/.local/mingw32/bin:$PATH"
+    # Update PATH for pip.
+    - PATH="$(python2.7 -c 'import site; print(site.getuserbase())')/bin:$PATH"
     # LLVM symbolizer path.
     - LLVM_SYMBOLIZER="$(which llvm-symbolizer-3.4)"
     # Build directory for Neovim.
@@ -34,8 +34,6 @@ env:
     - CMAKE_FLAGS_32BIT="-DCMAKE_SYSTEM_LIBRARY_PATH=/lib32:/usr/lib32:/usr/local/lib32
                          -DCMAKE_IGNORE_PATH=/lib:/usr/lib:/usr/local/lib
                          -DCMAKE_TOOLCHAIN_FILE=$TRAVIS_BUILD_DIR/cmake/i386-linux-gnu.toolchain.cmake"
-    # Additional CMake flags for MinGW builds.
-    - CMAKE_FLAGS_MINGW="-DCMAKE_TOOLCHAIN_FILE=$TRAVIS_BUILD_DIR/cmake/mingw32-w64-cross-travis.toolchain.cmake"
     # Environment variables for Clang sanitizers.
     - ASAN_OPTIONS="detect_leaks=1:check_initialization_order=1:log_path=$LOG_DIR/asan"
     - ASAN_SYMBOLIZER_PATH="$LLVM_SYMBOLIZER"
@@ -81,8 +79,6 @@ matrix:
       compiler: clang
     - os: osx
       compiler: gcc-4.9
-    - os: linux
-      env: BUILD_MINGW=ON
   fast_finish: true
 
 before_install: .ci/before_install.sh
