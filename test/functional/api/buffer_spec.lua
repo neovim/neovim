@@ -2,7 +2,9 @@ local helpers = require('test.functional.helpers')(after_each)
 local clear, nvim, buffer = helpers.clear, helpers.nvim, helpers.buffer
 local curbuf, curwin, eq = helpers.curbuf, helpers.curwin, helpers.eq
 local curbufmeths, ok = helpers.curbufmeths, helpers.ok
-local funcs, request = helpers.funcs, helpers.request
+local funcs = helpers.funcs
+local request = helpers.request
+local neq = helpers.neq
 local NIL = helpers.NIL
 
 describe('api/buf', function()
@@ -249,6 +251,17 @@ describe('api/buf', function()
       eq(1, funcs.exists('b:lua'))
       curbufmeths.del_var('lua')
       eq(0, funcs.exists('b:lua'))
+      curbuf('set_var', 'changedtick', true)
+      eq(true, curbuf('get_var', 'changedtick'))
+      neq(true, nvim('eval', 'b:changedtick'))
+    end)
+  end)
+
+  describe('get_changedtick', function()
+    it('works', function()
+      eq(2, curbufmeths.get_changedtick())
+      curbufmeths.set_lines(0, 1, false, {'abc\0', '\0def', 'ghi'})
+      eq(3, curbufmeths.get_changedtick())
     end)
 
     it('buffer_set_var returns the old value', function()

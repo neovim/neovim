@@ -411,10 +411,13 @@ end:
 
 /// Gets a buffer-scoped (b:) variable.
 ///
-/// @param buffer     Buffer handle
-/// @param name       Variable name
-/// @param[out] err   Error details, if any
-/// @return Variable value
+/// @note Use buffer_get_changedtick() for “variable” `b:changedtick`.
+///       This method only gets variables from b: dictionary.
+///
+/// @param buffer The buffer handle
+/// @param name The variable name
+/// @param[out] err Details of an error that may have occurred
+/// @return The variable value
 Object nvim_buf_get_var(Buffer buffer, String name, Error *err)
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
@@ -424,6 +427,22 @@ Object nvim_buf_get_var(Buffer buffer, String name, Error *err)
   }
 
   return dict_get_value(buf->b_vars, name, err);
+}
+
+/// Gets a changed tick of a buffer
+///
+/// @param[in]  buffer  The buffer handle.
+///
+/// @return `b:changedtick` value.
+Integer nvim_buf_get_changedtick(Buffer buffer, Error *err)
+{
+  const buf_T *const buf = find_buffer_by_handle(buffer, err);
+
+  if (!buf) {
+    return -1;
+  }
+
+  return buf->b_changedtick;
 }
 
 /// Sets a buffer-scoped (b:) variable
