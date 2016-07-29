@@ -1409,8 +1409,8 @@ recover_names (
         for (int i = 0; i < num_files; ++i) {
           /* print the swap file name */
           msg_outnum((long)++file_count);
-          MSG_PUTS(".    ");
-          msg_puts(path_tail(files[i]));
+          msg_puts(".    ");
+          msg_puts((const char *)path_tail(files[i]));
           msg_putchar('\n');
           (void)swapfile_info(files[i]);
         }

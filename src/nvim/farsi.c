@@ -1593,7 +1593,7 @@ void conv_to_pvim(void)
 
   // Assume the screen has been messed up: clear it and redraw.
   redraw_later(CLEAR);
-  MSG_ATTR(farsi_text_1, hl_attr(HLF_S));
+  MSG_ATTR((const char *)farsi_text_1, hl_attr(HLF_S));
 }
 
 /// Convert the Farsi VIM into Farsi 3342 standard.
@@ -1614,7 +1614,7 @@ void conv_to_pstd(void)
 
   // Assume the screen has been messed up: clear it and redraw.
   redraw_later(CLEAR);
-  MSG_ATTR(farsi_text_2, hl_attr(HLF_S));
+  msg_attr((const char *)farsi_text_2, hl_attr(HLF_S));
 }
 
 /// left-right swap the characters in buf[len].

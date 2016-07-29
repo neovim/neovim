@@ -29,7 +29,7 @@
 #define MSG(s)                      msg((char_u *)(s))
 
 /// Show message highlighted according to the attr
-#define MSG_ATTR(s, attr)           msg_attr((char_u *)(s), (attr))
+#define MSG_ATTR(s, attr)           msg_attr((const char *)(s), (attr))
 
 /// Display error message
 ///
@@ -49,13 +49,13 @@
 #define EMSGU(s, n)                 emsgf((const char *) (s), (uint64_t)(n))
 
 /// Display message at the recorded position
-#define MSG_PUTS(s)                 msg_puts((char_u *)(s))
+#define MSG_PUTS(s)                 msg_puts((const char *)(s))
 
 /// Display message at the recorded position, highlighted
-#define MSG_PUTS_ATTR(s, a)         msg_puts_attr((char_u *)(s), (a))
+#define MSG_PUTS_ATTR(s, a)         msg_puts_attr((const char *)(s), (a))
 
 /// Like #MSG_PUTS, but highlight like title
-#define MSG_PUTS_TITLE(s)           msg_puts_title((char_u *)(s))
+#define MSG_PUTS_TITLE(s)           msg_puts_title((const char *)(s))
 
 /// Like #MSG_PUTS, but if middle part of too long messages it will be replaced
 #define MSG_PUTS_LONG(s)            msg_puts_long_attr((char_u *)(s), 0)

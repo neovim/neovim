@@ -617,7 +617,7 @@ static void normal_redraw_mode_message(NormalState *s)
     update_screen(0);
     // now reset it, otherwise it's put in the history again
     keep_msg = kmsg;
-    msg_attr(kmsg, keep_msg_attr);
+    msg_attr((const char *)kmsg, keep_msg_attr);
     xfree(kmsg);
   }
   setcursor();
@@ -1275,7 +1275,7 @@ static void normal_redraw(NormalState *s)
     // msg_attr_keep() will set keep_msg to NULL, must free the string here.
     // Don't reset keep_msg, msg_attr_keep() uses it to check for duplicates.
     char *p = (char *)keep_msg;
-    msg_attr((uint8_t *)p, keep_msg_attr);
+    msg_attr(p, keep_msg_attr);
     xfree(p);
   }
 

@@ -1463,12 +1463,12 @@ void append_redir(char *const buf, const size_t buflen,
 
 void print_line_no_prefix(linenr_T lnum, int use_number, int list)
 {
-  char_u numbuf[30];
+  char numbuf[30];
 
   if (curwin->w_p_nu || use_number) {
-    vim_snprintf((char *)numbuf, sizeof(numbuf),
-        "%*ld ", number_width(curwin), (long)lnum);
-    msg_puts_attr(numbuf, hl_attr(HLF_N));      /* Highlight line nrs */
+    vim_snprintf(numbuf, sizeof(numbuf), "%*" PRIdLINENR " ",
+                 number_width(curwin), lnum);
+    msg_puts_attr(numbuf, hl_attr(HLF_N));  // Highlight line nrs.
   }
   msg_prt_line(ml_get(lnum), list);
 }
@@ -5678,33 +5678,33 @@ void ex_sign(exarg_T *eap)
  */
 static void sign_list_defined(sign_T *sp)
 {
-  char_u  *p;
-
   smsg("sign %s", sp->sn_name);
   if (sp->sn_icon != NULL) {
-    MSG_PUTS(" icon=");
+    msg_puts(" icon=");
     msg_outtrans(sp->sn_icon);
-    MSG_PUTS(_(" (not supported)"));
+    msg_puts(_(" (not supported)"));
   }
   if (sp->sn_text != NULL) {
-    MSG_PUTS(" text=");
+    msg_puts(" text=");
     msg_outtrans(sp->sn_text);
   }
   if (sp->sn_line_hl > 0) {
-    MSG_PUTS(" linehl=");
-    p = get_highlight_name(NULL, sp->sn_line_hl - 1);
-    if (p == NULL)
-      MSG_PUTS("NONE");
-    else
+    msg_puts(" linehl=");
+    const char *const p = get_highlight_name(NULL, sp->sn_line_hl - 1);
+    if (p == NULL) {
+      msg_puts("NONE");
+    } else {
       msg_puts(p);
+    }
   }
   if (sp->sn_text_hl > 0) {
-    MSG_PUTS(" texthl=");
-    p = get_highlight_name(NULL, sp->sn_text_hl - 1);
-    if (p == NULL)
-      MSG_PUTS("NONE");
-    else
+    msg_puts(" texthl=");
+    const char *const p = get_highlight_name(NULL, sp->sn_text_hl - 1);
+    if (p == NULL) {
+      msg_puts("NONE");
+    } else {
       msg_puts(p);
+    }
   }
 }
 

@@ -996,3 +996,51 @@ bool tv_islocked(const typval_T *const tv)
               && tv->vval.v_dict != NULL
               && (tv->vval.v_dict->dv_lock & VAR_LOCKED)));
 }
+
+//{{{2 Type checks
+
+/// Check that given value is a number or string
+///
+/// Error messages are compatible with get_tv_number() previously used for the
+/// same purpose in buf*() functions. Special values are not accepted (previous
+/// behaviour: silently fail to find buffer).
+///
+/// @param[in]  tv  Value to check.
+///
+/// @return true if everything is OK, false otherwise.
+bool tv_check_str_or_nr(const typval_T *const tv)
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
+{
+    switch (tv->v_type) {
+      case VAR_NUMBER:
+      case VAR_STRING: {
+        return true;
+      }
+      case VAR_FLOAT: {
+        EMSG(_("E805: Expected a Number or a String, Float found"));
+        return false;
+      }
+      case VAR_FUNC: {
+        EMSG(_("E703: Expected a Number or a String, Funcref found"));
+        return false;
+      }
+      case VAR_LIST: {
+        EMSG(_("E745: Expected a Number or a String, List found"));
+        return false;
+      }
+      case VAR_DICT: {
+        EMSG(_("E728: Expected a Number or a String, Dictionary found"));
+        return false;
+      }
+      case VAR_SPECIAL: {
+        EMSG(_("E5300: Expected a Number or a String"));
+        return false;
+      }
+      case VAR_UNKNOWN: {
+        EMSG2(_(e_intern2), "tv_check_str_or_nr(UNKNOWN)");
+        return false;
+      }
+    }
+    assert(false);
+    return false;
+}

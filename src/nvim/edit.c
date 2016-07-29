@@ -1857,8 +1857,9 @@ static bool check_compl_option(bool dict_opt)
       : (*curbuf->b_p_tsr == NUL && *p_tsr == NUL)) {
     ctrl_x_mode = 0;
     edit_submode = NULL;
-    msg_attr(dict_opt ? (char_u *)_("'dictionary' option is empty")
-             : (char_u *)_("'thesaurus' option is empty"), hl_attr(HLF_E));
+    msg_attr((dict_opt
+              ? _("'dictionary' option is empty")
+              : _("'thesaurus' option is empty")), hl_attr(HLF_E));
     if (emsg_silent == 0) {
       vim_beep(BO_COMPL);
       setcursor();
@@ -4796,9 +4797,9 @@ static int ins_complete(int c, bool enable_pum)
   if (!shortmess(SHM_COMPLETIONMENU)) {
     if (edit_submode_extra != NULL) {
       if (!p_smd) {
-        msg_attr(edit_submode_extra,
-                 edit_submode_highl < HLF_COUNT
-                 ? hl_attr(edit_submode_highl) : 0);
+        msg_attr((const char *)edit_submode_extra,
+                 (edit_submode_highl < HLF_COUNT
+                  ? hl_attr(edit_submode_highl) : 0));
       }
     } else {
       msg_clr_cmdline();  // necessary for "noshowmode"
