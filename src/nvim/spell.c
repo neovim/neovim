@@ -3094,10 +3094,11 @@ count_common_word (
   }
 
   hash = hash_hash(p);
-  hi = hash_lookup(&lp->sl_wordcount, p, hash);
+  const size_t p_len = STRLEN(p);
+  hi = hash_lookup(&lp->sl_wordcount, (const char *)p, p_len, hash);
   if (HASHITEM_EMPTY(hi)) {
-    wc = xmalloc(sizeof(wordcount_T) + STRLEN(p));
-    STRCPY(wc->wc_word, p);
+    wc = xmalloc(sizeof(wordcount_T) + p_len);
+    memcpy(wc->wc_word, p, p_len + 1);
     wc->wc_count = count;
     hash_add_item(&lp->sl_wordcount, hi, wc->wc_word, hash);
   } else {
@@ -5513,7 +5514,7 @@ static int spell_read_dic(spellinfo_T *spin, char_u *fname, afffile_T *affile)
     }
 
     hash = hash_hash(dw);
-    hi = hash_lookup(&ht, dw, hash);
+    hi = hash_lookup(&ht, (const char *)dw, STRLEN(dw), hash);
     if (!HASHITEM_EMPTY(hi)) {
       if (p_verbose > 0)
         smsg(_("Duplicate word in %s line %d: %s"),
@@ -6343,7 +6344,7 @@ static int tree_add_word(spellinfo_T *spin, char_u *word, wordnode_T *root, int 
 
     if (spin->si_verbose) {
       msg_start();
-      msg_puts((char_u *)_(msg_compressing));
+      msg_puts(_(msg_compressing));
       msg_clr_eos();
       msg_didout = FALSE;
       msg_col = 0;
@@ -6519,7 +6520,8 @@ node_compress (
 
       // Try to find an identical child.
       hash = hash_hash(child->wn_u1.hashkey);
-      hi = hash_lookup(ht, child->wn_u1.hashkey, hash);
+      hi = hash_lookup(ht, (const char *)child->wn_u1.hashkey,
+                       STRLEN(child->wn_u1.hashkey), hash);
       if (!HASHITEM_EMPTY(hi)) {
         // There are children we encountered before with a hash value
         // identical to the current child.  Now check if there is one
@@ -8515,7 +8517,7 @@ void spell_suggest(int count)
       vim_snprintf((char *)IObuff, IOSIZE, ":ot \"%.*s\" egnahC",
           sug.su_badlen, sug.su_badptr);
     }
-    msg_puts(IObuff);
+    msg_puts((const char *)IObuff);
     msg_clr_eos();
     msg_putchar('\n');
 
@@ -8531,18 +8533,19 @@ void spell_suggest(int count)
             sug.su_badptr + stp->st_orglen,
             sug.su_badlen - stp->st_orglen + 1);
       vim_snprintf((char *)IObuff, IOSIZE, "%2d", i + 1);
-      if (cmdmsg_rl)
+      if (cmdmsg_rl) {
         rl_mirror(IObuff);
-      msg_puts(IObuff);
+      }
+      msg_puts((const char *)IObuff);
 
       vim_snprintf((char *)IObuff, IOSIZE, " \"%s\"", wcopy);
-      msg_puts(IObuff);
+      msg_puts((const char *)IObuff);
 
       // The word may replace more than "su_badlen".
       if (sug.su_badlen < stp->st_orglen) {
         vim_snprintf((char *)IObuff, IOSIZE, _(" < \"%.*s\""),
-            stp->st_orglen, sug.su_badptr);
-        msg_puts(IObuff);
+                     stp->st_orglen, sug.su_badptr);
+        msg_puts((const char *)IObuff);
       }
 
       if (p_verbose > 0) {
@@ -8558,7 +8561,7 @@ void spell_suggest(int count)
           // Mirror the numbers, but keep the leading space.
           rl_mirror(IObuff + 1);
         msg_advance(30);
-        msg_puts(IObuff);
+        msg_puts((const char *)IObuff);
       }
       msg_putchar('\n');
     }
@@ -11182,11 +11185,13 @@ add_sound_suggest (
   // the words that have a better score than before.  Use a hashtable to
   // remember the words that have been done.
   hash = hash_hash(goodword);
-  hi = hash_lookup(&slang->sl_sounddone, goodword, hash);
+  const size_t goodword_len = STRLEN(goodword);
+  hi = hash_lookup(&slang->sl_sounddone, (const char *)goodword, goodword_len,
+                   hash);
   if (HASHITEM_EMPTY(hi)) {
-    sft = xmalloc(sizeof(sftword_T) + STRLEN(goodword));
+    sft = xmalloc(sizeof(sftword_T) + goodword_len);
     sft->sft_score = score;
-    STRCPY(sft->sft_word, goodword);
+    memcpy(sft->sft_word, goodword, goodword_len + 1);
     hash_add_item(&slang->sl_sounddone, hi, sft->sft_word, hash);
   } else {
     sft = HI2SFT(hi);
@@ -11453,10 +11458,10 @@ static void set_map_str(slang_T *lp, char_u *map)
         mb_char2bytes(headc, b + cl + 1);
         b[cl + 1 + headcl] = NUL;
         hash = hash_hash(b);
-        hi = hash_lookup(&lp->sl_map_hash, b, hash);
-        if (HASHITEM_EMPTY(hi))
+        hi = hash_lookup(&lp->sl_map_hash, (const char *)b, STRLEN(b), hash);
+        if (HASHITEM_EMPTY(hi)) {
           hash_add_item(&lp->sl_map_hash, hi, b, hash);
-        else {
+        } else {
           // This should have been checked when generating the .spl
           // file.
           EMSG(_("E783: duplicate char in MAP entry"));
@@ -11661,9 +11666,10 @@ static void add_banned(suginfo_T *su, char_u *word)
   hashitem_T  *hi;
 
   hash = hash_hash(word);
-  hi = hash_lookup(&su->su_banned, word, hash);
+  const size_t word_len = STRLEN(word);
+  hi = hash_lookup(&su->su_banned, (const char *)word, word_len, hash);
   if (HASHITEM_EMPTY(hi)) {
-    s = vim_strsave(word);
+    s = xmemdupz(word, word_len);
     hash_add_item(&su->su_banned, hi, s, hash);
   }
 }
@@ -12995,19 +13001,17 @@ pop:
 // ":spellinfo"
 void ex_spellinfo(exarg_T *eap)
 {
-  langp_T     *lp;
-  char_u      *p;
-
-  if (no_spell_checking(curwin))
+  if (no_spell_checking(curwin)) {
     return;
+  }
 
   msg_start();
   for (int lpi = 0; lpi < curwin->w_s->b_langp.ga_len && !got_int; ++lpi) {
-    lp = LANGP_ENTRY(curwin->w_s->b_langp, lpi);
-    msg_puts((char_u *)"file: ");
-    msg_puts(lp->lp_slang->sl_fname);
+    langp_T *const lp = LANGP_ENTRY(curwin->w_s->b_langp, lpi);
+    msg_puts("file: ");
+    msg_puts((const char *)lp->lp_slang->sl_fname);
     msg_putchar('\n');
-    p = lp->lp_slang->sl_info;
+    const char *const p = (const char *)lp->lp_slang->sl_info;
     if (p != NULL) {
       msg_puts(p);
       msg_putchar('\n');

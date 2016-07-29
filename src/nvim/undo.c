@@ -2512,13 +2512,14 @@ void ex_undolist(exarg_T *eap)
     sort_strings((char_u **)ga.ga_data, ga.ga_len);
 
     msg_start();
-    msg_puts_attr((char_u *)_("number changes  when               saved"),
-        hl_attr(HLF_T));
+    msg_puts_attr(_("number changes  when               saved"),
+                  hl_attr(HLF_T));
     for (int i = 0; i < ga.ga_len && !got_int; ++i) {
       msg_putchar('\n');
-      if (got_int)
+      if (got_int) {
         break;
-      msg_puts(((char_u **)ga.ga_data)[i]);
+      }
+      msg_puts(((const char **)ga.ga_data)[i]);
     }
     msg_end();
 

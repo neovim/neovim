@@ -82,22 +82,42 @@ void hash_clear_all(hashtab_T *ht, unsigned int off)
 ///         used for that key.
 ///         WARNING: Returned pointer becomes invalid as soon as the hash table
 ///                  is changed in any way.
-hashitem_T* hash_find(hashtab_T *ht, char_u *key)
+hashitem_T *hash_find(hashtab_T *ht, const char_u *key)
 {
-  return hash_lookup(ht, key, hash_hash(key));
+  return hash_lookup(ht, (const char *)key, STRLEN(key), hash_hash(key));
+}
+
+/// Like hash_find, but key is not NUL-terminated
+///
+/// @param[in]  ht  Hashtab to look in.
+/// @param[in]  key  Key of the looked-for item. Must not be NULL.
+/// @param[in]  len  Key length.
+///
+/// @return Pointer to the hash item corresponding to the given key.
+///         If not found, then return pointer to the empty item that would be
+///         used for that key.
+///
+///         @warning Returned pointer becomes invalid as soon as the hash table
+///                  is changed in any way.
+hashitem_T *hash_find_len(hashtab_T *ht, const char *key, const size_t len)
+{
+  return hash_lookup(ht, key, len, hash_hash_len(key, len));
 }
 
 /// Like hash_find(), but caller computes "hash".
 ///
-/// @param key  The key of the looked-for item. Must not be NULL.
-/// @param hash The precomputed hash for the key.
+/// @param[in]  key  The key of the looked-for item. Must not be NULL.
+/// @param[in]  key_len  Key length.
+/// @param[in]  hash  The precomputed hash for the key.
 ///
 /// @return Pointer to the hashitem corresponding to the given key.
 ///         If not found, then return pointer to the empty item that would be
 ///         used for that key.
 ///         WARNING: Returned pointer becomes invalid as soon as the hash table
 ///                  is changed in any way.
-hashitem_T* hash_lookup(hashtab_T *ht, char_u *key, hash_T hash)
+hashitem_T *hash_lookup(hashtab_T *const ht,
+                        const char *const key, const size_t key_len,
+                        const hash_T hash)
 {
 #ifdef HT_DEBUG
   hash_count_lookup++;
@@ -117,7 +137,9 @@ hashitem_T* hash_lookup(hashtab_T *ht, char_u *key, hash_T hash)
   hashitem_T *freeitem = NULL;
   if (hi->hi_key == HI_KEY_REMOVED) {
     freeitem = hi;
-  } else if ((hi->hi_hash == hash) && (STRCMP(hi->hi_key, key) == 0)) {
+  } else if ((hi->hi_hash == hash)
+             && (STRNCMP(hi->hi_key, key, key_len) == 0)
+             && hi->hi_key[key_len] == NUL) {
     return hi;
   }
 
@@ -142,7 +164,8 @@ hashitem_T* hash_lookup(hashtab_T *ht, char_u *key, hash_T hash)
 
     if ((hi->hi_hash == hash)
         && (hi->hi_key != HI_KEY_REMOVED)
-        && (STRCMP(hi->hi_key, key) == 0)) {
+        && (STRNCMP(hi->hi_key, key, key_len) == 0)
+        && hi->hi_key[key_len] == NUL) {
       return hi;
     }
 
@@ -179,7 +202,7 @@ void hash_debug_results(void)
 int hash_add(hashtab_T *ht, char_u *key)
 {
   hash_T hash = hash_hash(key);
-  hashitem_T *hi = hash_lookup(ht, key, hash);
+  hashitem_T *hi = hash_lookup(ht, (const char *)key, STRLEN(key), hash);
   if (!HASHITEM_EMPTY(hi)) {
     EMSG2(_(e_intern2), "hash_add()");
     return FAIL;
@@ -359,13 +382,16 @@ static void hash_may_resize(hashtab_T *ht, size_t minitems)
   ht->ht_filled = ht->ht_used;
 }
 
+#define HASH_CYCLE_BODY(hash, p) \
+    hash = hash * 101 + *p++
+
 /// Get the hash number for a key.
 ///
 /// If you think you know a better hash function: Compile with HT_DEBUG set and
 /// run a script that uses hashtables a lot. Vim will then print statistics
 /// when exiting. Try that with the current hash algorithm and yours. The
 /// lower the percentage the better.
-hash_T hash_hash(char_u *key)
+hash_T hash_hash(const char_u *key)
 {
   hash_T hash = *key;
 
@@ -375,13 +401,42 @@ hash_T hash_hash(char_u *key)
 
   // A simplistic algorithm that appears to do very well.
   // Suggested by George Reilly.
-  char_u *p = key + 1;
+  const uint8_t *p = key + 1;
   while (*p != NUL) {
-    hash = hash * 101 + *p++;
+    HASH_CYCLE_BODY(hash, p);
   }
 
   return hash;
 }
+
+/// Get the hash number for a key that is not a NUL-terminated string
+///
+/// @warning Function does not check whether key contains NUL. But you will not
+///          be able to get hash entry in this case.
+///
+/// @param[in]  key  Key.
+/// @param[in]  len  Key length.
+///
+/// @return Key hash.
+hash_T hash_hash_len(const char *key, const size_t len)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  if (len == 0) {
+    return 0;
+  }
+
+  hash_T hash = *(uint8_t *)key;
+  const uint8_t *end = (uint8_t *)key + len;
+
+  const uint8_t *p = (const uint8_t *)key + 1;
+  while (p < end) {
+    HASH_CYCLE_BODY(hash, p);
+  }
+
+  return hash;
+}
+
+#undef HASH_CYCLE_BODY
 
 /// Function to get HI_KEY_REMOVED value
 ///

@@ -1373,17 +1373,17 @@ void getvcols(win_T *wp, pos_T *pos1, pos_T *pos2, colnr_T *left,
 
 /// skipwhite: skip over ' ' and '\t'.
 ///
-/// @param q
+/// @param[in]  q  String to skip in.
 ///
 /// @return Pointer to character after the skipped whitespace.
-char_u* skipwhite(char_u *q)
+char_u *skipwhite(const char_u *q)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  char_u *p = q;
+  const char_u *p = q;
   while (ascii_iswhite(*p)) {
-    // skip to next non-white
     p++;
   }
-  return p;
+  return (char_u *)p;
 }
 
 /// skip over digits

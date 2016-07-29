@@ -755,10 +755,11 @@ static void show_menus_recursive(vimmenu_T *menu, int modes, int depth)
         else
           msg_putchar(' ');
         MSG_PUTS(" ");
-        if (*menu->strings[bit] == NUL)
-          msg_puts_attr((char_u *)"<Nop>", hl_attr(HLF_8));
-        else
+        if (*menu->strings[bit] == NUL) {
+          msg_puts_attr("<Nop>", hl_attr(HLF_8));
+        } else {
           msg_outtrans_special(menu->strings[bit], FALSE);
+        }
       }
   } else {
     if (menu == NULL) {

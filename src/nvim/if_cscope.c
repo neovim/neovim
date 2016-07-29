@@ -2008,8 +2008,9 @@ static int cs_reset(exarg_T *eap)
   xfree(pplist);
   xfree(fllist);
 
-  if (p_csverbose)
-    MSG_ATTR(_("All cscope databases reset"), hl_attr(HLF_R) | MSG_HIST);
+  if (p_csverbose) {
+    msg_attr(_("All cscope databases reset"), hl_attr(HLF_R) | MSG_HIST);
+  }
   return CSCOPE_SUCCESS;
 } /* cs_reset */
 

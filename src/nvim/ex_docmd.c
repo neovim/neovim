@@ -585,8 +585,9 @@ int do_cmdline(char_u *cmdline, LineGetter fgetline,
 
       smsg(_("line %" PRId64 ": %s"),
           (int64_t)sourcing_lnum, cmdline_copy);
-      if (msg_silent == 0)
-        msg_puts((char_u *)"\n");           /* don't overwrite this */
+      if (msg_silent == 0) {
+        msg_puts("\n");  // don't overwrite this either
+      }
 
       verbose_leave_scroll();
       --no_wait_return;
@@ -2582,7 +2583,7 @@ int modifier_len(char_u *cmd)
  * Return 2 if there is an exact match.
  * Return 3 if there is an ambiguous match.
  */
-int cmd_exists(char_u *name)
+int cmd_exists(const char *const name)
 {
   exarg_T ea;
   int full = FALSE;
@@ -2591,17 +2592,20 @@ int cmd_exists(char_u *name)
   char_u      *p;
 
   /* Check command modifiers. */
-  for (i = 0; i < (int)ARRAY_SIZE(cmdmods); ++i) {
-    for (j = 0; name[j] != NUL; ++j)
-      if (name[j] != cmdmods[i].name[j])
+  for (i = 0; i < (int)ARRAY_SIZE(cmdmods); i++) {
+    for (j = 0; name[j] != NUL; j++) {
+      if (name[j] != (char)cmdmods[i].name[j]) {
         break;
-    if (name[j] == NUL && j >= cmdmods[i].minlen)
+      }
+    }
+    if (name[j] == NUL && j >= cmdmods[i].minlen) {
       return cmdmods[i].name[j] == NUL ? 2 : 1;
+    }
   }
 
   /* Check built-in commands and user defined commands.
    * For ":2match" and ":3match" we need to skip the number. */
-  ea.cmd = (*name == '2' || *name == '3') ? name + 1 : name;
+  ea.cmd = (char_u *)((*name == '2' || *name == '3') ? name + 1 : name);
   ea.cmdidx = (cmdidx_T)0;
   p = find_command(&ea, &full);
   if (p == NULL)

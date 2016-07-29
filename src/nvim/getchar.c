@@ -3163,11 +3163,11 @@ map_clear_int (
   }
 }
 
-/*
- * Return characters to represent the map mode in an allocated string.
- * Returns NULL when out of memory.
- */
-char_u *map_mode_to_chars(int mode)
+/// Return characters to represent the map mode in an allocated string
+///
+/// @return [allocated] NUL-terminated string with characters.
+char *map_mode_to_chars(int mode)
+  FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_RET
 {
   garray_T mapmode;
 
@@ -3200,7 +3200,7 @@ char_u *map_mode_to_chars(int mode)
   }
 
   ga_append(&mapmode, NUL);
-  return (char_u *)mapmode.ga_data;
+  return (char *)mapmode.ga_data;
 }
 
 static void 
@@ -3209,8 +3209,7 @@ showmap (
     int local                  /* TRUE for buffer-local map */
 )
 {
-  int len = 1;
-  char_u      *mapchars;
+  size_t len = 1;
 
   if (msg_didout || msg_silent != 0) {
     msg_putchar('\n');
@@ -3218,10 +3217,10 @@ showmap (
       return;
   }
 
-  mapchars = map_mode_to_chars(mp->m_mode);
-  if (mapchars != NULL) {
+  {
+    char *const mapchars = map_mode_to_chars(mp->m_mode);
     msg_puts(mapchars);
-    len = (int)STRLEN(mapchars);
+    len = strlen(mapchars);
     xfree(mapchars);
   }
 
@@ -3229,18 +3228,19 @@ showmap (
     msg_putchar(' ');
 
   /* Display the LHS.  Get length of what we write. */
-  len = msg_outtrans_special(mp->m_keys, TRUE);
+  len = (size_t)msg_outtrans_special(mp->m_keys, true);
   do {
     msg_putchar(' ');                   /* padd with blanks */
     ++len;
   } while (len < 12);
 
-  if (mp->m_noremap == REMAP_NONE)
-    msg_puts_attr((char_u *)"*", hl_attr(HLF_8));
-  else if (mp->m_noremap == REMAP_SCRIPT)
-    msg_puts_attr((char_u *)"&", hl_attr(HLF_8));
-  else
+  if (mp->m_noremap == REMAP_NONE) {
+    msg_puts_attr("*", hl_attr(HLF_8));
+  } else if (mp->m_noremap == REMAP_SCRIPT) {
+    msg_puts_attr("&", hl_attr(HLF_8));
+  } else {
     msg_putchar(' ');
+  }
 
   if (local)
     msg_putchar('@');
@@ -3249,9 +3249,9 @@ showmap (
 
   /* Use FALSE below if we only want things like <Up> to show up as such on
    * the rhs, and not M-x etc, TRUE gets both -- webb */
-  if (*mp->m_str == NUL)
-    msg_puts_attr((char_u *)"<Nop>", hl_attr(HLF_8));
-  else {
+  if (*mp->m_str == NUL) {
+    msg_puts_attr("<Nop>", hl_attr(HLF_8));
+  } else {
     /* Remove escaping of CSI, because "m_str" is in a format to be used
      * as typeahead. */
     char_u *s = vim_strsave(mp->m_str);

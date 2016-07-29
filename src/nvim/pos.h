@@ -2,6 +2,8 @@
 #define NVIM_POS_H
 
 typedef long linenr_T;         // line number type
+/// Format used to print values which have linenr_T type
+#define PRIdLINENR "ld"
 
 /// Column number type
 typedef int colnr_T;

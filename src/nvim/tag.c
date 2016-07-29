@@ -540,7 +540,7 @@ do_tag (
           }
           vim_snprintf((char *)IObuff + 1, IOSIZE - 1, "%2d %s ", i + 1,
                        mt_names[matches[i][0] & MT_MASK]);
-          msg_puts(IObuff);
+          msg_puts((const char *)IObuff);
           if (tagp.tagkind != NULL)
             msg_outtrans_len(tagp.tagkind,
                 (int)(tagp.tagkind_end - tagp.tagkind));
@@ -595,7 +595,7 @@ do_tag (
                 }
                 p = msg_outtrans_one(p, attr);
                 if (*p == TAB) {
-                  msg_puts_attr((char_u *)" ", attr);
+                  msg_puts_attr(" ", attr);
                   break;
                 }
                 if (*p == ':')
@@ -858,11 +858,12 @@ do_tag (
           STRCAT(IObuff, _("  Using tag with different case!"));
         if ((num_matches > prev_num_matches || new_tag)
             && num_matches > 1) {
-          if (ic)
-            msg_attr(IObuff, hl_attr(HLF_W));
-          else
+          if (ic) {
+            msg_attr((const char *)IObuff, hl_attr(HLF_W));
+          } else {
             msg(IObuff);
-          msg_scroll = TRUE;            /* don't overwrite this message */
+          }
+          msg_scroll = true;  // Don't overwrite this message.
         } else
           give_warning(IObuff, ic);
         if (ic && !msg_scrolled && msg_silent == 0) {

@@ -6719,17 +6719,19 @@ int showmode(void)
           if (edit_submode_pre != NULL)
             length -= vim_strsize(edit_submode_pre);
           if (length - vim_strsize(edit_submode) > 0) {
-            if (edit_submode_pre != NULL)
-              msg_puts_attr(edit_submode_pre, attr);
-            msg_puts_attr(edit_submode, attr);
+            if (edit_submode_pre != NULL) {
+              msg_puts_attr((const char *)edit_submode_pre, attr);
+            }
+            msg_puts_attr((const char *)edit_submode, attr);
           }
           if (edit_submode_extra != NULL) {
             MSG_PUTS_ATTR(" ", attr);              /* add a space in between */
-            if ((int)edit_submode_highl < (int)HLF_COUNT)
+            if ((int)edit_submode_highl < (int)HLF_COUNT) {
               sub_attr = hl_attr(edit_submode_highl);
-            else
+            } else {
               sub_attr = attr;
-            msg_puts_attr(edit_submode_extra, sub_attr);
+            }
+            msg_puts_attr((const char *)edit_submode_extra, sub_attr);
           }
         }
       } else {
