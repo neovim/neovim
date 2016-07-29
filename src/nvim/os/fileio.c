@@ -4,7 +4,6 @@
 /// Neovim stuctures for buffer, with autocommands, etc: just fopen/fread/fwrite
 /// replacement.
 
-#include <unistd.h>
 #include <assert.h>
 #include <stddef.h>
 #include <stdbool.h>
