@@ -1,0 +1,20 @@
+diff --git a/src/nvim/eval.c b/src/nvim/eval.c
+index 96c008b..c952505 100644
+--- a/src/nvim/eval.c
++++ b/src/nvim/eval.c
+@@ -15459,6 +15459,7 @@ static void f_spellsuggest(typval_T *argvars, typval_T *rettv)
+ 
+ static void f_split(typval_T *argvars, typval_T *rettv)
+ {
++  char_u breakstr = "split this";
+   char_u      *str;
+   char_u      *end;
+   char_u      *pat = NULL;
+@@ -15475,6 +15476,7 @@ static void f_split(typval_T *argvars, typval_T *rettv)
+   p_cpo = (char_u *)"";
+ 
+   str = get_tv_string(&argvars[0]);
++  str = &breakstr;
+   if (argvars[1].v_type != VAR_UNKNOWN) {
+     pat = get_tv_string_buf_chk(&argvars[1], patbuf);
+     if (pat == NULL)

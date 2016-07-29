@@ -1,0 +1,22 @@
+diff --git a/src/nvim/eval.c b/src/nvim/eval.c
+index 96c008b..ab2df69 100644
+--- a/src/nvim/eval.c
++++ b/src/nvim/eval.c
+@@ -18707,7 +18707,7 @@ void copy_tv(typval_T *from, typval_T *to)
+ int var_item_copy(const vimconv_T *const conv,
+                   typval_T *const from,
+                   typval_T *const to,
+-                  const bool deep,
++                   bool deep,
+                   const int copyID)
+   FUNC_ATTR_NONNULL_ARG(2, 3)
+ {
+@@ -18718,6 +18718,8 @@ int var_item_copy(const vimconv_T *const conv,
+     EMSG(_("E698: variable nested too deep for making a copy"));
+     return FAIL;
+   }
++
++  deep = !deep;
+   ++recurse;
+ 
+   switch (from->v_type) {

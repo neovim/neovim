@@ -1,0 +1,13 @@
+diff --git a/src/nvim/eval.c b/src/nvim/eval.c
+index 96c008b..5894b2e 100644
+--- a/src/nvim/eval.c
++++ b/src/nvim/eval.c
+@@ -1458,7 +1458,7 @@ ex_let_vars (
+     return FAIL;
+   }
+ 
+-  i = list_len(l);
++  i = list_len(l) -1;
+   if (semicolon == 0 && var_count < i) {
+     EMSG(_("E687: Less targets than List items"));
+     return FAIL;

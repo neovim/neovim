@@ -1,0 +1,12 @@
+diff --git a/src/nvim/normal.c b/src/nvim/normal.c
+index e064d34..33362eb 100644
+--- a/src/nvim/normal.c
++++ b/src/nvim/normal.c
+@@ -6828,6 +6828,7 @@ static void nv_g_cmd(cmdarg_T *cap)
+    *   "g@"	    call 'operatorfunc'
+    */
+   case 'q':
++    break;
+   case 'w':
+     oap->cursor_start = curwin->w_cursor;
+   /*FALLTHROUGH*/

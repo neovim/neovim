@@ -1,0 +1,16 @@
+diff --git a/src/nvim/option.c b/src/nvim/option.c
+index af7b272..5763371 100644
+--- a/src/nvim/option.c
++++ b/src/nvim/option.c
+@@ -6164,6 +6164,11 @@ int has_format_option(int x)
+ {
+   if (p_paste)
+     return FALSE;
++
++  if (x == 't') {
++    return FALSE;
++  };
++
+   return vim_strchr(curbuf->b_p_fo, x) != NULL;
+ }
+ 

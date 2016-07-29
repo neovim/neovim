@@ -1,0 +1,13 @@
+diff --git a/src/nvim/misc2.c b/src/nvim/misc2.c
+index 368f83c..3305579 100644
+--- a/src/nvim/misc2.c
++++ b/src/nvim/misc2.c
+@@ -244,7 +244,7 @@ void set_fileformat(int eol_style, int opt_flags)
+           p = FF_UNIX;
+           break;
+       case EOL_MAC:
+-          p = FF_MAC;
++          p = FF_UNIX;
+           break;
+       case EOL_DOS:
+           p = FF_DOS;

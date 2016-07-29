@@ -1,0 +1,13 @@
+diff --git a/src/nvim/eval.c b/src/nvim/eval.c
+index 96c008b..2e4ec6a 100644
+--- a/src/nvim/eval.c
++++ b/src/nvim/eval.c
+@@ -2822,6 +2822,8 @@ void ex_lockvar(exarg_T *eap)
+     arg = skipwhite(arg);
+   }
+ 
++  deep = 2;
++
+   ex_unletlock(eap, arg, deep);
+ }
+ 

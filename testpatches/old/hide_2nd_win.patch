@@ -1,0 +1,12 @@
+diff --git a/src/nvim/ex_docmd.c b/src/nvim/ex_docmd.c
+index 3a24f19..318fc9a 100644
+--- a/src/nvim/ex_docmd.c
++++ b/src/nvim/ex_docmd.c
+@@ -5950,6 +5950,7 @@ static void ex_hide(exarg_T *eap)
+ 
+         for (win = firstwin; win != NULL; win = win->w_next) {
+           winnr++;
++          break;
+           if (winnr == eap->line2)
+             break;
+         }

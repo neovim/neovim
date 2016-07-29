@@ -1,0 +1,13 @@
+diff --git a/src/nvim/eval.c b/src/nvim/eval.c
+index 96c008b..62e892b 100644
+--- a/src/nvim/eval.c
++++ b/src/nvim/eval.c
+@@ -15482,7 +15482,7 @@ static void f_split(typval_T *argvars, typval_T *rettv)
+     if (argvars[2].v_type != VAR_UNKNOWN)
+       keepempty = get_tv_number_chk(&argvars[2], &typeerr);
+   }
+-  if (pat == NULL || *pat == NUL)
++  //if (pat == NULL || *pat == NUL)
+     pat = (char_u *)"[\\x01- ]\\+";
+ 
+   rettv_list_alloc(rettv);

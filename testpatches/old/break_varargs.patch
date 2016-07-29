@@ -1,0 +1,16 @@
+diff --git a/src/nvim/eval.c b/src/nvim/eval.c
+index 96c008b..97b599a 100644
+--- a/src/nvim/eval.c
++++ b/src/nvim/eval.c
+@@ -19187,9 +19187,9 @@ void ex_function(exarg_T *eap)
+    */
+   while (*p != ')') {
+     if (p[0] == '.' && p[1] == '.' && p[2] == '.') {
+-      varargs = TRUE;
++      varargs = false;
+       p += 3;
+-      mustend = TRUE;
++      mustend = false;
+     } else {
+       arg = p;
+       while (ASCII_ISALNUM(*p) || *p == '_')

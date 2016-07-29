@@ -1,0 +1,13 @@
+diff --git a/src/nvim/eval.c b/src/nvim/eval.c
+index 96c008b..bf336f3 100644
+--- a/src/nvim/eval.c
++++ b/src/nvim/eval.c
+@@ -15260,7 +15260,7 @@ static void do_sort_uniq(typval_T *argvars, typval_T *rettv, bool sort)
+     ptrs = xmalloc((size_t)(len * sizeof (sortItem_T)));
+ 
+     i = 0;
+-    if (sort) {
++    if (!sort) {
+       // sort(): ptrs will be the list to sort.
+       for (li = l->lv_first; li != NULL; li = li->li_next) {
+         ptrs[i].item = li;

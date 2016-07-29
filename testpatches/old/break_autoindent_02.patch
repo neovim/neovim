@@ -1,0 +1,13 @@
+diff --git a/src/nvim/misc1.c b/src/nvim/misc1.c
+index db303fd..ae0d461 100644
+--- a/src/nvim/misc1.c
++++ b/src/nvim/misc1.c
+@@ -182,7 +182,7 @@ open_line (
+    * If 'autoindent' and/or 'smartindent' is set, try to figure out what
+    * indent to use for the new line.
+    */
+-  if (curbuf->b_p_ai
++  if (!curbuf->b_p_ai
+       || do_si
+       ) {
+     /*

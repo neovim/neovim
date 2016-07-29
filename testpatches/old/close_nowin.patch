@@ -1,0 +1,12 @@
+diff --git a/src/nvim/ex_docmd.c b/src/nvim/ex_docmd.c
+index 3a24f19..f4ccd71 100644
+--- a/src/nvim/ex_docmd.c
++++ b/src/nvim/ex_docmd.c
+@@ -5726,6 +5726,7 @@ static void ex_quit_all(exarg_T *eap)
+  */
+ static void ex_close(exarg_T *eap)
+ {
++  return;
+   win_T *win;
+   int winnr = 0;
+   if (cmdwin_type != 0)

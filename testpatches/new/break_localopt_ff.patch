@@ -1,0 +1,13 @@
+diff --git a/src/nvim/option.c b/src/nvim/option.c
+index 45ebb4f..8ca0acd 100644
+--- a/src/nvim/option.c
++++ b/src/nvim/option.c
+@@ -5557,7 +5557,7 @@ void buf_copy_options(buf_T *buf, int flags)
+         free_buf_options(buf, TRUE);
+         buf->b_p_ro = FALSE;                    /* don't copy readonly */
+         buf->b_p_fenc = vim_strsave(p_fenc);
+-        buf->b_p_ff = vim_strsave(p_ff);
++        buf->b_p_ff = vim_strsave("unix");
+         buf->b_p_bh = empty_option;
+         buf->b_p_bt = empty_option;
+       } else

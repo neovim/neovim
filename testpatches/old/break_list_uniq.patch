@@ -1,0 +1,159 @@
+diff --git a/src/nvim/eval.c b/src/nvim/eval.c
+index 96c008b..d778814 100644
+--- a/src/nvim/eval.c
++++ b/src/nvim/eval.c
+@@ -15182,153 +15182,7 @@ static int item_compare2_not_keeping_zero(const void *s1, const void *s2)
+  */
+ static void do_sort_uniq(typval_T *argvars, typval_T *rettv, bool sort)
+ {
+-  list_T      *l;
+-  listitem_T  *li;
+-  sortItem_T  *ptrs;
+-  long len;
+-  long i;
+-
+-  if (argvars[0].v_type != VAR_LIST) {
+-    EMSG2(_(e_listarg), sort ? "sort()" : "uniq()");
+-  } else {
+-    l = argvars[0].vval.v_list;
+-    if (l == NULL
+-        || tv_check_lock(l->lv_lock,
+-                         (char_u *)(sort
+-                                    ? N_("sort() argument")
+-                                    : N_("uniq() argument")),
+-                         true)) {
+-      return;
+-    }
+-    rettv->vval.v_list = l;
+-    rettv->v_type = VAR_LIST;
+-    ++l->lv_refcount;
+-
+-    len = list_len(l);
+-    if (len <= 1)
+-      return;           /* short list sorts pretty quickly */
+-
+-    item_compare_ic = FALSE;
+-    item_compare_numeric = false;
+-    item_compare_numbers = false;
+-    item_compare_float = false;
+-    item_compare_func = NULL;
+-    item_compare_selfdict = NULL;
+-
+-    if (argvars[1].v_type != VAR_UNKNOWN) {
+-      /* optional second argument: {func} */
+-      if (argvars[1].v_type == VAR_FUNC) {
+-        item_compare_func = argvars[1].vval.v_string;
+-      } else {
+-        int error = FALSE;
+-
+-        i = get_tv_number_chk(&argvars[1], &error);
+-        if (error)
+-          return;                       /* type error; errmsg already given */
+-        if (i == 1)
+-          item_compare_ic = TRUE;
+-        else
+-          item_compare_func = get_tv_string(&argvars[1]);
+-        if (item_compare_func != NULL) {
+-          if (STRCMP(item_compare_func, "n") == 0) {
+-            item_compare_func = NULL;
+-            item_compare_numeric = true;
+-          } else if (STRCMP(item_compare_func, "N") == 0) {
+-            item_compare_func = NULL;
+-            item_compare_numbers = true;
+-          } else if (STRCMP(item_compare_func, "f") == 0) {
+-            item_compare_func = NULL;
+-            item_compare_float = true;
+-          } else if (STRCMP(item_compare_func, "i") == 0) {
+-            item_compare_func = NULL;
+-            item_compare_ic = TRUE;
+-          }
+-        }
+-      }
+-
+-      if (argvars[2].v_type != VAR_UNKNOWN) {
+-        /* optional third argument: {dict} */
+-        if (argvars[2].v_type != VAR_DICT) {
+-          EMSG(_(e_dictreq));
+-          return;
+-        }
+-        item_compare_selfdict = argvars[2].vval.v_dict;
+-      }
+-    }
+-
+-    /* Make an array with each entry pointing to an item in the List. */
+-    ptrs = xmalloc((size_t)(len * sizeof (sortItem_T)));
+-
+-    i = 0;
+-    if (sort) {
+-      // sort(): ptrs will be the list to sort.
+-      for (li = l->lv_first; li != NULL; li = li->li_next) {
+-        ptrs[i].item = li;
+-        ptrs[i].idx = i;
+-        i++;
+-      }
+-
+-      item_compare_func_err = FALSE;
+-      // Test the compare function.
+-      if (item_compare_func != NULL
+-          && item_compare2_not_keeping_zero(&ptrs[0], &ptrs[1])
+-             == ITEM_COMPARE_FAIL) {
+-        EMSG(_("E702: Sort compare function failed"));
+-      } else {
+-        // Sort the array with item pointers.
+-        qsort(ptrs, (size_t)len, sizeof (sortItem_T),
+-              item_compare_func == NULL ? item_compare_not_keeping_zero :
+-                                          item_compare2_not_keeping_zero);
+-
+-        if (!item_compare_func_err) {
+-          // Clear the list and append the items in the sorted order.
+-          l->lv_first    = NULL;
+-          l->lv_last     = NULL;
+-          l->lv_idx_item = NULL;
+-          l->lv_len      = 0;
+-
+-          for (i = 0; i < len; i++) {
+-            list_append(l, ptrs[i].item);
+-          }
+-        }
+-      }
+-    } else {
+-      int (*item_compare_func_ptr)(const void *, const void *);
+-
+-      // f_uniq(): ptrs will be a stack of items to remove.
+-      item_compare_func_err = FALSE;
+-      item_compare_func_ptr = item_compare_func ? item_compare2_keeping_zero :
+-                                                  item_compare_keeping_zero;
+-
+-      for (li = l->lv_first; li != NULL && li->li_next != NULL; li = li->li_next) {
+-        if (item_compare_func_ptr(&li, &li->li_next) == 0) {
+-          ptrs[i++].item = li;
+-        }
+-        if (item_compare_func_err) {
+-          EMSG(_("E882: Uniq compare function failed"));
+-          break;
+-        }
+-      }
+-
+-      if (!item_compare_func_err) {
+-        while (--i >= 0) {
+-          assert(ptrs[i].item->li_next);
+-          li = ptrs[i].item->li_next;
+-          ptrs[i].item->li_next = li->li_next;
+-          if (li->li_next != NULL) {
+-            li->li_next->li_prev = ptrs[i].item;
+-          } else {
+-            l->lv_last = ptrs[i].item;
+-          }
+-          list_fix_watch(l, li);
+-          listitem_free(li);
+-          l->lv_len--;
+-        }
+-      }
+-    }
+-
+-    xfree(ptrs);
+-  }
++  f_deepcopy(argvars, rettv);
+ }
+ 
+ /// "sort"({list})" function

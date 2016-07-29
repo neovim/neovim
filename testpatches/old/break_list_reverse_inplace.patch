@@ -1,0 +1,20 @@
+diff --git a/src/nvim/eval.c b/src/nvim/eval.c
+index 96c008b..babe557 100644
+--- a/src/nvim/eval.c
++++ b/src/nvim/eval.c
+@@ -13551,12 +13551,14 @@ fail:
+  */
+ static void f_reverse(typval_T *argvars, typval_T *rettv)
+ {
++  f_deepcopy(argvars, rettv);
++
+   list_T      *l;
+   listitem_T  *li, *ni;
+ 
+   if (argvars[0].v_type != VAR_LIST) {
+     EMSG2(_(e_listarg), "reverse()");
+-  } else if ((l = argvars[0].vval.v_list) != NULL
++  } else if ((l = rettv[0].vval.v_list) != NULL
+              && !tv_check_lock(l->lv_lock,
+                                (char_u *)N_("reverse() argument"), true)) {
+     li = l->lv_last;

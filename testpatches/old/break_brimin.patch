@@ -1,0 +1,12 @@
+diff --git a/src/nvim/option.c b/src/nvim/option.c
+index af7b272..7de3fd5 100644
+--- a/src/nvim/option.c
++++ b/src/nvim/option.c
+@@ -6633,6 +6633,7 @@ static bool briopt_check(win_T *wp)
+ 
+   wp->w_p_brishift = bri_shift;
+   wp->w_p_brimin   = bri_min;
++  wp->w_p_brimin   = 0;
+   wp->w_p_brisbr   = bri_sbr;
+ 
+   return true;

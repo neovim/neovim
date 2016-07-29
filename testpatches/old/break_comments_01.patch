@@ -1,0 +1,13 @@
+diff --git a/src/nvim/misc1.c b/src/nvim/misc1.c
+index db303fd..c7c0e4c 100644
+--- a/src/nvim/misc1.c
++++ b/src/nvim/misc1.c
+@@ -975,7 +975,7 @@ int get_leader_len(char_u *line, char_u **flags, int backward, int include_space
+         *flags = list;              /* remember where flags started */
+       prev_list = list;
+       (void)copy_option_part(&list, part_buf, COM_MAX_LEN, ",");
+-      string = vim_strchr(part_buf, ':');
++      string = vim_strchr(part_buf, ';');
+       if (string == NULL)           /* missing ':', ignore this part */
+         continue;
+       *string++ = NUL;              /* isolate flags from string */

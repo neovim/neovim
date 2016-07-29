@@ -1,0 +1,12 @@
+diff --git a/src/nvim/eval.c b/src/nvim/eval.c
+index 96c008b..088e17b 100644
+--- a/src/nvim/eval.c
++++ b/src/nvim/eval.c
+@@ -19213,6 +19213,7 @@ void ex_function(exarg_T *eap)
+           xfree(arg);
+           goto erret;
+         }
++      arg[0]='c';
+ 
+       ((char_u **)(newargs.ga_data))[newargs.ga_len] = arg;
+       *p = c;

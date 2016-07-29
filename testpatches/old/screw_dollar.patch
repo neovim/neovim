@@ -1,0 +1,13 @@
+diff --git a/src/nvim/ex_docmd.c b/src/nvim/ex_docmd.c
+index 3a24f19..56d474c 100644
+--- a/src/nvim/ex_docmd.c
++++ b/src/nvim/ex_docmd.c
+@@ -1959,7 +1959,7 @@ static char_u * do_one_cmd(char_u **cmdlinep,
+         ea.line2 = lastbuf->b_fnum;
+         break;
+       case ADDR_WINDOWS:
+-        ea.line2 = LAST_WIN_NR;
++        ea.line2 = CURRENT_WIN_NR;
+         break;
+       case ADDR_TABS:
+         ea.line2 = LAST_TAB_NR;

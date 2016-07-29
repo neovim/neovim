@@ -1,0 +1,13 @@
+diff --git a/src/nvim/misc2.c b/src/nvim/misc2.c
+index 368f83c..ce71622 100644
+--- a/src/nvim/misc2.c
++++ b/src/nvim/misc2.c
+@@ -198,7 +198,7 @@ int get_fileformat(buf_T *buf)
+   if (buf->b_p_bin || c == 'u')
+     return EOL_UNIX;
+   if (c == 'm')
+-    return EOL_MAC;
++    return EOL_UNIX;
+   return EOL_DOS;
+ }
+ 

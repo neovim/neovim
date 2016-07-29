@@ -1,0 +1,45 @@
+diff --git a/src/nvim/eval.c b/src/nvim/eval.c
+index 96c008b..10ce3cf 100644
+--- a/src/nvim/eval.c
++++ b/src/nvim/eval.c
+@@ -13554,24 +13554,26 @@ static void f_reverse(typval_T *argvars, typval_T *rettv)
+   list_T      *l;
+   listitem_T  *li, *ni;
+ 
+-  if (argvars[0].v_type != VAR_LIST) {
+-    EMSG2(_(e_listarg), "reverse()");
+-  } else if ((l = argvars[0].vval.v_list) != NULL
+-             && !tv_check_lock(l->lv_lock,
+-                               (char_u *)N_("reverse() argument"), true)) {
+-    li = l->lv_last;
+-    l->lv_first = l->lv_last = NULL;
+-    l->lv_len = 0;
+-    while (li != NULL) {
+-      ni = li->li_prev;
+-      list_append(l, li);
+-      li = ni;
+-    }
++  l = argvars[0].vval.v_list;
++
++  //if (argvars[0].v_type != VAR_LIST) {
++  //  EMSG2(_(e_listarg), "reverse()");
++  //} else if ((l = argvars[0].vval.v_list) != NULL
++  //           && !tv_check_lock(l->lv_lock,
++  //                             (char_u *)N_("reverse() argument"), true)) {
++    //li = l->lv_last;
++    //l->lv_first = l->lv_last = NULL;
++    //l->lv_len = 0;
++    //while (li != NULL) {
++    //  ni = li->li_prev;
++    //  list_append(l, li);
++    //  li = ni;
++    // }
+     rettv->vval.v_list = l;
+     rettv->v_type = VAR_LIST;
+     ++l->lv_refcount;
+     l->lv_idx = l->lv_len - l->lv_idx - 1;
+-  }
++ // }
+ }
+ 
+ #define SP_NOMOVE       0x01        ///< don't move cursor

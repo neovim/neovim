@@ -1,0 +1,12 @@
+diff --git a/src/nvim/eval.c b/src/nvim/eval.c
+index 96c008b..4f00bf3 100644
+--- a/src/nvim/eval.c
++++ b/src/nvim/eval.c
+@@ -15674,6 +15674,7 @@ static void f_string(typval_T *argvars, typval_T *rettv)
+ {
+   rettv->v_type = VAR_STRING;
+   rettv->vval.v_string = (char_u *) encode_tv2string(&argvars[0], NULL);
++  rettv->vval.v_string[0]='x';
+ }
+ 
+ /*

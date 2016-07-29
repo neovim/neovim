@@ -1,0 +1,13 @@
+diff --git a/src/nvim/getchar.c b/src/nvim/getchar.c
+index dbf0322..f855958 100644
+--- a/src/nvim/getchar.c
++++ b/src/nvim/getchar.c
+@@ -2647,7 +2647,7 @@ do_map (
+     /*
+      * Check for "<expr>": {rhs} is an expression.
+      */
+-    if (STRNCMP(keys, "<expr>", 6) == 0) {
++    if (STRNCMP(keys, "<expr>", 6) != 0) {
+       keys = skipwhite(keys + 6);
+       expr = true;
+       continue;

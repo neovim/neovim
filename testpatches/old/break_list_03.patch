@@ -1,0 +1,13 @@
+diff --git a/src/nvim/screen.c b/src/nvim/screen.c
+index 34eef83..32b8c86 100644
+--- a/src/nvim/screen.c
++++ b/src/nvim/screen.c
+@@ -3372,7 +3372,7 @@ win_line (
+             if (c == TAB)
+               /* See "Tab alignment" below. */
+               FIX_FOR_BOGUSCOLS;
+-            if (!wp->w_p_list) {
++            if (wp->w_p_list) {
+               c = ' ';
+             }
+           }

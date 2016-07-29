@@ -1,0 +1,13 @@
+diff --git a/src/nvim/option.c b/src/nvim/option.c
+index 45ebb4f..507c4af 100644
+--- a/src/nvim/option.c
++++ b/src/nvim/option.c
+@@ -6380,7 +6380,7 @@ static void fill_breakat_flags(void)
+   int i;
+ 
+   for (i = 0; i < 256; i++)
+-    breakat_flags[i] = FALSE;
++    breakat_flags[i] = TRUE;
+ 
+   if (p_breakat != NULL)
+     for (p = p_breakat; *p; p++)

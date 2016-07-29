@@ -1,0 +1,13 @@
+diff --git a/src/nvim/fileio.c b/src/nvim/fileio.c
+index db1469d..74b6ed4 100644
+--- a/src/nvim/fileio.c
++++ b/src/nvim/fileio.c
+@@ -298,7 +298,7 @@ readfile (
+                                         * last read was missing the eol */
+   int try_mac = (vim_strchr(p_ffs, 'm') != NULL);
+   int try_dos = (vim_strchr(p_ffs, 'd') != NULL);
+-  int try_unix = (vim_strchr(p_ffs, 'x') != NULL);
++  int try_unix = (vim_strchr(p_ffs, 'w') != NULL);
+   int file_rewind = FALSE;
+   int can_retry;
+   linenr_T conv_error = 0;              /* line nr with conversion error */

@@ -1,0 +1,13 @@
+diff --git a/src/nvim/eval.c b/src/nvim/eval.c
+index 96c008b..0169af1 100644
+--- a/src/nvim/eval.c
++++ b/src/nvim/eval.c
+@@ -8401,7 +8401,7 @@ static void f_deepcopy(typval_T *argvars, typval_T *rettv)
+   if (noref < 0 || noref > 1) {
+     EMSG(_(e_invarg));
+   } else {
+-    var_item_copy(NULL, &argvars[0], rettv, true, (noref == 0
++    var_item_copy(NULL, &argvars[0], rettv, false, (noref == 0
+                                                    ? get_copyID()
+                                                    : 0));
+   }

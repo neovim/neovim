@@ -1,0 +1,13 @@
+diff --git a/src/nvim/screen.c b/src/nvim/screen.c
+index 34eef83..617326083 100644
+--- a/src/nvim/screen.c
++++ b/src/nvim/screen.c
+@@ -2442,7 +2442,7 @@ win_line (
+     }
+   }
+ 
+-  if (wp->w_p_list) {
++  if (!wp->w_p_list) {
+     if (lcs_space || lcs_trail) {
+       extra_check = true;
+     }

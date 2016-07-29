@@ -1,0 +1,12 @@
+diff --git a/src/nvim/quickfix.c b/src/nvim/quickfix.c
+index 151b9d3..7470a34 100644
+--- a/src/nvim/quickfix.c
++++ b/src/nvim/quickfix.c
+@@ -2023,6 +2023,7 @@ void ex_cclose(exarg_T *eap)
+  */
+ void ex_copen(exarg_T *eap)
+ {
++  return;
+   qf_info_T   *qi = &ql_info;
+   int height;
+   win_T       *win;

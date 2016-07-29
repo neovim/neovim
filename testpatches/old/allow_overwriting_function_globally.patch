@@ -1,0 +1,13 @@
+diff --git a/src/nvim/eval.c b/src/nvim/eval.c
+index 96c008b..085dea5 100644
+--- a/src/nvim/eval.c
++++ b/src/nvim/eval.c
+@@ -8875,7 +8875,7 @@ void dict_extend(dict_T *d1, dict_T *d2, char_u *action)
+         /* Disallow replacing a builtin function in l: and g:.
+          * Check the key to be valid when adding to any
+          * scope. */
+-        if (d1->dv_scope == VAR_DEF_SCOPE
++        if (d1->dv_scope != VAR_DEF_SCOPE
+             && HI2DI(hi2)->di_tv.v_type == VAR_FUNC
+             && var_check_func_name(hi2->hi_key,
+                 di1 == NULL))

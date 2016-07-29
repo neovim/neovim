@@ -1,0 +1,13 @@
+diff --git a/src/nvim/quickfix.c b/src/nvim/quickfix.c
+index 151b9d3..ad39bd1 100644
+--- a/src/nvim/quickfix.c
++++ b/src/nvim/quickfix.c
+@@ -2815,7 +2815,7 @@ void ex_cnext(exarg_T *eap)
+       : (eap->cmdidx == CMD_cpfile || eap->cmdidx == CMD_lpfile
+          || eap->cmdidx == CMD_cNfile || eap->cmdidx == CMD_lNfile)
+       ? BACKWARD_FILE
+-      : BACKWARD,
++      : FORWARD,
+       errornr, eap->forceit);
+ }
+ 

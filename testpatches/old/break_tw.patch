@@ -1,0 +1,13 @@
+diff --git a/src/nvim/edit.c b/src/nvim/edit.c
+index 6313ea2..9c4c51c 100644
+--- a/src/nvim/edit.c
++++ b/src/nvim/edit.c
+@@ -5675,7 +5675,7 @@ comp_textwidth (
+ {
+   int textwidth;
+ 
+-  textwidth = curbuf->b_p_tw;
++  textwidth = curbuf->b_p_tw + 1;
+   if (textwidth == 0 && curbuf->b_p_wm) {
+     /* The width is the window width minus 'wrapmargin' minus all the
+      * things that add to the margin. */
