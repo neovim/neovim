@@ -14,6 +14,7 @@ Starting Vim						*starting*
 6. Saving settings		|save-settings|
 7. Views and Sessions		|views-sessions|
 8. The ShaDa file		|shada-file|
+9. Base Directories     	|base-directories|
 
 ==============================================================================
 1. Vim arguments					*vim-arguments*
@@ -382,7 +383,7 @@ accordingly.  Vim proceeds in this order:
 	name, "init.vim" is Neovim specific location for vimrc file.  Also see 
 	|vimrc-intro|.
 
-	Places for your personal initializations:
+	Places for your personal initializations (see |base-directories|):
 		Unix		$XDG_CONFIG_HOME/nvim/init.vim
 				(default for $XDG_CONFIG_HOME is ~/.config)
 		Windows		$XDG_CONFIG_HOME/nvim/init.vim
@@ -1083,7 +1084,7 @@ even if other entries (with known name/type/etc) are merged. |shada-merging|
 SHADA FILE NAME						*shada-file-name*
 
 - The default name of the ShaDa file is "$XDG_DATA_HOME/nvim/shada/main.shada" 
-  for Unix. Default for $XDG_DATA_HOME is ~/.local/share.
+  for Unix. Default for $XDG_DATA_HOME is ~/.local/share. |base-directories|
 - The 'n' flag in the 'shada' option can be used to specify another ShaDa
   file name |'shada'|.
 - The "-i" Vim argument can be used to set another file name, |-i|.  When the
@@ -1369,5 +1370,41 @@ file when reading and include:
   in the third object for parsing fourth object.  I.e. when fourth object 
   either contains more then one MessagePack object or it does not contain 
   complete MessagePack object.
+
+==============================================================================
+9. Base Directories				*base-directories* *xdg*
+
+Nvim conforms to the XDG Base Directory Specification for application
+configuration and data file locations. This just means Nvim looks for some
+optional settings and uses them if they exist, otherwise defaults are chosen.
+https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
+
+CONFIGURATION DIRECTORY				*$XDG_CONFIG_HOME*
+
+    Base directory default:
+        Unix:     ~/.config
+        Windows:  ~/AppData/Local
+
+    Nvim directory:
+        Unix:     ~/.config/nvim/
+        Windows:  ~/AppData/Local/nvim/
+
+DATA DIRECTORY					*$XDG_DATA_HOME*
+
+    Base directory default:
+        Unix:     ~/.local/share
+        Windows:  ~/AppData/Local
+
+    Nvim directory:
+        Unix:     ~/.local/share/nvim/
+        Windows:  ~/AppData/Local/nvim-data/
+
+Note on Windows the configuration and data directory defaults are the same
+(for lack of an alternative), but the sub-directory for data is named
+"nvim-data" to separate it from the configuration sub-directory "nvim".
+
+Throughout other sections of the user manual, the defaults are used as generic
+placeholders, e.g. where "~/.config" is mentioned it should be understood to
+mean "$XDG_CONFIG_HOME or ~/.config".
 
  vim:tw=78:ts=8:ft=help:norl:
