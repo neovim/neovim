@@ -397,6 +397,8 @@ ptrdiff_t os_read(const int fd, bool *ret_eof, char *const ret_buf,
     if (cur_read_bytes < 0) {
 #ifdef HAVE_UV_TRANSLATE_SYS_ERROR
       const int error = uv_translate_sys_error(errno);
+#elif WIN32
+      const int error = win32_translate_sys_error(errno);
 #else
       const int error = -errno;
       STATIC_ASSERT(-EINTR == UV_EINTR, "Need to translate error codes");
@@ -467,6 +469,8 @@ ptrdiff_t os_readv(int fd, bool *ret_eof, struct iovec *iov, size_t iov_size)
     } else if (cur_read_bytes < 0) {
 #ifdef HAVE_UV_TRANSLATE_SYS_ERROR
       const int error = uv_translate_sys_error(errno);
+#elif WIN32
+      const int error = win32_translate_sys_error(errno);
 #else
       const int error = -errno;
       STATIC_ASSERT(-EINTR == UV_EINTR, "Need to translate error codes");
@@ -513,6 +517,8 @@ ptrdiff_t os_write(const int fd, const char *const buf, const size_t size)
     if (cur_written_bytes < 0) {
 #ifdef HAVE_UV_TRANSLATE_SYS_ERROR
       const int error = uv_translate_sys_error(errno);
+#elif WIN32
+      const int error = win32_translate_sys_error(errno);
 #else
       const int error = -errno;
       STATIC_ASSERT(-EINTR == UV_EINTR, "Need to translate error codes");
