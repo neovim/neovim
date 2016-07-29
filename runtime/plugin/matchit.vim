@@ -1,7 +1,8 @@
 "  matchit.vim: (global plugin) Extended "%" matching
-"  Last Change: Fri Jan 25 10:00 AM 2008 EST
+"  Last Change: Fri Jul 29 01:20 AM 2016 EST
 "  Maintainer:  Benji Fisher PhD   <benji@member.AMS.org>
 "  Version:     1.13.2, for Vim 6.3+
+"		Fix from Tommy Allen included.
 "  URL:		http://www.vim.org/script.php?script_id=39
 
 " Documentation:
@@ -254,12 +255,7 @@ function! s:Match_wrapper(word, forward, mode) range
 
   " Fifth step:  actually start moving the cursor and call searchpair().
   " Later, :execute restore_cursor to get to the original screen.
-  let restore_cursor = virtcol(".") . "|"
-  normal! g0
-  let restore_cursor = line(".") . "G" .  virtcol(".") . "|zs" . restore_cursor
-  normal! H
-  let restore_cursor = "normal!" . line(".") . "Gzt" . restore_cursor
-  execute restore_cursor
+  let view = winsaveview()
   call cursor(0, curcol + 1)
   " normal! 0
   " if curcol
@@ -273,7 +269,7 @@ function! s:Match_wrapper(word, forward, mode) range
   let sp_return = searchpair(ini, mid, fin, flag, skip)
   let final_position = "call cursor(" . line(".") . "," . col(".") . ")"
   " Restore cursor position and original screen.
-  execute restore_cursor
+  call winrestview(view)
   normal! m'
   if sp_return > 0
     execute final_position
@@ -634,7 +630,7 @@ endfun
 " idea to give it its own matching patterns.
 fun! s:MultiMatch(spflag, mode)
   if !exists("b:match_words") || b:match_words == ""
-    return ""
+    return {}
   end
   let restore_options = (&ic ? "" : "no") . "ignorecase"
   if exists("b:match_ignorecase")
@@ -694,15 +690,7 @@ fun! s:MultiMatch(spflag, mode)
     let skip = 's:comment\|string'
   endif
   let skip = s:ParseSkip(skip)
-  " let restore_cursor = line(".") . "G" . virtcol(".") . "|"
-  " normal! H
-  " let restore_cursor = "normal!" . line(".") . "Gzt" . restore_cursor
-  let restore_cursor = virtcol(".") . "|"
-  normal! g0
-  let restore_cursor = line(".") . "G" .  virtcol(".") . "|zs" . restore_cursor
-  normal! H
-  let restore_cursor = "normal!" . line(".") . "Gzt" . restore_cursor
-  execute restore_cursor
+  let view = winsaveview()
 
   " Third step: call searchpair().
   " Replace '\('--but not '\\('--with '\%(' and ',' with '\|'.
@@ -720,14 +708,14 @@ fun! s:MultiMatch(spflag, mode)
   while level
     if searchpair(openpat, '', closepat, a:spflag, skip) < 1
       call s:CleanUp(restore_options, a:mode, startline, startcol)
-      return ""
+      return {}
     endif
     let level = level - 1
   endwhile
 
-  " Restore options and return a string to restore the original position.
+  " Restore options and return view dict to restore the original position.
   call s:CleanUp(restore_options, a:mode, startline, startcol)
-  return restore_cursor
+  return view
 endfun
 
 " Search backwards for "if" or "while" or "<tag>" or ...
