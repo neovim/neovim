@@ -28,7 +28,7 @@ typedef struct {
   colnr_T valid_to;
 } bufhl_lineinfo_T;
 
-#define BUFHL_CMP(a, b) (((b)->line - (a)->line))
+#define BUFHL_CMP(a, b) (((a)->line - (b)->line))
 KBTREE_INIT(bufhl, BufhlLine *, BUFHL_CMP)
 typedef kbtree_t(bufhl) bufhl_info_T;
 #endif  // NVIM_BUFHL_DEFS_H

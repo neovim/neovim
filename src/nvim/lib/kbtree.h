@@ -57,7 +57,9 @@ typedef struct {
 		int	off_key, off_ptr, ilen, elen;		\
 		int	n, t;								\
 		int	n_keys, n_nodes;					\
-	} kbtree_##name##_t;
+	} kbtree_##name##_t; \
+
+
 
 #define __KB_INIT(name, key_t)											\
 	static inline kbtree_##name##_t *kb_init_##name(unsigned int size)							\
@@ -75,7 +77,7 @@ typedef struct {
 		b->root = (kbnode_t*)calloc(1, (unsigned int)b->ilen);						\
 		++b->n_nodes;													\
 		return b;														\
-	}
+	} \
 
 #define __kb_destroy(b) do {											\
 		int i;                                                          \
@@ -346,7 +348,48 @@ typedef struct {
 			if (itr->p < itr->stack) return 0; \
 			if (itr->p->x && itr->p->i < itr->p->x->n) return 1; \
 		} \
-	}
+	} \
+	static inline int kb_itr_prev_##name(kbtree_##name##_t *b, kbitr_t *itr) \
+	{ \
+		if (itr->p < itr->stack) return 0; \
+		for (;;) { \
+			while (itr->p->x && itr->p->i >= 0) { \
+				itr->p[1].x = itr->p->x->is_internal? __KB_PTR(b, itr->p->x)[itr->p->i] : 0; \
+				itr->p[1].i = itr->p[1].x ? itr->p[1].x->n : -1; \
+				++itr->p; \
+			} \
+			--itr->p; \
+			if (itr->p < itr->stack) return 0; \
+			--itr->p->i; \
+			if (itr->p->x && itr->p->i >= 0) return 1; \
+		} \
+	} \
+	static int kb_itr_getp_##name(kbtree_##name##_t *b, const key_t * __restrict k, kbitr_t *itr) \
+	{ \
+		int i, r = 0; \
+		itr->p = itr->stack; \
+		itr->p->x = b->root; \
+		while (itr->p->x) { \
+			i = __kb_getp_aux_##name(itr->p->x, k, &r); \
+			itr->p->i = i; \
+			if (i >= 0 && r == 0) return 1; \
+			++itr->p->i; \
+			itr->p[1].x = itr->p->x->is_internal? __KB_PTR(b, itr->p->x)[i + 1] : 0; \
+			++itr->p; \
+		} \
+		return 0; \
+	} \
+	static int kb_itr_get_##name(kbtree_##name##_t *b, const key_t k, kbitr_t *itr) \
+	{																	\
+		return kb_itr_getp_##name(b,&k,itr); \
+	} \
+	static inline void kb_del_itr_##name(kbtree_##name##_t *b, kbitr_t *itr) \
+	{ \
+		key_t k = kb_itr_key(key_t, itr); \
+		kb_delp_##name(b, &k); \
+		kb_itr_getp_##name(b, &k, itr); \
+	} 
+
 
 #define KBTREE_INIT(name, key_t, __cmp)			\
 	__KB_TREE_T(name)							\
@@ -373,7 +416,11 @@ typedef struct {
 #define kb_intervalp(name, b, k, l, u) kb_intervalp_##name(b, k, l, u)
 
 #define kb_itr_first(name, b, i) kb_itr_first_##name(b, i)
+#define kb_itr_get(name, b, k, i) kb_itr_get_##name(b, k, i)
+#define kb_itr_getp(name, b, k, i) kb_itr_getp_##name(b, k, i)
 #define kb_itr_next(name, b, i) kb_itr_next_##name(b, i)
+#define kb_itr_prev(name, b, i) kb_itr_prev_##name(b, i)
+#define kb_del_itr(name, b, i) kb_del_itr_##name(b, i)
 #define kb_itr_key(type, itr) __KB_KEY(type, (itr)->p->x)[(itr)->p->i]
 #define kb_itr_valid(itr) ((itr)->p >= (itr)->stack)
 
