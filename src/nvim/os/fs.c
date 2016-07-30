@@ -25,6 +25,10 @@
 #include "nvim/path.h"
 #include "nvim/strings.h"
 
+#ifdef WIN32
+#include "nvim/mbyte.h"  // for utf8_to_utf16, utf16_to_utf8
+#endif
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "os/fs.c.generated.h"
 #endif
@@ -931,82 +935,6 @@ bool os_fileid_equal_fileinfo(const FileID *file_id,
 
 #ifdef WIN32
 # include <shlobj.h>
-#ifndef CP_UTF8
-# define CP_UTF8 65001	/* magic number from winnls.h */
-#endif
-
-static int utf8_to_utf16(const char *str, WCHAR **strw)
-  FUNC_ATTR_NONNULL_ALL
-{
-  ssize_t wchar_len = 0;
-
-  // Compute the length needed to store the converted widechar string.
-  wchar_len = MultiByteToWideChar(CP_UTF8,
-                                  0,     // dwFlags: must be 0 for utf8
-                                  str,   // lpMultiByteStr: string to convert
-                                  -1,    // -1 => process up to NUL
-                                  NULL,  // lpWideCharStr: converted string
-                                  0);    // 0  => return length, don't convert
-  if (wchar_len == 0) {
-    return GetLastError();
-  }
-
-  ssize_t buf_sz = wchar_len * sizeof(WCHAR);
-
-  if (buf_sz == 0) {
-    *strw = NULL;
-    return 0;
-  }
-
-  char* buf = xmalloc(buf_sz);
-  char* pos = buf;
-
-  int r = MultiByteToWideChar(CP_UTF8,
-                                0,
-                                str,
-                                -1,
-                                (WCHAR*) pos,
-                                wchar_len);
-  assert(r == wchar_len);
-  *strw = (WCHAR*) pos;
-
-  return 0;
-}
-
-static int utf16_to_utf8(const WCHAR *strw, char **str)
-  FUNC_ATTR_NONNULL_ALL
-{
-  // Compute the space required to store the string as UTF-8.
-  ssize_t utf8_len = WideCharToMultiByte(CP_UTF8,
-                                         0,
-                                         strw,
-                                         -1,
-                                         NULL,
-                                         0,
-                                         NULL,
-                                         NULL);
-  if (utf8_len == 0) {
-    return GetLastError();
-  }
-
-  ssize_t buf_sz = utf8_len * sizeof(char);
-  char* buf = xmalloc(buf_sz);
-  char* pos = buf;
-
-  // Convert string to UTF-8.
-  int r = WideCharToMultiByte(CP_UTF8,
-                              0,
-                              strw,
-                              -1,
-                              (LPSTR*) pos,
-                              utf8_len,
-                              NULL,
-                              NULL);
-  assert(r == utf8_len);
-  *str = pos;
-
-  return 0;
-}
 
 /// When "fname" is the name of a shortcut (*.lnk) resolve the file it points
 /// to and return that name in allocated memory.
@@ -1088,4 +1016,5 @@ shortcut_end:
   CoUninitialize();
   return rfname;
 }
+
 #endif
