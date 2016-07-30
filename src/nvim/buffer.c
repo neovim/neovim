@@ -4026,9 +4026,7 @@ void fname_expand(buf_T *buf, char_u **ffname, char_u **sfname)
     *sfname = *ffname;
   *ffname = (char_u *)fix_fname((char *)*ffname);     /* expand to full path */
 
-// TODO(Hettomei,equalsraf): Temporary disable this block
-// because mch_resolve_shortcut has gone from source tree.
-#if 0
+#ifdef WIN32
   if (!buf->b_p_bin) {
     char_u  *rfname;
 
