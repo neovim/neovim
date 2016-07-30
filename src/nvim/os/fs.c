@@ -946,6 +946,7 @@ char_u * os_resolve_shortcut(char_u *fname)
   OLECHAR wsz[MAX_PATH];
   char_u *rfname = NULL;
   int len;
+  int conversion_result;
   IShellLinkW *pslw = NULL;
   WIN32_FIND_DATAW ffdw;
 
@@ -966,8 +967,10 @@ char_u * os_resolve_shortcut(char_u *fname)
                         &IID_IShellLinkW, (void**)&pslw);
   if (hr == S_OK) {
     WCHAR *p;
-    //TODO(jkeyes): if this returns non-zero, report the error
-    (void)utf8_to_utf16((char *)fname, &p);
+    int conversion_result = utf8_to_utf16((char *)fname, &p);
+    if (conversion_result != 0) {
+      EMSG2("utf8_to_utf16 failed: %s", uv_strerror(conversion_result));
+    }
 
     if (p != NULL) {
       // Get a pointer to the IPersistFile interface.
@@ -994,8 +997,10 @@ char_u * os_resolve_shortcut(char_u *fname)
       ZeroMemory(wsz, MAX_PATH * sizeof(WCHAR));
       hr = pslw->lpVtbl->GetPath(pslw, wsz, MAX_PATH, &ffdw, 0);
       if (hr == S_OK && wsz[0] != NUL) {
-        //TODO(jkeyes): if this returns non-zero, report the error
-        (void)utf16_to_utf8(wsz, &rfname);
+        int conversion_result = utf16_to_utf8(wsz, &rfname);
+        if (conversion_result != 0) {
+          EMSG2("utf16_to_utf8 failed: %s", uv_strerror(conversion_result));
+        }
       }
 
 shortcut_errorw:
