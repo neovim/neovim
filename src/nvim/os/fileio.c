@@ -153,7 +153,11 @@ int file_fsync(FileDescriptor *const fp)
     fp->_error = 0;
     return error;
   }
-  return os_fsync(fp->fd);
+  const int error = os_fsync(fp->fd);
+  if (error != UV_EINVAL && error != UV_EROFS) {
+    return error;
+  }
+  return 0;
 }
 
 /// Buffer used for writing
