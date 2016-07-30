@@ -1809,7 +1809,6 @@ byteidx({expr}, {nr})		Number	byte index of {nr}'th char in {expr}
 byteidxcomp({expr}, {nr})	Number	byte index of {nr}'th char in {expr}
 call({func}, {arglist} [, {dict}])
 				any	call {func} with arguments {arglist}
-capture({command})		String	capture output of {command}
 ceil({expr})			Float	round {expr} up
 changenr()			Number	current change number
 char2nr({expr}[, {utf8}])	Number	ASCII/UTF8 value of first char in {expr}
@@ -1845,6 +1844,7 @@ escape({string}, {chars})	String	escape {chars} in {string} with '\'
 eval({string})			any	evaluate {string} into its value
 eventhandler()			Number	TRUE if inside an event handler
 executable({expr})		Number	1 if executable {expr} exists
+execute({command})		String	execute and capture output of {command}
 exepath({expr})		String  full path of the command {expr}
 exists({expr})			Number	TRUE if {expr} exists
 extend({expr1}, {expr2} [, {expr3}])
@@ -2524,21 +2524,6 @@ call({func}, {arglist} [, {dict}])			*call()* *E699*
 		{dict} is for functions with the "dict" attribute.  It will be
 		used to set the local variable "self". |Dictionary-function|
 
-capture({command})					*capture()*
-		Capture output of {command}.
-		If {command} is a |String|, returns {command} output.
-		If {command} is a |List|, returns concatenated outputs.
-		Examples: >
-			echo capture('echon "foo"')
-<			foo >
-			echo capture(['echon "foo"', 'echon "bar"'])
-<			foobar
-		This function is not available in the |sandbox|.
-		Note: {command} executes as if prepended with |:silent|
-		(output is collected, but not displayed).  If nested, an outer
-		capture() will not observe the output of inner calls.
-		Note: Text attributes (highlights) are not captured.
-
 ceil({expr})							*ceil()*
 		Return the smallest integral value greater than or equal to
 		{expr} as a |Float| (round up).
@@ -2988,6 +2973,21 @@ executable({expr})					*executable()*
 			1	exists
 			0	does not exist
 			-1	not implemented on this system
+
+execute({command})					*execute()*
+		Execute {command} and capture its output.
+		If {command} is a |String|, returns {command} output.
+		If {command} is a |List|, returns concatenated outputs.
+		Examples: >
+			echo execute('echon "foo"')
+<			foo >
+			echo execute(['echon "foo"', 'echon "bar"'])
+<			foobar
+		This function is not available in the |sandbox|.
+		Note: {command} executes as if prepended with |:silent|
+		(output is collected but not displayed).  If nested, an outer
+		execute() will not observe output of the inner calls.
+		Note: Text attributes (highlights) are not captured.
 
 exepath({expr})						*exepath()*
 		If {expr} is an executable and is either an absolute path, a

@@ -986,7 +986,7 @@ EXTERN int redir_off INIT(= false);         // no redirection for a moment
 EXTERN FILE *redir_fd INIT(= NULL);         // message redirection file
 EXTERN int redir_reg INIT(= 0);             // message redirection register
 EXTERN int redir_vname INIT(= 0);           // message redirection variable
-EXTERN garray_T *capture_ga INIT(= NULL);   // capture() buffer
+EXTERN garray_T *capture_ga INIT(= NULL);   // captured output for execute()
 
 EXTERN char_u langmap_mapchar[256];     /* mapping for language keys */
 

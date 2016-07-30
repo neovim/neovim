@@ -2396,7 +2396,7 @@ static void redir_write(char_u *str, int maxlen)
     return;
   }
 
-  // Append output to capture().
+  // Append output for execute().
   if (capture_ga) {
     size_t len = 0;
     while (str[len] && (maxlen < 0 ? 1 : (len < (size_t)maxlen))) {

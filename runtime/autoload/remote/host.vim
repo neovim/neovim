@@ -121,7 +121,7 @@ endfunction
 function! s:GetManifest() abort
   let prefix = exists('$MYVIMRC')
         \ ? $MYVIMRC
-        \ : matchstr(get(split(capture('scriptnames'), '\n'), 0, ''), '\f\+$')
+        \ : matchstr(get(split(execute('scriptnames'), '\n'), 0, ''), '\f\+$')
   return fnamemodify(expand(prefix, 1), ':h')
         \.'/.'.fnamemodify(prefix, ':t').'-rplugin~'
 endfunction
