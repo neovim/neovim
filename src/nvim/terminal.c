@@ -144,6 +144,10 @@ struct terminal {
   bool pending_resize;
   // With a reference count of 0 the terminal can be freed.
   size_t refcount;
+  // Last changedtick
+  int last_changedtick;
+  // Cursor hold timer
+  TimeWatcher cursorhold_timer;
 };
 
 static VTermScreenCallbacks vterm_screen_callbacks = {
@@ -245,6 +249,9 @@ Terminal *terminal_open(TerminalOptions opts)
   RESET_BINDING(curwin);
   // Apply TermOpen autocmds so the user can configure the terminal
   apply_autocmds(EVENT_TERMOPEN, NULL, NULL, false, curbuf);
+
+  time_watcher_init(&main_loop, &rv->cursorhold_timer, NULL);
+  rv->cursorhold_timer.events = queue_new_child(main_loop.events);
 
   // Configure the scrollback buffer. Try to get the size from:
   //
@@ -492,6 +499,11 @@ void terminal_destroy(Terminal *term)
       unblock_autocmds();
       pmap_del(ptr_t)(invalidated_terminals, term);
     }
+
+    time_watcher_stop(&term->cursorhold_timer);
+    queue_free(term->cursorhold_timer.events);
+    time_watcher_close(&term->cursorhold_timer, NULL);
+
     for (size_t i = 0; i < term->sb_current; i++) {
       xfree(term->sb_buffer[i]);
     }
@@ -533,6 +545,14 @@ void terminal_receive(Terminal *term, char *data, size_t len)
 
   vterm_input_write(term->vt, data, len);
   vterm_screen_flush_damage(term->vts);
+
+  int event = is_focused(term) ? EVENT_TERMTEXTCHANGEDI : EVENT_TERMTEXTCHANGED;
+  buf_T *buf = handle_get_buffer(term->buf_handle);
+  if (has_event(event)
+      && term->last_changedtick != buf->b_changedtick) {
+    apply_autocmds(event, NULL, NULL, false, buf);
+    term->last_changedtick = buf->b_changedtick;
+  }
 }
 
 void terminal_get_line_attributes(Terminal *term, win_T *wp, int linenr,
@@ -612,11 +632,53 @@ static int term_movecursor(VTermPos new, VTermPos old, int visible,
     void *data)
 {
   Terminal *term = data;
+  bool cursor_moved = term->cursor.row != new.row
+    || term->cursor.col != new.col;
+
   term->cursor.row = new.row;
   term->cursor.col = new.col;
   invalidate_terminal(term, old.row, old.row + 1);
   invalidate_terminal(term, new.row, new.row + 1);
+
+  if (cursor_moved) {
+    buf_T *buf = handle_get_buffer(term->buf_handle);
+    Error err;
+    dict_set_value(buf->b_vars, cstr_as_string("terminal_row"),
+                   INTEGER_OBJ(new.row), false, &err);
+    dict_set_value(buf->b_vars, cstr_as_string("terminal_col"),
+                   INTEGER_OBJ(new.col), false, &err);
+
+    int event = is_focused(term)
+      ? EVENT_TERMCURSORMOVEDI
+      : EVENT_TERMCURSORMOVED;
+    int hold_event = is_focused(term)
+      ? EVENT_TERMCURSORHOLDI
+      : EVENT_TERMCURSORHOLD;
+
+    if (has_event(event)) {
+      apply_autocmds(event, NULL, NULL, false, buf);
+    }
+
+    if (has_event(hold_event)) {
+      time_watcher_stop(&term->cursorhold_timer);
+      term->cursorhold_timer.data = term;
+      time_watcher_start(&term->cursorhold_timer, cursorhold_timer_cb,
+                         (uint64_t)p_ut, 0);
+    }
+  }
+
   return 1;
+}
+
+// Delayed autocmd for cursor hold.
+static void cursorhold_timer_cb(TimeWatcher *watcher, void *data)
+{
+  Terminal *term = data;
+  int event = is_focused(term) ? EVENT_TERMCURSORHOLDI : EVENT_TERMCURSORHOLD;
+  if (has_event(event)) {
+    buf_T *buf = handle_get_buffer(term->buf_handle);
+    apply_autocmds(event, NULL, NULL, false, buf);
+  }
 }
 
 static void buf_set_term_title(buf_T *buf, char *title)
