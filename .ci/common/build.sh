@@ -2,9 +2,6 @@ build_deps() {
   if [[ "${BUILD_32BIT}" == ON ]]; then
     DEPS_CMAKE_FLAGS="${DEPS_CMAKE_FLAGS} ${CMAKE_FLAGS_32BIT}"
   fi
-  if [[ "${BUILD_MINGW}" == ON ]]; then
-    DEPS_CMAKE_FLAGS="${DEPS_CMAKE_FLAGS} ${CMAKE_FLAGS_MINGW}"
-  fi
   if [[ "${FUNCTIONALTEST}" == "functionaltest-lua" ]]; then
     DEPS_CMAKE_FLAGS="${DEPS_CMAKE_FLAGS} -DUSE_BUNDLED_LUA=ON"
   fi
@@ -46,9 +43,6 @@ build_nvim() {
   fi
   if [[ "${BUILD_32BIT}" == ON ]]; then
     CMAKE_FLAGS="${CMAKE_FLAGS} ${CMAKE_FLAGS_32BIT}"
-  fi
-  if [[ "${BUILD_MINGW}" == ON ]]; then
-    CMAKE_FLAGS="${CMAKE_FLAGS} ${CMAKE_FLAGS_MINGW}"
   fi
 
   mkdir -p "${BUILD_DIR}"

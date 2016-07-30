@@ -1,23 +1,27 @@
 version: '{build}'
 skip_tags: true
-os: Windows Server 2012 R2
 environment:
-  GYP_MSVS_VERSION: 2015
+  # The default cpack in the PATH is not CMake
+  CPACK: C:\Program Files (x86)\CMake\bin\cpack.exe
   matrix:
-  - GENERATOR: Visual Studio 14 Win64
-    DEPS_PATH: deps64
-  - GENERATOR: Visual Studio 14
-    DEPS_PATH: deps32
-matrix:
-  # Allow builds to fail
-  allow_failures:
-  - os: Windows Server 2012 R2
+  - TARGET: MINGW_64
+    BUILD_DEPS_SCRIPT: .ci\msys_build_deps.bat
+    BUILD_SCRIPT: .ci\msys_build.bat
+  - TARGET: MINGW_32
+    BUILD_DEPS_SCRIPT: .ci\msys_build_deps.bat
+    BUILD_SCRIPT: .ci\msys_build.bat
 install: []
 build_script:
-# See http://help.appveyor.com/discussions/problems/539-cloning-gyp-fails
-- git config --global url."http://".insteadOf https://
-- mkdir %DEPS_PATH%
-- cd %DEPS_PATH%
-- cmake -G "%GENERATOR%" ..\third-party\
-- cmake --build .
-- cd ..
+- if defined BUILD_DEPS_SCRIPT call %BUILD_DEPS_SCRIPT%
+- call %BUILD_SCRIPT%
+# FIXME(equalsraf): don't generate artifacts until the
+# build script builds the main target, for now pack bin/
+artifacts:
+- path: build/bin
+# Build artifacts
+#- cd build
+#- '"%CPACK%" -G NSIS -C Release'
+#- '"%CPACK%" -G ZIP -C Release'
+#artifacts:
+#- path: build/Neovim.zip
+#- path: build/Neovim.exe

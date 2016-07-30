@@ -10,13 +10,6 @@ fi
 if [[ "${TRAVIS_OS_NAME}" == osx ]]; then
   brew install gettext
   brew reinstall -s libtool
-elif [[ "${BUILD_MINGW}" == ON ]]; then
-  # TODO: When Travis gets a recent version of Mingw-w64 use packages:
-  # binutils-mingw-w64-i686 gcc-mingw-w64-i686 g++-mingw-w64-i686 mingw-w64-dev mingw-w64-tools
-
-  echo "Downloading MinGW..."
-  curl -sSL "https://github.com/neovim/deps/raw/master/opt/i686-w64-mingw32-gcc-4.8.0-linux64_rubenvb.tar.xz" \
-    | tar xJf - -C "${HOME}/.local"
 fi
 
 # Use default CC to avoid compilation problems when installing Python modules.
