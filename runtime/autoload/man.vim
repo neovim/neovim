@@ -62,7 +62,7 @@ function man#get_page(...) abort
     endif
 
     if &filetype !=# 'man'
-      let editcmd = 'tabnew'
+      let editcmd = 'split'
     endif
   endif
 
@@ -84,7 +84,7 @@ function man#get_page(...) abort
   setlocal nomodified
   setlocal filetype=man
 
-  if invoked_from_man || editcmd ==# 'tabnew'
+  if invoked_from_man || editcmd ==# 'split'
     call s:set_window_local_options()
   endif
 endfunction
