@@ -1887,6 +1887,7 @@ getcmdline()			String	return the current command-line
 getcmdpos()			Number	return cursor position in command-line
 getcmdtype()			String	return current command-line type
 getcmdwintype()			String	return current command-line window type
+getcompletion({pat}, {type})	List	list of cmdline completion matches
 getcurpos()			List	position of the cursor
 getcwd([{winnr} [, {tabnr}]])	String	the current working directory
 getfontname([{name}])		String	name of font being used
@@ -3646,6 +3647,49 @@ getcmdwintype()						*getcmdwintype()*
 		Return the current |command-line-window| type. Possible return
 		values are the same as |getcmdtype()|. Returns an empty string
 		when not in the command-line window.
+
+getcompletion({pat}, {type})				*getcompletion()*
+		Return a list of command-line completion matches. {type}
+		specifies what for.  The following completion types are
+		supported:
+
+		augroup		autocmd groups
+		buffer		buffer names
+		behave		:behave suboptions
+		color		color schemes
+		command		Ex command (and arguments)
+		compiler	compilers
+		cscope		|:cscope| suboptions
+		dir		directory names
+		environment	environment variable names
+		event		autocommand events
+		expression	Vim expression
+		file		file and directory names
+		file_in_path	file and directory names in |'path'|
+		filetype	filetype names |'filetype'|
+		function	function name
+		help		help subjects
+		highlight	highlight groups
+		history		:history suboptions
+		locale		locale names (as output of locale -a)
+		mapping		mapping name
+		menu		menus
+		option		options
+		shellcmd	Shell command
+		sign		|:sign| suboptions
+		syntax		syntax file names |'syntax'|
+		syntime		|:syntime| suboptions
+		tag		tags
+		tag_listfiles	tags, file names
+		user		user names
+		var		user variables
+
+		If {pat} is an empty string, then all the matches are returned.
+		Otherwise only items matching {pat} are returned. See
+		|wildcards| for the use of special characters in {pat}.
+
+		If there are no matches, an empty list is returned.  An
+		invalid value for {type} produces an error.
 
 							*getcurpos()*
 getcurpos()	Get the position of the cursor.  This is like getpos('.'), but
