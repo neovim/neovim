@@ -351,6 +351,16 @@ local function tmpname()
   end
 end
 
+local function read_file(name)
+  local file = io.open(name, 'r')
+  if not file then
+    return nil
+  end
+  local ret = file:read('*a')
+  file:close()
+  return ret
+end
+
 local function source(code)
   local fname = tmpname()
   write_file(fname, code)
@@ -563,6 +573,7 @@ return function(after_each)
     sleep = sleep,
     set_session = set_session,
     write_file = write_file,
+    read_file = read_file,
     os_name = os_name,
     rmdir = rmdir,
     mkdir = lfs.mkdir,

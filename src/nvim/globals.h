@@ -1133,7 +1133,6 @@ EXTERN char_u e_noprev[] INIT(= N_("E34: No previous command"));
 EXTERN char_u e_noprevre[] INIT(= N_("E35: No previous regular expression"));
 EXTERN char_u e_norange[] INIT(= N_("E481: No range allowed"));
 EXTERN char_u e_noroom[] INIT(= N_("E36: Not enough room"));
-EXTERN char_u e_notcreate[] INIT(= N_("E482: Can't create file %s"));
 EXTERN char_u e_notmp[] INIT(= N_("E483: Can't get temp file name"));
 EXTERN char_u e_notopen[] INIT(= N_("E484: Can't open file %s"));
 EXTERN char_u e_notread[] INIT(= N_("E485: Can't read file %s"));
