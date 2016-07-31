@@ -9,16 +9,16 @@ local funcs = helpers.funcs
 local Screen = require('test.functional.ui.screen')
 local feed = helpers.feed
 
-describe('capture()', function()
+describe('execute()', function()
   before_each(clear)
 
   it('returns the same result with :redir', function()
-    eq(redir_exec('messages'), funcs.capture('messages'))
+    eq(redir_exec('messages'), funcs.execute('messages'))
   end)
 
   it('returns the output of the commands if the argument is List', function()
-    eq("foobar", funcs.capture({'echon "foo"', 'echon "bar"'}))
-    eq("\nfoo\nbar", funcs.capture({'echo "foo"', 'echo "bar"'}))
+    eq("foobar", funcs.execute({'echon "foo"', 'echon "bar"'}))
+    eq("\nfoo\nbar", funcs.execute({'echo "foo"', 'echo "bar"'}))
   end)
 
   it('supports the nested redirection', function()
@@ -38,34 +38,34 @@ describe('capture()', function()
       return a
     endfunction
     ]])
-    eq('foo', funcs.capture('call g:Bar()'))
+    eq('foo', funcs.execute('call g:Bar()'))
 
-    eq('42', funcs.capture([[echon capture("echon capture('echon 42')")]]))
+    eq('42', funcs.execute([[echon execute("echon execute('echon 42')")]]))
   end)
 
   it('returns the transformed string', function()
-    eq('^A', funcs.capture('echon "\\<C-a>"'))
+    eq('^A', funcs.execute('echon "\\<C-a>"'))
   end)
 
   it('returns the empty string if the argument list is empty', function()
-    eq('', funcs.capture({}))
-    eq(0, exc_exec('let g:ret = capture(v:_null_list)'))
+    eq('', funcs.execute({}))
+    eq(0, exc_exec('let g:ret = execute(v:_null_list)'))
     eq('', eval('g:ret'))
   end)
 
   it('returns the errors', function()
     local ret
-    ret = exc_exec('call capture(0.0)')
+    ret = exc_exec('call execute(0.0)')
     eq('Vim(call):E806: using Float as a String', ret)
-    ret = exc_exec('call capture(v:_null_dict)')
+    ret = exc_exec('call execute(v:_null_dict)')
     eq('Vim(call):E731: using Dictionary as a String', ret)
-    ret = exc_exec('call capture(function("tr"))')
+    ret = exc_exec('call execute(function("tr"))')
     eq('Vim(call):E729: using Funcref as a String', ret)
-    ret = exc_exec('call capture(["echo 42", 0.0, "echo 44"])')
+    ret = exc_exec('call execute(["echo 42", 0.0, "echo 44"])')
     eq('Vim(call):E806: using Float as a String', ret)
-    ret = exc_exec('call capture(["echo 42", v:_null_dict, "echo 44"])')
+    ret = exc_exec('call execute(["echo 42", v:_null_dict, "echo 44"])')
     eq('Vim(call):E731: using Dictionary as a String', ret)
-    ret = exc_exec('call capture(["echo 42", function("tr"), "echo 44"])')
+    ret = exc_exec('call execute(["echo 42", function("tr"), "echo 44"])')
     eq('Vim(call):E729: using Funcref as a String', ret)
   end)
 
@@ -73,7 +73,7 @@ describe('capture()', function()
     local screen = Screen.new(20, 5)
     screen:attach()
     screen:set_default_attr_ignore({{bold=true, foreground=255}})
-    feed(':let g:mes = capture("echon 42")<CR>')
+    feed(':let g:mes = execute("echon 42")<CR>')
     screen:expect([[
     ^                    |
     ~                   |

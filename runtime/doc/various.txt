@@ -417,7 +417,7 @@ m  *+xpm_w32*		Win32 GUI only: pixmap support |w32-xpm-support|
 			the screen, put the commands in a function and call it
 			with ":silent call Function()".
 			Alternatives are the 'verbosefile' option or
-			|capture()| function, these can be used in combination
+			|execute()| function, these can be used in combination
 			with ":redir".
 
 :redi[r] >> {file}	Redirect messages to file {file}.  Append if {file}

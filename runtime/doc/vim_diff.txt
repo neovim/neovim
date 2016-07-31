@@ -98,7 +98,7 @@ Commands:
   |:CheckHealth|
 
 Functions:
-  |capture()|
+  |execute()| works with |:redir|
 
 Events:
   |TabNew|
