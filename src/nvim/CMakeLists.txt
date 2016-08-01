@@ -259,6 +259,21 @@ add_executable(nvim ${NEOVIM_GENERATED_SOURCES} ${NEOVIM_SOURCES}
 target_link_libraries(nvim ${NVIM_EXEC_LINK_LIBRARIES})
 install_helper(TARGETS nvim)
 
+if(WIN32)
+  # Copy DLLs to bin/ and install them along with nvim
+  add_custom_target(nvim_dll_deps ALL DEPENDS nvim
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${PROJECT_BINARY_DIR}/windows_runtime_deps
+    COMMAND ${CMAKE_COMMAND}
+      "-DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}"
+      -DBINARY="${PROJECT_BINARY_DIR}/bin/nvim${CMAKE_EXECUTABLE_SUFFIX}"
+      -DDST=${PROJECT_BINARY_DIR}/windows_runtime_deps
+      -P ${PROJECT_SOURCE_DIR}/cmake/WindowsDllCopy.cmake
+    COMMAND ${CMAKE_COMMAND} -E copy_directory ${PROJECT_BINARY_DIR}/windows_runtime_deps/
+      ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
+  install(DIRECTORY ${PROJECT_BINARY_DIR}/windows_runtime_deps/
+    DESTINATION ${CMAKE_INSTALL_BINDIR})
+endif()
+
 if(CLANG_ASAN_UBSAN)
   message(STATUS "Enabling Clang address sanitizer and undefined behavior sanitizer for nvim.")
   check_c_compiler_flag(-fno-sanitize-recover=all SANITIZE_RECOVER_ALL)
