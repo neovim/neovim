@@ -25,6 +25,10 @@
 #include "nvim/path.h"
 #include "nvim/strings.h"
 
+#ifdef WIN32
+#include "nvim/mbyte.h"  // for utf8_to_utf16, utf16_to_utf8
+#endif
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "os/fs.c.generated.h"
 #endif
@@ -922,10 +926,100 @@ bool os_fileid_equal(const FileID *file_id_1, const FileID *file_id_2)
 /// @param file_info Pointer to a `FileInfo`
 /// @return `true` if the `FileID` and the `FileInfo` represent te same file.
 bool os_fileid_equal_fileinfo(const FileID *file_id,
-                                const FileInfo *file_info)
+                              const FileInfo *file_info)
   FUNC_ATTR_NONNULL_ALL
 {
   return file_id->inode == file_info->stat.st_ino
          && file_id->device_id == file_info->stat.st_dev;
 }
 
+#ifdef WIN32
+# include <shlobj.h>
+
+/// When "fname" is the name of a shortcut (*.lnk) resolve the file it points
+/// to and return that name in allocated memory.
+/// Otherwise NULL is returned.
+char_u * os_resolve_shortcut(char_u *fname)
+{
+  HRESULT hr;
+  IPersistFile *ppf = NULL;
+  OLECHAR wsz[MAX_PATH];
+  char_u *rfname = NULL;
+  int len;
+  int conversion_result;
+  IShellLinkW *pslw = NULL;
+  WIN32_FIND_DATAW ffdw;
+
+  // Check if the file name ends in ".lnk". Avoid calling CoCreateInstance(),
+  // it's quite slow.
+  if (fname == NULL) {
+    return rfname;
+  }
+  len = (int)STRLEN(fname);
+  if (len <= 4 || STRNICMP(fname + len - 4, ".lnk", 4) != 0) {
+    return rfname;
+  }
+
+  CoInitialize(NULL);
+
+  // create a link manager object and request its interface
+  hr = CoCreateInstance(&CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER,
+                        &IID_IShellLinkW, (void **)&pslw);
+  if (hr == S_OK) {
+    WCHAR *p;
+    int conversion_result = utf8_to_utf16((char *)fname, &p);
+    if (conversion_result != 0) {
+      EMSG2("utf8_to_utf16 failed: %s", uv_strerror(conversion_result));
+    }
+
+    if (p != NULL) {
+      // Get a pointer to the IPersistFile interface.
+      hr = pslw->lpVtbl->QueryInterface(
+          pslw, &IID_IPersistFile, (void **)&ppf);
+      if (hr != S_OK) {
+        goto shortcut_errorw;
+      }
+
+      // "load" the name and resolve the link
+      hr = ppf->lpVtbl->Load(ppf, p, STGM_READ);
+      if (hr != S_OK) {
+        goto shortcut_errorw;
+      }
+
+#  if 0  // This makes Vim wait a long time if the target does not exist.
+      hr = pslw->lpVtbl->Resolve(pslw, NULL, SLR_NO_UI);
+      if (hr != S_OK) {
+        goto shortcut_errorw;
+      }
+#  endif
+
+      // Get the path to the link target.
+      ZeroMemory(wsz, MAX_PATH * sizeof(WCHAR));
+      hr = pslw->lpVtbl->GetPath(pslw, wsz, MAX_PATH, &ffdw, 0);
+      if (hr == S_OK && wsz[0] != NUL) {
+        int conversion_result = utf16_to_utf8(wsz, &rfname);
+        if (conversion_result != 0) {
+          EMSG2("utf16_to_utf8 failed: %s", uv_strerror(conversion_result));
+        }
+      }
+
+shortcut_errorw:
+      xfree(p);
+      goto shortcut_end;
+    }
+  }
+
+shortcut_end:
+  // Release all interface pointers (both belong to the same object)
+  if (ppf != NULL) {
+    ppf->lpVtbl->Release(ppf);
+  }
+  if (pslw != NULL) {
+    pslw->lpVtbl->Release(pslw);
+  }
+
+  CoUninitialize();
+  return rfname;
+}
+
+#endif

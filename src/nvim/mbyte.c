@@ -1885,6 +1885,86 @@ static int utf_strnicmp(char_u *s1, char_u *s2, size_t n1, size_t n2)
   return n1 == 0 ? -1 : 1;
 }
 
+#ifdef WIN32
+#ifndef CP_UTF8
+# define CP_UTF8 65001  /* magic number from winnls.h */
+#endif
+
+int utf8_to_utf16(const char *str, WCHAR **strw)
+  FUNC_ATTR_NONNULL_ALL
+{
+  ssize_t wchar_len = 0;
+
+  // Compute the length needed to store the converted widechar string.
+  wchar_len = MultiByteToWideChar(CP_UTF8,
+                                  0,     // dwFlags: must be 0 for utf8
+                                  str,   // lpMultiByteStr: string to convert
+                                  -1,    // -1 => process up to NUL
+                                  NULL,  // lpWideCharStr: converted string
+                                  0);    // 0  => return length, don't convert
+  if (wchar_len == 0) {
+    return GetLastError();
+  }
+
+  ssize_t buf_sz = wchar_len * sizeof(WCHAR);
+
+  if (buf_sz == 0) {
+    *strw = NULL;
+    return 0;
+  }
+
+  char *buf = xmalloc(buf_sz);
+  char *pos = buf;
+
+  int r = MultiByteToWideChar(CP_UTF8,
+                              0,
+                              str,
+                              -1,
+                              (WCHAR *)pos,
+                              wchar_len);
+  assert(r == wchar_len);
+  *strw = (WCHAR *)pos;
+
+  return 0;
+}
+
+int utf16_to_utf8(const WCHAR *strw, char **str)
+  FUNC_ATTR_NONNULL_ALL
+{
+  // Compute the space required to store the string as UTF-8.
+  ssize_t utf8_len = WideCharToMultiByte(CP_UTF8,
+                                         0,
+                                         strw,
+                                         -1,
+                                         NULL,
+                                         0,
+                                         NULL,
+                                         NULL);
+  if (utf8_len == 0) {
+    return GetLastError();
+  }
+
+  ssize_t buf_sz = utf8_len * sizeof(char);
+  char *buf = xmalloc(buf_sz);
+  char *pos = buf;
+
+  // Convert string to UTF-8.
+  int r = WideCharToMultiByte(CP_UTF8,
+                              0,
+                              strw,
+                              -1,
+                              (LPSTR *)pos,
+                              utf8_len,
+                              NULL,
+                              NULL);
+  assert(r == utf8_len);
+  *str = pos;
+
+  return 0;
+}
+
+#endif
+
 /*
  * Version of strnicmp() that handles multi-byte characters.
  * Needed for Big5, Shift-JIS and UTF-8 encoding.  Other DBCS encodings can
