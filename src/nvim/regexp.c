@@ -1389,6 +1389,10 @@ int vim_regcomp_had_eol(void)
   return had_eol;
 }
 
+// variables for parsing reginput
+static int at_start;       // True when on the first character
+static int prev_at_start;  // True when on the second character
+
 /*
  * Parse regular expression, i.e. main body or parenthesized thing.
  *
@@ -1768,6 +1772,7 @@ static char_u *regatom(int *flagp)
   int c;
   char_u          *p;
   int extra = 0;
+  int save_prev_at_start = prev_at_start;
 
   *flagp = WORST;               /* Tentatively. */
 
@@ -2143,17 +2148,21 @@ static char_u *regatom(int *flagp)
           }
           break;
         } else if (c == 'l' || c == 'c' || c == 'v') {
-          if (c == 'l')
+          if (c == 'l') {
             ret = regnode(RE_LNUM);
-          else if (c == 'c')
+            if (save_prev_at_start) {
+              at_start = true;
+            }
+          } else if (c == 'c') {
             ret = regnode(RE_COL);
-          else
+          } else {
             ret = regnode(RE_VCOL);
-          if (ret == JUST_CALC_SIZE)
+          }
+          if (ret == JUST_CALC_SIZE) {
             regsize += 5;
-          else {
-            /* put the number and the optional
-             * comparator after the opcode */
+          } else {
+            // put the number and the optional
+            // comparator after the opcode
             regcode = re_put_uint32(regcode, n);
             *regcode++ = cmp;
           }
