@@ -71,6 +71,7 @@ modes.
 :ino[remap] {lhs} {rhs}		|mapmode-i|	*:ino* *:inoremap*
 :ln[oremap] {lhs} {rhs}		|mapmode-l|	*:ln*  *:lnoremap*
 :cno[remap] {lhs} {rhs}		|mapmode-c|	*:cno* *:cnoremap*
+:tno[remap] {lhs} {rhs}   |mapmode-t| *:tno* *:tnoremap*
 			Map the key sequence {lhs} to {rhs} for the modes
 			where the map command applies.  Disallow mapping of
 			{rhs}, to avoid nested and recursive mappings.  Often
@@ -288,9 +289,9 @@ as a special key.
 
 
 1.3 MAPPING AND MODES					*:map-modes*
-			*mapmode-nvo* *mapmode-n* *mapmode-v* *mapmode-o*
+			*mapmode-nvo* *mapmode-n* *mapmode-v* *mapmode-o* *mapmode-t*
 
-There are six sets of mappings
+There are seven sets of mappings
 - For Normal mode: When typing commands.
 - For Visual mode: When typing commands while the Visual area is highlighted.
 - For Select mode: like Visual mode but typing text replaces the selection.
@@ -298,6 +299,7 @@ There are six sets of mappings
   etc.).  See below: |omap-info|.
 - For Insert mode.  These are also used in Replace mode.
 - For Command-line mode: When entering a ":" or "/" command.
+- For the Terminal Emulator: When using nvim's built-in terminal emulator.
 
 Special case: While typing a count for a command in Normal mode, mapping zero
 is disabled.  This makes it possible to map zero without making it impossible
@@ -316,6 +318,7 @@ Overview of which map command works in which mode.  More details below.
 :imap  :inoremap :iunmap    Insert
 :lmap  :lnoremap :lunmap    Insert, Command-line, Lang-Arg
 :cmap  :cnoremap :cunmap    Command-line
+:tmap  :tnoremap :tunmap    Terminal Emulator
 
 
     COMMANDS				      MODES ~
@@ -525,9 +528,9 @@ scenario: >
 	:imap <M-C> foo
 	:set encoding=utf-8
 The mapping for <M-C> is defined with the latin1 encoding, resulting in a 0xc3
-byte.  If you type the character แ (0xe1 <M-a>) in UTF-8 encoding this is the
+byte.  If you type the character รก (0xe1 <M-a>) in UTF-8 encoding this is the
 two bytes 0xc3 0xa1.  You don't want the 0xc3 byte to be mapped then or
-otherwise it would be impossible to type the แ character.
+otherwise it would be impossible to type the รก character.
 
 					*<Leader>* *mapleader*
 To define a mapping which uses the "mapleader" variable, the special string
