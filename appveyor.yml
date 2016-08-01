@@ -14,14 +14,9 @@ install: []
 build_script:
 - if defined BUILD_DEPS_SCRIPT call %BUILD_DEPS_SCRIPT%
 - call %BUILD_SCRIPT%
-# FIXME(equalsraf): don't generate artifacts until the
-# build script builds the main target, for now pack bin/
-artifacts:
-- path: build/bin
 # Build artifacts
-#- cd build
-#- '"%CPACK%" -G NSIS -C Release'
-#- '"%CPACK%" -G ZIP -C Release'
-#artifacts:
-#- path: build/Neovim.zip
-#- path: build/Neovim.exe
+- cd build
+- '"%CPACK%" -G NSIS -C Release'
+- '"%CPACK%" -G ZIP -C Release'
+artifacts:
+- path: build/Neovim.zip

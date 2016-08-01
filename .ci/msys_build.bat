@@ -13,9 +13,7 @@ set PATH=C:\msys64\mingw%BITS%\bin;C:\Windows\System32;C:\Windows;%PATH%
 mkdir build
 cd build
 cmake -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release .. || goto :error
-:: FIXME(equalsraf): for now just build nvim and copy DLLs.
-:: We can't generate the helptags just yet (#810 fixes this)
-mingw32-make nvim_dll_deps VERBOSE=1 || goto :error
+mingw32-make VERBOSE=1 || goto :error
 bin\nvim --version || goto :error
 cd ..
 
