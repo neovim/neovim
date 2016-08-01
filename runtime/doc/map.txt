@@ -55,6 +55,7 @@ modes.
 :im[ap]	{lhs} {rhs}		|mapmode-i|		*:im* *:imap*
 :lm[ap]	{lhs} {rhs}		|mapmode-l|		*:lm* *:lmap*
 :cm[ap]	{lhs} {rhs}		|mapmode-c|		*:cm* *:cmap*
+:tm[ap]	{lhs} {rhs}		|mapmode-t|		*:tm* *:tmap*
 			Map the key sequence {lhs} to {rhs} for the modes
 			where the map command applies.  The result, including
 			{rhs}, is then further scanned for mappings.  This
@@ -71,6 +72,7 @@ modes.
 :ino[remap] {lhs} {rhs}		|mapmode-i|	*:ino* *:inoremap*
 :ln[oremap] {lhs} {rhs}		|mapmode-l|	*:ln*  *:lnoremap*
 :cno[remap] {lhs} {rhs}		|mapmode-c|	*:cno* *:cnoremap*
+:tno[remap] {lhs} {rhs}		|mapmode-t|	*:tno* *:tnoremap*
 			Map the key sequence {lhs} to {rhs} for the modes
 			where the map command applies.  Disallow mapping of
 			{rhs}, to avoid nested and recursive mappings.  Often
@@ -87,6 +89,7 @@ modes.
 :iu[nmap] {lhs}			|mapmode-i|		*:iu*   *:iunmap*
 :lu[nmap] {lhs}			|mapmode-l|		*:lu*   *:lunmap*
 :cu[nmap] {lhs}			|mapmode-c|		*:cu*   *:cunmap*
+:tu[nmap] {lhs}			|mapmode-t|		*:tu*   *:tunmap*
 			Remove the mapping of {lhs} for the modes where the
 			map command applies.  The mapping may remain defined
 			for other modes where it applies.
@@ -105,6 +108,7 @@ modes.
 :imapc[lear]			|mapmode-i|		*:imapc*  *:imapclear*
 :lmapc[lear]			|mapmode-l|		*:lmapc*  *:lmapclear*
 :cmapc[lear]			|mapmode-c|		*:cmapc*  *:cmapclear*
+:tmapc[lear]			|mapmode-t|		*:tmapc*  *:tmapclear*
 			Remove ALL mappings for the modes where the map
 			command applies.
 			Use the <buffer> argument to remove buffer-local
@@ -121,6 +125,7 @@ modes.
 :im[ap]				|mapmode-i|
 :lm[ap]				|mapmode-l|
 :cm[ap]				|mapmode-c|
+:tm[ap]				|mapmode-t|
 			List all key mappings for the modes where the map
 			command applies.  Note that ":map" and ":map!" are
 			used most often, because they include the other modes.
@@ -135,6 +140,7 @@ modes.
 :im[ap] {lhs}			|mapmode-i|		*:imap_l*
 :lm[ap] {lhs}			|mapmode-l|		*:lmap_l*
 :cm[ap] {lhs}			|mapmode-c|		*:cmap_l*
+:tm[ap] {lhs}			|mapmode-t|		*:tmap_l*
 			List the key mappings for the key sequences starting
 			with {lhs} in the modes where the map command applies.
 
@@ -288,9 +294,9 @@ as a special key.
 
 
 1.3 MAPPING AND MODES					*:map-modes*
-			*mapmode-nvo* *mapmode-n* *mapmode-v* *mapmode-o*
+		*mapmode-nvo* *mapmode-n* *mapmode-v* *mapmode-o* *mapmode-t*
 
-There are six sets of mappings
+There are seven sets of mappings
 - For Normal mode: When typing commands.
 - For Visual mode: When typing commands while the Visual area is highlighted.
 - For Select mode: like Visual mode but typing text replaces the selection.
@@ -298,6 +304,7 @@ There are six sets of mappings
   etc.).  See below: |omap-info|.
 - For Insert mode.  These are also used in Replace mode.
 - For Command-line mode: When entering a ":" or "/" command.
+- For Terminal mode: When typing in a |:terminal| buffer.
 
 Special case: While typing a count for a command in Normal mode, mapping zero
 is disabled.  This makes it possible to map zero without making it impossible
@@ -316,6 +323,7 @@ Overview of which map command works in which mode.  More details below.
 :imap  :inoremap :iunmap    Insert
 :lmap  :lnoremap :lunmap    Insert, Command-line, Lang-Arg
 :cmap  :cnoremap :cunmap    Command-line
+:tmap  :tnoremap :tunmap    Terminal
 
 
     COMMANDS				      MODES ~

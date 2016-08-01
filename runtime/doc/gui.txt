@@ -825,13 +825,13 @@ the <CR> key.  |<>|)
 
 See section |42.4| in the user manual.
 
-							*:tmenu* *:tm*
+							*:tmenu*
 :tm[enu] {menupath} {rhs}	Define a tip for a menu or tool.  {only in
 				X11 and Win32 GUI}
 
 :tm[enu] [menupath]		List menu tips. {only in X11 and Win32 GUI}
 
-							*:tunmenu* *:tu*
+							*:tunmenu*
 :tu[nmenu] {menupath}		Remove a tip for a menu or tool.
 				{only in X11 and Win32 GUI}
 
