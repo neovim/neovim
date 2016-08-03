@@ -7441,6 +7441,7 @@ multi_byte		Compiled with support for 'encoding'
 multi_byte_encoding	'encoding' is set to a multi-byte encoding.
 multi_byte_ime		Compiled with support for IME input method.
 multi_lang		Compiled with support for multiple languages.
+nvim			Always True in Neovim.
 ole			Compiled with OLE automation support for Win32.
 path_extra		Compiled with up/downwards search in 'path' and 'tags'
 persistent_undo		Compiled with support for persistent undo history.
