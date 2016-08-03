@@ -2403,11 +2403,14 @@ win_line (
   if (v != 0)
       line_attr = sign_get_attr((int)v, TRUE);
 
-  /* Highlight the current line in the quickfix window. */
-  if (bt_quickfix(wp->w_buffer) && qf_current_entry(wp) == lnum)
+  // Highlight the current line in the quickfix window.
+  if (bt_quickfix(wp->w_buffer) && qf_current_entry(wp) == lnum) {
     line_attr = hl_attr(HLF_QFL);
-  if (line_attr != 0)
-    area_highlighting = TRUE;
+  }
+
+  if (line_attr != 0) {
+    area_highlighting = true;
+  }
 
   line = ml_get_buf(wp->w_buffer, lnum, FALSE);
   ptr = line;
