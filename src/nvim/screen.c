@@ -2405,7 +2405,7 @@ win_line (
 
   /* Highlight the current line in the quickfix window. */
   if (bt_quickfix(wp->w_buffer) && qf_current_entry(wp) == lnum)
-    line_attr = hl_attr(HLF_L);
+    line_attr = hl_attr(HLF_QFL);
   if (line_attr != 0)
     area_highlighting = TRUE;
 
@@ -2624,7 +2624,12 @@ win_line (
    * then. */
   if (wp->w_p_cul && lnum == wp->w_cursor.lnum
       && !(wp == curwin && VIsual_active)) {
-    line_attr = hl_attr(HLF_CUL);
+    if (line_attr != 0 && !(State & INSERT) && bt_quickfix(wp->w_buffer)
+        && qf_current_entry(wp) == lnum) {
+      line_attr = hl_combine_attr(hl_attr(HLF_CUL), line_attr);
+    } else {
+      line_attr = hl_attr(HLF_CUL);
+    }
     area_highlighting = true;
   }
 

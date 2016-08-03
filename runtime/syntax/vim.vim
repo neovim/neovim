@@ -53,7 +53,7 @@ syn keyword vimGroup contained	Comment Constant String Character Number Boolean 
 syn keyword vimHLGroup contained	ColorColumn Cursor CursorColumn CursorIM CursorLine CursorLineNr DiffAdd DiffChange DiffDelete DiffText Directory ErrorMsg FoldColumn Folded IncSearch LineNr MatchParen Menu ModeMsg MoreMsg NonText Normal Pmenu PmenuSbar PmenuSel PmenuThumb Question Scrollbar Search SignColumn SpecialKey SpellBad SpellCap SpellLocal SpellRare StatusLine StatusLineNC TabLine TabLineFill TabLineSel Title Tooltip VertSplit Visual WarningMsg WildMenu
 syn match vimHLGroup contained	"Conceal"
 syn keyword vimOnlyHLGroup contained	VisualNOS
-syn keyword nvimHLGroup contained	EndOfBuffer TermCursor TermCursorNC
+syn keyword nvimHLGroup contained	EndOfBuffer TermCursor TermCursorNC QuickFixLine
 "}}}2
 syn case match
 " Special Vim Highlighting (not automatic) {{{1
