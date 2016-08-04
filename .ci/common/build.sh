@@ -19,7 +19,7 @@ build_deps() {
     echo "Using third-party dependencies from Travis's cache (last updated: $(${statcmd} "${CACHE_MARKER}"))."
 
      mkdir -p "$(dirname "${DEPS_BUILD_DIR}")"
-     mv "${HOME}/.cache/nvim-deps" "${DEPS_BUILD_DIR}"
+     cp -r "${HOME}/.cache/nvim-deps" "${DEPS_BUILD_DIR}"
   else
     mkdir -p "${DEPS_BUILD_DIR}"
   fi
