@@ -73,7 +73,7 @@ function man#get_page(...) abort
   if empty($MANWIDTH)
     let $MANWIDTH = winwidth(0)
   endif
-  silent exec 'r!/usr/bin/man '.s:cmd(sect, page).' | col -b'
+  silent exec 'r!man '.s:cmd(sect, page).' | col -b'
   " Remove blank lines from top and bottom.
   while getline(1) =~# '^\s*$'
     silent keepjumps 1delete _
@@ -132,6 +132,6 @@ function s:cmd(sect, page) abort
 endfunction
 
 function s:find_page(sect, page) abort
-  let where = system('/usr/bin/man '.s:man_find_arg.' '.s:cmd(a:sect, a:page))
+  let where = system('man '.s:man_find_arg.' '.s:cmd(a:sect, a:page))
   return (where =~# '^ */')
 endfunction
