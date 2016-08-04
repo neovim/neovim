@@ -4243,10 +4243,6 @@ msgstr "wiersz %4ld:"
 msgid "E354: Invalid register name: '%s'"
 msgstr "E354: Niew³a¶ciwa nazwa rejestru: '%s'"
 
-#: ../message.c:745
-msgid "Messages maintainer: Bram Moolenaar <Bram@vim.org>"
-msgstr "Opiekun komunikatów: Miko³aj Machowski <mikmach@wp.pl>"
-
 #: ../message.c:986
 msgid "Interrupt: "
 msgstr "Przerwanie: "

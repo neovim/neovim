@@ -4295,10 +4295,6 @@ msgstr "linio %4ld:"
 msgid "E354: Invalid register name: '%s'"
 msgstr "E354: Nevalida nomo de reĝistro: '%s'"
 
-#: ../message.c:745
-msgid "Messages maintainer: Bram Moolenaar <Bram@vim.org>"
-msgstr "Flegado de mesaĝoj: Dominique PELLÉ <dominique.pelle@gmail.com>"
-
 #: ../message.c:986
 msgid "Interrupt: "
 msgstr "Interrompo: "

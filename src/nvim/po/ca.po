@@ -4293,10 +4293,6 @@ msgstr "línia %4ld:"
 msgid "E354: Invalid register name: '%s'"
 msgstr "E354: El nom de registre no és vàlid: '%s'"
 
-#: ../message.c:745
-msgid "Messages maintainer: Bram Moolenaar <Bram@vim.org>"
-msgstr "Traducció dels missatges: Ernest Adrogué <eadrogue@gmx.net>"
-
 #: ../message.c:986
 msgid "Interrupt: "
 msgstr "Interrupció: "

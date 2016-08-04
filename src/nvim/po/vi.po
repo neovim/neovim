@@ -4311,11 +4311,6 @@ msgstr "dòng %4ld:"
 msgid "E354: Invalid register name: '%s'"
 msgstr "E354: Tên sổ đăng ký không cho phép: '%s'"
 
-#: ../message.c:745
-msgid "Messages maintainer: Bram Moolenaar <Bram@vim.org>"
-msgstr ""
-"Bản dịch các thông báo sang tiếng Việt: Phan Vĩnh Thịnh <teppi@vnlinux.org>"
-
 #: ../message.c:986
 msgid "Interrupt: "
 msgstr "Gián đoạn: "
