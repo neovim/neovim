@@ -496,7 +496,8 @@ readfile (
   // Check readonly.
   file_readonly = false;
   if (!read_buffer && !read_stdin) {
-    if (!newfile || readonlymode || !(os_getperm(fname) & 0222)) {
+    if (!newfile || readonlymode || !(perm & 0222)
+        || !os_file_is_writable((char *)fname)) {
       file_readonly = true;
     }
     fd = os_open((char *)fname, O_RDONLY, 0);
