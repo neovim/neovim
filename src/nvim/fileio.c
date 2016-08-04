@@ -493,22 +493,14 @@ readfile (
     curbuf->b_flags &= ~(BF_NEW | BF_NEW_W);
   }
 
-  /*
-   * Check readonly by trying to open the file for writing.
-   * If this fails, we know that the file is readonly.
-   */
-  file_readonly = FALSE;
+  // Check readonly.
+  file_readonly = false;
   if (!read_buffer && !read_stdin) {
-    if (!newfile || readonlymode) {
-      file_readonly = TRUE;
-    } else if ((fd = os_open((char *)fname, O_RDWR, 0)) < 0) {
-      // opening in readwrite mode failed => file is readonly
-      file_readonly = TRUE;
+    if (!newfile || readonlymode || !(perm & 0222)
+        || !os_file_is_writable((char *)fname)) {
+      file_readonly = true;
     }
-    if (file_readonly == TRUE) {
-      // try to open readonly
-      fd = os_open((char *)fname, O_RDONLY, 0);
-    }
+    fd = os_open((char *)fname, O_RDONLY, 0);
   }
 
   if (fd < 0) {                     /* cannot open at all */
