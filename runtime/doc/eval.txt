@@ -754,13 +754,23 @@ expressions are referring to the same |List| or |Dictionary| instance.  A copy
 of a |List| is different from the original |List|.  When using "is" without
 a |List| or a |Dictionary| it is equivalent to using "equal", using "isnot"
 equivalent to using "not equal".  Except that a different type means the
-values are different: "4 == '4'" is true, "4 is '4'" is false and "0 is []" is
-false and not an error. "is#"/"isnot#" and "is?"/"isnot?" can be used to match
-and ignore case.
+values are different: >
+	echo 4 == '4'
+	1
+	echo 4 is '4'
+	0
+	echo 0 is []
+	0
+"is#"/"isnot#" and "is?"/"isnot?" can be used to match and ignore case.
 
 When comparing a String with a Number, the String is converted to a Number,
-and the comparison is done on Numbers.	This means that "0 == 'x'" is TRUE,
-because 'x' converted to a Number is zero.
+and the comparison is done on Numbers. This means that: >
+	echo 0 == 'x'
+	1
+because 'x' converted to a Number is zero. However: >
+	echo 0 == 'x'
+	0
+Inside a List or Dictionary this conversion is not used.
 
 When comparing two Strings, this is done with strcmp() or stricmp().  This
 results in the mathematical difference (comparing byte values), not
@@ -2138,6 +2148,10 @@ values({dict})			List	values in {dict}
 virtcol({expr})		Number	screen column of cursor or mark
 visualmode([expr])		String	last visual mode used
 wildmenumode()			Number	whether 'wildmenu' mode is active
+win_getid( [{win} [, {tab}]])   Number  get window ID for {win} in {tab}
+win_gotoid( {expr})             Number  go to window with ID {expr}
+win_id2tabwin( {expr})          List    get tab window nr from window ID
+win_id2win( {expr})             Number  get window nr from window ID
 winbufnr({nr})			Number	buffer number of window {nr}
 wincol()			Number	window column of the cursor
 winheight({nr})		Number	height of window {nr}
@@ -7191,6 +7205,29 @@ wildmenumode()					*wildmenumode()*
 <
 		(Note, this needs the 'wildcharm' option set appropriately).
 
+
+win_getid([{win} [, {tab}]])				*win_getid()*
+		Get the window ID for the specified window.
+		When {win} is missing use the current window.
+		With {win} this is the window number.  The top window has
+		number 1.
+		Without {tab} use the current tab, otherwise the tab with
+		number {tab}.  The first tab has number one.
+		Return zero if the window cannot be found.
+
+win_gotoid({expr})					*win_gotoid()*
+		Go to window with ID {expr}.  This may also change the current
+		tabpage.
+		Return 1 if successful, 0 if the window cannot be found.
+
+win_id2tabwin({expr}					*win_id2tabwin()*
+		Return a list with the tab number and window number of window
+		with ID {expr}: [tabnr, winnr].
+		Return [0, 0] if the window cannot be found.
+
+win_id2win({expr})					*win_id2win()*
+		Return the window number of window with ID {expr}.
+		Return 0 if the window cannot be found in the current tabpage.
 
 							*winbufnr()*
 winbufnr({nr})	The result is a Number, which is the number of the buffer

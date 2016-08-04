@@ -937,8 +937,9 @@ struct matchitem {
  */
 struct window_S {
   uint64_t handle;
-  buf_T       *w_buffer;            /* buffer we are a window into (used
-                                       often, keep it the first item!) */
+  int w_id;                         ///< unique window ID
+  buf_T       *w_buffer;            ///< buffer we are a window into (used
+                                    ///< often, keep it the first item!)
 
   synblock_T  *w_s;                 /* for :ownsyntax */
 
