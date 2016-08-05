@@ -45,13 +45,10 @@ describe('terminal cursor', function()
   describe('with number column', function()
     before_each(function()
       feed('<c-\\><c-n>:set number<cr>')
-    end)
-
-    it('is positioned correctly when unfocused', function()
       screen:expect([[
           1 tty ready                                     |
-          2 {2: }                                             |
-          3                                               |
+          2 rows: 6, cols: 46                             |
+          3 {2: }                                             |
           4                                               |
           5                                               |
           6 ^                                              |
@@ -63,8 +60,8 @@ describe('terminal cursor', function()
       feed('i')
       screen:expect([[
           1 tty ready                                     |
-          2 {1: }                                             |
-          3                                               |
+          2 rows: 6, cols: 46                             |
+          3 {1: }                                             |
           4                                               |
           5                                               |
           6                                               |
