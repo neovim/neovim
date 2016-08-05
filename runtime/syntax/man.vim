@@ -6,11 +6,11 @@ if exists('b:current_syntax')
 endif
 
 syntax case  ignore
-syntax match manReference          '[^()[:space:]]\+([0-9nx][a-z]*)'
-syntax match manSectionHeading     '^\%(\S.*\)\=\S$'
-syntax match manTitle              '^\%1l.*$'
-syntax match manSubHeading         '^\s\{3\}\S.*$'
-syntax match manOptionDesc         '^\s\+\%(+\|--\=\)\S\+'
+syntax match manReference      display '[^()[:space:]]\+([0-9nx][a-z]*)'
+syntax match manSectionHeading display '^\%(\S.*\)\=\S$'
+syntax match manTitle          display '^\%1l.*$'
+syntax match manSubHeading     display '^ \{3\}\S.*$'
+syntax match manOptionDesc     display '^\s\+\%(+\|--\=\)\S\+'
 
 highlight default link manTitle          Title
 highlight default link manSectionHeading Statement
@@ -19,19 +19,19 @@ highlight default link manReference      PreProc
 highlight default link manSubHeading     Function
 
 if getline(1) =~# '^[^()[:space:]]\+([23].*'
-  syntax include @cCode $VIMRUNTIME/syntax/c.vim
-  syntax match manCFuncDefinition display '\<\h\w*\>\s*('me=e-1 contained
-  syntax region manSynopsis start='\V\^\%(
+  syntax include @c $VIMRUNTIME/syntax/c.vim
+  syntax match manCFuncDefinition display '\<\h\w*\>\ze\(\s\|\n\)*(' contained
+  syntax region manSynopsis start='^\%(
         \SYNOPSIS\|
         \SYNTAX\|
         \SINTASSI\|
         \SKŁADNIA\|
         \СИНТАКСИС\|
-        \書式\)\$'hs=s+8 end='^\%(\S.*\)\=\S$'me=e-12 keepend contains=manSectionHeading,@cCode,manCFuncDefinition
+        \書式\)$' end='^\%(\S.*\)\=\S$' keepend contains=manSectionHeading,@c,manCFuncDefinition
   highlight default link manCFuncDefinition Function
 endif
 
 " Prevent everything else from matching the last line
-execute 'syntax match manFooter "^\%'.line('$').'l.*$"'
+execute 'syntax match manFooter display "^\%'.line('$').'l.*$"'
 
 let b:current_syntax = 'man'
