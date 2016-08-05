@@ -96,6 +96,7 @@ Options:
 
 Commands:
   |:CheckHealth|
+  |:Man| has many improvements, including auto-completion
 
 Functions:
   |execute()| works with |:redir|

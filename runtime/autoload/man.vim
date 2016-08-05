@@ -27,7 +27,7 @@ function! man#open_page_command(...) abort
     call s:error('too many arguments')
     return
   elseif a:0 ==# 0
-    call s:error('what manual page do you want?')
+    call s:error('missing argument')
     return
   elseif a:0 ==# 1
     let ref = a:000[0]
@@ -221,9 +221,8 @@ endfunction
 
 function! s:error(msg) abort
   redraw
-  echon 'man.vim: '
   echohl ErrorMsg
-  echon a:msg
+  echon 'man.vim: ' a:msg
   echohl None
 endfunction
 
