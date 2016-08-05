@@ -52,37 +52,37 @@ describe('Commands that close windows and/or buffers', function()
     execute('1wincmd w')
     expect('testtext 1 1 1')
 
-    -- Test abandoning changed buffer, should be unloaded even when 'hidden' set
+    -- Test abandoning changed buffer, should not be unloaded when 'hidden' set
     execute('set hidden')
     feed('A 1<Esc>:q!<CR>')
     expect('testtext 2 2')
     execute('unhide')
-    expect('testtext 2 2')
+    expect('testtext 1 1 1 1')
 
     -- Test ":hide" hides anyway when 'hidden' not set
     execute('set nohidden')
-    feed('A 2<Esc>:hide<CR>')
-    expect('testtext 3')
+    feed('A 1<Esc>:hide<CR>')
+    expect('testtext 2 2')
 
     -- Test ":edit" failing in modified buffer when 'hidden' not set
-    feed('A 3<Esc>:e Xtest1<CR>')
-    expect('testtext 3 3')
+    feed('A 2<Esc>:e Xtest1<CR>')
+    expect('testtext 2 2 2')
 
     -- Test ":edit" working in modified buffer when 'hidden' set
     execute('set hidden')
     execute('e Xtest1')
-    expect('testtext 1')
+    expect('testtext 1 1 1 1 1')
 
     -- Test ":close" not hiding when 'hidden' not set in modified buffer
     execute('sp Xtest3')
     execute('set nohidden')
     feed('A 3<Esc>:close<CR>')
-    expect('testtext 3 3 3')
+    expect('testtext 1 1 1 1 1')
 
     -- Test ":close!" does hide when 'hidden' not set in modified buffer
     feed('A 3<Esc>:close!<CR>')
     execute('set nohidden')
-    expect('testtext 1')
+    expect('testtext 3 3')
 
     -- Test ":all!" hides changed buffer
     execute('sp Xtest4')

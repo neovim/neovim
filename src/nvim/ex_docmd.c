@@ -5704,8 +5704,8 @@ static void ex_quit(exarg_T *eap)
     if (only_one_window() && (firstwin == lastwin || eap->addr_count == 0)) {
       getout(0);
     }
-    /* close window; may free buffer */
-    win_close(wp, !P_HID(wp->w_buffer) || eap->forceit);
+    // close window; may free buffer
+    win_close(wp, !P_HID(wp->w_buffer) && eap->forceit);
   }
 }
 
