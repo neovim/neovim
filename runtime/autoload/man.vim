@@ -22,7 +22,7 @@ catch /E145:/
   " Ignore the error in restricted mode
 endtry
 
-function! man#open_page_command(...) abort
+function! man#open_page_command(count, count1, ...) abort
   if a:0 > 2
     call s:error('too many arguments')
     return
@@ -40,6 +40,10 @@ function! man#open_page_command(...) abort
   endif
   try
     let [sect, name] = s:extract_sect_and_name_ref(ref)
+    if a:count ==# a:count1
+      " user explicitly set a count
+      let sect = string(a:count)
+    endif
     let [sect, name] = s:verify_exists(sect, name)
   catch
     call s:error(v:exception)
@@ -54,7 +58,7 @@ endfunction
 " are equal was the count explicitly set.
 function! man#open_page_mapping(count, count1, ref) abort
   if empty(a:ref)
-    call s:error('what manual page do you want?')
+    call s:error('missing argument')
     return
   endif
   try
@@ -164,25 +168,23 @@ function! s:open_page(sect, name)
   endif
   if getbufvar(bufname, 'manwidth') ==# manwidth
     if found_man
-      silent execute 'buf '.bufnr(bufname)
+      silent execute 'buf' bufnr(bufname)
     else
-      execute 'split '.bufname
+      execute 'split' bufname
+      setlocal nobuflisted
     endif
     keepjumps 1
     return
   endif
-  let already_opened = bufexists(bufname)
   if found_man
-    execute 'edit '.bufname
+    execute 'edit' bufname
   else
-    execute 'split '.bufname
+    execute 'split' bufname
   endif
-  if already_opened
-    setlocal modifiable
-    setlocal noreadonly
-    keepjumps %delete _
-  endif
-  silent execute 'read!env MANWIDTH='.manwidth.' '.s:man_cmd.' '.s:man_args(a:sect, a:name)
+  setlocal modifiable
+  setlocal noreadonly
+  keepjumps %delete _
+  silent execute 'read!env MANWIDTH='.manwidth s:man_cmd s:man_args(a:sect, a:name)
   let b:manwidth = manwidth
   " remove all the backspaced text
   silent keeppatterns keepjumps %substitute,.\b,,ge
