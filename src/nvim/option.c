@@ -236,6 +236,7 @@ typedef struct vimoption {
 #define P_NO_ML        0x2000000U  ///< not allowed in modeline
 #define P_CURSWANT     0x4000000U  ///< update curswant required; not needed
                                    ///< when there is a redraw flag
+#define P_NO_DEF_EXP   0x8000000U  ///< Do not expand default value.
 
 #define HIGHLIGHT_INIT \
   "8:SpecialKey,~:EndOfBuffer,z:TermCursor,Z:TermCursorNC,@:NonText," \
@@ -676,15 +677,18 @@ void set_init_1(void)
 #endif
                      false);
 
-  char *backupdir = stdpaths_user_data_subpath("backup", 0);
+  char *backupdir = stdpaths_user_data_subpath("backup", 0, true);
   const size_t backupdir_len = strlen(backupdir);
   backupdir = xrealloc(backupdir, backupdir_len + 3);
   memmove(backupdir + 2, backupdir, backupdir_len + 1);
   memmove(backupdir, ".,", 2);
-  set_string_default("viewdir", stdpaths_user_data_subpath("view", 0), true);
+  set_string_default("viewdir", stdpaths_user_data_subpath("view", 0, true),
+                     true);
   set_string_default("backupdir", backupdir, true);
-  set_string_default("directory", stdpaths_user_data_subpath("swap", 2), true);
-  set_string_default("undodir", stdpaths_user_data_subpath("undo", 0), true);
+  set_string_default("directory", stdpaths_user_data_subpath("swap", 2, true),
+                     true);
+  set_string_default("undodir", stdpaths_user_data_subpath("undo", 0, true),
+                     true);
   // Set default for &runtimepath. All necessary expansions are performed in
   // this function.
   set_runtimepath_default();
@@ -726,6 +730,9 @@ void set_init_1(void)
    * default.
    */
   for (opt_idx = 0; options[opt_idx].fullname; opt_idx++) {
+    if (options[opt_idx].flags & P_NO_DEF_EXP) {
+      continue;
+    }
     char *p;
     if ((options[opt_idx].flags & P_GETTEXT)
         && options[opt_idx].var != NULL) {
@@ -1473,16 +1480,19 @@ do_set (
                * default value was already expanded, only
                * required when an environment variable was set
                * later */
-              if (newval == NULL)
+              new_value_alloced = true;
+              if (newval == NULL) {
                 newval = empty_option;
-              else {
+              } else if (!(options[opt_idx].flags | P_NO_DEF_EXP)) {
                 s = option_expand(opt_idx, newval);
-                if (s == NULL)
+                if (s == NULL) {
                   s = newval;
+                }
                 newval = vim_strsave(s);
+              } else {
+                newval = (char_u *)xstrdup((char *)newval);
               }
-              new_value_alloced = TRUE;
-            } else if (nextchar == '<') {             /* set to global val */
+            } else if (nextchar == '<') {  // set to global val
               newval = vim_strsave(*(char_u **)get_varp_scope(
                       &(options[opt_idx]), OPT_GLOBAL));
               new_value_alloced = TRUE;
@@ -2020,13 +2030,15 @@ static char_u *option_expand(int opt_idx, char_u *val)
   if (!(options[opt_idx].flags & P_EXPAND) || options[opt_idx].var == NULL)
     return NULL;
 
-  /* If val is longer than MAXPATHL no meaningful expansion can be done,
-   * expand_env() would truncate the string. */
-  if (val != NULL && STRLEN(val) > MAXPATHL)
-    return NULL;
-
-  if (val == NULL)
+  if (val == NULL) {
     val = *(char_u **)options[opt_idx].var;
+  }
+
+  // If val is longer than MAXPATHL no meaningful expansion can be done,
+  // expand_env() would truncate the string.
+  if (val == NULL || STRLEN(val) > MAXPATHL) {
+    return NULL;
+  }
 
   /*
    * Expanding this with NameBuff, expand_env() must not be passed IObuff.
