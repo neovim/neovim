@@ -500,7 +500,7 @@ Options:
 		avoid that a Subject line with "Vim:" in it will cause an
 		error message.
 'textwidth'	is set to 72.  This is often recommended for e-mail.
-'formatoptions'  is set to break text lines and to repeat the comment leader
+'formatoptions'	is set to break text lines and to repeat the comment leader
 		in new lines, so that a leading ">" for quotes is repeated.
 		You can also format quoted text with |gq|.
 
@@ -512,37 +512,40 @@ Local mappings:
 
 MAN					*ft-man-plugin* *:Man* *man.vim*
 
-Displays a manual page in a nice way.  Also see the user manual
-|find-manpage|.
+View manpages in Nvim. Supports highlighting, autocompletion, locales, and
+navigation. See also |find-manpage|.
 
-To start using the ":Man" command before any manual page was loaded, source
-this script from your startup vimrc file: >
+To use Nvim as a manpager:
 
-	runtime ftplugin/man.vim
-
-Options:
-'iskeyword'	the '.' character is added to be able to use CTRL-] on the
-		manual page name.
+     export MANPAGER="nvim -c 'set ft=man' -"
 
 Commands:
-Man {name}	Display the manual page for {name} in a window.
-Man {number} {name}
-		Display the manual page for {name} in a section {number}.
+Man {name}		  Display the manpage for {name} in a window.
+Man {sect} {name}	  Display the manpage for {name} and section {sect}.
+Man {name}({sect})	  Alternate syntax which auto-completes the section.
+Man {sect} {name}({sect}) Used during completion to show the real section of
+			  when the provided section is a prefix, e.g. 1m vs 1.
+Man {path}		  Open the manpage specified by path. Use "./" if it
+                          is in the current directory.
 
-Global mapping:
-<Leader>K	Displays the manual page for the word under the cursor.
+Global Mappings:
+<Plug>(Man)               Jump to the manpage for the <cWORD> under the
+                          cursor in a new tab. Takes a count for the section.
 
 Local mappings:
-CTRL-]		Jump to the manual page for the word under the cursor.
-CTRL-T		Jump back to the previous manual page.
-q		Same as ":quit"
+K
+CTRL-]			  Jump to the manpage for the <cWORD> under the
+                          cursor. Takes a count for the section.
+CTRL-T			  Jump back to the previous manpage.
+q			  Close the window.
 
-To enable folding use this: >
-  	let g:ft_man_folding_enable = 1
+Variables:
+g:no_man_maps		  Do not create mappings in manpage buffers.
+g:ft_man_folding_enable   Fold manpages with foldmethod=indent foldnestmax=1.
+
 If you do not like the default folding, use an autocommand to add your desired
-folding style instead.  For example: >
-        autocmd FileType man setlocal foldmethod=indent foldenable
-
+folding style instead. For example: >
+          :autocmd FileType man setlocal foldmethod=indent foldenable
 
 PDF							*ft-pdf-plugin*
 
