@@ -35,9 +35,9 @@ if !exists('g:no_plugin_maps') && !exists('g:no_man_maps')
   nnoremap <silent> <buffer> K          :Man<CR>
   nnoremap <silent> <buffer> <C-T>      :call man#pop_tag()<CR>
   if s:pager
-    nnoremap <silent> <buffer> <nowait> q :q<CR>
+    nnoremap <silent> <buffer> <nowait> q :lclose<CR>:q<CR>
   else
-    nnoremap <silent> <buffer> <nowait> q <C-W>c
+    nnoremap <silent> <buffer> <nowait> q :lclose<CR><C-W>c
   endif
 endif
 
@@ -46,6 +46,8 @@ if get(g:, 'ft_man_folding_enable', 0)
   setlocal foldmethod=indent
   setlocal foldnestmax=1
 endif
+
+autocmd BufWinEnter <buffer> call man#create_toc()
 
 let b:undo_ftplugin = ''
 " vim: set sw=2:

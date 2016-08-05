@@ -551,6 +551,9 @@ Variables:
                           For example in C one usually wants section 3 or 2: >
                                :let b:man_default_sections = '3,2'
 
+Man sections are added to the |location-list| and can be viewed with
+|:lwindow|.
+
 PDF							*ft-pdf-plugin*
 
 Two maps, <C-]> and <C-T>, are provided to simulate a tag stack for navigating
