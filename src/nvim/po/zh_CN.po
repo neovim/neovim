@@ -4265,10 +4265,6 @@ msgstr "第 %4ld 行:"
 msgid "E354: Invalid register name: '%s'"
 msgstr "E354: 无效的寄存器名: '%s'"
 
-#: ../message.c:745
-msgid "Messages maintainer: Bram Moolenaar <Bram@vim.org>"
-msgstr "简体中文消息维护者: Yuheng Xie <elephant@linux.net.cn>"
-
 #: ../message.c:986
 msgid "Interrupt: "
 msgstr "已中断: "

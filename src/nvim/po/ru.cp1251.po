@@ -4283,12 +4283,6 @@ msgstr "строка %4ld:"
 msgid "E354: Invalid register name: '%s'"
 msgstr "E354: Недопустимое имя регистра: '%s'"
 
-#: ../message.c:745
-msgid "Messages maintainer: Bram Moolenaar <Bram@vim.org>"
-msgstr ""
-"Перевод сообщений на русский язык: Василий Рагозин <vrr@users.sourceforge."
-"net>, Сергей Алёшин <alyoshin.s@gmail.com>"
-
 #: ../message.c:986
 msgid "Interrupt: "
 msgstr "Прерывание: "

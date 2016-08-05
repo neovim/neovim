@@ -4128,10 +4128,6 @@ msgstr ""
 msgid "E354: Invalid register name: '%s'"
 msgstr ""
 
-#: ../message.c:745
-msgid "Messages maintainer: Bram Moolenaar <Bram@vim.org>"
-msgstr "Messages maintainer: Mike Williams <mrw@eandem.co.uk>"
-
 #: ../message.c:986
 msgid "Interrupt: "
 msgstr ""
