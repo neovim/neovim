@@ -18,6 +18,11 @@ highlight default link manOptionDesc     Constant
 highlight default link manReference      PreProc
 highlight default link manSubHeading     Function
 
+if &filetype != 'man'
+  " May have been included by some other filetype.
+  finish
+endif
+
 if !exists('b:man_sect')
   call man#init_pager()
 endif

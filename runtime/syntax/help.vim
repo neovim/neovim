@@ -87,6 +87,8 @@ syn match helpSpecial		"CTRL-PageDown"
 syn match helpSpecial		"CTRL-Insert"
 syn match helpSpecial		"CTRL-Del"
 syn match helpSpecial		"CTRL-{char}"
+syn match helpSpecial		"META-."
+syn match helpSpecial		"ALT-."
 
 " Highlight group items in their own color.
 syn match helpComment		"\t[* ]Comment\t\+[a-z].*"
