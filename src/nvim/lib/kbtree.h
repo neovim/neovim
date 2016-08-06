@@ -32,79 +32,71 @@
 #include <string.h>
 #include <stdint.h>
 
+#include "nvim/memory.h"
+
 #define KB_MAX_DEPTH 64
 
-typedef struct {
-  int32_t is_internal:1, n:31;
-} kbnode_t;
+#define	__KB_KEY(type, x)	(x->key)
+#define __KB_PTR(btr, x)	(x->ptr)
 
-
-typedef struct {
-	kbnode_t *x;
-	int i;
-} kbpos_t;
-
-typedef struct {
-	kbpos_t stack[KB_MAX_DEPTH], *p;
-} kbitr_t;
-
-#define	__KB_KEY(type, x)	((type*)((char*)x + 4))
-#define __KB_PTR(btr, x)	((kbnode_t**)((char*)x + btr->off_ptr))
-
-#define __KB_TREE_T(name)						\
+#define __KB_TREE_T(name,key_t,T)						\
+typedef struct kbnode_##name##_s kbnode_##name##_t;     \
+struct kbnode_##name##_s {              \
+  int32_t n; \
+  bool is_internal; \
+  key_t key[2*T-1]; \
+  kbnode_##name##_t *ptr[0]; \
+} ;                   \
+                              \
 	typedef struct {							\
-		kbnode_t *root;							\
-		int	off_key, off_ptr, ilen, elen;		\
-		int	n, t;								\
+		kbnode_##name##_t *root;							\
 		int	n_keys, n_nodes;					\
 	} kbtree_##name##_t; \
+    typedef struct { \
+        kbnode_##name##_t *x; \
+        int i; \
+    } kbpos_##name##_t; \
+    typedef struct { \
+        kbpos_##name##_t stack[KB_MAX_DEPTH], *p; \
+    } kbitr_##name##_t; \
 
 
-
-#define __KB_INIT(name, key_t)											\
-	static inline kbtree_##name##_t *kb_init_##name(unsigned int size)							\
+#define __KB_INIT(name, key_t, kbnode_t, T, ILEN)											\
+	static inline kbtree_##name##_t *kb_init_##name()							\
 	{																	\
 		kbtree_##name##_t *b;											\
-		b = (kbtree_##name##_t*)calloc(1, sizeof(kbtree_##name##_t));	\
-		b->t = (int)((size - 4 - sizeof(void*)) / (sizeof(void*) + sizeof(key_t)) + 1) >> 1; \
-		if (b->t < 2) {													\
-			free(b); return 0;											\
-		}																\
-		b->n = 2 * b->t - 1;											\
-		b->off_ptr = (int)(4 + (unsigned int)b->n * sizeof(key_t));							\
-		b->ilen = (int)(4 + sizeof(void*) + (unsigned int)b->n * (sizeof(void*) + sizeof(key_t)) + 3) >> 2 << 2; \
-		b->elen = (b->off_ptr + 3) >> 2 << 2;							\
-		b->root = (kbnode_t*)calloc(1, (unsigned int)b->ilen);						\
+		b = (kbtree_##name##_t*)xcalloc(1, sizeof(kbtree_##name##_t));	\
+		b->root = (kbnode_t*)xcalloc(1, ILEN);						\
 		++b->n_nodes;													\
 		return b;														\
 	} \
 
-#define __kb_destroy(b) do {											\
+#define __kb_destroy(kbnode_t,b) do {											\
 		int i;                                                          \
         unsigned int max = 8;											\
 		kbnode_t *x, **top, **stack = 0;								\
 		if (b) {														\
-			top = stack = (kbnode_t**)calloc(max, sizeof(kbnode_t*));	\
+			top = stack = (kbnode_t**)xcalloc(max, sizeof(kbnode_t*));	\
 			*top++ = (b)->root;											\
 			while (top != stack) {										\
 				x = *--top;												\
-				if (x->is_internal == 0) { free(x); continue; }			\
+				if (x->is_internal == 0) { xfree(x); continue; }			\
 				for (i = 0; i <= x->n; ++i)								\
 					if (__KB_PTR(b, x)[i]) {							\
 						if (top - stack == (int)max) {		        	\
 							max <<= 1;									\
-							stack = (kbnode_t**)realloc(stack, max * sizeof(kbnode_t*)); \
+							stack = (kbnode_t**)xrealloc(stack, max * sizeof(kbnode_t*)); \
 							top = stack + (max>>1);						\
 						}												\
 						*top++ = __KB_PTR(b, x)[i];						\
 					}													\
-				free(x);												\
+				xfree(x);												\
 			}															\
 		}																\
-		free(b); free(stack);											\
+		xfree(b); xfree(stack);											\
 	} while (0)
 
-#define __KB_GET_AUX1(name, key_t, __cmp)								\
+#define __KB_GET_AUX1(name, key_t, kbnode_t, __cmp)								\
 	static inline int __kb_getp_aux_##name(const kbnode_t * __restrict x, const key_t * __restrict k, int *r) \
 	{																	\
 		int tr, *rr, begin = 0, end = x->n;								\
@@ -120,7 +112,7 @@ typedef struct {
 		return begin;													\
 	}
 
-#define __KB_GET(name, key_t)											\
+#define __KB_GET(name, key_t, kbnode_t)											\
 	static key_t *kb_getp_##name(kbtree_##name##_t *b, const key_t * __restrict k) \
 	{																	\
 		int i, r = 0;													\
@@ -138,7 +130,7 @@ typedef struct {
 		return kb_getp_##name(b, &k);									\
 	}
 
-#define __KB_INTERVAL(name, key_t)										\
+#define __KB_INTERVAL(name, key_t, kbnode_t)										\
 	static void kb_intervalp_##name(kbtree_##name##_t *b, const key_t * __restrict k, key_t **lower, key_t **upper)	\
 	{																	\
 		int i, r = 0;													\
@@ -161,22 +153,22 @@ typedef struct {
 		kb_intervalp_##name(b, &k, lower, upper);						\
 	}
 
-#define __KB_PUT(name, key_t, __cmp)									\
+#define __KB_PUT(name, key_t, kbnode_t, __cmp, T, ILEN)									\
 	/* x must be an internal node */									\
 	static void __kb_split_##name(kbtree_##name##_t *b, kbnode_t *x, int i, kbnode_t *y) \
 	{																	\
 		kbnode_t *z;													\
-		z = (kbnode_t*)calloc(1, y->is_internal? (unsigned int)b->ilen : (unsigned int)b->elen);	\
+		z = (kbnode_t*)xcalloc(1, y->is_internal? ILEN : sizeof(kbnode_##name##_t));	\
 		++b->n_nodes;													\
 		z->is_internal = y->is_internal;								\
-		z->n = b->t - 1;												\
-		memcpy(__KB_KEY(key_t, z), __KB_KEY(key_t, y) + b->t, sizeof(key_t) * (unsigned int)(b->t - 1)); \
-		if (y->is_internal) memcpy(__KB_PTR(b, z), __KB_PTR(b, y) + (unsigned int)b->t, sizeof(void*) * (unsigned int)b->t); \
-		y->n = b->t - 1;												\
-		memmove(__KB_PTR(b, x) + i + 2, __KB_PTR(b, x) + i + 1, sizeof(void*) * (unsigned int)(x->n - i)); \
+		z->n = T - 1;												\
+		memcpy(__KB_KEY(key_t, z), &__KB_KEY(key_t, y)[T], sizeof(key_t) * (T - 1)); \
+		if (y->is_internal) memcpy(__KB_PTR(b, z), &__KB_PTR(b, y)[T], sizeof(void*) * T); \
+		y->n = T - 1;												\
+		memmove(&__KB_PTR(b, x)[i + 2], &__KB_PTR(b, x)[i + 1], sizeof(void*) * (unsigned int)(x->n - i)); \
 		__KB_PTR(b, x)[i + 1] = z;										\
-		memmove(__KB_KEY(key_t, x) + i + 1, __KB_KEY(key_t, x) + i, sizeof(key_t) * (unsigned int)(x->n - i)); \
-		__KB_KEY(key_t, x)[i] = __KB_KEY(key_t, y)[b->t - 1];			\
+		memmove(&__KB_KEY(key_t, x)[i + 1], &__KB_KEY(key_t, x)[i], sizeof(key_t) * (unsigned int)(x->n - i)); \
+		__KB_KEY(key_t, x)[i] = __KB_KEY(key_t, y)[T - 1];			\
 		++x->n;															\
 	}																	\
 	static key_t *__kb_putp_aux_##name(kbtree_##name##_t *b, kbnode_t *x, const key_t * __restrict k) \
@@ -186,13 +178,13 @@ typedef struct {
 		if (x->is_internal == 0) {										\
 			i = __kb_getp_aux_##name(x, k, 0);							\
 			if (i != x->n - 1)											\
-				memmove(__KB_KEY(key_t, x) + i + 2, __KB_KEY(key_t, x) + i + 1, (unsigned int)(x->n - i - 1) * sizeof(key_t)); \
+				memmove(&__KB_KEY(key_t, x)[i + 2], &__KB_KEY(key_t, x)[i + 1], (unsigned int)(x->n - i - 1) * sizeof(key_t)); \
 			ret = &__KB_KEY(key_t, x)[i + 1];							\
 			*ret = *k;													\
 			++x->n;														\
 		} else {														\
 			i = __kb_getp_aux_##name(x, k, 0) + 1;						\
-			if (__KB_PTR(b, x)[i]->n == 2 * b->t - 1) {					\
+			if (__KB_PTR(b, x)[i]->n == 2 * T - 1) {					\
 				__kb_split_##name(b, x, i, __KB_PTR(b, x)[i]);			\
 				if (__cmp(*k, __KB_KEY(key_t, x)[i]) > 0) ++i;			\
 			}															\
@@ -205,9 +197,9 @@ typedef struct {
 		kbnode_t *r, *s;												\
 		++b->n_keys;													\
 		r = b->root;													\
-		if (r->n == 2 * b->t - 1) {										\
+		if (r->n == 2 * T - 1) {										\
 			++b->n_nodes;												\
-			s = (kbnode_t*)calloc(1, (unsigned int)b->ilen);							\
+			s = (kbnode_t*)xcalloc(1, ILEN);							\
 			b->root = s; s->is_internal = 1; s->n = 0;					\
 			__KB_PTR(b, s)[0] = r;										\
 			__kb_split_##name(b, s, 0, r);								\
@@ -221,7 +213,7 @@ typedef struct {
 	}
 
 
-#define __KB_DEL(name, key_t)											\
+#define __KB_DEL(name, key_t, kbnode_t, T)											\
 	static key_t __kb_delp_aux_##name(kbtree_##name##_t *b, kbnode_t *x, const key_t * __restrict k, int s) \
 	{																	\
 		int yn, zn, i, r = 0;											\
@@ -235,69 +227,69 @@ typedef struct {
 		if (x->is_internal == 0) {										\
 			if (s == 2) ++i;											\
 			kp = __KB_KEY(key_t, x)[i];									\
-			memmove(__KB_KEY(key_t, x) + i, __KB_KEY(key_t, x) + i + 1, (unsigned int)(x->n - i - 1) * sizeof(key_t)); \
+			memmove(&__KB_KEY(key_t, x)[i], &__KB_KEY(key_t, x)[i + 1], (unsigned int)(x->n - i - 1) * sizeof(key_t)); \
 			--x->n;														\
 			return kp;													\
 		}																\
 		if (r == 0) {													\
-			if ((yn = __KB_PTR(b, x)[i]->n) >= b->t) {					\
+			if ((yn = __KB_PTR(b, x)[i]->n) >= T) {					\
 				xp = __KB_PTR(b, x)[i];									\
 				kp = __KB_KEY(key_t, x)[i];								\
 				__KB_KEY(key_t, x)[i] = __kb_delp_aux_##name(b, xp, 0, 1); \
 				return kp;												\
-			} else if ((zn = __KB_PTR(b, x)[i + 1]->n) >= b->t) {		\
+			} else if ((zn = __KB_PTR(b, x)[i + 1]->n) >= T) {		\
 				xp = __KB_PTR(b, x)[i + 1];								\
 				kp = __KB_KEY(key_t, x)[i];								\
 				__KB_KEY(key_t, x)[i] = __kb_delp_aux_##name(b, xp, 0, 2); \
 				return kp;												\
-			} else if (yn == b->t - 1 && zn == b->t - 1) {				\
+			} else if (yn == T - 1 && zn == T - 1) {				\
 				y = __KB_PTR(b, x)[i]; z = __KB_PTR(b, x)[i + 1];		\
 				__KB_KEY(key_t, y)[y->n++] = *k;						\
-				memmove(__KB_KEY(key_t, y) + y->n, __KB_KEY(key_t, z), (unsigned int)z->n * sizeof(key_t)); \
-				if (y->is_internal) memmove(__KB_PTR(b, y) + y->n, __KB_PTR(b, z), (unsigned int)(z->n + 1) * sizeof(void*)); \
+				memmove(&__KB_KEY(key_t, y)[y->n], __KB_KEY(key_t, z), (unsigned int)z->n * sizeof(key_t)); \
+				if (y->is_internal) memmove(&__KB_PTR(b, y)[y->n], __KB_PTR(b, z), (unsigned int)(z->n + 1) * sizeof(void*)); \
 				y->n += z->n;											\
-				memmove(__KB_KEY(key_t, x) + i, __KB_KEY(key_t, x) + i + 1, (unsigned int)(x->n - i - 1) * sizeof(key_t)); \
-				memmove(__KB_PTR(b, x) + i + 1, __KB_PTR(b, x) + i + 2, (unsigned int)(x->n - i - 1) * sizeof(void*)); \
+				memmove(&__KB_KEY(key_t, x)[i], &__KB_KEY(key_t, x)[i + 1], (unsigned int)(x->n - i - 1) * sizeof(key_t)); \
+				memmove(&__KB_PTR(b, x)[i + 1], &__KB_PTR(b, x)[i + 2], (unsigned int)(x->n - i - 1) * sizeof(void*)); \
 				--x->n;													\
-				free(z);												\
+				xfree(z);												\
 				return __kb_delp_aux_##name(b, y, k, s);				\
 			}															\
 		}																\
 		++i;															\
-		if ((xp = __KB_PTR(b, x)[i])->n == b->t - 1) {					\
-			if (i > 0 && (y = __KB_PTR(b, x)[i - 1])->n >= b->t) {		\
-				memmove(__KB_KEY(key_t, xp) + 1, __KB_KEY(key_t, xp), (unsigned int)xp->n * sizeof(key_t)); \
-				if (xp->is_internal) memmove(__KB_PTR(b, xp) + 1, __KB_PTR(b, xp), (unsigned int)(xp->n + 1) * sizeof(void*)); \
+		if ((xp = __KB_PTR(b, x)[i])->n == T - 1) {					\
+			if (i > 0 && (y = __KB_PTR(b, x)[i - 1])->n >= T) {		\
+				memmove(&__KB_KEY(key_t, xp)[1], __KB_KEY(key_t, xp), (unsigned int)xp->n * sizeof(key_t)); \
+				if (xp->is_internal) memmove(&__KB_PTR(b, xp)[1], __KB_PTR(b, xp), (unsigned int)(xp->n + 1) * sizeof(void*)); \
 				__KB_KEY(key_t, xp)[0] = __KB_KEY(key_t, x)[i - 1];		\
 				__KB_KEY(key_t, x)[i - 1] = __KB_KEY(key_t, y)[y->n - 1]; \
 				if (xp->is_internal) __KB_PTR(b, xp)[0] = __KB_PTR(b, y)[y->n]; \
 				--y->n; ++xp->n;										\
-			} else if (i < x->n && (y = __KB_PTR(b, x)[i + 1])->n >= b->t) { \
+			} else if (i < x->n && (y = __KB_PTR(b, x)[i + 1])->n >= T) { \
 				__KB_KEY(key_t, xp)[xp->n++] = __KB_KEY(key_t, x)[i];	\
 				__KB_KEY(key_t, x)[i] = __KB_KEY(key_t, y)[0];			\
 				if (xp->is_internal) __KB_PTR(b, xp)[xp->n] = __KB_PTR(b, y)[0]; \
 				--y->n;													\
-				memmove(__KB_KEY(key_t, y), __KB_KEY(key_t, y) + 1, (unsigned int)y->n * sizeof(key_t)); \
-				if (y->is_internal) memmove(__KB_PTR(b, y), __KB_PTR(b, y) + 1, (unsigned int)(y->n + 1) * sizeof(void*)); \
-			} else if (i > 0 && (y = __KB_PTR(b, x)[i - 1])->n == b->t - 1) { \
+				memmove(__KB_KEY(key_t, y), &__KB_KEY(key_t, y)[1], (unsigned int)y->n * sizeof(key_t)); \
+				if (y->is_internal) memmove(__KB_PTR(b, y), &__KB_PTR(b, y)[1], (unsigned int)(y->n + 1) * sizeof(void*)); \
+			} else if (i > 0 && (y = __KB_PTR(b, x)[i - 1])->n == T - 1) { \
 				__KB_KEY(key_t, y)[y->n++] = __KB_KEY(key_t, x)[i - 1];	\
-				memmove(__KB_KEY(key_t, y) + y->n, __KB_KEY(key_t, xp), (unsigned int)xp->n * sizeof(key_t));	\
-				if (y->is_internal) memmove(__KB_PTR(b, y) + y->n, __KB_PTR(b, xp), (unsigned int)(xp->n + 1) * sizeof(void*)); \
+				memmove(&__KB_KEY(key_t, y)[y->n], __KB_KEY(key_t, xp), (unsigned int)xp->n * sizeof(key_t));	\
+				if (y->is_internal) memmove(&__KB_PTR(b, y)[y->n], __KB_PTR(b, xp), (unsigned int)(xp->n + 1) * sizeof(void*)); \
 				y->n += xp->n;											\
-				memmove(__KB_KEY(key_t, x) + i - 1, __KB_KEY(key_t, x) + i, (unsigned int)(x->n - i) * sizeof(key_t)); \
-				memmove(__KB_PTR(b, x) + i, __KB_PTR(b, x) + i + 1, (unsigned int)(x->n - i) * sizeof(void*)); \
+				memmove(&__KB_KEY(key_t, x)[i - 1], &__KB_KEY(key_t, x)[i], (unsigned int)(x->n - i) * sizeof(key_t)); \
+				memmove(&__KB_PTR(b, x)[i], &__KB_PTR(b, x)[i + 1], (unsigned int)(x->n - i) * sizeof(void*)); \
 				--x->n;													\
-				free(xp);												\
+				xfree(xp);												\
 				xp = y;													\
-			} else if (i < x->n && (y = __KB_PTR(b, x)[i + 1])->n == b->t - 1) { \
+			} else if (i < x->n && (y = __KB_PTR(b, x)[i + 1])->n == T - 1) { \
 				__KB_KEY(key_t, xp)[xp->n++] = __KB_KEY(key_t, x)[i];	\
-				memmove(__KB_KEY(key_t, xp) + xp->n, __KB_KEY(key_t, y), (unsigned int)y->n * sizeof(key_t));	\
-				if (xp->is_internal) memmove(__KB_PTR(b, xp) + xp->n, __KB_PTR(b, y), (unsigned int)(y->n + 1) * sizeof(void*)); \
+				memmove(&__KB_KEY(key_t, xp)[xp->n], __KB_KEY(key_t, y), (unsigned int)y->n * sizeof(key_t));	\
+				if (xp->is_internal) memmove(&__KB_PTR(b, xp)[xp->n], __KB_PTR(b, y), (unsigned int)(y->n + 1) * sizeof(void*)); \
 				xp->n += y->n;											\
-				memmove(__KB_KEY(key_t, x) + i, __KB_KEY(key_t, x) + i + 1, (unsigned int)(x->n - i - 1) * sizeof(key_t)); \
-				memmove(__KB_PTR(b, x) + i + 1, __KB_PTR(b, x) + i + 2, (unsigned int)(x->n - i - 1) * sizeof(void*)); \
+				memmove(&__KB_KEY(key_t, x)[i], &__KB_KEY(key_t, x)[i + 1], (unsigned int)(x->n - i - 1) * sizeof(key_t)); \
+				memmove(&__KB_PTR(b, x)[i + 1], &__KB_PTR(b, x)[i + 2], (unsigned int)(x->n - i - 1) * sizeof(void*)); \
 				--x->n;													\
-				free(y);												\
+				xfree(y);												\
 			}															\
 		}																\
 		return __kb_delp_aux_##name(b, xp, k, s);						\
@@ -312,7 +304,7 @@ typedef struct {
 			--b->n_nodes;												\
 			x = b->root;												\
 			b->root = __KB_PTR(b, x)[0];								\
-			free(x);													\
+			xfree(x);													\
 		}																\
 		return ret;														\
 	}																	\
@@ -321,8 +313,8 @@ typedef struct {
 		return kb_delp_##name(b, &k);									\
 	}
 
-#define __KB_ITR(name, key_t) \
-	static inline void kb_itr_first_##name(kbtree_##name##_t *b, kbitr_t *itr) \
+#define __KB_ITR(name, key_t, kbnode_t) \
+	static inline void kb_itr_first_##name(kbtree_##name##_t *b, kbitr_##name##_t *itr) \
 	{ \
 		itr->p = 0; \
 		if (b->n_keys == 0) return; \
@@ -334,7 +326,7 @@ typedef struct {
 			itr->p->x = __KB_PTR(b, x)[0]; itr->p->i = 0; \
 		} \
 	} \
-	static inline int kb_itr_next_##name(kbtree_##name##_t *b, kbitr_t *itr) \
+	static inline int kb_itr_next_##name(kbtree_##name##_t *b, kbitr_##name##_t *itr) \
 	{ \
 		if (itr->p < itr->stack) return 0; \
 		for (;;) { \
@@ -349,7 +341,7 @@ typedef struct {
 			if (itr->p->x && itr->p->i < itr->p->x->n) return 1; \
 		} \
 	} \
-	static inline int kb_itr_prev_##name(kbtree_##name##_t *b, kbitr_t *itr) \
+	static inline int kb_itr_prev_##name(kbtree_##name##_t *b, kbitr_##name##_t *itr) \
 	{ \
 		if (itr->p < itr->stack) return 0; \
 		for (;;) { \
@@ -364,7 +356,7 @@ typedef struct {
 			if (itr->p->x && itr->p->i >= 0) return 1; \
 		} \
 	} \
-	static int kb_itr_getp_##name(kbtree_##name##_t *b, const key_t * __restrict k, kbitr_t *itr) \
+	static int kb_itr_getp_##name(kbtree_##name##_t *b, const key_t * __restrict k, kbitr_##name##_t *itr) \
 	{ \
 		int i, r = 0; \
 		itr->p = itr->stack; \
@@ -379,33 +371,37 @@ typedef struct {
 		} \
 		return 0; \
 	} \
-	static int kb_itr_get_##name(kbtree_##name##_t *b, const key_t k, kbitr_t *itr) \
+	static int kb_itr_get_##name(kbtree_##name##_t *b, const key_t k, kbitr_##name##_t *itr) \
 	{																	\
 		return kb_itr_getp_##name(b,&k,itr); \
 	} \
-	static inline void kb_del_itr_##name(kbtree_##name##_t *b, kbitr_t *itr) \
+	static inline void kb_del_itr_##name(kbtree_##name##_t *b, kbitr_##name##_t *itr) \
 	{ \
-		key_t k = kb_itr_key(key_t, itr); \
+		const key_t k = kb_itr_key(itr); \
 		kb_delp_##name(b, &k); \
 		kb_itr_getp_##name(b, &k, itr); \
 	} 
 
+#define KBTREE_INIT(name, key_t, __cmp, T) \
+  KBTREE_INIT_IMPL(name, key_t, kbnode_##name##_t, __cmp, T, (sizeof(kbnode_##name##_t)+(2*T)*sizeof(void *)))
 
-#define KBTREE_INIT(name, key_t, __cmp)			\
-	__KB_TREE_T(name)							\
-	__KB_INIT(name, key_t)						\
-	__KB_GET_AUX1(name, key_t, __cmp)			\
-	__KB_GET(name, key_t)						\
-	__KB_INTERVAL(name, key_t)					\
-	__KB_PUT(name, key_t, __cmp)				\
-	__KB_DEL(name, key_t) \
-	__KB_ITR(name, key_t)
+
+#define KBTREE_INIT_IMPL(name, key_t, kbnode_t, __cmp, T, ILEN)			\
+	__KB_TREE_T(name, key_t, T)							\
+	__KB_INIT(name, key_t, kbnode_t, T, ILEN)						\
+	__KB_GET_AUX1(name, key_t, kbnode_t, __cmp)			\
+	__KB_GET(name, key_t, kbnode_t)						\
+	__KB_INTERVAL(name, key_t, kbnode_t)					\
+	__KB_PUT(name, key_t, kbnode_t, __cmp, T, ILEN)				\
+	__KB_DEL(name, key_t, kbnode_t, T) \
+	__KB_ITR(name, key_t, kbnode_t)
 
 #define KB_DEFAULT_SIZE 512
 
 #define kbtree_t(name) kbtree_##name##_t
-#define kb_init(name, s) kb_init_##name(s)
-#define kb_destroy(name, b) __kb_destroy(b)
+#define kbitr_t(name) kbitr_##name##_t
+#define kb_init(name) kb_init_##name()
+#define kb_destroy(name, b) __kb_destroy(kbnode_##name##_t, b)
 #define kb_get(name, b, k) kb_get_##name(b, k)
 #define kb_put(name, b, k) kb_put_##name(b, k)
 #define kb_del(name, b, k) kb_del_##name(b, k)
@@ -421,7 +417,7 @@ typedef struct {
 #define kb_itr_next(name, b, i) kb_itr_next_##name(b, i)
 #define kb_itr_prev(name, b, i) kb_itr_prev_##name(b, i)
 #define kb_del_itr(name, b, i) kb_del_itr_##name(b, i)
-#define kb_itr_key(type, itr) __KB_KEY(type, (itr)->p->x)[(itr)->p->i]
+#define kb_itr_key(itr) __KB_KEY(dummy, (itr)->p->x)[(itr)->p->i]
 #define kb_itr_valid(itr) ((itr)->p >= (itr)->stack)
 
 #define kb_size(b) ((b)->n_keys)
@@ -430,6 +426,8 @@ typedef struct {
 #define kb_str_cmp(a, b) strcmp(a, b)
 
 /* The following is *DEPRECATED*!!! Use the iterator interface instead! */
+
+#if 0
 
 typedef struct {
 	kbnode_t *x;
@@ -466,5 +464,7 @@ typedef struct {
 			__x = __KB_PTR(b, __x)[0];		\
 		(ret) = __KB_KEY(key_t, __x)[0];	\
 	} while (0)
+
+#endif
 
 #endif  // NVIM_LIB_KBTREE_H
