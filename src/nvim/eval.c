@@ -9994,8 +9994,8 @@ static void f_getcompletion(typval_T *argvars, typval_T *rettv)
 {
   char_u        *pat;
   expand_T      xpc;
-  int           options = WILD_KEEP_ALL | WILD_SILENT | WILD_USE_NL
-    | WILD_LIST_NOTFOUND | WILD_NO_BEEP;
+  int           options = WILD_SILENT | WILD_USE_NL | WILD_ADD_SLASH
+          | WILD_NO_BEEP;
 
   if (p_wic) {
     options |= WILD_ICASE;
