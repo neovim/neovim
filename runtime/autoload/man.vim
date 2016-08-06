@@ -22,7 +22,11 @@ catch /E145:/
   " Ignore the error in restricted mode
 endtry
 
-function! man#open_page_command(count, count1, ...) abort
+" We need count and count1 to ensure the section was explicitly set
+" by the user. count defaults to 0 which is a valid section and
+" count1 defaults to 1 which is also a valid section. Only when they
+" are equal was the count explicitly set.
+function! man#open_page(count, count1, ...) abort
   if a:0 > 2
     call s:error('too many arguments')
     return
@@ -30,13 +34,13 @@ function! man#open_page_command(count, count1, ...) abort
     call s:error('missing argument')
     return
   elseif a:0 ==# 1
-    let ref = a:000[0]
+    let ref = a:1
   else
     " We combine the name and sect into a manpage reference so that all
     " verification/extraction can be kept in a single function.
-    " If a:000[1] is a reference as well, that is fine because it is the only
+    " If a:2 is a reference as well, that is fine because it is the only
     " reference that will match.
-    let ref = a:000[1].'('.a:000[0].')'
+    let ref = a:2.'('.a:1.')'
   endif
   try
     let [sect, name] = s:extract_sect_and_name_ref(ref)
@@ -49,30 +53,49 @@ function! man#open_page_command(count, count1, ...) abort
     call s:error(v:exception)
     return
   endtry
-  call s:open_page(sect, name)
-endfunction
-
-" We need count and count1 to ensure the section was explicitly set
-" by the user. count defaults to 0 which is a valid section and
-" count1 defaults to 1 which is also a valid section. Only when they
-" are equal was the count explicitly set.
-function! man#open_page_mapping(count, count1, ref) abort
-  if empty(a:ref)
-    call s:error('missing argument')
+  call s:push_tag()
+  let bufname = 'man://'.name.(empty(sect)?'':'('.sect.')')
+  let found_man = s:find_man()
+  if getbufvar(bufname, 'manwidth') ==# s:manwidth()
+    if found_man
+      silent execute 'buf' bufnr(bufname)
+    else
+      execute 'split' bufname
+    endif
+    keepjumps 1
     return
   endif
+  if found_man
+    noautocmd execute 'edit' bufname
+  else
+    noautocmd execute 'split' bufname
+  endif
+  call s:read_page(sect, name)
+endfunction
+
+function! man#read_page(ref) abort
   try
     let [sect, name] = s:extract_sect_and_name_ref(a:ref)
-    if a:count ==# a:count1
-      " user explicitly set a count
-      let sect = string(a:count)
-    endif
     let [sect, name] = s:verify_exists(sect, name)
   catch
     call s:error(v:exception)
     return
   endtry
-  call s:open_page(sect, name)
+  call s:read_page(sect, name)
+endfunction
+
+function! s:read_page(sect, name) abort
+  setlocal modifiable
+  setlocal noreadonly
+  keepjumps %delete _
+  let b:manwidth = s:manwidth()
+  silent execute 'read!env MANWIDTH='.b:manwidth s:man_cmd s:man_args(a:sect, a:name)
+  " remove all the backspaced text
+  silent keeppatterns keepjumps %substitute,.\b,,ge
+  while getline(1) =~# '^\s*$'
+    silent keepjumps 1delete _
+  endwhile
+  setlocal filetype=man
 endfunction
 
 " attempt to extract the name and sect out of 'name(sect)'
@@ -107,7 +130,6 @@ function! s:verify_exists(sect, name) abort
       throw 'no manual entry for '.a:name.'('.a:sect.') or '.a:name
     endif
   endif
-  call s:push_tag()
   if a:name =~# '\/'
     " We do not need to extract the section/name from the path if the name is
     " just a path.
@@ -151,49 +173,6 @@ function! s:extract_sect_and_name_path(path) abort
   return [sect, name]
 endfunction
 
-function! s:open_page(sect, name)
-  let bufname = 'man://'.a:name.(empty(a:sect)?'':'('.a:sect.')')
-  let found_man = s:find_man()
-  " The reason for respecting $MANWIDTH even if it is wider/smaller than the
-  " current window is that the current window might only be temporarily
-  " narrow/wide. Since we don't reflow, we should just assume the
-  " user knows what they're doing and respect $MANWIDTH.
-  if empty($MANWIDTH)
-    " If $MANWIDTH is not set, we do not assign directly to $MANWIDTH because
-    " then $MANWIDTH will always stay the same value as we only use
-    " winwidth(0) when $MANWIDTH is empty. Instead we set it locally for the command.
-    let manwidth = winwidth(0)
-  else
-    let manwidth = $MANWIDTH
-  endif
-  if getbufvar(bufname, 'manwidth') ==# manwidth
-    if found_man
-      silent execute 'buf' bufnr(bufname)
-    else
-      execute 'split' bufname
-      setlocal nobuflisted
-    endif
-    keepjumps 1
-    return
-  endif
-  if found_man
-    execute 'edit' bufname
-  else
-    execute 'split' bufname
-  endif
-  setlocal modifiable
-  setlocal noreadonly
-  keepjumps %delete _
-  silent execute 'read!env MANWIDTH='.manwidth s:man_cmd s:man_args(a:sect, a:name)
-  let b:manwidth = manwidth
-  " remove all the backspaced text
-  silent keeppatterns keepjumps %substitute,.\b,,ge
-  while getline(1) =~# '^\s*$'
-    silent keepjumps 1delete _
-  endwhile
-  setlocal filetype=man
-endfunction
-
 function! s:find_man() abort
   if &filetype ==# 'man'
     return 1
@@ -207,6 +186,20 @@ function! s:find_man() abort
       return 0
     endif
   endwhile
+endfunction
+
+function! s:manwidth() abort
+  " The reason for respecting $MANWIDTH even if it is wider/smaller than the
+  " current window is that the current window might only be temporarily
+  " narrow/wide. Since we don't reflow, we should just assume the
+  " user knows what they're doing and respect $MANWIDTH.
+  if empty($MANWIDTH)
+    " If $MANWIDTH is not set, we do not assign directly to $MANWIDTH because
+    " then $MANWIDTH will always stay the same value as we only use
+    " winwidth(0) when $MANWIDTH is empty. Instead we set it locally for the command.
+    return winwidth(0)
+  endif
+  return $MANWIDTH
 endfunction
 
 function! s:man_args(sect, name) abort
