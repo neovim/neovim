@@ -25,7 +25,6 @@ endif
 setlocal buftype=nofile
 setlocal noswapfile
 setlocal bufhidden=hide
-setlocal nobuflisted
 setlocal nomodified
 setlocal readonly
 setlocal nomodifiable

@@ -12,8 +12,4 @@ nnoremap <silent> <Plug>(Man) :<C-U>call man#open_page(v:count, v:count1, &filet
 augroup man
   autocmd!
   autocmd BufReadCmd man://* call man#read_page(matchstr(expand('<amatch>'), 'man://\zs.*'))
-  " Need this because without it, if you do ':Man printf(3)' and then later,
-  " open a session that contains a buffer named 'man://printf(3)', the buffer
-  " will become listed.
-  autocmd BufEnter man://* set nobuflisted
 augroup END
