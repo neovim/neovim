@@ -5,7 +5,7 @@ include(CMakeParseArguments)
 # Failing to pass a command argument will result in no command being run
 function(BuildLibuv)
   cmake_parse_arguments(_libuv
-    ""
+    "BUILD_IN_SOURCE"
     "TARGET"
     "CONFIGURE_COMMAND;BUILD_COMMAND;INSTALL_COMMAND"
     ${ARGN})
@@ -30,6 +30,7 @@ function(BuildLibuv)
       -DTARGET=${_libuv_TARGET}
       -DUSE_EXISTING_SRC_DIR=${USE_EXISTING_SRC_DIR}
       -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/DownloadAndExtractFile.cmake
+    BUILD_IN_SOURCE ${_libuv_BUILD_IN_SOURCE}
     CONFIGURE_COMMAND "${_libuv_CONFIGURE_COMMAND}"
     BUILD_COMMAND "${_libuv_BUILD_COMMAND}"
     INSTALL_COMMAND "${_libuv_INSTALL_COMMAND}")
@@ -44,7 +45,6 @@ if(UNIX)
   BuildLibuv(
     CONFIGURE_COMMAND ${UNIX_CFGCMD}
     INSTALL_COMMAND ${MAKE_PRG} V=1 install)
-
 elseif(MINGW AND CMAKE_CROSSCOMPILING)
   # Build libuv for the host
   BuildLibuv(TARGET libuv_host
@@ -56,9 +56,17 @@ elseif(MINGW AND CMAKE_CROSSCOMPILING)
     CONFIGURE_COMMAND ${UNIX_CFGCMD} --host=${CROSS_TARGET}
     INSTALL_COMMAND ${MAKE_PRG} V=1 install)
 
+elseif(MINGW)
+  # Native MinGW
+  BuildLibUv(BUILD_IN_SOURCE
+    BUILD_COMMAND ${CMAKE_MAKE_PROGRAM} -f Makefile.mingw
+    INSTALL_COMMAND ${CMAKE_COMMAND} -E make_directory ${DEPS_INSTALL_DIR}/lib
+      COMMAND ${CMAKE_COMMAND} -E copy ${DEPS_BUILD_DIR}/src/libuv/libuv.a ${DEPS_INSTALL_DIR}/lib
+      COMMAND ${CMAKE_COMMAND} -E make_directory ${DEPS_INSTALL_DIR}/include
+      COMMAND ${CMAKE_COMMAND} -E copy_directory ${DEPS_BUILD_DIR}/src/libuv/include ${DEPS_INSTALL_DIR}/include
+    )
 
 elseif(WIN32 AND MSVC)
-
   find_package(PythonInterp 2.6 REQUIRED)
   if(NOT PYTHONINTERP_FOUND OR PYTHON_VERSION_MAJOR GREATER 2)
     message(FATAL_ERROR "Python2 is required to build libuv on windows, use -DPYTHON_EXECUTABLE to set a python interpreter")
