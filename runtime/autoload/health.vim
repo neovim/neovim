@@ -1,15 +1,30 @@
-" Dictionary where we keep all of the healtch check functions we've found.
+" Dictionary of all health check functions we have found.
 " They will only be run if the value is true
 let g:health_checkers = get(g:, 'health_checkers', {})
 let s:current_checker = get(s:, 'current_checker', '')
 
-""
-" Function to run the health checkers
-" It manages the output and any file local settings
-function! health#check(bang) abort
-  let l:report = '# Checking health'
+function! s:enhance_syntax() abort
+  syntax keyword healthError ERROR
+  highlight link healthError Error
 
-  if g:health_checkers == {}
+  syntax keyword healthWarning WARNING
+  highlight link healthWarning WarningMsg
+
+  syntax keyword healthInfo INFO
+  highlight link healthInfo ModeMsg
+
+  syntax keyword healthSuccess SUCCESS
+  highlight link healthSuccess Function
+
+  syntax keyword healthSuggestion SUGGESTION
+  highlight link healthSuggestion String
+endfunction
+
+" Runs the health checkers. Manages the output and buffer-local settings.
+function! health#check(bang) abort
+  let l:report = ''
+
+  if empty(g:health_checkers)
     call health#add_checker(s:_default_checkers())
   endif
 
@@ -17,20 +32,18 @@ function! health#check(bang) abort
     " Disabled checkers will not run their registered check functions
     if l:checker[1]
       let s:current_checker = l:checker[0]
-      let l:report .= "\n\n--------------------------------------------------------------------------------\n"
-      let l:report .= printf("\n## Checker %s says:\n", s:current_checker)
+      let l:report .= printf("\n%s\n================================================================================",
+                            \ s:current_checker)
 
-      let l:report .= capture('call ' . l:checker[0] . '()')
+      let l:report .= execute('call ' . l:checker[0] . '()')
     endif
   endfor
-
-  let l:report .= "\n--------------------------------------------------------------------------------\n"
 
   if a:bang
     new
     setlocal bufhidden=wipe
-    set syntax=health
-    set filetype=health
+    set filetype=markdown
+    call s:enhance_syntax()
     call setline(1, split(report, "\n"))
     setlocal nomodified
   else
@@ -43,80 +56,76 @@ function! health#check(bang) abort
   endif
 endfunction
 
-" Report functions {{{
-
-""
-" Start a report section.
-" It should represent a general area of tests that can be understood
-" from the argument {name}
-" To start a new report section, use this function again
+" Starts a new report.
 function! health#report_start(name) abort " {{{
-  echo '  - Checking: ' . a:name
+  echo "\n## " . a:name
 endfunction " }}}
 
-""
+" Indents lines *except* line 1 of a string if it contains newlines.
+function! s:indent_after_line1(s, columns) abort
+  let lines = split(a:s, "\n", 0)
+  if len(lines) < 2  " We do not indent line 1, so nothing to do.
+    return a:s
+  endif
+  for i in range(1, len(lines)-1)  " Indent lines after the first.
+    let lines[i] = substitute(lines[i], '^\s*', repeat(' ', a:columns), 'g')
+  endfor
+  return join(lines, "\n")
+endfunction
+
 " Format a message for a specific report item
 function! s:format_report_message(status, msg, ...) abort " {{{
-  let l:output = '    - ' . a:status . ': ' . a:msg
+  let output = '  - ' . a:status . ': ' . s:indent_after_line1(a:msg, 4)
+  let suggestions = []
 
-  " Check optional parameters
+  " Optional parameters
   if a:0 > 0
-    " Suggestions go in the first optional parameter can be a string or list
-    if type(a:1) == type("")
-      let l:output .= "\n      - SUGGESTIONS:"
-      let l:output .= "\n        - " . a:1
-    elseif type(a:1) == type([])
-      " Report each suggestion
-      let l:output .= "\n      - SUGGESTIONS:"
-      for l:suggestion in a:1
-        let l:output .= "\n        - " . l:suggestion
-      endfor
-    else
-      echoerr "A string or list is required as the optional argument for suggestions"
+    let suggestions = type(a:1) == type("") ? [a:1] : a:1
+    if type(suggestions) != type([])
+      echoerr "Expected String or List"
     endif
   endif
+
+  " Report each suggestion
+  if len(suggestions) > 0
+    let output .= "\n      - SUGGESTIONS:"
+  endif
+  for suggestion in suggestions
+    let output .= "\n        - " . s:indent_after_line1(suggestion, 10)
+  endfor
 
   return output
 endfunction " }}}
 
-""
 " Use {msg} to report information in the current section
 function! health#report_info(msg) abort " {{{
   echo s:format_report_message('INFO', a:msg)
 endfunction " }}}
 
-""
 " Use {msg} to represent the check that has passed
 function! health#report_ok(msg) abort " {{{
   echo s:format_report_message('SUCCESS', a:msg)
 endfunction " }}}
 
-""
 " Use {msg} to represent a failed health check and optionally a list of suggestions on how to fix it.
 function! health#report_warn(msg, ...) abort " {{{
-  if a:0 > 0 && type(a:1) == type([])
+  if a:0 > 0
     echo s:format_report_message('WARNING', a:msg, a:1)
   else
     echo s:format_report_message('WARNING', a:msg)
   endif
 endfunction " }}}
 
-""
 " Use {msg} to represent a critically failed health check and optionally a list of suggestions on how to fix it.
 function! health#report_error(msg, ...) abort " {{{
-  if a:0 > 0 && type(a:1) == type([])
+  if a:0 > 0
     echo s:format_report_message('ERROR', a:msg, a:1)
   else
     echo s:format_report_message('ERROR', a:msg)
   endif
 endfunction " }}}
 
-" }}}
-" Health checker management {{{
-
-""
-" Add a single health checker
-" It does not modify any values if the checker already exists
+" Adds a health checker. Does nothing if the checker already exists.
 function! s:add_single_checker(checker_name) abort " {{{
   if has_key(g:health_checkers, a:checker_name)
     return
@@ -125,25 +134,19 @@ function! s:add_single_checker(checker_name) abort " {{{
   endif
 endfunction " }}}
 
-""
-" Enable a single health checker
-" It will modify the values if the checker already exists
+" Enables a health checker.
 function! s:enable_single_checker(checker_name) abort " {{{
   let g:health_checkers[a:checker_name] = v:true
 endfunction " }}}
 
-""
-" Disable a single health checker
-" It will modify the values if the checker already exists
+" Disables a health checker.
 function! s:disable_single_checker(checker_name) abort " {{{
   let g:health_checkers[a:checker_name] = v:false
 endfunction " }}}
 
 
-""
-" Add at least one health checker
-" {checker_name} can be specified by either a list of strings or a single string.
-" It does not modify any values if the checker already exists
+" Adds a health checker. `checker_name` can be a list of strings or
+" a single string. Does nothing if the checker already exists.
 function! health#add_checker(checker_name) abort " {{{
   if type(a:checker_name) == type('')
     call s:add_single_checker(a:checker_name)
@@ -154,9 +157,8 @@ function! health#add_checker(checker_name) abort " {{{
   endif
 endfunction " }}}
 
-""
-" Enable at least one health checker
-" {checker_name} can be specified by either a list of strings or a single string.
+" Enables a health checker. `checker_name` can be a list of strings or
+" a single string.
 function! health#enable_checker(checker_name) abort " {{{
   if type(a:checker_name) == type('')
     call s:enable_single_checker(a:checker_name)
@@ -167,9 +169,8 @@ function! health#enable_checker(checker_name) abort " {{{
   endif
 endfunction " }}}
 
-""
-" Disable at least one health checker
-" {checker_name} can be specified by either a list of strings or a single string.
+" Disables a health checker. `checker_name` can be a list of strings or
+" a single string.
 function! health#disable_checker(checker_name) abort " {{{
   if type(a:checker_name) == type('')
     call s:disable_single_checker(a:checker_name)
@@ -196,4 +197,3 @@ function! s:_default_checkers() abort " {{{
   endfor
   return checkers_to_source
 endfunction " }}}
-" }}}

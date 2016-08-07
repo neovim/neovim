@@ -6,7 +6,7 @@ describe('health.vim', function()
     plugin_helpers.reset()
   end)
 
-  it('should echo the results when using the basic functions', function()
+  it('reports results', function()
     helpers.execute("call health#report_start('Foo')")
     local report = helpers.redir_exec([[call health#report_start('Check Bar')]])
       .. helpers.redir_exec([[call health#report_ok('Bar status')]])
@@ -30,25 +30,22 @@ describe('health.vim', function()
   end)
 
 
-  describe('CheckHealth', function()
-    -- Run the health check and store important results
-    -- Run it here because it may take awhile to complete, depending on the system
+  describe(':CheckHealth', function()
+    -- Run it here because it may be slow, depending on the system.
     helpers.execute([[CheckHealth!]])
     local report = helpers.curbuf_contents()
     local health_checkers = helpers.redir_exec("echo g:health_checkers")
 
-    it('should find the default checker upon execution', function()
+    it('finds the default checker', function()
       assert(string.find(health_checkers, "'health#nvim#check': v:true"))
     end)
 
-    it('should alert the user that health#nvim#check is running', function()
-      assert(string.find(report, '# Checking health'))
-      assert(string.find(report, 'Checker health#nvim#check says:'))
-      assert(string.find(report, 'Checking:'))
+    it('prints a header with the name of the checker', function()
+      assert(string.find(report, 'health#nvim#check'))
     end)
   end)
 
-  it('should allow users to disable checkers', function()
+  it('allows users to disable checkers', function()
     helpers.execute("call health#disable_checker('health#nvim#check')")
     helpers.execute("CheckHealth!")
     local health_checkers = helpers.redir_exec("echo g:health_checkers")

@@ -1,4 +1,3 @@
-" Script variables
 let s:bad_responses = [
             \ 'unable to parse python response',
             \ 'unable to parse',
@@ -7,8 +6,6 @@ let s:bad_responses = [
             \ 'unable to find neovim version'
             \ ]
 
-""
-" Check if the string is a bad response
 function! s:is_bad_response(s) abort
     return index(s:bad_responses, a:s) >= 0
 endfunction
@@ -32,7 +29,6 @@ function! s:version_cmp(a, b) abort
 
   return 0
 endfunction
-
 
 " Fetch the contents of a URL.
 function! s:download(url) abort
@@ -61,8 +57,7 @@ function! s:download(url) abort
 endfunction
 
 
-" Get the latest Neovim Python client version from PyPI.  The result is
-" cached.
+" Get the latest Neovim Python client version from PyPI.  Result is cached.
 function! s:latest_pypi_version() abort
   if exists('s:pypi_version')
     return s:pypi_version
@@ -77,8 +72,6 @@ function! s:latest_pypi_version() abort
   endif
 endfunction
 
-
-""
 " Get version information using the specified interpreter.  The interpreter is
 " used directly in case breaking changes were introduced since the last time
 " Neovim's Python client was updated.
@@ -140,7 +133,6 @@ function! s:version_info(python) abort
   return [python_version, nvim_version, pypi_version, version_status]
 endfunction
 
-
 " Check the Python interpreter's usability.
 function! s:check_bin(bin) abort
   if !filereadable(a:bin)
@@ -152,9 +144,6 @@ function! s:check_bin(bin) abort
   endif
   return 1
 endfunction
-
-
-
 
 " Load the remote plugin manifest file and check for unregistered plugins
 function! s:check_manifest() abort
@@ -217,6 +206,8 @@ endfunction
 
 
 function! s:check_python(version) abort
+  call health#report_start('Python ' . a:version . ' provider')
+
   let python_bin_name = 'python'.(a:version == 2 ? '2' : '3')
   let pyenv = resolve(exepath('pyenv'))
   let pyenv_root = exists('$PYENV_ROOT') ? resolve($PYENV_ROOT) : 'n'
@@ -226,8 +217,6 @@ function! s:check_python(version) abort
   let python_bin = ''
   let python_multiple = []
 
-  call health#report_start('Python ' . a:version . ' Configuration')
-
   if exists('g:'.host_prog_var)
     call health#report_info(printf('Using: g:%s = "%s"', host_prog_var, get(g:, host_prog_var)))
   endif
@@ -236,9 +225,6 @@ function! s:check_python(version) abort
   if empty(python_bin_name)
     call health#report_warn('No Python interpreter was found with the neovim '
             \ . 'module.  Using the first available for diagnostics.')
-
-    " TODO: Not sure what to do about these errors, or if this is the right
-    " type.
     if !empty(pythonx_errs)
       call health#report_warn(pythonx_errs)
     endif
@@ -256,12 +242,12 @@ function! s:check_python(version) abort
   endif
 
   if !empty(pythonx_errs)
-    call health#report_error('Provier python has reported errors:', pythonx_errs)
+    call health#report_error('Python provider error', pythonx_errs)
   endif
 
   if !empty(python_bin_name) && empty(python_bin) && empty(pythonx_errs)
     if !exists('g:'.host_prog_var)
-      call health#report_warn(printf('"g:%s" is not set.  Searching for '
+      call health#report_info(printf('`g:%s` is not set.  Searching for '
             \ . '%s in the environment.', host_prog_var, python_bin_name))
     endif
 
@@ -372,7 +358,7 @@ function! s:check_python(version) abort
   endif
 
   " Diagnostic output
-  call health#report_info('Executable:' . (empty(python_bin) ? 'Not found' : python_bin))
+  call health#report_info('Executable: ' . (empty(python_bin) ? 'Not found' : python_bin))
   if len(python_multiple)
     for path_bin in python_multiple
       call health#report_info('Other python executable: ' . path_bin)
@@ -389,7 +375,7 @@ function! s:check_python(version) abort
       call health#report_warn('Python 3.3+ is recommended.')
     endif
 
-    call health#report_info('Python Version: ' . pyversion)
+    call health#report_info('Python'.a:version.' version: ' . pyversion)
     call health#report_info(printf('%s-neovim Version: %s', python_bin_name, current))
 
     if s:is_bad_response(current)
@@ -415,12 +401,39 @@ function! s:check_python(version) abort
 
 endfunction
 
+function! s:check_ruby() abort
+  call health#report_start('Ruby provider')
+  let min_version  = "0.2.4"
+  let ruby_version = systemlist('ruby -v')[0]
+  let ruby_prog    = provider#ruby#Detect()
+  let suggestions  =
+        \ ['Install or upgrade the neovim RubyGem using `gem install neovim`.']
+
+  if empty(ruby_prog)
+    let ruby_prog = 'not found'
+    let prog_vers = 'not found'
+    call health#report_error('Missing Neovim RubyGem', suggestions)
+  else
+    silent let prog_vers = systemlist(ruby_prog . ' --version')[0]
+    if v:shell_error
+      let prog_vers = 'outdated'
+      call health#report_warn('Neovim RubyGem is not up-to-date', suggestions)
+    elseif s:version_cmp(prog_vers, min_version) == -1
+      let prog_vers .= ' (outdated)'
+      call health#report_warn('Neovim RubyGem is not up-to-date', suggestions)
+    else
+      call health#report_ok('Found Neovim RubyGem')
+    endif
+  endif
+
+  call health#report_info('Ruby Version: ' . ruby_version)
+  call health#report_info('Host Executable: ' . ruby_prog)
+  call health#report_info('Host Version: ' . prog_vers)
+endfunction
 
 function! health#nvim#check() abort
-  silent call s:check_python(2)
-  silent echo ''
-  silent call s:check_python(3)
-  silent echo ''
-  silent call s:check_manifest()
-  silent echo ''
+  call s:check_manifest()
+  call s:check_python(2)
+  call s:check_python(3)
+  call s:check_ruby()
 endfunction
