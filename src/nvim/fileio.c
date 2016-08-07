@@ -505,17 +505,15 @@ readfile (
     // On non-unix systems we can't open a directory, check here.
     if (os_isdir(fname)) {
       filemess(curbuf, sfname, (char_u *)_("is a directory"), 0);
-      curbuf->b_p_ro = TRUE;            /* must use "w!" now */
-    } else
+      curbuf->b_p_ro = true;        // must use "w!" now
+    } else {
 #endif
     if (!newfile) {
       return FAIL;
     }
     if (perm == UV_ENOENT) {  // check if the file exists
-      /*
-       * Set the 'new-file' flag, so that when the file has
-       * been created by someone else, a ":w" will complain.
-       */
+      // Set the 'new-file' flag, so that when the file has
+      // been created by someone else, a ":w" will complain.
       curbuf->b_flags |= BF_NEW;
 
       /* Create a swap file now, so that other Vims are warned
@@ -566,6 +564,9 @@ readfile (
 
     return FAIL;
   }
+#ifndef UNIX
+  }
+#endif
 
   /*
    * Only set the 'ro' flag for readonly files the first time they are
