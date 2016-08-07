@@ -71,7 +71,7 @@ endif
 
 " When not in gui we can only guess the colors.
 " TODO - is this true anymore?
-if has("gui_running")
+if has("gui_running") || has("termguicolors")
   let s:whatterm = "gui"
 else
   let s:whatterm = "cterm"
