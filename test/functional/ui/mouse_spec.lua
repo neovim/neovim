@@ -45,7 +45,7 @@ describe('Mouse input', function()
     screen:detach()
   end)
 
-  it('left click moves cursor', function()
+  it('single left click moves cursor', function()
     feed('<LeftMouse><2,1>')
     screen:expect([[
       testing                  |
@@ -61,6 +61,60 @@ describe('Mouse input', function()
       support and selection    |
       ~                        |
                                |
+    ]])
+  end)
+
+  it('double left click enters visual mode', function()
+    execute('%delete')
+    insert('foo')
+    feed('<LeftMouse><0,0>')
+    feed('<LeftRelease><0,0>')
+    feed('<LeftMouse><0,0>')
+    feed('<LeftRelease><0,0>')
+    screen:expect([[
+    {1:fo}^o                      |
+    ~                        |
+    ~                        |
+    ~                        |
+    {2:-- VISUAL --}             |
+    ]])
+  end)
+
+  it('triple left click enters visual line mode', function()
+    execute('%delete')
+    insert('foo')
+    feed('<LeftMouse><0,0>')
+    feed('<LeftRelease><0,0>')
+    feed('<LeftMouse><0,0>')
+    feed('<LeftRelease><0,0>')
+    feed('<LeftMouse><0,0>')
+    feed('<LeftRelease><0,0>')
+    screen:expect([[
+    ^f{1:oo}{3: }                     |
+    ~                        |
+    ~                        |
+    ~                        |
+    {2:-- VISUAL LINE --}        |
+    ]])
+  end)
+
+  it('quadruple left click enters visual block mode', function()
+    execute('%delete')
+    insert('foo')
+    feed('<LeftMouse><0,0>')
+    feed('<LeftRelease><0,0>')
+    feed('<LeftMouse><0,0>')
+    feed('<LeftRelease><0,0>')
+    feed('<LeftMouse><0,0>')
+    feed('<LeftRelease><0,0>')
+    feed('<LeftMouse><0,0>')
+    feed('<LeftRelease><0,0>')
+    screen:expect([[
+    ^foo                      |
+    ~                        |
+    ~                        |
+    ~                        |
+    {2:-- VISUAL BLOCK --}       |
     ]])
   end)
 
