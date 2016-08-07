@@ -91,7 +91,7 @@ function! s:read_page(sect, name) abort
   let b:manwidth = s:manwidth()
   silent execute 'read!env MANWIDTH='.b:manwidth s:man_cmd s:man_args(a:sect, a:name)
   " remove all the backspaced text
-  silent keeppatterns keepjumps %substitute,.\b,,ge
+  silent execute 'keeppatterns keepjumps %substitute,.\b,,e'.(&gdefault?'':'g')
   while getline(1) =~# '^\s*$'
     silent keepjumps 1delete _
   endwhile
