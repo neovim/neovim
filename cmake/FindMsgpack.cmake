@@ -42,7 +42,12 @@ if(MSGPACK_USE_STATIC)
     "${CMAKE_STATIC_LIBRARY_PREFIX}msgpack${CMAKE_STATIC_LIBRARY_SUFFIX}")
 endif()
 
-list(APPEND MSGPACK_NAMES msgpackc msgpack)
+if(MSVC)
+  # The import library for the msgpack DLL has a different name
+  list(APPEND MSGPACK_NAMES msgpack_import)
+else()
+  list(APPEND MSGPACK_NAMES msgpackc msgpack)
+endif()
 
 find_library(MSGPACK_LIBRARY NAMES ${MSGPACK_NAMES}
   # Check each directory for all names to avoid using headers/libraries from
