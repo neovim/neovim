@@ -11,7 +11,7 @@ let s:pager = 0
 if has('vim_starting')
   let s:pager = 1
   " remove all those backspaces
-  silent keeppatterns keepjumps %substitute,.\b,,ge
+  silent execute 'keeppatterns keepjumps %substitute,.\b,,e'.(&gdefault?'':'g')
   if getline(1) =~# '^\s*$'
     silent keepjumps 1delete _
   else
