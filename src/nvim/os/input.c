@@ -272,7 +272,7 @@ static unsigned int handle_mouse_event(char **ptr, uint8_t *buf,
       static int orig_mouse_col = 0;
       static int orig_mouse_row = 0;
       static uint64_t orig_mouse_time = 0;  // time of previous mouse click
-      uint64_t mouse_time = os_hrtime();    // time of current mouse click - nanosec
+      uint64_t mouse_time = os_hrtime();    // time of current mouse click (ns)
 
       // compute the time elapsed since the previous mouse click and
       // convert p_mouse from ms to ns
