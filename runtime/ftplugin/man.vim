@@ -17,15 +17,14 @@ if has('vim_starting')
   else
     keepjumps 1
   endif
-  " This is not perfect.See `man glDrawArraysInstanced`. Since the title is
+  " This is not perfect. See `man glDrawArraysInstanced`. Since the title is
   " all caps it is impossible to tell what the original capitilization was.
-  execute 'file '.'man://'.tolower(matchstr(getline(1), '^\S\+'))
+  execute 'file man://'.tolower(matchstr(getline(1), '^\S\+'))
 endif
 
 setlocal buftype=nofile
 setlocal noswapfile
 setlocal bufhidden=hide
-setlocal nobuflisted
 setlocal nomodified
 setlocal readonly
 setlocal nomodifiable
