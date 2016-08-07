@@ -32,6 +32,7 @@
 #include "nvim/strings.h"
 #include "nvim/ui.h"
 #include "nvim/mouse.h"
+#include "nvim/message_pane.h"
 #include "nvim/os/os.h"
 #include "nvim/os/input.h"
 #include "nvim/os/time.h"
@@ -701,6 +702,16 @@ static void add_msg_hist(const char *s, int len, int attr)
   if (first_msg_hist == NULL)
     first_msg_hist = last_msg_hist;
   ++msg_hist_len;
+
+  if (p_msgpane && len > 0) {
+    // Message pane is enabled.  Messages that are added to the history
+    // shouldn't display more than one line in the command line.
+    need_wait_return = false;
+    msgpane_add_msg(s, attr);
+    msg_scroll = 0;
+    emsg_on_display = false;
+    reset_last_sourcing();
+  }
 }
 
 /*
@@ -732,6 +743,10 @@ void ex_messages(void *const eap_p)
   exarg_T *eap = (exarg_T *)eap_p;
   struct msg_hist *p;
   int c = 0;
+
+  if (p_msgpane && msgpane_open()) {
+    return;
+  }
 
   if (STRCMP(eap->arg, "clear") == 0) {
     int keep = eap->addr_count == 0 ? 0 : eap->line2;

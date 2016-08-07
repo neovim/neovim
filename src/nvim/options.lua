@@ -1515,6 +1515,12 @@ return {
       defaults={if_true={vi=25}}
     },
     {
+      full_name='messagepane', abbreviation='msgpane',
+      type='bool', scope={'global'},
+      varname='p_msgpane',
+      defaults={if_true={vi=false, vim=false}}
+    },
+    {
       full_name='mkspellmem', abbreviation='msm',
       type='string', scope={'global'},
       secure=true,

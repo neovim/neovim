@@ -36,7 +36,7 @@ typedef struct {
 // for Map(K, V)
 #include "nvim/map.h"
 
-#define MODIFIABLE(buf) (!buf->terminal && buf->b_p_ma)
+#define MODIFIABLE(buf) (!buf->terminal && !buf->b_messages && buf->b_p_ma)
 
 /*
  * Flags for w_valid.
@@ -770,6 +770,8 @@ struct file_buffer {
   signlist_T *b_signlist;       /* list of signs to draw */
 
   Terminal *terminal;           // Terminal instance associated with the buffer
+
+  bool b_messages;              // Buffer for displaying :messages
 
   dict_T *additional_data;      // Additional data from shada file if any.
 
