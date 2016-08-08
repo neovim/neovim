@@ -73,6 +73,7 @@
 #include "nvim/undo.h"
 #include "nvim/version.h"
 #include "nvim/window.h"
+#include "nvim/message_pane.h"
 #include "nvim/eval/encode.h"
 #include "nvim/eval/decode.h"
 #include "nvim/os/os.h"
@@ -13973,6 +13974,55 @@ f_msgpackparse_exit:
   msgpack_unpacked_destroy(&unpacked);
   msgpack_unpacker_free(unpacker);
   return;
+}
+
+/// "msgpane()" function
+///
+/// Display a message in the message pane.
+///
+/// @param message Message to display.
+/// @param [highlight] The highlight group name.
+/// @param [open] Opens the message page if it's not already in a window.
+///
+/// @return Nothing.
+static void f_msgpane(typval_T *argvars, typval_T *rettv)
+{
+  char_u *msg = get_tv_string(&argvars[0]);
+  int attr = 0;
+
+  if (argvars[1].v_type != VAR_UNKNOWN) {
+    char_u *attrName = get_tv_string(&argvars[1]);
+    int hl_id = syn_name2id(attrName);
+    attr = syn_id2attr(hl_id);
+  }
+
+  if (argvars[2].v_type != VAR_UNKNOWN) {
+    if (get_tv_number(&argvars[2])) {
+      msgpane_open();
+    }
+  }
+
+  msgpane_add_msg(msg, attr);
+}
+
+/// "msgpane_open()" function
+///
+/// Displays the message pane if not already in a window.
+///
+/// @return Buffer number of the message pane or 0 if it can't be opened.
+static void f_msgpane_open(typval_T *argvars, typval_T *rettv)
+{
+  if (!msgpane_open()) {
+    rettv->vval.v_number = 0;
+    return;
+  }
+
+  FOR_ALL_TAB_WINDOWS(curtab, wp) {
+    if (wp->w_buffer->b_messages) {
+      rettv->vval.v_number = wp->w_buffer->b_fnum;
+      break;
+    }
+  }
 }
 
 /*
