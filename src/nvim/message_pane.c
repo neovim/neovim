@@ -164,6 +164,10 @@ static void msgpane_add_buffer_line(char_u *msg)
 /// Add a line to the message pane.
 void msgpane_add_msg(char_u *msg, int attr)
 {
+  if (curbuf->b_messages && STRCMP(msg, _(e_modifiable)) == 0) {
+    return;
+  }
+
   MessagePaneEntry *entry = xmalloc(sizeof(MessagePaneEntry));
   entry->msg = vim_strsave(msg);
   entry->attr = attr;
