@@ -7,6 +7,7 @@ local execute = helpers.execute
 local clear = helpers.clear
 local eval = helpers.eval
 local eq = helpers.eq
+local neq = helpers.neq
 
 local function init_session(...)
   local args = { helpers.nvim_prog, '-i', 'NONE', '--embed',
@@ -78,6 +79,19 @@ describe('startup defaults', function()
     it('overridden by early `syntax off`', function()
       init_session('-u', 'NORC', '--cmd', 'syntax off')
       eq(0, eval('exists("g:syntax_on")'))
+    end)
+  end)
+
+  describe('packpath', function()
+    it('defaults to &runtimepath', function()
+      eq(meths.get_option('runtimepath'), meths.get_option('packpath'))
+    end)
+
+    it('does not follow modifications to runtimepath', function()
+      meths.command('set runtimepath+=foo')
+      neq(meths.get_option('runtimepath'), meths.get_option('packpath'))
+      meths.command('set packpath+=foo')
+      eq(meths.get_option('runtimepath'), meths.get_option('packpath'))
     end)
   end)
 end)

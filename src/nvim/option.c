@@ -521,6 +521,8 @@ static void set_runtimepath_default(void)
 #undef SITE_SIZE
 #undef AFTER_SIZE
   set_string_default("runtimepath", rtp, true);
+  // Make a copy of 'rtp' for 'packpath'
+  set_string_default("packpath", rtp, false);
   xfree(data_dirs);
   xfree(config_dirs);
   xfree(data_home);
