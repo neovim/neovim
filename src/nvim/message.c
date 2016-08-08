@@ -703,12 +703,15 @@ static void add_msg_hist(const char *s, int len, int attr)
     first_msg_hist = last_msg_hist;
   ++msg_hist_len;
 
-  if (p_msgpane && len > 0) {
+  if (p_msgpane) {
     // Message pane is enabled.  Messages that are added to the history
     // shouldn't display more than one line in the command line.
-    need_wait_return = false;
-    msgpane_add_msg(s, attr);
+    if (len > 0) {
+      msgpane_add_msg(s, attr);
+    }
+
     msg_scroll = 0;
+    need_wait_return = false;
     emsg_on_display = false;
     reset_last_sourcing();
   }
