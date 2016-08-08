@@ -512,40 +512,41 @@ Local mappings:
 
 MAN					*ft-man-plugin* *:Man* *man.vim*
 
-View manpages in Nvim. Supports highlighting, autocompletion, locales, and
-navigation. See also |find-manpage|.
+View manpages in Nvim. Supports highlighting, completion, locales, and
+navigation. Also see |find-manpage|.
 
-To use Nvim as a manpager:
-
+To use Nvim as a manpager: >
      export MANPAGER="nvim -c 'set ft=man' -"
 
+man.vim will always attempt to reuse the closest man window (above/left) but
+otherwise create a split.
+
 Commands:
-Man {name}		  Display the manpage for {name} in a window.
-Man {sect} {name}	  Display the manpage for {name} and section {sect}.
-Man {name}({sect})	  Alternate syntax which auto-completes the section.
+Man {name}                Display the manpage for {name}.
+Man {sect} {name}         Display the manpage for {name} and section {sect}.
+Man {name}({sect})        Alternate syntax which completes the section.
 Man {sect} {name}({sect}) Used during completion to show the real section of
-			  when the provided section is a prefix, e.g. 1m vs 1.
-Man {path}		  Open the manpage specified by path. Use "./" if it
-                          is in the current directory.
+                          when the provided section is a prefix, e.g. 1m vs 1.
+Man {path}                Open the manpage specified by path. Prepend "./" if
+                          page is in the current directory.
+
+|:Man| accepts command modifiers. For example, to use a vertical split: >
+     :vertical Man printf
 
 Global Mappings:
 <Plug>(Man)               Jump to the manpage for the <cWORD> under the
-                          cursor in a new tab. Takes a count for the section.
+                          cursor. Takes a count for the section.
 
 Local mappings:
-K
-CTRL-]			  Jump to the manpage for the <cWORD> under the
+K or CTRL-]               Jump to the manpage for the <cWORD> under the
                           cursor. Takes a count for the section.
-CTRL-T			  Jump back to the previous manpage.
-q			  Close the window.
+CTRL-T                    Jump back to the location that the manpage was
+                          opened from.
+q                         :quit if invoked as $MANPAGER, otherwise :close.
 
 Variables:
-g:no_man_maps		  Do not create mappings in manpage buffers.
-g:ft_man_folding_enable   Fold manpages with foldmethod=indent foldnestmax=1.
-
-If you do not like the default folding, use an autocommand to add your desired
-folding style instead. For example: >
-          :autocmd FileType man setlocal foldmethod=indent foldenable
+*g:no_man_maps*             Do not create mappings in manpage buffers.
+*g:ft_man_folding_enable*   Fold manpages with foldmethod=indent foldnestmax=1.
 
 PDF							*ft-pdf-plugin*
 

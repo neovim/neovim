@@ -258,7 +258,6 @@ To display a man page for the word under the cursor, use this: >
 
 	K
 
-(If you redefined the <Leader>, use it instead of the backslash).
 For example, you want to know the return value of "strstr()" while editing
 this line:
 
