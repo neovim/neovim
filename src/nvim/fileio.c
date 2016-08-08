@@ -282,11 +282,9 @@ readfile (
   int error = FALSE;                    /* errors encountered */
   int ff_error = EOL_UNKNOWN;           /* file format with errors */
   long linerest = 0;                    /* remaining chars in line */
-#ifdef UNIX
   int perm = 0;
+#ifdef UNIX
   int swap_mode = -1;                   /* protection bits for swap file */
-#else
-  int perm;
 #endif
   int fileformat = 0;                   /* end-of-line format */
   int keep_fileformat = FALSE;
@@ -418,23 +416,21 @@ readfile (
     }
   }
 
-  if (!read_stdin && !read_buffer) {
-#ifdef UNIX
-    /*
-     * On Unix it is possible to read a directory, so we have to
-     * check for it before os_open().
-     */
+  if (!read_buffer && !read_stdin) {
     perm = os_getperm(fname);
-    if (perm >= 0 && !S_ISREG(perm)                 /* not a regular file ... */
+#ifdef UNIX
+    // On Unix it is possible to read a directory, so we have to
+    // check for it before os_open().
+    if (perm >= 0 && !S_ISREG(perm)                 // not a regular file ...
 # ifdef S_ISFIFO
-        && !S_ISFIFO(perm)                          /* ... or fifo */
+        && !S_ISFIFO(perm)                          // ... or fifo
 # endif
 # ifdef S_ISSOCK
-        && !S_ISSOCK(perm)                          /* ... or socket */
+        && !S_ISSOCK(perm)                          // ... or socket
 # endif
 # ifdef OPEN_CHR_FILES
         && !(S_ISCHR(perm) && is_dev_fd_file(fname))
-        /* ... or a character special file named /dev/fd/<n> */
+        // ... or a character special file named /dev/fd/<n>
 # endif
         ) {
       if (S_ISDIR(perm))
@@ -503,26 +499,21 @@ readfile (
     fd = os_open((char *)fname, O_RDONLY, 0);
   }
 
-  if (fd < 0) {                     /* cannot open at all */
+  if (fd < 0) {                     // cannot open at all
     msg_scroll = msg_save;
 #ifndef UNIX
-    /*
-     * On non-unix systems we can't open a directory, check here.
-     */
-    perm = os_getperm(fname);      /* check if the file exists */
+    // On non-unix systems we can't open a directory, check here.
     if (os_isdir(fname)) {
       filemess(curbuf, sfname, (char_u *)_("is a directory"), 0);
-      curbuf->b_p_ro = TRUE;            /* must use "w!" now */
-    } else
+      curbuf->b_p_ro = true;        // must use "w!" now
+    } else {
 #endif
     if (!newfile) {
       return FAIL;
     }
-    if (perm == UV_ENOENT) {
-      /*
-       * Set the 'new-file' flag, so that when the file has
-       * been created by someone else, a ":w" will complain.
-       */
+    if (perm == UV_ENOENT) {  // check if the file exists
+      // Set the 'new-file' flag, so that when the file has
+      // been created by someone else, a ":w" will complain.
       curbuf->b_flags |= BF_NEW;
 
       /* Create a swap file now, so that other Vims are warned
@@ -573,6 +564,9 @@ readfile (
 
     return FAIL;
   }
+#ifndef UNIX
+  }
+#endif
 
   /*
    * Only set the 'ro' flag for readonly files the first time they are
