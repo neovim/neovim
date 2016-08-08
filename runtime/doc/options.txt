@@ -4399,9 +4399,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'mousetime'* *'mouset'*
 'mousetime' 'mouset'	number	(default 500)
 			global
-	Only for GUI, Windows and Unix with xterm.  Defines the maximum
-	time in msec between two mouse clicks for the second click to be
-	recognized as a multi click.
+	Defines the maximum time in msec between two mouse clicks for the
+	second click to be recognized as a multi click.
 
 							*'nrformats'* *'nf'*
 'nrformats' 'nf'	string	(default "bin,hex")

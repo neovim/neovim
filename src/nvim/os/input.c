@@ -266,29 +266,32 @@ static unsigned int handle_mouse_event(char **ptr, uint8_t *buf,
   }
 
   static int orig_num_clicks = 0;
-  static int orig_mouse_code = 0;
-  static int orig_mouse_col = 0;
-  static int orig_mouse_row = 0;
-  static uint64_t orig_mouse_time = 0;  // time of previous mouse click
-  uint64_t mouse_time = os_hrtime();    // time of current mouse click
+  if (mouse_code != KE_LEFTRELEASE && mouse_code != KE_RIGHTRELEASE
+      && mouse_code != KE_MIDDLERELEASE) {
+      static int orig_mouse_code = 0;
+      static int orig_mouse_col = 0;
+      static int orig_mouse_row = 0;
+      static uint64_t orig_mouse_time = 0;  // time of previous mouse click
+      uint64_t mouse_time = os_hrtime();    // time of current mouse click (ns)
 
-  // compute the time elapsed since the previous mouse click and
-  // convert p_mouse from ms to ns
-  uint64_t timediff = mouse_time - orig_mouse_time;
-  uint64_t mouset = (uint64_t)p_mouset * 1000000;
-  if (mouse_code == orig_mouse_code
-      && timediff < mouset
-      && orig_num_clicks != 4
-      && orig_mouse_col == mouse_col
-      && orig_mouse_row == mouse_row) {
-    orig_num_clicks++;
-  } else {
-    orig_num_clicks = 1;
+      // compute the time elapsed since the previous mouse click and
+      // convert p_mouse from ms to ns
+      uint64_t timediff = mouse_time - orig_mouse_time;
+      uint64_t mouset = (uint64_t)p_mouset * 1000000;
+      if (mouse_code == orig_mouse_code
+          && timediff < mouset
+          && orig_num_clicks != 4
+          && orig_mouse_col == mouse_col
+          && orig_mouse_row == mouse_row) {
+        orig_num_clicks++;
+      } else {
+        orig_num_clicks = 1;
+      }
+      orig_mouse_code = mouse_code;
+      orig_mouse_col = mouse_col;
+      orig_mouse_row = mouse_row;
+      orig_mouse_time = mouse_time;
   }
-  orig_mouse_code = mouse_code;
-  orig_mouse_col = mouse_col;
-  orig_mouse_row = mouse_row;
-  orig_mouse_time = mouse_time;
 
   uint8_t modifiers = 0;
   if (orig_num_clicks == 2) {

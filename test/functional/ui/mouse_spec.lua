@@ -16,9 +16,9 @@ describe('Mouse input', function()
     clear()
     meths.set_option('mouse', 'a')
     meths.set_option('listchars', 'eol:$')
-    -- set mouset to very high value to ensure that even in valgrind/travis,
+    -- set mousetime to very high value to ensure that even in valgrind/travis,
     -- nvim will still pick multiple clicks
-    meths.set_option('mouset', 5000)
+    meths.set_option('mousetime', 5000)
     screen = Screen.new(25, 5)
     screen:attach()
     screen:set_default_attr_ids({
@@ -45,7 +45,7 @@ describe('Mouse input', function()
     screen:detach()
   end)
 
-  it('left click moves cursor', function()
+  it('single left click moves cursor', function()
     feed('<LeftMouse><2,1>')
     screen:expect([[
       testing                  |
@@ -61,6 +61,54 @@ describe('Mouse input', function()
       support and selection    |
       ~                        |
                                |
+    ]])
+  end)
+
+  it('double left click enters visual mode', function()
+    feed('<LeftMouse><0,0>')
+    feed('<LeftRelease><0,0>')
+    feed('<LeftMouse><0,0>')
+    feed('<LeftRelease><0,0>')
+    screen:expect([[
+      {1:testin}^g                  |
+      mouse                    |
+      support and selection    |
+      ~                        |
+      {2:-- VISUAL --}             |
+    ]])
+  end)
+
+  it('triple left click enters visual line mode', function()
+    feed('<LeftMouse><0,0>')
+    feed('<LeftRelease><0,0>')
+    feed('<LeftMouse><0,0>')
+    feed('<LeftRelease><0,0>')
+    feed('<LeftMouse><0,0>')
+    feed('<LeftRelease><0,0>')
+    screen:expect([[
+      ^t{1:esting}{3: }                 |
+      mouse                    |
+      support and selection    |
+      ~                        |
+      {2:-- VISUAL LINE --}        |
+    ]])
+  end)
+
+  it('quadruple left click enters visual block mode', function()
+    feed('<LeftMouse><0,0>')
+    feed('<LeftRelease><0,0>')
+    feed('<LeftMouse><0,0>')
+    feed('<LeftRelease><0,0>')
+    feed('<LeftMouse><0,0>')
+    feed('<LeftRelease><0,0>')
+    feed('<LeftMouse><0,0>')
+    feed('<LeftRelease><0,0>')
+    screen:expect([[
+      ^testing                  |
+      mouse                    |
+      support and selection    |
+      ~                        |
+      {2:-- VISUAL BLOCK --}       |
     ]])
   end)
 
