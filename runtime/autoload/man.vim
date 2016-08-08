@@ -30,10 +30,11 @@ function! man#open_page(count, count1, ...) abort
   if a:0 > 2
     call s:error('too many arguments')
     return
-  elseif a:0 ==# 0
-    call s:error('missing argument')
-    return
   elseif a:0 ==# 1
+    if empty(a:1)
+      call s:error('no identifier under cursor')
+      return
+    endif
     let ref = a:1
   else
     " We combine the name and sect into a manpage reference so that all
