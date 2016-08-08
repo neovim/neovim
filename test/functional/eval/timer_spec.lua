@@ -119,6 +119,21 @@ describe('timers', function()
     eq(2,eval("g:val2"))
   end)
 
+  it('do not crash when processing events in the handler', function()
+    source([[
+      let g:val = 0
+      func! MyHandler(timer)
+        call timer_stop(a:timer)
+        sleep 100m
+        let g:val += 1
+      endfunc
+    ]])
+    execute("call timer_start(5, 'MyHandler', {'repeat': 1})")
+    run(nil, nil, nil, 300)
+    eq(1,eval("g:val"))
+  end)
+
+
   it("doesn't mess up the cmdline", function()
     local screen = Screen.new(40, 6)
     screen:attach()
