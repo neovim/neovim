@@ -16,9 +16,9 @@ describe('Mouse input', function()
     clear()
     meths.set_option('mouse', 'a')
     meths.set_option('listchars', 'eol:$')
-    -- set mouset to very high value to ensure that even in valgrind/travis,
+    -- set mousetime to very high value to ensure that even in valgrind/travis,
     -- nvim will still pick multiple clicks
-    meths.set_option('mouset', 5000)
+    meths.set_option('mousetime', 5000)
     screen = Screen.new(25, 5)
     screen:attach()
     screen:set_default_attr_ids({
@@ -65,24 +65,20 @@ describe('Mouse input', function()
   end)
 
   it('double left click enters visual mode', function()
-    execute('%delete')
-    insert('foo')
     feed('<LeftMouse><0,0>')
     feed('<LeftRelease><0,0>')
     feed('<LeftMouse><0,0>')
     feed('<LeftRelease><0,0>')
     screen:expect([[
-    {1:fo}^o                      |
-    ~                        |
-    ~                        |
-    ~                        |
-    {2:-- VISUAL --}             |
+      {1:testin}^g                  |
+      mouse                    |
+      support and selection    |
+      ~                        |
+      {2:-- VISUAL --}             |
     ]])
   end)
 
   it('triple left click enters visual line mode', function()
-    execute('%delete')
-    insert('foo')
     feed('<LeftMouse><0,0>')
     feed('<LeftRelease><0,0>')
     feed('<LeftMouse><0,0>')
@@ -90,17 +86,15 @@ describe('Mouse input', function()
     feed('<LeftMouse><0,0>')
     feed('<LeftRelease><0,0>')
     screen:expect([[
-    ^f{1:oo}{3: }                     |
-    ~                        |
-    ~                        |
-    ~                        |
-    {2:-- VISUAL LINE --}        |
+      ^t{1:esting}{3: }                 |
+      mouse                    |
+      support and selection    |
+      ~                        |
+      {2:-- VISUAL LINE --}        |
     ]])
   end)
 
   it('quadruple left click enters visual block mode', function()
-    execute('%delete')
-    insert('foo')
     feed('<LeftMouse><0,0>')
     feed('<LeftRelease><0,0>')
     feed('<LeftMouse><0,0>')
@@ -110,11 +104,11 @@ describe('Mouse input', function()
     feed('<LeftMouse><0,0>')
     feed('<LeftRelease><0,0>')
     screen:expect([[
-    ^foo                      |
-    ~                        |
-    ~                        |
-    ~                        |
-    {2:-- VISUAL BLOCK --}       |
+      ^testing                  |
+      mouse                    |
+      support and selection    |
+      ~                        |
+      {2:-- VISUAL BLOCK --}       |
     ]])
   end)
 
