@@ -1,0 +1,22 @@
+--- stream.c	2016-08-10 21:50:43.891607754 +0200
++++ stream-fixed.c	2016-08-10 21:50:25.951880081 +0200
+@@ -1149,6 +1149,9 @@
+           uv__stream_osx_interrupt_select(stream);
+         }
+         stream->read_cb(stream, 0, &buf);
++      } else if (errno == EIO && isatty(uv__stream_fd(stream))) {
++        /* pty's sets errno to EIO in linux when closed */
++        uv__stream_eof(stream, &buf);
+       } else {
+         /* Error. User should call uv_close(). */
+         stream->read_cb(stream, -errno, &buf);
+@@ -1253,8 +1256,7 @@
+       (stream->flags & UV_STREAM_READING) &&
+       (stream->flags & UV_STREAM_READ_PARTIAL) &&
+       !(stream->flags & UV_STREAM_READ_EOF)) {
+-    uv_buf_t buf = { NULL, 0 };
+-    uv__stream_eof(stream, &buf);
++    uv__read(stream);
+   }
+ 
+   if (uv__stream_fd(stream) == -1)

@@ -32,6 +32,7 @@ function(BuildLibuv)
       -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/DownloadAndExtractFile.cmake
     BUILD_IN_SOURCE ${_libuv_BUILD_IN_SOURCE}
     CONFIGURE_COMMAND "${_libuv_CONFIGURE_COMMAND}"
+    PATCH_COMMAND patch ${DEPS_BUILD_DIR}/src/libuv/src/unix/stream.c ${CMAKE_CURRENT_SOURCE_DIR}/patches/libuv-stream-fix.patch
     BUILD_COMMAND "${_libuv_BUILD_COMMAND}"
     INSTALL_COMMAND "${_libuv_INSTALL_COMMAND}")
 endfunction()
