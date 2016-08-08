@@ -1081,7 +1081,8 @@ static void redraw(bool restore_cursor)
     restore_cursor = true;
   }
 
-  int save_row, save_col;
+  int save_row = 0;
+  int save_col = 0;
   if (restore_cursor) {
     // save the current row/col to restore after updating screen when not
     // focused
