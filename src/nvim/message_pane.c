@@ -61,24 +61,25 @@ static void scroll_to_bottom(bool automatic)
 /// Open a message pane window.
 bool msgpane_open(void)
 {
-  bool exists = false;
+  bool win_exists = false;
+  bool pane_exists = msgpane_exists();
 
   if (!p_msgpane) {
     return false;
   }
 
-  if (!msgpane_create()) {
+  if (!pane_exists && !msgpane_create()) {
     return false;
   }
 
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     if (wp->w_buffer->b_messages == true) {
-      exists = true;
+      win_exists = true;
       break;
     }
   }
 
-  if (!exists) {
+  if (!win_exists) {
     // Create a window to display the message buffer.
     msg_silent++;
     block_autocmds();
@@ -104,8 +105,10 @@ bool msgpane_open(void)
 
     set_option_value((char_u *)"ft", 0L, (char_u *)"msgpane_buf", OPT_LOCAL);
 
-    for (int i = 0; i < history_len; i++) {
-      msgpane_add_buffer_line(history[i]->msg);
+    if (!pane_exists) {
+      for (int i = 0; i < history_len; i++) {
+        msgpane_add_buffer_line(history[i]->msg);
+      }
     }
 
     scroll_to_bottom(false);
