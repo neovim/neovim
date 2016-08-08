@@ -5540,6 +5540,22 @@ msgpackparse({list})				   {Nvim} *msgpackparse()*
 			representing extension type. Second is 
 			|readfile()|-style list of strings.
 
+msgpane({message}[, {highlight}[, {open}]])		{Nvim} *msgpane()*
+		Display {message} in the message pane, optionally highlighted
+		with a {highlight} group name.
+
+		When {open} is non-zero, open the message pane in a window.
+		See also |'messagepane'|, |msgpane_open()|.
+
+msgpane_open()					  {Nvim} *msgpane_open()*
+		Open the message pane if it's not already displayed in a
+		window.  Only one message pane window is opened per tab.
+
+		Returns the message pane's buffer number or 0 is the pane
+		couldn't be opened.
+
+		See also |'messagepane'|, |msgpane()|.
+
 nextnonblank({lnum})					*nextnonblank()*
 		Return the line number of the first line at or below {lnum}
 		that is not blank.  Example: >

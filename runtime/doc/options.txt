@@ -4328,6 +4328,13 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Defines the maximum time in msec between two mouse clicks for the
 	second click to be recognized as a multi click.
 
+'messagepane' 'msgpane'	boolean (default off)	*'messagepane'* *'msgpane'*
+	Affects how |:messages| displays the message history.  When enabled,
+	messages are logged in a message pane buffer.  Only the last line of a
+	message produced by |:echomsg| or an exception is displayed.
+
+	See also: |msgpane()|, |msgpane_open()|.
+
 							*'nrformats'* *'nf'*
 'nrformats' 'nf'	string	(default "bin,hex")
 			local to buffer
