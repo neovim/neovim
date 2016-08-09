@@ -2494,7 +2494,7 @@ static int win_line (win_T *wp, linenr_T lnum, int startrow, int endrow, bool no
 
   int fromcol, tocol;                   // start/end of inverting
   int fromcol_prev = -2;                // start of inverting after cursor
-  int noinvcur = FALSE;                 // don't invert the cursor
+  bool noinvcur = false;                // don't invert the cursor
 
   bool lnum_in_visual_area = false;
   pos_T pos;
@@ -2532,12 +2532,12 @@ static int win_line (win_T *wp, linenr_T lnum, int startrow, int endrow, bool no
   int nextline_idx = 0;                 // index in nextline[] where next line starts
   int word_end = 0;                     // last byte with same spell_attr
   int cur_checked_col = 0;              // checked column for current line
-  int extra_check;                      // has syntax or linebreak
+  bool extra_check;                     // has syntax or linebreak
 
   int c = 0;                            // init for GCC
   int mb_l = 1;                         // multi-byte byte length
   int mb_c = 0;                         // decoded multi-byte character
-  int mb_utf8 = FALSE;                  // screen char is UTF-8 char
+  bool mb_utf8 = false;                 // screen char is UTF-8 char
   int u8cc[MAX_MCO];                    // composing UTF-8 chars
 
   int filler_lines;                     // nr of filler lines to be drawn
@@ -2548,10 +2548,7 @@ static int win_line (win_T *wp, linenr_T lnum, int startrow, int endrow, bool no
   int change_end = -1;                  // last col of changed area
   colnr_T trailcol = MAXCOL;            // start of trailing spaces
   bool need_showbreak = false;
-  matchitem_T *cur;                     // points to the match list
-  match_T     *shl;                     // points to search_hl or a match
-  int shl_flag;                         // flag to indicate whether search_hl
-                                        // has been processed or not
+
   int prevcol_hl_flag;                  // flag to indicate whether prevcol
                       // equals startcol of search_hl or one of the matches
 
@@ -2632,6 +2629,7 @@ static int win_line (win_T *wp, linenr_T lnum, int startrow, int endrow, bool no
   extra_check = wp->w_p_lbr;
   if (init_syntax(lnum, wp)) {
     has_syntax = true;
+    extra_check = true;
   } else {
     extra_check = false;
   }
@@ -2649,7 +2647,7 @@ static int win_line (win_T *wp, linenr_T lnum, int startrow, int endrow, bool no
   if (check_can_spell(wp)) {
     /* Prepare for spell checking. */
     has_spell = true;
-    extra_check = TRUE;
+    extra_check = true;
 
     /* Get the start of the next line, so that words that wrap to the next
      * line are found too: "et<line-break>al.".
