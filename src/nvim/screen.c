@@ -2429,7 +2429,24 @@ win_line (
     boguscols = 0; \
   }
 
-  if (startrow > endrow)                /* past the end already! */
+  #define MB_IS_WIDE() (has_mbyte && (*mb_char2cells)(mb_c) > 1)
+
+  #define SET_CHAR(ch) \
+    c = ch; \
+    mb_c = ch; \
+    mb_l = (*mb_char2len)(c); \
+    mb_utf8 = false; \
+    if (enc_utf8 && mb_l > 1) { \
+      c = 0xc0; \
+      mb_utf8 = true; \
+      u8cc[0] = 0; \
+    }
+
+  #define COL_ADD(var, val) var = (wp->w_p_rl) ? var - val : var + val;
+
+  #define LEFT_COL() (wp->w_p_wrap ? wp->w_skipcol : wp->w_leftcol)
+
+  if (startrow > endrow) // past the end already!
     return startrow;
 
   row = startrow;
@@ -2631,13 +2648,9 @@ win_line (
    * 'nowrap' or 'wrap' and a single line that doesn't fit: Advance to the
    * first character to be displayed.
    */
-  if (wp->w_p_wrap)
-    v = wp->w_skipcol;
-  else
-    v = wp->w_leftcol;
-  if (v > 0) {
+  if (LEFT_COL() > 0) {
     char_u  *prev_ptr = ptr;
-    while (vcol < v && *ptr != NUL) {
+    while (vcol < LEFT_COL() && *ptr != NUL) {
       c = win_lbr_chartabsize(wp, line, ptr, (colnr_T)vcol, NULL);
       vcol += c;
       prev_ptr = ptr;
@@ -2650,19 +2663,15 @@ win_line (
     // - 'virtualedit' is set, or
     // - the visual mode is active,
     // the end of the line may be before the start of the displayed part.
-    if (vcol < v && (wp->w_p_cuc
-                     || draw_color_col
-                     || virtual_active()
-                     || (VIsual_active && wp->w_buffer == curwin->w_buffer))) {
-      vcol = v;
-    }
+    if (vcol < LEFT_COL() && (wp->w_p_cuc || draw_color_col || virtual_active() || (VIsual_active && is_current_buffer)))
+    { vcol = LEFT_COL(); }
 
     /* Handle a character that's not completely on the screen: Put ptr at
      * that character but skip the first few screen characters. */
-    if (vcol > v) {
+    if (vcol > LEFT_COL()) {
       vcol -= c;
       ptr = prev_ptr;
-      n_skip = v - vcol;
+      n_skip = LEFT_COL() - vcol;
     }
 
     /*
@@ -3766,13 +3775,8 @@ win_line (
             vcol_off += n_extra;
           vcol += n_extra;
           if (wp->w_p_wrap && n_extra > 0) {
-            if (wp->w_p_rl) {
-              col -= n_extra;
-              boguscols -= n_extra;
-            } else {
-              boguscols += n_extra;
-              col += n_extra;
-            }
+            COL_ADD(col, n_extra)
+            COL_ADD(boguscols, n_extra)
           }
           n_extra = 0;
           n_attr = 0;
@@ -3817,15 +3821,10 @@ win_line (
      * character of the line and the user wants us to show us a
      * special character (via 'listchars' option "precedes:<char>".
      */
-    if (lcs_prec_todo != NUL
-        && wp->w_p_list
-        && (wp->w_p_wrap ? wp->w_skipcol > 0 : wp->w_leftcol > 0)
-        && filler_todo <= 0
-        && draw_state > WL_NR
-        && c != NUL) {
-      c = lcs_prec;
-      lcs_prec_todo = NUL;
-      if (has_mbyte && (*mb_char2cells)(mb_c) > 1) {
+    if (!did_print_precedes && wp->w_p_list && (LEFT_COL() > 0) && filler_todo <= 0 && draw_state > WL_NR && c != NUL) {
+      did_print_precedes = true;
+
+      if (MB_IS_WIDE()) {
         /* Double-width character being overwritten by the "precedes"
          * character, need to fill up half the character. */
         c_extra = MB_FILLER_CHAR;
@@ -3853,8 +3852,8 @@ win_line (
       long prevcol = (long)(ptr - line) - (c == NUL);
 
       /* we're not really at that column when skipping some text */
-      if ((long)(wp->w_p_wrap ? wp->w_skipcol : wp->w_leftcol) > prevcol)
-        ++prevcol;
+      if ((long)LEFT_COL() > prevcol)
+        prevcol++;
 
       /* Invert at least one char, used for Visual and empty line or
        * highlight match at end of line. If it's beyond the last
@@ -3907,14 +3906,11 @@ win_line (
           char_attr = get_search_attr(wp, (ptr - line - 1));
 
         ScreenAttrs[off] = char_attr;
-        if (wp->w_p_rl) {
-          --col;
-          --off;
-        } else {
-          ++col;
-          ++off;
-        }
-        ++vcol;
+
+        vcol++;
+        COL_ADD(col, 1)
+        COL_ADD(off, 1)
+
         eol_hl_off = 1;
       }
     }
@@ -3931,11 +3927,11 @@ win_line (
         --vcol;
       }
 
-      /* Highlight 'cursorcolumn' & 'colorcolumn' past end of the line. */
-      if (wp->w_p_wrap)
-        v = wp->w_skipcol;
-      else
-        v = wp->w_leftcol;
+      // Highlight 'cursorcolumn' & 'colorcolumn' past end of the line.
+      // check if line ends before left margin
+      long left_margin = LEFT_COL() + col - win_col_off(wp);
+      if (vcol < left_margin)
+        vcol = left_margin;
 
       /* check if line ends before left margin */
       if (vcol < v + col - win_col_off(wp))
@@ -3950,12 +3946,8 @@ win_line (
 
       if (((wp->w_p_cuc
             && (int)wp->w_virtcol >= VCOL_HLC - eol_hl_off
-            && (int)wp->w_virtcol <
-            wp->w_width * (row - startrow + 1) + v
-            && lnum != wp->w_cursor.lnum)
-           || draw_color_col)
-          && !wp->w_p_rl
-          ) {
+            && (int)wp->w_virtcol < wp->w_width * (row - startrow + 1) + LEFT_COL()
+            && !is_cursor_line) || draw_color_col) && !wp->w_p_rl) {
         int rightmost_vcol = 0;
         int i;
 
@@ -4059,22 +4051,10 @@ win_line (
      */
     vcol_prev = vcol;
     if (draw_state < WL_LINE || n_skip <= 0) {
-      /*
-       * Store the character.
-       */
-      if (has_mbyte && wp->w_p_rl && (*mb_char2cells)(mb_c) > 1) {
-        /* A double-wide character is: put first halve in left cell. */
-        --off;
-        --col;
+      // Store the character.
+      if (wp->w_p_rl && MB_IS_WIDE()) {
+        off--; col--; // A double-wide character is: put first halve in left cell.
       }
-      ScreenLines[off] = c;
-      if (enc_dbcs == DBCS_JPNU) {
-        if ((mb_c & 0xff00) == 0x8e00)
-          ScreenLines[off] = 0x8e;
-        ScreenLines2[off] = mb_c & 0xff;
-      } else if (enc_utf8) {
-        if (mb_utf8) {
-          int i;
 
           ScreenLinesUC[off] = mb_c;
           if ((c & 0xff) == 0)
@@ -4104,25 +4084,19 @@ win_line (
 
         if (draw_state > WL_NR && filler_todo <= 0)
           vcol++;
-        }
+
         // When "tocol" is halfway through a character, set it to the end of
         // the character, otherwise highlighting won't stop.
-        if (tocol == vcol) {
+        if (tocol == vcol)
           tocol++;
-        }
-        if (wp->w_p_rl) {
-          /* now it's time to backup one cell */
-          --off;
-          --col;
-        }
+
+        if (wp->w_p_rl) // now it's time to backup one cell
+          { off--; col--; }
       }
-      if (wp->w_p_rl) {
-        --off;
-        --col;
-      } else {
-        ++off;
-        ++col;
-      }
+
+      COL_ADD(col, 1)
+      COL_ADD(off, 1)
+
     } else if (wp->w_p_cole > 0 && is_concealing) {
       --n_skip;
       ++vcol_off;
@@ -4144,17 +4118,16 @@ win_line (
          */
         if (n_extra > 0) {
           vcol += n_extra;
-          if (wp->w_p_rl) {
-            col -= n_extra;
-            boguscols -= n_extra;
-          } else {
-            col += n_extra;
-            boguscols += n_extra;
-          }
+          COL_ADD(col, n_extra)
+          COL_ADD(boguscols, n_extra)
           n_extra = 0;
           n_attr = 0;
         }
 
+        /* Need to fill two screen columns? */
+        int n = (MB_IS_WIDE() ? 2 : 1);
+        COL_ADD(col, n)
+        COL_ADD(boguscols, n)
 
         if (has_mbyte && (*mb_char2cells)(mb_c) > 1) {
           /* Need to fill two screen columns. */
