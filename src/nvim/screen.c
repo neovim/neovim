@@ -2087,10 +2087,6 @@ static bool character_fits_at_col(int mb_c, int col, win_T* wp) {
     && (*mb_char2cells)(mb_c) == 2);
 }
 
-static int compare_lnum_to_cursor(int lnum, win_T* wp) {
-  return wp->w_cursor.lnum - lnum;
-}
-
 static bool should_conceal_line(win_T* wp, int lnum, bool in_visual_area) {
   return (wp->w_p_cole > 0
     && (wp != curwin || lnum != wp->w_cursor.lnum || conceal_cursor_line(wp))
@@ -2699,7 +2695,7 @@ static int win_line (win_T *wp, linenr_T lnum, int startrow, int endrow, bool no
       main_attr = hl_attr(HLF_V);
     }
   } else if (highlight_match && is_current_window) { // handle 'incsearch' and ":s///c" highlighting
-    int delta = compare_lnum_to_cursor(lnum, curwin);
+    int delta = lnum - wp->w_cursor.lnum;
     if (delta >= 0 && delta <= search_match_lines) {
       fromcol = 0; tocol = MAXCOL;
 
