@@ -1517,8 +1517,9 @@ return {
     {
       full_name='messagepane', abbreviation='msgpane',
       type='bool', scope={'global'},
+      vi_def=false,
       varname='p_msgpane',
-      defaults={if_true={vi=false, vim=false}}
+      defaults={if_true={vi=false}}
     },
     {
       full_name='mkspellmem', abbreviation='msm',
