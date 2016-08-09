@@ -152,13 +152,13 @@ bool msgpane_open(void)
     RESET_BINDING(curwin);
     unblock_autocmds();
 
-    set_option_value((char_u *)"ft", 0L, (char_u *)"msgpane_buf", OPT_LOCAL);
-
     if (!pane_exists) {
       for (int i = 0; i < history_len; i++) {
         msgpane_add_buffer_line(history[i]->msg);
       }
     }
+
+    set_option_value((char_u *)"ft", 0L, (char_u *)"msgpane", OPT_LOCAL);
 
     scroll_to_bottom(true);
     msg_silent--;
