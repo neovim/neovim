@@ -13,16 +13,16 @@ describe('Buffer highlighting', function()
     execute("syntax on")
     screen = Screen.new(40, 8)
     screen:attach()
-    screen:set_default_attr_ignore( {{bold=true, foreground=Screen.colors.Blue}} )
     screen:set_default_attr_ids({
-      [1] = {foreground = Screen.colors.Fuchsia}, -- String
-      [2] = {foreground = Screen.colors.Brown, bold = true}, -- Statement
-      [3] = {foreground = Screen.colors.SlateBlue}, -- Special
-      [4] = {bold = true, foreground = Screen.colors.SlateBlue},
-      [5] = {foreground = Screen.colors.DarkCyan}, -- Identifier
-      [6] = {bold = true},
-      [7] = {underline = true, bold = true, foreground = Screen.colors.SlateBlue},
-      [8] = {foreground = Screen.colors.SlateBlue, underline = true}
+      [1] = {bold=true, foreground=Screen.colors.Blue},
+      [2] = {foreground = Screen.colors.Fuchsia}, -- String
+      [3] = {foreground = Screen.colors.Brown, bold = true}, -- Statement
+      [4] = {foreground = Screen.colors.SlateBlue}, -- Special
+      [5] = {bold = true, foreground = Screen.colors.SlateBlue},
+      [6] = {foreground = Screen.colors.DarkCyan}, -- Identifier
+      [7] = {bold = true},
+      [8] = {underline = true, bold = true, foreground = Screen.colors.SlateBlue},
+      [9] = {foreground = Screen.colors.SlateBlue, underline = true}
     })
     curbuf = request('vim_get_current_buffer')
   end)
@@ -49,11 +49,11 @@ describe('Buffer highlighting', function()
     screen:expect([[
       these are some lines                    |
       with colorful tex^t                      |
-      ~                                       |
-      ~                                       |
-      ~                                       |
-      ~                                       |
-      ~                                       |
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
                                               |
     ]])
 
@@ -61,25 +61,25 @@ describe('Buffer highlighting', function()
     add_hl(-1, "Statement", 1 , 5, -1)
 
     screen:expect([[
-      these are {1:some} lines                    |
-      with {2:colorful tex^t}                      |
-      ~                                       |
-      ~                                       |
-      ~                                       |
-      ~                                       |
-      ~                                       |
+      these are {2:some} lines                    |
+      with {3:colorful tex^t}                      |
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
                                               |
     ]])
 
     feed("ggo<esc>")
     screen:expect([[
-      these are {1:some} lines                    |
+      these are {2:some} lines                    |
       ^                                        |
-      with {2:colorful text}                      |
-      ~                                       |
-      ~                                       |
-      ~                                       |
-      ~                                       |
+      with {3:colorful text}                      |
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
                                               |
     ]])
 
@@ -88,10 +88,10 @@ describe('Buffer highlighting', function()
       these are some lines                    |
       ^                                        |
       with colorful text                      |
-      ~                                       |
-      ~                                       |
-      ~                                       |
-      ~                                       |
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
                                               |
     ]])
   end)
@@ -119,13 +119,13 @@ describe('Buffer highlighting', function()
       neq(id1, id2)
 
       screen:expect([[
-        a {4:longer} example                        |
-        in {5:order} to {6:de}{4:monstr}{6:ate}                 |
-        {6:combin}{7:ing}{8: hi}ghlights                    |
-        {8:from }{7:diff}{6:erent} source^s                  |
-        ~                                       |
-        ~                                       |
-        ~                                       |
+        a {5:longer} example                        |
+        in {6:order} to {7:de}{5:monstr}{7:ate}                 |
+        {7:combin}{8:ing}{9: hi}ghlights                    |
+        {9:from }{8:diff}{7:erent} source^s                  |
+        {1:~                                       }|
+        {1:~                                       }|
+        {1:~                                       }|
         :hi ImportantWord gui=bold cterm=bold   |
       ]])
     end)
@@ -133,13 +133,13 @@ describe('Buffer highlighting', function()
     it('and clearing the first added', function()
       clear_hl(id1, 0, -1)
       screen:expect([[
-        a {3:longer} example                        |
-        in {5:order} to de{3:monstr}ate                 |
-        combin{8:ing hi}ghlights                    |
-        {8:from diff}erent source^s                  |
-        ~                                       |
-        ~                                       |
-        ~                                       |
+        a {4:longer} example                        |
+        in {6:order} to de{4:monstr}ate                 |
+        combin{9:ing hi}ghlights                    |
+        {9:from diff}erent source^s                  |
+        {1:~                                       }|
+        {1:~                                       }|
+        {1:~                                       }|
         :hi ImportantWord gui=bold cterm=bold   |
       ]])
     end)
@@ -147,13 +147,13 @@ describe('Buffer highlighting', function()
     it('and clearing the second added', function()
       clear_hl(id2, 0, -1)
       screen:expect([[
-        a {6:longer} example                        |
-        in order to {6:demonstrate}                 |
-        {6:combining} highlights                    |
-        from {6:different} source^s                  |
-        ~                                       |
-        ~                                       |
-        ~                                       |
+        a {7:longer} example                        |
+        in order to {7:demonstrate}                 |
+        {7:combining} highlights                    |
+        from {7:different} source^s                  |
+        {1:~                                       }|
+        {1:~                                       }|
+        {1:~                                       }|
         :hi ImportantWord gui=bold cterm=bold   |
       ]])
     end)
@@ -164,12 +164,12 @@ describe('Buffer highlighting', function()
       clear_hl(id2, 2, -1)
       screen:expect([[
         a longer example                        |
-        in {5:order} to de{3:monstr}ate                 |
-        {6:combining} highlights                    |
-        from {6:different} source^s                  |
-        ~                                       |
-        ~                                       |
-        ~                                       |
+        in {6:order} to de{4:monstr}ate                 |
+        {7:combining} highlights                    |
+        from {7:different} source^s                  |
+        {1:~                                       }|
+        {1:~                                       }|
+        {1:~                                       }|
         :hi ImportantWord gui=bold cterm=bold   |
       ]])
     end)
@@ -177,25 +177,25 @@ describe('Buffer highlighting', function()
     it('and renumbering lines', function()
       feed('3Gddggo<esc>')
       screen:expect([[
-        a {4:longer} example                        |
+        a {5:longer} example                        |
         ^                                        |
-        in {5:order} to {6:de}{4:monstr}{6:ate}                 |
-        {8:from }{7:diff}{6:erent} sources                  |
-        ~                                       |
-        ~                                       |
-        ~                                       |
+        in {6:order} to {7:de}{5:monstr}{7:ate}                 |
+        {9:from }{8:diff}{7:erent} sources                  |
+        {1:~                                       }|
+        {1:~                                       }|
+        {1:~                                       }|
                                                 |
       ]])
 
       execute(':3move 4')
       screen:expect([[
-        a {4:longer} example                        |
+        a {5:longer} example                        |
                                                 |
-        {8:from }{7:diff}{6:erent} sources                  |
-        ^in {5:order} to {6:de}{4:monstr}{6:ate}                 |
-        ~                                       |
-        ~                                       |
-        ~                                       |
+        {9:from }{8:diff}{7:erent} sources                  |
+        ^in {6:order} to {7:de}{5:monstr}{7:ate}                 |
+        {1:~                                       }|
+        {1:~                                       }|
+        {1:~                                       }|
         ::3move 4                               |
       ]])
     end)
@@ -209,25 +209,25 @@ describe('Buffer highlighting', function()
     local id = add_hl(0, "Special", 0, 0, 9)
 
     screen:expect([[
-      {3:three ove}{5:rlapp}{1:ing color}^s                |
-      ~                                       |
-      ~                                       |
-      ~                                       |
-      ~                                       |
-      ~                                       |
-      ~                                       |
+      {4:three ove}{6:rlapp}{2:ing color}^s                |
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
                                               |
     ]])
 
     clear_hl(id, 0, 1)
     screen:expect([[
-      three {5:overlapp}{1:ing color}^s                |
-      ~                                       |
-      ~                                       |
-      ~                                       |
-      ~                                       |
-      ~                                       |
-      ~                                       |
+      three {6:overlapp}{2:ing color}^s                |
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
                                               |
     ]])
   end)
@@ -239,13 +239,13 @@ describe('Buffer highlighting', function()
     add_hl(-1, "String", 0, 16, 21)
 
     screen:expect([[
-      Ta {5:båten} över {1:sjön}^!                     |
-      ~                                       |
-      ~                                       |
-      ~                                       |
-      ~                                       |
-      ~                                       |
-      ~                                       |
+      Ta {6:båten} över {2:sjön}^!                     |
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
                                               |
     ]])
   end)
