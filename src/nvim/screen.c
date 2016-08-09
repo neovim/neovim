@@ -2715,30 +2715,6 @@ static int win_line (win_T *wp, linenr_T lnum, int startrow, int endrow, bool no
       main_attr = hl_attr(HLF_I);
     }
   }
-  /*
-   * handle 'incsearch' and ":s///c" highlighting
-   */
-  else if (highlight_match
-           && wp == curwin
-           && lnum >= curwin->w_cursor.lnum
-           && lnum <= curwin->w_cursor.lnum + search_match_lines) {
-    if (lnum == curwin->w_cursor.lnum)
-      getvcol(curwin, &(curwin->w_cursor),
-          (colnr_T *)&fromcol, NULL, NULL);
-    else
-      fromcol = 0;
-    if (lnum == curwin->w_cursor.lnum + search_match_lines) {
-      pos.lnum = lnum;
-      pos.col = search_match_endcol;
-      getvcol(curwin, &pos, (colnr_T *)&tocol, NULL, NULL);
-    } else
-      tocol = MAXCOL;
-    /* do at least one character; happens when past end of line */
-    if (fromcol == tocol)
-      tocol = fromcol + 1;
-    area_highlighting = TRUE;
-    attr = hl_attr(HLF_I);
-  }
 
   filler_lines = diff_check(wp, lnum);
   if (filler_lines < 0) {
@@ -3213,39 +3189,33 @@ static int win_line (win_T *wp, linenr_T lnum, int startrow, int endrow, bool no
      */
     if (n_extra > 0) {
       if (c_extra != NUL) {
-        c = c_extra;
-        mb_c = c;               /* doesn't handle non-utf-8 multi-byte! */
-        if (enc_utf8 && (*mb_char2len)(c) > 1) {
-          mb_utf8 = TRUE;
-          u8cc[0] = 0;
-          c = 0xc0;
-        } else
-          mb_utf8 = FALSE;
+        SET_CHAR(c_extra)
       } else {
-        c = *p_extra;
+        SET_CHAR(*p_extra)
         if (has_mbyte) {
-          mb_c = c;
           if (enc_utf8) {
-            /* If the UTF-8 character is more than one byte:
-             * Decode it into "mb_c". */
+            // If the UTF-8 character is more than one byte:
+            // Decode it into "mb_c".
             mb_l = (*mb_ptr2len)(p_extra);
-            mb_utf8 = FALSE;
-            if (mb_l > n_extra)
+            mb_utf8 = false;
+            if (mb_l > n_extra) {
               mb_l = 1;
-            else if (mb_l > 1) {
+            } else if (mb_l > 1) {
               mb_c = utfc_ptr2char(p_extra, u8cc);
-              mb_utf8 = TRUE;
+              mb_utf8 = true;
               c = 0xc0;
             }
-          } else {
-            /* if this is a DBCS character, put it in "mb_c" */
+          } else { // if this is a DBCS character, put it in "mb_c"
             mb_l = MB_BYTE2LEN(c);
-            if (mb_l >= n_extra)
+            if (mb_l >= n_extra) {
               mb_l = 1;
-            else if (mb_l > 1)
+            } else if (mb_l > 1) {
               mb_c = (c << 8) + p_extra[1];
+            }
           }
-          if (mb_l == 0)            /* at the NUL at end-of-line */
+
+          // NUL at end-of-line
+          if (mb_l == 0)
             mb_l = 1;
 
           /* If a double-width char doesn't fit display a '>' in the
@@ -3278,17 +3248,15 @@ static int win_line (win_T *wp, linenr_T lnum, int startrow, int endrow, bool no
       if (has_mbyte) {
         mb_c = c;
         if (enc_utf8) {
-          /* If the UTF-8 character is more than one byte: Decode it
-           * into "mb_c". */
+          /* If the UTF-8 character is more than one byte: Decode it into "mb_c". */
           mb_l = (*mb_ptr2len)(ptr);
-          mb_utf8 = FALSE;
+          mb_utf8 = false;
           if (mb_l > 1) {
             mb_c = utfc_ptr2char(ptr, u8cc);
             /* Overlong encoded ASCII or ASCII with composing char
              * is displayed normally, except a NUL. */
-            if (mb_c < 0x80)
-              c = mb_c;
-            mb_utf8 = TRUE;
+            if (mb_c < 0x80) c = mb_c;
+            mb_utf8 = true;
 
             /* At start of the line we can have a composing char.
              * Draw it as a space with a composing char. */
@@ -3397,17 +3365,14 @@ static int win_line (win_T *wp, linenr_T lnum, int startrow, int endrow, bool no
          * a '<' in the first column.  Don't do this for unprintable
          * characters. */
         if (n_skip > 0 && mb_l > 1 && n_extra == 0) {
+          SET_CHAR(' ')
           n_extra = 1;
           c_extra = MB_FILLER_CHAR;
-          c = ' ';
           if (area_attr == 0 && search_attr == 0) {
             n_attr = n_extra + 1;
             extra_attr = hl_attr(HLF_AT);
             saved_attr2 = char_attr;             /* save current attr */
           }
-          mb_c = c;
-          mb_utf8 = FALSE;
-          mb_l = 1;
         }
 
       }
@@ -3416,29 +3381,27 @@ static int win_line (win_T *wp, linenr_T lnum, int startrow, int endrow, bool no
       if (extra_check) {
         bool can_spell = true;
 
-        /* Get syntax attribute, unless still at the start of the line
-         * (double-wide char that doesn't fit). */
-        v = (long)(ptr - line);
-        if (has_syntax && v > 0) {
+        int ch_col = (ptr - line);
+
+        if (has_syntax && ch_col > 0) {
           /* Get the syntax attribute for the character.  If there
            * is an error, disable syntax highlighting. */
           save_did_emsg = did_emsg;
           did_emsg = FALSE;
 
-          syntax_attr = get_syntax_attr((colnr_T)v - 1,
-              has_spell ? &can_spell :
-              NULL, FALSE);
+          syntax_attr = get_syntax_attr(ch_col - 1, has_spell ? &can_spell : NULL, FALSE);
 
           if (did_emsg) {
             wp->w_s->b_syn_error = TRUE;
-            has_syntax = FALSE;
-          } else
+            has_syntax = false;
+          } else {
             did_emsg = save_did_emsg;
+          }
 
           /* Need to get the line again, a multi-line regexp may
            * have made it invalid. */
           line = ml_get_buf(wp->w_buffer, lnum, FALSE);
-          ptr = line + v;
+          ptr = line + ch_col;
 
           if (!attr_has_priority)
             char_attr = syntax_attr;
@@ -3458,7 +3421,7 @@ static int win_line (win_T *wp, linenr_T lnum, int startrow, int endrow, bool no
          * Only do this when there is no syntax highlighting, the
          * @Spell cluster is not used or the current syntax item
          * contains the @Spell cluster. */
-        if (has_spell && v >= word_end && v > cur_checked_col) {
+        if (has_spell && ch_col >= word_end && ch_col > cur_checked_col) {
           spell_attr = 0;
           if (!attr_has_priority)
             char_attr = syntax_attr;
@@ -3470,7 +3433,7 @@ static int win_line (win_T *wp, linenr_T lnum, int startrow, int endrow, bool no
             hlf_T spell_hlf = HLF_COUNT;
             if (has_mbyte) {
               prev_ptr = ptr - mb_l;
-              v -= mb_l - 1;
+              ch_col -= mb_l - 1;
             } else
               prev_ptr = ptr - 1;
 
@@ -3484,7 +3447,7 @@ static int win_line (win_T *wp, linenr_T lnum, int startrow, int endrow, bool no
             size_t tmplen = spell_check(wp, p, &spell_hlf, &cap_col, nochange);
             assert(tmplen <= INT_MAX);
             len = (int)tmplen;
-            word_end = v + len;
+            word_end = ch_col + len;
 
             /* In Insert mode only highlight a word that
              * doesn't touch the cursor. */
@@ -3530,8 +3493,8 @@ static int win_line (win_T *wp, linenr_T lnum, int startrow, int endrow, bool no
             char_attr = hl_combine_attr(spell_attr, char_attr);
         }
 
-        if (has_bufhl && v > 0) {
-          bufhl_attr = bufhl_get_attr(&bufhl_info, (colnr_T)v);
+        if (has_bufhl && ch_col > 0) {
+          bufhl_attr = bufhl_get_attr(&bufhl_info, (colnr_T)ch_col);
           if (bufhl_attr != 0) {
             if (!attr_has_priority) {
               char_attr = hl_combine_attr(char_attr, bufhl_attr);
@@ -3577,28 +3540,14 @@ static int win_line (win_T *wp, linenr_T lnum, int startrow, int endrow, bool no
           n_attr = 1;
           extra_attr = hl_attr(HLF_8);
           saved_attr2 = char_attr;  // save current attr
-          mb_c = c;
-          if (enc_utf8 && (*mb_char2len)(c) > 1) {
-            mb_utf8 = true;
-            u8cc[0] = 0;
-            c = 0xc0;
-          } else {
-            mb_utf8 = false;
-          }
+          SET_CHAR((c == ' ') ? lcs_space : lcs_nbsp)
         }
 
         if (trailcol != MAXCOL && ptr > line + trailcol && c == ' ') {
-          c = lcs_trail;
           n_attr = 1;
           extra_attr = hl_attr(HLF_8);
           saved_attr2 = char_attr;  // save current attr
-          mb_c = c;
-          if (enc_utf8 && (*mb_char2len)(c) > 1) {
-            mb_utf8 = TRUE;
-            u8cc[0] = 0;
-            c = 0xc0;
-          } else
-            mb_utf8 = FALSE;
+          SET_CHAR(lcs_trail)
         }
       }
 
@@ -3655,7 +3604,6 @@ static int win_line (win_T *wp, linenr_T lnum, int startrow, int endrow, bool no
               p += mb_char2len(lcs_tab2);
               n_extra += mb_char2len(lcs_tab2) - (saved_nextra > 0 ? 1: 0);
             }
-            p_extra = p_extra_free;
 
             // n_extra will be increased by FIX_FOX_BOGUSCOLS
             // macro below, so need to adjust for that here
@@ -3683,26 +3631,20 @@ static int win_line (win_T *wp, linenr_T lnum, int startrow, int endrow, bool no
             }
           }
 
-          mb_utf8 = (int)false;  // don't draw as UTF-8
           if (wp->w_p_list) {
-            c = lcs_tab1;
-            if (wp->w_p_lbr) {
-              c_extra = NUL; /* using p_extra from above */
-            } else {
+            if (wp->w_p_lbr)
+              c_extra = NUL; // using p_extra from above
+            else
               c_extra = lcs_tab2;
-            }
+            SET_CHAR(lcs_tab1)
+
             n_attr = tab_len + 1;
             extra_attr = hl_attr(HLF_8);
             saved_attr2 = char_attr;             /* save current attr */
-            mb_c = c;
-            if (enc_utf8 && (*mb_char2len)(c) > 1) {
-              mb_utf8 = TRUE;
-              u8cc[0] = 0;
-              c = 0xc0;
-            }
+
           } else {
             c_extra = ' ';
-            c = ' ';
+            SET_CHAR(' ')
           }
         } else if (c == NUL && (wp->w_p_list || ((fromcol >= 0 || fromcol_prev >= 0) && tocol > vcol
               && VIsual_mode != Ctrl_V && check_column_limit(col, wp)
@@ -3723,22 +3665,16 @@ static int win_line (win_T *wp, linenr_T lnum, int startrow, int endrow, bool no
               c_extra = NUL;
             }
           }
-          if (wp->w_p_list && lcs_eol > 0) {
-            c = lcs_eol;
-          } else {
-            c = ' ';
-          }
-          lcs_eol_one = -1;
           ptr--;  // put it back at the NUL
-          extra_attr = hl_attr(HLF_AT);
           n_attr = 1;
-          mb_c = c;
-          if (enc_utf8 && (*mb_char2len)(c) > 1) {
-            mb_utf8 = TRUE;
-            u8cc[0] = 0;
-            c = 0xc0;
-          } else
-            mb_utf8 = FALSE;                    /* don't draw as UTF-8 */
+          extra_attr = hl_attr(HLF_AT);
+          did_print_eol = true;
+          if (wp->w_p_list && lcs_eol > 0) {
+            SET_CHAR(lcs_eol)
+          } else {
+            SET_CHAR(' ')
+          }
+
         } else if (c != NUL) {
           p_extra = transchar(c);
           if (n_extra == 0) {
@@ -3761,6 +3697,7 @@ static int win_line (win_T *wp, linenr_T lnum, int startrow, int endrow, bool no
             n_extra = byte2cells(c) - 1;
             c = *p_extra++;
           }
+          mb_utf8 = false;   // don't draw as UTF-8
           n_attr = n_extra + 1;
           extra_attr = hl_attr(HLF_8);
           saved_attr2 = char_attr;  // save current attr
@@ -3780,7 +3717,7 @@ static int win_line (win_T *wp, linenr_T lnum, int startrow, int endrow, bool no
           }
           if (diff_hlf == HLF_TXD) {
             diff_hlf = HLF_CHD;
-            if (attr == 0 || char_attr != attr) {
+            if (main_attr == 0 || char_attr != main_attr) {
               char_attr = hl_attr(diff_hlf);
               if (wp->w_p_cul && is_cursor_line)
                 char_attr = hl_combine_attr(char_attr, hl_attr(HLF_CUL));
@@ -3823,13 +3760,9 @@ static int win_line (win_T *wp, linenr_T lnum, int startrow, int endrow, bool no
           is_concealing = TRUE;
           n_skip = 1;
         }
-        mb_c = c;
-        if (enc_utf8 && (*mb_char2len)(c) > 1) {
-          mb_utf8 = TRUE;
-          u8cc[0] = 0;
-          c = 0xc0;
-        } else
-          mb_utf8 = FALSE;              /* don't draw as UTF-8 */
+
+        // Redundant c = c;
+        SET_CHAR(c)
       } else {
         prev_syntax_id = 0;
         is_concealing = FALSE;
@@ -3871,17 +3804,11 @@ static int win_line (win_T *wp, linenr_T lnum, int startrow, int endrow, bool no
         n_attr = 2;
         extra_attr = hl_attr(HLF_AT);
       }
-      mb_c = c;
-      if (enc_utf8 && (*mb_char2len)(c) > 1) {
-        mb_utf8 = TRUE;
-        u8cc[0] = 0;
-        c = 0xc0;
-      } else {
-        mb_utf8 = false;  // don't draw as UTF-8
-      }
+
+      SET_CHAR(lcs_prec)
+      n_attr3 = 1;
       saved_attr3 = char_attr;  // save current attr
       char_attr = hl_attr(HLF_AT);  // later copied to char_attr
-      n_attr3 = 1;
     }
 
     /*
@@ -3909,8 +3836,6 @@ static int win_line (win_T *wp, linenr_T lnum, int startrow, int endrow, bool no
               && (VIsual_mode != Ctrl_V || lnum == VIsual.lnum || lnum == curwin->w_cursor.lnum))
               || (prevcol_hl_flag == TRUE && did_line_attr <= 1))) {
               /* highlight 'hlsearch' match at end of line */
-              || (prevcol_hl_flag == TRUE && did_line_attr <= 1)
-              )) {
         int n = 0;
 
         if (wp->w_p_rl) {
@@ -3959,9 +3884,6 @@ static int win_line (win_T *wp, linenr_T lnum, int startrow, int endrow, bool no
       if (vcol < left_margin)
         vcol = left_margin;
 
-      /* check if line ends before left margin */
-      if (vcol < v + col - win_col_off(wp))
-        vcol = v + col - win_col_off(wp);
       /* Get rid of the boguscols now, we want to draw until the right
        * edge for 'cursorcolumn'. */
       col -= boguscols;
@@ -4040,13 +3962,6 @@ static int win_line (win_T *wp, linenr_T lnum, int startrow, int endrow, bool no
         && (*ptr != NUL || (wp->w_p_list && !did_print_eol) || (n_extra != 0))) {
       SET_CHAR(lcs_ext)
       char_attr = hl_attr(HLF_AT);
-      mb_c = c;
-      if (enc_utf8 && (*mb_char2len)(c) > 1) {
-        mb_utf8 = TRUE;
-        u8cc[0] = 0;
-        c = 0xc0;
-      } else
-        mb_utf8 = FALSE;
     }
 
     /* advance to the next 'colorcolumn' */
@@ -4079,22 +3994,8 @@ static int win_line (win_T *wp, linenr_T lnum, int startrow, int endrow, bool no
         off--; col--; // A double-wide character is: put first halve in left cell.
       }
 
-          ScreenLinesUC[off] = mb_c;
-          if ((c & 0xff) == 0)
-            ScreenLines[off] = 0x80;               /* avoid storing zero */
-          for (i = 0; i < Screen_mco; ++i) {
-            ScreenLinesC[i][off] = u8cc[i];
-            if (u8cc[i] == 0)
-              break;
-          }
-        } else
-          ScreenLinesUC[off] = 0;
-      }
-      if (multi_attr) {
-        ScreenAttrs[off] = multi_attr;
-        multi_attr = 0;
-      } else
-        ScreenAttrs[off] = char_attr;
+      int attr = (multi_attr ? multi_attr : char_attr);
+      multi_attr = 0;
 
       write_char(c, mb_c, mb_utf8, attr, u8cc, off);
 
@@ -4152,24 +4053,6 @@ static int win_line (win_T *wp, linenr_T lnum, int startrow, int endrow, bool no
         COL_ADD(col, n)
         COL_ADD(boguscols, n)
 
-        if (has_mbyte && (*mb_char2cells)(mb_c) > 1) {
-          /* Need to fill two screen columns. */
-          if (wp->w_p_rl) {
-            --boguscols;
-            --col;
-          } else {
-            ++boguscols;
-            ++col;
-          }
-        }
-
-        if (wp->w_p_rl) {
-          --boguscols;
-          --col;
-        } else {
-          ++boguscols;
-          ++col;
-        }
       } else {
         if (n_extra > 0) {
           vcol += n_extra;
