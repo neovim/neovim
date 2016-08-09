@@ -6,23 +6,18 @@ local execute = helpers.execute
 describe('search highlighting', function()
   local screen
   local colors = Screen.colors
-  local hl_colors = {
-    NonText = colors.Blue,
-    Search = colors.Yellow,
-    Message = colors.Red,
-  }
 
   before_each(function()
     clear()
     screen = Screen.new(40, 7)
     screen:attach()
     --ignore highligting of ~-lines
+    screen:set_default_attr_ignore( {{bold=true, foreground=colors.Blue}} )
     screen:set_default_attr_ids( {
-      [1] = {background = hl_colors.Search},
+      [1] = {background = colors.Yellow}, -- Search
       [2] = {reverse = true},
-      [3] = {foreground = hl_colors.Message},
+      [3] = {foreground = colors.Red}, -- Message
     })
-    screen:set_default_attr_ignore( {{bold=true, foreground=hl_colors.NonText}} )
   end)
 
   it('is disabled by ":set nohlsearch"', function()
@@ -250,8 +245,8 @@ describe('search highlighting', function()
       ~                                       |
       ~                                       |
       {3:search hit BOTTOM, continuing at TOP}    |
-    ]], {[1] = {background = hl_colors.Search}, [2] = {reverse = true},
-    [3] = {foreground = hl_colors.Message}, [4] = {bold = true, background =
+    ]], {[1] = {background = colors.Yellow}, [2] = {reverse = true},
+    [3] = {foreground = colors.Red}, [4] = {bold = true, background =
     colors.Green}, [5] = {italic = true, background = colors.Magenta}})
 
     execute("call clearmatches()")
@@ -276,9 +271,9 @@ describe('search highlighting', function()
       ~                                       |
       ~                                       |
       :syntax keyword MyGroup special         |
-    ]], {[1] = {background =  hl_colors.Search}, [2] = {reverse = true},
-    [3] = {foreground = hl_colors.Message}, [4] = {bold = true,
-    background = colors.Green}, [5] = {bold = true, background = hl_colors.Search}})
+    ]], {[1] = {background =  colors.Yellow}, [2] = {reverse = true},
+    [3] = {foreground = colors.Red}, [4] = {bold = true,
+    background = colors.Green}, [5] = {bold = true, background = colors.Yellow}})
 
   end)
 end)

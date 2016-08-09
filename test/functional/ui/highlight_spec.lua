@@ -89,17 +89,12 @@ describe('Default highlight groups', function()
   -- command
   local screen
 
-  local hlgroup_colors = {
-    NonText = Screen.colors.Blue,
-    Question = Screen.colors.SeaGreen
-  }
-
   before_each(function()
     clear()
     screen = Screen.new()
     screen:attach()
     --ignore highligting of ~-lines
-    screen:set_default_attr_ignore( {{bold=true, foreground=hlgroup_colors.NonText}} )
+    screen:set_default_attr_ignore( {{bold=true, foreground=Screen.colors.Blue}} )
   end)
 
   after_each(function()
@@ -238,7 +233,7 @@ describe('Default highlight groups', function()
       {1:~                                                    }|
       {1:~                                                    }|
                                                            |
-    ]], {[1] = {bold = true, foreground = hlgroup_colors.NonText}})
+    ]], {[1] = {bold = true, foreground = Screen.colors.Blue}})
   end)
 
   it('"wait return" text', function()
@@ -258,7 +253,7 @@ describe('Default highlight groups', function()
       :ls                                                  |
         1 %a   "[No Name]"                    line 1       |
       {1:Press ENTER or type command to continue}^              |
-    ]], {[1] = {bold = true, foreground = hlgroup_colors.Question}})
+    ]], {[1] = {bold = true, foreground = Screen.colors.SeaGreen}})
     feed('<cr>') --  skip the "Press ENTER..." state or tests will hang
   end)
   it('can be cleared and linked to other highlight groups', function()
@@ -405,13 +400,6 @@ end)
 describe("'cursorline' with 'listchars'", function()
   local screen
 
-  local hlgroup_colors = {
-    NonText = Screen.colors.Blue,
-    Cursorline = Screen.colors.Grey90,
-    SpecialKey = Screen.colors.Red,
-    Visual = Screen.colors.LightGrey,
-  }
-
   before_each(function()
     clear()
     screen = Screen.new(20,5)
@@ -423,8 +411,8 @@ describe("'cursorline' with 'listchars'", function()
   end)
 
   it("'cursorline' and 'cursorcolumn'", function()
-    screen:set_default_attr_ids({[1] = {background=hlgroup_colors.Cursorline}})
-    screen:set_default_attr_ignore( {{bold=true, foreground=hlgroup_colors.NonText}} )
+    screen:set_default_attr_ids({[1] = {background=Screen.colors.Grey90}})
+    screen:set_default_attr_ignore( {{bold=true, foreground=Screen.colors.Blue}} )
     execute('highlight clear ModeMsg')
     execute('set cursorline')
     feed('i')
@@ -497,22 +485,22 @@ describe("'cursorline' with 'listchars'", function()
 
   it("'cursorline' and with 'listchar' option: space, eol, tab, and trail", function()
     screen:set_default_attr_ids({
-      [1] = {background=hlgroup_colors.Cursorline},
+      [1] = {background=Screen.colors.Grey90},
       [2] = {
-        foreground=hlgroup_colors.SpecialKey,
-        background=hlgroup_colors.Cursorline,
+        foreground=Screen.colors.Red,
+        background=Screen.colors.Grey90,
       },
       [3] = {
-        background=hlgroup_colors.Cursorline,
-        foreground=hlgroup_colors.NonText,
+        background=Screen.colors.Grey90,
+        foreground=Screen.colors.Blue,
         bold=true,
       },
       [4] = {
-        foreground=hlgroup_colors.NonText,
+        foreground=Screen.colors.Blue,
         bold=true,
       },
       [5] = {
-        foreground=hlgroup_colors.SpecialKey,
+        foreground=Screen.colors.Red,
       },
     })
     execute('highlight clear ModeMsg')
@@ -581,33 +569,33 @@ describe("'cursorline' with 'listchars'", function()
 
   it("'listchar' in visual mode", function()
     screen:set_default_attr_ids({
-      [1] = {background=hlgroup_colors.Cursorline},
+      [1] = {background=Screen.colors.Grey90},
       [2] = {
-        foreground=hlgroup_colors.SpecialKey,
-        background=hlgroup_colors.Cursorline,
+        foreground=Screen.colors.Red,
+        background=Screen.colors.Grey90,
       },
       [3] = {
-        background=hlgroup_colors.Cursorline,
-        foreground=hlgroup_colors.NonText,
+        background=Screen.colors.Grey90,
+        foreground=Screen.colors.Blue,
         bold=true,
       },
       [4] = {
-        foreground=hlgroup_colors.NonText,
+        foreground=Screen.colors.Blue,
         bold=true,
       },
       [5] = {
-        foreground=hlgroup_colors.SpecialKey,
+        foreground=Screen.colors.Red,
       },
       [6] = {
-        background=hlgroup_colors.Visual,
+        background=Screen.colors.LightGrey,
       },
       [7] = {
-        background=hlgroup_colors.Visual,
-        foreground=hlgroup_colors.SpecialKey,
+        background=Screen.colors.LightGrey,
+        foreground=Screen.colors.Red,
       },
       [8] = {
-        background=hlgroup_colors.Visual,
-        foreground=hlgroup_colors.NonText,
+        background=Screen.colors.LightGrey,
+        foreground=Screen.colors.Blue,
         bold=true,
       },
     })

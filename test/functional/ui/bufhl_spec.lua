@@ -8,30 +8,21 @@ describe('Buffer highlighting', function()
   local screen
   local curbuf
 
-  local hl_colors = {
-    NonText = Screen.colors.Blue,
-    Question = Screen.colors.SeaGreen,
-    String = Screen.colors.Fuchsia,
-    Statement = Screen.colors.Brown,
-    Special = Screen.colors.SlateBlue,
-    Identifier = Screen.colors.DarkCyan
-  }
-
   before_each(function()
     clear()
     execute("syntax on")
     screen = Screen.new(40, 8)
     screen:attach()
-    screen:set_default_attr_ignore( {{bold=true, foreground=hl_colors.NonText}} )
+    screen:set_default_attr_ignore( {{bold=true, foreground=Screen.colors.Blue}} )
     screen:set_default_attr_ids({
-      [1] = {foreground = hl_colors.String},
-      [2] = {foreground = hl_colors.Statement, bold = true},
-      [3] = {foreground = hl_colors.Special},
-      [4] = {bold = true, foreground = hl_colors.Special},
-      [5] = {foreground = hl_colors.Identifier},
+      [1] = {foreground = Screen.colors.Fuchsia}, -- String
+      [2] = {foreground = Screen.colors.Brown, bold = true}, -- Statement
+      [3] = {foreground = Screen.colors.SlateBlue}, -- Special
+      [4] = {bold = true, foreground = Screen.colors.SlateBlue},
+      [5] = {foreground = Screen.colors.DarkCyan}, -- Identifier
       [6] = {bold = true},
-      [7] = {underline = true, bold = true, foreground = hl_colors.Special},
-      [8] = {foreground = hl_colors.Special, underline = true}
+      [7] = {underline = true, bold = true, foreground = Screen.colors.SlateBlue},
+      [8] = {foreground = Screen.colors.SlateBlue, underline = true}
     })
     curbuf = request('vim_get_current_buffer')
   end)
