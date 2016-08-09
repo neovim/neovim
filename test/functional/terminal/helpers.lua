@@ -44,14 +44,13 @@ local function screen_setup(extra_height, command)
   screen:set_default_attr_ids({
     [1] = {reverse = true},   -- focused cursor
     [2] = {background = 11},  -- unfocused cursor
-  })
-  screen:set_default_attr_ignore({
-    [1] = {bold = true},
-    [2] = {foreground = 12},
-    [3] = {bold = true, reverse = true},
-    [5] = {background = 11},
-    [6] = {foreground = 130},
-    [7] = {foreground = 15, background = 1}, -- error message
+    [3] = {bold = true},
+    [4] = {foreground = 12},
+    [5] = {bold = true, reverse = true},
+    [6] = {background = 11},
+    [7] = {foreground = 130},
+    [8] = {foreground = 15, background = 1}, -- error message
+    [9] = {foreground = 4},
   })
 
   screen:attach(false)
@@ -76,7 +75,7 @@ local function screen_setup(extra_height, command)
       table.insert(expected, empty_line)
     end
 
-    table.insert(expected, '-- TERMINAL --                                     ')
+    table.insert(expected, '{3:-- TERMINAL --}                                     ')
     screen:expect(table.concat(expected, '\n'))
   else
     wait()

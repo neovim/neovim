@@ -9,12 +9,12 @@ describe("shell command :!", function()
       '", "-u", "NONE", "-i", "NONE", "--cmd", "set noswapfile"]')
     screen:expect([[
       {1: }                                                 |
-      ~                                                 |
-      ~                                                 |
-      ~                                                 |
-      [No Name]                                         |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {5:[No Name]                                         }|
                                                         |
-      -- TERMINAL --                                    |
+      {3:-- TERMINAL --}                                    |
     ]])
   end)
 
@@ -27,13 +27,13 @@ describe("shell command :!", function()
     --       to avoid triggering a UI flush.
     child_session.feed_data(":!printf foo; sleep 200\n")
     screen:expect([[
-      ~                                                 |
-      ~                                                 |
-      [No Name]                                         |
-      :!printf foo; sleep 200                           |
+      {1: }                                                 |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {5:[No Name]                                         }|
                                                         |
-      foo                                               |
-      -- TERMINAL --                                    |
+      {3:-- TERMINAL --}                                    |
     ]])
   end)
 end)
