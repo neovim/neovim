@@ -248,14 +248,13 @@ describe('packadd', function()
       screen = Screen.new(30, 5)
       screen:attach()
       screen:set_default_attr_ids({
+        [0] = {bold=true, foreground=Screen.colors.Blue},
         [1] = {
           foreground = Screen.colors.Black,
           background = Screen.colors.Yellow,
         },
         [2] = {bold = true, reverse = true}
       })
-      local NonText = Screen.colors.Blue
-      screen:set_default_attr_ignore({{}, {bold=true, foreground=NonText}})
 
       execute([[let optdir1 = &packpath . '/pack/mine/opt']])
       execute([[let optdir2 = &packpath . '/pack/candidate/opt']])
@@ -269,32 +268,32 @@ describe('packadd', function()
       feed(':packadd <Tab>')
       screen:expect([=[
                                       |
-        ~                             |
-        ~                             |
+        {0:~                             }|
+        {0:~                             }|
         {1:pluginA}{2:  pluginB  pluginC     }|
         :packadd pluginA^              |
       ]=])
       feed('<Tab>')
       screen:expect([=[
                                       |
-        ~                             |
-        ~                             |
+        {0:~                             }|
+        {0:~                             }|
         {2:pluginA  }{1:pluginB}{2:  pluginC     }|
         :packadd pluginB^              |
       ]=])
       feed('<Tab>')
       screen:expect([=[
                                       |
-        ~                             |
-        ~                             |
+        {0:~                             }|
+        {0:~                             }|
         {2:pluginA  pluginB  }{1:pluginC}{2:     }|
         :packadd pluginC^              |
       ]=])
       feed('<Tab>')
       screen:expect([=[
                                       |
-        ~                             |
-        ~                             |
+        {0:~                             }|
+        {0:~                             }|
         {2:pluginA  pluginB  pluginC     }|
         :packadd ^                     |
       ]=])
@@ -316,32 +315,32 @@ describe('packadd', function()
       feed(':colorscheme <Tab>')
       screen:expect([=[
                                       |
-        ~                             |
-        ~                             |
+        {0:~                             }|
+        {0:~                             }|
         {1:one}{2:  three  two               }|
         :colorscheme one^              |
       ]=])
       feed('<Tab>')
       screen:expect([=[
                                       |
-        ~                             |
-        ~                             |
+        {0:~                             }|
+        {0:~                             }|
         {2:one  }{1:three}{2:  two               }|
         :colorscheme three^            |
       ]=])
       feed('<Tab>')
       screen:expect([=[
                                       |
-        ~                             |
-        ~                             |
+        {0:~                             }|
+        {0:~                             }|
         {2:one  three  }{1:two}{2:               }|
         :colorscheme two^              |
       ]=])
       feed('<Tab>')
       screen:expect([=[
                                       |
-        ~                             |
-        ~                             |
+        {0:~                             }|
+        {0:~                             }|
         {2:one  three  two               }|
         :colorscheme ^                 |
       ]=])

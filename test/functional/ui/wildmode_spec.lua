@@ -39,7 +39,7 @@ describe('command line completion', function()
     clear()
     screen = Screen.new(40, 5)
     screen:attach()
-    screen:set_default_attr_ignore({{bold=true, foreground=Screen.colors.Blue}})
+    screen:set_default_attr_ids({[1]={bold=true, foreground=Screen.colors.Blue}})
   end)
 
   after_each(function()
@@ -55,9 +55,9 @@ describe('command line completion', function()
     feed(':!<tab><bs>')
     screen:expect([[
                                               |
-      ~                                       |
-      ~                                       |
-      ~                                       |
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
       :!Xtest-functional-viml-compl-dir^       |
     ]])
   end)
