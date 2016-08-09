@@ -758,7 +758,7 @@ static void win_update(win_T *wp)
             lnumb = wp->w_lines[i].wl_lnum;
             // When there is a fold column it might need updating
             // in the next line ("J" just above an open fold).
-            if (compute_foldcolumn(wp, 0) > 0) {
+            if (foldcolumn_width(wp, 0) > 0) {
               lnumb++;
             }
           }
@@ -1572,7 +1572,7 @@ static void win_draw_end(win_T *wp, int c1, int c2, int row, int endrow, hlf_T h
 {
   int n = 0;
 # define FDC_OFF n
-  int fdc = compute_foldcolumn(wp, 0);
+  int fdc = foldcolumn_width(wp, 0);
 
   if (wp->w_p_rl) {
     // No check for cmdline window: should never be right-left.
@@ -1662,7 +1662,7 @@ static int advance_color_col(int vcol, int **color_cols)
 
 // Compute the width of the foldcolumn.  Based on 'foldcolumn' and how much
 // space is available for window "wp", minus "col".
-static int compute_foldcolumn(win_T *wp, int col)
+static int foldcolumn_width(win_T *wp, int col)
 {
   int fdc = wp->w_p_fdc;
   int wmw = wp == curwin && p_wmw == 0 ? 1 : p_wmw;
@@ -1714,7 +1714,7 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
 
   // 2. Add the 'foldcolumn'
   // Reduce the width when there is not enough space.
-  fdc = compute_foldcolumn(wp, col);
+  fdc = foldcolumn_width(wp, col);
   if (fdc > 0) {
     fill_foldcolumn(buf, wp, TRUE, lnum);
     if (wp->w_p_rl) {
@@ -2035,7 +2035,7 @@ fill_foldcolumn (
   int level;
   int first_level;
   int empty;
-  int fdc = compute_foldcolumn(wp, 0);
+  int fdc = foldcolumn_width(wp, 0);
 
   // Init to all spaces.
   memset(p, ' ', (size_t)fdc);
