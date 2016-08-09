@@ -2149,7 +2149,173 @@ static int get_search_attr_cur(win_T* wp) {
   return attr;
 }
 
-static bool init_syntax(int lnum, win_T* wp) {
+/* Handle highlighting the last used search pattern and matches.
+  * Do this for both search_hl and the match list.  */
+static int get_search_attr_for_line (win_T *wp, int lnum, long col) {
+  char_u      *line;                    // current line
+  char_u      *ptr;                     // current position in "line"
+  matchitem_T *cur;                     // points to the match list
+  match_T     *shl;                     // points to search_hl or a match
+  int shl_flag;                         // flag to indicate whether search_hl
+                                        // has been processed or not
+  int attr = -1;
+
+  line = ml_get_buf(wp->w_buffer, lnum, false);
+  ptr = line + col;
+  cur = wp->w_match_head;
+  shl_flag = FALSE;
+  while (cur != NULL || shl_flag == FALSE) {
+    if (shl_flag == FALSE) {
+      shl = &search_hl;
+      shl_flag = TRUE;
+    } else {
+      shl = &cur->hl;
+    }
+    shl->startcol = MAXCOL;
+    shl->endcol = MAXCOL;
+    shl->attr_cur = 0;
+    col = (long)(ptr - line);
+
+    if (cur != NULL) { cur->pos.cur = 0; }
+    next_search_hl(wp, shl, lnum, (colnr_T)col, cur);
+
+    // Need to get the line again, a multi-line regexp may have made it invalid.
+    line = ml_get_buf(wp->w_buffer, lnum, false);
+    ptr = line + col;
+
+    if (shl->lnum != 0 && shl->lnum <= lnum) {
+      if (shl->lnum == lnum) {
+        shl->startcol = shl->rm.startpos[0].col;
+      } else {
+        shl->startcol = 0;
+      }
+      if (lnum == shl->lnum + shl->rm.endpos[0].lnum
+                  - shl->rm.startpos[0].lnum) {
+          shl->endcol = shl->rm.endpos[0].col;
+      } else {
+          shl->endcol = MAXCOL;
+      }
+      // Highlight one character for an empty match.
+      if (shl->startcol == shl->endcol) {
+          if (has_mbyte && line[shl->endcol] != NUL)
+            { shl->endcol += (*mb_ptr2len)(line + shl->endcol); }
+          else { ++shl->endcol; }
+      }
+      if ((long)shl->startcol < col) {   // match at leftcol
+        shl->attr_cur = shl->attr;
+        attr = shl->attr;
+      }
+      if (attr == -1) {
+        attr = 0;
+      }
+    }
+    if (shl != &search_hl && cur != NULL)
+      cur = cur->next;
+  }
+  return attr;
+}
+
+struct MatchConceal {
+  int cchar;
+  bool active;
+  bool prev_id_reset;
+};
+
+static struct MatchConceal get_match_conceal_for_line (win_T *wp, int lnum, long hl_col) {
+  char_u      *line;                    // current line
+  char_u      *ptr;                     // current position in "line"
+  matchitem_T *cur;                     // points to the match list
+  match_T     *shl;                     // points to search_hl or a match
+  int shl_flag;                         // flag to indicate whether search_hl
+                                        // has been processed or not
+  struct MatchConceal match = {
+    .cchar = 0,
+    .active = false,
+    .prev_id_reset = false
+  };
+
+  line = ml_get_buf(wp->w_buffer, lnum, false);
+  ptr = line + hl_col;
+  cur = wp->w_match_head;
+  shl_flag = FALSE;
+  while (cur != NULL || shl_flag == FALSE) {
+    if (shl_flag == FALSE && ((cur != NULL && cur->priority > SEARCH_HL_PRIORITY) || cur == NULL)) {
+      shl = &search_hl;
+      shl_flag = TRUE;
+    } else {
+      shl = &cur->hl;
+    }
+
+    if (cur != NULL)
+      cur->pos.cur = 0;
+
+    bool pos_inprogress = true; // mark that a position match search is in progress
+    while (shl->rm.regprog != NULL || (cur != NULL && pos_inprogress)) {
+
+      if (shl->startcol != MAXCOL && hl_col >= (long)shl->startcol && hl_col < (long)shl->endcol) {
+        int tmp_col = hl_col + MB_PTR2LEN(ptr);
+
+        if (shl->endcol < tmp_col) { shl->endcol = tmp_col; }
+
+        shl->attr_cur = shl->attr;
+
+        if (cur != NULL && syn_name2id((char_u *)"Conceal") == cur->hlg_id) {
+          match.cchar = cur->conceal_char;
+          match.active = true;
+        } else {
+          match.cchar = 0;
+          match.active = false;
+        }
+
+      } else if (hl_col == (long)shl->endcol) {
+        shl->attr_cur = 0;
+        match.prev_id_reset = true;
+
+        next_search_hl(wp, shl, lnum, (colnr_T)hl_col, cur);
+        pos_inprogress = !(cur == NULL || cur->pos.cur == 0);
+
+        // Need to get the line again, a multi-line regexp may have made it invalid.
+        line = ml_get_buf(wp->w_buffer, lnum, FALSE);
+        ptr = line + hl_col;
+
+        if (shl->lnum == lnum) {
+          shl->startcol = shl->rm.startpos[0].col;
+          if (shl->rm.endpos[0].lnum == 0)
+            shl->endcol = shl->rm.endpos[0].col;
+          else
+            shl->endcol = MAXCOL;
+
+          if (shl->startcol == shl->endcol) { // highlight empty match, try again after it
+            if (has_mbyte)
+              shl->endcol += (*mb_ptr2len)(line + shl->endcol);
+            else
+              ++shl->endcol;
+          }
+
+          continue; // Loop to check if the match starts at the current position
+        }
+      }
+      break;
+    }
+    if (shl != &search_hl && cur != NULL)
+      cur = cur->next;
+  }
+  return match;
+}
+
+static bool get_prevcol_hl(win_T *wp, long prevcol) {
+  matchitem_T *cur;
+  cur = wp->w_match_head;
+  while (cur != NULL) {
+    if (prevcol == (long)cur->hl.startcol) {
+      return true;
+    }
+    cur = cur->next;
+  }
+  return false;
+}
+
+static bool init_syntax(int lnum, win_T *wp) {
   int save_did_emsg;
   if (syntax_present(wp) && !wp->w_s->b_syn_error) {
     save_did_emsg = did_emsg;
@@ -2468,7 +2634,7 @@ static int win_line (win_T *wp, linenr_T lnum, int startrow, int endrow, bool no
    * trailing white space and/or syntax processing to be done.
    */
   extra_check = wp->w_p_lbr;
-  if (init_syntax(wp)) {
+  if (init_syntax(lnum, wp)) {
     has_syntax = true;
   } else {
     extra_check = false;
@@ -2753,60 +2919,13 @@ static int win_line (win_T *wp, linenr_T lnum, int startrow, int endrow, bool no
       fromcol = -1;
   }
 
-  /*
-   * Handle highlighting the last used search pattern and matches.
-   * Do this for both search_hl and the match list.
-   */
-  cur = wp->w_match_head;
-  shl_flag = FALSE;
-  while (cur != NULL || shl_flag == FALSE) {
-    if (shl_flag == FALSE) {
-      shl = &search_hl;
-      shl_flag = TRUE;
-    } else
-      shl = &cur->hl;
-    shl->startcol = MAXCOL;
-    shl->endcol = MAXCOL;
-    shl->attr_cur = 0;
-    v = (long)(ptr - line);
-    if (cur != NULL) {
-      cur->pos.cur = 0;
-    }
-    next_search_hl(wp, shl, lnum, (colnr_T)v, cur);
-
-    // Need to get the line again, a multi-line regexp may have made it
-    // invalid.
-    line = ml_get_buf(wp->w_buffer, lnum, false);
-    ptr = line + v;
-
-    if (shl->lnum != 0 && shl->lnum <= lnum) {
-      if (shl->lnum == lnum) {
-        shl->startcol = shl->rm.startpos[0].col;
-      } else {
-        shl->startcol = 0;
-      }
-      if (lnum == shl->lnum + shl->rm.endpos[0].lnum
-                  - shl->rm.startpos[0].lnum) {
-          shl->endcol = shl->rm.endpos[0].col;
-      } else {
-          shl->endcol = MAXCOL;
-      }
-      // Highlight one character for an empty match.
-      if (shl->startcol == shl->endcol) {
-          if (has_mbyte && line[shl->endcol] != NUL) {
-              shl->endcol += (*mb_ptr2len)(line + shl->endcol);
-          } else {
-              ++shl->endcol;
-          }
-      }
-      if ((long)shl->startcol < v) {   // match at leftcol
-        shl->attr_cur = shl->attr;
-        search_attr = shl->attr;
-      }
-      area_highlighting = true;
-    }
-    if (shl != &search_hl && cur != NULL)
-      cur = cur->next;
+  /* Handle highlighting the last used search pattern and matches.
+   * Do this for both search_hl and the match list.  */
+  search_attr = get_search_attr_for_line(wp, lnum, (long)(ptr - line));
+  if (search_attr != -1) {
+    area_highlighting = true;
+  } else if (search_attr != -1) {
+    search_attr = 0;
   }
 
   /* Cursor line highlighting for 'cursorline' in the current window.  Not
@@ -3037,81 +3156,13 @@ static int win_line (win_T *wp, linenr_T lnum, int startrow, int endrow, bool no
          * When another match, have to check for start again.
          * Watch out for matching an empty string!
          * Do this for 'search_hl' and the match list (ordered by
-         * priority).
-         */
-        v = (long)(ptr - line);
-        cur = wp->w_match_head;
-        shl_flag = FALSE;
-        while (cur != NULL || shl_flag == FALSE) {
-          if (shl_flag == FALSE
-              && ((cur != NULL
-                   && cur->priority > SEARCH_HL_PRIORITY)
-                  || cur == NULL)) {
-            shl = &search_hl;
-            shl_flag = TRUE;
-          } else
-            shl = &cur->hl;
-          if (cur != NULL) {
-            cur->pos.cur = 0;
-          }
-          bool pos_inprogress = true; // mark that a position match search is
-                                      // in progress
-          while (shl->rm.regprog != NULL
-                                 || (cur != NULL && pos_inprogress)) {
-            if (shl->startcol != MAXCOL
-                && v >= (long)shl->startcol
-                && v < (long)shl->endcol) {
-              int tmp_col = v + MB_PTR2LEN(ptr);
-
-              if (shl->endcol < tmp_col) {
-                shl->endcol = tmp_col;
-              }
-              shl->attr_cur = shl->attr;
-              if (cur != NULL && syn_name2id((char_u *)"Conceal")
-                  == cur->hlg_id) {
-                has_match_conc = true;
-                match_conc = cur->conceal_char;
-              } else {
-                has_match_conc = match_conc = false;
-              }
-            } else if (v == (long)shl->endcol) {
-              shl->attr_cur = 0;
-              prev_syntax_id = 0;
-
-              next_search_hl(wp, shl, lnum, (colnr_T)v, cur);
-              pos_inprogress = !(cur == NULL || cur->pos.cur == 0);
-
-              /* Need to get the line again, a multi-line regexp
-               * may have made it invalid. */
-              line = ml_get_buf(wp->w_buffer, lnum, FALSE);
-              ptr = line + v;
-
-              if (shl->lnum == lnum) {
-                shl->startcol = shl->rm.startpos[0].col;
-                if (shl->rm.endpos[0].lnum == 0)
-                  shl->endcol = shl->rm.endpos[0].col;
-                else
-                  shl->endcol = MAXCOL;
-
-                if (shl->startcol == shl->endcol) {
-                  /* highlight empty match, try again after
-                   * it */
-                  if (has_mbyte)
-                    shl->endcol += (*mb_ptr2len)(line
-                                                 + shl->endcol);
-                  else
-                    ++shl->endcol;
-                }
-
-                /* Loop to check if the match starts at the
-                 * current position */
-                continue;
-              }
-            }
-            break;
-          }
-          if (shl != &search_hl && cur != NULL)
-            cur = cur->next;
+         * priority).  */
+        struct MatchConceal match =
+          get_match_conceal_for_line(wp, lnum, (long)(ptr - line));
+        match_conc = match.cchar;
+        has_match_conc = match.active;
+        if (match.prev_id_reset) {
+          prev_syntax_id = 0;
         }
 
         /* Use attributes from match with highest priority among 'search_hl' and the match list. */
@@ -3854,15 +3905,8 @@ static int win_line (win_T *wp, linenr_T lnum, int startrow, int endrow, bool no
       prevcol_hl_flag = FALSE;
       if (prevcol == (long)search_hl.startcol)
         prevcol_hl_flag = TRUE;
-      else {
-        cur = wp->w_match_head;
-        while (cur != NULL) {
-          if (prevcol == (long)cur->hl.startcol) {
-            prevcol_hl_flag = TRUE;
-            break;
-          }
-          cur = cur->next;
-        }
+      } else {
+        prevcol_hl_flag = get_prevcol_hl(wp, prevcol);
       }
 
       if (did_print_eol && ((area_attr != 0 && vcol == fromcol && c == NUL
