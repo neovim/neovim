@@ -98,8 +98,26 @@ bool msgpane_open(void)
     return false;
   }
 
-  if (!pane_exists && !msgpane_create()) {
-    return false;
+  if (!pane_exists) {
+    if (!msgpane_create()) {
+      return false;
+    }
+
+    // There are messages from before the creation of the message pane.
+    if (first_msg_hist != NULL && history_len == 0) {
+      // Temporarily NULL msgpane_buf while filling the history.
+      buf_T *msgpane = msgpane_buf;
+      msgpane_buf = NULL;
+      MessageHistoryEntry *p;
+
+      for (p = first_msg_hist; p != NULL; p = p->next) {
+        if (p->msg != NULL && *p->msg != NUL) {
+          msgpane_add_msg(p->msg, p->attr);
+        }
+      }
+
+      msgpane_buf = msgpane;
+    }
   }
 
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
