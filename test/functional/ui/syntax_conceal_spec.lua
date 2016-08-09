@@ -10,8 +10,10 @@ describe('Screen', function()
     clear()
     screen = Screen.new(nil,10)
     screen:attach()
-    screen:set_default_attr_ignore( {{bold=true, foreground=255}} )
-    screen:set_default_attr_ids( {{foreground = Screen.colors.LightGrey, background = Screen.colors.DarkGray}} )
+    screen:set_default_attr_ids( {
+      [0] = {bold=true, foreground=Screen.colors.Blue},
+      [1] = {foreground = Screen.colors.LightGrey, background = Screen.colors.DarkGray}
+    } )
   end)
   
   after_each(function()
@@ -46,8 +48,8 @@ describe('Screen', function()
             {1:∧}                                                    |
             {1:∧}                                                    |
             ^                                                     |
-            ~                                                    |
-            ~                                                    |
+            {0:~                                                    }|
+            {0:~                                                    }|
             :syn match dAmpersand '[&][&]' conceal cchar=∧       |
           ]])
       end)
@@ -62,8 +64,8 @@ describe('Screen', function()
           {1:∧}                                                    |
           ^&&                                                   |
                                                                |
-          ~                                                    |
-          ~                                                    |
+          {0:~                                                    }|
+          {0:~                                                    }|
           :syn match dAmpersand '[&][&]' conceal cchar=∧       |
         ]])
       end)
@@ -78,8 +80,8 @@ describe('Screen', function()
           {1:∧}                                                    |
           {1:∧}                                                    |
                                                                |
-          ~                                                    |
-          ~                                                    |
+          {0:~                                                    }|
+          {0:~                                                    }|
           :syn match dAmpersand '[&][&]' conceal cchar=∧       |
         ]])
       end)
@@ -94,8 +96,8 @@ describe('Screen', function()
           {1:∧}                                                    |
           {1:∧}                                                    |
                                                                |
-          ~                                                    |
-          ~                                                    |
+          {0:~                                                    }|
+          {0:~                                                    }|
           :syn match dAmpersand '[&][&]' conceal cchar=∧       |
         ]])
       end)
@@ -110,8 +112,8 @@ describe('Screen', function()
           {1:∧}                                                    |
           {1:∧}                                                    |
           ^                                                     |
-          ~                                                    |
-          ~                                                    |
+          {0:~                                                    }|
+          {0:~                                                    }|
           :syn match dAmpersand '[&][&]' conceal cchar=∧       |
         ]])
       end)
@@ -125,12 +127,12 @@ describe('Screen', function()
         {1:λ}                                                    |
         {1:λ}                                                    |
         ^                                                     |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
         :syn keyword kLambda lambda conceal cchar=λ          |
       ]])
     end) -- Keyword
@@ -149,12 +151,12 @@ describe('Screen', function()
           {1:R}                                                    |
           {1:R}                                                    |
           ^                                                     |
-          ~                                                    |
-          ~                                                    |
-          ~                                                    |
-          ~                                                    |
-          ~                                                    |
-          ~                                                    |
+          {0:~                                                    }|
+          {0:~                                                    }|
+          {0:~                                                    }|
+          {0:~                                                    }|
+          {0:~                                                    }|
+          {0:~                                                    }|
                                                                |
         ]])
       end)
@@ -167,12 +169,12 @@ describe('Screen', function()
           {1: } a region of text {1:-}                                 |
           {1: } a region of text {1:-}                                 |
           ^                                                     |
-          ~                                                    |
-          ~                                                    |
-          ~                                                    |
-          ~                                                    |
-          ~                                                    |
-          ~                                                    |
+          {0:~                                                    }|
+          {0:~                                                    }|
+          {0:~                                                    }|
+          {0:~                                                    }|
+          {0:~                                                    }|
+          {0:~                                                    }|
                                                                |
         ]])
       end)
@@ -186,10 +188,10 @@ describe('Screen', function()
           {1: } A region with {1: } a nested {1: } nested region.{1:-}         |
            {1:-} {1:-}                                                 |
           ^                                                     |
-          ~                                                    |
-          ~                                                    |
-          ~                                                    |
-          ~                                                    |
+          {0:~                                                    }|
+          {0:~                                                    }|
+          {0:~                                                    }|
+          {0:~                                                    }|
                                                                |
         ]])
       end)
@@ -208,12 +210,12 @@ describe('Screen', function()
           {1:-}                                                    |
           {1:-}                                                    |
           ^                                                     |
-          ~                                                    |
-          ~                                                    |
-          ~                                                    |
-          ~                                                    |
-          ~                                                    |
-          ~                                                    |
+          {0:~                                                    }|
+          {0:~                                                    }|
+          {0:~                                                    }|
+          {0:~                                                    }|
+          {0:~                                                    }|
+          {0:~                                                    }|
           :syn region rText start='<r>' end='</r>' cchar=-     |
         ]])
       end)
@@ -229,10 +231,10 @@ describe('Screen', function()
           <i> italian text </i>                                |
           <i> italian text </i>                                |
           ^                                                     |
-          ~                                                    |
-          ~                                                    |
-          ~                                                    |
-          ~                                                    |
+          {0:~                                                    }|
+          {0:~                                                    }|
+          {0:~                                                    }|
+          {0:~                                                    }|
           :syn region iText start='<i>' end='</i>' cchar=*     |
         ]])
         execute("syntax conceal on")
@@ -243,10 +245,10 @@ describe('Screen', function()
           {1:*}                                                    |
           {1:*}                                                    |
           ^                                                     |
-          ~                                                    |
-          ~                                                    |
-          ~                                                    |
-          ~                                                    |
+          {0:~                                                    }|
+          {0:~                                                    }|
+          {0:~                                                    }|
+          {0:~                                                    }|
           :syn region iText start='<i>' end='</i>' cchar=*     |
         ]])
       end)
@@ -271,10 +273,10 @@ describe('Screen', function()
         + With cchar                                         |
                                                              |
         ^                                                     |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
         :let &conceallevel=0                                 |
       ]])
     end)
@@ -287,10 +289,10 @@ describe('Screen', function()
         {1:C}                                                    |
                                                              |
         ^                                                     |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
         :let &conceallevel=1                                 |
       ]])
     end)
@@ -303,10 +305,10 @@ describe('Screen', function()
         {1:C}                                                    |
                                                              |
         ^                                                     |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
         :let &conceallevel=2                                 |
       ]])
     end)
@@ -319,10 +321,10 @@ describe('Screen', function()
                                                              |
                                                              |
         ^                                                     |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
         :let &conceallevel=3                                 |
       ]])
     end)
