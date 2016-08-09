@@ -41,21 +41,51 @@ static bool msgpane_create(void)
   return msgpane_exists();
 }
 
-/// Scroll to the bottom in each window displaying the message pane if it's
-/// already at the bottom.
-/// TODO: This doesn't work with wrapped lines.
-static void scroll_to_bottom(bool automatic)
+/// Scroll to the bottom in each window displaying the message pane if the
+/// cursor is on the last line.
+static void scroll_to_bottom(bool force)
 {
+  win_T *oldwin = curwin;
+  linenr_T lnum;
+  int lines_height;
+
   FOR_ALL_TAB_WINDOWS(tp, wp) {
     if (wp->w_buffer->b_messages) {
-      if (!automatic || wp->w_botline == wp->w_buffer->b_ml.ml_line_count) {
-        wp->w_cursor.lnum = wp->w_buffer->b_ml.ml_line_count;
-        set_topline(wp, MAX(1, wp->w_cursor.lnum - wp->w_height + 1));
+      // Note: we are checking the cursor's line _after_ adding a new line.
+      if (force || wp->w_cursor.lnum >= wp->w_buffer->b_ml.ml_line_count - 1) {
+        lnum = wp->w_buffer->b_ml.ml_line_count;
+        wp->w_cursor.lnum = lnum;
+        wp->w_cursor.col = 0;
+
+        if (wp->w_p_wrap) {
+          lines_height = 0;
+
+          while (lnum > 0 && lines_height < wp->w_height) {
+            lines_height += plines_win_nofill(wp, lnum--, false);
+          }
+
+          if (lines_height > wp->w_height) {
+            lnum++;
+          }
+        } else if (wp->w_height > lnum) {
+          lnum = 0;
+        } else {
+          lnum -= wp->w_height;
+        }
+
+        /// Note: There is scroll_cursor_bot() in move.c but I can't get it to
+        /// do what I want.
+        set_topline(wp, lnum + 1);
+
+        curwin = wp;
+        update_topline();
+        validate_cursor();
+        curwin = oldwin;
       }
     }
   }
 
-  redraw_later(SOME_VALID);
+  curwin = oldwin;
 }
 
 /// Open a message pane window.
@@ -112,7 +142,7 @@ bool msgpane_open(void)
       }
     }
 
-    scroll_to_bottom(false);
+    scroll_to_bottom(true);
     msg_silent--;
   }
 
@@ -185,5 +215,5 @@ void msgpane_add_msg(char_u *msg, int attr)
   history[history_len] = entry;
   history_len++;
   msgpane_add_buffer_line(entry->msg);
-  scroll_to_bottom(true);
+  scroll_to_bottom(false);
 }
