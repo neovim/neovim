@@ -435,6 +435,7 @@ typedef struct {
   TimeWatcher tw;
   int timer_id;
   int repeat_count;
+  int refcount;
   long timeout;
   bool stopped;
   ufunc_T *callback;
@@ -16775,6 +16776,7 @@ static void f_timer_start(typval_T *argvars, typval_T *rettv)
   func->uf_refcount++;
 
   timer = xmalloc(sizeof *timer);
+  timer->refcount = 1;
   timer->stopped = false;
   timer->repeat_count = repeat;
   timer->timeout = timeout;
@@ -16817,6 +16819,7 @@ static void timer_due_cb(TimeWatcher *tw, void *data)
   if (timer->stopped) {
     return;
   }
+  timer->refcount++;
   // if repeat was negative repeat forever
   if (timer->repeat_count >= 0 && --timer->repeat_count == 0) {
     timer_stop(timer);
@@ -16840,6 +16843,7 @@ static void timer_due_cb(TimeWatcher *tw, void *data)
     // when the main loop is blocked.
     time_watcher_start(&timer->tw, timer_due_cb, 0, 0);
   }
+  timer_decref(timer);
 }
 
 static void timer_stop(timer_T *timer)
@@ -16850,17 +16854,24 @@ static void timer_stop(timer_T *timer)
   }
   timer->stopped = true;
   time_watcher_stop(&timer->tw);
-  time_watcher_close(&timer->tw, timer_free_cb);
+  time_watcher_close(&timer->tw, timer_close_cb);
 }
 
 // invoked on next event loop tick, so queue is empty
-static void timer_free_cb(TimeWatcher *tw, void *data)
+static void timer_close_cb(TimeWatcher *tw, void *data)
 {
   timer_T *timer = (timer_T *)data;
   queue_free(timer->tw.events);
   user_func_unref(timer->callback);
   pmap_del(uint64_t)(timers, timer->timer_id);
-  xfree(timer);
+  timer_decref(timer);
+}
+
+static void timer_decref(timer_T *timer)
+{
+  if (--timer->refcount == 0) {
+    xfree(timer);
+  }
 }
 
 void timer_teardown(void)
