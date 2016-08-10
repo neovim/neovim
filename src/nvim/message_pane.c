@@ -188,6 +188,10 @@ static void msgpane_add_buffer_line(char_u *msg)
     return;
   }
 
+  int save_w_redr_type = curwin->w_redr_type;
+  int save_w_lines_valid = curwin->w_lines_valid;
+  int save_must_redraw = must_redraw;
+
   WITH_BUFFER(msgpane_buf, {
     if (bufempty()) {
       lnum = 1;
@@ -206,6 +210,16 @@ static void msgpane_add_buffer_line(char_u *msg)
       appended_lines(lnum, 1);
     }
   });
+
+  if (msgpane_buf->b_nwindows == 0) {
+    // Since the message pane buffer wasn't actually in any windows, but
+    // WITH_BUFFER() temporarily made it `curbuf`, undo the effects of
+    // `redraw_win_later()`.  Otherwise, it will look like lines are
+    // disappearing in the actual `curbuf`.
+    curwin->w_redr_type = save_w_redr_type;
+    curwin->w_lines_valid = save_w_lines_valid;
+    must_redraw = save_must_redraw;
+  }
 }
 
 
