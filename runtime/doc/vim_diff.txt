@@ -64,13 +64,13 @@ these differences.
 MAJOR FEATURES ~
 
 Embedded terminal emulator	|terminal-emulator|
-Shared data			|shada|
 RPC API				|RPC|
+Shared data			|shada|
+XDG base directories		|xdg|
 Job control			|job-control|
 Remote plugins			|remote-plugin|
 Python plugins			|provider-python|
 Clipboard integration		|provider-clipboard|
-XDG support
 
 
 OTHER FEATURES ~

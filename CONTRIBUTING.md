@@ -1,13 +1,18 @@
 # Contributing to Neovim
 
-## Getting started
+Getting started
+---------------
 
-- Help us review [open pull requests](https://github.com/neovim/neovim/pulls)!
-  See [Reviewing](#reviewing) for guidelines.
-- Try an [entry-level issue][entry-level] if you are wondering where to start.
-- Or [merge a Vim patch].
+If you want to help but don't know where to start, here are some
+low-risk/isolated tasks:
 
-## Reporting problems
+- Help us [review pull requests](#reviewing)!
+- Merge a [Vim patch].
+- Try a [complexity:low] issue.
+- Fix [clang-scan] or [coverity](#coverity) warnings.
+
+Reporting problems
+------------------
 
 - Check the [**FAQ**][wiki-faq].
 - Search [existing issues][github-issues] (including closed!)
@@ -18,7 +23,8 @@
 - [Bisecting][git-bisect] to the cause of a regression often leads to an
   immediate fix.
 
-## Pull requests ("PRs")
+Pull requests ("PRs")
+---------------------
 
 - To avoid duplicate work, you may want to create a `[WIP]` pull request so that
   others know what you are working on.
@@ -34,13 +40,13 @@
 
 ### Stages: WIP, RFC
 
-Pull requests are processed in two stages: _WIP_ (Work In Progress) and _RFC_
-(Request For Comment).
+Pull requests have two stages: `[WIP]` (Work In Progress) and `[RFC]` (Request
+For Comment).
 
-- Untagged PRs are assumed to be RFC, meaning the work is ready for review and
+- Untagged PRs are assumed to be `[RFC]`, i.e. the work is ready for review and
   you would like feedback.
 - Preprend `[WIP]` to the PR title if you are _not_ ready for feedback and the
-  work is still in flux. This saves time and confusion.
+  work is still in flux.
 
 ### Commit messages
 
@@ -86,7 +92,8 @@ Use this commit-message format for coverity fixes:
 
 where `<id>` is the Coverity ID (CID). For example see [#804](https://github.com/neovim/neovim/pull/804).
 
-## Reviewing
+Reviewing
+---------
 
 To help review pull requests, start with [this checklist][review-checklist].
 
@@ -101,8 +108,6 @@ commits in the feature branch which aren't in the `master` branch; `-p`
 shows each commit's diff. To show the whole surrounding function of a change
 as context, use the `-W` argument as well.
 
-
-[entry-level]: https://github.com/neovim/neovim/issues?labels=entry-level&state=open
 [gcc-warnings]: https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html
 [git-bisect]: http://git-scm.com/book/tr/v2/Git-Tools-Debugging-with-Git
 [git-feature-branch]: https://www.atlassian.com/git/tutorials/comparing-workflows
@@ -121,4 +126,6 @@ as context, use the `-W` argument as well.
 [3174]: https://github.com/neovim/neovim/issues/3174
 [travis CI]: https://travis-ci.org/neovim/neovim
 [quickbuild]: http://neovim-qb.szakmeister.net/dashboard
-[merge a Vim patch]: https://github.com/neovim/neovim/wiki/Merging-patches-from-upstream-Vim
+[Vim patch]: https://github.com/neovim/neovim/wiki/Merging-patches-from-upstream-Vim
+[clang-scan]: https://neovim.io/doc/reports/clang/
+[complexity:low]: https://github.com/neovim/neovim/issues?q=is%3Aopen+is%3Aissue+label%3Acomplexity%3Alow
