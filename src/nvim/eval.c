@@ -11748,6 +11748,7 @@ static void f_has(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     "macunix",
 #endif
     "menu",
+    "msgpane",
     "mksession",
     "modify_fname",
     "mouse",

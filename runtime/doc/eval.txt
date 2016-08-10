@@ -7973,6 +7973,7 @@ localmap		Compiled with local mappings and abbr. |:map-local|
 mac			Macintosh version of Vim.
 macunix			Macintosh version of Vim, using Unix files (OS-X).
 menu			Compiled with support for |:menu|.
+msgpane			Compiled with support for 'messagepane'.
 mksession		Compiled with support for |:mksession|.
 modify_fname		Compiled with file name modifiers. |filename-modifiers|
 mouse			Compiled with support mouse.
