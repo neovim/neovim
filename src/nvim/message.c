@@ -131,6 +131,34 @@ int verb_msg(char_u *s)
 
 int msg_attr(const char *s, const int attr) FUNC_ATTR_NONNULL_ARG(1)
 {
+  if (p_msgpane && !msg_hist_off && msg_silent == 0
+      && (keep_msg == NULL || STRCMP(keep_msg, s) || keep_msg_attr != attr)) {
+    msgpane_add_msg(s, attr);
+
+    msg_scroll = false;
+    msg_nowait = true;
+    msg_scrolled_ign = true;
+
+    // Everying that `wait_return()` resets after `msg_check()`
+    need_wait_return = false;
+    did_wait_return = true;
+    emsg_on_display = false;
+    lines_left = -1;
+
+    // If the message pane's window redraws while not `curwin`, forcing the
+    // message and its attribute to be kept will keep the last message on the
+    // screen.
+    msg_attr_keep((char_u *)s, attr, true);
+
+    if (keep_msg != NULL) {
+      keep_msg_attr = attr;
+    }
+
+    reset_last_sourcing();
+
+    return true;
+  }
+
   return msg_attr_keep((char_u *)s, attr, false);
 }
 
@@ -702,19 +730,6 @@ static void add_msg_hist(const char *s, int len, int attr)
   if (first_msg_hist == NULL)
     first_msg_hist = last_msg_hist;
   ++msg_hist_len;
-
-  if (p_msgpane) {
-    // Message pane is enabled.  Messages that are added to the history
-    // shouldn't display more than one line in the command line.
-    if (len > 0) {
-      msgpane_add_msg(s, attr);
-    }
-
-    msg_scroll = 0;
-    need_wait_return = false;
-    emsg_on_display = false;
-    reset_last_sourcing();
-  }
 }
 
 /*
