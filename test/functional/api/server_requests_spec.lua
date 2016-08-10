@@ -137,6 +137,12 @@ describe('server -> client', function()
   end)
 
   describe('when the client is a recursive vim instance', function()
+    if os.getenv("TRAVIS") and helpers.os_name() == "osx" then
+      -- XXX: Hangs Travis OSX since e9061117a5b8f195c3f26a5cb94e18ddd7752d86.
+      pending("[Hangs on Travis OSX. #5002]", function() end)
+      return
+    end
+
     before_each(function()
       nvim('command', "let vim = rpcstart('"..nvim_prog.."', ['-u', 'NONE', '-i', 'NONE', '--cmd', 'set noswapfile', '--embed'])")
       neq(0, eval('vim'))
