@@ -226,7 +226,9 @@ static void msgpane_add_buffer_line(char_u *msg)
 /// Add a line to the message pane.
 void msgpane_add_msg(char_u *msg, int attr)
 {
-  if (curbuf->b_messages && STRCMP(msg, _(e_modifiable)) == 0) {
+  if (*msg == NUL || (curbuf->b_messages && STRCMP(msg, _(e_modifiable)) == 0)
+      || (history_len > 0 && STRCMP(history[history_len - 1]->msg, msg) == 0
+          && history[history_len - 1]->attr == attr)) {
     return;
   }
 
