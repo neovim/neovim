@@ -23,7 +23,7 @@ function! s:open_err_script(err) abort
 
   let i += a:err.lnum
 
-  execute 'split' fname
+  execute 'wincmd p | split' fname
   execute 'normal! '.i.'G'
 endfunction
 
