@@ -3286,6 +3286,10 @@ win_line (
               has_spell ? &can_spell :
               NULL, FALSE);
 
+          if (msgpane_attr != 0) {
+            syntax_attr = hl_combine_attr(msgpane_attr, syntax_attr);
+          }
+
           if (did_emsg) {
             wp->w_s->b_syn_error = TRUE;
             has_syntax = FALSE;
