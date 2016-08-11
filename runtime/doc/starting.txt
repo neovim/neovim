@@ -1200,11 +1200,10 @@ running) you have additional options:
 :wv[iminfo][!] [file]	Deprecated alias to |:wshada| command.
 
 						*:o* *:ol* *:oldfiles*
-:o[ldfiles][!]		List the files that have marks stored in the ShaDa
+:o[ldfiles]		List the files that have marks stored in the ShaDa
 			file.  This list is read on startup and only changes
 			afterwards with ":rshada!".  Also see |v:oldfiles|.
 			The number can be used with |c_#<|.
-			Use ! to get a file selection prompt.
 
 :bro[wse] o[ldfiles][!]
 			List file names as with |:oldfiles|, and then prompt

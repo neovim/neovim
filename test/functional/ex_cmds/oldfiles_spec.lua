@@ -47,7 +47,7 @@ describe(':oldfiles', function()
   end)
 end)
 
-describe(':oldfiles!', function()
+describe(':browse oldfiles', function()
   local filename
   local filename2
   local oldfiles
@@ -74,7 +74,7 @@ describe(':oldfiles!', function()
     ok(filename == oldfiles[1] or filename == oldfiles[2])
     ok(filename2 == oldfiles[1] or filename2 == oldfiles[2])
 
-    execute('oldfiles!')
+    execute('browse oldfiles')
   end)
 
   after_each(function()
