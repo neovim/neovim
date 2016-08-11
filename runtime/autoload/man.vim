@@ -26,7 +26,7 @@ endtry
 " by the user. count defaults to 0 which is a valid section and
 " count1 defaults to 1 which is also a valid section. Only when they
 " are equal was the count explicitly set.
-function! man#open_page(count, count1, ...) abort
+function! man#open_page(count, count1, mods, ...) abort
   if a:0 > 2
     call s:error('too many arguments')
     return
@@ -56,20 +56,20 @@ function! man#open_page(count, count1, ...) abort
   endtry
   call s:push_tag()
   let bufname = 'man://'.name.(empty(sect)?'':'('.sect.')')
-  let found_man = s:find_man()
-  if getbufvar(bufname, 'manwidth') ==# s:manwidth()
-    if found_man
-      silent execute 'buf' bufnr(bufname)
-    else
-      execute 'split' bufname
+  if a:mods !~# 'tab' && s:find_man()
+    if s:manwidth() ==# getbufvar(bufname, 'manwidth')
+      silent execute 'buf' bufname
+      keepjumps 1
+      return
     endif
-    keepjumps 1
+    noautocmd execute 'edit' bufname
+    call s:read_page(sect, name)
     return
   endif
-  if found_man
-    noautocmd execute 'edit' bufname
-  else
-    noautocmd execute 'split' bufname
+  noautocmd execute a:mods 'split' bufname
+  if s:manwidth() ==# get(b:, 'manwidth')
+    keepjumps 1
+    return
   endif
   call s:read_page(sect, name)
 endfunction
