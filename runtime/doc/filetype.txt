@@ -515,12 +515,11 @@ MAN					*ft-man-plugin* *:Man* *man.vim*
 View manpages in Nvim. Supports highlighting, completion, locales, and
 navigation. Also see |find-manpage|.
 
-To use Nvim as a manpager:
-
+To use Nvim as a manpager: >
      export MANPAGER="nvim -c 'set ft=man' -"
 
-All commands and mappings will attempt to reuse the closest man window
-(above/left) and otherwise create a split.
+man.vim will always attempt to reuse the closest man window (above/left) but
+otherwise create a split.
 
 Commands:
 Man {name}                Display the manpage for {name}.
@@ -528,8 +527,12 @@ Man {sect} {name}         Display the manpage for {name} and section {sect}.
 Man {name}({sect})        Alternate syntax which completes the section.
 Man {sect} {name}({sect}) Used during completion to show the real section of
                           when the provided section is a prefix, e.g. 1m vs 1.
-Man {path}                Open the manpage specified by path. Use "./" if it
-                          is in the current directory.
+Man {path}                Open the manpage specified by path. Prepend './' if
+                          page is in the current directory.
+
+`:Man` also accept command modifiers.
+For example, to open a manpage in a vertical split. >
+     :vertical Man printf
 
 Global Mappings:
 <Plug>(Man)               Jump to the manpage for the <cWORD> under the
