@@ -176,6 +176,7 @@ typedef struct {
   int lockmarks;                        /* TRUE when ":lockmarks" was used */
   int keeppatterns;                     /* TRUE when ":keeppatterns" was used */
   bool noswapfile;                      /* true when ":noswapfile" was used */
+  bool browse;                          ///< TRUE to invoke file dialog
   char_u      *save_ei;                 /* saved value of 'eventignore' */
 } cmdmod_T;
 

@@ -1313,8 +1313,9 @@ static char_u * do_one_cmd(char_u **cmdlinep,
     case 'b':   if (checkforcmd(&ea.cmd, "belowright", 3)) {
         cmdmod.split |= WSP_BELOW;
         continue;
-    }
+      }
       if (checkforcmd(&ea.cmd, "browse", 3)) {
+        cmdmod.browse = true;
         continue;
       }
       if (!checkforcmd(&ea.cmd, "botright", 2))
