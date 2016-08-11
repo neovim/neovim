@@ -160,24 +160,22 @@ typedef struct expand {
 #define XP_BS_ONE       1       /* uses one backslash before a space */
 #define XP_BS_THREE     2       /* uses three backslashes before a space */
 
-/*
- * Command modifiers ":vertical", ":browse", ":confirm" and ":hide" set a flag.
- * This needs to be saved for recursive commands, put them in a structure for
- * easy manipulation.
- */
+/// Command modifiers ":vertical", ":browse", ":confirm", ":hide", etc. set a
+/// flag.  This needs to be saved for recursive commands, put them in a
+/// structure for easy manipulation.
 typedef struct {
-  int hide;                             /* TRUE when ":hide" was used */
-  int split;                            /* flags for win_split() */
-  int tab;                              /* > 0 when ":tab" was used */
-  int confirm;                          /* TRUE to invoke yes/no dialog */
-  int keepalt;                          /* TRUE when ":keepalt" was used */
-  int keepmarks;                        /* TRUE when ":keepmarks" was used */
-  int keepjumps;                        /* TRUE when ":keepjumps" was used */
-  int lockmarks;                        /* TRUE when ":lockmarks" was used */
-  int keeppatterns;                     /* TRUE when ":keeppatterns" was used */
-  bool noswapfile;                      /* true when ":noswapfile" was used */
-  bool browse;                          ///< TRUE to invoke file dialog
-  char_u      *save_ei;                 /* saved value of 'eventignore' */
+  int hide;          ///< TRUE when ":hide" was used
+  int split;         ///< flags for win_split()
+  int tab;           ///< > 0 when ":tab" was used
+  int confirm;       ///< TRUE to invoke yes/no dialog
+  int keepalt;       ///< TRUE when ":keepalt" was used
+  int keepmarks;     ///< TRUE when ":keepmarks" was used
+  int keepjumps;     ///< TRUE when ":keepjumps" was used
+  int lockmarks;     ///< TRUE when ":lockmarks" was used
+  int keeppatterns;  ///< TRUE when ":keeppatterns" was used
+  bool noswapfile;   ///< true when ":noswapfile" was used
+  bool browse;       ///< TRUE to invoke file dialog
+  char_u *save_ei;   ///< saved value of 'eventignore'
 } cmdmod_T;
 
 #endif  // NVIM_EX_CMDS_DEFS_H
