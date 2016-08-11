@@ -12,6 +12,11 @@
 #include "nvim/window.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/message_pane.h"
+#include "nvim/os/time.h"
+
+#define MSGPANE_SEP_FILL '-'
+#define MSGPANE_SEP (char_u *)"-- "
+#define MSGPANE_SEP_LEN STRLEN(MSGPANE_SEP)
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "message_pane.c.generated.h"
@@ -179,6 +184,48 @@ int msgpane_line_attr(linenr_T lnum)
 }
 
 
+/// Check if the line is a separator.
+bool msgpane_line_is_sep(linenr_T lnum) {
+  if (lnum > 0 && lnum <= history_len) {
+    char_u *msg = history[lnum - 1]->msg;
+    return (STRNCMP(msg, MSGPANE_SEP, MSGPANE_SEP_LEN) == 0
+            && STRLEN(msg) > MSGPANE_SEP_LEN);
+  }
+  return false;
+}
+
+
+/// Fill window line with the message's time and dashes up to a maximum of 512
+/// characters.  Time is displayed using the 24hr format with milliseconds as
+/// the fractional unit.
+///
+/// @param line Pointer to an allocated string.
+/// @param lnum Line number.
+/// @param width Width of the line, including string terminator.
+void msgpane_line_sep_fill(char_u *line, linenr_T lnum, int width) {
+  if (lnum <= 0 || lnum > history_len || width < 1) {
+    return;
+  }
+
+  double timestamp_f = history[lnum - 1]->timestamp;
+  time_t timestamp = (time_t)timestamp_f;
+  time_t ms = (time_t)((timestamp_f - (double)timestamp) * 1000);
+
+  struct tm msgtime;
+  struct tm *dt = os_localtime_r(&timestamp, &msgtime);
+
+  strftime((char *)line, (size_t)width, (char *)" @ %T", dt);
+  int len = vim_snprintf((char *)line, (size_t)width,
+                         (char *)"%s.%03d ", line, ms);
+
+  while (len <= width) {
+    line[len++] = MSGPANE_SEP_FILL;
+  }
+
+  line[width] = NUL;
+}
+
+
 /// Add a line to the message pane buffer.
 static void msgpane_add_buffer_line(char_u *msg)
 {
@@ -227,7 +274,8 @@ static void msgpane_add_buffer_line(char_u *msg)
 void msgpane_add_msg(char_u *msg, int attr)
 {
   if (*msg == NUL || (curbuf->b_messages && STRCMP(msg, _(e_modifiable)) == 0)
-      || (history_len > 0 && STRCMP(history[history_len - 1]->msg, msg) == 0
+      || (STRNCMP(msg, MSGPANE_SEP, MSGPANE_SEP_LEN) && history_len > 0
+          && STRCMP(history[history_len - 1]->msg, msg) == 0
           && history[history_len - 1]->attr == attr)) {
     return;
   }
@@ -235,6 +283,7 @@ void msgpane_add_msg(char_u *msg, int attr)
   MessagePaneEntry *entry = xmalloc(sizeof(MessagePaneEntry));
   entry->msg = vim_strsave(msg);
   entry->attr = attr;
+  entry->timestamp = os_timef();
 
   if (history_len >= MAX_MSGPANE_HIST) {
     history_len = MAX_MSGPANE_HIST - 1;

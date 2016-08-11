@@ -2652,6 +2652,12 @@ win_line (
   // entire line.
   if (wp->w_buffer->b_messages) {
     msgpane_attr = msgpane_line_attr(lnum);
+
+    // If the message pane line is a separator, use NonText if it doesn't have
+    // its own highlight attribute.
+    if (msgpane_attr == 0 && msgpane_line_is_sep(lnum)) {
+      msgpane_attr = hl_attr(HLF_AT);
+    }
   }
 
   off = (unsigned)(current_ScreenLine - ScreenLines);
@@ -2870,6 +2876,15 @@ win_line (
       else
         row = wp->w_height;
       break;
+    }
+
+    if (n_extra == 0 && wp->w_buffer->b_messages != 0 && *ptr == NUL
+        && msgpane_line_is_sep(lnum)) {
+      char_u p[512];  // 512 characters should be a reasonable maximum width.
+      size_t n = MIN(512, wp->w_width - col);
+      msgpane_line_sep_fill(p, lnum, n);
+      p_extra = p;
+      n_extra = n;
     }
 
     if (draw_state == WL_LINE && area_highlighting) {

@@ -8,3 +8,8 @@ setlocal keywordprg=:help
 
 nnoremap <silent><buffer> q :close<cr>
 nnoremap <silent><buffer> gf :<c-u>call msgpane#goto()<cr>
+
+nnoremap <silent><buffer> ]] :<c-u>call search('^-- ','sW')<cr>
+nnoremap <silent><buffer> [[ :<c-u>call search('^-- ','sbW')<cr>
+xnoremap <silent><buffer> ]] :<c-u>execute 'normal! gv'<bar>call search('^-- ','sW')<cr>
+xnoremap <silent><buffer> [[ :<c-u>execute 'normal! gv'<bar>call search('^-- ','sbW')<cr>

@@ -10,6 +10,7 @@
 typedef struct msgpane_entry {
   char_u *msg;
   int attr;
+  double timestamp;
 } MessagePaneEntry;
 
 #endif  // NVIM_MESSAGE_PANE_H
