@@ -1406,6 +1406,27 @@ The valid escape sequences are
 	<bang>	(See the '-bang' attribute) Expands to a ! if the
 		command was executed with a ! modifier, otherwise
 		expands to nothing.
+						*<mods>*
+	<mods>  The command modifiers, if specified. Otherwise, expands to
+		nothing. Supported modifiers are |aboveleft|, |belowright|,
+		|botright|, |browse|, |confirm|, |hide|, |keepalt|,
+		|keepjumps|, |keepmarks|, |keeppatterns|, |lockmarks|,
+		|noswapfile|, |silent|, |tab|, |topleft|, |verbose|, and
+		|vertical|.
+		Examples: >
+		    command! -nargs=+ -complete=file MyEdit
+				\ for f in expand(<q-args>, 0, 1) |
+				\ exe '<mods> split ' . f |
+				\ endfor
+
+		    function! SpecialEdit(files, mods)
+			for f in expand(a:files, 0, 1)
+			    exe a:mods . ' split ' . f
+			endfor
+		    endfunction
+		    command! -nargs=+ -complete=file Sedit
+				\ call SpecialEdit(<q-args>, <q-mods>)
+<
 						*<reg>* *<register>*
 	<reg>	(See the '-register' attribute) The optional register,
 		if specified.  Otherwise, expands to nothing.  <register>
