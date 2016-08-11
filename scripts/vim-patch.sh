@@ -3,6 +3,8 @@
 set -e
 set -u
 set -o pipefail
+# Use priviledged mode, which e.g. skips using CDPATH.
+set -p
 
 readonly NEOVIM_SOURCE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 readonly VIM_SOURCE_DIR_DEFAULT="${NEOVIM_SOURCE_DIR}/.vim-src"
