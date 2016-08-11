@@ -1691,8 +1691,11 @@ static void printdigraph(digr_T *dp)
       msg_putchar('\n');
     }
 
-    if (msg_col) {
-      while (msg_col % list_width != 0) {
+
+    // Make msg_col a multiple of list_width by using spaces.
+    if (msg_col % list_width != 0) {
+      int spaces = (msg_col / list_width + 1) * list_width - msg_col;
+      while (spaces--) {
         msg_putchar(' ');
       }
     }
