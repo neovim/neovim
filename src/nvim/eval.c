@@ -21722,8 +21722,8 @@ void ex_oldfiles(exarg_T *eap)
     /* Assume "got_int" was set to truncate the listing. */
     got_int = FALSE;
 
-    // File selection prompt on ":oldfiles!"
-    if (eap->forceit) {
+    // File selection prompt on ":browse oldfiles"
+    if (cmdmod.browse) {
       quit_more = false;
       nr = prompt_for_number(false);
       msg_starthere();

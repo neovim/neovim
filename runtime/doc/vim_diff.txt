@@ -188,7 +188,6 @@ Additional differences:
   compatibility reasons.
 - |:wviminfo| was renamed to |:wshada|, |:rviminfo| to |:rshada|.  Old
   commands are still kept.
-- |:oldfiles| supports !.
 - When writing (|:wshada| without bang or at exit) it merges much more data,
   and does this according to the timestamp.  Vim merges only marks.
   |shada-merging|
