@@ -2,6 +2,7 @@
 local helpers = require('test.functional.helpers')(after_each)
 local nvim_command, funcs, meths, nvim_feed, eq =
   helpers.command, helpers.funcs, helpers.meths, helpers.feed, helpers.eq
+local exc_exec = helpers.exc_exec
 
 local shada_helpers = require('test.functional.shada.helpers')
 local reset, set_additional_cmd, clear =
@@ -106,6 +107,44 @@ describe('ShaDa support code', function()
     eq('c', funcs.histget('>', -1))
   end)
 
+  it('does not restore search history with :keeppatterns rshada', function()
+    nvim_command('debuggreedy')
+    nvim_feed(':debug echo "Test"\n" Test 2\nc\n')  -- Debug history.
+    nvim_feed(':call input("")\nTest 2\n')  -- Input history.
+    nvim_feed('"="Test"\nyy')  -- Expression history.
+    nvim_feed('/Test\n')  -- Search history
+    nvim_feed(':" Test\n')  -- Command-line history
+    nvim_command('0debuggreedy')
+    nvim_command('wshada')
+    eq('" Test', funcs.histget(':', -1))
+    eq('Test', funcs.histget('/', -1))
+    eq('"Test"', funcs.histget('=', -1))
+    eq('Test 2', funcs.histget('@', -1))
+    eq('c', funcs.histget('>', -1))
+    eq(1, funcs.histdel(':'))
+    eq(1, funcs.histdel('/'))
+    eq(1, funcs.histdel('='))
+    eq(1, funcs.histdel('@'))
+    eq(1, funcs.histdel('>'))
+    eq('', funcs.histget(':', -1))
+    eq('', funcs.histget('/', -1))
+    eq('', funcs.histget('=', -1))
+    eq('', funcs.histget('@', -1))
+    eq('', funcs.histget('>', -1))
+    nvim_command('keeppatterns rshada')
+    eq('" Test', funcs.histget(':', -1))
+    eq('', funcs.histget('/', -1))
+    eq('"Test"', funcs.histget('=', -1))
+    eq('Test 2', funcs.histget('@', -1))
+    eq('c', funcs.histget('>', -1))
+    nvim_command('rshada')
+    eq('" Test', funcs.histget(':', -1))
+    eq('Test', funcs.histget('/', -1))
+    eq('"Test"', funcs.histget('=', -1))
+    eq('Test 2', funcs.histget('@', -1))
+    eq('c', funcs.histget('>', -1))
+  end)
+
   it('dumps and loads last search pattern with offset', function()
     meths.set_option('wrapscan', false)
     funcs.setline('.', {'foo', 'bar--'})
@@ -118,6 +157,20 @@ describe('ShaDa support code', function()
     nvim_feed('gg0n')
     eq({0, 2, 3, 0}, funcs.getpos('.'))
     eq(1, meths.get_vvar('searchforward'))
+  end)
+
+  it('does not load last search pattern with :keeppatterns rshada!', function()
+    meths.set_option('wrapscan', false)
+    funcs.setline('.', {'foo', 'bar--'})
+    nvim_feed('gg0/a/e+1\n')
+    eq({0, 2, 3, 0}, funcs.getpos('.'))
+    nvim_command('wshada')
+    nvim_feed('gg0/b/e+1\n')
+    eq('b', funcs.getreg('/'))
+    nvim_command('keeppatterns rshada!')
+    eq('b', funcs.getreg('/'))
+    nvim_command('rshada!')
+    eq('a', funcs.getreg('/'))
   end)
 
   it('dumps and loads last search pattern with offset and backward direction',
@@ -170,6 +223,24 @@ describe('ShaDa support code', function()
     reset()
     funcs.setline('.', {'foo', 'bar'})
     nvim_command('&')
+    eq('goo', funcs.getline(1))
+  end)
+
+  it('does not load last s/ pattern and replacement with :keeppatterns rshada',
+  function()
+    funcs.setline('.', {'foo', 'bar'})
+    nvim_command('%s/f/g/g')
+    eq('goo', funcs.getline(1))
+    nvim_command('wshada')
+    set_additional_cmd('set shada=')
+    reset()
+    nvim_command('set shada&')
+    funcs.setline('.', {'foo', 'bar'})
+    eq('Vim(&):E33: No previous substitute regular expression', exc_exec('&'))
+    nvim_command('keeppatterns rshada')
+    eq('Vim(&):E33: No previous substitute regular expression', exc_exec('&'))
+    nvim_command('rshada')
+    eq(0, exc_exec('&'))
     eq('goo', funcs.getline(1))
   end)
 

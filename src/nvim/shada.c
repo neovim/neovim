@@ -149,6 +149,9 @@ KHASH_SET_INIT_STR(strset)
 /// Common prefix for all ignorable “write” errors
 #define WERR "E574: "
 
+/// Callback function for add_search_pattern
+typedef void (*SearchPatternGetter)(SearchPattern *);
+
 /// Flags for shada_read_file and children
 typedef enum {
   kShaDaWantInfo = 1,       ///< Load non-mark information
@@ -206,46 +209,40 @@ typedef enum {
 
 /// Flags for shada_read_next_item
 enum SRNIFlags {
-  kSDReadHeader = (1 << kSDItemHeader),  ///< Determines whether header should
-                                         ///< be read (it is usually ignored).
-  kSDReadUndisableableData = (
-      (1 << kSDItemSearchPattern)
-      | (1 << kSDItemSubString)
-      | (1 << kSDItemJump)),  ///< Data reading which cannot be disabled by
-                              ///< &shada or other options except for disabling
-                              ///< reading ShaDa as a whole.
-  kSDReadRegisters = (1 << kSDItemRegister),  ///< Determines whether registers
-                                              ///< should be read (may only be
-                                              ///< disabled when writing, but
-                                              ///< not when reading).
-  kSDReadHistory = (1 << kSDItemHistoryEntry),  ///< Determines whether history
-                                                ///< should be read (can only be
-                                                ///< disabled by &history).
-  kSDReadVariables = (1 << kSDItemVariable),  ///< Determines whether variables
-                                              ///< should be read (disabled by
-                                              ///< removing ! from &shada).
-  kSDReadBufferList = (1 << kSDItemBufferList),  ///< Determines whether buffer
-                                                 ///< list should be read
-                                                 ///< (disabled by removing
-                                                 ///< % entry from &shada).
-  kSDReadUnknown = (1 << (SHADA_LAST_ENTRY + 1)),  ///< Determines whether
-                                                   ///< unknown items should be
-                                                   ///< read (usually disabled).
-  kSDReadGlobalMarks = (1 << kSDItemGlobalMark),  ///< Determines whether global
-                                                  ///< marks should be read. Can
-                                                  ///< only be disabled by
-                                                  ///< having f0 in &shada when
-                                                  ///< writing.
-  kSDReadLocalMarks = (1 << kSDItemLocalMark),  ///< Determines whether local
-                                                ///< marks should be read. Can
-                                                ///< only be disabled by
-                                                ///< disabling &shada or putting
-                                                ///< '0 there. Is also used for
-                                                ///< v:oldfiles.
-  kSDReadChanges = (1 << kSDItemChange),  ///< Determines whether change list
-                                          ///< should be read. Can only be
-                                          ///< disabled by disabling &shada or
-                                          ///< putting '0 there.
+  /// Determines whether header should be read (it is usually ignored).
+  kSDReadHeader = (1 << kSDItemHeader),
+  /// Determines whether :substitute replacement string should be read (can be
+  /// disabled by :keeppatterns).
+  kSDReadSubString = (1 << kSDItemSubString),
+  /// Determines whether search pattern should be read (may be disabled by
+  /// :keeppatterns).
+  kSDReadSearchPattern = (1 << kSDItemSearchPattern),
+  /// Determines whether jumps should be read (may be disabled by :keepjumps).
+  kSDReadJumps = (1 << kSDItemJump),
+  /// Determines whether registers should be read (may only be disabled when
+  /// writing, but not when reading).
+  kSDReadRegisters = (1 << kSDItemRegister),
+  /// Determines whether history should be read (can only be disabled by
+  /// &history).
+  kSDReadHistory = (1 << kSDItemHistoryEntry),
+  /// Determines whether variables should be read (disabled by removing ! from
+  /// &shada).
+  kSDReadVariables = (1 << kSDItemVariable),
+  /// Determines whether buffer list should be read (disabled by removing
+  /// % entry from &shada).
+  kSDReadBufferList = (1 << kSDItemBufferList),
+  /// Determines whether global marks should be read. Can only be disabled by
+  /// having f0 in &shada when writing.
+  kSDReadGlobalMarks = (1 << kSDItemGlobalMark),
+  /// Determines whether local marks should be read. Can only be disabled by
+  /// disabling &shada or putting '0 there. Is also used for v:oldfiles.
+  kSDReadLocalMarks = (1 << kSDItemLocalMark),
+  /// Determines whether change list should be read. Can be disabled by
+  /// disabling &shada or putting '0 there and also by using :keepjumps.
+  kSDReadChanges = (1 << kSDItemChange),
+  /// Determines whether unknown items should be read (usually disabled, enabled
+  /// when writing).
+  kSDReadUnknown = (1 << (SHADA_LAST_ENTRY + 1)),
 };
 // Note: SRNIFlags enum name was created only to make it possible to reference
 // it. This name is not actually used anywhere outside of the documentation.
@@ -1187,20 +1184,29 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
   const bool want_marks = flags & kShaDaWantMarks;
   const unsigned srni_flags = (unsigned) (
       (flags & kShaDaWantInfo
-       ? (kSDReadUndisableableData
+       ? (0
+          | (cmdmod.keepjumps
+             ? 0
+             : kSDReadJumps)
+          | (cmdmod.keeppatterns
+             ? 0
+             : kSDReadSearchPattern | kSDReadSubString)
           | kSDReadRegisters
           | kSDReadGlobalMarks
           | (p_hi ? kSDReadHistory : 0)
           | (find_shada_parameter('!') != NULL
              ? kSDReadVariables
              : 0)
-          | (find_shada_parameter('%') != NULL
-             && ARGCOUNT == 0
+          | ((find_shada_parameter('%') != NULL
+              && ARGCOUNT == 0)
              ? kSDReadBufferList
              : 0))
        : 0)
       | (want_marks && get_shada_parameter('\'') > 0
-         ? kSDReadLocalMarks | kSDReadChanges
+         ? (kSDReadLocalMarks
+            | (cmdmod.keepjumps
+               ? 0
+               : kSDReadChanges))
          : 0)
       | (get_old_files
          ? kSDReadLocalMarks
@@ -1312,7 +1318,9 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
         break;
       }
       case kSDItemHistoryEntry: {
-        if (cur_entry.data.history_item.histtype >= HIST_COUNT) {
+        if (cur_entry.data.history_item.histtype >= HIST_COUNT
+            || (cmdmod.keeppatterns
+                && cur_entry.data.history_item.histtype == HIST_SEARCH)) {
           shada_free_shada_entry(&cur_entry);
           break;
         }
@@ -1439,7 +1447,9 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
             cur_entry.data.filemark.fname = NULL;
           }
         }
-        if (!want_marks) {
+        if (!want_marks
+            || (cmdmod.keepjumps && cur_entry.type == kSDItemLocalMark
+                && strchr("'.^", cur_entry.data.filemark.name) != NULL)) {
           shada_free_shada_entry(&cur_entry);
           break;
         }
@@ -2317,6 +2327,62 @@ static inline ShaDaWriteResult shada_read_when_writing(
   return ret;
 }
 
+/// Save search pattern to PossiblyFreedShadaEntry
+///
+/// @param[out]  ret_pse  Location where result will be saved.
+/// @param[in]  get_pattern  Function used to get pattern.
+/// @param[in]  is_substitute_pattern  True if pattern in question is substitute
+///                                    pattern. Also controls whether some
+///                                    fields should be initialized to default
+///                                    or values from get_pattern.
+/// @param[in]  search_last_used  Result of search_was_last_used().
+/// @param[in]  search_highlighted  True if search pattern was highlighted by
+///                                 &hlsearch and this information should be
+///                                 saved.
+static inline void add_search_pattern(PossiblyFreedShadaEntry *const ret_pse,
+                                      const SearchPatternGetter get_pattern,
+                                      const bool is_substitute_pattern,
+                                      const bool search_last_used,
+                                      const bool search_highlighted)
+  FUNC_ATTR_ALWAYS_INLINE
+{
+  const ShadaEntry defaults = sd_default_values[kSDItemSearchPattern];
+  SearchPattern pat;
+  get_pattern(&pat);
+  if (pat.pat != NULL) {
+    *ret_pse = (PossiblyFreedShadaEntry) {
+      .can_free_entry = false,
+      .data = {
+        .type = kSDItemSearchPattern,
+        .timestamp = pat.timestamp,
+        .data = {
+          .search_pattern = {
+            .magic = pat.magic,
+            .smartcase = !pat.no_scs,
+            .has_line_offset = (is_substitute_pattern
+                                ? defaults.data.search_pattern.has_line_offset
+                                : pat.off.line),
+            .place_cursor_at_end = (
+                is_substitute_pattern
+                ? defaults.data.search_pattern.place_cursor_at_end
+                : pat.off.end),
+            .offset = (is_substitute_pattern
+                       ? pat.off.off
+                       : defaults.data.search_pattern.offset),
+            .is_last_used = (is_substitute_pattern ^ search_last_used),
+            .is_substitute_pattern = is_substitute_pattern,
+            .highlighted = ((is_substitute_pattern ^ search_last_used)
+                            && search_highlighted),
+            .pat = (char *)pat.pat,
+            .additional_data = pat.additional_data,
+            .search_backward = (!is_substitute_pattern && pat.off.dir == '?'),
+          }
+        }
+      }
+    };
+  }
+}
+
 /// Write ShaDa file
 ///
 /// @param[in]  sd_writer  Structure containing file writer definition.
@@ -2366,8 +2432,10 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer,
     }
   }
 
-  const unsigned srni_flags = (unsigned) (
-      kSDReadUndisableableData
+  const unsigned srni_flags = (unsigned)(
+      kSDReadSubString
+      | kSDReadSearchPattern
+      | kSDReadJumps
       | kSDReadUnknown
       | (dump_history ? kSDReadHistory : 0)
       | (dump_registers ? kSDReadRegisters : 0)
@@ -2424,7 +2492,7 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer,
   // Write buffer list
   if (find_shada_parameter('%') != NULL) {
     size_t buf_count = 0;
-#define IGNORE_BUF(buf)\
+#define IGNORE_BUF(buf) \
     (buf->b_ffname == NULL || !buf->b_p_bl || bt_quickfix(buf) \
      || in_bufset(&removable_bufs, buf))
     FOR_ALL_BUFFERS(buf) {
@@ -2511,45 +2579,14 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer,
   const bool search_highlighted = !(no_hlsearch
                                     || find_shada_parameter('h') != NULL);
   const bool search_last_used = search_was_last_used();
-#define ADD_SEARCH_PAT(func, wms_attr, hlo, pcae, o, is_sub) \
-  do { \
-    SearchPattern pat; \
-    func(&pat); \
-    if (pat.pat != NULL) { \
-      wms->wms_attr = (PossiblyFreedShadaEntry) { \
-        .can_free_entry = false, \
-        .data = { \
-          .type = kSDItemSearchPattern, \
-          .timestamp = pat.timestamp, \
-          .data = { \
-            .search_pattern = { \
-              .magic = pat.magic, \
-              .smartcase = !pat.no_scs, \
-              .has_line_offset = hlo, \
-              .place_cursor_at_end = pcae, \
-              .offset = o, \
-              .is_last_used = (is_sub ^ search_last_used), \
-              .is_substitute_pattern = is_sub, \
-              .highlighted = ((is_sub ^ search_last_used) \
-                              && search_highlighted), \
-              .pat = (char *) pat.pat, \
-              .additional_data = pat.additional_data, \
-              .search_backward = (!is_sub && pat.off.dir == '?'), \
-            } \
-          } \
-        } \
-      }; \
-    } \
-  } while (0)
 
   // Initialize search pattern
-  ADD_SEARCH_PAT(get_search_pattern, search_pattern, pat.off.line, \
-                 pat.off.end, pat.off.off, false);
+  add_search_pattern(&wms->search_pattern, &get_search_pattern, false,
+                     search_last_used, search_highlighted);
 
   // Initialize substitute search pattern
-  ADD_SEARCH_PAT(get_substitute_pattern, sub_search_pattern, false, false, 0,
-                 true);
-#undef ADD_SEARCH_PAT
+  add_search_pattern(&wms->sub_search_pattern, &get_substitute_pattern, true,
+                     search_last_used, search_highlighted);
 
   // Initialize substitute replacement string
   {

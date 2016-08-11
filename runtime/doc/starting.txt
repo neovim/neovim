@@ -1178,6 +1178,9 @@ running) you have additional options:
 			already set (registers, marks, |v:oldfiles|, etc.)
 			will be overwritten.
 
+			|:keepjumps| and |:keeppatterns| modifiers also apply 
+			to this command.
+
 						   *:rv* *:rviminfo*
 :rv[iminfo][!] [file]	Deprecated alias to |:rshada| command.
 
