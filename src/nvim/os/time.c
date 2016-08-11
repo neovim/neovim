@@ -15,6 +15,9 @@
 static uv_mutex_t delay_mutex;
 static uv_cond_t delay_cond;
 
+static Timestamp init_time_s;
+static uint64_t init_time_ns;
+
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "os/time.c.generated.h"
@@ -24,6 +27,9 @@ void time_init(void)
 {
   uv_mutex_init(&delay_mutex);
   uv_cond_init(&delay_cond);
+
+  init_time_s = os_time();
+  init_time_ns = os_hrtime();
 }
 
 /// Obtain a high-resolution timer value
@@ -129,4 +135,14 @@ Timestamp os_time(void)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return (Timestamp) time(NULL);
+}
+
+/// Obtains the current Unix timestamp with nanosecond precision.
+///
+/// @return Fractional seconds since epoch.
+double os_timef(void)
+  FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  return ((double)init_time_s
+          + ((double)(os_hrtime() - init_time_ns) * 0.000000001));
 }
