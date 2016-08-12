@@ -3,7 +3,7 @@
 set -e
 set -u
 set -o pipefail
-# Use priviledged mode, which e.g. skips using CDPATH.
+# Use privileged mode, which e.g. skips using CDPATH.
 set -p
 
 readonly NEOVIM_SOURCE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
