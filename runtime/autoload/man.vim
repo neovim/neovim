@@ -59,6 +59,7 @@ function! man#open_page(count, count1, mods, ...) abort
   if a:mods !~# 'tab' && s:find_man()
     if s:manwidth() ==# getbufvar(bufname, 'manwidth')
       silent execute 'buf' bufname
+      call man#set_window_local_options()
       keepjumps 1
       return
     endif
@@ -68,6 +69,7 @@ function! man#open_page(count, count1, mods, ...) abort
   endif
   noautocmd execute a:mods 'split' bufname
   if s:manwidth() ==# get(b:, 'manwidth')
+    call man#set_window_local_options()
     keepjumps 1
     return
   endif
@@ -201,6 +203,15 @@ function! s:manwidth() abort
     return winwidth(0)
   endif
   return $MANWIDTH
+endfunction
+
+function! man#set_window_local_options() abort
+  setlocal nonumber
+  setlocal norelativenumber
+  setlocal foldcolumn=0
+  setlocal colorcolumn=0
+  setlocal nolist
+  setlocal nofoldenable
 endfunction
 
 function! s:man_args(sect, name) abort
