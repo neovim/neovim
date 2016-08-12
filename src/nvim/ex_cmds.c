@@ -8,6 +8,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <inttypes.h>
+#include <math.h>
 
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
@@ -63,6 +64,12 @@
  * Struct to hold the sign properties.
  */
 typedef struct sign sign_T;
+
+// boolean to know if inc_sub needs to undo
+static bool inc_sub_did_changes = false;
+
+// reuse the same bufnr for inc_sub
+static handle_T inc_sub_bufnr = 0;
 
 /// Case matching style to use for :substitute
 typedef enum {
@@ -1523,7 +1530,7 @@ int rename_buffer(char_u *new_fname)
   }
   curbuf->b_flags |= BF_NOTEDITED;
   if (xfname != NULL && *xfname != NUL) {
-    buf = buflist_new(fname, xfname, curwin->w_cursor.lnum, 0);
+    buf = buflist_new(fname, xfname, curwin->w_cursor.lnum, 0, 0);
     if (buf != NULL && !cmdmod.keepalt)
       curwin->w_alt_fnum = buf->b_fnum;
   }
@@ -2174,7 +2181,7 @@ do_ecmd (
         buflist_altfpos(oldwin);
     }
 
-    if (fnum)
+    if (fnum && !(flags & ECMD_RESERVED_BUFNR))
       buf = buflist_findnr(fnum);
     else {
       if (flags & ECMD_ADDBUF) {
@@ -2185,11 +2192,11 @@ do_ecmd (
           if (tlnum <= 0)
             tlnum = 1L;
         }
-        (void)buflist_new(ffname, sfname, tlnum, BLN_LISTED);
+        (void)buflist_new(ffname, sfname, tlnum, BLN_LISTED, fnum);
         goto theend;
       }
       buf = buflist_new(ffname, sfname, 0L,
-          BLN_CURBUF | ((flags & ECMD_SET_HELP) ? 0 : BLN_LISTED));
+          BLN_CURBUF | ((flags & ECMD_SET_HELP) ? 0 : BLN_LISTED), fnum);
       // Autocmds may change curwin and curbuf.
       if (oldwin != NULL) {
         oldwin = curwin;
@@ -2978,10 +2985,12 @@ static bool sub_joining_lines(exarg_T *eap, char_u *pat,
       ex_may_print(eap);
     }
 
-    if (!cmdmod.keeppatterns) {
-      save_re_pat(RE_SUBST, pat, p_magic);
+    if (!eap->is_live){
+      if (!cmdmod.keeppatterns) {
+        save_re_pat(RE_SUBST, pat, p_magic);
+      }
+      add_to_history(HIST_SEARCH, pat, TRUE, NUL);
     }
-    add_to_history(HIST_SEARCH, pat, TRUE, NUL);
 
     return true;
   }
@@ -3127,6 +3136,9 @@ void do_sub(exarg_T *eap)
   int start_nsubs;
   int save_ma = 0;
 
+  inc_sub_did_changes = false;
+  bool has_second_delim = false;
+
   if (!global_busy) {
     sub_nsubs = 0;
     sub_nlines = 0;
@@ -3161,6 +3173,7 @@ void do_sub(exarg_T *eap)
         which_pat = RE_SEARCH;              /* use last '/' pattern */
       pat = (char_u *)"";                   /* empty search pattern */
       delimiter = *cmd++;                   /* remember delimiter character */
+      has_second_delim = true;
     } else {          /* find the end of the regexp */
       if (p_altkeymap && curwin->w_p_rl)
         lrF_sub(cmd);
@@ -3168,8 +3181,10 @@ void do_sub(exarg_T *eap)
       delimiter = *cmd++;                   /* remember delimiter character */
       pat = cmd;                            /* remember start of search pat */
       cmd = skip_regexp(cmd, delimiter, p_magic, &eap->arg);
-      if (cmd[0] == delimiter)              /* end delimiter found */
+      if (cmd[0] == delimiter) {            /* end delimiter found */
         *cmd++ = NUL;                       /* replace it with a NUL */
+        has_second_delim = true;
+      }
     }
 
     /*
@@ -3188,7 +3203,7 @@ void do_sub(exarg_T *eap)
       mb_ptr_adv(cmd);
     }
 
-    if (!eap->skip) {
+    if (!eap->skip && !eap->is_live) {
       sub_set_replacement((SubReplacementString) {
         .sub = xstrdup((char *) sub),
         .timestamp = os_time(),
@@ -3252,7 +3267,9 @@ void do_sub(exarg_T *eap)
     return;
   }
 
-  if (search_regcomp(pat, RE_SUBST, which_pat, SEARCH_HIS, &regmatch) == FAIL) {
+  int search_options = eap->is_live ? 0 : SEARCH_HIS;
+  if (search_regcomp(pat, RE_SUBST, which_pat, search_options,
+                     &regmatch) == FAIL) {
     if (subflags.do_error) {
       EMSG(_(e_invcmd));
     }
@@ -3275,6 +3292,9 @@ void do_sub(exarg_T *eap)
    */
   if (!(sub[0] == '\\' && sub[1] == '='))
     sub = regtilde(sub, p_magic);
+
+  //  list to save matched lines
+  MatchedLineVec lmatch = KV_INITIAL_VALUE;
 
   // Check for a match on each line.
   linenr_T line2 = eap->line2;
@@ -3343,6 +3363,8 @@ void do_sub(exarg_T *eap)
       sub_firstlnum = lnum;
       copycol = 0;
       matchcol = 0;
+      // the current match
+      MatchedLine cmatch = { 0, 0, NULL, KV_INITIAL_VALUE };
 
       /* At first match, remember current cursor position. */
       if (!got_match) {
@@ -3378,6 +3400,10 @@ void do_sub(exarg_T *eap)
          * cursor position (just like Vi). */
         curwin->w_cursor.lnum = lnum;
         do_again = FALSE;
+
+        // increment number of match on the line and store the column
+        cmatch.nmatch++;
+        kv_push(cmatch.start_col, regmatch.startpos[0].col);
 
         /*
          * 1. Match empty string does not count, except for first
@@ -3426,7 +3452,7 @@ void do_sub(exarg_T *eap)
             goto skip;
         }
 
-        if (subflags.do_ask) {
+        if (subflags.do_ask && !eap->is_live) {
           int typed = 0;
 
           /* change State to CONFIRM, so that the mouse works
@@ -3597,9 +3623,9 @@ void do_sub(exarg_T *eap)
          * use "\=col("."). */
         curwin->w_cursor.col = regmatch.startpos[0].col;
 
-        /*
-         * 3. substitute the string.
-         */
+        // 3. Substitute the string. Don't do this while incsubstitution and
+        //    there's no word to replace by eg : ":%s/pattern"
+        if (!eap->is_live || has_second_delim) {
         if (subflags.do_count) {
           // prevent accidentally changing the buffer by a function
           save_ma = curbuf->b_p_ma;
@@ -3726,6 +3752,7 @@ void do_sub(exarg_T *eap)
           } else if (has_mbyte)
             p1 += (*mb_ptr2len)(p1) - 1;
         }
+        }
 
         // 4. If subflags.do_all is set, find next match.
         // Prevent endless loop with patterns that match empty
@@ -3845,6 +3872,12 @@ skip:
       xfree(new_start);              /* for when substitute was cancelled */
       xfree(sub_firstline);          /* free the copy of the original line */
       sub_firstline = NULL;
+
+      // saving info about the matched line
+      cmatch.lnum = lnum;
+      cmatch.line = vim_strsave(ml_get(lnum));
+
+      kv_push(lmatch, cmatch);
     }
 
     line_breakcheck();
@@ -3880,7 +3913,7 @@ skip:
           beginline(BL_WHITE | BL_FIX);
         }
       }
-      if (!do_sub_msg(subflags.do_count) && subflags.do_ask) {
+      if (!eap->is_live && !do_sub_msg(subflags.do_count) && subflags.do_ask) {
         MSG("");
       }
     } else {
@@ -3912,6 +3945,79 @@ skip:
   // Restore the flag values, they can be used for ":&&".
   subflags.do_all = save_do_all;
   subflags.do_ask = save_do_ask;
+
+  // inc_sub if sub on the whole file and there are results to display
+  if (lmatch.size != 0) {
+    // we did incsubstitute only if we had no word to replace by
+    // by and no ending slash
+    if (!subflags.do_count && (!eap->is_live || has_second_delim)) {
+      inc_sub_did_changes = true;
+    }
+    if (pat != NULL && *p_ics != NUL && eap->is_live) {
+      bool split = true;
+
+      // p_ics is "", "nosplit" or "split"
+      if (*p_ics == 'n' || eap[0].cmdlinep[0][0] == 's') {
+        split = false;
+      }
+
+      // Place cursor on the first match after the cursor
+      // If all matches are before the cursor, then do_sub did
+      // already place the cursor on the last match
+
+      linenr_T cur_lnum = 0;
+      colnr_T cur_col = -1;
+      MatchedLine current;
+
+      for (size_t j = 0; j < lmatch.size; j++) {
+        current = lmatch.items[j];
+        cur_lnum = current.lnum;
+
+        // 1. Match on line of the cursor, need to iterate over the
+        //    matches on this line to see if there is one on a later
+        //    column
+        if (cur_lnum == old_cursor.lnum) {
+          for (size_t i = 0; i < current.start_col.size; i++) {
+            if (current.start_col.items[i] >= old_cursor.col) {
+              cur_col = current.start_col.items[i];
+              break;
+            }
+          }
+          // match on cursor's line, after the cursor
+          if (cur_col != -1) {
+            curwin->w_cursor.lnum = cur_lnum;
+            curwin->w_cursor.col = cur_col;
+            break;
+          }
+        // 2. Match on line after cursor, just put cursor on column
+        //    of first match there
+        } else if (cur_lnum > old_cursor.lnum) {
+            cur_col = current.start_col.items[0];
+            curwin->w_cursor.lnum = cur_lnum;
+            curwin->w_cursor.col = cur_col;
+            break;
+        }
+      }
+
+      inc_sub_display(pat, sub, &lmatch, split);
+    } else if (*p_ics != NUL && eap->is_live) {
+      curwin->w_cursor = old_cursor;
+    }
+  } else {
+    curwin->w_cursor = old_cursor;
+  }
+
+  MatchedLine current;
+  for (size_t j = 0; j < lmatch.size; j++) {
+    current = lmatch.items[j];
+
+    if (current.line) { xfree(current.line); }
+
+    kv_destroy(current.start_col);
+  }
+
+
+  kv_destroy(lmatch);
 }  // NOLINT(readability/fn_size)
 
 /*
@@ -5950,4 +6056,193 @@ void set_context_in_sign_cmd(expand_T *xp, char_u *arg)
         xp->xp_context = EXPAND_NOTHING;
     }
   }
+}
+
+/// Open a window for displaying of the inc_sub mode.
+///
+/// Does not allow editing in the window. Closes the window and restores
+/// the window layout before returning.
+///
+/// @param pat    The pattern word
+/// @param sub    The replacement word
+/// @param lmatch The list containing our data
+static void inc_sub_display(char_u * pat,
+                       char_u * sub,
+                       MatchedLineVec *lmatch,
+                       bool split)
+  FUNC_ATTR_NONNULL_ARG(1, 2, 3)
+{
+  garray_T winsizes;
+  int save_restart_edit = restart_edit;
+  int save_State = State;
+  int save_exmode = exmode_active;
+  int save_cmdmsg_rl = cmdmsg_rl;
+
+  // Can't do this recursively.  Can't do it when typing a password.
+  if (cmdline_star > 0) {
+    beep_flush();
+    return;
+  }
+
+  // Save current window sizes.
+  win_size_save(&winsizes);
+
+  // Save the current window to restore it later
+  win_T *oldwin = curwin;
+
+  if (split) {
+    // don't use a new tab page
+    cmdmod.tab = 0;
+
+    // Create a window for the command-line buffer.
+    if (win_split((int)p_cwh, WSP_BOT) == FAIL) {
+      beep_flush();
+      return;
+    }
+    cmdwin_type = get_cmdline_type();
+
+    // Create the command-line buffer empty.
+    (void)do_ecmd(inc_sub_bufnr, NULL, NULL, NULL, ECMD_ONE, ECMD_HIDE | ECMD_RESERVED_BUFNR, NULL);
+    inc_sub_bufnr = curbuf->handle;
+    (void)setfname(curbuf, (char_u *) "[inc_sub]", NULL, true);
+    set_option_value((char_u *) "bt", 0L, (char_u *) "incsub", OPT_LOCAL);
+    set_option_value((char_u *) "swf", 0L, NULL, OPT_LOCAL);
+    curbuf->b_p_ma = false;  // Not Modifiable
+    curwin->w_p_fen = false;
+    curwin->w_p_rl = cmdmsg_rl;
+    cmdmsg_rl = false;
+    RESET_BINDING(curwin);
+
+    // Showing the prompt may have set need_wait_return, reset it.
+    need_wait_return = false;
+
+    // Reset 'textwidth' after setting 'filetype'
+    // (the Vim filetype plugin sets 'textwidth' to 78).
+    curbuf->b_p_tw = 0;
+
+    // Save the buffer used in the split
+    livebuf = curbuf;
+
+    // Initialize line and highlight variables
+    int line = 0;
+    int src_id_highlight = 0;
+    long sub_size = STRLEN(sub);
+    long pat_size = STRLEN(pat);
+
+    // Get the width of the column which display the number of the line
+    linenr_T highest_num_line = kv_last(*lmatch).lnum;
+
+    // computing the length of the column that will display line number
+    int col_width = log10(highest_num_line) + 1 + 3;
+
+    // will be allocated in the loop
+    char *str = NULL;
+
+    size_t old_line_size = 0;
+    size_t line_size;
+
+    // Append the lines to our buffer
+    for (size_t i = 0; i < (*lmatch).size; i++) {
+      MatchedLine mat = (*lmatch).items[i];
+      line_size = STRLEN(mat.line) + col_width + 1;
+
+      // Reallocation if str not long enough
+      if (line_size > old_line_size) {
+        str = xrealloc(str, line_size * sizeof(char));
+        old_line_size = line_size;
+      }
+
+      // put ' [ lnum]line' into str and append it to the incsubstitute buffer
+      snprintf(str, line_size, " [%*ld]%s", col_width - 3, mat.lnum, mat.line);
+      ml_append(line++, (char_u *)str, (colnr_T)line_size, false);
+
+      // highlight the replaced part
+      if (sub_size > 0) {
+        int hlgroup_ls = syn_check_group((char_u *)"IncSubstitute", 13);
+
+        for (size_t j = 0; j < mat.start_col.size; j++) {
+          src_id_highlight =
+          bufhl_add_hl(curbuf,
+                       src_id_highlight,
+                       hlgroup_ls,  // id of our highlight
+                       line,
+                       mat.start_col.items[j] + col_width
+                       + j * (sub_size - pat_size) + 1,
+                       mat.start_col.items[j] + col_width
+                       + j * (sub_size - pat_size) + sub_size);
+        }
+      }
+    }
+    xfree(str);
+    redraw_later(SOME_VALID);
+  }
+
+  // Restore the old window
+  win_enter(oldwin, false);
+  win_size_restore(&winsizes);
+  ga_clear(&winsizes);
+  exmode_active = save_exmode;
+  restart_edit = save_restart_edit;
+  cmdmsg_rl = save_cmdmsg_rl;
+  State = save_State;
+
+  cmdwin_type = 0;
+  int save_rd = RedrawingDisabled;
+  RedrawingDisabled = 0;
+  update_screen(0);
+  RedrawingDisabled = save_rd;
+
+  setmouse();
+}
+
+
+/// :substitute command implementation
+///
+/// Uses do_sub() to do the actual substitution. Undoes the substitution and
+/// removes it from the undo history unless finishing the command. If
+/// ics is set to "", it just calls do_sub().
+void do_inc_sub(exarg_T *eap)
+{
+  // if incsubstitute disabled, do it the classical way
+  if (*p_ics == NUL || !eap->is_live) {
+    do_sub(eap);
+    return;
+  }
+
+  // Save the state of eap
+  char_u *tmp = eap->arg;
+
+  save_search_patterns();
+
+  // save the value of undolevels to the maximum value to avoid losing
+  // history when it is set to a low value
+  long b_p_ul_save = curbuf->b_p_ul;
+  curbuf->b_p_ul = LONG_MAX;
+
+  // Incsub window/buffer is opened in do_sub, so to suppress autocmd
+  // we need to start it before the call
+  block_autocmds();
+
+  emsg_off++;  // No error messages for live commands
+  do_sub(eap);
+  emsg_off--;
+  if (inc_sub_did_changes) {
+    if (!u_undo_and_forget(1)) {
+      abort();
+    }
+    inc_sub_did_changes = false;
+  }
+
+  // Put back eap in first state
+  eap->arg = tmp;
+  restore_search_patterns();
+  curbuf->b_p_ul = b_p_ul_save;
+
+  update_screen(0);
+  if (livebuf != NULL && buf_valid(livebuf)) {
+    close_windows(livebuf, false);
+    wipe_buffer(livebuf, false);
+  }
+  unblock_autocmds();
+  redraw_later(SOME_VALID);
 }

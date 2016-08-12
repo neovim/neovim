@@ -5067,7 +5067,7 @@ void buf_reload(buf_T *buf, int orig_mode)
     savebuf = NULL;
   else {
     /* Allocate a buffer without putting it in the buffer list. */
-    savebuf = buflist_new(NULL, NULL, (linenr_T)1, BLN_DUMMY);
+    savebuf = buflist_new(NULL, NULL, (linenr_T)1, BLN_DUMMY, 0);
     if (savebuf != NULL && buf == curbuf) {
       /* Open the memline. */
       curbuf = savebuf;

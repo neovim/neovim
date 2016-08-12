@@ -1405,7 +1405,7 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
               cur_entry.data.buffer_list.buffers[i].fname);
           buf_T *const buf = buflist_new(
               cur_entry.data.buffer_list.buffers[i].fname, sfname, 0,
-              BLN_LISTED);
+              BLN_LISTED, 0);
           if (buf != NULL) {
             RESET_FMARK(&buf->b_last_cursor,
                         cur_entry.data.buffer_list.buffers[i].pos, 0);

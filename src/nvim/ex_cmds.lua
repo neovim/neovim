@@ -2194,7 +2194,7 @@ return {
     command='substitute',
     flags=bit.bor(RANGE, WHOLEFOLD, EXTRA, CMDWIN),
     addr_type=ADDR_LINES,
-    func='do_sub',
+    func='do_inc_sub',
   },
   {
     command='sNext',

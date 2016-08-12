@@ -7703,7 +7703,7 @@ static void f_bufnr(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       && !error
       && (name = get_tv_string_chk(&argvars[0])) != NULL
       && !error)
-    buf = buflist_new(name, NULL, (linenr_T)1, 0);
+    buf = buflist_new(name, NULL, (linenr_T)1, 0, 0);
 
   if (buf != NULL)
     rettv->vval.v_number = buf->b_fnum;

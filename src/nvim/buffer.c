@@ -678,7 +678,7 @@ void handle_swap_exists(buf_T *old_curbuf)
     swap_exists_did_quit = TRUE;
     close_buffer(curwin, curbuf, DOBUF_UNLOAD, FALSE);
     if (!buf_valid(old_curbuf) || old_curbuf == curbuf)
-      old_curbuf = buflist_new(NULL, NULL, 1L, BLN_CURBUF | BLN_LISTED);
+      old_curbuf = buflist_new(NULL, NULL, 1L, BLN_CURBUF | BLN_LISTED, 0);
     if (old_curbuf != NULL) {
       enter_buffer(old_curbuf);
       if (old_tw != curbuf->b_p_tw)
@@ -1339,7 +1339,8 @@ buflist_new (
     char_u *ffname,            /* full path of fname or relative */
     char_u *sfname,            /* short fname or NULL */
     linenr_T lnum,                  /* preferred cursor line */
-    int flags                      /* BLN_ defines */
+    int flags,                      /* BLN_ defines */
+    handle_T bufnr
 )
 {
   buf_T       *buf;
@@ -1458,7 +1459,9 @@ buflist_new (
     }
     lastbuf = buf;
 
-    buf->b_fnum = top_file_num++;
+    // If bufnr is nonzero it is assumed to be a previously
+    // reserved buffer number (handle)
+    buf->handle = bufnr != 0 ? bufnr : top_file_num++;
     handle_register_buffer(buf);
     if (top_file_num < 0) {  // wrap around (may cause duplicates)
       EMSG(_("W14: Warning: List of file names overflow"));
@@ -2375,7 +2378,7 @@ buf_T *setaltfname(char_u *ffname, char_u *sfname, linenr_T lnum)
   buf_T       *buf;
 
   /* Create a buffer.  'buflisted' is not set if it's a new buffer */
-  buf = buflist_new(ffname, sfname, lnum, 0);
+  buf = buflist_new(ffname, sfname, lnum, 0, 0);
   if (buf != NULL && !cmdmod.keepalt)
     curwin->w_alt_fnum = buf->b_fnum;
   return buf;
@@ -2411,7 +2414,7 @@ int buflist_add(char_u *fname, int flags)
 {
   buf_T       *buf;
 
-  buf = buflist_new(fname, NULL, (linenr_T)0, flags);
+  buf = buflist_new(fname, NULL, (linenr_T)0, flags, 0);
   if (buf != NULL)
     return buf->b_fnum;
   return 0;
@@ -5193,7 +5196,7 @@ bool buf_contents_changed(buf_T *buf)
   bool differ = true;
 
   // Allocate a buffer without putting it in the buffer list.
-  buf_T *newbuf = buflist_new(NULL, NULL, (linenr_T)1, BLN_DUMMY);
+  buf_T *newbuf = buflist_new(NULL, NULL, (linenr_T)1, BLN_DUMMY, 0);
   if (newbuf == NULL) {
     return true;
   }

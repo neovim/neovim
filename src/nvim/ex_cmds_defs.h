@@ -124,6 +124,7 @@ struct exarg {
   LineGetter getline;           ///< Function used to get the next line
   void   *cookie;               ///< argument for getline()
   struct condstack *cstack;     ///< condition stack for ":if" etc.
+  bool is_live;                 ///< live preview
 };
 
 #define FORCE_BIN 1             // ":edit ++bin file"

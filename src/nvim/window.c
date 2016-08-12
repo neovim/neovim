@@ -2903,7 +2903,7 @@ static int win_alloc_firstwin(win_T *oldwin)
   if (oldwin == NULL) {
     /* Very first window, need to create an empty buffer for it and
      * initialize from scratch. */
-    curbuf = buflist_new(NULL, NULL, 1L, BLN_LISTED);
+    curbuf = buflist_new(NULL, NULL, 1L, BLN_LISTED, 0);
     if (curbuf == NULL)
       return FAIL;
     curwin->w_buffer = curbuf;

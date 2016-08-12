@@ -271,7 +271,7 @@ do_exmode (
 int do_cmdline_cmd(char *cmd)
 {
   return do_cmdline((char_u *)cmd, NULL, NULL,
-      DOCMD_VERBOSE|DOCMD_NOWAIT|DOCMD_KEYTYPED);
+                    DOCMD_NOWAIT|DOCMD_KEYTYPED);
 }
 
 /*
@@ -597,11 +597,11 @@ int do_cmdline(char_u *cmdline, LineGetter fgetline,
      *    do_one_cmd() will return NULL if there is no trailing '|'.
      *    "cmdline_copy" can change, e.g. for '%' and '#' expansion.
      */
-    ++recursive;
-    next_cmdline = do_one_cmd(&cmdline_copy, flags & DOCMD_VERBOSE,
-        &cstack,
-        cmd_getline, cmd_cookie);
-    --recursive;
+    recursive++;
+    next_cmdline = do_one_cmd(&cmdline_copy, flags,
+                              &cstack,
+                              cmd_getline, cmd_cookie);
+    recursive--;
 
     if (cmd_cookie == (void *)&cmd_loop_cookie)
       /* Use "current_line" from "cmd_loop_cookie", it may have been
@@ -1225,7 +1225,7 @@ static void get_wincmd_addr_type(char_u *arg, exarg_T *eap)
  * This function may be called recursively!
  */
 static char_u * do_one_cmd(char_u **cmdlinep,
-                           int sourcing,
+                           int flags,
                            struct condstack *cstack,
                            LineGetter fgetline,
                            void *cookie /* argument for fgetline() */
@@ -1248,6 +1248,7 @@ static char_u * do_one_cmd(char_u **cmdlinep,
   memset(&ea, 0, sizeof(ea));
   ea.line1 = 1;
   ea.line2 = 1;
+  ea.is_live = flags & DOCMD_LIVE_PREVIEW;
   ++ex_nesting_level;
 
   /* When the last file has not been edited :q has to be typed twice. */
@@ -1726,7 +1727,7 @@ static char_u * do_one_cmd(char_u **cmdlinep,
   if (ea.cmdidx == CMD_SIZE) {
     if (!ea.skip) {
       STRCPY(IObuff, _("E492: Not an editor command"));
-      if (!sourcing)
+      if (!(flags & DOCMD_VERBOSE))
         append_command(*cmdlinep);
       errormsg = IObuff;
       did_emsg_syntax = TRUE;
@@ -1809,7 +1810,7 @@ static char_u * do_one_cmd(char_u **cmdlinep,
      */
     if (!global_busy && ea.line1 > ea.line2) {
       if (msg_silent == 0) {
-        if (sourcing || exmode_active) {
+        if ((flags & DOCMD_VERBOSE) || exmode_active) {
           errormsg = (char_u *)_("E493: Backwards range given");
           goto doend;
         }
@@ -2221,7 +2222,7 @@ doend:
     curwin->w_cursor.lnum = 1;
 
   if (errormsg != NULL && *errormsg != NUL && !did_emsg) {
-    if (sourcing) {
+    if (flags & DOCMD_VERBOSE) {
       if (errormsg != IObuff) {
         STRCPY(IObuff, errormsg);
         errormsg = IObuff;
@@ -9646,4 +9647,29 @@ static void ex_terminal(exarg_T *eap)
   if (mustfree) {
     xfree(name);
   }
+}
+
+/// Check whether commandline starts with a live command
+///
+/// @param[in] cmd_live Commandline to check. May start with a range.
+///
+/// @return True if first command is a live command
+///         Currently :s is the only one
+bool is_live(char_u *cmd_live)
+{
+  exarg_T ea;
+  ea.cmd = cmd_live;
+
+  // parse the command line
+  if (ea.cmd != NULL) {
+    ea.cmd = skip_range(ea.cmd, NULL);
+    if (*ea.cmd == '*') {
+      ea.cmd = skipwhite(ea.cmd + 1);
+    }
+    find_command(&ea, NULL);
+  } else {
+    return false;
+  }
+
+  return (ea.cmdidx == CMD_substitute);
 }
