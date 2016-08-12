@@ -1592,6 +1592,10 @@ static int command_line_changed(CommandLineState *s)
     msg_starthere();
     redrawcmdline();
     s->did_incsearch = true;
+  } else if (*p_ics != NUL && s->firstc == ':' && is_live(ccline.cmdbuff)) {
+    // compute a live action
+    do_cmdline(ccline.cmdbuff, NULL, NULL, DOCMD_KEEPLINE|DOCMD_LIVE_PREVIEW);
+    redrawcmdline();
   }
 
   if (cmdmsg_rl || (p_arshape && !p_tbidi && enc_utf8)) {

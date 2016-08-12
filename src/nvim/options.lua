@@ -1203,6 +1203,14 @@ return {
       defaults={if_true={vi=false, vim=true}}
     },
     {
+      full_name='incsubstitute', abbreviation='ics',
+      type='string', scope={'global'},
+      vi_def=true,
+      redraw={'everything'},
+      varname='p_ics',
+      defaults={if_true={vi=""}}
+    },
+    {
       full_name='indentexpr', abbreviation='inde',
       type='string', scope={'buffer'},
       vi_def=true,

@@ -4855,6 +4855,8 @@ IncSearch	'incsearch' highlighting; also used for the text replaced with
 							*hl-LineNr*
 LineNr		Line number for ":number" and ":#" commands, and when 'number'
 		or 'relativenumber' option is set.
+                                                        *hl-IncSubstitute*
+IncSubstitute   The replacement text when using the |incsubstitute| functionality
 							*hl-CursorLineNr*
 CursorLineNr	Like LineNr when 'cursorline' or 'relativenumber' is set for
 		the cursor line.
