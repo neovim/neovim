@@ -7,7 +7,7 @@ function! s:open_err_script(err) abort
   endif
 
   let func_pattern = '\C^\s*fu\%[nction]!\?\s\+'
-  if a:err.func !~# '#'
+  if a:err.script_local
     let func_pattern .= '\%(<\%(sid\|SID\)>\|s:\)'
   endif
   let func_pattern .= a:err.func.'\>'
@@ -47,7 +47,7 @@ function! msgpane#goto() abort
     let selections = ['Jump to function:']
     let i = 1
 
-    for func in split(matchstr(curline, '<SNR>\S\+:$'), '\.\.')
+    for func in split(matchstr(curline, '\S\+:$'), '\.\.')
       let index = matchstr(func, '<SNR>\zs\d\+')
       let funcname = matchstr(func, '\%(<SNR>\d\+_\)\?\zs[^\[:]\+')
       let lnum = matchstr(func, '\[\zs\d\+\ze\]$')
@@ -57,14 +57,11 @@ function! msgpane#goto() abort
       if !empty(index)
         let script_fname = scripts[index - 1]
         let display_name = 's:'.display_name
-      elseif funcname =~# '#'
-        let autoload_script = '/autoload/'.join(split(funcname, '#')[:-2], '/').'\.vim$'
-        for script in scripts
-          if script =~# autoload_script
-            let script_fname = script
-            break
-          endif
-        endfor
+      else
+        let script_lines = split(execute('silent! verbose function '.funcname), "\n")
+        if len(script_lines) > 1
+          let script_fname = matchstr(script_lines[1], 'Last set from \zs\f\+')
+        endif
       endif
 
       if !empty(script_fname)
@@ -78,13 +75,14 @@ function! msgpane#goto() abort
               \   'func': funcname,
               \   'fname': script_fname,
               \   'lnum': lnum,
+              \   'script_local': func =~# '<SNR>',
               \ })
         let i += 1
       endif
     endfor
 
     let index = inputlist(selections)
-    if index > 1
+    if index > 0
       call s:open_err_script(err_funcs[index - 1])
     endif
   else
