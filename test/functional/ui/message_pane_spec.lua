@@ -662,5 +662,81 @@ describe(':messages', function()
 
       end)
     end)
+
+    describe('using vimscript', function()
+      before_each(function()
+        command('set messagepane')
+      end)
+
+      it('msgpane_open()', function()
+        command('call msgpane_open()')
+
+        screen:expect([[
+                                                  |
+          {2:[No Name]                               }|
+          ^                                        |
+          {1:~                                       }|
+          {1:~                                       }|
+          {1:~                                       }|
+          {1:~                                       }|
+          {1:~                                       }|
+          {3:nvim://messages                         }|
+                                                  |
+        ]])
+      end)
+
+      describe('msgpane()', function()
+        it('does not display message in command line', function()
+          command('call msgpane("test")')
+          command('call msgpane("test", "Green")')
+
+          screen:expect([[
+            ^                                        |
+            {1:~                                       }|
+            {1:~                                       }|
+            {1:~                                       }|
+            {1:~                                       }|
+            {1:~                                       }|
+            {1:~                                       }|
+            {1:~                                       }|
+            {1:~                                       }|
+                                                    |
+          ]])
+        end)
+
+        it('opens message pane when not open', function()
+          command('call msgpane("test", "Green", 1)')
+
+          screen:expect([[
+                                                    |
+            {2:[No Name]                               }|
+            {5:^test}                                    |
+            {1:~                                       }|
+            {1:~                                       }|
+            {1:~                                       }|
+            {1:~                                       }|
+            {1:~                                       }|
+            {3:nvim://messages                         }|
+                                                    |
+          ]])
+
+          -- One more call to make sure the window doesn't change
+          command('call msgpane("test 2", "Green", 1)')
+
+          screen:expect([[
+                                                    |
+            {2:[No Name]                               }|
+            {5:test}                                    |
+            {5:^test 2}                                  |
+            {1:~                                       }|
+            {1:~                                       }|
+            {1:~                                       }|
+            {1:~                                       }|
+            {3:nvim://messages                         }|
+                                                    |
+          ]])
+        end)
+      end)
+    end)
   end)
 end)
