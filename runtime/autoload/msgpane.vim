@@ -22,9 +22,14 @@ function! s:open_err_script(err) abort
   endfor
 
   let i += a:err.lnum
+  let win = bufwinnr(fname)
+  if win == -1
+    execute 'wincmd p | split' fname
+  else
+    execute win 'wincmd w'
+  endif
 
-  execute 'wincmd p | split' fname
-  execute 'normal! '.i.'G'
+  execute 'normal! '.i.'Gzz'
 endfunction
 
 
