@@ -172,19 +172,23 @@ char_u *path_next_component(char_u *fname)
   return fname;
 }
 
-/*
- * Get a pointer to one character past the head of a path name.
- * Unix: after "/"; DOS: after "c:\"; Mac: no head.
- * If there is no head, path is returned.
- */
+/// Get a pointer to one character past the head of a path name.
+/// Unix: after "/"; Win: after "c:\"
+/// If there is no head, path is returned.
 char_u *get_past_head(char_u *path)
 {
-  char_u  *retval;
+  char_u *retval = path;
 
-  retval = path;
+#ifdef WIN32
+  // May skip "c:"
+  if (isalpha(path[0]) && path[1] == ':') {
+    retval = path + 2;
+  }
+#endif
 
-  while (vim_ispathsep(*retval))
+  while (vim_ispathsep(*retval)) {
     ++retval;
+  }
 
   return retval;
 }
