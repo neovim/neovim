@@ -164,18 +164,18 @@ typedef struct expand {
 /// flag.  This needs to be saved for recursive commands, put them in a
 /// structure for easy manipulation.
 typedef struct {
-  int hide;          ///< TRUE when ":hide" was used
-  int split;         ///< flags for win_split()
-  int tab;           ///< > 0 when ":tab" was used
-  int confirm;       ///< TRUE to invoke yes/no dialog
-  int keepalt;       ///< TRUE when ":keepalt" was used
-  int keepmarks;     ///< TRUE when ":keepmarks" was used
-  int keepjumps;     ///< TRUE when ":keepjumps" was used
-  int lockmarks;     ///< TRUE when ":lockmarks" was used
-  int keeppatterns;  ///< TRUE when ":keeppatterns" was used
-  bool noswapfile;   ///< true when ":noswapfile" was used
-  bool browse;       ///< TRUE to invoke file dialog
-  char_u *save_ei;   ///< saved value of 'eventignore'
+  int split;          ///< flags for win_split()
+  int tab;            ///< > 0 when ":tab" was used
+  bool browse;        ///< true to invoke file dialog
+  bool confirm;       ///< true to invoke yes/no dialog
+  bool hide;          ///< true when ":hide" was used
+  bool keepalt;       ///< true when ":keepalt" was used
+  bool keepjumps;     ///< true when ":keepjumps" was used
+  bool keepmarks;     ///< true when ":keepmarks" was used
+  bool keeppatterns;  ///< true when ":keeppatterns" was used
+  bool lockmarks;     ///< true when ":lockmarks" was used
+  bool noswapfile;    ///< true when ":noswapfile" was used
+  char_u *save_ei;    ///< saved value of 'eventignore'
 } cmdmod_T;
 
 #endif  // NVIM_EX_CMDS_DEFS_H

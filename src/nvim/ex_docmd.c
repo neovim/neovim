@@ -1325,24 +1325,24 @@ static char_u * do_one_cmd(char_u **cmdlinep,
 
     case 'c':   if (!checkforcmd(&ea.cmd, "confirm", 4))
         break;
-      cmdmod.confirm = TRUE;
+      cmdmod.confirm = true;
       continue;
 
     case 'k':   if (checkforcmd(&ea.cmd, "keepmarks", 3)) {
-        cmdmod.keepmarks = TRUE;
+        cmdmod.keepmarks = true;
         continue;
     }
       if (checkforcmd(&ea.cmd, "keepalt", 5)) {
-        cmdmod.keepalt = TRUE;
+        cmdmod.keepalt = true;
         continue;
       }
       if (checkforcmd(&ea.cmd, "keeppatterns", 5)) {
-        cmdmod.keeppatterns = TRUE;
+        cmdmod.keeppatterns = true;
         continue;
       }
       if (!checkforcmd(&ea.cmd, "keepjumps", 5))
         break;
-      cmdmod.keepjumps = TRUE;
+      cmdmod.keepjumps = true;
       continue;
 
     /* ":hide" and ":hide | cmd" are not modifiers */
@@ -1350,11 +1350,11 @@ static char_u * do_one_cmd(char_u **cmdlinep,
                     || *p == NUL || ends_excmd(*p))
         break;
       ea.cmd = p;
-      cmdmod.hide = TRUE;
+      cmdmod.hide = true;
       continue;
 
     case 'l':   if (checkforcmd(&ea.cmd, "lockmarks", 3)) {
-        cmdmod.lockmarks = TRUE;
+        cmdmod.lockmarks = true;
         continue;
     }
 
@@ -5363,13 +5363,13 @@ uc_check_code (
     } mod_entry_T;
     static mod_entry_T mod_entries[] = {
       { &cmdmod.browse, "browse" },
-      { (bool *)&cmdmod.confirm, "confirm" },
-      { (bool *)&cmdmod.hide, "hide" },
-      { (bool *)&cmdmod.keepalt, "keepalt" },
-      { (bool *)&cmdmod.keepjumps, "keepjumps" },
-      { (bool *)&cmdmod.keepmarks, "keepmarks" },
-      { (bool *)&cmdmod.keeppatterns, "keeppatterns" },
-      { (bool *)&cmdmod.lockmarks, "lockmarks" },
+      { &cmdmod.confirm, "confirm" },
+      { &cmdmod.hide, "hide" },
+      { &cmdmod.keepalt, "keepalt" },
+      { &cmdmod.keepjumps, "keepjumps" },
+      { &cmdmod.keepmarks, "keepmarks" },
+      { &cmdmod.keeppatterns, "keeppatterns" },
+      { &cmdmod.lockmarks, "lockmarks" },
       { &cmdmod.noswapfile, "noswapfile" }
     };
     // the modifiers that are simple flags
