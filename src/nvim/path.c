@@ -2191,8 +2191,9 @@ int path_is_absolute_path(const char_u *fname)
 {
 #ifdef WIN32
   // A name like "d:/foo" and "//server/share" is absolute
-  return ((isalpha(fname[0]) && fname[1] == ':' && (fname[2] == '/' || fname[2] == '\\'))
-          || (fname[0] == fname[1] && (fname[0] == '/' || fname[0] == '\\')));
+  return ((isalpha(fname[0]) && fname[1] == ':'
+           && vim_ispathsep_nocolon(fname[2]))
+          || (vim_ispathsep_nocolon(fname[0]) && fname[0] == fname[1]));
 #else
   // UNIX: This just checks if the file name starts with '/' or '~'.
   return *fname == '/' || *fname == '~';
