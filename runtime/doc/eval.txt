@@ -5551,7 +5551,7 @@ msgpane_open()					  {Nvim} *msgpane_open()*
 		Open the message pane if it's not already displayed in a
 		window.  Only one message pane window is opened per tab.
 
-		Returns the message pane's buffer number or 0 is the pane
+		Returns the message pane's buffer number or 0 if the pane
 		couldn't be opened.
 
 		See also |'messagepane'|, |msgpane()|.

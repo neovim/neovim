@@ -13983,7 +13983,7 @@ f_msgpackparse_exit:
 ///
 /// @param message Message to display.
 /// @param [highlight] The highlight group name.
-/// @param [open] Opens the message page if it's not already in a window.
+/// @param [open] Opens the message pane if it's not already in a window.
 ///
 /// @return Nothing.
 static void f_msgpane(typval_T *argvars, typval_T *rettv)
