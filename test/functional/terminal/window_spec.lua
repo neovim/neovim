@@ -52,7 +52,7 @@ describe('terminal window', function()
                                                           |
                                                           |
                                                           |
-        -- TERMINAL --                                    |
+        {3:-- TERMINAL --}                                    |
       ]])
     end)
   end)
@@ -68,7 +68,7 @@ describe('terminal window', function()
         line3                                             |
         line4                                             |
         {1: }                                                 |
-        -- TERMINAL --                                    |
+        {3:-- TERMINAL --}                                    |
       ]])
     end)
 

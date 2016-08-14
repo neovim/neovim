@@ -21,11 +21,11 @@ describe('terminal buffer', function()
       feed('<c-\\><c-n>:set bufhidden=wipe<cr>:enew<cr>')
       screen:expect([[
         ^                                                  |
-        ~                                                 |
-        ~                                                 |
-        ~                                                 |
-        ~                                                 |
-        ~                                                 |
+        {4:~                                                 }|
+        {4:~                                                 }|
+        {4:~                                                 }|
+        {4:~                                                 }|
+        {4:~                                                 }|
         :enew                                             |
       ]])
     end)
@@ -34,11 +34,11 @@ describe('terminal buffer', function()
       feed(':bnext:l<esc>')
       screen:expect([[
         ^                                                  |
-        ~                                                 |
-        ~                                                 |
-        ~                                                 |
-        ~                                                 |
-        ~                                                 |
+        {4:~                                                 }|
+        {4:~                                                 }|
+        {4:~                                                 }|
+        {4:~                                                 }|
+        {4:~                                                 }|
                                                           |
       ]])
     end)
@@ -78,7 +78,7 @@ describe('terminal buffer', function()
                                                         |
                                                         |
       ^                                                  |
-      E21: Cannot make changes, 'modifiable' is off     |
+      {8:E21: Cannot make changes, 'modifiable' is off}     |
     ]])
   end)
 
@@ -138,21 +138,21 @@ describe('terminal buffer', function()
     feed('<c-\\><c-n>:bd!<cr>')
     screen:expect([[
       ^                                                  |
-      ~                                                 |
-      ~                                                 |
-      ~                                                 |
-      ~                                                 |
-      ~                                                 |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                                 }|
       :bd!                                              |
     ]])
     execute('bnext')
     screen:expect([[
       ^                                                  |
-      ~                                                 |
-      ~                                                 |
-      ~                                                 |
-      ~                                                 |
-      ~                                                 |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                                 }|
       :bnext                                            |
     ]])
   end)
@@ -180,8 +180,8 @@ describe('terminal buffer', function()
     -- We should be in a new buffer now.
     screen:expect([[
       ab^c                                               |
-      ~                                                 |
-      ==========                                        |
+      {4:~                                                 }|
+      {5:==========                                        }|
       rows: 2, cols: 50                                 |
       {2: }                                                 |
       {1:==========                                        }|

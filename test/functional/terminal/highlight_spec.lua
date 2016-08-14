@@ -16,33 +16,32 @@ describe('terminal window highlighting', function()
       [1] = {foreground = 45},
       [2] = {background = 46},
       [3] = {foreground = 45, background = 46},
-      [4] = {bold = true, italic = true, underline = true}
-    })
-    screen:set_default_attr_ignore({
-      [1] = {bold = true},
-      [2] = {foreground = 12},
-      [3] = {bold = true, reverse = true},
-      [5] = {background = 11},
-      [6] = {foreground = 130},
-      [7] = {reverse = true},
+      [4] = {bold = true, italic = true, underline = true},
+      [5] = {bold = true},
+      [6] = {foreground = 12},
+      [7] = {bold = true, reverse = true},
       [8] = {background = 11},
+      [9] = {foreground = 130},
+      [10] = {reverse = true},
+      [11] = {background = 11},
     })
     screen:attach(false)
     execute('enew | call termopen(["'..nvim_dir..'/tty-test"]) | startinsert')
     screen:expect([[
       tty ready                                         |
+      {10: }                                                 |
                                                         |
                                                         |
                                                         |
                                                         |
-                                                        |
-      -- TERMINAL --                                    |
+      {5:-- TERMINAL --}                                    |
     ]])
   end)
 
   local function descr(title, attr_num, set_attrs_fn)
     local function sub(s)
-      return s:gsub('NUM', attr_num)
+      local str = s:gsub('NUM', attr_num)
+      return str
     end
 
     describe(title, function() 
@@ -54,16 +53,15 @@ describe('terminal window highlighting', function()
       end)
 
       local function pass_attrs()
-        local s = sub([[
+        screen:expect(sub([[
           tty ready                                         |
-          {NUM:text}text                                          |
+          {NUM:text}text{10: }                                         |
                                                             |
                                                             |
                                                             |
                                                             |
-          -- TERMINAL --                                    |
-        ]])
-        screen:expect(s)
+          {5:-- TERMINAL --}                                    |
+        ]]))
       end
 
       it('will pass the corresponding attributes', pass_attrs)
@@ -82,11 +80,11 @@ describe('terminal window highlighting', function()
           line6                                             |
           line7                                             |
           line8                                             |
-                                                            |
-          -- TERMINAL --                                    |
+          {10: }                                                 |
+          {5:-- TERMINAL --}                                    |
         ]])
         feed('<c-\\><c-n>gg')
-        local s = sub([[
+        screen:expect(sub([[
           ^tty ready                                         |
           {NUM:text}textline1                                     |
           line2                                             |
@@ -94,8 +92,7 @@ describe('terminal window highlighting', function()
           line4                                             |
           line5                                             |
                                                             |
-        ]])
-        screen:expect(s)
+        ]]))
       end)
     end)
   end
@@ -121,28 +118,26 @@ describe('terminal window highlighting with custom palette', function()
     clear()
     screen = Screen.new(50, 7)
     screen:set_default_attr_ids({
-      [1] = {foreground = 1193046, special = Screen.colors.Black}
-    })
-    screen:set_default_attr_ignore({
-      [1] = {bold = true},
+      [1] = {foreground = 1193046, special = Screen.colors.Black},
       [2] = {foreground = 12},
       [3] = {bold = true, reverse = true},
       [5] = {background = 11},
       [6] = {foreground = 130},
       [7] = {reverse = true},
       [8] = {background = 11},
+      [9] = {bold = true},
     })
     screen:attach(true)
     nvim('set_var', 'terminal_color_3', '#123456')
     execute('enew | call termopen(["'..nvim_dir..'/tty-test"]) | startinsert')
     screen:expect([[
       tty ready                                         |
+      {7: }                                                 |
                                                         |
                                                         |
                                                         |
                                                         |
-                                                        |
-      -- TERMINAL --                                    |
+      {9:-- TERMINAL --}                                    |
     ]])
   end)
 
@@ -153,12 +148,12 @@ describe('terminal window highlighting with custom palette', function()
     thelpers.feed_data('text')
     screen:expect([[
       tty ready                                         |
-      {1:text}text                                          |
+      {1:text}text{7: }                                         |
                                                         |
                                                         |
                                                         |
                                                         |
-      -- TERMINAL --                                    |
+      {9:-- TERMINAL --}                                    |
     ]])
   end)
 end)

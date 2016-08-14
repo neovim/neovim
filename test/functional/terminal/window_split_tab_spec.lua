@@ -32,8 +32,8 @@ describe('terminal', function()
       tty ready                                         |
       rows: 2, cols: 50                                 |
       {2: }                                                 |
-      ~                                                 |
-      ~                                                 |
+      {4:~                                                 }|
+      {4:~                                                 }|
       ==========                                        |
                                                         |
     ]])
@@ -58,8 +58,8 @@ describe('terminal', function()
       rows: 5, cols: 50                                 |
       rows: 2, cols: 50                                 |
       {2: }                                                 |
-      ~                                                 |
-      ~                                                 |
+      {4:~                                                 }|
+      {4:~                                                 }|
       ==========                                        |
       :wincmd p                                         |
     ]])
@@ -83,7 +83,7 @@ describe('terminal', function()
                                                              |
                                                              |
                                                              |
-        -- TERMINAL --                                       |
+        {3:-- TERMINAL --}                                       |
       ]])
       screen:try_resize(screen._width - 6, screen._height - 10)
       screen:expect([[
@@ -91,7 +91,7 @@ describe('terminal', function()
         rows: 14, cols: 53                             |
         rows: 4, cols: 47                              |
         {1: }                                              |
-        -- TERMINAL --                                 |
+        {3:-- TERMINAL --}                                 |
       ]])
     end)
   end)

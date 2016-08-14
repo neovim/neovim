@@ -15,7 +15,10 @@ describe('Initial screen', function()
     set_session(screen_nvim)
     screen = Screen.new()
     screen:attach()
-    screen:set_default_attr_ignore( {{bold=true, foreground=255}} )
+    screen:set_default_attr_ids( {
+      [0] = {bold=true, foreground=255},
+      [1] = {bold=true, reverse=true},
+    } )
   end)
 
   after_each(function()
@@ -25,18 +28,18 @@ describe('Initial screen', function()
   it('is the default initial screen', function()
       screen:expect([[
       ^                                                     |
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
-      [No Name]                                            |
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {1:[No Name]                                            }|
                                                            |
     ]])
   end)
@@ -49,7 +52,16 @@ describe('Screen', function()
     clear()
     screen = Screen.new()
     screen:attach()
-    screen:set_default_attr_ignore( {{bold=true, foreground=255}} )
+    screen:set_default_attr_ids( {
+      [0] = {bold=true, foreground=255},
+      [1] = {bold=true, reverse=true},
+      [2] = {bold=true},
+      [3] = {reverse=true},
+      [4] = {background = Screen.colors.LightGrey, underline = true},
+      [5] = {background = Screen.colors.LightGrey, underline = true, bold = true, foreground = Screen.colors.Fuchsia},
+      [6] = {bold = true, foreground = Screen.colors.Fuchsia},
+      [7] = {bold = true, foreground = Screen.colors.SeaGreen},
+    } )
   end)
 
   after_each(function()
@@ -147,18 +159,18 @@ describe('Screen', function()
         execute('sp')
         screen:expect([[
           ^                                                     |
-          ~                                                    |
-          ~                                                    |
-          ~                                                    |
-          ~                                                    |
-          ~                                                    |
-          [No Name]                                            |
+          {0:~                                                    }|
+          {0:~                                                    }|
+          {0:~                                                    }|
+          {0:~                                                    }|
+          {0:~                                                    }|
+          {1:[No Name]                                            }|
                                                                |
-          ~                                                    |
-          ~                                                    |
-          ~                                                    |
-          ~                                                    |
-          [No Name]                                            |
+          {0:~                                                    }|
+          {0:~                                                    }|
+          {0:~                                                    }|
+          {0:~                                                    }|
+          {3:[No Name]                                            }|
           :sp                                                  |
         ]])
       end)
@@ -168,18 +180,18 @@ describe('Screen', function()
         execute('resize 8')
         screen:expect([[
           ^                                                     |
-          ~                                                    |
-          ~                                                    |
-          ~                                                    |
-          ~                                                    |
-          ~                                                    |
-          ~                                                    |
-          ~                                                    |
-          [No Name]                                            |
+          {0:~                                                    }|
+          {0:~                                                    }|
+          {0:~                                                    }|
+          {0:~                                                    }|
+          {0:~                                                    }|
+          {0:~                                                    }|
+          {0:~                                                    }|
+          {1:[No Name]                                            }|
                                                                |
-          ~                                                    |
-          ~                                                    |
-          [No Name]                                            |
+          {0:~                                                    }|
+          {0:~                                                    }|
+          {3:[No Name]                                            }|
           :resize 8                                            |
         ]])
       end)
@@ -187,36 +199,36 @@ describe('Screen', function()
       it('horizontal and vertical', function()
         execute('sp', 'vsp', 'vsp')
         screen:expect([[
-          ^                    |                |               |
-          ~                   |~               |~              |
-          ~                   |~               |~              |
-          ~                   |~               |~              |
-          ~                   |~               |~              |
-          ~                   |~               |~              |
-          [No Name]            [No Name]        [No Name]      |
+          ^                    {3:|}                {3:|}               |
+          {0:~                   }{3:|}{0:~               }{3:|}{0:~              }|
+          {0:~                   }{3:|}{0:~               }{3:|}{0:~              }|
+          {0:~                   }{3:|}{0:~               }{3:|}{0:~              }|
+          {0:~                   }{3:|}{0:~               }{3:|}{0:~              }|
+          {0:~                   }{3:|}{0:~               }{3:|}{0:~              }|
+          {1:[No Name]            }{3:[No Name]        [No Name]      }|
                                                                |
-          ~                                                    |
-          ~                                                    |
-          ~                                                    |
-          ~                                                    |
-          [No Name]                                            |
+          {0:~                                                    }|
+          {0:~                                                    }|
+          {0:~                                                    }|
+          {0:~                                                    }|
+          {3:[No Name]                                            }|
                                                                |
         ]])
         insert('hello')
         screen:expect([[
-          hell^o               |hello           |hello          |
-          ~                   |~               |~              |
-          ~                   |~               |~              |
-          ~                   |~               |~              |
-          ~                   |~               |~              |
-          ~                   |~               |~              |
-          [No Name] [+]        [No Name] [+]    [No Name] [+]  |
+          hell^o               {3:|}hello           {3:|}hello          |
+          {0:~                   }{3:|}{0:~               }{3:|}{0:~              }|
+          {0:~                   }{3:|}{0:~               }{3:|}{0:~              }|
+          {0:~                   }{3:|}{0:~               }{3:|}{0:~              }|
+          {0:~                   }{3:|}{0:~               }{3:|}{0:~              }|
+          {0:~                   }{3:|}{0:~               }{3:|}{0:~              }|
+          {1:[No Name] [+]        }{3:[No Name] [+]    [No Name] [+]  }|
           hello                                                |
-          ~                                                    |
-          ~                                                    |
-          ~                                                    |
-          ~                                                    |
-          [No Name] [+]                                        |
+          {0:~                                                    }|
+          {0:~                                                    }|
+          {0:~                                                    }|
+          {0:~                                                    }|
+          {3:[No Name] [+]                                        }|
                                                                |
         ]])
       end)
@@ -228,55 +240,55 @@ describe('Screen', function()
       execute('sp', 'vsp', 'vsp')
       insert('hello')
       screen:expect([[
-        hell^o               |hello           |hello          |
-        ~                   |~               |~              |
-        ~                   |~               |~              |
-        ~                   |~               |~              |
-        ~                   |~               |~              |
-        ~                   |~               |~              |
-        [No Name] [+]        [No Name] [+]    [No Name] [+]  |
+        hell^o               {3:|}hello           {3:|}hello          |
+        {0:~                   }{3:|}{0:~               }{3:|}{0:~              }|
+        {0:~                   }{3:|}{0:~               }{3:|}{0:~              }|
+        {0:~                   }{3:|}{0:~               }{3:|}{0:~              }|
+        {0:~                   }{3:|}{0:~               }{3:|}{0:~              }|
+        {0:~                   }{3:|}{0:~               }{3:|}{0:~              }|
+        {1:[No Name] [+]        }{3:[No Name] [+]    [No Name] [+]  }|
         hello                                                |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        [No Name] [+]                                        |
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {3:[No Name] [+]                                        }|
                                                              |
       ]])
       execute('tabnew')
       insert('hello2')
       feed('h')
       screen:expect([[
-         4+ [No Name]  + [No Name]                          X|
+        {4: }{5:4}{4:+ [No Name] }{2: + [No Name] }{3:                         }{4:X}|
         hell^o2                                               |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
                                                              |
       ]])
       execute('tabprevious')
       screen:expect([[
-         4+ [No Name]  + [No Name]                          X|
-        hell^o               |hello           |hello          |
-        ~                   |~               |~              |
-        ~                   |~               |~              |
-        ~                   |~               |~              |
-        ~                   |~               |~              |
-        ~                   |~               |~              |
-        [No Name] [+]        [No Name] [+]    [No Name] [+]  |
+        {2: }{6:4}{2:+ [No Name] }{4: + [No Name] }{3:                         }{4:X}|
+        hell^o               {3:|}hello           {3:|}hello          |
+        {0:~                   }{3:|}{0:~               }{3:|}{0:~              }|
+        {0:~                   }{3:|}{0:~               }{3:|}{0:~              }|
+        {0:~                   }{3:|}{0:~               }{3:|}{0:~              }|
+        {0:~                   }{3:|}{0:~               }{3:|}{0:~              }|
+        {0:~                   }{3:|}{0:~               }{3:|}{0:~              }|
+        {1:[No Name] [+]        }{3:[No Name] [+]    [No Name] [+]  }|
         hello                                                |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        [No Name] [+]                                        |
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {3:[No Name] [+]                                        }|
                                                              |
       ]])
     end)
@@ -289,17 +301,17 @@ describe('Screen', function()
         line 1                                               |
         line 2                                               |
         ^                                                     |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        -- INSERT --                                         |
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {2:-- INSERT --}                                         |
       ]])
     end)
   end)
@@ -314,17 +326,17 @@ describe('Screen', function()
       screen:expect([[
         0123^456                                              |
         789                                                  |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
         :set ruler                         1,5           All |
       ]])
     end)
@@ -335,18 +347,18 @@ describe('Screen', function()
       feed(':ls')
       screen:expect([[
                                                              |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
         :ls^                                                  |
       ]])
     end)
@@ -354,20 +366,20 @@ describe('Screen', function()
     it('execute command with multi-line output', function()
       feed(':ls<cr>')
       screen:expect([[
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
         :ls                                                  |
           1 %a   "[No Name]"                    line 1       |
-        Press ENTER or type command to continue^              |
+        {7:Press ENTER or type command to continue}^              |
       ]])
       feed('<cr>') --  skip the "Press ENTER..." state or tests will hang
     end)
@@ -392,19 +404,19 @@ describe('Screen', function()
       ]])
       execute('sp', 'vsp', 'vsp')
       screen:expect([[
-        and                 |and             |and            |
-        clearing            |clearing        |clearing       |
-        in                  |in              |in             |
-        split               |split           |split          |
-        windows             |windows         |windows        |
-        ^                    |                |               |
-        [No Name] [+]        [No Name] [+]    [No Name] [+]  |
+        and                 {3:|}and             {3:|}and            |
+        clearing            {3:|}clearing        {3:|}clearing       |
+        in                  {3:|}in              {3:|}in             |
+        split               {3:|}split           {3:|}split          |
+        windows             {3:|}windows         {3:|}windows        |
+        ^                    {3:|}                {3:|}               |
+        {1:[No Name] [+]        }{3:[No Name] [+]    [No Name] [+]  }|
         clearing                                             |
         in                                                   |
         split                                                |
         windows                                              |
                                                              |
-        [No Name] [+]                                        |
+        {3:[No Name] [+]                                        }|
                                                              |
       ]])
     end)
@@ -412,121 +424,121 @@ describe('Screen', function()
     it('only affects the current scroll region', function()
       feed('6k')
       screen:expect([[
-        ^scrolling           |and             |and            |
-        and                 |clearing        |clearing       |
-        clearing            |in              |in             |
-        in                  |split           |split          |
-        split               |windows         |windows        |
-        windows             |                |               |
-        [No Name] [+]        [No Name] [+]    [No Name] [+]  |
+        ^scrolling           {3:|}and             {3:|}and            |
+        and                 {3:|}clearing        {3:|}clearing       |
+        clearing            {3:|}in              {3:|}in             |
+        in                  {3:|}split           {3:|}split          |
+        split               {3:|}windows         {3:|}windows        |
+        windows             {3:|}                {3:|}               |
+        {1:[No Name] [+]        }{3:[No Name] [+]    [No Name] [+]  }|
         clearing                                             |
         in                                                   |
         split                                                |
         windows                                              |
                                                              |
-        [No Name] [+]                                        |
+        {3:[No Name] [+]                                        }|
                                                              |
       ]])
       feed('<c-w>l')
       screen:expect([[
-        scrolling           |and                 |and        |
-        and                 |clearing            |clearing   |
-        clearing            |in                  |in         |
-        in                  |split               |split      |
-        split               |windows             |windows    |
-        windows             |^                    |           |
-        [No Name] [+]        [No Name] [+]        <Name] [+] |
+        scrolling           {3:|}and                 {3:|}and        |
+        and                 {3:|}clearing            {3:|}clearing   |
+        clearing            {3:|}in                  {3:|}in         |
+        in                  {3:|}split               {3:|}split      |
+        split               {3:|}windows             {3:|}windows    |
+        windows             {3:|}^                    {3:|}           |
+        {3:[No Name] [+]        }{1:[No Name] [+]        }{3:<Name] [+] }|
         clearing                                             |
         in                                                   |
         split                                                |
         windows                                              |
                                                              |
-        [No Name] [+]                                        |
+        {3:[No Name] [+]                                        }|
                                                              |
       ]])
       feed('gg')
       screen:expect([[
-        scrolling           |^Inserting           |and        |
-        and                 |text                |clearing   |
-        clearing            |with                |in         |
-        in                  |many                |split      |
-        split               |lines               |windows    |
-        windows             |to                  |           |
-        [No Name] [+]        [No Name] [+]        <Name] [+] |
+        scrolling           {3:|}^Inserting           {3:|}and        |
+        and                 {3:|}text                {3:|}clearing   |
+        clearing            {3:|}with                {3:|}in         |
+        in                  {3:|}many                {3:|}split      |
+        split               {3:|}lines               {3:|}windows    |
+        windows             {3:|}to                  {3:|}           |
+        {3:[No Name] [+]        }{1:[No Name] [+]        }{3:<Name] [+] }|
         clearing                                             |
         in                                                   |
         split                                                |
         windows                                              |
                                                              |
-        [No Name] [+]                                        |
+        {3:[No Name] [+]                                        }|
                                                              |
       ]])
       feed('7j')
       screen:expect([[
-        scrolling           |with                |and        |
-        and                 |many                |clearing   |
-        clearing            |lines               |in         |
-        in                  |to                  |split      |
-        split               |test                |windows    |
-        windows             |^scrolling           |           |
-        [No Name] [+]        [No Name] [+]        <Name] [+] |
+        scrolling           {3:|}with                {3:|}and        |
+        and                 {3:|}many                {3:|}clearing   |
+        clearing            {3:|}lines               {3:|}in         |
+        in                  {3:|}to                  {3:|}split      |
+        split               {3:|}test                {3:|}windows    |
+        windows             {3:|}^scrolling           {3:|}           |
+        {3:[No Name] [+]        }{1:[No Name] [+]        }{3:<Name] [+] }|
         clearing                                             |
         in                                                   |
         split                                                |
         windows                                              |
                                                              |
-        [No Name] [+]                                        |
+        {3:[No Name] [+]                                        }|
                                                              |
       ]])
       feed('2j')
       screen:expect([[
-        scrolling           |lines               |and        |
-        and                 |to                  |clearing   |
-        clearing            |test                |in         |
-        in                  |scrolling           |split      |
-        split               |and                 |windows    |
-        windows             |^clearing            |           |
-        [No Name] [+]        [No Name] [+]        <Name] [+] |
+        scrolling           {3:|}lines               {3:|}and        |
+        and                 {3:|}to                  {3:|}clearing   |
+        clearing            {3:|}test                {3:|}in         |
+        in                  {3:|}scrolling           {3:|}split      |
+        split               {3:|}and                 {3:|}windows    |
+        windows             {3:|}^clearing            {3:|}           |
+        {3:[No Name] [+]        }{1:[No Name] [+]        }{3:<Name] [+] }|
         clearing                                             |
         in                                                   |
         split                                                |
         windows                                              |
                                                              |
-        [No Name] [+]                                        |
+        {3:[No Name] [+]                                        }|
                                                              |
       ]])
       feed('5k')
       screen:expect([[
-        scrolling           |^lines               |and        |
-        and                 |to                  |clearing   |
-        clearing            |test                |in         |
-        in                  |scrolling           |split      |
-        split               |and                 |windows    |
-        windows             |clearing            |           |
-        [No Name] [+]        [No Name] [+]        <Name] [+] |
+        scrolling           {3:|}^lines               {3:|}and        |
+        and                 {3:|}to                  {3:|}clearing   |
+        clearing            {3:|}test                {3:|}in         |
+        in                  {3:|}scrolling           {3:|}split      |
+        split               {3:|}and                 {3:|}windows    |
+        windows             {3:|}clearing            {3:|}           |
+        {3:[No Name] [+]        }{1:[No Name] [+]        }{3:<Name] [+] }|
         clearing                                             |
         in                                                   |
         split                                                |
         windows                                              |
                                                              |
-        [No Name] [+]                                        |
+        {3:[No Name] [+]                                        }|
                                                              |
       ]])
       feed('k')
       screen:expect([[
-        scrolling           |^many                |and        |
-        and                 |lines               |clearing   |
-        clearing            |to                  |in         |
-        in                  |test                |split      |
-        split               |scrolling           |windows    |
-        windows             |and                 |           |
-        [No Name] [+]        [No Name] [+]        <Name] [+] |
+        scrolling           {3:|}^many                {3:|}and        |
+        and                 {3:|}lines               {3:|}clearing   |
+        clearing            {3:|}to                  {3:|}in         |
+        in                  {3:|}test                {3:|}split      |
+        split               {3:|}scrolling           {3:|}windows    |
+        windows             {3:|}and                 {3:|}           |
+        {3:[No Name] [+]        }{1:[No Name] [+]        }{3:<Name] [+] }|
         clearing                                             |
         in                                                   |
         split                                                |
         windows                                              |
                                                              |
-        [No Name] [+]                                        |
+        {3:[No Name] [+]                                        }|
                                                              |
       ]])
     end)
@@ -541,10 +553,10 @@ describe('Screen', function()
     it('rebuilds the whole screen', function()
       screen:expect([[
         resize^                   |
-        ~                        |
-        ~                        |
-        ~                        |
-        -- INSERT --             |
+        {0:~                        }|
+        {0:~                        }|
+        {0:~                        }|
+        {2:-- INSERT --}             |
       ]])
     end)
 

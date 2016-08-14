@@ -7,11 +7,6 @@ local eq, funcs = helpers.eq, helpers.funcs
 describe('Mouse input', function()
   local screen
 
-  local hlgroup_colors = {
-    NonText = Screen.colors.Blue,
-    Visual = Screen.colors.LightGrey
-  }
-
   before_each(function()
     clear()
     meths.set_option('mouse', 'a')
@@ -22,21 +17,23 @@ describe('Mouse input', function()
     screen = Screen.new(25, 5)
     screen:attach()
     screen:set_default_attr_ids({
-      [1] = {background = hlgroup_colors.Visual},
+      [0] = {bold=true, foreground=Screen.colors.Blue},
+      [1] = {background = Screen.colors.LightGrey},
       [2] = {bold = true},
       [3] = {
-        foreground = hlgroup_colors.NonText,
-        background = hlgroup_colors.Visual,
+        foreground = Screen.colors.Blue,
+        background = Screen.colors.LightGrey,
         bold = true,
       },
+      [4] = {reverse = true},
+      [5] = {bold = true, reverse = true},
     })
-    screen:set_default_attr_ignore( {{bold=true, foreground=hlgroup_colors.NonText}} )
     feed('itesting<cr>mouse<cr>support and selection<esc>')
     screen:expect([[
       testing                  |
       mouse                    |
       support and selectio^n    |
-      ~                        |
+      {0:~                        }|
                                |
     ]])
   end)
@@ -51,7 +48,7 @@ describe('Mouse input', function()
       testing                  |
       mo^use                    |
       support and selection    |
-      ~                        |
+      {0:~                        }|
                                |
     ]])
     feed('<LeftMouse><0,0>')
@@ -59,7 +56,7 @@ describe('Mouse input', function()
       ^testing                  |
       mouse                    |
       support and selection    |
-      ~                        |
+      {0:~                        }|
                                |
     ]])
   end)
@@ -73,7 +70,7 @@ describe('Mouse input', function()
       {1:testin}^g                  |
       mouse                    |
       support and selection    |
-      ~                        |
+      {0:~                        }|
       {2:-- VISUAL --}             |
     ]])
   end)
@@ -89,7 +86,7 @@ describe('Mouse input', function()
       ^t{1:esting}{3: }                 |
       mouse                    |
       support and selection    |
-      ~                        |
+      {0:~                        }|
       {2:-- VISUAL LINE --}        |
     ]])
   end)
@@ -107,17 +104,20 @@ describe('Mouse input', function()
       ^testing                  |
       mouse                    |
       support and selection    |
-      ~                        |
+      {0:~                        }|
       {2:-- VISUAL BLOCK --}       |
     ]])
   end)
 
   describe('tabline', function()
-    local tab_attrs = {
-      tab  = { background=Screen.colors.LightGrey, underline=true },
-      sel  = { bold=true },
-      fill = { reverse=true }
-    }
+    before_each(function()
+      screen:set_default_attr_ids( {
+        [0] = {bold=true, foreground=Screen.colors.Blue},
+        tab  = { background=Screen.colors.LightGrey, underline=true },
+        sel  = { bold=true },
+        fill = { reverse=true }
+      })
+    end)
 
     it('left click in default tabline (position 4) switches to tab', function()
       execute('%delete')
@@ -127,18 +127,18 @@ describe('Mouse input', function()
       screen:expect([[
         {tab: + foo }{sel: + bar }{fill:          }{tab:X}|
         this is ba^r              |
-        ~                        |
-        ~                        |
+        {0:~                        }|
+        {0:~                        }|
                                  |
-      ]], tab_attrs)
+      ]])
       feed('<LeftMouse><4,0>')
       screen:expect([[
         {sel: + foo }{tab: + bar }{fill:          }{tab:X}|
         this is fo^o              |
-        ~                        |
-        ~                        |
+        {0:~                        }|
+        {0:~                        }|
                                  |
-      ]], tab_attrs)
+      ]])
     end)
 
     it('left click in default tabline (position 24) closes tab', function()
@@ -150,18 +150,18 @@ describe('Mouse input', function()
       screen:expect([[
         {tab: + foo }{sel: + bar }{fill:          }{tab:X}|
         this is ba^r              |
-        ~                        |
-        ~                        |
+        {0:~                        }|
+        {0:~                        }|
                                  |
-      ]], tab_attrs)
+      ]])
       feed('<LeftMouse><24,0>')
       screen:expect([[
         this is fo^o              |
-        ~                        |
-        ~                        |
-        ~                        |
+        {0:~                        }|
+        {0:~                        }|
+        {0:~                        }|
                                  |
-      ]], tab_attrs)
+      ]])
     end)
 
     it('double click in default tabline (position 4) opens new tab', function()
@@ -173,18 +173,18 @@ describe('Mouse input', function()
       screen:expect([[
         {tab: + foo }{sel: + bar }{fill:          }{tab:X}|
         this is ba^r              |
-        ~                        |
-        ~                        |
+        {0:~                        }|
+        {0:~                        }|
                                  |
-      ]], tab_attrs)
+      ]])
       feed('<2-LeftMouse><4,0>')
       screen:expect([[
         {sel:  Name] }{tab: + foo  + bar }{fill:  }{tab:X}|
         ^                         |
-        ~                        |
-        ~                        |
+        {0:~                        }|
+        {0:~                        }|
                                  |
-      ]], tab_attrs)
+      ]])
     end)
 
     describe('%@ label', function()
@@ -206,9 +206,9 @@ describe('Mouse input', function()
           {fill:test-test2               }|
           mouse                    |
           support and selectio^n    |
-          ~                        |
+          {0:~                        }|
                                    |
-        ]], tab_attrs)
+        ]])
         meths.set_var('reply', {})
       end)
 
@@ -264,7 +264,7 @@ describe('Mouse input', function()
       testing                  |
       mo^use                    |
       support and selection    |
-      ~                        |
+      {0:~                        }|
                                |
     ]])
     feed('<LeftDrag><4,1>')
@@ -272,7 +272,7 @@ describe('Mouse input', function()
       testing                  |
       mo{1:us}^e                    |
       support and selection    |
-      ~                        |
+      {0:~                        }|
       {2:-- VISUAL --}             |
     ]])
     feed('<LeftDrag><2,2>')
@@ -280,7 +280,7 @@ describe('Mouse input', function()
       testing                  |
       mo{1:use}{3: }                   |
       {1:su}^pport and selection    |
-      ~                        |
+      {0:~                        }|
       {2:-- VISUAL --}             |
     ]])
     feed('<LeftDrag><0,0>')
@@ -288,18 +288,19 @@ describe('Mouse input', function()
       ^t{1:esting}{3: }                 |
       {1:mou}se                    |
       support and selection    |
-      ~                        |
+      {0:~                        }|
       {2:-- VISUAL --}             |
     ]])
   end)
 
   it('left drag changes visual selection after tab click', function()
-    local tab_attrs = {
+    screen:set_default_attr_ids({
+      [0] = {bold=true, foreground=Screen.colors.Blue},
       tab  = { background=Screen.colors.LightGrey, underline=true },
       sel  = { bold=true },
       fill = { reverse=true },
       vis  = { background=Screen.colors.LightGrey }
-    }
+    })
     execute('silent file foo | tabnew | file bar')
     insert('this is bar')
     execute('tabprevious')  -- go to first tab
@@ -307,27 +308,27 @@ describe('Mouse input', function()
       {sel: + foo }{tab: + bar }{fill:          }{tab:X}|
       mouse                    |
       support and selectio^n    |
-      ~                        |
+      {0:~                        }|
                                |
-    ]], tab_attrs)
+    ]])
     feed('<LeftMouse><10,0><LeftRelease>')  -- go to second tab
     helpers.wait()
     feed('<LeftMouse><0,1>')
     screen:expect([[
       {tab: + foo }{sel: + bar }{fill:          }{tab:X}|
       ^this is bar              |
-      ~                        |
-      ~                        |
+      {0:~                        }|
+      {0:~                        }|
                                |
-    ]], tab_attrs)
+    ]])
     feed('<LeftDrag><4,1>')
     screen:expect([[
       {tab: + foo }{sel: + bar }{fill:          }{tab:X}|
       {vis:this}^ is bar              |
-      ~                        |
-      ~                        |
+      {0:~                        }|
+      {0:~                        }|
       {sel:-- VISUAL --}             |
-    ]], tab_attrs)
+    ]])
   end)
 
   it('two clicks will select the word and enter VISUAL', function()
@@ -336,7 +337,7 @@ describe('Mouse input', function()
       testing                  |
       mouse                    |
       {1:suppor}^t and selection    |
-      ~                        |
+      {0:~                        }|
       {2:-- VISUAL --}             |
     ]])
   end)
@@ -347,7 +348,7 @@ describe('Mouse input', function()
       testing                  |
       mouse                    |
       {1:su}^p{1:port and selection}{3: }   |
-      ~                        |
+      {0:~                        }|
       {2:-- VISUAL LINE --}        |
     ]])
   end)
@@ -358,7 +359,7 @@ describe('Mouse input', function()
       testing                  |
       mouse                    |
       su^pport and selection    |
-      ~                        |
+      {0:~                        }|
       {2:-- VISUAL BLOCK --}       |
     ]])
   end)
@@ -369,7 +370,7 @@ describe('Mouse input', function()
       ^testing                  |
       mouse                    |
       support and selection    |
-      ~                        |
+      {0:~                        }|
                                |
     ]])
     feed('<RightMouse><2,2>')
@@ -377,7 +378,7 @@ describe('Mouse input', function()
       {1:testing}{3: }                 |
       {1:mouse}{3: }                   |
       {1:su}^pport and selection    |
-      ~                        |
+      {0:~                        }|
       {2:-- VISUAL --}             |
     ]])
   end)
@@ -409,73 +410,71 @@ describe('Mouse input', function()
     ]])
     screen:try_resize(53, 14)
     execute('sp', 'vsp')
-    screen:set_default_attr_ignore( {{bold=true, foreground=hlgroup_colors.NonText},
-            {reverse=true}, {bold=true, reverse=true}} )
     screen:expect([[
-      lines                     |lines                     |
-      to                        |to                        |
-      test                      |test                      |
-      mouse scrolling           |mouse scrolling           |
-      ^                          |                          |
-      ~                         |~                         |
-      [No Name] [+]              [No Name] [+]             |
+      lines                     {4:|}lines                     |
+      to                        {4:|}to                        |
+      test                      {4:|}test                      |
+      mouse scrolling           {4:|}mouse scrolling           |
+      ^                          {4:|}                          |
+      {0:~                         }{4:|}{0:~                         }|
+      {5:[No Name] [+]              }{4:[No Name] [+]             }|
       to                                                   |
       test                                                 |
       mouse scrolling                                      |
                                                            |
-      ~                                                    |
-      [No Name] [+]                                        |
+      {0:~                                                    }|
+      {4:[No Name] [+]                                        }|
       :vsp                                                 |
     ]])
     feed('<MouseUp><0,0>')
     screen:expect([[
-      mouse scrolling           |lines                     |
-      ^                          |to                        |
-      ~                         |test                      |
-      ~                         |mouse scrolling           |
-      ~                         |                          |
-      ~                         |~                         |
-      [No Name] [+]              [No Name] [+]             |
+      mouse scrolling           {4:|}lines                     |
+      ^                          {4:|}to                        |
+      {0:~                         }{4:|}test                      |
+      {0:~                         }{4:|}mouse scrolling           |
+      {0:~                         }{4:|}                          |
+      {0:~                         }{4:|}{0:~                         }|
+      {5:[No Name] [+]              }{4:[No Name] [+]             }|
       to                                                   |
       test                                                 |
       mouse scrolling                                      |
                                                            |
-      ~                                                    |
-      [No Name] [+]                                        |
+      {0:~                                                    }|
+      {4:[No Name] [+]                                        }|
                                                            |
     ]])
     feed('<MouseDown><27,0>')
     screen:expect([[
-      mouse scrolling           |text                      |
-      ^                          |with                      |
-      ~                         |many                      |
-      ~                         |lines                     |
-      ~                         |to                        |
-      ~                         |test                      |
-      [No Name] [+]              [No Name] [+]             |
+      mouse scrolling           {4:|}text                      |
+      ^                          {4:|}with                      |
+      {0:~                         }{4:|}many                      |
+      {0:~                         }{4:|}lines                     |
+      {0:~                         }{4:|}to                        |
+      {0:~                         }{4:|}test                      |
+      {5:[No Name] [+]              }{4:[No Name] [+]             }|
       to                                                   |
       test                                                 |
       mouse scrolling                                      |
                                                            |
-      ~                                                    |
-      [No Name] [+]                                        |
+      {0:~                                                    }|
+      {4:[No Name] [+]                                        }|
                                                            |
     ]])
     feed('<MouseDown><27,7><MouseDown>')
     screen:expect([[
-      mouse scrolling           |text                      |
-      ^                          |with                      |
-      ~                         |many                      |
-      ~                         |lines                     |
-      ~                         |to                        |
-      ~                         |test                      |
-      [No Name] [+]              [No Name] [+]             |
+      mouse scrolling           {4:|}text                      |
+      ^                          {4:|}with                      |
+      {0:~                         }{4:|}many                      |
+      {0:~                         }{4:|}lines                     |
+      {0:~                         }{4:|}to                        |
+      {0:~                         }{4:|}test                      |
+      {5:[No Name] [+]              }{4:[No Name] [+]             }|
       Inserting                                            |
       text                                                 |
       with                                                 |
       many                                                 |
       lines                                                |
-      [No Name] [+]                                        |
+      {4:[No Name] [+]                                        }|
                                                            |
     ]])
   end)
@@ -488,7 +487,7 @@ describe('Mouse input', function()
                                |
                                |
       bbbbbbbbbbbbbbb^b         |
-      ~                        |
+      {0:~                        }|
                                |
     ]])
 
@@ -497,7 +496,7 @@ describe('Mouse input', function()
                                |
                                |
       n bbbbbbbbbbbbbbbbbbb^b   |
-      ~                        |
+      {0:~                        }|
                                |
     ]])
 
@@ -506,7 +505,7 @@ describe('Mouse input', function()
       g                        |
                                |
       ^t and selection bbbbbbbbb|
-      ~                        |
+      {0:~                        }|
                                |
     ]])
   end)
@@ -514,12 +513,13 @@ describe('Mouse input', function()
   describe('on concealed text', function()
     -- Helpful for reading the test expectations:
     -- :match Error /\^/
-    local concealed = {
-      c = { foreground = Screen.colors.LightGrey, background = Screen.colors.DarkGray }
-    }
 
     before_each(function()
       screen:try_resize(25, 7)
+      screen:set_default_attr_ids({
+        [0] = {bold=true, foreground=Screen.colors.Blue},
+        c = { foreground = Screen.colors.LightGrey, background = Screen.colors.DarkGray },
+      })
       feed('ggdG')
 
       execute('set concealcursor=n')
@@ -545,44 +545,44 @@ describe('Mouse input', function()
         {c:^Y}rem ip{c:X}um do{c: } {c:X}it {c: }, con|
         {c:X}tet {c: }ta ka{c:X}d {c:X}ber{c:X}en, no|
                                  |
-        ~                        |
-        ~                        |
-        ~                        |
+        {0:~                        }|
+        {0:~                        }|
+        {0:~                        }|
                                  |
-      ]], concealed)
+      ]])
 
       feed('<esc><LeftMouse><1,0>')
       screen:expect([[
         {c:Y}^rem ip{c:X}um do{c: } {c:X}it {c: }, con|
         {c:X}tet {c: }ta ka{c:X}d {c:X}ber{c:X}en, no|
                                  |
-        ~                        |
-        ~                        |
-        ~                        |
+        {0:~                        }|
+        {0:~                        }|
+        {0:~                        }|
                                  |
-      ]], concealed)
+      ]])
 
       feed('<esc><LeftMouse><15,0>')
       screen:expect([[
         {c:Y}rem ip{c:X}um do{c: } {c:^X}it {c: }, con|
         {c:X}tet {c: }ta ka{c:X}d {c:X}ber{c:X}en, no|
                                  |
-        ~                        |
-        ~                        |
-        ~                        |
+        {0:~                        }|
+        {0:~                        }|
+        {0:~                        }|
                                  |
-      ]], concealed)
+      ]])
 
       feed('<esc><LeftMouse><15,1>')
       screen:expect([[
         {c:Y}rem ip{c:X}um do{c: } {c:X}it {c: }, con|
         {c:X}tet {c: }ta ka{c:X}d {c:X}^ber{c:X}en, no|
                                  |
-        ~                        |
-        ~                        |
-        ~                        |
+        {0:~                        }|
+        {0:~                        }|
+        {0:~                        }|
                                  |
-      ]], concealed)
+      ]])
     end) -- level 1 - non wrapped
 
     it('(level 1) click on wrapped lines', function()
@@ -597,7 +597,7 @@ describe('Mouse input', function()
         , no {c:X}ea takimata {c:X}anctu{c:X}|
          e{c:X}t.                    |
                                  |
-      ]], concealed)
+      ]])
 
       feed('<esc><LeftMouse><6,1>')
       screen:expect([[
@@ -608,7 +608,7 @@ describe('Mouse input', function()
         , no {c:X}ea takimata {c:X}anctu{c:X}|
          e{c:X}t.                    |
                                  |
-      ]], concealed)
+      ]])
 
       feed('<esc><LeftMouse><15,1>')
       screen:expect([[
@@ -619,7 +619,7 @@ describe('Mouse input', function()
         , no {c:X}ea takimata {c:X}anctu{c:X}|
          e{c:X}t.                    |
                                  |
-      ]], concealed)
+      ]])
 
       feed('<esc><LeftMouse><15,3>')
       screen:expect([[
@@ -630,7 +630,7 @@ describe('Mouse input', function()
         , no {c:X}ea takimata {c:X}anctu{c:X}|
          e{c:X}t.                    |
                                  |
-      ]], concealed)
+      ]])
     end) -- level 1 - wrapped
 
 
@@ -642,44 +642,44 @@ describe('Mouse input', function()
         {c:^Y}rem ip{c:X}um do {c:X}it , con{c:X}e|
         {c:X}tet ta ka{c:X}d {c:X}ber{c:X}en, no |
                                  |
-        ~                        |
-        ~                        |
-        ~                        |
+        {0:~                        }|
+        {0:~                        }|
+        {0:~                        }|
                                  |
-      ]], concealed)
+      ]])
 
       feed('<esc><LeftMouse><1,0>')
       screen:expect([[
         {c:Y}^rem ip{c:X}um do {c:X}it , con{c:X}e|
         {c:X}tet ta ka{c:X}d {c:X}ber{c:X}en, no |
                                  |
-        ~                        |
-        ~                        |
-        ~                        |
+        {0:~                        }|
+        {0:~                        }|
+        {0:~                        }|
                                  |
-      ]], concealed)
+      ]])
 
       feed('<esc><LeftMouse><15,0>')
       screen:expect([[
         {c:Y}rem ip{c:X}um do {c:X}^it , con{c:X}e|
         {c:X}tet ta ka{c:X}d {c:X}ber{c:X}en, no |
                                  |
-        ~                        |
-        ~                        |
-        ~                        |
+        {0:~                        }|
+        {0:~                        }|
+        {0:~                        }|
                                  |
-      ]], concealed)
+      ]])
 
       feed('<esc><LeftMouse><15,1>')
       screen:expect([[
         {c:Y}rem ip{c:X}um do {c:X}it , con{c:X}e|
         {c:X}tet ta ka{c:X}d {c:X}b^er{c:X}en, no |
                                  |
-        ~                        |
-        ~                        |
-        ~                        |
+        {0:~                        }|
+        {0:~                        }|
+        {0:~                        }|
                                  |
-      ]], concealed)
+      ]])
     end) -- level 2 - non wrapped
 
     it('(level 2) click on wrapped lines', function()
@@ -694,7 +694,7 @@ describe('Mouse input', function()
         , no {c:X}ea takimata {c:X}anctu{c:X}|
          e{c:X}t.                    |
                                  |
-      ]], concealed)
+      ]])
 
       feed('<esc><LeftMouse><6,1>')
       screen:expect([[
@@ -705,7 +705,7 @@ describe('Mouse input', function()
         , no {c:X}ea takimata {c:X}anctu{c:X}|
          e{c:X}t.                    |
                                  |
-      ]], concealed)
+      ]])
 
       feed('<esc><LeftMouse><15,1>')
       screen:expect([[
@@ -716,7 +716,7 @@ describe('Mouse input', function()
         , no {c:X}ea takimata {c:X}anctu{c:X}|
          e{c:X}t.                    |
                                  |
-      ]], concealed)
+      ]])
 
       feed('<esc><LeftMouse><15,3>')
       screen:expect([[
@@ -727,7 +727,7 @@ describe('Mouse input', function()
         , no {c:X}ea takimata {c:X}anctu{c:X}|
          e{c:X}t.                    |
                                  |
-      ]], concealed)
+      ]])
     end) -- level 2 - wrapped
 
 
@@ -739,44 +739,44 @@ describe('Mouse input', function()
         ^rem ipum do it , conetetu|
         tet ta kad beren, no ea t|
                                  |
-        ~                        |
-        ~                        |
-        ~                        |
+        {0:~                        }|
+        {0:~                        }|
+        {0:~                        }|
                                  |
-      ]], concealed)
+      ]])
 
       feed('<esc><LeftMouse><1,0>')
       screen:expect([[
         r^em ipum do it , conetetu|
         tet ta kad beren, no ea t|
                                  |
-        ~                        |
-        ~                        |
-        ~                        |
+        {0:~                        }|
+        {0:~                        }|
+        {0:~                        }|
                                  |
-      ]], concealed)
+      ]])
 
       feed('<esc><LeftMouse><15,0>')
       screen:expect([[
         rem ipum do it ^, conetetu|
         tet ta kad beren, no ea t|
                                  |
-        ~                        |
-        ~                        |
-        ~                        |
+        {0:~                        }|
+        {0:~                        }|
+        {0:~                        }|
                                  |
-      ]], concealed)
+      ]])
 
       feed('<esc><LeftMouse><15,1>')
       screen:expect([[
         rem ipum do it , conetetu|
         tet ta kad bere^n, no ea t|
                                  |
-        ~                        |
-        ~                        |
-        ~                        |
+        {0:~                        }|
+        {0:~                        }|
+        {0:~                        }|
                                  |
-      ]], concealed)
+      ]])
     end) -- level 3 - non wrapped
 
     it('(level 3) click on wrapped lines', function()
@@ -791,7 +791,7 @@ describe('Mouse input', function()
         , no ea takimata anctu   |
          et.                     |
                                  |
-      ]], concealed)
+      ]])
 
       feed('<esc><LeftMouse><6,1>')
       screen:expect([[
@@ -802,7 +802,7 @@ describe('Mouse input', function()
         , no ea takimata anctu   |
          et.                     |
                                  |
-      ]], concealed)
+      ]])
 
       feed('<esc><LeftMouse><15,1>')
       screen:expect([[
@@ -813,7 +813,7 @@ describe('Mouse input', function()
         , no ea takimata anctu   |
          et.                     |
                                  |
-      ]], concealed)
+      ]])
 
       feed('<esc><LeftMouse><15,3>')
       screen:expect([[
@@ -824,7 +824,7 @@ describe('Mouse input', function()
         , no ea takimata anctu   |
          et.                     |
                                  |
-      ]], concealed)
+      ]])
     end) -- level 3 - wrapped
   end)
 end)

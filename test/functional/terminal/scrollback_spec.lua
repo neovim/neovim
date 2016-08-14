@@ -33,7 +33,7 @@ describe('terminal scrollback', function()
         line29                                            |
         line30                                            |
         {1: }                                                 |
-        -- TERMINAL --                                    |
+        {3:-- TERMINAL --}                                    |
       ]])
     end)
 
@@ -61,7 +61,7 @@ describe('terminal scrollback', function()
         line3                                             |
         line4                                             |
         {1: }                                                 |
-        -- TERMINAL --                                    |
+        {3:-- TERMINAL --}                                    |
       ]])
     end)
 
@@ -76,7 +76,7 @@ describe('terminal scrollback', function()
           line4                                             |
           line5                                             |
           {1: }                                                 |
-          -- TERMINAL --                                    |
+          {3:-- TERMINAL --}                                    |
         ]])
         eq(7, curbuf('line_count'))
       end)
@@ -92,7 +92,7 @@ describe('terminal scrollback', function()
             line6                                             |
             line7                                             |
             line8{1: }                                            |
-            -- TERMINAL --                                    |
+            {3:-- TERMINAL --}                                    |
           ]])
 
           feed('<c-\\><c-n>6k')
@@ -141,7 +141,7 @@ describe('terminal scrollback', function()
           line4                                             |
           rows: 5, cols: 50                                 |
           {1: }                                                 |
-          -- TERMINAL --                                    |
+          {3:-- TERMINAL --}                                    |
         ]])
       end
 
@@ -158,7 +158,7 @@ describe('terminal scrollback', function()
             rows: 5, cols: 50                                 |
             rows: 3, cols: 50                                 |
             {1: }                                                 |
-            -- TERMINAL --                                    |
+            {3:-- TERMINAL --}                                    |
           ]])
           eq(8, curbuf('line_count'))
           feed('<c-\\><c-n>3k')
@@ -185,7 +185,7 @@ describe('terminal scrollback', function()
           rows: 4, cols: 50                                 |
           {1: }                                                 |
                                                             |
-          -- TERMINAL --                                    |
+          {3:-- TERMINAL --}                                    |
         ]])
         eq(4, curbuf('line_count'))
       end
@@ -203,7 +203,7 @@ describe('terminal scrollback', function()
             rows: 4, cols: 50                                 |
             rows: 3, cols: 50                                 |
             {1: }                                                 |
-            -- TERMINAL --                                    |
+            {3:-- TERMINAL --}                                    |
           ]])
           eq(4, curbuf('line_count'))
           feed('<c-\\><c-n>gg')
@@ -218,7 +218,7 @@ describe('terminal scrollback', function()
             rows: 4, cols: 50                                 |
             rows: 3, cols: 50                                 |
             {1: }                                                 |
-            -- TERMINAL --                                    |
+            {3:-- TERMINAL --}                                    |
           ]])
         end)
       end)
@@ -235,14 +235,14 @@ describe('terminal scrollback', function()
         line3                                             |
         line4                                             |
         {1: }                                                 |
-        -- TERMINAL --                                    |
+        {3:-- TERMINAL --}                                    |
       ]])
       screen:try_resize(screen._width, screen._height - 3)
       screen:expect([[
         line4                                             |
         rows: 3, cols: 50                                 |
         {1: }                                                 |
-        -- TERMINAL --                                    |
+        {3:-- TERMINAL --}                                    |
       ]])
       eq(7, curbuf('line_count'))
     end)
@@ -255,7 +255,7 @@ describe('terminal scrollback', function()
           rows: 3, cols: 50                                 |
           rows: 4, cols: 50                                 |
           {1: }                                                 |
-          -- TERMINAL --                                    |
+          {3:-- TERMINAL --}                                    |
         ]])
       end
 
@@ -277,7 +277,7 @@ describe('terminal scrollback', function()
             rows: 4, cols: 50                                 |
             rows: 7, cols: 50                                 |
             {1: }                                                 |
-            -- TERMINAL --                                    |
+            {3:-- TERMINAL --}                                    |
           ]])
           eq(9, curbuf('line_count'))
           feed('<c-\\><c-n>gg')
@@ -315,7 +315,7 @@ describe('terminal scrollback', function()
               rows: 11, cols: 50                                |
               {1: }                                                 |
                                                                 |
-              -- TERMINAL --                                    |
+              {3:-- TERMINAL --}                                    |
             ]])
             -- since there's an empty line after the cursor, the buffer line
             -- count equals the terminal screen height

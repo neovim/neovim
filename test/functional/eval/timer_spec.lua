@@ -137,7 +137,7 @@ describe('timers', function()
   it("doesn't mess up the cmdline", function()
     local screen = Screen.new(40, 6)
     screen:attach()
-    screen:set_default_attr_ignore({{bold=true, foreground=Screen.colors.Blue}})
+    screen:set_default_attr_ids( {[0] = {bold=true, foreground=255}} )
     source([[
       func! MyHandler(timer)
         echo "evil"
@@ -148,10 +148,10 @@ describe('timers', function()
     screen:sleep(200)
     screen:expect([[
                                               |
-      ~                                       |
-      ~                                       |
-      ~                                       |
-      ~                                       |
+      {0:~                                       }|
+      {0:~                                       }|
+      {0:~                                       }|
+      {0:~                                       }|
       :good^                                   |
     ]])
   end)

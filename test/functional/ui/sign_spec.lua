@@ -9,7 +9,11 @@ describe('Signs', function()
     clear()
     screen = Screen.new()
     screen:attach()
-    screen:set_default_attr_ignore( {{}, {bold=true, foreground=255}} ) 
+    screen:set_default_attr_ids( {
+      [0] = {bold=true, foreground=255},
+      [1] = {background = Screen.colors.Yellow},
+      [2] = {foreground = Screen.colors.DarkBlue, background = Screen.colors.Grey},
+    } )
   end)
 
   after_each(function()
@@ -25,19 +29,19 @@ describe('Signs', function()
       execute('sign place 2 line=3 name=piet buffer=1')
       execute('sign place 3 line=1 name=pietx buffer=1')
       screen:expect([[
-        >!a                                                  |
-          b                                                  |
-        >>c                                                  |
-          ^                                                   |
-          ~                                                  |
-          ~                                                  |
-          ~                                                  |
-          ~                                                  |
-          ~                                                  |
-          ~                                                  |
-          ~                                                  |
-          ~                                                  |
-          ~                                                  |
+        {1:>!}a                                                  |
+        {2:  }b                                                  |
+        {1:>>}c                                                  |
+        {2:  }^                                                   |
+        {2:  }{0:~                                                  }|
+        {2:  }{0:~                                                  }|
+        {2:  }{0:~                                                  }|
+        {2:  }{0:~                                                  }|
+        {2:  }{0:~                                                  }|
+        {2:  }{0:~                                                  }|
+        {2:  }{0:~                                                  }|
+        {2:  }{0:~                                                  }|
+        {2:  }{0:~                                                  }|
         :sign place 3 line=1 name=pietx buffer=1             |
       ]])
     end)

@@ -25,7 +25,7 @@ describe('terminal cursor', function()
                                                         |
                                                         |
                                                         |
-      -- TERMINAL --                                    |
+      {3:-- TERMINAL --}                                    |
     ]])
   end)
 
@@ -49,12 +49,12 @@ describe('terminal cursor', function()
 
     it('is positioned correctly when unfocused', function()
       screen:expect([[
-          1 tty ready                                     |
-          2 {2: }                                             |
-          3                                               |
-          4                                               |
-          5                                               |
-          6 ^                                              |
+        {7:  1 }tty ready                                     |
+        {7:  2 }{2: }                                             |
+        {7:  3 }                                              |
+        {7:  4 }                                              |
+        {7:  5 }                                              |
+        {7:  6 }^                                              |
         :set number                                       |
       ]])
     end)
@@ -83,7 +83,7 @@ describe('terminal cursor', function()
                                                           |
                                                           |
                                                           |
-        -- TERMINAL --                                    |
+        {3:-- TERMINAL --}                                    |
       ]])
       show_cursor()
       screen:expect([[
@@ -93,7 +93,7 @@ describe('terminal cursor', function()
                                                           |
                                                           |
                                                           |
-        -- TERMINAL --                                    |
+        {3:-- TERMINAL --}                                    |
       ]])
       -- same for when the terminal is unfocused
       feed('<c-\\><c-n>')
@@ -132,14 +132,8 @@ describe('cursor with customized highlighting', function()
     screen = Screen.new(50, 7)
     screen:set_default_attr_ids({
       [1] = {foreground = 45, background = 46},
-      [2] = {foreground = 55, background = 56}
-    })
-    screen:set_default_attr_ignore({
-      [1] = {bold = true},
-      [2] = {foreground = 12},
-      [3] = {bold = true, reverse = true},
-      [5] = {background = 11},
-      [6] = {foreground = 130},
+      [2] = {foreground = 55, background = 56},
+      [3] = {bold = true},
     })
     screen:attach(false)
     execute('call termopen(["'..nvim_dir..'/tty-test"]) | startinsert')
@@ -153,7 +147,7 @@ describe('cursor with customized highlighting', function()
                                                         |
                                                         |
                                                         |
-      -- TERMINAL --                                    |
+      {3:-- TERMINAL --}                                    |
     ]])
     feed('<c-\\><c-n>')
     screen:expect([[

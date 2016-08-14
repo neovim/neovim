@@ -9,8 +9,8 @@ describe(":drop", function()
     clear()
     screen = Screen.new(35, 10)
     screen:attach()
-    screen:set_default_attr_ignore({{bold=true, foreground=Screen.colors.Blue}})
     screen:set_default_attr_ids({
+      [0] = {bold=true, foreground=Screen.colors.Blue},
       [1] = {bold = true, reverse = true},
       [2] = {reverse = true},
       [3] = {bold = true},
@@ -26,13 +26,13 @@ describe(":drop", function()
     execute("drop tmp1.vim")
     screen:expect([[
       ^                                   |
-      ~                                  |
-      ~                                  |
-      ~                                  |
-      ~                                  |
-      ~                                  |
-      ~                                  |
-      ~                                  |
+      {0:~                                  }|
+      {0:~                                  }|
+      {0:~                                  }|
+      {0:~                                  }|
+      {0:~                                  }|
+      {0:~                                  }|
+      {0:~                                  }|
       {1:tmp1.vim                           }|
       "tmp1.vim" [New File]              |
     ]])
@@ -45,13 +45,13 @@ describe(":drop", function()
     execute("drop tmp1")
     screen:expect([[
                     {2:|}^                    |
-      ~             {2:|}~                   |
-      ~             {2:|}~                   |
-      ~             {2:|}~                   |
-      ~             {2:|}~                   |
-      ~             {2:|}~                   |
-      ~             {2:|}~                   |
-      ~             {2:|}~                   |
+      {0:~             }{2:|}{0:~                   }|
+      {0:~             }{2:|}{0:~                   }|
+      {0:~             }{2:|}{0:~                   }|
+      {0:~             }{2:|}{0:~                   }|
+      {0:~             }{2:|}{0:~                   }|
+      {0:~             }{2:|}{0:~                   }|
+      {0:~             }{2:|}{0:~                   }|
       {2:tmp2           }{1:tmp1                }|
       :drop tmp1                         |
     ]])
@@ -65,13 +65,13 @@ describe(":drop", function()
     execute("drop tmp3")
     screen:expect([[
       ^                    {2:|}              |
-      ~                   {2:|}~             |
-      ~                   {2:|}~             |
-      ~                   {2:|}~             |
-      {1:tmp3                }{2:|}~             |
-      ABC                 {2:|}~             |
-      ~                   {2:|}~             |
-      ~                   {2:|}~             |
+      {0:~                   }{2:|}{0:~             }|
+      {0:~                   }{2:|}{0:~             }|
+      {0:~                   }{2:|}{0:~             }|
+      {1:tmp3                }{2:|}{0:~             }|
+      ABC                 {2:|}{0:~             }|
+      {0:~                   }{2:|}{0:~             }|
+      {0:~                   }{2:|}{0:~             }|
       {2:tmp2 [+]             tmp1          }|
       "tmp3" [New File]                  |
     ]])
