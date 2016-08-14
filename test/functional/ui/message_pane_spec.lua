@@ -842,6 +842,92 @@ describe(':messages', function()
                                                     |
           ]])
         end)
+
+        it('opens message pane when not open using truthy argument', function()
+          command('call msgpane("test", "Green", "open")')
+
+          screen:expect([[
+                                                    |
+            {2:[No Name]                               }|
+            {5:^test}                                    |
+            {1:~                                       }|
+            {1:~                                       }|
+            {1:~                                       }|
+            {1:~                                       }|
+            {1:~                                       }|
+            {3:nvim://messages                         }|
+                                                    |
+          ]])
+
+          -- One more call to make sure the window doesn't change
+          command('call msgpane("test 2", "Green", "open")')
+
+          screen:expect([[
+                                                    |
+            {2:[No Name]                               }|
+            {5:test}                                    |
+            {5:^test 2}                                  |
+            {1:~                                       }|
+            {1:~                                       }|
+            {1:~                                       }|
+            {1:~                                       }|
+            {3:nvim://messages                         }|
+                                                    |
+          ]])
+        end)
+
+        describe('with unexpected', function()
+          it('highlight group', function()
+            command('messages')
+            command('call msgpane("test", "NotAHighlight")')
+
+            screen:expect([[
+                                                      |
+              {2:[No Name]                               }|
+              ^test                                    |
+              {1:~                                       }|
+              {1:~                                       }|
+              {1:~                                       }|
+              {1:~                                       }|
+              {1:~                                       }|
+              {3:nvim://messages                         }|
+                                                      |
+            ]])
+          end)
+
+          it('number as a highlight group', function()
+            command('messages')
+            command('call msgpane("test", 0)')
+
+            screen:expect([[
+                                                      |
+              {2:[No Name]                               }|
+              ^test                                    |
+              {1:~                                       }|
+              {1:~                                       }|
+              {1:~                                       }|
+              {1:~                                       }|
+              {1:~                                       }|
+              {3:nvim://messages                         }|
+                                                      |
+            ]])
+
+            command('call msgpane("test 2", -1)')
+
+            screen:expect([[
+                                                      |
+              {2:[No Name]                               }|
+              test                                    |
+              ^test 2                                  |
+              {1:~                                       }|
+              {1:~                                       }|
+              {1:~                                       }|
+              {1:~                                       }|
+              {3:nvim://messages                         }|
+                                                      |
+            ]])
+          end)
+        end)
       end)
     end)
   end)
