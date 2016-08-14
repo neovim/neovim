@@ -3885,8 +3885,20 @@ skip:
         split = false;
       }
 
+
+      kl_iter(MatchedLine, lmatch, current) {
+        if ((*current)->data.lnum >= old_cursor.lnum) {
+          curwin->w_cursor.lnum = (*current)->data.lnum;
+          break;
+        }
+      }
+
       ex_window_inc_sub(pat, sub, lmatch, split);
+    } else if (*p_ics != NUL && eap->is_live) {
+      curwin->w_cursor = old_cursor;
     }
+  } else {
+    curwin->w_cursor = old_cursor;
   }
 
   kl_destroy(MatchedLine, lmatch);
