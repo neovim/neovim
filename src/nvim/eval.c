@@ -13999,7 +13999,7 @@ static void f_msgpane(typval_T *argvars, typval_T *rettv)
     }
 
     if (argvars[2].v_type != VAR_UNKNOWN) {
-      if (get_tv_number(&argvars[2])) {
+      if (non_zero_arg(&argvars[2])) {
         msgpane_open();
       }
     }
