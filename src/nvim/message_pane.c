@@ -140,6 +140,7 @@ bool msgpane_open(void)
     if (win_split((int)p_cwh, WSP_BOT) == FAIL) {
       beep_flush();
       unblock_autocmds();
+      msg_silent--;
       return false;
     }
 
