@@ -112,6 +112,11 @@ describe(':messages', function()
       [19] = { background = Screen.colors.Oldlace, foreground = Screen.colors.Green },
       [20] = { background = Screen.colors.Oldlace, foreground = Screen.colors.Yellow },
       [21] = { background = Screen.colors.Oldlace, foreground = Screen.colors.Fuchsia },
+      -- tabline
+      [22] = { background = Screen.colors.LightGrey, underline = true },
+      [23] = { background = Screen.colors.LightGrey, underline = true, bold = true, foreground = Screen.colors.Fuchsia },
+      [24] = { bold = true },
+      [25] = { bold = true, foreground = Screen.colors.Fuchsia },
     })
 
     -- Needs to be sourced before 'syntax on' and 'filetype plugin on' so that
@@ -660,6 +665,107 @@ describe(':messages', function()
           /e\|a                                   |
         ]])
 
+      end)
+    end)
+
+    describe('without a window', function()
+      before_each(function()
+        command('set messagepane')
+        command('messages')
+        echo_messages(1, 'before')
+
+        screen:expect([[
+                                                  |
+          {2:[No Name]                               }|
+          message 1                               |
+          {5:message 2}                               |
+          {6:message 3}                               |
+          {7:message 4}                               |
+          ^before                                  |
+          {1:~                                       }|
+          {3:nvim://messages                         }|
+          before                                  |
+        ]])
+      end)
+
+      it('and still writes to buffer', function()
+        command('quit')
+        echo_messages(1, 'after')
+
+        screen:expect([[
+          ^                                        |
+          {1:~                                       }|
+          {1:~                                       }|
+          {1:~                                       }|
+          {1:~                                       }|
+          {1:~                                       }|
+          {1:~                                       }|
+          {1:~                                       }|
+          {1:~                                       }|
+          after                                   |
+        ]])
+
+        command('messages')
+
+        screen:expect([[
+                                                  |
+          {2:[No Name]                               }|
+          before                                  |
+          message 1                               |
+          {5:message 2}                               |
+          {6:message 3}                               |
+          {7:message 4}                               |
+          ^after                                   |
+          {3:nvim://messages                         }|
+          after                                   |
+        ]])
+      end)
+
+      it('in current tab and still writes to buffer', function()
+        command('tabnew')
+
+        screen:expect([[
+          {22: }{23:2}{22: n//messages }{24: [No Name] }{2:             }{22:X}|
+          ^                                        |
+          {1:~                                       }|
+          {1:~                                       }|
+          {1:~                                       }|
+          {1:~                                       }|
+          {1:~                                       }|
+          {1:~                                       }|
+          {1:~                                       }|
+                                                  |
+        ]])
+
+        echo_messages(1, 'after tab')
+
+        screen:expect([[
+          {22: }{23:2}{22: n//messages }{24: [No Name] }{2:             }{22:X}|
+          ^                                        |
+          {1:~                                       }|
+          {1:~                                       }|
+          {1:~                                       }|
+          {1:~                                       }|
+          {1:~                                       }|
+          {1:~                                       }|
+          {1:~                                       }|
+          after tab                               |
+        ]])
+
+        command('tabp')
+
+        screen:expect([[
+          {24: }{25:2}{24: n//messages }{22: [No Name] }{2:             }{22:X}|
+                                                  |
+          {2:[No Name]                               }|
+          message 1                               |
+          {5:message 2}                               |
+          {6:message 3}                               |
+          {7:message 4}                               |
+          ^after tab                               |
+          {3:nvim://messages                         }|
+                                                  |
+        ]])
       end)
     end)
 
