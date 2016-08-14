@@ -42,6 +42,10 @@ static bool msgpane_create(void)
   }
 
   msgpane_buf = buflist_new((char_u *)"nvim://messages", NULL, 1, BLN_LISTED);
+  if (msgpane_buf == NULL) {
+    return false;
+  }
+
   msgpane_buf->b_messages = true;
   return msgpane_exists();
 }
