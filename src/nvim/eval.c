@@ -13998,9 +13998,10 @@ static void f_msgpane(typval_T *argvars, typval_T *rettv)
       attr = syn_id2attr(hl_id);
     }
 
-  if (argvars[2].v_type != VAR_UNKNOWN) {
-    if (get_tv_number(&argvars[2])) {
-      msgpane_open();
+    if (argvars[2].v_type != VAR_UNKNOWN) {
+      if (get_tv_number(&argvars[2])) {
+        msgpane_open();
+      }
     }
   }
 
