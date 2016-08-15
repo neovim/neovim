@@ -130,7 +130,7 @@ if(USE_BUNDLED_BUSTED)
   add_custom_command(OUTPUT ${HOSTDEPS_BIN_DIR}/busted
     COMMAND ${LUAROCKS_BINARY}
     ARGS build https://raw.githubusercontent.com/Olivine-Labs/busted/v2.0.rc11-0/busted-2.0.rc11-0.rockspec ${LUAROCKS_BUILDARGS}
-    DEPENDS lpeg)
+    DEPENDS inspect)
   add_custom_target(busted
     DEPENDS ${HOSTDEPS_BIN_DIR}/busted)
 
