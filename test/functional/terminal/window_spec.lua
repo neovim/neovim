@@ -4,6 +4,8 @@ local feed, clear = helpers.feed, helpers.clear
 local wait = helpers.wait
 local execute = helpers.execute
 
+if helpers.pending_win32(pending) then return end
+
 describe('terminal window', function()
   local screen
 

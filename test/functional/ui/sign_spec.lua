@@ -2,6 +2,8 @@ local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 local clear, feed, execute = helpers.clear, helpers.feed, helpers.execute
 
+if helpers.pending_win32(pending) then return end
+
 describe('Signs', function()
   local screen
 

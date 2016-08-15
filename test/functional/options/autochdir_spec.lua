@@ -3,6 +3,8 @@ local clear = helpers.clear
 local eq = helpers.eq
 local getcwd = helpers.funcs.getcwd
 
+if helpers.pending_win32(pending) then return end
+
 describe("'autochdir'", function()
   it('given on the shell gets processed properly', function()
     local targetdir = 'test/functional/fixtures'

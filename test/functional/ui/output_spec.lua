@@ -1,6 +1,8 @@
 local session = require('test.functional.helpers')(after_each)
 local child_session = require('test.functional.terminal.helpers')
 
+if session.pending_win32(pending) then return end
+
 describe("shell command :!", function()
   local screen
   before_each(function()

@@ -430,6 +430,20 @@ local function create_callindex(func)
   return table
 end
 
+-- Helper to skip tests. Returns true in Windows systems.
+-- pending_func is the pending() from busted
+local function pending_win32(pending_func)
+  clear()
+  if os_name() == 'windows' then
+    if pending_func ~= nil then
+      pending_func('FIXME: Windows', function() end)
+    end
+    return true
+  else
+    return false
+  end
+end
+
 local funcs = create_callindex(nvim_call)
 local meths = create_callindex(nvim)
 local bufmeths = create_callindex(buffer)
@@ -493,6 +507,7 @@ return function(after_each)
     curbufmeths = curbufmeths,
     curwinmeths = curwinmeths,
     curtabmeths = curtabmeths,
+    pending_win32 = pending_win32,
     NIL = mpack.NIL,
   }
 end

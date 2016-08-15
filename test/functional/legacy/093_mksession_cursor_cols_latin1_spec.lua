@@ -7,6 +7,8 @@ local helpers = require('test.functional.helpers')(after_each)
 local feed, insert = helpers.feed, helpers.insert
 local clear, execute, expect = helpers.clear, helpers.execute, helpers.expect
 
+if helpers.pending_win32(pending) then return end
+
 describe('store cursor position in session file in Latin-1', function()
   setup(clear)
 

@@ -9,6 +9,8 @@ local clear = helpers.clear
 local execute = helpers.execute
 local exc_exec = helpers.exc_exec
 
+if helpers.pending_win32(pending) then return end
+
 -- These directories will be created for testing
 local directories = {
   tab = 'Xtest-functional-ex_cmds-cd_spec.tab', -- Tab

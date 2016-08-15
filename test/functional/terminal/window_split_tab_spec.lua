@@ -4,6 +4,8 @@ local clear = helpers.clear
 local feed, nvim = helpers.feed, helpers.nvim
 local execute = helpers.execute
 
+if helpers.pending_win32(pending) then return end
+
 describe('terminal', function()
   local screen
 

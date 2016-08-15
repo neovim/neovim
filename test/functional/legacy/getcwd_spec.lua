@@ -4,6 +4,8 @@ local helpers = require('test.functional.helpers')(after_each)
 local eq, eval, source = helpers.eq, helpers.eval, helpers.source
 local call, clear, execute = helpers.call, helpers.clear, helpers.execute
 
+if helpers.pending_win32(pending) then return end
+
 describe('getcwd', function()
   before_each(clear)
 

@@ -5,6 +5,8 @@ local eq, eval, clear, write_file, execute, source =
 	helpers.eq, helpers.eval, helpers.clear, helpers.write_file,
 	helpers.execute, helpers.source
 
+if helpers.pending_win32(pending) then return end
+
 describe(':write', function()
   after_each(function()
     os.remove('test_bkc_file.txt')

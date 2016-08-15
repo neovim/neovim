@@ -4,6 +4,7 @@ local os = require('os')
 local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
 local execute, request, eq = helpers.execute, helpers.request, helpers.eq
 
+if helpers.pending_win32(pending) then return end
 
 describe('color scheme compatibility', function()
   before_each(function()

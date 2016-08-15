@@ -5,6 +5,8 @@ local feed, insert, source = helpers.feed, helpers.insert, helpers.source
 local clear, execute = helpers.clear, helpers.execute
 local eq, eval = helpers.eq, helpers.eval
 
+if helpers.pending_win32(pending) then return end
+
 describe('wordcount', function()
   before_each(clear)
 

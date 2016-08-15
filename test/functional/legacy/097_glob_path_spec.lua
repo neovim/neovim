@@ -6,6 +6,8 @@ local helpers = require('test.functional.helpers')(after_each)
 local clear = helpers.clear
 local execute, expect = helpers.execute, helpers.expect
 
+if helpers.pending_win32(pending) then return end
+
 describe('glob() and globpath()', function()
   setup(clear)
 

@@ -5,6 +5,7 @@ local wait = helpers.wait
 local eval, execute, source = helpers.eval, helpers.execute, helpers.source
 local eq, neq = helpers.eq, helpers.neq
 
+if helpers.pending_win32(pending) then return end
 
 describe('terminal buffer', function()
   local screen

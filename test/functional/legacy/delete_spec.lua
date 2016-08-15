@@ -2,6 +2,8 @@ local helpers = require('test.functional.helpers')(after_each)
 local clear, source = helpers.clear, helpers.source
 local eq, eval, execute = helpers.eq, helpers.eval, helpers.execute
 
+if helpers.pending_win32(pending) then return end
+
 describe('Test for delete()', function()
   before_each(clear)
 

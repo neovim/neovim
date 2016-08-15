@@ -14,6 +14,8 @@ local nvim_current_line = function()
   return curwinmeths.get_cursor()[1]
 end
 
+if helpers.pending_win32(pending) then return end
+
 describe('ShaDa support code', function()
   local testfilename = 'Xtestfile-functional-shada-marks'
   local testfilename_2 = 'Xtestfile-functional-shada-marks-2'

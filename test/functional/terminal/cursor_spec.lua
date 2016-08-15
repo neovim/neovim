@@ -6,6 +6,7 @@ local nvim_dir, execute = helpers.nvim_dir, helpers.execute
 local hide_cursor = thelpers.hide_cursor
 local show_cursor = thelpers.show_cursor
 
+if helpers.pending_win32(pending) then return end
 
 describe('terminal cursor', function()
   local screen

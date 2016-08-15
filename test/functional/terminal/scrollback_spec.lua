@@ -6,6 +6,8 @@ local feed, nvim_dir, execute = helpers.feed, helpers.nvim_dir, helpers.execute
 local wait = helpers.wait
 local feed_data = thelpers.feed_data
 
+if helpers.pending_win32(pending) then return end
+
 describe('terminal scrollback', function()
   local screen
 

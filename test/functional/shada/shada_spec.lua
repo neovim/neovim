@@ -18,6 +18,8 @@ local read_shada_file = shada_helpers.read_shada_file
 local wshada, _, shada_fname, clean =
   get_shada_rw('Xtest-functional-shada-shada.shada')
 
+if helpers.pending_win32(pending) then return end
+
 describe('ShaDa support code', function()
   before_each(reset)
   after_each(function()

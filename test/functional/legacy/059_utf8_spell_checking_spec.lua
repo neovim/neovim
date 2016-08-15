@@ -5,6 +5,8 @@ local feed, insert, source = helpers.feed, helpers.insert, helpers.source
 local clear, execute, expect = helpers.clear, helpers.execute, helpers.expect
 local write_file, call = helpers.write_file, helpers.call
 
+if helpers.pending_win32(pending) then return end
+
 local function write_latin1(name, text)
   text = call('iconv', text, 'utf-8', 'latin-1')
   write_file(name, text)

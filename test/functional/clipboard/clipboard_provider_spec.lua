@@ -5,6 +5,8 @@ local Screen = require('test.functional.ui.screen')
 local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
 local execute, expect, eq, eval = helpers.execute, helpers.expect, helpers.eq, helpers.eval
 
+if helpers.pending_win32(pending) then return end
+
 local function basic_register_test(noblock)
   insert("some words")
 

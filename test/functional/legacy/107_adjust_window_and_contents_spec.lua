@@ -5,6 +5,8 @@ local Screen = require('test.functional.ui.screen')
 local insert = helpers.insert
 local clear, execute = helpers.clear, helpers.execute
 
+if helpers.pending_win32(pending) then return end
+
 describe('107', function()
   setup(clear)
 

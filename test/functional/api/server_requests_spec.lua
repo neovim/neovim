@@ -8,6 +8,7 @@ local nvim_prog, command, funcs = helpers.nvim_prog, helpers.command, helpers.fu
 local source, next_message = helpers.source, helpers.next_message
 local meths = helpers.meths
 
+if helpers.pending_win32(pending) then return end
 
 describe('server -> client', function()
   local cid

@@ -4,6 +4,8 @@ local helpers = require('test.functional.helpers')(after_each)
 local clear, source = helpers.clear, helpers.source
 local call, eq, nvim = helpers.call, helpers.eq, helpers.meths
 
+if helpers.pending_win32(pending) then return end
+
 local function expected_empty()
   eq({}, nvim.get_vvar('errors'))
 end
