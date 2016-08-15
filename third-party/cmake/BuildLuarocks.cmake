@@ -127,10 +127,17 @@ add_custom_target(inspect
 list(APPEND THIRD_PARTY_DEPS inspect)
 
 if(USE_BUNDLED_BUSTED)
+  add_custom_command(OUTPUT ${HOSTDEPS_LIB_DIR}/luarocks/rocks/penlight/1.3.2-2
+    COMMAND ${LUAROCKS_BINARY}
+    ARGS build penlight 1.3.2-2 ${LUAROCKS_BUILDARGS}
+    DEPENDS inspect)
+  add_custom_target(penlight
+    DEPENDS ${HOSTDEPS_LIB_DIR}/luarocks/rocks/penlight/1.3.2-2)
+
   add_custom_command(OUTPUT ${HOSTDEPS_BIN_DIR}/busted
     COMMAND ${LUAROCKS_BINARY}
     ARGS build https://raw.githubusercontent.com/Olivine-Labs/busted/v2.0.rc11-0/busted-2.0.rc11-0.rockspec ${LUAROCKS_BUILDARGS}
-    DEPENDS lpeg)
+    DEPENDS penlight)
   add_custom_target(busted
     DEPENDS ${HOSTDEPS_BIN_DIR}/busted)
 
