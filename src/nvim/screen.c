@@ -1707,8 +1707,7 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
   if (cmdwin_type != 0 && wp == curwin) {
     ScreenLines[off] = cmdwin_type;
     ScreenAttrs[off] = hl_attr(HLF_AT);
-    if (enc_utf8)
-      ScreenLinesUC[off] = 0;
+    ScreenLinesUC[off] = 0;
     ++col;
   }
 
@@ -1897,13 +1896,11 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
   while (col < wp->w_width
          - (wp->w_p_rl ? txtcol : 0)
          ) {
-    if (enc_utf8) {
-      if (fill_fold >= 0x80) {
-        ScreenLinesUC[off + col] = fill_fold;
-        ScreenLinesC[0][off + col] = 0;
-      } else
-        ScreenLinesUC[off + col] = 0;
-    }
+    if (fill_fold >= 0x80) {
+      ScreenLinesUC[off + col] = fill_fold;
+      ScreenLinesC[0][off + col] = 0;
+    } else
+      ScreenLinesUC[off + col] = 0;
     ScreenLines[off + col++] = fill_fold;
   }
 
@@ -2013,9 +2010,8 @@ static void copy_text_attr(int off, char_u *buf, int len, int attr)
   int i;
 
   memmove(ScreenLines + off, buf, (size_t)len);
-  if (enc_utf8)
-    memset(ScreenLinesUC + off, 0, sizeof(u8char_T) * (size_t)len);
-  for (i = 0; i < len; ++i)
+  memset(ScreenLinesUC + off, 0, sizeof(u8char_T) * (size_t)len);
+  for (int i = 0; i < len; ++i)
     ScreenAttrs[off + i] = attr;
 }
 
@@ -2394,8 +2390,7 @@ static struct VisualPos init_visual(int lnum, win_T* wp) {
 
 static void write_space (unsigned off) {
   ScreenLines[off] = ' ';
-  if (enc_utf8)
-    ScreenLinesUC[off] = 0;
+  ScreenLinesUC[off] = 0;
 }
 
 static void write_utf8 (int ch, int attr, unsigned off) {
@@ -3190,27 +3185,17 @@ static int win_line (win_T *wp, linenr_T lnum, int startrow, int endrow, bool no
         SET_CHAR(c_extra)
       } else {
         SET_CHAR(*p_extra)
-        if (has_mbyte) {
-          if (enc_utf8) {
-            // If the UTF-8 character is more than one byte:
-            // Decode it into "mb_c".
-            mb_l = (*mb_ptr2len)(p_extra);
-            mb_utf8 = false;
-            if (mb_l > n_extra) {
-              mb_l = 1;
-            } else if (mb_l > 1) {
-              mb_c = utfc_ptr2char(p_extra, u8cc);
-              mb_utf8 = true;
-              c = 0xc0;
-            }
-          } else { // if this is a DBCS character, put it in "mb_c"
-            mb_l = MB_BYTE2LEN(c);
-            if (mb_l >= n_extra) {
-              mb_l = 1;
-            } else if (mb_l > 1) {
-              mb_c = (c << 8) + p_extra[1];
-            }
-          }
+        // If the UTF-8 character is more than one byte:
+        // Decode it into "mb_c".
+        mb_l = (*mb_ptr2len)(p_extra);
+        mb_utf8 = false;
+        if (mb_l > n_extra) {
+          mb_l = 1;
+        } else if (mb_l > 1) {
+          mb_c = utfc_ptr2char(p_extra, u8cc);
+          mb_utf8 = true;
+          c = 0xc0;
+        }
 
           // NUL at end-of-line
           if (mb_l == 0)
@@ -3907,9 +3892,9 @@ static int win_line (win_T *wp, linenr_T lnum, int startrow, int endrow, bool no
 
         while (col < wp->w_width) {
           ScreenLines[off] = ' ';
-          if (enc_utf8)
-            ScreenLinesUC[off] = 0;
-          ++col;
+          ScreenLinesUC[off] = 0;
+          col++;
+
           if (draw_color_col)
             draw_color_col = advance_color_col(VCOL_HLC,
                 &color_cols);
@@ -3933,9 +3918,7 @@ static int win_line (win_T *wp, linenr_T lnum, int startrow, int endrow, bool no
         // logical line
         while (col < wp->w_width) {
           ScreenLines[off] = ' ';
-          if (enc_utf8) {
-            ScreenLinesUC[off] = 0;
-          }
+          ScreenLinesUC[off] = 0;
           ScreenAttrs[off++] = term_attrs[vcol++];
           col++;
         }
@@ -4000,9 +3983,8 @@ static int win_line (win_T *wp, linenr_T lnum, int startrow, int endrow, bool no
       if (MB_IS_WIDE()) {
         off++; col++; // Need to fill two screen columns.
 
-        // UTF-8: Put a 0 in the second screen char.
-        // DBCS: Put second byte in the second screen char.
-        /*ScreenLines[off] = (enc_utf8) ? 0 : mb_c & 0xff;*/
+        // Done in write_char
+        /*ScreenLines[off] = 0;*/
 
         if (draw_state > WL_NR && filler_todo <= 0)
           vcol++;
@@ -4390,8 +4372,7 @@ static void screen_line(int row, int coloff, int endcol, int clear_width, int rl
     /* Clear the second half of a double-wide character of which the left
      * half was overwritten with a single-wide character. */
     ScreenLines[off_to] = ' ';
-    if (enc_utf8)
-      ScreenLinesUC[off_to] = 0;
+    ScreenLinesUC[off_to] = 0;
     screen_char(off_to, row, col + coloff);
   }
 
@@ -4402,7 +4383,7 @@ static void screen_line(int row, int coloff, int endcol, int clear_width, int rl
     /* blank out the rest of the line */
     while (col < clear_width && ScreenLines[off_to] == ' '
            && ScreenAttrs[off_to] == 0
-           && (!enc_utf8 || ScreenLinesUC[off_to] == 0)
+           && (ScreenLinesUC[off_to] == 0)
            ) {
       ++off_to;
       ++col;
@@ -4422,17 +4403,16 @@ static void screen_line(int row, int coloff, int endcol, int clear_width, int rl
 
       c = fillchar_vsep(&hl);
       if (ScreenLines[off_to] != (schar_T)c
-          || (enc_utf8 && (int)ScreenLinesUC[off_to]
+          || ((int)ScreenLinesUC[off_to]
               != (c >= 0x80 ? c : 0))
           || ScreenAttrs[off_to] != hl) {
         ScreenLines[off_to] = c;
         ScreenAttrs[off_to] = hl;
-        if (enc_utf8) {
-          if (c >= 0x80) {
-            ScreenLinesUC[off_to] = c;
-            ScreenLinesC[0][off_to] = 0;
-          } else
-            ScreenLinesUC[off_to] = 0;
+        if (c >= 0x80) {
+          ScreenLinesUC[off_to] = c;
+          ScreenLinesC[0][off_to] = 0;
+        } else {
+          ScreenLinesUC[off_to] = 0;
         }
         screen_char(off_to, row, col + coloff);
       }
@@ -5169,16 +5149,8 @@ void screen_getbytes(int row, int col, char_u *bytes, int *attrp)
     bytes[0] = ScreenLines[off];
     bytes[1] = NUL;
 
-    if (enc_utf8 && ScreenLinesUC[off] != 0)
+    if (ScreenLinesUC[off] != 0)
       bytes[utfc_char2bytes(off, bytes)] = NUL;
-    else if (enc_dbcs == DBCS_JPNU && ScreenLines[off] == 0x8e) {
-      bytes[0] = ScreenLines[off];
-      bytes[1] = ScreenLines2[off];
-      bytes[2] = NUL;
-    } else if (enc_dbcs && MB_BYTE2LEN(bytes[0]) > 1) {
-      bytes[1] = ScreenLines[off + 1];
-      bytes[2] = NUL;
-    }
   }
 }
 
@@ -5235,13 +5207,6 @@ void screen_puts_len(char_u *text, int textlen, int row, int col, int attr)
   int force_redraw_next = FALSE;
   int need_redraw;
 
-  const int l_has_mbyte = has_mbyte;
-  const bool l_enc_utf8 = enc_utf8;
-  const int l_enc_dbcs = enc_dbcs;
-
-  assert((l_has_mbyte == (l_enc_utf8 || l_enc_dbcs))
-         && !(l_enc_utf8 && l_enc_dbcs));
-
   if (ScreenLines == NULL || row >= screen_Rows)        /* safety check */
     return;
   off = LineOffset[row] + col;
@@ -5252,10 +5217,8 @@ void screen_puts_len(char_u *text, int textlen, int row, int col, int attr)
       && mb_fix_col(col, row) != col) {
     ScreenLines[off - 1] = ' ';
     ScreenAttrs[off - 1] = 0;
-    if (l_enc_utf8) {
-      ScreenLinesUC[off - 1] = 0;
-      ScreenLinesC[0][off - 1] = 0;
-    }
+    ScreenLinesUC[off - 1] = 0;
+    ScreenLinesC[0][off - 1] = 0;
     /* redraw the previous cell, make it empty */
     screen_char(off - 1, row, col - 1);
     /* force the cell at "col" to be redrawn */
@@ -5736,7 +5699,7 @@ static void screen_char(unsigned off, int row, int col)
   if (screen_attr != attr)
     screen_start_highlight(attr);
 
-  if (enc_utf8 && ScreenLinesUC[off] != 0) {
+  if (ScreenLinesUC[off] != 0) {
     char_u buf[MB_MAXBYTES + 1];
 
     // Convert UTF-8 character to bytes and write it.
@@ -5744,36 +5707,7 @@ static void screen_char(unsigned off, int row, int col)
     ui_puts(buf);
   } else {
     ui_putc(ScreenLines[off]);
-    // double-byte character in single-width cell
-    if (enc_dbcs == DBCS_JPNU && ScreenLines[off] == 0x8e) {
-      ui_putc(ScreenLines2[off]);
-    }
   }
-}
-
-/*
- * Used for enc_dbcs only: Put one double-wide character at ScreenLines["off"]
- * on the screen at position 'row' and 'col'.
- * The attributes of the first byte is used for all.  This is required to
- * output the two bytes of a double-byte character with nothing in between.
- */
-static void screen_char_2(unsigned off, int row, int col)
-{
-  /* Check for illegal values (could be wrong when screen was resized). */
-  if (off + 1 >= (unsigned)(screen_Rows * screen_Columns))
-    return;
-
-  /* Outputting the last character on the screen may scrollup the screen.
-   * Don't to it!  Mark the character invalid (update it when scrolled up) */
-  if (row == screen_Rows - 1 && col >= screen_Columns - 2) {
-    ScreenAttrs[off] = (sattr_T)-1;
-    return;
-  }
-
-  /* Output the first byte normally (positions the cursor), then write the
-   * second byte directly. */
-  screen_char(off, row, col);
-  ui_putc(ScreenLines[off + 1]);
 }
 
 /*
@@ -5849,8 +5783,7 @@ void screen_fill(int start_row, int end_row, int start_col, int end_col, int c1,
         col = end_col - col;
         while (col--) {                 /* clear chars in ScreenLines */
           ScreenLines[off] = ' ';
-          if (enc_utf8)
-            ScreenLinesUC[off] = 0;
+          ScreenLinesUC[off] = 0;
           ScreenAttrs[off] = 0;
           ++off;
         }
@@ -5862,18 +5795,15 @@ void screen_fill(int start_row, int end_row, int start_col, int end_col, int c1,
     c = c1;
     for (col = start_col; col < end_col; ++col) {
       if (ScreenLines[off] != c
-          || (enc_utf8 && (int)ScreenLinesUC[off]
-              != (c >= 0x80 ? c : 0))
+          || ((int)ScreenLinesUC[off] != (c >= 0x80 ? c : 0))
           || ScreenAttrs[off] != attr
           ) {
         ScreenLines[off] = c;
-        if (enc_utf8) {
-          if (c >= 0x80) {
-            ScreenLinesUC[off] = c;
-            ScreenLinesC[0][off] = 0;
-          } else
-            ScreenLinesUC[off] = 0;
-        }
+        if (c >= 0x80) {
+          ScreenLinesUC[off] = c;
+          ScreenLinesC[0][off] = 0;
+        } else
+          ScreenLinesUC[off] = 0;
         ScreenAttrs[off] = attr;
         if (!did_delete || c != ' ')
           screen_char(off, row, col);
@@ -5944,7 +5874,6 @@ void screenalloc(bool doclear)
   schar_T         *new_ScreenLines;
   u8char_T        *new_ScreenLinesUC = NULL;
   u8char_T        *new_ScreenLinesC[MAX_MCO];
-  schar_T         *new_ScreenLines2 = NULL;
   int i;
   sattr_T         *new_ScreenAttrs;
   unsigned        *new_LineOffset;
@@ -5953,8 +5882,6 @@ void screenalloc(bool doclear)
   static bool entered = false;  // avoid recursiveness
   static bool done_outofmem_msg = false;
   int retry_count = 0;
-  const bool l_enc_utf8 = enc_utf8;
-  const int l_enc_dbcs = enc_dbcs;
 
 retry:
   /*
@@ -5965,8 +5892,7 @@ retry:
   if ((ScreenLines != NULL
        && Rows == screen_Rows
        && Columns == screen_Columns
-       && l_enc_utf8 == (ScreenLinesUC != NULL)
-       && (l_enc_dbcs == DBCS_JPNU) == (ScreenLines2 != NULL)
+       && ScreenLinesUC != NULL
        && p_mco == Screen_mco
        )
       || Rows == 0
@@ -6012,15 +5938,10 @@ retry:
 
   new_ScreenLines = xmalloc((size_t)((Rows + 1) * Columns * sizeof(schar_T)));
   memset(new_ScreenLinesC, 0, sizeof(u8char_T *) * MAX_MCO);
-  if (l_enc_utf8) {
-    new_ScreenLinesUC = xmalloc(
-        (size_t)((Rows + 1) * Columns * sizeof(u8char_T)));
-    for (i = 0; i < p_mco; ++i)
-      new_ScreenLinesC[i] = xcalloc((Rows + 1) * Columns, sizeof(u8char_T));
-  }
-  if (l_enc_dbcs == DBCS_JPNU)
-    new_ScreenLines2 = xmalloc(
-        (size_t)((Rows + 1) * Columns * sizeof(schar_T)));
+  new_ScreenLinesUC = xmalloc(
+      (size_t)((Rows + 1) * Columns * sizeof(u8char_T)));
+  for (i = 0; i < p_mco; ++i)
+    new_ScreenLinesC[i] = xcalloc((Rows + 1) * Columns, sizeof(u8char_T));
   new_ScreenAttrs = xmalloc((size_t)((Rows + 1) * Columns * sizeof(sattr_T)));
   new_LineOffset = xmalloc((size_t)(Rows * sizeof(unsigned)));
   new_LineWraps = xmalloc((size_t)(Rows * sizeof(char_u)));
@@ -6038,8 +5959,7 @@ retry:
     if (new_ScreenLinesC[i] == NULL)
       break;
   if (new_ScreenLines == NULL
-      || (l_enc_utf8 && (new_ScreenLinesUC == NULL || i != p_mco))
-      || (l_enc_dbcs == DBCS_JPNU && new_ScreenLines2 == NULL)
+      || (new_ScreenLinesUC == NULL || i != p_mco)
       || new_ScreenAttrs == NULL
       || new_LineOffset == NULL
       || new_LineWraps == NULL
@@ -6061,8 +5981,6 @@ retry:
       xfree(new_ScreenLinesC[i]);
       new_ScreenLinesC[i] = NULL;
     }
-    xfree(new_ScreenLines2);
-    new_ScreenLines2 = NULL;
     xfree(new_ScreenAttrs);
     new_ScreenAttrs = NULL;
     xfree(new_LineOffset);
@@ -6087,17 +6005,12 @@ retry:
       if (!doclear) {
         (void)memset(new_ScreenLines + new_row * Columns,
             ' ', (size_t)Columns * sizeof(schar_T));
-        if (l_enc_utf8) {
-          (void)memset(new_ScreenLinesUC + new_row * Columns,
+        (void)memset(new_ScreenLinesUC + new_row * Columns,
+            0, (size_t)Columns * sizeof(u8char_T));
+        for (i = 0; i < p_mco; ++i)
+          (void)memset(new_ScreenLinesC[i]
+              + new_row * Columns,
               0, (size_t)Columns * sizeof(u8char_T));
-          for (i = 0; i < p_mco; ++i)
-            (void)memset(new_ScreenLinesC[i]
-                + new_row * Columns,
-                0, (size_t)Columns * sizeof(u8char_T));
-        }
-        if (l_enc_dbcs == DBCS_JPNU)
-          (void)memset(new_ScreenLines2 + new_row * Columns,
-              0, (size_t)Columns * sizeof(schar_T));
         (void)memset(new_ScreenAttrs + new_row * Columns,
             0, (size_t)Columns * sizeof(sattr_T));
         old_row = new_row + (screen_Rows - Rows);
@@ -6108,12 +6021,12 @@ retry:
             len = Columns;
           /* When switching to utf-8 don't copy characters, they
            * may be invalid now.  Also when p_mco changes. */
-          if (!(l_enc_utf8 && ScreenLinesUC == NULL)
+          if (!(ScreenLinesUC == NULL)
               && p_mco == Screen_mco)
             memmove(new_ScreenLines + new_LineOffset[new_row],
                 ScreenLines + LineOffset[old_row],
                 (size_t)len * sizeof(schar_T));
-          if (l_enc_utf8 && ScreenLinesUC != NULL
+          if (ScreenLinesUC != NULL
               && p_mco == Screen_mco) {
             memmove(new_ScreenLinesUC + new_LineOffset[new_row],
                 ScreenLinesUC + LineOffset[old_row],
@@ -6124,10 +6037,6 @@ retry:
                   ScreenLinesC[i] + LineOffset[old_row],
                   (size_t)len * sizeof(u8char_T));
           }
-          if (l_enc_dbcs == DBCS_JPNU && ScreenLines2 != NULL)
-            memmove(new_ScreenLines2 + new_LineOffset[new_row],
-                ScreenLines2 + LineOffset[old_row],
-                (size_t)len * sizeof(schar_T));
           memmove(new_ScreenAttrs + new_LineOffset[new_row],
               ScreenAttrs + LineOffset[old_row],
               (size_t)len * sizeof(sattr_T));
@@ -6145,7 +6054,6 @@ retry:
   for (i = 0; i < p_mco; ++i)
     ScreenLinesC[i] = new_ScreenLinesC[i];
   Screen_mco = p_mco;
-  ScreenLines2 = new_ScreenLines2;
   ScreenAttrs = new_ScreenAttrs;
   LineOffset = new_LineOffset;
   LineWraps = new_LineWraps;
@@ -6184,7 +6092,6 @@ void free_screenlines(void)
   xfree(ScreenLinesUC);
   for (i = 0; i < Screen_mco; ++i)
     xfree(ScreenLinesC[i]);
-  xfree(ScreenLines2);
   xfree(ScreenLines);
   xfree(ScreenAttrs);
   xfree(LineOffset);
@@ -6258,9 +6165,7 @@ static void screenclear2(void)
 static void lineclear(unsigned off, int width)
 {
   (void)memset(ScreenLines + off, ' ', (size_t)width * sizeof(schar_T));
-  if (enc_utf8)
-    (void)memset(ScreenLinesUC + off, 0,
-        (size_t)width * sizeof(u8char_T));
+  (void)memset(ScreenLinesUC + off, 0, (size_t)width * sizeof(u8char_T));
   (void)memset(ScreenAttrs + off, 0, (size_t)width * sizeof(sattr_T));
 }
 
@@ -6274,18 +6179,11 @@ static void linecopy(int to, int from, win_T *wp)
 
   memmove(ScreenLines + off_to, ScreenLines + off_from,
       wp->w_width * sizeof(schar_T));
-  if (enc_utf8) {
-    int i;
-
-    memmove(ScreenLinesUC + off_to, ScreenLinesUC + off_from,
+  memmove(ScreenLinesUC + off_to, ScreenLinesUC + off_from,
+      wp->w_width * sizeof(u8char_T));
+  for (int i = 0; i < p_mco; ++i)
+    memmove(ScreenLinesC[i] + off_to, ScreenLinesC[i] + off_from,
         wp->w_width * sizeof(u8char_T));
-    for (i = 0; i < p_mco; ++i)
-      memmove(ScreenLinesC[i] + off_to, ScreenLinesC[i] + off_from,
-          wp->w_width * sizeof(u8char_T));
-  }
-  if (enc_dbcs == DBCS_JPNU)
-    memmove(ScreenLines2 + off_to, ScreenLines2 + off_from,
-        wp->w_width * sizeof(schar_T));
   memmove(ScreenAttrs + off_to, ScreenAttrs + off_from,
       wp->w_width * sizeof(sattr_T));
 }
