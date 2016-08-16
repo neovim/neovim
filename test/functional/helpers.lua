@@ -241,6 +241,7 @@ local function clear(...)
         'ASAN_OPTIONS',
         'LD_LIBRARY_PATH', 'PATH',
         'NVIM_LOG_FILE',
+        'NVIM_RPLUGIN_MANIFEST',
       }) do
         env_tbl[k] = os.getenv(k)
       end
