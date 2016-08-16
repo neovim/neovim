@@ -153,9 +153,9 @@ if(USE_BUNDLED_BUSTED)
   if(MINGW AND CMAKE_CROSSCOMPILING)
     set(LUV_DEPS ${LUV_DEPS} libuv_host)
   endif()
-  set(LUV_ARGS CFLAGS='-O0 -g3 -fPIC')
+  set(LUV_ARGS "CFLAGS=-O0 -g3 -fPIC")
   if(USE_BUNDLED_LIBUV)
-    set(LUV_ARGS LIBUV_DIR=${HOSTDEPS_INSTALL_DIR} CFLAGS='-O0 -g3 -fPIC')
+    list(APPEND LUV_ARGS LIBUV_DIR=${HOSTDEPS_INSTALL_DIR})
   endif()
   add_custom_command(OUTPUT ${HOSTDEPS_LIB_DIR}/luarocks/rocks/luv
     COMMAND ${LUAROCKS_BINARY}
