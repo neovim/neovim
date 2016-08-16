@@ -2878,6 +2878,25 @@ static SubReplacementString old_sub = {NULL, 0, NULL};
 
 static int global_need_beginline;       // call beginline() after ":g"
 
+/// Case matching style to use for :substitute
+typedef enum {
+  kSubHonorOptions = 0,  ///< Honor the user's 'ignorecase'/'smartcase' options
+  kSubIgnoreCase,        ///< Ignore case of the search
+  kSubMatchCase,         ///< Match case of the search
+} SubIgnoreType;
+
+/// Flags kept between calls to :substitute.
+typedef struct {
+  bool do_all;          ///< do multiple substitutions per line
+  bool do_ask;          ///< ask for confirmation
+  bool do_count;        ///< count only
+  bool do_error;        ///< if false, ignore errors
+  bool do_print;        ///< print last line with subs
+  bool do_list;         ///< list last line with subs
+  bool do_number;       ///< list last line with line nr
+  SubIgnoreType do_ic;  ///< ignore case flag
+} subflags_T;
+
 /// Get old substitute replacement string
 ///
 /// @param[out]  ret_sub    Location where old string will be saved.
@@ -2915,16 +2934,18 @@ void do_sub(exarg_T *eap)
   linenr_T lnum;
   long i = 0;
   regmmatch_T regmatch;
-  static int do_all = FALSE;            /* do multiple substitutions per line */
-  static int do_ask = FALSE;            /* ask for confirmation */
-  static bool do_count = false;         /* count only */
-  static int do_error = TRUE;           /* if false, ignore errors */
-  static int do_print = FALSE;          /* print last line with subs. */
-  static int do_list = FALSE;           /* list last line with subs. */
-  static int do_number = FALSE;         /* list last line with line nr*/
-  static int do_ic = 0;                 /* ignore case flag */
-  int save_do_all;                      // remember user specified 'g' flag
-  int save_do_ask;                      // remember user specified 'c' flag
+  static subflags_T subflags = {
+    .do_all = false,
+    .do_ask = false,
+    .do_count = false,
+    .do_error = true,
+    .do_print = false,
+    .do_list = false,
+    .do_number = false,
+    .do_ic = kSubHonorOptions
+  };
+  bool save_do_all;                      // remember user specified 'g' flag
+  bool save_do_ask;                      // remember user specified 'c' flag
   char_u      *pat = NULL, *sub = NULL;         /* init for GCC */
   int delimiter;
   int sublen;
@@ -3075,57 +3096,55 @@ void do_sub(exarg_T *eap)
   if (*cmd == '&') {
     ++cmd;
   } else {
-    // default is global on
-    do_all = p_gd ? TRUE : FALSE;
-
-    do_ask = FALSE;
-    do_error = TRUE;
-    do_print = FALSE;
-    do_count = false;
-    do_number = FALSE;
-    do_ic = 0;
+    subflags.do_all = p_gd;
+    subflags.do_ask = false;
+    subflags.do_error = true;
+    subflags.do_print = false;
+    subflags.do_count = false;
+    subflags.do_number = false;
+    subflags.do_ic = kSubHonorOptions;
   }
   while (*cmd) {
     // Note that 'g' and 'c' are always inverted.
     // 'r' is never inverted.
     if (*cmd == 'g')
-      do_all = !do_all;
+      subflags.do_all = !subflags.do_all;
     else if (*cmd == 'c')
-      do_ask = !do_ask;
+      subflags.do_ask = !subflags.do_ask;
     else if (*cmd == 'n')
-      do_count = true;
+      subflags.do_count = true;
     else if (*cmd == 'e')
-      do_error = !do_error;
+      subflags.do_error = !subflags.do_error;
     else if (*cmd == 'r')           /* use last used regexp */
       which_pat = RE_LAST;
     else if (*cmd == 'p')
-      do_print = TRUE;
+      subflags.do_print = true;
     else if (*cmd == '#') {
-      do_print = TRUE;
-      do_number = TRUE;
+      subflags.do_print = true;
+      subflags.do_number = true;
     } else if (*cmd == 'l') {
-      do_print = TRUE;
-      do_list = TRUE;
+      subflags.do_print = true;
+      subflags.do_list = true;
     } else if (*cmd == 'i')         /* ignore case */
-      do_ic = 'i';
+      subflags.do_ic = kSubIgnoreCase;
     else if (*cmd == 'I')           /* don't ignore case */
-      do_ic = 'I';
+      subflags.do_ic = kSubMatchCase;
     else
       break;
     ++cmd;
   }
-  if (do_count) {
-    do_ask = FALSE;
+  if (subflags.do_count) {
+    subflags.do_ask = false;
   }
 
-  save_do_all = do_all;
-  save_do_ask = do_ask;
+  save_do_all = subflags.do_all;
+  save_do_ask = subflags.do_ask;
 
   // check for a trailing count
   cmd = skipwhite(cmd);
   if (ascii_isdigit(*cmd)) {
     i = getdigits_long(&cmd);
-    if (i <= 0 && !eap->skip && do_error) {
+    if (i <= 0 && !eap->skip && subflags.do_error) {
       EMSG(_(e_zerocount));
       return;
     }
@@ -3150,7 +3169,7 @@ void do_sub(exarg_T *eap)
   if (eap->skip)            /* not executing commands, only parsing */
     return;
 
-  if (!do_count && !MODIFIABLE(curbuf)) {
+  if (!subflags.do_count && !MODIFIABLE(curbuf)) {
     /* Substitution is not allowed in non-'modifiable' buffer */
     EMSG(_(e_modifiable));
     return;
@@ -3158,15 +3177,15 @@ void do_sub(exarg_T *eap)
 
   if (search_regcomp(pat, RE_SUBST, which_pat, SEARCH_HIS,
           &regmatch) == FAIL) {
-    if (do_error)
+    if (subflags.do_error)
       EMSG(_(e_invcmd));
     return;
   }
 
   /* the 'i' or 'I' flag overrules 'ignorecase' and 'smartcase' */
-  if (do_ic == 'i')
+  if (subflags.do_ic == kSubIgnoreCase)
     regmatch.rmm_ic = TRUE;
-  else if (do_ic == 'I')
+  else if (subflags.do_ic == kSubMatchCase)
     regmatch.rmm_ic = FALSE;
 
   sub_firstline = NULL;
@@ -3261,9 +3280,9 @@ void do_sub(exarg_T *eap)
       /*
        * Loop until nothing more to replace in this line.
        * 1. Handle match with empty string.
-       * 2. If do_ask is set, ask for confirmation.
+       * 2. If subflags.do_ask is set, ask for confirmation.
        * 3. substitute the string.
-       * 4. if do_all is set, find next match
+       * 4. if subflags.do_all is set, find next match
        * 5. break if there isn't another match in this line
        */
       for (;; ) {
@@ -3315,10 +3334,10 @@ void do_sub(exarg_T *eap)
         prev_matchcol = matchcol;
 
         /*
-         * 2. If do_count is set only increase the counter.
+         * 2. If subflags.do_count is set only increase the counter.
          *    If do_ask is set, ask for confirmation.
          */
-        if (do_count) {
+        if (subflags.do_count) {
           /* For a multi-line match, put matchcol at the NUL at
            * the end of the line and set nmatch to one, so that
            * we continue looking for a match on the next line.
@@ -3336,7 +3355,7 @@ void do_sub(exarg_T *eap)
             goto skip;
         }
 
-        if (do_ask) {
+        if (subflags.do_ask) {
           int typed = 0;
 
           /* change State to CONFIRM, so that the mouse works
@@ -3354,17 +3373,17 @@ void do_sub(exarg_T *eap)
           /*
            * Loop until 'y', 'n', 'q', CTRL-E or CTRL-Y typed.
            */
-          while (do_ask) {
+          while (subflags.do_ask) {
             if (exmode_active) {
               char_u      *resp;
               colnr_T sc, ec;
 
-              print_line_no_prefix(lnum, do_number, do_list);
+              print_line_no_prefix(lnum, subflags.do_number, subflags.do_list);
 
               getvcol(curwin, &curwin->w_cursor, &sc, NULL, NULL);
               curwin->w_cursor.col = regmatch.endpos[0].col - 1;
               getvcol(curwin, &curwin->w_cursor, NULL, NULL, &ec);
-              if (do_number || curwin->w_p_nu) {
+              if (subflags.do_number || curwin->w_p_nu) {
                 int numw = number_width(curwin) + 1;
                 sc += numw;
                 ec += numw;
@@ -3469,12 +3488,12 @@ void do_sub(exarg_T *eap)
               break;
             if (typed == 'l') {
               /* last: replace and then stop */
-              do_all = FALSE;
+              subflags.do_all = false;
               line2 = lnum;
               break;
             }
             if (typed == 'a') {
-              do_ask = FALSE;
+              subflags.do_ask = FALSE;
               break;
             }
             if (typed == Ctrl_E)
@@ -3510,19 +3529,25 @@ void do_sub(exarg_T *eap)
         /*
          * 3. substitute the string.
          */
-        if (do_count) {
+        if (subflags.do_count) {
           /* prevent accidentally changing the buffer by a function */
           save_ma = curbuf->b_p_ma;
           curbuf->b_p_ma = FALSE;
           sandbox++;
         }
+        // Save flags for recursion.  They can change for e.g.
+        // :s/^/\=execute("s#^##gn")
+        subflags_T subflags_save = subflags;
         /* get length of substitution part */
         sublen = vim_regsub_multi(&regmatch,
             sub_firstlnum - regmatch.startpos[0].lnum,
             sub, sub_firstline, FALSE, p_magic, TRUE);
-        if (do_count) {
+        // Don't keep flags set by a recursive call
+        subflags = subflags_save;
+        if (subflags.do_count) {
           curbuf->b_p_ma = save_ma;
-          sandbox--;
+          if (sandbox > 0)
+            sandbox--;
           goto skip;
         }
 
@@ -3599,7 +3624,7 @@ void do_sub(exarg_T *eap)
           if (sub_firstlnum <= line2)
             do_again = TRUE;
           else
-            do_all = FALSE;
+            subflags.do_all = false;
         }
 
         /* Remember next character to be copied. */
@@ -3630,7 +3655,7 @@ void do_sub(exarg_T *eap)
               ml_append(lnum - 1, new_start,
                   (colnr_T)(p1 - new_start + 1), FALSE);
               mark_adjust(lnum + 1, (linenr_T)MAXLNUM, 1L, 0L);
-              if (do_ask)
+              if (subflags.do_ask)
                 appended_lines(lnum - 1, 1L);
               else {
                 if (first_line == 0)
@@ -3652,7 +3677,7 @@ void do_sub(exarg_T *eap)
         }
 
         /*
-         * 4. If do_all is set, find next match.
+         * 4. If subflags.do_all is set, find next match.
          * Prevent endless loop with patterns that match empty
          * strings, e.g. :s/$/pat/g or :s/[a-z]* /(&)/g.
          * But ":s/\n/#/" is OK.
@@ -3667,7 +3692,7 @@ skip:
                    || got_int
                    || got_quit
                    || lnum > line2
-                   || !(do_all || do_again)
+                   || !(subflags.do_all || do_again)
                    || (sub_firstline[matchcol] == NUL && nmatch <= 1
                        && !re_multiline(regmatch.regprog)));
         nmatch = -1;
@@ -3718,7 +3743,7 @@ skip:
                 ml_delete(lnum, (int)FALSE);
               mark_adjust(lnum, lnum + nmatch_tl - 1,
                   (long)MAXLNUM, -nmatch_tl);
-              if (do_ask)
+              if (subflags.do_ask)
                 deleted_lines(lnum, nmatch_tl);
               --lnum;
               line2 -= nmatch_tl;               /* nr of lines decreases */
@@ -3727,7 +3752,7 @@ skip:
 
             /* When asking, undo is saved each time, must also set
              * changed flag each time. */
-            if (do_ask)
+            if (subflags.do_ask)
               changed_bytes(lnum, 0);
             else {
               if (first_line == 0)
@@ -3785,7 +3810,7 @@ skip:
   xfree(sub_firstline);   /* may have to free allocated copy of the line */
 
   /* ":s/pat//n" doesn't move the cursor */
-  if (do_count)
+  if (subflags.do_count)
     curwin->w_cursor = old_cursor;
 
   if (sub_nsubs > start_nsubs) {
@@ -3795,28 +3820,29 @@ skip:
     curbuf->b_op_start.col = curbuf->b_op_end.col = 0;
 
     if (!global_busy) {
-      if (!do_ask) {      /* when interactive leave cursor on the match */
+      // when interactive leave cursor on the match
+      if (!subflags.do_ask) {
         if (endcolumn)
           coladvance((colnr_T)MAXCOL);
         else
           beginline(BL_WHITE | BL_FIX);
       }
-      if (!do_sub_msg(do_count) && do_ask)
+      if (!do_sub_msg(subflags.do_count) && subflags.do_ask)
         MSG("");
     } else
       global_need_beginline = TRUE;
-    if (do_print)
-      print_line(curwin->w_cursor.lnum, do_number, do_list);
+    if (subflags.do_print)
+      print_line(curwin->w_cursor.lnum, subflags.do_number, subflags.do_list);
   } else if (!global_busy) {
     if (got_int)                /* interrupted */
       EMSG(_(e_interr));
     else if (got_match)         /* did find something but nothing substituted */
       MSG("");
-    else if (do_error)          /* nothing found */
+    else if (subflags.do_error)          /* nothing found */
       EMSG2(_(e_patnotf2), get_search_pat());
   }
 
-  if (do_ask && hasAnyFolding(curwin)) {
+  if (subflags.do_ask && hasAnyFolding(curwin)) {
     // Cursor position may require updating
     changed_window_setting();
   }
@@ -3824,8 +3850,8 @@ skip:
   vim_regfree(regmatch.regprog);
 
   // Restore the flag values, they can be used for ":&&".
-  do_all = save_do_all;
-  do_ask = save_do_ask;
+  subflags.do_all = save_do_all;
+  subflags.do_ask = save_do_ask;
 }
 
 /*

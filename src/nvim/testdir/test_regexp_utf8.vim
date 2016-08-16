@@ -31,3 +31,11 @@ func Test_equivalence_re2()
   call s:equivalence_test()
   set re=0
 endfunc
+
+func Test_recursive_substitute()
+  new
+  s/^/\=execute("s#^##gn")
+  " check we are now not in the sandbox
+  call setwinvar(1, 'myvar', 1)
+  bwipe!
+endfunc
