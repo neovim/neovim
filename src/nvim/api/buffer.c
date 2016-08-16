@@ -691,7 +691,7 @@ Integer buffer_add_highlight(Buffer buffer,
     col_end = MAXCOL;
   }
 
-  int hlg_id = syn_name2id((char_u*)hl_group.data);
+  int hlg_id = syn_name2id((char_u *)(hl_group.data ? hl_group.data : ""));
   src_id = bufhl_add_hl(buf, (int)src_id, hlg_id, (linenr_T)line+1,
                         (colnr_T)col_start+1, (colnr_T)col_end);
   return src_id;

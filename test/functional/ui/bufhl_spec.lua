@@ -111,12 +111,16 @@ describe('Buffer highlighting', function()
       add_hl(id1, "ImportantWord", 2, 0, 9)
       add_hl(id1, "ImportantWord", 3, 5, 14)
 
-      id2 = add_hl(0, "Special", 0, 2, 8)
+      -- add_highlight can be called like this to get a new source
+      -- without adding any highlight
+      id2 = add_hl(0, "", 0, 0, 0)
+      neq(id1, id2)
+
+      add_hl(id2, "Special", 0, 2, 8)
       add_hl(id2, "Identifier", 1, 3, 8)
       add_hl(id2, "Special", 1, 14, 20)
       add_hl(id2, "Underlined", 2, 6, 12)
       add_hl(id2, "Underlined", 3, 0, 9)
-      neq(id1, id2)
 
       screen:expect([[
         a {5:longer} example                        |
