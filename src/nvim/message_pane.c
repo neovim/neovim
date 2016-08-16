@@ -140,8 +140,14 @@ bool msgpane_open(void)
     // Create a window to display the message buffer.
     msg_silent++;
     block_autocmds();
+    int size = (int)p_cwh;
+    int split = cmdmod.split ? cmdmod.split : WSP_BOT;
 
-    if (win_split((int)p_cwh, WSP_BOT) == FAIL) {
+    if (cmdmod.split & WSP_VERT) {
+      size = MAX(20, (int)Columns / 3);
+    }
+
+    if (win_split(size, split) == FAIL) {
       beep_flush();
       unblock_autocmds();
       msg_silent--;
@@ -157,6 +163,7 @@ bool msgpane_open(void)
       set_option_value((char_u *)"fen", 0L, NULL, OPT_LOCAL);
       set_option_value((char_u *)"cc", 0L, (char_u *)"", OPT_LOCAL);
       set_option_value((char_u *)"ma", 0L, NULL, OPT_LOCAL);
+      set_option_value((char_u *)"wfw", 1L, NULL, OPT_LOCAL);
       set_option_value((char_u *)"wfh", 1L, NULL, OPT_LOCAL);
     });
     RESET_BINDING(curwin);
