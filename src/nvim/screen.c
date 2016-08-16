@@ -2333,7 +2333,11 @@ static struct VisualPos init_visual(int lnum, win_T* wp) {
   struct VisualPos res = {
     .from = -10, .to = MAXCOL,
     .in_visual = false,
-    .pos = { 0 }
+    .pos = {
+      .lnum = 0L,
+      .col = 0,
+      .coladd = 0
+    }
   };
 
   pos_T *top, *bot;
@@ -3103,15 +3107,10 @@ static int win_line (win_T *wp, linenr_T lnum, int startrow, int endrow, bool no
     if (draw_state == WL_LINE && area_highlighting) {
       /* handle Visual or match highlighting in this line */
       if (vcol == fromcol
-          || (has_mbyte && vcol + 1 == fromcol && n_extra == 0
-              && (*mb_ptr2cells)(ptr) > 1)
-          || ((int)vcol_prev == fromcol_prev
-              && vcol_prev < vcol               /* not at margin */
-              && vcol < tocol))
-        area_attr = attr;                       /* start highlighting */
-      else if (area_attr != 0
-               && (vcol == tocol
-                   || (noinvcur && (colnr_T)vcol == wp->w_virtcol)))
+          || (vcol + 1 == fromcol && n_extra == 0 && (*mb_ptr2cells)(ptr) > 1)
+          || ((int)vcol_prev == fromcol_prev && vcol_prev < vcol && vcol < tocol)) /* not at margin */
+        area_attr = main_attr;                       /* start highlighting */
+      else if (area_attr != 0 && (vcol == tocol || (noinvcur && (colnr_T)vcol == wp->w_virtcol)))
         area_attr = 0;                          /* stop highlighting */
 
       if (!n_extra) {
