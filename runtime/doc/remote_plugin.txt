@@ -130,9 +130,9 @@ like this: It's a way to provide IDE capabilities in Nvim while still keeping
 it fast and lightweight for general use. It's also analogous to the |:helptags|
 command.
 
-Unless a path is set in the `$NVIM_RPLUGIN_MANIFEST` environment variable, the
-manifest will be written to a file named `rplugin.vim` in one of the following
-directories:
+						*$NVIM_RPLUGIN_MANIFEST*
+Unless $NVIM_RPLUGIN_MANIFEST is set the manifest will be written to a file
+named `rplugin.vim` at:
 
 	Unix ~
 	  $XDG_DATA_HOME/nvim/ or ~/.local/share/nvim/

@@ -126,23 +126,17 @@ function! s:GetManifestPath() abort
     return fnamemodify($NVIM_RPLUGIN_MANIFEST, ':p')
   endif
 
-  let preferred = has('win32')
-        \ ? ['$LOCALAPPDATA', '~/AppData/Local']
-        \ : ['$XDG_DATA_HOME', '~/.local/share']
+  let dest = has('win32') ? '$LOCALAPPDATA' : '$XDG_DATA_HOME'
+  if !exists(dest)
+    let dest = has('win32') ? '~/AppData/Local' : '~/.local/share'
+  endif
 
-  for dest in preferred
-    if dest[0] == '$' && !exists(dest)
-      continue
-    endif
-
-    let dest = fnamemodify(expand(dest), ':p')
-    if !empty(dest) && isdirectory(dest)
-      let dest .= 'nvim/'
-      call mkdir(dest, 'p', 700)
-      let manifest_base = dest
-      break
-    endif
-  endfor
+  let dest = fnamemodify(expand(dest), ':p')
+  if !empty(dest) && isdirectory(dest)
+    let dest .= 'nvim/'
+    call mkdir(dest, 'p', 700)
+    let manifest_base = dest
+  endif
 
   return manifest_base.'rplugin.vim'
 endfunction
