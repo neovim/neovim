@@ -132,13 +132,13 @@ function! s:GetManifestPath() abort
   endif
 
   let dest = fnamemodify(expand(dest), ':p')
-  if !empty(dest) && isdirectory(dest)
-    let dest .= 'nvim/'
+  if !empty(dest) && !filereadable(dest)
+    let dest .= ('/' ==# dest[-1:] ? '' : '/') . 'nvim'
     call mkdir(dest, 'p', 700)
     let manifest_base = dest
   endif
 
-  return manifest_base.'rplugin.vim'
+  return manifest_base.'/rplugin.vim'
 endfunction
 
 
