@@ -6,4 +6,5 @@ source test_cursor_func.vim
 source test_cmdline.vim
 source test_menu.vim
 source test_popup.vim
+source test_regexp_utf8.vim
 source test_unlet.vim
