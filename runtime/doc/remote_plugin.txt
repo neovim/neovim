@@ -93,22 +93,22 @@ approach with |rpcnotify()|, meaning return values or exceptions raised in the
 handler function are ignored.
 
 To test the above plugin, it must be saved in "rplugin/python" in a
-'runtimepath' directory (~/.config/nvim/rplugin/python/limit.py for example). 
-Then, the remote plugin manifest must be generated with 
-`:UpdateRemotePlugins`.
+'runtimepath' directory (~/.config/nvim/rplugin/python/limit.py for example).
+Then, the remote plugin manifest must be generated with
+|:UpdateRemotePlugins|.
 
 ==============================================================================
 4. Remote plugin manifest			    *remote-plugin-manifest*
+						      *:UpdateRemotePlugins*
 
 Just installing remote plugins to "rplugin/{host}" isn't enough for them to be
-automatically loaded when required. You must execute `:UpdateRemotePlugins`
+automatically loaded when required. You must execute |:UpdateRemotePlugins|
 every time a remote plugin is installed, updated, or deleted.
 
-`:UpdateRemotePlugins` generates the remote plugin manifest, a special
+|:UpdateRemotePlugins| generates the remote plugin manifest, a special
 Vimscript file containing declarations for all Vimscript entities
 (commands/autocommands/functions) defined by all remote plugins, with each
-entity associated with the host and plugin path. The manifest is a generated
-extension to the user's vimrc (it even has the vimrc filename prepended).
+entity associated with the host and plugin path.
 
 Manifest declarations are just calls to the `remote#host#RegisterPlugin`
 function, which takes care of bootstrapping the host as soon as the declared
@@ -125,10 +125,20 @@ the example, say the Java plugin is a semantic completion engine for Java code.
 If it defines the autocommand "BufEnter *.java", then the Java host is spawned
 only when Nvim loads a buffer matching "*.java".
 
-If the explicit call to `:UpdateRemotePlugins` seems incovenient, try to see it
+If the explicit call to |:UpdateRemotePlugins| seems incovenient, try to see it
 like this: It's a way to provide IDE capabilities in Nvim while still keeping
 it fast and lightweight for general use. It's also analogous to the |:helptags|
 command.
+
+						*$NVIM_RPLUGIN_MANIFEST*
+Unless $NVIM_RPLUGIN_MANIFEST is set the manifest will be written to a file
+named `rplugin.vim` at:
+
+	Unix ~
+	  $XDG_DATA_HOME/nvim/ or ~/.local/share/nvim/
+
+	Windows ~
+	  $LOCALAPPDATA/nvim/ or ~/AppData/Local/nvim/
 
 ==============================================================================
  vim:tw=78:ts=8:noet:ft=help:norl:

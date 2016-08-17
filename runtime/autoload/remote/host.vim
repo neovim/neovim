@@ -118,7 +118,32 @@ function! remote#host#RegisterPlugin(host, path, specs) abort
 endfunction
 
 
-function! s:GetManifest() abort
+" Get the path to the rplugin manifest file.
+function! s:GetManifestPath() abort
+  let manifest_base = ''
+
+  if exists('$NVIM_RPLUGIN_MANIFEST')
+    return fnamemodify($NVIM_RPLUGIN_MANIFEST, ':p')
+  endif
+
+  let dest = has('win32') ? '$LOCALAPPDATA' : '$XDG_DATA_HOME'
+  if !exists(dest)
+    let dest = has('win32') ? '~/AppData/Local' : '~/.local/share'
+  endif
+
+  let dest = fnamemodify(expand(dest), ':p')
+  if !empty(dest) && !filereadable(dest)
+    let dest .= ('/' ==# dest[-1:] ? '' : '/') . 'nvim'
+    call mkdir(dest, 'p', 0700)
+    let manifest_base = dest
+  endif
+
+  return manifest_base.'/rplugin.vim'
+endfunction
+
+
+" Old manifest file based on known script locations.
+function! s:GetOldManifestPath() abort
   let prefix = exists('$MYVIMRC')
         \ ? $MYVIMRC
         \ : matchstr(get(split(execute('scriptnames'), '\n'), 0, ''), '\f\+$')
@@ -127,9 +152,25 @@ function! s:GetManifest() abort
 endfunction
 
 
+function! s:GetManifest() abort
+  let manifest = s:GetManifestPath()
+
+  if !filereadable(manifest)
+    " Check if an old manifest file exists and move it to the new location.
+    let old_manifest = s:GetOldManifestPath()
+    if filereadable(old_manifest)
+      call rename(old_manifest, manifest)
+    endif
+  endif
+
+  return manifest
+endfunction
+
+
 function! remote#host#LoadRemotePlugins() abort
-  if filereadable(s:GetManifest())
-    exe 'source '.s:GetManifest()
+  let manifest = s:GetManifest()
+  if filereadable(manifest)
+    execute 'source' fnameescape(manifest)
   endif
 endfunction
 
@@ -202,7 +243,7 @@ function! remote#host#UpdateRemotePlugins() abort
     endif
   endfor
   call writefile(commands, s:GetManifest())
-  echomsg printf('remote/host: generated the manifest file in "%s"',
+  echomsg printf('remote/host: generated rplugin manifest: %s',
         \ s:GetManifest())
 endfunction
 
