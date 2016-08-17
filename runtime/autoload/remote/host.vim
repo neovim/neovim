@@ -134,7 +134,7 @@ function! s:GetManifestPath() abort
   let dest = fnamemodify(expand(dest), ':p')
   if !empty(dest) && !filereadable(dest)
     let dest .= ('/' ==# dest[-1:] ? '' : '/') . 'nvim'
-    call mkdir(dest, 'p', 700)
+    call mkdir(dest, 'p', 0700)
     let manifest_base = dest
   endif
 
