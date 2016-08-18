@@ -2931,7 +2931,6 @@ void sub_set_replacement(SubReplacementString sub)
  */
 void do_sub(exarg_T *eap)
 {
-  linenr_T lnum;
   long i = 0;
   regmmatch_T regmatch;
   static subflags_T subflags = {
@@ -2944,30 +2943,24 @@ void do_sub(exarg_T *eap)
     .do_number = false,
     .do_ic = kSubHonorOptions
   };
-  bool save_do_all;                      // remember user specified 'g' flag
-  bool save_do_ask;                      // remember user specified 'c' flag
-  char_u      *pat = NULL, *sub = NULL;         /* init for GCC */
+  char_u *pat = NULL, *sub = NULL;  // init for GCC
   int delimiter;
   int sublen;
-  int got_quit = FALSE;
-  int got_match = FALSE;
-  int temp;
+  int got_quit = false;
+  int got_match = false;
   int which_pat;
-  char_u      *cmd;
-  int save_State;
-  linenr_T first_line = 0;              /* first changed line */
-  linenr_T last_line= 0;                /* below last changed line AFTER the
-                                         * change */
+  char_u *cmd = eap->arg;
+  linenr_T first_line = 0;  // first changed line
+  linenr_T last_line= 0;    // below last changed line AFTER the
+                            // change
   linenr_T old_line_count = curbuf->b_ml.ml_line_count;
   linenr_T line2;
-  long nmatch;                          /* number of lines in match */
   char_u      *sub_firstline;           /* allocated copy of first sub line */
   int endcolumn = FALSE;                /* cursor in last column when done */
   pos_T old_cursor = curwin->w_cursor;
   int start_nsubs;
   int save_ma = 0;
 
-  cmd = eap->arg;
   if (!global_busy) {
     sub_nsubs = 0;
     sub_nlines = 0;
@@ -3107,38 +3100,39 @@ void do_sub(exarg_T *eap)
   while (*cmd) {
     // Note that 'g' and 'c' are always inverted.
     // 'r' is never inverted.
-    if (*cmd == 'g')
+    if (*cmd == 'g') {
       subflags.do_all = !subflags.do_all;
-    else if (*cmd == 'c')
+    } else if (*cmd == 'c') {
       subflags.do_ask = !subflags.do_ask;
-    else if (*cmd == 'n')
+    } else if (*cmd == 'n') {
       subflags.do_count = true;
-    else if (*cmd == 'e')
+    } else if (*cmd == 'e') {
       subflags.do_error = !subflags.do_error;
-    else if (*cmd == 'r')           /* use last used regexp */
+    } else if (*cmd == 'r') {  // use last used regexp
       which_pat = RE_LAST;
-    else if (*cmd == 'p')
+    } else if (*cmd == 'p') {
       subflags.do_print = true;
-    else if (*cmd == '#') {
+    } else if (*cmd == '#') {
       subflags.do_print = true;
       subflags.do_number = true;
     } else if (*cmd == 'l') {
       subflags.do_print = true;
       subflags.do_list = true;
-    } else if (*cmd == 'i')         /* ignore case */
+    } else if (*cmd == 'i') {  // ignore case
       subflags.do_ic = kSubIgnoreCase;
-    else if (*cmd == 'I')           /* don't ignore case */
+    } else if (*cmd == 'I') {  // don't ignore case
       subflags.do_ic = kSubMatchCase;
-    else
+    } else {
       break;
-    ++cmd;
+    }
+    cmd++;
   }
   if (subflags.do_count) {
     subflags.do_ask = false;
   }
 
-  save_do_all = subflags.do_all;
-  save_do_ask = subflags.do_ask;
+  bool save_do_all = subflags.do_all;  // remember user specified 'g' flag
+  bool save_do_ask = subflags.do_ask;  // remember user specified 'c' flag
 
   // check for a trailing count
   cmd = skipwhite(cmd);
@@ -3170,23 +3164,24 @@ void do_sub(exarg_T *eap)
     return;
 
   if (!subflags.do_count && !MODIFIABLE(curbuf)) {
-    /* Substitution is not allowed in non-'modifiable' buffer */
+    // Substitution is not allowed in non-'modifiable' buffer
     EMSG(_(e_modifiable));
     return;
   }
 
-  if (search_regcomp(pat, RE_SUBST, which_pat, SEARCH_HIS,
-          &regmatch) == FAIL) {
-    if (subflags.do_error)
+  if (search_regcomp(pat, RE_SUBST, which_pat, SEARCH_HIS, &regmatch) == FAIL) {
+    if (subflags.do_error) {
       EMSG(_(e_invcmd));
+    }
     return;
   }
 
-  /* the 'i' or 'I' flag overrules 'ignorecase' and 'smartcase' */
-  if (subflags.do_ic == kSubIgnoreCase)
-    regmatch.rmm_ic = TRUE;
-  else if (subflags.do_ic == kSubMatchCase)
-    regmatch.rmm_ic = FALSE;
+  // the 'i' or 'I' flag overrules 'ignorecase' and 'smartcase'
+  if (subflags.do_ic == kSubIgnoreCase) {
+    regmatch.rmm_ic = true;
+  } else if (subflags.do_ic == kSubMatchCase) {
+    regmatch.rmm_ic = false;
+  }
 
   sub_firstline = NULL;
 
@@ -3198,15 +3193,13 @@ void do_sub(exarg_T *eap)
   if (!(sub[0] == '\\' && sub[1] == '='))
     sub = regtilde(sub, p_magic);
 
-  /*
-   * Check for a match on each line.
-   */
+  // Check for a match on each line.
   line2 = eap->line2;
-  for (lnum = eap->line1; lnum <= line2 && !(got_quit
-                                             || aborting()
-                                             ); ++lnum) {
-    nmatch = vim_regexec_multi(&regmatch, curwin, curbuf, lnum,
-        (colnr_T)0, NULL);
+  for (linenr_T lnum = eap->line1;
+       lnum <= line2 && !(got_quit || aborting());
+       lnum++) {
+    long nmatch = vim_regexec_multi(&regmatch, curwin, curbuf, lnum,
+                                    (colnr_T)0, NULL);
     if (nmatch) {
       colnr_T copycol;
       colnr_T matchcol;
@@ -3333,15 +3326,13 @@ void do_sub(exarg_T *eap)
         matchcol = regmatch.endpos[0].col;
         prev_matchcol = matchcol;
 
-        /*
-         * 2. If subflags.do_count is set only increase the counter.
-         *    If do_ask is set, ask for confirmation.
-         */
+        // 2. If subflags.do_count is set only increase the counter.
+        //    If do_ask is set, ask for confirmation.
         if (subflags.do_count) {
-          /* For a multi-line match, put matchcol at the NUL at
-           * the end of the line and set nmatch to one, so that
-           * we continue looking for a match on the next line.
-           * Avoids that ":s/\nB\@=//gc" get stuck. */
+          // For a multi-line match, put matchcol at the NUL at
+          // the end of the line and set nmatch to one, so that
+          // we continue looking for a match on the next line.
+          // Avoids that ":s/\nB\@=//gc" get stuck.
           if (nmatch > 1) {
             matchcol = (colnr_T)STRLEN(sub_firstline);
             nmatch = 1;
@@ -3360,7 +3351,7 @@ void do_sub(exarg_T *eap)
 
           /* change State to CONFIRM, so that the mouse works
            * properly */
-          save_State = State;
+          int save_State = State;
           State = CONFIRM;
           setmouse();                   /* disable mouse in xterm */
           curwin->w_cursor.col = regmatch.startpos[0].col;
@@ -3407,7 +3398,7 @@ void do_sub(exarg_T *eap)
               curwin->w_p_fen = FALSE;
               /* Invert the matched string.
                * Remove the inversion afterwards. */
-              temp = RedrawingDisabled;
+              int temp = RedrawingDisabled;
               RedrawingDisabled = 0;
 
               if (new_start != NULL) {
@@ -3487,13 +3478,13 @@ void do_sub(exarg_T *eap)
             if (typed == 'y')
               break;
             if (typed == 'l') {
-              /* last: replace and then stop */
+              // last: replace and then stop
               subflags.do_all = false;
               line2 = lnum;
               break;
             }
             if (typed == 'a') {
-              subflags.do_ask = FALSE;
+              subflags.do_ask = false;
               break;
             }
             if (typed == Ctrl_E)
@@ -3530,24 +3521,25 @@ void do_sub(exarg_T *eap)
          * 3. substitute the string.
          */
         if (subflags.do_count) {
-          /* prevent accidentally changing the buffer by a function */
+          // prevent accidentally changing the buffer by a function
           save_ma = curbuf->b_p_ma;
-          curbuf->b_p_ma = FALSE;
+          curbuf->b_p_ma = false;
           sandbox++;
         }
         // Save flags for recursion.  They can change for e.g.
         // :s/^/\=execute("s#^##gn")
         subflags_T subflags_save = subflags;
-        /* get length of substitution part */
+        // get length of substitution part
         sublen = vim_regsub_multi(&regmatch,
-            sub_firstlnum - regmatch.startpos[0].lnum,
-            sub, sub_firstline, FALSE, p_magic, TRUE);
+                                  sub_firstlnum - regmatch.startpos[0].lnum,
+                                  sub, sub_firstline, false, p_magic, true);
         // Don't keep flags set by a recursive call
         subflags = subflags_save;
         if (subflags.do_count) {
           curbuf->b_p_ma = save_ma;
-          if (sandbox > 0)
+          if (sandbox > 0) {
             sandbox--;
+          }
           goto skip;
         }
 
@@ -3620,11 +3612,12 @@ void do_sub(exarg_T *eap)
           sub_firstlnum += nmatch - 1;
           xfree(sub_firstline);
           sub_firstline = vim_strsave(ml_get(sub_firstlnum));
-          /* When going beyond the last line, stop substituting. */
-          if (sub_firstlnum <= line2)
-            do_again = TRUE;
-          else
+          // When going beyond the last line, stop substituting.
+          if (sub_firstlnum <= line2) {
+            do_again = true;
+          } else {
             subflags.do_all = false;
+          }
         }
 
         /* Remember next character to be copied. */
@@ -3655,11 +3648,12 @@ void do_sub(exarg_T *eap)
               ml_append(lnum - 1, new_start,
                   (colnr_T)(p1 - new_start + 1), FALSE);
               mark_adjust(lnum + 1, (linenr_T)MAXLNUM, 1L, 0L);
-              if (subflags.do_ask)
+              if (subflags.do_ask) {
                 appended_lines(lnum - 1, 1L);
-              else {
-                if (first_line == 0)
+              } else {
+                if (first_line == 0) {
                   first_line = lnum;
+                }
                 last_line = lnum + 1;
               }
               /* All line numbers increase. */
@@ -3676,12 +3670,10 @@ void do_sub(exarg_T *eap)
             p1 += (*mb_ptr2len)(p1) - 1;
         }
 
-        /*
-         * 4. If subflags.do_all is set, find next match.
-         * Prevent endless loop with patterns that match empty
-         * strings, e.g. :s/$/pat/g or :s/[a-z]* /(&)/g.
-         * But ":s/\n/#/" is OK.
-         */
+        // 4. If subflags.do_all is set, find next match.
+        // Prevent endless loop with patterns that match empty
+        // strings, e.g. :s/$/pat/g or :s/[a-z]* /(&)/g.
+        // But ":s/\n/#/" is OK.
 skip:
         /* We already know that we did the last subst when we are at
          * the end of the line, except that a pattern like
@@ -3742,21 +3734,23 @@ skip:
               for (i = 0; i < nmatch_tl; ++i)
                 ml_delete(lnum, (int)FALSE);
               mark_adjust(lnum, lnum + nmatch_tl - 1,
-                  (long)MAXLNUM, -nmatch_tl);
-              if (subflags.do_ask)
+                          (long)MAXLNUM, -nmatch_tl);
+              if (subflags.do_ask) {
                 deleted_lines(lnum, nmatch_tl);
-              --lnum;
-              line2 -= nmatch_tl;               /* nr of lines decreases */
+              }
+              lnum--;
+              line2 -= nmatch_tl;  // nr of lines decreases
               nmatch_tl = 0;
             }
 
             /* When asking, undo is saved each time, must also set
              * changed flag each time. */
-            if (subflags.do_ask)
+            if (subflags.do_ask) {
               changed_bytes(lnum, 0);
-            else {
-              if (first_line == 0)
+            } else {
+              if (first_line == 0) {
                 first_line = lnum;
+              }
               last_line = lnum + 1;
             }
 
@@ -3809,9 +3803,10 @@ skip:
 
   xfree(sub_firstline);   /* may have to free allocated copy of the line */
 
-  /* ":s/pat//n" doesn't move the cursor */
-  if (subflags.do_count)
+  // ":s/pat//n" doesn't move the cursor
+  if (subflags.do_count) {
     curwin->w_cursor = old_cursor;
+  }
 
   if (sub_nsubs > start_nsubs) {
     /* Set the '[ and '] marks. */
@@ -3822,24 +3817,32 @@ skip:
     if (!global_busy) {
       // when interactive leave cursor on the match
       if (!subflags.do_ask) {
-        if (endcolumn)
+        if (endcolumn) {
           coladvance((colnr_T)MAXCOL);
-        else
+        } else {
           beginline(BL_WHITE | BL_FIX);
+        }
       }
-      if (!do_sub_msg(subflags.do_count) && subflags.do_ask)
+      if (!do_sub_msg(subflags.do_count) && subflags.do_ask) {
         MSG("");
-    } else
-      global_need_beginline = TRUE;
-    if (subflags.do_print)
+      }
+    } else {
+      global_need_beginline = true;
+    }
+    if (subflags.do_print) {
       print_line(curwin->w_cursor.lnum, subflags.do_number, subflags.do_list);
+    }
   } else if (!global_busy) {
-    if (got_int)                /* interrupted */
+    if (got_int) {
+      // interrupted
       EMSG(_(e_interr));
-    else if (got_match)         /* did find something but nothing substituted */
+    } else if (got_match) {
+      // did find something but nothing substituted
       MSG("");
-    else if (subflags.do_error)          /* nothing found */
+    } else if (subflags.do_error) {
+      // nothing found
       EMSG2(_(e_patnotf2), get_search_pat());
+    }
   }
 
   if (subflags.do_ask && hasAnyFolding(curwin)) {
