@@ -5265,25 +5265,6 @@ int dict_add_nr_str(dict_T *d, char *key, long nr, char_u *str)
   return OK;
 }
 
-/*
- * Add a list entry to dictionary "d".
- * Returns FAIL when key already exists.
- */
-int dict_add_list(dict_T *d, char *key, list_T *list)
-{
-  dictitem_T *item = tv_dict_item_alloc(key);
-
-  item->di_tv.v_lock = 0;
-  item->di_tv.v_type = VAR_LIST;
-  item->di_tv.vval.v_list = list;
-  if (tv_dict_add(d, item) == FAIL) {
-    tv_dict_item_free(item);
-    return FAIL;
-  }
-  ++list->lv_refcount;
-  return OK;
-}
-
 /// Find user function with the given name
 ///
 /// @param[in]  name  Function name.
@@ -8764,7 +8745,7 @@ static void f_getmatches(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       // match added with matchaddpos() 
       for (i = 0; i < MAXPOSMATCH; ++i) {
         llpos_T   *llpos;
-        char      buf[6];
+        char buf[6];
 
         llpos = &cur->pos.pos[i];
         if (llpos->lnum == 0) {
@@ -8776,8 +8757,9 @@ static void f_getmatches(typval_T *argvars, typval_T *rettv, FunPtr fptr)
           tv_list_append_number(l, (varnumber_T)llpos->col);
           tv_list_append_number(l, (varnumber_T)llpos->len);
         }
-        sprintf(buf, "pos%d", i + 1);
-        dict_add_list(dict, buf, l);
+        int len = snprintf(buf, sizeof(buf), "pos%d", i + 1);
+        assert((size_t)len < sizeof(buf));
+        tv_dict_add_list(dict, buf, (size_t)len, l);
       }
     } else {
       dict_add_nr_str(dict, "pattern", 0L, cur->pattern);
@@ -15581,7 +15563,7 @@ static void f_undotree(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   list = tv_list_alloc();
   u_eval_tree(curbuf->b_u_oldhead, list);
-  dict_add_list(dict, "entries", list);
+  tv_dict_add_list(dict, S_LEN("entries"), list);
 }
 
 /*

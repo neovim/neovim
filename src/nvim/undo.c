@@ -82,6 +82,7 @@
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
 #include "nvim/undo.h"
+#include "nvim/macros.h"
 #include "nvim/cursor.h"
 #include "nvim/edit.h"
 #include "nvim/eval.h"
@@ -2917,7 +2918,7 @@ void u_eval_tree(u_header_T *first_uhp, list_T *list)
 
       /* Recursive call to add alternate undo tree. */
       u_eval_tree(uhp->uh_alt_next.ptr, alt_list);
-      dict_add_list(dict, "alt", alt_list);
+      tv_dict_add_list(dict, S_LEN("alt"), alt_list);
     }
 
     tv_list_append_dict(list, dict);

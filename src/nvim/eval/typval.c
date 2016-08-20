@@ -303,7 +303,7 @@ void tv_list_append_list(list_T *const list, list_T *const itemlist)
   listitem_T  *li = tv_list_item_alloc();
 
   li->li_tv.v_type = VAR_LIST;
-  li->li_tv.v_lock = 0;
+  li->li_tv.v_lock = VAR_UNLOCKED;
   li->li_tv.vval.v_list = itemlist;
   tv_list_append(list, li);
   if (itemlist != NULL) {
@@ -321,7 +321,7 @@ void tv_list_append_dict(list_T *const list, dict_T *const dict)
   listitem_T  *li = tv_list_item_alloc();
 
   li->li_tv.v_type = VAR_DICT;
-  li->li_tv.v_lock = 0;
+  li->li_tv.v_lock = VAR_UNLOCKED;
   li->li_tv.vval.v_dict = dict;
   tv_list_append(list, li);
   if (dict != NULL) {
@@ -938,8 +938,8 @@ dict_T *tv_dict_alloc(void)
   gc_first_dict = d;
 
   hash_init(&d->dv_hashtab);
-  d->dv_lock = 0;
-  d->dv_scope = 0;
+  d->dv_lock = VAR_UNLOCKED;
+  d->dv_scope = VAR_NO_SCOPE;
   d->dv_refcount = 0;
   d->dv_copyID = 0;
   QUEUE_INIT(&d->watchers);
@@ -1121,6 +1121,33 @@ bool tv_dict_get_callback(const dict_T *const d,
 
   (*result)->uf_refcount++;
   return true;
+}
+
+//{{{2 dict_add*
+
+/// Add a list entry to dictionary
+///
+/// @param[out]  d  Dictionary to add entry to.
+/// @param[in]  key  Key to add.
+/// @param[in]  key_len  Key length.
+/// @param  list  List to add. Will have reference count incremented.
+///
+/// @return OK in case of success, FAIL when key already exists.
+int tv_dict_add_list(dict_T *const d, const char *const key,
+                     const size_t key_len, list_T *const list)
+  FUNC_ATTR_NONNULL_ALL
+{
+  dictitem_T *item = tv_dict_item_alloc_len(key, key_len);
+
+  item->di_tv.v_lock = VAR_UNLOCKED;
+  item->di_tv.v_type = VAR_LIST;
+  item->di_tv.vval.v_list = list;
+  if (tv_dict_add(d, item) == FAIL) {
+    tv_dict_item_free(item);
+    return FAIL;
+  }
+  list->lv_refcount++;
+  return OK;
 }
 
 //{{{2 Operations on the whole dict
