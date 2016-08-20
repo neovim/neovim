@@ -1406,14 +1406,14 @@ static int syn_stack_equal(synstate_T *sp)
         /* If the pointer is different it can still be the
          * same text.  Compare the strings, ignore case when
          * the start item has the sp_ic flag set. */
-        if (bsx->matches[j] == NULL
-            || six->matches[j] == NULL)
+        if (bsx->matches[j] == NULL || six->matches[j] == NULL) {
           break;
-        if ((SYN_ITEMS(syn_block)[CUR_STATE(i).si_idx]).sp_ic
-            ? mb_stricmp(bsx->matches[j],
-                six->matches[j]) != 0
-            : STRCMP(bsx->matches[j], six->matches[j]) != 0)
+        }
+        if (mb_strcmp_ic((SYN_ITEMS(syn_block)[CUR_STATE(i).si_idx]).sp_ic,
+                         (const char *)bsx->matches[j],
+                         (const char *)six->matches[j]) != 0) {
           break;
+        }
       }
     }
     if (j != NSUBEXP)
@@ -6510,16 +6510,16 @@ do_highlight (
               if (!ui_rgb_attached()) {
                 must_redraw = CLEAR;
                 if (color >= 0) {
-                  if (t_colors < 16)
+                  if (t_colors < 16) {
                     i = (color == 0 || color == 4);
-                  else
+                  } else {
                     i = (color < 7 || color == 8);
-                  /* Set the 'background' option if the value is
-                   * wrong. */
-                  if (i != (*p_bg == 'd'))
-                    set_option_value((char_u *)"bg", 0L,
-                        i ?  (char_u *)"dark"
-                        : (char_u *)"light", 0);
+                  }
+                  // Set the 'background' option if the value is
+                  // wrong.
+                  if (i != (*p_bg == 'd')) {
+                    set_option_value("bg", 0L, (i ? "dark" : "light"), 0);
+                  }
                 }
               }
             }
@@ -7113,7 +7113,7 @@ set_hl_attr (
  * Lookup a highlight group name and return it's ID.
  * If it is not found, 0 is returned.
  */
-int syn_name2id(char_u *name)
+int syn_name2id(const char_u *name)
 {
   int i;
   char_u name_u[200];

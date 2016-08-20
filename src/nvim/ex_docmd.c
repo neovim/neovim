@@ -9483,18 +9483,18 @@ void dialog_msg(char_u *buff, char *format, char_u *fname)
 static void ex_behave(exarg_T *eap)
 {
   if (STRCMP(eap->arg, "mswin") == 0) {
-    set_option_value((char_u *)"selection", 0L, (char_u *)"exclusive", 0);
-    set_option_value((char_u *)"selectmode", 0L, (char_u *)"mouse,key", 0);
-    set_option_value((char_u *)"mousemodel", 0L, (char_u *)"popup", 0);
-    set_option_value((char_u *)"keymodel", 0L,
-        (char_u *)"startsel,stopsel", 0);
+    set_option_value("selection", 0L, "exclusive", 0);
+    set_option_value("selectmode", 0L, "mouse,key", 0);
+    set_option_value("mousemodel", 0L, "popup", 0);
+    set_option_value("keymodel", 0L, "startsel,stopsel", 0);
   } else if (STRCMP(eap->arg, "xterm") == 0) {
-    set_option_value((char_u *)"selection", 0L, (char_u *)"inclusive", 0);
-    set_option_value((char_u *)"selectmode", 0L, (char_u *)"", 0);
-    set_option_value((char_u *)"mousemodel", 0L, (char_u *)"extend", 0);
-    set_option_value((char_u *)"keymodel", 0L, (char_u *)"", 0);
-  } else
+    set_option_value("selection", 0L, "inclusive", 0);
+    set_option_value("selectmode", 0L, "", 0);
+    set_option_value("mousemodel", 0L, "extend", 0);
+    set_option_value("keymodel", 0L, "", 0);
+  } else {
     EMSG2(_(e_invarg2), eap->arg);
+  }
 }
 
 /*
@@ -9608,8 +9608,9 @@ void filetype_maybe_enable(void)
  */
 static void ex_setfiletype(exarg_T *eap)
 {
-  if (!did_filetype)
-    set_option_value((char_u *)"filetype", 0L, eap->arg, OPT_LOCAL);
+  if (!did_filetype) {
+    set_option_value("filetype", 0L, (char *)eap->arg, OPT_LOCAL);
+  }
 }
 
 static void ex_digraphs(exarg_T *eap)
@@ -9695,7 +9696,8 @@ static void ex_match(exarg_T *eap)
 
       c = *end;
       *end = NUL;
-      match_add(curwin, g, p + 1, 10, id, NULL, NULL);
+      match_add(curwin, (const char *)g, (const char *)p + 1, 10, id,
+                NULL, NULL);
       xfree(g);
       *end = c;
     }

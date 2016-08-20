@@ -2,6 +2,7 @@
 #include <stdbool.h>
 #include <assert.h>
 
+#include "nvim/lib/queue.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/gc.h"
 #include "nvim/eval/executor.h"
@@ -12,6 +13,9 @@
 #include "nvim/assert.h"
 #include "nvim/memory.h"
 #include "nvim/globals.h"
+#include "nvim/hashtab.h"
+#include "nvim/vim.h"
+#include "nvim/ascii.h"
 // TODO(ZyX-I): Move line_breakcheck out of misc1
 #include "nvim/misc1.h"  // For line_breakcheck
 
@@ -115,8 +119,7 @@ void tv_list_watch_fix(list_T *const l, const listitem_T *const item)
   }
 }
 
-//{{{2 Lists
-//{{{3 Alloc/free
+//{{{2 Alloc/free
 
 /// Allocate an empty list
 ///
@@ -205,7 +208,7 @@ void tv_list_unref(list_T *const l)
   }
 }
 
-//{{{3 Add/remove
+//{{{2 Add/remove
 
 /// Remove items "item" to "item2" from list "l".
 ///
@@ -406,7 +409,7 @@ void tv_list_append_number(list_T *const l, const varnumber_T n)
   tv_list_append(l, li);
 }
 
-//{{{3 Operations on the whole list
+//{{{2 Operations on the whole list
 
 /// Make a copy of list
 ///
@@ -596,6 +599,8 @@ int tv_list_join(garray_T *const gap, list_T *const l, const char *const sep)
 /// @param[in]  l2  Second list to compare.
 /// @param[in]  ic  True if case is to be ignored.
 /// @param[in]  recursive  True when used recursively.
+///
+/// @return True if lists are equal, false otherwise.
 bool tv_list_equal(list_T *const l1, list_T *const l2, const bool ic,
                    const bool recursive)
   FUNC_ATTR_WARN_UNUSED_RESULT
@@ -623,7 +628,7 @@ bool tv_list_equal(list_T *const l1, list_T *const l2, const bool ic,
   return true;
 }
 
-//{{{3 Indexing/searching
+//{{{2 Indexing/searching
 
 /// Locate item with a given index in a list and return it
 ///
@@ -761,6 +766,552 @@ long tv_list_idx_of_item(const list_T *const l, const listitem_T *const item)
   }
   return idx;
 }
+
+//{{{1 Dictionaries
+//{{{2 Dictionary watchers
+
+/// Perform all necessary cleanup for a `DictWatcher` instance
+///
+/// @param  watcher  Watcher to free.
+void tv_dict_watcher_free(DictWatcher *watcher)
+  FUNC_ATTR_NONNULL_ALL
+{
+  callback_free(&watcher->callback);
+  xfree(watcher->key_pattern);
+  xfree(watcher);
+}
+
+/// Test if `key` matches with with `watcher->key_pattern`
+///
+/// @param[in]  watcher  Watcher to check key pattern from.
+/// @param[in]  key  Key to check.
+///
+/// @return true if key matches, false otherwise.
+static bool tv_dict_watcher_matches(DictWatcher *watcher, const char *const key)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE
+{
+  // For now only allow very simple globbing in key patterns: a '*' at the end
+  // of the string means it should match everything up to the '*' instead of the
+  // whole string.
+  const size_t len = strlen(watcher->key_pattern);
+  if (watcher->key_pattern[len - 1] == '*') {
+    return strncmp(key, watcher->key_pattern, len - 1) == 0;
+  } else {
+    return strcmp(key, watcher->key_pattern) == 0;
+  }
+}
+
+/// Send a change notification to all dictionary watchers that match given key
+///
+/// @param[in]  dict  Dictionary which was modified.
+/// @param[in]  key  Key which was modified.
+/// @param[in]  newtv  New key value.
+/// @param[in]  oldtv  Old key value.
+void tv_dict_watcher_notify(dict_T *const dict, const char *const key,
+                            typval_T *const newtv, typval_T *const oldtv)
+  FUNC_ATTR_NONNULL_ARG(1, 2)
+{
+  typval_T argv[3];
+
+  argv[0].v_type = VAR_DICT;
+  argv[0].v_lock = VAR_UNLOCKED;
+  argv[0].vval.v_dict = dict;
+  argv[1].v_type = VAR_STRING;
+  argv[1].v_lock = VAR_UNLOCKED;
+  argv[1].vval.v_string = (char_u *)xstrdup(key);
+  argv[2].v_type = VAR_DICT;
+  argv[2].v_lock = VAR_UNLOCKED;
+  argv[2].vval.v_dict = tv_dict_alloc();
+  argv[2].vval.v_dict->dv_refcount++;
+
+  if (newtv) {
+    dictitem_T *const v = tv_dict_item_alloc_len(S_LEN("new"));
+    copy_tv(newtv, &v->di_tv);
+    tv_dict_add(argv[2].vval.v_dict, v);
+  }
+
+  if (oldtv) {
+    dictitem_T *const v = tv_dict_item_alloc_len(S_LEN("old"));
+    copy_tv(oldtv, &v->di_tv);
+    tv_dict_add(argv[2].vval.v_dict, v);
+  }
+
+  typval_T rettv;
+
+  QUEUE *w;
+  QUEUE_FOREACH(w, &dict->watchers) {
+    DictWatcher *watcher = tv_dict_watcher_node_data(w);
+    if (!watcher->busy && tv_dict_watcher_matches(watcher, key)) {
+      rettv = TV_INITIAL_VALUE;
+      watcher->busy = true;
+      callback_call(&watcher->callback, 3, argv, &rettv);
+      watcher->busy = false;
+      tv_clear(&rettv);
+    }
+  }
+
+  for (size_t i = 1; i < ARRAY_SIZE(argv); i++) {
+    tv_clear(argv + i);
+  }
+}
+
+//{{{2 Dictionary item
+
+/// Allocate a dictionary item
+///
+/// @note that the value of the item (->di_tv) still needs to be initialized.
+///
+/// @param[in]  key  Key, is copied to the new item.
+/// @param[in]  key_len  Key length.
+///
+/// @return [allocated] new dictionary item.
+dictitem_T *tv_dict_item_alloc_len(const char *const key, const size_t key_len)
+  FUNC_ATTR_NONNULL_RET FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_MALLOC
+{
+  dictitem_T *const di = xmalloc(offsetof(dictitem_T, di_key) + key_len + 1);
+  memcpy(di->di_key, key, key_len);
+  di->di_key[key_len] = NUL;
+  di->di_flags = DI_FLAGS_ALLOC;
+  return di;
+}
+
+/// Allocate a dictionary item
+///
+/// @note that the value of the item (->di_tv) still needs to be initialized.
+///
+/// @param[in]  key  Key, is copied to the new item.
+///
+/// @return [allocated] new dictionary item.
+dictitem_T *tv_dict_item_alloc(const char *const key)
+  FUNC_ATTR_NONNULL_RET FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_MALLOC
+{
+  return tv_dict_item_alloc_len(key, strlen(key));
+}
+
+/// Free a dictionary item, also clearing the value
+///
+/// @param  item  Item to free.
+void tv_dict_item_free(dictitem_T *const item)
+  FUNC_ATTR_NONNULL_ALL
+{
+  tv_clear(&item->di_tv);
+  if (item->di_flags & DI_FLAGS_ALLOC) {
+    xfree(item);
+  }
+}
+
+/// Add item to dictionary
+///
+/// @param[out]  d  Dictionary to add to.
+/// @param[in]  item  Item to add.
+///
+/// @return FAIL if key already exists.
+int tv_dict_add(dict_T *const d, dictitem_T *const item)
+  FUNC_ATTR_NONNULL_ALL
+{
+  return hash_add(&d->dv_hashtab, item->di_key);
+}
+
+/// Make a copy of a dictionary item
+///
+/// @param[in]  di  Item to copy.
+///
+/// @return [allocated] new dictionary item.
+static dictitem_T *tv_dict_item_copy(dictitem_T *const di)
+  FUNC_ATTR_NONNULL_RET FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_MALLOC
+{
+  dictitem_T *const new_di = tv_dict_item_alloc((const char *)di->di_key);
+  copy_tv(&di->di_tv, &new_di->di_tv);
+  return new_di;
+}
+
+/// Remove item from dictionary and free it
+///
+/// @param  dict  Dictionary to remove item from.
+/// @param  item  Item to remove.
+void tv_dict_item_remove(dict_T *const dict, dictitem_T *const item)
+  FUNC_ATTR_NONNULL_ALL
+{
+  hashitem_T *const hi = hash_find(&dict->dv_hashtab, item->di_key);
+  if (HASHITEM_EMPTY(hi)) {
+    emsgf(_(e_intern2), "tv_dict_item_remove()");
+  } else {
+    hash_remove(&dict->dv_hashtab, hi);
+  }
+  tv_dict_item_free(item);
+}
+
+//{{{2 Alloc/free
+
+/// Allocate an empty dictionary
+///
+/// @return [allocated] new dictionary.
+dict_T *tv_dict_alloc(void)
+  FUNC_ATTR_NONNULL_RET FUNC_ATTR_MALLOC FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  dict_T *const d = xmalloc(sizeof(dict_T));
+
+  // Add the dict to the list of dicts for garbage collection.
+  if (gc_first_dict != NULL) {
+    gc_first_dict->dv_used_prev = d;
+  }
+  d->dv_used_next = gc_first_dict;
+  d->dv_used_prev = NULL;
+  gc_first_dict = d;
+
+  hash_init(&d->dv_hashtab);
+  d->dv_lock = VAR_UNLOCKED;
+  d->dv_scope = VAR_NO_SCOPE;
+  d->dv_refcount = 0;
+  d->dv_copyID = 0;
+  QUEUE_INIT(&d->watchers);
+
+  return d;
+}
+
+/// Free items contained in a dictionary
+///
+/// @param[in,out]  d  Dictionary to clear.
+void tv_dict_free_contents(dict_T *const d)
+  FUNC_ATTR_NONNULL_ALL
+{
+  // Lock the hashtab, we don't want it to resize while freeing items.
+  hash_lock(&d->dv_hashtab);
+  assert(d->dv_hashtab.ht_locked > 0);
+  HASHTAB_ITER(&d->dv_hashtab, hi, {
+    // Remove the item before deleting it, just in case there is
+    // something recursive causing trouble.
+    dictitem_T *const di = TV_DICT_HI2DI(hi);
+    hash_remove(&d->dv_hashtab, hi);
+    tv_dict_item_free(di);
+  });
+
+  while (!QUEUE_EMPTY(&d->watchers)) {
+    QUEUE *w = QUEUE_HEAD(&d->watchers);
+    QUEUE_REMOVE(w);
+    DictWatcher *watcher = tv_dict_watcher_node_data(w);
+    tv_dict_watcher_free(watcher);
+  }
+
+  hash_clear(&d->dv_hashtab);
+  d->dv_hashtab.ht_locked--;
+  hash_init(&d->dv_hashtab);
+}
+
+/// Free a dictionary itself, ignoring items it contains
+///
+/// Ignores the reference count.
+///
+/// @param[in,out]  d  Dictionary to free.
+void tv_dict_free_dict(dict_T *const d)
+  FUNC_ATTR_NONNULL_ALL
+{
+  // Remove the dict from the list of dicts for garbage collection.
+  if (d->dv_used_prev == NULL) {
+    gc_first_dict = d->dv_used_next;
+  } else {
+    d->dv_used_prev->dv_used_next = d->dv_used_next;
+  }
+  if (d->dv_used_next != NULL) {
+    d->dv_used_next->dv_used_prev = d->dv_used_prev;
+  }
+
+  xfree(d);
+}
+
+/// Free a dictionary, including all items it contains
+///
+/// Ignores the reference count.
+///
+/// @param  d  Dictionary to free.
+void tv_dict_free(dict_T *const d)
+  FUNC_ATTR_NONNULL_ALL
+{
+  if (!tv_in_free_unref_items) {
+    tv_dict_free_contents(d);
+    tv_dict_free_dict(d);
+  }
+}
+
+
+/// Unreference a dictionary
+///
+/// Decrements the reference count and frees dictionary when it becomes zero.
+///
+/// @param[in]  d  Dictionary to operate on.
+void tv_dict_unref(dict_T *const d)
+{
+  if (d != NULL && --d->dv_refcount <= 0) {
+    tv_dict_free(d);
+  }
+}
+
+//{{{2 Indexing/searching
+
+/// Find item in dictionary
+///
+/// @param[in]  d  Dictionary to check.
+/// @param[in]  key  Dictionary key.
+/// @param[in]  len  Key length. If negative, then strlen(key) is used.
+///
+/// @return found item or NULL if nothing was found.
+dictitem_T *tv_dict_find(const dict_T *const d, const char *const key,
+                         const ptrdiff_t len)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  hashitem_T *const hi = (len < 0
+                          ? hash_find(&d->dv_hashtab, (const char_u *)key)
+                          : hash_find_len(&d->dv_hashtab, key, (size_t)len));
+  if (HASHITEM_EMPTY(hi)) {
+    return NULL;
+  }
+  return TV_DICT_HI2DI(hi);
+}
+
+/// Get a number item from a dictionary
+///
+/// Returns 0 if the entry does not exist.
+///
+/// @param[in]  d  Dictionary to get item from.
+/// @param[in]  key  Key to find in dictionary.
+///
+/// @return Dictionary item.
+varnumber_T tv_dict_get_number(dict_T *const d, const char *const key)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  dictitem_T *const di = tv_dict_find(d, key, -1);
+  if (di == NULL) {
+    return 0;
+  }
+  return get_tv_number(&di->di_tv);
+}
+
+/// Get a string item from a dictionary
+///
+/// @param[in]  d  Dictionary to get item from.
+/// @param[in]  key  Dictionary key.
+/// @param[in]  save  If true, returned string will be placed in the allocated
+///                   memory.
+///
+/// @return NULL if key does not exist, empty string in case of type error,
+///         string item value otherwise. If returned value is not NULL, it may
+///         be allocated depending on `save` argument.
+char *tv_dict_get_string(dict_T *const d, const char *const key,
+                         const bool save)
+  FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  static char numbuf[NUMBUFLEN];
+  const char *const s = tv_dict_get_string_buf(d, key, numbuf);
+  if (save && s != NULL) {
+    return xstrdup(s);
+  }
+  return (char *)s;
+}
+
+/// Get a string item from a dictionary
+///
+/// @param[in]  d  Dictionary to get item from.
+/// @param[in]  key  Dictionary key.
+/// @param[in]  numbuf  Numbuf for.
+///
+/// @return NULL if key does not exist, empty string in case of type error,
+///         string item value otherwise.
+const char *tv_dict_get_string_buf(dict_T *const d, const char *const key,
+                                   char *const numbuf)
+  FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  dictitem_T *const di = tv_dict_find(d, key, -1);
+  if (di == NULL) {
+    return NULL;
+  }
+  return (const char *)get_tv_string_buf(&di->di_tv, (char_u *)numbuf);
+}
+
+//{{{2 Operations on the whole dict
+
+/// Clear all the keys of a Dictionary. "d" remains a valid empty Dictionary.
+///
+/// @param  d  The Dictionary to clear
+void tv_dict_clear(dict_T *const d)
+  FUNC_ATTR_NONNULL_ALL
+{
+  hash_lock(&d->dv_hashtab);
+  assert(d->dv_hashtab.ht_locked > 0);
+
+  HASHTAB_ITER(&d->dv_hashtab, hi, {
+    tv_dict_item_free(TV_DICT_HI2DI(hi));
+    hash_remove(&d->dv_hashtab, hi);
+  });
+
+  hash_unlock(&d->dv_hashtab);
+}
+
+/// Extend dictionary with items from another dictionary
+///
+/// @param  d1  Dictionary to extend.
+/// @param[in]  d2  Dictionary to extend with.
+/// @param[in]  action  "error", "force", "keep":
+///
+///                     e*, including "error": duplicate key gives an error.
+///                     f*, including "force": duplicate d2 keys override d1.
+///                     other, including "keep": duplicate d2 keys ignored.
+void tv_dict_extend(dict_T *const d1, dict_T *const d2,
+                    const char *const action)
+  FUNC_ATTR_NONNULL_ALL
+{
+  const bool watched = tv_dict_is_watched(d1);
+  const char *const arg_errmsg = _("extend() argument");
+  const size_t arg_errmsg_len = strlen(arg_errmsg);
+
+  TV_DICT_ITER(d2, di2, {
+    dictitem_T *const di1 = tv_dict_find(d1, (const char *)di2->di_key, -1);
+    if (d1->dv_scope != VAR_NO_SCOPE) {
+      // Disallow replacing a builtin function in l: and g:.
+      // Check the key to be valid when adding to any scope.
+      if (d1->dv_scope == VAR_DEF_SCOPE
+          && di2->di_tv.v_type == VAR_FUNC
+          && !var_check_func_name((const char *)di2->di_key, di1 == NULL)) {
+        break;
+      }
+      if (!valid_varname((const char *)di2->di_key)) {
+        break;
+      }
+    }
+    if (di1 == NULL) {
+      dictitem_T *const new_di = tv_dict_item_copy(di2);
+      if (tv_dict_add(d1, new_di) == FAIL) {
+        tv_dict_item_free(new_di);
+      } else if (watched) {
+        tv_dict_watcher_notify(d1, (const char *)new_di->di_key, &new_di->di_tv,
+                               NULL);
+      }
+    } else if (*action == 'e') {
+      emsgf(_("E737: Key already exists: %s"), di2->di_key);
+      break;
+    } else if (*action == 'f' && di2 != di1) {
+      typval_T oldtv;
+
+      if (tv_check_lock(di1->di_tv.v_lock, arg_errmsg, arg_errmsg_len)
+          || var_check_ro(di1->di_flags, arg_errmsg, arg_errmsg_len)) {
+        break;
+      }
+
+      if (watched) {
+        copy_tv(&di1->di_tv, &oldtv);
+      }
+
+      tv_clear(&di1->di_tv);
+      copy_tv(&di2->di_tv, &di1->di_tv);
+
+      if (watched) {
+        tv_dict_watcher_notify(d1, (const char *)di1->di_key, &di1->di_tv,
+                               &oldtv);
+        tv_clear(&oldtv);
+      }
+    }
+  });
+}
+
+/// Compare two dictionaries
+///
+/// @param[in]  d1  First dictionary.
+/// @param[in]  d2  Second dictionary.
+/// @param[in]  ic  True if case is to be ignored.
+/// @param[in]  recursive  True when used recursively.
+bool tv_dict_equal(dict_T *const d1, dict_T *const d2,
+                   const bool ic, const bool recursive)
+  FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  if (d1 == d2) {
+    return true;
+  }
+  if (d1 == NULL || d2 == NULL) {
+    return false;
+  }
+  if (tv_dict_len(d1) != tv_dict_len(d2)) {
+    return false;
+  }
+
+  TV_DICT_ITER(d1, di1, {
+    dictitem_T *const di2 = tv_dict_find(d2, (const char *)di1->di_key, -1);
+    if (di2 == NULL) {
+      return false;
+    }
+    if (!tv_equal(&di1->di_tv, &di2->di_tv, ic, recursive)) {
+      return false;
+    }
+  });
+  return true;
+}
+
+/// Make a copy of dictionary
+///
+/// @param[in]  conv  If non-NULL, then all internal strings will be converted.
+/// @param[in]  orig  Original dictionary to copy.
+/// @param[in]  deep  If false, then shallow copy will be done.
+/// @param[in]  copyID  See var_item_copy().
+///
+/// @return Copied dictionary. May be NULL in case original dictionary is NULL
+///         or some failure happens. The refcount of the new dictionary is set
+///         to 1.
+dict_T *tv_dict_copy(const vimconv_T *const conv,
+                     dict_T *const orig,
+                     const bool deep,
+                     const int copyID)
+{
+  if (orig == NULL) {
+    return NULL;
+  }
+
+  dict_T *copy = tv_dict_alloc();
+  if (copyID != 0) {
+    orig->dv_copyID = copyID;
+    orig->dv_copydict = copy;
+  }
+  TV_DICT_ITER(orig, di, {
+    if (got_int) {
+      break;
+    }
+    dictitem_T *new_di;
+    if (conv == NULL || conv->vc_type == CONV_NONE) {
+      new_di = tv_dict_item_alloc((const char *)di->di_key);
+    } else {
+      size_t len = STRLEN(di->di_key);
+      char *const key = (char *)string_convert(conv, di->di_key, &len);
+      if (key == NULL) {
+        new_di = tv_dict_item_alloc_len((const char *)di->di_key, len);
+      } else {
+        new_di = tv_dict_item_alloc_len(key, len);
+        xfree(key);
+      }
+    }
+    if (deep) {
+      if (var_item_copy(conv, &di->di_tv, &new_di->di_tv, deep,
+                        copyID) == FAIL) {
+        xfree(new_di);
+        break;
+      }
+    } else {
+      copy_tv(&di->di_tv, &new_di->di_tv);
+    }
+    if (tv_dict_add(copy, new_di) == FAIL) {
+      tv_dict_item_free(new_di);
+      break;
+    }
+  });
+
+  copy->dv_refcount++;
+  if (got_int) {
+    tv_dict_unref(copy);
+    copy = NULL;
+  }
+
+  return copy;
+}
+
 //{{{1 Generic typval operations
 //{{{2 Init/alloc/clear
 //{{{3 Alloc
@@ -781,6 +1332,21 @@ list_T *tv_list_alloc_ret(typval_T *const ret_tv)
   ret_tv->v_lock = VAR_UNLOCKED;
   l->lv_refcount++;
   return l;
+}
+
+/// Allocate an empty dictionary for a return value
+///
+/// Also sets reference count.
+///
+/// @param[out]  ret_tv  Structure where dictionary is saved.
+void tv_dict_alloc_ret(typval_T *const ret_tv)
+  FUNC_ATTR_NONNULL_ALL
+{
+  dict_T *const d = tv_dict_alloc();
+  ret_tv->vval.v_dict = d;
+  ret_tv->v_type = VAR_DICT;
+  ret_tv->v_lock = VAR_UNLOCKED;
+  d->dv_refcount++;
 }
 
 //{{{3 Clear
@@ -884,7 +1450,7 @@ static inline void _nothing_conv_func_end(typval_T *const tv, const int copyID)
 #define TYPVAL_ENCODE_CONV_EMPTY_DICT(tv, dict) \
     do { \
       assert((void *)&dict != (void *)&TYPVAL_ENCODE_NODICT_VAR); \
-      dict_unref((dict_T *)dict); \
+      tv_dict_unref((dict_T *)dict); \
       *((dict_T **)&dict) = NULL; \
       if (tv != NULL) { \
         ((typval_T *)tv)->v_lock = VAR_UNLOCKED; \
@@ -966,7 +1532,7 @@ static inline void _nothing_conv_dict_end(typval_T *const tv,
   FUNC_ATTR_ALWAYS_INLINE
 {
   if ((const void *)dictp != nodictvar) {
-    dict_unref(*dictp);
+    tv_dict_unref(*dictp);
     *dictp = NULL;
   }
 }
@@ -1077,13 +1643,9 @@ void tv_item_lock(typval_T *const tv, const int deep, const bool lock)
         CHANGE_LOCK(lock, d->dv_lock);
         if (deep < 0 || deep > 1) {
           // recursive: lock/unlock the items the List contains
-          int todo = (int)d->dv_hashtab.ht_used;
-          for (hashitem_T *hi = d->dv_hashtab.ht_array; todo > 0; hi++) {
-            if (!HASHITEM_EMPTY(hi)) {
-              todo--;
-              tv_item_lock(&HI2DI(hi)->di_tv, deep - 1, lock);
-            }
-          }
+          TV_DICT_ITER(d, di, {
+            tv_item_lock(&di->di_tv, deep - 1, lock);
+          });
         }
       }
       break;
@@ -1121,6 +1683,140 @@ bool tv_islocked(const typval_T *const tv)
               && (tv->vval.v_dict->dv_lock & VAR_LOCKED)));
 }
 
+/// Return true if typval is locked
+///
+/// Also gives an error message when typval is locked.
+///
+/// @param[in]  lock  Lock status.
+/// @param[in]  name  Variable name, used in the error message.
+/// @param[in]  use_gettext  True if variable name also is to be translated.
+///
+/// @return true if variable is locked, false otherwise.
+bool tv_check_lock(const VarLockStatus lock, const char *const name,
+                   const size_t name_len)
+  FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  const char *error_message = NULL;
+  switch (lock) {
+    case VAR_UNLOCKED: {
+      return false;
+    }
+    case VAR_LOCKED: {
+      error_message = N_("E741: Value is locked: %.*s");
+      break;
+    }
+    case VAR_FIXED: {
+      error_message = N_("E742: Cannot change value of %.*s");
+      break;
+    }
+  }
+  assert(error_message != NULL);
+
+  const char *const unknown_name = _("Unknown");
+
+  emsgf(_(error_message), (name != NULL ? name_len : strlen(unknown_name)),
+        (name != NULL ? name : unknown_name));
+
+  return true;
+}
+
+//{{{2 Comparison
+
+static int tv_equal_recurse_limit;
+
+/// Compare two VimL values
+///
+/// Like "==", but strings and numbers are different, as well as floats and
+/// numbers.
+///
+/// @warning Too nested structures may be considered equal even if they are not.
+///
+/// @param[in]  tv1  First value to compare.
+/// @param[in]  tv2  Second value to compare.
+/// @param[in]  ic  True if case is to be ignored.
+/// @param[in]  recursive  True when used recursively.
+///
+/// @return true if values are equal.
+bool tv_equal(typval_T *const tv1, typval_T *const tv2, const bool ic,
+              const bool recursive)
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
+{
+  // TODO(ZyX-I): Make this not recursive
+  static int recursive_cnt = 0;  // Catch recursive loops.
+
+  if (!((tv1->v_type == VAR_FUNC || tv1->v_type == VAR_PARTIAL)
+        && (tv2->v_type == VAR_FUNC || tv2->v_type == VAR_PARTIAL))
+      && tv1->v_type != tv2->v_type) {
+    return false;
+  }
+
+  // Catch lists and dicts that have an endless loop by limiting
+  // recursiveness to a limit.  We guess they are equal then.
+  // A fixed limit has the problem of still taking an awful long time.
+  // Reduce the limit every time running into it. That should work fine for
+  // deeply linked structures that are not recursively linked and catch
+  // recursiveness quickly.
+  if (!recursive) {
+    tv_equal_recurse_limit = 1000;
+  }
+  if (recursive_cnt >= tv_equal_recurse_limit) {
+    tv_equal_recurse_limit--;
+    return true;
+  }
+
+  switch (tv1->v_type) {
+    case VAR_LIST: {
+      recursive_cnt++;
+      const bool r = tv_list_equal(tv1->vval.v_list, tv2->vval.v_list, ic,
+                                   true);
+      recursive_cnt--;
+      return r;
+    }
+    case VAR_DICT: {
+      recursive_cnt++;
+      const bool r = tv_dict_equal(tv1->vval.v_dict, tv2->vval.v_dict, ic,
+                                   true);
+      recursive_cnt--;
+      return r;
+    }
+    case VAR_PARTIAL:
+    case VAR_FUNC: {
+      if ((tv1->v_type == VAR_PARTIAL && tv1->vval.v_partial == NULL)
+          || (tv2->v_type == VAR_PARTIAL && tv2->vval.v_partial == NULL)) {
+        return false;
+      }
+      recursive_cnt++;
+      const bool r = func_equal(tv1, tv2, ic);
+      recursive_cnt--;
+      return r;
+    }
+    case VAR_NUMBER: {
+      return tv1->vval.v_number == tv2->vval.v_number;
+    }
+    case VAR_FLOAT: {
+      return tv1->vval.v_float == tv2->vval.v_float;
+    }
+    case VAR_STRING: {
+      char buf1[NUMBUFLEN];
+      char buf2[NUMBUFLEN];
+      const char *s1 = (const char *)get_tv_string_buf(tv1, (char_u *)buf1);
+      const char *s2 = (const char *)get_tv_string_buf(tv2, (char_u *)buf2);
+      return mb_strcmp_ic((bool)ic, s1, s2) == 0;
+    }
+    case VAR_SPECIAL: {
+      return tv1->vval.v_special == tv2->vval.v_special;
+    }
+    case VAR_UNKNOWN: {
+      // VAR_UNKNOWN can be the result of an invalid expression, let’s say it
+      // does not equal anything, not even self.
+      return false;
+    }
+  }
+
+  assert(false);
+  return false;
+}
+
 //{{{2 Type checks
 
 /// Check that given value is a number or string
@@ -1135,37 +1831,37 @@ bool tv_islocked(const typval_T *const tv)
 bool tv_check_str_or_nr(const typval_T *const tv)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
 {
-    switch (tv->v_type) {
-      case VAR_NUMBER:
-      case VAR_STRING: {
-        return true;
-      }
-      case VAR_FLOAT: {
-        EMSG(_("E805: Expected a Number or a String, Float found"));
-        return false;
-      }
-      case VAR_PARTIAL:
-      case VAR_FUNC: {
-        EMSG(_("E703: Expected a Number or a String, Funcref found"));
-        return false;
-      }
-      case VAR_LIST: {
-        EMSG(_("E745: Expected a Number or a String, List found"));
-        return false;
-      }
-      case VAR_DICT: {
-        EMSG(_("E728: Expected a Number or a String, Dictionary found"));
-        return false;
-      }
-      case VAR_SPECIAL: {
-        EMSG(_("E5300: Expected a Number or a String"));
-        return false;
-      }
-      case VAR_UNKNOWN: {
-        EMSG2(_(e_intern2), "tv_check_str_or_nr(UNKNOWN)");
-        return false;
-      }
+  switch (tv->v_type) {
+    case VAR_NUMBER:
+    case VAR_STRING: {
+      return true;
     }
-    assert(false);
-    return false;
+    case VAR_FLOAT: {
+      emsgf(_("E805: Expected a Number or a String, Float found"));
+      return false;
+    }
+    case VAR_PARTIAL:
+    case VAR_FUNC: {
+      emsgf(_("E703: Expected a Number or a String, Funcref found"));
+      return false;
+    }
+    case VAR_LIST: {
+      emsgf(_("E745: Expected a Number or a String, List found"));
+      return false;
+    }
+    case VAR_DICT: {
+      emsgf(_("E728: Expected a Number or a String, Dictionary found"));
+      return false;
+    }
+    case VAR_SPECIAL: {
+      emsgf(_("E5300: Expected a Number or a String"));
+      return false;
+    }
+    case VAR_UNKNOWN: {
+      emsgf(_(e_intern2), "tv_check_str_or_nr(UNKNOWN)");
+      return false;
+    }
+  }
+  assert(false);
+  return false;
 }

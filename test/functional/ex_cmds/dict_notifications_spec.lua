@@ -48,7 +48,7 @@ describe('dictionary change notifications', function()
       eq({'notification', 'values', {key, vals}}, next_msg())
     end
 
-    describe('watcher', function()
+    describe(dict_expr .. ' watcher', function()
       if dict_init then
         setup(function()
           source(dict_init)
@@ -58,7 +58,7 @@ describe('dictionary change notifications', function()
       before_each(function()
         source([[
         function! g:Changed(dict, key, value)
-          if a:dict != ]]..dict_expr..[[ |
+          if a:dict isnot ]]..dict_expr..[[ |
             throw 'invalid dict'
           endif
           call rpcnotify(g:channel, 'values', a:key, a:value)

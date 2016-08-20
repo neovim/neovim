@@ -7134,16 +7134,17 @@ void ex_spelldump(exarg_T *eap)
   char_u  *spl;
   long dummy;
 
-  if (no_spell_checking(curwin))
+  if (no_spell_checking(curwin)) {
     return;
-  get_option_value((char_u*)"spl", &dummy, &spl, OPT_LOCAL);
+  }
+  get_option_value((char_u *)"spl", &dummy, &spl, OPT_LOCAL);
 
   // Create a new empty buffer in a new window.
   do_cmdline_cmd("new");
 
   // enable spelling locally in the new window
-  set_option_value((char_u*)"spell", true, (char_u*)"", OPT_LOCAL);
-  set_option_value((char_u*)"spl",  dummy, spl, OPT_LOCAL);
+  set_option_value("spell", true, "", OPT_LOCAL);
+  set_option_value("spl",  dummy, (char *)spl, OPT_LOCAL);
   xfree(spl);
 
   if (!bufempty()) {

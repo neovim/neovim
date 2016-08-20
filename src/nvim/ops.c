@@ -16,6 +16,7 @@
 #include "nvim/cursor.h"
 #include "nvim/edit.h"
 #include "nvim/eval.h"
+#include "nvim/eval/typval.h"
 #include "nvim/ex_cmds.h"
 #include "nvim/ex_cmds2.h"
 #include "nvim/ex_getln.h"
@@ -888,7 +889,7 @@ static void set_yreg_additional_data(yankreg_T *reg, dict_T *additional_data)
   if (reg->additional_data == additional_data) {
     return;
   }
-  dict_unref(reg->additional_data);
+  tv_dict_unref(reg->additional_data);
   reg->additional_data = additional_data;
 }
 
@@ -2581,7 +2582,7 @@ static void do_autocmd_textyankpost(oparg_T *oap, yankreg_T *reg)
   textlock++;
   apply_autocmds(EVENT_TEXTYANKPOST, NULL, NULL, false, curbuf);
   textlock--;
-  dict_clear(dict);
+  tv_dict_clear(dict);
 
   recursive = false;
 }

@@ -1623,10 +1623,10 @@ static ShaDaWriteResult shada_pack_entry(msgpack_packer *const packer,
       for (const hashitem_T *hi= d->dv_hashtab.ht_array; todo; hi++) { \
         if (!HASHITEM_EMPTY(hi)) { \
           todo--; \
-          dictitem_T *const di = HI2DI(hi); \
-          const size_t key_len = strlen((const char *) hi->hi_key); \
+          dictitem_T *const di = TV_DICT_HI2DI(hi); \
+          const size_t key_len = strlen((const char *)hi->hi_key); \
           msgpack_pack_str(spacker, key_len); \
-          msgpack_pack_str_body(spacker, (const char *) hi->hi_key, key_len); \
+          msgpack_pack_str_body(spacker, (const char *)hi->hi_key, key_len); \
           if (encode_vim_to_msgpack(spacker, &di->di_tv, \
                                     _("additional data of ShaDa " what)) \
               == FAIL) { \
@@ -3156,17 +3156,17 @@ static void shada_free_shada_entry(ShadaEntry *const entry)
     case kSDItemJump:
     case kSDItemGlobalMark:
     case kSDItemLocalMark: {
-      dict_unref(entry->data.filemark.additional_data);
+      tv_dict_unref(entry->data.filemark.additional_data);
       xfree(entry->data.filemark.fname);
       break;
     }
     case kSDItemSearchPattern: {
-      dict_unref(entry->data.search_pattern.additional_data);
+      tv_dict_unref(entry->data.search_pattern.additional_data);
       xfree(entry->data.search_pattern.pat);
       break;
     }
     case kSDItemRegister: {
-      dict_unref(entry->data.reg.additional_data);
+      tv_dict_unref(entry->data.reg.additional_data);
       for (size_t i = 0; i < entry->data.reg.contents_size; i++) {
         xfree(entry->data.reg.contents[i]);
       }
@@ -3192,7 +3192,7 @@ static void shada_free_shada_entry(ShadaEntry *const entry)
     case kSDItemBufferList: {
       for (size_t i = 0; i < entry->data.buffer_list.size; i++) {
         xfree(entry->data.buffer_list.buffers[i].fname);
-        dict_unref(entry->data.buffer_list.buffers[i].additional_data);
+        tv_dict_unref(entry->data.buffer_list.buffers[i].additional_data);
       }
       xfree(entry->data.buffer_list.buffers);
       break;

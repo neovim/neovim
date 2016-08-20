@@ -1236,7 +1236,7 @@ static int qf_add_entry(qf_info_T *qi, char_u *dir, char_u *fname, int bufnum,
   qfp->qf_nr = nr;
   if (type != 1 && !vim_isprintc(type))   /* only printable chars allowed */
     type = 0;
-  qfp->qf_type = type;
+  qfp->qf_type = (char_u)type;
   qfp->qf_valid = valid;
 
   lastp = &qi->qf_lists[qi->qf_curlist].qf_last;
@@ -2581,15 +2581,13 @@ void ex_copen(exarg_T *eap)
     else {
       /* Create a new quickfix buffer */
       (void)do_ecmd(0, NULL, NULL, NULL, ECMD_ONE, ECMD_HIDE, oldwin);
-      /* switch off 'swapfile' */
-      set_option_value((char_u *)"swf", 0L, NULL, OPT_LOCAL);
-      set_option_value((char_u *)"bt", 0L, (char_u *)"quickfix",
-          OPT_LOCAL);
-      set_option_value((char_u *)"bh", 0L, (char_u *)"wipe", OPT_LOCAL);
+      // Switch off 'swapfile'.
+      set_option_value("swf", 0L, NULL, OPT_LOCAL);
+      set_option_value("bt", 0L, "quickfix", OPT_LOCAL);
+      set_option_value("bh", 0L, "wipe", OPT_LOCAL);
       RESET_BINDING(curwin);
-      curwin->w_p_diff = FALSE;
-      set_option_value((char_u *)"fdm", 0L, (char_u *)"manual",
-          OPT_LOCAL);
+      curwin->w_p_diff = false;
+      set_option_value("fdm", 0L, "manual", OPT_LOCAL);
     }
 
     /* Only set the height when still in the same tab page and there is no
@@ -2901,14 +2899,14 @@ static void qf_fill_buffer(qf_info_T *qi, buf_T *buf, qfline_T *old_last)
     }
   }
 
-  /* correct cursor position */
-  check_lnums(TRUE);
+  // Correct cursor position.
+  check_lnums(true);
 
   if (old_last == NULL) {
     // Set the 'filetype' to "qf" each time after filling the buffer.  This
     // resembles reading a file into a buffer, it's more logical when using
     // autocommands.
-    set_option_value((char_u *)"ft", 0L, (char_u *)"qf", OPT_LOCAL);
+    set_option_value("ft", 0L, "qf", OPT_LOCAL);
     curbuf->b_p_ma = false;
 
     keep_filetype = true;                 // don't detect 'filetype'
@@ -4002,7 +4000,7 @@ int get_errorlist(win_T *wp, int qf_idx, list_T *list)
     if (bufnum != 0 && (buflist_findnr(bufnum) == NULL))
       bufnum = 0;
 
-    dict = dict_alloc();
+    dict = tv_dict_alloc();
     tv_list_append_dict(list, dict);
 
     buf[0] = qfp->qf_type;
@@ -4057,7 +4055,7 @@ int get_errorlist_properties(win_T *wp, dict_T *what, dict_T *retdict)
   int flags = QF_GETLIST_NONE;
 
   int qf_idx = qi->qf_curlist;  // default is the current list
-  if ((di = dict_find(what, (char_u *)"nr", -1)) != NULL) {
+  if ((di = tv_dict_find(what, S_LEN("nr"))) != NULL) {
     // Use the specified quickfix/location list
     if (di->di_tv.v_type == VAR_NUMBER) {
       qf_idx = di->di_tv.vval.v_number - 1;
@@ -4070,15 +4068,15 @@ int get_errorlist_properties(win_T *wp, dict_T *what, dict_T *retdict)
     }
   }
 
-  if (dict_find(what, (char_u *)"all", -1) != NULL) {
+  if (tv_dict_find(what, S_LEN("all")) != NULL) {
     flags |= QF_GETLIST_ALL;
   }
 
-  if (dict_find(what, (char_u *)"title", -1) != NULL) {
+  if (tv_dict_find(what, S_LEN("title")) != NULL) {
     flags |= QF_GETLIST_TITLE;
   }
 
-  if (dict_find(what, (char_u *)"winid", -1) != NULL) {
+  if (tv_dict_find(what, S_LEN("winid")) != NULL) {
     flags |= QF_GETLIST_WINID;
   }
 
@@ -4132,17 +4130,18 @@ static int qf_add_entries(qf_info_T *qi, list_T *list, char_u *title,
     if (d == NULL)
       continue;
 
-    char_u *filename = get_dict_string(d, "filename", true);
-    int bufnum = (int)get_dict_number(d, "bufnr");
-    long lnum = get_dict_number(d, "lnum");
-    int col = (int)get_dict_number(d, "col");
-    char_u vcol = (char_u)get_dict_number(d, "vcol");
-    int nr = (int)get_dict_number(d, "nr");
-    char_u *type = get_dict_string(d, "type", true);
-    char_u *pattern = get_dict_string(d, "pattern", true);
-    char_u *text = get_dict_string(d, "text", true);
+    char *const filename = tv_dict_get_string(d, "filename", true);
+    int bufnum = (int)tv_dict_get_number(d, "bufnr");
+    long lnum = tv_dict_get_number(d, "lnum");
+    int col = (int)tv_dict_get_number(d, "col");
+    char_u vcol = (char_u)tv_dict_get_number(d, "vcol");
+    int nr = (int)tv_dict_get_number(d, "nr");
+    const char *type_str = tv_dict_get_string(d, "type", false);
+    const char_u type = (char_u)(uint8_t)(type_str == NULL ? NUL : *type_str);
+    char *const pattern = tv_dict_get_string(d, "pattern", true);
+    char *text = tv_dict_get_string(d, "text", true);
     if (text == NULL) {
-      text = vim_strsave((char_u *)"");
+      text = xcalloc(1, 1);
     }
     bool valid = true;
     if ((filename == NULL && bufnum == 0) || (lnum == 0 && pattern == NULL)) {
@@ -4162,21 +4161,20 @@ static int qf_add_entries(qf_info_T *qi, list_T *list, char_u *title,
 
     int status = qf_add_entry(qi,
                               NULL,      // dir
-                              filename,
+                              (char_u *)filename,
                               bufnum,
-                              text,
+                              (char_u *)text,
                               lnum,
                               col,
                               vcol,      // vis_col
-                              pattern,   // search pattern
+                              (char_u *)pattern,   // search pattern
                               nr,
-                              (char_u)(type == NULL ? NUL : *type),
+                              type,
                               valid);
 
     xfree(filename);
     xfree(pattern);
     xfree(text);
-    xfree(type);
 
     if (status == FAIL) {
       retval = FAIL;
@@ -4213,7 +4211,7 @@ static int qf_set_properties(qf_info_T *qi, dict_T *what, int action)
     newlist = true;
   }
   int qf_idx = qi->qf_curlist;  // default is the current list
-  if ((di = dict_find(what, (char_u *)"nr", -1)) != NULL) {
+  if ((di = tv_dict_find(what, S_LEN("nr"))) != NULL) {
     // Use the specified quickfix/location list
     if (di->di_tv.v_type == VAR_NUMBER) {
       qf_idx = di->di_tv.vval.v_number - 1;
@@ -4231,10 +4229,11 @@ static int qf_set_properties(qf_info_T *qi, dict_T *what, int action)
     qf_idx = qi->qf_curlist;
   }
 
-  if ((di = dict_find(what, (char_u *)"title", -1)) != NULL) {
+  if ((di = tv_dict_find(what, S_LEN("title"))) != NULL) {
     if (di->di_tv.v_type == VAR_STRING) {
       xfree(qi->qf_lists[qf_idx].qf_title);
-      qi->qf_lists[qf_idx].qf_title = get_dict_string(what, "title", true);
+      qi->qf_lists[qf_idx].qf_title = (char_u *)tv_dict_get_string(
+          what, "title", true);
       if (qf_idx == qi->qf_curlist) {
         qf_update_win_titlevar(qi);
       }

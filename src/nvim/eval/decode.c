@@ -6,6 +6,7 @@
 #include "nvim/eval.h"
 #include "nvim/eval/encode.h"
 #include "nvim/ascii.h"
+#include "nvim/macros.h"
 #include "nvim/message.h"
 #include "nvim/charset.h"  // vim_str2nr
 #include "nvim/lib/kvec.h"
@@ -51,16 +52,16 @@ static inline void create_special_dict(typval_T *const rettv,
                                        typval_T val)
   FUNC_ATTR_NONNULL_ALL
 {
-  dict_T *const dict = dict_alloc();
-  dictitem_T *const type_di = dictitem_alloc((char_u *) "_TYPE");
+  dict_T *const dict = tv_dict_alloc();
+  dictitem_T *const type_di = tv_dict_item_alloc_len(S_LEN("_TYPE"));
   type_di->di_tv.v_type = VAR_LIST;
   type_di->di_tv.v_lock = VAR_UNLOCKED;
   type_di->di_tv.vval.v_list = (list_T *) eval_msgpack_type_lists[type];
   type_di->di_tv.vval.v_list->lv_refcount++;
-  dict_add(dict, type_di);
-  dictitem_T *const val_di = dictitem_alloc((char_u *) "_VAL");
+  tv_dict_add(dict, type_di);
+  dictitem_T *const val_di = tv_dict_item_alloc_len(S_LEN("_VAL"));
   val_di->di_tv = val;
-  dict_add(dict, val_di);
+  tv_dict_add(dict, val_di);
   dict->dv_refcount++;
   *rettv = (typval_T) {
     .v_type = VAR_DICT,
@@ -138,9 +139,10 @@ static inline int json_decoder_pop(ValuesStackItem obj,
       assert(!(key.is_special_string
                || key.val.vval.v_string == NULL
                || *key.val.vval.v_string == NUL));
-      dictitem_T *obj_di = dictitem_alloc(key.val.vval.v_string);
+      dictitem_T *const obj_di = tv_dict_item_alloc(
+          (const char *)key.val.vval.v_string);
       tv_clear(&key.val);
-      if (dict_add(last_container.container.vval.v_dict, obj_di)
+      if (tv_dict_add(last_container.container.vval.v_dict, obj_di)
           == FAIL) {
         assert(false);
       }
@@ -173,8 +175,8 @@ static inline int json_decoder_pop(ValuesStackItem obj,
         && (obj.is_special_string
             || obj.val.vval.v_string == NULL
             || *obj.val.vval.v_string == NUL
-            || dict_find(last_container.container.vval.v_dict,
-                         obj.val.vval.v_string, -1))) {
+            || tv_dict_find(last_container.container.vval.v_dict,
+                            (const char *)obj.val.vval.v_string, -1))) {
       tv_clear(&obj.val);
 
       // Restart
@@ -835,7 +837,7 @@ json_decode_string_cycle_start:
             .vval = { .v_list = val_list },
           }));
         } else {
-          dict_T *dict = dict_alloc();
+          dict_T *dict = tv_dict_alloc();
           dict->dv_refcount++;
           tv = (typval_T) {
             .v_type = VAR_DICT,
@@ -1042,7 +1044,7 @@ int msgpack_to_vim(const msgpack_object mobj, typval_T *const rettv)
           goto msgpack_to_vim_generic_map;
         }
       }
-      dict_T *const dict = dict_alloc();
+      dict_T *const dict = tv_dict_alloc();
       dict->dv_refcount++;
       *rettv = (typval_T) {
         .v_type = VAR_DICT,
@@ -1055,7 +1057,7 @@ int msgpack_to_vim(const msgpack_object mobj, typval_T *const rettv)
         memcpy(&di->di_key[0], mobj.via.map.ptr[i].key.via.str.ptr,
                mobj.via.map.ptr[i].key.via.str.size);
         di->di_tv.v_type = VAR_UNKNOWN;
-        if (dict_add(dict, di) == FAIL) {
+        if (tv_dict_add(dict, di) == FAIL) {
           // Duplicate key: fallback to generic map
           tv_clear(rettv);
           xfree(di);

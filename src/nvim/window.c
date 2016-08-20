@@ -2983,8 +2983,8 @@ static tabpage_T *alloc_tabpage(void)
   tp->handle = ++last_tp_handle;
   handle_register_tabpage(tp);
 
-  /* init t: variables */
-  tp->tp_vars = dict_alloc();
+  // Init t: variables.
+  tp->tp_vars = tv_dict_alloc();
   init_var_dict(tp->tp_vars, &tp->tp_winvar, VAR_SCOPE);
   tp->tp_diff_invalid = TRUE;
   tp->tp_ch_used = p_ch;
@@ -3811,8 +3811,8 @@ static win_T *win_alloc(win_T *after, int hidden)
   new_wp->handle = ++last_win_id;
   handle_register_window(new_wp);
 
-  /* init w: variables */
-  new_wp->w_vars = dict_alloc();
+  // Init w: variables.
+  new_wp->w_vars = tv_dict_alloc();
   init_var_dict(new_wp->w_vars, &new_wp->w_winvar, VAR_SCOPE);
 
   /* Don't execute autocommands while the window is not properly
@@ -5504,9 +5504,9 @@ void restore_buffer(bufref_T *save_curbuf)
 // Optionally, a desired ID 'id' can be specified (greater than or equal to 1).
 // If no particular ID is desired, -1 must be specified for 'id'.
 // Return ID of added match, -1 on failure.
-int match_add(win_T *wp, char_u *grp, char_u *pat,
+int match_add(win_T *wp, const char *const grp, const char *const pat,
               int prio, int id, list_T *pos_list,
-              char_u *conceal_char)
+              const char *const conceal_char)
 {
   matchitem_T *cur;
   matchitem_T *prev;
@@ -5534,11 +5534,11 @@ int match_add(win_T *wp, char_u *grp, char_u *pat,
       cur = cur->next;
     }
   }
-  if ((hlg_id = syn_namen2id(grp, (int)STRLEN(grp))) == 0) {
+  if ((hlg_id = syn_name2id((const char_u *)grp)) == 0) {
     EMSG2(_(e_nogroup), grp);
     return -1;
   }
-  if (pat != NULL && (regprog = vim_regcomp(pat, RE_MAGIC)) == NULL) {
+  if (pat != NULL && (regprog = vim_regcomp((char_u *)pat, RE_MAGIC)) == NULL) {
     EMSG2(_(e_invarg2), pat);
     return -1;
   }
@@ -5557,14 +5557,14 @@ int match_add(win_T *wp, char_u *grp, char_u *pat,
   m = xcalloc(1, sizeof(matchitem_T));
   m->id = id;
   m->priority = prio;
-  m->pattern = pat == NULL ? NULL: vim_strsave(pat);
+  m->pattern = pat == NULL ? NULL: (char_u *)xstrdup(pat);
   m->hlg_id = hlg_id;
   m->match.regprog = regprog;
   m->match.rmm_ic = FALSE;
   m->match.rmm_maxcol = 0;
   m->conceal_char = 0;
   if (conceal_char != NULL) {
-    m->conceal_char = (*mb_ptr2char)(conceal_char);
+    m->conceal_char = (*mb_ptr2char)((const char_u *)conceal_char);
   }
 
   // Set up position matches

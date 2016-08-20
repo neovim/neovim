@@ -7,6 +7,7 @@
 #include "nvim/screen.h"  // for StlClickRecord
 #include "nvim/func_attr.h"
 #include "nvim/eval.h"
+#include "nvim/macros.h"
 
 // Values for buflist_getfile()
 enum getf_values {
@@ -91,8 +92,8 @@ static inline void buf_set_changedtick(buf_T *const buf, const int changedtick)
 static inline void buf_set_changedtick(buf_T *const buf, const int changedtick)
 {
 #ifndef NDEBUG
-  dictitem_T *const changedtick_di = dict_find(
-      buf->b_vars, (char_u *)"changedtick", sizeof("changedtick") - 1);
+  dictitem_T *const changedtick_di = tv_dict_find(
+      buf->b_vars, S_LEN("changedtick"));
   assert(changedtick_di != NULL);
   assert(changedtick_di->di_tv.v_type == VAR_NUMBER);
   assert(changedtick_di->di_tv.v_lock == VAR_FIXED);

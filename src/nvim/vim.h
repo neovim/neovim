@@ -109,11 +109,14 @@ Error: configure did not run properly.Check auto/config.log.
 // all mode bits used for mapping
 #define MAP_ALL_MODES   (0x3f | SELECTMODE | TERM_FOCUS)
 
-/* directions */
-#define FORWARD                 1
-#define BACKWARD                (-1)
-#define FORWARD_FILE            3
-#define BACKWARD_FILE           (-3)
+/// Directions.
+typedef enum {
+  kDirectionNotSet = 0,
+  FORWARD = 1,
+  BACKWARD = (-1),
+  FORWARD_FILE = 3,
+  BACKWARD_FILE = (-3),
+} Direction;
 
 /* return values for functions */
 #if !(defined(OK) && (OK == 1))
@@ -282,15 +285,22 @@ enum {
 #define SHOWCMD_COLS 10                 /* columns needed by shown command */
 #define STL_MAX_ITEM 80                 /* max nr of %<flag> in statusline */
 
-/*
- * fnamecmp() is used to compare file names.
- * On some systems case in a file name does not matter, on others it does.
- * (this does not account for maximum name lengths and things like "../dir",
- * thus it is not 100% accurate!)
- */
-#define fnamecmp(x, y) vim_fnamecmp((char_u *)(x), (char_u *)(y))
-#define fnamencmp(x, y, n) vim_fnamencmp((char_u *)(x), (char_u *)(y), \
-    (size_t)(n))
+/// Compare file names
+///
+/// On some systems case in a file name does not matter, on others it does.
+///
+/// @note Does not account for maximum name lengths and things like "../dir",
+///       thus it is not 100% accurate. OS may also use different algorythm for
+///       case-insensitive comparison.
+///
+/// @param[in]  x  First file name to compare.
+/// @param[in]  y  Second file name to compare.
+///
+/// @return 0 for equal file names, non-zero otherwise.
+#define fnamecmp(x, y) path_fnamecmp((const char *)(x), (const char *)(y))
+#define fnamencmp(x, y, n) path_fnamencmp((const char *)(x), \
+                                          (const char *)(y), \
+                                          (size_t)(n))
 
 /*
  * Enums need a typecast to be used as array index (for Ultrix).

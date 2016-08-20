@@ -4764,8 +4764,8 @@ void fix_help_buffer(void)
   char_u      *p;
   char_u      *rt;
 
-  /* set filetype to "help". */
-  set_option_value((char_u *)"ft", 0L, (char_u *)"help", OPT_LOCAL);
+  // Set filetype to "help".
+  set_option_value("ft", 0L, "help", OPT_LOCAL);
 
   if (!syntax_present(curwin)) {
     for (lnum = 1; lnum <= curbuf->b_ml.ml_line_count; ++lnum) {

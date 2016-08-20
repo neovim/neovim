@@ -773,7 +773,7 @@ do_tag (
             cmd[len] = NUL;
           }
 
-          dict = dict_alloc();
+          dict = tv_dict_alloc();
           tv_list_append_dict(list, dict);
 
           dict_add_nr_str(dict, "text", 0L, tag_name);
@@ -2768,8 +2768,8 @@ add_tag_field (
   int len = 0;
   int retval;
 
-  /* check that the field name doesn't exist yet */
-  if (dict_find(dict, (char_u *)field_name, -1) != NULL) {
+  // Check that the field name doesn't exist yet.
+  if (tv_dict_find(dict, field_name, -1) != NULL) {
     if (p_verbose > 0) {
       verbose_enter();
       smsg(_("Duplicate field name: %s"), field_name);
@@ -2824,7 +2824,7 @@ int get_tags(list_T *list, char_u *pat)
       if (STRNCMP(tp.tagname, "!_TAG_", 6) == 0)
         continue;
 
-      dict = dict_alloc();
+      dict = tv_dict_alloc();
       tv_list_append_dict(list, dict);
 
       full_fname = tag_full_fname(&tp);

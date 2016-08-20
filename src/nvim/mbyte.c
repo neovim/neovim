@@ -583,7 +583,7 @@ int utf_ptr2char(const char_u *p)
  * If byte sequence is illegal or incomplete, returns -1 and does not advance
  * "s".
  */
-static int utf_safe_read_char_adv(char_u **s, size_t *n)
+static int utf_safe_read_char_adv(const char_u **s, size_t *n)
 {
   int c;
 
@@ -1233,7 +1233,8 @@ bool utf_isupper(int a)
   return utf_tolower(a) != a;
 }
 
-static int utf_strnicmp(char_u *s1, char_u *s2, size_t n1, size_t n2)
+static int utf_strnicmp(const char_u *s1, const char_u *s2, size_t n1,
+                        size_t n2)
 {
   int c1, c2, cdiff;
   char_u buffer[6];
@@ -1392,19 +1393,26 @@ int utf16_to_utf8(const WCHAR *strw, char **str)
  * Returns zero if s1 and s2 are equal (ignoring case), the difference between
  * two characters otherwise.
  */
-int mb_strnicmp(char_u *s1, char_u *s2, size_t nn)
+int mb_strnicmp(const char_u *s1, const char_u *s2, const size_t nn)
 {
   return utf_strnicmp(s1, s2, nn, nn);
 }
 
-/* We need to call mb_stricmp() even when we aren't dealing with a multi-byte
- * encoding because mb_stricmp() takes care of all ascii and non-ascii
- * encodings, including characters with umlauts in latin1, etc., while
- * STRICMP() only handles the system locale version, which often does not
- * handle non-ascii properly. */
-int mb_stricmp(char_u *s1, char_u *s2)
+/// Compare strings case-insensitively
+///
+/// @note We need to call mb_stricmp() even when we aren't dealing with
+///       a multi-byte encoding because mb_stricmp() takes care of all ASCII and
+///       non-ascii encodings, including characters with umlauts in latin1,
+///       etc., while STRICMP() only handles the system locale version, which
+///       often does not handle non-ascii properly.
+///
+/// @param[in]  s1  First string to compare, not more then #MAXCOL characters.
+/// @param[in]  s2  Second string to compare, not more then #MAXCOL characters.
+///
+/// @return 0 if strings are equal, <0 if s1 < s2, >0 if s1 > s2.
+int mb_stricmp(const char *s1, const char *s2)
 {
-  return mb_strnicmp(s1, s2, MAXCOL);
+  return mb_strnicmp((const char_u *)s1, (const char_u *)s2, MAXCOL);
 }
 
 /*
@@ -2020,8 +2028,8 @@ void * my_iconv_open(char_u *to, char_u *from)
  * Returns the converted string in allocated memory.  NULL for an error.
  * If resultlenp is not NULL, sets it to the result length in bytes.
  */
-static char_u * iconv_string(vimconv_T *vcp, char_u *str, size_t slen,
-                             size_t *unconvlenp, size_t *resultlenp)
+static char_u *iconv_string(const vimconv_T *const vcp, char_u *str,
+                            size_t slen, size_t *unconvlenp, size_t *resultlenp)
 {
   const char  *from;
   size_t fromlen;
@@ -2306,7 +2314,7 @@ int convert_setup_ext(vimconv_T *vcp, char_u *from, bool from_unicode_is_utf8,
  * Illegal chars are often changed to "?", unless vcp->vc_fail is set.
  * When something goes wrong, NULL is returned and "*lenp" is unchanged.
  */
-char_u * string_convert(vimconv_T *vcp, char_u *ptr, size_t *lenp)
+char_u *string_convert(const vimconv_T *const vcp, char_u *ptr, size_t *lenp)
 {
   return string_convert_ext(vcp, ptr, lenp, NULL);
 }
@@ -2316,7 +2324,7 @@ char_u * string_convert(vimconv_T *vcp, char_u *ptr, size_t *lenp)
  * an incomplete sequence at the end it is not converted and "*unconvlenp" is
  * set to the number of remaining bytes.
  */
-char_u * string_convert_ext(vimconv_T *vcp, char_u *ptr,
+char_u * string_convert_ext(const vimconv_T *const vcp, char_u *ptr,
                             size_t *lenp, size_t *unconvlenp)
 {
   char_u      *retval = NULL;

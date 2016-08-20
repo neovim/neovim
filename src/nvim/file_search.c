@@ -1556,7 +1556,7 @@ void do_autocmd_dirchanged(char *new_dir, CdScope scope)
   apply_autocmds(EVENT_DIRCHANGED, (char_u *)buf, (char_u *)new_dir, false,
                  NULL);
 
-  dict_clear(dict);
+  tv_dict_clear(dict);
 
   recursive = false;
 }

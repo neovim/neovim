@@ -5173,7 +5173,7 @@ static int ex_window(void)
   // Create empty command-line buffer.
   buf_open_scratch(0, "[Command Line]");
   // Command-line buffer has bufhidden=wipe, unlike a true "scratch" buffer.
-  set_option_value((char_u *)"bh", 0L, (char_u *)"wipe", OPT_LOCAL);
+  set_option_value("bh", 0L, "wipe", OPT_LOCAL);
   curwin->w_p_rl = cmdmsg_rl;
   cmdmsg_rl = false;
   curbuf->b_p_ma = true;
@@ -5191,7 +5191,7 @@ static int ex_window(void)
       add_map((char_u *)"<buffer> <Tab> <C-X><C-V>", INSERT);
       add_map((char_u *)"<buffer> <Tab> a<C-X><C-V>", NORMAL);
     }
-    set_option_value((char_u *)"ft", 0L, (char_u *)"vim", OPT_LOCAL);
+    set_option_value("ft", 0L, "vim", OPT_LOCAL);
   }
 
   /* Reset 'textwidth' after setting 'filetype' (the Vim filetype plugin

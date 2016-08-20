@@ -8,6 +8,7 @@
 #include "nvim/hashtab.h"
 #include "nvim/garray.h"
 #include "nvim/mbyte.h"
+#include "nvim/func_attr.h"
 #include "nvim/lib/queue.h"
 #include "nvim/profile.h"  // for proftime_T
 #include "nvim/pos.h"      // for linenr_T
@@ -30,6 +31,31 @@ typedef double float_T;
 typedef struct listvar_S list_T;
 typedef struct dictvar_S dict_T;
 typedef struct partial_S partial_T;
+
+typedef struct ufunc ufunc_T;
+
+typedef enum {
+  kCallbackNone,
+  kCallbackFuncref,
+  kCallbackPartial,
+} CallbackType;
+
+typedef struct {
+  union {
+    char_u *funcref;
+    partial_T *partial;
+  } data;
+  CallbackType type;
+} Callback;
+#define CALLBACK_NONE ((Callback){ .type = kCallbackNone })
+
+/// Structure holding dictionary watcher
+typedef struct dict_watcher {
+  Callback callback;
+  char *key_pattern;
+  QUEUE node;
+  bool busy;  // prevent recursion if the dict is changed in the callback
+} DictWatcher;
 
 /// Special variable values
 typedef enum {
@@ -134,7 +160,7 @@ struct dictitem_S {
     struct { \
       typval_T di_tv;  /* Structure that holds scope dictionary itself. */ \
       uint8_t di_flags;  /* Flags. */ \
-      char_u di_key[KEY_LEN];  /* NUL. */ \
+      char_u di_key[KEY_LEN];  /* Key value. */ \
     }
 
 /// Structure to hold a scope dictionary
@@ -181,9 +207,7 @@ typedef int scid_T;
 // Structure to hold info for a function that is currently being executed.
 typedef struct funccall_S funccall_T;
 
-// Structure to hold info for a user function.
-typedef struct ufunc ufunc_T;
-
+/// Structure to hold info for a user function.
 struct ufunc {
   int          uf_varargs;       ///< variable nr of arguments
   int          uf_flags;
@@ -207,12 +231,12 @@ struct ufunc {
   int          uf_tml_idx;       ///< index of line being timed; -1 if none
   int          uf_tml_execed;    ///< line being timed was executed
   scid_T       uf_script_ID;     ///< ID of script where function was defined,
-                                 //   used for s: variables
+                                 ///< used for s: variables
   int          uf_refcount;      ///< reference count, see func_name_refcount()
   funccall_T   *uf_scoped;       ///< l: local variables for closure
   char_u       uf_name[1];       ///< name of function (actually longer); can
-                                 //   start with <SNR>123_ (<SNR> is K_SPECIAL
-                                 //   KS_EXTRA KE_SNR)
+                                 ///< start with <SNR>123_ (<SNR> is K_SPECIAL
+                                 ///< KS_EXTRA KE_SNR)
 };
 
 /// Maximum number of function arguments
@@ -245,30 +269,81 @@ typedef struct list_stack_S {
 // In a hashtab item "hi_key" points to "di_key" in a dictitem.
 // This avoids adding a pointer to the hashtab item.
 
-/// Convert a dictitem pointer to a hashitem key pointer
-#define DI2HIKEY(di) ((di)->di_key)
-
-/// Convert a hashitem key pointer to a dictitem pointer
-#define HIKEY2DI(p)  ((dictitem_T *)(p - offsetof(dictitem_T, di_key)))
-
-/// Convert a hashitem value pointer to a dictitem pointer
-#define HIVAL2DI(p) \
-    ((dictitem_T *)(((char *)p) - offsetof(dictitem_T, di_tv)))
-
 /// Convert a hashitem pointer to a dictitem pointer
-#define HI2DI(hi)     HIKEY2DI((hi)->hi_key)
+#define TV_DICT_HI2DI(hi) \
+    ((dictitem_T *)((hi)->hi_key - offsetof(dictitem_T, di_key)))
+
+static inline long tv_list_len(list_T *const l)
+  REAL_FATTR_PURE REAL_FATTR_WARN_UNUSED_RESULT;
 
 /// Get the number of items in a list
 ///
 /// @param[in]  l  List to check.
 static inline long tv_list_len(list_T *const l)
-  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (l == NULL) {
     return 0;
   }
   return l->lv_len;
 }
+
+static inline long tv_dict_len(const dict_T *const d)
+  REAL_FATTR_PURE REAL_FATTR_WARN_UNUSED_RESULT;
+
+/// Get the number of items in a Dictionary
+///
+/// @param[in]  d  Dictionary to check.
+static inline long tv_dict_len(const dict_T *const d)
+{
+  if (d == NULL) {
+    return 0L;
+  }
+  return (long)d->dv_hashtab.ht_used;
+}
+
+static inline bool tv_dict_is_watched(const dict_T *const d)
+  REAL_FATTR_PURE REAL_FATTR_WARN_UNUSED_RESULT;
+
+/// Check if dictionary is watched
+///
+/// @param[in]  d  Dictionary to check.
+///
+/// @return true if there is at least one watcher.
+static inline bool tv_dict_is_watched(const dict_T *const d)
+{
+  return d && !QUEUE_EMPTY(&d->watchers);
+}
+
+static inline DictWatcher *tv_dict_watcher_node_data(QUEUE *q)
+  REAL_FATTR_NONNULL_ALL REAL_FATTR_NONNULL_RET REAL_FATTR_PURE
+  REAL_FATTR_WARN_UNUSED_RESULT;
+
+/// Compute the `DictWatcher` address from a QUEUE node.
+///
+/// This only exists for .asan-blacklist (ASAN doesn't handle QUEUE_DATA pointer
+/// arithmetic).
+static inline DictWatcher *tv_dict_watcher_node_data(QUEUE *q)
+{
+  return QUEUE_DATA(q, DictWatcher, node);
+}
+
+/// Initialize VimL object
+///
+/// Initializes to unlocked VAR_UNKNOWN object.
+///
+/// @param[out]  tv  Object to initialize.
+static inline void tv_init(typval_T *const tv)
+{
+  if (tv != NULL) {
+    memset(tv, 0, sizeof(*tv));
+  }
+}
+
+#define TV_INITIAL_VALUE \
+    ((typval_T) { \
+      .v_type = VAR_UNKNOWN, \
+      .v_lock = VAR_UNLOCKED, \
+    })
 
 /// Empty string
 ///
@@ -278,6 +353,21 @@ extern const char *const tv_empty_string;
 
 /// Specifies that free_unref_items() function has (not) been entered
 extern bool tv_in_free_unref_items;
+
+/// Iterate over a dictionary
+///
+/// @param[in]  d  Dictionary to iterate over.
+/// @param  di  Name of the variable with current dictitem_T entry.
+/// @param  code  Cycle body.
+#define TV_DICT_ITER(d, di, code) \
+    HASHTAB_ITER(&(d)->dv_hashtab, di##hi_, { \
+      { \
+        dictitem_T *const di = TV_DICT_HI2DI(di##hi_); \
+        { \
+          code \
+        } \
+      } \
+    })
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "eval/typval.h.generated.h"
