@@ -14680,6 +14680,7 @@ static void f_setmatches(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
     clear_matches(curwin);
     li = l->lv_first;
+    bool match_add_failed = false;
     while (li != NULL) {
       int i = 0;
 
@@ -14728,17 +14729,23 @@ static void f_setmatches(typval_T *argvars, typval_T *rettv, FunPtr fptr)
                                        &conceal_di->di_tv)
                                    : NULL);
       if (i == 0) {
-        match_add(curwin, group,
-                  tv_dict_get_string(d, "pattern", false),
-                  priority, id, NULL, conceal);
+        if (match_add(curwin, group,
+                      tv_dict_get_string(d, "pattern", false),
+                      priority, id, NULL, conceal) != id) {
+          match_add_failed = true;
+        }
       } else {
-        match_add(curwin, group, NULL, priority, id, s, conceal);
+        if (match_add(curwin, group, NULL, priority, id, s, conceal) != id) {
+          match_add_failed = true;
+        }
         tv_list_unref(s);
         s = NULL;
       }
       li = li->li_next;
     }
-    rettv->vval.v_number = 0;
+    if (!match_add_failed) {
+      rettv->vval.v_number = 0;
+    }
   }
 }
 
