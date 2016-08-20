@@ -4,52 +4,78 @@ local plugin_helpers = require('test.functional.plugin.helpers')
 describe('health.vim', function()
   before_each(function()
     plugin_helpers.reset()
+    -- Provides functions:
+    --    health#broken#check()
+    --    health#success1#check()
+    --    health#success2#check()
+    helpers.execute("set runtimepath+=test/functional/fixtures")
   end)
 
-  it('reports results', function()
-    helpers.execute("call health#report_start('Foo')")
-    local report = helpers.redir_exec([[call health#report_start('Check Bar')]])
-      .. helpers.redir_exec([[call health#report_ok('Bar status')]])
-      .. helpers.redir_exec([[call health#report_ok('Other Bar status')]])
-      .. helpers.redir_exec([[call health#report_warn('Zub')]])
-      .. helpers.redir_exec([[call health#report_start('Baz')]])
-      .. helpers.redir_exec([[call health#report_warn('Zim', ['suggestion 1', 'suggestion 2'])]])
+  it("reports", function()
+    helpers.source([[
+      let g:health_report = execute([
+        \ "call health#report_start('Check Bar')",
+        \ "call health#report_ok('Bar status')",
+        \ "call health#report_ok('Other Bar status')",
+        \ "call health#report_warn('Zub')",
+        \ "call health#report_start('Baz')",
+        \ "call health#report_warn('Zim', ['suggestion 1', 'suggestion 2'])"
+        \ ])
+    ]])
+    local result = helpers.eval("g:health_report")
 
-    local expected_contents = {
-      'Checking: Check Bar',
-      'SUCCESS: Bar status',
-      'WARNING: Zub',
-      'SUGGESTIONS:',
-      '- suggestion 1',
-      '- suggestion 2'
-    }
+    helpers.eq(helpers.dedent([[
 
-    for _, content in ipairs(expected_contents) do
-      assert(string.find(report, content))
-    end
+
+      ## Check Bar
+        - SUCCESS: Bar status
+        - SUCCESS: Other Bar status
+        - WARNING: Zub
+
+      ## Baz
+        - WARNING: Zim
+            - SUGGESTIONS:
+              - suggestion 1
+              - suggestion 2]]),
+      result)
   end)
 
 
-  describe(':CheckHealth', function()
-    -- Run it here because it may be slow, depending on the system.
-    helpers.execute([[CheckHealth!]])
-    local report = helpers.curbuf_contents()
-    local health_checkers = helpers.redir_exec("echo g:health_checkers")
+  describe(":CheckHealth", function()
+    it("concatenates multiple reports", function()
+      helpers.execute("CheckHealth success1 success2")
+      helpers.expect([[
+        health#success1#check
+        ================================================================================
 
-    it('finds the default checker', function()
-      assert(string.find(health_checkers, "'health#nvim#check': v:true"))
+        ## report 1
+          - SUCCESS: everything is fine
+
+        ## report 2
+          - SUCCESS: nothing to see here
+
+        health#success2#check
+        ================================================================================
+
+        ## another 1
+          - SUCCESS: ok]])
     end)
 
-    it('prints a header with the name of the checker', function()
-      assert(string.find(report, 'health#nvim#check'))
+    it("gracefully handles broken healthcheck", function()
+      helpers.execute("CheckHealth broken")
+      helpers.expect([[
+        health#broken#check
+        ================================================================================
+          - ERROR: Failed to run healthcheck for "broken" plugin. Exception:
+            caused an error]])
     end)
-  end)
 
-  it('allows users to disable checkers', function()
-    helpers.execute("call health#disable_checker('health#nvim#check')")
-    helpers.execute("CheckHealth!")
-    local health_checkers = helpers.redir_exec("echo g:health_checkers")
-
-    assert(string.find(health_checkers, "'health#nvim#check': v:false"))
+    it("gracefully handles invalid healthcheck", function()
+      helpers.execute("CheckHealth non_existent_healthcheck")
+      helpers.expect([[
+        health#non_existent_healthcheck#check
+        ================================================================================
+          - ERROR: No healthcheck found for "non_existent_healthcheck" plugin.]])
+    end)
   end)
 end)

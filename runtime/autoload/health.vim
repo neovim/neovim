@@ -20,46 +20,49 @@ function! s:enhance_syntax() abort
   highlight link healthSuggestion String
 endfunction
 
-" Runs the health checkers. Manages the output and buffer-local settings.
-function! health#check(bang) abort
-  let l:report = ''
+" Runs the specified healthchecks.
+" Runs all discovered healthchecks if a:plugin_names is empty.
+function! health#check(plugin_names) abort
+  let report = ''
 
-  if empty(g:health_checkers)
-    call health#add_checker(s:_default_checkers())
-  endif
+  let healthchecks = empty(a:plugin_names)
+        \ ? s:discover_health_checks()
+        \ : s:to_fn_names(a:plugin_names)
 
-  for l:checker in items(g:health_checkers)
-    " Disabled checkers will not run their registered check functions
-    if l:checker[1]
-      let s:current_checker = l:checker[0]
-      let l:report .= printf("\n%s\n================================================================================",
-                            \ s:current_checker)
-
-      let l:report .= execute('call ' . l:checker[0] . '()')
-    endif
-  endfor
-
-  if a:bang
-    new
-    setlocal bufhidden=wipe
-    set filetype=markdown
-    call s:enhance_syntax()
-    call setline(1, split(report, "\n"))
-    setlocal nomodified
+  if empty(healthchecks)
+    let report = "ERROR: No healthchecks found."
   else
-    echo report
-    echo "\nTip: Use "
-    echohl Identifier
-    echon ':CheckHealth!'
-    echohl None
-    echon ' to open this in a new buffer.'
+    for c in healthchecks
+      let report .= printf("\n%s\n%s", c, repeat('=',80))
+      try
+        let report .= execute('call '.c.'()')
+      catch /^Vim\%((\a\+)\)\=:E117/
+        let report .= execute(
+              \ 'call health#report_error(''No healthcheck found for "'
+              \ .s:to_plugin_name(c)
+              \ .'" plugin.'')')
+      catch
+        let report .= execute(
+              \ 'call health#report_error(''Failed to run healthcheck for "'
+              \ .s:to_plugin_name(c)
+              \ .'" plugin. Exception:''."\n".v:exception)')
+      endtry
+      let report .= "\n"
+    endfor
   endif
+
+  new
+  setlocal bufhidden=wipe
+  set filetype=markdown
+  call s:enhance_syntax()
+  call setline(1, split(report, "\n"))
+  setlocal nomodified
 endfunction
 
 " Starts a new report.
-function! health#report_start(name) abort " {{{
+function! health#report_start(name) abort
   echo "\n## " . a:name
-endfunction " }}}
+endfunction
 
 " Indents lines *except* line 1 of a string if it contains newlines.
 function! s:indent_after_line1(s, columns) abort
@@ -102,12 +105,12 @@ function! health#report_info(msg) abort " {{{
   echo s:format_report_message('INFO', a:msg)
 endfunction " }}}
 
-" Use {msg} to represent the check that has passed
+" Reports a successful healthcheck.
 function! health#report_ok(msg) abort " {{{
   echo s:format_report_message('SUCCESS', a:msg)
 endfunction " }}}
 
-" Use {msg} to represent a failed health check and optionally a list of suggestions on how to fix it.
+" Reports a health warning.
 function! health#report_warn(msg, ...) abort " {{{
   if a:0 > 0
     echo s:format_report_message('WARNING', a:msg, a:1)
@@ -116,7 +119,7 @@ function! health#report_warn(msg, ...) abort " {{{
   endif
 endfunction " }}}
 
-" Use {msg} to represent a critically failed health check and optionally a list of suggestions on how to fix it.
+" Reports a failed healthcheck.
 function! health#report_error(msg, ...) abort " {{{
   if a:0 > 0
     echo s:format_report_message('ERROR', a:msg, a:1)
@@ -181,19 +184,28 @@ function! health#disable_checker(checker_name) abort " {{{
   endif
 endfunction " }}}
 
-function! s:change_file_name_to_health_checker(name) abort " {{{
-  return substitute(substitute(substitute(a:name, ".*autoload/", "", ""), "\\.vim", "#check", ""), "/", "#", "g")
-endfunction " }}}
+function! s:filepath_to_function(name) abort
+  return substitute(substitute(substitute(a:name, ".*autoload/", "", ""),
+        \ "\\.vim", "#check", ""), "/", "#", "g")
+endfunction
 
-function! s:_default_checkers() abort " {{{
-  " Get all of the files that are in autoload/health/ folders with a vim
-  " suffix
-  let checker_files = globpath(&runtimepath, 'autoload/health/*.vim', 1, 1)
-  let temp = checker_files[0]
+function! s:discover_health_checks() abort
+  let healthchecks = globpath(&runtimepath, 'autoload/health/*.vim', 1, 1)
+  let healthchecks = map(healthchecks, '<SID>filepath_to_function(v:val)')
+  return healthchecks
+endfunction
 
-  let checkers_to_source = []
-  for file_name in checker_files
-    call add(checkers_to_source, s:change_file_name_to_health_checker(file_name))
+" Translates a list of plugin names to healthcheck function names.
+function! s:to_fn_names(plugin_names) abort
+  let healthchecks = []
+  for p in a:plugin_names
+    call add(healthchecks, 'health#'.p.'#check')
   endfor
-  return checkers_to_source
-endfunction " }}}
+  return healthchecks
+endfunction
+
+" Extracts 'foo' from 'health#foo#check'.
+function! s:to_plugin_name(fn_name) abort
+  return substitute(a:fn_name,
+        \ '\v.*health\#(.+)\#check.*', '\1', '')
+endfunction
