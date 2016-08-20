@@ -10,6 +10,7 @@
 #include "nvim/mbyte.h"
 #include "nvim/func_attr.h"
 #include "nvim/lib/queue.h"
+#include "nvim/gettext.h"
 
 /// Structure to hold info for a user function.
 typedef struct ufunc ufunc_T;
@@ -265,6 +266,32 @@ extern const char *const tv_empty_string;
         } \
       } \
     })
+
+static inline bool tv_get_float(const typval_T *const tv, float_T *const ret_f)
+  REAL_FATTR_NONNULL_ALL REAL_FATTR_WARN_UNUSED_RESULT;
+
+// FIXME circular dependency, cannot import message.h.
+bool emsgf(const char *const fmt, ...);
+
+/// Get the float value
+///
+/// @param[in]  tv  VimL object to get value from.
+/// @param[out]  ret_f  Location where resulting float is stored.
+///
+/// @return true in case of success, false if tv is not a number or float.
+static inline bool tv_get_float(const typval_T *const tv, float_T *const ret_f)
+{
+  if (tv->v_type == VAR_FLOAT) {
+    *ret_f = tv->vval.v_float;
+    return true;
+  }
+  if (tv->v_type == VAR_NUMBER) {
+    *ret_f = (float_T)tv->vval.v_number;
+    return true;
+  }
+  emsgf(_("E808: Number or Float required"));
+  return false;
+}
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "eval/typval.h.generated.h"
