@@ -5284,24 +5284,6 @@ int dict_add_list(dict_T *d, char *key, list_T *list)
   return OK;
 }
 
-/// Set all existing keys in "dict" as read-only.
-///
-/// This does not protect against adding new keys to the Dictionary.
-///
-/// @param dict The dict whose keys should be frozen
-void dict_set_keys_readonly(dict_T *dict)
-  FUNC_ATTR_NONNULL_ALL
-{
-  size_t todo = dict->dv_hashtab.ht_used;
-  for (hashitem_T *hi = dict->dv_hashtab.ht_array; todo > 0 ; hi++) {
-    if (HASHITEM_EMPTY(hi)) {
-      continue;
-    }
-    todo--;
-    TV_DICT_HI2DI(hi)->di_flags |= DI_FLAGS_RO | DI_FLAGS_FIX;
-  }
-}
-
 /// Find user function with the given name
 ///
 /// @param[in]  name  Function name.

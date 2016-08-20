@@ -1303,6 +1303,19 @@ dict_T *tv_dict_copy(const vimconv_T *const conv,
   return copy;
 }
 
+/// Set all existing keys in "dict" as read-only.
+///
+/// This does not protect against adding new keys to the Dictionary.
+///
+/// @param  dict  The dict whose keys should be frozen.
+void dict_set_keys_readonly(dict_T *const dict)
+  FUNC_ATTR_NONNULL_ALL
+{
+  TV_DICT_ITER(dict, di, {
+    di->di_flags |= DI_FLAGS_RO | DI_FLAGS_FIX;
+  });
+}
+
 //{{{1 Generic typval operations
 //{{{2 Init/alloc/clear
 //{{{3 Alloc
