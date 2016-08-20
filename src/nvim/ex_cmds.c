@@ -64,6 +64,24 @@
  */
 typedef struct sign sign_T;
 
+/// Case matching style to use for :substitute
+typedef enum {
+  kSubHonorOptions = 0,  ///< Honor the user's 'ignorecase'/'smartcase' options
+  kSubIgnoreCase,        ///< Ignore case of the search
+  kSubMatchCase,         ///< Match case of the search
+} SubIgnoreType;
+
+/// Flags kept between calls to :substitute.
+typedef struct {
+  bool do_all;          ///< do multiple substitutions per line
+  bool do_ask;          ///< ask for confirmation
+  bool do_count;        ///< count only
+  bool do_error;        ///< if false, ignore errors
+  bool do_print;        ///< print last line with subs
+  bool do_list;         ///< list last line with subs
+  bool do_number;       ///< list last line with line nr
+  SubIgnoreType do_ic;  ///< ignore case flag
+} subflags_T;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ex_cmds.c.generated.h"
@@ -2878,25 +2896,6 @@ static SubReplacementString old_sub = {NULL, 0, NULL};
 
 static int global_need_beginline;       // call beginline() after ":g"
 
-/// Case matching style to use for :substitute
-typedef enum {
-  kSubHonorOptions = 0,  ///< Honor the user's 'ignorecase'/'smartcase' options
-  kSubIgnoreCase,        ///< Ignore case of the search
-  kSubMatchCase,         ///< Match case of the search
-} SubIgnoreType;
-
-/// Flags kept between calls to :substitute.
-typedef struct {
-  bool do_all;          ///< do multiple substitutions per line
-  bool do_ask;          ///< ask for confirmation
-  bool do_count;        ///< count only
-  bool do_error;        ///< if false, ignore errors
-  bool do_print;        ///< print last line with subs
-  bool do_list;         ///< list last line with subs
-  bool do_number;       ///< list last line with line nr
-  SubIgnoreType do_ic;  ///< ignore case flag
-} subflags_T;
-
 /// Get old substitute replacement string
 ///
 /// @param[out]  ret_sub    Location where old string will be saved.
@@ -2918,6 +2917,159 @@ void sub_set_replacement(SubReplacementString sub)
     list_unref(old_sub.additional_elements);
   }
   old_sub = sub;
+}
+
+/// Recognize ":%s/\n//" and turn it into a join command, which is much
+/// more efficient.
+///
+/// @param[in]  eap  Ex arguments
+/// @param[in]  pat  Search pattern
+/// @param[in]  sub  Replacement string
+/// @param[in]  cmd  Command from :s_flags
+///
+/// @returns true if :substitute can be replaced with a join command
+static bool sub_joining_lines(exarg_T *eap, char_u *pat,
+                              char_u *sub, char_u *cmd)
+  FUNC_ATTR_NONNULL_ARG(1, 3, 4)
+{
+  // TODO(vim): find a generic solution to make line-joining operations more
+  // efficient, avoid allocating a string that grows in size.
+  if (pat != NULL
+      && strcmp((const char *)pat, "\\n") == 0
+      && *sub == NUL
+      && (*cmd == NUL || (cmd[1] == NUL
+                          && (*cmd == 'g'
+                              || *cmd == 'l'
+                              || *cmd == 'p'
+                              || *cmd == '#')))) {
+    curwin->w_cursor.lnum = eap->line1;
+    if (*cmd == 'l') {
+      eap->flags = EXFLAG_LIST;
+    } else if (*cmd == '#') {
+      eap->flags = EXFLAG_NR;
+    } else if (*cmd == 'p') {
+      eap->flags = EXFLAG_PRINT;
+    }
+
+    // The number of lines joined is the number of lines in the range
+    linenr_T joined_lines_count = eap->line2 - eap->line1 + 1
+      // plus one extra line if not at the end of file.
+      + (eap->line2 < curbuf->b_ml.ml_line_count ? 1 : 0);
+    if (joined_lines_count > 1) {
+      do_join(joined_lines_count, FALSE, TRUE, FALSE, true);
+      sub_nsubs = joined_lines_count - 1;
+      sub_nlines = 1;
+      do_sub_msg(false);
+      ex_may_print(eap);
+    }
+
+    if (!cmdmod.keeppatterns) {
+      save_re_pat(RE_SUBST, pat, p_magic);
+    }
+    add_to_history(HIST_SEARCH, pat, TRUE, NUL);
+
+    return true;
+  }
+
+  return false;
+}
+
+/// Allocate memory to store the replacement text for :substitute.
+///
+/// Slightly more memory that is strictly necessary is allocated to reduce the
+/// frequency of memory (re)allocation.
+///
+/// @param[in,out]  new_start   pointer to the memory for the replacement text
+/// @param[in]      needed_len  amount of memory needed
+///
+/// @returns pointer to the end of the allocated memory
+static char_u *sub_grow_buf(char_u **new_start, int needed_len)
+  FUNC_ATTR_NONNULL_ARG(1) FUNC_ATTR_NONNULL_RET
+{
+  int new_start_len = 0;
+  char_u *new_end;
+  if (*new_start == NULL) {
+    // Get some space for a temporary buffer to do the
+    // substitution into (and some extra space to avoid
+    // too many calls to xmalloc()/free()).
+    new_start_len = needed_len + 50;
+    *new_start = xmalloc(new_start_len);
+    **new_start = NUL;
+    new_end = *new_start;
+  } else {
+    // Check if the temporary buffer is long enough to do the
+    // substitution into.  If not, make it larger (with a bit
+    // extra to avoid too many calls to xmalloc()/free()).
+    size_t len = STRLEN(*new_start);
+    needed_len += len;
+    if (needed_len > new_start_len) {
+      new_start_len = needed_len + 50;
+      *new_start = xrealloc(*new_start, new_start_len);
+    }
+    new_end = *new_start + len;
+  }
+
+  return new_end;
+}
+
+/// Parse cmd string for :substitute's {flags} and update subflags accordingly
+///
+/// @param[in]      cmd  command string
+/// @param[in,out]  subflags  current flags defined for the :substitute command
+/// @param[in,out]  which_pat  pattern type from which to get default search
+///
+/// @returns pointer to the end of the flags, which may be the end of the string
+static char_u *sub_parse_flags(char_u *cmd, subflags_T *subflags,
+                               int *which_pat)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
+{
+  // Find trailing options.  When '&' is used, keep old options.
+  if (*cmd == '&') {
+    cmd++;
+  } else {
+    subflags->do_all = p_gd;
+    subflags->do_ask = false;
+    subflags->do_error = true;
+    subflags->do_print = false;
+    subflags->do_count = false;
+    subflags->do_number = false;
+    subflags->do_ic = kSubHonorOptions;
+  }
+  while (*cmd) {
+    // Note that 'g' and 'c' are always inverted.
+    // 'r' is never inverted.
+    if (*cmd == 'g') {
+      subflags->do_all = !subflags->do_all;
+    } else if (*cmd == 'c') {
+      subflags->do_ask = !subflags->do_ask;
+    } else if (*cmd == 'n') {
+      subflags->do_count = true;
+    } else if (*cmd == 'e') {
+      subflags->do_error = !subflags->do_error;
+    } else if (*cmd == 'r') {  // use last used regexp
+      *which_pat = RE_LAST;
+    } else if (*cmd == 'p') {
+      subflags->do_print = true;
+    } else if (*cmd == '#') {
+      subflags->do_print = true;
+      subflags->do_number = true;
+    } else if (*cmd == 'l') {
+      subflags->do_print = true;
+      subflags->do_list = true;
+    } else if (*cmd == 'i') {  // ignore case
+      subflags->do_ic = kSubIgnoreCase;
+    } else if (*cmd == 'I') {  // don't ignore case
+      subflags->do_ic = kSubMatchCase;
+    } else {
+      break;
+    }
+    cmd++;
+  }
+  if (subflags->do_count) {
+    subflags->do_ask = false;
+  }
+
+  return cmd;
 }
 
 /* do_sub()
@@ -2954,9 +3106,8 @@ void do_sub(exarg_T *eap)
   linenr_T last_line= 0;    // below last changed line AFTER the
                             // change
   linenr_T old_line_count = curbuf->b_ml.ml_line_count;
-  linenr_T line2;
-  char_u      *sub_firstline;           /* allocated copy of first sub line */
-  int endcolumn = FALSE;                /* cursor in last column when done */
+  char_u      *sub_firstline;  // allocated copy of first sub line
+  bool endcolumn = false;        // cursor in last column when done
   pos_T old_cursor = curwin->w_cursor;
   int start_nsubs;
   int save_ma = 0;
@@ -3042,94 +3193,11 @@ void do_sub(exarg_T *eap)
     endcolumn = (curwin->w_curswant == MAXCOL);
   }
 
-  // Recognize ":%s/\n//" and turn it into a join command, which is much
-  // more efficient.
-  // TODO: find a generic solution to make line-joining operations more
-  // efficient, avoid allocating a string that grows in size.
-  if (pat != NULL
-      && strcmp((const char *)pat, "\\n") == 0
-      && *sub == NUL
-      && (*cmd == NUL || (cmd[1] == NUL
-                          && (*cmd == 'g'
-                              || *cmd == 'l'
-                              || *cmd == 'p'
-                              || *cmd == '#')))) {
-    curwin->w_cursor.lnum = eap->line1;
-    if (*cmd == 'l') {
-      eap->flags = EXFLAG_LIST;
-    } else if (*cmd == '#') {
-      eap->flags = EXFLAG_NR;
-    } else if (*cmd == 'p') {
-      eap->flags = EXFLAG_PRINT;
-    }
-
-    // The number of lines joined is the number of lines in the range
-    linenr_T joined_lines_count = eap->line2 - eap->line1 + 1
-      // plus one extra line if not at the end of file.
-      + (eap->line2 < curbuf->b_ml.ml_line_count ? 1 : 0);
-    if (joined_lines_count > 1) {
-      do_join(joined_lines_count, FALSE, TRUE, FALSE, true);
-      sub_nsubs = joined_lines_count - 1;
-      sub_nlines = 1;
-      do_sub_msg(false);
-      ex_may_print(eap);
-    }
-
-    if (!cmdmod.keeppatterns) {
-      save_re_pat(RE_SUBST, pat, p_magic);
-    }
-    add_to_history(HIST_SEARCH, pat, TRUE, NUL);
-
+  if (sub_joining_lines(eap, pat, sub, cmd)) {
     return;
   }
 
-  /*
-   * Find trailing options.  When '&' is used, keep old options.
-   */
-  if (*cmd == '&') {
-    ++cmd;
-  } else {
-    subflags.do_all = p_gd;
-    subflags.do_ask = false;
-    subflags.do_error = true;
-    subflags.do_print = false;
-    subflags.do_count = false;
-    subflags.do_number = false;
-    subflags.do_ic = kSubHonorOptions;
-  }
-  while (*cmd) {
-    // Note that 'g' and 'c' are always inverted.
-    // 'r' is never inverted.
-    if (*cmd == 'g') {
-      subflags.do_all = !subflags.do_all;
-    } else if (*cmd == 'c') {
-      subflags.do_ask = !subflags.do_ask;
-    } else if (*cmd == 'n') {
-      subflags.do_count = true;
-    } else if (*cmd == 'e') {
-      subflags.do_error = !subflags.do_error;
-    } else if (*cmd == 'r') {  // use last used regexp
-      which_pat = RE_LAST;
-    } else if (*cmd == 'p') {
-      subflags.do_print = true;
-    } else if (*cmd == '#') {
-      subflags.do_print = true;
-      subflags.do_number = true;
-    } else if (*cmd == 'l') {
-      subflags.do_print = true;
-      subflags.do_list = true;
-    } else if (*cmd == 'i') {  // ignore case
-      subflags.do_ic = kSubIgnoreCase;
-    } else if (*cmd == 'I') {  // don't ignore case
-      subflags.do_ic = kSubMatchCase;
-    } else {
-      break;
-    }
-    cmd++;
-  }
-  if (subflags.do_count) {
-    subflags.do_ask = false;
-  }
+  cmd = sub_parse_flags(cmd, &subflags, &which_pat);
 
   bool save_do_all = subflags.do_all;  // remember user specified 'g' flag
   bool save_do_ask = subflags.do_ask;  // remember user specified 'c' flag
@@ -3194,7 +3262,7 @@ void do_sub(exarg_T *eap)
     sub = regtilde(sub, p_magic);
 
   // Check for a match on each line.
-  line2 = eap->line2;
+  linenr_T line2 = eap->line2;
   for (linenr_T lnum = eap->line1;
        lnum <= line2 && !(got_quit || aborting());
        lnum++) {
@@ -3205,15 +3273,13 @@ void do_sub(exarg_T *eap)
       colnr_T matchcol;
       colnr_T prev_matchcol = MAXCOL;
       char_u      *new_end, *new_start = NULL;
-      unsigned new_start_len = 0;
       char_u      *p1;
       int did_sub = FALSE;
       int lastone;
-      int len, copy_len, needed_len;
-      long nmatch_tl = 0;               /* nr of lines matched below lnum */
-      int do_again;                     /* do it again after joining lines */
-      int skip_match = FALSE;
-      linenr_T sub_firstlnum;           /* nr of first sub line */
+      long nmatch_tl = 0;               // nr of lines matched below lnum
+      int do_again;                     // do it again after joining lines
+      int skip_match = false;
+      linenr_T sub_firstlnum;           // nr of first sub line
 
       /*
        * The new text is build up step by step, to avoid too much
@@ -3253,8 +3319,7 @@ void do_sub(exarg_T *eap)
        *   accordingly.
        *
        * The new text is built up in new_start[].  It has some extra
-       * room to avoid using xmalloc()/free() too often.  new_start_len is
-       * the length of the allocated memory at new_start.
+       * room to avoid using xmalloc()/free() too often.
        *
        * Make a copy of the old line, so it won't be taken away when
        * updating the screen or handling a multi-line match.  The "old_"
@@ -3562,33 +3627,10 @@ void do_sub(exarg_T *eap)
           p1 = ml_get(sub_firstlnum + nmatch - 1);
           nmatch_tl += nmatch - 1;
         }
-        copy_len = regmatch.startpos[0].col - copycol;
-        needed_len = copy_len + ((unsigned)STRLEN(p1)
-                                 - regmatch.endpos[0].col) + sublen + 1;
-        if (new_start == NULL) {
-          /*
-           * Get some space for a temporary buffer to do the
-           * substitution into (and some extra space to avoid
-           * too many calls to xmalloc()/free()).
-           */
-          new_start_len = needed_len + 50;
-          new_start = xmalloc(new_start_len);
-          *new_start = NUL;
-          new_end = new_start;
-        } else {
-          /*
-           * Check if the temporary buffer is long enough to do the
-           * substitution into.  If not, make it larger (with a bit
-           * extra to avoid too many calls to xmalloc()/free()).
-           */
-          len = (unsigned)STRLEN(new_start);
-          needed_len += len;
-          if (needed_len > (int)new_start_len) {
-            new_start_len = needed_len + 50;
-            new_start = xrealloc(new_start, new_start_len);
-          }
-          new_end = new_start + len;
-        }
+        size_t copy_len = regmatch.startpos[0].col - copycol;
+        new_end = sub_grow_buf(&new_start,
+                               copy_len + (STRLEN(p1) - regmatch.endpos[0].col)
+                               + sublen + 1);
 
         /*
          * copy the text up to the part that matched
@@ -3855,7 +3897,7 @@ skip:
   // Restore the flag values, they can be used for ":&&".
   subflags.do_all = save_do_all;
   subflags.do_ask = save_do_ask;
-}
+}  // NOLINT(readability/fn_size)
 
 /*
  * Give message for number of substitutions.
