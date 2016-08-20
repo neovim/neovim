@@ -685,8 +685,8 @@ void set_internal_string_var(char_u *name, char_u *value)
 }
 
 static lval_T   *redir_lval = NULL;
-static garray_T redir_ga;       /* only valid when redir_lval is not NULL */
-static char_u   *redir_endp = NULL;
+static garray_T redir_ga;  // Only valid when redir_lval is not NULL.
+static char_u *redir_endp = NULL;
 static char_u   *redir_varname = NULL;
 
 /*
@@ -717,9 +717,9 @@ var_redir_start (
   /* The output is stored in growarray "redir_ga" until redirection ends. */
   ga_init(&redir_ga, (int)sizeof(char), 500);
 
-  /* Parse the variable name (can be a dict or list entry). */
-  redir_endp = get_lval(redir_varname, NULL, redir_lval, FALSE, FALSE, 0,
-      FNE_CHECK_START);
+  // Parse the variable name (can be a dict or list entry).
+  redir_endp = (char_u *)get_lval(redir_varname, NULL, redir_lval, FALSE, FALSE,
+                                  0, FNE_CHECK_START);
   if (redir_endp == NULL || redir_lval->ll_name == NULL || *redir_endp !=
       NUL) {
     clear_lval(redir_lval);
@@ -795,10 +795,10 @@ void var_redir_stop(void)
       ga_append(&redir_ga, NUL);        /* Append the trailing NUL. */
       tv.v_type = VAR_STRING;
       tv.vval.v_string = redir_ga.ga_data;
-      /* Call get_lval() again, if it's inside a Dict or List it may
-       * have changed. */
-      redir_endp = get_lval(redir_varname, NULL, redir_lval,
-          FALSE, FALSE, 0, FNE_CHECK_START);
+      // Call get_lval() again, if it's inside a Dict or List it may
+      // have changed.
+      redir_endp = (char_u *)get_lval(redir_varname, NULL, redir_lval,
+                                      false, false, 0, FNE_CHECK_START);
       if (redir_endp != NULL && redir_lval->ll_name != NULL)
         set_var_lval(redir_lval, redir_endp, &tv, FALSE, (char_u *)".");
       clear_lval(redir_lval);
@@ -1411,7 +1411,7 @@ void ex_let(exarg_T *eap)
   char_u      *argend;
   int first = TRUE;
 
-  argend = skip_var_list(arg, &var_count, &semicolon);
+  argend = (char_u *)skip_var_list(arg, &var_count, &semicolon);
   if (argend == NULL)
     return;
   if (argend > arg && argend[-1] == '.')    /* for var.='str' */
@@ -1481,7 +1481,7 @@ ex_let_vars (
     char_u *nextchars
 )
 {
-  char_u      *arg = arg_start;
+  char_u *arg = arg_start;
   list_T      *l;
   int i;
   listitem_T  *item;
@@ -1559,9 +1559,11 @@ ex_let_vars (
  * for "[var, var; var]" set "semicolon".
  * Return NULL for an error.
  */
-static char_u *skip_var_list(char_u *arg, int *var_count, int *semicolon)
+static const char_u *skip_var_list(const char_u *arg, int *var_count,
+                                   int *semicolon)
 {
-  char_u      *p, *s;
+  const char_u *p;
+  const char_u *s;
 
   if (*arg == '[') {
     /* "[var, var]": find the matching ']'. */
@@ -1598,7 +1600,7 @@ static char_u *skip_var_list(char_u *arg, int *var_count, int *semicolon)
  * Skip one (assignable) variable name, including @r, $VAR, &option, d.key,
  * l[idx].
  */
-static char_u *skip_var_one(char_u *arg)
+static const char_u *skip_var_one(const char_u *arg)
 {
   if (*arg == '@' && arg[1] != NUL)
     return arg + 2;
@@ -1784,25 +1786,27 @@ static const char *list_arg_vars(exarg_T *eap, const char *arg, int *first)
 
 // TODO(ZyX-I): move to eval/ex_cmds
 
-/*
- * Set one item of ":let var = expr" or ":let [v1, v2] = list" to its value.
- * Returns a pointer to the char just after the var name.
- * Returns NULL if there is an error.
- */
-static char_u *
-ex_let_one (
-    char_u *arg,               /* points to variable name */
-    typval_T *tv,                /* value to assign to variable */
-    int copy,                       /* copy value from "tv" */
-    char_u *endchars,          /* valid chars after variable name  or NULL */
-    char_u *op                /* "+", "-", "."  or NULL*/
-)
+/// Set one item of `:let var = expr` or `:let [v1, v2] = list` to its value
+///
+/// @param[in]  arg  Start of the variable name.
+/// @param[in]  tv  Value to assign to the variable.
+/// @param[in]  copy  If true, copy value from `tv`.
+/// @param[in]  endchars  Valid characters after variable name or NULL.
+/// @param[in]  op  Operation performed: *op is `+`, `-`, `.` for `+=`, etc.
+///                 NULL for `=`.
+///
+/// @return a pointer to the char just after the var name or NULL in case of
+///         error.
+static char_u *ex_let_one(char_u *arg, typval_T *const tv,
+                          const bool copy, const char_u *const endchars,
+                          const char_u *const op)
+  FUNC_ATTR_NONNULL_ARG(1, 2) FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  char_u      *name;
-  char_u      *arg_end = NULL;
+  char_u *name;
+  char_u *arg_end = NULL;
   int len;
   int opt_flags;
-  char_u      *tofree = NULL;
+  char_u *tofree = NULL;
 
   /*
    * ":let $VAR = expr": Set environment variable.
@@ -1811,7 +1815,7 @@ ex_let_one (
     /* Find the end of the name. */
     ++arg;
     name = arg;
-    len = get_env_len(&arg);
+    len = get_env_len((const char_u **)&arg);
     if (len == 0)
       EMSG2(_(e_invarg2), name - 1);
     else {
@@ -1931,11 +1935,12 @@ ex_let_one (
   else if (eval_isnamec1(*arg) || *arg == '{') {
     lval_T lv;
 
-    char_u *const p = get_lval(arg, tv, &lv, FALSE, FALSE, 0, FNE_CHECK_START);
+    char_u *const p = (char_u *)get_lval(arg, tv, &lv, false, false, 0,
+                                         FNE_CHECK_START);
     if (p != NULL && lv.ll_name != NULL) {
-      if (endchars != NULL && vim_strchr(endchars, *skipwhite(p)) == NULL)
+      if (endchars != NULL && vim_strchr(endchars, *skipwhite(p)) == NULL) {
         EMSG(_(e_letunexp));
-      else {
+      } else {
         set_var_lval(&lv, p, tv, copy, op);
         arg_end = p;
       }
@@ -1979,9 +1984,9 @@ static int check_changedtick(char_u *arg)
  * When an evaluation error occurs "lp->ll_name" is NULL;
  * Returns NULL for a parsing error.  Still need to free items in "lp"!
  */
-static char_u *
+static const char_u *
 get_lval (
-    char_u *name,
+    const char_u *name,
     typval_T *rettv,
     lval_T *lp,
     int unlet,
@@ -1991,7 +1996,6 @@ get_lval (
 )
 {
   char_u      *p;
-  char_u      *expr_start, *expr_end;
   int cc;
   dictitem_T  *v;
   typval_T var1;
@@ -2007,13 +2011,17 @@ get_lval (
   memset(lp, 0, sizeof(lval_T));
 
   if (skip) {
-    /* When skipping just find the end of the name. */
-    lp->ll_name = name;
+    // When skipping just find the end of the name.
+    lp->ll_name = (char_u *)name;
     return find_name_end(name, NULL, NULL, FNE_INCL_BR | fne_flags);
   }
 
-  /* Find the end of the name. */
-  p = find_name_end(name, &expr_start, &expr_end, fne_flags);
+  // Find the end of the name.
+  char_u *expr_start;
+  char_u *expr_end;
+  p = (char_u *)find_name_end(name,
+                              (const char_u **)&expr_start,
+                              (const char_u **)&expr_end, fne_flags);
   if (expr_start != NULL) {
     /* Don't expand the name when we already know there is an error. */
     if (unlet && !ascii_iswhite(*p) && !ends_excmd(*p)
@@ -2034,8 +2042,9 @@ get_lval (
       }
     }
     lp->ll_name = lp->ll_exp_name;
-  } else
-    lp->ll_name = name;
+  } else {
+    lp->ll_name = (char_u *)name;
+  }
 
   /* Without [idx] or .key we are done. */
   if ((*p != '[' && *p != '.') || lp->ll_name == NULL)
@@ -2298,7 +2307,8 @@ static void clear_lval(lval_T *lp)
  * "endp" points to just after the parsed name.
  * "op" is NULL, "+" for "+=", "-" for "-=", "." for ".=" or "=" for "=".
  */
-static void set_var_lval(lval_T *lp, char_u *endp, typval_T *rettv, int copy, char_u *op)
+static void set_var_lval(lval_T *lp, char_u *endp, typval_T *rettv,
+                         int copy, const char_u *op)
 {
   int cc;
   listitem_T  *ri;
@@ -2441,10 +2451,10 @@ notify:
  * Set "*errp" to TRUE for an error, FALSE otherwise;
  * Return a pointer that holds the info.  Null when there is an error.
  */
-void *eval_for_line(char_u *arg, bool *errp, char_u **nextcmdp, int skip)
+void *eval_for_line(const char_u *arg, bool *errp, char_u **nextcmdp, int skip)
 {
   forinfo_T   *fi = xcalloc(1, sizeof(forinfo_T));
-  char_u      *expr;
+  const char_u *expr;
   typval_T tv;
   list_T      *l;
 
@@ -2637,7 +2647,8 @@ void ex_call(exarg_T *eap)
     return;
   }
 
-  tofree = trans_function_name(&arg, eap->skip, TFN_INT, &fudi);
+  tofree = trans_function_name((const char_u **)&arg, eap->skip, TFN_INT,
+                               &fudi);
   if (fudi.fd_newkey != NULL) {
     /* Still need to give an error message for missing key. */
     EMSG2(_(e_dictkey), fudi.fd_newkey);
@@ -2762,16 +2773,17 @@ void ex_lockvar(exarg_T *eap)
 static void ex_unletlock(exarg_T *eap, char_u *argstart, int deep)
 {
   char_u      *arg = argstart;
-  char_u      *name_end;
-  int error = FALSE;
+  bool error = false;
   lval_T lv;
 
   do {
-    /* Parse the name and find the end. */
-    name_end = get_lval(arg, NULL, &lv, TRUE, eap->skip || error, 0,
-        FNE_CHECK_START);
-    if (lv.ll_name == NULL)
-      error = TRUE;                 /* error but continue parsing */
+    // Parse the name and find the end.
+    char_u *const name_end = (char_u *)get_lval(arg, NULL, &lv, true,
+                                                eap->skip || error,
+                                                0, FNE_CHECK_START);
+    if (lv.ll_name == NULL) {
+      error = true;  // error, but continue parsing.
+    }
     if (name_end == NULL || (!ascii_iswhite(*name_end)
                              && !ends_excmd(*name_end))) {
       if (name_end != NULL) {
@@ -2806,7 +2818,7 @@ static void ex_unletlock(exarg_T *eap, char_u *argstart, int deep)
 
 // TODO(ZyX-I): move to eval/ex_cmds
 
-static int do_unlet_var(lval_T *lp, char_u *name_end, int forceit)
+static int do_unlet_var(lval_T *const lp, char_u *const name_end, int forceit)
 {
   int ret = OK;
   int cc;
@@ -2956,7 +2968,7 @@ int do_unlet(char_u *name, int forceit)
  * "deep" is the levels to go (-1 for unlimited);
  * "lock" is TRUE for ":lockvar", FALSE for ":unlockvar".
  */
-static int do_lock_var(lval_T *lp, char_u *name_end, const int deep,
+static int do_lock_var(lval_T *lp, char_u *const name_end, const int deep,
                        const bool lock)
 {
   int ret = OK;
@@ -5290,41 +5302,21 @@ void dict_set_keys_readonly(dict_T *dict)
   }
 }
 
-/// Get a function from a dictionary
-/// @param[out] result The address where a pointer to the wanted callback
-///                    will be left.
-/// @return true/false on success/failure.
-static bool get_dict_callback(dict_T *d, char *key, ufunc_T **result)
+/// Find user function with the given name
+///
+/// @param[in]  name  Function name.
+///
+/// @return Pointer to the user function structure or NULL if not found. Also
+///         gives an error in the latter case.
+ufunc_T *find_ufunc(const char_u *name)
 {
-  dictitem_T *const di = tv_dict_find(d, key, -1);
-
-  if (di == NULL) {
-    *result = NULL;
-    return true;
-  }
-
-  if (di->di_tv.v_type != VAR_FUNC && di->di_tv.v_type != VAR_STRING) {
-    EMSG(_("Argument is not a function or function name"));
-    *result = NULL;
-    return false;
-  }
-
-  if ((*result = find_ufunc(di->di_tv.vval.v_string)) == NULL) {
-    return false;
-  }
-
-  (*result)->uf_refcount++;
-  return true;
-}
-
-static ufunc_T *find_ufunc(uint8_t *name)
-{
-  uint8_t *n = name;
+  const char_u *n = (const char_u *)name;
   ufunc_T *rv = NULL;
   if (*n > '9' || *n < '0') {
-    if ((n = trans_function_name(&n, false, TFN_INT|TFN_QUIET, NULL))) {
-      rv = find_func(n);
-      xfree(n);
+    char_u *tofree;
+    if ((tofree = trans_function_name(&n, false, TFN_INT|TFN_QUIET, NULL))) {
+      rv = find_func(tofree);
+      xfree(tofree);
     }
   } else {
     // dict function, name is already translated
@@ -5477,7 +5469,7 @@ static int get_env_tv(char_u **arg, typval_T *rettv, int evaluate)
 
   ++*arg;
   name = *arg;
-  len = get_env_len(arg);
+  len = get_env_len((const char_u **)arg);
 
   if (evaluate) {
     if (len == 0) {
@@ -10033,16 +10025,16 @@ static void f_isdirectory(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 static void f_islocked(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   lval_T lv;
-  char_u      *end;
   dictitem_T  *di;
 
   rettv->vval.v_number = -1;
-  end = get_lval(get_tv_string(&argvars[0]), NULL, &lv, FALSE, FALSE,
-      GLV_NO_AUTOLOAD, FNE_CHECK_START);
+  const char_u *const end = get_lval(get_tv_string(&argvars[0]), NULL,
+                                     &lv, false, false,
+                                     GLV_NO_AUTOLOAD, FNE_CHECK_START);
   if (end != NULL && lv.ll_name != NULL) {
-    if (*end != NUL)
+    if (*end != NUL) {
       EMSG(_(e_trailing));
-    else {
+    } else {
       if (lv.ll_tv == NULL) {
         if (check_changedtick(lv.ll_name)) {
           rettv->vval.v_number = 1;  // Always locked.
@@ -16195,15 +16187,16 @@ static int list2fpos(typval_T *arg, pos_T *posp, int *fnump, colnr_T *curswantp)
  * Advance "arg" to the first character after the name.
  * Return 0 for error.
  */
-static int get_env_len(char_u **arg)
+static int get_env_len(const char_u **arg)
 {
-  char_u      *p;
   int len;
 
-  for (p = *arg; vim_isIDc(*p); ++p)
-    ;
-  if (p == *arg)            /* no name found */
+  const char_u *p;
+  for (p = *arg; vim_isIDc(*p); p++) {
+  }
+  if (p == *arg) {  // No name found.
     return 0;
+  }
 
   len = (int)(p - *arg);
   *arg = p;
@@ -16255,8 +16248,6 @@ static int get_name_len(const char **const arg,
                         int verbose)
 {
   int len;
-  char_u      *expr_start;
-  char_u      *expr_end;
 
   *alias = NULL;    /* default to no alias */
 
@@ -16272,12 +16263,12 @@ static int get_name_len(const char **const arg,
     *arg += len;
   }
 
-  /*
-   * Find the end of the name; check for {} construction.
-   */
+  // Find the end of the name; check for {} construction.
+  char_u      *expr_start;
+  char_u      *expr_end;
   const char *p = (const char *)find_name_end((char_u *)*arg,
-                                              &expr_start,
-                                              &expr_end,
+                                              (const char_u **)&expr_start,
+                                              (const char_u **)&expr_end,
                                               len > 0 ? 0 : FNE_CHECK_START);
   if (expr_start != NULL) {
     if (!evaluate) {
@@ -16313,12 +16304,11 @@ static int get_name_len(const char **const arg,
 // "flags" can have FNE_INCL_BR and FNE_CHECK_START.
 // Return a pointer to just after the name.  Equal to "arg" if there is no
 // valid name.
-static char_u *find_name_end(char_u *arg, char_u **expr_start,
-                             char_u **expr_end, int flags)
+static const char_u *find_name_end(const char_u *arg, const char_u **expr_start,
+                                   const char_u **expr_end, int flags)
 {
   int mb_nest = 0;
   int br_nest = 0;
-  char_u *p;
   int len;
 
   if (expr_start != NULL) {
@@ -16331,6 +16321,7 @@ static char_u *find_name_end(char_u *arg, char_u **expr_start,
     return arg;
   }
 
+  const char_u *p;
   for (p = arg; *p != NUL
        && (eval_isnamec(*p)
            || *p == '{'
@@ -16402,7 +16393,8 @@ static char_u *find_name_end(char_u *arg, char_u **expr_start,
  * Returns a new allocated string, which the caller must free.
  * Returns NULL for failure.
  */
-static char_u *make_expanded_name(char_u *in_start, char_u *expr_start, char_u *expr_end, char_u *in_end)
+static char_u *make_expanded_name(const char_u *in_start, char_u *expr_start,
+                                  char_u *expr_end, char_u *in_end)
 {
   char_u c1;
   char_u      *retval = NULL;
@@ -16431,7 +16423,9 @@ static char_u *make_expanded_name(char_u *in_start, char_u *expr_start, char_u *
   *expr_end = '}';
 
   if (retval != NULL) {
-    temp_result = find_name_end(retval, &expr_start, &expr_end, 0);
+    temp_result = (char_u *)find_name_end(retval,
+                                          (const char_u **)&expr_start,
+                                          (const char_u **)&expr_end, 0);
     if (expr_start != NULL) {
       /* Further expansion! */
       temp_result = make_expanded_name(retval, expr_start,
@@ -18047,7 +18041,7 @@ void ex_function(exarg_T *eap)
   // s:func      script-local function name
   // g:func      global function name, same as "func"
   p = eap->arg;
-  name = trans_function_name(&p, eap->skip, 0, &fudi);
+  name = trans_function_name((const char_u **)&p, eap->skip, 0, &fudi);
   paren = (vim_strchr(p, '(') != NULL);
   if (name == NULL && (fudi.fd_dict == NULL || !paren) && !eap->skip) {
     /*
@@ -18314,7 +18308,7 @@ void ex_function(exarg_T *eap)
           p = skipwhite(p + 1);
         }
         p += eval_fname_script((const char *)p);
-        xfree(trans_function_name(&p, true, 0, NULL));
+        xfree(trans_function_name((const char_u **)&p, true, 0, NULL));
         if (*skipwhite(p) == '(') {
           nesting++;
           indent += 2;
@@ -18530,15 +18524,15 @@ ret_free:
  */
 static char_u *
 trans_function_name (
-    char_u **pp,
-    int skip,                       /* only find the end, don't evaluate */
+    const char_u **pp,
+    int skip,                       // only find the end, don't evaluate
     int flags,
     funcdict_T *fdp               /* return: info about dictionary used */
 )
 {
   char_u      *name = NULL;
-  char_u      *start;
-  char_u      *end;
+  const char_u *start;
+  const char_u *end;
   int lead;
   char_u sid_buf[20];
   int len;
@@ -18731,11 +18725,15 @@ static int eval_fname_script(const char *const p)
   return 0;
 }
 
-/*
- * Return TRUE if "p" starts with "<SID>" or "s:".
- * Only works if eval_fname_script() returned non-zero for "p"!
- */
-static int eval_fname_sid(char_u *p)
+/// Check if string starts with `<SID>` or `s:`
+///
+/// @warning Only works if eval_fname_script() returned non-zero for "p"!
+///
+/// @param[in]  p  String to check.
+///
+/// @return true if it does, false otherwise.
+static inline bool eval_fname_sid(const char_u *p)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   return *p == 's' || TOUPPER_ASC(p[2]) == 'I';
 }
@@ -18830,7 +18828,7 @@ bool translated_function_exists(const char *name)
 /// @return True if it exists, false otherwise.
 static bool function_exists(const char *const name)
 {
-  char_u *nm = (char_u *)name;
+  const char_u *nm = (const char_u *)name;
   bool n = false;
 
   char *const p = (char *)trans_function_name(&nm, false,
@@ -19166,7 +19164,7 @@ void ex_delfunction(exarg_T *eap)
   funcdict_T fudi;
 
   p = eap->arg;
-  name = trans_function_name(&p, eap->skip, 0, &fudi);
+  name = trans_function_name((const char_u **)&p, eap->skip, 0, &fudi);
   xfree(fudi.fd_newkey);
   if (name == NULL) {
     if (fudi.fd_dict != NULL && !eap->skip)
@@ -20569,9 +20567,9 @@ static inline TerminalJobData *common_job_init(char **argv,
 static inline bool common_job_callbacks(dict_T *vopts, ufunc_T **on_stdout,
                                         ufunc_T **on_stderr, ufunc_T **on_exit)
 {
-  if (get_dict_callback(vopts, "on_stdout", on_stdout)
-      && get_dict_callback(vopts, "on_stderr", on_stderr)
-      && get_dict_callback(vopts, "on_exit", on_exit)) {
+  if (tv_dict_get_callback(vopts, S_LEN("on_stdout"), on_stdout)
+      && tv_dict_get_callback(vopts, S_LEN("on_stderr"), on_stderr)
+      && tv_dict_get_callback(vopts, S_LEN("on_exit"), on_exit)) {
     vopts->dv_refcount++;
     return true;
   }
