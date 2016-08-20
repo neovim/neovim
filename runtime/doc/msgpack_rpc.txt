@@ -11,7 +11,6 @@ RPC API for Nvim				     *RPC* *rpc* *msgpack-rpc*
 3. Connecting			|rpc-connecting|
 4. Clients			|rpc-api-client|
 5. Types			|rpc-types|
-6. Vimscript functions		|rpc-vim-functions|
 
 ==============================================================================
 1. Introduction						            *rpc-intro*
@@ -66,12 +65,16 @@ To get a formatted dump of the API using python (requires the `pyyaml` and
 ==============================================================================
 3. Connecting						      *rpc-connecting*
 
-There are several ways to open a msgpack-rpc stream to an Nvim server:
+There are several ways to open a msgpack-rpc channel to an Nvim instance:
 
   1. Through stdin/stdout when `nvim` is started with `--embed`. This is how
      applications can embed Nvim.
 
-  2. Through stdin/stdout of some other process spawned by |rpcstart()|.
+  2. Through stdin/stdout of some other process spawned by |jobstart()|.
+     Set the "rpc" key to |v:true| in the options dict to use the job's stdin
+     and stdout as a single msgpack channel that is processed directly by
+     Nvim.  Then it is not possible to process raw data to or from the
+     process's stdin and stdout. stderr can still be used, though.
 
   3. Through the socket automatically created with each instance. The socket
      location is stored in |v:servername|.
@@ -110,11 +113,12 @@ functions can be called interactively:
     >>> nvim = attach('socket', path='[address]')
     >>> nvim.command('echo "hello world!"')
 <
-You can also embed an Nvim instance via |rpcstart()|
+You can also embed an Nvim instance via |jobstart()|, and communicate using
+|rpcrequest()| and |rpcnotify()|:
 >
-    let vim = rpcstart('nvim', ['--embed'])
+    let vim = jobstart(['nvim', '--embed'], {'rpc': v:true})
     echo rpcrequest(vim, 'vim_eval', '"Hello " . "world!"')
-    call rpcstop(vim)
+    call jobstop(vim)
 <
 ==============================================================================
 4. Implementing API clients			*rpc-api-client* *api-client*
@@ -232,24 +236,6 @@ the `types` object:
 Even for statically compiled clients it is good practice to avoid hardcoding
 the type codes, because a client may be built against one Nvim version but
 connect to another with different type codes.
-
-==============================================================================
-6. Vimscript functions				           *rpc-vim-functions*
-
-RPC functions are available in Vimscript:
-
-  1. |rpcstart()|: Similarly to |jobstart()|, this will spawn a co-process
-     with its standard handles connected to Nvim. The difference is that it's
-     not possible to process raw data to or from the process's stdin, stdout,
-     or stderr.  This is because the job's stdin and stdout are used as
-     a single msgpack channel that is processed directly by Nvim.
-  2. |rpcstop()|: Same as |jobstop()|, but operates on handles returned by
-     |rpcstart()|.
-  3. |rpcrequest()|: Sends a msgpack-rpc request to the process.
-  4. |rpcnotify()|: Sends a msgpack-rpc notification to the process.
-
-|rpcrequest()| and |rpcnotify()| can also be used with channels connected to
-a nvim server. |v:servername|
 
 ==============================================================================
  vim:tw=78:ts=8:noet:ft=help:norl:

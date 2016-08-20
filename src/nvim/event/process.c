@@ -25,7 +25,7 @@
 #define CLOSE_PROC_STREAM(proc, stream) \
   do { \
     if (proc->stream && !proc->stream->closed) { \
-      stream_close(proc->stream, NULL); \
+      stream_close(proc->stream, NULL, NULL); \
     } \
   } while (0)
 
@@ -78,10 +78,8 @@ bool process_spawn(Process *proc) FUNC_ATTR_NONNULL_ALL
     return false;
   }
 
-  void *data = proc->data;
-
   if (proc->in) {
-    stream_init(NULL, proc->in, -1, (uv_stream_t *)&proc->in->uv.pipe, data);
+    stream_init(NULL, proc->in, -1, (uv_stream_t *)&proc->in->uv.pipe);
     proc->in->events = proc->events;
     proc->in->internal_data = proc;
     proc->in->internal_close_cb = on_process_stream_close;
@@ -89,7 +87,7 @@ bool process_spawn(Process *proc) FUNC_ATTR_NONNULL_ALL
   }
 
   if (proc->out) {
-    stream_init(NULL, proc->out, -1, (uv_stream_t *)&proc->out->uv.pipe, data);
+    stream_init(NULL, proc->out, -1, (uv_stream_t *)&proc->out->uv.pipe);
     proc->out->events = proc->events;
     proc->out->internal_data = proc;
     proc->out->internal_close_cb = on_process_stream_close;
@@ -97,7 +95,7 @@ bool process_spawn(Process *proc) FUNC_ATTR_NONNULL_ALL
   }
 
   if (proc->err) {
-    stream_init(NULL, proc->err, -1, (uv_stream_t *)&proc->err->uv.pipe, data);
+    stream_init(NULL, proc->err, -1, (uv_stream_t *)&proc->err->uv.pipe);
     proc->err->events = proc->events;
     proc->err->internal_data = proc;
     proc->err->internal_close_cb = on_process_stream_close;
@@ -373,7 +371,7 @@ static void flush_stream(Process *proc, Stream *stream)
       if (stream->read_cb) {
         // Stream callback could miss EOF handling if a child keeps the stream
         // open.
-        stream->read_cb(stream, stream->buffer, 0, stream->data, true);
+        stream->read_cb(stream, stream->buffer, 0, stream->cb_data, true);
       }
       break;
     }

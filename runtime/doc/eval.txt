@@ -2043,7 +2043,6 @@ rpcnotify({channel}, {event}[, {args}...])
 				Sends an |RPC| notification to {channel}
 rpcrequest({channel}, {method}[, {args}...])
 				Sends an |RPC| request to {channel}
-rpcstart({prog}[, {argv}])	Spawns {prog} and opens an |RPC| channel
 rpcstop({channel})		Closes an |RPC| {channel}
 screenattr({row}, {col})	Number	attribute at screen position
 screenchar({row}, {col})	Number	character at screen position
@@ -4395,8 +4394,10 @@ items({dict})						*items()*
 		order.
 
 jobclose({job}[, {stream}])				{Nvim} *jobclose()*
-		Close {job}'s {stream}, which can be one "stdin", "stdout" or
-		"stderr". If {stream} is omitted, all streams are closed.
+		Close {job}'s {stream}, which can be one of "stdin", "stdout",
+		"stderr" or "rpc" (closes the rpc channel for a job started
+		with the "rpc" option.) If {stream} is omitted, all streams
+		are closed.
 
 jobpid({job})						{Nvim} *jobpid()*
 		Return the pid (process id) of {job}.
@@ -4418,6 +4419,10 @@ jobsend({job}, {data})					{Nvim} *jobsend()*
 			:call jobsend(j, ["abc", "123\n456", ""])
 < 		will send "abc<NL>123<NUL>456<NL>".
 
+		If the job was started with the rpc option this function
+		cannot be used, instead use |rpcnotify()| and |rpcrequest()|
+		to communicate with the job.
+
 jobstart({cmd}[, {opts}])				{Nvim} *jobstart()*
 		Spawns {cmd} as a job.  If {cmd} is a |List| it is run
 		directly.  If {cmd} is a |String| it is processed like this: >
@@ -4433,9 +4438,14 @@ jobstart({cmd}[, {opts}])				{Nvim} *jobstart()*
 		  on_exit  : exit event handler (function name or |Funcref|)
 		  cwd      : Working directory of the job; defaults to
 		             |current-directory|.
+		  rpc      : If set, |msgpack-rpc| will be used to communicate
+			     with the job over stdin and stdout. "on_stdout" is
+			     then ignored, but "on_stderr" can still be used.
 		  pty      : If set, the job will be connected to a new pseudo
-		             terminal, and the job streams are connected to
-		             the master file descriptor.
+			     terminal, and the job streams are connected to
+			     the master file descriptor. "on_stderr" is ignored
+			     as all output will be received on stdout.
+
 		  width    : (pty only) Width of the terminal screen
 		  height   : (pty only) Height of the terminal screen
 		  TERM     : (pty only) $TERM environment variable
@@ -4447,10 +4457,12 @@ jobstart({cmd}[, {opts}])				{Nvim} *jobstart()*
 		{opts} is passed as |self| to the callback; the caller may
 		pass arbitrary data by setting other keys.
 		Returns:
-		  - job ID on success, used by |jobsend()| and |jobstop()|
+		  - The job ID on success, which is used by |jobsend()| (or
+		    |rpcnotify()| and |rpcrequest()| if "rpc" option was used)
+		    and |jobstop()|
 		  - 0 on invalid arguments or if the job table is full
 		  - -1 if {cmd}[0] is not executable.
-		See |job-control| for more information.
+		See |job-control| and |msgpack-rpc| for more information.
 
 jobstop({job})						{Nvim} *jobstop()*
 		Stop a job created with |jobstart()| by sending a `SIGTERM`
@@ -5649,19 +5661,20 @@ rpcrequest({channel}, {method}[, {args}...])		 {Nvim} *rpcrequest()*
 			:let result = rpcrequest(rpc_chan, "func", 1, 2, 3)
 
 rpcstart({prog}[, {argv}])				   {Nvim} *rpcstart()*
-		Spawns {prog} as a job (optionally passing the list {argv}),
-		and opens an |RPC| channel with the spawned process's
-		stdin/stdout. Returns:
-		  - channel id on success, which is used by |rpcrequest()|,
-		    |rpcnotify()| and |rpcstop()|
-		  - 0 on failure
-		Example: >
-			:let rpc_chan = rpcstart('prog', ['arg1', 'arg2'])
+		Deprecated. Replace  >
+			:let id = rpcstart('prog', ['arg1', 'arg2'])
+<		with >
+			:let id = jobstart(['prog', 'arg1', 'arg2'],
+					   {'rpc': v:true})
 
 rpcstop({channel})					    {Nvim} *rpcstop()*
-		Closes an |RPC| {channel}, possibly created via
-		|rpcstart()|. Also closes channels created by connections to
-		|v:servername|.
+		Closes an |RPC| {channel}.  If the channel is a job
+		started with |jobstart()|  the job is killed.
+		It is better to use |jobstop()| in this case, or use
+		|jobclose|(id, "rpc") to only close the channel without
+		killing the job.
+		Closes the socket connection if the channel was opened by
+		connecting to |v:servername|.
 
 screenattr(row, col)						*screenattr()*
 		Like screenchar(), but return the attribute.  This is a rather

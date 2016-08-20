@@ -38,7 +38,7 @@ void term_input_init(TermInput *input, Loop *loop)
   int curflags = termkey_get_canonflags(input->tk);
   termkey_set_canonflags(input->tk, curflags | TERMKEY_CANON_DELBS);
   // setup input handle
-  rstream_init_fd(loop, &input->read_stream, input->in_fd, 0xfff, input);
+  rstream_init_fd(loop, &input->read_stream, input->in_fd, 0xfff);
   // initialize a timer handle for handling ESC with libtermkey
   time_watcher_init(loop, &input->timer_handle, input);
 }
@@ -49,13 +49,13 @@ void term_input_destroy(TermInput *input)
   uv_mutex_destroy(&input->key_buffer_mutex);
   uv_cond_destroy(&input->key_buffer_cond);
   time_watcher_close(&input->timer_handle, NULL);
-  stream_close(&input->read_stream, NULL);
+  stream_close(&input->read_stream, NULL, NULL);
   termkey_destroy(input->tk);
 }
 
 void term_input_start(TermInput *input)
 {
-  rstream_start(&input->read_stream, read_cb);
+  rstream_start(&input->read_stream, read_cb, input);
 }
 
 void term_input_stop(TermInput *input)
@@ -340,7 +340,7 @@ static void read_cb(Stream *stream, RBuffer *buf, size_t c, void *data,
       //
       // ls *.md | xargs nvim
       input->in_fd = 2;
-      stream_close(&input->read_stream, NULL);
+      stream_close(&input->read_stream, NULL, NULL);
       queue_put(input->loop->fast_events, restart_reading, 1, input);
     } else {
       loop_schedule(&main_loop, event_create(1, input_done_event, 0));
@@ -391,6 +391,6 @@ static void read_cb(Stream *stream, RBuffer *buf, size_t c, void *data,
 static void restart_reading(void **argv)
 {
   TermInput *input = argv[0];
-  rstream_init_fd(input->loop, &input->read_stream, input->in_fd, 0xfff, input);
-  rstream_start(&input->read_stream, read_cb);
+  rstream_init_fd(input->loop, &input->read_stream, input->in_fd, 0xfff);
+  rstream_start(&input->read_stream, read_cb, input);
 }

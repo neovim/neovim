@@ -236,10 +236,10 @@ static int do_os_system(char **argv,
   }
   proc->out->events = NULL;
   rstream_init(proc->out, 0);
-  rstream_start(proc->out, data_cb);
+  rstream_start(proc->out, data_cb, &buf);
   proc->err->events = NULL;
   rstream_init(proc->err, 0);
-  rstream_start(proc->err, data_cb);
+  rstream_start(proc->err, data_cb, &buf);
 
   // write the input, if any
   if (input) {
@@ -251,7 +251,7 @@ static int do_os_system(char **argv,
       return -1;
     }
     // close the input stream after everything is written
-    wstream_set_write_cb(&in, shell_write_cb);
+    wstream_set_write_cb(&in, shell_write_cb, NULL);
   }
 
   // invoke busy_start here so event_poll_until wont change the busy state for
@@ -546,5 +546,5 @@ static size_t write_output(char *output, size_t remaining, bool to_buffer,
 
 static void shell_write_cb(Stream *stream, void *data, int status)
 {
-  stream_close(stream, NULL);
+  stream_close(stream, NULL, NULL);
 }

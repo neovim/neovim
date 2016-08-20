@@ -60,8 +60,8 @@ void input_start(int fd)
   }
 
   global_fd = fd;
-  rstream_init_fd(&main_loop, &read_stream, fd, READ_BUFFER_SIZE, NULL);
-  rstream_start(&read_stream, read_cb);
+  rstream_init_fd(&main_loop, &read_stream, fd, READ_BUFFER_SIZE);
+  rstream_start(&read_stream, read_cb, NULL);
 }
 
 void input_stop(void)
@@ -71,7 +71,7 @@ void input_stop(void)
   }
 
   rstream_stop(&read_stream);
-  stream_close(&read_stream, NULL);
+  stream_close(&read_stream, NULL, NULL);
 }
 
 static void cursorhold_event(void **argv)
