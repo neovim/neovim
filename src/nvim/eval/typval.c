@@ -1130,6 +1130,42 @@ const char *tv_dict_get_string_buf(dict_T *const d, const char *const key,
   return (const char *)get_tv_string_buf(&di->di_tv, (char_u *)numbuf);
 }
 
+/// Get a function from a dictionary
+///
+/// @param[in]  d  Dictionary to get callback from.
+/// @param[in]  key  Dictionary key.
+/// @param[in]  key_len  Key length, may be -1 to use strlen().
+/// @param[out] result The address where a pointer to the wanted callback
+///                    will be left.
+///
+/// @return true/false on success/failure.
+bool tv_dict_get_callback(dict_T *const d,
+                          const char *const key, const ptrdiff_t key_len,
+                          Callback *const result)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  result->type = kCallbackNone;
+
+  dictitem_T *const di = tv_dict_find(d, key, key_len);
+
+  if (di == NULL) {
+    return true;
+  }
+
+  if (di->di_tv.v_type != VAR_FUNC && di->di_tv.v_type != VAR_STRING
+      && di->di_tv.v_type != VAR_PARTIAL) {
+    EMSG(_("Argument is not a function or function name"));
+    return false;
+  }
+
+  typval_T tv;
+  copy_tv(&di->di_tv, &tv);
+  set_selfdict(&tv, d);
+  bool res = callback_from_typval(result, &tv);
+  tv_clear(&tv);
+  return res;
+}
+
 //{{{2 Operations on the whole dict
 
 /// Clear all the keys of a Dictionary. "d" remains a valid empty Dictionary.
