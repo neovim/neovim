@@ -11,6 +11,7 @@
 #include "nvim/func_attr.h"
 #include "nvim/lib/queue.h"
 #include "nvim/gettext.h"
+#include "nvim/message.h"
 
 /// Structure to hold info for a user function.
 typedef struct ufunc ufunc_T;
@@ -269,9 +270,6 @@ extern const char *const tv_empty_string;
 
 static inline bool tv_get_float(const typval_T *const tv, float_T *const ret_f)
   REAL_FATTR_NONNULL_ALL REAL_FATTR_WARN_UNUSED_RESULT;
-
-// FIXME circular dependency, cannot import message.h.
-bool emsgf(const char *const fmt, ...);
 
 /// Get the float value
 ///

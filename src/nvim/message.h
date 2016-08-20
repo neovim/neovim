@@ -3,8 +3,9 @@
 
 #include <stdbool.h>
 #include <stdarg.h>
-#include "nvim/eval/typval.h"  // for typval_T
-#include "nvim/ex_cmds_defs.h"  // for exarg_T
+#include <stddef.h>
+
+#include "nvim/types.h"
 
 /*
  * Types of dialogs passed to do_dialog().
