@@ -36,4 +36,11 @@ describe('setmatches()', function()
       conceal='5',
     }}, funcs.getmatches())
   end)
+
+  it('fails with -1 if highlight group is not defined', function()
+    eq(-1, funcs.setmatches({{group=1, pattern=2, id=3, priority=4}}))
+    eq({}, funcs.getmatches())
+    eq(-1, funcs.setmatches({{group=1, pos1={2}, pos2={6}, id=3, priority=4, conceal=5}}))
+    eq({}, funcs.getmatches())
+  end)
 end)
