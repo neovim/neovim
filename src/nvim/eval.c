@@ -5605,19 +5605,6 @@ int dict_add_dict(dict_T *d, char *key, dict_T *dict)
   return OK;
 }
 
-/// Set all existing keys in "dict" as read-only.
-///
-/// This does not protect against adding new keys to the Dictionary.
-///
-/// @param dict The dict whose keys should be frozen
-void dict_set_keys_readonly(dict_T *const dict)
-  FUNC_ATTR_NONNULL_ALL
-{
-  TV_DICT_ITER(dict, di, {
-    di->di_flags |= DI_FLAGS_RO | DI_FLAGS_FIX;
-  });
-}
-
 /*
  * Allocate a variable for a Dictionary and fill it from "*arg".
  * Return OK or FAIL.  Returns NOTDONE for {expr}.
@@ -18083,7 +18070,7 @@ void set_vim_var_dict(const VimVarIndex idx, dict_T *const val)
   if (val != NULL) {
     val->dv_refcount++;
     // Set readonly
-    dict_set_keys_readonly(val);
+    tv_dict_set_keys_readonly(val);
   }
 }
 

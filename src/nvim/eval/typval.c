@@ -1135,8 +1135,8 @@ const char *tv_dict_get_string_buf(dict_T *const d, const char *const key,
 /// @param[in]  d  Dictionary to get callback from.
 /// @param[in]  key  Dictionary key.
 /// @param[in]  key_len  Key length, may be -1 to use strlen().
-/// @param[out] result The address where a pointer to the wanted callback
-///                    will be left.
+/// @param[out]  result  The address where a pointer to the wanted callback
+///                      will be left.
 ///
 /// @return true/false on success/failure.
 bool tv_dict_get_callback(dict_T *const d,
@@ -1346,6 +1346,19 @@ dict_T *tv_dict_copy(const vimconv_T *const conv,
   }
 
   return copy;
+}
+
+/// Set all existing keys in "dict" as read-only.
+///
+/// This does not protect against adding new keys to the Dictionary.
+///
+/// @param  dict  The dict whose keys should be frozen.
+void tv_dict_set_keys_readonly(dict_T *const dict)
+  FUNC_ATTR_NONNULL_ALL
+{
+  TV_DICT_ITER(dict, di, {
+    di->di_flags |= DI_FLAGS_RO | DI_FLAGS_FIX;
+  });
 }
 
 //{{{1 Generic typval operations

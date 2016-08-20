@@ -1551,7 +1551,7 @@ void do_autocmd_dirchanged(char *new_dir, CdScope scope)
 
   dict_add_nr_str(dict, "scope", 0L, (char_u *)buf);
   dict_add_nr_str(dict, "cwd",   0L, (char_u *)new_dir);
-  dict_set_keys_readonly(dict);
+  tv_dict_set_keys_readonly(dict);
 
   apply_autocmds(EVENT_DIRCHANGED, (char_u *)buf, (char_u *)new_dir, false,
                  NULL);

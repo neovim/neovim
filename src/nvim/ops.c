@@ -2578,7 +2578,7 @@ static void do_autocmd_textyankpost(oparg_T *oap, yankreg_T *reg)
   buf[1] = NUL;
   dict_add_nr_str(dict, "operator", 0, (char_u *)buf);
 
-  dict_set_keys_readonly(dict);
+  tv_dict_set_keys_readonly(dict);
   textlock++;
   apply_autocmds(EVENT_TEXTYANKPOST, NULL, NULL, false, curbuf);
   textlock--;
