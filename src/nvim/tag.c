@@ -776,11 +776,12 @@ do_tag (
           dict = tv_dict_alloc();
           tv_list_append_dict(list, dict);
 
-          dict_add_nr_str(dict, "text", 0L, tag_name);
-          dict_add_nr_str(dict, "filename", 0L, fname);
-          dict_add_nr_str(dict, "lnum", lnum, NULL);
-          if (lnum == 0)
-            dict_add_nr_str(dict, "pattern", 0L, cmd);
+          tv_dict_add_str(dict, S_LEN("text"), (const char *)tag_name);
+          tv_dict_add_str(dict, S_LEN("filename"), (const char *)fname);
+          tv_dict_add_nr(dict, S_LEN("lnum"), lnum);
+          if (lnum == 0) {
+            tv_dict_add_str(dict, S_LEN("pattern"), (const char *)cmd);
+          }
         }
 
         vim_snprintf((char *)IObuff, IOSIZE, "ltag %s", tag);
@@ -2167,7 +2168,7 @@ parse_tag_line (
  * Return TRUE if it is a static tag and adjust *tagname to the real tag.
  * Return FALSE if it is not a static tag.
  */
-static int test_for_static(tagptrs_T *tagp)
+static bool test_for_static(tagptrs_T *tagp)
 {
   char_u      *p;
 
@@ -2754,7 +2755,8 @@ add_tag_field (
     STRLCPY(buf, start, len + 1);
   }
   buf[len] = NUL;
-  retval = dict_add_nr_str(dict, field_name, 0L, buf);
+  retval = tv_dict_add_str(dict, field_name, STRLEN(field_name),
+                           (const char *)buf);
   xfree(buf);
   return retval;
 }
@@ -2770,7 +2772,7 @@ int get_tags(list_T *list, char_u *pat)
   char_u      *full_fname;
   dict_T      *dict;
   tagptrs_T tp;
-  long is_static;
+  bool is_static;
 
   ret = find_tags(pat, &num_matches, &matches,
       TAG_REGEXP | TAG_NOIC, (int)MAXCOL, NULL);
@@ -2799,7 +2801,7 @@ int get_tags(list_T *list, char_u *pat)
               tp.command_end) == FAIL
           || add_tag_field(dict, "kind", tp.tagkind,
               tp.tagkind ? tp.tagkind_end : NULL) == FAIL
-          || dict_add_nr_str(dict, "static", is_static, NULL) == FAIL)
+          || tv_dict_add_nr(dict, S_LEN("static"), is_static) == FAIL)
         ret = FAIL;
 
       xfree(full_fname);

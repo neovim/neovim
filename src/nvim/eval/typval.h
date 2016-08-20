@@ -3,6 +3,7 @@
 
 #include <limits.h>
 #include <stddef.h>
+#include <string.h>
 
 #include "nvim/hashtab.h"
 #include "nvim/garray.h"

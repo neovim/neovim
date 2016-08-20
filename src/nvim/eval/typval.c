@@ -1137,7 +1137,7 @@ int tv_dict_add_list(dict_T *const d, const char *const key,
                      const size_t key_len, list_T *const list)
   FUNC_ATTR_NONNULL_ALL
 {
-  dictitem_T *item = tv_dict_item_alloc_len(key, key_len);
+  dictitem_T *const item = tv_dict_item_alloc_len(key, key_len);
 
   item->di_tv.v_lock = VAR_UNLOCKED;
   item->di_tv.v_type = VAR_LIST;
@@ -1147,6 +1147,54 @@ int tv_dict_add_list(dict_T *const d, const char *const key,
     return FAIL;
   }
   list->lv_refcount++;
+  return OK;
+}
+
+/// Add a number entry to dictionary
+///
+/// @param[out]  d  Dictionary to add entry to.
+/// @param[in]  key  Key to add.
+/// @param[in]  key_len  Key length.
+/// @param[in]  nr  Number to add.
+///
+/// @return OK in case of success, FAIL when key already exists.
+int tv_dict_add_nr(dict_T *const d, const char *const key,
+                   const size_t key_len, const varnumber_T nr)
+{
+  dictitem_T  *const item = tv_dict_item_alloc_len(key, key_len);
+
+  item->di_tv.v_lock = VAR_UNLOCKED;
+  item->di_tv.v_type = VAR_NUMBER;
+  item->di_tv.vval.v_number = nr;
+  if (tv_dict_add(d, item) == FAIL) {
+    tv_dict_item_free(item);
+    return FAIL;
+  }
+  return OK;
+}
+
+/// Add a string entry to dictionary
+///
+/// @param[out]  d  Dictionary to add entry to.
+/// @param[in]  key  Key to add.
+/// @param[in]  key_len  Key length.
+/// @param[in]  val  String to add.
+///
+/// @return OK in case of success, FAIL when key already exists.
+int tv_dict_add_str(dict_T *const d,
+                    const char *const key, const size_t key_len,
+                    const char *const val)
+  FUNC_ATTR_NONNULL_ALL
+{
+  dictitem_T  *const item = tv_dict_item_alloc_len(key, key_len);
+
+  item->di_tv.v_lock = VAR_UNLOCKED;
+  item->di_tv.v_type = VAR_STRING;
+  item->di_tv.vval.v_string = (char_u *)xstrdup(val);
+  if (tv_dict_add(d, item) == FAIL) {
+    tv_dict_item_free(item);
+    return FAIL;
+  }
   return OK;
 }
 

@@ -350,9 +350,10 @@ int pat_has_uppercase(char_u *pat)
   return FALSE;
 }
 
-char_u *last_csearch(void)
+const char *last_csearch(void)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  return lastc_bytes;
+  return (const char *)lastc_bytes;
 }
 
 int last_csearch_forward(void)

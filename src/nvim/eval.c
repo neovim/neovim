@@ -5240,31 +5240,6 @@ static inline bool set_ref_dict(dict_T *dict, int copyID)
   return false;
 }
 
-/*
- * Add a number or string entry to dictionary "d".
- * When "str" is NULL use number "nr", otherwise use "str".
- * Returns FAIL when key already exists.
- */
-int dict_add_nr_str(dict_T *d, char *key, long nr, char_u *str)
-{
-  dictitem_T  *item;
-
-  item = tv_dict_item_alloc(key);
-  item->di_tv.v_lock = 0;
-  if (str == NULL) {
-    item->di_tv.v_type = VAR_NUMBER;
-    item->di_tv.vval.v_number = nr;
-  } else {
-    item->di_tv.v_type = VAR_STRING;
-    item->di_tv.vval.v_string = vim_strsave(str);
-  }
-  if (tv_dict_add(d, item) == FAIL) {
-    tv_dict_item_free(item);
-    return FAIL;
-  }
-  return OK;
-}
-
 /// Find user function with the given name
 ///
 /// @param[in]  name  Function name.
@@ -8331,9 +8306,9 @@ static void f_getcharsearch(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   dict_T *dict = rettv->vval.v_dict;
 
-  dict_add_nr_str(dict, "char", 0L, last_csearch());
-  dict_add_nr_str(dict, "forward", last_csearch_forward(), NULL);
-  dict_add_nr_str(dict, "until", last_csearch_until(), NULL);
+  tv_dict_add_str(dict, S_LEN("char"), last_csearch());
+  tv_dict_add_nr(dict, S_LEN("forward"), last_csearch_forward());
+  tv_dict_add_nr(dict, S_LEN("until"), last_csearch_until());
 }
 
 /*
@@ -8762,17 +8737,18 @@ static void f_getmatches(typval_T *argvars, typval_T *rettv, FunPtr fptr)
         tv_dict_add_list(dict, buf, (size_t)len, l);
       }
     } else {
-      dict_add_nr_str(dict, "pattern", 0L, cur->pattern);
+      tv_dict_add_str(dict, S_LEN("pattern"), (const char *)cur->pattern);
     }
-    dict_add_nr_str(dict, "group", 0L, syn_id2name(cur->hlg_id));
-    dict_add_nr_str(dict, "priority", (long)cur->priority, NULL);
-    dict_add_nr_str(dict, "id", (long)cur->id, NULL);
+    tv_dict_add_str(dict, S_LEN("group"),
+                    (const char *)syn_id2name(cur->hlg_id));
+    tv_dict_add_nr(dict, S_LEN("priority"), (varnumber_T)cur->priority);
+    tv_dict_add_nr(dict, S_LEN("id"), (varnumber_T)cur->id);
 
     if (cur->conceal_char) {
-      char_u buf[MB_MAXBYTES + 1];
+      char buf[MB_MAXBYTES + 1];
 
-      buf[(*mb_char2bytes)((int)cur->conceal_char, buf)] = NUL;
-      dict_add_nr_str(dict, "conceal", 0L, (char_u *)&buf);
+      buf[(*mb_char2bytes)((int)cur->conceal_char, (char_u *)buf)] = NUL;
+      tv_dict_add_str(dict, S_LEN("conceal"), buf);
     }
 
     tv_list_append_dict(rettv->vval.v_list, dict);
@@ -10835,15 +10811,15 @@ static void get_maparg(typval_T *argvars, typval_T *rettv, int exact)
       char *const mapmode = map_mode_to_chars(mp->m_mode);
       dict_T      *dict = rettv->vval.v_dict;
 
-      dict_add_nr_str(dict, "lhs",     0L, lhs);
-      dict_add_nr_str(dict, "rhs",     0L, mp->m_orig_str);
-      dict_add_nr_str(dict, "noremap", mp->m_noremap ? 1L : 0L, NULL);
-      dict_add_nr_str(dict, "expr",    mp->m_expr    ? 1L : 0L, NULL);
-      dict_add_nr_str(dict, "silent",  mp->m_silent  ? 1L : 0L, NULL);
-      dict_add_nr_str(dict, "sid",     (long)mp->m_script_ID, NULL);
-      dict_add_nr_str(dict, "buffer",  (long)buffer_local, NULL);
-      dict_add_nr_str(dict, "nowait",  mp->m_nowait  ? 1L : 0L, NULL);
-      dict_add_nr_str(dict, "mode",    0L, (char_u *)mapmode);
+      tv_dict_add_str(dict, S_LEN("lhs"), (const char *)lhs);
+      tv_dict_add_str(dict, S_LEN("rhs"), (const char *)mp->m_orig_str);
+      tv_dict_add_nr(dict, S_LEN("noremap"), mp->m_noremap ? 1 : 0);
+      tv_dict_add_nr(dict, S_LEN("expr"),  mp->m_expr ? 1 : 0);
+      tv_dict_add_nr(dict, S_LEN("silent"), mp->m_silent ? 1 : 0);
+      tv_dict_add_nr(dict, S_LEN("sid"), (varnumber_T)mp->m_script_ID);
+      tv_dict_add_nr(dict, S_LEN("buffer"), (varnumber_T)buffer_local);
+      tv_dict_add_nr(dict, S_LEN("nowait"), mp->m_nowait ? 1 : 0);
+      tv_dict_add_str(dict, S_LEN("mode"), mapmode);
 
       xfree(lhs);
       xfree(mapmode);
@@ -15553,13 +15529,13 @@ static void f_undotree(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   dict_T *dict = rettv->vval.v_dict;
   list_T *list;
 
-  dict_add_nr_str(dict, "synced", (long)curbuf->b_u_synced, NULL);
-  dict_add_nr_str(dict, "seq_last", curbuf->b_u_seq_last, NULL);
-  dict_add_nr_str(dict, "save_last",
-      (long)curbuf->b_u_save_nr_last, NULL);
-  dict_add_nr_str(dict, "seq_cur", curbuf->b_u_seq_cur, NULL);
-  dict_add_nr_str(dict, "time_cur", (long)curbuf->b_u_time_cur, NULL);
-  dict_add_nr_str(dict, "save_cur", (long)curbuf->b_u_save_nr_cur, NULL);
+  tv_dict_add_nr(dict, S_LEN("synced"), (varnumber_T)curbuf->b_u_synced);
+  tv_dict_add_nr(dict, S_LEN("seq_last"), (varnumber_T)curbuf->b_u_seq_last);
+  tv_dict_add_nr(dict, S_LEN("save_last"),
+                 (varnumber_T)curbuf->b_u_save_nr_last);
+  tv_dict_add_nr(dict, S_LEN("seq_cur"), (varnumber_T)curbuf->b_u_seq_cur);
+  tv_dict_add_nr(dict, S_LEN("time_cur"), (varnumber_T)curbuf->b_u_time_cur);
+  tv_dict_add_nr(dict, S_LEN("save_cur"), (varnumber_T)curbuf->b_u_save_nr_cur);
 
   list = tv_list_alloc();
   u_eval_tree(curbuf->b_u_oldhead, list);
@@ -15792,16 +15768,16 @@ static void f_winsaveview(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   tv_dict_alloc_ret(rettv);
   dict = rettv->vval.v_dict;
 
-  dict_add_nr_str(dict, "lnum", (long)curwin->w_cursor.lnum, NULL);
-  dict_add_nr_str(dict, "col", (long)curwin->w_cursor.col, NULL);
-  dict_add_nr_str(dict, "coladd", (long)curwin->w_cursor.coladd, NULL);
+  tv_dict_add_nr(dict, S_LEN("lnum"), (varnumber_T)curwin->w_cursor.lnum);
+  tv_dict_add_nr(dict, S_LEN("col"), (varnumber_T)curwin->w_cursor.col);
+  tv_dict_add_nr(dict, S_LEN("coladd"), (varnumber_T)curwin->w_cursor.coladd);
   update_curswant();
-  dict_add_nr_str(dict, "curswant", (long)curwin->w_curswant, NULL);
+  tv_dict_add_nr(dict, S_LEN("curswant"), (varnumber_T)curwin->w_curswant);
 
-  dict_add_nr_str(dict, "topline", (long)curwin->w_topline, NULL);
-  dict_add_nr_str(dict, "topfill", (long)curwin->w_topfill, NULL);
-  dict_add_nr_str(dict, "leftcol", (long)curwin->w_leftcol, NULL);
-  dict_add_nr_str(dict, "skipcol", (long)curwin->w_skipcol, NULL);
+  tv_dict_add_nr(dict, S_LEN("topline"), (varnumber_T)curwin->w_topline);
+  tv_dict_add_nr(dict, S_LEN("topfill"), (varnumber_T)curwin->w_topfill);
+  tv_dict_add_nr(dict, S_LEN("leftcol"), (varnumber_T)curwin->w_leftcol);
+  tv_dict_add_nr(dict, S_LEN("skipcol"), (varnumber_T)curwin->w_skipcol);
 }
 
 /// Writes list of strings to file
