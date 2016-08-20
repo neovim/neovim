@@ -1,8 +1,3 @@
-" Dictionary of all health check functions we have found.
-" They will only be run if the value is true
-let g:health_checkers = get(g:, 'health_checkers', {})
-let s:current_checker = get(s:, 'current_checker', '')
-
 function! s:enhance_syntax() abort
   syntax keyword healthError ERROR
   highlight link healthError Error
@@ -51,7 +46,7 @@ function! health#check(plugin_names) abort
     endfor
   endif
 
-  new
+  tabnew
   setlocal bufhidden=wipe
   set filetype=markdown
   call s:enhance_syntax()
@@ -125,62 +120,6 @@ function! health#report_error(msg, ...) abort " {{{
     echo s:format_report_message('ERROR', a:msg, a:1)
   else
     echo s:format_report_message('ERROR', a:msg)
-  endif
-endfunction " }}}
-
-" Adds a health checker. Does nothing if the checker already exists.
-function! s:add_single_checker(checker_name) abort " {{{
-  if has_key(g:health_checkers, a:checker_name)
-    return
-  else
-      let g:health_checkers[a:checker_name] = v:true
-  endif
-endfunction " }}}
-
-" Enables a health checker.
-function! s:enable_single_checker(checker_name) abort " {{{
-  let g:health_checkers[a:checker_name] = v:true
-endfunction " }}}
-
-" Disables a health checker.
-function! s:disable_single_checker(checker_name) abort " {{{
-  let g:health_checkers[a:checker_name] = v:false
-endfunction " }}}
-
-
-" Adds a health checker. `checker_name` can be a list of strings or
-" a single string. Does nothing if the checker already exists.
-function! health#add_checker(checker_name) abort " {{{
-  if type(a:checker_name) == type('')
-    call s:add_single_checker(a:checker_name)
-  elseif type(a:checker_name) == type([])
-    for checker in a:checker_name
-      call s:add_single_checker(checker)
-    endfor
-  endif
-endfunction " }}}
-
-" Enables a health checker. `checker_name` can be a list of strings or
-" a single string.
-function! health#enable_checker(checker_name) abort " {{{
-  if type(a:checker_name) == type('')
-    call s:enable_single_checker(a:checker_name)
-  elseif type(a:checker_name) == type([])
-    for checker in a:checker_name
-      call s:enable_single_checker(checker)
-    endfor
-  endif
-endfunction " }}}
-
-" Disables a health checker. `checker_name` can be a list of strings or
-" a single string.
-function! health#disable_checker(checker_name) abort " {{{
-  if type(a:checker_name) == type('')
-    call s:disable_single_checker(a:checker_name)
-  elseif type(a:checker_name) == type([])
-    for checker in a:checker_name
-      call s:disable_single_checker(checker)
-    endfor
   endif
 endfunction " }}}
 
