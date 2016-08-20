@@ -282,7 +282,7 @@ void restore_search_patterns(void)
 static inline void free_spat(struct spat *const spat)
 {
   xfree(spat->pat);
-  dict_unref(spat->additional_data);
+  tv_dict_unref(spat->additional_data);
 }
 
 #if defined(EXITFREE)
@@ -1284,10 +1284,11 @@ int search_for_exact_line(buf_T *buf, pos_T *pos, int dir, char_u *pat)
      * ignored because we are interested in the next line -- Acevedo */
     if ((compl_cont_status & CONT_ADDING)
         && !(compl_cont_status & CONT_SOL)) {
-      if ((p_ic ? mb_stricmp(p, pat) : STRCMP(p, pat)) == 0)
+      if (mb_strcmp_ic((bool)p_ic, (const char *)p, (const char *)pat) == 0) {
         return OK;
-    } else if (*p != NUL) {   /* ignore empty lines */
-      /* expanding lines or words */
+      }
+    } else if (*p != NUL) {  // Ignore empty lines.
+      // Expanding lines or words.
       assert(compl_length >= 0);
       if ((p_ic ? mb_strnicmp(p, pat, (size_t)compl_length)
            : STRNCMP(p, pat, compl_length)) == 0)

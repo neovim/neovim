@@ -282,48 +282,63 @@ bool dir_of_file_exists(char_u *fname)
   return retval;
 }
 
-/*
- * Versions of fnamecmp() and fnamencmp() that handle '/' and '\' equally
- * and deal with 'fileignorecase'.
- */
-int vim_fnamecmp(char_u *x, char_u *y)
+/// Compare two file names
+///
+/// Handles '/' and '\\' correctly and deals with &fileignorecase option.
+///
+/// @param[in]  fname1  First file name.
+/// @param[in]  fname2  Second file name.
+///
+/// @return 0 if they are equal, non-zero otherwise.
+int path_fnamecmp(const char *fname1, const char *fname2)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
 #ifdef BACKSLASH_IN_FILENAME
-  return vim_fnamencmp(x, y, MAXPATHL);
+  const size_t len1 = strlen(fname1);
+  const size_t len2 = strlen(fname2);
+  return path_fnamencmp(fname1, fname2, MAX(len1, len2));
 #else
-  if (p_fic)
-    return mb_stricmp(x, y);
-  return STRCMP(x, y);
+  return mb_strcmp_ic((bool)p_fic, fname1, fname2);
 #endif
 }
 
-int vim_fnamencmp(char_u *x, char_u *y, size_t len)
+/// Compare two file names
+///
+/// Handles '/' and '\\' correctly and deals with &fileignorecase option.
+///
+/// @param[in]  fname1  First file name.
+/// @param[in]  fname2  Second file name.
+/// @param[in]  len  Compare at most len bytes.
+///
+/// @return 0 if they are equal, non-zero otherwise.
+int path_fnamencmp(const char *const fname1, const char *const fname2,
+                   const size_t len)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
 #ifdef BACKSLASH_IN_FILENAME
-  char_u      *px = x;
-  char_u      *py = y;
-  int cx = NUL;
-  int cy = NUL;
+  int c1 = NUL;
+  int c2 = NUL;
 
+  const char *p1 = fname1;
+  const char *p2 = fname2;
   while (len > 0) {
-    cx = PTR2CHAR(px);
-    cy = PTR2CHAR(py);
-    if (cx == NUL || cy == NUL
-        || ((p_fic ? vim_tolower(cx) != vim_tolower(cy) : cx != cy)
-            && !(cx == '/' && cy == '\\')
-            && !(cx == '\\' && cy == '/')))
+    c1 = PTR2CHAR(p1);
+    c2 = PTR2CHAR(p2);
+    if (c1 == NUL || c2 == NUL
+        || (!((c1 == '/' || c1 == '\\') && (c2 == '\\' || c2 == '/')))
+            && (p_fic ? (c1 != c2 && ch_fold(c1) != ch_fold(c2)) : c1 != c2)) {
       break;
-    len -= MB_PTR2LEN(px);
-    px += MB_PTR2LEN(px);
-    py += MB_PTR2LEN(py);
+    }
+    len -= MB_PTR2LEN(p1);
+    p1 += MB_PTR2LEN(p1);
+    p2 += MB_PTR2LEN(p2);
   }
-  if (len == 0)
-    return 0;
-  return cx - cy;
+  return c1 - c2;
 #else
-  if (p_fic)
-    return mb_strnicmp(x, y, len);
-  return STRNCMP(x, y, len);
+  if (p_fic) {
+    return mb_strnicmp((const char_u *)fname1, (const char_u *)fname2, len);
+  }
+  return strncmp(fname1, fname2, len);
 #endif
 }
 

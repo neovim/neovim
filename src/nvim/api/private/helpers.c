@@ -20,6 +20,7 @@
 #include "nvim/option_defs.h"
 #include "nvim/version.h"
 #include "nvim/eval/typval_encode.h"
+#include "nvim/eval/typval.h"
 #include "nvim/lib/kvec.h"
 
 /// Helper structure for vim_to_object
@@ -88,14 +89,13 @@ bool try_end(Error *err)
 /// @param[out] err Details of an error that may have occurred
 Object dict_get_value(dict_T *dict, String key, Error *err)
 {
-  hashitem_T *hi = hash_find(&dict->dv_hashtab, (char_u *)key.data);
+  dictitem_T *const di = tv_dict_find(dict, key.data, (ptrdiff_t)key.size);
 
-  if (HASHITEM_EMPTY(hi)) {
+  if (di == NULL) {
     api_set_error(err, Validation, _("Key not found"));
     return (Object) OBJECT_INIT;
   }
 
-  dictitem_T *di = dict_lookup(hi);
   return vim_to_object(&di->di_tv);
 }
 
@@ -130,7 +130,7 @@ Object dict_set_value(dict_T *dict, String key, Object value, bool del,
     return rv;
   }
 
-  dictitem_T *di = dict_find(dict, (uint8_t *)key.data, (int)key.size);
+  dictitem_T *di = tv_dict_find(dict, key.data, (ptrdiff_t)key.size);
 
   if (del) {
     // Delete the key
@@ -143,9 +143,7 @@ Object dict_set_value(dict_T *dict, String key, Object value, bool del,
         rv = vim_to_object(&di->di_tv);
       }
       // Delete the entry
-      hashitem_T *hi = hash_find(&dict->dv_hashtab, di->di_key);
-      hash_remove(&dict->dv_hashtab, hi);
-      dictitem_free(di);
+      tv_dict_item_remove(dict, di);
     }
   } else {
     // Update the key
@@ -158,8 +156,8 @@ Object dict_set_value(dict_T *dict, String key, Object value, bool del,
 
     if (di == NULL) {
       // Need to create an entry
-      di = dictitem_alloc((uint8_t *) key.data);
-      dict_add(dict, di);
+      di = tv_dict_item_alloc_len(key.data, key.size);
+      tv_dict_add(dict, di);
     } else {
       // Return the old value
       if (retval) {
@@ -665,7 +663,7 @@ bool object_to_vim(Object obj, typval_T *tv, Error *err)
     }
 
     case kObjectTypeDictionary: {
-      dict_T *dict = dict_alloc();
+      dict_T *const dict = tv_dict_alloc();
 
       for (uint32_t i = 0; i < obj.data.dictionary.size; i++) {
         KeyValuePair item = obj.data.dictionary.items[i];
@@ -675,20 +673,20 @@ bool object_to_vim(Object obj, typval_T *tv, Error *err)
           api_set_error(err, Validation,
                         _("Empty dictionary keys aren't allowed"));
           // cleanup
-          dict_free(dict, true);
+          tv_dict_free(dict, true);
           return false;
         }
 
-        dictitem_T *di = dictitem_alloc((uint8_t *)key.data);
+        dictitem_T *const di = tv_dict_item_alloc(key.data);
 
         if (!object_to_vim(item.value, &di->di_tv, err)) {
           // cleanup
-          dictitem_free(di);
-          dict_free(dict, true);
+          tv_dict_item_free(di);
+          tv_dict_free(dict, true);
           return false;
         }
 
-        dict_add(dict, di);
+        tv_dict_add(dict, di);
       }
       dict->dv_refcount++;
 
@@ -919,11 +917,7 @@ static void set_option_value_err(char *key,
 {
   char *errmsg;
 
-  if ((errmsg = (char *)set_option_value((uint8_t *)key,
-                                         numval,
-                                         (uint8_t *)stringval,
-                                         opt_flags)))
-  {
+  if ((errmsg = set_option_value(key, numval, stringval, opt_flags))) {
     if (try_end(err)) {
       return;
     }

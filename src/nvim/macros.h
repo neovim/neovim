@@ -19,6 +19,15 @@
 # define MAX(X, Y) ((X) > (Y) ? (X) : (Y))
 #endif
 
+/// String with length
+///
+/// For use in functions which accept (char *s, size_t len) pair in arguments.
+///
+/// @param[in]  s  Static string.
+///
+/// @return `s, sizeof(s) - 1`
+#define S_LEN(s) (s), (sizeof(s) - 1)
+
 /*
  * Position comparisons
  */

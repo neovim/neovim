@@ -236,11 +236,11 @@ Terminal *terminal_open(TerminalOptions opts)
   rv->invalid_start = 0;
   rv->invalid_end = opts.height;
   refresh_screen(rv, curbuf);
-  set_option_value((uint8_t *)"buftype", 0, (uint8_t *)"terminal", OPT_LOCAL);
+  set_option_value("buftype", 0, "terminal", OPT_LOCAL);
   // some sane settings for terminal buffers
-  set_option_value((uint8_t *)"wrap", false, NULL, OPT_LOCAL);
-  set_option_value((uint8_t *)"number", false, NULL, OPT_LOCAL);
-  set_option_value((uint8_t *)"relativenumber", false, NULL, OPT_LOCAL);
+  set_option_value("wrap", false, NULL, OPT_LOCAL);
+  set_option_value("number", false, NULL, OPT_LOCAL);
+  set_option_value("relativenumber", false, NULL, OPT_LOCAL);
   buf_set_term_title(curbuf, (char *)curbuf->b_ffname);
   RESET_BINDING(curwin);
   // Apply TermOpen autocmds so the user can configure the terminal

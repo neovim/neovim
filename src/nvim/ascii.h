@@ -8,9 +8,11 @@
 
 // Definitions of various common control characters.
 
-#define CharOrd(x)      ((x) < 'a' ? (x) - 'A' : (x) - 'a')
-#define CharOrdLow(x)   ((x) - 'a')
-#define CharOrdUp(x)    ((x) - 'A')
+#define CharOrd(x)      ((uint8_t)(x) < 'a' \
+                         ? (uint8_t)(x) - 'A'\
+                         : (uint8_t)(x) - 'a')
+#define CharOrdLow(x)   ((uint8_t)(x) - 'a')
+#define CharOrdUp(x)    ((uint8_t)(x) - 'A')
 #define ROT13(c, a)     (((((c) - (a)) + 13) % 26) + (a))
 
 #define NUL             '\000'

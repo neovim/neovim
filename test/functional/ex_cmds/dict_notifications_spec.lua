@@ -56,7 +56,7 @@ describe('dictionary change notifications', function()
       before_each(function()
         source([[
         function! g:Changed(dict, key, value)
-          if a:dict != ]]..dict_expr..[[ |
+          if a:dict isnot ]]..dict_expr..[[ |
             throw 'invalid dict'
           endif
           call rpcnotify(g:channel, 'values', a:key, a:value)
@@ -83,6 +83,17 @@ describe('dictionary change notifications', function()
         update('.= "noop2"', 'unwatched')
         update('', 'unwatched')
         verify_echo()
+      end)
+
+      it('does not allow callback function to be removed or replaced', function()
+        eq('Vim(delfunction):Cannot delete function g:Changed: It is being used internally',
+           exc_exec('delfunction g:Changed'))
+        eq('Vim(function):E127: Cannot redefine function Changed: It is in use',
+           exc_exec([[execute "function! g:Changed()\nendfunction"]]))
+        update('= "test"')
+        verify_value({new = 'test'})
+        nvim('command', 'call remove('..dict_expr..', "watched")')
+        verify_value({old = 'test'})
       end)
 
       it('is triggered by remove()', function()

@@ -321,7 +321,7 @@ static long get_undolevel(void)
 static inline void zero_fmark_additional_data(fmark_T *fmarks)
 {
   for (size_t i = 0; i < NMARKS; i++) {
-    dict_unref(fmarks[i].additional_data);
+    tv_dict_unref(fmarks[i].additional_data);
     fmarks[i].additional_data = NULL;
   }
 }
@@ -2902,7 +2902,7 @@ void u_eval_tree(u_header_T *first_uhp, list_T *list)
   dict_T      *dict;
 
   while (uhp != NULL) {
-    dict = dict_alloc();
+    dict = tv_dict_alloc();
     dict_add_nr_str(dict, "seq", uhp->uh_seq, NULL);
     dict_add_nr_str(dict, "time", (long)uhp->uh_time, NULL);
     if (uhp == curbuf->b_u_newhead)

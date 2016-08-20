@@ -5142,8 +5142,8 @@ static int ex_window(void)
   /* Create the command-line buffer empty. */
   (void)do_ecmd(0, NULL, NULL, NULL, ECMD_ONE, ECMD_HIDE, NULL);
   (void)setfname(curbuf, (char_u *)"[Command Line]", NULL, TRUE);
-  set_option_value((char_u *)"bt", 0L, (char_u *)"nofile", OPT_LOCAL);
-  set_option_value((char_u *)"swf", 0L, NULL, OPT_LOCAL);
+  set_option_value("bt", 0L, "nofile", OPT_LOCAL);
+  set_option_value("swf", 0L, NULL, OPT_LOCAL);
   curbuf->b_p_ma = TRUE;
   curwin->w_p_fen = FALSE;
   curwin->w_p_rl = cmdmsg_rl;
@@ -5162,7 +5162,7 @@ static int ex_window(void)
       add_map((char_u *)"<buffer> <Tab> <C-X><C-V>", INSERT);
       add_map((char_u *)"<buffer> <Tab> a<C-X><C-V>", NORMAL);
     }
-    set_option_value((char_u *)"ft", 0L, (char_u *)"vim", OPT_LOCAL);
+    set_option_value("ft", 0L, "vim", OPT_LOCAL);
   }
 
   /* Reset 'textwidth' after setting 'filetype' (the Vim filetype plugin

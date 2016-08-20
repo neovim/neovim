@@ -1888,9 +1888,8 @@ static int vgetorpeek(int advance)
                          (size_t)(mlen - typebuf.tb_maplen));
               }
 
-              del_typebuf(mlen, 0);               /* remove the chars */
-              set_option_value((char_u *)"paste",
-                  (long)!p_paste, NULL, 0);
+              del_typebuf(mlen, 0);  // Remove the chars.
+              set_option_value("paste", !p_paste, NULL, 0);
               if (!(State & INSERT)) {
                 msg_col = 0;
                 msg_row = (int)Rows - 1;

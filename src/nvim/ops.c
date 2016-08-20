@@ -887,7 +887,7 @@ static void set_yreg_additional_data(yankreg_T *reg, dict_T *additional_data)
   if (reg->additional_data == additional_data) {
     return;
   }
-  dict_unref(reg->additional_data);
+  tv_dict_unref(reg->additional_data);
   reg->additional_data = additional_data;
 }
 

@@ -1,20 +1,18 @@
 #ifndef NVIM_EVAL_H
 #define NVIM_EVAL_H
 
-#include "nvim/profile.h"
 #include "nvim/hashtab.h"  // For hashtab_T
-#include "nvim/garray.h"  // For garray_T
 #include "nvim/buffer_defs.h"  // For scid_T
 #include "nvim/ex_cmds_defs.h"  // For exarg_T
+#include "nvim/eval/typval.h"
+#include "nvim/profile.h"
+#include "nvim/garray.h"
 
 #define COPYID_INC 2
 #define COPYID_MASK (~0x1)
 
 // All user-defined functions are found in this hashtable.
 extern hashtab_T func_hashtab;
-
-// Structure to hold info for a user function.
-typedef struct ufunc ufunc_T;
 
 struct ufunc {
   int          uf_varargs;       ///< variable nr of arguments

@@ -2,8 +2,10 @@
 #define NVIM_MBYTE_H
 
 #include <stdbool.h>
+#include <string.h>
 
 #include "nvim/iconv.h"
+#include "nvim/func_attr.h"
 
 /*
  * Return byte length of character that starts with byte "b".
@@ -66,4 +68,17 @@ typedef struct {
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "mbyte.h.generated.h"
 #endif
+
+static inline int mb_strcmp_ic(bool ic, const char *s1, const char *s2)
+  REAL_FATTR_NONNULL_ALL REAL_FATTR_PURE REAL_FATTR_WARN_UNUSED_RESULT;
+
+/// Compare strings
+///
+/// @param[in]  ic  True if case is to be ignored.
+///
+/// @return 0 if s1 == s2, <0 if s1 < s2, >0 if s1 > s2.
+static inline int mb_strcmp_ic(bool ic, const char *s1, const char *s2)
+{
+  return (ic ? mb_stricmp(s1, s2) : strcmp(s1, s2));
+}
 #endif  // NVIM_MBYTE_H

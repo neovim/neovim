@@ -356,15 +356,15 @@ char *xstpncpy(char *restrict dst, const char *restrict src, size_t maxlen)
 size_t xstrlcpy(char *restrict dst, const char *restrict src, size_t size)
   FUNC_ATTR_NONNULL_ALL
 {
-    size_t ret = strlen(src);
+  size_t ret = strlen(src);
 
-    if (size) {
-        size_t len = (ret >= size) ? size - 1 : ret;
-        memcpy(dst, src, len);
-        dst[len] = '\0';
-    }
+  if (size) {
+    size_t len = (ret >= size) ? size - 1 : ret;
+    memcpy(dst, src, len);
+    dst[len] = '\0';
+  }
 
-    return ret;
+  return ret;
 }
 
 /// strdup() wrapper

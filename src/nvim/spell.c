@@ -7940,8 +7940,6 @@ spell_add_word (
 // Initialize 'spellfile' for the current buffer.
 static void init_spellfile(void)
 {
-  char_u      *buf;
-  int l;
   char_u      *fname;
   char_u      *rtp;
   char_u      *lend;
@@ -7949,7 +7947,7 @@ static void init_spellfile(void)
   char_u      *lstart = curbuf->b_s.b_p_spl;
 
   if (*curwin->w_s->b_p_spl != NUL && !GA_EMPTY(&curwin->w_s->b_langp)) {
-    buf = xmalloc(MAXPATHL);
+    char *const buf = xmalloc(MAXPATHL);
 
     // Find the end of the language name.  Exclude the region.  If there
     // is a path separator remember the start of the tail.
@@ -7964,40 +7962,40 @@ static void init_spellfile(void)
     // are allowed to write.
     rtp = p_rtp;
     while (*rtp != NUL) {
-      if (aspath)
+      if (aspath) {
         // Use directory of an entry with path, e.g., for
         // "/dir/lg.utf-8.spl" use "/dir".
-        STRLCPY(buf, curbuf->b_s.b_p_spl,
-            lstart - curbuf->b_s.b_p_spl);
-      else
+        STRLCPY(buf, curbuf->b_s.b_p_spl, lstart - curbuf->b_s.b_p_spl);
+      } else {
         // Copy the path from 'runtimepath' to buf[].
-        copy_option_part(&rtp, buf, MAXPATHL, ",");
-      if (os_file_is_writable((char *)buf) == 2) {
+        copy_option_part(&rtp, (char_u *)buf, MAXPATHL, ",");
+      }
+      if (os_file_is_writable(buf) == 2) {
+        size_t l;
         // Use the first language name from 'spelllang' and the
         // encoding used in the first loaded .spl file.
-        if (aspath)
-          STRLCPY(buf, curbuf->b_s.b_p_spl,
-              lend - curbuf->b_s.b_p_spl + 1);
-        else {
+        if (aspath) {
+          STRLCPY(buf, curbuf->b_s.b_p_spl, lend - curbuf->b_s.b_p_spl + 1);
+        } else {
           // Create the "spell" directory if it doesn't exist yet.
-          l = (int)STRLEN(buf);
-          vim_snprintf((char *)buf + l, MAXPATHL - l, "/spell");
-          if (os_file_is_writable((char *)buf) != 2) {
-            os_mkdir((char *)buf, 0755);
+          l = strlen(buf);
+          vim_snprintf(buf + l, MAXPATHL - l, "/spell");
+          if (os_file_is_writable(buf) != 2) {
+            os_mkdir(buf, 0755);
           }
 
-          l = (int)STRLEN(buf);
-          vim_snprintf((char *)buf + l, MAXPATHL - l,
-              "/%.*s", (int)(lend - lstart), lstart);
+          l = strlen(buf);
+          vim_snprintf(buf + l, MAXPATHL - l, "/%.*s",
+                       (int)(lend - lstart), lstart);
         }
-        l = (int)STRLEN(buf);
-        fname = LANGP_ENTRY(curwin->w_s->b_langp, 0)
-                ->lp_slang->sl_fname;
-        vim_snprintf((char *)buf + l, MAXPATHL - l, ".%s.add",
-            fname != NULL
-            && strstr((char *)path_tail(fname), ".ascii.") != NULL
-            ? (char_u *)"ascii" : spell_enc());
-        set_option_value((char_u *)"spellfile", 0L, buf, OPT_LOCAL);
+        l = strlen(buf);
+        fname = LANGP_ENTRY(curwin->w_s->b_langp, 0)->lp_slang->sl_fname;
+        vim_snprintf(buf + l, MAXPATHL - l, ".%s.add",
+                     (fname != NULL
+                      && (strstr((char *)path_tail(fname), ".ascii.") != NULL
+                          ? (char_u *)"ascii"
+                          : spell_enc())));
+        set_option_value("spellfile", 0L, buf, OPT_LOCAL);
         break;
       }
       aspath = false;
@@ -13027,16 +13025,17 @@ void ex_spelldump(exarg_T *eap)
   char_u  *spl;
   long dummy;
 
-  if (no_spell_checking(curwin))
+  if (no_spell_checking(curwin)) {
     return;
+  }
   get_option_value((char_u*)"spl", &dummy, &spl, OPT_LOCAL);
 
   // Create a new empty buffer in a new window.
   do_cmdline_cmd("new");
 
   // enable spelling locally in the new window
-  set_option_value((char_u*)"spell", true, (char_u*)"", OPT_LOCAL);
-  set_option_value((char_u*)"spl",  dummy, spl, OPT_LOCAL);
+  set_option_value("spell", true, "", OPT_LOCAL);
+  set_option_value("spl",  dummy, (char *)spl, OPT_LOCAL);
   xfree(spl);
 
   if (!bufempty() || !buf_valid(curbuf))

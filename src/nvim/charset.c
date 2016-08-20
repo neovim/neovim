@@ -1710,6 +1710,23 @@ int vim_tolower(int c)
   return TOLOWER_LOC(c);
 }
 
+/// Return the folded-case equivalent of the given character
+///
+/// With UTF-8 encoding uses utf_fold, otherwise just vim_tolower.
+///
+/// @param[in]  c  Character to transform.
+///
+/// @return Folded variant.
+int ch_fold(int c)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  if (enc_utf8) {
+    return utf_fold(c);
+  } else {
+    return vim_tolower(c);
+  }
+}
+
 /// skiptowhite: skip over text until ' ' or '\t' or NUL.
 ///
 /// @param p

@@ -149,17 +149,17 @@ local lua2typvalt_type_tab = {
       processed[l].dv_refcount = processed[l].dv_refcount + 1
       return typvalt(eval.VAR_DICT, {v_dict=processed[l]})
     end
-    local dct = eval.dict_alloc()
+    local dct = eval.tv_dict_alloc()
     dct.dv_refcount = 1
     processed[l] = dct
     local ret = typvalt(eval.VAR_DICT, {v_dict=dct})
     for k, v in pairs(l) do
       if type(k) == 'string' then
-        local di = eval.dictitem_alloc(to_cstr(k))
+        local di = eval.tv_dict_item_alloc(to_cstr(k))
         local val_tv = ffi.gc(lua2typvalt(v, processed), nil)
         eval.copy_tv(val_tv, di.di_tv)
         eval.tv_clear(val_tv)
-        eval.dict_add(dct, di)
+        eval.tv_dict_add(dct, di)
       end
     end
     return ret

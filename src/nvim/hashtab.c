@@ -80,7 +80,7 @@ void hash_clear_all(hashtab_T *ht, unsigned int off)
 ///         used for that key.
 ///         WARNING: Returned pointer becomes invalid as soon as the hash table
 ///                  is changed in any way.
-hashitem_T *hash_find(hashtab_T *ht, const char_u *key)
+hashitem_T *hash_find(const hashtab_T *const ht, const char_u *const key)
 {
   return hash_lookup(ht, (const char *)key, STRLEN(key), hash_hash(key));
 }
@@ -97,7 +97,8 @@ hashitem_T *hash_find(hashtab_T *ht, const char_u *key)
 ///
 ///         @warning Returned pointer becomes invalid as soon as the hash table
 ///                  is changed in any way.
-hashitem_T *hash_find_len(hashtab_T *ht, const char *key, const size_t len)
+hashitem_T *hash_find_len(const hashtab_T *const ht, const char *const key,
+                          const size_t len)
 {
   return hash_lookup(ht, key, len, hash_hash_len(key, len));
 }
@@ -113,7 +114,7 @@ hashitem_T *hash_find_len(hashtab_T *ht, const char *key, const size_t len)
 ///         used for that key.
 ///         WARNING: Returned pointer becomes invalid as soon as the hash table
 ///                  is changed in any way.
-hashitem_T *hash_lookup(hashtab_T *const ht,
+hashitem_T *hash_lookup(const hashtab_T *const ht,
                         const char *const key, const size_t key_len,
                         const hash_T hash)
 {
