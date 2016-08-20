@@ -51,22 +51,7 @@ Error: configure did not run properly.Check auto/config.log.
 
 /* ================ end of the header file puzzle =============== */
 
-#ifdef HAVE_WORKING_LIBINTL
-#  include <libintl.h>
-#  define _(x) gettext((char *)(x))
-// XXX do we actually need this?
-#  ifdef gettext_noop
-#    define N_(x) gettext_noop(x)
-#  else
-#    define N_(x) x
-#  endif
-#else
-#  define _(x) ((char *)(x))
-#  define N_(x) x
-#  define bindtextdomain(x, y) /* empty */
-#  define bind_textdomain_codeset(x, y) /* empty */
-#  define textdomain(x) /* empty */
-#endif
+#include "nvim/gettext.h"
 
 /* special attribute addition: Put message in history */
 #define MSG_HIST                0x1000

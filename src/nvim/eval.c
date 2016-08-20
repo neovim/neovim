@@ -6473,24 +6473,6 @@ static int non_zero_arg(typval_T *argvars)
  */
 
 
-/*
- * Get the float value of "argvars[0]" into "f".
- * Returns FAIL when the argument is not a Number or Float.
- */
-static inline int get_float_arg(typval_T *argvars, float_T *f)
-{
-  if (argvars[0].v_type == VAR_FLOAT) {
-    *f = argvars[0].vval.v_float;
-    return OK;
-  }
-  if (argvars[0].v_type == VAR_NUMBER) {
-    *f = (float_T)argvars[0].vval.v_number;
-    return OK;
-  }
-  EMSG(_("E808: Number or Float required"));
-  return FAIL;
-}
-
 // Apply a floating point C function on a typval with one float_T.
 //
 // Some versions of glibc on i386 have an optimization that makes it harder to
@@ -6502,7 +6484,7 @@ static void float_op_wrapper(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   float_T (*function)(float_T) = (float_T (*)(float_T))fptr;
 
   rettv->v_type = VAR_FLOAT;
-  if (get_float_arg(argvars, &f) == OK) {
+  if (tv_get_float(argvars, &f)) {
     rettv->vval.v_float = function(f);
   } else {
     rettv->vval.v_float = 0.0;
@@ -6957,14 +6939,15 @@ static void f_assert_true(typval_T *argvars, typval_T *rettv, FunPtr fptr)
  */
 static void f_atan2(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  float_T fx, fy;
+  float_T fx;
+  float_T fy;
 
   rettv->v_type = VAR_FLOAT;
-  if (get_float_arg(argvars, &fx) == OK
-      && get_float_arg(&argvars[1], &fy) == OK)
+  if (tv_get_float(argvars, &fx) && tv_get_float(&argvars[1], &fy)) {
     rettv->vval.v_float = atan2(fx, fy);
-  else
+  } else {
     rettv->vval.v_float = 0.0;
+  }
 }
 
 /*
@@ -8557,13 +8540,14 @@ static void f_float2nr(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   float_T f;
 
-  if (get_float_arg(argvars, &f) == OK) {
-    if (f < -0x7fffffff)
-      rettv->vval.v_number = -0x7fffffff;
-    else if (f > 0x7fffffff)
-      rettv->vval.v_number = 0x7fffffff;
-    else
+  if (tv_get_float(argvars, &f)) {
+    if (f < VARNUMBER_MIN) {
+      rettv->vval.v_number = VARNUMBER_MIN;
+    } else if (f > VARNUMBER_MAX) {
+      rettv->vval.v_number = VARNUMBER_MAX;
+    } else {
       rettv->vval.v_number = (varnumber_T)f;
+    }
   }
 }
 
@@ -8572,14 +8556,15 @@ static void f_float2nr(typval_T *argvars, typval_T *rettv, FunPtr fptr)
  */
 static void f_fmod(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  float_T fx, fy;
+  float_T fx;
+  float_T fy;
 
   rettv->v_type = VAR_FLOAT;
-  if (get_float_arg(argvars, &fx) == OK
-      && get_float_arg(&argvars[1], &fy) == OK)
+  if (tv_get_float(argvars, &fx) && tv_get_float(&argvars[1], &fy)) {
     rettv->vval.v_float = fmod(fx, fy);
-  else
+  } else {
     rettv->vval.v_float = 0.0;
+  }
 }
 
 /*
@@ -12790,14 +12775,15 @@ static void f_pathshorten(typval_T *argvars, typval_T *rettv, FunPtr fptr)
  */
 static void f_pow(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  float_T fx, fy;
+  float_T fx;
+  float_T fy;
 
   rettv->v_type = VAR_FLOAT;
-  if (get_float_arg(argvars, &fx) == OK
-      && get_float_arg(&argvars[1], &fy) == OK)
+  if (tv_get_float(argvars, &fx) && tv_get_float(&argvars[1], &fy)) {
     rettv->vval.v_float = pow(fx, fy);
-  else
+  } else {
     rettv->vval.v_float = 0.0;
+  }
 }
 
 /*
