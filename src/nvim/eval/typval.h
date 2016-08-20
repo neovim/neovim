@@ -4,6 +4,7 @@
 #include <limits.h>
 #include <stddef.h>
 #include <stdbool.h>
+#include <string.h>
 
 #include "nvim/hashtab.h"
 #include "nvim/garray.h"

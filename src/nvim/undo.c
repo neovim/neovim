@@ -2943,19 +2943,22 @@ void u_eval_tree(u_header_T *first_uhp, list_T *list)
 
   while (uhp != NULL) {
     dict = tv_dict_alloc();
-    dict_add_nr_str(dict, "seq", uhp->uh_seq, NULL);
-    dict_add_nr_str(dict, "time", (long)uhp->uh_time, NULL);
-    if (uhp == curbuf->b_u_newhead)
-      dict_add_nr_str(dict, "newhead", 1, NULL);
-    if (uhp == curbuf->b_u_curhead)
-      dict_add_nr_str(dict, "curhead", 1, NULL);
-    if (uhp->uh_save_nr > 0)
-      dict_add_nr_str(dict, "save", uhp->uh_save_nr, NULL);
+    tv_dict_add_nr(dict, S_LEN("seq"), (varnumber_T)uhp->uh_seq);
+    tv_dict_add_nr(dict, S_LEN("time"), (varnumber_T)uhp->uh_time);
+    if (uhp == curbuf->b_u_newhead) {
+      tv_dict_add_nr(dict, S_LEN("newhead"), 1);
+    }
+    if (uhp == curbuf->b_u_curhead) {
+      tv_dict_add_nr(dict, S_LEN("curhead"), 1);
+    }
+    if (uhp->uh_save_nr > 0) {
+      tv_dict_add_nr(dict, S_LEN("save"), (varnumber_T)uhp->uh_save_nr);
+    }
 
     if (uhp->uh_alt_next.ptr != NULL) {
       list_T *alt_list = tv_list_alloc();
 
-      /* Recursive call to add alternate undo tree. */
+      // Recursive call to add alternate undo tree.
       u_eval_tree(uhp->uh_alt_next.ptr, alt_list);
       tv_dict_add_list(dict, S_LEN("alt"), alt_list);
     }

@@ -6971,9 +6971,10 @@ dict_T *get_winbuf_options(const int bufopt)
 
       if (varp != NULL) {
         if (opt->flags & P_STRING) {
-          dict_add_nr_str(d, opt->fullname, 0L, *(char_u **)varp);
+          tv_dict_add_str(d, opt->fullname, strlen(opt->fullname),
+                          *(const char **)varp);
         } else {
-          dict_add_nr_str(d, opt->fullname, *varp, NULL);
+          tv_dict_add_nr(d, opt->fullname, strlen(opt->fullname), *varp);
         }
       }
     }

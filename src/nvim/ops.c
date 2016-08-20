@@ -14,6 +14,7 @@
 #include "nvim/buffer.h"
 #include "nvim/charset.h"
 #include "nvim/cursor.h"
+#include "nvim/assert.h"
 #include "nvim/edit.h"
 #include "nvim/eval.h"
 #include "nvim/eval/typval.h"
@@ -2567,17 +2568,17 @@ static void do_autocmd_textyankpost(oparg_T *oap, yankreg_T *reg)
   // the register type
   char buf[NUMBUFLEN+2];
   format_reg_type(reg->y_type, reg->y_width, buf, ARRAY_SIZE(buf));
-  dict_add_nr_str(dict, "regtype", 0, (char_u *)buf);
+  tv_dict_add_str(dict, S_LEN("regtype"), buf);
 
   // name of requested register or the empty string for an unnamed operation.
   buf[0] = (char)oap->regname;
   buf[1] = NUL;
-  dict_add_nr_str(dict, "regname", 0, (char_u *)buf);
+  tv_dict_add_str(dict, S_LEN("regname"), buf);
 
   // kind of operation (yank/delete/change)
   buf[0] = (char)get_op_char(oap->op_type);
   buf[1] = NUL;
-  dict_add_nr_str(dict, "operator", 0, (char_u *)buf);
+  tv_dict_add_str(dict, S_LEN("operator"), buf);
 
   tv_dict_set_keys_readonly(dict);
   textlock++;
@@ -5484,17 +5485,19 @@ void cursor_pos_info(dict_T *dict)
 
   if (dict != NULL) {
     // Don't shorten this message, the user asked for it.
-    dict_add_nr_str(dict, "words", word_count, NULL);
-    dict_add_nr_str(dict, "chars", char_count, NULL);
-    dict_add_nr_str(dict, "bytes", byte_count + bom_count, NULL);
+    tv_dict_add_nr(dict, S_LEN("words"), (varnumber_T)word_count);
+    tv_dict_add_nr(dict, S_LEN("chars"), (varnumber_T)char_count);
+    tv_dict_add_nr(dict, S_LEN("bytes"), (varnumber_T)(byte_count + bom_count));
 
-    dict_add_nr_str(dict, l_VIsual_active ? "visual_bytes" : "cursor_bytes",
-                    byte_count_cursor, NULL);
-    dict_add_nr_str(dict, l_VIsual_active ? "visual_chars" : "cursor_chars",
-                    char_count_cursor, NULL);
-    dict_add_nr_str(dict, l_VIsual_active ? "visual_words" : "cursor_words",
-                    word_count_cursor, NULL);
-    }
+    STATIC_ASSERT(sizeof("visual") == sizeof("cursor"),
+                  "key_len argument in tv_dict_add_nr is wrong");
+    tv_dict_add_nr(dict, l_VIsual_active ? "visual_bytes" : "cursor_bytes",
+                   sizeof("visual_bytes") - 1, (varnumber_T)byte_count_cursor);
+    tv_dict_add_nr(dict, l_VIsual_active ? "visual_chars" : "cursor_chars",
+                   sizeof("visual_chars") - 1, (varnumber_T)char_count_cursor);
+    tv_dict_add_nr(dict, l_VIsual_active ? "visual_words" : "cursor_words",
+                   sizeof("visual_words") - 1, (varnumber_T)word_count_cursor);
+  }
 }
 
 /// Check if the default register (used in an unnamed paste) should be a

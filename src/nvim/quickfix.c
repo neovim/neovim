@@ -3972,7 +3972,6 @@ static void unload_dummy_buffer(buf_T *buf, char_u *dirname_start)
 int get_errorlist(win_T *wp, int qf_idx, list_T *list)
 {
   qf_info_T   *qi = &ql_info;
-  dict_T      *dict;
   char_u buf[2];
   qfline_T    *qfp;
   int i;
@@ -4000,23 +3999,34 @@ int get_errorlist(win_T *wp, int qf_idx, list_T *list)
     if (bufnum != 0 && (buflist_findnr(bufnum) == NULL))
       bufnum = 0;
 
-    dict = tv_dict_alloc();
+    dict_T *const dict = tv_dict_alloc();
     tv_list_append_dict(list, dict);
 
     buf[0] = qfp->qf_type;
     buf[1] = NUL;
-    if ( dict_add_nr_str(dict, "bufnr", (long)bufnum, NULL) == FAIL
-         || dict_add_nr_str(dict, "lnum",  (long)qfp->qf_lnum, NULL) == FAIL
-         || dict_add_nr_str(dict, "col",   (long)qfp->qf_col, NULL) == FAIL
-         || dict_add_nr_str(dict, "vcol",  (long)qfp->qf_viscol, NULL) == FAIL
-         || dict_add_nr_str(dict, "nr",    (long)qfp->qf_nr, NULL) == FAIL
-         || dict_add_nr_str(dict, "pattern",  0L,
-             qfp->qf_pattern == NULL ? (char_u *)"" : qfp->qf_pattern) == FAIL
-         || dict_add_nr_str(dict, "text",  0L,
-             qfp->qf_text == NULL ? (char_u *)"" : qfp->qf_text) == FAIL
-         || dict_add_nr_str(dict, "type",  0L, buf) == FAIL
-         || dict_add_nr_str(dict, "valid", (long)qfp->qf_valid, NULL) == FAIL)
-      return FAIL;
+    if (tv_dict_add_nr(dict, S_LEN("bufnr"), (varnumber_T)bufnum) == FAIL
+        || (tv_dict_add_nr(dict, S_LEN("lnum"), (varnumber_T)qfp->qf_lnum)
+            == FAIL)
+        || (tv_dict_add_nr(dict, S_LEN("col"), (varnumber_T)qfp->qf_col)
+            == FAIL)
+        || (tv_dict_add_nr(dict, S_LEN("vcol"), (varnumber_T)qfp->qf_viscol)
+            == FAIL)
+        || (tv_dict_add_nr(dict, S_LEN("nr"), (varnumber_T)qfp->qf_nr) == FAIL)
+        || tv_dict_add_str(dict, S_LEN("pattern"),
+                           (qfp->qf_pattern == NULL
+                            ? ""
+                            : (const char *)qfp->qf_pattern)) == FAIL
+        || tv_dict_add_str(dict, S_LEN("text"),
+                           (qfp->qf_text == NULL
+                            ? ""
+                            : (const char *)qfp->qf_text)) == FAIL
+        || tv_dict_add_str(dict, S_LEN("type"), (const char *)buf) == FAIL
+        || (tv_dict_add_nr(dict, S_LEN("valid"), (varnumber_T)qfp->qf_valid)
+            == FAIL)) {
+      // tv_dict_add* fail only if key already exist, but this is a newly
+      // allocated dictionary which is thus guaranteed to have no existing keys.
+      assert(false);
+    }
 
     qfp = qfp->qf_next;
     if (qfp == NULL) {
@@ -4085,15 +4095,15 @@ int get_errorlist_properties(win_T *wp, dict_T *what, dict_T *retdict)
     if (t == NULL) {
       t = (char_u *)"";
     }
-    status = dict_add_nr_str(retdict, "title", 0L, t);
+    status = tv_dict_add_str(retdict, S_LEN("title"), (const char *)t);
   }
   if ((status == OK) && (flags & QF_GETLIST_NR)) {
-    status = dict_add_nr_str(retdict, "nr", qf_idx + 1, NULL);
+    status = tv_dict_add_nr(retdict, S_LEN("nr"), qf_idx + 1);
   }
   if ((status == OK) && (flags & QF_GETLIST_WINID)) {
     win_T *win = qf_find_win(qi);
     if (win != NULL) {
-      status = dict_add_nr_str(retdict, "winid", win->handle, NULL);
+      status = tv_dict_add_nr(retdict, S_LEN("winid"), win->handle);
     }
   }
 

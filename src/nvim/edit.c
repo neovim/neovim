@@ -4034,16 +4034,20 @@ static void ins_compl_insert(int in_compl_func)
   // Set completed item.
   // { word, abbr, menu, kind, info }
   dict_T *dict = tv_dict_alloc();
-  dict_add_nr_str(dict, "word", 0L,
-                  EMPTY_IF_NULL(compl_shown_match->cp_str));
-  dict_add_nr_str(dict, "abbr", 0L,
-                  EMPTY_IF_NULL(compl_shown_match->cp_text[CPT_ABBR]));
-  dict_add_nr_str(dict, "menu", 0L,
-                  EMPTY_IF_NULL(compl_shown_match->cp_text[CPT_MENU]));
-  dict_add_nr_str(dict, "kind", 0L,
-                  EMPTY_IF_NULL(compl_shown_match->cp_text[CPT_KIND]));
-  dict_add_nr_str(dict, "info", 0L,
-                  EMPTY_IF_NULL(compl_shown_match->cp_text[CPT_INFO]));
+  tv_dict_add_str(dict, S_LEN("word"),
+                  (const char *)EMPTY_IF_NULL(compl_shown_match->cp_str));
+  tv_dict_add_str(
+      dict, S_LEN("abbr"),
+      (const char *)EMPTY_IF_NULL(compl_shown_match->cp_text[CPT_ABBR]));
+  tv_dict_add_str(
+      dict, S_LEN("menu"),
+      (const char *)EMPTY_IF_NULL(compl_shown_match->cp_text[CPT_MENU]));
+  tv_dict_add_str(
+      dict, S_LEN("kind"),
+      (const char *)EMPTY_IF_NULL(compl_shown_match->cp_text[CPT_KIND]));
+  tv_dict_add_str(
+      dict, S_LEN("info"),
+      (const char *)EMPTY_IF_NULL(compl_shown_match->cp_text[CPT_INFO]));
   set_vim_var_dict(VV_COMPLETED_ITEM, dict);
   if (!in_compl_func) {
     compl_curr_match = compl_shown_match;
