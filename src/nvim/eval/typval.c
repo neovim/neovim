@@ -1085,7 +1085,7 @@ const char *tv_dict_get_string_buf(dict_T *const d, const char *const key,
   if (di == NULL) {
     return NULL;
   }
-  return (const char *)get_tv_string_buf(&di->di_tv, (char_u *)numbuf);
+  return tv_get_string_buf(&di->di_tv, numbuf);
 }
 
 /// Get a function from a dictionary
@@ -1765,8 +1765,8 @@ bool tv_equal(typval_T *const tv1, typval_T *const tv2, const bool ic,
     case VAR_STRING: {
       char buf1[NUMBUFLEN];
       char buf2[NUMBUFLEN];
-      const char *s1 = (const char *)get_tv_string_buf(tv1, (char_u *)buf1);
-      const char *s2 = (const char *)get_tv_string_buf(tv2, (char_u *)buf2);
+      const char *s1 = tv_get_string_buf(tv1, buf1);
+      const char *s2 = tv_get_string_buf(tv2, buf2);
       return mb_strcmp_ic((bool)ic, s1, s2) == 0;
     }
     case VAR_SPECIAL: {
@@ -1837,7 +1837,7 @@ bool tv_check_str_or_nr(const typval_T *const tv)
 ///
 /// @warning For number and special values it uses a single, static buffer. It
 ///          may be used only once, next call to get_tv_string may reuse it. Use
-///          get_tv_string_buf() if you need to use tv_get_string() output after
+///          tv_get_string_buf() if you need to use tv_get_string() output after
 ///          calling it again.
 ///
 /// @note get_tv_string_chk() and get_tv_string_buf_chk() are similar, but
@@ -1851,6 +1851,30 @@ bool tv_check_str_or_nr(const typval_T *const tv)
 const char *tv_get_string(const typval_T *const varp)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  static char_u mybuf[NUMBUFLEN];
-  return (const char *)get_tv_string_buf((typval_T *)varp, mybuf);
+  static char mybuf[NUMBUFLEN];
+  return tv_get_string_buf((typval_T *)varp, mybuf);
+}
+
+/// Get the string value of a variable
+///
+/// @note get_tv_string_chk() and get_tv_string_buf_chk() are similar, but
+///       return NULL on error.
+///
+/// @param[in]  varp  Varible to get value of.
+/// @param  buf  Buffer used to hold numbers and special variables converted to
+///              string. When function encounters one of these stringified value
+///              will be written to buf and buf will be returned.
+///
+///              Buffer must have NUMBUFLEN size.
+///
+/// @return Variable value if it is VAR_STRING variable, number converted to
+///         a string for VAR_NUMBER, v: variable name for VAR_SPECIAL or empty
+///         string.
+const char *tv_get_string_buf(const typval_T *const varp, char *const buf)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  const char *const res = (const char *)get_tv_string_buf_chk(
+      (typval_T *)varp, (char_u *)buf);
+
+  return res != NULL ? res : "";
 }

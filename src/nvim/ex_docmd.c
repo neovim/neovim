@@ -7633,7 +7633,7 @@ static void ex_mkrc(exarg_T *eap)
 
   /* When using 'viewdir' may have to create the directory. */
   if (using_vdir && !os_isdir(p_vdir)) {
-    vim_mkdir_emsg(p_vdir, 0755);
+    vim_mkdir_emsg((const char *)p_vdir, 0755);
   }
 
   fd = open_exfile((char_u *) fname, eap->forceit, WRITEBIN);
@@ -7745,10 +7745,17 @@ static void ex_mkrc(exarg_T *eap)
   xfree(viewFile);
 }
 
-int vim_mkdir_emsg(char_u *name, int prot)
+/// Try creating a directory, give error message on failure
+///
+/// @param[in]  name  Directory to create.
+/// @param[in]  prot  Directory permissions.
+///
+/// @return OK in case of success, FAIL otherwise.
+int vim_mkdir_emsg(const char *const name, const int prot)
+  FUNC_ATTR_NONNULL_ALL
 {
   int ret;
-  if ((ret = os_mkdir((char *)name, prot)) != 0) {
+  if ((ret = os_mkdir(name, prot)) != 0) {
     EMSG3(_(e_mkdir), name, os_strerror(ret));
     return FAIL;
   }
