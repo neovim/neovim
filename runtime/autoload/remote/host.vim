@@ -178,7 +178,9 @@ endfunction
 function! remote#host#LoadRemotePluginsEvent(event, pattern) abort
   autocmd! nvim-rplugin
   call remote#host#LoadRemotePlugins()
-  execute 'silent doautocmd <nomodeline>' a:event a:pattern
+  if exists('#'.a:event.'#'.a:pattern)  " Avoid 'No matching autocommands'.
+    execute 'silent doautocmd <nomodeline>' a:event a:pattern
+  endif
 endfunction
 
 
