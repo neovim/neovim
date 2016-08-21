@@ -75,6 +75,7 @@ static char *features[] = {
 
 // clang-format off
 static int included_patches[] = {
+  2219,
   // 2200,
   // 2199,
   // 2198,
@@ -577,7 +578,7 @@ static int included_patches[] = {
   1703,
   // 1702,
   // 1701,
-  // 1700,
+  1700,
   // 1699,
   // 1698 NA
   // 1697,

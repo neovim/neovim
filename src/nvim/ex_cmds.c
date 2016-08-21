@@ -64,6 +64,24 @@
  */
 typedef struct sign sign_T;
 
+/// Case matching style to use for :substitute
+typedef enum {
+  kSubHonorOptions = 0,  ///< Honor the user's 'ignorecase'/'smartcase' options
+  kSubIgnoreCase,        ///< Ignore case of the search
+  kSubMatchCase,         ///< Match case of the search
+} SubIgnoreType;
+
+/// Flags kept between calls to :substitute.
+typedef struct {
+  bool do_all;          ///< do multiple substitutions per line
+  bool do_ask;          ///< ask for confirmation
+  bool do_count;        ///< count only
+  bool do_error;        ///< if false, ignore errors
+  bool do_print;        ///< print last line with subs
+  bool do_list;         ///< list last line with subs
+  bool do_number;       ///< list last line with line nr
+  SubIgnoreType do_ic;  ///< ignore case flag
+} subflags_T;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ex_cmds.c.generated.h"
@@ -2901,6 +2919,159 @@ void sub_set_replacement(SubReplacementString sub)
   old_sub = sub;
 }
 
+/// Recognize ":%s/\n//" and turn it into a join command, which is much
+/// more efficient.
+///
+/// @param[in]  eap  Ex arguments
+/// @param[in]  pat  Search pattern
+/// @param[in]  sub  Replacement string
+/// @param[in]  cmd  Command from :s_flags
+///
+/// @returns true if :substitute can be replaced with a join command
+static bool sub_joining_lines(exarg_T *eap, char_u *pat,
+                              char_u *sub, char_u *cmd)
+  FUNC_ATTR_NONNULL_ARG(1, 3, 4)
+{
+  // TODO(vim): find a generic solution to make line-joining operations more
+  // efficient, avoid allocating a string that grows in size.
+  if (pat != NULL
+      && strcmp((const char *)pat, "\\n") == 0
+      && *sub == NUL
+      && (*cmd == NUL || (cmd[1] == NUL
+                          && (*cmd == 'g'
+                              || *cmd == 'l'
+                              || *cmd == 'p'
+                              || *cmd == '#')))) {
+    curwin->w_cursor.lnum = eap->line1;
+    if (*cmd == 'l') {
+      eap->flags = EXFLAG_LIST;
+    } else if (*cmd == '#') {
+      eap->flags = EXFLAG_NR;
+    } else if (*cmd == 'p') {
+      eap->flags = EXFLAG_PRINT;
+    }
+
+    // The number of lines joined is the number of lines in the range
+    linenr_T joined_lines_count = eap->line2 - eap->line1 + 1
+      // plus one extra line if not at the end of file.
+      + (eap->line2 < curbuf->b_ml.ml_line_count ? 1 : 0);
+    if (joined_lines_count > 1) {
+      do_join(joined_lines_count, FALSE, TRUE, FALSE, true);
+      sub_nsubs = joined_lines_count - 1;
+      sub_nlines = 1;
+      do_sub_msg(false);
+      ex_may_print(eap);
+    }
+
+    if (!cmdmod.keeppatterns) {
+      save_re_pat(RE_SUBST, pat, p_magic);
+    }
+    add_to_history(HIST_SEARCH, pat, TRUE, NUL);
+
+    return true;
+  }
+
+  return false;
+}
+
+/// Allocate memory to store the replacement text for :substitute.
+///
+/// Slightly more memory that is strictly necessary is allocated to reduce the
+/// frequency of memory (re)allocation.
+///
+/// @param[in,out]  new_start   pointer to the memory for the replacement text
+/// @param[in]      needed_len  amount of memory needed
+///
+/// @returns pointer to the end of the allocated memory
+static char_u *sub_grow_buf(char_u **new_start, int needed_len)
+  FUNC_ATTR_NONNULL_ARG(1) FUNC_ATTR_NONNULL_RET
+{
+  int new_start_len = 0;
+  char_u *new_end;
+  if (*new_start == NULL) {
+    // Get some space for a temporary buffer to do the
+    // substitution into (and some extra space to avoid
+    // too many calls to xmalloc()/free()).
+    new_start_len = needed_len + 50;
+    *new_start = xmalloc(new_start_len);
+    **new_start = NUL;
+    new_end = *new_start;
+  } else {
+    // Check if the temporary buffer is long enough to do the
+    // substitution into.  If not, make it larger (with a bit
+    // extra to avoid too many calls to xmalloc()/free()).
+    size_t len = STRLEN(*new_start);
+    needed_len += len;
+    if (needed_len > new_start_len) {
+      new_start_len = needed_len + 50;
+      *new_start = xrealloc(*new_start, new_start_len);
+    }
+    new_end = *new_start + len;
+  }
+
+  return new_end;
+}
+
+/// Parse cmd string for :substitute's {flags} and update subflags accordingly
+///
+/// @param[in]      cmd  command string
+/// @param[in,out]  subflags  current flags defined for the :substitute command
+/// @param[in,out]  which_pat  pattern type from which to get default search
+///
+/// @returns pointer to the end of the flags, which may be the end of the string
+static char_u *sub_parse_flags(char_u *cmd, subflags_T *subflags,
+                               int *which_pat)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
+{
+  // Find trailing options.  When '&' is used, keep old options.
+  if (*cmd == '&') {
+    cmd++;
+  } else {
+    subflags->do_all = p_gd;
+    subflags->do_ask = false;
+    subflags->do_error = true;
+    subflags->do_print = false;
+    subflags->do_count = false;
+    subflags->do_number = false;
+    subflags->do_ic = kSubHonorOptions;
+  }
+  while (*cmd) {
+    // Note that 'g' and 'c' are always inverted.
+    // 'r' is never inverted.
+    if (*cmd == 'g') {
+      subflags->do_all = !subflags->do_all;
+    } else if (*cmd == 'c') {
+      subflags->do_ask = !subflags->do_ask;
+    } else if (*cmd == 'n') {
+      subflags->do_count = true;
+    } else if (*cmd == 'e') {
+      subflags->do_error = !subflags->do_error;
+    } else if (*cmd == 'r') {  // use last used regexp
+      *which_pat = RE_LAST;
+    } else if (*cmd == 'p') {
+      subflags->do_print = true;
+    } else if (*cmd == '#') {
+      subflags->do_print = true;
+      subflags->do_number = true;
+    } else if (*cmd == 'l') {
+      subflags->do_print = true;
+      subflags->do_list = true;
+    } else if (*cmd == 'i') {  // ignore case
+      subflags->do_ic = kSubIgnoreCase;
+    } else if (*cmd == 'I') {  // don't ignore case
+      subflags->do_ic = kSubMatchCase;
+    } else {
+      break;
+    }
+    cmd++;
+  }
+  if (subflags->do_count) {
+    subflags->do_ask = false;
+  }
+
+  return cmd;
+}
+
 /* do_sub()
  *
  * Perform a substitution from line eap->line1 to line eap->line2 using the
@@ -2912,41 +3083,35 @@ void sub_set_replacement(SubReplacementString sub)
  */
 void do_sub(exarg_T *eap)
 {
-  linenr_T lnum;
   long i = 0;
   regmmatch_T regmatch;
-  static int do_all = FALSE;            /* do multiple substitutions per line */
-  static int do_ask = FALSE;            /* ask for confirmation */
-  static bool do_count = false;         /* count only */
-  static int do_error = TRUE;           /* if false, ignore errors */
-  static int do_print = FALSE;          /* print last line with subs. */
-  static int do_list = FALSE;           /* list last line with subs. */
-  static int do_number = FALSE;         /* list last line with line nr*/
-  static int do_ic = 0;                 /* ignore case flag */
-  int save_do_all;                      // remember user specified 'g' flag
-  int save_do_ask;                      // remember user specified 'c' flag
-  char_u      *pat = NULL, *sub = NULL;         /* init for GCC */
+  static subflags_T subflags = {
+    .do_all = false,
+    .do_ask = false,
+    .do_count = false,
+    .do_error = true,
+    .do_print = false,
+    .do_list = false,
+    .do_number = false,
+    .do_ic = kSubHonorOptions
+  };
+  char_u *pat = NULL, *sub = NULL;  // init for GCC
   int delimiter;
   int sublen;
-  int got_quit = FALSE;
-  int got_match = FALSE;
-  int temp;
+  int got_quit = false;
+  int got_match = false;
   int which_pat;
-  char_u      *cmd;
-  int save_State;
-  linenr_T first_line = 0;              /* first changed line */
-  linenr_T last_line= 0;                /* below last changed line AFTER the
-                                         * change */
+  char_u *cmd = eap->arg;
+  linenr_T first_line = 0;  // first changed line
+  linenr_T last_line= 0;    // below last changed line AFTER the
+                            // change
   linenr_T old_line_count = curbuf->b_ml.ml_line_count;
-  linenr_T line2;
-  long nmatch;                          /* number of lines in match */
-  char_u      *sub_firstline;           /* allocated copy of first sub line */
-  int endcolumn = FALSE;                /* cursor in last column when done */
+  char_u      *sub_firstline;  // allocated copy of first sub line
+  bool endcolumn = false;        // cursor in last column when done
   pos_T old_cursor = curwin->w_cursor;
   int start_nsubs;
   int save_ma = 0;
 
-  cmd = eap->arg;
   if (!global_busy) {
     sub_nsubs = 0;
     sub_nlines = 0;
@@ -3028,104 +3193,20 @@ void do_sub(exarg_T *eap)
     endcolumn = (curwin->w_curswant == MAXCOL);
   }
 
-  // Recognize ":%s/\n//" and turn it into a join command, which is much
-  // more efficient.
-  // TODO: find a generic solution to make line-joining operations more
-  // efficient, avoid allocating a string that grows in size.
-  if (pat != NULL
-      && strcmp((const char *)pat, "\\n") == 0
-      && *sub == NUL
-      && (*cmd == NUL || (cmd[1] == NUL
-                          && (*cmd == 'g'
-                              || *cmd == 'l'
-                              || *cmd == 'p'
-                              || *cmd == '#')))) {
-    curwin->w_cursor.lnum = eap->line1;
-    if (*cmd == 'l') {
-      eap->flags = EXFLAG_LIST;
-    } else if (*cmd == '#') {
-      eap->flags = EXFLAG_NR;
-    } else if (*cmd == 'p') {
-      eap->flags = EXFLAG_PRINT;
-    }
-
-    // The number of lines joined is the number of lines in the range
-    linenr_T joined_lines_count = eap->line2 - eap->line1 + 1
-      // plus one extra line if not at the end of file.
-      + (eap->line2 < curbuf->b_ml.ml_line_count ? 1 : 0);
-    if (joined_lines_count > 1) {
-      do_join(joined_lines_count, FALSE, TRUE, FALSE, true);
-      sub_nsubs = joined_lines_count - 1;
-      sub_nlines = 1;
-      do_sub_msg(false);
-      ex_may_print(eap);
-    }
-
-    if (!cmdmod.keeppatterns) {
-      save_re_pat(RE_SUBST, pat, p_magic);
-    }
-    add_to_history(HIST_SEARCH, pat, TRUE, NUL);
-
+  if (sub_joining_lines(eap, pat, sub, cmd)) {
     return;
   }
 
-  /*
-   * Find trailing options.  When '&' is used, keep old options.
-   */
-  if (*cmd == '&') {
-    ++cmd;
-  } else {
-    // default is global on
-    do_all = p_gd ? TRUE : FALSE;
+  cmd = sub_parse_flags(cmd, &subflags, &which_pat);
 
-    do_ask = FALSE;
-    do_error = TRUE;
-    do_print = FALSE;
-    do_count = false;
-    do_number = FALSE;
-    do_ic = 0;
-  }
-  while (*cmd) {
-    // Note that 'g' and 'c' are always inverted.
-    // 'r' is never inverted.
-    if (*cmd == 'g')
-      do_all = !do_all;
-    else if (*cmd == 'c')
-      do_ask = !do_ask;
-    else if (*cmd == 'n')
-      do_count = true;
-    else if (*cmd == 'e')
-      do_error = !do_error;
-    else if (*cmd == 'r')           /* use last used regexp */
-      which_pat = RE_LAST;
-    else if (*cmd == 'p')
-      do_print = TRUE;
-    else if (*cmd == '#') {
-      do_print = TRUE;
-      do_number = TRUE;
-    } else if (*cmd == 'l') {
-      do_print = TRUE;
-      do_list = TRUE;
-    } else if (*cmd == 'i')         /* ignore case */
-      do_ic = 'i';
-    else if (*cmd == 'I')           /* don't ignore case */
-      do_ic = 'I';
-    else
-      break;
-    ++cmd;
-  }
-  if (do_count) {
-    do_ask = FALSE;
-  }
-
-  save_do_all = do_all;
-  save_do_ask = do_ask;
+  bool save_do_all = subflags.do_all;  // remember user specified 'g' flag
+  bool save_do_ask = subflags.do_ask;  // remember user specified 'c' flag
 
   // check for a trailing count
   cmd = skipwhite(cmd);
   if (ascii_isdigit(*cmd)) {
     i = getdigits_long(&cmd);
-    if (i <= 0 && !eap->skip && do_error) {
+    if (i <= 0 && !eap->skip && subflags.do_error) {
       EMSG(_(e_zerocount));
       return;
     }
@@ -3150,24 +3231,25 @@ void do_sub(exarg_T *eap)
   if (eap->skip)            /* not executing commands, only parsing */
     return;
 
-  if (!do_count && !MODIFIABLE(curbuf)) {
-    /* Substitution is not allowed in non-'modifiable' buffer */
+  if (!subflags.do_count && !MODIFIABLE(curbuf)) {
+    // Substitution is not allowed in non-'modifiable' buffer
     EMSG(_(e_modifiable));
     return;
   }
 
-  if (search_regcomp(pat, RE_SUBST, which_pat, SEARCH_HIS,
-          &regmatch) == FAIL) {
-    if (do_error)
+  if (search_regcomp(pat, RE_SUBST, which_pat, SEARCH_HIS, &regmatch) == FAIL) {
+    if (subflags.do_error) {
       EMSG(_(e_invcmd));
+    }
     return;
   }
 
-  /* the 'i' or 'I' flag overrules 'ignorecase' and 'smartcase' */
-  if (do_ic == 'i')
-    regmatch.rmm_ic = TRUE;
-  else if (do_ic == 'I')
-    regmatch.rmm_ic = FALSE;
+  // the 'i' or 'I' flag overrules 'ignorecase' and 'smartcase'
+  if (subflags.do_ic == kSubIgnoreCase) {
+    regmatch.rmm_ic = true;
+  } else if (subflags.do_ic == kSubMatchCase) {
+    regmatch.rmm_ic = false;
+  }
 
   sub_firstline = NULL;
 
@@ -3179,29 +3261,25 @@ void do_sub(exarg_T *eap)
   if (!(sub[0] == '\\' && sub[1] == '='))
     sub = regtilde(sub, p_magic);
 
-  /*
-   * Check for a match on each line.
-   */
-  line2 = eap->line2;
-  for (lnum = eap->line1; lnum <= line2 && !(got_quit
-                                             || aborting()
-                                             ); ++lnum) {
-    nmatch = vim_regexec_multi(&regmatch, curwin, curbuf, lnum,
-        (colnr_T)0, NULL);
+  // Check for a match on each line.
+  linenr_T line2 = eap->line2;
+  for (linenr_T lnum = eap->line1;
+       lnum <= line2 && !(got_quit || aborting());
+       lnum++) {
+    long nmatch = vim_regexec_multi(&regmatch, curwin, curbuf, lnum,
+                                    (colnr_T)0, NULL);
     if (nmatch) {
       colnr_T copycol;
       colnr_T matchcol;
       colnr_T prev_matchcol = MAXCOL;
       char_u      *new_end, *new_start = NULL;
-      unsigned new_start_len = 0;
       char_u      *p1;
       int did_sub = FALSE;
       int lastone;
-      int len, copy_len, needed_len;
-      long nmatch_tl = 0;               /* nr of lines matched below lnum */
-      int do_again;                     /* do it again after joining lines */
-      int skip_match = FALSE;
-      linenr_T sub_firstlnum;           /* nr of first sub line */
+      long nmatch_tl = 0;               // nr of lines matched below lnum
+      int do_again;                     // do it again after joining lines
+      int skip_match = false;
+      linenr_T sub_firstlnum;           // nr of first sub line
 
       /*
        * The new text is build up step by step, to avoid too much
@@ -3241,8 +3319,7 @@ void do_sub(exarg_T *eap)
        *   accordingly.
        *
        * The new text is built up in new_start[].  It has some extra
-       * room to avoid using xmalloc()/free() too often.  new_start_len is
-       * the length of the allocated memory at new_start.
+       * room to avoid using xmalloc()/free() too often.
        *
        * Make a copy of the old line, so it won't be taken away when
        * updating the screen or handling a multi-line match.  The "old_"
@@ -3261,9 +3338,9 @@ void do_sub(exarg_T *eap)
       /*
        * Loop until nothing more to replace in this line.
        * 1. Handle match with empty string.
-       * 2. If do_ask is set, ask for confirmation.
+       * 2. If subflags.do_ask is set, ask for confirmation.
        * 3. substitute the string.
-       * 4. if do_all is set, find next match
+       * 4. if subflags.do_all is set, find next match
        * 5. break if there isn't another match in this line
        */
       for (;; ) {
@@ -3314,15 +3391,13 @@ void do_sub(exarg_T *eap)
         matchcol = regmatch.endpos[0].col;
         prev_matchcol = matchcol;
 
-        /*
-         * 2. If do_count is set only increase the counter.
-         *    If do_ask is set, ask for confirmation.
-         */
-        if (do_count) {
-          /* For a multi-line match, put matchcol at the NUL at
-           * the end of the line and set nmatch to one, so that
-           * we continue looking for a match on the next line.
-           * Avoids that ":s/\nB\@=//gc" get stuck. */
+        // 2. If subflags.do_count is set only increase the counter.
+        //    If do_ask is set, ask for confirmation.
+        if (subflags.do_count) {
+          // For a multi-line match, put matchcol at the NUL at
+          // the end of the line and set nmatch to one, so that
+          // we continue looking for a match on the next line.
+          // Avoids that ":s/\nB\@=//gc" get stuck.
           if (nmatch > 1) {
             matchcol = (colnr_T)STRLEN(sub_firstline);
             nmatch = 1;
@@ -3336,12 +3411,12 @@ void do_sub(exarg_T *eap)
             goto skip;
         }
 
-        if (do_ask) {
+        if (subflags.do_ask) {
           int typed = 0;
 
           /* change State to CONFIRM, so that the mouse works
            * properly */
-          save_State = State;
+          int save_State = State;
           State = CONFIRM;
           setmouse();                   /* disable mouse in xterm */
           curwin->w_cursor.col = regmatch.startpos[0].col;
@@ -3354,17 +3429,17 @@ void do_sub(exarg_T *eap)
           /*
            * Loop until 'y', 'n', 'q', CTRL-E or CTRL-Y typed.
            */
-          while (do_ask) {
+          while (subflags.do_ask) {
             if (exmode_active) {
               char_u      *resp;
               colnr_T sc, ec;
 
-              print_line_no_prefix(lnum, do_number, do_list);
+              print_line_no_prefix(lnum, subflags.do_number, subflags.do_list);
 
               getvcol(curwin, &curwin->w_cursor, &sc, NULL, NULL);
               curwin->w_cursor.col = regmatch.endpos[0].col - 1;
               getvcol(curwin, &curwin->w_cursor, NULL, NULL, &ec);
-              if (do_number || curwin->w_p_nu) {
+              if (subflags.do_number || curwin->w_p_nu) {
                 int numw = number_width(curwin) + 1;
                 sc += numw;
                 ec += numw;
@@ -3388,7 +3463,7 @@ void do_sub(exarg_T *eap)
               curwin->w_p_fen = FALSE;
               /* Invert the matched string.
                * Remove the inversion afterwards. */
-              temp = RedrawingDisabled;
+              int temp = RedrawingDisabled;
               RedrawingDisabled = 0;
 
               if (new_start != NULL) {
@@ -3468,13 +3543,13 @@ void do_sub(exarg_T *eap)
             if (typed == 'y')
               break;
             if (typed == 'l') {
-              /* last: replace and then stop */
-              do_all = FALSE;
+              // last: replace and then stop
+              subflags.do_all = false;
               line2 = lnum;
               break;
             }
             if (typed == 'a') {
-              do_ask = FALSE;
+              subflags.do_ask = false;
               break;
             }
             if (typed == Ctrl_E)
@@ -3510,19 +3585,26 @@ void do_sub(exarg_T *eap)
         /*
          * 3. substitute the string.
          */
-        if (do_count) {
-          /* prevent accidentally changing the buffer by a function */
+        if (subflags.do_count) {
+          // prevent accidentally changing the buffer by a function
           save_ma = curbuf->b_p_ma;
-          curbuf->b_p_ma = FALSE;
+          curbuf->b_p_ma = false;
           sandbox++;
         }
-        /* get length of substitution part */
+        // Save flags for recursion.  They can change for e.g.
+        // :s/^/\=execute("s#^##gn")
+        subflags_T subflags_save = subflags;
+        // get length of substitution part
         sublen = vim_regsub_multi(&regmatch,
-            sub_firstlnum - regmatch.startpos[0].lnum,
-            sub, sub_firstline, FALSE, p_magic, TRUE);
-        if (do_count) {
+                                  sub_firstlnum - regmatch.startpos[0].lnum,
+                                  sub, sub_firstline, false, p_magic, true);
+        // Don't keep flags set by a recursive call
+        subflags = subflags_save;
+        if (subflags.do_count) {
           curbuf->b_p_ma = save_ma;
-          sandbox--;
+          if (sandbox > 0) {
+            sandbox--;
+          }
           goto skip;
         }
 
@@ -3545,33 +3627,10 @@ void do_sub(exarg_T *eap)
           p1 = ml_get(sub_firstlnum + nmatch - 1);
           nmatch_tl += nmatch - 1;
         }
-        copy_len = regmatch.startpos[0].col - copycol;
-        needed_len = copy_len + ((unsigned)STRLEN(p1)
-                                 - regmatch.endpos[0].col) + sublen + 1;
-        if (new_start == NULL) {
-          /*
-           * Get some space for a temporary buffer to do the
-           * substitution into (and some extra space to avoid
-           * too many calls to xmalloc()/free()).
-           */
-          new_start_len = needed_len + 50;
-          new_start = xmalloc(new_start_len);
-          *new_start = NUL;
-          new_end = new_start;
-        } else {
-          /*
-           * Check if the temporary buffer is long enough to do the
-           * substitution into.  If not, make it larger (with a bit
-           * extra to avoid too many calls to xmalloc()/free()).
-           */
-          len = (unsigned)STRLEN(new_start);
-          needed_len += len;
-          if (needed_len > (int)new_start_len) {
-            new_start_len = needed_len + 50;
-            new_start = xrealloc(new_start, new_start_len);
-          }
-          new_end = new_start + len;
-        }
+        size_t copy_len = regmatch.startpos[0].col - copycol;
+        new_end = sub_grow_buf(&new_start,
+                               copy_len + (STRLEN(p1) - regmatch.endpos[0].col)
+                               + sublen + 1);
 
         /*
          * copy the text up to the part that matched
@@ -3595,11 +3654,12 @@ void do_sub(exarg_T *eap)
           sub_firstlnum += nmatch - 1;
           xfree(sub_firstline);
           sub_firstline = vim_strsave(ml_get(sub_firstlnum));
-          /* When going beyond the last line, stop substituting. */
-          if (sub_firstlnum <= line2)
-            do_again = TRUE;
-          else
-            do_all = FALSE;
+          // When going beyond the last line, stop substituting.
+          if (sub_firstlnum <= line2) {
+            do_again = true;
+          } else {
+            subflags.do_all = false;
+          }
         }
 
         /* Remember next character to be copied. */
@@ -3630,11 +3690,12 @@ void do_sub(exarg_T *eap)
               ml_append(lnum - 1, new_start,
                   (colnr_T)(p1 - new_start + 1), FALSE);
               mark_adjust(lnum + 1, (linenr_T)MAXLNUM, 1L, 0L);
-              if (do_ask)
+              if (subflags.do_ask) {
                 appended_lines(lnum - 1, 1L);
-              else {
-                if (first_line == 0)
+              } else {
+                if (first_line == 0) {
                   first_line = lnum;
+                }
                 last_line = lnum + 1;
               }
               /* All line numbers increase. */
@@ -3651,12 +3712,10 @@ void do_sub(exarg_T *eap)
             p1 += (*mb_ptr2len)(p1) - 1;
         }
 
-        /*
-         * 4. If do_all is set, find next match.
-         * Prevent endless loop with patterns that match empty
-         * strings, e.g. :s/$/pat/g or :s/[a-z]* /(&)/g.
-         * But ":s/\n/#/" is OK.
-         */
+        // 4. If subflags.do_all is set, find next match.
+        // Prevent endless loop with patterns that match empty
+        // strings, e.g. :s/$/pat/g or :s/[a-z]* /(&)/g.
+        // But ":s/\n/#/" is OK.
 skip:
         /* We already know that we did the last subst when we are at
          * the end of the line, except that a pattern like
@@ -3667,7 +3726,7 @@ skip:
                    || got_int
                    || got_quit
                    || lnum > line2
-                   || !(do_all || do_again)
+                   || !(subflags.do_all || do_again)
                    || (sub_firstline[matchcol] == NUL && nmatch <= 1
                        && !re_multiline(regmatch.regprog)));
         nmatch = -1;
@@ -3717,21 +3776,23 @@ skip:
               for (i = 0; i < nmatch_tl; ++i)
                 ml_delete(lnum, (int)FALSE);
               mark_adjust(lnum, lnum + nmatch_tl - 1,
-                  (long)MAXLNUM, -nmatch_tl);
-              if (do_ask)
+                          (long)MAXLNUM, -nmatch_tl);
+              if (subflags.do_ask) {
                 deleted_lines(lnum, nmatch_tl);
-              --lnum;
-              line2 -= nmatch_tl;               /* nr of lines decreases */
+              }
+              lnum--;
+              line2 -= nmatch_tl;  // nr of lines decreases
               nmatch_tl = 0;
             }
 
             /* When asking, undo is saved each time, must also set
              * changed flag each time. */
-            if (do_ask)
+            if (subflags.do_ask) {
               changed_bytes(lnum, 0);
-            else {
-              if (first_line == 0)
+            } else {
+              if (first_line == 0) {
                 first_line = lnum;
+              }
               last_line = lnum + 1;
             }
 
@@ -3784,9 +3845,10 @@ skip:
 
   xfree(sub_firstline);   /* may have to free allocated copy of the line */
 
-  /* ":s/pat//n" doesn't move the cursor */
-  if (do_count)
+  // ":s/pat//n" doesn't move the cursor
+  if (subflags.do_count) {
     curwin->w_cursor = old_cursor;
+  }
 
   if (sub_nsubs > start_nsubs) {
     /* Set the '[ and '] marks. */
@@ -3795,28 +3857,37 @@ skip:
     curbuf->b_op_start.col = curbuf->b_op_end.col = 0;
 
     if (!global_busy) {
-      if (!do_ask) {      /* when interactive leave cursor on the match */
-        if (endcolumn)
+      // when interactive leave cursor on the match
+      if (!subflags.do_ask) {
+        if (endcolumn) {
           coladvance((colnr_T)MAXCOL);
-        else
+        } else {
           beginline(BL_WHITE | BL_FIX);
+        }
       }
-      if (!do_sub_msg(do_count) && do_ask)
+      if (!do_sub_msg(subflags.do_count) && subflags.do_ask) {
         MSG("");
-    } else
-      global_need_beginline = TRUE;
-    if (do_print)
-      print_line(curwin->w_cursor.lnum, do_number, do_list);
+      }
+    } else {
+      global_need_beginline = true;
+    }
+    if (subflags.do_print) {
+      print_line(curwin->w_cursor.lnum, subflags.do_number, subflags.do_list);
+    }
   } else if (!global_busy) {
-    if (got_int)                /* interrupted */
+    if (got_int) {
+      // interrupted
       EMSG(_(e_interr));
-    else if (got_match)         /* did find something but nothing substituted */
+    } else if (got_match) {
+      // did find something but nothing substituted
       MSG("");
-    else if (do_error)          /* nothing found */
+    } else if (subflags.do_error) {
+      // nothing found
       EMSG2(_(e_patnotf2), get_search_pat());
+    }
   }
 
-  if (do_ask && hasAnyFolding(curwin)) {
+  if (subflags.do_ask && hasAnyFolding(curwin)) {
     // Cursor position may require updating
     changed_window_setting();
   }
@@ -3824,9 +3895,9 @@ skip:
   vim_regfree(regmatch.regprog);
 
   // Restore the flag values, they can be used for ":&&".
-  do_all = save_do_all;
-  do_ask = save_do_ask;
-}
+  subflags.do_all = save_do_all;
+  subflags.do_ask = save_do_ask;
+}  // NOLINT(readability/fn_size)
 
 /*
  * Give message for number of substitutions.
