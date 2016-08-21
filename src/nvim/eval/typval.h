@@ -205,6 +205,8 @@ struct dictvar_S {
 
 /// Type used for script ID
 typedef int scid_T;
+/// Format argument for scid_T
+#define PRIdSCID "d"
 
 // Structure to hold info for a function that is currently being executed.
 typedef struct funccall_S funccall_T;

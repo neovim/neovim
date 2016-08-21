@@ -270,7 +270,7 @@ do_exmode (
 /*
  * Execute a simple command line.  Used for translated commands like "*".
  */
-int do_cmdline_cmd(char *cmd)
+int do_cmdline_cmd(const char *cmd)
 {
   return do_cmdline((char_u *)cmd, NULL, NULL,
                     DOCMD_NOWAIT|DOCMD_KEYTYPED);
@@ -9347,8 +9347,8 @@ static int ses_put_fname(FILE *fd, char_u *name, unsigned *flagp)
         *p = '/';
   }
 
-  /* escape special characters */
-  p = vim_strsave_fnameescape(sname, FALSE);
+  // Escape special characters.
+  p = (char_u *)vim_strsave_fnameescape((const char *)sname, false);
   xfree(sname);
 
   /* write the result */

@@ -77,10 +77,10 @@ int eexe_mod_op(typval_T *const tv1, const typval_T *const tv2,
           if (tv2->v_type == VAR_FLOAT) {
             break;
           }
-          char *s = (char *)get_tv_string(tv1);
+          const char *tvs = tv_get_string(tv1);
           char numbuf[NUMBUFLEN];
-          s = (char *)concat_str((char_u *)s,
-                                 get_tv_string_buf(tv2, (char_u *)numbuf));
+          char *const s = (char *)concat_str(
+              (const char_u *)tvs, get_tv_string_buf(tv2, (char_u *)numbuf));
           tv_clear(tv1);
           tv1->v_type = VAR_STRING;
           tv1->vval.v_string = (char_u *)s;

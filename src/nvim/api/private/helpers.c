@@ -625,7 +625,7 @@ String cstr_as_string(char *str) FUNC_ATTR_PURE
   if (str == NULL) {
     return (String) STRING_INIT;
   }
-  return (String) {.data = str, .size = strlen(str)};
+  return (String) { .data = str, .size = strlen(str) };
 }
 
 /// Converts from type Object to a VimL value.

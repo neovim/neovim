@@ -718,7 +718,7 @@ int delete_first_msg(void)
 void ex_messages(void *const eap_p)
   FUNC_ATTR_NONNULL_ALL
 {
-  exarg_T *eap = (exarg_T *)eap_p;
+  const exarg_T *const eap = (const exarg_T *)eap_p;
   struct msg_hist *p;
   int c = 0;
 

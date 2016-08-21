@@ -91,11 +91,11 @@ int os_dirname(char_u *buf, size_t len)
 /// Check if the given path is a directory and not a symlink to a directory.
 /// @return `true` if `name` is a directory and NOT a symlink to a directory.
 ///         `false` if `name` is not a directory or if an error occurred.
-bool os_isrealdir(const char_u *name)
+bool os_isrealdir(const char *name)
   FUNC_ATTR_NONNULL_ALL
 {
   uv_fs_t request;
-  if (uv_fs_lstat(&fs_loop, &request, (char *)name, NULL) != kLibuvSuccess) {
+  if (uv_fs_lstat(&fs_loop, &request, name, NULL) != kLibuvSuccess) {
     return false;
   }
   if (S_ISLNK(request.statbuf.st_mode)) {
@@ -111,7 +111,7 @@ bool os_isrealdir(const char_u *name)
 bool os_isdir(const char_u *name)
   FUNC_ATTR_NONNULL_ALL
 {
-  int32_t mode = os_getperm(name);
+  int32_t mode = os_getperm((const char *)name);
   if (mode < 0) {
     return false;
   }
@@ -236,7 +236,8 @@ bool os_can_exe(const char_u *name, char_u **abspath, bool use_path)
                                                                pathext);
 #else
     // Must have path separator, cannot execute files in the current directory.
-    bool ok = gettail_dir(name) != name && is_executable((char *)name);
+    const bool ok = ((const char_u *)gettail_dir((const char *)name) != name
+                     && is_executable((char *)name));
 #endif
     if (ok) {
       if (abspath != NULL) {
@@ -254,7 +255,7 @@ bool os_can_exe(const char_u *name, char_u **abspath, bool use_path)
 static bool is_executable(const char *name)
   FUNC_ATTR_NONNULL_ALL
 {
-  int32_t mode = os_getperm((char_u *)name);
+  int32_t mode = os_getperm((const char *)name);
 
   if (mode < 0) {
     return false;
@@ -606,11 +607,11 @@ static int os_stat(const char *name, uv_stat_t *statbuf)
 /// Get the file permissions for a given file.
 ///
 /// @return libuv error code on error.
-int32_t os_getperm(const char_u *name)
+int32_t os_getperm(const char *name)
   FUNC_ATTR_NONNULL_ALL
 {
   uv_stat_t statbuf;
-  int stat_result = os_stat((char *)name, &statbuf);
+  int stat_result = os_stat(name, &statbuf);
   if (stat_result == kLibuvSuccess) {
     return (int32_t)statbuf.st_mode;
   } else {
@@ -979,13 +980,13 @@ bool os_fileid_equal_fileinfo(const FileID *file_id,
 /// When "fname" is the name of a shortcut (*.lnk) resolve the file it points
 /// to and return that name in allocated memory.
 /// Otherwise NULL is returned.
-char *os_resolve_shortcut(char_u *fname)
+char *os_resolve_shortcut(const char *fname)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_MALLOC
 {
   HRESULT hr;
   IPersistFile *ppf = NULL;
   OLECHAR wsz[MAX_PATH];
   char *rfname = NULL;
-  int len;
   IShellLinkW *pslw = NULL;
   WIN32_FIND_DATAW ffdw;
 
@@ -994,7 +995,7 @@ char *os_resolve_shortcut(char_u *fname)
   if (fname == NULL) {
     return rfname;
   }
-  len = (int)STRLEN(fname);
+  const size_t len = strlen(fname);
   if (len <= 4 || STRNICMP(fname + len - 4, ".lnk", 4) != 0) {
     return rfname;
   }
@@ -1006,7 +1007,7 @@ char *os_resolve_shortcut(char_u *fname)
                         &IID_IShellLinkW, (void **)&pslw);
   if (hr == S_OK) {
     WCHAR *p;
-    int conversion_result = utf8_to_utf16((char *)fname, &p);
+    const int conversion_result = utf8_to_utf16(fname, &p);
     if (conversion_result != 0) {
       EMSG2("utf8_to_utf16 failed: %s", uv_strerror(conversion_result));
     }
@@ -1036,7 +1037,7 @@ char *os_resolve_shortcut(char_u *fname)
       ZeroMemory(wsz, MAX_PATH * sizeof(WCHAR));
       hr = pslw->lpVtbl->GetPath(pslw, wsz, MAX_PATH, &ffdw, 0);
       if (hr == S_OK && wsz[0] != NUL) {
-        int conversion_result = utf16_to_utf8(wsz, &rfname);
+        const int conversion_result = utf16_to_utf8(wsz, &rfname);
         if (conversion_result != 0) {
           EMSG2("utf16_to_utf8 failed: %s", uv_strerror(conversion_result));
         }

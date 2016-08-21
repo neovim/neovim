@@ -3464,7 +3464,6 @@ expand_by_function (
 {
   list_T      *matchlist = NULL;
   dict_T      *matchdict = NULL;
-  char_u      *args[2];
   char_u      *funcname;
   pos_T pos;
   win_T       *curwin_save;
@@ -3475,9 +3474,8 @@ expand_by_function (
   if (*funcname == NUL)
     return;
 
-  /* Call 'completefunc' to obtain the list of matches. */
-  args[0] = (char_u *)"0";
-  args[1] = base;
+  // Call 'completefunc' to obtain the list of matches.
+  const char_u *const args[2] = { (char_u *)"0", base };
 
   pos = curwin->w_cursor;
   curwin_save = curwin;
@@ -4589,7 +4587,6 @@ static int ins_complete(int c, bool enable_pum)
        * Call user defined function 'completefunc' with "a:findstart"
        * set to 1 to obtain the length of text to use for completion.
        */
-      char_u      *args[2];
       int col;
       char_u      *funcname;
       pos_T pos;
@@ -4608,8 +4605,7 @@ static int ins_complete(int c, bool enable_pum)
         return FAIL;
       }
 
-      args[0] = (char_u *)"1";
-      args[1] = NULL;
+      const char_u *const args[2] = { (char_u *)"1", NULL };
       pos = curwin->w_cursor;
       curwin_save = curwin;
       curbuf_save = curbuf;
@@ -7111,8 +7107,8 @@ static void ins_ctrl_g(void)
  */
 static void ins_ctrl_hat(void)
 {
-  if (map_to_exists_mode((char_u *)"", LANGMAP, FALSE)) {
-    /* ":lmap" mappings exists, Toggle use of ":lmap" mappings. */
+  if (map_to_exists_mode("", LANGMAP, false)) {
+    // ":lmap" mappings exists, Toggle use of ":lmap" mappings.
     if (State & LANGMAP) {
       curbuf->b_p_iminsert = B_IMODE_NONE;
       State &= ~LANGMAP;

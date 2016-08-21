@@ -82,8 +82,6 @@ KHASH_SET_INIT_STR(strset)
     (buflist_new((char_u *)ffname, (char_u *)sfname, __VA_ARGS__))
 #define convert_setup(vcp, from, to) \
     (convert_setup(vcp, (char_u *)from, (char_u *)to))
-#define os_getperm(f) \
-    (os_getperm((char_u *) f))
 #define os_isdir(f) (os_isdir((char_u *) f))
 #define regtilde(s, m) ((char *) regtilde((char_u *) s, m))
 #define path_tail_with_sep(f) ((char *) path_tail_with_sep((char_u *)f))

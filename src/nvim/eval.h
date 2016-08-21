@@ -2,7 +2,7 @@
 #define NVIM_EVAL_H
 
 #include "nvim/hashtab.h"  // For hashtab_T
-#include "nvim/buffer_defs.h"  // For scid_T
+#include "nvim/buffer_defs.h"
 #include "nvim/ex_cmds_defs.h"  // For exarg_T
 #include "nvim/eval/typval.h"
 #include "nvim/profile.h"

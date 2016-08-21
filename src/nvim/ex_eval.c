@@ -1149,23 +1149,25 @@ void ex_endwhile(exarg_T *eap)
  */
 void ex_throw(exarg_T *eap)
 {
-  char_u      *arg = eap->arg;
-  char_u      *value;
+  const char *arg = (const char *)eap->arg;
+  char *value;
 
-  if (*arg != NUL && *arg != '|' && *arg != '\n')
-    value = eval_to_string_skip(arg, &eap->nextcmd, eap->skip);
-  else {
+  if (*arg != NUL && *arg != '|' && *arg != '\n') {
+    value = eval_to_string_skip(arg, (const char **)&eap->nextcmd,
+                                (bool)eap->skip);
+  } else {
     EMSG(_(e_argreq));
     value = NULL;
   }
 
-  /* On error or when an exception is thrown during argument evaluation, do
-   * not throw. */
+  // On error or when an exception is thrown during argument evaluation, do
+  // not throw.
   if (!eap->skip && value != NULL) {
-    if (throw_exception(value, ET_USER, NULL) == FAIL)
+    if (throw_exception((char_u *)value, ET_USER, NULL) == FAIL) {
       xfree(value);
-    else
+    } else {
       do_throw(eap->cstack);
+    }
   }
 }
 
