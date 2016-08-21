@@ -417,7 +417,7 @@ readfile (
   }
 
   if (!read_buffer && !read_stdin) {
-    perm = os_getperm(fname);
+    perm = os_getperm((const char *)fname);
 #ifdef UNIX
     // On Unix it is possible to read a directory, so we have to
     // check for it before os_open().
@@ -2591,7 +2591,7 @@ buf_write (
     newfile = TRUE;
     perm = -1;
   } else {
-    perm = os_getperm(fname);
+    perm = os_getperm((const char *)fname);
     if (perm < 0)
       newfile = TRUE;
     else if (os_isdir(fname)) {
@@ -3613,7 +3613,7 @@ restore_backup:
         close(empty_fd);
     }
     if (org != NULL) {
-      os_setperm((char_u *)org, os_getperm(fname) & 0777);
+      os_setperm((char_u *)org, os_getperm((const char *)fname) & 0777);
       xfree(org);
     }
   }
@@ -4533,9 +4533,9 @@ int put_time(FILE *fd, time_t time_)
 
 /// os_rename() only works if both files are on the same file system, this
 /// function will (attempts to?) copy the file across if rename fails -- webb
-//
+///
 /// @return -1 for failure, 0 for success
-int vim_rename(char_u *from, char_u *to)
+int vim_rename(const char_u *from, const char_u *to)
 {
   int fd_in;
   int fd_out;
@@ -4554,10 +4554,12 @@ int vim_rename(char_u *from, char_u *to)
    * the file name differs we need to go through a temp file.
    */
   if (fnamecmp(from, to) == 0) {
-    if (p_fic && STRCMP(path_tail(from), path_tail(to)) != 0)
+    if (p_fic && (STRCMP(path_tail((char_u *)from), path_tail((char_u *)to))
+                  != 0)) {
       use_tmp_file = true;
-    else
+    } else {
       return 0;
+    }
   }
 
   // Fail if the "from" file doesn't exist. Avoids that "to" is deleted.
@@ -4623,9 +4625,9 @@ int vim_rename(char_u *from, char_u *to)
   /*
    * Rename() failed, try copying the file.
    */
-  perm = os_getperm(from);
+  perm = os_getperm((const char *)from);
 #ifdef HAVE_ACL
-  /* For systems that support ACL: get the ACL from the original file. */
+  // For systems that support ACL: get the ACL from the original file.
   acl = mch_get_acl(from);
 #endif
   fd_in = os_open((char *)from, O_RDONLY, 0);
@@ -5232,7 +5234,7 @@ static void vim_maketempdir(void)
 /// Delete "name" and everything in it, recursively.
 /// @param name The path which should be deleted.
 /// @return 0 for success, -1 if some file was not deleted.
-int delete_recursive(char_u *name)
+int delete_recursive(const char *name)
 {
   int result = 0;
 
@@ -5246,7 +5248,7 @@ int delete_recursive(char_u *name)
                              EW_DIR | EW_FILE | EW_SILENT | EW_ALLLINKS
                              | EW_DODOT | EW_EMPTYOK) == OK) {
       for (int i = 0; i < file_count; i++) {
-        if (delete_recursive(files[i]) != 0) {
+        if (delete_recursive((const char *)files[i]) != 0) {
           result = -1;
         }
       }
@@ -5256,9 +5258,9 @@ int delete_recursive(char_u *name)
     }
 
     xfree(exp);
-    os_rmdir((char *)name);
+    os_rmdir(name);
   } else {
-    result = os_remove((char *)name) == 0 ? 0 : -1;
+    result = os_remove(name) == 0 ? 0 : -1;
   }
 
   return result;
@@ -5270,7 +5272,7 @@ void vim_deltempdir(void)
   if (vim_tempdir != NULL) {
     // remove the trailing path separator
     path_tail(vim_tempdir)[-1] = NUL;
-    delete_recursive(vim_tempdir);
+    delete_recursive((const char *)vim_tempdir);
     xfree(vim_tempdir);
     vim_tempdir = NULL;
   }

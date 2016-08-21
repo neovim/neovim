@@ -840,7 +840,7 @@ describe('completion', function()
       feed('i<C-r>=TestComplete()<CR>')
       screen:expect([[
         ^                                                            |
-        {1:1 3 2          }                                             |
+        {1:1 3 2          }{0:                                             }|
         {0:~                                                           }|
         {0:~                                                           }|
         {0:~                                                           }|

@@ -290,30 +290,33 @@ void vim_strup(char_u *p)
   }
 }
 
-/*
- * Make string "s" all upper-case and return it in allocated memory.
- * Handles multi-byte characters as well as possible.
- */
-char_u *strup_save(const char_u *orig)
+/// Make given string all upper-case
+///
+/// Handels multi-byte characters as good as possible.
+///
+/// @param[in]  orig  Input string.
+///
+/// @return [allocated] upper-cased string.
+char *strup_save(const char *const orig)
   FUNC_ATTR_NONNULL_RET FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_ALL
 {
-  char_u *res = vim_strsave(orig);
+  char *res = xstrdup(orig);
 
-  char_u *p = res;
+  char *p = res;
   while (*p != NUL) {
     int l;
 
     if (enc_utf8) {
-      int c = utf_ptr2char(p);
+      int c = utf_ptr2char((const char_u *)p);
       int uc = utf_toupper(c);
 
-      /* Reallocate string when byte count changes.  This is rare,
-       * thus it's OK to do another malloc()/free(). */
-      l = utf_ptr2len(p);
+      // Reallocate string when byte count changes.  This is rare,
+      // thus it's OK to do another malloc()/free().
+      l = utf_ptr2len((const char_u *)p);
       int newl = utf_char2len(uc);
       if (newl != l) {
         // TODO(philix): use xrealloc() in strup_save()
-        char_u *s = xmalloc(STRLEN(res) + (size_t)(1 + newl - l));
+        char *s = xmalloc(STRLEN(res) + (size_t)(1 + newl - l));
         memcpy(s, res, (size_t)(p - res));
         STRCPY(s + (p - res) + newl, p + l);
         p = s + (p - res);
@@ -321,12 +324,13 @@ char_u *strup_save(const char_u *orig)
         res = s;
       }
 
-      utf_char2bytes(uc, p);
+      utf_char2bytes(uc, (char_u *)p);
       p += newl;
-    } else if (has_mbyte && (l = (*mb_ptr2len)(p)) > 1)
-      p += l;                 /* skip multi-byte character */
-    else {
-      *p = (char_u) TOUPPER_LOC(*p);  // note that toupper() can be a macro
+    } else if (has_mbyte && (l = (*mb_ptr2len)((const char_u *)p)) > 1) {
+      p += l;  // Skip multi-byte character.
+    } else {
+      // note that toupper() can be a macro
+      *p = (char)(uint8_t)TOUPPER_LOC(*p);
       p++;
     }
   }

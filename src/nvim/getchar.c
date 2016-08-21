@@ -3265,82 +3265,99 @@ showmap (
   ui_flush();                          /* show one line at a time */
 }
 
-/*
- * Return TRUE if a map exists that has "str" in the rhs for mode "modechars".
- * Recognize termcap codes in "str".
- * Also checks mappings local to the current buffer.
- */
-int map_to_exists(char_u *str, char_u *modechars, int abbr)
+/// Check if a map exists that has given string in the rhs
+///
+/// Also checks mappings local to the current buffer.
+///
+/// @param[in]  str  String which mapping must have in the rhs. Termcap codes
+///                  are recognized in this argument.
+/// @param[in]  modechars  Mode(s) in which mappings are checked.
+/// @param[in]  abbr  true if checking abbreviations in place of mappings.
+///
+/// @return true if there is at least one mapping with given parameters.
+bool map_to_exists(const char *const str, const char *const modechars,
+                   const bool abbr)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE
 {
   int mode = 0;
-  char_u      *rhs;
-  char_u      *buf;
   int retval;
 
-  rhs = replace_termcodes(str, STRLEN(str), &buf, false, true, false,
-                          CPO_TO_CPO_FLAGS);
+  char_u *buf;
+  char_u *const rhs = replace_termcodes((const char_u *)str, strlen(str), &buf,
+                                        false, true, false,
+                                        CPO_TO_CPO_FLAGS);
 
-  if (vim_strchr(modechars, 'n') != NULL)
-    mode |= NORMAL;
-  if (vim_strchr(modechars, 'v') != NULL)
-    mode |= VISUAL + SELECTMODE;
-  if (vim_strchr(modechars, 'x') != NULL)
-    mode |= VISUAL;
-  if (vim_strchr(modechars, 's') != NULL)
-    mode |= SELECTMODE;
-  if (vim_strchr(modechars, 'o') != NULL)
-    mode |= OP_PENDING;
-  if (vim_strchr(modechars, 'i') != NULL)
-    mode |= INSERT;
-  if (vim_strchr(modechars, 'l') != NULL)
-    mode |= LANGMAP;
-  if (vim_strchr(modechars, 'c') != NULL)
-    mode |= CMDLINE;
+#define MAPMODE(mode, modechars, chr, modeflags) \
+  do { \
+    if (strchr(modechars, chr) != NULL) { \
+      mode |= modeflags; \
+    } \
+  } while (0)
+  MAPMODE(mode, modechars, 'n', NORMAL);
+  MAPMODE(mode, modechars, 'v', VISUAL|SELECTMODE);
+  MAPMODE(mode, modechars, 'x', VISUAL);
+  MAPMODE(mode, modechars, 's', SELECTMODE);
+  MAPMODE(mode, modechars, 'o', OP_PENDING);
+  MAPMODE(mode, modechars, 'i', INSERT);
+  MAPMODE(mode, modechars, 'l', LANGMAP);
+  MAPMODE(mode, modechars, 'c', CMDLINE);
+#undef MAPMODE
 
-  retval = map_to_exists_mode(rhs, mode, abbr);
+  retval = map_to_exists_mode((const char *)rhs, mode, abbr);
   xfree(buf);
 
   return retval;
 }
 
-/*
- * Return TRUE if a map exists that has "str" in the rhs for mode "mode".
- * Also checks mappings local to the current buffer.
- */
-int map_to_exists_mode(char_u *rhs, int mode, int abbr)
+/// Check if a map exists that has given string in the rhs
+///
+/// Also checks mappings local to the current buffer.
+///
+/// @param[in]  rhs  String which mapping must have in the rhs. Termcap codes
+///                  are recognized in this argument.
+/// @param[in]  mode  Mode(s) in which mappings are checked.
+/// @param[in]  abbr  true if checking abbreviations in place of mappings.
+///
+/// @return true if there is at least one mapping with given parameters.
+int map_to_exists_mode(const char *const rhs, const int mode, const bool abbr)
 {
   mapblock_T  *mp;
   int hash;
-  int expand_buffer = FALSE;
+  bool expand_buffer = false;
 
   validate_maphash();
 
-  /* Do it twice: once for global maps and once for local maps. */
-  for (;; ) {
+  // Do it twice: once for global maps and once for local maps.
+  for (;;) {
     for (hash = 0; hash < 256; ++hash) {
       if (abbr) {
-        if (hash > 0)                   /* there is only one abbr list */
+        if (hash > 0) {  // There is only one abbr list.
           break;
-        if (expand_buffer)
+        }
+        if (expand_buffer) {
           mp = curbuf->b_first_abbr;
-        else
+        } else {
           mp = first_abbr;
-      } else if (expand_buffer)
+        }
+      } else if (expand_buffer) {
         mp = curbuf->b_maphash[hash];
-      else
+      } else {
         mp = maphash[hash];
+      }
       for (; mp; mp = mp->m_next) {
         if ((mp->m_mode & mode)
-            && strstr((char *)mp->m_str, (char *)rhs) != NULL)
-          return TRUE;
+            && strstr((char *)mp->m_str, rhs) != NULL) {
+          return true;
+        }
       }
     }
-    if (expand_buffer)
+    if (expand_buffer){
       break;
-    expand_buffer = TRUE;
+    }
+    expand_buffer = true;
   }
 
-  return FALSE;
+  return false;
 }
 
 /*

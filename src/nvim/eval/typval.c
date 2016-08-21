@@ -705,7 +705,7 @@ varnumber_T tv_list_find_nr(list_T *const l, const int n, bool *ret_error)
 /// @param[in]  n  Index in a list.
 ///
 /// @return [allocated] Copy of the list item string value.
-char *tv_list_find_str(list_T *l, int n)
+const char *tv_list_find_str(list_T *l, int n)
   FUNC_ATTR_MALLOC
 {
   listitem_T  *li;
@@ -715,7 +715,7 @@ char *tv_list_find_str(list_T *l, int n)
     EMSGN(_(e_listidx), n);
     return NULL;
   }
-  return (char *)get_tv_string(&li->li_tv);
+  return tv_get_string(&li->li_tv);
 }
 
 /// Locate item in a list and return its index
@@ -1829,4 +1829,28 @@ bool tv_check_str_or_nr(const typval_T *const tv)
   }
   assert(false);
   return false;
+}
+
+//{{{2 Get
+
+/// Get the string value of a variable
+///
+/// @warning For number and special values it uses a single, static buffer. It
+///          may be used only once, next call to get_tv_string may reuse it. Use
+///          get_tv_string_buf() if you need to use tv_get_string() output after
+///          calling it again.
+///
+/// @note get_tv_string_chk() and get_tv_string_buf_chk() are similar, but
+///       return NULL on error.
+///
+/// @param[in]  varp  Varible to get value of.
+///
+/// @return Variable value if it is VAR_STRING variable, number converted to
+///         a string for VAR_NUMBER, v: variable name for VAR_SPECIAL or empty
+///         string.
+const char *tv_get_string(const typval_T *const varp)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  static char_u mybuf[NUMBUFLEN];
+  return (const char *)get_tv_string_buf((typval_T *)varp, mybuf);
 }

@@ -8893,7 +8893,7 @@ static void spell_suggest_expr(suginfo_T *su, char_u *expr)
   list_T      *list;
   listitem_T  *li;
   int score;
-  char_u      *p;
+  const char *p;
 
   // The work is split up in a few parts to avoid having to export
   // suginfo_T.
@@ -8905,9 +8905,10 @@ static void spell_suggest_expr(suginfo_T *su, char_u *expr)
       if (li->li_tv.v_type == VAR_LIST) {
         // Get the word and the score from the items.
         score = get_spellword(li->li_tv.vval.v_list, &p);
-        if (score >= 0 && score <= su->su_maxscore)
-          add_suggestion(su, &su->su_ga, p, su->su_badlen,
-              score, 0, true, su->su_sallang, false);
+        if (score >= 0 && score <= su->su_maxscore) {
+          add_suggestion(su, &su->su_ga, (const char_u *)p, su->su_badlen,
+                         score, 0, true, su->su_sallang, false);
+        }
       }
     tv_list_unref(list);
   }
@@ -11506,7 +11507,7 @@ static void
 add_suggestion (
     suginfo_T *su,
     garray_T *gap,              // either su_ga or su_sga
-    char_u *goodword,
+    const char_u *goodword,
     int badlenarg,              // len of bad word replaced with "goodword"
     int score,
     int altscore,
@@ -11520,13 +11521,11 @@ add_suggestion (
   int badlen;                   // len of bad word changed
   suggest_T   *stp;
   suggest_T new_sug;
-  int i;
-  char_u      *pgood, *pbad;
 
   // Minimize "badlen" for consistency.  Avoids that changing "the the" to
   // "thee the" is added next to changing the first "the" the "thee".
-  pgood = goodword + STRLEN(goodword);
-  pbad = su->su_badptr + badlenarg;
+  const char_u *pgood = goodword + STRLEN(goodword);
+  char_u *pbad = su->su_badptr + badlenarg;
   for (;; ) {
     goodlen = (int)(pgood - goodword);
     badlen = (int)(pbad - su->su_badptr);
@@ -11546,9 +11545,10 @@ add_suggestion (
     // the first "the" to itself.
     return;
 
-  if (GA_EMPTY(gap))
+  int i;
+  if (GA_EMPTY(gap)) {
     i = -1;
-  else {
+  } else {
     // Check if the word is already there.  Also check the length that is
     // being replaced "thes," -> "these" is a different suggestion from
     // "thes" -> "these".
@@ -11747,27 +11747,31 @@ cleanup_suggestions (
   return maxscore;
 }
 
-// Soundfold a string, for soundfold().
-// Result is in allocated memory, NULL for an error.
-char_u *eval_soundfold(char_u *word)
+/// Soundfold a string, for soundfold()
+///
+/// @param[in]  word  Word to soundfold.
+///
+/// @return [allocated] soundfolded string or NULL in case of error. May return
+///                     copy of the input string if soundfolding is not
+///                     supported by any of the languages in &spellang.
+char *eval_soundfold(const char *const word)
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_ALL
 {
-  langp_T     *lp;
-  char_u sound[MAXWLEN];
-
   if (curwin->w_p_spell && *curwin->w_s->b_p_spl != NUL) {
     // Use the sound-folding of the first language that supports it.
     for (int lpi = 0; lpi < curwin->w_s->b_langp.ga_len; ++lpi) {
-      lp = LANGP_ENTRY(curwin->w_s->b_langp, lpi);
+      langp_T *const lp = LANGP_ENTRY(curwin->w_s->b_langp, lpi);
       if (!GA_EMPTY(&lp->lp_slang->sl_sal)) {
         // soundfold the word
-        spell_soundfold(lp->lp_slang, word, false, sound);
-        return vim_strsave(sound);
+        char_u sound[MAXWLEN];
+        spell_soundfold(lp->lp_slang, (char_u *)word, false, sound);
+        return xstrdup((const char *)sound);
       }
     }
   }
 
   // No language with sound folding, return word as-is.
-  return vim_strsave(word);
+  return xstrdup(word);
 }
 
 // Turn "inword" into its sound-a-like equivalent in "res[MAXWLEN]".

@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <inttypes.h>
 
+#include "nvim/assert.h"
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
 #include "nvim/arabic.h"
@@ -957,7 +958,7 @@ static int command_line_handle_key(CommandLineState *s)
     return command_line_not_changed(s);
 
   case Ctrl_HAT:
-    if (map_to_exists_mode((char_u *)"", LANGMAP, false)) {
+    if (map_to_exists_mode("", LANGMAP, false)) {
       // ":lmap" mappings exists, toggle use of mappings.
       State ^= LANGMAP;
       if (s->b_im_ptr != NULL) {
@@ -3091,9 +3092,10 @@ void ExpandEscape(expand_T *xp, char_u *str, int numfiles, char_u **files, int o
 #endif
         }
 #ifdef BACKSLASH_IN_FILENAME
-        p = vim_strsave_fnameescape(files[i], FALSE);
+        p = (char_u *)vim_strsave_fnameescape((const char *)files[i], false);
 #else
-        p = vim_strsave_fnameescape(files[i], xp->xp_shell);
+        p = (char_u *)vim_strsave_fnameescape((const char *)files[i],
+                                              xp->xp_shell);
 #endif
         xfree(files[i]);
         files[i] = p;
@@ -3123,42 +3125,49 @@ void ExpandEscape(expand_T *xp, char_u *str, int numfiles, char_u **files, int o
   }
 }
 
-/*
- * Escape special characters in "fname" for when used as a file name argument
- * after a Vim command, or, when "shell" is non-zero, a shell command.
- * Returns the result in allocated memory.
- */
-char_u *vim_strsave_fnameescape(char_u *fname, int shell) FUNC_ATTR_NONNULL_RET
+/// Escape special characters in a file name for use as a command argument
+///
+/// @param[in]  fname  File name to escape.
+/// @param[in]  shell  What to escape for: if false, escapes for VimL command,
+///                    if true then it escapes for a shell command.
+///
+/// @return [allocated] escaped file name.
+char *vim_strsave_fnameescape(const char *const fname, const bool shell)
+  FUNC_ATTR_NONNULL_RET FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_ALL
 {
-  char_u      *p;
 #ifdef BACKSLASH_IN_FILENAME
-#define PATH_ESC_CHARS ((char_u *)" \t\n*?[{`%#'\"|!<")
-  char_u buf[20];
+#define PATH_ESC_CHARS " \t\n*?[{`%#'\"|!<"
+  char_u buf[sizeof(PATH_ESC_CHARS)];
   int j = 0;
 
   /* Don't escape '[', '{' and '!' if they are in 'isfname'. */
-  for (p = PATH_ESC_CHARS; *p != NUL; ++p)
-    if ((*p != '[' && *p != '{' && *p != '!') || !vim_isfilec(*p))
-      buf[j++] = *p;
+  for (const char *s = PATH_ESC_CHARS; *s != NUL; s++) {
+    if ((*s != '[' && *s != '{' && *s != '!') || !vim_isfilec(*s)) {
+      buf[j++] = *s;
+    }
+  }
   buf[j] = NUL;
-  p = vim_strsave_escaped(fname, buf);
+  char *p = (char *)vim_strsave_escaped((const char_u *)fname,
+                                        (const char_u *)buf);
 #else
 #define PATH_ESC_CHARS ((char_u *)" \t\n*?[{`$\\%#'\"|!<")
 #define SHELL_ESC_CHARS ((char_u *)" \t\n*?[{`$\\%#'\"|!<>();&")
-  p = vim_strsave_escaped(fname, shell ? SHELL_ESC_CHARS : PATH_ESC_CHARS);
+  char *p = (char *)vim_strsave_escaped(
+      (const char_u *)fname, (shell ? SHELL_ESC_CHARS : PATH_ESC_CHARS));
   if (shell && csh_like_shell()) {
-    /* For csh and similar shells need to put two backslashes before '!'.
-     * One is taken by Vim, one by the shell. */
-    char_u *s = vim_strsave_escaped(p, (char_u *)"!");
+    // For csh and similar shells need to put two backslashes before '!'.
+    // One is taken by Vim, one by the shell.
+    char *s = (char *)vim_strsave_escaped((const char_u *)p,
+                                          (const char_u *)"!");
     xfree(p);
     p = s;
   }
 #endif
 
-  /* '>' and '+' are special at the start of some commands, e.g. ":edit" and
-   * ":write".  "cd -" has a special meaning. */
+  // '>' and '+' are special at the start of some commands, e.g. ":edit" and
+  // ":write".  "cd -" has a special meaning.
   if (*p == '>' || *p == '+' || (*p == '-' && p[1] == NUL)) {
-    escape_fname(&p);
+    escape_fname((char_u **)&p);
   }
 
   return p;
@@ -4168,7 +4177,8 @@ static int ExpandUserDefined(expand_T *xp, regmatch_T *regmatch, int *num_file, 
   char_u keep;
   garray_T ga;
 
-  retstr = call_user_expand_func(call_func_retstr, xp, num_file, file);
+  retstr = call_user_expand_func((user_expand_func_T)call_func_retstr, xp,
+                                 num_file, file);
   if (retstr == NULL)
     return FAIL;
 
@@ -4208,7 +4218,8 @@ static int ExpandUserList(expand_T *xp, int *num_file, char_u ***file)
   listitem_T  *li;
   garray_T ga;
 
-  retlist = call_user_expand_func(call_func_retlist, xp, num_file, file);
+  retlist = call_user_expand_func((user_expand_func_T)call_func_retlist, xp,
+                                  num_file, file);
   if (retlist == NULL)
     return FAIL;
 

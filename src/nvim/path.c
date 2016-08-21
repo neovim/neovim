@@ -159,7 +159,7 @@ const char_u *invocation_path_tail(const char_u *invocation, size_t *len)
 /// @param fname A file path. (Must be != NULL.)
 /// @return Pointer to first found path separator + 1.
 /// An empty string, if `fname` doesn't contain a path separator,
-char_u *path_next_component(char_u *fname)
+const char *path_next_component(const char *fname)
 {
   assert(fname != NULL);
   while (*fname != NUL && !vim_ispathsep(*fname)) {
@@ -424,7 +424,7 @@ void add_pathsep(char *p)
 ///
 /// @return [allocated] Copy of absolute path to `fname` or NULL when
 ///                     `fname` is NULL.
-char *FullName_save(char *fname, bool force)
+char *FullName_save(const char *fname, bool force)
   FUNC_ATTR_NONNULL_RET FUNC_ATTR_MALLOC
 {
   if (fname == NULL) {
@@ -903,9 +903,9 @@ static void uniquefy_paths(garray_T *gap, char_u *pattern)
   in_curdir = xcalloc((size_t)gap->ga_len, sizeof(char_u *));
 
   for (int i = 0; i < gap->ga_len && !got_int; i++) {
-    char_u      *path = fnames[i];
+    char_u *path = fnames[i];
     int is_in_curdir;
-    char_u      *dir_end = gettail_dir(path);
+    char_u *dir_end = (char_u *)gettail_dir((const char *)path);
     char_u      *pathsep_p;
     char_u      *path_cutoff;
 
@@ -1013,14 +1013,13 @@ static void uniquefy_paths(garray_T *gap, char_u *pattern)
  * "/path/file", "/path/dir/", "/path//dir", "/file"
  *	 ^	       ^	     ^	      ^
  */
-char_u *gettail_dir(const char_u *fname)
+const char *gettail_dir(const char *fname)
 {
-  const char_u      *dir_end = fname;
-  const char_u      *next_dir_end = fname;
+  const char *dir_end = fname;
+  const char *next_dir_end = fname;
   bool look_for_sep = true;
-  const char_u      *p;
 
-  for (p = fname; *p != NUL; ) {
+  for (const char *p = fname; *p != NUL; ) {
     if (vim_ispathsep(*p)) {
       if (look_for_sep) {
         next_dir_end = p;
@@ -1033,7 +1032,7 @@ char_u *gettail_dir(const char_u *fname)
     }
     mb_ptr_adv(p);
   }
-  return (char_u *)dir_end;
+  return dir_end;
 }
 
 
@@ -1552,8 +1551,8 @@ void simplify_filename(char_u *filename)
         p = tail;                       /* skip to char after ".." or "../" */
       }
     } else {
-      ++components;                     /* simple path component */
-      p = path_next_component(p);
+      components++;  // Simple path component.
+      p = (char_u *)path_next_component((const char *)p);
     }
   } while (*p != NUL);
 }

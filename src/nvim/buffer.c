@@ -4037,14 +4037,12 @@ void fname_expand(buf_T *buf, char_u **ffname, char_u **sfname)
 
 #ifdef WIN32
   if (!buf->b_p_bin) {
-    char_u  *rfname;
-
     // If the file name is a shortcut file, use the file it links to.
-    rfname = os_resolve_shortcut(*ffname);
+    char *rfname = os_resolve_shortcut((const char *)*ffname);
     if (rfname != NULL) {
       xfree(*ffname);
-      *ffname = rfname;
-      *sfname = rfname;
+      *ffname = (char_u *)rfname;
+      *sfname = (char_u *)rfname;
     }
   }
 #endif

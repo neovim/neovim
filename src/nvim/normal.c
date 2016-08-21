@@ -2077,7 +2077,6 @@ static void op_colon(oparg_T *oap)
  */
 static void op_function(oparg_T *oap)
 {
-  char_u      *(argv[1]);
   int save_virtual_op = virtual_op;
 
   if (*p_opfunc == NUL)
@@ -2091,16 +2090,16 @@ static void op_function(oparg_T *oap)
       decl(&curbuf->b_op_end);
     }
 
-    if (oap->motion_type == kMTBlockWise) {
-      argv[0] = (char_u *)"block";
-    } else if (oap->motion_type == kMTLineWise) {
-      argv[0] = (char_u *)"line";
-    } else {
-      argv[0] = (char_u *)"char";
-    }
+    const char_u *const argv[1] = {
+      (const char_u *)(((const char *const []) {
+        [kMTBlockWise] = "block",
+        [kMTLineWise] = "line",
+        [kMTCharWise] = "char",
+      })[oap->motion_type]),
+    };
 
-    /* Reset virtual_op so that 'virtualedit' can be changed in the
-     * function. */
+    // Reset virtual_op so that 'virtualedit' can be changed in the
+    // function.
     virtual_op = MAYBE;
 
     (void)call_func_retnr(p_opfunc, 1, argv, false);

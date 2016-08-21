@@ -6923,21 +6923,21 @@ static int highlight_list_arg(int id, int didh, int type, int iarg, char_u *sarg
   return didh;
 }
 
-/*
- * Return "1" if highlight group "id" has attribute "flag".
- * Return NULL otherwise.
- */
-char_u *
-highlight_has_attr (
-    int id,
-    int flag,
-    int modec              // 'g' for GUI, 'c' for cterm
-)
+/// Check whether highlight group has attribute
+///
+/// @param[in]  id  Highilght group to check.
+/// @param[in]  flag  Attribute to check.
+/// @param[in]  modec  'g' for GUI, 'c' for term.
+///
+/// @return "1" if highlight group has attribute, NULL otherwise.
+const char *highlight_has_attr(const int id, const int flag, const int modec)
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE
 {
   int attr;
 
-  if (id <= 0 || id > highlight_ga.ga_len)
+  if (id <= 0 || id > highlight_ga.ga_len) {
     return NULL;
+  }
 
   if (modec == 'g') {
     attr = HL_TABLE()[id - 1].sg_gui;
@@ -6945,39 +6945,42 @@ highlight_has_attr (
     attr = HL_TABLE()[id - 1].sg_cterm;
   }
 
-  if (attr & flag)
-    return (char_u *)"1";
-  return NULL;
+  return (attr & flag) ? "1" : NULL;
 }
 
-/*
- * Return color name of highlight group "id".
- */
-char_u *
-highlight_color (
-    int id,
-    char_u *what,      /* "font", "fg", "bg", "sp", "fg#", "bg#" or "sp#" */
-    int modec              /* 'g' for GUI, 'c' for cterm, 't' for term */
-)
+/// Return color name of the given highlight group
+///
+/// @param[in]  id  Highlight group to work with.
+/// @param[in]  what  What to return: one of "font", "fg", "bg", "sp", "fg#",
+///                   "bg#" or "sp#".
+/// @param[in]  modec  'g' for GUI, 'c' for cterm and 't' for term.
+///
+/// @return color name, possibly in a static buffer. Buffer will be overwritten
+///         on next highlight_color() call. May return NULL.
+const char *highlight_color(const int id, const char *const what,
+                            const int modec)
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
-  static char_u name[20];
+  static char name[20];
   int n;
-  int fg = FALSE;
-  int sp = FALSE;
-  int font = FALSE;
+  bool fg = false;
+  bool sp = false;
+  bool font = false;
 
-  if (id <= 0 || id > highlight_ga.ga_len)
+  if (id <= 0 || id > highlight_ga.ga_len) {
     return NULL;
+  }
 
-  if (TOLOWER_ASC(what[0]) == 'f' && TOLOWER_ASC(what[1]) == 'g')
-    fg = TRUE;
-  else if (TOLOWER_ASC(what[0]) == 'f' && TOLOWER_ASC(what[1]) == 'o'
-           && TOLOWER_ASC(what[2]) == 'n' && TOLOWER_ASC(what[3]) == 't')
-    font = TRUE;
-  else if (TOLOWER_ASC(what[0]) == 's' && TOLOWER_ASC(what[1]) == 'p')
-    sp = TRUE;
-  else if (!(TOLOWER_ASC(what[0]) == 'b' && TOLOWER_ASC(what[1]) == 'g'))
+  if (TOLOWER_ASC(what[0]) == 'f' && TOLOWER_ASC(what[1]) == 'g') {
+    fg = true;
+  } else if (TOLOWER_ASC(what[0]) == 'f' && TOLOWER_ASC(what[1]) == 'o'
+             && TOLOWER_ASC(what[2]) == 'n' && TOLOWER_ASC(what[3]) == 't') {
+    font = true;
+  } else if (TOLOWER_ASC(what[0]) == 's' && TOLOWER_ASC(what[1]) == 'p') {
+    sp = true;
+  } else if (!(TOLOWER_ASC(what[0]) == 'b' && TOLOWER_ASC(what[1]) == 'g')) {
     return NULL;
+  }
   if (modec == 'g') {
     if (what[2] == '#' && ui_rgb_attached()) {
       if (fg) {
@@ -6990,19 +6993,20 @@ highlight_color (
       if (n < 0 || n > 0xffffff) {
         return NULL;
       }
-      snprintf((char *)name, sizeof(name), "#%06x", n);
+      snprintf(name, sizeof(name), "#%06x", n);
       return name;
     }
     if (fg) {
-      return HL_TABLE()[id - 1].sg_rgb_fg_name;
+      return (const char *)HL_TABLE()[id - 1].sg_rgb_fg_name;
     }
     if (sp) {
-      return HL_TABLE()[id - 1].sg_rgb_sp_name;
+      return (const char *)HL_TABLE()[id - 1].sg_rgb_sp_name;
     }
-    return HL_TABLE()[id - 1].sg_rgb_bg_name;
+    return (const char *)HL_TABLE()[id - 1].sg_rgb_bg_name;
   }
-  if (font || sp)
+  if (font || sp) {
     return NULL;
+  }
   if (modec == 'c') {
     if (fg) {
       n = HL_TABLE()[id - 1].sg_cterm_fg - 1;
@@ -7012,10 +7016,10 @@ highlight_color (
     if (n < 0) {
       return NULL;
     }
-    snprintf((char *)name, sizeof(name), "%d", n);
+    snprintf(name, sizeof(name), "%d", n);
     return name;
   }
-  /* term doesn't have color */
+  // term doesn't have color.
   return NULL;
 }
 
@@ -7126,7 +7130,7 @@ int syn_name2id(const char_u *name)
 /*
  * Return TRUE if highlight group "name" exists.
  */
-int highlight_exists(char_u *name)
+int highlight_exists(const char_u *name)
 {
   return syn_name2id(name) > 0;
 }

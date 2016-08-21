@@ -147,7 +147,7 @@ void channel_from_connection(SocketWatcher *watcher)
 /// @param name The event name, an arbitrary string
 /// @param args Array with event arguments
 /// @return True if the event was sent successfully, false otherwise.
-bool channel_send_event(uint64_t id, char *name, Array args)
+bool channel_send_event(uint64_t id, const char *name, Array args)
 {
   Channel *channel = NULL;
 
@@ -160,7 +160,7 @@ bool channel_send_event(uint64_t id, char *name, Array args)
   if (channel) {
     if (channel->pending_requests) {
       // Pending request, queue the notification for later sending.
-      String method = cstr_as_string(name);
+      const String method = cstr_as_string((char *)name);
       WBuffer *buffer = serialize_request(id, 0, method, args, &out_buffer, 1);
       kv_push(channel->delayed_notifications, buffer);
     } else {
@@ -182,7 +182,7 @@ bool channel_send_event(uint64_t id, char *name, Array args)
 /// @param[out] error True if the return value is an error
 /// @return Whatever the remote method returned
 Object channel_send_call(uint64_t id,
-                         char *method_name,
+                         const char *method_name,
                          Array args,
                          Error *err)
 {
@@ -520,10 +520,10 @@ static void send_error(Channel *channel, uint64_t id, char *err)
 
 static void send_request(Channel *channel,
                          uint64_t id,
-                         char *name,
+                         const char *name,
                          Array args)
 {
-  String method = {.size = strlen(name), .data = name};
+  const String method = cstr_as_string((char *)name);
   channel_write(channel, serialize_request(channel->id,
                                            id,
                                            method,
@@ -533,10 +533,10 @@ static void send_request(Channel *channel,
 }
 
 static void send_event(Channel *channel,
-                       char *name,
+                       const char *name,
                        Array args)
 {
-  String method = {.size = strlen(name), .data = name};
+  const String method = cstr_as_string((char *)name);
   channel_write(channel, serialize_request(channel->id,
                                            0,
                                            method,
@@ -545,7 +545,7 @@ static void send_event(Channel *channel,
                                            1));
 }
 
-static void broadcast_event(char *name, Array args)
+static void broadcast_event(const char *name, Array args)
 {
   kvec_t(Channel *) subscribed = KV_INITIAL_VALUE;
   Channel *channel;
@@ -561,7 +561,7 @@ static void broadcast_event(char *name, Array args)
     goto end;
   }
 
-  String method = {.size = strlen(name), .data = name};
+  const String method = cstr_as_string((char *)name);
   WBuffer *buffer = serialize_request(0,
                                       0,
                                       method,
@@ -729,7 +729,7 @@ static void call_set_error(Channel *channel, char *msg)
 
 static WBuffer *serialize_request(uint64_t channel_id,
                                   uint64_t request_id,
-                                  String method,
+                                  const String method,
                                   Array args,
                                   msgpack_sbuffer *sbuffer,
                                   size_t refcount)

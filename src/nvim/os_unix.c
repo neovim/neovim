@@ -113,7 +113,7 @@ void mch_copy_sec(char_u *from_file, char_u *to_file)
  * Return a pointer to the ACL of file "fname" in allocated memory.
  * Return NULL if the ACL is not available for whatever reason.
  */
-vim_acl_T mch_get_acl(char_u *fname)
+vim_acl_T mch_get_acl(const char_u *fname)
 {
   vim_acl_T ret = NULL;
   return ret;
@@ -122,7 +122,7 @@ vim_acl_T mch_get_acl(char_u *fname)
 /*
  * Set the ACL of file "fname" to "acl" (unless it's NULL).
  */
-void mch_set_acl(char_u *fname, vim_acl_T aclent)
+void mch_set_acl(const char_u *fname, vim_acl_T aclent)
 {
   if (aclent == NULL)
     return;

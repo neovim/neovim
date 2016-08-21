@@ -1085,7 +1085,7 @@ void u_write_undo(const char *const name, const bool forceit, buf_T *const buf,
    */
   perm = 0600;
   if (buf->b_ffname != NULL) {
-    perm = os_getperm(buf->b_ffname);
+    perm = os_getperm((const char *)buf->b_ffname);
     if (perm < 0) {
       perm = 0600;
     }
