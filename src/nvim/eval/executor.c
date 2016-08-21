@@ -80,7 +80,8 @@ int eexe_mod_op(typval_T *const tv1, const typval_T *const tv2,
           const char *tvs = tv_get_string(tv1);
           char numbuf[NUMBUFLEN];
           char *const s = (char *)concat_str(
-              (const char_u *)tvs, get_tv_string_buf(tv2, (char_u *)numbuf));
+              (const char_u *)tvs, (const char_u *)tv_get_string_buf(tv2,
+                                                                     numbuf));
           tv_clear(tv1);
           tv1->v_type = VAR_STRING;
           tv1->vval.v_string = (char_u *)s;
