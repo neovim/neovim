@@ -1764,16 +1764,18 @@ void qf_list(exarg_T *eap)
         vim_snprintf((char *)IObuff, IOSIZE, "%2d %s",
             i, (char *)fname);
       msg_outtrans_attr(IObuff, i == qi->qf_lists[qi->qf_curlist].qf_index
-          ? hl_attr(HLF_L) : hl_attr(HLF_D));
-      if (qfp->qf_lnum == 0)
+                        ? hl_attr(HLF_QFL) : hl_attr(HLF_D));
+      if (qfp->qf_lnum == 0) {
         IObuff[0] = NUL;
-      else if (qfp->qf_col == 0)
-        sprintf((char *)IObuff, ":%" PRId64, (int64_t)qfp->qf_lnum);
-      else
-        sprintf((char *)IObuff, ":%" PRId64 " col %d",
-                (int64_t)qfp->qf_lnum, qfp->qf_col);
-      sprintf((char *)IObuff + STRLEN(IObuff), "%s:",
-          (char *)qf_types(qfp->qf_type, qfp->qf_nr));
+      } else if (qfp->qf_col == 0) {
+        vim_snprintf((char *)IObuff, IOSIZE, ":%" PRId64,
+                     (int64_t)qfp->qf_lnum);
+      } else {
+        vim_snprintf((char *)IObuff, IOSIZE, ":%" PRId64 " col %d",
+                     (int64_t)qfp->qf_lnum, qfp->qf_col);
+      }
+      vim_snprintf((char *)IObuff + STRLEN(IObuff), IOSIZE, "%s:",
+                   (char *)qf_types(qfp->qf_type, qfp->qf_nr));
       msg_puts_attr(IObuff, hl_attr(HLF_N));
       if (qfp->qf_pattern != NULL) {
         qf_fmt_text(qfp->qf_pattern, IObuff, IOSIZE);

@@ -5902,6 +5902,7 @@ static char *highlight_init_both[] =
   "VertSplit    cterm=reverse gui=reverse",
   "WildMenu     ctermbg=Yellow ctermfg=Black guibg=Yellow guifg=Black",
   "default link EndOfBuffer NonText",
+  "default link QuickFixLine Search",
   NULL
 };
 
