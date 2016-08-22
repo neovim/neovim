@@ -1,5 +1,5 @@
 if arg[1] == '--help' then
-  print('Usage: genoptions.lua src/nvim runtime/syntax/vim/generated.vim')
+  print('Usage: lua genvimvim.lua src/nvim runtime/syntax/vim/generated.vim')
   os.exit(0)
 end
 

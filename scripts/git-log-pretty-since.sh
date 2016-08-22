@@ -19,7 +19,7 @@ is_merge_commit() {
   git log $1^2 >/dev/null 2>&1 && return 0 || return 1
 }
 
-for commit in $(git log --format='%H' --first-parent --since $__SINCE); do
+for commit in $(git log --format='%H' --first-parent "$__SINCE"..HEAD); do
   if is_merge_commit ${commit} ; then
       if [ -z "$__INVMATCH" ] || ! git log --oneline ${commit}^1..${commit}^2 \
            | grep -E "$__INVMATCH" >/dev/null 2>&1 ; then

@@ -111,6 +111,7 @@ Events:
 
 Highlight groups:
   |hl-EndOfBuffer|
+  |hl-QuickFixLine|
   |hl-TermCursor|
   |hl-TermCursorNC|
 

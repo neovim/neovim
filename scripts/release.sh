@@ -52,7 +52,10 @@ git commit --edit -m "${__RELEASE_MSG} ${__CHANGELOG}"
 git tag -a v"${__VERSION}" -m "NVIM v${__VERSION}"
 
 sed -i -r 's/(NVIM_VERSION_PRERELEASE) ""/\1 "-dev"/' CMakeLists.txt
-nvim -c '/NVIM_VERSION' -c 'echo "Update version numbers"' CMakeLists.txt
+sed -i -r 's/set\((NVIM_VERSION_PATCH) [[:digit:]]/set(\1 ?/' CMakeLists.txt
+nvim +'/NVIM_VERSION' +10new +'exe "norm! iUpdate version numbers!!!\<CR>"' \
+  +'norm! 10.' CMakeLists.txt
+
 git add CMakeLists.txt
 git commit -m "$__BUMP_MSG"
 
