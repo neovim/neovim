@@ -79,14 +79,6 @@ TROUBLESHOOTING					*python-trouble*
 If you have trouble with a plugin that uses the `neovim` Python client, use
 the |:CheckHealth| command to diagnose your setup.
 
-								 *:CheckHealth*
-:CheckHealth[!]	  Check your setup for common problems that may be keeping a
-		  plugin from functioning correctly.  Include the output of
-		  this command in bug reports to help reduce the amount of
-		  time it takes to address your issue.  With "!" the output
-		  will be placed in a new buffer which can make it easier to
-		  save to a file or copy to the clipboard.
-
 ==============================================================================
 Ruby integration		    	      *provider-ruby*
 

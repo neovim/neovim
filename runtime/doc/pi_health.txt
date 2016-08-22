@@ -1,0 +1,127 @@
+*pi_health.txt*   Healthcheck framework
+
+Author: TJ DeVries <devries.timothyj@gmail.com>
+
+==============================================================================
+1. Introduction				|health.vim-intro|
+2. Commands and functions		|health.vim-manual|
+3. Create a healthcheck			|health.vim-dev|
+
+==============================================================================
+Introduction				*healthcheck* *health.vim-intro*
+
+Troubleshooting user configuration problems is a time-consuming task that
+developers want to minimize. health.vim provides a simple framework for plugin
+authors to hook into, and for users to invoke, to check and report the user's
+configuration and environment. Type this command to try it: >
+
+        :CheckHealth
+<
+For example, some users have broken or unusual Python setups, which breaks the
+|:python| command. |:CheckHealth| detects several common Python configuration
+problems and reports them. If the Neovim Python module is not installed, it
+shows a warning: >
+
+	You have not installed the Neovim Python module
+	You might want to try `pip install Neovim`
+< 
+Plugin authors are encouraged to add healthchecks, see |health.vim-dev|.
+
+==============================================================================
+Commands and functions			*health.vim-manual*
+
+Commands
+------------------------------------------------------------------------------
+							*:CheckHealth*
+:CheckHealth          Run all healthchecks and show the output in a new
+                      tabpage. These healthchecks are included by default:
+                        - python2
+                        - python3
+                        - ruby
+                        - remote plugin
+
+:CheckHealth {plugins}
+                      Run healthchecks for one or more plugins. E.g. to run
+                      only the standard Nvim healthcheck: >
+                        :CheckHealth nvim
+<                      To run the healthchecks for the "foo" and "bar" plugins
+                      (assuming these plugins are on your 'runtimepath' and
+                      they have implemented health#foo#check() and
+                      health#bar#check(), respectively): >
+                        :CheckHealth foo bar
+<
+Functions
+------------------------------------------------------------------------------
+
+health.vim functions are for creating new healthchecks. They mostly just do
+some layout and formatting, to give users a consistent presentation.
+
+health#report_start({name})				*health#report_start*
+	Starts a new report. Most plugins should call this only once, but if
+        you want different sections to appear in your report, call this once
+        per section.
+
+health#report_info({msg})				*health#report_info*
+	Displays an informational message.
+
+health#report_ok({msg})					*health#report_ok*
+	Displays a "success" message.
+
+health#report_warn({msg}, [{suggestions}])		*health#report_warn*
+        Displays a warning. {suggestions} is an optional List of suggestions.
+
+health#report_error({msg}, [{suggestions}])		*health#report_error*
+        Displays an error. {suggestions} is an optional List of suggestions.
+
+health#{plugin}#check()					*health.user_checker*
+        This is the form of a healthcheck definition. Call the above functions
+        from this function, then |:CheckHealth| does the rest. Example: >
+
+                function! health#my_plug#check() abort
+                  silent call s:check_environment_vars()
+                  silent call s:check_python_configuration()
+                endfunction
+<
+        The function will be found and called automatically when the user
+        invokes |:CheckHealth|.
+
+	All output will be captured from the healthcheck. Use the
+        health#report_* functions so that your healthcheck has a format
+        consistent with the standard healthchecks.
+
+==============================================================================
+Create a healthcheck			*health.vim-dev*
+
+Healthchecks are functions that check the health of the system. Neovim has
+built-in checkers, found in $VIMRUNTIME/autoload/health/.
+
+To add a new checker for your own plugin, simply define a
+health#{plugin}#check() function in autoload/health/{plugin}.vim.
+|:CheckHealth| automatically finds and invokes such functions.
+
+If your plugin is named "jslint", then its healthcheck function must be >
+
+        health#jslint#check()
+<
+defined in this file on 'runtimepath': >
+
+        autoload/health/jslint.vim
+<
+Here's a sample to get started: >
+
+        function! health#jslint#check() abort
+          call health#report_start('sanity checks')
+          " perform arbitrary checks
+          " ...
+
+          if looks_good
+            call health#report_ok('found required dependencies')
+          else
+            call health#report_error('cannot find jslint', 
+              \ ['npm install --save jslint'])
+          endif
+        endfunction
+<
+==============================================================================
+
+vim:tw=78:ts=8:ft=help:fdm=marker

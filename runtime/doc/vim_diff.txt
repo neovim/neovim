@@ -107,6 +107,7 @@ Events:
   |TabClosed|
   |TermOpen|
   |TermClose|
+  |TextYankPost|
 
 Highlight groups:
   |hl-EndOfBuffer|

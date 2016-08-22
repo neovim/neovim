@@ -1,1 +1,1 @@
-command! -bang CheckHealth call health#check(<bang>0)
+command! -nargs=* CheckHealth call health#check([<f-args>])
