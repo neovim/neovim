@@ -5664,8 +5664,7 @@ rpcstart({prog}[, {argv}])				   {Nvim} *rpcstart()*
 		Deprecated. Replace  >
 			:let id = rpcstart('prog', ['arg1', 'arg2'])
 <		with >
-			:let id = jobstart(['prog', 'arg1', 'arg2'],
-					   {'rpc': v:true})
+			:let id = jobstart(['prog', 'arg1', 'arg2'], {'rpc': v:true})
 
 rpcstop({channel})					    {Nvim} *rpcstop()*
 		Closes an |RPC| {channel}.  If the channel is a job
