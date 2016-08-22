@@ -1,12 +1,9 @@
 " Maintainer: Anmol Sethi <anmol@aubble.com>
 
-" Ensure Vim is not recursively invoked (man-db does this)
-" by forcing man to use cat as the pager.
-" More info here http://comments.gmane.org/gmane.editors.vim.devel/29085
 if &shell =~# 'fish$'
-  let s:man_cmd = 'man -P cat ^/dev/null'
+  let s:man_cmd = 'man ^/dev/null'
 else
-  let s:man_cmd = 'man -P cat 2>/dev/null'
+  let s:man_cmd = 'man 2>/dev/null'
 endif
 
 let s:man_find_arg = "-w"
@@ -49,7 +46,7 @@ function! man#open_page(count, count1, mods, ...) abort
       " user explicitly set a count
       let sect = string(a:count)
     endif
-    let [sect, name] = s:verify_exists(sect, name)
+    let [sect, name, path] = s:verify_exists(sect, name)
   catch
     call s:error(v:exception)
     return
@@ -64,7 +61,7 @@ function! man#open_page(count, count1, mods, ...) abort
       return
     endif
     noautocmd execute 'edit' bufname
-    call s:read_page(sect, name)
+    call s:read_page(path)
     return
   endif
   noautocmd execute a:mods 'split' bufname
@@ -73,26 +70,29 @@ function! man#open_page(count, count1, mods, ...) abort
     keepjumps 1
     return
   endif
-  call s:read_page(sect, name)
+  call s:read_page(path)
 endfunction
 
 function! man#read_page(ref) abort
   try
     let [sect, name] = s:extract_sect_and_name_ref(a:ref)
-    let [sect, name] = s:verify_exists(sect, name)
+    " The third element is the path.
+    call s:read_page(s:verify_exists(sect, name)[2])
   catch
     call s:error(v:exception)
     return
   endtry
-  call s:read_page(sect, name)
 endfunction
 
-function! s:read_page(sect, name) abort
+function! s:read_page(path) abort
   setlocal modifiable
   setlocal noreadonly
   keepjumps %delete _
   let b:manwidth = s:manwidth()
-  silent execute 'read!env MANWIDTH='.b:manwidth s:man_cmd s:man_args(a:sect, a:name)
+  " Ensure Vim is not recursively invoked (man-db does this)
+  " by forcing man to use cat as the pager.
+  " More info here http://comments.gmane.org/gmane.editors.vim.devel/29085
+  silent execute 'read!env MANPAGER=cat MANWIDTH='.b:manwidth s:man_cmd a:path
   " remove all the backspaced text
   silent execute 'keeppatterns keepjumps %substitute,.\b,,e'.(&gdefault?'':'g')
   while getline(1) =~# '^\s*$'
@@ -136,7 +136,7 @@ function! s:verify_exists(sect, name) abort
   if a:name =~# '\/'
     " We do not need to extract the section/name from the path if the name is
     " just a path.
-    return ['', a:name]
+    return ['', a:name, path]
   endif
   " We need to extract the section from the path because sometimes
   " the actual section of the manpage is more specific than the section
@@ -144,7 +144,8 @@ function! s:verify_exists(sect, name) abort
   " Also on linux, it seems that the name is case insensitive. So if one does
   " ':Man PRIntf', we still want the name of the buffer to be 'printf' or
   " whatever the correct capitilization is.
-  return s:extract_sect_and_name_path(path[:len(path)-2])
+  let path = path[:len(path)-2]
+  return s:extract_sect_and_name_path(path) + [path]
 endfunction
 
 let s:tag_stack = []
@@ -282,11 +283,11 @@ function! man#complete(arg_lead, cmd_line, cursor_pos) abort
   return uniq(sort(map(globpath(s:mandirs,'man?/'.name.'*.'.sect.'*', 0, 1), 's:format_candidate(v:val, sect)'), 'i'))
 endfunction
 
-function! s:format_candidate(c, sect) abort
-  if a:c =~# '\.\%(pdf\|in\)$' " invalid extensions
+function! s:format_candidate(path, sect) abort
+  if a:path =~# '\.\%(pdf\|in\)$' " invalid extensions
     return
   endif
-  let [sect, name] = s:extract_sect_and_name_path(a:c)
+  let [sect, name] = s:extract_sect_and_name_path(a:path)
   if sect ==# a:sect
     return name
   elseif sect =~# a:sect.'[^.]\+$'
