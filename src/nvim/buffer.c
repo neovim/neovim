@@ -671,14 +671,15 @@ void handle_swap_exists(buf_T *old_curbuf)
      * aborting() returns FALSE when closing a buffer. */
     enter_cleanup(&cs);
 
-    /* User selected Quit at ATTENTION prompt.  Go back to previous
-     * buffer.  If that buffer is gone or the same as the current one,
-     * open a new, empty buffer. */
-    swap_exists_action = SEA_NONE;      /* don't want it again */
-    swap_exists_did_quit = TRUE;
-    close_buffer(curwin, curbuf, DOBUF_UNLOAD, FALSE);
-    if (!buf_valid(old_curbuf) || old_curbuf == curbuf)
+    // User selected Quit at ATTENTION prompt.  Go back to previous
+    // buffer.  If that buffer is gone or the same as the current one,
+    // open a new, empty buffer.
+    swap_exists_action = SEA_NONE;      // don't want it again
+    swap_exists_did_quit = true;
+    close_buffer(curwin, curbuf, DOBUF_UNLOAD, false);
+    if (!buf_valid(old_curbuf) || old_curbuf == curbuf) {
       old_curbuf = buflist_new(NULL, NULL, 1L, BLN_CURBUF | BLN_LISTED, 0);
+    }
     if (old_curbuf != NULL) {
       enter_buffer(old_curbuf);
       if (old_tw != curbuf->b_p_tw)
@@ -1335,11 +1336,11 @@ void do_autochdir(void)
 static int top_file_num = 1;            /* highest file number */
 
 buf_T *
-buflist_new (
-    char_u *ffname,            /* full path of fname or relative */
-    char_u *sfname,            /* short fname or NULL */
-    linenr_T lnum,                  /* preferred cursor line */
-    int flags,                      /* BLN_ defines */
+buflist_new(
+    char_u *ffname,            // full path of fname or relative
+    char_u *sfname,            // short fname or NULL
+    linenr_T lnum,             // preferred cursor line
+    int flags,                 // BLN_ defines
     handle_T bufnr
 )
 {
@@ -2377,10 +2378,11 @@ buf_T *setaltfname(char_u *ffname, char_u *sfname, linenr_T lnum)
 {
   buf_T       *buf;
 
-  /* Create a buffer.  'buflisted' is not set if it's a new buffer */
+  // Create a buffer.  'buflisted' is not set if it's a new buffer
   buf = buflist_new(ffname, sfname, lnum, 0, 0);
-  if (buf != NULL && !cmdmod.keepalt)
+  if (buf != NULL && !cmdmod.keepalt) {
     curwin->w_alt_fnum = buf->b_fnum;
+  }
   return buf;
 }
 
@@ -2415,8 +2417,9 @@ int buflist_add(char_u *fname, int flags)
   buf_T       *buf;
 
   buf = buflist_new(fname, NULL, (linenr_T)0, flags, 0);
-  if (buf != NULL)
+  if (buf != NULL) {
     return buf->b_fnum;
+  }
   return 0;
 }
 

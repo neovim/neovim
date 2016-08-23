@@ -5063,10 +5063,10 @@ void buf_reload(buf_T *buf, int orig_mode)
    * the old contents.  Can't use memory only, the file might be
    * too big.  Use a hidden buffer to move the buffer contents to.
    */
-  if (bufempty() || saved == FAIL)
+  if (bufempty() || saved == FAIL) {
     savebuf = NULL;
-  else {
-    /* Allocate a buffer without putting it in the buffer list. */
+  } else {
+    // Allocate a buffer without putting it in the buffer list.
     savebuf = buflist_new(NULL, NULL, (linenr_T)1, BLN_DUMMY, 0);
     if (savebuf != NULL && buf == curbuf) {
       /* Open the memline. */

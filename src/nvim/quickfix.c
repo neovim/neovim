@@ -3326,10 +3326,11 @@ load_dummy_buffer (
   int failed = TRUE;
   aco_save_T aco;
 
-  /* Allocate a buffer without putting it in the buffer list. */
+  // Allocate a buffer without putting it in the buffer list.
   newbuf = buflist_new(NULL, NULL, (linenr_T)1, BLN_DUMMY, 0);
-  if (newbuf == NULL)
+  if (newbuf == NULL) {
     return NULL;
+  }
 
   /* Init the options. */
   buf_copy_options(newbuf, BCO_ENTER | BCO_NOHELP);
