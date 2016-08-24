@@ -54,18 +54,7 @@ function! man#open_page(count, count1, mods, ...) abort
   call s:push_tag()
   let bufname = 'man://'.name.(empty(sect)?'':'('.sect.')')
   if a:mods !~# 'tab' && s:find_man()
-    if s:manwidth() ==# getbufvar(bufname, 'manwidth')
-      silent execute 'buf' bufname
-      call man#set_window_local_options()
-      keepjumps 1
-      return
-    endif
     noautocmd execute 'edit' bufname
-  elseif s:manwidth() ==# getbufvar(bufname, 'manwidth')
-    execute a:mods 'split' bufname
-    call man#set_window_local_options()
-    keepjumps 1
-    return
   else
     noautocmd execute a:mods 'split' bufname
   endif
@@ -78,7 +67,7 @@ function! man#read_page(ref) abort
     let [sect, name] = man#extract_sect_and_name_ref(a:ref)
     let [b:man_sect, name, path] = s:verify_exists(sect, name)
   catch
-    " Fairly certain that a call to s:error() is not necessary
+    " call to s:error() is unnecessary
     return
   endtry
   call s:read_page(path)
@@ -88,11 +77,20 @@ function! s:read_page(path) abort
   setlocal modifiable
   setlocal noreadonly
   keepjumps %delete _
-  let b:manwidth = s:manwidth()
   " Ensure Vim is not recursively invoked (man-db does this)
   " by forcing man to use cat as the pager.
   " More info here http://comments.gmane.org/gmane.editors.vim.devel/29085
-  silent execute 'read !env MANPAGER=cat MANWIDTH='.b:manwidth s:man_cmd a:path
+  let cmd = 'read !env MANPAGER=cat'
+  if empty($MANWIDTH)
+    " Do not set $MANWIDTH globally.
+    silent execute cmd 'MANWIDTH='.winwidth(0) s:man_cmd shellescape(a:path)
+  else
+    " The reason for respecting $MANWIDTH even if it is wider/smaller than the
+    " current window is that the current window might only be temporarily
+    " narrow/wide. Since we don't reflow, we should just assume the
+    " user knows what they're doing and respect $MANWIDTH.
+    silent execute cmd s:man_cmd shellescape(a:path)
+  endif
   " remove all the backspaced text
   silent execute 'keeppatterns keepjumps %substitute,.\b,,e'.(&gdefault?'':'g')
   while getline(1) =~# '^\s*$'
@@ -194,29 +192,6 @@ function! s:find_man() abort
       return 0
     endif
   endwhile
-endfunction
-
-function! s:manwidth() abort
-  " The reason for respecting $MANWIDTH even if it is wider/smaller than the
-  " current window is that the current window might only be temporarily
-  " narrow/wide. Since we don't reflow, we should just assume the
-  " user knows what they're doing and respect $MANWIDTH.
-  if empty($MANWIDTH)
-    " If $MANWIDTH is not set, we do not assign directly to $MANWIDTH because
-    " then $MANWIDTH will always stay the same value as we only use
-    " winwidth(0) when $MANWIDTH is empty. Instead we set it locally for the command.
-    return winwidth(0)
-  endif
-  return $MANWIDTH
-endfunction
-
-function! man#set_window_local_options() abort
-  setlocal nonumber
-  setlocal norelativenumber
-  setlocal foldcolumn=0
-  setlocal colorcolumn=0
-  setlocal nolist
-  setlocal nofoldenable
 endfunction
 
 function! s:error(msg) abort
