@@ -61,14 +61,13 @@ function! man#open_page(count, count1, mods, ...) abort
       return
     endif
     noautocmd execute 'edit' bufname
-    call s:read_page(path)
-    return
-  endif
-  noautocmd execute a:mods 'split' bufname
-  if s:manwidth() ==# get(b:, 'manwidth')
+  elseif s:manwidth() ==# getbufvar(bufname, 'manwidth')
+    execute a:mods 'split' bufname
     call man#set_window_local_options()
     keepjumps 1
     return
+  else
+    noautocmd execute a:mods 'split' bufname
   endif
   call s:read_page(path)
 endfunction
