@@ -19,7 +19,9 @@ if has('vim_starting')
   endif
   " This is not perfect. See `man glDrawArraysInstanced`. Since the title is
   " all caps it is impossible to tell what the original capitilization was.
-  execute 'file man://'.tolower(matchstr(getline(1), '^\S\+'))
+  let ref = tolower(matchstr(getline(1), '^\S\+'))
+  let b:man_sect = man#extract_sect_and_name_ref(ref)[0]
+  execute 'file man://'.ref
 endif
 
 setlocal buftype=nofile

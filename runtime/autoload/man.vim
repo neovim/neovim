@@ -41,7 +41,7 @@ function! man#open_page(count, count1, mods, ...) abort
     let ref = a:2.'('.a:1.')'
   endif
   try
-    let [sect, name] = s:extract_sect_and_name_ref(ref)
+    let [sect, name] = man#extract_sect_and_name_ref(ref)
     if a:count ==# a:count1
       " user explicitly set a count
       let sect = string(a:count)
@@ -69,18 +69,19 @@ function! man#open_page(count, count1, mods, ...) abort
   else
     noautocmd execute a:mods 'split' bufname
   endif
+  let b:man_sect = sect
   call s:read_page(path)
 endfunction
 
 function! man#read_page(ref) abort
   try
-    let [sect, name] = s:extract_sect_and_name_ref(a:ref)
-    " The third element is the path.
-    call s:read_page(s:verify_exists(sect, name)[2])
+    let [sect, name] = man#extract_sect_and_name_ref(a:ref)
+    let [b:man_sect, name, path] = s:verify_exists(sect, name)
   catch
     call s:error(v:exception)
     return
   endtry
+  call s:read_page(path)
 endfunction
 
 function! s:read_page(path) abort
@@ -102,15 +103,15 @@ endfunction
 
 " attempt to extract the name and sect out of 'name(sect)'
 " otherwise just return the largest string of valid characters in ref
-function! s:extract_sect_and_name_ref(ref) abort
+function! man#extract_sect_and_name_ref(ref) abort
   if a:ref[0] ==# '-' " try ':Man -pandoc' with this disabled.
-    throw 'manpage name starts with ''-'''
+    throw 'manpage name cannot start with ''-'''
   endif
   let ref = matchstr(a:ref, '[^()]\+([^()]\+)')
   if empty(ref)
     let name = matchstr(a:ref, '[^()]\+')
     if empty(name)
-      throw 'manpage reference contains only parantheses'
+      throw 'manpage reference cannot contain only parentheses'
     endif
     return ['', name]
   endif
@@ -131,11 +132,6 @@ function! s:verify_exists(sect, name) abort
     if path !~# '^\/'
       throw 'no manual entry for '.a:name.'('.a:sect.') or '.a:name
     endif
-  endif
-  if a:name =~# '\/'
-    " We do not need to extract the section/name from the path if the name is
-    " just a path.
-    return ['', a:name, path]
   endif
   " We need to extract the section from the path because sometimes
   " the actual section of the manpage is more specific than the section
@@ -235,7 +231,7 @@ endfunction
 
 let s:mandirs = join(split(system(s:man_cmd.' '.s:man_find_arg), ':\|\n'), ',')
 
-" see s:extract_sect_and_name_ref on why tolower(sect)
+" see man#extract_sect_and_name_ref on why tolower(sect)
 function! man#complete(arg_lead, cmd_line, cursor_pos) abort
   let args = split(a:cmd_line)
   let l = len(args)
