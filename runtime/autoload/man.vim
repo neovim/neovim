@@ -78,7 +78,7 @@ function! man#read_page(ref) abort
     let [sect, name] = man#extract_sect_and_name_ref(a:ref)
     let [b:man_sect, name, path] = s:verify_exists(sect, name)
   catch
-    call s:error(v:exception)
+    " Fairly certain that a call to s:error() is not necessary
     return
   endtry
   call s:read_page(path)
@@ -123,14 +123,23 @@ function! man#extract_sect_and_name_ref(ref) abort
 endfunction
 
 function! s:verify_exists(sect, name) abort
-  let path = system(s:man_cmd.' '.s:man_find_arg.' '.s:man_args(a:sect, a:name))
-  if path !~# '^\/'
-    if empty(a:sect)
-      throw 'no manual entry for '.a:name
-    endif
+  if empty(a:sect)
     let path = system(s:man_cmd.' '.s:man_find_arg.' '.shellescape(a:name))
     if path !~# '^\/'
-      throw 'no manual entry for '.a:name.'('.a:sect.') or '.a:name
+      throw 'no manual entry for '.a:name
+    endif
+  else
+    " The '-s' flag is very useful.
+    " We do not need to worry about stuff like 'printf(echo)'
+    " (two manpages would be interpreted by man without -s)
+    " We do not need to check if the sect starts with '-'
+    " Lastly, the 3pcap section on macOS doesn't work without -s
+    let path = system(s:man_cmd.' '.s:man_find_arg.' -s '.shellescape(a:sect).' '.shellescape(a:name))
+    if path !~# '^\/'
+      let path = system(s:man_cmd.' '.s:man_find_arg.' '.shellescape(a:name))
+      if path !~# '^\/'
+        throw 'no manual entry for '.a:name.'('.a:sect.') or '.a:name
+      endif
     endif
   endif
   " We need to extract the section from the path because sometimes
@@ -208,18 +217,6 @@ function! man#set_window_local_options() abort
   setlocal colorcolumn=0
   setlocal nolist
   setlocal nofoldenable
-endfunction
-
-function! s:man_args(sect, name) abort
-  if empty(a:sect)
-    return shellescape(a:name)
-  endif
-  " The '-s' flag is very useful.
-  " We do not need to worry about stuff like 'printf(echo)'
-  " (two manpages would be interpreted by man without -s)
-  " We do not need to check if the sect starts with '-'
-  " Lastly, the 3pcap section on macOS doesn't work without -s
-  return '-s '.shellescape(a:sect).' '.shellescape(a:name)
 endfunction
 
 function! s:error(msg) abort
