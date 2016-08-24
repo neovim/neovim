@@ -17,8 +17,7 @@
 # include "event/process.c.generated.h"
 #endif
 
-// {SIGNAL}_TIMEOUT is the time (in nanoseconds) that a process has to cleanly
-// exit before we send SIGNAL to it
+// Time (ns) for a process to exit cleanly before we send TERM/KILL.
 #define TERM_TIMEOUT 1000000000
 #define KILL_TIMEOUT (TERM_TIMEOUT * 2)
 
