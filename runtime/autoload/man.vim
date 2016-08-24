@@ -111,7 +111,7 @@ function! man#extract_sect_and_name_ref(ref) abort
     if empty(name)
       throw 'manpage reference cannot contain only parentheses'
     endif
-    return ['', name]
+    return [get(b:, 'man_default_sects', ''), name]
   endif
   let left = split(ref, '(')
   " see ':Man 3X curses' on why tolower.
@@ -120,24 +120,28 @@ function! man#extract_sect_and_name_ref(ref) abort
   return [tolower(split(left[1], ')')[0]), left[0]]
 endfunction
 
-function! s:verify_exists(sect, name) abort
+function! s:get_path(sect, name) abort
   if empty(a:sect)
     let path = system(s:man_cmd.' '.s:man_find_arg.' '.shellescape(a:name))
     if path !~# '^\/'
       throw 'no manual entry for '.a:name
     endif
-  else
-    " The '-s' flag is very useful.
-    " We do not need to worry about stuff like 'printf(echo)'
-    " (two manpages would be interpreted by man without -s)
-    " We do not need to check if the sect starts with '-'
-    " Lastly, the 3pcap section on macOS doesn't work without -s
-    let path = system(s:man_cmd.' '.s:man_find_arg.' -s '.shellescape(a:sect).' '.shellescape(a:name))
+    return path
+  endif
+  " '-s' flag handles:
+  "   - references like 'printf(echo)' (two manpages would be
+  "     interpreted by man without -s)
+  "   - sections starting with '-'
+  "   - 3pcap section (found on macOS)
+  return system(s:man_cmd.' '.s:man_find_arg.' -s '.shellescape(a:sect).' '.shellescape(a:name))
+endfunction
+
+function! s:verify_exists(sect, name) abort
+  let path = s:get_path(a:sect, a:name)
+  if path !~# '^\/'
+    let path = s:get_path(get(b:, 'man_default_sects', ''), a:name)
     if path !~# '^\/'
-      let path = system(s:man_cmd.' '.s:man_find_arg.' '.shellescape(a:name))
-      if path !~# '^\/'
-        throw 'no manual entry for '.a:name.'('.a:sect.') or '.a:name
-      endif
+      let path = s:get_path('', a:name)
     endif
   endif
   " We need to extract the section from the path because sometimes
