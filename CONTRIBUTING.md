@@ -38,15 +38,25 @@ Pull requests ("PRs")
 - Try to [tidy your history][git-history-rewriting]: combine related commits
   with interactive rebasing, separate monolithic commits, etc.
 
-### Stages: WIP, RFC
+### Stages: WIP, RFC, RDY
 
-Pull requests have two stages: `[WIP]` (Work In Progress) and `[RFC]` (Request
-For Comment).
+Pull requests have three stages: `[WIP]` (Work In Progress), `[RFC]` (Request
+For Comment) and `[RDY]` (Ready).
 
-- Untagged PRs are assumed to be `[RFC]`, i.e. the work is ready for review and
-  you would like feedback.
-- Preprend `[WIP]` to the PR title if you are _not_ ready for feedback and the
+- Untagged PRs are assumed to be `[RFC]`, i.e. you are requesting a review.
+- Prepend `[WIP]` to the PR title if you are _not_ requesting feedback and the
   work is still in flux.
+- Prepend `[RDY]` to the PR title if you are _done_ with the PR and are only
+  waiting on it to be merged.
+
+For example, a typical workflow is:
+
+1. You open a `[WIP]` PR where the work is _not_ ready for feedback, you just want to
+   let others know what you are doing.
+2. Once the PR is ready for review, you replace `[WIP]` in the title with `[RFC]`.
+   You may add fix up commits to address issues that come up during review.
+3. Once the PR is ready for merging, you rebase/squash your work appropriately and
+   then replace `[RFC]` in the title with `[RDY]`.
 
 ### Commit messages
 
