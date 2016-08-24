@@ -534,8 +534,11 @@ Man {path}                Open the manpage specified by path. Prepend "./" if
      :vertical Man printf
 
 Global Mappings:
-<Plug>(Man)               Jump to the manpage for the <cWORD> under the
-                          cursor. Takes a count for the section.
+<Plug>(man)               Jump to the manpage for the <cWORD> (man buffers)
+                          or <cword> (non-man buffers) under the cursor.
+                          Takes a count for the section.
+<Plug>(man_vsplit)        Same as <Plug>(man) but open in a vertical split.
+<Plug>(man_tab)           Same as <Plug>(man) but open in a new tab.
 
 Local mappings:
 K or CTRL-]               Jump to the manpage for the <cWORD> under the
@@ -547,6 +550,9 @@ q                         :quit if invoked as $MANPAGER, otherwise :close.
 Variables:
 *g:no_man_maps*             Do not create mappings in manpage buffers.
 *g:ft_man_folding_enable*   Fold manpages with foldmethod=indent foldnestmax=1.
+*b:man_default_sects*       Comma-separated, ordered list of preferred sections.
+                          For example in C one usually wants section 3 or 2: >
+                               :let b:man_default_sections = '3,2'
 
 PDF							*ft-pdf-plugin*
 
