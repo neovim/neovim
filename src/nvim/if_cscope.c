@@ -108,10 +108,10 @@ char_u *get_cscope_name(expand_T *xp, int idx)
       "a", "c", "d", "e", "f", "g", "i", "s", "t", NULL
     };
 
-    /* Complete with query type of ":cscope find {query_type}".
-     * {query_type} can be letters (c, d, ... a) or numbers (0, 1,
-     * ..., 9) but only complete with letters, since numbers are
-     * redundant. */
+    // Complete with query type of ":cscope find {query_type}".
+    // {query_type} can be letters (c, d, ... a) or numbers (0, 1,
+    // ..., 9) but only complete with letters, since numbers are
+    // redundant.
     return (char_u *)query_type[idx];
   }
   case EXP_CSCOPE_KILL:
@@ -1132,15 +1132,15 @@ static int cs_help(exarg_T *eap)
         cmdp->usage);
     if (strcmp(cmdp->name, "find") == 0)
       MSG_PUTS(_("\n"
-              "       a: Find assignments to this symbol\n"
-              "       c: Find functions calling this function\n"
-              "       d: Find functions called by this function\n"
-              "       e: Find this egrep pattern\n"
-              "       f: Find this file\n"
-              "       g: Find this definition\n"
-              "       i: Find files #including this file\n"
-              "       s: Find this C symbol\n"
-              "       t: Find this text string\n"));
+                 "       a: Find assignments to this symbol\n"
+                 "       c: Find functions calling this function\n"
+                 "       d: Find functions called by this function\n"
+                 "       e: Find this egrep pattern\n"
+                 "       f: Find this file\n"
+                 "       g: Find this definition\n"
+                 "       i: Find files #including this file\n"
+                 "       s: Find this C symbol\n"
+                 "       t: Find this text string\n"));
 
     cmdp++;
   }
