@@ -380,7 +380,7 @@ EXTERN char_u   *p_cpo;         /* 'cpoptions' */
 EXTERN char_u   *p_csprg;       /* 'cscopeprg' */
 EXTERN int p_csre;              /* 'cscoperelative' */
 EXTERN char_u   *p_csqf;        /* 'cscopequickfix' */
-#  define       CSQF_CMDS   "sgdctefi"
+#  define       CSQF_CMDS   "sgdctefia"
 #  define       CSQF_FLAGS  "+-0"
 EXTERN int p_cst;               /* 'cscopetag' */
 EXTERN long p_csto;             /* 'cscopetagorder' */
