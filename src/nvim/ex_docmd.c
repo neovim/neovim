@@ -346,6 +346,7 @@ int do_cmdline(char_u *cmdline, LineGetter fgetline,
     return FAIL;
   }
   ++call_depth;
+  start_batch_changes();
 
   cstack.cs_idx = -1;
   cstack.cs_looplevel = 0;
@@ -953,6 +954,7 @@ int do_cmdline(char_u *cmdline, LineGetter fgetline,
   did_endif = FALSE;    /* in case do_cmdline used recursively */
 
   --call_depth;
+  end_batch_changes();
   return retval;
 }
 
@@ -9513,8 +9515,6 @@ static void ex_folddo(exarg_T *eap)
 {
   linenr_T lnum;
 
-  start_batch_changes();
-
   /* First set the marks for all lines closed/open. */
   for (lnum = eap->line1; lnum <= eap->line2; ++lnum)
     if (hasFolding(lnum, NULL, NULL) == (eap->cmdidx == CMD_folddoclosed))
@@ -9523,8 +9523,6 @@ static void ex_folddo(exarg_T *eap)
   /* Execute the command on the marked lines. */
   global_exe(eap->arg);
   ml_clearmarked();        /* clear rest of the marks */
-
-  end_batch_changes();
 }
 
 static void ex_terminal(exarg_T *eap)
