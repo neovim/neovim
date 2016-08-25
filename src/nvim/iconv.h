@@ -24,10 +24,10 @@
 // defined, we provide a type shim (pull in errno.h and define iconv_t).
 // This enables us to still load and use iconv dynamically at runtime.
 #ifdef USE_ICONV
+#  include <errno.h>
 #  ifdef HAVE_ICONV_H
 #    include <iconv.h>
 #  else
-#    include <errno.h>
 typedef void *iconv_t;
 #  endif
 #endif
