@@ -6482,19 +6482,20 @@ static ufunc_T *find_ufunc(uint8_t *name)
   return rv;
 }
 
-/*
- * Get a string item from a dictionary.
- * When "save" is TRUE allocate memory for it.
- * Returns NULL if the entry doesn't exist.
- */
-char_u *get_dict_string(dict_T *d, char_u *key, int save)
+/// Get a string item from a dictionary.
+///
+/// @param save whether memory should be allocated for the return value
+///
+/// @return the entry or NULL if the entry doesn't exist.
+char_u *get_dict_string(dict_T *d, char *key, bool save)
 {
   dictitem_T  *di;
   char_u      *s;
 
-  di = dict_find(d, key, -1);
-  if (di == NULL)
+  di = dict_find(d, (char_u *)key, -1);
+  if (di == NULL) {
     return NULL;
+  }
   s = get_tv_string(&di->di_tv);
   if (save) {
     s = vim_strsave(s);
@@ -6502,15 +6503,15 @@ char_u *get_dict_string(dict_T *d, char_u *key, int save)
   return s;
 }
 
-/*
- * Get a number item from a dictionary.
- * Returns 0 if the entry doesn't exist.
- */
-long get_dict_number(dict_T *d, char_u *key)
+/// Get a number item from a dictionary.
+///
+/// @return the entry or 0 if the entry doesn't exist.
+long get_dict_number(dict_T *d, char *key)
 {
-  dictitem_T *di = dict_find(d, key, -1);
-  if (di == NULL)
+  dictitem_T *di = dict_find(d, (char_u *)key, -1);
+  if (di == NULL) {
     return 0;
+  }
   return get_tv_number(&di->di_tv);
 }
 
@@ -11943,16 +11944,16 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv)
   if (argvars[1].v_type == VAR_DICT) {
     job_opts = argvars[1].vval.v_dict;
 
-    detach = get_dict_number(job_opts, (uint8_t *)"detach") != 0;
-    rpc = get_dict_number(job_opts, (uint8_t *)"rpc") != 0;
-    pty = get_dict_number(job_opts, (uint8_t *)"pty") != 0;
+    detach = get_dict_number(job_opts, "detach") != 0;
+    rpc = get_dict_number(job_opts, "rpc") != 0;
+    pty = get_dict_number(job_opts, "pty") != 0;
     if (pty && rpc) {
       EMSG2(_(e_invarg2), "job cannot have both 'pty' and 'rpc' options set");
       shell_free_argv(argv);
       return;
     }
 
-    char *new_cwd = (char *)get_dict_string(job_opts, (char_u *)"cwd", false);
+    char *new_cwd = (char *)get_dict_string(job_opts, "cwd", false);
     if (new_cwd && strlen(new_cwd) > 0) {
       cwd = new_cwd;
       // The new cwd must be a directory.
@@ -11974,15 +11975,15 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv)
   Process *proc = (Process *)&data->proc;
 
   if (pty) {
-    uint16_t width = get_dict_number(job_opts, (uint8_t *)"width");
+    uint16_t width = get_dict_number(job_opts, "width");
     if (width > 0) {
       data->proc.pty.width = width;
     }
-    uint16_t height = get_dict_number(job_opts, (uint8_t *)"height");
+    uint16_t height = get_dict_number(job_opts, "height");
     if (height > 0) {
       data->proc.pty.height = height;
     }
-    char *term = (char *)get_dict_string(job_opts, (uint8_t *)"TERM", true);
+    char *term = (char *)get_dict_string(job_opts, "TERM", true);
     if (term) {
       data->proc.pty.term_name = term;
     }
@@ -12677,7 +12678,7 @@ static void f_matchadd(typval_T *argvars, typval_T *rettv)
         if (dict_find(argvars[4].vval.v_dict,
                       (char_u *)"conceal", -1) != NULL) {
           conceal_char = get_dict_string(argvars[4].vval.v_dict,
-                                         (char_u *)"conceal", false);
+                                         "conceal", false);
         }
       }
     }
@@ -12733,7 +12734,7 @@ static void f_matchaddpos(typval_T *argvars, typval_T *rettv) FUNC_ATTR_NONNULL_
           if (dict_find(argvars[4].vval.v_dict,
                         (char_u *)"conceal", -1) != NULL) {
             conceal_char = get_dict_string(argvars[4].vval.v_dict,
-                                           (char_u *)"conceal", false);
+                                           "conceal", false);
           }
         }
       }
@@ -14697,7 +14698,7 @@ static void f_setcharsearch(typval_T *argvars, typval_T *rettv)
   }
 
   if ((d = argvars[0].vval.v_dict) != NULL) {
-    csearch = get_dict_string(d, (char_u *)"char", FALSE);
+    csearch = get_dict_string(d, "char", false);
     if (csearch != NULL) {
       if (enc_utf8) {
         int pcc[MAX_MCO];
@@ -14971,16 +14972,16 @@ static void f_setmatches(typval_T *argvars, typval_T *rettv)
         }
       }
 
-      char_u *group = get_dict_string(d, (char_u *)"group", false);
-      int priority = get_dict_number(d, (char_u *)"priority");
-      int id = get_dict_number(d, (char_u *)"id");
+      char_u *group = get_dict_string(d, "group", false);
+      int priority = get_dict_number(d, "priority");
+      int id = get_dict_number(d, "id");
       char_u *conceal = dict_find(d, (char_u *)"conceal", -1) != NULL
-                                  ? get_dict_string(d, (char_u *)"conceal",
+                                  ? get_dict_string(d, "conceal",
                                                     false)
                                   : NULL;
       if (i == 0) {
         match_add(curwin, group,
-                  get_dict_string(d, (char_u *)"pattern", false),
+                  get_dict_string(d, "pattern", false),
                   priority, id, NULL, conceal);
       } else {
         match_add(curwin, group, NULL, priority, id, s, conceal);
@@ -16687,7 +16688,7 @@ static void f_termopen(typval_T *argvars, typval_T *rettv)
   if (argvars[1].v_type == VAR_DICT) {
     job_opts = argvars[1].vval.v_dict;
 
-    char *new_cwd = (char *)get_dict_string(job_opts, (char_u *)"cwd", false);
+    char *new_cwd = (char *)get_dict_string(job_opts, "cwd", false);
     if (new_cwd && strlen(new_cwd) > 0) {
       cwd = new_cwd;
       // The new cwd must be a directory.
@@ -16785,7 +16786,7 @@ static void f_timer_start(typval_T *argvars, typval_T *rettv)
       return;
     }
     if (dict_find(dict, (char_u *)"repeat", -1) != NULL) {
-      repeat = get_dict_number(dict, (char_u *)"repeat");
+      repeat = get_dict_number(dict, "repeat");
       if (repeat == 0) {
         repeat = 1;
       }
@@ -17311,29 +17312,29 @@ static void f_winrestview(typval_T *argvars, typval_T *rettv)
     EMSG(_(e_invarg));
   else {
     if (dict_find(dict, (char_u *)"lnum", -1) != NULL) {
-      curwin->w_cursor.lnum = get_dict_number(dict, (char_u *)"lnum");
+      curwin->w_cursor.lnum = get_dict_number(dict, "lnum");
     }
     if (dict_find(dict, (char_u *)"col", -1) != NULL) {
-      curwin->w_cursor.col = get_dict_number(dict, (char_u *)"col");
+      curwin->w_cursor.col = get_dict_number(dict, "col");
     }
     if (dict_find(dict, (char_u *)"coladd", -1) != NULL) {
-      curwin->w_cursor.coladd = get_dict_number(dict, (char_u *)"coladd");
+      curwin->w_cursor.coladd = get_dict_number(dict, "coladd");
     }
     if (dict_find(dict, (char_u *)"curswant", -1) != NULL) {
-      curwin->w_curswant = get_dict_number(dict, (char_u *)"curswant");
-      curwin->w_set_curswant = FALSE;
+      curwin->w_curswant = get_dict_number(dict, "curswant");
+      curwin->w_set_curswant = false;
     }
     if (dict_find(dict, (char_u *)"topline", -1) != NULL) {
-      set_topline(curwin, get_dict_number(dict, (char_u *)"topline"));
+      set_topline(curwin, get_dict_number(dict, "topline"));
     }
     if (dict_find(dict, (char_u *)"topfill", -1) != NULL) {
-      curwin->w_topfill = get_dict_number(dict, (char_u *)"topfill");
+      curwin->w_topfill = get_dict_number(dict, "topfill");
     }
     if (dict_find(dict, (char_u *)"leftcol", -1) != NULL) {
-      curwin->w_leftcol = get_dict_number(dict, (char_u *)"leftcol");
+      curwin->w_leftcol = get_dict_number(dict, "leftcol");
     }
     if (dict_find(dict, (char_u *)"skipcol", -1) != NULL) {
-      curwin->w_skipcol = get_dict_number(dict, (char_u *)"skipcol");
+      curwin->w_skipcol = get_dict_number(dict, "skipcol");
     }
 
     check_cursor();

@@ -3505,15 +3505,15 @@ int set_errorlist(win_T *wp, list_T *list, int action, char_u *title)
     if (d == NULL)
       continue;
 
-    char_u *filename = get_dict_string(d, (char_u *)"filename", true);
-    int bufnum = (int)get_dict_number(d, (char_u *)"bufnr");
-    long lnum = get_dict_number(d, (char_u *)"lnum");
-    int col = (int)get_dict_number(d, (char_u *)"col");
-    char_u vcol = (char_u)get_dict_number(d, (char_u *)"vcol");
-    int nr = (int)get_dict_number(d, (char_u *)"nr");
-    char_u *type = get_dict_string(d, (char_u *)"type", true);
-    char_u *pattern = get_dict_string(d, (char_u *)"pattern", true);
-    char_u *text = get_dict_string(d, (char_u *)"text", true);
+    char_u *filename = get_dict_string(d, "filename", true);
+    int bufnum = (int)get_dict_number(d, "bufnr");
+    long lnum = get_dict_number(d, "lnum");
+    int col = (int)get_dict_number(d, "col");
+    char_u vcol = (char_u)get_dict_number(d, "vcol");
+    int nr = (int)get_dict_number(d, "nr");
+    char_u *type = get_dict_string(d, "type", true);
+    char_u *pattern = get_dict_string(d, "pattern", true);
+    char_u *text = get_dict_string(d, "text", true);
     if (text == NULL) {
       text = vim_strsave((char_u *)"");
     }
