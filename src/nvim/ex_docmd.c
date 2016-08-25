@@ -9513,7 +9513,7 @@ static void ex_folddo(exarg_T *eap)
 {
   linenr_T lnum;
 
-  start_global_changes();
+  start_batch_changes();
 
   /* First set the marks for all lines closed/open. */
   for (lnum = eap->line1; lnum <= eap->line2; ++lnum)
@@ -9524,7 +9524,7 @@ static void ex_folddo(exarg_T *eap)
   global_exe(eap->arg);
   ml_clearmarked();        /* clear rest of the marks */
 
-  end_global_changes();
+  end_batch_changes();
 }
 
 static void ex_terminal(exarg_T *eap)

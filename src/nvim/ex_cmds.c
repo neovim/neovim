@@ -4053,9 +4053,9 @@ void ex_global(exarg_T *eap)
       smsg(_("Pattern not found: %s"), pat);
     }
   } else {
-    start_global_changes();
+    start_batch_changes();
     global_exe(cmd);
-    end_global_changes();
+    end_batch_changes();
   }
   ml_clearmarked();        /* clear rest of the marks */
   vim_regfree(regmatch.regprog);

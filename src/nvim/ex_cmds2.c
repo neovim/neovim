@@ -1983,7 +1983,7 @@ void ex_listdo(exarg_T *eap)
     save_ei = au_event_disable(",Syntax");
   }
 
-  start_global_changes();
+  start_batch_changes();
 
   if (eap->cmdidx == CMD_windo
       || eap->cmdidx == CMD_tabdo
@@ -2181,7 +2181,7 @@ void ex_listdo(exarg_T *eap)
     apply_autocmds(EVENT_SYNTAX, curbuf->b_p_syn,
                    curbuf->b_fname, true, curbuf);
   }
-  end_global_changes();
+  end_batch_changes();
 }
 
 /// Add files[count] to the arglist of the current window after arg "after".

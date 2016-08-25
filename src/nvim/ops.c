@@ -51,10 +51,10 @@ static yankreg_T *y_previous = NULL; /* ptr to last written yankreg */
 
 static bool clipboard_didwarn_unnamed = false;
 
-// for behavior between start_global_changes() and end_global_changes())
+// for behavior between start_batch_changes() and end_batch_changes())
 static bool clipboard_delay_update = false;  // delay clipboard update
-static int global_change_count = 0;          // if set, inside global changes
-static bool clipboard_needs_update = false;  // the clipboard was updated
+static int batch_change_count = 0;           // inside a script
+static bool clipboard_needs_update = false;  // clipboard was updated
 
 /*
  * structure used by block_prep, op_delete and op_yank for blockwise operators
@@ -5630,20 +5630,20 @@ static void set_clipboard(int name, yankreg_T *reg)
   (void)eval_call_provider("clipboard", "set", args);
 }
 
-/// Avoid clipboard (slow) during batch operations (:global).
-void start_global_changes(void)
+/// Avoid clipboard (slow) during batch operations (i.e., a script).
+void start_batch_changes(void)
 {
-  if (++global_change_count > 1) {
+  if (++batch_change_count > 1) {
     return;
   }
   clipboard_delay_update = true;
   clipboard_needs_update = false;
 }
 
-/// Update the clipboard after :global changes finished.
-void end_global_changes(void)
+/// Update the clipboard after batch changes finished.
+void end_batch_changes(void)
 {
-  if (--global_change_count > 0) {
+  if (--batch_change_count > 0) {
     // recursive
     return;
   }
