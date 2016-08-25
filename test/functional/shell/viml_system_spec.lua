@@ -8,8 +8,6 @@ local eq, clear, eval, feed, nvim =
 
 local Screen = require('test.functional.ui.screen')
 
-if helpers.pending_win32(pending) then return end
-
 local function create_file_with_nuls(name)
   return function()
     feed('ipart1<C-V>000part2<C-V>000part3<ESC>:w '..name..'<CR>')
@@ -33,6 +31,47 @@ end
 
 describe('system()', function()
   before_each(clear)
+
+  describe('command passed as a list', function()
+
+    local printargs_exe = helpers.nvim_dir.."/printargs"
+    if helpers.os_name() == 'windows' then
+      printargs_exe = helpers.nvim_dir.."/printargs.exe"
+    end
+
+    it('quotes arguments correctly', function()
+      local out = helpers.call('system', {printargs_exe, '1', '2 "3'})
+      eq(0, eval('v:shell_error'))
+      eq([[arg1=1;arg2=2 "3;]], out)
+
+      out = helpers.call('system', {printargs_exe, "'1", '2 "3'})
+      eq(0, eval('v:shell_error'))
+      eq([[arg1='1;arg2=2 "3;]], out)
+
+      out = helpers.call('system', {printargs_exe, "A\nB"})
+      eq(0, eval('v:shell_error'))
+      eq("arg1=A\nB;", out)
+    end)
+
+    it('can call an executable in $PATH', function()
+      local cmd
+      if helpers.os_name() == "windows" then
+        cmd = "system(['ping'])"
+      else
+        cmd = "system(['ls'])"
+      end
+      eval(cmd)
+    end)
+
+    it('does not execute &shell', function()
+      if helpers.os_name() ~= 'windows' then
+        eq('* $NOTHING ~/file',
+           eval("system(['echo', '-n', '*', '$NOTHING', '~/file'])"))
+      end
+    end)
+  end)
+
+  if helpers.pending_win32(pending) then return end
 
   it('sets the v:shell_error variable', function()
     eval([[system("sh -c 'exit'")]])
@@ -195,14 +234,9 @@ describe('system()', function()
       end)
     end
   end)
-
-  describe('command passed as a list', function()
-    it('does not execute &shell', function()
-      eq('* $NOTHING ~/file',
-         eval("system(['echo', '-n', '*', '$NOTHING', '~/file'])"))
-    end)
-  end)
 end)
+
+if helpers.pending_win32(pending) then return end
 
 describe('systemlist()', function()
   -- behavior is similar to `system()` but it returns a list instead of a

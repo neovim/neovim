@@ -478,9 +478,9 @@ if(BUSTED_PRG)
 
   set(UNITTEST_PREREQS nvim-test unittest-headers)
   if(WIN32)
-    set(FUNCTIONALTEST_PREREQS nvim shell-test)
+    set(FUNCTIONALTEST_PREREQS nvim shell-test printargs)
   else()
-    set(FUNCTIONALTEST_PREREQS nvim tty-test shell-test)
+    set(FUNCTIONALTEST_PREREQS nvim tty-test shell-test printargs)
   endif()
   set(BENCHMARK_PREREQS nvim tty-test)
 
