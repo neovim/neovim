@@ -52,7 +52,7 @@ static cscmd_T cs_cmds[] =
   { "add",    cs_add,
     N_("Add a new database"),     "add file|dir [pre-path] [flags]", 0 },
   { "find",   cs_find,
-    N_("Query for a pattern"),    "find c|d|e|f|g|i|s|t name", 1 },
+    N_("Query for a pattern"),    "find c|d|e|f|g|i|s|t|a name", 1 },
   { "help",   cs_help,
     N_("Show this message"),      "help", 0 },
   { "kill",   cs_kill,
@@ -105,12 +105,12 @@ char_u *get_cscope_name(expand_T *xp, int idx)
   {
     const char *query_type[] =
     {
-      "c", "d", "e", "f", "g", "i", "s", "t", NULL
+      "c", "d", "e", "f", "g", "i", "s", "t", "a", NULL
     };
 
     /* Complete with query type of ":cscope find {query_type}".
-     * {query_type} can be letters (c, d, ... t) or numbers (0, 1,
-     * ..., 8) but only complete with letters, since numbers are
+     * {query_type} can be letters (c, d, ... a) or numbers (0, 1,
+     * ..., 9) but only complete with letters, since numbers are
      * redundant. */
     return (char_u *)query_type[idx];
   }
@@ -674,6 +674,9 @@ static char *cs_create_cmd(char *csoption, char *pattern)
   case '8': case 'i':
     search = 8;
     break;
+  case '9': case 'a':
+    search = 9;
+    break;
   default:
     (void)EMSG(_("E561: unknown cscope search type"));
     cs_usage_msg(Find);
@@ -970,6 +973,9 @@ static int cs_find_common(char *opt, char *pat, int forceit, int verbose,
   case '8':
     cmdletter = 'i';
     break;
+  case '9':
+    cmdletter = 'a';
+    break;
   default:
     cmdletter = opt[0];
   }
@@ -1133,7 +1139,8 @@ static int cs_help(exarg_T *eap)
               "       g: Find this definition\n"
               "       i: Find files #including this file\n"
               "       s: Find this C symbol\n"
-              "       t: Find this text string\n"));
+              "       t: Find this text string\n"
+              "       a: Find assignments to this symbol\n"));
 
     cmdp++;
   }
