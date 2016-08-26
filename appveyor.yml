@@ -1,22 +1,10 @@
 version: '{build}'
-skip_tags: true
-environment:
-  # The default cpack in the PATH is not CMake
-  CPACK: C:\Program Files (x86)\CMake\bin\cpack.exe
-  matrix:
-  - TARGET: MINGW_64
-    BUILD_DEPS_SCRIPT: .ci\msys_build_deps.bat
-    BUILD_SCRIPT: .ci\msys_build.bat
-  - TARGET: MINGW_32
-    BUILD_DEPS_SCRIPT: .ci\msys_build_deps.bat
-    BUILD_SCRIPT: .ci\msys_build.bat
+configuration:
+- MINGW_64
+- MINGW_32
 install: []
 build_script:
-- if defined BUILD_DEPS_SCRIPT call %BUILD_DEPS_SCRIPT%
-- call %BUILD_SCRIPT%
-# Build artifacts
-- cd build
-- '"%CPACK%" -G NSIS -C Release'
-- '"%CPACK%" -G ZIP -C Release'
+- call .ci\build.bat
 artifacts:
 - path: build/Neovim.zip
+- path: build/Neovim.exe
