@@ -33,12 +33,7 @@ setlocal tabstop=8
 setlocal softtabstop=8
 setlocal shiftwidth=8
 
-setlocal nonumber
-setlocal norelativenumber
-setlocal foldcolumn=0
-setlocal colorcolumn=0
-setlocal nolist
-setlocal nofoldenable
+call man#set_window_local_options()
 
 if !exists('g:no_plugin_maps') && !exists('g:no_man_maps')
   nmap     <silent> <buffer> <C-]>      <Plug>(Man)

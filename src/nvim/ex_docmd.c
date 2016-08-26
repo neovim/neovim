@@ -1327,24 +1327,24 @@ static char_u * do_one_cmd(char_u **cmdlinep,
 
     case 'c':   if (!checkforcmd(&ea.cmd, "confirm", 4))
         break;
-      cmdmod.confirm = TRUE;
+      cmdmod.confirm = true;
       continue;
 
     case 'k':   if (checkforcmd(&ea.cmd, "keepmarks", 3)) {
-        cmdmod.keepmarks = TRUE;
+        cmdmod.keepmarks = true;
         continue;
     }
       if (checkforcmd(&ea.cmd, "keepalt", 5)) {
-        cmdmod.keepalt = TRUE;
+        cmdmod.keepalt = true;
         continue;
       }
       if (checkforcmd(&ea.cmd, "keeppatterns", 5)) {
-        cmdmod.keeppatterns = TRUE;
+        cmdmod.keeppatterns = true;
         continue;
       }
       if (!checkforcmd(&ea.cmd, "keepjumps", 5))
         break;
-      cmdmod.keepjumps = TRUE;
+      cmdmod.keepjumps = true;
       continue;
 
     /* ":hide" and ":hide | cmd" are not modifiers */
@@ -1352,11 +1352,11 @@ static char_u * do_one_cmd(char_u **cmdlinep,
                     || *p == NUL || ends_excmd(*p))
         break;
       ea.cmd = p;
-      cmdmod.hide = TRUE;
+      cmdmod.hide = true;
       continue;
 
     case 'l':   if (checkforcmd(&ea.cmd, "lockmarks", 3)) {
-        cmdmod.lockmarks = TRUE;
+        cmdmod.lockmarks = true;
         continue;
     }
 
@@ -5156,6 +5156,24 @@ static char_u *uc_split_args(char_u *arg, size_t *lenp)
   return buf;
 }
 
+static size_t add_cmd_modifier(char_u *buf, char *mod_str, bool *multi_mods)
+{
+  size_t result = STRLEN(mod_str);
+  if (*multi_mods) {
+    result++;
+  }
+
+  if (buf != NULL) {
+    if (*multi_mods) {
+      STRCAT(buf, " ");
+    }
+    STRCAT(buf, mod_str);
+  }
+
+  *multi_mods = true;
+  return result;
+}
+
 /*
  * Check for a <> code in a user command.
  * "code" points to the '<'.  "len" the length of the <> (inclusive).
@@ -5180,8 +5198,8 @@ uc_check_code (
   char_u      *p = code + 1;
   size_t l = len - 2;
   int quote = 0;
-  enum { ct_ARGS, ct_BANG, ct_COUNT, ct_LINE1, ct_LINE2, ct_REGISTER,
-         ct_LT, ct_NONE } type = ct_NONE;
+  enum { ct_ARGS, ct_BANG, ct_COUNT, ct_LINE1, ct_LINE2, ct_MODS,
+  ct_REGISTER, ct_LT, ct_NONE } type = ct_NONE;
 
   if ((vim_strchr((char_u *)"qQfF", *p) != NULL) && p[1] == '-') {
     quote = (*p == 'q' || *p == 'Q') ? 1 : 2;
@@ -5189,23 +5207,26 @@ uc_check_code (
     l -= 2;
   }
 
-  ++l;
-  if (l <= 1)
+  l++;
+  if (l <= 1) {
     type = ct_NONE;
-  else if (STRNICMP(p, "args>", l) == 0)
+  } else if (STRNICMP(p, "args>", l) == 0) {
     type = ct_ARGS;
-  else if (STRNICMP(p, "bang>", l) == 0)
+  } else if (STRNICMP(p, "bang>", l) == 0) {
     type = ct_BANG;
-  else if (STRNICMP(p, "count>", l) == 0)
+  } else if (STRNICMP(p, "count>", l) == 0) {
     type = ct_COUNT;
-  else if (STRNICMP(p, "line1>", l) == 0)
+  } else if (STRNICMP(p, "line1>", l) == 0) {
     type = ct_LINE1;
-  else if (STRNICMP(p, "line2>", l) == 0)
+  } else if (STRNICMP(p, "line2>", l) == 0) {
     type = ct_LINE2;
-  else if (STRNICMP(p, "lt>", l) == 0)
+  } else if (STRNICMP(p, "lt>", l) == 0) {
     type = ct_LT;
-  else if (STRNICMP(p, "reg>", l) == 0 || STRNICMP(p, "register>", l) == 0)
+  } else if (STRNICMP(p, "reg>", l) == 0 || STRNICMP(p, "register>", l) == 0) {
     type = ct_REGISTER;
+  } else if (STRNICMP(p, "mods>", l) == 0) {
+    type = ct_MODS;
+  }
 
   switch (type) {
   case ct_ARGS:
@@ -5310,6 +5331,87 @@ uc_check_code (
         *buf = '"';
     }
 
+    break;
+  }
+
+  case ct_MODS:
+  {
+    result = quote ? 2 : 0;
+    if (buf != NULL) {
+      if (quote) {
+        *buf++ = '"';
+      }
+      *buf = '\0';
+    }
+
+    bool multi_mods = false;
+
+    // :aboveleft and :leftabove
+    if (cmdmod.split & WSP_ABOVE) {
+      result += add_cmd_modifier(buf, "aboveleft", &multi_mods);
+    }
+    // :belowright and :rightbelow
+    if (cmdmod.split & WSP_BELOW) {
+      result += add_cmd_modifier(buf, "belowright", &multi_mods);
+    }
+    // :botright
+    if (cmdmod.split & WSP_BOT) {
+      result += add_cmd_modifier(buf, "botright", &multi_mods);
+    }
+
+    typedef struct {
+      bool *set;
+      char *name;
+    } mod_entry_T;
+    static mod_entry_T mod_entries[] = {
+      { &cmdmod.browse, "browse" },
+      { &cmdmod.confirm, "confirm" },
+      { &cmdmod.hide, "hide" },
+      { &cmdmod.keepalt, "keepalt" },
+      { &cmdmod.keepjumps, "keepjumps" },
+      { &cmdmod.keepmarks, "keepmarks" },
+      { &cmdmod.keeppatterns, "keeppatterns" },
+      { &cmdmod.lockmarks, "lockmarks" },
+      { &cmdmod.noswapfile, "noswapfile" }
+    };
+    // the modifiers that are simple flags
+    for (size_t i = 0; i < ARRAY_SIZE(mod_entries); i++) {
+      if (*mod_entries[i].set) {
+        result += add_cmd_modifier(buf, mod_entries[i].name, &multi_mods);
+      }
+    }
+
+    // TODO(vim): How to support :noautocmd?
+    // TODO(vim): How to support :sandbox?
+
+    // :silent
+    if (msg_silent > 0) {
+      result += add_cmd_modifier(buf, emsg_silent > 0 ? "silent!" : "silent",
+                                 &multi_mods);
+    }
+    // :tab
+    if (cmdmod.tab > 0) {
+      result += add_cmd_modifier(buf, "tab", &multi_mods);
+    }
+    // :topleft
+    if (cmdmod.split & WSP_TOP) {
+      result += add_cmd_modifier(buf, "topleft", &multi_mods);
+    }
+
+    // TODO(vim): How to support :unsilent?
+
+    // :verbose
+    if (p_verbose > 0) {
+      result += add_cmd_modifier(buf, "verbose", &multi_mods);
+    }
+    // :vertical
+    if (cmdmod.split & WSP_VERT) {
+      result += add_cmd_modifier(buf, "vertical", &multi_mods);
+    }
+    if (quote && buf != NULL) {
+      buf += result - 2;
+      *buf = '"';
+    }
     break;
   }
 

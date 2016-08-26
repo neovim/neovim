@@ -1,12 +1,9 @@
 " Maintainer: Anmol Sethi <anmol@aubble.com>
 
-" Ensure Vim is not recursively invoked (man-db does this)
-" by forcing man to use cat as the pager.
-" More info here http://comments.gmane.org/gmane.editors.vim.devel/29085
 if &shell =~# 'fish$'
-  let s:man_cmd = 'man -P cat ^/dev/null'
+  let s:man_cmd = 'man ^/dev/null'
 else
-  let s:man_cmd = 'man -P cat 2>/dev/null'
+  let s:man_cmd = 'man 2>/dev/null'
 endif
 
 let s:man_find_arg = "-w"
@@ -26,7 +23,7 @@ endtry
 " by the user. count defaults to 0 which is a valid section and
 " count1 defaults to 1 which is also a valid section. Only when they
 " are equal was the count explicitly set.
-function! man#open_page(count, count1, ...) abort
+function! man#open_page(count, count1, mods, ...) abort
   if a:0 > 2
     call s:error('too many arguments')
     return
@@ -49,48 +46,52 @@ function! man#open_page(count, count1, ...) abort
       " user explicitly set a count
       let sect = string(a:count)
     endif
-    let [sect, name] = s:verify_exists(sect, name)
+    let [sect, name, path] = s:verify_exists(sect, name)
   catch
     call s:error(v:exception)
     return
   endtry
   call s:push_tag()
   let bufname = 'man://'.name.(empty(sect)?'':'('.sect.')')
-  let found_man = s:find_man()
-  if getbufvar(bufname, 'manwidth') ==# s:manwidth()
-    if found_man
-      silent execute 'buf' bufnr(bufname)
-    else
-      execute 'split' bufname
+  if a:mods !~# 'tab' && s:find_man()
+    if s:manwidth() ==# getbufvar(bufname, 'manwidth')
+      silent execute 'buf' bufname
+      call man#set_window_local_options()
+      keepjumps 1
+      return
     endif
+    noautocmd execute 'edit' bufname
+  elseif s:manwidth() ==# getbufvar(bufname, 'manwidth')
+    execute a:mods 'split' bufname
+    call man#set_window_local_options()
     keepjumps 1
     return
-  endif
-  if found_man
-    noautocmd execute 'edit' bufname
   else
-    noautocmd execute 'split' bufname
+    noautocmd execute a:mods 'split' bufname
   endif
-  call s:read_page(sect, name)
+  call s:read_page(path)
 endfunction
 
 function! man#read_page(ref) abort
   try
     let [sect, name] = s:extract_sect_and_name_ref(a:ref)
-    let [sect, name] = s:verify_exists(sect, name)
+    " The third element is the path.
+    call s:read_page(s:verify_exists(sect, name)[2])
   catch
     call s:error(v:exception)
     return
   endtry
-  call s:read_page(sect, name)
 endfunction
 
-function! s:read_page(sect, name) abort
+function! s:read_page(path) abort
   setlocal modifiable
   setlocal noreadonly
   keepjumps %delete _
   let b:manwidth = s:manwidth()
-  silent execute 'read!env MANWIDTH='.b:manwidth s:man_cmd s:man_args(a:sect, a:name)
+  " Ensure Vim is not recursively invoked (man-db does this)
+  " by forcing man to use cat as the pager.
+  " More info here http://comments.gmane.org/gmane.editors.vim.devel/29085
+  silent execute 'read !env MANPAGER=cat MANWIDTH='.b:manwidth s:man_cmd a:path
   " remove all the backspaced text
   silent execute 'keeppatterns keepjumps %substitute,.\b,,e'.(&gdefault?'':'g')
   while getline(1) =~# '^\s*$'
@@ -134,7 +135,7 @@ function! s:verify_exists(sect, name) abort
   if a:name =~# '\/'
     " We do not need to extract the section/name from the path if the name is
     " just a path.
-    return ['', a:name]
+    return ['', a:name, path]
   endif
   " We need to extract the section from the path because sometimes
   " the actual section of the manpage is more specific than the section
@@ -142,7 +143,8 @@ function! s:verify_exists(sect, name) abort
   " Also on linux, it seems that the name is case insensitive. So if one does
   " ':Man PRIntf', we still want the name of the buffer to be 'printf' or
   " whatever the correct capitilization is.
-  return s:extract_sect_and_name_path(path[:len(path)-2])
+  let path = path[:len(path)-2]
+  return s:extract_sect_and_name_path(path) + [path]
 endfunction
 
 let s:tag_stack = []
@@ -201,6 +203,15 @@ function! s:manwidth() abort
     return winwidth(0)
   endif
   return $MANWIDTH
+endfunction
+
+function! man#set_window_local_options() abort
+  setlocal nonumber
+  setlocal norelativenumber
+  setlocal foldcolumn=0
+  setlocal colorcolumn=0
+  setlocal nolist
+  setlocal nofoldenable
 endfunction
 
 function! s:man_args(sect, name) abort
@@ -271,11 +282,11 @@ function! man#complete(arg_lead, cmd_line, cursor_pos) abort
   return uniq(sort(map(globpath(s:mandirs,'man?/'.name.'*.'.sect.'*', 0, 1), 's:format_candidate(v:val, sect)'), 'i'))
 endfunction
 
-function! s:format_candidate(c, sect) abort
-  if a:c =~# '\.\%(pdf\|in\)$' " invalid extensions
+function! s:format_candidate(path, sect) abort
+  if a:path =~# '\.\%(pdf\|in\)$' " invalid extensions
     return
   endif
-  let [sect, name] = s:extract_sect_and_name_path(a:c)
+  let [sect, name] = s:extract_sect_and_name_path(a:path)
   if sect ==# a:sect
     return name
   elseif sect =~# a:sect.'[^.]\+$'
