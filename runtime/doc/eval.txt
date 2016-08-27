@@ -4418,6 +4418,15 @@ jobstart({cmd}[, {opts}])				{Nvim} *jobstart()*
 		only written to show the idea, one needs to perform unquoting 
 		and do split taking quotes into account.
 
+		On Windows, if {cmd} is a list, cmd[0] must be a valid
+		executable (.exe, .com).  If the executable is in your $PATH
+		it can be called by name, with or without an extension: >
+		   :call jobstart(['ping', 'neovim.io'])
+		   :call jobstart(['ping.exe', 'neovim.io'])
+<		However if cmd[0] is a path to an executable it must include
+		the file extension: >
+		   :call jobstart(['c:\Windows\System32\ping.exe', 'neovim.io'])
+<
 		{opts} is a dictionary with these keys:
 		  on_stdout: stdout event handler (function name or |Funcref|)
 		  on_stderr: stderr event handler (function name or |Funcref|)
