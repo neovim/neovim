@@ -10268,7 +10268,11 @@ find_win_by_nr (
   }
 
   FOR_ALL_WINDOWS_IN_TAB(wp, tp) {
-    if (--nr <= 0) {
+    if (nr >= LOWEST_WIN_ID) {
+      if (wp->handle == nr) {
+        return wp;
+      }
+    } else if (--nr <= 0) {
       return wp;
     }
   }

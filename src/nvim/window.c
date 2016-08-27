@@ -3694,7 +3694,7 @@ win_T *buf_jump_open_tab(buf_T *buf)
  */
 static win_T *win_alloc(win_T *after, int hidden)
 {
-  static int last_win_id = 0;
+  static int last_win_id = LOWEST_WIN_ID - 1;
 
   // allocate window structure and linesizes arrays
   win_T *new_wp = xcalloc(1, sizeof(win_T));
