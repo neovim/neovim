@@ -109,6 +109,25 @@ describe('Mouse input', function()
     ]])
   end)
 
+  it('test drag left', function()
+    feed('<LeftMouse><6,0>')
+    screen:expect([[
+      testin^g                  |
+      mouse                    |
+      support and selection    |
+      {0:~                        }|
+                               |
+    ]])
+    feed('<LeftDrag><0,0>')
+    screen:expect([[
+      ^t{1:esting}                  |
+      mouse                    |
+      support and selection    |
+      {0:~                        }|
+      {2:-- VISUAL --}             |
+    ]])
+  end)
+
   describe('tabline', function()
     before_each(function()
       screen:set_default_attr_ids( {
