@@ -6810,19 +6810,14 @@ synstack({lnum}, {col})					*synstack()*
 		valid positions.
 
 system({cmd} [, {input}])				*system()* *E677*
-		Get the output of the shell command {cmd} as a |string|.  {cmd}
+		Get the output of the command {cmd} as a |string|.  {cmd}
 		will be run the same as in |jobstart()|.  See |systemlist()|
 		to get the output as a |List|.
 
-		When {input} is given and is a string this string is written 
-		to a file and passed as stdin to the command.  The string is 
-		written as-is, you need to take care of using the correct line 
-		separators yourself.
-		If {input} is given and is a |List| it is written to the file
-		in a way |writefile()| does with {binary} set to "b" (i.e.
-		with a newline between each list item with newlines inside
-		list items converted to NULs).  
-		Pipes are not used.
+		When {input} is given and is a string it is passed as stdin
+		to the command. If {input} is a |List| it is first converted
+		as |writefile()| does (i.e. with a newline between each list
+		item with newlines inside list items converted to NULs).
 
 		Note: Use |shellescape()| or |::S| with |expand()| or 
 		|fnamemodify()| to escape special characters in a command 
