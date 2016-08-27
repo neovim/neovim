@@ -3773,8 +3773,9 @@ static int set_rw_fname(char_u *fname, char_u *sfname)
 
   /* Do filetype detection now if 'filetype' is empty. */
   if (*curbuf->b_p_ft == NUL) {
-    if (au_has_group((char_u *)"filetypedetect"))
-      (void)do_doautocmd((char_u *)"filetypedetect BufRead", FALSE);
+    if (au_has_group((char_u *)"filetypedetect")) {
+      (void)do_doautocmd((char_u *)"filetypedetect BufRead", false, NULL);
+    }
     do_modelines(0);
   }
 
@@ -6058,12 +6059,17 @@ static int do_autocmd_event(event_T event, char_u *pat, int nested, char_u *cmd,
 int 
 do_doautocmd (
     char_u *arg,
-    int do_msg                 /* give message for no matching autocmds? */
+    int do_msg,  // give message for no matching autocmds?
+    bool *did_something
 )
 {
   char_u      *fname;
   int nothing_done = TRUE;
   int group;
+
+  if (did_something != NULL) {
+    *did_something = false;
+  }
 
   /*
    * Check for a legal group name.  If not, use AUGROUP_ALL.
@@ -6093,8 +6099,12 @@ do_doautocmd (
             fname, NULL, TRUE, group, curbuf, NULL))
       nothing_done = FALSE;
 
-  if (nothing_done && do_msg)
+  if (nothing_done && do_msg) {
     MSG(_("No matching autocommands"));
+  }
+  if (did_something != NULL) {
+    *did_something = !nothing_done;
+  }
 
   return aborting() ? FAIL : OK;
 }
@@ -6123,13 +6133,14 @@ void ex_doautoall(exarg_T *eap)
     /* find a window for this buffer and save some values */
     aucmd_prepbuf(&aco, buf);
 
-    /* execute the autocommands for this buffer */
-    retval = do_doautocmd(arg, FALSE);
+    bool did_aucmd;
+    // execute the autocommands for this buffer
+    retval = do_doautocmd(arg, false, &did_aucmd);
 
-    if (call_do_modelines) {
-      /* Execute the modeline settings, but don't set window-local
-       * options if we are using the current window for another
-       * buffer. */
+    if (call_do_modelines && did_aucmd) {
+      // Execute the modeline settings, but don't set window-local
+      // options if we are using the current window for another
+      // buffer.
       do_modelines(curwin == aucmd_win ? OPT_NOWIN : 0);
     }
 

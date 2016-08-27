@@ -1711,11 +1711,11 @@ int do_write(exarg_T *eap)
         goto theend;
       }
 
-      /* If 'filetype' was empty try detecting it now. */
+      // If 'filetype' was empty try detecting it now.
       if (*curbuf->b_p_ft == NUL) {
-        if (au_has_group((char_u *)"filetypedetect"))
-          (void)do_doautocmd((char_u *)"filetypedetect BufRead",
-              TRUE);
+        if (au_has_group((char_u *)"filetypedetect")) {
+          (void)do_doautocmd((char_u *)"filetypedetect BufRead", true, NULL);
+        }
         do_modelines(0);
       }
 
