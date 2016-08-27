@@ -763,6 +763,11 @@ struct file_buffer {
   BufhlInfo b_bufhl_info;       // buffer stored highlights
 
   kvec_t(BufhlLine *) b_bufhl_move_space;  // temporary space for highlights
+
+  // array of channelids which have asked to receive live updates for this
+  // buffer. The last item in the array will always be LIVEUPDATE_NONE.
+  uint64_t *liveupdate_channels;
+#define LIVEUPDATE_NONE 0
 };
 
 /*
