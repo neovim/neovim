@@ -37,4 +37,14 @@ func Test_help_tagjump()
   call assert_equal("help", &filetype)
   call assert_true(getline('.') =~ '\*arglistid()\*')
   helpclose
+
+  exec "help! 'autoindent'."
+  call assert_equal("help", &filetype)
+  call assert_true(getline('.') =~ "\\*'autoindent'\\*")
+  helpclose
+
+  exec "help! {address}."
+  call assert_equal("help", &filetype)
+  call assert_true(getline('.') =~ '\*{address}\*')
+  helpclose
 endfunc
