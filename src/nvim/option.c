@@ -3661,7 +3661,7 @@ set_bool_option (
       if ((State & INSERT) == 0)
         need_start_insertmode = TRUE;
       stop_insert_mode = FALSE;
-    } else {
+    } else if (old_value) {  // only reset if it was set previously
       need_start_insertmode = FALSE;
       stop_insert_mode = TRUE;
       if (restart_edit != 0 && mode_displayed)
