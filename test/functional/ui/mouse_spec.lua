@@ -128,6 +128,78 @@ describe('Mouse input', function()
     ]])
   end)
 
+  describe('tab drag', function()
+    before_each(function()
+      screen:set_default_attr_ids( {
+        [0] = {bold=true, foreground=Screen.colors.Blue},
+        tab  = { background=Screen.colors.LightGrey, underline=true },
+        sel  = { bold=true },
+        fill = { reverse=true }
+      })
+      screen.timeout = 15000
+    end)
+
+    it('in tabline to the left moves tab left', function()
+      execute('%delete')
+      insert('this is foo')
+      execute('silent file foo | tabnew | file bar')
+      insert('this is bar')
+      screen:expect([[
+        {tab: + foo }{sel: + bar }{fill:          }{tab:X}|
+        this is ba^r              |
+        {0:~                        }|
+        {0:~                        }|
+                                 |
+      ]])
+      feed('<LeftMouse><11,0>')
+      screen:expect([[
+        {tab: + foo }{sel: + bar }{fill:          }{tab:X}|
+        this is ba^r              |
+        {0:~                        }|
+        {0:~                        }|
+                                 |
+      ]])
+      feed('<LeftDrag><6,0>')
+      screen:expect([[
+        {sel: + bar }{tab: + foo }{fill:          }{tab:X}|
+        this is ba^r              |
+        {0:~                        }|
+        {0:~                        }|
+                                 |
+      ]])
+    end)
+
+    it('in tabline to the right moves tab right', function()
+      execute('%delete')
+      insert('this is foo')
+      execute('silent file foo | tabnew | file bar')
+      insert('this is bar')
+      screen:expect([[
+        {tab: + foo }{sel: + bar }{fill:          }{tab:X}|
+        this is ba^r              |
+        {0:~                        }|
+        {0:~                        }|
+                                 |
+      ]])
+      feed('<LeftMouse><4,0>')
+      screen:expect([[
+        {sel: + foo }{tab: + bar }{fill:          }{tab:X}|
+        this is fo^o              |
+        {0:~                        }|
+        {0:~                        }|
+                                 |
+      ]])
+      feed('<LeftDrag><7,0>')
+      screen:expect([[
+        {tab: + bar }{sel: + foo }{fill:          }{tab:X}|
+        this is fo^o              |
+        {0:~                        }|
+        {0:~                        }|
+                                 |
+      ]])
+    end)
+  end)
+
   describe('tabline', function()
     before_each(function()
       screen:set_default_attr_ids( {
