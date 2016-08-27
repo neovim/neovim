@@ -131,7 +131,7 @@ describe('Mouse input', function()
         {0:~                        }|
         {0:~                        }|
                                  |
-      ]], tab_attrs)
+      ]])
       feed('<LeftMouse><4,0>')
       screen:expect([[
         {sel: + foo }{tab: + bar }{fill:          }{tab:X}|
@@ -139,7 +139,7 @@ describe('Mouse input', function()
         {0:~                        }|
         {0:~                        }|
                                  |
-      ]], tab_attrs)
+      ]])
       feed('<LeftDrag><14,0>')
       screen:expect([[
         {tab: + bar }{sel: + foo }{fill:          }{tab:X}|
@@ -147,7 +147,7 @@ describe('Mouse input', function()
         {0:~                        }|
         {0:~                        }|
                                  |
-      ]], tab_attrs)
+      ]])
     end)
 
     it('in tabline to the left moves tab left', function()
@@ -161,7 +161,7 @@ describe('Mouse input', function()
         {0:~                        }|
         {0:~                        }|
                                  |
-      ]], tab_attrs)
+      ]])
       feed('<LeftMouse><11,0>')
       screen:expect([[
         {tab: + foo }{sel: + bar }{fill:          }{tab:X}|
@@ -169,7 +169,7 @@ describe('Mouse input', function()
         {0:~                        }|
         {0:~                        }|
                                  |
-      ]], tab_attrs)
+      ]])
       feed('<LeftDrag><6,0>')
       screen:expect([[
         {sel: + bar }{tab: + foo }{fill:          }{tab:X}|
@@ -177,7 +177,7 @@ describe('Mouse input', function()
         {0:~                        }|
         {0:~                        }|
                                  |
-      ]], tab_attrs)
+      ]])
     end)
 
     it('in tabline to the right moves tab right', function()
@@ -191,7 +191,7 @@ describe('Mouse input', function()
         {0:~                        }|
         {0:~                        }|
                                  |
-      ]], tab_attrs)
+      ]])
       feed('<LeftMouse><4,0>')
       screen:expect([[
         {sel: + foo }{tab: + bar }{fill:          }{tab:X}|
@@ -199,7 +199,7 @@ describe('Mouse input', function()
         {0:~                        }|
         {0:~                        }|
                                  |
-      ]], tab_attrs)
+      ]])
       feed('<LeftDrag><7,0>')
       screen:expect([[
         {tab: + bar }{sel: + foo }{fill:          }{tab:X}|
@@ -207,7 +207,7 @@ describe('Mouse input', function()
         {0:~                        }|
         {0:~                        }|
                                  |
-      ]], tab_attrs)
+      ]])
     end)
 
     it('out of tabline under filler space moves tab to the end', function()
@@ -221,7 +221,7 @@ describe('Mouse input', function()
         {0:~                        }|
         {0:~                        }|
                                  |
-      ]], tab_attrs)
+      ]])
       feed('<LeftMouse><4,0>')
       screen:expect([[
         {sel: + foo }{tab: + bar }{fill:          }{tab:X}|
@@ -229,7 +229,7 @@ describe('Mouse input', function()
         {0:~                        }|
         {0:~                        }|
                                  |
-      ]], tab_attrs)
+      ]])
       feed('<LeftDrag><4,1>')
       screen:expect([[
         {sel: + foo }{tab: + bar }{fill:          }{tab:X}|
@@ -237,7 +237,7 @@ describe('Mouse input', function()
         {0:~                        }|
         {0:~                        }|
                                  |
-      ]], tab_attrs)
+      ]])
       feed('<LeftDrag><14,1>')
       screen:expect([[
         {tab: + bar }{sel: + foo }{fill:          }{tab:X}|
@@ -245,7 +245,7 @@ describe('Mouse input', function()
         {0:~                        }|
         {0:~                        }|
                                  |
-      ]], tab_attrs)
+      ]])
     end)
 
     it('out of tabline to the left moves tab left', function()
@@ -259,7 +259,7 @@ describe('Mouse input', function()
         {0:~                        }|
         {0:~                        }|
                                  |
-      ]], tab_attrs)
+      ]])
       feed('<LeftMouse><11,0>')
       screen:expect([[
         {tab: + foo }{sel: + bar }{fill:          }{tab:X}|
@@ -267,7 +267,7 @@ describe('Mouse input', function()
         {0:~                        }|
         {0:~                        }|
                                  |
-      ]], tab_attrs)
+      ]])
       feed('<LeftDrag><11,1>')
       screen:expect([[
         {tab: + foo }{sel: + bar }{fill:          }{tab:X}|
@@ -275,7 +275,7 @@ describe('Mouse input', function()
         {0:~                        }|
         {0:~                        }|
                                  |
-      ]], tab_attrs)
+      ]])
       feed('<LeftDrag><6,1>')
       screen:expect([[
         {sel: + bar }{tab: + foo }{fill:          }{tab:X}|
@@ -283,7 +283,7 @@ describe('Mouse input', function()
         {0:~                        }|
         {0:~                        }|
                                  |
-      ]], tab_attrs)
+      ]])
     end)
 
     it('out of tabline to the right moves tab right', function()
@@ -297,7 +297,7 @@ describe('Mouse input', function()
         {0:~                        }|
         {0:~                        }|
                                  |
-      ]], tab_attrs)
+      ]])
       feed('<LeftMouse><4,0>')
       screen:expect([[
         {sel: + foo }{tab: + bar }{fill:          }{tab:X}|
@@ -305,7 +305,7 @@ describe('Mouse input', function()
         {0:~                        }|
         {0:~                        }|
                                  |
-      ]], tab_attrs)
+      ]])
       feed('<LeftDrag><4,1>')
       screen:expect([[
         {sel: + foo }{tab: + bar }{fill:          }{tab:X}|
@@ -313,7 +313,7 @@ describe('Mouse input', function()
         {0:~                        }|
         {0:~                        }|
                                  |
-      ]], tab_attrs)
+      ]])
       feed('<LeftDrag><7,1>')
       screen:expect([[
         {tab: + bar }{sel: + foo }{fill:          }{tab:X}|
@@ -321,7 +321,7 @@ describe('Mouse input', function()
         {0:~                        }|
         {0:~                        }|
                                  |
-      ]], tab_attrs)
+      ]])
     end)
   end)
 
