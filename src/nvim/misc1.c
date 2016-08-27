@@ -742,10 +742,14 @@ open_line (
     if (ml_append(curwin->w_cursor.lnum, p_extra, (colnr_T)0, FALSE)
         == FAIL)
       goto theend;
-    /* Postpone calling changed_lines(), because it would mess up folding
-     * with markers. */
-    mark_adjust(curwin->w_cursor.lnum + 1, (linenr_T)MAXLNUM, 1L, 0L);
-    did_append = TRUE;
+    // Postpone calling changed_lines(), because it would mess up folding
+    // with markers.
+    // Skip mark_adjust when adding a line after the last one, there can't
+    // be marks there.
+    if (curwin->w_cursor.lnum + 1 < curbuf->b_ml.ml_line_count) {
+      mark_adjust(curwin->w_cursor.lnum + 1, (linenr_T)MAXLNUM, 1L, 0L);
+    }
+    did_append = true;
   } else {
     /*
      * In VREPLACE mode we are starting to replace the next line.
@@ -1871,7 +1875,11 @@ void appended_lines(linenr_T lnum, long count)
  */
 void appended_lines_mark(linenr_T lnum, long count)
 {
-  mark_adjust(lnum + 1, (linenr_T)MAXLNUM, count, 0L);
+  // Skip mark_adjust when adding a line after the last one, there can't
+  // be marks there.
+  if (lnum + count < curbuf->b_ml.ml_line_count) {
+    mark_adjust(lnum + 1, (linenr_T)MAXLNUM, count, 0L);
+  }
   changed_lines(lnum + 1, 0, lnum + 1, count);
 }
 
