@@ -45,6 +45,7 @@ return {
     bufloaded={args=1},
     bufname={args=1},
     bufnr={args={1, 2}},
+    bufwinid={args=1},
     bufwinnr={args=1},
     byte2line={args=1},
     byteidx={args=2},

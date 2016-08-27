@@ -1813,6 +1813,7 @@ buflisted({expr})		Number	TRUE if buffer {expr} is listed
 bufloaded({expr})		Number	TRUE if buffer {expr} is loaded
 bufname({expr})		String	Name of the buffer {expr}
 bufnr({expr} [, {create}])	Number	Number of the buffer {expr}
+bufwinid({expr})		Number	window ID of buffer {expr}
 bufwinnr({expr})		Number	window number of buffer {expr}
 byte2line({byte})		Number	line number at byte count {byte}
 byteidx({expr}, {nr})		Number	byte index of {nr}'th char in {expr}
@@ -2467,6 +2468,16 @@ bufnr({expr} [, {create}])
 		of existing buffers.  Note that not all buffers with a smaller
 		number necessarily exist, because ":bwipeout" may have removed
 		them.  Use bufexists() to test for the existence of a buffer.
+
+bufwinid({expr})					*bufwinid()*
+		The result is a Number, which is the window ID of the first
+		window associated with buffer {expr}.  For the use of {expr},
+		see |bufname()| above.  If buffer {expr} doesn't exist or
+		there is no such window, -1 is returned.  Example: >
+
+	echo "A window containing buffer 1 is " . (bufwinid(1))
+<
+		Only deals with the current tab page.
 
 bufwinnr({expr})					*bufwinnr()*
 		The result is a Number, which is the number of the first
