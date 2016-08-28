@@ -14,14 +14,13 @@
 #include "nvim/ex_eval.h"
 #include "nvim/charset.h"
 #include "nvim/eval.h"
+#include "nvim/eval/typval.h"
 #include "nvim/ex_cmds2.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/message.h"
 #include "nvim/memory.h"
 #include "nvim/regexp.h"
 #include "nvim/strings.h"
-
-
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ex_eval.c.generated.h"
@@ -59,12 +58,14 @@
  * is an error exception.)  -  The macros can be defined as expressions checking
  * for a variable that is allowed to be changed during execution of a script.
  */
-/* Values used for the Vim release. */
-# define THROW_ON_ERROR         TRUE
-# define THROW_ON_ERROR_TRUE
-# define THROW_ON_INTERRUPT     TRUE
-# define THROW_ON_INTERRUPT_TRUE
 
+// Values used for the Vim release.
+#define THROW_ON_ERROR true
+#define THROW_ON_ERROR_TRUE
+#define THROW_ON_INTERRUPT true
+#define THROW_ON_INTERRUPT_TRUE
+
+#define discard_pending_return(p) tv_free((typval_T *)(p))
 
 /*
  * When several errors appear in a row, setting "force_abort" is delayed until

@@ -3652,7 +3652,6 @@ void ex_cbuffer(exarg_T *eap)
  */
 void ex_cexpr(exarg_T *eap)
 {
-  typval_T    *tv;
   qf_info_T   *qi = &ql_info;
 
   if (eap->cmdidx == CMD_lexpr || eap->cmdidx == CMD_lgetexpr
@@ -3660,22 +3659,23 @@ void ex_cexpr(exarg_T *eap)
     qi = ll_get_or_alloc_list(curwin);
   }
 
-  /* Evaluate the expression.  When the result is a string or a list we can
-   * use it to fill the errorlist. */
-  tv = eval_expr(eap->arg, NULL);
-  if (tv != NULL) {
-    if ((tv->v_type == VAR_STRING && tv->vval.v_string != NULL)
-        || (tv->v_type == VAR_LIST && tv->vval.v_list != NULL)) {
-      if (qf_init_ext(qi, NULL, NULL, tv, p_efm,
+  // Evaluate the expression.  When the result is a string or a list we can
+  // use it to fill the errorlist.
+  typval_T rettv;
+  if (eval0(eap->arg, &rettv, NULL, true) != FAIL) {
+    if ((rettv.v_type == VAR_STRING && rettv.vval.v_string != NULL)
+        || (rettv.v_type == VAR_LIST && rettv.vval.v_list != NULL)) {
+      if (qf_init_ext(qi, NULL, NULL, &rettv, p_efm,
               (eap->cmdidx != CMD_caddexpr
                && eap->cmdidx != CMD_laddexpr),
               (linenr_T)0, (linenr_T)0, *eap->cmdlinep) > 0
           && (eap->cmdidx == CMD_cexpr
-              || eap->cmdidx == CMD_lexpr))
-        qf_jump(qi, 0, 0, eap->forceit);          /* display first error */
-    } else
+              || eap->cmdidx == CMD_lexpr)) {
+        qf_jump(qi, 0, 0, eap->forceit);  // Display first error.
+      }
+    } else {
       EMSG(_("E777: String or List expected"));
-    free_tv(tv);
+    }
   }
 }
 
