@@ -7713,10 +7713,20 @@ static void f_bufnr(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
 static void buf_win_common(typval_T *argvars, typval_T *rettv, bool get_nr)
 {
-  (void)get_tv_number(&argvars[0]);  // issue errmsg if type error
-  emsg_off++;
+  int error = false;
+  (void)get_tv_number_chk(&argvars[0], &error);  // issue errmsg if type error
+  if (error) {  // the argument has an invalid type
+    rettv->vval.v_number = -1;
+    return;
+  }
 
-  buf_T *buf = get_buf_tv(&argvars[0], TRUE);
+  emsg_off++;
+  buf_T *buf = get_buf_tv(&argvars[0], true);
+  if (buf == NULL) {  // no need to search if buffer was not found
+    rettv->vval.v_number = -1;
+    goto end;
+  }
+
   int winnr = 0;
   int winid;
   bool found_buf = false;
@@ -7729,6 +7739,7 @@ static void buf_win_common(typval_T *argvars, typval_T *rettv, bool get_nr)
     }
   }
   rettv->vval.v_number = (found_buf ? (get_nr ? winnr : winid) : -1);
+end:
   emsg_off--;
 }
 
