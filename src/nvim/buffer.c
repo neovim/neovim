@@ -5150,7 +5150,8 @@ void sign_mark_adjust(linenr_T line1, linenr_T line2, long amount, long amount_a
 /// @param line the linenumber to lookup
 /// @param put if true, put a new line when not found
 ///            if false, return NULL when not found
-BufhlLine *bufhl_tree_ref(kbtree_t(bufhl) *b, linenr_T line, bool put) {
+BufhlLine *bufhl_tree_ref(BufhlInfo *b, linenr_T line, bool put)
+{
   BufhlLine t = BUFHLLINE_INIT(line);
 
   // kp_put() only works if key is absent, try get first
@@ -5207,7 +5208,7 @@ int bufhl_add_hl(buf_T *buf,
 
   BufhlLine *lineinfo = bufhl_tree_ref(&buf->b_bufhl_info, lnum, true);
 
-  bufhl_hl_item_T *hlentry = kv_pushp(lineinfo->items);
+  BufhlItem *hlentry = kv_pushp(lineinfo->items);
   hlentry->src_id = src_id;
   hlentry->hl_id = hl_id;
   hlentry->start = col_start;
@@ -5279,16 +5280,16 @@ static BufhlLineStatus bufhl_clear_line(BufhlLine *lineinfo, int src_id,
   if (src_id < 0) {
     kv_size(lineinfo->items) = 0;
   } else {
-    size_t newind = 0;
+    size_t newidx = 0;
     for (size_t i = 0; i < kv_size(lineinfo->items); i++) {
       if (kv_A(lineinfo->items, i).src_id != src_id) {
-        if (i != newind) {
-          kv_A(lineinfo->items, newind) = kv_A(lineinfo->items, i);
+        if (i != newidx) {
+          kv_A(lineinfo->items, newidx) = kv_A(lineinfo->items, i);
         }
-        newind++;
+        newidx++;
       }
     }
-    kv_size(lineinfo->items) = newind;
+    kv_size(lineinfo->items) = newidx;
   }
 
   if (kv_size(lineinfo->items) == 0) {
@@ -5349,7 +5350,7 @@ void bufhl_mark_adjust(buf_T* buf,
 /// @param lnum The line number
 /// @param[out] info The highligts for the line
 /// @return true if there was highlights to display
-bool bufhl_start_line(buf_T *buf, linenr_T lnum, bufhl_lineinfo_T *info)
+bool bufhl_start_line(buf_T *buf, linenr_T lnum, BufhlLineInfo *info)
 {
   BufhlLine *lineinfo = bufhl_tree_ref(&buf->b_bufhl_info, lnum, false);
   if (!lineinfo) {
@@ -5370,14 +5371,14 @@ bool bufhl_start_line(buf_T *buf, linenr_T lnum, bufhl_lineinfo_T *info)
 /// @param info The info returned by bufhl_start_line
 /// @param col The column to get the attr for
 /// @return The highilight attr to display at the column
-int bufhl_get_attr(bufhl_lineinfo_T *info, colnr_T col) {
+int bufhl_get_attr(BufhlLineInfo *info, colnr_T col) {
   if (col <= info->valid_to) {
     return info->current;
   }
   int attr = 0;
   info->valid_to = MAXCOL;
   for (size_t i = 0; i < kv_size(info->entries); i++) {
-    bufhl_hl_item_T entry = kv_A(info->entries, i);
+    BufhlItem entry = kv_A(info->entries, i);
     if (entry.start <= col && col <= entry.stop) {
       int entry_attr = syn_id2attr(entry.hl_id);
       attr = hl_combine_attr(attr, entry_attr);

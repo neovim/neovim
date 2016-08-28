@@ -2210,7 +2210,7 @@ win_line (
   bool search_attr_from_match = false;  // if search_attr is from :match
   bool has_bufhl = false;               // this buffer has highlight matches
   int bufhl_attr = 0;                   // attributes desired by bufhl
-  bufhl_lineinfo_T bufhl_info;          // bufhl data for this line
+  BufhlLineInfo bufhl_info;             // bufhl data for this line
 
   /* draw_state: items that are drawn in sequence: */
 #define WL_START        0               /* nothing done yet */
