@@ -1842,6 +1842,7 @@ bool tv_check_str_or_nr(const typval_T *const tv)
 ///
 /// @return Line number or -1 or 0.
 linenr_T tv_get_lnum(const typval_T *const tv)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   linenr_T lnum = get_tv_number_chk(tv, NULL);
   if (lnum == 0) {  // No valid number, try using same function as line() does.
@@ -1862,6 +1863,7 @@ linenr_T tv_get_lnum(const typval_T *const tv)
 ///
 /// @return Floating-point value of the variable or zero.
 float_T tv_get_float(const typval_T *const tv)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   switch (tv->v_type) {
     case VAR_NUMBER: {
