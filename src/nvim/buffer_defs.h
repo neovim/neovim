@@ -761,6 +761,8 @@ struct file_buffer {
   int b_mapped_ctrl_c;          // modes where CTRL-C is mapped
 
   BufhlInfo b_bufhl_info;       // buffer stored highlights
+
+  kvec_t(BufhlLine *) b_bufhl_move_space;  // temporary space for highlights
 };
 
 /*

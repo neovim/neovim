@@ -359,7 +359,10 @@
 	} \
 	static inline int kb_itr_getp_##name(kbtree_##name##_t *b, key_t * __restrict k, kbitr_##name##_t *itr) \
 	{ \
-		if (b->n_keys == 0) return 0; \
+		if (b->n_keys == 0) { \
+            itr->p = NULL; \
+            return 0; \
+        } \
 		int i, r = 0; \
 		itr->p = itr->stack; \
 		itr->p->x = b->root; \
@@ -420,6 +423,7 @@
 
 #define kbtree_t(name) kbtree_##name##_t
 #define kbitr_t(name) kbitr_##name##_t
+#define kb_init(b) ((b)->n_keys = (b)->n_nodes = 0, (b)->root = 0)
 #define kb_destroy(name, b) __kb_destroy(kbnode_##name##_t, b)
 #define kb_get(name, b, k) kb_get_##name(b, k)
 #define kb_put(name, b, k) kb_put_##name(b, k)

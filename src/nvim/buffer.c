@@ -5304,6 +5304,9 @@ void bufhl_clear_all(buf_T *buf)
 {
   bufhl_clear_line_range(buf, -1, 1, MAXLNUM);
   kb_destroy(bufhl, (&buf->b_bufhl_info));
+  kb_init(&buf->b_bufhl_info);
+  kv_destroy(buf->b_bufhl_move_space);
+  kv_init(buf->b_bufhl_move_space);
 }
 
 /// Adjust a placed highlight for inserted/deleted lines.
@@ -5311,19 +5314,32 @@ void bufhl_mark_adjust(buf_T* buf,
                        linenr_T line1,
                        linenr_T line2,
                        long amount,
-                       long amount_after)
+                       long amount_after,
+                       bool end_temp)
 {
-  // XXX: does not support move
-  // we need to detect this case and
-
   kbitr_t(bufhl) itr;
   BufhlLine *l, t = BUFHLLINE_INIT(line1);
+  if (end_temp && amount < 0) {
+    // Move all items from b_bufhl_move_space to the btree.
+    for (size_t i = 0; i < kv_size(buf->b_bufhl_move_space); i++) {
+      l = kv_A(buf->b_bufhl_move_space, i);
+      l->line += amount;
+      kb_put(bufhl, &buf->b_bufhl_info, l);
+    }
+    kv_size(buf->b_bufhl_move_space) = 0;
+    return;
+  }
+
   if (!kb_itr_get(bufhl, &buf->b_bufhl_info, &t, &itr)) {
     kb_itr_next(bufhl, &buf->b_bufhl_info, &itr);
   }
   for (; kb_itr_valid(&itr); kb_itr_next(bufhl, &buf->b_bufhl_info, &itr)) {
     l = kb_itr_key(&itr);
     if (l->line >= line1 && l->line <= line2) {
+      if (end_temp && amount > 0) {
+        kb_del_itr(bufhl, &buf->b_bufhl_info, &itr);
+        kv_push(buf->b_bufhl_move_space, l);
+      }
       if (amount == MAXLNUM) {
         if (bufhl_clear_line(l, -1, l->line) == kBLSDeleted) {
           kb_del_itr(bufhl, &buf->b_bufhl_info, &itr);
@@ -5371,7 +5387,8 @@ bool bufhl_start_line(buf_T *buf, linenr_T lnum, BufhlLineInfo *info)
 /// @param info The info returned by bufhl_start_line
 /// @param col The column to get the attr for
 /// @return The highilight attr to display at the column
-int bufhl_get_attr(BufhlLineInfo *info, colnr_T col) {
+int bufhl_get_attr(BufhlLineInfo *info, colnr_T col)
+{
   if (col <= info->valid_to) {
     return info->current;
   }
