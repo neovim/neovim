@@ -5841,7 +5841,7 @@ static void float_op_wrapper(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   float_T (*function)(float_T) = (float_T (*)(float_T))fptr;
 
   rettv->v_type = VAR_FLOAT;
-  if (tv_get_float(argvars, &f)) {
+  if (tv_get_float_chk(argvars, &f)) {
     rettv->vval.v_float = function(f);
   } else {
     rettv->vval.v_float = 0.0;
@@ -5951,7 +5951,7 @@ static void f_append(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     u_sync(TRUE);
   }
 
-  lnum = get_tv_lnum(argvars);
+  lnum = tv_get_lnum(argvars);
   if (lnum >= 0
       && lnum <= curbuf->b_ml.ml_line_count
       && u_save(lnum, lnum + 1) == OK) {
@@ -6267,7 +6267,7 @@ static void f_atan2(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   float_T fy;
 
   rettv->v_type = VAR_FLOAT;
-  if (tv_get_float(argvars, &fx) && tv_get_float(&argvars[1], &fy)) {
+  if (tv_get_float_chk(argvars, &fx) && tv_get_float_chk(&argvars[1], &fy)) {
     rettv->vval.v_float = atan2(fx, fy);
   } else {
     rettv->vval.v_float = 0.0;
@@ -6635,7 +6635,7 @@ static void f_cindent(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   linenr_T lnum;
 
   pos = curwin->w_cursor;
-  lnum = get_tv_lnum(argvars);
+  lnum = tv_get_lnum(argvars);
   if (lnum >= 1 && lnum <= curbuf->b_ml.ml_line_count) {
     curwin->w_cursor.lnum = lnum;
     rettv->vval.v_number = get_c_indent();
@@ -6914,7 +6914,7 @@ static void f_cursor(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       set_curswant = false;
     }
   } else {
-    line = get_tv_lnum(argvars);
+    line = tv_get_lnum(argvars);
     col = get_tv_number_chk(&argvars[1], NULL);
     if (argvars[2].v_type != VAR_UNKNOWN) {
       coladd = get_tv_number_chk(&argvars[2], NULL);
@@ -7114,7 +7114,7 @@ static void f_did_filetype(typval_T *argvars, typval_T *rettv, FunPtr fptr)
  */
 static void f_diff_filler(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  rettv->vval.v_number = diff_check_fill(curwin, get_tv_lnum(argvars));
+  rettv->vval.v_number = diff_check_fill(curwin, tv_get_lnum(argvars));
 }
 
 /*
@@ -7122,7 +7122,7 @@ static void f_diff_filler(typval_T *argvars, typval_T *rettv, FunPtr fptr)
  */
 static void f_diff_hlID(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  linenr_T lnum = get_tv_lnum(argvars);
+  linenr_T lnum = tv_get_lnum(argvars);
   static linenr_T prev_lnum = 0;
   static int changedtick = 0;
   static int fnum = 0;
@@ -7793,7 +7793,7 @@ static void f_float2nr(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   float_T f;
 
-  if (tv_get_float(argvars, &f)) {
+  if (tv_get_float_chk(argvars, &f)) {
     if (f < VARNUMBER_MIN) {
       rettv->vval.v_number = VARNUMBER_MIN;
     } else if (f > VARNUMBER_MAX) {
@@ -7813,7 +7813,7 @@ static void f_fmod(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   float_T fy;
 
   rettv->v_type = VAR_FLOAT;
-  if (tv_get_float(argvars, &fx) && tv_get_float(&argvars[1], &fy)) {
+  if (tv_get_float_chk(argvars, &fx) && tv_get_float_chk(&argvars[1], &fy)) {
     rettv->vval.v_float = fmod(fx, fy);
   } else {
     rettv->vval.v_float = 0.0;
@@ -7865,11 +7865,10 @@ static void f_fnamemodify(typval_T *argvars, typval_T *rettv, FunPtr fptr)
  */
 static void foldclosed_both(typval_T *argvars, typval_T *rettv, int end)
 {
-  linenr_T lnum;
-  linenr_T first, last;
-
-  lnum = get_tv_lnum(argvars);
+  const linenr_T lnum = tv_get_lnum(argvars);
   if (lnum >= 1 && lnum <= curbuf->b_ml.ml_line_count) {
+    linenr_T first;
+    linenr_T last;
     if (hasFoldingWin(curwin, lnum, &first, &last, FALSE, NULL)) {
       if (end)
         rettv->vval.v_number = (varnumber_T)last;
@@ -7902,11 +7901,10 @@ static void f_foldclosedend(typval_T *argvars, typval_T *rettv, FunPtr fptr)
  */
 static void f_foldlevel(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  linenr_T lnum;
-
-  lnum = get_tv_lnum(argvars);
-  if (lnum >= 1 && lnum <= curbuf->b_ml.ml_line_count)
+  const linenr_T lnum = tv_get_lnum(argvars);
+  if (lnum >= 1 && lnum <= curbuf->b_ml.ml_line_count) {
     rettv->vval.v_number = foldLevel(lnum);
+  }
 }
 
 /*
@@ -7967,7 +7965,6 @@ static void f_foldtext(typval_T *argvars, typval_T *rettv, FunPtr fptr)
  */
 static void f_foldtextresult(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  linenr_T lnum;
   char_u      *text;
   char_u buf[51];
   foldinfo_T foldinfo;
@@ -7975,10 +7972,11 @@ static void f_foldtextresult(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   rettv->v_type = VAR_STRING;
   rettv->vval.v_string = NULL;
-  lnum = get_tv_lnum(argvars);
-  /* treat illegal types and illegal string values for {lnum} the same */
-  if (lnum < 0)
+  linenr_T lnum = tv_get_lnum(argvars);
+  // Treat illegal types and illegal string values for {lnum} the same.
+  if (lnum < 0) {
     lnum = 0;
+  }
   fold_count = foldedCount(curwin, lnum, &foldinfo);
   if (fold_count > 0) {
     text = get_foldtext(curwin, lnum, lnum + fold_count - 1,
@@ -8698,17 +8696,16 @@ static void f_getftype(typval_T *argvars, typval_T *rettv, FunPtr fptr)
  */
 static void f_getline(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  linenr_T lnum;
   linenr_T end;
-  int retlist;
+  bool retlist;
 
-  lnum = get_tv_lnum(argvars);
+  const linenr_T lnum = tv_get_lnum(argvars);
   if (argvars[1].v_type == VAR_UNKNOWN) {
     end = 0;
-    retlist = FALSE;
+    retlist = false;
   } else {
-    end = get_tv_lnum(&argvars[1]);
-    retlist = TRUE;
+    end = tv_get_lnum(&argvars[1]);
+    retlist = true;
   }
 
   get_buffer_lines(curbuf, lnum, end, retlist, rettv);
@@ -9686,13 +9683,12 @@ static void f_iconv(typval_T *argvars, typval_T *rettv, FunPtr fptr)
  */
 static void f_indent(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  linenr_T lnum;
-
-  lnum = get_tv_lnum(argvars);
-  if (lnum >= 1 && lnum <= curbuf->b_ml.ml_line_count)
+  const linenr_T lnum = tv_get_lnum(argvars);
+  if (lnum >= 1 && lnum <= curbuf->b_ml.ml_line_count) {
     rettv->vval.v_number = get_indent_lnum(lnum);
-  else
+  } else {
     rettv->vval.v_number = -1;
+  }
 }
 
 /*
@@ -10740,15 +10736,15 @@ static void f_line(typval_T *argvars, typval_T *rettv, FunPtr fptr)
  */
 static void f_line2byte(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  linenr_T lnum;
-
-  lnum = get_tv_lnum(argvars);
-  if (lnum < 1 || lnum > curbuf->b_ml.ml_line_count + 1)
+  const linenr_T lnum = tv_get_lnum(argvars);
+  if (lnum < 1 || lnum > curbuf->b_ml.ml_line_count + 1) {
     rettv->vval.v_number = -1;
-  else
+  } else {
     rettv->vval.v_number = ml_find_line_or_offset(curbuf, lnum, NULL);
-  if (rettv->vval.v_number >= 0)
-    ++rettv->vval.v_number;
+  }
+  if (rettv->vval.v_number >= 0) {
+    rettv->vval.v_number++;
+  }
 }
 
 /*
@@ -10756,17 +10752,15 @@ static void f_line2byte(typval_T *argvars, typval_T *rettv, FunPtr fptr)
  */
 static void f_lispindent(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  pos_T pos;
-  linenr_T lnum;
-
-  pos = curwin->w_cursor;
-  lnum = get_tv_lnum(argvars);
+  const pos_T pos = curwin->w_cursor;
+  const linenr_T lnum = tv_get_lnum(argvars);
   if (lnum >= 1 && lnum <= curbuf->b_ml.ml_line_count) {
     curwin->w_cursor.lnum = lnum;
     rettv->vval.v_number = get_lisp_indent();
     curwin->w_cursor = pos;
-  } else
+  } else {
     rettv->vval.v_number = -1;
+  }
 }
 
 /*
@@ -11477,13 +11471,14 @@ static void f_nextnonblank(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   linenr_T lnum;
 
-  for (lnum = get_tv_lnum(argvars);; ++lnum) {
+  for (lnum = tv_get_lnum(argvars);; lnum++) {
     if (lnum < 0 || lnum > curbuf->b_ml.ml_line_count) {
       lnum = 0;
       break;
     }
-    if (*skipwhite(ml_get(lnum)) != NUL)
+    if (*skipwhite(ml_get(lnum)) != NUL) {
       break;
+    }
   }
   rettv->vval.v_number = lnum;
 }
@@ -11543,7 +11538,7 @@ static void f_pow(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   float_T fy;
 
   rettv->v_type = VAR_FLOAT;
-  if (tv_get_float(argvars, &fx) && tv_get_float(&argvars[1], &fy)) {
+  if (tv_get_float_chk(argvars, &fx) && tv_get_float_chk(&argvars[1], &fy)) {
     rettv->vval.v_float = pow(fx, fy);
   } else {
     rettv->vval.v_float = 0.0;
@@ -11555,14 +11550,14 @@ static void f_pow(typval_T *argvars, typval_T *rettv, FunPtr fptr)
  */
 static void f_prevnonblank(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  linenr_T lnum;
-
-  lnum = get_tv_lnum(argvars);
-  if (lnum < 1 || lnum > curbuf->b_ml.ml_line_count)
+  linenr_T lnum = tv_get_lnum(argvars);
+  if (lnum < 1 || lnum > curbuf->b_ml.ml_line_count) {
     lnum = 0;
-  else
-    while (lnum >= 1 && *skipwhite(ml_get(lnum)) == NUL)
-      --lnum;
+  } else {
+    while (lnum >= 1 && *skipwhite(ml_get(lnum)) == NUL) {
+      lnum--;
+    }
+  }
   rettv->vval.v_number = lnum;
 }
 
@@ -13157,14 +13152,13 @@ static void f_setfperm(typval_T *argvars, typval_T *rettv, FunPtr fptr)
  */
 static void f_setline(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  linenr_T lnum;
   char_u      *line = NULL;
   list_T      *l = NULL;
   listitem_T  *li = NULL;
   long added = 0;
   linenr_T lcount = curbuf->b_ml.ml_line_count;
 
-  lnum = get_tv_lnum(&argvars[0]);
+  linenr_T lnum = tv_get_lnum(&argvars[0]);
   if (argvars[1].v_type == VAR_LIST) {
     l = argvars[1].vval.v_list;
     li = l->lv_first;
@@ -13732,8 +13726,8 @@ static int item_compare(const void *s1, const void *s2, bool keep_zero)
   }
 
   if (sortinfo->item_compare_float) {
-    float_T v1 = get_tv_float(tv1);
-    float_T v2 = get_tv_float(tv2);
+    const float_T v1 = tv_get_float(tv1);
+    const float_T v2 = tv_get_float(tv2);
 
     return v1 == v2 ? 0 : v1 > v2 ? 1 : -1;
   }
@@ -14671,19 +14665,18 @@ static void f_substitute(typval_T *argvars, typval_T *rettv, FunPtr fptr)
  */
 static void f_synID(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  int id = 0;
-  long lnum;
-  long col;
-  int trans;
+  // -1 on type error (both)
+  const linenr_T lnum = tv_get_lnum(argvars);
+  const colnr_T col = (colnr_T)get_tv_number(&argvars[1]) - 1;
+
   bool transerr = false;
+  const int trans = get_tv_number_chk(&argvars[2], &transerr);
 
-  lnum = get_tv_lnum(argvars);                  /* -1 on type error */
-  col = get_tv_number(&argvars[1]) - 1;         /* -1 on type error */
-  trans = get_tv_number_chk(&argvars[2], &transerr);
-
+  int id = 0;
   if (!transerr && lnum >= 1 && lnum <= curbuf->b_ml.ml_line_count
-      && col >= 0 && col < (long)STRLEN(ml_get(lnum)))
-    id = syn_get_id(curwin, lnum, (colnr_T)col, trans, NULL, FALSE);
+      && col >= 0 && (size_t)col < STRLEN(ml_get(lnum))) {
+    id = syn_get_id(curwin, lnum, col, trans, NULL, false);
+  }
 
   rettv->vval.v_number = id;
 }
@@ -14785,8 +14778,6 @@ static void f_synIDtrans(typval_T *argvars, typval_T *rettv, FunPtr fptr)
  */
 static void f_synconcealed(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  long lnum;
-  long col;
   int syntax_flags = 0;
   int cchar;
   int matchid = 0;
@@ -14795,15 +14786,16 @@ static void f_synconcealed(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   rettv->v_type = VAR_LIST;
   rettv->vval.v_list = NULL;
 
-  lnum = get_tv_lnum(argvars);                  /* -1 on type error */
-  col = get_tv_number(&argvars[1]) - 1;         /* -1 on type error */
+  // -1 on type error (both)
+  const linenr_T lnum = tv_get_lnum(argvars);
+  const colnr_T col = (colnr_T)get_tv_number(&argvars[1]) - 1;
 
   memset(str, NUL, sizeof(str));
 
   tv_list_alloc_ret(rettv);
   if (lnum >= 1 && lnum <= curbuf->b_ml.ml_line_count && col >= 0
-      && col <= (long)STRLEN(ml_get(lnum)) && curwin->w_p_cole > 0) {
-    (void)syn_get_id(curwin, lnum, col, FALSE, NULL, FALSE);
+      && (size_t)col <= STRLEN(ml_get(lnum)) && curwin->w_p_cole > 0) {
+    (void)syn_get_id(curwin, lnum, col, false, NULL, false);
     syntax_flags = get_syntax_info(&matchid);
 
     // get the conceal character
@@ -14832,21 +14824,19 @@ static void f_synconcealed(typval_T *argvars, typval_T *rettv, FunPtr fptr)
  */
 static void f_synstack(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  long lnum;
-  long col;
-
   rettv->v_type = VAR_LIST;
   rettv->vval.v_list = NULL;
 
-  lnum = get_tv_lnum(argvars);                  /* -1 on type error */
-  col = get_tv_number(&argvars[1]) - 1;         /* -1 on type error */
+  // -1 on type error (both)
+  const linenr_T lnum = tv_get_lnum(argvars);
+  const colnr_T col = (colnr_T)get_tv_number(&argvars[1]) - 1;
 
   if (lnum >= 1
       && lnum <= curbuf->b_ml.ml_line_count
       && col >= 0
-      && col <= (long)STRLEN(ml_get(lnum))) {
+      && (size_t)col <= STRLEN(ml_get(lnum))) {
     tv_list_alloc_ret(rettv);
-    (void)syn_get_id(curwin, lnum, (colnr_T)col, FALSE, NULL, TRUE);
+    (void)syn_get_id(curwin, lnum, col, false, NULL, true);
 
     int id;
     int i = 0;
@@ -15986,29 +15976,32 @@ static void f_xor(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 }
 
 
-/*
- * Translate a String variable into a position.
- * Returns NULL when there is an error.
- */
-static pos_T *
-var2fpos (
-    typval_T *varp,
-    int dollar_lnum,                /* TRUE when $ is last line */
-    int *fnum              /* set to fnum for '0, 'A, etc. */
-)
+/// Translate a VimL object into a position
+///
+/// Accepts VAR_LIST and VAR_STRING objects. Does not give an error for invalid
+/// type.
+///
+/// @param[in]  tv  Object to translate.
+/// @param[in]  dollar_lnum  True when "$" is last line.
+/// @param[out]  ret_fnum  Set to fnum for marks.
+///
+/// @return Pointer to position or NULL in case of error (e.g. invalid type).
+pos_T *var2fpos(const typval_T *const tv, const int dollar_lnum,
+                int *const ret_fnum)
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   char_u              *name;
   static pos_T pos;
   pos_T               *pp;
 
   /* Argument can be [lnum, col, coladd]. */
-  if (varp->v_type == VAR_LIST) {
+  if (tv->v_type == VAR_LIST) {
     list_T          *l;
     int len;
     bool error = false;
     listitem_T *li;
 
-    l = varp->vval.v_list;
+    l = tv->vval.v_list;
     if (l == NULL)
       return NULL;
 
@@ -16043,7 +16036,7 @@ var2fpos (
     return &pos;
   }
 
-  name = get_tv_string_chk(varp);
+  name = get_tv_string_chk(tv);
   if (name == NULL)
     return NULL;
   if (name[0] == '.')                           /* cursor */
@@ -16054,7 +16047,7 @@ var2fpos (
     return &curwin->w_cursor;
   }
   if (name[0] == '\'') {                        /* mark */
-    pp = getmark_buf_fnum(curbuf, name[1], FALSE, fnum);
+    pp = getmark_buf_fnum(curbuf, name[1], FALSE, ret_fnum);
     if (pp == NULL || pp == (pos_T *)-1 || pp->lnum <= 0)
       return NULL;
     return pp;
@@ -16875,53 +16868,6 @@ varnumber_T get_tv_number_chk(const typval_T *const varp, bool *const denote)
     *denote = true;
   }
   return n;
-}
-
-static float_T get_tv_float(typval_T *varp)
-{
-  switch (varp->v_type) {
-    case VAR_NUMBER:
-      return (float_T)(varp->vval.v_number);
-    case VAR_FLOAT:
-      return varp->vval.v_float;
-      break;
-    case VAR_FUNC:
-      EMSG(_("E891: Using a Funcref as a Float"));
-      break;
-    case VAR_STRING:
-      EMSG(_("E892: Using a String as a Float"));
-      break;
-    case VAR_LIST:
-      EMSG(_("E893: Using a List as a Float"));
-      break;
-    case VAR_DICT:
-      EMSG(_("E894: Using a Dictionary as a Float"));
-      break;
-    default:
-      EMSG2(_(e_intern2), "get_tv_float()");
-      break;
-  }
-  return 0;
-}
-
-/*
- * Get the lnum from the first argument.
- * Also accepts ".", "$", etc., but that only works for the current buffer.
- * Returns -1 on error.
- */
-static linenr_T get_tv_lnum(typval_T *argvars)
-{
-  typval_T rettv;
-  linenr_T lnum;
-
-  lnum = get_tv_number_chk(&argvars[0], NULL);
-  if (lnum == 0) {  /* no valid number, try using line() */
-    rettv.v_type = VAR_NUMBER;
-    f_line(argvars, &rettv, NULL);
-    lnum = rettv.vval.v_number;
-    tv_clear(&rettv);
-  }
-  return lnum;
 }
 
 /*
