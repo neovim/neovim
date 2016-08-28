@@ -593,7 +593,7 @@ static varnumber_T tv_nr(typval_T *tvs, int *idxp)
   } else {
     (*idxp)++;
     bool err = false;
-    n = get_tv_number_chk(&tvs[idx], &err);
+    n = tv_get_number_chk(&tvs[idx], &err);
     if (err) {
       n = 0;
     }

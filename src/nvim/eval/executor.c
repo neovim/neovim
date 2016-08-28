@@ -48,8 +48,8 @@ int eexe_mod_op(typval_T *const tv1, const typval_T *const tv2,
           break;
         }
         if (*op == '+' || *op == '-') {
-          /* nr += nr  or  nr -= nr*/
-          varnumber_T n = get_tv_number(tv1);
+          // nr += nr  or  nr -= nr
+          varnumber_T n = tv_get_number(tv1);
           if (tv2->v_type == VAR_FLOAT) {
             float_T f = n;
 
@@ -63,9 +63,9 @@ int eexe_mod_op(typval_T *const tv1, const typval_T *const tv2,
             tv1->vval.v_float = f;
           } else {
             if (*op == '+') {
-              n += get_tv_number(tv2);
+              n += tv_get_number(tv2);
             } else {
-              n -= get_tv_number(tv2);
+              n -= tv_get_number(tv2);
             }
             tv_clear(tv1);
             tv1->v_type = VAR_NUMBER;
@@ -96,7 +96,7 @@ int eexe_mod_op(typval_T *const tv1, const typval_T *const tv2,
         }
         const float_T f = (tv2->v_type == VAR_FLOAT
                            ? tv2->vval.v_float
-                           : get_tv_number(tv2));
+                           : tv_get_number(tv2));
         if (*op == '+') {
           tv1->vval.v_float += f;
         } else {

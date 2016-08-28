@@ -15,6 +15,7 @@
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
 #include "nvim/pos.h"
+#include "nvim/charset.h"
 // TODO(ZyX-I): Move line_breakcheck out of misc1
 #include "nvim/misc1.h"  // For line_breakcheck
 
@@ -697,7 +698,7 @@ varnumber_T tv_list_find_nr(list_T *const l, const int n, bool *ret_error)
     }
     return -1;
   }
-  return get_tv_number_chk(&li->li_tv, ret_error);
+  return tv_get_number_chk(&li->li_tv, ret_error);
 }
 
 /// Get list item l[n - 1] as a string
@@ -1045,7 +1046,7 @@ varnumber_T tv_dict_get_number(dict_T *const d, const char *key)
   if (di == NULL) {
     return 0;
   }
-  return get_tv_number(&di->di_tv);
+  return tv_get_number(&di->di_tv);
 }
 
 /// Get a string item from a dictionary
@@ -1162,7 +1163,7 @@ int tv_dict_add_list(dict_T *const d, const char *const key,
 int tv_dict_add_nr(dict_T *const d, const char *const key,
                    const size_t key_len, const varnumber_T nr)
 {
-  dictitem_T  *const item = tv_dict_item_alloc_len(key, key_len);
+  dictitem_T *const item = tv_dict_item_alloc_len(key, key_len);
 
   item->di_tv.v_lock = VAR_UNLOCKED;
   item->di_tv.v_type = VAR_NUMBER;
@@ -1788,7 +1789,7 @@ bool tv_equal(typval_T *const tv1, typval_T *const tv2, const bool ic,
 
 /// Check that given value is a number or string
 ///
-/// Error messages are compatible with get_tv_number() previously used for the
+/// Error messages are compatible with tv_get_number() previously used for the
 /// same purpose in buf*() functions. Special values are not accepted (previous
 /// behaviour: silently fail to find buffer).
 ///
@@ -1834,6 +1835,89 @@ bool tv_check_str_or_nr(const typval_T *const tv)
 
 //{{{2 Get
 
+/// Get the number value of a VimL object
+///
+/// @note Use tv_get_number_chk() if you need to determine whether there was an
+///       error.
+///
+/// @param[in]  tv  Object to get value from.
+///
+/// @return Number value: vim_str2nr() output for VAR_STRING objects, value
+///         for VAR_NUMBER objects, -1 for other types.
+varnumber_T tv_get_number(const typval_T *const tv)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  bool error = false;
+  return tv_get_number_chk(tv, &error);
+}
+
+/// Get the number value of a VimL object
+///
+/// @param[in]  tv  Object to get value from.
+/// @param[out]  ret_error  If type error occurred then `true` will be written
+///                         to this location. Otherwise it is not touched.
+///
+///                         @note Needs to be initialized to `false` to be
+///                               useful.
+///
+/// @return Number value: vim_str2nr() output for VAR_STRING objects, value
+///         for VAR_NUMBER objects, -1 (ret_error == NULL) or 0 (otherwise) for
+///         other types.
+varnumber_T tv_get_number_chk(const typval_T *const tv, bool *const ret_error)
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ARG(1)
+{
+  switch (tv->v_type) {
+    case VAR_NUMBER: {
+      return tv->vval.v_number;
+    }
+    case VAR_FLOAT: {
+      EMSG(_("E805: Using a Float as a Number"));
+      break;
+    }
+    case VAR_FUNC: {
+      EMSG(_("E703: Using a Funcref as a Number"));
+      break;
+    }
+    case VAR_STRING: {
+      varnumber_T n = 0;
+      if (tv->vval.v_string != NULL) {
+        long nr;
+        vim_str2nr(tv->vval.v_string, NULL, NULL, STR2NR_ALL, &nr, NULL, 0);
+        n = (varnumber_T)nr;
+      }
+      return n;
+    }
+    case VAR_LIST: {
+      EMSG(_("E745: Using a List as a Number"));
+      break;
+    }
+    case VAR_DICT: {
+      EMSG(_("E728: Using a Dictionary as a Number"));
+      break;
+    }
+    case VAR_SPECIAL: {
+      switch (tv->vval.v_special) {
+        case kSpecialVarTrue: {
+          return 1;
+        }
+        case kSpecialVarFalse:
+        case kSpecialVarNull: {
+          return 0;
+        }
+      }
+      break;
+    }
+    case VAR_UNKNOWN: {
+      EMSG2(_(e_intern2), "tv_get_number(UNKNOWN)");
+      break;
+    }
+  }
+  if (ret_error != NULL) {
+    *ret_error = true;
+  }
+  return (ret_error == NULL ? -1 : 0);
+}
+
 /// Get the line number from VimL object
 ///
 /// @param[in]  tv  Object to get value from. Is expected to be a number or
@@ -1844,7 +1928,7 @@ bool tv_check_str_or_nr(const typval_T *const tv)
 linenr_T tv_get_lnum(const typval_T *const tv)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  linenr_T lnum = get_tv_number_chk(tv, NULL);
+  linenr_T lnum = tv_get_number_chk(tv, NULL);
   if (lnum == 0) {  // No valid number, try using same function as line() does.
     int fnum;
     pos_T *const fp = var2fpos(tv, true, &fnum);
@@ -1893,7 +1977,7 @@ float_T tv_get_float(const typval_T *const tv)
       break;
     }
     case VAR_UNKNOWN: {
-      EMSG2(_(e_intern2), "get_tv_float()");
+      EMSG2(_(e_intern2), "get_tv_float(UNKNOWN)");
       break;
     }
   }

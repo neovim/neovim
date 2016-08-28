@@ -5505,7 +5505,7 @@ int match_add(win_T *wp, const char *const grp, const char *const pat,
         if (subli == NULL) {
           goto fail;
         }
-        lnum = get_tv_number_chk(&subli->li_tv, &error);
+        lnum = tv_get_number_chk(&subli->li_tv, &error);
         if (error) {
           goto fail;
         }
@@ -5516,13 +5516,13 @@ int match_add(win_T *wp, const char *const grp, const char *const pat,
         m->pos.pos[i].lnum = lnum;
         subli = subli->li_next;
         if (subli != NULL) {
-          col = get_tv_number_chk(&subli->li_tv, &error);
+          col = tv_get_number_chk(&subli->li_tv, &error);
           if (error) {
             goto fail;
           }
           subli = subli->li_next;
           if (subli != NULL) {
-            len = get_tv_number_chk(&subli->li_tv, &error);
+            len = tv_get_number_chk(&subli->li_tv, &error);
             if (error) {
               goto fail;
             }
@@ -5722,14 +5722,14 @@ int win_getid(typval_T *argvars)
   if (argvars[0].v_type == VAR_UNKNOWN) {
     return curwin->handle;
   }
-  int winnr = get_tv_number(&argvars[0]);
+  int winnr = tv_get_number(&argvars[0]);
   win_T *wp;
   if (winnr > 0) {
     if (argvars[1].v_type == VAR_UNKNOWN) {
       wp = firstwin;
     } else {
       tabpage_T *tp;
-      int tabnr = get_tv_number(&argvars[1]);
+      int tabnr = tv_get_number(&argvars[1]);
       for (tp = first_tabpage; tp != NULL; tp = tp->tp_next) {
         if (--tabnr == 0) {
           break;
@@ -5751,7 +5751,7 @@ int win_getid(typval_T *argvars)
 
 int win_gotoid(typval_T *argvars)
 {
-  int id = get_tv_number(&argvars[0]);
+  int id = tv_get_number(&argvars[0]);
 
   FOR_ALL_TAB_WINDOWS(tp, wp) {
     if (wp->handle == id) {
@@ -5786,7 +5786,7 @@ void win_id2tabwin(typval_T *argvars, list_T *list)
 {
   int winnr = 1;
   int tabnr = 1;
-  int id = get_tv_number(&argvars[0]);
+  handle_T id = (handle_T)tv_get_number(&argvars[0]);
 
   win_get_tabwin(id, &tabnr, &winnr);
   tv_list_append_number(list, tabnr);
@@ -5797,7 +5797,7 @@ int win_id2win(typval_T *argvars)
 {
   win_T   *wp;
   int nr = 1;
-  int id = get_tv_number(&argvars[0]);
+  int id = tv_get_number(&argvars[0]);
 
   for (wp = firstwin; wp != NULL; wp = wp->w_next) {
     if (wp->handle == id) {
@@ -5810,7 +5810,7 @@ int win_id2win(typval_T *argvars)
 
 void win_findbuf(typval_T *argvars, list_T *list)
 {
-  int bufnr = get_tv_number(&argvars[0]);
+  int bufnr = tv_get_number(&argvars[0]);
 
   for (tabpage_T *tp = first_tabpage; tp != NULL; tp = tp->tp_next) {
     for (win_T *wp = tp == curtab ? firstwin : tp->tp_firstwin;
