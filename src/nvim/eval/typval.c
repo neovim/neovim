@@ -17,6 +17,7 @@
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
 #include "nvim/pos.h"
+#include "nvim/charset.h"
 // TODO(ZyX-I): Move line_breakcheck out of misc1
 #include "nvim/misc1.h"  // For line_breakcheck
 
@@ -725,7 +726,7 @@ varnumber_T tv_list_find_nr(list_T *const l, const int n, bool *ret_error)
     }
     return -1;
   }
-  return get_tv_number_chk(&li->li_tv, ret_error);
+  return tv_get_number_chk(&li->li_tv, ret_error);
 }
 
 /// Get list item l[n - 1] as a string
@@ -1087,7 +1088,7 @@ varnumber_T tv_dict_get_number(dict_T *const d, const char *const key)
   if (di == NULL) {
     return 0;
   }
-  return get_tv_number(&di->di_tv);
+  return tv_get_number(&di->di_tv);
 }
 
 /// Get a string item from a dictionary
@@ -1971,7 +1972,7 @@ bool tv_equal(typval_T *const tv1, typval_T *const tv2, const bool ic,
 
 /// Check that given value is a number or string
 ///
-/// Error messages are compatible with get_tv_number() previously used for the
+/// Error messages are compatible with tv_get_number() previously used for the
 /// same purpose in buf*() functions. Special values are not accepted (previous
 /// behaviour: silently fail to find buffer).
 ///
@@ -2016,7 +2017,126 @@ bool tv_check_str_or_nr(const typval_T *const tv)
   return false;
 }
 
+#define FUNC_ERROR "E703: Using a Funcref as a Number"
+
+static const char *const num_errors[] = {
+  [VAR_PARTIAL]=N_(FUNC_ERROR),
+  [VAR_FUNC]=N_(FUNC_ERROR),
+  [VAR_LIST]=N_("E745: Using a List as a Number"),
+  [VAR_DICT]=N_("E728: Using a Dictionary as a Number"),
+  [VAR_FLOAT]=N_("E805: Using a Float as a Number"),
+  [VAR_UNKNOWN]=N_("E685: using an invalid value as a Number"),
+};
+
+#undef FUNC_ERROR
+
+/// Check that given value is a number or can be converted to it
+///
+/// Error messages are compatible with tv_get_number() previously used for
+/// the same purpose.
+///
+/// @param[in]  tv  Value to check.
+///
+/// @return true if everything is OK, false otherwise.
+bool tv_check_num(const typval_T *const tv)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  switch (tv->v_type) {
+    case VAR_NUMBER:
+    case VAR_SPECIAL:
+    case VAR_STRING: {
+      return true;
+    }
+    case VAR_FUNC:
+    case VAR_PARTIAL:
+    case VAR_LIST:
+    case VAR_DICT:
+    case VAR_FLOAT:
+    case VAR_UNKNOWN: {
+      EMSG(_(num_errors[tv->v_type]));
+      return false;
+    }
+  }
+  assert(false);
+  return false;
+}
+
 //{{{2 Get
+
+/// Get the number value of a VimL object
+///
+/// @note Use tv_get_number_chk() if you need to determine whether there was an
+///       error.
+///
+/// @param[in]  tv  Object to get value from.
+///
+/// @return Number value: vim_str2nr() output for VAR_STRING objects, value
+///         for VAR_NUMBER objects, -1 for other types.
+varnumber_T tv_get_number(const typval_T *const tv)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  bool error = false;
+  return tv_get_number_chk(tv, &error);
+}
+
+/// Get the number value of a VimL object
+///
+/// @param[in]  tv  Object to get value from.
+/// @param[out]  ret_error  If type error occurred then `true` will be written
+///                         to this location. Otherwise it is not touched.
+///
+///                         @note Needs to be initialized to `false` to be
+///                               useful.
+///
+/// @return Number value: vim_str2nr() output for VAR_STRING objects, value
+///         for VAR_NUMBER objects, -1 (ret_error == NULL) or 0 (otherwise) for
+///         other types.
+varnumber_T tv_get_number_chk(const typval_T *const tv, bool *const ret_error)
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ARG(1)
+{
+  switch (tv->v_type) {
+    case VAR_FUNC:
+    case VAR_PARTIAL:
+    case VAR_LIST:
+    case VAR_DICT:
+    case VAR_FLOAT: {
+      EMSG(_(num_errors[tv->v_type]));
+      break;
+    }
+    case VAR_NUMBER: {
+      return tv->vval.v_number;
+    }
+    case VAR_STRING: {
+      varnumber_T n = 0;
+      if (tv->vval.v_string != NULL) {
+        long nr;
+        vim_str2nr(tv->vval.v_string, NULL, NULL, STR2NR_ALL, &nr, NULL, 0);
+        n = (varnumber_T)nr;
+      }
+      return n;
+    }
+    case VAR_SPECIAL: {
+      switch (tv->vval.v_special) {
+        case kSpecialVarTrue: {
+          return 1;
+        }
+        case kSpecialVarFalse:
+        case kSpecialVarNull: {
+          return 0;
+        }
+      }
+      break;
+    }
+    case VAR_UNKNOWN: {
+      EMSG2(_(e_intern2), "tv_get_number(UNKNOWN)");
+      break;
+    }
+  }
+  if (ret_error != NULL) {
+    *ret_error = true;
+  }
+  return (ret_error == NULL ? -1 : 0);
+}
 
 /// Get the line number from VimL object
 ///
@@ -2028,7 +2148,7 @@ bool tv_check_str_or_nr(const typval_T *const tv)
 linenr_T tv_get_lnum(const typval_T *const tv)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  linenr_T lnum = get_tv_number_chk(tv, NULL);
+  linenr_T lnum = tv_get_number_chk(tv, NULL);
   if (lnum == 0) {  // No valid number, try using same function as line() does.
     int fnum;
     pos_T *const fp = var2fpos(tv, true, &fnum);
@@ -2078,7 +2198,7 @@ float_T tv_get_float(const typval_T *const tv)
       break;
     }
     case VAR_UNKNOWN: {
-      EMSG2(_(e_intern2), "get_tv_float()");
+      EMSG2(_(e_intern2), "get_tv_float(UNKNOWN)");
       break;
     }
   }
