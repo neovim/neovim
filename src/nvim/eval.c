@@ -9190,13 +9190,34 @@ static void get_buffer_lines(buf_T *buf, linenr_T start, linenr_T end, int retli
   }
 }
 
+/// Get the line number from VimL object
+///
+/// @note Unlike tv_get_lnum(), this one supports only "$" special string.
+///
+/// @param[in]  tv  Object to get value from. Is expected to be a number or
+///                 a special string "$".
+/// @param[in]  buf  Buffer to take last line number from in case tv is "$". May
+///                  be NULL, in this case "$" results in zero return.
+///
+/// @return Line number or 0 in case of error.
+static linenr_T tv_get_lnum_buf(const typval_T *const tv,
+                                const buf_T *const buf)
+  FUNC_ATTR_NONNULL_ARG(1) FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  if (tv->v_type == VAR_STRING
+      && tv->vval.v_string != NULL
+      && tv->vval.v_string[0] == '$'
+      && buf != NULL) {
+    return buf->b_ml.ml_line_count;
+  }
+  return get_tv_number_chk(tv, NULL);
+}
+
 /*
  * "getbufline()" function
  */
 static void f_getbufline(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  linenr_T lnum;
-  linenr_T end;
   buf_T *buf = NULL;
 
   if (tv_check_str_or_nr(&argvars[0])) {
@@ -9205,12 +9226,10 @@ static void f_getbufline(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     emsg_off--;
   }
 
-  lnum = get_tv_lnum_buf(&argvars[1], buf);
-  if (argvars[2].v_type == VAR_UNKNOWN) {
-    end = lnum;
-  } else {
-    end = get_tv_lnum_buf(&argvars[2], buf);
-  }
+  const linenr_T lnum = tv_get_lnum_buf(&argvars[1], buf);
+  const linenr_T end = (argvars[2].v_type == VAR_UNKNOWN
+                        ? lnum
+                        : tv_get_lnum_buf(&argvars[2], buf));
 
   get_buffer_lines(buf, lnum, end, true, rettv);
 }
@@ -18462,21 +18481,6 @@ varnumber_T get_tv_number_chk(const typval_T *const varp, bool *const denote)
     *denote = true;
   }
   return n;
-}
-
-/*
- * Get the lnum from the first argument.
- * Also accepts "$", then "buf" is used.
- * Returns 0 on error.
- */
-static linenr_T get_tv_lnum_buf(typval_T *argvars, buf_T *buf)
-{
-  if (argvars[0].v_type == VAR_STRING
-      && argvars[0].vval.v_string != NULL
-      && argvars[0].vval.v_string[0] == '$'
-      && buf != NULL)
-    return buf->b_ml.ml_line_count;
-  return get_tv_number_chk(&argvars[0], NULL);
 }
 
 // TODO(ZyX-I): move to eval/typval
