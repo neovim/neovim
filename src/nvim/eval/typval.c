@@ -1742,6 +1742,46 @@ void tv_clear(typval_T *tv)
   }
 }
 
+//{{{3 Free
+
+/// Free allocated VimL object and value stored inside
+///
+/// @param  tv  Object to free.
+void tv_free(typval_T *tv)
+{
+  if (tv != NULL) {
+    switch (tv->v_type) {
+      case VAR_PARTIAL: {
+        partial_unref(tv->vval.v_partial);
+        break;
+      }
+      case VAR_FUNC: {
+        func_unref(tv->vval.v_string);
+        // FALLTHROUGH
+      }
+      case VAR_STRING: {
+        xfree(tv->vval.v_string);
+        break;
+      }
+      case VAR_LIST: {
+        tv_list_unref(tv->vval.v_list);
+        break;
+      }
+      case VAR_DICT: {
+        tv_dict_unref(tv->vval.v_dict);
+        break;
+      }
+      case VAR_SPECIAL:
+      case VAR_NUMBER:
+      case VAR_FLOAT:
+      case VAR_UNKNOWN: {
+        break;
+      }
+    }
+    xfree(tv);
+  }
+}
+
 //{{{2 Locks
 
 /// Lock or unlock an item

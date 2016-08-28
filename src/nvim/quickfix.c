@@ -4372,7 +4372,6 @@ void ex_cbuffer(exarg_T *eap)
  */
 void ex_cexpr(exarg_T *eap)
 {
-  typval_T *tv;
   qf_info_T *qi = &ql_info;
   const char *au_name = NULL;
 
@@ -4412,11 +4411,11 @@ void ex_cexpr(exarg_T *eap)
 
   /* Evaluate the expression.  When the result is a string or a list we can
    * use it to fill the errorlist. */
-  tv = eval_expr(eap->arg, NULL);
-  if (tv != NULL) {
-    if ((tv->v_type == VAR_STRING && tv->vval.v_string != NULL)
-        || (tv->v_type == VAR_LIST && tv->vval.v_list != NULL)) {
-      if (qf_init_ext(qi, NULL, NULL, tv, p_efm,
+  typval_T tv;
+  if (eval0(eap->arg, &tv, NULL, true) != FAIL) {
+    if ((tv.v_type == VAR_STRING && tv.vval.v_string != NULL)
+        || (tv.v_type == VAR_LIST && tv.vval.v_list != NULL)) {
+      if (qf_init_ext(qi, NULL, NULL, &tv, p_efm,
                       (eap->cmdidx != CMD_caddexpr
                        && eap->cmdidx != CMD_laddexpr),
                       (linenr_T)0, (linenr_T)0, *eap->cmdlinep) > 0) {
@@ -4431,7 +4430,7 @@ void ex_cexpr(exarg_T *eap)
     } else {
       EMSG(_("E777: String or List expected"));
     }
-    free_tv(tv);
+    tv_clear(&tv);
   }
 }
 

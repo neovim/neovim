@@ -182,19 +182,20 @@ Object nvim_eval(String expr, Error *err)
   Object rv = OBJECT_INIT;
   // Evaluate the expression
   try_start();
-  typval_T *expr_result = eval_expr((char_u *)expr.data, NULL);
 
-  if (!expr_result) {
+  typval_T rettv;
+  if (eval0((char_u *)expr.data, &rettv, NULL, true) == FAIL) {
     api_set_error(err, Exception, "Failed to evaluate expression");
   }
 
   if (!try_end(err)) {
     // No errors, convert the result
-    rv = vim_to_object(expr_result);
+    rv = vim_to_object(&rettv);
   }
 
-  // Free the vim object
-  free_tv(expr_result);
+  // Free the Vim object
+  tv_clear(&rettv);
+
   return rv;
 }
 

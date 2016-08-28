@@ -719,13 +719,12 @@ int current_func_returned(void)
  */
 void set_internal_string_var(char_u *name, char_u *value)
 {
-  char_u *val = vim_strsave(value);
-  typval_T *tvp = xcalloc(1, sizeof(typval_T));
+  const typval_T tv = {
+    .v_type = VAR_STRING,
+    .vval.v_string = value,
+  };
 
-  tvp->v_type = VAR_STRING;
-  tvp->vval.v_string = val;
-  set_var((const char *)name, tvp, false);
-  free_tv(tvp);
+  set_var((const char *)name, (typval_T *)&tv, true);
 }
 
 static lval_T   *redir_lval = NULL;
@@ -3264,7 +3263,7 @@ typedef enum {
  * Note: "rettv.v_lock" is not set.
  * Return OK or FAIL.
  */
-static int eval0(char_u *arg, typval_T *rettv, char_u **nextcmd, int evaluate)
+int eval0(char_u *arg, typval_T *rettv, char_u **nextcmd, int evaluate)
 {
   int ret;
   char_u      *p;
@@ -18404,38 +18403,6 @@ void set_selfdict(typval_T *rettv, dict_T *selfdict)
   }
 }
 
-/*
- * Free the memory for a variable type-value.
- */
-void free_tv(typval_T *varp)
-{
-  if (varp != NULL) {
-    switch (varp->v_type) {
-      case VAR_FUNC:
-        func_unref(varp->vval.v_string);
-        // FALLTHROUGH
-      case VAR_STRING:
-        xfree(varp->vval.v_string);
-        break;
-      case VAR_PARTIAL:
-        partial_unref(varp->vval.v_partial);
-        break;
-      case VAR_LIST:
-        tv_list_unref(varp->vval.v_list);
-        break;
-      case VAR_DICT:
-        tv_dict_unref(varp->vval.v_dict);
-        break;
-      case VAR_SPECIAL:
-      case VAR_NUMBER:
-      case VAR_FLOAT:
-      case VAR_UNKNOWN:
-        break;
-    }
-    xfree(varp);
-  }
-}
-
 // TODO(ZyX-I): move to eval/typval
 
 /// Careful: This uses a single, static buffer.  YOU CAN ONLY USE IT ONCE!
@@ -21523,14 +21490,6 @@ int do_return(exarg_T *eap, int reanimate, int is_cmd, void *rettv)
   }
 
   return idx < 0;
-}
-
-/*
- * Free the variable with a pending return value.
- */
-void discard_pending_return(void *rettv)
-{
-  free_tv((typval_T *)rettv);
 }
 
 /*
