@@ -16,6 +16,7 @@
 #include "nvim/hashtab.h"
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
+#include "nvim/pos.h"
 // TODO(ZyX-I): Move line_breakcheck out of misc1
 #include "nvim/misc1.h"  // For line_breakcheck
 
@@ -1730,11 +1731,11 @@ static inline void _nothing_conv_dict_end(typval_T *const tv,
 
 /// Free memory for a variable value and set the value to NULL or 0
 ///
-/// @param[in,out]  varp  Value to free.
-void tv_clear(typval_T *varp)
+/// @param[in,out]  tv  Value to free.
+void tv_clear(typval_T *tv)
 {
-  if (varp != NULL && varp->v_type != VAR_UNKNOWN) {
-    const int evn_ret = encode_vim_to_nothing(varp, varp, "tv_clear argument");
+  if (tv != NULL && tv->v_type != VAR_UNKNOWN) {
+    const int evn_ret = encode_vim_to_nothing(NULL, tv, "tv_clear argument");
     (void)evn_ret;
     assert(evn_ret == OK);
   }
@@ -2017,7 +2018,72 @@ bool tv_check_str_or_nr(const typval_T *const tv)
 
 //{{{2 Get
 
-/// Get the string value of a variable
+/// Get the line number from VimL object
+///
+/// @param[in]  tv  Object to get value from. Is expected to be a number or
+///                 a special string like ".", "$", … (works with current buffer
+///                 only).
+///
+/// @return Line number or -1 or 0.
+linenr_T tv_get_lnum(const typval_T *const tv)
+{
+  linenr_T lnum = get_tv_number_chk(tv, NULL);
+  if (lnum == 0) {  // No valid number, try using same function as line() does.
+    int fnum;
+    pos_T *const fp = var2fpos(tv, true, &fnum);
+    if (fp != NULL) {
+      lnum = fp->lnum;
+    }
+  }
+  return lnum;
+}
+
+/// Get the floating-point value of a VimL object
+///
+/// Raises an error if object is not number or floating-point.
+///
+/// @param[in]  tv  Object to get value of.
+///
+/// @return Floating-point value of the variable or zero.
+float_T tv_get_float(const typval_T *const tv)
+{
+  switch (tv->v_type) {
+    case VAR_NUMBER: {
+      return (float_T)(tv->vval.v_number);
+    }
+    case VAR_FLOAT: {
+      return tv->vval.v_float;
+    }
+    case VAR_PARTIAL:
+    case VAR_FUNC: {
+      EMSG(_("E891: Using a Funcref as a Float"));
+      break;
+    }
+    case VAR_STRING: {
+      EMSG(_("E892: Using a String as a Float"));
+      break;
+    }
+    case VAR_LIST: {
+      EMSG(_("E893: Using a List as a Float"));
+      break;
+    }
+    case VAR_DICT: {
+      EMSG(_("E894: Using a Dictionary as a Float"));
+      break;
+    }
+    case VAR_SPECIAL: {
+      EMSG(_("E907: Using a special value as a Float"));
+      break;
+    }
+    case VAR_UNKNOWN: {
+      EMSG2(_(e_intern2), "get_tv_float()");
+      break;
+    }
+  }
+  return 0;
+}
+
+/// Get the string value of a VimL object
 ///
 /// @warning For number and special values it uses a single, static buffer. It
 ///          may be used only once, next call to get_tv_string may reuse it. Use
@@ -2027,38 +2093,38 @@ bool tv_check_str_or_nr(const typval_T *const tv)
 /// @note get_tv_string_chk() and get_tv_string_buf_chk() are similar, but
 ///       return NULL on error.
 ///
-/// @param[in]  varp  Varible to get value of.
+/// @param[in]  tv  Object to get value of.
 ///
-/// @return Variable value if it is VAR_STRING variable, number converted to
+/// @return Object value if it is VAR_STRING object, number converted to
 ///         a string for VAR_NUMBER, v: variable name for VAR_SPECIAL or empty
 ///         string.
-const char *tv_get_string(const typval_T *const varp)
+const char *tv_get_string(const typval_T *const tv)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET FUNC_ATTR_WARN_UNUSED_RESULT
 {
   static char mybuf[NUMBUFLEN];
-  return tv_get_string_buf((typval_T *)varp, mybuf);
+  return tv_get_string_buf((typval_T *)tv, mybuf);
 }
 
-/// Get the string value of a variable
+/// Get the string value of a VimL object
 ///
 /// @note get_tv_string_chk() and get_tv_string_buf_chk() are similar, but
 ///       return NULL on error.
 ///
-/// @param[in]  varp  Varible to get value of.
+/// @param[in]  tv  Object to get value of.
 /// @param  buf  Buffer used to hold numbers and special variables converted to
 ///              string. When function encounters one of these stringified value
 ///              will be written to buf and buf will be returned.
 ///
 ///              Buffer must have NUMBUFLEN size.
 ///
-/// @return Variable value if it is VAR_STRING variable, number converted to
+/// @return Object value if it is VAR_STRING object, number converted to
 ///         a string for VAR_NUMBER, v: variable name for VAR_SPECIAL or empty
 ///         string.
-const char *tv_get_string_buf(const typval_T *const varp, char *const buf)
+const char *tv_get_string_buf(const typval_T *const tv, char *const buf)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET FUNC_ATTR_WARN_UNUSED_RESULT
 {
   const char *const res = (const char *)get_tv_string_buf_chk(
-      (typval_T *)varp, (char_u *)buf);
+      (typval_T *)tv, (char_u *)buf);
 
   return res != NULL ? res : "";
 }

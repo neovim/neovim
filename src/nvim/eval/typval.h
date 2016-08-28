@@ -14,6 +14,7 @@
 #include "nvim/profile.h"  // for proftime_T
 #include "nvim/pos.h"      // for linenr_T
 #include "nvim/gettext.h"
+#include "nvim/message.h"
 
 /// Type used for VimL VAR_NUMBER values
 typedef int varnumber_T;
@@ -373,7 +374,8 @@ extern bool tv_in_free_unref_items;
       } \
     })
 
-static inline bool tv_get_float(const typval_T *const tv, float_T *const ret_f)
+static inline bool tv_get_float_chk(const typval_T *const tv,
+                                    float_T *const ret_f)
   REAL_FATTR_NONNULL_ALL REAL_FATTR_WARN_UNUSED_RESULT;
 
 // FIXME circular dependency, cannot import message.h.
@@ -381,11 +383,14 @@ bool emsgf(const char *const fmt, ...);
 
 /// Get the float value
 ///
+/// Raises an error if object is not number or floating-point.
+///
 /// @param[in]  tv  VimL object to get value from.
 /// @param[out]  ret_f  Location where resulting float is stored.
 ///
 /// @return true in case of success, false if tv is not a number or float.
-static inline bool tv_get_float(const typval_T *const tv, float_T *const ret_f)
+static inline bool tv_get_float_chk(const typval_T *const tv,
+                                    float_T *const ret_f)
 {
   if (tv->v_type == VAR_FLOAT) {
     *ret_f = tv->vval.v_float;
