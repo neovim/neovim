@@ -167,7 +167,7 @@ endfunction
 function! man#pop_tag() abort
   if !empty(s:tag_stack)
     let tag = remove(s:tag_stack, -1)
-    execute tag['buf'].'b'
+    silent execute tag['buf'].'buffer'
     call cursor(tag['lnum'], tag['col'])
   endif
 endfunction
