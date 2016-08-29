@@ -7,6 +7,7 @@
 #include <stdbool.h>
 
 #include "nvim/vim.h"
+#include "nvim/api/private/helpers.h"
 #include "nvim/ascii.h"
 #include "nvim/popupmnu.h"
 #include "nvim/charset.h"
@@ -21,6 +22,7 @@
 #include "nvim/memory.h"
 #include "nvim/window.h"
 #include "nvim/edit.h"
+#include "nvim/ui.h"
 
 static pumitem_T *pum_array = NULL; // items of displayed pum
 static int pum_size;                // nr of items in "pum_array"
@@ -36,8 +38,10 @@ static int pum_scrollbar;           // TRUE when scrollbar present
 static int pum_row;                 // top row of pum
 static int pum_col;                 // left column of pum
 
-static int pum_do_redraw = FALSE;   // do redraw anyway
+static bool pum_is_visible = false;
 
+static bool pum_external = false;
+static bool pum_wants_external = false;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "popupmnu.c.generated.h"
@@ -53,7 +57,10 @@ static int pum_do_redraw = FALSE;   // do redraw anyway
 /// @param array
 /// @param size
 /// @param selected index of initially selected item, none if out of range
-void pum_display(pumitem_T *array, int size, int selected)
+/// @param array_changed if true, array contains different items since last call
+///                      if false, a new item is selected, but the array
+///                      is the same
+void pum_display(pumitem_T *array, int size, int selected, bool array_changed)
 {
   int w;
   int def_width;
@@ -68,19 +75,54 @@ void pum_display(pumitem_T *array, int size, int selected)
   int above_row = cmdline_row;
   int redo_count = 0;
 
+  if (!pum_is_visible) {
+    // To keep the code simple, we only allow changing the
+    // draw mode when the popup menu is not being displayed
+    pum_external = pum_wants_external;
+  }
+
 redo:
+  // Mark the pum as visible already here,
+  // to avoid that must_redraw is set when 'cursorcolumn' is on.
+  pum_is_visible = true;
+  validate_cursor_col();
+
+  // anchor position: the start of the completed word
+  row = curwin->w_wrow + curwin->w_winrow;
+  if (curwin->w_p_rl) {
+    col = curwin->w_wincol + curwin->w_width - curwin->w_wcol - 1;
+  } else {
+    col = curwin->w_wincol + curwin->w_wcol;
+  }
+
+  if (pum_external) {
+    Array args = ARRAY_DICT_INIT;
+    if (array_changed) {
+      Array arr = ARRAY_DICT_INIT;
+      for (i = 0; i < size; i++) {
+        Array item = ARRAY_DICT_INIT;
+        ADD(item, STRING_OBJ(cstr_to_string((char *)array[i].pum_text)));
+        ADD(item, STRING_OBJ(cstr_to_string((char *)array[i].pum_kind)));
+        ADD(item, STRING_OBJ(cstr_to_string((char *)array[i].pum_extra)));
+        ADD(item, STRING_OBJ(cstr_to_string((char *)array[i].pum_info)));
+        ADD(arr, ARRAY_OBJ(item));
+      }
+      ADD(args, ARRAY_OBJ(arr));
+      ADD(args, INTEGER_OBJ(selected));
+      ADD(args, INTEGER_OBJ(row));
+      ADD(args, INTEGER_OBJ(col));
+      ui_event("popupmenu_show", args);
+    } else {
+      ADD(args, INTEGER_OBJ(selected));
+      ui_event("popupmenu_select", args);
+    }
+    return;
+  }
+
   def_width = PUM_DEF_WIDTH;
   max_width = 0;
   kind_width = 0;
   extra_width = 0;
-
-  // Pretend the pum is already there to avoid that must_redraw is set when
-  // 'cuc' is on.
-  pum_array = (pumitem_T *)1;
-  validate_cursor_col();
-  pum_array = NULL;
-
-  row = curwin->w_wrow + curwin->w_winrow;
 
   if (firstwin->w_p_pvw) {
     top_clear = firstwin->w_height;
@@ -193,13 +235,6 @@ redo:
   }
   pum_base_width = max_width;
   pum_kind_width = kind_width;
-
-  // Calculate column
-  if (curwin->w_p_rl) {
-    col = curwin->w_wincol + curwin->w_width - curwin->w_wcol - 1;
-  } else {
-    col = curwin->w_wincol + curwin->w_wcol;
-  }
 
   // if there are more items than room we need a scrollbar
   if (pum_height < size) {
@@ -641,9 +676,9 @@ static int pum_set_selected(int n, int repeat)
 
             // Update the screen before drawing the popup menu.
             // Enable updating the status lines.
-            pum_do_redraw = TRUE;
+            pum_is_visible = false;
             update_screen(0);
-            pum_do_redraw = FALSE;
+            pum_is_visible = true;
 
             if (!resized && win_valid(curwin_save)) {
               no_u_sync++;
@@ -653,9 +688,9 @@ static int pum_set_selected(int n, int repeat)
 
             // May need to update the screen again when there are
             // autocommands involved.
-            pum_do_redraw = TRUE;
+            pum_is_visible = false;
             update_screen(0);
-            pum_do_redraw = FALSE;
+            pum_is_visible = true;
           }
         }
       }
@@ -672,10 +707,17 @@ static int pum_set_selected(int n, int repeat)
 /// Undisplay the popup menu (later).
 void pum_undisplay(void)
 {
+  pum_is_visible = false;
   pum_array = NULL;
-  redraw_all_later(SOME_VALID);
-  redraw_tabline = TRUE;
-  status_redraw_all();
+
+  if (pum_external) {
+    Array args = ARRAY_DICT_INIT;
+    ui_event("popupmenu_hide", args);
+  } else {
+    redraw_all_later(SOME_VALID);
+    redraw_tabline = true;
+    status_redraw_all();
+  }
 }
 
 /// Clear the popup menu.  Currently only resets the offset to the first
@@ -685,12 +727,16 @@ void pum_clear(void)
   pum_first = 0;
 }
 
-/// Overruled when "pum_do_redraw" is set, used to redraw the status lines.
-///
-/// @return TRUE if the popup menu is displayed.
-int pum_visible(void)
+/// @return true if the popup menu is displayed.
+bool pum_visible(void)
 {
-  return !pum_do_redraw && pum_array != NULL;
+  return pum_is_visible;
+}
+
+/// @return true if the popup menu is displayed and drawn on the grid.
+bool pum_drawn(void)
+{
+  return pum_visible() && !pum_external;
 }
 
 /// Gets the height of the menu.
@@ -700,4 +746,9 @@ int pum_visible(void)
 int pum_get_height(void)
 {
   return pum_height;
+}
+
+void pum_set_external(bool external)
+{
+  pum_wants_external = external;
 }

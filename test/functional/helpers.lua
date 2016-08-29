@@ -306,6 +306,10 @@ local function nvim(method, ...)
   return request('vim_'..method, ...)
 end
 
+local function ui(method, ...)
+  return request('nvim_ui_'..method, ...)
+end
+
 local function nvim_async(method, ...)
   session:notify('vim_'..method, ...)
 end
@@ -432,6 +436,7 @@ end
 
 local funcs = create_callindex(nvim_call)
 local meths = create_callindex(nvim)
+local uimeths = create_callindex(ui)
 local bufmeths = create_callindex(buffer)
 local winmeths = create_callindex(window)
 local tabmeths = create_callindex(tabpage)
@@ -490,6 +495,7 @@ return function(after_each)
     bufmeths = bufmeths,
     winmeths = winmeths,
     tabmeths = tabmeths,
+    uimeths = uimeths,
     curbufmeths = curbufmeths,
     curwinmeths = curwinmeths,
     curtabmeths = curtabmeths,

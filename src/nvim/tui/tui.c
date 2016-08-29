@@ -83,6 +83,7 @@ UI *tui_start(void)
   UI *ui = xcalloc(1, sizeof(UI));
   ui->stop = tui_stop;
   ui->rgb = p_tgc;
+  ui->pum_external = false;
   ui->resize = tui_resize;
   ui->clear = tui_clear;
   ui->eol_clear = tui_eol_clear;
@@ -106,6 +107,7 @@ UI *tui_start(void)
   ui->suspend = tui_suspend;
   ui->set_title = tui_set_title;
   ui->set_icon = tui_set_icon;
+  ui->event = tui_event;
   return ui_bridge_attach(ui, tui_main, tui_scheduler);
 }
 
@@ -647,6 +649,12 @@ static void tui_set_title(UI *ui, char *title)
 }
 
 static void tui_set_icon(UI *ui, char *icon)
+{
+}
+
+// NB: if we start to use this, the ui_bridge must be updated
+// to make a copy for the tui thread
+static void tui_event(UI *ui, char *name, Array args, bool *args_consumed)
 {
 }
 

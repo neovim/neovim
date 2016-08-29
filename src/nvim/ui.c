@@ -27,6 +27,7 @@
 #include "nvim/os/time.h"
 #include "nvim/os/input.h"
 #include "nvim/os/signal.h"
+#include "nvim/popupmnu.h"
 #include "nvim/screen.h"
 #include "nvim/syntax.h"
 #include "nvim/window.h"
@@ -35,6 +36,7 @@
 #else
 # include "nvim/msgpack_rpc/server.h"
 #endif
+#include "nvim/api/private/helpers.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ui.c.generated.h"
@@ -143,6 +145,15 @@ void ui_set_icon(char *icon)
   UI_CALL(flush);
 }
 
+void ui_event(char *name, Array args)
+{
+  bool args_consumed = false;
+  UI_CALL(event, name, args, &args_consumed);
+  if (!args_consumed) {
+    api_free_array(args);
+  }
+}
+
 // May update the shape of the cursor.
 void ui_cursor_shape(void)
 {
@@ -156,15 +167,18 @@ void ui_refresh(void)
   }
 
   int width = INT_MAX, height = INT_MAX;
+  bool pum_external = true;
 
   for (size_t i = 0; i < ui_count; i++) {
     UI *ui = uis[i];
     width = ui->width < width ? ui->width : width;
     height = ui->height < height ? ui->height : height;
+    pum_external &= ui->pum_external;
   }
 
   row = col = 0;
   screen_resize(width, height);
+  pum_set_external(pum_external);
 }
 
 void ui_resize(int new_width, int new_height)
@@ -519,3 +533,4 @@ static void ui_mode_change(void)
   UI_CALL(mode_change, mode);
   conceal_check_cursur_line();
 }
+

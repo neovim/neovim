@@ -8,8 +8,10 @@
 #include "nvim/memory.h"
 #include "nvim/map.h"
 #include "nvim/msgpack_rpc/channel.h"
+#include "nvim/api/ui.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
+#include "nvim/popupmnu.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "api/ui.c.generated.h"
@@ -44,8 +46,8 @@ void remote_ui_disconnect(uint64_t channel_id)
   xfree(ui);
 }
 
-void ui_attach(uint64_t channel_id, Integer width, Integer height,
-               Boolean enable_rgb, Error *err)
+void nvim_ui_attach(uint64_t channel_id, Integer width, Integer height,
+                    Dictionary options, Error *err)
 {
   if (pmap_has(uint64_t)(connected_uis, channel_id)) {
     api_set_error(err, Exception, _("UI already attached for channel"));
@@ -57,14 +59,11 @@ void ui_attach(uint64_t channel_id, Integer width, Integer height,
                   _("Expected width > 0 and height > 0"));
     return;
   }
-  UIData *data = xmalloc(sizeof(UIData));
-  data->channel_id = channel_id;
-  data->buffer = (Array)ARRAY_DICT_INIT;
   UI *ui = xcalloc(1, sizeof(UI));
   ui->width = (int)width;
   ui->height = (int)height;
-  ui->rgb = enable_rgb;
-  ui->data = data;
+  ui->rgb = true;
+  ui->pum_external = false;
   ui->resize = remote_ui_resize;
   ui->clear = remote_ui_clear;
   ui->eol_clear = remote_ui_eol_clear;
@@ -88,37 +87,108 @@ void ui_attach(uint64_t channel_id, Integer width, Integer height,
   ui->suspend = remote_ui_suspend;
   ui->set_title = remote_ui_set_title;
   ui->set_icon = remote_ui_set_icon;
+  ui->event = remote_ui_event;
+
+  for (size_t i = 0; i < options.size; i++) {
+    ui_set_option(ui, options.items[i].key, options.items[i].value, err);
+    if (err->set) {
+      xfree(ui);
+      return;
+    }
+  }
+
+  UIData *data = xmalloc(sizeof(UIData));
+  data->channel_id = channel_id;
+  data->buffer = (Array)ARRAY_DICT_INIT;
+  ui->data = data;
+
   pmap_put(uint64_t)(connected_uis, channel_id, ui);
   ui_attach_impl(ui);
-  return;
 }
 
-void ui_detach(uint64_t channel_id, Error *err)
+/// @deprecated
+void ui_attach(uint64_t channel_id, Integer width, Integer height,
+               Boolean enable_rgb, Error *err)
+{
+  Dictionary opts = ARRAY_DICT_INIT;
+  PUT(opts, "rgb", BOOLEAN_OBJ(enable_rgb));
+  nvim_ui_attach(channel_id, width, height, opts, err);
+  api_free_dictionary(opts);
+}
+
+void nvim_ui_detach(uint64_t channel_id, Error *err)
 {
   if (!pmap_has(uint64_t)(connected_uis, channel_id)) {
     api_set_error(err, Exception, _("UI is not attached for channel"));
+    return;
   }
   remote_ui_disconnect(channel_id);
 }
 
-Object ui_try_resize(uint64_t channel_id, Integer width,
-                     Integer height, Error *err)
+/// @deprecated
+void ui_detach(uint64_t channel_id, Error *err)
+{
+  nvim_ui_detach(channel_id, err);
+}
+
+void nvim_ui_try_resize(uint64_t channel_id, Integer width,
+                        Integer height, Error *err)
 {
   if (!pmap_has(uint64_t)(connected_uis, channel_id)) {
     api_set_error(err, Exception, _("UI is not attached for channel"));
+    return;
   }
 
   if (width <= 0 || height <= 0) {
     api_set_error(err, Validation,
                   _("Expected width > 0 and height > 0"));
-    return NIL;
+    return;
   }
 
   UI *ui = pmap_get(uint64_t)(connected_uis, channel_id);
   ui->width = (int)width;
   ui->height = (int)height;
   ui_refresh();
-  return NIL;
+}
+
+/// @deprecated
+void ui_try_resize(uint64_t channel_id, Integer width,
+                   Integer height, Error *err)
+{
+  nvim_ui_try_resize(channel_id, width, height, err);
+}
+
+void nvim_ui_set_option(uint64_t channel_id, String name,
+                        Object value, Error *error) {
+  if (!pmap_has(uint64_t)(connected_uis, channel_id)) {
+    api_set_error(error, Exception, _("UI is not attached for channel"));
+    return;
+  }
+  UI *ui = pmap_get(uint64_t)(connected_uis, channel_id);
+
+  ui_set_option(ui, name, value, error);
+  if (!error->set) {
+    ui_refresh();
+  }
+}
+
+static void ui_set_option(UI *ui, String name, Object value, Error *error) {
+  if (strcmp(name.data, "rgb") == 0) {
+    if (value.type != kObjectTypeBoolean) {
+      api_set_error(error, Validation, _("rgb must be a Boolean"));
+      return;
+    }
+    ui->rgb = value.data.boolean;
+  } else if (strcmp(name.data, "popupmenu_external") == 0) {
+    if (value.type != kObjectTypeBoolean) {
+      api_set_error(error, Validation,
+                    _("popupmenu_external must be a Boolean"));
+      return;
+    }
+    ui->pum_external = value.data.boolean;
+  } else {
+    api_set_error(error, Validation, _("No such ui option"));
+  }
 }
 
 static void push_call(UI *ui, char *name, Array args)
@@ -340,4 +410,20 @@ static void remote_ui_set_icon(UI *ui, char *icon)
   Array args = ARRAY_DICT_INIT;
   ADD(args, STRING_OBJ(cstr_to_string(icon)));
   push_call(ui, "set_icon", args);
+}
+
+static void remote_ui_event(UI *ui, char *name, Array args, bool *args_consumed)
+{
+  Array my_args = ARRAY_DICT_INIT;
+  // Objects are currently single-reference
+  // make a copy, but only if necessary
+  if (*args_consumed) {
+    for (size_t i = 0; i < args.size; i++) {
+      ADD(my_args, copy_object(args.items[i]));
+    }
+  } else {
+    my_args = args;
+    *args_consumed = true;
+  }
+  push_call(ui, name, my_args);
 }

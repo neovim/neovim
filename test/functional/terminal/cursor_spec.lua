@@ -135,7 +135,7 @@ describe('cursor with customized highlighting', function()
       [2] = {foreground = 55, background = 56},
       [3] = {bold = true},
     })
-    screen:attach(false)
+    screen:attach({rgb=false})
     execute('call termopen(["'..nvim_dir..'/tty-test"]) | startinsert')
   end)
 

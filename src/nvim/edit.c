@@ -2472,6 +2472,7 @@ void ins_compl_show_pum(void)
   int cur = -1;
   colnr_T col;
   int lead_len = 0;
+  bool array_changed = false;
 
   if (!pum_wanted() || !pum_enough_matches())
     return;
@@ -2483,7 +2484,8 @@ void ins_compl_show_pum(void)
   update_screen(0);
 
   if (compl_match_array == NULL) {
-    /* Need to build the popup menu list. */
+    array_changed = true;
+    // Need to build the popup menu list.
     compl_match_arraysize = 0;
     compl = compl_first_match;
     /*
@@ -2586,7 +2588,7 @@ void ins_compl_show_pum(void)
   // Use the cursor to get all wrapping and other settings right.
   col = curwin->w_cursor.col;
   curwin->w_cursor.col = compl_col;
-  pum_display(compl_match_array, compl_match_arraysize, cur);
+  pum_display(compl_match_array, compl_match_arraysize, cur, array_changed);
   curwin->w_cursor.col = col;
 }
 
