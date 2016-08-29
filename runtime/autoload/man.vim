@@ -179,7 +179,7 @@ function! s:extract_sect_and_name_path(path) abort
     let tail = fnamemodify(tail, ':r')
   endif
   let sect = matchstr(tail, '\.\zs[^.]\+$')
-  let name = matchstr(tail, '^.\+\ze\.[^.]\+$')
+  let name = matchstr(tail, '^.\+\ze\.')
   return [sect, name]
 endfunction
 
@@ -261,7 +261,7 @@ function! s:format_candidate(path, sect) abort
   let [sect, name] = s:extract_sect_and_name_path(a:path)
   if sect ==# a:sect
     return name
-  elseif sect =~# a:sect.'[^.]\+$'
+  elseif sect =~# a:sect.'.\+$'
     " We include the section if the user provided section is a prefix
     " of the actual section.
     return name.'('.sect.')'
