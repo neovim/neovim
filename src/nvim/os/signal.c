@@ -2,6 +2,9 @@
 #include <stdbool.h>
 
 #include <uv.h>
+#ifndef WIN32
+# include <signal.h>  // for sigset_t
+#endif
 
 #include "nvim/ascii.h"
 #include "nvim/vim.h"
@@ -29,6 +32,9 @@ static bool rejecting_deadly;
 
 void signal_init(void)
 {
+  // Ensure that SIGCHLD is unblocked, else libuv (epoll_wait) may hang.
+  signal_unblock_SIGCHLD();
+
   signal_watcher_init(&main_loop, &spipe, NULL);
   signal_watcher_init(&main_loop, &shup, NULL);
   signal_watcher_init(&main_loop, &squit, NULL);
@@ -150,4 +156,28 @@ static void on_signal(SignalWatcher *handle, int signum, void *data)
       fprintf(stderr, "Invalid signal %d", signum);
       break;
   }
+}
+
+static void signal_unblock_SIGCHLD(void)
+{
+#ifndef WIN32
+  sigset_t mask;
+  sigemptyset(&mask);
+
+  // Work around broken macOS headers. #5243
+# if defined(__APPLE__) && !defined(__clang__) && !defined(__INTEL_COMPILER) \
+    && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6))
+#  pragma GCC diagnostic push
+#  pragma GCC diagnostic ignored "-Wsign-conversion"
+# endif
+
+  sigaddset(&mask, SIGCHLD);
+
+# if defined(__APPLE__) && !defined(__clang__) && !defined(__INTEL_COMPILER) \
+    && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6))
+#  pragma GCC diagnostic pop
+# endif
+
+  pthread_sigmask(SIG_UNBLOCK, &mask, NULL);
+#endif
 }
