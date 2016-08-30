@@ -14,11 +14,12 @@ describe('Screen rendering', function()
     screen:set_default_attr_ids( {
       [1] = {foreground = Screen.colors.Brown},
       [2] = {bold = true, foreground = Screen.colors.Brown},
-      [3] = {foreground = Screen.colors.Message},
+      [3] = {},
+      [4] = {background = Screen.colors.LightGrey},
+      [5] = {background = Screen.colors.LightGrey, bold = true, foreground = Screen.colors.Blue},
+      [6] = {bold = true, foreground = Screen.colors.Blue},
+      [7] = {bold = true}
     })
-  end)
-
-  it('works with number and relative line number', function()
     insert("line 1\n")
     insert("line 2\n")
     insert("line 3\n")
@@ -26,6 +27,9 @@ describe('Screen rendering', function()
     insert("line 5\n")
     insert("line 6")
     feed("gg")
+  end)
+
+  it('works with number and relative line number', function()
     execute('set number')
     screen:expect([[
       {1:  1 }{3:^line 1                              }|
@@ -63,7 +67,79 @@ describe('Screen rendering', function()
     ]])
   end)
 
-  it('works with line-wise visual-mode')
+  it('works with line-wise visual-mode', function()
+    execute('set list listchars=')
+    execute('set lcs+=conceal:.,eol:¬')
+    execute('set lcs+=tab:\\ ,nbsp:―,trail:·')
+    execute('set lcs+=precedes:,extends:')
+
+    screen:expect([[
+      {3:^line 1}{6:¬}{3:                                 }|
+      {3:line 2}{6:¬}{3:                                 }|
+      {3:line 3}{6:¬}{3:                                 }|
+      {3:line 4}{6:¬}{3:                                 }|
+      {3:line 5}{6:¬}{3:                                 }|
+      {3:line 6}{6:¬}{3:                                 }|
+      {3::set lcs+=precedes:,extends:          }|
+    ]])
+
+    feed('V')
+    screen:expect([[
+      {3:^l}{4:ine 1}{5:¬}{3:                                 }|
+      {3:line 2}{6:¬}{3:                                 }|
+      {3:line 3}{6:¬}{3:                                 }|
+      {3:line 4}{6:¬}{3:                                 }|
+      {3:line 5}{6:¬}{3:                                 }|
+      {3:line 6}{6:¬}{3:                                 }|
+      {7:-- VISUAL LINE --}{3:                       }|
+    ]])
+
+    feed('dd<esc>O<esc>45a=<esc>')
+    screen:expect([[
+      {3:========================================}|
+      {3:====^=}{6:¬}{3:                                  }|
+      {3:line 2}{6:¬}{3:                                 }|
+      {3:line 3}{6:¬}{3:                                 }|
+      {3:line 4}{6:¬}{3:                                 }|
+      {3:line 5}{6:¬}{3:                                 }|
+      {3:                                        }|
+    ]])
+
+    execute('set nowrap')
+    feed('ggzl')
+
+    screen:expect([[
+      {6:^}{3:======================================}{6:}|
+      {6:}{3:ne 2}{6:¬}{3:                                  }|
+      {6:}{3:ne 3}{6:¬}{3:                                  }|
+      {6:}{3:ne 4}{6:¬}{3:                                  }|
+      {6:}{3:ne 5}{6:¬}{3:                                  }|
+      {6:}{3:ne 6}{6:¬}{3:                                  }|
+      {3::set nowrap                             }|
+    ]])
+
+    feed('10zl')
+    screen:expect([[
+      {6:^}{3:=================================}{6:¬}{3:     }|
+      {6:}{3:                                       }|
+      {6:}{3:                                       }|
+      {6:}{3:                                       }|
+      {6:}{3:                                       }|
+      {6:}{3:                                       }|
+      {3::set nowrap                             }|
+    ]])
+
+    feed('V')
+    screen:expect([[
+      {6:^}{4:=================================}{5:¬}{3:     }|
+      {6:}{3:                                       }|
+      {6:}{3:                                       }|
+      {6:}{3:                                       }|
+      {6:}{3:                                       }|
+      {6:}{3:                                       }|
+      {7:-- VISUAL LINE --}{3:                       }|
+    ]])
+  end)
 
   it('works with block-wise visual-mode')
 
