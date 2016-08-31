@@ -3,8 +3,6 @@ local Screen = require('test.functional.ui.screen')
 local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
 local execute, request, neq = helpers.execute, helpers.request, helpers.neq
 
-if helpers.pending_win32(pending) then return end
-
 describe('Buffer highlighting', function()
   local screen
   local curbuf
