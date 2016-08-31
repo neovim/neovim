@@ -104,7 +104,10 @@ describe('Buffer highlighting', function()
         combining highlights
         from different sources]])
 
-      execute("hi ImportantWord gui=bold cterm=bold")
+      feed(":hi ImportantWord gui=bold cterm=bold")
+      screen:snapshot_util()
+      feed("<cr>")
+      screen:snapshot_util()
       id1 = add_hl(0, "ImportantWord", 0, 2, 8)
       add_hl(id1, "ImportantWord", 1, 12, -1)
       add_hl(id1, "ImportantWord", 2, 0, 9)
