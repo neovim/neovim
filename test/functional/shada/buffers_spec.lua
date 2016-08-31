@@ -8,8 +8,6 @@ local reset, set_additional_cmd, clear =
   shada_helpers.reset, shada_helpers.set_additional_cmd,
   shada_helpers.clear
 
-if helpers.pending_win32(pending) then return end
-
 describe('ShaDa support code', function()
   local testfilename = 'Xtestfile-functional-shada-buffers'
   local testfilename_2 = 'Xtestfile-functional-shada-buffers-2'
