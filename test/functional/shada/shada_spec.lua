@@ -171,6 +171,7 @@ describe('ShaDa support code', function()
   end
 
   it('correctly uses shada-r option', function()
+    nvim_command('set shellslash')
     meths.set_var('__home', paths.test_source_path)
     nvim_command('let $HOME = __home')
     nvim_command('unlet __home')
@@ -194,6 +195,7 @@ describe('ShaDa support code', function()
   end)
 
   it('correctly ignores case with shada-r option', function()
+    nvim_command('set shellslash')
     local pwd = funcs.getcwd()
     local relfname = 'абв/test'
     local fname = pwd .. '/' .. relfname
