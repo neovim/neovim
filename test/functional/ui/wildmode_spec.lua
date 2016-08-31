@@ -3,6 +3,8 @@ local Screen = require('test.functional.ui.screen')
 local clear, feed, execute = helpers.clear, helpers.feed, helpers.execute
 local funcs = helpers.funcs
 
+if helpers.pending_win32(pending) then return end
+
 describe("'wildmode'", function()
   local screen
 

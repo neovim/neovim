@@ -1,6 +1,8 @@
 local helpers = require('test.functional.helpers')(after_each)
 local clear, nvim, eq = helpers.clear, helpers.nvim, helpers.eq
 
+if helpers.pending_win32(pending) then return end
+
 describe('TabNewEntered', function()
   describe('au TabNewEntered', function()
     describe('with * as <afile>', function()

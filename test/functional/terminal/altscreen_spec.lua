@@ -6,6 +6,8 @@ local feed_data = thelpers.feed_data
 local enter_altscreen = thelpers.enter_altscreen
 local exit_altscreen = thelpers.exit_altscreen
 
+if helpers.pending_win32(pending) then return end
+
 describe('terminal altscreen', function()
   local screen
 

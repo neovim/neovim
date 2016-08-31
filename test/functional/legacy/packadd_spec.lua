@@ -9,6 +9,8 @@ local function expected_empty()
   eq({}, nvim.get_vvar('errors'))
 end
 
+if helpers.pending_win32(pending) then return end
+
 describe('packadd', function()
   before_each(function()
     clear()

@@ -5,7 +5,7 @@ local write_file, merge_args = helpers.write_file, helpers.merge_args
 
 local mpack = require('mpack')
 
-local tmpname = os.tmpname()
+local tmpname = helpers.tmpname()
 local additional_cmd = ''
 
 local function nvim_argv()

@@ -8,6 +8,7 @@ local clear, eq, eval, execute, feed, insert, neq, next_msg, nvim,
 local command = helpers.command
 local Screen = require('test.functional.ui.screen')
 
+if helpers.pending_win32(pending) then return end
 
 describe('jobs', function()
   local channel
@@ -90,7 +91,7 @@ describe('jobs', function()
 
   it('preserves NULs', function()
     -- Make a file with NULs in it.
-    local filename = os.tmpname()
+    local filename = helpers.tmpname()
     write_file(filename, "abc\0def\n")
 
     nvim('command', "let j = jobstart(['cat', '"..filename.."'], g:job_opts)")

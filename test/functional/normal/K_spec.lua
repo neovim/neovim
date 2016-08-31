@@ -2,6 +2,8 @@ local helpers = require('test.functional.helpers')(after_each)
 local eq, clear, eval, feed =
   helpers.eq, helpers.clear, helpers.eval, helpers.feed
 
+if helpers.pending_win32(pending) then return end
+
 describe('K', function()
   local test_file = 'K_spec_out'
   before_each(function()

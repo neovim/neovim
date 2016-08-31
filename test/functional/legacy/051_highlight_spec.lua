@@ -7,6 +7,8 @@ local clear, feed = helpers.clear, helpers.feed
 local execute, expect = helpers.execute, helpers.expect
 local wait = helpers.wait
 
+if helpers.pending_win32(pending) then return end
+
 describe(':highlight', function()
   setup(clear)
 

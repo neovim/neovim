@@ -3,7 +3,6 @@
 local helpers = require('test.functional.helpers')(after_each)
 local clear, execute, expect = helpers.clear, helpers.execute, helpers.expect
 local source, write_file = helpers.source, helpers.write_file
-local os_name = helpers.os_name
 
 local function sixlines(text)
     local result = ''
@@ -14,19 +13,16 @@ local function sixlines(text)
 end
 
 local function diff(text, nodedent)
-  local tmpname = os.tmpname()
-  if os_name() == 'osx' and string.match(tmpname, '^/tmp') then
-   tmpname = '/private'..tmpname
-  end
-  execute('w! '..tmpname)
+  local fname = helpers.tmpname()
+  execute('w! '..fname)
   helpers.wait()
-  local data = io.open(tmpname):read('*all')
+  local data = io.open(fname):read('*all')
   if nodedent then
     helpers.eq(text, data)
   else
     helpers.eq(helpers.dedent(text), data)
   end
-  os.remove(tmpname)
+  os.remove(fname)
 end
 
 describe('character classes in regexp', function()

@@ -4,6 +4,8 @@ local nvim, eq, neq, eval = helpers.nvim, helpers.eq, helpers.neq, helpers.eval
 local clear, funcs, meths = helpers.clear, helpers.funcs, helpers.meths
 local os_name = helpers.os_name
 
+if helpers.pending_win32(pending) then return end
+
 describe('serverstart(), serverstop()', function()
   before_each(clear)
 

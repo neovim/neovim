@@ -4,6 +4,8 @@ local clear = helpers.clear
 local feed, nvim = helpers.feed, helpers.nvim
 local feed_data = thelpers.feed_data
 
+if helpers.pending_win32(pending) then return end
+
 describe('terminal mouse', function()
   local screen
 

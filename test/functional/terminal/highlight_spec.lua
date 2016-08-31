@@ -5,6 +5,7 @@ local feed, clear, nvim = helpers.feed, helpers.clear, helpers.nvim
 local nvim_dir, execute = helpers.nvim_dir, helpers.execute
 local eq, eval = helpers.eq, helpers.eval
 
+if helpers.pending_win32(pending) then return end
 
 describe('terminal window highlighting', function()
   local screen

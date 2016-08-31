@@ -4,6 +4,8 @@ local helpers = require('test.functional.helpers')(after_each)
 local feed, execute, clear = helpers.feed, helpers.execute, helpers.clear
 local mkdir, write_file, rmdir = helpers.mkdir, helpers.write_file, helpers.rmdir
 
+if helpers.pending_win32(pending) then return end
+
 local Screen = require('test.functional.ui.screen')
 
 

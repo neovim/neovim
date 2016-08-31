@@ -18,6 +18,8 @@ local clear, execute, expect, eq, neq, dedent, write_file, feed =
   helpers.clear, helpers.execute, helpers.expect, helpers.eq, helpers.neq,
   helpers.dedent, helpers.write_file, helpers.feed
 
+if helpers.pending_win32(pending) then return end
+
 local function has_gzip()
   return os.execute('gzip --help >/dev/null 2>&1') == 0
 end

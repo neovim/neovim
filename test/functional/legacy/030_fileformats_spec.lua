@@ -4,6 +4,8 @@ local helpers = require('test.functional.helpers')(after_each)
 local feed, clear, execute = helpers.feed, helpers.clear, helpers.execute
 local eq, write_file = helpers.eq, helpers.write_file
 
+if helpers.pending_win32(pending) then return end
+
 describe('fileformats option', function()
   setup(function()
     clear()

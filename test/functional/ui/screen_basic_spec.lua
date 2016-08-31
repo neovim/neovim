@@ -4,6 +4,8 @@ local spawn, set_session, clear = helpers.spawn, helpers.set_session, helpers.cl
 local feed, execute = helpers.feed, helpers.execute
 local insert = helpers.insert
 
+if helpers.pending_win32(pending) then return end
+
 describe('Initial screen', function()
   local screen
   local nvim_argv = {helpers.nvim_prog, '-u', 'NONE', '-i', 'NONE', '-N',

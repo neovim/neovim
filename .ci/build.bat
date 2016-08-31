@@ -28,13 +28,14 @@ cd ..
 :: Build Neovim
 mkdir build
 cd build
-cmake -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release .. || goto :error
+cmake -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release -DBUSTED_OUTPUT_TYPE=gtest .. || goto :error
 mingw32-make VERBOSE=1 || goto :error
 bin\nvim --version || goto :error
-cd ..
+
+:: Functional tests
+mingw32-make functionaltest VERBOSE=1 || goto :error
 
 :: Build artifacts
-cd build
 cpack -G ZIP -C Release
 if defined APPVEYOR_REPO_TAG_NAME cpack -G NSIS -C Release
 

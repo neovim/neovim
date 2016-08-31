@@ -2,6 +2,8 @@ local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 local clear, execute = helpers.clear, helpers.execute
 
+if helpers.pending_win32(pending) then return end
+
 describe("'shortmess'", function()
   local screen
 

@@ -5,6 +5,8 @@ local clear, execute, feed, nvim, nvim_dir = helpers.clear,
 helpers.execute, helpers.feed, helpers.nvim, helpers.nvim_dir
 local eval, eq = helpers.eval, helpers.eq
 
+if helpers.pending_win32(pending) then return end
+
 describe('TermClose event', function()
   local screen
   before_each(function()

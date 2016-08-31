@@ -6,6 +6,8 @@ local feed = thelpers.feed_data
 local execute = helpers.execute
 local nvim_dir = helpers.nvim_dir
 
+if helpers.pending_win32(pending) then return end
+
 describe('tui', function()
   local screen
 

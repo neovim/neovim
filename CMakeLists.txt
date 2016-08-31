@@ -395,7 +395,7 @@ endif()
 message(STATUS "Using the Lua interpreter ${LUA_PRG}.")
 
 # Setup busted.
-find_program(BUSTED_PRG busted)
+find_program(BUSTED_PRG NAMES busted busted.bat)
 find_program(BUSTED_LUA_PRG busted-lua)
 if(NOT BUSTED_OUTPUT_TYPE)
   if(WIN32)
@@ -498,6 +498,7 @@ if(BUSTED_PRG)
         -DTEST_DIR=${CMAKE_CURRENT_SOURCE_DIR}/test
         -DBUILD_DIR=${CMAKE_BINARY_DIR}
         -DTEST_TYPE=unit
+        -DSYSTEM_NAME=${CMAKE_SYSTEM_NAME}
         -P ${PROJECT_SOURCE_DIR}/cmake/RunTests.cmake
       DEPENDS ${UNITTEST_PREREQS}
       ${TEST_TARGET_ARGS})
@@ -516,6 +517,7 @@ if(BUSTED_PRG)
       -DTEST_DIR=${CMAKE_CURRENT_SOURCE_DIR}/test
       -DBUILD_DIR=${CMAKE_BINARY_DIR}
       -DTEST_TYPE=functional
+      -DSYSTEM_NAME=${CMAKE_SYSTEM_NAME}
       -P ${PROJECT_SOURCE_DIR}/cmake/RunTests.cmake
     DEPENDS ${FUNCTIONALTEST_PREREQS}
     ${TEST_TARGET_ARGS})
@@ -530,6 +532,7 @@ if(BUSTED_PRG)
       -DTEST_DIR=${CMAKE_CURRENT_SOURCE_DIR}/test
       -DBUILD_DIR=${CMAKE_BINARY_DIR}
       -DTEST_TYPE=benchmark
+      -DCMAKE_SYSTEM_NAME=${CMAKE_SYSTEM_NAME}
       -P ${PROJECT_SOURCE_DIR}/cmake/RunTests.cmake
     DEPENDS ${BENCHMARK_PREREQS}
     ${TEST_TARGET_ARGS})
@@ -546,6 +549,7 @@ if(BUSTED_LUA_PRG)
       -DTEST_DIR=${CMAKE_CURRENT_SOURCE_DIR}/test
       -DBUILD_DIR=${CMAKE_BINARY_DIR}
       -DTEST_TYPE=functional
+      -DCMAKE_SYSTEM_NAME=${CMAKE_SYSTEM_NAME}
       -P ${PROJECT_SOURCE_DIR}/cmake/RunTests.cmake
     DEPENDS ${FUNCTIONALTEST_PREREQS}
     ${TEST_TARGET_ARGS})
@@ -556,6 +560,7 @@ if(LUACHECK_PRG)
     COMMAND ${CMAKE_COMMAND}
       -DLUACHECK_PRG=${LUACHECK_PRG}
       -DTEST_DIR=${CMAKE_CURRENT_SOURCE_DIR}/test
+      -DCMAKE_SYSTEM_NAME=${CMAKE_SYSTEM_NAME}
       -P ${PROJECT_SOURCE_DIR}/cmake/RunTestsLint.cmake)
 endif()
 

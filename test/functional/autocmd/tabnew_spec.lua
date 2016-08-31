@@ -5,6 +5,8 @@ local command = helpers.command
 local eq = helpers.eq
 local eval = helpers.eval
 
+if helpers.pending_win32(pending) then return end
+
 describe('autocmd TabNew', function()
   before_each(clear)
 

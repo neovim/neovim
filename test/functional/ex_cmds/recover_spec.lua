@@ -6,6 +6,8 @@ local execute, eq, clear, eval, feed, expect, source =
   helpers.execute, helpers.eq, helpers.clear, helpers.eval, helpers.feed,
   helpers.expect, helpers.source
 
+if helpers.pending_win32(pending) then return end
+
 describe(':recover', function()
   before_each(clear)
 

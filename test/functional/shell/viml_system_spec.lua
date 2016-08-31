@@ -8,6 +8,7 @@ local eq, clear, eval, feed, nvim =
 
 local Screen = require('test.functional.ui.screen')
 
+if helpers.pending_win32(pending) then return end
 
 local function create_file_with_nuls(name)
   return function()

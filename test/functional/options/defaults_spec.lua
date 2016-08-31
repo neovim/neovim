@@ -9,6 +9,8 @@ local eval = helpers.eval
 local eq = helpers.eq
 local neq = helpers.neq
 
+if helpers.pending_win32(pending) then return end
+
 local function init_session(...)
   local args = { helpers.nvim_prog, '-i', 'NONE', '--embed',
     '--cmd', 'set shortmess+=I background=light noswapfile noautoindent',

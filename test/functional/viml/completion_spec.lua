@@ -4,6 +4,8 @@ local clear, feed = helpers.clear, helpers.feed
 local eval, eq, neq = helpers.eval, helpers.eq, helpers.neq
 local execute, source, expect = helpers.execute, helpers.source, helpers.expect
 
+if helpers.pending_win32(pending) then return end
+
 describe('completion', function()
   local screen
 
