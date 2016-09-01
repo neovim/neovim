@@ -21765,6 +21765,9 @@ static inline bool common_job_start(TerminalJobData *data, typval_T *rettv)
   Process *proc = (Process *)&data->proc;
   if (proc->type == kProcessTypePty && proc->detach) {
     EMSG2(_(e_invarg2), "terminal/pty job cannot be detached");
+    xfree(data->proc.pty.term_name);
+    shell_free_argv(proc->argv);
+    free_term_job_data_event((void **)&data);
     return false;
   }
 
