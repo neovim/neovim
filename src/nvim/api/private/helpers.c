@@ -507,6 +507,10 @@ Object vim_to_object(typval_T *obj)
 
 buf_T *find_buffer_by_handle(Buffer buffer, Error *err)
 {
+  if (buffer == 0) {
+    return curbuf;
+  }
+
   buf_T *rv = handle_get_buffer(buffer);
 
   if (!rv) {
@@ -518,6 +522,10 @@ buf_T *find_buffer_by_handle(Buffer buffer, Error *err)
 
 win_T * find_window_by_handle(Window window, Error *err)
 {
+  if (window == 0) {
+    return curwin;
+  }
+
   win_T *rv = handle_get_window(window);
 
   if (!rv) {
@@ -529,6 +537,10 @@ win_T * find_window_by_handle(Window window, Error *err)
 
 tabpage_T * find_tab_by_handle(Tabpage tabpage, Error *err)
 {
+  if (tabpage == 0) {
+    return curtab;
+  }
+
   tabpage_T *rv = handle_get_tabpage(tabpage);
 
   if (!rv) {
@@ -764,12 +776,15 @@ static void init_type_metadata(Dictionary *metadata)
 
   Dictionary buffer_metadata = ARRAY_DICT_INIT;
   PUT(buffer_metadata, "id", INTEGER_OBJ(kObjectTypeBuffer));
+  PUT(buffer_metadata, "prefix", STRING_OBJ(cstr_to_string("nvim_buf_")));
 
   Dictionary window_metadata = ARRAY_DICT_INIT;
   PUT(window_metadata, "id", INTEGER_OBJ(kObjectTypeWindow));
+  PUT(window_metadata, "prefix", STRING_OBJ(cstr_to_string("nvim_win_")));
 
   Dictionary tabpage_metadata = ARRAY_DICT_INIT;
   PUT(tabpage_metadata, "id", INTEGER_OBJ(kObjectTypeTabpage));
+  PUT(tabpage_metadata, "prefix", STRING_OBJ(cstr_to_string("nvim_tabpage_")));
 
   PUT(types, "Buffer", DICTIONARY_OBJ(buffer_metadata));
   PUT(types, "Window", DICTIONARY_OBJ(window_metadata));

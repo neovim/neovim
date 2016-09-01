@@ -37,22 +37,28 @@ c_proto = Ct(
   Cg(Cc(false), 'async') *
   (fill * Cg((P('FUNC_API_ASYNC') * Cc(true)), 'async') ^ -1) *
   (fill * Cg((P('FUNC_API_NOEXPORT') * Cc(true)), 'noexport') ^ -1) *
+  (fill * Cg((P('FUNC_API_NOEVAL') * Cc(true)), 'noeval') ^ -1) *
   fill * P(';')
   )
 grammar = Ct((c_proto + c_comment + c_preproc + ws) ^ 1)
 
--- we need at least 2 arguments since the last one is the output file
-assert(#arg >= 1)
+-- we need at least 4 arguments since the last two are output files
+assert(#arg >= 3)
 functions = {}
+
+local scriptdir = arg[1]
+package.path = scriptdir .. '/?.lua;' .. package.path
 
 -- names of all headers relative to the source root (for inclusion in the
 -- generated file)
 headers = {}
--- output file(dispatch function + metadata serialized with msgpack)
-outputf = arg[#arg]
+-- output c file(dispatch function + metadata serialized with msgpack)
+outputf = arg[#arg-1]
+-- output mpack file (metadata)
+mpack_outputf = arg[#arg]
 
 -- read each input file, parse and append to the api metadata
-for i = 1, #arg - 1 do
+for i = 2, #arg - 2 do
   local full_path = arg[i]
   local parts = {}
   for part in string.gmatch(full_path, '[^/]+') do
@@ -84,6 +90,45 @@ for i = 1, #arg - 1 do
   input:close()
 end
 
+local function shallowcopy(orig)
+  local copy = {}
+  for orig_key, orig_value in pairs(orig) do
+    copy[orig_key] = orig_value
+  end
+  return copy
+end
+
+local function startswith(String,Start)
+  return string.sub(String,1,string.len(Start))==Start
+end
+
+-- Export functions under older deprecated names.
+-- These will be removed eventually.
+local deprecated_aliases = require("dispatch_deprecated")
+for i,f in ipairs(shallowcopy(functions)) do
+  local ismethod = false
+  if startswith(f.name, "nvim_buf_") then
+    ismethod = true
+  elseif startswith(f.name, "nvim_win_") then
+    ismethod = true
+  elseif startswith(f.name, "nvim_tabpage_") then
+    ismethod = true
+  elseif not startswith(f.name, "nvim_") then
+    f.noeval = true
+    f.deprecated_since = 1
+  end
+  f.method = ismethod
+  local newname = deprecated_aliases[f.name]
+  if newname ~= nil then
+    local newf = shallowcopy(f)
+    newf.name = newname
+    newf.impl_name = f.name
+    newf.noeval = true
+    newf.deprecated_since = 1
+    functions[#functions+1] = newf
+  end
+end
+
 
 -- start building the output
 output = io.open(outputf, 'wb')
@@ -99,7 +144,7 @@ output:write([[
 #include "nvim/log.h"
 #include "nvim/vim.h"
 #include "nvim/msgpack_rpc/helpers.h"
-#include "nvim/msgpack_rpc/defs.h"
+#include "nvim/api/private/dispatch.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/private/defs.h"
 ]])
@@ -163,99 +208,95 @@ end
 -- the real API.
 for i = 1, #functions do
   local fn = functions[i]
-  local args = {}
+  if fn.impl_name == nil then
+    local args = {}
 
-  output:write('static Object handle_'..fn.name..'(uint64_t channel_id, uint64_t request_id, Array args, Error *error)')
-  output:write('\n{')
-  output:write('\n  Object ret = NIL;')
-  -- Declare/initialize variables that will hold converted arguments
-  for j = 1, #fn.parameters do
-    local param = fn.parameters[j]
-    local converted = 'arg_'..j
-    output:write('\n  '..param[1]..' '..converted..' api_init_'..string.lower(real_type(param[1]))..';')
-  end
-  output:write('\n')
-  output:write('\n  if (args.size != '..#fn.parameters..') {')
-  output:write('\n    snprintf(error->msg, sizeof(error->msg), "Wrong number of arguments: expecting '..#fn.parameters..' but got %zu", args.size);')
-  output:write('\n    error->set = true;')
-  output:write('\n    goto cleanup;')
-  output:write('\n  }\n')
+    output:write('Object handle_'..fn.name..'(uint64_t channel_id, uint64_t request_id, Array args, Error *error)')
+    output:write('\n{')
+    output:write('\n  Object ret = NIL;')
+    -- Declare/initialize variables that will hold converted arguments
+    for j = 1, #fn.parameters do
+      local param = fn.parameters[j]
+      local converted = 'arg_'..j
+      output:write('\n  '..param[1]..' '..converted..' api_init_'..string.lower(real_type(param[1]))..';')
+    end
+    output:write('\n')
+    output:write('\n  if (args.size != '..#fn.parameters..') {')
+    output:write('\n    snprintf(error->msg, sizeof(error->msg), "Wrong number of arguments: expecting '..#fn.parameters..' but got %zu", args.size);')
+    output:write('\n    error->set = true;')
+    output:write('\n    goto cleanup;')
+    output:write('\n  }\n')
 
-  -- Validation/conversion for each argument
-  for j = 1, #fn.parameters do
-    local converted, convert_arg, param, arg
-    param = fn.parameters[j]
-    converted = 'arg_'..j
-    local rt = real_type(param[1])
-    if rt ~= 'Object' then
-      output:write('\n  if (args.items['..(j - 1)..'].type == kObjectType'..rt..') {')
-      output:write('\n    '..converted..' = args.items['..(j - 1)..'].data.'..rt:lower()..';')
-      if rt:match('^Buffer$') or rt:match('^Window$') or rt:match('^Tabpage$') or rt:match('^Boolean$') then
-        -- accept positive integers for Buffers, Windows and Tabpages
-        output:write('\n  } else if (args.items['..(j - 1)..'].type == kObjectTypeInteger && args.items['..(j - 1)..'].data.integer > 0) {')
-        output:write('\n    '..converted..' = (unsigned)args.items['..(j - 1)..'].data.integer;')
+    -- Validation/conversion for each argument
+    for j = 1, #fn.parameters do
+      local converted, convert_arg, param, arg
+      param = fn.parameters[j]
+      converted = 'arg_'..j
+      local rt = real_type(param[1])
+      if rt ~= 'Object' then
+        output:write('\n  if (args.items['..(j - 1)..'].type == kObjectType'..rt..') {')
+        output:write('\n    '..converted..' = args.items['..(j - 1)..'].data.'..rt:lower()..';')
+        if rt:match('^Buffer$') or rt:match('^Window$') or rt:match('^Tabpage$') or rt:match('^Boolean$') then
+          -- accept nonnegative integers for Booleans, Buffers, Windows and Tabpages
+          output:write('\n  } else if (args.items['..(j - 1)..'].type == kObjectTypeInteger && args.items['..(j - 1)..'].data.integer >= 0) {')
+          output:write('\n    '..converted..' = (handle_T)args.items['..(j - 1)..'].data.integer;')
+        end
+        output:write('\n  } else {')
+        output:write('\n    snprintf(error->msg, sizeof(error->msg), "Wrong type for argument '..j..', expecting '..param[1]..'");')
+        output:write('\n    error->set = true;')
+        output:write('\n    goto cleanup;')
+        output:write('\n  }\n')
+      else
+        output:write('\n  '..converted..' = args.items['..(j - 1)..'];\n')
       end
-      output:write('\n  } else {')
-      output:write('\n    snprintf(error->msg, sizeof(error->msg), "Wrong type for argument '..j..', expecting '..param[1]..'");')
-      output:write('\n    error->set = true;')
+
+      args[#args + 1] = converted
+    end
+
+    -- function call
+    local call_args = table.concat(args, ', ')
+    output:write('\n  ')
+    if fn.return_type ~= 'void' then
+      -- has a return value, prefix the call with a declaration
+      output:write(fn.return_type..' rv = ')
+    end
+
+    -- write the function name and the opening parenthesis
+    output:write(fn.name..'(')
+
+    if fn.receives_channel_id then
+      -- if the function receives the channel id, pass it as first argument
+      if #args > 0 or fn.can_fail then
+        output:write('channel_id, '..call_args)
+      else
+        output:write('channel_id')
+      end
+    else
+      output:write(call_args)
+    end
+
+    if fn.can_fail then
+      -- if the function can fail, also pass a pointer to the local error object
+      if #args > 0 then
+        output:write(', error);\n')
+      else
+        output:write('error);\n')
+      end
+      -- and check for the error
+      output:write('\n  if (error->set) {')
       output:write('\n    goto cleanup;')
       output:write('\n  }\n')
     else
-      output:write('\n  '..converted..' = args.items['..(j - 1)..'];\n')
+      output:write(');\n')
     end
 
-    args[#args + 1] = converted
-  end
-
-  -- function call
-  local call_args = table.concat(args, ', ')
-  output:write('\n  ')
-  if fn.return_type ~= 'void' then
-    -- has a return value, prefix the call with a declaration
-    output:write(fn.return_type..' rv = ')
-  end
-
-  -- write the function name and the opening parenthesis
-  output:write(fn.name..'(')
-
-  if fn.receives_channel_id then
-    -- if the function receives the channel id, pass it as first argument
-    if #args > 0 or fn.can_fail then
-      output:write('channel_id, '..call_args)
-    else
-      output:write('channel_id')
+    if fn.return_type ~= 'void' then
+      output:write('\n  ret = '..string.upper(real_type(fn.return_type))..'_OBJ(rv);')
     end
-  else
-    output:write(call_args)
-  end
+    output:write('\n\ncleanup:');
 
-  if fn.can_fail then
-    -- if the function can fail, also pass a pointer to the local error object
-    if #args > 0 then
-      output:write(', error);\n')
-    else
-      output:write('error);\n')
-    end
-    -- and check for the error
-    output:write('\n  if (error->set) {')
-    output:write('\n    goto cleanup;')
-    output:write('\n  }\n')
-  else
-    output:write(');\n')
+    output:write('\n  return ret;\n}\n\n');
   end
-
-  if fn.return_type ~= 'void' then
-    output:write('\n  ret = '..string.upper(real_type(fn.return_type))..'_OBJ(rv);')
-  end
-  -- Now generate the cleanup label for freeing memory allocated for the
-  -- arguments
-  output:write('\n\ncleanup:');
-
-  for j = 1, #fn.parameters do
-    local param = fn.parameters[j]
-    output:write('\n  api_free_'..string.lower(real_type(param[1]))..'(arg_'..j..');')
-  end
-  output:write('\n  return ret;\n}\n\n');
 end
 
 -- Generate a function that initializes method names with handler functions
@@ -281,7 +322,7 @@ for i = 1, #functions do
   output:write('  msgpack_rpc_add_method_handler('..
                '(String) {.data = "'..fn.name..'", '..
                '.size = sizeof("'..fn.name..'") - 1}, '..
-               '(MsgpackRpcRequestHandler) {.fn = handle_'..  fn.name..
+               '(MsgpackRpcRequestHandler) {.fn = handle_'..  (fn.impl_name or fn.name)..
                ', .async = '..tostring(fn.async)..'});\n')
 
   if #fn.name > max_fname_len then
@@ -311,3 +352,7 @@ MsgpackRpcRequestHandler msgpack_rpc_get_handler_for(const char *name,
 ]])
 
 output:close()
+
+mpack_output = io.open(mpack_outputf, 'wb')
+mpack_output:write(packed)
+mpack_output:close()

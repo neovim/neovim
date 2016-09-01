@@ -3,6 +3,7 @@ set(GENERATED_RUNTIME_DIR ${PROJECT_BINARY_DIR}/runtime)
 set(GENERATED_SYN_VIM ${GENERATED_RUNTIME_DIR}/syntax/vim/generated.vim)
 set(GENERATED_HELP_TAGS ${GENERATED_RUNTIME_DIR}/doc/tags)
 set(GENERATED_PACKAGE_DIR ${GENERATED_RUNTIME_DIR}/pack/dist/opt)
+set(FUNCS_DATA ${PROJECT_BINARY_DIR}/funcs_data.mpack)
 
 file(MAKE_DIRECTORY ${GENERATED_RUNTIME_DIR})
 file(MAKE_DIRECTORY ${GENERATED_RUNTIME_DIR}/syntax)
@@ -10,13 +11,14 @@ file(MAKE_DIRECTORY ${GENERATED_RUNTIME_DIR}/syntax/vim)
 
 add_custom_command(OUTPUT ${GENERATED_SYN_VIM}
   COMMAND ${LUA_PRG} ${SYN_VIM_GENERATOR}
-          ${PROJECT_SOURCE_DIR}/src/nvim ${GENERATED_SYN_VIM}
+          ${PROJECT_SOURCE_DIR}/src/nvim ${GENERATED_SYN_VIM} ${FUNCS_DATA}
   DEPENDS
     ${SYN_VIM_GENERATOR}
     ${PROJECT_SOURCE_DIR}/src/nvim/ex_cmds.lua
     ${PROJECT_SOURCE_DIR}/src/nvim/auevents.lua
     ${PROJECT_SOURCE_DIR}/src/nvim/options.lua
     ${PROJECT_SOURCE_DIR}/src/nvim/eval.c
+    ${FUNCS_DATA}
 )
 
 if(POLICY CMP0054)

@@ -1397,8 +1397,7 @@ buflist_new (
   }
   if (buf != curbuf || curbuf == NULL) {
     buf = xcalloc(1, sizeof(buf_T));
-    handle_register_buffer(buf);
-    /* init b: variables */
+    // init b: variables
     buf->b_vars = dict_alloc();
     init_var_dict(buf->b_vars, &buf->b_bufvar, VAR_SCOPE);
   }
@@ -1451,11 +1450,12 @@ buflist_new (
     lastbuf = buf;
 
     buf->b_fnum = top_file_num++;
-    if (top_file_num < 0) {             /* wrap around (may cause duplicates) */
+    handle_register_buffer(buf);
+    if (top_file_num < 0) {  // wrap around (may cause duplicates)
       EMSG(_("W14: Warning: List of file names overflow"));
       if (emsg_silent == 0) {
         ui_flush();
-        os_delay(3000L, true);          /* make sure it is noticed */
+        os_delay(3000L, true);  // make sure it is noticed
       }
       top_file_num = 1;
     }
@@ -5231,12 +5231,12 @@ wipe_buffer (
     int aucmd                   /* When TRUE trigger autocommands. */
 )
 {
-  if (buf->b_fnum == top_file_num - 1)
-    --top_file_num;
-
-  if (!aucmd)               /* Don't trigger BufDelete autocommands here. */
+  if (!aucmd) {
+    // Don't trigger BufDelete autocommands here.
     block_autocmds();
-  close_buffer(NULL, buf, DOBUF_WIPE, FALSE);
-  if (!aucmd)
+  }
+  close_buffer(NULL, buf, DOBUF_WIPE, false);
+  if (!aucmd) {
     unblock_autocmds();
+  }
 }

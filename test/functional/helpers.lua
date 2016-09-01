@@ -133,11 +133,11 @@ local function stop()
 end
 
 local function nvim_command(cmd)
-  request('vim_command', cmd)
+  request('nvim_command', cmd)
 end
 
 local function nvim_eval(expr)
-  return request('vim_eval', expr)
+  return request('nvim_eval', expr)
 end
 
 local os_name = (function()
@@ -157,12 +157,12 @@ local os_name = (function()
 end)()
 
 local function nvim_call(name, ...)
-  return request('vim_call_function', name, {...})
+  return request('nvim_call_function', name, {...})
 end
 
 local function nvim_feed(input)
   while #input > 0 do
-    local written = request('vim_input', input)
+    local written = request('nvim_input', input)
     input = input:sub(written + 1)
   end
 end
@@ -339,7 +339,7 @@ local function source(code)
 end
 
 local function nvim(method, ...)
-  return request('vim_'..method, ...)
+  return request('nvim_'..method, ...)
 end
 
 local function ui(method, ...)
@@ -347,27 +347,26 @@ local function ui(method, ...)
 end
 
 local function nvim_async(method, ...)
-  session:notify('vim_'..method, ...)
+  session:notify('nvim_'..method, ...)
 end
 
 local function buffer(method, ...)
-  return request('buffer_'..method, ...)
+  return request('nvim_buf_'..method, ...)
 end
 
 local function window(method, ...)
-  return request('window_'..method, ...)
+  return request('nvim_win_'..method, ...)
 end
 
 local function tabpage(method, ...)
-  return request('tabpage_'..method, ...)
+  return request('nvim_tabpage_'..method, ...)
 end
 
 local function curbuf(method, ...)
-  local buf = nvim('get_current_buffer')
   if not method then
-    return buf
+    return nvim('get_current_buffer')
   end
-  return buffer(method, buf, ...)
+  return buffer(method, 0, ...)
 end
 
 local function wait()
@@ -387,19 +386,17 @@ local function curbuf_contents()
 end
 
 local function curwin(method, ...)
-  local win = nvim('get_current_window')
   if not method then
-    return win
+    return nvim('get_current_window')
   end
-  return window(method, win, ...)
+  return window(method, 0, ...)
 end
 
 local function curtab(method, ...)
-  local tab = nvim('get_current_tabpage')
   if not method then
-    return tab
+    return nvim('get_current_tabpage')
   end
-  return tabpage(method, tab, ...)
+  return tabpage(method, 0, ...)
 end
 
 local function expect(contents)

@@ -6,7 +6,7 @@
 #include "nvim/map_defs.h"
 #include "nvim/vim.h"
 #include "nvim/memory.h"
-#include "nvim/msgpack_rpc/defs.h"
+#include "nvim/api/private/dispatch.h"
 
 #include "nvim/lib/khash.h"
 
@@ -20,6 +20,8 @@
 #define int_eq kh_int_hash_equal
 #define linenr_T_hash kh_int_hash_func
 #define linenr_T_eq kh_int_hash_equal
+#define handle_T_hash kh_int_hash_func
+#define handle_T_eq kh_int_hash_equal
 
 
 #if defined(ARCH_64)
@@ -141,7 +143,8 @@ MAP_IMPL(cstr_t, uint64_t, DEFAULT_INITIALIZER)
 MAP_IMPL(cstr_t, ptr_t, DEFAULT_INITIALIZER)
 MAP_IMPL(ptr_t, ptr_t, DEFAULT_INITIALIZER)
 MAP_IMPL(uint64_t, ptr_t, DEFAULT_INITIALIZER)
-#define MSGPACK_HANDLER_INITIALIZER {.fn = NULL, .async = false}
+MAP_IMPL(handle_T, ptr_t, DEFAULT_INITIALIZER)
+#define MSGPACK_HANDLER_INITIALIZER { .fn = NULL, .async = false }
 MAP_IMPL(String, MsgpackRpcRequestHandler, MSGPACK_HANDLER_INITIALIZER)
 #define KVEC_INITIALIZER { .size = 0, .capacity = 0, .items = NULL }
 MAP_IMPL(linenr_T, bufhl_vec_T, KVEC_INITIALIZER)

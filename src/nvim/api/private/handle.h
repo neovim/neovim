@@ -3,9 +3,10 @@
 
 #include "nvim/vim.h"
 #include "nvim/buffer_defs.h"
+#include "nvim/api/private/defs.h"
 
 #define HANDLE_DECLS(type, name) \
-  type *handle_get_##name(uint64_t handle); \
+  type *handle_get_##name(handle_T handle); \
   void handle_register_##name(type *name); \
   void handle_unregister_##name(type *name);
 

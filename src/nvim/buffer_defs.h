@@ -461,9 +461,10 @@ typedef struct {
  */
 
 struct file_buffer {
-  uint64_t handle;              // unique identifier for the buffer
-  memline_T b_ml;               /* associated memline (also contains line
-                                   count) */
+  handle_T handle;              // unique id for the buffer (buffer number)
+#define b_fnum handle
+
+  memline_T b_ml;               // associated memline (also contains line count
 
   buf_T       *b_next;          /* links in list of buffers */
   buf_T       *b_prev;
@@ -486,8 +487,6 @@ struct file_buffer {
 
   bool file_id_valid;
   FileID file_id;
-
-  int b_fnum;                   /* buffer number for this file. */
 
   bool b_changed;               /* 'modified': Set to true if something in the
                                    file has been changed and not written out. */
@@ -799,28 +798,27 @@ struct diffblock_S {
 # define SNAP_AUCMD_IDX 1
 # define SNAP_COUNT     2
 
-/*
- * Tab pages point to the top frame of each tab page.
- * Note: Most values are NOT valid for the current tab page!  Use "curwin",
- * "firstwin", etc. for that.  "tp_topframe" is always valid and can be
- * compared against "topframe" to find the current tab page.
- */
+/// Tab pages point to the top frame of each tab page.
+/// Note: Most values are NOT valid for the current tab page!  Use "curwin",
+/// "firstwin", etc. for that.  "tp_topframe" is always valid and can be
+/// compared against "topframe" to find the current tab page.
 typedef struct tabpage_S tabpage_T;
 struct tabpage_S {
-  uint64_t handle;
-  tabpage_T       *tp_next;         /* next tabpage or NULL */
-  frame_T         *tp_topframe;     /* topframe for the windows */
-  win_T           *tp_curwin;       /* current window in this Tab page */
-  win_T           *tp_prevwin;      /* previous window in this Tab page */
-  win_T           *tp_firstwin;     /* first window in this Tab page */
-  win_T           *tp_lastwin;      /* last window in this Tab page */
-  long tp_old_Rows;                 /* Rows when Tab page was left */
-  long tp_old_Columns;              /* Columns when Tab page was left */
-  long tp_ch_used;                  /* value of 'cmdheight' when frame size
-                                       was set */
+  handle_T handle;
+  tabpage_T       *tp_next;         ///< next tabpage or NULL
+  frame_T         *tp_topframe;     ///< topframe for the windows
+  win_T           *tp_curwin;       ///< current window in this Tab page
+  win_T           *tp_prevwin;      ///< previous window in this Tab page
+  win_T           *tp_firstwin;     ///< first window in this Tab page
+  win_T           *tp_lastwin;      ///< last window in this Tab page
+  long tp_old_Rows;                 ///< Rows when Tab page was left
+  long tp_old_Columns;              ///< Columns when Tab page was left
+  long tp_ch_used;                  ///< value of 'cmdheight' when frame size
+                                    ///< was set
+
   diff_T          *tp_first_diff;
   buf_T           *(tp_diffbuf[DB_COUNT]);
-  int tp_diff_invalid;              ///< list of diffs is outdated */
+  int tp_diff_invalid;              ///< list of diffs is outdated
   frame_T         *(tp_snapshot[SNAP_COUNT]);    ///< window layout snapshots
   dictitem_T tp_winvar;             ///< variable for "t:" Dictionary
   dict_T          *tp_vars;         ///< internal variables, local to tab page
@@ -936,8 +934,8 @@ struct matchitem {
  * All row numbers are relative to the start of the window, except w_winrow.
  */
 struct window_S {
-  uint64_t handle;
-  int w_id;                         ///< unique window ID
+  handle_T handle;                  ///< unique identifier for the window
+
   buf_T       *w_buffer;            ///< buffer we are a window into (used
                                     ///< often, keep it the first item!)
 

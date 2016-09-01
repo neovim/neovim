@@ -87,7 +87,7 @@ describe('buffer functions', function()
     it('should find exact matches', function()
       local buf = buflist_new(path1, buffer.BLN_LISTED)
 
-      eq(buf.b_fnum, buflist_findpat(path1, ONLY_LISTED))
+      eq(buf.handle, buflist_findpat(path1, ONLY_LISTED))
 
       close_buffer(NULL, buf, buffer.DOBUF_WIPE, 0)
     end)
@@ -97,9 +97,9 @@ describe('buffer functions', function()
       local buf2 = buflist_new(path2, buffer.BLN_LISTED)
       local buf3 = buflist_new(path3, buffer.BLN_LISTED)
 
-      eq(buf1.b_fnum, buflist_findpat("test", ONLY_LISTED))
-      eq(buf2.b_fnum, buflist_findpat("file", ONLY_LISTED))
-      eq(buf3.b_fnum, buflist_findpat("path", ONLY_LISTED))
+      eq(buf1.handle, buflist_findpat("test", ONLY_LISTED))
+      eq(buf2.handle, buflist_findpat("file", ONLY_LISTED))
+      eq(buf3.handle, buflist_findpat("path", ONLY_LISTED))
 
       close_buffer(NULL, buf1, buffer.DOBUF_WIPE, 0)
       close_buffer(NULL, buf2, buffer.DOBUF_WIPE, 0)
@@ -113,7 +113,7 @@ describe('buffer functions', function()
       local buf3 = buflist_new(path3, buffer.BLN_LISTED)
 
       -- Then: buf2 is the buffer that is found
-      eq(buf2.b_fnum, buflist_findpat("test", ONLY_LISTED))
+      eq(buf2.handle, buflist_findpat("test", ONLY_LISTED))
       --}
 
       --{ When: We close buf2
@@ -123,7 +123,7 @@ describe('buffer functions', function()
       local buf1 = buflist_new(path1, buffer.BLN_LISTED)
 
       -- Then: buf3 is found since 'file' appears at the end of the name
-      eq(buf3.b_fnum, buflist_findpat("file", ONLY_LISTED))
+      eq(buf3.handle, buflist_findpat("file", ONLY_LISTED))
       --}
 
       close_buffer(NULL, buf1, buffer.DOBUF_WIPE, 0)
@@ -135,7 +135,7 @@ describe('buffer functions', function()
       local buf2 = buflist_new(path2, buffer.BLN_LISTED)
       local buf3 = buflist_new(path3, buffer.BLN_LISTED)
 
-      eq(buf3.b_fnum, buflist_findpat("_test_", ONLY_LISTED))
+      eq(buf3.handle, buflist_findpat("_test_", ONLY_LISTED))
 
       close_buffer(NULL, buf1, buffer.DOBUF_WIPE, 0)
       close_buffer(NULL, buf2, buffer.DOBUF_WIPE, 0)
@@ -147,7 +147,7 @@ describe('buffer functions', function()
       local buf3 = buflist_new(path3, buffer.BLN_LISTED)
 
       -- Then: We should find the buffer when it is given a unique pattern
-      eq(buf3.b_fnum, buflist_findpat("_test_", ONLY_LISTED))
+      eq(buf3.handle, buflist_findpat("_test_", ONLY_LISTED))
       --}
 
       --{ When: We unlist the buffer
@@ -157,7 +157,7 @@ describe('buffer functions', function()
       eq(-1, buflist_findpat("_test_", ONLY_LISTED))
 
       -- And: It should find the buffer when including unlisted buffers
-      eq(buf3.b_fnum, buflist_findpat("_test_", ALLOW_UNLISTED))
+      eq(buf3.handle, buflist_findpat("_test_", ALLOW_UNLISTED))
       --}
 
       --{ When: We wipe the buffer
@@ -175,7 +175,7 @@ describe('buffer functions', function()
       local buf2 = buflist_new(path2, buffer.BLN_LISTED)
 
       -- Then: The first buffer is preferred when both are listed
-      eq(buf1.b_fnum, buflist_findpat("test", ONLY_LISTED))
+      eq(buf1.handle, buflist_findpat("test", ONLY_LISTED))
       --}
 
       --{ When: The first buffer is unlisted
@@ -183,13 +183,13 @@ describe('buffer functions', function()
 
       -- Then: The second buffer is preferred because
       --       unlisted buffers are not allowed
-      eq(buf2.b_fnum, buflist_findpat("test", ONLY_LISTED))
+      eq(buf2.handle, buflist_findpat("test", ONLY_LISTED))
       --}
 
       --{ When: We allow unlisted buffers
       -- Then: The second buffer is still preferred
       --       because listed buffers are preferred to unlisted
-      eq(buf2.b_fnum, buflist_findpat("test", ALLOW_UNLISTED))
+      eq(buf2.handle, buflist_findpat("test", ALLOW_UNLISTED))
       --}
 
       --{ When: We unlist the second buffer
@@ -198,7 +198,7 @@ describe('buffer functions', function()
       -- Then: The first buffer is preferred again
       --       because buf1 matches better which takes precedence
       --       when both buffers have the same listing status.
-      eq(buf1.b_fnum, buflist_findpat("test", ALLOW_UNLISTED))
+      eq(buf1.handle, buflist_findpat("test", ALLOW_UNLISTED))
 
       -- And: Neither buffer is returned when ignoring unlisted
       eq(-1, buflist_findpat("test", ONLY_LISTED))

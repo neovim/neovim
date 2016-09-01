@@ -47,7 +47,7 @@ instance.
 
 There are three ways to obtain API metadata:
 
-  1. Connect to a running Nvim instance and call `vim_get_api_info` via
+  1. Connect to a running Nvim instance and call `nvim_get_api_info` via
      msgpack-rpc. This is best for clients written in dynamic languages which
      can define functions at runtime.
 
@@ -105,7 +105,7 @@ Nvim instance:
     require 'msgpack/rpc/transport/unix'
 
     nvim = MessagePack::RPC::Client.new(MessagePack::RPC::UNIXTransport.new, ENV['NVIM_LISTEN_ADDRESS'])
-    result = nvim.call(:vim_command, 'echo "hello world!"')
+    result = nvim.call(:nvim_command, 'echo "hello world!"')
 <
 A better way is to use the Python REPL with the `neovim` package, where API
 functions can be called interactively:
@@ -117,9 +117,9 @@ functions can be called interactively:
 You can also embed an Nvim instance via |jobstart()|, and communicate using
 |rpcrequest()| and |rpcnotify()|:
 >
-    let vim = jobstart(['nvim', '--embed'], {'rpc': v:true})
-    echo rpcrequest(vim, 'vim_eval', '"Hello " . "world!"')
-    call jobstop(vim)
+    let nvim = jobstart(['nvim', '--embed'], {'rpc': v:true})
+    echo rpcrequest(nvim, 'nvim_eval', '"Hello " . "world!"')
+    call jobstop(nvim)
 <
 ==============================================================================
 4. Implementing API clients			*rpc-api-client* *api-client*
@@ -177,15 +177,20 @@ contains information that makes this task easier (see also |rpc-types|):
   - Container types may be decorated with type/size constraints, e.g.
     ArrayOf(Buffer) or ArrayOf(Integer, 2). This can be useful to generate
     even more strongly-typed APIs.
-  - Methods that operate on instances of Nvim special types (msgpack EXT) are
-    prefixed with the type name in lower case, e.g. `buffer_get_line`
-    represents the `get_line` method of a Buffer instance.
-  - Global methods are prefixed with `vim`, e.g. `vim_get_buffers`.
+  - Functions that are considered to be methods that operate on instances of
+    Nvim special types (msgpack EXT) will have the `"method"` attribute set to
+    `true`. The reciever type is the type of the first argument. The method
+    names are prefixed with `nvim_` plus a shortened type name, e.g.
+    `nvim_buf_get_lines` represents the `get_lines` method of a Buffer instance.
+    - Global functions have `"method"` set to `false` and are prefixed with just
+    `nvim_`, e.g. `nvim_get_buffers`.
 
 So for an object-oriented language, an API client contains the classes
 representing Nvim special types, and the methods of each class could be
-defined by inspecting the method name prefix. There could also be a singleton
-Vim class with methods mapped to functions prefixed with `vim_`.
+defined by stripping the prefix for the type as defined in the `types` metadata
+(this will always be the first two "_"-separated parts of the function name).
+There could also be a singleton Vim class with methods where the `nvim_`
+prefix is stripped off.
 
 ==============================================================================
 5. Types							    *rpc-types*
@@ -219,18 +224,21 @@ an integer, but not a Window or Tabpage.
 
 The most reliable way of determining the type codes for the special Nvim types
 is to inspect the `types` key of metadata dictionary returned by the
-`vim_get_api_info` method at runtime. Here's a sample JSON representation of
+`nvim_get_api_info` method at runtime. Here's a sample JSON representation of
 the `types` object:
 >
   "types": {
     "Buffer": {
-      "id": 0
+      "id": 0,
+      "prefix": "nvim_buf_"
     },
     "Window": {
-      "id": 1
+      "id": 1,
+      "prefix": "nvim_win_"
     },
     "Tabpage": {
-      "id": 2
+      "id": 2,
+      "prefix": "nvim_tabpage_"
     }
   }
 <

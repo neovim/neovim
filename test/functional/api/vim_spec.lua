@@ -7,6 +7,7 @@ local ok, nvim_async, feed = helpers.ok, helpers.nvim_async, helpers.feed
 local os_name = helpers.os_name
 local meths = helpers.meths
 local funcs = helpers.funcs
+local request = helpers.request
 
 describe('vim_* functions', function()
   before_each(clear)
@@ -40,6 +41,10 @@ describe('vim_* functions', function()
     it('handles NULL-initialized strings correctly', function()
       eq(1, nvim('eval',"matcharg(1) == ['', '']"))
       eq({'', ''}, nvim('eval','matcharg(1)'))
+    end)
+
+    it('works under deprecated name', function()
+      eq(2, request("vim_eval", "1+1"))
     end)
   end)
 
@@ -298,4 +303,11 @@ describe('vim_* functions', function()
     eq(false, status)
     ok(err:match('Invalid option name') ~= nil)
   end)
+
+  it("doesn't leak memory on incorrect argument types", function()
+    local status, err = pcall(nvim, 'change_directory',{'not', 'a', 'dir'})
+    eq(false, status)
+    ok(err:match(': Wrong type for argument 1, expecting String') ~= nil)
+  end)
+
 end)

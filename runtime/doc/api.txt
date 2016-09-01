@@ -14,13 +14,13 @@ C API for Nvim							   *API* *api*
 ==============================================================================
 1. Introduction							   *api-intro*
 
-Nvim exposes a public API for external code to interact with the Nvim core. In
-the present version of Nvim the API is primarily used by external processes to
-interact with Nvim using the msgpack-rpc protocol, see |msgpack-rpc|. The API
-will also be used from vimscript to access new Nvim core features, but this is
-not implemented yet. Later on, Nvim might be embeddable in C applications as
-libnvim, and the application will then control the embedded instance by
-calling the C API directly.
+Nvim exposes a public API for external code to interact with the Nvim core.
+The API is used by external processes to interact with Nvim using the
+msgpack-rpc protocol, see |msgpack-rpc|. The API is used from vimscript to
+access some new Nvim core features. See |eval-api| for how api functions are
+called from vimscript. Later on, Nvim might be embeddable in C applications as
+libnvim, and the application will then control the embedded instance by calling
+the C API directly.
 
 ==============================================================================
 2. API Types							   *api-types*
@@ -73,10 +73,10 @@ Another use case are plugins that show output in an append-only buffer, and
 want to add highlights to the outputs. Highlight data cannot be preserved
 on writing and loading a buffer to file, nor in undo/redo cycles.
 
-Highlights are registered using the |buffer_add_highlight| function, see the
+Highlights are registered using the |nvim_buf_add_highlight| function, see the
 generated API documentation for details. If an external highlighter plugin is
 adding a large number of highlights in a batch, performance can be improved by
-calling |buffer_add_highlight| as an asynchronous notification, after first
+calling |nvim_buf_add_highlight| as an asynchronous notification, after first
 (synchronously) reqesting a source id. Here is an example using wrapper
 functions in the python client:
 >
@@ -91,10 +91,19 @@ functions in the python client:
     buf.clear_highlight(src)
 <
 If the highlights don't need to be deleted or updated, just pass -1 as
-src_id (this is the default in python). |buffer_clear_highlight| can be used
-to clear highligts from a specific source, in a specific line range or the
-entire buffer by passing in the line range 0, -1 (the later is the default
+src_id (this is the default in python). |nvim_buf_clear_highlight| can be used
+to clear highlights from a specific source, in a specific line range or the
+entire buffer by passing in the line range 0, -1 (the latter is the default
 in python as used above).
 
+An example of calling the api from vimscript: >
+
+    call nvim_buf_set_lines(0, 0, 0, v:true, ["test text"])
+    let src = nvim_buf_add_highlight(0, 0, "String", 1, 0, 4)
+    call nvim_buf_add_highlight(0, src, "Identifier", 0, 5, -1)
+
+    " later
+    call nvim_buf_clear_highlight(0, src, 0, -1)
+>
 ==============================================================================
  vim:tw=78:ts=8:noet:ft=help:norl:

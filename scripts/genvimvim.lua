@@ -1,3 +1,5 @@
+mpack = require('mpack')
+
 if arg[1] == '--help' then
   print('Usage: lua genvimvim.lua src/nvim runtime/syntax/vim/generated.vim')
   os.exit(0)
@@ -5,6 +7,7 @@ end
 
 local nvimsrcdir = arg[1]
 local syntax_file = arg[2]
+local funcs_file = arg[3]
 
 package.path = nvimsrcdir .. '/?.lua;' .. package.path
 
@@ -111,28 +114,16 @@ end
 w('\n\nsyn case match')
 local vimfun_start = 'syn keyword vimFuncName contained '
 w('\n\n' .. vimfun_start)
-eval_fd = io.open(nvimsrcdir .. '/eval.c', 'r')
+funcs = mpack.unpack(io.open(funcs_file):read("*all"))
 local started = 0
-for line in eval_fd:lines() do
-  if line == '} functions[] =' then
-    started = 1
-  elseif started == 1 then
-    assert (line == '{')
-    started = 2
-  elseif started == 2 then
-    if line == '};' then
-      break
+for name, def in pairs(funcs) do
+  if name then
+    if lld.line_length > 850 then
+      w('\n' .. vimfun_start)
     end
-    local func_name = line:match('^  { "([%w_]+)",')
-    if func_name then
-      if lld.line_length > 850 then
-        w('\n' .. vimfun_start)
-      end
-      w(' ' .. func_name)
-    end
+    w(' ' .. name)
   end
 end
-eval_fd:close()
 
 w('\n')
 syn_fd:close()
