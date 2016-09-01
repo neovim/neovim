@@ -21768,6 +21768,9 @@ static inline bool common_job_start(TerminalJobData *data, typval_T *rettv)
     return false;
   }
 
+  data->id = next_chan_id++;
+  pmap_put(uint64_t)(jobs, data->id, data);
+
   data->refcount++;
   char *cmd = xstrdup(proc->argv[0]);
   if (!process_spawn(proc)) {
@@ -21782,7 +21785,6 @@ static inline bool common_job_start(TerminalJobData *data, typval_T *rettv)
   }
   xfree(cmd);
 
-  data->id = next_chan_id++;
 
   if (data->rpc) {
     // the rpc channel takes over the in and out streams
@@ -21799,7 +21801,6 @@ static inline bool common_job_start(TerminalJobData *data, typval_T *rettv)
     rstream_init(proc->err, 0);
     rstream_start(proc->err, on_job_stderr, data);
   }
-  pmap_put(uint64_t)(jobs, data->id, data);
   rettv->vval.v_number = data->id;
   return true;
 }
@@ -21821,6 +21822,7 @@ static inline void free_term_job_data_event(void **argv)
     dict_unref(data->self);
   }
   queue_free(data->events);
+  pmap_del(uint64_t)(jobs, data->id);
   xfree(data);
 }
 
@@ -21927,7 +21929,6 @@ static void on_process_exit(Process *proc, int status, void *d)
 
   process_job_event(data, data->on_exit, "exit", NULL, 0, status);
 
-  pmap_del(uint64_t)(jobs, data->id);
   term_job_data_decref(data);
 }
 
