@@ -32,8 +32,15 @@ static bool rejecting_deadly;
 
 void signal_init(void)
 {
-  // Ensure that SIGCHLD is unblocked, else libuv (epoll_wait) may hang.
-  signal_unblock_SIGCHLD();
+#ifndef WIN32
+  // Ensure a clean slate by unblocking all signals. For example, if SIGCHLD is
+  // blocked, libuv may hang after spawning a subprocess on Linux. #5230
+  sigset_t mask;
+  sigemptyset(&mask);
+  if (pthread_sigmask(SIG_SETMASK, &mask, NULL) != 0) {
+    ELOG("Could not unblock signals, nvim might behave strangely.");
+  }
+#endif
 
   signal_watcher_init(&main_loop, &spipe, NULL);
   signal_watcher_init(&main_loop, &shup, NULL);
@@ -156,28 +163,4 @@ static void on_signal(SignalWatcher *handle, int signum, void *data)
       fprintf(stderr, "Invalid signal %d", signum);
       break;
   }
-}
-
-static void signal_unblock_SIGCHLD(void)
-{
-#ifndef WIN32
-  sigset_t mask;
-  sigemptyset(&mask);
-
-  // Work around broken macOS headers. #5243
-# if defined(__APPLE__) && !defined(__clang__) && !defined(__INTEL_COMPILER) \
-    && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6))
-#  pragma GCC diagnostic push
-#  pragma GCC diagnostic ignored "-Wsign-conversion"
-# endif
-
-  sigaddset(&mask, SIGCHLD);
-
-# if defined(__APPLE__) && !defined(__clang__) && !defined(__INTEL_COMPILER) \
-    && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6))
-#  pragma GCC diagnostic pop
-# endif
-
-  pthread_sigmask(SIG_UNBLOCK, &mask, NULL);
-#endif
 }
