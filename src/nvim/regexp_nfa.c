@@ -4855,9 +4855,15 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start,
   // recursive_regmatch(). Allow interrupting them with CTRL-C.
   fast_breakcheck();
   if (got_int) {
+#ifdef NFA_REGEXP_DEBUG_LOG
+    fclose(debug);
+#endif
     return false;
   }
   if (nfa_time_limit != NULL && profile_passed_limit(*nfa_time_limit)) {
+#ifdef NFA_REGEXP_DEBUG_LOG
+    fclose(debug);
+#endif
     return false;
   }
 
