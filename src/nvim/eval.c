@@ -1131,23 +1131,6 @@ int get_spellword(list_T *list, const char **pp)
   return tv_get_number(&li->li_tv);
 }
 
-/*
- * Top level evaluation function.
- * Returns an allocated typval_T with the result.
- * Returns NULL when there is an error.
- */
-typval_T *eval_expr(char_u *arg, char_u **nextcmd)
-{
-  typval_T *tv = xmalloc(sizeof(typval_T));
-
-  if (eval0(arg, tv, nextcmd, TRUE) == FAIL) {
-    xfree(tv);
-    return NULL;
-  }
-
-  return tv;
-}
-
 
 // Call some vimL function and return the result in "*rettv".
 // Uses argv[argc] for the function arguments.  Only Number and String
