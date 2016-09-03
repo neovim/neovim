@@ -2554,19 +2554,22 @@ void cmdline_paste_str(char_u *s, int literally)
   else
     while (*s != NUL) {
       cv = *s;
-      if (cv == Ctrl_V && s[1])
-        ++s;
-      if (has_mbyte)
-        c = mb_cptr2char_adv(&s);
-      else
+      if (cv == Ctrl_V && s[1]) {
+        s++;
+      }
+      if (has_mbyte) {
+        c = mb_cptr2char_adv((const char_u **)&s);
+      } else {
         c = *s++;
+      }
       if (cv == Ctrl_V || c == ESC || c == Ctrl_C
           || c == CAR || c == NL || c == Ctrl_L
 #ifdef UNIX
           || c == intr_char
 #endif
-          || (c == Ctrl_BSL && *s == Ctrl_N))
+          || (c == Ctrl_BSL && *s == Ctrl_N)) {
         stuffcharReadbuff(Ctrl_V);
+      }
       stuffcharReadbuff(c);
     }
 }
@@ -4636,7 +4639,7 @@ in_history (
 ///
 /// @return Any value from HistoryType enum, including HIST_INVALID. May not
 ///         return HIST_DEFAULT unless return_default is true.
-HistoryType get_histtype(const char_u *const name, const size_t len,
+HistoryType get_histtype(const char *const name, const size_t len,
                          const bool return_default)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
@@ -5029,7 +5032,7 @@ void ex_history(exarg_T *eap)
     while (ASCII_ISALPHA(*end)
            || vim_strchr((char_u *)":=@>/?", *end) != NULL)
       end++;
-    histype1 = get_histtype(arg, end - arg, false);
+    histype1 = get_histtype((const char *)arg, end - arg, false);
     if (histype1 == HIST_INVALID) {
       if (STRNICMP(arg, "all", end - arg) == 0) {
         histype1 = 0;
@@ -5288,18 +5291,18 @@ static int ex_window(void)
       cmdwin_result = Ctrl_C;
     /* Set the new command line from the cmdline buffer. */
     xfree(ccline.cmdbuff);
-    if (cmdwin_result == K_XF1 || cmdwin_result == K_XF2) {   /* :qa[!] typed */
-      char *p = (cmdwin_result == K_XF2) ? "qa" : "qa!";
+    if (cmdwin_result == K_XF1 || cmdwin_result == K_XF2) {  // :qa[!] typed
+      const char *p = (cmdwin_result == K_XF2) ? "qa" : "qa!";
 
       if (histtype == HIST_CMD) {
-        /* Execute the command directly. */
-        ccline.cmdbuff = vim_strsave((char_u *)p);
+        // Execute the command directly.
+        ccline.cmdbuff = (char_u *)xstrdup(p);
         cmdwin_result = CAR;
       } else {
-        /* First need to cancel what we were doing. */
+        // First need to cancel what we were doing.
         ccline.cmdbuff = NULL;
         stuffcharReadbuff(':');
-        stuffReadbuff((char_u *)p);
+        stuffReadbuff(p);
         stuffcharReadbuff(CAR);
       }
     } else if (cmdwin_result == K_XF2) {      /* :qa typed */

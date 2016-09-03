@@ -90,7 +90,6 @@ int buf_init_chartab(buf_T *buf, int global)
 {
   int c;
   int c2;
-  char_u *p;
   int i;
   bool tilde;
   bool do_isalpha;
@@ -144,7 +143,8 @@ int buf_init_chartab(buf_T *buf, int global)
   // Walk through the 'isident', 'iskeyword', 'isfname' and 'isprint'
   // options Each option is a list of characters, character numbers or
   // ranges, separated by commas, e.g.: "200-210,x,#-178,-"
-  for (i = global ? 0 : 3; i <= 3; ++i) {
+  for (i = global ? 0 : 3; i <= 3; i++) {
+    const char_u *p;
     if (i == 0) {
       // first round: 'isident'
       p = p_isi;
@@ -169,7 +169,7 @@ int buf_init_chartab(buf_T *buf, int global)
       }
 
       if (ascii_isdigit(*p)) {
-        c = getdigits_int(&p);
+        c = getdigits_int((char_u **)&p);
       } else {
         c = mb_ptr2char_adv(&p);
       }
@@ -179,7 +179,7 @@ int buf_init_chartab(buf_T *buf, int global)
         ++p;
 
         if (ascii_isdigit(*p)) {
-          c2 = getdigits_int(&p);
+          c2 = getdigits_int((char_u **)&p);
         } else {
           c2 = mb_ptr2char_adv(&p);
         }

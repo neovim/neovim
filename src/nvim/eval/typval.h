@@ -27,6 +27,7 @@ typedef double float_T;
 
 /// Mimimal possible value of varnumber_T variable
 #define VARNUMBER_MIN INT_MIN
+#define PRIdVARNUMBER "d"
 
 /// %d printf format specifier for varnumber_T
 #define PRIdVARNUMBER "d"

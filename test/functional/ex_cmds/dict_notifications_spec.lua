@@ -9,7 +9,7 @@ local eval = helpers.eval
 describe('dictionary change notifications', function()
   local channel
 
-  setup(function()
+  before_each(function()
     clear()
     channel = nvim('get_api_info')[1]
     nvim('set_var', 'channel', channel)
@@ -18,19 +18,15 @@ describe('dictionary change notifications', function()
   -- the same set of tests are applied to top-level dictionaries(g:, b:, w: and
   -- t:) and a dictionary variable, so we generate them in the following
   -- function.
-  local function gentests(dict_expr, dict_expr_suffix, dict_init)
-    if not dict_expr_suffix then
-      dict_expr_suffix = ''
-    end
-
+  local function gentests(dict_expr, dict_init)
     local function update(opval, key)
       if not key then
         key = 'watched'
       end
       if opval == '' then
-        nvim('command', "unlet "..dict_expr..dict_expr_suffix..key)
+        command(('unlet %s[\'%s\']'):format(dict_expr, key))
       else
-        nvim('command', "let "..dict_expr..dict_expr_suffix..key.." "..opval)
+        command(('let %s[\'%s\'] %s'):format(dict_expr, key, opval))
       end
     end
 
@@ -50,7 +46,7 @@ describe('dictionary change notifications', function()
 
     describe(dict_expr .. ' watcher', function()
       if dict_init then
-        setup(function()
+        before_each(function()
           source(dict_init)
         end)
       end
@@ -143,6 +139,32 @@ describe('dictionary change notifications', function()
         ]])
       end)
 
+      it('is triggered for empty keys', function()
+        command([[
+        call dictwatcheradd(]]..dict_expr..[[, "", "g:Changed")
+        ]])
+        update('= 1', '')
+        verify_value({new = 1}, '')
+        update('= 2', '')
+        verify_value({old = 1, new = 2}, '')
+        command([[
+        call dictwatcherdel(]]..dict_expr..[[, "", "g:Changed")
+        ]])
+      end)
+
+      it('is triggered for empty keys when using catch-all *', function()
+        command([[
+        call dictwatcheradd(]]..dict_expr..[[, "*", "g:Changed")
+        ]])
+        update('= 1', '')
+        verify_value({new = 1}, '')
+        update('= 2', '')
+        verify_value({old = 1, new = 2}, '')
+        command([[
+        call dictwatcherdel(]]..dict_expr..[[, "*", "g:Changed")
+        ]])
+      end)
+
       -- test a sequence of updates of different types to ensure proper memory
       -- management(with ASAN)
       local function test_updates(tests)
@@ -190,10 +212,10 @@ describe('dictionary change notifications', function()
   gentests('b:')
   gentests('w:')
   gentests('t:')
-  gentests('g:dict_var', '.', 'let g:dict_var = {}')
+  gentests('g:dict_var', 'let g:dict_var = {}')
 
   describe('multiple watchers on the same dict/key', function()
-    setup(function()
+    before_each(function()
       source([[
       function! g:Watcher1(dict, key, value)
         call rpcnotify(g:channel, '1', a:key, a:value)
@@ -213,6 +235,9 @@ describe('dictionary change notifications', function()
     end)
 
     it('only removes watchers that fully match dict, key and callback', function()
+      nvim('command', 'let g:key = "value"')
+      eq({'notification', '1', {'key', {new = 'value'}}}, next_msg())
+      eq({'notification', '2', {'key', {new = 'value'}}}, next_msg())
       nvim('command', 'call dictwatcherdel(g:, "key", "g:Watcher1")')
       nvim('command', 'let g:key = "v2"')
       eq({'notification', '2', {'key', {old = 'value', new = 'v2'}}}, next_msg())
@@ -220,6 +245,17 @@ describe('dictionary change notifications', function()
   end)
 
   describe('errors', function()
+    before_each(function()
+      source([[
+      function! g:Watcher1(dict, key, value)
+        call rpcnotify(g:channel, '1', a:key, a:value)
+      endfunction
+      function! g:Watcher2(dict, key, value)
+        call rpcnotify(g:channel, '2', a:key, a:value)
+      endfunction
+      ]])
+    end)
+
     -- WARNING: This suite depends on the above tests
     it('fails to remove if no watcher with matching callback is found', function()
       eq("Vim(call):Couldn't find a watcher matching key and callback",
@@ -236,15 +272,10 @@ describe('dictionary change notifications', function()
       command('call dictwatcherdel(g:, "key", "g:InvalidCb")')
     end)
 
-    it('fails with empty keys', function()
-      eq("Vim(call):E713: Cannot use empty key for Dictionary",
-        exc_exec('call dictwatcheradd(g:, "", "g:Watcher1")'))
-      eq("Vim(call):E713: Cannot use empty key for Dictionary",
-        exc_exec('call dictwatcherdel(g:, "", "g:Watcher1")'))
-    end)
-
     it('does not fail to replace a watcher function', function()
       source([[
+      let g:key = 'v2'
+      call dictwatcheradd(g:, "key", "g:Watcher2")
       function! g:ReplaceWatcher2()
         function! g:Watcher2(dict, key, value)
           call rpcnotify(g:channel, '2b', a:key, a:value)

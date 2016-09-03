@@ -235,19 +235,18 @@ char_u *get_inserted(void)
   return get_buffcont(&redobuff, FALSE);
 }
 
-/*
- * Add string "s" after the current block of buffer "buf".
- * K_SPECIAL and CSI should have been escaped already.
- */
-static void 
-add_buff (
-    buffheader_T *buf,
-    char_u *s,
-    ssize_t slen                      // length of "s" or -1
-)
+/// Add string after the current block of the given buffer
+///
+/// K_SPECIAL and CSI should have been escaped already.
+///
+/// @param[out]  buf  Buffer to add to.
+/// @param[in]  s  String to add.
+/// @param[in]  slen  String length or -1 for NUL-terminated string.
+static void add_buff(buffheader_T *const buf, const char *const s,
+                     ptrdiff_t slen)
 {
   if (slen < 0) {
-    slen = (ssize_t)STRLEN(s);
+    slen = (ptrdiff_t)strlen(s);
   }
   if (slen == 0) {                              // don't add empty strings
     return;
@@ -292,9 +291,8 @@ add_buff (
  */
 static void add_num_buff(buffheader_T *buf, long n)
 {
-  char_u number[32];
-
-  sprintf((char *)number, "%" PRId64, (int64_t)n);
+  char number[32];
+  snprintf(number, sizeof(number), "%ld", n);
   add_buff(buf, number, -1L);
 }
 
@@ -304,27 +302,29 @@ static void add_num_buff(buffheader_T *buf, long n)
  */
 static void add_char_buff(buffheader_T *buf, int c)
 {
-  char_u bytes[MB_MAXBYTES + 1];
+  char bytes[MB_MAXBYTES + 1];
+
   int len;
-  int i;
-  char_u temp[4];
-
-  if (IS_SPECIAL(c))
+  if (IS_SPECIAL(c)) {
     len = 1;
-  else
-    len = (*mb_char2bytes)(c, bytes);
-  for (i = 0; i < len; ++i) {
-    if (!IS_SPECIAL(c))
-      c = bytes[i];
+  } else {
+    len = (*mb_char2bytes)(c, (char_u *)bytes);
+  }
 
+  for (int i = 0; i < len; i++) {
+    if (!IS_SPECIAL(c)) {
+      c = bytes[i];
+    }
+
+    char temp[4];
     if (IS_SPECIAL(c) || c == K_SPECIAL || c == NUL) {
-      /* translate special key code into three byte sequence */
-      temp[0] = K_SPECIAL;
-      temp[1] = (char_u)K_SECOND(c);
-      temp[2] = (char_u)K_THIRD(c);
+      // Translate special key code into three byte sequence.
+      temp[0] = (char)K_SPECIAL;
+      temp[1] = (char)K_SECOND(c);
+      temp[2] = (char)K_THIRD(c);
       temp[3] = NUL;
     } else {
-      temp[0] = (char_u)c;
+      temp[0] = (char)c;
       temp[1] = NUL;
     }
     add_buff(buf, temp, -1L);
@@ -479,16 +479,14 @@ static int save_level = 0;
 
 void saveRedobuff(void)
 {
-  char_u      *s;
-
   if (save_level++ == 0) {
     save_redobuff = redobuff;
     redobuff.bh_first.b_next = NULL;
     save_old_redobuff = old_redobuff;
     old_redobuff.bh_first.b_next = NULL;
 
-    /* Make a copy, so that ":normal ." in a function works. */
-    s = get_buffcont(&save_redobuff, FALSE);
+    // Make a copy, so that ":normal ." in a function works.
+    char *const s = (char *)get_buffcont(&save_redobuff, false);
     if (s != NULL) {
       add_buff(&redobuff, s, -1L);
       xfree(s);
@@ -514,10 +512,11 @@ void restoreRedobuff(void)
  * Append "s" to the redo buffer.
  * K_SPECIAL and CSI should already have been escaped.
  */
-void AppendToRedobuff(char_u *s)
+void AppendToRedobuff(const char *s)
 {
-  if (!block_redo)
-    add_buff(&redobuff, s, -1L);
+  if (!block_redo) {
+    add_buff(&redobuff, (const char *)s, -1L);
+  }
 }
 
 /*
@@ -530,44 +529,47 @@ AppendToRedobuffLit (
     int len                    /* length of "str" or -1 for up to the NUL */
 )
 {
-  char_u      *s = str;
-  int c;
-  char_u      *start;
-
-  if (block_redo)
+  if (block_redo) {
     return;
+  }
 
-  while (len < 0 ? *s != NUL : s - str < len) {
-    /* Put a string of normal characters in the redo buffer (that's
-     * faster). */
-    start = s;
-    while (*s >= ' ' && *s < DEL && (len < 0 || s - str < len))
-      ++s;
+  const char *s = (const char *)str;
+  while (len < 0 ? *s != NUL : s - (const char *)str < len) {
+    // Put a string of normal characters in the redo buffer (that's
+    // faster).
+    const char *start = s;
+    while (*s >= ' ' && *s < DEL && (len < 0 || s - (const char *)str < len)) {
+      s++;
+    }
 
-    /* Don't put '0' or '^' as last character, just in case a CTRL-D is
-     * typed next. */
-    if (*s == NUL && (s[-1] == '0' || s[-1] == '^'))
-      --s;
-    if (s > start)
+    // Don't put '0' or '^' as last character, just in case a CTRL-D is
+    // typed next.
+    if (*s == NUL && (s[-1] == '0' || s[-1] == '^')) {
+      s--;
+    }
+    if (s > start) {
       add_buff(&redobuff, start, (long)(s - start));
+    }
 
-    if (*s == NUL || (len >= 0 && s - str >= len))
+    if (*s == NUL || (len >= 0 && s - (const char *)str >= len)) {
       break;
+    }
 
-    /* Handle a special or multibyte character. */
-    if (has_mbyte)
-      /* Handle composing chars separately. */
-      c = mb_cptr2char_adv(&s);
-    else
-      c = *s++;
-    if (c < ' ' || c == DEL || (*s == NUL && (c == '0' || c == '^')))
+    // Handle a special or multibyte character.
+    // Composing chars separately are handled separately.
+    const int c = (has_mbyte
+                   ? mb_cptr2char_adv((const char_u **)&s)
+                   : (uint8_t)(*s++));
+    if (c < ' ' || c == DEL || (*s == NUL && (c == '0' || c == '^'))) {
       add_char_buff(&redobuff, Ctrl_V);
+    }
 
-    /* CTRL-V '0' must be inserted as CTRL-V 048 */
-    if (*s == NUL && c == '0')
-      add_buff(&redobuff, (char_u *)"048", 3L);
-    else
+    // CTRL-V '0' must be inserted as CTRL-V 048.
+    if (*s == NUL && c == '0') {
+      add_buff(&redobuff, "048", 3L);
+    } else {
       add_char_buff(&redobuff, c);
+    }
   }
 }
 
@@ -594,19 +596,19 @@ void AppendNumberToRedobuff(long n)
  * Append string "s" to the stuff buffer.
  * CSI and K_SPECIAL must already have been escaped.
  */
-void stuffReadbuff(char_u *s)
+void stuffReadbuff(const char *s)
 {
   add_buff(&readbuf1, s, -1L);
 }
 
 /// Append string "s" to the redo stuff buffer.
 /// @remark CSI and K_SPECIAL must already have been escaped.
-void stuffRedoReadbuff(char_u *s)
+void stuffRedoReadbuff(const char *s)
 {
   add_buff(&readbuf2, s, -1L);
 }
 
-void stuffReadbuffLen(char_u *s, long len)
+void stuffReadbuffLen(const char *s, long len)
 {
   add_buff(&readbuf1, s, len);
 }
@@ -616,19 +618,18 @@ void stuffReadbuffLen(char_u *s, long len)
  * escaping other K_SPECIAL and CSI bytes.
  * Change CR, LF and ESC into a space.
  */
-void stuffReadbuffSpec(char_u *s)
+void stuffReadbuffSpec(const char *s)
 {
-  int c;
-
   while (*s != NUL) {
-    if (*s == K_SPECIAL && s[1] != NUL && s[2] != NUL) {
-      /* Insert special key literally. */
-      stuffReadbuffLen(s, 3L);
+    if ((uint8_t)(*s) == K_SPECIAL && s[1] != NUL && s[2] != NUL) {
+      // Insert special key literally.
+      stuffReadbuffLen(s, 3);
       s += 3;
     } else {
-      c = mb_ptr2char_adv(&s);
-      if (c == CAR || c == NL || c == ESC)
+      int c = mb_ptr2char_adv((const char_u **)&s);
+      if (c == CAR || c == NL || c == ESC) {
         c = ' ';
+      }
       stuffcharReadbuff(c);
     }
   }
@@ -747,8 +748,8 @@ int start_redo(long count, int old_redo)
 
   /* copy the buffer name, if present */
   if (c == '"') {
-    add_buff(&readbuf2, (char_u *)"\"", 1L);
-    c = read_redo(FALSE, old_redo);
+    add_buff(&readbuf2, "\"", 1L);
+    c = read_redo(false, old_redo);
 
     /* if a numbered buffer is used, increment the number */
     if (c >= '1' && c < '9')
@@ -1091,21 +1092,19 @@ static void gotchars(char_u *chars, size_t len)
 {
   char_u      *s = chars;
   int c;
-  char_u buf[2];
 
   // remember how many chars were last recorded
   if (Recording) {
     last_recorded_len += len;
   }
 
-  buf[1] = NUL;
   while (len--) {
     // Handle one byte at a time; no translation to be done.
     c = *s++;
     updatescript(c);
 
     if (Recording) {
-      buf[0] = (char_u)c;
+      char buf[2] = { (char)c, NUL };
       add_buff(&recordbuff, buf, 1L);
     }
   }

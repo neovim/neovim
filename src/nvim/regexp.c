@@ -2221,10 +2221,11 @@ collection:
               if (*regparse == '[')
                 endc = get_coll_element(&regparse);
               if (endc == 0) {
-                if (has_mbyte)
-                  endc = mb_ptr2char_adv(&regparse);
-                else
+                if (has_mbyte) {
+                  endc = mb_ptr2char_adv((const char_u **)&regparse);
+                } else {
                   endc = *regparse++;
+                }
               }
 
               /* Handle \o40, \x20 and \u20AC style sequences */
@@ -6271,8 +6272,8 @@ static int cstrncmp(char_u *s1, char_u *s2, int *n)
     str2 = s2;
     c1 = c2 = 0;
     while ((int)(str1 - s1) < *n) {
-      c1 = mb_ptr2char_adv(&str1);
-      c2 = mb_ptr2char_adv(&str2);
+      c1 = mb_ptr2char_adv((const char_u **)&str1);
+      c2 = mb_ptr2char_adv((const char_u **)&str2);
 
       /* decompose the character if necessary, into 'base' characters
        * because I don't care about Arabic, I will hard-code the Hebrew
@@ -6586,7 +6587,6 @@ static int vim_regsub_both(char_u *source, typval_T *expr, char_u *dest,
       if (expr != NULL) {
         typval_T argv[2];
         int dummy;
-        char_u buf[NUMBUFLEN];
         typval_T rettv;
         staticList10_T matchList;
 
@@ -6616,7 +6616,8 @@ static int vim_regsub_both(char_u *source, typval_T *expr, char_u *dest,
             clear_submatch_list(&matchList);
           }
         }
-        eval_result = get_tv_string_buf_chk(&rettv, buf);
+        char buf[NUMBUFLEN];
+        eval_result = (char_u *)tv_get_string_buf_chk(&rettv, buf);
         if (eval_result != NULL) {
           eval_result = vim_strsave(eval_result);
         }

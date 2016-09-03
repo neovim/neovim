@@ -1109,7 +1109,6 @@ int insert_reg(
 )
 {
   int retval = OK;
-  char_u      *arg;
   int allocated;
 
   /*
@@ -1125,21 +1124,24 @@ int insert_reg(
   if (regname != NUL && !valid_yank_reg(regname, false))
     return FAIL;
 
-  if (regname == '.')                   /* insert last inserted text */
-    retval = stuff_inserted(NUL, 1L, TRUE);
-  else if (get_spec_reg(regname, &arg, &allocated, TRUE)) {
-    if (arg == NULL)
+  char_u *arg;
+  if (regname == '.') {  // Insert last inserted text.
+    retval = stuff_inserted(NUL, 1L, true);
+  } else if (get_spec_reg(regname, &arg, &allocated, true)) {
+    if (arg == NULL) {
       return FAIL;
-    stuffescaped(arg, literally);
-    if (allocated)
+    }
+    stuffescaped((const char *)arg, literally);
+    if (allocated) {
       xfree(arg);
-  } else {                            /* name or number register */
+    }
+  } else {  // Name or number register.
     yankreg_T *reg = get_yank_register(regname, YREG_PASTE);
     if (reg->y_array == NULL) {
       retval = FAIL;
     } else {
       for (size_t i = 0; i < reg->y_size; i++) {
-        stuffescaped(reg->y_array[i], literally);
+        stuffescaped((const char *)reg->y_array[i], literally);
         // Insert a newline between lines and after last line if
         // y_type is kMTLineWise.
         if (reg->y_type == kMTLineWise || i < reg->y_size - 1) {
@@ -1156,29 +1158,29 @@ int insert_reg(
  * Stuff a string into the typeahead buffer, such that edit() will insert it
  * literally ("literally" TRUE) or interpret is as typed characters.
  */
-static void stuffescaped(char_u *arg, int literally)
+static void stuffescaped(const char *arg, int literally)
 {
-  int c;
-  char_u      *start;
-
   while (*arg != NUL) {
-    /* Stuff a sequence of normal ASCII characters, that's fast.  Also
-     * stuff K_SPECIAL to get the effect of a special key when "literally"
-     * is TRUE. */
-    start = arg;
-    while ((*arg >= ' ' && *arg < DEL) || (*arg == K_SPECIAL && !literally))
-      ++arg;
-    if (arg > start)
+    // Stuff a sequence of normal ASCII characters, that's fast.  Also
+    // stuff K_SPECIAL to get the effect of a special key when "literally"
+    // is TRUE.
+    const char *const start = arg;
+    while ((*arg >= ' ' && *arg < DEL) || ((uint8_t)(*arg) == K_SPECIAL
+                                           && !literally)) {
+      arg++;
+    }
+    if (arg > start) {
       stuffReadbuffLen(start, (long)(arg - start));
+    }
 
     /* stuff a single special character */
     if (*arg != NUL) {
-      if (has_mbyte)
-        c = mb_cptr2char_adv(&arg);
-      else
-        c = *arg++;
-      if (literally && ((c < ' ' && c != TAB) || c == DEL))
+      const int c = (has_mbyte
+                     ? mb_cptr2char_adv((const char_u **)&arg)
+                     : (uint8_t)(*arg++));
+      if (literally && ((c < ' ' && c != TAB) || c == DEL)) {
         stuffcharReadbuff(Ctrl_V);
+      }
       stuffcharReadbuff(c);
     }
   }
@@ -2663,7 +2665,7 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
           // back to the previous line in the case of 'noautoindent' and
           // 'backspace' includes "eol". So we insert a dummy space for Ctrl_U
           // to consume.
-          stuffReadbuff((char_u *)"\n ");
+          stuffReadbuff("\n ");
           stuffcharReadbuff(Ctrl_U);
         }
       }
@@ -2675,7 +2677,7 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
     // character.  Simulate it with motion commands after the insert.
     if (flags & PUT_CURSEND) {
       if (flags & PUT_LINE) {
-        stuffReadbuff((char_u *)"j0");
+        stuffReadbuff("j0");
       } else {
         // Avoid ringing the bell from attempting to move into the space after
         // the current line. We can stuff the readbuffer with "l" if:
@@ -2705,7 +2707,7 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
         }
       }
     } else if (flags & PUT_LINE) {
-      stuffReadbuff((char_u *)"g'[");
+      stuffReadbuff("g'[");
     }
 
     // So the 'u' command restores cursor position after ".p, save the cursor
@@ -4981,7 +4983,7 @@ void write_reg_contents(int name, const char_u *str, ssize_t len,
   write_reg_contents_ex(name, str, len, must_append, kMTUnknown, 0L);
 }
 
-void write_reg_contents_lst(int name, char_u **strings, int maxlen,
+void write_reg_contents_lst(int name, char_u **strings,
                             bool must_append, MotionType yank_type,
                             colnr_T block_len)
 {

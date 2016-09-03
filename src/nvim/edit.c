@@ -1423,7 +1423,7 @@ static void ins_ctrl_v(void)
     edit_putchar('^', TRUE);
     did_putchar = TRUE;
   }
-  AppendToRedobuff((char_u *)CTRL_V_STR);       /* CTRL-V */
+  AppendToRedobuff(CTRL_V_STR);
 
   add_to_showcmd_c(Ctrl_V);
 
@@ -1977,7 +1977,6 @@ static bool ins_compl_accept_char(int c)
  */
 int ins_compl_add_infercase(char_u *str, int len, int icase, char_u *fname, int dir, int flags)
 {
-  char_u      *p;
   int i, c;
   int actual_len;                       /* Take multi-byte characters */
   int actual_compl_length;              /* into account. */
@@ -1987,11 +1986,11 @@ int ins_compl_add_infercase(char_u *str, int len, int icase, char_u *fname, int 
   int was_letter = FALSE;
 
   if (p_ic && curbuf->b_p_inf && len > 0) {
-    /* Infer case of completed part. */
+    // Infer case of completed part.
 
-    /* Find actual length of completion. */
+    // Find actual length of completion.
     if (has_mbyte) {
-      p = str;
+      const char_u *p = str;
       actual_len = 0;
       while (*p != NUL) {
         mb_ptr_adv(p);
@@ -2002,7 +2001,7 @@ int ins_compl_add_infercase(char_u *str, int len, int icase, char_u *fname, int 
 
     /* Find actual length of original text. */
     if (has_mbyte) {
-      p = compl_orig_text;
+      const char_u *p = compl_orig_text;
       actual_compl_length = 0;
       while (*p != NUL) {
         mb_ptr_adv(p);
@@ -2018,27 +2017,35 @@ int ins_compl_add_infercase(char_u *str, int len, int icase, char_u *fname, int 
 
     /* Allocate wide character array for the completion and fill it. */
     wca = xmalloc(actual_len * sizeof(*wca));
-    p = str;
-    for (i = 0; i < actual_len; ++i)
-      if (has_mbyte)
-        wca[i] = mb_ptr2char_adv(&p);
-      else
-        wca[i] = *(p++);
+    {
+      const char_u *p = str;
+      for (i = 0; i < actual_len; i++) {
+        if (has_mbyte) {
+          wca[i] = mb_ptr2char_adv(&p);
+        } else {
+          wca[i] = *(p++);
+        }
+      }
+    }
 
-    /* Rule 1: Were any chars converted to lower? */
-    p = compl_orig_text;
-    for (i = 0; i < min_len; ++i) {
-      if (has_mbyte)
-        c = mb_ptr2char_adv(&p);
-      else
-        c = *(p++);
-      if (vim_islower(c)) {
-        has_lower = TRUE;
-        if (vim_isupper(wca[i])) {
-          /* Rule 1 is satisfied. */
-          for (i = actual_compl_length; i < actual_len; ++i)
-            wca[i] = vim_tolower(wca[i]);
-          break;
+    // Rule 1: Were any chars converted to lower?
+    {
+      const char_u *p = compl_orig_text;
+      for (i = 0; i < min_len; i++) {
+        if (has_mbyte) {
+          c = mb_ptr2char_adv(&p);
+        } else {
+          c = *(p++);
+        }
+        if (vim_islower(c)) {
+          has_lower = true;
+          if (vim_isupper(wca[i])) {
+            // Rule 1 is satisfied.
+            for (i = actual_compl_length; i < actual_len; i++) {
+              wca[i] = vim_tolower(wca[i]);
+            }
+            break;
+          }
         }
       }
     }
@@ -2048,49 +2055,57 @@ int ins_compl_add_infercase(char_u *str, int len, int icase, char_u *fname, int 
      * upper case.
      */
     if (!has_lower) {
-      p = compl_orig_text;
-      for (i = 0; i < min_len; ++i) {
-        if (has_mbyte)
+      const char_u *p = compl_orig_text;
+      for (i = 0; i < min_len; i++) {
+        if (has_mbyte) {
           c = mb_ptr2char_adv(&p);
-        else
+        } else {
           c = *(p++);
+        }
         if (was_letter && vim_isupper(c) && vim_islower(wca[i])) {
-          /* Rule 2 is satisfied. */
-          for (i = actual_compl_length; i < actual_len; ++i)
+          // Rule 2 is satisfied.
+          for (i = actual_compl_length; i < actual_len; i++) {
             wca[i] = vim_toupper(wca[i]);
+          }
           break;
         }
         was_letter = vim_islower(c) || vim_isupper(c);
       }
     }
 
-    /* Copy the original case of the part we typed. */
-    p = compl_orig_text;
-    for (i = 0; i < min_len; ++i) {
-      if (has_mbyte)
-        c = mb_ptr2char_adv(&p);
-      else
-        c = *(p++);
-      if (vim_islower(c))
-        wca[i] = vim_tolower(wca[i]);
-      else if (vim_isupper(c))
-        wca[i] = vim_toupper(wca[i]);
+    // Copy the original case of the part we typed.
+    {
+      const char_u *p = compl_orig_text;
+      for (i = 0; i < min_len; i++) {
+        if (has_mbyte) {
+          c = mb_ptr2char_adv(&p);
+        } else {
+          c = *(p++);
+        }
+        if (vim_islower(c)) {
+          wca[i] = vim_tolower(wca[i]);
+        } else if (vim_isupper(c)) {
+          wca[i] = vim_toupper(wca[i]);
+        }
+      }
     }
 
-    /*
-     * Generate encoding specific output from wide character array.
-     * Multi-byte characters can occupy up to five bytes more than
-     * ASCII characters, and we also need one byte for NUL, so stay
-     * six bytes away from the edge of IObuff.
-     */
-    p = IObuff;
-    i = 0;
-    while (i < actual_len && (p - IObuff + 6) < IOSIZE)
-      if (has_mbyte)
-        p += (*mb_char2bytes)(wca[i++], p);
-      else
-        *(p++) = wca[i++];
-    *p = NUL;
+    // Generate encoding specific output from wide character array.
+    // Multi-byte characters can occupy up to five bytes more than
+    // ASCII characters, and we also need one byte for NUL, so stay
+    // six bytes away from the edge of IObuff.
+    {
+      char_u *p = IObuff;
+      i = 0;
+      while (i < actual_len && (p - IObuff + 6) < IOSIZE) {
+        if (has_mbyte) {
+          p += (*mb_char2bytes)(wca[i++], p);
+        } else {
+          *(p++) = wca[i++];
+        }
+      }
+      *p = NUL;
+    }
 
     xfree(wca);
 
@@ -3594,7 +3609,7 @@ int ins_compl_add_tv(typval_T *const tv, const Direction dir)
     adup = (bool)tv_dict_get_number(tv->vval.v_dict, "dup");
     aempty = (bool)tv_dict_get_number(tv->vval.v_dict, "empty");
   } else {
-    word = (const char *)get_tv_string_chk(tv);
+    word = (const char *)tv_get_string_chk(tv);
     memset(cptext, 0, sizeof(cptext));
   }
   if (word == NULL || (!aempty && *word == NUL)) {
@@ -5785,15 +5800,16 @@ comp_textwidth (
  */
 static void redo_literal(int c)
 {
-  char_u buf[10];
+  char buf[10];
 
-  /* Only digits need special treatment.  Translate them into a string of
-   * three digits. */
+  // Only digits need special treatment.  Translate them into a string of
+  // three digits.
   if (ascii_isdigit(c)) {
-    vim_snprintf((char *)buf, sizeof(buf), "%03d", c);
+    vim_snprintf(buf, sizeof(buf), "%03d", c);
     AppendToRedobuff(buf);
-  } else
+  } else {
     AppendCharToRedobuff(c);
+  }
 }
 
 // start_arrow() is called when an arrow key is used in insert mode.
@@ -5822,8 +5838,8 @@ static void start_arrow_common(pos_T *end_insert_pos, bool end_change)
 {
   if (!arrow_used && end_change) {  // something has been inserted
     AppendToRedobuff(ESC_STR);
-    stop_insert(end_insert_pos, FALSE, FALSE);
-    arrow_used = TRUE;          /* this means we stopped the current insert */
+    stop_insert(end_insert_pos, false, false);
+    arrow_used = true;  // This means we stopped the current insert.
   }
   check_spell_redraw();
 }
@@ -5880,7 +5896,7 @@ int stop_arrow(void)
       vr_lines_changed = 1;
     }
     ResetRedobuff();
-    AppendToRedobuff((char_u *)"1i");       /* pretend we start an insertion */
+    AppendToRedobuff("1i");  // Pretend we start an insertion.
     new_insert_skip = 2;
   } else if (ins_need_undo) {
     if (u_save_cursor() == OK)
@@ -6345,12 +6361,13 @@ stuff_inserted (
   }
 
   do {
-    stuffReadbuff(ptr);
-    /* a trailing "0" is inserted as "<C-V>048", "^" as "<C-V>^" */
-    if (last)
-      stuffReadbuff((char_u *)(last == '0'
-                               ? "\026\060\064\070"
-                               : "\026^"));
+    stuffReadbuff((const char *)ptr);
+    // A trailing "0" is inserted as "<C-V>048", "^" as "<C-V>^".
+    if (last) {
+      stuffReadbuff((last == '0'
+                     ? "\026\060\064\070"
+                     : "\026^"));
+    }
   } while (--count > 0);
 
   if (last)
@@ -7143,13 +7160,12 @@ static bool ins_esc(long *count, int cmdchar, bool nomove)
     disabled_redraw = false;
   }
   if (!arrow_used) {
-    /*
-     * Don't append the ESC for "r<CR>" and "grx".
-     * When 'insertmode' is set only CTRL-L stops Insert mode.  Needed for
-     * when "count" is non-zero.
-     */
-    if (cmdchar != 'r' && cmdchar != 'v')
-      AppendToRedobuff(p_im ? (char_u *)"\014" : ESC_STR);
+    // Don't append the ESC for "r<CR>" and "grx".
+    // When 'insertmode' is set only CTRL-L stops Insert mode.  Needed for
+    // when "count" is non-zero.
+    if (cmdchar != 'r' && cmdchar != 'v') {
+      AppendToRedobuff(p_im ? "\014" : ESC_STR);
+    }
 
     /*
      * Repeating insert may take a long time.  Check for
@@ -7303,7 +7319,8 @@ static bool ins_start_select(int c)
     // Execute the key in (insert) Select mode.
     stuffcharReadbuff(Ctrl_O);
     if (mod_mask) {
-      char_u buf[4] = { K_SPECIAL, KS_MODIFIER, mod_mask, NUL };
+      const char buf[] = { (char)K_SPECIAL, (char)KS_MODIFIER,
+                           (char)(uint8_t)mod_mask, NUL };
       stuffReadbuff(buf);
     }
     stuffcharReadbuff(c);
@@ -8111,11 +8128,11 @@ static bool ins_tab(void)
     return true;
   }
 
-  did_ai = FALSE;
-  did_si = FALSE;
-  can_si = FALSE;
-  can_si_back = FALSE;
-  AppendToRedobuff((char_u *)"\t");
+  did_ai = false;
+  did_si = false;
+  can_si = false;
+  can_si_back = false;
+  AppendToRedobuff("\t");
 
   if (p_sta && ind) {  // insert tab in indent, use "shiftwidth"
     temp = get_sw_value(curbuf);
@@ -8380,8 +8397,8 @@ static int ins_digraph(void)
       edit_unputchar();
     }
     if (cc != ESC) {
-      AppendToRedobuff((char_u *)CTRL_V_STR);
-      c = getdigraph(c, cc, TRUE);
+      AppendToRedobuff(CTRL_V_STR);
+      c = getdigraph(c, cc, true);
       clear_showcmd();
       return c;
     }
@@ -8443,12 +8460,13 @@ static int ins_ctrl_ey(int tc)
     if (c != NUL) {
       long tw_save;
 
-      /* The character must be taken literally, insert like it
-       * was typed after a CTRL-V, and pretend 'textwidth'
-       * wasn't set.  Digits, 'o' and 'x' are special after a
-       * CTRL-V, don't use it for these. */
-      if (c < 256 && !isalnum(c))
-        AppendToRedobuff((char_u *)CTRL_V_STR);         /* CTRL-V */
+      // The character must be taken literally, insert like it
+      // was typed after a CTRL-V, and pretend 'textwidth'
+      // wasn't set.  Digits, 'o' and 'x' are special after a
+      // CTRL-V, don't use it for these.
+      if (c < 256 && !isalnum(c)) {
+        AppendToRedobuff(CTRL_V_STR);
+      }
       tw_save = curbuf->b_p_tw;
       curbuf->b_p_tw = -1;
       insert_special(c, TRUE, FALSE);

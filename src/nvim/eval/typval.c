@@ -796,7 +796,7 @@ static bool tv_dict_watcher_matches(DictWatcher *watcher, const char *const key)
   // of the string means it should match everything up to the '*' instead of the
   // whole string.
   const size_t len = strlen(watcher->key_pattern);
-  if (watcher->key_pattern[len - 1] == '*') {
+  if (len && watcher->key_pattern[len - 1] == '*') {
     return strncmp(key, watcher->key_pattern, len - 1) == 0;
   } else {
     return strcmp(key, watcher->key_pattern) == 0;
@@ -2020,7 +2020,7 @@ bool tv_equal(typval_T *const tv1, typval_T *const tv2, const bool ic,
 ///
 /// @return true if everything is OK, false otherwise.
 bool tv_check_str_or_nr(const typval_T *const tv)
-  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   switch (tv->v_type) {
     case VAR_NUMBER:
@@ -2072,7 +2072,7 @@ static const char *const num_errors[] = {
 
 /// Check that given value is a number or can be converted to it
 ///
-/// Error messages are compatible with tv_get_number() previously used for
+/// Error messages are compatible with tv_get_number_chk() previously used for
 /// the same purpose.
 ///
 /// @param[in]  tv  Value to check.
@@ -2094,6 +2094,50 @@ bool tv_check_num(const typval_T *const tv)
     case VAR_FLOAT:
     case VAR_UNKNOWN: {
       EMSG(_(num_errors[tv->v_type]));
+      return false;
+    }
+  }
+  assert(false);
+  return false;
+}
+
+#define FUNC_ERROR "E729: using Funcref as a String"
+
+static const char *const str_errors[] = {
+  [VAR_PARTIAL]=N_(FUNC_ERROR),
+  [VAR_FUNC]=N_(FUNC_ERROR),
+  [VAR_LIST]=N_("E730: using List as a String"),
+  [VAR_DICT]=N_("E731: using Dictionary as a String"),
+  [VAR_FLOAT]=((const char *)e_float_as_string),
+  [VAR_UNKNOWN]=N_("E908: using an invalid value as a String"),
+};
+
+#undef FUNC_ERROR
+
+/// Check that given value is a string or can be converted to it
+///
+/// Error messages are compatible with tv_get_string_chk() previously used for
+/// the same purpose.
+///
+/// @param[in]  tv  Value to check.
+///
+/// @return true if everything is OK, false otherwise.
+bool tv_check_str(const typval_T *const tv)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  switch (tv->v_type) {
+    case VAR_NUMBER:
+    case VAR_SPECIAL:
+    case VAR_STRING: {
+      return true;
+    }
+    case VAR_PARTIAL:
+    case VAR_FUNC:
+    case VAR_LIST:
+    case VAR_DICT:
+    case VAR_FLOAT:
+    case VAR_UNKNOWN: {
+      EMSG(_(str_errors[tv->v_type]));
       return false;
     }
   }
@@ -2247,12 +2291,73 @@ float_T tv_get_float(const typval_T *const tv)
 
 /// Get the string value of a VimL object
 ///
+/// @param[in]  tv  Object to get value of.
+/// @param  buf  Buffer used to hold numbers and special variables converted to
+///              string. When function encounters one of these stringified value
+///              will be written to buf and buf will be returned.
+///
+///              Buffer must have NUMBUFLEN size.
+///
+/// @return Object value if it is VAR_STRING object, number converted to
+///         a string for VAR_NUMBER, v: variable name for VAR_SPECIAL or NULL.
+const char *tv_get_string_buf_chk(const typval_T *const tv, char *const buf)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  switch (tv->v_type) {
+    case VAR_NUMBER: {
+      snprintf(buf, NUMBUFLEN, "%" PRIdVARNUMBER, tv->vval.v_number);
+      return buf;
+    }
+    case VAR_STRING: {
+      if (tv->vval.v_string != NULL) {
+        return (const char *)tv->vval.v_string;
+      }
+      return "";
+    }
+    case VAR_SPECIAL: {
+      STRCPY(buf, encode_special_var_names[tv->vval.v_special]);
+      return buf;
+    }
+    case VAR_PARTIAL:
+    case VAR_FUNC:
+    case VAR_LIST:
+    case VAR_DICT:
+    case VAR_FLOAT:
+    case VAR_UNKNOWN: {
+      EMSG(_(str_errors[tv->v_type]));
+      return false;
+    }
+  }
+  return NULL;
+}
+
+/// Get the string value of a VimL object
+///
 /// @warning For number and special values it uses a single, static buffer. It
 ///          may be used only once, next call to get_tv_string may reuse it. Use
 ///          tv_get_string_buf() if you need to use tv_get_string() output after
 ///          calling it again.
 ///
-/// @note get_tv_string_chk() and get_tv_string_buf_chk() are similar, but
+/// @param[in]  tv  Object to get value of.
+///
+/// @return Object value if it is VAR_STRING object, number converted to
+///         a string for VAR_NUMBER, v: variable name for VAR_SPECIAL or NULL.
+const char *tv_get_string_chk(const typval_T *const tv)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  static char mybuf[NUMBUFLEN];
+
+  return tv_get_string_buf_chk(tv, mybuf);
+}
+
+/// Get the string value of a VimL object
+///
+/// @warning For number and special values it uses a single, static buffer. It
+///          may be used only once, next call to get_tv_string may reuse it. Use
+///          tv_get_string_buf() if you need to use tv_get_string() output after
+///          calling it again.
+///
+/// @note tv_get_string_chk() and tv_get_string_buf_chk() are similar, but
 ///       return NULL on error.
 ///
 /// @param[in]  tv  Object to get value of.
@@ -2269,7 +2374,7 @@ const char *tv_get_string(const typval_T *const tv)
 
 /// Get the string value of a VimL object
 ///
-/// @note get_tv_string_chk() and get_tv_string_buf_chk() are similar, but
+/// @note tv_get_string_chk() and tv_get_string_buf_chk() are similar, but
 ///       return NULL on error.
 ///
 /// @param[in]  tv  Object to get value of.
@@ -2285,8 +2390,7 @@ const char *tv_get_string(const typval_T *const tv)
 const char *tv_get_string_buf(const typval_T *const tv, char *const buf)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  const char *const res = (const char *)get_tv_string_buf_chk(
-      (typval_T *)tv, (char_u *)buf);
+  const char *const res = (const char *)tv_get_string_buf_chk(tv, buf);
 
   return res != NULL ? res : "";
 }
