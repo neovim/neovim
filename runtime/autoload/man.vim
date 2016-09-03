@@ -133,6 +133,7 @@ function! s:get_path(sect, name) abort
   "     interpreted by man without -s)
   "   - sections starting with '-'
   "   - 3pcap section (found on macOS)
+  "   - allows use of commas between sections for ordered priority
   return system(s:man_cmd.' '.s:man_find_arg.' -s '.shellescape(a:sect).' '.shellescape(a:name))
 endfunction
 
