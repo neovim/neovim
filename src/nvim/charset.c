@@ -1739,8 +1739,11 @@ char_u* skiptowhite_esc(char_u *p) {
 /// @return Number read from the string.
 intmax_t getdigits(char_u **pp)
 {
+  errno = 0;
   intmax_t number = strtoimax((char *)*pp, (char **)pp, 10);
-  assert(errno != ERANGE);
+  if (number == INTMAX_MAX || number == INTMAX_MIN) {
+    assert(errno != ERANGE);
+  }
   return number;
 }
 
