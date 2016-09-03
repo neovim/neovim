@@ -41,7 +41,7 @@ function! man#open_page(count, count1, mods, ...) abort
     let ref = a:2.'('.a:1.')'
   endif
   try
-    let [sect, name] = s:extract_sect_and_name_ref(ref)
+    let [sect, name] = man#extract_sect_and_name_ref(ref)
     if a:count ==# a:count1
       " user explicitly set a count
       let sect = string(a:count)
@@ -54,44 +54,43 @@ function! man#open_page(count, count1, mods, ...) abort
   call s:push_tag()
   let bufname = 'man://'.name.(empty(sect)?'':'('.sect.')')
   if a:mods !~# 'tab' && s:find_man()
-    if s:manwidth() ==# getbufvar(bufname, 'manwidth')
-      silent execute 'buf' bufname
-      call man#set_window_local_options()
-      keepjumps 1
-      return
-    endif
     noautocmd execute 'edit' bufname
-  elseif s:manwidth() ==# getbufvar(bufname, 'manwidth')
-    execute a:mods 'split' bufname
-    call man#set_window_local_options()
-    keepjumps 1
-    return
   else
     noautocmd execute a:mods 'split' bufname
   endif
+  let b:man_sect = sect
   call s:read_page(path)
 endfunction
 
 function! man#read_page(ref) abort
   try
-    let [sect, name] = s:extract_sect_and_name_ref(a:ref)
-    " The third element is the path.
-    call s:read_page(s:verify_exists(sect, name)[2])
+    let [sect, name] = man#extract_sect_and_name_ref(a:ref)
+    let [b:man_sect, name, path] = s:verify_exists(sect, name)
   catch
-    call s:error(v:exception)
+    " call to s:error() is unnecessary
     return
   endtry
+  call s:read_page(path)
 endfunction
 
 function! s:read_page(path) abort
   setlocal modifiable
   setlocal noreadonly
   keepjumps %delete _
-  let b:manwidth = s:manwidth()
   " Ensure Vim is not recursively invoked (man-db does this)
   " by forcing man to use cat as the pager.
   " More info here http://comments.gmane.org/gmane.editors.vim.devel/29085
-  silent execute 'read !env MANPAGER=cat MANWIDTH='.b:manwidth s:man_cmd a:path
+  let cmd = 'read !env MANPAGER=cat'
+  if empty($MANWIDTH)
+    " Do not set $MANWIDTH globally.
+    silent execute cmd 'MANWIDTH='.winwidth(0) s:man_cmd shellescape(a:path)
+  else
+    " The reason for respecting $MANWIDTH even if it is wider/smaller than the
+    " current window is that the current window might only be temporarily
+    " narrow/wide. Since we don't reflow, we should just assume the
+    " user knows what they're doing and respect $MANWIDTH.
+    silent execute cmd s:man_cmd shellescape(a:path)
+  endif
   " remove all the backspaced text
   silent execute 'keeppatterns keepjumps %substitute,.\b,,e'.(&gdefault?'':'g')
   while getline(1) =~# '^\s*$'
@@ -102,17 +101,17 @@ endfunction
 
 " attempt to extract the name and sect out of 'name(sect)'
 " otherwise just return the largest string of valid characters in ref
-function! s:extract_sect_and_name_ref(ref) abort
+function! man#extract_sect_and_name_ref(ref) abort
   if a:ref[0] ==# '-' " try ':Man -pandoc' with this disabled.
-    throw 'manpage name starts with ''-'''
+    throw 'manpage name cannot start with ''-'''
   endif
   let ref = matchstr(a:ref, '[^()]\+([^()]\+)')
   if empty(ref)
     let name = matchstr(a:ref, '[^()]\+')
     if empty(name)
-      throw 'manpage reference contains only parantheses'
+      throw 'manpage reference cannot contain only parentheses'
     endif
-    return ['', name]
+    return [get(b:, 'man_default_sects', ''), name]
   endif
   let left = split(ref, '(')
   " see ':Man 3X curses' on why tolower.
@@ -121,21 +120,30 @@ function! s:extract_sect_and_name_ref(ref) abort
   return [tolower(split(left[1], ')')[0]), left[0]]
 endfunction
 
-function! s:verify_exists(sect, name) abort
-  let path = system(s:man_cmd.' '.s:man_find_arg.' '.s:man_args(a:sect, a:name))
-  if path !~# '^\/'
-    if empty(a:sect)
-      throw 'no manual entry for '.a:name
-    endif
+function! s:get_path(sect, name) abort
+  if empty(a:sect)
     let path = system(s:man_cmd.' '.s:man_find_arg.' '.shellescape(a:name))
     if path !~# '^\/'
-      throw 'no manual entry for '.a:name.'('.a:sect.') or '.a:name
+      throw 'no manual entry for '.a:name
     endif
+    return path
   endif
-  if a:name =~# '\/'
-    " We do not need to extract the section/name from the path if the name is
-    " just a path.
-    return ['', a:name, path]
+  " '-s' flag handles:
+  "   - references like 'printf(echo)' (two manpages would be
+  "     interpreted by man without -s)
+  "   - sections starting with '-'
+  "   - 3pcap section (found on macOS)
+  "   - allows use of commas between sections for ordered priority
+  return system(s:man_cmd.' '.s:man_find_arg.' -s '.shellescape(a:sect).' '.shellescape(a:name))
+endfunction
+
+function! s:verify_exists(sect, name) abort
+  let path = s:get_path(a:sect, a:name)
+  if path !~# '^\/'
+    let path = s:get_path(get(b:, 'man_default_sects', ''), a:name)
+    if path !~# '^\/'
+      let path = s:get_path('', a:name)
+    endif
   endif
   " We need to extract the section from the path because sometimes
   " the actual section of the manpage is more specific than the section
@@ -160,7 +168,7 @@ endfunction
 function! man#pop_tag() abort
   if !empty(s:tag_stack)
     let tag = remove(s:tag_stack, -1)
-    execute tag['buf'].'b'
+    silent execute tag['buf'].'buffer'
     call cursor(tag['lnum'], tag['col'])
   endif
 endfunction
@@ -172,7 +180,7 @@ function! s:extract_sect_and_name_path(path) abort
     let tail = fnamemodify(tail, ':r')
   endif
   let sect = matchstr(tail, '\.\zs[^.]\+$')
-  let name = matchstr(tail, '^.\+\ze\.[^.]\+$')
+  let name = matchstr(tail, '^.\+\ze\.')
   return [sect, name]
 endfunction
 
@@ -191,41 +199,6 @@ function! s:find_man() abort
   endwhile
 endfunction
 
-function! s:manwidth() abort
-  " The reason for respecting $MANWIDTH even if it is wider/smaller than the
-  " current window is that the current window might only be temporarily
-  " narrow/wide. Since we don't reflow, we should just assume the
-  " user knows what they're doing and respect $MANWIDTH.
-  if empty($MANWIDTH)
-    " If $MANWIDTH is not set, we do not assign directly to $MANWIDTH because
-    " then $MANWIDTH will always stay the same value as we only use
-    " winwidth(0) when $MANWIDTH is empty. Instead we set it locally for the command.
-    return winwidth(0)
-  endif
-  return $MANWIDTH
-endfunction
-
-function! man#set_window_local_options() abort
-  setlocal nonumber
-  setlocal norelativenumber
-  setlocal foldcolumn=0
-  setlocal colorcolumn=0
-  setlocal nolist
-  setlocal nofoldenable
-endfunction
-
-function! s:man_args(sect, name) abort
-  if empty(a:sect)
-    return shellescape(a:name)
-  endif
-  " The '-s' flag is very useful.
-  " We do not need to worry about stuff like 'printf(echo)'
-  " (two manpages would be interpreted by man without -s)
-  " We do not need to check if the sect starts with '-'
-  " Lastly, the 3pcap section on macOS doesn't work without -s
-  return '-s '.shellescape(a:sect).' '.shellescape(a:name)
-endfunction
-
 function! s:error(msg) abort
   redraw
   echohl ErrorMsg
@@ -235,7 +208,7 @@ endfunction
 
 let s:mandirs = join(split(system(s:man_cmd.' '.s:man_find_arg), ':\|\n'), ',')
 
-" see s:extract_sect_and_name_ref on why tolower(sect)
+" see man#extract_sect_and_name_ref on why tolower(sect)
 function! man#complete(arg_lead, cmd_line, cursor_pos) abort
   let args = split(a:cmd_line)
   let l = len(args)
@@ -289,7 +262,7 @@ function! s:format_candidate(path, sect) abort
   let [sect, name] = s:extract_sect_and_name_path(a:path)
   if sect ==# a:sect
     return name
-  elseif sect =~# a:sect.'[^.]\+$'
+  elseif sect =~# a:sect.'.\+$'
     " We include the section if the user provided section is a prefix
     " of the actual section.
     return name.'('.sect.')'
