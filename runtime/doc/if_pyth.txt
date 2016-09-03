@@ -181,11 +181,6 @@ vim.eval(str)						*python-eval*
 						# string.atoi() to convert to
 						# a number.
 
-	    :py tagList = vim.eval('taglist("eval_expr")')
-<	The latter will return a python list of python dicts, for instance:
-	[{'cmd': '/^eval_expr(arg, nextcmd)$/', 'static': 0, 'name':
-	'eval_expr', 'kind': 'f', 'filename': './src/eval.c'}]
-
 vim.bindeval(str)					*python-bindeval*
 	Like |python-eval|, but returns special objects described in 
 	|python-bindeval-objects|. These python objects let you modify (|List| 
