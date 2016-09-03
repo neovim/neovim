@@ -3457,7 +3457,7 @@ static int set_sofo(slang_T *lp, char_u *from, char_u *to)
     // First count the number of items for each list.  Temporarily use
     // sl_sal_first[] for this.
     for (p = from, s = to; *p != NUL && *s != NUL; ) {
-      c = mb_cptr2char_adv(&p);
+      c = mb_cptr2char_adv((const char_u **)&p);
       mb_cptr_adv(s);
       if (c >= 256)
         ++lp->sl_sal_first[c & 0xff];
@@ -3477,8 +3477,8 @@ static int set_sofo(slang_T *lp, char_u *from, char_u *to)
     // list.
     memset(lp->sl_sal_first, 0, sizeof(salfirst_T) * 256);
     for (p = from, s = to; *p != NUL && *s != NUL; ) {
-      c = mb_cptr2char_adv(&p);
-      i = mb_cptr2char_adv(&s);
+      c = mb_cptr2char_adv((const char_u **)&p);
+      i = mb_cptr2char_adv((const char_u **)&s);
       if (c >= 256) {
         // Append the from-to chars at the end of the list with
         // the low byte.
@@ -3564,8 +3564,9 @@ static int *mb_str2wide(char_u *s)
   int i = 0;
 
   int *res = xmalloc((mb_charlen(s) + 1) * sizeof(int));
-  for (char_u *p = s; *p != NUL; )
-    res[i++] = mb_ptr2char_adv(&p);
+  for (char_u *p = s; *p != NUL; ) {
+    res[i++] = mb_ptr2char_adv((const char_u **)&p);
+  }
   res[i] = NUL;
 
   return res;
@@ -4067,10 +4068,11 @@ captype (
   for (p = word; !spell_iswordp_nmw(p, curwin); mb_ptr_adv(p))
     if (end == NULL ? *p == NUL : p >= end)
       return 0;             // only non-word characters, illegal word
-  if (has_mbyte)
-    c = mb_ptr2char_adv(&p);
-  else
+  if (has_mbyte) {
+    c = mb_ptr2char_adv((const char_u **)&p);
+  } else {
     c = *p++;
+  }
   firstcap = allcap = SPELL_ISUPPER(c);
 
   // Need to check all letters to find a word with mixed upper/lower.
@@ -4951,7 +4953,7 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
 
           // Check that every character appears only once.
           for (p = items[1]; *p != NUL; ) {
-            c = mb_ptr2char_adv(&p);
+            c = mb_ptr2char_adv((const char_u **)&p);
             if ((!GA_EMPTY(&spin->si_map)
                  && vim_strchr(spin->si_map.ga_data, c)
                  != NULL)
@@ -5182,12 +5184,13 @@ static unsigned get_affitem(int flagtype, char_u **pp)
     }
     res = getdigits_int(pp);
   } else {
-    res = mb_ptr2char_adv(pp);
+    res = mb_ptr2char_adv((const char_u **)pp);
     if (flagtype == AFT_LONG || (flagtype == AFT_CAPLONG
                                  && res >= 'A' && res <= 'Z')) {
-      if (**pp == NUL)
+      if (**pp == NUL) {
         return 0;
-      res = mb_ptr2char_adv(pp) + (res << 16);
+      }
+      res = mb_ptr2char_adv((const char_u **)pp) + (res << 16);
     }
   }
   return res;
@@ -5288,10 +5291,10 @@ static bool flag_in_afflist(int flagtype, char_u *afflist, unsigned flag)
   case AFT_CAPLONG:
   case AFT_LONG:
     for (p = afflist; *p != NUL; ) {
-      n = mb_ptr2char_adv(&p);
+      n = mb_ptr2char_adv((const char_u **)&p);
       if ((flagtype == AFT_LONG || (n >= 'A' && n <= 'Z'))
           && *p != NUL)
-        n = mb_ptr2char_adv(&p) + (n << 16);
+        n = mb_ptr2char_adv((const char_u **)&p) + (n << 16);
       if (n == flag)
         return true;
     }
@@ -8094,9 +8097,9 @@ static int set_spell_chartab(char_u *fol, char_u *low, char_u *upp)
       EMSG(_(e_affform));
       return FAIL;
     }
-    f = mb_ptr2char_adv(&pf);
-    l = mb_ptr2char_adv(&pl);
-    u = mb_ptr2char_adv(&pu);
+    f = mb_ptr2char_adv((const char_u **)&pf);
+    l = mb_ptr2char_adv((const char_u **)&pl);
+    u = mb_ptr2char_adv((const char_u **)&pu);
     // Every character that appears is a word character.
     if (f < 256)
       new_st.st_isw[f] = true;
@@ -8161,7 +8164,7 @@ set_spell_charflags (
     }
 
     if (*p != NUL) {
-      c = mb_ptr2char_adv(&p);
+      c = mb_ptr2char_adv((const char_u **)&p);
       new_st.st_fold[i + 128] = c;
       if (i + 128 != c && new_st.st_isu[i + 128] && c < 256)
         new_st.st_upper[c] = i + 128;
@@ -8233,14 +8236,15 @@ static bool spell_iswordp(char_u *p, win_T *wp)
 
 // Returns true if "p" points to a word character.
 // Unlike spell_iswordp() this doesn't check for "midword" characters.
-static bool spell_iswordp_nmw(char_u *p, win_T *wp)
+static bool spell_iswordp_nmw(const char_u *p, win_T *wp)
 {
   int c;
 
   if (has_mbyte) {
     c = mb_ptr2char(p);
-    if (c > 255)
+    if (c > 255) {
       return spell_mb_isword_class(mb_get_class(p), wp);
+    }
     return spelltab.st_isw[c];
   }
   return spelltab.st_isw[*p];
@@ -8336,7 +8340,7 @@ static int spell_casefold(char_u *str, int len, char_u *buf, int buflen)
         buf[outi] = NUL;
         return FAIL;
       }
-      c = mb_cptr2char_adv(&p);
+      c = mb_cptr2char_adv((const char_u **)&p);
       outi += mb_char2bytes(SPELL_TOFOLD(c), buf + outi);
     }
     buf[outi] = NUL;
@@ -8598,7 +8602,7 @@ void spell_suggest(int count)
 
     // For redo we use a change-word command.
     ResetRedobuff();
-    AppendToRedobuff((char_u *)"ciw");
+    AppendToRedobuff("ciw");
     AppendToRedobuffLit(p + c,
         stp->st_wordlen + sug.su_badlen - stp->st_orglen);
     AppendCharToRedobuff(ESC);
@@ -9236,17 +9240,19 @@ onecap_copy (
   int l;
 
   p = word;
-  if (has_mbyte)
-    c = mb_cptr2char_adv(&p);
-  else
+  if (has_mbyte) {
+    c = mb_cptr2char_adv((const char_u **)&p);
+  } else {
     c = *p++;
-  if (upper)
+  }
+  if (upper) {
     c = SPELL_TOUPPER(c);
-  else
+  } else {
     c = SPELL_TOFOLD(c);
-  if (has_mbyte)
+  }
+  if (has_mbyte) {
     l = mb_char2bytes(c, wcopy);
-  else {
+  } else {
     l = 1;
     wcopy[0] = c;
   }
@@ -9263,10 +9269,11 @@ static void allcap_copy(char_u *word, char_u *wcopy)
 
   d = wcopy;
   for (s = word; *s != NUL; ) {
-    if (has_mbyte)
-      c = mb_cptr2char_adv(&s);
-    else
+    if (has_mbyte) {
+      c = mb_cptr2char_adv((const char_u **)&s);
+    } else {
       c = *s++;
+    }
 
     if (c == 0xdf) {
       c = 'S';
@@ -11429,7 +11436,7 @@ static void set_map_str(slang_T *lp, char_u *map)
   // "aaa/bbb/ccc/".  Fill sl_map_array[c] with the character before c and
   // before the same slash.  For characters above 255 sl_map_hash is used.
   for (p = map; *p != NUL; ) {
-    c = mb_cptr2char_adv(&p);
+    c = mb_cptr2char_adv((const char_u **)&p);
     if (c == '/')
       headc = 0;
     else {
@@ -11829,12 +11836,12 @@ static void spell_soundfold_sofo(slang_T *slang, char_u *inword, char_u *res)
     // The sl_sal_first[] table contains the translation for chars up to
     // 255, sl_sal the rest.
     for (s = inword; *s != NUL; ) {
-      c = mb_cptr2char_adv(&s);
-      if (enc_utf8 ? utf_class(c) == 0 : ascii_iswhite(c))
+      c = mb_cptr2char_adv((const char_u **)&s);
+      if (enc_utf8 ? utf_class(c) == 0 : ascii_iswhite(c)) {
         c = ' ';
-      else if (c < 256)
+      } else if (c < 256) {
         c = slang->sl_sal_first[c];
-      else {
+      } else {
         ip = ((int **)slang->sl_sal.ga_data)[c & 0xff];
         if (ip == NULL)                 // empty list, can't match
           c = NUL;
@@ -12119,9 +12126,7 @@ static void spell_soundfold_wsal(slang_T *slang, char_u *inword, char_u *res)
   int word[MAXWLEN];
   int wres[MAXWLEN];
   int l;
-  char_u      *s;
   int         *ws;
-  char_u      *t;
   int         *pf;
   int i, j, z;
   int reslen;
@@ -12141,9 +12146,9 @@ static void spell_soundfold_wsal(slang_T *slang, char_u *inword, char_u *res)
   // Remove accents, if wanted.  We actually remove all non-word characters.
   // But keep white space.
   wordlen = 0;
-  for (s = inword; *s != NUL; ) {
-    t = s;
-    c = mb_cptr2char_adv(&s);
+  for (const char_u *s = inword; *s != NUL; ) {
+    const char_u *t = s;
+    c = mb_cptr2char_adv((const char_u **)&s);
     if (slang->sl_rem_accents) {
       if (enc_utf8 ? utf_class(c) == 0 : ascii_iswhite(c)) {
         if (did_white)
@@ -12152,8 +12157,9 @@ static void spell_soundfold_wsal(slang_T *slang, char_u *inword, char_u *res)
         did_white = true;
       } else {
         did_white = false;
-        if (!spell_iswordp_nmw(t, curwin))
+        if (!spell_iswordp_nmw(t, curwin)) {
           continue;
+        }
       }
     }
     word[wordlen++] = c;
@@ -12200,7 +12206,7 @@ static void spell_soundfold_wsal(slang_T *slang, char_u *inword, char_u *res)
             continue;
           ++k;
         }
-        s = smp[n].sm_rules;
+        char_u *s = smp[n].sm_rules;
         pri = 5;            // default priority
 
         p0 = *s;
@@ -12599,25 +12605,30 @@ soundalike_score (
 // support multi-byte characters.
 static int spell_edit_score(slang_T *slang, char_u *badword, char_u *goodword)
 {
-  int         *cnt;
-  int badlen, goodlen;                  // lengths including NUL
+  int *cnt;
   int j, i;
   int t;
   int bc, gc;
   int pbc, pgc;
-  char_u      *p;
   int wbadword[MAXWLEN];
   int wgoodword[MAXWLEN];
   const bool l_has_mbyte = has_mbyte;
 
+  // Lengths with NUL.
+  int badlen;
+  int goodlen;
   if (l_has_mbyte) {
     // Get the characters from the multi-byte strings and put them in an
     // int array for easy access.
-    for (p = badword, badlen = 0; *p != NUL; )
+    badlen = 0;
+    for (const char_u *p = badword; *p != NUL; ) {
       wbadword[badlen++] = mb_cptr2char_adv(&p);
+    }
     wbadword[badlen++] = 0;
-    for (p = goodword, goodlen = 0; *p != NUL; )
+    goodlen = 0;
+    for (const char_u *p = goodword; *p != NUL; ) {
       wgoodword[goodlen++] = mb_cptr2char_adv(&p);
+    }
     wgoodword[goodlen++] = 0;
   } else {
     badlen = (int)STRLEN(badword) + 1;
@@ -12851,19 +12862,20 @@ static int spell_edit_score_limit_w(slang_T *slang, char_u *badword, char_u *goo
   int score_off;
   int minscore;
   int round;
-  char_u          *p;
   int wbadword[MAXWLEN];
   int wgoodword[MAXWLEN];
 
   // Get the characters from the multi-byte strings and put them in an
   // int array for easy access.
   bi = 0;
-  for (p = badword; *p != NUL; )
+  for (const char_u *p = badword; *p != NUL; ) {
     wbadword[bi++] = mb_cptr2char_adv(&p);
+  }
   wbadword[bi++] = 0;
   gi = 0;
-  for (p = goodword; *p != NUL; )
+  for (const char_u *p = goodword; *p != NUL; ) {
     wgoodword[gi++] = mb_cptr2char_adv(&p);
+  }
   wgoodword[gi++] = 0;
 
   // The idea is to go from start to end over the words.  So long as

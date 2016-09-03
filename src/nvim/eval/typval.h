@@ -22,6 +22,7 @@ typedef double float_T;
 
 #define VARNUMBER_MAX INT_MAX
 #define VARNUMBER_MIN INT_MIN
+#define PRIdVARNUMBER "d"
 
 /// Structure holding dictionary watcher
 typedef struct dict_watcher {

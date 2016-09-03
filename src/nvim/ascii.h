@@ -20,14 +20,12 @@
 #define BS              '\010'
 #define TAB             '\011'
 #define NL              '\012'
-#define NL_STR          (char_u *)"\012"
+#define NL_STR          "\012"
 #define FF              '\014'
 #define CAR             '\015'  /* CR is used by Mac OS X */
 #define ESC             '\033'
-#define ESC_STR         (char_u *)"\033"
-#define ESC_STR_nc      "\033"
+#define ESC_STR         "\033"
 #define DEL             0x7f
-#define DEL_STR         (char_u *)"\177"
 #define CSI             0x9b    /* Control Sequence Introducer */
 #define CSI_STR         "\233"
 #define DCS             0x90    /* Device Control String */

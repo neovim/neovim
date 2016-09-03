@@ -563,11 +563,11 @@ int32_t os_getperm(const char *name)
 /// Set the permission of a file.
 ///
 /// @return `OK` for success, `FAIL` for failure.
-int os_setperm(const char_u *name, int perm)
+int os_setperm(const char *const name, int perm)
   FUNC_ATTR_NONNULL_ALL
 {
   int r;
-  RUN_UV_FS_FUNC(r, uv_fs_chmod, (const char *)name, perm, NULL);
+  RUN_UV_FS_FUNC(r, uv_fs_chmod, name, perm, NULL);
   return (r == kLibuvSuccess ? OK : FAIL);
 }
 

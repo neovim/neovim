@@ -2221,10 +2221,11 @@ collection:
               if (*regparse == '[')
                 endc = get_coll_element(&regparse);
               if (endc == 0) {
-                if (has_mbyte)
-                  endc = mb_ptr2char_adv(&regparse);
-                else
+                if (has_mbyte) {
+                  endc = mb_ptr2char_adv((const char_u **)&regparse);
+                } else {
                   endc = *regparse++;
+                }
               }
 
               /* Handle \o40, \x20 and \u20AC style sequences */
@@ -6250,8 +6251,8 @@ static int cstrncmp(char_u *s1, char_u *s2, int *n)
     str2 = s2;
     c1 = c2 = 0;
     while ((int)(str1 - s1) < *n) {
-      c1 = mb_ptr2char_adv(&str1);
-      c2 = mb_ptr2char_adv(&str2);
+      c1 = mb_ptr2char_adv((const char_u **)&str1);
+      c2 = mb_ptr2char_adv((const char_u **)&str2);
 
       /* decompose the character if necessary, into 'base' characters
        * because I don't care about Arabic, I will hard-code the Hebrew

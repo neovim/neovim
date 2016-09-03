@@ -44,3 +44,18 @@ describe('setmatches()', function()
     eq({}, funcs.getmatches())
   end)
 end)
+
+describe('matchadd()', function()
+  it('correctly works when first two arguments and conceal are numbers at once',
+  function()
+    command('hi def link 1 PreProc')
+    eq(4, funcs.matchadd(1, 2, 3, 4, {conceal=5}))
+    eq({{
+      group='1',
+      pattern='2',
+      priority=3,
+      id=4,
+      conceal='5',
+    }}, funcs.getmatches())
+  end)
+end)

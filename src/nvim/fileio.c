@@ -602,10 +602,12 @@ readfile (
       return FAIL;
     }
 #ifdef UNIX
-    /* Set swap file protection bits after creating it. */
+    // Set swap file protection bits after creating it.
     if (swap_mode > 0 && curbuf->b_ml.ml_mfp != NULL
-        && curbuf->b_ml.ml_mfp->mf_fname != NULL)
-      (void)os_setperm(curbuf->b_ml.ml_mfp->mf_fname, (long)swap_mode);
+        && curbuf->b_ml.ml_mfp->mf_fname != NULL) {
+      (void)os_setperm((const char *)curbuf->b_ml.ml_mfp->mf_fname,
+                       (long)swap_mode);
+    }
 #endif
   }
 
@@ -2855,9 +2857,9 @@ buf_write (
             xfree(backup);
             backup = NULL;
           } else {
-            /* set file protection same as original file, but
-             * strip s-bit */
-            (void)os_setperm(backup, perm & 0777);
+            // set file protection same as original file, but
+            // strip s-bit.
+            (void)os_setperm((const char *)backup, perm & 0777);
 
 #ifdef UNIX
             /*
@@ -2868,7 +2870,8 @@ buf_write (
              */
             if (file_info_new.stat.st_gid != file_info_old.stat.st_gid
                 && os_fchown(bfd, -1, file_info_old.stat.st_gid) != 0) {
-              os_setperm(backup, (perm & 0707) | ((perm & 07) << 3));
+              os_setperm((const char *)backup,
+                         (perm & 0707) | ((perm & 07) << 3));
             }
 # ifdef HAVE_SELINUX
             mch_copy_sec(fname, backup);
@@ -3022,8 +3025,8 @@ nobackup:
       && file_info_old.stat.st_uid == getuid()
       && vim_strchr(p_cpo, CPO_FWRITE) == NULL) {
     perm |= 0200;
-    (void)os_setperm(fname, perm);
-    made_writable = TRUE;
+    (void)os_setperm((const char *)fname, perm);
+    made_writable = true;
   }
 #endif
 
@@ -3387,8 +3390,9 @@ restore_backup:
         || file_info.stat.st_uid != file_info_old.stat.st_uid
         || file_info.stat.st_gid != file_info_old.stat.st_gid) {
       os_fchown(fd, file_info_old.stat.st_uid, file_info_old.stat.st_gid);
-      if (perm >= 0)            /* set permission again, may have changed */
-        (void)os_setperm(wfname, perm);
+      if (perm >= 0) {  // Set permission again, may have changed.
+        (void)os_setperm((const char *)wfname, perm);
+      }
     }
     buf_set_file_id(buf);
   } else if (!buf->file_id_valid) {
@@ -3406,8 +3410,9 @@ restore_backup:
   if (made_writable)
     perm &= ~0200;              /* reset 'w' bit for security reasons */
 #endif
-  if (perm >= 0)                /* set perm. of new file same as old file */
-    (void)os_setperm(wfname, perm);
+  if (perm >= 0) {  // Set perm. of new file same as old file.
+    (void)os_setperm((const char *)wfname, perm);
+  }
 #ifdef HAVE_ACL
   /* Probably need to set the ACL before changing the user (can't set the
    * ACL on a file the user doesn't own). */
@@ -3613,7 +3618,7 @@ restore_backup:
         close(empty_fd);
     }
     if (org != NULL) {
-      os_setperm((char_u *)org, os_getperm((const char *)fname) & 0777);
+      os_setperm(org, os_getperm((const char *)fname) & 0777);
       xfree(org);
     }
   }
@@ -4675,8 +4680,8 @@ int vim_rename(const char_u *from, const char_u *to)
     errmsg = _("E210: Error reading \"%s\"");
     to = from;
   }
-#ifndef UNIX        /* for Unix os_open() already set the permission */
-  os_setperm(to, perm);
+#ifndef UNIX  // For Unix os_open() already set the permission.
+  os_setperm((const char *)to, perm);
 #endif
 #ifdef HAVE_ACL
   mch_set_acl(to, acl);

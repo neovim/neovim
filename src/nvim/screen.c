@@ -3137,7 +3137,7 @@ win_line (
 
             p_extra = extra;
             c = *p_extra;
-            mb_c = mb_ptr2char_adv(&p_extra);
+            mb_c = mb_ptr2char_adv((const char_u **)&p_extra);
             mb_utf8 = (c >= 0x80);
             n_extra = (int)STRLEN(p_extra);
             c_extra = NUL;

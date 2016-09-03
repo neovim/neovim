@@ -621,7 +621,7 @@ static char *tv_str(typval_T *tvs, int *idxp)
     EMSG(_(e_printf));
   } else {
     (*idxp)++;
-    s = (char *)get_tv_string_chk(&tvs[idx]);
+    s = (char *)tv_get_string_chk(&tvs[idx]);
   }
   return s;
 }

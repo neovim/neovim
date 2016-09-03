@@ -3367,13 +3367,13 @@ static char_u *set_chars_option(char_u **varp)
             && p[len] == ':'
             && p[len + 1] != NUL) {
           s = p + len + 1;
-          c1 = mb_ptr2char_adv(&s);
+          c1 = mb_ptr2char_adv((const char_u **)&s);
           if (mb_char2cells(c1) > 1)
             continue;
           if (tab[i].cp == &lcs_tab2) {
             if (*s == NUL)
               continue;
-            c2 = mb_ptr2char_adv(&s);
+            c2 = mb_ptr2char_adv((const char_u **)&s);
             if (mb_char2cells(c2) > 1)
               continue;
           }
@@ -6805,8 +6805,8 @@ void set_fileformat(int eol_style, int opt_flags)
   need_maketitle = true;  // Set window title later.
 }
 
-/// Skip to next part of an option argument: Skip space and comma.
-char_u *skip_to_option_part(char_u *p)
+/// Skip to next part of an option argument: skip space and comma
+char_u *skip_to_option_part(const char_u *p)
 {
   if (*p == ',') {
     p++;
@@ -6814,7 +6814,7 @@ char_u *skip_to_option_part(char_u *p)
   while (*p == ' ') {
     p++;
   }
-  return p;
+  return (char_u *)p;
 }
 
 /// Isolate one part of a string option separated by `sep_chars`.
