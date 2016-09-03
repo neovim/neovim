@@ -43,8 +43,8 @@ setlocal nolist
 setlocal nofoldenable
 
 if !exists('g:no_plugin_maps') && !exists('g:no_man_maps')
-  nmap     <silent> <buffer> <C-]>      <Plug>(man)
-  nmap     <silent> <buffer> K          <Plug>(man)
+  nmap     <silent> <buffer> <C-]>      :Man<CR>
+  nmap     <silent> <buffer> K          :Man<CR>
   nnoremap <silent> <buffer> <C-T>      :call man#pop_tag()<CR>
   if s:pager
     nnoremap <silent> <buffer> <nowait> q :q<CR>

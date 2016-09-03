@@ -23,11 +23,13 @@ function! man#open_page(count, count1, mods, ...) abort
   if a:0 > 2
     call s:error('too many arguments')
     return
-  elseif a:0 ==# 1
-    if empty(a:1)
+  elseif a:0 == 0
+    let ref = &filetype ==# 'man' ? expand('<cWORD>') : expand('<cword>')
+    if empty(ref)
       call s:error('no identifier under cursor')
       return
     endif
+  elseif a:0 ==# 1
     let ref = a:1
   else
     " Combine the name and sect into a manpage reference so that all

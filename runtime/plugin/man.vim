@@ -5,15 +5,7 @@ if exists('g:loaded_man')
 endif
 let g:loaded_man = 1
 
-command! -range=0 -complete=customlist,man#complete -nargs=+ Man call man#open_page(v:count, v:count1, <q-mods>, <f-args>)
-
-function! s:cword() abort
-  return &filetype ==# 'man' ? expand('<cWORD>') : expand('<cword>')
-endfunction
-
-nnoremap <silent> <Plug>(man)        :<C-U>execute 'Man '         .<SID>cword()<CR>
-nnoremap <silent> <Plug>(man_vsplit) :<C-U>execute 'vertical Man '.<SID>cword()<CR>
-nnoremap <silent> <Plug>(man_tab)    :<C-U>execute 'tab Man '     .<SID>cword()<CR>
+command! -range=0 -complete=customlist,man#complete -nargs=* Man call man#open_page(v:count, v:count1, <q-mods>, <f-args>)
 
 augroup man
   autocmd!
