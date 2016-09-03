@@ -9,8 +9,7 @@ endif
 let s:man_find_arg = "-w"
 
 " TODO(nhooyr) Completion may work on SunOS; I'm not sure if `man -l` displays
-" the list of searched directories. I also do not think Solaris supports the
-" '-P' flag used above and uses only $PAGER.
+" the list of searched directories.
 try
   if !has('win32') && $OSTYPE !~? 'cygwin\|linux' && system('uname -s') =~? 'SunOS' && system('uname -r') =~# '^5'
     let s:man_find_arg = '-l'
