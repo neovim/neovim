@@ -51,9 +51,9 @@ function! man#open_page(count, count1, mods, ...) abort
   call s:push_tag()
   let bufname = 'man://'.name.(empty(sect)?'':'('.sect.')')
   if a:mods !~# 'tab' && s:find_man()
-    noautocmd execute 'edit' bufname
+    noautocmd execute 'silent edit' bufname
   else
-    noautocmd execute a:mods 'split' bufname
+    noautocmd execute 'silent' a:mods 'split' bufname
   endif
   let b:man_sect = sect
   call s:read_page(path)
@@ -73,22 +73,15 @@ endfunction
 function! s:read_page(path) abort
   setlocal modifiable
   setlocal noreadonly
-  keepjumps %delete _
-  " Ensure Vim is not recursively invoked (man-db does this)
-  " by forcing man to use cat as the pager.
-  " More info here http://comments.gmane.org/gmane.editors.vim.devel/29085
-  let cmd = 'read !env MANPAGER=cat'
-  if empty($MANWIDTH)
-    " Do not set $MANWIDTH globally.
-    silent execute cmd 'MANWIDTH='.winwidth(0) s:man_cmd shellescape(a:path)
-  else
-    " Respect $MANWIDTH even if it is wider/smaller than the current window,
-    " because the current window might only be temporarily wide/narrow. Since we
-    " don't reflow, we assume the user set $MANWIDTH intentionally.
-    silent execute cmd s:man_cmd shellescape(a:path)
-  endif
+  silent keepjumps %delete _
+  " Force MANPAGER=cat to ensure Vim is not recursively invoked (by man-db).
+  " http://comments.gmane.org/gmane.editors.vim.devel/29085
+  " Respect $MANWIDTH, or default to window width.
+  let cmd  = 'env MANPAGER=cat'.(empty($MANWIDTH) ? ' MANWIDTH='.winwidth(0) : '')
+  let cmd .= ' '.s:man_cmd.' '.shellescape(a:path)
+  silent put =system(cmd)
   " remove all the backspaced text
-  silent execute 'keeppatterns keepjumps %substitute,.\b,,e'.(&gdefault?'':'g')
+  execute 'silent keeppatterns keepjumps %substitute,.\b,,e'.(&gdefault?'':'g')
   while getline(1) =~# '^\s*$'
     silent keepjumps 1delete _
   endwhile
