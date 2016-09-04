@@ -19,4 +19,6 @@ run_oldtests
 
 install_nvim
 
+run_single_includes_test
+
 touch "${SUCCESS_MARKER}"
