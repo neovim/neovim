@@ -279,13 +279,13 @@ typedef struct list_stack_S {
 #define TV_DICT_HI2DI(hi) \
     ((dictitem_T *)((hi)->hi_key - offsetof(dictitem_T, di_key)))
 
-static inline long tv_list_len(list_T *const l)
+static inline long tv_list_len(const list_T *const l)
   REAL_FATTR_PURE REAL_FATTR_WARN_UNUSED_RESULT;
 
 /// Get the number of items in a list
 ///
 /// @param[in]  l  List to check.
-static inline long tv_list_len(list_T *const l)
+static inline long tv_list_len(const list_T *const l)
 {
   if (l == NULL) {
     return 0;

@@ -12463,53 +12463,49 @@ static void f_matchstrpos(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   find_some_match(argvars, rettv, 4);
 }
 
-static void max_min(typval_T *argvars, typval_T *rettv, int domax)
+/// Get maximal/minimal number value in a list or dictionary
+///
+/// @param[in]  tv  List or dictionary to work with. If it contains something
+///                 that is not an integer number (or cannot be coerced to
+///                 it) error is given.
+/// @param[out]  rettv  Location where result will be saved. Only assigns
+///                     vval.v_number, type is not touched. Returns zero for
+///                     empty lists/dictionaries.
+/// @param[in]  domax  Determines whether maximal or minimal value is desired.
+static void max_min(const typval_T *const tv, typval_T *const rettv,
+                    const bool domax)
+  FUNC_ATTR_NONNULL_ALL
 {
-  long n = 0;
-  long i;
+  varnumber_T n = 0;
   bool error = false;
 
-  if (argvars[0].v_type == VAR_LIST) {
-    list_T          *l;
-    listitem_T      *li;
-
-    l = argvars[0].vval.v_list;
-    if (l != NULL) {
-      li = l->lv_first;
-      if (li != NULL) {
-        n = tv_get_number_chk(&li->li_tv, &error);
-        for (;; ) {
-          li = li->li_next;
-          if (li == NULL) {
-            break;
-          }
-          i = tv_get_number_chk(&li->li_tv, &error);
-          if (domax ? i > n : i < n) {
-            n = i;
-          }
+  if (tv->v_type == VAR_LIST) {
+    const list_T *const l = tv->vval.v_list;
+    if (tv_list_len(l) != 0) {
+      n = tv_get_number_chk(&l->lv_first->li_tv, &error);
+      for (const listitem_T *li = l->lv_first->li_next; li != NULL && !error;
+           li = li->li_next) {
+        const varnumber_T i = tv_get_number_chk(&li->li_tv, &error);
+        if (domax ? i > n : i < n) {
+          n = i;
         }
       }
     }
-  } else if (argvars[0].v_type == VAR_DICT) {
-    dict_T          *d;
-    int first = TRUE;
-    hashitem_T      *hi;
-    int todo;
-
-    d = argvars[0].vval.v_dict;
-    if (d != NULL) {
-      todo = (int)d->dv_hashtab.ht_used;
-      for (hi = d->dv_hashtab.ht_array; todo > 0; ++hi) {
-        if (!HASHITEM_EMPTY(hi)) {
-          todo--;
-          i = tv_get_number_chk(&TV_DICT_HI2DI(hi)->di_tv, &error);
-          if (first) {
-            n = i;
-            first = FALSE;
-          } else if (domax ? i > n : i < n)
-            n = i;
+  } else if (tv->v_type == VAR_DICT) {
+    if (tv->vval.v_dict != NULL) {
+      bool first = true;
+      TV_DICT_ITER(tv->vval.v_dict, di, {
+        const varnumber_T i = tv_get_number_chk(&di->di_tv, &error);
+        if (error) {
+          break;
         }
-      }
+        if (first) {
+          n = i;
+          first = true;
+        } else if (domax ? i > n : i < n) {
+          n = i;
+        }
+      });
     }
   } else {
     EMSG2(_(e_listdictarg), domax ? "max()" : "min()");
