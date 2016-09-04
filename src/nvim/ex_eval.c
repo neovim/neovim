@@ -536,14 +536,16 @@ static void discard_exception(except_T *excp, int was_finished)
                       : _("Exception discarded: %s"),
          excp->value);
     msg_puts("\n");  // don't overwrite this either
-    if (debug_break_level > 0 || *p_vfile == NUL)
+    if (debug_break_level > 0 || *p_vfile == NUL) {
       cmdline_row = msg_row;
-    --no_wait_return;
-    if (debug_break_level > 0)
+    }
+    no_wait_return--;
+    if (debug_break_level > 0) {
       msg_silent = save_msg_silent;
-    else
+    } else {
       verbose_leave();
-    STRCPY(IObuff, saved_IObuff);
+    }
+    STRNCPY(IObuff, saved_IObuff, IOSIZE);
     xfree(saved_IObuff);
   }
   if (excp->type != ET_INTERRUPT)

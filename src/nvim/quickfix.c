@@ -2129,7 +2129,7 @@ void ex_copen(exarg_T *eap)
       set_option_value("bt", 0L, "quickfix", OPT_LOCAL);
       set_option_value("bh", 0L, "wipe", OPT_LOCAL);
       RESET_BINDING(curwin);
-      curwin->w_p_diff = FALSE;
+      curwin->w_p_diff = false;
       set_option_value("fdm", 0L, "manual", OPT_LOCAL);
     }
 
@@ -2379,7 +2379,7 @@ static void qf_fill_buffer(qf_info_T *qi)
   // resembles reading a file into a buffer, it's more logical when using
   // autocommands.
   set_option_value("ft", 0L, "qf", OPT_LOCAL);
-  curbuf->b_p_ma = FALSE;
+  curbuf->b_p_ma = false;
 
   keep_filetype = TRUE;                 /* don't detect 'filetype' */
   apply_autocmds(EVENT_BUFREADPOST, (char_u *)"quickfix", NULL,
@@ -3459,24 +3459,24 @@ int get_errorlist(win_T *wp, list_T *list)
     buf[0] = qfp->qf_type;
     buf[1] = NUL;
     if (tv_dict_add_nr(dict, S_LEN("bufnr"), (varnumber_T)bufnum) == FAIL
-         || (tv_dict_add_nr(dict, S_LEN("lnum"), (varnumber_T)qfp->qf_lnum)
-             == FAIL)
-         || (tv_dict_add_nr(dict, S_LEN("col"), (varnumber_T)qfp->qf_col)
-             == FAIL)
-         || (tv_dict_add_nr(dict, S_LEN("vcol"), (varnumber_T)qfp->qf_viscol)
-             == FAIL)
-         || (tv_dict_add_nr(dict, S_LEN("nr"), (varnumber_T)qfp->qf_nr) == FAIL)
-         || tv_dict_add_str(dict, S_LEN("pattern"),
-                            (qfp->qf_pattern == NULL
-                             ? ""
-                             : (const char *)qfp->qf_pattern)) == FAIL
-         || tv_dict_add_str(dict, S_LEN("text"),
-                            (qfp->qf_text == NULL
-                             ? ""
-                             : (const char *)qfp->qf_text)) == FAIL
-         || tv_dict_add_str(dict, S_LEN("type"), (const char *)buf) == FAIL
-         || (tv_dict_add_nr(dict, S_LEN("valid"), (varnumber_T)qfp->qf_valid)
-             == FAIL)) {
+        || (tv_dict_add_nr(dict, S_LEN("lnum"), (varnumber_T)qfp->qf_lnum)
+            == FAIL)
+        || (tv_dict_add_nr(dict, S_LEN("col"), (varnumber_T)qfp->qf_col)
+            == FAIL)
+        || (tv_dict_add_nr(dict, S_LEN("vcol"), (varnumber_T)qfp->qf_viscol)
+            == FAIL)
+        || (tv_dict_add_nr(dict, S_LEN("nr"), (varnumber_T)qfp->qf_nr) == FAIL)
+        || tv_dict_add_str(dict, S_LEN("pattern"),
+                           (qfp->qf_pattern == NULL
+                            ? ""
+                            : (const char *)qfp->qf_pattern)) == FAIL
+        || tv_dict_add_str(dict, S_LEN("text"),
+                           (qfp->qf_text == NULL
+                            ? ""
+                            : (const char *)qfp->qf_text)) == FAIL
+        || tv_dict_add_str(dict, S_LEN("type"), (const char *)buf) == FAIL
+        || (tv_dict_add_nr(dict, S_LEN("valid"), (varnumber_T)qfp->qf_valid)
+            == FAIL)) {
       // tv_dict_add* fail only if key already exist, but this is a newly
       // allocated dictionary which is thus guaranteed to have no existing keys.
       assert(false);
@@ -3666,9 +3666,9 @@ void ex_cexpr(exarg_T *eap)
     if ((rettv.v_type == VAR_STRING && rettv.vval.v_string != NULL)
         || (rettv.v_type == VAR_LIST && rettv.vval.v_list != NULL)) {
       if (qf_init_ext(qi, NULL, NULL, &rettv, p_efm,
-              (eap->cmdidx != CMD_caddexpr
-               && eap->cmdidx != CMD_laddexpr),
-              (linenr_T)0, (linenr_T)0, *eap->cmdlinep) > 0
+                      (eap->cmdidx != CMD_caddexpr
+                       && eap->cmdidx != CMD_laddexpr),
+                      (linenr_T)0, (linenr_T)0, *eap->cmdlinep) > 0
           && (eap->cmdidx == CMD_cexpr
               || eap->cmdidx == CMD_lexpr)) {
         qf_jump(qi, 0, 0, eap->forceit);  // Display first error.

@@ -395,7 +395,7 @@ hash_T hash_hash(const char_u *key)
   hash_T hash = *key;
 
   if (hash == 0) {
-    return (hash_T) 0;
+    return (hash_T)0;
   }
 
   // A simplistic algorithm that appears to do very well.

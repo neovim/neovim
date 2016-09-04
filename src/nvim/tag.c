@@ -537,9 +537,10 @@ do_tag (
           vim_snprintf((char *)IObuff + 1, IOSIZE - 1, "%2d %s ", i + 1,
                        mt_names[matches[i][0] & MT_MASK]);
           msg_puts((const char *)IObuff);
-          if (tagp.tagkind != NULL)
+          if (tagp.tagkind != NULL) {
             msg_outtrans_len(tagp.tagkind,
-                (int)(tagp.tagkind_end - tagp.tagkind));
+                             (int)(tagp.tagkind_end - tagp.tagkind));
+          }
           msg_advance(13);
           msg_outtrans_len_attr(tagp.tagname,
               (int)(tagp.tagname_end - tagp.tagname),
@@ -787,7 +788,7 @@ do_tag (
         vim_snprintf((char *)IObuff, IOSIZE, "ltag %s", tag);
         set_errorlist(curwin, list, ' ', IObuff);
 
-        tv_list_free(list, TRUE);
+        tv_list_free(list, true);
         xfree(fname);
         xfree(cmd);
 
@@ -861,8 +862,9 @@ do_tag (
             msg(IObuff);
           }
           msg_scroll = true;  // Don't overwrite this message.
-        } else
+        } else {
           give_warning(IObuff, ic);
+        }
         if (ic && !msg_scrolled && msg_silent == 0) {
           ui_flush();
           os_delay(1000L, true);
@@ -2733,7 +2735,7 @@ add_tag_field (
   int len = 0;
   int retval;
 
-  /* check that the field name doesn't exist yet */
+  // Check that the field name doesn't exist yet.
   if (tv_dict_find(dict, field_name, -1) != NULL) {
     if (p_verbose > 0) {
       verbose_enter();
@@ -2795,14 +2797,13 @@ int get_tags(list_T *list, char_u *pat)
 
       full_fname = tag_full_fname(&tp);
       if (add_tag_field(dict, "name", tp.tagname, tp.tagname_end) == FAIL
-          || add_tag_field(dict, "filename", full_fname,
-              NULL) == FAIL
-          || add_tag_field(dict, "cmd", tp.command,
-              tp.command_end) == FAIL
+          || add_tag_field(dict, "filename", full_fname, NULL) == FAIL
+          || add_tag_field(dict, "cmd", tp.command, tp.command_end) == FAIL
           || add_tag_field(dict, "kind", tp.tagkind,
-              tp.tagkind ? tp.tagkind_end : NULL) == FAIL
-          || tv_dict_add_nr(dict, S_LEN("static"), is_static) == FAIL)
+                           tp.tagkind ? tp.tagkind_end : NULL) == FAIL
+          || tv_dict_add_nr(dict, S_LEN("static"), is_static) == FAIL) {
         ret = FAIL;
+      }
 
       xfree(full_fname);
 

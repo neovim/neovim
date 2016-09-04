@@ -164,7 +164,7 @@ int buf_init_chartab(buf_T *buf, int global)
   // Walk through the 'isident', 'iskeyword', 'isfname' and 'isprint'
   // options Each option is a list of characters, character numbers or
   // ranges, separated by commas, e.g.: "200-210,x,#-178,-"
-  for (i = global ? 0 : 3; i <= 3; ++i) {
+  for (i = global ? 0 : 3; i <= 3; i++) {
     const char_u *p;
     if (i == 0) {
       // first round: 'isident'

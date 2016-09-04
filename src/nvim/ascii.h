@@ -26,7 +26,7 @@
 #define ESC             '\033'
 #define ESC_STR         "\033"
 #define DEL             0x7f
-#define CSI             0x9b    /* Control Sequence Introducer */
+#define CSI             0x9b    ///< Control Sequence Introducer.
 #define CSI_STR         "\233"
 #define DCS             0x90    /* Device Control String */
 #define STERM           0x9c    /* String Terminator */

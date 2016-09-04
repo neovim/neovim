@@ -401,16 +401,20 @@ int mb_get_class(const char_u *p)
 int mb_get_class_tab(const char_u *p, const uint64_t *const chartab)
 {
   if (MB_BYTE2LEN(p[0]) == 1) {
-    if (p[0] == NUL || ascii_iswhite(p[0]))
+    if (p[0] == NUL || ascii_iswhite(p[0])) {
       return 0;
-    if (vim_iswordc_tab(p[0], chartab))
+    }
+    if (vim_iswordc_tab(p[0], chartab)) {
       return 2;
+    }
     return 1;
   }
-  if (enc_dbcs != 0 && p[0] != NUL && p[1] != NUL)
+  if (enc_dbcs != 0 && p[0] != NUL && p[1] != NUL) {
     return dbcs_class(p[0], p[1]);
-  if (enc_utf8)
+  }
+  if (enc_utf8) {
     return utf_class(utf_ptr2char(p));
+  }
   return 0;
 }
 

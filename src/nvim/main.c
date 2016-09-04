@@ -387,9 +387,10 @@ int main(int argc, char **argv)
     shada_read_everything(NULL, false, true);
     TIME_MSG("reading ShaDa");
   }
-  /* It's better to make v:oldfiles an empty list than NULL. */
-  if (get_vim_var_list(VV_OLDFILES) == NULL)
+  // It's better to make v:oldfiles an empty list than NULL.
+  if (get_vim_var_list(VV_OLDFILES) == NULL) {
     set_vim_var_list(VV_OLDFILES, tv_list_alloc());
+  }
 
   /*
    * "-q errorfile": Load the error file now.

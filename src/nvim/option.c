@@ -952,8 +952,9 @@ void set_init_2(void)
    */
   set_number_default("scroll", Rows / 2);
   idx = findoption("scroll");
-  if (idx >= 0 && !(options[idx].flags & P_WAS_SET))
+  if (idx >= 0 && !(options[idx].flags & P_WAS_SET)) {
     set_option_default(idx, OPT_LOCAL, p_cp);
+  }
   comp_col();
 
   /*
@@ -982,15 +983,17 @@ void set_init_3(void)
   int do_sp;
 
   idx_srr = findoption("srr");
-  if (idx_srr < 0)
-    do_srr = FALSE;
-  else
+  if (idx_srr < 0) {
+    do_srr = false;
+  } else {
     do_srr = !(options[idx_srr].flags & P_WAS_SET);
+  }
   idx_sp = findoption("sp");
-  if (idx_sp < 0)
-    do_sp = FALSE;
-  else
+  if (idx_sp < 0) {
+    do_sp = false;
+  } else {
     do_sp = !(options[idx_sp].flags & P_WAS_SET);
+  }
 
   size_t len = 0;
   char_u *p = (char_u *)invocation_path_tail(p_sh, &len);
@@ -1062,7 +1065,7 @@ void set_helplang_default(const char *lang)
     if (options[idx].flags & P_ALLOCED)
       free_string_option(p_hlg);
     p_hlg = (char_u *)xmemdupz(lang, lang_len);
-    /* zh_CN becomes "cn", zh_TW becomes "tw". */
+    // zh_CN becomes "cn", zh_TW becomes "tw".
     if (STRNICMP(p_hlg, "zh_", 3) == 0 && STRLEN(p_hlg) >= 5) {
       p_hlg[0] = (char_u)TOLOWER_ASC(p_hlg[3]);
       p_hlg[1] = (char_u)TOLOWER_ASC(p_hlg[4]);
@@ -1400,7 +1403,7 @@ do_set (
 
           errmsg = (char_u *)set_bool_option(opt_idx, varp, (int)value,
                                              opt_flags);
-        } else {                                  /* numeric or string */
+        } else {  // Numeric or string.
           if (vim_strchr((char_u *)"=:&<", nextchar) == NULL
               || prefix != 1) {
             errmsg = e_invarg;
@@ -1467,7 +1470,7 @@ do_set (
             errmsg = (char_u *)set_num_option(opt_idx, varp, value,
                                               errbuf, sizeof(errbuf),
                                               opt_flags);
-          } else if (opt_idx >= 0) {                      /* string */
+          } else if (opt_idx >= 0) {  // String.
             char_u      *save_arg = NULL;
             char_u      *s = NULL;
             char_u      *oldval = NULL;         // previous value if *varp
@@ -2552,10 +2555,10 @@ did_set_string_option (
       init_highlight(FALSE, FALSE);
 
       if (dark != (*p_bg == 'd') && get_var_value("g:colors_name") != NULL) {
-        /* The color scheme must have set 'background' back to another
-         * value, that's not what we want here.  Disable the color
-         * scheme and set the colors again. */
-        do_unlet((char_u *)"g:colors_name", TRUE);
+        // The color scheme must have set 'background' back to another
+        // value, that's not what we want here.  Disable the color
+        // scheme and set the colors again.
+        do_unlet((char_u *)"g:colors_name", true);
         free_string_option(p_bg);
         p_bg = vim_strsave((char_u *)(dark ? "dark" : "light"));
         check_string_option(&p_bg);
@@ -3368,14 +3371,17 @@ static char_u *set_chars_option(char_u **varp)
             && p[len + 1] != NUL) {
           s = p + len + 1;
           c1 = mb_ptr2char_adv((const char_u **)&s);
-          if (mb_char2cells(c1) > 1)
+          if (mb_char2cells(c1) > 1) {
             continue;
+          }
           if (tab[i].cp == &lcs_tab2) {
-            if (*s == NUL)
+            if (*s == NUL) {
               continue;
+            }
             c2 = mb_ptr2char_adv((const char_u **)&s);
-            if (mb_char2cells(c2) > 1)
+            if (mb_char2cells(c2) > 1) {
               continue;
+            }
           }
           if (*s == ',' || *s == NUL) {
             if (round) {
@@ -3544,7 +3550,8 @@ static void set_option_scriptID_idx(int opt_idx, int opt_flags, int id)
 /// @param[in]  opt_flags  OPT_LOCAL and/or OPT_GLOBAL.
 ///
 /// @return NULL on success, error message on error.
-static char *set_bool_option(int opt_idx, char_u *varp, int value, int opt_flags)
+static char *set_bool_option(int opt_idx, char_u *varp, int value,
+                             int opt_flags)
 {
   int old_value = *(int *)varp;
 
@@ -3564,13 +3571,12 @@ static char *set_bool_option(int opt_idx, char_u *varp, int value, int opt_flags
     *(int *)get_varp_scope(&(options[opt_idx]), OPT_GLOBAL) = value;
 
   // Ensure that options set to p_force_on cannot be disabled.
-  if ((int *)varp == &p_force_on && p_force_on == FALSE) {
-    p_force_on = TRUE;
+  if ((int *)varp == &p_force_on && !p_force_on) {
+    p_force_on = true;
     return (char *)e_unsupportedoption;
-  }
   // Ensure that options set to p_force_off cannot be enabled.
-  else if ((int *)varp == &p_force_off && p_force_off == TRUE) {
-    p_force_off = FALSE;
+  } else if ((int *)varp == &p_force_off && p_force_off) {
+    p_force_off = false;
     return (char *)e_unsupportedoption;
   }
   /* 'undofile' */
@@ -3698,7 +3704,7 @@ static char *set_bool_option(int opt_idx, char_u *varp, int value, int opt_flags
     if (curwin->w_p_pvw) {
       FOR_ALL_WINDOWS_IN_TAB(win, curtab) {
         if (win->w_p_pvw && win != curwin) {
-          curwin->w_p_pvw = FALSE;
+          curwin->w_p_pvw = false;
           return N_("E590: A preview window already exists");
         }
       }
@@ -4707,9 +4713,10 @@ char_u *get_highlight_default(void)
   int i;
 
   i = findoption("hl");
-  if (i >= 0)
+  if (i >= 0) {
     return options[i].def_val[VI_DEFAULT];
-  return (char_u *)NULL;
+  }
+  return NULL;
 }
 
 /*
@@ -5702,11 +5709,12 @@ void reset_modifiable(void)
 {
   int opt_idx;
 
-  curbuf->b_p_ma = FALSE;
-  p_ma = FALSE;
+  curbuf->b_p_ma = false;
+  p_ma = false;
   opt_idx = findoption("ma");
-  if (opt_idx >= 0)
-    options[opt_idx].def_val[VI_DEFAULT] = FALSE;
+  if (opt_idx >= 0) {
+    options[opt_idx].def_val[VI_DEFAULT] = false;
+  }
 }
 
 /*

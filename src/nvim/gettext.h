@@ -2,20 +2,20 @@
 #define NVIM_GETTEXT_H
 
 #ifdef HAVE_WORKING_LIBINTL
-#  include <libintl.h>
-#  define _(x) gettext((char *)(x))
+# include <libintl.h>
+# define _(x) gettext((char *)(x))
 // XXX do we actually need this?
-#  ifdef gettext_noop
-#    define N_(x) gettext_noop(x)
-#  else
-#    define N_(x) x
-#  endif
-#else
-#  define _(x) ((char *)(x))
+# ifdef gettext_noop
+#  define N_(x) gettext_noop(x)
+# else
 #  define N_(x) x
-#  define bindtextdomain(x, y) /* empty */
-#  define bind_textdomain_codeset(x, y) /* empty */
-#  define textdomain(x) /* empty */
+# endif
+#else
+# define _(x) ((char *)(x))
+# define N_(x) x
+# define bindtextdomain(x, y)  // empty
+# define bind_textdomain_codeset(x, y)  // empty
+# define textdomain(x)  // empty
 #endif
 
 #endif  // NVIM_GETTEXT_H

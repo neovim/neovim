@@ -479,7 +479,6 @@ static int save_level = 0;
 
 void saveRedobuff(void)
 {
-
   if (save_level++ == 0) {
     save_redobuff = redobuff;
     redobuff.bh_first.b_next = NULL;
@@ -530,9 +529,9 @@ AppendToRedobuffLit (
     int len                    /* length of "str" or -1 for up to the NUL */
 )
 {
-
-  if (block_redo)
+  if (block_redo) {
     return;
+  }
 
   const char *s = (const char *)str;
   while (len < 0 ? *s != NUL : s - (const char *)str < len) {
@@ -558,7 +557,9 @@ AppendToRedobuffLit (
 
     // Handle a special or multibyte character.
     // Composing chars separately are handled separately.
-    int c = (has_mbyte ? mb_cptr2char_adv((const char_u **)&s) : (uint8_t)*s++);
+    int c = (has_mbyte
+             ? mb_cptr2char_adv((const char_u **)&s)
+             : (uint8_t)(*s++));
     if (c < ' ' || c == DEL || (*s == NUL && (c == '0' || c == '^'))) {
       add_char_buff(&redobuff, Ctrl_V);
     }
@@ -620,7 +621,7 @@ void stuffReadbuffLen(const char *s, long len)
 void stuffReadbuffSpec(const char *s)
 {
   while (*s != NUL) {
-    if ((uint8_t)*s == K_SPECIAL && s[1] != NUL && s[2] != NUL) {
+    if ((uint8_t)(*s) == K_SPECIAL && s[1] != NUL && s[2] != NUL) {
       // Insert special key literally.
       stuffReadbuffLen(s, 3);
       s += 3;
@@ -3226,7 +3227,7 @@ showmap (
   while (++len <= 3)
     msg_putchar(' ');
 
-  /* Display the LHS.  Get length of what we write. */
+  // Display the LHS.  Get length of what we write.
   len = (size_t)msg_outtrans_special(mp->m_keys, true);
   do {
     msg_putchar(' ');                   /* padd with blanks */
@@ -3251,8 +3252,8 @@ showmap (
   if (*mp->m_str == NUL) {
     msg_puts_attr("<Nop>", hl_attr(HLF_8));
   } else {
-    /* Remove escaping of CSI, because "m_str" is in a format to be used
-     * as typeahead. */
+    // Remove escaping of CSI, because "m_str" is in a format to be used
+    // as typeahead.
     char_u *s = vim_strsave(mp->m_str);
     vim_unescape_csi(s);
     msg_outtrans_special(s, FALSE);
@@ -3327,7 +3328,7 @@ int map_to_exists_mode(const char *const rhs, const int mode, const bool abbr)
 
   // Do it twice: once for global maps and once for local maps.
   for (;;) {
-    for (hash = 0; hash < 256; ++hash) {
+    for (hash = 0; hash < 256; hash++) {
       if (abbr) {
         if (hash > 0) {  // There is only one abbr list.
           break;
@@ -3349,7 +3350,7 @@ int map_to_exists_mode(const char *const rhs, const int mode, const bool abbr)
         }
       }
     }
-    if (expand_buffer){
+    if (expand_buffer) {
       break;
     }
     expand_buffer = true;

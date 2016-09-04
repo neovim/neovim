@@ -2961,7 +2961,7 @@ static tabpage_T *alloc_tabpage(void)
   tp->handle = ++last_tp_handle;
   handle_register_tabpage(tp);
 
-  /* init t: variables */
+  // Init t: variables.
   tp->tp_vars = tv_dict_alloc();
   init_var_dict(tp->tp_vars, &tp->tp_winvar, VAR_SCOPE);
   tp->tp_diff_invalid = TRUE;
@@ -3730,7 +3730,7 @@ static win_T *win_alloc(win_T *after, int hidden)
   new_wp->handle = ++last_win_id;
   handle_register_window(new_wp);
 
-  /* init w: variables */
+  // Init w: variables.
   new_wp->w_vars = tv_dict_alloc();
   init_var_dict(new_wp->w_vars, &new_wp->w_winvar, VAR_SCOPE);
 

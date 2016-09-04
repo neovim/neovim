@@ -1133,7 +1133,7 @@ int insert_reg(
     if (allocated) {
       xfree(arg);
     }
-  } else {                            /* name or number register */
+  } else {  // Name or number register.
     yankreg_T *reg = get_yank_register(regname, YREG_PASTE);
     if (reg->y_array == NULL) {
       retval = FAIL;
@@ -1163,7 +1163,7 @@ static void stuffescaped(const char *arg, int literally)
     // stuff K_SPECIAL to get the effect of a special key when "literally"
     // is TRUE.
     const char *const start = arg;
-    while ((*arg >= ' ' && *arg < DEL) || ((uint8_t)*arg == K_SPECIAL
+    while ((*arg >= ' ' && *arg < DEL) || ((uint8_t)(*arg) == K_SPECIAL
                                            && !literally)) {
       arg++;
     }
@@ -1175,7 +1175,7 @@ static void stuffescaped(const char *arg, int literally)
     if (*arg != NUL) {
       const int c = (has_mbyte
                      ? mb_cptr2char_adv((const char_u **)&arg)
-                     : (uint8_t)*arg++);
+                     : (uint8_t)(*arg++));
       if (literally && ((c < ' ' && c != TAB) || c == DEL)) {
         stuffcharReadbuff(Ctrl_V);
       }

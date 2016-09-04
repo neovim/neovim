@@ -121,7 +121,7 @@ struct listvar_S {
     struct { \
       typval_T di_tv;  /* Structure that holds scope dictionary itself. */ \
       uint8_t di_flags;  /* Flags. */ \
-      char_u di_key[key_len];  /* Key value. */ \
+      char_u di_key[key_len];  /* Key value. */ /* NOLINT(runtime/arrays) */ \
     }
 
 /// Structure to hold a scope dictionary

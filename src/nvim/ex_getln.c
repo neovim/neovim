@@ -2525,8 +2525,9 @@ void cmdline_paste_str(char_u *s, int literally)
   else
     while (*s != NUL) {
       cv = *s;
-      if (cv == Ctrl_V && s[1])
-        ++s;
+      if (cv == Ctrl_V && s[1]) {
+        s++;
+      }
       if (has_mbyte) {
         c = mb_cptr2char_adv((const char_u **)&s);
       } else {
@@ -2537,8 +2538,9 @@ void cmdline_paste_str(char_u *s, int literally)
 #ifdef UNIX
           || c == intr_char
 #endif
-          || (c == Ctrl_BSL && *s == Ctrl_N))
+          || (c == Ctrl_BSL && *s == Ctrl_N)) {
         stuffcharReadbuff(Ctrl_V);
+      }
       stuffcharReadbuff(c);
     }
 }
@@ -3141,7 +3143,7 @@ char *vim_strsave_fnameescape(const char *const fname, const bool shell)
   char_u buf[sizeof(PATH_ESC_CHARS)];
   int j = 0;
 
-  /* Don't escape '[', '{' and '!' if they are in 'isfname'. */
+  // Don't escape '[', '{' and '!' if they are in 'isfname'.
   for (const char *s = PATH_ESC_CHARS; *s != NUL; s++) {
     if ((*s != '[' && *s != '{' && *s != '!') || !vim_isfilec(*s)) {
       buf[j++] = *s;
@@ -3881,34 +3883,34 @@ ExpandFromContext (
       int escaped;
     } tab[] =
     {
-      {EXPAND_COMMANDS, get_command_name, FALSE, TRUE},
-      {EXPAND_BEHAVE, get_behave_arg, TRUE, TRUE},
-      {EXPAND_HISTORY, get_history_arg, TRUE, TRUE},
-      {EXPAND_USER_COMMANDS, get_user_commands, FALSE, TRUE},
-      {EXPAND_USER_ADDR_TYPE, get_user_cmd_addr_type, FALSE, TRUE},
-      {EXPAND_USER_CMD_FLAGS, get_user_cmd_flags, FALSE, TRUE},
-      {EXPAND_USER_NARGS, get_user_cmd_nargs, FALSE, TRUE},
-      {EXPAND_USER_COMPLETE, get_user_cmd_complete, FALSE, TRUE},
-      {EXPAND_USER_VARS, get_user_var_name, FALSE, TRUE},
-      {EXPAND_FUNCTIONS, get_function_name, FALSE, TRUE},
-      {EXPAND_USER_FUNC, get_user_func_name, FALSE, TRUE},
-      {EXPAND_EXPRESSION, get_expr_name, FALSE, TRUE},
-      {EXPAND_MENUS, get_menu_name, FALSE, TRUE},
-      {EXPAND_MENUNAMES, get_menu_names, FALSE, TRUE},
-      {EXPAND_SYNTAX, get_syntax_name, TRUE, TRUE},
-      {EXPAND_SYNTIME, get_syntime_arg, TRUE, TRUE},
-      {EXPAND_HIGHLIGHT, (ExpandFunc)get_highlight_name, TRUE, TRUE},
-      {EXPAND_EVENTS, get_event_name, TRUE, TRUE},
-      {EXPAND_AUGROUP, get_augroup_name, TRUE, TRUE},
-      {EXPAND_CSCOPE, get_cscope_name, TRUE, TRUE},
-      {EXPAND_SIGN, get_sign_name, TRUE, TRUE},
-      {EXPAND_PROFILE, get_profile_name, TRUE, TRUE},
+      { EXPAND_COMMANDS, get_command_name, false, true },
+      { EXPAND_BEHAVE, get_behave_arg, true, true },
+      { EXPAND_HISTORY, get_history_arg, true, true },
+      { EXPAND_USER_COMMANDS, get_user_commands, false, true },
+      { EXPAND_USER_ADDR_TYPE, get_user_cmd_addr_type, false, true },
+      { EXPAND_USER_CMD_FLAGS, get_user_cmd_flags, false, true },
+      { EXPAND_USER_NARGS, get_user_cmd_nargs, false, true },
+      { EXPAND_USER_COMPLETE, get_user_cmd_complete, false, true },
+      { EXPAND_USER_VARS, get_user_var_name, false, true },
+      { EXPAND_FUNCTIONS, get_function_name, false, true },
+      { EXPAND_USER_FUNC, get_user_func_name, false, true },
+      { EXPAND_EXPRESSION, get_expr_name, false, true },
+      { EXPAND_MENUS, get_menu_name, false, true },
+      { EXPAND_MENUNAMES, get_menu_names, false, true },
+      { EXPAND_SYNTAX, get_syntax_name, true, true },
+      { EXPAND_SYNTIME, get_syntime_arg, true, true },
+      { EXPAND_HIGHLIGHT, (ExpandFunc)get_highlight_name, true, true },
+      { EXPAND_EVENTS, get_event_name, true, true },
+      { EXPAND_AUGROUP, get_augroup_name, true, true },
+      { EXPAND_CSCOPE, get_cscope_name, true, true },
+      { EXPAND_SIGN, get_sign_name, true, true },
+      { EXPAND_PROFILE, get_profile_name, true, true },
 #ifdef HAVE_WORKING_LIBINTL
-      {EXPAND_LANGUAGE, get_lang_arg, TRUE, FALSE},
-      {EXPAND_LOCALES, get_locales, TRUE, FALSE},
+      { EXPAND_LANGUAGE, get_lang_arg, true, false },
+      { EXPAND_LOCALES, get_locales, true, false },
 #endif
-      {EXPAND_ENV_VARS, get_env_name, TRUE, TRUE},
-      {EXPAND_USER, get_users, TRUE, FALSE},
+      { EXPAND_ENV_VARS, get_env_name, true, true },
+      { EXPAND_USER, get_users, true, false },
     };
     int i;
 
@@ -4180,8 +4182,9 @@ static int ExpandUserDefined(expand_T *xp, regmatch_T *regmatch, int *num_file, 
 
   retstr = call_user_expand_func((user_expand_func_T)call_func_retstr, xp,
                                  num_file, file);
-  if (retstr == NULL)
+  if (retstr == NULL) {
     return FAIL;
+  }
 
   ga_init(&ga, (int)sizeof(char *), 3);
   for (s = retstr; *s != NUL; s = e) {
@@ -4221,8 +4224,9 @@ static int ExpandUserList(expand_T *xp, int *num_file, char_u ***file)
 
   retlist = call_user_expand_func((user_expand_func_T)call_func_retlist, xp,
                                   num_file, file);
-  if (retlist == NULL)
+  if (retlist == NULL) {
     return FAIL;
+  }
 
   ga_init(&ga, (int)sizeof(char *), 3);
   /* Loop over the items in the list. */
@@ -5153,11 +5157,11 @@ static int ex_window(void)
 
   /* Create the command-line buffer empty. */
   (void)do_ecmd(0, NULL, NULL, NULL, ECMD_ONE, ECMD_HIDE, NULL);
-  (void)setfname(curbuf, (char_u *)"[Command Line]", NULL, TRUE);
+  (void)setfname(curbuf, (char_u *)"[Command Line]", NULL, true);
   set_option_value("bt", 0L, "nofile", OPT_LOCAL);
   set_option_value("swf", 0L, NULL, OPT_LOCAL);
-  curbuf->b_p_ma = TRUE;
-  curwin->w_p_fen = FALSE;
+  curbuf->b_p_ma = true;
+  curwin->w_p_fen = false;
   curwin->w_p_rl = cmdmsg_rl;
   cmdmsg_rl = FALSE;
   RESET_BINDING(curwin);
@@ -5260,7 +5264,7 @@ static int ex_window(void)
       cmdwin_result = Ctrl_C;
     /* Set the new command line from the cmdline buffer. */
     xfree(ccline.cmdbuff);
-    if (cmdwin_result == K_XF1 || cmdwin_result == K_XF2) {   /* :qa[!] typed */
+    if (cmdwin_result == K_XF1 || cmdwin_result == K_XF2) {  // :qa[!] typed
       const char *p = (cmdwin_result == K_XF2) ? "qa" : "qa!";
 
       if (histtype == HIST_CMD) {

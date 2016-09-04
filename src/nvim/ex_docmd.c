@@ -583,8 +583,7 @@ int do_cmdline(char_u *cmdline, LineGetter fgetline,
       ++no_wait_return;
       verbose_enter_scroll();
 
-      smsg(_("line %" PRId64 ": %s"),
-          (int64_t)sourcing_lnum, cmdline_copy);
+      smsg(_("line %" PRIdLINENR ": %s"), sourcing_lnum, cmdline_copy);
       if (msg_silent == 0) {
         msg_puts("\n");  // don't overwrite this either
       }
@@ -598,11 +597,11 @@ int do_cmdline(char_u *cmdline, LineGetter fgetline,
      *    do_one_cmd() will return NULL if there is no trailing '|'.
      *    "cmdline_copy" can change, e.g. for '%' and '#' expansion.
      */
-    ++recursive;
+    recursive++;
     next_cmdline = do_one_cmd(&cmdline_copy, flags & DOCMD_VERBOSE,
-        &cstack,
-        cmd_getline, cmd_cookie);
-    --recursive;
+                              &cstack,
+                              cmd_getline, cmd_cookie);
+    recursive--;
 
     if (cmd_cookie == (void *)&cmd_loop_cookie)
       /* Use "current_line" from "cmd_loop_cookie", it may have been
@@ -676,7 +675,7 @@ int do_cmdline(char_u *cmdline, LineGetter fgetline,
           /* can only get here with ":endwhile" or ":endfor" */
           if (cstack.cs_idx >= 0)
             rewind_conditionals(&cstack, cstack.cs_idx - 1,
-                CSF_WHILE | CSF_FOR, &cstack.cs_looplevel);
+                                CSF_WHILE | CSF_FOR, &cstack.cs_looplevel);
         }
       }
       /*
@@ -2589,7 +2588,7 @@ int cmd_exists(const char *const name)
   int j;
   char_u      *p;
 
-  /* Check command modifiers. */
+  // Check command modifiers.
   for (i = 0; i < (int)ARRAY_SIZE(cmdmods); i++) {
     for (j = 0; name[j] != NUL; j++) {
       if (name[j] != (char)cmdmods[i].name[j]) {

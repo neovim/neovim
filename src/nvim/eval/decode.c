@@ -942,11 +942,11 @@ int msgpack_to_vim(const msgpack_object mobj, typval_T *const rettv)
           .v_lock = VAR_UNLOCKED,
           .vval = { .v_list = list },
         }));
-        uint64_t n = mobj.via.u64;
+        const uint64_t n = mobj.via.u64;
         tv_list_append_number(list, 1);
-        tv_list_append_number(list, (varnumber_T) ((n >> 62) & 0x3));
-        tv_list_append_number(list, (varnumber_T) ((n >> 31) & 0x7FFFFFFF));
-        tv_list_append_number(list, (varnumber_T) (n & 0x7FFFFFFF));
+        tv_list_append_number(list, (varnumber_T)((n >> 62) & 0x3));
+        tv_list_append_number(list, (varnumber_T)((n >> 31) & 0x7FFFFFFF));
+        tv_list_append_number(list, (varnumber_T)(n & 0x7FFFFFFF));
       }
       break;
     }
@@ -965,11 +965,11 @@ int msgpack_to_vim(const msgpack_object mobj, typval_T *const rettv)
           .v_lock = VAR_UNLOCKED,
           .vval = { .v_list = list },
         }));
-        uint64_t n = -((uint64_t) mobj.via.i64);
+        const uint64_t n = -((uint64_t)mobj.via.i64);
         tv_list_append_number(list, -1);
-        tv_list_append_number(list, (varnumber_T) ((n >> 62) & 0x3));
-        tv_list_append_number(list, (varnumber_T) ((n >> 31) & 0x7FFFFFFF));
-        tv_list_append_number(list, (varnumber_T) (n & 0x7FFFFFFF));
+        tv_list_append_number(list, (varnumber_T)((n >> 62) & 0x3));
+        tv_list_append_number(list, (varnumber_T)((n >> 31) & 0x7FFFFFFF));
+        tv_list_append_number(list, (varnumber_T)(n & 0x7FFFFFFF));
       }
       break;
     }

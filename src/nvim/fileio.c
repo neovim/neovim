@@ -2594,9 +2594,9 @@ buf_write (
     perm = -1;
   } else {
     perm = os_getperm((const char *)fname);
-    if (perm < 0)
-      newfile = TRUE;
-    else if (os_isdir(fname)) {
+    if (perm < 0) {
+      newfile = true;
+    } else if (os_isdir(fname)) {
       errnum = (char_u *)"E502: ";
       errmsg = (char_u *)_("is a directory");
       goto fail;
@@ -3873,14 +3873,15 @@ static int check_mtime(buf_T *buf, FileInfo *file_info)
   if (buf->b_mtime_read != 0
       && time_differs(file_info->stat.st_mtim.tv_sec,
                       buf->b_mtime_read)) {
-    msg_scroll = TRUE;              /* don't overwrite messages here */
-    msg_silent = 0;                 /* must give this prompt */
+    msg_scroll = true;  // Don't overwrite messages here.
+    msg_silent = 0;     // Must give this prompt.
     // Don't use emsg() here, don't want to flush the buffers.
     msg_attr(_("WARNING: The file has been changed since reading it!!!"),
              hl_attr(HLF_E));
-    if (ask_yesno(_("Do you really want to write to it"), true) == 'n')
+    if (ask_yesno(_("Do you really want to write to it"), true) == 'n') {
       return FAIL;
-    msg_scroll = FALSE;             /* always overwrite the file message now */
+    }
+    msg_scroll = false;  // Always overwrite the file message now.
   }
   return OK;
 }
@@ -5350,7 +5351,7 @@ static AutoPatCmd *active_apc_list = NULL; /* stack of active autocommands */
 /*
  * augroups stores a list of autocmd group names.
  */
-static garray_T augroups = {0, 0, sizeof(char_u *), 10, NULL};
+static garray_T augroups = { 0, 0, sizeof(char_u *), 10, NULL };
 #define AUGROUP_NAME(i) (((char **)augroups.ga_data)[i])
 
 /*
@@ -5542,9 +5543,10 @@ static int au_new_group(char_u *name)
       ga_grow(&augroups, 1);
     }
 
-    AUGROUP_NAME(i) = xstrdup((char *)name);
-    if (i == augroups.ga_len)
-      ++augroups.ga_len;
+    AUGROUP_NAME(i) = xstrdup((const char *)name);
+    if (i == augroups.ga_len) {
+      augroups.ga_len++;
+    }
   }
 
   return i;
@@ -5639,11 +5641,11 @@ static event_T event_name2nr(const char_u *start, char_u **end)
   int i;
   int len;
 
-  /* the event name ends with end of line, a blank or a comma */
+  // The event name ends with end of line, a blank or a comma.
   for (p = start; *p && !ascii_iswhite(*p) && *p != ','; p++) {
   }
-  for (i = 0; event_names[i].name != NULL; ++i) {
-    len = (int) event_names[i].len;
+  for (i = 0; event_names[i].name != NULL; i++) {
+    len = (int)event_names[i].len;
     if (len == p - start && STRNICMP(event_names[i].name, start, len) == 0) {
       break;
     }

@@ -3647,7 +3647,9 @@ static void syn_list_cluster(int id)
   }
 }
 
-static void put_id_list(const char *name, short *list, int attr)
+static void put_id_list(const char *name,
+                        short *list,  // NOLINT(runtime/int)
+                        int attr)
 {
   short               *p;
 
@@ -5517,19 +5519,21 @@ void ex_ownsyntax(exarg_T *eap)
     clear_string_option(&curwin->w_s->b_syn_isk);
   }
 
-  /* save value of b:current_syntax */
+  // Save value of b:current_syntax.
   old_value = get_var_value("b:current_syntax");
-  if (old_value != NULL)
+  if (old_value != NULL) {
     old_value = vim_strsave(old_value);
+  }
 
   /* Apply the "syntax" autocommand event, this finds and loads the syntax
    * file. */
   apply_autocmds(EVENT_SYNTAX, eap->arg, curbuf->b_fname, TRUE, curbuf);
 
-  /* move value of b:current_syntax to w:current_syntax */
+  // Move value of b:current_syntax to w:current_syntax.
   new_value = get_var_value("b:current_syntax");
-  if (new_value != NULL)
+  if (new_value != NULL) {
     set_internal_string_var((char_u *)"w:current_syntax", new_value);
+  }
 
   /* restore value of b:current_syntax */
   if (old_value == NULL)
@@ -7538,11 +7542,10 @@ static void highlight_list_two(int cnt, int attr)
 const char *get_highlight_name(expand_T *const xp, const int idx)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  // TODO: 'xp' is unused
   if (idx == highlight_ga.ga_len && include_none != 0) {
     return "none";
   } else if (idx == highlight_ga.ga_len + include_none
-      && include_default != 0) {
+             && include_default != 0) {
     return "default";
   } else if (idx == highlight_ga.ga_len + include_none + include_default
              && include_link != 0) {

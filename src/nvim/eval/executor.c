@@ -88,7 +88,6 @@ int eexe_mod_op(typval_T *const tv1, const typval_T *const tv2,
         return OK;
       }
       case VAR_FLOAT: {
-
         if (*op == '.' || (tv2->v_type != VAR_FLOAT
                            && tv2->v_type != VAR_NUMBER
                            && tv2->v_type != VAR_STRING)) {

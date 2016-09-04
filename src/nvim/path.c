@@ -324,9 +324,9 @@ int path_fnamencmp(const char *const fname1, const char *const fname2,
   while (len > 0) {
     c1 = PTR2CHAR(p1);
     c2 = PTR2CHAR(p2);
-    if (c1 == NUL || c2 == NUL
-        || (!((c1 == '/' || c1 == '\\') && (c2 == '\\' || c2 == '/')))
-            && (p_fic ? (c1 != c2 && ch_fold(c1) != ch_fold(c2)) : c1 != c2)) {
+    if ((c1 == NUL || c2 == NUL
+         || (!((c1 == '/' || c1 == '\\') && (c2 == '\\' || c2 == '/'))))
+        && (p_fic ? (c1 != c2 && ch_fold(c1) != ch_fold(c2)) : c1 != c2)) {
       break;
     }
     len -= MB_PTR2LEN(p1);

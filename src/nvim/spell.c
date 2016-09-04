@@ -4957,9 +4957,10 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
             if ((!GA_EMPTY(&spin->si_map)
                  && vim_strchr(spin->si_map.ga_data, c)
                  != NULL)
-                || vim_strchr(p, c) != NULL)
+                || vim_strchr(p, c) != NULL) {
               smsg(_("Duplicate character in MAP in %s line %d"),
                    fname, lnum);
+            }
           }
 
           // We simply concatenate all the MAP strings, separated by
@@ -5293,10 +5294,12 @@ static bool flag_in_afflist(int flagtype, char_u *afflist, unsigned flag)
     for (p = afflist; *p != NUL; ) {
       n = mb_ptr2char_adv((const char_u **)&p);
       if ((flagtype == AFT_LONG || (n >= 'A' && n <= 'Z'))
-          && *p != NUL)
+          && *p != NUL) {
         n = mb_ptr2char_adv((const char_u **)&p) + (n << 16);
-      if (n == flag)
+      }
+      if (n == flag) {
         return true;
+      }
     }
     break;
 
@@ -11437,11 +11440,12 @@ static void set_map_str(slang_T *lp, char_u *map)
   // before the same slash.  For characters above 255 sl_map_hash is used.
   for (p = map; *p != NUL; ) {
     c = mb_cptr2char_adv((const char_u **)&p);
-    if (c == '/')
+    if (c == '/') {
       headc = 0;
-    else {
-      if (headc == 0)
+    } else {
+      if (headc == 0) {
         headc = c;
+      }
 
       // Characters above 255 don't fit in sl_map_array[], put them in
       // the hash table.  Each entry is the char, a NUL the headchar and
@@ -11766,7 +11770,7 @@ char *eval_soundfold(const char *const word)
 {
   if (curwin->w_p_spell && *curwin->w_s->b_p_spl != NUL) {
     // Use the sound-folding of the first language that supports it.
-    for (int lpi = 0; lpi < curwin->w_s->b_langp.ga_len; ++lpi) {
+    for (int lpi = 0; lpi < curwin->w_s->b_langp.ga_len; lpi++) {
       langp_T *const lp = LANGP_ENTRY(curwin->w_s->b_langp, lpi);
       if (!GA_EMPTY(&lp->lp_slang->sl_sal)) {
         // soundfold the word
@@ -13015,7 +13019,7 @@ void ex_spellinfo(exarg_T *eap)
   }
 
   msg_start();
-  for (int lpi = 0; lpi < curwin->w_s->b_langp.ga_len && !got_int; ++lpi) {
+  for (int lpi = 0; lpi < curwin->w_s->b_langp.ga_len && !got_int; lpi++) {
     langp_T *const lp = LANGP_ENTRY(curwin->w_s->b_langp, lpi);
     msg_puts("file: ");
     msg_puts((const char *)lp->lp_slang->sl_fname);
@@ -13044,7 +13048,7 @@ void ex_spelldump(exarg_T *eap)
   if (no_spell_checking(curwin)) {
     return;
   }
-  get_option_value((char_u*)"spl", &dummy, &spl, OPT_LOCAL);
+  get_option_value((char_u *)"spl", &dummy, &spl, OPT_LOCAL);
 
   // Create a new empty buffer in a new window.
   do_cmdline_cmd("new");

@@ -1429,7 +1429,7 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
             fname = xstrdup(fname);
           }
           int kh_ret;
-          (void) kh_put(strset, &oldfiles_set, fname, &kh_ret);
+          (void)kh_put(strset, &oldfiles_set, fname, &kh_ret);
           tv_list_append_allocated_string(oldfiles_list, fname);
           if (!want_marks) {
             // Avoid free because this string was already used.

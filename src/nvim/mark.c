@@ -1410,7 +1410,6 @@ void free_all_marks(void)
 void mark_mb_adjustpos(buf_T *buf, pos_T *lp)
   FUNC_ATTR_NONNULL_ALL
 {
-
   if (lp->col > 0 || lp->coladd > 1) {
     const char_u *const p = ml_get_buf(buf, lp->lnum, false);
     lp->col -= (*mb_head_off)(p, p + lp->col);

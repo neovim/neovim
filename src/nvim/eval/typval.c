@@ -501,7 +501,7 @@ static int list_join_inner(garray_T *const gap, list_T *const l,
   bool first = true;
   listitem_T  *item;
 
-  /* Stringify each item in the list. */
+  // Stringify each item in the list.
   for (item = l->lv_first; item != NULL && !got_int; item = item->li_next) {
     char *s;
     size_t len;
@@ -510,30 +510,32 @@ static int list_join_inner(garray_T *const gap, list_T *const l,
       return FAIL;
     }
 
-    sumlen += (int) len;
+    sumlen += (int)len;
 
     Join *const p = GA_APPEND_VIA_PTR(Join, join_gap);
-    p->tofree = p->s = (char_u *) s;
+    p->tofree = p->s = (char_u *)s;
 
     line_breakcheck();
   }
 
-  /* Allocate result buffer with its total size, avoid re-allocation and
-   * multiple copy operations.  Add 2 for a tailing ']' and NUL. */
-  if (join_gap->ga_len >= 2)
-    sumlen += (int)STRLEN(sep) * (join_gap->ga_len - 1);
+  // Allocate result buffer with its total size, avoid re-allocation and
+  // multiple copy operations.  Add 2 for a tailing ']' and NUL.
+  if (join_gap->ga_len >= 2) {
+    sumlen += (int)strlen(sep) * (join_gap->ga_len - 1);
+  }
   ga_grow(gap, sumlen + 2);
 
-  for (int i = 0; i < join_gap->ga_len && !got_int; ++i) {
+  for (int i = 0; i < join_gap->ga_len && !got_int; i++) {
     if (first) {
       first = false;
     } else {
-      ga_concat(gap, (const char_u *) sep);
+      ga_concat(gap, (const char_u *)sep);
     }
     const Join *const p = ((const Join *)join_gap->ga_data) + i;
 
-    if (p->s != NULL)
+    if (p->s != NULL) {
       ga_concat(gap, p->s);
+    }
     line_breakcheck();
   }
 
@@ -682,7 +684,7 @@ listitem_T *tv_list_find(list_T *const l, int n)
 /// @param[in]  l  List to index.
 /// @param[in]  n  Index in a list.
 /// @param[out]  ret_error  Location where 1 will be saved if index was not
-///                         found. May be NULL. If everything is OK, 
+///                         found. May be NULL. If everything is OK,
 ///                         `*ret_error` is not touched.
 ///
 /// @return Integer value at the given index or -1.
@@ -959,7 +961,6 @@ dict_T *tv_dict_alloc(void)
 void tv_dict_free(dict_T *const d, const bool recurse)
   FUNC_ATTR_NONNULL_ALL
 {
-
   // Remove the dict from the list of dicts for garbage collection.
   if (d->dv_used_prev == NULL) {
     gc_first_dict = d->dv_used_next;
@@ -1228,7 +1229,8 @@ void dict_clear(dict_T *const d)
 ///                     e*, including "error": duplicate key gives an error.
 ///                     f*, including "force": duplicate d2 keys override d1.
 ///                     other, including "keep": duplicate d2 keys ignored.
-void tv_dict_extend(dict_T *const d1, dict_T *const d2, const char *const action)
+void tv_dict_extend(dict_T *const d1, dict_T *const d2,
+                    const char *const action)
 {
   const bool watched = tv_dict_is_watched(d1);
 
