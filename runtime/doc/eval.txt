@@ -1527,16 +1527,21 @@ v:event		Dictionary of event data for the current |autocommand|.  Valid
 <		Keys vary by event; see the documentation for the specific
 		event, e.g. |DirChanged| or |TextYankPost|.
 			KEY		DESCRIPTION ~
-			cwd		Current working directory
+			abort		Whether the event triggered during
+					an aborting condition, i e |c_Esc| or
+					|c_CTRL-c|for |CmdlineLeave|.
+			cmdlevel	Level of cmdline.
+			cmdtype		Type of cmdline, |cmdline-char|.
+			cwd		Current working directory.
 			scope		Event-specific scope name.
 			operator	Current |operator|.  Also set for Ex
 					commands (unlike |v:operator|). For
 					example if |TextYankPost| is triggered
 					by the |:yank| Ex command then
-					`v:event['operator']` is "y".
+					`v:event.operator` is "y".
 			regcontents	Text stored in the register as a
 					|readfile()|-style list of lines.
-			regname 	Requested register (e.g "x" for "xyy)
+			regname		Requested register (e.g "x" for "xyy)
 					or the empty string for an unnamed
 					operation.
 			regtype		Type of register as returned by

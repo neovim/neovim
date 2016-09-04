@@ -1374,6 +1374,29 @@ int tv_dict_add_nr(dict_T *const d, const char *const key,
   return OK;
 }
 
+/// Add a special entry to dictionary
+///
+/// @param[out]  d  Dictionary to add entry to.
+/// @param[in]  key  Key to add.
+/// @param[in]  key_len  Key length.
+/// @param[in]  val SpecialVarValue to add.
+///
+/// @return OK in case of success, FAIL when key already exists.
+int tv_dict_add_special(dict_T *const d, const char *const key,
+                        const size_t key_len, SpecialVarValue val)
+{
+  dictitem_T *const item = tv_dict_item_alloc_len(key, key_len);
+
+  item->di_tv.v_lock = VAR_UNLOCKED;
+  item->di_tv.v_type = VAR_SPECIAL;
+  item->di_tv.vval.v_special = val;
+  if (tv_dict_add(d, item) == FAIL) {
+    tv_dict_item_free(item);
+    return FAIL;
+  }
+  return OK;
+}
+
 /// Add a string entry to dictionary
 ///
 /// @param[out]  d  Dictionary to add entry to.
