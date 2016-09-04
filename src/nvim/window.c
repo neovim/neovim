@@ -2978,6 +2978,9 @@ int win_new_tabpage(int after, char_u *filename)
     xfree(newtp);
     return FAIL;
   }
+
+  newtp->localdir = tp->localdir ? vim_strsave(tp->localdir) : NULL;
+
   curtab = newtp;
 
   /* Create a new empty window. */
