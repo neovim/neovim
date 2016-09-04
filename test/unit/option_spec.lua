@@ -82,3 +82,59 @@ describe('set_option_value mps', function()
     end
   end)
 end)
+
+describe('find_mps_values', function()
+  --take input parameters and return output parameters
+  local find_mps_values = function(to_match, switchit)
+    --TODO mbyte handling with utf8.codepoints
+    local initc = ffi.new("int[1]", string.byte(to_match)) 
+    local findc = ffi.new("int[1]", 2)
+    local backwards = ffi.new("int[1]", 3)
+    option.find_mps_values(initc, findc, backwards, switchit)
+    --TODO mbyte handling with utf8.char
+    return string.char(initc[0]), string.char(findc[0]), backwards[0] 
+  end
+
+  it("finds pairs of searched character", function()
+    globals.curbuf.b_p_mps = to_cstr("(:),[:]")
+    local match, pair, backwards = find_mps_values("(", false)
+    eq("(", match)
+    eq(")", pair)
+    eq(0, backwards)
+
+    match, pair, backwards = find_mps_values("[", false)
+    eq("[", match)
+    eq("]", pair)
+    eq(0, backwards)
+  end)
+
+  it("sets backwards when match is found after its pair", function()
+    local match, pair, backwards = find_mps_values(")", false)
+    eq(")", match)
+    eq("(", pair)
+    eq(1, backwards)
+  end)
+
+  it("swaps match and pair when switchit=true", function()
+    globals.curbuf.b_p_mps = to_cstr("(:),[:]")
+    local match, pair, backwards = find_mps_values("(", true)
+    eq(")", match)
+    eq("(", pair)
+    eq(1, backwards)
+
+    match, pair, backwards = find_mps_values(")", true)
+    eq("(", match)
+    eq(")", pair)
+    eq(0, backwards)
+
+    match, pair, backwards = find_mps_values("(", true)
+    eq(")", match)
+    eq("(", pair)
+    eq(1, backwards)
+
+    match, pair, backwards = find_mps_values(")", true)
+    eq("(", match)
+    eq(")", pair)
+    eq(0, backwards)
+  end)
+end)
