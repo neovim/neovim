@@ -1,4 +1,4 @@
-*quickfix.txt*  For Vim version 7.4.  Last change: 2016 Mar 19
+*quickfix.txt*  For Vim version 7.4.  Last change: 2016 Jul 01
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -259,8 +259,22 @@ location list command, it will be aborted.
 			The 'switchbuf' settings are respected when jumping
 			to a buffer.
 
+:cl[ist] +{count}	List the current and next {count} valid errors.  This
+			is similar to ":clist from from+count", where "from"
+			is the current error position.
+
 :cl[ist]! [from] [, [to]]
 			List all errors.
+
+:cl[ist]! +{count}	List the current and next {count} error lines.  This
+			is useful to see unrecognized lines after the current
+			one.  For example, if ":clist" shows:
+        8384 testje.java:252: error: cannot find symbol ~
+			Then using ":cl! +3" shows the reason:
+        8384 testje.java:252: error: cannot find symbol ~
+        8385:   ZexitCode = Fmainx(); ~
+        8386:               ^ ~
+        8387:   symbol:   method Fmainx() ~
 
 							*:lli* *:llist*
 :lli[st] [from] [, [to]]
@@ -306,7 +320,7 @@ EXECUTE A COMMAND IN ALL THE BUFFERS IN QUICKFIX OR LOCATION LIST:
 				etc.
 <			When the current file can't be |abandon|ed and the [!]
 			is not present, the command fails.
-			When an error is detected excecution stops.
+			When an error is detected execution stops.
 			The last buffer (or where an error occurred) becomes
 			the current buffer.
 			{cmd} can contain '|' to concatenate several commands.
