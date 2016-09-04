@@ -36,8 +36,10 @@ describe('shell functions', function()
   end
 
   after_each(function()
-    shell.p_sxq = to_cstr('')
-    shell.p_sxe = to_cstr('')
+    cimported.p_sxq = to_cstr('')
+    cimported.p_sxe = to_cstr('')
+    cimported.p_sh = to_cstr('/bin/bash')
+    cimported.p_shcf = to_cstr('-c')
   end)
 
   local function os_system(cmd, input)
@@ -123,13 +125,13 @@ describe('shell functions', function()
   
   describe('shell_build_argv can deal with sxe and sxq', function()
     setup(function()
-      shell.p_sxq = to_cstr('(')
-      shell.p_sxe = to_cstr('"&|<>()@^')
+      cimported.p_sxq = to_cstr('(')
+      cimported.p_sxe = to_cstr('"&|<>()@^')
     end)
 
     it('applies shellxescape and shellxquote', function()
       local argv = ffi.cast('char**',
-                        shell.shell_build_argv(to_cstr('echo &|<>()@^'), nil))
+                        cimported.shell_build_argv(to_cstr('echo &|<>()@^'), nil))
       eq(ffi.string(argv[0]), '/bin/bash')
       eq(ffi.string(argv[1]), '-c')
       eq(ffi.string(argv[2]), '(echo ^&^|^<^>^(^)^@^^)')
@@ -137,9 +139,9 @@ describe('shell functions', function()
     end)
 
     it('applies shellxquote when shellxquote is "\\"("', function()
-      shell.p_sxq = to_cstr('"(')
+      cimported.p_sxq = to_cstr('"(')
 
-      local argv = ffi.cast('char**', shell.shell_build_argv(
+      local argv = ffi.cast('char**', cimported.shell_build_argv(
                                           to_cstr('echo -n some text'), nil))
       eq(ffi.string(argv[0]), '/bin/bash')
       eq(ffi.string(argv[1]), '-c')
@@ -148,10 +150,10 @@ describe('shell functions', function()
     end)
 
     it('applies shellxquote when shellxquote is "\\""', function()
-      shell.p_sxq = to_cstr('"')
-      shell.p_sxe = to_cstr('')
+      cimported.p_sxq = to_cstr('"')
+      cimported.p_sxe = to_cstr('')
 
-      local argv = ffi.cast('char**', shell.shell_build_argv(
+      local argv = ffi.cast('char**', cimported.shell_build_argv(
                                           to_cstr('echo -n some text'), nil))
       eq(ffi.string(argv[0]), '/bin/bash')
       eq(ffi.string(argv[1]), '-c')
