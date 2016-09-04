@@ -15022,58 +15022,61 @@ static sortinfo_T *sortinfo = NULL;
  */
 static int item_compare(const void *s1, const void *s2, bool keep_zero)
 {
-  sortItem_T  *si1, *si2;
-  char_u *p1;
-  char_u *p2;
-  char_u *tofree1 = NULL;
-  char_u *tofree2 = NULL;
+  sortItem_T *const si1 = (sortItem_T *)s1;
+  sortItem_T *const si2 = (sortItem_T *)s2;
+
+  typval_T *const tv1 = &si1->item->li_tv;
+  typval_T *const tv2 = &si2->item->li_tv;
+
   int res;
 
-  si1 = (sortItem_T *)s1;
-  si2 = (sortItem_T *)s2;
-  typval_T *tv1 = &si1->item->li_tv;
-  typval_T *tv2 = &si2->item->li_tv;
-
   if (sortinfo->item_compare_numbers) {
-    const varnumber_T v1 = tv_get_number(tv1);
-    const varnumber_T v2 = tv_get_number(tv2);
+    const long v1 = tv_get_number(tv1);
+    const long v2 = tv_get_number(tv2);
 
-    return v1 == v2 ? 0 : v1 > v2 ? 1 : -1;
+    res = v1 == v2 ? 0 : v1 > v2 ? 1 : -1;
+    goto item_compare_end;
   }
 
   if (sortinfo->item_compare_float) {
     const float_T v1 = tv_get_float(tv1);
     const float_T v2 = tv_get_float(tv2);
 
-    return v1 == v2 ? 0 : v1 > v2 ? 1 : -1;
+    res = v1 == v2 ? 0 : v1 > v2 ? 1 : -1;
+    goto item_compare_end;
   }
+
+  char *tofree1 = NULL;
+  char *tofree2 = NULL;
+  char *p1;
+  char *p2;
 
   // encode_tv2string() puts quotes around a string and allocates memory.  Don't
   // do that for string variables. Use a single quote when comparing with
   // a non-string to do what the docs promise.
   if (tv1->v_type == VAR_STRING) {
     if (tv2->v_type != VAR_STRING || sortinfo->item_compare_numeric) {
-      p1 = (char_u *)"'";
+      p1 = "'";
     } else {
-      p1 = tv1->vval.v_string;
+      p1 = (char *)tv1->vval.v_string;
     }
   } else {
-    tofree1 = p1 = (char_u *) encode_tv2string(tv1, NULL);
+    tofree1 = p1 = encode_tv2string(tv1, NULL);
   }
   if (tv2->v_type == VAR_STRING) {
     if (tv1->v_type != VAR_STRING || sortinfo->item_compare_numeric) {
-      p2 = (char_u *)"'";
+      p2 = "'";
     } else {
-      p2 = tv2->vval.v_string;
+      p2 = (char *)tv2->vval.v_string;
     }
   } else {
-    tofree2 = p2 = (char_u *) encode_tv2string(tv2, NULL);
+    tofree2 = p2 = encode_tv2string(tv2, NULL);
   }
   if (p1 == NULL) {
-    p1 = (char_u *)"";
+    p1 = "";
   }
   if (p2 == NULL) {
-    p2 = (char_u *)"";
+    p2 = "";
   }
   if (!sortinfo->item_compare_numeric) {
     if (sortinfo->item_compare_ic) {
@@ -15083,19 +15086,20 @@ static int item_compare(const void *s1, const void *s2, bool keep_zero)
     }
   } else {
     double n1, n2;
-    n1 = strtod((char *)p1, (char **)&p1);
-    n2 = strtod((char *)p2, (char **)&p2);
+    n1 = strtod(p1, &p1);
+    n2 = strtod(p2, &p2);
     res = n1 == n2 ? 0 : n1 > n2 ? 1 : -1;
   }
 
+  xfree(tofree1);
+  xfree(tofree2);
+
+item_compare_end:
   // When the result would be zero, compare the item indexes.  Makes the
   // sort stable.
   if (res == 0 && !keep_zero) {
     res = si1->idx > si2->idx ? 1 : -1;
   }
-
-  xfree(tofree1);
-  xfree(tofree2);
   return res;
 }
 
