@@ -9776,26 +9776,20 @@ static void f_getcwd(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       if (from) {
         break;
       }
-    case kCdScopeTab:  // FALLTHROUGH
+    case kCdScopeTab:         // FALLTHROUGH
       assert(tp);
       from = tp->localdir;
       if (from) {
         break;
       }
-    case kCdScopeGlobal:  // FALLTHROUGH
-      // The `globaldir` variable is not always set.
-      if (globaldir) {
+    case kCdScopeGlobal:      // FALLTHROUGH
+      if (globaldir) {        // `globaldir` is not always set.
         from = globaldir;
-      } else {
-        // We have to copy the OS path directly into output string.
-        if (os_dirname(cwd, MAXPATHL) == FAIL) {
-          EMSG(_("E41: Could not display path."));
-          goto end;
-        }
+      } else if (os_dirname(cwd, MAXPATHL) == FAIL) {  // Get the OS CWD.
+        from = (char_u *)"";  // Return empty string on failure.
       }
       break;
-    case kCdScopeInvalid:
-      // We should never get here
+    case kCdScopeInvalid:     // We should never get here
       assert(false);
   }
 
@@ -9807,7 +9801,7 @@ static void f_getcwd(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 #ifdef BACKSLASH_IN_FILENAME
   slash_adjust(rettv->vval.v_string);
 #endif
-end:
+
   xfree(cwd);
 }
 

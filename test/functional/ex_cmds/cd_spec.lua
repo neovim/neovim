@@ -269,3 +269,23 @@ for _, cmd in ipairs {'getcwd', 'haslocaldir'} do
   end)
 end
 
+describe("getcwd()", function ()
+  local temp_dir = "Xtest-functional-ex_cmds-cd_spec.temp"
+  before_each(function()
+    clear()
+    lfs.mkdir(temp_dir)
+  end)
+
+  after_each(function()
+    helpers.rmdir(temp_dir)
+  end)
+
+  it("returns empty string if working directory does not exist", function()
+    execute("cd " .. temp_dir)
+    helpers.wait()
+    helpers.rmdir(temp_dir)
+    eq("", helpers.eval("getcwd()"))
+  end)
+end)
+
+
