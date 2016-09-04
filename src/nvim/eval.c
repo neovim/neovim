@@ -10092,17 +10092,17 @@ static void f_islocked(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 static void dict_list(typval_T *const tv, typval_T *const rettv,
                       const DictListType what)
 {
-  if (tv[0].v_type != VAR_DICT) {
+  if (tv->v_type != VAR_DICT) {
     EMSG(_(e_dictreq));
     return;
   }
-  if (tv[0].vval.v_dict == NULL) {
+  if (tv->vval.v_dict == NULL) {
     return;
   }
 
   tv_list_alloc_ret(rettv);
 
-  TV_DICT_ITER(tv[0].vval.v_dict, di, {
+  TV_DICT_ITER(tv->vval.v_dict, di, {
     listitem_T *const li = tv_list_item_alloc();
     tv_list_append(rettv->vval.v_list, li);
 

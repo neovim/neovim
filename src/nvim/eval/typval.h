@@ -261,9 +261,9 @@ extern const char *const tv_empty_string;
 /// @param  di  Name of the variable with current dictitem_T entry.
 /// @param  code  Cycle body.
 #define TV_DICT_ITER(d, di, code) \
-    HASHTAB_ITER(&(d)->dv_hashtab, d##hi_, { \
+    HASHTAB_ITER(&(d)->dv_hashtab, di##hi_, { \
       { \
-        dictitem_T *const di = TV_DICT_HI2DI(d##hi_); \
+        dictitem_T *const di = TV_DICT_HI2DI(di##hi_); \
         { \
           code \
         } \
