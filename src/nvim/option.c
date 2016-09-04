@@ -6585,10 +6585,8 @@ int get_sw_value(buf_T *buf)
   return (int)result;
 }
 
-/*
- * Return the effective softtabstop value for the current buffer, using the
- * 'tabstop' value when 'softtabstop' is negative.
- */
+// Return the effective softtabstop value for the current buffer,
+// using the effective shiftwidth  value when 'softtabstop' is negative.
 int get_sts_value(void)
 {
   long result = curbuf->b_p_sts < 0 ? get_sw_value(curbuf) : curbuf->b_p_sts;

@@ -126,39 +126,36 @@ struct exarg {
   struct condstack *cstack;     ///< condition stack for ":if" etc.
 };
 
-#define FORCE_BIN 1             /* ":edit ++bin file" */
-#define FORCE_NOBIN 2           /* ":edit ++nobin file" */
+#define FORCE_BIN 1             // ":edit ++bin file"
+#define FORCE_NOBIN 2           // ":edit ++nobin file"
 
-/* Values for "flags" */
-#define EXFLAG_LIST     0x01    /* 'l': list */
-#define EXFLAG_NR       0x02    /* '#': number */
-#define EXFLAG_PRINT    0x04    /* 'p': print */
+// Values for "flags"
+#define EXFLAG_LIST     0x01    // 'l': list
+#define EXFLAG_NR       0x02    // '#': number
+#define EXFLAG_PRINT    0x04    // 'p': print
 
-/*
- * used for completion on the command line
- */
-typedef struct expand {
-  int xp_context;                       /* type of expansion */
-  char_u      *xp_pattern;              /* start of item to expand */
-  int xp_pattern_len;                   /* bytes in xp_pattern before cursor */
-  char_u      *xp_arg;                  /* completion function */
-  int xp_scriptID;                      /* SID for completion function */
-  int xp_backslash;                     /* one of the XP_BS_ values */
+// used for completion on the command line
+struct expand {
+  int xp_context;               // type of expansion
+  char_u *xp_pattern;           // start of item to expand
+  int xp_pattern_len;           // bytes in xp_pattern before cursor
+  char_u *xp_arg;               // completion function
+  int xp_scriptID;              // SID for completion function
+  int xp_backslash;             // one of the XP_BS_ values
 #ifndef BACKSLASH_IN_FILENAME
-  int xp_shell;                         /* TRUE for a shell command, more
-                                           characters need to be escaped */
+  int xp_shell;                 // TRUE for a shell command, more
+                                // characters need to be escaped
 #endif
-  int xp_numfiles;                      /* number of files found by
-                                                    file name completion */
-  char_u      **xp_files;               /* list of files */
-  char_u      *xp_line;                 /* text being completed */
-  int xp_col;                           /* cursor position in line */
-} expand_T;
+  int xp_numfiles;              // number of files found by file name completion
+  char_u **xp_files;            // list of files
+  char_u *xp_line;              // text being completed
+  int xp_col;                   // cursor position in line
+};
 
-/* values for xp_backslash */
-#define XP_BS_NONE      0       /* nothing special for backslashes */
-#define XP_BS_ONE       1       /* uses one backslash before a space */
-#define XP_BS_THREE     2       /* uses three backslashes before a space */
+// values for xp_backslash
+#define XP_BS_NONE      0       // nothing special for backslashes
+#define XP_BS_ONE       1       // uses one backslash before a space
+#define XP_BS_THREE     2       // uses three backslashes before a space
 
 /// Command modifiers ":vertical", ":browse", ":confirm", ":hide", etc. set a
 /// flag.  This needs to be saved for recursive commands, put them in a
