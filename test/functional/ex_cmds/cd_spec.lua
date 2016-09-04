@@ -269,3 +269,25 @@ for _, cmd in ipairs {'getcwd', 'haslocaldir'} do
   end)
 end
 
+-- Test what happens when a directory does not exist
+describe('Printing the working directory when it does not exist', function ()
+  local temp_dir = 'Xtest-functional-ex_cmds-cd_spec.temp'
+  before_each(function()
+    clear()
+    lfs.mkdir(temp_dir)
+  end)
+
+  after_each(function()
+    lfs.rmdir(temp_dir)
+  end)
+
+  it('returns an empty string', function()
+    execute('cd ' .. temp_dir)
+    helpers.wait()
+    lfs.rmdir(temp_dir)
+    local working_dir = cwd()
+    eq('', working_dir)
+  end)
+end)
+
+
