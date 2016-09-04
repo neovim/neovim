@@ -403,7 +403,6 @@ endfunction
 
 function! s:check_ruby() abort
   call health#report_start('Ruby provider')
-  let min_version  = "0.2.4"
   let ruby_version = systemlist('ruby -v')[0]
   let ruby_prog    = provider#ruby#Detect()
   let suggestions  =
@@ -414,15 +413,20 @@ function! s:check_ruby() abort
     let prog_vers = 'not found'
     call health#report_error('Missing Neovim RubyGem', suggestions)
   else
+    silent let latest_gem = get(systemlist("gem list -ra '^neovim$' 2>/dev/null | " .
+          \ "awk -F'[()]' '{print $2}' | " .
+          \ 'cut -d, -f1'), 0, 'not found')
+    let latest_desc = ' (latest: ' . latest_gem . ')'
+
     silent let prog_vers = systemlist(ruby_prog . ' --version')[0]
     if v:shell_error
-      let prog_vers = 'outdated'
-      call health#report_warn('Neovim RubyGem is not up-to-date', suggestions)
-    elseif s:version_cmp(prog_vers, min_version) == -1
-      let prog_vers .= ' (outdated)'
-      call health#report_warn('Neovim RubyGem is not up-to-date', suggestions)
+      let prog_vers = 'not found' . latest_desc
+      call health#report_warn('Neovim RubyGem is not up-to-date.', suggestions)
+    elseif s:version_cmp(prog_vers, latest_gem) == -1
+      let prog_vers .= latest_desc
+      call health#report_warn('Neovim RubyGem is not up-to-date.', suggestions)
     else
-      call health#report_ok('Found Neovim RubyGem')
+      call health#report_ok('Found up-to-date neovim RubyGem')
     endif
   endif
 
