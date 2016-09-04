@@ -4563,12 +4563,15 @@ int find_help_tags(char_u *arg, int *num_matches, char_u ***matches, int keep_la
           break;
         }
 
-        /*
-         * If tag starts with ', toss everything after a second '. Fixes
-         * CTRL-] on 'option'. (would include the trailing '.').
-         */
-        if (*s == '\'' && s > arg && *arg == '\'')
+        // If tag starts with ', toss everything after a second '. Fixes
+        // CTRL-] on 'option'. (would include the trailing '.').
+        if (*s == '\'' && s > arg && *arg == '\'') {
           break;
+        }
+        // Also '{' and '}'. Fixes CTRL-] on '{address}'.
+        if (*s == '}' && s > arg && *arg == '{') {
+          break;
+        }
       }
       *d = NUL;
 
