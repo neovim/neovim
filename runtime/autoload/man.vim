@@ -9,8 +9,7 @@ endif
 let s:man_find_arg = "-w"
 
 " TODO(nhooyr) Completion may work on SunOS; I'm not sure if `man -l` displays
-" the list of searched directories. I also do not think Solaris supports the
-" '-P' flag used above and uses only $PAGER.
+" the list of searched directories.
 try
   if !has('win32') && $OSTYPE !~? 'cygwin\|linux' && system('uname -s') =~? 'SunOS' && system('uname -r') =~# '^5'
     let s:man_find_arg = '-l'
@@ -23,11 +22,13 @@ function! man#open_page(count, count1, mods, ...) abort
   if a:0 > 2
     call s:error('too many arguments')
     return
-  elseif a:0 ==# 1
-    if empty(a:1)
+  elseif a:0 == 0
+    let ref = &filetype ==# 'man' ? expand('<cWORD>') : expand('<cword>')
+    if empty(ref)
       call s:error('no identifier under cursor')
       return
     endif
+  elseif a:0 ==# 1
     let ref = a:1
   else
     " Combine the name and sect into a manpage reference so that all

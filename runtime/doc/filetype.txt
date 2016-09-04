@@ -529,16 +529,11 @@ Man {sect} {name}({sect}) Used during completion to show the real section of
                           when the provided section is a prefix, e.g. 1m vs 1.
 Man {path}                Open the manpage specified by path. Prepend "./" if
                           page is in the current directory.
+Man                       Open the manpage for the <cWORD> (man buffers)
+                          or <cword> (non-man buffers) under the cursor.
 
 |:Man| accepts command modifiers. For example, to use a vertical split: >
      :vertical Man printf
-
-Global Mappings:
-<Plug>(man)               Jump to the manpage for the <cWORD> (man buffers)
-                          or <cword> (non-man buffers) under the cursor.
-                          Takes a count for the section.
-<Plug>(man_vsplit)        Same as <Plug>(man) but open in a vertical split.
-<Plug>(man_tab)           Same as <Plug>(man) but open in a new tab.
 
 Local mappings:
 K or CTRL-]               Jump to the manpage for the <cWORD> under the
