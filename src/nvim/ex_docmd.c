@@ -1814,9 +1814,9 @@ static char_u * do_one_cmd(char_u **cmdlinep,
           errormsg = (char_u *)_("E493: Backwards range given");
           goto doend;
         }
-        if (ask_yesno((char_u *)
-                _("Backwards range given, OK to swap"), FALSE) != 'y')
+        if (ask_yesno(_("Backwards range given, OK to swap"), false) != 'y') {
           goto doend;
+        }
       }
       lnum = ea.line1;
       ea.line1 = ea.line2;

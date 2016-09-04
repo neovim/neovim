@@ -3877,9 +3877,8 @@ static int check_mtime(buf_T *buf, FileInfo *file_info)
     msg_silent = 0;                 /* must give this prompt */
     // Don't use emsg() here, don't want to flush the buffers.
     msg_attr(_("WARNING: The file has been changed since reading it!!!"),
-        hl_attr(HLF_E));
-    if (ask_yesno((char_u *)_("Do you really want to write to it"),
-            TRUE) == 'n')
+             hl_attr(HLF_E));
+    if (ask_yesno(_("Do you really want to write to it"), true) == 'n')
       return FAIL;
     msg_scroll = FALSE;             /* always overwrite the file message now */
   }
