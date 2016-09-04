@@ -1,13 +1,11 @@
 local helpers = require('test.functional.helpers')(after_each)
 local clear = helpers.clear
 local eq = helpers.eq
-local command = helpers.command
 local meths = helpers.meths
 local eval = helpers.eval
 local exc_exec = helpers.exc_exec
 local redir_exec = helpers.redir_exec
 local funcs = helpers.funcs
-local write_file = helpers.write_file
 local NIL = helpers.NIL
 local source = helpers.source
 
