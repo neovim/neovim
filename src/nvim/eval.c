@@ -11248,26 +11248,26 @@ static void f_islocked(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 }
 
 
-/*
- * Turn a dict into a list:
- * "what" == 0: list of keys
- * "what" == 1: list of values
- * "what" == 2: list of items
- */
-static void dict_list(typval_T *argvars, typval_T *rettv, int what)
+/// Turn a dictionary into a list
+///
+/// @param[in]  tv  Dictionary to convert. Is checked for actually being
+///                 a dictionary, will give an error if not.
+/// @param[out]  rettv  Location where result will be saved.
+/// @param[in]  what  What to save in rettv.
+static void dict_list(typval_T *const tv, typval_T *const rettv,
+                      const DictListType what)
 {
-  if (argvars[0].v_type != VAR_DICT) {
-    EMSG(_(e_dictreq));
+  if (tv->v_type != VAR_DICT) {
+    emsgf(_(e_dictreq));
     return;
   }
-  dict_T *const d = argvars[0].vval.v_dict;
-  if (d == NULL) {
+  if (tv->vval.v_dict == NULL) {
     return;
   }
 
   tv_list_alloc_ret(rettv);
 
-  TV_DICT_ITER(d, di, {
+  TV_DICT_ITER(tv->vval.v_dict, di, {
     listitem_T *const li = tv_list_item_alloc();
     tv_list_append(rettv->vval.v_list, li);
 
