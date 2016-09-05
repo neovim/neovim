@@ -22,13 +22,13 @@ function! health#check(plugin_names) abort
         \ ? s:discover_health_checks()
         \ : s:to_fn_names(a:plugin_names)
 
+  tabnew
+  setlocal filetype=markdown bufhidden=wipe
+  call s:enhance_syntax()
+
   if empty(healthchecks)
     call setline(1, 'ERROR: No healthchecks found.')
   else
-    tabnew
-    setlocal filetype=markdown bufhidden=wipe
-    call s:enhance_syntax()
-
     redraw|echo 'Running healthchecks...'
     for c in healthchecks
       let output = ''
