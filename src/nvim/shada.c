@@ -2976,7 +2976,7 @@ shada_write_file_nomerge: {}
   if (sd_writer.cookie == NULL) {
     xfree(fname);
     xfree(tempname);
-    if (sd_reader.close != NULL) {
+    if (sd_reader.cookie != NULL) {
       sd_reader.close(&sd_reader);
     }
     return FAIL;
