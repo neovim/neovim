@@ -11,47 +11,50 @@ function! s:enhance_syntax() abort
   syntax keyword healthSuccess SUCCESS
   highlight link healthSuccess Function
 
-  syntax keyword healthSuggestion SUGGESTION
+  syntax keyword healthSuggestion SUGGESTIONS
   highlight link healthSuggestion String
 endfunction
 
 " Runs the specified healthchecks.
 " Runs all discovered healthchecks if a:plugin_names is empty.
 function! health#check(plugin_names) abort
-  let report = ''
-
   let healthchecks = empty(a:plugin_names)
         \ ? s:discover_health_checks()
         \ : s:to_fn_names(a:plugin_names)
 
   if empty(healthchecks)
-    let report = "ERROR: No healthchecks found."
+    call setline(1, 'ERROR: No healthchecks found.')
   else
+    tabnew
+    setlocal filetype=markdown bufhidden=wipe
+    call s:enhance_syntax()
+
+    redraw|echo 'Running healthchecks...'
     for c in healthchecks
-      let report .= printf("\n%s\n%s", c, repeat('=',80))
+      let output = ''
+      call append('$', split(printf("\n%s\n%s", c, repeat('=',80)), "\n"))
       try
-        let report .= execute('call '.c.'()')
-      catch /^Vim\%((\a\+)\)\=:E117/
-        let report .= execute(
-              \ 'call health#report_error(''No healthcheck found for "'
-              \ .s:to_plugin_name(c)
-              \ .'" plugin.'')')
+        let output = "\n\n".execute('call '.c.'()')
       catch
-        let report .= execute(
-              \ 'call health#report_error(''Failed to run healthcheck for "'
-              \ .s:to_plugin_name(c)
-              \ .'" plugin. Exception:''."\n".v:exception)')
+        if v:exception =~# '^Vim\%((\a\+)\)\=:E117.*\V'.c
+          let output = execute(
+                \ 'call health#report_error(''No healthcheck found for "'
+                \ .s:to_plugin_name(c)
+                \ .'" plugin.'')')
+        else
+          let output = execute(
+                \ 'call health#report_error(''Failed to run healthcheck for "'
+                \ .s:to_plugin_name(c)
+                \ .'" plugin. Exception:''."\n".v:exception)')
+        endif
       endtry
-      let report .= "\n"
+      call append('$', split(output, "\n") + [''])
+      redraw
     endfor
   endif
 
-  tabnew
-  setlocal bufhidden=wipe
-  set filetype=markdown
-  call s:enhance_syntax()
-  call setline(1, split(report, "\n"))
   setlocal nomodified
+  redraw|echo ''
 endfunction
 
 " Starts a new report.
@@ -86,10 +89,10 @@ function! s:format_report_message(status, msg, ...) abort " {{{
 
   " Report each suggestion
   if len(suggestions) > 0
-    let output .= "\n      - SUGGESTIONS:"
+    let output .= "\n    - SUGGESTIONS:"
   endif
   for suggestion in suggestions
-    let output .= "\n        - " . s:indent_after_line1(suggestion, 10)
+    let output .= "\n      - " . s:indent_after_line1(suggestion, 10)
   endfor
 
   return output

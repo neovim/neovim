@@ -34,9 +34,9 @@ describe('health.vim', function()
 
       ## Baz
         - WARNING: Zim
-            - SUGGESTIONS:
-              - suggestion 1
-              - suggestion 2]]),
+          - SUGGESTIONS:
+            - suggestion 1
+            - suggestion 2]]),
       result)
   end)
 
@@ -45,9 +45,9 @@ describe('health.vim', function()
     it("concatenates multiple reports", function()
       helpers.execute("CheckHealth success1 success2")
       helpers.expect([[
+
         health#success1#check
         ================================================================================
-
         ## report 1
           - SUCCESS: everything is fine
 
@@ -56,26 +56,30 @@ describe('health.vim', function()
 
         health#success2#check
         ================================================================================
-
         ## another 1
-          - SUCCESS: ok]])
+          - SUCCESS: ok
+        ]])
     end)
 
     it("gracefully handles broken healthcheck", function()
       helpers.execute("CheckHealth broken")
       helpers.expect([[
+
         health#broken#check
         ================================================================================
           - ERROR: Failed to run healthcheck for "broken" plugin. Exception:
-            caused an error]])
+            caused an error
+        ]])
     end)
 
     it("gracefully handles invalid healthcheck", function()
       helpers.execute("CheckHealth non_existent_healthcheck")
       helpers.expect([[
+
         health#non_existent_healthcheck#check
         ================================================================================
-          - ERROR: No healthcheck found for "non_existent_healthcheck" plugin.]])
+          - ERROR: No healthcheck found for "non_existent_healthcheck" plugin.
+        ]])
     end)
   end)
 end)
