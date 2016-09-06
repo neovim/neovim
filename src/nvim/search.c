@@ -696,37 +696,29 @@ int searchit(
               } else
                 break;
 
-              /*
-               * We found a valid match, now check if there is
-               * another one after it.
-               * If vi-compatible searching, continue at the end
-               * of the match, otherwise continue one position
-               * forward.
-               */
+              // We found a valid match, now check if there is
+              // another one after it.
+              // If vi-compatible searching, continue at the end
+              // of the match, otherwise continue one position
+              // forward.
               if (vim_strchr(p_cpo, CPO_SEARCH) != NULL) {
-                if (nmatched > 1)
+                if (nmatched > 1) {
                   break;
+                }
                 matchcol = endpos.col;
-                /* for empty match: advance one char */
+                // for empty match: advance one char
                 if (matchcol == matchpos.col
                     && ptr[matchcol] != NUL) {
-                  if (has_mbyte)
-                    matchcol +=
-                      (*mb_ptr2len)(ptr + matchcol);
-                  else
-                    ++matchcol;
+                  matchcol += mb_ptr2len(ptr + matchcol);
                 }
               } else {
-                /* Stop when the match is in a next line. */
-                if (matchpos.lnum > 0)
+                // Stop when the match is in a next line.
+                if (matchpos.lnum > 0) {
                   break;
+                }
                 matchcol = matchpos.col;
                 if (ptr[matchcol] != NUL) {
-                  if (has_mbyte)
-                    matchcol +=
-                      (*mb_ptr2len)(ptr + matchcol);
-                  else
-                    ++matchcol;
+                  matchcol += mb_ptr2len(ptr + matchcol);
                 }
               }
               if (ptr[matchcol] == NUL
