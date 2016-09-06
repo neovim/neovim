@@ -3206,7 +3206,9 @@ static bool mps_valid(char_u *mps)
       return false;
     }
 
-    if(*p == NUL ) return true;
+    if (*p == NUL) {
+      return true;
+    }
   }
   return true;
 }
@@ -6584,74 +6586,48 @@ int get_sts_value(void)
   return (int)result;
 }
 
-/*
- * Check matchpairs option for "*initc".
- * If there is a match set "*initc" to the matching character and "*findc" to
- * the opposite character.  Set "*backwards" to the direction.
- * When "switchit" is TRUE swap the direction.
- */
+// Find the pair of "*initc" in 'matchpairs'.
+// If there is a match set "*initc" to the matching character and "*findc" to
+// the opposite character.  Set "*backwards" to the direction.
+// When "switchit" is true swap the direction.
 void find_mps_values(int *initc, int *findc, int *backwards, int switchit)
 {
-  char_u      *ptr;
+  const int to_match = *initc;
 
-  ptr = curbuf->b_p_mps;
+  int * match;
+  int * opposite;
+  if ( switchit ) {
+    match = findc;
+    opposite = initc;
+  } else {
+    match = initc;
+    opposite = findc;
+  }
+
+  // 'matchpairs' is ','-separated list like "(:),[:],{:}"
+  char_u *ptr = curbuf->b_p_mps;
   while (*ptr != NUL) {
-    if (has_mbyte) {
-      char_u *prev;
-
-      if (mb_ptr2char(ptr) == *initc) {
-        if (switchit) {
-          *findc = *initc;
-          *initc = mb_ptr2char(ptr + mb_ptr2len(ptr) + 1);
-          *backwards = TRUE;
-        } else {
-          *findc = mb_ptr2char(ptr + mb_ptr2len(ptr) + 1);
-          *backwards = FALSE;
-        }
-        return;
-      }
-      prev = ptr;
-      ptr += mb_ptr2len(ptr) + 1;
-      if (mb_ptr2char(ptr) == *initc) {
-        if (switchit) {
-          *findc = *initc;
-          *initc = mb_ptr2char(prev);
-          *backwards = FALSE;
-        } else {
-          *findc = mb_ptr2char(prev);
-          *backwards = TRUE;
-        }
-        return;
-      }
-      ptr += mb_ptr2len(ptr);
-    } else {
-      if (*ptr == *initc) {
-        if (switchit) {
-          *backwards = TRUE;
-          *findc = *initc;
-          *initc = ptr[2];
-        } else {
-          *backwards = FALSE;
-          *findc = ptr[2];
-        }
-        return;
-      }
-      ptr += 2;
-      if (*ptr == *initc) {
-        if (switchit) {
-          *backwards = FALSE;
-          *findc = *initc;
-          *initc = ptr[-2];
-        } else {
-          *backwards = TRUE;
-          *findc =  ptr[-2];
-        }
-        return;
-      }
-      ++ptr;
+    const int left = mb_ptr2char(ptr);
+    const int right = mb_ptr2char(ptr + mb_ptr2len(ptr) + 1);
+    if (left == to_match) {
+      *match = left;
+      *opposite = right;
+      *backwards = switchit;
+      return;
     }
-    if (*ptr == ',')
-      ++ptr;
+    if (right == to_match) {
+      *match = right;
+      *opposite = left;
+      *backwards = !switchit;
+      return;
+    }
+    ptr += mb_ptr2len(ptr);
+    ptr += 1;  // length of ':'
+    ptr += mb_ptr2len(ptr);
+
+    if (*ptr == ',') {
+      ptr++;
+    }
   }
 }
 
