@@ -5481,12 +5481,9 @@ reltime([{start} [, {end}]])				*reltime()*
 		|reltimestr()| to convert it to a string or |reltimefloat()| 
 		to convert to a float.
 
-		Without an argument it returns the current "relative time",
-		an implementation-dependent value meaningful only in the
-		context of:
-			1. comparison with other reltime() results
-			2. |reltimestr()|
-			3. |reltimefloat()|
+		Without an argument it returns the current "relative time", an
+		implementation-defined value meaningful only when used as an
+		argument to |reltime()|, |reltimestr()| and |reltimefloat()|.
 
 		With one argument it returns the time passed since the time
 		specified in the argument.
