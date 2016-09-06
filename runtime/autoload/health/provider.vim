@@ -112,13 +112,19 @@ function! s:version_info(python) abort
   endif
 
   let nvim_version = 'unable to find neovim version'
-  let base = fnamemodify(nvim_path, ':h')
-  for meta in glob(base.'-*/METADATA', 1, 1) + glob(base.'-*/PKG-INFO', 1, 1)
-    for meta_line in readfile(meta)
-      if meta_line =~# '^Version:'
-        let nvim_version = matchstr(meta_line, '^Version: \zs\S\+')
-      endif
-    endfor
+  let pip_list = split(
+        \ system([
+            \ a:python,
+            \ '-m',
+            \ 'pip',
+            \ 'list',
+            \ ]),
+        \ "\n")
+
+  for package in pip_list
+    if package =~# 'neovim (\d*.\d*.\d*)'
+      let nvim_version = matchstr(package, '\d*\.\d*\.\d*')
+    endif
   endfor
 
   let version_status = 'unknown'
@@ -150,7 +156,7 @@ function! s:check_python(version) abort
 
   let python_bin_name = 'python'.(a:version == 2 ? '2' : '3')
   let pyenv = resolve(exepath('pyenv'))
-  let pyenv_root = exists('$PYENV_ROOT') ? resolve($PYENV_ROOT) : 'n'
+  let pyenv_root = exists('$PYENV_ROOT') ? resolve($PYENV_ROOT) : ''
   let venv = exists('$VIRTUAL_ENV') ? resolve($VIRTUAL_ENV) : ''
   let host_prog_var = python_bin_name.'_host_prog'
   let host_skip_var = python_bin_name.'_host_skip_check'
@@ -205,7 +211,7 @@ function! s:check_python(version) abort
             \ printf('"%s" which %s 2>/dev/null', pyenv, python_bin_name)))
 
       if empty(python_bin)
-        call health#report_warn(printf('pyenv couldn''t find %s.', python_bin_name))
+        call health#report_warn(printf('pyenv could not find %s.', python_bin_name))
       endif
     endif
 
