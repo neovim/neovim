@@ -529,13 +529,11 @@ Man {sect} {name}({sect}) Used during completion to show the real section of
                           when the provided section is a prefix, e.g. 1m vs 1.
 Man {path}                Open the manpage specified by path. Prepend "./" if
                           page is in the current directory.
+Man                       Open the manpage for the <cWORD> (man buffers)
+                          or <cword> (non-man buffers) under the cursor.
 
 |:Man| accepts command modifiers. For example, to use a vertical split: >
      :vertical Man printf
-
-Global Mappings:
-<Plug>(Man)               Jump to the manpage for the <cWORD> under the
-                          cursor. Takes a count for the section.
 
 Local mappings:
 K or CTRL-]               Jump to the manpage for the <cWORD> under the
@@ -547,6 +545,9 @@ q                         :quit if invoked as $MANPAGER, otherwise :close.
 Variables:
 *g:no_man_maps*             Do not create mappings in manpage buffers.
 *g:ft_man_folding_enable*   Fold manpages with foldmethod=indent foldnestmax=1.
+*b:man_default_sects*       Comma-separated, ordered list of preferred sections.
+                          For example in C one usually wants section 3 or 2: >
+                               :let b:man_default_sections = '3,2'
 
 PDF							*ft-pdf-plugin*
 

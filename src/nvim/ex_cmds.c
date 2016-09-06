@@ -1711,11 +1711,11 @@ int do_write(exarg_T *eap)
         goto theend;
       }
 
-      /* If 'filetype' was empty try detecting it now. */
+      // If 'filetype' was empty try detecting it now.
       if (*curbuf->b_p_ft == NUL) {
-        if (au_has_group((char_u *)"filetypedetect"))
-          (void)do_doautocmd((char_u *)"filetypedetect BufRead",
-              TRUE);
+        if (au_has_group((char_u *)"filetypedetect")) {
+          (void)do_doautocmd((char_u *)"filetypedetect BufRead", true, NULL);
+        }
         do_modelines(0);
       }
 
@@ -4563,12 +4563,15 @@ int find_help_tags(char_u *arg, int *num_matches, char_u ***matches, int keep_la
           break;
         }
 
-        /*
-         * If tag starts with ', toss everything after a second '. Fixes
-         * CTRL-] on 'option'. (would include the trailing '.').
-         */
-        if (*s == '\'' && s > arg && *arg == '\'')
+        // If tag starts with ', toss everything after a second '. Fixes
+        // CTRL-] on 'option'. (would include the trailing '.').
+        if (*s == '\'' && s > arg && *arg == '\'') {
           break;
+        }
+        // Also '{' and '}'. Fixes CTRL-] on '{address}'.
+        if (*s == '}' && s > arg && *arg == '{') {
+          break;
+        }
       }
       *d = NUL;
 

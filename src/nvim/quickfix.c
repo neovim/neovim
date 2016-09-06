@@ -1732,15 +1732,29 @@ void qf_list(exarg_T *eap)
     EMSG(_(e_quickfix));
     return;
   }
+
+  bool plus = false;
+  if (*arg == '+') {
+    arg++;
+    plus = true;
+  }
   if (!get_list_range(&arg, &idx1, &idx2) || *arg != NUL) {
     EMSG(_(e_trailing));
     return;
   }
-  i = qi->qf_lists[qi->qf_curlist].qf_count;
-  if (idx1 < 0)
-    idx1 = (-idx1 > i) ? 0 : idx1 + i + 1;
-  if (idx2 < 0)
-    idx2 = (-idx2 > i) ? 0 : idx2 + i + 1;
+  if (plus) {
+    i = qi->qf_lists[qi->qf_curlist].qf_index;
+    idx2 = i + idx1;
+    idx1 = i;
+  } else {
+    i = qi->qf_lists[qi->qf_curlist].qf_count;
+    if (idx1 < 0) {
+      idx1 = (-idx1 > i) ? 0 : idx1 + i + 1;
+    }
+    if (idx2 < 0) {
+      idx2 = (-idx2 > i) ? 0 : idx2 + i + 1;
+    }
+  }
 
   if (qi->qf_lists[qi->qf_curlist].qf_nonevalid)
     all = TRUE;

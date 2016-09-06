@@ -55,5 +55,7 @@ if (has("gui_win32") || has("gui_gtk")) && !exists("b:browsefilter")
   endif
 endif
 
+let b:man_default_sects = '3,2'
+
 let &cpo = s:cpo_save
 unlet s:cpo_save

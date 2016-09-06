@@ -5,6 +5,7 @@ local meths, nvim_command, funcs, eq =
 local write_file, spawn, set_session, nvim_prog, exc_exec =
   helpers.write_file, helpers.spawn, helpers.set_session, helpers.nvim_prog,
   helpers.exc_exec
+
 local lfs = require('lfs')
 local paths = require('test.config.paths')
 
@@ -14,9 +15,13 @@ local shada_helpers = require('test.functional.shada.helpers')
 local reset, clear, get_shada_rw =
   shada_helpers.reset, shada_helpers.clear, shada_helpers.get_shada_rw
 local read_shada_file = shada_helpers.read_shada_file
+local set_additional_cmd = shada_helpers.set_additional_cmd
 
 local wshada, _, shada_fname, clean =
   get_shada_rw('Xtest-functional-shada-shada.shada')
+
+local dirname = 'Xtest-functional-shada-shada.d'
+local dirshada = dirname .. '/main.shada'
 
 if helpers.pending_win32(pending) then return end
 
@@ -25,6 +30,7 @@ describe('ShaDa support code', function()
   after_each(function()
     clear()
     clean()
+    lfs.rmdir(dirname)
   end)
 
   it('preserves `s` item size limit with unknown entries', function()
@@ -231,5 +237,18 @@ describe('ShaDa support code', function()
     nvim_command('set shada=')
     eq('', meths.get_option('viminfo'))
     eq('', meths.get_option('shada'))
+  end)
+
+  it('does not crash when ShaDa file directory is not writable', function()
+    funcs.mkdir(dirname, '', 0)
+    eq(0, funcs.filewritable(dirname))
+    set_additional_cmd('set shada=')
+    reset(dirshada)
+    meths.set_option('shada', '\'10')
+    eq('Vim(wshada):E886: System error while opening ShaDa file '
+       .. 'Xtest-functional-shada-shada.d/main.shada for reading to merge '
+       .. 'before writing it: permission denied',
+       exc_exec('wshada'))
+    meths.set_option('shada', '')
   end)
 end)
