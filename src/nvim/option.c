@@ -1607,16 +1607,10 @@ do_set (
                              || (s == newval
                                  && arg[2] != '\\')))
 #endif
-                    )
-                  ++arg;                        /* remove backslash */
-                if (has_mbyte
-                    && (i = (*mb_ptr2len)(arg)) > 1) {
-                  /* copy multibyte char */
-                  memmove(s, arg, (size_t)i);
-                  arg += i;
-                  s += i;
-                } else
-                  *s++ = *arg++;
+                    ) {
+                  arg++;   // remove backslash
+                }
+                mb_copy_char((const char_u **)&arg, &s);
               }
               *s = NUL;
 
