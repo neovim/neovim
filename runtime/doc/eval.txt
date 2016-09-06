@@ -5480,13 +5480,22 @@ reltime([{start} [, {end}]])				*reltime()*
 		the item depends on the system.  It can be passed to
 		|reltimestr()| to convert it to a string or |reltimefloat()| 
 		to convert to a float.
-		Without an argument it returns the current time.
-		With one argument is returns the time passed since the time
+
+		Without an argument it returns the current "relative time",
+		an implementation-dependent value meaningful only in the
+		context of:
+			1. comparison with other reltime() results
+			2. |reltimestr()|
+			3. |reltimefloat()|
+
+		With one argument it returns the time passed since the time
 		specified in the argument.
 		With two arguments it returns the time passed between {start}
 		and {end}.
 		The {start} and {end} arguments must be values returned by
 		reltime().
+
+		Note: |localtime()| returns the current (non-relative) time.
 
 reltimefloat({time})				*reltimefloat()*
 		Return a Float that represents the time value of {time}.
