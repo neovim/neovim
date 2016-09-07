@@ -2,8 +2,6 @@ local helpers = require('test.functional.helpers')(after_each)
 local clear, source = helpers.clear, helpers.source
 local eq, eval, execute = helpers.eq, helpers.eval, helpers.execute
 
-if helpers.pending_win32(pending) then return end
-
 describe('Test for delete()', function()
   before_each(clear)
 
@@ -44,6 +42,10 @@ describe('Test for delete()', function()
   end)
 
   it('symlink delete', function()
+    if helpers.os_name() == 'windows' then
+      pending('No symlinks in Windows')
+      return
+    end
     source([[
       split Xfile
       call setline(1, ['a', 'b'])
@@ -57,6 +59,10 @@ describe('Test for delete()', function()
   end)
 
   it('symlink directory delete', function()
+    if helpers.os_name() == 'windows' then
+      pending('No symlinks in Windows')
+      return
+    end
     execute("call mkdir('Xdir1')")
     execute("silent !ln -s Xdir1 Xlink")
     eq(1, eval("isdirectory('Xdir1')"))
@@ -68,6 +74,10 @@ describe('Test for delete()', function()
   end)
 
   it('symlink recursive delete', function()
+    if helpers.os_name() == 'windows' then
+      pending('No symlinks in Windows')
+      return
+    end
     source([[
       call mkdir('Xdir3')
       call mkdir('Xdir3/subdir')
