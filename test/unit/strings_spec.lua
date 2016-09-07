@@ -98,3 +98,38 @@ describe('vim_strnsave_unquoted()', function()
     eq('/Program\\nFiles/sh', vim_strnsave_unquoted('/Program"\\n"Files/sh'))
   end)
 end)
+
+describe("reverse_text", function()
+  local reverse_text = function(str)
+    return helpers.internalize(strings.reverse_text(to_cstr(str)))
+  end
+
+  it("handles empty string", function()
+    eq("", reverse_text(""))
+  end)
+
+  it("handles simple cases", function()
+    eq("a", reverse_text("a"))
+    eq("ba", reverse_text("ab"))
+  end)
+
+  it("handles multibyte characters", function()
+    eq("bα", reverse_text("αb"))
+    eq("Yötön yö", reverse_text("öy nötöY"))
+  end)
+
+  it("handles combining chars", function()
+    local utf8_COMBINING_RING_ABOVE = "\204\138"
+    local utf8_COMBINING_RING_BELOW = "\204\165"
+    eq("bba" .. utf8_COMBINING_RING_ABOVE .. utf8_COMBINING_RING_BELOW .. "aa", 
+       reverse_text("aaa" .. utf8_COMBINING_RING_ABOVE .. utf8_COMBINING_RING_BELOW .. "bb"))
+  end)
+
+  it("treats invalid utf as separate characters", function()
+    eq("\192ba", reverse_text("ab\192"))
+  end)
+
+  it("treats an incomplete utf continuation sequence as valid", function()
+    eq("\194ba", reverse_text("ab\194"))
+  end)
+end)
