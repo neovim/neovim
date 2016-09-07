@@ -3588,16 +3588,14 @@ find_next_quote (
 
   for (;; ) {
     c = line[col];
-    if (c == NUL)
+    if (c == NUL) {
       return -1;
-    else if (escape != NULL && vim_strchr(escape, c))
-      ++col;
-    else if (c == quotechar)
+    } else if (escape != NULL && vim_strchr(escape, c)) {
+      col++;
+    } else if (c == quotechar) {
       break;
-    if (has_mbyte)
-      col += (*mb_ptr2len)(line + col);
-    else
-      ++col;
+    }
+    col += mb_ptr2len(line + col);
   }
   return col;
 }
