@@ -320,35 +320,37 @@ int ignorecase(char_u *pat)
   return ic;
 }
 
-/*
- * Return TRUE if pattern "pat" has an uppercase character.
- */
-int pat_has_uppercase(char_u *pat)
+// Return true if pattern "pat" has an uppercase character.
+bool pat_has_uppercase(char_u *pat)
+  FUNC_ATTR_NONNULL_ALL
 {
   char_u *p = pat;
 
   while (*p != NUL) {
-    int l;
+    const int l = mb_ptr2len(p);
 
-    if (has_mbyte && (l = (*mb_ptr2len)(p)) > 1) {
-      if (enc_utf8 && utf_isupper(utf_ptr2char(p)))
-        return TRUE;
+    if (l > 1) {
+      if (enc_utf8 && utf_isupper(utf_ptr2char(p))) {
+        return true;
+      }
       p += l;
     } else if (*p == '\\') {
-      if (p[1] == '_' && p[2] != NUL)        /* skip "\_X" */
+      if (p[1] == '_' && p[2] != NUL) {  // skip "\_X"
         p += 3;
-      else if (p[1] == '%' && p[2] != NUL)        /* skip "\%X" */
+      } else if (p[1] == '%' && p[2] != NUL) {  // skip "\%X"
         p += 3;
-      else if (p[1] != NUL)        /* skip "\X" */
+      } else if (p[1] != NUL) {  // skip "\X"
         p += 2;
-      else
+      } else {
         p += 1;
-    } else if (vim_isupper(*p))
-      return TRUE;
-    else
-      ++p;
+      }
+    } else if (vim_isupper(*p)) {
+      return true;
+    } else {
+      p += l;
+    }
   }
-  return FALSE;
+  return false;
 }
 
 char_u *last_csearch(void)
