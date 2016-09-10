@@ -6107,7 +6107,7 @@ static void ex_stop(exarg_T *eap)
       autowrite_all();
     }
     ui_cursor_goto((int)Rows - 1, 0);
-    ui_putc('\n');
+    ui_putc('\n', true);
     ui_flush();
     ui_suspend();               /* call machine specific function */
     maketitle();

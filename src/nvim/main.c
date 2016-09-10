@@ -1262,7 +1262,7 @@ static void handle_quickfix(mparm_T *paramp)
           paramp->use_ef, OPT_FREE, SID_CARG);
     vim_snprintf((char *)IObuff, IOSIZE, "cfile %s", p_ef);
     if (qf_init(NULL, p_ef, p_efm, TRUE, IObuff) < 0) {
-      ui_putc('\n');
+      ui_putc('\n', true);
       mch_exit(3);
     }
     TIME_MSG("reading errorfile");
