@@ -6597,6 +6597,23 @@ do_highlight (
   else {
     if (is_normal_group) {
       HL_TABLE()[idx].sg_attr = 0;
+      // Colors need to be refreshed since some highlight groups
+      // might be using "bg"/"background" or "fg"/"foreground".
+      for (idx = 0; idx < highlight_ga.ga_len; idx++) {
+        if (HL_TABLE()[idx].sg_rgb_bg_name != NULL) {
+          HL_TABLE()[idx].sg_rgb_bg =
+            name_to_color(HL_TABLE()[idx].sg_rgb_bg_name);
+        }
+        if (HL_TABLE()[idx].sg_rgb_fg_name != NULL) {
+          HL_TABLE()[idx].sg_rgb_fg =
+            name_to_color(HL_TABLE()[idx].sg_rgb_fg_name);
+        }
+        if (HL_TABLE()[idx].sg_rgb_sp_name != NULL) {
+          HL_TABLE()[idx].sg_rgb_sp =
+            name_to_color(HL_TABLE()[idx].sg_rgb_sp_name);
+        }
+        set_hl_attr(idx);
+      }
       // If the normal group has changed, it is simpler to refresh every UI
       ui_refresh();
     } else
