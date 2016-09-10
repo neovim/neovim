@@ -7,11 +7,9 @@ CI_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${CI_DIR}/common/build.sh"
 source "${CI_DIR}/common/test.sh"
 
-prepare_build -DCMAKE_VERBOSE_MAKEFILE=on
+prepare_build # -DCMAKE_VERBOSE_MAKEFILE=on
 
-set -x
-run_single_includes_test
-set +x
+run_single_includes_tests
 
 build_nvim
 
