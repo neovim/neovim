@@ -8831,14 +8831,13 @@ static void f_feedkeys(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     return;
 
   keys = get_tv_string(&argvars[0]);
-  if (*keys != NUL) {
-    if (argvars[1].v_type != VAR_UNKNOWN) {
-      flags = get_tv_string_buf(&argvars[1], nbuf);
-    }
 
-    nvim_feedkeys(cstr_as_string((char *)keys),
-                  cstr_as_string((char *)flags), true);
+  if (argvars[1].v_type != VAR_UNKNOWN) {
+    flags = get_tv_string_buf(&argvars[1], nbuf);
   }
+
+  nvim_feedkeys(cstr_as_string((char *)keys),
+                cstr_as_string((char *)flags), true);
 }
 
 /// "filereadable()" function
