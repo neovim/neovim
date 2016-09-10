@@ -1581,7 +1581,6 @@ void msg_puts_attr_len(const char *const str, const ptrdiff_t len, int attr)
 
   // if MSG_HIST flag set, add message to history
   if (attr & MSG_HIST) {
-    assert(len < 0);
     add_msg_hist(str, (int)len, attr);
     attr &= ~MSG_HIST;
   }
