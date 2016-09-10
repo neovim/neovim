@@ -7005,6 +7005,8 @@ highlight_color (
       n = HL_TABLE()[id - 1].sg_cterm_fg - 1;
     else
       n = HL_TABLE()[id - 1].sg_cterm_bg - 1;
+    if (n < 0)
+      return NULL;
     sprintf((char *)name, "%d", n);
     return name;
   }
