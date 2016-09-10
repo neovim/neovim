@@ -7702,6 +7702,10 @@ RgbValue name_to_color(uint8_t *name)
       && isxdigit(name[6]) && name[7] == NUL) {
     // rgb hex string
     return strtol((char *)(name + 1), NULL, 16);
+  } else if (!STRICMP(name, "bg") || !STRICMP(name, "background")) {
+    return normal_bg;
+  } else if (!STRICMP(name, "fg") || !STRICMP(name, "foreground")) {
+    return normal_fg;
   }
 
   for (int i = 0; color_name_table[i].name != NULL; i++) {
