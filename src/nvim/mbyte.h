@@ -4,6 +4,10 @@
 #include <stdbool.h>
 #include <string.h>
 
+#ifdef WIN32
+# include <winnt.h>  // WCHAR for utf*_to_utf* conversion functions
+#endif
+
 #include "nvim/iconv.h"
 #include "nvim/func_attr.h"
 
