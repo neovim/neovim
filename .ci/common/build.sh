@@ -37,7 +37,7 @@ build_deps() {
   cd "${TRAVIS_BUILD_DIR}"
 }
 
-build_nvim() {
+prepare_build() {
   if [[ -n "${CLANG_SANITIZER}" ]]; then
     CMAKE_FLAGS="${CMAKE_FLAGS} -DCLANG_${CLANG_SANITIZER}=ON"
   fi
@@ -47,9 +47,11 @@ build_nvim() {
 
   mkdir -p "${BUILD_DIR}"
   cd "${BUILD_DIR}"
-  echo "Configuring with '${CMAKE_FLAGS}'."
-  cmake ${CMAKE_FLAGS} "${TRAVIS_BUILD_DIR}"
+  echo "Configuring with '${CMAKE_FLAGS} $@'."
+  cmake ${CMAKE_FLAGS} "$@" "${TRAVIS_BUILD_DIR}"
+}
 
+build_nvim() {
   echo "Building nvim."
   if ! ${MAKE_CMD} nvim; then
     exit 1
