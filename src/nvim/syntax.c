@@ -6599,7 +6599,7 @@ do_highlight (
       HL_TABLE()[idx].sg_attr = 0;
       // Colors need to be refreshed since some highlight groups
       // might be using "bg"/"background" or "fg"/"foreground".
-      for (idx = 0; idx < highlight_ga.ga_len; idx++) {
+      for (int idx = 0; idx < highlight_ga.ga_len; idx++) {
         if (HL_TABLE()[idx].sg_rgb_bg_name != NULL) {
           HL_TABLE()[idx].sg_rgb_bg =
             name_to_color(HL_TABLE()[idx].sg_rgb_bg_name);
