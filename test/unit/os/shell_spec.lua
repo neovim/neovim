@@ -12,10 +12,12 @@ local to_cstr = helpers.to_cstr
 local NULL = ffi.cast('void *', 0)
 
 describe('shell functions', function()
-  setup(function()
+  before_each(function()
     -- os_system() can't work when the p_sh and p_shcf variables are unset
     cimported.p_sh = to_cstr('/bin/bash')
     cimported.p_shcf = to_cstr('-c')
+    cimported.p_sxq = to_cstr('')
+    cimported.p_sxe = to_cstr('')
   end)
 
   local function shell_build_argv(cmd, extra_args)
@@ -34,13 +36,6 @@ describe('shell functions', function()
     cimported.xfree(res)
     return ret
   end
-
-  after_each(function()
-    cimported.p_sxq = to_cstr('')
-    cimported.p_sxe = to_cstr('')
-    cimported.p_sh = to_cstr('/bin/bash')
-    cimported.p_shcf = to_cstr('-c')
-  end)
 
   local function os_system(cmd, input)
     local input_or = input and to_cstr(input) or NULL
@@ -121,15 +116,11 @@ describe('shell functions', function()
           '-c', 'abc  def'},
          shell_build_argv('abc  def', 'ghi  jkl'))
     end)
-  end)
-  
-  describe('shell_build_argv can deal with sxe and sxq', function()
-    setup(function()
+
+    it('applies shellxescape (p_sxe) and shellxquote (p_sxq)', function()
       cimported.p_sxq = to_cstr('(')
       cimported.p_sxe = to_cstr('"&|<>()@^')
-    end)
 
-    it('applies shellxescape and shellxquote', function()
       local argv = ffi.cast('char**',
                         cimported.shell_build_argv(to_cstr('echo &|<>()@^'), nil))
       eq(ffi.string(argv[0]), '/bin/bash')
@@ -138,8 +129,9 @@ describe('shell functions', function()
       eq(nil, argv[3])
     end)
 
-    it('applies shellxquote when shellxquote is "\\"("', function()
+    it('applies shellxquote="(', function()
       cimported.p_sxq = to_cstr('"(')
+      cimported.p_sxe = to_cstr('"&|<>()@^')
 
       local argv = ffi.cast('char**', cimported.shell_build_argv(
                                           to_cstr('echo -n some text'), nil))
@@ -149,7 +141,7 @@ describe('shell functions', function()
       eq(nil, argv[3])
     end)
 
-    it('applies shellxquote when shellxquote is "\\""', function()
+    it('applies shellxquote="', function()
       cimported.p_sxq = to_cstr('"')
       cimported.p_sxe = to_cstr('')
 
@@ -158,6 +150,15 @@ describe('shell functions', function()
       eq(ffi.string(argv[0]), '/bin/bash')
       eq(ffi.string(argv[1]), '-c')
       eq(ffi.string(argv[2]), '"echo -n some text"')
+      eq(nil, argv[3])
+    end)
+
+    it('with empty shellxquote/shellxescape', function()
+      local argv = ffi.cast('char**', cimported.shell_build_argv(
+                                          to_cstr('echo -n some text'), nil))
+      eq(ffi.string(argv[0]), '/bin/bash')
+      eq(ffi.string(argv[1]), '-c')
+      eq(ffi.string(argv[2]), 'echo -n some text')
       eq(nil, argv[3])
     end)
   end)
