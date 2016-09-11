@@ -7269,16 +7269,16 @@ int syn_get_final_id(int hl_id)
 /// be using "bg" or "fg".
 static void highlight_attr_set_all(void)
 {
-  int idx;
-  for (idx = 0; idx < highlight_ga.ga_len; idx++) {
-    if (HL_TABLE()[idx].sg_rgb_bg_name != NULL) {
-      HL_TABLE()[idx].sg_rgb_bg = name_to_color(HL_TABLE()[idx].sg_rgb_bg_name);
+  for (int idx = 0; idx < highlight_ga.ga_len; idx++) {
+    struct hl_group *sgp = &HL_TABLE()[idx];
+    if (sgp->sg_rgb_bg_name != NULL) {
+      sgp->sg_rgb_bg = name_to_color(sgp->sg_rgb_bg_name);
     }
-    if (HL_TABLE()[idx].sg_rgb_fg_name != NULL) {
-      HL_TABLE()[idx].sg_rgb_fg = name_to_color(HL_TABLE()[idx].sg_rgb_fg_name);
+    if (sgp->sg_rgb_fg_name != NULL) {
+      sgp->sg_rgb_fg = name_to_color(sgp->sg_rgb_fg_name);
     }
-    if (HL_TABLE()[idx].sg_rgb_sp_name != NULL) {
-      HL_TABLE()[idx].sg_rgb_sp = name_to_color(HL_TABLE()[idx].sg_rgb_sp_name);
+    if (sgp->sg_rgb_sp_name != NULL) {
+      sgp->sg_rgb_sp = name_to_color(sgp->sg_rgb_sp_name);
     }
     set_hl_attr(idx);
   }
