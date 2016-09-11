@@ -20,6 +20,11 @@
 #include "nvim/ascii.h"
 #include "nvim/pos.h"
 #include "nvim/charset.h"
+#include "nvim/garray.h"
+#include "nvim/gettext.h"
+#include "nvim/macros.h"
+#include "nvim/mbyte.h"
+#include "nvim/message.h"
 // TODO(ZyX-I): Move line_breakcheck out of misc1
 #include "nvim/misc1.h"  // For line_breakcheck
 

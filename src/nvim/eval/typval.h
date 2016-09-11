@@ -3,9 +3,11 @@
 
 #include <limits.h>
 #include <stddef.h>
-#include <stdbool.h>
+#include <stdint.h>
 #include <string.h>
+#include <stdbool.h>
 
+#include "nvim/types.h"
 #include "nvim/hashtab.h"
 #include "nvim/garray.h"
 #include "nvim/mbyte.h"
