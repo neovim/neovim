@@ -9,6 +9,12 @@ local neq = global_helpers.neq
 local eq = global_helpers.eq
 local ok = global_helpers.ok
 
+-- C constants.
+local NULL = ffi.cast('void*', 0)
+
+local OK = 1
+local FAIL = 0
+
 -- add some standard header locations
 for _, p in ipairs(Paths.include_paths) do
   Preprocess.add_to_include_path(p)
@@ -124,6 +130,47 @@ local function cppimport(path)
   return cimport(Paths.test_include_path .. '/' .. path)
 end
 
+local function set_logging_allocator()
+  local lib = cimport('./src/nvim/memory.h')
+  local log = {log={}}
+  local saved = {
+    malloc = lib.mem_malloc,
+    free = lib.mem_free,
+    calloc = lib.mem_calloc,
+    realloc = lib.mem_realloc,
+  }
+  local restore_allocators = function()
+    for k, v in pairs(saved) do
+      lib['mem_' .. k] = v
+    end
+  end
+  for k, _ in pairs(saved) do
+    do
+      local kk = k
+      lib['mem_' .. k] = function(...)
+        log_entry = {func=kk, args={...}}
+        log.log[#log.log + 1] = log_entry
+        if kk == 'free' then
+          saved[kk](...)
+        else
+          log_entry.ret = saved[kk](...)
+        end
+        for i, v in ipairs(log_entry.args) do
+          if v == nil then
+            -- XXX This thing thinks that {NULL} ~= {NULL}.
+            log_entry.args[i] = nil
+          end
+        end
+        if log.hook then log:hook(log_entry) end
+        if log_entry.ret then
+          return log_entry.ret
+        end
+      end
+    end
+  end
+  return log, restore_allocators
+end
+
 cimport('./src/nvim/types.h')
 
 -- take a pointer to a C-allocated string and return an interned
@@ -148,12 +195,6 @@ do
   main.event_init()
 end
 
--- C constants.
-local NULL = ffi.cast('void*', 0)
-
-local OK = 1
-local FAIL = 0
-
 return {
   cimport = cimport,
   cppimport = cppimport,
@@ -167,5 +208,6 @@ return {
   to_cstr = to_cstr,
   NULL = NULL,
   OK = OK,
-  FAIL = FAIL
+  FAIL = FAIL,
+  set_logging_allocator = set_logging_allocator,
 }

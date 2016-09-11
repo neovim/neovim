@@ -10,6 +10,7 @@ local eval = cimport('./src/nvim/eval.h', './src/nvim/eval/typval.h')
 local null_string = {[true]='NULL string'}
 local null_list = {[true]='NULL list'}
 local type_key = {[true]='type key'}
+local locks_key = {[true]='locks key'}
 local list_type = {[true]='list type'}
 local dict_type = {[true]='dict type'}
 local func_type = {[true]='func type'}
@@ -36,6 +37,8 @@ local function list(...)
       eq(1, itemlist.lv_refcount)
       itemlist.lv_refcount = 0
       eval.tv_list_append_list(ret, itemlist)
+    elseif typ == 'number' then
+      eval.tv_list_append_number(ret, val)
     else
       assert(false, 'Not implemented yet')
     end
@@ -157,7 +160,7 @@ local lua2typvalt_type_tab = {
       if type(k) == 'string' then
         local di = eval.tv_dict_item_alloc(to_cstr(k))
         local val_tv = ffi.gc(lua2typvalt(v, processed), nil)
-        eval.copy_tv(val_tv, di.di_tv)
+        eval.tv_copy(val_tv, di.di_tv)
         eval.tv_clear(val_tv)
         eval.tv_dict_add(dct, di)
       end
@@ -203,6 +206,7 @@ return {
   nil_value=nil_value,
 
   type_key=type_key,
+  locks_key=locks_key,
 
   list=list,
   lst2tbl=lst2tbl,
