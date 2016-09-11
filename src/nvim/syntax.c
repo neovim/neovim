@@ -6597,7 +6597,7 @@ do_highlight (
   else {
     if (is_normal_group) {
       HL_TABLE()[idx].sg_attr = 0;
-      highlight_groups_refresh();
+      highlight_attr_set_all();
       // If the normal group has changed, it is simpler to refresh every UI
       ui_refresh();
     } else
@@ -7267,7 +7267,7 @@ int syn_get_final_id(int hl_id)
 /// This usually needs to be done after the "Normal"
 /// group is modified to update the groups that might
 /// be using "bg" or "fg".
-void highlight_groups_refresh(void)
+static void highlight_attr_set_all(void)
 {
   int idx;
   for (idx = 0; idx < highlight_ga.ga_len; idx++) {
