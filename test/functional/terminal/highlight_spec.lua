@@ -241,4 +241,18 @@ describe('synIDattr()', function()
     eq(eval('synIDattr(hlID("Normal"), "bg#")'),
       eval('synIDattr(hlID("Visual"), "sp#")'))
   end)
+
+  it('returns the current "Normal" values for group using fg/bg after \z
+    Normal is updated', function()
+    screen:attach({rgb=true})
+    execute('highlight Normal ctermfg=145 ctermbg=16 guifg=#ff0000 guibg=Black')
+    execute('highlight Visual ctermfg=bg ctermbg=fg guifg=bg guibg=fg guisp=bg')
+    execute('highlight Normal guifg=#abb2bf guibg=#282c34')
+    eq(eval('synIDattr(hlID("Normal"), "bg#")'),
+      eval('synIDattr(hlID("Visual"), "fg#")'))
+    eq(eval('synIDattr(hlID("Normal"), "fg#")'),
+      eval('synIDattr(hlID("Visual"), "bg#")'))
+    eq(eval('synIDattr(hlID("Normal"), "bg#")'),
+      eval('synIDattr(hlID("Visual"), "sp#")'))
+  end)
 end)
