@@ -6599,21 +6599,7 @@ do_highlight (
       HL_TABLE()[idx].sg_attr = 0;
       // Colors need to be refreshed since some highlight groups
       // might be using "bg"/"background" or "fg"/"foreground".
-      for (int idx = 0; idx < highlight_ga.ga_len; idx++) {
-        if (HL_TABLE()[idx].sg_rgb_bg_name != NULL) {
-          HL_TABLE()[idx].sg_rgb_bg =
-            name_to_color(HL_TABLE()[idx].sg_rgb_bg_name);
-        }
-        if (HL_TABLE()[idx].sg_rgb_fg_name != NULL) {
-          HL_TABLE()[idx].sg_rgb_fg =
-            name_to_color(HL_TABLE()[idx].sg_rgb_fg_name);
-        }
-        if (HL_TABLE()[idx].sg_rgb_sp_name != NULL) {
-          HL_TABLE()[idx].sg_rgb_sp =
-            name_to_color(HL_TABLE()[idx].sg_rgb_sp_name);
-        }
-        set_hl_attr(idx);
-      }
+      highlight_groups_refresh();
       // If the normal group has changed, it is simpler to refresh every UI
       ui_refresh();
     } else
@@ -7278,6 +7264,28 @@ int syn_get_final_id(int hl_id)
   return hl_id;
 }
 
+/* Refresh the color attributes of all highlight
+ * groups.
+ * This usually needs to be done after the "Normal"
+ * group is modified to update the groups that might
+ * be using "bg" or "fg".
+ */
+void highlight_groups_refresh(void)
+{
+  int idx;
+  for (idx = 0; idx < highlight_ga.ga_len; idx++) {
+    if (HL_TABLE()[idx].sg_rgb_bg_name != NULL) {
+      HL_TABLE()[idx].sg_rgb_bg = name_to_color(HL_TABLE()[idx].sg_rgb_bg_name);
+    }
+    if (HL_TABLE()[idx].sg_rgb_fg_name != NULL) {
+      HL_TABLE()[idx].sg_rgb_fg = name_to_color(HL_TABLE()[idx].sg_rgb_fg_name);
+    }
+    if (HL_TABLE()[idx].sg_rgb_sp_name != NULL) {
+      HL_TABLE()[idx].sg_rgb_sp = name_to_color(HL_TABLE()[idx].sg_rgb_sp_name);
+    }
+    set_hl_attr(idx);
+  }
+}
 
 /*
  * Translate the 'highlight' option into attributes in highlight_attr[] and
