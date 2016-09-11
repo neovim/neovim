@@ -18,7 +18,6 @@
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/misc1.h"
-#include "nvim/misc2.h"
 #include "nvim/option.h"
 #include "nvim/os/os.h"
 #include "nvim/os/shell.h"

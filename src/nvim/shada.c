@@ -27,7 +27,6 @@
 #include "nvim/api/private/helpers.h"
 #include "nvim/buffer.h"
 #include "nvim/buffer_defs.h"
-#include "nvim/misc2.h"
 #include "nvim/ex_getln.h"
 #include "nvim/search.h"
 #include "nvim/regexp.h"

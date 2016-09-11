@@ -20,7 +20,6 @@
 #include "nvim/eval.h"
 #include "nvim/fileio.h"
 #include "nvim/message.h"
-#include "nvim/misc2.h"
 #include "nvim/memory.h"
 #include "nvim/os/time.h"
 #include "nvim/path.h"

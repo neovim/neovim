@@ -36,7 +36,6 @@
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/misc1.h"
-#include "nvim/misc2.h"
 #include "nvim/keymap.h"
 #include "nvim/move.h"
 #include "nvim/mouse.h"

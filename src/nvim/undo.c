@@ -99,6 +99,7 @@
 #include "nvim/quickfix.h"
 #include "nvim/screen.h"
 #include "nvim/sha256.h"
+#include "nvim/state.h"
 #include "nvim/strings.h"
 #include "nvim/types.h"
 #include "nvim/os/os.h"

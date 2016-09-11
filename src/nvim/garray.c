@@ -8,7 +8,6 @@
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
 #include "nvim/log.h"
-#include "nvim/misc2.h"
 #include "nvim/memory.h"
 #include "nvim/path.h"
 #include "nvim/garray.h"

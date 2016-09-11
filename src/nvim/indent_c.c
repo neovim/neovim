@@ -12,7 +12,6 @@
 #include "nvim/indent_c.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
-#include "nvim/misc2.h"
 #include "nvim/option.h"
 #include "nvim/search.h"
 #include "nvim/strings.h"

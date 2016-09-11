@@ -13,7 +13,6 @@
 #include "nvim/charset.h"
 #include "nvim/ex_cmds.h"
 #include "nvim/memline.h"
-#include "nvim/misc2.h"
 #include "nvim/move.h"
 #include "nvim/option.h"
 #include "nvim/screen.h"

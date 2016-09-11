@@ -6712,3 +6712,148 @@ unsigned int get_bkc_value(buf_T *buf)
 {
   return buf->b_bkc_flags ? buf->b_bkc_flags : bkc_flags;
 }
+
+/// Return the current end-of-line type: EOL_DOS, EOL_UNIX or EOL_MAC.
+int get_fileformat(buf_T *buf)
+{
+  int c = *buf->b_p_ff;
+
+  if (buf->b_p_bin || c == 'u') {
+    return EOL_UNIX;
+  }
+  if (c == 'm') {
+    return EOL_MAC;
+  }
+  return EOL_DOS;
+}
+
+/// Like get_fileformat(), but override 'fileformat' with "p" for "++opt=val"
+/// argument.
+///
+/// @param eap  can be NULL!
+int get_fileformat_force(buf_T *buf, exarg_T *eap)
+{
+  int c;
+
+  if (eap != NULL && eap->force_ff != 0) {
+    c = eap->cmd[eap->force_ff];
+  } else {
+    if ((eap != NULL && eap->force_bin != 0)
+        ? (eap->force_bin == FORCE_BIN) : buf->b_p_bin) {
+      return EOL_UNIX;
+    }
+    c = *buf->b_p_ff;
+  }
+  if (c == 'u') {
+    return EOL_UNIX;
+  }
+  if (c == 'm') {
+    return EOL_MAC;
+  }
+  return EOL_DOS;
+}
+
+/// Return the default fileformat from 'fileformats'.
+int default_fileformat(void)
+{
+  switch (*p_ffs) {
+  case 'm':   return EOL_MAC;
+  case 'd':   return EOL_DOS;
+  }
+  return EOL_UNIX;
+}
+
+/// Set the current end-of-line type to EOL_UNIX, EOL_MAC, or EOL_DOS.
+///
+/// Sets 'fileformat'.
+///
+/// @param eol_style End-of-line style.
+/// @param opt_flags OPT_LOCAL and/or OPT_GLOBAL
+void set_fileformat(int eol_style, int opt_flags)
+{
+  char *p = NULL;
+
+  switch (eol_style) {
+      case EOL_UNIX:
+          p = FF_UNIX;
+          break;
+      case EOL_MAC:
+          p = FF_MAC;
+          break;
+      case EOL_DOS:
+          p = FF_DOS;
+          break;
+  }
+
+  // p is NULL if "eol_style" is EOL_UNKNOWN.
+  if (p != NULL) {
+    set_string_option_direct((char_u *)"ff",
+                             -1,
+                             (char_u *)p,
+                             OPT_FREE | opt_flags,
+                             0);
+  }
+
+  // This may cause the buffer to become (un)modified.
+  check_status(curbuf);
+  redraw_tabline = true;
+  need_maketitle = true;  // Set window title later.
+}
+
+/// Skip to next part of an option argument: Skip space and comma.
+char_u *skip_to_option_part(char_u *p)
+{
+  if (*p == ',') {
+    p++;
+  }
+  while (*p == ' ') {
+    p++;
+  }
+  return p;
+}
+
+/// Isolate one part of a string option separated by `sep_chars`.
+///
+/// @param[in,out]  option    advanced to the next part
+/// @param[in,out]  buf       copy of the isolated part
+/// @param[in]      maxlen    length of `buf`
+/// @param[in]      sep_chars chars that separate the option parts
+///
+/// @return length of `*option`
+size_t copy_option_part(char_u **option, char_u *buf, size_t maxlen,
+                        char *sep_chars)
+{
+  size_t len = 0;
+  char_u  *p = *option;
+
+  // skip '.' at start of option part, for 'suffixes'
+  if (*p == '.') {
+    buf[len++] = *p++;
+  }
+  while (*p != NUL && vim_strchr((char_u *)sep_chars, *p) == NULL) {
+    // Skip backslash before a separator character and space.
+    if (p[0] == '\\' && vim_strchr((char_u *)sep_chars, p[1]) != NULL) {
+      p++;
+    }
+    if (len < maxlen - 1) {
+      buf[len++] = *p;
+    }
+    p++;
+  }
+  buf[len] = NUL;
+
+  if (*p != NUL && *p != ',') {  // skip non-standard separator
+    p++;
+  }
+  p = skip_to_option_part(p);    // p points to next file name
+
+  *option = p;
+  return len;
+}
+
+/// Return TRUE when 'shell' has "csh" in the tail.
+int csh_like_shell(void)
+{
+  return strstr((char *)path_tail(p_sh), "csh") != NULL;
+}
+

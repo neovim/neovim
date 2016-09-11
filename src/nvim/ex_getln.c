@@ -34,7 +34,6 @@
 #include "nvim/menu.h"
 #include "nvim/message.h"
 #include "nvim/misc1.h"
-#include "nvim/misc2.h"
 #include "nvim/memory.h"
 #include "nvim/cursor_shape.h"
 #include "nvim/keymap.h"

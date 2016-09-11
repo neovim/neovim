@@ -5,7 +5,6 @@
 #include "nvim/api/private/helpers.h"
 #include "nvim/ascii.h"
 #include "nvim/main.h"
-#include "nvim/misc2.h"
 #include "nvim/os/os.h"
 #include "nvim/os/input.h"
 #include "nvim/event/rstream.h"

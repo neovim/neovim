@@ -14,7 +14,6 @@
 #include "nvim/memline.h"
 #include "nvim/memory.h"
 #include "nvim/misc1.h"
-#include "nvim/misc2.h"
 #include "nvim/ex_cmds.h"
 #include "nvim/mark.h"
 #include "nvim/fileio.h"

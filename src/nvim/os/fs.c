@@ -21,7 +21,6 @@
 #include "nvim/message.h"
 #include "nvim/assert.h"
 #include "nvim/misc1.h"
-#include "nvim/misc2.h"
 #include "nvim/path.h"
 #include "nvim/strings.h"
 

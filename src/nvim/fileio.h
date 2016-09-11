@@ -12,6 +12,8 @@
 #define READ_DUMMY      0x10    /* reading into a dummy buffer */
 #define READ_KEEP_UNDO  0x20    /* keep undo info*/
 
+#define READ_STRING(x, y) (char_u *)read_string((x), (size_t)(y))
+
 /*
  * Struct to save values in before executing autocommands for a buffer that is
  * not the current buffer.

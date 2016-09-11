@@ -2,10 +2,12 @@
 
 #include "nvim/lib/kvec.h"
 
+#include "nvim/ascii.h"
 #include "nvim/state.h"
 #include "nvim/vim.h"
 #include "nvim/main.h"
 #include "nvim/getchar.h"
+#include "nvim/option_defs.h"
 #include "nvim/ui.h"
 #include "nvim/os/input.h"
 
@@ -61,3 +63,35 @@ getkey:
     }
   }
 }
+
+/// Return TRUE if in the current mode we need to use virtual.
+int virtual_active(void)
+{
+  // While an operator is being executed we return "virtual_op", because
+  // VIsual_active has already been reset, thus we can't check for "block"
+  // being used.
+  if (virtual_op != MAYBE) {
+    return virtual_op;
+  }
+  return ve_flags == VE_ALL
+         || ((ve_flags & VE_BLOCK) && VIsual_active && VIsual_mode == Ctrl_V)
+         || ((ve_flags & VE_INSERT) && (State & INSERT));
+}
+
+/// VISUAL, SELECTMODE and OP_PENDING State are never set, they are equal to
+/// NORMAL State with a condition.  This function returns the real State.
+int get_real_state(void)
+{
+  if (State & NORMAL) {
+    if (VIsual_active) {
+      if (VIsual_select) {
+        return SELECTMODE;
+      }
+      return VISUAL;
+    } else if (finish_op) {
+      return OP_PENDING;
+    }
+  }
+  return State;
+}
+

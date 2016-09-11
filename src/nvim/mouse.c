@@ -4,6 +4,7 @@
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
 #include "nvim/window.h"
+#include "nvim/state.h"
 #include "nvim/strings.h"
 #include "nvim/screen.h"
 #include "nvim/syntax.h"
