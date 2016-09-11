@@ -7262,12 +7262,11 @@ int syn_get_final_id(int hl_id)
   return hl_id;
 }
 
-/* Refresh the color attributes of all highlight
- * groups.
- * This usually needs to be done after the "Normal"
- * group is modified to update the groups that might
- * be using "bg" or "fg".
- */
+/// Refresh the color attributes of all highlight
+/// groups.
+/// This usually needs to be done after the "Normal"
+/// group is modified to update the groups that might
+/// be using "bg" or "fg".
 void highlight_groups_refresh(void)
 {
   int idx;
