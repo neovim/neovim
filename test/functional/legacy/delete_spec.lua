@@ -1,35 +1,43 @@
 local helpers = require('test.functional.helpers')(after_each)
 local clear, source = helpers.clear, helpers.source
-local eq, eval, execute = helpers.eq, helpers.eval, helpers.execute
+local eq, eval = helpers.eq, helpers.eval
 
 describe('Test for delete()', function()
-  before_each(clear)
+  before_each(function()
+    clear()
+    helpers.rmdir('Xcomplicated')
+  end)
+  after_each(function()
+    helpers.rmdir('Xcomplicated')
+  end)
 
   it('file delete', function()
-    execute('split Xfile')
-    execute("call setline(1, ['a', 'b'])")
-    execute('wq')
+    source([[
+      call writefile(['a', 'b'], 'Xfile')
+    ]])
+
     eq(eval("['a', 'b']"), eval("readfile('Xfile')"))
     eq(0, eval("delete('Xfile')"))
     eq(-1, eval("delete('Xfile')"))
   end)
 
   it('directory delete', function()
-    execute("call mkdir('Xdir1')")
+    source([[
+      call mkdir('Xdir1')
+    ]])
+
     eq(1, eval("isdirectory('Xdir1')"))
     eq(0, eval("delete('Xdir1', 'd')"))
     eq(0, eval("isdirectory('Xdir1')"))
     eq(-1, eval("delete('Xdir1', 'd')"))
   end)
   it('recursive delete', function()
-    execute("call mkdir('Xdir1')")
-    execute("call mkdir('Xdir1/subdir')")
-    execute("call mkdir('Xdir1/empty')")
-    execute('split Xdir1/Xfile')
-    execute("call setline(1, ['a', 'b'])")
-    execute('w')
-    execute('w Xdir1/subdir/Xfile')
-    execute('close')
+    source([[
+      call mkdir('Xdir1/subdir', 'p')
+      call mkdir('Xdir1/empty')
+      call writefile(['a', 'b'], 'Xdir1/Xfile')
+      call writefile(['a', 'b'], 'Xdir1/subdir/Xfile')
+    ]])
 
     eq(1, eval("isdirectory('Xdir1')"))
     eq(eval("['a', 'b']"), eval("readfile('Xdir1/Xfile')"))
@@ -45,11 +53,10 @@ describe('Test for delete()', function()
     if helpers.pending_win32(pending) then return end
 
     source([[
-      split Xfile
-      call setline(1, ['a', 'b'])
-      wq
+      call writefile(['a', 'b'], 'Xfile')
       silent !ln -s Xfile Xlink
     ]])
+
     -- Delete the link, not the file
     eq(0, eval("delete('Xlink')"))
     eq(-1, eval("delete('Xlink')"))
@@ -59,8 +66,11 @@ describe('Test for delete()', function()
   it('symlink directory delete', function()
     if helpers.pending_win32(pending) then return end
 
-    execute("call mkdir('Xdir1')")
-    execute("silent !ln -s Xdir1 Xlink")
+    source([[
+      call mkdir('Xdir1')
+      silent !ln -s Xdir1 Xlink
+    ]])
+
     eq(1, eval("isdirectory('Xdir1')"))
     eq(1, eval("isdirectory('Xlink')"))
     -- Delete the link, not the directory
@@ -73,15 +83,11 @@ describe('Test for delete()', function()
     if helpers.pending_win32(pending) then return end
 
     source([[
-      call mkdir('Xdir3')
-      call mkdir('Xdir3/subdir')
+      call mkdir('Xdir3/subdir', 'p')
       call mkdir('Xdir4')
-      split Xdir3/Xfile
-      call setline(1, ['a', 'b'])
-      w
-      w Xdir3/subdir/Xfile
-      w Xdir4/Xfile
-      close
+      call writefile(['a', 'b'], 'Xdir3/Xfile')
+      call writefile(['a', 'b'], 'Xdir3/subdir/Xfile')
+      call writefile(['a', 'b'], 'Xdir4/Xfile')
       silent !ln -s ../Xdir4 Xdir3/Xlink
     ]])
 
@@ -105,15 +111,11 @@ describe('Test for delete()', function()
 
   it('complicated name delete', function()
     source([[
-      call mkdir('Xcomplicated')
-      call mkdir('Xcomplicated/[complicated-1 ]')
-      call mkdir('Xcomplicated/{complicated,2 }')
-      split Xcomplicated/Xfile
-      call setline(1, ['a', 'b'])
-      w
-      w Xcomplicated/\[complicated-1\ \]/Xfile
-      w Xcomplicated/\{complicated,2\ \}/Xfile
-      close
+      call mkdir('Xcomplicated/[complicated-1 ]', 'p')
+      call mkdir('Xcomplicated/{complicated,2 }', 'p')
+      call writefile(['a', 'b'], 'Xcomplicated/Xfile')
+      call writefile(['a', 'b'], 'Xcomplicated/[complicated-1 ]/Xfile')
+      call writefile(['a', 'b'], 'Xcomplicated/{complicated,2 }/Xfile')
     ]])
 
     eq(1, eval("isdirectory('Xcomplicated')"))
@@ -130,13 +132,9 @@ describe('Test for delete()', function()
 
   it('complicated name delete in unix', function()
     source([[
-      call mkdir('Xcomplicated')
-      call mkdir('Xcomplicated/[complicated-1 ?')
-      split Xcomplicated/Xfile
-      call setline(1, ['a', 'b'])
-      w
-      w Xcomplicated/\[complicated-1\ \?/Xfile
-      close
+      call mkdir('Xcomplicated/[complicated-1 ?', 'p')
+      call writefile(['a', 'b'], 'Xcomplicated/Xfile')
+      call writefile(['a', 'b'], 'Xcomplicated/[complicated-1 ?/Xfile')
     ]])
 
     eq(1, eval("isdirectory('Xcomplicated')"))
