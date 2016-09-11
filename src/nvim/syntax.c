@@ -6597,8 +6597,6 @@ do_highlight (
   else {
     if (is_normal_group) {
       HL_TABLE()[idx].sg_attr = 0;
-      // Colors need to be refreshed since some highlight groups
-      // might be using "bg"/"background" or "fg"/"foreground".
       highlight_groups_refresh();
       // If the normal group has changed, it is simpler to refresh every UI
       ui_refresh();
