@@ -7001,13 +7001,15 @@ highlight_color (
   if (font || sp)
     return NULL;
   if (modec == 'c') {
-    if (fg)
+    if (fg) {
       n = HL_TABLE()[id - 1].sg_cterm_fg - 1;
-    else
+    } else {
       n = HL_TABLE()[id - 1].sg_cterm_bg - 1;
-    if (n < 0)
+    }
+    if (n < 0) {
       return NULL;
-    sprintf((char *)name, "%d", n);
+    }
+    snprintf((char *)name, sizeof(name), "%d", n);
     return name;
   }
   /* term doesn't have color */
