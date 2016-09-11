@@ -10,6 +10,7 @@
 #include "nvim/eval/executor.h"
 #include "nvim/eval/typval_encode.h"
 #include "nvim/eval/encode.h"
+#include "nvim/eval.h"
 #include "nvim/types.h"
 #include "nvim/assert.h"
 #include "nvim/memory.h"
@@ -19,6 +20,11 @@
 #include "nvim/ascii.h"
 #include "nvim/pos.h"
 #include "nvim/charset.h"
+#include "nvim/garray.h"
+#include "nvim/gettext.h"
+#include "nvim/macros.h"
+#include "nvim/mbyte.h"
+#include "nvim/message.h"
 // TODO(ZyX-I): Move line_breakcheck out of misc1
 #include "nvim/misc1.h"  // For line_breakcheck
 
