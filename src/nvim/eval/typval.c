@@ -1,12 +1,15 @@
+#include <stdio.h>
 #include <stddef.h>
-#include <stdbool.h>
+#include <string.h>
 #include <assert.h>
+#include <stdbool.h>
 
 #include "nvim/lib/queue.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/gc.h"
 #include "nvim/eval/executor.h"
 #include "nvim/eval/typval_encode.h"
+#include "nvim/eval/encode.h"
 #include "nvim/types.h"
 #include "nvim/assert.h"
 #include "nvim/memory.h"
@@ -248,7 +251,7 @@ void tv_list_insert(list_T *const l, listitem_T *const ni,
 /// Insert VimL value into a list
 ///
 /// @param[out]  l  List to insert to.
-/// @param[in,out]  tv  Value to insert. Is copied (@see copy_tv()) to an
+/// @param[in,out]  tv  Value to insert. Is copied (@see tv_copy()) to an
 ///                     allocated listitem_T and inserted.
 /// @param[in]  item  Item to insert before. If NULL, inserts at the end of the
 ///                   list.
@@ -257,7 +260,7 @@ void tv_list_insert_tv(list_T *const l, typval_T *const tv,
 {
   listitem_T *const ni = tv_list_item_alloc();
 
-  copy_tv(tv, &ni->li_tv);
+  tv_copy(tv, &ni->li_tv);
   tv_list_insert(l, ni, item);
 }
 
@@ -285,13 +288,13 @@ void tv_list_append(list_T *const l, listitem_T *const item)
 /// Append VimL value to the end of list
 ///
 /// @param[out]  l  List to append to.
-/// @param[in,out]  tv  Value to append. Is copied (@see copy_tv()) to an
+/// @param[in,out]  tv  Value to append. Is copied (@see tv_copy()) to an
 ///                     allocated listitem_T.
 void tv_list_append_tv(list_T *const l, typval_T *const tv)
   FUNC_ATTR_NONNULL_ALL
 {
   listitem_T  *li = tv_list_item_alloc();
-  copy_tv(tv, &li->li_tv);
+  tv_copy(tv, &li->li_tv);
   tv_list_append(l, li);
 }
 
@@ -419,7 +422,7 @@ list_T *tv_list_copy(const vimconv_T *const conv, list_T *const orig,
         break;
       }
     } else {
-      copy_tv(&item->li_tv, &ni->li_tv);
+      tv_copy(&item->li_tv, &ni->li_tv);
     }
     tv_list_append(copy, ni);
   }
@@ -804,13 +807,13 @@ void tv_dict_watcher_notify(dict_T *const dict, const char *const key,
 
   if (newtv) {
     dictitem_T *const v = tv_dict_item_alloc_len(S_LEN("new"));
-    copy_tv(newtv, &v->di_tv);
+    tv_copy(newtv, &v->di_tv);
     tv_dict_add(argv[2].vval.v_dict, v);
   }
 
   if (oldtv) {
     dictitem_T *const v = tv_dict_item_alloc_len(S_LEN("old"));
-    copy_tv(oldtv, &v->di_tv);
+    tv_copy(oldtv, &v->di_tv);
     tv_dict_add(argv[2].vval.v_dict, v);
   }
 
@@ -903,7 +906,7 @@ static dictitem_T *tv_dict_item_copy(dictitem_T *di)
   FUNC_ATTR_MALLOC
 {
   dictitem_T *const new_di = tv_dict_item_alloc((const char *)di->di_key);
-  copy_tv(&di->di_tv, &new_di->di_tv);
+  tv_copy(&di->di_tv, &new_di->di_tv);
   return new_di;
 }
 
@@ -1269,11 +1272,11 @@ void tv_dict_extend(dict_T *const d1, dict_T *const d2,
       }
 
       if (watched) {
-        copy_tv(&di1->di_tv, &oldtv);
+        tv_copy(&di1->di_tv, &oldtv);
       }
 
       tv_clear(&di1->di_tv);
-      copy_tv(&di2->di_tv, &di1->di_tv);
+      tv_copy(&di2->di_tv, &di1->di_tv);
 
       if (watched) {
         tv_dict_watcher_notify(d1, (const char *)di1->di_key, &di1->di_tv,
@@ -1365,7 +1368,7 @@ dict_T *tv_dict_copy(const vimconv_T *const conv,
         break;
       }
     } else {
-      copy_tv(&di->di_tv, &new_di->di_tv);
+      tv_copy(&di->di_tv, &new_di->di_tv);
     }
     if (tv_dict_add(copy, new_di) == FAIL) {
       tv_dict_item_free(new_di);
@@ -1608,6 +1611,58 @@ void tv_free(typval_T *tv)
       }
     }
     xfree(tv);
+  }
+}
+
+//{{{3 Copy
+
+/// Copy typval from one location to another
+///
+/// When needed allocates string or increases reference count. Does not make
+/// a copy of a container, but copies its reference!
+///
+/// It is OK for `from` and `to` to point to the same location; this is used to
+/// make a copy later.
+///
+/// @param[in]  from  Location to copy from.
+/// @param[out]  to  Location to copy to.
+void tv_copy(typval_T *const from, typval_T *const to)
+{
+  to->v_type = from->v_type;
+  to->v_lock = VAR_UNLOCKED;
+  memmove(&to->vval, &from->vval, sizeof(to->vval));
+  switch (from->v_type) {
+    case VAR_NUMBER:
+    case VAR_FLOAT:
+    case VAR_SPECIAL: {
+      break;
+    }
+    case VAR_STRING:
+    case VAR_FUNC: {
+      if (from->vval.v_string != NULL) {
+        to->vval.v_string = vim_strsave(from->vval.v_string);
+        if (from->v_type == VAR_FUNC) {
+          func_ref(to->vval.v_string);
+        }
+      }
+      break;
+    }
+    case VAR_LIST: {
+      if (from->vval.v_list != NULL) {
+        to->vval.v_list->lv_refcount++;
+      }
+      break;
+    }
+    case VAR_DICT: {
+      if (from->vval.v_dict != NULL) {
+        to->vval.v_dict->dv_refcount++;
+      }
+      break;
+    }
+    case VAR_UNKNOWN: {
+      EMSG2(_(e_intern2), "copy_tv(UNKNOWN)");
+      break;
+    }
   }
 }
 

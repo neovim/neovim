@@ -2481,7 +2481,7 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer,
       if (sd_writer->sd_conv.vc_type != CONV_NONE) {
         var_item_copy(&sd_writer->sd_conv, &vartv, &tgttv, true, 0);
       } else {
-        copy_tv(&vartv, &tgttv);
+        tv_copy(&vartv, &tgttv);
       }
       ShaDaWriteResult spe_ret;
       if ((spe_ret = shada_pack_entry(packer, (ShadaEntry) {
