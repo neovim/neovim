@@ -280,7 +280,7 @@ local lua2typvalt_type_tab = {
       if type(k) == 'string' then
         local di = eval.tv_dict_item_alloc(to_cstr(k))
         local val_tv = ffi.gc(lua2typvalt(v, processed), nil)
-        eval.copy_tv(val_tv, di.di_tv)
+        eval.tv_copy(val_tv, di.di_tv)
         eval.tv_clear(val_tv)
         eval.tv_dict_add(dct, di)
       end
@@ -300,7 +300,7 @@ local lua2typvalt_type_tab = {
         argv = ffi.gc(ffi.cast('typval_T*', eval.xmalloc(ffi.sizeof('typval_T') * #l.args)), nil)
         for i, arg in ipairs(l.args) do
           local arg_tv = ffi.gc(lua2typvalt(arg, processed), nil)
-          eval.copy_tv(arg_tv, argv[i - 1])
+          eval.tv_copy(arg_tv, argv[i - 1])
           eval.tv_clear(arg_tv)
         end
       end

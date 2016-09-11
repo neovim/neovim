@@ -494,6 +494,13 @@ typedef enum
   ASSERT_OTHER,
 } assert_type_T;
 
+/// Type for dict_list function
+typedef enum {
+  kDictListKeys,  ///< List dictionary keys.
+  kDictListValues,  ///< List dictionary values.
+  kDictListItems,  ///< List dictionary contents: [keys, values].
+} DictListType;
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "eval.c.generated.h"
 #endif
@@ -2412,7 +2419,7 @@ static void set_var_lval(lval_T *lp, char_u *endp, typval_T *rettv,
         eexe_mod_op(&lp->ll_li->li_tv, &ri->li_tv, (const char *)op);
       } else {
         tv_clear(&lp->ll_li->li_tv);
-        copy_tv(&ri->li_tv, &lp->ll_li->li_tv);
+        tv_copy(&ri->li_tv, &lp->ll_li->li_tv);
       }
       ri = ri->li_next;
       if (ri == NULL || (!lp->ll_empty2 && lp->ll_n2 == lp->ll_n1))
@@ -2452,7 +2459,7 @@ static void set_var_lval(lval_T *lp, char_u *endp, typval_T *rettv,
       lp->ll_tv = &di->di_tv;
     } else {
       if (watched) {
-        copy_tv(lp->ll_tv, &oldtv);
+        tv_copy(lp->ll_tv, &oldtv);
       }
 
       if (op != NULL && *op != '=') {
@@ -2465,7 +2472,7 @@ static void set_var_lval(lval_T *lp, char_u *endp, typval_T *rettv,
 
     // Assign the value to the variable or list item.
     if (copy) {
-      copy_tv(rettv, lp->ll_tv);
+      tv_copy(rettv, lp->ll_tv);
     } else {
       *lp->ll_tv = *rettv;
       lp->ll_tv->v_lock = 0;
@@ -2926,7 +2933,7 @@ static int do_unlet_var(lval_T *const lp, char_u *const name_end, int forceit)
       typval_T oldtv;
 
       if (watched) {
-        copy_tv(&di->di_tv, &oldtv);
+        tv_copy(&di->di_tv, &oldtv);
         // need to save key because dictitem_remove will free it
         key = xstrdup((char *)di->di_key);
       }
@@ -2998,7 +3005,7 @@ int do_unlet(char_u *name, int forceit)
       bool watched = tv_dict_is_watched(dict);
 
       if (watched) {
-        copy_tv(&di->di_tv, &oldtv);
+        tv_copy(&di->di_tv, &oldtv);
       }
 
       delete_var(ht, hi);
@@ -4532,7 +4539,7 @@ eval_index (
           rettv->vval.v_list = l;
           l->lv_refcount++;
         } else {
-          copy_tv(&tv_list_find(rettv->vval.v_list, n1)->li_tv, &var1);
+          tv_copy(&tv_list_find(rettv->vval.v_list, n1)->li_tv, &var1);
           tv_clear(rettv);
           *rettv = var1;
         }
@@ -4570,7 +4577,7 @@ eval_index (
           return FAIL;
         }
 
-        copy_tv(&item->di_tv, &var1);
+        tv_copy(&item->di_tv, &var1);
         tv_clear(rettv);
         *rettv = var1;
         break;
@@ -6298,7 +6305,7 @@ call_func(
     }
     if (error == ERROR_NONE && partial->pt_argc > 0) {
       for (argv_clear = 0; argv_clear < partial->pt_argc; argv_clear++) {
-        copy_tv(&partial->pt_argv[argv_clear], &argv[argv_clear]);
+        tv_copy(&partial->pt_argv[argv_clear], &argv[argv_clear]);
       }
       for (int i = 0; i < argcount_in; i++) {
         argv[i + argv_clear] = argvars_in[i];
@@ -6552,7 +6559,7 @@ static void f_add(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     if ((l = argvars[0].vval.v_list) != NULL
         && !tv_check_lock(l->lv_lock, arg_errmsg, arg_errmsg_len)) {
       tv_list_append_tv(l, &argvars[1]);
-      copy_tv(&argvars[0], rettv);
+      tv_copy(&argvars[0], rettv);
     }
   } else
     EMSG(_(e_listreq));
@@ -7231,7 +7238,7 @@ int func_call(char_u *name, typval_T *args, partial_T *partial,
     /* Make a copy of each argument.  This is needed to be able to set
      * v_lock to VAR_FIXED in the copy without changing the original list.
      */
-    copy_tv(&item->li_tv, &argv[argc++]);
+    tv_copy(&item->li_tv, &argv[argc++]);
   }
 
   if (item == NULL) {
@@ -8190,7 +8197,7 @@ static void f_extend(typval_T *argvars, typval_T *rettv, FunPtr fptr)
         item = NULL;
       tv_list_extend(l1, l2, item);
 
-      copy_tv(&argvars[0], rettv);
+      tv_copy(&argvars[0], rettv);
     }
   } else if (argvars[0].v_type == VAR_DICT && argvars[1].v_type ==
              VAR_DICT) {
@@ -8224,7 +8231,7 @@ static void f_extend(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
       tv_dict_extend(d1, d2, action);
 
-      copy_tv(&argvars[0], rettv);
+      tv_copy(&argvars[0], rettv);
     }
   } else {
     EMSG2(_(e_listdictarg), "extend()");
@@ -8441,7 +8448,7 @@ static void filter_map(typval_T *argvars, typval_T *rettv, int map)
     did_emsg |= save_did_emsg;
   }
 
-  copy_tv(&argvars[0], rettv);
+  tv_copy(&argvars[0], rettv);
 }
 
 static int filter_map_one(typval_T *tv, typval_T *expr, int map, int *remp)
@@ -8451,7 +8458,7 @@ static int filter_map_one(typval_T *tv, typval_T *expr, int map, int *remp)
   int retval = FAIL;
   int dummy;
 
-  copy_tv(tv, &vimvars[VV_VAL].vv_tv);
+  tv_copy(tv, &vimvars[VV_VAL].vv_tv);
   argv[0] = vimvars[VV_KEY].vv_tv;
   argv[1] = vimvars[VV_VAL].vv_tv;
   if (expr->v_type == VAR_FUNC) {
@@ -8859,13 +8866,13 @@ static void common_function(typval_T *argvars, typval_T *rettv,
         }
         int i = 0;
         for (; i < arg_len; i++) {
-          copy_tv(&arg_pt->pt_argv[i], &pt->pt_argv[i]);
+          tv_copy(&arg_pt->pt_argv[i], &pt->pt_argv[i]);
         }
         if (lv_len > 0) {
           for (listitem_T *li = list->lv_first;
                li != NULL;
                li = li->li_next) {
-            copy_tv(&li->li_tv, &pt->pt_argv[i++]);
+            tv_copy(&li->li_tv, &pt->pt_argv[i++]);
           }
         }
       }
@@ -9012,10 +9019,12 @@ static void f_get(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   if (tv == NULL) {
-    if (argvars[2].v_type != VAR_UNKNOWN)
-      copy_tv(&argvars[2], rettv);
-  } else
-    copy_tv(tv, rettv);
+    if (argvars[2].v_type != VAR_UNKNOWN) {
+      tv_copy(&argvars[2], rettv);
+    }
+  } else {
+    tv_copy(tv, rettv);
+  }
 }
 
 /// Returns information about signs placed in a buffer as list of dicts.
@@ -9260,7 +9269,7 @@ static void f_getbufvar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       dictitem_T *const v = find_var_in_ht(&curbuf->b_vars->dv_hashtab, 'b',
                                            varname, strlen(varname), false);
       if (v != NULL) {
-        copy_tv(&v->di_tv, rettv);
+        tv_copy(&v->di_tv, rettv);
         done = true;
       }
     }
@@ -9273,7 +9282,7 @@ static void f_getbufvar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 f_getbufvar_end:
   if (!done && argvars[2].v_type != VAR_UNKNOWN) {
     // use the default value
-    copy_tv(&argvars[2], rettv);
+    tv_copy(&argvars[2], rettv);
   }
 }
 
@@ -10094,7 +10103,7 @@ static void f_gettabvar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       v = find_var_in_ht(&tp->tp_vars->dv_hashtab, 't',
                          varname, strlen(varname), false);
       if (v != NULL) {
-        copy_tv(&v->di_tv, rettv);
+        tv_copy(&v->di_tv, rettv);
         done = true;
       }
     }
@@ -10104,7 +10113,7 @@ static void f_gettabvar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   if (!done && argvars[2].v_type != VAR_UNKNOWN) {
-    copy_tv(&argvars[2], rettv);
+    tv_copy(&argvars[2], rettv);
   }
 }
 
@@ -10315,7 +10324,7 @@ getwinvar (
         v = find_var_in_ht(&win->w_vars->dv_hashtab, 'w', varname,
                            strlen(varname), false);
         if (v != NULL) {
-          copy_tv(&v->di_tv, rettv);
+          tv_copy(&v->di_tv, rettv);
           done = true;
         }
       }
@@ -10330,7 +10339,7 @@ getwinvar (
 
   if (!done && argvars[off + 2].v_type != VAR_UNKNOWN) {
     // use the default return value
-    copy_tv(&argvars[off + 2], rettv);
+    tv_copy(&argvars[off + 2], rettv);
   }
 }
 
@@ -11181,7 +11190,7 @@ static void f_insert(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     }
     if (l != NULL) {
       tv_list_insert_tv(l, &argvars[1], item);
-      copy_tv(&argvars[0], rettv);
+      tv_copy(&argvars[0], rettv);
     }
   }
 }
@@ -11271,31 +11280,36 @@ static void dict_list(typval_T *const tv, typval_T *const rettv,
     listitem_T *const li = tv_list_item_alloc();
     tv_list_append(rettv->vval.v_list, li);
 
-    if (what == 0) {
-      // keys()
-      li->li_tv.v_type = VAR_STRING;
-      li->li_tv.v_lock = 0;
-      li->li_tv.vval.v_string = vim_strsave(di->di_key);
-    } else if (what == 1) {
-      // values()
-      copy_tv(&di->di_tv, &li->li_tv);
-    } else {
-      // items()
-      list_T *const l2 = tv_list_alloc();
-      li->li_tv.v_type = VAR_LIST;
-      li->li_tv.v_lock = 0;
-      li->li_tv.vval.v_list = l2;
-      l2->lv_refcount++;
+    switch (what) {
+      case kDictListKeys: {
+        li->li_tv.v_type = VAR_STRING;
+        li->li_tv.v_lock = VAR_UNLOCKED;
+        li->li_tv.vval.v_string = vim_strsave(di->di_key);
+        break;
+      }
+      case kDictListValues: {
+        tv_copy(&di->di_tv, &li->li_tv);
+        break;
+      }
+      case kDictListItems: {
+        // items()
+        list_T *const sub_l = tv_list_alloc();
+        li->li_tv.v_type = VAR_LIST;
+        li->li_tv.v_lock = VAR_UNLOCKED;
+        li->li_tv.vval.v_list = sub_l;
+        sub_l->lv_refcount++;
 
-      listitem_T *sub_li = tv_list_item_alloc();
-      tv_list_append(l2, sub_li);
-      sub_li->li_tv.v_type = VAR_STRING;
-      sub_li->li_tv.v_lock = 0;
-      sub_li->li_tv.vval.v_string = vim_strsave(di->di_key);
+        listitem_T *sub_li = tv_list_item_alloc();
+        tv_list_append(sub_l, sub_li);
+        sub_li->li_tv.v_type = VAR_STRING;
+        sub_li->li_tv.v_lock = VAR_UNLOCKED;
+        sub_li->li_tv.vval.v_string = vim_strsave(di->di_key);
 
-      sub_li = tv_list_item_alloc();
-      tv_list_append(l2, sub_li);
-      copy_tv(&di->di_tv, &sub_li->li_tv);
+        sub_li = tv_list_item_alloc();
+        tv_list_append(sub_l, sub_li);
+        tv_copy(&di->di_tv, &sub_li->li_tv);
+        break;
+      }
     }
   });
 }
@@ -12256,21 +12270,24 @@ static void find_some_match(typval_T *argvars, typval_T *rettv, int type)
           }
         }
       } else if (type == 2) {
-        /* return matched string */
-        if (l != NULL)
-          copy_tv(&li->li_tv, rettv);
-        else
-          rettv->vval.v_string = vim_strnsave(regmatch.startp[0],
-              (int)(regmatch.endp[0] - regmatch.startp[0]));
-      } else if (l != NULL)
+        // Return matched string.
+        if (l != NULL) {
+          tv_copy(&li->li_tv, rettv);
+        } else {
+          rettv->vval.v_string = (char_u *)xmemdupz(
+              (const char *)regmatch.startp[0],
+              (size_t)(regmatch.endp[0] - regmatch.startp[0]));
+        }
+      } else if (l != NULL) {
         rettv->vval.v_number = idx;
-      else {
-        if (type != 0)
+      } else {
+        if (type != 0) {
           rettv->vval.v_number =
             (varnumber_T)(regmatch.startp[0] - str);
-        else
+        } else {
           rettv->vval.v_number =
             (varnumber_T)(regmatch.endp[0] - str);
+        }
         rettv->vval.v_number += (varnumber_T)(str - expr);
       }
     }
@@ -15135,8 +15152,8 @@ static int item_compare2(const void *s1, const void *s2, bool keep_zero)
 
   // Copy the values.  This is needed to be able to set v_lock to VAR_FIXED
   // in the copy without changing the original list items.
-  copy_tv(&si1->item->li_tv, &argv[0]);
-  copy_tv(&si2->item->li_tv, &argv[1]);
+  tv_copy(&si1->item->li_tv, &argv[0]);
+  tv_copy(&si2->item->li_tv, &argv[1]);
 
   rettv.v_type = VAR_UNKNOWN;  // tv_clear() uses this
   res = call_func((const char_u *)func_name,
@@ -18203,7 +18220,7 @@ static int get_var_tv(
     }
     ret = FAIL;
   } else if (rettv != NULL) {
-    copy_tv(tv, rettv);
+    tv_copy(tv, rettv);
   }
 
   return ret;
@@ -18375,7 +18392,7 @@ void set_selfdict(typval_T *rettv, dict_T *selfdict)
           } else {
             pt->pt_argc = ret_pt->pt_argc;
             for (i = 0; i < pt->pt_argc; i++) {
-              copy_tv(&ret_pt->pt_argv[i], &pt->pt_argv[i]);
+              tv_copy(&ret_pt->pt_argv[i], &pt->pt_argv[i]);
             }
           }
         }
@@ -18852,7 +18869,7 @@ static void set_var(const char *name, typval_T *const tv, const bool copy)
     }
 
     if (watched) {
-      copy_tv(&v->di_tv, &oldtv);
+      tv_copy(&v->di_tv, &oldtv);
     }
     tv_clear(&v->di_tv);
   } else {  // Add a new variable.
@@ -18877,7 +18894,7 @@ static void set_var(const char *name, typval_T *const tv, const bool copy)
   }
 
   if (copy || tv->v_type == VAR_NUMBER || tv->v_type == VAR_FLOAT) {
-    copy_tv(tv, &v->di_tv);
+    tv_copy(tv, &v->di_tv);
   } else {
     v->di_tv = *tv;
     v->di_tv.v_lock = 0;
@@ -18992,56 +19009,6 @@ bool valid_varname(const char *varname)
   return true;
 }
 
-/*
- * Copy the values from typval_T "from" to typval_T "to".
- * When needed allocates string or increases reference count.
- * Does not make a copy of a list or dict but copies the reference!
- * It is OK for "from" and "to" to point to the same item.  This is used to
- * make a copy later.
- */
-void copy_tv(typval_T *from, typval_T *to)
-{
-  to->v_type = from->v_type;
-  to->v_lock = 0;
-  memmove(&to->vval, &from->vval, sizeof(to->vval));
-  switch (from->v_type) {
-    case VAR_NUMBER:
-    case VAR_FLOAT:
-    case VAR_SPECIAL:
-      break;
-    case VAR_STRING:
-    case VAR_FUNC:
-      if (from->vval.v_string != NULL) {
-        to->vval.v_string = vim_strsave(from->vval.v_string);
-        if (from->v_type == VAR_FUNC) {
-          func_ref(to->vval.v_string);
-        }
-      }
-      break;
-    case VAR_PARTIAL:
-      if (from->vval.v_partial == NULL) {
-        to->vval.v_partial = NULL;
-      } else {
-        to->vval.v_partial = from->vval.v_partial;
-        (to->vval.v_partial->pt_refcount)++;
-      }
-      break;
-    case VAR_LIST:
-      if (from->vval.v_list != NULL) {
-        to->vval.v_list->lv_refcount++;
-      }
-      break;
-    case VAR_DICT:
-      if (from->vval.v_dict != NULL) {
-        to->vval.v_dict->dv_refcount++;
-      }
-      break;
-    case VAR_UNKNOWN:
-      EMSG2(_(e_intern2), "copy_tv(UNKNOWN)");
-      break;
-  }
-}
-
 /// Make a copy of an item
 ///
 /// Lists and Dictionaries are also copied.
@@ -19080,11 +19047,11 @@ int var_item_copy(const vimconv_T *const conv,
   case VAR_FUNC:
   case VAR_PARTIAL:
   case VAR_SPECIAL:
-    copy_tv(from, to);
+    tv_copy(from, to);
     break;
   case VAR_STRING:
     if (conv == NULL || conv->vc_type == CONV_NONE) {
-      copy_tv(from, to);
+      tv_copy(from, to);
     } else {
       to->v_type = VAR_STRING;
       to->v_lock = 0;
@@ -20981,7 +20948,7 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars,
     if (addlocal) {
       // Named arguments can be accessed without the "a:" prefix in lambda
       // expressions. Add to the l: dict.
-      copy_tv(&v->di_tv, &v->di_tv);
+      tv_copy(&v->di_tv, &v->di_tv);
       tv_dict_add(&fc->l_vars, v);
     } else {
       tv_dict_add(&fc->l_avars, v);
@@ -21188,13 +21155,13 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars,
 
     // Make a copy of the a: variables, since we didn't do that above.
     TV_DICT_ITER(&fc->l_avars, di, {
-      copy_tv(&di->di_tv, &di->di_tv);
+      tv_copy(&di->di_tv, &di->di_tv);
     });
 
     // Make a copy of the a:000 items, since we didn't do that above.
     for (listitem_T *li = fc->l_varlist.lv_first; li != NULL;
          li = li->li_next) {
-      copy_tv(&li->li_tv, &li->li_tv);
+      tv_copy(&li->li_tv, &li->li_tv);
     }
   }
 
@@ -21700,7 +21667,7 @@ const void *var_shada_iter(const void *const iter, const char **const name,
     hi = (const hashitem_T *) iter;
   }
   *name = (char *)TV_DICT_HI2DI(hi)->di_key;
-  copy_tv(&TV_DICT_HI2DI(hi)->di_tv, rettv);
+  tv_copy(&TV_DICT_HI2DI(hi)->di_tv, rettv);
   while ((size_t)(++hi - hifirst) < hinum) {
     if (!HASHITEM_EMPTY(hi) && var_flavour(hi->hi_key) == VAR_FLAVOUR_SHADA) {
       return hi;

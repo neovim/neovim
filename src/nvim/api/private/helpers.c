@@ -179,7 +179,7 @@ Object dict_set_var(dict_T *dict, String key, Object value, bool del,
     }
 
     // Update the value
-    copy_tv(&tv, &di->di_tv);
+    tv_copy(&tv, &di->di_tv);
     // Clear the temporary variable
     tv_clear(&tv);
   }
