@@ -281,7 +281,6 @@ int default_fileformat(void)
 // Call shell. Calls os_call_shell, with 'shellxquote' added.
 int call_shell(char_u *cmd, ShellOpts opts, char_u *extra_shell_arg)
 {
-  char_u      *ncmd;
   int retval;
   proftime_T wait_time;
 
@@ -303,28 +302,7 @@ int call_shell(char_u *cmd, ShellOpts opts, char_u *extra_shell_arg)
     /* The external command may update a tags file, clear cached tags. */
     tag_freematch();
 
-    if (cmd == NULL || *p_sxq == NUL)
-      retval = os_call_shell(cmd, opts, extra_shell_arg);
-    else {
-      char_u *ecmd = cmd;
-
-      if (*p_sxe != NUL && STRCMP(p_sxq, "(") == 0) {
-        ecmd = vim_strsave_escaped_ext(cmd, p_sxe, '^', FALSE);
-      }
-      ncmd = xmalloc(STRLEN(ecmd) + STRLEN(p_sxq) * 2 + 1);
-      STRCPY(ncmd, p_sxq);
-      STRCAT(ncmd, ecmd);
-      /* When 'shellxquote' is ( append ).
-       * When 'shellxquote' is "( append )". */
-      STRCAT(ncmd, STRCMP(p_sxq, "(") == 0 ? (char_u *)")"
-          : STRCMP(p_sxq, "\"(") == 0 ? (char_u *)")\""
-          : p_sxq);
-      retval = os_call_shell(ncmd, opts, extra_shell_arg);
-      xfree(ncmd);
-
-      if (ecmd != cmd)
-        xfree(ecmd);
-    }
+    retval = os_call_shell(cmd, opts, extra_shell_arg);
   }
 
   set_vim_var_nr(VV_SHELL_ERROR, (varnumber_T) retval);
