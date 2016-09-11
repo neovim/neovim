@@ -92,7 +92,12 @@ void nvim_feedkeys(String keys, String mode, Boolean escape_csi)
     typebuf_was_filled = true;
   }
   if (execute) {
+    int save_msg_scroll = msg_scroll;
+
+    /* Avoid a 1 second delay when the keys start Insert mode. */
+    msg_scroll = false;
     exec_normal(true);
+    msg_scroll |= save_msg_scroll;
   }
 }
 
