@@ -120,9 +120,14 @@ if(NOT MSVC)
   set_source_files_properties(
     ${CONV_SOURCES} PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} -Wno-conversion")
   # gperf generates ANSI-C with incorrect linkage, ignore it.
-  set_source_files_properties(
-    eval.c PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} -Wno-static-in-inline -Wno-conversion")
-
+  check_c_compiler_flag(-Wno-static-in-inline HAS_WNO_STATIC_IN_INLINE_FLAG)
+  if(HAS_WNO_STATIC_IN_INLINE_FLAG)
+    set_source_files_properties(
+      eval.c PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} -Wno-static-in-inline -Wno-conversion")
+  else()
+    set_source_files_properties(
+      eval.c PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} -Wno-conversion")
+  endif()
 endif()
 
 if(DEFINED MIN_LOG_LEVEL)
