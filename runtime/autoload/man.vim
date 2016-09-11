@@ -176,6 +176,8 @@ endfunction
 function! s:find_man() abort
   if &filetype ==# 'man'
     return 1
+  elseif winnr('$') ==# 1
+    return 0
   endif
   let thiswin = winnr()
   while 1
