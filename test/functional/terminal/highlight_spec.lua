@@ -206,10 +206,18 @@ describe('synIDattr()', function()
     eq('252', eval('synIDattr(hlID("Normal"), "fg")'))
     eq('79', eval('synIDattr(hlID("Keyword"), "fg")'))
   end)
+end)
 
-  it('returns "Normal" values for group using special fg/bg names', function()
+describe('fg/bg special colors', function()
+  local screen
+  before_each(function()
+    clear()
+    screen = Screen.new(50, 7)
     execute('highlight Normal ctermfg=145 ctermbg=16 guifg=#ff0000 guibg=Black')
     execute('highlight Visual ctermfg=bg ctermbg=fg guifg=bg guibg=fg guisp=bg')
+  end)
+
+  it('resolve to "Normal" values', function()
     eq(eval('synIDattr(hlID("Normal"), "bg")'),
       eval('synIDattr(hlID("Visual"), "fg")'))
     eq(eval('synIDattr(hlID("Normal"), "bg#")'),
@@ -226,11 +234,8 @@ describe('synIDattr()', function()
     eq('bg', eval('synIDattr(hlID("Visual"), "sp#", "gui")'))
   end)
 
-  it('returns "Normal" values for group using special fg/bg names \z
-    if RGB-capable UI is attached', function()
+  it('resolve to "Normal" values in RGB-capable UI', function()
     screen:attach({rgb=true})
-    execute('highlight Normal ctermfg=145 ctermbg=16 guifg=#ff0000 guibg=Black')
-    execute('highlight Visual ctermfg=bg ctermbg=fg guifg=bg guibg=fg guisp=bg')
     eq('bg', eval('synIDattr(hlID("Visual"), "fg")'))
     eq(eval('synIDattr(hlID("Normal"), "bg#")'),
       eval('synIDattr(hlID("Visual"), "fg#")'))
@@ -242,11 +247,8 @@ describe('synIDattr()', function()
       eval('synIDattr(hlID("Visual"), "sp#")'))
   end)
 
-  it('returns the current "Normal" values for group using fg/bg after \z
-    Normal is updated', function()
+  it('resolve after the "Normal" group is modified', function()
     screen:attach({rgb=true})
-    execute('highlight Normal ctermfg=145 ctermbg=16 guifg=#ff0000 guibg=Black')
-    execute('highlight Visual ctermfg=bg ctermbg=fg guifg=bg guibg=fg guisp=bg')
     execute('highlight Normal guifg=#abb2bf guibg=#282c34')
     eq(eval('synIDattr(hlID("Normal"), "bg#")'),
       eval('synIDattr(hlID("Visual"), "fg#")'))
