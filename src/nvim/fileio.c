@@ -4498,16 +4498,16 @@ time_t get8ctime(FILE *fd)
 /// @return pointer to the string or NULL when unable to read that many bytes.
 char *read_string(FILE *fd, size_t cnt)
 {
-  uint8_t *str = xmallocz(cnt);
+  char *str = xmallocz(cnt);
   for (size_t i = 0; i < cnt; i++) {
     int c = getc(fd);
     if (c == EOF) {
       xfree(str);
       return NULL;
     }
-    str[i] = (uint8_t)c;
+    str[i] = (char)c;
   }
-  return (char *)str;
+  return str;
 }
 
 /// Writes a number to file "fd", most significant bit first, in "len" bytes.
