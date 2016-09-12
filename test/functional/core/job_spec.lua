@@ -109,8 +109,8 @@ describe('jobs', function()
   it("will not buffer data if it doesn't end in newlines", function()
     if os.getenv("TRAVIS") and os.getenv("CC") == "gcc-4.9"
       and helpers.os_name() == "osx" then
-      -- XXX: Hangs Travis OSX since e9061117a5b8f195c3f26a5cb94e18ddd7752d86.
-      pending("[Hangs on Travis OSX. #5002]", function() end)
+      -- XXX: Hangs Travis macOS since e9061117a5b8f195c3f26a5cb94e18ddd7752d86.
+      pending("[Hangs on Travis macOS. #5002]", function() end)
       return
     end
 
