@@ -153,6 +153,11 @@ describe('Mouse input', function()
     end)
 
     it('in tabline to the left moves tab left', function()
+      if os.getenv("TRAVIS") and helpers.os_name() == "osx" then
+        pending("[Hangs on Travis macOS. #4874]", function() end)
+        return
+      end
+
       execute('%delete')
       insert('this is foo')
       execute('silent file foo | tabnew | file bar')
@@ -251,6 +256,11 @@ describe('Mouse input', function()
     end)
 
     it('out of tabline to the left moves tab left', function()
+      if os.getenv("TRAVIS") and helpers.os_name() == "osx" then
+        pending("[Hangs on Travis macOS. #4874]", function() end)
+        return
+      end
+
       execute('%delete')
       insert('this is foo')
       execute('silent file foo | tabnew | file bar')
