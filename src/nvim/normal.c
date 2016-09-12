@@ -2110,6 +2110,20 @@ static void op_function(oparg_T *oap)
   }
 }
 
+// Move the current tab to tab in same column as mouse or to end of the
+// tabline if there is no tab there.
+static void move_tab_to_mouse(void)
+{
+  int tabnr = tab_page_click_defs[mouse_col].tabnr;
+  if (tabnr <= 0) {
+      tabpage_move(9999);
+  } else if (tabnr < tabpage_index(curtab)) {
+      tabpage_move(tabnr - 1);
+  } else {
+      tabpage_move(tabnr);
+  }
+}
+
 /*
  * Do the appropriate action for the current mouse click in the current mode.
  * Not used for Command-line mode.
@@ -2346,12 +2360,7 @@ do_mouse (
   if (mouse_row == 0 && firstwin->w_winrow > 0) {
     if (is_drag) {
       if (in_tab_line) {
-        if (tab_page_click_defs[mouse_col].type == kStlClickTabClose) {
-          tabpage_move(9999);
-        } else {
-          int tabnr = tab_page_click_defs[mouse_col].tabnr;
-          tabpage_move(tabnr < tabpage_index(curtab) ? tabnr - 1 : tabnr);
-        }
+        move_tab_to_mouse();
       }
       return false;
     }
@@ -2466,10 +2475,7 @@ do_mouse (
     }
     return true;
   } else if (is_drag && in_tab_line) {
-    tabpage_move(tab_page_click_defs[mouse_col].type == kStlClickTabClose
-                 ? 9999
-                 : tab_page_click_defs[mouse_col].tabnr - 1);
-    in_tab_line = false;
+    move_tab_to_mouse();
     return false;
   }
 
