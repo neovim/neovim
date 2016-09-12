@@ -6,8 +6,8 @@ set -o pipefail
 # Use privileged mode, which e.g. skips using CDPATH.
 set -p
 
-readonly NEOVIM_SOURCE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-readonly VIM_SOURCE_DIR_DEFAULT="${NEOVIM_SOURCE_DIR}/.vim-src"
+readonly NVIM_SOURCE_DIR="${NVIM_SOURCE_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
+readonly VIM_SOURCE_DIR_DEFAULT="${NVIM_SOURCE_DIR}/.vim-src"
 readonly VIM_SOURCE_DIR="${VIM_SOURCE_DIR:-${VIM_SOURCE_DIR_DEFAULT}}"
 readonly BASENAME="$(basename "${0}")"
 readonly BRANCH_PREFIX="vim-"
@@ -124,6 +124,28 @@ assign_commit_details() {
   patch_file="vim-${vim_version}.patch"
 }
 
+# Patch surgery:
+preprocess_patch() {
+  local file="$1"
+  local nvim="nvim -u NORC -i NONE "
+
+  # Remove *.proto, Make*, gui_*, some if_*
+  local na_src='proto\|Make*\|gui_*'
+  na_src="$na_src"'\|if_lua\|if_mzsch\|if_olepp\|if_ole\|if_perl\|if_py\|if_ruby\|if_tcl\|if_xcmdsrv'
+  $nvim --cmd 'set dir=/tmp' +'g@^diff --git a/src/\S*\<'${na_src}'@norm! d/\v(^diff)|%$' +w +q "$file"
+
+  # Remove todo.txt, version*.txt, tags
+  local na_doc='todo\.txt\|version\d\.txt\|tags'
+  $nvim --cmd 'set dir=/tmp' +'g@^diff --git a/runtime/doc/'${na_doc}'@norm! d/\v(^diff)|%$' +w +q "$file"
+
+  # Remove some testdir/Make_*.mak files
+  local na_src_testdir='Make_amiga.mak\|Make_dos.mak\|Make_ming.mak\|Make_vms.mms'
+  $nvim --cmd 'set dir=/tmp' +'g@^diff --git a/src/testdir/'${na_src_testdir}'@norm! d/\v(^diff)|%$' +w +q "$file"
+
+  # Rename src/ paths to src/nvim/
+  LC_ALL=C sed -e 's/\( [ab]\/src\)/\1\/nvim/g' "$file" > "$file".tmp && mv "$file".tmp "$file"
+}
+
 get_vim_patch() {
   get_vim_sources
 
@@ -136,14 +158,11 @@ get_vim_patch() {
   echo
   echo "✔ Found Vim revision '${vim_commit}'."
 
-  # Patch surgery: preprocess the patch.
-  #   - transform src/ paths to src/nvim/
-  local vim_full
-  vim_full="$(git --no-pager show --color=never -1 --pretty=medium "${vim_commit}" \
-    | LC_ALL=C sed -e 's/\( [ab]\/src\)/\1\/nvim/g')"
+  local patch_content
+  patch_content="$(git --no-pager show --color=never -1 --pretty=medium "${vim_commit}")"
   local neovim_branch="${BRANCH_PREFIX}${vim_version}"
 
-  cd "${NEOVIM_SOURCE_DIR}"
+  cd "${NVIM_SOURCE_DIR}"
   local git_remote
   git_remote="$(find_git_remote)"
   local checked_out_branch
@@ -161,26 +180,26 @@ get_vim_patch() {
 
     echo
     echo "Creating new branch '${neovim_branch}' based on '${git_remote}/master'."
-    cd "${NEOVIM_SOURCE_DIR}"
+    cd "${NVIM_SOURCE_DIR}"
     output="$(git checkout -b "${neovim_branch}" "${git_remote}/master" 2>&1)" &&
       echo "✔ ${output}" ||
       (echo "✘ ${output}"; false)
   fi
 
-  echo
-  echo "Creating empty commit with correct commit message."
+  printf 'Creating empty commit with correct commit message.'
   output="$(commit_message | git commit --allow-empty --file 2>&1 -)" &&
     echo "✔ ${output}" ||
     (echo "✘ ${output}"; false)
 
-  echo
-  echo "Creating files."
-  echo "${vim_full}" > "${NEOVIM_SOURCE_DIR}/${patch_file}"
-  echo "✔ Saved full commit details to '${NEOVIM_SOURCE_DIR}/${patch_file}'."
+  printf 'Creating patch...'
+  echo "$patch_content" > "${NVIM_SOURCE_DIR}/${patch_file}"
 
-  echo
-  echo "Instructions:"
-  echo
+  printf 'Pre-processing patch...'
+  preprocess_patch "${NVIM_SOURCE_DIR}/${patch_file}"
+
+  echo "✔ Saved patch to '${NVIM_SOURCE_DIR}/${patch_file}'."
+
+  printf '\nInstructions:\n'
   echo "  Proceed to port the patch."
   echo "  You might want to try 'patch -p1 < ${patch_file}' first."
   echo
@@ -223,7 +242,7 @@ submit_pr() {
     exit 1
   fi
 
-  cd "${NEOVIM_SOURCE_DIR}"
+  cd "${NVIM_SOURCE_DIR}"
   local checked_out_branch
   checked_out_branch="$(git rev-parse --abbrev-ref HEAD)"
   if [[ "${checked_out_branch}" != ${BRANCH_PREFIX}* ]]; then
@@ -263,11 +282,11 @@ submit_pr() {
   local patch_file
   for patch_file in "${patches[@]}"; do
     patch_file="vim-${patch_file}.patch"
-    if [[ ! -f "${NEOVIM_SOURCE_DIR}/${patch_file}" ]]; then
+    if [[ ! -f "${NVIM_SOURCE_DIR}/${patch_file}" ]]; then
       continue
     fi
-    rm -- "${NEOVIM_SOURCE_DIR}/${patch_file}"
-    echo "✔ Removed '${NEOVIM_SOURCE_DIR}/${patch_file}'."
+    rm -- "${NVIM_SOURCE_DIR}/${patch_file}"
+    echo "✔ Removed '${NVIM_SOURCE_DIR}/${patch_file}'."
   done
 }
 
@@ -289,7 +308,7 @@ list_vim_patches() {
     if [[ -n "${vim_tag}" ]]; then
       local patch_number="${vim_tag:5}" # Remove prefix like "v7.4."
       # Tagged Vim patch, check version.c:
-      is_missing="$(sed -n '/static int included_patches/,/}/p' "${NEOVIM_SOURCE_DIR}/src/nvim/version.c" |
+      is_missing="$(sed -n '/static int included_patches/,/}/p' "${NVIM_SOURCE_DIR}/src/nvim/version.c" |
         grep -x -e "[[:space:]]*//[[:space:]]${patch_number} NA.*" -e "[[:space:]]*${patch_number}," >/dev/null && echo "false" || echo "true")"
       vim_commit="${vim_tag#v}"
       if (cd "${VIM_SOURCE_DIR}" && git --no-pager  show --color=never --name-only "v${vim_commit}" 2>/dev/null) | grep -q ^runtime; then
@@ -297,7 +316,7 @@ list_vim_patches() {
       fi
     else
       # Untagged Vim patch (e.g. runtime updates), check the Neovim git log:
-      is_missing="$(cd "${NEOVIM_SOURCE_DIR}" &&
+      is_missing="$(cd "${NVIM_SOURCE_DIR}" &&
         git log -1 --no-merges --grep="vim\-patch:${vim_commit:0:7}" --pretty=format:false)"
     fi
 
@@ -362,18 +381,18 @@ review_commit() {
 
   echo
   echo "Creating files."
-  echo "${neovim_patch}" > "${NEOVIM_SOURCE_DIR}/n${patch_file}"
-  echo "✔ Saved pull request diff to '${NEOVIM_SOURCE_DIR}/n${patch_file}'."
-  CREATED_FILES+=("${NEOVIM_SOURCE_DIR}/n${patch_file}")
+  echo "${neovim_patch}" > "${NVIM_SOURCE_DIR}/n${patch_file}"
+  echo "✔ Saved pull request diff to '${NVIM_SOURCE_DIR}/n${patch_file}'."
+  CREATED_FILES+=("${NVIM_SOURCE_DIR}/n${patch_file}")
 
-  curl -Ssfo "${NEOVIM_SOURCE_DIR}/${patch_file}" "${vim_patch_url}"
-  echo "✔ Saved Vim diff to '${NEOVIM_SOURCE_DIR}/${patch_file}'."
-  CREATED_FILES+=("${NEOVIM_SOURCE_DIR}/${patch_file}")
+  curl -Ssfo "${NVIM_SOURCE_DIR}/${patch_file}" "${vim_patch_url}"
+  echo "✔ Saved Vim diff to '${NVIM_SOURCE_DIR}/${patch_file}'."
+  CREATED_FILES+=("${NVIM_SOURCE_DIR}/${patch_file}")
 
   echo
   echo "Launching nvim."
-  nvim -c "cd ${NEOVIM_SOURCE_DIR}" \
-    -O "${NEOVIM_SOURCE_DIR}/${patch_file}" "${NEOVIM_SOURCE_DIR}/n${patch_file}"
+  nvim -c "cd ${NVIM_SOURCE_DIR}" \
+    -O "${NVIM_SOURCE_DIR}/${patch_file}" "${NVIM_SOURCE_DIR}/n${patch_file}"
 }
 
 review_pr() {
