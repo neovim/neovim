@@ -218,7 +218,7 @@ for i = 1, #functions do
     for j = 1, #fn.parameters do
       local param = fn.parameters[j]
       local converted = 'arg_'..j
-      output:write('\n  '..param[1]..' '..converted..' api_init_'..string.lower(real_type(param[1]))..';')
+      output:write('\n  '..param[1]..' '..converted..';')
     end
     output:write('\n')
     output:write('\n  if (args.size != '..#fn.parameters..') {')
