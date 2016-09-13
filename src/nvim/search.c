@@ -1500,30 +1500,30 @@ static int find_rawstring_end(char_u *linep, pos_T *startpos, pos_T *endpos)
 
 pos_T *findmatchlimit(oparg_T *oap, int initc, int flags, int64_t maxtravel)
 {
-  static pos_T pos;                     /* current search position */
-  int findc = 0;                        /* matching brace */
+  static pos_T pos;                     // current search position
+  int findc = 0;                        // matching brace
   int c;
-  int count = 0;                        /* cumulative number of braces */
-  int backwards = false;                /* init for gcc */
-  int raw_string = false;               /* search for raw string */
-  int inquote = false;                  /* true when inside quotes */
-  char_u      *linep;                   /* pointer to current line */
+  int count = 0;                        // cumulative number of braces
+  bool backwards = false;               // init for gcc
+  int raw_string = false;               // search for raw string
+  int inquote = false;                  // true when inside quotes
+  char_u      *linep;                   // pointer to current line
   char_u      *ptr;
-  int do_quotes;                        /* check for quotes in current line */
-  int at_start;                         /* do_quotes value at start position */
-  int hash_dir = 0;                     /* Direction searched for # things */
-  int comment_dir = 0;                  /* Direction searched for comments */
-  pos_T match_pos;                      /* Where last slash-star was found */
-  int start_in_quotes;                  /* start position is in quotes */
-  int traveled = 0;                     /* how far we've searched so far */
-  int ignore_cend = FALSE;              /* ignore comment end */
-  int cpo_match;                        /* vi compatible matching */
-  int cpo_bsl;                          /* don't recognize backslashes */
-  int match_escaped = 0;                /* search for escaped match */
-  int dir;                              /* Direction to search */
-  int comment_col = MAXCOL;             /* start of / / comment */
-  int lispcomm = FALSE;                 /* inside of Lisp-style comment */
-  int lisp = curbuf->b_p_lisp;           /* engage Lisp-specific hacks ;) */
+  int do_quotes;                        // check for quotes in current line
+  int at_start;                         // do_quotes value at start position
+  int hash_dir = 0;                     // Direction searched for # things
+  int comment_dir = 0;                  // Direction searched for comments
+  pos_T match_pos;                      // Where last slash-star was found
+  int start_in_quotes;                  // start position is in quotes
+  int traveled = 0;                     // how far we've searched so far
+  int ignore_cend = FALSE;              // ignore comment end
+  int cpo_match;                        // vi compatible matching
+  int cpo_bsl;                          // don't recognize backslashes
+  int match_escaped = 0;                // search for escaped match
+  int dir;                              // Direction to search
+  int comment_col = MAXCOL;             // start of / / comment
+  int lispcomm = FALSE;                 // inside of Lisp-style comment
+  int lisp = curbuf->b_p_lisp;          // engage Lisp-specific hacks ;)
 
   pos = curwin->w_cursor;
   pos.coladd = 0;
@@ -1554,7 +1554,7 @@ pos_T *findmatchlimit(oparg_T *oap, int initc, int flags, int64_t maxtravel)
     raw_string = (initc == 'R');
     initc = NUL;
   } else if (initc != '#' && initc != NUL) {
-    find_mps_values(&initc, &findc, &backwards, TRUE);
+    find_mps_values(&initc, &findc, &backwards, true);
     if (findc == NUL)
       return NULL;
   } else {
@@ -1619,7 +1619,7 @@ pos_T *findmatchlimit(oparg_T *oap, int initc, int flags, int64_t maxtravel)
           if (initc == NUL)
             break;
 
-          find_mps_values(&initc, &findc, &backwards, FALSE);
+          find_mps_values(&initc, &findc, &backwards, false);
           if (findc)
             break;
           pos.col += MB_PTR2LEN(linep + pos.col);

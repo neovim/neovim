@@ -6590,7 +6590,7 @@ int get_sts_value(void)
 // If there is a match set "*initc" to the matching character and "*findc" to
 // the opposite character.  Set "*backwards" to the direction.
 // When "switchit" is true swap the direction.
-void find_mps_values(int *initc, int *findc, int *backwards, int switchit)
+void find_mps_values(int *initc, int *findc, bool *backwards, bool switchit)
 {
   const int to_match = *initc;
 
