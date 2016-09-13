@@ -125,6 +125,7 @@ describe("reverse_text", function()
        reverse_text("aaa" .. utf8_COMBINING_RING_ABOVE .. utf8_COMBINING_RING_BELOW .. "bb"))
   end)
 
+  --TODO the cases below should be handled more reasonably
   it("treats invalid utf as separate characters", function()
     eq("\192ba", reverse_text("ab\192"))
   end)
