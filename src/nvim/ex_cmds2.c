@@ -27,7 +27,6 @@
 #include "nvim/mbyte.h"
 #include "nvim/message.h"
 #include "nvim/misc1.h"
-#include "nvim/misc2.h"
 #include "nvim/garray.h"
 #include "nvim/memory.h"
 #include "nvim/move.h"

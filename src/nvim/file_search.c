@@ -1,48 +1,44 @@
-/* TODO: make some #ifdef for this */
-/*--------[ file searching ]-------------------------------------------------*/
-/*
- * File searching functions for 'path', 'tags' and 'cdpath' options.
- * External visible functions:
- * vim_findfile_init()		creates/initialises the search context
- * vim_findfile_free_visited()	free list of visited files/dirs of search
- *				context
- * vim_findfile()		find a file in the search context
- * vim_findfile_cleanup()	cleanup/free search context created by
- *				vim_findfile_init()
- *
- * All static functions and variables start with 'ff_'
- *
- * In general it works like this:
- * First you create yourself a search context by calling vim_findfile_init().
- * It is possible to give a search context from a previous call to
- * vim_findfile_init(), so it can be reused. After this you call vim_findfile()
- * until you are satisfied with the result or it returns NULL. On every call it
- * returns the next file which matches the conditions given to
- * vim_findfile_init(). If it doesn't find a next file it returns NULL.
- *
- * It is possible to call vim_findfile_init() again to reinitialise your search
- * with some new parameters. Don't forget to pass your old search context to
- * it, so it can reuse it and especially reuse the list of already visited
- * directories. If you want to delete the list of already visited directories
- * simply call vim_findfile_free_visited().
- *
- * When you are done call vim_findfile_cleanup() to free the search context.
- *
- * The function vim_findfile_init() has a long comment, which describes the
- * needed parameters.
- *
- *
- *
- * ATTENTION:
- * ==========
- *	Also we use an allocated search context here, this functions are NOT
- *	thread-safe!!!!!
- *
- *	To minimize parameter passing (or because I'm to lazy), only the
- *	external visible functions get a search context as a parameter. This is
- *	then assigned to a static global, which is used throughout the local
- *	functions.
- */
+// File searching functions for 'path', 'tags' and 'cdpath' options.
+//
+// External visible functions:
+//   vim_findfile_init()          creates/initialises the search context
+//   vim_findfile_free_visited()  free list of visited files/dirs of search
+//                                context
+//   vim_findfile()               find a file in the search context
+//   vim_findfile_cleanup()       cleanup/free search context created by
+//                                vim_findfile_init()
+//
+// All static functions and variables start with 'ff_'
+//
+// In general it works like this:
+// First you create yourself a search context by calling vim_findfile_init().
+// It is possible to give a search context from a previous call to
+// vim_findfile_init(), so it can be reused. After this you call vim_findfile()
+// until you are satisfied with the result or it returns NULL. On every call it
+// returns the next file which matches the conditions given to
+// vim_findfile_init(). If it doesn't find a next file it returns NULL.
+//
+// It is possible to call vim_findfile_init() again to reinitialise your search
+// with some new parameters. Don't forget to pass your old search context to
+// it, so it can reuse it and especially reuse the list of already visited
+// directories. If you want to delete the list of already visited directories
+// simply call vim_findfile_free_visited().
+//
+// When you are done call vim_findfile_cleanup() to free the search context.
+//
+// The function vim_findfile_init() has a long comment, which describes the
+// needed parameters.
+//
+//
+//
+// ATTENTION:
+// ==========
+// We use an allocated search context, these functions are NOT thread-safe!!!!!
+//
+// To minimize parameter passing (or because I'm too lazy), only the
+// external visible functions get a search context as a parameter. This is
+// then assigned to a static global, which is used throughout the local
+// functions.
 
 #include <assert.h>
 #include <string.h>
@@ -59,7 +55,7 @@
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/misc1.h"
-#include "nvim/misc2.h"
+#include "nvim/option.h"
 #include "nvim/os_unix.h"
 #include "nvim/path.h"
 #include "nvim/strings.h"
@@ -1524,5 +1520,30 @@ find_file_in_path_option (
 
 theend:
   return file_name;
+}
+
+/// Change to a file's directory.
+/// Caller must call shorten_fnames()!
+/// @return OK or FAIL
+int vim_chdirfile(char_u *fname)
+{
+  char_u dir[MAXPATHL];
+
+  STRLCPY(dir, fname, MAXPATHL);
+  *path_tail_with_sep(dir) = NUL;
+  return os_chdir((char *)dir) == 0 ? OK : FAIL;
+}
+
+/// Change directory to "new_dir". Search 'cdpath' for relative directory names.
+int vim_chdir(char_u *new_dir)
+{
+  char_u *dir_name = find_directory_in_path(new_dir, STRLEN(new_dir),
+                                            FNAME_MESS, curbuf->b_ffname);
+  if (dir_name == NULL) {
+    return -1;
+  }
+  int r = os_chdir((char *)dir_name);
+  xfree(dir_name);
+  return r;
 }
 

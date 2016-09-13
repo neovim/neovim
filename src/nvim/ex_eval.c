@@ -15,7 +15,6 @@
 #include "nvim/ex_cmds2.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/message.h"
-#include "nvim/misc2.h"
 #include "nvim/memory.h"
 #include "nvim/regexp.h"
 #include "nvim/strings.h"

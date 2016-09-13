@@ -55,7 +55,6 @@
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/misc1.h"
-#include "nvim/misc2.h"
 #include "nvim/option.h"
 #include "nvim/os_unix.h"
 #include "nvim/path.h"
@@ -3964,20 +3963,19 @@ long ml_find_line_or_offset(buf_T *buf, linenr_T lnum, long *offp)
   return size;
 }
 
-/*
- * Goto byte in buffer with offset 'cnt'.
- */
+/// Goto byte in buffer with offset 'cnt'.
 void goto_byte(long cnt)
 {
   long boff = cnt;
   linenr_T lnum;
 
-  ml_flush_line(curbuf);        /* cached line may be dirty */
+  ml_flush_line(curbuf);  // cached line may be dirty
   setpcmark();
-  if (boff)
-    --boff;
+  if (boff) {
+    boff--;
+  }
   lnum = ml_find_line_or_offset(curbuf, (linenr_T)0, &boff);
-  if (lnum < 1) {       /* past the end */
+  if (lnum < 1) {         // past the end
     curwin->w_cursor.lnum = curbuf->b_ml.ml_line_count;
     curwin->w_curswant = MAXCOL;
     coladvance((colnr_T)MAXCOL);
@@ -3989,7 +3987,84 @@ void goto_byte(long cnt)
   }
   check_cursor();
 
-  /* Make sure the cursor is on the first byte of a multi-byte char. */
-  if (has_mbyte)
+  // Make sure the cursor is on the first byte of a multi-byte char.
+  if (has_mbyte) {
     mb_adjust_cursor();
+  }
+}
+
+/// Increment the line pointer "lp" crossing line boundaries as necessary.
+/// Return 1 when going to the next line.
+/// Return 2 when moving forward onto a NUL at the end of the line).
+/// Return -1 when at the end of file.
+/// Return 0 otherwise.
+int inc(pos_T *lp)
+{
+  char_u  *p = ml_get_pos(lp);
+
+  if (*p != NUL) {      // still within line, move to next char (may be NUL)
+    if (has_mbyte) {
+      int l = (*mb_ptr2len)(p);
+
+      lp->col += l;
+      return (p[l] != NUL) ? 0 : 2;
+    }
+    lp->col++;
+    lp->coladd = 0;
+    return (p[1] != NUL) ? 0 : 2;
+  }
+  if (lp->lnum != curbuf->b_ml.ml_line_count) {     // there is a next line
+    lp->col = 0;
+    lp->lnum++;
+    lp->coladd = 0;
+    return 1;
+  }
+  return -1;
+}
+
+/// Same as inc(), but skip NUL at the end of non-empty lines.
+int incl(pos_T *lp)
+{
+  int r;
+
+  if ((r = inc(lp)) >= 1 && lp->col) {
+    r = inc(lp);
+  }
+  return r;
+}
+
+int dec(pos_T *lp)
+{
+  char_u      *p;
+
+  lp->coladd = 0;
+  if (lp->col > 0) {            // still within line
+    lp->col--;
+    if (has_mbyte) {
+      p = ml_get(lp->lnum);
+      lp->col -= (*mb_head_off)(p, p + lp->col);
+    }
+    return 0;
+  }
+  if (lp->lnum > 1) {           // there is a prior line
+    lp->lnum--;
+    p = ml_get(lp->lnum);
+    lp->col = (colnr_T)STRLEN(p);
+    if (has_mbyte) {
+      lp->col -= (*mb_head_off)(p, p + lp->col);
+    }
+    return 1;
+  }
+  return -1;                    // at start of file
+}
+
+/// Same as dec(), but skip NUL at the end of non-empty lines.
+int decl(pos_T *lp)
+{
+  int r;
+
+  if ((r = dec(lp)) == 1 && lp->col) {
+    r = dec(lp);
+  }
+  return r;
 }

@@ -440,6 +440,16 @@ void do_outofmem_msg(size_t size)
   }
 }
 
+/// Writes time_t to "buf[8]".
+void time_to_bytes(time_t time_, uint8_t buf[8])
+{
+  // time_t can be up to 8 bytes in size, more than uintmax_t in 32 bits
+  // systems, thus we can't use put_bytes() here.
+  for (size_t i = 7, bufi = 0; bufi < 8; i--, bufi++) {
+    buf[bufi] = (uint8_t)((uint64_t)time_ >> (i * 8));
+  }
+}
+
 #if defined(EXITFREE)
 
 #include "nvim/file_search.h"

@@ -9,6 +9,7 @@
 #include "nvim/misc1.h"
 #include "nvim/move.h"
 #include "nvim/screen.h"
+#include "nvim/state.h"
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
 

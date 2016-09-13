@@ -19,7 +19,7 @@
 #include "nvim/getchar.h"
 #include "nvim/main.h"
 #include "nvim/misc1.h"
-#include "nvim/misc2.h"
+#include "nvim/state.h"
 
 #define READ_BUFFER_SIZE 0xfff
 #define INPUT_BUFFER_SIZE (READ_BUFFER_SIZE * 4)
