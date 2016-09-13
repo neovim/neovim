@@ -5,6 +5,7 @@ func Test_win_getid()
   let id1 = win_getid()
   split two
   let id2 = win_getid()
+  let bufnr2 = bufnr('%')
   split three
   let id3 = win_getid()
   tabnew
@@ -12,6 +13,7 @@ func Test_win_getid()
   let id4 = win_getid()
   split five
   let id5 = win_getid()
+  let bufnr5 = bufnr('%')
   tabnext
 
   wincmd w
@@ -66,6 +68,12 @@ func Test_win_getid()
   call assert_equal([0, 0], win_id2tabwin(9999))
   call assert_equal([1, nr2], win_id2tabwin(id2))
   call assert_equal([2, nr4], win_id2tabwin(id4))
+
+  call assert_equal([], win_findbuf(9999))
+  call assert_equal([id2], win_findbuf(bufnr2))
+  call win_gotoid(id5)
+  split
+  call assert_equal(sort([id5, win_getid()]), sort(win_findbuf(bufnr5)))
 
   only!
 endfunc

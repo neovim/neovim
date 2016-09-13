@@ -16768,6 +16768,14 @@ static void f_wildmenumode(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     rettv->vval.v_number = 1;
 }
 
+/// "win_findbuf()" function
+static void f_win_findbuf(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  if (rettv_list_alloc(rettv) != FAIL) {
+    win_findbuf(argvars, rettv->vval.v_list);
+  }
+}
+
 /// "win_getid()" function
 static void f_win_getid(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
