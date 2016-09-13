@@ -2655,40 +2655,9 @@ did_set_string_option (
     if (check_opt_strings(p_ffs, p_ff_values, TRUE) != OK) {
       errmsg = e_invarg;
     }
-  }
-
-  /* 'matchpairs' */
-  else if (gvarp == &p_mps) {
-    if (has_mbyte) {
-      for (p = *varp; *p != NUL; ++p) {
-        int x2 = -1;
-        int x3 = -1;
-
-        if (*p != NUL)
-          p += mb_ptr2len(p);
-        if (*p != NUL)
-          x2 = *p++;
-        if (*p != NUL) {
-          x3 = mb_ptr2char(p);
-          p += mb_ptr2len(p);
-        }
-        if (x2 != ':' || x3 == -1 || (*p != NUL && *p != ',')) {
-          errmsg = e_invarg;
-          break;
-        }
-        if (*p == NUL)
-          break;
-      }
-    } else {
-      /* Check for "x:y,x:y" */
-      for (p = *varp; *p != NUL; p += 4) {
-        if (p[1] != ':' || p[2] == NUL || (p[3] != NUL && p[3] != ',')) {
-          errmsg = e_invarg;
-          break;
-        }
-        if (p[3] == NUL)
-          break;
-      }
+  } else if (gvarp == &p_mps) {  // 'matchpairs'
+    if (!mps_valid(*varp)) {
+      errmsg = e_invarg;
     }
   }
   /* 'comments' */
@@ -3219,6 +3188,33 @@ did_set_string_option (
   check_redraw(options[opt_idx].flags);
 
   return errmsg;
+}
+
+// 'matchpairs' is a comma-separated string of
+// [(multibyte) char]:[(multibyte) char]
+// for example "(:),[:],{:}"
+static bool mps_valid(char_u *mps)
+{
+  for (char_u *p = mps; *p != NUL; p++) {
+    p += mb_ptr2len(p);
+
+    if (*p != ':') {
+      return false;
+    }
+    p++;
+
+    if (*p == NUL) {
+      return false;
+    }
+    p += mb_ptr2len(p);
+
+    if (*p != NUL && *p != ',') {
+      return false;
+    }
+
+    if(*p == NUL ) return true;
+  }
+  return true;
 }
 
 /*
