@@ -2148,6 +2148,7 @@ values({dict})			List	values in {dict}
 virtcol({expr})		Number	screen column of cursor or mark
 visualmode([expr])		String	last visual mode used
 wildmenumode()			Number	whether 'wildmenu' mode is active
+win_findbuf( {bufnr}) 		List	find windows containing {bufnr}
 win_getid( [{win} [, {tab}]])   Number  get window ID for {win} in {tab}
 win_gotoid( {expr})             Number  go to window with ID {expr}
 win_id2tabwin( {expr})          List    get tab window nr from window ID
@@ -7233,6 +7234,10 @@ wildmenumode()					*wildmenumode()*
 <
 		(Note, this needs the 'wildcharm' option set appropriately).
 
+
+win_findbuf({bufnr})					*win_findbuf()*
+		Returns a list with window IDs for windows that contain buffer
+		{bufnr}.  When there is none the list is empty.
 
 win_getid([{win} [, {tab}]])				*win_getid()*
 		Get the window ID for the specified window.

@@ -310,6 +310,7 @@ return {
     virtcol={args=1},
     visualmode={args={0, 1}},
     wildmenumode={},
+    win_findbuf={args=1},
     win_getid={args={0,2}},
     win_gotoid={args=1},
     win_id2tabwin={args=1},
