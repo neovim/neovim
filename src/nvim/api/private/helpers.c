@@ -104,10 +104,11 @@ Object dict_get_value(dict_T *dict, String key, Error *err)
 /// @param value The new value
 /// @param del Delete key in place of setting it. Argument `value` is ignored in
 ///            this case.
+/// @param retval If true the old value will be converted and returned.
 /// @param[out] err Details of an error that may have occurred
-/// @return the old value, if any
+/// @return The old value if `retval` is true and the key was present, else NIL
 Object dict_set_value(dict_T *dict, String key, Object value, bool del,
-                      Error *err)
+                      bool retval, Error *err)
 {
   Object rv = OBJECT_INIT;
 
@@ -135,7 +136,9 @@ Object dict_set_value(dict_T *dict, String key, Object value, bool del,
       api_set_error(err, Validation, _("Key \"%s\" doesn't exist"), key.data);
     } else {
       // Return the old value
-      rv = vim_to_object(&di->di_tv);
+      if (retval) {
+        rv = vim_to_object(&di->di_tv);
+      }
       // Delete the entry
       hashitem_T *hi = hash_find(&dict->dv_hashtab, di->di_key);
       hash_remove(&dict->dv_hashtab, hi);
@@ -156,7 +159,9 @@ Object dict_set_value(dict_T *dict, String key, Object value, bool del,
       dict_add(dict, di);
     } else {
       // Return the old value
-      rv = vim_to_object(&di->di_tv);
+      if (retval) {
+        rv = vim_to_object(&di->di_tv);
+      }
       clear_tv(&di->di_tv);
     }
 

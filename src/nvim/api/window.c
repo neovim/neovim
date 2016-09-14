@@ -202,19 +202,15 @@ Object nvim_win_get_var(Window window, String name, Error *err)
 /// @param name The variable name
 /// @param value The variable value
 /// @param[out] err Details of an error that may have occurred
-/// @return The old value or nil if there was no previous value.
-///
-///         @warning It may return nil if there was no previous value
-///                  or if previous value was `v:null`.
-Object nvim_win_set_var(Window window, String name, Object value, Error *err)
+void nvim_win_set_var(Window window, String name, Object value, Error *err)
 {
   win_T *win = find_window_by_handle(window, err);
 
   if (!win) {
-    return (Object) OBJECT_INIT;
+    return;
   }
 
-  return dict_set_value(win->w_vars, name, value, false, err);
+  dict_set_value(win->w_vars, name, value, false, false, err);
 }
 
 /// Removes a window-scoped (w:) variable
@@ -222,11 +218,30 @@ Object nvim_win_set_var(Window window, String name, Object value, Error *err)
 /// @param window The window handle
 /// @param name The variable name
 /// @param[out] err Details of an error that may have occurred
+void nvim_win_del_var(Window window, String name, Error *err)
+{
+  win_T *win = find_window_by_handle(window, err);
+
+  if (!win) {
+    return;
+  }
+
+  dict_set_value(win->w_vars, name, NIL, true, false, err);
+}
+
+/// Sets a window-scoped (w:) variable
+///
+/// @deprecated
+///
+/// @param window The window handle
+/// @param name The variable name
+/// @param value The variable value
+/// @param[out] err Details of an error that may have occurred
 /// @return The old value or nil if there was no previous value.
 ///
 ///         @warning It may return nil if there was no previous value
 ///                  or if previous value was `v:null`.
-Object nvim_win_del_var(Window window, String name, Error *err)
+Object window_set_var(Window window, String name, Object value, Error *err)
 {
   win_T *win = find_window_by_handle(window, err);
 
@@ -234,7 +249,26 @@ Object nvim_win_del_var(Window window, String name, Error *err)
     return (Object) OBJECT_INIT;
   }
 
-  return dict_set_value(win->w_vars, name, NIL, true, err);
+  return dict_set_value(win->w_vars, name, value, false, true, err);
+}
+
+/// Removes a window-scoped (w:) variable
+///
+/// @deprecated
+///
+/// @param window The window handle
+/// @param name The variable name
+/// @param[out] err Details of an error that may have occurred
+/// @return The old value
+Object window_del_var(Window window, String name, Error *err)
+{
+  win_T *win = find_window_by_handle(window, err);
+
+  if (!win) {
+    return (Object) OBJECT_INIT;
+  }
+
+  return dict_set_value(win->w_vars, name, NIL, true, true, err);
 }
 
 /// Gets a window option value

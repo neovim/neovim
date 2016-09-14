@@ -623,11 +623,12 @@ static void buf_set_term_title(buf_T *buf, char *title)
     FUNC_ATTR_NONNULL_ALL
 {
   Error err;
-  api_free_object(dict_set_value(buf->b_vars,
-                                 cstr_as_string("term_title"),
-                                 STRING_OBJ(cstr_as_string(title)),
-                                 false,
-                                 &err));
+  dict_set_value(buf->b_vars,
+                 cstr_as_string("term_title"),
+                 STRING_OBJ(cstr_as_string(title)),
+                 false,
+                 false,
+                 &err);
 }
 
 static int term_settermprop(VTermProp prop, VTermValue *val, void *data)

@@ -5,6 +5,8 @@ local clear, nvim, tabpage, curtab, eq, ok =
   helpers.ok
 local curtabmeths = helpers.curtabmeths
 local funcs = helpers.funcs
+local request = helpers.request
+local NIL = helpers.NIL
 
 describe('tabpage_* functions', function()
   before_each(clear)
@@ -31,6 +33,21 @@ describe('tabpage_* functions', function()
       eq(1, funcs.exists('t:lua'))
       curtabmeths.del_var('lua')
       eq(0, funcs.exists('t:lua'))
+    end)
+
+    it('tabpage_set_var returns the old value', function()
+      local val1 = {1, 2, {['3'] = 1}}
+      local val2 = {4, 7}
+      eq(NIL, request('tabpage_set_var', 0, 'lua', val1))
+      eq(val1, request('tabpage_set_var', 0, 'lua', val2))
+    end)
+
+    it('tabpage_del_var returns the old value', function()
+      local val1 = {1, 2, {['3'] = 1}}
+      local val2 = {4, 7}
+      eq(NIL,  request('tabpage_set_var', 0, 'lua', val1))
+      eq(val1, request('tabpage_set_var', 0, 'lua', val2))
+      eq(val2, request('tabpage_del_var', 0, 'lua'))
     end)
   end)
 

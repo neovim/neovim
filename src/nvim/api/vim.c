@@ -354,26 +354,46 @@ Object nvim_get_var(String name, Error *err)
 /// @param name The variable name
 /// @param value The variable value
 /// @param[out] err Details of an error that may have occurred
-/// @return The old value or nil if there was no previous value.
-///
-///         @warning It may return nil if there was no previous value
-///                  or if previous value was `v:null`.
-Object nvim_set_var(String name, Object value, Error *err)
+void nvim_set_var(String name, Object value, Error *err)
 {
-  return dict_set_value(&globvardict, name, value, false, err);
+  dict_set_value(&globvardict, name, value, false, false, err);
 }
 
 /// Removes a global variable
 ///
 /// @param name The variable name
 /// @param[out] err Details of an error that may have occurred
+void nvim_del_var(String name, Error *err)
+{
+  dict_set_value(&globvardict, name, NIL, true, false, err);
+}
+
+/// Sets a global variable
+///
+/// @deprecated
+///
+/// @param name The variable name
+/// @param value The variable value
+/// @param[out] err Details of an error that may have occurred
 /// @return The old value or nil if there was no previous value.
 ///
 ///         @warning It may return nil if there was no previous value
 ///                  or if previous value was `v:null`.
-Object nvim_del_var(String name, Error *err)
+Object vim_set_var(String name, Object value, Error *err)
 {
-  return dict_set_value(&globvardict, name, NIL, true, err);
+  return dict_set_value(&globvardict, name, value, false, true, err);
+}
+
+/// Removes a global variable
+///
+/// @deprecated
+///
+/// @param name The variable name
+/// @param[out] err Details of an error that may have occurred
+/// @return The old value
+Object vim_del_var(String name, Error *err)
+{
+  return dict_set_value(&globvardict, name, NIL, true, true, err);
 }
 
 /// Gets a vim variable
