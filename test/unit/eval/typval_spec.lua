@@ -15,6 +15,7 @@ local li_alloc  = eval_helpers.li_alloc
 local dict_type  = eval_helpers.dict_type
 local list_type  = eval_helpers.list_type
 local lua2typvalt  = eval_helpers.lua2typvalt
+local typvalt2lua  = eval_helpers.typvalt2lua
 
 local lib = cimport('./src/nvim/eval/typval.h', './src/nvim/memory.h')
 
@@ -347,6 +348,77 @@ describe('typval.c', function()
           {func='free', args={alloc_rets[3]}},
           {func='free', args={alloc_rets[1]}},
         })
+      end)
+    end)
+    describe('remove_items()', function()
+      it('works', function()
+        local l_tv = lua2typvalt({1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13})
+        local l = l_tv.vval.v_list
+        local lis = list_items(l)
+        -- Three watchers: pointing to first, middle and last elements.
+        local lws = {
+          list_watch(l, lis[1]),
+          list_watch(l, lis[7]),
+          list_watch(l, lis[13]),
+        }
+        clear_alloc_log()
+
+        lib.tv_list_remove_items(l, lis[1], lis[3])
+        eq({4, 5, 6, 7, 8, 9, 10, 11, 12, 13}, typvalt2lua(l_tv))
+        eq({lis[4], lis[7], lis[13]}, {lws[1].lw_item, lws[2].lw_item, lws[3].lw_item})
+
+        lib.tv_list_remove_items(l, lis[11], lis[13])
+        eq({4, 5, 6, 7, 8, 9, 10}, typvalt2lua(l_tv))
+        eq({lis[4], lis[7], nil}, {lws[1].lw_item, lws[2].lw_item, lws[3].lw_item == nil and nil})
+
+        lib.tv_list_remove_items(l, lis[6], lis[8])
+        eq({4, 5, 9, 10}, typvalt2lua(l_tv))
+        eq({lis[4], lis[9], nil}, {lws[1].lw_item, lws[2].lw_item, lws[3].lw_item == nil and nil})
+
+        lib.tv_list_remove_items(l, lis[4], lis[10])
+        eq({[type_key]=list_type}, typvalt2lua(l_tv))
+        eq({true, true, true}, {lws[1].lw_item == nil, lws[2].lw_item == nil, lws[3].lw_item == nil})
+
+        check_alloc_log({})
+      end)
+    end)
+    describe('insert()', function()
+      it('works', function()
+        local l_tv = lua2typvalt({1, 2, 3, 4, 5, 6, 7})
+        local l = l_tv.vval.v_list
+        local lis = list_items(l)
+        local li
+
+        li = li_alloc(true)
+        li.li_tv = {v_type=lib.VAR_FLOAT, vval={v_float=100500}}
+        lib.tv_list_insert(l, li, nil)
+        eq(l.lv_last, li)
+        eq({1, 2, 3, 4, 5, 6, 7, 100500}, typvalt2lua(l_tv))
+
+        li = li_alloc(true)
+        li.li_tv = {v_type=lib.VAR_FLOAT, vval={v_float=0}}
+        lib.tv_list_insert(l, li, lis[1])
+        eq(l.lv_first, li)
+        eq({0, 1, 2, 3, 4, 5, 6, 7, 100500}, typvalt2lua(l_tv))
+
+        li = li_alloc(true)
+        li.li_tv = {v_type=lib.VAR_FLOAT, vval={v_float=4.5}}
+        lib.tv_list_insert(l, li, lis[5])
+        eq(list_items(l)[6], li)
+        eq({0, 1, 2, 3, 4, 4.5, 5, 6, 7, 100500}, typvalt2lua(l_tv))
+      end)
+      it('works with an empty list', function()
+        local l_tv = lua2typvalt({[type_key]=list_type})
+        local l = l_tv.vval.v_list
+
+        eq(nil, l.lv_first)
+        eq(nil, l.lv_last)
+
+        local li = li_alloc(true)
+        li.li_tv = {v_type=lib.VAR_FLOAT, vval={v_float=100500}}
+        lib.tv_list_insert(l, li, nil)
+        eq(l.lv_last, li)
+        eq({100500}, typvalt2lua(l_tv))
       end)
     end)
   end)
