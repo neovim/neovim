@@ -1516,13 +1516,13 @@ pos_T *findmatchlimit(oparg_T *oap, int initc, int flags, int64_t maxtravel)
   pos_T match_pos;                      // Where last slash-star was found
   int start_in_quotes;                  // start position is in quotes
   int traveled = 0;                     // how far we've searched so far
-  int ignore_cend = FALSE;              // ignore comment end
+  bool ignore_cend = false;             // ignore comment end
   int cpo_match;                        // vi compatible matching
   int cpo_bsl;                          // don't recognize backslashes
   int match_escaped = 0;                // search for escaped match
   int dir;                              // Direction to search
   int comment_col = MAXCOL;             // start of / / comment
-  int lispcomm = FALSE;                 // inside of Lisp-style comment
+  bool lispcomm = false;                // inside of Lisp-style comment
   int lisp = curbuf->b_p_lisp;          // engage Lisp-specific hacks ;)
 
   pos = curwin->w_cursor;
@@ -1555,8 +1555,9 @@ pos_T *findmatchlimit(oparg_T *oap, int initc, int flags, int64_t maxtravel)
     initc = NUL;
   } else if (initc != '#' && initc != NUL) {
     find_mps_values(&initc, &findc, &backwards, true);
-    if (findc == NUL)
+    if (findc == NUL) {
       return NULL;
+    }
   } else {
     /*
      * Either initc is '#', or no initc was given and we need to look
@@ -1620,9 +1621,10 @@ pos_T *findmatchlimit(oparg_T *oap, int initc, int flags, int64_t maxtravel)
             break;
 
           find_mps_values(&initc, &findc, &backwards, false);
-          if (findc)
+          if (findc) {
             break;
-          pos.col += MB_PTR2LEN(linep + pos.col);
+          }
+          pos.col += mb_ptr2len(linep + pos.col);
         }
         if (!findc) {
           /* no brace in the line, maybe use "  #if" then */
