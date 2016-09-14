@@ -124,17 +124,16 @@ You can also embed an Nvim instance via |jobstart()|, and communicate using
 ==============================================================================
 4. Implementing API clients			*rpc-api-client* *api-client*
 
-All external UIs and remote plugins (as opposed to regular Vim plugins) are
-"clients" in general; but we call something an "API client" if its purpose is
-to abstract or wrap the RPC API for the convenience of other applications
-(just like a REST client or SDK such as boto3 for AWS: you can speak AWS REST
-using an HTTP client like curl, but boto3 wraps that in a convenient python
-interface). For example, the lua-client is an API client:
-    https://github.com/neovim/lua-client
+"API clients" wrap the Nvim API to provide idiomatic "SDKs" for their
+respective platforms (see |dev-jargon|). You can build a new API client for
+your favorite platform or programming language.
 
-The Python client (pip package "neovim") is the reference implementation of an
-API client. It is always up-to-date with the Nvim API, so its source code and
-test suite are an authoritative reference.
+Existing API clients are listed here:
+    https://github.com/neovim/neovim/wiki/Related-projects#api-clients
+
+The Python client is the reference implementation for API clients. It is
+always up-to-date with the Nvim API, so its source code and test suite are
+authoritative references.
     https://github.com/neovim/python-client
 
 API client implementation guidelines ~

@@ -289,7 +289,7 @@ ArrayOf(String) nvim_list_runtime_paths(void)
 ///
 /// @param dir The new working directory
 /// @param[out] err Details of an error that may have occurred
-void nvim_change_directory(String dir, Error *err)
+void nvim_set_current_dir(String dir, Error *err)
 {
   if (dir.size >= MAXPATHL) {
     api_set_error(err, Validation, _("Directory string is too long"));
@@ -446,7 +446,7 @@ void nvim_err_write(String str)
 /// are written by sending a trailing linefeed to `nvim_err_write`
 ///
 /// @param str The message
-void nvim_report_error(String str)
+void nvim_err_writeln(String str)
 {
   nvim_err_write(str);
   nvim_err_write((String) { .data = "\n", .size = 1 });
@@ -455,7 +455,7 @@ void nvim_report_error(String str)
 /// Gets the current list of buffer handles
 ///
 /// @return The number of buffers
-ArrayOf(Buffer) nvim_get_buffers(void)
+ArrayOf(Buffer) nvim_list_bufs(void)
 {
   Array rv = ARRAY_DICT_INIT;
 
@@ -476,7 +476,7 @@ ArrayOf(Buffer) nvim_get_buffers(void)
 /// Gets the current buffer
 ///
 /// @reqturn The buffer handle
-Buffer nvim_get_current_buffer(void)
+Buffer nvim_get_current_buf(void)
 {
   return curbuf->handle;
 }
@@ -485,7 +485,7 @@ Buffer nvim_get_current_buffer(void)
 ///
 /// @param id The buffer handle
 /// @param[out] err Details of an error that may have occurred
-void nvim_set_current_buffer(Buffer buffer, Error *err)
+void nvim_set_current_buf(Buffer buffer, Error *err)
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
 
@@ -506,7 +506,7 @@ void nvim_set_current_buffer(Buffer buffer, Error *err)
 /// Gets the current list of window handles
 ///
 /// @return The number of windows
-ArrayOf(Window) nvim_get_windows(void)
+ArrayOf(Window) nvim_list_wins(void)
 {
   Array rv = ARRAY_DICT_INIT;
 
@@ -527,7 +527,7 @@ ArrayOf(Window) nvim_get_windows(void)
 /// Gets the current window
 ///
 /// @return The window handle
-Window nvim_get_current_window(void)
+Window nvim_get_current_win(void)
 {
   return curwin->handle;
 }
@@ -535,7 +535,7 @@ Window nvim_get_current_window(void)
 /// Sets the current window
 ///
 /// @param handle The window handle
-void nvim_set_current_window(Window window, Error *err)
+void nvim_set_current_win(Window window, Error *err)
 {
   win_T *win = find_window_by_handle(window, err);
 
@@ -556,7 +556,7 @@ void nvim_set_current_window(Window window, Error *err)
 /// Gets the current list of tabpage handles
 ///
 /// @return The number of tab pages
-ArrayOf(Tabpage) nvim_get_tabpages(void)
+ArrayOf(Tabpage) nvim_list_tabpages(void)
 {
   Array rv = ARRAY_DICT_INIT;
 
@@ -634,7 +634,7 @@ void nvim_unsubscribe(uint64_t channel_id, String event)
   channel_unsubscribe(channel_id, e);
 }
 
-Integer nvim_name_to_color(String name)
+Integer nvim_get_color_by_name(String name)
 {
   return name_to_color((uint8_t *)name.data);
 }

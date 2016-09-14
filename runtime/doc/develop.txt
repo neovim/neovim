@@ -124,12 +124,25 @@ include the kitchen sink... but you can use it for plumbing."
 ==============================================================================
 2. Design decisions					*design-decisions*
 
-Jargon	 							*dev-jargon*
+JARGON	 							*dev-jargon*
+
+API client ~
+All external UIs and remote plugins (as opposed to regular Vim plugins) are
+"clients" in general; but we call something an "API client" if its purpose is
+to abstract or wrap the RPC API for the convenience of other applications
+(just like a REST client or SDK such as boto3 for AWS: you can speak AWS REST
+using an HTTP client like curl, but boto3 wraps that in a convenient python
+interface). For example, the Nvim lua-client is an API client:
+    https://github.com/neovim/lua-client
 
 Host ~
 A plugin "host" is both a client (of the Nvim API) and a server (of an
 external platform, e.g. python). It is a remote plugin that hosts other
 plugins.
+
+Remote plugin ~
+Arbitrary code registered via |:UpdateRemotePlugins|, that runs in a separate
+process and communicates with Nvim via the |api|.
 
 Window ~
 The word "window" is commonly used for several things: A window on the screen,
@@ -145,7 +158,7 @@ window		View on a buffer.  There can be several windows in Vim,
 		together with the command line, menubar, toolbar, etc. they
 		fit in the shell.
 
-Providers 							*dev-provider*
+PROVIDERS 							*dev-provider*
 
 A goal of Nvim is to allow extension of the editor without special knowledge
 in the core. But some Vim components are too tightly coupled; in those cases
@@ -189,8 +202,35 @@ Python host isn't installed then the plugin will "think" it is running in
 a Vim compiled without the |+python| feature.
 
 
-RPC API
-API client
-remote plugin
+API								*dev-api*
+
+Use this pattern to name new API functions:
+    nvim_{thing}_{action}_{arbitrary-qualifiers}
+
+If the function acts on an object then {thing} is the name of that object
+(e.g. "buf" or "win"). If the function operates in a "global" context then
+{thing} is usually omitted (but consider "namespacing" your global operations
+with a {thing} that groups functions under a common concept).
+
+Use existing common {action} names if possible:
+    add   append to, or insert into, a collection
+    get   get a thing (or subset of things by some query)
+    set   set a thing
+    del   delete a thing (or group of things)
+    list  get all things
+
+Use consistent names for {thing} in all API function. E.g. a buffer is called
+"buf" everywhere, not "buffer" in some places and "buf" in others.
+
+Example: `nvim_get_current_line` acts on the global editor state; the common
+{action} "get" is used but {thing} is omitted.
+
+Example: `nvim_buf_add_highlight` acts on a `Buffer` object (the first
+parameter) and uses the common {action} "add".
+
+Example: `nvim_list_bufs` operates in a global context (first parameter is
+_not_ a Buffer). The common {action} "list" indicates that it lists all
+bufs (plural) in the global context.
+
 
  vim:tw=78:ts=8:ft=help:norl:

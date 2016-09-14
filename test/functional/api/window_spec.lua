@@ -32,14 +32,14 @@ end
 describe('window_* functions', function()
   before_each(clear)
 
-  describe('get_buffer', function()
+  describe('get_buf', function()
     it('works', function()
-      eq(curbuf(), window('get_buffer', nvim('get_windows')[1]))
+      eq(curbuf(), window('get_buf', nvim('list_wins')[1]))
       nvim('command', 'new')
-      nvim('set_current_window', nvim('get_windows')[2])
-      eq(curbuf(), window('get_buffer', nvim('get_windows')[2]))
-      neq(window('get_buffer', nvim('get_windows')[1]),
-        window('get_buffer', nvim('get_windows')[2]))
+      nvim('set_current_win', nvim('list_wins')[2])
+      eq(curbuf(), window('get_buf', nvim('list_wins')[2]))
+      neq(window('get_buf', nvim('list_wins')[1]),
+        window('get_buf', nvim('list_wins')[2]))
     end)
   end)
 
@@ -105,28 +105,28 @@ describe('window_* functions', function()
   describe('{get,set}_height', function()
     it('works', function()
       nvim('command', 'vsplit')
-      eq(window('get_height', nvim('get_windows')[2]),
-        window('get_height', nvim('get_windows')[1]))
-      nvim('set_current_window', nvim('get_windows')[2])
+      eq(window('get_height', nvim('list_wins')[2]),
+        window('get_height', nvim('list_wins')[1]))
+      nvim('set_current_win', nvim('list_wins')[2])
       nvim('command', 'split')
-      eq(window('get_height', nvim('get_windows')[2]),
-        math.floor(window('get_height', nvim('get_windows')[1]) / 2))
-      window('set_height', nvim('get_windows')[2], 2)
-      eq(2, window('get_height', nvim('get_windows')[2]))
+      eq(window('get_height', nvim('list_wins')[2]),
+        math.floor(window('get_height', nvim('list_wins')[1]) / 2))
+      window('set_height', nvim('list_wins')[2], 2)
+      eq(2, window('get_height', nvim('list_wins')[2]))
     end)
   end)
 
   describe('{get,set}_width', function()
     it('works', function()
       nvim('command', 'split')
-      eq(window('get_width', nvim('get_windows')[2]),
-        window('get_width', nvim('get_windows')[1]))
-      nvim('set_current_window', nvim('get_windows')[2])
+      eq(window('get_width', nvim('list_wins')[2]),
+        window('get_width', nvim('list_wins')[1]))
+      nvim('set_current_win', nvim('list_wins')[2])
       nvim('command', 'vsplit')
-      eq(window('get_width', nvim('get_windows')[2]),
-        math.floor(window('get_width', nvim('get_windows')[1]) / 2))
-      window('set_width', nvim('get_windows')[2], 2)
-      eq(2, window('get_width', nvim('get_windows')[2]))
+      eq(window('get_width', nvim('list_wins')[2]),
+        math.floor(window('get_width', nvim('list_wins')[1]) / 2))
+      window('set_width', nvim('list_wins')[2], 2)
+      eq(2, window('get_width', nvim('list_wins')[2]))
     end)
   end)
 
@@ -169,17 +169,17 @@ describe('window_* functions', function()
 
   describe('get_position', function()
     it('works', function()
-      local height = window('get_height', nvim('get_windows')[1])
-      local width = window('get_width', nvim('get_windows')[1])
+      local height = window('get_height', nvim('list_wins')[1])
+      local width = window('get_width', nvim('list_wins')[1])
       nvim('command', 'split')
       nvim('command', 'vsplit')
-      eq({0, 0}, window('get_position', nvim('get_windows')[1]))
+      eq({0, 0}, window('get_position', nvim('list_wins')[1]))
       local vsplit_pos = math.floor(width / 2)
       local split_pos = math.floor(height / 2)
       local win2row, win2col =
-        unpack(window('get_position', nvim('get_windows')[2]))
+        unpack(window('get_position', nvim('list_wins')[2]))
       local win3row, win3col =
-        unpack(window('get_position', nvim('get_windows')[3]))
+        unpack(window('get_position', nvim('list_wins')[3]))
       eq(0, win2row)
       eq(0, win3col)
       ok(vsplit_pos - 1 <= win2col and win2col <= vsplit_pos + 1)
@@ -192,19 +192,19 @@ describe('window_* functions', function()
       nvim('command', 'tabnew')
       nvim('command', 'vsplit')
       eq(window('get_tabpage',
-        nvim('get_windows')[1]), nvim('get_tabpages')[1])
+        nvim('list_wins')[1]), nvim('list_tabpages')[1])
       eq(window('get_tabpage',
-        nvim('get_windows')[2]), nvim('get_tabpages')[2])
+        nvim('list_wins')[2]), nvim('list_tabpages')[2])
       eq(window('get_tabpage',
-        nvim('get_windows')[3]), nvim('get_tabpages')[2])
+        nvim('list_wins')[3]), nvim('list_tabpages')[2])
     end)
   end)
 
   describe('is_valid', function()
     it('works', function()
       nvim('command', 'split')
-      local win = nvim('get_windows')[2]
-      nvim('set_current_window', win)
+      local win = nvim('list_wins')[2]
+      nvim('set_current_win', win)
       ok(window('is_valid', win))
       nvim('command', 'close')
       ok(not window('is_valid', win))

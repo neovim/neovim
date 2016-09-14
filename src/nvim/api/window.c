@@ -18,7 +18,7 @@
 /// @param window The window handle
 /// @param[out] err Details of an error that may have occurred
 /// @return The buffer handle
-Buffer nvim_win_get_buffer(Window window, Error *err)
+Buffer nvim_win_get_buf(Window window, Error *err)
 {
   win_T *win = find_window_by_handle(window, err);
 

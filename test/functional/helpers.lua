@@ -364,7 +364,7 @@ end
 
 local function curbuf(method, ...)
   if not method then
-    return nvim('get_current_buffer')
+    return nvim('get_current_buf')
   end
   return buffer(method, 0, ...)
 end
@@ -387,7 +387,7 @@ end
 
 local function curwin(method, ...)
   if not method then
-    return nvim('get_current_window')
+    return nvim('get_current_win')
   end
   return window(method, 0, ...)
 end

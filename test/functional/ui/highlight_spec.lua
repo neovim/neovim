@@ -13,7 +13,7 @@ describe('color scheme compatibility', function()
 
   it('t_Co is set to 256 by default', function()
     eq('256', request('vim_eval', '&t_Co'))
-    request('vim_set_option', 't_Co', '88')
+    request('nvim_set_option', 't_Co', '88')
     eq('88', request('vim_eval', '&t_Co'))
   end)
 end)
