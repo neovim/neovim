@@ -5,10 +5,10 @@ local eq, eval = helpers.eq, helpers.eval
 describe('Test for delete()', function()
   before_each(function()
     clear()
-    helpers.rmdir('Xcomplicated')
+    helpers.call('delete', 'Xcomplicated', 'rf')
   end)
   after_each(function()
-    helpers.rmdir('Xcomplicated')
+    helpers.call('delete', 'Xcomplicated', 'rf')
   end)
 
   it('file delete', function()
@@ -110,6 +110,8 @@ describe('Test for delete()', function()
   end)
 
   it('complicated name delete', function()
+    if helpers.pending_win32(pending) then return end
+
     source([[
       call mkdir('Xcomplicated/[complicated-1 ]', 'p')
       call mkdir('Xcomplicated/{complicated,2 }', 'p')
@@ -131,6 +133,10 @@ describe('Test for delete()', function()
   end)
 
   it('complicated name delete in unix', function()
+    if helpers.os_name() == 'windows' then
+      return
+    end
+
     source([[
       call mkdir('Xcomplicated/[complicated-1 ?', 'p')
       call writefile(['a', 'b'], 'Xcomplicated/Xfile')

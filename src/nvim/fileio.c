@@ -5241,9 +5241,12 @@ int delete_recursive(char_u *name)
   if (os_isrealdir(name)) {
     // Escape some regexp chars in file names as these probably will be
     // interpreted as ill-formed regular expressions in gen_expand_wildcards.
-    char_u *esc_name = vim_strsave_escaped(name, (char_u *)"[");
-    snprintf((char *)NameBuff, MAXPATHL, "%s/*", esc_name);  // NOLINT
+    char_u *esc_name = do_string_sub(name, (char_u *)"[",
+                                     (char_u *)"[[]", (char_u *)"g");
+    char_u *esc_name2 = vim_strsave_escaped(esc_name, (char_u *)"{}?");
+    snprintf((char *)NameBuff, MAXPATHL, "%s/*", esc_name2);  // NOLINT
     xfree(esc_name);
+    xfree(esc_name2);
 
     char_u **files;
     int file_count;
