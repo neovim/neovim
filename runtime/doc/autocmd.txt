@@ -256,7 +256,6 @@ Name			triggered by ~
 	Options
 |FileType|		when the 'filetype' option has been set
 |Syntax|		when the 'syntax' option has been set
-|EncodingChanged|	after the 'encoding' option has been changed
 |TermChanged|		after the value of 'term' has changed
 |OptionSet|		after setting any option
 
@@ -557,9 +556,6 @@ CursorMoved			After the cursor was moved in Normal or Visual
 CursorMovedI			After the cursor was moved in Insert mode.
 				Not triggered when the popup menu is visible.
 				Otherwise the same as CursorMoved.
-							*EncodingChanged*
-EncodingChanged			Fires off after the 'encoding' option has been
-				changed.  Useful to set up fonts, for example.
 							*FileAppendCmd*
 FileAppendCmd			Before appending to a file.  Should do the
 				appending to the file.  Use the '[ and ']
@@ -618,9 +614,6 @@ FileChangedShell		When Vim notices that the modification time of
 							*FileChangedShellPost*
 FileChangedShellPost		After handling a file that was changed outside
 				of Vim.  Can be used to update the statusline.
-							*FileEncoding*
-FileEncoding			Obsolete.  It still works and is equivalent
-				to |EncodingChanged|.
 							*FileReadCmd*
 FileReadCmd			Before reading a file with a ":read" command.
 				Should do the reading of the file. |Cmd-event|

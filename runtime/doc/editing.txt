@@ -267,9 +267,6 @@ CTRL-^			Edit the alternate file.  Mostly the alternate file is
 			files.
 			See |CTRL-^| above for further details.
 
-[count]]f						*]f* *[f*
-[count][f		Same as "gf".  Deprecated.
-
 							*gf* *E446* *E447*
 [count]gf		Edit the file whose name is under or after the cursor.
 			Mnemonic: "goto file".

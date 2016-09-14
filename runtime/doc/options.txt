@@ -2337,11 +2337,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 	This option can not be changed when 'modifiable' is off.
 
-							*'fe'*
-	NOTE: Before version 6.0 this option specified the encoding for the
-	whole of Vim, this was a mistake.  Now use 'encoding' instead.  The
-	old short name was 'fe', which is no longer used.
-
 					*'fileencodings'* *'fencs'*
 'fileencodings' 'fencs'	string (default: "ucs-bom,utf-8,default,latin1")
 			global
@@ -6758,12 +6753,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	"slash" and "unix" are useful on Windows when sharing view files
 	with Unix.  The Unix version of Vim cannot source dos format scripts,
 	but the Windows version of Vim can source unix format scripts.
-
-				*'viminfo'* *'vi'*
-'viminfo' 'vi'		string
-			global
-	Deprecated alias for 'shada' option. Is kept for compatibility 
-	reasons.
 
 					    *'virtualedit'* *'ve'*
 'virtualedit' 've'	string	(default "")

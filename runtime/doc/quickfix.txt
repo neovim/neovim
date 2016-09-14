@@ -1507,12 +1507,6 @@ However, to properly parse such a complex file, an external filter should
 be used.  See the description further above how to make such a filter known
 by Vim.
 
-						*errorformat-Perl*
-In $VIMRUNTIME/tools you can find the efm_perl.pl script, which filters Perl
-error messages into a format that quickfix mode will understand.  See the
-start of the file about how to use it.  (This script is deprecated, see
-|compiler-perl|.)
-
 
 
  vim:tw=78:ts=8:ft=help:norl:
