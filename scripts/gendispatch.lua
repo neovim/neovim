@@ -46,8 +46,8 @@ grammar = Ct((c_proto + c_comment + c_preproc + ws) ^ 1)
 assert(#arg >= 3)
 functions = {}
 
-local scriptdir = arg[1]
-package.path = scriptdir .. '/?.lua;' .. package.path
+local nvimsrcdir = arg[1]
+package.path = nvimsrcdir .. '/?.lua;' .. package.path
 
 -- names of all headers relative to the source root (for inclusion in the
 -- generated file)
@@ -56,6 +56,9 @@ headers = {}
 outputf = arg[#arg-1]
 -- output mpack file (metadata)
 mpack_outputf = arg[#arg]
+
+-- set of function names, used to detect duplicates
+function_names = {}
 
 -- read each input file, parse and append to the api metadata
 for i = 2, #arg - 2 do
@@ -72,6 +75,7 @@ for i = 2, #arg - 2 do
     local fn = tmp[i]
     if not fn.noexport then
       functions[#functions + 1] = tmp[i]
+      function_names[fn.name] = true
       if #fn.parameters ~= 0 and fn.parameters[1][2] == 'channel_id' then
         -- this function should receive the channel id
         fn.receives_channel_id = true
@@ -104,7 +108,7 @@ end
 
 -- Export functions under older deprecated names.
 -- These will be removed eventually.
-local deprecated_aliases = require("dispatch_deprecated")
+local deprecated_aliases = require("api.dispatch_deprecated")
 for i,f in ipairs(shallowcopy(functions)) do
   local ismethod = false
   if startswith(f.name, "nvim_buf_") then
@@ -120,6 +124,13 @@ for i,f in ipairs(shallowcopy(functions)) do
   f.method = ismethod
   local newname = deprecated_aliases[f.name]
   if newname ~= nil then
+    if function_names[newname] then
+      -- duplicate
+      print("Function "..f.name.." has deprecated alias\n"
+            ..newname.." which has a separate implementation.\n"..
+            "Please remove it from src/nvim/api/dispatch_deprecated.lua")
+      os.exit(1)
+    end
     local newf = shallowcopy(f)
     newf.name = newname
     newf.impl_name = f.name
