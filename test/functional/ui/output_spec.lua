@@ -21,6 +21,7 @@ describe("shell command :!", function()
   end)
 
   after_each(function()
+    child_session.feed_data("\3") -- Ctrl-C
     screen:detach()
   end)
 
