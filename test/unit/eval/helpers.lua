@@ -19,29 +19,28 @@ local flt_type = {[true]='flt type'}
 
 local nil_value = {[true]='nil'}
 
+local lua2typvalt
+
+local function li_alloc(nogc)
+  local gcfunc = eval.tv_list_item_free
+  if nogc then gcfunc = nil end
+  local li = ffi.gc(eval.tv_list_item_alloc(), gcfunc)
+  li.li_next = nil
+  li.li_prev = nil
+  li.li_tv = {v_type=eval.VAR_UNKNOWN, v_lock=eval.VAR_UNLOCKED}
+  return li
+end
+
 local function list(...)
   local ret = ffi.gc(eval.tv_list_alloc(), eval.tv_list_unref)
   eq(0, ret.lv_refcount)
   ret.lv_refcount = 1
   for i = 1, select('#', ...) do
     local val = select(i, ...)
-    local typ = type(val)
-    if typ == 'string' then
-      eval.tv_list_append_string(ret, to_cstr(val))
-    elseif typ == 'table' and val == null_string then
-      eval.tv_list_append_string(ret, nil)
-    elseif typ == 'table' and val == null_list then
-      eval.tv_list_append_list(ret, nil)
-    elseif typ == 'table' and val[type_key] == list_type then
-      local itemlist = ffi.gc(list(table.unpack(val)), nil)
-      eq(1, itemlist.lv_refcount)
-      itemlist.lv_refcount = 0
-      eval.tv_list_append_list(ret, itemlist)
-    elseif typ == 'number' then
-      eval.tv_list_append_number(ret, val)
-    else
-      assert(false, 'Not implemented yet')
-    end
+    local li_tv = ffi.gc(lua2typvalt(val), nil)
+    local li = li_alloc(true)
+    li.li_tv = li_tv
+    eval.tv_list_append(ret, li)
   end
   return ret
 end
@@ -114,8 +113,6 @@ dct2tbl = function(d)
   assert(false, 'Converting dictionaries is not implemented yet')
   return ret
 end
-
-local lua2typvalt
 
 local typvalt = function(typ, vval)
   if type(typ) == 'string' then
@@ -216,4 +213,6 @@ return {
   typvalt2lua=typvalt2lua,
 
   typvalt=typvalt,
+
+  li_alloc=li_alloc,
 }
