@@ -5,7 +5,10 @@
 #include <string.h>
 
 #ifdef WIN32
-# include <winnt.h>  // WCHAR for utf*_to_utf* conversion functions
+# ifndef WIN32_LEAN_AND_MEAN
+#  define WIN32_LEAN_AND_MEAN
+# endif
+# include <windows.h>  // WCHAR for utf*_to_utf* conversion functions
 #endif
 
 #include "nvim/iconv.h"
