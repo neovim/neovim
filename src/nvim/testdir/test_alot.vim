@@ -9,3 +9,4 @@ source test_menu.vim
 source test_popup.vim
 source test_regexp_utf8.vim
 source test_unlet.vim
+source test_syn_attr.vim
