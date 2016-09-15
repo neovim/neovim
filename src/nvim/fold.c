@@ -761,7 +761,7 @@ void clearFolding(win_T *win)
  */
 void foldUpdate(win_T *wp, linenr_T top, linenr_T bot)
 {
-  if (compl_busy) {
+  if (compl_busy || State & INSERT) {
     return;
   }
 
