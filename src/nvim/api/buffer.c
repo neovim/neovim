@@ -432,19 +432,15 @@ Object nvim_buf_get_var(Buffer buffer, String name, Error *err)
 /// @param name The variable name
 /// @param value The variable value
 /// @param[out] err Details of an error that may have occurred
-/// @return The old value or nil if there was no previous value.
-///
-///         @warning It may return nil if there was no previous value
-///                  or if previous value was `v:null`.
-Object nvim_buf_set_var(Buffer buffer, String name, Object value, Error *err)
+void nvim_buf_set_var(Buffer buffer, String name, Object value, Error *err)
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
 
   if (!buf) {
-    return (Object) OBJECT_INIT;
+    return;
   }
 
-  return dict_set_value(buf->b_vars, name, value, false, err);
+  dict_set_value(buf->b_vars, name, value, false, false, err);
 }
 
 /// Removes a buffer-scoped (b:) variable
@@ -452,11 +448,30 @@ Object nvim_buf_set_var(Buffer buffer, String name, Object value, Error *err)
 /// @param buffer The buffer handle
 /// @param name The variable name
 /// @param[out] err Details of an error that may have occurred
+void nvim_buf_del_var(Buffer buffer, String name, Error *err)
+{
+  buf_T *buf = find_buffer_by_handle(buffer, err);
+
+  if (!buf) {
+    return;
+  }
+
+  dict_set_value(buf->b_vars, name, NIL, true, false, err);
+}
+
+/// Sets a buffer-scoped (b:) variable
+///
+/// @deprecated
+///
+/// @param buffer The buffer handle
+/// @param name The variable name
+/// @param value The variable value
+/// @param[out] err Details of an error that may have occurred
 /// @return The old value or nil if there was no previous value.
 ///
 ///         @warning It may return nil if there was no previous value
 ///                  or if previous value was `v:null`.
-Object nvim_buf_del_var(Buffer buffer, String name, Error *err)
+Object buffer_set_var(Buffer buffer, String name, Object value, Error *err)
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
 
@@ -464,8 +479,28 @@ Object nvim_buf_del_var(Buffer buffer, String name, Error *err)
     return (Object) OBJECT_INIT;
   }
 
-  return dict_set_value(buf->b_vars, name, NIL, true, err);
+  return dict_set_value(buf->b_vars, name, value, false, true, err);
 }
+
+/// Removes a buffer-scoped (b:) variable
+///
+/// @deprecated
+///
+/// @param buffer The buffer handle
+/// @param name The variable name
+/// @param[out] err Details of an error that may have occurred
+/// @return The old value
+Object buffer_del_var(Buffer buffer, String name, Error *err)
+{
+  buf_T *buf = find_buffer_by_handle(buffer, err);
+
+  if (!buf) {
+    return (Object) OBJECT_INIT;
+  }
+
+  return dict_set_value(buf->b_vars, name, NIL, true, true, err);
+}
+
 
 /// Gets a buffer option value
 ///

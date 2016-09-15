@@ -88,19 +88,19 @@ describe('vim_* functions', function()
       eq(0, funcs.exists('g:lua'))
     end)
 
-    it('set_var returns the old value', function()
+    it('vim_set_var returns the old value', function()
       local val1 = {1, 2, {['3'] = 1}}
       local val2 = {4, 7}
-      eq(NIL, nvim('set_var', 'lua', val1))
-      eq(val1, nvim('set_var', 'lua', val2))
+      eq(NIL, request('vim_set_var', 'lua', val1))
+      eq(val1, request('vim_set_var', 'lua', val2))
     end)
 
-    it('del_var returns the old value', function()
+    it('vim_del_var returns the old value', function()
       local val1 = {1, 2, {['3'] = 1}}
       local val2 = {4, 7}
-      eq(NIL, meths.set_var('lua', val1))
-      eq(val1, meths.set_var('lua', val2))
-      eq(val2, meths.del_var('lua'))
+      eq(NIL,  request('vim_set_var', 'lua', val1))
+      eq(val1, request('vim_set_var', 'lua', val2))
+      eq(val2, request('vim_del_var', 'lua'))
     end)
 
     it('truncates values with NULs in them', function()
