@@ -30,12 +30,12 @@ describe("shell command :!", function()
     --       to avoid triggering a UI flush.
     child_session.feed_data(":!printf foo; sleep 200\n")
     screen:expect([[
-      {1: }                                                 |
-      {4:~                                                 }|
       {4:~                                                 }|
       {4:~                                                 }|
       {5:[No Name]                                         }|
+      :!printf foo; sleep 200                           |
                                                         |
+      foo                                               |
       {3:-- TERMINAL --}                                    |
     ]])
   end)
