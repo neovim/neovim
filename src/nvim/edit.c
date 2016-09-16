@@ -462,6 +462,8 @@ static void insert_enter(InsertState *s)
     o_lnum = curwin->w_cursor.lnum;
   }
 
+  foldUpdateAll(curwin);
+  foldOpenCursor();
   if (s->cmdchar != 'r' && s->cmdchar != 'v') {
     apply_autocmds(EVENT_INSERTLEAVE, NULL, NULL, false, curbuf);
   }
