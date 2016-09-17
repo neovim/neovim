@@ -3548,9 +3548,9 @@ int get_errorlist_properties(win_T *wp, dict_T *what, dict_T *retdict)
     flags |= QF_GETLIST_TITLE;
   }
 
-  // if (dict_find(what, (char_u *)"winid", -1) != NULL) {
-  //   flags |= QF_GETLIST_WINID;
-  // }
+  if (dict_find(what, (char_u *)"winid", -1) != NULL) {
+    flags |= QF_GETLIST_WINID;
+  }
 
   if (flags & QF_GETLIST_TITLE) {
     char_u *t;
@@ -3563,13 +3563,13 @@ int get_errorlist_properties(win_T *wp, dict_T *what, dict_T *retdict)
   if ((status == OK) && (flags & QF_GETLIST_NR)) {
     status = dict_add_nr_str(retdict, "nr", qf_idx + 1, NULL);
   }
-  // if ((status == OK) && (flags & QF_GETLIST_WINID)) {
-  //   win_T *win;
-  //   win = qf_find_win(qi);
-  //   if (win != NULL) {
-  //     status = dict_add_nr_str(retdict, "winid", win->w_id, NULL);
-  //   }
-  // }
+  if ((status == OK) && (flags & QF_GETLIST_WINID)) {
+    win_T *win;
+    win = qf_find_win(qi);
+    if (win != NULL) {
+      status = dict_add_nr_str(retdict, "winid", win->handle, NULL);
+    }
+  }
 
   return status;
 }
