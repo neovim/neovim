@@ -9,6 +9,7 @@ local eval = cimport('./src/nvim/eval.h', './src/nvim/eval/typval.h')
 
 local null_string = {[true]='NULL string'}
 local null_list = {[true]='NULL list'}
+local null_dict = {[true]='NULL dict'}
 local type_key = {[true]='type key'}
 local locks_key = {[true]='locks key'}
 local list_type = {[true]='list type'}
@@ -74,32 +75,38 @@ typvalt2lua_tab = {
       return ffi.string(str)
     end
   end,
-  [tonumber(eval.VAR_LIST)] = function(t)
-    return lst2tbl(t.vval.v_list)
+  [tonumber(eval.VAR_LIST)] = function(t, processed)
+    return lst2tbl(t.vval.v_list, processed)
   end,
-  [tonumber(eval.VAR_DICT)] = function(t)
-    return dct2tbl(t.vval.v_dict)
+  [tonumber(eval.VAR_DICT)] = function(t, processed)
+    return dct2tbl(t.vval.v_dict, processed)
   end,
   [tonumber(eval.VAR_FUNC)] = function(t)
     return {[type_key]=func_type, value=typvalt2lua_tab[eval.VAR_STRING](t)}
   end,
 }
 
-local typvalt2lua = function(t)
+local typvalt2lua = function(t, processed)
   return ((typvalt2lua_tab[tonumber(t.v_type)] or function(t_inner)
     assert(false, 'Converting ' .. tonumber(t_inner.v_type) .. ' was not implemented yet')
-  end)(t))
+  end)(t, processed))
 end
 
-lst2tbl = function(l)
-  local ret = {[type_key]=list_type}
+lst2tbl = function(l, processed)
   if l == nil then
-    return ret
+    return null_list
   end
+  processed = processed or {}
+  local p_key = tostring(l)
+  if processed[p_key] then
+    return processed[p_key]
+  end
+  local ret = {[type_key]=list_type}
+  processed[p_key] = ret
   local li = l.lv_first
   -- (listitem_T *) NULL is equal to nil, but yet it is not false.
   while li ~= nil do
-    ret[#ret + 1] = typvalt2lua(li.li_tv)
+    ret[#ret + 1] = typvalt2lua(li.li_tv, processed)
     li = li.li_next
   end
   if ret[1] then
@@ -108,23 +115,48 @@ lst2tbl = function(l)
   return ret
 end
 
-dct2tbl = function(d)
+local function dict_iter(d)
+  local s = {
+    todo=d.dv_hashtab.ht_used,
+    hi=d.dv_hashtab.ht_array,
+  }
+  local var = nil
+  local function f(s, var)
+    if s.todo == 0 then return nil end
+    while s.todo > 0 do
+      if s.hi.hi_key ~= nil and s.hi ~= eval.hash_removed then
+        local key = ffi.string(s.hi.hi_key)
+        local di = ffi.cast('dictitem_T*',
+                            s.hi.hi_key - ffi.offsetof('dictitem_T', 'di_key'))
+        s.todo = s.todo - 1
+        s.hi = s.hi + 1
+        return key, di
+      end
+      s.hi = s.hi + 1
+    end
+  end
+  return f, s, var
+end
+
+local function first_di(d)
+  for k, di in dict_iter(d) do
+    return di
+  end
+end
+
+dct2tbl = function(d, processed)
   if d == nil then
-    return {}
+    return null_dict
+  end
+  processed = processed or {}
+  local p_key = tostring(l)
+  if processed[p_key] then
+    return processed[p_key]
   end
   local ret = {}
-  local todo = d.dv_hashtab.ht_used
-  local hi = d.dv_hashtab.ht_array
-  while todo > 0 do
-    if hi.hi_key ~= nil and hi ~= eval.hash_removed then
-      local key = ffi.string(hi.hi_key)
-      local di = ffi.cast('dictitem_T*',
-                          hi.hi_key - ffi.offsetof('dictitem_T', 'di_key'))
-      local val = typvalt2lua(di.di_tv)
-      ret[key] = val
-      todo = todo - 1
-    end
-    hi = hi + 1
+  processed[p_key] = ret
+  for k, di in dict_iter(d) do
+    ret[k] = typvalt2lua(di.di_tv, processed)
   end
   return ret
 end
@@ -181,10 +213,21 @@ local lua2typvalt_type_tab = {
   end,
 }
 
+local special_vals = {
+  [null_string] = typvalt(eval.VAR_STRING, {v_string=ffi.cast('char_u*', nil)}),
+  [null_list] = typvalt(eval.VAR_LIST, {v_list=ffi.cast('list_T*', nil)}),
+  [null_dict] = typvalt(eval.VAR_DICT, {v_dict=ffi.cast('dict_T*', nil)}),
+  [nil_value] = typvalt(eval.VAR_SPECIAL, {v_special=eval.kSpecialVarNull}),
+  [true] = typvalt(eval.VAR_SPECIAL, {v_special=eval.kSpecialVarTrue}),
+  [false] = typvalt(eval.VAR_SPECIAL, {v_special=eval.kSpecialVarFalse}),
+}
+
 lua2typvalt = function(l, processed)
   processed = processed or {}
-  if l == nil or l == nil_value then
-    return typvalt(eval.VAR_SPECIAL, {v_special=eval.kSpecialVarNull})
+  if l == nil then
+    return special_vals[nil_value]
+  elseif special_vals[l] then
+    return special_vals[l]
   elseif type(l) == 'table' then
     if l[type_key] then
       return lua2typvalt_type_tab[l[type_key]](l, processed)
@@ -197,18 +240,19 @@ lua2typvalt = function(l, processed)
     end
   elseif type(l) == 'number' then
     return typvalt(eval.VAR_FLOAT, {v_float=l})
-  elseif type(l) == 'boolean' then
-    return typvalt(eval.VAR_SPECIAL, {
-      v_special=(l and eval.kSpecialVarTrue or eval.kSpecialVarFalse)
-    })
   elseif type(l) == 'string' then
     return typvalt(eval.VAR_STRING, {v_string=eval.xmemdupz(to_cstr(l), #l)})
+  elseif type(l) == 'cdata' then
+    local tv = typvalt(eval.VAR_UNKNOWN)
+    eval.tv_copy(l, tv)
+    return tv
   end
 end
 
 return {
   null_string=null_string,
   null_list=null_list,
+  null_dict=null_dict,
   list_type=list_type,
   dict_type=dict_type,
   func_type=func_type,
@@ -230,4 +274,7 @@ return {
   typvalt=typvalt,
 
   li_alloc=li_alloc,
+
+  dict_iter=dict_iter,
+  first_di=first_di,
 }

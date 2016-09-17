@@ -398,6 +398,7 @@ void tv_list_append_number(list_T *const l, const varnumber_T n)
 /// Make a copy of list
 ///
 /// @param[in]  conv  If non-NULL, then all internal strings will be converted.
+///                   Only used when `deep` is true.
 /// @param[in]  orig  Original list to copy.
 /// @param[in]  deep  If false, then shallow copy will be done.
 /// @param[in]  copyID  See var_item_copy().
@@ -858,7 +859,7 @@ dictitem_T *tv_dict_item_alloc_len(const char *const key, const size_t key_len)
   FUNC_ATTR_NONNULL_RET FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
   FUNC_ATTR_MALLOC
 {
-  dictitem_T *const di = xmalloc(sizeof(dictitem_T) + key_len);
+  dictitem_T *const di = xmalloc(offsetof(dictitem_T, di_key) + key_len + 1);
   memcpy(di->di_key, key, key_len);
   di->di_key[key_len] = NUL;
   di->di_flags = DI_FLAGS_ALLOC;
