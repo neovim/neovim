@@ -123,7 +123,7 @@ return {
     getftime={args=1},
     getftype={args=1},
     getline={args={1, 2}},
-    getloclist={args=1, func='f_getqflist'},
+    getloclist={args={1, 2}},
     getmatches={},
     getpid={},
     getpos={args=1},
