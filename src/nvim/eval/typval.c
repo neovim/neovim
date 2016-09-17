@@ -472,22 +472,25 @@ void tv_list_extend(list_T *const l1, list_T *const l2,
 int tv_list_concat(list_T *const l1, list_T *const l2, typval_T *const tv)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  list_T      *l;
+  list_T *l;
 
-  if (l1 == NULL || l2 == NULL) {
-    return FAIL;
-  }
-
-  // make a copy of the first list.
-  l = tv_list_copy(NULL, l1, false, 0);
-  if (l == NULL) {
-    return FAIL;
-  }
   tv->v_type = VAR_LIST;
-  tv->vval.v_list = l;
 
-  // append all items from the second list
-  tv_list_extend(l, l2, NULL);
+  if (l1 == NULL && l2 == NULL) {
+    l = NULL;
+  } else if (l1 == NULL) {
+    l = tv_list_copy(NULL, l2, false, 0);
+  } else {
+    l = tv_list_copy(NULL, l1, false, 0);
+    if (l != NULL && l2 != NULL) {
+      tv_list_extend(l, l2, NULL);
+    }
+  }
+  if (l == NULL && !(l1 == NULL && l2 == NULL)) {
+    return FAIL;
+  }
+
+  tv->vval.v_list = l;
   return OK;
 }
 
