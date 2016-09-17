@@ -369,7 +369,7 @@ lua2typvalt = function(l, processed)
     return typvalt(eval.VAR_STRING, {v_string=eval.xmemdupz(to_cstr(l), #l)})
   elseif type(l) == 'cdata' then
     local tv = typvalt(eval.VAR_UNKNOWN)
-    eval.copy_tv(l, tv)
+    eval.tv_copy(l, tv)
     return tv
   end
 end
@@ -379,14 +379,28 @@ local function void(ptr)
   return ffi.cast(void_ptr, ptr)
 end
 
+local function alloc_len(len, get_ptr)
+  if type(len) == 'string' or type(len) == 'table' then
+    return #len
+  elseif len == nil then
+    return eval.strlen(get_ptr())
+  else
+    return len
+  end
+end
+
 local alloc_logging_helpers = {
   list = function(l) return {func='calloc', args={1, ffi.sizeof('list_T')}, ret=void(l)} end,
   li = function(li) return {func='malloc', args={ffi.sizeof('listitem_T')}, ret=void(li)} end,
   dict = function(d) return {func='malloc', args={ffi.sizeof('dict_T')}, ret=void(d)} end,
   di = function(di, size)
+    size = alloc_len(size, function() return di.di_key end)
     return {func='malloc', args={ffi.offsetof('dictitem_T', 'di_key') + size + 1}, ret=void(di)}
   end,
-  str = function(s, size) return {func='malloc', args={size + 1}, ret=void(s)} end,
+  str = function(s, size)
+    size = alloc_len(size, function() return s end)
+    return {func='malloc', args={size + 1}, ret=void(s)}
+  end,
 
   freed = function(p) return {func='free', args={type(p) == 'table' and p or void(p)}} end,
 }
