@@ -7131,7 +7131,7 @@ static void api_wrapper(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   Object result = fn(INVALID_CHANNEL, NO_RESPONSE, args, &err);
 
   if (err.set) {
-    nvim_report_error(cstr_as_string(err.msg));
+    nvim_err_writeln(cstr_as_string(err.msg));
     goto end;
   }
 
@@ -13743,7 +13743,7 @@ static void f_rpcrequest(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   if (err.set) {
-    nvim_report_error(cstr_as_string(err.msg));
+    nvim_err_writeln(cstr_as_string(err.msg));
     goto end;
   }
 

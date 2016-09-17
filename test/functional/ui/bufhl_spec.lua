@@ -25,7 +25,7 @@ describe('Buffer highlighting', function()
       [8] = {underline = true, bold = true, foreground = Screen.colors.SlateBlue},
       [9] = {foreground = Screen.colors.SlateBlue, underline = true}
     })
-    curbuf = request('vim_get_current_buffer')
+    curbuf = request('nvim_get_current_buf')
   end)
 
   after_each(function()
@@ -33,11 +33,11 @@ describe('Buffer highlighting', function()
   end)
 
   local function add_hl(...)
-    return request('buffer_add_highlight', curbuf, ...)
+    return request('nvim_buf_add_highlight', curbuf, ...)
   end
 
   local function clear_hl(...)
-    return request('buffer_clear_highlight', curbuf, ...)
+    return request('nvim_buf_clear_highlight', curbuf, ...)
   end
 
 
