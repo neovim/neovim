@@ -5,14 +5,19 @@
 
 #include "nvim/types.h"
 
+/// Magic number used for hashitem "hi_key" value indicating a deleted item
+///
+/// Only the address is used.
+extern char hash_removed;
+
 /// Type for hash number (hash calculation result).
 typedef size_t hash_T;
 
 /// The address of "hash_removed" is used as a magic number
 /// for hi_key to indicate a removed item.
-#define HI_KEY_REMOVED &hash_removed
+#define HI_KEY_REMOVED ((char_u *)&hash_removed)
 #define HASHITEM_EMPTY(hi) ((hi)->hi_key == NULL \
-                            || (hi)->hi_key == &hash_removed)
+                            || (hi)->hi_key == (char_u *)&hash_removed)
 
 /// A hastable item.
 ///

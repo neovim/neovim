@@ -12,10 +12,12 @@ local list = eval_helpers.list
 local lst2tbl = eval_helpers.lst2tbl
 local type_key  = eval_helpers.type_key
 local li_alloc  = eval_helpers.li_alloc
+local int_type  = eval_helpers.int_type
 local dict_type  = eval_helpers.dict_type
 local list_type  = eval_helpers.list_type
 local lua2typvalt  = eval_helpers.lua2typvalt
 local typvalt2lua  = eval_helpers.typvalt2lua
+local null_string  = eval_helpers.null_string
 
 local lib = cimport('./src/nvim/eval/typval.h', './src/nvim/memory.h')
 
@@ -382,43 +384,199 @@ describe('typval.c', function()
         check_alloc_log({})
       end)
     end)
-    describe('insert()', function()
-      it('works', function()
-        local l_tv = lua2typvalt({1, 2, 3, 4, 5, 6, 7})
-        local l = l_tv.vval.v_list
-        local lis = list_items(l)
-        local li
+    describe('insert', function()
+      describe('()', function()
+        it('works', function()
+          local l_tv = lua2typvalt({1, 2, 3, 4, 5, 6, 7})
+          local l = l_tv.vval.v_list
+          local lis = list_items(l)
+          local li
 
-        li = li_alloc(true)
-        li.li_tv = {v_type=lib.VAR_FLOAT, vval={v_float=100500}}
-        lib.tv_list_insert(l, li, nil)
-        eq(l.lv_last, li)
-        eq({1, 2, 3, 4, 5, 6, 7, 100500}, typvalt2lua(l_tv))
+          li = li_alloc(true)
+          li.li_tv = {v_type=lib.VAR_FLOAT, vval={v_float=100500}}
+          lib.tv_list_insert(l, li, nil)
+          eq(l.lv_last, li)
+          eq({1, 2, 3, 4, 5, 6, 7, 100500}, typvalt2lua(l_tv))
 
-        li = li_alloc(true)
-        li.li_tv = {v_type=lib.VAR_FLOAT, vval={v_float=0}}
-        lib.tv_list_insert(l, li, lis[1])
-        eq(l.lv_first, li)
-        eq({0, 1, 2, 3, 4, 5, 6, 7, 100500}, typvalt2lua(l_tv))
+          li = li_alloc(true)
+          li.li_tv = {v_type=lib.VAR_FLOAT, vval={v_float=0}}
+          lib.tv_list_insert(l, li, lis[1])
+          eq(l.lv_first, li)
+          eq({0, 1, 2, 3, 4, 5, 6, 7, 100500}, typvalt2lua(l_tv))
 
-        li = li_alloc(true)
-        li.li_tv = {v_type=lib.VAR_FLOAT, vval={v_float=4.5}}
-        lib.tv_list_insert(l, li, lis[5])
-        eq(list_items(l)[6], li)
-        eq({0, 1, 2, 3, 4, 4.5, 5, 6, 7, 100500}, typvalt2lua(l_tv))
+          li = li_alloc(true)
+          li.li_tv = {v_type=lib.VAR_FLOAT, vval={v_float=4.5}}
+          lib.tv_list_insert(l, li, lis[5])
+          eq(list_items(l)[6], li)
+          eq({0, 1, 2, 3, 4, 4.5, 5, 6, 7, 100500}, typvalt2lua(l_tv))
+        end)
+        it('works with an empty list', function()
+          local l_tv = lua2typvalt({[type_key]=list_type})
+          local l = l_tv.vval.v_list
+
+          eq(nil, l.lv_first)
+          eq(nil, l.lv_last)
+
+          local li = li_alloc(true)
+          li.li_tv = {v_type=lib.VAR_FLOAT, vval={v_float=100500}}
+          lib.tv_list_insert(l, li, nil)
+          eq(l.lv_last, li)
+          eq({100500}, typvalt2lua(l_tv))
+        end)
       end)
-      it('works with an empty list', function()
-        local l_tv = lua2typvalt({[type_key]=list_type})
-        local l = l_tv.vval.v_list
+      describe('tv()', function()
+        it('works', function()
+          local l_tv = lua2typvalt({[type_key]=list_type})
+          local l = l_tv.vval.v_list
 
-        eq(nil, l.lv_first)
-        eq(nil, l.lv_last)
+          local l_l_tv = lua2typvalt({[type_key]=list_type})
+          clear_alloc_log()
+          local l_l = l_l_tv.vval.v_list
+          eq(1, l_l.lv_refcount)
+          lib.tv_list_insert_tv(l, l_l_tv, nil)
+          eq(2, l_l.lv_refcount)
+          eq(l_l, l.lv_first.li_tv.vval.v_list)
+          check_alloc_log({
+            {func='malloc', args={ffi.sizeof('listitem_T')}, ret=v(l.lv_first)},
+          })
 
-        local li = li_alloc(true)
-        li.li_tv = {v_type=lib.VAR_FLOAT, vval={v_float=100500}}
-        lib.tv_list_insert(l, li, nil)
-        eq(l.lv_last, li)
-        eq({100500}, typvalt2lua(l_tv))
+          local l_s_tv = lua2typvalt('test')
+          check_alloc_log({
+            {func='malloc', args={5}, ret=v(l_s_tv.vval.v_string)},
+          })
+          lib.tv_list_insert_tv(l, l_s_tv, l.lv_first)
+          check_alloc_log({
+            {func='malloc', args={ffi.sizeof('listitem_T')}, ret=v(l.lv_first)},
+            {func='malloc', args={5}, ret=v(l.lv_first.li_tv.vval.v_string)},
+          })
+
+          eq({'test', {[type_key]=list_type}}, typvalt2lua(l_tv))
+        end)
+      end)
+    end)
+    describe('append', function()
+      describe('list()', function()
+        it('works', function()
+          local l_tv = lua2typvalt({[type_key]=list_type})
+          local l = l_tv.vval.v_list
+
+          local l_l = list(1)
+          clear_alloc_log()
+          eq(1, l_l.lv_refcount)
+          lib.tv_list_append_list(l, l_l)
+          eq(2, l_l.lv_refcount)
+          eq(l_l, l.lv_first.li_tv.vval.v_list)
+          check_alloc_log({
+            {func='malloc', args={ffi.sizeof('listitem_T')}, ret=v(l.lv_last)},
+          })
+
+          lib.tv_list_append_list(l, nil)
+          check_alloc_log({
+            {func='malloc', args={ffi.sizeof('listitem_T')}, ret=v(l.lv_last)},
+          })
+
+          eq({{1}, {[type_key]=list_type}}, typvalt2lua(l_tv))
+        end)
+      end)
+      describe('dict()', function()
+        it('works', function()
+          local l_tv = lua2typvalt({[type_key]=list_type})
+          local l = l_tv.vval.v_list
+
+          local l_d_tv = lua2typvalt({test=1})
+          local l_d = l_d_tv.vval.v_dict
+          clear_alloc_log()
+          eq(1, l_d.dv_refcount)
+          lib.tv_list_append_dict(l, l_d)
+          eq(2, l_d.dv_refcount)
+          eq(l_d, l.lv_first.li_tv.vval.v_list)
+          check_alloc_log({
+            {func='malloc', args={ffi.sizeof('listitem_T')}, ret=v(l.lv_last)},
+          })
+
+          lib.tv_list_append_dict(l, nil)
+          check_alloc_log({
+            {func='malloc', args={ffi.sizeof('listitem_T')}, ret=v(l.lv_last)},
+          })
+
+          eq({{test=1}, {}}, typvalt2lua(l_tv))
+        end)
+      end)
+      describe('string()', function()
+        it('works', function()
+          local l_tv = lua2typvalt({[type_key]=list_type})
+          local l = l_tv.vval.v_list
+
+          clear_alloc_log()
+          lib.tv_list_append_string(l, 'test', 3)
+          check_alloc_log({
+            {func='malloc', args={4}, ret=v(l.lv_last.li_tv.vval.v_string)},
+            {func='malloc', args={ffi.sizeof('listitem_T')}, ret=v(l.lv_last)},
+          })
+
+          lib.tv_list_append_string(l, nil, 0)
+          check_alloc_log({
+            {func='malloc', args={ffi.sizeof('listitem_T')}, ret=v(l.lv_last)},
+          })
+
+          lib.tv_list_append_string(l, nil, -1)
+          check_alloc_log({
+            {func='malloc', args={ffi.sizeof('listitem_T')}, ret=v(l.lv_last)},
+          })
+
+          lib.tv_list_append_string(l, 'test', -1)
+          check_alloc_log({
+            {func='malloc', args={5}, ret=v(l.lv_last.li_tv.vval.v_string)},
+            {func='malloc', args={ffi.sizeof('listitem_T')}, ret=v(l.lv_last)},
+          })
+
+          eq({'tes', null_string, null_string, 'test'}, typvalt2lua(l_tv))
+        end)
+      end)
+      describe('allocated string()', function()
+        it('works', function()
+          local l_tv = lua2typvalt({[type_key]=list_type})
+          local l = l_tv.vval.v_list
+
+          local s = lib.xstrdup('test')
+          clear_alloc_log()
+          lib.tv_list_append_allocated_string(l, s)
+          check_alloc_log({
+            {func='malloc', args={ffi.sizeof('listitem_T')}, ret=v(l.lv_last)},
+          })
+
+          lib.tv_list_append_allocated_string(l, nil)
+          check_alloc_log({
+            {func='malloc', args={ffi.sizeof('listitem_T')}, ret=v(l.lv_last)},
+          })
+
+          lib.tv_list_append_allocated_string(l, nil)
+          check_alloc_log({
+            {func='malloc', args={ffi.sizeof('listitem_T')}, ret=v(l.lv_last)},
+          })
+
+          eq({'test', null_string, null_string}, typvalt2lua(l_tv))
+        end)
+      end)
+      describe('number()', function()
+        it('works', function()
+          local l_tv = lua2typvalt({[type_key]=list_type})
+          local l = l_tv.vval.v_list
+
+          clear_alloc_log()
+          lib.tv_list_append_number(l, -100500)
+          check_alloc_log({
+            {func='malloc', args={ffi.sizeof('listitem_T')}, ret=v(l.lv_last)},
+          })
+
+          lib.tv_list_append_number(l, 100500)
+          check_alloc_log({
+            {func='malloc', args={ffi.sizeof('listitem_T')}, ret=v(l.lv_last)},
+          })
+
+          eq({{[type_key]=int_type, value=-100500},
+              {[type_key]=int_type, value=100500}}, typvalt2lua(l_tv))
+        end)
       end)
     end)
   end)

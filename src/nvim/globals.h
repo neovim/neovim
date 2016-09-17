@@ -409,10 +409,6 @@ EXTERN struct caller_scope {
 } provider_caller_scope;
 EXTERN int provider_call_nesting INIT(= 0);
 
-/* Magic number used for hashitem "hi_key" value indicating a deleted item.
- * Only the address is used. */
-EXTERN char_u hash_removed;
-
 
 EXTERN int t_colors INIT(= 256);                // int value of T_CCO
 

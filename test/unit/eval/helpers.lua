@@ -109,8 +109,23 @@ lst2tbl = function(l)
 end
 
 dct2tbl = function(d)
-  local ret = {d=d}
-  assert(false, 'Converting dictionaries is not implemented yet')
+  if d == nil then
+    return {}
+  end
+  local ret = {}
+  local todo = d.dv_hashtab.ht_used
+  local hi = d.dv_hashtab.ht_array
+  while todo > 0 do
+    if hi.hi_key ~= nil and hi ~= eval.hash_removed then
+      local key = ffi.string(hi.hi_key)
+      local di = ffi.cast('dictitem_T*',
+                          hi.hi_key - ffi.offsetof('dictitem_T', 'di_key'))
+      local val = typvalt2lua(di.di_tv)
+      ret[key] = val
+      todo = todo - 1
+    end
+    hi = hi + 1
+  end
   return ret
 end
 

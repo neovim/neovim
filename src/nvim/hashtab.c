@@ -36,6 +36,8 @@
 # include "hashtab.c.generated.h"
 #endif
 
+char hash_removed;
+
 /// Initialize an empty hash table.
 void hash_init(hashtab_T *ht)
 {
