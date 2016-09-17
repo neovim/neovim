@@ -19024,7 +19024,7 @@ bool valid_varname(const char *varname)
 ///                     list[1]`) var_item_copy with zero copyID will emit
 ///                     a copy with (`copy[0] isnot copy[1]`), with non-zero it
 ///                     will emit a copy with (`copy[0] is copy[1]`) like in the
-///                     original list. Not use when deep is false.
+///                     original list. Not used when deep is false.
 int var_item_copy(const vimconv_T *const conv,
                   typval_T *const from,
                   typval_T *const to,
@@ -19050,7 +19050,8 @@ int var_item_copy(const vimconv_T *const conv,
     tv_copy(from, to);
     break;
   case VAR_STRING:
-    if (conv == NULL || conv->vc_type == CONV_NONE) {
+    if (conv == NULL || conv->vc_type == CONV_NONE
+        || from->vval.v_string == NULL) {
       tv_copy(from, to);
     } else {
       to->v_type = VAR_STRING;
@@ -19075,8 +19076,9 @@ int var_item_copy(const vimconv_T *const conv,
     } else {
       to->vval.v_list = tv_list_copy(conv, from->vval.v_list, deep, copyID);
     }
-    if (to->vval.v_list == NULL)
+    if (to->vval.v_list == NULL && from->vval.v_list != NULL) {
       ret = FAIL;
+    }
     break;
   case VAR_DICT:
     to->v_type = VAR_DICT;
@@ -19090,8 +19092,9 @@ int var_item_copy(const vimconv_T *const conv,
     } else {
       to->vval.v_dict = tv_dict_copy(conv, from->vval.v_dict, deep, copyID);
     }
-    if (to->vval.v_dict == NULL)
+    if (to->vval.v_dict == NULL && from->vval.v_dict != NULL) {
       ret = FAIL;
+    }
     break;
   case VAR_UNKNOWN:
     EMSG2(_(e_intern2), "var_item_copy(UNKNOWN)");

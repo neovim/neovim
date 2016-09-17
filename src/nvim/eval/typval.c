@@ -424,6 +424,7 @@ void tv_list_append_number(list_T *const l, const varnumber_T n)
 /// Make a copy of list
 ///
 /// @param[in]  conv  If non-NULL, then all internal strings will be converted.
+///                   Only used when `deep` is true.
 /// @param[in]  orig  Original list to copy.
 /// @param[in]  deep  If false, then shallow copy will be done.
 /// @param[in]  copyID  See var_item_copy().

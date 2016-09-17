@@ -3,17 +3,21 @@ local eval_helpers = require('test.unit.eval.helpers')
 
 local itp = helpers.gen_itp(it)
 
+local OK = helpers.OK
 local eq = helpers.eq
 local neq = helpers.neq
 local ffi = helpers.ffi
 local cimport = helpers.cimport
+local to_cstr = helpers.to_cstr
 local alloc_log_new = helpers.alloc_log_new
 
 local a = eval_helpers.alloc_logging_helpers
 local list = eval_helpers.list
+local lst2tbl = eval_helpers.lst2tbl
 local type_key  = eval_helpers.type_key
 local li_alloc  = eval_helpers.li_alloc
 local int_type  = eval_helpers.int_type
+local first_di  = eval_helpers.first_di
 local dict_type  = eval_helpers.dict_type
 local list_type  = eval_helpers.list_type
 local null_list  = eval_helpers.null_list
@@ -22,7 +26,8 @@ local lua2typvalt  = eval_helpers.lua2typvalt
 local typvalt2lua  = eval_helpers.typvalt2lua
 local null_string  = eval_helpers.null_string
 
-local lib = cimport('./src/nvim/eval/typval.h', './src/nvim/memory.h')
+local lib = cimport('./src/nvim/eval/typval.h', './src/nvim/memory.h',
+                    './src/nvim/mbyte.h')
 
 local function list_items(l)
   local lis = {}
@@ -61,6 +66,30 @@ local alloc_log = alloc_log_new()
 before_each(function()
   alloc_log:before_each()
 end)
+
+local function clear_tmp_allocs()
+  local toremove = {}
+  local allocs = {}
+  for i, v in ipairs(alloc_log.log) do
+    if v.func == 'malloc' or v.func == 'calloc' then
+      allocs[tostring(v.ret)] = i
+    elseif v.func == 'realloc' or v.func == 'free' then
+      if allocs[tostring(v.args[1])] then
+        toremove[#toremove + 1] = allocs[tostring(v.args[1])]
+        if v.func == 'free' then
+          toremove[#toremove + 1] = i
+        end
+      end
+      if v.func == 'realloc' then
+        allocs[tostring(v.ret)] = i
+      end
+    end
+  end
+  table.sort(toremove)
+  for i = #toremove,1,-1 do
+    table.remove(alloc_log.log, toremove[i])
+  end
+end
 
 after_each(function()
   alloc_log:after_each()
@@ -564,6 +593,158 @@ describe('typval.c', function()
           eq({{[type_key]=int_type, value=-100500},
               {[type_key]=int_type, value=100500}}, typvalt2lua(l_tv))
         end)
+      end)
+    end)
+    describe('copy()', function()
+      local function tv_list_copy(...)
+        return ffi.gc(lib.tv_list_copy(...), lib.tv_list_unref)
+      end
+      itp('copies NULL correctly', function()
+        eq(nil, lib.tv_list_copy(nil, nil, true, 0))
+        eq(nil, lib.tv_list_copy(nil, nil, false, 0))
+        eq(nil, lib.tv_list_copy(nil, nil, true, 1))
+        eq(nil, lib.tv_list_copy(nil, nil, false, 1))
+      end)
+      itp('copies list correctly without converting items', function()
+        local v = {{['«']='»'}, {'„'}, 1, '“', null_string, null_list, null_dict}
+        local l_tv = lua2typvalt(v)
+        local l = l_tv.vval.v_list
+        local lis = list_items(l)
+        alloc_log:clear()
+
+        eq(1, lis[1].li_tv.vval.v_dict.dv_refcount)
+        eq(1, lis[2].li_tv.vval.v_list.lv_refcount)
+        local l_copy1 = tv_list_copy(nil, l, false, 0)
+        eq(2, lis[1].li_tv.vval.v_dict.dv_refcount)
+        eq(2, lis[2].li_tv.vval.v_list.lv_refcount)
+        local lis_copy1 = list_items(l_copy1)
+        eq(lis[1].li_tv.vval.v_dict, lis_copy1[1].li_tv.vval.v_dict)
+        eq(lis[2].li_tv.vval.v_list, lis_copy1[2].li_tv.vval.v_list)
+        eq(v, lst2tbl(l_copy1))
+        alloc_log:check({
+          a.list(l_copy1),
+          a.li(lis_copy1[1]),
+          a.li(lis_copy1[2]),
+          a.li(lis_copy1[3]),
+          a.li(lis_copy1[4]),
+          a.str(lis_copy1[4].li_tv.vval.v_string, #v[4]),
+          a.li(lis_copy1[5]),
+          a.li(lis_copy1[6]),
+          a.li(lis_copy1[7]),
+        })
+        lib.tv_list_free(ffi.gc(l_copy1, nil))
+        alloc_log:clear()
+
+        eq(1, lis[1].li_tv.vval.v_dict.dv_refcount)
+        eq(1, lis[2].li_tv.vval.v_list.lv_refcount)
+        local l_deepcopy1 = tv_list_copy(nil, l, true, 0)
+        neq(nil, l_deepcopy1)
+        eq(1, lis[1].li_tv.vval.v_dict.dv_refcount)
+        eq(1, lis[2].li_tv.vval.v_list.lv_refcount)
+        local lis_deepcopy1 = list_items(l_deepcopy1)
+        neq(lis[1].li_tv.vval.v_dict, lis_deepcopy1[1].li_tv.vval.v_dict)
+        neq(lis[2].li_tv.vval.v_list, lis_deepcopy1[2].li_tv.vval.v_list)
+        eq(v, lst2tbl(l_deepcopy1))
+        local di_deepcopy1 = first_di(lis_deepcopy1[1].li_tv.vval.v_dict)
+        alloc_log:check({
+          a.list(l_deepcopy1),
+          a.li(lis_deepcopy1[1]),
+          a.dict(lis_deepcopy1[1].li_tv.vval.v_dict),
+          a.di(di_deepcopy1, #('«')),
+          a.str(di_deepcopy1.di_tv.vval.v_string, #v[1]['«']),
+          a.li(lis_deepcopy1[2]),
+          a.list(lis_deepcopy1[2].li_tv.vval.v_list),
+          a.li(lis_deepcopy1[2].li_tv.vval.v_list.lv_first),
+          a.str(lis_deepcopy1[2].li_tv.vval.v_list.lv_first.li_tv.vval.v_string, #v[2][1]),
+          a.li(lis_deepcopy1[3]),
+          a.li(lis_deepcopy1[4]),
+          a.str(lis_deepcopy1[4].li_tv.vval.v_string, #v[4]),
+          a.li(lis_deepcopy1[5]),
+          a.li(lis_deepcopy1[6]),
+          a.li(lis_deepcopy1[7]),
+        })
+      end)
+      itp('copies list correctly and converts items', function()
+        local vc = ffi.gc(ffi.new('vimconv_T[1]'), function(vc)
+          lib.convert_setup(vc, nil, nil)
+        end)
+        -- UTF-8 ↔ latin1 conversions need no iconv
+        eq(OK, lib.convert_setup(vc, to_cstr('utf-8'), to_cstr('latin1')))
+
+        local v = {{['«']='»'}, {'„'}, 1, '“', null_string, null_list, null_dict}
+        local l_tv = lua2typvalt(v)
+        local l = l_tv.vval.v_list
+        local lis = list_items(l)
+        alloc_log:clear()
+
+        eq(1, lis[1].li_tv.vval.v_dict.dv_refcount)
+        eq(1, lis[2].li_tv.vval.v_list.lv_refcount)
+        local l_deepcopy1 = tv_list_copy(vc, l, true, 0)
+        neq(nil, l_deepcopy1)
+        eq(1, lis[1].li_tv.vval.v_dict.dv_refcount)
+        eq(1, lis[2].li_tv.vval.v_list.lv_refcount)
+        local lis_deepcopy1 = list_items(l_deepcopy1)
+        neq(lis[1].li_tv.vval.v_dict, lis_deepcopy1[1].li_tv.vval.v_dict)
+        neq(lis[2].li_tv.vval.v_list, lis_deepcopy1[2].li_tv.vval.v_list)
+        eq({{['\171']='\187'}, {'\191'}, 1, '\191', null_string, null_list, null_dict},
+           lst2tbl(l_deepcopy1))
+        local di_deepcopy1 = first_di(lis_deepcopy1[1].li_tv.vval.v_dict)
+        clear_tmp_allocs()
+        alloc_log:check({
+          a.list(l_deepcopy1),
+          a.li(lis_deepcopy1[1]),
+          a.dict(lis_deepcopy1[1].li_tv.vval.v_dict),
+          a.di(di_deepcopy1, 1),
+          a.str(di_deepcopy1.di_tv.vval.v_string, 2),
+          a.li(lis_deepcopy1[2]),
+          a.list(lis_deepcopy1[2].li_tv.vval.v_list),
+          a.li(lis_deepcopy1[2].li_tv.vval.v_list.lv_first),
+          a.str(lis_deepcopy1[2].li_tv.vval.v_list.lv_first.li_tv.vval.v_string, #v[2][1]),
+          a.li(lis_deepcopy1[3]),
+          a.li(lis_deepcopy1[4]),
+          a.str(lis_deepcopy1[4].li_tv.vval.v_string, #v[4]),
+          a.li(lis_deepcopy1[5]),
+          a.li(lis_deepcopy1[6]),
+          a.li(lis_deepcopy1[7]),
+        })
+      end)
+      itp('returns different/same containers with(out) copyID', function()
+        local l_inner_tv = lua2typvalt({[type_key]=list_type})
+        local l_tv = lua2typvalt({l_inner_tv, l_inner_tv})
+        eq(3, l_inner_tv.vval.v_list.lv_refcount)
+        local l = l_tv.vval.v_list
+        eq(l.lv_first.li_tv.vval.v_list, l.lv_last.li_tv.vval.v_list)
+
+        local l_copy1 = tv_list_copy(nil, l, true, 0)
+        neq(l_copy1.lv_first.li_tv.vval.v_list, l_copy1.lv_last.li_tv.vval.v_list)
+        eq({{[type_key]=list_type}, {[type_key]=list_type}}, lst2tbl(l_copy1))
+
+        local l_copy2 = tv_list_copy(nil, l, true, 2)
+        eq(l_copy2.lv_first.li_tv.vval.v_list, l_copy2.lv_last.li_tv.vval.v_list)
+        eq({{[type_key]=list_type}, {[type_key]=list_type}}, lst2tbl(l_copy2))
+
+        eq(3, l_inner_tv.vval.v_list.lv_refcount)
+      end)
+      itp('works with self-referencing list with copyID', function()
+        local l_tv = lua2typvalt({[type_key]=list_type})
+        local l = l_tv.vval.v_list
+        eq(1, l.lv_refcount)
+        lib.tv_list_append_list(l, l)
+        eq(2, l.lv_refcount)
+
+        local l_copy1 = tv_list_copy(nil, l, true, 2)
+        eq(2, l_copy1.lv_refcount)
+        local v = {}
+        v[1] = v
+        eq(v, lst2tbl(l_copy1))
+
+        local lis = list_items(l)
+        lib.tv_list_item_remove(l, lis[1])
+        eq(1, l.lv_refcount)
+
+        local lis_copy1 = list_items(l_copy1)
+        lib.tv_list_item_remove(l_copy1, lis_copy1[1])
+        eq(1, l_copy1.lv_refcount)
       end)
     end)
   end)
