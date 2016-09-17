@@ -61,14 +61,6 @@ describe('NULL', function()
     null_list_expr_test('is equal to itself', 'L == L', 0, 0)
     -- FIXME Should return 0
     null_list_expr_test('is not not equal to itself', 'L != L', 0, 1)
-    -- FIXME Should return empty list
-    null_list_expr_test('can be added to itself', '(L + L)', 'E15: Invalid expression: (L + L)', nil)
-    -- FIXME Should return [1]
-    null_list_expr_test('can be added to non-empty list (reversed)', '(L + [1])',
-                        'E15: Invalid expression: (L + [1])', nil)
-    -- FIXME Should return [1]
-    null_list_expr_test('can be added to non-empty list', '([1] + L)',
-                        'E15: Invalid expression: ([1] + L)', nil)
     -- FIXME Should return 1
     null_list_expr_test('counts correctly', 'count([L], L)', 0, 0)
     -- FIXME should be accepted by inputlist()
@@ -137,5 +129,9 @@ describe('NULL', function()
     null_list_expr_test('is stringified correctly', 'string(L)', 0, '[]')
     null_list_expr_test('is JSON encoded correctly', 'json_encode(L)', 0, '[]')
     null_list_test('does not crash lockvar', 'lockvar! L', 0)
+    null_list_expr_test('can be added to itself', '(L + L)', 0, {})
+    null_list_expr_test('can be added to itself', '(L + L) is L', 0, 1)
+    null_list_expr_test('can be added to non-empty list', '([1] + L)', 0, {1})
+    null_list_expr_test('can be added to non-empty list (reversed)', '(L + [1])', 0, {1})
   end)
 end)
