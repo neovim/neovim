@@ -162,7 +162,9 @@ dct2tbl = function(d, processed)
 end
 
 local typvalt = function(typ, vval)
-  if type(typ) == 'string' then
+  if typ == nil then
+    typ = eval.VAR_UNKNOWN
+  elseif type(typ) == 'string' then
     typ = eval[typ]
   end
   return ffi.gc(ffi.new('typval_T', {v_type=typ, vval=vval}), eval.tv_clear)

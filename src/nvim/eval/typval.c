@@ -455,7 +455,7 @@ void tv_list_extend(list_T *const l1, list_T *const l2,
   int todo = l2->lv_len;
   // We also quit the loop when we have inserted the original item count of
   // the list, avoid a hang when we extend a list with itself.
-  for (listitem_T  *item = l2->lv_first
+  for (listitem_T *item = l2->lv_first
        ; item != NULL && --todo >= 0
        ; item = item->li_next) {
     tv_list_insert_tv(l1, &item->li_tv, bef);
