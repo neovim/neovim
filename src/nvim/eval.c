@@ -513,6 +513,7 @@ void eval_init(void)
 
   for (size_t i = 0; i < ARRAY_SIZE(vimvars); i++) {
     p = &vimvars[i];
+    assert(STRLEN(p->vv_name) <= 16);
     STRCPY(p->vv_di.di_key, p->vv_name);
     if (p->vv_flags & VV_RO)
       p->vv_di.di_flags = DI_FLAGS_RO | DI_FLAGS_FIX;
