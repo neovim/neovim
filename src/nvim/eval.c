@@ -8121,10 +8121,12 @@ static void f_get(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   if (tv == NULL) {
-    if (argvars[2].v_type != VAR_UNKNOWN)
+    if (argvars[2].v_type != VAR_UNKNOWN) {
       tv_copy(&argvars[2], rettv);
-  } else
+    }
+  } else {
     tv_copy(tv, rettv);
+  }
 }
 
 
@@ -11058,21 +11060,24 @@ static void find_some_match(typval_T *argvars, typval_T *rettv, int type)
           }
         }
       } else if (type == 2) {
-        /* return matched string */
-        if (l != NULL)
+        // Return matched string.
+        if (l != NULL) {
           tv_copy(&li->li_tv, rettv);
-        else
-          rettv->vval.v_string = vim_strnsave(regmatch.startp[0],
-              (int)(regmatch.endp[0] - regmatch.startp[0]));
-      } else if (l != NULL)
+        } else {
+          rettv->vval.v_string = (char_u *)xmemdupz(
+              regmatch.startp[0],
+              (size_t)(regmatch.endp[0] - regmatch.startp[0]));
+        }
+      } else if (l != NULL) {
         rettv->vval.v_number = idx;
-      else {
-        if (type != 0)
+      } else {
+        if (type != 0) {
           rettv->vval.v_number =
             (varnumber_T)(regmatch.startp[0] - str);
-        else
+        } else {
           rettv->vval.v_number =
             (varnumber_T)(regmatch.endp[0] - str);
+        }
         rettv->vval.v_number += (varnumber_T)(str - expr);
       }
     }
@@ -19419,9 +19424,10 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars,
       }
     }
 
-    /* Make a copy of the a:000 items, since we didn't do that above. */
-    for (li = fc->l_varlist.lv_first; li != NULL; li = li->li_next)
+    // Make a copy of the a:000 items, since we didn't do that above.
+    for (li = fc->l_varlist.lv_first; li != NULL; li = li->li_next) {
       tv_copy(&li->li_tv, &li->li_tv);
+    }
   }
 
   if (--fp->uf_calls <= 0 && isdigit(*fp->uf_name) && fp->uf_refcount <= 0) {
