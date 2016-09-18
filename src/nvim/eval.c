@@ -4951,7 +4951,8 @@ static list_T *rettv_list_alloc(typval_T *rettv)
   list_T *l = list_alloc();
   rettv->vval.v_list = l;
   rettv->v_type = VAR_LIST;
-  ++l->lv_refcount;
+  rettv->v_lock = VAR_UNLOCKED;
+  l->lv_refcount++;
   return l;
 }
 
@@ -6131,7 +6132,8 @@ static void rettv_dict_alloc(typval_T *rettv)
 
   rettv->vval.v_dict = d;
   rettv->v_type = VAR_DICT;
-  ++d->dv_refcount;
+  rettv->v_lock = VAR_UNLOCKED;
+  d->dv_refcount++;
 }
 
 /// Clear all the keys of a Dictionary. "d" remains a valid empty Dictionary.
