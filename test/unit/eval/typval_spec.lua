@@ -14,6 +14,7 @@ local alloc_log_new = helpers.alloc_log_new
 local a = eval_helpers.alloc_logging_helpers
 local list = eval_helpers.list
 local lst2tbl = eval_helpers.lst2tbl
+local typvalt = eval_helpers.typvalt
 local type_key  = eval_helpers.type_key
 local li_alloc  = eval_helpers.li_alloc
 local int_type  = eval_helpers.int_type
@@ -745,6 +746,147 @@ describe('typval.c', function()
         local lis_copy1 = list_items(l_copy1)
         lib.tv_list_item_remove(l_copy1, lis_copy1[1])
         eq(1, l_copy1.lv_refcount)
+      end)
+    end)
+    describe('concat()', function()
+      itp('works with NULL lists', function()
+        local l = list(1, {})
+        alloc_log:clear()
+        eq(1, l.lv_refcount)
+        eq(1, l.lv_last.li_tv.vval.v_dict.dv_refcount)
+
+        local rettv1 = typvalt()
+        eq(OK, lib.tv_list_concat(nil, l, rettv1))
+        eq(1, l.lv_refcount)
+        eq(tonumber(lib.VAR_LIST), tonumber(rettv1.v_type))
+        eq({1, {}}, typvalt2lua(rettv1))
+        eq(1, rettv1.vval.v_list.lv_refcount)
+        alloc_log:check({
+          a.list(rettv1.vval.v_list),
+          a.li(rettv1.vval.v_list.lv_first),
+          a.li(rettv1.vval.v_list.lv_last),
+        })
+        eq(2, l.lv_last.li_tv.vval.v_dict.dv_refcount)
+
+        local rettv2 = typvalt()
+        eq(OK, lib.tv_list_concat(l, nil, rettv2))
+        eq(1, l.lv_refcount)
+        eq(tonumber(lib.VAR_LIST), tonumber(rettv2.v_type))
+        eq({1, {}}, typvalt2lua(rettv2))
+        eq(1, rettv2.vval.v_list.lv_refcount)
+        alloc_log:check({
+          a.list(rettv2.vval.v_list),
+          a.li(rettv2.vval.v_list.lv_first),
+          a.li(rettv2.vval.v_list.lv_last),
+        })
+        eq(3, l.lv_last.li_tv.vval.v_dict.dv_refcount)
+
+        local rettv3 = typvalt()
+        eq(OK, lib.tv_list_concat(nil, nil, rettv3))
+        eq(tonumber(lib.VAR_LIST), tonumber(rettv3.v_type))
+        eq(null_list, typvalt2lua(rettv3))
+        alloc_log:check({})
+      end)
+      itp('works with two different lists', function()
+        local l1 = list(1, {})
+        local l2 = list(3, {[type_key]=list_type})
+        eq(1, l1.lv_refcount)
+        eq(1, l1.lv_last.li_tv.vval.v_dict.dv_refcount)
+        eq(1, l2.lv_refcount)
+        eq(1, l2.lv_last.li_tv.vval.v_list.lv_refcount)
+        alloc_log:clear()
+
+        local rettv = typvalt()
+        eq(OK, lib.tv_list_concat(l1, l2, rettv))
+        eq(1, l1.lv_refcount)
+        eq(2, l1.lv_last.li_tv.vval.v_dict.dv_refcount)
+        eq(1, l2.lv_refcount)
+        eq(2, l2.lv_last.li_tv.vval.v_list.lv_refcount)
+        alloc_log:check({
+          a.list(rettv.vval.v_list),
+          a.li(rettv.vval.v_list.lv_first),
+          a.li(rettv.vval.v_list.lv_first.li_next),
+          a.li(rettv.vval.v_list.lv_last.li_prev),
+          a.li(rettv.vval.v_list.lv_last),
+        })
+        eq({1, {}, 3, {[type_key]=list_type}}, typvalt2lua(rettv))
+      end)
+      itp('can concatenate list with itself', function()
+        local l = list(1, {})
+        eq(1, l.lv_refcount)
+        eq(1, l.lv_last.li_tv.vval.v_dict.dv_refcount)
+        alloc_log:clear()
+
+        local rettv = typvalt()
+        eq(OK, lib.tv_list_concat(l, l, rettv))
+        eq(1, l.lv_refcount)
+        eq(3, l.lv_last.li_tv.vval.v_dict.dv_refcount)
+        alloc_log:check({
+          a.list(rettv.vval.v_list),
+          a.li(rettv.vval.v_list.lv_first),
+          a.li(rettv.vval.v_list.lv_first.li_next),
+          a.li(rettv.vval.v_list.lv_last.li_prev),
+          a.li(rettv.vval.v_list.lv_last),
+        })
+        eq({1, {}, 1, {}}, typvalt2lua(rettv))
+      end)
+      itp('can concatenate empty non-NULL lists', function()
+        local l = list(1, {})
+        local le = list()
+        local le2 = list()
+        eq(1, l.lv_refcount)
+        eq(1, l.lv_last.li_tv.vval.v_dict.dv_refcount)
+        eq(1, le.lv_refcount)
+        eq(1, le2.lv_refcount)
+        alloc_log:clear()
+
+        local rettv1 = typvalt()
+        eq(OK, lib.tv_list_concat(l, le, rettv1))
+        eq(1, l.lv_refcount)
+        eq(2, l.lv_last.li_tv.vval.v_dict.dv_refcount)
+        eq(1, le.lv_refcount)
+        eq(1, le2.lv_refcount)
+        alloc_log:check({
+          a.list(rettv1.vval.v_list),
+          a.li(rettv1.vval.v_list.lv_first),
+          a.li(rettv1.vval.v_list.lv_last),
+        })
+        eq({1, {}}, typvalt2lua(rettv1))
+
+        local rettv2 = typvalt()
+        eq(OK, lib.tv_list_concat(le, l, rettv2))
+        eq(1, l.lv_refcount)
+        eq(3, l.lv_last.li_tv.vval.v_dict.dv_refcount)
+        eq(1, le.lv_refcount)
+        eq(1, le2.lv_refcount)
+        alloc_log:check({
+          a.list(rettv2.vval.v_list),
+          a.li(rettv2.vval.v_list.lv_first),
+          a.li(rettv2.vval.v_list.lv_last),
+        })
+        eq({1, {}}, typvalt2lua(rettv2))
+
+        local rettv3 = typvalt()
+        eq(OK, lib.tv_list_concat(le, le, rettv3))
+        eq(1, l.lv_refcount)
+        eq(3, l.lv_last.li_tv.vval.v_dict.dv_refcount)
+        eq(1, le.lv_refcount)
+        eq(1, le2.lv_refcount)
+        alloc_log:check({
+          a.list(rettv3.vval.v_list),
+        })
+        eq({[type_key]=list_type}, typvalt2lua(rettv3))
+
+        local rettv4 = typvalt()
+        eq(OK, lib.tv_list_concat(le, le2, rettv4))
+        eq(1, l.lv_refcount)
+        eq(3, l.lv_last.li_tv.vval.v_dict.dv_refcount)
+        eq(1, le.lv_refcount)
+        eq(1, le2.lv_refcount)
+        alloc_log:check({
+          a.list(rettv4.vval.v_list),
+        })
+        eq({[type_key]=list_type}, typvalt2lua(rettv4))
       end)
     end)
   end)
