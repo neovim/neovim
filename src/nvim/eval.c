@@ -292,8 +292,8 @@ typedef enum {
     .vv_di = { \
       .di_tv = { .v_type = type }, \
       .di_flags = 0, \
+      .di_key = { 0 }, \
     }, \
-    .vv_filler = { 0 }, \
     .vv_flags = flags, \
   }
 
@@ -303,8 +303,7 @@ typedef enum {
 // variables with the VV_ defines.
 static struct vimvar {
   char        *vv_name;  ///< Name of the variable, without v:.
-  dictitem_T vv_di;      ///< Value of the variable, with name.
-  char vv_filler[16];    ///< Space for longest name from below.
+  dictitem16_T vv_di;    ///< Value and name for key (max 16 chars)
   char vv_flags;         ///< Flags: #VV_COMPAT, #VV_RO, #VV_RO_SBX.
 } vimvars[] =
 {
