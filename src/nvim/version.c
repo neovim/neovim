@@ -74,6 +74,7 @@ static char *features[] = {
 
 // clang-format off
 static int included_patches[] = {
+  2284,
   2219,
   // 2200,
   // 2199,
@@ -242,7 +243,7 @@ static int included_patches[] = {
   // 2036,
   // 2035 NA
   // 2034 NA
-  // 2033,
+  2033,
   // 2032 NA
   // 2031,
   // 2030 NA
@@ -285,7 +286,7 @@ static int included_patches[] = {
   // 1993,
   // 1992,
   // 1991,
-  // 1990,
+  1990,
   // 1989,
   // 1988 NA
   // 1987 NA
@@ -323,7 +324,7 @@ static int included_patches[] = {
   // 1955,
   // 1954,
   // 1953,
-  // 1952,
+  1952,
   // 1951 NA
   // 1950,
   // 1949,

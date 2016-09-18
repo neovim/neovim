@@ -25,18 +25,7 @@
 #define CSCOPE_DBFILE           "cscope.out"
 #define CSCOPE_PROMPT           ">> "
 
-/*
- * s 0name	Find this C symbol
- * g 1name	Find this definition
- * d 2name	Find functions called by this function
- * c 3name	Find functions calling this function
- * t 4string	find text string (cscope 12.9)
- * t 4name	Find assignments to (cscope 13.3)
- *   5pattern	change pattern -- NOT USED
- * e 6pattern	Find this egrep pattern
- * f 7name	Find this file
- * i 8name	Find files #including this file
- */
+// See ":help cscope-find" for the possible queries.
 
 typedef struct {
   char *  name;

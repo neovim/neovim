@@ -370,17 +370,17 @@ static char *(p_cb_values[]) = {"unnamed", "unnamedplus", NULL};
 # define CB_UNNAMED             0x001
 # define CB_UNNAMEDPLUS         0x002
 # define CB_UNNAMEDMASK         (CB_UNNAMED | CB_UNNAMEDPLUS)
-EXTERN long p_cwh;              /* 'cmdwinheight' */
-EXTERN long p_ch;               /* 'cmdheight' */
-EXTERN int p_confirm;           /* 'confirm' */
-EXTERN int p_cp;                /* 'compatible' */
-EXTERN char_u   *p_cot;         /* 'completeopt' */
-EXTERN long p_ph;               /* 'pumheight' */
-EXTERN char_u   *p_cpo;         /* 'cpoptions' */
-EXTERN char_u   *p_csprg;       /* 'cscopeprg' */
-EXTERN int p_csre;              /* 'cscoperelative' */
-EXTERN char_u   *p_csqf;        /* 'cscopequickfix' */
-#  define       CSQF_CMDS   "sgdctefi"
+EXTERN long p_cwh;              // 'cmdwinheight'
+EXTERN long p_ch;               // 'cmdheight'
+EXTERN int p_confirm;           // 'confirm'
+EXTERN int p_cp;                // 'compatible'
+EXTERN char_u   *p_cot;         // 'completeopt'
+EXTERN long p_ph;               // 'pumheight'
+EXTERN char_u   *p_cpo;         // 'cpoptions'
+EXTERN char_u   *p_csprg;       // 'cscopeprg'
+EXTERN int p_csre;              // 'cscoperelative'
+EXTERN char_u   *p_csqf;        // 'cscopequickfix'
+#  define       CSQF_CMDS   "sgdctefia"
 #  define       CSQF_FLAGS  "+-0"
 EXTERN int p_cst;               /* 'cscopetag' */
 EXTERN long p_csto;             /* 'cscopetagorder' */
