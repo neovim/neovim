@@ -761,16 +761,12 @@ void clearFolding(win_T *win)
  */
 void foldUpdate(win_T *wp, linenr_T top, linenr_T bot)
 {
-  if (compl_busy || State & INSERT) {
-    return;
-  }
-
-  fold_T      *fp;
-  if (wp->w_buffer->terminal) {
+  if (compl_busy || State & INSERT || wp->w_buffer->terminal) {
     return;
   }
 
   // Mark all folds from top to bot as maybe-small.
+  fold_T      *fp;
   (void)foldFind(&wp->w_folds, top, &fp);
   while (fp < (fold_T *)wp->w_folds.ga_data + wp->w_folds.ga_len
          && fp->fd_top < bot) {
