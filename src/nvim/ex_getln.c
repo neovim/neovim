@@ -4358,6 +4358,7 @@ static HistoryType hist_char2type(const int c)
   FUNC_ATTR_CONST FUNC_ATTR_WARN_UNUSED_RESULT
 {
   switch (c) {
+    case NUL:
     case ':': {
       return HIST_CMD;
     }
