@@ -376,8 +376,8 @@ local function wait()
 end
 
 -- sleeps the test runner (_not_ the nvim instance)
-local function sleep(timeout)
-  run(nil, nil, nil, timeout)
+local function sleep(ms)
+  run(nil, nil, nil, ms)
 end
 
 local function curbuf_contents()
@@ -403,7 +403,7 @@ local function expect(contents)
   return eq(dedent(contents), curbuf_contents())
 end
 
-local function rmdir(path)
+local function do_rmdir(path)
   if lfs.attributes(path, 'mode') ~= 'directory' then
     return nil
   end
@@ -411,7 +411,7 @@ local function rmdir(path)
     if file ~= '.' and file ~= '..' then
       local abspath = path..'/'..file
       if lfs.attributes(abspath, 'mode') == 'directory' then
-        local ret = rmdir(abspath)  -- recurse
+        local ret = do_rmdir(abspath)  -- recurse
         if not ret then
           return nil
         end
@@ -429,6 +429,16 @@ local function rmdir(path)
     error('os.remove: '..err)
   end
   return ret
+end
+
+local function rmdir(path)
+  local ret, err = pcall(do_rmdir, path)
+  -- During teardown, the nvim process may not exit quickly enough, then rmdir()
+  -- will fail (on Windows).
+  if not ret then  -- Try again.
+    sleep(1000)
+    do_rmdir(path)
+  end
 end
 
 local exc_exec = function(cmd)

@@ -36,6 +36,7 @@ describe("'directory' option", function()
     clear()
   end)
   teardown(function()
+    execute('qall!')
     helpers.rmdir('Xtest.je')
     helpers.rmdir('Xtest2')
     os.remove('Xtest1')
@@ -71,15 +72,14 @@ describe("'directory' option", function()
     wait()
 
     -- swapfile should no longer exist in CWD.
-    eq(nil, lfs.attributes('.Xtest1.swp')) -- for unix
-    eq(nil, lfs.attributes('Xtest1.swp'))  -- for other systems
+    eq(nil, lfs.attributes('.Xtest1.swp')) -- unix
+    eq(nil, lfs.attributes('Xtest1.swp'))  -- non-unix
 
     eq({ "Xtest1.swp", "Xtest3" }, ls_dir_sorted("Xtest2"))
 
     execute('set dir=Xtest.je,~')
     execute('e Xtest2/Xtest3')
     eq(1, eval('&swapfile'))
-    execute('swap')
     wait()
 
     eq({ "Xtest3" }, ls_dir_sorted("Xtest2"))
