@@ -36,6 +36,7 @@ describe("'directory' option", function()
     clear()
   end)
   teardown(function()
+    execute('qall!')
     helpers.rmdir('Xtest.je')
     helpers.rmdir('Xtest2')
     os.remove('Xtest1')
@@ -52,34 +53,27 @@ describe("'directory' option", function()
     execute('set dir=.,~')
 
     -- sanity check: files should not exist yet.
-    eq(nil, lfs.attributes('.Xtest1.swp')) -- unix
-    eq(nil, lfs.attributes('Xtest1.swp'))  -- non-unix
+    eq(nil, lfs.attributes('.Xtest1.swp'))
 
     execute('e! Xtest1')
     wait()
     eq('Xtest1', eval('buffer_name("%")'))
     -- Verify that the swapfile exists. In the legacy test this was done by
     -- reading the output from :!ls.
-    if eval('has("unix")') == 1 then
-      neq(nil, lfs.attributes('.Xtest1.swp'))
-    else
-      neq(nil, lfs.attributes('Xtest1.swp'))
-    end
+    neq(nil, lfs.attributes('.Xtest1.swp'))
 
     execute('set dir=./Xtest2,.,~')
     execute('e Xtest1')
     wait()
 
     -- swapfile should no longer exist in CWD.
-    eq(nil, lfs.attributes('.Xtest1.swp')) -- for unix
-    eq(nil, lfs.attributes('Xtest1.swp'))  -- for other systems
+    eq(nil, lfs.attributes('.Xtest1.swp'))
 
     eq({ "Xtest1.swp", "Xtest3" }, ls_dir_sorted("Xtest2"))
 
     execute('set dir=Xtest.je,~')
     execute('e Xtest2/Xtest3')
     eq(1, eval('&swapfile'))
-    execute('swap')
     wait()
 
     eq({ "Xtest3" }, ls_dir_sorted("Xtest2"))

@@ -19,7 +19,18 @@ local expect = helpers.expect
 local execute = helpers.execute
 
 describe('Commands that close windows and/or buffers', function()
-  setup(clear)
+  local function cleanup()
+    os.remove('Xtest1')
+    os.remove('Xtest2')
+    os.remove('Xtest3')
+  end
+  setup(function()
+    cleanup()
+    clear()
+  end)
+  teardown(function()
+    cleanup()
+  end)
 
   it('is working', function()
     insert('testtext')
@@ -111,11 +122,5 @@ describe('Commands that close windows and/or buffers', function()
       q!
       " Now nvim should have exited
       throw "Oh, Not finished yet."]])
-  end)
-
-  teardown(function()
-    os.remove('Xtest1')
-    os.remove('Xtest2')
-    os.remove('Xtest3')
   end)
 end)
