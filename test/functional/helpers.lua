@@ -424,15 +424,15 @@ local function do_rmdir(path)
       end
     end
   end
-  local ret, err = os.remove(path)
+  local ret, err = lfs.rmdir(path)
   if not ret then
-    error('os.remove: '..err)
+    error('lfs.rmdir('..path..'): '..err)
   end
   return ret
 end
 
 local function rmdir(path)
-  local ret, err = pcall(do_rmdir, path)
+  local ret, _ = pcall(do_rmdir, path)
   -- During teardown, the nvim process may not exit quickly enough, then rmdir()
   -- will fail (on Windows).
   if not ret then  -- Try again.
