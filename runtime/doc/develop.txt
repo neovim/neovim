@@ -213,13 +213,13 @@ If the function acts on an object then {thing} is the name of that object
 with a {thing} that groups functions under a common concept).
 
 Use existing common {action} names if possible:
-    add   append to, or insert into, a collection
-    get   get a thing (or subset of things by some query)
-    set   set a thing
-    del   delete a thing (or group of things)
-    list  get all things
+    add   Append to, or insert into, a collection
+    get   Get a thing (or subset of things by some query)
+    set   Set a thing
+    del   Delete a thing (or group of things)
+    list  Get all things
 
-Use consistent names for {thing} in all API function. E.g. a buffer is called
+Use consistent names for {thing} in all API functions. E.g. a buffer is called
 "buf" everywhere, not "buffer" in some places and "buf" in others.
 
 Example: `nvim_get_current_line` acts on the global editor state; the common
