@@ -10,7 +10,7 @@ describe('undolevel', function()
       func FillBuffer()
         for i in range(1,13)
           put=i
-          " Set 'undolevels' to split undo. 
+          " Set 'undolevels' to split undo.
           exe "setg ul=" . &g:ul
         endfor
       endfunc
@@ -48,6 +48,10 @@ describe('undolevel', function()
         call assert_equal(50, &g:undolevels)
         call assert_equal(-123456, &l:undolevels)
 
+        " Drop created windows
+        set ul&
+        new
+        only!
       endfunc
 
       call Test_global_local_undolevels()

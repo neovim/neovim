@@ -41,6 +41,7 @@ NEW_TESTS = \
 	    test_viml.res \
 	    test_visual.res \
 	    test_window_id.res \
+	    test_matchadd_conceal.res \
 	    test_alot.res
 
 SCRIPTS_GUI := test16.out
