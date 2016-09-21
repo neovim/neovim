@@ -47,6 +47,25 @@ lang mess C
 " Always use forward slashes.
 set shellslash
 
+function RunTheTest(test)
+  echo 'Executing ' . test
+  if exists("*SetUp")
+    call SetUp()
+  endif
+
+  call add(s:messages, 'Executing ' . test)
+  let s:done += 1
+  try
+    exe 'call ' . test
+  catch
+    call add(v:errors, 'Caught exception in ' . test . ': ' . v:exception . ' @ ' . v:throwpoint)
+  endtry
+
+  if exists("*TearDown")
+    call TearDown()
+  endif
+endfunc
+
 " Source the test script.  First grab the file name, in case the script
 " navigates away.
 let testname = expand('%')
@@ -66,6 +85,9 @@ else
   endtry
 endif
 
+" Names of flaky tests.
+let s:flaky = []
+
 " Locate Test_ functions and execute them.
 set nomore
 redir @q
@@ -80,19 +102,13 @@ endif
 
 " Execute the tests in alphabetical order.
 for test in sort(tests)
-  echo 'Executing ' . test
-  if exists("*SetUp")
-    call SetUp()
-  endif
+  call RunTheTest(test)
 
-  call add(messages, 'Executing ' . test)
-  let done += 1
-  try
-    exe 'call ' . test
-  catch
-    let fail += 1
-    call add(v:errors, 'Caught exception in ' . test . ': ' . v:exception . ' @ ' . v:throwpoint)
-  endtry
+  if len(v:errors) > 0 && index(flaky, test) >= 0
+		call add(messages, 'Flaky test failed, running it again')
+		let v:errors = []
+		call RunTheTest(test)
+	endif
 
   if len(v:errors) > 0
     let fail += 1
@@ -101,9 +117,6 @@ for test in sort(tests)
     let v:errors = []
   endif
 
-  if exists("*TearDown")
-    call TearDown()
-  endif
 endfor
 
 if fail == 0
