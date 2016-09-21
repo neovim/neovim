@@ -109,7 +109,7 @@ for s:test in sort(s:tests)
   call RunTheTest(s:test)
 
   if len(v:errors) > 0 && index(flaky, s:test) >= 0
-		call add(messages, 'Flaky test failed, running it again')
+		call add(s:messages, 'Flaky test failed, running it again')
 		let v:errors = []
 		call RunTheTest(s:test)
 	endif
@@ -149,7 +149,7 @@ if s:fail > 0
 endif
 
 " Append messages to "messages"
-split s:messages
+split messages
 call append(line('$'), '')
 call append(line('$'), 'From ' . g:testname . ':')
 call append(line('$'), s:messages)
