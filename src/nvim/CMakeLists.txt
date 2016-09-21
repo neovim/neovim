@@ -39,6 +39,7 @@ set(UNICODE_DIR ${PROJECT_SOURCE_DIR}/unicode)
 set(UNICODEDATA_FILE ${UNICODE_DIR}/UnicodeData.txt)
 set(CASEFOLDING_FILE ${UNICODE_DIR}/CaseFolding.txt)
 set(EASTASIANWIDTH_FILE ${UNICODE_DIR}/EastAsianWidth.txt)
+set(EMOJI_FILE ${UNICODE_DIR}/emoji-data.txt)
 set(GENERATED_UNICODE_TABLES ${GENERATED_DIR}/unicode_tables.generated.h)
 
 include_directories(${GENERATED_DIR})
@@ -195,12 +196,14 @@ add_custom_command(OUTPUT ${GENERATED_UNICODE_TABLES}
                      ${UNICODEDATA_FILE}
                      ${CASEFOLDING_FILE}
                      ${EASTASIANWIDTH_FILE}
+                     ${EMOJI_FILE}
                      ${GENERATED_UNICODE_TABLES}
   DEPENDS
     ${UNICODE_TABLES_GENERATOR}
     ${UNICODEDATA_FILE}
     ${CASEFOLDING_FILE}
     ${EASTASIANWIDTH_FILE}
+    ${EMOJI_FILE}
 )
 
 add_custom_command(OUTPUT ${GENERATED_API_DISPATCH} ${API_METADATA}

@@ -1195,6 +1195,8 @@ if has("multi_byte")
   endif
   call append("$", "ambiwidth\twidth of ambiguous width characters")
   call <SID>OptionG("ambw", &ambw)
+  call append("$", "emoji\temoji characters are full width")
+  call <SID>BinOptionG("emo", &emo)
 endif
 
 

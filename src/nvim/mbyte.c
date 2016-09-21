@@ -949,6 +949,9 @@ int utf_char2cells(int c)
     if (intable(doublewidth, ARRAY_SIZE(doublewidth), c))
       return 2;
 #endif
+    if (p_emoji && intable(emoji, ARRAY_SIZE(emoji), c)) {
+      return 2;
+    }
   }
   /* Characters below 0x100 are influenced by 'isprint' option */
   else if (c >= 0x80 && !vim_isprintc(c))

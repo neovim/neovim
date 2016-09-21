@@ -12,10 +12,12 @@
 --    2 then interval applies only to first, third, fifth, … character in range. 
 --    Fourth value is number that should be added to the codepoint to yield 
 --    folded/lower/upper codepoint.
+-- 4. emoji table: sorted list of non-overlapping closed intervals of Emoji
+--    characters
 if arg[1] == '--help' then
   print('Usage:')
   print('  genunicodetables.lua UnicodeData.txt CaseFolding.txt ' ..
-        'EastAsianWidth.txt')
+        'EastAsianWidth.txt emoji-data.txt')
   print('                       unicode_tables.generated.h')
   os.exit(0)
 end
@@ -23,8 +25,9 @@ end
 local unicodedata_fname = arg[1]
 local casefolding_fname = arg[2]
 local eastasianwidth_fname = arg[3]
+local emoji_fname = arg[4]
 
-local utf_tables_fname = arg[4]
+local utf_tables_fname = arg[5]
 
 local split_on_semicolons = function(s)
   local ret = {}
@@ -77,6 +80,10 @@ end
 
 local parse_width_props = function(eaw_fp)
   return fp_lines_to_lists(eaw_fp, 2, true)
+end
+
+local parse_emoji_props = function(emoji_fp)
+  return fp_lines_to_lists(emoji_fp, 2, true)
 end
 
 local make_range = function(start, end_, step, add)
@@ -213,6 +220,24 @@ local build_width_table = function(ut_fp, dataprops, widthprops, widths,
   ut_fp:write('};\n')
 end
 
+local build_emoji_table = function(ut_fp, emojiprops)
+  ut_fp:write('static const struct interval emoji[] = {\n')
+  for _, p in ipairs(emojiprops) do
+    if p[2]:match('Emoji%s+#') then
+      local start, end_ = p[1]:find('%.%.')
+      if start then
+        local n = tonumber(p[1]:sub(1, start - 1), 16)
+        local nl = tonumber(p[1]:sub(end_ + 1), 16)
+        ut_fp:write(make_range(n, nl))
+      else
+        local n = tonumber(p[1], 16)
+        ut_fp:write(make_range(n, n))
+      end
+    end
+  end
+  ut_fp:write('};\n')
+end
+
 local ud_fp = io.open(unicodedata_fname, 'r')
 local dataprops = parse_data_to_props(ud_fp)
 ud_fp:close()
@@ -235,5 +260,11 @@ eaw_fp:close()
 
 build_width_table(ut_fp, dataprops, widthprops, {W=true, F=true}, 'doublewidth')
 build_width_table(ut_fp, dataprops, widthprops, {A=true}, 'ambiguous')
+
+local emoji_fp = io.open(emoji_fname, 'r')
+local emojiprops = parse_emoji_props(emoji_fp)
+emoji_fp:close()
+
+build_emoji_table(ut_fp, emojiprops)
 
 ut_fp:close()

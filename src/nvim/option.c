@@ -2520,7 +2520,7 @@ did_set_string_option (
       errmsg = e_invarg;
   }
   /* 'ambiwidth' */
-  else if (varp == &p_ambw) {
+  else if (varp == &p_ambw || (bool *)varp == &p_emoji) {
     if (check_opt_strings(p_ambw, p_ambw_values, FALSE) != OK)
       errmsg = e_invarg;
     else if (set_chars_option(&p_lcs) != NULL)
