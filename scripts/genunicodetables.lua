@@ -12,8 +12,9 @@
 --    2 then interval applies only to first, third, fifth, … character in range. 
 --    Fourth value is number that should be added to the codepoint to yield 
 --    folded/lower/upper codepoint.
--- 4. emoji_tab table: sorted list of non-overlapping closed intervals of Emoji
---    characters
+-- 4. emoji_width and emoji_all tables: sorted lists of non-overlapping closed
+--    intervals of Emoji characters.  emoji_width contains all the characters
+--    which don't have ambiguous or double width, and emoji_all has all Emojis.
 if arg[1] == '--help' then
   print('Usage:')
   print('  genunicodetables.lua UnicodeData.txt CaseFolding.txt ' ..
@@ -242,29 +243,34 @@ local build_emoji_table = function(ut_fp, emojiprops, doublewidth, ambiwidth)
       else
         table.insert(emoji, { n, n_last })
       end
-      -- exclude characters that are in the ambiguous/doublewidth table
-      for _, ambi in ipairs(ambiwidth) do
-        if n >= ambi[1] and n <= ambi[2] then
-          n = ambi[2] + 1
-        end
-        if n_last >= ambi[1] and n_last <= ambi[2] then
-          n_last = ambi[1] - 1
-        end
-      end
-      for _, double in ipairs(doublewidth) do
-        if n >= double[1] and n <= double[2] then
-          n = double[2] + 1
-        end
-        if n_last >= double[1] and n_last <= double[2] then
-          n_last = double[1] - 1
-        end
-      end
 
-      if n <= n_last then
-        if #emojiwidth > 0 and n - 1 == emojiwidth[#emojiwidth][2] then
-          emojiwidth[#emojiwidth][2] = n_last
-        else
-          table.insert(emojiwidth, { n, n_last })
+      -- Characters below 1F000 may be considered single width traditionally,
+      -- making them double width causes problems.
+      if n >= 0x1f000 then
+        -- exclude characters that are in the ambiguous/doublewidth table
+        for _, ambi in ipairs(ambiwidth) do
+          if n >= ambi[1] and n <= ambi[2] then
+            n = ambi[2] + 1
+          end
+          if n_last >= ambi[1] and n_last <= ambi[2] then
+            n_last = ambi[1] - 1
+          end
+        end
+        for _, double in ipairs(doublewidth) do
+          if n >= double[1] and n <= double[2] then
+            n = double[2] + 1
+          end
+          if n_last >= double[1] and n_last <= double[2] then
+            n_last = double[1] - 1
+          end
+        end
+
+        if n <= n_last then
+          if #emojiwidth > 0 and n - 1 == emojiwidth[#emojiwidth][2] then
+            emojiwidth[#emojiwidth][2] = n_last
+          else
+            table.insert(emojiwidth, { n, n_last })
+          end
         end
       end
     end
