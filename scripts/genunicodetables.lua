@@ -12,7 +12,7 @@
 --    2 then interval applies only to first, third, fifth, … character in range. 
 --    Fourth value is number that should be added to the codepoint to yield 
 --    folded/lower/upper codepoint.
--- 4. emoji table: sorted list of non-overlapping closed intervals of Emoji
+-- 4. emoji_tab table: sorted list of non-overlapping closed intervals of Emoji
 --    characters
 if arg[1] == '--help' then
   print('Usage:')
@@ -221,7 +221,7 @@ local build_width_table = function(ut_fp, dataprops, widthprops, widths,
 end
 
 local build_emoji_table = function(ut_fp, emojiprops)
-  ut_fp:write('static const struct interval emoji[] = {\n')
+  ut_fp:write('static const struct interval emoji_tab[] = {\n')
   for _, p in ipairs(emojiprops) do
     if p[2]:match('Emoji%s+#') then
       local start, end_ = p[1]:find('%.%.')
