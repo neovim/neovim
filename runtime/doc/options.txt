@@ -899,7 +899,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	- The backup file will be created in the first directory in the list
 	  where this is possible.  The directory must exist, Vim will not
 	  create it for you.
-	- Empty means that no backup file will be created ( 'patchmode' is
+	- Empty means that no backup file will be created ('patchmode' is
 	  impossible!).  Writing may fail because of this.
 	- A directory "." means to put the backup file in the same directory
 	  as the edited file.
@@ -1459,7 +1459,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	when CTRL-P or CTRL-N are used.  It is also used for whole-line
 	completion |i_CTRL-X_CTRL-L|.  It indicates the type of completion
 	and the places to scan.  It is a comma separated list of flags:
-	.	scan the current buffer ( 'wrapscan' is ignored)
+	.	scan the current buffer ('wrapscan' is ignored)
 	w	scan buffers from other windows
 	b	scan other loaded buffers that are in the buffer list
 	u	scan the unloaded buffers that are in the buffer list
@@ -2131,6 +2131,15 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 			   *'ed'* *'edcompatible'* *'noed'* *'noedcompatible'*
 'edcompatible' 'ed'	Removed. |vim-differences| {Nvim}
+
+						*'emoji'* *'emo'*
+'emoji' 'emo'	boolean (default: on)
+			global
+			{not in Vi}
+			{only available when compiled with the |+multi_byte|
+			feature}
+	When on all Unicode emoji characters are considered to be full width.
+
 
 					*'encoding'* *'enc'* *E543*
 'encoding' 'enc'	string (default: "utf-8")
@@ -3096,7 +3105,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 		The same applies to the modeless selection.
 								*'go-P'*
 	  'P'	Like autoselect but using the "+ register instead of the "*
-	  	register.
+		register.
 								*'go-A'*
 	  'A'	Autoselect for the modeless selection.  Like 'a', but only
 		applies to the modeless selection.
@@ -4410,7 +4419,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	respectively; see |CTRL-A| for more info on these commands.
 	alpha	If included, single alphabetical characters will be
 		incremented or decremented.  This is useful for a list with a
-		letter index a), b), etc.	  	*octal-nrformats*
+		letter index a), b), etc.		*octal-nrformats*
 	octal	If included, numbers that start with a zero will be considered
 		to be octal.  Example: Using CTRL-A on "007" results in "010".
 	hex	If included, numbers starting with "0x" or "0X" will be
@@ -4440,7 +4449,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	relative to the cursor.  Together with 'number' there are these
 	four combinations (cursor in line 3):
 
-              	'nonu'          'nu'            'nonu'          'nu'
+		'nonu'          'nu'            'nonu'          'nu'
 		'nornu'         'nornu'         'rnu'           'rnu'
 
 	    |apple          |  1 apple      |  2 apple      |  2 apple
