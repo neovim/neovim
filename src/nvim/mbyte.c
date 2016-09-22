@@ -1724,12 +1724,11 @@ int utf_class(int c)
   return 2;
 }
 
-/*
- * Code for Unicode case-dependent operations.  Based on notes in
- * http://www.unicode.org/Public/UNIDATA/CaseFolding.txt
- * This code uses simple case folding, not full case folding.
- * Last updated for Unicode 5.2.
- */
+int utf_ambiguous_width(int c)
+{
+  return c >= 0x80 && (intable(ambiguous, ARRAY_SIZE(ambiguous), c)
+                       || intable(emoji_all, ARRAY_SIZE(emoji_all), c));
+}
 
 /*
  * Generic conversion function for case operations.
