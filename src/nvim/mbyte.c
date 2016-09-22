@@ -949,7 +949,7 @@ int utf_char2cells(int c)
     if (intable(doublewidth, ARRAY_SIZE(doublewidth), c))
       return 2;
 #endif
-    if (p_emoji && intable(emoji_tab, ARRAY_SIZE(emoji_tab), c)) {
+    if (p_emoji && intable(emoji_width, ARRAY_SIZE(emoji_width), c)) {
       return 2;
     }
   }
@@ -1716,7 +1716,7 @@ int utf_class(int c)
   }
 
   // emoji
-  if (intable(emoji_tab, ARRAY_SIZE(emoji_tab), c)) {
+  if (intable(emoji_all, ARRAY_SIZE(emoji_all), c)) {
     return 3;
   }
 

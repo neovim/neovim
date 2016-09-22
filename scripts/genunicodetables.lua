@@ -175,6 +175,7 @@ local build_width_table = function(ut_fp, dataprops, widthprops, widths,
   local start = -1
   local end_ = -1
   local dataidx = 1
+  local ret = {}
   for _, p in ipairs(widthprops) do
     if widths[p[2]:sub(1, 1)] then
       local rng_start, rng_end = p[1]:find('%.%.')
@@ -207,6 +208,7 @@ local build_width_table = function(ut_fp, dataprops, widthprops, widths,
         else
           if start >= 0 then
             ut_fp:write(make_range(start, end_))
+            table.insert(ret, {start, end_})
           end
           start = n
         end
@@ -216,24 +218,67 @@ local build_width_table = function(ut_fp, dataprops, widthprops, widths,
   end
   if start >= 0 then
     ut_fp:write(make_range(start, end_))
+    table.insert(ret, {start, end_})
   end
   ut_fp:write('};\n')
+  return ret
 end
 
-local build_emoji_table = function(ut_fp, emojiprops)
-  ut_fp:write('static const struct interval emoji_tab[] = {\n')
+local build_emoji_table = function(ut_fp, emojiprops, doublewidth, ambiwidth)
+  local emojiwidth = {}
+  local emoji = {}
   for _, p in ipairs(emojiprops) do
     if p[2]:match('Emoji%s+#') then
-      local start, end_ = p[1]:find('%.%.')
-      if start then
-        local n = tonumber(p[1]:sub(1, start - 1), 16)
-        local nl = tonumber(p[1]:sub(end_ + 1), 16)
-        ut_fp:write(make_range(n, nl))
+      local rng_start, rng_end = p[1]:find('%.%.')
+      if rng_start then
+        n = tonumber(p[1]:sub(1, rng_start - 1), 16)
+        n_last = tonumber(p[1]:sub(rng_end + 1), 16)
       else
-        local n = tonumber(p[1], 16)
-        ut_fp:write(make_range(n, n))
+        n = tonumber(p[1], 16)
+        n_last = n
+      end
+      if #emoji > 0 and n - 1 == emoji[#emoji][2] then
+        emoji[#emoji][2] = n_last
+      else
+        table.insert(emoji, { n, n_last })
+      end
+      -- exclude characters that are in the ambiguous/doublewidth table
+      for _, ambi in ipairs(ambiwidth) do
+        if n >= ambi[1] and n <= ambi[2] then
+          n = ambi[2] + 1
+        end
+        if n_last >= ambi[1] and n_last <= ambi[2] then
+          n_last = ambi[1] - 1
+        end
+      end
+      for _, double in ipairs(doublewidth) do
+        if n >= double[1] and n <= double[2] then
+          n = double[2] + 1
+        end
+        if n_last >= double[1] and n_last <= double[2] then
+          n_last = double[1] - 1
+        end
+      end
+
+      if n <= n_last then
+        if #emojiwidth > 0 and n - 1 == emojiwidth[#emojiwidth][2] then
+          emojiwidth[#emojiwidth][2] = n_last
+        else
+          table.insert(emojiwidth, { n, n_last })
+        end
       end
     end
+  end
+
+  ut_fp:write('static const struct interval emoji_all[] = {\n')
+  for _, p in ipairs(emoji) do
+    ut_fp:write(make_range(p[1], p[2]))
+  end
+  ut_fp:write('};\n')
+
+  ut_fp:write('static const struct interval emoji_width[] = {\n')
+  for _, p in ipairs(emojiwidth) do
+    ut_fp:write(make_range(p[1], p[2]))
   end
   ut_fp:write('};\n')
 end
@@ -258,13 +303,15 @@ local eaw_fp = io.open(eastasianwidth_fname, 'r')
 local widthprops = parse_width_props(eaw_fp)
 eaw_fp:close()
 
-build_width_table(ut_fp, dataprops, widthprops, {W=true, F=true}, 'doublewidth')
-build_width_table(ut_fp, dataprops, widthprops, {A=true}, 'ambiguous')
+local doublewidth = build_width_table(ut_fp, dataprops, widthprops,
+                                      {W=true, F=true}, 'doublewidth')
+local ambiwidth = build_width_table(ut_fp, dataprops, widthprops,
+                                    {A=true}, 'ambiguous')
 
 local emoji_fp = io.open(emoji_fname, 'r')
 local emojiprops = parse_emoji_props(emoji_fp)
 emoji_fp:close()
 
-build_emoji_table(ut_fp, emojiprops)
+build_emoji_table(ut_fp, emojiprops, doublewidth, ambiwidth)
 
 ut_fp:close()
