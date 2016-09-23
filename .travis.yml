@@ -1,6 +1,9 @@
 sudo: false
 language: c
 
+# macOS 10.11
+osx_image: xcode7.3
+
 env:
   global:
     # To force rebuilding of third-party dependencies, set this to 'true'.
