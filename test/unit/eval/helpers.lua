@@ -439,4 +439,6 @@ return {
 
   list_items=list_items,
   dict_items=dict_items,
+
+  empty_list = {[type_key]=list_type},
 }
