@@ -108,7 +108,7 @@ endif
 for s:test in sort(s:tests)
   call RunTheTest(s:test)
 
-  if len(v:errors) > 0 && index(flaky, s:test) >= 0
+  if len(v:errors) > 0 && index(s:flaky, s:test) >= 0
 		call add(s:messages, 'Flaky test failed, running it again')
 		let v:errors = []
 		call RunTheTest(s:test)
