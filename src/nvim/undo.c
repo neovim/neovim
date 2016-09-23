@@ -308,13 +308,14 @@ bool undo_allowed(void)
 /*
  * Get the undolevle value for the current buffer.
  */
-static long get_undolevel(void)
+static intmax_t get_undolevel(void)
 {
   if (curbuf->terminal) {
     return -1;
   }
-  if (curbuf->b_p_ul == NO_LOCAL_UNDOLEVEL)
+  if (curbuf->b_p_ul == NO_LOCAL_UNDOLEVEL) {
     return p_ul;
+  }
   return curbuf->b_p_ul;
 }
 

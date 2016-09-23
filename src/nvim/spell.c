@@ -13023,7 +13023,7 @@ void ex_spellinfo(exarg_T *eap)
 void ex_spelldump(exarg_T *eap)
 {
   char_u  *spl;
-  long dummy;
+  NumOpt dummy;
 
   if (no_spell_checking(curwin))
     return;

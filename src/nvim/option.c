@@ -130,8 +130,8 @@ static char_u   *p_ff;
 static char_u   *p_fo;
 static char_u   *p_flp;
 static char_u   *p_ft;
-static long p_iminsert;
-static long p_imsearch;
+static NumOpt p_iminsert;
+static NumOpt p_imsearch;
 static char_u   *p_inex;
 static char_u   *p_inde;
 static char_u   *p_indk;
@@ -148,33 +148,33 @@ static int p_pi;
 static char_u   *p_qe;
 static int p_ro;
 static int p_si;
-static long p_sts;
+static NumOpt p_sts;
 static char_u   *p_sua;
-static long p_sw;
+static NumOpt p_sw;
 static int p_swf;
-static long p_smc;
+static NumOpt p_smc;
 static char_u   *p_syn;
 static char_u   *p_spc;
 static char_u   *p_spf;
 static char_u   *p_spl;
-static long p_ts;
-static long p_tw;
+static NumOpt p_ts;
+static NumOpt p_tw;
 static int p_udf;
-static long p_wm;
+static NumOpt p_wm;
 static char_u   *p_keymap;
 
 /* Saved values for when 'bin' is set. */
 static int p_et_nobin;
 static int p_ml_nobin;
-static long p_tw_nobin;
-static long p_wm_nobin;
+static NumOpt p_tw_nobin;
+static NumOpt p_wm_nobin;
 
 // Saved values for when 'paste' is set.
 static int p_ai_nopaste;
 static int p_et_nopaste;
-static long p_sts_nopaste;
-static long p_tw_nopaste;
-static long p_wm_nopaste;
+static NumOpt p_sts_nopaste;
+static NumOpt p_tw_nopaste;
+static NumOpt p_wm_nopaste;
 
 typedef struct vimoption {
   char        *fullname;        /* full option name */
@@ -825,14 +825,15 @@ set_option_default (
         options[opt_idx].flags &= ~P_ALLOCED;
       }
     } else if (flags & P_NUM)   {
-      if (options[opt_idx].indir == PV_SCROLL)
+      if (options[opt_idx].indir == PV_SCROLL) {
         win_comp_scroll(curwin);
-      else {
-        *(long *)varp = (long)options[opt_idx].def_val[dvi];
-        /* May also set global value for local option. */
-        if (both)
-          *(long *)get_varp_scope(&(options[opt_idx]), OPT_GLOBAL) =
-            *(long *)varp;
+      } else {
+        *(NumOpt *)varp = (NumOpt)(intptr_t)options[opt_idx].def_val[dvi];
+        // May also set global value for local option.
+        if (both) {
+          *(NumOpt *)get_varp_scope(&(options[opt_idx]), OPT_GLOBAL) =
+            *(NumOpt *)varp;
+        }
       }
     } else {  /* P_BOOL */
       *(int *)varp = (int)(intptr_t)options[opt_idx].def_val[dvi];
@@ -900,17 +901,17 @@ static void set_string_default(const char *name, char *val, bool allocated)
   }
 }
 
-/*
- * Set the Vi-default value of a number option.
- * Used for 'lines' and 'columns'.
- */
-void set_number_default(char *name, long val)
+/// Set the Vi-default value of a number option.
+/// Used for 'lines' and 'columns'.
+///
+/// @param  name  name of the option
+/// @param  val   value to set to "name"
+void set_number_default(char *name, NumOpt val)
 {
-  int opt_idx;
-
-  opt_idx = findoption((char_u *)name);
-  if (opt_idx >= 0)
-    options[opt_idx].def_val[VI_DEFAULT] = (char_u *)val;
+  int opt_idx = findoption((char_u *)name);
+  if (opt_idx >= 0) {
+    options[opt_idx].def_val[VI_DEFAULT] = (char_u *)(intptr_t)val;
+  }
 }
 
 #if defined(EXITFREE)
@@ -1119,14 +1120,14 @@ do_set (
   int afterchar;                    /* character just after option name */
   int len;
   int i;
-  long value;
+  intmax_t value;
   int key;
-  uint32_t flags;                   /* flags for current option */
-  char_u      *varp = NULL;         /* pointer to variable for current option */
-  int did_show = FALSE;             /* already showed one value */
-  int adding;                       /* "opt+=arg" */
-  int prepending;                   /* "opt^=arg" */
-  int removing;                     /* "opt-=arg" */
+  uint32_t flags;        // flags for current option
+  void *varp = NULL;     // pointer to variable for current option
+  int did_show = false;  // already showed one value
+  int adding;            // "opt+=arg"
+  int prepending;        // "opt^=arg"
+  int removing;          // "opt-=arg"
   int cp_val = 0;
 
   if (*arg == NUL) {
@@ -1395,38 +1396,35 @@ do_set (
             goto skip;
           }
 
-          if (flags & P_NUM) {                      /* numeric */
-            /*
-             * Different ways to set a number option:
-             * &	    set to default value
-             * <	    set to global value
-             * <xx>	    accept special key codes for 'wildchar'
-             * c	    accept any non-digit for 'wildchar'
-             * [-]0-9   set number
-             * other    error
-             */
-            ++arg;
-            if (nextchar == '&')
-              value = (long)options[opt_idx].def_val[
-                ((flags & P_VI_DEF) || cp_val)
-                ?  VI_DEFAULT : VIM_DEFAULT];
-            else if (nextchar == '<') {
-              /* For 'undolevels' NO_LOCAL_UNDOLEVEL means to
-               * use the global value. */
-              if ((long *)varp == &curbuf->b_p_ul
-                  && opt_flags == OPT_LOCAL)
+          if (flags & P_NUM) {  // numeric
+            // Different ways to set a number option:
+            // &        set to default value
+            // <        set to global value
+            // <xx>     accept special key codes for 'wildchar'
+            // c        accept any non-digit for 'wildchar'
+            // [-]0-9   set number
+            // other    error
+            arg++;
+            if (nextchar == '&') {
+              value = (intptr_t)options[opt_idx].def_val[
+                  ((flags & P_VI_DEF) || cp_val) ?  VI_DEFAULT : VIM_DEFAULT];
+            } else if (nextchar == '<') {
+              // For 'undolevels' NO_LOCAL_UNDOLEVEL means to
+              // use the global value.
+              if ((NumOpt *)varp == &curbuf->b_p_ul && opt_flags == OPT_LOCAL) {
                 value = NO_LOCAL_UNDOLEVEL;
-              else
-                value = *(long *)get_varp_scope(
-                    &(options[opt_idx]), OPT_GLOBAL);
-            } else if (((long *)varp == &p_wc
-                        || (long *)varp == &p_wcm)
+              } else {
+                value = *(NumOpt *)get_varp_scope(&options[opt_idx],
+                                                  OPT_GLOBAL);
+              }
+            } else if (((NumOpt *)varp == &p_wc
+                        || (NumOpt *)varp == &p_wcm)
                        && (*arg == '<'
                            || *arg == '^'
                            || ((!arg[1] || ascii_iswhite(arg[1]))
                                && !ascii_isdigit(*arg)))) {
               value = string_to_key(arg);
-              if (value == 0 && (long *)varp != &p_wcm) {
+              if (value == 0 && (NumOpt *)varp != &p_wcm) {
                 errmsg = e_invarg;
                 goto skip;
               }
@@ -1443,15 +1441,16 @@ do_set (
               goto skip;
             }
 
-            if (adding)
-              value = *(long *)varp + value;
-            if (prepending)
-              value = *(long *)varp * value;
-            if (removing)
-              value = *(long *)varp - value;
-            errmsg = set_num_option(opt_idx, varp, value,
-                errbuf, sizeof(errbuf), opt_flags);
-          } else if (opt_idx >= 0) {                      /* string */
+            if (adding) {
+              value = *(NumOpt *)varp + value;
+            } else if (prepending) {
+              value = *(NumOpt *)varp * value;
+            } else if (removing) {
+              value = *(NumOpt *)varp - value;
+            }
+            errmsg = set_num_option(opt_idx, varp, (NumOpt)value,
+                                    errbuf, sizeof(errbuf), opt_flags);
+          } else if (opt_idx >= 0) {  // string
             char_u      *save_arg = NULL;
             char_u      *s = NULL;
             char_u      *oldval = NULL;         // previous value if *varp
@@ -3910,26 +3909,24 @@ set_bool_option (
   return NULL;
 }
 
-/*
- * Set the value of a number option, and take care of side effects.
- * Returns NULL for success, or an error message for an error.
- */
-static char_u *
-set_num_option (
-    int opt_idx,                            /* index in options[] table */
-    char_u *varp,                      /* pointer to the option variable */
-    long value,                             /* new value */
-    char_u *errbuf,                    /* buffer for error messages */
-    size_t errbuflen,                       /* length of "errbuf" */
-    int opt_flags                          /* OPT_LOCAL, OPT_GLOBAL and
-                                           OPT_MODELINE */
-)
+/// Set the value of a number option, and take care of side effects.
+///
+/// @param opt_idx index in options[] table
+/// @param varp pointer to the option variable
+/// @param value new value
+/// @param effbuf buffer for error messages
+/// @param errbuflen length of "errbuf"
+/// @param opt_flags OPT_LOCAL, OPT_GLOBAL and OPT_MODELINE
+///
+/// @return NULL for success, or an error message for an error.
+static char_u *set_num_option(int opt_idx, NumOpt *varp, NumOpt value,
+                              char_u *errbuf, size_t errbuflen, int opt_flags)
 {
-  char_u      *errmsg = NULL;
-  long old_value = *(long *)varp;
-  long old_Rows = Rows;                 /* remember old Rows */
-  long old_Columns = Columns;           /* remember old Columns */
-  long        *pp = (long *)varp;
+  char_u *errmsg = NULL;
+  NumOpt old_value = *varp;
+  NumOpt old_Rows = Rows;              // remember old Rows
+  NumOpt old_Columns = Columns;        // remember old Columns
+  NumOpt *pp = varp;
 
   /* Disallow changing some options from secure mode. */
   if ((secure || sandbox != 0)
@@ -4040,7 +4037,7 @@ set_num_option (
       curwin->w_p_fdc = 12;
     }
   // 'shiftwidth' or 'tabstop'
-  } else if (pp == &curbuf->b_p_sw || pp == (long *)&curbuf->b_p_ts) {
+  } else if (pp == &curbuf->b_p_sw || pp == &curbuf->b_p_ts) {
     if (foldmethodIsIndent(curwin)) {
       foldUpdateAll(curwin);
     }
@@ -4267,10 +4264,10 @@ set_num_option (
     p_ss = 0;
   }
 
-  /* May set global value for local option. */
-  if ((opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0)
-    *(long *)get_varp_scope(&(options[opt_idx]), OPT_GLOBAL) = *pp;
-
+  // May set global value for local option.
+  if ((opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0) {
+    *(NumOpt *)get_varp_scope(&(options[opt_idx]), OPT_GLOBAL) = *pp;
+  }
   options[opt_idx].flags |= P_WAS_SET;
 
   if (!starting && errmsg == NULL) {
@@ -4468,8 +4465,8 @@ static int findoption(char_u *arg)
 int 
 get_option_value (
     char_u *name,
-    long *numval,
-    char_u **stringval,            /* NULL when only checking existence */
+    NumOpt *numval,
+    char_u **stringval,  // NULL when only checking existence
     int opt_flags
 )
 {
@@ -4478,13 +4475,13 @@ get_option_value (
   }
 
   int opt_idx;
-  char_u      *varp;
+  NumOpt *varp;
 
   opt_idx = findoption(name);
   if (opt_idx < 0)                  /* unknown option */
     return -3;
 
-  varp = get_varp_scope(&(options[opt_idx]), opt_flags);
+  varp = (NumOpt *)get_varp_scope(&(options[opt_idx]), opt_flags);
 
   if (options[opt_idx].flags & P_STRING) {
     if (varp == NULL)                       /* hidden option */
@@ -4497,15 +4494,16 @@ get_option_value (
 
   if (varp == NULL)                 /* hidden option */
     return -1;
-  if (options[opt_idx].flags & P_NUM)
-    *numval = *(long *)varp;
-  else {
-    /* Special case: 'modified' is b_changed, but we also want to consider
-     * it set when 'ff' or 'fenc' changed. */
-    if ((bool *)varp == &curbuf->b_changed)
+  if (options[opt_idx].flags & P_NUM) {
+    *numval = *varp;
+  } else {
+    // Special case: 'modified' is b_changed, but we also want to consider
+    // it set when 'ff' or 'fenc' changed.
+    if ((bool *)varp == &curbuf->b_changed) {
       *numval = curbufIsChanged();
-    else
+    } else {
       *numval = *(int *)varp;
+    }
   }
   return 1;
 }
@@ -4642,7 +4640,7 @@ int get_option_value_strict(char *name,
 char_u *
 set_option_value (
     char_u *name,
-    long number,
+    NumOpt number,
     char_u *string,
     int opt_flags                  /* OPT_LOCAL or 0 (both) */
 )
@@ -4652,7 +4650,7 @@ set_option_value (
   }
 
   int opt_idx;
-  char_u      *varp;
+  void *varp;
 
   opt_idx = findoption(name);
   if (opt_idx < 0)
@@ -4688,12 +4686,11 @@ set_option_value (
             return NULL;  // do nothing as we hit an error
           }
         }
-        if (flags & P_NUM)
-          return set_num_option(opt_idx, varp, number,
-              NULL, 0, opt_flags);
-        else
-          return set_bool_option(opt_idx, varp, (int)number,
-              opt_flags);
+        if (flags & P_NUM) {
+          return set_num_option(opt_idx, varp, number, NULL, 0, opt_flags);
+        } else {
+          return set_bool_option(opt_idx, varp, (int)number, opt_flags);
+        }
       }
     }
   }
@@ -4844,14 +4841,17 @@ static int optval_default(vimoption_T *p, char_u *varp)
 {
   int dvi;
 
-  if (varp == NULL)
-    return TRUE;            /* hidden option is always at default */
+  if (varp == NULL) {
+    return true;       // hidden option is always at default
+  }
   dvi = ((p->flags & P_VI_DEF) || p_cp) ? VI_DEFAULT : VIM_DEFAULT;
-  if (p->flags & P_NUM)
-    return *(long *)varp == (long)p->def_val[dvi];
-  if (p->flags & P_BOOL)
+  if (p->flags & P_NUM) {
+    return *(NumOpt *)varp == (NumOpt)(intptr_t)p->def_val[dvi];
+  }
+  if (p->flags & P_BOOL) {
     return *(int *)varp == (int)(intptr_t)p->def_val[dvi];
-  /* P_STRING */
+  }
+  // P_STRING
   return STRCMP(*(char_u **)varp, p->def_val[dvi]) == 0;
 }
 
@@ -4977,19 +4977,21 @@ int makeset(FILE *fd, int opt_flags, int local_only)
         /* Round 1: fresh value for window-local options.
          * Round 2: other values */
         for (; round <= 2; varp = varp_local, ++round) {
-          if (round == 1 || (opt_flags & OPT_GLOBAL))
+          if (round == 1 || (opt_flags & OPT_GLOBAL)) {
             cmd = "set";
-          else
+          } else {
             cmd = "setlocal";
-
+          }
           if (p->flags & P_BOOL) {
-            if (put_setbool(fd, cmd, p->fullname, *(int *)varp) == FAIL)
+            if (put_setbool(fd, cmd, p->fullname, *(int *)varp) == FAIL) {
               return FAIL;
+            }
           } else if (p->flags & P_NUM) {
-            if (put_setnum(fd, cmd, p->fullname, (long *)varp) == FAIL)
+            if (put_setnum(fd, cmd, p->fullname, (NumOpt *)varp) == FAIL) {
               return FAIL;
-          } else {    /* P_STRING */
-            int do_endif = FALSE;
+            }
+          } else {  // P_STRING
+            int do_endif = false;
 
             // Don't set 'syntax' and 'filetype' again if the value is
             // already right, avoids reloading the syntax file.
@@ -5070,9 +5072,9 @@ static int put_setstring(FILE *fd, char *cmd, char *name, char_u **valuep, int e
   return OK;
 }
 
-static int put_setnum(FILE *fd, char *cmd, char *name, long *valuep)
+static int put_setnum(FILE *fd, char *cmd, char *name, NumOpt *valuep)
 {
-  long wc;
+  NumOpt wc;
 
   if (fprintf(fd, "%s %s=", cmd, name) < 0)
     return FAIL;
@@ -6016,17 +6018,15 @@ option_value2string (
   varp = get_varp_scope(opp, opt_flags);
 
   if (opp->flags & P_NUM) {
-    long wc = 0;
+    NumOpt wc = 0;
 
     if (wc_use_keyname(varp, &wc)) {
       STRLCPY(NameBuff, get_special_key_name((int)wc, 0), sizeof(NameBuff));
     } else if (wc != 0) {
       STRLCPY(NameBuff, transchar((int)wc), sizeof(NameBuff));
     } else {
-      snprintf((char *)NameBuff,
-               sizeof(NameBuff),
-               "%" PRId64,
-               (int64_t)*(long *)varp);
+      snprintf((char *)NameBuff, sizeof(NameBuff),
+               "%" PRIdOPT, *(NumOpt *)varp);
     }
   } else {  // P_STRING
     varp = *(char_u **)(varp);
@@ -6047,14 +6047,15 @@ option_value2string (
  * printed as a keyname.
  * "*wcp" is set to the value of the option if it's 'wildchar' or 'wildcharm'.
  */
-static int wc_use_keyname(char_u *varp, long *wcp)
+static int wc_use_keyname(char_u *varp, NumOpt *wcp)
 {
-  if (((long *)varp == &p_wc) || ((long *)varp == &p_wcm)) {
-    *wcp = *(long *)varp;
-    if (IS_SPECIAL(*wcp) || find_special_key_in_table((int)*wcp) >= 0)
-      return TRUE;
+  if (((NumOpt *)varp == &p_wc) || ((NumOpt *)varp == &p_wcm)) {
+    *wcp = *(NumOpt *)varp;
+    if (IS_SPECIAL(*wcp) || find_special_key_in_table((int)(*wcp)) >= 0) {
+      return true;
+    }
   }
-  return FALSE;
+  return false;
 }
 
 /*
@@ -6580,7 +6581,7 @@ int check_ff_value(char_u *p)
  */
 int get_sw_value(buf_T *buf)
 {
-  long result = buf->b_p_sw ? buf->b_p_sw : buf->b_p_ts;
+  NumOpt result = buf->b_p_sw ? buf->b_p_sw : buf->b_p_ts;
   assert(result >= 0 && result <= INT_MAX);
   return (int)result;
 }
@@ -6589,7 +6590,7 @@ int get_sw_value(buf_T *buf)
 // using the effective shiftwidth  value when 'softtabstop' is negative.
 int get_sts_value(void)
 {
-  long result = curbuf->b_p_sts < 0 ? get_sw_value(curbuf) : curbuf->b_p_sts;
+  NumOpt result = curbuf->b_p_sts < 0 ? get_sw_value(curbuf) : curbuf->b_p_sts;
   assert(result >= 0 && result <= INT_MAX);
   return (int)result;
 }

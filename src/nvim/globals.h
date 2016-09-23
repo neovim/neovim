@@ -112,9 +112,9 @@ typedef enum {
 #define DFLT_COLS       80              /* default value for 'columns' */
 #define DFLT_ROWS       24              /* default value for 'lines' */
 
-EXTERN long Rows INIT(= DFLT_ROWS);     // nr of rows in the screen
 
-EXTERN long Columns INIT(= DFLT_COLS);  // nr of columns in the screen
+EXTERN NumOpt Rows INIT(= DFLT_ROWS);     ///< Number of rows in the screen
+EXTERN NumOpt Columns INIT(= DFLT_COLS);  ///< Number of columns in the screen
 
 /*
  * The characters and attributes cached for the screen.

@@ -1,6 +1,7 @@
 #ifndef NVIM_OPTION_H
 #define NVIM_OPTION_H
 
+#include <inttypes.h>
 #include "nvim/ex_cmds_defs.h"  // for exarg_T
 
 /* flags for buf_copy_options() */
@@ -20,6 +21,8 @@ typedef enum {
   OPT_WINONLY = 16,  ///< Only set window-local options.
   OPT_NOWIN = 32,  ///< Don’t set window-local options.
 } OptionFlags;
+
+#define PRIdOPT PRIdMAX
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "option.h.generated.h"

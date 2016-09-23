@@ -451,12 +451,11 @@ int get_number_indent(linenr_T lnum)
  * necessarily always the current one.
  */
 int get_breakindent_win(win_T *wp, char_u *line) {
-  static int prev_indent = 0;  /* cached indent value */
-  static long prev_ts = 0; /* cached tabstop value */
-  static char_u *prev_line = NULL; /* cached pointer to line */
-  static int prev_tick = 0;  // changedtick of cached value
-  int bri = 0;
-  /* window width minus window margin space, i.e. what rests for text */
+  static int prev_indent = 0;       // cached indent value
+  static NumOpt prev_ts = 0;        // cached tabstop value
+  static char_u *prev_line = NULL;  // cached pointer to line
+  static int prev_tick = 0;         // changedtick of cached value
+  // window width minus window margin space, i.e. what rests for text
   const int eff_wwidth = wp->w_width
     - ((wp->w_p_nu || wp->w_p_rnu)
         && (vim_strchr(p_cpo, CPO_NUMCOL) == NULL)
@@ -471,7 +470,7 @@ int get_breakindent_win(win_T *wp, char_u *line) {
     prev_indent = get_indent_str(line,
             (int)wp->w_buffer->b_p_ts, wp->w_p_list);
   }
-  bri = prev_indent + wp->w_p_brishift;
+  int bri = prev_indent + wp->w_p_brishift;
 
   /* indent minus the length of the showbreak string */
   if (wp->w_p_brisbr)

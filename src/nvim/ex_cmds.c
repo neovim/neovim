@@ -309,7 +309,7 @@ typedef struct {
       long start_col_nr;  ///< starting column number
       long end_col_nr;    ///< ending column number
     } line;
-    long value;           ///< value if sorting by integer
+    intmax_t value;       ///< value if sorting by integer
     float_T value_flt;    ///< value if sorting by float
   } st_u;
 } sorti_T;

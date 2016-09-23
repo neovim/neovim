@@ -739,13 +739,13 @@ static void normal_get_additional_char(NormalState *s)
         && s->ca.cmdchar == 'g') {
       s->ca.oap->op_type = get_op_type(*cp, NUL);
     } else if (*cp == Ctrl_BSL) {
-      long towait = (p_ttm >= 0 ? p_ttm : p_tm);
+      NumOpt towait = (p_ttm >= 0 ? p_ttm : p_tm);
 
       // There is a busy wait here when typing "f<C-\>" and then
       // something different from CTRL-N.  Can't be avoided.
-      while ((s->c = vpeekc()) <= 0 && towait > 0L) {
-        do_sleep(towait > 50L ? 50L : towait);
-        towait -= 50L;
+      while ((s->c = vpeekc()) <= 0 && towait > 0) {
+        do_sleep(towait > 50 ? 50 : towait);
+        towait -= 50;
       }
       if (s->c > 0) {
         s->c = plain_vgetc();
@@ -4018,7 +4018,7 @@ static void nv_zet(cmdarg_T *cap)
   int n;
   colnr_T col;
   int nchar = cap->nchar;
-  long old_fdl = curwin->w_p_fdl;
+  NumOpt old_fdl = curwin->w_p_fdl;
   int old_fen = curwin->w_p_fen;
   bool undo = false;
 

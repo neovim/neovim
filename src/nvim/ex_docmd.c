@@ -7112,15 +7112,15 @@ static void ex_sleep(exarg_T *eap)
   do_sleep(len);
 }
 
-/*
- * Sleep for "msec" milliseconds, but keep checking for a CTRL-C every second.
- */
-void do_sleep(long msec)
+/// Sleep for "msec" milliseconds, but keep checking for a CTRL-C every second.
+///
+/// @param  msec  number of milliseconds to sleep
+void do_sleep(intmax_t msec)
 {
   ui_flush();  // flush before waiting
-  for (long left = msec; !got_int && left > 0; left -= 1000L) {
+  for (intmax_t left = msec; !got_int && left > 0; left -= 1000L) {
     int next = left > 1000l ? 1000 : (int)left;
-    LOOP_PROCESS_EVENTS_UNTIL(&main_loop, main_loop.events, (int)next, got_int);
+    LOOP_PROCESS_EVENTS_UNTIL(&main_loop, main_loop.events, next, got_int);
     os_breakcheck();
   }
 }

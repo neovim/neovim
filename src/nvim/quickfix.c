@@ -2925,10 +2925,9 @@ void ex_vimgrep(exarg_T *eap)
   int using_dummy;
   int redraw_for_dummy = FALSE;
   int found_match;
-  buf_T       *first_match_buf = NULL;
+  buf_T *first_match_buf = NULL;
   time_t seconds = 0;
-  long save_mls;
-  char_u      *save_ei = NULL;
+  char_u *save_ei = NULL;
   aco_save_T aco;
   int flags = 0;
   colnr_T col;
@@ -3058,11 +3057,11 @@ void ex_vimgrep(exarg_T *eap)
       using_dummy = TRUE;
       redraw_for_dummy = TRUE;
 
-      /* Don't do Filetype autocommands to avoid loading syntax and
-       * indent scripts, a great speed improvement. */
+      // Don't do Filetype autocommands to avoid loading syntax and
+      // indent scripts, a great speed improvement.
       save_ei = au_event_disable(",Filetype");
-      /* Don't use modelines here, it's useless. */
-      save_mls = p_mls;
+      // Don't use modelines here, it's useless
+      NumOpt save_mls = p_mls;
       p_mls = 0;
 
       /* Load file into a buffer, so that 'fileencoding' is detected,

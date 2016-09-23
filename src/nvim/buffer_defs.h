@@ -33,49 +33,47 @@ typedef struct file_buffer buf_T; // Forward declaration
 
 #define MODIFIABLE(buf) (!buf->terminal && buf->b_p_ma)
 
-/*
- * Flags for w_valid.
- * These are set when something in a window structure becomes invalid, except
- * when the cursor is moved.  Call check_cursor_moved() before testing one of
- * the flags.
- * These are reset when that thing has been updated and is valid again.
- *
- * Every function that invalidates one of these must call one of the
- * invalidate_* functions.
- *
- * w_valid is supposed to be used only in screen.c.  From other files, use the
- * functions that set or reset the flags.
- *
- * VALID_BOTLINE    VALID_BOTLINE_AP
- *     on		on		w_botline valid
- *     off		on		w_botline approximated
- *     off		off		w_botline not valid
- *     on		off		not possible
- */
-#define VALID_WROW      0x01    /* w_wrow (window row) is valid */
-#define VALID_WCOL      0x02    /* w_wcol (window col) is valid */
-#define VALID_VIRTCOL   0x04    /* w_virtcol (file col) is valid */
-#define VALID_CHEIGHT   0x08    /* w_cline_height and w_cline_folded valid */
-#define VALID_CROW      0x10    /* w_cline_row is valid */
-#define VALID_BOTLINE   0x20    /* w_botine and w_empty_rows are valid */
-#define VALID_BOTLINE_AP 0x40   /* w_botine is approximated */
-#define VALID_TOPLINE   0x80    /* w_topline is valid (for cursor position) */
+// Flags for w_valid.
+// These are set when something in a window structure becomes invalid, except
+// when the cursor is moved.  Call check_cursor_moved() before testing one of
+// the flags.
+// These are reset when that thing has been updated and is valid again.
+//
+// Every function that invalidates one of these must call one of the
+// invalidate_* functions.
+//
+// w_valid is supposed to be used only in screen.c.  From other files, use the
+// functions that set or reset the flags.
+//
+// VALID_BOTLINE    VALID_BOTLINE_AP
+//     on               on              w_botline valid
+//     off              on              w_botline approximated
+//     off              off             w_botline not valid
+//     on               off             not possible
+#define VALID_WROW      0x01   ///< w_wrow (window row) is valid
+#define VALID_WCOL      0x02   ///< w_wcol (window col) is valid
+#define VALID_VIRTCOL   0x04   ///< w_virtcol (file col) is valid
+#define VALID_CHEIGHT   0x08   ///< w_cline_height and w_cline_folded valid
+#define VALID_CROW      0x10   ///< w_cline_row is valid
+#define VALID_BOTLINE   0x20   ///< w_botine and w_empty_rows are valid
+#define VALID_BOTLINE_AP 0x40  ///< w_botine is approximated
+#define VALID_TOPLINE   0x80   ///< w_topline is valid (for cursor position)
 
 // flags for b_flags
-#define BF_RECOVERED    0x01    // buffer has been recovered
-#define BF_CHECK_RO     0x02    // need to check readonly when loading file
-                                // into buffer (set by ":e", may be reset by
-                                // ":buf")
-#define BF_NEVERLOADED  0x04    // file has never been loaded into buffer,
-                                // many variables still need to be set
-#define BF_NOTEDITED    0x08    // Set when file name is changed after
-                                // starting to edit, reset when file is
-                                // written out.
-#define BF_NEW          0x10    // file didn't exist when editing started
-#define BF_NEW_W        0x20    // Warned for BF_NEW and file created
-#define BF_READERR      0x40    // got errors while reading the file
-#define BF_DUMMY        0x80    // dummy buffer, only used internally
-#define BF_PRESERVED    0x100   // ":preserve" was used
+#define BF_RECOVERED    0x01   ///< buffer has been recovered
+#define BF_CHECK_RO     0x02   ///< need to check readonly when loading file
+                               ///< into buffer. It is set by ":e", may be reset
+                               ///< by ":buf"
+#define BF_NEVERLOADED  0x04   ///< file has never been loaded into buffer,
+                               ///< many variables still need to be set
+#define BF_NOTEDITED    0x08   ///< Set when file name is changed after
+                               ///< starting to edit, reset when file is
+                               ///< written out.
+#define BF_NEW          0x10   ///< file didn't exist when editing started
+#define BF_NEW_W        0x20   ///< Warned for BF_NEW and file created
+#define BF_READERR      0x40   ///< got errors while reading the file
+#define BF_DUMMY        0x80   ///< dummy buffer, only used internally
+#define BF_PRESERVED    0x100  ///< ":preserve" was used
 
 /* Mask to check for flags that prevent normal writing */
 #define BF_WRITE_MASK   (BF_NOTEDITED + BF_NEW + BF_READERR)
@@ -145,100 +143,97 @@ struct buffheader {
   size_t bh_space;          // space in bh_curr for appending
 };
 
-/*
- * Structure that contains all options that are local to a window.
- * Used twice in a window: for the current buffer and for all buffers.
- * Also used in wininfo_T.
- */
+/// Structure that contains all options that are local to a window.
+/// Used twice in a window: for the current buffer and for all buffers.
+/// Also used in wininfo_T.
 typedef struct {
-  int wo_arab;
-# define w_p_arab w_onebuf_opt.wo_arab  /* 'arabic' */
-  int wo_bri;
-# define w_p_bri w_onebuf_opt.wo_bri	/* 'breakindent' */
-  char_u *wo_briopt;
-# define w_p_briopt w_onebuf_opt.wo_briopt /* 'breakindentopt' */
-  int wo_diff;
-# define w_p_diff w_onebuf_opt.wo_diff  /* 'diff' */
-  long wo_fdc;
-# define w_p_fdc w_onebuf_opt.wo_fdc    /* 'foldcolumn' */
-  int wo_fdc_save;
-# define w_p_fdc_save w_onebuf_opt.wo_fdc_save  /* 'foldenable' saved for diff mode */
-  int wo_fen;
-# define w_p_fen w_onebuf_opt.wo_fen    /* 'foldenable' */
-  int wo_fen_save;
-# define w_p_fen_save w_onebuf_opt.wo_fen_save  /* 'foldenable' saved for diff mode */
-  char_u      *wo_fdi;
-# define w_p_fdi w_onebuf_opt.wo_fdi    /* 'foldignore' */
-  long wo_fdl;
-# define w_p_fdl w_onebuf_opt.wo_fdl    /* 'foldlevel' */
-  int wo_fdl_save;
-# define w_p_fdl_save w_onebuf_opt.wo_fdl_save  /* 'foldlevel' state saved for diff mode */
-  char_u      *wo_fdm;
-# define w_p_fdm w_onebuf_opt.wo_fdm    /* 'foldmethod' */
-  char_u      *wo_fdm_save;
-# define w_p_fdm_save w_onebuf_opt.wo_fdm_save  /* 'fdm' saved for diff mode */
-  long wo_fml;
-# define w_p_fml w_onebuf_opt.wo_fml    /* 'foldminlines' */
-  long wo_fdn;
-# define w_p_fdn w_onebuf_opt.wo_fdn    /* 'foldnestmax' */
-  char_u      *wo_fde;
-# define w_p_fde w_onebuf_opt.wo_fde    /* 'foldexpr' */
-  char_u      *wo_fdt;
-#  define w_p_fdt w_onebuf_opt.wo_fdt   /* 'foldtext' */
-  char_u      *wo_fmr;
-# define w_p_fmr w_onebuf_opt.wo_fmr    /* 'foldmarker' */
-  int wo_lbr;
-# define w_p_lbr w_onebuf_opt.wo_lbr    /* 'linebreak' */
-  int wo_list;
-#define w_p_list w_onebuf_opt.wo_list   /* 'list' */
-  int wo_nu;
-#define w_p_nu w_onebuf_opt.wo_nu       /* 'number' */
-  int wo_rnu;
-#define w_p_rnu w_onebuf_opt.wo_rnu     /* 'relativenumber' */
-  long wo_nuw;
-# define w_p_nuw w_onebuf_opt.wo_nuw    /* 'numberwidth' */
-  int wo_wfh;
-# define w_p_wfh w_onebuf_opt.wo_wfh    /* 'winfixheight' */
-  int wo_wfw;
-# define w_p_wfw w_onebuf_opt.wo_wfw    /* 'winfixwidth' */
-  int wo_pvw;
-# define w_p_pvw w_onebuf_opt.wo_pvw    /* 'previewwindow' */
-  int wo_rl;
-# define w_p_rl w_onebuf_opt.wo_rl      /* 'rightleft' */
-  char_u      *wo_rlc;
-# define w_p_rlc w_onebuf_opt.wo_rlc    /* 'rightleftcmd' */
-  long wo_scr;
-#define w_p_scr w_onebuf_opt.wo_scr     /* 'scroll' */
-  int wo_spell;
-# define w_p_spell w_onebuf_opt.wo_spell /* 'spell' */
-  int wo_cuc;
-# define w_p_cuc w_onebuf_opt.wo_cuc    /* 'cursorcolumn' */
-  int wo_cul;
-# define w_p_cul w_onebuf_opt.wo_cul    /* 'cursorline' */
-  char_u      *wo_cc;
-# define w_p_cc w_onebuf_opt.wo_cc      /* 'colorcolumn' */
-  char_u      *wo_stl;
-#define w_p_stl w_onebuf_opt.wo_stl     /* 'statusline' */
-  int wo_scb;
-# define w_p_scb w_onebuf_opt.wo_scb    /* 'scrollbind' */
-  int wo_diff_saved;           /* options were saved for starting diff mode */
+  int wo_arab;                ///< 'arabic'
+# define w_p_arab w_onebuf_opt.wo_arab
+  int wo_bri;                 ///< 'breakindent'
+# define w_p_bri w_onebuf_opt.wo_bri
+  char_u *wo_briopt;          ///< 'breakindentopt'
+# define w_p_briopt w_onebuf_opt.wo_briopt
+  int wo_diff;                ///< 'diff'
+# define w_p_diff w_onebuf_opt.wo_diff
+  NumOpt wo_fdc;              ///< 'foldcolumn'
+# define w_p_fdc w_onebuf_opt.wo_fdc
+  int wo_fdc_save;            ///< 'foldenable' saved for diff mode
+# define w_p_fdc_save w_onebuf_opt.wo_fdc_save
+  int wo_fen;                 ///< 'foldenable'
+# define w_p_fen w_onebuf_opt.wo_fen
+  int wo_fen_save;            ///< 'foldenable' saved for diff mode
+# define w_p_fen_save w_onebuf_opt.wo_fen_save
+  char_u *wo_fdi;             ///< 'foldignore'
+# define w_p_fdi w_onebuf_opt.wo_fdi
+  NumOpt wo_fdl;              ///< 'foldlevel'
+# define w_p_fdl w_onebuf_opt.wo_fdl
+  int wo_fdl_save;            ///< 'foldlevel' state saved for diff mode
+# define w_p_fdl_save w_onebuf_opt.wo_fdl_save
+  char_u *wo_fdm;             ///< 'foldmethod'
+# define w_p_fdm w_onebuf_opt.wo_fdm
+  char_u *wo_fdm_save;        ///< 'fdm' saved for diff mode
+# define w_p_fdm_save w_onebuf_opt.wo_fdm_save
+  NumOpt wo_fml;              ///< 'foldminlines'
+# define w_p_fml w_onebuf_opt.wo_fml
+  NumOpt wo_fdn;              ///< 'foldnestmax'
+# define w_p_fdn w_onebuf_opt.wo_fdn
+  char_u *wo_fde;             ///< 'foldexpr'
+# define w_p_fde w_onebuf_opt.wo_fde
+  char_u *wo_fdt;             ///< 'foldtext'
+#  define w_p_fdt w_onebuf_opt.wo_fdt
+  char_u *wo_fmr;             ///< 'foldmarker'
+# define w_p_fmr w_onebuf_opt.wo_fmr
+  int wo_lbr;                 ///< 'linebreak'
+# define w_p_lbr w_onebuf_opt.wo_lbr
+  int wo_list;                ///< 'list'
+#define w_p_list w_onebuf_opt.wo_list
+  int wo_nu;                  ///< 'number'
+#define w_p_nu w_onebuf_opt.wo_nu
+  int wo_rnu;                 ///< 'relativenumber'
+#define w_p_rnu w_onebuf_opt.wo_rnu
+  NumOpt wo_nuw;              ///< 'numberwidth'
+# define w_p_nuw w_onebuf_opt.wo_nuw
+  int wo_wfh;                 ///< 'winfixheight'
+# define w_p_wfh w_onebuf_opt.wo_wfh
+  int wo_wfw;                 ///< 'winfixwidth'
+# define w_p_wfw w_onebuf_opt.wo_wfw
+  int wo_pvw;                 ///< 'previewwindow'
+# define w_p_pvw w_onebuf_opt.wo_pvw
+  int wo_rl;                  ///< 'rightleft'
+# define w_p_rl w_onebuf_opt.wo_rl
+  char_u *wo_rlc;             ///< 'rightleftcmd'
+# define w_p_rlc w_onebuf_opt.wo_rlc
+  NumOpt wo_scr;              ///< 'scroll'
+#define w_p_scr w_onebuf_opt.wo_scr
+  int wo_spell;               ///< 'spell'
+# define w_p_spell w_onebuf_opt.wo_spell
+  int wo_cuc;                 ///< 'cursorcolumn'
+# define w_p_cuc w_onebuf_opt.wo_cuc
+  int wo_cul;                 ///< 'cursorline'
+# define w_p_cul w_onebuf_opt.wo_cul
+  char_u *wo_cc;              ///< 'colorcolumn'
+# define w_p_cc w_onebuf_opt.wo_cc
+  char_u *wo_stl;             ///< 'statusline'
+#define w_p_stl w_onebuf_opt.wo_stl
+  int wo_scb;                 ///< 'scrollbind'
+# define w_p_scb w_onebuf_opt.wo_scb
+  int wo_diff_saved;          ///< options were saved for starting diff mode
 # define w_p_diff_saved w_onebuf_opt.wo_diff_saved
-  int wo_scb_save;              /* 'scrollbind' saved for diff mode*/
+  int wo_scb_save;            ///< 'scrollbind' saved for diff mode
 # define w_p_scb_save w_onebuf_opt.wo_scb_save
-  int wo_wrap;
-#define w_p_wrap w_onebuf_opt.wo_wrap   /* 'wrap' */
-  int wo_wrap_save;             /* 'wrap' state saved for diff mode*/
+  int wo_wrap;                ///< 'wrap'
+#define w_p_wrap w_onebuf_opt.wo_wrap
+  int wo_wrap_save;           ///< 'wrap' state saved for diff mode
 # define w_p_wrap_save w_onebuf_opt.wo_wrap_save
-  char_u      *wo_cocu;                 /* 'concealcursor' */
+  char_u *wo_cocu;            ///< 'concealcursor'
 # define w_p_cocu w_onebuf_opt.wo_cocu
-  long wo_cole;                         /* 'conceallevel' */
+  NumOpt wo_cole;             ///< 'conceallevel'
 # define w_p_cole w_onebuf_opt.wo_cole
-  int wo_crb;
-# define w_p_crb w_onebuf_opt.wo_crb    /* 'cursorbind' */
-  int wo_crb_save;              /* 'cursorbind' state saved for diff mode*/
+  int wo_crb;                 ///< 'cursorbind'
+# define w_p_crb w_onebuf_opt.wo_crb
+  int wo_crb_save;            ///< 'cursorbind' state saved for diff mode
 # define w_p_crb_save w_onebuf_opt.wo_crb_save
-
-  int wo_scriptID[WV_COUNT];            /* SIDs for window-local options */
+  int wo_scriptID[WV_COUNT];  ///< SIDs for window-local options
 # define w_p_scriptID w_onebuf_opt.wo_scriptID
 } winopt_T;
 
@@ -578,12 +573,12 @@ struct file_buffer {
 
   bool b_scanned;               /* ^N/^P have scanned this buffer */
 
-  /* flags for use of ":lmap" and IM control */
-  long b_p_iminsert;            /* input mode for insert */
-  long b_p_imsearch;            /* input mode for search */
-#define B_IMODE_USE_INSERT -1   /*	Use b_p_iminsert value for search */
-#define B_IMODE_NONE 0          /*	Input via none */
-#define B_IMODE_LMAP 1          /*	Input via langmap */
+  // flags for use of ":lmap" and IM control
+  NumOpt b_p_iminsert;          ///< input mode for insert
+  NumOpt b_p_imsearch;          ///< input mode for search
+#define B_IMODE_USE_INSERT -1   ///< Use b_p_iminsert value for search
+#define B_IMODE_NONE 0          ///< Input via none
+#define B_IMODE_LMAP 1          ///< Input via langmap
 # define B_IMODE_LAST 1
 
   short b_kmap_state;           /* using "lmap" mappings */
@@ -591,19 +586,15 @@ struct file_buffer {
 # define KEYMAP_LOADED  2       /* 'keymap' mappings have been loaded */
   garray_T b_kmap_ga;           /* the keymap table */
 
-  /*
-   * Options local to a buffer.
-   * They are here because their value depends on the type of file
-   * or contents of the file being edited.
-   */
-  bool b_p_initialized;                 /* set when options initialized */
-
-  int b_p_scriptID[BV_COUNT];           /* SIDs for buffer-local options */
-
+  // Options local to a buffer.
+  // They are here because their value depends on the type of file
+  // or contents of the file being edited.
+  bool b_p_initialized;         ///< set when options initialized
+  int b_p_scriptID[BV_COUNT];   ///< SIDs for buffer-local options
   int b_p_ai;                   ///< 'autoindent'
   int b_p_ai_nopaste;           ///< b_p_ai saved for paste mode
-  char_u *b_p_bkc;              ///< 'backupco
-  unsigned int b_bkc_flags;     ///< flags for 'backupco
+  char_u *b_p_bkc;              ///< 'backupcopy'
+  unsigned int b_bkc_flags;     ///< flags for 'backupcopy'
   int b_p_ci;                   ///< 'copyindent'
   int b_p_bin;                  ///< 'binary'
   int b_p_bomb;                 ///< 'bomb'
@@ -650,21 +641,21 @@ struct file_buffer {
   int b_p_pi;                   ///< 'preserveindent'
   char_u *b_p_qe;               ///< 'quoteescape'
   int b_p_ro;                   ///< 'readonly'
-  long b_p_sw;                  ///< 'shiftwidth'
+  NumOpt b_p_sw;                ///< 'shiftwidth'
   int b_p_si;                   ///< 'smartindent'
-  long b_p_sts;                 ///< 'softtabstop'
-  long b_p_sts_nopaste;         ///< b_p_sts saved for paste mode
+  NumOpt b_p_sts;               ///< 'softtabstop'
+  NumOpt b_p_sts_nopaste;       ///< b_p_sts saved for paste mode
   char_u *b_p_sua;              ///< 'suffixesadd'
   bool b_p_swf;                 ///< 'swapfile'
-  long b_p_smc;                 ///< 'synmaxcol'
+  NumOpt b_p_smc;               ///< 'synmaxcol'
   char_u *b_p_syn;              ///< 'syntax'
-  long b_p_ts;                  ///< 'tabstop'
-  long b_p_tw;                  ///< 'textwidth'
-  long b_p_tw_nobin;            ///< b_p_tw saved for binary mode
-  long b_p_tw_nopaste;          ///< b_p_tw saved for paste mode
-  long b_p_wm;                  ///< 'wrapmargin'
-  long b_p_wm_nobin;            ///< b_p_wm saved for binary mode
-  long b_p_wm_nopaste;          ///< b_p_wm saved for paste mode
+  NumOpt b_p_ts;                ///< 'tabstop'
+  NumOpt b_p_tw;                ///< 'textwidth'
+  NumOpt b_p_tw_nobin;          ///< b_p_tw saved for binary mode
+  NumOpt b_p_tw_nopaste;        ///< b_p_tw saved for paste mode
+  NumOpt b_p_wm;                ///< 'wrapmargin'
+  NumOpt b_p_wm_nobin;          ///< b_p_wm saved for binary mode
+  NumOpt b_p_wm_nopaste;        ///< b_p_wm saved for paste mode
   char_u *b_p_keymap;           ///< 'keymap'
 
   // local values for options which are normally global
@@ -679,7 +670,7 @@ struct file_buffer {
   unsigned b_tc_flags;          ///< flags for 'tagcase'
   char_u *b_p_dict;             ///< 'dictionary' local value
   char_u *b_p_tsr;              ///< 'thesaurus' local value
-  long b_p_ul;                  ///< 'undolevels' local value
+  NumOpt b_p_ul;                ///< 'undolevels' local value
   int b_p_udf;                  ///< 'undofile'
   char_u *b_p_lw;               ///< 'lispwords' local value
 

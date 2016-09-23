@@ -1149,7 +1149,7 @@ int call_vim_function(
     typval_T *rettv
 )
 {
-  long n;
+  intmax_t n;
   int len;
   int doesrange;
   void        *save_funccalp = NULL;
@@ -1848,12 +1848,12 @@ ex_let_one (
     /* Find the end of the name. */
     p = find_option_end(&arg, &opt_flags);
     if (p == NULL || (endchars != NULL
-                      && vim_strchr(endchars, *skipwhite(p)) == NULL))
+                      && vim_strchr(endchars, *skipwhite(p)) == NULL)) {
       EMSG(_(e_letunexp));
-    else {
-      long n;
+    } else {
+      NumOpt n;
       int opt_type;
-      long numval;
+      NumOpt numval;
       char_u      *stringval = NULL;
       char_u      *s;
 
@@ -1863,18 +1863,17 @@ ex_let_one (
       n = get_tv_number(tv);
       s = get_tv_string_chk(tv);            /* != NULL if number or string */
       if (s != NULL && op != NULL && *op != '=') {
-        opt_type = get_option_value(arg, &numval,
-            &stringval, opt_flags);
-        if ((opt_type == 1 && *op == '.')
-            || (opt_type == 0 && *op != '.'))
+        opt_type = get_option_value(arg, &numval, &stringval, opt_flags);
+        if ((opt_type == 1 && *op == '.') || (opt_type == 0 && *op != '.')) {
           EMSG2(_(e_letwrong), op);
-        else {
-          if (opt_type == 1) {          /* number */
-            if (*op == '+')
+        } else {
+          if (opt_type == 1) {  // number
+            if (*op == '+') {
               n = numval + n;
-            else
+            } else {
               n = numval - n;
-          } else if (opt_type == 0 && stringval != NULL) {     /* string */
+            }
+          } else if (opt_type == 0 && stringval != NULL) {  // string
             s = concat_str(stringval, s);
             xfree(stringval);
             stringval = s;
@@ -4146,7 +4145,7 @@ static int eval7(
     int want_string                 // after "." operator
 )
 {
-  long n;
+  intmax_t n;
   int len;
   char_u      *s;
   char_u      *start_leader, *end_leader;
@@ -4641,7 +4640,7 @@ get_option_tv (
 )
 {
   char_u      *option_end;
-  long numval;
+  NumOpt numval;
   char_u      *stringval;
   int opt_type;
   int c;
@@ -15468,7 +15467,7 @@ static void f_str2nr(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   int base = 10;
   char_u      *p;
-  long n;
+  intmax_t n;
   int what;
 
   if (argvars[1].v_type != VAR_UNKNOWN) {
@@ -18093,9 +18092,9 @@ long get_tv_number(typval_T *varp)
   return get_tv_number_chk(varp, &error);       /* return 0L on error */
 }
 
-long get_tv_number_chk(typval_T *varp, int *denote)
+intmax_t get_tv_number_chk(typval_T *varp, int *denote)
 {
-  long n = 0L;
+  intmax_t n = 0;
 
   switch (varp->v_type) {
   case VAR_NUMBER:
@@ -18108,8 +18107,7 @@ long get_tv_number_chk(typval_T *varp, int *denote)
     break;
   case VAR_STRING:
     if (varp->vval.v_string != NULL) {
-      vim_str2nr(varp->vval.v_string, NULL, NULL,
-                 STR2NR_ALL, &n, NULL, 0);
+      vim_str2nr(varp->vval.v_string, NULL, NULL, STR2NR_ALL, &n, NULL, 0);
     }
     return n;
   case VAR_LIST:

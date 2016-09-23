@@ -550,7 +550,7 @@ int find_special_key(const char_u **srcp, const size_t src_len, int *const modp,
   int modifiers;
   int bit;
   int key;
-  unsigned long n;
+  uintmax_t n;
   int l;
 
   if (src_len == 0) {

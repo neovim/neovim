@@ -4360,9 +4360,9 @@ int do_addsub(int op_type, pos_T *pos, int length, linenr_T Prenum1)
   char_u buf2[NUMBUFLEN];
   int pre;  // 'X' or 'x': hex; '0': octal; 'B' or 'b': bin
   static bool hexupper = false;  // 0xABC
-  unsigned long n;
-  unsigned long oldn;
-  char_u      *ptr;
+  uintmax_t n;
+  uintmax_t oldn;
+  char_u *ptr;
   int c;
   int todel;
   bool dohex;
@@ -4544,21 +4544,20 @@ int do_addsub(int op_type, pos_T *pos, int length, linenr_T Prenum1)
     }
 
     oldn = n;
-
-    n = subtract ? n - (unsigned long) Prenum1
-                 : n + (unsigned long) Prenum1;
+    n = subtract ? n - (uintmax_t)Prenum1
+                 : n + (uintmax_t)Prenum1;
 
     // handle wraparound for decimal numbers
     if (!pre) {
       if (subtract) {
         if (n > oldn) {
-          n = 1 + (n ^ (unsigned long)-1);
+          n = 1 + (n ^ (uintmax_t)-1);
           negative ^= true;
         }
       } else {
         // add
         if (n < oldn) {
-          n = (n ^ (unsigned long)-1);
+          n = (n ^ (uintmax_t)-1);
           negative ^= true;
         }
       }
