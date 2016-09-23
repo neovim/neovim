@@ -250,11 +250,6 @@ static void tui_scheduler(Event event, void *d)
   loop_schedule(data->loop, event);
 }
 
-static void refresh_event(void **argv)
-{
-  ui_refresh();
-}
-
 static void sigcont_cb(SignalWatcher *watcher, int signum, void *data)
 {
   ((TUIData *)data)->cont_received = true;
@@ -265,8 +260,7 @@ static void sigwinch_cb(SignalWatcher *watcher, int signum, void *data)
   got_winch = true;
   UI *ui = data;
   update_size(ui);
-  // run refresh_event in nvim main loop
-  loop_schedule(&main_loop, event_create(1, refresh_event, 0));
+  ui_schedule_refresh();
 }
 
 static bool attrs_differ(HlAttrs a1, HlAttrs a2)
