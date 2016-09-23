@@ -453,11 +453,13 @@ void tv_list_extend(list_T *const l1, list_T *const l2,
   FUNC_ATTR_NONNULL_ARG(1, 2)
 {
   int todo = l2->lv_len;
+  listitem_T *const befbef = (bef == NULL ? NULL : bef->li_prev);
+  listitem_T *const saved_next = (befbef == NULL ? NULL : befbef->li_next);
   // We also quit the loop when we have inserted the original item count of
   // the list, avoid a hang when we extend a list with itself.
   for (listitem_T *item = l2->lv_first
        ; item != NULL && --todo >= 0
-       ; item = item->li_next) {
+       ; item = (item == befbef ? saved_next : item->li_next)) {
     tv_list_insert_tv(l1, &item->li_tv, bef);
   }
 }

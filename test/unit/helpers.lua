@@ -148,7 +148,7 @@ local function set_logging_allocator()
     do
       local kk = k
       lib['mem_' .. k] = function(...)
-        log_entry = {func=kk, args={...}}
+        local log_entry = {func=kk, args={...}}
         log.log[#log.log + 1] = log_entry
         if kk == 'free' then
           saved[kk](...)

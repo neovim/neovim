@@ -116,12 +116,11 @@ lst2tbl = function(l, processed)
 end
 
 local function dict_iter(d)
-  local s = {
+  local init_s = {
     todo=d.dv_hashtab.ht_used,
     hi=d.dv_hashtab.ht_array,
   }
-  local var = nil
-  local function f(s, var)
+  local function f(s, _)
     if s.todo == 0 then return nil end
     while s.todo > 0 do
       if s.hi.hi_key ~= nil and s.hi ~= eval.hash_removed then
@@ -135,11 +134,11 @@ local function dict_iter(d)
       s.hi = s.hi + 1
     end
   end
-  return f, s, var
+  return f, init_s, nil
 end
 
 local function first_di(d)
-  for k, di in dict_iter(d) do
+  for _, di in dict_iter(d) do
     return di
   end
 end
@@ -149,7 +148,7 @@ dct2tbl = function(d, processed)
     return null_dict
   end
   processed = processed or {}
-  local p_key = tostring(l)
+  local p_key = tostring(d)
   if processed[p_key] then
     return processed[p_key]
   end
@@ -279,4 +278,6 @@ return {
 
   dict_iter=dict_iter,
   first_di=first_di,
+
+  empty_list = {[type_key]=list_type},
 }
