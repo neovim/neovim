@@ -9,6 +9,7 @@ fi
 
 if [[ "${TRAVIS_OS_NAME}" == osx ]]; then
   brew update
+  brew update
 fi
 
 echo "Upgrade Python 2's pip."
