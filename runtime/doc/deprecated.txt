@@ -10,31 +10,34 @@ Nvim                                                             *deprecated*
 
 Normal commands ~
 *]f*
-*[f*                    Same as "gf".
+*[f*			Same as "gf".
 
 
 Commands ~
 *:rv*
-*:rviminfo*             Deprecated alias to |:rshada| command.
+*:rviminfo*		Deprecated alias to |:rshada| command.
 *:wv*
-*:wviminfo*             Deprecated alias to |:wshada| command.
+*:wviminfo*		Deprecated alias to |:wshada| command.
 
 
 Events ~
-*EncodingChanged*       Never fired; 'encoding' is always "utf-8".
-*FileEncoding*          Never fired; equivalent to |EncodingChanged|.
+*EncodingChanged*	Never fired; 'encoding' is always "utf-8".
+*FileEncoding*		Never fired; equivalent to |EncodingChanged|.
+
+Highlight groups ~
+*hl-VisualNOS*		Obsolete. |vim-differences| {Nvim}
 
 Functions ~
-*buffer_exists()*       Obsolete name for |bufexists()|.
-*buffer_name()*         Obsolete name for |bufname()|.
-*buffer_number()*       Obsolete name for |buffer_number()|.
-*file_readable()*       Obsolete name for |filereadable()|.
-*highlight_exists()*    Obsolete name for |hlexists()|.
-*highlightID()*         Obsolete name for |hlID()|.
-*last_buffer_nr()*      Obsolete name for bufnr("$").
+*buffer_exists()*	Obsolete name for |bufexists()|.
+*buffer_name()*		Obsolete name for |bufname()|.
+*buffer_number()*	Obsolete name for |buffer_number()|.
+*file_readable()*	Obsolete name for |filereadable()|.
+*highlight_exists()*	Obsolete name for |hlexists()|.
+*highlightID()*		Obsolete name for |hlID()|.
+*last_buffer_nr()*	Obsolete name for bufnr("$").
 
 Options ~
-*'fe'*                  'fenc'+'enc' before Vim 6.0; no longer used.
+*'fe'*			'fenc'+'enc' before Vim 6.0; no longer used.
 *'vi'*
-*'viminfo'*             Deprecated alias to 'shada' option.
+*'viminfo'*		Deprecated alias to 'shada' option.
 

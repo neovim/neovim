@@ -220,10 +220,12 @@ planned for the current milestone.
 
 These features are in Vim, but have been intentionally removed from Nvim.
 
-Vi-compatible mode:
+			*'cp'* *'nocompatible'* *'nocp'* *'compatible'*
+Nvim is always "non-compatible" with Vi.
   ":set nocompatible" is ignored
   ":set compatible" is an error
 
+			*'ed'* *'edcompatible'* *'noed'* *'noedcompatible'*
 Ed-compatible mode:
   ":set noedcompatible" is ignored
   ":set edcompatible" is an error
@@ -233,8 +235,8 @@ Ed-compatible mode:
   ":set nottyfast" is an error
 
 Encryption support:
-  'cryptmethod'
-  'key'
+  *'cryptmethod'* *'cm'*
+  *'key'*
 
 MS-DOS support:
   'bioskey'
@@ -245,27 +247,27 @@ Highlight groups:
 
 Other options:
   'antialias'
-  'cpoptions' ('g', 'w', 'H', '*', '-', 'j', and all POSIX flags were removed)
-  'guioptions' (only the 't' flag was removed)
-  'guipty'
-  'imactivatefunc'
-  'imactivatekey'
-  'imstatusfunc'
-  'macatsui'
-  'restorescreen'
+  'cpoptions' ("g", "w", "H", "*", "-", "j", and all POSIX flags were removed)
+  'guioptions' "t" flag was removed
+  *'guipty'* (Nvim uses pipes and PTYs consistently on all platforms.)
+  *'imactivatefunc'* *'imaf'*
+  *'imactivatekey'* *'imak'*
+  *'imstatusfunc'* *'imsf'*
+  *'macatsui'*
+  *'restorescreen'* *'rs'* *'norestorescreen'* *'nors'*
   'shelltype'
-  'shortname'
-  'swapsync'
-  'term'
-  'termencoding' (Vim 7.4.852 also removed this for Windows)
+  *'shortname'* *'sn'* *'noshortname'* *'nosn'*
+  *'swapsync'* *'sws'*
+  *'term'* *E529* *E530* *E531*
+  *'termencoding'* *'tenc'* (Vim 7.4.852 also removed this for Windows)
   'textauto'
   'textmode'
-  'toolbar'
-  'toolbariconsize'
-  'ttybuiltin'
-  'ttymouse'
-  'ttyscroll'
-  'ttytype'
+  *'toolbar'* *'tb'*
+  *'toolbariconsize'* *'tbis'*
+  *'ttybuiltin'* *'tbi'* *'nottybuiltin'* *'notbi'*
+  *'ttymouse'* *'ttym'*
+  *'ttyscroll'* *'tsl'*
+  *'ttytype'* *'tty'*
   'weirdinvert'
 
 Other commands:
