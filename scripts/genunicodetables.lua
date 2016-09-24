@@ -17,18 +17,22 @@
 --    which don't have ambiguous or double width, and emoji_all has all Emojis.
 if arg[1] == '--help' then
   print('Usage:')
-  print('  genunicodetables.lua UnicodeData.txt CaseFolding.txt ' ..
-        'EastAsianWidth.txt emoji-data.txt')
-  print('                       unicode_tables.generated.h')
+  print('  genunicodetables.lua unicode/ unicode_tables.generated.h')
   os.exit(0)
 end
 
-local unicodedata_fname = arg[1]
-local casefolding_fname = arg[2]
-local eastasianwidth_fname = arg[3]
-local emoji_fname = arg[4]
+local basedir = arg[1]
+local pathsep = package.config:sub(1, 1)
+local get_path = function(fname)
+  return basedir .. pathsep .. fname
+end
 
-local utf_tables_fname = arg[5]
+local unicodedata_fname = get_path('UnicodeData.txt')
+local casefolding_fname = get_path('CaseFolding.txt')
+local eastasianwidth_fname = get_path('EastAsianWidth.txt')
+local emoji_fname = get_path('emoji-data.txt')
+
+local utf_tables_fname = arg[2]
 
 local split_on_semicolons = function(s)
   local ret = {}

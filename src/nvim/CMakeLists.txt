@@ -36,10 +36,7 @@ set(EVAL_DEFS_FILE ${PROJECT_SOURCE_DIR}/src/nvim/eval.lua)
 set(OPTIONS_LIST_FILE ${PROJECT_SOURCE_DIR}/src/nvim/options.lua)
 set(UNICODE_TABLES_GENERATOR ${PROJECT_SOURCE_DIR}/scripts/genunicodetables.lua)
 set(UNICODE_DIR ${PROJECT_SOURCE_DIR}/unicode)
-set(UNICODEDATA_FILE ${UNICODE_DIR}/UnicodeData.txt)
-set(CASEFOLDING_FILE ${UNICODE_DIR}/CaseFolding.txt)
-set(EASTASIANWIDTH_FILE ${UNICODE_DIR}/EastAsianWidth.txt)
-set(EMOJI_FILE ${UNICODE_DIR}/emoji-data.txt)
+file(GLOB UNICODE_FILES ${UNICODE_DIR}/*.txt)
 set(GENERATED_UNICODE_TABLES ${GENERATED_DIR}/unicode_tables.generated.h)
 
 include_directories(${GENERATED_DIR})
@@ -193,17 +190,11 @@ endforeach()
 
 add_custom_command(OUTPUT ${GENERATED_UNICODE_TABLES}
   COMMAND ${LUA_PRG} ${UNICODE_TABLES_GENERATOR}
-                     ${UNICODEDATA_FILE}
-                     ${CASEFOLDING_FILE}
-                     ${EASTASIANWIDTH_FILE}
-                     ${EMOJI_FILE}
+                     ${UNICODE_DIR}
                      ${GENERATED_UNICODE_TABLES}
   DEPENDS
     ${UNICODE_TABLES_GENERATOR}
-    ${UNICODEDATA_FILE}
-    ${CASEFOLDING_FILE}
-    ${EASTASIANWIDTH_FILE}
-    ${EMOJI_FILE}
+    ${UNICODE_FILES}
 )
 
 add_custom_command(OUTPUT ${GENERATED_API_DISPATCH} ${API_METADATA}
