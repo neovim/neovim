@@ -2414,8 +2414,6 @@ bufexists({expr})					*bufexists()*
 		for MS-Windows 8.3 names in the form "c:\DOCUME~1"
 		Use "bufexists(0)" to test for the existence of an alternate
 		file name.
-							*buffer_exists()*
-		Obsolete name: buffer_exists().
 
 buflisted({expr})					*buflisted()*
 		The result is a Number, which is non-zero if a buffer called
@@ -2454,8 +2452,6 @@ bufname({expr})						*bufname()*
 	bufname(3)		name of buffer 3
 	bufname("%")		name of current buffer
 	bufname("file2")	name of buffer where "file2" matches.
-<							*buffer_name()*
-		Obsolete name: buffer_name().
 
 							*bufnr()*
 bufnr({expr} [, {create}])
@@ -2471,10 +2467,6 @@ bufnr({expr} [, {create}])
 		of existing buffers.  Note that not all buffers with a smaller
 		number necessarily exist, because ":bwipeout" may have removed
 		them.  Use bufexists() to test for the existence of a buffer.
-							*buffer_number()*
-		Obsolete name: buffer_number().
-							*last_buffer_nr()*
-		Obsolete name for bufnr("$"): last_buffer_nr().
 
 bufwinnr({expr})					*bufwinnr()*
 		The result is a Number, which is the number of the first
@@ -3262,8 +3254,6 @@ filereadable({file})					*filereadable()*
 		expression, which is used as a String.
 		If you don't care about the file being readable you can use
 		|glob()|.
-							*file_readable()*
-		Obsolete name: file_readable().
 
 
 filewritable({file})					*filewritable()*
@@ -4186,8 +4176,6 @@ hlexists({name})					*hlexists()*
 		defined in some way.  Not necessarily when highlighting has
 		been defined for it, it may also have been used for a syntax
 		item.
-							*highlight_exists()*
-		Obsolete name: highlight_exists().
 
 							*hlID()*
 hlID({name})	The result is a Number, which is the ID of the highlight group
@@ -4197,8 +4185,6 @@ hlID({name})	The result is a Number, which is the ID of the highlight group
 		group.	For example, to get the background color of the
 		"Comment" group: >
 	:echo synIDattr(synIDtrans(hlID("Comment")), "bg")
-<							*highlightID()*
-		Obsolete name: highlightID().
 
 hostname()						*hostname()*
 		The result is a String, which is the name of the machine on

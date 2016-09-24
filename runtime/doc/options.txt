@@ -1449,9 +1449,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	comment text.  Currently only used to add markers for folding, see
 	|fold-marker|.
 
-			*'compatible'* *'cp'* *'nocompatible'* *'nocp'*
-'compatible' 'cp'	Removed. |vim-differences| {Nvim}
-
 						*'complete'* *'cpt'* *E535*
 'complete' 'cpt'	string	(default: ".,w,b,u,t")
 			local to buffer
@@ -1848,9 +1845,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 			the cursor would skip over it and jump to the
 			following occurrence.
 
-						*'cryptmethod'* *'cm'*
-'cryptmethod'		Removed. |vim-differences| {Nvim}
-
 						*'cscopepathcomp'* *'cspc'*
 'cscopepathcomp' 'cspc'	number	(default 0)
 			global
@@ -2129,9 +2123,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 		hor	horizontally, height of windows is not affected
 		both	width and height of windows is affected
 
-			   *'ed'* *'edcompatible'* *'noed'* *'noedcompatible'*
-'edcompatible' 'ed'	Removed. |vim-differences| {Nvim}
-
 					*'encoding'* *'enc'* *E543*
 'encoding' 'enc'	string (default: "utf-8")
 			global
@@ -2336,11 +2327,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	'nomodified' to avoid not being able to ":q".
 
 	This option can not be changed when 'modifiable' is off.
-
-							*'fe'*
-	NOTE: Before version 6.0 this option specified the encoding for the
-	whole of Vim, this was a mistake.  Now use 'encoding' instead.  The
-	old short name was 'fe', which is no longer used.
 
 					*'fileencodings'* *'fencs'*
 'fileencodings' 'fencs'	string (default: "ucs-bom,utf-8,default,latin1")
@@ -3164,9 +3150,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 		removing it after the GUI has started has no effect.
 
 
-						*'guipty'* *'noguipty'*
-'guipty'		Removed. |vim-differences| {Nvim}
-
 						*'guitablabel'* *'gtl'*
 'guitablabel' 'gtl'	string	(default empty)
 			global
@@ -3411,12 +3394,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Can be overruled by using "\c" or "\C" in the pattern, see
 	|/ignorecase|.
 
-						*'imactivatefunc'* *'imaf'*
-'imactivatefunc' 'imaf'	Removed. |vim-differences| {Nvim}
-
-						*'imactivatekey'* *'imak'*
-'imactivatekey' 'imak'	Removed. |vim-differences| {Nvim}
-
 				*'imcmdline'* *'imc'* *'noimcmdline'* *'noimc'*
 'imcmdline' 'imc'	boolean (default off)
 			global
@@ -3472,9 +3449,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	|c_CTRL-^|.
 	The value is set to 1 when it is not -1 and setting the 'keymap'
 	option to a valid keymap name.
-
-						*'imstatusfunc'* *'imsf'*
-'imstatusfunc' 'imsf'	Removed. |vim-differences| {Nvim}
 
 						*'include'* *'inc'*
 'include' 'inc'		string	(default "^\s*#\s*include")
@@ -3731,9 +3705,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 			global
 	Insert two spaces after a '.', '?' and '!' with a join command.
 	Otherwise only one space is inserted.
-
-					*'key'*
-'key'			Removed. |vim-differences| {Nvim}
 
 					*'keymap'* *'kmp'* *E544*
 'keymap' 'kmp'		string	(default "")
@@ -4012,9 +3983,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	of plugins.
 	Note that using the "-u NONE" and "--noplugin" command line arguments
 	reset this option. |-u| |--noplugin|
-
-						*'macatsui'* *'nomacatsui'*
-'macatsui'		Removed. |vim-differences| {Nvim}
 
 						*'magic'* *'nomagic'*
 'magic'			boolean	(default on)
@@ -4859,9 +4827,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	For the ":substitute" command the number of substitutions is used
 	instead of the number of lines.
 
-			 *'restorescreen'* *'rs'* *'norestorescreen'* *'nors'*
-'restorescreen' 'rs'	Removed. |vim-differences| {Nvim}
-
 				*'revins'* *'ri'* *'norevins'* *'nori'*
 'revins' 'ri'		boolean	(default off)
 			global
@@ -5569,9 +5534,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	    shm=a	Abbreviation, but no loss of information.
 	    shm=at	Abbreviation, and truncate message when necessary.
 
-				 *'shortname'* *'sn'* *'noshortname'* *'nosn'*
-'shortname' 'sn'	Removed. |vim-differences| {Nvim}
-
 						*'showbreak'* *'sbr'* *E595*
 'showbreak' 'sbr'	string	(default "")
 			global
@@ -6185,9 +6147,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	This option is used together with 'bufhidden' and 'buftype' to
 	specify special kinds of buffers.   See |special-buffers|.
 
-						*'swapsync'* *'sws'*
-'swapsync' 'sws'	Removed. |vim-differences| {Nvim}
-
 						*'switchbuf'* *'swb'*
 'switchbuf' 'swb'	string	(default "")
 			global
@@ -6411,9 +6370,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Resetting this option is useful when using a ":tag" command in a
 	mapping which should not change the tagstack.
 
-						*'term'* *E529* *E530* *E531*
-'term'			Removed. |vim-differences| {Nvim}
-
 						*'termbidi'* *'tbidi'*
 						*'notermbidi'* *'notbidi'*
 'termbidi' 'tbidi'	boolean (default off)
@@ -6426,9 +6382,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Note that setting 'termbidi' has the immediate effect that
 	'arabicshape' is ignored, but 'rightleft' isn't changed automatically.
 	For further details see |arabic.txt|.
-
-					*'termencoding'* *'tenc'*
-'termencoding' 'tenc'	Removed. |vim-differences| {Nvim}
 
 						*'termguicolors'* *'tgc'*
 'termguicolors' 'tgc'	boolean (default off)
@@ -6584,26 +6537,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	to be garbled (e.g., when it contains a CR or NL character).
 	{not available when compiled without the |+statusline| feature}
 
-				*'toolbar'* *'tb'*
-'toolbar' 'tb'		Removed. |vim-differences| {Nvim}
-
-						*'toolbariconsize'* *'tbis'*
-'toolbariconsize' 'tbis'	Removed. |vim-differences| {Nvim}
-
-			     *'ttybuiltin'* *'tbi'* *'nottybuiltin'* *'notbi'*
-'ttybuiltin' 'tbi'	Removed. |vim-differences| {Nvim}
-
 				     *'ttyfast'* *'tf'* *'nottyfast'* *'notf'*
 'ttyfast' 'tf'		Removed. |vim-differences| {Nvim}
-
-						*'ttymouse'* *'ttym'*
-'ttymouse' 'ttym'	Removed. |vim-differences| {Nvim}
-
-						*'ttyscroll'* *'tsl'*
-'ttyscroll' 'tsl'	Removed. |vim-differences| {Nvim}
-
-						*'ttytype'* *'tty'*
-'ttytype' 'tty'		Alias for 'term'. Removed. |vim-differences| {Nvim}
 
 						*'undodir'* *'udir'* *E926*
 'undodir' 'udir'	string	(default "$XDG_DATA_HOME/nvim/undo")
@@ -6759,12 +6694,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	with Unix.  The Unix version of Vim cannot source dos format scripts,
 	but the Windows version of Vim can source unix format scripts.
 
-				*'viminfo'* *'vi'*
-'viminfo' 'vi'		string
-			global
-	Deprecated alias for 'shada' option. Is kept for compatibility 
-	reasons.
-
 					    *'virtualedit'* *'ve'*
 'virtualedit' 've'	string	(default "")
 			global
@@ -6809,9 +6738,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 			global
 	Give a warning message when a shell command is used while the buffer
 	has been changed.
-
-		     *'weirdinvert'* *'wiv'* *'noweirdinvert'* *'nowiv'*
-'weirdinvert' 'wiv'	Removed. |vim-differences| {Nvim}
 
 						*'whichwrap'* *'ww'*
 'whichwrap' 'ww'	string	(Vim default: "b,s", Vi default: "")

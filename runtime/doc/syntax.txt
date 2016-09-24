@@ -4926,8 +4926,6 @@ TabLineSel	tab pages line, active tab page label
 Title		titles for output from ":set all", ":autocmd" etc.
 							*hl-Visual*
 Visual		Visual mode selection
-							*hl-VisualNOS*
-VisualNOS	Removed. |vim-differences| {Nvim}
 							*hl-WarningMsg*
 WarningMsg	warning messages
 							*hl-WildMenu*

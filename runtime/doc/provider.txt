@@ -12,16 +12,16 @@ Nvim delegates some features to dynamic "providers".
 Python integration		    	      *provider-python*
 
 Nvim supports the Vim legacy |python-vim| and |python3| interfaces via
-external Python interpreters connected via |RPC|,
-
+external Python interpreters connected via |RPC|.
 Note: Only the Vim 7.3 API is supported; bindeval (Vim 7.4) is not.
-
 
 PYTHON QUICKSTART ~
 
-If you used a package manager to install Nvim there's a good chance that
-it also provides the `neovim` Python package. If it doesn't, follow these
-steps to install the package with Python's package manager, `pip`.
+If you used a package manager to install Nvim, you might already have the
+required `neovim` Python package. Run |:CheckHealth| to see if your system is
+up-to-date.
+
+Following are steps to install the package with Python's `pip` tool.
 
 Note: Depending on your system, `pip` might refer to Python 2 or Python 3,
       which is why the following instructions mention `pip2` or `pip3`
@@ -74,23 +74,18 @@ Note: This requires you to install the python3-neovim module properly. >
     let g:python3_host_skip_check = 1
 
 
-TROUBLESHOOTING					*python-trouble*
-
-If you have trouble with a plugin that uses the `neovim` Python client, use
-the |:CheckHealth| command to diagnose your setup.
-
 ==============================================================================
 Ruby integration		    	      *provider-ruby*
 
 Nvim supports the Vim legacy |ruby-vim| interface via external Ruby
 interpreters connected via |RPC|.
 
+Run |:CheckHealth| to see if your system is up-to-date.
 
 RUBY QUICKSTART ~
 
 To use Vim Ruby plugins with Nvim, just install the latest `neovim` RubyGem: >
     $ gem install neovim
-
 
 RUBY PROVIDER CONFIGURATION ~
 						*g:loaded_ruby_provider*
