@@ -138,9 +138,8 @@ local function dict_iter(d)
 end
 
 local function first_di(d)
-  for _, di in dict_iter(d) do
-    return di
-  end
+  local f, init_s, v = dict_iter(d)
+  return select(2, f(init_s, v))
 end
 
 dct2tbl = function(d, processed)
