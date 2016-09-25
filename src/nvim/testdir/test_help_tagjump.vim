@@ -124,36 +124,36 @@ func Test_help_complete()
       set rtp+=Xdir1/doc-ab
       set helplang=
       let list = s:get_cmd_compl_list(":h test")
-      call assert_equal(['h test-col@en', 'h test-col@ab',
-            \             'h test-char@en', 'h test-char@ab'], list)
+      call assert_equal(sort(['h test-col@en', 'h test-col@ab',
+            \             'h test-char@en', 'h test-char@ab']), sort(list))
 
       " 'helplang=ab' and help file lang is 'en' and 'ab'
       set helplang=ab
       let list = s:get_cmd_compl_list(":h test")
-      call assert_equal(['h test-col', 'h test-col@en',
-            \             'h test-char', 'h test-char@en'], list)
+      call assert_equal(sort(['h test-col', 'h test-col@en',
+            \             'h test-char', 'h test-char@en']), sort(list))
 
       " 'helplang=' and help file lang is 'en', 'ab' and 'ja'
       set rtp+=Xdir1/doc-ja
       set helplang=
       let list = s:get_cmd_compl_list(":h test")
-      call assert_equal(['h test-col@en', 'h test-col@ab',
+      call assert_equal(sort(['h test-col@en', 'h test-col@ab',
             \             'h test-col@ja', 'h test-char@en',
-            \             'h test-char@ab', 'h test-char@ja'], list)
+            \             'h test-char@ab', 'h test-char@ja']), sort(list))
 
       " 'helplang=ab' and help file lang is 'en', 'ab' and 'ja'
       set helplang=ab
       let list = s:get_cmd_compl_list(":h test")
-      call assert_equal(['h test-col', 'h test-col@en',
+      call assert_equal(sort(['h test-col', 'h test-col@en',
             \             'h test-col@ja', 'h test-char',
-            \             'h test-char@en', 'h test-char@ja'], list)
+            \             'h test-char@en', 'h test-char@ja']), sort(list))
 
       " 'helplang=ab,ja' and help file lang is 'en', 'ab' and 'ja'
       set helplang=ab,ja
       let list = s:get_cmd_compl_list(":h test")
-      call assert_equal(['h test-col', 'h test-col@ja',
+      call assert_equal(sort(['h test-col', 'h test-col@ja',
             \             'h test-col@en', 'h test-char',
-            \             'h test-char@ja', 'h test-char@en'], list)
+            \             'h test-char@ja', 'h test-char@en']), sort(list))
     endif
   catch
     call assert_exception('X')
