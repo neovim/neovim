@@ -27,7 +27,7 @@ local typvalt2lua  = eval_helpers.typvalt2lua
 local null_string  = eval_helpers.null_string
 
 local lib = cimport('./src/nvim/eval/typval.h', './src/nvim/memory.h',
-                    './src/nvim/mbyte.h')
+                    './src/nvim/mbyte.h', './src/nvim/garray.h')
 
 local function list_items(l)
   local lis = {}
@@ -94,6 +94,13 @@ end
 after_each(function()
   alloc_log:after_each()
 end)
+
+local function ga_alloc(itemsize, growsize)
+  local ga = ffi.gc(ffi.cast('garray_T*', ffi.new('garray_T[1]', {})),
+                    lib.ga_clear)
+  lib.ga_init(ga, itemsize or 1, growsize or 80)
+  return ga
+end
 
 describe('typval.c', function()
   describe('list', function()
@@ -1023,6 +1030,40 @@ describe('typval.c', function()
         })
         eq(empty_list, typvalt2lua(rettv4))
       end)
+    end)
+  end)
+  describe('join()', function()
+    local function list_join(l, sep, ret)
+      local ga = ga_alloc()
+      eq(ret or OK, lib.tv_list_join(ga, l, sep))
+      if ga.ga_data == nil then return ''
+      else return ffi.string(ga.ga_data)
+      end
+    end
+    it('works', function()
+      local l
+      l = list('boo', 'far')
+      eq('boo far', list_join(l, ' '))
+      eq('boofar', list_join(l, ''))
+
+      l = list('boo')
+      eq('boo', list_join(l, ' '))
+
+      l = list()
+      eq('', list_join(l, ' '))
+
+      l = list({}, 'far')
+      eq('{} far', list_join(l, ' '))
+
+      local recursive_list = {}
+      recursive_list[1] = recursive_list
+      l = ffi.gc(list(recursive_list, 'far'), nil)
+      eq('[[...@0]] far', list_join(l, ' '))
+
+      local recursive_l = l.lv_first.li_tv.vval.v_list
+      local recursive_li = recursive_l.lv_first
+      lib.tv_list_item_remove(recursive_l, recursive_li)
+      lib.tv_list_free(l, true)
     end)
   end)
 end)
