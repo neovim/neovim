@@ -65,6 +65,12 @@ set(NVIM_VERSION_MINOR 1)
 set(NVIM_VERSION_PATCH 6)
 set(NVIM_VERSION_PRERELEASE "-dev") # for package maintainers
 
+# Neovim API version. When changing the API, bump CURRENT if
+# PRERELEASE is false, and set PRERELEASE as true
+set(NVIM_API_CURRENT 1)
+set(NVIM_API_COMPATIBILITY 0)
+set(NVIM_API_PRERELEASE true)
+
 file(TO_CMAKE_PATH ${CMAKE_CURRENT_LIST_DIR}/.git FORCED_GIT_DIR)
 include(GetGitRevisionDescription)
 get_git_head_revision(GIT_REFSPEC NVIM_VERSION_COMMIT)

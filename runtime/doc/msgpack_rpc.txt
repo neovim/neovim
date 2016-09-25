@@ -168,6 +168,9 @@ API metadata object ~
 API clients exist to hide msgpack-rpc details. The API metadata object
 contains information that makes this task easier (see also |rpc-types|):
 
+  - The "api_level" key contais API compatibility information. The "current"
+    key holds the API version supported Neovim. The "compatibility" key holds
+    the oldest supported API version.
   - The "functions" key contains a list of metadata objects for individual
     functions.
   - Each function metadata object has |rpc-types| information about the return
