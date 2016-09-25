@@ -3688,10 +3688,7 @@ static void cleanup_help_tags(int num_file, char_u **file)
     if (len <= 0) {
       continue;
     }
-    if (STRCMP(file[i] + len, buf) == 0) {
-      // remove the default language
-      file[i][len] = NUL;
-    } else if (STRCMP(file[i] + len, "@en") == 0) {
+    if (STRCMP(file[i] + len, "@en") == 0) {
       // Sorting on priority means the same item in another language may
       // be anywhere.  Search all items for a match up to the "@en".
       int j;
@@ -3704,6 +3701,19 @@ static void cleanup_help_tags(int num_file, char_u **file)
       }
       if (j == num_file) {
         // item only exists with @en, remove it
+        file[i][len] = NUL;
+      }
+    }
+  }
+
+  if (*buf != NUL) {
+    for (int i = 0; i < num_file; i++) {
+      int len = (int)STRLEN(file[i]) - 3;
+      if (len <= 0) {
+        continue;
+      }
+      if (STRCMP(file[i] + len, buf) == 0) {
+        // remove the default language
         file[i][len] = NUL;
       }
     }
