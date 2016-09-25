@@ -3,6 +3,7 @@ local Screen = require('test.functional.ui.screen')
 local ok, feed, eq, eval = helpers.ok, helpers.feed, helpers.eq, helpers.eval
 local source, nvim_async, run = helpers.source, helpers.nvim_async, helpers.run
 local clear, execute, funcs = helpers.clear, helpers.execute, helpers.funcs
+local curbufmeths = helpers.curbufmeths
 
 describe('timers', function()
   before_each(function()
@@ -62,17 +63,74 @@ describe('timers', function()
   end)
 
   it('are paused when event processing is disabled', function()
-    -- this is not the intended behavior, but at least there will
-    -- not be a burst of queued up callbacks
-    execute("call timer_start(50, 'MyHandler', {'repeat': 2})")
+    execute("call timer_start(50, 'MyHandler', {'repeat': -1})")
     run(nil, nil, nil, 100)
     local count = eval("g:val")
+    -- shows two line error message and thus invokes the return prompt.
+    -- if we start to allow event processing here, we need to change this test.
+    execute("throw 'fatal error'")
+    run(nil, nil, nil, 300)
+    feed("<cr>")
+    local diff = eval("g:val") - count
+    ok(0 <= diff and diff <= 4)
+  end)
+
+  it('are triggered in blocking getchar() call', function()
+    execute("call timer_start(50, 'MyHandler', {'repeat': -1})")
     nvim_async("command", "let g:c = getchar()")
     run(nil, nil, nil, 300)
     feed("c")
-    local diff = eval("g:val") - count
-    ok(0 <= diff and diff <= 2)
+    local count = eval("g:val")
+    ok(count >= 5)
     eq(99, eval("g:c"))
+  end)
+
+  it('can invoke redraw in blocking getchar() call', function()
+    local screen = Screen.new(40, 6)
+    screen:attach()
+    screen:set_default_attr_ids({
+        [1] = {bold=true, foreground=Screen.colors.Blue},
+    })
+
+    curbufmeths.set_lines(0, -1, true, {"ITEM 1", "ITEM 2"})
+    source([[
+      func! AddItem(timer)
+        call nvim_buf_set_lines(0, 2, 2, v:true, ['ITEM 3'])
+        redraw
+      endfunc
+      call timer_start(200, 'AddItem')
+    ]])
+    nvim_async("command", "let g:c2 = getchar()")
+
+    screen:expect([[
+      ITEM 1                                  |
+      ITEM 2                                  |
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      ^                                        |
+    ]])
+
+    screen:sleep(200)
+    screen:expect([[
+      ITEM 1                                  |
+      ITEM 2                                  |
+      ITEM 3                                  |
+      {1:~                                       }|
+      {1:~                                       }|
+      ^                                        |
+    ]])
+
+    feed("3")
+    eq(51, eval("g:c2"))
+    screen:expect([[
+      ^ITEM 1                                  |
+      ITEM 2                                  |
+      ITEM 3                                  |
+      {1:~                                       }|
+      {1:~                                       }|
+                                              |
+    ]])
   end)
 
   it('can be stopped', function()

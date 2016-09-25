@@ -9527,24 +9527,35 @@ static void f_getchar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   varnumber_T n;
   int error = FALSE;
 
-  /* Position the cursor.  Needed after a message that ends in a space. */
-  ui_cursor_goto(msg_row, msg_col);
-
   ++no_mapping;
   ++allow_keys;
   for (;; ) {
-    if (argvars[0].v_type == VAR_UNKNOWN)
-      /* getchar(): blocking wait. */
+    // Position the cursor.  Needed after a message that ends in a space,
+    // or if event processing caused a redraw.
+    ui_cursor_goto(msg_row, msg_col);
+
+    if (argvars[0].v_type == VAR_UNKNOWN) {
+      // getchar(): blocking wait.
+      if (!(char_avail() || using_script() || input_available())) {
+        input_enable_events();
+        (void)os_inchar(NULL, 0, -1, 0);
+        input_disable_events();
+        if (!multiqueue_empty(main_loop.events)) {
+          multiqueue_process_events(main_loop.events);
+          continue;
+        }
+      }
       n = safe_vgetc();
-    else if (get_tv_number_chk(&argvars[0], &error) == 1)
-      /* getchar(1): only check if char avail */
+    } else if (get_tv_number_chk(&argvars[0], &error) == 1) {
+      // getchar(1): only check if char avail
       n = vpeekc_any();
-    else if (error || vpeekc_any() == NUL)
-      /* illegal argument or getchar(0) and no char avail: return zero */
+    } else if (error || vpeekc_any() == NUL) {
+      // illegal argument or getchar(0) and no char avail: return zero
       n = 0;
-    else
-      /* getchar(0) and char avail: return char */
+    } else {
+      // getchar(0) and char avail: return char
       n = safe_vgetc();
+    }
 
     if (n == K_IGNORE)
       continue;
