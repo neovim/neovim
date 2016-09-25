@@ -4,6 +4,9 @@ local Set = require('test.unit.set')
 local Preprocess = require('test.unit.preprocess')
 local Paths = require('test.config.paths')
 local global_helpers = require('test.helpers')
+local posix = require('posix')
+local assert = require('luassert')
+local say = require('say')
 
 local neq = global_helpers.neq
 local eq = global_helpers.eq
@@ -195,6 +198,52 @@ do
   main.event_init()
 end
 
+local function gen_itp(it)
+  local function just_fail(_)
+    return false
+  end
+  say:set('assertion.just_fail.positive', '%s')
+  say:set('assertion.just_fail.negative', '%s')
+  assert:register('assertion', 'just_fail', just_fail,
+                  'assertion.just_fail.positive',
+                  'assertion.just_fail.negative')
+  local function itp(name, func)
+    it(name, function()
+      local rd, wr = posix.pipe()
+      local pid = posix.fork()
+      if pid == 0 then
+        posix.close(rd)
+        local err, emsg = pcall(func)
+        emsg = tostring(emsg)
+        if not err then
+          posix.write(wr, ('-\n%05u\n%s'):format(#emsg, emsg))
+          posix.close(wr)
+          posix._exit(1)
+        else
+          posix.write(wr, '+\n')
+          posix.close(wr)
+          posix._exit(0)
+        end
+      else
+        posix.close(wr)
+        posix.wait(pid)
+        local res = posix.read(rd, 2)
+        eq(2, #res)
+        if res == '+\n' then
+          return
+        end
+        eq('-\n', res)
+        local len_s = posix.read(rd, 5)
+        local len = tonumber(len_s)
+        neq(0, len)
+        local err = posix.read(rd, len + 1)
+        assert.just_fail(err)
+      end
+    end)
+  end
+  return itp
+end
+
 return {
   cimport = cimport,
   cppimport = cppimport,
@@ -210,4 +259,5 @@ return {
   OK = OK,
   FAIL = FAIL,
   set_logging_allocator = set_logging_allocator,
+  gen_itp = gen_itp,
 }
