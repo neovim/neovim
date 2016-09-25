@@ -647,7 +647,7 @@ listitem_T *tv_list_find(list_T *const l, int n)
   }
 
   int idx;
-  listitem_T  *item;
+  listitem_T *item;
 
   // When there is a cached index may start search from there.
   if (l->lv_idx_item != NULL) {
