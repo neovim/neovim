@@ -145,6 +145,18 @@ for i,f in ipairs(shallowcopy(functions)) do
   end
 end
 
+-- don't expose internal attributes like "impl_name" in public metadata
+exported_attributes = {'name', 'parameters', 'return_type', 'method',
+                       'since', 'deprecated_since'}
+exported_functions = {}
+for _,f in ipairs(functions) do
+  local f_exported = {}
+  for _,attr in ipairs(exported_attributes) do
+    f_exported[attr] = f[attr]
+  end
+  exported_functions[#exported_functions+1] = f_exported
+end
+
 
 -- start building the output
 output = io.open(outputf, 'wb')
@@ -179,9 +191,9 @@ static const uint8_t msgpack_metadata[] = {
 ]])
 -- serialize the API metadata using msgpack and embed into the resulting
 -- binary for easy querying by clients
-packed = mpack.pack(functions)
-for i = 1, #packed do
-  output:write(string.byte(packed, i)..', ')
+packed_exported_functions = mpack.pack(exported_functions)
+for i = 1, #packed_exported_functions do
+  output:write(string.byte(packed_exported_functions, i)..', ')
   if i % 10 == 0 then
     output:write('\n  ')
   end
@@ -370,5 +382,5 @@ MsgpackRpcRequestHandler msgpack_rpc_get_handler_for(const char *name,
 output:close()
 
 mpack_output = io.open(mpack_outputf, 'wb')
-mpack_output:write(packed)
+mpack_output:write(mpack.pack(functions))
 mpack_output:close()
