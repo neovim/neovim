@@ -927,9 +927,9 @@ EXTERN FILE     *scriptin[NSCRIPT];         /* streams to read script from */
 EXTERN int curscript INIT(= 0);             /* index in scriptin[] */
 EXTERN FILE     *scriptout INIT(= NULL);    /* stream to write script to */
 
-/* volatile because it is used in signal handler catch_sigint(). */
-EXTERN volatile int got_int INIT(= FALSE);    /* set to TRUE when interrupt
-                                                 signal occurred */
+// volatile because it is used in a signal handler.
+EXTERN volatile int got_int INIT(= false);  // set to true when interrupt
+                                            // signal occurred
 EXTERN int bangredo INIT(= FALSE);          /* set to TRUE with ! command */
 EXTERN int searchcmdlen;                    /* length of previous search cmd */
 EXTERN int reg_do_extmatch INIT(= 0);       /* Used when compiling regexp:

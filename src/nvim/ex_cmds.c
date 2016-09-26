@@ -1154,15 +1154,11 @@ static void do_filter(
   }
   read_linecount = curbuf->b_ml.ml_line_count;
 
-  /*
-   * When call_shell() fails wait_return() is called to give the user a
-   * chance to read the error messages. Otherwise errors are ignored, so you
-   * can see the error messages from the command that appear on stdout; use
-   * 'u' to fix the text
-   * Switch to cooked mode when not redirecting stdin, avoids that something
-   * like ":r !cat" hangs.
-   * Pass on the kShellDoOut flag when the output is being redirected.
-   */
+  // When call_shell() fails wait_return() is called to give the user a chance
+  // to read the error messages. Otherwise errors are ignored, so you can see
+  // the error messages from the command that appear on stdout; use 'u' to fix
+  // the text.
+  // Pass on the kShellDoOut flag when the output is being redirected.
   if (call_shell(
         cmd_buf,
         kShellOptFilter | shell_flags,

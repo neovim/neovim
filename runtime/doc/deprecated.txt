@@ -30,7 +30,7 @@ Highlight groups ~
 Functions ~
 *buffer_exists()*	Obsolete name for |bufexists()|.
 *buffer_name()*		Obsolete name for |bufname()|.
-*buffer_number()*	Obsolete name for |buffer_number()|.
+*buffer_number()*	Obsolete name for |bufnr()|.
 *file_readable()*	Obsolete name for |filereadable()|.
 *highlight_exists()*	Obsolete name for |hlexists()|.
 *highlightID()*		Obsolete name for |hlID()|.

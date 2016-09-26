@@ -1,5 +1,5 @@
-// FIXME(tarruda): This module is very repetitive. It might be a good idea to
-// automatically generate it with a lua script during build
+// UI wrapper for the built-in TUI. Sends UI requests to the TUI thread.
+
 #include <assert.h>
 #include <stdbool.h>
 #include <stdio.h>

@@ -1,3 +1,5 @@
+// Terminal UI functions. Invoked (by ui_bridge.c) on the TUI thread.
+
 #include <assert.h>
 #include <stdbool.h>
 #include <stdio.h>
