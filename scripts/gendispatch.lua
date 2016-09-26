@@ -133,6 +133,11 @@ for i,f in ipairs(shallowcopy(functions)) do
     end
     local newf = shallowcopy(f)
     newf.name = newname
+    if newname == "ui_try_resize" then
+      -- The return type was incorrectly set to Object in 0.1.5.
+      -- Keep it that way for clients that rely on this.
+      newf.return_type = "Object"
+    end
     newf.impl_name = f.name
     newf.noeval = true
     newf.deprecated_since = 1
