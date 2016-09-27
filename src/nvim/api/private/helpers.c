@@ -7,6 +7,7 @@
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/handle.h"
+#include "nvim/msgpack_rpc/helpers.h"
 #include "nvim/ascii.h"
 #include "nvim/vim.h"
 #include "nvim/buffer.h"
@@ -27,6 +28,7 @@ typedef struct {
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "api/private/helpers.c.generated.h"
+# include "api/private/funcs_metadata.generated.h"
 #endif
 
 /// Start block that may cause vimscript exceptions
@@ -761,12 +763,28 @@ Dictionary api_metadata(void)
   static Dictionary metadata = ARRAY_DICT_INIT;
 
   if (!metadata.size) {
-    msgpack_rpc_init_function_metadata(&metadata);
+    init_function_metadata(&metadata);
     init_error_type_metadata(&metadata);
     init_type_metadata(&metadata);
   }
 
   return copy_object(DICTIONARY_OBJ(metadata)).data.dictionary;
+}
+
+static void init_function_metadata(Dictionary *metadata)
+{
+  msgpack_unpacked unpacked;
+  msgpack_unpacked_init(&unpacked);
+  if (msgpack_unpack_next(&unpacked,
+                          (const char *)funcs_metadata,
+                          sizeof(funcs_metadata),
+                          NULL) != MSGPACK_UNPACK_SUCCESS) {
+    abort();
+  }
+  Object functions;
+  msgpack_rpc_to_object(&unpacked.data, &functions);
+  msgpack_unpacked_destroy(&unpacked);
+  PUT(*metadata, "functions", functions);
 }
 
 static void init_error_type_metadata(Dictionary *metadata)
@@ -784,6 +802,7 @@ static void init_error_type_metadata(Dictionary *metadata)
 
   PUT(*metadata, "error_types", DICTIONARY_OBJ(types));
 }
+
 static void init_type_metadata(Dictionary *metadata)
 {
   Dictionary types = ARRAY_DICT_INIT;
