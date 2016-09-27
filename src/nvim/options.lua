@@ -644,6 +644,14 @@ return {
       defaults={if_true={vi=false}}
     },
     {
+      full_name='emoji', abbreviation='emo',
+      type='bool', scope={'global'},
+      vi_def=true,
+      redraw={'everything'},
+      varname='p_emoji',
+      defaults={if_true={vi=true}}
+    },
+    {
       full_name='encoding', abbreviation='enc',
       type='string', scope={'global'},
       deny_in_modelines=true,

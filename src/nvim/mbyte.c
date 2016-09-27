@@ -949,6 +949,9 @@ int utf_char2cells(int c)
     if (intable(doublewidth, ARRAY_SIZE(doublewidth), c))
       return 2;
 #endif
+    if (p_emoji && intable(emoji_width, ARRAY_SIZE(emoji_width), c)) {
+      return 2;
+    }
   }
   /* Characters below 0x100 are influenced by 'isprint' option */
   else if (c >= 0x80 && !vim_isprintc(c))
@@ -1712,16 +1715,20 @@ int utf_class(int c)
       return (int)classes[mid].class;
   }
 
+  // emoji
+  if (intable(emoji_all, ARRAY_SIZE(emoji_all), c)) {
+    return 3;
+  }
+
   /* most other characters are "word" characters */
   return 2;
 }
 
-/*
- * Code for Unicode case-dependent operations.  Based on notes in
- * http://www.unicode.org/Public/UNIDATA/CaseFolding.txt
- * This code uses simple case folding, not full case folding.
- * Last updated for Unicode 5.2.
- */
+int utf_ambiguous_width(int c)
+{
+  return c >= 0x80 && (intable(ambiguous, ARRAY_SIZE(ambiguous), c)
+                       || intable(emoji_all, ARRAY_SIZE(emoji_all), c));
+}
 
 /*
  * Generic conversion function for case operations.
