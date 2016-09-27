@@ -111,14 +111,20 @@ end
 local deprecated_aliases = require("api.dispatch_deprecated")
 for i,f in ipairs(shallowcopy(functions)) do
   local ismethod = false
-  if startswith(f.name, "nvim_buf_") then
-    ismethod = true
-  elseif startswith(f.name, "nvim_win_") then
-    ismethod = true
-  elseif startswith(f.name, "nvim_tabpage_") then
-    ismethod = true
-  elseif not startswith(f.name, "nvim_") then
+  if startswith(f.name, "nvim_") then
+    -- TODO(bfredl) after 0.1.6 allow method definitions
+    -- to specify the since and deprecated_since field
+    f.since = 1
+    if startswith(f.name, "nvim_buf_") then
+      ismethod = true
+    elseif startswith(f.name, "nvim_win_") then
+      ismethod = true
+    elseif startswith(f.name, "nvim_tabpage_") then
+      ismethod = true
+    end
+  else
     f.noeval = true
+    f.since = 0
     f.deprecated_since = 1
   end
   f.method = ismethod
@@ -133,11 +139,29 @@ for i,f in ipairs(shallowcopy(functions)) do
     end
     local newf = shallowcopy(f)
     newf.name = newname
+    if newname == "ui_try_resize" then
+      -- The return type was incorrectly set to Object in 0.1.5.
+      -- Keep it that way for clients that rely on this.
+      newf.return_type = "Object"
+    end
     newf.impl_name = f.name
     newf.noeval = true
+    newf.since = 0
     newf.deprecated_since = 1
     functions[#functions+1] = newf
   end
+end
+
+-- don't expose internal attributes like "impl_name" in public metadata
+exported_attributes = {'name', 'parameters', 'return_type', 'method',
+                       'since', 'deprecated_since'}
+exported_functions = {}
+for _,f in ipairs(functions) do
+  local f_exported = {}
+  for _,attr in ipairs(exported_attributes) do
+    f_exported[attr] = f[attr]
+  end
+  exported_functions[#exported_functions+1] = f_exported
 end
 
 
@@ -174,9 +198,9 @@ static const uint8_t msgpack_metadata[] = {
 ]])
 -- serialize the API metadata using msgpack and embed into the resulting
 -- binary for easy querying by clients
-packed = mpack.pack(functions)
-for i = 1, #packed do
-  output:write(string.byte(packed, i)..', ')
+packed_exported_functions = mpack.pack(exported_functions)
+for i = 1, #packed_exported_functions do
+  output:write(string.byte(packed_exported_functions, i)..', ')
   if i % 10 == 0 then
     output:write('\n  ')
   end
@@ -365,5 +389,5 @@ MsgpackRpcRequestHandler msgpack_rpc_get_handler_for(const char *name,
 output:close()
 
 mpack_output = io.open(mpack_outputf, 'wb')
-mpack_output:write(packed)
+mpack_output:write(mpack.pack(functions))
 mpack_output:close()
