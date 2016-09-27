@@ -111,14 +111,20 @@ end
 local deprecated_aliases = require("api.dispatch_deprecated")
 for i,f in ipairs(shallowcopy(functions)) do
   local ismethod = false
-  if startswith(f.name, "nvim_buf_") then
-    ismethod = true
-  elseif startswith(f.name, "nvim_win_") then
-    ismethod = true
-  elseif startswith(f.name, "nvim_tabpage_") then
-    ismethod = true
-  elseif not startswith(f.name, "nvim_") then
+  if startswith(f.name, "nvim_") then
+    -- TODO(bfredl) after 0.1.6 allow method definitions
+    -- to specify the since and deprecated_since field
+    f.since = 1
+    if startswith(f.name, "nvim_buf_") then
+      ismethod = true
+    elseif startswith(f.name, "nvim_win_") then
+      ismethod = true
+    elseif startswith(f.name, "nvim_tabpage_") then
+      ismethod = true
+    end
+  else
     f.noeval = true
+    f.since = 0
     f.deprecated_since = 1
   end
   f.method = ismethod
@@ -140,6 +146,7 @@ for i,f in ipairs(shallowcopy(functions)) do
     end
     newf.impl_name = f.name
     newf.noeval = true
+    newf.since = 0
     newf.deprecated_since = 1
     functions[#functions+1] = newf
   end
