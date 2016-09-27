@@ -2548,10 +2548,9 @@ static void cmdline_del(int from)
   ccline.cmdpos = from;
 }
 
-/*
- * this function is called when the screen size changes and with incremental
- * search
- */
+// This function is called when the screen size changes and with incremental
+// search and in other situations where the command line may have been
+// overwritten.
 void redrawcmdline(void)
 {
   if (cmd_silent)
@@ -3669,27 +3668,54 @@ expand_cmdline (
   return EXPAND_OK;
 }
 
-/*
- * Cleanup matches for help tags: remove "@en" if "en" is the only language.
- */
-
+// Cleanup matches for help tags:
+// Remove "@ab" if the top of 'helplang' is "ab" and the language of the first
+// tag matches it.  Otherwise remove "@en" if "en" is the only language.
 static void cleanup_help_tags(int num_file, char_u **file)
 {
-  int i, j;
-  int len;
+  char_u buf[4];
+  char_u *p = buf;
 
-  for (i = 0; i < num_file; ++i) {
-    len = (int)STRLEN(file[i]) - 3;
-    if (len > 0 && STRCMP(file[i] + len, "@en") == 0) {
-      /* Sorting on priority means the same item in another language may
-       * be anywhere.  Search all items for a match up to the "@en". */
-      for (j = 0; j < num_file; ++j)
+  if (p_hlg[0] != NUL && (p_hlg[0] != 'e' || p_hlg[1] != 'n')) {
+    *p++ = '@';
+    *p++ = p_hlg[0];
+    *p++ = p_hlg[1];
+  }
+  *p = NUL;
+
+  for (int i = 0; i < num_file; i++) {
+    int len = (int)STRLEN(file[i]) - 3;
+    if (len <= 0) {
+      continue;
+    }
+    if (STRCMP(file[i] + len, "@en") == 0) {
+      // Sorting on priority means the same item in another language may
+      // be anywhere.  Search all items for a match up to the "@en".
+      int j;
+      for (j = 0; j < num_file; j++) {
         if (j != i
             && (int)STRLEN(file[j]) == len + 3
-            && STRNCMP(file[i], file[j], len + 1) == 0)
+            && STRNCMP(file[i], file[j], len + 1) == 0) {
           break;
-      if (j == num_file)
+        }
+      }
+      if (j == num_file) {
+        // item only exists with @en, remove it
         file[i][len] = NUL;
+      }
+    }
+  }
+
+  if (*buf != NUL) {
+    for (int i = 0; i < num_file; i++) {
+      int len = (int)STRLEN(file[i]) - 3;
+      if (len <= 0) {
+        continue;
+      }
+      if (STRCMP(file[i] + len, buf) == 0) {
+        // remove the default language
+        file[i][len] = NUL;
+      }
     }
   }
 }
