@@ -3658,14 +3658,16 @@ set_bool_option (
   /* when 'insertmode' is set from an autocommand need to do work here */
   else if ((int *)varp == &p_im) {
     if (p_im) {
-      if ((State & INSERT) == 0)
-        need_start_insertmode = TRUE;
-      stop_insert_mode = FALSE;
-    } else {
-      need_start_insertmode = FALSE;
-      stop_insert_mode = TRUE;
-      if (restart_edit != 0 && mode_displayed)
-        clear_cmdline = TRUE;           /* remove "(insert)" */
+      if ((State & INSERT) == 0) {
+        need_start_insertmode = true;
+      }
+      stop_insert_mode = false;
+    } else if (old_value) {  // only reset if it was set previously
+      need_start_insertmode = false;
+      stop_insert_mode = true;
+      if (restart_edit != 0 && mode_displayed) {
+        clear_cmdline = true;  // remove "(insert)"
+      }
       restart_edit = 0;
     }
   }
