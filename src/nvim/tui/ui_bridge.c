@@ -1,5 +1,5 @@
-// FIXME(tarruda): This module is very repetitive. It might be a good idea to
-// automatically generate it with a lua script during build
+// UI wrapper for the built-in TUI. Sends UI requests to the TUI thread.
+
 #include <assert.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -9,11 +9,11 @@
 #include "nvim/vim.h"
 #include "nvim/ui.h"
 #include "nvim/memory.h"
-#include "nvim/ui_bridge.h"
 #include "nvim/ugrid.h"
+#include "nvim/tui/ui_bridge.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "ui_bridge.c.generated.h"
+# include "tui/ui_bridge.c.generated.h"
 #endif
 
 #define UI(b) (((UIBridgeData *)b)->ui)

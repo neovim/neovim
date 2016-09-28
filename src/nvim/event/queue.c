@@ -8,7 +8,7 @@
 // - removing a node from a child queue will remove the corresponding link node
 //   in the parent queue
 //
-// These properties allow neovim to organize and process events from different
+// These properties allow Nvim to organize and process events from different
 // sources with a certain degree of control. Here's how the queue is used:
 //
 //                         +----------------+
@@ -26,20 +26,20 @@
 //    +-----------+   +-----------+    +---------+    +---------+
 //
 //
-// In the above diagram, the lower boxes represents event emitters, each with
-// it's own private queue that have the event loop queue as the parent.
+// The lower boxes represents event emitters, each with its own private queue
+// having the event loop queue as the parent.
 //
 // When idle, the main loop spins the event loop which queues events from many
-// sources(channels, jobs, user...). Each event emitter pushes events to its own
+// sources (channels, jobs, user...). Each event emitter pushes events to its
 // private queue which is propagated to the event loop queue. When the main loop
 // consumes an event, the corresponding event is removed from the emitter's
 // queue.
 //
 // The main reason for this queue hierarchy is to allow focusing on a single
 // event emitter while blocking the main loop. For example, if the `jobwait`
-// vimscript function is called on job1, the main loop will temporarily stop
-// polling the event loop queue and poll job1 queue instead. Same with channels,
-// when calling `rpcrequest`, we want to temporarily stop processing events from
+// VimL function is called on job1, the main loop will temporarily stop polling
+// the event loop queue and poll job1 queue instead. Same with channels, when
+// calling `rpcrequest` we want to temporarily stop processing events from
 // other sources and focus on a specific channel.
 
 #include <assert.h>

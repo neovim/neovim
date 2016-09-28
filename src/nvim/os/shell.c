@@ -162,7 +162,7 @@ int os_call_shell(char_u *cmd, ShellOpts opts, char_u *extra_args)
 /// @param input The input to the shell (NULL for no input), passed to the
 ///              stdin of the resulting process.
 /// @param len The length of the input buffer (not used if `input` == NULL)
-/// @param[out] output A pointer to to a location where the output will be
+/// @param[out] output Pointer to a location where the output will be
 ///                    allocated and stored. Will point to NULL if the shell
 ///                    command did not output anything. If NULL is passed,
 ///                    the shell output will be ignored.
@@ -227,7 +227,7 @@ static int do_os_system(char **argv,
 
   // We want to deal with stream events as fast a possible while queueing
   // process events, so reset everything to NULL. It prevents closing the
-  // streams while there's still data in the OS buffer(due to the process
+  // streams while there's still data in the OS buffer (due to the process
   // exiting before all data is read).
   if (input != NULL) {
     proc->in->events = NULL;

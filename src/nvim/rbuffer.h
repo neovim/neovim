@@ -1,4 +1,4 @@
-// Ring buffer implementation. This is basically an array that wraps read/write
+// Specialized ring buffer. This is basically an array that wraps read/write
 // pointers around the memory region. It should be more efficient than the old
 // RBuffer which required memmove() calls to relocate read/write positions.
 //

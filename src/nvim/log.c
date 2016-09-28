@@ -146,10 +146,10 @@ static bool v_do_log_to_file(FILE *log_file, int log_level,
                              const char* fmt, va_list args)
 {
   static const char *log_levels[] = {
-    [DEBUG_LOG_LEVEL] = "debug",
-    [INFO_LOG_LEVEL] = "info",
-    [WARNING_LOG_LEVEL] = "warning",
-    [ERROR_LOG_LEVEL] = "error"
+    [DEBUG_LOG_LEVEL]   = "DEBUG",
+    [INFO_LOG_LEVEL]    = "INFO ",
+    [WARNING_LOG_LEVEL] = "WARN ",
+    [ERROR_LOG_LEVEL]   = "ERROR"
   };
   assert(log_level >= DEBUG_LOG_LEVEL && log_level <= ERROR_LOG_LEVEL);
 
@@ -166,8 +166,8 @@ static bool v_do_log_to_file(FILE *log_file, int log_level,
 
   // print the log message prefixed by the current timestamp and pid
   int64_t pid = os_get_pid();
-  if (fprintf(log_file, "%s [%s @ %s:%d] %" PRId64 " - ", date_time,
-              log_levels[log_level], func_name, line_num, pid) < 0) {
+  if (fprintf(log_file, "%s %s %" PRId64 "/%s:%d: ", date_time,
+              log_levels[log_level], pid, func_name, line_num) < 0) {
     return false;
   }
   if (vfprintf(log_file, fmt, args) < 0) {
