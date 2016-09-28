@@ -9,11 +9,11 @@
 #include "nvim/vim.h"
 #include "nvim/ui.h"
 #include "nvim/memory.h"
-#include "nvim/ui_bridge.h"
 #include "nvim/ugrid.h"
+#include "nvim/tui/ui_bridge.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "ui_bridge.c.generated.h"
+# include "tui/ui_bridge.c.generated.h"
 #endif
 
 #define UI(b) (((UIBridgeData *)b)->ui)

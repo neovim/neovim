@@ -1,6 +1,6 @@
 // Bridge used for communication between a builtin UI thread and nvim core
-#ifndef NVIM_UI_BRIDGE_H
-#define NVIM_UI_BRIDGE_H
+#ifndef NVIM_TUI_UI_BRIDGE_H
+#define NVIM_TUI_UI_BRIDGE_H
 
 #include <uv.h>
 
@@ -39,6 +39,6 @@ struct ui_bridge_data {
 
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "ui_bridge.h.generated.h"
+# include "tui/ui_bridge.h.generated.h"
 #endif
-#endif  // NVIM_UI_BRIDGE_H
+#endif  // NVIM_TUI_UI_BRIDGE_H

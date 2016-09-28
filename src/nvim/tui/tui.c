@@ -19,13 +19,13 @@
 #include "nvim/api/private/helpers.h"
 #include "nvim/event/loop.h"
 #include "nvim/event/signal.h"
-#include "nvim/tui/tui.h"
-#include "nvim/tui/input.h"
 #include "nvim/os/input.h"
 #include "nvim/os/os.h"
 #include "nvim/strings.h"
 #include "nvim/ugrid.h"
-#include "nvim/ui_bridge.h"
+#include "nvim/tui/input.h"
+#include "nvim/tui/tui.h"
+#include "nvim/tui/ui_bridge.h"
 
 // Space reserved in the output buffer to restore the cursor to normal when
 // flushing. No existing terminal will require 32 bytes to do that.
