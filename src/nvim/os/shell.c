@@ -207,7 +207,7 @@ static int do_os_system(char **argv,
   Stream in, out, err;
   LibuvProcess uvproc = libuv_process_init(&main_loop, &buf);
   Process *proc = &uvproc.process;
-  Queue *events = queue_new_child(main_loop.events);
+  MultiQueue *events = multiqueue_new_child(main_loop.events);
   proc->events = events;
   proc->argv = argv;
   proc->in = input != NULL ? &in : NULL;
@@ -221,7 +221,7 @@ static int do_os_system(char **argv,
       msg_outtrans((char_u *)prog);
       msg_putchar('\n');
     }
-    queue_free(events);
+    multiqueue_free(events);
     return -1;
   }
 
@@ -277,8 +277,8 @@ static int do_os_system(char **argv,
     }
   }
 
-  assert(queue_empty(events));
-  queue_free(events);
+  assert(multiqueue_empty(events));
+  multiqueue_free(events);
 
   return status;
 }

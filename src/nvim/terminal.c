@@ -166,7 +166,7 @@ void terminal_init(void)
   invalidated_terminals = pmap_new(ptr_t)();
   time_watcher_init(&main_loop, &refresh_timer, NULL);
   // refresh_timer_cb will redraw the screen which can call vimscript
-  refresh_timer.events = queue_new_child(main_loop.events);
+  refresh_timer.events = multiqueue_new_child(main_loop.events);
 
   // initialize a rgb->color index map for cterm attributes(VTermScreenCell
   // only has RGB information and we need color indexes for terminal UIs)
@@ -201,7 +201,7 @@ void terminal_init(void)
 void terminal_teardown(void)
 {
   time_watcher_stop(&refresh_timer);
-  queue_free(refresh_timer.events);
+  multiqueue_free(refresh_timer.events);
   time_watcher_close(&refresh_timer, NULL);
   pmap_free(ptr_t)(invalidated_terminals);
   map_free(int, int)(color_indexes);
@@ -445,7 +445,7 @@ static int terminal_execute(VimState *state, int key)
     case K_EVENT:
       // We cannot let an event free the terminal yet. It is still needed.
       s->term->refcount++;
-      queue_process_events(main_loop.events);
+      multiqueue_process_events(main_loop.events);
       s->term->refcount--;
       if (s->term->buf_handle == 0) {
         s->close = true;

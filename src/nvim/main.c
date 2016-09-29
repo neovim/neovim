@@ -156,7 +156,7 @@ void event_teardown(void)
     return;
   }
 
-  queue_process_events(main_loop.events);
+  multiqueue_process_events(main_loop.events);
   input_stop();
   channel_teardown();
   process_teardown(&main_loop);

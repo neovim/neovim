@@ -340,7 +340,7 @@ static void read_cb(Stream *stream, RBuffer *buf, size_t c, void *data,
       // ls *.md | xargs nvim
       input->in_fd = 2;
       stream_close(&input->read_stream, NULL, NULL);
-      queue_put(input->loop->fast_events, restart_reading, 1, input);
+      multiqueue_put(input->loop->fast_events, restart_reading, 1, input);
     } else {
       loop_schedule(&main_loop, event_create(1, input_done_event, 0));
     }

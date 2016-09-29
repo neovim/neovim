@@ -126,7 +126,7 @@ void process_teardown(Loop *loop) FUNC_ATTR_NONNULL_ALL
   // Wait until all children exit and all close events are processed.
   LOOP_PROCESS_EVENTS_UNTIL(
       loop, loop->events, -1,
-      kl_empty(loop->children) && queue_empty(loop->events));
+      kl_empty(loop->children) && multiqueue_empty(loop->events));
   pty_process_teardown(loop);
 }
 
@@ -163,7 +163,8 @@ void process_close_err(Process *proc) FUNC_ATTR_NONNULL_ALL
 ///         indistinguishable from the process returning -1 by itself. Which
 ///         is possible on some OS. Returns -2 if an user has interruped the
 ///         wait.
-int process_wait(Process *proc, int ms, Queue *events) FUNC_ATTR_NONNULL_ARG(1)
+int process_wait(Process *proc, int ms, MultiQueue *events)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
   // The default status is -1, which represents a timeout
   int status = -1;
@@ -208,7 +209,7 @@ int process_wait(Process *proc, int ms, Queue *events) FUNC_ATTR_NONNULL_ARG(1)
     decref(proc);
     if (events) {
       // the decref call created an exit event, process it now
-      queue_process_events(events);
+      multiqueue_process_events(events);
     }
   } else {
     proc->refcount--;
@@ -362,7 +363,7 @@ static void flush_stream(Process *proc, Stream *stream)
     // Poll for data and process the generated events.
     loop_poll_events(proc->loop, 0);
     if (proc->events) {
-        queue_process_events(proc->events);
+        multiqueue_process_events(proc->events);
     }
 
     // Stream can be closed if it is empty.
@@ -402,7 +403,7 @@ static void on_process_exit(Process *proc)
   // OS. We are still in the libuv loop, so we cannot call code that polls for
   // more data directly. Instead delay the reading after the libuv loop by
   // queueing process_close_handles() as an event.
-  Queue *queue = proc->events ? proc->events : loop->events;
+  MultiQueue *queue = proc->events ? proc->events : loop->events;
   CREATE_EVENT(queue, process_close_handles, 1, proc);
 }
 

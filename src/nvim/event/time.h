@@ -12,7 +12,7 @@ struct time_watcher {
   uv_timer_t uv;
   void *data;
   time_cb cb, close_cb;
-  Queue *events;
+  MultiQueue *events;
   bool blockable;
 };
 

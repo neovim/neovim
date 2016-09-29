@@ -18,9 +18,9 @@ void loop_init(Loop *loop, void *data)
   loop->uv.data = loop;
   loop->children = kl_init(WatcherPtr);
   loop->children_stop_requests = 0;
-  loop->events = queue_new_parent(loop_on_put, loop);
-  loop->fast_events = queue_new_child(loop->events);
-  loop->thread_events = queue_new_parent(NULL, NULL);
+  loop->events = multiqueue_new_parent(loop_on_put, loop);
+  loop->fast_events = multiqueue_new_child(loop->events);
+  loop->thread_events = multiqueue_new_parent(NULL, NULL);
   uv_mutex_init(&loop->mutex);
   uv_async_init(&loop->uv, &loop->async, async_cb);
   uv_signal_init(&loop->uv, &loop->children_watcher);
@@ -53,19 +53,19 @@ void loop_poll_events(Loop *loop, int ms)
   }
 
   loop->recursive--;  // Can re-enter uv_run now
-  queue_process_events(loop->fast_events);
+  multiqueue_process_events(loop->fast_events);
 }
 
 // Schedule an event from another thread
 void loop_schedule(Loop *loop, Event event)
 {
   uv_mutex_lock(&loop->mutex);
-  queue_put_event(loop->thread_events, event);
+  multiqueue_put_event(loop->thread_events, event);
   uv_async_send(&loop->async);
   uv_mutex_unlock(&loop->mutex);
 }
 
-void loop_on_put(Queue *queue, void *data)
+void loop_on_put(MultiQueue *queue, void *data)
 {
   Loop *loop = data;
   // Sometimes libuv will run pending callbacks(timer for example) before
@@ -86,9 +86,9 @@ void loop_close(Loop *loop, bool wait)
   do {
     uv_run(&loop->uv, wait ? UV_RUN_DEFAULT : UV_RUN_NOWAIT);
   } while (uv_loop_close(&loop->uv) && wait);
-  queue_free(loop->fast_events);
-  queue_free(loop->thread_events);
-  queue_free(loop->events);
+  multiqueue_free(loop->fast_events);
+  multiqueue_free(loop->thread_events);
+  multiqueue_free(loop->events);
   kl_destroy(WatcherPtr, loop->children);
 }
 
@@ -96,9 +96,9 @@ static void async_cb(uv_async_t *handle)
 {
   Loop *l = handle->loop->data;
   uv_mutex_lock(&l->mutex);
-  while (!queue_empty(l->thread_events)) {
-    Event ev = queue_get(l->thread_events);
-    queue_put_event(l->fast_events, ev);
+  while (!multiqueue_empty(l->thread_events)) {
+    Event ev = multiqueue_get(l->thread_events);
+    multiqueue_put_event(l->fast_events, ev);
   }
   uv_mutex_unlock(&l->mutex);
 }

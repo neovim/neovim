@@ -1,5 +1,5 @@
-// Queue for selective async event processing. Instances of this queue support a
-// parent/child relationship with the following properties:
+// Multi-level queue for selective async event processing. Multiqueue supports
+// a parent-child relationship with the following properties:
 //
 // - pushing a node to a child queue will push a corresponding link node to the
 //   parent queue
@@ -9,7 +9,7 @@
 //   in the parent queue
 //
 // These properties allow Nvim to organize and process events from different
-// sources with a certain degree of control. Here's how the queue is used:
+// sources with a certain degree of control. How the multiqueue is used:
 //
 //                         +----------------+
 //                         |   Main loop    |
@@ -26,7 +26,7 @@
 //    +-----------+   +-----------+    +---------+    +---------+
 //
 //
-// The lower boxes represents event emitters, each with its own private queue
+// The lower boxes represent event emitters, each with its own private queue
 // having the event loop queue as the parent.
 //
 // When idle, the main loop spins the event loop which queues events from many
@@ -50,51 +50,52 @@
 
 #include <uv.h>
 
-#include "nvim/event/queue.h"
+#include "nvim/event/multiqueue.h"
 #include "nvim/memory.h"
 #include "nvim/os/time.h"
 
-typedef struct queue_item QueueItem;
-struct queue_item {
+typedef struct multiqueue_item MultiQueueItem;
+struct multiqueue_item {
   union {
-    Queue *queue;
+    MultiQueue *queue;
     struct {
       Event event;
-      QueueItem *parent;
+      MultiQueueItem *parent;
     } item;
   } data;
-  bool link;  // this is just a link to a node in a child queue
+  bool link;  // true: current item is just a link to a node in a child queue
   QUEUE node;
 };
 
-struct queue {
-  Queue *parent;
+struct multiqueue {
+  MultiQueue *parent;
   QUEUE headtail;
   put_callback put_cb;
   void *data;
 };
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "event/queue.c.generated.h"
+# include "event/multiqueue.c.generated.h"
 #endif
 
-static Event NILEVENT = {.handler = NULL, .argv = {NULL}};
+static Event NILEVENT = { .handler = NULL, .argv = {NULL} };
 
-Queue *queue_new_parent(put_callback put_cb, void *data)
+MultiQueue *multiqueue_new_parent(put_callback put_cb, void *data)
 {
-  return queue_new(NULL, put_cb, data);
+  return multiqueue_new(NULL, put_cb, data);
 }
 
-Queue *queue_new_child(Queue *parent)
+MultiQueue *multiqueue_new_child(MultiQueue *parent)
   FUNC_ATTR_NONNULL_ALL
 {
   assert(!parent->parent);
-  return queue_new(parent, NULL, NULL);
+  return multiqueue_new(parent, NULL, NULL);
 }
 
-static Queue *queue_new(Queue *parent, put_callback put_cb, void *data)
+static MultiQueue *multiqueue_new(MultiQueue *parent, put_callback put_cb,
+                                  void *data)
 {
-  Queue *rv = xmalloc(sizeof(Queue));
+  MultiQueue *rv = xmalloc(sizeof(MultiQueue));
   QUEUE_INIT(&rv->headtail);
   rv->parent = parent;
   rv->put_cb = put_cb;
@@ -102,13 +103,13 @@ static Queue *queue_new(Queue *parent, put_callback put_cb, void *data)
   return rv;
 }
 
-void queue_free(Queue *queue)
+void multiqueue_free(MultiQueue *this)
 {
-  assert(queue);
-  while (!QUEUE_EMPTY(&queue->headtail)) {
-    QUEUE *q = QUEUE_HEAD(&queue->headtail);
-    QueueItem *item = queue_node_data(q);
-    if (queue->parent) {
+  assert(this);
+  while (!QUEUE_EMPTY(&this->headtail)) {
+    QUEUE *q = QUEUE_HEAD(&this->headtail);
+    MultiQueueItem *item = multiqueue_node_data(q);
+    if (this->parent) {
       QUEUE_REMOVE(&item->data.item.parent->node);
       xfree(item->data.item.parent);
     }
@@ -116,66 +117,66 @@ void queue_free(Queue *queue)
     xfree(item);
   }
 
-  xfree(queue);
+  xfree(this);
 }
 
-Event queue_get(Queue *queue)
+Event multiqueue_get(MultiQueue *this)
 {
-  return queue_empty(queue) ? NILEVENT : queue_remove(queue);
+  return multiqueue_empty(this) ? NILEVENT : multiqueue_remove(this);
 }
 
-void queue_put_event(Queue *queue, Event event)
+void multiqueue_put_event(MultiQueue *this, Event event)
 {
-  assert(queue);
-  queue_push(queue, event);
-  if (queue->parent && queue->parent->put_cb) {
-    queue->parent->put_cb(queue->parent, queue->parent->data);
+  assert(this);
+  multiqueue_push(this, event);
+  if (this->parent && this->parent->put_cb) {
+    this->parent->put_cb(this->parent, this->parent->data);
   }
 }
 
-void queue_process_events(Queue *queue)
+void multiqueue_process_events(MultiQueue *this)
 {
-  assert(queue);
-  while (!queue_empty(queue)) {
-    Event event = queue_get(queue);
+  assert(this);
+  while (!multiqueue_empty(this)) {
+    Event event = multiqueue_get(this);
     if (event.handler) {
       event.handler(event.argv);
     }
   }
 }
 
-bool queue_empty(Queue *queue)
+bool multiqueue_empty(MultiQueue *this)
 {
-  assert(queue);
-  return QUEUE_EMPTY(&queue->headtail);
+  assert(this);
+  return QUEUE_EMPTY(&this->headtail);
 }
 
-void queue_replace_parent(Queue *queue, Queue *new_parent)
+void multiqueue_replace_parent(MultiQueue *this, MultiQueue *new_parent)
 {
-  assert(queue_empty(queue));
-  queue->parent = new_parent;
+  assert(multiqueue_empty(this));
+  this->parent = new_parent;
 }
 
-static Event queue_remove(Queue *queue)
+static Event multiqueue_remove(MultiQueue *this)
 {
-  assert(!queue_empty(queue));
-  QUEUE *h = QUEUE_HEAD(&queue->headtail);
+  assert(!multiqueue_empty(this));
+  QUEUE *h = QUEUE_HEAD(&this->headtail);
   QUEUE_REMOVE(h);
-  QueueItem *item = queue_node_data(h);
+  MultiQueueItem *item = multiqueue_node_data(h);
   Event rv;
 
   if (item->link) {
-    assert(!queue->parent);
+    assert(!this->parent);
     // remove the next node in the linked queue
-    Queue *linked = item->data.queue;
-    assert(!queue_empty(linked));
-    QueueItem *child =
-      queue_node_data(QUEUE_HEAD(&linked->headtail));
+    MultiQueue *linked = item->data.queue;
+    assert(!multiqueue_empty(linked));
+    MultiQueueItem *child =
+      multiqueue_node_data(QUEUE_HEAD(&linked->headtail));
     QUEUE_REMOVE(&child->node);
     rv = child->data.item.event;
     xfree(child);
   } else {
-    if (queue->parent) {
+    if (this->parent) {
       // remove the corresponding link node in the parent queue
       QUEUE_REMOVE(&item->data.item.parent->node);
       xfree(item->data.item.parent);
@@ -187,22 +188,22 @@ static Event queue_remove(Queue *queue)
   return rv;
 }
 
-static void queue_push(Queue *queue, Event event)
+static void multiqueue_push(MultiQueue *this, Event event)
 {
-  QueueItem *item = xmalloc(sizeof(QueueItem));
+  MultiQueueItem *item = xmalloc(sizeof(MultiQueueItem));
   item->link = false;
   item->data.item.event = event;
-  QUEUE_INSERT_TAIL(&queue->headtail, &item->node);
-  if (queue->parent) {
+  QUEUE_INSERT_TAIL(&this->headtail, &item->node);
+  if (this->parent) {
     // push link node to the parent queue
-    item->data.item.parent = xmalloc(sizeof(QueueItem));
+    item->data.item.parent = xmalloc(sizeof(MultiQueueItem));
     item->data.item.parent->link = true;
-    item->data.item.parent->data.queue = queue;
-    QUEUE_INSERT_TAIL(&queue->parent->headtail, &item->data.item.parent->node);
+    item->data.item.parent->data.queue = this;
+    QUEUE_INSERT_TAIL(&this->parent->headtail, &item->data.item.parent->node);
   }
 }
 
-static QueueItem *queue_node_data(QUEUE *q)
+static MultiQueueItem *multiqueue_node_data(QUEUE *q)
 {
-  return QUEUE_DATA(q, QueueItem, node);
+  return QUEUE_DATA(q, MultiQueueItem, node);
 }

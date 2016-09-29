@@ -30,7 +30,7 @@ struct socket_watcher {
   void *data;
   socket_cb cb;
   socket_close_cb close_cb;
-  Queue *events;
+  MultiQueue *events;
 };
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

@@ -7,7 +7,7 @@
 
 #include "nvim/lib/klist.h"
 #include "nvim/os/time.h"
-#include "nvim/event/queue.h"
+#include "nvim/event/multiqueue.h"
 
 typedef void * WatcherPtr;
 
@@ -16,7 +16,7 @@ KLIST_INIT(WatcherPtr, WatcherPtr, _noop)
 
 typedef struct loop {
   uv_loop_t uv;
-  Queue *events, *fast_events, *thread_events;
+  MultiQueue *events, *fast_events, *thread_events;
   klist_t(WatcherPtr) *children;
   uv_signal_t children_watcher;
   uv_timer_t children_kill_timer, poll_timer;
@@ -26,10 +26,10 @@ typedef struct loop {
   int recursive;
 } Loop;
 
-#define CREATE_EVENT(queue, handler, argc, ...) \
+#define CREATE_EVENT(multiqueue, handler, argc, ...) \
   do { \
-    if (queue) { \
-      queue_put((queue), (handler), argc, __VA_ARGS__); \
+    if (multiqueue) { \
+      multiqueue_put((multiqueue), (handler), argc, __VA_ARGS__); \
     } else { \
       void *argv[argc] = { __VA_ARGS__ }; \
       (handler)(argv); \
@@ -37,12 +37,12 @@ typedef struct loop {
   } while (0)
 
 // Poll for events until a condition or timeout
-#define LOOP_PROCESS_EVENTS_UNTIL(loop, queue, timeout, condition) \
+#define LOOP_PROCESS_EVENTS_UNTIL(loop, multiqueue, timeout, condition) \
   do { \
     int remaining = timeout; \
     uint64_t before = (remaining > 0) ? os_hrtime() : 0; \
     while (!(condition)) { \
-      LOOP_PROCESS_EVENTS(loop, queue, remaining); \
+      LOOP_PROCESS_EVENTS(loop, multiqueue, remaining); \
       if (remaining == 0) { \
         break; \
       } else if (remaining > 0) { \
@@ -56,10 +56,10 @@ typedef struct loop {
     } \
   } while (0)
 
-#define LOOP_PROCESS_EVENTS(loop, queue, timeout) \
+#define LOOP_PROCESS_EVENTS(loop, multiqueue, timeout) \
   do { \
-    if (queue && !queue_empty(queue)) { \
-      queue_process_events(queue); \
+    if (multiqueue && !multiqueue_empty(multiqueue)) { \
+      multiqueue_process_events(multiqueue); \
     } else { \
       loop_poll_events(loop, timeout); \
     } \

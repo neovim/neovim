@@ -415,7 +415,7 @@ typedef struct {
   dict_T *self;
   int *status_ptr;
   uint64_t id;
-  Queue *events;
+  MultiQueue *events;
 } TerminalJobData;
 
 typedef struct dict_watcher {
@@ -11692,7 +11692,7 @@ static void f_jobwait(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   list_T *rv = list_alloc();
 
   ui_busy_start();
-  Queue *waiting_jobs = queue_new_parent(loop_on_put, &main_loop);
+  MultiQueue *waiting_jobs = multiqueue_new_parent(loop_on_put, &main_loop);
   // For each item in the input list append an integer to the output list. -3
   // is used to represent an invalid job id, -2 is for a interrupted job and
   // -1 for jobs that were skipped or timed out.
@@ -11708,8 +11708,8 @@ static void f_jobwait(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       data->status_ptr = &rv->lv_last->li_tv.vval.v_number;
       // Process any pending events for the job because we'll temporarily
       // replace the parent queue
-      queue_process_events(data->events);
-      queue_replace_parent(data->events, waiting_jobs);
+      multiqueue_process_events(data->events);
+      multiqueue_replace_parent(data->events, waiting_jobs);
     }
   }
 
@@ -11769,11 +11769,11 @@ static void f_jobwait(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       continue;
     }
     // restore the parent queue for the job
-    queue_process_events(data->events);
-    queue_replace_parent(data->events, main_loop.events);
+    multiqueue_process_events(data->events);
+    multiqueue_replace_parent(data->events, main_loop.events);
   }
 
-  queue_free(waiting_jobs);
+  multiqueue_free(waiting_jobs);
   ui_busy_stop();
   rv->lv_refcount++;
   rettv->v_type = VAR_LIST;
@@ -16400,7 +16400,7 @@ static void f_timer_start(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   timer->callback = func;
 
   time_watcher_init(&main_loop, &timer->tw, timer);
-  timer->tw.events = queue_new_child(main_loop.events);
+  timer->tw.events = multiqueue_new_child(main_loop.events);
   // if main loop is blocked, don't queue up multiple events
   timer->tw.blockable = true;
   time_watcher_start(&timer->tw, timer_due_cb, timeout,
@@ -16477,7 +16477,7 @@ static void timer_stop(timer_T *timer)
 static void timer_close_cb(TimeWatcher *tw, void *data)
 {
   timer_T *timer = (timer_T *)data;
-  queue_free(timer->tw.events);
+  multiqueue_free(timer->tw.events);
   user_func_unref(timer->callback);
   pmap_del(uint64_t)(timers, timer->timer_id);
   timer_decref(timer);
@@ -21725,7 +21725,7 @@ static inline TerminalJobData *common_job_init(char **argv,
   data->on_stderr = on_stderr;
   data->on_exit = on_exit;
   data->self = self;
-  data->events = queue_new_child(main_loop.events);
+  data->events = multiqueue_new_child(main_loop.events);
   data->rpc = rpc;
   if (pty) {
     data->proc.pty = pty_process_init(&main_loop, data);
@@ -21834,7 +21834,7 @@ static inline void free_term_job_data_event(void **argv)
   if (data->self) {
     dict_unref(data->self);
   }
-  queue_free(data->events);
+  multiqueue_free(data->events);
   pmap_del(uint64_t)(jobs, data->id);
   xfree(data);
 }
@@ -21843,7 +21843,7 @@ static inline void free_term_job_data(TerminalJobData *data)
 {
   // data->queue may still be used after this function returns(process_wait), so
   // only free in the next event loop iteration
-  queue_put(main_loop.fast_events, free_term_job_data_event, 1, data);
+  multiqueue_put(main_loop.fast_events, free_term_job_data_event, 1, data);
 }
 
 // vimscript job callbacks must be executed on Nvim main loop
@@ -21962,7 +21962,7 @@ static inline void term_delayed_free(void **argv)
 {
   TerminalJobData *j = argv[0];
   if (j->in.pending_reqs || j->out.pending_reqs || j->err.pending_reqs) {
-    queue_put(j->events, term_delayed_free, 1, j);
+    multiqueue_put(j->events, term_delayed_free, 1, j);
     return;
   }
 
@@ -21977,7 +21977,7 @@ static void term_close(void *d)
     data->exited = true;
     process_stop((Process *)&data->proc);
   }
-  queue_put(data->events, term_delayed_free, 1, data);
+  multiqueue_put(data->events, term_delayed_free, 1, data);
 }
 
 static void term_job_data_decref(TerminalJobData *data)

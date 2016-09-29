@@ -3,28 +3,28 @@ local helpers = require("test.unit.helpers")
 local ffi     = helpers.ffi
 local eq      = helpers.eq
 
-local queue = helpers.cimport("./test/unit/fixtures/queue.h")
+local multiqueue = helpers.cimport("./test/unit/fixtures/multiqueue.h")
 
-describe('queue', function()
+describe("multiqueue (multi-level event-queue)", function()
   local parent, child1, child2, child3
 
   local function put(q, str)
-    queue.ut_queue_put(q, str)
+    multiqueue.ut_multiqueue_put(q, str)
   end
 
   local function get(q)
-    return ffi.string(queue.ut_queue_get(q))
+    return ffi.string(multiqueue.ut_multiqueue_get(q))
   end
 
   local function free(q)
-    queue.queue_free(q)
+    multiqueue.multiqueue_free(q)
   end
 
   before_each(function()
-    parent = queue.queue_new_parent(ffi.NULL, ffi.NULL)
-    child1 = queue.queue_new_child(parent)
-    child2 = queue.queue_new_child(parent)
-    child3 = queue.queue_new_child(parent)
+    parent = multiqueue.multiqueue_new_parent(ffi.NULL, ffi.NULL)
+    child1 = multiqueue.multiqueue_new_child(parent)
+    child2 = multiqueue.multiqueue_new_child(parent)
+    child3 = multiqueue.multiqueue_new_child(parent)
     put(child1, 'c1i1')
     put(child1, 'c1i2')
     put(child2, 'c2i1')

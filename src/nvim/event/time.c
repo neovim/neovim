@@ -51,7 +51,7 @@ static void time_watcher_cb(uv_timer_t *handle)
   FUNC_ATTR_NONNULL_ALL
 {
   TimeWatcher *watcher = handle->data;
-  if (watcher->blockable && !queue_empty(watcher->events)) {
+  if (watcher->blockable && !multiqueue_empty(watcher->events)) {
     // the timer blocked and there already is an unprocessed event waiting
     return;
   }

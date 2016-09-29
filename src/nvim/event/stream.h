@@ -53,7 +53,7 @@ struct stream {
   size_t pending_reqs;
   size_t num_bytes;
   bool closed;
-  Queue *events;
+  MultiQueue *events;
 };
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

@@ -628,8 +628,8 @@ static void tui_suspend(UI *ui)
   // kill(0, SIGTSTP) won't stop the UI thread, so we must poll for SIGCONT
   // before continuing. This is done in another callback to avoid
   // loop_poll_events recursion
-  queue_put_event(data->loop->fast_events,
-      event_create(1, suspend_event, 1, ui));
+  multiqueue_put_event(data->loop->fast_events,
+                       event_create(1, suspend_event, 1, ui));
 }
 
 static void tui_set_title(UI *ui, char *title)

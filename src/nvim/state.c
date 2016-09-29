@@ -35,8 +35,8 @@ getkey:
       // processing. Characters can come from mappings, scripts and other
       // sources, so this scenario is very common.
       key = safe_vgetc();
-    } else if (!queue_empty(main_loop.events)) {
-      // Event was made available after the last queue_process_events call
+    } else if (!multiqueue_empty(main_loop.events)) {
+      // Event was made available after the last multiqueue_process_events call
       key = K_EVENT;
     } else {
       input_enable_events();
@@ -48,7 +48,7 @@ getkey:
       // directly.
       (void)os_inchar(NULL, 0, -1, 0);
       input_disable_events();
-      key = !queue_empty(main_loop.events) ? K_EVENT : safe_vgetc();
+      key = !multiqueue_empty(main_loop.events) ? K_EVENT : safe_vgetc();
     }
 
     if (key == K_EVENT) {

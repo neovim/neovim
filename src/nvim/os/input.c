@@ -87,8 +87,8 @@ static void create_cursorhold_event(void)
   // have been called(inbuf_poll would return kInputAvail)
   // TODO(tarruda): Cursorhold should be implemented as a timer set during the
   // `state_check` callback for the states where it can be triggered.
-  assert(!events_enabled || queue_empty(main_loop.events));
-  queue_put(main_loop.events, cursorhold_event, 0);
+  assert(!events_enabled || multiqueue_empty(main_loop.events));
+  multiqueue_put(main_loop.events, cursorhold_event, 0);
 }
 
 // Low level input function
@@ -422,5 +422,5 @@ static void read_error_exit(void)
 
 static bool pending_events(void)
 {
-  return events_enabled && !queue_empty(main_loop.events);
+  return events_enabled && !multiqueue_empty(main_loop.events);
 }

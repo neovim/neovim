@@ -65,7 +65,7 @@ typedef struct {
   uint64_t next_request_id;
   kvec_t(ChannelCallFrame *) call_stack;
   kvec_t(WBuffer *) delayed_notifications;
-  Queue *events;
+  MultiQueue *events;
 } Channel;
 
 typedef struct {
@@ -440,7 +440,7 @@ static void handle_request(Channel *channel, msgpack_object *request)
   if (handler.async) {
     on_request_event((void **)&event_data);
   } else {
-    queue_put(channel->events, on_request_event, 1, event_data);
+    multiqueue_put(channel->events, on_request_event, 1, event_data);
   }
 }
 
@@ -620,7 +620,7 @@ static void close_channel(Channel *channel)
     case kChannelTypeStdio:
       stream_close(&channel->data.std.in, NULL, NULL);
       stream_close(&channel->data.std.out, NULL, NULL);
-      queue_put(main_loop.fast_events, exit_event, 1, channel);
+      multiqueue_put(main_loop.fast_events, exit_event, 1, channel);
       return;
     default:
       abort();
@@ -654,7 +654,7 @@ static void free_channel(Channel *channel)
   kv_destroy(channel->call_stack);
   kv_destroy(channel->delayed_notifications);
   if (channel->type != kChannelTypeProc) {
-    queue_free(channel->events);
+    multiqueue_free(channel->events);
   }
   xfree(channel);
 }
@@ -664,10 +664,11 @@ static void close_cb(Stream *stream, void *data)
   decref(data);
 }
 
-static Channel *register_channel(ChannelType type, uint64_t id, Queue *events)
+static Channel *register_channel(ChannelType type, uint64_t id,
+                                 MultiQueue *events)
 {
   Channel *rv = xmalloc(sizeof(Channel));
-  rv->events = events ? events : queue_new_child(main_loop.events);
+  rv->events = events ? events : multiqueue_new_child(main_loop.events);
   rv->type = type;
   rv->refcount = 1;
   rv->closed = false;
