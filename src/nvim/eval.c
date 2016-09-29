@@ -292,8 +292,8 @@ typedef enum {
     .vv_di = { \
       .di_tv = { .v_type = type }, \
       .di_flags = 0, \
+      .di_key = { 0 }, \
     }, \
-    .vv_filler = { 0 }, \
     .vv_flags = flags, \
   }
 
@@ -303,8 +303,7 @@ typedef enum {
 // variables with the VV_ defines.
 static struct vimvar {
   char        *vv_name;  ///< Name of the variable, without v:.
-  dictitem_T vv_di;      ///< Value of the variable, with name.
-  char vv_filler[16];    ///< Space for longest name from below.
+  dictitem16_T vv_di;    ///< Value and name for key (max 16 chars)
   char vv_flags;         ///< Flags: #VV_COMPAT, #VV_RO, #VV_RO_SBX.
 } vimvars[] =
 {
@@ -514,6 +513,7 @@ void eval_init(void)
 
   for (size_t i = 0; i < ARRAY_SIZE(vimvars); i++) {
     p = &vimvars[i];
+    assert(STRLEN(p->vv_name) <= 16);
     STRCPY(p->vv_di.di_key, p->vv_name);
     if (p->vv_flags & VV_RO)
       p->vv_di.di_flags = DI_FLAGS_RO | DI_FLAGS_FIX;
@@ -4952,7 +4952,8 @@ static list_T *rettv_list_alloc(typval_T *rettv)
   list_T *l = list_alloc();
   rettv->vval.v_list = l;
   rettv->v_type = VAR_LIST;
-  ++l->lv_refcount;
+  rettv->v_lock = VAR_UNLOCKED;
+  l->lv_refcount++;
   return l;
 }
 
@@ -6132,7 +6133,8 @@ static void rettv_dict_alloc(typval_T *rettv)
 
   rettv->vval.v_dict = d;
   rettv->v_type = VAR_DICT;
-  ++d->dv_refcount;
+  rettv->v_lock = VAR_UNLOCKED;
+  d->dv_refcount++;
 }
 
 /// Clear all the keys of a Dictionary. "d" remains a valid empty Dictionary.

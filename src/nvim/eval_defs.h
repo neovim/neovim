@@ -114,6 +114,16 @@ struct dictitem_S {
 
 typedef struct dictitem_S dictitem_T;
 
+/// A dictitem with a 16 character key (plus NUL)
+struct dictitem16_S {
+  typval_T di_tv;     ///< type and value of the variable
+  char_u di_flags;    ///< flags (only used for variable)
+  char_u di_key[17];  ///< key
+};
+
+typedef struct dictitem16_S dictitem16_T;
+
+
 #define DI_FLAGS_RO     1   // "di_flags" value: read-only variable
 #define DI_FLAGS_RO_SBX 2   // "di_flags" value: read-only in the sandbox
 #define DI_FLAGS_FIX    4   // "di_flags" value: fixed: no :unlet or remove()
