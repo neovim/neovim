@@ -25,7 +25,16 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.*/
 #ifndef WINDOW_UTSNAME_H
 #define WINDOW_UTSNAME_H
 
+#include "nvim/vim.h"
+
+#define WINDOWS "Windows"
+#define AMD64   "x86_64"
+#define IA64    "ia64"
+#define INTEL   "x86"
+#define UNkNOWN "unknown"
+
 #define WINDOW_UTSNAME_LENGTH 256
+
 struct utsname {
 	char sysname[WINDOW_UTSNAME_LENGTH];
 	char nodename[WINDOW_UTSNAME_LENGTH];
