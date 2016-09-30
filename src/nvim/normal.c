@@ -459,7 +459,7 @@ void normal_enter(bool cmdwin, bool noexmode)
   normal_state_init(&state);
   state.cmdwin = cmdwin;
   state.noexmode = noexmode;
-  state.toplevel = !cmdwin && !noexmode;
+  state.toplevel = (!cmdwin || cmdwin_result == 0) && !noexmode;
   state_enter(&state.state);
 }
 
@@ -1360,7 +1360,7 @@ static int normal_check(VimState *state)
   // Dict internally somewhere.
   // "may_garbage_collect" is reset in vgetc() which is invoked through
   // do_exmode() and normal_cmd().
-  may_garbage_collect = s->toplevel;
+  may_garbage_collect = !s->cmdwin && !s->noexmode;
 
   // Update w_curswant if w_set_curswant has been set.
   // Postponed until here to avoid computing w_virtcol too often.
