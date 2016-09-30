@@ -33,9 +33,15 @@ describe('system()', function()
     local printargs_path = helpers.nvim_dir..'/printargs-test'
       .. (helpers.os_name() == 'windows' and '.exe' or '')
 
+    it('sets v:shell_error if cmd[0] is not executable', function()
+      call('system', { 'this-should-not-exist' })
+      eq(-1, eval('v:shell_error'))
+    end)
+
     it('quotes arguments correctly #5280', function()
       local out = call('system',
         { printargs_path, [[1]], [[2 "3]], [[4 ' 5]], [[6 ' 7']] })
+
       eq(0, eval('v:shell_error'))
       eq([[arg1=1;arg2=2 "3;arg3=4 ' 5;arg4=6 ' 7';]], out)
 
