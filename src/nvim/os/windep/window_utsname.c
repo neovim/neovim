@@ -26,47 +26,47 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.*/
 #include "window_utsname.h"
 
 int w_uname(struct utsname *name) {
-    struct utsname *ret;
-    OSVERSIONINFO versionInfo;
-    SYSTEM_INFO sysInfo;
+  struct utsname *ret;
+  OSVERSIONINFO versionInfo;
+  SYSTEM_INFO sysInfo;
     
-    // Get Windows version info
-    ZeroMemory(&versionInfo, sizeof(OSVERSIONINFO));
-    versionInfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFO); // wtf
-    GetVersionEx(&versionInfo);
+  // Get Windows version info
+  ZeroMemory(&versionInfo, sizeof(OSVERSIONINFO));
+  versionInfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFO); // wtf
+  GetVersionEx(&versionInfo);
     
-    // Get hardware info
-    ZeroMemory(&sysInfo, sizeof(SYSTEM_INFO));
-    GetSystemInfo(&sysInfo);
+  // Get hardware info
+  ZeroMemory(&sysInfo, sizeof(SYSTEM_INFO));
+  GetSystemInfo(&sysInfo);
 
-    strcpy(name->sysname, "Windows");
-    itoa(versionInfo.dwBuildNumber, name->release, 10);
-    sprintf(name->version, "%i.%i", versionInfo.dwMajorVersion, versionInfo.dwMinorVersion);
+  strncpy(name->sysname, WINDOWS, STRLEN(WINDOWS));
+  itoa(versionInfo.dwBuildNumber, name->release, 10);
+  sprintf(name->version, "%i.%i", versionInfo.dwMajorVersion, versionInfo.dwMinorVersion);
 
-    if (gethostname(name->nodename, WINDOW_UTSNAME_LENGTH) != 0) {
-        if (WSAGetLastError() == WSANOTINITIALISED) { // WinSock not initialized
-            WSADATA WSAData;
-            WSAStartup(MAKEWORD(1, 0), &WSAData);
-            gethostname(name->nodename, WINDOW_UTSNAME_LENGTH);
-            WSACleanup();
-        } else
-            return WSAGetLastError();
-    }
+  if (gethostname(name->nodename, WINDOW_UTSNAME_LENGTH) != 0) {
+    if (WSAGetLastError() == WSANOTINITIALISED) { // WinSock not initialized
+      WSADATA WSAData;
+      WSAStartup(MAKEWORD(1, 0), &WSAData);
+      gethostname(name->nodename, WINDOW_UTSNAME_LENGTH);
+      WSACleanup();
+    } else
+    return WSAGetLastError();
+  }
 
-    switch(sysInfo.wProcessorArchitecture) {
+  switch(sysInfo.wProcessorArchitecture) {
     case PROCESSOR_ARCHITECTURE_AMD64:
-        strcpy(name->machine, "x86_64");
-        break;
+      strncpy(name->machine, AMD64, STRLEN(AMD64));
+      break;
     case PROCESSOR_ARCHITECTURE_IA64:
-        strcpy(name->machine, "ia64");
-        break;
+      strncpy(name->machine, IA64, STRLEN(IA64));
+      break;
     case PROCESSOR_ARCHITECTURE_INTEL:
-        strcpy(name->machine, "x86");
-        break;
+      strncpy(name->machine, INTEL, STRLEN(INTEL));
+      break;
     case PROCESSOR_ARCHITECTURE_UNKNOWN:
     default:
-        strcpy(name->machine, "unknown");
-    }
+      strncpy(name->machine, UNKNOWN, STRLEN(UNKNOWN));
+  }
 
-    return 0;
+  return 0;
 }

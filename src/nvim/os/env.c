@@ -125,8 +125,8 @@ void os_get_hostname(char *hostname, size_t len)
   if (uname(&vutsname) < 0) {
 #endif
 #if defined(_WIN32) || defined(WIN32)
-  #include "/windep/win_defs.h"
-  #include "/windep/window_utsname.h"
+  #include "nvim/os/windep/win_defs.h"
+  #include "nvim/os/windep/window_utsname.h"
   if (w_uname(&vutsname) < 0) {  
 #endif
 	*hostname = '\0';
