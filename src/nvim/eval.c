@@ -16043,6 +16043,7 @@ static void get_system_output_as_rettv(typval_T *argvars, typval_T *rettv,
   // get shell command to execute
   char **argv = tv_to_argv(&argvars[0], NULL);
   if (!argv) {
+    set_vim_var_nr(VV_SHELL_ERROR, (long)-1);
     xfree(input);
     return;  // Already did emsg.
   }

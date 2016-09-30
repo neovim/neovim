@@ -39,6 +39,11 @@ describe('system()', function()
       printargs_exe = helpers.nvim_dir.."/printargs.exe"
     end
 
+    it('sets the v:shell_error variable', function()
+      helpers.call('system', {'this-should-not-exist'})
+      eq(-1, eval('v:shell_error'))
+    end)
+
     it('quotes arguments correctly', function()
       local out = helpers.call('system', {printargs_exe, '1', '2 "3'})
       eq(0, eval('v:shell_error'))
