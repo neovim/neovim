@@ -12,16 +12,16 @@ local feed = helpers.feed
 describe('execute()', function()
   before_each(clear)
 
-  it('returns the same result with :redir', function()
+  it('captures the same result as :redir', function()
     eq(redir_exec('messages'), funcs.execute('messages'))
   end)
 
-  it('returns the output of the commands if the argument is List', function()
+  it('captures the concatenated outputs of a List of commands', function()
     eq("foobar", funcs.execute({'echon "foo"', 'echon "bar"'}))
     eq("\nfoo\nbar", funcs.execute({'echo "foo"', 'echo "bar"'}))
   end)
 
-  it('supports the nested redirection', function()
+  it('supports nested redirection', function()
     source([[
     function! g:Foo()
       let a = ''
@@ -43,17 +43,17 @@ describe('execute()', function()
     eq('42', funcs.execute([[echon execute("echon execute('echon 42')")]]))
   end)
 
-  it('returns the transformed string', function()
+  it('captures a transformed string', function()
     eq('^A', funcs.execute('echon "\\<C-a>"'))
   end)
 
-  it('returns the empty string if the argument list is empty', function()
+  it('returns empty string if the argument list is empty', function()
     eq('', funcs.execute({}))
     eq(0, exc_exec('let g:ret = execute(v:_null_list)'))
     eq('', eval('g:ret'))
   end)
 
-  it('returns the errors', function()
+  it('captures errors', function()
     local ret
     ret = exc_exec('call execute(0.0)')
     eq('Vim(call):E806: using Float as a String', ret)
@@ -67,6 +67,11 @@ describe('execute()', function()
     eq('Vim(call):E731: using Dictionary as a String', ret)
     ret = exc_exec('call execute(["echo 42", function("tr"), "echo 44"])')
     eq('Vim(call):E729: using Funcref as a String', ret)
+  end)
+
+  -- This matches Vim behavior.
+  it('does not capture shell-command output', function()
+    eq('\n:!echo "foo"\13\n', funcs.execute('!echo "foo"'))
   end)
 
   it('silences command run inside', function()

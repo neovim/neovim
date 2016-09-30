@@ -1,5 +1,6 @@
 local session = require('test.functional.helpers')(after_each)
 local child_session = require('test.functional.terminal.helpers')
+local Screen = require('test.functional.ui.screen')
 
 if session.pending_win32(pending) then return end
 
@@ -38,5 +39,12 @@ describe("shell command :!", function()
       foo                                               |
       {3:-- TERMINAL --}                                    |
     ]])
+  end)
+
+  it("throttles shell-command output greater than ~20KB", function()
+    child_session.feed_data(
+      ":!for i in $(seq 2 3000); do echo XXXXXXXXXX; done\n")
+    -- If a line with only a dot "." appears, then throttling was triggered.
+    screen:expect("\n.", nil, nil, nil, true)
   end)
 end)

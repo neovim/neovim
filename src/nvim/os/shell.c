@@ -187,6 +187,8 @@ static int do_os_system(char **argv,
                         bool silent,
                         bool forward_output)
 {
+  out_data_throttle(NULL, 0);  // Initialize throttle for this shell command.
+
   // the output buffer
   DynamicBuffer buf = DYNAMIC_BUFFER_INIT;
   stream_read_cb data_cb = system_data_cb;
@@ -253,8 +255,8 @@ static int do_os_system(char **argv,
     wstream_set_write_cb(&in, shell_write_cb, NULL);
   }
 
-  // invoke busy_start here so event_poll_until wont change the busy state for
-  // the UI
+  // Invoke busy_start here so LOOP_PROCESS_EVENTS_UNTIL will not change the
+  // busy state.
   ui_busy_start();
   ui_flush();
   int status = process_wait(proc, -1, NULL);
@@ -309,6 +311,86 @@ static void system_data_cb(Stream *stream, RBuffer *buf, size_t count,
   dbuf->len += nread;
 }
 
+/// Tracks output received for the current executing shell command. To avoid
+/// flooding the UI, output is periodically skipped and a pulsing "..." is
+/// shown instead. Tracking depends on the synchronous/blocking nature of ":!".
+//
+/// Purpose:
+///   1. CTRL-C is more responsive. #1234 #5396
+///   2. Improves performance of :! (UI, esp. TUI, is the bottleneck here).
+///   3. Avoids OOM during long-running, spammy :!.
+///
+/// Note:
+///   - Throttling "solves" the issue for *all* UIs, on all platforms.
+///   - Unlikely that users will miss useful output: humans do not read >100KB.
+///   - Caveat: Affects execute(':!foo'), but that is not a "very important"
+///     case; system('foo') should be used for large outputs.
+///
+/// Vim does not need this hack because:
+///   1. :! in terminal-Vim runs in cooked mode, so CTRL-C is caught by the
+///      terminal and raises SIGINT out-of-band.
+///   2. :! in terminal-Vim uses a tty (Nvim uses pipes), so commands
+///      (e.g. `git grep`) may page themselves.
+///
+/// @returns true if output was skipped and pulse was displayed
+static bool out_data_throttle(char *output, size_t size)
+{
+#define NS_1_SECOND 1000000000        // 1s, in ns
+#define THRESHOLD   1024 * 10         // 10KB, "a few screenfuls" of data.
+  static uint64_t   started     = 0;  // Start time of the current throttle.
+  static size_t     received    = 0;  // Bytes observed since last throttle.
+  static size_t     visit       = 0;  // "Pulse" count of the current throttle.
+  static size_t     max_visits  = 0;
+  static char       pulse_msg[] = { ' ', ' ', ' ', '\0' };
+
+  if (output == NULL) {
+    started = received = visit = 0;
+    max_visits = 10;
+    return false;
+  }
+
+  received += size;
+  if (received < THRESHOLD
+      // Display at least the first chunk of output even if it is >=THRESHOLD.
+      || (!started && received < size + 1000)) {
+    return false;
+  }
+
+  if (!visit) {
+    started = os_hrtime();
+  }
+
+  if (visit >= max_visits) {
+    uint64_t since = os_hrtime() - started;
+    if (since < NS_1_SECOND) {
+      // Adjust max_visits based on the current relative performance.
+      // Each "pulse" period should last >=1 second so that it is perceptible.
+      max_visits = (2 * max_visits);
+    } else {
+      received = visit = 0;
+    }
+  }
+
+  if (received && ++visit <= max_visits) {
+    // Pulse "..." at the bottom of the screen.
+    size_t tick = (visit == max_visits)
+                  ? 3  // Force all dots "..." on last visit.
+                  : (visit + 1) % 4;
+    pulse_msg[0] = (tick == 0) ? ' ' : '.';
+    pulse_msg[1] = (tick == 0 || 1 == tick) ? ' ' : '.';
+    pulse_msg[2] = (tick == 0 || 1 == tick || 2 == tick) ? ' ' : '.';
+    if (visit == 1) {
+      screen_del_lines(0, 0, 1, (int)Rows, NULL);
+    }
+    int lastrow = (int)Rows - 1;
+    screen_puts_len((char_u *)pulse_msg, ARRAY_SIZE(pulse_msg), lastrow, 0, 0);
+    ui_flush();
+    return true;
+  }
+
+  return false;
+}
+
 /// Continue to append data to last screen line.
 ///
 /// @param output       Data to append to screen lines.
@@ -318,6 +400,11 @@ static void append_to_screen_end(char *output, size_t remaining, bool new_line)
 {
   // Column of last row to start appending data to.
   static colnr_T last_col = 0;
+
+  if (out_data_throttle(output, remaining)) {
+    last_col = 0;
+    return;
+  }
 
   size_t off = 0;
   int last_row = (int)Rows - 1;
