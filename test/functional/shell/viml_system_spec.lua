@@ -45,6 +45,10 @@ describe('system()', function()
     end)
 
     it('quotes arguments correctly', function()
+print(printargs_exe)
+for file in lfs.dir(helpers.nvim_dir) do
+print(file)
+end
       local out = helpers.call('system', {printargs_exe, '1', '2 "3'})
       eq(0, eval('v:shell_error'))
       eq([[arg1=1;arg2=2 "3;]], out)
