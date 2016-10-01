@@ -121,12 +121,22 @@ func Test_getcompletion()
   let l = getcompletion('dark', 'highlight')
   call assert_equal([], l)
 
+  if has('cscope')
+    let l = getcompletion('', 'cscope')
+    let cmds = ['add', 'find', 'help', 'kill', 'reset', 'show']
+    call assert_equal(cmds, l)
+    " using cmdline completion must not change the result
+    call feedkeys(":cscope find \<c-d>\<c-c>", 'xt')
+    let l = getcompletion('', 'cscope')
+    call assert_equal(cmds, l)
+    let keys = ['a', 'c', 'd', 'e', 'f', 'g', 'i', 's', 't']
+    let l = getcompletion('find ', 'cscope')
+    call assert_equal(keys, l)
+  endif
+
   " For others test if the name is recognized.
   let names = ['buffer', 'environment', 'file_in_path',
 	\ 'mapping', 'shellcmd', 'tag', 'tag_listfiles', 'user']
-  if has('cscope')
-    call add(names, 'cscope')
-  endif
   if has('cmdline_hist')
     call add(names, 'history')
   endif
