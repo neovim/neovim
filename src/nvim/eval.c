@@ -9678,6 +9678,11 @@ static void f_getcompletion(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     xpc.xp_pattern_len = STRLEN(xpc.xp_pattern);
   }
 
+  if (xpc.xp_context == EXPAND_SIGN) {
+    set_context_in_sign_cmd(&xpc, xpc.xp_pattern);
+    xpc.xp_pattern_len = STRLEN(xpc.xp_pattern);
+  }
+
   pat = addstar(xpc.xp_pattern, xpc.xp_pattern_len, xpc.xp_context);
   rettv_list_alloc(rettv);
   if (pat != NULL) {

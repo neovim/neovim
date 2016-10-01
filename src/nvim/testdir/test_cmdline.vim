@@ -134,6 +134,19 @@ func Test_getcompletion()
     call assert_equal(keys, l)
   endif
 
+  if has('signs')
+    sign define Testing linehl=Comment
+    let l = getcompletion('', 'sign')
+    let cmds = ['define', 'jump', 'list', 'place', 'undefine', 'unplace']
+    call assert_equal(cmds, l)
+    " using cmdline completion must not change the result
+    call feedkeys(":sign list \<c-d>\<c-c>", 'xt')
+    let l = getcompletion('', 'sign')
+    call assert_equal(cmds, l)
+    let l = getcompletion('list ', 'sign')
+    call assert_equal(['Testing'], l)
+  endif
+
   " For others test if the name is recognized.
   let names = ['buffer', 'environment', 'file_in_path',
 	\ 'mapping', 'shellcmd', 'tag', 'tag_listfiles', 'user']
@@ -145,9 +158,6 @@ func Test_getcompletion()
   endif
   if has('profile')
     call add(names, 'syntime')
-  endif
-  if has('signs')
-    call add(names, 'sign')
   endif
 
   set tags=Xtags
