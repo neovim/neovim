@@ -9648,11 +9648,21 @@ static void f_getcompletion(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   char_u        *pat;
   expand_T      xpc;
+  bool          filtered = false;
   int           options = WILD_SILENT | WILD_USE_NL | WILD_ADD_SLASH
           | WILD_NO_BEEP;
 
+  if (argvars[2].v_type != VAR_UNKNOWN) {
+    filtered = get_tv_number_chk(&argvars[2], NULL);
+  }
+
   if (p_wic) {
     options |= WILD_ICASE;
+  }
+
+  // For filtered results, 'wildignore' is used
+  if (!filtered) {
+    options |= WILD_KEEP_ALL;
   }
 
   ExpandInit(&xpc);

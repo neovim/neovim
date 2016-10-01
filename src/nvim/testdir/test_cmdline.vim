@@ -89,6 +89,10 @@ func Test_getcompletion()
   call assert_true(index(l, 'runtest.vim') >= 0)
   let l = getcompletion('walk', 'file')
   call assert_equal([], l)
+  set wildignore=*.vim
+  let l = getcompletion('run', 'file', 1)
+  call assert_true(index(l, 'runtest.vim') < 0)
+  set wildignore&
 
   let l = getcompletion('ha', 'filetype')
   call assert_true(index(l, 'hamster') >= 0)
