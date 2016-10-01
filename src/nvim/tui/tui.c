@@ -67,7 +67,7 @@ typedef struct {
   struct {
     int enable_mouse, disable_mouse;
     int enable_bracketed_paste, disable_bracketed_paste;
-    int enter_insert_mode, enter_replace_mode, exit_insert_mode;
+    int set_cursor_shape_bar, set_cursor_shape_ul, set_cursor_shape_block;
     int set_rgb_foreground, set_rgb_background;
     int enable_focus_reporting, disable_focus_reporting;
   } unibi_ext;
@@ -124,9 +124,9 @@ static void terminfo_start(UI *ui)
   data->unibi_ext.disable_mouse = -1;
   data->unibi_ext.enable_bracketed_paste = -1;
   data->unibi_ext.disable_bracketed_paste = -1;
-  data->unibi_ext.enter_insert_mode = -1;
-  data->unibi_ext.enter_replace_mode = -1;
-  data->unibi_ext.exit_insert_mode = -1;
+  data->unibi_ext.set_cursor_shape_bar = -1;
+  data->unibi_ext.set_cursor_shape_ul = -1;
+  data->unibi_ext.set_cursor_shape_block = -1;
   data->unibi_ext.enable_focus_reporting = -1;
   data->unibi_ext.disable_focus_reporting = -1;
   data->out_fd = 1;
@@ -139,6 +139,8 @@ static void terminfo_start(UI *ui)
     data->ut = unibi_dummy();
   }
   fix_terminfo(data);
+  // Initialize the cursor shape.
+  unibi_out(ui, data->unibi_ext.set_cursor_shape_block);
   // Set 't_Co' from the result of unibilium & fix_terminfo.
   t_colors = unibi_get_num(data->ut, unibi_max_colors);
   // Enter alternate screen and clear
@@ -457,16 +459,16 @@ static void tui_mode_change(UI *ui, int mode)
 
   if (mode == INSERT) {
     if (data->showing_mode != INSERT) {
-      unibi_out(ui, data->unibi_ext.enter_insert_mode);
+      unibi_out(ui, data->unibi_ext.set_cursor_shape_bar);
     }
   } else if (mode == REPLACE) {
     if (data->showing_mode != REPLACE) {
-      unibi_out(ui, data->unibi_ext.enter_replace_mode);
+      unibi_out(ui, data->unibi_ext.set_cursor_shape_ul);
     }
   } else {
     assert(mode == NORMAL);
     if (data->showing_mode != NORMAL) {
-      unibi_out(ui, data->unibi_ext.exit_insert_mode);
+      unibi_out(ui, data->unibi_ext.set_cursor_shape_block);
     }
   }
   data->showing_mode = mode;
@@ -860,23 +862,23 @@ static void fix_terminfo(TUIData *data)
       || os_getenv("KONSOLE_DBUS_SESSION") != NULL) {
     // Konsole uses a proprietary escape code to set the cursor shape
     // and does not support DECSCUSR.
-    data->unibi_ext.enter_insert_mode = (int)unibi_add_ext_str(ut, NULL,
+    data->unibi_ext.set_cursor_shape_bar = (int)unibi_add_ext_str(ut, NULL,
         TMUX_WRAP("\x1b]50;CursorShape=1;BlinkingCursorEnabled=1\x07"));
-    data->unibi_ext.enter_replace_mode = (int)unibi_add_ext_str(ut, NULL,
+    data->unibi_ext.set_cursor_shape_ul = (int)unibi_add_ext_str(ut, NULL,
         TMUX_WRAP("\x1b]50;CursorShape=2;BlinkingCursorEnabled=1\x07"));
-    data->unibi_ext.exit_insert_mode = (int)unibi_add_ext_str(ut, NULL,
+    data->unibi_ext.set_cursor_shape_block = (int)unibi_add_ext_str(ut, NULL,
         TMUX_WRAP("\x1b]50;CursorShape=0;BlinkingCursorEnabled=0\x07"));
   } else if (!vte_version || atoi(vte_version) >= 3900) {
     // Assume that the terminal supports DECSCUSR unless it is an
     // old VTE based terminal.  This should not get wrapped for tmux,
     // which will handle it via its Ss/Se terminfo extension - usually
     // according to its terminal-overrides.
-    data->unibi_ext.enter_insert_mode = (int)unibi_add_ext_str(ut, NULL,
-                                                               "\x1b[5 q");
-    data->unibi_ext.enter_replace_mode = (int)unibi_add_ext_str(ut, NULL,
-                                                                "\x1b[3 q");
-    data->unibi_ext.exit_insert_mode = (int)unibi_add_ext_str(ut, NULL,
-                                                              "\x1b[2 q");
+    data->unibi_ext.set_cursor_shape_bar =
+      (int)unibi_add_ext_str(ut, NULL, "\x1b[5 q");
+    data->unibi_ext.set_cursor_shape_ul =
+      (int)unibi_add_ext_str(ut, NULL, "\x1b[3 q");
+    data->unibi_ext.set_cursor_shape_block =
+      (int)unibi_add_ext_str(ut, NULL, "\x1b[2 q");
   }
 
 end:
