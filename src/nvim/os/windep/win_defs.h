@@ -1,5 +1,5 @@
-#ifndef NVIM_OS_WIN_DEFS_H
-#define NVIM_OS_WIN_DEFS_H
+#ifndef NVIM_OS_WINDEP_WIN_DEFS_H
+#define NVIM_OS_WINDEP_WIN_DEFS_H
 
 // winsock2.h must be first to avoid incompatibilities
 // with winsock.h (included by windows.h)
@@ -15,7 +15,7 @@
 
 #define NAME_MAX _MAX_PATH
 
-#define TEMP_DIR_NAMES {"$TMP", "$TEMP", "$USERPROFILE", ""}
+#define TEMP_DIR_NAMES { "$TMP", "$TEMP", "$USERPROFILE", "" }
 #define TEMP_FILE_PATH_MAXLEN _MAX_PATH
 
 #define FNAME_ILLEGAL "\"*?><|"
@@ -86,4 +86,4 @@ typedef SSIZE_T ssize_t;
 # define S_ISCHR(m) (((m) & S_IFMT) == S_IFCHR)
 #endif
 
-#endif  // NVIM_OS_WIN_DEFS_H
+#endif  // NVIM_OS_WINDEP_WIN_DEFS_H

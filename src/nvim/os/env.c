@@ -118,18 +118,17 @@ int64_t os_get_pid(void)
 /// @param len Length of `hostname`.
 void os_get_hostname(char *hostname, size_t len)
 {
-
+#ifdef HAVE_SYS_UTSNAME_H	 
   struct utsname vutsname;
-
-#ifdef HAVE_SYS_UTSNAME_H
   if (uname(&vutsname) < 0) {
 #endif
 #if defined(_WIN32) || defined(WIN32)
-  #include "nvim/os/windep/win_defs.h"
-  #include "nvim/os/windep/window_utsname.h"
+#include "nvim/os/windep/win_defs.h"
+#include "nvim/os/windep/window_utsname.h"
+  struct w_utsname vutsname;
   if (w_uname(&vutsname) < 0) {  
 #endif
-	*hostname = '\0';
+    *hostname = '\0';
   } else {
     strncpy(hostname, vutsname.nodename, len - 1);
     hostname[len - 1] = '\0';
