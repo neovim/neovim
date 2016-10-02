@@ -213,7 +213,9 @@ local function gen_itp(it)
       local pid = posix.fork()
       if pid == 0 then
         posix.close(rd)
+        collectgarbage('stop')
         local err, emsg = pcall(func)
+        collectgarbage('restart')
         emsg = tostring(emsg)
         if not err then
           posix.write(wr, ('-\n%05u\n%s'):format(#emsg, emsg))
