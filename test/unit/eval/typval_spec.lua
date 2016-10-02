@@ -1031,39 +1031,108 @@ describe('typval.c', function()
         eq(empty_list, typvalt2lua(rettv4))
       end)
     end)
-  end)
-  describe('join()', function()
-    local function list_join(l, sep, ret)
-      local ga = ga_alloc()
-      eq(ret or OK, lib.tv_list_join(ga, l, sep))
-      if ga.ga_data == nil then return ''
-      else return ffi.string(ga.ga_data)
+    describe('join()', function()
+      local function list_join(l, sep, ret)
+        local ga = ga_alloc()
+        eq(ret or OK, lib.tv_list_join(ga, l, sep))
+        if ga.ga_data == nil then return ''
+        else return ffi.string(ga.ga_data)
+        end
       end
-    end
-    it('works', function()
-      local l
-      l = list('boo', 'far')
-      eq('boo far', list_join(l, ' '))
-      eq('boofar', list_join(l, ''))
+      itp('works', function()
+        local l
+        l = list('boo', 'far')
+        eq('boo far', list_join(l, ' '))
+        eq('boofar', list_join(l, ''))
 
-      l = list('boo')
-      eq('boo', list_join(l, ' '))
+        l = list('boo')
+        eq('boo', list_join(l, ' '))
 
-      l = list()
-      eq('', list_join(l, ' '))
+        l = list()
+        eq('', list_join(l, ' '))
 
-      l = list({}, 'far')
-      eq('{} far', list_join(l, ' '))
+        l = list({}, 'far')
+        eq('{} far', list_join(l, ' '))
 
-      local recursive_list = {}
-      recursive_list[1] = recursive_list
-      l = ffi.gc(list(recursive_list, 'far'), nil)
-      eq('[[...@0]] far', list_join(l, ' '))
+        local recursive_list = {}
+        recursive_list[1] = recursive_list
+        l = ffi.gc(list(recursive_list, 'far'), nil)
+        eq('[[...@0]] far', list_join(l, ' '))
 
-      local recursive_l = l.lv_first.li_tv.vval.v_list
-      local recursive_li = recursive_l.lv_first
-      lib.tv_list_item_remove(recursive_l, recursive_li)
-      lib.tv_list_free(l, true)
+        local recursive_l = l.lv_first.li_tv.vval.v_list
+        local recursive_li = recursive_l.lv_first
+        lib.tv_list_item_remove(recursive_l, recursive_li)
+        lib.tv_list_free(l, true)
+      end)
+    end)
+    describe('equal()', function()
+      itp('compares empty and NULL lists correctly', function()
+        local l = list()
+        local l2 = list()
+
+        -- NULL lists are not equal to empty lists
+        eq(false, lib.tv_list_equal(l, nil, true, false))
+        eq(false, lib.tv_list_equal(nil, l, false, false))
+        eq(false, lib.tv_list_equal(nil, l, false, true))
+        eq(false, lib.tv_list_equal(l, nil, true, true))
+
+        -- Yet NULL lists are equal themselves
+        eq(true, lib.tv_list_equal(nil, nil, true, false))
+        eq(true, lib.tv_list_equal(nil, nil, false, false))
+        eq(true, lib.tv_list_equal(nil, nil, false, true))
+        eq(true, lib.tv_list_equal(nil, nil, true, true))
+
+        -- As well as empty lists
+        eq(true, lib.tv_list_equal(l, l, true, false))
+        eq(true, lib.tv_list_equal(l, l2, false, false))
+        eq(true, lib.tv_list_equal(l2, l, false, true))
+        eq(true, lib.tv_list_equal(l2, l2, true, true))
+      end)
+      -- Must not use recursive=true argument in the following tests because it
+      -- indicates that tv_equal_recurse_limit and recursive_cnt were set which
+      -- is essential. This argument will be set when comparing inner lists.
+      itp('compares lists correctly when case is not ignored', function()
+        local l1 = list('abc', {1, 2, 'Abc'}, 'def')
+        local l2 = list('abc', {1, 2, 'Abc'})
+        local l3 = list('abc', {1, 2, 'Abc'}, 'Def')
+        local l4 = list('abc', {1, 2, 'Abc', 4}, 'def')
+        local l5 = list('Abc', {1, 2, 'Abc'}, 'def')
+        local l6 = list('abc', {1, 2, 'Abc'}, 'def')
+        local l7 = list('abc', {1, 2, 'abc'}, 'def')
+        local l8 = list('abc', nil, 'def')
+        local l9 = list('abc', {1, 2, nil}, 'def')
+
+        eq(true, lib.tv_list_equal(l1, l1, false, false))
+        eq(false, lib.tv_list_equal(l1, l2, false, false))
+        eq(false, lib.tv_list_equal(l1, l3, false, false))
+        eq(false, lib.tv_list_equal(l1, l4, false, false))
+        eq(false, lib.tv_list_equal(l1, l5, false, false))
+        eq(true, lib.tv_list_equal(l1, l6, false, false))
+        eq(false, lib.tv_list_equal(l1, l7, false, false))
+        eq(false, lib.tv_list_equal(l1, l8, false, false))
+        eq(false, lib.tv_list_equal(l1, l9, false, false))
+      end)
+      itp('compares lists correctly when case is ignored', function()
+        local l1 = list('abc', {1, 2, 'Abc'}, 'def')
+        local l2 = list('abc', {1, 2, 'Abc'})
+        local l3 = list('abc', {1, 2, 'Abc'}, 'Def')
+        local l4 = list('abc', {1, 2, 'Abc', 4}, 'def')
+        local l5 = list('Abc', {1, 2, 'Abc'}, 'def')
+        local l6 = list('abc', {1, 2, 'Abc'}, 'def')
+        local l7 = list('abc', {1, 2, 'abc'}, 'def')
+        local l8 = list('abc', nil, 'def')
+        local l9 = list('abc', {1, 2, nil}, 'def')
+
+        eq(true, lib.tv_list_equal(l1, l1, true, false))
+        eq(false, lib.tv_list_equal(l1, l2, true, false))
+        eq(true, lib.tv_list_equal(l1, l3, true, false))
+        eq(false, lib.tv_list_equal(l1, l4, true, false))
+        eq(true, lib.tv_list_equal(l1, l5, true, false))
+        eq(true, lib.tv_list_equal(l1, l6, true, false))
+        eq(true, lib.tv_list_equal(l1, l7, true, false))
+        eq(false, lib.tv_list_equal(l1, l8, true, false))
+        eq(false, lib.tv_list_equal(l1, l9, true, false))
+      end)
     end)
   end)
 end)
