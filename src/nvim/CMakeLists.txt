@@ -393,6 +393,7 @@ set(HEADER_CHECK_SKIPPED
   tag
   terminal
   tui/tui
+  tui/ui_bridge
   ugrid
   ui
   ui_bridge
