@@ -1009,7 +1009,7 @@ char *os_resolve_shortcut(const char *fname)
     WCHAR *p;
     const int conversion_result = utf8_to_utf16(fname, &p);
     if (conversion_result != 0) {
-      EMSG2("utf8_to_utf16 failed: %s", uv_strerror(conversion_result));
+      EMSG2("utf8_to_utf16 failed: %d", conversion_result);
     }
 
     if (p != NULL) {
