@@ -57,12 +57,6 @@ describe('NULL', function()
     null_list_expr_test('does not crash extend()', 'extend(L, [1])', 0, 0)
     -- FIXME extend() should not return 0 at all
     null_list_expr_test('does not crash extend() (second position)', 'extend([1], L)', 0, 0)
-    -- FIXME Should return 1
-    null_list_expr_test('is equal to itself', 'L == L', 0, 0)
-    -- FIXME Should return 0
-    null_list_expr_test('is not not equal to itself', 'L != L', 0, 1)
-    -- FIXME Should return 1
-    null_list_expr_test('counts correctly', 'count([L], L)', 0, 0)
     -- FIXME should be accepted by inputlist()
     null_list_expr_test('is accepted as an empty list by inputlist()',
                         '[feedkeys("\\n"), inputlist(L)]', 'E686: Argument of inputlist() must be a List', {0, 0})
@@ -133,5 +127,8 @@ describe('NULL', function()
     null_list_expr_test('can be added to itself', '(L + L) is L', 0, 1)
     null_list_expr_test('can be added to non-empty list', '([1] + L)', 0, {1})
     null_list_expr_test('can be added to non-empty list (reversed)', '(L + [1])', 0, {1})
+    null_list_expr_test('is equal to itself', 'L == L', 0, 1)
+    null_list_expr_test('is not not equal to itself', 'L != L', 0, 0)
+    null_list_expr_test('counts correctly', 'count([L], L)', 0, 1)
   end)
 end)

@@ -595,12 +595,11 @@ bool tv_list_equal(list_T *const l1, list_T *const l2,
                    const bool ic, const bool recursive)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  if (l1 == NULL || l2 == NULL) {
-    // FIXME? compare empty list with NULL list equal
-    return false;
-  }
   if (l1 == l2) {
     return true;
+  }
+  if (l1 == NULL || l2 == NULL) {
+    return false;
   }
   if (tv_list_len(l1) != tv_list_len(l2)) {
     return false;
