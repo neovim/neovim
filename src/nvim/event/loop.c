@@ -92,6 +92,22 @@ void loop_close(Loop *loop, bool wait)
   kl_destroy(WatcherPtr, loop->children);
 }
 
+void loop_purge(Loop *loop)
+{
+  uv_mutex_lock(&loop->mutex);
+  multiqueue_purge_events(loop->thread_events);
+  multiqueue_purge_events(loop->fast_events);
+  uv_mutex_unlock(&loop->mutex);
+}
+
+size_t loop_size(Loop *loop)
+{
+  uv_mutex_lock(&loop->mutex);
+  size_t rv = multiqueue_size(loop->thread_events);
+  uv_mutex_unlock(&loop->mutex);
+  return rv;
+}
+
 static void async_cb(uv_async_t *handle)
 {
   Loop *l = handle->loop->data;

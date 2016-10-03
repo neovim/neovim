@@ -11,6 +11,7 @@
 #include "nvim/lib/kvec.h"
 
 #include "nvim/vim.h"
+#include "nvim/log.h"
 #include "nvim/ui.h"
 #include "nvim/map.h"
 #include "nvim/main.h"
@@ -31,6 +32,8 @@
 // flushing. No existing terminal will require 32 bytes to do that.
 #define CNORM_COMMAND_MAX_SIZE 32
 #define OUTBUF_SIZE 0xffff
+
+#define TOO_MANY_EVENTS 1000000
 
 typedef struct {
   int top, bot, left, right;
@@ -590,6 +593,18 @@ static void tui_flush(UI *ui)
 {
   TUIData *data = ui->data;
   UGrid *grid = &data->grid;
+
+  size_t nrevents = loop_size(data->loop);
+  if (nrevents > TOO_MANY_EVENTS) {
+    ILOG("TUI event-queue flooded (thread_events=%zu); purging", nrevents);
+    // Back-pressure: UI events may accumulate much faster than the terminal
+    // device can serve them. Even if SIGINT/CTRL-C is received, user must still
+    // wait for the TUI event-queue to drain, and if there are ~millions of
+    // events in the queue, it could take hours. Clearing the queue allows the
+    // UI to recover. #1234 #5396
+    loop_purge(data->loop);
+    tui_busy_stop(ui);  // avoid hidden cursor
+  }
 
   while (kv_size(data->invalid_regions)) {
     Rect r = kv_pop(data->invalid_regions);

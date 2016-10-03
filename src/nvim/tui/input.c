@@ -319,8 +319,6 @@ static bool handle_forced_escape(TermInput *input)
   return false;
 }
 
-static void restart_reading(void **argv);
-
 static void read_cb(Stream *stream, RBuffer *buf, size_t c, void *data,
     bool eof)
 {

@@ -1,3 +1,8 @@
+// Queue implemented by circularly-linked list.
+//
+// Adapted from libuv. Simpler and more efficient than klist.h for implementing
+// queues that support arbitrary insertion/removal.
+//
 // Copyright (c) 2013, Ben Noordhuis <info@bnoordhuis.nl>
 //
 // Permission to use, copy, modify, and/or distribute this software for any
@@ -28,6 +33,8 @@ typedef struct _queue {
 #define QUEUE_DATA(ptr, type, field) \
   ((type *)((char *)(ptr) - offsetof(type, field)))
 
+// Important note: mutating the list while QUEUE_FOREACH is
+// iterating over its elements results in undefined behavior.
 #define QUEUE_FOREACH(q, h) \
   for (  /* NOLINT(readability/braces) */ \
       (q) = (h)->next; (q) != (h); (q) = (q)->next)
@@ -54,17 +61,6 @@ static inline void QUEUE_ADD(QUEUE *const h, QUEUE *const n)
   n->next->prev = h->prev;
   h->prev = n->prev;
   h->prev->next = h;
-}
-
-static inline void QUEUE_SPLIT(QUEUE *const h, QUEUE *const q, QUEUE *const n)
-  FUNC_ATTR_ALWAYS_INLINE
-{
-  n->prev = h->prev;
-  n->prev->next = n;
-  n->next = q;
-  h->prev = q->prev;
-  h->prev->next = h;
-  q->prev = n;
 }
 
 static inline void QUEUE_INSERT_HEAD(QUEUE *const h, QUEUE *const q)

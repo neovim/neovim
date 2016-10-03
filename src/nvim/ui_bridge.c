@@ -1,11 +1,12 @@
-// UI wrapper that sends UI requests to the UI thread.
-// Used by the built-in TUI and external libnvim-based UIs.
+// UI wrapper that sends requests to the UI thread.
+// Used by the built-in TUI and libnvim-based UIs.
 
 #include <assert.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <limits.h>
 
+#include "nvim/log.h"
 #include "nvim/main.h"
 #include "nvim/vim.h"
 #include "nvim/ui.h"
@@ -19,10 +20,30 @@
 
 #define UI(b) (((UIBridgeData *)b)->ui)
 
-// Call a function in the UI thread
+#if MIN_LOG_LEVEL <= DEBUG_LOG_LEVEL
+static size_t        uilog_seen = 0;
+static argv_callback uilog_event = NULL;
+#define UI_CALL(ui, name, argc, ...) \
+  do { \
+    if (uilog_event == ui_bridge_##name##_event) { \
+      uilog_seen++; \
+    } else { \
+      if (uilog_seen > 0) { \
+        DLOG("UI bridge: ...%zu times", uilog_seen); \
+      } \
+      DLOG("UI bridge: " STR(name)); \
+      uilog_seen = 0; \
+      uilog_event = ui_bridge_##name##_event; \
+    } \
+    ((UIBridgeData *)ui)->scheduler( \
+        event_create(1, ui_bridge_##name##_event, argc, __VA_ARGS__), UI(ui)); \
+  } while (0)
+#else
+// Schedule a function call on the UI bridge thread.
 #define UI_CALL(ui, name, argc, ...) \
   ((UIBridgeData *)ui)->scheduler( \
       event_create(1, ui_bridge_##name##_event, argc, __VA_ARGS__), UI(ui))
+#endif
 
 #define INT2PTR(i) ((void *)(uintptr_t)i)
 #define PTR2INT(p) ((int)(uintptr_t)p)
@@ -218,16 +239,16 @@ static void ui_bridge_mode_change_event(void **argv)
 }
 
 static void ui_bridge_set_scroll_region(UI *b, int top, int bot, int left,
-    int right)
+                                        int right)
 {
   UI_CALL(b, set_scroll_region, 5, b, INT2PTR(top), INT2PTR(bot),
-      INT2PTR(left), INT2PTR(right));
+          INT2PTR(left), INT2PTR(right));
 }
 static void ui_bridge_set_scroll_region_event(void **argv)
 {
   UI *ui = UI(argv[0]);
   ui->set_scroll_region(ui, PTR2INT(argv[1]), PTR2INT(argv[2]),
-      PTR2INT(argv[3]), PTR2INT(argv[4]));
+                        PTR2INT(argv[3]), PTR2INT(argv[4]));
 }
 
 static void ui_bridge_scroll(UI *b, int count)
