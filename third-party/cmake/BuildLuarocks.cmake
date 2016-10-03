@@ -172,14 +172,14 @@ if(USE_BUNDLED_BUSTED)
   add_custom_target(nvim-client
     DEPENDS ${HOSTDEPS_LIB_DIR}/luarocks/rocks/nvim-client)
 
-  add_custom_command(OUTPUT ${HOSTDEPS_BIN_DIR}/luarocks/rocks/luaposix
+  add_custom_command(OUTPUT ${HOSTDEPS_LIB_DIR}/luarocks/rocks/luaposix
     COMMAND env ${LUAROCKS_BUILDARGS}
             ${LUAROCKS_BINARY} build
               https://raw.githubusercontent.com/luaposix/luaposix/release-v33.4.0/luaposix-33.4.0-1.rockspec
               ${LUAROCKS_BUILDARGS}
     DEPENDS luarocks)
   add_custom_target(luaposix
-    DEPENDS ${HOSTDEPS_BIN_DIR}/luarocks/rocks/luaposix)
+    DEPENDS ${HOSTDEPS_LIB_DIR}/luarocks/rocks/luaposix)
 
   list(APPEND THIRD_PARTY_DEPS busted luacheck nvim-client luaposix)
 endif()
