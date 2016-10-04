@@ -16250,12 +16250,9 @@ static void f_taglist(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   if (*tag_pattern == NUL)
     return;
 
-  if ( argvars[1].v_type != VAR_UNKNOWN )
-  {
+  if ( argvars[1].v_type != VAR_UNKNOWN ) {
       fname = get_tv_string(&argvars[1]);
-  }
-  else
-  {
+  } else {
       fname = NULL;
   }
 
