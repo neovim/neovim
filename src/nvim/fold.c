@@ -788,6 +788,19 @@ void foldUpdate(win_T *wp, linenr_T top, linenr_T bot)
   }
 }
 
+/// Updates folds when leaving insert-mode.
+void foldUpdateAfterInsert(void)
+{
+  if (foldmethodIsManual(curwin)  // foldmethod=manual: No need to update.
+      // These foldmethods are too slow, do not auto-update on insert-leave.
+      || foldmethodIsSyntax(curwin) || foldmethodIsExpr(curwin)) {
+    return;
+  }
+
+  foldUpdateAll(curwin);
+  foldOpenCursor();
+}
+
 /* foldUpdateAll() {{{2 */
 /*
  * Update all lines in a window for folding.
