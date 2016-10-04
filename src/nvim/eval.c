@@ -16241,6 +16241,7 @@ static void f_tagfiles(typval_T *argvars, typval_T *rettv, FunPtr fptr)
  */
 static void f_taglist(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
+  char_u      *fname;
   char_u  *tag_pattern;
 
   tag_pattern = get_tv_string(&argvars[0]);
@@ -16249,7 +16250,16 @@ static void f_taglist(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   if (*tag_pattern == NUL)
     return;
 
-  (void)get_tags(rettv_list_alloc(rettv), tag_pattern);
+  if ( argvars[1].v_type != VAR_UNKNOWN )
+  {
+      fname = get_tv_string(&argvars[1]);
+  }
+  else
+  {
+      fname = NULL;
+  }
+
+  (void)get_tags(rettv_list_alloc(rettv), tag_pattern, fname);
 }
 
 /*
