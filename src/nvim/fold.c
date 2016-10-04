@@ -788,6 +788,22 @@ void foldUpdate(win_T *wp, linenr_T top, linenr_T bot)
   }
 }
 
+// foldUpdateInsert()
+//
+// Update folds for the insert changes in the buffer of a window.
+//
+void foldUpdateInsert(void)
+{
+  if (foldmethodIsManual(curwin)
+      || foldmethodIsSyntax(curwin)
+      || foldmethodIsExpr(curwin)) {
+    return;
+  }
+
+  foldUpdateAll(curwin);
+  foldOpenCursor();
+}
+
 /* foldUpdateAll() {{{2 */
 /*
  * Update all lines in a window for folding.
