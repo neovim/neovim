@@ -23,8 +23,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Vim(Esperanto)\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-02-13 23:42+0100\n"
-"PO-Revision-Date: 2016-02-13 23:45+0100\n"
+"POT-Creation-Date: 2016-03-29 23:03+0200\n"
+"PO-Revision-Date: 2016-03-29 23:05+0200\n"
 "Last-Translator: Dominique PELLÉ <dominique.pelle@gmail.com>\n"
 "Language-Team: \n"
 "Language: eo\n"
@@ -1348,6 +1348,10 @@ msgstr "E154: Ripetita etikedo \"%s\" en dosiero %s/%s"
 
 #: ../ex_cmds.c:5687
 #, c-format
+msgid "E150: Not a directory: %s"
+msgstr "E150: Ne estas dosierujo: %s"
+
+#, c-format
 msgid "E160: Unknown sign command: %s"
 msgstr "E160: Nekonata simbola komando: %s"
 
@@ -1482,8 +1486,8 @@ msgstr "Serĉado de \"%s\""
 
 #: ../ex_cmds2.c:2307
 #, c-format
-msgid "not found in 'runtimepath': \"%s\""
-msgstr "ne trovita en 'runtimepath': \"%s\""
+msgid "not found in '%s': \"%s\""
+msgstr "ne trovita en '%s: \"%s\""
 
 #: ../ex_cmds2.c:2472
 #, c-format
@@ -6685,6 +6689,12 @@ msgstr "E446: Neniu dosiernomo sub la kursoro"
 
 #~ msgid "E232: Cannot create BalloonEval with both message and callback"
 #~ msgstr "E232: Ne eblas krei BalloonEval kun ambaŭ mesaĝo kaj reagfunkcio"
+
+msgid "Yes"
+msgstr "Jes"
+
+msgid "No"
+msgstr "Ne"
 
 # todo '_' is for hotkey, i guess?
 #~ msgid "Input _Methods"

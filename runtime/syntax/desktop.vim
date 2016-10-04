@@ -3,7 +3,8 @@
 "		according to freedesktop.org specification 0.9.4
 " http://pdx.freedesktop.org/Standards/desktop-entry-spec/desktop-entry-spec-0.9.4.html
 " Maintainer:	Mikolaj Machowski ( mikmach AT wp DOT pl )
-" Last Change:	2004 May 16
+" Last Change:	2016 Apr 02
+" 		(added "Keywords")
 " Version Info: desktop.vim 0.9.4-1.2
 
 " For version 5.x: Clear all syntax items
@@ -53,8 +54,8 @@ syn keyword dtBooleanKey StartupNotify ReadOnly Terminal Hidden NoDisplay nextgr
 syn keyword dtBooleanValue true false containedin=dtBoolean contained
 
 " String
-syn match   dtString /^\s*\<\(Encoding\|Icon\|Path\|Actions\|FSType\|MountPoint\|UnmountIcon\|URL\|Categories\|OnlyShowIn\|NotShowIn\|StartupWMClass\|FilePattern\|MimeType\)\>.*/ contains=dtStringKey,dtDelim transparent
-syn keyword dtStringKey Type Encoding TryExec Exec Path Actions FSType MountPoint URL Categories OnlyShowIn NotShowIn StartupWMClass FilePattern MimeType nextgroup=dtDelim containedin=dtString contained
+syn match   dtString /^\s*\<\(Encoding\|Icon\|Path\|Actions\|FSType\|MountPoint\|UnmountIcon\|URL\|Keywords\|Categories\|OnlyShowIn\|NotShowIn\|StartupWMClass\|FilePattern\|MimeType\)\>.*/ contains=dtStringKey,dtDelim transparent
+syn keyword dtStringKey Type Encoding TryExec Exec Path Actions FSType MountPoint URL Keywords Categories OnlyShowIn NotShowIn StartupWMClass FilePattern MimeType nextgroup=dtDelim containedin=dtString contained
 
 " Exec
 syn match   dtExec /^\s*\<\(Exec\|TryExec\|SwallowExec\)\>.*/ contains=dtExecKey,dtDelim,dtExecParam transparent

@@ -645,7 +645,7 @@ msgstr "E708: [:] ne peut être spécifié qu'en dernier"
 
 #: ../eval.c:2439
 msgid "E709: [:] requires a List value"
-msgstr "E709: [:] requiert une Liste"
+msgstr "E709: [:] n?cessite une Liste"
 
 #: ../eval.c:2674
 msgid "E710: List value has more items than target"
@@ -1400,6 +1400,10 @@ msgstr " sur 1 ligne"
 msgid " on %<PRId64> lines"
 msgstr " sur %<PRId64> lignes"
 
+#, c-format
+msgid "E150: Not a directory: %s"
+msgstr "E150: %s n'est pas un r?pertoire"
+
 # AB - Il faut respecter l'esprit plus que la lettre.
 # AB - Ce message devrait contenir une référence à :vglobal.
 #: ../ex_cmds.c:4438
@@ -1639,8 +1643,8 @@ msgstr "Recherche de \"%s\""
 
 #: ../ex_cmds2.c:2307
 #, c-format
-msgid "not found in 'runtimepath': \"%s\""
-msgstr "introuvable dans 'runtimepath' : \"%s\""
+msgid "not found in '%s': \"%s\""
+msgstr "introuvable dans '%s' : \"%s\""
 
 #: ../ex_cmds2.c:2472
 #, c-format
@@ -6877,6 +6881,12 @@ msgstr "E446: Aucun nom de fichier sous le curseur"
 #~ msgid "E232: Cannot create BalloonEval with both message and callback"
 #~ msgstr "E232: Impossible de créer un BalloonEval avec message ET callback"
 
+msgid "Yes"
+msgstr "Oui"
+
+msgid "No"
+msgstr "Non"
+
 # todo '_' is for hotkey, i guess?
 #~ msgid "Input _Methods"
 #~ msgstr "_Méthodes de saisie"
@@ -7000,6 +7010,17 @@ msgstr "E446: Aucun nom de fichier sous le curseur"
 #      fichier.
 #~ msgid "Directory\t*.nothing\n"
 #~ msgstr "Répertoire\t*.rien\n"
+
+#, c-format
+msgid "E671: Cannot find window title \"%s\""
+msgstr "E671: Titre de fen?tre \"%s\" introuvable"
+
+#, c-format
+msgid "E243: Argument not supported: \"-%s\"; Use the OLE version."
+msgstr "E243: Argument non support? : \"-%s\" ; Utilisez la version OLE."
+
+msgid "E672: Unable to open window inside MDI application"
+msgstr "E672: Impossible d'ouvrir une fen?tre dans une application MDI"
 
 # DB - todo : perfectible.
 #~ msgid ""
