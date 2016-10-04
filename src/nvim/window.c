@@ -5716,45 +5716,46 @@ int win_getid(typval_T *argvars)
 
 int win_gotoid(typval_T *argvars)
 {
-  win_T *wp;
-  tabpage_T   *tp;
   int id = get_tv_number(&argvars[0]);
 
-  for (tp = first_tabpage; tp != NULL; tp = tp->tp_next) {
-    for (wp = tp == curtab ? firstwin : tp->tp_firstwin;
-         wp != NULL; wp = wp->w_next) {
-      if (wp->handle == id) {
-        goto_tabpage_win(tp, wp);
-        return 1;
-      }
+  FOR_ALL_TAB_WINDOWS(tp, wp) {
+    if (wp->handle == id) {
+      goto_tabpage_win(tp, wp);
+      return 1;
     }
   }
   return 0;
 }
 
+void win_get_tabwin(handle_T id, int *tabnr, int *winnr)
+{
+  *tabnr = 0;
+  *winnr = 0;
+
+  int tnum = 1, wnum = 1;
+  FOR_ALL_TABS(tp) {
+    FOR_ALL_WINDOWS_IN_TAB(wp, tp) {
+      if (wp->handle == id) {
+        *winnr = wnum;
+        *tabnr = tnum;
+        return;
+      }
+      wnum++;
+    }
+    tnum++;
+    wnum = 1;
+  }
+}
+
 void win_id2tabwin(typval_T *argvars, list_T *list)
 {
-  win_T *wp;
-  tabpage_T   *tp;
   int winnr = 1;
   int tabnr = 1;
   int id = get_tv_number(&argvars[0]);
 
-  for (tp = first_tabpage; tp != NULL; tp = tp->tp_next) {
-    for (wp = tp == curtab ? firstwin : tp->tp_firstwin;
-         wp != NULL; wp = wp->w_next) {
-      if (wp->handle == id) {
-        list_append_number(list, tabnr);
-        list_append_number(list, winnr);
-        return;
-      }
-      winnr++;
-    }
-    tabnr++;
-    winnr = 1;
-  }
-  list_append_number(list, 0);
-  list_append_number(list, 0);
+  win_get_tabwin(id, &tabnr, &winnr);
+  list_append_number(list, tabnr);
+  list_append_number(list, winnr);
 }
 
 int win_id2win(typval_T *argvars)

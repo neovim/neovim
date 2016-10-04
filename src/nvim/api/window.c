@@ -341,6 +341,26 @@ Tabpage nvim_win_get_tabpage(Window window, Error *err)
   return rv;
 }
 
+/// Gets the window number
+///
+/// @param window The window handle
+/// @param[out] err Details of an error that may have occurred
+/// @return The window number
+Integer nvim_win_get_number(Window window, Error *err)
+{
+  Integer rv = 0;
+  win_T *win = find_window_by_handle(window, err);
+
+  if (!win) {
+    return rv;
+  }
+
+  int tabnr;
+  win_get_tabwin(window, &tabnr, (int *)&rv);
+
+  return rv;
+}
+
 /// Checks if a window is valid
 ///
 /// @param window The window handle
