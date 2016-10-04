@@ -19,6 +19,12 @@ inoremap <C-U> <C-G>u<C-U>
 " Switch syntax highlighting on
 syntax on
 
+" Also switch on highlighting the last used search pattern.
+set hlsearch
+
+" I like highlighting strings inside C comments.
+let c_comment_strings=1
+
 " Enable file type detection.
 " Use the default filetype settings, so that mail gets 'textwidth' set to 72,
 " 'cindent' is on in C files, etc.
