@@ -174,7 +174,7 @@ static void terminfo_stop(UI *ui)
   unibi_out(ui, data->unibi_ext.disable_bracketed_paste);
   // Disable focus reporting
   unibi_out(ui, data->unibi_ext.disable_focus_reporting);
-  flush_buf(ui);
+  flush_buf(ui, true);
   uv_tty_reset_mode();
   uv_close((uv_handle_t *)&data->output_handle, NULL);
   uv_run(&data->write_loop, UV_RUN_DEFAULT);
@@ -601,7 +601,7 @@ static void tui_flush(UI *ui)
 
   unibi_goto(ui, grid->row, grid->col);
 
-  flush_buf(ui);
+  flush_buf(ui, true);
 }
 
 static void suspend_event(void **argv)
@@ -774,7 +774,7 @@ static void out(void *ctx, const char *str, size_t len)
   size_t available = data->bufsize - data->bufpos;
 
   if (len > available) {
-    flush_buf(ui);
+    flush_buf(ui, false);
   }
 
   memcpy(data->buf + data->bufpos, str, len);
@@ -910,13 +910,13 @@ end:
   unibi_set_if_empty(ut, unibi_clr_eos, "\x1b[J");
 }
 
-static void flush_buf(UI *ui)
+static void flush_buf(UI *ui, bool toggle_cursor)
 {
   uv_write_t req;
   uv_buf_t buf;
   TUIData *data = ui->data;
 
-  if (!data->busy) {
+  if (toggle_cursor && !data->busy) {
     // not busy and the cursor is invisible(see below). Append a "cursor
     // normal" command to the end of the buffer.
     data->bufsize += CNORM_COMMAND_MAX_SIZE;
@@ -930,7 +930,7 @@ static void flush_buf(UI *ui)
   uv_run(&data->write_loop, UV_RUN_DEFAULT);
   data->bufpos = 0;
 
-  if (!data->busy) {
+  if (toggle_cursor && !data->busy) {
     // not busy and cursor is visible(see above), append a "cursor invisible"
     // command to the beginning of the buffer for the next flush
     unibi_out(ui, unibi_cursor_invisible);
