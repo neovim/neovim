@@ -100,13 +100,6 @@ function! s:version_info(python) abort
         \ 'import neovim; print(neovim.__file__)',
         \ '2>/dev/null']))
 
-  let nvim_path = s:trim(system([
-        \ 'python3',
-        \ '-c',
-        \ 'import neovim; print(neovim.__file__)'
-        \ ]))
-        " \ '2>/dev/null']))
-
   if empty(nvim_path)
     return [python_version, 'unable to find neovim executable', pypi_version, 'unable to get neovim executable']
   endif
