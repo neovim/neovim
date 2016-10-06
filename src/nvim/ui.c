@@ -164,15 +164,18 @@ void ui_refresh(void)
 
   int width = INT_MAX, height = INT_MAX;
   bool pum_external = true;
+  bool win_external = true;
 
   for (size_t i = 0; i < ui_count; i++) {
     UI *ui = uis[i];
     width = MIN(ui->width, width);
     height = MIN(ui->height, height);
     pum_external &= ui->pum_external;
+    win_external &= ui->win_external;
   }
 
   row = col = 0;
+  win_set_external(true);
   screen_resize(width, height);
   pum_set_external(pum_external);
 }

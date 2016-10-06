@@ -117,12 +117,6 @@ EXTERN long Rows INIT(= DFLT_ROWS);     // nr of rows in the screen
 EXTERN long Columns INIT(= DFLT_COLS);  // nr of columns in the screen
 
 /*
- * The characters and attributes cached for the screen.
- */
-typedef char_u schar_T;
-typedef unsigned short sattr_T;
-
-/*
  * The characters that are currently on the screen are kept in ScreenLines[].
  * It is a single block of characters, the size of the screen plus one line.
  * The attributes for those characters are kept in ScreenAttrs[].

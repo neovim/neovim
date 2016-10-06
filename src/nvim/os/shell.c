@@ -329,7 +329,7 @@ static void append_to_screen_end(char *output, size_t remaining, bool new_line)
       if (last_col == 0) {
         screen_del_lines(0, 0, 1, (int)Rows, NULL);
       }
-      screen_puts_len((char_u *)output, (int)off, last_row, last_col, 0);
+      screen_puts_len(curwin, (char_u *)output, (int)off, last_row, last_col, 0);
       last_col = 0;
 
       size_t skip = off + 1;
@@ -351,7 +351,7 @@ static void append_to_screen_end(char *output, size_t remaining, bool new_line)
     if (last_col == 0) {
       screen_del_lines(0, 0, 1, (int)Rows, NULL);
     }
-    screen_puts_len((char_u *)output, (int)remaining, last_row, last_col, 0);
+    screen_puts_len(curwin, (char_u *)output, (int)remaining, last_row, last_col, 0);
     last_col += (colnr_T)remaining;
   }
 
@@ -505,7 +505,7 @@ static size_t write_output(char *output, size_t remaining, bool to_buffer,
                   false);
       } else {
         screen_del_lines(0, 0, 1, (int)Rows, NULL);
-        screen_puts_len((char_u *)output, (int)off, lastrow, 0, 0);
+        screen_puts_len(curwin, (char_u *)output, (int)off, lastrow, 0, 0);
       }
       size_t skip = off + 1;
       output += skip;
@@ -530,7 +530,7 @@ static size_t write_output(char *output, size_t remaining, bool to_buffer,
         curbuf->b_no_eol_lnum = curwin->w_cursor.lnum;
       } else {
         screen_del_lines(0, 0, 1, (int)Rows, NULL);
-        screen_puts_len((char_u *)output, (int)remaining, lastrow, 0, 0);
+        screen_puts_len(curwin, (char_u *)output, (int)remaining, lastrow, 0, 0);
       }
       output += remaining;
     } else if (to_buffer) {

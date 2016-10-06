@@ -1461,7 +1461,7 @@ static char_u *screen_puts_mbyte(char_u *s, int l, int attr)
     return s;
   }
 
-  screen_puts_len(s, l, msg_row, msg_col, attr);
+  screen_puts_len(curwin, s, l, msg_row, msg_col, attr);
   if (cmdmsg_rl) {
     msg_col -= cw;
     if (msg_col == 0) {
@@ -1915,7 +1915,7 @@ static void t_puts(int *t_col, char_u *t_s, char_u *s, int attr)
 {
   /* output postponed text */
   msg_didout = TRUE;            /* remember that line is not empty */
-  screen_puts_len(t_s, (int)(s - t_s), msg_row, msg_col, attr);
+  screen_puts_len(curwin, t_s, (int)(s - t_s), msg_row, msg_col, attr);
   msg_col += *t_col;
   *t_col = 0;
   /* If the string starts with a composing character don't increment the
@@ -2148,7 +2148,7 @@ static int do_more_prompt(int typed_char)
           /* scroll up, display line at bottom */
           msg_scroll_up();
           inc_msg_scrolled();
-          screen_fill((int)Rows - 2, (int)Rows - 1, 0,
+          screen_fill(curwin, (int)Rows - 2, (int)Rows - 1, 0,
               (int)Columns, ' ', ' ', 0);
           mp_last = disp_sb_line((int)Rows - 2, mp_last);
           --toscroll;
@@ -2157,7 +2157,7 @@ static int do_more_prompt(int typed_char)
 
       if (toscroll <= 0) {
         /* displayed the requested text, more prompt again */
-        screen_fill((int)Rows - 1, (int)Rows, 0,
+        screen_fill(curwin, (int)Rows - 1, (int)Rows, 0,
             (int)Columns, ' ', ' ', 0);
         msg_moremsg(FALSE);
         continue;
@@ -2171,7 +2171,7 @@ static int do_more_prompt(int typed_char)
   }
 
   /* clear the --more-- message */
-  screen_fill((int)Rows - 1, (int)Rows, 0, (int)Columns, ' ', ' ', 0);
+  screen_fill(curwin, (int)Rows - 1, (int)Rows, 0, (int)Columns, ' ', ' ', 0);
   State = oldState;
   setmouse();
   if (quit_more) {
@@ -2270,7 +2270,7 @@ void mch_msg(char *str)
 static void msg_screen_putchar(int c, int attr)
 {
   msg_didout = TRUE;            /* remember that line is not empty */
-  screen_putchar(c, msg_row, msg_col, attr);
+  screen_putchar(curwin, c, msg_row, msg_col, attr);
   if (cmdmsg_rl) {
     if (--msg_col == 0) {
       msg_col = Columns;
@@ -2290,9 +2290,9 @@ void msg_moremsg(int full)
   char_u      *s = (char_u *)_("-- More --");
 
   attr = hl_attr(HLF_M);
-  screen_puts(s, (int)Rows - 1, 0, attr);
+  screen_puts(curwin, s, (int)Rows - 1, 0, attr);
   if (full)
-    screen_puts((char_u *)
+    screen_puts(curwin, (char_u *)
         _(" SPACE/d/j: screen/page/line down, b/u/k: up, q: quit "),
         (int)Rows - 1, vim_strsize(s), attr);
 }
@@ -2343,11 +2343,11 @@ void msg_clr_eos(void)
 void msg_clr_eos_force(void)
 {
   if (cmdmsg_rl) {
-    screen_fill(msg_row, msg_row + 1, 0, msg_col + 1, ' ', ' ', 0);
-    screen_fill(msg_row + 1, (int)Rows, 0, (int)Columns, ' ', ' ', 0);
+    screen_fill(curwin, msg_row, msg_row + 1, 0, msg_col + 1, ' ', ' ', 0);
+    screen_fill(curwin, msg_row + 1, (int)Rows, 0, (int)Columns, ' ', ' ', 0);
   } else {
-    screen_fill(msg_row, msg_row + 1, msg_col, (int)Columns, ' ', ' ', 0);
-    screen_fill(msg_row + 1, (int)Rows, 0, (int)Columns, ' ', ' ', 0);
+    screen_fill(curwin, msg_row, msg_row + 1, msg_col, (int)Columns, ' ', ' ', 0);
+    screen_fill(curwin, msg_row + 1, (int)Rows, 0, (int)Columns, ' ', ' ', 0);
   }
 }
 

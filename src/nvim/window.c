@@ -3723,6 +3723,10 @@ win_T *buf_jump_open_tab(buf_T *buf)
 static win_T *win_alloc(win_T *after, int hidden)
 {
   static int last_win_id = LOWEST_WIN_ID - 1;
+  int new_row;
+  schar_T *screen_lines;
+  sattr_T *screen_attrs;
+  unsigned *line_offset;
 
   // allocate window structure and linesizes arrays
   win_T *new_wp = xcalloc(1, sizeof(win_T));
@@ -3748,6 +3752,22 @@ static win_T *win_alloc(win_T *after, int hidden)
   new_wp->w_wincol = 0;
   new_wp->w_width = Columns;
 
+  screen_lines = xmalloc((size_t)((Rows + 1) * Columns * sizeof(schar_T)));
+  screen_attrs = xmalloc((size_t)((Rows + 1) * Columns * sizeof(sattr_T)));
+  line_offset = xmalloc((size_t)(Rows * sizeof(unsigned)));
+  for (new_row = 0; new_row < Rows; ++new_row) {
+    line_offset[new_row] = new_row * Columns;
+    (void)memset(screen_lines + new_row * Columns,
+        ' ', (size_t)Columns * sizeof(schar_T));
+    (void)memset(screen_attrs + new_row * Columns,
+        0, (size_t)Columns * sizeof(sattr_T));
+  }
+  new_wp->screen_lines = screen_lines;
+  new_wp->screen_attrs = screen_attrs;
+  new_wp->line_offset = line_offset;
+  new_wp->screen_rows = Rows;
+  new_wp->screen_columns = Columns;
+
   /* position the display and the cursor at the top of the file. */
   new_wp->w_topline = 1;
   new_wp->w_topfill = 0;
@@ -3763,6 +3783,7 @@ static win_T *win_alloc(win_T *after, int hidden)
   unblock_autocmds();
   new_wp->w_match_head = NULL;
   new_wp->w_next_match_id = 4;
+
   return new_wp;
 }
 
@@ -4119,7 +4140,7 @@ void win_setheight_win(int height, win_T *win)
    * line, clear it.
    */
   if (full_screen && msg_scrolled == 0 && row < cmdline_row)
-    screen_fill(row, cmdline_row, 0, (int)Columns, ' ', ' ', 0);
+    screen_fill(win, row, cmdline_row, 0, (int)Columns, ' ', ' ', 0);
   cmdline_row = row;
   msg_row = row;
   msg_col = 0;
@@ -4570,7 +4591,7 @@ void win_drag_status_line(win_T *dragwin, int offset)
       fr = fr->fr_next;
   }
   row = win_comp_pos();
-  screen_fill(row, cmdline_row, 0, (int)Columns, ' ', ' ', 0);
+  screen_fill(dragwin, row, cmdline_row, 0, (int)Columns, ' ', ' ', 0);
   cmdline_row = row;
   p_ch = Rows - cmdline_row;
   if (p_ch < 1)
@@ -4904,7 +4925,7 @@ void command_height(void)
 
       /* clear the lines added to cmdline */
       if (full_screen)
-        screen_fill(cmdline_row, (int)Rows, 0,
+        screen_fill(curwin, cmdline_row, (int)Rows, 0,
             (int)Columns, ' ', ' ', 0);
       msg_row = cmdline_row;
       redraw_cmdline = TRUE;
