@@ -36,7 +36,9 @@ these differences.
 - 'autoindent' is set by default
 - 'autoread' is set by default
 - 'backspace' defaults to "indent,eol,start"
+- 'backupdir' defaults to .,~/.local/share/nvim/backup (|xdg|)
 - 'complete' doesn't include "i"
+- 'directory' defaults to ~/.local/share/nvim/swap// (|xdg|), auto-created
 - 'display' defaults to "lastline"
 - 'encoding' defaults to "utf-8"
 - 'formatoptions' defaults to "tcqj"
@@ -54,6 +56,7 @@ these differences.
 - 'tabpagemax' defaults to 50
 - 'tags' defaults to "./tags;,tags"
 - 'ttyfast' is always set
+- 'undodir' defaults to ~/.local/share/nvim/undo (|xdg|), auto-created
 - 'viminfo' includes "!"
 - 'wildmenu' is set by default
 
