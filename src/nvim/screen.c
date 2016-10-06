@@ -84,6 +84,7 @@
 #include <string.h>
 
 #include "nvim/vim.h"
+#include "nvim/api/private/helpers.h"
 #include "nvim/ascii.h"
 #include "nvim/arabic.h"
 #include "nvim/screen.h"
@@ -142,6 +143,8 @@ static match_T search_hl;       /* used for 'hlsearch' highlight matching */
 
 static foldinfo_T win_foldinfo; /* info for 'foldcolumn' */
 
+static bool win_external = false;
+
 /*
  * Buffer for one screen line (characters and attributes).
  */
@@ -150,7 +153,7 @@ static schar_T  *current_ScreenLine;
 StlClickDefinition *tab_page_click_defs = NULL;
 long tab_page_click_defs_size = 0;
 
-# define SCREEN_LINE(r, o, e, c, rl)    screen_line((r), (o), (e), (c), (rl))
+# define SCREEN_LINE(w, r, o, e, c, rl)    screen_line((w), (r), (o), (e), (c), (rl))
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "screen.c.generated.h"
 #endif
@@ -1488,10 +1491,17 @@ static void win_update(win_T *wp)
       /*
        * Last line isn't finished: Display "@@@" at the end.
        */
-      screen_fill(wp->w_winrow + wp->w_height - 1,
-                  wp->w_winrow + wp->w_height,
-                  W_ENDCOL(wp) - 3, W_ENDCOL(wp),
-                  '@', '@', hl_attr(HLF_AT));
+      if (!win_external) {
+        screen_fill(wp, wp->w_winrow + wp->w_height - 1,
+                    wp->w_winrow + wp->w_height,
+                    W_ENDCOL(wp) - 3, W_ENDCOL(wp),
+                    '@', '@', hl_attr(HLF_AT));
+      } else {
+        screen_fill(wp, wp->w_height - 1,
+                    wp->w_height,
+                    W_ENDCOL(wp) - 3, W_ENDCOL(wp),
+                    '@', '@', hl_attr(HLF_AT));
+      }
       set_empty_rows(wp, srow);
       wp->w_botline = lnum;
     } else {
@@ -1583,7 +1593,7 @@ static void win_draw_end(win_T *wp, int c1, int c2, int row, int endrow, hlf_T h
       /* draw the fold column at the right */
       if (n > wp->w_width)
         n = wp->w_width;
-      screen_fill(wp->w_winrow + row, wp->w_winrow + endrow,
+      screen_fill(wp, wp->w_winrow + row, wp->w_winrow + endrow,
                   W_ENDCOL(wp) - n, W_ENDCOL(wp),
                   ' ', ' ', hl_attr(HLF_FC));
     }
@@ -1595,16 +1605,16 @@ static void win_draw_end(win_T *wp, int c1, int c2, int row, int endrow, hlf_T h
         if (nn > wp->w_width) {
             nn = wp->w_width;
         }
-        screen_fill(wp->w_winrow + row, wp->w_winrow + endrow,
+        screen_fill(wp, wp->w_winrow + row, wp->w_winrow + endrow,
                     W_ENDCOL(wp) - nn, W_ENDCOL(wp) - n,
                     ' ', ' ', hl_attr(HLF_SC));
         n = nn;
     }
 
-    screen_fill(wp->w_winrow + row, wp->w_winrow + endrow,
+    screen_fill(wp, wp->w_winrow + row, wp->w_winrow + endrow,
                 wp->w_wincol, W_ENDCOL(wp) - 1 - FDC_OFF,
                 c2, c2, hl_attr(hl));
-    screen_fill(wp->w_winrow + row, wp->w_winrow + endrow,
+    screen_fill(wp, wp->w_winrow + row, wp->w_winrow + endrow,
                 W_ENDCOL(wp) - 1 - FDC_OFF, W_ENDCOL(wp) - FDC_OFF,
                 c1, c2, hl_attr(hl));
   } else {
@@ -1613,7 +1623,7 @@ static void win_draw_end(win_T *wp, int c1, int c2, int row, int endrow, hlf_T h
       n = 1;
       if (n > wp->w_width)
         n = wp->w_width;
-      screen_fill(wp->w_winrow + row, wp->w_winrow + endrow,
+      screen_fill(wp, wp->w_winrow + row, wp->w_winrow + endrow,
                   wp->w_wincol, wp->w_wincol + n,
                   cmdwin_type, ' ', hl_attr(HLF_AT));
     }
@@ -1623,7 +1633,7 @@ static void win_draw_end(win_T *wp, int c1, int c2, int row, int endrow, hlf_T h
       /* draw the fold column at the left */
       if (nn > wp->w_width)
         nn = wp->w_width;
-      screen_fill(wp->w_winrow + row, wp->w_winrow + endrow,
+      screen_fill(wp, wp->w_winrow + row, wp->w_winrow + endrow,
                   wp->w_wincol + n, wp->w_wincol + nn,
                   ' ', ' ', hl_attr(HLF_FC));
       n = nn;
@@ -1637,15 +1647,21 @@ static void win_draw_end(win_T *wp, int c1, int c2, int row, int endrow, hlf_T h
         if (nn > wp->w_width) {
             nn = wp->w_width;
         }
-        screen_fill(wp->w_winrow + row, wp->w_winrow + endrow,
+        screen_fill(wp, wp->w_winrow + row, wp->w_winrow + endrow,
                     wp->w_wincol + n, wp->w_wincol + nn,
                     ' ', ' ', hl_attr(HLF_SC));
         n = nn;
     }
 
-    screen_fill(wp->w_winrow + row, wp->w_winrow + endrow,
-                wp->w_wincol + FDC_OFF, W_ENDCOL(wp),
-                c1, c2, hl_attr(hl));
+    if (!win_external) {
+      screen_fill(wp, wp->w_winrow + row, wp->w_winrow + endrow,
+                  wp->w_wincol + FDC_OFF, W_ENDCOL(wp),
+                  c1, c2, hl_attr(hl));
+    } else {
+      screen_fill(wp, row, endrow,
+                  FDC_OFF, wp->w_width,
+                  c1, c2, hl_attr(hl));
+    }
   }
   set_empty_rows(wp, row);
 }
@@ -1989,7 +2005,7 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
           ScreenAttrs[off + txtcol], hl_attr(HLF_CUC));
   }
 
-  SCREEN_LINE(row + wp->w_winrow, wp->w_wincol, wp->w_width,
+  SCREEN_LINE(wp, row + wp->w_winrow, wp->w_wincol, wp->w_width,
               wp->w_width, FALSE);
 
   /*
@@ -2213,6 +2229,10 @@ win_line (
   int match_conc      = 0;              ///< cchar for match functions
   int has_match_conc  = 0;              ///< match wants to conceal
   int old_boguscols = 0;
+
+  schar_T *screen_lines;
+  sattr_T *screen_attrs;
+  unsigned *line_offset;
 # define VCOL_HLC (vcol - vcol_off)
 # define FIX_FOR_BOGUSCOLS \
   { \
@@ -2222,6 +2242,16 @@ win_line (
     col -= boguscols; \
     old_boguscols = boguscols; \
     boguscols = 0; \
+  }
+
+  if (!win_external) {
+    screen_lines = ScreenLines;
+    screen_attrs = ScreenAttrs;
+    line_offset = LineOffset;
+  } else {
+    screen_lines = wp->screen_lines;
+    screen_attrs = wp->screen_attrs;
+    line_offset = wp->line_offset;
   }
 
   if (startrow > endrow)                /* past the end already! */
@@ -2637,7 +2667,7 @@ win_line (
     area_highlighting = true;
   }
 
-  off = (unsigned)(current_ScreenLine - ScreenLines);
+  off = (unsigned)(current_ScreenLine - screen_lines);
   col = 0;
   if (wp->w_p_rl) {
     /* Rightleft window: process the text in the normal direction, but put
@@ -2843,7 +2873,7 @@ win_line (
         && lnum == wp->w_cursor.lnum && vcol >= (long)wp->w_virtcol
         && filler_todo <= 0
         ) {
-      SCREEN_LINE(screen_row, wp->w_wincol, col, -wp->w_width, wp->w_p_rl);
+      SCREEN_LINE(wp, screen_row, wp->w_wincol, col, -wp->w_width, wp->w_p_rl);
       /* Pretend we have finished updating the window.  Except when
        * 'cursorcolumn' is set. */
       if (wp->w_p_cuc)
@@ -3792,7 +3822,7 @@ win_line (
           col += n;
         } else {
           /* Add a blank character to highlight. */
-          ScreenLines[off] = ' ';
+          screen_lines[off] = ' ';
           if (enc_utf8)
             ScreenLinesUC[off] = 0;
         }
@@ -3817,7 +3847,7 @@ win_line (
               cur = cur->next;
           }
         }
-        ScreenAttrs[off] = char_attr;
+        screen_attrs[off] = char_attr;
         if (wp->w_p_rl) {
           --col;
           --off;
@@ -3879,7 +3909,7 @@ win_line (
               rightmost_vcol = color_cols[i];
 
         while (col < wp->w_width) {
-          ScreenLines[off] = ' ';
+          screen_lines[off] = ' ';
           if (enc_utf8)
             ScreenLinesUC[off] = 0;
           ++col;
@@ -3888,11 +3918,11 @@ win_line (
                 &color_cols);
 
           if (wp->w_p_cuc && VCOL_HLC == (long)wp->w_virtcol)
-            ScreenAttrs[off++] = hl_attr(HLF_CUC);
+            screen_attrs[off++] = hl_attr(HLF_CUC);
           else if (draw_color_col && VCOL_HLC == *color_cols)
-            ScreenAttrs[off++] = hl_attr(HLF_MC);
+            screen_attrs[off++] = hl_attr(HLF_MC);
           else
-            ScreenAttrs[off++] = 0;
+            screen_attrs[off++] = 0;
 
           if (VCOL_HLC >= rightmost_vcol)
             break;
@@ -3905,15 +3935,19 @@ win_line (
         // terminal buffers may need to highlight beyond the end of the
         // logical line
         while (col < wp->w_width) {
-          ScreenLines[off] = ' ';
+          screen_lines[off] = ' ';
           if (enc_utf8) {
             ScreenLinesUC[off] = 0;
           }
-          ScreenAttrs[off++] = term_attrs[vcol++];
+          screen_attrs[off++] = term_attrs[vcol++];
           col++;
         }
       }
-      SCREEN_LINE(screen_row, wp->w_wincol, col, wp->w_width, wp->w_p_rl);
+      if (!win_external) {
+        SCREEN_LINE(wp, screen_row, wp->w_wincol, col, wp->w_width, wp->w_p_rl);
+      } else {
+        SCREEN_LINE(wp, screen_row, 0, col, wp->w_width, wp->w_p_rl);
+      }
       row++;
 
       /*
@@ -3985,10 +4019,10 @@ win_line (
         --off;
         --col;
       }
-      ScreenLines[off] = c;
+      screen_lines[off] = c;
       if (enc_dbcs == DBCS_JPNU) {
         if ((mb_c & 0xff00) == 0x8e00)
-          ScreenLines[off] = 0x8e;
+          screen_lines[off] = 0x8e;
         ScreenLines2[off] = mb_c & 0xff;
       } else if (enc_utf8) {
         if (mb_utf8) {
@@ -3996,7 +4030,7 @@ win_line (
 
           ScreenLinesUC[off] = mb_c;
           if ((c & 0xff) == 0)
-            ScreenLines[off] = 0x80;               /* avoid storing zero */
+            screen_lines[off] = 0x80;               /* avoid storing zero */
           for (i = 0; i < Screen_mco; ++i) {
             ScreenLinesC[i][off] = u8cc[i];
             if (u8cc[i] == 0)
@@ -4006,10 +4040,10 @@ win_line (
           ScreenLinesUC[off] = 0;
       }
       if (multi_attr) {
-        ScreenAttrs[off] = multi_attr;
+        screen_attrs[off] = multi_attr;
         multi_attr = 0;
       } else
-        ScreenAttrs[off] = char_attr;
+        screen_attrs[off] = char_attr;
 
       if (has_mbyte && (*mb_char2cells)(mb_c) > 1) {
         // Need to fill two screen columns.
@@ -4017,10 +4051,10 @@ win_line (
         col++;
         if (enc_utf8) {
           // UTF-8: Put a 0 in the second screen char.
-          ScreenLines[off] = 0;
+          screen_lines[off] = 0;
         } else {
           // DBCS: Put second byte in the second screen char.
-          ScreenLines[off] = mb_c & 0xff;
+          screen_lines[off] = mb_c & 0xff;
         }
         if (draw_state > WL_NR && filler_todo <= 0) {
           vcol++;
@@ -4135,7 +4169,7 @@ win_line (
             || (wp->w_p_list && lcs_eol != NUL && p_extra != at_end_str)
             || (n_extra != 0 && (c_extra != NUL || *p_extra != NUL)))
         ) {
-      SCREEN_LINE(screen_row, wp->w_wincol, col - boguscols,
+      SCREEN_LINE(wp, screen_row, wp->w_wincol, col - boguscols,
                   wp->w_width, wp->w_p_rl);
       boguscols = 0;
       ++row;
@@ -4181,12 +4215,12 @@ win_line (
          * Don't do this for a window not at the right screen border.
          */
         if (!(has_mbyte
-                 && ((*mb_off2cells)(LineOffset[screen_row],
-                                     LineOffset[screen_row] + screen_Columns)
+                 && ((*mb_off2cells)(line_offset[screen_row],
+                                     line_offset[screen_row] + screen_Columns)
                      == 2
-                     || (*mb_off2cells)(LineOffset[screen_row - 1]
+                     || (*mb_off2cells)(line_offset[screen_row - 1]
                                         + (int)Columns - 2,
-                                        LineOffset[screen_row] + screen_Columns)
+                                        line_offset[screen_row] + screen_Columns)
                      == 2))
             ) {
           /* First make sure we are at the end of the screen line,
@@ -4194,26 +4228,26 @@ win_line (
            * terminal know about the wrap.  If the terminal doesn't
            * auto-wrap, we overwrite the character. */
           if (ui_current_col() != wp->w_width)
-            screen_char(LineOffset[screen_row - 1]
+            screen_char(wp, line_offset[screen_row - 1]
                 + (unsigned)Columns - 1,
                 screen_row - 1, (int)(Columns - 1));
 
           /* When there is a multi-byte character, just output a
            * space to keep it simple. */
-          if (has_mbyte && MB_BYTE2LEN(ScreenLines[LineOffset[
+          if (has_mbyte && MB_BYTE2LEN(screen_lines[line_offset[
                                                      screen_row -
                                                      1] + (Columns - 1)]) > 1) {
             ui_putc(' ');
           } else {
-            ui_putc(ScreenLines[LineOffset[screen_row - 1] + (Columns - 1)]);
+            ui_putc(screen_lines[line_offset[screen_row - 1] + (Columns - 1)]);
           }
           /* force a redraw of the first char on the next line */
-          ScreenAttrs[LineOffset[screen_row]] = (sattr_T)-1;
+          screen_attrs[line_offset[screen_row]] = (sattr_T)-1;
         }
       }
 
       col = 0;
-      off = (unsigned)(current_ScreenLine - ScreenLines);
+      off = (unsigned)(current_ScreenLine - screen_lines);
       if (wp->w_p_rl) {
         col = wp->w_width - 1;          /* col is not used if breaking! */
         off += col;
@@ -4304,7 +4338,7 @@ static int char_needs_redraw(int off_from, int off_to, int cols)
  *    When TRUE and "clear_width" > 0, clear columns 0 to "endcol"
  *    When FALSE and "clear_width" > 0, clear columns "endcol" to "clear_width"
  */
-static void screen_line(int row, int coloff, int endcol, int clear_width, int rlflag)
+static void screen_line(win_T *wp, int row, int coloff, int endcol, int clear_width, int rlflag)
 {
   unsigned off_from;
   unsigned off_to;
@@ -4319,7 +4353,20 @@ static void screen_line(int row, int coloff, int endcol, int clear_width, int rl
   int clear_next = FALSE;
   int char_cells;                       /* 1: normal char */
                                         /* 2: occupies two display cells */
+  schar_T *screen_lines;
+  sattr_T *screen_attrs;
+  unsigned *line_offset;
 # define CHAR_CELLS char_cells
+
+  if (!win_external) {
+    screen_lines = ScreenLines;
+    screen_attrs = ScreenAttrs;
+    line_offset = LineOffset;
+  } else {
+    screen_lines = wp->screen_lines;
+    screen_attrs = wp->screen_attrs;
+    line_offset = wp->line_offset;
+  }
 
   /* Check for illegal row and col, just in case. */
   if (row >= Rows)
@@ -4328,27 +4375,27 @@ static void screen_line(int row, int coloff, int endcol, int clear_width, int rl
     endcol = Columns;
 
 
-  off_from = (unsigned)(current_ScreenLine - ScreenLines);
-  off_to = LineOffset[row] + coloff;
+  off_from = (unsigned)(current_ScreenLine - screen_lines);
+  off_to = line_offset[row] + coloff;
   max_off_from = off_from + screen_Columns;
-  max_off_to = LineOffset[row] + screen_Columns;
+  max_off_to = line_offset[row] + screen_Columns;
 
   if (rlflag) {
     /* Clear rest first, because it's left of the text. */
     if (clear_width > 0) {
-      while (col <= endcol && ScreenLines[off_to] == ' '
-             && ScreenAttrs[off_to] == 0
+      while (col <= endcol && screen_lines[off_to] == ' '
+             && screen_attrs[off_to] == 0
              && (!enc_utf8 || ScreenLinesUC[off_to] == 0)
              ) {
         ++off_to;
         ++col;
       }
       if (col <= endcol)
-        screen_fill(row, row + 1, col + coloff,
+        screen_fill(wp, row, row + 1, col + coloff,
             endcol + coloff + 1, ' ', ' ', 0);
     }
     col = endcol + 1;
-    off_to = LineOffset[row] + col + coloff;
+    off_to = line_offset[row] + col + coloff;
     off_from += col;
     endcol = (clear_width > 0 ? clear_width : -clear_width);
   }
@@ -4377,7 +4424,7 @@ static void screen_line(int row, int coloff, int endcol, int clear_width, int rl
             && (*mb_off2cells)(off_to, max_off_to) > 1) {
           /* Writing a single-cell character over a double-cell
            * character: need to redraw the next cell. */
-          ScreenLines[off_to + 1] = 0;
+          screen_lines[off_to + 1] = 0;
           redraw_next = TRUE;
         } else if (char_cells == 2
                    && col + 2 < endcol
@@ -4386,7 +4433,7 @@ static void screen_line(int row, int coloff, int endcol, int clear_width, int rl
           /* Writing the second half of a double-cell character over
            * a double-cell character: need to redraw the second
            * cell. */
-          ScreenLines[off_to + 2] = 0;
+          screen_lines[off_to + 2] = 0;
           redraw_next = TRUE;
         }
 
@@ -4406,7 +4453,7 @@ static void screen_line(int row, int coloff, int endcol, int clear_width, int rl
                   && (*mb_off2cells)(off_to + 1, max_off_to) > 1)))
         clear_next = TRUE;
 
-      ScreenLines[off_to] = ScreenLines[off_from];
+      screen_lines[off_to] = screen_lines[off_from];
       if (enc_utf8) {
         ScreenLinesUC[off_to] = ScreenLinesUC[off_from];
         if (ScreenLinesUC[off_from] != 0) {
@@ -4417,18 +4464,18 @@ static void screen_line(int row, int coloff, int endcol, int clear_width, int rl
         }
       }
       if (char_cells == 2)
-        ScreenLines[off_to + 1] = ScreenLines[off_from + 1];
+        screen_lines[off_to + 1] = screen_lines[off_from + 1];
 
-      ScreenAttrs[off_to] = ScreenAttrs[off_from];
+      screen_attrs[off_to] = screen_attrs[off_from];
       /* For simplicity set the attributes of second half of a
        * double-wide character equal to the first half. */
       if (char_cells == 2)
-        ScreenAttrs[off_to + 1] = ScreenAttrs[off_from];
+        screen_attrs[off_to + 1] = screen_attrs[off_from];
 
       if (enc_dbcs != 0 && char_cells == 2)
-        screen_char_2(off_to, row, col + coloff);
+        screen_char_2(wp, off_to, row, col + coloff);
       else
-        screen_char(off_to, row, col + coloff);
+        screen_char(wp, off_to, row, col + coloff);
     }
 
     off_to += CHAR_CELLS;
@@ -4439,10 +4486,10 @@ static void screen_line(int row, int coloff, int endcol, int clear_width, int rl
   if (clear_next) {
     /* Clear the second half of a double-wide character of which the left
      * half was overwritten with a single-wide character. */
-    ScreenLines[off_to] = ' ';
+    screen_lines[off_to] = ' ';
     if (enc_utf8)
       ScreenLinesUC[off_to] = 0;
-    screen_char(off_to, row, col + coloff);
+    screen_char(wp, off_to, row, col + coloff);
   }
 
   if (clear_width > 0
@@ -4450,15 +4497,15 @@ static void screen_line(int row, int coloff, int endcol, int clear_width, int rl
       ) {
 
     /* blank out the rest of the line */
-    while (col < clear_width && ScreenLines[off_to] == ' '
-           && ScreenAttrs[off_to] == 0
+    while (col < clear_width && screen_lines[off_to] == ' '
+           && screen_attrs[off_to] == 0
            && (!enc_utf8 || ScreenLinesUC[off_to] == 0)
            ) {
       ++off_to;
       ++col;
     }
     if (col < clear_width) {
-      screen_fill(row, row + 1, col + coloff, clear_width + coloff,
+      screen_fill(wp, row, row + 1, col + coloff, clear_width + coloff,
           ' ', ' ', 0);
       off_to += clear_width - col;
       col = clear_width;
@@ -4471,12 +4518,12 @@ static void screen_line(int row, int coloff, int endcol, int clear_width, int rl
       int c;
 
       c = fillchar_vsep(&hl);
-      if (ScreenLines[off_to] != (schar_T)c
+      if (screen_lines[off_to] != (schar_T)c
           || (enc_utf8 && (int)ScreenLinesUC[off_to]
               != (c >= 0x80 ? c : 0))
-          || ScreenAttrs[off_to] != hl) {
-        ScreenLines[off_to] = c;
-        ScreenAttrs[off_to] = hl;
+          || screen_attrs[off_to] != hl) {
+        screen_lines[off_to] = c;
+        screen_attrs[off_to] = hl;
         if (enc_utf8) {
           if (c >= 0x80) {
             ScreenLinesUC[off_to] = c;
@@ -4484,7 +4531,7 @@ static void screen_line(int row, int coloff, int endcol, int clear_width, int rl
           } else
             ScreenLinesUC[off_to] = 0;
         }
-        screen_char(off_to, row, col + coloff);
+        screen_char(wp, off_to, row, col + coloff);
       }
     } else
       LineWraps[row] = FALSE;
@@ -4577,9 +4624,11 @@ static void draw_vsep_win(win_T *wp, int row)
   if (wp->w_vsep_width) {
     /* draw the vertical separator right of this window */
     c = fillchar_vsep(&hl);
-    screen_fill(wp->w_winrow + row, wp->w_winrow + wp->w_height,
-        W_ENDCOL(wp), W_ENDCOL(wp) + 1,
-        c, ' ', hl);
+    if (!win_external) {
+      screen_fill(wp, wp->w_winrow + row, wp->w_winrow + wp->w_height,
+          W_ENDCOL(wp), W_ENDCOL(wp) + 1,
+          c, ' ', hl);
+    }
   }
 }
 
@@ -4792,13 +4841,13 @@ win_redr_status_matches (
       }
     }
 
-    screen_puts(buf, row, 0, attr);
+    screen_puts(curwin, buf, row, 0, attr);
     if (selstart != NULL && highlight) {
       *selend = NUL;
-      screen_puts(selstart, row, selstart_col, hl_attr(HLF_WM));
+      screen_puts(curwin, selstart, row, selstart_col, hl_attr(HLF_WM));
     }
 
-    screen_fill(row, row + 1, clen, (int)Columns, fillchar, fillchar, attr);
+    screen_fill(curwin, row, row + 1, clen, (int)Columns, fillchar, fillchar, attr);
   }
 
   win_redraw_last_status(topframe);
@@ -4897,13 +4946,13 @@ void win_redr_status(win_T *wp)
     }
 
     row = wp->w_winrow + wp->w_height;
-    screen_puts(p, row, wp->w_wincol, attr);
-    screen_fill(row, row + 1, len + wp->w_wincol,
+    screen_puts(wp, p, row, wp->w_wincol, attr);
+    screen_fill(wp, row, row + 1, len + wp->w_wincol,
         this_ru_col + wp->w_wincol, fillchar, fillchar, attr);
 
     if (get_keymap_str(wp, NameBuff, MAXPATHL)
         && this_ru_col - len > (int)(STRLEN(NameBuff) + 1))
-      screen_puts(NameBuff, row, (int)(this_ru_col - STRLEN(NameBuff)
+      screen_puts(wp, NameBuff, row, (int)(this_ru_col - STRLEN(NameBuff)
                                        - 1 + wp->w_wincol), attr);
 
     win_redr_ruler(wp, TRUE);
@@ -4917,7 +4966,7 @@ void win_redr_status(win_T *wp)
       fillchar = fillchar_status(&attr, wp == curwin);
     else
       fillchar = fillchar_vsep(&attr);
-    screen_putchar(fillchar, wp->w_winrow + wp->w_height,
+    screen_putchar(wp, fillchar, wp->w_winrow + wp->w_height,
                    W_ENDCOL(wp), attr);
   }
   busy = FALSE;
@@ -5143,7 +5192,7 @@ win_redr_custom (
   p = buf;
   for (n = 0; hltab[n].start != NULL; n++) {
     int len = (int)(hltab[n].start - p);
-    screen_puts_len(p, len, row, col, curattr);
+    screen_puts_len(wp, p, len, row, col, curattr);
     col += vim_strnsize(p, len);
     p = hltab[n].start;
 
@@ -5157,7 +5206,7 @@ win_redr_custom (
       curattr = highlight_user[hltab[n].userhl - 1];
   }
   // Make sure to use an empty string instead of p, if p is beyond buf + len.
-  screen_puts(p >= buf + len ? (char_u *)"" : p, row, col, curattr);
+  screen_puts(wp, p >= buf + len ? (char_u *)"" : p, row, col, curattr);
 
   if (wp == NULL) {
     // Fill the tab_page_click_defs array for clicking in the tab pages line.
@@ -5188,7 +5237,7 @@ theend:
 /*
  * Output a single character directly to the screen and update ScreenLines.
  */
-void screen_putchar(int c, int row, int col, int attr)
+void screen_putchar(win_T *wp, int c, int row, int col, int attr)
 {
   char_u buf[MB_MAXBYTES + 1];
 
@@ -5198,7 +5247,7 @@ void screen_putchar(int c, int row, int col, int attr)
     buf[0] = c;
     buf[1] = NUL;
   }
-  screen_puts(buf, row, col, attr);
+  screen_puts(wp, buf, row, col, attr);
 }
 
 /*
@@ -5254,16 +5303,16 @@ static int screen_comp_differs(int off, int *u8cc)
  * Note: only outputs within one row, message is truncated at screen boundary!
  * Note: if ScreenLines[], row and/or col is invalid, nothing is done.
  */
-void screen_puts(char_u *text, int row, int col, int attr)
+void screen_puts(win_T *wp, char_u *text, int row, int col, int attr)
 {
-  screen_puts_len(text, -1, row, col, attr);
+  screen_puts_len(wp, text, -1, row, col, attr);
 }
 
 /*
  * Like screen_puts(), but output "text[len]".  When "len" is -1 output up to
  * a NUL.
  */
-void screen_puts_len(char_u *text, int textlen, int row, int col, int attr)
+void screen_puts_len(win_T *wp, char_u *text, int textlen, int row, int col, int attr)
 {
   unsigned off;
   char_u      *ptr = text;
@@ -5281,36 +5330,58 @@ void screen_puts_len(char_u *text, int textlen, int row, int col, int attr)
   int force_redraw_this;
   int force_redraw_next = FALSE;
   int need_redraw;
+  schar_T *screen_lines;
+  sattr_T *screen_attrs;
+  unsigned *line_offset;
+  u8char_T *screen_lines_uc;
+  int screen_rows;
+  int screen_columns;
 
   const int l_has_mbyte = has_mbyte;
   const bool l_enc_utf8 = enc_utf8;
   const int l_enc_dbcs = enc_dbcs;
 
+  if (!win_external) {
+    screen_lines = ScreenLines;
+    screen_attrs = ScreenAttrs;
+    line_offset = LineOffset;
+    screen_lines_uc = ScreenLinesUC;
+    screen_rows = screen_Rows;
+    screen_columns = screen_Columns;
+  } else {
+    screen_lines = wp->screen_lines;
+    screen_attrs = wp->screen_attrs;
+    line_offset = wp->line_offset;
+    screen_lines_uc = ScreenLinesUC;
+    screen_rows = wp->screen_rows;
+    screen_columns = wp->screen_columns;
+  }
+
   assert((l_has_mbyte == (l_enc_utf8 || l_enc_dbcs))
          && !(l_enc_utf8 && l_enc_dbcs));
 
-  if (ScreenLines == NULL || row >= screen_Rows)        /* safety check */
+  if (screen_lines == NULL || row >= screen_rows)        /* safety check */
     return;
-  off = LineOffset[row] + col;
+  off = line_offset[row] + col;
 
   /* When drawing over the right halve of a double-wide char clear out the
    * left halve.  Only needed in a terminal. */
-  if (l_has_mbyte && col > 0 && col < screen_Columns
+  if (l_has_mbyte && col > 0 && col < screen_columns
       && mb_fix_col(col, row) != col) {
-    ScreenLines[off - 1] = ' ';
-    ScreenAttrs[off - 1] = 0;
+    screen_lines[off - 1] = ' ';
+    screen_attrs[off - 1] = 0;
     if (l_enc_utf8) {
-      ScreenLinesUC[off - 1] = 0;
+      screen_lines_uc[off - 1] = 0;
       ScreenLinesC[0][off - 1] = 0;
     }
     /* redraw the previous cell, make it empty */
-    screen_char(off - 1, row, col - 1);
+    screen_char(wp, off - 1, row, col - 1);
     /* force the cell at "col" to be redrawn */
     force_redraw_next = TRUE;
   }
 
-  max_off = LineOffset[row] + screen_Columns;
-  while (col < screen_Columns
+  max_off = line_offset[row] + screen_columns;
+  while (col < screen_columns
          && (len < 0 || (int)(ptr - text) < len)
          && *ptr != NUL) {
     c = *ptr;
@@ -5347,7 +5418,7 @@ void screen_puts_len(char_u *text, int textlen, int row, int col, int attr)
           u8c = arabic_shape(u8c, &c, &u8cc[0], nc, nc1, pc);
         } else
           prev_c = u8c;
-        if (col + mbyte_cells > screen_Columns) {
+        if (col + mbyte_cells > screen_columns) {
           /* Only 1 cell left, but character requires 2 cells:
            * display a '>' in the last column to avoid wrapping. */
           c = '>';
@@ -5359,18 +5430,18 @@ void screen_puts_len(char_u *text, int textlen, int row, int col, int attr)
     force_redraw_this = force_redraw_next;
     force_redraw_next = FALSE;
 
-    need_redraw = ScreenLines[off] != c
+    need_redraw = screen_lines[off] != c
                   || (mbyte_cells == 2
-                      && ScreenLines[off + 1] != (l_enc_dbcs ? ptr[1] : 0))
+                      && screen_lines[off + 1] != (l_enc_dbcs ? ptr[1] : 0))
                   || (l_enc_dbcs == DBCS_JPNU
                       && c == 0x8e
                       && ScreenLines2[off] != ptr[1])
                   || (l_enc_utf8
-                      && (ScreenLinesUC[off] !=
+                      && (screen_lines_uc[off] !=
                           (u8char_T)(c < 0x80 && u8cc[0] == 0 ? 0 : u8c)
-                          || (ScreenLinesUC[off] != 0
+                          || (screen_lines_uc[off] != 0
                               && screen_comp_differs(off, u8cc))))
-                  || ScreenAttrs[off] != attr
+                  || screen_attrs[off] != attr
                   || exmode_active;
 
     if (need_redraw
@@ -5399,16 +5470,16 @@ void screen_puts_len(char_u *text, int textlen, int row, int col, int attr)
               || (mbyte_cells == 2
                   && (*mb_off2cells)(off, max_off) == 1
                   && (*mb_off2cells)(off + 1, max_off) > 1)))
-        ScreenLines[off + mbyte_blen] = 0;
-      ScreenLines[off] = c;
-      ScreenAttrs[off] = attr;
+        screen_lines[off + mbyte_blen] = 0;
+      screen_lines[off] = c;
+      screen_attrs[off] = attr;
       if (l_enc_utf8) {
         if (c < 0x80 && u8cc[0] == 0)
-          ScreenLinesUC[off] = 0;
+          screen_lines_uc[off] = 0;
         else {
           int i;
 
-          ScreenLinesUC[off] = u8c;
+          screen_lines_uc[off] = u8c;
           for (i = 0; i < Screen_mco; ++i) {
             ScreenLinesC[i][off] = u8cc[i];
             if (u8cc[i] == 0)
@@ -5416,19 +5487,19 @@ void screen_puts_len(char_u *text, int textlen, int row, int col, int attr)
           }
         }
         if (mbyte_cells == 2) {
-          ScreenLines[off + 1] = 0;
-          ScreenAttrs[off + 1] = attr;
+          screen_lines[off + 1] = 0;
+          screen_attrs[off + 1] = attr;
         }
-        screen_char(off, row, col);
+        screen_char(wp, off, row, col);
       } else if (mbyte_cells == 2) {
-        ScreenLines[off + 1] = ptr[1];
-        ScreenAttrs[off + 1] = attr;
-        screen_char_2(off, row, col);
+        screen_lines[off + 1] = ptr[1];
+        screen_attrs[off + 1] = attr;
+        screen_char_2(wp, off, row, col);
       } else if (l_enc_dbcs == DBCS_JPNU && c == 0x8e) {
         ScreenLines2[off] = ptr[1];
-        screen_char(off, row, col);
+        screen_char(wp, off, row, col);
       } else
-        screen_char(off, row, col);
+        screen_char(wp, off, row, col);
     }
     if (l_has_mbyte) {
       off += mbyte_cells;
@@ -5448,11 +5519,11 @@ void screen_puts_len(char_u *text, int textlen, int row, int col, int attr)
 
   /* If we detected the next character needs to be redrawn, but the text
    * doesn't extend up to there, update the character here. */
-  if (force_redraw_next && col < screen_Columns) {
+  if (force_redraw_next && col < screen_columns) {
     if (l_enc_dbcs != 0 && dbcs_off2cells(off, max_off) > 1)
-      screen_char_2(off, row, col);
+      screen_char_2(wp, off, row, col);
     else
-      screen_char(off, row, col);
+      screen_char(wp, off, row, col);
   }
 }
 
@@ -5752,33 +5823,57 @@ void screen_stop_highlight(void)
  * Put character ScreenLines["off"] on the screen at position "row" and "col",
  * using the attributes from ScreenAttrs["off"].
  */
-static void screen_char(unsigned off, int row, int col)
+static void screen_char(win_T *wp, unsigned off, int row, int col)
 {
   int attr;
+  schar_T *screen_lines;
+  sattr_T *screen_attrs;
+  int screen_rows;
+  int screen_columns;
+
+  if (!win_external) {
+    screen_lines = ScreenLines;
+    screen_attrs = ScreenAttrs;
+    screen_rows = screen_Rows;
+    screen_columns = screen_Columns;
+  } else {
+    screen_lines = wp->screen_lines;
+    screen_attrs = wp->screen_attrs;
+    screen_rows = wp->screen_rows;
+    screen_columns = wp->screen_columns;
+  }
 
   /* Check for illegal values, just in case (could happen just after
    * resizing). */
-  if (row >= screen_Rows || col >= screen_Columns)
+  if (row >= screen_rows || col >= screen_columns)
     return;
 
   /* Outputting the last character on the screen may scrollup the screen.
    * Don't to it!  Mark the character invalid (update it when scrolled up) */
-  if (row == screen_Rows - 1 && col == screen_Columns - 1
+  if (row == screen_rows - 1 && col == screen_columns - 1
       /* account for first command-line character in rightleft mode */
       && !cmdmsg_rl
       ) {
-    ScreenAttrs[off] = (sattr_T)-1;
+    screen_attrs[off] = (sattr_T)-1;
     return;
   }
 
   /*
    * Stop highlighting first, so it's easier to move the cursor.
    */
-  attr = ScreenAttrs[off];
+  attr = screen_attrs[off];
   if (screen_attr != attr)
     screen_stop_highlight();
 
-  ui_cursor_goto(row, col);
+  if (!win_external) {
+    ui_cursor_goto(row, col);
+  } else {
+    Array args = ARRAY_DICT_INIT;
+    ADD(args, INTEGER_OBJ(wp->handle));
+    ADD(args, INTEGER_OBJ(row));
+    ADD(args, INTEGER_OBJ(col));
+    ui_event("win_cursor_goto", args);
+  }
 
   if (screen_attr != attr)
     screen_start_highlight(attr);
@@ -5788,12 +5883,33 @@ static void screen_char(unsigned off, int row, int col)
 
     // Convert UTF-8 character to bytes and write it.
     buf[utfc_char2bytes(off, buf)] = NUL;
-    ui_puts(buf);
+    if (!win_external) {
+      ui_puts(buf);
+    } else {
+      Array args = ARRAY_DICT_INIT;
+      ADD(args, INTEGER_OBJ(wp->handle));
+      ADD(args, STRING_OBJ(cstr_to_string((char *)buf)));
+      ui_event("win_puts", args);
+    }
   } else {
-    ui_putc(ScreenLines[off]);
+    if (!win_external) {
+      ui_putc(screen_lines[off]);
+    } else {
+      Array args = ARRAY_DICT_INIT;
+      ADD(args, INTEGER_OBJ(wp->handle));
+      ADD(args, STRING_OBJ(cstr_to_string(screen_lines[off])));
+      ui_event("win_putc", args);
+    }
     // double-byte character in single-width cell
-    if (enc_dbcs == DBCS_JPNU && ScreenLines[off] == 0x8e) {
-      ui_putc(ScreenLines2[off]);
+    if (enc_dbcs == DBCS_JPNU && screen_lines[off] == 0x8e) {
+      if (!win_external) {
+        ui_putc(ScreenLines2[off]);
+      } else {
+        Array args = ARRAY_DICT_INIT;
+        ADD(args, INTEGER_OBJ(wp->handle));
+        ADD(args, STRING_OBJ(cstr_to_string(ScreenLines2[off])));
+        ui_event("win_putc", args);
+      }
     }
   }
 }
@@ -5804,23 +5920,47 @@ static void screen_char(unsigned off, int row, int col)
  * The attributes of the first byte is used for all.  This is required to
  * output the two bytes of a double-byte character with nothing in between.
  */
-static void screen_char_2(unsigned off, int row, int col)
+static void screen_char_2(win_T *wp, unsigned off, int row, int col)
 {
+  schar_T *screen_lines;
+  sattr_T *screen_attrs;
+  int screen_rows;
+  int screen_columns;
+
+  if (!win_external) {
+    screen_lines = ScreenLines;
+    screen_attrs = ScreenAttrs;
+    screen_rows = screen_Rows;
+    screen_columns = screen_Columns;
+  } else {
+    screen_lines = wp->screen_lines;
+    screen_attrs = wp->screen_attrs;
+    screen_rows = wp->screen_rows;
+    screen_columns = wp->screen_columns;
+  }
+
   /* Check for illegal values (could be wrong when screen was resized). */
-  if (off + 1 >= (unsigned)(screen_Rows * screen_Columns))
+  if (off + 1 >= (unsigned)(screen_rows * screen_columns))
     return;
 
   /* Outputting the last character on the screen may scrollup the screen.
    * Don't to it!  Mark the character invalid (update it when scrolled up) */
-  if (row == screen_Rows - 1 && col >= screen_Columns - 2) {
-    ScreenAttrs[off] = (sattr_T)-1;
+  if (row == screen_rows - 1 && col >= screen_columns - 2) {
+    screen_attrs[off] = (sattr_T)-1;
     return;
   }
 
   /* Output the first byte normally (positions the cursor), then write the
    * second byte directly. */
-  screen_char(off, row, col);
-  ui_putc(ScreenLines[off + 1]);
+  screen_char(wp, off, row, col);
+  if (!win_external) {
+    ui_putc(screen_lines[off + 1]);
+  } else {
+    Array args = ARRAY_DICT_INIT;
+    ADD(args, INTEGER_OBJ(wp->handle));
+    ADD(args, STRING_OBJ(cstr_to_string(screen_lines[off + 1])));
+    ui_event("win_putc", args);
+  }
 }
 
 /*
@@ -5828,7 +5968,7 @@ static void screen_char_2(unsigned off, int row, int col)
  * with character 'c1' in first column followed by 'c2' in the other columns.
  * Use attributes 'attr'.
  */
-void screen_fill(int start_row, int end_row, int start_col, int end_col, int c1, int c2, int attr)
+void screen_fill(win_T *wp, int start_row, int end_row, int start_col, int end_col, int c1, int c2, int attr)
 {
   int row;
   int col;
@@ -5836,12 +5976,34 @@ void screen_fill(int start_row, int end_row, int start_col, int end_col, int c1,
   int end_off;
   int did_delete;
   int c;
+  schar_T *screen_lines;
+  sattr_T *screen_attrs;
+  unsigned *line_offset;
+  u8char_T *screen_lines_uc;
+  int screen_rows;
+  int screen_columns;
 
-  if (end_row > screen_Rows)            /* safety check */
-    end_row = screen_Rows;
-  if (end_col > screen_Columns)         /* safety check */
-    end_col = screen_Columns;
-  if (ScreenLines == NULL
+  if (!win_external) {
+    screen_lines = ScreenLines;
+    screen_attrs = ScreenAttrs;
+    line_offset = LineOffset;
+    screen_lines_uc = ScreenLinesUC;
+    screen_rows = screen_Rows;
+    screen_columns = screen_Columns;
+  } else {
+    screen_lines = wp->screen_lines;
+    screen_attrs = wp->screen_attrs;
+    line_offset = wp->line_offset;
+    screen_lines_uc = ScreenLinesUC;
+    screen_rows = wp->screen_rows;
+    screen_columns = wp->screen_columns;
+  }
+
+  if (end_row > screen_rows)            /* safety check */
+    end_row = screen_rows;
+  if (end_col > screen_columns)         /* safety check */
+    end_col = screen_columns;
+  if (screen_lines == NULL
       || start_row >= end_row
       || start_col >= end_col)          /* nothing to do */
     return;
@@ -5854,10 +6016,10 @@ void screen_fill(int start_row, int end_row, int start_col, int end_col, int c1,
       // double wide-char clear out the right halve.  Only needed in a
       // terminal.
       if (start_col > 0 && mb_fix_col(start_col, row) != start_col) {
-        screen_puts_len((char_u *)" ", 1, row, start_col - 1, 0);
+        screen_puts_len(wp, (char_u *)" ", 1, row, start_col - 1, 0);
       }
       if (end_col < screen_Columns && mb_fix_col(end_col, row) != end_col) {
-        screen_puts_len((char_u *)" ", 1, row, end_col, 0);
+        screen_puts_len(wp, (char_u *)" ", 1, row, end_col, 0);
       }
     }
     /*
@@ -5876,54 +6038,54 @@ void screen_fill(int start_row, int end_row, int start_col, int end_col, int c1,
       if (c1 != ' ')                            /* don't clear first char */
         ++col;
 
-      off = LineOffset[row] + col;
-      end_off = LineOffset[row] + end_col;
+      off = line_offset[row] + col;
+      end_off = line_offset[row] + end_col;
 
       /* skip blanks (used often, keep it fast!) */
       if (enc_utf8)
-        while (off < end_off && ScreenLines[off] == ' '
-               && ScreenAttrs[off] == 0 && ScreenLinesUC[off] == 0)
+        while (off < end_off && screen_lines[off] == ' '
+               && screen_attrs[off] == 0 && screen_lines_uc[off] == 0)
           ++off;
       else
-        while (off < end_off && ScreenLines[off] == ' '
-               && ScreenAttrs[off] == 0)
+        while (off < end_off && screen_lines[off] == ' '
+               && screen_attrs[off] == 0)
           ++off;
       if (off < end_off) {              /* something to be cleared */
-        col = off - LineOffset[row];
+        col = off - line_offset[row];
         screen_stop_highlight();
         ui_cursor_goto(row, col);        // clear rest of this screen line
         ui_eol_clear();
         col = end_col - col;
         while (col--) {                 /* clear chars in ScreenLines */
-          ScreenLines[off] = ' ';
+          screen_lines[off] = ' ';
           if (enc_utf8)
-            ScreenLinesUC[off] = 0;
-          ScreenAttrs[off] = 0;
+            screen_lines_uc[off] = 0;
+          screen_attrs[off] = 0;
           ++off;
         }
       }
       did_delete = TRUE;                /* the chars are cleared now */
     }
 
-    off = LineOffset[row] + start_col;
+    off = line_offset[row] + start_col;
     c = c1;
     for (col = start_col; col < end_col; ++col) {
-      if (ScreenLines[off] != c
-          || (enc_utf8 && (int)ScreenLinesUC[off]
+      if (screen_lines[off] != c
+          || (enc_utf8 && (int)screen_lines_uc[off]
               != (c >= 0x80 ? c : 0))
-          || ScreenAttrs[off] != attr
+          || screen_attrs[off] != attr
           ) {
-        ScreenLines[off] = c;
+        screen_lines[off] = c;
         if (enc_utf8) {
           if (c >= 0x80) {
-            ScreenLinesUC[off] = c;
+            screen_lines_uc[off] = c;
             ScreenLinesC[0][off] = 0;
           } else
-            ScreenLinesUC[off] = 0;
+            screen_lines_uc[off] = 0;
         }
-        ScreenAttrs[off] = attr;
+        screen_attrs[off] = attr;
         if (!did_delete || c != ' ')
-          screen_char(off, row, col);
+          screen_char(wp, off, row, col);
       }
       ++off;
       if (col == start_col) {
@@ -6408,7 +6570,7 @@ int win_ins_lines(win_T *wp, int row, int line_count, int invalid, int mayclear)
     lastrow = nextrow + line_count;
     if (lastrow > Rows)
       lastrow = Rows;
-    screen_fill(nextrow - line_count, lastrow - line_count,
+    screen_fill(wp, nextrow - line_count, lastrow - line_count,
                 wp->w_wincol, W_ENDCOL(wp),
                 ' ', ' ', 0);
   }
@@ -6488,9 +6650,15 @@ static int win_do_lines(win_T *wp, int row, int line_count, int mayclear, int de
 
   // Delete all remaining lines
   if (row + line_count >= wp->w_height) {
-    screen_fill(wp->w_winrow + row, wp->w_winrow + wp->w_height,
-                wp->w_wincol, W_ENDCOL(wp),
-                ' ', ' ', 0);
+    if (!win_external) {
+      screen_fill(wp, wp->w_winrow + row, wp->w_winrow + wp->w_height,
+                  wp->w_wincol, W_ENDCOL(wp),
+                  ' ', ' ', 0);
+    } else {
+      screen_fill(wp, row, wp->w_height,
+                  0, W_ENDCOL(wp),
+                  ' ', ' ', 0);
+    }
     return OK;
   }
 
@@ -6911,12 +7079,12 @@ static void draw_tabline(void)
       if (tp->tp_topframe == topframe)
         attr = attr_sel;
       if (use_sep_chars && col > 0)
-        screen_putchar('|', 0, col++, attr);
+        screen_putchar(wp, '|', 0, col++, attr);
 
       if (tp->tp_topframe != topframe)
         attr = attr_nosel;
 
-      screen_putchar(' ', 0, col++, attr);
+      screen_putchar(wp, ' ', 0, col++, attr);
 
       if (tp == curtab) {
         cwp = curwin;
@@ -6936,13 +7104,13 @@ static void draw_tabline(void)
           len = (int)STRLEN(NameBuff);
           if (col + len >= Columns - 3)
             break;
-          screen_puts_len(NameBuff, len, 0, col,
+          screen_puts_len(wp, NameBuff, len, 0, col,
                           hl_combine_attr(attr, hl_attr(HLF_T)));
           col += len;
         }
         if (modified)
-          screen_puts_len((char_u *)"+", 1, 0, col++, attr);
-        screen_putchar(' ', 0, col++, attr);
+          screen_puts_len(wp, (char_u *)"+", 1, 0, col++, attr);
+        screen_putchar(wp, ' ', 0, col++, attr);
       }
 
       room = scol - col + tabwidth - 1;
@@ -6964,10 +7132,10 @@ static void draw_tabline(void)
         if (len > Columns - col - 1)
           len = Columns - col - 1;
 
-        screen_puts_len(p, (int)STRLEN(p), 0, col, attr);
+        screen_puts_len(wp, p, (int)STRLEN(p), 0, col, attr);
         col += len;
       }
-      screen_putchar(' ', 0, col++, attr);
+      screen_putchar(wp, ' ', 0, col++, attr);
 
       // Store the tab page number in tab_page_click_defs[], so that
       // jump_to_mouse() knows where each one is.
@@ -6985,11 +7153,11 @@ static void draw_tabline(void)
       c = '_';
     else
       c = ' ';
-    screen_fill(0, 1, col, (int)Columns, c, c, attr_fill);
+    screen_fill(wp, 0, 1, col, (int)Columns, c, c, attr_fill);
 
     /* Put an "X" for closing the current tab if there are several. */
     if (first_tabpage->tp_next != NULL) {
-      screen_putchar('X', 0, (int)Columns - 1, attr_nosel);
+      screen_putchar(wp, 'X', 0, (int)Columns - 1, attr_nosel);
       tab_page_click_defs[Columns - 1] = (StlClickDefinition) {
         .type = kStlClickTabClose,
         .tabnr = 999,
@@ -7240,9 +7408,9 @@ static void win_redr_ruler(win_T *wp, int always)
     } else if (this_ru_col + (int)STRLEN(buffer) > width)
       buffer[width - this_ru_col] = NUL;
 
-    screen_puts(buffer, row, this_ru_col + off, attr);
+    screen_puts(wp, buffer, row, this_ru_col + off, attr);
     i = redraw_cmdline;
-    screen_fill(row, row + 1,
+    screen_fill(wp, row, row + 1,
         this_ru_col + off + (int)STRLEN(buffer),
         off + width,
         fillchar, fillchar, attr);
@@ -7426,4 +7594,9 @@ void win_new_shellsize(void)
     old_Columns = Columns;
     shell_new_columns();  // update window sizes
   }
+}
+
+void win_set_external(bool external)
+{
+  win_external = external;
 }

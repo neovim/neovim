@@ -31,6 +31,8 @@ typedef struct file_buffer buf_T; // Forward declaration
 // for Map(K, V)
 #include "nvim/map.h"
 
+#include "nvim/types.h"
+
 #define MODIFIABLE(buf) (!buf->terminal && buf->b_p_ma)
 
 /*
@@ -1168,6 +1170,19 @@ struct window_S {
    * In a non-location list window, w_llist_ref is NULL.
    */
   qf_info_T   *w_llist_ref;
+
+  schar_T  *screen_lines;
+  sattr_T  *screen_attrs;
+  unsigned *line_offset;
+  char_u   *line_wraps;
+
+  u8char_T *screen_lines_uc;
+  u8char_T *screen_lines_c[6];
+  int screen_mco;
+
+  char_u  *screen_lines2;
+  int screen_rows;
+  int screen_columns;
 };
 
 #endif // NVIM_BUFFER_DEFS_H

@@ -346,10 +346,10 @@ void pum_redraw(void)
     // prepend a space if there is room
     if (curwin->w_p_rl) {
       if (pum_col < curwin->w_wincol + curwin->w_width - 1) {
-        screen_putchar(' ', row, pum_col + 1, attr);
+        screen_putchar(curwin, ' ', row, pum_col + 1, attr);
       }
     } else if (pum_col > 0) {
-      screen_putchar(' ', row, pum_col - 1, attr);
+      screen_putchar(curwin, ' ', row, pum_col - 1, attr);
     }
 
     // Display each entry, use two spaces for a Tab.
@@ -411,12 +411,12 @@ void pum_redraw(void)
                   size++;
                 }
               }
-              screen_puts_len(rt, (int)STRLEN(rt), row, col - size + 1, attr);
+              screen_puts_len(curwin, rt, (int)STRLEN(rt), row, col - size + 1, attr);
               xfree(rt_start);
               xfree(st);
               col -= width;
             } else {
-              screen_puts_len(st, (int)STRLEN(st), row, col, attr);
+              screen_puts_len(curwin, st, (int)STRLEN(st), row, col, attr);
               xfree(st);
               col += width;
             }
@@ -427,10 +427,10 @@ void pum_redraw(void)
 
             // Display two spaces for a Tab.
             if (curwin->w_p_rl) {
-              screen_puts_len((char_u *)"  ", 2, row, col - 1, attr);
+              screen_puts_len(curwin, (char_u *)"  ", 2, row, col - 1, attr);
               col -= 2;
             } else {
-              screen_puts_len((char_u *)"  ", 2, row, col, attr);
+              screen_puts_len(curwin, (char_u *)"  ", 2, row, col, attr);
               col += 2;
             }
             totwidth += 2;
@@ -461,11 +461,11 @@ void pum_redraw(void)
       }
 
       if (curwin->w_p_rl) {
-        screen_fill(row, row + 1, pum_col - pum_base_width - n + 1,
+        screen_fill(curwin, row, row + 1, pum_col - pum_base_width - n + 1,
                     col + 1, ' ', ' ', attr);
         col = pum_col - pum_base_width - n + 1;
       } else {
-        screen_fill(row, row + 1, col, pum_col + pum_base_width + n,
+        screen_fill(curwin, row, row + 1, col, pum_col + pum_base_width + n,
                     ' ', ' ', attr);
         col = pum_col + pum_base_width + n;
       }
@@ -473,19 +473,19 @@ void pum_redraw(void)
     }
 
     if (curwin->w_p_rl) {
-      screen_fill(row, row + 1, pum_col - pum_width + 1, col + 1, ' ', ' ',
+      screen_fill(curwin, row, row + 1, pum_col - pum_width + 1, col + 1, ' ', ' ',
                   attr);
     } else {
-      screen_fill(row, row + 1, col, pum_col + pum_width, ' ', ' ', attr);
+      screen_fill(curwin, row, row + 1, col, pum_col + pum_width, ' ', ' ', attr);
     }
 
     if (pum_scrollbar > 0) {
       if (curwin->w_p_rl) {
-        screen_putchar(' ', row, pum_col - pum_width,
+        screen_putchar(curwin, ' ', row, pum_col - pum_width,
                        i >= thumb_pos && i < thumb_pos + thumb_heigth
                        ? attr_thumb : attr_scroll);
       } else {
-        screen_putchar(' ', row, pum_col + pum_width,
+        screen_putchar(curwin, ' ', row, pum_col + pum_width,
                        i >= thumb_pos && i < thumb_pos + thumb_heigth
                        ? attr_thumb : attr_scroll);
       }
