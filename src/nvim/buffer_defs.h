@@ -1183,6 +1183,8 @@ struct window_S {
   char_u  *screen_lines2;
   int screen_rows;
   int screen_columns;
+
+  schar_T  *current_screenline;
 };
 
 #endif // NVIM_BUFFER_DEFS_H

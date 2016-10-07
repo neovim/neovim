@@ -3,6 +3,7 @@
 #include <stdbool.h>
 
 #include "nvim/api/private/handle.h"
+#include "nvim/api/private/helpers.h"
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
 #include "nvim/window.h"
@@ -46,6 +47,7 @@
 #include "nvim/terminal.h"
 #include "nvim/undo.h"
 #include "nvim/os/os.h"
+#include "nvim/ui.h"
 
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -3722,7 +3724,7 @@ win_T *buf_jump_open_tab(buf_T *buf)
  */
 static win_T *win_alloc(win_T *after, int hidden)
 {
-  static int last_win_id = LOWEST_WIN_ID - 1;
+  static int last_win_id = 0;
   int new_row;
   schar_T *screen_lines;
   sattr_T *screen_attrs;
@@ -3731,6 +3733,7 @@ static win_T *win_alloc(win_T *after, int hidden)
   // allocate window structure and linesizes arrays
   win_T *new_wp = xcalloc(1, sizeof(win_T));
   win_alloc_lines(new_wp);
+  win_alloc_screen(new_wp);
 
   new_wp->handle = ++last_win_id;
   handle_register_window(new_wp);
@@ -3751,22 +3754,6 @@ static win_T *win_alloc(win_T *after, int hidden)
 
   new_wp->w_wincol = 0;
   new_wp->w_width = Columns;
-
-  screen_lines = xmalloc((size_t)((Rows + 1) * Columns * sizeof(schar_T)));
-  screen_attrs = xmalloc((size_t)((Rows + 1) * Columns * sizeof(sattr_T)));
-  line_offset = xmalloc((size_t)(Rows * sizeof(unsigned)));
-  for (new_row = 0; new_row < Rows; ++new_row) {
-    line_offset[new_row] = new_row * Columns;
-    (void)memset(screen_lines + new_row * Columns,
-        ' ', (size_t)Columns * sizeof(schar_T));
-    (void)memset(screen_attrs + new_row * Columns,
-        0, (size_t)Columns * sizeof(sattr_T));
-  }
-  new_wp->screen_lines = screen_lines;
-  new_wp->screen_attrs = screen_attrs;
-  new_wp->line_offset = line_offset;
-  new_wp->screen_rows = Rows;
-  new_wp->screen_columns = Columns;
 
   /* position the display and the cursor at the top of the file. */
   new_wp->w_topline = 1;
@@ -3957,6 +3944,71 @@ void win_alloc_lines(win_T *wp)
   wp->w_lines_valid = 0;
   assert(Rows >= 0);
   wp->w_lines = xcalloc(Rows, sizeof(wline_T));
+}
+
+
+/*
+ * Allocate screen cache for window "wp".
+ */
+void win_alloc_screen(win_T *wp)
+{
+  int i;
+  int new_row;
+  schar_T *screen_lines;
+  u8char_T *screen_lines_uc;
+  u8char_T *screen_lines_c[MAX_MCO];
+  sattr_T *screen_attrs;
+  unsigned *line_offset;
+
+  screen_lines = xmalloc((size_t)((Rows + 1) * Columns * sizeof(schar_T)));
+  memset(screen_lines_c, 0, sizeof(u8char_T *) * MAX_MCO);
+  if (enc_utf8) {
+    screen_lines_uc = xmalloc(
+        (size_t)((Rows + 1) * Columns * sizeof(u8char_T)));
+    for (i = 0; i < p_mco; ++i)
+      screen_lines_c[i] = xcalloc((Rows + 1) * Columns, sizeof(u8char_T));
+  }
+  screen_attrs = xmalloc((size_t)((Rows + 1) * Columns * sizeof(sattr_T)));
+  line_offset = xmalloc((size_t)(Rows * sizeof(unsigned)));
+  for (new_row = 0; new_row < Rows; ++new_row) {
+    line_offset[new_row] = new_row * Columns;
+    (void)memset(screen_lines + new_row * Columns,
+        ' ', (size_t)Columns * sizeof(schar_T));
+    if (enc_utf8) {
+      (void)memset(screen_lines_uc + new_row * Columns,
+          0, (size_t)Columns * sizeof(u8char_T));
+      for (i = 0; i < p_mco; ++i)
+        (void)memset(screen_lines_c[i]
+            + new_row * Columns,
+            0, (size_t)Columns * sizeof(u8char_T));
+    }
+    (void)memset(screen_attrs + new_row * Columns,
+        0, (size_t)Columns * sizeof(sattr_T));
+  }
+  wp->screen_lines = screen_lines;
+  wp->screen_lines_uc = screen_lines_uc;
+  for (i = 0; i < p_mco; ++i)
+    wp->screen_lines_c[i] = screen_lines_c[i];
+  wp->screen_attrs = screen_attrs;
+  wp->line_offset = line_offset;
+  wp->screen_rows = Rows;
+  wp->screen_columns = Columns;
+  wp->current_screenline = screen_lines + Rows * Columns;
+}
+
+/*
+ * Free screen cache for window "wp".
+ */
+void win_free_screen(win_T *wp)
+{
+  int i;
+  xfree(wp->screen_lines);
+  xfree(wp->screen_lines_uc);
+  for (i = 0; i < p_mco; ++i) {
+    xfree(wp->screen_lines_c[i]);
+  }
+  xfree(wp->screen_attrs);
+  xfree(wp->line_offset);
 }
 
 /*

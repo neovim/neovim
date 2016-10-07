@@ -667,7 +667,14 @@ size_t mb_string2cells(const char_u *str)
 /// We make sure that the offset used is less than "max_off".
 int utf_off2cells(unsigned off, unsigned max_off)
 {
-  return (off + 1 < max_off && ScreenLines[off + 1] == 0) ? 2 : 1;
+  schar_T *screen_lines;
+  if (!win_get_external()) {
+    screen_lines = ScreenLines;
+  } else {
+    screen_lines = wp->screen_lines;
+  }
+
+  return (off + 1 < max_off && screen_lines[off + 1] == 0) ? 2 : 1;
 }
 
 /*
@@ -898,12 +905,18 @@ int utfc_ptr2char_len(const char_u *p, int *pcc, int maxlen)
  * Only to be used when ScreenLinesUC[off] != 0.
  * Returns the produced number of bytes.
  */
-int utfc_char2bytes(int off, char_u *buf)
+int utfc_char2bytes(win_T *wp, int off, char_u *buf)
 {
   int len;
   int i;
+  u8char_T *screen_lines_uc;
+  if (!win_get_external()) {
+    screen_lines_uc = ScreenLinesUC;
+  } else {
+    screen_lines_uc = wp->screen_lines_uc;
+  }
 
-  len = utf_char2bytes(ScreenLinesUC[off], buf);
+  len = utf_char2bytes(screen_lines_uc[off], buf);
   for (i = 0; i < Screen_mco; ++i) {
     if (ScreenLinesC[i][off] == 0)
       break;
@@ -1940,7 +1953,7 @@ char_u * mb_unescape(char_u **pp)
  */
 bool mb_lefthalve(int row, int col)
 {
-  return (*mb_off2cells)(LineOffset[row] + col,
+  return (*mb_off2cells)(curwin, LineOffset[row] + col,
       LineOffset[row] + screen_Columns) > 1;
 }
 
@@ -1948,12 +1961,31 @@ bool mb_lefthalve(int row, int col)
  * Correct a position on the screen, if it's the right half of a double-wide
  * char move it to the left half.  Returns the corrected column.
  */
-int mb_fix_col(int col, int row)
+int mb_fix_col(win_T *wp, int col, int row)
 {
+  schar_T *screen_lines;
+  unsigned *line_offset;
+  if (!win_get_external()) {
+    screen_lines = ScreenLines;
+    line_offset = LineOffset;
+  } else {
+    screen_lines = wp->screen_lines;
+    line_offset = wp->line_offset;
+  }
+
   col = check_col(col);
   row = check_row(row);
+<<<<<<< HEAD
   if (ScreenLines != NULL && col > 0
       && ScreenLines[LineOffset[row] + col] == 0) {
+=======
+  if (has_mbyte && screen_lines != NULL && col > 0
+      && ((enc_dbcs
+          && screen_lines[line_offset[row] + col] != NUL
+          && dbcs_screen_head_off(screen_lines + line_offset[row],
+            screen_lines + line_offset[row] + col))
+        || (enc_utf8 && screen_lines[line_offset[row] + col] == 0)))
+>>>>>>> Roughly working
     return col - 1;
   }
   return col;
