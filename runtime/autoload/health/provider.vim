@@ -100,13 +100,6 @@ function! s:version_info(python) abort
         \ 'import neovim; print(neovim.__file__)',
         \ '2>/dev/null']))
 
-  let nvim_path = s:trim(system([
-        \ 'python3',
-        \ '-c',
-        \ 'import neovim; print(neovim.__file__)'
-        \ ]))
-        " \ '2>/dev/null']))
-
   if empty(nvim_path)
     return [python_version, 'unable to find neovim executable', pypi_version, 'unable to get neovim executable']
   endif
@@ -148,7 +141,7 @@ endfunction
 function! s:check_python(version) abort
   call health#report_start('Python ' . a:version . ' provider')
 
-  let python_bin_name = 'python'.(a:version == 2 ? '2' : '3')
+  let python_bin_name = 'python'.(a:version == 2 ? '' : '3')
   let pyenv = resolve(exepath('pyenv'))
   let pyenv_root = exists('$PYENV_ROOT') ? resolve($PYENV_ROOT) : 'n'
   let venv = exists('$VIRTUAL_ENV') ? resolve($VIRTUAL_ENV) : ''
