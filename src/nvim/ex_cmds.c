@@ -2116,6 +2116,16 @@ do_ecmd (
     }
   }
 
+  // Make re-editing a terminal buffer a no-op
+  if (!other_file && curbuf->terminal != NULL) {
+      // this is needed for when we are called by do_argfile() and the new
+      // argument index becomes the terminal buffer we are already editing
+      check_arg_idx(curwin);
+      maketitle();
+      retval = OK;
+      goto theend;
+  }
+
   /*
    * if the file was changed we may not be allowed to abandon it
    * - if we are going to re-edit the same file
