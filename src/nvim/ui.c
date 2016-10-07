@@ -356,6 +356,77 @@ void ui_puts(uint8_t *str)
   }
 }
 
+static void win_put(handle_T win_id, uint8_t *data, size_t size)
+{
+  Array args = ARRAY_DICT_INIT;
+  ADD(args, INTEGER_OBJ(win_id));
+  String str = { .data = xmemdupz(data, size), .size = size };
+  ADD(args, STRING_OBJ(str));
+  ui_event("win_put", args);
+}
+
+static void win_send_output(handle_T win_id, uint8_t **ptr)
+{
+  uint8_t *p = *ptr;
+
+  while (*p >= 0x20) {
+    size_t clen = (size_t)mb_ptr2len(p);
+    win_put(win_id, p, clen);
+    col++;
+    if (utf_ambiguous_width(*p)) {
+      pending_cursor_update = true;
+      flush_cursor_update();
+    } else if (mb_ptr2cells(p) > 1) {
+      // double cell character, blank the next cell
+      UI_CALL(put, NULL, 0);
+      col++;
+    }
+    if (col >= width) {
+      ui_linefeed();
+    }
+    p += clen;
+  }
+
+  *ptr = p;
+}
+
+void win_ui_puts(handle_T win_id, uint8_t *str)
+{
+  uint8_t *ptr = str;
+  uint8_t c;
+
+  while ((c = *ptr)) {
+    if (c < 0x20) {
+      parse_control_character(c);
+      ptr++;
+    } else {
+      win_send_output(win_id, &ptr);
+    }
+  }
+}
+
+void win_ui_putc(handle_T win_id, uint8_t c)
+{
+  uint8_t buf[2] = {c, 0};
+  win_ui_puts(win_id, buf);
+}
+
+void win_ui_cursor_goto(handle_T win_id, int new_row, int new_col)
+{
+  if (new_row == row && new_col == col) {
+    return;
+  }
+  row = new_row;
+  col = new_col;
+  pending_cursor_update = true;
+
+  Array args = ARRAY_DICT_INIT;
+  ADD(args, INTEGER_OBJ(win_id));
+  ADD(args, INTEGER_OBJ(row));
+  ADD(args, INTEGER_OBJ(col));
+  ui_event("win_cursor_goto", args);
+}
+
 void ui_putc(uint8_t c)
 {
   uint8_t buf[2] = {c, 0};

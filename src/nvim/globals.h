@@ -806,7 +806,7 @@ EXTERN int (*mb_ptr2cells)(const char_u *p) INIT(= latin_ptr2cells);
 EXTERN int (*mb_ptr2cells_len)(const char_u *p, int size) INIT(
       = latin_ptr2cells_len);
 EXTERN int (*mb_char2cells)(int c) INIT(= latin_char2cells);
-EXTERN int (*mb_off2cells)(unsigned off, unsigned max_off) INIT(
+EXTERN int (*mb_off2cells)(win_T *wp, unsigned off, unsigned max_off) INIT(
       = latin_off2cells);
 EXTERN int (*mb_ptr2char)(const char_u *p) INIT(= latin_ptr2char);
 EXTERN int (*mb_head_off)(const char_u *base, const char_u *p) INIT(= latin_head_off);

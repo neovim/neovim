@@ -1464,7 +1464,7 @@ void edit_putchar(int c, int highlight)
     if (curwin->w_p_rl) {
       pc_col += curwin->w_width - 1 - curwin->w_wcol;
       if (has_mbyte) {
-        int fix_col = mb_fix_col(pc_col, pc_row);
+        int fix_col = mb_fix_col(curwin, pc_col, pc_row);
 
         if (fix_col != pc_col) {
           screen_putchar(curwin, ' ', pc_row, fix_col, attr);
