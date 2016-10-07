@@ -141,7 +141,7 @@ endfunction
 function! s:check_python(version) abort
   call health#report_start('Python ' . a:version . ' provider')
 
-  let python_bin_name = 'python'.(a:version == 2 ? '2' : '3')
+  let python_bin_name = 'python'.(a:version == 2 ? '' : '3')
   let pyenv = resolve(exepath('pyenv'))
   let pyenv_root = exists('$PYENV_ROOT') ? resolve($PYENV_ROOT) : 'n'
   let venv = exists('$VIRTUAL_ENV') ? resolve($VIRTUAL_ENV) : ''
