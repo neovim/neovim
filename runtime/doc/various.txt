@@ -264,10 +264,10 @@ g8			Print the hex values of the bytes used in the
 			After the command has been executed, the timestamp and
 			size of the current file is checked |timestamp|.
 
-			If the command produces a lot of output the displayed
-			output will be "throttled" so the command can execute
-			quickly without waiting for the display.  This only
-			affects the display, no data is lost.
+			If the command produces too much output some lines may
+			be skipped so the command can execute quickly.  No
+			data is lost, this only affects the display.  The last
+			few lines are always displayed (never skipped).
 
 			Vim redraws the screen after the command is finished,
 			because it may have printed any text.  This requires a

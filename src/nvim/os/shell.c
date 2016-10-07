@@ -25,7 +25,9 @@
 #include "nvim/charset.h"
 #include "nvim/strings.h"
 
-#define DYNAMIC_BUFFER_INIT {NULL, 0, 0}
+#define DYNAMIC_BUFFER_INIT { NULL, 0, 0 }
+#define NS_1_SECOND         1000000000      // 1 second, in nanoseconds
+#define OUT_DATA_THRESHOLD  1024 * 10U      // 10KB, "a few screenfuls" of data.
 
 typedef struct {
   char *data;
@@ -187,7 +189,8 @@ static int do_os_system(char **argv,
                         bool silent,
                         bool forward_output)
 {
-  out_data_throttle(NULL, 0);  // Initialize throttle for this shell command.
+  out_data_decide_throttle(0);  // Initialize throttle decider.
+  out_data_ring(NULL, 0);       // Initialize output ring-buffer.
 
   // the output buffer
   DynamicBuffer buf = DYNAMIC_BUFFER_INIT;
@@ -217,7 +220,7 @@ static int do_os_system(char **argv,
   proc->err = &err;
   if (!process_spawn(proc)) {
     loop_poll_events(&main_loop, 0);
-    // Failed, probably due to `sh` not being executable
+    // Failed, probably due to 'sh' not being executable
     if (!silent) {
       MSG_PUTS(_("\nCannot execute "));
       msg_outtrans((char_u *)prog);
@@ -260,6 +263,10 @@ static int do_os_system(char **argv,
   ui_busy_start();
   ui_flush();
   int status = process_wait(proc, -1, NULL);
+  if (!got_int && out_data_decide_throttle(0)) {
+    // Last chunk of output was skipped; display it now.
+    out_data_ring(NULL, SIZE_MAX);
+  }
   ui_busy_stop();
 
   // prepare the out parameters if requested
@@ -311,20 +318,14 @@ static void system_data_cb(Stream *stream, RBuffer *buf, size_t count,
   dbuf->len += nread;
 }
 
-/// Tracks output received for the current executing shell command. To avoid
-/// flooding the UI, output is periodically skipped and a pulsing "..." is
-/// shown instead. Tracking depends on the synchronous/blocking nature of ":!".
+/// Tracks output received for the current executing shell command, and displays
+/// a pulsing "..." when output should be skipped. Tracking depends on the
+/// synchronous/blocking nature of ":!".
 //
 /// Purpose:
 ///   1. CTRL-C is more responsive. #1234 #5396
-///   2. Improves performance of :! (UI, esp. TUI, is the bottleneck here).
+///   2. Improves performance of :! (UI, esp. TUI, is the bottleneck).
 ///   3. Avoids OOM during long-running, spammy :!.
-///
-/// Note:
-///   - Throttling "solves" the issue for *all* UIs, on all platforms.
-///   - Unlikely that users will miss useful output: humans do not read >100KB.
-///   - Caveat: Affects execute(':!foo'), but that is not a "very important"
-///     case; system('foo') should be used for large outputs.
 ///
 /// Vim does not need this hack because:
 ///   1. :! in terminal-Vim runs in cooked mode, so CTRL-C is caught by the
@@ -332,35 +333,35 @@ static void system_data_cb(Stream *stream, RBuffer *buf, size_t count,
 ///   2. :! in terminal-Vim uses a tty (Nvim uses pipes), so commands
 ///      (e.g. `git grep`) may page themselves.
 ///
-/// @returns true if output was skipped and pulse was displayed
-static bool out_data_throttle(char *output, size_t size)
+/// @param size Length of data, used with internal state to decide whether
+///             output should be skipped. size=0 resets the internal state and
+///             returns the previous decision.
+///
+/// @returns true if output should be skipped and pulse was displayed.
+///          Returns the previous decision if size=0.
+static bool out_data_decide_throttle(size_t size)
 {
-#define NS_1_SECOND 1000000000        // 1s, in ns
-#define THRESHOLD   1024 * 10         // 10KB, "a few screenfuls" of data.
   static uint64_t   started     = 0;  // Start time of the current throttle.
   static size_t     received    = 0;  // Bytes observed since last throttle.
   static size_t     visit       = 0;  // "Pulse" count of the current throttle.
   static size_t     max_visits  = 0;
   static char       pulse_msg[] = { ' ', ' ', ' ', '\0' };
 
-  if (output == NULL) {
+  if (!size) {
+    bool previous_decision = (visit > 0); // TODO: needs to check that last print shows more than a page
     started = received = visit = 0;
-    max_visits = 10;
-    return false;
+    max_visits = 20;
+    return previous_decision;
   }
 
   received += size;
-  if (received < THRESHOLD
-      // Display at least the first chunk of output even if it is >=THRESHOLD.
+  if (received < OUT_DATA_THRESHOLD
+      // Display at least the first chunk of output even if it is big.
       || (!started && received < size + 1000)) {
     return false;
-  }
-
-  if (!visit) {
+  } else if (!visit) {
     started = os_hrtime();
-  }
-
-  if (visit >= max_visits) {
+  } else if (visit >= max_visits) {
     uint64_t since = os_hrtime() - started;
     if (since < NS_1_SECOND) {
       // Adjust max_visits based on the current relative performance.
@@ -368,27 +369,74 @@ static bool out_data_throttle(char *output, size_t size)
       max_visits = (2 * max_visits);
     } else {
       received = visit = 0;
+      return false;
     }
   }
 
-  if (received && ++visit <= max_visits) {
-    // Pulse "..." at the bottom of the screen.
-    size_t tick = (visit == max_visits)
-                  ? 3  // Force all dots "..." on last visit.
-                  : (visit + 1) % 4;
-    pulse_msg[0] = (tick == 0) ? ' ' : '.';
-    pulse_msg[1] = (tick == 0 || 1 == tick) ? ' ' : '.';
-    pulse_msg[2] = (tick == 0 || 1 == tick || 2 == tick) ? ' ' : '.';
-    if (visit == 1) {
-      screen_del_lines(0, 0, 1, (int)Rows, NULL);
-    }
-    int lastrow = (int)Rows - 1;
-    screen_puts_len((char_u *)pulse_msg, ARRAY_SIZE(pulse_msg), lastrow, 0, 0);
-    ui_flush();
-    return true;
+  visit++;
+  // Pulse "..." at the bottom of the screen.
+  size_t tick = (visit == max_visits)
+                ? 3  // Force all dots "..." on last visit.
+                : (visit % 4);
+  pulse_msg[0] = (tick == 0) ? ' ' : '.';
+  pulse_msg[1] = (tick == 0 || 1 == tick) ? ' ' : '.';
+  pulse_msg[2] = (tick == 0 || 1 == tick || 2 == tick) ? ' ' : '.';
+  if (visit == 1) {
+    screen_del_lines(0, 0, 1, (int)Rows, NULL);
+  }
+  int lastrow = (int)Rows - 1;
+  screen_puts_len((char_u *)pulse_msg, ARRAY_SIZE(pulse_msg), lastrow, 0, 0);
+  ui_flush();
+  return true;
+}
+
+/// Saves output in a quasi-ringbuffer. Used to ensure the last ~page of
+/// output for a shell-command is always displayed.
+///
+/// Init mode: Resets the internal state.
+///   output = NULL
+///   size   = 0
+/// Print mode: Displays the current saved data.
+///   output = NULL
+///   size   = SIZE_MAX
+///
+/// @param  output  Data to save, or NULL to invoke a special mode.
+/// @param  size    Length of `output`.
+static void out_data_ring(char *output, size_t size)
+{
+#define MAX_CHUNK_SIZE (OUT_DATA_THRESHOLD / 2)
+  static char    last_skipped[MAX_CHUNK_SIZE];  // Saved output.
+  static size_t  last_skipped_len = 0;
+
+  assert(output != NULL || (size == 0 || size == SIZE_MAX));
+
+  if (output == NULL && size == 0) {          // Init mode
+    last_skipped_len = 0;
+    return;
   }
 
-  return false;
+  if (output == NULL && size == SIZE_MAX) {   // Print mode
+    out_data_append_to_screen(last_skipped, last_skipped_len, true);
+    return;
+  }
+
+  // This is basically a ring-buffer...
+  if (size >= MAX_CHUNK_SIZE) {               // Save mode
+    size_t start = size - MAX_CHUNK_SIZE;
+    memcpy(last_skipped, output + start, MAX_CHUNK_SIZE);
+    last_skipped_len = MAX_CHUNK_SIZE;
+  } else if (size > 0) {
+    // Length of the old data that can be kept.
+    size_t keep_len   = MIN(last_skipped_len, MAX_CHUNK_SIZE - size);
+    size_t keep_start = last_skipped_len - keep_len;
+    // Shift the kept part of the old data to the start.
+    if (keep_start) {
+      memmove(last_skipped, last_skipped + keep_start, keep_len);
+    }
+    // Copy the entire new data to the remaining space.
+    memcpy(last_skipped + keep_len, output, size);
+    last_skipped_len = keep_len + size;
+  }
 }
 
 /// Continue to append data to last screen line.
@@ -396,15 +444,10 @@ static bool out_data_throttle(char *output, size_t size)
 /// @param output       Data to append to screen lines.
 /// @param remaining    Size of data.
 /// @param new_line     If true, next data output will be on a new line.
-static void append_to_screen_end(char *output, size_t remaining, bool new_line)
+static void out_data_append_to_screen(char *output, size_t remaining,
+                                      bool new_line)
 {
-  // Column of last row to start appending data to.
-  static colnr_T last_col = 0;
-
-  if (out_data_throttle(output, remaining)) {
-    last_col = 0;
-    return;
-  }
+  static colnr_T last_col = 0;  // Column of last row to append to.
 
   size_t off = 0;
   int last_row = (int)Rows - 1;
@@ -457,7 +500,14 @@ static void out_data_cb(Stream *stream, RBuffer *buf, size_t count, void *data,
   size_t cnt;
   char *ptr = rbuffer_read_ptr(buf, &cnt);
 
-  append_to_screen_end(ptr, cnt, eof);
+  if (ptr != NULL && cnt > 0
+      && out_data_decide_throttle(cnt)) {  // Skip output above a threshold.
+    // Save the skipped output. If it is the final chunk, we display it later.
+    out_data_ring(ptr, cnt);
+  } else {
+    out_data_append_to_screen(ptr, cnt, eof);
+  }
+
   if (cnt) {
     rbuffer_consumed(buf, cnt);
   }
