@@ -110,6 +110,7 @@ function! s:version_info(python) abort
     for meta_line in readfile(meta)
       if meta_line =~# '^Version:'
         let nvim_version = matchstr(meta_line, '^Version: \zs\S\+')
+        break
       endif
     endfor
   endfor
