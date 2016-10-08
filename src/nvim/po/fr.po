@@ -645,7 +645,7 @@ msgstr "E708: [:] ne peut être spécifié qu'en dernier"
 
 #: ../eval.c:2439
 msgid "E709: [:] requires a List value"
-msgstr "E709: [:] requiert une Liste"
+msgstr "E709: [:] n?cessite une Liste"
 
 #: ../eval.c:2674
 msgid "E710: List value has more items than target"
@@ -1639,8 +1639,8 @@ msgstr "Recherche de \"%s\""
 
 #: ../ex_cmds2.c:2307
 #, c-format
-msgid "not found in 'runtimepath': \"%s\""
-msgstr "introuvable dans 'runtimepath' : \"%s\""
+msgid "not found in '%s': \"%s\""
+msgstr "introuvable dans '%s' : \"%s\""
 
 #: ../ex_cmds2.c:2472
 #, c-format
@@ -6876,6 +6876,12 @@ msgstr "E446: Aucun nom de fichier sous le curseur"
 
 #~ msgid "E232: Cannot create BalloonEval with both message and callback"
 #~ msgstr "E232: Impossible de créer un BalloonEval avec message ET callback"
+
+msgid "Yes"
+msgstr "Oui"
+
+msgid "No"
+msgstr "Non"
 
 # todo '_' is for hotkey, i guess?
 #~ msgid "Input _Methods"

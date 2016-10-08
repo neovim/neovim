@@ -4,8 +4,8 @@
 " Maintainer:	Dominik Fischer <d dot f dot fischer at web dot de>
 " Contributor:  Leonard Ehrenfried <leonard.ehrenfried@web.de>
 " Contributor:  Karsten Hopp <karsten@redhat.com>
-" Last Change:	2016 Mar 1
-" SSH Version:	7.2
+" Last Change:	2016 Apr 7
+" SSH Version:	7.2p2
 "
 
 " Setup
@@ -36,7 +36,7 @@ syn keyword sshconfigTodo TODO FIXME NOTE contained
 
 
 " Constants
-syn keyword sshconfigYesNo yes no ask
+syn keyword sshconfigYesNo yes no ask confirm
 syn keyword sshconfigYesNo any auto
 syn keyword sshconfigYesNo force autoask none
 
@@ -139,6 +139,7 @@ syn keyword sshconfigHostSect Host
 syn keyword sshconfigMatch canonical exec host originalhost user localuser all
 
 syn keyword sshconfigKeyword AddressFamily
+syn keyword sshconfigKeyword AddKeysToAgent
 syn keyword sshconfigKeyword BatchMode
 syn keyword sshconfigKeyword BindAddress
 syn keyword sshconfigKeyword CanonicalDomains

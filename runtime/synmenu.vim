@@ -61,6 +61,7 @@ an 50.10.320 &Syntax.AB.Ascii\ Doc :cal SetSyn("asciidoc")<CR>
 an 50.10.330 &Syntax.AB.ASP\ with\ VBScript :cal SetSyn("aspvbs")<CR>
 an 50.10.340 &Syntax.AB.ASP\ with\ Perl :cal SetSyn("aspperl")<CR>
 an 50.10.350 &Syntax.AB.Assembly.680x0 :cal SetSyn("asm68k")<CR>
+an 50.10.355 &Syntax.AB.Assembly.AVR :cal SetSyn("avra")<CR>
 an 50.10.360 &Syntax.AB.Assembly.Flat :cal SetSyn("fasm")<CR>
 an 50.10.370 &Syntax.AB.Assembly.GNU :cal SetSyn("asm")<CR>
 an 50.10.380 &Syntax.AB.Assembly.GNU\ H-8300 :cal SetSyn("asmh8300")<CR>

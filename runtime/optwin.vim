@@ -1,7 +1,7 @@
 " These commands create the option window.
 "
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2016 Mar 19
+" Last Change:	2016 Apr 21
 
 " If there already is an option window, jump to that one.
 if bufwinnr("option-window") > 0

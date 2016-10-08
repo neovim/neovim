@@ -2,6 +2,7 @@
 " Compiler:         GNU C Compiler
 " Maintainer:       Nikolai Weibull <now@bitwi.se>
 " Latest Revision:  2010-10-14
+" 			added line suggested by Anton Lindqvist 2016 Mar 31
 
 if exists("current_compiler")
   finish
@@ -24,6 +25,7 @@ CompilerSet errorformat=
       \%f:%l:\ %trror:\ %m,
       \%f:%l:\ %tarning:\ %m,
       \%f:%l:\ %m,
+      \%f:\\(%*[^\\)]\\):\ %m,
       \\"%f\"\\,\ line\ %l%*\\D%c%*[^\ ]\ %m,
       \%D%*\\a[%*\\d]:\ Entering\ directory\ [`']%f',
       \%X%*\\a[%*\\d]:\ Leaving\ directory\ [`']%f',
