@@ -348,7 +348,7 @@ static bool out_data_decide_throttle(size_t size)
   static char       pulse_msg[] = { ' ', ' ', ' ', '\0' };
 
   if (!size) {
-    bool previous_decision = (visit > 0); // TODO: needs to check that last print shows more than a page
+    bool previous_decision = (visit > 0);
     started = received = visit = 0;
     max_visits = 20;
     return previous_decision;
@@ -361,6 +361,10 @@ static bool out_data_decide_throttle(size_t size)
     return false;
   } else if (!visit) {
     started = os_hrtime();
+  } else if (visit >= max_visits && size < 256 && max_visits < 999) {
+    // Gobble up small chunks even if we maxed out. Avoids the case where the
+    // final displayed chunk is very tiny.
+    max_visits = visit + 1;
   } else if (visit >= max_visits) {
     uint64_t since = os_hrtime() - started;
     if (since < NS_1_SECOND) {
