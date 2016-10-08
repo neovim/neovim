@@ -4509,7 +4509,7 @@ chk_modeline (
   char_u      *e;
   char_u      *linecopy;                /* local copy of any modeline found */
   int prev;
-  int vers;
+  intmax_t vers;
   int end;
   int retval = OK;
   char_u      *save_sourcing_name;
@@ -4528,7 +4528,10 @@ chk_modeline (
           e = s + 4;
         else
           e = s + 3;
-        vers = getdigits_int(&e);
+        if (getdigits_safe(&e, &vers) != OK) {
+          continue;
+        }
+
         if (*e == ':'
             && (s[0] != 'V'
                 || STRNCMP(skipwhite(e + 1), "set", 3) == 0)
@@ -4536,8 +4539,9 @@ chk_modeline (
                 || (VIM_VERSION_100 >= vers && isdigit(s[3]))
                 || (VIM_VERSION_100 < vers && s[3] == '<')
                 || (VIM_VERSION_100 > vers && s[3] == '>')
-                || (VIM_VERSION_100 == vers && s[3] == '=')))
+                || (VIM_VERSION_100 == vers && s[3] == '='))) {
           break;
+        }
       }
     }
     prev = *s;

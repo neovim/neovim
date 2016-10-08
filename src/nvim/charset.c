@@ -1732,6 +1732,26 @@ char_u* skiptowhite_esc(char_u *p) {
   return p;
 }
 
+/// Get a number from a string and skip over it, signalling overflows
+///
+/// @param[out]  pp  A pointer to a pointer to char_u.
+///                  It will be advanced past the read number.
+/// @param[out]  nr  Number read from the string.
+///
+/// @return OK on success, FAIL on error/overflow
+int getdigits_safe(char_u **pp, intmax_t *nr)
+{
+  errno = 0;
+  *nr = strtoimax((char *)(*pp), (char **)pp, 10);
+
+  if ((*nr == INTMAX_MIN || *nr == INTMAX_MAX)
+      && errno == ERANGE) {
+    return FAIL;
+  }
+
+  return OK;
+}
+
 /// Get a number from a string and skip over it.
 ///
 /// @param[out]  pp  A pointer to a pointer to char_u.
@@ -1740,17 +1760,16 @@ char_u* skiptowhite_esc(char_u *p) {
 /// @return Number read from the string.
 intmax_t getdigits(char_u **pp)
 {
-  errno = 0;
-  intmax_t number = strtoimax((char *)*pp, (char **)pp, 10);
-  if (number == INTMAX_MAX || number == INTMAX_MIN) {
-    assert(errno != ERANGE);
-  }
+  intmax_t number;
+  int ret = getdigits_safe(pp, &number);
+
+  (void)ret;  // Avoid "unused variable" warning in Release build
+  assert(ret == OK);
+
   return number;
 }
 
-/// Get an int number from a string.
-///
-/// A getdigits wrapper restricted to int values.
+/// Get an int number from a string. Like getdigits(), but restricted to `int`.
 int getdigits_int(char_u **pp)
 {
   intmax_t number = getdigits(pp);
@@ -1760,9 +1779,7 @@ int getdigits_int(char_u **pp)
   return (int)number;
 }
 
-/// Get a long number from a string.
-///
-/// A getdigits wrapper restricted to long values.
+/// Get a long number from a string. Like getdigits(), but restricted to `long`.
 long getdigits_long(char_u **pp)
 {
   intmax_t number = getdigits(pp);

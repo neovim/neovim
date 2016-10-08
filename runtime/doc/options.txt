@@ -497,6 +497,7 @@ For example, to use a modeline only for Vim 7.0:
 To use a modeline for Vim after version 7.2:
 	/* vim>702: set cole=2: */ ~
 There can be no blanks between "vim" and the ":".
+The modeline is ignored if {vers} does not fit in an integer. {Nvim}
 
 
 The number of lines that are checked can be set with the 'modelines' option.
