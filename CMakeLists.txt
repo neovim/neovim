@@ -253,6 +253,10 @@ option(
 if(TRAVIS_CI_BUILD)
   message(STATUS "Travis CI build enabled.")
   add_definitions(-Werror)
+  if(DEFINED ENV{BUILD_32BIT})
+    # Get some test coverage for unsigned char
+    add_definitions(-funsigned-char)
+  endif()
 endif()
 
 if(CMAKE_BUILD_TYPE MATCHES Debug)
