@@ -104,15 +104,27 @@ function! s:version_info(python) abort
     return [python_version, 'unable to find neovim executable', pypi_version, 'unable to get neovim executable']
   endif
 
+  " Assuming that multiple versions of a package are installed, sort them
+  " numerically in descending order.
+  function! s:compare(metapath1, metapath2)
+    let a = matchstr(fnamemodify(a:metapath1, ':p:h:t'), '[0-9.]\+')
+    let b = matchstr(fnamemodify(a:metapath2, ':p:h:t'), '[0-9.]\+')
+    return a == b ? 0 : a > b ? 1 : -1
+  endfunction
+
   let nvim_version = 'unable to find neovim version'
   let base = fnamemodify(nvim_path, ':h')
-  for meta in glob(base.'-*/METADATA', 1, 1) + glob(base.'-*/PKG-INFO', 1, 1)
-    for meta_line in readfile(meta)
+  let metas = glob(base.'-*/METADATA', 1, 1) + glob(base.'-*/PKG-INFO', 1, 1)
+  let metas = sort(metas, 's:compare')
+
+  if !empty(metas)
+    for meta_line in readfile(metas[0])
       if meta_line =~# '^Version:'
         let nvim_version = matchstr(meta_line, '^Version: \zs\S\+')
+        break
       endif
     endfor
-  endfor
+  endif
 
   let version_status = 'unknown'
   if !s:is_bad_response(nvim_version) && !s:is_bad_response(pypi_version)

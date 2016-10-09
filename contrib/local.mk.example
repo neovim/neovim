@@ -2,7 +2,7 @@
 # Individual entries must be uncommented to take effect.
 
 # By default, the installation prefix is '/usr/local'.
-# CMAKE_EXTRA_FLAGS += -DCMAKE_INSTALL_PREFIX=/usr/local/nvim-latest
+# PREFIX := /usr/local/nvim-latest
 
 # These CFLAGS can be used in addition to those specified in CMakeLists.txt:
 # CMAKE_EXTRA_FLAGS="-DCMAKE_C_FLAGS=-ftrapv -Wlogical-op"

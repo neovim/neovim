@@ -16,9 +16,13 @@ func Test_missing_attr()
   call assert_equal('', synIDattr(hlID("Mine"), "undercurl", 'gui'))
 
   if has('gui')
-    hi Mine guifg=blue guibg=red font=something
+    let fontname = getfontname()
+    if fontname == ''
+      let fontname = 'something'
+    endif
+    exe 'hi Mine guifg=blue guibg=red font=' . escape(fontname, ' \')
     call assert_equal('blue', synIDattr(hlID("Mine"), "fg", 'gui'))
     call assert_equal('red', synIDattr(hlID("Mine"), "bg", 'gui'))
-    call assert_equal('something', synIDattr(hlID("Mine"), "font", 'gui'))
+    call assert_equal(fontname, synIDattr(hlID("Mine"), "font", 'gui'))
   endif
 endfunc

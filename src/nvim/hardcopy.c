@@ -2105,7 +2105,7 @@ int mch_print_init(prt_settings_T *psettings, char_u *jobname, int forceit)
   props = enc_canon_props(p_encoding);
   if (!(props & ENC_8BIT) && ((*p_pmcs != NUL) || !(props & ENC_UNICODE))) {
     p_mbenc_first = NULL;
-    int effective_cmap;
+    int effective_cmap = 0;
     for (cmap = 0; cmap < (int)ARRAY_SIZE(prt_ps_mbfonts); cmap++)
       if (prt_match_encoding((char *)p_encoding, &prt_ps_mbfonts[cmap],
                              &p_mbenc)) {

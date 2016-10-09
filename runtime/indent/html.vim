@@ -2,7 +2,7 @@
 " Header: "{{{
 " Maintainer:	Bram Moolenaar
 " Original Author: Andy Wokula <anwoku@yahoo.de>
-" Last Change:	2015 Sep 25
+" Last Change:	2016 Mar 30
 " Version:	1.0
 " Description:	HTML indent script with cached state for faster indenting on a
 "		range of lines.
@@ -240,13 +240,13 @@ call s:AddITags(s:indent_tags, [
     \ 'sup', 'table', 'textarea', 'title', 'tt', 'u', 'ul', 'var', 'th', 'td',
     \ 'tr', 'tbody', 'tfoot', 'thead'])
 
-" Tags added 2011 Sep 09 (especially HTML5 tags):
+" New HTML5 elements:
 call s:AddITags(s:indent_tags, [
     \ 'area', 'article', 'aside', 'audio', 'bdi', 'canvas',
-    \ 'command', 'datalist', 'details', 'embed', 'figure', 'footer',
-    \ 'header', 'group', 'keygen', 'mark', 'math', 'meter', 'nav', 'output',
-    \ 'progress', 'ruby', 'section', 'svg', 'texture', 'time', 'video',
-    \ 'wbr', 'text'])
+    \ 'command', 'data', 'datalist', 'details', 'embed', 'figcaption',
+    \ 'figure', 'footer', 'header', 'keygen', 'mark', 'meter', 'nav', 'output',
+    \ 'progress', 'rp', 'rt', 'ruby', 'section', 'source', 'summary', 'svg', 
+    \ 'time', 'track', 'video', 'wbr'])
 
 " Tags added for web components:
 call s:AddITags(s:indent_tags, [
