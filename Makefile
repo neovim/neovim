@@ -13,6 +13,10 @@ CLINT_ERRORS_FILE_PATH := /reports/clint/errors.json
 BUILD_TYPE ?= $(shell (type ninja > /dev/null 2>&1 && echo "Ninja") || \
     echo "Unix Makefiles")
 
+ifneq (,$(PREFIX))
+  CMAKE_FLAGS += -DCMAKE_INSTALL_PREFIX:PATH="$(PREFIX)"
+endif
+
 ifeq (,$(BUILD_TOOL))
   ifeq (Ninja,$(BUILD_TYPE))
     ifneq ($(shell cmake --help 2>/dev/null | grep Ninja),)
