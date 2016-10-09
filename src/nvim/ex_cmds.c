@@ -2116,14 +2116,12 @@ do_ecmd (
     }
   }
 
-  // Make re-editing a terminal buffer a no-op
-  if (!other_file && curbuf->terminal != NULL) {
-      // this is needed for when we are called by do_argfile() and the new
-      // argument index becomes the terminal buffer we are already editing
-      check_arg_idx(curwin);
-      maketitle();
-      retval = OK;
-      goto theend;
+  // Re-editing a terminal buffer: skip most buffer re-initialization.
+  if (!other_file && curbuf->terminal) {
+    check_arg_idx(curwin);  // Needed when called from do_argfile().
+    maketitle();            // Title may show the arg index, e.g. "(2 of 5)".
+    retval = OK;
+    goto theend;
   }
 
   /*

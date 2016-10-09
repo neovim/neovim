@@ -7916,9 +7916,8 @@ static void ex_normal(exarg_T *eap)
   if (force_restart_edit) {
     force_restart_edit = false;
   } else {
-    // some function called was aware of ex_normal and decided to override the
-    // value of restart_edit anyway. So far only used in terminal mode(see
-    // terminal_enter() in edit.c)
+    // Some function (terminal_enter()) was aware of ex_normal and decided to
+    // override the value of restart_edit anyway.
     restart_edit = save_restart_edit;
   }
   p_im = save_insertmode;

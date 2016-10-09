@@ -3,7 +3,6 @@ local Screen = require('test.functional.ui.screen')
 local clear, wait, nvim = helpers.clear, helpers.wait, helpers.nvim
 local nvim_dir, source, eq = helpers.nvim_dir, helpers.source, helpers.eq
 local execute, eval = helpers.execute, helpers.eval
-local funcs = helpers.funcs
 
 if helpers.pending_win32(pending) then return end
 

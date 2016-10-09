@@ -320,14 +320,18 @@ int main(int argc, char **argv)
 
   // open terminals when opening files that start with term://
 #define PROTO "term://"
+  do_cmdline_cmd("augroup nvim_terminal");
+  do_cmdline_cmd("autocmd!");
   do_cmdline_cmd("autocmd BufReadCmd " PROTO "* nested "
-                 ":call termopen( "
+                 ":if !exists('b:term_title')|call termopen( "
                  // Capture the command string
                  "matchstr(expand(\"<amatch>\"), "
                  "'\\c\\m" PROTO "\\%(.\\{-}//\\%(\\d\\+:\\)\\?\\)\\?\\zs.*'), "
                  // capture the working directory
                  "{'cwd': get(matchlist(expand(\"<amatch>\"), "
-                 "'\\c\\m" PROTO "\\(.\\{-}\\)//'), 1, '')})");
+                 "'\\c\\m" PROTO "\\(.\\{-}\\)//'), 1, '')})"
+                 "|endif");
+  do_cmdline_cmd("augroup END");
 #undef PROTO
 
   /* Execute --cmd arguments. */
