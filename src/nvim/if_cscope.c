@@ -1761,7 +1761,7 @@ static void cs_print_tags_priv(char **matches, char **cntxts,
  */
 static int cs_read_prompt(size_t i)
 {
-  char ch;
+  int ch;
   char        *buf = NULL;   /* buffer for possible error message from cscope */
   size_t bufpos = 0;
   char   *cs_emsg = _("E609: Cscope error: %s");
@@ -1774,7 +1774,7 @@ static int cs_read_prompt(size_t i)
   size_t maxlen = IOSIZE - cs_emsg_len;
 
   for (;; ) {
-    while ((ch = (char)getc(csinfo[i].fr_fp)) != EOF && ch != CSCOPE_PROMPT[0])
+    while ((ch = getc(csinfo[i].fr_fp)) != EOF && ch != CSCOPE_PROMPT[0])
       /* if there is room and char is printable */
       if (bufpos < maxlen - 1 && vim_isprintc(ch)) {
         // lazy buffer allocation
@@ -1783,7 +1783,7 @@ static int cs_read_prompt(size_t i)
         }
         {
           /* append character to the message */
-          buf[bufpos++] = ch;
+          buf[bufpos++] = (char)ch;
           buf[bufpos] = NUL;
           if (bufpos >= epromptlen
               && strcmp(&buf[bufpos - epromptlen], eprompt) == 0) {
