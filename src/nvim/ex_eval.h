@@ -23,19 +23,19 @@ struct eslist_elem {
 #define CSTACK_LEN      50
 
 struct condstack {
-  short cs_flags[CSTACK_LEN];           /* CSF_ flags */
-  char cs_pending[CSTACK_LEN];          /* CSTP_: what's pending in ":finally"*/
+  int cs_flags[CSTACK_LEN];             // CSF_ flags
+  char cs_pending[CSTACK_LEN];          // CSTP_: what's pending in ":finally"
   union {
-    void    *csp_rv[CSTACK_LEN];        /* return typeval for pending return */
-    void    *csp_ex[CSTACK_LEN];        /* exception for pending throw */
+    void    *csp_rv[CSTACK_LEN];        // return typeval for pending return
+    void    *csp_ex[CSTACK_LEN];        // exception for pending throw
   }           cs_pend;
-  void        *cs_forinfo[CSTACK_LEN];   /* info used by ":for" */
-  int cs_line[CSTACK_LEN];              /* line nr of ":while"/":for" line */
-  int cs_idx;                           /* current entry, or -1 if none */
-  int cs_looplevel;                     /* nr of nested ":while"s and ":for"s */
-  int cs_trylevel;                      /* nr of nested ":try"s */
-  eslist_T    *cs_emsg_silent_list;     /* saved values of "emsg_silent" */
-  int cs_lflags;                        /* loop flags: CSL_ flags */
+  void        *cs_forinfo[CSTACK_LEN];  // info used by ":for"
+  int cs_line[CSTACK_LEN];              // line nr of ":while"/":for" line
+  int cs_idx;                           // current entry, or -1 if none
+  int cs_looplevel;                     // nr of nested ":while"s and ":for"s
+  int cs_trylevel;                      // nr of nested ":try"s
+  eslist_T    *cs_emsg_silent_list;     // saved values of "emsg_silent"
+  int cs_lflags;                        // loop flags: CSL_ flags
 };
 # define cs_rettv       cs_pend.csp_rv
 # define cs_exception   cs_pend.csp_ex

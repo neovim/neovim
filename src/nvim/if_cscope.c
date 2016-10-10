@@ -1762,7 +1762,7 @@ static void cs_print_tags_priv(char **matches, char **cntxts,
 static int cs_read_prompt(size_t i)
 {
   int ch;
-  char        *buf = NULL;   /* buffer for possible error message from cscope */
+  char        *buf = NULL;   // buffer for possible error message from cscope
   size_t bufpos = 0;
   char   *cs_emsg = _("E609: Cscope error: %s");
   size_t cs_emsg_len = strlen(cs_emsg);
@@ -1774,35 +1774,34 @@ static int cs_read_prompt(size_t i)
   size_t maxlen = IOSIZE - cs_emsg_len;
 
   for (;; ) {
-    while ((ch = getc(csinfo[i].fr_fp)) != EOF && ch != CSCOPE_PROMPT[0])
-      /* if there is room and char is printable */
+    while ((ch = getc(csinfo[i].fr_fp)) != EOF && ch != CSCOPE_PROMPT[0]) {
+      // if there is room and char is printable
       if (bufpos < maxlen - 1 && vim_isprintc(ch)) {
         // lazy buffer allocation
         if (buf == NULL) {
           buf = xmalloc(maxlen);
         }
-        {
-          /* append character to the message */
-          buf[bufpos++] = (char)ch;
+        // append character to the message
+        buf[bufpos++] = (char)ch;
+        buf[bufpos] = NUL;
+        if (bufpos >= epromptlen
+            && strcmp(&buf[bufpos - epromptlen], eprompt) == 0) {
+          // remove eprompt from buf
+          buf[bufpos - epromptlen] = NUL;
+
+          // print message to user
+          (void)EMSG2(cs_emsg, buf);
+
+          // send RETURN to cscope
+          (void)putc('\n', csinfo[i].to_fp);
+          (void)fflush(csinfo[i].to_fp);
+
+          // clear buf
+          bufpos = 0;
           buf[bufpos] = NUL;
-          if (bufpos >= epromptlen
-              && strcmp(&buf[bufpos - epromptlen], eprompt) == 0) {
-            /* remove eprompt from buf */
-            buf[bufpos - epromptlen] = NUL;
-
-            /* print message to user */
-            (void)EMSG2(cs_emsg, buf);
-
-            /* send RETURN to cscope */
-            (void)putc('\n', csinfo[i].to_fp);
-            (void)fflush(csinfo[i].to_fp);
-
-            /* clear buf */
-            bufpos = 0;
-            buf[bufpos] = NUL;
-          }
         }
       }
+    }
 
     for (size_t n = 0; n < strlen(CSCOPE_PROMPT); ++n) {
       if (n > 0)
