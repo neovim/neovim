@@ -35,7 +35,7 @@ struct condstack {
   int cs_looplevel;                     /* nr of nested ":while"s and ":for"s */
   int cs_trylevel;                      /* nr of nested ":try"s */
   eslist_T    *cs_emsg_silent_list;     /* saved values of "emsg_silent" */
-  char cs_lflags;                       /* loop flags: CSL_ flags */
+  int cs_lflags;                        /* loop flags: CSL_ flags */
 };
 # define cs_rettv       cs_pend.csp_rv
 # define cs_exception   cs_pend.csp_ex
