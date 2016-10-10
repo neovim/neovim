@@ -482,7 +482,7 @@ wingotofile:
 }
 
 static void cmd_with_count(char *cmd, char_u *bufp, size_t bufsize,
-                           long Prenum)
+                           int64_t Prenum)
 {
   size_t len = xstrlcpy((char *)bufp, cmd, bufsize);
 
