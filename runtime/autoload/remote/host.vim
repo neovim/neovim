@@ -191,6 +191,7 @@ function! s:RegistrationCommands(host) abort
   let pattern = s:plugin_patterns[a:host]
   let paths = globpath(&rtp, 'rplugin/'.a:host.'/'.pattern, 0, 1)
   let paths = map(paths, 'tr(v:val,"\\","/")') " Normalize slashes #4795
+  let paths = uniq(sort(paths))
   if empty(paths)
     return []
   endif
