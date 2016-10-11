@@ -133,6 +133,7 @@ void process_teardown(Loop *loop) FUNC_ATTR_NONNULL_ALL
 // Wrappers around `stream_close` that protect against double-closing.
 void process_close_streams(Process *proc) FUNC_ATTR_NONNULL_ALL
 {
+      ILOG("");
   process_close_in(proc);
   process_close_out(proc);
   process_close_err(proc);
@@ -140,6 +141,7 @@ void process_close_streams(Process *proc) FUNC_ATTR_NONNULL_ALL
 
 void process_close_in(Process *proc) FUNC_ATTR_NONNULL_ALL
 {
+  ILOG("");
   CLOSE_PROC_STREAM(proc, in);
 }
 
@@ -231,10 +233,12 @@ void process_stop(Process *proc) FUNC_ATTR_NONNULL_ALL
       // Close the process's stdin. If the process doesn't close its own
       // stdout/stderr, they will be closed when it exits(possibly due to being
       // terminated after a timeout)
+      ILOG("");
       process_close_in(proc);
       break;
     case kProcessTypePty:
       // close all streams for pty processes to send SIGHUP to the process
+      ILOG("");
       process_close_streams(proc);
       pty_process_close_master((PtyProcess *)proc);
       break;
@@ -381,6 +385,7 @@ static void flush_stream(Process *proc, Stream *stream)
 static void process_close_handles(void **argv)
 {
   Process *proc = argv[0];
+  ILOG("");
 
   flush_stream(proc, proc->out);
   flush_stream(proc, proc->err);
@@ -392,6 +397,7 @@ static void process_close_handles(void **argv)
 static void on_process_exit(Process *proc)
 {
   Loop *loop = proc->loop;
+  ILOG("");
   if (proc->stopped_time && loop->children_stop_requests
       && !--loop->children_stop_requests) {
     // Stop the timer if no more stop requests are pending
@@ -409,6 +415,7 @@ static void on_process_exit(Process *proc)
 
 static void on_process_stream_close(Stream *stream, void *data)
 {
+  ILOG("");
   Process *proc = data;
   decref(proc);
 }
