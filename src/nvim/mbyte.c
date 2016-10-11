@@ -1724,7 +1724,7 @@ int utf_class(int c)
   return 2;
 }
 
-int utf_ambiguous_width(int c)
+bool utf_ambiguous_width(int c)
 {
   return c >= 0x80 && (intable(ambiguous, ARRAY_SIZE(ambiguous), c)
                        || intable(emoji_all, ARRAY_SIZE(emoji_all), c));
