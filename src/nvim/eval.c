@@ -405,7 +405,7 @@ typedef struct {
     LibuvProcess uv;
     PtyProcess pty;
   } proc;
-  Stream in, out, err;
+  Stream in, out, err;  // Initialized in common_job_start().
   Terminal *term;
   bool stopped;
   bool exited;
@@ -21739,7 +21739,7 @@ static inline TerminalJobData *common_job_init(char **argv,
   if (!pty) {
     proc->err = &data->err;
   }
-  proc->cb = on_process_exit;
+  proc->cb = eval_job_process_exit_cb;
   proc->events = data->events;
   proc->detach = detach;
   proc->cwd = cwd;
@@ -21923,7 +21923,7 @@ static void on_job_output(Stream *stream, TerminalJobData *data, RBuffer *buf,
   rbuffer_consumed(buf, count);
 }
 
-static void on_process_exit(Process *proc, int status, void *d)
+static void eval_job_process_exit_cb(Process *proc, int status, void *d)
 {
   TerminalJobData *data = d;
   if (data->term && !data->exited) {
@@ -21947,9 +21947,15 @@ static void on_process_exit(Process *proc, int status, void *d)
 
 static void term_write(char *buf, size_t size, void *d)
 {
-  TerminalJobData *data = d;
+  TerminalJobData *job = d;
+  if (job->in.closed) {
+    // If the backing stream was closed abruptly, there may be write events
+    // ahead of the terminal close event. Just ignore the writes.
+    ILOG("write failed: stream is closed");
+    return;
+  }
   WBuffer *wbuf = wstream_new_buffer(xmemdup(buf, size), size, 1, xfree);
-  wstream_write(&data->in, wbuf);
+  wstream_write(&job->in, wbuf);
 }
 
 static void term_resize(uint16_t width, uint16_t height, void *d)
