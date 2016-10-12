@@ -3,17 +3,22 @@
 func Test_win_getid()
   edit one
   let id1 = win_getid()
+  let w:one = 'one'
   split two
   let id2 = win_getid()
   let bufnr2 = bufnr('%')
+  let w:two = 'two'
   split three
   let id3 = win_getid()
+  let w:three = 'three'
   tabnew
   edit four
   let id4 = win_getid()
+  let w:four = 'four'
   split five
   let id5 = win_getid()
   let bufnr5 = bufnr('%')
+  let w:five = 'five'
   tabnext
 
   wincmd w
@@ -28,6 +33,9 @@ func Test_win_getid()
   call assert_equal("three", expand("%"))
   call assert_equal(id3, win_getid())
   let nr3 = winnr()
+  call assert_equal('one', getwinvar(id1, 'one'))
+  call assert_equal('two', getwinvar(id2, 'two'))
+  call assert_equal('three', getwinvar(id3, 'three'))
   tabnext
   call assert_equal("five", expand("%"))
   call assert_equal(id5, win_getid())
@@ -36,7 +44,14 @@ func Test_win_getid()
   call assert_equal("four", expand("%"))
   call assert_equal(id4, win_getid())
   let nr4 = winnr()
+  call assert_equal('four', getwinvar(id4, 'four'))
+  call assert_equal('five', getwinvar(id5, 'five'))
+  call settabwinvar(1, id2, 'two', '2')
+  call setwinvar(id4, 'four', '4')
   tabnext
+  call assert_equal('4', gettabwinvar(2, id4, 'four'))
+  call assert_equal('five', gettabwinvar(2, id5, 'five'))
+  call assert_equal('2', getwinvar(id2, 'two'))
 
   exe nr1 . "wincmd w"
   call assert_equal(id1, win_getid())

@@ -316,4 +316,7 @@ enum {
 #define DIP_OPT 0x10    // also use "opt" directory in 'packpath'
 #define DIP_NORTP 0x20  // do not use 'runtimepath'
 
+// Lowest number used for window ID. Cannot have this many windows per tab.
+#define LOWEST_WIN_ID 1000
+
 #endif /* NVIM_VIM_H */

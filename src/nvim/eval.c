@@ -6709,7 +6709,6 @@ static int get_env_tv(char_u **arg, typval_T *rettv, int evaluate)
 # include "funcs.generated.h"
 #endif
 
-
 /*
  * Function given to ExpandGeneric() to obtain the list of internal
  * or user defined function names.
@@ -7712,26 +7711,47 @@ static void f_bufnr(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     rettv->vval.v_number = -1;
 }
 
-/*
- * "bufwinnr(nr)" function
- */
-static void f_bufwinnr(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+static void buf_win_common(typval_T *argvars, typval_T *rettv, bool get_nr)
 {
-  (void)get_tv_number(&argvars[0]);         /* issue errmsg if type error */
-  ++emsg_off;
+  int error = false;
+  (void)get_tv_number_chk(&argvars[0], &error);  // issue errmsg if type error
+  if (error) {  // the argument has an invalid type
+    rettv->vval.v_number = -1;
+    return;
+  }
 
-  buf_T *buf = get_buf_tv(&argvars[0], TRUE);
+  emsg_off++;
+  buf_T *buf = get_buf_tv(&argvars[0], true);
+  if (buf == NULL) {  // no need to search if buffer was not found
+    rettv->vval.v_number = -1;
+    goto end;
+  }
+
   int winnr = 0;
+  int winid;
   bool found_buf = false;
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-    ++winnr;
+    winnr++;
     if (wp->w_buffer == buf) {
       found_buf = true;
+      winid = wp->handle;
       break;
     }
   }
-  rettv->vval.v_number = (found_buf ? winnr : -1);
-  --emsg_off;
+  rettv->vval.v_number = (found_buf ? (get_nr ? winnr : winid) : -1);
+end:
+  emsg_off--;
+}
+
+/// "bufwinid(nr)" function
+static void f_bufwinid(typval_T *argvars, typval_T *rettv, FunPtr fptr) {
+  buf_win_common(argvars, rettv, false);
+}
+
+/// "bufwinnr(nr)" function
+static void f_bufwinnr(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  buf_win_common(argvars, rettv, true);
 }
 
 /*
@@ -10279,7 +10299,11 @@ find_win_by_nr (
   }
 
   FOR_ALL_WINDOWS_IN_TAB(wp, tp) {
-    if (--nr <= 0) {
+    if (nr >= LOWEST_WIN_ID) {
+      if (wp->handle == nr) {
+        return wp;
+      }
+    } else if (--nr <= 0) {
       return wp;
     }
   }

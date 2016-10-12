@@ -1813,6 +1813,7 @@ buflisted({expr})		Number	TRUE if buffer {expr} is listed
 bufloaded({expr})		Number	TRUE if buffer {expr} is loaded
 bufname({expr})		String	Name of the buffer {expr}
 bufnr({expr} [, {create}])	Number	Number of the buffer {expr}
+bufwinid({expr})		Number	window ID of buffer {expr}
 bufwinnr({expr})		Number	window number of buffer {expr}
 byte2line({byte})		Number	line number at byte count {byte}
 byteidx({expr}, {nr})		Number	byte index of {nr}'th char in {expr}
@@ -2244,6 +2245,7 @@ arglistid([{winnr} [, {tabnr}]])
 		With {winnr} only use this window in the current tab page.
 		With {winnr} and {tabnr} use the window in the specified tab
 		page.
+		{winnr} can be the window number or the window ID.
 
 							*argv()*
 argv([{nr}])	The result is the {nr}th file in the argument list of the
@@ -2468,6 +2470,16 @@ bufnr({expr} [, {create}])
 		of existing buffers.  Note that not all buffers with a smaller
 		number necessarily exist, because ":bwipeout" may have removed
 		them.  Use bufexists() to test for the existence of a buffer.
+
+bufwinid({expr})					*bufwinid()*
+		The result is a Number, which is the window ID of the first
+		window associated with buffer {expr}.  For the use of {expr},
+		see |bufname()| above.  If buffer {expr} doesn't exist or
+		there is no such window, -1 is returned.  Example: >
+
+	echo "A window containing buffer 1 is " . (bufwinid(1))
+<
+		Only deals with the current tab page.
 
 bufwinnr({expr})					*bufwinnr()*
 		The result is a Number, which is the number of the first
@@ -3721,6 +3733,7 @@ getcwd([{winnr}[, {tabnr}]])				*getcwd()*
 			getcwd(0)
 			getcwd(0, 0)
 <		If {winnr} is -1 it is ignored, only the tab is resolved.
+		{winnr} can be the window number or the window ID.
 
 
 getfsize({fname})					*getfsize()*
@@ -3815,7 +3828,9 @@ getline({lnum} [, {end}])
 
 getloclist({nr})					*getloclist()*
 		Returns a list with all the entries in the location list for
-		window {nr}. When {nr} is zero the current window is used.
+		window {nr}. {nr} can be the window number or the window ID.
+		When {nr} is zero the current window is used.
+
 		For a location list window, the displayed location list is
 		returned.  For an invalid window number {nr}, an empty list is
 		returned. Otherwise, same as |getqflist()|.
@@ -3943,6 +3958,7 @@ gettabwinvar({tabnr}, {winnr}, {varname} [, {def}])		*gettabwinvar()*
 		Note that {varname} must be the name without "w:".
 		Tabs are numbered starting with one.  For the current tabpage
 		use |getwinvar()|.
+		{winnr} can be the window number or the window ID.
 		When {winnr} is zero the current window is used.
 		This also works for a global option, buffer-local option and
 		window-local option, but it doesn't work for a global variable
@@ -4070,7 +4086,8 @@ haslocaldir([{winnr}[, {tabnr}]])			*haslocaldir()*
 			haslocaldir()
 			haslocaldir(0)
 			haslocaldir(0, 0)
-<		If {winnr} is -1 it is ignored, only the tab is resolved.
+<		{winnr} can be the window number or the window ID.
+		If {winnr} is -1 it is ignored, only the tab is resolved.
 
 hasmapto({what} [, {mode} [, {abbr}]])			*hasmapto()*
 		The result is a Number, which is 1 if there is a mapping that
@@ -6059,11 +6076,13 @@ setline({lnum}, {text})					*setline()*
 
 setloclist({nr}, {list} [, {action}[, {title}]])	*setloclist()*
 		Create or replace or add to the location list for window {nr}.
-		When {nr} is zero the current window is used. For a location
-		list window, the displayed location list is modified.  For an
-		invalid window number {nr}, -1 is returned. If {title} is
-		given, it will be used to set |w:quickfix_title| after opening
-		the location window.
+		{nr} can be the window number or the window ID.
+		When {nr} is zero the current window is used.
+
+		For a location list window, the displayed location list is
+		modified.  For an invalid window number {nr}, -1 is returned. If
+		{title} is given, it will be used to set |w:quickfix_title|
+		after opening the location window.
 		Otherwise, same as |setqflist()|.
 		Also see |location-list|.
 
@@ -6227,6 +6246,7 @@ settabwinvar({tabnr}, {winnr}, {varname}, {val})	*settabwinvar()*
 		{val}.
 		Tabs are numbered starting with one.  For the current tabpage
 		use |setwinvar()|.
+		{winnr} can be the window number or the window ID.
 		When {winnr} is zero the current window is used.
 		This also works for a global or local buffer option, but it
 		doesn't work for a global or local buffer variable.
@@ -7255,9 +7275,11 @@ win_id2win({expr})					*win_id2win()*
 
 							*winbufnr()*
 winbufnr({nr})	The result is a Number, which is the number of the buffer
-		associated with window {nr}.  When {nr} is zero, the number of
-		the buffer in the current window is returned.  When window
-		{nr} doesn't exist, -1 is returned.
+		associated with window {nr}.  {nr} can be the window number or
+		the window ID.
+		When {nr} is zero, the number of the buffer in the current
+		window is returned.
+		When window {nr} doesn't exist, -1 is returned.
 		Example: >
   :echo "The file in the current window is " . bufname(winbufnr(0))
 <
@@ -7268,6 +7290,7 @@ wincol()	The result is a Number, which is the virtual column of the
 
 winheight({nr})						*winheight()*
 		The result is a Number, which is the height of window {nr}.
+		{nr} can be the window number or the window ID.
 		When {nr} is zero, the height of the current window is
 		returned.  When window {nr} doesn't exist, -1 is returned.
 		An existing window always has a height of zero or more.
@@ -7347,6 +7370,7 @@ winsaveview()	Returns a |Dictionary| that contains information to restore
 
 winwidth({nr})						*winwidth()*
 		The result is a Number, which is the width of window {nr}.
+		{nr} can be the window number or the window ID.
 		When {nr} is zero, the width of the current window is
 		returned.  When window {nr} doesn't exist, -1 is returned.
 		An existing window always has a width of zero or more.
