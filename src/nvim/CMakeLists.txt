@@ -156,7 +156,7 @@ foreach(sfile ${NEOVIM_SOURCES}
               ${GENERATED_API_DISPATCH})
   get_filename_component(full_d ${sfile} PATH)
   file(RELATIVE_PATH d "${PROJECT_SOURCE_DIR}/src/nvim" "${full_d}")
-  if(${d} MATCHES "^[.][.]")
+  if(${d} MATCHES "^([.][.]|auto/)")
     file(RELATIVE_PATH d "${GENERATED_DIR}" "${full_d}")
   endif()
   get_filename_component(f ${sfile} NAME)
