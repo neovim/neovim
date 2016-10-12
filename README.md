@@ -4,7 +4,7 @@
 [Documentation](https://neovim.io/doc) |
 [Twitter](https://twitter.com/Neovim) |
 [Community](https://neovim.io/community/) |
-[![Gitter chat](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/neovim/neovim?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[Gitter **Chat**](https://gitter.im/neovim/neovim)
 
 [![Travis Build Status](https://travis-ci.org/neovim/neovim.svg?branch=master)](https://travis-ci.org/neovim/neovim)
 [![AppVeyor Build status](https://ci.appveyor.com/api/projects/status/cf1jwc29198748we/branch/master?svg=true)](https://ci.appveyor.com/project/neovim/neovim/branch/master)
@@ -12,7 +12,7 @@
 [![Coverage Status](https://img.shields.io/coveralls/neovim/neovim.svg)](https://coveralls.io/r/neovim/neovim)
 [![Coverity Scan Build](https://scan.coverity.com/projects/2227/badge.svg)](https://scan.coverity.com/projects/2227)
 [![Clang Scan Build](https://neovim.io/doc/reports/clang/badge.svg)](https://neovim.io/doc/reports/clang)
-[![Debian package build](https://www.debian.org/logos/openlogo-25.png)](https://buildd.debian.org/neovim)
+<a href="https://buildd.debian.org/neovim"><img src="https://www.debian.org/logos/openlogo-nd-25.png" width="13" height="15">Debian</a>
 
 Neovim is a project that seeks to aggressively refactor Vim in order to:
 
