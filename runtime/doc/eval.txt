@@ -1897,7 +1897,8 @@ getcmdline()			String	return the current command-line
 getcmdpos()			Number	return cursor position in command-line
 getcmdtype()			String	return current command-line type
 getcmdwintype()			String	return current command-line window type
-getcompletion({pat}, {type})	List	list of cmdline completion matches
+getcompletion({pat}, {type} [, {filtered}])
+				List	list of cmdline completion matches
 getcurpos()			List	position of the cursor
 getcwd([{winnr} [, {tabnr}]])	String	the current working directory
 getfontname([{name}])		String	name of font being used
@@ -3651,7 +3652,7 @@ getcmdwintype()						*getcmdwintype()*
 		values are the same as |getcmdtype()|. Returns an empty string
 		when not in the command-line window.
 
-getcompletion({pat}, {type})				*getcompletion()*
+getcompletion({pat}, {type} [, {filtered}])		*getcompletion()*
 		Return a list of command-line completion matches. {type}
 		specifies what for.  The following completion types are
 		supported:
@@ -3690,6 +3691,10 @@ getcompletion({pat}, {type})				*getcompletion()*
 		If {pat} is an empty string, then all the matches are returned.
 		Otherwise only items matching {pat} are returned. See
 		|wildcards| for the use of special characters in {pat}.
+
+		If the optional {filtered} flag is set to 1, then 'wildignore'
+		is applied to filter the results.  Otherwise all the matches
+		are returned. The 'wildignorecase' option always applies.
 
 		If there are no matches, an empty list is returned.  An
 		invalid value for {type} produces an error.

@@ -9648,11 +9648,21 @@ static void f_getcompletion(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   char_u        *pat;
   expand_T      xpc;
+  bool          filtered = false;
   int           options = WILD_SILENT | WILD_USE_NL | WILD_ADD_SLASH
           | WILD_NO_BEEP;
 
+  if (argvars[2].v_type != VAR_UNKNOWN) {
+    filtered = get_tv_number_chk(&argvars[2], NULL);
+  }
+
   if (p_wic) {
     options |= WILD_ICASE;
+  }
+
+  // For filtered results, 'wildignore' is used
+  if (!filtered) {
+    options |= WILD_KEEP_ALL;
   }
 
   ExpandInit(&xpc);
@@ -9670,6 +9680,16 @@ static void f_getcompletion(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   if (xpc.xp_context == EXPAND_MENUS) {
     set_context_in_menu_cmd(&xpc, (char_u *)"menu", xpc.xp_pattern, false);
+    xpc.xp_pattern_len = STRLEN(xpc.xp_pattern);
+  }
+
+  if (xpc.xp_context == EXPAND_CSCOPE) {
+    set_context_in_cscope_cmd(&xpc, xpc.xp_pattern, CMD_cscope);
+    xpc.xp_pattern_len = STRLEN(xpc.xp_pattern);
+  }
+
+  if (xpc.xp_context == EXPAND_SIGN) {
+    set_context_in_sign_cmd(&xpc, xpc.xp_pattern);
     xpc.xp_pattern_len = STRLEN(xpc.xp_pattern);
   }
 

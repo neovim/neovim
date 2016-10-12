@@ -114,7 +114,7 @@ return {
     getcmdpos={},
     getcmdtype={},
     getcmdwintype={},
-    getcompletion={args=2},
+    getcompletion={args={2, 3}},
     getcurpos={},
     getcwd={args={0,2}},
     getfontname={args={0, 1}},
