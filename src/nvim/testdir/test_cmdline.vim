@@ -152,3 +152,11 @@ func Test_getcompletion()
 
   call assert_fails('call getcompletion("", "burp")', 'E475:')
 endfunc
+
+func Test_expand_star_star()
+  call mkdir('a/b', 'p')
+  call writefile(['asdfasdf'], 'a/b/fileXname')
+  call feedkeys(":find **/fileXname\<Tab>\<CR>", 'xt')
+  call assert_equal('find a/b/fileXname', getreg(':'))
+  call delete('a', 'rf')
+endfunc
