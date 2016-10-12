@@ -6726,11 +6726,6 @@ do_exedit (
         old_curwin == NULL ? curwin : NULL);
   } else if ((eap->cmdidx != CMD_split && eap->cmdidx != CMD_vsplit)
              || *eap->arg != NUL) {
-    // ":edit <blank>" is a no-op in terminal buffers. #2822
-    if (curbuf->terminal != NULL && eap->cmdidx == CMD_edit && *eap->arg == NUL) {
-      return;
-    }
-
     /* Can't edit another file when "curbuf_lock" is set.  Only ":edit"
      * can bring us here, others are stopped earlier. */
     if (*eap->arg != NUL && curbuf_locked())
@@ -7921,9 +7916,8 @@ static void ex_normal(exarg_T *eap)
   if (force_restart_edit) {
     force_restart_edit = false;
   } else {
-    // some function called was aware of ex_normal and decided to override the
-    // value of restart_edit anyway. So far only used in terminal mode(see
-    // terminal_enter() in edit.c)
+    // Some function (terminal_enter()) was aware of ex_normal and decided to
+    // override the value of restart_edit anyway.
     restart_edit = save_restart_edit;
   }
   p_im = save_insertmode;

@@ -276,30 +276,25 @@ bool buf_valid(buf_T *buf)
   return false;
 }
 
-/*
- * Close the link to a buffer.
- * "action" is used when there is no longer a window for the buffer.
- * It can be:
- * 0			buffer becomes hidden
- * DOBUF_UNLOAD		buffer is unloaded
- * DOBUF_DELETE		buffer is unloaded and removed from buffer list
- * DOBUF_WIPE		buffer is unloaded and really deleted
- * When doing all but the first one on the current buffer, the caller should
- * get a new buffer very soon!
- *
- * The 'bufhidden' option can force freeing and deleting.
- *
- * When "abort_if_last" is TRUE then do not close the buffer if autocommands
- * cause there to be only one window with this buffer.  e.g. when ":quit" is
- * supposed to close the window but autocommands close all other windows.
- */
-void 
-close_buffer (
-    win_T *win,               /* if not NULL, set b_last_cursor */
-    buf_T *buf,
-    int action,
-    int abort_if_last
-)
+/// Close the link to a buffer.
+///
+/// @param win    If not NULL, set b_last_cursor.
+/// @param buf
+/// @param action Used when there is no longer a window for the buffer.
+///               Possible values:
+///                 0            buffer becomes hidden
+///                 DOBUF_UNLOAD buffer is unloaded
+///                 DOBUF_DELETE buffer is unloaded and removed from buffer list
+///                 DOBUF_WIPE   buffer is unloaded and really deleted
+///               When doing all but the first one on the current buffer, the
+///               caller should get a new buffer very soon!
+///               The 'bufhidden' option can force freeing and deleting.
+/// @param abort_if_last
+///               If TRUE, do not close the buffer if autocommands cause
+///               there to be only one window with this buffer. e.g. when
+///               ":quit" is supposed to close the window but autocommands
+///               close all other windows.
+void close_buffer(win_T *win, buf_T *buf, int action, int abort_if_last)
 {
   bool unload_buf = (action != 0);
   bool del_buf = (action == DOBUF_DEL || action == DOBUF_WIPE);

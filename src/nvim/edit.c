@@ -1286,10 +1286,9 @@ bool edit(int cmdchar, bool startln, long count)
 {
   if (curbuf->terminal) {
     if (ex_normal_busy) {
-      // don't enter terminal mode from `ex_normal`, which can result in all
-      // kinds of havoc(such as terminal mode recursiveness). Instead, set a
-      // flag that allow us to force-set the value of `restart_edit` before
-      // `ex_normal` returns
+      // Do not enter terminal mode from ex_normal(), which would cause havoc
+      // (such as terminal-mode recursiveness). Instead set a flag to force-set
+      // the value of `restart_edit` before `ex_normal` returns.
       restart_edit = 'i';
       force_restart_edit = true;
     } else {
