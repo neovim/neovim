@@ -1036,8 +1036,9 @@ void set_init_3(void)
     int idx_ffs = findoption((char_u *)"ffs");
 
     // Apply the first entry of 'fileformats' to the initial buffer.
-    if (idx_ffs >= 0 && (options[idx_ffs].flags & P_WAS_SET))
+    if (idx_ffs >= 0 && (options[idx_ffs].flags & P_WAS_SET)) {
       set_fileformat(default_fileformat(), OPT_LOCAL);
+    }
   }
 
   set_title_defaults();
