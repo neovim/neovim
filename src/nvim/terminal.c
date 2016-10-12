@@ -366,10 +366,10 @@ void terminal_resize(Terminal *term, uint16_t width, uint16_t height)
 void terminal_enter(void)
 {
   buf_T *buf = curbuf;
+  assert(buf->terminal);  // Should only be called when curbuf has a terminal.
   TerminalState state, *s = &state;
   memset(s, 0, sizeof(TerminalState));
   s->term = buf->terminal;
-  assert(s->term && "should only be called when curbuf has a terminal");
 
   // Ensure the terminal is properly sized.
   terminal_resize(s->term, 0, 0);
