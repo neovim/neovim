@@ -397,12 +397,13 @@ static void send_output(uint8_t **ptr)
     size_t clen = (size_t)mb_ptr2len(p);
     UI_CALL(put, p, (size_t)clen);
     col++;
-    if (utf_ambiguous_width(utf_ptr2char(p))) {
-      pending_cursor_update = true;
-    } else if (mb_ptr2cells(p) > 1) {
+    if (mb_ptr2cells(p) > 1) {
       // double cell character, blank the next cell
       UI_CALL(put, NULL, 0);
       col++;
+    }
+    if (utf_ambiguous_width(utf_ptr2char(p))) {
+      pending_cursor_update = true;
     }
     if (col >= width) {
       ui_linefeed();
