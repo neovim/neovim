@@ -1,13 +1,5 @@
-let s:bad_responses = [
-            \ 'unable to parse python response',
-            \ 'unable to parse',
-            \ 'unable to get pypi response',
-            \ 'unable to get neovim executable',
-            \ 'unable to find neovim version'
-            \ ]
-
 function! s:is_bad_response(s) abort
-    return index(s:bad_responses, a:s) >= 0
+  return a:s =~? '\v(^unable)|(^error)'
 endfunction
 
 function! s:trim(s) abort
@@ -32,44 +24,41 @@ endfunction
 
 " Fetch the contents of a URL.
 function! s:download(url) abort
-  let content = ''
   if executable('curl')
-    let content = system(['curl', '-sL', a:url])
-  endif
-
-  if empty(content) && executable('python')
+    let rv = system(['curl', '-sL', a:url])
+    return v:shell_error ? 'curl error: '.v:shell_error : rv
+  elseif executable('python')
     let script = "
           \try:\n
           \    from urllib.request import urlopen\n
           \except ImportError:\n
           \    from urllib2 import urlopen\n
           \\n
-          \try:\n
-          \    response = urlopen('".a:url."')\n
-          \    print(response.read().decode('utf8'))\n
-          \except Exception:\n
-          \    pass\n
+          \response = urlopen('".a:url."')\n
+          \print(response.read().decode('utf8'))\n
           \"
-    let content = system(['python', '-c', script, '2>/dev/null'])
+    let rv = system(['python', '-c', script])
+    return empty(rv) && v:shell_error
+          \ ? 'python urllib.request error: '.v:shell_error
+          \ : rv
   endif
-
-  return content
+  return 'missing `curl` and `python`, cannot make pypi request'
 endfunction
 
 
-" Get the latest Neovim Python client version from PyPI.  Result is cached.
+" Get the latest Neovim Python client version from PyPI.
 function! s:latest_pypi_version() abort
-  if exists('s:pypi_version')
-    return s:pypi_version
+  let pypi_version = 'unable to get pypi response'
+  let pypi_response = s:download('https://pypi.python.org/pypi/neovim/json')
+  if !empty(pypi_response)
+    try
+      let pypi_data = json_decode(pypi_response)
+    catch /E474/
+      return 'error: '.pypi_response
+    endtry
+    let pypi_version = get(get(pypi_data, 'info', {}), 'version', 'unable to parse')
   endif
-
-  let s:pypi_version = 'unable to get pypi response'
-  let pypi_info = s:download('https://pypi.python.org/pypi/neovim/json')
-  if !empty(pypi_info)
-    let pypi_data = json_decode(pypi_info)
-    let s:pypi_version = get(get(pypi_data, 'info', {}), 'version', 'unable to parse')
-    return s:pypi_version
-  endif
+  return pypi_version
 endfunction
 
 " Get version information using the specified interpreter.  The interpreter is
@@ -97,11 +86,11 @@ function! s:version_info(python) abort
   let nvim_path = s:trim(system([
         \ a:python,
         \ '-c',
-        \ 'import neovim; print(neovim.__file__)',
-        \ '2>/dev/null']))
+        \ 'import neovim; print(neovim.__file__)']))
+  let nvim_path = v:shell_error ? '' : nvim_path
 
   if empty(nvim_path)
-    return [python_version, 'unable to find neovim executable', pypi_version, 'unable to get neovim executable']
+    return [python_version, 'unable to find nvim executable', pypi_version, 'unable to get nvim executable']
   endif
 
   " Assuming that multiple versions of a package are installed, sort them
@@ -112,7 +101,7 @@ function! s:version_info(python) abort
     return a == b ? 0 : a > b ? 1 : -1
   endfunction
 
-  let nvim_version = 'unable to find neovim version'
+  let nvim_version = 'unable to find nvim version'
   let base = fnamemodify(nvim_path, ':h')
   let metas = glob(base.'-*/METADATA', 1, 1) + glob(base.'-*/PKG-INFO', 1, 1)
   let metas = sort(metas, 's:compare')
@@ -334,12 +323,13 @@ function! s:check_python(version) abort
     endif
 
     if s:is_bad_response(latest)
-      call health#report_warn('Unable to fetch latest Neovim Python client version.')
+      call health#report_warn('Unable to contact PyPI.')
+      call health#report_error('HTTP request failed: '.latest)
     endif
 
     if s:is_bad_response(status)
-      call health#report_warn('Latest Neovim Python client versions: ('.latest.')')
-    else
+      call health#report_warn('Latest Neovim Python client version: ('.latest.')')
+    elseif !s:is_bad_response(latest)
       call health#report_ok('Latest Neovim Python client is installed: ('.status.')')
     endif
   endif
