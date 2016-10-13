@@ -313,7 +313,7 @@ describe("tui 't_Co' (terminal colors)", function()
     -- This is ugly because :term/termopen() forces TERM=xterm-256color.
     -- TODO: Revisit this after jobstart/termopen accept `env` dict.
     screen = thelpers.screen_setup(0, string.format(
-      [=[['sh', '-c', 'TERM=%s %s %s -u NONE -i NONE --cmd "silent set noswapfile"']]=],
+      [=[['sh', '-c', 'LANG=C TERM=%s %s %s -u NONE -i NONE --cmd "silent set noswapfile"']]=],
       term,
       (colorterm ~= nil and "COLORTERM="..colorterm or ""),
       helpers.nvim_prog))
