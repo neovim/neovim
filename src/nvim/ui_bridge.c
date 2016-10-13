@@ -1,4 +1,5 @@
-// UI wrapper for the built-in TUI. Sends UI requests to the TUI thread.
+// UI wrapper that sends UI requests to the UI thread.
+// Used by the built-in TUI and external libnvim-based UIs.
 
 #include <assert.h>
 #include <stdbool.h>
@@ -9,11 +10,11 @@
 #include "nvim/vim.h"
 #include "nvim/ui.h"
 #include "nvim/memory.h"
+#include "nvim/ui_bridge.h"
 #include "nvim/ugrid.h"
-#include "nvim/tui/ui_bridge.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "tui/ui_bridge.c.generated.h"
+# include "ui_bridge.c.generated.h"
 #endif
 
 #define UI(b) (((UIBridgeData *)b)->ui)
