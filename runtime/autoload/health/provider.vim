@@ -34,7 +34,7 @@ endfunction
 function! s:download(url) abort
   let content = ''
   if executable('curl')
-    let content = system(['curl', '-sL', "'", a:url, "'"])
+    let content = system(['curl', '-sL', a:url])
   endif
 
   if empty(content) && executable('python')
@@ -50,7 +50,7 @@ function! s:download(url) abort
           \except Exception:\n
           \    pass\n
           \"
-    let content = system(['python', '-c', "'", script, "'", '2>/dev/null'])
+    let content = system(['python', '-c', script, '2>/dev/null'])
   endif
 
   return content
