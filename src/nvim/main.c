@@ -270,11 +270,6 @@ int main(int argc, char **argv)
 
   setbuf(stdout, NULL);
 
-  /* This message comes before term inits, but after setting "silent_mode"
-   * when the input is not a tty. */
-  if (GARGCOUNT > 1 && !silent_mode)
-    printf(_("%d files to edit\n"), GARGCOUNT);
-
   full_screen = true;
   check_tty(&params);
 
