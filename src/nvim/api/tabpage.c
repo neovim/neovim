@@ -159,6 +159,23 @@ Window nvim_tabpage_get_win(Tabpage tabpage, Error *err)
   }
 }
 
+/// Gets the tab page number
+///
+/// @param tabpage The tabpage handle
+/// @param[out] err Details of an error that may have occurred
+/// @return The tabpage number
+Integer nvim_tabpage_get_number(Tabpage tabpage, Error *err)
+{
+  Integer rv = 0;
+  tabpage_T *tab = find_tab_by_handle(tabpage, err);
+
+  if (!tab) {
+    return rv;
+  }
+
+  return tabpage_index(tab);
+}
+
 /// Checks if a tab page is valid
 ///
 /// @param tabpage The tab page handle

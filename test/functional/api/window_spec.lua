@@ -200,6 +200,30 @@ describe('window_* functions', function()
     end)
   end)
 
+  describe('get_number', function()
+    it('works', function()
+      local wins = nvim('list_wins')
+      eq(1, window('get_number', wins[1]))
+
+      nvim('command', 'split')
+      local win1, win2 = unpack(nvim('list_wins'))
+      eq(1, window('get_number', win1))
+      eq(2, window('get_number', win2))
+
+      nvim('command', 'wincmd J')
+      eq(2, window('get_number', win1))
+      eq(1, window('get_number', win2))
+
+      nvim('command', 'tabnew')
+      local win3 = nvim('list_wins')[3]
+      -- First tab page
+      eq(2, window('get_number', win1))
+      eq(1, window('get_number', win2))
+      -- Second tab page
+      eq(1, window('get_number', win3))
+    end)
+  end)
+
   describe('is_valid', function()
     it('works', function()
       nvim('command', 'split')

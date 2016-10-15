@@ -51,6 +51,22 @@ describe('tabpage_* functions', function()
     end)
   end)
 
+  describe('get_number', function()
+    it('works', function()
+      local tabs = nvim('list_tabpages')
+      eq(1, tabpage('get_number', tabs[1]))
+
+      nvim('command', 'tabnew')
+      local tab1, tab2 = unpack(nvim('list_tabpages'))
+      eq(1, tabpage('get_number', tab1))
+      eq(2, tabpage('get_number', tab2))
+
+      nvim('command', '-tabmove')
+      eq(2, tabpage('get_number', tab1))
+      eq(1, tabpage('get_number', tab2))
+    end)
+  end)
+
   describe('is_valid', function()
     it('works', function()
       nvim('command', 'tabnew')
