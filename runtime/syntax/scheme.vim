@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	Scheme (R5RS + some R6RS extras)
-" Last Change:	2012 May 13
+" Last Change:	2016 May 23
 " Maintainer:	Sergey Khorev <sergey.khorev@gmail.com>
 " Original author:	Dirk van Deun <dirk@igwe.vub.ac.be>
 
@@ -245,6 +245,18 @@ if exists("b:is_mzscheme") || exists("is_mzscheme")
     syn region schemeUnquote matchgroup=Delimiter start="#,@\[" end="\]" contains=ALL
     syn region schemeQuoted matchgroup=Delimiter start="#['`]" end=![ \t()\[\]";]!me=e-1 contains=ALL
     syn region schemeQuoted matchgroup=Delimiter start="#['`](" matchgroup=Delimiter end=")" contains=ALL
+
+    " Identifiers are very liberal in MzScheme/Racket
+    syn match schemeOther ![^()[\]{}",'`;#|\\ ]\+!
+
+    " Language setting
+    syn match schemeLang "#lang [-+_/A-Za-z0-9]\+\>"
+
+    " Various number forms
+    syn match schemeNumber "[-+]\=[0-9]\+\(\.[0-9]*\)\=\(e[-+]\=[0-9]\+\)\=\>"
+    syn match schemeNumber "[-+]\=\.[0-9]\+\(e[-+]\=[0-9]\+\)\=\>"
+    syn match schemeNumber "[-+]\=[0-9]\+/[0-9]\+\>"
+    syn match schemeNumber "\([-+]\=\([0-9]\+\(\.[0-9]*\)\=\(e[-+]\=[0-9]\+\)\=\|\.[0-9]\+\(e[-+]\=[0-9]\+\)\=\|[0-9]\+/[0-9]\+\)\)\=[-+]\([0-9]\+\(\.[0-9]*\)\=\(e[-+]\=[0-9]\+\)\=\|\.[0-9]\+\(e[-+]\=[0-9]\+\)\=\|[0-9]\+/[0-9]\+\)\=i\>"
 endif
 
 
@@ -321,6 +333,9 @@ if version >= 508 || !exists("did_scheme_syntax_inits")
 
   HiLink schemeExtSyntax	Type
   HiLink schemeExtFunc		PreProc
+
+  HiLink schemeLang		PreProc
+
   delcommand HiLink
 endif
 

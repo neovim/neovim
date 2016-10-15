@@ -2,9 +2,9 @@
 " Language:	Groovy
 " Original Author:	Alessio Pace <billy.corgan@tiscali.it>
 " Maintainer:	Tobias Rapp <yahuxo@gmx.de>
-" Version: 	0.1.14
+" Version: 	0.1.16
 " URL:	  http://www.vim.org/scripts/script.php?script_id=945
-" Last Change:	2015 Apr 21
+" Last Change:	2016 May 23
 
 " THE ORIGINAL AUTHOR'S NOTES:
 "
@@ -255,8 +255,11 @@ syn region  groovyString          start=+"+ end=+"+ end=+$+ contains=groovySpeci
 syn region  groovyString          start=+'+ end=+'+ end=+$+ contains=groovySpecialChar,groovySpecialError,@Spell
 syn region  groovyString          start=+"""+ end=+"""+ contains=groovySpecialChar,groovySpecialError,@Spell,groovyELExpr
 syn region  groovyString          start=+'''+ end=+'''+ contains=groovySpecialChar,groovySpecialError,@Spell
-" regex string
-syn region groovyString           start='/[^/]'  end='/' contains=groovySpecialChar,groovyRegexChar,groovyELExpr
+if exists("groovy_regex_strings")
+  " regex strings interfere with the division operator and thus are disabled
+  " by default
+  syn region groovyString         start='/[^/*]' end='/' contains=groovySpecialChar,groovyRegexChar,groovyELExpr
+endif
 " syn region groovyELExpr start=+${+ end=+}+ keepend contained
 syn match groovyELExpr /\${.\{-}}/ contained
 syn match groovyELExpr /\$[a-zA-Z_][a-zA-Z0-9_.]*/ contained
