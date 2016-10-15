@@ -70,16 +70,16 @@ describe('execute()', function()
   end)
 
   it('silences command run inside', function()
-    local screen = Screen.new(20, 5)
+    local screen = Screen.new(40, 5)
     screen:attach()
     screen:set_default_attr_ids( {[0] = {bold=true, foreground=255}} )
     feed(':let g:mes = execute("echon 42")<CR>')
     screen:expect([[
-    ^                    |
-    {0:~                   }|
-    {0:~                   }|
-    {0:~                   }|
-                        |
+    ^                                        |
+    {0:~                                       }|
+    {0:~                                       }|
+    {0:~                                       }|
+    :let g:mes = execute("echon 42")        |
     ]])
     eq('42', eval('g:mes'))
   end)
