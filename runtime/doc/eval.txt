@@ -1,4 +1,4 @@
-*eval.txt*	For Vim version 7.4.  Last change: 2016 May 05
+*eval.txt*	For Vim version 7.4.  Last change: 2016 May 20
 
 
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
@@ -7046,8 +7046,9 @@ timer_start({time}, {callback} [, {options}])
 		{only available when compiled with the |+timers| feature}
 
 timer_stop({timer})					*timer_stop()*
-		Stop a timer.  {timer} is an ID returned by timer_start().
-		The timer callback will no longer be invoked.
+		Stop a timer.  The timer callback will no longer be invoked.
+		{timer} is an ID returned by timer_start(), thus it must be a
+		Number.
 
 tolower({expr})						*tolower()*
 		The result is a copy of the String given, with all uppercase
