@@ -1962,10 +1962,9 @@ isdirectory({directory})	Number	TRUE if {directory} is a directory
 islocked({expr})		Number	TRUE if {expr} is locked
 items({dict})			List	key-value pairs in {dict}
 jobclose({job}[, {stream}])	Number	Closes a job stream(s)
-jobpid({job})			Number	Returns pid of a job.
-jobresize({job}, {width}, {height})
-				Number	Resize {job}'s pseudo terminal window
+jobget({job}[, {key}])		Dict	Returns job info/properties.
 jobsend({job}, {data})		Number	Writes {data} to {job}'s stdin
+jobset({job}, {dict})		Number	Sets job options/properties.
 jobstart({cmd}[, {opts}])	Number	Spawns {cmd} as a job
 jobstop({job})			Number	Stops a job
 jobwait({ids}[, {timeout}])	Number	Wait for a set of jobs
@@ -4407,13 +4406,7 @@ jobclose({job}[, {stream}])				{Nvim} *jobclose()*
 		with the "rpc" option.) If {stream} is omitted, all streams
 		are closed.
 
-jobpid({job})						{Nvim} *jobpid()*
-		Return the pid (process id) of {job}.
-
-jobresize({job}, {width}, {height})			{Nvim} *jobresize()*
-		Resize {job}'s pseudo terminal window to {width} and {height}.
-		This function will fail if used on jobs started without the
-		"pty" option.
+jobget({job}[, {get}])					{Nvim} *jobget()*
 
 jobsend({job}, {data})					{Nvim} *jobsend()*
 		Send data to {job} by writing it to the stdin of the process.
@@ -4430,6 +4423,8 @@ jobsend({job}, {data})					{Nvim} *jobsend()*
 		If the job was started with the rpc option this function
 		cannot be used, instead use |rpcnotify()| and |rpcrequest()|
 		to communicate with the job.
+
+jobset({job}, {properties})				{Nvim} *jobset()*
 
 jobstart({cmd}[, {opts}])				{Nvim} *jobstart()*
 		Spawns {cmd} as a job.  If {cmd} is a |List| it is run
@@ -4454,13 +4449,21 @@ jobstart({cmd}[, {opts}])				{Nvim} *jobstart()*
 			     the master file descriptor. "on_stderr" is ignored
 			     as all output will be received on stdout.
 
-		  width    : (pty only) Width of the terminal screen
-		  height   : (pty only) Height of the terminal screen
-		  TERM     : (pty only) $TERM environment variable
-		  detach   : (non-pty only) Detach the job process from the
+		  width    : (pty/term) Width of the terminal screen. Defaults
+			     to the current window width.
+		  height   : (pty/term) Height of the terminal screen Defaults
+			     to the current window height.
+		  TERM     : (pty/term) $TERM environment variable. Defaults
+			     to "xterm-256color"
+		  detach   : (non-pty/term) Detach the job process from the
 			     nvim process. The process will not get killed
 			     when nvim exits. If the process dies before
 			     nvim exits, on_exit will still be invoked.
+		  type     : (optional)
+			     "rpc" :
+			     "pty" :
+			     "term": Spawns {cmd} in a new pseudo-terminal
+				     connected to "buf". |terminal-emulator|
 
 		{opts} is passed as |self| to the callback; the caller may
 		pass arbitrary data by setting other keys.
@@ -4476,9 +4479,8 @@ jobstop({job})						{Nvim} *jobstop()*
 		Stop a job created with |jobstart()| by sending a `SIGTERM`
 		to the corresponding process. If the process doesn't exit
 		cleanly soon, a `SIGKILL` will be sent. When the job is
-		finally closed, the exit handler provided to |jobstart()| or
-		|termopen()| will be run.
-		See |job-control| for more information.
+		finally closed, the exit handler provided to |jobstart()| will
+		be run. |job-control|
 
 jobwait({ids}[, {timeout}])				{Nvim} *jobwait()*
 		Wait for a set of jobs to finish. The {ids} argument is a list
@@ -5684,12 +5686,6 @@ rpcrequest({channel}, {method}[, {args}...])		 {Nvim} *rpcrequest()*
 		|RPC| and blocks until a response is received.
 		Example: >
 			:let result = rpcrequest(rpc_chan, "func", 1, 2, 3)
-
-rpcstart({prog}[, {argv}])				   {Nvim} *rpcstart()*
-		Deprecated. Replace  >
-			:let id = rpcstart('prog', ['arg1', 'arg2'])
-<		with >
-			:let id = jobstart(['prog', 'arg1', 'arg2'], {'rpc': v:true})
 
 rpcstop({channel})					    {Nvim} *rpcstop()*
 		Closes an |RPC| {channel}.  If the channel is a job
@@ -6983,20 +6979,6 @@ tempname()					*tempname()* *temp-file-name*
 <		For Unix, the file will be in a private directory |tempfile|.
 		For MS-Windows forward slashes are used when the 'shellslash'
 		option is set or when 'shellcmdflag' starts with '-'.
-
-termopen({cmd}[, {opts}])			{Nvim} *termopen()*
-		Spawns {cmd} in a new pseudo-terminal session connected
-		to the current buffer.  {cmd} is the same as the one passed to
-		|jobstart()|.  This function fails if the current buffer is
-		modified (all buffer contents are destroyed).
-
-		The {opts} dict is similar to the one passed to |jobstart()|,
-		but the `pty`, `width`, `height`, and `TERM` fields are
-		ignored: `height`/`width` are taken from the current window
-		and `$TERM` is set to "xterm-256color".
-		Returns the same values as |jobstart()|.
-
-		See |terminal-emulator| for more information.
 
 tan({expr})						*tan()*
 		Return the tangent of {expr}, measured in radians, as a |Float|

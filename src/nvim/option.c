@@ -1,24 +1,22 @@
-/*
- * Code to handle user-settable options. This is all pretty much table-
- * driven. Checklist for adding a new option:
- * - Put it in the options array below (copy an existing entry).
- * - For a global option: Add a variable for it in option_defs.h.
- * - For a buffer or window local option:
- *   - Add a PV_XX entry to the enum below.
- *   - Add a variable to the window or buffer struct in buffer_defs.h.
- *   - For a window option, add some code to copy_winopt().
- *   - For a buffer option, add some code to buf_copy_options().
- *   - For a buffer string option, add code to check_buf_options().
- * - If it's a numeric option, add any necessary bounds checks to do_set().
- * - If it's a list of flags, add some code in do_set(), search for WW_ALL.
- * - When adding an option with expansion (P_EXPAND), but with a different
- *   default for Vi and Vim (no P_VI_DEF), add some code at VIMEXP.
- * - Add documentation!  One line in doc/help.txt, full description in
- *   options.txt, and any other related places.
- * - Add an entry in runtime/optwin.vim.
- * When making changes:
- * - Adjust the help for the option in doc/option.txt.
- */
+// Code to handle user-settable options. This is all pretty much table-
+// driven. Checklist for adding a new option:
+//   - Put it in the options array below (copy an existing entry).
+//   - For a global option: Add a variable for it in option_defs.h.
+//   - For a buffer or window local option:
+//     - Add an entry to options.lua.
+//     - Add a variable to the window or buffer struct in buffer_defs.h.
+//     - For a window option, add some code to copy_winopt().
+//     - For a buffer option, add some code to buf_copy_options().
+//     - For a buffer string option, add code to check_buf_options().
+//   - If it's a numeric option, add any necessary bounds checks to do_set().
+//   - If it's a list of flags, add some code in do_set(), search for WW_ALL.
+//   - When adding an option with expansion (P_EXPAND), but with a different
+//     default for Vi and Vim (no P_VI_DEF), add some code at VIMEXP.
+//   - Add documentation!  One line in doc/help.txt, full description in
+//     options.txt, and any other related places.
+//   - Add an entry in runtime/optwin.vim.
+// When making changes:
+//   - Adjust the help for the option in doc/option.txt.
 
 #define IN_OPTION_C
 #include <assert.h>
