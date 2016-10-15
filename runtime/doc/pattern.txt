@@ -1,4 +1,4 @@
-*pattern.txt*   For Vim version 7.4.  Last change: 2016 Apr 03
+*pattern.txt*   For Vim version 7.4.  Last change: 2016 Apr 26
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -1071,8 +1071,8 @@ x	A single character, with no special meaning, matches itself
 	  belonging to that character class.  The following character classes
 	  are supported:
 			  Name		Contents ~
-*[:alnum:]*		  [:alnum:]     letters and digits
-*[:alpha:]*		  [:alpha:]     letters
+*[:alnum:]*		  [:alnum:]     ASCII letters and digits
+*[:alpha:]*		  [:alpha:]     ASCII letters
 *[:blank:]*		  [:blank:]     space and tab characters
 *[:cntrl:]*		  [:cntrl:]     control characters
 *[:digit:]*		  [:digit:]     decimal digits
@@ -1080,7 +1080,7 @@ x	A single character, with no special meaning, matches itself
 *[:lower:]*		  [:lower:]     lowercase letters (all letters when
 					'ignorecase' is used)
 *[:print:]*		  [:print:]     printable characters including space
-*[:punct:]*		  [:punct:]     punctuation characters
+*[:punct:]*		  [:punct:]     ASCII punctuation characters
 *[:space:]*		  [:space:]     whitespace characters
 *[:upper:]*		  [:upper:]     uppercase letters (all letters when
 					'ignorecase' is used)
@@ -1097,7 +1097,8 @@ x	A single character, with no special meaning, matches itself
 	  These items only work for 8-bit characters, except [:lower:] and
 	  [:upper:] also work for multi-byte characters when using the new
 	  regexp engine.  See |two-engines|.  In the future these items may
-	  work for multi-byte characters.
+	  work for multi-byte characters.  For now, to get all "alpha"
+	  characters you can use: [[:lower:][:upper:]].
 							*/[[=* *[==]*
 	- An equivalence class.  This means that characters are matched that
 	  have almost the same meaning, e.g., when ignoring accents.  This

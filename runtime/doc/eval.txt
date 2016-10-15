@@ -1,4 +1,4 @@
-*eval.txt*	For Vim version 7.4.  Last change: 2016 Mar 27
+*eval.txt*	For Vim version 7.4.  Last change: 2016 Apr 26
 
 
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
@@ -43,6 +43,7 @@ Number		A 32 or 64 bit signed number.  |expr-number| *Number*
 Float		A floating point number. |floating-point-format| *Float*
 		Examples: 123.456  1.15e-6  -1.1e3
 
+							*E928*
 String		A NUL terminated string of 8-bit unsigned characters (bytes).
 		|expr-string| Examples: "ab\txx\"--"  'x-z''a,c'
 
@@ -6171,6 +6172,7 @@ setqflist({list} [, {action}[, {title}]])		*setqflist()*
 		Note that the list is not exactly the same as what
 		|getqflist()| returns.
 
+							*E927*
 		If {action} is set to 'a', then the items from {list} are
 		added to the existing quickfix list. If there is no existing
 		list, then a new list is created. If {action} is set to 'r',
