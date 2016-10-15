@@ -1,8 +1,8 @@
 " Vim syntax file
 " Language:	TeX
 " Maintainer:	Charles E. Campbell <NdrchipO@ScampbellPfamily.AbizM>
-" Last Change:	Apr 11, 2016
-" Version:	94
+" Last Change:	May 02, 2016
+" Version:	95
 " URL:		http://www.drchip.org/astronaut/vim/index.html#SYNTAX_TEX
 "
 " Notes: {{{1
@@ -133,7 +133,7 @@ endif
 " g:tex_isk
 if exists("g:tex_isk")
  exe "setlocal isk=".g:tex_isk
-elseif !has("patch-7.4.1141")
+elseif !has("patch-7.4.1142")
  setl isk=48-57,a-z,A-Z,192-255
 else
  syn iskeyword 48-57,a-z,A-Z,192-255
