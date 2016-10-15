@@ -298,6 +298,11 @@ void nvim_buf_set_lines(uint64_t channel_id,
   ssize_t extra = 0;  // lines added to text, can be negative
   char **lines = (new_len != 0) ? xcalloc(new_len, sizeof(char *)) : NULL;
 
+  int save_p_ma = buf->b_p_ma;
+  int save_p_ro = buf->b_p_ro;
+  buf->b_p_ma = 1;
+  buf->b_p_ro = 0;
+
   for (size_t i = 0; i < new_len; i++) {
     if (replacement.items[i].type != kObjectTypeString) {
       api_set_error(err,
@@ -400,6 +405,8 @@ void nvim_buf_set_lines(uint64_t channel_id,
   }
 
 end:
+  buf->b_p_ma = save_p_ma;
+  buf->b_p_ro = save_p_ro;
   for (size_t i = 0; i < new_len; i++) {
     xfree(lines[i]);
   }
