@@ -73,7 +73,7 @@
 #include "nvim/undo.h"
 #include "nvim/version.h"
 #include "nvim/window.h"
-#include "nvim/message_pane.h"
+#include "nvim/message_buffer.h"
 #include "nvim/eval/encode.h"
 #include "nvim/eval/decode.h"
 #include "nvim/os/os.h"
@@ -11748,7 +11748,7 @@ static void f_has(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     "macunix",
 #endif
     "menu",
-    "msgpane",
+    "msgbuf",
     "mksession",
     "modify_fname",
     "mouse",
@@ -13977,16 +13977,16 @@ f_msgpackparse_exit:
   return;
 }
 
-/// "msgpane()" function
+/// "msgbuf()" function
 ///
-/// Display a message in the message pane.
+/// Display a message in the message buffer.
 ///
 /// @param message Message to display.
 /// @param [highlight] The highlight group name.
 /// @param [open] Opens the message pane if it's not already in a window.
 ///
 /// @return Nothing.
-static void f_msgpane(typval_T *argvars, typval_T *rettv)
+static void f_msgbuf(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   char_u *msg = get_tv_string(&argvars[0]);
   int attr = 0;
@@ -14000,22 +14000,22 @@ static void f_msgpane(typval_T *argvars, typval_T *rettv)
 
     if (argvars[2].v_type != VAR_UNKNOWN) {
       if (non_zero_arg(&argvars[2])) {
-        msgpane_open();
+        msgbuf_open();
       }
     }
   }
 
-  msgpane_add_msg(msg, attr);
+  msgbuf_add_msg(msg, attr);
 }
 
-/// "msgpane_open()" function
+/// "msgbuf_open()" function
 ///
-/// Displays the message pane if not already in a window.
+/// Displays the message buffer if not already in a window.
 ///
-/// @return Buffer number of the message pane or 0 if it can't be opened.
-static void f_msgpane_open(typval_T *argvars, typval_T *rettv)
+/// @return Buffer number of the message buffer or 0 if it can't be opened.
+static void f_msgbuf_open(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  if (!msgpane_open()) {
+  if (!msgbuf_open()) {
     rettv->vval.v_number = 0;
     return;
   }

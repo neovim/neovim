@@ -11,7 +11,7 @@
 #include "nvim/misc1.h"
 #include "nvim/window.h"
 #include "nvim/buffer_defs.h"
-#include "nvim/message_pane.h"
+#include "nvim/message_buffer.h"
 #include "nvim/os/time.h"
 
 #define MSGPANE_SEP_FILL '-'
@@ -19,35 +19,36 @@
 #define MSGPANE_SEP_LEN STRLEN(MSGPANE_SEP)
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "message_pane.c.generated.h"
+# include "message_buffer.c.generated.h"
 #endif
 
 
-static buf_T *msgpane_buf = NULL;
-static MessagePaneEntry *history[MAX_MSGPANE_HIST];
+static buf_T *messages_buffer = NULL;
+static MessagePaneEntry *history[MAX_MSGBUF_HIST];
 static int history_len = 0;
 
 
 /// Return true if the message pane exists.
-static bool msgpane_exists(void)
+static bool msgbuf_exists(void)
 {
-  return msgpane_buf != NULL && buf_valid(msgpane_buf);
+  return messages_buffer != NULL && buf_valid(messages_buffer);
 }
 
 /// Create a message pane buffer.
-static bool msgpane_create(void)
+static bool msgbuf_create(void)
 {
-  if (msgpane_exists()) {
+  if (msgbuf_exists()) {
     return true;
   }
 
-  msgpane_buf = buflist_new((char_u *)"nvim://messages", NULL, 1, BLN_LISTED);
-  if (msgpane_buf == NULL) {
+  messages_buffer = buflist_new((char_u *)"nvim://messages", NULL, 1,
+                                BLN_LISTED);
+  if (messages_buffer == NULL) {
     return false;
   }
 
-  msgpane_buf->b_messages = true;
-  return msgpane_exists();
+  messages_buffer->b_messages = true;
+  return msgbuf_exists();
 }
 
 /// Scroll to the bottom in each window displaying the message pane if the
@@ -98,34 +99,34 @@ static void scroll_to_bottom(bool force)
 }
 
 /// Open a message pane window.
-bool msgpane_open(void)
+bool msgbuf_open(void)
 {
   bool win_exists = false;
-  bool pane_exists = msgpane_exists();
+  bool pane_exists = msgbuf_exists();
 
-  if (!p_msgpane) {
+  if (!p_msgbuf) {
     return false;
   }
 
   if (!pane_exists) {
-    if (!msgpane_create()) {
+    if (!msgbuf_create()) {
       return false;
     }
 
     // There are messages from before the creation of the message pane.
     if (first_msg_hist != NULL && history_len == 0) {
-      // Temporarily NULL msgpane_buf while filling the history.
-      buf_T *msgpane = msgpane_buf;
-      msgpane_buf = NULL;
+      // Temporarily NULL messages_buffer while filling the history.
+      buf_T *msgbuf = messages_buffer;
+      messages_buffer = NULL;
       MessageHistoryEntry *p;
 
       for (p = first_msg_hist; p != NULL; p = p->next) {
         if (p->msg != NULL && *p->msg != NUL) {
-          msgpane_add_msg(p->msg, p->attr);
+          msgbuf_add_msg(p->msg, p->attr);
         }
       }
 
-      msgpane_buf = msgpane;
+      messages_buffer = msgbuf;
     }
   }
 
@@ -154,8 +155,8 @@ bool msgpane_open(void)
       return false;
     }
 
-    set_curbuf(msgpane_buf, DOBUF_SPLIT);
-    WITH_BUFFER(msgpane_buf, {
+    set_curbuf(messages_buffer, DOBUF_SPLIT);
+    WITH_BUFFER(messages_buffer, {
       set_option_value((char_u *)"bt", 0L, (char_u *)"nofile", OPT_LOCAL);
       set_option_value((char_u *)"bh", 0L, (char_u *)"hide", OPT_LOCAL);
       set_option_value((char_u *)"swf", 0L, NULL, OPT_LOCAL);
@@ -171,11 +172,11 @@ bool msgpane_open(void)
 
     if (!pane_exists) {
       for (int i = 0; i < history_len; i++) {
-        msgpane_add_buffer_line(history[i]->msg);
+        msgbuf_add_buffer_line(history[i]->msg);
       }
     }
 
-    set_option_value((char_u *)"ft", 0L, (char_u *)"msgpane", OPT_LOCAL);
+    set_option_value((char_u *)"ft", 0L, (char_u *)"msgbuf", OPT_LOCAL);
 
     scroll_to_bottom(true);
     msg_silent--;
@@ -186,7 +187,7 @@ bool msgpane_open(void)
 
 
 /// Highlight attribute for a message line.
-int msgpane_line_attr(linenr_T lnum)
+int msgbuf_line_attr(linenr_T lnum)
 {
   if (lnum > 0 && lnum <= history_len) {
     return history[lnum - 1]->attr;
@@ -197,7 +198,7 @@ int msgpane_line_attr(linenr_T lnum)
 
 
 /// Check if the line is a separator.
-bool msgpane_line_is_sep(linenr_T lnum) {
+bool msgbuf_line_is_sep(linenr_T lnum) {
   if (lnum > 0 && lnum <= history_len) {
     char_u *msg = history[lnum - 1]->msg;
     return (STRNCMP(msg, MSGPANE_SEP, MSGPANE_SEP_LEN) == 0
@@ -214,7 +215,7 @@ bool msgpane_line_is_sep(linenr_T lnum) {
 /// @param line Pointer to an allocated string.
 /// @param lnum Line number.
 /// @param width Width of the line, including string terminator.
-void msgpane_line_sep_fill(char_u *line, linenr_T lnum, int width) {
+void msgbuf_line_sep_fill(char_u *line, linenr_T lnum, int width) {
   if (lnum <= 0 || lnum > history_len || width < 1) {
     return;
   }
@@ -239,11 +240,11 @@ void msgpane_line_sep_fill(char_u *line, linenr_T lnum, int width) {
 
 
 /// Add a line to the message pane buffer.
-static void msgpane_add_buffer_line(char_u *msg)
+static void msgbuf_add_buffer_line(char_u *msg)
 {
   linenr_T lnum;
 
-  if (!msgpane_exists()) {
+  if (!msgbuf_exists()) {
     return;
   }
 
@@ -256,7 +257,7 @@ static void msgpane_add_buffer_line(char_u *msg)
     }
   }
 
-  WITH_BUFFER(msgpane_buf, {
+  WITH_BUFFER(messages_buffer, {
     if (bufempty()) {
       lnum = 1;
       ml_replace(1, msg, 1);
@@ -264,9 +265,9 @@ static void msgpane_add_buffer_line(char_u *msg)
         changed_lines(1, 0, 2, 1);
       }
     } else {
-      lnum = msgpane_buf->b_ml.ml_line_count;
+      lnum = messages_buffer->b_ml.ml_line_count;
 
-      if (lnum == MAX_MSGPANE_HIST) {
+      if (lnum == MAX_MSGBUF_HIST) {
         ml_delete(1, 0);
         if (on_screen) {
           deleted_lines(1, 1);
@@ -284,7 +285,7 @@ static void msgpane_add_buffer_line(char_u *msg)
 
 
 /// Add a line to the message pane.
-void msgpane_add_msg(char_u *msg, int attr)
+void msgbuf_add_msg(char_u *msg, int attr)
 {
   if (*msg == NUL || (curbuf->b_messages && STRCMP(msg, _(e_modifiable)) == 0)
       || (STRNCMP(msg, MSGPANE_SEP, MSGPANE_SEP_LEN) && history_len > 0
@@ -298,18 +299,18 @@ void msgpane_add_msg(char_u *msg, int attr)
   entry->attr = attr;
   entry->timestamp = os_timef();
 
-  if (history_len >= MAX_MSGPANE_HIST) {
-    history_len = MAX_MSGPANE_HIST - 1;
+  if (history_len >= MAX_MSGBUF_HIST) {
+    history_len = MAX_MSGBUF_HIST - 1;
     xfree(history[0]->msg);
     xfree(history[0]);
 
-    for (int i = 1; i < MAX_MSGPANE_HIST; i++) {
+    for (int i = 1; i < MAX_MSGBUF_HIST; i++) {
       history[i - 1] = history[i];
     }
   }
 
   history[history_len] = entry;
   history_len++;
-  msgpane_add_buffer_line(entry->msg);
+  msgbuf_add_buffer_line(entry->msg);
   scroll_to_bottom(false);
 }

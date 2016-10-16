@@ -4,7 +4,7 @@ local clear, feed, wait = helpers.clear, helpers.feed, helpers.wait
 local execute, command = helpers.execute, helpers.command
 
 before_each(function()
-  local file = io.open('Xtest_msgpane_script', 'w')
+  local file = io.open('Xtest_msgbuf_script', 'w')
   file:write([[
 function! s:throw_func() abort
   throw 'Error'
@@ -18,7 +18,7 @@ endfunction
 end)
 
 after_each(function()
-  os.remove('Xtest_msgpane_script')
+  os.remove('Xtest_msgbuf_script')
 end)
 
 describe(':messages', function()
@@ -121,7 +121,7 @@ describe(':messages', function()
 
     -- Needs to be sourced before 'syntax on' and 'filetype plugin on' so that
     -- it's <SNR>1
-    command('source Xtest_msgpane_script')
+    command('source Xtest_msgbuf_script')
 
     command('syntax on')
     command('filetype plugin on')
@@ -177,7 +177,7 @@ describe(':messages', function()
   describe('in a buffer', function()
     it('displays messages', function()
       echo_messages()
-      command('set messagepane')
+      command('set messagebuf')
       execute('messages')
 
       screen:expect([[
@@ -196,7 +196,7 @@ describe(':messages', function()
 
     it('displays an exception', function()
       echo_messages()
-      command('set messagepane')
+      command('set messagebuf')
       execute('messages')
       execute('call Throw()')
 
@@ -215,7 +215,7 @@ describe(':messages', function()
     end)
 
     it('displays the last message without prompting', function()
-      command('set messagepane')
+      command('set messagebuf')
       execute('call Throw()')
 
       screen:expect([[
@@ -263,9 +263,9 @@ describe(':messages', function()
       ]])
     end)
 
-    it('displays history before messagepane enabled', function()
+    it('displays history before messagebuf enabled', function()
       echo_messages()
-      command('set messagepane')
+      command('set messagebuf')
       command('messages')
 
       screen:expect([[
@@ -284,7 +284,7 @@ describe(':messages', function()
 
     describe('auto scrolling', function()
       before_each(function()
-        command('set messagepane')
+        command('set messagebuf')
         command('messages')
       end)
 
@@ -397,7 +397,7 @@ describe(':messages', function()
       before_each(function()
         screen:try_resize(40, 20)
 
-        command('set messagepane')
+        command('set messagebuf')
         execute('messages')
         execute('call Throw()')
 
@@ -465,7 +465,7 @@ describe(':messages', function()
             ^call s:throw_func()                   |
           endfunction                             |
           {1:~                                       }|
-          {3:Xtest_msgpane_script                    }|
+          {3:Xtest_msgbuf_script                     }|
                                                   |
           {1:~                                       }|
           {1:~                                       }|
@@ -486,7 +486,7 @@ describe(':messages', function()
       it('and selection jumps to existing buffer', function()
         command('wincmd k')
         command('setlocal statusline=%t')
-        command('edit Xtest_msgpane_script')
+        command('edit Xtest_msgbuf_script')
         command('wincmd j')
         feed('G2kgf1<cr>')
 
@@ -501,7 +501,7 @@ describe(':messages', function()
           {1:~                                       }|
           {1:~                                       }|
           {1:~                                       }|
-          {3:Xtest_msgpane_script                    }|
+          {3:Xtest_msgbuf_script                     }|
           {4:Error detected while processing function}|
           {4: Throw[1]..<SNR>1_throw_func:}           |
           {8:line    1:}                              |
@@ -518,7 +518,7 @@ describe(':messages', function()
     describe('highlight', function()
       before_each(function()
         echo_messages()
-        command('set messagepane noshowmode')
+        command('set messagebuf noshowmode')
         command('messages')
       end)
 
@@ -670,7 +670,7 @@ describe(':messages', function()
 
     describe('without a window', function()
       before_each(function()
-        command('set messagepane')
+        command('set messagebuf')
         command('messages')
         echo_messages(1, 'before')
 
@@ -771,11 +771,11 @@ describe(':messages', function()
 
     describe('using vimscript', function()
       before_each(function()
-        command('set messagepane')
+        command('set messagebuf')
       end)
 
-      it('msgpane_open()', function()
-        command('call msgpane_open()')
+      it('msgbuf_open()', function()
+        command('call msgbuf_open()')
 
         screen:expect([[
                                                   |
@@ -791,10 +791,10 @@ describe(':messages', function()
         ]])
       end)
 
-      describe('msgpane()', function()
+      describe('msgbuf()', function()
         it('does not display message in command line', function()
-          command('call msgpane("test")')
-          command('call msgpane("test", "Green")')
+          command('call msgbuf("test")')
+          command('call msgbuf("test", "Green")')
 
           screen:expect([[
             ^                                        |
@@ -811,7 +811,7 @@ describe(':messages', function()
         end)
 
         it('opens message pane when not open', function()
-          command('call msgpane("test", "Green", 1)')
+          command('call msgbuf("test", "Green", 1)')
 
           screen:expect([[
                                                     |
@@ -827,7 +827,7 @@ describe(':messages', function()
           ]])
 
           -- One more call to make sure the window doesn't change
-          command('call msgpane("test 2", "Green", 1)')
+          command('call msgbuf("test 2", "Green", 1)')
 
           screen:expect([[
                                                     |
@@ -844,7 +844,7 @@ describe(':messages', function()
         end)
 
         it('opens message pane when not open using truthy argument', function()
-          command('call msgpane("test", "Green", "open")')
+          command('call msgbuf("test", "Green", "open")')
 
           screen:expect([[
                                                     |
@@ -860,7 +860,7 @@ describe(':messages', function()
           ]])
 
           -- One more call to make sure the window doesn't change
-          command('call msgpane("test 2", "Green", "open")')
+          command('call msgbuf("test 2", "Green", "open")')
 
           screen:expect([[
                                                     |
@@ -879,7 +879,7 @@ describe(':messages', function()
         describe('with unexpected', function()
           it('highlight group', function()
             command('messages')
-            command('call msgpane("test", "NotAHighlight")')
+            command('call msgbuf("test", "NotAHighlight")')
 
             screen:expect([[
                                                       |
@@ -897,7 +897,7 @@ describe(':messages', function()
 
           it('number as a highlight group', function()
             command('messages')
-            command('call msgpane("test", 0)')
+            command('call msgbuf("test", 0)')
 
             screen:expect([[
                                                       |
@@ -912,7 +912,7 @@ describe(':messages', function()
                                                       |
             ]])
 
-            command('call msgpane("test 2", -1)')
+            command('call msgbuf("test 2", -1)')
 
             screen:expect([[
                                                       |

@@ -5540,21 +5540,21 @@ msgpackparse({list})				   {Nvim} *msgpackparse()*
 			representing extension type. Second is 
 			|readfile()|-style list of strings.
 
-msgpane({message}[, {highlight}[, {open}]])		{Nvim} *msgpane()*
+msgbuf({message}[, {highlight}[, {open}]])		{Nvim} *msgbuf()*
 		Display {message} in the message pane, optionally highlighted
 		with a {highlight} group name.
 
 		When {open} is non-zero, open the message pane in a window.
-		See also |'messagepane'|, |msgpane_open()|.
+		See also |'messagepane'|, |msgbuf_open()|.
 
-msgpane_open()					  {Nvim} *msgpane_open()*
+msgbuf_open()					  {Nvim} *msgbuf_open()*
 		Open the message pane if it's not already displayed in a
 		window.  Only one message pane window is opened per tab.
 
 		Returns the message pane's buffer number or 0 if the pane
 		couldn't be opened.
 
-		See also |'messagepane'|, |msgpane()|.
+		See also |'messagepane'|, |msgbuf()|.
 
 nextnonblank({lnum})					*nextnonblank()*
 		Return the line number of the first line at or below {lnum}
@@ -7973,7 +7973,7 @@ localmap		Compiled with local mappings and abbr. |:map-local|
 mac			Macintosh version of Vim.
 macunix			Macintosh version of Vim, using Unix files (OS-X).
 menu			Compiled with support for |:menu|.
-msgpane			Compiled with support for 'messagepane'.
+msgbuf			Compiled with support for 'messagebuf'.
 mksession		Compiled with support for |:mksession|.
 modify_fname		Compiled with file name modifiers. |filename-modifiers|
 mouse			Compiled with support mouse.

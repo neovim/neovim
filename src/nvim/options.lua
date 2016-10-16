@@ -1515,10 +1515,10 @@ return {
       defaults={if_true={vi=25}}
     },
     {
-      full_name='messagepane', abbreviation='msgpane',
+      full_name='messagebuf', abbreviation='msgbuf',
       type='bool', scope={'global'},
       vi_def=false,
-      varname='p_msgpane',
+      varname='p_msgbuf',
       defaults={if_true={vi=false}}
     },
     {

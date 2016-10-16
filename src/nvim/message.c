@@ -32,7 +32,7 @@
 #include "nvim/strings.h"
 #include "nvim/ui.h"
 #include "nvim/mouse.h"
-#include "nvim/message_pane.h"
+#include "nvim/message_buffer.h"
 #include "nvim/os/os.h"
 #include "nvim/os/input.h"
 #include "nvim/os/time.h"
@@ -131,9 +131,9 @@ int verb_msg(char_u *s)
 
 int msg_attr(const char *s, const int attr) FUNC_ATTR_NONNULL_ARG(1)
 {
-  if (p_msgpane && !msg_hist_off && msg_silent == 0
+  if (p_msgbuf && !msg_hist_off && msg_silent == 0
       && (keep_msg == NULL || STRCMP(keep_msg, s) || keep_msg_attr != attr)) {
-    msgpane_add_msg(s, attr);
+    msgbuf_add_msg(s, attr);
 
     msg_scroll = false;
     msg_nowait = true;
@@ -762,7 +762,7 @@ void ex_messages(void *const eap_p)
   struct msg_hist *p;
   int c = 0;
 
-  if (p_msgpane && msgpane_open()) {
+  if (p_msgbuf && msgbuf_open()) {
     return;
   }
 

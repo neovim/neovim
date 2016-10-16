@@ -34,7 +34,7 @@ endfunction
 
 
 " List functions involved in an exception.
-function! msgpane#goto() abort
+function! msgbuf#goto() abort
   let curline = getline('.')
   let nextline = getline(line('.') + 1)
   if curline =~# '<SNR>' && nextline =~? 'Line\s\+\d\+:$'
