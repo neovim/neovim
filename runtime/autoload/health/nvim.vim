@@ -74,13 +74,40 @@ function! s:check_tmux() abort
     call health#report_error('escape-time is not set', suggestions)
   elseif tmux_esc_time > 500
     call health#report_error(
-          \ 'escape-time ('.tmux_esc_time.') is higher than 300ms', suggestions)
+        \ 'escape-time ('.tmux_esc_time.') is higher than 300ms', suggestions)
   else
     call health#report_ok('escape-time = '.tmux_esc_time.'ms')
+  endif
+endfunction
+
+function! s:check_terminfo() abort
+  if !executable('infocmp')
+    return
+  endif
+  call health#report_start('terminfo')
+  let suggestions = [
+        \ "Set key_backspace to \\177 (ASCII BACKSPACE). Run these commands:\n"
+        \   .'infocmp $TERM | sed ''s/kbs=^[hH]/kbs=\\177/'' > $TERM.ti'
+        \   ."\n"
+        \   .'tic $TERM.ti',
+        \ 'See https://github.com/neovim/neovim/wiki/FAQ']
+  let cmd = 'infocmp -L'
+  let out = system(cmd)
+  let kbs_entry = matchstr(out, 'key_backspace=\S*')
+
+  if v:shell_error
+    call health#report_error('command failed: '.cmd."\n".out)
+  elseif !empty(matchstr(out, '\Vkey_backspace=^H'))
+    call health#report_error('key_backspace (kbs) entry is ^H (ASCII DELETE): '
+        \ .kbs_entry, suggestions)
+  else
+    call health#report_info('key_backspace terminfo entry: '
+        \ .(empty(kbs_entry) ? '? (not found)' : kbs_entry))
   endif
 endfunction
 
 function! health#nvim#check() abort
   call s:check_manifest()
   call s:check_tmux()
+  call s:check_terminfo()
 endfunction
