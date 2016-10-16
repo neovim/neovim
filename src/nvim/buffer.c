@@ -4539,8 +4539,9 @@ chk_modeline (
                 || (VIM_VERSION_100 >= vers && isdigit(s[3]))
                 || (VIM_VERSION_100 < vers && s[3] == '<')
                 || (VIM_VERSION_100 > vers && s[3] == '>')
-                || (VIM_VERSION_100 == vers && s[3] == '=')))
+                || (VIM_VERSION_100 == vers && s[3] == '='))) {
           break;
+        }
       }
     }
     prev = *s;
