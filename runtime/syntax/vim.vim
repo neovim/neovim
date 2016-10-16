@@ -5,6 +5,8 @@
 " Version:	7.4-45
 " Automatically generated keyword lists: {{{1
 
+" See $VIMRUNTIME/syntax/vim/generated.vim for the generated list in Neovim.
+
 " Quit when a syntax file was already loaded {{{2
 if exists("b:current_syntax")
   finish
