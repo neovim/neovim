@@ -6,6 +6,10 @@
 
 Nvim                                                             *deprecated*
 
+The items listed below are "deprecated". This means they will be removed in
+the future. They should not be used in new scripts, and old scripts should be
+updated.
+
 ==============================================================================
 
 Normal commands ~

@@ -13,6 +13,9 @@ function! s:enhance_syntax() abort
 
   syntax keyword healthSuggestion SUGGESTIONS
   highlight link healthSuggestion String
+
+  " We do not care about markdown syntax errors in :CheckHealth output.
+  highlight! link markdownError Normal
 endfunction
 
 " Runs the specified healthchecks.
