@@ -57,6 +57,30 @@ function! s:check_manifest() abort
   endif
 endfunction
 
+function! s:check_tmux() abort
+  if empty($TMUX) || !executable('tmux')
+    return
+  endif
+  call health#report_start('tmux configuration')
+  let suggestions = ["Set escape-time in ~/.tmux.conf: set-option -sg escape-time 10",
+        \ 'See https://github.com/neovim/neovim/wiki/FAQ']
+  let cmd = 'tmux show-option -qvgs escape-time'
+  let out = system(cmd)
+  let tmux_esc_time = substitute(out, '\v(\s|\r|\n)', '', 'g')
+
+  if v:shell_error
+    call health#report_error('command failed: '.cmd."\n".out)
+  elseif empty(tmux_esc_time)
+    call health#report_error('escape-time is not set', suggestions)
+  elseif tmux_esc_time > 500
+    call health#report_error(
+          \ 'escape-time ('.tmux_esc_time.') is higher than 300ms', suggestions)
+  else
+    call health#report_ok('escape-time = '.tmux_esc_time.'ms')
+  endif
+endfunction
+
 function! health#nvim#check() abort
   call s:check_manifest()
+  call s:check_tmux()
 endfunction
