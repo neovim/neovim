@@ -210,6 +210,8 @@ return {
     mode={args={0, 1}},
     msgpackdump={args=1},
     msgpackparse={args=1},
+    msgpane={args={1, 3}},
+    msgpane_open={},
     nextnonblank={args=1},
     nr2char={args={1, 2}},
     ['or']={args=2},
