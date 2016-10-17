@@ -34,6 +34,7 @@
 #include "nvim/os/os.h"
 #include "nvim/os/input.h"
 #include "nvim/os/time.h"
+#include "nvim/api/private/helpers.h"
 
 /*
  * To be able to scroll back at the "more" and "hit-enter" prompts we need to
@@ -110,6 +111,11 @@ static int verbose_did_open = FALSE;
  */
 int msg(char_u *s)
 {
+  if (win_get_external()) {
+    Array args = ARRAY_DICT_INIT;
+    ADD(args, STRING_OBJ(cstr_to_string((char *)(s))));
+    ui_event("msg", args);
+  }
   return msg_attr_keep(s, 0, FALSE);
 }
 
@@ -468,6 +474,12 @@ int emsg(char_u *s)
   char_u      *p;
   int ignore = false;
   int severe;
+  if (win_get_external()) {
+    Array args = ARRAY_DICT_INIT;
+    ADD(args, STRING_OBJ(cstr_to_string((char *)(s))));
+    ui_event("emsg", args);
+    return true;
+  }
 
   // Skip this if not giving error messages at the moment.
   if (emsg_not_now()) {

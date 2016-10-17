@@ -87,11 +87,20 @@ redo:
   validate_cursor_col();
 
   // anchor position: the start of the completed word
-  row = curwin->w_wrow + curwin->w_winrow;
-  if (curwin->w_p_rl) {
-    col = curwin->w_wincol + curwin->w_width - curwin->w_wcol - 1;
+  if (!win_get_external()) {
+    row = curwin->w_wrow + curwin->w_winrow;
+    if (curwin->w_p_rl) {
+      col = curwin->w_wincol + curwin->w_width - curwin->w_wcol - 1;
+    } else {
+      col = curwin->w_wincol + curwin->w_wcol;
+    }
   } else {
-    col = curwin->w_wincol + curwin->w_wcol;
+    row = curwin->w_wrow;
+    if (curwin->w_p_rl) {
+      col = curwin->w_width - curwin->w_wcol - 1;
+    } else {
+      col = curwin->w_wcol;
+    }
   }
 
   if (pum_external) {
@@ -110,6 +119,7 @@ redo:
       ADD(args, INTEGER_OBJ(selected));
       ADD(args, INTEGER_OBJ(row));
       ADD(args, INTEGER_OBJ(col));
+      ADD(args, INTEGER_OBJ(curwin->handle));
       ui_event("popupmenu_show", args);
     } else {
       ADD(args, INTEGER_OBJ(selected));

@@ -675,6 +675,11 @@ static void win_update(win_T *wp)
     wp->w_redr_type = 0;
     return;
   }
+  init_search_hl(wp);
+
+  /* Force redraw when width of 'number' or 'relativenumber' column
+   * changes. */
+  i = (wp->w_p_nu || wp->w_p_rnu) ? number_width(wp) : 0;
 
   Array args = ARRAY_DICT_INIT;
   ADD(args, INTEGER_OBJ(wp->handle));
@@ -682,13 +687,10 @@ static void win_update(win_T *wp)
   ADD(args, INTEGER_OBJ(wp->w_height));
   ADD(args, INTEGER_OBJ(wp->w_winrow));
   ADD(args, INTEGER_OBJ(wp->w_wincol));
-  ui_event("win_size", args);
+  ADD(args, INTEGER_OBJ(i));
+  ADD(args, INTEGER_OBJ(draw_signcolumn(wp)));
+  ui_event("win_update", args);
 
-  init_search_hl(wp);
-
-  /* Force redraw when width of 'number' or 'relativenumber' column
-   * changes. */
-  i = (wp->w_p_nu || wp->w_p_rnu) ? number_width(wp) : 0;
   if (wp->w_nrwidth != i) {
     type = NOT_VALID;
     wp->w_nrwidth = i;
@@ -1508,7 +1510,7 @@ static void win_update(win_T *wp)
       } else {
         screen_fill(wp, wp->w_height - 1,
                     wp->w_height,
-                    W_ENDCOL(wp) - 3, W_ENDCOL(wp),
+                    wp->w_width - 3, wp->w_width,
                     '@', '@', hl_attr(HLF_AT));
       }
       set_empty_rows(wp, srow);
@@ -1669,9 +1671,15 @@ static void win_draw_end(win_T *wp, int c1, int c2, int row, int endrow, hlf_T h
       /* draw the fold column at the left */
       if (nn > wp->w_width)
         nn = wp->w_width;
-      screen_fill(wp, wp->w_winrow + row, wp->w_winrow + endrow,
-                  wp->w_wincol + n, wp->w_wincol + nn,
-                  ' ', ' ', hl_attr(HLF_FC));
+      if (!win_external) {
+        screen_fill(wp, wp->w_winrow + row, wp->w_winrow + endrow,
+                    wp->w_wincol + n, wp->w_wincol + nn,
+                    ' ', ' ', hl_attr(HLF_FC));
+      } else {
+        screen_fill(wp, row, endrow,
+                    n, nn,
+                    ' ', ' ', hl_attr(HLF_FC));
+      }
       n = nn;
     }
 
@@ -1746,8 +1754,35 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
   int fdc;
   int col;
   int txtcol;
-  int off = (int)(current_ScreenLine - ScreenLines);
+  int off;
   int ri;
+  int i;
+  schar_T *screen_lines;
+  u8char_T *screen_lines_uc;
+  u8char_T *screen_lines_c[MAX_MCO];
+  schar_T *screen_lines_2;
+  sattr_T *screen_attrs;
+  schar_T *current_screenline;
+
+  if (!win_external) {
+    screen_lines = ScreenLines;
+    screen_lines_uc = ScreenLinesUC;
+    screen_lines_2 = ScreenLines2;
+    for (i = 0; i < p_mco; ++i)
+      screen_lines_c[i] = ScreenLinesC[i];
+    screen_attrs = ScreenAttrs;
+    current_screenline = current_ScreenLine;
+  } else {
+    screen_lines = wp->screen_lines;
+    screen_lines_uc = wp->screen_lines_uc;
+    screen_lines_2 = wp->screen_lines_2;
+    for (i = 0; i < p_mco; ++i)
+      screen_lines_c[i] = wp->screen_lines_c[i];
+    screen_attrs = wp->screen_attrs;
+    current_screenline = wp->current_screenline;
+  }
+
+  off = (int)(current_screenline - screen_lines);
 
   /* Build the fold line:
    * 1. Add the cmdwin_type for the command-line window
@@ -1764,10 +1799,10 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
    * Ignores 'rightleft', this window is never right-left.
    */
   if (cmdwin_type != 0 && wp == curwin) {
-    ScreenLines[off] = cmdwin_type;
-    ScreenAttrs[off] = hl_attr(HLF_AT);
+    screen_lines[off] = cmdwin_type;
+    screen_attrs[off] = hl_attr(HLF_AT);
     if (enc_utf8)
-      ScreenLinesUC[off] = 0;
+      screen_lines_uc[off] = 0;
     ++col;
   }
 
@@ -1779,22 +1814,22 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
     if (wp->w_p_rl) {
       int i;
 
-      copy_text_attr(off + wp->w_width - fdc - col, buf, fdc,
+      copy_text_attr(wp, off + wp->w_width - fdc - col, buf, fdc,
           hl_attr(HLF_FC));
       /* reverse the fold column */
       for (i = 0; i < fdc; ++i)
-        ScreenLines[off + wp->w_width - i - 1 - col] = buf[i];
+        screen_lines[off + wp->w_width - i - 1 - col] = buf[i];
     } else
-      copy_text_attr(off + col, buf, fdc, hl_attr(HLF_FC));
+      copy_text_attr(wp, off + col, buf, fdc, hl_attr(HLF_FC));
     col += fdc;
   }
 
 # define RL_MEMSET(p, v, l)  if (wp->w_p_rl) \
     for (ri = 0; ri < l; ++ri) \
-      ScreenAttrs[off + (wp->w_width - (p) - (l)) + ri] = v; \
+      screen_attrs[off + (wp->w_width - (p) - (l)) + ri] = v; \
   else \
     for (ri = 0; ri < l; ++ri) \
-      ScreenAttrs[off + (p) + ri] = v
+      screen_attrs[off + (p) + ri] = v
 
   /* Set all attributes of the 'number' or 'relativenumber' column and the
    * text */
@@ -1807,7 +1842,7 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
           if (len > 2) {
               len = 2;
           }
-          copy_text_attr(off + col, (char_u *)"  ", len, hl_attr(HLF_FL));
+          copy_text_attr(wp, off + col, (char_u *)"  ", len, hl_attr(HLF_FL));
           col += len;
       }
   }
@@ -1842,10 +1877,10 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
       sprintf((char *)buf, fmt, w, num);
       if (wp->w_p_rl)
         /* the line number isn't reversed */
-        copy_text_attr(off + wp->w_width - len - col, buf, len,
+        copy_text_attr(wp, off + wp->w_width - len - col, buf, len,
             hl_attr(HLF_FL));
       else
-        copy_text_attr(off + col, buf, len, hl_attr(HLF_FL));
+        copy_text_attr(wp, off + col, buf, len, hl_attr(HLF_FL));
       col += len;
     }
   }
@@ -1885,11 +1920,11 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
           - (wp->w_p_rl ? col : 0)
           )
         break;
-      ScreenLines[idx] = *p;
+      screen_lines[idx] = *p;
       if (enc_utf8) {
         u8c = utfc_ptr2char(p, u8cc);
         if (*p < 0x80 && u8cc[0] == 0) {
-          ScreenLinesUC[idx] = 0;
+          screen_lines_uc[idx] = 0;
           prev_c = u8c;
         } else {
           if (p_arshape && !p_tbidi && arabic_char(u8c)) {
@@ -1914,25 +1949,25 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
 
             u8c = arabic_shape(u8c, &firstbyte, &u8cc[0],
                 pc, pc1, nc);
-            ScreenLines[idx] = firstbyte;
+            screen_lines[idx] = firstbyte;
           } else
             prev_c = u8c;
           /* Non-BMP character: display as ? or fullwidth ?. */
-          ScreenLinesUC[idx] = u8c;
+          screen_lines_uc[idx] = u8c;
           for (i = 0; i < Screen_mco; ++i) {
-            ScreenLinesC[i][idx] = u8cc[i];
+            screen_lines_c[i][idx] = u8cc[i];
             if (u8cc[i] == 0)
               break;
           }
         }
         if (cells > 1)
-          ScreenLines[idx + 1] = 0;
+          screen_lines[idx + 1] = 0;
       } else if (enc_dbcs == DBCS_JPNU && *p == 0x8e)
         /* double-byte single width character */
-        ScreenLines2[idx] = p[1];
+        screen_lines_2[idx] = p[1];
       else if (cells > 1)
         /* double-width character */
-        ScreenLines[idx + 1] = p[1];
+        screen_lines[idx + 1] = p[1];
       col += cells;
       idx += cells;
       p += c_len;
@@ -1943,9 +1978,9 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
       len = wp->w_width - col;
     if (len > 0) {
       if (wp->w_p_rl)
-        STRNCPY(current_ScreenLine, text, len);
+        STRNCPY(current_screenline, text, len);
       else
-        STRNCPY(current_ScreenLine + col, text, len);
+        STRNCPY(current_screenline + col, text, len);
       col += len;
     }
   }
@@ -1958,12 +1993,12 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
          ) {
     if (enc_utf8) {
       if (fill_fold >= 0x80) {
-        ScreenLinesUC[off + col] = fill_fold;
-        ScreenLinesC[0][off + col] = 0;
+        screen_lines_uc[off + col] = fill_fold;
+        screen_lines_c[0][off + col] = 0;
       } else
-        ScreenLinesUC[off + col] = 0;
+        screen_lines_uc[off + col] = 0;
     }
-    ScreenLines[off + col++] = fill_fold;
+    screen_lines[off + col++] = fill_fold;
   }
 
   if (text != buf)
@@ -2027,8 +2062,8 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
         txtcol -= wp->w_leftcol;
       }
       if (txtcol >= 0 && txtcol < wp->w_width) {
-        ScreenAttrs[off + txtcol] =
-          hl_combine_attr(ScreenAttrs[off + txtcol], hl_attr(HLF_MC));
+        screen_attrs[off + txtcol] =
+          hl_combine_attr(screen_attrs[off + txtcol], hl_attr(HLF_MC));
       }
       txtcol = old_txtcol;
       j = wp->w_p_cc_cols[++i];
@@ -2043,12 +2078,17 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
     else
       txtcol -= wp->w_leftcol;
     if (txtcol >= 0 && txtcol < wp->w_width)
-      ScreenAttrs[off + txtcol] = hl_combine_attr(
-          ScreenAttrs[off + txtcol], hl_attr(HLF_CUC));
+      screen_attrs[off + txtcol] = hl_combine_attr(
+          screen_attrs[off + txtcol], hl_attr(HLF_CUC));
   }
 
-  SCREEN_LINE(wp, row + wp->w_winrow, wp->w_wincol, wp->w_width,
-              wp->w_width, FALSE);
+  if (!win_external) {
+    SCREEN_LINE(wp, row + wp->w_winrow, wp->w_wincol, wp->w_width,
+                wp->w_width, FALSE);
+  } else {
+    SCREEN_LINE(wp, row, 0, wp->w_width,
+                wp->w_width, FALSE);
+  }
 
   /*
    * Update w_cline_height and w_cline_folded if the cursor line was
@@ -2067,15 +2107,28 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
 /*
  * Copy "buf[len]" to ScreenLines["off"] and set attributes to "attr".
  */
-static void copy_text_attr(int off, char_u *buf, int len, int attr)
+static void copy_text_attr(win_T *wp, int off, char_u *buf, int len, int attr)
 {
   int i;
+  schar_T *screen_lines;
+  u8char_T *screen_lines_uc;
+  sattr_T *screen_attrs;
 
-  memmove(ScreenLines + off, buf, (size_t)len);
+  if (!win_external) {
+    screen_lines = ScreenLines;
+    screen_lines_uc = ScreenLinesUC;
+    screen_attrs = ScreenAttrs;
+  } else {
+    screen_lines = wp->screen_lines;
+    screen_lines_uc = wp->screen_lines_uc;
+    screen_attrs = wp->screen_attrs;
+  }
+
+  memmove(screen_lines + off, buf, (size_t)len);
   if (enc_utf8)
-    memset(ScreenLinesUC + off, 0, sizeof(u8char_T) * (size_t)len);
+    memset(screen_lines_uc + off, 0, sizeof(u8char_T) * (size_t)len);
   for (i = 0; i < len; ++i)
-    ScreenAttrs[off + i] = attr;
+    screen_attrs[off + i] = attr;
 }
 
 /*
@@ -2276,8 +2329,10 @@ win_line (
   schar_T *screen_lines;
   u8char_T *screen_lines_uc;
   u8char_T *screen_lines_c[MAX_MCO];
+  schar_T *screen_lines_2;
   sattr_T *screen_attrs;
   unsigned *line_offset;
+  char_u *line_wraps;
   schar_T *current_screenline;
 # define VCOL_HLC (vcol - vcol_off)
 # define FIX_FOR_BOGUSCOLS \
@@ -2293,18 +2348,22 @@ win_line (
   if (!win_external) {
     screen_lines = ScreenLines;
     screen_lines_uc = ScreenLinesUC;
+    screen_lines_2 = ScreenLines2;
     for (i = 0; i < p_mco; ++i)
       screen_lines_c[i] = ScreenLinesC[i];
     screen_attrs = ScreenAttrs;
     line_offset = LineOffset;
+    line_wraps = LineWraps;
     current_screenline = current_ScreenLine;
   } else {
     screen_lines = wp->screen_lines;
     screen_lines_uc = wp->screen_lines_uc;
+    screen_lines_2 = wp->screen_lines_2;
     for (i = 0; i < p_mco; ++i)
       screen_lines_c[i] = wp->screen_lines_c[i];
     screen_attrs = wp->screen_attrs;
     line_offset = wp->line_offset;
+    line_wraps = wp->line_wraps;
     current_screenline = wp->current_screenline;
   }
 
@@ -4085,7 +4144,7 @@ win_line (
       if (enc_dbcs == DBCS_JPNU) {
         if ((mb_c & 0xff00) == 0x8e00)
           screen_lines[off] = 0x8e;
-        ScreenLines2[off] = mb_c & 0xff;
+        screen_lines_2[off] = mb_c & 0xff;
       } else if (enc_utf8) {
         if (mb_utf8) {
           int i;
@@ -4268,7 +4327,7 @@ win_line (
           && filler_todo <= 0
           && wp->w_width == Columns) {
         /* Remember that the line wraps, used for modeless copy. */
-        LineWraps[screen_row - 1] = TRUE;
+        line_wraps[screen_row - 1] = TRUE;
 
         /*
          * Special trick to make copy/paste of wrapped lines work with
@@ -4361,14 +4420,23 @@ win_line (
  * Return if the composing characters at "off_from" and "off_to" differ.
  * Only to be used when ScreenLinesUC[off_from] != 0.
  */
-static int comp_char_differs(int off_from, int off_to)
+static int comp_char_differs(win_T *wp, int off_from, int off_to)
 {
   int i;
+  u8char_T *screen_lines_c[MAX_MCO];
+
+  if (!win_external) {
+    for (i = 0; i < p_mco; ++i)
+      screen_lines_c[i] = ScreenLinesC[i];
+  } else {
+    for (i = 0; i < p_mco; ++i)
+      screen_lines_c[i] = wp->screen_lines_c[i];
+  }
 
   for (i = 0; i < Screen_mco; ++i) {
-    if (ScreenLinesC[i][off_from] != ScreenLinesC[i][off_to])
+    if (screen_lines_c[i][off_from] != screen_lines_c[i][off_to])
       return TRUE;
-    if (ScreenLinesC[i][off_from] == 0)
+    if (screen_lines_c[i][off_from] == 0)
       break;
   }
   return FALSE;
@@ -4384,14 +4452,20 @@ static int comp_char_differs(int off_from, int off_to)
 static int char_needs_redraw(win_T *wp, int off_from, int off_to, int cols)
 {
   schar_T *screen_lines;
+  u8char_T *screen_lines_uc;
+  schar_T *screen_lines_2;
   sattr_T *screen_attrs;
   unsigned *line_offset;
   if (!win_external) {
     screen_lines = ScreenLines;
+    screen_lines_uc = ScreenLinesUC;
+    screen_lines_2 = ScreenLines2;
     screen_attrs = ScreenAttrs;
     line_offset = LineOffset;
   } else {
     screen_lines = wp->screen_lines;
+    screen_lines_uc = wp->screen_lines_uc;
+    screen_lines_2 = wp->screen_lines_2;
     screen_attrs = wp->screen_attrs;
     line_offset = wp->line_offset;
   }
@@ -4402,13 +4476,13 @@ static int char_needs_redraw(win_T *wp, int off_from, int off_to, int cols)
           || (enc_dbcs != 0
               && MB_BYTE2LEN(screen_lines[off_from]) > 1
               && (enc_dbcs == DBCS_JPNU && screen_lines[off_from] == 0x8e
-                  ? ScreenLines2[off_from] != ScreenLines2[off_to]
+                  ? screen_lines_2[off_from] != screen_lines_2[off_to]
                   : (cols > 1 && screen_lines[off_from + 1]
                      != screen_lines[off_to + 1])))
           || (enc_utf8
-              && (ScreenLinesUC[off_from] != ScreenLinesUC[off_to]
-                  || (ScreenLinesUC[off_from] != 0
-                      && comp_char_differs(off_from, off_to))
+              && (screen_lines_uc[off_from] != screen_lines_uc[off_to]
+                  || (screen_lines_uc[off_from] != 0
+                      && comp_char_differs(wp, off_from, off_to))
                   || ((*mb_off2cells)(wp, off_from, off_from + cols) > 1
                       && screen_lines[off_from + 1]
                       != screen_lines[off_to + 1])))));
@@ -4444,26 +4518,32 @@ static void screen_line(win_T *wp, int row, int coloff, int endcol, int clear_wi
   schar_T *screen_lines;
   u8char_T *screen_lines_uc;
   u8char_T *screen_lines_c[MAX_MCO];
+  schar_T *screen_lines_2;
   sattr_T *screen_attrs;
   unsigned *line_offset;
+  char_u *line_wraps;
   schar_T *current_screenline;
 # define CHAR_CELLS char_cells
 
   if (!win_external) {
     screen_lines = ScreenLines;
     screen_lines_uc = ScreenLinesUC;
+    screen_lines_2 = ScreenLines2;
     for (i = 0; i < p_mco; ++i)
       screen_lines_c[i] = ScreenLinesC[i];
     screen_attrs = ScreenAttrs;
     line_offset = LineOffset;
+    line_wraps = LineWraps;
     current_screenline = current_ScreenLine;
   } else {
     screen_lines = wp->screen_lines;
     screen_lines_uc = wp->screen_lines_uc;
+    screen_lines_2 = wp->screen_lines_2;
     for (i = 0; i < p_mco; ++i)
       screen_lines_c[i] = wp->screen_lines_c[i];
     screen_attrs = wp->screen_attrs;
     line_offset = wp->line_offset;
+    line_wraps = wp->line_wraps;
     current_screenline = wp->current_screenline;
   }
 
@@ -4536,7 +4616,7 @@ static void screen_line(win_T *wp, int row, int coloff, int endcol, int clear_wi
         }
 
         if (enc_dbcs == DBCS_JPNU)
-          ScreenLines2[off_to] = ScreenLines2[off_from];
+          screen_lines_2[off_to] = screen_lines_2[off_from];
       }
       /* When writing a single-width character over a double-width
        * character and at the end of the redrawn text, need to clear out
@@ -4632,7 +4712,7 @@ static void screen_line(win_T *wp, int row, int coloff, int endcol, int clear_wi
         screen_char(wp, off_to, row, col + coloff);
       }
     } else
-      LineWraps[row] = FALSE;
+      line_wraps[row] = FALSE;
   }
 }
 
@@ -4725,6 +4805,10 @@ static void draw_vsep_win(win_T *wp, int row)
     if (!win_external) {
       screen_fill(wp, wp->w_winrow + row, wp->w_winrow + wp->w_height,
           W_ENDCOL(wp), W_ENDCOL(wp) + 1,
+          c, ' ', hl);
+    } else {
+      screen_fill(wp, row, wp->w_height,
+          wp->w_width, wp->w_width + 1,
           c, ' ', hl);
     }
   }
@@ -5043,15 +5127,30 @@ void win_redr_status(win_T *wp)
       len = this_ru_col - 1;
     }
 
-    row = wp->w_winrow + wp->w_height;
-    screen_puts(wp, p, row, wp->w_wincol, attr);
-    screen_fill(wp, row, row + 1, len + wp->w_wincol,
-        this_ru_col + wp->w_wincol, fillchar, fillchar, attr);
+    if (!win_external) {
+      row = wp->w_winrow + wp->w_height;
+    } else {
+      row = wp->w_height;
+    }
+    if (!win_external) {
+      screen_puts(wp, p, row, wp->w_wincol, attr);
+      screen_fill(wp, row, row + 1, len + wp->w_wincol,
+          this_ru_col + wp->w_wincol, fillchar, fillchar, attr);
+    } else {
+      screen_puts(wp, p, row, 0, attr);
+      screen_fill(wp, row, row + 1, len,
+          this_ru_col, fillchar, fillchar, attr);
+    }
 
     if (get_keymap_str(wp, NameBuff, MAXPATHL)
-        && this_ru_col - len > (int)(STRLEN(NameBuff) + 1))
-      screen_puts(wp, NameBuff, row, (int)(this_ru_col - STRLEN(NameBuff)
-                                       - 1 + wp->w_wincol), attr);
+        && this_ru_col - len > (int)(STRLEN(NameBuff) + 1)) {
+      if (!win_external) {
+        screen_puts(wp, NameBuff, row, (int)(this_ru_col - STRLEN(NameBuff)
+                                         - 1 + wp->w_wincol), attr);
+      } else {
+        screen_puts(wp, NameBuff, row, (int)(this_ru_col - STRLEN(NameBuff) - 1), attr);
+      }
+    }
 
     win_redr_ruler(wp, TRUE);
   }
@@ -5064,8 +5163,13 @@ void win_redr_status(win_T *wp)
       fillchar = fillchar_status(&attr, wp == curwin);
     else
       fillchar = fillchar_vsep(&attr);
-    screen_putchar(wp, fillchar, wp->w_winrow + wp->w_height,
-                   W_ENDCOL(wp), attr);
+    if (!win_external) {
+      screen_putchar(wp, fillchar, wp->w_winrow + wp->w_height,
+                     W_ENDCOL(wp), attr);
+    } else {
+      screen_putchar(wp, fillchar, wp->w_height,
+                     wp->w_width, attr);
+    }
   }
   busy = FALSE;
 }
@@ -5212,7 +5316,11 @@ win_redr_custom (
     maxwidth = Columns;
     use_sandbox = was_set_insecurely((char_u *)"tabline", 0);
   } else {
-    row = wp->w_winrow + wp->w_height;
+    if (!win_external) {
+      row = wp->w_winrow + wp->w_height;
+    } else {
+      row = wp->w_height;
+    }
     fillchar = fillchar_status(&attr, wp == curwin);
     maxwidth = wp->w_width;
 
@@ -5249,7 +5357,9 @@ win_redr_custom (
           *wp->w_p_stl == NUL ? 0 : OPT_LOCAL);
     }
 
-    col += wp->w_wincol;
+    if (!win_external) {
+      col += wp->w_wincol;
+    }
   }
 
   if (maxwidth <= 0)
@@ -5352,25 +5462,43 @@ void screen_putchar(win_T *wp, int c, int row, int col, int attr)
  * Get a single character directly from ScreenLines into "bytes[]".
  * Also return its attribute in *attrp;
  */
-void screen_getbytes(int row, int col, char_u *bytes, int *attrp)
+void screen_getbytes(win_T *wp, int row, int col, char_u *bytes, int *attrp)
 {
   unsigned off;
+  schar_T *screen_lines;
+  u8char_T *screen_lines_uc;
+  schar_T *screen_lines_2;
+  sattr_T *screen_attrs;
+  unsigned *line_offset;
+  if (!win_external) {
+    screen_lines = ScreenLines;
+    screen_lines_uc = ScreenLinesUC;
+    screen_lines_2 = ScreenLines2;
+    screen_attrs = ScreenAttrs;
+    line_offset = LineOffset;
+  } else {
+    screen_lines = wp->screen_lines;
+    screen_lines_uc = wp->screen_lines_uc;
+    screen_lines_2 = wp->screen_lines_2;
+    screen_attrs = wp->screen_attrs;
+    line_offset = wp->line_offset;
+  }
 
   /* safety check */
-  if (ScreenLines != NULL && row < screen_Rows && col < screen_Columns) {
-    off = LineOffset[row] + col;
-    *attrp = ScreenAttrs[off];
-    bytes[0] = ScreenLines[off];
+  if (screen_lines != NULL && row < screen_Rows && col < screen_Columns) {
+    off = line_offset[row] + col;
+    *attrp = screen_attrs[off];
+    bytes[0] = screen_lines[off];
     bytes[1] = NUL;
 
-    if (enc_utf8 && ScreenLinesUC[off] != 0)
+    if (enc_utf8 && screen_lines_uc[off] != 0)
       bytes[utfc_char2bytes(curwin, off, bytes)] = NUL;
-    else if (enc_dbcs == DBCS_JPNU && ScreenLines[off] == 0x8e) {
-      bytes[0] = ScreenLines[off];
-      bytes[1] = ScreenLines2[off];
+    else if (enc_dbcs == DBCS_JPNU && screen_lines[off] == 0x8e) {
+      bytes[0] = screen_lines[off];
+      bytes[1] = screen_lines_2[off];
       bytes[2] = NUL;
     } else if (enc_dbcs && MB_BYTE2LEN(bytes[0]) > 1) {
-      bytes[1] = ScreenLines[off + 1];
+      bytes[1] = screen_lines[off + 1];
       bytes[2] = NUL;
     }
   }
@@ -5382,12 +5510,21 @@ void screen_getbytes(int row, int col, char_u *bytes, int *attrp)
  * composing characters in "u8cc".
  * Only to be used when ScreenLinesUC[off] != 0.
  */
-static int screen_comp_differs(int off, int *u8cc)
+static int screen_comp_differs(win_T *wp, int off, int *u8cc)
 {
   int i;
+  u8char_T *screen_lines_c[MAX_MCO];
+
+  if (!win_external) {
+    for (i = 0; i < p_mco; ++i)
+      screen_lines_c[i] = ScreenLinesC[i];
+  } else {
+    for (i = 0; i < p_mco; ++i)
+      screen_lines_c[i] = wp->screen_lines_c[i];
+  }
 
   for (i = 0; i < Screen_mco; ++i) {
-    if (ScreenLinesC[i][off] != (u8char_T)u8cc[i])
+    if (screen_lines_c[i][off] != (u8char_T)u8cc[i])
       return TRUE;
     if (u8cc[i] == 0)
       break;
@@ -5429,6 +5566,7 @@ void screen_puts_len(win_T *wp, char_u *text, int textlen, int row, int col, int
   int force_redraw_next = FALSE;
   int need_redraw;
   schar_T *screen_lines;
+  schar_T *screen_lines_2;
   sattr_T *screen_attrs;
   unsigned *line_offset;
   u8char_T *screen_lines_uc;
@@ -5441,6 +5579,7 @@ void screen_puts_len(win_T *wp, char_u *text, int textlen, int row, int col, int
 
   if (!win_external) {
     screen_lines = ScreenLines;
+    screen_lines_2 = ScreenLines2;
     screen_attrs = ScreenAttrs;
     line_offset = LineOffset;
     screen_lines_uc = ScreenLinesUC;
@@ -5448,6 +5587,7 @@ void screen_puts_len(win_T *wp, char_u *text, int textlen, int row, int col, int
     screen_columns = screen_Columns;
   } else {
     screen_lines = wp->screen_lines;
+    screen_lines_2 = wp->screen_lines_2;
     screen_attrs = wp->screen_attrs;
     line_offset = wp->line_offset;
     screen_lines_uc = ScreenLinesUC;
@@ -5533,12 +5673,12 @@ void screen_puts_len(win_T *wp, char_u *text, int textlen, int row, int col, int
                       && screen_lines[off + 1] != (l_enc_dbcs ? ptr[1] : 0))
                   || (l_enc_dbcs == DBCS_JPNU
                       && c == 0x8e
-                      && ScreenLines2[off] != ptr[1])
+                      && screen_lines_2[off] != ptr[1])
                   || (l_enc_utf8
                       && (screen_lines_uc[off] !=
                           (u8char_T)(c < 0x80 && u8cc[0] == 0 ? 0 : u8c)
                           || (screen_lines_uc[off] != 0
-                              && screen_comp_differs(off, u8cc))))
+                              && screen_comp_differs(wp, off, u8cc))))
                   || screen_attrs[off] != attr
                   || exmode_active;
 
@@ -5594,7 +5734,7 @@ void screen_puts_len(win_T *wp, char_u *text, int textlen, int row, int col, int
         screen_attrs[off + 1] = attr;
         screen_char_2(wp, off, row, col);
       } else if (l_enc_dbcs == DBCS_JPNU && c == 0x8e) {
-        ScreenLines2[off] = ptr[1];
+        screen_lines_2[off] = ptr[1];
         screen_char(wp, off, row, col);
       } else
         screen_char(wp, off, row, col);
@@ -5925,17 +6065,23 @@ static void screen_char(win_T *wp, unsigned off, int row, int col)
 {
   int attr;
   schar_T *screen_lines;
+  u8char_T *screen_lines_uc;
+  schar_T *screen_lines_2;
   sattr_T *screen_attrs;
   int screen_rows;
   int screen_columns;
 
   if (!win_external) {
     screen_lines = ScreenLines;
+    screen_lines_uc = ScreenLinesUC;
+    screen_lines_2 = ScreenLines2;
     screen_attrs = ScreenAttrs;
     screen_rows = screen_Rows;
     screen_columns = screen_Columns;
   } else {
     screen_lines = wp->screen_lines;
+    screen_lines_uc = wp->screen_lines_uc;
+    screen_lines_2 = wp->screen_lines_2;
     screen_attrs = wp->screen_attrs;
     screen_rows = wp->screen_rows;
     screen_columns = wp->screen_columns;
@@ -5972,7 +6118,7 @@ static void screen_char(win_T *wp, unsigned off, int row, int col)
   if (screen_attr != attr)
     screen_start_highlight(attr);
 
-  if (enc_utf8 && ScreenLinesUC[off] != 0) {
+  if (enc_utf8 && screen_lines_uc[off] != 0) {
     char_u buf[MB_MAXBYTES + 1];
 
     // Convert UTF-8 character to bytes and write it.
@@ -5991,9 +6137,9 @@ static void screen_char(win_T *wp, unsigned off, int row, int col)
     // double-byte character in single-width cell
     if (enc_dbcs == DBCS_JPNU && screen_lines[off] == 0x8e) {
       if (!win_external) {
-        ui_putc(ScreenLines2[off]);
+        ui_putc(screen_lines_2[off]);
       } else {
-        ui_putc(ScreenLines2[off]);
+        win_ui_putc(wp->handle, screen_lines_2[off]);
       }
     }
   }
@@ -6059,9 +6205,10 @@ void screen_fill(win_T *wp, int start_row, int end_row, int start_col, int end_c
   int did_delete;
   int c;
   schar_T *screen_lines;
+  u8char_T *screen_lines_uc;
   sattr_T *screen_attrs;
   unsigned *line_offset;
-  u8char_T *screen_lines_uc;
+  char_u *line_wraps;
   int screen_rows;
   int screen_columns;
 
@@ -6069,6 +6216,7 @@ void screen_fill(win_T *wp, int start_row, int end_row, int start_col, int end_c
     screen_lines = ScreenLines;
     screen_attrs = ScreenAttrs;
     line_offset = LineOffset;
+    line_wraps = LineWraps;
     screen_lines_uc = ScreenLinesUC;
     screen_rows = screen_Rows;
     screen_columns = screen_Columns;
@@ -6076,6 +6224,7 @@ void screen_fill(win_T *wp, int start_row, int end_row, int start_col, int end_c
     screen_lines = wp->screen_lines;
     screen_attrs = wp->screen_attrs;
     line_offset = wp->line_offset;
+    line_wraps = wp->line_wraps;
     screen_lines_uc = wp->screen_lines_uc;
     screen_rows = wp->screen_rows;
     screen_columns = wp->screen_columns;
@@ -6181,7 +6330,7 @@ void screen_fill(win_T *wp, int start_row, int end_row, int start_col, int end_c
       }
     }
     if (end_col == Columns)
-      LineWraps[row] = FALSE;
+      line_wraps[row] = FALSE;
     if (row == Rows - 1) {              /* overwritten the command line */
       redraw_cmdline = TRUE;
       if (c1 == ' ' && c2 == ' ')
@@ -6527,7 +6676,7 @@ static void screenclear2(void)
 
   /* blank out ScreenLines */
   for (i = 0; i < Rows; ++i) {
-    lineclear(LineOffset[i], (int)Columns);
+    lineclear(curwin, LineOffset[i], (int)Columns);
     LineWraps[i] = FALSE;
   }
 
@@ -6552,13 +6701,26 @@ static void screenclear2(void)
 /*
  * Clear one line in ScreenLines.
  */
-static void lineclear(unsigned off, int width)
+static void lineclear(win_T *wp, unsigned off, int width)
 {
-  (void)memset(ScreenLines + off, ' ', (size_t)width * sizeof(schar_T));
+  schar_T *screen_lines;
+  u8char_T *screen_lines_uc;
+  sattr_T *screen_attrs;
+  if (!win_external) {
+    screen_lines = ScreenLines;
+    screen_lines_uc = ScreenLinesUC;
+    screen_attrs = ScreenAttrs;
+  } else {
+    screen_lines = wp->screen_lines;
+    screen_lines_uc = wp->screen_lines_uc;
+    screen_attrs = wp->screen_attrs;
+  }
+
+  (void)memset(screen_lines + off, ' ', (size_t)width * sizeof(schar_T));
   if (enc_utf8)
-    (void)memset(ScreenLinesUC + off, 0,
+    (void)memset(screen_lines_uc + off, 0,
         (size_t)width * sizeof(u8char_T));
-  (void)memset(ScreenAttrs + off, 0, (size_t)width * sizeof(sattr_T));
+  (void)memset(screen_attrs + off, 0, (size_t)width * sizeof(sattr_T));
 }
 
 /*
@@ -6566,24 +6728,50 @@ static void lineclear(unsigned off, int width)
  */
 static void linecopy(int to, int from, win_T *wp)
 {
-  unsigned off_to = LineOffset[to] + wp->w_wincol;
-  unsigned off_from = LineOffset[from] + wp->w_wincol;
+  unsigned off_to;
+  unsigned off_from;
+  schar_T *screen_lines;
+  u8char_T *screen_lines_uc;
+  u8char_T *screen_lines_c[MAX_MCO];
+  schar_T *screen_lines_2;
+  sattr_T *screen_attrs;
+  int i;
 
-  memmove(ScreenLines + off_to, ScreenLines + off_from,
+  if (!win_external) {
+    screen_lines = ScreenLines;
+    screen_lines_uc = ScreenLinesUC;
+    screen_lines_2 = ScreenLines2;
+    for (i = 0; i < p_mco; ++i)
+      screen_lines_c[i] = ScreenLinesC[i];
+    screen_attrs = ScreenAttrs;
+    off_to = LineOffset[to] + wp->w_wincol;
+    off_from = LineOffset[from] + wp->w_wincol;
+  } else {
+    screen_lines = wp->screen_lines;
+    screen_lines_uc = wp->screen_lines_uc;
+    screen_lines_2 = wp->screen_lines_2;
+    for (i = 0; i < p_mco; ++i)
+      screen_lines_c[i] = wp->screen_lines_c[i];
+    screen_attrs = wp->screen_attrs;
+    off_to = wp->line_offset[to];
+    off_from = wp->line_offset[from];
+  }
+
+  memmove(screen_lines + off_to, screen_lines + off_from,
       wp->w_width * sizeof(schar_T));
   if (enc_utf8) {
     int i;
 
-    memmove(ScreenLinesUC + off_to, ScreenLinesUC + off_from,
+    memmove(screen_lines_uc + off_to, screen_lines_uc + off_from,
         wp->w_width * sizeof(u8char_T));
     for (i = 0; i < p_mco; ++i)
-      memmove(ScreenLinesC[i] + off_to, ScreenLinesC[i] + off_from,
+      memmove(screen_lines_c[i] + off_to, screen_lines_c[i] + off_from,
           wp->w_width * sizeof(u8char_T));
   }
   if (enc_dbcs == DBCS_JPNU)
-    memmove(ScreenLines2 + off_to, ScreenLines2 + off_from,
+    memmove(screen_lines_2 + off_to, screen_lines_2 + off_from,
         wp->w_width * sizeof(schar_T));
-  memmove(ScreenAttrs + off_to, ScreenAttrs + off_from,
+  memmove(screen_attrs + off_to, screen_attrs + off_from,
       wp->w_width * sizeof(sattr_T));
 }
 
@@ -6691,8 +6879,12 @@ int win_ins_lines(win_T *wp, int row, int line_count, int invalid, int mayclear)
     }
   }
 
-  if (screen_ins_lines(0, wp->w_winrow + row, line_count, (int)Rows, NULL)
-      == FAIL) {
+  if (!win_external) {
+    retval = screen_ins_lines(0, wp->w_winrow + row, line_count, (int)Rows, NULL);
+  } else {
+    retval = screen_ins_lines(0, row, line_count, (int)Rows, NULL);
+  }
+  if (retval == FAIL) {
     /* deletion will have messed up other windows */
     if (did_delete) {
       wp->w_redr_status = TRUE;
@@ -6725,8 +6917,12 @@ int win_del_lines(win_T *wp, int row, int line_count, int invalid, int mayclear)
   if (retval != MAYBE)
     return retval;
 
-  if (screen_del_lines(0, wp->w_winrow + row, line_count,
-          (int)Rows, NULL) == FAIL) {
+  if (!win_external) {
+    retval = screen_del_lines(0, wp->w_winrow + row, line_count, (int)Rows, NULL);
+  } else {
+    retval = screen_del_lines(0, row, line_count, (int)Rows, NULL);
+  }
+  if (retval == FAIL) {
     return FAIL;
   }
 
@@ -6735,8 +6931,14 @@ int win_del_lines(win_T *wp, int row, int line_count, int invalid, int mayclear)
    * correct place. If we can't do that, they have to be redrawn.
    */
   if (wp->w_next || wp->w_status_height || cmdline_row < Rows - 1) {
-    if (screen_ins_lines(0, wp->w_winrow + wp->w_height - line_count,
-            line_count, (int)Rows, NULL) == FAIL) {
+    if (!win_external) {
+      retval = screen_ins_lines(0, wp->w_winrow + wp->w_height - line_count,
+              line_count, (int)Rows, NULL);
+    } else {
+      retval = screen_ins_lines(0, wp->w_height - line_count,
+              line_count, (int)Rows, NULL);
+    }
+    if (retval == FAIL) {
       wp->w_redr_status = TRUE;
       win_rest_invalid(wp->w_next);
     }
@@ -6784,11 +6986,21 @@ static int win_do_lines(win_T *wp, int row, int line_count, int mayclear, int de
   int retval;
   ui_set_scroll_region(wp, row);
   if (del) {
-    retval = screen_del_lines(wp->w_winrow + row, 0, line_count,
-        wp->w_height - row, wp);
+    if (!win_external) {
+      retval = screen_del_lines(wp->w_winrow + row, 0, line_count,
+          wp->w_height - row, wp);
+    } else {
+      retval = screen_del_lines(row, 0, line_count,
+          wp->w_height - row, wp);
+    }
   } else {
-    retval = screen_ins_lines(wp->w_winrow + row, 0, line_count,
-        wp->w_height - row, wp);
+    if (!win_external) {
+      retval = screen_ins_lines(wp->w_winrow + row, 0, line_count,
+          wp->w_height - row, wp);
+    } else {
+      retval = screen_ins_lines(row, 0, line_count,
+          wp->w_height - row, wp);
+    }
   }
   ui_reset_scroll_region();
   return retval;
@@ -6835,6 +7047,15 @@ int screen_ins_lines (
   int i;
   int j;
   unsigned temp;
+  unsigned *line_offset;
+  char_u *line_wraps;
+  if (!win_external) {
+    line_offset = LineOffset;
+    line_wraps = LineWraps;
+  } else {
+    line_offset = wp->line_offset;
+    line_wraps = wp->line_wraps;
+  }
 
   if (!screen_valid(TRUE) || line_count <= 0) {
     return FAIL;
@@ -6852,22 +7073,33 @@ int screen_ins_lines (
         linecopy(j + line_count, j, wp);
       }
       j += line_count;
-      lineclear(LineOffset[j] + wp->w_wincol, wp->w_width);
-      LineWraps[j] = FALSE;
+      if (!win_external) {
+        lineclear(wp, line_offset[j] + wp->w_wincol, wp->w_width);
+      } else {
+        lineclear(wp, line_offset[j], wp->w_width);
+      }
+      line_wraps[j] = FALSE;
     } else {
       j = end - 1 - i;
-      temp = LineOffset[j];
+      temp = line_offset[j];
       while ((j -= line_count) >= row) {
-        LineOffset[j + line_count] = LineOffset[j];
-        LineWraps[j + line_count] = LineWraps[j];
+        line_offset[j + line_count] = line_offset[j];
+        line_wraps[j + line_count] = line_wraps[j];
       }
-      LineOffset[j + line_count] = temp;
-      LineWraps[j + line_count] = FALSE;
-      lineclear(temp, (int)Columns);
+      line_offset[j + line_count] = temp;
+      line_wraps[j + line_count] = FALSE;
+      lineclear(wp, temp, (int)Columns);
     }
   }
 
-  ui_append_lines(line_count);
+  if (!win_external) {
+    ui_append_lines(line_count);
+  } else {
+    Array args = ARRAY_DICT_INIT;
+    ADD(args, INTEGER_OBJ(wp->handle));
+    ADD(args, INTEGER_OBJ(-line_count));
+    ui_event("win_scroll", args);
+  }
 
   return OK;
 }
@@ -6889,6 +7121,15 @@ int screen_del_lines (
   int j;
   int i;
   unsigned temp;
+  unsigned *line_offset;
+  char_u *line_wraps;
+  if (!win_external) {
+    line_offset = LineOffset;
+    line_wraps = LineWraps;
+  } else {
+    line_offset = wp->line_offset;
+    line_wraps = wp->line_wraps;
+  }
 
   if (!screen_valid(TRUE) || line_count <= 0) {
     return FAIL;
@@ -6906,23 +7147,34 @@ int screen_del_lines (
         linecopy(j - line_count, j, wp);
       }
       j -= line_count;
-      lineclear(LineOffset[j] + wp->w_wincol, wp->w_width);
-      LineWraps[j] = FALSE;
+      if (!win_external) {
+        lineclear(wp, line_offset[j] + wp->w_wincol, wp->w_width);
+      } else {
+        lineclear(wp, line_offset[j], wp->w_width);
+      }
+      line_wraps[j] = FALSE;
     } else {
       // whole width, moving the line pointers is faster
       j = row + i;
-      temp = LineOffset[j];
+      temp = line_offset[j];
       while ((j += line_count) <= end - 1) {
-        LineOffset[j - line_count] = LineOffset[j];
-        LineWraps[j - line_count] = LineWraps[j];
+        line_offset[j - line_count] = line_offset[j];
+        line_wraps[j - line_count] = line_wraps[j];
       }
-      LineOffset[j - line_count] = temp;
-      LineWraps[j - line_count] = FALSE;
-      lineclear(temp, (int)Columns);
+      line_offset[j - line_count] = temp;
+      line_wraps[j - line_count] = FALSE;
+      lineclear(wp, temp, (int)Columns);
     }
   }
 
-  ui_delete_lines(line_count);
+  if (!win_external) {
+    ui_delete_lines(line_count);
+  } else {
+    Array args = ARRAY_DICT_INIT;
+    ADD(args, INTEGER_OBJ(wp->handle));
+    ADD(args, INTEGER_OBJ(line_count));
+    ui_event("win_scroll", args);
+  }
 
   return OK;
 }
@@ -7448,9 +7700,17 @@ static void win_redr_ruler(win_T *wp, int always)
     int off;
 
     if (wp->w_status_height) {
-      row = wp->w_winrow + wp->w_height;
+      if (!win_external) {
+        row = wp->w_winrow + wp->w_height;
+      } else {
+        row = wp->w_height;
+      }
       fillchar = fillchar_status(&attr, wp == curwin);
-      off = wp->w_wincol;
+      if (!win_external) {
+        off = wp->w_wincol;
+      } else {
+        off = 0;
+      }
       width = wp->w_width;
     } else {
       row = Rows - 1;
