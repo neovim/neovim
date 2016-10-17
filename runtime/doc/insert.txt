@@ -1436,7 +1436,7 @@ original HTML files completion of tags (and only tags) isn't context aware.
 
 RUBY						 *ft-ruby-omni* {Nvim}
 
-NOTE: Completion for ruby code is not currently provided by Nvim.
+NOTE: |compl-omni| for Ruby code requires |provider-ruby| to be installed.
 
 Ruby completion will parse your buffer on demand in order to provide a list of
 completions.  These completions will be drawn from modules loaded by 'require'
