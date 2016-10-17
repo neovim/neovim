@@ -1449,8 +1449,14 @@ static int pc_col;
 void edit_putchar(int c, int highlight)
 {
   int attr;
+  schar_T *screen_lines;
+  if (!win_get_external()) {
+    screen_lines = ScreenLines;
+  } else {
+    screen_lines = curwin->screen_lines;
+  }
 
-  if (ScreenLines != NULL) {
+  if (screen_lines != NULL) {
     update_topline();           /* just in case w_topline isn't valid */
     validate_cursor();
     if (highlight)
@@ -1473,13 +1479,13 @@ void edit_putchar(int c, int highlight)
       }
     } else {
       pc_col += curwin->w_wcol;
-      if (mb_lefthalve(pc_row, pc_col))
+      if (mb_lefthalve(curwin, pc_row, pc_col))
         pc_status = PC_STATUS_LEFT;
     }
 
     /* save the character to be able to put it back */
     if (pc_status == PC_STATUS_UNSET) {
-      screen_getbytes(pc_row, pc_col, pc_bytes, &pc_attr);
+      screen_getbytes(curwin, pc_row, pc_col, pc_bytes, &pc_attr);
       pc_status = PC_STATUS_SET;
     }
     screen_putchar(curwin, c, pc_row, pc_col, attr);

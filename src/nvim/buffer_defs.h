@@ -1180,7 +1180,7 @@ struct window_S {
   u8char_T *screen_lines_c[6];
   int screen_mco;
 
-  char_u  *screen_lines2;
+  schar_T  *screen_lines_2;
   int screen_rows;
   int screen_columns;
 

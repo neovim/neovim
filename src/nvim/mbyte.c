@@ -910,17 +910,22 @@ int utfc_char2bytes(win_T *wp, int off, char_u *buf)
   int len;
   int i;
   u8char_T *screen_lines_uc;
+  u8char_T *screen_lines_c[MAX_MCO];
   if (!win_get_external()) {
     screen_lines_uc = ScreenLinesUC;
+    for (i = 0; i < p_mco; ++i)
+      screen_lines_c[i] = ScreenLinesC[i];
   } else {
     screen_lines_uc = wp->screen_lines_uc;
+    for (i = 0; i < p_mco; ++i)
+      screen_lines_c[i] = wp->screen_lines_c[i];
   }
 
   len = utf_char2bytes(screen_lines_uc[off], buf);
   for (i = 0; i < Screen_mco; ++i) {
-    if (ScreenLinesC[i][off] == 0)
+    if (screen_lines_c[i][off] == 0)
       break;
-    len += utf_char2bytes(ScreenLinesC[i][off], buf + len);
+    len += utf_char2bytes(screen_lines_c[i][off], buf + len);
   }
   return len;
 }
@@ -1951,10 +1956,16 @@ char_u * mb_unescape(char_u **pp)
  * of a double-width character.
  * Caller must make sure "row" and "col" are not invalid!
  */
-bool mb_lefthalve(int row, int col)
+bool mb_lefthalve(win_T *wp, int row, int col)
 {
-  return (*mb_off2cells)(curwin, LineOffset[row] + col,
-      LineOffset[row] + screen_Columns) > 1;
+  unsigned *line_offset;
+  if (!win_get_external()) {
+    line_offset = LineOffset;
+  } else {
+    line_offset = wp->line_offset;
+  }
+  return (*mb_off2cells)(wp, line_offset[row] + col,
+      line_offset[row] + screen_Columns) > 1;
 }
 
 /*

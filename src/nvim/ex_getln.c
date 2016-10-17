@@ -57,6 +57,7 @@
 #include "nvim/os/os.h"
 #include "nvim/event/loop.h"
 #include "nvim/os/time.h"
+#include "nvim/api/private/helpers.h"
 
 /*
  * Variables shared between getcmdline(), redrawcmdline() and others.
@@ -290,6 +291,7 @@ static uint8_t *command_line_enter(int firstc, long count, int indent)
 
   if (ccline.cmdbuff != NULL) {
     // Put line in history buffer (":" and "=" only when it was typed).
+
     if (s->histype != HIST_INVALID
         && ccline.cmdlen
         && s->firstc != NUL
@@ -2159,6 +2161,14 @@ static void draw_cmdline(int start, int len)
 {
   int i;
 
+  if (win_get_external()) {
+    Array args = ARRAY_DICT_INIT;
+    ADD(args, STRING_OBJ(cstr_to_string((char *)(ccline.cmdbuff))));
+    ADD(args, INTEGER_OBJ(ccline.cmdpos));
+    ui_event("cmdline", args);
+    return;
+  }
+
   if (cmdline_star > 0)
     for (i = 0; i < len; ++i) {
       msg_putchar('*');
@@ -2666,6 +2676,13 @@ static void cursorcmd(void)
 {
   if (cmd_silent)
     return;
+
+  if (win_get_external()) {
+    Array args = ARRAY_DICT_INIT;
+    ADD(args, INTEGER_OBJ(ccline.cmdpos));
+    ui_event("cmdlinepos", args);
+    return;
+  }
 
   if (cmdmsg_rl) {
     msg_row = cmdline_row  + (ccline.cmdspos / (int)(Columns - 1));

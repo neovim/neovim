@@ -3957,24 +3957,33 @@ void win_alloc_screen(win_T *wp)
   schar_T *screen_lines;
   u8char_T *screen_lines_uc;
   u8char_T *screen_lines_c[MAX_MCO];
+  schar_T *screen_lines_2 = NULL;
   sattr_T *screen_attrs;
   unsigned *line_offset;
+  char_u *line_wraps;
+  const bool l_enc_utf8 = enc_utf8;
+  const int l_enc_dbcs = enc_dbcs;
 
   screen_lines = xmalloc((size_t)((Rows + 1) * Columns * sizeof(schar_T)));
   memset(screen_lines_c, 0, sizeof(u8char_T *) * MAX_MCO);
-  if (enc_utf8) {
+  if (l_enc_utf8) {
     screen_lines_uc = xmalloc(
         (size_t)((Rows + 1) * Columns * sizeof(u8char_T)));
     for (i = 0; i < p_mco; ++i)
       screen_lines_c[i] = xcalloc((Rows + 1) * Columns, sizeof(u8char_T));
   }
+  if (l_enc_dbcs == DBCS_JPNU)
+    screen_lines_2 = xmalloc(
+        (size_t)((Rows + 1) * Columns * sizeof(schar_T)));
   screen_attrs = xmalloc((size_t)((Rows + 1) * Columns * sizeof(sattr_T)));
   line_offset = xmalloc((size_t)(Rows * sizeof(unsigned)));
+  line_wraps = xmalloc((size_t)(Rows * sizeof(char_u)));
   for (new_row = 0; new_row < Rows; ++new_row) {
     line_offset[new_row] = new_row * Columns;
+    line_wraps[new_row] = FALSE;
     (void)memset(screen_lines + new_row * Columns,
         ' ', (size_t)Columns * sizeof(schar_T));
-    if (enc_utf8) {
+    if (l_enc_utf8) {
       (void)memset(screen_lines_uc + new_row * Columns,
           0, (size_t)Columns * sizeof(u8char_T));
       for (i = 0; i < p_mco; ++i)
@@ -3982,15 +3991,20 @@ void win_alloc_screen(win_T *wp)
             + new_row * Columns,
             0, (size_t)Columns * sizeof(u8char_T));
     }
+    if (l_enc_dbcs == DBCS_JPNU)
+      (void)memset(screen_lines_2 + new_row * Columns,
+          0, (size_t)Columns * sizeof(schar_T));
     (void)memset(screen_attrs + new_row * Columns,
         0, (size_t)Columns * sizeof(sattr_T));
   }
   wp->screen_lines = screen_lines;
   wp->screen_lines_uc = screen_lines_uc;
+  wp->screen_lines_2 = screen_lines_2;
   for (i = 0; i < p_mco; ++i)
     wp->screen_lines_c[i] = screen_lines_c[i];
   wp->screen_attrs = screen_attrs;
   wp->line_offset = line_offset;
+  wp->line_wraps = line_wraps;
   wp->screen_rows = Rows;
   wp->screen_columns = Columns;
   wp->current_screenline = screen_lines + Rows * Columns;
@@ -4004,11 +4018,13 @@ void win_free_screen(win_T *wp)
   int i;
   xfree(wp->screen_lines);
   xfree(wp->screen_lines_uc);
+  xfree(wp->screen_lines_2);
   for (i = 0; i < p_mco; ++i) {
     xfree(wp->screen_lines_c[i]);
   }
   xfree(wp->screen_attrs);
   xfree(wp->line_offset);
+  xfree(wp->line_wraps);
 }
 
 /*

@@ -56,6 +56,7 @@
 #include "nvim/event/loop.h"
 #include "nvim/os/time.h"
 #include "nvim/os/input.h"
+#include "nvim/api/private/helpers.h"
 
 typedef struct normal_state {
   VimState state;
@@ -4491,8 +4492,16 @@ static void nv_colon(cmdarg_T *cap)
     old_p_im = p_im;
 
     /* get a command line and execute it */
+    if (win_get_external()) {
+      Array args = ARRAY_DICT_INIT;
+      ui_event("command_line_enter", args);
+    }
     cmd_result = do_cmdline(NULL, getexline, NULL,
         cap->oap->op_type != OP_NOP ? DOCMD_KEEPLINE : 0);
+    if (win_get_external()) {
+      Array args = ARRAY_DICT_INIT;
+      ui_event("command_line_leave", args);
+    }
 
     /* If 'insertmode' changed, enter or exit Insert mode */
     if (p_im != old_p_im) {
