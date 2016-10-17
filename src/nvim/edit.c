@@ -664,9 +664,10 @@ static int insert_execute(VimState *state, int key)
 
       // Pressing CTRL-Y selects the current match.  When
       // compl_enter_selects is set the Enter key does the same.
-      if (s->c == Ctrl_Y
-          || (compl_enter_selects
-            && (s->c == CAR || s->c == K_KENTER || s->c == NL))) {
+      if ((s->c == Ctrl_Y
+           || (compl_enter_selects
+               && (s->c == CAR || s->c == K_KENTER || s->c == NL)))
+          && stop_arrow() == OK) {
         ins_compl_delete();
         ins_compl_insert();
       }
