@@ -4245,15 +4245,18 @@ do_arg_all (
         }
       }
     } else if (split_ret == OK) {
+      bool tab_suc = false;
       if (!use_firstwin) {              /* split current window */
         p_ea_save = p_ea;
         p_ea = true;                    /* use space from all windows */
-        split_ret = win_split(0, WSP_ROOM | WSP_BELOW);
+        split_ret = win_split_with_tab_suc(0, WSP_ROOM | WSP_BELOW, &tab_suc);
         p_ea = p_ea_save;
-        if (split_ret == FAIL)
+        if (split_ret == FAIL) {
           continue;
-      } else        /* first window: do autocmd for leaving this buffer */
+        }
+      } else {       /* first window: do autocmd for leaving this buffer */
         --autocmd_no_leave;
+      }
 
       /*
        * edit file "i"
@@ -4268,9 +4271,13 @@ do_arg_all (
           ((P_HID(curwin->w_buffer)
             || bufIsChanged(curwin->w_buffer)) ? ECMD_HIDE : 0)
           + ECMD_OLDBUF, curwin);
-      if (use_firstwin)
+      if (use_firstwin) {
         ++autocmd_no_leave;
+      }
       use_firstwin = FALSE;
+      if (tab_suc) {
+          apply_autocmds(EVENT_TABNEWENTERED, NULL, NULL, false, curbuf);
+      }
     }
     os_breakcheck();
 
