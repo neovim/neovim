@@ -2057,6 +2057,7 @@ void ex_copen(exarg_T *eap)
   tabpage_T   *prevtab = curtab;
   buf_T       *qf_buf;
   win_T       *oldwin = curwin;
+  bool tab_suc = false;
 
   if (eap->cmdidx == CMD_lopen || eap->cmdidx == CMD_lwindow) {
     qi = GET_LOC_LIST(curwin);
@@ -2103,8 +2104,9 @@ void ex_copen(exarg_T *eap)
       /* Create the new window at the very bottom, except when
        * :belowright or :aboveleft is used. */
       win_goto(lastwin);
-    if (win_split(height, WSP_BELOW | WSP_NEWLOC) == FAIL)
+    if (win_split_with_tab_suc(height, WSP_BELOW | WSP_NEWLOC, &tab_suc) == FAIL) {
       return;                   /* not enough room for window */
+    }
     RESET_BINDING(curwin);
 
     if (eap->cmdidx == CMD_lopen || eap->cmdidx == CMD_lwindow) {
@@ -2156,6 +2158,9 @@ void ex_copen(exarg_T *eap)
   curwin->w_cursor.col = 0;
   check_cursor();
   update_topline();             /* scroll to show the line */
+  if (tab_suc) {
+      apply_autocmds(EVENT_TABNEWENTERED, NULL, NULL, false, curbuf);
+  }
 }
 
 /*
