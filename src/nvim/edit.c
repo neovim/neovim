@@ -2350,9 +2350,6 @@ void set_completion(colnr_T startcol, list_T *list)
   }
   ins_compl_clear();
 
-  if (stop_arrow() == FAIL)
-    return;
-
   compl_direction = FORWARD;
   if (startcol > curwin->w_cursor.col)
     startcol = curwin->w_cursor.col;
@@ -3263,14 +3260,19 @@ static bool ins_compl_prep(int c)
       } else {
         int prev_col = curwin->w_cursor.col;
 
-        /* put the cursor on the last char, for 'tw' formatting */
-        if (prev_col > 0)
+        // put the cursor on the last char, for 'tw' formatting
+        if (prev_col > 0) {
           dec_cursor();
-        if (stop_arrow() == OK)
+        }
+
+        if (!arrow_used && !ins_need_undo) {
           insertchar(NUL, 0, -1);
+        }
+
         if (prev_col > 0
-            && get_cursor_line_ptr()[curwin->w_cursor.col] != NUL)
+            && get_cursor_line_ptr()[curwin->w_cursor.col] != NUL) {
           inc_cursor();
+        }
       }
 
       // If the popup menu is displayed pressing CTRL-Y means accepting
