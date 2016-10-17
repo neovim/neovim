@@ -4403,7 +4403,8 @@ void ex_buffer_all(exarg_T *eap)
       /* Split the window and put the buffer in it */
       p_ea_save = p_ea;
       p_ea = true;                      /* use space from all windows */
-      split_ret = win_split(0, WSP_ROOM | WSP_BELOW);
+      bool tab_suc = false;
+      split_ret = win_split_with_tab_suc(0, WSP_ROOM | WSP_BELOW, &tab_suc);
       ++open_wins;
       p_ea = p_ea_save;
       if (split_ret == FAIL)
@@ -4412,6 +4413,9 @@ void ex_buffer_all(exarg_T *eap)
       /* Open the buffer in this window. */
       swap_exists_action = SEA_DIALOG;
       set_curbuf(buf, DOBUF_GOTO);
+      if (tab_suc) {
+          apply_autocmds(EVENT_TABNEWENTERED, NULL, NULL, false, curbuf);
+      }
       if (!buf_valid(buf)) {            /* autocommands deleted the buffer!!! */
         swap_exists_action = SEA_NONE;
         break;
