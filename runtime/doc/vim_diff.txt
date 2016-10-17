@@ -108,6 +108,7 @@ Options:
 
 Commands:
   |:CheckHealth|
+  |:drop| is available on all platforms
   |:Man| is available by default, with many improvements such as completion
 
 Functions:
