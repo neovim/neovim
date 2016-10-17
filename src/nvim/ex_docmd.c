@@ -6399,8 +6399,7 @@ void ex_splitview(exarg_T *eap)
 {
   win_T       *old_curwin = curwin;
   char_u      *fname = NULL;
-
-
+  bool         tab_suc = false;
 
   /* A ":split" in the quickfix window works like ":new".  Don't want two
    * quickfix windows.  But it's OK when doing ":tab split". */
@@ -6428,7 +6427,7 @@ void ex_splitview(exarg_T *eap)
     if (win_new_tabpage(cmdmod.tab != 0 ? cmdmod.tab : eap->addr_count == 0
                         ? 0 : (int)eap->line2 + 1, eap->arg) != FAIL) {
       do_exedit(eap, old_curwin);
-      apply_autocmds(EVENT_TABNEWENTERED, NULL, NULL, FALSE, curbuf);
+      apply_autocmds(EVENT_TABNEWENTERED, NULL, NULL, false, curbuf);
 
       /* set the alternate buffer for the window we came from */
       if (curwin != old_curwin
@@ -6437,8 +6436,8 @@ void ex_splitview(exarg_T *eap)
           && !cmdmod.keepalt)
         old_curwin->w_alt_fnum = curbuf->b_fnum;
     }
-  } else if (win_split(eap->addr_count > 0 ? (int)eap->line2 : 0,
-                 *eap->cmd == 'v' ? WSP_VERT : 0) != FAIL) {
+  } else if (win_split_with_tab_suc(eap->addr_count > 0 ? (int)eap->line2 : 0,
+             *eap->cmd == 'v' ? WSP_VERT : 0, &tab_suc) != FAIL) {
     /* Reset 'scrollbind' when editing another file, but keep it when
      * doing ":split" without arguments. */
     if (*eap->arg != NUL
@@ -6447,6 +6446,9 @@ void ex_splitview(exarg_T *eap)
     } else
       do_check_scrollbind(FALSE);
     do_exedit(eap, old_curwin);
+    if (tab_suc) {
+        apply_autocmds(EVENT_TABNEWENTERED, NULL, NULL, false, curbuf);
+    }
   }
 
 

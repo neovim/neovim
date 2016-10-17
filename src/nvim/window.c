@@ -506,11 +506,23 @@ static void cmd_with_count(char *cmd, char_u *bufp, size_t bufsize,
  *
  * return FAIL for failure, OK otherwise
  */
-int win_split(int size, int flags)
+int win_split(int size, int flags) {
+    return win_split_with_tab_suc(size, flags, NULL);
+}
+
+int win_split_with_tab_suc(int size, int flags, bool *tab_suc)
 {
-  /* When the ":tab" modifier was used open a new tab page instead. */
-  if (may_open_tabpage() == OK)
+  if (tab_suc != NULL) {
+    *tab_suc = false;
+  }
+
+  // When the ":tab" modifier was used open a new tab page instead.
+  if (may_open_tabpage() == OK) {
+    if (tab_suc != NULL) {
+      *tab_suc = true;
+    }
     return OK;
+  }
 
   /* Add flags from ":vertical", ":topleft" and ":botright". */
   flags |= cmdmod.split;

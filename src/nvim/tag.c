@@ -2307,6 +2307,7 @@ jumpto_tag (
   char_u      *full_fname = NULL;
   int old_KeyTyped = KeyTyped;              /* getting the file may reset it */
   const int l_g_do_tagpreview = g_do_tagpreview;
+  bool tab_suc = false;
 
   pbuf = xmalloc(LSIZE);
 
@@ -2387,8 +2388,8 @@ jumpto_tag (
   /* If it was a CTRL-W CTRL-] command split window now.  For ":tab tag"
    * open a new tab page. */
   if (postponed_split || cmdmod.tab != 0) {
-    win_split(postponed_split > 0 ? postponed_split : 0,
-        postponed_split_flags);
+    win_split_with_tab_suc(postponed_split > 0 ? postponed_split : 0,
+                           postponed_split_flags, &tab_suc);
     RESET_BINDING(curwin);
   }
 
@@ -2543,6 +2544,9 @@ jumpto_tag (
       validate_cursor();
       redraw_later(VALID);
       win_enter(curwin_save, true);
+    }
+    if (tab_suc) {
+        apply_autocmds(EVENT_TABNEWENTERED, NULL, NULL, false, curbuf);
     }
 
     --RedrawingDisabled;

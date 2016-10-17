@@ -866,6 +866,7 @@ do_buffer (
 {
   buf_T       *buf;
   buf_T       *bp;
+  bool         tab_suc = false;
   int unload = (action == DOBUF_UNLOAD || action == DOBUF_DEL
                 || action == DOBUF_WIPE);
 
@@ -1110,13 +1111,18 @@ do_buffer (
      * page containing "buf" if one exists */
     if ((swb_flags & SWB_USETAB) && buf_jump_open_tab(buf))
       return OK;
-    if (win_split(0, 0) == FAIL)
+    if (win_split_with_tab_suc(0, 0, &tab_suc) == FAIL) {
       return FAIL;
+    }
   }
 
-  /* go to current buffer - nothing to do */
-  if (buf == curbuf)
+  // go to current buffer - nothing to do
+  if (buf == curbuf) {
+    if (tab_suc) {
+        apply_autocmds(EVENT_TABNEWENTERED, NULL, NULL, false, curbuf);
+    }
     return OK;
+  }
 
   /*
    * Check if the current buffer may be abandoned.
@@ -1139,6 +1145,10 @@ do_buffer (
 
   if (action == DOBUF_SPLIT) {
     RESET_BINDING(curwin);      /* reset 'scrollbind' and 'cursorbind' */
+  }
+
+  if (tab_suc) {
+      apply_autocmds(EVENT_TABNEWENTERED, NULL, NULL, false, curbuf);
   }
 
   if (aborting())           /* autocmds may abort script processing */
