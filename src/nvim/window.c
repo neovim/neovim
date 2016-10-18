@@ -3243,10 +3243,7 @@ void goto_tabpage(int n)
 
   if (text_locked()) {
     /* Not allowed when editing the command line. */
-    if (cmdwin_type != 0)
-      EMSG(_(e_cmdwin));
-    else
-      EMSG(_(e_secure));
+    text_locked_msg();
     return;
   }
 

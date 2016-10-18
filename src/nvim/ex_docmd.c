@@ -1772,10 +1772,7 @@ static char_u * do_one_cmd(char_u **cmdlinep,
     if (text_locked() && !(ea.argt & CMDWIN)
         && !IS_USER_CMDIDX(ea.cmdidx)) {
       /* Command not allowed when editing the command line. */
-      if (cmdwin_type != 0)
-        errormsg = (char_u *)_(e_cmdwin);
-      else
-        errormsg = (char_u *)_(e_secure);
+      errormsg = get_text_locked_msg();
       goto doend;
     }
     /* Disallow editing another buffer when "curbuf_lock" is set.

@@ -1688,10 +1688,14 @@ int text_locked(void) {
  */
 void text_locked_msg(void)
 {
+  EMSG(_(get_text_locked_msg()));
+}
+
+char_u * get_text_locked_msg(void) {
   if (cmdwin_type != 0)
-    EMSG(_(e_cmdwin));
+    return e_cmdwin;
   else
-    EMSG(_(e_secure));
+    return e_secure;
 }
 
 /*

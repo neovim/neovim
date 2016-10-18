@@ -478,17 +478,20 @@ void buf_clear_file(buf_T *buf)
   buf->b_ml.ml_flags = ML_EMPTY;                /* empty buffer */
 }
 
-/*
- * buf_freeall() - free all things allocated for a buffer that are related to
- * the file.  flags:
- * BFA_DEL	  buffer is going to be deleted
- * BFA_WIPE	  buffer is going to be wiped out
- * BFA_KEEP_UNDO  do not free undo information
- */
+/// buf_freeall() - free all things allocated for a buffer that are related to
+/// the file.  Careful: get here with "curwin" NULL when exiting.
+///
+/// @param flags BFA_DEL buffer is going to be deleted
+///              BFA_WIPE buffer is going to be wiped out
+///              BFA_KEEP_UNDO  do not free undo information
 void buf_freeall(buf_T *buf, int flags)
 {
   bool is_curbuf = (buf == curbuf);
+  int is_curwin = (curwin != NULL && curwin->w_buffer == buf);
+  win_T *the_curwin = curwin;
+  tabpage_T *the_curtab = curtab;
 
+  // Make sure the buffer isn't closed by autocommands.
   buf->b_closing = true;
   apply_autocmds(EVENT_BUFUNLOAD, buf->b_fname, buf->b_fname, FALSE, buf);
   if (!buf_valid(buf))              /* autocommands may delete the buffer */
@@ -505,6 +508,15 @@ void buf_freeall(buf_T *buf, int flags)
       return;
   }
   buf->b_closing = false;
+
+  // If the buffer was in curwin and the window has changed, go back to that
+  // window, if it still exists.  This avoids that ":edit x" triggering a
+  // "tabnext" BufUnload autocmd leaves a window behind without a buffer.
+  if (is_curwin && curwin != the_curwin &&  win_valid_any_tab(the_curwin)) {
+    block_autocmds();
+    goto_tabpage_win(the_curtab, the_curwin);
+    unblock_autocmds();
+  }
   if (aborting())           /* autocmds may abort script processing */
     return;
 
