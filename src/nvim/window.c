@@ -1065,6 +1065,23 @@ bool win_valid(win_T *win) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
   return false;
 }
 
+/// Check if "win" is a pointer to an existing window in any tabpage.
+///
+/// @param  win  window to check
+bool win_valid_any_tab(win_T *win) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  if (win == NULL) {
+    return false;
+  }
+
+  FOR_ALL_TAB_WINDOWS(tp, wp) {
+    if (wp == win) {
+      return true;
+    }
+  }
+  return false;
+}
+
 /*
  * Return the number of windows.
  */
