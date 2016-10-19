@@ -108,6 +108,7 @@ Options:
 
 Commands:
   |:CheckHealth|
+  |:drop| is available on all platforms
   |:Man| is available by default, with many improvements such as completion
 
 Functions:
@@ -140,10 +141,10 @@ are always available and may be used simultaneously in separate plugins.  The
 `neovim` pip package must be installed to use Python plugins in Nvim (see
 |provider-python|).
 
-|:!| and |system()| do not support "interactive" commands; use |:terminal| for
-that instead. Terminal Vim supports interactive |:!| and |system()|, but gui
-Vim does not. See ":help gui-pty" in Vim:
-   http://vimdoc.sourceforge.net/htmldoc/gui_x11.html#gui-pty
+|:!| does not support "interactive" commands. Use |:terminal| instead.
+(GUI Vim has a similar limitation, see ":help gui-pty" in Vim.)
+
+|system()| does not support writing/reading "backgrounded" commands. |E5677|
 
 |mkdir()| behaviour changed:
 1. Assuming /tmp/foo does not exist and /tmp can be written to

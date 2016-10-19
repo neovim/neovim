@@ -6838,23 +6838,30 @@ system({cmd} [, {input}])				*system()* *E677*
 		Get the output of the shell command {cmd} as a |string|.  {cmd}
 		will be run the same as in |jobstart()|.  See |systemlist()|
 		to get the output as a |List|.
+		Not to be used for interactive commands.
 
-		When {input} is given and is a string this string is written 
-		to a file and passed as stdin to the command.  The string is 
-		written as-is, you need to take care of using the correct line 
-		separators yourself.
-		If {input} is given and is a |List| it is written to the file
-		in a way |writefile()| does with {binary} set to "b" (i.e.
-		with a newline between each list item with newlines inside
-		list items converted to NULs).  
-		Pipes are not used.
+		If {input} is a string it is written to a pipe and passed as
+		stdin to the command.  The string is written as-is, line
+		separators are not changed.
+		If {input} is a |List| it is written to the pipe as
+		|writefile()| does with {binary} set to "b" (i.e. with
+		a newline between each list item, and newlines inside list
+		items converted to NULs).
+								*E5677*
+		Note: system() cannot write to or read from backgrounded ("&")
+		shell commands, e.g.: >
+		    :echo system("cat - &", "foo"))
+<		which is equivalent to: >
+		    $ echo foo | bash -c 'cat - &'
+<		The pipes are disconnected (unless overridden by shell
+		redirection syntax) before input can reach it. Use
+		|jobstart()| instead.
 
 		Note: Use |shellescape()| or |::S| with |expand()| or 
 		|fnamemodify()| to escape special characters in a command 
 		argument.  Newlines in {cmd} may cause the command to fail.  
 		The characters in 'shellquote' and 'shellxquote' may also 
 		cause trouble.
-		This is not to be used for interactive commands.
 
 		The result is a String.  Example: >
 		    :let files = system("ls " .  shellescape(expand('%:h')))
@@ -6868,9 +6875,6 @@ system({cmd} [, {input}])				*system()* *E677*
 
 		The command executed is constructed using several options when
 		{cmd} is a string: 'shell' 'shellcmdflag' {cmd}
-
-		The command will be executed in "cooked" mode, so that a
-		CTRL-C will interrupt the command (on Unix at least).
 
 		The resulting error code can be found in |v:shell_error|.
 		This function will fail in |restricted-mode|.

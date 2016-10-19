@@ -545,6 +545,16 @@ static size_t write_output(char *output, size_t remaining, bool to_buffer,
 
 static void shell_write_cb(Stream *stream, void *data, int status)
 {
+  if (status) {
+    // Can happen if system() tries to send input to a shell command that was
+    // backgrounded (:call system("cat - &", "foo")). #3529 #5241
+    EMSG2(_("E5677: Error writing input to shell-command: %s"),
+          uv_err_name(status));
+  }
+  if (stream->closed) {  // Process may have exited before this write.
+    ELOG("stream was already closed");
+    return;
+  }
   stream_close(stream, NULL, NULL);
 }
 

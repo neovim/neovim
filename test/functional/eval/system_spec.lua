@@ -1,7 +1,3 @@
--- Specs for
--- - `system()`
--- - `systemlist()`
-
 local helpers = require('test.functional.helpers')(after_each)
 local eq, clear, eval, feed, nvim =
   helpers.eq, helpers.clear, helpers.eval, helpers.feed, helpers.nvim
@@ -120,11 +116,21 @@ describe('system()', function()
     it('returns the program output', function()
       eq("echoed", eval('system("echo -n echoed")'))
     end)
+    it('to backgrounded command does not crash', function()
+      -- This is indeterminate, just exercise the codepath.
+      eval('system("echo -n echoed &")')
+      eq(2, eval("1+1"))  -- Still alive?
+    end)
   end)
 
   describe('passing input', function()
     it('returns the program output', function()
       eq("input", eval('system("cat -", "input")'))
+    end)
+    it('to backgrounded command does not crash', function()
+      -- This is indeterminate, just exercise the codepath.
+      eval('system("cat - &", "input")')
+      eq(2, eval("1+1"))  -- Still alive?
     end)
   end)
 
