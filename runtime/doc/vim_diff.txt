@@ -105,6 +105,10 @@ Some `CTRL-SHIFT-...` key chords are distinguished from `CTRL-...` variants
 
 Options:
   'statusline' supports unlimited alignment sections
+  'tabline' %@Func@foo%X can call any function on mouse-click
+
+Variables:
+  |v:windowid| is always available (for use by external UIs)
 
 Commands:
   |:CheckHealth|
@@ -112,7 +116,10 @@ Commands:
   |:Man| is available by default, with many improvements such as completion
 
 Functions:
+  |dictwatcheradd()| notifies a callback whenever a |Dict| is modified
+  |dictwatcherdel()|
   |execute()| works with |:redir|
+  |msgpackdump()|, |msgpackparse()| provide msgpack de/serialization
 
 Events:
   |TabNew|

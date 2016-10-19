@@ -124,7 +124,7 @@ assign_commit_details() {
   patch_file="vim-${vim_version}.patch"
 }
 
-# Patch surgery:
+# Patch surgery
 preprocess_patch() {
   local file="$1"
   local nvim="nvim -u NORC -i NONE --headless"
@@ -134,8 +134,8 @@ preprocess_patch() {
   na_src="$na_src"'\|if_lua\|if_mzsch\|if_olepp\|if_ole\|if_perl\|if_py\|if_ruby\|if_tcl\|if_xcmdsrv'
   2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git a/src/\S*\<\%('${na_src}'\)@norm! d/\v(^diff)|%$' +w +q "$file"
 
-  # Remove todo.txt, version*.txt, tags
-  local na_doc='todo\.txt\|version\d\.txt\|tags'
+  # Remove channel.txt, netbeans.txt, os_*.txt, todo.txt, version*.txt, tags
+  local na_doc='channel\.txt\|netbeans\.txt\|os_\w\+\.txt\|todo\.txt\|version\d\.txt\|tags'
   2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git a/runtime/doc/\%('${na_doc}'\)@norm! d/\v(^diff)|%$' +w +q "$file"
 
   # Remove some testdir/Make_*.mak files
@@ -143,7 +143,12 @@ preprocess_patch() {
   2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git a/src/testdir/\%('${na_src_testdir}'\)@norm! d/\v(^diff)|%$' +w +q "$file"
 
   # Rename src/ paths to src/nvim/
-  LC_ALL=C sed -e 's/\( [ab]\/src\)/\1\/nvim/g' "$file" > "$file".tmp && mv "$file".tmp "$file"
+  LC_ALL=C sed -e 's/\( [ab]\/src\)/\1\/nvim/g' \
+    "$file" > "$file".tmp && mv "$file".tmp "$file"
+
+  # Rename path to matchit plugin.
+  LC_ALL=C sed -e 's@\( [ab]/runtime\)/pack/dist/opt/matchit/\(plugin/matchit.vim\)@\1/\2@g' \
+    "$file" > "$file".tmp && mv "$file".tmp "$file"
 }
 
 get_vim_patch() {

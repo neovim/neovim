@@ -123,7 +123,6 @@ function! s:Match_wrapper(word, forward, mode) range
 " Thanks to Preben "Peppe" Guldberg and Bram Moolenaar for this suggestion!
   if (match_words != s:last_words) || (&mps != s:last_mps) ||
     \ exists("b:match_debug")
-    let s:last_words = match_words
     let s:last_mps = &mps
     " The next several lines were here before
     " BF started messing with this script.
@@ -135,6 +134,7 @@ function! s:Match_wrapper(word, forward, mode) range
       \ '\/\*:\*\/,#\s*if\%(def\)\=:#\s*else\>:#\s*elif\>:#\s*endif\>'
     " s:all = pattern with all the keywords
     let match_words = match_words . (strlen(match_words) ? "," : "") . default
+    let s:last_words = match_words
     if match_words !~ s:notslash . '\\\d'
       let s:do_BR = 0
       let s:pat = match_words

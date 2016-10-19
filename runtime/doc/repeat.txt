@@ -223,6 +223,8 @@ For writing a Vim script, see chapter 41 of the user manual |usr_41.txt|.
 				pack/*/opt/{name} ~
 			The directory is added to 'runtimepath' if it wasn't
 			there yet.
+			If the directory pack/*/opt/{name}/after exists it is
+			added at the end of 'runtimepath'.
 
 			Note that {name} is the directory name, not the name
 			of the .vim file.  All the files matching the pattern
@@ -491,6 +493,9 @@ To load packages earlier, so that 'runtimepath' gets updated: >
 	:packloadall
 This also works when loading plugins is disabled.  The automatic loading will
 only happen once.
+
+If the package has an "after" directory, that directory is added to the end of
+'runtimepath', so that anything there will be loaded later.
 
 
 Using a single plugin and loading it automatically ~

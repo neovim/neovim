@@ -198,7 +198,8 @@ argument.
 -Z		Restricted mode.  All commands that make use of an external
 		shell are disabled.  This includes suspending with CTRL-Z,
 		":sh", filtering, the system() function, backtick expansion,
-		delete(), rename(), mkdir(), writefile(), libcall(), etc.
+		delete(), rename(), mkdir(), writefile(), libcall(),
+		jobstart(), etc.
 
 							*-e*
 -e		Start Vim in Ex mode |Q|.

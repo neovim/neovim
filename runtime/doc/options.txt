@@ -4943,6 +4943,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	  keymap/	key mapping files |mbyte-keymap|
 	  lang/		menu translations |:menutrans|
 	  menu.vim	GUI menus |menu.vim|
+	  pack/		packages |:packadd|
 	  plugin/	plugin scripts |write-plugin|
 	  print/	files for printing |postscript-print-encoding|
 	  spell/	spell checking files |spell|
@@ -4968,6 +4969,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	6, 7, 8, 9. In after/ subdirectories of 1, 2, 3 and 4, with reverse 
 	   ordering.  This is for preferences to overrule or add to the 
 	   distributed defaults or system-wide settings (rarely needed).
+
+	More entries are added when using |packages|.
 
 	Note that, unlike 'path', no wildcards like "**" are allowed.  Normal
 	wildcards are allowed, but can significantly slow down searching for
