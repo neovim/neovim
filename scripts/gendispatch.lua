@@ -52,16 +52,18 @@ package.path = nvimsrcdir .. '/?.lua;' .. package.path
 -- names of all headers relative to the source root (for inclusion in the
 -- generated file)
 headers = {}
--- output c file(dispatch function + metadata serialized with msgpack)
-outputf = arg[#arg-1]
--- output mpack file (metadata)
+-- output h file with generated dispatch functions
+dispatch_outputf = arg[#arg-2]
+-- output h file with packed metadata
+funcs_metadata_outputf = arg[#arg-1]
+-- output metadata mpack file, for use by other build scripts
 mpack_outputf = arg[#arg]
 
 -- set of function names, used to detect duplicates
 function_names = {}
 
 -- read each input file, parse and append to the api metadata
-for i = 2, #arg - 2 do
+for i = 2, #arg - 3 do
   local full_path = arg[i]
   local parts = {}
   for part in string.gmatch(full_path, '[^/]+') do
@@ -165,66 +167,27 @@ for _,f in ipairs(functions) do
 end
 
 
--- start building the output
-output = io.open(outputf, 'wb')
-
-output:write([[
-#include <inttypes.h>
-#include <stdbool.h>
-#include <stdint.h>
-#include <assert.h>
-#include <msgpack.h>
-
-#include "nvim/map.h"
-#include "nvim/log.h"
-#include "nvim/vim.h"
-#include "nvim/msgpack_rpc/helpers.h"
-#include "nvim/api/private/dispatch.h"
-#include "nvim/api/private/helpers.h"
-#include "nvim/api/private/defs.h"
+funcs_metadata_output = io.open(funcs_metadata_outputf, 'wb')
+funcs_metadata_output:write([[
+static const uint8_t funcs_metadata[] = {
 ]])
 
-for i = 1, #headers do
-  if headers[i]:sub(-12) ~= '.generated.h' then
-    output:write('\n#include "nvim/'..headers[i]..'"')
-  end
-end
-
-output:write([[
-
-
-static const uint8_t msgpack_metadata[] = {
-
-]])
 -- serialize the API metadata using msgpack and embed into the resulting
 -- binary for easy querying by clients
 packed_exported_functions = mpack.pack(exported_functions)
 for i = 1, #packed_exported_functions do
-  output:write(string.byte(packed_exported_functions, i)..', ')
+  funcs_metadata_output:write(string.byte(packed_exported_functions, i)..', ')
   if i % 10 == 0 then
-    output:write('\n  ')
+    funcs_metadata_output:write('\n  ')
   end
 end
-output:write([[
+funcs_metadata_output:write([[
 };
-
-void msgpack_rpc_init_function_metadata(Dictionary *metadata)
-{
-  msgpack_unpacked unpacked;
-  msgpack_unpacked_init(&unpacked);
-  if (msgpack_unpack_next(&unpacked,
-                          (const char *)msgpack_metadata,
-                          sizeof(msgpack_metadata),
-                          NULL) != MSGPACK_UNPACK_SUCCESS) {
-    abort();
-  }
-  Object functions;
-  msgpack_rpc_to_object(&unpacked.data, &functions);
-  msgpack_unpacked_destroy(&unpacked);
-  PUT(*metadata, "functions", functions);
-}
-
 ]])
+funcs_metadata_output:close()
+
+-- start building the dispatch wrapper output
+output = io.open(dispatch_outputf, 'wb')
 
 local function real_type(type)
   local rv = type
@@ -336,22 +299,12 @@ end
 
 -- Generate a function that initializes method names with handler functions
 output:write([[
-static Map(String, MsgpackRpcRequestHandler) *methods = NULL;
-
-void msgpack_rpc_add_method_handler(String method, MsgpackRpcRequestHandler handler)
-{
-  map_put(String, MsgpackRpcRequestHandler)(methods, method, handler);
-}
-
 void msgpack_rpc_init_method_table(void)
 {
   methods = map_new(String, MsgpackRpcRequestHandler)();
 
 ]])
 
--- Keep track of the maximum method name length in order to avoid walking
--- strings longer than that when searching for a method handler
-local max_fname_len = 0
 for i = 1, #functions do
   local fn = functions[i]
   output:write('  msgpack_rpc_add_method_handler('..
@@ -360,32 +313,9 @@ for i = 1, #functions do
                '(MsgpackRpcRequestHandler) {.fn = handle_'..  (fn.impl_name or fn.name)..
                ', .async = '..tostring(fn.async)..'});\n')
 
-  if #fn.name > max_fname_len then
-    max_fname_len = #fn.name
-  end
 end
 
 output:write('\n}\n\n')
-
-output:write([[
-MsgpackRpcRequestHandler msgpack_rpc_get_handler_for(const char *name,
-                                                     size_t name_len)
-{
-  String m = {
-    .data=(char *)name,
-    .size=MIN(name_len, ]]..max_fname_len..[[)
-  };
-  MsgpackRpcRequestHandler rv =
-    map_get(String, MsgpackRpcRequestHandler)(methods, m);
-
-  if (!rv.fn) {
-    rv.fn = msgpack_rpc_handle_missing_method;
-  }
-
-  return rv;
-}
-]])
-
 output:close()
 
 mpack_output = io.open(mpack_outputf, 'wb')
