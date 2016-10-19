@@ -1244,9 +1244,9 @@ void enter_buffer(buf_T *buf)
   /* mark cursor position as being invalid */
   curwin->w_valid = 0;
 
-  if (buf->terminal) {
-    terminal_resize(buf->terminal, curwin->w_width, curwin->w_height);
-  }
+  // if (buf->terminal) {
+  //   terminal_resize(buf->terminal, curwin->w_width, curwin->w_height);
+  // }
 
   /* Make sure the buffer is loaded. */
   if (curbuf->b_ml.ml_mfp == NULL) {    /* need to load the file */
