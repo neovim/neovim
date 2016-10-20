@@ -34,6 +34,7 @@ NEW_TESTS = \
 	    test_cscope.res \
 	    test_hardcopy.res \
 	    test_help_tagjump.res \
+	    test_history.res \
 	    test_langmap.res \
 	    test_syntax.res \
 	    test_usercommands.res \

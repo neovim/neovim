@@ -4396,6 +4396,7 @@ static HistoryType hist_char2type(const int c)
     case '>': {
       return HIST_DEBUG;
     }
+    case NUL:
     case '/':
     case '?': {
       return HIST_SEARCH;
