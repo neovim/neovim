@@ -13,6 +13,42 @@ describe(':terminal', function()
     clear()
     screen = Screen.new(50, 4)
     screen:attach({rgb=false})
+  end)
+
+  it("does not interrupt Press-ENTER prompt #2748", function()
+    -- Ensure that :messages shows Press-ENTER.
+    source([[
+      echomsg "msg1"
+      echomsg "msg2"
+    ]])
+    -- Invoke a command that emits frequent terminal activity.
+    execute([[terminal while true; do echo X; done]])
+    helpers.feed([[<C-\><C-N>]])
+    screen:expect([[
+      X                                                 |
+      X                                                 |
+      ^X                                                 |
+                                                        |
+    ]])
+    helpers.sleep(10)  -- Let some terminal activity happen.
+    execute("messages")
+    screen:expect([[
+      X                                                 |
+      msg1                                              |
+      msg2                                              |
+      Press ENTER or type command to continue^           |
+    ]])
+  end)
+
+end)
+
+describe(':terminal (with fake shell)', function()
+  local screen
+
+  before_each(function()
+    clear()
+    screen = Screen.new(50, 4)
+    screen:attach({rgb=false})
     -- shell-test.c is a fake shell that prints its arguments and exits.
     nvim('set_option', 'shell', nvim_dir..'/shell-test')
     nvim('set_option', 'shellcmdflag', 'EXE')
@@ -20,12 +56,12 @@ describe(':terminal', function()
 
   -- Invokes `:terminal {cmd}` using a fake shell (shell-test.c) which prints
   -- the {cmd} and exits immediately .
-  local function terminal_run_fake_shell_cmd(cmd)
+  local function terminal_with_fake_shell(cmd)
     execute("terminal "..(cmd and cmd or ""))
   end
 
   it('with no argument, acts like termopen()', function()
-    terminal_run_fake_shell_cmd()
+    terminal_with_fake_shell()
     wait()
     screen:expect([[
       ready $                                           |
@@ -36,7 +72,7 @@ describe(':terminal', function()
   end)
 
   it('executes a given command through the shell', function()
-    terminal_run_fake_shell_cmd('echo hi')
+    terminal_with_fake_shell('echo hi')
     wait()
     screen:expect([[
       ready $ echo hi                                   |
@@ -47,7 +83,7 @@ describe(':terminal', function()
   end)
 
   it('allows quotes and slashes', function()
-    terminal_run_fake_shell_cmd([[echo 'hello' \ "world"]])
+    terminal_with_fake_shell([[echo 'hello' \ "world"]])
     wait()
     screen:expect([[
       ready $ echo 'hello' \ "world"                    |
@@ -66,14 +102,14 @@ describe(':terminal', function()
   end)
 
   it('ignores writes if the backing stream closes', function()
-      terminal_run_fake_shell_cmd()
+      terminal_with_fake_shell()
       helpers.feed('iiXXXXXXX')
       wait()
       -- Race: Though the shell exited (and streams were closed by SIGCHLD
       -- handler), :terminal cleanup is pending on the main-loop.
       -- This write should be ignored (not crash, #5445).
       helpers.feed('iiYYYYYYY')
-      wait()
+      eq(2, eval("1+1"))  -- Still alive?
   end)
 
 end)

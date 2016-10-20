@@ -121,14 +121,14 @@ describe('jobs', function()
     eq({'notification', 'exit', {0, 0}}, next_msg())
   end)
 
-  it('can preserve newlines', function()
+  it('preserves newlines', function()
     nvim('command', "let j = jobstart(['cat', '-'], g:job_opts)")
     nvim('command', 'call jobsend(j, "a\\n\\nc\\n\\n\\n\\nb\\n\\n")')
     eq({'notification', 'stdout',
       {0, {'a', '', 'c', '', '', '', 'b', '', ''}}}, next_msg())
   end)
 
-  it('can preserve NULs', function()
+  it('preserves NULs', function()
     nvim('command', "let j = jobstart(['cat', '-'], g:job_opts)")
     nvim('command', 'call jobsend(j, ["\n123\n", "abc\\nxyz\n", ""])')
     eq({'notification', 'stdout', {0, {'\n123\n', 'abc\nxyz\n', ''}}},
@@ -137,7 +137,7 @@ describe('jobs', function()
     eq({'notification', 'exit', {0, 0}}, next_msg())
   end)
 
-  it('can avoid sending final newline', function()
+  it('avoids sending final newline', function()
     nvim('command', "let j = jobstart(['cat', '-'], g:job_opts)")
     nvim('command', 'call jobsend(j, ["some data", "without\nfinal nl"])')
     eq({'notification', 'stdout', {0, {'some data', 'without\nfinal nl'}}},
@@ -146,7 +146,7 @@ describe('jobs', function()
     eq({'notification', 'exit', {0, 0}}, next_msg())
   end)
 
-  it('can close the job streams with jobclose', function()
+  it('closes the job streams with jobclose', function()
     nvim('command', "let j = jobstart(['cat', '-'], g:job_opts)")
     nvim('command', 'call jobclose(j, "stdin")')
     eq({'notification', 'exit', {0, 0}}, next_msg())
