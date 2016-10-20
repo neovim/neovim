@@ -125,6 +125,11 @@ int msg(char_u *s)
 int verb_msg(char_u *s)
 {
   int n;
+  if (win_get_external()) {
+    Array args = ARRAY_DICT_INIT;
+    ADD(args, STRING_OBJ(cstr_to_string((char *)(s))));
+    ui_event("verb_msg", args);
+  }
 
   verbose_enter();
   n = msg_attr_keep(s, 0, FALSE);
@@ -713,6 +718,16 @@ int delete_first_msg(void)
 void ex_messages(exarg_T *eap)
 {
   struct msg_hist *p;
+  if (win_get_external()) {
+    for (p = first_msg_hist; p != NULL && !got_int; p = p->next) {
+      if (p->msg != NULL) {
+        Array args = ARRAY_DICT_INIT;
+        ADD(args, STRING_OBJ(cstr_to_string((char *)(p->msg))));
+        ui_event("ex_msg", args);
+      }
+    }
+    return;
+  }
 
   msg_hist_off = TRUE;
 
@@ -1572,6 +1587,12 @@ static void msg_puts_display(char_u *str, int maxlen, int attr, int recurse)
   int sb_col = msg_col;
   int wrap;
   int did_last_char;
+
+  if (win_get_external()) {
+    Array args = ARRAY_DICT_INIT;
+    ADD(args, STRING_OBJ(cstr_to_string((char *)(str))));
+    ui_event("msg_puts_display", args);
+  }
 
   did_wait_return = false;
   while ((maxlen < 0 || (int)(s - str) < maxlen) && *s != NUL) {

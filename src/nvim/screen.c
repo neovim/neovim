@@ -314,18 +314,36 @@ void update_screen(int type)
       if (screen_ins_lines(0, 0, msg_scrolled, (int)Rows, NULL) == FAIL)
         type = CLEAR;
       FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-        if (wp->w_winrow < msg_scrolled) {
-          if (wp->w_winrow + wp->w_height > msg_scrolled
-              && wp->w_redr_type < REDRAW_TOP
-              && wp->w_lines_valid > 0
-              && wp->w_topline == wp->w_lines[0].wl_lnum) {
-            wp->w_upd_rows = msg_scrolled - wp->w_winrow;
-            wp->w_redr_type = REDRAW_TOP;
-          } else {
-            wp->w_redr_type = NOT_VALID;
-            if (wp->w_winrow + wp->w_height + wp->w_status_height
-                <= msg_scrolled) {
-              wp->w_redr_status = TRUE;
+        if (!win_external) {
+          if (wp->w_winrow < msg_scrolled) {
+            if (wp->w_winrow + wp->w_height > msg_scrolled
+                && wp->w_redr_type < REDRAW_TOP
+                && wp->w_lines_valid > 0
+                && wp->w_topline == wp->w_lines[0].wl_lnum) {
+              wp->w_upd_rows = msg_scrolled - wp->w_winrow;
+              wp->w_redr_type = REDRAW_TOP;
+            } else {
+              wp->w_redr_type = NOT_VALID;
+              if (wp->w_winrow + wp->w_height + wp->w_status_height
+                  <= msg_scrolled) {
+                wp->w_redr_status = TRUE;
+              }
+            }
+          }
+        } else {
+          if (0 < msg_scrolled) {
+            if (wp->w_height > msg_scrolled
+                && wp->w_redr_type < REDRAW_TOP
+                && wp->w_lines_valid > 0
+                && wp->w_topline == wp->w_lines[0].wl_lnum) {
+              wp->w_upd_rows = msg_scrolled;
+              wp->w_redr_type = REDRAW_TOP;
+            } else {
+              wp->w_redr_type = NOT_VALID;
+              if (wp->w_height + wp->w_status_height
+                  <= msg_scrolled) {
+                wp->w_redr_status = TRUE;
+              }
             }
           }
         }
@@ -1542,7 +1560,9 @@ static void win_update(win_T *wp)
 
     /* make sure the rest of the screen is blank */
     /* put '~'s on rows that aren't part of the file. */
-    win_draw_end(wp, '~', ' ', row, wp->w_height, HLF_EOB);
+    if (!win_external) {
+      win_draw_end(wp, '~', ' ', row, wp->w_height, HLF_EOB);
+    }
   }
 
   /* Reset the type of redrawing required, the window has been updated. */
@@ -5400,7 +5420,7 @@ win_redr_custom (
   p = buf;
   for (n = 0; hltab[n].start != NULL; n++) {
     int len = (int)(hltab[n].start - p);
-    screen_puts_len(wp, p, len, row, col, curattr);
+    screen_puts_len(ewp, p, len, row, col, curattr);
     col += vim_strnsize(p, len);
     p = hltab[n].start;
 
@@ -5414,7 +5434,7 @@ win_redr_custom (
       curattr = highlight_user[hltab[n].userhl - 1];
   }
   // Make sure to use an empty string instead of p, if p is beyond buf + len.
-  screen_puts(wp, p >= buf + len ? (char_u *)"" : p, row, col, curattr);
+  screen_puts(ewp, p >= buf + len ? (char_u *)"" : p, row, col, curattr);
 
   if (wp == NULL) {
     // Fill the tab_page_click_defs array for clicking in the tab pages line.
@@ -5570,8 +5590,10 @@ void screen_puts_len(win_T *wp, char_u *text, int textlen, int row, int col, int
   sattr_T *screen_attrs;
   unsigned *line_offset;
   u8char_T *screen_lines_uc;
+  u8char_T *screen_lines_c[MAX_MCO];
   int screen_rows;
   int screen_columns;
+  int i;
 
   const int l_has_mbyte = has_mbyte;
   const bool l_enc_utf8 = enc_utf8;
@@ -5580,6 +5602,8 @@ void screen_puts_len(win_T *wp, char_u *text, int textlen, int row, int col, int
   if (!win_external) {
     screen_lines = ScreenLines;
     screen_lines_2 = ScreenLines2;
+    for (i = 0; i < p_mco; ++i)
+      screen_lines_c[i] = ScreenLinesC[i];
     screen_attrs = ScreenAttrs;
     line_offset = LineOffset;
     screen_lines_uc = ScreenLinesUC;
@@ -5588,6 +5612,8 @@ void screen_puts_len(win_T *wp, char_u *text, int textlen, int row, int col, int
   } else {
     screen_lines = wp->screen_lines;
     screen_lines_2 = wp->screen_lines_2;
+    for (i = 0; i < p_mco; ++i)
+      screen_lines_c[i] = wp->screen_lines_c[i];
     screen_attrs = wp->screen_attrs;
     line_offset = wp->line_offset;
     screen_lines_uc = ScreenLinesUC;
@@ -5610,7 +5636,7 @@ void screen_puts_len(win_T *wp, char_u *text, int textlen, int row, int col, int
     screen_attrs[off - 1] = 0;
     if (l_enc_utf8) {
       screen_lines_uc[off - 1] = 0;
-      ScreenLinesC[0][off - 1] = 0;
+      screen_lines_c[0][off - 1] = 0;
     }
     /* redraw the previous cell, make it empty */
     screen_char(wp, off - 1, row, col - 1);
@@ -5719,7 +5745,7 @@ void screen_puts_len(win_T *wp, char_u *text, int textlen, int row, int col, int
 
           screen_lines_uc[off] = u8c;
           for (i = 0; i < Screen_mco; ++i) {
-            ScreenLinesC[i][off] = u8cc[i];
+            screen_lines_c[i][off] = u8cc[i];
             if (u8cc[i] == 0)
               break;
           }
@@ -6206,14 +6232,18 @@ void screen_fill(win_T *wp, int start_row, int end_row, int start_col, int end_c
   int c;
   schar_T *screen_lines;
   u8char_T *screen_lines_uc;
+  u8char_T *screen_lines_c[MAX_MCO];
   sattr_T *screen_attrs;
   unsigned *line_offset;
   char_u *line_wraps;
   int screen_rows;
   int screen_columns;
+  int i;
 
   if (!win_external) {
     screen_lines = ScreenLines;
+    for (i = 0; i < p_mco; ++i)
+      screen_lines_c[i] = ScreenLinesC[i];
     screen_attrs = ScreenAttrs;
     line_offset = LineOffset;
     line_wraps = LineWraps;
@@ -6222,6 +6252,8 @@ void screen_fill(win_T *wp, int start_row, int end_row, int start_col, int end_c
     screen_columns = screen_Columns;
   } else {
     screen_lines = wp->screen_lines;
+    for (i = 0; i < p_mco; ++i)
+      screen_lines_c[i] = wp->screen_lines_c[i];
     screen_attrs = wp->screen_attrs;
     line_offset = wp->line_offset;
     line_wraps = wp->line_wraps;
@@ -6314,7 +6346,7 @@ void screen_fill(win_T *wp, int start_row, int end_row, int start_col, int end_c
         if (enc_utf8) {
           if (c >= 0x80) {
             screen_lines_uc[off] = c;
-            ScreenLinesC[0][off] = 0;
+            screen_lines_c[0][off] = 0;
           } else
             screen_lines_uc[off] = 0;
         }
@@ -6680,7 +6712,15 @@ static void screenclear2(void)
     LineWraps[i] = FALSE;
   }
 
-  ui_clear();  // clear the display
+  if (!win_external) {
+    ui_clear();  // clear the display
+  } else {
+    Array args = ARRAY_DICT_INIT;
+    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+      ADD(args, INTEGER_OBJ(wp->handle));
+    }
+    ui_event("win_clear", args);
+  }
   clear_cmdline = FALSE;
   mode_displayed = FALSE;
   screen_cleared = TRUE;        /* can use contents of ScreenLines now */
@@ -7400,10 +7440,27 @@ static void draw_tabline(void)
 
   redraw_tabline = FALSE;
 
+  if (win_external) {
+    Array args = ARRAY_DICT_INIT;
+    ADD(args, INTEGER_OBJ(curtab->handle));
+    FOR_ALL_TABS(tp) {
+      if (tp == curtab) {
+        cwp = curwin;
+      } else {
+        cwp = tp->tp_curwin;
+      }
+      get_trans_bufname(cwp->w_buffer);
+      Array item = ARRAY_DICT_INIT;
+      ADD(item, INTEGER_OBJ(tp->handle));
+      ADD(item, STRING_OBJ(cstr_to_string((char *)NameBuff)));
+      ADD(args, ARRAY_OBJ(item));
+    }
+    ui_event("tab", args);
+    return;
+  }
 
   if (tabline_height() < 1)
     return;
-
 
   // Init TabPageIdxs[] to zero: Clicking outside of tabs has no effect.
   assert(Columns == tab_page_click_defs_size);
