@@ -3769,18 +3769,15 @@ win_free (
   hash_init(&wp->w_vars->dv_hashtab);
   unref_var_dict(wp->w_vars);
 
-  {
-    tabpage_T *ttp;
-
-    if (prevwin == wp) {
-      prevwin = NULL;
-    }
-    for (ttp = first_tabpage; ttp != NULL; ttp = ttp->tp_next) {
-      if (ttp->tp_prevwin == wp) {
-        ttp->tp_prevwin = NULL;
-      }
+  if (prevwin == wp) {
+    prevwin = NULL;
+  }
+  FOR_ALL_TABS(ttp) {
+    if (ttp->tp_prevwin == wp) {
+      ttp->tp_prevwin = NULL;
     }
   }
+
   win_free_lsize(wp);
 
   for (i = 0; i < wp->w_tagstacklen; ++i)
