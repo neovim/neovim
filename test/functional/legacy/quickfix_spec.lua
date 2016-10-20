@@ -277,6 +277,118 @@ describe('helpgrep', function()
 
           augroup! testgroup
       endfunction
+
+      " This will test for problems in quickfix:
+      " A. incorrectly copying location lists which caused the location list to show
+      "    a different name than the file that was actually being displayed.
+      " B. not reusing the window for which the location list window is opened but
+      "    instead creating new windows.
+      " C. make sure that the location list window is not reused instead of the
+      "    window it belongs to.
+      "
+      " Set up the test environment:
+      function! ReadTestProtocol(name)
+        let base = substitute(a:name, '\v^test://(.*)%(\.[^.]+)?', '\1', '')
+        let word = substitute(base, '\v(.*)\..*', '\1', '')
+
+        setl modifiable
+        setl noreadonly
+        setl noswapfile
+        setl bufhidden=delete
+        %del _
+        " For problem 2:
+        " 'buftype' has to be set to reproduce the constant opening of new windows
+        setl buftype=nofile
+
+        call setline(1, word)
+
+        setl nomodified
+        setl nomodifiable
+        setl readonly
+        exe 'doautocmd BufRead ' . substitute(a:name, '\v^test://(.*)', '\1', '')
+      endfunction
+
+      function Test_locationlist()
+        enew
+
+        augroup testgroup
+          au!
+          autocmd BufReadCmd test://* call ReadTestProtocol(expand("<amatch>"))
+        augroup END
+
+        let words = [ "foo", "bar", "baz", "quux", "shmoo", "spam", "eggs" ]
+
+        let qflist = []
+        for word in words
+          call add(qflist, {'filename': 'test://' . word . '.txt', 'text': 'file ' . word . '.txt', })
+          " NOTE: problem 1:
+          " intentionally not setting 'lnum' so that the quickfix entries are not
+          " valid
+          call setloclist(0, qflist, ' ')
+        endfor
+
+        " Test A
+        lrewind
+        enew
+        lopen
+        lnext
+        lnext
+        lnext
+        lnext
+        vert split
+        wincmd L
+        lopen
+        wincmd p
+        lnext
+        let fileName = expand("%")
+        wincmd p
+        let locationListFileName = substitute(getline(line('.')), '\([^|]*\)|.*', '\1', '')
+        let fileName = substitute(fileName, '\\', '/', 'g')
+        let locationListFileName = substitute(locationListFileName, '\\', '/', 'g')
+        call assert_equal("test://bar.txt", fileName)
+        call assert_equal("test://bar.txt", locationListFileName)
+
+        wincmd n | only
+
+        " Test B:
+        lrewind
+        lopen
+        2
+        exe "normal \<CR>"
+        wincmd p
+        3
+        exe "normal \<CR>"
+        wincmd p
+        4
+        exe "normal \<CR>"
+        call assert_equal(2, winnr('$'))
+        wincmd n | only
+
+        " Test C:
+        lrewind
+        lopen
+        " Let's move the location list window to the top to check whether it (the
+        " first window found) will be reused when we try to open new windows:
+        wincmd K
+        2
+        exe "normal \<CR>"
+        wincmd p
+        3
+        exe "normal \<CR>"
+        wincmd p
+        4
+        exe "normal \<CR>"
+        1wincmd w
+        call assert_equal('quickfix', &buftype)
+        2wincmd w
+        let bufferName = expand("%")
+        let bufferName = substitute(bufferName, '\\', '/', 'g')
+        call assert_equal('test://quux.txt', bufferName)
+
+        wincmd n | only
+
+        augroup! testgroup
+      endfunction
       ]])
   end)
 
@@ -337,6 +449,11 @@ describe('helpgrep', function()
 
   it('errors when an autocommand closes the location list\'s window', function()
     call('Test_locationlist_curwin_was_closed')
+    expected_empty()
+  end)
+
+  it('checks locationlist protocol read', function()
+    call('Test_locationlist')
     expected_empty()
   end)
 end)
