@@ -1864,6 +1864,10 @@ int win_close(win_T *win, int free_buf)
   int help_window = FALSE;
   tabpage_T   *prev_curtab = curtab;
 
+  Array args = ARRAY_DICT_INIT;
+  ADD(args, INTEGER_OBJ(win->handle));
+  ui_event("win_close", args);
+
   if (last_window()) {
     EMSG(_("E444: Cannot close last window"));
     return FAIL;
@@ -5219,6 +5223,9 @@ static void last_status_rec(frame_T *fr, int statusline)
  */
 int tabline_height(void)
 {
+  if (win_get_external()) {
+      return 0;
+  }
   assert(first_tabpage);
   switch (p_stal) {
   case 0: return 0;
