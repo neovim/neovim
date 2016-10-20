@@ -2,6 +2,7 @@ local helpers = require('test.functional.helpers')(after_each)
 local nvim, call = helpers.meths, helpers.call
 local clear, eq = helpers.clear, helpers.eq
 local source, execute = helpers.source, helpers.execute
+local exc_exec = helpers.exc_exec
 
 local function expected_errors(errors)
   eq(errors, nvim.get_vvar('errors'))
@@ -61,6 +62,20 @@ describe('assert function:', function()
     it('should change v:errors when expected is not equal to actual', function()
       call('assert_equal', 'true', 'false')
       expected_errors({"Expected 'true' but got 'false'"})
+    end)
+
+    it('should change v:errors when expected is not equal to actual', function()
+      source([[
+      function CheckAssert()
+        let s:v = {}
+        let s:x = {"a": s:v}
+        let s:v["b"] = s:x
+        let s:w = {"c": s:x, "d": ''}
+        call assert_equal(s:w, '')
+      endfunction
+      ]])
+      eq('Vim(call):E724: unable to correctly dump variable with self-referencing container',
+         exc_exec('call CheckAssert()'))
     end)
   end)
 
