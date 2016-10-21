@@ -278,10 +278,11 @@ newwindow:
   /* cursor to last accessed (previous) window */
   case 'p':
   case Ctrl_P:
-    if (prevwin == NULL)
+    if (!win_valid(prevwin)) {
       beep_flush();
-    else
+    } else {
       win_goto(prevwin);
+    }
     break;
 
   /* exchange current and next window */
@@ -3768,8 +3769,15 @@ win_free (
   hash_init(&wp->w_vars->dv_hashtab);
   unref_var_dict(wp->w_vars);
 
-  if (prevwin == wp)
+  if (prevwin == wp) {
     prevwin = NULL;
+  }
+  FOR_ALL_TABS(ttp) {
+    if (ttp->tp_prevwin == wp) {
+      ttp->tp_prevwin = NULL;
+    }
+  }
+
   win_free_lsize(wp);
 
   for (i = 0; i < wp->w_tagstacklen; ++i)
