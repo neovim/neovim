@@ -2370,10 +2370,12 @@ do_ecmd (
     if (p_ur < 0 || curbuf->b_ml.ml_line_count <= p_ur) {
       /* Save all the text, so that the reload can be undone.
        * Sync first so that this is a separate undo-able action. */
-      u_sync(FALSE);
-      if (u_savecommon(0, curbuf->b_ml.ml_line_count + 1, 0, TRUE)
-          == FAIL)
+      u_sync(false);
+      if (u_savecommon(0, curbuf->b_ml.ml_line_count + 1, 0, true)
+          == FAIL) {
+        xfree(new_name);
         goto theend;
+      }
       u_unchanged(curbuf);
       buf_freeall(curbuf, BFA_KEEP_UNDO);
 
