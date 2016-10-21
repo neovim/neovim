@@ -2271,7 +2271,8 @@ do_ecmd (
           }
         }
 
-        if (aborting()) {           /* autocmds may abort script processing */
+        /* autocmds may abort script processing */
+        if (aborting() && curwin->w_buffer != NULL) {
           xfree(new_name);
           goto theend;
         }
