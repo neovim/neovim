@@ -163,8 +163,12 @@ int os_nodetype(const char *name)
   // saves us the hassle.
 
   int nodetype = NODE_WRITABLE;
-  int fd = os_open(name, O_RDONLY, 0);
-  switch(uv_guess_handle(fd)) {
+  int fd = os_open(name, O_RDONLY
+#ifdef O_NONBLOCK
+                   | O_NONBLOCK
+#endif
+                   , 0);
+  switch (uv_guess_handle(fd)) {
     case UV_TTY:         // FILE_TYPE_CHAR
       nodetype = NODE_WRITABLE;
       break;
