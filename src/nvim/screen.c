@@ -1401,7 +1401,7 @@ static void win_update(win_T *wp)
                  && wp->w_lines[idx].wl_valid
                  && wp->w_lines[idx].wl_lnum == lnum
                  && lnum > wp->w_topline
-                 && !(dy_flags & DY_LASTLINE)
+                 && !(dy_flags & (DY_LASTLINE | DY_TRUNCATE))
                  && srow + wp->w_lines[idx].wl_size > wp->w_height
                  && diff_check_fill(wp, lnum) == 0
                  ) {
@@ -1484,7 +1484,20 @@ static void win_update(win_T *wp)
       /* Window ends in filler lines. */
       wp->w_botline = lnum;
       wp->w_filler_rows = wp->w_height - srow;
-    } else if (dy_flags & DY_LASTLINE) {      /* 'display' has "lastline" */
+    } else if (dy_flags & DY_TRUNCATE) {      // 'display' has "truncate"
+      int scr_row = W_WINROW(wp) + wp->w_height - 1;
+
+      // Last line isn't finished: Display "@@@" in the last screen line.
+      screen_puts_len((char_u *)"@@", 2, scr_row, W_WINCOL(wp),
+                      hl_attr(HLF_AT));
+
+      screen_fill(scr_row, scr_row + 1,
+                  (int)W_WINCOL(wp) + 2, (int)W_ENDCOL(wp),
+                  '@', ' ', hl_attr(HLF_AT));
+      set_empty_rows(wp, srow);
+      wp->w_botline = lnum;
+    }
+    } else if (dy_flags & DY_LASTLINE) {      // 'display' has "lastline"
       /*
        * Last line isn't finished: Display "@@@" at the end.
        */
