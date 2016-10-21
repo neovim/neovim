@@ -26,7 +26,7 @@
 #include "nvim/strings.h"
 
 #define DYNAMIC_BUFFER_INIT { NULL, 0, 0 }
-#define NS_1_SECOND         1000000000      // 1 second, in nanoseconds
+#define NS_1_SECOND         1000000000U     // 1 second, in nanoseconds
 #define OUT_DATA_THRESHOLD  1024 * 10U      // 10KB, "a few screenfuls" of data.
 
 typedef struct {
@@ -344,13 +344,11 @@ static bool out_data_decide_throttle(size_t size)
   static uint64_t   started     = 0;  // Start time of the current throttle.
   static size_t     received    = 0;  // Bytes observed since last throttle.
   static size_t     visit       = 0;  // "Pulse" count of the current throttle.
-  static size_t     max_visits  = 0;
   static char       pulse_msg[] = { ' ', ' ', ' ', '\0' };
 
   if (!size) {
     bool previous_decision = (visit > 0);
     started = received = visit = 0;
-    max_visits = 20;
     return previous_decision;
   }
 
@@ -361,17 +359,9 @@ static bool out_data_decide_throttle(size_t size)
     return false;
   } else if (!visit) {
     started = os_hrtime();
-  } else if (visit >= max_visits && size < 256 && max_visits < 999) {
-    // Gobble up small chunks even if we maxed out. Avoids the case where the
-    // final displayed chunk is very tiny.
-    max_visits = visit + 1;
-  } else if (visit >= max_visits) {
+  } else if (visit % 20 == 0) {
     uint64_t since = os_hrtime() - started;
-    if (since < NS_1_SECOND) {
-      // Adjust max_visits based on the current relative performance.
-      // Each "pulse" period should last >=1 second so that it is perceptible.
-      max_visits = (2 * max_visits);
-    } else {
+    if (since > (3 * NS_1_SECOND)) {
       received = visit = 0;
       return false;
     }
@@ -379,7 +369,7 @@ static bool out_data_decide_throttle(size_t size)
 
   visit++;
   // Pulse "..." at the bottom of the screen.
-  size_t tick = (visit == max_visits)
+  size_t tick = (visit % 20 == 0)
                 ? 3  // Force all dots "..." on last visit.
                 : (visit % 4);
   pulse_msg[0] = (tick == 0) ? ' ' : '.';
