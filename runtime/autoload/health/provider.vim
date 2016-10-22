@@ -155,13 +155,10 @@ function! s:version_info(python) abort
   endif
 
   let nvim_path = s:trim(s:system([
-        \ a:python,
-        \ '-c',
-        \ 'import neovim; print(neovim.__file__)']))
-  let nvim_path = s:shell_error ? '' : nvim_path
-
-  if empty(nvim_path)
-    return [python_version, 'unable to find nvim executable', pypi_version, 'unable to get nvim executable']
+        \ a:python, '-c', 'import neovim; print(neovim.__file__)']))
+  if s:shell_error || empty(nvim_path)
+    return [python_version, 'unable to load neovim Python module', pypi_version,
+          \ nvim_path]
   endif
 
   " Assuming that multiple versions of a package are installed, sort them
@@ -172,7 +169,7 @@ function! s:version_info(python) abort
     return a == b ? 0 : a > b ? 1 : -1
   endfunction
 
-  let nvim_version = 'unable to find nvim version'
+  let nvim_version = 'unable to find neovim Python module version'
   let base = fnamemodify(nvim_path, ':h')
   let metas = glob(base.'-*/METADATA', 1, 1)
         \ + glob(base.'-*/PKG-INFO', 1, 1)
@@ -390,7 +387,7 @@ function! s:check_python(version) abort
     if s:is_bad_response(status)
       call health#report_warn(printf('Latest %s-neovim is NOT installed: %s',
             \ python_bin_name, latest))
-    elseif !s:is_bad_response(latest)
+    elseif !s:is_bad_response(latest) !s:is_bad_response(current)
       call health#report_ok(printf('Latest %s-neovim is installed: %s',
             \ python_bin_name, latest))
     endif
