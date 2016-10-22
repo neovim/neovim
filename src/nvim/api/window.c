@@ -15,9 +15,9 @@
 
 /// Gets the current buffer in a window
 ///
-/// @param window The window handle
-/// @param[out] err Details of an error that may have occurred
-/// @return The buffer handle
+/// @param window   Window handle
+/// @param[out] err Error details, if any
+/// @return Buffer handle
 Buffer nvim_win_get_buf(Window window, Error *err)
 {
   win_T *win = find_window_by_handle(window, err);
@@ -31,9 +31,9 @@ Buffer nvim_win_get_buf(Window window, Error *err)
 
 /// Gets the cursor position in the window
 ///
-/// @param window The window handle
-/// @param[out] err Details of an error that may have occurred
-/// @return the (row, col) tuple
+/// @param window   Window handle
+/// @param[out] err Error details, if any
+/// @return (row, col) tuple
 ArrayOf(Integer, 2) nvim_win_get_cursor(Window window, Error *err)
 {
   Array rv = ARRAY_DICT_INIT;
@@ -49,9 +49,9 @@ ArrayOf(Integer, 2) nvim_win_get_cursor(Window window, Error *err)
 
 /// Sets the cursor position in the window
 ///
-/// @param window The window handle
-/// @param pos the (row, col) tuple representing the new position
-/// @param[out] err Details of an error that may have occurred
+/// @param window   Window handle
+/// @param pos      (row, col) tuple representing the new position
+/// @param[out] err Error details, if any
 void nvim_win_set_cursor(Window window, ArrayOf(Integer, 2) pos, Error *err)
 {
   win_T *win = find_window_by_handle(window, err);
@@ -95,9 +95,9 @@ void nvim_win_set_cursor(Window window, ArrayOf(Integer, 2) pos, Error *err)
 
 /// Gets the window height
 ///
-/// @param window The window handle
-/// @param[out] err Details of an error that may have occurred
-/// @return the height in rows
+/// @param window   Window handle
+/// @param[out] err Error details, if any
+/// @return Height as a count of rows
 Integer nvim_win_get_height(Window window, Error *err)
 {
   win_T *win = find_window_by_handle(window, err);
@@ -112,9 +112,9 @@ Integer nvim_win_get_height(Window window, Error *err)
 /// Sets the window height. This will only succeed if the screen is split
 /// horizontally.
 ///
-/// @param window The window handle
-/// @param height the new height in rows
-/// @param[out] err Details of an error that may have occurred
+/// @param window   Window handle
+/// @param height   Height as a count of rows
+/// @param[out] err Error details, if any
 void nvim_win_set_height(Window window, Integer height, Error *err)
 {
   win_T *win = find_window_by_handle(window, err);
@@ -138,9 +138,9 @@ void nvim_win_set_height(Window window, Integer height, Error *err)
 
 /// Gets the window width
 ///
-/// @param window The window handle
-/// @param[out] err Details of an error that may have occurred
-/// @return the width in columns
+/// @param window   Window handle
+/// @param[out] err Error details, if any
+/// @return Width as a count of columns
 Integer nvim_win_get_width(Window window, Error *err)
 {
   win_T *win = find_window_by_handle(window, err);
@@ -155,9 +155,9 @@ Integer nvim_win_get_width(Window window, Error *err)
 /// Sets the window width. This will only succeed if the screen is split
 /// vertically.
 ///
-/// @param window The window handle
-/// @param width the new width in columns
-/// @param[out] err Details of an error that may have occurred
+/// @param window   Window handle
+/// @param width    Width as a count of columns
+/// @param[out] err Error details, if any
 void nvim_win_set_width(Window window, Integer width, Error *err)
 {
   win_T *win = find_window_by_handle(window, err);
@@ -181,10 +181,10 @@ void nvim_win_set_width(Window window, Integer width, Error *err)
 
 /// Gets a window-scoped (w:) variable
 ///
-/// @param window The window handle
-/// @param name The variable name
-/// @param[out] err Details of an error that may have occurred
-/// @return The variable value
+/// @param window   Window handle
+/// @param name     Variable name
+/// @param[out] err Error details, if any
+/// @return Variable value
 Object nvim_win_get_var(Window window, String name, Error *err)
 {
   win_T *win = find_window_by_handle(window, err);
@@ -198,10 +198,10 @@ Object nvim_win_get_var(Window window, String name, Error *err)
 
 /// Sets a window-scoped (w:) variable
 ///
-/// @param window The window handle
-/// @param name The variable name
-/// @param value The variable value
-/// @param[out] err Details of an error that may have occurred
+/// @param window   Window handle
+/// @param name     Variable name
+/// @param value    Variable value
+/// @param[out] err Error details, if any
 void nvim_win_set_var(Window window, String name, Object value, Error *err)
 {
   win_T *win = find_window_by_handle(window, err);
@@ -215,9 +215,9 @@ void nvim_win_set_var(Window window, String name, Object value, Error *err)
 
 /// Removes a window-scoped (w:) variable
 ///
-/// @param window The window handle
-/// @param name The variable name
-/// @param[out] err Details of an error that may have occurred
+/// @param window   Window handle
+/// @param name     Variable name
+/// @param[out] err Error details, if any
 void nvim_win_del_var(Window window, String name, Error *err)
 {
   win_T *win = find_window_by_handle(window, err);
@@ -233,11 +233,11 @@ void nvim_win_del_var(Window window, String name, Error *err)
 ///
 /// @deprecated
 ///
-/// @param window The window handle
-/// @param name The variable name
-/// @param value The variable value
-/// @param[out] err Details of an error that may have occurred
-/// @return The old value or nil if there was no previous value.
+/// @param window   Window handle
+/// @param name     Variable name
+/// @param value    Variable value
+/// @param[out] err Error details, if any
+/// @return Old value or nil if there was no previous value.
 ///
 ///         @warning It may return nil if there was no previous value
 ///                  or if previous value was `v:null`.
@@ -256,10 +256,10 @@ Object window_set_var(Window window, String name, Object value, Error *err)
 ///
 /// @deprecated
 ///
-/// @param window The window handle
-/// @param name The variable name
-/// @param[out] err Details of an error that may have occurred
-/// @return The old value
+/// @param window   Window handle
+/// @param name     variable name
+/// @param[out] err Error details, if any
+/// @return Old value
 Object window_del_var(Window window, String name, Error *err)
 {
   win_T *win = find_window_by_handle(window, err);
@@ -273,10 +273,10 @@ Object window_del_var(Window window, String name, Error *err)
 
 /// Gets a window option value
 ///
-/// @param window The window handle
-/// @param name The option name
-/// @param[out] err Details of an error that may have occurred
-/// @return The option value
+/// @param window   Window handle
+/// @param name     Option name
+/// @param[out] err Error details, if any
+/// @return Option value
 Object nvim_win_get_option(Window window, String name, Error *err)
 {
   win_T *win = find_window_by_handle(window, err);
@@ -291,10 +291,10 @@ Object nvim_win_get_option(Window window, String name, Error *err)
 /// Sets a window option value. Passing 'nil' as value deletes the option(only
 /// works if there's a global fallback)
 ///
-/// @param window The window handle
-/// @param name The option name
-/// @param value The option value
-/// @param[out] err Details of an error that may have occurred
+/// @param window   Window handle
+/// @param name     Option name
+/// @param value    Option value
+/// @param[out] err Error details, if any
 void nvim_win_set_option(Window window, String name, Object value, Error *err)
 {
   win_T *win = find_window_by_handle(window, err);
@@ -308,9 +308,9 @@ void nvim_win_set_option(Window window, String name, Object value, Error *err)
 
 /// Gets the window position in display cells. First position is zero.
 ///
-/// @param window The window handle
-/// @param[out] err Details of an error that may have occurred
-/// @return The (row, col) tuple with the window position
+/// @param window   Window handle
+/// @param[out] err Error details, if any
+/// @return (row, col) tuple with the window position
 ArrayOf(Integer, 2) nvim_win_get_position(Window window, Error *err)
 {
   Array rv = ARRAY_DICT_INIT;
@@ -324,11 +324,11 @@ ArrayOf(Integer, 2) nvim_win_get_position(Window window, Error *err)
   return rv;
 }
 
-/// Gets the window tab page
+/// Gets the window tabpage
 ///
-/// @param window The window handle
-/// @param[out] err Details of an error that may have occurred
-/// @return The tab page that contains the window
+/// @param window   Window handle
+/// @param[out] err Error details, if any
+/// @return Tabpage that contains the window
 Tabpage nvim_win_get_tabpage(Window window, Error *err)
 {
   Tabpage rv = 0;
@@ -343,9 +343,9 @@ Tabpage nvim_win_get_tabpage(Window window, Error *err)
 
 /// Gets the window number
 ///
-/// @param window The window handle
-/// @param[out] err Details of an error that may have occurred
-/// @return The window number
+/// @param window   Window handle
+/// @param[out] err Error details, if any
+/// @return Window number
 Integer nvim_win_get_number(Window window, Error *err)
 {
   Integer rv = 0;
@@ -363,7 +363,7 @@ Integer nvim_win_get_number(Window window, Error *err)
 
 /// Checks if a window is valid
 ///
-/// @param window The window handle
+/// @param window Window handle
 /// @return true if the window is valid, false otherwise
 Boolean nvim_win_is_valid(Window window)
 {

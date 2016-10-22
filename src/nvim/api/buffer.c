@@ -28,9 +28,9 @@
 
 /// Gets the buffer line count
 ///
-/// @param buffer The buffer handle
-/// @param[out] err Details of an error that may have occurred
-/// @return The line count
+/// @param buffer   Buffer handle
+/// @param[out] err Error details, if any
+/// @return Line count
 Integer nvim_buf_line_count(Buffer buffer, Error *err)
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
@@ -50,10 +50,10 @@ Integer nvim_buf_line_count(Buffer buffer, Error *err)
 ///             for negative indices use
 ///                 "nvim_buf_get_lines(buffer, index-1, index, true)"
 ///
-/// @param buffer The buffer handle
-/// @param index The line index
-/// @param[out] err Details of an error that may have occurred
-/// @return The line string
+/// @param buffer   Buffer handle
+/// @param index    Line index
+/// @param[out] err Error details, if any
+/// @return Line string
 String buffer_get_line(Buffer buffer, Integer index, Error *err)
 {
   String rv = { .size = 0 };
@@ -78,10 +78,10 @@ String buffer_get_line(Buffer buffer, Integer index, Error *err)
 ///             for negative indices use
 ///                 "nvim_buf_set_lines(buffer, index-1, index, true, [line])"
 ///
-/// @param buffer The buffer handle
-/// @param index The line index
-/// @param line The new line.
-/// @param[out] err Details of an error that may have occurred
+/// @param buffer   Buffer handle
+/// @param index    Line index
+/// @param line     Contents of the new line
+/// @param[out] err Error details, if any
 void buffer_set_line(Buffer buffer, Integer index, String line, Error *err)
 {
   Object l = STRING_OBJ(line);
@@ -97,9 +97,9 @@ void buffer_set_line(Buffer buffer, Integer index, String line, Error *err)
 ///                 "nvim_buf_set_lines(buffer, index, index+1, true, [])"
 ///             for negative indices use
 ///                 "nvim_buf_set_lines(buffer, index-1, index, true, [])"
-/// @param buffer The buffer handle
-/// @param index The line index
-/// @param[out] err Details of an error that may have occurred
+/// @param buffer   buffer handle
+/// @param index    line index
+/// @param[out] err Error details, if any
 void buffer_del_line(Buffer buffer, Integer index, Error *err)
 {
   Array array = ARRAY_DICT_INIT;
@@ -113,13 +113,13 @@ void buffer_del_line(Buffer buffer, Integer index, Error *err)
 ///             where newstart = start + int(not include_start) - int(start < 0)
 ///                   newend = end + int(include_end) - int(end < 0)
 ///                   int(bool) = 1 if bool is true else 0
-/// @param buffer The buffer handle
-/// @param start The first line index
-/// @param end The last line index
-/// @param include_start True if the slice includes the `start` parameter
-/// @param include_end True if the slice includes the `end` parameter
-/// @param[out] err Details of an error that may have occurred
-/// @return An array of lines
+/// @param buffer         Buffer handle
+/// @param start          First line index
+/// @param end            Last line index
+/// @param include_start  True if the slice includes the `start` parameter
+/// @param include_end    True if the slice includes the `end` parameter
+/// @param[out] err       Error details, if any
+/// @return Array of lines
 ArrayOf(String) buffer_get_line_slice(Buffer buffer,
                                       Integer start,
                                       Integer end,
@@ -142,12 +142,12 @@ ArrayOf(String) buffer_get_line_slice(Buffer buffer,
 /// Out-of-bounds indices are clamped to the nearest valid value, unless
 /// `strict_indexing` is set.
 ///
-/// @param buffer The buffer handle
-/// @param start The first line index
-/// @param end The last line index (exclusive)
-/// @param strict_indexing whether out-of-bounds should be an error.
-/// @param[out] err Details of an error that may have occurred
-/// @return An array of lines
+/// @param buffer           Buffer handle
+/// @param start            First line index
+/// @param end              Last line index (exclusive)
+/// @param strict_indexing  Whether out-of-bounds should be an error.
+/// @param[out] err         Error details, if any
+/// @return Array of lines
 ArrayOf(String) nvim_buf_get_lines(uint64_t channel_id,
                                    Buffer buffer,
                                    Integer start,
@@ -219,14 +219,14 @@ end:
 ///                   newend = end + int(include_end) + int(end < 0)
 ///                   int(bool) = 1 if bool is true else 0
 ///
-/// @param buffer The buffer handle
-/// @param start The first line index
-/// @param end The last line index
-/// @param include_start True if the slice includes the `start` parameter
-/// @param include_end True if the slice includes the `end` parameter
-/// @param replacement An array of lines to use as replacement(A 0-length
-//         array will simply delete the line range)
-/// @param[out] err Details of an error that may have occurred
+/// @param buffer         Buffer handle
+/// @param start          First line index
+/// @param end            Last line index
+/// @param include_start  True if the slice includes the `start` parameter
+/// @param include_end    True if the slice includes the `end` parameter
+/// @param replacement    Array of lines to use as replacement (0-length
+//                        array will delete the line range)
+/// @param[out] err       Error details, if any
 void buffer_set_line_slice(Buffer buffer,
                            Integer start,
                            Integer end,
@@ -253,12 +253,12 @@ void buffer_set_line_slice(Buffer buffer,
 /// Out-of-bounds indices are clamped to the nearest valid value, unless
 /// `strict_indexing` is set.
 ///
-/// @param buffer The buffer handle
-/// @param start The first line index
-/// @param end The last line index (exclusive)
-/// @param strict_indexing whether out-of-bounds should be an error.
-/// @param replacement An array of lines to use as replacement
-/// @param[out] err Details of an error that may have occurred
+/// @param buffer           Buffer handle
+/// @param start            First line index
+/// @param end              Last line index (exclusive)
+/// @param strict_indexing  Whether out-of-bounds should be an error.
+/// @param replacement      Array of lines to use as replacement
+/// @param[out] err         Error details, if any
 void nvim_buf_set_lines(uint64_t channel_id,
                         Buffer buffer,
                         Integer start,
@@ -411,10 +411,10 @@ end:
 
 /// Gets a buffer-scoped (b:) variable.
 ///
-/// @param buffer The buffer handle
-/// @param name The variable name
-/// @param[out] err Details of an error that may have occurred
-/// @return The variable value
+/// @param buffer     Buffer handle
+/// @param name       Variable name
+/// @param[out] err   Error details, if any
+/// @return Variable value
 Object nvim_buf_get_var(Buffer buffer, String name, Error *err)
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
@@ -428,10 +428,10 @@ Object nvim_buf_get_var(Buffer buffer, String name, Error *err)
 
 /// Sets a buffer-scoped (b:) variable
 ///
-/// @param buffer The buffer handle
-/// @param name The variable name
-/// @param value The variable value
-/// @param[out] err Details of an error that may have occurred
+/// @param buffer     Buffer handle
+/// @param name       Variable name
+/// @param value      Variable value
+/// @param[out] err   Error details, if any
 void nvim_buf_set_var(Buffer buffer, String name, Object value, Error *err)
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
@@ -445,9 +445,9 @@ void nvim_buf_set_var(Buffer buffer, String name, Object value, Error *err)
 
 /// Removes a buffer-scoped (b:) variable
 ///
-/// @param buffer The buffer handle
-/// @param name The variable name
-/// @param[out] err Details of an error that may have occurred
+/// @param buffer     Buffer handle
+/// @param name       Variable name
+/// @param[out] err   Error details, if any
 void nvim_buf_del_var(Buffer buffer, String name, Error *err)
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
@@ -463,11 +463,11 @@ void nvim_buf_del_var(Buffer buffer, String name, Error *err)
 ///
 /// @deprecated
 ///
-/// @param buffer The buffer handle
-/// @param name The variable name
-/// @param value The variable value
-/// @param[out] err Details of an error that may have occurred
-/// @return The old value or nil if there was no previous value.
+/// @param buffer     Buffer handle
+/// @param name       Variable name
+/// @param value      Variable value
+/// @param[out] err   Error details, if any
+/// @return Old value or nil if there was no previous value.
 ///
 ///         @warning It may return nil if there was no previous value
 ///                  or if previous value was `v:null`.
@@ -486,10 +486,10 @@ Object buffer_set_var(Buffer buffer, String name, Object value, Error *err)
 ///
 /// @deprecated
 ///
-/// @param buffer The buffer handle
-/// @param name The variable name
-/// @param[out] err Details of an error that may have occurred
-/// @return The old value
+/// @param buffer     Buffer handle
+/// @param name       Variable name
+/// @param[out] err   Error details, if any
+/// @return Old value
 Object buffer_del_var(Buffer buffer, String name, Error *err)
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
@@ -504,10 +504,10 @@ Object buffer_del_var(Buffer buffer, String name, Error *err)
 
 /// Gets a buffer option value
 ///
-/// @param buffer The buffer handle
-/// @param name The option name
-/// @param[out] err Details of an error that may have occurred
-/// @return The option value
+/// @param buffer     Buffer handle
+/// @param name       Option name
+/// @param[out] err   Error details, if any
+/// @return Option value
 Object nvim_buf_get_option(Buffer buffer, String name, Error *err)
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
@@ -519,13 +519,13 @@ Object nvim_buf_get_option(Buffer buffer, String name, Error *err)
   return get_option_from(buf, SREQ_BUF, name, err);
 }
 
-/// Sets a buffer option value. Passing 'nil' as value deletes the option(only
+/// Sets a buffer option value. Passing 'nil' as value deletes the option (only
 /// works if there's a global fallback)
 ///
-/// @param buffer The buffer handle
-/// @param name The option name
-/// @param value The option value
-/// @param[out] err Details of an error that may have occurred
+/// @param buffer     Buffer handle
+/// @param name       Option name
+/// @param value      Option value
+/// @param[out] err   Error details, if any
 void nvim_buf_set_option(Buffer buffer, String name, Object value, Error *err)
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
@@ -539,9 +539,9 @@ void nvim_buf_set_option(Buffer buffer, String name, Object value, Error *err)
 
 /// Gets the buffer number
 ///
-/// @param buffer The buffer handle
-/// @param[out] err Details of an error that may have occurred
-/// @return The buffer number
+/// @param buffer     Buffer handle
+/// @param[out] err   Error details, if any
+/// @return Buffer number
 Integer nvim_buf_get_number(Buffer buffer, Error *err)
 {
   Integer rv = 0;
@@ -556,9 +556,9 @@ Integer nvim_buf_get_number(Buffer buffer, Error *err)
 
 /// Gets the full file name for the buffer
 ///
-/// @param buffer The buffer handle
-/// @param[out] err Details of an error that may have occurred
-/// @return The buffer name
+/// @param buffer     Buffer handle
+/// @param[out] err   Error details, if any
+/// @return Buffer name
 String nvim_buf_get_name(Buffer buffer, Error *err)
 {
   String rv = STRING_INIT;
@@ -573,9 +573,9 @@ String nvim_buf_get_name(Buffer buffer, Error *err)
 
 /// Sets the full file name for a buffer
 ///
-/// @param buffer The buffer handle
-/// @param name The buffer name
-/// @param[out] err Details of an error that may have occurred
+/// @param buffer     Buffer handle
+/// @param name       Buffer name
+/// @param[out] err   Error details, if any
 void nvim_buf_set_name(Buffer buffer, String name, Error *err)
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
@@ -603,7 +603,7 @@ void nvim_buf_set_name(Buffer buffer, String name, Error *err)
 
 /// Checks if a buffer is valid
 ///
-/// @param buffer The buffer handle
+/// @param buffer Buffer handle
 /// @return true if the buffer is valid, false otherwise
 Boolean nvim_buf_is_valid(Buffer buffer)
 {
@@ -615,11 +615,11 @@ Boolean nvim_buf_is_valid(Buffer buffer)
 ///
 /// @deprecated use nvim_buf_set_lines(buffer, lnum, lnum, true, lines)
 ///
-/// @param buffer The buffer handle
-/// @param lnum Insert the lines after `lnum`. If negative, it will append
-///        to the end of the buffer.
-/// @param lines An array of lines
-/// @param[out] err Details of an error that may have occurred
+/// @param buffer     Buffer handle
+/// @param lnum       Insert the lines after `lnum`. If negative, appends to
+///                   the end of the buffer.
+/// @param lines      Array of lines
+/// @param[out] err   Error details, if any
 void buffer_insert(Buffer buffer,
                    Integer lnum,
                    ArrayOf(String) lines,
@@ -632,10 +632,10 @@ void buffer_insert(Buffer buffer,
 
 /// Return a tuple (row,col) representing the position of the named mark
 ///
-/// @param buffer The buffer handle
-/// @param name The mark's name
-/// @param[out] err Details of an error that may have occurred
-/// @return The (row, col) tuple
+/// @param buffer     Buffer handle
+/// @param name       Mark name
+/// @param[out] err   Error details, if any
+/// @return (row, col) tuple
 ArrayOf(Integer, 2) nvim_buf_get_mark(Buffer buffer, String name, Error *err)
 {
   Array rv = ARRAY_DICT_INIT;
@@ -694,15 +694,15 @@ ArrayOf(Integer, 2) nvim_buf_get_mark(Buffer buffer, String name, Error *err)
 /// request an unique src_id at initialization, and later asynchronously add and
 /// clear highlights in response to buffer changes.
 ///
-/// @param buffer The buffer handle
-/// @param src_id Source group to use or 0 to use a new group,
-///               or -1 for ungrouped highlight
-/// @param hl_group Name of the highlight group to use
-/// @param line The line to highlight
-/// @param col_start Start of range of columns to highlight
-/// @param col_end End of range of columns to highlight,
-///                or -1 to highlight to end of line
-/// @param[out] err Details of an error that may have occurred
+/// @param buffer     Buffer handle
+/// @param src_id     Source group to use or 0 to use a new group,
+///                   or -1 for ungrouped highlight
+/// @param hl_group   Name of the highlight group to use
+/// @param line       Line to highlight
+/// @param col_start  Start of range of columns to highlight
+/// @param col_end    End of range of columns to highlight,
+///                   or -1 to highlight to end of line
+/// @param[out] err   Error details, if any
 /// @return The src_id that was used
 Integer nvim_buf_add_highlight(Buffer buffer,
                                Integer src_id,
@@ -740,12 +740,12 @@ Integer nvim_buf_add_highlight(Buffer buffer,
 /// To clear a source group in the entire buffer, pass in 1 and -1 to
 /// line_start and line_end respectively.
 ///
-/// @param buffer The buffer handle
-/// @param src_id Highlight source group to clear, or -1 to clear all groups.
+/// @param buffer     Buffer handle
+/// @param src_id     Highlight source group to clear, or -1 to clear all.
 /// @param line_start Start of range of lines to clear
-/// @param line_end End of range of lines to clear (exclusive)
-///                 or -1 to clear to end of file.
-/// @param[out] err Details of an error that may have occurred
+/// @param line_end   End of range of lines to clear (exclusive) or -1 to clear
+///                   to end of file.
+/// @param[out] err   Error details, if any
 void nvim_buf_clear_highlight(Buffer buffer,
                               Integer src_id,
                               Integer line_start,

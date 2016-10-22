@@ -1,6 +1,7 @@
 local helpers = require('test.functional.helpers')(after_each)
-local eq, clear, eval, feed, nvim =
-  helpers.eq, helpers.clear, helpers.eval, helpers.feed, helpers.nvim
+local eq, clear, eval, execute, feed, nvim =
+  helpers.eq, helpers.clear, helpers.eval, helpers.execute, helpers.feed,
+  helpers.nvim
 
 local Screen = require('test.functional.ui.screen')
 
@@ -117,8 +118,12 @@ describe('system()', function()
       eq("echoed", eval('system("echo -n echoed")'))
     end)
     it('to backgrounded command does not crash', function()
-      -- This is indeterminate, just exercise the codepath.
-      eval('system("echo -n echoed &")')
+      -- This is indeterminate, just exercise the codepath. May get E5677.
+      execute('call system("echo -n echoed &")')
+      local v_errnum = string.match(eval("v:errmsg"), "^E%d*:")
+      if v_errnum then
+        eq("E5677:", v_errnum)
+      end
       eq(2, eval("1+1"))  -- Still alive?
     end)
   end)
@@ -128,8 +133,12 @@ describe('system()', function()
       eq("input", eval('system("cat -", "input")'))
     end)
     it('to backgrounded command does not crash', function()
-      -- This is indeterminate, just exercise the codepath.
-      eval('system("cat - &", "input")')
+      -- This is indeterminate, just exercise the codepath. May get E5677.
+      execute('call system("cat - &")')
+      local v_errnum = string.match(eval("v:errmsg"), "^E%d*:")
+      if v_errnum then
+        eq("E5677:", v_errnum)
+      end
       eq(2, eval("1+1"))  -- Still alive?
     end)
   end)
