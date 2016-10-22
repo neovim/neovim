@@ -2250,23 +2250,25 @@ do_ecmd (
         xfree(new_name);
         goto theend;
       }
-      if (buf == curbuf)                /* already in new buffer */
-        auto_buf = TRUE;
-      else {
-        win_T	    *the_curwin = curwin;
+      if (buf == curbuf) {  // already in new buffer
+        auto_buf = true;
+      } else {
+        win_T *the_curwin = curwin;
 
         // Set the w_closing flag to avoid that autocommands close the window.
-        the_curwin->w_closing = TRUE;
-        if (curbuf == old_curbuf)
+        the_curwin->w_closing = true;
+        if (curbuf == old_curbuf) {
           buf_copy_options(buf, BCO_ENTER);
+        }
 
         // Close the link to the current buffer. This will set
         // curwin->w_buffer to NULL.
-        u_sync(FALSE);
+        u_sync(false);
         close_buffer(oldwin, curbuf,
-            (flags & ECMD_HIDE) || curbuf->terminal ? 0 : DOBUF_UNLOAD, FALSE);
+                     (flags & ECMD_HIDE) || curbuf->terminal ? 0 : DOBUF_UNLOAD,
+                     false);
 
-        the_curwin->w_closing = FALSE;
+        the_curwin->w_closing = false;
 
         // autocmds may abort script processing
         if (aborting() && curwin->w_buffer != NULL) {

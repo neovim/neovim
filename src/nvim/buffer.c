@@ -324,12 +324,13 @@ void close_buffer(win_T *win, buf_T *buf, int action, int abort_if_last)
   }
 
   if (win_valid_any_tab(win)) {
-    /* Set b_last_cursor when closing the last window for the buffer.
-     * Remember the last cursor position and window options of the buffer.
-     * This used to be only for the current window, but then options like
-     * 'foldmethod' may be lost with a ":only" command. */
-    if (buf->b_nwindows == 1)
+    // Set b_last_cursor when closing the last window for the buffer.
+    // Remember the last cursor position and window options of the buffer.
+    // This used to be only for the current window, but then options like
+    // 'foldmethod' may be lost with a ":only" command.
+    if (buf->b_nwindows == 1) {
       set_last_cursor(win);
+    }
     buflist_setfpos(buf, win,
         win->w_cursor.lnum == 1 ? 0 : win->w_cursor.lnum,
         win->w_cursor.col, TRUE);
@@ -517,8 +518,9 @@ void buf_freeall(buf_T *buf, int flags)
     goto_tabpage_win(the_curtab, the_curwin);
     unblock_autocmds();
   }
-  if (aborting())           /* autocmds may abort script processing */
+  if (aborting()) {  // autocmds may abort script processing
     return;
+  }
 
   /*
    * It's possible that autocommands change curbuf to the one being deleted.

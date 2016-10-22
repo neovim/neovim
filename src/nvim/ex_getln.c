@@ -1692,10 +1692,11 @@ void text_locked_msg(void)
 }
 
 char_u * get_text_locked_msg(void) {
-  if (cmdwin_type != 0)
+  if (cmdwin_type != 0) {
     return e_cmdwin;
-  else
+  } else {
     return e_secure;
+  }
 }
 
 /*
