@@ -317,6 +317,62 @@ describe('completion', function()
     end)
   end)
 
+  describe('completeopt+=noinsert does not add blank undo items', function()
+    before_each(function()
+      source([[
+      function! TestComplete() abort
+        call complete(1, ['foo', 'bar'])
+        return ''
+      endfunction
+      ]])
+      execute('set completeopt+=noselect,noinsert')
+      execute('inoremap <right> <c-r>=TestComplete()<cr>')
+    end)
+
+    local tests = {
+      ['<up>, <down>, <cr>'] = {'<down><cr>', '<up><cr>'},
+      ['<c-n>, <c-p>, <c-y>'] = {'<c-n><c-y>', '<c-p><c-y>'},
+    }
+
+    for name, seq in pairs(tests) do
+      it('using ' .. name, function()
+        feed('iaaa<esc>')
+        feed('A<right>' .. seq[1] .. '<esc>')
+        feed('A<right><esc>A<right><esc>')
+        feed('A<cr>bbb<esc>')
+        feed('A<right>' .. seq[2] .. '<esc>')
+        feed('A<right><esc>A<right><esc>')
+        feed('A<cr>ccc<esc>')
+        feed('A<right>' .. seq[1] .. '<esc>')
+        feed('A<right><esc>A<right><esc>')
+
+        local expected = {
+          {'foo', 'bar', 'foo'},
+          {'foo', 'bar', 'ccc'},
+          {'foo', 'bar'},
+          {'foo', 'bbb'},
+          {'foo'},
+          {'aaa'},
+          {''},
+        }
+
+        for i = 1, #expected do
+          if i > 1 then
+            feed('u')
+          end
+          eq(expected[i], eval('getline(1, "$")'))
+        end
+
+        for i = #expected, 1, -1 do
+          if i < #expected then
+            feed('<c-r>')
+          end
+          eq(expected[i], eval('getline(1, "$")'))
+        end
+      end)
+    end
+  end)
+
   describe("refresh:always", function()
     before_each(function()
       source([[

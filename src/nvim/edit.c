@@ -664,9 +664,10 @@ static int insert_execute(VimState *state, int key)
 
       // Pressing CTRL-Y selects the current match.  When
       // compl_enter_selects is set the Enter key does the same.
-      if (s->c == Ctrl_Y
-          || (compl_enter_selects
-            && (s->c == CAR || s->c == K_KENTER || s->c == NL))) {
+      if ((s->c == Ctrl_Y
+           || (compl_enter_selects
+               && (s->c == CAR || s->c == K_KENTER || s->c == NL)))
+          && stop_arrow() == OK) {
         ins_compl_delete();
         ins_compl_insert();
       }
@@ -2350,9 +2351,6 @@ void set_completion(colnr_T startcol, list_T *list)
   }
   ins_compl_clear();
 
-  if (stop_arrow() == FAIL)
-    return;
-
   compl_direction = FORWARD;
   if (startcol > curwin->w_cursor.col)
     startcol = curwin->w_cursor.col;
@@ -3263,14 +3261,19 @@ static bool ins_compl_prep(int c)
       } else {
         int prev_col = curwin->w_cursor.col;
 
-        /* put the cursor on the last char, for 'tw' formatting */
-        if (prev_col > 0)
+        // put the cursor on the last char, for 'tw' formatting
+        if (prev_col > 0) {
           dec_cursor();
-        if (stop_arrow() == OK)
+        }
+
+        if (!arrow_used && !ins_need_undo) {
           insertchar(NUL, 0, -1);
+        }
+
         if (prev_col > 0
-            && get_cursor_line_ptr()[curwin->w_cursor.col] != NUL)
+            && get_cursor_line_ptr()[curwin->w_cursor.col] != NUL) {
           inc_cursor();
+        }
       }
 
       // If the popup menu is displayed pressing CTRL-Y means accepting
@@ -3947,16 +3950,20 @@ static int ins_compl_get_exp(pos_T *ini)
 /* Delete the old text being completed. */
 static void ins_compl_delete(void)
 {
-  int i;
+  int col;
 
-  /*
-   * In insert mode: Delete the typed part.
-   * In replace mode: Put the old characters back, if any.
-   */
-  i = compl_col + (compl_cont_status & CONT_ADDING ? compl_length : 0);
-  backspace_until_column(i);
-  // TODO: is this sufficient for redrawing?  Redrawing everything causes
-  // flicker, thus we can't do that.
+  // In insert mode: Delete the typed part.
+  // In replace mode: Put the old characters back, if any.
+  col = compl_col + (compl_cont_status & CONT_ADDING ? compl_length : 0);
+  if ((int)curwin->w_cursor.col > col) {
+    if (stop_arrow() == FAIL) {
+      return;
+    }
+    backspace_until_column(col);
+  }
+
+  // TODO(vim): is this sufficient for redrawing?  Redrawing everything
+  // causes flicker, thus we can't do that.
   changed_cline_bef_curs();
   // clear v:completed_item
   set_vim_var_dict(VV_COMPLETED_ITEM, dict_alloc());
@@ -4318,8 +4325,11 @@ static int ins_complete(int c, bool enable_pum)
   colnr_T curs_col;                 /* cursor column */
   int n;
   int save_w_wrow;
+  int insert_match;
 
   compl_direction = ins_compl_key2dir(c);
+  insert_match = ins_compl_use_match(c);
+
   if (!compl_started) {
     /* First time we hit ^N or ^P (in a row, I mean) */
 
@@ -4652,6 +4662,8 @@ static int ins_complete(int c, bool enable_pum)
     showmode();
     edit_submode_extra = NULL;
     ui_flush();
+  } else if (insert_match && stop_arrow() == FAIL) {
+    return FAIL;
   }
 
   compl_shown_match = compl_curr_match;
@@ -4661,7 +4673,7 @@ static int ins_complete(int c, bool enable_pum)
    * Find next match (and following matches).
    */
   save_w_wrow = curwin->w_wrow;
-  n = ins_compl_next(TRUE, ins_compl_key2count(c), ins_compl_use_match(c));
+  n = ins_compl_next(true, ins_compl_key2count(c), insert_match);
 
   /* may undisplay the popup menu */
   ins_compl_upd_pum();
