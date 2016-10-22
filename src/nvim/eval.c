@@ -7133,7 +7133,7 @@ static void api_wrapper(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   Error err = ERROR_INIT;
-  Object result = fn(INVALID_CHANNEL, NO_RESPONSE, args, &err);
+  Object result = fn(INTERNAL_CALL, args, &err);
 
   if (err.set) {
     nvim_err_writeln(cstr_as_string(err.msg));

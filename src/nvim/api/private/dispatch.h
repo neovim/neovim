@@ -4,7 +4,6 @@
 #include "nvim/api/private/defs.h"
 
 typedef Object (*ApiDispatchWrapper)(uint64_t channel_id,
-                                     uint64_t request_id,
                                      Array args,
                                      Error *error);
 
