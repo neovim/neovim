@@ -1485,10 +1485,10 @@ static void win_update(win_T *wp)
       wp->w_botline = lnum;
       wp->w_filler_rows = wp->w_height - srow;
     } else if (dy_flags & DY_TRUNCATE) {      // 'display' has "truncate"
-      int scr_row = W_WINROW(wp) + wp->w_height - 1;
+      int scr_row = wp->w_winrow + wp->w_height - 1;
 
       // Last line isn't finished: Display "@@@" in the last screen line.
-      screen_puts_len((char_u *)"@@", 2, scr_row, W_WINCOL(wp),
+      screen_puts_len((char_u *)"@@", 2, scr_row, wp->w_wincol,
                       hl_attr(HLF_AT));
 
       screen_fill(scr_row, scr_row + 1,
