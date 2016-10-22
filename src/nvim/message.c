@@ -204,9 +204,10 @@ msg_attr_keep (
 
   /* Truncate the message if needed. */
   msg_start();
-  buf = msg_strtrunc(s, FALSE);
-  if (buf != NULL)
+  buf = msg_strtrunc(s, p_msgbuf);
+  if (buf != NULL) {
     s = buf;
+  }
 
   msg_outtrans_attr(s, attr);
   msg_clr_eos();
