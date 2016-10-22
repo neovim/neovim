@@ -34,7 +34,7 @@
 #endif
 
 /// Executes an ex-command.
-/// VimL error will be returned and v:errmsg updated.
+/// On VimL error: Returns the VimL error and updates v:errmsg.
 ///
 /// @param command  Ex-command string
 /// @param[out] err Error details (including actual VimL error), if any
@@ -48,7 +48,7 @@ void nvim_command(String command, Error *err)
 }
 
 /// Passes input keys to Nvim.
-/// Does not fail on VimL error, but v:errmsg will be updated.
+/// On VimL error: Does not fail, but updates v:errmsg.
 ///
 /// @param keys         to be typed
 /// @param mode         mapping options
@@ -105,7 +105,7 @@ void nvim_feedkeys(String keys, String mode, Boolean escape_csi)
 }
 
 /// Passes keys to Nvim as raw user-input.
-/// Does not fail on VimL error, but v:errmsg will be updated.
+/// On VimL error: Does not fail, but updates v:errmsg.
 ///
 /// Unlike `nvim_feedkeys`, this uses a lower-level input buffer and the call
 /// is not deferred. This is the most reliable way to emulate real user input.
@@ -158,7 +158,7 @@ String nvim_command_output(String str, Error *err)
 
 /// Evaluates a VimL expression (:help expression).
 /// Dictionaries and Lists are recursively expanded.
-/// VimL error returns a generic error. v:errmsg is not updated.
+/// On VimL error: Returns a generic error; v:errmsg is not updated.
 ///
 /// @param expr     VimL expression string
 /// @param[out] err Error details, if any
@@ -168,7 +168,7 @@ Object nvim_eval(String expr, Error *err)
   Object rv = OBJECT_INIT;
   // Evaluate the expression
   try_start();
-  typval_T *expr_result = eval_expr((char_u *) expr.data, NULL);
+  typval_T *expr_result = eval_expr((char_u *)expr.data, NULL);
 
   if (!expr_result) {
     api_set_error(err, Exception, _("Failed to evaluate expression"));
@@ -185,7 +185,7 @@ Object nvim_eval(String expr, Error *err)
 }
 
 /// Calls a VimL function with the given arguments.
-/// VimL error returns a generic error. v:errmsg is not updated.
+/// On VimL error: Returns a generic error; v:errmsg is not updated.
 ///
 /// @param fname    Function to call
 /// @param args     Function arguments packed in an Array
@@ -235,7 +235,7 @@ free_vim_args:
 }
 
 /// Calculates the number of display cells occupied by `text`.
-/// Tab is counted as one cell.
+/// <Tab> counts as one cell.
 ///
 /// @param text       Some text
 /// @param[out] err   Error details, if any
@@ -344,7 +344,7 @@ void nvim_del_current_line(Error *err)
   buffer_del_line(curbuf->handle, curwin->w_cursor.lnum - 1, err);
 }
 
-/// Gets a global variable
+/// Gets a global (g:) variable
 ///
 /// @param name     Variable name
 /// @param[out] err Error details, if any
@@ -354,7 +354,7 @@ Object nvim_get_var(String name, Error *err)
   return dict_get_value(&globvardict, name, err);
 }
 
-/// Sets a global variable
+/// Sets a global (g:) variable
 ///
 /// @param name     Variable name
 /// @param value    Variable value
@@ -364,7 +364,7 @@ void nvim_set_var(String name, Object value, Error *err)
   dict_set_value(&globvardict, name, value, false, false, err);
 }
 
-/// Removes a global variable
+/// Removes a global (g:) variable
 ///
 /// @param name     Variable name
 /// @param[out] err Error details, if any
@@ -447,8 +447,8 @@ void nvim_err_write(String str)
   write_msg(str, true);
 }
 
-/// Writes a message to vim error buffer. To ensure all contents are written,
-/// a trailing linefeed is appended.
+/// Writes a message to vim error buffer. Appends a linefeed to ensure all
+/// contents are written.
 ///
 /// @param str Message
 /// @see nvim_err_write()

@@ -49,8 +49,8 @@ ArrayOf(Integer, 2) nvim_win_get_cursor(Window window, Error *err)
 
 /// Sets the cursor position in the window
 ///
-/// @param window Window handle
-/// @param pos    (row, col) tuple representing the new position
+/// @param window   Window handle
+/// @param pos      (row, col) tuple representing the new position
 /// @param[out] err Error details, if any
 void nvim_win_set_cursor(Window window, ArrayOf(Integer, 2) pos, Error *err)
 {
