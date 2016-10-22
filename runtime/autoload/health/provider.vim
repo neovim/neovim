@@ -174,7 +174,9 @@ function! s:version_info(python) abort
 
   let nvim_version = 'unable to find nvim version'
   let base = fnamemodify(nvim_path, ':h')
-  let metas = glob(base.'-*/METADATA', 1, 1) + glob(base.'-*/PKG-INFO', 1, 1)
+  let metas = glob(base.'-*/METADATA', 1, 1)
+        \ + glob(base.'-*/PKG-INFO', 1, 1)
+        \ + glob(base.'.egg-info/PKG-INFO', 1, 1)
   let metas = sort(metas, 's:compare')
 
   if !empty(metas)
