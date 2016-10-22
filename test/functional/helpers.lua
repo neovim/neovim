@@ -1,10 +1,12 @@
 require('coxpcall')
 local lfs = require('lfs')
-local ChildProcessStream = require('nvim.child_process_stream')
-local SocketStream = require('nvim.socket_stream')
-local TcpStream = require('nvim.tcp_stream')
-local Session = require('nvim.session')
 local global_helpers = require('test.helpers')
+
+-- nvim client: Found in .deps/usr/share/lua/<version>/nvim/ if "bundled".
+local Session = require('nvim.session')
+local TcpStream = require('nvim.tcp_stream')
+local SocketStream = require('nvim.socket_stream')
+local ChildProcessStream = require('nvim.child_process_stream')
 
 local check_logs = global_helpers.check_logs
 local neq = global_helpers.neq
@@ -134,10 +136,14 @@ local function stop()
   session:stop()
 end
 
+-- Executes an ex-command. VimL errors will manifest as client (lua) errors, and
+-- v:errmsg will be updated.
 local function nvim_command(cmd)
   request('nvim_command', cmd)
 end
 
+-- Evaluates a VimL expression.
+-- Fails on VimL error, but does not update v:errmsg.
 local function nvim_eval(expr)
   return request('nvim_eval', expr)
 end
@@ -158,10 +164,14 @@ local os_name = (function()
   end)
 end)()
 
+-- Executes a VimL function.
+-- Fails on VimL error, but does not update v:errmsg.
 local function nvim_call(name, ...)
   return request('nvim_call_function', name, {...})
 end
 
+-- Sends user input to Nvim.
+-- Does not fail on VimL error, but v:errmsg will be updated.
 local function nvim_feed(input)
   while #input > 0 do
     local written = request('nvim_input', input)
@@ -279,6 +289,8 @@ local function insert(...)
   nvim_feed('<ESC>')
 end
 
+-- Executes an ex-command by user input. Because nvim_input() is used, VimL
+-- errors will not manifest as client (lua) errors. Use command() for that.
 local function execute(...)
   for _, v in ipairs({...}) do
     if v:sub(1, 1) ~= '/' then

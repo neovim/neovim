@@ -11,9 +11,9 @@
 
 /// Gets the windows in a tabpage
 ///
-/// @param tabpage The tabpage
-/// @param[out] err Details of an error that may have occurred
-/// @return The windows in `tabpage`
+/// @param tabpage  Tabpage
+/// @param[out] err Error details, if any
+/// @return List of windows in `tabpage`
 ArrayOf(Window) nvim_tabpage_list_wins(Tabpage tabpage, Error *err)
 {
   Array rv = ARRAY_DICT_INIT;
@@ -39,10 +39,10 @@ ArrayOf(Window) nvim_tabpage_list_wins(Tabpage tabpage, Error *err)
 
 /// Gets a tab-scoped (t:) variable
 ///
-/// @param tabpage The tab page handle
-/// @param name The variable name
-/// @param[out] err Details of an error that may have occurred
-/// @return The variable value
+/// @param tabpage  Tabpage handle
+/// @param name     Variable name
+/// @param[out] err Error details, if any
+/// @return Variable value
 Object nvim_tabpage_get_var(Tabpage tabpage, String name, Error *err)
 {
   tabpage_T *tab = find_tab_by_handle(tabpage, err);
@@ -56,10 +56,10 @@ Object nvim_tabpage_get_var(Tabpage tabpage, String name, Error *err)
 
 /// Sets a tab-scoped (t:) variable
 ///
-/// @param tabpage handle
-/// @param name The variable name
-/// @param value The variable value
-/// @param[out] err Details of an error that may have occurred
+/// @param tabpage  Tabpage handle
+/// @param name     Variable name
+/// @param value    Variable value
+/// @param[out] err Error details, if any
 void nvim_tabpage_set_var(Tabpage tabpage,
                           String name,
                           Object value,
@@ -76,9 +76,9 @@ void nvim_tabpage_set_var(Tabpage tabpage,
 
 /// Removes a tab-scoped (t:) variable
 ///
-/// @param tabpage handle
-/// @param name The variable name
-/// @param[out] err Details of an error that may have occurred
+/// @param tabpage  Tabpage handle
+/// @param name     Variable name
+/// @param[out] err Error details, if any
 void nvim_tabpage_del_var(Tabpage tabpage, String name, Error *err)
 {
   tabpage_T *tab = find_tab_by_handle(tabpage, err);
@@ -94,11 +94,11 @@ void nvim_tabpage_del_var(Tabpage tabpage, String name, Error *err)
 ///
 /// @deprecated
 ///
-/// @param tabpage handle
-/// @param name The variable name
-/// @param value The variable value
-/// @param[out] err Details of an error that may have occurred
-/// @return The old value or nil if there was no previous value.
+/// @param tabpage  Tabpage handle
+/// @param name     Variable name
+/// @param value    Variable value
+/// @param[out] err Error details, if any
+/// @return Old value or nil if there was no previous value.
 ///
 ///         @warning It may return nil if there was no previous value
 ///                  or if previous value was `v:null`.
@@ -117,10 +117,10 @@ Object tabpage_set_var(Tabpage tabpage, String name, Object value, Error *err)
 ///
 /// @deprecated
 ///
-/// @param tabpage handle
-/// @param name The variable name
-/// @param[out] err Details of an error that may have occurred
-/// @return The old value
+/// @param tabpage  Tabpage handle
+/// @param name     Variable name
+/// @param[out] err Error details, if any
+/// @return Old value
 Object tabpage_del_var(Tabpage tabpage, String name, Error *err)
 {
   tabpage_T *tab = find_tab_by_handle(tabpage, err);
@@ -132,11 +132,11 @@ Object tabpage_del_var(Tabpage tabpage, String name, Error *err)
   return dict_set_value(tab->tp_vars, name, NIL, true, true, err);
 }
 
-/// Gets the current window in a tab page
+/// Gets the current window in a tabpage
 ///
-/// @param tabpage The tab page handle
-/// @param[out] err Details of an error that may have occurred
-/// @return The Window handle
+/// @param tabpage  Tabpage handle
+/// @param[out] err Error details, if any
+/// @return Window handle
 Window nvim_tabpage_get_win(Tabpage tabpage, Error *err)
 {
   Window rv = 0;
@@ -159,11 +159,11 @@ Window nvim_tabpage_get_win(Tabpage tabpage, Error *err)
   }
 }
 
-/// Gets the tab page number
+/// Gets the tabpage number
 ///
-/// @param tabpage The tabpage handle
-/// @param[out] err Details of an error that may have occurred
-/// @return The tabpage number
+/// @param tabpage  Tabpage handle
+/// @param[out] err Error details, if any
+/// @return Tabpage number
 Integer nvim_tabpage_get_number(Tabpage tabpage, Error *err)
 {
   Integer rv = 0;
@@ -176,10 +176,10 @@ Integer nvim_tabpage_get_number(Tabpage tabpage, Error *err)
   return tabpage_index(tab);
 }
 
-/// Checks if a tab page is valid
+/// Checks if a tabpage is valid
 ///
-/// @param tabpage The tab page handle
-/// @return true if the tab page is valid, false otherwise
+/// @param tabpage Tabpage handle
+/// @return true if the tabpage is valid, false otherwise
 Boolean nvim_tabpage_is_valid(Tabpage tabpage)
 {
   Error stub = ERROR_INIT;
