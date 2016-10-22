@@ -1496,11 +1496,8 @@ static void win_update(win_T *wp)
                   '@', ' ', hl_attr(HLF_AT));
       set_empty_rows(wp, srow);
       wp->w_botline = lnum;
-    }
     } else if (dy_flags & DY_LASTLINE) {      // 'display' has "lastline"
-      /*
-       * Last line isn't finished: Display "@@@" at the end.
-       */
+      // Last line isn't finished: Display "@@@" at the end.
       screen_fill(wp->w_winrow + wp->w_height - 1,
                   wp->w_winrow + wp->w_height,
                   W_ENDCOL(wp) - 3, W_ENDCOL(wp),
