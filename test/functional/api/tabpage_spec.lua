@@ -1,4 +1,3 @@
--- Sanity checks for tabpage_* API calls via msgpack-rpc
 local helpers = require('test.functional.helpers')(after_each)
 local clear, nvim, tabpage, curtab, eq, ok =
   helpers.clear, helpers.nvim, helpers.tabpage, helpers.curtab, helpers.eq,
@@ -8,7 +7,7 @@ local funcs = helpers.funcs
 local request = helpers.request
 local NIL = helpers.NIL
 
-describe('tabpage_* functions', function()
+describe('api/tabpage', function()
   before_each(clear)
 
   describe('list_wins and get_win', function()

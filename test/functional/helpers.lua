@@ -136,8 +136,8 @@ local function stop()
   session:stop()
 end
 
--- Executes an ex-command. VimL errors will manifest as client (lua) errors, and
--- v:errmsg will be updated.
+-- Executes an ex-command. VimL errors manifest as client (lua) errors, but
+-- v:errmsg will not be updated.
 local function nvim_command(cmd)
   request('nvim_command', cmd)
 end

@@ -34,7 +34,7 @@
 #endif
 
 /// Executes an ex-command.
-/// On VimL error: Returns the VimL error and updates v:errmsg.
+/// On VimL error: Returns the VimL error; v:errmsg is not updated.
 ///
 /// @param command  Ex-command string
 /// @param[out] err Error details (including actual VimL error), if any

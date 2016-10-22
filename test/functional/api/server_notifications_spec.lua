@@ -1,4 +1,3 @@
--- Tests for nvim notifications
 local helpers = require('test.functional.helpers')(after_each)
 local eq, clear, eval, execute, nvim, next_message =
   helpers.eq, helpers.clear, helpers.eval, helpers.execute, helpers.nvim,

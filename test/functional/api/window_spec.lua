@@ -1,4 +1,3 @@
--- Sanity checks for window_* API calls via msgpack-rpc
 local helpers = require('test.functional.helpers')(after_each)
 local clear, nvim, curbuf, curbuf_contents, window, curwin, eq, neq,
   ok, feed, insert, eval = helpers.clear, helpers.nvim, helpers.curbuf,
@@ -29,7 +28,7 @@ local function is_visible(str)
     return false
 end
 
-describe('window_* functions', function()
+describe('api/win', function()
   before_each(clear)
 
   describe('get_buf', function()

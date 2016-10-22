@@ -1,4 +1,3 @@
--- Sanity checks for vim_* API calls via msgpack-rpc
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 local NIL = helpers.NIL
@@ -9,10 +8,10 @@ local meths = helpers.meths
 local funcs = helpers.funcs
 local request = helpers.request
 
-describe('vim_* functions', function()
+describe('api', function()
   before_each(clear)
 
-  describe('command', function()
+  describe('nvim_command', function()
     it('works', function()
       local fname = helpers.tmpname()
       nvim('command', 'new')
@@ -29,9 +28,18 @@ describe('vim_* functions', function()
       f:close()
       os.remove(fname)
     end)
+
+    it("VimL error: fails (VimL error), does NOT update v:errmsg", function()
+      -- Most API methods return generic errors (or no error) if a VimL
+      -- expression fails; nvim_command returns the VimL error details.
+      local status, rv = pcall(nvim, "command", "bogus_command")
+      eq(false, status)                       -- nvim_command() failed.
+      eq("E492:", string.match(rv, "E%d*:"))  -- VimL error was returned.
+      eq("", nvim("eval", "v:errmsg"))        -- v:errmsg was not updated.
+    end)
   end)
 
-  describe('eval', function()
+  describe('nvim_eval', function()
     it('works', function()
       nvim('command', 'let g:v1 = "a"')
       nvim('command', 'let g:v2 = [1, 2, {"v3": 3}]')
@@ -46,18 +54,41 @@ describe('vim_* functions', function()
     it('works under deprecated name', function()
       eq(2, request("vim_eval", "1+1"))
     end)
+
+    it("VimL error: fails (generic error), does NOT update v:errmsg", function()
+      local status, rv = pcall(nvim, "eval", "bogus expression")
+      eq(false, status)                 -- nvim_eval() failed.
+      ok(nil ~= string.find(rv, "Failed to evaluate expression"))
+      eq("", nvim("eval", "v:errmsg"))  -- v:errmsg was not updated.
+    end)
   end)
 
-  describe('call_function', function()
+  describe('nvim_call_function', function()
     it('works', function()
       nvim('call_function', 'setqflist', {{{ filename = 'something', lnum = 17}}, 'r'})
       eq(17, nvim('call_function', 'getqflist', {})[1].lnum)
       eq(17, nvim('call_function', 'eval', {17}))
       eq('foo', nvim('call_function', 'simplify', {'this/./is//redundant/../../../foo'}))
     end)
+
+    it("VimL error: fails (generic error), does NOT update v:errmsg", function()
+      local status, rv = pcall(nvim, "call_function", "bogus function", {"arg1"})
+      eq(false, status)                 -- nvim_call_function() failed.
+      ok(nil ~= string.find(rv, "Error calling function"))
+      eq("", nvim("eval", "v:errmsg"))  -- v:errmsg was not updated.
+    end)
   end)
 
-  describe('strwidth', function()
+  describe('nvim_input', function()
+    it("VimL error: does NOT fail, updates v:errmsg", function()
+      local status, _ = pcall(nvim, "input", ":call bogus_fn()<CR>")
+      local v_errnum = string.match(nvim("eval", "v:errmsg"), "E%d*:")
+      eq(true, status)        -- nvim_input() did not fail.
+      eq("E117:", v_errnum)   -- v:errmsg was updated.
+    end)
+  end)
+
+  describe('nvim_strwidth', function()
     it('works', function()
       eq(3, nvim('strwidth', 'abc'))
       -- 6 + (neovim)
@@ -70,7 +101,7 @@ describe('vim_* functions', function()
     end)
   end)
 
-  describe('{get,set}_current_line', function()
+  describe('nvim_get_current_line, nvim_set_current_line', function()
     it('works', function()
       eq('', nvim('get_current_line'))
       nvim('set_current_line', 'abc')
@@ -78,7 +109,7 @@ describe('vim_* functions', function()
     end)
   end)
 
-  describe('{get,set,del}_var', function()
+  describe('nvim_get_var, nvim_set_var, nvim_del_var', function()
     it('works', function()
       nvim('set_var', 'lua', {1, 2, {['3'] = 1}})
       eq({1, 2, {['3'] = 1}}, nvim('get_var', 'lua'))
@@ -109,7 +140,7 @@ describe('vim_* functions', function()
     end)
   end)
 
-  describe('{get,set}_option', function()
+  describe('nvim_get_option, nvim_set_option', function()
     it('works', function()
       ok(nvim('get_option', 'equalalways'))
       nvim('set_option', 'equalalways', false)
@@ -117,7 +148,7 @@ describe('vim_* functions', function()
     end)
   end)
 
-  describe('{get,set}_current_buf and list_bufs', function()
+  describe('nvim_{get,set}_current_buf, nvim_list_bufs', function()
     it('works', function()
       eq(1, #nvim('list_bufs'))
       eq(nvim('list_bufs')[1], nvim('get_current_buf'))
@@ -129,7 +160,7 @@ describe('vim_* functions', function()
     end)
   end)
 
-  describe('{get,set}_current_win and list_wins', function()
+  describe('nvim_{get,set}_current_win, nvim_list_wins', function()
     it('works', function()
       eq(1, #nvim('list_wins'))
       eq(nvim('list_wins')[1], nvim('get_current_win'))
@@ -142,7 +173,7 @@ describe('vim_* functions', function()
     end)
   end)
 
-  describe('{get,set}_current_tabpage and list_tabpages', function()
+  describe('nvim_{get,set}_current_tabpage, nvim_list_tabpages', function()
     it('works', function()
       eq(1, #nvim('list_tabpages'))
       eq(nvim('list_tabpages')[1], nvim('get_current_tabpage'))
@@ -161,7 +192,7 @@ describe('vim_* functions', function()
     end)
   end)
 
-  describe('replace_termcodes', function()
+  describe('nvim_replace_termcodes', function()
     it('escapes K_SPECIAL as K_SPECIAL KS_SPECIAL KE_FILLER', function()
       eq('\128\254X', helpers.nvim('replace_termcodes', '\128', true, true, true))
     end)
@@ -183,7 +214,7 @@ describe('vim_* functions', function()
     end)
   end)
 
-  describe('feedkeys', function()
+  describe('nvim_feedkeys', function()
     it('CSI escaping', function()
       local function on_setup()
         -- notice the special char(…) \xe2\80\xa6
@@ -210,7 +241,7 @@ describe('vim_* functions', function()
     end)
   end)
 
-  describe('err_write', function()
+  describe('nvim_err_write', function()
     local screen
 
     before_each(function()
@@ -298,7 +329,7 @@ describe('vim_* functions', function()
     end)
   end)
 
-  describe('call_atomic', function()
+  describe('nvim_call_atomic', function()
     it('works', function()
       meths.buf_set_lines(0, 0, -1, true, {'first'})
       local req = {

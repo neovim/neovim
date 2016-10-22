@@ -1,4 +1,3 @@
--- Sanity checks for buffer_* API calls via msgpack-rpc
 local helpers = require('test.functional.helpers')(after_each)
 local clear, nvim, buffer = helpers.clear, helpers.nvim, helpers.buffer
 local curbuf, curwin, eq = helpers.curbuf, helpers.curwin, helpers.eq
@@ -6,7 +5,7 @@ local curbufmeths, ok = helpers.curbufmeths, helpers.ok
 local funcs, request = helpers.funcs, helpers.request
 local NIL = helpers.NIL
 
-describe('buffer_* functions', function()
+describe('api/buf', function()
   before_each(clear)
 
   -- access deprecated functions
