@@ -1492,7 +1492,7 @@ static void win_update(win_T *wp)
                       hl_attr(HLF_AT));
 
       screen_fill(scr_row, scr_row + 1,
-                  (int)W_WINCOL(wp) + 2, (int)W_ENDCOL(wp),
+                  (int)wp->w_wincol + 2, (int)W_ENDCOL(wp),
                   '@', ' ', hl_attr(HLF_AT));
       set_empty_rows(wp, srow);
       wp->w_botline = lnum;
