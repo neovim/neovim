@@ -218,4 +218,18 @@ function Test_tabpage_with_tab_modifier()
   bw!
 endfunction
 
+func Test_tabnext_on_buf_unload()
+  " This once caused a crash
+  new
+  tabedit
+  tabfirst
+  au BufUnload <buffer> tabnext
+  q
+
+  while tabpagenr('$') > 1
+    quit
+  endwhile
+endfunc
+
+
 " vim: shiftwidth=2 sts=2 expandtab

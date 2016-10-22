@@ -1935,7 +1935,7 @@ int win_close(win_T *win, int free_buf)
   if (win->w_buffer != NULL) {
     win->w_closing = true;
     close_buffer(win, win->w_buffer, free_buf ? DOBUF_UNLOAD : 0, true);
-    if (win_valid(win)) {
+    if (win_valid_any_tab(win)) {
       win->w_closing = false;
     }
 
@@ -1955,11 +1955,19 @@ int win_close(win_T *win, int free_buf)
       curwin->w_buffer = curbuf;
     getout(0);
   }
-  /* Autocommands may have closed the window already, or closed the only
-   * other window or moved to another tab page. */
-  else if (!win_valid(win) || last_window() || curtab != prev_curtab
-           || close_last_window_tabpage(win, free_buf, prev_curtab))
+  // Autocommands may have moved to another tab page.
+  if (curtab != prev_curtab && win_valid_any_tab(win)
+      && win->w_buffer == NULL) {
+    // Need to close the window anyway, since the buffer is NULL.
+    win_close_othertab(win, false, prev_curtab);
     return FAIL;
+  }
+  // Autocommands may have closed the window already, or closed the only
+  // other window or moved to another tab page.
+  if (!win_valid(win) || last_window()
+      || close_last_window_tabpage(win, free_buf, prev_curtab)) {
+    return FAIL;
+  }
 
   // let terminal buffers know that this window dimensions may be ignored
   win->w_closing = true;
@@ -2036,12 +2044,16 @@ void win_close_othertab(win_T *win, int free_buf, tabpage_T *tp)
   tabpage_T   *ptp = NULL;
   int free_tp = FALSE;
 
-  assert(win->w_buffer);  // to avoid np dereference warning in next line
-  if (win->w_closing || win->w_buffer->b_closing)
-    return;     /* window is already being closed */
+  // Get here with win->w_buffer == NULL when win_close() detects the tab page
+  // changed.
+  if (win->w_closing || (win->w_buffer != NULL && win->w_buffer->b_closing)) {
+    return;  // window is already being closed
+  }
 
-  /* Close the link to the buffer. */
-  close_buffer(win, win->w_buffer, free_buf ? DOBUF_UNLOAD : 0, FALSE);
+  if (win->w_buffer != NULL) {
+    // Close the link to the buffer.
+    close_buffer(win, win->w_buffer, free_buf ? DOBUF_UNLOAD : 0, FALSE);
+  }
 
   /* Careful: Autocommands may have closed the tab page or made it the
    * current tab page.  */
