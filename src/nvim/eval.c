@@ -15612,6 +15612,39 @@ static void f_strftime(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 }
 
+// "strgetchar()" function
+static void f_strgetchar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  char_u *str;
+  int len;
+  int error = false;
+  int charidx;
+
+  rettv->vval.v_number = -1;
+  str = get_tv_string_chk(&argvars[0]);
+  if (str == NULL) {
+    return;
+  }
+  len = (int)STRLEN(str);
+  charidx = get_tv_number_chk(&argvars[1], &error);
+  if (error) {
+    return;
+  }
+
+  {
+    int byteidx = 0;
+
+    while (charidx >= 0 && byteidx < len) {
+      if (charidx == 0) {
+        rettv->vval.v_number = mb_ptr2char(str + byteidx);
+        break;
+      }
+      charidx--;
+      byteidx += mb_char2len(str[byteidx]);
+    }
+  }
+}
+
 /*
  * "stridx()" function
  */
@@ -15710,6 +15743,58 @@ static void f_strwidth(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   char_u      *s = get_tv_string(&argvars[0]);
 
   rettv->vval.v_number = (varnumber_T) mb_string2cells(s);
+}
+
+// "strcharpart()" function
+static void f_strcharpart(typval_T *argvars, typval_T *rettv, FunPtr fptr) {
+  char_u *p;
+  int nchar;
+  int nbyte = 0;
+  int charlen;
+  int len = 0;
+  int slen;
+  int error = false;
+
+  p = get_tv_string(&argvars[0]);
+  slen = (int)STRLEN(p);
+
+  nchar = get_tv_number_chk(&argvars[1], &error);
+  if (!error) {
+    if (nchar > 0) {
+      while (nchar > 0 && nbyte < slen) {
+        nbyte += mb_char2len(p[nbyte]);
+        nchar--;
+      }
+    } else {
+      nbyte = nchar;
+    }
+  }
+  if (argvars[2].v_type != VAR_UNKNOWN) {
+    charlen = get_tv_number(&argvars[2]);
+    while (charlen > 0 && nbyte + len < slen) {
+      len += mb_char2len(p[nbyte + len]);
+      charlen--;
+    }
+  } else {
+    len = slen - nbyte;    // default: all bytes that are available.
+  }
+
+  // Only return the overlap between the specified part and the actual
+  // string.
+  if (nbyte < 0) {
+    len += nbyte;
+    nbyte = 0;
+  } else if (nbyte > slen) {
+    nbyte = slen;
+  }
+  if (len < 0) {
+    len = 0;
+  } else if (nbyte + len > slen) {
+    len = slen - nbyte;
+  }
+
+  rettv->v_type = VAR_STRING;
+  rettv->vval.v_string = vim_strnsave(p + nbyte, len);
 }
 
 /*
