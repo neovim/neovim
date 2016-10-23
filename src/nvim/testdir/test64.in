@@ -20,6 +20,7 @@ STARTTEST
 :"""" Previously written tests """"""""""""""""""""""""""""""""
 :""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 :"
+:set noautoindent
 :call add(tl, [2, 'ab', 'aab', 'ab'])
 :call add(tl, [2, 'b', 'abcdef', 'b'])
 :call add(tl, [2, 'bc*', 'abccccdef', 'bcccc'])
@@ -577,7 +578,7 @@ Gop:"
 :" Check patterns matching cursor position.
 :func! Postest()
  new
- call setline(1, ['ffooooo', 'boboooo', 'zoooooo', 'koooooo', 'moooooo', "\t\t\tfoo", 'abababababababfoo', 'bababababababafoo', '********_'])
+ call setline(1, ['ffooooo', 'boboooo', 'zoooooo', 'koooooo', 'moooooo', "\t\t\tfoo", 'abababababababfoo', 'bababababababafoo', '********_', '        xxxxxxxxxxxx    xxxx xxxxxx xxxxxxx x xxxxxxxxx xx xxxxxx xxxxxx xxxxx xxxxxxx xx xxxx xxxxxxxx xxxx xxxxxxxxxxx xxx xxxxxxx xxxxxxxxx xx xxxxxx xx xxxxxxx xxxxxxxxxxxxxxxx xxxxxxxxx  xxx xxxxxxxx xxxxxxxxx xxxx xxx xxxx xxx xxx xxxxx xxxxxxxxxxxx xxxx xxxxxxxxx xxxxxxxxxxx xx xxxxx xxx xxxxxxxx xxxxxx xxx xxx xxxxxxxxx xxxxxxx x xxxxxxxxx xx xxxxxx xxxxxxx  xxxxxxxxxxxxxxxxxx xxxxxxx xxxxxxx xxx xxx xxxxxxxx xxxxxxx  xxxx xxx xxxxxx xxxxx xxxxx xx xxxxxx xxxxxxx xxx xxxxxxxxxxxx xxxx xxxxxxxxx xxxxxx xxxxxx xxxxx xxx xxxxxxx xxxxxxxxxxxxxxxx xxxxxxxxx  xxxxxxxxxx xxxx xx xxxxxxxx xxx xxxxxxxxxxx xxxxx'])
  call setpos('.', [0, 1, 0, 0])
  s/\%>3c.//g
  call setpos('.', [0, 2, 4, 0])
@@ -589,6 +590,7 @@ Gop:"
  %s/\%>6l\%3c./!/g
  %s/\%>7l\%12c./?/g
  %s/\%>7l\%<9l\%>5v\%<8v./#/g
+ $s/\%(|\u.*\)\@<=[^|\t]\+$//ge
  1,$yank
  quit!
 endfunc
