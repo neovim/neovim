@@ -15640,7 +15640,7 @@ static void f_strgetchar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
         break;
       }
       charidx--;
-      byteidx += mb_char2len(str[byteidx]);
+      byteidx += mb_cptr2len(str + byteidx);
     }
   }
 }
