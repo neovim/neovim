@@ -5,9 +5,8 @@ endif
 scriptencoding utf-8
 
 func Test_strgetchar()
-  call assert_equal(char2nr('a'), strgetchar('axb', 0))
-  call assert_equal(char2nr('x'), strgetchar('axb', 1))
-  call assert_equal(char2nr('b'), strgetchar('axb', 2))
+  call assert_equal(char2nr('á'), strgetchar('áxb', 0))
+  call assert_equal(char2nr('x'), strgetchar('áxb', 1))
 
   call assert_equal(-1, strgetchar('axb', -1))
   call assert_equal(-1, strgetchar('axb', 3))
