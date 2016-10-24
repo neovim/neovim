@@ -15772,8 +15772,14 @@ static void f_strcharpart(typval_T *argvars, typval_T *rettv, FunPtr fptr) {
   if (argvars[2].v_type != VAR_UNKNOWN) {
     charlen = get_tv_number(&argvars[2]);
     while (charlen > 0 && nbyte + len < slen) {
-      len += mb_char2len(p[nbyte + len]);
-      charlen--;
+      int off = nbyte + len;
+
+      if (off < 0) {
+        len += 1;
+      } else {
+        len += mb_char2len(p[off]);
+        charlen--;
+      }
     }
   } else {
     len = slen - nbyte;    // default: all bytes that are available.
