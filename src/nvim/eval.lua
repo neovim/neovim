@@ -272,7 +272,7 @@ return {
     strchars={args={1,2}},
     strdisplaywidth={args={1, 2}},
     strftime={args={1, 2}},
-    strgetchar={args={2,2}},
+    strgetchar={args={2, 2}},
     stridx={args={2, 3}},
     string={args=1},
     strlen={args=1},

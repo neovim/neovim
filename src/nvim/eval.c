@@ -15762,7 +15762,7 @@ static void f_strcharpart(typval_T *argvars, typval_T *rettv, FunPtr fptr) {
   if (!error) {
     if (nchar > 0) {
       while (nchar > 0 && nbyte < slen) {
-        nbyte += mb_char2len(p[nbyte]);
+        nbyte += mb_cptr2len(p + nbyte);
         nchar--;
       }
     } else {
@@ -15777,9 +15777,9 @@ static void f_strcharpart(typval_T *argvars, typval_T *rettv, FunPtr fptr) {
       if (off < 0) {
         len += 1;
       } else {
-        len += mb_char2len(p[off]);
-        charlen--;
+        len += mb_cptr2len(p + off);
       }
+      charlen--;
     }
   } else {
     len = slen - nbyte;    // default: all bytes that are available.
