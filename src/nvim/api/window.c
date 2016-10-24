@@ -19,6 +19,7 @@
 /// @param[out] err Error details, if any
 /// @return Buffer handle
 Buffer nvim_win_get_buf(Window window, Error *err)
+    FUNC_API_SINCE(1)
 {
   win_T *win = find_window_by_handle(window, err);
 
@@ -35,6 +36,7 @@ Buffer nvim_win_get_buf(Window window, Error *err)
 /// @param[out] err Error details, if any
 /// @return (row, col) tuple
 ArrayOf(Integer, 2) nvim_win_get_cursor(Window window, Error *err)
+    FUNC_API_SINCE(1)
 {
   Array rv = ARRAY_DICT_INIT;
   win_T *win = find_window_by_handle(window, err);
@@ -53,6 +55,7 @@ ArrayOf(Integer, 2) nvim_win_get_cursor(Window window, Error *err)
 /// @param pos      (row, col) tuple representing the new position
 /// @param[out] err Error details, if any
 void nvim_win_set_cursor(Window window, ArrayOf(Integer, 2) pos, Error *err)
+    FUNC_API_SINCE(1)
 {
   win_T *win = find_window_by_handle(window, err);
 
@@ -99,6 +102,7 @@ void nvim_win_set_cursor(Window window, ArrayOf(Integer, 2) pos, Error *err)
 /// @param[out] err Error details, if any
 /// @return Height as a count of rows
 Integer nvim_win_get_height(Window window, Error *err)
+    FUNC_API_SINCE(1)
 {
   win_T *win = find_window_by_handle(window, err);
 
@@ -116,6 +120,7 @@ Integer nvim_win_get_height(Window window, Error *err)
 /// @param height   Height as a count of rows
 /// @param[out] err Error details, if any
 void nvim_win_set_height(Window window, Integer height, Error *err)
+    FUNC_API_SINCE(1)
 {
   win_T *win = find_window_by_handle(window, err);
 
@@ -142,6 +147,7 @@ void nvim_win_set_height(Window window, Integer height, Error *err)
 /// @param[out] err Error details, if any
 /// @return Width as a count of columns
 Integer nvim_win_get_width(Window window, Error *err)
+    FUNC_API_SINCE(1)
 {
   win_T *win = find_window_by_handle(window, err);
 
@@ -159,6 +165,7 @@ Integer nvim_win_get_width(Window window, Error *err)
 /// @param width    Width as a count of columns
 /// @param[out] err Error details, if any
 void nvim_win_set_width(Window window, Integer width, Error *err)
+    FUNC_API_SINCE(1)
 {
   win_T *win = find_window_by_handle(window, err);
 
@@ -186,6 +193,7 @@ void nvim_win_set_width(Window window, Integer width, Error *err)
 /// @param[out] err Error details, if any
 /// @return Variable value
 Object nvim_win_get_var(Window window, String name, Error *err)
+    FUNC_API_SINCE(1)
 {
   win_T *win = find_window_by_handle(window, err);
 
@@ -203,6 +211,7 @@ Object nvim_win_get_var(Window window, String name, Error *err)
 /// @param value    Variable value
 /// @param[out] err Error details, if any
 void nvim_win_set_var(Window window, String name, Object value, Error *err)
+    FUNC_API_SINCE(1)
 {
   win_T *win = find_window_by_handle(window, err);
 
@@ -219,6 +228,7 @@ void nvim_win_set_var(Window window, String name, Object value, Error *err)
 /// @param name     Variable name
 /// @param[out] err Error details, if any
 void nvim_win_del_var(Window window, String name, Error *err)
+    FUNC_API_SINCE(1)
 {
   win_T *win = find_window_by_handle(window, err);
 
@@ -278,6 +288,7 @@ Object window_del_var(Window window, String name, Error *err)
 /// @param[out] err Error details, if any
 /// @return Option value
 Object nvim_win_get_option(Window window, String name, Error *err)
+    FUNC_API_SINCE(1)
 {
   win_T *win = find_window_by_handle(window, err);
 
@@ -296,6 +307,7 @@ Object nvim_win_get_option(Window window, String name, Error *err)
 /// @param value    Option value
 /// @param[out] err Error details, if any
 void nvim_win_set_option(Window window, String name, Object value, Error *err)
+    FUNC_API_SINCE(1)
 {
   win_T *win = find_window_by_handle(window, err);
 
@@ -312,6 +324,7 @@ void nvim_win_set_option(Window window, String name, Object value, Error *err)
 /// @param[out] err Error details, if any
 /// @return (row, col) tuple with the window position
 ArrayOf(Integer, 2) nvim_win_get_position(Window window, Error *err)
+    FUNC_API_SINCE(1)
 {
   Array rv = ARRAY_DICT_INIT;
   win_T *win = find_window_by_handle(window, err);
@@ -330,6 +343,7 @@ ArrayOf(Integer, 2) nvim_win_get_position(Window window, Error *err)
 /// @param[out] err Error details, if any
 /// @return Tabpage that contains the window
 Tabpage nvim_win_get_tabpage(Window window, Error *err)
+    FUNC_API_SINCE(1)
 {
   Tabpage rv = 0;
   win_T *win = find_window_by_handle(window, err);
@@ -347,6 +361,7 @@ Tabpage nvim_win_get_tabpage(Window window, Error *err)
 /// @param[out] err Error details, if any
 /// @return Window number
 Integer nvim_win_get_number(Window window, Error *err)
+    FUNC_API_SINCE(1)
 {
   int rv = 0;
   win_T *win = find_window_by_handle(window, err);
@@ -366,6 +381,7 @@ Integer nvim_win_get_number(Window window, Error *err)
 /// @param window Window handle
 /// @return true if the window is valid, false otherwise
 Boolean nvim_win_is_valid(Window window)
+    FUNC_API_SINCE(1)
 {
   Error stub = ERROR_INIT;
   return find_window_by_handle(window, &stub) != NULL;
