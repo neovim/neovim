@@ -5,6 +5,7 @@
 # Steps:
 #   Create the "release" commit:
 #     - CMakeLists.txt: Unset NVIM_VERSION_PRERELEASE
+#     - CMakeLists.txt: Unset NVIM_API_PRERELEASE
 #     - Tag the commit.
 #   Create the "version bump" commit:
 #     - CMakeLists.txt: Set NVIM_VERSION_PRERELEASE to "-dev"
@@ -46,6 +47,7 @@ __BUMP_MSG="version bump"
 echo "Most recent tag: ${__LAST_TAG}"
 echo "Release version: ${__VERSION}"
 $__sed -i.bk 's/(NVIM_VERSION_PRERELEASE) "-dev"/\1 ""/' CMakeLists.txt
+$__sed -i.bk 's/(NVIM_API_PRERELEASE) true/\1 false/' CMakeLists.txt
 echo "Building changelog since ${__LAST_TAG}..."
 __CHANGELOG="$(./scripts/git-log-pretty-since.sh "$__LAST_TAG" 'vim-patch:\S')"
 
