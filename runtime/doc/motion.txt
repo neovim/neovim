@@ -1,4 +1,4 @@
-*motion.txt*    For Vim version 7.4.  Last change: 2015 Jun 06
+*motion.txt*    For Vim version 7.4.  Last change: 2016 Jul 12
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -569,7 +569,7 @@ i[			"inner [] block", select [count] '[' ']' blocks.  This
 			When used in Visual mode it is made characterwise.
 
 a)							*v_a)* *a)* *a(*
-a(							*v_ab* *v_a(* *ab*
+a(							*vab* *v_ab* *v_a(* *ab*
 ab			"a block", select [count] blocks, from "[count] [(" to
 			the matching ')', including the '(' and ')' (see
 			|[(|).  Does not include white space outside of the
@@ -577,7 +577,7 @@ ab			"a block", select [count] blocks, from "[count] [(" to
 			When used in Visual mode it is made characterwise.
 
 i)							*v_i)* *i)* *i(*
-i(							*v_ib* *v_i(* *ib*
+i(							*vib* *v_ib* *v_i(* *ib*
 ib			"inner block", select [count] blocks, from "[count] [("
 			to the matching ')', excluding the '(' and ')' (see
 			|[(|).

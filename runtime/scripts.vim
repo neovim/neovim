@@ -1,7 +1,7 @@
 " Vim support file to detect file types in scripts
 "
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last change:	2014 Aug 24
+" Last change:	2016 May 21
 
 " This file is called by an autocommand for every file that has just been
 " loaded into a buffer.  It checks if the type of file can be recognized by
@@ -240,7 +240,8 @@ else
     set ft=xhtml
 
     " HTML (e.g.: <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN")
-  elseif s:line1 =~? '\<DOCTYPE\s\+html\>'
+    " Avoid "doctype html", used by slim.
+  elseif s:line1 =~? '<!DOCTYPE\s\+html\>'
     set ft=html
 
     " PDF

@@ -1,4 +1,4 @@
-*options.txt*	For Vim version 7.4.  Last change: 2016 Mar 19
+*options.txt*	For Vim version 7.4.  Last change: 2016 Jul 12
 
 
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
@@ -5445,6 +5445,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	The |FilterReadPre|, |FilterReadPost| and |FilterWritePre|,
 	|FilterWritePost| autocommands event are not triggered when
 	'shelltemp' is off.
+	The `system()` function does not respect this option and always uses
+	temp files.
 
 						*'shellxescape'* *'sxe'*
 'shellxescape' 'sxe'	string	(default: "";
