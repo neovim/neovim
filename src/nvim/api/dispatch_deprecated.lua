@@ -7,6 +7,7 @@ local deprecated_aliases = {
   nvim_buf_get_number="buffer_get_number",
   nvim_buf_get_option="buffer_get_option",
   nvim_buf_get_var="buffer_get_var",
+  nvim_buf_live_updates="buffer_live_updates",
   nvim_buf_is_valid="buffer_is_valid",
   nvim_buf_line_count="buffer_line_count",
   nvim_buf_set_lines="buffer_set_lines",

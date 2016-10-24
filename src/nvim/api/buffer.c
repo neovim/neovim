@@ -24,6 +24,7 @@
 #include "nvim/syntax.h"
 #include "nvim/window.h"
 #include "nvim/undo.h"
+#include "nvim/liveupdate.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "api/buffer.c.generated.h"
@@ -72,6 +73,30 @@ String buffer_get_line(Buffer buffer, Integer index, Error *err)
   xfree(slice.items);
 
   return rv;
+}
+
+/// activate live updates from this buffer to the current channel
+///
+/// @param buffer The buffer handle
+/// @param enabled True turns on live updates, False turns them off.
+/// @param[out] err Details of an error that may have occurred
+Boolean nvim_buf_live_updates(uint64_t channel_id,
+                         Buffer buffer,
+                         Boolean enabled,
+                         Error *err)
+{
+  buf_T *buf = find_buffer_by_handle(buffer, err);
+
+  if (!buf) {
+    return false;
+  }
+
+  if (enabled) {
+    return liveupdate_register(buf, channel_id);
+  }
+
+  liveupdate_unregister(buf, channel_id);
+  return false;
 }
 
 /// Sets a buffer line
