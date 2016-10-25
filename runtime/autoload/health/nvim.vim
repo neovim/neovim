@@ -1,5 +1,7 @@
+let s:suggest_faq = 'See https://github.com/neovim/neovim/wiki/FAQ'
+
 " Load the remote plugin manifest file and check for unregistered plugins
-function! s:check_manifest() abort
+function! s:check_rplugin_manifest() abort
   call health#report_start('Remote Plugins')
   let existing_rplugins = {}
 
@@ -57,17 +59,36 @@ function! s:check_manifest() abort
   endif
 endfunction
 
+function! s:check_performance() abort
+  call health#report_start('Performance')
+
+  " check buildtype
+  let buildtype = matchstr(execute('version'), '\v\cbuild type:?\s*[^\n\r\t ]+')
+  if empty(buildtype)
+    call health#report_error('failed to get build type from :version')
+  elseif buildtype =~# '\v(MinSizeRel|Release|RelWithDebInfo)'
+    call health#report_ok(buildtype)
+  else
+    call health#report_info(buildtype)
+    call health#report_warn(
+          \ "Non-optimized build-type. Nvim will be slower.",
+          \ ["Install a different Nvim package, or rebuild with `CMAKE_BUILD_TYPE=RelWithDebInfo`.",
+          \  s:suggest_faq])
+  endif
+endfunction
+
 function! s:check_tmux() abort
   if empty($TMUX) || !executable('tmux')
     return
   endif
-  call health#report_start('tmux configuration')
-  let suggestions = ["Set escape-time in ~/.tmux.conf: set-option -sg escape-time 10",
-        \ 'See https://github.com/neovim/neovim/wiki/FAQ']
+  call health#report_start('tmux')
+
+  " check escape-time
+  let suggestions = ["Set escape-time in ~/.tmux.conf:\nset-option -sg escape-time 10",
+        \ s:suggest_faq]
   let cmd = 'tmux show-option -qvgs escape-time'
   let out = system(cmd)
   let tmux_esc_time = substitute(out, '\v(\s|\r|\n)', '', 'g')
-
   if v:shell_error
     call health#report_error('command failed: '.cmd."\n".out)
   elseif empty(tmux_esc_time)
@@ -76,7 +97,16 @@ function! s:check_tmux() abort
     call health#report_error(
         \ 'escape-time ('.tmux_esc_time.') is higher than 300ms', suggestions)
   else
-    call health#report_ok('escape-time = '.tmux_esc_time.'ms')
+    call health#report_ok('escape-time: '.tmux_esc_time.'ms')
+  endif
+
+  " check $TERM
+  call health#report_info('$TERM: '.$TERM)
+  if $TERM !~# '\v(tmux-256color|screen-256color)'
+    call health#report_error(
+          \ '$TERM should be "screen-256color" or "tmux-256color" when running tmux.',
+          \ ["Set default-terminal in ~/.tmux.conf:\nset-option -g default-terminal \"screen-256color\"",
+          \  s:suggest_faq])
   endif
 endfunction
 
@@ -90,7 +120,7 @@ function! s:check_terminfo() abort
         \   .'infocmp $TERM | sed ''s/kbs=^[hH]/kbs=\\177/'' > $TERM.ti'
         \   ."\n"
         \   .'tic $TERM.ti',
-        \ 'See https://github.com/neovim/neovim/wiki/FAQ']
+        \ s:suggest_faq]
   let cmd = 'infocmp -L'
   let out = system(cmd)
   let kbs_entry = matchstr(out, 'key_backspace=\S*')
@@ -107,7 +137,8 @@ function! s:check_terminfo() abort
 endfunction
 
 function! health#nvim#check() abort
-  call s:check_manifest()
+  call s:check_rplugin_manifest()
+  call s:check_performance()
   call s:check_tmux()
   call s:check_terminfo()
 endfunction

@@ -10669,7 +10669,7 @@ static void f_has(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       } else {
         n = has_vim_patch(atoi(name + 5));
       }
-    } else if (STRNICMP(name, "nvim", 4) == 0 && name[4] == '-') {
+    } else if (STRNICMP(name, "nvim-", 5) == 0) {
       // Expect "nvim-x.y.z"
       n = has_nvim_version(name + 5);
     } else if (STRICMP(name, "vim_starting") == 0) {

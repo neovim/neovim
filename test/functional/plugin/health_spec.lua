@@ -47,7 +47,7 @@ describe('health.vim', function()
       helpers.expect([[
 
         health#success1#check
-        ================================================================================
+        ========================================================================
         ## report 1
           - SUCCESS: everything is fine
 
@@ -55,7 +55,7 @@ describe('health.vim', function()
           - SUCCESS: nothing to see here
 
         health#success2#check
-        ================================================================================
+        ========================================================================
         ## another 1
           - SUCCESS: ok
         ]])
@@ -66,7 +66,7 @@ describe('health.vim', function()
       helpers.expect([[
 
         health#broken#check
-        ================================================================================
+        ========================================================================
           - ERROR: Failed to run healthcheck for "broken" plugin. Exception:
             caused an error
         ]])
@@ -77,7 +77,7 @@ describe('health.vim', function()
       helpers.expect([[
 
         health#non_existent_healthcheck#check
-        ================================================================================
+        ========================================================================
           - ERROR: No healthcheck found for "non_existent_healthcheck" plugin.
         ]])
     end)
