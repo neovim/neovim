@@ -28,6 +28,7 @@
 #include "nvim/getchar.h"
 #include "nvim/indent.h"
 #include "nvim/indent_c.h"
+#include "nvim/liveupdate.h"
 #include "nvim/main.h"
 #include "nvim/mark.h"
 #include "nvim/mbyte.h"
@@ -1815,6 +1816,10 @@ void changed_bytes(linenr_T lnum, colnr_T col)
 {
   changedOneline(curbuf, lnum);
   changed_common(lnum, col, lnum + 1, 0L);
+  // notify any channels that are watching
+  if (curbuf->liveupdate_channels != NULL) {
+    liveupdate_send_changes(curbuf, lnum, 1, 1);
+  }
 
   /* Diff highlighting in other diff windows may need to be updated too. */
   if (curwin->w_p_diff) {
@@ -1933,6 +1938,12 @@ changed_lines (
   }
 
   changed_common(lnum, col, lnume, xtra);
+
+  if (curbuf->liveupdate_channels != NULL) {
+    int64_t num_added = (int64_t)(lnume + xtra - lnum);
+    int64_t num_removed = lnume - lnum;
+    liveupdate_send_changes(curbuf, lnum, num_added, num_removed);
+  }
 }
 
 /// Mark line range in buffer as changed.

@@ -124,3 +124,61 @@ void liveupdate_unregister_all(buf_T *buf) {
     buf->liveupdate_channels = NULL;
   }
 }
+
+void liveupdate_send_changes(buf_T *buf, linenr_T firstline, int64_t num_added, int64_t num_removed) {
+  // if one the channels doesn't work, put its ID here so we can remove it later
+  uint64_t badchannelid = LIVEUPDATE_NONE;
+
+  // notify each of the active channels
+  if (buf->liveupdate_channels != NULL) {
+    for (int i = 0; buf->liveupdate_channels[i] != LIVEUPDATE_NONE; i++) {
+      uint64_t channelid = buf->liveupdate_channels[i];
+
+      // send through the changes now channel contents now
+      Array args = ARRAY_DICT_INIT;
+      args.size = 4;
+      args.items = xcalloc(sizeof(Object), args.size);
+
+      // the first argument is always the buffer number
+      args.items[0] = INTEGER_OBJ(buf->handle);
+
+      // the first line that changed (zero-indexed)
+      args.items[1] = INTEGER_OBJ(firstline - 1);
+
+      // how many lines are being swapped out
+      args.items[2] = INTEGER_OBJ(num_removed);
+
+      // linedata of lines being swapped in
+      Array linedata = ARRAY_DICT_INIT;
+      if (num_added > 0) {
+          linedata.size = num_added;
+          linedata.items = xcalloc(sizeof(Object), num_added);
+          for (int64_t i = 0; i < num_added; i++) {
+            int64_t lnum = firstline + i;
+            const char *bufstr = (char *) ml_get_buf(buf, (linenr_T)lnum, false);
+            Object str = STRING_OBJ(cstr_to_string(bufstr));
+
+            // Vim represents NULs as NLs, but this may confuse clients.
+            strchrsub(str.data.string.data, '\n', '\0');
+
+            linedata.items[i] = str;
+          }
+      }
+      args.items[3] = ARRAY_OBJ(linedata);
+      if (!channel_send_event(channelid, "LiveUpdate", args)) {
+        // We can't unregister the channel while we're iterating over the
+        // liveupdate_channels array, so we remember its ID to unregister it at
+        // the end.
+        badchannelid = channelid;
+      }
+    }
+  }
+
+  // We can only ever remove one dead channel at a time. This is OK because the
+  // change notifications are so frequent that many dead channels will be
+  // cleared up quickly.
+  if (badchannelid != LIVEUPDATE_NONE) {
+    ELOG("Disabling live updates for dead channel %llu", badchannelid);
+    liveupdate_unregister(buf, badchannelid);
+  }
+}
