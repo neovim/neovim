@@ -1913,7 +1913,8 @@ foldlevel({lnum})		Number	fold level at {lnum}
 foldtext()			String	line displayed for closed fold
 foldtextresult({lnum})		String	text for closed fold at {lnum}
 foreground()			Number	bring the Vim window to the foreground
-function({name})		Funcref reference to function {name}
+function({name} [, {arglist}] [, {dict}])
+				Funcref reference to function {name}
 garbagecollect([{atexit}])	none	free memory, breaking cyclic references
 get({list}, {idx} [, {def}])	any	get item {idx} from {list} or {def}
 get({dict}, {key} [, {def}])	any	get item {key} from {dict} or {def}
@@ -3483,9 +3484,45 @@ foreground()	Move the Vim window to the foreground.	Useful when sent from
 		{only in the Win32 GUI and console version}
 
 
-function({name})					*function()* *E700*
+				       *function()* *E700* *E922* *E929*
+function({name} [, {arglist}] [, {dict}])
 		Return a |Funcref| variable that refers to function {name}.
 		{name} can be a user defined function or an internal function.
+
+		When {arglist} or {dict} is present this creates a partial.
+		That mans the argument list and/or the dictionary is stored in
+		the Funcref and will be used when the Funcref is called.
+		
+		The arguments are passed to the function in front of other
+		arguments.  Example: >
+			func Callback(arg1, arg2, name)
+			...
+			let Func = function('Callback', ['one', 'two'])
+			...
+			call Func('name')
+<		Invokes the function as with: >
+			call Callback('one', 'two', 'name')
+
+<		The Dictionary is only useful when calling a "dict" function.
+		In that case the {dict} is passed in as "self". Example: >
+			function Callback() dict
+			   echo "called for " . self.name
+			endfunction
+			...
+			let context = {"name": "example"}
+			let Func = function('Callback', context)
+			...
+			call Func()	" will echo: called for example
+
+<		The argument list and the Dictionary can be combined: >
+			function Callback(arg1, count) dict
+			...
+			let context = {"name": "example"}
+			let Func = function('Callback', ['one'], context)
+			...
+			call Func(500)
+<		Invokes the function as with: >
+			call context.Callback('one', 500)
 
 
 garbagecollect([{atexit}])				*garbagecollect()*

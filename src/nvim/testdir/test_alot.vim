@@ -14,6 +14,7 @@ source test_matchadd_conceal_utf8.vim
 source test_menu.vim
 source test_messages.vim
 source test_options.vim
+source test_partial.vim
 source test_popup.vim
 source test_regexp_utf8.vim
 source test_statusline.vim

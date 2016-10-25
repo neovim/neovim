@@ -103,7 +103,7 @@ return {
     foldtext={},
     foldtextresult={args=1},
     foreground={},
-    ['function']={args=1},
+    ['function']={args={1, 3}},
     garbagecollect={args={0, 1}},
     get={args={2, 3}},
     getbufline={args={2, 3}},

@@ -225,7 +225,7 @@ Object nvim_call_function(String fname, Array args, Error *err)
                     &rettv, (int) args.size, vim_args,
                     curwin->w_cursor.lnum, curwin->w_cursor.lnum, &dummy,
                     true,
-                    NULL);
+                    NULL, NULL);
   if (r == FAIL) {
     api_set_error(err, Exception, _("Error calling function."));
   }

@@ -360,6 +360,9 @@ void set_option_to(void *to, int type, String name, Object value, Error *err)
 #define TYPVAL_ENCODE_CONV_FUNC(fun) \
     TYPVAL_ENCODE_CONV_NIL()
 
+#define TYPVAL_ENCODE_CONV_PARTIAL(partial) \
+    TYPVAL_ENCODE_CONV_NIL()
+
 #define TYPVAL_ENCODE_CONV_EMPTY_LIST() \
     kv_push(edata->stack, ARRAY_OBJ(((Array) { .capacity = 0, .size = 0 })))
 
@@ -482,6 +485,7 @@ TYPVAL_ENCODE_DEFINE_CONV_FUNCTIONS(static, object, EncodedData *const, edata)
 #undef TYPVAL_ENCODE_CONV_NUMBER
 #undef TYPVAL_ENCODE_CONV_FLOAT
 #undef TYPVAL_ENCODE_CONV_FUNC
+#undef TYPVAL_ENCODE_CONV_PARTIAL
 #undef TYPVAL_ENCODE_CONV_EMPTY_LIST
 #undef TYPVAL_ENCODE_CONV_LIST_START
 #undef TYPVAL_ENCODE_CONV_EMPTY_DICT

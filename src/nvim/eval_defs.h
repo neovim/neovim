@@ -15,6 +15,7 @@ typedef double float_T;
 
 typedef struct listvar_S list_T;
 typedef struct dictvar_S dict_T;
+typedef struct partial_S partial_T;
 
 /// Special variable values
 typedef enum {
@@ -35,7 +36,8 @@ typedef enum {
   VAR_UNKNOWN = 0,  ///< Unknown (unspecified) value.
   VAR_NUMBER,       ///< Number, .v_number is used.
   VAR_STRING,       ///< String, .v_string is used.
-  VAR_FUNC,         ///< Function referene, .v_string is used for function name.
+  VAR_FUNC,         ///< Function reference, .v_string is used as function name.
+  VAR_PARTIAL,      ///< Partial, .v_partial is used.
   VAR_LIST,         ///< List, .v_list is used.
   VAR_DICT,         ///< Dictionary, .v_dict is used.
   VAR_FLOAT,        ///< Floating-point value, .v_float is used.
@@ -54,6 +56,7 @@ typedef struct {
     char_u *v_string;  ///< String, for VAR_STRING and VAR_FUNC, can be NULL.
     list_T *v_list;  ///< List for VAR_LIST, can be NULL.
     dict_T *v_dict;  ///< Dictionary for VAR_DICT, can be NULL.
+    partial_T *v_partial;  ///< Closure: function with args.
   }           vval;  ///< Actual value.
 } typval_T;
 
@@ -142,6 +145,14 @@ struct dictvar_S {
   dict_T *dv_used_next;   ///< Next dictionary in used dictionaries list.
   dict_T *dv_used_prev;   ///< Previous dictionary in used dictionaries list.
   QUEUE watchers;         ///< Dictionary key watchers set by user code.
+};
+
+struct partial_S {
+  int pt_refcount;        ///< Reference count.
+  char_u *pt_name;        ///< Function name.
+  int pt_argc;            ///< Number of arguments.
+  typval_T *pt_argv;      ///< Arguments in allocated array.
+  dict_T *pt_dict;        ///< Dict for "self".
 };
 
 // structure used for explicit stack while garbage collecting hash tables
