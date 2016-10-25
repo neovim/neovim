@@ -137,6 +137,7 @@ set(CONV_SOURCES
   message.c
   regexp.c
   screen.c
+  liveupdate.c
   search.c
   spell.c
   spellfile.c
