@@ -71,3 +71,56 @@ bool liveupdate_register(buf_T *buf, uint64_t channel_id) {
   channel_send_event(channel_id, "LiveUpdateStart", args);
   return true;
 }
+
+void liveupdate_send_end(buf_T *buf, uint64_t channelid) {
+    Array args = ARRAY_DICT_INIT;
+    args.size = 1;
+    args.items = xcalloc(sizeof(Object), args.size);
+    args.items[0] = INTEGER_OBJ(buf->handle);
+    channel_send_event(channelid, "LiveUpdateEnd", args);
+}
+
+void liveupdate_unregister(buf_T *buf, uint64_t channelid) {
+  if (buf->liveupdate_channels == NULL) {
+    return;
+  }
+
+  // does the channelid appear in the liveupdate_channels array?
+  int found_active = 0;
+  int active_size = 0;
+  while (buf->liveupdate_channels[active_size] != LIVEUPDATE_NONE) {
+    if (buf->liveupdate_channels[active_size] == channelid) {
+      found_active++;
+    }
+    active_size += 1;
+  }
+
+  if (found_active) {
+    // make a new copy of the active array without the channelid in it
+    uint64_t *newlist = xmalloc((1 + active_size - found_active)
+        * sizeof channelid);
+    int i = 0;
+    int j = 0;
+    for (; i < active_size; i++) {
+      if (buf->liveupdate_channels[i] != channelid) {
+        newlist[j] = buf->liveupdate_channels[i];
+        j++;
+      }
+    }
+    newlist[j] = LIVEUPDATE_NONE;
+    xfree(buf->liveupdate_channels);
+    buf->liveupdate_channels = newlist;
+
+    liveupdate_send_end(buf, channelid);
+  }
+}
+
+void liveupdate_unregister_all(buf_T *buf) {
+  if (buf->liveupdate_channels != NULL) {
+    for (int i = 0; buf->liveupdate_channels[i] != LIVEUPDATE_NONE; i++) {
+      liveupdate_send_end(buf, buf->liveupdate_channels[i]);
+    }
+    xfree(buf->liveupdate_channels);
+    buf->liveupdate_channels = NULL;
+  }
+}
