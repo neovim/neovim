@@ -73,6 +73,7 @@
 #include "nvim/os/os.h"
 #include "nvim/os/time.h"
 #include "nvim/os/input.h"
+#include "nvim/liveupdate.h"
 
 typedef enum {
   kBLSUnchanged = 0,
@@ -574,6 +575,9 @@ void close_buffer(win_T *win, buf_T *buf, int action, int abort_if_last)
   /* Change directories when the 'acd' option is set. */
   do_autochdir();
 
+  // disable live updates for the current buffer
+  liveupdate_unregister_all(buf);
+
   /*
    * Remove the buffer from the list.
    */
@@ -784,6 +788,8 @@ free_buffer_stuff (
   map_clear_int(buf, MAP_ALL_MODES, true, true);     // clear local abbrevs
   xfree(buf->b_start_fenc);
   buf->b_start_fenc = NULL;
+
+  liveupdate_unregister_all(buf);
 }
 
 /*

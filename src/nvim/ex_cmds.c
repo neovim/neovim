@@ -35,6 +35,7 @@
 #include "nvim/fold.h"
 #include "nvim/getchar.h"
 #include "nvim/indent.h"
+#include "nvim/liveupdate.h"
 #include "nvim/main.h"
 #include "nvim/mark.h"
 #include "nvim/mbyte.h"
@@ -2421,6 +2422,7 @@ int do_ecmd(
         goto theend;
       }
       u_unchanged(curbuf);
+      liveupdate_unregister_all(curbuf);
       buf_freeall(curbuf, BFA_KEEP_UNDO);
 
       // Tell readfile() not to clear or reload undo info.
