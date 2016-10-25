@@ -2570,7 +2570,11 @@ static void list_features(void)
         }
       } else {
         while (msg_col % width) {
+          int old_msg_col = msg_col;
           msg_putchar(' ');
+          if (old_msg_col == msg_col) {
+            break;  // XXX: Avoid infinite loop.
+          }
         }
       }
     } else {
