@@ -4528,6 +4528,14 @@ chk_modeline (
           e = s + 4;
         else
           e = s + 3;
+
+        if (isVersionNumberTooLong(e))
+        {
+            return FAIL;
+        }
+
+
+
         vers = getdigits_int(&e);
         if (*e == ':'
             && (s[0] != 'V'
@@ -4607,6 +4615,25 @@ chk_modeline (
   xfree(linecopy);
 
   return retval;
+}
+
+/*
+ * checks the modeline is not longer
+ * than the INT_MAX 
+ */
+static bool isVersionNumberTooLong(char_u* e)
+{
+  int digitsFound = 0;
+  char myBuffer[20];
+ 
+  snprintf(&myBuffer[0], 20, "%d",INT_MAX);
+  int longestVersionPossible = strlen(myBuffer);
+ 
+  for (digitsFound = 0;
+       ascii_isdigit(*e) && digitsFound < 20;
+       digitsFound++,e++);
+ 
+  return digitsFound >= longestVersionPossible;
 }
 
 /*
