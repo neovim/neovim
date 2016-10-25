@@ -26,6 +26,7 @@ function! health#check(plugin_names) abort
         \ : s:to_fn_names(a:plugin_names)
 
   tabnew
+  setlocal wrap breakindent
   setlocal filetype=markdown bufhidden=wipe
   call s:enhance_syntax()
 
@@ -35,7 +36,7 @@ function! health#check(plugin_names) abort
     redraw|echo 'Running healthchecks...'
     for c in healthchecks
       let output = ''
-      call append('$', split(printf("\n%s\n%s", c, repeat('=',80)), "\n"))
+      call append('$', split(printf("\n%s\n%s", c, repeat('=',72)), "\n"))
       try
         let output = "\n\n".execute('call '.c.'()')
       catch
