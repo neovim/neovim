@@ -19,6 +19,9 @@ func Test_partial_args()
   call assert_equal("foo/bar/xxx", Cb("xxx"))
   call assert_equal("foo/bar/yyy", call(Cb, ["yyy"]))
 
+  let Cb = function('MyFunc', [])
+  call assert_equal("a/b/c", Cb("a", "b", "c"))
+
   let Sort = function('MySort', [1])
   call assert_equal([1, 2, 3], sort([3, 1, 2], Sort))
   let Sort = function('MySort', [0])
@@ -34,10 +37,15 @@ func Test_partial_dict()
   let Cb = function('MyDictFunc', ["foo", "bar"], dict)
   call assert_equal("hello/foo/bar", Cb())
   call assert_fails('Cb("xxx")', 'E492:')
+
+  let Cb = function('MyDictFunc', [], dict)
+  call assert_equal("hello/ttt/xxx", Cb("ttt", "xxx"))
+  call assert_fails('Cb("yyy")', 'E492:')
+
   let Cb = function('MyDictFunc', ["foo"], dict)
   call assert_equal("hello/foo/xxx", Cb("xxx"))
   call assert_fails('Cb()', 'E492:')
   let Cb = function('MyDictFunc', dict)
   call assert_equal("hello/xxx/yyy", Cb("xxx", "yyy"))
-  call assert_fails('Cb()', 'E492:')
+  call assert_fails('Cb("fff")', 'E492:')
 endfunc
