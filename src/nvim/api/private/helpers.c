@@ -18,9 +18,9 @@
 #include "nvim/map.h"
 #include "nvim/option.h"
 #include "nvim/option_defs.h"
+#include "nvim/version.h"
 #include "nvim/eval/typval_encode.h"
 #include "nvim/lib/kvec.h"
-#include "auto/versiondef.h"
 
 /// Helper structure for vim_to_object
 typedef struct {
@@ -764,10 +764,10 @@ Dictionary api_metadata(void)
   static Dictionary metadata = ARRAY_DICT_INIT;
 
   if (!metadata.size) {
+    PUT(metadata, "version", DICTIONARY_OBJ(version_dict()));
     init_function_metadata(&metadata);
     init_error_type_metadata(&metadata);
     init_type_metadata(&metadata);
-    init_api_level_metadata(&metadata);
   }
 
   return copy_object(DICTIONARY_OBJ(metadata)).data.dictionary;
@@ -826,17 +826,6 @@ static void init_type_metadata(Dictionary *metadata)
   PUT(types, "Tabpage", DICTIONARY_OBJ(tabpage_metadata));
 
   PUT(*metadata, "types", DICTIONARY_OBJ(types));
-}
-static void init_api_level_metadata(Dictionary *metadata)
-{
-  Dictionary version = ARRAY_DICT_INIT;
-  PUT(version, "current", INTEGER_OBJ(NVIM_API_CURRENT));
-  PUT(version, "compatibility", INTEGER_OBJ(NVIM_API_COMPATIBILITY));
-#ifdef NVIM_API_PRERELEASE
-  PUT(version, "prerelease", BOOLEAN_OBJ(true));
-#endif
-
-  PUT(*metadata, "api_level", DICTIONARY_OBJ(version));
 }
 
 /// Creates a deep clone of an object

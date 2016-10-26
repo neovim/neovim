@@ -460,7 +460,7 @@ describe('msgpackparse() function', function()
     eval(cmd)
     eval(cmd)  -- do it again (try to force segfault)
     local api_info = eval(cmd)  -- do it again
-    eq({'api_level', 'error_types', 'functions', 'types'}, api_info)
+    eq({'error_types', 'functions', 'types', 'version'}, api_info)
   end)
 
   it('fails when called with no arguments', function()
