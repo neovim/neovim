@@ -67,3 +67,17 @@ func Test_partial_implicit()
 
   call assert_fails('call function(dict.MyFunc, ["bbb"], dict)', 'E924:')
 endfunc
+
+fun InnerCall(funcref)
+  return a:funcref
+endfu
+
+fun OuterCall()
+  let opt = { 'func' : function('sin') }
+  call InnerCall(opt.func)
+endfu
+
+func Test_function_in_dict()
+  call OuterCall()
+endfunc
+
