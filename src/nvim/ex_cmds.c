@@ -2250,28 +2250,28 @@ do_ecmd (
         xfree(new_name);
         goto theend;
       }
-      if (buf == curbuf)                /* already in new buffer */
-        auto_buf = TRUE;
-      else {
-        if (curbuf == old_curbuf)
+      if (buf == curbuf) {  // already in new buffer
+        auto_buf = true;
+      } else {
+        win_T *the_curwin = curwin;
+
+        // Set the w_closing flag to avoid that autocommands close the window.
+        the_curwin->w_closing = true;
+        if (curbuf == old_curbuf) {
           buf_copy_options(buf, BCO_ENTER);
-
-        /* close the link to the current buffer */
-        u_sync(FALSE);
-        close_buffer(oldwin, curbuf,
-            (flags & ECMD_HIDE) || curbuf->terminal ? 0 : DOBUF_UNLOAD, FALSE);
-
-        /* Autocommands may open a new window and leave oldwin open
-         * which leads to crashes since the above call sets
-         * oldwin->w_buffer to NULL. */
-        if (curwin != oldwin && oldwin != aucmd_win && win_valid(oldwin)) {
-          assert(oldwin);
-          if (oldwin->w_buffer == NULL) {
-            win_close(oldwin, FALSE);
-          }
         }
 
-        if (aborting()) {           /* autocmds may abort script processing */
+        // Close the link to the current buffer. This will set
+        // curwin->w_buffer to NULL.
+        u_sync(false);
+        close_buffer(oldwin, curbuf,
+                     (flags & ECMD_HIDE) || curbuf->terminal ? 0 : DOBUF_UNLOAD,
+                     false);
+
+        the_curwin->w_closing = false;
+
+        // autocmds may abort script processing
+        if (aborting() && curwin->w_buffer != NULL) {
           xfree(new_name);
           goto theend;
         }

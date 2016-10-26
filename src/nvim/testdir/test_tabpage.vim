@@ -186,4 +186,62 @@ function Test_tabpage_with_autocmd()
   bw!
 endfunction
 
+function Test_tabpage_with_tab_modifier()
+  for n in range(4)
+    tabedit
+  endfor
+
+  function s:check_tab(pre_nr, cmd, post_nr)
+    exec 'tabnext ' . a:pre_nr
+    exec a:cmd
+    call assert_equal(a:post_nr, tabpagenr())
+    call assert_equal('help', &filetype)
+    helpclose
+  endfunc
+
+  call s:check_tab(1, 'tab help', 2)
+  call s:check_tab(1, '3tab help', 4)
+  call s:check_tab(1, '.tab help', 2)
+  call s:check_tab(1, '.+1tab help', 3)
+  call s:check_tab(1, '0tab help', 1)
+  call s:check_tab(2, '+tab help', 4)
+  call s:check_tab(2, '+2tab help', 5)
+  call s:check_tab(4, '-tab help', 4)
+  call s:check_tab(4, '-2tab help', 3)
+  call s:check_tab(3, '$tab help', 6)
+  call assert_fails('99tab help', 'E16:')
+  call assert_fails('+99tab help', 'E16:')
+  call assert_fails('-99tab help', 'E16:')
+
+  delfunction s:check_tab
+  tabonly!
+  bw!
+endfunction
+
+func Test_tabnext_on_buf_unload1()
+  " This once caused a crash
+  new
+  tabedit
+  tabfirst
+  au BufUnload <buffer> tabnext
+  q
+
+  while tabpagenr('$') > 1
+    bwipe!
+  endwhile
+endfunc
+
+func Test_tabnext_on_buf_unload2()
+  " This once caused a crash
+  tabedit
+  autocmd BufUnload <buffer> tabnext
+  file x
+  edit y
+
+  while tabpagenr('$') > 1
+    bwipe!
+  endwhile
+endfunc
+
+
 " vim: shiftwidth=2 sts=2 expandtab

@@ -1302,8 +1302,7 @@ static char_u * do_one_cmd(char_u **cmdlinep,
      * 2. Handle command modifiers.
      */
     p = ea.cmd;
-    if (ascii_isdigit(*ea.cmd))
-      p = skipwhite(skipdigits(ea.cmd));
+    p = skip_range(ea.cmd, NULL);
     switch (*p) {
     /* When adding an entry, also modify cmd_exists(). */
     case 'a':   if (!checkforcmd(&ea.cmd, "aboveleft", 3))
@@ -1406,12 +1405,18 @@ static char_u * do_one_cmd(char_u **cmdlinep,
       continue;
 
     case 't':   if (checkforcmd(&p, "tab", 3)) {
-        if (ascii_isdigit(*ea.cmd))
-          cmdmod.tab = atoi((char *)ea.cmd) + 1;
-        else
-          cmdmod.tab = tabpage_index(curtab) + 1;
-        ea.cmd = p;
-        continue;
+      long tabnr = get_address(&ea, &ea.cmd, ADDR_TABS, ea.skip, false);
+      if (tabnr == MAXLNUM) {
+        cmdmod.tab = tabpage_index(curtab) + 1;
+      } else {
+        if (tabnr < 0 || tabnr > LAST_TAB_NR) {
+          errormsg = (char_u *)_(e_invrange);
+          goto doend;
+        }
+        cmdmod.tab = tabnr + 1;
+      }
+      ea.cmd = p;
+      continue;
     }
       if (!checkforcmd(&ea.cmd, "topleft", 2))
         break;
@@ -1766,11 +1771,8 @@ static char_u * do_one_cmd(char_u **cmdlinep,
 
     if (text_locked() && !(ea.argt & CMDWIN)
         && !IS_USER_CMDIDX(ea.cmdidx)) {
-      /* Command not allowed when editing the command line. */
-      if (cmdwin_type != 0)
-        errormsg = (char_u *)_(e_cmdwin);
-      else
-        errormsg = (char_u *)_(e_secure);
+      // Command not allowed when editing the command line.
+      errormsg = get_text_locked_msg();
       goto doend;
     }
     /* Disallow editing another buffer when "curbuf_lock" is set.

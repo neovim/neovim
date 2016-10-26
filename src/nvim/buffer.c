@@ -323,13 +323,14 @@ void close_buffer(win_T *win, buf_T *buf, int action, int abort_if_last)
     wipe_buf = true;
   }
 
-  if (win_valid(win)) {
-    /* Set b_last_cursor when closing the last window for the buffer.
-     * Remember the last cursor position and window options of the buffer.
-     * This used to be only for the current window, but then options like
-     * 'foldmethod' may be lost with a ":only" command. */
-    if (buf->b_nwindows == 1)
+  if (win_valid_any_tab(win)) {
+    // Set b_last_cursor when closing the last window for the buffer.
+    // Remember the last cursor position and window options of the buffer.
+    // This used to be only for the current window, but then options like
+    // 'foldmethod' may be lost with a ":only" command.
+    if (buf->b_nwindows == 1) {
       set_last_cursor(win);
+    }
     buflist_setfpos(buf, win,
         win->w_cursor.lnum == 1 ? 0 : win->w_cursor.lnum,
         win->w_cursor.col, TRUE);
@@ -402,7 +403,7 @@ void close_buffer(win_T *win, buf_T *buf, int action, int abort_if_last)
   buf->b_nwindows = nwindows;
 
   buf_freeall(buf, (del_buf ? BFA_DEL : 0) + (wipe_buf ? BFA_WIPE : 0));
-  if (win_valid(win) && win->w_buffer == buf) {
+  if (win_valid_any_tab(win) && win->w_buffer == buf) {
     win->w_buffer = NULL;  // make sure we don't use the buffer now
   }
 
@@ -478,17 +479,20 @@ void buf_clear_file(buf_T *buf)
   buf->b_ml.ml_flags = ML_EMPTY;                /* empty buffer */
 }
 
-/*
- * buf_freeall() - free all things allocated for a buffer that are related to
- * the file.  flags:
- * BFA_DEL	  buffer is going to be deleted
- * BFA_WIPE	  buffer is going to be wiped out
- * BFA_KEEP_UNDO  do not free undo information
- */
+/// buf_freeall() - free all things allocated for a buffer that are related to
+/// the file.  Careful: get here with "curwin" NULL when exiting.
+///
+/// @param flags BFA_DEL buffer is going to be deleted
+///              BFA_WIPE buffer is going to be wiped out
+///              BFA_KEEP_UNDO  do not free undo information
 void buf_freeall(buf_T *buf, int flags)
 {
   bool is_curbuf = (buf == curbuf);
+  int is_curwin = (curwin != NULL && curwin->w_buffer == buf);
+  win_T *the_curwin = curwin;
+  tabpage_T *the_curtab = curtab;
 
+  // Make sure the buffer isn't closed by autocommands.
   buf->b_closing = true;
   apply_autocmds(EVENT_BUFUNLOAD, buf->b_fname, buf->b_fname, FALSE, buf);
   if (!buf_valid(buf))              /* autocommands may delete the buffer */
@@ -505,8 +509,18 @@ void buf_freeall(buf_T *buf, int flags)
       return;
   }
   buf->b_closing = false;
-  if (aborting())           /* autocmds may abort script processing */
+
+  // If the buffer was in curwin and the window has changed, go back to that
+  // window, if it still exists.  This avoids that ":edit x" triggering a
+  // "tabnext" BufUnload autocmd leaves a window behind without a buffer.
+  if (is_curwin && curwin != the_curwin &&  win_valid_any_tab(the_curwin)) {
+    block_autocmds();
+    goto_tabpage_win(the_curtab, the_curwin);
+    unblock_autocmds();
+  }
+  if (aborting()) {  // autocmds may abort script processing
     return;
+  }
 
   /*
    * It's possible that autocommands change curbuf to the one being deleted.

@@ -83,14 +83,21 @@ In the GUI tab pages line you can use the right mouse button to open menu.
 		Execute {cmd} and when it opens a new window open a new tab
 		page instead.  Doesn't work for |:diffsplit|, |:diffpatch|,
 		|:execute| and |:normal|.
-		When [count] is omitted the tab page appears after the current
-		one.
-		When [count] is specified the new tab page comes after tab
-		page [count].  Use ":0tab cmd" to get the new tab page as the
-		first one.
+		If [count] is given the new tab page appears after the tab
+		page [count] otherwise the new tab page will appear after the
+		current one.
 		Examples: >
-			:tab split	" opens current buffer in new tab page
-			:tab help gt	" opens tab page with help for "gt"
+		    :tab split	    " opens current buffer in new tab page
+		    :tab help gt    " opens tab page with help for "gt"
+		    :.tab help gt   " as above
+		    :+tab help	    " opens tab page with help after the next
+				    " tab page
+		    :-tab help	    " opens tab page with help before the
+				    " current one
+		    :0tab help	    " opens tab page with help before the
+				    " first one
+		    :$tab help	    " opens tab page with help after the last
+				    " one
 
 CTRL-W gf	Open a new tab page and edit the file name under the cursor.
 		See |CTRL-W_gf|.
@@ -140,7 +147,7 @@ something else.
 
 :{count}tabo[nly][!]
 		Close all tab pages except the {count}th one. >
-		    :.tabonly " one
+		    :.tabonly " as above
 		    :-tabonly " close all tab pages except the previous one
 		    :+tabonly " close all tab pages except the next one
 		    :1tabonly " close all tab pages except the first one
