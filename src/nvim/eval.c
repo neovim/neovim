@@ -170,6 +170,8 @@ static char *e_letwrong = N_("E734: Wrong variable type for %s=");
 static char *e_nofunc = N_("E130: Unknown function: %s");
 static char *e_illvar = N_("E461: Illegal variable name: %s");
 static char *e_float_as_string = N_("E806: using Float as a String");
+static char *e_dict_both = N_("E924: can't have both a \"self\" dict and "
+                              "a partial: %s");
 
 static char_u * const empty_string = (char_u *)"";
 static char_u * const namespace_char = (char_u *)"abglstvw";
@@ -7123,8 +7125,7 @@ call_func(
           name);
       break;
     case ERROR_BOTH:
-      emsg_funcname(N_("E924: can't have both a \"self\" dict and "
-                       "a partial: %s"), name);
+      emsg_funcname(N_(e_dict_both, name);
       break;
     }
   }
@@ -9426,11 +9427,26 @@ static void f_function(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   char_u      *s;
   char_u      *name;
+  bool use_string = false;
+
+  if (argvars[0].v_type == VAR_FUNC) {
+    // function(MyFunc, [arg], dict)
+    s = argvars[0].vval.v_string;
+  } else if (argvars[0].v_type == VAR_PARTIAL
+             && argvars[0].vval.v_partial != NULL) {
+    // function(dict.MyFunc, [arg])
+    s = argvars[0].vval.v_partial->pt_name;
+  } else {
+    // function('MyFunc', [arg], dict)
+    s = get_tv_string(&argvars[0]);
+    use_string = true;
+  }
 
   s = get_tv_string(&argvars[0]);
-  if (s == NULL || *s == NUL || ascii_isdigit(*s)) {
+  if (s == NULL || *s == NUL || (use_string && ascii_isdigit(*s))) {
     EMSG2(_(e_invarg2), s);
-  } else if (vim_strchr(s, AUTOLOAD_CHAR) == NULL && !function_exists(s)) {
+  } else if (use_string && vim_strchr(s, AUTOLOAD_CHAR) == NULL
+             && !function_exists(s)) {
     // Don't check an autoload name for existence here.
     EMSG2(_("E700: Unknown function: %s"), s);
   } else {
@@ -9475,6 +9491,11 @@ static void f_function(typval_T *argvars, typval_T *rettv, FunPtr fptr)
           xfree(name);
           return;
         }
+        if (argvars[0].v_type == VAR_PARTIAL) {
+          EMSG2(_(e_dict_both), name);
+          xfree(name);
+          return;
+        }
         if (argvars[dict_idx].vval.v_dict == NULL) {
           dict_idx = 0;
         }
@@ -9513,7 +9534,10 @@ static void f_function(typval_T *argvars, typval_T *rettv, FunPtr fptr)
           }
         }
 
-        if (dict_idx > 0) {
+        if (argvars[0].v_type == VAR_PARTIAL) {
+           pt->pt_dict = argvars[0].vval.v_partial->pt_dict;
+           (pt->pt_dict->dv_refcount)++;
+        } else if (dict_idx > 0) {
           pt->pt_dict = argvars[dict_idx].vval.v_dict;
           (pt->pt_dict->dv_refcount)++;
         }
@@ -18268,7 +18292,7 @@ handle_subscript (
         rettv->v_type = VAR_UNKNOWN;
 
         // Invoke the function.  Recursive!
-        if (rettv->v_type == VAR_PARTIAL) {
+        if (functv.v_type == VAR_PARTIAL) {
           pt = functv.vval.v_partial;
           s = pt->pt_name;
         } else {
@@ -18310,6 +18334,21 @@ handle_subscript (
       }
     }
   }
+
+  if (rettv->v_type == VAR_FUNC && selfdict != NULL) {
+    partial_T *pt = (partial_T *)alloc_clear(sizeof(partial_T));
+
+    // Turn "dict.Func" into a partial for "Func" with "dict".
+    if (pt != NULL) {
+      pt->pt_dict = selfdict;
+      selfdict = NULL;
+      pt->pt_name = rettv->vval.v_string;
+      func_ref(pt->pt_name);
+      rettv->v_type = VAR_PARTIAL;
+      rettv->vval.v_partial = pt;
+    }
+  }
+
   dict_unref(selfdict);
   return ret;
 }

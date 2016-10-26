@@ -49,3 +49,21 @@ func Test_partial_dict()
   call assert_equal("hello/xxx/yyy", Cb("xxx", "yyy"))
   call assert_fails('Cb("fff")', 'E492:')
 endfunc
+
+func Test_partial_implicit()
+  let dict = {'name': 'foo'}
+  func dict.MyFunc(arg) dict
+    return self.name . '/' . a:arg
+  endfunc
+
+  call assert_equal('foo/bar',  dict.MyFunc('bar'))
+
+  call assert_fails('let func = dict.MyFunc', 'E704:')
+  let Func = dict.MyFunc
+  call assert_equal('foo/aaa', Func('aaa'))
+
+  let Func = function(dict.MyFunc, ['bbb'])
+  call assert_equal('foo/bbb', Func())
+
+  call assert_fails('call function(dict.MyFunc, ["bbb"], dict)', 'E924:')
+endfunc
