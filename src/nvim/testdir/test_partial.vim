@@ -16,6 +16,8 @@ endfunc
 
 func Test_partial_args()
   let Cb = function('MyFunc', ["foo", "bar"])
+
+  call Cb("zzz")
   call assert_equal("foo/bar/xxx", Cb("xxx"))
   call assert_equal("foo/bar/yyy", call(Cb, ["yyy"]))
 
@@ -48,6 +50,9 @@ func Test_partial_dict()
   let Cb = function('MyDictFunc', dict)
   call assert_equal("hello/xxx/yyy", Cb("xxx", "yyy"))
   call assert_fails('Cb("fff")', 'E492:')
+
+  let dict = {"tr": function('tr', ['hello', 'h', 'H'])}
+  call assert_equal("Hello", dict.tr())
 endfunc
 
 func Test_partial_implicit()
