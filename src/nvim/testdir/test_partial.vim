@@ -9,9 +9,9 @@ func MySort(up, one, two)
     return 0
   endif
   if a:up
-    return a:one > a:two
+    return a:one > a:two ? 1 : -1
   endif
-  return a:one < a:two
+  return a:one < a:two ? 1 : -1
 endfunc
 
 func Test_partial_args()
