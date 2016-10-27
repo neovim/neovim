@@ -274,17 +274,13 @@ describe('list and dictionary types', function()
       let dict.data = [1,2,3]
       call dict.func("len: ")
       let x = dict.func("again: ")
-      try
-	      let Fn = dict.func
-	      call Fn('xxx')
-      catch
-	      $put =v:exception[:15]
-      endtry]])
+      let Fn = dict.func
+      call Fn('xxx')]])
     expect([[
       
       len: 3
       again: 3
-      Vim(call):E725: ]])
+      xxx3]])
   end)
 
   it('Function in script-local List or Dict', function()
