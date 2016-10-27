@@ -9455,6 +9455,7 @@ static void f_function(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   char_u      *s;
   char_u      *name;
   bool use_string = false;
+  partial_T *arg_pt = NULL;
 
   if (argvars[0].v_type == VAR_FUNC) {
     // function(MyFunc, [arg], dict)
@@ -9462,7 +9463,8 @@ static void f_function(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   } else if (argvars[0].v_type == VAR_PARTIAL
              && argvars[0].vval.v_partial != NULL) {
     // function(dict.MyFunc, [arg])
-    s = argvars[0].vval.v_partial->pt_name;
+    arg_pt = argvars[0].vval.v_partial;
+    s = arg_pt->pt_name;
   } else {
     // function('MyFunc', [arg], dict)
     s = get_tv_string(&argvars[0]);
@@ -9535,23 +9537,37 @@ static void f_function(typval_T *argvars, typval_T *rettv, FunPtr fptr)
         }
       }
     }
-    if (dict_idx > 0 || arg_idx > 0) {
+    if (dict_idx > 0 || arg_idx > 0 || arg_pt != NULL) {
       partial_T *pt = (partial_T *)xcalloc(1, sizeof(partial_T));
 
+      // result is a VAR_PARTIAL
       if (pt != NULL) {
-        if (arg_idx > 0) {
+        if (arg_idx > 0 || (arg_pt != NULL && arg_pt->pt_argc > 0)) {
           listitem_T *li;
           int i = 0;
+          int arg_len = 0;
+          int lv_len = 0;
 
-          pt->pt_argv = (typval_T *)xmalloc(sizeof(typval_T) * list->lv_len);
+          if (arg_pt != NULL) {
+            arg_len = arg_pt->pt_argc;
+          }
+          if (list != NULL) {
+            lv_len = list->lv_len;
+          }
+          pt->pt_argc = arg_len + lv_len;
+          pt->pt_argv = (typval_T *)xmalloc(sizeof(typval_T) * pt->pt_argc);
           if (pt->pt_argv == NULL) {
             xfree(pt);
             xfree(name);
             return;
           } else {
-            pt->pt_argc = list->lv_len;
-            for (li = list->lv_first; li != NULL; li = li->li_next) {
-              copy_tv(&li->li_tv, &pt->pt_argv[i++]);
+            for (i = 0; i < arg_len; i++) {
+              copy_tv(&arg_pt->pt_argv[i], &pt->pt_argv[i]);
+            }
+            if (lv_len > 0) {
+              for (li = list->lv_first; li != NULL; li = li->li_next) {
+                copy_tv(&li->li_tv, &pt->pt_argv[i++]);
+              }
             }
           }
         }
@@ -9561,9 +9577,11 @@ static void f_function(typval_T *argvars, typval_T *rettv, FunPtr fptr)
         if (dict_idx > 0) {
            pt->pt_dict = argvars[dict_idx].vval.v_dict;
            (pt->pt_dict->dv_refcount)++;
-        } else if (argvars[0].v_type == VAR_PARTIAL) {
-          pt->pt_dict = argvars[0].vval.v_partial->pt_dict;
-          (pt->pt_dict->dv_refcount)++;
+        } else if (arg_pt != NULL) {
+          pt->pt_dict = arg_pt->pt_dict;
+          if (pt->pt_dict != NULL) {
+            (pt->pt_dict->dv_refcount)++;
+          }
         }
 
         pt->pt_refcount = 1;
@@ -9573,6 +9591,7 @@ static void f_function(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       rettv->v_type = VAR_PARTIAL;
       rettv->vval.v_partial = pt;
     } else {
+      // result is a VAR_FUNC
       rettv->v_type = VAR_FUNC;
       rettv->vval.v_string = name;
       func_ref(name);
