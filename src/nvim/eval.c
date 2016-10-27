@@ -217,9 +217,11 @@ static int echo_attr = 0;   /* attributes used for ":echo" */
 /* The names of packages that once were loaded are remembered. */
 static garray_T ga_loaded = {0, 0, sizeof(char_u *), 4, NULL};
 
-/* list heads for garbage collection */
-static dict_T           *first_dict = NULL;     /* list of all dicts */
-static list_T           *first_list = NULL;     /* list of all lists */
+// List heads for garbage collection. Although there can be a reference loop
+// from partial to dict to partial, we don't need to keep track of the partial,
+// since it will get freed when the dict is unused and gets freed.
+static dict_T           *first_dict = NULL;     // list of all dicts
+static list_T           *first_list = NULL;     // list of all lists
 
 #define FUNCARG(fp, j)  ((char_u **)(fp->uf_args.ga_data))[j]
 #define FUNCLINE(fp, j) ((char_u **)(fp->uf_lines.ga_data))[j]
@@ -6024,10 +6026,19 @@ bool set_ref_in_item(typval_T *tv, int copyID, ht_stack_T **ht_stack,
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
   bool abort = false;
+  dict_T *dd;
 
   switch (tv->v_type) {
+    case VAR_PARTIAL:
     case VAR_DICT: {
-      dict_T *dd = tv->vval.v_dict;
+      if (tv->v_type == VAR_DICT) {
+        dd = tv->vval.v_dict;
+      } else if (tv->vval.v_partial != NULL) {
+        dd = tv->vval.v_partial->pt_dict;
+      } else {
+        dd = NULL;
+      }
+
       if (dd != NULL && dd->dv_copyID != copyID) {
         // Didn't see this dict yet.
         dd->dv_copyID = copyID;
@@ -6069,7 +6080,6 @@ bool set_ref_in_item(typval_T *tv, int copyID, ht_stack_T **ht_stack,
     }
 
     case VAR_FUNC:
-    case VAR_PARTIAL:
     case VAR_UNKNOWN:
     case VAR_SPECIAL:
     case VAR_FLOAT:
@@ -6125,6 +6135,31 @@ static inline bool set_ref_dict(dict_T *dict, int copyID)
     return set_ref_in_item(&tv, copyID, NULL, NULL);
   }
   return false;
+}
+
+static void partial_free(partial_T *pt, bool free_dict)
+{
+  int i;
+
+  for (i = 0; i < pt->pt_argc; i++) {
+    clear_tv(&pt->pt_argv[i]);
+  }
+  xfree(pt->pt_argv);
+  if (free_dict) {
+    dict_unref(pt->pt_dict);
+  }
+  func_unref(pt->pt_name);
+  xfree(pt->pt_name);
+  xfree(pt);
+}
+
+/// Unreference a closure: decrement the reference count and free it when it
+/// becomes zero.
+void partial_unref(partial_T *pt)
+{
+  if (pt != NULL && --pt->pt_refcount <= 0) {
+    partial_free(pt, true);
+  }
 }
 
 /*
@@ -6229,8 +6264,18 @@ dict_free (
       di = HI2DI(hi);
       hash_remove(&d->dv_hashtab, hi);
       if (recurse || (di->di_tv.v_type != VAR_LIST
-                      && di->di_tv.v_type != VAR_DICT))
-        clear_tv(&di->di_tv);
+                      && di->di_tv.v_type != VAR_DICT)) {
+        if (!recurse && di->di_tv.v_type == VAR_PARTIAL) {
+          partial_T *pt = di->di_tv.vval.v_partial;
+
+          // We unref the partial but not the dict it refers to.
+          if (pt != NULL && --pt->pt_refcount == 0) {
+            partial_free(pt, false);
+          }
+        } else {
+          clear_tv(&di->di_tv);
+        }
+      }
       xfree(di);
       --todo;
     }
@@ -9579,29 +9624,6 @@ static void f_function(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       rettv->vval.v_string = name;
       func_ref(name);
     }
-  }
-}
-
-static void partial_free(partial_T *pt)
-{
-  int i;
-
-  for (i = 0; i < pt->pt_argc; i++) {
-    clear_tv(&pt->pt_argv[i]);
-  }
-  xfree(pt->pt_argv);
-  dict_unref(pt->pt_dict);
-  func_unref(pt->pt_name);
-  xfree(pt->pt_name);
-  xfree(pt);
-}
-
-// Unreference a closure: decrement the reference count and free it when it
-// becomes zero.
-void partial_unref(partial_T *pt)
-{
-  if (pt != NULL && --pt->pt_refcount <= 0) {
-    partial_free(pt);
   }
 }
 
@@ -18505,7 +18527,6 @@ void free_tv(typval_T *varp)
 
 #define TYPVAL_ENCODE_CONV_PARTIAL(partial) \
     do { \
-      partial_unref(partial); \
       tv->v_lock = VAR_UNLOCKED; \
     } while (0)
 
