@@ -69,8 +69,6 @@ func Test_partial_implicit()
 
   let Func = function(dict.MyFunc, ['bbb'])
   call assert_equal('foo/bbb', Func())
-
-  call assert_fails('call function(dict.MyFunc, ["bbb"], dict)', 'E924:')
 endfunc
 
 fun InnerCall(funcref)
@@ -86,3 +84,24 @@ func Test_function_in_dict()
   call OuterCall()
 endfunc
 
+function! s:cache_clear() dict
+  return self.name
+endfunction
+
+func Test_script_function_in_dict()
+  let s:obj = {'name': 'foo'}
+  let s:obj2 = {'name': 'bar'}
+
+  let s:obj['clear'] = function('s:cache_clear')
+
+  call assert_equal('foo', s:obj.clear())
+  let F = s:obj.clear
+  call assert_equal('foo', F())
+  call assert_equal('foo', call(s:obj.clear, [], s:obj))
+  call assert_equal('bar', call(s:obj.clear, [], s:obj2))
+
+  let s:obj2['clear'] = function('s:cache_clear')
+  call assert_equal('bar', s:obj2.clear())
+  let B = s:obj2.clear
+  call assert_equal('bar', B())
+endfunc

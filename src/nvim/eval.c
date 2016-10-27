@@ -170,8 +170,6 @@ static char *e_letwrong = N_("E734: Wrong variable type for %s=");
 static char *e_nofunc = N_("E130: Unknown function: %s");
 static char *e_illvar = N_("E461: Illegal variable name: %s");
 static char *e_float_as_string = N_("E806: using Float as a String");
-static char *e_dict_both = N_("E924: can't have both a \"self\" dict and "
-                              "a partial: %s");
 
 static char_u * const empty_string = (char_u *)"";
 static char_u * const namespace_char = (char_u *)"abglstvw";
@@ -6933,12 +6931,65 @@ get_func_tv (
   return ret;
 }
 
+#define ERROR_UNKNOWN   0
+#define ERROR_TOOMANY   1
+#define ERROR_TOOFEW    2
+#define ERROR_SCRIPT    3
+#define ERROR_DICT      4
+#define ERROR_NONE      5
+#define ERROR_OTHER     6
+#define ERROR_BOTH      7
+#define FLEN_FIXED 40
 
-/*
- * Call a function with its resolved parameters
- * Return FAIL when the function can't be called,  OK otherwise.
- * Also returns OK when an error was encountered while executing the function.
- */
+/// In a script change <SID>name() and s:name() to K_SNR 123_name().
+/// Change <SNR>123_name() to K_SNR 123_name().
+/// Use "fname_buf[FLEN_FIXED + 1]" when it fits, otherwise allocate memory
+/// (slow).
+static char_u *
+fname_trans_sid(char_u *name, char_u *fname_buf, char_u **tofree, int *error) {
+  int llen;
+  char_u *fname;
+  int i;
+
+  llen = eval_fname_script(name);
+  if (llen > 0) {
+    fname_buf[0] = K_SPECIAL;
+    fname_buf[1] = KS_EXTRA;
+    fname_buf[2] = (int)KE_SNR;
+    i = 3;
+    if (eval_fname_sid(name)) {  // "<SID>" or "s:"
+      if (current_SID <= 0) {
+        *error = ERROR_SCRIPT;
+      } else {
+        vim_snprintf((char *)fname_buf + 3, ARRAY_SIZE(fname_buf) - 3,
+                     "%" PRId64 "_", (int64_t)current_SID);
+        i = (int)STRLEN(fname_buf);
+      }
+    }
+
+    if (i + STRLEN(name + llen) < FLEN_FIXED) {
+      STRCPY(fname_buf + i, name + llen);
+      fname = fname_buf;
+    } else {
+      fname = xmalloc((unsigned)(i + STRLEN(name + llen) + 1));
+      if (fname == NULL) {
+        *error = ERROR_OTHER;
+      } else {
+        *tofree = fname;
+        memmove(fname, fname_buf, (size_t)i);
+        STRCPY(fname + i, name + llen);
+      }
+    }
+  } else {
+    fname = name;
+  }
+
+  return fname;
+}
+
+/// Call a function with its resolved parameters
+/// Return FAIL when the function can't be called,  OK otherwise.
+/// Also returns OK when an error was encountered while executing the function.
 int
 call_func(
     char_u *funcname,               // name of the function
@@ -6956,21 +7007,12 @@ call_func(
 )
 {
   int ret = FAIL;
-#define ERROR_UNKNOWN   0
-#define ERROR_TOOMANY   1
-#define ERROR_TOOFEW    2
-#define ERROR_SCRIPT    3
-#define ERROR_DICT      4
-#define ERROR_NONE      5
-#define ERROR_OTHER     6
-#define ERROR_BOTH      7
   int error = ERROR_NONE;
-  int llen;
   ufunc_T     *fp;
-#define FLEN_FIXED 40
   char_u fname_buf[FLEN_FIXED + 1];
-  char_u      *fname;
-  char_u      *name;
+  char_u *tofree = NULL;
+  char_u *fname;
+  char_u *name;
   int argcount = argcount_in;
   typval_T *argvars = argvars_in;
   dict_T *selfdict = selfdict_in;
@@ -6980,44 +7022,20 @@ call_func(
   // Make a copy of the name, if it comes from a funcref variable it could
   // be changed or deleted in the called function.
   name = vim_strnsave(funcname, len);
+  if (name == NULL) {
+    return ret;
+  }
 
-  /*
-   * In a script change <SID>name() and s:name() to K_SNR 123_name().
-   * Change <SNR>123_name() to K_SNR 123_name().
-   * Use fname_buf[] when it fits, otherwise allocate memory (slow).
-   */
-  llen = eval_fname_script(name);
-  if (llen > 0) {
-    fname_buf[0] = K_SPECIAL;
-    fname_buf[1] = KS_EXTRA;
-    fname_buf[2] = (int)KE_SNR;
-    int i = 3;
-    if (eval_fname_sid(name)) {  // "<SID>" or "s:"
-      if (current_SID <= 0) {
-        error = ERROR_SCRIPT;
-      } else {
-        vim_snprintf((char *)fname_buf + 3, ARRAY_SIZE(fname_buf) - 3,
-                     "%" PRId64 "_", (int64_t)current_SID);
-        i = (int)STRLEN(fname_buf);
-      }
-    }
-    if (i + STRLEN(name + llen) < FLEN_FIXED) {
-      STRCPY(fname_buf + i, name + llen);
-      fname = fname_buf;
-    } else {
-      fname = xmalloc(i + STRLEN(name + llen) + 1);
-      memmove(fname, fname_buf, (size_t)i);
-      STRCPY(fname + i, name + llen);
-    }
-  } else
-    fname = name;
+  fname = fname_trans_sid(name, fname_buf, &tofree, &error);
 
   *doesrange = FALSE;
 
   if (partial != NULL) {
     if (partial->pt_dict != NULL) {
-      if (selfdict_in != NULL) {
-        error = ERROR_BOTH;
+      // When the function has a partial with a dict and there is a dict
+      // argument, use the dict argument. That is backwards compatible.
+      if (selfdict_in == NULL) {
+        selfdict = partial->pt_dict;
       }
       selfdict = partial->pt_dict;
     }
@@ -7138,18 +7156,13 @@ call_func(
       emsg_funcname(N_("E725: Calling dict function without Dictionary: %s"),
           name);
       break;
-    case ERROR_BOTH:
-      emsg_funcname(N_(e_dict_both), name);
-      break;
     }
   }
 
   while (argv_clear > 0) {
     clear_tv(&argv[--argv_clear]);
   }
-  if (fname != name && fname != fname_buf) {
-    xfree(fname);
-  }
+  xfree(tofree);
   xfree(name);
 
   return ret;
@@ -9505,11 +9518,6 @@ static void f_function(typval_T *argvars, typval_T *rettv, FunPtr fptr)
           xfree(name);
           return;
         }
-        if (argvars[0].v_type == VAR_PARTIAL) {
-          EMSG2(_(e_dict_both), name);
-          xfree(name);
-          return;
-        }
         if (argvars[dict_idx].vval.v_dict == NULL) {
           dict_idx = 0;
         }
@@ -9548,11 +9556,13 @@ static void f_function(typval_T *argvars, typval_T *rettv, FunPtr fptr)
           }
         }
 
-        if (argvars[0].v_type == VAR_PARTIAL) {
-           pt->pt_dict = argvars[0].vval.v_partial->pt_dict;
+        // For "function(dict.func, [], dict)" and "func" is a partial
+        // use "dict". That is backwards compatible.
+        if (dict_idx > 0) {
+           pt->pt_dict = argvars[dict_idx].vval.v_dict;
            (pt->pt_dict->dv_refcount)++;
-        } else if (dict_idx > 0) {
-          pt->pt_dict = argvars[dict_idx].vval.v_dict;
+        } else if (argvars[0].v_type == VAR_PARTIAL) {
+          pt->pt_dict = argvars[0].vval.v_partial->pt_dict;
           (pt->pt_dict->dv_refcount)++;
         }
 
@@ -18350,7 +18360,17 @@ handle_subscript (
   }
 
   if (rettv->v_type == VAR_FUNC && selfdict != NULL) {
-    ufunc_T *fp = find_func(rettv->vval.v_string);
+    char_u *fname;
+    char_u *tofree = NULL;
+    ufunc_T *fp;
+    char_u fname_buf[FLEN_FIXED + 1];
+    int error;
+
+    // Translate "s:func" to the stored function name.
+    fname = fname_trans_sid(rettv->vval.v_string, fname_buf, &tofree, &error);
+
+    fp = find_func(fname);
+    xfree(tofree);
 
     // Turn "dict.Func" into a partial for "Func" with "dict".
     if (fp != NULL && (fp->uf_flags & FC_DICT)) {
