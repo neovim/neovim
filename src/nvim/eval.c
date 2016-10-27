@@ -2759,7 +2759,7 @@ void ex_call(exarg_T *eap)
   int doesrange;
   int failed = false;
   funcdict_T fudi;
-  partial_T *partial;
+  partial_T *partial = NULL;
 
   if (eap->skip) {
     /* trans_function_name() doesn't work well when skipping, use eval0()
@@ -2792,13 +2792,6 @@ void ex_call(exarg_T *eap)
   len = (int)STRLEN(tofree);
   name = deref_func_name(tofree, &len,
                          partial != NULL ? NULL : &partial, false);
-
-  // When calling fdict.func(), where "func" is a partial, use "fdict"
-  // instead of the dict in the partial, for backwards compatibility.
-  // TODO(vim): Do use the arguments in the partial?
-  if (fudi.fd_dict != NULL) {
-    partial = NULL;
-  }
 
   /* Skip white space to allow ":call func ()".  Not good, but required for
    * backward compatibility. */
@@ -18378,15 +18371,17 @@ handle_subscript (
     }
   }
 
-  if (rettv->v_type == VAR_FUNC && selfdict != NULL) {
-    char_u *fname;
+  if ((rettv->v_type == VAR_FUNC || rettv->v_type == VAR_PARTIAL)
+      && selfdict != NULL) {
+    char_u *fname = rettv->v_type == VAR_FUNC ? rettv->vval.v_string
+                                    : rettv->vval.v_partial->pt_name;
     char_u *tofree = NULL;
     ufunc_T *fp;
     char_u fname_buf[FLEN_FIXED + 1];
     int error;
 
     // Translate "s:func" to the stored function name.
-    fname = fname_trans_sid(rettv->vval.v_string, fname_buf, &tofree, &error);
+    fname = fname_trans_sid(fname, fname_buf, &tofree, &error);
 
     fp = find_func(fname);
     xfree(tofree);
@@ -18399,7 +18394,29 @@ handle_subscript (
         pt->pt_refcount = 1;
         pt->pt_dict = selfdict;
         selfdict = NULL;
-        pt->pt_name = rettv->vval.v_string;
+        if (rettv->v_type == VAR_FUNC) {
+          // just a function: use selfdict
+          pt->pt_name = rettv->vval.v_string;
+        } else {
+          partial_T *ret_pt = rettv->vval.v_partial;
+          int i;
+
+          // partial: use selfdict and copy args
+          pt->pt_name = vim_strsave(ret_pt->pt_name);
+          if (ret_pt->pt_argc > 0) {
+            pt->pt_argv = (typval_T *)xmalloc(sizeof(typval_T) * ret_pt->pt_argc);
+            if (pt->pt_argv == NULL) {
+              // out of memory: drop the arguments
+              pt->pt_argc = 0;
+            } else {
+              pt->pt_argc = ret_pt->pt_argc;
+              for (i = 0; i < pt->pt_argc; i++) {
+                copy_tv(&ret_pt->pt_argv[i], &pt->pt_argv[i]);
+              }
+            }
+          }
+          partial_unref(ret_pt);
+        }
         func_ref(pt->pt_name);
         rettv->v_type = VAR_PARTIAL;
         rettv->vval.v_partial = pt;
@@ -20344,6 +20361,9 @@ trans_function_name (
                && lv.ll_tv->vval.v_partial != NULL) {
       name = vim_strsave(lv.ll_tv->vval.v_partial->pt_name);
       *pp = end;
+      if (partial != NULL) {
+        *partial = lv.ll_tv->vval.v_partial;
+      }
     } else {
       if (!skip && !(flags & TFN_QUIET) && (fdp == NULL
                                             || lv.ll_dict == NULL

@@ -114,6 +114,36 @@ func Test_script_function_in_dict()
   call assert_equal('bar', B())
 endfunc
 
+function! s:cache_arg(arg) dict
+  let s:result = self.name . '/' . a:arg
+  return s:result
+endfunction
+
+func Test_script_function_in_dict_arg()
+  let s:obj = {'name': 'foo'}
+  let s:obj['clear'] = function('s:cache_arg')
+
+  call assert_equal('foo/bar', s:obj.clear('bar'))
+  let F = s:obj.clear
+  let s:result = ''
+  call assert_equal('foo/bar', F('bar'))
+  call assert_equal('foo/bar', s:result)
+
+  let s:obj['clear'] = function('s:cache_arg', ['bar'])
+  call assert_equal('foo/bar', s:obj.clear())
+  let s:result = ''
+  call s:obj.clear()
+  call assert_equal('foo/bar', s:result)
+
+  let F = s:obj.clear
+  call assert_equal('foo/bar', F())
+  let s:result = ''
+  call F()
+  call assert_equal('foo/bar', s:result)
+
+  call assert_equal('foo/bar', call(s:obj.clear, [], s:obj))
+endfunc
+
 func Test_partial_exists()
   let F = function('MyFunc')
   call assert_true(exists('*F'))
