@@ -20321,6 +20321,10 @@ trans_function_name (
     if (lv.ll_tv->v_type == VAR_FUNC && lv.ll_tv->vval.v_string != NULL) {
       name = vim_strsave(lv.ll_tv->vval.v_string);
       *pp = end;
+    } else if (lv.ll_tv->v_type == VAR_PARTIAL
+               && lv.ll_tv->vval.v_partial != NULL) {
+      name = vim_strsave(lv.ll_tv->vval.v_partial->pt_name);
+      *pp = end;
     } else {
       if (!skip && !(flags & TFN_QUIET) && (fdp == NULL
                                             || lv.ll_dict == NULL

@@ -105,3 +105,15 @@ func Test_script_function_in_dict()
   let B = s:obj2.clear
   call assert_equal('bar', B())
 endfunc
+
+func Test_partial_exists()
+  let F = function('MyFunc')
+  call assert_true(exists('*F'))
+  let lF = [F]
+  call assert_true(exists('*lF[0]'))
+
+  let F = function('MyFunc', ['arg'])
+  call assert_true(exists('*F'))
+  let lF = [F]
+  call assert_true(exists('*lF[0]'))
+endfunc
