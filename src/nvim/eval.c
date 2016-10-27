@@ -3763,28 +3763,13 @@ static int eval4(char_u **arg, typval_T *rettv, int evaluate)
       } else if (rettv->v_type == VAR_FUNC || var2.v_type == VAR_FUNC
                  || rettv->v_type == VAR_PARTIAL
                  || var2.v_type == VAR_PARTIAL) {
-        if (rettv->v_type != var2.v_type
-            || (type != TYPE_EQUAL && type != TYPE_NEQUAL)) {
-          if (rettv->v_type != var2.v_type)
-            EMSG(_("E693: Can only compare Funcref with Funcref"));
-          else
-            EMSG(_("E694: Invalid operation for Funcrefs"));
+        if (type != TYPE_EQUAL && type != TYPE_NEQUAL) {
+          EMSG(_("E694: Invalid operation for Funcrefs"));
           clear_tv(rettv);
           clear_tv(&var2);
           return FAIL;
-        } else if (rettv->v_type == VAR_PARTIAL) {
-          // Partials are only equal when identical.
-          n1 = rettv->vval.v_partial != NULL
-                    && rettv->vval.v_partial == var2.vval.v_partial;
-        } else {
-          /* Compare two Funcrefs for being equal or unequal. */
-          if (rettv->vval.v_string == NULL
-              || var2.vval.v_string == NULL) {
-            n1 = false;
-          } else {
-            n1 = STRCMP(rettv->vval.v_string, var2.vval.v_string) == 0;
-          }
         }
+        n1 = tv_equal(rettv, &var2, false, false);
         if (type == TYPE_NEQUAL) {
           n1 = !n1;
         }
@@ -5159,8 +5144,20 @@ tv_equal (
   static int recursive_cnt = 0;             /* catch recursive loops */
   int r;
 
-  if (tv1->v_type != tv2->v_type)
-    return FALSE;
+  // For VAR_FUNC and VAR_PARTIAL only compare the function name.
+  if ((tv1->v_type == VAR_FUNC
+       || (tv1->v_type == VAR_PARTIAL && tv1->vval.v_partial != NULL))
+      && (tv2->v_type == VAR_FUNC
+          || (tv2->v_type == VAR_PARTIAL && tv2->vval.v_partial != NULL))) {
+    s1 = tv1->v_type == VAR_FUNC ? tv1->vval.v_string
+                       : tv1->vval.v_partial->pt_name;
+    s2 = tv2->v_type == VAR_FUNC ? tv2->vval.v_string
+                       : tv2->vval.v_partial->pt_name;
+    return (s1 != NULL && s2 != NULL && STRCMP(s1, s2) == 0);
+  }
+  if (tv1->v_type != tv2->v_type) {
+    return false;
+  }
 
   /* Catch lists and dicts that have an endless loop by limiting
    * recursiveness to a limit.  We guess they are equal then.
@@ -5188,15 +5185,6 @@ tv_equal (
     --recursive_cnt;
     return r;
 
-  case VAR_FUNC:
-    return tv1->vval.v_string != NULL
-           && tv2->vval.v_string != NULL
-           && STRCMP(tv1->vval.v_string, tv2->vval.v_string) == 0;
-
-  case VAR_PARTIAL:
-    return tv1->vval.v_partial != NULL
-           && tv1->vval.v_partial == tv2->vval.v_partial;
-
   case VAR_NUMBER:
     return tv1->vval.v_number == tv2->vval.v_number;
 
@@ -5211,6 +5199,8 @@ tv_equal (
   case VAR_SPECIAL:
     return tv1->vval.v_special == tv2->vval.v_special;
 
+  case VAR_FUNC:
+  case VAR_PARTIAL:
   case VAR_UNKNOWN:
     // VAR_UNKNOWN can be the result of an invalid expression, let’s say it does
     // not equal anything, not even self.
@@ -18404,7 +18394,8 @@ handle_subscript (
           // partial: use selfdict and copy args
           pt->pt_name = vim_strsave(ret_pt->pt_name);
           if (ret_pt->pt_argc > 0) {
-            pt->pt_argv = (typval_T *)xmalloc(sizeof(typval_T) * ret_pt->pt_argc);
+            size_t arg_size = sizeof(typval_T) * ret_pt->pt_argc;
+            pt->pt_argv = (typval_T *)xmalloc(arg_size);
             if (pt->pt_argv == NULL) {
               // out of memory: drop the arguments
               pt->pt_argc = 0;
