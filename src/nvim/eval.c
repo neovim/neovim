@@ -17107,6 +17107,7 @@ static void f_type(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   switch (argvars[0].v_type) {
     case VAR_NUMBER: n = VAR_TYPE_NUMBER; break;
     case VAR_STRING: n = VAR_TYPE_STRING; break;
+    case VAR_PARTIAL:
     case VAR_FUNC:   n = VAR_TYPE_FUNC; break;
     case VAR_LIST:   n = VAR_TYPE_LIST; break;
     case VAR_DICT:   n = VAR_TYPE_DICT; break;
@@ -17125,7 +17126,6 @@ static void f_type(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       }
       break;
     }
-    case VAR_PARTIAL: n = 8; break;
     case VAR_UNKNOWN: {
       EMSG2(_(e_intern2), "f_type(UNKNOWN)");
       break;
