@@ -108,6 +108,7 @@ Options:
   'tabline' %@Func@foo%X can call any function on mouse-click
 
 Variables:
+  |v:event|
   |v:windowid| is always available (for use by external UIs)
 
 Commands:
