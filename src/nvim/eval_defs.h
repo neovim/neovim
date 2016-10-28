@@ -150,6 +150,8 @@ struct dictvar_S {
 struct partial_S {
   int pt_refcount;        ///< Reference count.
   char_u *pt_name;        ///< Function name.
+  bool pt_auto;           ///< when true the partial was created for using
+                          ///< dict.member in handle_subscript().
   int pt_argc;            ///< Number of arguments.
   typval_T *pt_argv;      ///< Arguments in allocated array.
   dict_T *pt_dict;        ///< Dict for "self".

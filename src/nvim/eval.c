@@ -7099,12 +7099,11 @@ call_func(
   *doesrange = FALSE;
 
   if (partial != NULL) {
-    if (partial->pt_dict != NULL) {
-      // When the function has a partial with a dict and there is a dict
-      // argument, use the dict argument. That is backwards compatible.
-      if (selfdict_in == NULL) {
-        selfdict = partial->pt_dict;
-      }
+    // When the function has a partial with a dict and there is a dict
+    // argument, use the dict argument. That is backwards compatible.
+    // When the dict was bound explicitly use the one from the partial.
+    if (partial->pt_dict != NULL
+        && (selfdict_in == NULL || !partial->pt_auto)) {
       selfdict = partial->pt_dict;
     }
     if (error == ERROR_NONE && partial->pt_argc > 0) {
@@ -9643,10 +9642,14 @@ static void f_function(typval_T *argvars, typval_T *rettv, FunPtr fptr)
         // For "function(dict.func, [], dict)" and "func" is a partial
         // use "dict". That is backwards compatible.
         if (dict_idx > 0) {
-           pt->pt_dict = argvars[dict_idx].vval.v_dict;
-           (pt->pt_dict->dv_refcount)++;
+          // The dict is bound explicitly, pt_auto is false
+          pt->pt_dict = argvars[dict_idx].vval.v_dict;
+          (pt->pt_dict->dv_refcount)++;
         } else if (arg_pt != NULL) {
+          // If the dict was bound automatically the result is also
+          // bound automatically.
           pt->pt_dict = arg_pt->pt_dict;
+          pt->pt_auto = arg_pt->pt_auto;
           if (pt->pt_dict != NULL) {
             (pt->pt_dict->dv_refcount)++;
           }
@@ -18424,8 +18427,14 @@ handle_subscript (
     }
   }
 
-  if ((rettv->v_type == VAR_FUNC || rettv->v_type == VAR_PARTIAL)
-      && selfdict != NULL) {
+  // Turn "dict.Func" into a partial for "Func" bound to "dict".
+  // Don't do this when "Func" is already a partial that was bound
+  // explicitly (pt_auto is false).
+  if (self != NULL
+      && (rettv->v_type == VAR_FUNC
+          || (rettv->v_type == VAR_PARTIAL
+              && (rettv->vval.v_partial->pt_auto
+                  || rettv->vval.v_partial->pt_dict == NULL)))) {
     char_u *fname = rettv->v_type == VAR_FUNC ? rettv->vval.v_string
                                     : rettv->vval.v_partial->pt_name;
     char_u *tofree = NULL;
@@ -18446,6 +18455,7 @@ handle_subscript (
       if (pt != NULL) {
         pt->pt_refcount = 1;
         pt->pt_dict = selfdict;
+        pt->pt_auto = true;
         selfdict = NULL;
         if (rettv->v_type == VAR_FUNC) {
           // Just a function: Take over the function name and use

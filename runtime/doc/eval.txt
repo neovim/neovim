@@ -1,6 +1,5 @@
 *eval.txt*	For Vim version 7.4.  Last change: 2016 Jun 04
 
-
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
 
 
@@ -49,6 +48,9 @@ String		A NUL terminated string of 8-bit unsigned characters (bytes).
 
 Funcref		A reference to a function |Funcref|.
 		Example: function("strlen")
+		It can be bound to a dictionary and arguments, it then works
+		like a Partial.
+		Example: function("Callback", [arg], myDict)
 
 List		An ordered sequence of items |List|.
 		Example: [1, 2, ['a', 'b']]
@@ -139,6 +141,43 @@ The name of the referenced function can be obtained with |string()|. >
 You can use |call()| to invoke a Funcref and use a list variable for the
 arguments: >
 	:let r = call(Fn, mylist)
+<
+								*Partial*
+A Funcref optionally binds a Dictionary and/or arguments.  This is also called
+a Partial.  This is created by passing the Dictionary and/or arguments to
+function().  When calling the function the Dictionary and/or arguments will be
+passed to the function.  Example: >
+
+	let Cb = function('Callback', ['foo'], myDict)
+	call Cb()
+
+This will invoke the function as if using: >
+	call myDict.Callback('foo')
+
+This is very useful when passing a function around, e.g. in the arguments of
+|ch_open()|.
+
+Note that binding a function to a Dictionary also happens when the function is
+a member of the Dictionary: >
+
+	let myDict.myFunction = MyFunction
+	call myDict.myFunction()
+
+Here MyFunction() will get myDict passed as "self".  This happens when the
+"myFunction" member is accessed.  When making assigning "myFunction" to
+otherDict and calling it, it will be bound to otherDict: >
+
+	let otherDict.myFunction = myDict.myFunction
+	call otherDict.myFunction()
+
+Now "self" will be "otherDict".  But when the dictionary was bound explicitly
+this won't happen: >
+
+	let myDict.myFunction = function(MyFunction, myDict)
+	let otherDict.myFunction = myDict.myFunction
+	call otherDict.myFunction()
+
+Here "self" will be "myDict", because it was bound explitly.
 
 
 1.3 Lists ~
