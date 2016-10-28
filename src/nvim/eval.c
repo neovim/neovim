@@ -9706,8 +9706,40 @@ static void f_get(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       if (di != NULL)
         tv = &di->di_tv;
     }
-  } else
+  } else if (argvars[0].v_type == VAR_PARTIAL) {
+    partial_T *pt = argvars[0].vval.v_partial;
+
+    if (pt != NULL) {
+      char_u *what = get_tv_string(&argvars[1]);
+
+      if (STRCMP(what, "func") == 0) {
+        rettv->v_type = VAR_STRING;
+        if (pt->pt_name != NULL) {
+          rettv->vval.v_string = vim_strsave(pt->pt_name);
+        }
+      } else if (STRCMP(what, "dict") == 0) {
+        rettv->v_type = VAR_DICT;
+        rettv->vval.v_dict = pt->pt_dict;
+        if (pt->pt_dict != NULL) {
+          (pt->pt_dict->dv_refcount)++;
+        }
+      } else if (STRCMP(what, "args") == 0) {
+        rettv->v_type = VAR_LIST;
+        if (rettv_list_alloc(rettv) != NULL) {
+          int i;
+
+          for (i = 0; i < pt->pt_argc; i++) {
+            list_append_tv(rettv->vval.v_list, &pt->pt_argv[i]);
+          }
+        }
+      } else {
+        EMSG2(_(e_invarg2), what);
+      }
+      return;
+    }
+  } else {
     EMSG2(_(e_listdictarg), "get()");
+  }
 
   if (tv == NULL) {
     if (argvars[2].v_type != VAR_UNKNOWN)
@@ -18430,7 +18462,7 @@ handle_subscript (
   // Turn "dict.Func" into a partial for "Func" bound to "dict".
   // Don't do this when "Func" is already a partial that was bound
   // explicitly (pt_auto is false).
-  if (self != NULL
+  if (selfdict != NULL
       && (rettv->v_type == VAR_FUNC
           || (rettv->v_type == VAR_PARTIAL
               && (rettv->vval.v_partial->pt_auto

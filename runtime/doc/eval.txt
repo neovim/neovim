@@ -3586,6 +3586,12 @@ get({dict}, {key} [, {default}])
 		Get item with key {key} from |Dictionary| {dict}.  When this
 		item is not available return {default}.  Return zero when
 		{default} is omitted.
+get({partial}, {what})
+		Get an item with from Funcref {partial}.  Possible values for
+		{what} are:
+			'func'	The function
+			'dict'	The dictionary
+			'args'	The list with arguments
 
 							*getbufline()*
 getbufline({expr}, {lnum} [, {end}])
