@@ -35,11 +35,11 @@ __VERSION="${__VERSION_MAJOR}.${__VERSION_MINOR}.${__VERSION_PATCH}"
   &&  { echo "ERROR: version parse failed: '${__VERSION}'"; exit 1; }
 __RELEASE_MSG="NVIM v${__VERSION}
 
-Features:
+FEATURES:
 
-Fixes:
+FIXES:
 
-Changes:
+CHANGES:
 
 "
 __BUMP_MSG="version bump"
