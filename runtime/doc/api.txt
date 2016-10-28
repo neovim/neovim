@@ -51,9 +51,10 @@ Tabpage				  -> enum value kObjectTypeTabpage
 
 Nvim exposes metadata about the API as a Dictionary with the following keys:
 
-functions  	calling signature of the API functions
-types		The custom handle types defined by Nvim
-error_types	The possible kinds of errors an API function can exit with.
+version		Nvim version, API level/compatibility
+functions  	API function signatures
+types		Custom handle types defined by Nvim
+error_types	Possible error types returned by API functions
 
 This metadata is mostly useful for external programs accessing the API via
 RPC, see |rpc-api|.

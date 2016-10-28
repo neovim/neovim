@@ -18,6 +18,7 @@
 #include "nvim/map.h"
 #include "nvim/option.h"
 #include "nvim/option_defs.h"
+#include "nvim/version.h"
 #include "nvim/eval/typval_encode.h"
 #include "nvim/lib/kvec.h"
 
@@ -763,6 +764,7 @@ Dictionary api_metadata(void)
   static Dictionary metadata = ARRAY_DICT_INIT;
 
   if (!metadata.size) {
+    PUT(metadata, "version", DICTIONARY_OBJ(version_dict()));
     init_function_metadata(&metadata);
     init_error_type_metadata(&metadata);
     init_type_metadata(&metadata);
