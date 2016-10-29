@@ -133,7 +133,6 @@ ArrayOf(String) buffer_get_line_slice(Buffer buffer,
   return nvim_buf_get_lines(0, buffer, start , end, false, err);
 }
 
-
 /// Retrieves a line range from the buffer
 ///
 /// Indexing is zero-based, end-exclusive. Negative indices are interpreted

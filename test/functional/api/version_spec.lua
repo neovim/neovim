@@ -4,24 +4,14 @@ local clear, funcs, eq = helpers.clear, helpers.funcs, helpers.eq
 
 local function read_mpack_file(fname)
   local fd = io.open(fname, 'rb')
+  if fd == nil then
+    return nil
+  end
+
   local data = fd:read('*a')
   fd:close()
   local unpack = mpack.Unpacker()
   return unpack(data)
-end
-
--- Remove metadata that is not essential to backwards-compatibility.
-local function remove_function_metadata(fspec)
-  fspec['can_fail'] = nil
-  fspec['async'] = nil
-  fspec['method'] = nil
-  fspec['since'] = nil
-  fspec['deprecated_since'] = nil
-  fspec['receives_channel_id'] = nil
-  for idx, _ in ipairs(fspec['parameters']) do
-    fspec['parameters'][idx][2] = ''  -- Remove parameter name.
-  end
-  return fspec
 end
 
 describe("api_info()['version']", function()
@@ -49,23 +39,111 @@ describe("api_info()['version']", function()
     eq(0, funcs.has("nvim-"..major.."."..(minor + 1).."."..patch))
     eq(0, funcs.has("nvim-"..(major + 1).."."..minor.."."..patch))
   end)
+end)
 
-  it("api_compatible level is valid", function()
-    local api     = helpers.call('api_info')
-    local compat  = api['version']['api_compatible']
-    local path    = 'test/functional/fixtures/api_level_'
-                    ..tostring(compat)..'.mpack'
 
-    -- Verify that the current API function signatures match those of the API
-    -- level for which we claim compatibility.
-    local old_api = read_mpack_file(path)
-    for _, fn_old in ipairs(old_api['functions']) do
-      for _, fn_new in ipairs(api['functions']) do
-        if fn_old['name'] == fn_new['name'] then
-          eq(remove_function_metadata(fn_old),
-             remove_function_metadata(fn_new))
+describe("api functions", function()
+  before_each(clear)
+
+  local function func_table(metadata)
+    local functions = {}
+    for _,f in ipairs(metadata.functions) do
+      functions[f.name] = f
+    end
+    return functions
+  end
+
+  -- Remove metadata that is not essential to backwards-compatibility.
+  local function filter_function_metadata(f)
+    f.deprecated_since = nil
+    for idx, _ in ipairs(f.parameters) do
+      f.parameters[idx][2] = ''  -- Remove parameter name.
+    end
+
+    if string.sub(f.name, 1, 4) ~= "nvim" then
+      f.method = nil
+    end
+    return f
+  end
+
+  -- Level 0 represents methods from 0.1.5 and earlier, when 'since' was not
+  -- yet defined, and metadata was not filtered of internal keys like 'async'.
+  local function clean_level_0(metadata)
+    for _, f in ipairs(metadata.functions) do
+      f.can_fail = nil
+      f.async = nil
+      f.receives_channel_id = nil
+      f.since = 0
+    end
+  end
+
+  it("are compatible with old metadata or have new level", function()
+    local api = helpers.call('api_info')
+    local compat  = api.version.api_compatible
+    local api_level = api.version.api_level
+    local stable
+    if api.version.api_prerelease then
+      stable = api_level-1
+    else
+      stable = api_level
+    end
+
+    local funcs_new = func_table(api)
+    local funcs_compat = {}
+    for level = compat, stable do
+      local path = ('test/functional/fixtures/api_level_'..
+                   tostring(level)..'.mpack')
+      local old_api = read_mpack_file(path)
+      if old_api == nil then
+        local errstr = "missing metadata fixture for stable level "..level..". "
+        if level == api_level and not api.version.api_prerelease then
+          errstr = (errstr.."If NVIM_API_CURRENT was bumped, "..
+                    "don't forget to set NVIM_API_PRERELEASE to true.")
         end
+        error(errstr)
+      end
+
+      if level == 0 then
+        clean_level_0(old_api)
+      end
+
+      for _,f in ipairs(old_api.functions) do
+        if funcs_new[f.name] == nil then
+          if f.since >= compat then
+            error('function '..f.name..' was removed but exists in level '..
+                  f.since..' which nvim should be compatible with')
+          end
+        else
+          eq(filter_function_metadata(f),
+             filter_function_metadata(funcs_new[f.name]))
+        end
+      end
+
+      funcs_compat[level] = func_table(old_api)
+    end
+
+    for _,f in ipairs(api.functions) do
+      if f.since <= stable then
+        local f_old = funcs_compat[f.since][f.name]
+        if f_old == nil then
+          if string.sub(f.name, 1, 4) == "nvim" then
+            local errstr = ("function "..f.name.." has too low since value. "..
+                            "For new functions set it to "..(stable+1)..".")
+            if not api.version.api_prerelease then
+              errstr = (errstr.." Also bump NVIM_API_CURRENT and set "..
+                        "NVIM_API_PRERELEASE to true in CMakeLists.txt.")
+            end
+            error(errstr)
+          else
+            error("function name '"..f.name.."' doesn't begin with 'nvim_'")
+          end
+        end
+      elseif f.since > api_level then
+        error("function "..f.name.." has since value > api_level. "..
+             "Please bump NVIM_API_CURRENT and set "..
+             "NVIM_API_PRERELEASE to true in CMakeLists.txt.")
       end
     end
   end)
+
 end)
