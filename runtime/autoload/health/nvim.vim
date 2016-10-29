@@ -106,7 +106,7 @@ function! s:check_tmux() abort
     call health#report_error('command failed: '.cmd."\n".out)
   elseif empty(tmux_esc_time)
     call health#report_error('escape-time is not set', suggestions)
-  elseif tmux_esc_time > 500
+  elseif tmux_esc_time > 300
     call health#report_error(
         \ 'escape-time ('.tmux_esc_time.') is higher than 300ms', suggestions)
   else
