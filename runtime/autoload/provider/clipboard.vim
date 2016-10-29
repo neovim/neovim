@@ -31,6 +31,11 @@ function! s:try_cmd(cmd, ...)
 endfunction
 
 let s:cache_enabled = 1
+let s:err = ''
+
+function! provider#clipboard#Error() abort
+  return s:err
+endfunction
 
 function! provider#clipboard#Executable() abort
   if executable('pbcopy')
@@ -66,11 +71,11 @@ function! provider#clipboard#Executable() abort
     return 'doitclient'
   endif
 
+  let s:err = 'clipboard: No clipboard tool available. See :help clipboard'
   return ''
 endfunction
 
 if empty(provider#clipboard#Executable())
-  echom 'clipboard: No clipboard tool available. See :help clipboard'
   finish
 endif
 
