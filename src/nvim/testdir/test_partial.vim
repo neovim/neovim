@@ -155,3 +155,89 @@ func Test_partial_exists()
   let lF = [F]
   call assert_true(exists('*lF[0]'))
 endfunc
+
+func Test_partial_string()
+  let F = function('MyFunc')
+  call assert_equal("function('MyFunc')", string(F))
+  let F = function('MyFunc', ['foo'])
+  call assert_equal("function('MyFunc', ['foo'])", string(F))
+  let F = function('MyFunc', ['foo', 'bar'])
+  call assert_equal("function('MyFunc', ['foo', 'bar'])", string(F))
+  let d = {'one': 1}
+  let F = function('MyFunc', d)
+  call assert_equal("function('MyFunc', {'one': 1})", string(F))
+  let F = function('MyFunc', ['foo'], d)
+  call assert_equal("function('MyFunc', ['foo'], {'one': 1})", string(F))
+endfunc
+
+func Test_func_unref()
+  let obj = {}
+  function! obj.func() abort
+  endfunction
+  let funcnumber = matchstr(string(obj.func), '^function(''\zs.\{-}\ze''')
+  call assert_true(exists('*{' . funcnumber . '}'))
+  unlet obj
+  call assert_false(exists('*{' . funcnumber . '}'))
+endfunc
+
+func Test_redefine_dict_func()
+  let d = {}
+  function d.test4()
+  endfunction
+  let d.test4 = d.test4
+  try
+    function! d.test4(name)
+    endfunction
+  catch
+    call assert_true(v:errmsg, v:exception)
+  endtry
+endfunc
+
+" This causes double free on exit if EXITFREE is defined.
+func Test_cyclic_list_arg()
+  let l = []
+  let Pt = function('string', [l])
+  call add(l, Pt)
+  unlet l
+  unlet Pt
+endfunc
+
+" This causes double free on exit if EXITFREE is defined.
+func Test_cyclic_dict_arg()
+  let d = {}
+  let Pt = function('string', [d])
+  let d.Pt = Pt
+  unlet d
+  unlet Pt
+endfunc
+
+func Test_auto_partial_rebind()
+  let dict1 = {'name': 'dict1'}
+  func! dict1.f1()
+    return self.name
+  endfunc
+  let dict1.f2 = function(dict1.f1, dict1)
+
+  call assert_equal('dict1', dict1.f1())
+  call assert_equal('dict1', dict1['f1']())
+  call assert_equal('dict1', dict1.f2())
+  call assert_equal('dict1', dict1['f2']())
+
+  let dict2 = {'name': 'dict2'}
+  let dict2.f1 = dict1.f1
+  let dict2.f2 = dict1.f2
+
+  call assert_equal('dict2', dict2.f1())
+  call assert_equal('dict2', dict2['f1']())
+  call assert_equal('dict1', dict2.f2())
+  call assert_equal('dict1', dict2['f2']())
+endfunc
+
+func Test_get_partial_items()
+  let dict = {'name': 'hello'}
+  let Cb = function('MyDictFunc', ["foo", "bar"], dict)
+  call assert_equal('MyDictFunc', get(Cb, 'func'))
+  call assert_equal(["foo", "bar"], get(Cb, 'args'))
+  call assert_equal(dict, get(Cb, 'dict'))
+  call assert_fails('call get(Cb, "xxx")', 'E475:')
+endfunc

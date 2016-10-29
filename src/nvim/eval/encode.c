@@ -317,9 +317,32 @@ int encode_read_from_list(ListReaderState *const state, char *const buf,
 
 #define TYPVAL_ENCODE_CONV_PARTIAL(partial) \
     do { \
-        ga_concat(gap, "partial("); \
-        TYPVAL_ENCODE_CONV_STRING(partial, STRLEN(partial)); \
-        ga_append(gap, ')'); \
+        partial_T *pt = tv->vval.v_partial; \
+        garray_T ga; \
+        int i; \
+        ga_init(&ga, 1, 100); \
+        ga_concat(&ga, (char_u *)"function("); \
+        if (&pt->pt_name != NULL) { \
+          TYPVAL_ENCODE_CONV_STRING((char *)pt->pt_name, sizeof(pt->pt_name)); \
+        } \
+        if (pt != NULL && pt->pt_argc > 0) { \
+          ga_concat(&ga, (char_u *)", ["); \
+          for (i = 0; i < pt->pt_argc; i++) { \
+            if (i > 0) { \
+              ga_concat(&ga, (char_u *)", "); \
+            } \
+            ga_concat(&ga, encode_tv2string(&pt->pt_argv[i], NULL)); \
+          } \
+          ga_concat(&ga, (char_u *)"]"); \
+        } \
+        if (pt != NULL && pt->pt_dict != NULL) { \
+          typval_T dtv; \
+          ga_concat(&ga, (char_u *)", "); \
+          dtv.v_type = VAR_DICT; \
+          dtv.vval.v_dict = pt->pt_dict; \
+          ga_concat(&ga, encode_tv2string(&dtv, NULL)); \
+        } \
+        ga_concat(&ga, (char_u *)")"); \
     } while (0)
 
 #define TYPVAL_ENCODE_CONV_EMPTY_LIST() \
