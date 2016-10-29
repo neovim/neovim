@@ -37,12 +37,12 @@ typedef enum {
   VAR_NUMBER,       ///< Number, .v_number is used.
   VAR_STRING,       ///< String, .v_string is used.
   VAR_FUNC,         ///< Function reference, .v_string is used as function name.
-  VAR_PARTIAL,      ///< Partial, .v_partial is used.
   VAR_LIST,         ///< List, .v_list is used.
   VAR_DICT,         ///< Dictionary, .v_dict is used.
   VAR_FLOAT,        ///< Floating-point value, .v_float is used.
   VAR_SPECIAL,      ///< Special value (true, false, null), .v_special
                     ///< is used.
+  VAR_PARTIAL,      ///< Partial, .v_partial is used.
 } VarType;
 
 /// Structure that holds an internal variable value

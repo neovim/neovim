@@ -72,7 +72,7 @@
 /// @def TYPVAL_ENCODE_CONV_PARTIAL
 /// @brief Macros used to convert a partial
 ///
-/// @param  partial Partial name.
+/// @param  pt Partial name.
 
 /// @def TYPVAL_ENCODE_CONV_EMPTY_LIST
 /// @brief Macros used to convert an empty list

@@ -315,34 +315,58 @@ int encode_read_from_list(ListReaderState *const state, char *const buf,
       ga_append(gap, ')'); \
     } while (0)
 
-#define TYPVAL_ENCODE_CONV_PARTIAL(partial) \
+#define TYPVAL_ENCODE_CONV_PARTIAL(pt) \
     do { \
-        partial_T *pt = tv->vval.v_partial; \
-        garray_T ga; \
         int i; \
-        ga_init(&ga, 1, 100); \
-        ga_concat(&ga, (char_u *)"function("); \
+        ga_concat(gap, "function("); \
         if (&pt->pt_name != NULL) { \
-          TYPVAL_ENCODE_CONV_STRING((char *)pt->pt_name, sizeof(pt->pt_name)); \
+          size_t len; \
+          char_u *p; \
+          len = 3; \
+          len += STRLEN(pt->pt_name); \
+          for (p = pt->pt_name; *p != NUL; mb_ptr_adv(p)) { \
+            if (*p == '\'') { \
+              len++; \
+            } \
+          } \
+          char_u *r, *s; \
+          s = r = xmalloc(len); \
+          if (r != NULL) { \
+            *r++ = '\''; \
+            for (p = pt->pt_name; *p != NUL; ) { \
+              if (*p == '\'') { \
+                *r++ = '\''; \
+              } \
+            MB_COPY_CHAR(p, r); \
+            } \
+            *r++ = '\''; \
+            *r++ = NUL; \
+          } \
+          ga_concat(gap, s); \
+          xfree(s); \
         } \
-        if (pt != NULL && pt->pt_argc > 0) { \
-          ga_concat(&ga, (char_u *)", ["); \
+        if (pt->pt_argc > 0) { \
+          ga_concat(gap, ", ["); \
           for (i = 0; i < pt->pt_argc; i++) { \
             if (i > 0) { \
-              ga_concat(&ga, (char_u *)", "); \
+              ga_concat(gap, ", "); \
             } \
-            ga_concat(&ga, encode_tv2string(&pt->pt_argv[i], NULL)); \
+            char *tofree = encode_tv2string(&pt->pt_argv[i], NULL); \
+            ga_concat(gap, tofree); \
+            xfree(tofree); \
           } \
-          ga_concat(&ga, (char_u *)"]"); \
+          ga_append(gap, ']'); \
         } \
-        if (pt != NULL && pt->pt_dict != NULL) { \
+        if (pt->pt_dict != NULL) { \
           typval_T dtv; \
-          ga_concat(&ga, (char_u *)", "); \
+          ga_concat(gap, ", "); \
           dtv.v_type = VAR_DICT; \
           dtv.vval.v_dict = pt->pt_dict; \
-          ga_concat(&ga, encode_tv2string(&dtv, NULL)); \
+          char *tofree = encode_tv2string(&dtv, NULL); \
+          ga_concat(gap, tofree); \
+          xfree(tofree); \
         } \
-        ga_concat(&ga, (char_u *)")"); \
+        ga_append(gap, ')'); \
     } while (0)
 
 #define TYPVAL_ENCODE_CONV_EMPTY_LIST() \
@@ -692,7 +716,7 @@ static inline int convert_to_json_string(garray_T *const gap,
                       mpstack, objname)
 
 #undef TYPVAL_ENCODE_CONV_PARTIAL
-#define TYPVAL_ENCODE_CONV_PARTIAL(partial) \
+#define TYPVAL_ENCODE_CONV_PARTIAL(pt) \
     return conv_error(_("E474: Error while dumping %s, %s: " \
                         "attempt to dump partial"), \
                       mpstack, objname)

@@ -154,9 +154,6 @@ passed to the function.  Example: >
 This will invoke the function as if using: >
 	call myDict.Callback('foo')
 
-This is very useful when passing a function around, e.g. in the arguments of
-|ch_open()|.
-
 Note that binding a function to a Dictionary also happens when the function is
 a member of the Dictionary: >
 
@@ -164,8 +161,8 @@ a member of the Dictionary: >
 	call myDict.myFunction()
 
 Here MyFunction() will get myDict passed as "self".  This happens when the
-"myFunction" member is accessed.  When making assigning "myFunction" to
-otherDict and calling it, it will be bound to otherDict: >
+"myFunction" member is accessed.  When assigning "myFunction" to otherDict
+and calling it, it will be bound to otherDict: >
 
 	let otherDict.myFunction = myDict.myFunction
 	call otherDict.myFunction()
@@ -3588,7 +3585,7 @@ get({dict}, {key} [, {default}])
 		item is not available return {default}.  Return zero when
 		{default} is omitted.
 get({func}, {what})
-		Get an item with from Funcref {func}.  Possible values for
+		Get item {what} from Funcref {func}.  Possible values for
 		{what} are:
 			'name'	The function name
 			'func'	The function

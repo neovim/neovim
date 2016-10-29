@@ -1235,7 +1235,7 @@ EXTERN FILE *time_fd INIT(= NULL);  /* where to write startup timing */
 EXTERN int ignored;
 EXTERN char *ignoredp;
 
-EXTERN int in_free_unref_items INIT(= false);
+EXTERN bool in_free_unref_items INIT(= false);
 
 // If a msgpack-rpc channel should be started over stdin/stdout
 EXTERN bool embedded_mode INIT(= false);

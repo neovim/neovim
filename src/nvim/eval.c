@@ -2759,7 +2759,7 @@ void ex_call(exarg_T *eap)
   typval_T rettv;
   linenr_T lnum;
   int doesrange;
-  int failed = false;
+  bool failed = false;
   funcdict_T fudi;
   partial_T *partial = NULL;
 
@@ -4915,9 +4915,7 @@ static int get_lit_string_tv(char_u **arg, typval_T *rettv, int evaluate)
 
 static void partial_free(partial_T *pt)
 {
-  int i;
-
-  for (i = 0; i < pt->pt_argc; i++) {
+  for (int i = 0; i < pt->pt_argc; i++) {
     clear_tv(&pt->pt_argv[i]);
   }
   xfree(pt->pt_argv);
@@ -5170,15 +5168,14 @@ dict_equal (
 
 static int tv_equal_recurse_limit;
 
-static int func_equal(
+static bool func_equal(
     typval_T *tv1,
     typval_T *tv2,
-    int ic         // ignore case
+    bool ic         // ignore case
 ) {
   char_u *s1, *s2;
   dict_T *d1, *d2;
   int a1, a2;
-  int i;
 
   // empty and NULL function name considered the same
   s1 = tv1->v_type == VAR_FUNC ? tv1->vval.v_string
@@ -5216,7 +5213,7 @@ static int func_equal(
   if (a1 != a2) {
     return false;
   }
-  for (i = 0; i < a1; i++) {
+  for (int i = 0; i < a1; i++) {
     if (!tv_equal(tv1->vval.v_partial->pt_argv + i,
                   tv2->vval.v_partial->pt_argv + i, ic, true)) {
       return false;
@@ -6147,7 +6144,6 @@ bool set_ref_in_item(typval_T *tv, int copyID, ht_stack_T **ht_stack,
   switch (tv->v_type) {
     case VAR_DICT: {
       dict_T *dd = tv->vval.v_dict;
-
       if (dd != NULL && dd->dv_copyID != copyID) {
         // Didn't see this dict yet.
         dd->dv_copyID = copyID;
@@ -6201,7 +6197,6 @@ bool set_ref_in_item(typval_T *tv, int copyID, ht_stack_T **ht_stack,
 
     case VAR_PARTIAL: {
       partial_T *pt = tv->vval.v_partial;
-      int i;
 
       // A partial does not have a copyID, because it cannot contain itself.
       if (pt != NULL) {
@@ -6213,7 +6208,7 @@ bool set_ref_in_item(typval_T *tv, int copyID, ht_stack_T **ht_stack,
           abort = abort || set_ref_in_item(&dtv, copyID, ht_stack, list_stack);
         }
 
-        for (i = 0; i < pt->pt_argc; i++) {
+        for (int i = 0; i < pt->pt_argc; i++) {
           abort = abort || set_ref_in_item(&pt->pt_argv[i], copyID,
                                            ht_stack, list_stack);
         }
@@ -6354,7 +6349,6 @@ static void dict_free_contents(dict_T *d) {
   int todo;
   hashitem_T  *hi;
   dictitem_T  *di;
-
 
 
   /* Lock the hashtab, we don't want it to resize while freeing items. */
@@ -6969,7 +6963,7 @@ static VimLFuncDef *find_internal_func(const char *const name)
 /// "partialp".
 static char_u *deref_func_name(
     char_u *name, int *lenp,
-    partial_T **partialp, int no_autoload
+    partial_T **partialp, bool no_autoload
 )
 {
   dictitem_T  *v;
@@ -7102,17 +7096,16 @@ fname_trans_sid(char_u *name, char_u *fname_buf, char_u **tofree, int *error) {
       if (current_SID <= 0) {
         *error = ERROR_SCRIPT;
       } else {
-        vim_snprintf((char *)fname_buf + 3, ARRAY_SIZE(fname_buf) - 3,
-                     "%" PRId64 "_", (int64_t)current_SID);
+        snprintf((char *)fname_buf + 3, FLEN_FIXED + 1, "%" PRId64 "_",
+                 (int64_t)current_SID);
         i = (int)STRLEN(fname_buf);
       }
     }
-
     if (i + STRLEN(name + llen) < FLEN_FIXED) {
       STRCPY(fname_buf + i, name + llen);
       fname = fname_buf;
     } else {
-      fname = xmalloc((unsigned)(i + STRLEN(name + llen) + 1));
+      fname = xmalloc(i + STRLEN(name + llen) + 1);
       if (fname == NULL) {
         *error = ERROR_OTHER;
       } else {
@@ -7142,14 +7135,14 @@ call_func(
     linenr_T firstline,             // first line of range
     linenr_T lastline,              // last line of range
     int *doesrange,                 // return: function handled range
-    int evaluate,
+    bool evaluate,
     partial_T *partial,             // optional, can be NULL
     dict_T *selfdict_in             // Dictionary for "self"
 )
 {
   int ret = FAIL;
   int error = ERROR_NONE;
-  ufunc_T     *fp;
+  ufunc_T *fp;
   char_u fname_buf[FLEN_FIXED + 1];
   char_u *tofree = NULL;
   char_u *fname;
@@ -7169,7 +7162,7 @@ call_func(
 
   fname = fname_trans_sid(name, fname_buf, &tofree, &error);
 
-  *doesrange = FALSE;
+  *doesrange = false;
 
   if (partial != NULL) {
     // When the function has a partial with a dict and there is a dict
@@ -7180,12 +7173,10 @@ call_func(
       selfdict = partial->pt_dict;
     }
     if (error == ERROR_NONE && partial->pt_argc > 0) {
-      int i;
-
       for (argv_clear = 0; argv_clear < partial->pt_argc; argv_clear++) {
         copy_tv(&partial->pt_argv[argv_clear], &argv[argv_clear]);
       }
-      for (i = 0; i < argcount_in; i++) {
+      for (int i = 0; i < argcount_in; i++) {
         argv[i + argv_clear] = argvars_in[i];
       }
       argvars = argv;
@@ -8133,7 +8124,7 @@ static void f_call(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     selfdict = argvars[2].vval.v_dict;
   }
 
-  (void)func_call(func, &argvars[1], partial, selfdict, rettv);
+  func_call(func, &argvars[1], partial, selfdict, rettv);
 }
 
 /*
@@ -9611,7 +9602,6 @@ static void f_function(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     use_string = true;
   }
 
-  s = get_tv_string(&argvars[0]);
   if (s == NULL || *s == NUL || (use_string && ascii_isdigit(*s))) {
     EMSG2(_(e_invarg2), s);
   } else if (use_string && vim_strchr(s, AUTOLOAD_CHAR) == NULL
@@ -9622,7 +9612,6 @@ static void f_function(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     int dict_idx = 0;
     int arg_idx = 0;
     list_T *list = NULL;
-
     if (STRNCMP(s, "s:", 2) == 0 || STRNCMP(s, "<SID>", 5) == 0) {
       char sid_buf[25];
       int off = *s == 's' ? 2 : 5;
@@ -9633,7 +9622,7 @@ static void f_function(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       // printable text.
       snprintf(sid_buf, sizeof(sid_buf), "<SNR>%" PRId64 "_",
                (int64_t)current_SID);
-      name = xmalloc((int)(STRLEN(sid_buf) + STRLEN(s + off) + 1));
+      name = xmalloc(STRLEN(sid_buf) + STRLEN(s + off) + 1);
       if (name != NULL) {
         STRCPY(name, sid_buf);
         STRCAT(name, s + off);
@@ -15570,11 +15559,10 @@ static int item_compare2(const void *s1, const void *s2, bool keep_zero)
   si2 = (sortItem_T *)s2;
 
   if (partial == NULL) {
-      func_name = sortinfo->item_compare_func;
+    func_name = sortinfo->item_compare_func;
   } else {
-      func_name = partial->pt_name;
+    func_name = partial->pt_name;
   }
-
   // Copy the values.  This is needed to be able to set v_lock to VAR_FIXED
   // in the copy without changing the original list items.
   copy_tv(&si1->item->li_tv, &argv[0]);
@@ -18573,8 +18561,7 @@ handle_subscript (
         pt->pt_auto = true;
         selfdict = NULL;
         if (rettv->v_type == VAR_FUNC) {
-          // Just a function: Take over the function name and use
-          // selfdict.
+          // Just a function: Take over the function name and use selfdict.
           pt->pt_name = rettv->vval.v_string;
         } else {
           partial_T *ret_pt = rettv->vval.v_partial;
@@ -18692,6 +18679,8 @@ void free_tv(typval_T *varp)
 
 #define TYPVAL_ENCODE_CONV_PARTIAL(pt) \
     do { \
+      partial_unref(pt); \
+      pt = NULL; \
       tv->v_lock = VAR_UNLOCKED; \
     } while (0)
 
@@ -19020,11 +19009,10 @@ static dictitem_T *find_var(char_u *name, hashtab_T **htp, int no_autoload)
   return find_var_in_ht(ht, *name, varname, no_autoload || htp != NULL);
 }
 
-/*
- * Find variable "varname" in hashtab "ht" with name "htname".
- * Returns NULL if not found.
- */
-static dictitem_T *find_var_in_ht(hashtab_T *ht, int htname, char_u *varname, int no_autoload)
+/// Find variable "varname" in hashtab "ht" with name "htname".
+/// Returns NULL if not found.
+static dictitem_T *find_var_in_ht(hashtab_T *ht, int htname,
+                                  char_u *varname, bool no_autoload)
 {
   hashitem_T  *hi;
 
