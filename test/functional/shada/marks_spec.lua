@@ -104,7 +104,7 @@ describe('ShaDa support code', function()
 
   it('is able to dump and read back mark " from a closed tab', function()
     nvim_command('edit ' .. testfilename)
-    nvim_command('edit ' .. testfilename_2)
+    nvim_command('tabedit ' .. testfilename_2)
     nvim_command('2')
     nvim_command('q!')
     nvim_command('qall')
