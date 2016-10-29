@@ -4074,65 +4074,66 @@ void ex_global(exarg_T *eap)
   vim_regfree(regmatch.regprog);
 }
 
-/*
- * Execute "cmd" on lines marked with ml_setmarked().
- */
+/// Execute `cmd` on lines marked with ml_setmarked().
 void global_exe(char_u *cmd)
 {
-  linenr_T old_lcount;          /* b_ml.ml_line_count before the command */
-  buf_T    *old_buf = curbuf;   /* remember what buffer we started in */
-  linenr_T lnum;                /* line number according to old situation */
+  linenr_T old_lcount;      // b_ml.ml_line_count before the command
+  buf_T *old_buf = curbuf;  // remember what buffer we started in
+  linenr_T lnum;            // line number according to old situation
   int save_mapped_ctrl_c = mapped_ctrl_c;
 
-  /*
-   * Set current position only once for a global command.
-   * If global_busy is set, setpcmark() will not do anything.
-   * If there is an error, global_busy will be incremented.
-   */
+  // Set current position only once for a global command.
+  // If global_busy is set, setpcmark() will not do anything.
+  // If there is an error, global_busy will be incremented.
   setpcmark();
 
-  /* When the command writes a message, don't overwrite the command. */
-  msg_didout = TRUE;
+  // When the command writes a message, don't overwrite the command.
+  msg_didout = true;
   // Disable CTRL-C mapping, let it interrupt (potentially long output).
   mapped_ctrl_c = 0;
 
   sub_nsubs = 0;
   sub_nlines = 0;
-  global_need_beginline = FALSE;
+  global_need_beginline = false;
   global_busy = 1;
   old_lcount = curbuf->b_ml.ml_line_count;
+
   while (!got_int && (lnum = ml_firstmarked()) != 0 && global_busy == 1) {
     curwin->w_cursor.lnum = lnum;
     curwin->w_cursor.col = 0;
-    if (*cmd == NUL || *cmd == '\n')
+    if (*cmd == NUL || *cmd == '\n') {
       do_cmdline((char_u *)"p", NULL, NULL, DOCMD_NOWAIT);
-    else
+    } else {
       do_cmdline(cmd, NULL, NULL, DOCMD_NOWAIT);
+    }
     os_breakcheck();
   }
 
   mapped_ctrl_c = save_mapped_ctrl_c;
   global_busy = 0;
-  if (global_need_beginline)
+  if (global_need_beginline) {
     beginline(BL_WHITE | BL_FIX);
-  else
-    check_cursor();     /* cursor may be beyond the end of the line */
+  } else {
+    check_cursor();  // cursor may be beyond the end of the line
+  }
 
-  /* the cursor may not have moved in the text but a change in a previous
-   * line may move it on the screen */
+  // the cursor may not have moved in the text but a change in a previous
+  // line may move it on the screen
   changed_line_abv_curs();
 
-  /* If it looks like no message was written, allow overwriting the
-   * command with the report for number of changes. */
-  if (msg_col == 0 && msg_scrolled == 0)
-    msg_didout = FALSE;
+  // If it looks like no message was written, allow overwriting the
+  // command with the report for number of changes.
+  if (msg_col == 0 && msg_scrolled == 0) {
+    msg_didout = false;
+  }
 
-  /* If substitutes done, report number of substitutes, otherwise report
-   * number of extra or deleted lines.
-   * Don't report extra or deleted lines in the edge case where the buffer
-   * we are in after execution is different from the buffer we started in. */
-  if (!do_sub_msg(false) && curbuf == old_buf)
+  // If substitutes done, report number of substitutes, otherwise report
+  // number of extra or deleted lines.
+  // Don't report extra or deleted lines in the edge case where the buffer
+  // we are in after execution is different from the buffer we started in.
+  if (!do_sub_msg(false) && curbuf == old_buf) {
     msgmore(curbuf->b_ml.ml_line_count - old_lcount);
+  }
 }
 
 #if defined(EXITFREE)
