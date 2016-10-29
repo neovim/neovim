@@ -1957,6 +1957,7 @@ function({name} [, {arglist}] [, {dict}])
 garbagecollect([{atexit}])	none	free memory, breaking cyclic references
 get({list}, {idx} [, {def}])	any	get item {idx} from {list} or {def}
 get({dict}, {key} [, {def}])	any	get item {key} from {dict} or {def}
+get({func}, {what})		any	get property of funcref/partial {func}
 getbufline({expr}, {lnum} [, {end}])
 				List	lines {lnum} to {end} of buffer {expr}
 getbufvar({expr}, {varname} [, {def}])
@@ -3586,9 +3587,10 @@ get({dict}, {key} [, {default}])
 		Get item with key {key} from |Dictionary| {dict}.  When this
 		item is not available return {default}.  Return zero when
 		{default} is omitted.
-get({partial}, {what})
-		Get an item with from Funcref {partial}.  Possible values for
+get({func}, {what})
+		Get an item with from Funcref {func}.  Possible values for
 		{what} are:
+			'name'	The function name
 			'func'	The function
 			'dict'	The dictionary
 			'args'	The list with arguments

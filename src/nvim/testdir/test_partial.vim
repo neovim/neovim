@@ -250,9 +250,18 @@ endfunc
 
 func Test_get_partial_items()
   let dict = {'name': 'hello'}
-  let Cb = function('MyDictFunc', ["foo", "bar"], dict)
-  call assert_equal('MyDictFunc', get(Cb, 'func'))
-  call assert_equal(["foo", "bar"], get(Cb, 'args'))
+  let args = ["foo", "bar"]
+  let Func = function('MyDictFunc')
+  let Cb = function('MyDictFunc', args, dict)
+
+  call assert_equal(Func, get(Cb, 'func'))
+  call assert_equal('MyDictFunc', get(Cb, 'name'))
+  call assert_equal(args, get(Cb, 'args'))
   call assert_equal(dict, get(Cb, 'dict'))
   call assert_fails('call get(Cb, "xxx")', 'E475:')
+
+  call assert_equal(Func, get(Func, 'func'))
+  call assert_equal('MyDictFunc', get(Func, 'name'))
+  call assert_equal([], get(Func, 'args'))
+  call assert_true(empty( get(Func, 'dict')))
 endfunc

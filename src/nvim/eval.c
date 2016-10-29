@@ -9706,14 +9706,24 @@ static void f_get(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       if (di != NULL)
         tv = &di->di_tv;
     }
-  } else if (argvars[0].v_type == VAR_PARTIAL) {
-    partial_T *pt = argvars[0].vval.v_partial;
+  } else if (argvars[0].v_type == VAR_PARTIAL
+             || argvars[0].v_type == VAR_FUNC) {
+    partial_T *pt;
+    partial_T fref_pt;
+
+    if (argvars[0].v_type == VAR_PARTIAL) {
+      pt = argvars[0].vval.v_partial;
+    } else {
+      memset(&fref_pt, 0, sizeof(fref_pt));
+      fref_pt.pt_name = argvars[0].vval.v_string;
+      pt = &fref_pt;
+    }
 
     if (pt != NULL) {
       char_u *what = get_tv_string(&argvars[1]);
 
-      if (STRCMP(what, "func") == 0) {
-        rettv->v_type = VAR_STRING;
+      if (STRCMP(what, "func") == 0 || STRCMP(what, "name") == 0) {
+        rettv->v_type = (*what == 'f' ? VAR_FUNC : VAR_STRING);
         if (pt->pt_name != NULL) {
           rettv->vval.v_string = vim_strsave(pt->pt_name);
         }
