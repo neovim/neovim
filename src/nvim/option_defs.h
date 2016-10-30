@@ -800,6 +800,7 @@ enum {
   , WV_WFH
   , WV_WFW
   , WV_WRAP
+  , WV_SCL
   , WV_COUNT        /* must be the last one */
 };
 

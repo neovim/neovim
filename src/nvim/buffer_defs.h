@@ -237,6 +237,8 @@ typedef struct {
 # define w_p_crb w_onebuf_opt.wo_crb    /* 'cursorbind' */
   int wo_crb_save;              /* 'cursorbind' state saved for diff mode*/
 # define w_p_crb_save w_onebuf_opt.wo_crb_save
+  char_u	*wo_scl;
+# define w_p_scl w_onebuf_opt.wo_scl	/* 'signcolumn' */
 
   int wo_scriptID[WV_COUNT];            /* SIDs for window-local options */
 # define w_p_scriptID w_onebuf_opt.wo_scriptID
