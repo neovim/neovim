@@ -801,7 +801,7 @@ enum {
   , WV_WFW
   , WV_WRAP
   , WV_SCL
-  , WV_COUNT        /* must be the last one */
+  , WV_COUNT        // must be the last one
 };
 
 /* Value for b_p_ul indicating the global value must be used. */
