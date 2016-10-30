@@ -4757,16 +4757,6 @@ static int find_key_option(const char_u *arg)
   return find_key_option_len(arg, STRLEN(arg));
 }
 
-#ifdef FEAT_SIGNS
-    /* 'signcolumn' */
-    else if (varp == &curwin->w_p_scl)
-    {
-	if (check_opt_strings(*varp, p_scl_values, FALSE) != OK)
-	    errmsg = e_invarg;
-    }
-#endif
-
-
 /*
  * if 'all' == 0: show changed options
  * if 'all' == 1: show all normal options
