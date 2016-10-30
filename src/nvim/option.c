@@ -289,6 +289,7 @@ static char *(p_fcl_values[]) =       { "all", NULL };
 static char *(p_cot_values[]) =       { "menu", "menuone", "longest", "preview",
                                         "noinsert", "noselect", NULL };
 static char *(p_icm_values[]) =       { "nosplit", "split", NULL };
+static char *(p_scl_values[]) =       { "yes", "no", "auto", NULL };
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "option.c.generated.h"
@@ -3008,6 +3009,12 @@ did_set_string_option (
       completeopt_was_set();
     }
   }
+  /* 'signcolumn' */
+  else if (varp == &curwin->w_p_scl) {
+    if (check_opt_strings(*varp, p_scl_values, false) != OK) {
+      errmsg = e_invarg;
+    }
+  }
   /* 'pastetoggle': translate key codes like in a mapping */
   else if (varp == &p_pt) {
     if (*p_pt) {
@@ -4782,7 +4789,6 @@ static int find_key_option(const char_u *arg)
   return find_key_option_len(arg, STRLEN(arg));
 }
 
-
 /*
  * if 'all' == 0: show changed options
  * if 'all' == 1: show all normal options
@@ -5428,6 +5434,7 @@ static char_u *get_varp(vimoption_T *p)
   case PV_UDF:    return (char_u *)&(curbuf->b_p_udf);
   case PV_WM:     return (char_u *)&(curbuf->b_p_wm);
   case PV_KMAP:   return (char_u *)&(curbuf->b_p_keymap);
+  case PV_SCL:    return (char_u *)&(curwin->w_p_scl);
   default:        EMSG(_("E356: get_varp ERROR"));
   }
   /* always return a valid pointer to avoid a crash! */
@@ -5505,6 +5512,7 @@ void copy_winopt(winopt_T *from, winopt_T *to)
   to->wo_fde = vim_strsave(from->wo_fde);
   to->wo_fdt = vim_strsave(from->wo_fdt);
   to->wo_fmr = vim_strsave(from->wo_fmr);
+  to->wo_scl = vim_strsave(from->wo_scl);
   check_winopt(to);             /* don't want NULL pointers */
 }
 
@@ -5528,6 +5536,7 @@ static void check_winopt(winopt_T *wop)
   check_string_option(&wop->wo_fde);
   check_string_option(&wop->wo_fdt);
   check_string_option(&wop->wo_fmr);
+  check_string_option(&wop->wo_scl);
   check_string_option(&wop->wo_rlc);
   check_string_option(&wop->wo_stl);
   check_string_option(&wop->wo_cc);
@@ -5546,6 +5555,7 @@ void clear_winopt(winopt_T *wop)
   clear_string_option(&wop->wo_fde);
   clear_string_option(&wop->wo_fdt);
   clear_string_option(&wop->wo_fmr);
+  clear_string_option(&wop->wo_scl);
   clear_string_option(&wop->wo_rlc);
   clear_string_option(&wop->wo_stl);
   clear_string_option(&wop->wo_cc);
@@ -6902,3 +6912,14 @@ int csh_like_shell(void)
   return strstr((char *)path_tail(p_sh), "csh") != NULL;
 }
 
+/// Return true when window "wp" has a column to draw signs in.
+bool signcolumn_on(win_T *wp)
+{
+    if (*wp->w_p_scl == 'n') {
+      return false;
+    }
+    if (*wp->w_p_scl == 'y') {
+      return true;
+    }
+    return wp->w_buffer->b_signlist != NULL;
+}
