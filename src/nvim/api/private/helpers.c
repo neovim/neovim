@@ -657,7 +657,7 @@ bool object_to_vim(Object obj, typval_T *tv, Error *err)
         if (!object_to_vim(item, &li->li_tv, err)) {
           // cleanup
           listitem_free(li);
-          list_free(list, true);
+          list_free(list);
           return false;
         }
 
@@ -681,7 +681,7 @@ bool object_to_vim(Object obj, typval_T *tv, Error *err)
           api_set_error(err, Validation,
                         _("Empty dictionary keys aren't allowed"));
           // cleanup
-          dict_free(dict, true);
+          dict_free(dict);
           return false;
         }
 
@@ -690,7 +690,7 @@ bool object_to_vim(Object obj, typval_T *tv, Error *err)
         if (!object_to_vim(item.value, &di->di_tv, err)) {
           // cleanup
           dictitem_free(di);
-          dict_free(dict, true);
+          dict_free(dict);
           return false;
         }
 
