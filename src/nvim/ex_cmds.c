@@ -5584,92 +5584,81 @@ void ex_sign(exarg_T *eap)
 	    arg = skipwhite(arg);
 	}
 
-	if (buf == NULL)
-	{
-	    EMSG2(_("E158: Invalid buffer name: %s"), arg);
-	}
-	else if (id <= 0 && !(idx == SIGNCMD_UNPLACE && id == -2))
-	{
-	    if (lnum >= 0 || sign_name != NULL)
-		EMSG(_(e_invarg));
-	    else
-		/* ":sign place file={fname}": list placed signs in one file */
-		sign_list_placed(buf);
-	}
-	else if (idx == SIGNCMD_JUMP)
-	{
-	    /* ":sign jump {id} file={fname}" */
-	    if (lnum >= 0 || sign_name != NULL)
-		EMSG(_(e_invarg));
-	    else if ((lnum = buf_findsign(buf, id)) > 0)
-	    {				/* goto a sign ... */
-		if (buf_jump_open_win(buf) != NULL)
-		{			/* ... in a current window */
-		    curwin->w_cursor.lnum = lnum;
-		    check_cursor_lnum();
-		    beginline(BL_WHITE);
-		}
-		else
-		{   // ... not currently in a window
-      if (buf->b_fname == NULL) {
-        EMSG(_("E934: Cannot jump to a buffer that does not have a name"));
-        return;
+  if (buf == NULL) {
+    EMSG2(_("E158: Invalid buffer name: %s"), arg);
+  } else if (id <= 0 && !(idx == SIGNCMD_UNPLACE && id == -2)) {
+    if (lnum >= 0 || sign_name != NULL) {
+      EMSG(_(e_invarg));
+    } else {
+      // ":sign place file={fname}": list placed signs in one file
+      sign_list_placed(buf);
+    }
+  } else if (idx == SIGNCMD_JUMP) {
+    // ":sign jump {id} file={fname}"
+    if (lnum >= 0 || sign_name != NULL) {
+      EMSG(_(e_invarg));
+    } else if ((lnum = buf_findsign(buf, id)) > 0) {  // goto a sign ...
+      if (buf_jump_open_win(buf) != NULL) {  // ... in a current window
+        curwin->w_cursor.lnum = lnum;
+        check_cursor_lnum();
+        beginline(BL_WHITE);
+      } else {  // ... not currently in a window
+        if (buf->b_fname == NULL) {
+          EMSG(_("E934: Cannot jump to a buffer that does not have a name"));
+          return;
+        }
+
+        size_t cmdlen = STRLEN(buf->b_fname) + 25;
+        char *cmd = xmalloc(cmdlen);
+        snprintf(cmd, cmdlen, "e +%" PRId64 " %s", (int64_t)lnum, buf->b_fname);
+        do_cmdline_cmd(cmd);
+        xfree(cmd);
       }
 
-		    char *cmd = xmalloc(STRLEN(buf->b_fname) + 25);
-		    sprintf(cmd, "e +%" PRId64 " %s",
-                    (int64_t)lnum, buf->b_fname);
-		    do_cmdline_cmd(cmd);
-		    xfree(cmd);
-		}
+      foldOpenCursor();
+    } else {
+      EMSGN(_("E157: Invalid sign ID: %" PRId64), id);
+    }
+  } else if (idx == SIGNCMD_UNPLACE) {
+    if (lnum >= 0 || sign_name != NULL) {
+      EMSG(_(e_invarg));
+    } else if (id == -2) {
+      // ":sign unplace * file={fname}"
+      redraw_buf_later(buf, NOT_VALID);
+      buf_delete_signs(buf);
+    } else {
+      // ":sign unplace {id} file={fname}"
+      lnum = buf_delsign(buf, id);
+      update_debug_sign(buf, lnum);
+    }
+  } else if (sign_name != NULL) {  // idx == SIGNCMD_PLACE
+    for (sp = first_sign; sp != NULL; sp = sp->sn_next) {
+      if (STRCMP(sp->sn_name, sign_name) == 0) {
+        break;
+      }
+    }
+    if (sp == NULL) {
+      EMSG2(_("E155: Unknown sign: %s"), sign_name);
+      return;
+    }
 
-		foldOpenCursor();
-	    }
-	    else
-		EMSGN(_("E157: Invalid sign ID: %" PRId64), id);
-	}
-	else if (idx == SIGNCMD_UNPLACE)
-	{
-	    if (lnum >= 0 || sign_name != NULL)
-		EMSG(_(e_invarg));
-	    else if (id == -2)
-	    {
-		/* ":sign unplace * file={fname}" */
-		redraw_buf_later(buf, NOT_VALID);
-		buf_delete_signs(buf);
-	    }
-	    else
-	    {
-		/* ":sign unplace {id} file={fname}" */
-		lnum = buf_delsign(buf, id);
-		update_debug_sign(buf, lnum);
-	    }
-	}
-	    /* idx == SIGNCMD_PLACE */
-	else if (sign_name != NULL)
-	{
-	    for (sp = first_sign; sp != NULL; sp = sp->sn_next)
-		if (STRCMP(sp->sn_name, sign_name) == 0)
-		    break;
-	    if (sp == NULL)
-	    {
-		EMSG2(_("E155: Unknown sign: %s"), sign_name);
-		return;
-	    }
-	    if (lnum > 0)
-		/* ":sign place {id} line={lnum} name={name} file={fname}":
-		 * place a sign */
-		buf_addsign(buf, id, lnum, sp->sn_typenr);
-	    else
-		/* ":sign place {id} file={fname}": change sign type */
-		lnum = buf_change_sign_type(buf, id, sp->sn_typenr);
-            if (lnum > 0)
-                update_debug_sign(buf, lnum);
-            else
-                EMSG2(_("E885: Not possible to change sign %s"), sign_name);
-	}
-	else
-	    EMSG(_(e_invarg));
+    if (lnum > 0) {
+      // ":sign place {id} line={lnum} name={name} file={fname}":
+      // place a sign
+      buf_addsign(buf, id, lnum, sp->sn_typenr);
+    } else {
+      // ":sign place {id} file={fname}": change sign type
+      lnum = buf_change_sign_type(buf, id, sp->sn_typenr);
+    }
+
+    if (lnum > 0) {
+      update_debug_sign(buf, lnum);
+    } else {
+      EMSG2(_("E885: Not possible to change sign %s"), sign_name);
+    }
+  } else {
+    EMSG(_(e_invarg));
+  }
     }
 }
 
