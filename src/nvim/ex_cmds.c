@@ -5611,6 +5611,11 @@ void ex_sign(exarg_T *eap)
 		}
 		else
 		{   // ... not currently in a window
+      if (buf->b_fname == NULL) {
+        EMSG(_("E934: Cannot jump to a buffer that does not have a name"));
+        return;
+      }
+
 		    char *cmd = xmalloc(STRLEN(buf->b_fname) + 25);
 		    sprintf(cmd, "e +%" PRId64 " %s",
                     (int64_t)lnum, buf->b_fname);
