@@ -348,7 +348,7 @@ Tabpage nvim_win_get_tabpage(Window window, Error *err)
 /// @return Window number
 Integer nvim_win_get_number(Window window, Error *err)
 {
-  Integer rv = 0;
+  int rv = 0;
   win_T *win = find_window_by_handle(window, err);
 
   if (!win) {
@@ -356,7 +356,7 @@ Integer nvim_win_get_number(Window window, Error *err)
   }
 
   int tabnr;
-  win_get_tabwin(window, &tabnr, (int *)&rv);
+  win_get_tabwin(window, &tabnr, &rv);
 
   return rv;
 }
