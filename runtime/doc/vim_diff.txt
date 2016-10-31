@@ -123,15 +123,12 @@ Functions:
   |msgpackdump()|, |msgpackparse()| provide msgpack de/serialization
 
 Events:
-  |TabNew|
   |TabNewEntered|
-  |TabClosed|
   |TermOpen|
   |TermClose|
   |TextYankPost|
 
 Highlight groups:
-  |hl-EndOfBuffer|
   |hl-QuickFixLine|
   |hl-TermCursor|
   |hl-TermCursorNC|
