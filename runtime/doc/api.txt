@@ -49,15 +49,20 @@ Tabpage				  -> enum value kObjectTypeTabpage
 ==============================================================================
 3. API metadata							 *api-metadata*
 
-Nvim exposes metadata about the API as a Dictionary with the following keys:
+Nvim exposes API metadata as a Dictionary. Some items are described below:
 
-version		Nvim version, API level/compatibility
-functions  	API function signatures
-types		Custom handle types defined by Nvim
-error_types	Possible error types returned by API functions
+version			Nvim version, API level/compatibility
+version.api_level	Current API level
+version.api_compatible	API is backwards-compatible with this level
+version.api_prerelease	Declares the current API level as unstable >
+			(version.api_prerelease && fn.since == version.api_level)
+functions		API function signatures
+{fn}.since		API level where function {fn} was introduced
+{fn}.deprecated_since	API level where function {fn} was deprecated
+types			Custom handle types defined by Nvim
+error_types		Possible error types returned by API functions
 
-This metadata is mostly useful for external programs accessing the API via
-RPC, see |rpc-api|.
+External programs ("clients") can use the metadata to discover the |rpc-api|.
 
 ==============================================================================
 4. Buffer highlighting					       *api-highlights*
