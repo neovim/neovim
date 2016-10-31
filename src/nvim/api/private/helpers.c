@@ -472,6 +472,8 @@ static inline void typval_encode_dict_end(EncodedData *const edata)
 #define TYPVAL_ENCODE_CONV_RECURSE(val, conv_type) \
     TYPVAL_ENCODE_CONV_NIL()
 
+// object_convert_one_value()
+// encode_vim_to_object()
 TYPVAL_ENCODE_DEFINE_CONV_FUNCTIONS(static, object, EncodedData *const, edata)
 
 #undef TYPVAL_ENCODE_CONV_STRING

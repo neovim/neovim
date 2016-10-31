@@ -18096,6 +18096,8 @@ void free_tv(typval_T *varp)
 
 #define TYPVAL_ENCODE_CONV_RECURSE(ignored1, ignored2)
 
+// nothing_convert_one_value()
+// encode_vim_to_nothing()
 TYPVAL_ENCODE_DEFINE_CONV_FUNCTIONS(static, nothing, void *, ignored)
 
 #undef TYPVAL_ENCODE_ALLOW_SPECIALS
