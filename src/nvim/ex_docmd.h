@@ -10,8 +10,7 @@
 #define DOCMD_KEYTYPED  0x08      // don't reset KeyTyped
 #define DOCMD_EXCRESET  0x10      // reset exception environment (for debugging
 #define DOCMD_KEEPLINE  0x20      // keep typed line for repeating with "."
-#define DOCMD_LIVE_PREVIEW  0x40  // Command is a live preview like
-                                  // incsubstitution
+#define DOCMD_LIVE      0x40      // show updates as-you-type ("live" command)
 
 /* defines for eval_vars() */
 #define VALID_PATH              1

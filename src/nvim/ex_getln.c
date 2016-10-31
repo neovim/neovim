@@ -1591,9 +1591,12 @@ static int command_line_changed(CommandLineState *s)
     msg_starthere();
     redrawcmdline();
     s->did_incsearch = true;
-  } else if (*p_ics != NUL && s->firstc == ':' && is_live(ccline.cmdbuff)) {
-    // compute a live action
-    do_cmdline(ccline.cmdbuff, NULL, NULL, DOCMD_KEEPLINE|DOCMD_LIVE_PREVIEW);
+  } else if (s->firstc == ':'
+             && *p_ics != NUL       // 'incsubstitute' is set
+             && cmdline_star == 0   // not typing a password
+             && cmd_is_live(ccline.cmdbuff)) {
+    // process a "live" command
+    do_cmdline(ccline.cmdbuff, NULL, NULL, DOCMD_KEEPLINE|DOCMD_LIVE);
     redrawcmdline();
   }
 
@@ -5141,16 +5144,12 @@ static int ex_window(void)
   }
   cmdwin_type = get_cmdline_type();
 
-  /* Create the command-line buffer empty. */
-  (void)do_ecmd(0, NULL, NULL, NULL, ECMD_ONE, ECMD_HIDE, NULL);
-  (void)setfname(curbuf, (char_u *)"[Command Line]", NULL, TRUE);
-  set_option_value((char_u *)"bt", 0L, (char_u *)"nofile", OPT_LOCAL);
-  set_option_value((char_u *)"swf", 0L, NULL, OPT_LOCAL);
-  curbuf->b_p_ma = TRUE;
-  curwin->w_p_fen = FALSE;
+  // Create empty command-line buffer.
+  buf_open_special(0, "[Command Line]", "nofile");
   curwin->w_p_rl = cmdmsg_rl;
-  cmdmsg_rl = FALSE;
-  RESET_BINDING(curwin);
+  cmdmsg_rl = false;
+  curbuf->b_p_ma = true;
+  curwin->w_p_fen = false;
 
   /* Do execute autocommands for setting the filetype (load syntax). */
   unblock_autocmds();

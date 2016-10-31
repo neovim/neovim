@@ -1248,7 +1248,7 @@ static char_u * do_one_cmd(char_u **cmdlinep,
   memset(&ea, 0, sizeof(ea));
   ea.line1 = 1;
   ea.line2 = 1;
-  ea.is_live = flags & DOCMD_LIVE_PREVIEW;
+  ea.is_live = flags & DOCMD_LIVE;
   ex_nesting_level++;
 
   /* When the last file has not been edited :q has to be typed twice. */
@@ -9652,25 +9652,22 @@ static void ex_terminal(exarg_T *eap)
 
 /// Check whether commandline starts with a live command
 ///
-/// @param[in] cmd_live Commandline to check. May start with a range.
+/// @param[in] cmd Commandline to check. May start with a range.
 ///
 /// @return True if first command is a live command
-///         Currently :s is the only one
-bool is_live(char_u *cmd_live)
+bool cmd_is_live(char_u *cmd)
 {
-  exarg_T ea;
-  ea.cmd = cmd_live;
-
-  // parse the command line
-  if (ea.cmd != NULL) {
-    ea.cmd = skip_range(ea.cmd, NULL);
-    if (*ea.cmd == '*') {
-      ea.cmd = skipwhite(ea.cmd + 1);
-    }
-    find_command(&ea, NULL);
-  } else {
+  if (cmd == NULL) {
     return false;
   }
+
+  exarg_T ea;
+  // parse the command line
+  ea.cmd = skip_range(cmd, NULL);
+  if (*ea.cmd == '*') {
+    ea.cmd = skipwhite(ea.cmd + 1);
+  }
+  find_command(&ea, NULL);
 
   return (ea.cmdidx == CMD_substitute);
 }

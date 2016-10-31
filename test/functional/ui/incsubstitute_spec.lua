@@ -42,19 +42,14 @@ local function common_setup(screen, incsub, text)
     })
   end
 
-  -- default for incsub is off
-  if not incsub then
-    incsub = ""
-  end
-
-  execute("set incsubstitute=" .. incsub)
+  execute("set incsubstitute=" .. (incsub and incsub or ""))
 
   if text then
     insert(text)
   end
 end
 
-describe('IncSubstitution preserves', function()
+describe("'incsubstitute' preserves", function()
    if helpers.pending_win32(pending) then return end
 
   before_each(clear)
@@ -98,7 +93,7 @@ describe('IncSubstitution preserves', function()
     end
   end)
 
-  it('the undolevels setting', function()
+  it("'undolevels' setting", function()
     for _, case in pairs{"", "split", "nosplit"} do
       clear()
       execute("set undolevels=139")
@@ -113,7 +108,7 @@ describe('IncSubstitution preserves', function()
 
 end)
 
-describe('IncSubstitution preserves undo functionality', function()
+describe("'incsubstitute' preserves undo", function()
    if helpers.pending_win32(pending) then return end
 
   local cases = { "", "split", "nosplit" }
@@ -241,21 +236,16 @@ describe('IncSubstitution preserves undo functionality', function()
       2]])
   end
 
-  it("at a non-leaf of the undo tree", function()
-    -- this does not work even in standard vim
-    -- if fixed, easily combined with the test below
-    if true then
-      pending("vim")
-      return
-    end
-
---    for _, case in pairs(cases) do
---      for _, str in pairs(substrings) do
---        for _, redoable in pairs({true}) do
---          test_sub(str, case, redoable)
---        end
---      end
---    end
+  -- TODO(vim): This does not work, even in Vim.
+  -- Waiting for fix (perhaps from upstream).
+  pending("at a non-leaf of the undo tree", function()
+   for _, case in pairs(cases) do
+     for _, str in pairs(substrings) do
+       for _, redoable in pairs({true}) do
+         test_sub(str, case, redoable)
+       end
+     end
+   end
   end)
 
   it("at a leaf of the undo tree", function()
@@ -555,7 +545,7 @@ describe('IncSubstitution preserves undo functionality', function()
 
 end)
 
-describe('IncSubstitution with incsubstitute=split', function()
+describe("incsubstitute=split", function()
   if helpers.pending_win32(pending) then return end
 
   local screen = Screen.new(30,15)
@@ -693,7 +683,7 @@ describe('IncSubstitution with incsubstitute=split', function()
     ]])
   end)
 
-  it('highlights the patterg up with :set hlsearch', function()
+  it('highlights the pattern with :set hlsearch', function()
     execute("set hlsearch")
     feed(":%s/tw")
     screen:expect([[
@@ -815,7 +805,7 @@ describe('IncSubstitution with incsubstitute=split', function()
 
 end)
 
-describe('Incsubstitution with incsubstitute=nosplit', function()
+describe("incsubstitute=nosplit", function()
   if helpers.pending_win32(pending) then return end
 
   local screen = Screen.new(20,10)
@@ -891,7 +881,7 @@ describe('Incsubstitution with incsubstitute=nosplit', function()
 
 end)
 
-describe('Incsubstitution with a failing expression', function()
+describe("'incsubstitute' with a failing expression", function()
   if helpers.pending_win32(pending) then return end
 
   local screen = Screen.new(20,10)
@@ -927,7 +917,7 @@ describe('Incsubstitution with a failing expression', function()
 
 end)
 
-describe('Incsubstitution and cnoremap', function()
+describe("'incsubstitute' and :cnoremap", function()
   local cases = { "",  "split", "nosplit" }
 
   local function refresh(case)
@@ -1041,7 +1031,7 @@ describe('Incsubstitution and cnoremap', function()
 
 end)
 
-describe('Incsubstitute: autocommands', function()
+describe("'incsubstitute': autocommands", function()
   before_each(clear)
 
   -- keys are events to be tested
@@ -1129,7 +1119,7 @@ describe('Incsubstitute: autocommands', function()
 
 end)
 
-describe('Incsubstitute splits', function()
+describe("'incsubstitute': split windows", function()
   if helpers.pending_win32(pending) then return end
 
   local screen
@@ -1143,7 +1133,7 @@ describe('Incsubstitute splits', function()
     screen:detach()
   end)
 
-  it('work after other splittings', function()
+  it('work after more splits', function()
     refresh()
 
     execute("vsplit")

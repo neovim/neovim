@@ -6,8 +6,6 @@
 #include "nvim/os/time.h"
 #include "nvim/eval_defs.h"
 #include "nvim/pos.h"
-#include "nvim/lib/klist.h"
-#include "nvim/lib/kvec.h"
 
 // flags for do_ecmd()
 #define ECMD_HIDE            0x01    // don't free the current buffer
@@ -17,6 +15,7 @@
 #define ECMD_FORCEIT         0x08    // ! used in Ex command
 #define ECMD_ADDBUF          0x10    // don't edit, just add to buffer list
 #define ECMD_RESERVED_BUFNR  0x20    // bufnr argument is reserved bufnr
+
 
 /* for lnum argument in do_ecmd() */
 #define ECMD_LASTL      (linenr_T)0     /* use last position in loaded file */
@@ -29,24 +28,6 @@ typedef struct {
   Timestamp timestamp;  ///< Time when it was last set.
   list_T *additional_elements;  ///< Additional data left from ShaDa file.
 } SubReplacementString;
-
-
-// Defs for inc_sub functionality
-
-/// Structure to backup and display matched lines in incsubstitution
-typedef struct {
-  linenr_T lnum;
-  long nmatch;
-  char_u *line;
-  // list of column numbers of matches on this line
-  kvec_t(colnr_T) start_col;
-} MatchedLine;
-
-// List of matched lines
-typedef kvec_t(MatchedLine) MatchedLineVec;
-
-// End defs for inc_sub functionality
-
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ex_cmds.h.generated.h"

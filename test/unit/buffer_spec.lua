@@ -13,7 +13,7 @@ describe('buffer functions', function()
 
   local buflist_new = function(file, flags)
     local c_file = to_cstr(file)
-    return buffer.buflist_new(c_file, c_file, 1, flags, 0)
+    return buffer.buflist_new(c_file, c_file, 1, flags)
   end
 
   local close_buffer = function(win, buf, action, abort_if_last)

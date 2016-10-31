@@ -64,7 +64,7 @@ these differences.
 3. New Features						       *nvim-features*
 
 
-MAJOR FEATURES ~
+MAJOR COMPONENTS ~
 
 Embedded terminal emulator	|terminal-emulator|
 RPC API				|RPC|
@@ -85,25 +85,29 @@ avoids features that cannot be provided on all platforms--instead that is
 delegated to external plugins/extensions.
 
 
-OTHER FEATURES ~
+ARCHITECTURE ~
+
+External plugins run in separate processes. |remote-plugin| This improves
+stability and allows those plugins to perform tasks without blocking the
+editor. Even "legacy" Python and Ruby plugins which use the old Vim interfaces
+(|if_py| and |if_ruby|) run out-of-process.
+
+
+FEATURES ~
 
 |bracketed-paste-mode| is built-in and enabled by default.
 
-Meta (alt) chords are recognized (even in the terminal).
-  <M-1>, <M-2>, ...
-  <M-BS>, <M-Del>, <M-Ins>, ...
-  <M-/>, <M-\>, ...
-  <M-Space>, <M-Enter>, <M-=>, <M-->, <M-?>, <M-$>, ...
-
-  Note: Meta chords are case-sensitive (<M-a> is distinguished from <M-A>).
+|META| (ALT) chords are recognized, even in the terminal. Any |<M-| mapping
+will work. Some examples: <M-1>, <M-2>, <M-BS>, <M-Del>, <M-Ins>, <M-/>,
+<M-\>, <M-Space>, <M-Enter>, <M-=>, <M-->, <M-?>, <M-$>, ...
+META chords are case-sensitive: <M-a> and <M-A> are two different keycodes.
 
 Some `CTRL-SHIFT-...` key chords are distinguished from `CTRL-...` variants
 (even in the terminal). Specifically, the following are known to work:
-  <C-Tab>, <C-S-Tab>
-  <C-BS>, <C-S-BS>
-  <C-Enter>, <C-S-Enter>
+  <C-Tab>, <C-S-Tab>, <C-BS>, <C-S-BS>, <C-Enter>, <C-S-Enter>
 
 Options:
+  'incsubstitute' shows results while typing a |:substitute| command
   'statusline' supports unlimited alignment sections
   'tabline' %@Func@foo%X can call any function on mouse-click
 
@@ -125,14 +129,14 @@ Functions:
 Events:
   |TabNew|
   |TabNewEntered|
-  |TabClosed|
-  |TermOpen|
   |TermClose|
+  |TermOpen|
   |TextYankPost|
 
 Highlight groups:
-  |hl-EndOfBuffer|
+  |hl-Substitute|
   |hl-QuickFixLine|
+  |hl-Substitute|
   |hl-TermCursor|
   |hl-TermCursorNC|
 
@@ -298,6 +302,7 @@ Other commands:
   :mode (no longer accepts an argument)
   :open
   :shell
+  :smile
   :tearoff
 
 Other compile-time features:

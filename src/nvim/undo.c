@@ -1685,7 +1685,7 @@ void u_redo(int count)
   u_doit(count, false);
 }
 
-/// undo and forget.
+/// undo, and remove the undo branch from the undo tree.
 bool u_undo_and_forget(int count)
 {
   if (curbuf->b_u_synced == false) {
@@ -1726,9 +1726,7 @@ bool u_undo_and_forget(int count)
   return true;
 }
 
-/*
- * Undo or redo, depending on 'undo_undoes', 'count' times.
- */
+/// Undo or redo, depending on `undo_undoes`, `count` times.
 static void u_doit(int startcount, bool quiet)
 {
   int count = startcount;
@@ -2342,17 +2340,13 @@ static void u_undoredo(int undo)
 #endif
 }
 
-/*
- * If we deleted or added lines, report the number of less/more lines.
- * Otherwise, report the number of changes (this may be incorrect
- * in some cases, but it's better than nothing).
- */
-static void
-u_undo_end(
-    int did_undo,                   // just did an undo
-    int absolute,                   // used ":undo N"
-    bool quiet
-)
+/// If we deleted or added lines, report the number of less/more lines.
+/// Otherwise, report the number of changes (this may be incorrect
+/// in some cases, but it's better than nothing).
+static void u_undo_end(
+    int did_undo,     //< just did an undo
+    int absolute,     //< used ":undo N"
+    bool quiet)
 {
   char        *msgstr;
   u_header_T  *uhp;
@@ -2361,9 +2355,9 @@ u_undo_end(
   if ((fdo_flags & FDO_UNDO) && KeyTyped)
     foldOpenCursor();
 
-  if (global_busy           // no messages now, wait until global is finished
-      || !messaging()       // 'lazyredraw' set, don't do messages now
-      || quiet) {  // livemode doesn't show messages
+  if (quiet
+      || global_busy        // no messages until global is finished
+      || !messaging()) {    // 'lazyredraw' set, don't do messages now
     return;
   }
 

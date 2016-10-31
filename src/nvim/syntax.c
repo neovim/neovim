@@ -7160,16 +7160,13 @@ int syn_namen2id(char_u *linep, int len)
  */
 int syn_check_group(char_u *pp, int len)
 {
-  int id;
-  char_u  *name;
-
-  name = vim_strnsave(pp, len);
-
-  id = syn_name2id(name);
-  if (id == 0)                          /* doesn't exist yet */
+  char_u  *name = vim_strnsave(pp, len);
+  int id = syn_name2id(name);
+  if (id == 0) {  // doesn't exist yet
     id = syn_add_group(name);
-  else
+  } else {
     xfree(name);
+  }
   return id;
 }
 

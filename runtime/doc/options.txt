@@ -3526,6 +3526,14 @@ A jump table for the options with a short description can be found at |Q_op|.
 	CTRL-R CTRL-W can be used to add the word at the end of the current
 	match, excluding the characters that were already typed.
 
+						*'incsubstitute'* *'ics'*
+'incsubstitute' 'ics'	string	(default "")
+			global
+			
+	If "split" or "nosplit" then |:substitute| updates the buffer
+	as-you-type.  If "split", also show partial off-screen results in
+	a window.  Replacement text is hightlighted with |hl-IncSubstitute|.
+
 						*'indentexpr'* *'inde'*
 'indentexpr' 'inde'	string	(default "")
 			local to buffer
@@ -3991,16 +3999,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 <	The "NonText" highlighting will be used for "eol", "extends" and
 	"precedes".  "SpecialKey" for "nbsp", "space", "tab" and "trail".
 	|hl-NonText| |hl-SpecialKey|
-
-						*'incsubstitute'* *'ics'*
-'incsubstitute' 'ics'	string	(default "")
-			global
-			
-	If set to "split" or "nosplit", substitutions (|:s|) are updated live
-	while the user types the command.  If set to "split", a split window
-	is open which displays the lines where the search matches. The
-	replacement text in the split is hightlighted using
-	|hl-IncSubstitute|. Note: Only '/' is supported as a delimiter.
 
 			*'lpl'* *'nolpl'* *'loadplugins'* *'noloadplugins'*
 'loadplugins' 'lpl'	boolean	(default on)
