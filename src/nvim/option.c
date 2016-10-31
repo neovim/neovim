@@ -2527,7 +2527,7 @@ did_set_string_option (
   else if (varp == &p_sbo) {
     if (check_opt_strings(p_sbo, p_scbopt_values, TRUE) != OK)
       errmsg = e_invarg;
-  } else if (varp == &p_ambw || (bool *)varp == &p_emoji) {
+  } else if (varp == &p_ambw || (int *)varp == &p_emoji) {
     // 'ambiwidth'
     if (check_opt_strings(p_ambw, p_ambw_values, false) != OK) {
       errmsg = e_invarg;
@@ -3720,7 +3720,7 @@ set_bool_option (
     did_set_title(FALSE);
   } else if ((int *)varp == &p_icon) {
     did_set_title(TRUE);
-  } else if ((bool *)varp == &curbuf->b_changed) {
+  } else if ((int *)varp == &curbuf->b_changed) {
     if (!value)
       save_file_ff(curbuf);             /* Buffer is unchanged */
     redraw_titles();
@@ -3750,10 +3750,10 @@ set_bool_option (
   else if ((int *)varp == &curwin->w_p_wrap) {
     if (curwin->w_p_wrap)
       curwin->w_leftcol = 0;
-  } else if ((bool *)varp == &p_ea) {
+  } else if ((int *)varp == &p_ea) {
     if (p_ea && !old_value)
       win_equal(curwin, false, 0);
-  } else if ((bool *)varp == &p_acd) {
+  } else if ((int *)varp == &p_acd) {
     /* Change directories when the 'acd' option is set now. */
     do_autochdir();
   }
@@ -4513,7 +4513,7 @@ get_option_value (
   else {
     /* Special case: 'modified' is b_changed, but we also want to consider
      * it set when 'ff' or 'fenc' changed. */
-    if ((bool *)varp == &curbuf->b_changed)
+    if ((int *)varp == &curbuf->b_changed)
       *numval = curbufIsChanged();
     else
       *numval = *(int *)varp;
@@ -4885,8 +4885,8 @@ showoneopt (
   varp = get_varp_scope(p, opt_flags);
 
   /* for 'modified' we also need to check if 'ff' or 'fenc' changed. */
-  if ((p->flags & P_BOOL) && ((bool *)varp == &curbuf->b_changed
-                              ? !curbufIsChanged() : !*(bool *)varp))
+  if ((p->flags & P_BOOL) && ((int *)varp == &curbuf->b_changed
+                              ? !curbufIsChanged() : !*(int *)varp))
     MSG_PUTS("no");
   else if ((p->flags & P_BOOL) && *(int *)varp < 0)
     MSG_PUTS("--");

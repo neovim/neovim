@@ -1,8 +1,6 @@
 #ifndef NVIM_OPTION_DEFS_H
 #define NVIM_OPTION_DEFS_H
 
-#include <stdbool.h>
-
 #include "nvim/types.h"
 #include "nvim/macros.h"  // For EXTERN
 
@@ -297,7 +295,7 @@ enum {
  */
 
 EXTERN long p_aleph;            /* 'aleph' */
-EXTERN bool p_acd;              /* 'autochdir' */
+EXTERN int p_acd;               /* 'autochdir' */
 EXTERN char_u   *p_ambw;        /* 'ambiwidth' */
 EXTERN int p_ar;                /* 'autoread' */
 EXTERN int p_aw;                /* 'autowrite' */
@@ -403,9 +401,9 @@ static char *(p_dy_values[]) = { "lastline", "truncate", "uhex", NULL };
 #define DY_TRUNCATE             0x002
 #define DY_UHEX                 0x004
 EXTERN int p_ed;                // 'edcompatible'
-EXTERN bool p_emoji;            // 'emoji'
+EXTERN int p_emoji;             // 'emoji'
 EXTERN char_u   *p_ead;         // 'eadirection'
-EXTERN bool p_ea;               // 'equalalways'
+EXTERN int p_ea;                // 'equalalways'
 EXTERN char_u   *p_ep;          // 'equalprg'
 EXTERN int p_eb;                // 'errorbells'
 EXTERN char_u   *p_ef;          // 'errorfile'
@@ -417,7 +415,7 @@ EXTERN int p_ek;                // 'esckeys'
 EXTERN int p_exrc;              // 'exrc'
 EXTERN char_u   *p_fencs;       // 'fileencodings'
 EXTERN char_u   *p_ffs;         // 'fileformats'
-EXTERN bool p_fic;              // 'fileignorecase'
+EXTERN int p_fic;               // 'fileignorecase'
 EXTERN char_u   *p_fcl;         // 'foldclose'
 EXTERN long p_fdls;             // 'foldlevelstart'
 EXTERN char_u   *p_fdo;         // 'foldopen'
@@ -622,7 +620,7 @@ EXTERN long p_titlelen;         ///< 'titlelen'
 EXTERN char_u *p_titleold;      ///< 'titleold'
 EXTERN char_u *p_titlestring;   ///< 'titlestring'
 EXTERN char_u *p_tsr;           ///< 'thesaurus'
-EXTERN bool p_tgc;              ///< 'termguicolors'
+EXTERN int p_tgc;               ///< 'termguicolors'
 EXTERN int p_ttimeout;          ///< 'ttimeout'
 EXTERN long p_ttm;              ///< 'ttimeoutlen'
 EXTERN char_u *p_udir;          ///< 'undodir'
@@ -659,14 +657,14 @@ EXTERN char_u   *p_wig;         /* 'wildignore' */
 EXTERN char_u   *p_ww;          /* 'whichwrap' */
 EXTERN long p_wc;               /* 'wildchar' */
 EXTERN long p_wcm;              /* 'wildcharm' */
-EXTERN bool p_wic;              ///< 'wildignorecase'
+EXTERN int p_wic;               ///< 'wildignorecase'
 EXTERN char_u   *p_wim;         /* 'wildmode' */
 EXTERN int p_wmnu;              /* 'wildmenu' */
 EXTERN long p_wh;               /* 'winheight' */
 EXTERN long p_wmh;              /* 'winminheight' */
 EXTERN long p_wmw;              /* 'winminwidth' */
 EXTERN long p_wiw;              /* 'winwidth' */
-EXTERN bool p_ws;               /* 'wrapscan' */
+EXTERN int p_ws;                /* 'wrapscan' */
 EXTERN int p_write;             /* 'write' */
 EXTERN int p_wa;                /* 'writeany' */
 EXTERN int p_wb;                /* 'writebackup' */

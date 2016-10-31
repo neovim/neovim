@@ -488,7 +488,7 @@ struct file_buffer {
   bool file_id_valid;
   FileID file_id;
 
-  bool b_changed;               /* 'modified': Set to true if something in the
+  int b_changed;                /* 'modified': Set to true if something in the
                                    file has been changed and not written out. */
   int b_changedtick;            /* incremented for each change, also for undo */
 
@@ -655,7 +655,7 @@ struct file_buffer {
   long b_p_sts;                 ///< 'softtabstop'
   long b_p_sts_nopaste;         ///< b_p_sts saved for paste mode
   char_u *b_p_sua;              ///< 'suffixesadd'
-  bool b_p_swf;                 ///< 'swapfile'
+  int b_p_swf;                  ///< 'swapfile'
   long b_p_smc;                 ///< 'synmaxcol'
   char_u *b_p_syn;              ///< 'syntax'
   long b_p_ts;                  ///< 'tabstop'
