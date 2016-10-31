@@ -91,9 +91,6 @@ typedef enum {
 struct object {
   ObjectType type;
   union {
-    Buffer buffer;
-    Window window;
-    Tabpage tabpage;
     Boolean boolean;
     Integer integer;
     Float floating;
