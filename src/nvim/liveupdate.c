@@ -3,11 +3,9 @@
 #include "nvim/api/private/helpers.h"
 #include "nvim/msgpack_rpc/channel.h"
 
-/*
- * Register a channel. Return True if the channel was added, or already added.
- * Return False if the channel couldn't be added because the buffer is
- * unloaded.
- */
+// Register a channel. Return True if the channel was added, or already added.
+// Return False if the channel couldn't be added because the buffer is
+// unloaded.
 bool liveupdate_register(buf_T *buf, uint64_t channel_id) {
   // must fail if the buffer isn't loaded
   if (buf->b_ml.ml_mfp == NULL) {
@@ -50,7 +48,7 @@ bool liveupdate_register(buf_T *buf, uint64_t channel_id) {
   for (size_t i = 0; i < line_count; i++) {
     linenr_T lnum = 1 + (linenr_T)i;
 
-    const char *bufstr = (char *) ml_get_buf(buf, lnum, false);
+    const char *bufstr = (char *)ml_get_buf(buf, lnum, false);
     Object str = STRING_OBJ(cstr_to_string(bufstr));
 
     // Vim represents NULs as NLs, but this may confuse clients.
@@ -98,7 +96,7 @@ void liveupdate_unregister(buf_T *buf, uint64_t channelid) {
   if (found_active) {
     // make a new copy of the active array without the channelid in it
     uint64_t *newlist = xmalloc((1 + active_size - found_active)
-        * sizeof channelid);
+                                * sizeof channelid);
     int i = 0;
     int j = 0;
     for (; i < active_size; i++) {
@@ -125,7 +123,8 @@ void liveupdate_unregister_all(buf_T *buf) {
   }
 }
 
-void liveupdate_send_changes(buf_T *buf, linenr_T firstline, int64_t num_added, int64_t num_removed) {
+void liveupdate_send_changes(buf_T *buf, linenr_T firstline, int64_t num_added,
+                             int64_t num_removed) {
   // if one the channels doesn't work, put its ID here so we can remove it later
   uint64_t badchannelid = LIVEUPDATE_NONE;
 
@@ -155,7 +154,7 @@ void liveupdate_send_changes(buf_T *buf, linenr_T firstline, int64_t num_added, 
           linedata.items = xcalloc(sizeof(Object), num_added);
           for (int64_t i = 0; i < num_added; i++) {
             int64_t lnum = firstline + i;
-            const char *bufstr = (char *) ml_get_buf(buf, (linenr_T)lnum, false);
+            const char *bufstr = (char *)ml_get_buf(buf, (linenr_T)lnum, false);
             Object str = STRING_OBJ(cstr_to_string(bufstr));
 
             // Vim represents NULs as NLs, but this may confuse clients.

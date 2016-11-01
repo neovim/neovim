@@ -81,9 +81,9 @@ String buffer_get_line(Buffer buffer, Integer index, Error *err)
 /// @param enabled True turns on live updates, False turns them off.
 /// @param[out] err Details of an error that may have occurred
 Boolean nvim_buf_live_updates(uint64_t channel_id,
-                         Buffer buffer,
-                         Boolean enabled,
-                         Error *err)
+                              Buffer buffer,
+                              Boolean enabled,
+                              Error *err)
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
 
