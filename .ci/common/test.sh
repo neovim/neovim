@@ -1,20 +1,22 @@
 check_core_dumps() {
-  sleep 2
-
+  local app="${1:-${BUILD_DIR}/bin/nvim}"
   if [[ "${TRAVIS_OS_NAME}" == osx ]]; then
     local cores="$(find /cores/ -type f -print)"
-    local dbg_cmd="lldb -Q -o bt -f ${BUILD_DIR}/bin/nvim -c"
   else
     # FIXME (fwalch): Will trigger if a file named core.* exists outside of $DEPS_BUILD_DIR.
     local cores="$(find ./ -type f -not -path "*${DEPS_BUILD_DIR}*" -name 'core.*' -print)"
-    local dbg_cmd="gdb -n -batch -ex bt ${BUILD_DIR}/bin/nvim"
   fi
 
   if [ -z "${cores}" ]; then
     return
   fi
+  local core
   for core in $cores; do
-    ${dbg_cmd} "${core}"
+    if [[ "${TRAVIS_OS_NAME}" == osx ]]; then
+      lldb -Q -o "bt all" -f "${app}" -c "${core}"
+    else
+      gdb -n -batch -ex 'thread apply all bt full' "${app}" -c "${core}"
+    fi
   done
   exit 1
 }
@@ -49,29 +51,40 @@ asan_check() {
 }
 
 run_unittests() {
-  ${MAKE_CMD} -C "${BUILD_DIR}" unittest
+  ulimit -c unlimited
+  if ! ${MAKE_CMD} -C "${BUILD_DIR}" unittest ; then
+    check_core_dumps "$(which luajit)"
+    exit 1
+  fi
+  check_core_dumps "$(which luajit)"
 }
 
 run_functionaltests() {
+  ulimit -c unlimited
   if ! ${MAKE_CMD} -C "${BUILD_DIR}" ${FUNCTIONALTEST}; then
     asan_check "${LOG_DIR}"
     valgrind_check "${LOG_DIR}"
+    check_core_dumps
     exit 1
   fi
   asan_check "${LOG_DIR}"
   valgrind_check "${LOG_DIR}"
+  check_core_dumps
 }
 
 run_oldtests() {
+  ulimit -c unlimited
   ${MAKE_CMD} -C "${BUILD_DIR}" helptags
   if ! make -C "${TRAVIS_BUILD_DIR}/src/nvim/testdir"; then
     reset
     asan_check "${LOG_DIR}"
     valgrind_check "${LOG_DIR}"
+    check_core_dumps
     exit 1
   fi
   asan_check "${LOG_DIR}"
   valgrind_check "${LOG_DIR}"
+  check_core_dumps
 }
 
 install_nvim() {
