@@ -94,8 +94,6 @@ end
 cimportstr = function(body)
   -- format it (so that the lines are "unique" statements), also filter out
   -- Objective-C blocks
-  body = body:gsub('//.*', '')
-  body = body:gsub('/%*.*%*/', '')
   body = formatc(body)
   body = filter_complex_blocks(body)
 
@@ -136,10 +134,6 @@ cimportstr = function(body)
 
   return libnvim
 end
-
-ffi.cdef = cimportstr
-local syscall = require('syscall')
-ffi.cdef = cdef
 
 local function cppimport(path)
   return cimport(Paths.test_include_path .. '/' .. path)
