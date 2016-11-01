@@ -1,6 +1,7 @@
 
 #include "nvim/tui/input.h"
 #include "nvim/vim.h"
+#include "nvim/log.h"
 #include "nvim/api/vim.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/ascii.h"
@@ -236,6 +237,11 @@ static void tk_getkeys(TermInput *input, bool force)
       forward_modified_utf8(input, &key);
     } else if (key.type == TERMKEY_TYPE_MOUSE) {
       forward_mouse_event(input, &key);
+    } else if (key.type == TERMKEY_TYPE_MODEREPORT) {
+      int initial, mode, value;
+      termkey_interpret_modereport(input->tk, &key, &initial, &mode, &value);
+      ILOG("TERMKEY_TYPE_MODEREPORT initial=%c mode=%d value=%d",
+           initial, mode, value);
     }
   }
 

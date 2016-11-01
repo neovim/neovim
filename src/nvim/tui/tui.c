@@ -193,6 +193,11 @@ static void tui_terminal_start(UI *ui)
   update_size(ui);
   signal_watcher_start(&data->winch_handle, sigwinch_cb, SIGWINCH);
   term_input_start(&data->input);
+
+  // Query the terminal now. If the terminal responds it will be picked up by
+  // tui/input.c
+#define DECRQM_QUERY_CURSOR_BLINK "\x1b[?12$p"
+  out(ui, DECRQM_QUERY_CURSOR_BLINK, strlen(DECRQM_QUERY_CURSOR_BLINK));
 }
 
 static void tui_terminal_stop(UI *ui)
@@ -791,6 +796,8 @@ static void unibi_set_if_empty(unibi_term *ut, enum unibi_string str,
 
 static void tui_terminfo_set_cursor_codes(TUIData *data)
 {
+  unibi_term *ut = data->ut;
+  bool inside_tmux = os_getenv("TMUX") != NULL;
 #define TMUX_WRAP(seq) (inside_tmux ? "\x1bPtmux;\x1b" seq "\x1b\\" : seq)
   // Support changing cursor shape on some popular terminals.
   const char *term_prog = os_getenv("TERM_PROGRAM");
@@ -829,8 +836,6 @@ static void fix_terminfo(TUIData *data)
   if (!term) {
     goto end;
   }
-
-  bool inside_tmux = os_getenv("TMUX") != NULL;
 
 #define STARTS_WITH(str, prefix) (!memcmp(str, prefix, sizeof(prefix) - 1))
 
