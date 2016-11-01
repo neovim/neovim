@@ -789,6 +789,37 @@ static void unibi_set_if_empty(unibi_term *ut, enum unibi_string str,
   }
 }
 
+static void tui_terminfo_set_cursor_codes(TUIData *data)
+{
+#define TMUX_WRAP(seq) (inside_tmux ? "\x1bPtmux;\x1b" seq "\x1b\\" : seq)
+  // Support changing cursor shape on some popular terminals.
+  const char *term_prog = os_getenv("TERM_PROGRAM");
+  const char *vte_version = os_getenv("VTE_VERSION");
+
+  if ((term_prog && !strcmp(term_prog, "Konsole"))
+      || os_getenv("KONSOLE_DBUS_SESSION") != NULL) {
+    // Konsole uses a proprietary escape code to set the cursor shape
+    // and does not support DECSCUSR.
+    data->unibi_ext.set_cursor_shape_bar = (int)unibi_add_ext_str(ut, NULL,
+        TMUX_WRAP("\x1b]50;CursorShape=1;BlinkingCursorEnabled=1\x07"));
+    data->unibi_ext.set_cursor_shape_ul = (int)unibi_add_ext_str(ut, NULL,
+        TMUX_WRAP("\x1b]50;CursorShape=2;BlinkingCursorEnabled=1\x07"));
+    data->unibi_ext.set_cursor_shape_block = (int)unibi_add_ext_str(ut, NULL,
+        TMUX_WRAP("\x1b]50;CursorShape=0;BlinkingCursorEnabled=0\x07"));
+  } else if (!vte_version || atoi(vte_version) >= 3900) {
+    // Assume that the terminal supports DECSCUSR unless it is an
+    // old VTE based terminal.  This should not get wrapped for tmux,
+    // which will handle it via its Ss/Se terminfo extension - usually
+    // according to its terminal-overrides.
+    data->unibi_ext.set_cursor_shape_bar =
+      (int)unibi_add_ext_str(ut, NULL, "\x1b[5 q");
+    data->unibi_ext.set_cursor_shape_ul =
+      (int)unibi_add_ext_str(ut, NULL, "\x1b[3 q");
+    data->unibi_ext.set_cursor_shape_block =
+      (int)unibi_add_ext_str(ut, NULL, "\x1b[2 q");
+  }
+}
+
 static void fix_terminfo(TUIData *data)
 {
   unibi_term *ut = data->ut;
@@ -849,36 +880,9 @@ static void fix_terminfo(TUIData *data)
     unibi_set_str(ut, unibi_set_a_background, XTERM_SETAB);
   }
 
-  if (os_getenv("NVIM_TUI_ENABLE_CURSOR_SHAPE") == NULL) {
-    goto end;
-  }
-
-#define TMUX_WRAP(seq) (inside_tmux ? "\x1bPtmux;\x1b" seq "\x1b\\" : seq)
-  // Support changing cursor shape on some popular terminals.
-  const char *term_prog = os_getenv("TERM_PROGRAM");
-  const char *vte_version = os_getenv("VTE_VERSION");
-
-  if ((term_prog && !strcmp(term_prog, "Konsole"))
-      || os_getenv("KONSOLE_DBUS_SESSION") != NULL) {
-    // Konsole uses a proprietary escape code to set the cursor shape
-    // and does not support DECSCUSR.
-    data->unibi_ext.set_cursor_shape_bar = (int)unibi_add_ext_str(ut, NULL,
-        TMUX_WRAP("\x1b]50;CursorShape=1;BlinkingCursorEnabled=1\x07"));
-    data->unibi_ext.set_cursor_shape_ul = (int)unibi_add_ext_str(ut, NULL,
-        TMUX_WRAP("\x1b]50;CursorShape=2;BlinkingCursorEnabled=1\x07"));
-    data->unibi_ext.set_cursor_shape_block = (int)unibi_add_ext_str(ut, NULL,
-        TMUX_WRAP("\x1b]50;CursorShape=0;BlinkingCursorEnabled=0\x07"));
-  } else if (!vte_version || atoi(vte_version) >= 3900) {
-    // Assume that the terminal supports DECSCUSR unless it is an
-    // old VTE based terminal.  This should not get wrapped for tmux,
-    // which will handle it via its Ss/Se terminfo extension - usually
-    // according to its terminal-overrides.
-    data->unibi_ext.set_cursor_shape_bar =
-      (int)unibi_add_ext_str(ut, NULL, "\x1b[5 q");
-    data->unibi_ext.set_cursor_shape_ul =
-      (int)unibi_add_ext_str(ut, NULL, "\x1b[3 q");
-    data->unibi_ext.set_cursor_shape_block =
-      (int)unibi_add_ext_str(ut, NULL, "\x1b[2 q");
+  const char *enable_curs_shape = os_getenv("NVIM_TUI_ENABLE_CURSOR_SHAPE");
+  if (enable_curs_shape && strcmp(enable_curs_shape, "0") != 0) {
+    tui_terminfo_set_cursor_codes(data);
   }
 
 end:
