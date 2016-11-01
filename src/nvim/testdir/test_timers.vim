@@ -41,6 +41,7 @@ func Test_with_partial_callback()
   function s:meow.bite(...)
     let s:val += 1
   endfunction
+
   call timer_start(50, s:meow.bite)
   sleep 200m
   call assert_equal(1, s:val)

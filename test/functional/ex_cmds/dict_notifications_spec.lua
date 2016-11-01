@@ -2,6 +2,7 @@ local helpers = require('test.functional.helpers')(after_each)
 local clear, nvim, source = helpers.clear, helpers.nvim, helpers.source
 local eq, next_msg = helpers.eq, helpers.next_message
 local exc_exec = helpers.exc_exec
+local command = helpers.command
 
 
 describe('dictionary change notifications', function()
@@ -229,11 +230,9 @@ describe('dictionary change notifications', function()
         exc_exec('call dictwatcherdel(g:, "invalid_key", "g:Watcher2")'))
     end)
 
-    it("fails to add/remove if the callback doesn't exist", function()
-      eq("Vim(call):Function g:InvalidCb doesn't exist",
-        exc_exec('call dictwatcheradd(g:, "key", "g:InvalidCb")'))
-      eq("Vim(call):Function g:InvalidCb doesn't exist",
-        exc_exec('call dictwatcherdel(g:, "key", "g:InvalidCb")'))
+    it("does not fail to add/remove if the callback doesn't exist", function()
+      command('call dictwatcheradd(g:, "key", "g:InvalidCb")')
+      command('call dictwatcherdel(g:, "key", "g:InvalidCb")')
     end)
 
     it('fails with empty keys', function()
@@ -243,15 +242,18 @@ describe('dictionary change notifications', function()
         exc_exec('call dictwatcherdel(g:, "", "g:Watcher1")'))
     end)
 
-    it('fails to replace a watcher function', function()
+    it('does not fail to replace a watcher function', function()
       source([[
       function! g:ReplaceWatcher2()
-        function! g:Watcher2()
+        function! g:Watcher2(dict, key, value)
+          call rpcnotify(g:channel, '2b', a:key, a:value)
         endfunction
       endfunction
       ]])
-      eq("Vim(function):E127: Cannot redefine function Watcher2: It is in use",
-        exc_exec('call g:ReplaceWatcher2()'))
+      command('call g:ReplaceWatcher2()')
+      command('let g:key = "value"')
+      eq({'notification', '2b', {'key', {old = 'v2', new = 'value'}}}, next_msg())
+      
     end)
   end)
 end)
