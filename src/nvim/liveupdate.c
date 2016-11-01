@@ -13,32 +13,18 @@ bool liveupdate_register(buf_T *buf, uint64_t channel_id) {
   }
 
   // count how many channels are currently watching the buffer
-  int active_size = 0;
-  if (buf->liveupdate_channels != NULL) {
-    while (buf->liveupdate_channels[active_size] != LIVEUPDATE_NONE) {
-      if (buf->liveupdate_channels[active_size] == channel_id) {
+  size_t size = kv_size(buf->liveupdate_channels);
+  if (size) {
+    for (size_t i = 0; i < size; i++) {
+      if (kv_A(buf->liveupdate_channels, i) == channel_id) {
         // buffer is already registered ... nothing to do
         return true;
       }
-      active_size++;
     }
   }
 
-  // add the buffer to the active array and send the full buffer contents now
-  uint64_t *newlist = xmalloc((active_size + 2) * sizeof channel_id);
-  // copy items to the new array
-  for (int i = 0; i < active_size; i++) {
-    newlist[i] = buf->liveupdate_channels[i];
-  }
-  // put the new channel on the end
-  newlist[active_size] = channel_id;
-  // terminator
-  newlist[active_size + 1] = LIVEUPDATE_NONE;
-  // free the old list and put the new one in place
-  if (active_size) {
-    xfree(buf->liveupdate_channels);
-  }
-  buf->liveupdate_channels = newlist;
+  // append the channelid to the list
+  kv_push(buf->liveupdate_channels, channel_id);
 
   // send through the full channel contents now
   Array linedata = ARRAY_DICT_INIT;
@@ -79,59 +65,57 @@ void liveupdate_send_end(buf_T *buf, uint64_t channelid) {
 }
 
 void liveupdate_unregister(buf_T *buf, uint64_t channelid) {
-  if (buf->liveupdate_channels == NULL) {
+  size_t size = kv_size(buf->liveupdate_channels);
+  if (!size) {
     return;
   }
 
-  // does the channelid appear in the liveupdate_channels array?
-  int found_active = 0;
-  int active_size = 0;
-  while (buf->liveupdate_channels[active_size] != LIVEUPDATE_NONE) {
-    if (buf->liveupdate_channels[active_size] == channelid) {
-      found_active++;
+  // go through list backwards and remove the channel id each time it appears
+  // (it should never appear more than once)
+  size_t j = 0;
+  size_t found = 0;
+  for (size_t i = 0; i < size; i++) {
+    if (kv_A(buf->liveupdate_channels, i) == channelid) {
+      found++;
+    } else {
+      // copy item backwards into prior slot if needed
+      if (i != j) {
+        kv_A(buf->liveupdate_channels, j) = kv_A(buf->liveupdate_channels, i);
+      }
+      j++;
     }
-    active_size += 1;
   }
 
-  if (found_active) {
-    // make a new copy of the active array without the channelid in it
-    uint64_t *newlist = xmalloc((1 + active_size - found_active)
-                                * sizeof channelid);
-    int i = 0;
-    int j = 0;
-    for (; i < active_size; i++) {
-      if (buf->liveupdate_channels[i] != channelid) {
-        newlist[j] = buf->liveupdate_channels[i];
-        j++;
-      }
-    }
-    newlist[j] = LIVEUPDATE_NONE;
-    xfree(buf->liveupdate_channels);
-    buf->liveupdate_channels = newlist;
+  if (found) {
+    // remove X items from the end of the array
+    buf->liveupdate_channels.size -= found;
 
+    // make a new copy of the active array without the channelid in it
     liveupdate_send_end(buf, channelid);
   }
 }
 
 void liveupdate_unregister_all(buf_T *buf) {
-  if (buf->liveupdate_channels != NULL) {
-    for (int i = 0; buf->liveupdate_channels[i] != LIVEUPDATE_NONE; i++) {
-      liveupdate_send_end(buf, buf->liveupdate_channels[i]);
+  size_t size = kv_size(buf->liveupdate_channels);
+  if (size) {
+    for (size_t i = 0; i < size; i++) {
+      liveupdate_send_end(buf, kv_A(buf->liveupdate_channels, i));
     }
-    xfree(buf->liveupdate_channels);
-    buf->liveupdate_channels = NULL;
+    kv_destroy(buf->liveupdate_channels);
+    kv_init(buf->liveupdate_channels);
   }
 }
 
 void liveupdate_send_changes(buf_T *buf, linenr_T firstline, int64_t num_added,
                              int64_t num_removed) {
   // if one the channels doesn't work, put its ID here so we can remove it later
-  uint64_t badchannelid = LIVEUPDATE_NONE;
+  uint64_t badchannelid = 0;
 
   // notify each of the active channels
-  if (buf->liveupdate_channels != NULL) {
-    for (int i = 0; buf->liveupdate_channels[i] != LIVEUPDATE_NONE; i++) {
-      uint64_t channelid = buf->liveupdate_channels[i];
+  size_t size = kv_size(buf->liveupdate_channels);
+  if (size) {
+    for (size_t i = 0; i < size; i++) {
+      uint64_t channelid = kv_A(buf->liveupdate_channels, i);
 
       // send through the changes now channel contents now
       Array args = ARRAY_DICT_INIT;
@@ -176,7 +160,7 @@ void liveupdate_send_changes(buf_T *buf, linenr_T firstline, int64_t num_added,
   // We can only ever remove one dead channel at a time. This is OK because the
   // change notifications are so frequent that many dead channels will be
   // cleared up quickly.
-  if (badchannelid != LIVEUPDATE_NONE) {
+  if (badchannelid != 0) {
     ELOG("Disabling live updates for dead channel %llu", badchannelid);
     liveupdate_unregister(buf, badchannelid);
   }

@@ -1738,7 +1738,8 @@ buf_T * buflist_new(char_u *ffname, char_u *sfname, linenr_T lnum, int flags)
   clrallmarks(buf);                     /* clear marks */
   fmarks_check_names(buf);              /* check file marks for this file */
   buf->b_p_bl = (flags & BLN_LISTED) ? TRUE : FALSE;    /* init 'buflisted' */
-  buf->liveupdate_channels = NULL;
+  kv_destroy(buf->liveupdate_channels);
+  kv_init(buf->liveupdate_channels);
   if (!(flags & BLN_DUMMY)) {
     // Tricky: these autocommands may change the buffer list.  They could also
     // split the window with re-using the one empty buffer. This may result in

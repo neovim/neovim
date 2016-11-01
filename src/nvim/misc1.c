@@ -1817,7 +1817,7 @@ void changed_bytes(linenr_T lnum, colnr_T col)
   changedOneline(curbuf, lnum);
   changed_common(lnum, col, lnum + 1, 0L);
   // notify any channels that are watching
-  if (curbuf->liveupdate_channels != NULL) {
+  if (kv_size(curbuf->liveupdate_channels)) {
     liveupdate_send_changes(curbuf, lnum, 1, 1);
   }
 
@@ -1939,7 +1939,7 @@ changed_lines (
 
   changed_common(lnum, col, lnume, xtra);
 
-  if (curbuf->liveupdate_channels != NULL) {
+  if (kv_size(curbuf->liveupdate_channels)) {
     int64_t num_added = (int64_t)(lnume + xtra - lnum);
     int64_t num_removed = lnume - lnum;
     liveupdate_send_changes(curbuf, lnum, num_added, num_removed);

@@ -38,6 +38,8 @@ typedef struct {
 #include "nvim/api/private/defs.h"
 // for Map(K, V)
 #include "nvim/map.h"
+// for kvec
+#include "nvim/lib/kvec.h"
 
 #define MODIFIABLE(buf) (buf->b_p_ma)
 
@@ -765,9 +767,8 @@ struct file_buffer {
   kvec_t(BufhlLine *) b_bufhl_move_space;  // temporary space for highlights
 
   // array of channelids which have asked to receive live updates for this
-  // buffer. The last item in the array will always be LIVEUPDATE_NONE.
-  uint64_t *liveupdate_channels;
-#define LIVEUPDATE_NONE 0
+  // buffer.
+  kvec_t(uint64_t) liveupdate_channels;
 };
 
 /*
