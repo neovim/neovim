@@ -4,7 +4,6 @@ local Set = require('test.unit.set')
 local Preprocess = require('test.unit.preprocess')
 local Paths = require('test.config.paths')
 local global_helpers = require('test.helpers')
-local posix = require('posix')
 local assert = require('luassert')
 local say = require('say')
 
@@ -53,6 +52,10 @@ local function filter_complex_blocks(body)
   return table.concat(result, "\n")
 end
 
+local cdef = ffi.cdef
+
+local cimportstr
+
 -- use this helper to import C files, you can pass multiple paths at once,
 -- this helper will return the C namespace of the nvim library.
 local function cimport(...)
@@ -85,9 +88,14 @@ local function cimport(...)
   if body == nil then
     print("ERROR: helpers.lua: Preprocess.preprocess_stream():read() returned empty")
   end
+  return cimportstr(body)
+end
 
+cimportstr = function(body)
   -- format it (so that the lines are "unique" statements), also filter out
   -- Objective-C blocks
+  body = body:gsub('//.*', '')
+  body = body:gsub('/%*.*%*/', '')
   body = formatc(body)
   body = filter_complex_blocks(body)
 
@@ -124,10 +132,14 @@ local function cimport(...)
       print(lnum, line)
     end
   end
-  ffi.cdef(table.concat(new_lines, "\n"))
+  cdef(table.concat(new_lines, "\n"))
 
   return libnvim
 end
+
+ffi.cdef = cimportstr
+local syscall = require('syscall')
+ffi.cdef = cdef
 
 local function cppimport(path)
   return cimport(Paths.test_include_path .. '/' .. path)
@@ -198,6 +210,39 @@ do
   main.event_init()
 end
 
+local sc
+
+if posix ~= nil then
+  sc = {
+    fork = posix.fork,
+    pipe = posix.pipe,
+    read = posix.read,
+    write = posix.write,
+    close = posix.close,
+    wait = posix.wait,
+    exit = posix._exit,
+  }
+else
+  sc = {
+    fork = syscall.fork,
+    pipe = function()
+      local ret = {syscall.pipe()}
+      return ret[3], ret[4]
+    end,
+    read = function(rd, len)
+      return rd:read(nil, len)
+    end,
+    write = function(wr, s)
+      return wr:write(s)
+    end,
+    close = function(p)
+      return p:close()
+    end,
+    wait = syscall.wait,
+    exit = syscall.exit,
+  }
+end
+
 local function gen_itp(it)
   local function just_fail(_)
     return false
@@ -209,36 +254,36 @@ local function gen_itp(it)
                   'assertion.just_fail.negative')
   local function itp(name, func)
     it(name, function()
-      local rd, wr = posix.pipe()
-      local pid = posix.fork()
+      local rd, wr = sc.pipe()
+      local pid = sc.fork()
       if pid == 0 then
-        posix.close(rd)
+        sc.close(rd)
         collectgarbage('stop')
         local err, emsg = pcall(func)
         collectgarbage('restart')
         emsg = tostring(emsg)
         if not err then
-          posix.write(wr, ('-\n%05u\n%s'):format(#emsg, emsg))
-          posix.close(wr)
-          posix._exit(1)
+          sc.write(wr, ('-\n%05u\n%s'):format(#emsg, emsg))
+          sc.close(wr)
+          sc.exit(1)
         else
-          posix.write(wr, '+\n')
-          posix.close(wr)
-          posix._exit(0)
+          sc.write(wr, '+\n')
+          sc.close(wr)
+          sc.exit(0)
         end
       else
-        posix.close(wr)
-        posix.wait(pid)
-        local res = posix.read(rd, 2)
+        sc.close(wr)
+        sc.wait(pid)
+        local res = sc.read(rd, 2)
         eq(2, #res)
         if res == '+\n' then
           return
         end
         eq('-\n', res)
-        local len_s = posix.read(rd, 5)
+        local len_s = sc.read(rd, 5)
         local len = tonumber(len_s)
         neq(0, len)
-        local err = posix.read(rd, len + 1)
+        local err = sc.read(rd, len + 1)
         assert.just_fail(err)
       end
     end)
