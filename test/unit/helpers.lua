@@ -343,6 +343,29 @@ else
   }
 end
 
+local function format_list(lst)
+  local ret = ''
+  for _, v in ipairs(lst) do
+    if ret ~= '' then ret = ret .. ', ' end
+    ret = ret .. assert:format({v, n=1})[1]
+  end
+  return ret
+end
+
+if os.getenv('NVIM_TEST_PRINT_SYSCALLS') == '1' then
+  for k_, v_ in pairs(sc) do
+    (function(k, v)
+      local f = sc[k]
+      sc[k] = function(...)
+        local rets = {f(...)}
+        io.stderr:write(('%s(%s) = %s\n'):format(k, format_list({...}),
+                                                 format_list(rets)))
+        return unpack(rets)
+      end
+    end)(k_, v_)
+  end
+end
+
 local function gen_itp(it)
   local function just_fail(_)
     return false
