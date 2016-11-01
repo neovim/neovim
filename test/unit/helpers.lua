@@ -96,8 +96,6 @@ cimportstr = function(body)
       print(lnum, line)
     end
   end
-  body = body:gsub('//.*', '')
-  body = body:gsub('/%*.*%*/', '')
   body = formatc(body)
   body = filter_complex_blocks(body)
 
@@ -138,10 +136,6 @@ cimportstr = function(body)
 
   return libnvim
 end
-
-ffi.cdef = cimportstr
-local syscall = require('syscall')
-ffi.cdef = cdef
 
 local function cppimport(path)
   return cimport(Paths.test_include_path .. '/' .. path)
