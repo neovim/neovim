@@ -294,16 +294,16 @@ enum {
  * The following are actual variables for the options
  */
 
-EXTERN long p_aleph;            /* 'aleph' */
-EXTERN int p_acd;               /* 'autochdir' */
-EXTERN char_u   *p_ambw;        /* 'ambiwidth' */
-EXTERN int p_ar;                /* 'autoread' */
-EXTERN int p_aw;                /* 'autowrite' */
-EXTERN int p_awa;               /* 'autowriteall' */
-EXTERN char_u   *p_bs;          /* 'backspace' */
-EXTERN char_u   *p_bg;          /* 'background' */
-EXTERN int p_bk;                /* 'backup' */
-EXTERN char_u   *p_bkc;         /* 'backupcopy' */
+EXTERN long p_aleph;            // 'aleph'
+EXTERN int p_acd;               // 'autochdir'
+EXTERN char_u   *p_ambw;        // 'ambiwidth'
+EXTERN int p_ar;                // 'autoread'
+EXTERN int p_aw;                // 'autowrite'
+EXTERN int p_awa;               // 'autowriteall'
+EXTERN char_u   *p_bs;          // 'backspace'
+EXTERN char_u   *p_bg;          // 'background'
+EXTERN int p_bk;                // 'backup'
+EXTERN char_u   *p_bkc;         // 'backupcopy'
 EXTERN unsigned int bkc_flags;  ///< flags from 'backupcopy'
 #ifdef IN_OPTION_C
 static char *(p_bkc_values[]) =
@@ -649,26 +649,26 @@ char_u  *p_vfile = (char_u *)""; /* used before options are initialized */
 #else
 extern char_u   *p_vfile;       /* 'verbosefile' */
 #endif
-EXTERN int p_warn;              /* 'warn' */
-EXTERN char_u   *p_wop;         /* 'wildoptions' */
-EXTERN long p_window;           /* 'window' */
-EXTERN char_u   *p_wak;         /* 'winaltkeys' */
-EXTERN char_u   *p_wig;         /* 'wildignore' */
-EXTERN char_u   *p_ww;          /* 'whichwrap' */
-EXTERN long p_wc;               /* 'wildchar' */
-EXTERN long p_wcm;              /* 'wildcharm' */
-EXTERN int p_wic;               ///< 'wildignorecase'
-EXTERN char_u   *p_wim;         /* 'wildmode' */
-EXTERN int p_wmnu;              /* 'wildmenu' */
-EXTERN long p_wh;               /* 'winheight' */
-EXTERN long p_wmh;              /* 'winminheight' */
-EXTERN long p_wmw;              /* 'winminwidth' */
-EXTERN long p_wiw;              /* 'winwidth' */
-EXTERN int p_ws;                /* 'wrapscan' */
-EXTERN int p_write;             /* 'write' */
-EXTERN int p_wa;                /* 'writeany' */
-EXTERN int p_wb;                /* 'writebackup' */
-EXTERN long p_wd;               /* 'writedelay' */
+EXTERN int p_warn;              // 'warn'
+EXTERN char_u   *p_wop;         // 'wildoptions'
+EXTERN long p_window;           // 'window'
+EXTERN char_u   *p_wak;         // 'winaltkeys'
+EXTERN char_u   *p_wig;         // 'wildignore'
+EXTERN char_u   *p_ww;          // 'whichwrap'
+EXTERN long p_wc;               // 'wildchar'
+EXTERN long p_wcm;              // 'wildcharm'
+EXTERN int p_wic;               // 'wildignorecase'
+EXTERN char_u   *p_wim;         // 'wildmode'
+EXTERN int p_wmnu;              // 'wildmenu'
+EXTERN long p_wh;               // 'winheight'
+EXTERN long p_wmh;              // 'winminheight'
+EXTERN long p_wmw;              // 'winminwidth'
+EXTERN long p_wiw;              // 'winwidth'
+EXTERN int p_ws;                // 'wrapscan'
+EXTERN int p_write;             // 'write'
+EXTERN int p_wa;                // 'writeany'
+EXTERN int p_wb;                // 'writebackup'
+EXTERN long p_wd;               // 'writedelay'
 
 EXTERN int p_force_on;          ///< options that cannot be turned off.
 EXTERN int p_force_off;         ///< options that cannot be turned on.
