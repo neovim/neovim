@@ -14,12 +14,13 @@ describe('terminal window', function()
     screen = thelpers.screen_setup()
   end)
 
-  it('resets its size when entering terminal buffer', function()
+  it('resets its vterm size on :redraw!', function()
     feed('<c-\\><c-n>')
     execute('set hidden')
     execute('edit foo')
     execute('doautoall SessionLoadPost')
-    execute('silent bnext')
+    execute('bnext')
+    execute('redraw!')
     screen:expect([[
       tty ready                                         |
       {2: }                                                 |
@@ -27,7 +28,7 @@ describe('terminal window', function()
                                                         |
                                                         |
       ^                                                  |
-      :silent bnext                                     |
+                                                        |
     ]])
   end)
 

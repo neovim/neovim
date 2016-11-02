@@ -331,7 +331,8 @@ void terminal_close(Terminal *term, char *msg)
   }
 }
 
-void terminal_resize(Terminal *term, uint16_t width, uint16_t height)
+void terminal_resize(Terminal *term, uint16_t width, uint16_t height,
+                     bool force)
 {
   if (term->closed) {
     // will be called after exited if two windows display the same terminal and
@@ -347,6 +348,17 @@ void terminal_resize(Terminal *term, uint16_t width, uint16_t height)
 
   if (!height) {
     height = (uint16_t)curheight;
+  }
+
+  if (!force) {
+    // The new width/height are the minimum for all windows that display the
+    // terminal in the current tab.
+    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+      if (!wp->w_closing && wp->w_buffer->terminal == term) {
+        width = (uint16_t)MIN(width, (uint16_t)(wp->w_width - win_col_off(wp)));
+        height = (uint16_t)MIN(height, (uint16_t)wp->w_height);
+      }
+    }
   }
 
   if (curheight == height && curwidth == width) {
@@ -372,7 +384,7 @@ void terminal_enter(void)
   s->term = buf->terminal;
 
   // Ensure the terminal is properly sized.
-  terminal_resize(s->term, 0, 0);
+  terminal_resize(s->term, 0, 0, false);
 
   checkpcmark();
   setpcmark();

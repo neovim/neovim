@@ -1832,7 +1832,7 @@ static bool close_last_window_tabpage(win_T *win, bool free_buf,
   if (term) {
     // When a window containing a terminal buffer is closed, recalculate its
     // size
-    terminal_resize(term, 0, 0);
+    terminal_resize(term, 0, 0, false);
   }
 
   // Since goto_tabpage_tp above did not trigger *Enter autocommands, do
@@ -3651,10 +3651,6 @@ static void win_enter_ext(win_T *wp, bool undo_sync, int curwin_invalid, int tri
 
   /* Change directories when the 'acd' option is set. */
   do_autochdir();
-
-  if (curbuf->terminal) {
-    terminal_resize(curbuf->terminal, curwin->w_width, curwin->w_height);
-  }
 }
 
 
@@ -4818,7 +4814,7 @@ void win_new_height(win_T *wp, int height)
   invalidate_botline_win(wp);
 
   if (wp->w_buffer->terminal) {
-    terminal_resize(wp->w_buffer->terminal, 0, wp->w_height);
+    terminal_resize(wp->w_buffer->terminal, 0, wp->w_height, false);
     redraw_win_later(wp, CLEAR);
   }
 }
@@ -4841,7 +4837,7 @@ void win_new_width(win_T *wp, int width)
 
   if (wp->w_buffer->terminal) {
     if (wp->w_height != 0) {
-      terminal_resize(wp->w_buffer->terminal, wp->w_width, 0);
+      terminal_resize(wp->w_buffer->terminal, wp->w_width, 0, false);
     }
     redraw_win_later(wp, CLEAR);
   }

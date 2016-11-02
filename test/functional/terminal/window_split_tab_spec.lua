@@ -24,7 +24,7 @@ describe('terminal', function()
     screen:detach()
   end)
 
-  it('resets its size when entering terminal window', function()
+  it('resets its vterm size on :redraw!', function()
     feed('<c-\\><c-n>')
     execute('2split')
     screen:expect([[
@@ -40,6 +40,7 @@ describe('terminal', function()
                                                         |
     ]])
     execute('wincmd p')
+    execute('redraw!')
     screen:expect([[
       tty ready                                         |
       rows: 2, cols: 50                                 |
@@ -50,9 +51,10 @@ describe('terminal', function()
       {2: }                                                 |
       ^                                                  |
       ==========                                        |
-      :wincmd p                                         |
+                                                        |
     ]])
     execute('wincmd p')
+    execute('redraw!')
     screen:expect([[
       rows: 5, cols: 50                                 |
       ^rows: 2, cols: 50                                 |
@@ -63,7 +65,7 @@ describe('terminal', function()
       {4:~                                                 }|
       {4:~                                                 }|
       ==========                                        |
-      :wincmd p                                         |
+                                                        |
     ]])
   end)
 
