@@ -14,6 +14,10 @@ function! s:enhance_syntax() abort
   syntax keyword healthSuggestion SUGGESTIONS
   highlight link healthSuggestion String
 
+  syntax match healthHelp "|.\{-}|" contains=healthBar
+  syntax match healthBar  "|" contained conceal
+  highlight link healthHelp Identifier
+
   " We do not care about markdown syntax errors in :CheckHealth output.
   highlight! link markdownError Normal
 endfunction
@@ -28,6 +32,8 @@ function! health#check(plugin_names) abort
   tabnew
   setlocal wrap breakindent
   setlocal filetype=markdown bufhidden=wipe
+  setlocal conceallevel=2 concealcursor=nc
+  setlocal keywordprg=:help
   call s:enhance_syntax()
 
   if empty(healthchecks)
