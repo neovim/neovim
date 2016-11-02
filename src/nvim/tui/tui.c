@@ -611,6 +611,7 @@ static void suspend_event(void **argv)
   bool enable_mouse = data->mouse_enabled;
   tui_terminal_stop(ui);
   data->cont_received = false;
+  stream_set_blocking(input_global_fd(), true);   // normalize stream (#2598)
   kill(0, SIGTSTP);
   while (!data->cont_received) {
     // poll the event loop until SIGCONT is received
@@ -620,6 +621,7 @@ static void suspend_event(void **argv)
   if (enable_mouse) {
     tui_mouse_on(ui);
   }
+  stream_set_blocking(input_global_fd(), false);  // libuv expects this
   // resume the main thread
   CONTINUE(data->bridge);
 }
