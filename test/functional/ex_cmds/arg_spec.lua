@@ -3,6 +3,8 @@ local eq, execute, funcs = helpers.eq, helpers.execute, helpers.funcs
 local ok = helpers.ok
 local clear = helpers.clear
 
+if helpers.pending_win32(pending) then return end
+
 describe(":argument", function()
   before_each(function() 
     clear()

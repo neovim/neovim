@@ -4,7 +4,6 @@ local bit = require('bit')
 local helpers = require('test.unit.helpers')
 
 local cimport = helpers.cimport
-local cppimport = helpers.cppimport
 local internalize = helpers.internalize
 local ok = helpers.ok
 local eq = helpers.eq
@@ -18,15 +17,14 @@ local NULL = helpers.NULL
 local NODE_NORMAL = 0
 local NODE_WRITABLE = 1
 
-cimport('unistd.h')
 cimport('./src/nvim/os/shell.h')
 cimport('./src/nvim/option_defs.h')
 cimport('./src/nvim/main.h')
 cimport('./src/nvim/fileio.h')
 local fs = cimport('./src/nvim/os/os.h')
-cppimport('sys/stat.h')
-cppimport('fcntl.h')
-cppimport('uv-errno.h')
+cimport('sys/stat.h')
+cimport('fcntl.h')
+cimport('uv-errno.h')
 
 local s = ''
 for i = 0, 255 do

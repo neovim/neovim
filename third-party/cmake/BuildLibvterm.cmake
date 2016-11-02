@@ -27,13 +27,16 @@ function(BuildLibvterm)
       -DUSE_EXISTING_SRC_DIR=${USE_EXISTING_SRC_DIR}
       -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/DownloadAndExtractFile.cmake
     CONFIGURE_COMMAND ""
-    BUILD_IN_SOURCE 1
+    BUILD_IN_SOURCE 0
     CONFIGURE_COMMAND "${_libvterm_CONFIGURE_COMMAND}"
     BUILD_COMMAND "${_libvterm_BUILD_COMMAND}"
     INSTALL_COMMAND "${_libvterm_INSTALL_COMMAND}")
 endfunction()
 
 if(WIN32)
+  if(DEFINED CMAKE_TOOLCHAIN_FILE)
+    get_filename_component(_toolchain ${CMAKE_TOOLCHAIN_FILE} REALPATH)
+  endif()
   # MinGW
   set(LIBVTERM_CONFIGURE_COMMAND ${CMAKE_COMMAND} -E copy
 	  ${CMAKE_CURRENT_SOURCE_DIR}/cmake/LibvtermCMakeLists.txt
@@ -42,6 +45,11 @@ if(WIN32)
       -DCMAKE_INSTALL_PREFIX=${DEPS_INSTALL_DIR}
       -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
       "-DCMAKE_C_FLAGS:STRING=${CMAKE_C_COMPILER_ARG1} -fPIC"
+      # Pass toolchain
+      -DCMAKE_TOOLCHAIN_FILE=${_toolchain}
+      -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+      # Hack to avoid -rdynamic in Mingw
+      -DCMAKE_SHARED_LIBRARY_LINK_C_FLAGS=""
       -DCMAKE_GENERATOR=${CMAKE_GENERATOR})
   set(LIBVTERM_BUILD_COMMAND ${CMAKE_COMMAND} --build . --config ${CMAKE_BUILD_TYPE})
   set(LIBVTERM_INSTALL_COMMAND ${CMAKE_COMMAND} --build . --target install --config ${CMAKE_BUILD_TYPE})

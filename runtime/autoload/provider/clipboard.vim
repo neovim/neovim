@@ -57,6 +57,11 @@ elseif executable('doitclient')
   let s:paste['+'] = 'doitclient wclip -r'
   let s:copy['*'] = s:copy['+']
   let s:paste['*'] = s:paste['+']
+elseif executable('win32yank')
+  let s:copy['+'] = 'win32yank -i --crlf'
+  let s:paste['+'] = 'win32yank -o --lf'
+  let s:copy['*'] = s:copy['+']
+  let s:paste['*'] = s:paste['+']
 else
   echom 'clipboard: No clipboard tool available. See :help clipboard'
   finish
