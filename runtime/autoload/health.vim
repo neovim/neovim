@@ -9,7 +9,7 @@ function! s:enhance_syntax() abort
   highlight link healthInfo ModeMsg
 
   syntax keyword healthSuccess SUCCESS
-  highlight link healthSuccess Function
+  highlight link healthSuccess ModeMsg
 
   syntax keyword healthSuggestion SUGGESTIONS
   highlight link healthSuggestion String
