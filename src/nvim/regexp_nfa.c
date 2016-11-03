@@ -4560,9 +4560,11 @@ static int recursive_regmatch(nfa_state_T *state, nfa_pim_T *pim, nfa_regprog_T 
   if (REG_MULTI)
     regline = reg_getline(reglnum);
   reginput = regline + save_reginput_col;
-  nfa_match = save_nfa_match;
+  if (result != NFA_TOO_EXPENSIVE) {
+    nfa_match = save_nfa_match;
+    nfa_listid = save_nfa_listid;
+  }
   nfa_endp = save_nfa_endp;
-  nfa_listid = save_nfa_listid;
 
 #ifdef REGEXP_DEBUG
   log_fd = fopen(NFA_REGEXP_RUN_LOG, "a");
