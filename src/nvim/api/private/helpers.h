@@ -37,15 +37,15 @@
 
 #define BUFFER_OBJ(s) ((Object) { \
     .type = kObjectTypeBuffer, \
-    .data.buffer = s })
+    .data.integer = s })
 
 #define WINDOW_OBJ(s) ((Object) { \
     .type = kObjectTypeWindow, \
-    .data.window = s })
+    .data.integer = s })
 
 #define TABPAGE_OBJ(s) ((Object) { \
     .type = kObjectTypeTabpage, \
-    .data.tabpage = s })
+    .data.integer = s })
 
 #define ARRAY_OBJ(a) ((Object) { \
     .type = kObjectTypeArray, \

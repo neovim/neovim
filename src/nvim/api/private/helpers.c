@@ -616,13 +616,14 @@ bool object_to_vim(Object obj, typval_T *tv, Error *err)
     case kObjectTypeWindow:
     case kObjectTypeTabpage:
     case kObjectTypeInteger:
-      if (obj.data.integer > INT_MAX || obj.data.integer < INT_MIN) {
+      if (obj.data.integer > VARNUMBER_MAX
+          || obj.data.integer < VARNUMBER_MIN) {
         api_set_error(err, Validation, _("Integer value outside range"));
         return false;
       }
 
       tv->v_type = VAR_NUMBER;
-      tv->vval.v_number = (int)obj.data.integer;
+      tv->vval.v_number = (varnumber_T)obj.data.integer;
       break;
 
     case kObjectTypeFloat:

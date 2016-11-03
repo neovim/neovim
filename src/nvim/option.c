@@ -2527,7 +2527,7 @@ did_set_string_option (
   else if (varp == &p_sbo) {
     if (check_opt_strings(p_sbo, p_scbopt_values, TRUE) != OK)
       errmsg = e_invarg;
-  } else if (varp == &p_ambw || (bool *)varp == &p_emoji) {
+  } else if (varp == &p_ambw || (int *)varp == &p_emoji) {
     // 'ambiwidth'
     if (check_opt_strings(p_ambw, p_ambw_values, false) != OK) {
       errmsg = e_invarg;
@@ -3706,23 +3706,19 @@ set_bool_option (
         }
       }
     }
-  }
-
-  /*
-   * When 'lisp' option changes include/exclude '-' in
-   * keyword characters.
-   */
-  else if (varp == (char_u *)&(curbuf->b_p_lisp)) {
-    (void)buf_init_chartab(curbuf, FALSE);          /* ignore errors */
-  }
-  /* when 'title' changed, may need to change the title; same for 'icon' */
-  else if ((int *)varp == &p_title) {
-    did_set_title(FALSE);
+  } else if (varp == (char_u *)&(curbuf->b_p_lisp)) {
+    // When 'lisp' option changes include/exclude '-' in
+    // keyword characters.
+    (void)buf_init_chartab(curbuf, false);          // ignore errors
+  } else if ((int *)varp == &p_title) {
+    // when 'title' changed, may need to change the title; same for 'icon'
+    did_set_title(false);
   } else if ((int *)varp == &p_icon) {
-    did_set_title(TRUE);
-  } else if ((bool *)varp == &curbuf->b_changed) {
-    if (!value)
-      save_file_ff(curbuf);             /* Buffer is unchanged */
+    did_set_title(true);
+  } else if ((int *)varp == &curbuf->b_changed) {
+    if (!value) {
+      save_file_ff(curbuf);             // Buffer is unchanged
+    }
     redraw_titles();
     modified_was_set = value;
   }
@@ -3750,11 +3746,12 @@ set_bool_option (
   else if ((int *)varp == &curwin->w_p_wrap) {
     if (curwin->w_p_wrap)
       curwin->w_leftcol = 0;
-  } else if ((bool *)varp == &p_ea) {
-    if (p_ea && !old_value)
+  } else if ((int *)varp == &p_ea) {
+    if (p_ea && !old_value) {
       win_equal(curwin, false, 0);
-  } else if ((bool *)varp == &p_acd) {
-    /* Change directories when the 'acd' option is set now. */
+    }
+  } else if ((int *)varp == &p_acd) {
+    // Change directories when the 'acd' option is set now.
     do_autochdir();
   }
   /* 'diff' */
@@ -4513,10 +4510,11 @@ get_option_value (
   else {
     /* Special case: 'modified' is b_changed, but we also want to consider
      * it set when 'ff' or 'fenc' changed. */
-    if ((bool *)varp == &curbuf->b_changed)
+    if ((int *)varp == &curbuf->b_changed) {
       *numval = curbufIsChanged();
-    else
+    } else {
       *numval = *(int *)varp;
+    }
   }
   return 1;
 }
@@ -4884,14 +4882,15 @@ showoneopt (
 
   varp = get_varp_scope(p, opt_flags);
 
-  /* for 'modified' we also need to check if 'ff' or 'fenc' changed. */
-  if ((p->flags & P_BOOL) && ((bool *)varp == &curbuf->b_changed
-                              ? !curbufIsChanged() : !*(bool *)varp))
+  // for 'modified' we also need to check if 'ff' or 'fenc' changed.
+  if ((p->flags & P_BOOL) && ((int *)varp == &curbuf->b_changed
+                              ? !curbufIsChanged() : !*(int *)varp)) {
     MSG_PUTS("no");
-  else if ((p->flags & P_BOOL) && *(int *)varp < 0)
+  } else if ((p->flags & P_BOOL) && *(int *)varp < 0) {
     MSG_PUTS("--");
-  else
+  } else {
     MSG_PUTS("  ");
+  }
   MSG_PUTS(p->fullname);
   if (!(p->flags & P_BOOL)) {
     msg_putchar('=');

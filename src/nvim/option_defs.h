@@ -1,8 +1,6 @@
 #ifndef NVIM_OPTION_DEFS_H
 #define NVIM_OPTION_DEFS_H
 
-#include <stdbool.h>
-
 #include "nvim/types.h"
 #include "nvim/macros.h"  // For EXTERN
 
@@ -296,16 +294,16 @@ enum {
  * The following are actual variables for the options
  */
 
-EXTERN long p_aleph;            /* 'aleph' */
-EXTERN bool p_acd;              /* 'autochdir' */
-EXTERN char_u   *p_ambw;        /* 'ambiwidth' */
-EXTERN int p_ar;                /* 'autoread' */
-EXTERN int p_aw;                /* 'autowrite' */
-EXTERN int p_awa;               /* 'autowriteall' */
-EXTERN char_u   *p_bs;          /* 'backspace' */
-EXTERN char_u   *p_bg;          /* 'background' */
-EXTERN int p_bk;                /* 'backup' */
-EXTERN char_u   *p_bkc;         /* 'backupcopy' */
+EXTERN long p_aleph;            // 'aleph'
+EXTERN int p_acd;               // 'autochdir'
+EXTERN char_u   *p_ambw;        // 'ambiwidth'
+EXTERN int p_ar;                // 'autoread'
+EXTERN int p_aw;                // 'autowrite'
+EXTERN int p_awa;               // 'autowriteall'
+EXTERN char_u   *p_bs;          // 'backspace'
+EXTERN char_u   *p_bg;          // 'background'
+EXTERN int p_bk;                // 'backup'
+EXTERN char_u   *p_bkc;         // 'backupcopy'
 EXTERN unsigned int bkc_flags;  ///< flags from 'backupcopy'
 #ifdef IN_OPTION_C
 static char *(p_bkc_values[]) =
@@ -403,9 +401,9 @@ static char *(p_dy_values[]) = { "lastline", "truncate", "uhex", NULL };
 #define DY_TRUNCATE             0x002
 #define DY_UHEX                 0x004
 EXTERN int p_ed;                // 'edcompatible'
-EXTERN bool p_emoji;            // 'emoji'
+EXTERN int p_emoji;             // 'emoji'
 EXTERN char_u   *p_ead;         // 'eadirection'
-EXTERN bool p_ea;               // 'equalalways'
+EXTERN int p_ea;                // 'equalalways'
 EXTERN char_u   *p_ep;          // 'equalprg'
 EXTERN int p_eb;                // 'errorbells'
 EXTERN char_u   *p_ef;          // 'errorfile'
@@ -417,7 +415,7 @@ EXTERN int p_ek;                // 'esckeys'
 EXTERN int p_exrc;              // 'exrc'
 EXTERN char_u   *p_fencs;       // 'fileencodings'
 EXTERN char_u   *p_ffs;         // 'fileformats'
-EXTERN bool p_fic;              // 'fileignorecase'
+EXTERN int p_fic;               // 'fileignorecase'
 EXTERN char_u   *p_fcl;         // 'foldclose'
 EXTERN long p_fdls;             // 'foldlevelstart'
 EXTERN char_u   *p_fdo;         // 'foldopen'
@@ -622,7 +620,7 @@ EXTERN long p_titlelen;         ///< 'titlelen'
 EXTERN char_u *p_titleold;      ///< 'titleold'
 EXTERN char_u *p_titlestring;   ///< 'titlestring'
 EXTERN char_u *p_tsr;           ///< 'thesaurus'
-EXTERN bool p_tgc;              ///< 'termguicolors'
+EXTERN int p_tgc;               ///< 'termguicolors'
 EXTERN int p_ttimeout;          ///< 'ttimeout'
 EXTERN long p_ttm;              ///< 'ttimeoutlen'
 EXTERN char_u *p_udir;          ///< 'undodir'
@@ -651,26 +649,26 @@ char_u  *p_vfile = (char_u *)""; /* used before options are initialized */
 #else
 extern char_u   *p_vfile;       /* 'verbosefile' */
 #endif
-EXTERN int p_warn;              /* 'warn' */
-EXTERN char_u   *p_wop;         /* 'wildoptions' */
-EXTERN long p_window;           /* 'window' */
-EXTERN char_u   *p_wak;         /* 'winaltkeys' */
-EXTERN char_u   *p_wig;         /* 'wildignore' */
-EXTERN char_u   *p_ww;          /* 'whichwrap' */
-EXTERN long p_wc;               /* 'wildchar' */
-EXTERN long p_wcm;              /* 'wildcharm' */
-EXTERN bool p_wic;              ///< 'wildignorecase'
-EXTERN char_u   *p_wim;         /* 'wildmode' */
-EXTERN int p_wmnu;              /* 'wildmenu' */
-EXTERN long p_wh;               /* 'winheight' */
-EXTERN long p_wmh;              /* 'winminheight' */
-EXTERN long p_wmw;              /* 'winminwidth' */
-EXTERN long p_wiw;              /* 'winwidth' */
-EXTERN bool p_ws;               /* 'wrapscan' */
-EXTERN int p_write;             /* 'write' */
-EXTERN int p_wa;                /* 'writeany' */
-EXTERN int p_wb;                /* 'writebackup' */
-EXTERN long p_wd;               /* 'writedelay' */
+EXTERN int p_warn;              // 'warn'
+EXTERN char_u   *p_wop;         // 'wildoptions'
+EXTERN long p_window;           // 'window'
+EXTERN char_u   *p_wak;         // 'winaltkeys'
+EXTERN char_u   *p_wig;         // 'wildignore'
+EXTERN char_u   *p_ww;          // 'whichwrap'
+EXTERN long p_wc;               // 'wildchar'
+EXTERN long p_wcm;              // 'wildcharm'
+EXTERN int p_wic;               // 'wildignorecase'
+EXTERN char_u   *p_wim;         // 'wildmode'
+EXTERN int p_wmnu;              // 'wildmenu'
+EXTERN long p_wh;               // 'winheight'
+EXTERN long p_wmh;              // 'winminheight'
+EXTERN long p_wmw;              // 'winminwidth'
+EXTERN long p_wiw;              // 'winwidth'
+EXTERN int p_ws;                // 'wrapscan'
+EXTERN int p_write;             // 'write'
+EXTERN int p_wa;                // 'writeany'
+EXTERN int p_wb;                // 'writebackup'
+EXTERN long p_wd;               // 'writedelay'
 
 EXTERN int p_force_on;          ///< options that cannot be turned off.
 EXTERN int p_force_off;         ///< options that cannot be turned on.

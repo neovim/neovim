@@ -21,7 +21,8 @@ static msgpack_zone zone;
 static msgpack_sbuffer sbuffer;
 
 #define HANDLE_TYPE_CONVERSION_IMPL(t, lt) \
-  bool msgpack_rpc_to_##lt(const msgpack_object *const obj, t *const arg) \
+  bool msgpack_rpc_to_##lt(const msgpack_object *const obj, \
+                           Integer *const arg) \
     FUNC_ATTR_NONNULL_ALL \
   { \
     if (obj->type != MSGPACK_OBJECT_EXT \
@@ -44,12 +45,12 @@ static msgpack_sbuffer sbuffer;
     return true; \
   } \
   \
-  void msgpack_rpc_from_##lt(t o, msgpack_packer *res) \
+  void msgpack_rpc_from_##lt(Integer o, msgpack_packer *res) \
     FUNC_ATTR_NONNULL_ARG(2) \
   { \
     msgpack_packer pac; \
     msgpack_packer_init(&pac, &sbuffer, msgpack_sbuffer_write); \
-    msgpack_pack_int64(&pac, o); \
+    msgpack_pack_int64(&pac, (handle_T)o); \
     msgpack_pack_ext(res, sbuffer.size, kObjectType##t); \
     msgpack_pack_ext_body(res, sbuffer.data, sbuffer.size); \
     msgpack_sbuffer_clear(&sbuffer); \
@@ -213,17 +214,17 @@ bool msgpack_rpc_to_object(const msgpack_object *const obj, Object *const arg)
         switch (cur.mobj->via.ext.type) {
           case kObjectTypeBuffer: {
             cur.aobj->type = kObjectTypeBuffer;
-            ret = msgpack_rpc_to_buffer(cur.mobj, &cur.aobj->data.buffer);
+            ret = msgpack_rpc_to_buffer(cur.mobj, &cur.aobj->data.integer);
             break;
           }
           case kObjectTypeWindow: {
             cur.aobj->type = kObjectTypeWindow;
-            ret = msgpack_rpc_to_window(cur.mobj, &cur.aobj->data.window);
+            ret = msgpack_rpc_to_window(cur.mobj, &cur.aobj->data.integer);
             break;
           }
           case kObjectTypeTabpage: {
             cur.aobj->type = kObjectTypeTabpage;
-            ret = msgpack_rpc_to_tabpage(cur.mobj, &cur.aobj->data.tabpage);
+            ret = msgpack_rpc_to_tabpage(cur.mobj, &cur.aobj->data.integer);
             break;
           }
         }
@@ -369,15 +370,15 @@ void msgpack_rpc_from_object(const Object result, msgpack_packer *const res)
         break;
       }
       case kObjectTypeBuffer: {
-        msgpack_rpc_from_buffer(cur.aobj->data.buffer, res);
+        msgpack_rpc_from_buffer(cur.aobj->data.integer, res);
         break;
       }
       case kObjectTypeWindow: {
-        msgpack_rpc_from_window(cur.aobj->data.window, res);
+        msgpack_rpc_from_window(cur.aobj->data.integer, res);
         break;
       }
       case kObjectTypeTabpage: {
-        msgpack_rpc_from_tabpage(cur.aobj->data.tabpage, res);
+        msgpack_rpc_from_tabpage(cur.aobj->data.integer, res);
         break;
       }
       case kObjectTypeArray: {
