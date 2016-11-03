@@ -87,6 +87,11 @@ function! s:indent_after_line1(s, columns) abort
   return join(lines, "\n")
 endfunction
 
+" Changes ':help clipboard' to '|clipoard|'. Also removes surrounding quotes.
+function! s:help_to_link(s) abort
+  return substitute(a:s, '\v[''"]?:h%[elp] ([^''"]+)[''"]?', '|\1|', 'g')
+endfunction
+
 " Format a message for a specific report item
 function! s:format_report_message(status, msg, ...) abort " {{{
   let output = '  - ' . a:status . ': ' . s:indent_after_line1(a:msg, 4)
@@ -108,7 +113,7 @@ function! s:format_report_message(status, msg, ...) abort " {{{
     let output .= "\n      - " . s:indent_after_line1(suggestion, 10)
   endfor
 
-  return output
+  return s:help_to_link(output)
 endfunction " }}}
 
 " Use {msg} to report information in the current section
