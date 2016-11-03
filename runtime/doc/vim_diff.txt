@@ -235,7 +235,7 @@ Additional differences:
 These legacy Vim features may be implemented in the future, but they are not
 planned for the current milestone.
 
-- vim.bindeval() (new feature in Vim 7.4 Python interface)
+- |if_py|: vim.bindeval() and vim.Function() are not supported
 - |if_lua|
 - |if_perl|
 - |if_mzscheme|
