@@ -9,13 +9,20 @@ function! s:enhance_syntax() abort
   highlight link healthInfo ModeMsg
 
   syntax keyword healthSuccess SUCCESS
-  highlight link healthSuccess Function
+  highlight link healthSuccess ModeMsg
 
   syntax keyword healthSuggestion SUGGESTIONS
   highlight link healthSuggestion String
 
+  syntax match healthHelp "|.\{-}|" contains=healthBar
+  syntax match healthBar  "|" contained conceal
+  highlight link healthHelp Identifier
+
   " We do not care about markdown syntax errors in :CheckHealth output.
   highlight! link markdownError Normal
+
+  " We don't need code blocks.
+  syntax clear markdownCodeBlock
 endfunction
 
 " Runs the specified healthchecks.
@@ -28,6 +35,8 @@ function! health#check(plugin_names) abort
   tabnew
   setlocal wrap breakindent
   setlocal filetype=markdown bufhidden=wipe
+  setlocal conceallevel=2 concealcursor=nc
+  setlocal keywordprg=:help
   call s:enhance_syntax()
 
   if empty(healthchecks)
@@ -78,6 +87,11 @@ function! s:indent_after_line1(s, columns) abort
   return join(lines, "\n")
 endfunction
 
+" Changes ':help clipboard' to '|clipoard|'. Also removes surrounding quotes.
+function! s:help_to_link(s) abort
+  return substitute(a:s, '\v[''"]?:h%[elp] ([^''"]+)[''"]?', '|\1|', 'g')
+endfunction
+
 " Format a message for a specific report item
 function! s:format_report_message(status, msg, ...) abort " {{{
   let output = '  - ' . a:status . ': ' . s:indent_after_line1(a:msg, 4)
@@ -99,7 +113,7 @@ function! s:format_report_message(status, msg, ...) abort " {{{
     let output .= "\n      - " . s:indent_after_line1(suggestion, 10)
   endfor
 
-  return output
+  return s:help_to_link(output)
 endfunction " }}}
 
 " Use {msg} to report information in the current section
