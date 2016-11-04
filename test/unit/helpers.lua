@@ -375,7 +375,7 @@ local function gen_itp(it)
   assert:register('assertion', 'just_fail', just_fail,
                   'assertion.just_fail.positive',
                   'assertion.just_fail.negative')
-  local function itp(name, func)
+  local function itp(name, func, allow_failure)
     it(name, function()
       local rd, wr = sc.pipe()
       local pid = sc.fork()
@@ -397,17 +397,28 @@ local function gen_itp(it)
       else
         sc.close(wr)
         sc.wait(pid)
-        local res = sc.read(rd, 2)
-        eq(2, #res)
-        if res == '+\n' then
-          return
+        local function check()
+          local res = sc.read(rd, 2)
+          eq(2, #res)
+          if res == '+\n' then
+            return
+          end
+          eq('-\n', res)
+          local len_s = sc.read(rd, 5)
+          local len = tonumber(len_s)
+          neq(0, len)
+          local err = sc.read(rd, len + 1)
+          assert.just_fail(err)
         end
-        eq('-\n', res)
-        local len_s = sc.read(rd, 5)
-        local len = tonumber(len_s)
-        neq(0, len)
-        local err = sc.read(rd, len + 1)
-        assert.just_fail(err)
+        if allow_failure then
+          local err, emsg = pcall(check)
+          if not err then
+            io.stderr:write('Errorred out:\n' .. tostring(emsg) .. '\n')
+            os.execute([[sh -c "source .ci/common/test.sh ; check_core_dumps --delete \"\$(which luajit)\""]])
+          end
+        else
+          check()
+        end
       end
     end)
   end
