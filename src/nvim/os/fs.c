@@ -306,8 +306,7 @@ static bool is_executable_in_path(const char_u *name, char_u **abspath)
     for (const char *ext = pathext; *ext; ext++) {
       // Skip the extension if there is no suffix after a '.'.
       if (ext[0] == '.' && (ext[1] == '\0' || ext[1] == ';')) {
-        *ext++;
-
+        ext++;
         continue;
       }
 
@@ -927,7 +926,6 @@ char *os_resolve_shortcut(const char *fname)
   IPersistFile *ppf = NULL;
   OLECHAR wsz[MAX_PATH];
   char *rfname = NULL;
-  int conversion_result;
   IShellLinkW *pslw = NULL;
   WIN32_FIND_DATAW ffdw;
 

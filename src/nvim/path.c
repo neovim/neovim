@@ -312,7 +312,7 @@ int path_fnamecmp(const char *fname1, const char *fname2)
 ///
 /// @return 0 if they are equal, non-zero otherwise.
 int path_fnamencmp(const char *const fname1, const char *const fname2,
-                   const size_t len)
+                   size_t len)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
 #ifdef BACKSLASH_IN_FILENAME
@@ -322,16 +322,16 @@ int path_fnamencmp(const char *const fname1, const char *const fname2,
   const char *p1 = fname1;
   const char *p2 = fname2;
   while (len > 0) {
-    c1 = PTR2CHAR(p1);
-    c2 = PTR2CHAR(p2);
+    c1 = PTR2CHAR((const char_u *)p1);
+    c2 = PTR2CHAR((const char_u *)p2);
     if ((c1 == NUL || c2 == NUL
          || (!((c1 == '/' || c1 == '\\') && (c2 == '\\' || c2 == '/'))))
         && (p_fic ? (c1 != c2 && ch_fold(c1) != ch_fold(c2)) : c1 != c2)) {
       break;
     }
-    len -= MB_PTR2LEN(p1);
-    p1 += MB_PTR2LEN(p1);
-    p2 += MB_PTR2LEN(p2);
+    len -= MB_PTR2LEN((const char_u *)p1);
+    p1 += MB_PTR2LEN((const char_u *)p1);
+    p2 += MB_PTR2LEN((const char_u *)p2);
   }
   return c1 - c2;
 #else
@@ -816,7 +816,7 @@ static void expand_path_option(char_u *curdir, garray_T *gap)
       }
       STRMOVE(buf + len + 1, buf);
       STRCPY(buf, curdir);
-      buf[len] = PATHSEP;
+      buf[len] = (char_u)PATHSEP;
       simplify_filename(buf);
     }
 
@@ -1327,12 +1327,12 @@ static int expand_backtick(
 /// When the path looks like a URL leave it unmodified.
 void slash_adjust(char_u *p)
 {
-  if (path_with_url(p)) {
+  if (path_with_url((const char *)p)) {
     return;
   }
   while (*p) {
-    if (*p == psepcN) {
-      *p = psepc;
+    if (*p == (char_u)psepcN) {
+      *p = (char_u)psepc;
     }
     mb_ptr_adv(p);
   }

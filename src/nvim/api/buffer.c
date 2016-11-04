@@ -390,13 +390,13 @@ void nvim_buf_set_lines(uint64_t channel_id,
   // Only adjust marks if we managed to switch to a window that holds
   // the buffer, otherwise line numbers will be invalid.
   if (save_curbuf == NULL) {
-    mark_adjust((linenr_T)start, (linenr_T)(end - 1), MAXLNUM, extra);
+    mark_adjust((linenr_T)start, (linenr_T)(end - 1), MAXLNUM, (long)extra);
   }
 
-  changed_lines((linenr_T)start, 0, (linenr_T)end, extra);
+  changed_lines((linenr_T)start, 0, (linenr_T)end, (long)extra);
 
   if (buf == curbuf) {
-    fix_cursor((linenr_T)start, (linenr_T)end, extra);
+    fix_cursor((linenr_T)start, (linenr_T)end, (linenr_T)extra);
   }
 
 end:
