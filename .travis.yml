@@ -98,6 +98,7 @@ addons:
     packages:
       - autoconf
       - automake
+      - apport
       - build-essential
       - clang-3.8
       - cmake
