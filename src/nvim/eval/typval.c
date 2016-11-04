@@ -1030,7 +1030,7 @@ void tv_dict_unref(dict_T *const d)
 /// @param[in]  len  Key length. If negative, then strlen(key) is used.
 ///
 /// @return found item or NULL if nothing was found.
-dictitem_T *tv_dict_find(const dict_T *const d, const char *key,
+dictitem_T *tv_dict_find(const dict_T *const d, const char *const key,
                          const ptrdiff_t len)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
@@ -1051,7 +1051,7 @@ dictitem_T *tv_dict_find(const dict_T *const d, const char *key,
 /// @param[in]  key  Key to find in dictionary.
 ///
 /// @return Dictionary item.
-varnumber_T tv_dict_get_number(dict_T *const d, const char *key)
+varnumber_T tv_dict_get_number(const dict_T *const d, const char *const key)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   dictitem_T *di = tv_dict_find(d, key, -1);
@@ -1071,7 +1071,7 @@ varnumber_T tv_dict_get_number(dict_T *const d, const char *key)
 /// @return NULL if key does not exist, empty string in case of type error,
 ///         string item value otherwise. If returned value is not NULL, it may
 ///         be allocated depending on `save` argument.
-char *tv_dict_get_string(dict_T *const d, const char *const key,
+char *tv_dict_get_string(const dict_T *const d, const char *const key,
                          const bool save)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
@@ -1091,11 +1091,11 @@ char *tv_dict_get_string(dict_T *const d, const char *const key,
 ///
 /// @return NULL if key does not exist, empty string in case of type error,
 ///         string item value otherwise.
-const char *tv_dict_get_string_buf(dict_T *const d, const char *const key,
+const char *tv_dict_get_string_buf(const dict_T *const d, const char *const key,
                                    char *const numbuf)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  dictitem_T *const di = tv_dict_find(d, key, -1);
+  const dictitem_T *const di = tv_dict_find(d, key, -1);
   if (di == NULL) {
     return NULL;
   }
@@ -1200,7 +1200,7 @@ int tv_dict_add_str(dict_T *const d,
                     const char *const val)
   FUNC_ATTR_NONNULL_ALL
 {
-  dictitem_T  *const item = tv_dict_item_alloc_len(key, key_len);
+  dictitem_T *const item = tv_dict_item_alloc_len(key, key_len);
 
   item->di_tv.v_lock = VAR_UNLOCKED;
   item->di_tv.v_type = VAR_STRING;
