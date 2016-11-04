@@ -21783,7 +21783,7 @@ void ex_oldfiles(exarg_T *eap)
       nr = prompt_for_number(false);
       msg_starthere();
       if (nr > 0 && nr <= l->lv_len) {
-        const char *const p = tv_list_find_str(l, nr);
+        const char *const p = tv_list_find_str(l, nr - 1);
         if (p == NULL) {
           return;
         }

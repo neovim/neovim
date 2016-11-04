@@ -405,7 +405,13 @@ local alloc_logging_helpers = {
   freed = function(p) return {func='free', args={type(p) == 'table' and p or void(p)}} end,
 }
 
+local function int(n)
+  return {[type_key]=int_type, value=n}
+end
+
 return {
+  int=int,
+
   null_string=null_string,
   null_list=null_list,
   null_dict=null_dict,
