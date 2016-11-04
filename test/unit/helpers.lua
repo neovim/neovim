@@ -7,6 +7,9 @@ local global_helpers = require('test.helpers')
 local assert = require('luassert')
 local say = require('say')
 
+local posix = nil
+local syscall = nil
+
 local neq = global_helpers.neq
 local eq = global_helpers.eq
 local ok = global_helpers.ok
@@ -355,9 +358,8 @@ end
 if os.getenv('NVIM_TEST_PRINT_SYSCALLS') == '1' then
   for k_, v_ in pairs(sc) do
     (function(k, v)
-      local f = sc[k]
       sc[k] = function(...)
-        local rets = {f(...)}
+        local rets = {v(...)}
         io.stderr:write(('%s(%s) = %s\n'):format(k, format_list({...}),
                                                  format_list(rets)))
         return unpack(rets)
