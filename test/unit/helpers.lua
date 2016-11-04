@@ -356,6 +356,10 @@ local function gen_itp(it)
                   'assertion.just_fail.positive',
                   'assertion.just_fail.negative')
   local function itp(name, func, allow_failure)
+    if allow_failure and os.getenv('NVIM_TEST_RUN_FAILING_TESTS') ~= '1' then
+      -- FIXME Fix tests with this true
+      return
+    end
     it(name, function()
       local rd, wr = sc.pipe()
       local pid = sc.fork()
