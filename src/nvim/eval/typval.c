@@ -1096,7 +1096,7 @@ dictitem_T *tv_dict_find(const dict_T *const d, const char *const key,
 /// @param[in]  key  Key to find in dictionary.
 ///
 /// @return Dictionary item.
-varnumber_T tv_dict_get_number(dict_T *const d, const char *const key)
+varnumber_T tv_dict_get_number(const dict_T *const d, const char *const key)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   dictitem_T *const di = tv_dict_find(d, key, -1);
@@ -1116,7 +1116,7 @@ varnumber_T tv_dict_get_number(dict_T *const d, const char *const key)
 /// @return NULL if key does not exist, empty string in case of type error,
 ///         string item value otherwise. If returned value is not NULL, it may
 ///         be allocated depending on `save` argument.
-char *tv_dict_get_string(dict_T *const d, const char *const key,
+char *tv_dict_get_string(const dict_T *const d, const char *const key,
                          const bool save)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
@@ -1136,11 +1136,11 @@ char *tv_dict_get_string(dict_T *const d, const char *const key,
 ///
 /// @return NULL if key does not exist, empty string in case of type error,
 ///         string item value otherwise.
-const char *tv_dict_get_string_buf(dict_T *const d, const char *const key,
+const char *tv_dict_get_string_buf(const dict_T *const d, const char *const key,
                                    char *const numbuf)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  dictitem_T *const di = tv_dict_find(d, key, -1);
+  const dictitem_T *const di = tv_dict_find(d, key, -1);
   if (di == NULL) {
     return NULL;
   }
