@@ -8331,7 +8331,7 @@ eval_vars (
           return NULL;
         }
         result = (char_u *)tv_list_find_str(get_vim_var_list(VV_OLDFILES),
-                                            (long)i);
+                                            i - 1);
         if (result == NULL) {
           *errormsg = (char_u *)"";
           return NULL;

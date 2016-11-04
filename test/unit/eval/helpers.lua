@@ -253,7 +253,13 @@ lua2typvalt = function(l, processed)
   end
 end
 
+local function int(n)
+  return {[type_key]=int_type, value=n}
+end
+
 return {
+  int=int,
+
   null_string=null_string,
   null_list=null_list,
   null_dict=null_dict,

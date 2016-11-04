@@ -703,12 +703,10 @@ listitem_T *tv_list_find(list_T *const l, int n)
 ///                         `*ret_error` is not touched.
 ///
 /// @return Integer value at the given index or -1.
-varnumber_T tv_list_find_nr(list_T *const l, const int n, bool *ret_error)
+varnumber_T tv_list_find_nr(list_T *const l, const int n, bool *const ret_error)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  listitem_T  *li;
-
-  li = tv_list_find(l, n);
+  const listitem_T *const li = tv_list_find(l, n);
   if (li == NULL) {
     if (ret_error != NULL) {
       *ret_error = true;
@@ -718,18 +716,16 @@ varnumber_T tv_list_find_nr(list_T *const l, const int n, bool *ret_error)
   return tv_get_number_chk(&li->li_tv, ret_error);
 }
 
-/// Get list item l[n - 1] as a string
+/// Get list item l[n] as a string
 ///
 /// @param[in]  l  List to index.
 /// @param[in]  n  Index in a list.
 ///
-/// @return [allocated] Copy of the list item string value.
-const char *tv_list_find_str(list_T *l, int n)
-  FUNC_ATTR_MALLOC
+/// @return List item string value or NULL in case of error.
+const char *tv_list_find_str(list_T *const l, const int n)
+  FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  listitem_T  *li;
-
-  li = tv_list_find(l, n - 1);
+  const listitem_T *const li = tv_list_find(l, n);
   if (li == NULL) {
     EMSGN(_(e_listidx), n);
     return NULL;

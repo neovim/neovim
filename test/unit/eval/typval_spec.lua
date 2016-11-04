@@ -10,6 +10,7 @@ local to_cstr = helpers.to_cstr
 local gen_itp = helpers.gen_itp
 local set_logging_allocator = helpers.set_logging_allocator
 
+local int = eval_helpers.int
 local list = eval_helpers.list
 local lst2tbl = eval_helpers.lst2tbl
 local typvalt = eval_helpers.typvalt
@@ -1158,6 +1159,195 @@ describe('typval.c', function()
         eq(true, lib.tv_list_equal(l1, l7, true, false))
         eq(false, lib.tv_list_equal(l1, l8, true, false))
         eq(false, lib.tv_list_equal(l1, l9, true, false))
+      end)
+    end)
+    describe('find', function()
+      describe('()', function()
+        itp('correctly indexes list', function()
+          local l = list(1, 2, 3, 4, 5)
+          local lis = list_items(l)
+          clear_alloc_log()
+
+          eq(nil, lib.tv_list_find(nil, -1))
+          eq(nil, lib.tv_list_find(nil, 0))
+          eq(nil, lib.tv_list_find(nil, 1))
+
+          eq(nil, lib.tv_list_find(l, 5))
+          eq(nil, lib.tv_list_find(l, -6))
+          eq(lis[1], lib.tv_list_find(l, -5))
+          eq(lis[5], lib.tv_list_find(l, 4))
+          eq(lis[3], lib.tv_list_find(l, 2))
+          eq(lis[3], lib.tv_list_find(l, -3))
+          eq(lis[3], lib.tv_list_find(l, 2))
+          eq(lis[3], lib.tv_list_find(l, 2))
+          eq(lis[3], lib.tv_list_find(l, -3))
+
+          l.lv_idx_item = nil
+          eq(lis[1], lib.tv_list_find(l, -5))
+          l.lv_idx_item = nil
+          eq(lis[5], lib.tv_list_find(l, 4))
+          l.lv_idx_item = nil
+          eq(lis[3], lib.tv_list_find(l, 2))
+          l.lv_idx_item = nil
+          eq(lis[3], lib.tv_list_find(l, -3))
+          l.lv_idx_item = nil
+          eq(lis[3], lib.tv_list_find(l, 2))
+          l.lv_idx_item = nil
+          eq(lis[3], lib.tv_list_find(l, 2))
+          l.lv_idx_item = nil
+          eq(lis[3], lib.tv_list_find(l, -3))
+
+          l.lv_idx_item = nil
+          eq(lis[3], lib.tv_list_find(l, 2))
+          eq(lis[1], lib.tv_list_find(l, -5))
+          eq(lis[3], lib.tv_list_find(l, 2))
+          eq(lis[5], lib.tv_list_find(l, 4))
+          eq(lis[3], lib.tv_list_find(l, 2))
+          eq(lis[3], lib.tv_list_find(l, 2))
+          eq(lis[3], lib.tv_list_find(l, 2))
+          eq(lis[3], lib.tv_list_find(l, -3))
+          eq(lis[3], lib.tv_list_find(l, 2))
+          eq(lis[3], lib.tv_list_find(l, 2))
+          eq(lis[3], lib.tv_list_find(l, 2))
+          eq(lis[3], lib.tv_list_find(l, -3))
+
+          check_alloc_log({})
+        end)
+      end)
+      local function check_emsg(f, msg)
+        local saved_last_msg_hist = lib.last_msg_hist
+        local ret = {f()}
+        if msg ~= nil then
+          neq(saved_last_msg_hist, lib.last_msg_hist)
+          eq(msg, ffi.string(lib.last_msg_hist.msg))
+        else
+          eq(saved_last_msg_hist, lib.last_msg_hist)
+        end
+        return unpack(ret)
+      end
+      describe('nr()', function()
+        local function tv_list_find_nr(l, n, msg)
+          return check_emsg(function()
+            local err = ffi.new('bool[1]', {false})
+            local ret = lib.tv_list_find_nr(l, n, err)
+            return (err[0] == true), ret
+          end, msg)
+        end
+        it('returns correct number', function()
+          local l = list(int(1), int(2), int(3), int(4), int(5))
+          clear_alloc_log()
+
+          eq({false, 1}, {tv_list_find_nr(l, -5)})
+          eq({false, 5}, {tv_list_find_nr(l, 4)})
+          eq({false, 3}, {tv_list_find_nr(l, 2)})
+          eq({false, 3}, {tv_list_find_nr(l, -3)})
+
+          check_alloc_log({})
+        end)
+        it('returns correct number when given a string', function()
+          local l = list('1', '2', '3', '4', '5')
+          clear_alloc_log()
+
+          eq({false, 1}, {tv_list_find_nr(l, -5)})
+          eq({false, 5}, {tv_list_find_nr(l, 4)})
+          eq({false, 3}, {tv_list_find_nr(l, 2)})
+          eq({false, 3}, {tv_list_find_nr(l, -3)})
+
+          check_alloc_log({})
+        end)
+        it('returns zero when given a NULL string', function()
+          local l = list(null_string)
+          clear_alloc_log()
+
+          eq({false, 0}, {tv_list_find_nr(l, 0)})
+
+          check_alloc_log({})
+        end)
+        it('errors out on NULL lists', function()
+          eq({true, -1}, {tv_list_find_nr(nil, -5)})
+          eq({true, -1}, {tv_list_find_nr(nil, 4)})
+          eq({true, -1}, {tv_list_find_nr(nil, 2)})
+          eq({true, -1}, {tv_list_find_nr(nil, -3)})
+
+          check_alloc_log({})
+        end)
+        it('errors out on out-of-range indexes', function()
+          local l = list(int(1), int(2), int(3), int(4), int(5))
+          clear_alloc_log()
+
+          eq({true, -1}, {tv_list_find_nr(l, -6)})
+          eq({true, -1}, {tv_list_find_nr(l, 5)})
+
+          check_alloc_log({})
+        end)
+        it('errors out on invalid types', function()
+          local l = list(1, empty_list, {})
+
+          eq({true, 0}, {tv_list_find_nr(l, 0, 'E805: Using a Float as a Number')})
+          eq({true, 0}, {tv_list_find_nr(l, 1, 'E745: Using a List as a Number')})
+          eq({true, 0}, {tv_list_find_nr(l, 2, 'E728: Using a Dictionary as a Number')})
+          eq({true, 0}, {tv_list_find_nr(l, -1, 'E728: Using a Dictionary as a Number')})
+          eq({true, 0}, {tv_list_find_nr(l, -2, 'E745: Using a List as a Number')})
+          eq({true, 0}, {tv_list_find_nr(l, -3, 'E805: Using a Float as a Number')})
+        end)
+      end)
+      local function tv_list_find_str(l, n, msg)
+        return check_emsg(function()
+          local ret = lib.tv_list_find_str(l, n)
+          local s = nil
+          if ret ~= nil then
+            s = ffi.string(ret)
+          end
+          return s
+        end, msg)
+      end
+      describe('str()', function()
+        it('returns correct string', function()
+          local l = list(int(1), int(2), int(3), int(4), int(5))
+          clear_alloc_log()
+
+          eq('1', tv_list_find_str(l, -5))
+          eq('5', tv_list_find_str(l, 4))
+          eq('3', tv_list_find_str(l, 2))
+          eq('3', tv_list_find_str(l, -3))
+
+          check_alloc_log({})
+        end)
+        it('returns string when used with VAR_STRING items', function()
+          local l = list('1', '2', '3', '4', '5')
+          clear_alloc_log()
+
+          eq('1', tv_list_find_str(l, -5))
+          eq('5', tv_list_find_str(l, 4))
+          eq('3', tv_list_find_str(l, 2))
+          eq('3', tv_list_find_str(l, -3))
+
+          check_alloc_log({})
+        end)
+        it('returns empty when used with NULL string', function()
+          local l = list(null_string)
+          clear_alloc_log()
+
+          eq('', tv_list_find_str(l, 0))
+
+          check_alloc_log({})
+        end)
+        it('fails with error message when index is out of range', function()
+          local l = list(int(1), int(2), int(3), int(4), int(5))
+
+          eq(nil, tv_list_find_str(l, -6, 'E684: list index out of range: -6'))
+          eq(nil, tv_list_find_str(l, 5, 'E684: list index out of range: 5'))
+        end)
+        it('fails with error message on invalid types', function()
+          local l = list(1, empty_list, {})
+
+          eq('', tv_list_find_str(l, 0, 'E806: using Float as a String'))
+          eq('', tv_list_find_str(l, 1, 'E730: using List as a String'))
+          eq('', tv_list_find_str(l, 2, 'E731: using Dictionary as a String'))
+          eq('', tv_list_find_str(l, -1, 'E731: using Dictionary as a String'))
+          eq('', tv_list_find_str(l, -2, 'E730: using List as a String'))
+          eq('', tv_list_find_str(l, -3, 'E806: using Float as a String'))
+        end)
       end)
     end)
   end)
