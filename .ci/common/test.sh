@@ -1,4 +1,19 @@
+print_core() {
+  local app="$1"
+  local core="$2"
+  if [[ "${TRAVIS_OS_NAME}" == osx ]]; then
+    lldb -Q -o "bt all" -f "${app}" -c "${core}"
+  else
+    gdb -n -batch -ex 'thread apply all bt full' "${app}" -c "${core}"
+  fi
+}
+
 check_core_dumps() {
+  local del=
+  if test "$1" = "--delete" ; then
+    del=1
+    shift
+  fi
   local app="${1:-${BUILD_DIR}/bin/nvim}"
   if [[ "${TRAVIS_OS_NAME}" == osx ]]; then
     local cores="$(find /cores/ -type f -print)"
@@ -12,10 +27,11 @@ check_core_dumps() {
   fi
   local core
   for core in $cores; do
-    if [[ "${TRAVIS_OS_NAME}" == osx ]]; then
-      lldb -Q -o "bt all" -f "${app}" -c "${core}"
+    if test "$del" = "1" ; then
+      print_core "$app" "$core" >&2
+      rm "$core"
     else
-      gdb -n -batch -ex 'thread apply all bt full' "${app}" -c "${core}"
+      print_core "$app" "$core"
     fi
   done
   exit 1
