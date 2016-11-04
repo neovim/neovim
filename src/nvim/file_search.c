@@ -322,8 +322,11 @@ vim_findfile_init (
       drive[0] = path[0];
       drive[1] = ':';
       drive[2] = NUL;
-      if (vim_FullName(drive, ff_expand_buffer, MAXPATHL, TRUE) == FAIL)
+      if (vim_FullName((const char *)drive, (char *)ff_expand_buffer, MAXPATHL,
+                       true)
+          == FAIL) {
         goto error_return;
+      }
       path += 2;
     } else
 #endif

@@ -395,10 +395,10 @@ void nvim_buf_set_lines(uint64_t channel_id,
     mark_adjust((linenr_T)start, (linenr_T)(end - 1), MAXLNUM, extra);
   }
 
-  changed_lines((linenr_T)start, 0, (linenr_T)end, extra);
+  changed_lines((linenr_T)start, 0, (linenr_T)end, (long)extra);
 
   if (save_curbuf.br_buf == NULL) {
-    fix_cursor((linenr_T)start, (linenr_T)end, extra);
+    fix_cursor((linenr_T)start, (linenr_T)end, (linenr_T)extra);
   }
 
 end:

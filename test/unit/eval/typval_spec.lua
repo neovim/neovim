@@ -294,8 +294,8 @@ describe('typval.c', function()
       end)
     end)
     -- add() and fix() were tested when testing tv_list_item_remove()
-    describe('alloc()/free()', function()
-      itp('recursively frees list with', function()
+    describe('free()', function()
+      itp('recursively frees list', function()
         local l1 = ffi.gc(list(1, 'abc'), nil)
         local l2 = ffi.gc(list({}), nil)
         local l3 = ffi.gc(list(empty_list), nil)
@@ -332,27 +332,73 @@ describe('typval.c', function()
           alloc_rets:freed(8),
         })
       end)
-      itp('does not free container items with recurse=false', function()
-        local l1 = ffi.gc(list('abc', {}, empty_list), nil)
+    end)
+    describe('free_list()', function()
+      itp('does not free list contents', function()
+        local l1 = ffi.gc(list(1, 'abc'), nil)
+        local l2 = ffi.gc(list({}), nil)
+        local l3 = ffi.gc(list(empty_list), nil)
         local alloc_rets = {}
         alloc_log:check(get_alloc_rets({
           a.list(l1),
-          a.str(l1.lv_first.li_tv.vval.v_string, #('abc')),
           a.li(l1.lv_first),
-          a.dict(l1.lv_first.li_next.li_tv.vval.v_dict),
-          a.li(l1.lv_first.li_next),
-          a.list(l1.lv_last.li_tv.vval.v_list),
+          a.str(l1.lv_last.li_tv.vval.v_string, #('abc')),
           a.li(l1.lv_last),
+          a.list(l2),
+          a.dict(l2.lv_first.li_tv.vval.v_dict),
+          a.li(l2.lv_first),
+          a.list(l3),
+          a.list(l3.lv_first.li_tv.vval.v_list),
+          a.li(l3.lv_first),
         }, alloc_rets))
-        lib.tv_list_free(l1)
+        lib.tv_list_free_list(l1)
+        alloc_log:check({
+          alloc_rets:freed(1),
+        })
+        lib.tv_list_free_list(l2)
+        alloc_log:check({
+          alloc_rets:freed(5),
+        })
+        lib.tv_list_free_list(l3)
+        alloc_log:check({
+          alloc_rets:freed(8),
+        })
+      end)
+    end)
+    describe('free_contents()', function()
+      itp('recursively frees list, except for the list structure itself',
+      function()
+        local l1 = ffi.gc(list(1, 'abc'), nil)
+        local l2 = ffi.gc(list({}), nil)
+        local l3 = ffi.gc(list(empty_list), nil)
+        local alloc_rets = {}
+        alloc_log:check(get_alloc_rets({
+          a.list(l1),
+          a.li(l1.lv_first),
+          a.str(l1.lv_last.li_tv.vval.v_string, #('abc')),
+          a.li(l1.lv_last),
+          a.list(l2),
+          a.dict(l2.lv_first.li_tv.vval.v_dict),
+          a.li(l2.lv_first),
+          a.list(l3),
+          a.list(l3.lv_first.li_tv.vval.v_list),
+          a.li(l3.lv_first),
+        }, alloc_rets))
+        lib.tv_list_free_contents(l1)
         alloc_log:check({
           alloc_rets:freed(2),
           alloc_rets:freed(3),
           alloc_rets:freed(4),
-          alloc_rets:freed(5),
+        })
+        lib.tv_list_free_contents(l2)
+        alloc_log:check({
           alloc_rets:freed(6),
           alloc_rets:freed(7),
-          alloc_rets:freed(1),
+        })
+        lib.tv_list_free_contents(l3)
+        alloc_log:check({
+          alloc_rets:freed(9),
+          alloc_rets:freed(10),
         })
       end)
     end)
@@ -1063,8 +1109,8 @@ describe('typval.c', function()
         local recursive_l = l.lv_first.li_tv.vval.v_list
         local recursive_li = recursive_l.lv_first
         lib.tv_list_item_remove(recursive_l, recursive_li)
-        lib.tv_list_free(l, true)
-      end)
+        lib.tv_list_free(l)
+      end, true)
     end)
     describe('equal()', function()
       itp('compares empty and NULL lists correctly', function()
@@ -1140,7 +1186,7 @@ describe('typval.c', function()
         itp('correctly indexes list', function()
           local l = list(1, 2, 3, 4, 5)
           local lis = list_items(l)
-          clear_alloc_log()
+          alloc_log:clear()
 
           eq(nil, lib.tv_list_find(nil, -1))
           eq(nil, lib.tv_list_find(nil, 0))
@@ -1185,7 +1231,7 @@ describe('typval.c', function()
           eq(lis[3], lib.tv_list_find(l, 2))
           eq(lis[3], lib.tv_list_find(l, -3))
 
-          check_alloc_log({})
+          alloc_log:check({})
         end)
       end)
       local function check_emsg(f, msg)
@@ -1207,54 +1253,54 @@ describe('typval.c', function()
             return (err[0] == true), ret
           end, msg)
         end
-        it('returns correct number', function()
+        itp('returns correct number', function()
           local l = list(int(1), int(2), int(3), int(4), int(5))
-          clear_alloc_log()
+          alloc_log:clear()
 
           eq({false, 1}, {tv_list_find_nr(l, -5)})
           eq({false, 5}, {tv_list_find_nr(l, 4)})
           eq({false, 3}, {tv_list_find_nr(l, 2)})
           eq({false, 3}, {tv_list_find_nr(l, -3)})
 
-          check_alloc_log({})
+          alloc_log:check({})
         end)
-        it('returns correct number when given a string', function()
+        itp('returns correct number when given a string', function()
           local l = list('1', '2', '3', '4', '5')
-          clear_alloc_log()
+          alloc_log:clear()
 
           eq({false, 1}, {tv_list_find_nr(l, -5)})
           eq({false, 5}, {tv_list_find_nr(l, 4)})
           eq({false, 3}, {tv_list_find_nr(l, 2)})
           eq({false, 3}, {tv_list_find_nr(l, -3)})
 
-          check_alloc_log({})
+          alloc_log:check({})
         end)
-        it('returns zero when given a NULL string', function()
+        itp('returns zero when given a NULL string', function()
           local l = list(null_string)
-          clear_alloc_log()
+          alloc_log:clear()
 
           eq({false, 0}, {tv_list_find_nr(l, 0)})
 
-          check_alloc_log({})
+          alloc_log:check({})
         end)
-        it('errors out on NULL lists', function()
+        itp('errors out on NULL lists', function()
           eq({true, -1}, {tv_list_find_nr(nil, -5)})
           eq({true, -1}, {tv_list_find_nr(nil, 4)})
           eq({true, -1}, {tv_list_find_nr(nil, 2)})
           eq({true, -1}, {tv_list_find_nr(nil, -3)})
 
-          check_alloc_log({})
+          alloc_log:check({})
         end)
-        it('errors out on out-of-range indexes', function()
+        itp('errors out on out-of-range indexes', function()
           local l = list(int(1), int(2), int(3), int(4), int(5))
-          clear_alloc_log()
+          alloc_log:clear()
 
           eq({true, -1}, {tv_list_find_nr(l, -6)})
           eq({true, -1}, {tv_list_find_nr(l, 5)})
 
-          check_alloc_log({})
+          alloc_log:check({})
         end)
-        it('errors out on invalid types', function()
+        itp('errors out on invalid types', function()
           local l = list(1, empty_list, {})
 
           eq({true, 0}, {tv_list_find_nr(l, 0, 'E805: Using a Float as a Number')})
@@ -1276,43 +1322,43 @@ describe('typval.c', function()
         end, msg)
       end
       describe('str()', function()
-        it('returns correct string', function()
+        itp('returns correct string', function()
           local l = list(int(1), int(2), int(3), int(4), int(5))
-          clear_alloc_log()
+          alloc_log:clear()
 
           eq('1', tv_list_find_str(l, -5))
           eq('5', tv_list_find_str(l, 4))
           eq('3', tv_list_find_str(l, 2))
           eq('3', tv_list_find_str(l, -3))
 
-          check_alloc_log({})
+          alloc_log:check({})
         end)
-        it('returns string when used with VAR_STRING items', function()
+        itp('returns string when used with VAR_STRING items', function()
           local l = list('1', '2', '3', '4', '5')
-          clear_alloc_log()
+          alloc_log:clear()
 
           eq('1', tv_list_find_str(l, -5))
           eq('5', tv_list_find_str(l, 4))
           eq('3', tv_list_find_str(l, 2))
           eq('3', tv_list_find_str(l, -3))
 
-          check_alloc_log({})
+          alloc_log:check({})
         end)
-        it('returns empty when used with NULL string', function()
+        itp('returns empty when used with NULL string', function()
           local l = list(null_string)
-          clear_alloc_log()
+          alloc_log:clear()
 
           eq('', tv_list_find_str(l, 0))
 
-          check_alloc_log({})
+          alloc_log:check({})
         end)
-        it('fails with error message when index is out of range', function()
+        itp('fails with error message when index is out of range', function()
           local l = list(int(1), int(2), int(3), int(4), int(5))
 
           eq(nil, tv_list_find_str(l, -6, 'E684: list index out of range: -6'))
           eq(nil, tv_list_find_str(l, 5, 'E684: list index out of range: 5'))
         end)
-        it('fails with error message on invalid types', function()
+        itp('fails with error message on invalid types', function()
           local l = list(1, empty_list, {})
 
           eq('', tv_list_find_str(l, 0, 'E806: using Float as a String'))
@@ -1325,7 +1371,7 @@ describe('typval.c', function()
       end)
     end)
     describe('idx_of_item()', function()
-      it('works', function()
+      itp('works', function()
         local l = list(1, 2, 3, 4, 5)
         local l2 = list(42, empty_list)
         local lis = list_items(l)
