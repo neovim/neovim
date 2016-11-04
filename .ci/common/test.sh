@@ -1,10 +1,29 @@
+print_core() {
+  local app="$1"
+  local core="$2"
+  if test "$app" = quiet ; then
+    echo "Found core $core"
+    return 0
+  fi
+  echo "======= Core file $core ======="
+  if [[ "${TRAVIS_OS_NAME}" == osx ]]; then
+    lldb -Q -o "bt all" -f "${app}" -c "${core}"
+  else
+    gdb -n -batch -ex 'thread apply all bt full' "${app}" -c "${core}"
+  fi
+}
+
 check_core_dumps() {
+  local del=
+  if test "$1" = "--delete" ; then
+    del=1
+    shift
+  fi
   local app="${1:-${BUILD_DIR}/bin/nvim}"
   if [[ "${TRAVIS_OS_NAME}" == osx ]]; then
     local cores="$(find /cores/ -type f -print)"
   else
-    # FIXME (fwalch): Will trigger if a file named core.* exists outside of $DEPS_BUILD_DIR.
-    local cores="$(find ./ -type f -not -path "*${DEPS_BUILD_DIR}*" -name 'core.*' -print)"
+    local cores="$(find ./ -type f -name 'core.*' -print)"
   fi
 
   if [ -z "${cores}" ]; then
@@ -12,12 +31,16 @@ check_core_dumps() {
   fi
   local core
   for core in $cores; do
-    if [[ "${TRAVIS_OS_NAME}" == osx ]]; then
-      lldb -Q -o "bt all" -f "${app}" -c "${core}"
+    if test "$del" = "1" ; then
+      print_core "$app" "$core" >&2
+      rm "$core"
     else
-      gdb -n -batch -ex 'thread apply all bt full' "${app}" -c "${core}"
+      print_core "$app" "$core"
     fi
   done
+  if test "$app" = quiet ; then
+    return 0
+  fi
   exit 1
 }
 
