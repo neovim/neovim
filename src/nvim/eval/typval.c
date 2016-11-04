@@ -774,7 +774,7 @@ long tv_list_idx_of_item(const list_T *const l, const listitem_T *const item)
     return -1;
   }
   long idx = 0;
-  listitem_T *li;
+  const listitem_T *li;
   for (li = l->lv_first; li != NULL && li != item; li = li->li_next) {
     idx++;
   }
