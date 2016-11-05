@@ -1,6 +1,11 @@
 print_core() {
   local app="$1"
   local core="$2"
+  if test "$app" = quiet ; then
+    echo "Found core $core"
+    return 0
+  fi
+  echo "======= Core file $core ======="
   if [[ "${TRAVIS_OS_NAME}" == osx ]]; then
     lldb -Q -o "bt all" -f "${app}" -c "${core}"
   else
@@ -18,8 +23,7 @@ check_core_dumps() {
   if [[ "${TRAVIS_OS_NAME}" == osx ]]; then
     local cores="$(find /cores/ -type f -print)"
   else
-    # FIXME (fwalch): Will trigger if a file named core.* exists outside of $DEPS_BUILD_DIR.
-    local cores="$(find ./ -type f -not -path "*${DEPS_BUILD_DIR}*" -name 'core.*' -print)"
+    local cores="$(find ./ -type f -name 'core.*' -print)"
   fi
 
   if [ -z "${cores}" ]; then
@@ -34,6 +38,9 @@ check_core_dumps() {
       print_core "$app" "$core"
     fi
   done
+  if test "$app" = quiet ; then
+    return 0
+  fi
   exit 1
 }
 
