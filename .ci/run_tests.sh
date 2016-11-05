@@ -11,7 +11,7 @@ check_core_dumps --delete quiet
 
 prepare_build # -DCMAKE_VERBOSE_MAKEFILE=on
 
-run_single_includes_tests
+# run_single_includes_tests
 
 build_nvim
 
