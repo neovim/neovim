@@ -13,6 +13,7 @@ local winmeths = helpers.winmeths
 local curbufmeths = helpers.curbufmeths
 local curwinmeths = helpers.curwinmeths
 local curtabmeths = helpers.curtabmeths
+local get_pathsep = helpers.get_pathsep
 
 local fname = 'Xtest-functional-eval-buf_functions'
 local fname2 = fname .. '.2'
@@ -66,14 +67,15 @@ describe('bufname() function', function()
     eq('', funcs.bufname('%'))  -- Buffer has no name yet
     command('file ' .. fname)
     local wd = lfs.currentdir()
+    local sep = get_pathsep()
     local curdirname = funcs.fnamemodify(wd, ':t')
     for _, arg in ipairs({'%', 1, 'X', wd}) do
       eq(fname, funcs.bufname(arg))
       meths.set_current_dir('..')
-      eq(curdirname .. '/' .. fname, funcs.bufname(arg))
+      eq(curdirname .. sep .. fname, funcs.bufname(arg))
       meths.set_current_dir(curdirname)
       meths.set_current_dir(dirname)
-      eq(wd .. '/' .. fname, funcs.bufname(arg))
+      eq(wd .. sep .. fname, funcs.bufname(arg))
       meths.set_current_dir('..')
       eq(fname, funcs.bufname(arg))
       command('enew')
