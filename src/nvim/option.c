@@ -780,14 +780,11 @@ void set_init_1(void)
   }
   fenc_default = p;
 
-  // Initialize multibyte (utf-8) handling
-  mb_init();
-
-  // Don't change &encoding when resetting to defaults with ":set all&".
-  opt_idx = findoption((char_u *)"encoding");
-  if (opt_idx >= 0) {
-    options[opt_idx].flags |= P_NODEFAULT;
-  }
+#ifdef HAVE_WORKING_LIBINTL
+  // GNU gettext 0.10.37 supports this feature: set the codeset used for
+  // translated messages independently from the current locale.
+  (void)bind_textdomain_codeset(PROJECT_NAME, (char *)p_enc);
+#endif
 
   /* Set the default for 'helplang'. */
   set_helplang_default(get_mess_lang());
@@ -2580,19 +2577,17 @@ did_set_string_option (
       errmsg = e_invarg;
   /* 'encoding' and 'fileencoding' */
   } else if (varp == &p_enc || gvarp == &p_fenc) {
-    if (varp == &p_enc && did_source_startup_scripts) {
-       errmsg = e_afterinit;
-    } else if (gvarp == &p_fenc) {
-      if (!MODIFIABLE(curbuf) && opt_flags != OPT_GLOBAL)
+    if (gvarp == &p_fenc) {
+      if (!MODIFIABLE(curbuf) && opt_flags != OPT_GLOBAL) {
         errmsg = e_modifiable;
-      else if (vim_strchr(*varp, ',') != NULL)
-        /* No comma allowed in 'fileencoding'; catches confusing it
-         * with 'fileencodings'. */
+      } else if (vim_strchr(*varp, ',') != NULL) {
+        // No comma allowed in 'fileencoding'; catches confusing it
+        // with 'fileencodings'.
         errmsg = e_invarg;
-      else {
-        /* May show a "+" in the title now. */
+      } else {
+        // May show a "+" in the title now.
         redraw_titles();
-        /* Add 'fileencoding' to the swap file. */
+        // Add 'fileencoding' to the swap file.
         ml_setflags(curbuf);
       }
     }
@@ -2603,16 +2598,11 @@ did_set_string_option (
       xfree(*varp);
       *varp = p;
       if (varp == &p_enc) {
-        errmsg = mb_init();
-        redraw_titles();
+        // only encoding=utf-8 allowed
+        if (STRCMP(p_enc, "utf-8") != 0) {
+          errmsg = e_invarg;
+        }
       }
-    }
-
-    if (errmsg == NULL) {
-      /* When 'keymap' is used and 'encoding' changes, reload the keymap
-       * (with another encoding). */
-      if (varp == &p_enc && *curbuf->b_p_keymap != NUL)
-        (void)keymap_init();
     }
   } else if (varp == &p_penc) {
     /* Canonize printencoding if VIM standard one */

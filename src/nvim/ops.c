@@ -1936,8 +1936,7 @@ int swapchar(int op_type, pos_T *pos)
   if (c >= 0x80 && op_type == OP_ROT13)
     return FALSE;
 
-  if (op_type == OP_UPPER && c == 0xdf
-      && (enc_latin1like || STRCMP(p_enc, "iso-8859-2") == 0)) {
+  if (op_type == OP_UPPER && c == 0xdf) {
     pos_T sp = curwin->w_cursor;
 
     /* Special handling of German sharp s: change to "SS". */

@@ -9266,9 +9266,7 @@ static void allcap_copy(char_u *word, char_u *wcopy)
     else
       c = *s++;
 
-    // We only change 0xdf to SS when we are certain latin1 is used.  It
-    // would cause weird errors in other 8-bit encodings.
-    if (enc_latin1like && c == 0xdf) {
+    if (c == 0xdf) {
       c = 'S';
       if (d - wcopy >= MAXWLEN - 1)
         break;
@@ -12602,7 +12600,7 @@ static int spell_edit_score(slang_T *slang, char_u *badword, char_u *goodword)
   char_u      *p;
   int wbadword[MAXWLEN];
   int wgoodword[MAXWLEN];
-  const int l_has_mbyte = has_mbyte;
+  const bool l_has_mbyte = has_mbyte;
 
   if (l_has_mbyte) {
     // Get the characters from the multi-byte strings and put them in an

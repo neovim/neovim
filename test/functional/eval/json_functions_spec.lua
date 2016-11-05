@@ -489,18 +489,6 @@ describe('json_decode() function', function()
                  '{"b": 3, "a": 1, "c": 4, "d": 2, "\\u0000": 4}')
   end)
 
-  it('converts strings to latin1 when &encoding is latin1', function()
-    restart('--cmd', 'set encoding=latin1')
-    eq('\171', funcs.json_decode('"\\u00AB"'))
-    sp_decode_eq({_TYPE='string', _VAL={'\n\171\n'}}, '"\\u0000\\u00AB\\u0000"')
-  end)
-
-  it('fails to convert string to latin1 if it is impossible', function()
-    restart('--cmd', 'set encoding=latin1')
-    eq('Vim(call):E474: Failed to convert string "ꯍ" from UTF-8',
-       exc_exec('call json_decode(\'"\\uABCD"\')'))
-  end)
-
   it('parses U+00C3 correctly', function()
     eq('\195\131', funcs.json_decode('"\195\131"'))
   end)
@@ -526,14 +514,6 @@ describe('json_decode() function', function()
     local s = ' \t\n\r \t\r\n \n\t\r \n\r\t \r\t\n \r\n\t\t \n\r\t \r\n\t\n \r\t\n\r \t\r \n\t\r\n \n \t\r\n \r\t\n\t \r\n\t\r \n\r \t\n\r\t \r \t\n\r \n\t\r\t \n\r\t\n \r\n \t\r\n\t'
     local str = ('%s{%s"key"%s:%s[%s"val"%s,%s"val2"%s]%s,%s"key2"%s:%s1%s}%s'):gsub('%%s', s)
     eq({key={'val', 'val2'}, key2=1}, funcs.json_decode(str))
-  end)
-
-  it('always treats input as UTF-8', function()
-    -- When &encoding is latin1 string "«" is U+00C2 U+00AB U+00C2: Â«Â. So if
-    -- '"«"' was parsed as latin1 json_decode would return three characters, and
-    -- only one U+00AB when this string is parsed as latin1.
-    restart('--cmd', 'set encoding=latin1')
-    eq(('%c'):format(0xAB), funcs.json_decode('"«"'))
   end)
 
   it('does not overflow when writing error message about decoding ["", ""]',
@@ -760,12 +740,6 @@ describe('json_encode() function', function()
   it('fails when called with two arguments', function()
     eq('Vim(call):E118: Too many arguments for function: json_encode',
        exc_exec('call json_encode(["", ""], 1)'))
-  end)
-
-  it('converts strings from latin1 when &encoding is latin1', function()
-    clear('--cmd', 'set encoding=latin1')
-    eq('"\\u00AB"', funcs.json_encode('\171'))
-    eq('"\\u0000\\u00AB\\u0000"', eval('json_encode({"_TYPE": v:msgpack_types.string, "_VAL": ["\\n\171\\n"]})'))
   end)
 
   it('ignores improper values in &isprint', function()

@@ -122,32 +122,29 @@
 /* Whether to draw the vertical bar on the right side of the cell. */
 # define CURSOR_BAR_RIGHT (curwin->w_p_rl && (!(State & CMDLINE) || cmdmsg_rl))
 
-/*
- * mb_ptr_adv(): advance a pointer to the next character, taking care of
- * multi-byte characters if needed.
- * mb_ptr_back(): backup a pointer to the previous character, taking care of
- * multi-byte characters if needed.
- * MB_COPY_CHAR(f, t): copy one char from "f" to "t" and advance the pointers.
- * PTR2CHAR(): get character from pointer.
- */
-/* Get the length of the character p points to */
-# define MB_PTR2LEN(p)          (has_mbyte ? (*mb_ptr2len)(p) : 1)
-/* Advance multi-byte pointer, skip over composing chars. */
-# define mb_ptr_adv(p)      (p += has_mbyte ? (*mb_ptr2len)((char_u *)p) : 1)
-/* Advance multi-byte pointer, do not skip over composing chars. */
-# define mb_cptr_adv(p)     (p += \
-  enc_utf8 ? utf_ptr2len(p) : has_mbyte ? (*mb_ptr2len)(p) : 1)
-/* Backup multi-byte pointer. Only use with "p" > "s" ! */
-# define mb_ptr_back(s, p)  (p -= has_mbyte ? ((*mb_head_off)((char_u *)s, (char_u *)p - 1) + 1) : 1)
-/* get length of multi-byte char, not including composing chars */
-# define mb_cptr2len(p)     (enc_utf8 ? utf_ptr2len(p) : (*mb_ptr2len)(p))
+// mb_ptr_adv(): advance a pointer to the next character, taking care of
+// multi-byte characters if needed.
+// mb_ptr_back(): backup a pointer to the previous character, taking care of
+// multi-byte characters if needed.
+// MB_COPY_CHAR(f, t): copy one char from "f" to "t" and advance the pointers.
+// PTR2CHAR(): get character from pointer.
 
-# define MB_COPY_CHAR(f, t) \
-  if (has_mbyte) mb_copy_char((const char_u **)(&f), &t); \
-  else *t++ = *f++
-# define MB_CHARLEN(p)      (has_mbyte ? mb_charlen(p) : (int)STRLEN(p))
-# define MB_CHAR2LEN(c)     (has_mbyte ? mb_char2len(c) : 1)
-# define PTR2CHAR(p)        (has_mbyte ? mb_ptr2char(p) : (int)*(p))
+// Get the length of the character p points to
+# define MB_PTR2LEN(p)          mb_ptr2len(p)
+// Advance multi-byte pointer, skip over composing chars.
+# define mb_ptr_adv(p)      (p += mb_ptr2len((char_u *)p))
+// Advance multi-byte pointer, do not skip over composing chars.
+# define mb_cptr_adv(p)     (p += utf_ptr2len(p))
+// Backup multi-byte pointer. Only use with "p" > "s" !
+# define mb_ptr_back(s, p)  (p -= mb_head_off((char_u *)s, (char_u *)p - 1) + 1)
+// get length of multi-byte char, not including composing chars
+# define mb_cptr2len(p)     utf_ptr2len(p)
+
+# define MB_COPY_CHAR(f, t) mb_copy_char((const char_u **)(&f), &t);
+
+# define MB_CHARLEN(p)      mb_charlen(p)
+# define MB_CHAR2LEN(c)     mb_char2len(c)
+# define PTR2CHAR(p)        mb_ptr2char(p)
 
 # define RESET_BINDING(wp)  (wp)->w_p_scb = FALSE; (wp)->w_p_crb = FALSE
 

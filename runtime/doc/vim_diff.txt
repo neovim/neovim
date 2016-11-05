@@ -40,7 +40,6 @@ these differences.
 - 'complete' doesn't include "i"
 - 'directory' defaults to ~/.local/share/nvim/swap// (|xdg|), auto-created
 - 'display' defaults to "lastline"
-- 'encoding' defaults to "utf-8"
 - 'formatoptions' defaults to "tcqj"
 - 'history' defaults to 10000 (the maximum)
 - 'hlsearch' is set by default
@@ -159,7 +158,7 @@ are always available and may be used simultaneously in separate plugins.  The
    'p')) mkdir() will silently exit. In Vim this was an error.
 3. mkdir() error messages now include strerror() text when mkdir fails.
 
-'encoding' cannot be changed after startup.
+'encoding' is always "utf-8".
 
 |string()| and |:echo| behaviour changed:
 1. No maximum recursion depth limit is applied to nested container
@@ -266,6 +265,7 @@ Highlight groups:
 Other options:
   'antialias'
   'cpoptions' ("g", "w", "H", "*", "-", "j", and all POSIX flags were removed)
+  'encoding' ("utf-8" is always used)
   'guioptions' "t" flag was removed
   *'guipty'* (Nvim uses pipes and PTYs consistently on all platforms.)
   *'imactivatefunc'* *'imaf'*

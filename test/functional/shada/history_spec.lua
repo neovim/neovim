@@ -4,9 +4,7 @@ local nvim_command, funcs, meths, nvim_feed, eq =
   helpers.command, helpers.funcs, helpers.meths, helpers.feed, helpers.eq
 
 local shada_helpers = require('test.functional.shada.helpers')
-local reset, set_additional_cmd, clear =
-  shada_helpers.reset, shada_helpers.set_additional_cmd,
-  shada_helpers.clear
+local reset, clear = shada_helpers.reset, shada_helpers.clear
 
 describe('ShaDa support code', function()
   before_each(reset)
@@ -173,120 +171,48 @@ describe('ShaDa support code', function()
     eq('goo', funcs.getline(1))
   end)
 
-  it('dumps and loads history correctly when &encoding is not UTF-8', function()
-    set_additional_cmd('set encoding=latin1')
+  it('dumps and loads history with UTF-8 characters', function()
     reset()
-    -- \171 is U+00AB LEFT-POINTING DOUBLE ANGLE QUOTATION MARK in latin1
-    nvim_feed(':echo "\171"\n')
-    nvim_command('qall')
-    reset()
-    eq('echo "\171"', funcs.histget(':', -1))
-  end)
-
-  it('dumps and loads history correctly when &encoding /= UTF-8 when dumping',
-  function()
-    set_additional_cmd('set encoding=latin1')
-    reset()
-    -- \171 is U+00AB LEFT-POINTING DOUBLE ANGLE QUOTATION MARK in latin1
-    nvim_feed(':echo "\171"\n')
-    set_additional_cmd('')
+    nvim_feed(':echo "«"\n')
     nvim_command('qall')
     reset()
     eq('echo "«"', funcs.histget(':', -1))
   end)
 
-  it('dumps and loads history correctly when &encoding /= UTF-8 when loading',
+  it('dumps and loads replacement with UTF-8 characters',
   function()
-    -- \171 is U+00AB LEFT-POINTING DOUBLE ANGLE QUOTATION MARK in latin1
-    nvim_feed(':echo "«"\n')
-    set_additional_cmd('set encoding=latin1')
-    nvim_command('qall')
-    reset()
-    eq('echo "\171"', funcs.histget(':', -1))
-  end)
-
-  it('dumps and loads replacement correctly when &encoding is not UTF-8',
-  function()
-    set_additional_cmd('set encoding=latin1')
-    reset()
-    -- \171 is U+00AB LEFT-POINTING DOUBLE ANGLE QUOTATION MARK in latin1
-    nvim_command('substitute/./\171/ge')
+    nvim_command('substitute/./«/ge')
     nvim_command('qall!')
-    reset()
-    funcs.setline('.', {'.'})
-    nvim_command('&')
-    eq('\171', funcs.getline('.'))
-  end)
-
-  it('dumps&loads replacement correctly when &encoding /= UTF-8 when dumping',
-  function()
-    set_additional_cmd('set encoding=latin1')
-    reset()
-    -- \171 is U+00AB LEFT-POINTING DOUBLE ANGLE QUOTATION MARK in latin1
-    nvim_command('substitute/./\171/ge')
-    set_additional_cmd('')
-    nvim_command('qall')
     reset()
     funcs.setline('.', {'.'})
     nvim_command('&')
     eq('«', funcs.getline('.'))
   end)
 
-  it('dumps&loads replacement correctly when &encoding /= UTF-8 when loading',
+  it('dumps and loads substitute pattern with UTF-8 characters',
   function()
-    -- \171 is U+00AB LEFT-POINTING DOUBLE ANGLE QUOTATION MARK in latin1
-    nvim_command('substitute/./«/ge')
-    set_additional_cmd('set encoding=latin1')
-    nvim_command('qall')
-    reset()
-    funcs.setline('.', {'.'})
-    nvim_command('&')
-    eq('\171', funcs.getline('.'))
-  end)
-
-  it('dumps and loads substitute pattern correctly when &encoding is not UTF-8',
-  function()
-    set_additional_cmd('set encoding=latin1')
-    reset()
-    -- \171 is U+00AB LEFT-POINTING DOUBLE ANGLE QUOTATION MARK in latin1
-    nvim_command('substitute/\171/./ge')
+    nvim_command('substitute/«/./ge')
     nvim_command('qall!')
-    reset()
-    funcs.setline('.', {'\171«'})
-    nvim_command('&')
-    eq('.«', funcs.getline('.'))
-  end)
-
-  it('dumps&loads s/pattern correctly when &encoding /= UTF-8 when dumping',
-  function()
-    set_additional_cmd('set encoding=latin1')
-    reset()
-    -- \171 is U+00AB LEFT-POINTING DOUBLE ANGLE QUOTATION MARK in latin1
-    nvim_command('substitute/\171/./ge')
-    set_additional_cmd('')
-    nvim_command('qall')
     reset()
     funcs.setline('.', {'«\171'})
     nvim_command('&')
     eq('.\171', funcs.getline('.'))
   end)
 
-  it('dumps&loads s/pattern correctly when &encoding /= UTF-8 when loading',
+  it('dumps and loads search pattern with UTF-8 characters',
   function()
-    -- \171 is U+00AB LEFT-POINTING DOUBLE ANGLE QUOTATION MARK in latin1
-    nvim_command('substitute/«/./ge')
-    set_additional_cmd('set encoding=latin1')
-    nvim_command('qall')
+    nvim_command('silent! /«/')
+    nvim_command('set shada+=/0')
+    nvim_command('qall!')
     reset()
     funcs.setline('.', {'\171«'})
-    nvim_command('&')
-    eq('.«', funcs.getline('.'))
+    nvim_command('~&')
+    eq('\171', funcs.getline('.'))
+    eq('', funcs.histget('/', -1))
   end)
 
-  it('dumps and loads search pattern correctly when &encoding is not UTF-8',
+  it('dumps and loads search pattern with 8-bit single-byte',
   function()
-    set_additional_cmd('set encoding=latin1')
-    reset()
     -- \171 is U+00AB LEFT-POINTING DOUBLE ANGLE QUOTATION MARK in latin1
     nvim_command('silent! /\171/')
     nvim_command('set shada+=/0')
@@ -298,33 +224,4 @@ describe('ShaDa support code', function()
     eq('', funcs.histget('/', -1))
   end)
 
-  it('dumps&loads /pattern correctly when &encoding /= UTF-8 when dumping',
-  function()
-    set_additional_cmd('set encoding=latin1')
-    reset()
-    -- \171 is U+00AB LEFT-POINTING DOUBLE ANGLE QUOTATION MARK in latin1
-    nvim_command('silent! /\171/')
-    nvim_command('set shada+=/0')
-    set_additional_cmd('')
-    nvim_command('qall')
-    reset()
-    funcs.setline('.', {'«\171'})
-    nvim_command('~&')
-    eq('\171', funcs.getline('.'))
-    eq('', funcs.histget('/', -1))
-  end)
-
-  it('dumps&loads /pattern correctly when &encoding /= UTF-8 when loading',
-  function()
-    -- \171 is U+00AB LEFT-POINTING DOUBLE ANGLE QUOTATION MARK in latin1
-    nvim_command('silent! /«/')
-    nvim_command('set shada+=/0')
-    set_additional_cmd('set encoding=latin1')
-    nvim_command('qall')
-    reset()
-    funcs.setline('.', {'\171«'})
-    nvim_command('~&')
-    eq('«', funcs.getline('.'))
-    eq('', funcs.histget('/', -1))
-  end)
 end)
