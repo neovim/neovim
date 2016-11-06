@@ -590,8 +590,8 @@ describe("incsubstitute=split", function()
       {15:~                             }|
       {15:~                             }|
       {11:[No Name] [+]                 }|
-       [2]two lines                 |
-       [4]two lines                 |
+      |2| two lines                 |
+      |4| two lines                 |
                                     |
       {15:~                             }|
       {15:~                             }|
@@ -611,8 +611,8 @@ describe("incsubstitute=split", function()
       {15:~                             }|
       {15:~                             }|
       {11:[No Name] [+]                 }|
-       [2]o lines                   |
-       [4]o lines                   |
+      |2| o lines                   |
+      |4| o lines                   |
                                     |
       {15:~                             }|
       {15:~                             }|
@@ -630,8 +630,8 @@ describe("incsubstitute=split", function()
                                     |
       {15:~                             }|
       {11:[No Name] [+]                 }|
-       [2]{12:x}o lines                  |
-       [4]{12:x}o lines                  |
+      |2| {12:x}o lines                  |
+      |4| {12:x}o lines                  |
                                     |
       {15:~                             }|
       {15:~                             }|
@@ -649,8 +649,8 @@ describe("incsubstitute=split", function()
                                     |
       {15:~                             }|
       {11:[No Name] [+]                 }|
-       [2]o lines                   |
-       [4]o lines                   |
+      |2| o lines                   |
+      |4| o lines                   |
                                     |
       {15:~                             }|
       {15:~                             }|
@@ -671,8 +671,8 @@ describe("incsubstitute=split", function()
                                     |
       {15:~                             }|
       {11:[No Name] [+]                 }|
-       [2]{12:XX}o lines                 |
-       [4]{12:XX}o lines                 |
+      |2| {12:XX}o lines                 |
+      |4| {12:XX}o lines                 |
                                     |
       {15:~                             }|
       {15:~                             }|
@@ -716,8 +716,8 @@ describe("incsubstitute=split", function()
       {15:~                             }|
       {15:~                             }|
       {11:[No Name] [+]                 }|
-       [2]{9:tw}o lines                 |
-       [4]{9:tw}o lines                 |
+      |2| {9:tw}o lines                 |
+      |4| {9:tw}o lines                 |
                                     |
       {15:~                             }|
       {15:~                             }|
@@ -739,7 +739,7 @@ describe("incsubstitute=split", function()
       Inc substitution on           |
       two lines                     |
       {11:[No Name] [+]                 }|
-       [1]{12:123}     {12:123}       {12:123}     |
+      |1| {12:123}     {12:123}       {12:123}     |
                                     |
       {15:~                             }|
       {15:~                             }|
@@ -787,13 +787,13 @@ describe("incsubstitute=split", function()
       Inc substitution on           |
       Xo lines                      |
       {11:[No Name] [+]                 }|
-       [1001]{12:X}o lines               |
-       [1003]{12:X}o lines               |
-       [1005]{12:X}o lines               |
-       [1007]{12:X}o lines               |
-       [1009]{12:X}o lines               |
-       [1011]{12:X}o lines               |
-       [1013]{12:X}o lines               |
+      |1001| {12:X}o lines               |
+      |1003| {12:X}o lines               |
+      |1005| {12:X}o lines               |
+      |1007| {12:X}o lines               |
+      |1009| {12:X}o lines               |
+      |1011| {12:X}o lines               |
+      |1013| {12:X}o lines               |
       {10:[Preview]                     }|
       :%s/tw/X^                      |
     ]])
@@ -1197,7 +1197,7 @@ describe("'incsubstitute': split windows", function()
       {15:~                   }{10:|}{15:~                  }|
       {15:~                   }{10:|}{15:~                  }|
       {10:[No Name] [+]        [No Name] [+]      }|
-       [2]two lines                           |
+      |2| two lines                           |
                                               |
       {15:~                                       }|
       {15:~                                       }|
@@ -1236,7 +1236,7 @@ describe("'incsubstitute': split windows", function()
       {15:~                                       }|
       {15:~                                       }|
       {10:[No Name] [+]                           }|
-       [2]two lines                           |
+      |2| two lines                           |
                                               |
       {15:~                                       }|
       {15:~                                       }|
@@ -1286,7 +1286,7 @@ describe("'incsubstitute': split windows", function()
         {15:~                                       }|
         {15:~                                       }|
         {11:[No Name] [+]                           }|
-         [2]two lines                           |
+        |2| two lines                           |
                                                 |
         {15:~                                       }|
         {15:~                                       }|

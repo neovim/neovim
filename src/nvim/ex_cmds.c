@@ -6084,7 +6084,7 @@ static buf_T *incsub_display(char_u *pat, char_u *sub,
       }
 
       // put " | lnum|line" into str and append it to the incsubstitute buffer
-      snprintf(str, line_size, " [%*ld]%s", col_width - 3, mat.lnum, mat.line);
+      snprintf(str, line_size, "|%*ld| %s", col_width - 3, mat.lnum, mat.line);
       ml_append(line, (char_u *)str, (colnr_T)line_size, false);
 
       // highlight the replaced part
