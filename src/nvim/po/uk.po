@@ -27,35 +27,35 @@ msgstr "Індекс поза межами"
 
 #: ../api/buffer.c:186
 msgid "Line index is too high"
-msgstr ""
+msgstr "Номер рядка завеликий"
 
 #: ../api/buffer.c:289
 msgid "Argument \"start\" is higher than \"end\""
-msgstr ""
+msgstr "Аргумент «start» більший, ніж «end»"
 
 #: ../api/buffer.c:305
 msgid "All items in the replacement array must be strings"
-msgstr ""
+msgstr "Всі елементи в масиві заміни мають бути текстовими"
 
 #: ../api/buffer.c:316
 msgid "string cannot contain newlines"
-msgstr ""
+msgstr "текст має бути одним рядком"
 
 #: ../api/buffer.c:328 ../ops.c:2662
 msgid "Failed to save undo information"
-msgstr ""
+msgstr "Не вдалося записати інформацію для скасування"
 
 #: ../api/buffer.c:338
 msgid "Failed to delete line"
-msgstr ""
+msgstr "Не вдалося знищити рядок"
 
 #: ../api/buffer.c:355 ../api/buffer.c:373
 msgid "Index value is too high"
-msgstr ""
+msgstr "Значення індексу завелике"
 
 #: ../api/buffer.c:360
 msgid "Failed to replace line"
-msgstr ""
+msgstr "Не вдалося замінити рядок"
 
 #: ../api/buffer.c:378
 msgid "Failed to insert line"
@@ -67,7 +67,7 @@ msgstr "Не вдалося перейменувати буфер"
 
 #: ../api/buffer.c:649
 msgid "Mark name must be a single character"
-msgstr ""
+msgstr "Назва позначки має бути одним символом"
 
 # msgstr "E181: "
 #: ../api/buffer.c:667
@@ -76,11 +76,11 @@ msgstr "Неправильна назва помітки"
 
 #: ../api/buffer.c:721 ../api/buffer.c:761
 msgid "Line number outside range"
-msgstr ""
+msgstr "Номер рядка поза межами"
 
 #: ../api/buffer.c:725 ../api/window.c:80
 msgid "Column value outside range"
-msgstr ""
+msgstr "Значення колонки поза межами"
 
 #: ../api/private/helpers.c:61
 msgid "Keyboard interrupt"
@@ -96,11 +96,11 @@ msgstr "Словник заблоковано"
 
 #: ../api/private/helpers.c:124 ../api/private/helpers.c:676
 msgid "Empty dictionary keys aren't allowed"
-msgstr ""
+msgstr "Не дозволено порожні ключі в словнику"
 
 #: ../api/private/helpers.c:129
 msgid "Key length is too high"
-msgstr ""
+msgstr "Довжина ключа завелика"
 
 # msgstr "E428: "
 #. Doesn't exist, fail
@@ -136,12 +136,12 @@ msgstr "Не вдалося прибрати опцію «%s»"
 #: ../api/private/helpers.c:272
 #, c-format
 msgid "Cannot unset option \"%s\" because it doesn't have a global value"
-msgstr ""
+msgstr "Не вдалося скинути опцію «%s», тому що в неї немає глобального значення"
 
 #: ../api/private/helpers.c:288
 #, c-format
 msgid "Option \"%s\" requires a boolean value"
-msgstr ""
+msgstr "Опція «%s» потребує логічне значення"
 
 #: ../api/private/helpers.c:299
 #, c-format
@@ -151,7 +151,7 @@ msgstr "Опція «%s» вимагає ціле значення"
 #: ../api/private/helpers.c:307
 #, c-format
 msgid "Value for option \"%s\" is outside range"
-msgstr ""
+msgstr "Значення для опції «%s» поза межами"
 
 #: ../api/private/helpers.c:318
 #, c-format
@@ -172,11 +172,11 @@ msgstr "Некоректний ід. вкладки"
 
 #: ../api/private/helpers.c:621
 msgid "Integer value outside range"
-msgstr ""
+msgstr "Ціле значення поза межами"
 
 #: ../api/private/helpers.c:890
 msgid "Problem while switching windows"
-msgstr ""
+msgstr "Невдача при перемиканні вікон"
 
 #: ../api/ui.c:54
 msgid "UI already attached for channel"
@@ -184,19 +184,19 @@ msgstr "До каналу вже приєднано інтерфейс кори�
 
 #: ../api/ui.c:60 ../api/ui.c:142
 msgid "Expected width > 0 and height > 0"
-msgstr ""
+msgstr "Очікується ширина > 0 і висота > 0"
 
 #: ../api/ui.c:124 ../api/ui.c:136 ../api/ui.c:157
 msgid "UI is not attached for channel"
-msgstr ""
+msgstr "Інтерфейс користувача не під’єднано до каналу"
 
 #: ../api/ui.c:171
 msgid "rgb must be a Boolean"
-msgstr ""
+msgstr "rgb має бути Boolean"
 
 #: ../api/ui.c:178
 msgid "popupmenu_external must be a Boolean"
-msgstr ""
+msgstr "popupmenu_external має бути Boolean"
 
 # msgstr "E23: "
 #: ../api/ui.c:183
@@ -205,23 +205,23 @@ msgstr "Немає такої опції інтерфейсу користува
 
 #: ../api/vim.c:174
 msgid "Failed to evaluate expression"
-msgstr ""
+msgstr "Не вдалося обчислити вираз"
 
 #: ../api/vim.c:199
 msgid "Function called with too many arguments."
-msgstr ""
+msgstr "Функцію викликано із завеликою кількістю аргументів."
 
 #: ../api/vim.c:222
 msgid "Error calling function."
-msgstr ""
+msgstr "Помилка виклику функції."
 
 #: ../api/vim.c:246
 msgid "String length is too high"
-msgstr ""
+msgstr "Довжина тексту завелика"
 
 #: ../api/vim.c:300
 msgid "Directory string is too long"
-msgstr ""
+msgstr "Назва каталогу завелика"
 
 #: ../api/vim.c:312
 msgid "Failed to change directory"
@@ -230,33 +230,33 @@ msgstr "Не вдалося змінити каталог"
 #: ../api/vim.c:507
 #, c-format
 msgid "Failed to switch to buffer %d"
-msgstr ""
+msgstr "Не вдалося перемкнутися до буфера %d"
 
 #: ../api/vim.c:557
 #, c-format
 msgid "Failed to switch to window %d"
-msgstr ""
+msgstr "Не вдалося перемкнутися до вікна %d"
 
 #: ../api/vim.c:608
 #, c-format
 msgid "Failed to switch to tabpage %d"
-msgstr ""
+msgstr "Не вдалося перемкнутися до вкладки %d"
 
 #: ../api/vim.c:705
 msgid "All items in calls array must be arrays"
-msgstr ""
+msgstr "Всі елементи масиву calls мають бути масивами"
 
 #: ../api/vim.c:712
 msgid "All items in calls array must be arrays of size 2"
-msgstr ""
+msgstr "Всі елементи в масиві calls мають бути масивами довжиною 2"
 
 #: ../api/vim.c:719
 msgid "name must be String"
-msgstr ""
+msgstr "Назва має бути String"
 
 #: ../api/vim.c:727
 msgid "args must be Array"
-msgstr ""
+msgstr "args має бути Array"
 
 #: ../api/window.c:63
 msgid "Argument \"pos\" must be a [row, col] array"
@@ -264,15 +264,15 @@ msgstr "Аргумент «pos» має бути масивом [ряд, ст]"
 
 #: ../api/window.c:75
 msgid "Cursor position outside buffer"
-msgstr ""
+msgstr "Положення курсора поза буфером"
 
 #: ../api/window.c:127
 msgid "Height value outside range"
-msgstr ""
+msgstr "Значення висоти поза межами"
 
 #: ../api/window.c:170
 msgid "Width value outside range"
-msgstr ""
+msgstr "Значення ширини поза межами"
 
 #: ../buffer.c:77
 msgid "[Location List]"
@@ -930,11 +930,11 @@ msgstr "E697: Немає кінцівки списку ']': %s"
 
 #: ../eval.c:5853
 msgid "Not enough memory to set references, garbage collection aborted!"
-msgstr ""
+msgstr "Недостатньо пам’яті для встановлення посилань, збирання сміття припинено!"
 
 #: ../eval.c:6474
 msgid "Argument is not a function or function name"
-msgstr ""
+msgstr "Аргумент не функція чи назва функції"
 
 # msgstr "E428: "
 #: ../eval.c:6502
@@ -1001,7 +1001,7 @@ msgstr "E808: Треба вказати Number чи Float"
 #: ../eval.c:7144 ../eval.c:13811
 #, c-format
 msgid "Error converting the call result: %s"
-msgstr ""
+msgstr "Не вдалося перетворити результат виклику: %s"
 
 # msgstr "E14: "
 #: ../eval.c:7184
@@ -1058,11 +1058,11 @@ msgstr "E5000: Не можна знайти номер вкладки."
 
 #: ../eval.c:9812 ../eval.c:10780
 msgid "E5001: Higher scope cannot be -1 if lower scope is >= 0."
-msgstr ""
+msgstr "E5001: Вища область не може бути -1, якщо нижча область >= 0."
 
 #: ../eval.c:9819 ../eval.c:10787
 msgid "E5002: Cannot find window number."
-msgstr ""
+msgstr "E5002: Неможливо знайти номер вікна."
 
 #: ../eval.c:10772
 msgid "5000: Cannot find tab number."
@@ -1084,37 +1084,37 @@ msgstr "E786: Інтервал не дозволено"
 
 #: ../eval.c:11430 ../eval.c:11436
 msgid "Invalid stream on rpc job, use jobclose(id, 'rpc')"
-msgstr ""
+msgstr "Некоректний потік на завданні rpc, вживайте jobclose(id, 'rpc')"
 
 #: ../eval.c:11446
 msgid "Invalid job stream: Not an rpc job"
-msgstr ""
+msgstr "Некоректний потік завдання: Не є завданням rpc"
 
 #: ../eval.c:11449
 #, c-format
 msgid "Invalid job stream \"%s\""
-msgstr ""
+msgstr "Некоректний потік завдання «%s»"
 
 #: ../eval.c:11510
 msgid "Can't send data to the job: stdin is closed"
-msgstr ""
+msgstr "Неможливо надіслати дані завданню: вхідний потік закрито"
 
 #: ../eval.c:11515
 msgid "Can't send raw data to rpc channel"
-msgstr ""
+msgstr "Неможливо надіслати дані у канал завдання"
 
 #: ../eval.c:11583
 msgid "Argument vector must have at least one item"
-msgstr ""
+msgstr "Вектор аргументів має мати щонайменше один елемент"
 
 #: ../eval.c:11877
 msgid "E474: Failed to convert list to string"
-msgstr ""
+msgstr "E474: Не вдалося перетворити список у текст"
 
 #: ../eval.c:11894
 #, c-format
 msgid "E474: Failed to parse %.*s"
-msgstr ""
+msgstr "E474: Не вдалося розібрати %.*s"
 
 # msgstr "E177: "
 #: ../eval.c:11954
@@ -1179,7 +1179,7 @@ msgstr "(Неможливо)"
 
 #: ../eval.c:16418
 msgid "Can only call this function in an unmodified buffer"
-msgstr ""
+msgstr "Цю функцію можна викликати тільки у незміненому буфері"
 
 #: ../eval.c:18256
 msgid "E805: Using a Float as a Number"
@@ -1379,12 +1379,12 @@ msgstr "Жодного старого файлу"
 #: ../eval/decode.c:120
 #, c-format
 msgid "E474: Expected comma before list item: %s"
-msgstr ""
+msgstr "E474: Очікується кома перед елементом списка: %s"
 
 #: ../eval/decode.c:130
 #, c-format
 msgid "E474: Expected colon before dictionary value: %s"
-msgstr ""
+msgstr "E474: Очікується двокрапка перед значенням у словнику: %s"
 
 # msgstr "E414: "
 #: ../eval/decode.c:161
@@ -1406,12 +1406,12 @@ msgstr "E474: Не закінчено послідовність escape: %.*s"
 #: ../eval/decode.c:267
 #, c-format
 msgid "E474: Unfinished unicode escape sequence: %.*s"
-msgstr ""
+msgstr "E474: Не закінчено escape-послідовність юнікоду: %.*s"
 
 #: ../eval/decode.c:274
 #, c-format
 msgid "E474: Expected four hex digits after \\u: %.*s"
-msgstr ""
+msgstr "E474: Очікується чотири шістнадцяткові цифри після \\u: %.*s"
 
 #: ../eval/decode.c:297
 #, c-format
@@ -1421,12 +1421,12 @@ msgstr "E474: Невідома послідовність escape: %.*s"
 #: ../eval/decode.c:305
 #, c-format
 msgid "E474: ASCII control characters cannot be present inside string: %.*s"
-msgstr ""
+msgstr "E474: Керуючі символи ASCII не можуть бути всередині тексту: %.*s"
 
 #: ../eval/decode.c:318
 #, c-format
 msgid "E474: Only UTF-8 strings allowed: %.*s"
-msgstr ""
+msgstr "E474: Дозволено тільки текст UTF-8: %.*s"
 
 #: ../eval/decode.c:321
 #, c-format
@@ -1434,6 +1434,8 @@ msgid ""
 "E474: Only UTF-8 code points up to U+10FFFF are allowed to appear unescaped: "
 "%.*s"
 msgstr ""
+"E474: Тільки точки коду UTF-8 до U+10FFFF можуть бути присутні без escape: "
+"%.*s"
 
 # msgstr "E414: "
 #: ../eval/decode.c:332
@@ -1444,7 +1446,7 @@ msgstr "E474: Очікувався кінець рядка: %.*s"
 #: ../eval/decode.c:422
 #, c-format
 msgid "E474: Failed to convert string \"%.*s\" from UTF-8"
-msgstr ""
+msgstr "E474: Не вдалося перетворити текст «%.*s» з UTF-8"
 
 # msgstr "E406: "
 #: ../eval/decode.c:513
@@ -1473,6 +1475,8 @@ msgid ""
 "E685: internal error: while converting number \"%.*s\" to float string2float "
 "consumed %zu bytes in place of %zu"
 msgstr ""
+"E685: внутрішня помилка: при перетворенні числа «%.*s» у float, string2float "
+"спожив %zu байтів замість %zu"
 
 #: ../eval/decode.c:571
 #, c-format
@@ -1480,20 +1484,22 @@ msgid ""
 "E685: internal error: while converting number \"%.*s\" to integer vim_str2nr "
 "consumed %i bytes in place of %zu"
 msgstr ""
+"E685: внутрішня помилка: при перетворенні числа «%.*s» у ціле, vim_str2nr "
+"спожив %i байтів замість %zu"
 
 #: ../eval/decode.c:624
 msgid "E474: Attempt to decode a blank string"
-msgstr ""
+msgstr "E474: Спроба декодування порожнього тексту"
 
 #: ../eval/decode.c:644
 #, c-format
 msgid "E474: No container to close: %.*s"
-msgstr ""
+msgstr "E474: Немає контейнера щоб закрити: %.*s"
 
 #: ../eval/decode.c:649
 #, c-format
 msgid "E474: Closing list with curly bracket: %.*s"
-msgstr ""
+msgstr "E474: Закривається список фігурною дужкою: %.*s"
 
 #: ../eval/decode.c:652
 #, c-format
@@ -1508,7 +1514,7 @@ msgstr "E474: Зайва кома: %.*s"
 #: ../eval/decode.c:659
 #, c-format
 msgid "E474: Expected value after colon: %.*s"
-msgstr ""
+msgstr "E474: Очікується значення після двокрапки: %.*s"
 
 # msgstr "E414: "
 #: ../eval/decode.c:663
@@ -1519,7 +1525,7 @@ msgstr "E474: Очікується значення: %.*s"
 #: ../eval/decode.c:682
 #, c-format
 msgid "E474: Comma not inside container: %.*s"
-msgstr ""
+msgstr "E474: Кома поза контейнером: %.*s"
 
 #: ../eval/decode.c:687
 #, c-format
@@ -1540,12 +1546,12 @@ msgstr "E474: Кома замість двокрапки: %.*s"
 #: ../eval/decode.c:701
 #, c-format
 msgid "E474: Leading comma: %.*s"
-msgstr ""
+msgstr "E474: Кома на початку: %.*s"
 
 #: ../eval/decode.c:709
 #, c-format
 msgid "E474: Colon not inside container: %.*s"
-msgstr ""
+msgstr "E474: Двокрапка не всередині контейнера: %.*s"
 
 # msgstr "E235: "
 #: ../eval/decode.c:714
@@ -1562,7 +1568,7 @@ msgstr "E474: Несподівана двокрапка: %.*s"
 #: ../eval/decode.c:720
 #, c-format
 msgid "E474: Colon after comma: %.*s"
-msgstr ""
+msgstr "E474: Двокрапка після коми: %.*s"
 
 #: ../eval/decode.c:723
 #, c-format
@@ -1606,35 +1612,35 @@ msgstr "E474: Несподіваний кінець: %.*s"
 #: ../eval/encode.c:111
 #, c-format
 msgid "key %s"
-msgstr ""
+msgstr "ключ %s"
 
 #: ../eval/encode.c:112
 #, c-format
 msgid "key %s at index %i from special map"
-msgstr ""
+msgstr "ключ %s за індексом %i із спеціальної мапи"
 
 #: ../eval/encode.c:113
 #, c-format
 msgid "index %i"
-msgstr ""
+msgstr "індекс %i"
 
 #: ../eval/encode.c:160
 msgid "itself"
-msgstr ""
+msgstr "сам себе"
 
 #. Only give this message once for a recursive call to avoid
 #. flooding the user with errors.
 #: ../eval/encode.c:361 ../eval/encode.c:425
 msgid "E724: unable to correctly dump variable with self-referencing container"
-msgstr ""
+msgstr "E724: не вдалося коректно злити змінну з контейнером, який сам на себе посилається"
 
 #: ../eval/encode.c:455
 msgid "E474: Unable to represent NaN value in JSON"
-msgstr ""
+msgstr "E474: Неможливо представити значення NaN у JSON"
 
 #: ../eval/encode.c:459
 msgid "E474: Unable to represent infinity in JSON"
-msgstr ""
+msgstr "E474: Неможливо представити нескінченність у JSON"
 
 #: ../eval/encode.c:522
 #, c-format
@@ -1646,6 +1652,7 @@ msgstr "E474: Не вдалося перетворити рядок «%.*s» д�
 msgid ""
 "E474: String \"%.*s\" contains byte that does not start any UTF-8 character"
 msgstr ""
+"E474: Текст \"%.*s\" містить байт, що не починає жодного символу UTF-8"
 
 #: ../eval/encode.c:565
 #, c-format
@@ -1653,6 +1660,8 @@ msgid ""
 "E474: UTF-8 string contains code point which belongs to a surrogate pair: "
 "%.*s"
 msgstr ""
+"E474: текст UTF-8 містить точку кодування, яка належить сурогатній парі: "
+"%.*s"
 
 #: ../eval/encode.c:650
 msgid "E474: Unable to convert EXT string to JSON"
@@ -1661,7 +1670,7 @@ msgstr "E474: Не вдалося перетворити рядок EXT у JSON"
 #: ../eval/encode.c:656
 #, c-format
 msgid "E474: Error while dumping %s, %s: attempt to dump function reference"
-msgstr ""
+msgstr "E474: Помилка при злитті %s, %s: спроба злити посилання на функцію"
 
 #: ../eval/encode.c:702
 msgid "E474: Invalid key in special dictionary"
@@ -1670,12 +1679,12 @@ msgstr "E474: Неправильний ключ у спеціальному сл
 #: ../eval/encode.c:839
 #, c-format
 msgid "E951: Error while dumping %s, %s: attempt to dump function reference"
-msgstr ""
+msgstr "E951: Помилка при зливанні %s, %s: спроба злити посилання на функцію"
 
 #: ../eval/encode.c:883
 #, c-format
 msgid "E952: Unable to dump %s: container references itself in %s"
-msgstr ""
+msgstr "E952: Неможливо злити %s: контейнер посилається на самого себе у %s"
 
 #: ../ex_cmds.c:135
 #, c-format
@@ -1931,7 +1940,7 @@ msgstr "E157: Неправильний ID надпису: %<PRId64>"
 #: ../ex_cmds.c:5669
 #, c-format
 msgid "E885: Not possible to change sign %s"
-msgstr ""
+msgstr "E885: Неможливо змінити знак %s"
 
 #: ../ex_cmds.c:5687
 msgid " (not supported)"
@@ -1962,7 +1971,7 @@ msgstr "кадр нульовий"
 #: ../ex_cmds2.c:380
 #, c-format
 msgid "frame at highest level: %d"
-msgstr ""
+msgstr "кадр на найвищому рівні: %d"
 
 #: ../ex_cmds2.c:458
 #, c-format
@@ -3264,11 +3273,11 @@ msgstr "E902: \"%s\" не можна виконати"
 #: ../globals.h:1110
 #, c-format
 msgid "E903: Process for command \"%s\" could not be spawned"
-msgstr ""
+msgstr "E903: Не вдалося запустити процес для команди «%s»"
 
 #: ../globals.h:1111
 msgid "E904: Job is not connected to a pty"
-msgstr ""
+msgstr "E904: Завдання не приєднане до pty"
 
 #: ../globals.h:1112
 #, c-format
@@ -4046,11 +4055,11 @@ msgstr "  -d                    Режим порівняння\n"
 
 #: ../main.c:1838
 msgid "  -R                    Read-only mode\n"
-msgstr ""
+msgstr "  -R                    Режим тільки для читання\n"
 
 #: ../main.c:1839
 msgid "  -Z                    Restricted mode\n"
-msgstr ""
+msgstr "  -Z                    Обмежений режим\n"
 
 #: ../main.c:1840
 msgid "  -m                    Modifications (writing files) not allowed\n"
@@ -4062,7 +4071,7 @@ msgstr "  -M                    Зміни в тексті файлів не д�
 
 #: ../main.c:1842
 msgid "  -b                    Binary mode\n"
-msgstr ""
+msgstr "  -b                    Двійковий режим\n"
 
 #: ../main.c:1843
 msgid "  -l                    Lisp mode\n"
@@ -4070,15 +4079,15 @@ msgstr "  -l                    Режим Lisp\n"
 
 #: ../main.c:1844
 msgid "  -A                    Arabic mode\n"
-msgstr ""
+msgstr "  -A                    Режим арабської мови\n"
 
 #: ../main.c:1845
 msgid "  -F                    Farsi mode\n"
-msgstr ""
+msgstr "  -F                    Режим перської мови\n"
 
 #: ../main.c:1846
 msgid "  -H                    Hebrew mode\n"
-msgstr ""
+msgstr "  -H                    Режим івриту\n"
 
 #: ../main.c:1847
 msgid "  -V[N][file]           Be verbose [level N][log messages to file]\n"
@@ -4086,7 +4095,7 @@ msgstr "  -V[N][файл]           Більше повідомлень [рів�
 
 #: ../main.c:1848
 msgid "  -D                    Debugging mode\n"
-msgstr ""
+msgstr "  -D                    Режим налагодження\n"
 
 #: ../main.c:1849
 msgid "  -n                    No swap file, use memory only\n"
@@ -4102,11 +4111,11 @@ msgstr "  -r <файл>             Відновити аварійно закі
 
 #: ../main.c:1852
 msgid "  -u <vimrc>            Use <vimrc> instead of the default\n"
-msgstr "  -u <vimrc>            Використати <vimrc> замість початкового\n"
+msgstr "  -u <vimrc>            Використати <vimrc> замість стандартного\n"
 
 #: ../main.c:1853
 msgid "  -i <shada>            Use <shada> instead of the default\n"
-msgstr ""
+msgstr "  -i <shada>            Вжити <shada> запість стандартного\n"
 
 #: ../main.c:1854
 msgid "  --noplugin            Don't load plugin scripts\n"
@@ -4134,7 +4143,7 @@ msgstr "  +<рядок>              Розпочати у <рядку>\n"
 
 #: ../main.c:1860
 msgid "  +/<pattern>           Start at first occurrence of <pattern>\n"
-msgstr ""
+msgstr "  +/<шаблон>           Розпочати, де найперше трапиться <шаблон>\n"
 
 #: ../main.c:1861
 msgid "  --cmd <command>       Execute <command> before loading any vimrc\n"
@@ -4170,14 +4179,15 @@ msgstr "  --startuptime <файл>  Записати профіль запуск
 msgid ""
 "  --api-info            Dump API metadata serialized to msgpack and exit\n"
 msgstr ""
+"  --api-info            Злити метадані API, серіалізовані у msgpack, і вийти\n"
 
 #: ../main.c:1869
 msgid "  --embed               Use stdin/stdout as a msgpack-rpc channel\n"
-msgstr ""
+msgstr "  --embed               Використати stdin/stdout, як канал msgpack-rpc\n"
 
 #: ../main.c:1870
 msgid "  --headless            Don't start a user interface\n"
-msgstr ""
+msgstr "  --headless            Не запускати інтерфейс користувача\n"
 
 #: ../main.c:1871
 msgid "  -v, --version         Print version information and exit\n"
@@ -4492,7 +4502,7 @@ msgstr "        [не схоже на файл обміну]"
 
 #: ../memline.c:1504
 msgid "         [garbled strings (not nul terminated)]"
-msgstr ""
+msgstr "         [пошкоджений текст (не закінчується nul)]"
 
 #: ../memline.c:1506
 msgid "         file name: "
@@ -4782,7 +4792,7 @@ msgstr ""
 
 #: ../memory.c:164
 msgid "Vim: Data too large to fit into virtual memory space\n"
-msgstr ""
+msgstr "Vim: Даних забагато щоб влізти у віртуальний адресний простір\n"
 
 # msgstr "E341: "
 #: ../memory.c:439
@@ -4990,15 +5000,15 @@ msgstr "Некоректний канал «%<PRIu64>»"
 
 #: ../msgpack_rpc/helpers.c:559
 msgid "Message is not an array"
-msgstr ""
+msgstr "Повідомлення не є масивом"
 
 #: ../msgpack_rpc/helpers.c:564
 msgid "Message is empty"
-msgstr ""
+msgstr "Повідомлення порожнє"
 
 #: ../msgpack_rpc/helpers.c:569
 msgid "Message type must be an integer"
-msgstr ""
+msgstr "Повідомлення має бути цілим числом"
 
 #: ../msgpack_rpc/helpers.c:575
 msgid "Unknown message type"
@@ -5006,19 +5016,19 @@ msgstr "Невідомий тип повідомлення"
 
 #: ../msgpack_rpc/helpers.c:581
 msgid "Request array size should be 4 (request) or 3 (notification)"
-msgstr ""
+msgstr "Розмір масиву запиту має бути 4 (запит) чи 3 (повідомлення)"
 
 #: ../msgpack_rpc/helpers.c:589
 msgid "ID must be a positive integer"
-msgstr ""
+msgstr "ID має бути додатним числом"
 
 #: ../msgpack_rpc/helpers.c:596
 msgid "Method must be a string"
-msgstr ""
+msgstr "Метод має бути текстом"
 
 #: ../msgpack_rpc/helpers.c:601
 msgid "Parameters must be an array"
-msgstr ""
+msgstr "Параметри має бути масивом"
 
 # msgstr "E348: "
 #.
@@ -5147,6 +5157,7 @@ msgid ""
 "E883: search pattern and expression register may not contain two or more "
 "lines"
 msgstr ""
+"E883: шаблон пошуку і реєстр виразу не можуть містити два чи більше рядків"
 
 #: ../ops.c:5325
 #, c-format
@@ -5219,7 +5230,7 @@ msgstr "E539: Недозволений символ <%s>"
 #: ../option.c:2278
 #, c-format
 msgid "For option %s"
-msgstr ""
+msgstr "Для опції %s"
 
 #: ../option.c:2456
 msgid "E589: 'backupext' and 'patchmode' are equal"
@@ -5472,7 +5483,7 @@ msgstr "E553: Немає більше елементів"
 
 #: ../quickfix.c:1591
 msgid "E924: Current window was closed"
-msgstr ""
+msgstr "E924: Активне вікно було закрито"
 
 #: ../quickfix.c:1656
 #, c-format
@@ -5655,11 +5666,11 @@ msgstr ""
 
 #: ../regexp.c:7045
 msgid "Switching to backtracking RE engine for pattern: "
-msgstr ""
+msgstr "Перемикання до простого рушія регулярних виразів: "
 
 #: ../screen.c:6728
 msgid " TERMINAL"
-msgstr ""
+msgstr " ТЕРМІНАЛ"
 
 #: ../screen.c:6730
 msgid " VREPLACE"
@@ -5810,7 +5821,7 @@ msgstr "E389: Зразок не знайдено"
 
 #: ../shada.c:741
 msgid "too few bytes read"
-msgstr ""
+msgstr "прочитано замало байтів"
 
 #: ../shada.c:764
 #, c-format
@@ -5823,6 +5834,8 @@ msgid ""
 "Error while reading ShaDa file: last entry specified that it occupies "
 "%<PRIu64> bytes, but file ended earlier"
 msgstr ""
+"Помилка при читанні файлу ShaDa: останнє поле зазначило, що воно займає "
+"%<PRIu64> байтів, але файл закінчився раніше"
 
 #: ../shada.c:814
 #, c-format
@@ -5858,20 +5871,20 @@ msgstr " НЕ ВДАЛОСЯ"
 #: ../shada.c:896
 #, c-format
 msgid "System error while opening ShaDa file %s for reading: %s"
-msgstr ""
+msgstr "Системна помилка при відкритті файлу ShaDa %s для читання: %s"
 
 #: ../shada.c:1603
 msgid "additional elements of ShaDa "
-msgstr ""
+msgstr "додаткові елементи ShaDa "
 
 #: ../shada.c:1623
 msgid "additional data of ShaDa "
-msgstr ""
+msgstr "додаткові дані ShaDa "
 
 #: ../shada.c:1677
 #, c-format
 msgid "Failed to write variable %s"
-msgstr ""
+msgstr "Не вдалося записати змінну %s"
 
 #: ../shada.c:2076
 #, c-format
@@ -5879,12 +5892,15 @@ msgid ""
 "Failed to parse ShaDa file due to a msgpack parser error at position "
 "%<PRIu64>"
 msgstr ""
+"Не вдалося розібрати файл ShaDa через помилку розбору msgpack у позиції "
+"%<PRIu64>"
 
 #: ../shada.c:2093
 #, c-format
 msgid ""
 "Failed to parse ShaDa file: incomplete msgpack string at position %<PRIu64>"
 msgstr ""
+"Не вдалося розібрати файл ShaDa: неповний текст msgpack у позиції %<PRIu64>"
 
 #: ../shada.c:2101
 #, c-format
@@ -5892,6 +5908,8 @@ msgid ""
 "Failed to parse ShaDa file: extra bytes in msgpack string at position "
 "%<PRIu64>"
 msgstr ""
+"Не вдалося розібрати файл ShaDa: зайві байти у тексті msgpack у позиції "
+"%<PRIu64>"
 
 #: ../shada.c:2896
 #, c-format
@@ -5899,13 +5917,15 @@ msgid ""
 "System error while opening ShaDa file %s for reading to merge before writing "
 "it: %s"
 msgstr ""
+"Системна помилка при відкритті файлу ShaDa %s для читання щоб виконати злиття "
+"перед записом: %s"
 
 #. Tried names from .tmp.a to .tmp.z, all failed. Something must be
 #. wrong then.
 #: ../shada.c:2929
 #, c-format
 msgid "E138: All %s.tmp.X files exist, cannot write ShaDa file!"
-msgstr ""
+msgstr "E138: Усі файли %s.tmp.X зайнято, неможливо записати файл ShaDa!"
 
 #: ../shada.c:2941
 #, c-format
@@ -5915,12 +5935,12 @@ msgstr "Системна помилка при відкритті тимчасо
 #: ../shada.c:2956
 #, c-format
 msgid "Failed to create directory %s for writing ShaDa file: %s"
-msgstr ""
+msgstr "Не вдалося створити каталог %s для запису файлу ShaDa: %s"
 
 #: ../shada.c:2970
 #, c-format
 msgid "System error while opening ShaDa file %s for writing: %s"
-msgstr ""
+msgstr "Системна помилка при відкритті файлу ShaDa %s для запису: %s"
 
 #: ../shada.c:2986
 #, c-format
@@ -5940,7 +5960,7 @@ msgstr "E137: Не дозволено запис у файл ShaDa: %s"
 #: ../shada.c:3030
 #, c-format
 msgid "Can't rename ShaDa file from %s to %s!"
-msgstr ""
+msgstr "Не вдалося перейменувати файл ShaDa з %s у %s!"
 
 #: ../shada.c:3038
 #, c-format
@@ -5950,12 +5970,12 @@ msgstr "Не перейменував %s, тому що %s не схожий н�
 #: ../shada.c:3041
 #, c-format
 msgid "Did not rename %s to %s because there were errors during writing it"
-msgstr ""
+msgstr "Не вдалося перейменувати %s у %s через помилки під час запису"
 
 #: ../shada.c:3049
 #, c-format
 msgid "Do not forget to remove %s or rename it manually to %s."
-msgstr ""
+msgstr "Не забудьте знищити %s чи перейменувати його самостійно у %s."
 
 #: ../shada.c:3187
 #, c-format
@@ -5973,6 +5993,8 @@ msgid ""
 "Error while reading ShaDa file: expected positive integer at position "
 "%<PRIu64>, but got nothing"
 msgstr ""
+"Помилка при читанні файлу ShaDa: очікувалося додатне число у позиції "
+"%<PRIu64>, але нічого немає"
 
 #: ../shada.c:3261
 #, c-format
@@ -5980,6 +6002,8 @@ msgid ""
 "Error while reading ShaDa file: expected positive integer at position "
 "%<PRIu64>"
 msgstr ""
+"Помилка при читанні файлу ShaDa: очікувалося додатне число у позиції "
+"%<PRIu64>"
 
 #. kSDItemUnknown cannot possibly pass that far because it is -1 and that
 #. will fail in msgpack_read_uint64. But kSDItemMissing may and it will
@@ -5990,6 +6014,8 @@ msgid ""
 "Error while reading ShaDa file: there is an item at position %<PRIu64> that "
 "must not be there: Missing items are for internal uses only"
 msgstr ""
+"Помилка при читанні файлу ShaDa: неочікуваний елемент у позиції %<PRIu64>:"
+" Пропущені елементи тільки для внутрішнього вжитку"
 
 #: ../shada.c:3867
 #, c-format
@@ -5997,6 +6023,8 @@ msgid ""
 "Error while reading ShaDa file: buffer list at position %<PRIu64> contains "
 "entry that is not a dictionary"
 msgstr ""
+"Помилка при читанні файлу ShaDa: список буферів у позиції %<PRIu64> містить "
+"поле, яке не є словником"
 
 #: ../shada.c:3892
 #, c-format
@@ -6004,6 +6032,8 @@ msgid ""
 "Error while reading ShaDa file: buffer list at position %<PRIu64> contains "
 "entry with invalid line number"
 msgstr ""
+"Помилка при читанні файлу ShaDa: список буферів у позиції %<PRIu64> містить "
+"поле з некоректним номером рядка"
 
 #: ../shada.c:3899
 #, c-format
@@ -6011,6 +6041,8 @@ msgid ""
 "Error while reading ShaDa file: buffer list at position %<PRIu64> contains "
 "entry with invalid column number"
 msgstr ""
+"Помилка при читанні файлу ShaDa: список буферів у позиції %<PRIu64> містить "
+"поле з некоректним номером стовпця"
 
 #: ../shada.c:3906
 #, c-format
@@ -6018,6 +6050,8 @@ msgid ""
 "Error while reading ShaDa file: buffer list at position %<PRIu64> contains "
 "entry that does not have a file name"
 msgstr ""
+"Помилка при читанні файлу ShaDa: список буферів у позиції %<PRIu64> містить "
+"поле, яке не має назву файлу"
 
 #: ../spell.c:1046
 msgid "E759: Format error in spell file"
@@ -6488,7 +6522,7 @@ msgstr "E390: Неправильний аргумент: %s"
 
 #: ../syntax.c:3076
 msgid "syntax iskeyword "
-msgstr ""
+msgstr "синтаксис iskeyword "
 
 #: ../syntax.c:3273
 #, c-format
@@ -7102,7 +7136,7 @@ msgstr "Nvim — це відкрита й вільно розповсюджув�
 
 #: ../version.c:2713
 msgid "https://neovim.io/community"
-msgstr ""
+msgstr "https://neovim.io/community"
 
 #: ../version.c:2715
 msgid "type  :help nvim<Enter>       if you are new! "
