@@ -597,7 +597,7 @@ describe("incsubstitute=split", function()
       {15:~                             }|
       {15:~                             }|
       {15:~                             }|
-      {10:[inc_sub]                     }|
+      {10:[Preview]                     }|
       :%s/tw^                        |
     ]])
   end)
@@ -618,7 +618,7 @@ describe("incsubstitute=split", function()
       {15:~                             }|
       {15:~                             }|
       {15:~                             }|
-      {10:[inc_sub]                     }|
+      {10:[Preview]                     }|
       :%s/tw/^                       |
     ]])
 
@@ -637,7 +637,7 @@ describe("incsubstitute=split", function()
       {15:~                             }|
       {15:~                             }|
       {15:~                             }|
-      {10:[inc_sub]                     }|
+      {10:[Preview]                     }|
       :%s/tw/x^                      |
     ]])
 
@@ -656,7 +656,7 @@ describe("incsubstitute=split", function()
       {15:~                             }|
       {15:~                             }|
       {15:~                             }|
-      {10:[inc_sub]                     }|
+      {10:[Preview]                     }|
       :%s/tw/^                       |
     ]])
 
@@ -678,7 +678,7 @@ describe("incsubstitute=split", function()
       {15:~                             }|
       {15:~                             }|
       {15:~                             }|
-      {10:[inc_sub]                     }|
+      {10:[Preview]                     }|
       :%s/tw/XX^                     |
     ]])
   end)
@@ -723,7 +723,7 @@ describe("incsubstitute=split", function()
       {15:~                             }|
       {15:~                             }|
       {15:~                             }|
-      {10:[inc_sub]                     }|
+      {10:[Preview]                     }|
       :%s/tw^                        |
     ]])
   end)
@@ -746,7 +746,7 @@ describe("incsubstitute=split", function()
       {15:~                             }|
       {15:~                             }|
       {15:~                             }|
-      {10:[inc_sub]                     }|
+      {10:[Preview]                     }|
       :%s/M/123/g^                   |
     ]])
   end)
@@ -794,7 +794,7 @@ describe("incsubstitute=split", function()
        [1009]{12:X}o lines               |
        [1011]{12:X}o lines               |
        [1013]{12:X}o lines               |
-      {10:[inc_sub]                     }|
+      {10:[Preview]                     }|
       :%s/tw/X^                      |
     ]])
   end)
@@ -1204,7 +1204,7 @@ describe("'incsubstitute': split windows", function()
       {15:~                                       }|
       {15:~                                       }|
       {15:~                                       }|
-      {10:[inc_sub]                               }|
+      {10:[Preview]                               }|
       :%s/tw^                                  |
     ]])
 
@@ -1243,7 +1243,7 @@ describe("'incsubstitute': split windows", function()
       {15:~                                       }|
       {15:~                                       }|
       {15:~                                       }|
-      {10:[inc_sub]                               }|
+      {10:[Preview]                               }|
       :%s/tw^                                  |
     ]])
   end)
@@ -1293,7 +1293,7 @@ describe("'incsubstitute': split windows", function()
         {15:~                                       }|
         {15:~                                       }|
         {15:~                                       }|
-        {10:[inc_sub]                               }|
+        {10:[Preview]                               }|
         :%s/tw^                                  |
       ]])
     end

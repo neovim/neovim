@@ -6049,7 +6049,7 @@ static buf_T *incsub_display(char_u *pat, char_u *sub,
   }
 
   if (split && win_split((int)p_cwh, WSP_BOT) != FAIL) {
-    buf_open_special(incsub_buf ? bufnr : 0, "[inc_sub]", "incsub");
+    buf_open_special(incsub_buf ? bufnr : 0, "[Preview]", "incsub");
     buf_clear();
     incsub_buf = curbuf;
     set_option_value((char_u *)"bh", 0L, (char_u *)"hide", OPT_LOCAL);
