@@ -10,6 +10,7 @@ local feed = helpers.feed
 local insert = helpers.insert
 local meths = helpers.meths
 local neq = helpers.neq
+local ok = helpers.ok
 local source = helpers.source
 
 local default_text = [[
@@ -54,7 +55,7 @@ describe("'incsubstitute' preserves", function()
 
   before_each(clear)
 
-  it(':ls functionality', function()
+  it('listed buffers (:ls)', function()
     local screen = Screen.new(30,10)
     common_setup(screen, "split", "ABC")
 
@@ -75,7 +76,7 @@ describe("'incsubstitute' preserves", function()
     ]])
   end)
 
-  it('substitution with various delimiters', function()
+  it(':substitute with various delimiters', function()
     for _, case in pairs{"", "split", "nosplit"} do
       clear()
       insert(default_text)
@@ -93,7 +94,7 @@ describe("'incsubstitute' preserves", function()
     end
   end)
 
-  it("'undolevels' setting", function()
+  it("'undolevels'", function()
     for _, case in pairs{"", "split", "nosplit"} do
       clear()
       execute("set undolevels=139")
@@ -103,6 +104,25 @@ describe("'incsubstitute' preserves", function()
       feed(":%s/as/glork/<enter>")
       eq(meths.get_option('undolevels'), 139)
       eq(curbufmeths.get_option('undolevels'), 34)
+    end
+  end)
+
+  it("b:changedtick", function()
+    for _, case in pairs{"", "split", "nosplit"} do
+      clear()
+      execute("set incsubstitute=" .. case)
+      feed([[isome text 1<C-\><C-N>]])
+      feed([[osome text 2<C-\><C-N>]])
+      local expected_tick = eval("b:changedtick")
+      ok(expected_tick > 0)
+
+      expect([[
+        some text 1
+        some text 2]])
+      feed(":%s/e/XXX/")
+      helpers.wait()
+
+      eq(expected_tick, eval("b:changedtick"))
     end
   end)
 

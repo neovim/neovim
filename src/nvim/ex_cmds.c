@@ -6166,6 +6166,7 @@ void ex_substitute(exarg_T *eap)
     // XXX: Must do this *after* u_undo_and_forget(), why?
     close_windows(incsub_buf, false);
   }
+  curbuf->b_changedtick = save_changedtick;
   curbuf->b_p_ul = save_b_p_ul;
   eap->arg = save_eap;
   restore_search_patterns();
