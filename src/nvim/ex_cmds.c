@@ -87,7 +87,7 @@ typedef struct {
   SubIgnoreType do_ic;  ///< ignore case flag
 } subflags_T;
 
-/// Lines matched during 'incsubstitute'.
+/// Lines matched during :substitute.
 typedef struct {
   linenr_T lnum;
   long nmatch;
@@ -3110,7 +3110,7 @@ static char_u *sub_parse_flags(char_u *cmd, subflags_T *subflags,
 ///
 /// The usual escapes are supported as described in the regexp docs.
 ///
-/// @return buffer used for 'incsubstitute'
+/// @return buffer used for 'inccommand' preview
 buf_T *do_sub(exarg_T *eap)
 {
   long i = 0;
@@ -3627,8 +3627,8 @@ buf_T *do_sub(exarg_T *eap)
          * use "\=col("."). */
         curwin->w_cursor.col = regmatch.startpos[0].col;
 
-        // 3. Substitute the string. During 'incsubstitute' only do this if
-        //    there is a replace pattern.
+        // 3. Substitute the string. During 'inccommand' only do this if there
+        //    is a replace pattern.
         if (!eap->is_live || has_second_delim) {
           if (subflags.do_count) {
             // prevent accidentally changing the buffer by a function
@@ -3944,9 +3944,9 @@ skip:
   subflags.do_all = save_do_all;
   subflags.do_ask = save_do_ask;
 
-  // Show 'incsubstitute' preview if there are matched lines.
-  buf_T *incsub_buf = NULL;
-  if (eap->is_live && matched_lines.size != 0 && pat != NULL && *p_ics != NUL) {
+  // Show 'inccommand' preview if there are matched lines.
+  buf_T *preview_buf = NULL;
+  if (eap->is_live && matched_lines.size != 0 && pat != NULL && *p_icm != NUL) {
     // Place cursor on the first match after the cursor. (If all matches are
     // above, then do_sub already placed cursor on the last match.)
     colnr_T cur_col = -1;
@@ -3971,10 +3971,9 @@ skip:
       }
     }
 
-    incsub_buf = incsub_display(pat, sub, eap->line1, eap->line2,
-                                &matched_lines);
+    preview_buf = show_sub(pat, sub, eap->line1, eap->line2, &matched_lines);
 
-  } else if (*p_ics != NUL && eap->is_live) {
+  } else if (*p_icm != NUL && eap->is_live) {
     curwin->w_cursor = old_cursor;  // don't move the cursor
   }
 
@@ -3985,7 +3984,7 @@ skip:
   }
   kv_destroy(matched_lines);
 
-  return incsub_buf;
+  return preview_buf;
 }  // NOLINT(readability/fn_size)
 
 /*
@@ -6015,12 +6014,11 @@ void set_context_in_sign_cmd(expand_T *xp, char_u *arg)
   }
 }
 
-/// Shows a preview of :substitute (for 'incsubstitute').
-/// With incsubstitute=split, shows a special buffer in a window, draws the
-/// screen, then restores the layout.
-static buf_T *incsub_display(char_u *pat, char_u *sub,
-                             linenr_T line1, linenr_T line2,
-                             MatchedLineVec *matched_lines)
+/// Shows the effects of the current :substitute command being typed
+/// ('inccommand'). If inccommand=split, shows a preview window then later
+/// restores the layout.
+static buf_T *show_sub(char_u *pat, char_u *sub, linenr_T line1, linenr_T line2,
+                       MatchedLineVec *matched_lines)
   FUNC_ATTR_NONNULL_ALL
 {
   static handle_T bufnr = 0;  // special buffer, re-used on each visit
@@ -6033,27 +6031,27 @@ static buf_T *incsub_display(char_u *pat, char_u *sub,
   size_t pat_size = mb_string2cells(pat);
 
   // We keep a special-purpose buffer around, but don't assume it exists.
-  buf_T *incsub_buf = bufnr ? buflist_findnr(bufnr) : 0;
+  buf_T *preview_buf = bufnr ? buflist_findnr(bufnr) : 0;
   win_size_save(&save_winsizes);  // Save current window sizes.
   cmdmod.tab = 0;                 // disable :tab modifier
-  cmdmod.noswapfile = true;       // disable swap for 'incsubstitute' buffer
+  cmdmod.noswapfile = true;       // disable swap for preview buffer
   // disable file info message
   set_option_value((char_u *)"shm", 0L, (char_u *)"F", 0);
 
   bool outside_curline = (line1 != curwin->w_cursor.lnum
                           || line2 != curwin->w_cursor.lnum);
-  bool split = outside_curline && (*p_ics != 'n') && (sub_size || pat_size);
-  if (incsub_buf == curbuf) {  // Preview buffer cannot preview itself!
+  bool split = outside_curline && (*p_icm != 'n') && (sub_size || pat_size);
+  if (preview_buf == curbuf) {  // Preview buffer cannot preview itself!
     split = false;
-    incsub_buf = NULL;
+    preview_buf = NULL;
   }
 
   if (split && win_split((int)p_cwh, WSP_BOT) != FAIL) {
-    buf_open_special(incsub_buf ? bufnr : 0, "[Preview]", "incsub");
+    buf_open_special(preview_buf ? bufnr : 0, "[Preview]", "incsub");
     buf_clear();
-    incsub_buf = curbuf;
+    preview_buf = curbuf;
     set_option_value((char_u *)"bh", 0L, (char_u *)"hide", OPT_LOCAL);
-    bufnr = incsub_buf->handle;
+    bufnr = preview_buf->handle;
     curbuf->b_p_bl = false;
     curbuf->b_p_ma = true;
     curbuf->b_p_ul = -1;
@@ -6070,9 +6068,9 @@ static buf_T *incsub_display(char_u *pat, char_u *sub,
     size_t old_line_size = 0;
     size_t line_size;
     int src_id_highlight = 0;
-    int hl_id = syn_check_group((char_u *)"IncSubstitute", 13);
+    int hl_id = syn_check_group((char_u *)"Substitute", 13);
 
-    // Dump the lines into the incsub buffer.
+    // Dump the lines into the preview buffer.
     for (size_t line = 0; line < matched_lines->size; line++) {
       MatchedLine mat = matched_lines->items[line];
       line_size = mb_string2cells(mat.line) + col_width + 1;
@@ -6083,7 +6081,7 @@ static buf_T *incsub_display(char_u *pat, char_u *sub,
         old_line_size = line_size;
       }
 
-      // put " | lnum|line" into str and append it to the incsubstitute buffer
+      // put " | lnum|line" into str and append it to the preview buffer
       snprintf(str, line_size, "|%*ld| %s", col_width - 3, mat.lnum, mat.line);
       ml_append(line, (char_u *)str, (colnr_T)line_size, false);
 
@@ -6118,17 +6116,17 @@ static buf_T *incsub_display(char_u *pat, char_u *sub,
 
   cmdmod = save_cmdmod;
 
-  return incsub_buf;
+  return preview_buf;
 }
 
 /// :substitute command
 ///
-/// If 'incsubstitute' is empty, this just calls do_sub().
-/// If 'incsubstitute' is set, substitutes as-you-type ("live").
-/// If the command is cancelled the changes are removed from undo history.
+/// If 'inccommand' is empty this just calls do_sub().
+/// If 'inccommand' is set, shows a "live" preview then removes the changes
+/// from undo history.
 void ex_substitute(exarg_T *eap)
 {
-  if (*p_ics == NUL || !eap->is_live) {  // 'incsubstitute' is disabled
+  if (*p_icm == NUL || !eap->is_live) {  // 'inccommand' is disabled
     (void)do_sub(eap);
     return;
   }
@@ -6138,18 +6136,18 @@ void ex_substitute(exarg_T *eap)
   int save_changedtick = curbuf->b_changedtick;
   long save_b_p_ul = curbuf->b_p_ul;
   curbuf->b_p_ul = LONG_MAX;  // make sure we can undo all changes
-  block_autocmds();   // disable events before incsub opening window/buffer
+  block_autocmds();   // disable events before show_sub() opens window/buffer
   emsg_off++;         // No error messages for live commands
 
-  buf_T *incsub_buf = do_sub(eap);
+  buf_T *preview_buf = do_sub(eap);
 
   if (save_changedtick != curbuf->b_changedtick
       && !u_undo_and_forget(1)) {
     abort();
   }
-  if (buf_valid(incsub_buf)) {
+  if (buf_valid(preview_buf)) {
     // XXX: Must do this *after* u_undo_and_forget(), why?
-    close_windows(incsub_buf, false);
+    close_windows(preview_buf, false);
   }
   curbuf->b_changedtick = save_changedtick;
   curbuf->b_p_ul = save_b_p_ul;

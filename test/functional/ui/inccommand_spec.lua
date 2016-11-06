@@ -19,11 +19,11 @@ local default_text = [[
   two lines
 ]]
 
-local function common_setup(screen, incsub, text)
+local function common_setup(screen, inccommand, text)
   if screen then
     execute("syntax on")
     execute("set nohlsearch")
-    execute("hi IncSubstitute guifg=red guibg=yellow")
+    execute("hi Substitute guifg=red guibg=yellow")
     screen:attach()
     screen:set_default_attr_ids({
       [1]  = {foreground = Screen.colors.Fuchsia},
@@ -45,14 +45,14 @@ local function common_setup(screen, incsub, text)
     })
   end
 
-  execute("set incsubstitute=" .. (incsub and incsub or ""))
+  execute("set inccommand=" .. (inccommand and inccommand or ""))
 
   if text then
     insert(text)
   end
 end
 
-describe("'incsubstitute' preserves", function()
+describe(":substitute, 'inccommand' preserves", function()
    if helpers.pending_win32(pending) then return end
 
   before_each(clear)
@@ -82,7 +82,7 @@ describe("'incsubstitute' preserves", function()
     for _, case in pairs{"", "split", "nosplit"} do
       clear()
       insert(default_text)
-      execute("set incsubstitute=" .. case)
+      execute("set inccommand=" .. case)
 
       local delims = { '/', '#', ';', '%', ',', '@', '!', ''}
       for _,delim in pairs(delims) do
@@ -101,7 +101,7 @@ describe("'incsubstitute' preserves", function()
       clear()
       execute("set undolevels=139")
       execute("setlocal undolevels=34")
-      execute("set incsubstitute=" .. case)
+      execute("set inccommand=" .. case)
       insert("as")
       feed(":%s/as/glork/<enter>")
       eq(meths.get_option('undolevels'), 139)
@@ -112,7 +112,7 @@ describe("'incsubstitute' preserves", function()
   it("b:changedtick", function()
     for _, case in pairs{"", "split", "nosplit"} do
       clear()
-      execute("set incsubstitute=" .. case)
+      execute("set inccommand=" .. case)
       feed([[isome text 1<C-\><C-N>]])
       feed([[osome text 2<C-\><C-N>]])
       local expected_tick = eval("b:changedtick")
@@ -130,7 +130,7 @@ describe("'incsubstitute' preserves", function()
 
 end)
 
-describe("'incsubstitute' preserves undo", function()
+describe(":substitute, 'inccommand' preserves undo", function()
    if helpers.pending_win32(pending) then return end
 
   local cases = { "", "split", "nosplit" }
@@ -155,7 +155,7 @@ describe("'incsubstitute' preserves undo", function()
 
   local function test_sub(substring, split, redoable)
     clear()
-    execute("set incsubstitute=" .. split)
+    execute("set inccommand=" .. split)
 
     insert("1")
     feed("o2<esc>")
@@ -181,7 +181,7 @@ describe("'incsubstitute' preserves undo", function()
 
   local function test_notsub(substring, split, redoable)
     clear()
-    execute("set incsubstitute=" .. split)
+    execute("set inccommand=" .. split)
 
     insert("1")
     feed("o2<esc>")
@@ -215,7 +215,7 @@ describe("'incsubstitute' preserves undo", function()
 
   local function test_threetree(substring, split)
     clear()
-    execute("set incsubstitute=" .. split)
+    execute("set inccommand=" .. split)
 
     insert("1")
     feed("o2<esc>")
@@ -567,7 +567,7 @@ describe("'incsubstitute' preserves undo", function()
 
 end)
 
-describe("incsubstitute=split", function()
+describe(":substitute, inccommand=split", function()
   if helpers.pending_win32(pending) then return end
 
   local screen = Screen.new(30,15)
@@ -841,7 +841,7 @@ describe("incsubstitute=split", function()
 
 end)
 
-describe("incsubstitute=nosplit", function()
+describe(":substitute, inccommand=nosplit", function()
   if helpers.pending_win32(pending) then return end
 
   local screen = Screen.new(20,10)
@@ -917,7 +917,7 @@ describe("incsubstitute=nosplit", function()
 
 end)
 
-describe("'incsubstitute' with a failing expression", function()
+describe(":substitute, 'inccommand' with a failing expression", function()
   if helpers.pending_win32(pending) then return end
 
   local screen = Screen.new(20,10)
@@ -931,7 +931,7 @@ describe("'incsubstitute' with a failing expression", function()
   it('in the pattern does nothing for', function()
     for _, case in pairs(cases) do
       refresh(case)
-      execute("set incsubstitute=" .. case)
+      execute("set inccommand=" .. case)
       feed(":silent! %s/tw\\(/LARD/<enter>")
       expect(default_text)
     end
@@ -943,7 +943,7 @@ describe("'incsubstitute' with a failing expression", function()
       local replacements = { "\\='LARD", "\\=xx_novar__xx" }
 
       for _, repl in pairs(replacements) do
-        execute("set incsubstitute=" .. case)
+        execute("set inccommand=" .. case)
         feed(":silent! %s/tw/" .. repl .. "/<enter>")
         expect(default_text:gsub("tw", ""))
         execute("undo")
@@ -953,7 +953,7 @@ describe("'incsubstitute' with a failing expression", function()
 
 end)
 
-describe("'incsubstitute' and :cnoremap", function()
+describe("'inccommand' and :cnoremap", function()
   local cases = { "",  "split", "nosplit" }
 
   local function refresh(case)
@@ -1043,10 +1043,10 @@ describe("'incsubstitute' and :cnoremap", function()
     end
   end)
 
-  it('work when a mapping disables incsub', function()
+  it("work when a mapping disables 'inccommand'", function()
     for _, case in pairs(cases) do
       refresh(case)
-      execute("cnoremap <expr> x execute('set incsubstitute=')[-1]")
+      execute("cnoremap <expr> x execute('set inccommand=')[-1]")
 
       feed(":%s/tw/toxa/g<enter>")
       expect(default_text:gsub("tw", "toa"))
@@ -1067,15 +1067,15 @@ describe("'incsubstitute' and :cnoremap", function()
 
 end)
 
-describe("'incsubstitute': autocommands", function()
+describe("'inccommand': autocommands", function()
   before_each(clear)
 
   -- keys are events to be tested
   -- values are arrays like 
   --    { open = { 1 }, close = { 2, 3} } 
   -- which would mean that during the test below the event fires for 
-  -- buffer 1 when opening an incsub window, and for buffers 2 and 3
-  -- when closing an incsub window
+  -- buffer 1 when opening the preview window, and for buffers 2 and 3
+  -- when closing the preview window
   local eventsExpected = {
     BufAdd = {},
     BufDelete = {},
@@ -1155,7 +1155,7 @@ describe("'incsubstitute': autocommands", function()
 
 end)
 
-describe("'incsubstitute': split windows", function()
+describe("'inccommand': split windows", function()
   if helpers.pending_win32(pending) then return end
 
   local screen

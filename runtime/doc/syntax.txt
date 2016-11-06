@@ -4852,8 +4852,9 @@ SignColumn	column where |signs| are displayed
 							*hl-IncSearch*
 IncSearch	'incsearch' highlighting; also used for the text replaced with
 		":s///c"
-							*hl-IncSubstitute*
-IncSubstitute	'incsubstitute' replacement text
+							*hl-Substitute*
+Substitute	|:substitute| replacement text highlighting
+
 							*hl-LineNr*
 LineNr		Line number for ":number" and ":#" commands, and when 'number'
 		or 'relativenumber' option is set.

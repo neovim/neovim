@@ -3466,6 +3466,15 @@ A jump table for the options with a short description can be found at |Q_op|.
 	The value is set to 1 when it is not -1 and setting the 'keymap'
 	option to a valid keymap name.
 
+						*'inccommand'* *'icm'*
+'inccommand' 'icm'	string	(default "")
+			global
+			
+	"nosplit" : Shows the effects of a command incrementally, as you type.
+	"split"	  : Also shows partial off-screen results in a preview window.
+
+	Currently only works for |:substitute|. |hl-Substitute|
+
 						*'include'* *'inc'*
 'include' 'inc'		string	(default "^\s*#\s*include")
 			global or local to buffer |global-local|
@@ -3525,14 +3534,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	converted to lowercase.
 	CTRL-R CTRL-W can be used to add the word at the end of the current
 	match, excluding the characters that were already typed.
-
-						*'incsubstitute'* *'ics'*
-'incsubstitute' 'ics'	string	(default "")
-			global
-			
-	If "split" or "nosplit" then |:substitute| updates the buffer
-	as-you-type.  If "split", also show partial off-screen results in
-	a window.  Replacement text is hightlighted with |hl-IncSubstitute|.
 
 						*'indentexpr'* *'inde'*
 'indentexpr' 'inde'	string	(default "")

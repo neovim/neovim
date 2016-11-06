@@ -470,6 +470,7 @@ EXTERN int p_icon;              // 'icon'
 EXTERN char_u   *p_iconstring;  // 'iconstring'
 EXTERN int p_ic;                // 'ignorecase'
 EXTERN int p_is;                // 'incsearch'
+EXTERN char_u   *p_icm;         // 'inccommand'
 EXTERN int p_im;                // 'insertmode'
 EXTERN char_u   *p_isf;         // 'isfname'
 EXTERN char_u   *p_isi;         // 'isident'
@@ -589,7 +590,6 @@ EXTERN int p_spr;               // 'splitright'
 EXTERN int p_sol;               // 'startofline'
 EXTERN char_u   *p_su;          // 'suffixes'
 EXTERN char_u   *p_swb;         // 'switchbuf'
-EXTERN char_u   *p_ics;         // 'incsubstitute'
 EXTERN unsigned swb_flags;
 #ifdef IN_OPTION_C
 static char *(p_swb_values[]) =

@@ -1188,6 +1188,14 @@ return {
       }
     },
     {
+      full_name='inccommand', abbreviation='icm',
+      type='string', scope={'global'},
+      vi_def=true,
+      redraw={'everything'},
+      varname='p_icm',
+      defaults={if_true={vi=""}}
+    },
+    {
       full_name='include', abbreviation='inc',
       type='string', scope={'global', 'buffer'},
       vi_def=true,
@@ -1209,14 +1217,6 @@ return {
       vim=true,
       varname='p_is',
       defaults={if_true={vi=false, vim=true}}
-    },
-    {
-      full_name='incsubstitute', abbreviation='ics',
-      type='string', scope={'global'},
-      vi_def=true,
-      redraw={'everything'},
-      varname='p_ics',
-      defaults={if_true={vi=""}}
     },
     {
       full_name='indentexpr', abbreviation='inde',
