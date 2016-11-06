@@ -6343,27 +6343,24 @@ aucmd_prepbuf (
   aco->new_curbuf = curbuf;
 }
 
-/*
- * Cleanup after executing autocommands for a (hidden) buffer.
- * Restore the window as it was (if possible).
- */
-void 
-aucmd_restbuf (
-    aco_save_T *aco               /* structure holding saved values */
-)
+/// Cleanup after executing autocommands for a (hidden) buffer.
+/// Restore the window as it was (if possible).
+///
+/// @param aco  structure holding saved values
+void aucmd_restbuf(aco_save_T *aco)
 {
   int dummy;
 
   if (aco->use_aucmd_win) {
-    --curbuf->b_nwindows;
-    /* Find "aucmd_win", it can't be closed, but it may be in another tab
-     * page. Do not trigger autocommands here. */
+    curbuf->b_nwindows--;
+    // Find "aucmd_win", it can't be closed, but it may be in another tab page.
+    // Do not trigger autocommands here.
     block_autocmds();
     if (curwin != aucmd_win) {
       FOR_ALL_TAB_WINDOWS(tp, wp) {
         if (wp == aucmd_win) {
           if (tp != curtab) {
-            goto_tabpage_tp(tp, TRUE, TRUE);
+            goto_tabpage_tp(tp, true, true);
           }
           win_goto(aucmd_win);
           goto win_found;
@@ -6372,39 +6369,39 @@ aucmd_restbuf (
     }
 win_found:
 
-    /* Remove the window and frame from the tree of frames. */
+    // Remove the window and frame from the tree of frames.
     (void)winframe_remove(curwin, &dummy, NULL);
     win_remove(curwin, NULL);
-    aucmd_win_used = FALSE;
-    last_status(FALSE);             /* may need to remove last status line */
-    restore_snapshot(SNAP_AUCMD_IDX, FALSE);
-    (void)win_comp_pos();       /* recompute window positions */
+    aucmd_win_used = false;
+    last_status(false);         // may need to remove last status line
+    restore_snapshot(SNAP_AUCMD_IDX, false);
+    (void)win_comp_pos();       // recompute window positions
     unblock_autocmds();
 
-    if (win_valid(aco->save_curwin))
+    if (win_valid(aco->save_curwin)) {
       curwin = aco->save_curwin;
-    else
-      /* Hmm, original window disappeared.  Just use the first one. */
+    } else {
+      // Hmm, original window disappeared.  Just use the first one.
       curwin = firstwin;
-    vars_clear(&aucmd_win->w_vars->dv_hashtab);      /* free all w: variables */
-    hash_init(&aucmd_win->w_vars->dv_hashtab);       /* re-use the hashtab */
+    }
+    vars_clear(&aucmd_win->w_vars->dv_hashtab);      // free all w: variables
+    hash_init(&aucmd_win->w_vars->dv_hashtab);       // re-use the hashtab
     curbuf = curwin->w_buffer;
 
     xfree(globaldir);
     globaldir = aco->globaldir;
 
-    /* the buffer contents may have changed */
+    // the buffer contents may have changed
     check_cursor();
     if (curwin->w_topline > curbuf->b_ml.ml_line_count) {
       curwin->w_topline = curbuf->b_ml.ml_line_count;
       curwin->w_topfill = 0;
     }
   } else {
-    /* restore curwin */
+    // restore curwin
     if (win_valid(aco->save_curwin)) {
-      /* Restore the buffer which was previously edited by curwin, if
-       * it was changed, we are still the same window and the buffer is
-       * valid. */
+      // Restore the buffer which was previously edited by curwin, if it was
+      // changed, we are still the same window and the buffer is valid.
       if (curwin == aco->new_curwin
           && curbuf != aco->new_curbuf
           && buf_valid(aco->new_curbuf)
@@ -6412,10 +6409,10 @@ win_found:
         if (curwin->w_s == &curbuf->b_s) {
           curwin->w_s = &aco->new_curbuf->b_s;
         }
-        --curbuf->b_nwindows;
+        curbuf->b_nwindows--;
         curbuf = aco->new_curbuf;
         curwin->w_buffer = curbuf;
-        ++curbuf->b_nwindows;
+        curbuf->b_nwindows++;
       }
 
       curwin = aco->save_curwin;

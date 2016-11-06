@@ -1339,7 +1339,7 @@ void do_autochdir(void)
 // functions for dealing with the buffer list
 //
 
-static int top_file_num = 1;            /* highest file number */
+static int top_file_num = 1;            ///< highest file number
 
 /// Add a file name to the buffer list.
 /// If the same file name already exists return a pointer to that buffer.

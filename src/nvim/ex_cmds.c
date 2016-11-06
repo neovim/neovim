@@ -92,7 +92,7 @@ typedef struct {
   linenr_T lnum;
   long nmatch;
   char_u *line;
-  kvec_t(colnr_T) cols;  //< columns of in-line matches
+  kvec_t(colnr_T) cols;  ///< columns of in-line matches
 } MatchedLine;
 typedef kvec_t(MatchedLine) MatchedLineVec;
 
@@ -2060,7 +2060,7 @@ theend:
 ///                 info of the previous buffer for "oldwin" is stored.
 ///
 /// @return FAIL for failure, OK otherwise
-int do_ecmd (
+int do_ecmd(
     int fnum,
     char_u *ffname,
     char_u *sfname,
@@ -2201,7 +2201,7 @@ int do_ecmd (
         goto theend;
       }
       buf = buflist_new(ffname, sfname, 0L,
-                        BLN_CURBUF | ((flags & ECMD_SET_HELP) ? 0 : BLN_LISTED));
+                        BLN_CURBUF | (flags & ECMD_SET_HELP ? 0 : BLN_LISTED));
       // Autocmds may change curwin and curbuf.
       if (oldwin != NULL) {
         oldwin = curwin;
@@ -3264,8 +3264,9 @@ buf_T *do_sub(exarg_T *eap)
     }
   }
 
-  if (eap->skip)            /* not executing commands, only parsing */
+  if (eap->skip) {          // not executing commands, only parsing
     return NULL;
+  }
 
   if (!subflags.do_count && !MODIFIABLE(curbuf)) {
     // Substitution is not allowed in non-'modifiable' buffer
@@ -5878,50 +5879,39 @@ static enum
     EXP_SIGN_NAMES	/* expand with name of placed signs */
 } expand_what;
 
-/*
- * Function given to ExpandGeneric() to obtain the sign command
- * expansion.
- */
+/// Function given to ExpandGeneric() to obtain the sign command
+/// expansion.
 char_u * get_sign_name(expand_T *xp, int idx)
 {
-    sign_T	*sp;
-    int		current_idx;
-
-    switch (expand_what)
-    {
+  switch (expand_what)
+  {
     case EXP_SUBCMD:
-	return (char_u *)cmds[idx];
-    case EXP_DEFINE:
-	{
-	    char *define_arg[] =
-	    {
-		"icon=", "linehl=", "text=", "texthl=", NULL
-	    };
-	    return (char_u *)define_arg[idx];
-	}
-    case EXP_PLACE:
-	{
-	    char *place_arg[] =
-	    {
-		"line=", "name=", "file=", "buffer=", NULL
-	    };
-	    return (char_u *)place_arg[idx];
-	}
-    case EXP_UNPLACE:
-	{
-	    char *unplace_arg[] = { "file=", "buffer=", NULL };
-	    return (char_u *)unplace_arg[idx];
-	}
-    case EXP_SIGN_NAMES:
-	/* Complete with name of signs already defined */
-	current_idx = 0;
-	for (sp = first_sign; sp != NULL; sp = sp->sn_next)
-	    if (current_idx++ == idx)
-		return sp->sn_name;
-	return NULL;
+      return (char_u *)cmds[idx];
+    case EXP_DEFINE: {
+        char *define_arg[] = { "icon=", "linehl=", "text=", "texthl=", NULL };
+        return (char_u *)define_arg[idx];
+      }
+    case EXP_PLACE: {
+        char *place_arg[] = { "line=", "name=", "file=", "buffer=", NULL };
+        return (char_u *)place_arg[idx];
+      }
+    case EXP_UNPLACE: {
+        char *unplace_arg[] = { "file=", "buffer=", NULL };
+        return (char_u *)unplace_arg[idx];
+      }
+    case EXP_SIGN_NAMES: {
+        // Complete with name of signs already defined
+        int current_idx = 0;
+        for (sign_T *sp = first_sign; sp != NULL; sp = sp->sn_next) {
+          if (current_idx++ == idx) {
+            return sp->sn_name;
+          }
+        }
+      }
+      return NULL;
     default:
-	return NULL;
-    }
+      return NULL;
+  }
 }
 
 /*

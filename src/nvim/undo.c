@@ -2344,8 +2344,8 @@ static void u_undoredo(int undo)
 /// Otherwise, report the number of changes (this may be incorrect
 /// in some cases, but it's better than nothing).
 static void u_undo_end(
-    int did_undo,     //< just did an undo
-    int absolute,     //< used ":undo N"
+    int did_undo,     ///< just did an undo
+    int absolute,     ///< used ":undo N"
     bool quiet)
 {
   char        *msgstr;
