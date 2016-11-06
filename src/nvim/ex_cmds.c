@@ -3946,42 +3946,28 @@ skip:
 
   // Show 'incsubstitute' preview if there are matched lines.
   buf_T *incsub_buf = NULL;
-  if (matched_lines.size != 0 && pat != NULL && *p_ics != NUL && eap->is_live) {
-    // Place cursor on the first match after the cursor.
-    // If all matches are before the cursor, then do_sub already placed the
-    // cursor on the last match.
-
-    linenr_T cur_lnum = 0;
+  if (eap->is_live && matched_lines.size != 0 && pat != NULL && *p_ics != NUL) {
+    // Place cursor on the first match after the cursor. (If all matches are
+    // above, then do_sub already placed cursor on the last match.)
     colnr_T cur_col = -1;
-    MatchedLine current;
-
-    for (size_t j = 0; j < matched_lines.size; j++) {
-      current = matched_lines.items[j];
-      cur_lnum = current.lnum;
-
-      // 1. Match on line of the cursor, need to iterate over the
-      //    matches on this line to see if there is one on a later
-      //    column
-      if (cur_lnum == old_cursor.lnum) {
-        for (size_t i = 0; i < current.cols.size; i++) {
-          if (current.cols.items[i] >= old_cursor.col) {
-            cur_col = current.cols.items[i];
+    MatchedLine curmatch;
+    for (size_t j = 0; j < matched_lines.size && cur_col == -1; j++) {
+      curmatch = matched_lines.items[j];
+      if (curmatch.lnum == old_cursor.lnum) {
+        // On cursor line; iterate in-line matches to find one after cursor.
+        for (size_t i = 0; i < curmatch.cols.size; i++) {
+          if (curmatch.cols.items[i] >= old_cursor.col) {
+            cur_col = curmatch.cols.items[i];
+            curwin->w_cursor.lnum = curmatch.lnum;
+            curwin->w_cursor.col = cur_col;
             break;
           }
         }
-        // match on cursor's line, after the cursor
-        if (cur_col != -1) {
-          curwin->w_cursor.lnum = cur_lnum;
-          curwin->w_cursor.col = cur_col;
-          break;
-        }
-      // 2. Match on line after cursor, just put cursor on column
-      //    of first match there
-      } else if (cur_lnum > old_cursor.lnum) {
-          cur_col = current.cols.items[0];
-          curwin->w_cursor.lnum = cur_lnum;
-          curwin->w_cursor.col = cur_col;
-          break;
+      } else if (curmatch.lnum > old_cursor.lnum) {
+        // After cursor; put cursor on first match there.
+        cur_col = curmatch.cols.items[0];
+        curwin->w_cursor.lnum = curmatch.lnum;
+        curwin->w_cursor.col = cur_col;
       }
     }
 
@@ -3992,16 +3978,13 @@ skip:
     curwin->w_cursor = old_cursor;  // don't move the cursor
   }
 
-  MatchedLine current;
-  for (size_t j = 0; j < matched_lines.size; j++) {
-    current = matched_lines.items[j];
-    if (current.line) {
-      xfree(current.line);
-    }
-    kv_destroy(current.cols);
+  for (MatchedLine m; kv_size(matched_lines);) {
+    m = kv_pop(matched_lines);
+    xfree(m.line);
+    kv_destroy(m.cols);
   }
-
   kv_destroy(matched_lines);
+
   return incsub_buf;
 }  // NOLINT(readability/fn_size)
 
@@ -6069,13 +6052,15 @@ static buf_T *incsub_display(char_u *pat, char_u *sub,
     buf_open_special(incsub_buf ? bufnr : 0, "[inc_sub]", "incsub");
     buf_clear();
     incsub_buf = curbuf;
-    set_option_value((char_u *)"bl", 0L, NULL, OPT_LOCAL);
     set_option_value((char_u *)"bh", 0L, (char_u *)"hide", OPT_LOCAL);
     bufnr = incsub_buf->handle;
+    curbuf->b_p_bl = false;
     curbuf->b_p_ma = true;
     curbuf->b_p_ul = -1;
-    curwin->w_p_fen = false;
     curbuf->b_p_tw = 0;         // Reset 'textwidth' (was set by ftplugin)
+    curwin->w_p_cul = false;
+    curwin->w_p_spell = false;
+    curwin->w_p_fen = false;
 
     // Width of the "| lnum|..." column which displays the line numbers.
     linenr_T highest_num_line = kv_last(*matched_lines).lnum;

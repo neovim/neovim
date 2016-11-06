@@ -12,6 +12,7 @@ local meths = helpers.meths
 local neq = helpers.neq
 local ok = helpers.ok
 local source = helpers.source
+local wait = helpers.wait
 
 local default_text = [[
   Inc substitution on
@@ -40,6 +41,7 @@ local function common_setup(screen, incsub, text)
       [13] = {bold = true, foreground = Screen.colors.SeaGreen},
       [14] = {foreground = Screen.colors.White, background = Screen.colors.Red},
       [15] = {bold=true, foreground=Screen.colors.Blue},
+      [16] = {background=Screen.colors.Grey90},  -- cursorline
     })
   end
 
@@ -120,7 +122,7 @@ describe("'incsubstitute' preserves", function()
         some text 1
         some text 2]])
       feed(":%s/e/XXX/")
-      helpers.wait()
+      wait()
 
       eq(expected_tick, eval("b:changedtick"))
     end
@@ -703,12 +705,13 @@ describe("incsubstitute=split", function()
     ]])
   end)
 
-  it('highlights the pattern with :set hlsearch', function()
+  it("'hlsearch' highlights the substitution, 'cursorline' does not", function()
     execute("set hlsearch")
+    execute("set cursorline")  -- Should NOT appear in the preview window.
     feed(":%s/tw")
     screen:expect([[
       Inc substitution on           |
-      {9:tw}o lines                     |
+      {9:tw}{16:o lines                     }|
                                     |
       {15:~                             }|
       {15:~                             }|
@@ -796,8 +799,21 @@ describe("incsubstitute=split", function()
     ]])
   end)
 
-  it('does not increase the buffer numbers unduly', function()
-    feed(":%s/tw/Xo/g<enter>")
+  it('does not spam the buffer numbers', function()
+    -- The preview buffer is re-used (unless user deleted it), so buffer numbers
+    -- will not increase on each keystroke.
+    feed(":%s/tw/Xo/g")
+    -- Delete and re-type the g a few times.
+    feed("<BS>")
+    wait()
+    feed("g")
+    wait()
+    feed("<BS>")
+    wait()
+    feed("g")
+    wait()
+    feed("<CR>")
+    wait()
     feed(":vs tmp<enter>")
     eq(3, helpers.call('bufnr', '$'))
   end)
@@ -963,7 +979,7 @@ describe("'incsubstitute' and :cnoremap", function()
       end
   end)
 
-  it('work then mappings move the cursor', function()
+  it('work when mappings move the cursor', function()
     for _, case in pairs(cases) do
       refresh(case)
       execute("cnoremap ,S LINES/<left><left><left><left><left><left>")
