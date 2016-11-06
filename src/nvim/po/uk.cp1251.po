@@ -276,7 +276,7 @@ msgid " File name completion (^F^N^P)"
 msgstr " Доповнення назви файлу (^F^N^P)"
 
 msgid " Tag completion (^]^N^P)"
-msgstr " Доповнення теґів (^]^N^P)"
+msgstr " Доповнення з міток (^]^N^P)"
 
 msgid " Path pattern completion (^N^P)"
 msgstr " Доповнення шляху за зразком (^N^P)"
@@ -1055,7 +1055,7 @@ msgstr "E670: Мішанина кодувань файлу допомоги для мови %s"
 
 #, c-format
 msgid "E154: Duplicate tag \"%s\" in file %s/%s"
-msgstr "E154: Повторення теґу «%s» у файлі %s/%s"
+msgstr "E154: Повторення мітки «%s» у файлі %s/%s"
 
 #, c-format
 msgid "E160: Unknown sign command: %s"
@@ -2072,7 +2072,7 @@ msgstr "E11: Неприпустимо у вікні команд, <CR> виконує, CTRL-C виходить"
 
 msgid "E12: Command not allowed from exrc/vimrc in current dir or tag search"
 msgstr ""
-"E12: Команда не дозволена у exrc/vimrc у пошуку поточного каталогу чи теґу"
+"E12: Команда не дозволена у exrc/vimrc у пошуку поточного каталогу чи мітки"
 
 msgid "E171: Missing :endif"
 msgstr "E171: Бракує :endif"
@@ -2320,7 +2320,7 @@ msgid "E72: Close error on swap file"
 msgstr "E72: Помилка під час закриття файлу обміну"
 
 msgid "E73: tag stack empty"
-msgstr "E73: Стек теґів порожній"
+msgstr "E73: Стек міток порожній"
 
 msgid "E74: Command too complex"
 msgstr "E74: Занадто складна команда"
@@ -2514,7 +2514,7 @@ msgid "E562: Usage: cstag <ident>"
 msgstr "E562: Використання: cstag <ідентиф-ор>"
 
 msgid "E257: cstag: tag not found"
-msgstr "E257: cstag: теґ не знайдено"
+msgstr "E257: cstag: мітку не знайдено"
 
 # msgstr "E257: "
 #, c-format
@@ -2616,7 +2616,7 @@ msgstr "E570: Фатальна помилка в cs_manage_matches"
 
 #, c-format
 msgid "Cscope tag: %s"
-msgstr "Теґ cscope: %s"
+msgstr "Мітка cscope: %s"
 
 msgid ""
 "\n"
@@ -2702,7 +2702,7 @@ msgid "-               read text from stdin"
 msgstr "-               читати текст з stdin"
 
 msgid "-t tag          edit file where tag is defined"
-msgstr "-t помітка      перейти до теґу"
+msgstr "-t мітка        перейти до файлу, де визначено мітку"
 
 msgid "-q [errorfile]  edit file with first error"
 msgstr "-q [файл]       перейти до першої помилки"
@@ -4836,32 +4836,32 @@ msgstr "E849: Забагато груп підсвічування і синтаксису"
 
 # msgstr "E424: "
 msgid "E555: at bottom of tag stack"
-msgstr "E555: Кінець стеку теґів"
+msgstr "E555: Кінець стеку міток"
 
 msgid "E556: at top of tag stack"
-msgstr "E556: Вершина стеку теґів"
+msgstr "E556: Вершина стеку міток"
 
 msgid "E425: Cannot go before first matching tag"
-msgstr "E425: Це вже найперший відповідний теґ"
+msgstr "E425: Це вже найперша відповідна мітка"
 
 # msgstr "E425: "
 #, c-format
 msgid "E426: tag not found: %s"
-msgstr "E426: Теґ не знайдено: %s"
+msgstr "E426: Мітку не знайдено: %s"
 
 # msgstr "E426: "
 msgid "  # pri kind tag"
-msgstr "  # прі тип теґ"
+msgstr "  # прі тип мітка"
 
 msgid "file\n"
 msgstr "файл\n"
 
 msgid "E427: There is only one matching tag"
-msgstr "E427: Лише один відповідний теґ"
+msgstr "E427: Лише одна відповідна мітка"
 
 # msgstr "E427: "
 msgid "E428: Cannot go beyond last matching tag"
-msgstr "E428: Це вже останній відповідний теґ"
+msgstr "E428: Це вже остання відповідна мітка"
 
 # msgstr "E428: "
 #, c-format
@@ -4871,13 +4871,13 @@ msgstr "Файл «%s» не існує"
 #. Give an indication of the number of matching tags
 #, c-format
 msgid "tag %d of %d%s"
-msgstr "теґ %d з %d%s"
+msgstr "мітка %d з %d%s"
 
 msgid " or more"
 msgstr " або більше"
 
 msgid "  Using tag with different case!"
-msgstr "  Використано теґ, не розрізняючи великі й малі літери"
+msgstr "  Використано мітку, не розрізняючи великі й малі літери!"
 
 #, c-format
 msgid "E429: File \"%s\" does not exist"
@@ -4890,7 +4890,7 @@ msgid ""
 "  # TO tag         FROM line  in file/text"
 msgstr ""
 "\n"
-"  # ДО теґу        З рядка  у файлі/тексті"
+"  # ДО мітки       З рядка  у файлі/тексті"
 
 #, c-format
 msgid "Searching tags file %s"
@@ -4920,11 +4920,11 @@ msgstr "E433: Немає файлу теґів"
 
 # msgstr "E433: "
 msgid "E434: Can't find tag pattern"
-msgstr "E434: Не вдалося знайти зразок теґу"
+msgstr "E434: Не вдалося знайти зразок мітки"
 
 # msgstr "E434: "
 msgid "E435: Couldn't find tag, just guessing!"
-msgstr "E435: Не вдалося знайти теґ, тільки припущення!"
+msgstr "E435: Не вдалося знайти мітку, тільки припущення!"
 
 #, c-format
 msgid "Duplicate field name: %s"
