@@ -610,6 +610,30 @@ describe(":substitute, inccommand=split", function()
     screen:detach()
   end)
 
+  it("preserves 'modified' buffer flag", function()
+    execute("set nomodified")
+    feed(":%s/tw")
+    screen:expect([[
+      Inc substitution on           |
+      two lines                     |
+                                    |
+      {15:~                             }|
+      {15:~                             }|
+      {11:[No Name]                     }|
+      |2| two lines                 |
+      |4| two lines                 |
+                                    |
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      {10:[Preview]                     }|
+      :%s/tw^                        |
+    ]])
+    feed([[<C-\><C-N>]])  -- Cancel the :substitute command.
+    eq(0, eval("&modified"))
+  end)
+
   it('shows split window when typing the pattern', function()
     feed(":%s/tw")
     screen:expect([[
@@ -957,7 +981,7 @@ describe(":substitute, 'inccommand' with a failing expression", function()
     common_setup(screen, case, default_text)
   end
 
-  it('in the pattern does nothing for', function()
+  it('in the pattern does nothing', function()
     for _, case in pairs(cases) do
       refresh(case)
       execute("set inccommand=" .. case)

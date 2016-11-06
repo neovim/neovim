@@ -3142,6 +3142,7 @@ buf_T *do_sub(exarg_T *eap)
   pos_T old_cursor = curwin->w_cursor;
   int start_nsubs;
   int save_ma = 0;
+  int save_b_changed = curbuf->b_changed;
 
   if (!global_busy) {
     sub_nsubs = 0;
@@ -3971,6 +3972,8 @@ skip:
       }
     }
 
+    curbuf->b_changed = save_b_changed;  // preserve 'modified' during preview
+    // set_option_value((char_u *)"modified", 0L, NULL, OPT_LOCAL);
     preview_buf = show_sub(pat, sub, eap->line1, eap->line2, &matched_lines);
 
   } else if (*p_icm != NUL && eap->is_live) {
@@ -6014,9 +6017,8 @@ void set_context_in_sign_cmd(expand_T *xp, char_u *arg)
   }
 }
 
-/// Shows the effects of the current :substitute command being typed
-/// ('inccommand'). If inccommand=split, shows a preview window then later
-/// restores the layout.
+/// Shows the effects of the :substitute command being typed ('inccommand').
+/// If inccommand=split, shows a preview window and later restores the layout.
 static buf_T *show_sub(char_u *pat, char_u *sub, linenr_T line1, linenr_T line2,
                        MatchedLineVec *matched_lines)
   FUNC_ATTR_NONNULL_ALL
@@ -6050,7 +6052,7 @@ static buf_T *show_sub(char_u *pat, char_u *sub, linenr_T line1, linenr_T line2,
     buf_open_special(preview_buf ? bufnr : 0, "[Preview]", "incsub");
     buf_clear();
     preview_buf = curbuf;
-    set_option_value((char_u *)"bh", 0L, (char_u *)"hide", OPT_LOCAL);
+    set_option_value((char_u *)"bufhidden", 0L, (char_u *)"hide", OPT_LOCAL);
     bufnr = preview_buf->handle;
     curbuf->b_p_bl = false;
     curbuf->b_p_ma = true;

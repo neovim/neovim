@@ -1594,6 +1594,7 @@ static int command_line_changed(CommandLineState *s)
   } else if (s->firstc == ':'
              && KeyTyped            // only if interactive
              && *p_icm != NUL       // 'inccommand' is set
+             && curbuf->b_p_ma      // buffer is modifiable
              && cmdline_star == 0   // not typing a password
              && cmd_is_live(ccline.cmdbuff)) {
     // process a "live" command ('inccommand')
