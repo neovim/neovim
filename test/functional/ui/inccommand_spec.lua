@@ -52,6 +52,31 @@ local function common_setup(screen, inccommand, text)
   end
 end
 
+describe(":substitute, inccommand=split does not trigger preview", function()
+  before_each(function()
+    clear()
+    common_setup(nil, "split", default_text)
+  end)
+
+  it("when invoked by feedkeys() in a script ", function()
+    source(':call feedkeys(":%s/tw/MO/g\\<CR>")')
+    wait()
+    eq(1, eval("bufnr('$')"))
+
+    -- sanity check: assert the buffer state
+    expect(default_text:gsub("tw", "MO"))
+  end)
+
+  it("when invoked directly in a script ", function()
+    source('%s/tw/MO/g')
+    wait()
+    eq(1, eval("bufnr('$')"))
+
+    -- sanity check: assert the buffer state
+    expect(default_text:gsub("tw", "MO"))
+  end)
+end)
+
 describe(":substitute, 'inccommand' preserves", function()
    if helpers.pending_win32(pending) then return end
 
