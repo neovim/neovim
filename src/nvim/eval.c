@@ -10769,7 +10769,7 @@ static void f_haslocaldir(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   if (scope_number[kCdScopeTab] > 0) {
     tp = find_tabpage(scope_number[kCdScopeTab]);
     if (!tp) {
-      EMSG(_("5000: Cannot find tab number."));
+      EMSG(_("E5000: Cannot find tab number."));
       return;
     }
   }

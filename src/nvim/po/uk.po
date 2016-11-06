@@ -22,9 +22,8 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 
 #: ../api/buffer.c:170 ../api/buffer.c:281
-#, fuzzy
 msgid "Index out of bounds"
-msgstr "не знайдено "
+msgstr "Індекс поза межами"
 
 #: ../api/buffer.c:186
 msgid "Line index is too high"
@@ -59,14 +58,12 @@ msgid "Failed to replace line"
 msgstr ""
 
 #: ../api/buffer.c:378
-#, fuzzy
 msgid "Failed to insert line"
-msgstr "E365: Не вдалося надрукувати файл PostScript"
+msgstr "Не вдалося вставити рядок"
 
 #: ../api/buffer.c:600
-#, fuzzy
 msgid "Failed to rename buffer"
-msgstr "E222: Додати до буфера читання"
+msgstr "Не вдалося перейменувати буфер"
 
 #: ../api/buffer.c:649
 msgid "Mark name must be a single character"
@@ -74,9 +71,8 @@ msgstr ""
 
 # msgstr "E181: "
 #: ../api/buffer.c:667
-#, fuzzy
 msgid "Invalid mark name"
-msgstr "E182: Неправильна назва команди"
+msgstr "Неправильна назва помітки"
 
 #: ../api/buffer.c:721 ../api/buffer.c:761
 msgid "Line number outside range"
@@ -87,19 +83,16 @@ msgid "Column value outside range"
 msgstr ""
 
 #: ../api/private/helpers.c:61
-#, fuzzy
 msgid "Keyboard interrupt"
-msgstr "Помилка, перервано"
+msgstr "Перервано з клавіатури"
 
 #: ../api/private/helpers.c:94
-#, fuzzy
 msgid "Key not found"
-msgstr "не знайдено "
+msgstr "Ключ не знайдено"
 
 #: ../api/private/helpers.c:119
-#, fuzzy
 msgid "Dictionary is locked"
-msgstr "E715: Потрібен словник"
+msgstr "Словник заблоковано"
 
 #: ../api/private/helpers.c:124 ../api/private/helpers.c:676
 msgid "Empty dictionary keys aren't allowed"
@@ -112,34 +105,33 @@ msgstr ""
 # msgstr "E428: "
 #. Doesn't exist, fail
 #: ../api/private/helpers.c:139
-#, fuzzy, c-format
+#, c-format
 msgid "Key \"%s\" doesn't exist"
-msgstr "Файл «%s» не існує"
+msgstr "Ключ «%s» не існує"
 
 #: ../api/private/helpers.c:193 ../api/private/helpers.c:248
-#, fuzzy
 msgid "Empty option name"
-msgstr "E792: Порожня назва меню"
+msgstr "Порожня назва опції"
 
 #: ../api/private/helpers.c:206 ../api/private/helpers.c:257
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid option name \"%s\""
-msgstr "E755: Некоректний регіон у %s"
+msgstr "Неправильна назва опції «%s»"
 
 #: ../api/private/helpers.c:225
-#, fuzzy, c-format
+#, c-format
 msgid "Unable to get value for option \"%s\""
-msgstr "Не вдалося отримати значення опції"
+msgstr "Не вдалося отримати значення опції «%s»"
 
 #: ../api/private/helpers.c:231
-#, fuzzy, c-format
+#, c-format
 msgid "Unknown type for option \"%s\""
-msgstr "E113: Невідома опція: %s"
+msgstr "Невідомий тип для опції «%s»"
 
 #: ../api/private/helpers.c:266
-#, fuzzy, c-format
+#, c-format
 msgid "Unable to unset option \"%s\""
-msgstr "Не вдалося отримати значення опції"
+msgstr "Не вдалося прибрати опцію «%s»"
 
 #: ../api/private/helpers.c:272
 #, c-format
@@ -152,9 +144,9 @@ msgid "Option \"%s\" requires a boolean value"
 msgstr ""
 
 #: ../api/private/helpers.c:299
-#, fuzzy, c-format
+#, c-format
 msgid "Option \"%s\" requires an integer value"
-msgstr "E709: [:] вимагає список"
+msgstr "Опція «%s» вимагає ціле значення"
 
 #: ../api/private/helpers.c:307
 #, c-format
@@ -162,24 +154,21 @@ msgid "Value for option \"%s\" is outside range"
 msgstr ""
 
 #: ../api/private/helpers.c:318
-#, fuzzy, c-format
+#, c-format
 msgid "Option \"%s\" requires a string value"
-msgstr "E709: [:] вимагає список"
+msgstr "Опція «%s» вимагає рядкове значення"
 
 #: ../api/private/helpers.c:523
-#, fuzzy
 msgid "Invalid buffer id"
-msgstr "E158: Некоректна назва буфера: %s"
+msgstr "Некоректний ід. буфера"
 
 #: ../api/private/helpers.c:538
-#, fuzzy
 msgid "Invalid window id"
-msgstr "E900: Некоректний ід. завдання"
+msgstr "Некоректний ід. вікна"
 
 #: ../api/private/helpers.c:553
-#, fuzzy
 msgid "Invalid tabpage id"
-msgstr "E900: Некоректний ід. завдання"
+msgstr "Некоректний ід. вкладки"
 
 #: ../api/private/helpers.c:621
 msgid "Integer value outside range"
@@ -190,9 +179,8 @@ msgid "Problem while switching windows"
 msgstr ""
 
 #: ../api/ui.c:54
-#, fuzzy
 msgid "UI already attached for channel"
-msgstr "Вже на найстаршій зміні"
+msgstr "До каналу вже приєднано інтерфейс користувача"
 
 #: ../api/ui.c:60 ../api/ui.c:142
 msgid "Expected width > 0 and height > 0"
@@ -212,9 +200,8 @@ msgstr ""
 
 # msgstr "E23: "
 #: ../api/ui.c:183
-#, fuzzy
 msgid "No such ui option"
-msgstr "E24: Такого скорочення немає"
+msgstr "Немає такої опції інтерфейсу користувача"
 
 #: ../api/vim.c:174
 msgid "Failed to evaluate expression"
@@ -237,9 +224,8 @@ msgid "Directory string is too long"
 msgstr ""
 
 #: ../api/vim.c:312
-#, fuzzy
 msgid "Failed to change directory"
-msgstr "каталог"
+msgstr "Не вдалося змінити каталог"
 
 #: ../api/vim.c:507
 #, c-format
@@ -273,9 +259,8 @@ msgid "args must be Array"
 msgstr ""
 
 #: ../api/window.c:63
-#, fuzzy
 msgid "Argument \"pos\" must be a [row, col] array"
-msgstr "E712: Аргумент у %s має бути списком чи словником"
+msgstr "Аргумент «pos» має бути масивом [ряд, ст]"
 
 #: ../api/window.c:75
 msgid "Cursor position outside buffer"
@@ -370,9 +355,9 @@ msgid "E88: Cannot go before first buffer"
 msgstr "E88: Це вже найперший буфер"
 
 #: ../buffer.c:974
-#, fuzzy, c-format
+#, c-format
 msgid "E89: %s will be killed(add ! to override)"
-msgstr "E189: Файл «%s» існує (! щоб не зважати)"
+msgstr "E89: «%s» буде вбито(! щоб не зважати)"
 
 #: ../buffer.c:977
 #, c-format
@@ -762,9 +747,8 @@ msgstr "E715: Потрібен словник"
 
 # msgstr "E396: "
 #: ../eval.c:161
-#, fuzzy
 msgid "E114: String required"
-msgstr "E714: Потрібен список"
+msgstr "E114: Потрібен String"
 
 #: ../eval.c:162
 #, c-format
@@ -878,7 +862,6 @@ msgid "E691: Can only compare List with List"
 msgstr "E691: Список можна порівняти тільки зі списком"
 
 #: ../eval.c:3705
-#, fuzzy
 msgid "E692: Invalid operation for List"
 msgstr "E692: Некоректна операція над списком"
 
@@ -911,9 +894,8 @@ msgid "E695: Cannot index a Funcref"
 msgstr "E695: Функція не має індексації"
 
 #: ../eval.c:4417
-#, fuzzy
 msgid "E909: Cannot index a special variable"
-msgstr "E695: Функція не має індексації"
+msgstr "E909: Спеціальна змінна не має індексації"
 
 #: ../eval.c:4662
 #, c-format
@@ -956,9 +938,9 @@ msgstr ""
 
 # msgstr "E428: "
 #: ../eval.c:6502
-#, fuzzy, c-format
+#, c-format
 msgid "Function %s doesn't exist"
-msgstr "Файл «%s» не існує"
+msgstr "Функції «%s» немає"
 
 # msgstr "E235: "
 #: ../eval.c:6581
@@ -1071,9 +1053,8 @@ msgid "E700: Unknown function: %s"
 msgstr "E700: Невідома функція: %s"
 
 #: ../eval.c:9804
-#, fuzzy
 msgid "E5000: Cannot find tab number."
-msgstr "E695: Функція не має індексації"
+msgstr "E5000: Не можна знайти номер вкладки."
 
 #: ../eval.c:9812 ../eval.c:10780
 msgid "E5001: Higher scope cannot be -1 if lower scope is >= 0."
@@ -1084,9 +1065,8 @@ msgid "E5002: Cannot find window number."
 msgstr ""
 
 #: ../eval.c:10772
-#, fuzzy
 msgid "5000: Cannot find tab number."
-msgstr "E695: Функція не має індексації"
+msgstr "5000: Не можна знайти номер вкладки."
 
 #: ../eval.c:11200
 msgid "called inputrestore() more often than inputsave()"
@@ -1143,9 +1123,9 @@ msgstr "E701: Некоректний тип для len()"
 
 # msgstr "E14: "
 #: ../eval.c:12675
-#, fuzzy, c-format
+#, c-format
 msgid "msgpackdump() argument, index %i"
-msgstr "аргумент map()"
+msgstr "аргумент msgpackdump(), індекс %i"
 
 #: ../eval.c:12944
 msgid "E726: Stride is zero"
@@ -1218,24 +1198,20 @@ msgid "E728: Using a Dictionary as a Number"
 msgstr "E728: Dictionary вжито як Number"
 
 #: ../eval.c:18306
-#, fuzzy
 msgid "E891: Using a Funcref as a Float"
-msgstr "E703: Funcref вжито як Number"
+msgstr "E891: Funcref вжито як Float"
 
 #: ../eval.c:18309
-#, fuzzy
 msgid "E892: Using a String as a Float"
-msgstr "E728: Dictionary вжито як Number"
+msgstr "E892: String вжито як Float"
 
 #: ../eval.c:18312
-#, fuzzy
 msgid "E893: Using a List as a Float"
-msgstr "E745: List вжито як Number"
+msgstr "E893: List вжито як Float"
 
 #: ../eval.c:18315
-#, fuzzy
 msgid "E894: Using a Dictionary as a Float"
-msgstr "E728: Dictionary вжито як Number"
+msgstr "E894: Dictionary вжито як Float"
 
 #: ../eval.c:18402
 msgid "E729: using Funcref as a String"
@@ -1252,9 +1228,8 @@ msgstr "E731: Dictionary вжито як String"
 
 # msgstr "E373: "
 #: ../eval.c:18421
-#, fuzzy
 msgid "E908: using an invalid value as a String"
-msgstr "E806: Float вжито як String"
+msgstr "E908: некоректне значення вжито як String"
 
 #: ../eval.c:18892
 #, c-format
@@ -1352,9 +1327,9 @@ msgid "E131: Cannot delete function %s: It is in use"
 msgstr "E131: Не вдалося знищити функцію %s: Вона використовується"
 
 #: ../eval.c:20532
-#, fuzzy, c-format
+#, c-format
 msgid "Cannot delete function %s: It is being used internally"
-msgstr "E131: Не вдалося знищити функцію %s: Вона використовується"
+msgstr "Не вдалося знищити функцію %s: Вона використовується"
 
 #: ../eval.c:20646
 msgid "E132: Function call depth is higher than 'maxfuncdepth'"
@@ -1413,20 +1388,20 @@ msgstr ""
 
 # msgstr "E414: "
 #: ../eval/decode.c:161
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Expected string key: %s"
-msgstr "E415: Несподіваний знак рівності: %s"
+msgstr "E474: Очікується текстовий ключ: %s"
 
 # msgstr "E235: "
 #: ../eval/decode.c:167
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Expected comma before dictionary key: %s"
-msgstr "E722: Бракує коми у словнику: %s"
+msgstr "E474: Очікується кома перед словниковим ключем: %s"
 
 #: ../eval/decode.c:260
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Unfinished escape sequence: %.*s"
-msgstr "E540: Послідовність виразів не завершено"
+msgstr "E474: Не закінчено послідовність escape: %.*s"
 
 #: ../eval/decode.c:267
 #, c-format
@@ -1439,9 +1414,9 @@ msgid "E474: Expected four hex digits after \\u: %.*s"
 msgstr ""
 
 #: ../eval/decode.c:297
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Unknown escape sequence: %.*s"
-msgstr "E409: Невідома назва групи: %s"
+msgstr "E474: Невідома послідовність escape: %.*s"
 
 #: ../eval/decode.c:305
 #, c-format
@@ -1462,9 +1437,9 @@ msgstr ""
 
 # msgstr "E414: "
 #: ../eval/decode.c:332
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Expected string end: %.*s"
-msgstr "E415: Несподіваний знак рівності: %s"
+msgstr "E474: Очікувався кінець рядка: %.*s"
 
 #: ../eval/decode.c:422
 #, c-format
@@ -1473,24 +1448,24 @@ msgstr ""
 
 # msgstr "E406: "
 #: ../eval/decode.c:513
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Leading zeroes are not allowed: %.*s"
-msgstr "E786: Інтервал не дозволено"
+msgstr "E474: Початкові нулі не дозволено: %.*s"
 
 #: ../eval/decode.c:542
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Missing number after minus sign: %.*s"
-msgstr "E526: Після <%s> бракує числа"
+msgstr "E474: Бракує числа після знаку: %.*s"
 
 #: ../eval/decode.c:545
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Missing number after decimal dot: %.*s"
-msgstr "E526: Після <%s> бракує числа"
+msgstr "E474: Бракує числа після десяткової крапки: %.*s"
 
 #: ../eval/decode.c:548
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Missing exponent: %.*s"
-msgstr "E114: Бракує лапки: %s"
+msgstr "E474: Бракує експоненти: %.*s"
 
 #: ../eval/decode.c:560
 #, c-format
@@ -1521,14 +1496,14 @@ msgid "E474: Closing list with curly bracket: %.*s"
 msgstr ""
 
 #: ../eval/decode.c:652
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Closing dictionary with square bracket: %.*s"
-msgstr "E725: Виклик dict-функції без словника: %s"
+msgstr "E474: Закриття словника квадратною дужкою: %.*s"
 
 #: ../eval/decode.c:656
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Trailing comma: %.*s"
-msgstr "E488: Надлишкові символи"
+msgstr "E474: Зайва кома: %.*s"
 
 #: ../eval/decode.c:659
 #, c-format
@@ -1537,9 +1512,9 @@ msgstr ""
 
 # msgstr "E414: "
 #: ../eval/decode.c:663
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Expected value: %.*s"
-msgstr "E415: Несподіваний знак рівності: %s"
+msgstr "E474: Очікується значення: %.*s"
 
 #: ../eval/decode.c:682
 #, c-format
@@ -1547,20 +1522,20 @@ msgid "E474: Comma not inside container: %.*s"
 msgstr ""
 
 #: ../eval/decode.c:687
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Duplicate comma: %.*s"
-msgstr "E721: Повторення ключа в словнику: «%s»"
+msgstr "E474: Зайва кома: %.*s"
 
 #: ../eval/decode.c:690
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Comma after colon: %.*s"
-msgstr "E74: Занадто складна команда"
+msgstr "E474: Кома після двокрапки: %.*s"
 
 # msgstr "E235: "
 #: ../eval/decode.c:694
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Using comma in place of colon: %.*s"
-msgstr "E722: Бракує коми у словнику: %s"
+msgstr "E474: Кома замість двокрапки: %.*s"
 
 #: ../eval/decode.c:701
 #, c-format
@@ -1574,15 +1549,15 @@ msgstr ""
 
 # msgstr "E235: "
 #: ../eval/decode.c:714
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Using colon not in dictionary: %.*s"
-msgstr "E720: Бракує двокрапки у словнику: %s"
+msgstr "E474: Двокрапка не в словнику: %.*s"
 
 # msgstr "E414: "
 #: ../eval/decode.c:717
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Unexpected colon: %.*s"
-msgstr "E415: Несподіваний знак рівності: %s"
+msgstr "E474: Несподівана двокрапка: %.*s"
 
 #: ../eval/decode.c:720
 #, c-format
@@ -1590,43 +1565,43 @@ msgid "E474: Colon after comma: %.*s"
 msgstr ""
 
 #: ../eval/decode.c:723
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Duplicate colon: %.*s"
-msgstr "E721: Повторення ключа в словнику: «%s»"
+msgstr "E474: Зайва двокрапка: %.*s"
 
 # msgstr "E414: "
 #: ../eval/decode.c:737
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Expected null: %.*s"
-msgstr "E415: Несподіваний знак рівності: %s"
+msgstr "E474: Несподіваний null: %.*s"
 
 # msgstr "E414: "
 #: ../eval/decode.c:750
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Expected true: %.*s"
-msgstr "E415: Несподіваний знак рівності: %s"
+msgstr "E474: Очікується true: %.*s"
 
 # msgstr "E414: "
 #: ../eval/decode.c:763
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Expected false: %.*s"
-msgstr "E415: Несподіваний знак рівності: %s"
+msgstr "E474: Очікується false: %.*s"
 
 #: ../eval/decode.c:856
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Unidentified byte: %.*s"
-msgstr "E121: Невизначена змінна: %s"
+msgstr "E474: Невизначений байт: %.*s"
 
 #: ../eval/decode.c:877
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Trailing characters: %.*s"
-msgstr "E488: Надлишкові символи"
+msgstr "E474: Надлишкові символи: %.*s"
 
 # msgstr "E414: "
 #: ../eval/decode.c:886
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Unexpected end of input: %.*s"
-msgstr "E415: Несподіваний знак рівності: %s"
+msgstr "E474: Несподіваний кінець: %.*s"
 
 #: ../eval/encode.c:111
 #, c-format
@@ -1662,9 +1637,9 @@ msgid "E474: Unable to represent infinity in JSON"
 msgstr ""
 
 #: ../eval/encode.c:522
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Failed to convert string \"%.*s\" to UTF-8"
-msgstr "E620: Не вдалося перетворити до кодування друку «%s»"
+msgstr "E474: Не вдалося перетворити рядок «%.*s» до UTF-8"
 
 #: ../eval/encode.c:558
 #, c-format
@@ -1680,9 +1655,8 @@ msgid ""
 msgstr ""
 
 #: ../eval/encode.c:650
-#, fuzzy
 msgid "E474: Unable to convert EXT string to JSON"
-msgstr "E620: Не вдалося перетворити до кодування друку «%s»"
+msgstr "E474: Не вдалося перетворити рядок EXT у JSON"
 
 #: ../eval/encode.c:656
 #, c-format
@@ -1690,9 +1664,8 @@ msgid "E474: Error while dumping %s, %s: attempt to dump function reference"
 msgstr ""
 
 #: ../eval/encode.c:702
-#, fuzzy
 msgid "E474: Invalid key in special dictionary"
-msgstr "E736: Некоректна операція над словником"
+msgstr "E474: Неправильний ключ у спеціальному словнику"
 
 #: ../eval/encode.c:839
 #, c-format
@@ -1812,9 +1785,8 @@ msgid "E144: non-numeric argument to :z"
 msgstr "E144: нечисловий аргумент для :z"
 
 #: ../ex_cmds.c:2881
-#, fuzzy
 msgid "E145: Shell commands not allowed in restricted mode"
-msgstr "E145: У rvim не дозволені команди оболонки"
+msgstr "E145: У обмеженому режимі не дозволені команди оболонки"
 
 #: ../ex_cmds.c:3146
 msgid "E146: Regular expressions can't be delimited by letters"
@@ -1984,9 +1956,8 @@ msgid "cmd: %s"
 msgstr "команда: %s"
 
 #: ../ex_cmds2.c:375
-#, fuzzy
 msgid "frame is zero"
-msgstr "E726: Крок нульовий"
+msgstr "кадр нульовий"
 
 #: ../ex_cmds2.c:380
 #, c-format
@@ -2064,9 +2035,9 @@ msgid "Searching for \"%s\""
 msgstr "Пошук «%s»"
 
 #: ../ex_cmds2.c:2401
-#, fuzzy, c-format
+#, c-format
 msgid "not found in '%s': \"%s\""
-msgstr "В 'runtimepath' не знайдено «%s»"
+msgstr "не знайдено в '%s': «%s»"
 
 #: ../ex_cmds2.c:2731
 #, c-format
@@ -2222,13 +2193,12 @@ msgid "E174: Command already exists: add ! to replace it"
 msgstr "E174: Команда вже існує, ! щоб замінити її"
 
 #: ../ex_docmd.c:4734
-#, fuzzy
 msgid ""
 "\n"
 "    Name        Args       Address   Complete  Definition"
 msgstr ""
 "\n"
-"    Назва       Арг. Межа  Доповнення Визначення"
+"    Назва       Арг.       Адреса   Доповнення Визначення"
 
 #: ../ex_docmd.c:4832
 msgid "No user-defined commands found"
@@ -2258,9 +2228,8 @@ msgstr "E179: для -complete потрібний аргумент"
 
 # msgstr "E178: "
 #: ../ex_docmd.c:4953
-#, fuzzy
 msgid "E179: argument required for -addr"
-msgstr "E179: для -complete потрібний аргумент"
+msgstr "E179: для -addr потрібний аргумент"
 
 # msgstr "E180: "
 #: ../ex_docmd.c:4965
@@ -2291,9 +2260,9 @@ msgstr "E184: Команду користувача не знайдено: %s"
 
 # msgstr "E179: "
 #: ../ex_docmd.c:5639
-#, fuzzy, c-format
+#, c-format
 msgid "E180: Invalid address type value: %s"
-msgstr "E180: Неправильне доповнення: %s"
+msgstr "E180: Неправильне значення типу адреси: %s"
 
 # msgstr "E179: "
 #: ../ex_docmd.c:5688
@@ -3180,14 +3149,12 @@ msgid "E470: Command aborted"
 msgstr "E470: Команду перервано"
 
 #: ../globals.h:1081
-#, fuzzy
 msgid "E905: Cannot set this option after startup"
-msgstr "E529: Не вдалося спорожнити 'term'"
+msgstr "E905: Не вдалося встановити цю опцію після запуску"
 
 #: ../globals.h:1082
-#, fuzzy
 msgid "E903: Could not spawn API job"
-msgstr "E623: Не вдалося створити процес cscope"
+msgstr "E903: Не вдалося запустити задачу"
 
 #: ../globals.h:1083
 msgid "E471: Argument required"
@@ -3309,9 +3276,9 @@ msgid "E364: Library call failed for \"%s()\""
 msgstr "E364: Бібліотечний виклик до «%s()» не вдався"
 
 #: ../globals.h:1113
-#, fuzzy, c-format
+#, c-format
 msgid "E739: Cannot create directory %s: %s"
-msgstr "E739: Не вдалося створити каталог: %s"
+msgstr "E739: Не вдалося створити каталог %s: %s"
 
 # msgstr "E18: "
 #: ../globals.h:1114
@@ -3626,9 +3593,9 @@ msgid "E850: Invalid register name"
 msgstr "E850: Неправильна назва регістру"
 
 #: ../globals.h:1199
-#, fuzzy, c-format
+#, c-format
 msgid "E919: Directory not found in '%s': \"%s\""
-msgstr "E161: Точку зупинки не знайдено: %s"
+msgstr "E919: Каталог не знайдено у '%s': «%s»"
 
 #: ../globals.h:1200
 msgid "E519: Option not supported"
@@ -3665,9 +3632,9 @@ msgid "No text to be printed"
 msgstr "Нічого друкувати"
 
 #: ../hardcopy.c:715
-#, fuzzy, c-format
+#, c-format
 msgid "Printing page %d (%zu%%)"
-msgstr "Друкується сторінка %d (%d%%)"
+msgstr "Друкується сторінка %d (%zu%%)"
 
 #: ../hardcopy.c:723
 #, c-format
@@ -3823,9 +3790,9 @@ msgid "Added cscope database %s"
 msgstr "Додано базу даних cscope %s"
 
 #: ../if_cscope.c:582
-#, fuzzy, c-format
+#, c-format
 msgid "E262: error reading cscope connection %<PRIu64>"
-msgstr "E262: Помилка читання зі з'єднання cscope %<PRId64>"
+msgstr "E262: помилка читання зі з'єднання cscope %<PRIu64>"
 
 #: ../if_cscope.c:680
 msgid "E561: unknown cscope search type"
@@ -3885,7 +3852,6 @@ msgid "%-5s: %s%*s (Usage: %s)"
 msgstr "%-5s: %s%*s (Використання: %s)"
 
 #: ../if_cscope.c:1133
-#, fuzzy
 msgid ""
 "\n"
 "       a: Find assignments to this symbol\n"
@@ -3899,6 +3865,8 @@ msgid ""
 "       t: Find this text string\n"
 msgstr ""
 "\n"
+"       a: Знайти присвоєння цього символу\n"
+"       a: Знайти присвоєння цього символу\n"
 "       c: Знайти функції, що викликають цю функцію\n"
 "       d: Знайти функції, що викликаються цією функцією\n"
 "       e: Знайти цей шаблон egrep\n"
@@ -4016,82 +3984,65 @@ msgstr "E282: Не вдалося прочитати з «%s»"
 
 # msgstr "E282: "
 #: ../main.c:1803
-#, fuzzy
 msgid ""
 "\n"
 "More info with \""
 msgstr ""
 "\n"
-"Дізнайтеся більше: «vim -h»\n"
+"Дізнайтеся більше: \""
 
 #. kill us with CTRL-C here, if you like
 #: ../main.c:1824
-#, fuzzy
 msgid "Usage:\n"
-msgstr ""
-"\n"
-"\n"
-"Вжиток:"
+msgstr "Вжиток:\n"
 
 #: ../main.c:1825
-#, fuzzy
 msgid "  nvim [arguments] [file ...]      Edit specified file(s)\n"
-msgstr "[файл ..]       редагувати вказані файли"
+msgstr "  nvim [аргументи] [файл ...]      Редагувати вказані файли\n"
 
 #: ../main.c:1826
-#, fuzzy
 msgid "  nvim [arguments] -               Read text from stdin\n"
-msgstr "-               читати текст з stdin"
+msgstr "  nvim [аргументи] -               Читати текст з stdin\n"
 
 #: ../main.c:1827
-#, fuzzy
 msgid "  nvim [arguments] -t <tag>        Edit file where tag is defined\n"
-msgstr "-t мітка        редагувати файл, де визначено мітку"
+msgstr "  nvim [аргументи] -t <мітка>      Редагувати файл, де визначено мітку\n"
 
 #: ../main.c:1828
-#, fuzzy
 msgid "  nvim [arguments] -q [errorfile]  Edit file with first error\n"
-msgstr "-q [файл]       перейти до першої помилки"
+msgstr "  nvim [аргументи] -q [ф.помилки]  Редагувати файл з першою помилкою\n"
 
 #: ../main.c:1829
-#, fuzzy
 msgid ""
 "\n"
 "Arguments:\n"
 msgstr ""
 "\n"
-"\n"
 "Аргументи:\n"
 
 #: ../main.c:1830
-#, fuzzy
 msgid "  --                    Only file names after this\n"
-msgstr "--\t\t\tЛише назви файлів після цього"
+msgstr "  --                    Лише назви файлів після цього\n"
 
 #: ../main.c:1832
-#, fuzzy
 msgid "  --literal             Don't expand wildcards\n"
-msgstr "--literal\t\tНе розкривати шаблони"
+msgstr "  --literal             Не розкривати шаблони\n"
 
 #: ../main.c:1834
-#, fuzzy
 msgid "  -e                    Ex mode\n"
-msgstr "-               читати текст з stdin"
+msgstr "  -e                    Режим Ex\n"
 
 #: ../main.c:1835
-#, fuzzy
 msgid "  -E                    Improved Ex mode\n"
-msgstr "-               читати текст з stdin"
+msgstr "  -E                    Покращений режим Ex\n"
 
 #: ../main.c:1836
-#, fuzzy
 msgid "  -s                    Silent (batch) mode (only for ex mode)\n"
-msgstr "-s\t\t\tМовчазний (пакетний) режим (лише для «ex»)"
+msgstr "  -s                    Мовчазний (пакетний) режим (лише для «ex»)\n"
 
 #: ../main.c:1837
-#, fuzzy
 msgid "  -d                    Diff mode\n"
-msgstr "-               читати текст з stdin"
+msgstr "  -d                    Режим порівняння\n"
 
 #: ../main.c:1838
 msgid "  -R                    Read-only mode\n"
@@ -4102,23 +4053,20 @@ msgid "  -Z                    Restricted mode\n"
 msgstr ""
 
 #: ../main.c:1840
-#, fuzzy
 msgid "  -m                    Modifications (writing files) not allowed\n"
-msgstr "-m\t\t\tЗміни (запис файлів) не дозволено"
+msgstr "  -m                    Зміни (запис файлів) не дозволено\n"
 
 #: ../main.c:1841
-#, fuzzy
 msgid "  -M                    Modifications in text not allowed\n"
-msgstr "-M\t\t\tЗміни в тексті файлів не дозволено"
+msgstr "  -M                    Зміни в тексті файлів не дозволено\n"
 
 #: ../main.c:1842
 msgid "  -b                    Binary mode\n"
 msgstr ""
 
 #: ../main.c:1843
-#, fuzzy
 msgid "  -l                    Lisp mode\n"
-msgstr "-               читати текст з stdin"
+msgstr "  -l                    Режим Lisp\n"
 
 #: ../main.c:1844
 msgid "  -A                    Arabic mode\n"
@@ -4133,109 +4081,90 @@ msgid "  -H                    Hebrew mode\n"
 msgstr ""
 
 #: ../main.c:1847
-#, fuzzy
 msgid "  -V[N][file]           Be verbose [level N][log messages to file]\n"
-msgstr "-V[N][файл]\t\tБільше повідомлень [рівень N] [файл журн. повідомлень]"
+msgstr "  -V[N][файл]           Більше повідомлень [рівень N] [файл журн. повідомлень]\n"
 
 #: ../main.c:1848
 msgid "  -D                    Debugging mode\n"
 msgstr ""
 
 #: ../main.c:1849
-#, fuzzy
 msgid "  -n                    No swap file, use memory only\n"
-msgstr "-n\t\t\tНе використовувати файл обміну, тримати усе в пам'яті"
+msgstr "  -n                    Не використовувати файл обміну, тримати усе в пам'яті\n"
 
 #: ../main.c:1850
-#, fuzzy
 msgid "  -r, -L                List swap files and exit\n"
-msgstr "-r\t\t\tПоказати файли обміну і вийти"
+msgstr "  -r, -L                Показати файли обміну і вийти\n"
 
 #: ../main.c:1851
-#, fuzzy
 msgid "  -r <file>             Recover crashed session\n"
-msgstr "-r (назва файлу)\tВідновити аварійно закінчений сеанс"
+msgstr "  -r <файл>             Відновити аварійно закінчений сеанс\n"
 
 #: ../main.c:1852
-#, fuzzy
 msgid "  -u <vimrc>            Use <vimrc> instead of the default\n"
-msgstr "-u <vimrc>\t\tВикористати поданий файл замість .vimrc"
+msgstr "  -u <vimrc>            Використати <vimrc> замість початкового\n"
 
 #: ../main.c:1853
 msgid "  -i <shada>            Use <shada> instead of the default\n"
 msgstr ""
 
 #: ../main.c:1854
-#, fuzzy
 msgid "  --noplugin            Don't load plugin scripts\n"
-msgstr "--noplugin\t\tНе вантажити скрипти доповнення"
+msgstr "  --noplugin            Не вантажити скрипти доповнення\n"
 
 #: ../main.c:1855
-#, fuzzy
 msgid "  -o[N]                 Open N windows (default: one for each file)\n"
-msgstr "-o[N]\t\tВідкрити N вікон (або по одному для кожного файлу)"
+msgstr "  -o[N]                 Відкрити N вікон (стандартно: по одному для кожного файлу)\n"
 
 #: ../main.c:1856
-#, fuzzy
 msgid "  -O[N]                 Like -o but split vertically\n"
-msgstr "-O[N]\t\tНіби -o, але поділити вікна вертикально"
+msgstr "  -O[N]                 Ніби -o, але поділити вікна вертикально\n"
 
 #: ../main.c:1857
-#, fuzzy
 msgid "  -p[N]                 Open N tab pages (default: one for each file)\n"
-msgstr "-p[N]\t\tВідкрити N вкладок (або по одній для кожного файлу)"
+msgstr "  -p[N]                 Відкрити N вкладок (стандартно: по одній для кожного файлу)\n"
 
 #: ../main.c:1858
-#, fuzzy
 msgid "  +                     Start at end of file\n"
-msgstr "+\t\t\tРозпочати в кінці файлу"
+msgstr "  +                     Розпочати в кінці файлу\n"
 
 #: ../main.c:1859
-#, fuzzy
 msgid "  +<linenum>            Start at line <linenum>\n"
-msgstr "+<рядок>\t\tРозпочати у вказаному <рядку>"
+msgstr "  +<рядок>              Розпочати у <рядку>\n"
 
 #: ../main.c:1860
 msgid "  +/<pattern>           Start at first occurrence of <pattern>\n"
 msgstr ""
 
 #: ../main.c:1861
-#, fuzzy
 msgid "  --cmd <command>       Execute <command> before loading any vimrc\n"
-msgstr "--cmd <команда>\tВиконати <команду> перед завантаженням vimrc"
+msgstr "  --cmd <команда>       Виконати <команду> перед завантаженням vimrc\n"
 
 #: ../main.c:1862
-#, fuzzy
 msgid ""
 "  -c <command>          Execute <command> after loading the first file\n"
-msgstr "-c <команда>\t\tВиконати <команду> після завантаження першого файлу"
+msgstr ""
+"  -c <команда>          Виконати <команду> після завантаження першого файлу\n"
 
 #: ../main.c:1863
-#, fuzzy
 msgid "  -S <session>          Source <session> after loading the first file\n"
-msgstr "-S <сеанс>\t\tВиконати поданий файл після першого завантаженого файлу"
+msgstr "  -S <сеанс>            Виконати <сеанс> після першого завантаженого файлу\n"
 
 #: ../main.c:1864
-#, fuzzy
 msgid "  -s <scriptin>         Read Normal mode commands from <scriptin>\n"
-msgstr "-s <скрипт>\t\tЗчитати команди нормального режиму з файлу <скрипт>"
+msgstr "  -s <скрипт>           Зчитати команди нормального режиму з файлу <скрипт>\n"
 
 #: ../main.c:1865
-#, fuzzy
 msgid "  -w <scriptout>        Append all typed characters to <scriptout>\n"
-msgstr "-w <скрипт>\t\tДописати усі набрані команди до файлу <скрипт>"
+msgstr "  -w <скрипт>           Дописати усі набрані команди до файлу <скрипт>\n"
 
 #: ../main.c:1866
-#, fuzzy
 msgid "  -W <scriptout>        Write all typed characters to <scriptout>\n"
-msgstr "-w <скрипт>\t\tЗаписати усі набрані команди у файл <скрипт>"
+msgstr "  -W <скрипт>           Записати усі набрані символи у файл <скрипт>\n"
 
 #: ../main.c:1867
-#, fuzzy
 msgid "  --startuptime <file>  Write startup timing messages to <file>\n"
-msgstr ""
-"--startuptime <файл>\tЗаписати запускні повідомлення з часовими відмітками "
-"до <файлу>"
+msgstr "  --startuptime <файл>  Записати профіль запуску до <файлу>\n"
 
 #: ../main.c:1868
 msgid ""
@@ -4251,14 +4180,12 @@ msgid "  --headless            Don't start a user interface\n"
 msgstr ""
 
 #: ../main.c:1871
-#, fuzzy
 msgid "  -v, --version         Print version information and exit\n"
-msgstr "--version\t\tНадрукувати інформацію про версію програми і вийти"
+msgstr "  -v, --version         Надрукувати інформацію про версію програми і вийти\n"
 
 #: ../main.c:1872
-#, fuzzy
 msgid "  -h, --help            Print this help message and exit\n"
-msgstr "-h  чи  --help\tНадрукувати це повідомлення і вийти"
+msgstr "  -h, --help            Надрукувати це повідомлення і вийти\n"
 
 #: ../mark.c:654
 msgid "No marks set"
@@ -4745,7 +4672,6 @@ msgstr "      НОВІШИЙ за файл обміну!\n"
 #. Some of these messages are long to allow translation to
 #. * other languages.
 #: ../memline.c:3167
-#, fuzzy
 msgid ""
 "\n"
 "(1) Another program may be editing the same file.  If this is the case,\n"
@@ -4754,8 +4680,8 @@ msgid ""
 msgstr ""
 "\n"
 "(1) Можливо, інша програма вже редагує цей самий файл. Якщо це так,\n"
-"    будьте обережні, щоб не залишилися два різні екземпляри\n"
-"    одного й того самого файлу після змін."
+"    будьте обережні, щоб не залишилися два різні екземпляри одного й того\n"
+"    самого файлу після змін.  Вийдіть чи продовжуйте обережно.\n"
 
 #: ../memline.c:3171
 msgid "(2) An edit session for this file crashed.\n"
@@ -4846,11 +4772,13 @@ msgstr "E326: Знайдено забагато файлів обміну"
 
 # msgstr "E302: "
 #: ../memline.c:3469
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "E303: Unable to create directory \"%s\" for swap file, recovery impossible: "
 "%s"
-msgstr "E303: Не вдалося прочитати файл обміну для «%s», відновлення неможливе"
+msgstr ""
+"E303: Не вдалося створити каталог «%s» для файлу обміну, відновлення неможливе: "
+"%s"
 
 #: ../memory.c:164
 msgid "Vim: Data too large to fit into virtual memory space\n"
@@ -5056,9 +4984,9 @@ msgid "Calling shell to execute: \"%s\""
 msgstr "Викликається оболонка щоб виконати: «%s»"
 
 #: ../msgpack_rpc/channel.c:192
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid channel \"%<PRIu64>\""
-msgstr "рядок %<PRId64>"
+msgstr "Некоректний канал «%<PRIu64>»"
 
 #: ../msgpack_rpc/helpers.c:559
 msgid "Message is not an array"
@@ -5073,9 +5001,8 @@ msgid "Message type must be an integer"
 msgstr ""
 
 #: ../msgpack_rpc/helpers.c:575
-#, fuzzy
 msgid "Unknown message type"
-msgstr "E574: Невідомий тип регістру %d"
+msgstr "Невідомий тип повідомлення"
 
 #: ../msgpack_rpc/helpers.c:581
 msgid "Request array size should be 4 (request) or 3 (notification)"
@@ -5457,20 +5384,19 @@ msgstr ""
 "оболонка повернула: "
 
 #: ../os/shell.c:220
-#, fuzzy
 msgid ""
 "\n"
 "Cannot execute "
 msgstr ""
 "\n"
-"Не вдалося запустити оболонку"
+"Не вдалося виконати "
 
 #. Can happen if system() tries to send input to a shell command that was
 #. backgrounded (:call system("cat - &", "foo")). #3529 #5241
 #: ../os/shell.c:551
-#, fuzzy, c-format
+#, c-format
 msgid "E5677: Error writing input to shell-command: %s"
-msgstr "E677: Не вдалося записати тимчасовий файл"
+msgstr "E5677: Не вдалося записати на вхід команди оболонки: %s"
 
 #: ../os_unix.c:87 ../os_unix.c:93
 msgid ""
@@ -5705,9 +5631,9 @@ msgid "E71: Invalid character after %s%%"
 msgstr "E71: Недозволений символ після %s%%"
 
 #: ../regexp.c:2478
-#, fuzzy, c-format
+#, c-format
 msgid "E888: (NFA regexp) cannot repeat %s"
-msgstr "E866: (NFA regexp) Не на місці %c"
+msgstr "E888: (NFA regexp) неможливо повторити %s"
 
 # msgstr "E64: "
 #: ../regexp.c:3103
@@ -5887,9 +5813,9 @@ msgid "too few bytes read"
 msgstr ""
 
 #: ../shada.c:764
-#, fuzzy, c-format
+#, c-format
 msgid "System error while skipping in ShaDa file: %s"
-msgstr "E782: Помилка читання файлу .sug: %s"
+msgstr "Системна помилка при пропусканні у файлі ShaDa: %s"
 
 #: ../shada.c:768 ../shada.c:3191
 #, c-format
@@ -5899,19 +5825,19 @@ msgid ""
 msgstr ""
 
 #: ../shada.c:814
-#, fuzzy, c-format
+#, c-format
 msgid "System error while closing ShaDa file: %s"
-msgstr "E782: Помилка читання файлу .sug: %s"
+msgstr "Системна помилка при закритті файлу ShaDa: %s"
 
 #: ../shada.c:849
-#, fuzzy, c-format
+#, c-format
 msgid "System error while writing ShaDa file: %s"
-msgstr "E782: Помилка читання файлу .sug: %s"
+msgstr "Системна помилка при читанні з файлу ShaDa: %s"
 
 #: ../shada.c:885
-#, fuzzy, c-format
+#, c-format
 msgid "Reading ShaDa file \"%s\"%s%s%s"
-msgstr "Зчитується файл viminfo: «%s»%s%s%s"
+msgstr "Зчитується файл ShaDa: «%s»%s%s%s"
 
 #: ../shada.c:887
 msgid " info"
@@ -5982,9 +5908,9 @@ msgid "E138: All %s.tmp.X files exist, cannot write ShaDa file!"
 msgstr ""
 
 #: ../shada.c:2941
-#, fuzzy, c-format
+#, c-format
 msgid "System error while opening temporary ShaDa file %s for writing: %s"
-msgstr "Не вдалося відкрити тимчасовий файл журналу для запису "
+msgstr "Системна помилка при відкритті тимчасового файлу ShaDa %s для запису: %s"
 
 #: ../shada.c:2956
 #, c-format
@@ -5997,19 +5923,19 @@ msgid "System error while opening ShaDa file %s for writing: %s"
 msgstr ""
 
 #: ../shada.c:2986
-#, fuzzy, c-format
+#, c-format
 msgid "Writing ShaDa file \"%s\""
-msgstr "Записується файл viminfo «%s»"
+msgstr "Записується файл ShaDa «%s»"
 
 #: ../shada.c:3014
-#, fuzzy, c-format
+#, c-format
 msgid "Failed setting uid and gid for file %s: %s"
-msgstr "Закінчено читання файлу історії %s"
+msgstr "Не вдалося встановити uid і gid для файлу %s: %s"
 
 #: ../shada.c:3024
-#, fuzzy, c-format
+#, c-format
 msgid "E137: ShaDa file is not writable: %s"
-msgstr "E137: Не дозволено запис у файл viminfo: %s"
+msgstr "E137: Не дозволено запис у файл ShaDa: %s"
 
 #: ../shada.c:3030
 #, c-format
@@ -6017,9 +5943,9 @@ msgid "Can't rename ShaDa file from %s to %s!"
 msgstr ""
 
 #: ../shada.c:3038
-#, fuzzy, c-format
+#, c-format
 msgid "Did not rename %s because %s does not looks like a ShaDa file"
-msgstr "        [не схоже на файл обміну]"
+msgstr "Не перейменував %s, тому що %s не схожий на файл ShaDa"
 
 #: ../shada.c:3041
 #, c-format
@@ -6032,14 +5958,14 @@ msgid "Do not forget to remove %s or rename it manually to %s."
 msgstr ""
 
 #: ../shada.c:3187
-#, fuzzy, c-format
+#, c-format
 msgid "System error while reading ShaDa file: %s"
-msgstr "E782: Помилка читання файлу .sug: %s"
+msgstr "Системна помилка при читанні файлу ShaDa: %s"
 
 #: ../shada.c:3226
-#, fuzzy, c-format
+#, c-format
 msgid "System error while reading integer from ShaDa file: %s"
-msgstr "E782: Помилка читання файлу .sug: %s"
+msgstr "Системна помилка при читанні цілого числа з файлу ShaDa: %s"
 
 #: ../shada.c:3230
 #, c-format
@@ -6243,13 +6169,13 @@ msgid "Duplicate affix in %s line %d: %s"
 msgstr "Подвійний афікс у %s у рядку %d: %s"
 
 #: ../spell.c:4697
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Affix also used for BAD/RARE/KEEPCASE/NEEDAFFIX/NEEDCOMPOUND/NOSUGGESTin %s "
 "line %d: %s"
 msgstr ""
-"Афікс також використовується для BAD/RARE/KEEPCASE/NEEDAFFIX/NEEDCOMPOUND/"
-"NOSUGGEST у %s у рядку %d: %s"
+"Афікс також вживається для BAD/RARE/KEEPCASE/NEEDAFFIX/NEEDCOMPOUND/NOSUGGEST"
+" у %s рядок %d: %s"
 
 #: ../spell.c:4724
 #, c-format
@@ -6663,9 +6589,9 @@ msgid "E789: Missing ']': %s"
 msgstr "E789: Пропущено ']': %s"
 
 #: ../syntax.c:4290
-#, fuzzy, c-format
+#, c-format
 msgid "E890: trailing char after ']': %s]%s"
-msgstr "E488: Надлишкові символи"
+msgstr "E890: Зайвий символ після ']': %s]%s"
 
 #: ../syntax.c:4510
 #, c-format
@@ -6969,9 +6895,9 @@ msgstr "E828: Не вдалося відкрити файл історії дл�
 
 # msgstr "E345: "
 #: ../undo.c:694
-#, fuzzy, c-format
+#, c-format
 msgid "E926: Unable to create directory \"%s\" for undo file: %s"
-msgstr "E346: У cdpath немає більше каталогу «%s»"
+msgstr "E926: Не вдалося створити каталог «%s» для файлу зворотніх змін: %s"
 
 #: ../undo.c:735
 #, c-format
@@ -7145,12 +7071,14 @@ msgid "by "
 msgstr " "
 
 #: ../version.c:2639
-#, fuzzy
 msgid ""
 "\n"
 "\n"
 "Optional features included (+) or not (-): "
-msgstr "  Включені (+) або не включені (-) компоненти:\n"
+msgstr ""
+"\n"
+"\n"
+"Включені (+) або не включені (-) компоненти: "
 
 #: ../version.c:2644
 msgid "   system vimrc file: \""
@@ -7169,32 +7097,28 @@ msgid "by Bram Moolenaar et al."
 msgstr "автор: Bram Moolenaar та ін."
 
 #: ../version.c:2712
-#, fuzzy
 msgid "Nvim is open source and freely distributable"
-msgstr "Vim — це відкрита й вільно розповсюджувана програма"
+msgstr "Nvim — це відкрита й вільно розповсюджувана програма"
 
 #: ../version.c:2713
 msgid "https://neovim.io/community"
 msgstr ""
 
 #: ../version.c:2715
-#, fuzzy
 msgid "type  :help nvim<Enter>       if you are new! "
-msgstr ":help iccf<Enter>         подробиці                "
+msgstr "      :help nvim<Enter>       якщо ви вперше! "
 
 #: ../version.c:2716
-#, fuzzy
 msgid "type  :CheckHealth<Enter>     to optimize Nvim"
-msgstr "Уведіть :quit<Enter>  щоб вийти з Vim"
+msgstr "      :CheckHealth<Enter>     щоб оптимізувати Nvim"
 
 #: ../version.c:2717
 msgid "type  :q<Enter>               to exit         "
 msgstr ":q<Enter>                 вихід з Vim              "
 
 #: ../version.c:2718
-#, fuzzy
 msgid "type  :help<Enter>            for help        "
-msgstr ":q<Enter>                 вихід з Vim              "
+msgstr "      :help<Enter>            щоб отримати допомогу"
 
 #: ../version.c:2720
 msgid "Help poor children in Uganda!"
@@ -7269,9 +7193,8 @@ msgstr "E446: Немає назви файлу над курсором"
 
 # msgstr "E396: "
 #: ../window.c:5541
-#, fuzzy
 msgid "List or number required"
-msgstr "E714: Потрібен список"
+msgstr "Очікується список чи число"
 
 #~ msgid "type  :help cp-default<Enter> for info on this"
 #~ msgstr ":help cp-default<Enter>   інформація про сумісність"
