@@ -4143,7 +4143,7 @@ msgstr "  +<рядок>              Розпочати у <рядку>\n"
 
 #: ../main.c:1860
 msgid "  +/<pattern>           Start at first occurrence of <pattern>\n"
-msgstr "  +/<шаблон>           Розпочати, де найперше трапиться <шаблон>\n"
+msgstr "  +/<шаблон>            Розпочати, де найперше трапиться <шаблон>\n"
 
 #: ../main.c:1861
 msgid "  --cmd <command>       Execute <command> before loading any vimrc\n"
@@ -7140,19 +7140,19 @@ msgstr "https://neovim.io/community"
 
 #: ../version.c:2715
 msgid "type  :help nvim<Enter>       if you are new! "
-msgstr "      :help nvim<Enter>       якщо ви вперше! "
+msgstr ":help nvim<Enter>       якщо ви вперше!       "
 
 #: ../version.c:2716
 msgid "type  :CheckHealth<Enter>     to optimize Nvim"
-msgstr "      :CheckHealth<Enter>     щоб оптимізувати Nvim"
+msgstr ":CheckHealth<Enter>     щоб оптимізувати Nvim "
 
 #: ../version.c:2717
 msgid "type  :q<Enter>               to exit         "
-msgstr ":q<Enter>                 вихід з Vim              "
+msgstr ":q<Enter>               вихід з Vim           "
 
 #: ../version.c:2718
 msgid "type  :help<Enter>            for help        "
-msgstr "      :help<Enter>            щоб отримати допомогу"
+msgstr ":help<Enter>            щоб отримати допомогу "
 
 #: ../version.c:2720
 msgid "Help poor children in Uganda!"
@@ -7160,7 +7160,7 @@ msgstr "Допоможіть сиротам з Уганди!"
 
 #: ../version.c:2721
 msgid "type  :help iccf<Enter>       for information "
-msgstr ":help iccf<Enter>         подробиці                "
+msgstr ":help iccf<Enter>       подробиці             "
 
 #: ../version.c:2754
 msgid "Sponsor Vim development!"
@@ -7172,15 +7172,15 @@ msgstr "Станьте зареєстрованим користувачем Vim
 
 #: ../version.c:2758
 msgid "type  :help sponsor<Enter>    for information "
-msgstr ":help sponsor<Enter>      подальша інформація      "
+msgstr ":help sponsor<Enter>    подальша інформація   "
 
 #: ../version.c:2759
 msgid "type  :help register<Enter>   for information "
-msgstr ":help register<Enter>     подальша інформація      "
+msgstr ":help register<Enter>   подальша інформація   "
 
 #: ../version.c:2761
 msgid "menu  Help->Sponsor/Register  for information    "
-msgstr "меню  Допомога->Спонсор/Реєстрація  подробиці      "
+msgstr "меню  Допомога->Спонсор/Реєстрація  подробиці    "
 
 # msgstr "E444: "
 #: ../window.c:63
