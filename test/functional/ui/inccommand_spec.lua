@@ -107,9 +107,8 @@ describe(":substitute, 'inccommand' preserves", function()
     ]])
   end)
 
-  it(':substitute with various delimiters', function()
-    for _, case in pairs{"", "split", "nosplit"} do
-      clear()
+  for _, case in pairs{"", "split", "nosplit"} do
+    it("various delimiters (inccommand="..case..")", function()
       insert(default_text)
       execute("set inccommand=" .. case)
 
@@ -122,12 +121,11 @@ describe(":substitute, 'inccommand' preserves", function()
           ]])
         execute("undo")
       end
-    end
-  end)
+    end)
+  end
 
-  it("'undolevels'", function()
-    for _, case in pairs{"", "split", "nosplit"} do
-      clear()
+  for _, case in pairs{"", "split", "nosplit"} do
+    it("'undolevels' (inccommand="..case..")", function()
       execute("set undolevels=139")
       execute("setlocal undolevels=34")
       execute("set inccommand=" .. case)
@@ -135,12 +133,64 @@ describe(":substitute, 'inccommand' preserves", function()
       feed(":%s/as/glork/<enter>")
       eq(meths.get_option('undolevels'), 139)
       eq(curbufmeths.get_option('undolevels'), 34)
-    end
-  end)
+    end)
+  end
 
-  it("b:changedtick", function()
-    for _, case in pairs{"", "split", "nosplit"} do
-      clear()
+  for _, case in ipairs({"", "split", "nosplit"}) do
+    it("empty undotree() (inccommand="..case..")", function()
+      execute("set undolevels=1000")
+      execute("set inccommand=" .. case)
+      local expected_undotree = eval("undotree()")
+
+      -- Start typing an incomplete :substitute command.
+      feed([[:%s/e/YYYY/g]])
+      wait()
+      -- Cancel the :substitute.
+      feed([[<C-\><C-N>]])
+
+      -- The undo tree should be unchanged.
+      eq(expected_undotree, eval("undotree()"))
+      eq({}, eval("undotree()")["entries"])
+    end)
+  end
+
+  for _, case in ipairs({"", "split", "nosplit"}) do
+    it("undotree() with branches (inccommand="..case..")", function()
+      execute("set undolevels=1000")
+      execute("set inccommand=" .. case)
+      -- Make some changes.
+      feed([[isome text 1<C-\><C-N>]])
+      feed([[osome text 2<C-\><C-N>]])
+      -- Add an undo branch.
+      feed([[u]])
+      -- More changes, more undo branches.
+      feed([[osome text 3<C-\><C-N>]])
+      feed([[AX<C-\><C-N>]])
+      feed([[...]])
+      feed([[uu]])
+      feed([[osome text 4<C-\><C-N>]])
+      feed([[u<C-R>u]])
+      feed([[osome text 5<C-\><C-N>]])
+      expect([[
+        some text 1
+        some text 3XX
+        some text 5]])
+      local expected_undotree = eval("undotree()")
+      eq(5, #expected_undotree["entries"])  -- sanity
+
+      -- Start typing an incomplete :substitute command.
+      feed([[:%s/e/YYYY/g]])
+      wait()
+      -- Cancel the :substitute.
+      feed([[<C-\><C-N>]])
+
+      -- The undo tree should be unchanged.
+      eq(expected_undotree, eval("undotree()"))
+    end)
+  end
+
+  for _, case in pairs{"", "split", "nosplit"} do
+    it("b:changedtick (inccommand="..case..")", function()
       execute("set inccommand=" .. case)
       feed([[isome text 1<C-\><C-N>]])
       feed([[osome text 2<C-\><C-N>]])
@@ -154,8 +204,8 @@ describe(":substitute, 'inccommand' preserves", function()
       wait()
 
       eq(expected_tick, eval("b:changedtick"))
-    end
-  end)
+    end)
+  end
 
 end)
 

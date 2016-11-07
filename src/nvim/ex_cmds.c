@@ -6140,6 +6140,8 @@ void ex_substitute(exarg_T *eap)
   char_u *save_eap = eap->arg;
   save_search_patterns();
   int save_changedtick = curbuf->b_changedtick;
+  time_t save_b_u_time_cur = curbuf->b_u_time_cur;
+  u_header_T *save_b_u_newhead = curbuf->b_u_newhead;
   long save_b_p_ul = curbuf->b_p_ul;
   curbuf->b_p_ul = LONG_MAX;  // make sure we can undo all changes
   block_autocmds();   // disable events before show_sub() opens window/buffer
@@ -6147,15 +6149,18 @@ void ex_substitute(exarg_T *eap)
 
   buf_T *preview_buf = do_sub(eap);
 
-  if (save_changedtick != curbuf->b_changedtick
-      && !u_undo_and_forget(1)) {
-    abort();
+  if (save_changedtick != curbuf->b_changedtick) {
+    if (!u_undo_and_forget(1)) { abort(); }
+    // Restore newhead. It is meaningless when curhead is valid, but we must
+    // restore it so that undotree() is identical before/after the preview.
+    curbuf->b_u_newhead = save_b_u_newhead;
+    curbuf->b_u_time_cur = save_b_u_time_cur;
+    curbuf->b_changedtick = save_changedtick;
   }
   if (buf_valid(preview_buf)) {
     // XXX: Must do this *after* u_undo_and_forget(), why?
     close_windows(preview_buf, false);
   }
-  curbuf->b_changedtick = save_changedtick;
   curbuf->b_p_ul = save_b_p_ul;
   eap->arg = save_eap;
   restore_search_patterns();
