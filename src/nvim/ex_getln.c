@@ -1592,10 +1592,11 @@ static int command_line_changed(CommandLineState *s)
     redrawcmdline();
     s->did_incsearch = true;
   } else if (s->firstc == ':'
+             && KeyTyped            // only if interactive
              && *p_icm != NUL       // 'inccommand' is set
              && cmdline_star == 0   // not typing a password
              && cmd_is_live(ccline.cmdbuff)) {
-    // process a "live" command
+    // process a "live" command ('inccommand')
     do_cmdline(ccline.cmdbuff, NULL, NULL, DOCMD_KEEPLINE|DOCMD_LIVE);
     redrawcmdline();
   }

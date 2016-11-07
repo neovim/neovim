@@ -58,8 +58,8 @@ describe(":substitute, inccommand=split does not trigger preview", function()
     common_setup(nil, "split", default_text)
   end)
 
-  it("when invoked by feedkeys() in a script ", function()
-    source(':call feedkeys(":%s/tw/MO/g\\<CR>")')
+  it("if invoked by a script ", function()
+    source('%s/tw/MO/g')
     wait()
     eq(1, eval("bufnr('$')"))
 
@@ -67,8 +67,12 @@ describe(":substitute, inccommand=split does not trigger preview", function()
     expect(default_text:gsub("tw", "MO"))
   end)
 
-  it("when invoked directly in a script ", function()
-    source('%s/tw/MO/g')
+  it("if invoked by feedkeys()", function()
+    -- in a script...
+    source([[:call feedkeys(":%s/tw/MO/g\<CR>")]])
+    wait()
+    -- or interactively...
+    feed([[:call feedkeys(":%s/tw/MO/g\<CR>")<CR>]])
     wait()
     eq(1, eval("bufnr('$')"))
 
@@ -1038,7 +1042,7 @@ describe("'inccommand' and :cnoremap", function()
       end
   end)
 
-  it('work with a failing mapping', function()
+  it('does not work with a failing mapping', function()
     for _, case in pairs(cases) do
       refresh(case)
       execute("cnoremap <expr> x execute('bwipeout!')[-1].'x'")
@@ -1047,14 +1051,7 @@ describe("'inccommand' and :cnoremap", function()
 
       -- error thrown b/c of the mapping
       neq(nil, eval('v:errmsg'):find('^E523:'))
-      -- the substitution after the error only works for ics=split/nosplit
-      -- which seems like the right thing to do in all cases, but we probably
-      -- don't want to change the default, so all in all this seems alright
-      if case == '' then
-        expect(default_text)
-      else
-        expect(default_text:gsub("tw", "tox"))
-      end
+      expect(default_text)
     end
   end)
 
