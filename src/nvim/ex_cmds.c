@@ -3406,9 +3406,11 @@ buf_T *do_sub(exarg_T *eap)
         curwin->w_cursor.lnum = lnum;
         do_again = FALSE;
 
-        // Increment the in-line match count and store the column.
-        matched_line.nmatch++;
-        kv_push(matched_line.cols, regmatch.startpos[0].col);
+        if (eap->is_live) {
+          // Increment the in-line match count and store the column.
+          matched_line.nmatch++;
+          kv_push(matched_line.cols, regmatch.startpos[0].col);
+        }
 
         /*
          * 1. Match empty string does not count, except for first
@@ -3874,9 +3876,11 @@ skip:
       xfree(sub_firstline);          /* free the copy of the original line */
       sub_firstline = NULL;
 
-      matched_line.lnum = lnum;
-      matched_line.line = vim_strsave(ml_get(lnum));
-      kv_push(matched_lines, matched_line);
+      if (eap->is_live) {
+        matched_line.lnum = lnum;
+        matched_line.line = vim_strsave(ml_get(lnum));
+        kv_push(matched_lines, matched_line);
+      }
     }
 
     line_breakcheck();
@@ -3948,33 +3952,9 @@ skip:
   // Show 'inccommand' preview if there are matched lines.
   buf_T *preview_buf = NULL;
   if (eap->is_live && matched_lines.size != 0 && pat != NULL && *p_icm != NUL) {
-    // Place cursor on the first match after the cursor. (If all matches are
-    // above, then do_sub already placed cursor on the last match.)
-    colnr_T cur_col = -1;
-    MatchedLine curmatch;
-    for (size_t j = 0; j < matched_lines.size && cur_col == -1; j++) {
-      curmatch = matched_lines.items[j];
-      if (curmatch.lnum == old_cursor.lnum) {
-        // On cursor line; iterate in-line matches to find one after cursor.
-        for (size_t i = 0; i < curmatch.cols.size; i++) {
-          if (curmatch.cols.items[i] >= old_cursor.col) {
-            cur_col = curmatch.cols.items[i];
-            curwin->w_cursor.lnum = curmatch.lnum;
-            curwin->w_cursor.col = cur_col;
-            break;
-          }
-        }
-      } else if (curmatch.lnum > old_cursor.lnum) {
-        // After cursor; put cursor on first match there.
-        cur_col = curmatch.cols.items[0];
-        curwin->w_cursor.lnum = curmatch.lnum;
-        curwin->w_cursor.col = cur_col;
-      }
-    }
-
     curbuf->b_changed = save_b_changed;  // preserve 'modified' during preview
-    // set_option_value((char_u *)"modified", 0L, NULL, OPT_LOCAL);
-    preview_buf = show_sub(pat, sub, eap->line1, eap->line2, &matched_lines);
+    preview_buf = show_sub(old_cursor, pat, sub, eap->line1, eap->line2,
+                           &matched_lines);
 
   } else if (*p_icm != NUL && eap->is_live) {
     curwin->w_cursor = old_cursor;  // don't move the cursor
@@ -6019,8 +5999,8 @@ void set_context_in_sign_cmd(expand_T *xp, char_u *arg)
 
 /// Shows the effects of the :substitute command being typed ('inccommand').
 /// If inccommand=split, shows a preview window and later restores the layout.
-static buf_T *show_sub(char_u *pat, char_u *sub, linenr_T line1, linenr_T line2,
-                       MatchedLineVec *matched_lines)
+static buf_T *show_sub(pos_T old_cusr, char_u *pat, char_u *sub, linenr_T line1,
+                       linenr_T line2, MatchedLineVec *matched_lines)
   FUNC_ATTR_NONNULL_ALL
 {
   static handle_T bufnr = 0;  // special buffer, re-used on each visit
@@ -6046,6 +6026,30 @@ static buf_T *show_sub(char_u *pat, char_u *sub, linenr_T line1, linenr_T line2,
   if (preview_buf == curbuf) {  // Preview buffer cannot preview itself!
     split = false;
     preview_buf = NULL;
+  }
+
+  // Place cursor on the first match after the cursor. (If all matches are
+  // above, then do_sub already placed cursor on the last match.)
+  colnr_T cur_col = -1;
+  MatchedLine curmatch;
+  for (size_t j = 0; j < matched_lines->size && cur_col == -1; j++) {
+    curmatch = matched_lines->items[j];
+    if (curmatch.lnum == old_cusr.lnum) {
+      // On cursor line; iterate in-line matches to find one after cursor.
+      for (size_t i = 0; i < curmatch.cols.size; i++) {
+        if (curmatch.cols.items[i] >= old_cusr.col) {
+          cur_col = curmatch.cols.items[i];
+          curwin->w_cursor.lnum = curmatch.lnum;
+          curwin->w_cursor.col = cur_col;
+          break;
+        }
+      }
+    } else if (curmatch.lnum > old_cusr.lnum) {
+      // After cursor; put cursor on first match there.
+      cur_col = curmatch.cols.items[0];
+      curwin->w_cursor.lnum = curmatch.lnum;
+      curwin->w_cursor.col = cur_col;
+    }
   }
 
   if (split && win_split((int)p_cwh, WSP_BOT) != FAIL) {
