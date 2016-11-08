@@ -22,7 +22,7 @@ function! s:enhance_syntax() abort
   highlight! link markdownError Normal
 
   " We don't need code blocks.
-  syntax clear markdownCodeBlock
+  silent! syntax clear markdownCodeBlock
 endfunction
 
 " Runs the specified healthchecks.
