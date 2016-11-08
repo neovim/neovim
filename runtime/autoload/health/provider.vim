@@ -1,3 +1,5 @@
+let s:shell_error = 0
+
 function! s:is_bad_response(s) abort
   return a:s =~? '\v(^unable)|(^error)'
 endfunction
@@ -22,11 +24,67 @@ function! s:version_cmp(a, b) abort
   return 0
 endfunction
 
+" Handler for s:system() function.
+function! s:system_handler(jobid, data, event) abort
+  if a:event == 'stdout'
+    let self.stdout .= join(a:data, '')
+  elseif a:event == 'stderr'
+    let self.stderr .= join(a:data, '')
+  elseif a:event == 'exit'
+    let s:shell_error = a:data
+  endif
+endfunction
+
+" Run a system command and timeout after 30 seconds.
+function! s:system(cmd, ...) abort
+  let stdin = a:0 ? a:1 : ''
+  let opts = {
+        \ 'stdout': '',
+        \ 'stderr': '',
+        \ 'on_stdout': function('s:system_handler'),
+        \ 'on_stderr': function('s:system_handler'),
+        \ 'on_exit': function('s:system_handler'),
+        \ }
+  let jobid = jobstart(a:cmd, opts)
+
+  if jobid < 1
+    call health#report_error(printf('Command error %d: %s', jobid,
+          \ type(a:cmd) == type([]) ? join(a:cmd) : a:cmd)))
+    let s:shell_error = 1
+    return ''
+  endif
+
+  if !empty(stdin)
+    call jobsend(jobid, stdin)
+  endif
+
+  let res = jobwait([jobid], 30000)
+  if res[0] == -1
+    call health#report_error(printf('Command timed out: %s',
+          \ type(a:cmd) == type([]) ? join(a:cmd) : a:cmd))
+    call jobstop(jobid)
+  elseif s:shell_error != 0
+    call health#report_error(printf("Command error (%d) %s: %s", jobid,
+          \ type(a:cmd) == type([]) ? join(a:cmd) : a:cmd,
+          \ opts.stderr))
+  endif
+
+  return opts.stdout
+endfunction
+
+function! s:systemlist(cmd, ...) abort
+  let stdout = split(s:system(a:cmd, a:0 ? a:1 : ''), "\n")
+  if a:0 > 1 && !empty(a:2)
+    return filter(stdout, '!empty(v:val)')
+  endif
+  return stdout
+endfunction
+
 " Fetch the contents of a URL.
 function! s:download(url) abort
   if executable('curl')
-    let rv = system(['curl', '-sL', a:url])
-    return v:shell_error ? 'curl error: '.v:shell_error : rv
+    let rv = s:system(['curl', '-sL', a:url])
+    return s:shell_error ? 'curl error: '.s:shell_error : rv
   elseif executable('python')
     let script = "
           \try:\n
@@ -37,9 +95,9 @@ function! s:download(url) abort
           \response = urlopen('".a:url."')\n
           \print(response.read().decode('utf8'))\n
           \"
-    let rv = system(['python', '-c', script])
-    return empty(rv) && v:shell_error
-          \ ? 'python urllib.request error: '.v:shell_error
+    let rv = s:system(['python', '-c', script])
+    return empty(rv) && s:shell_error
+          \ ? 'python urllib.request error: '.s:shell_error
           \ : rv
   endif
   return 'missing `curl` and `python`, cannot make pypi request'
@@ -86,7 +144,7 @@ endfunction
 " ]
 function! s:version_info(python) abort
   let pypi_version = s:latest_pypi_version()
-  let python_version = s:trim(system([
+  let python_version = s:trim(s:system([
         \ a:python,
         \ '-c',
         \ 'import sys; print(".".join(str(x) for x in sys.version_info[:3]))',
@@ -96,11 +154,11 @@ function! s:version_info(python) abort
     let python_version = 'unable to parse python response'
   endif
 
-  let nvim_path = s:trim(system([
+  let nvim_path = s:trim(s:system([
         \ a:python,
         \ '-c',
         \ 'import neovim; print(neovim.__file__)']))
-  let nvim_path = v:shell_error ? '' : nvim_path
+  let nvim_path = s:shell_error ? '' : nvim_path
 
   if empty(nvim_path)
     return [python_version, 'unable to find nvim executable', pypi_version, 'unable to get nvim executable']
@@ -208,7 +266,7 @@ function! s:check_python(version) abort
         call health#report_ok(printf('pyenv found: "%s"', pyenv))
       endif
 
-      let python_bin = s:trim(system(
+      let python_bin = s:trim(s:system(
             \ printf('"%s" which %s 2>/dev/null', pyenv, python_bin_name)))
 
       if empty(python_bin)
@@ -285,7 +343,7 @@ function! s:check_python(version) abort
 
   if exists('$VIRTUAL_ENV')
     if !empty(pyenv)
-      let pyenv_prefix = resolve(s:trim(system([pyenv, 'prefix'])))
+      let pyenv_prefix = resolve(s:trim(s:system([pyenv, 'prefix'])))
       if $VIRTUAL_ENV != pyenv_prefix
         let virtualenv_inactive = 1
       endif
@@ -351,7 +409,7 @@ endfunction
 
 function! s:check_ruby() abort
   call health#report_start('Ruby provider')
-  let ruby_version = systemlist('ruby -v')[0]
+  let ruby_version = s:systemlist('ruby -v')[0]
   let ruby_prog    = provider#ruby#Detect()
   let suggestions  =
         \ ['Install or upgrade the neovim RubyGem using `gem install neovim`.']
@@ -361,13 +419,13 @@ function! s:check_ruby() abort
     let prog_vers = 'not found'
     call health#report_error('Missing Neovim RubyGem', suggestions)
   else
-    silent let latest_gem = get(systemlist("gem list -ra '^neovim$' 2>/dev/null | " .
+    silent let latest_gem = get(s:systemlist("gem list -ra '^neovim$' 2>/dev/null | " .
           \ "awk -F'[()]' '{print $2}' | " .
           \ 'cut -d, -f1'), 0, 'not found')
     let latest_desc = ' (latest: ' . latest_gem . ')'
 
-    silent let prog_vers = systemlist(ruby_prog . ' --version')[0]
-    if v:shell_error
+    silent let prog_vers = s:systemlist(ruby_prog . ' --version')[0]
+    if s:shell_error
       let prog_vers = 'not found' . latest_desc
       call health#report_warn('Neovim RubyGem is not up-to-date.', suggestions)
     elseif s:version_cmp(prog_vers, latest_gem) == -1
