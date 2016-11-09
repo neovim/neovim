@@ -26,10 +26,8 @@ endfunction
 
 " Handler for s:system() function.
 function! s:system_handler(jobid, data, event) abort
-  if a:event == 'stdout'
-    let self.stdout .= join(a:data, '')
-  elseif a:event == 'stderr'
-    let self.stderr .= join(a:data, '')
+  if a:event == 'stdout' || a:event == 'stderr'
+    let self.output .= join(a:data, '')
   elseif a:event == 'exit'
     let s:shell_error = a:data
   endif
@@ -39,8 +37,7 @@ endfunction
 function! s:system(cmd, ...) abort
   let stdin = a:0 ? a:1 : ''
   let opts = {
-        \ 'stdout': '',
-        \ 'stderr': '',
+        \ 'output': '',
         \ 'on_stdout': function('s:system_handler'),
         \ 'on_stderr': function('s:system_handler'),
         \ 'on_exit': function('s:system_handler'),
@@ -51,7 +48,7 @@ function! s:system(cmd, ...) abort
     call health#report_error(printf('Command error %d: %s', jobid,
           \ type(a:cmd) == type([]) ? join(a:cmd) : a:cmd)))
     let s:shell_error = 1
-    return ''
+    return opts.output
   endif
 
   if !empty(stdin)
@@ -66,10 +63,10 @@ function! s:system(cmd, ...) abort
   elseif s:shell_error != 0
     call health#report_error(printf("Command error (%d) %s: %s", jobid,
           \ type(a:cmd) == type([]) ? join(a:cmd) : a:cmd,
-          \ opts.stderr))
+          \ opts.output))
   endif
 
-  return opts.stdout
+  return opts.output
 endfunction
 
 function! s:systemlist(cmd, ...) abort
