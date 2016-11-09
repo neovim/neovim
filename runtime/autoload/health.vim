@@ -58,7 +58,7 @@ function! health#check(plugin_names) abort
           let output = execute(
                 \ 'call health#report_error(''Failed to run healthcheck for "'
                 \ .s:to_plugin_name(c)
-                \ .'" plugin. Exception:''."\n".v:exception)')
+                \ .'" plugin. Exception:''."\n".v:throwpoint."\n".v:exception)')
         endif
       endtry
       call append('$', split(output, "\n") + [''])
