@@ -409,7 +409,10 @@ endfunction
 
 function! s:check_ruby() abort
   call health#report_start('Ruby provider')
-  let ruby_version = s:systemlist('ruby -v')[0]
+  let ruby_version = 'not found'
+  if executable('ruby')
+    let ruby_version = s:systemlist('ruby -v')[0]
+  endif
   let ruby_prog    = provider#ruby#Detect()
   let suggestions  =
         \ ['Install or upgrade the neovim RubyGem using `gem install neovim`.']
