@@ -47,8 +47,8 @@ bool liveupdate_register(buf_T *buf, uint64_t channel_id) {
   args.size = 3;
   args.items = xcalloc(sizeof(Object), args.size);
 
-  // the first argument is always the buffer number
-  args.items[0] = INTEGER_OBJ(buf->handle);
+  // the first argument is always the buffer handle
+  args.items[0] = BUFFER_OBJ(buf->handle);
   args.items[1] = ARRAY_OBJ(linedata);
   args.items[2] = BOOLEAN_OBJ(false);
 
@@ -60,7 +60,7 @@ void liveupdate_send_end(buf_T *buf, uint64_t channelid) {
     Array args = ARRAY_DICT_INIT;
     args.size = 1;
     args.items = xcalloc(sizeof(Object), args.size);
-    args.items[0] = INTEGER_OBJ(buf->handle);
+    args.items[0] = BUFFER_OBJ(buf->handle);
     channel_send_event(channelid, "LiveUpdateEnd", args);
 }
 
@@ -122,8 +122,8 @@ void liveupdate_send_changes(buf_T *buf, linenr_T firstline, int64_t num_added,
       args.size = 4;
       args.items = xcalloc(sizeof(Object), args.size);
 
-      // the first argument is always the buffer number
-      args.items[0] = INTEGER_OBJ(buf->handle);
+      // the first argument is always the buffer handle
+      args.items[0] = BUFFER_OBJ(buf->handle);
 
       // the first line that changed (zero-indexed)
       args.items[1] = INTEGER_OBJ(firstline - 1);
