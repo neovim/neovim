@@ -2904,8 +2904,9 @@ static int win_alloc_firstwin(win_T *oldwin)
     /* Very first window, need to create an empty buffer for it and
      * initialize from scratch. */
     curbuf = buflist_new(NULL, NULL, 1L, BLN_LISTED);
-    if (curbuf == NULL)
+    if (curbuf == NULL) {
       return FAIL;
+    }
     curwin->w_buffer = curbuf;
     curwin->w_s = &(curbuf->b_s);
     curbuf->b_nwindows = 1;     /* there is one window */

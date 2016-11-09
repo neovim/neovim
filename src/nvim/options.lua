@@ -1188,6 +1188,14 @@ return {
       }
     },
     {
+      full_name='inccommand', abbreviation='icm',
+      type='string', scope={'global'},
+      vi_def=true,
+      redraw={'everything'},
+      varname='p_icm',
+      defaults={if_true={vi=""}}
+    },
+    {
       full_name='include', abbreviation='inc',
       type='string', scope={'global', 'buffer'},
       vi_def=true,

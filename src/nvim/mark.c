@@ -473,7 +473,7 @@ static void fname2fnum(xfmark_T *fm)
     os_dirname(IObuff, IOSIZE);
     p = path_shorten_fname(NameBuff, IObuff);
 
-    /* buflist_new() will call fmarks_check_names() */
+    // buflist_new() will call fmarks_check_names()
     (void)buflist_new(NameBuff, p, (linenr_T)1, 0);
   }
 }

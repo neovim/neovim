@@ -288,6 +288,7 @@ static char *(p_fdm_values[]) =       { "manual", "expr", "marker", "indent",
 static char *(p_fcl_values[]) =       { "all", NULL };
 static char *(p_cot_values[]) =       { "menu", "menuone", "longest", "preview",
                                         "noinsert", "noselect", NULL };
+static char *(p_icm_values[]) =       { "nosplit", "split", NULL };
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "option.c.generated.h"
@@ -3100,9 +3101,13 @@ did_set_string_option (
   else if (gvarp == &p_cino) {
     /* TODO: recognize errors */
     parse_cino(curbuf);
-  }
-  /* Options that are a list of flags. */
-  else {
+  // inccommand
+  } else if (varp == &p_icm) {
+      if (check_opt_strings(p_icm, p_icm_values, false) != OK) {
+        errmsg = e_invarg;
+      }
+  // Options that are a list of flags.
+  } else {
     p = NULL;
     if (varp == &p_ww)
       p = (char_u *)WW_ALL;
