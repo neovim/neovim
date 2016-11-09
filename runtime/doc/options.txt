@@ -246,10 +246,10 @@ global value, which is used for new buffers.  With ":set" both the local and
 global value is changed.  With "setlocal" only the local value is changed,
 thus this value is not used when editing a new buffer.
 
-When editing a buffer that has been edited before, the last used window
-options are used again.  If this buffer has been edited in this window, the
-values from back then are used.  Otherwise the values from the window where
-the buffer was edited last are used.
+When editing a buffer that has been edited before, the options from the window
+that was last closed are used again.  If this buffer has been edited in this
+window, the values from back then are used.  Otherwise the values from the
+last closed window where the buffer was edited last are used.
 
 It's possible to set a local window option specifically for a type of buffer.
 When you edit another buffer in the same window, you don't want to keep
@@ -5619,10 +5619,19 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 	Example: Try this together with 'sidescroll' and 'listchars' as
 		 in the following example to never allow the cursor to move
-		 onto the "extends" character:
+		 onto the "extends" character: >
 
 		 :set nowrap sidescroll=1 listchars=extends:>,precedes:<
 		 :set sidescrolloff=1
+<
+						*'signcolumn'* *'scl'*
+'signcolumn' 'scl'	string	(default "auto")
+			local to window
+			{not in Vi}
+			{not available when compiled without the |+signs|
+			feature}
+	Whether or not to draw the signcolumn. "auto" means it will only be
+	drawn when there is a sign to display.
 
 
 			*'smartcase'* *'scs'* *'nosmartcase'* *'noscs'*

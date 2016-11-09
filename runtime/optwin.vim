@@ -1250,6 +1250,9 @@ call append("$", "\t(local to buffer)")
 call <SID>BinOptionL("bl")
 call append("$", "debug\tset to \"msg\" to see all error messages")
 call append("$", " \tset debug=" . &debug)
+call append("$", "signcolumn\twhether to show the signcolumn")
+call append("$", "\t(local to window)")
+call <SID>OptionL("scl")
 
 set cpo&vim
 

@@ -5701,7 +5701,7 @@ comp_textwidth (
       textwidth -= 1;
     textwidth -= curwin->w_p_fdc;
 
-    if (curwin->w_buffer->b_signlist != NULL) {
+    if (signcolumn_on(curwin)) {
         textwidth -= 1;
     }
 
