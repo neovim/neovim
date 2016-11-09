@@ -358,10 +358,10 @@ will be equivilent to the following |rpcnotify()| calls:
 
 	Indicates that live updates for the nominated buffer have been
 	disabled, either by calling the api function `live_updates(false)`, or
-	because the buffer was unloaded (see |live-update-disabling| and
-	|live-update-limitations| for more information).
+	because the buffer was unloaded (see |live-updates-disabling| and
+	|live-updates-limitations| for more information).
 
-							*live-update-examples*
+							*live-updates-examples*
 Example Events~
 
 If live updates are activated on the new empty buffer 4, the following
