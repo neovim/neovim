@@ -2188,7 +2188,6 @@ int do_ecmd(
     if (fnum) {
       buf = buflist_findnr(fnum);
     } else {
-      ILOG("here");
       if (flags & ECMD_ADDBUF) {
         linenr_T tlnum = 1L;
 
@@ -3275,8 +3274,7 @@ buf_T *do_sub(exarg_T *eap)
     return NULL;
   }
 
-  int search_options = eap->is_live ? 0 : SEARCH_HIS;
-  if (search_regcomp(pat, RE_SUBST, which_pat, search_options,
+  if (search_regcomp(pat, RE_SUBST, which_pat, (eap->is_live ? 0 : SEARCH_HIS),
                      &regmatch) == FAIL) {
     if (subflags.do_error) {
       EMSG(_(e_invcmd));
@@ -3951,13 +3949,10 @@ skip:
 
   // Show 'inccommand' preview if there are matched lines.
   buf_T *preview_buf = NULL;
-  if (eap->is_live && matched_lines.size != 0 && pat != NULL && *p_icm != NUL) {
+  if (eap->is_live && *p_icm != NUL && matched_lines.size != 0 && pat != NULL) {
     curbuf->b_changed = save_b_changed;  // preserve 'modified' during preview
     preview_buf = show_sub(old_cursor, pat, sub, eap->line1, eap->line2,
                            &matched_lines);
-
-  } else if (*p_icm != NUL && eap->is_live) {
-    curwin->w_cursor = old_cursor;  // don't move the cursor
   }
 
   for (MatchedLine m; kv_size(matched_lines);) {
@@ -6058,10 +6053,9 @@ static buf_T *show_sub(pos_T old_cusr, char_u *pat, char_u *sub, linenr_T line1,
   }
 
   if (split && win_split((int)p_cwh, WSP_BOT) != FAIL) {
-    buf_open_special(preview_buf ? bufnr : 0, "[Preview]", "incsub");
+    buf_open_scratch(preview_buf ? bufnr : 0, "[Preview]");
     buf_clear();
     preview_buf = curbuf;
-    set_option_value((char_u *)"bufhidden", 0L, (char_u *)"hide", OPT_LOCAL);
     bufnr = preview_buf->handle;
     curbuf->b_p_bl = false;
     curbuf->b_p_ma = true;
@@ -6092,7 +6086,7 @@ static buf_T *show_sub(pos_T old_cusr, char_u *pat, char_u *sub, linenr_T line1,
         old_line_size = line_size;
       }
 
-      // put " | lnum|line" into str and append it to the preview buffer
+      // Put "|lnum| line" into `str` and append it to the preview buffer.
       snprintf(str, line_size, "|%*ld| %s", col_width - 3, mat.lnum, mat.line);
       ml_append(line, (char_u *)str, (colnr_T)line_size, false);
 
@@ -6155,6 +6149,7 @@ void ex_substitute(exarg_T *eap)
   buf_T *preview_buf = do_sub(eap);
 
   if (save_changedtick != curbuf->b_changedtick) {
+    // Undo invisibly. This also moves the cursor!
     if (!u_undo_and_forget(1)) { abort(); }
     // Restore newhead. It is meaningless when curhead is valid, but we must
     // restore it so that undotree() is identical before/after the preview.
