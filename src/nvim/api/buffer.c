@@ -75,11 +75,14 @@ String buffer_get_line(Buffer buffer, Integer index, Error *err)
   return rv;
 }
 
-/// activate live updates from this buffer to the current channel
+/// Activate live updates from this buffer to the current channel.
+///
 ///
 /// @param buffer The buffer handle
 /// @param enabled True turns on live updates, False turns them off.
 /// @param[out] err Details of an error that may have occurred
+/// @return False when live updates couldn't be enabled because the buffer isn't
+///         loaded; otherwise True.
 Boolean nvim_buf_live_updates(uint64_t channel_id,
                               Buffer buffer,
                               Boolean enabled,
@@ -96,7 +99,7 @@ Boolean nvim_buf_live_updates(uint64_t channel_id,
   }
 
   liveupdate_unregister(buf, channel_id);
-  return false;
+  return true;
 }
 
 /// Sets a buffer line
