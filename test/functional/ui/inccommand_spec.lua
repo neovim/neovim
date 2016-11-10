@@ -808,16 +808,37 @@ describe(":substitute, inccommand=split", function()
     ]])
   end)
 
-  it("'hlsearch' highlights the substitution, 'cursorline' does not", function()
-    execute("set hlsearch")
-    execute("set cursorline")  -- Should NOT appear in the preview window.
-    feed(":%s/tw")
+  it("'hlsearch' is active, 'cursorline' is not", function()
+    execute("set hlsearch cursorline")
+    feed("gg")
+
+    -- Assert that 'cursorline' is active.
     screen:expect([[
+      {16:^Inc substitution on           }|
+      two lines                     |
       Inc substitution on           |
-      {9:tw}{16:o lines                     }|
+      two lines                     |
                                     |
       {15:~                             }|
       {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      :set hlsearch cursorline      |
+    ]])
+
+    feed(":%s/tw")
+    -- 'cursorline' is NOT active during preview.
+    screen:expect([[
+      Inc substitution on           |
+      {9:tw}o lines                     |
+      Inc substitution on           |
+      {9:tw}o lines                     |
+                                    |
       {11:[No Name] [+]                 }|
       |2| {9:tw}o lines                 |
       |4| {9:tw}o lines                 |

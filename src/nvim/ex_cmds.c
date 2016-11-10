@@ -3951,8 +3951,7 @@ skip:
   buf_T *preview_buf = NULL;
   if (eap->is_live && *p_icm != NUL && matched_lines.size != 0 && pat != NULL) {
     curbuf->b_changed = save_b_changed;  // preserve 'modified' during preview
-    preview_buf = show_sub(old_cursor, pat, sub, eap->line1, eap->line2,
-                           &matched_lines);
+    preview_buf = show_sub(eap, old_cursor, pat, sub, &matched_lines);
   }
 
   for (MatchedLine m; kv_size(matched_lines);) {
@@ -5999,8 +5998,8 @@ void set_context_in_sign_cmd(expand_T *xp, char_u *arg)
 
 /// Shows the effects of the :substitute command being typed ('inccommand').
 /// If inccommand=split, shows a preview window and later restores the layout.
-static buf_T *show_sub(pos_T old_cusr, char_u *pat, char_u *sub, linenr_T line1,
-                       linenr_T line2, MatchedLineVec *matched_lines)
+static buf_T *show_sub(exarg_T *eap, pos_T old_cusr, char_u *pat, char_u *sub,
+                       MatchedLineVec *matched_lines)
   FUNC_ATTR_NONNULL_ALL
 {
   static handle_T bufnr = 0;  // special buffer, re-used on each visit
@@ -6020,36 +6019,22 @@ static buf_T *show_sub(pos_T old_cusr, char_u *pat, char_u *sub, linenr_T line1,
   // disable file info message
   set_option_value((char_u *)"shm", 0L, (char_u *)"F", 0);
 
-  bool outside_curline = (line1 != curwin->w_cursor.lnum
-                          || line2 != curwin->w_cursor.lnum);
+  bool outside_curline = (eap->line1 != old_cusr.lnum
+                          || eap->line2 != old_cusr.lnum);
   bool split = outside_curline && (*p_icm != 'n') && (sub_size || pat_size);
   if (preview_buf == curbuf) {  // Preview buffer cannot preview itself!
     split = false;
     preview_buf = NULL;
   }
 
-  // Place cursor on the first match after the cursor. (If all matches are
-  // above, then do_sub already placed cursor on the last match.)
-  colnr_T cur_col = -1;
-  MatchedLine curmatch;
-  for (size_t j = 0; j < matched_lines->size && cur_col == -1; j++) {
-    curmatch = matched_lines->items[j];
-    if (curmatch.lnum == old_cusr.lnum) {
-      // On cursor line; iterate in-line matches to find one after cursor.
-      for (size_t i = 0; i < curmatch.cols.size; i++) {
-        if (curmatch.cols.items[i] >= old_cusr.col) {
-          cur_col = curmatch.cols.items[i];
-          curwin->w_cursor.lnum = curmatch.lnum;
-          curwin->w_cursor.col = cur_col;
-          break;
-        }
-      }
-    } else if (curmatch.lnum > old_cusr.lnum) {
-      // After cursor; put cursor on first match there.
-      cur_col = curmatch.cols.items[0];
+  // Place cursor on nearest matching line, to undo do_sub() cursor placement.
+  for (size_t i = 0; i < matched_lines->size; i++) {
+    MatchedLine curmatch = matched_lines->items[i];
+    if (curmatch.lnum >= old_cusr.lnum) {
       curwin->w_cursor.lnum = curmatch.lnum;
-      curwin->w_cursor.col = cur_col;
-    }
+      curwin->w_cursor.col = curmatch.cols.items[0];
+      break;
+    }  // Else: All matches are above, do_sub() already placed cursor.
   }
 
   if (split && win_split((int)p_cwh, WSP_BOT) != FAIL) {
@@ -6062,6 +6047,7 @@ static buf_T *show_sub(pos_T old_cusr, char_u *pat, char_u *sub, linenr_T line1,
     curbuf->b_p_ul = -1;
     curbuf->b_p_tw = 0;         // Reset 'textwidth' (was set by ftplugin)
     curwin->w_p_cul = false;
+    curwin->w_p_cuc = false;
     curwin->w_p_spell = false;
     curwin->w_p_fen = false;
 
@@ -6126,8 +6112,8 @@ static buf_T *show_sub(pos_T old_cusr, char_u *pat, char_u *sub, linenr_T line1,
 
 /// :substitute command
 ///
-/// If 'inccommand' is empty this just calls do_sub().
-/// If 'inccommand' is set, shows a "live" preview then removes the changes
+/// If 'inccommand' is empty: calls do_sub().
+/// If 'inccommand' is set: shows a "live" preview then removes the changes.
 /// from undo history.
 void ex_substitute(exarg_T *eap)
 {
@@ -6136,15 +6122,21 @@ void ex_substitute(exarg_T *eap)
     return;
   }
 
+  block_autocmds();           // Disable events during command preview.
+
   char_u *save_eap = eap->arg;
   save_search_patterns();
   int save_changedtick = curbuf->b_changedtick;
   time_t save_b_u_time_cur = curbuf->b_u_time_cur;
   u_header_T *save_b_u_newhead = curbuf->b_u_newhead;
   long save_b_p_ul = curbuf->b_p_ul;
+  int save_w_p_cul = curwin->w_p_cul;
+  int save_w_p_cuc = curwin->w_p_cuc;
+
+  emsg_off++;                 // No error messages during command preview.
   curbuf->b_p_ul = LONG_MAX;  // make sure we can undo all changes
-  block_autocmds();   // disable events before show_sub() opens window/buffer
-  emsg_off++;         // No error messages for live commands
+  curwin->w_p_cul = false;    // Disable 'cursorline'
+  curwin->w_p_cuc = false;    // Disable 'cursorcolumn'
 
   buf_T *preview_buf = do_sub(eap);
 
@@ -6162,6 +6154,8 @@ void ex_substitute(exarg_T *eap)
     close_windows(preview_buf, false);
   }
   curbuf->b_p_ul = save_b_p_ul;
+  curwin->w_p_cul = save_w_p_cul;   // Restore 'cursorline'
+  curwin->w_p_cuc = save_w_p_cuc;   // Restore 'cursorcolumn'
   eap->arg = save_eap;
   restore_search_patterns();
   emsg_off--;
