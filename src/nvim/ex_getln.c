@@ -1599,6 +1599,16 @@ static int command_line_changed(CommandLineState *s)
              && cmd_is_live(ccline.cmdbuff)) {
     // process a "live" command ('inccommand')
     do_cmdline(ccline.cmdbuff, NULL, NULL, DOCMD_KEEPLINE|DOCMD_LIVE);
+
+    // restore the window "view"
+    curwin->w_cursor   = s->old_cursor;
+    curwin->w_curswant = s->old_curswant;
+    curwin->w_leftcol  = s->old_leftcol;
+    curwin->w_topline  = s->old_topline;
+    curwin->w_topfill  = s->old_topfill;
+    curwin->w_botline  = s->old_botline;
+    update_topline();
+
     redrawcmdline();
   }
 
