@@ -326,6 +326,7 @@ elseif(CLANG_TSAN)
   message(STATUS "Enabling Clang thread sanitizer for nvim.")
   set_property(TARGET nvim APPEND_STRING PROPERTY COMPILE_FLAGS "-DEXITFREE ")
   set_property(TARGET nvim APPEND_STRING PROPERTY COMPILE_FLAGS "-fsanitize=thread ")
+  set_property(TARGET nvim APPEND_STRING PROPERTY COMPILE_FLAGS "-fPIE ")
   set_property(TARGET nvim APPEND_STRING PROPERTY LINK_FLAGS "-fsanitize=thread ")
 endif()
 

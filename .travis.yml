@@ -9,9 +9,7 @@ env:
     # http://docs.travis-ci.com/user/speeding-up-the-build/#Paralellizing-your-build-on-one-VM
     - MAKE_CMD="make -j2"
     # Update PATH for pip.
-    - PATH="$(python2.7 -c 'import site; print(site.getuserbase())')/bin:$PATH"
-    # LLVM symbolizer path.
-    - LLVM_SYMBOLIZER="$(which llvm-symbolizer-3.4)"
+    - PATH="$(python2.7 -c 'import site; print(site.getuserbase())')/bin:/usr/lib/llvm-symbolizer-3.8/bin:$PATH"
     # Build directory for Neovim.
     - BUILD_DIR="$TRAVIS_BUILD_DIR/build"
     # Build directory for third-party dependencies.
@@ -36,8 +34,7 @@ env:
                          -DCMAKE_TOOLCHAIN_FILE=$TRAVIS_BUILD_DIR/cmake/i386-linux-gnu.toolchain.cmake"
     # Environment variables for Clang sanitizers.
     - ASAN_OPTIONS="detect_leaks=1:check_initialization_order=1:log_path=$LOG_DIR/asan"
-    - ASAN_SYMBOLIZER_PATH="$LLVM_SYMBOLIZER"
-    - TSAN_OPTIONS="external_symbolizer_path=$LLVM_SYMBOLIZER log_path=$LOG_DIR/tsan"
+    - TSAN_OPTIONS="log_path=$LOG_DIR/tsan"
     - UBSAN_OPTIONS="log_path=$LOG_DIR/ubsan"
     # Environment variables for Valgrind.
     - VALGRIND_LOG="$LOG_DIR/valgrind-%p.log"
@@ -70,10 +67,10 @@ matrix:
       compiler: gcc-5 -m32
       env: BUILD_32BIT=ON
     - os: linux
-      compiler: clang
+      compiler: clang-3.8
       env: CLANG_SANITIZER=ASAN_UBSAN
     - os: linux
-      compiler: clang
+      compiler: clang-3.8
       env: CLANG_SANITIZER=TSAN
     - os: osx
       compiler: clang
@@ -96,11 +93,12 @@ addons:
       # TODO: Remove PPA when Travis gets Python >=3.3.
       - deadsnakes
       - ubuntu-toolchain-r-test
+      - llvm-toolchain-precise-3.8
     packages:
       - autoconf
       - automake
       - build-essential
-      - clang-3.4
+      - clang-3.8
       - cmake
       - g++-5-multilib
       - g++-multilib
@@ -109,7 +107,7 @@ addons:
       - gdb
       - libc6-dev-i386
       - libtool
-      - llvm-3.4-dev
+      - llvm-3.8-dev
       - pkg-config
       - python3.3-dev
       - unzip
