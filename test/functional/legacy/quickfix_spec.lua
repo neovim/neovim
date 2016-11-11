@@ -479,3 +479,137 @@ describe('helpgrep', function()
     expected_empty()
   end)
 end)
+
+describe('errorformat', function()
+  before_each(function()
+    clear()
+
+    source([[
+    " More tests for 'errorformat'
+    function! Test_efm1()
+        if !has('unix')
+            " The 'errorformat' setting is different on non-Unix systems.
+            " This test works only on Unix-like systems.
+            return
+        endif
+
+        let l = [
+          \ '"Xtestfile", line 4.12: 1506-045 (S) Undeclared identifier fd_set.',
+          \ '﻿"Xtestfile", line 6 col 19; this is an error',
+          \ 'gcc -c -DHAVE_CONFIsing-prototypes -I/usr/X11R6/include  version.c',
+          \ 'Xtestfile:9: parse error before `asd''',
+          \ 'make: *** [vim] Error 1',
+          \ 'in file "Xtestfile" linenr 10: there is an error',
+          \ '',
+          \ '2 returned',
+          \ '"Xtestfile", line 11 col 1; this is an error',
+          \ '"Xtestfile", line 12 col 2; this is another error',
+          \ '"Xtestfile", line 14:10; this is an error in column 10',
+          \ '=Xtestfile=, line 15:10; this is another error, but in vcol 10 this time',
+          \ '"Xtestfile", linenr 16: yet another problem',
+          \ 'Error in "Xtestfile" at line 17:',
+          \ 'x should be a dot',
+          \ '	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line 17',
+          \ '            ^',
+          \ 'Error in "Xtestfile" at line 18:',
+          \ 'x should be a dot',
+          \ '	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line 18',
+          \ '.............^',
+          \ 'Error in "Xtestfile" at line 19:',
+          \ 'x should be a dot',
+          \ '	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line 19',
+          \ '--------------^',
+          \ 'Error in "Xtestfile" at line 20:',
+          \ 'x should be a dot',
+          \ '	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line 20',
+          \ '	       ^',
+          \ '',
+          \ 'Does anyone know what is the problem and how to correction it?',
+          \ '"Xtestfile", line 21 col 9: What is the title of the quickfix window?',
+          \ '"Xtestfile", line 22 col 9: What is the title of the quickfix window?'
+          \ ]
+
+        call writefile(l, 'Xerrorfile1')
+        call writefile(l[:-2], 'Xerrorfile2')
+
+        let m = [
+            \ '	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line  2',
+            \ '	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line  3',
+            \ '	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line  4',
+            \ '	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line  5',
+            \ '	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line  6',
+            \ '	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line  7',
+            \ '	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line  8',
+            \ '	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line  9',
+            \ '	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line 10',
+            \ '	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line 11',
+            \ '	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line 12',
+            \ '	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line 13',
+            \ '	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line 14',
+            \ '	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line 15',
+            \ '	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line 16',
+            \ '	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line 17',
+            \ '	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line 18',
+            \ '	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line 19',
+            \ '	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line 20',
+            \ '	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line 21',
+            \ '	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line 22'
+            \ ]
+        call writefile(m, 'Xtestfile')
+
+        let save_efm = &efm
+        set efm+==%f=\\,\ line\ %l%*\\D%v%*[^\ ]\ %m
+        set efm^=%AError\ in\ \"%f\"\ at\ line\ %l:,%Z%p^,%C%m
+
+        exe 'cf Xerrorfile2'
+        clast
+        copen
+        call assert_equal(':cf Xerrorfile2', w:quickfix_title)
+        wincmd p
+
+        exe 'cf Xerrorfile1'
+        call assert_equal([4, 12], [line('.'), col('.')])
+        cn
+        call assert_equal([6, 19], [line('.'), col('.')])
+        cn
+        call assert_equal([9, 2], [line('.'), col('.')])
+        cn
+        call assert_equal([10, 2], [line('.'), col('.')])
+        cn
+        call assert_equal([11, 1], [line('.'), col('.')])
+        cn
+        call assert_equal([12, 2], [line('.'), col('.')])
+        cn
+        call assert_equal([14, 10], [line('.'), col('.')])
+        cn
+        call assert_equal([15, 3, 10], [line('.'), col('.'), virtcol('.')])
+        cn
+        call assert_equal([16, 2], [line('.'), col('.')])
+        cn
+        call assert_equal([17, 6], [line('.'), col('.')])
+        cn
+        call assert_equal([18, 7], [line('.'), col('.')])
+        cn
+        call assert_equal([19, 8], [line('.'), col('.')])
+        cn
+        call assert_equal([20, 9], [line('.'), col('.')])
+        clast
+        cprev
+        cprev
+        wincmd w
+        call assert_equal(':cf Xerrorfile1', w:quickfix_title)
+        wincmd p
+
+        let &efm = save_efm
+        call delete('Xerrorfile1')
+        call delete('Xerrorfile2')
+        call delete('Xtestfile')
+    endfunction
+    ]])
+  end)
+
+  it('works', function()
+    call('Test_efm1')
+    expected_empty()
+  end)
+end)
