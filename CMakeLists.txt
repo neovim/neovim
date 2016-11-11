@@ -418,7 +418,7 @@ if(NOT BUSTED_OUTPUT_TYPE)
   if(WIN32)
     set(BUSTED_OUTPUT_TYPE "plainTerminal")
   else()
-    set(BUSTED_OUTPUT_TYPE "gtest")
+    set(BUSTED_OUTPUT_TYPE "utfTerminal")
   endif()
 endif()
 

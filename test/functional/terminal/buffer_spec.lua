@@ -167,7 +167,7 @@ describe('terminal buffer', function()
     local tbuf = eval('bufnr("%")')
 
     source([[
-    function! SplitWindow()
+    function! SplitWindow(id, data, event)
       new
       call feedkeys("iabc\<Esc>")
     endfunction

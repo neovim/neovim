@@ -908,7 +908,7 @@ char *encode_tv2json(typval_T *tv, size_t *len)
                       mpstack, objname)
 
 #define TYPVAL_ENCODE_CONV_PARTIAL(partial) \
-    return conv_error(_("E951: Error while dumping %s, %s: " \
+    return conv_error(_("E5004: Error while dumping %s, %s: " \
                         "attempt to dump partial"), \
                       mpstack, objname)
 
