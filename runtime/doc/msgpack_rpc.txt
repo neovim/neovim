@@ -247,40 +247,37 @@ connect to another with different type codes.
 6. Live Updates				      *live-updates* *rpc-live-updates*
 
 A dedicated API has been created to allow co-processes to be notified in
-real-time when the user changes a buffer in any way. (It is difficult and
-innefficient to do this using |TextChanged| and other autocommands.)
+real-time when the user changes a buffer in any way. It is difficult and
+error-prone to try and do this with autocommands such as |TextChanged|.
 
 							*live-updates-enabling*
 Setting Up~
 
-Use |jobstart()| to start up your co-process. >
+If your API client is a standalone co-process, it can use the
+`"nvim_buf_live_updates"`API method to activate Live Update events for a
+specific buffer. For example, in python >
 
-	let g:myhelper = jobstart(['myhelper.py', string(bufnr(""))])
+	import sys, neovim
+	nvim = neovim.attach('stdio')
+	bufnr = sys.argv[1]
+	nvim.buffers[bufnr].live_updates(True)
 
-Your co-process can use the msgpack API to request live updates for one or
-more buffers. >
-
-	myhelper.py:
-		import sys, neovim
-		nvim = neovim.attach('stdio')
-		bufnr = sys.argv[1]
-		nvim.buffers[bufnr].live_updates(True)
-
-After the `live_updates()` method is called, neovim will send a series of
-notifications containing the entire buffer's contents and any subsequent
-changes. The buffer's contents are sent via notifications because if you were
-to use the other API methods to retrieve the buffer contents, the buffer could
-be changed again before you call `live_updates(True)`. This can cause a delay
-if your plugin activates live updates for a very large buffer, but it is the
-the most efficient way to maintain a copy of the entire buffer's contents
-inside your plugin.
+After the `"nvim_buf_live_updates"` method is called, neovim will send a
+series of notifications containing the entire buffer's contents and any
+subsequent changes. The buffer's contents are sent via notifications because
+if you were to use the other API methods to retrieve the buffer contents, the
+buffer could be changed again before you turn on live updates. This can cause
+a delay if your plugin activates live updates for a very large buffer, but it
+is the the most efficient way to maintain a copy of the entire buffer's
+contents inside your plugin.
 
 						      *live-updates-disabling*
 Turning Off~
 
-You can use `live_updates(False)` to turn off notifications. One final
-notification will be sent to indicate that live updates are no longer active
-for the specified buffer. Alternatively, you can just close the channel.
+You can use `"nvim_buf_live_updates"` with an argument of `False` to turn off
+notifications. One final notification will be sent to indicate that live
+updates are no longer active for the specified buffer. Alternatively, you can
+just close the channel.
 
 						    *live-updates-limitations*
 Limitations~
@@ -295,18 +292,18 @@ the buffer contents are unloaded from memory:
 							  *live-updates-events*
 Handling Events~
 
-The co-process will start receiving the following notification events which
-will be equivilent to the following |rpcnotify()| calls:
+The co-process will start receiving the notification events which will be
+equivilent to the following |rpcnotify()| calls:
 
 1. rpcnotify({channel}, "LiveUpdateStart",		      *LiveUpdateStart*
-             [{bufnr}, {linedata}, {more}])
+             [{buf}, {linedata}, {more}])
 
 	Neovim will send at least one of these notifications to provide you
 	with the original buffer contents. If the buffer is very large, neovim
 	will send the contents through in multiple events to avoid loading the
 	entire buffer's contents into memory at once.
 
-	{bufnr} is the buffer number (see |bufnr()|) and will always be >= 1.
+	{buf} is an API handle for the buffer.
 
 	{linedata} is a list of strings containing the buffer's contents. If
 	this list contains 100 strings, then they represent lines 1-100 of the
@@ -328,12 +325,14 @@ will be equivilent to the following |rpcnotify()| calls:
 	be certain that you now have the entire buffer's contents.
 
 2. rpcnotify({channel}, "LiveUpdate",				  *LiveUpdate*
-	     [{bufnr}, {firstline}, {numreplaced}, {linedata}])
+	     [{buf}, {firstline}, {numreplaced}, {linedata}])
 
 	Indicates that {numreplaced} lines starting at line {firstline} have
 	been replaced with the new line data contained in the {linedata} list.
 	All buffer changes (even adding single characters) will be transmitted
 	as whole-line changes.
+
+	{buf} is an API handle for the buffer.
 
 	{firstline} is the integer line number of the first line that was
 	replaced. Note that {firstline} is zero-indexed, so if line `1` was
@@ -342,8 +341,9 @@ will be equivilent to the following |rpcnotify()| calls:
 	were in the buffer before the lines were replaced.
 
 	{numreplaced} is a positive integer indicating how many lines were
-	replaced. It will be `0` if new lines were added to the buffer but none
-	were replaced. If {numreplaced} is `0` then the new lines were added
+	replaced. It will be `0` if new lines were added to the buffer but
+	none were replaced. If {numreplaced} is `0` then the new lines were
+	added
 	before the zero-indexed line number in {firstline}.
 
 	{linedata} is a list of strings containing the contents of the new
@@ -354,50 +354,53 @@ will be equivilent to the following |rpcnotify()| calls:
 	lines were added to the buffer) then {linedata} is guaranteed to
 	contain at least 1 item.
 
-3. rpcnotify({channel}, "LiveUpdateEnd", [{bufnr}])		*LiveUpdateEnd*
+3. rpcnotify({channel}, "LiveUpdateEnd", [{buf}])		*LiveUpdateEnd*
+
+	{buf} is an API handle for the buffer.
 
 	Indicates that live updates for the nominated buffer have been
-	disabled, either by calling the api function `live_updates(false)`, or
-	because the buffer was unloaded (see |live-updates-disabling| and
-	|live-updates-limitations| for more information).
+	disabled, either by calling the api function `"nvim_buf_live_updates"`
+	with argument `false`, or because the buffer was unloaded (see
+	|live-updates-disabling| and |live-updates-limitations| for more
+	information).
 
 							*live-updates-examples*
 Example Events~
 
-If live updates are activated on the new empty buffer 4, the following
+If live updates are activated a new empty buffer, the following
 |LiveUpdateStart| event will be sent: >
 
-	rpcnotify({channel}, "LiveUpdateStart", [4, [""], v:false])
+	rpcnotify({channel}, "LiveUpdateStart", [{buf}, [""], v:false])
 
-If the user adds 2 new lines to the start of buffer 7, the following event
+If the user adds 2 new lines to the start of a buffer, the following event
 would be generated: >
 
-	rpcnotify({channel}, "LiveUpdate", [7, 0, 0, ["line1", "line2"]])
+	rpcnotify({channel}, "LiveUpdate", [{buf}, 0, 0, ["line1", "line2"]])
 
 If the puts the cursor on a line containing the text `"Hello world"` and adds
 a `!` character to the end using insert mode, the following event would be
 generated: >
 
 	rpcnotify({channel}, "LiveUpdate",
-		  [{bufnr}, {linenr}, 1, ["Hello world!"]])
+		  [{buf}, {linenr}, 1, ["Hello world!"]])
 
-If the user moves their cursor to line 3 of buffer 7 and deletes 20 lines
+If the user moves their cursor to line 3 of a buffer and deletes 20 lines
 using `20dd`, the following event will be generated: >
 
-	rpcnotify({channel}, "LiveUpdate", [7, 2, 20, []])
+	rpcnotify({channel}, "LiveUpdate", [{buf}, 2, 20, []])
 
-If the user selects lines 3-5 of buffer 5 using |linewise-visual| mode and
+If the user selects lines 3-5 of a buffer using |linewise-visual| mode and
 then presses `p` to paste in a new block of 6 lines, then the following event
 would be sent to the co-process: >
 
 	rpcnotify({channel}, "LiveUpdate",
-		  [5, 2, 3, ['pasted line 1', 'pasted line 2',
-			     'pasted line 3', 'pasted line 4',
-			     'pasted line 5', 'pasted line 6']])
+		  [{buf}, 2, 3, ['pasted line 1', 'pasted line 2',
+				 'pasted line 3', 'pasted line 4',
+				 'pasted line 5', 'pasted line 6']])
 
-If the user uses :edit to reload buffer 4, then the following event would be
+If the user uses :edit to reload a buffer then the following event would be
 generated: >
 
-	rpcnotify({channel}, "LiveUpdateEnd", [4])
+	rpcnotify({channel}, "LiveUpdateEnd", [{buf}])
 
 
