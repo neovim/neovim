@@ -389,6 +389,23 @@ describe('helpgrep', function()
 
         augroup! testgroup
       endfunction
+
+      func Test_vimgreptitle()
+        augroup QfBufWinEnter
+          au!
+          au BufWinEnter * :let g:a=get(w:, 'quickfix_title', 'NONE')
+        augroup END
+        try
+          vimgrep /pattern/j file
+        catch /E480/
+        endtry
+        copen
+        call assert_equal(':    vimgrep /pattern/j file', g:a)
+        augroup QfBufWinEnter
+          au!
+        augroup END
+        augroup! QfBufWinEnter
+      endfunc
       ]])
   end)
 
@@ -445,6 +462,11 @@ describe('helpgrep', function()
     execute('call setqflist([])')
     execute('copen')
     eq(':setqflist()', eval('g:foo'))
+  end)
+
+  it('does not truncate quickfix title', function()
+    call('Test_vimgreptitle')
+    expected_empty()
   end)
 
   it('errors when an autocommand closes the location list\'s window', function()
