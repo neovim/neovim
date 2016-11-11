@@ -8,8 +8,8 @@ function! s:check_config() abort
   else
     call health#report_info("found sensible.vim plugin:\n".join(sensible_pi, "\n"))
     call health#report_error("sensible.vim plugin is not needed; Nvim has the same defaults built-in."
-      \ ." Also, sensible.vim sets 'ttimeoutlen' to a sub-optimal value.",
-      \ ["Remove sensible.vim plugin, or wrap it in a `if !has('nvim')` check."])
+      \ ." Also, sensible.vim sets |'ttimeoutlen'| to a sub-optimal value.",
+      \ ["Remove sensible.vim plugin, or wrap it in `if !has('nvim')`."])
   endif
 endfunction
 
@@ -66,7 +66,7 @@ function! s:check_rplugin_manifest() abort
   endfor
 
   if require_update
-    call health#report_warn('Out of date', ['Run `:UpdateRemotePlugins`'])
+    call health#report_warn('Out of date', ['Run |:UpdateRemotePlugins|'])
   else
     call health#report_ok('Up to date')
   endif
@@ -90,6 +90,26 @@ function! s:check_performance() abort
   endif
 endfunction
 
+" Gets the value of a tmux option from global or session scope.
+function! s:get_tmux_option(option) abort
+  let cmd = 'tmux show-option -qvg '.a:option  " try global scope
+  let out = system(cmd)
+  let val = substitute(out, '\v(\s|\r|\n)', '', 'g')
+  if v:shell_error
+    call health#report_error('command failed: '.cmd."\n".out)
+    return 'error'
+  elseif empty(val)
+    let cmd = 'tmux show-option -qvgs '.a:option  " try session scope
+    let out = system(cmd)
+    let val = substitute(out, '\v(\s|\r|\n)', '', 'g')
+    if v:shell_error
+      call health#report_error('command failed: '.cmd."\n".out)
+      return 'error'
+    endif
+  endif
+  return val
+endfunction
+
 function! s:check_tmux() abort
   if empty($TMUX) || !executable('tmux')
     return
@@ -97,20 +117,30 @@ function! s:check_tmux() abort
   call health#report_start('tmux')
 
   " check escape-time
-  let suggestions = ["Set escape-time in ~/.tmux.conf:\nset-option -sg escape-time 10",
+  let suggestions = ["Set `escape-time` in ~/.tmux.conf:\nset-option -sg escape-time 10",
         \ s:suggest_faq]
-  let cmd = 'tmux show-option -qvgs escape-time'
-  let out = system(cmd)
-  let tmux_esc_time = substitute(out, '\v(\s|\r|\n)', '', 'g')
-  if v:shell_error
-    call health#report_error('command failed: '.cmd."\n".out)
-  elseif empty(tmux_esc_time)
-    call health#report_error('escape-time is not set', suggestions)
-  elseif tmux_esc_time > 300
-    call health#report_error(
-        \ 'escape-time ('.tmux_esc_time.') is higher than 300ms', suggestions)
-  else
-    call health#report_ok('escape-time: '.tmux_esc_time.'ms')
+  let tmux_esc_time = s:get_tmux_option('escape-time')
+  if tmux_esc_time !=# 'error'
+    if empty(tmux_esc_time)
+      call health#report_error('`escape-time` is not set', suggestions)
+    elseif tmux_esc_time > 300
+      call health#report_error(
+          \ '`escape-time` ('.tmux_esc_time.') is higher than 300ms', suggestions)
+    else
+      call health#report_ok('escape-time: '.tmux_esc_time.'ms')
+    endif
+  endif
+
+  " check focus-events
+  let suggestions = ["(tmux 1.9+ only) Set `focus-events` in ~/.tmux.conf:\nset-option -g focus-events on"]
+  let tmux_focus_events = s:get_tmux_option('focus-events')
+  if tmux_focus_events !=# 'error'
+    if empty(tmux_focus_events) || tmux_focus_events !=# 'on'
+      call health#report_warn(
+          \ "`focus-events` is not enabled. |'autoread'| may not work.", suggestions)
+    else
+      call health#report_ok('focus-events: '.tmux_focus_events)
+    endif
   endif
 
   " check $TERM

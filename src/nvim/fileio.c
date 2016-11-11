@@ -4693,18 +4693,15 @@ int vim_rename(char_u *from, char_u *to)
 
 static int already_warned = FALSE;
 
-/*
- * Check if any not hidden buffer has been changed.
- * Postpone the check if there are characters in the stuff buffer, a global
- * command is being executed, a mapping is being executed or an autocommand is
- * busy.
- * Returns TRUE if some message was written (screen should be redrawn and
- * cursor positioned).
- */
-int 
-check_timestamps (
-    int focus                      /* called for GUI focus event */
-)
+/// Check if any not hidden buffer has been changed.
+/// Postpone the check if there are characters in the stuff buffer, a global
+/// command is being executed, a mapping is being executed or autocmd is busy.
+///
+/// @param focus  called for UI focus event
+///
+/// @return true if some message was written (screen should be redrawn and
+/// cursor positioned).
+bool check_timestamps(int focus)
 {
   buf_T       *buf;
   int didit = 0;

@@ -8,6 +8,7 @@
 #include <stdbool.h>
 
 #include "nvim/vim.h"
+#include "nvim/log.h"
 #include "nvim/ascii.h"
 #include "nvim/edit.h"
 #include "nvim/buffer.h"
@@ -965,12 +966,12 @@ static int insert_handle_key(InsertState *s)
     multiqueue_process_events(main_loop.events);
     break;
 
-  case K_FOCUSGAINED:  // Neovim has been given focus
-    apply_autocmds(EVENT_FOCUSGAINED, NULL, NULL, false, curbuf);
+  case K_FOCUSGAINED:
+    ui_focus_change(true);
     break;
 
-  case K_FOCUSLOST:   // Neovim has lost focus
-    apply_autocmds(EVENT_FOCUSLOST, NULL, NULL, false, curbuf);
+  case K_FOCUSLOST:
+    ui_focus_change(false);
     break;
 
   case K_HOME:        // <Home>
@@ -1240,6 +1241,57 @@ normalchar:
 
   return 1;  // continue
 }
+
+/// Called when focus changed.
+///
+/// @param in_focus  true if focus gained
+void ui_focus_change(bool in_focus)
+{
+  static Timestamp last_time = (time_t)0;
+  bool need_redraw = false;
+
+  // When activated: Check if any file was modified outside of Vim.
+  // Only do this when not done within the last two seconds (could get
+  // several events in a row). */
+  if (in_focus && last_time + (Timestamp)2 < os_time()) {
+    need_redraw = check_timestamps(true);
+    last_time = os_time();
+  }
+
+  // Fire the focus gained/lost autocommand.
+  need_redraw |= apply_autocmds(in_focus ? EVENT_FOCUSGAINED : EVENT_FOCUSLOST,
+                                NULL, NULL, false, curbuf);
+
+  if (need_redraw) {
+    // Something was executed, make sure the cursor is put back where it
+    // belongs.
+    need_wait_return = FALSE;
+
+    if (State & CMDLINE) {
+      redrawcmdline();
+    } else if (State == HITRETURN || State == SETWSIZE || State == ASKMORE
+               || State == EXTERNCMD || State == CONFIRM || exmode_active) {
+      repeat_message();
+    } else if ((State & NORMAL) || (State & INSERT)) {
+      if (must_redraw != 0) {
+        update_screen(0);
+      }
+      setcursor();
+    }
+    // cursor_on();   /* redrawing may have switched it off */
+    ui_flush();
+    // if (gui.in_use)
+    // {
+    //   gui_update_cursor(FALSE, TRUE);
+    //   gui_update_scrollbars(FALSE);
+    // }
+  }
+  // File may have been changed from 'readonly' to 'noreadonly'
+  if (need_maketitle) {
+    maketitle();
+  }
+}
+
 
 static void insert_do_complete(InsertState *s)
 {

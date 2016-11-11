@@ -7894,13 +7894,13 @@ static void nv_event(cmdarg_T *cap)
 /// Trigger FocusGained event.
 static void nv_focusgained(cmdarg_T *cap)
 {
-  apply_autocmds(EVENT_FOCUSGAINED, NULL, NULL, false, curbuf);
+  ui_focus_change(true);
 }
 
 /// Trigger FocusLost event.
 static void nv_focuslost(cmdarg_T *cap)
 {
-  apply_autocmds(EVENT_FOCUSLOST, NULL, NULL, false, curbuf);
+  ui_focus_change(false);
 }
 
 /*
