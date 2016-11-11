@@ -84,3 +84,4 @@ See `LICENSE` for details.
 [external UIs]: https://github.com/neovim/neovim/wiki/Related-projects#gui-projects
 
 <!-- vim: set tw=80: -->
+foo
