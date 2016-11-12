@@ -4679,6 +4679,8 @@ int do_addsub(int op_type, pos_T *pos, int length, linenr_T Prenum1)
 theend:
   if (visual) {
     curwin->w_cursor = save_cursor;
+  } else if (did_change) {
+    curwin->w_set_curswant = true;
   }
 
   return did_change;
