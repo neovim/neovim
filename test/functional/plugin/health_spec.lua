@@ -68,6 +68,7 @@ describe('health.vim', function()
         health#broken#check
         ========================================================================
           - ERROR: Failed to run healthcheck for "broken" plugin. Exception:
+            function health#check[20]..health#broken#check, line 1
             caused an error
         ]])
     end)
