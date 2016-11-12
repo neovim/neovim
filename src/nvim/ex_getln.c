@@ -1599,6 +1599,16 @@ static int command_line_changed(CommandLineState *s)
              && cmd_is_live(ccline.cmdbuff)) {
     // process a "live" command ('inccommand')
     do_cmdline(ccline.cmdbuff, NULL, NULL, DOCMD_KEEPLINE|DOCMD_LIVE);
+
+    // restore the window "view"
+    curwin->w_cursor   = s->old_cursor;
+    curwin->w_curswant = s->old_curswant;
+    curwin->w_leftcol  = s->old_leftcol;
+    curwin->w_topline  = s->old_topline;
+    curwin->w_topfill  = s->old_topfill;
+    curwin->w_botline  = s->old_botline;
+    update_topline();
+
     redrawcmdline();
   }
 
@@ -5147,7 +5157,9 @@ static int ex_window(void)
   cmdwin_type = get_cmdline_type();
 
   // Create empty command-line buffer.
-  buf_open_special(0, "[Command Line]", "nofile");
+  buf_open_scratch(0, "[Command Line]");
+  // Command-line buffer has bufhidden=wipe, unlike a true "scratch" buffer.
+  set_option_value((char_u *)"bh", 0L, (char_u *)"wipe", OPT_LOCAL);
   curwin->w_p_rl = cmdmsg_rl;
   cmdmsg_rl = false;
   curbuf->b_p_ma = true;

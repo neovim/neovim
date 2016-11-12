@@ -1155,21 +1155,14 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'buftype'* *'bt'* *E382*
 'buftype' 'bt'		string (default: "")
 			local to buffer
-			{not available when compiled without the |+quickfix|
-			feature}
 	The value of this option specifies the type of a buffer:
 	  <empty>	normal buffer
-	  nofile	buffer which is not related to a file and will not be
-			written
-	  nowrite	buffer which will not be written
-	  acwrite	buffer which will always be written with BufWriteCmd
-			autocommands.
-	  quickfix	quickfix buffer, contains list of errors |:cwindow|
-			or list of locations |:lwindow|
-	  help		help buffer (you are not supposed to set this
-			manually)
-	  terminal	terminal buffer, this is set automatically when a 
-			terminal is created. |terminal-emulator|
+	  acwrite	buffer will always be written with |BufWriteCmd|s
+	  help		help buffer (do not set this manually)
+	  nofile	buffer is not related to a file, will not be written
+	  nowrite	buffer will not be written
+	  quickfix	list of errors |:cwindow| or locations |:lwindow|
+	  terminal	|terminal-emulator| buffer
 
 	This option is used together with 'bufhidden' and 'swapfile' to
 	specify special kinds of buffers.   See |special-buffers|.
@@ -3420,10 +3413,10 @@ A jump table for the options with a short description can be found at |Q_op|.
 'inccommand' 'icm'	string	(default "")
 			global
 			
-	"nosplit" : Shows the effects of a command incrementally, as you type.
-	"split"	  : Also shows partial off-screen results in a preview window.
+	"nosplit": Shows the effects of a command incrementally, as you type.
+	"split"	 : Also shows partial off-screen results in a preview window.
 
-	Currently only works for |:substitute|. |hl-Substitute|
+	Works for |:substitute|, |:smagic|, |:snomagic|. |hl-Substitute|
 
 						*'include'* *'inc'*
 'include' 'inc'		string	(default "^\s*#\s*include")

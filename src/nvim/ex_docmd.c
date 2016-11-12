@@ -7295,15 +7295,13 @@ void ex_may_print(exarg_T *eap)
   }
 }
 
-/*
- * ":smagic" and ":snomagic".
- */
+/// ":smagic" and ":snomagic".
 static void ex_submagic(exarg_T *eap)
 {
   int magic_save = p_magic;
 
   p_magic = (eap->cmdidx == CMD_smagic);
-  do_sub(eap);
+  ex_substitute(eap);
   p_magic = magic_save;
 }
 
@@ -9669,5 +9667,7 @@ bool cmd_is_live(char_u *cmd)
   }
   find_command(&ea, NULL);
 
-  return (ea.cmdidx == CMD_substitute);
+  return ea.cmdidx == CMD_substitute
+      || ea.cmdidx == CMD_smagic
+      || ea.cmdidx == CMD_snomagic;
 }
