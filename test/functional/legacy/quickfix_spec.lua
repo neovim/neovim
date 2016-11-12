@@ -448,11 +448,13 @@ describe('helpgrep', function()
         helpgr quickfix
         call setqflist([], 'r')
         cad
-        call assert_fails('cn', 'E553:')
-        " Upstream calls quit! here to verify vim is still
-        " running, but that will be covered by the
-        " expected_empty() call in the busted test
-        " quit!
+        try
+          silent cn
+        catch
+          " number of matches is unknown
+          call assert_true(v:exception =~ 'E553:')
+        endtry
+        quit!
       endfunc
       ]])
   end)
