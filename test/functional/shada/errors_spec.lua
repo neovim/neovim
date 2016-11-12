@@ -497,7 +497,7 @@ $
   it('errors when a funcref is stored in a variable', function()
     nvim_command('let F = function("tr")')
     nvim_command('set shada+=!')
-    eq('\nE951: Error while dumping variable g:F, itself: attempt to dump function reference'
+    eq('\nE5004: Error while dumping variable g:F, itself: attempt to dump function reference'
        .. '\nE574: Failed to write variable F',
        redir_exec('wshada'))
   end)
@@ -506,7 +506,7 @@ $
     nvim_command('let L = []')
     nvim_command('call add(L, L)')
     nvim_command('set shada+=!')
-    eq('\nE952: Unable to dump variable g:L: container references itself in index 0'
+    eq('\nE5005: Unable to dump variable g:L: container references itself in index 0'
        .. '\nE574: Failed to write variable L',
        redir_exec('wshada'))
   end)
