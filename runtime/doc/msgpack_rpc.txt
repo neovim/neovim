@@ -296,7 +296,7 @@ The co-process will start receiving the notification events which will be
 equivilent to the following |rpcnotify()| calls:
 
 1. rpcnotify({channel}, "LiveUpdateStart",		      *LiveUpdateStart*
-             [{buf}, {linedata}, {more}])
+             [{buf}, {changedtick}, {linedata}, {more}])
 
 	Neovim will send at least one of these notifications to provide you
 	with the original buffer contents. If the buffer is very large, neovim
@@ -304,6 +304,12 @@ equivilent to the following |rpcnotify()| calls:
 	entire buffer's contents into memory at once.
 
 	{buf} is an API handle for the buffer.
+
+	{changedtick} is the value of |b:changedtick| for the buffer. If you
+	send an API command back to neovim you can check the value of
+	|b:changedtick| as part of your request to ensure that no other
+	changes have been made. See |live-update-race-conditions| for more
+	information.
 
 	{linedata} is a list of strings containing the buffer's contents. If
 	this list contains 100 strings, then they represent lines 1-100 of the
@@ -325,7 +331,7 @@ equivilent to the following |rpcnotify()| calls:
 	be certain that you now have the entire buffer's contents.
 
 2. rpcnotify({channel}, "LiveUpdate",				  *LiveUpdate*
-	     [{buf}, {firstline}, {numreplaced}, {linedata}])
+	     [{buf}, {changedtick}, {firstline}, {numreplaced}, {linedata}])
 
 	Indicates that {numreplaced} lines starting at line {firstline} have
 	been replaced with the new line data contained in the {linedata} list.
@@ -333,6 +339,11 @@ equivilent to the following |rpcnotify()| calls:
 	as whole-line changes.
 
 	{buf} is an API handle for the buffer.
+
+	{changedtick} is the value of |b:changedtick| for the buffer. If you
+	send an API command back to neovim you can check the value of
+	|b:changedtick| as part of your request to ensure that no other
+	changes have been made.
 
 	{firstline} is the integer line number of the first line that was
 	replaced. Note that {firstline} is zero-indexed, so if line `1` was
@@ -354,7 +365,23 @@ equivilent to the following |rpcnotify()| calls:
 	lines were added to the buffer) then {linedata} is guaranteed to
 	contain at least 1 item.
 
-3. rpcnotify({channel}, "LiveUpdateEnd", [{buf}])		*LiveUpdateEnd*
+	Note: sometimes {changedtick} will be |v:null|, which means that the
+	buffer text *looks* like it has changed, but actually hasn't. In this
+	case the lines in {linedata} contain the modified text that is shown
+	to the user, but doesn't reflect the actual buffer contents. Currently
+	this behaviour is only used for the 'inccommand' option.
+
+3. rpcnotify({channel}, "LiveUpdateTick",		      *LiveUpdateTick*
+	     [{buf}, {changedtick}])
+
+	Indicates that |b:changedtick| was incremented for the buffer {buf},
+	but no text was changed. This is currently only used by undo/redo.
+
+	{buf} is an API handle for the buffer.
+
+	{changedtick} is the new value of |b:changedtick| for that buffer.
+
+4. rpcnotify({channel}, "LiveUpdateEnd", [{buf}])		*LiveUpdateEnd*
 
 	{buf} is an API handle for the buffer.
 

@@ -44,13 +44,14 @@ bool liveupdate_register(buf_T *buf, uint64_t channel_id) {
   }
 
   Array args = ARRAY_DICT_INIT;
-  args.size = 3;
+  args.size = 4;
   args.items = xcalloc(sizeof(Object), args.size);
 
   // the first argument is always the buffer handle
   args.items[0] = BUFFER_OBJ(buf->handle);
-  args.items[1] = ARRAY_OBJ(linedata);
-  args.items[2] = BOOLEAN_OBJ(false);
+  args.items[1] = INTEGER_OBJ(buf->b_changedtick);
+  args.items[2] = ARRAY_OBJ(linedata);
+  args.items[3] = BOOLEAN_OBJ(false);
 
   channel_send_event(channel_id, "LiveUpdateStart", args);
   return true;
@@ -112,48 +113,48 @@ void liveupdate_send_changes(buf_T *buf, linenr_T firstline, int64_t num_added,
   uint64_t badchannelid = 0;
 
   // notify each of the active channels
-  size_t size = kv_size(buf->liveupdate_channels);
-  if (size) {
-    for (size_t i = 0; i < size; i++) {
-      uint64_t channelid = kv_A(buf->liveupdate_channels, i);
+  for (size_t i = 0; i < kv_size(buf->liveupdate_channels); i++) {
+    uint64_t channelid = kv_A(buf->liveupdate_channels, i);
 
-      // send through the changes now channel contents now
-      Array args = ARRAY_DICT_INIT;
-      args.size = 4;
-      args.items = xcalloc(sizeof(Object), args.size);
+    // send through the changes now channel contents now
+    Array args = ARRAY_DICT_INIT;
+    args.size = 5;
+    args.items = xcalloc(sizeof(Object), args.size);
 
-      // the first argument is always the buffer handle
-      args.items[0] = BUFFER_OBJ(buf->handle);
+    // the first argument is always the buffer handle
+    args.items[0] = BUFFER_OBJ(buf->handle);
 
-      // the first line that changed (zero-indexed)
-      args.items[1] = INTEGER_OBJ(firstline - 1);
+    // next argument is b:changedtick
+    args.items[1] = INTEGER_OBJ(buf->b_changedtick);
 
-      // how many lines are being swapped out
-      args.items[2] = INTEGER_OBJ(num_removed);
+    // the first line that changed (zero-indexed)
+    args.items[2] = INTEGER_OBJ(firstline - 1);
 
-      // linedata of lines being swapped in
-      Array linedata = ARRAY_DICT_INIT;
-      if (num_added > 0) {
-          linedata.size = num_added;
-          linedata.items = xcalloc(sizeof(Object), num_added);
-          for (int64_t i = 0; i < num_added; i++) {
-            int64_t lnum = firstline + i;
-            const char *bufstr = (char *)ml_get_buf(buf, (linenr_T)lnum, false);
-            Object str = STRING_OBJ(cstr_to_string(bufstr));
+    // how many lines are being swapped out
+    args.items[3] = INTEGER_OBJ(num_removed);
 
-            // Vim represents NULs as NLs, but this may confuse clients.
-            strchrsub(str.data.string.data, '\n', '\0');
+    // linedata of lines being swapped in
+    Array linedata = ARRAY_DICT_INIT;
+    if (num_added > 0) {
+        linedata.size = num_added;
+        linedata.items = xcalloc(sizeof(Object), num_added);
+        for (int64_t i = 0; i < num_added; i++) {
+          int64_t lnum = firstline + i;
+          const char *bufstr = (char *)ml_get_buf(buf, (linenr_T)lnum, false);
+          Object str = STRING_OBJ(cstr_to_string(bufstr));
 
-            linedata.items[i] = str;
-          }
-      }
-      args.items[3] = ARRAY_OBJ(linedata);
-      if (!channel_send_event(channelid, "LiveUpdate", args)) {
-        // We can't unregister the channel while we're iterating over the
-        // liveupdate_channels array, so we remember its ID to unregister it at
-        // the end.
-        badchannelid = channelid;
-      }
+          // Vim represents NULs as NLs, but this may confuse clients.
+          strchrsub(str.data.string.data, '\n', '\0');
+
+          linedata.items[i] = str;
+        }
+    }
+    args.items[4] = ARRAY_OBJ(linedata);
+    if (!channel_send_event(channelid, "LiveUpdate", args)) {
+      // We can't unregister the channel while we're iterating over the
+      // liveupdate_channels array, so we remember its ID to unregister it at
+      // the end.
+      badchannelid = channelid;
     }
   }
 
@@ -163,5 +164,26 @@ void liveupdate_send_changes(buf_T *buf, linenr_T firstline, int64_t num_added,
   if (badchannelid != 0) {
     ELOG("Disabling live updates for dead channel %llu", badchannelid);
     liveupdate_unregister(buf, badchannelid);
+  }
+}
+
+void liveupdate_send_tick(buf_T *buf) {
+  // notify each of the active channels
+  for (size_t i = 0; i < kv_size(buf->liveupdate_channels); i++) {
+    uint64_t channelid = kv_A(buf->liveupdate_channels, i);
+
+    // send through the changes now channel contents now
+    Array args = ARRAY_DICT_INIT;
+    args.size = 2;
+    args.items = xcalloc(sizeof(Object), args.size);
+
+    // the first argument is always the buffer handle
+    args.items[0] = BUFFER_OBJ(buf->handle);
+
+    // next argument is b:changedtick
+    args.items[1] = INTEGER_OBJ(buf->b_changedtick);
+
+    // don't try and clean up dead channels here
+    channel_send_event(channelid, "LiveUpdateTick", args);
   }
 }
