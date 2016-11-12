@@ -944,7 +944,7 @@ describe(":substitute, inccommand=split", function()
 
 end)
 
-describe(":substitute, inccommand=nosplit", function()
+describe("inccommand=nosplit", function()
   if helpers.pending_win32(pending) then return end
 
   local screen = Screen.new(20,10)
@@ -958,7 +958,42 @@ describe(":substitute, inccommand=nosplit", function()
     if screen then screen:detach() end
   end)
 
-  it('does not show a split window anytime', function()
+  it("works with :smagic, :snomagic", function()
+    execute("set hlsearch")
+    insert("Line *.3.* here")
+
+    feed(":%smagic/3.*/X")    -- start :smagic command
+    screen:expect([[
+      Inc substitution on |
+      two lines           |
+      Inc substitution on |
+      two lines           |
+      Line *.X            |
+      {15:~                   }|
+      {15:~                   }|
+      {15:~                   }|
+      {15:~                   }|
+      :%smagic/3.*/X^      |
+    ]])
+
+
+    feed([[<C-\><C-N>]])      -- cancel
+    feed(":%snomagic/3.*/X")  -- start :snomagic command
+    screen:expect([[
+      Inc substitution on |
+      two lines           |
+      Inc substitution on |
+      two lines           |
+      Line *.X here       |
+      {15:~                   }|
+      {15:~                   }|
+      {15:~                   }|
+      {15:~                   }|
+      :%snomagic/3.*/X^    |
+    ]])
+  end)
+
+  it('never shows preview buffer', function()
     execute("set hlsearch")
 
     feed(":%s/tw")
@@ -1163,7 +1198,7 @@ describe("'inccommand' and :cnoremap", function()
 
 end)
 
-describe("'inccommand': autocommands", function()
+describe("'inccommand' autocommands", function()
   before_each(clear)
 
   -- keys are events to be tested
@@ -1251,7 +1286,7 @@ describe("'inccommand': autocommands", function()
 
 end)
 
-describe("'inccommand': split windows", function()
+describe("'inccommand' split windows", function()
   if helpers.pending_win32(pending) then return end
 
   local screen

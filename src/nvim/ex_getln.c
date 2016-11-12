@@ -5147,7 +5147,9 @@ static int ex_window(void)
   cmdwin_type = get_cmdline_type();
 
   // Create empty command-line buffer.
-  buf_open_special(0, "[Command Line]", "nofile");
+  buf_open_scratch(0, "[Command Line]");
+  // Command-line buffer has bufhidden=wipe, unlike a true "scratch" buffer.
+  set_option_value((char_u *)"bh", 0L, (char_u *)"wipe", OPT_LOCAL);
   curwin->w_p_rl = cmdmsg_rl;
   cmdmsg_rl = false;
   curbuf->b_p_ma = true;

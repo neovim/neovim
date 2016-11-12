@@ -1685,7 +1685,8 @@ void u_redo(int count)
   u_doit(count, false);
 }
 
-/// undo, and remove the undo branch from the undo tree.
+/// Undo and remove the branch from the undo tree.
+/// Also moves the cursor (as a "normal" undo would).
 bool u_undo_and_forget(int count)
 {
   if (curbuf->b_u_synced == false) {
