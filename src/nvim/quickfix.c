@@ -482,10 +482,10 @@ qf_init_ext (
 
           p_str += len;
         } else if (tv->v_type == VAR_LIST) {
-          /* Get the next line from the supplied list */
+          // Get the next line from the supplied list
           while (p_li && (p_li->li_tv.v_type != VAR_STRING
                           || p_li->li_tv.vval.v_string == NULL)) {
-            p_li = p_li->li_next;               /* Skip non-string items */
+            p_li = p_li->li_next;               // Skip non-string items
           }
 
           if (!p_li)                            /* End of the list */
@@ -914,7 +914,7 @@ static int qf_add_entry(qf_info_T *qi, qfline_T **prevp, char_u *dir,
     qi->qf_lists[qi->qf_curlist].qf_start = qfp;
     qi->qf_lists[qi->qf_curlist].qf_ptr = qfp;
     qi->qf_lists[qi->qf_curlist].qf_index = 0;
-    qfp->qf_prev = qfp;         /* first element points to itself */
+    qfp->qf_prev = qfp;         // first element points to itself
   } else {
     assert(*prevp);
     qfp->qf_prev = *prevp;
