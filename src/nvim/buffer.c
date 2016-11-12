@@ -5273,14 +5273,20 @@ wipe_buffer (
   }
 }
 
-/// Creates or switches to a special-purpose buffer.
+/// Creates or switches to a scratch buffer. :h special-buffers
+/// Scratch buffer is:
+///   - buftype=nofile bufhidden=hide noswapfile
+///   - Always considered 'nomodified'
 ///
 /// @param bufnr     Buffer to switch to, or 0 to create a new buffer.
-void buf_open_special(handle_T bufnr, char *bufname, char *buftype)
+///
+/// @see curbufIsChanged()
+void buf_open_scratch(handle_T bufnr, char *bufname)
 {
   (void)do_ecmd((int)bufnr, NULL, NULL, NULL, ECMD_ONE, ECMD_HIDE, NULL);
   (void)setfname(curbuf, (char_u *)bufname, NULL, true);
-  set_option_value((char_u *)"bt", 0L, (char_u *)buftype, OPT_LOCAL);
+  set_option_value((char_u *)"bh", 0L, (char_u *)"hide", OPT_LOCAL);
+  set_option_value((char_u *)"bt", 0L, (char_u *)"nofile", OPT_LOCAL);
   set_option_value((char_u *)"swf", 0L, NULL, OPT_LOCAL);
   RESET_BINDING(curwin);
 }

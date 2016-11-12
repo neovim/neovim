@@ -413,7 +413,7 @@ describe(":substitute, 'inccommand' preserves undo", function()
       insert("X")
       feed("IY<esc>")
       feed(":%s/tw/MO/<esc>")
-      -- using execute("undo") here will result in a "Press ENTER" prompt
+      -- execute("undo") here would cause "Press ENTER".
       feed("u")
       expect(default_text:gsub("Inc", "XInc"))
       feed("u")
@@ -430,9 +430,9 @@ describe(":substitute, 'inccommand' preserves undo", function()
 
       if case == "split" then
         screen:expect([[
+          Inc substitution on |
           ^MOo lines           |
                               |
-          {15:~                   }|
           {15:~                   }|
           {15:~                   }|
           {15:~                   }|
@@ -482,9 +482,9 @@ describe(":substitute, 'inccommand' preserves undo", function()
 
       if case == "split" then
         screen:expect([[
+          Inc substitution on |
           two line^s           |
                               |
-          {15:~                   }|
           {15:~                   }|
           {15:~                   }|
           {15:~                   }|
@@ -522,9 +522,9 @@ describe(":substitute, 'inccommand' preserves undo", function()
 
       if case == "split" then
         screen:expect([[
+          Inc substitution on |
           ^MOo lines           |
                               |
-          {15:~                   }|
           {15:~                   }|
           {15:~                   }|
           {15:~                   }|
@@ -564,9 +564,9 @@ describe(":substitute, 'inccommand' preserves undo", function()
       feed("u")
       if case == "split" then
         screen:expect([[
+          Inc substitution on |
           ^MOo lines           |
                               |
-          {15:~                   }|
           {15:~                   }|
           {15:~                   }|
           {15:~                   }|
@@ -602,9 +602,9 @@ describe(":substitute, 'inccommand' preserves undo", function()
 
       if case == "split" then
         screen:expect([[
-          ^two lines           |
+          ^LInc substitution on|
+          two lines           |
                               |
-          {15:~                   }|
           {15:~                   }|
           {15:~                   }|
           {15:~                   }|
@@ -705,7 +705,7 @@ describe(":substitute, inccommand=split", function()
     ]])
   end)
 
-  it('shows split window with empty replacement', function()
+  it('shows preview with empty replacement', function()
     feed(":%s/tw/")
     screen:expect([[
       Inc substitution on           |
@@ -727,10 +727,10 @@ describe(":substitute, inccommand=split", function()
 
     feed("x")
     screen:expect([[
-      xo lines                      |
       Inc substitution on           |
       xo lines                      |
                                     |
+      {15:~                             }|
       {15:~                             }|
       {11:[No Name] [+]                 }|
       |2| {12:x}o lines                  |
@@ -746,10 +746,10 @@ describe(":substitute, inccommand=split", function()
 
     feed("<bs>")
     screen:expect([[
-      o lines                       |
       Inc substitution on           |
       o lines                       |
                                     |
+      {15:~                             }|
       {15:~                             }|
       {11:[No Name] [+]                 }|
       |2| o lines                   |
@@ -768,10 +768,10 @@ describe(":substitute, inccommand=split", function()
   it('shows split window when typing replacement', function()
     feed(":%s/tw/XX")
     screen:expect([[
-      XXo lines                     |
       Inc substitution on           |
       XXo lines                     |
                                     |
+      {15:~                             }|
       {15:~                             }|
       {11:[No Name] [+]                 }|
       |2| {12:XX}o lines                 |
@@ -831,7 +831,7 @@ describe(":substitute, inccommand=split", function()
     ]])
   end)
 
-  it('highlights the replacement text correctly', function()
+  it('highlights the replacement text', function()
     feed('ggO')
     feed('M     M       M<esc>')
     feed(':%s/M/123/g')
@@ -855,14 +855,14 @@ describe(":substitute, inccommand=split", function()
   end)
 
   it('actually replaces text', function()
-    feed(":%s/tw/XX/g<enter>")
+    feed(":%s/tw/XX/g<Enter>")
 
     screen:expect([[
+      Inc substitution on           |
       XXo lines                     |
       Inc substitution on           |
       ^XXo lines                     |
                                     |
-      {15:~                             }|
       {15:~                             }|
       {15:~                             }|
       {15:~                             }|
@@ -884,11 +884,11 @@ describe(":substitute, inccommand=split", function()
 
     feed(":%s/tw/X")
     screen:expect([[
+      Inc substitution on           |
       BBo lines                     |
       Inc substitution on           |
       Xo lines                      |
       Inc substitution on           |
-      Xo lines                      |
       {11:[No Name] [+]                 }|
       |1001| {12:X}o lines               |
       |1003| {12:X}o lines               |
@@ -922,13 +922,13 @@ describe(":substitute, inccommand=split", function()
   end)
 
   it('works with the n flag', function()
-    feed(":%s/tw/Mix/n<enter>")
+    feed(":%s/tw/Mix/n<Enter>")
     screen:expect([[
-      ^two lines                     |
       Inc substitution on           |
       two lines                     |
-                                    |
-      {15:~                             }|
+      Inc substitution on           |
+      two lines                     |
+      ^                              |
       {15:~                             }|
       {15:~                             }|
       {15:~                             }|
@@ -944,7 +944,7 @@ describe(":substitute, inccommand=split", function()
 
 end)
 
-describe(":substitute, inccommand=nosplit", function()
+describe("inccommand=nosplit", function()
   if helpers.pending_win32(pending) then return end
 
   local screen = Screen.new(20,10)
@@ -958,7 +958,42 @@ describe(":substitute, inccommand=nosplit", function()
     if screen then screen:detach() end
   end)
 
-  it('does not show a split window anytime', function()
+  it("works with :smagic, :snomagic", function()
+    execute("set hlsearch")
+    insert("Line *.3.* here")
+
+    feed(":%smagic/3.*/X")    -- start :smagic command
+    screen:expect([[
+      Inc substitution on |
+      two lines           |
+      Inc substitution on |
+      two lines           |
+      Line *.X            |
+      {15:~                   }|
+      {15:~                   }|
+      {15:~                   }|
+      {15:~                   }|
+      :%smagic/3.*/X^      |
+    ]])
+
+
+    feed([[<C-\><C-N>]])      -- cancel
+    feed(":%snomagic/3.*/X")  -- start :snomagic command
+    screen:expect([[
+      Inc substitution on |
+      two lines           |
+      Inc substitution on |
+      two lines           |
+      Line *.X here       |
+      {15:~                   }|
+      {15:~                   }|
+      {15:~                   }|
+      {15:~                   }|
+      :%snomagic/3.*/X^    |
+    ]])
+  end)
+
+  it('never shows preview buffer', function()
     execute("set hlsearch")
 
     feed(":%s/tw")
@@ -1163,7 +1198,7 @@ describe("'inccommand' and :cnoremap", function()
 
 end)
 
-describe("'inccommand': autocommands", function()
+describe("'inccommand' autocommands", function()
   before_each(clear)
 
   -- keys are events to be tested
@@ -1251,7 +1286,7 @@ describe("'inccommand': autocommands", function()
 
 end)
 
-describe("'inccommand': split windows", function()
+describe("'inccommand' split windows", function()
   if helpers.pending_win32(pending) then return end
 
   local screen
@@ -1268,10 +1303,12 @@ describe("'inccommand': split windows", function()
   it('work after more splits', function()
     refresh()
 
+    feed("gg")
     execute("vsplit")
     execute("split")
     feed(":%s/tw")
     screen:expect([[
+      Inc substitution on {10:|}Inc substitution on|
       two lines           {10:|}two lines          |
                           {10:|}                   |
       {15:~                   }{10:|}{15:~                  }|
@@ -1285,11 +1322,10 @@ describe("'inccommand': split windows", function()
       {15:~                   }{10:|}{15:~                  }|
       {15:~                   }{10:|}{15:~                  }|
       {15:~                   }{10:|}{15:~                  }|
-      {15:~                   }{10:|}{15:~                  }|
       {11:[No Name] [+]       }{10:|}{15:~                  }|
+      Inc substitution on {10:|}{15:~                  }|
       two lines           {10:|}{15:~                  }|
                           {10:|}{15:~                  }|
-      {15:~                   }{10:|}{15:~                  }|
       {15:~                   }{10:|}{15:~                  }|
       {15:~                   }{10:|}{15:~                  }|
       {10:[No Name] [+]        [No Name] [+]      }|
