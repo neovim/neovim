@@ -265,7 +265,7 @@ describe('helpgrep', function()
             autocmd BufReadCmd t call R(expand("<amatch>"))
           augroup END
 
-          function R(n)
+          function! R(n)
             quit
           endfunc
 
@@ -406,6 +406,43 @@ describe('helpgrep', function()
         augroup END
         augroup! QfBufWinEnter
       endfunc
+
+      function XquickfixChangedByAutocmd(cchar)
+        let Xolder = a:cchar . 'older'
+        let Xgetexpr = a:cchar . 'getexpr'
+        let Xrewind = a:cchar . 'rewind'
+        if a:cchar == 'c'
+          let Xsetlist = 'setqflist('
+          let ErrorNr = 'E925'
+          function! ReadFunc()
+            colder
+            cgetexpr []
+          endfunc
+        else
+          let Xsetlist = 'setloclist(0,'
+          let ErrorNr = 'E926'
+          function! ReadFunc()
+            lolder
+            lgetexpr []
+          endfunc
+        endif
+
+        augroup testgroup
+          au!
+          autocmd BufReadCmd t call ReadFunc()
+        augroup END
+
+        bwipe!
+        let words = [ "a", "b" ]
+        let qflist = []
+        for word in words
+          call add(qflist, {'filename': 't'})
+          exec "call " . Xsetlist . "qflist, '')"
+        endfor
+        exec "call assert_fails('" . Xrewind . "', '" . ErrorNr . ":')"
+
+        augroup! testgroup
+      endfunc
       ]])
   end)
 
@@ -476,6 +513,13 @@ describe('helpgrep', function()
 
   it('checks locationlist protocol read', function()
     call('Test_locationlist')
+    expected_empty()
+  end)
+
+  it('is changed by autocmd', function()
+    call('XquickfixChangedByAutocmd', 'c')
+    expected_empty()
+    call('XquickfixChangedByAutocmd', 'l')
     expected_empty()
   end)
 end)

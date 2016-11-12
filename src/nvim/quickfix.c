@@ -1254,6 +1254,32 @@ static char_u *qf_guess_filepath(char_u *filename)
 
 }
 
+/// When loading a file from the quickfix, the auto commands may modify it.
+/// This may invalidate the current quickfix entry.  This function checks
+/// whether a entry is still present in the quickfix.
+/// Similar to location list.
+static bool is_qf_entry_present(qf_info_T *qi, qfline_T *qf_ptr)
+{
+  qf_list_T *qfl;
+  qfline_T *qfp;
+  int i;
+
+  qfl = &qi->qf_lists[qi->qf_curlist];
+
+  // Search for the entry in the current list
+  for (i = 0, qfp = qfl->qf_start; i < qfl->qf_count; i++, qfp = qfp->qf_next) {
+    if (qfp == qf_ptr) {
+      break;
+    }
+  }
+
+  if (i == qfl->qf_count) {  // Entry is not found
+    return false;
+  }
+
+  return true;
+}
+
 /*
  * jump to a quickfix line
  * if dir == FORWARD go "errornr" valid entries forward
@@ -1585,14 +1611,29 @@ win_found:
                      oldwin == curwin ? curwin : NULL);
       }
     } else {
+      int old_qf_curlist = qi->qf_curlist;
+      bool is_abort = false;
+
       ok = buflist_getfile(qf_ptr->qf_fnum, (linenr_T)1,
                            GETF_SETMARK | GETF_SWITCH, forceit);
       if (qi != &ql_info && !win_valid(oldwin)) {
         EMSG(_("E924: Current window was closed"));
+        is_abort = true;
+        opened_window = false;
+      } else if (old_qf_curlist != qi->qf_curlist
+                 || !is_qf_entry_present(qi, qf_ptr)) {
+        if (qi == &ql_info) {
+          EMSG(_("E925: Current quickfix was changed"));
+        } else {
+          EMSG(_("E926: Current location list was changed"));
+        }
+        is_abort = true;
+      }
+
+      if (is_abort) {
         ok = false;
         qi = NULL;
         qf_ptr = NULL;
-        opened_window = false;
       }
     }
   }
