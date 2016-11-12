@@ -910,6 +910,8 @@ static int qf_add_entry(qf_info_T *qi, qfline_T **prevp, char_u *dir,
   if (qi->qf_lists[qi->qf_curlist].qf_count == 0) {
     /* first element in the list */
     qi->qf_lists[qi->qf_curlist].qf_start = qfp;
+    qi->qf_lists[qi->qf_curlist].qf_ptr = qfp;
+    qi->qf_lists[qi->qf_curlist].qf_index = 0;
     qfp->qf_prev = qfp;         /* first element points to itself */
   } else {
     assert(*prevp);
@@ -3621,7 +3623,9 @@ int set_errorlist(win_T *wp, list_T *list, int action, char_u *title)
   else
     qi->qf_lists[qi->qf_curlist].qf_nonevalid = FALSE;
   qi->qf_lists[qi->qf_curlist].qf_ptr = qi->qf_lists[qi->qf_curlist].qf_start;
-  qi->qf_lists[qi->qf_curlist].qf_index = 1;
+  if (qi->qf_lists[qi->qf_curlist].qf_count > 0) {
+    qi->qf_lists[qi->qf_curlist].qf_index = 1;
+  }
 
   qf_update_buffer(qi);
 

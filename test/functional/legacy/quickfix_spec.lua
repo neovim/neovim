@@ -443,6 +443,17 @@ describe('helpgrep', function()
 
         augroup! testgroup
       endfunc
+
+      func Test_caddbuffer_to_empty()
+        helpgr quickfix
+        call setqflist([], 'r')
+        cad
+        call assert_fails('cn', 'E553:')
+        " Upstream calls quit! here to verify vim is still
+        " running, but that will be covered by the
+        " expected_empty() call in the busted test
+        " quit!
+      endfunc
       ]])
   end)
 
@@ -520,6 +531,11 @@ describe('helpgrep', function()
     call('XquickfixChangedByAutocmd', 'c')
     expected_empty()
     call('XquickfixChangedByAutocmd', 'l')
+    expected_empty()
+  end)
+
+  it('does not crash after using caddbuffer with an empty qf list', function()
+    call('Test_caddbuffer_to_empty')
     expected_empty()
   end)
 end)
