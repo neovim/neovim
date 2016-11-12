@@ -483,8 +483,10 @@ qf_init_ext (
           p_str += len;
         } else if (tv->v_type == VAR_LIST) {
           /* Get the next line from the supplied list */
-          while (p_li && p_li->li_tv.v_type != VAR_STRING)
+          while (p_li && (p_li->li_tv.v_type != VAR_STRING
+                          || p_li->li_tv.vval.v_string == NULL)) {
             p_li = p_li->li_next;               /* Skip non-string items */
+          }
 
           if (!p_li)                            /* End of the list */
             break;

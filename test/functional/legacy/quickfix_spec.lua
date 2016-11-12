@@ -540,6 +540,12 @@ describe('helpgrep', function()
     call('Test_caddbuffer_to_empty')
     expected_empty()
   end)
+
+  it('cgetexpr does not crash with a NULL element in a list', function()
+    execute('cgetexpr [$x]')
+    -- Still alive?
+    eq(2, eval('1+1'))
+  end)
 end)
 
 describe('errorformat', function()
