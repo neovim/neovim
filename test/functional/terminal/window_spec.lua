@@ -2,7 +2,6 @@ local helpers = require('test.functional.helpers')(after_each)
 local thelpers = require('test.functional.terminal.helpers')
 local feed, clear = helpers.feed, helpers.clear
 local wait = helpers.wait
-local execute = helpers.execute
 
 if helpers.pending_win32(pending) then return end
 
@@ -12,23 +11,6 @@ describe('terminal window', function()
   before_each(function()
     clear()
     screen = thelpers.screen_setup()
-  end)
-
-  it('resets its size when entering terminal buffer', function()
-    feed('<c-\\><c-n>')
-    execute('set hidden')
-    execute('edit foo')
-    execute('doautoall SessionLoadPost')
-    execute('silent bnext')
-    screen:expect([[
-      tty ready                                         |
-      {2: }                                                 |
-                                                        |
-                                                        |
-                                                        |
-      ^                                                  |
-      :silent bnext                                     |
-    ]])
   end)
 
   describe('with colorcolumn set', function()
