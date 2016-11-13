@@ -35,7 +35,7 @@ env:
     # Environment variables for Clang sanitizers.
     - ASAN_OPTIONS="detect_leaks=1:check_initialization_order=1:log_path=$LOG_DIR/asan"
     - TSAN_OPTIONS="log_path=$LOG_DIR/tsan"
-    - UBSAN_OPTIONS="log_path=$LOG_DIR/ubsan"
+    - UBSAN_OPTIONS="print_stacktrace=1 log_path=$LOG_DIR/ubsan"
     # Environment variables for Valgrind.
     - VALGRIND_LOG="$LOG_DIR/valgrind-%p.log"
     # Cache marker for third-party dependencies cache.
