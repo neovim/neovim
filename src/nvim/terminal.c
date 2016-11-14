@@ -955,7 +955,6 @@ static void invalidate_terminal(Terminal *term, int start_row, int end_row)
 
 static void refresh_terminal(Terminal *term)
 {
-  // TODO(SplinterOfChaos): Find the condition that makes term->buf invalid.
   buf_T *buf = handle_get_buffer(term->buf_handle);
   bool valid = true;
   if (!buf || !(valid = buf_valid(buf))) {

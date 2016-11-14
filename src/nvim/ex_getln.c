@@ -103,7 +103,6 @@ typedef struct command_line_state {
   linenr_T  old_botline;
   int did_incsearch;
   int incsearch_postponed;
-  bool live;                            // performing 'inccommand' preview
   int did_wild_list;                    // did wild_list() recently
   int wim_index;                        // index in wim_flags[]
   int res;
@@ -400,8 +399,7 @@ static int command_line_execute(VimState *state, int key)
   if ((s->c == Ctrl_C)
       && s->firstc != '@'
       && !s->break_ctrl_c
-      && !global_busy
-      && !cmd_is_live(ccline.cmdbuff)) {
+      && !global_busy) {
     got_int = false;
   }
 
@@ -1601,13 +1599,17 @@ static int command_line_changed(CommandLineState *s)
              && *p_icm != NUL       // 'inccommand' is set
              && curbuf->b_p_ma      // buffer is modifiable
              && cmdline_star == 0   // not typing a password
-             && cmd_is_live(ccline.cmdbuff)
+             && cmd_can_preview(ccline.cmdbuff)
              && !vpeekc_any()) {
-    s->live = true;
-    // process a "live" command ('inccommand')
-    do_cmdline(ccline.cmdbuff, NULL, NULL, DOCMD_KEEPLINE|DOCMD_LIVE);
+    // Show 'inccommand' preview. It works like this:
+    //    1. Do the command.
+    //    2. Command implementation detects CMDPREVIEW state, then:
+    //       - Update the screen while the effects are in place.
+    //       - Immediately undo the effects.
+    State |= CMDPREVIEW;
+    do_cmdline(ccline.cmdbuff, NULL, NULL, DOCMD_KEEPLINE|DOCMD_NOWAIT);
 
-    // restore the window "view"
+    // Restore the window "view".
     curwin->w_cursor   = s->old_cursor;
     curwin->w_curswant = s->old_curswant;
     curwin->w_leftcol  = s->old_leftcol;
@@ -1617,8 +1619,8 @@ static int command_line_changed(CommandLineState *s)
     update_topline();
 
     redrawcmdline();
-  } else if (s->live) {
-    s->live = false;
+  } else if (State & CMDPREVIEW) {
+    State = (State & ~CMDPREVIEW);
     update_screen(SOME_VALID);  // Clear 'inccommand' preview.
   }
 

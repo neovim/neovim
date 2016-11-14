@@ -1248,7 +1248,6 @@ static char_u * do_one_cmd(char_u **cmdlinep,
   memset(&ea, 0, sizeof(ea));
   ea.line1 = 1;
   ea.line2 = 1;
-  ea.is_live = flags & DOCMD_LIVE;
   ex_nesting_level++;
 
   /* When the last file has not been edited :q has to be typed twice. */
@@ -9648,12 +9647,12 @@ static void ex_terminal(exarg_T *eap)
   }
 }
 
-/// Check whether commandline starts with a live command
+/// Checks if `cmd` is "previewable" (i.e. supported by 'inccommand').
 ///
 /// @param[in] cmd Commandline to check. May start with a range.
 ///
-/// @return True if first command is a live command
-bool cmd_is_live(char_u *cmd)
+/// @return true if `cmd` is previewable
+bool cmd_can_preview(char_u *cmd)
 {
   if (cmd == NULL) {
     return false;
