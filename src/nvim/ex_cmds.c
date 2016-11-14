@@ -3100,8 +3100,6 @@ static char_u *sub_parse_flags(char_u *cmd, subflags_T *subflags,
   return cmd;
 }
 
-/// do_sub()
-///
 /// Perform a substitution from line eap->line1 to line eap->line2 using the
 /// command pointed to by eap->arg which should be of the form:
 ///
@@ -3110,7 +3108,7 @@ static char_u *sub_parse_flags(char_u *cmd, subflags_T *subflags,
 /// The usual escapes are supported as described in the regexp docs.
 ///
 /// @return buffer used for 'inccommand' preview
-buf_T *do_sub(exarg_T *eap)
+static buf_T *do_sub(exarg_T *eap)
 {
   long i = 0;
   regmmatch_T regmatch;
@@ -3139,6 +3137,7 @@ buf_T *do_sub(exarg_T *eap)
   bool endcolumn = false;   // cursor in last column when done
   MatchedLineVec matched_lines = KV_INITIAL_VALUE;
   pos_T old_cursor = curwin->w_cursor;
+  proftime_T timeout = eap->is_live ? profile_setlimit(p_rdt) : profile_zero();
   int start_nsubs;
   int save_ma = 0;
   int save_b_changed = curbuf->b_changed;
@@ -3581,7 +3580,7 @@ buf_T *do_sub(exarg_T *eap)
                 || typed == intr_char
 #endif
                 ) {
-              got_quit = TRUE;
+              got_quit = true;
               break;
             }
             if (typed == 'n')
@@ -3882,6 +3881,10 @@ skip:
     }
 
     line_breakcheck();
+
+    if (profile_passed_limit(timeout)) {
+      got_quit = true;
+    }
   }
 
   if (first_line != 0) {
@@ -3949,9 +3952,14 @@ skip:
 
   // Show 'inccommand' preview if there are matched lines.
   buf_T *preview_buf = NULL;
-  if (eap->is_live && *p_icm != NUL && matched_lines.size != 0 && pat != NULL) {
-    curbuf->b_changed = save_b_changed;  // preserve 'modified' during preview
-    preview_buf = show_sub(eap, old_cursor, pat, sub, &matched_lines);
+  if (eap->is_live && !aborting()) {
+    if (got_quit) {  // Substitution is too slow, disable 'inccommand'.
+      set_string_option_direct((char_u *)"icm", -1, (char_u *)"", OPT_FREE,
+                               SID_NONE);
+    } else if (*p_icm != NUL && matched_lines.size != 0 && pat != NULL) {
+      curbuf->b_changed = save_b_changed;  // preserve 'modified' during preview
+      preview_buf = show_sub(eap, old_cursor, pat, sub, &matched_lines);
+    }
   }
 
   for (MatchedLine m; kv_size(matched_lines);) {
@@ -6017,7 +6025,8 @@ static buf_T *show_sub(exarg_T *eap, pos_T old_cusr, char_u *pat, char_u *sub,
   cmdmod.tab = 0;                 // disable :tab modifier
   cmdmod.noswapfile = true;       // disable swap for preview buffer
   // disable file info message
-  set_option_value((char_u *)"shm", 0L, (char_u *)"F", 0);
+  set_string_option_direct((char_u *)"shm", -1, (char_u *)"F", OPT_FREE,
+                           SID_NONE);
 
   bool outside_curline = (eap->line1 != old_cusr.lnum
                           || eap->line2 != old_cusr.lnum);
@@ -6096,7 +6105,7 @@ static buf_T *show_sub(exarg_T *eap, pos_T old_cusr, char_u *pat, char_u *sub,
   win_size_restore(&save_winsizes);
   ga_clear(&save_winsizes);
 
-  set_option_value((char_u *)"shm", 0L, save_shm_p, 0);
+  set_string_option_direct((char_u *)"shm", -1, save_shm_p, OPT_FREE, SID_NONE);
   xfree(save_shm_p);
 
   // Update screen now. Must do this _before_ close_windows().

@@ -1583,29 +1583,27 @@ vungetc ( /* unget one character (can only be done once!) */
   old_mouse_col = mouse_col;
 }
 
-/*
- * get a character:
- * 1. from the stuffbuffer
- *	This is used for abbreviated commands like "D" -> "d$".
- *	Also used to redo a command for ".".
- * 2. from the typeahead buffer
- *	Stores text obtained previously but not used yet.
- *	Also stores the result of mappings.
- *	Also used for the ":normal" command.
- * 3. from the user
- *	This may do a blocking wait if "advance" is TRUE.
- *
- * if "advance" is TRUE (vgetc()):
- *	really get the character.
- *	KeyTyped is set to TRUE in the case the user typed the key.
- *	KeyStuffed is TRUE if the character comes from the stuff buffer.
- * if "advance" is FALSE (vpeekc()):
- *	just look whether there is a character available.
- *
- * When "no_mapping" is zero, checks for mappings in the current mode.
- * Only returns one byte (of a multi-byte character).
- * K_SPECIAL and CSI may be escaped, need to get two more bytes then.
- */
+/// get a character:
+/// 1. from the stuffbuffer
+///    This is used for abbreviated commands like "D" -> "d$".
+///    Also used to redo a command for ".".
+/// 2. from the typeahead buffer
+///    Stores text obtained previously but not used yet.
+///    Also stores the result of mappings.
+///    Also used for the ":normal" command.
+/// 3. from the user
+///    This may do a blocking wait if "advance" is TRUE.
+///
+/// if "advance" is TRUE (vgetc()):
+///    really get the character.
+///    KeyTyped is set to TRUE in the case the user typed the key.
+///    KeyStuffed is TRUE if the character comes from the stuff buffer.
+/// if "advance" is FALSE (vpeekc()):
+///    just look whether there is a character available.
+///
+/// When "no_mapping" is zero, checks for mappings in the current mode.
+/// Only returns one byte (of a multi-byte character).
+/// K_SPECIAL and CSI may be escaped, need to get two more bytes then.
 static int vgetorpeek(int advance)
 {
   int c, c1;
