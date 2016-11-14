@@ -6012,7 +6012,6 @@ static buf_T *show_sub(exarg_T *eap, pos_T old_cusr, char_u *pat, char_u *sub,
 {
   static handle_T bufnr = 0;  // special buffer, re-used on each visit
 
-  garray_T save_winsizes;
   win_T *save_curwin = curwin;
   cmdmod_T save_cmdmod = cmdmod;
   char_u *save_shm_p = vim_strsave(p_shm);
@@ -6021,7 +6020,6 @@ static buf_T *show_sub(exarg_T *eap, pos_T old_cusr, char_u *pat, char_u *sub,
 
   // We keep a special-purpose buffer around, but don't assume it exists.
   buf_T *preview_buf = bufnr ? buflist_findnr(bufnr) : 0;
-  win_size_save(&save_winsizes);  // Save current window sizes.
   cmdmod.tab = 0;                 // disable :tab modifier
   cmdmod.noswapfile = true;       // disable swap for preview buffer
   // disable file info message
@@ -6100,19 +6098,17 @@ static buf_T *show_sub(exarg_T *eap, pos_T old_cusr, char_u *pat, char_u *sub,
   }
 
   redraw_later(SOME_VALID);
-
   win_enter(save_curwin, false);  // Return to original window
-  win_size_restore(&save_winsizes);
-  ga_clear(&save_winsizes);
-
-  set_string_option_direct((char_u *)"shm", -1, save_shm_p, OPT_FREE, SID_NONE);
-  xfree(save_shm_p);
+  update_topline();
 
   // Update screen now. Must do this _before_ close_windows().
   int save_rd = RedrawingDisabled;
   RedrawingDisabled = 0;
-  update_screen(NOT_VALID);
+  update_screen(SOME_VALID);
   RedrawingDisabled = save_rd;
+
+  set_string_option_direct((char_u *)"shm", -1, save_shm_p, OPT_FREE, SID_NONE);
+  xfree(save_shm_p);
 
   cmdmod = save_cmdmod;
 
@@ -6134,6 +6130,8 @@ void ex_substitute(exarg_T *eap)
   block_autocmds();           // Disable events during command preview.
 
   char_u *save_eap = eap->arg;
+  garray_T save_view;
+  win_size_save(&save_view);  // Save current window sizes.
   save_search_patterns();
   int save_changedtick = curbuf->b_changedtick;
   time_t save_b_u_time_cur = curbuf->b_u_time_cur;
@@ -6167,6 +6165,8 @@ void ex_substitute(exarg_T *eap)
   curwin->w_p_cuc = save_w_p_cuc;   // Restore 'cursorcolumn'
   eap->arg = save_eap;
   restore_search_patterns();
+  win_size_restore(&save_view);
+  ga_clear(&save_view);
   emsg_off--;
   unblock_autocmds();
 }

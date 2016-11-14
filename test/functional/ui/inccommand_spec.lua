@@ -600,46 +600,18 @@ describe(":substitute, 'inccommand' preserves undo", function()
       feed(":%s/tw/MO/g<esc>")
       feed("u")
 
-      if case == "split" then
-        screen:expect([[
-          ^LInc substitution on|
-          two lines           |
-                              |
-          {15:~                   }|
-          {15:~                   }|
-          {15:~                   }|
-          {15:~                   }|
-          {15:~                   }|
-          {15:~                   }|
-          Already...st change |
-        ]])
-      elseif case == "" then
-        screen:expect([[
-          ^LInc substitution on|
-          two lines           |
-                              |
-          {15:~                   }|
-          {15:~                   }|
-          {15:~                   }|
-          {15:~                   }|
-          {15:~                   }|
-          {15:~                   }|
-          Already...st change |
-        ]])
-      else
-        screen:expect([[
-          LInc substitution on|
-          ^two lines           |
-                              |
-          {15:~                   }|
-          {15:~                   }|
-          {15:~                   }|
-          {15:~                   }|
-          {15:~                   }|
-          {15:~                   }|
-          Already...st change |
-        ]])
-      end
+      screen:expect([[
+        ^LInc substitution on|
+        two lines           |
+                            |
+        {15:~                   }|
+        {15:~                   }|
+        {15:~                   }|
+        {15:~                   }|
+        {15:~                   }|
+        {15:~                   }|
+        Already...st change |
+      ]])
     end
     screen:detach()
   end)
@@ -905,11 +877,11 @@ describe(":substitute, inccommand=split", function()
 
     feed(":%s/tw/X")
     screen:expect([[
-      Inc substitution on           |
       BBo lines                     |
       Inc substitution on           |
       Xo lines                      |
       Inc substitution on           |
+      Xo lines                      |
       {11:[No Name] [+]                 }|
       |1001| {12:X}o lines               |
       |1003| {12:X}o lines               |
