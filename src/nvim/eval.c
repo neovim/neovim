@@ -384,6 +384,7 @@ static struct vimvar {
   VV(VV_NULL,           "null",             VAR_SPECIAL, VV_RO),
   VV(VV__NULL_LIST,     "_null_list",       VAR_LIST, VV_RO),
   VV(VV__NULL_DICT,     "_null_dict",       VAR_DICT, VV_RO),
+  VV(VV_VIM_DID_ENTER,  "vim_did_enter",    VAR_NUMBER, VV_RO),
 };
 #undef VV
 

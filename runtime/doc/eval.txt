@@ -1765,6 +1765,10 @@ v:version	Version number of Vim: Major version number times 100 plus
 		version 5.0 and 5.1 may have a patch 123, but these are
 		completely different.
 
+				*v:vim_did_enter* *vim_did_enter-variable*
+v:vim_did_enter	Zero until most of startup is done.  It is set to one just
+		before |VimEnter| autocommands are triggered.
+
 					*v:warningmsg* *warningmsg-variable*
 v:warningmsg	Last given warning message.  It's allowed to set this variable.
 
