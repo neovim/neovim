@@ -1727,13 +1727,25 @@ do_set (
               }
 
               if (flags & P_FLAGLIST) {
-                /* Remove flags that appear twice. */
-                for (s = newval; *s; ++s)
-                  if ((!(flags & P_COMMA) || *s != ',')
-                      && vim_strchr(s + 1, *s) != NULL) {
-                    STRMOVE(s, s + 1);
-                    --s;
+                // Remove flags that appear twice.
+                for (s = newval; *s; s++) {
+                  // if options have P_FLAGLIST and P_ONECOMMA such as
+                  // 'whichwrap'
+                  if (flags & P_ONECOMMA) {
+                    if (*s != ',' && *(s + 1) == ','
+                        && vim_strchr(s + 2, *s) != NULL) {
+                      // Remove the duplicated value and the next comma.
+                      STRMOVE(s, s + 2);
+                      s -= 2;
+                    }
+                  } else {
+                    if ((!(flags & P_COMMA) || *s != ',')
+                        && vim_strchr(s + 1, *s) != NULL) {
+                      STRMOVE(s, s + 1);
+                      s--;
+                    }
                   }
+                }
               }
 
               if (save_arg != NULL)                 /* number for 'whichwrap' */
