@@ -1,4 +1,4 @@
-*usr_41.txt*	For Vim version 7.4.  Last change: 2016 Apr 12
+*usr_41.txt*	For Vim version 7.4.  Last change: 2016 Aug 07
 
 		     VIM USER MANUAL - by Bram Moolenaar
 
@@ -789,6 +789,9 @@ Buffers, windows and the argument list:
 	bufwinnr()		get the window number of a specific buffer
 	winbufnr()		get the buffer number of a specific window
 	getbufline()		get a list of lines from the specified buffer
+	getbufinfo()		get a list with buffer information
+	gettabinfo()		get a list with tab page information
+	getwininfo()		get a list with window information
 
 Command line:					*command-line-functions*
 	getcmdline()		get the current command line

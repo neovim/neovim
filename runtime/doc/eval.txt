@@ -1956,6 +1956,7 @@ garbagecollect([{atexit}])	none	free memory, breaking cyclic references
 get({list}, {idx} [, {def}])	any	get item {idx} from {list} or {def}
 get({dict}, {key} [, {def}])	any	get item {key} from {dict} or {def}
 get({func}, {what})		any	get property of funcref/partial {func}
+getbufinfo( [{expr}])		List  	information about buffers
 getbufline({expr}, {lnum} [, {end}])
 				List	lines {lnum} to {end} of buffer {expr}
 getbufvar({expr}, {varname} [, {def}])
@@ -1986,10 +1987,12 @@ getqflist()			List	list of quickfix items
 getreg([{regname} [, 1 [, {list}]]])
 				String or List   contents of register
 getregtype([{regname}])	String	type of register
+gettabinfo( [{expr}])		List  	list of tab pages
 gettabvar({nr}, {varname} [, {def}])
 				any	variable {varname} in tab {nr} or {def}
 gettabwinvar({tabnr}, {winnr}, {name} [, {def}])
 				any	{name} in {winnr} in tab page {tabnr}
+getwininfo( [{winid}])		List  	list of windows
 getwinposx()			Number	X coord in pixels of GUI Vim window
 getwinposy()			Number	Y coord in pixels of GUI Vim window
 getwinvar({nr}, {varname} [, {def}])
@@ -3593,6 +3596,55 @@ get({func}, {what})
 			'dict'	The dictionary
 			'args'	The list with arguments
 
+							*getbufinfo()*
+getbufinfo([{expr}])
+getbufinfo([{dict}])
+		Get information about buffers as a List of Dictionaries.
+
+		Without an argument information about all the buffers is
+		returned.
+
+		When the argument is a Dictionary only the buffers matching
+		the specified criteria are returned.  The following keys can
+		be specified in {dict}:
+			buflisted	include only listed buffers.
+			bufloaded	include only loaded buffers.
+
+		Otherwise, {expr} specifies a particular buffer to return
+		information for.  For the use of {expr}, see |bufname()|
+		above.  If the buffer is found the returned List has one item.
+		Otherwise the result is an empty list.
+
+		Each returned List item is a dictionary with the following
+		entries:
+			changed		TRUE if the buffer is modified.
+			changedtick	number of changes made to the buffer.
+			hidden		TRUE if the buffer is hidden.
+			listed		TRUE if the buffer is listed.
+			lnum		current line number in buffer.
+			loaded		TRUE if the buffer is loaded.
+			name		full path to the file in the buffer.
+			nr		buffer number.
+			options		dictionary of buffer local options.
+			signs		list of signs placed in the buffer.
+					Each list item is a dictionary with
+					the following fields:
+					    id	  sign identifier
+					    lnum  line number
+					    name  sign name
+			variables	dictionary of buffer local variables.
+			windows		list of window IDs with this buffer
+
+		Examples: >
+			for buf in getbufinfo()
+			    echo buf.name
+			endfor
+			for buf in getbufinfo({'buflisted':1})
+			    if buf.options.filetype == 'java'
+				....
+			    endif
+			endfor
+<
 							*getbufline()*
 getbufline({expr}, {lnum} [, {end}])
 		Return a |List| with the lines starting from {lnum} to {end}
@@ -4050,6 +4102,18 @@ getregtype([{regname}])					*getregtype()*
 		<CTRL-V> is one character with value 0x16.
 		If {regname} is not specified, |v:register| is used.
 
+gettabinfo([{arg}])					*gettabinfo()*
+		If {arg} is not specified, then information about all the tab
+		pages is returned as a List. Each List item is a Dictionary.
+		Otherwise, {arg} specifies the tab page number and information
+		about that one is returned.  If the tab page does not exist an
+		empty List is returned.
+
+		Each List item is a Dictionary with the following entries:
+			nr		tab page number.
+			windows		List of window IDs in the tag page.
+			variables	dictionary of tabpage local variables.
+
 gettabvar({tabnr}, {varname} [, {def}])				*gettabvar()*
 		Get the value of a tab-local variable {varname} in tab page
 		{tabnr}. |t:var|
@@ -4090,6 +4154,26 @@ getwinposx()	The result is a Number, which is the X coordinate in pixels of
 getwinposy()	The result is a Number, which is the Y coordinate in pixels of
 		the top of the GUI Vim window.	The result will be -1 if the
 		information is not available.
+
+getwininfo([{winid}])					*getwininfo()*
+		Returns information about windows as a List with Dictionaries.
+
+		If {winid} is given Information about the window with that ID
+		is returned.  If the window does not exist the result is an
+		empty list.
+
+		Without an information about all the windows in all the tab
+		pages is returned.
+
+		Each List item is a Dictionary with the following entries:
+			nr		window number.
+			tpnr		tab page number.
+			winid		window ID.
+			height		window height.
+			width		window width.
+			bufnum		number of buffer in the window.
+			options		dictionary of window local options.
+			variables	dictionary of window local variables.
 
 getwinvar({winnr}, {varname} [, {def}])				*getwinvar()*
 		Like |gettabwinvar()| for the current tabpage.

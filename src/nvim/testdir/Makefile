@@ -30,6 +30,7 @@ SCRIPTS := \
 # Tests using runtest.vim.vim.
 # Keep test_alot*.res as the last one, sort the others.
 NEW_TESTS = \
+	    test_bufwintabinfo.res \
 	    test_cmdline.res \
 	    test_cscope.res \
 	    test_diffmode.res \
