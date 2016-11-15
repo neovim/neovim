@@ -40,6 +40,7 @@ NEW_TESTS = \
 	    test_match.res \
 	    test_matchadd_conceal.res \
 	    test_quickfix.res \
+	    test_signs.res \
 	    test_syntax.res \
 	    test_usercommands.res \
 	    test_timers.res \
