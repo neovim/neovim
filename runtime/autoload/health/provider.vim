@@ -1,7 +1,7 @@
 let s:shell_error = 0
 
 function! s:is_bad_response(s) abort
-  return a:s =~? '\v(^unable)|(^error)'
+  return a:s =~? '\v(^unable)|(^error)|(^outdated)'
 endfunction
 
 function! s:trim(s) abort
@@ -10,13 +10,13 @@ endfunction
 
 " Simple version comparison.
 function! s:version_cmp(a, b) abort
-  let a = split(a:a, '\.')
-  let b = split(a:b, '\.')
+  let a = split(a:a, '\.', 0)
+  let b = split(a:b, '\.', 0)
 
   for i in range(len(a))
-    if a[i] > b[i]
+    if str2nr(a[i]) > str2nr(b[i])
       return 1
-    elseif a[i] < b[i]
+    elseif str2nr(a[i]) < str2nr(b[i])
       return -1
     endif
   endfor
@@ -378,7 +378,7 @@ function! s:check_python(version) abort
     endif
 
     call health#report_info('Python'.a:version.' version: ' . pyversion)
-    call health#report_info(printf('%s-neovim Version: %s', python_bin_name, current))
+    call health#report_info(printf('%s-neovim version: %s', python_bin_name, current))
 
     if s:is_bad_response(current)
       let suggestions = [
@@ -396,9 +396,11 @@ function! s:check_python(version) abort
     endif
 
     if s:is_bad_response(status)
-      call health#report_warn('Latest Neovim Python client version: ('.latest.')')
+      call health#report_warn(printf('Latest %s-neovim is NOT installed: %s',
+            \ python_bin_name, latest))
     elseif !s:is_bad_response(latest)
-      call health#report_ok('Latest Neovim Python client is installed: ('.status.')')
+      call health#report_ok(printf('Latest %s-neovim is installed: %s',
+            \ python_bin_name, latest))
     endif
   endif
 
