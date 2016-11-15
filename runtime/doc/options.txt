@@ -3418,6 +3418,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 	Works for |:substitute|, |:smagic|, |:snomagic|. |hl-Substitute|
 
+	If the preview is too slow (exceeds 'redrawtime') then 'inccommand' is
+	automatically disabled until |Command-line-mode| is done.
+
 						*'include'* *'inc'*
 'include' 'inc'		string	(default "^\s*#\s*include")
 			global or local to buffer |global-local|
@@ -4733,8 +4736,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 			global
 			{only available when compiled with the |+reltime|
 			feature}
-	The time in milliseconds for redrawing the display.  This applies to
-	searching for patterns for 'hlsearch' and |:match| highlighting.
+	Time in milliseconds for redrawing the display.  Applies to
+	'hlsearch', 'inccommand' and |:match| highlighting.
 	When redrawing takes more than this many milliseconds no further
 	matches will be highlighted.  This is used to avoid that Vim hangs
 	when using a very complicated pattern.

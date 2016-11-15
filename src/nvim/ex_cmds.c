@@ -2952,10 +2952,11 @@ void sub_set_replacement(SubReplacementString sub)
 /// @param[in]  pat  Search pattern
 /// @param[in]  sub  Replacement string
 /// @param[in]  cmd  Command from :s_flags
+/// @param[in]  save Save pattern to options, history
 ///
 /// @returns true if :substitute can be replaced with a join command
-static bool sub_joining_lines(exarg_T *eap, char_u *pat,
-                              char_u *sub, char_u *cmd)
+static bool sub_joining_lines(exarg_T *eap, char_u *pat, char_u *sub,
+                              char_u *cmd, bool save)
   FUNC_ATTR_NONNULL_ARG(1, 3, 4)
 {
   // TODO(vim): find a generic solution to make line-joining operations more
@@ -2989,7 +2990,7 @@ static bool sub_joining_lines(exarg_T *eap, char_u *pat,
       ex_may_print(eap);
     }
 
-    if (!eap->is_live) {
+    if (save) {
       if (!cmdmod.keeppatterns) {
         save_re_pat(RE_SUBST, pat, p_magic);
       }
@@ -3100,8 +3101,6 @@ static char_u *sub_parse_flags(char_u *cmd, subflags_T *subflags,
   return cmd;
 }
 
-/// do_sub()
-///
 /// Perform a substitution from line eap->line1 to line eap->line2 using the
 /// command pointed to by eap->arg which should be of the form:
 ///
@@ -3110,7 +3109,7 @@ static char_u *sub_parse_flags(char_u *cmd, subflags_T *subflags,
 /// The usual escapes are supported as described in the regexp docs.
 ///
 /// @return buffer used for 'inccommand' preview
-buf_T *do_sub(exarg_T *eap)
+static buf_T *do_sub(exarg_T *eap, proftime_T timeout)
 {
   long i = 0;
   regmmatch_T regmatch;
@@ -3142,6 +3141,7 @@ buf_T *do_sub(exarg_T *eap)
   int start_nsubs;
   int save_ma = 0;
   int save_b_changed = curbuf->b_changed;
+  bool preview = (State & CMDPREVIEW);
 
   if (!global_busy) {
     sub_nsubs = 0;
@@ -3209,7 +3209,7 @@ buf_T *do_sub(exarg_T *eap)
       mb_ptr_adv(cmd);
     }
 
-    if (!eap->skip && !eap->is_live) {
+    if (!eap->skip && !preview) {
       sub_set_replacement((SubReplacementString) {
         .sub = xstrdup((char *) sub),
         .timestamp = os_time(),
@@ -3229,7 +3229,7 @@ buf_T *do_sub(exarg_T *eap)
     endcolumn = (curwin->w_curswant == MAXCOL);
   }
 
-  if (sub_joining_lines(eap, pat, sub, cmd)) {
+  if (sub_joining_lines(eap, pat, sub, cmd, !preview)) {
     return NULL;
   }
 
@@ -3274,7 +3274,7 @@ buf_T *do_sub(exarg_T *eap)
     return NULL;
   }
 
-  if (search_regcomp(pat, RE_SUBST, which_pat, (eap->is_live ? 0 : SEARCH_HIS),
+  if (search_regcomp(pat, RE_SUBST, which_pat, (preview ? 0 : SEARCH_HIS),
                      &regmatch) == FAIL) {
     if (subflags.do_error) {
       EMSG(_(e_invcmd));
@@ -3404,7 +3404,7 @@ buf_T *do_sub(exarg_T *eap)
         curwin->w_cursor.lnum = lnum;
         do_again = FALSE;
 
-        if (eap->is_live) {
+        if (preview) {
           // Increment the in-line match count and store the column.
           matched_line.nmatch++;
           kv_push(matched_line.cols, regmatch.startpos[0].col);
@@ -3457,7 +3457,7 @@ buf_T *do_sub(exarg_T *eap)
             goto skip;
         }
 
-        if (subflags.do_ask && !eap->is_live) {
+        if (subflags.do_ask && !preview) {
           int typed = 0;
 
           /* change State to CONFIRM, so that the mouse works
@@ -3581,7 +3581,7 @@ buf_T *do_sub(exarg_T *eap)
                 || typed == intr_char
 #endif
                 ) {
-              got_quit = TRUE;
+              got_quit = true;
               break;
             }
             if (typed == 'n')
@@ -3628,9 +3628,9 @@ buf_T *do_sub(exarg_T *eap)
          * use "\=col("."). */
         curwin->w_cursor.col = regmatch.startpos[0].col;
 
-        // 3. Substitute the string. During 'inccommand' only do this if there
-        //    is a replace pattern.
-        if (!eap->is_live || has_second_delim) {
+        // 3. Substitute the string. During 'inccommand' preview only do this if
+        //    there is a replace pattern.
+        if (!preview || has_second_delim) {
           if (subflags.do_count) {
             // prevent accidentally changing the buffer by a function
             save_ma = curbuf->b_p_ma;
@@ -3874,7 +3874,7 @@ skip:
       xfree(sub_firstline);          /* free the copy of the original line */
       sub_firstline = NULL;
 
-      if (eap->is_live) {
+      if (preview) {
         matched_line.lnum = lnum;
         matched_line.line = vim_strsave(ml_get(lnum));
         kv_push(matched_lines, matched_line);
@@ -3882,6 +3882,10 @@ skip:
     }
 
     line_breakcheck();
+
+    if (profile_passed_limit(timeout)) {
+      got_quit = true;
+    }
   }
 
   if (first_line != 0) {
@@ -3914,7 +3918,7 @@ skip:
           beginline(BL_WHITE | BL_FIX);
         }
       }
-      if (!eap->is_live && !do_sub_msg(subflags.do_count) && subflags.do_ask) {
+      if (!preview && !do_sub_msg(subflags.do_count) && subflags.do_ask) {
         MSG("");
       }
     } else {
@@ -3949,9 +3953,14 @@ skip:
 
   // Show 'inccommand' preview if there are matched lines.
   buf_T *preview_buf = NULL;
-  if (eap->is_live && *p_icm != NUL && matched_lines.size != 0 && pat != NULL) {
-    curbuf->b_changed = save_b_changed;  // preserve 'modified' during preview
-    preview_buf = show_sub(eap, old_cursor, pat, sub, &matched_lines);
+  if (preview && !aborting()) {
+    if (got_quit) {  // Substitution is too slow, disable 'inccommand'.
+      set_string_option_direct((char_u *)"icm", -1, (char_u *)"", OPT_FREE,
+                               SID_NONE);
+    } else if (*p_icm != NUL && matched_lines.size != 0 && pat != NULL) {
+      curbuf->b_changed = save_b_changed;  // preserve 'modified' during preview
+      preview_buf = show_sub(eap, old_cursor, pat, sub, &matched_lines);
+    }
   }
 
   for (MatchedLine m; kv_size(matched_lines);) {
@@ -6004,7 +6013,6 @@ static buf_T *show_sub(exarg_T *eap, pos_T old_cusr, char_u *pat, char_u *sub,
 {
   static handle_T bufnr = 0;  // special buffer, re-used on each visit
 
-  garray_T save_winsizes;
   win_T *save_curwin = curwin;
   cmdmod_T save_cmdmod = cmdmod;
   char_u *save_shm_p = vim_strsave(p_shm);
@@ -6013,11 +6021,11 @@ static buf_T *show_sub(exarg_T *eap, pos_T old_cusr, char_u *pat, char_u *sub,
 
   // We keep a special-purpose buffer around, but don't assume it exists.
   buf_T *preview_buf = bufnr ? buflist_findnr(bufnr) : 0;
-  win_size_save(&save_winsizes);  // Save current window sizes.
   cmdmod.tab = 0;                 // disable :tab modifier
   cmdmod.noswapfile = true;       // disable swap for preview buffer
   // disable file info message
-  set_option_value((char_u *)"shm", 0L, (char_u *)"F", 0);
+  set_string_option_direct((char_u *)"shm", -1, (char_u *)"F", OPT_FREE,
+                           SID_NONE);
 
   bool outside_curline = (eap->line1 != old_cusr.lnum
                           || eap->line2 != old_cusr.lnum);
@@ -6091,19 +6099,17 @@ static buf_T *show_sub(exarg_T *eap, pos_T old_cusr, char_u *pat, char_u *sub,
   }
 
   redraw_later(SOME_VALID);
-
   win_enter(save_curwin, false);  // Return to original window
-  win_size_restore(&save_winsizes);
-  ga_clear(&save_winsizes);
-
-  set_option_value((char_u *)"shm", 0L, save_shm_p, 0);
-  xfree(save_shm_p);
+  update_topline();
 
   // Update screen now. Must do this _before_ close_windows().
   int save_rd = RedrawingDisabled;
   RedrawingDisabled = 0;
-  update_screen(NOT_VALID);
+  update_screen(SOME_VALID);
   RedrawingDisabled = save_rd;
+
+  set_string_option_direct((char_u *)"shm", -1, save_shm_p, OPT_FREE, SID_NONE);
+  xfree(save_shm_p);
 
   cmdmod = save_cmdmod;
 
@@ -6117,14 +6123,17 @@ static buf_T *show_sub(exarg_T *eap, pos_T old_cusr, char_u *pat, char_u *sub,
 /// from undo history.
 void ex_substitute(exarg_T *eap)
 {
-  if (*p_icm == NUL || !eap->is_live) {  // 'inccommand' is disabled
-    (void)do_sub(eap);
+  bool preview = (State & CMDPREVIEW);
+  if (*p_icm == NUL || !preview) {  // 'inccommand' is disabled
+    (void)do_sub(eap, profile_zero());
     return;
   }
 
   block_autocmds();           // Disable events during command preview.
 
   char_u *save_eap = eap->arg;
+  garray_T save_view;
+  win_size_save(&save_view);  // Save current window sizes.
   save_search_patterns();
   int save_changedtick = curbuf->b_changedtick;
   time_t save_b_u_time_cur = curbuf->b_u_time_cur;
@@ -6138,7 +6147,7 @@ void ex_substitute(exarg_T *eap)
   curwin->w_p_cul = false;    // Disable 'cursorline'
   curwin->w_p_cuc = false;    // Disable 'cursorcolumn'
 
-  buf_T *preview_buf = do_sub(eap);
+  buf_T *preview_buf = do_sub(eap, profile_setlimit(p_rdt));
 
   if (save_changedtick != curbuf->b_changedtick) {
     // Undo invisibly. This also moves the cursor!
@@ -6158,6 +6167,8 @@ void ex_substitute(exarg_T *eap)
   curwin->w_p_cuc = save_w_p_cuc;   // Restore 'cursorcolumn'
   eap->arg = save_eap;
   restore_search_patterns();
+  win_size_restore(&save_view);
+  ga_clear(&save_view);
   emsg_off--;
   unblock_autocmds();
 }

@@ -600,46 +600,18 @@ describe(":substitute, 'inccommand' preserves undo", function()
       feed(":%s/tw/MO/g<esc>")
       feed("u")
 
-      if case == "split" then
-        screen:expect([[
-          ^LInc substitution on|
-          two lines           |
-                              |
-          {15:~                   }|
-          {15:~                   }|
-          {15:~                   }|
-          {15:~                   }|
-          {15:~                   }|
-          {15:~                   }|
-          Already...st change |
-        ]])
-      elseif case == "" then
-        screen:expect([[
-          ^LInc substitution on|
-          two lines           |
-                              |
-          {15:~                   }|
-          {15:~                   }|
-          {15:~                   }|
-          {15:~                   }|
-          {15:~                   }|
-          {15:~                   }|
-          Already...st change |
-        ]])
-      else
-        screen:expect([[
-          LInc substitution on|
-          ^two lines           |
-                              |
-          {15:~                   }|
-          {15:~                   }|
-          {15:~                   }|
-          {15:~                   }|
-          {15:~                   }|
-          {15:~                   }|
-          Already...st change |
-        ]])
-      end
+      screen:expect([[
+        ^LInc substitution on|
+        two lines           |
+                            |
+        {15:~                   }|
+        {15:~                   }|
+        {15:~                   }|
+        {15:~                   }|
+        {15:~                   }|
+        {15:~                   }|
+        Already...st change |
+      ]])
     end
     screen:detach()
   end)
@@ -789,6 +761,7 @@ describe(":substitute, inccommand=split", function()
   it('does not show split window for :s/', function()
     feed("2gg")
     feed(":s/tw")
+    wait()
     screen:expect([[
       Inc substitution on           |
       two lines                     |
@@ -905,11 +878,11 @@ describe(":substitute, inccommand=split", function()
 
     feed(":%s/tw/X")
     screen:expect([[
-      Inc substitution on           |
       BBo lines                     |
       Inc substitution on           |
       Xo lines                      |
       Inc substitution on           |
+      Xo lines                      |
       {11:[No Name] [+]                 }|
       |1001| {12:X}o lines               |
       |1003| {12:X}o lines               |
@@ -960,6 +933,89 @@ describe(":substitute, inccommand=split", function()
       {15:~                             }|
       {15:~                             }|
       2 matches on 2 lines          |
+    ]])
+  end)
+
+  it("deactivates if 'redrawtime' is exceeded #5602", function()
+    -- Assert that 'inccommand' is ENABLED initially.
+    eq("split", eval("&inccommand"))
+    -- Set 'redrawtime' to minimal value, to ensure timeout is triggered.
+    execute("set redrawtime=1 nowrap")
+    -- Load a big file.
+    execute("silent edit! test/functional/fixtures/bigfile.txt")
+    -- Start :substitute with a slow pattern.
+    feed([[:%s/B.*N/x]])
+    wait()
+
+    -- Assert that 'inccommand' is DISABLED in cmdline mode.
+    eq("", eval("&inccommand"))
+    -- Assert that preview cleared (or never manifested).
+    screen:expect([[
+      0000;<control>;Cc;0;BN;;;;;N;N|
+      0001;<control>;Cc;0;BN;;;;;N;S|
+      0002;<control>;Cc;0;BN;;;;;N;S|
+      0003;<control>;Cc;0;BN;;;;;N;E|
+      0004;<control>;Cc;0;BN;;;;;N;E|
+      0005;<control>;Cc;0;BN;;;;;N;E|
+      0006;<control>;Cc;0;BN;;;;;N;A|
+      0007;<control>;Cc;0;BN;;;;;N;B|
+      0008;<control>;Cc;0;BN;;;;;N;B|
+      0009;<control>;Cc;0;S;;;;;N;CH|
+      000A;<control>;Cc;0;B;;;;;N;LI|
+      000B;<control>;Cc;0;S;;;;;N;LI|
+      000C;<control>;Cc;0;WS;;;;;N;F|
+      000D;<control>;Cc;0;B;;;;;N;CA|
+      :%s/B.*N/x^                    |
+    ]])
+
+    -- Assert that 'inccommand' is again ENABLED after leaving cmdline mode.
+    feed([[<C-\><C-N>]])
+    eq("split", eval("&inccommand"))
+  end)
+
+  it("clears preview if non-previewable command is edited #5585", function()
+    -- Put a non-previewable command in history.
+    execute("echo 'foo'")
+    -- Start an incomplete :substitute command.
+    feed(":1,2s/t/X")
+
+    screen:expect([[
+      Inc subsXitution on           |
+      Xwo lines                     |
+      Inc substitution on           |
+      two lines                     |
+                                    |
+      {11:[No Name] [+]                 }|
+      |1| Inc subs{12:X}itution on       |
+      |2| {12:X}wo lines                 |
+                                    |
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      {10:[Preview]                     }|
+      :1,2s/t/X^                     |
+    ]])
+
+    -- Select the previous command.
+    feed("<C-P>")
+    -- Assert that preview was cleared.
+    screen:expect([[
+      Inc substitution on           |
+      two lines                     |
+      Inc substitution on           |
+      two lines                     |
+                                    |
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      :echo 'foo'^                   |
     ]])
   end)
 
@@ -1074,6 +1130,41 @@ describe("inccommand=nosplit", function()
     ]])
   end)
 
+  it("clears preview if non-previewable command is edited", function()
+    -- Put a non-previewable command in history.
+    execute("echo 'foo'")
+    -- Start an incomplete :substitute command.
+    feed(":1,2s/t/X")
+
+    screen:expect([[
+      Inc subsXitution on |
+      Xwo lines           |
+      Inc substitution on |
+      two lines           |
+                          |
+      {15:~                   }|
+      {15:~                   }|
+      {15:~                   }|
+      {15:~                   }|
+      :1,2s/t/X^           |
+    ]])
+
+    -- Select the previous command.
+    feed("<C-P>")
+    -- Assert that preview was cleared.
+    screen:expect([[
+      Inc substitution on |
+      two lines           |
+      Inc substitution on |
+      two lines           |
+                          |
+      {15:~                   }|
+      {15:~                   }|
+      {15:~                   }|
+      {15:~                   }|
+      :echo 'foo'^         |
+    ]])
+  end)
 end)
 
 describe(":substitute, 'inccommand' with a failing expression", function()
