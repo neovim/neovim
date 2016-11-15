@@ -8010,7 +8010,7 @@ static void f_complete_check(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   int saved = RedrawingDisabled;
 
   RedrawingDisabled = 0;
-  ins_compl_check_keys(0);
+  ins_compl_check_keys(0, true);
   rettv->vval.v_number = compl_interrupted;
   RedrawingDisabled = saved;
 }

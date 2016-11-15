@@ -63,3 +63,116 @@ func! Test_popup_completion_insertmode()
   bwipe!
   iunmap <F5>
 endfunc
+
+func DummyCompleteOne(findstart, base)
+  if a:findstart
+    return 0
+  else
+    wincmd n
+    return ['onedef', 'oneDEF']
+  endif
+endfunc
+
+" Test that nothing happens if the 'completefunc' opens
+" a new window (no completion, no crash)
+func Test_completefunc_opens_new_window_one()
+  new
+  let winid = win_getid()
+  setlocal completefunc=DummyCompleteOne
+  call setline(1, 'one')
+  /^one
+  call assert_fails('call feedkeys("A\<C-X>\<C-U>\<C-N>\<Esc>", "x")', 'E839:')
+  call assert_notequal(winid, win_getid())
+  q!
+  call assert_equal(winid, win_getid())
+  call assert_equal('', getline(1))
+  q!
+endfunc
+
+" Test that nothing happens if the 'completefunc' opens
+" a new window (no completion, no crash)
+func DummyCompleteTwo(findstart, base)
+  if a:findstart
+    wincmd n
+    return 0
+  else
+    return ['twodef', 'twoDEF']
+  endif
+endfunction
+
+" Test that nothing happens if the 'completefunc' opens
+" a new window (no completion, no crash)
+func Test_completefunc_opens_new_window_two()
+  new
+  let winid = win_getid()
+  setlocal completefunc=DummyCompleteTwo
+  call setline(1, 'two')
+  /^two
+  call assert_fails('call feedkeys("A\<C-X>\<C-U>\<C-N>\<Esc>", "x")', 'E764:')
+  call assert_notequal(winid, win_getid())
+  q!
+  call assert_equal(winid, win_getid())
+  call assert_equal('two', getline(1))
+  q!
+endfunc
+
+func DummyCompleteThree(findstart, base)
+  if a:findstart
+    return 0
+  else
+    return ['threedef', 'threeDEF']
+  endif
+endfunc
+
+:"Test that 'completefunc' works when it's OK.
+func Test_completefunc_works()
+  new
+  let winid = win_getid()
+  setlocal completefunc=DummyCompleteThree
+  call setline(1, 'three')
+  /^three
+  call feedkeys("A\<C-X>\<C-U>\<C-N>\<Esc>", "x")
+  call assert_equal(winid, win_getid())
+  call assert_equal('threeDEF', getline(1))
+  q!
+endfunc
+
+func DummyCompleteFour(findstart, base)
+  if a:findstart
+    return 0
+  else
+    call complete_add('four1')
+    call complete_add('four2')
+    call complete_check()
+    call complete_add('four3')
+    call complete_add('four4')
+    call complete_check()
+    call complete_add('four5')
+    call complete_add('four6')
+    return []
+  endif
+endfunc
+
+:"Test that 'completefunc' works when it's OK.
+func Test_omnifunc_with_check()
+  new
+  setlocal omnifunc=DummyCompleteFour
+  call setline(1, 'four')
+  /^four
+  call feedkeys("A\<C-X>\<C-O>\<C-N>\<Esc>", "x")
+  call assert_equal('four2', getline(1))
+
+  call setline(1, 'four')
+  /^four
+  call feedkeys("A\<C-X>\<C-O>\<C-N>\<C-N>\<Esc>", "x")
+  call assert_equal('four3', getline(1))
+
+  call setline(1, 'four')
+  /^four
+  call feedkeys("A\<C-X>\<C-O>\<C-N>\<C-N>\<C-N>\<C-N>\<Esc>", "x")
+  call assert_equal('four5', getline(1))
+
+  q!
+endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab
