@@ -13160,7 +13160,7 @@ spell_dump_compl (
           // Done all bytes at this node, go up one level.
           --depth;
           line_breakcheck();
-          ins_compl_check_keys(50);
+          ins_compl_check_keys(50, false);
         } else {
           // Do one more byte at this node.
           n = arridx[depth] + curi[depth];

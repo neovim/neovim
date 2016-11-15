@@ -4549,7 +4549,7 @@ exit_matched:
     }
     line_breakcheck();
     if (action == ACTION_EXPAND)
-      ins_compl_check_keys(30);
+      ins_compl_check_keys(30, false);
     if (got_int || compl_interrupted)
       break;
 
