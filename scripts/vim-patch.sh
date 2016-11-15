@@ -2,7 +2,6 @@
 
 set -e
 set -u
-set -o pipefail
 # Use privileged mode, which e.g. skips using CDPATH.
 set -p
 
