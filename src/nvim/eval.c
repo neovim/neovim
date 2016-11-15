@@ -9880,11 +9880,8 @@ static dict_T *get_buffer_info(buf_T *buf)
                   buf->b_ml.ml_mfp != NULL && buf->b_nwindows == 0,
                   NULL);
 
-  // Copy buffer variables
-  dict_T *vars = dict_copy(NULL, buf->b_vars, true, 0);
-  if (vars != NULL) {
-    dict_add_dict(dict, "variables", vars);
-  }
+  // Get a reference to buffer variables
+  dict_add_dict(dict, "variables", buf->b_vars);
 
   // Copy buffer options
   dict_T *opts = get_winbuf_options(true);
@@ -10806,11 +10803,8 @@ static dict_T *get_tabpage_info(tabpage_T *tp, int tp_idx)
   }
   dict_add_list(dict, "windows", l);
 
-  // Copy tabpage variables
-  dict_T *vars = dict_copy(NULL, tp->tp_vars, true, 0);
-  if (vars != NULL) {
-    dict_add_dict(dict, "variables", vars);
-  }
+  // Make a reference to tabpage variables
+  dict_add_dict(dict, "variables", tp->tp_vars);
 
   return dict;
 }
@@ -10910,11 +10904,8 @@ static dict_T *get_win_info(win_T *wp, short tpnr, short winnr)
                   (bt_quickfix(wp->w_buffer) && wp->w_llist_ref != NULL),
                   NULL);
 
-  // Copy window variables
-  dict_T *vars = dict_copy(NULL, wp->w_vars, true, 0);
-  if (vars != NULL) {
-    dict_add_dict(dict, "variables", vars);
-  }
+  // Make a reference to window variables
+  dict_add_dict(dict, "variables", wp->w_vars);
 
   // Copy window options
   dict_T *opts = get_winbuf_options(false);
