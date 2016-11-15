@@ -4166,14 +4166,16 @@ getwininfo([{winid}])					*getwininfo()*
 		pages is returned.
 
 		Each List item is a Dictionary with the following entries:
-			nr		window number.
-			tpnr		tab page number.
-			winid		window ID.
-			height		window height.
-			width		window width.
-			bufnum		number of buffer in the window.
-			options		dictionary of window local options.
-			variables	dictionary of window local variables.
+			bufnum		number of buffer in the window
+			height		window height
+			loclist		1 if showing a location list
+			nr		window number
+			options		dictionary of window local options
+			quickfix	1 if quickfix or location list window
+			tpnr		tab page number
+			variables	dictionary of window local variables
+			width		window width
+			winid		window ID
 
 getwinvar({winnr}, {varname} [, {def}])				*getwinvar()*
 		Like |gettabwinvar()| for the current tabpage.

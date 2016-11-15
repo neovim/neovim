@@ -10905,6 +10905,11 @@ static dict_T *get_win_info(win_T *wp, short tpnr, short winnr)
   dict_add_nr_str(dict, "width", wp->w_width, NULL);
   dict_add_nr_str(dict, "bufnum", wp->w_buffer->b_fnum, NULL);
 
+  dict_add_nr_str(dict, "quickfix", bt_quickfix(wp->w_buffer), NULL);
+  dict_add_nr_str(dict, "loclist",
+                  (bt_quickfix(wp->w_buffer) && wp->w_llist_ref != NULL),
+                  NULL);
+
   // Copy window variables
   dict_T *vars = dict_copy(NULL, wp->w_vars, true, 0);
   if (vars != NULL) {
