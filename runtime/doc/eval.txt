@@ -3617,6 +3617,7 @@ getbufinfo([{dict}])
 
 		Each returned List item is a dictionary with the following
 		entries:
+			bufnr		buffer number.
 			changed		TRUE if the buffer is modified.
 			changedtick	number of changes made to the buffer.
 			hidden		TRUE if the buffer is hidden.
@@ -3624,7 +3625,6 @@ getbufinfo([{dict}])
 			lnum		current line number in buffer.
 			loaded		TRUE if the buffer is loaded.
 			name		full path to the file in the buffer.
-			nr		buffer number.
 			options		dictionary of buffer local options.
 			signs		list of signs placed in the buffer.
 					Each list item is a dictionary with

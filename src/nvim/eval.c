@@ -9868,7 +9868,7 @@ static dict_T *get_buffer_info(buf_T *buf)
 {
   dict_T *dict = dict_alloc();
 
-  dict_add_nr_str(dict, "nr", buf->b_fnum, NULL);
+  dict_add_nr_str(dict, "bufnr", buf->b_fnum, NULL);
   dict_add_nr_str(dict, "name", 0L,
                   buf->b_ffname != NULL ? buf->b_ffname : (char_u *)"");
   dict_add_nr_str(dict, "lnum", buflist_findlnum(buf), NULL);
@@ -10798,7 +10798,7 @@ static dict_T *get_tabpage_info(tabpage_T *tp, int tp_idx)
 {
   dict_T *dict = dict_alloc();
 
-  dict_add_nr_str(dict, "nr", tp_idx, NULL);
+  dict_add_nr_str(dict, "tabnr", tp_idx, NULL);
 
   list_T *l = list_alloc();
   FOR_ALL_WINDOWS_IN_TAB(wp, tp) {
@@ -10898,12 +10898,12 @@ static dict_T *get_win_info(win_T *wp, short tpnr, short winnr)
 {
   dict_T *dict = dict_alloc();
 
-  dict_add_nr_str(dict, "tpnr", tpnr, NULL);
-  dict_add_nr_str(dict, "nr", winnr, NULL);
+  dict_add_nr_str(dict, "tabnr", tpnr, NULL);
+  dict_add_nr_str(dict, "winnr", winnr, NULL);
   dict_add_nr_str(dict, "winid", wp->handle, NULL);
   dict_add_nr_str(dict, "height", wp->w_height, NULL);
   dict_add_nr_str(dict, "width", wp->w_width, NULL);
-  dict_add_nr_str(dict, "bufnum", wp->w_buffer->b_fnum, NULL);
+  dict_add_nr_str(dict, "bufnr", wp->w_buffer->b_fnum, NULL);
 
   dict_add_nr_str(dict, "quickfix", bt_quickfix(wp->w_buffer), NULL);
   dict_add_nr_str(dict, "loclist",
