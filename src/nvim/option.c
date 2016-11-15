@@ -1727,7 +1727,7 @@ do_set (
               }
 
               if (flags & P_FLAGLIST) {
-                /* Remove flags that appear twice. */
+                // Remove flags that appear twice.
                 for (s = newval; *s; s++) {
                   // if options have P_FLAGLIST and P_ONECOMMA such as
                   // 'whichwrap'
