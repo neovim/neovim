@@ -5632,8 +5632,10 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'signcolumn'* *'scl'*
 'signcolumn' 'scl'	string	(default "auto")
 			local to window
-	Whether or not to draw the signcolumn. "auto" means it will only be
-	drawn when there is a sign to display.
+	Whether or not to draw the signcolumn. Valid values are:
+	   "auto"   	only when there is a sign to display
+	   "no"	    	never
+	   "yes"    	always
 
 
 			*'smartcase'* *'scs'* *'nosmartcase'* *'noscs'*
