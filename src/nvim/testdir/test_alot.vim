@@ -10,6 +10,7 @@ source test_expr_utf8.vim
 source test_feedkeys.vim
 source test_cmdline.vim
 source test_menu.vim
+source test_options.vim
 source test_popup.vim
 source test_regexp_utf8.vim
 source test_syn_attr.vim
