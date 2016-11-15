@@ -181,3 +181,15 @@ func Test_sign_invalid_commands()
   call assert_fails('sign place 1 buffer=', 'E158:')
   call assert_fails('sign define Sign2 text=', 'E239:')
 endfunc
+
+func Test_sign_delete_buffer()
+  new
+  sign define Sign text=x
+  let bufnr = bufnr('%')
+  new
+  exe 'bd ' . bufnr
+  exe 'sign place 61 line=3 name=Sign buffer=' . bufnr
+  call assert_fails('sign jump 61 buffer=' . bufnr, 'E934:')
+  sign unplace 61
+  sign undefine Sign
+endfunc
