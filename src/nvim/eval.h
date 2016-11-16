@@ -104,6 +104,7 @@ typedef enum {
     VV_SWAPCOMMAND,
     VV_CHAR,
     VV_MOUSE_WIN,
+    VV_MOUSE_WINID,
     VV_MOUSE_LNUM,
     VV_MOUSE_COL,
     VV_OP,
