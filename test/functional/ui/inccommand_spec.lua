@@ -1314,9 +1314,9 @@ describe("'inccommand' autocommands", function()
   before_each(clear)
 
   -- keys are events to be tested
-  -- values are arrays like 
-  --    { open = { 1 }, close = { 2, 3} } 
-  -- which would mean that during the test below the event fires for 
+  -- values are arrays like
+  --    { open = { 1 }, close = { 2, 3} }
+  -- which would mean that during the test below the event fires for
   -- buffer 1 when opening the preview window, and for buffers 2 and 3
   -- when closing the preview window
   local eventsExpected = {
@@ -1385,7 +1385,7 @@ describe("'inccommand' autocommands", function()
     feed("/<enter>")
 
     for event, _ in pairs(eventsExpected) do
-        eventsObserved[event].close = meths.get_var(event .. "_fired") 
+        eventsObserved[event].close = meths.get_var(event .. "_fired")
     end
 
     for event, _ in pairs(eventsExpected) do

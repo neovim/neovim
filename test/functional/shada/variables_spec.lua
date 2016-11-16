@@ -33,7 +33,7 @@ describe('ShaDa support code', function()
       else
         meths.set_var(varname, varval)
       end
-      -- Exit during `reset` is not a regular exit: it does not write shada 
+      -- Exit during `reset` is not a regular exit: it does not write shada
       -- automatically
       nvim_command('qall')
       reset()

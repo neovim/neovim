@@ -15,12 +15,12 @@ local measure_cmd =
 local measure_script = [[
     func! Measure(re, file, pattern, arg)
       let sstart=reltime()
-    
+
       execute 'set re=' . a:re
       execute 'split' a:arg a:file
       call search(a:pattern, '', '', 10000)
       q!
-    
+
       $put =printf('file: %s, re: %d, time: %s', a:file, a:re, reltimestr(reltime(sstart)))
     endfunc]]
 

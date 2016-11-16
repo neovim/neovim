@@ -9,7 +9,7 @@ local eq = helpers.eq
 
 local reset = plugin_helpers.reset
 
-describe('matchparen', function() 
+describe('matchparen', function()
   local screen
 
   before_each(function()

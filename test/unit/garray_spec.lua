@@ -198,8 +198,8 @@ describe('garray', function()
     local function new_and_grow(itemsize_, growsize_, req)
       local garr = new_garray()
       ga_init(garr, itemsize_, growsize_)
-      eq(0, ga_size(garr))         -- should be 0 at first     
-      eq(NULL, ga_data(garr))      -- should be NULL           
+      eq(0, ga_size(garr))         -- should be 0 at first
+      eq(NULL, ga_data(garr))      -- should be NULL
       ga_grow(garr, req)           -- add space for `req` items
       return garr
     end
@@ -209,7 +209,7 @@ describe('garray', function()
       growsize = 4
       local grow_by = growsize - 1
       local garr = new_and_grow(itemsize, growsize, grow_by)
-      neq(NULL, ga_data(garr))       -- data should be a ptr to memory        
+      neq(NULL, ga_data(garr))       -- data should be a ptr to memory
       eq(growsize, ga_maxlen(garr))  -- we requested LESS than growsize, so...
     end)
 
@@ -218,7 +218,7 @@ describe('garray', function()
       growsize = 4
       local grow_by = growsize + 1
       local garr = new_and_grow(itemsize, growsize, grow_by)
-      neq(NULL, ga_data(garr))       -- data should be a ptr to memory        
+      neq(NULL, ga_data(garr))       -- data should be a ptr to memory
       eq(grow_by, ga_maxlen(garr))   -- we requested MORE than growsize, so...
     end)
 

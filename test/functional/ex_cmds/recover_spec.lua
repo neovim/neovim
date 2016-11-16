@@ -32,7 +32,7 @@ describe(':preserve', function()
 
   it("saves to custom 'directory' and (R)ecovers (issue #1836)", function()
     local testfile = 'testfile_recover_spec'
-    -- Note: `set swapfile` *must* go after `set directory`: otherwise it may 
+    -- Note: `set swapfile` *must* go after `set directory`: otherwise it may
     -- attempt to create a swapfile in different directory.
     local init = [[
       set directory^=]]..swapdir..[[//

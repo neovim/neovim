@@ -16,18 +16,18 @@ describe('msgpack*() functions', function()
     end)
   end
 
-  -- Regression test: msgpack_list_write was failing to write buffer with zero 
+  -- Regression test: msgpack_list_write was failing to write buffer with zero
   -- length.
   obj_test('are able to dump and restore {"file": ""}', {{file=''}})
-  -- Regression test: msgpack_list_write was failing to write buffer with NL at 
+  -- Regression test: msgpack_list_write was failing to write buffer with NL at
   -- the end.
   obj_test('are able to dump and restore {0, "echo mpack"}', {{0, 'echo mpack'}})
   obj_test('are able to dump and restore "Test\\n"', {'Test\n'})
-  -- Regression test: msgpack_list_write was failing to write buffer with NL 
+  -- Regression test: msgpack_list_write was failing to write buffer with NL
   -- inside.
   obj_test('are able to dump and restore "Test\\nTest 2"', {'Test\nTest 2'})
-  -- Test that big objects (requirement: dump to something that is bigger then 
-  -- IOSIZE) are also fine. This particular object is obtained by concatenating 
+  -- Test that big objects (requirement: dump to something that is bigger then
+  -- IOSIZE) are also fine. This particular object is obtained by concatenating
   -- 5 identical shada files.
   local big_obj = {
     1, 1436711454, 78, {
