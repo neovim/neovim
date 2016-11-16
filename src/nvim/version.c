@@ -415,7 +415,7 @@ static const int included_patches[] = {
   // 2032 NA
   2031,
   // 2030 NA
-  // 2029,
+  2029,
   2028,
   // 2027 NA
   // 2026 NA

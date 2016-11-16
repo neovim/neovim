@@ -121,6 +121,12 @@ func Test_option_value()
   set cpo&vim
 endfunc
 
+function Test_printf_64bit()
+  if has('num64')
+    call assert_equal("123456789012345", printf('%d', 123456789012345))
+  endif
+endfunc
+
 func Test_setmatches()
   hi def link 1 Comment
   hi def link 2 PreProc

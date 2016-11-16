@@ -910,6 +910,13 @@ int vim_vsnprintf(char *str, size_t str_m, const char *fmt, va_list ap,
         default: break;
       }
 
+      switch (fmt_spec) {
+        case 'd': case 'u': case 'o': case 'x': case 'X':
+          if (tvs && length_modifier == '\0') {
+            length_modifier = '2';
+          }
+      }
+
       // get parameter value, do initial processing
       switch (fmt_spec) {
         // '%' and 'c' behave similar to 's' regarding flags and field widths
