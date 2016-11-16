@@ -1,12 +1,12 @@
-*diff.txt*      For Vim version 7.4.  Last change: 2015 Nov 01
+*diff.txt*      For Vim version 7.4.  Last change: 2016 Aug 24
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
 
 
 							*diff* *diff-mode*
-This file describes |diff-mode|, which shows the differences between two,
-three, or four versions of the same file.
+This file describes the |+diff| feature: Showing differences between two to
+eight versions of the same file.
 
 The basics are explained in section |08.7| of the user manual.
 
@@ -109,7 +109,7 @@ To make these commands use a vertical split, prepend |:vertical|.  Examples: >
 If you always prefer a vertical split include "vertical" in 'diffopt'.
 
 							*E96*
-There can be up to four buffers with 'diff' set.
+There can be up to eight buffers with 'diff' set.
 
 Since the option values are remembered with the buffer, you can edit another
 file for a moment and come back to the same file and be in diff mode again.
