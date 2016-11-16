@@ -22,9 +22,13 @@ func Test_largefile()
   normal 50%
   normal gg
   w
-  " Check if the file size is larger than 2^31 - 1 bytes.
-  " Note that getfsize() returns -2 if a Number is 32 bits.
+  " Check if the file size is 4,000,000,000 bytes.
   let fsize=getfsize(fname)
-  call assert_true(fsize > 2147483647 || fsize == -2)
-  "call delete(fname)
+  if has('num64')
+    call assert_true(fsize == 4000000000)
+  else
+    " getfsize() returns -2 if a Number is 32 bits.
+    call assert_true(fsize == -2)
+  endif
+  call delete(fname)
 endfunc
