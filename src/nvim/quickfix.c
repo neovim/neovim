@@ -4027,7 +4027,7 @@ int get_errorlist_properties(win_T *wp, dict_T *what, dict_T *retdict)
   if ((di = tv_dict_find(what, S_LEN("nr"))) != NULL) {
     // Use the specified quickfix/location list
     if (di->di_tv.v_type == VAR_NUMBER) {
-      qf_idx = di->di_tv.vval.v_number - 1;
+      qf_idx = (int)di->di_tv.vval.v_number - 1;
       if (qf_idx < 0 || qf_idx >= qi->qf_listcount) {
         return FAIL;
       }
@@ -4101,7 +4101,7 @@ static int qf_add_entries(qf_info_T *qi, list_T *list, char_u *title,
 
     char *const filename = tv_dict_get_string(d, "filename", true);
     int bufnum = (int)tv_dict_get_number(d, "bufnr");
-    long lnum = tv_dict_get_number(d, "lnum");
+    long lnum = (long)tv_dict_get_number(d, "lnum");
     int col = (int)tv_dict_get_number(d, "col");
     char_u vcol = (char_u)tv_dict_get_number(d, "vcol");
     int nr = (int)tv_dict_get_number(d, "nr");
@@ -4183,7 +4183,7 @@ static int qf_set_properties(qf_info_T *qi, dict_T *what, int action)
   if ((di = tv_dict_find(what, S_LEN("nr"))) != NULL) {
     // Use the specified quickfix/location list
     if (di->di_tv.v_type == VAR_NUMBER) {
-      qf_idx = di->di_tv.vval.v_number - 1;
+      qf_idx = (int)di->di_tv.vval.v_number - 1;
       if (qf_idx < 0 || qf_idx >= qi->qf_listcount) {
         return FAIL;
       }

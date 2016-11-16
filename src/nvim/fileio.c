@@ -6871,7 +6871,7 @@ static bool apply_autocmds_group(event_T event, char_u *fname, char_u *fname_io,
     active_apc_list = &patcmd;
 
     /* set v:cmdarg (only when there is a matching pattern) */
-    save_cmdbang = get_vim_var_nr(VV_CMDBANG);
+    save_cmdbang = (long)get_vim_var_nr(VV_CMDBANG);
     if (eap != NULL) {
       save_cmdarg = set_cmdarg(eap, NULL);
       set_vim_var_nr(VV_CMDBANG, (long)eap->forceit);

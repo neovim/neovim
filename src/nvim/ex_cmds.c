@@ -318,14 +318,12 @@ static int sort_abort;    ///< flag to indicate if sorting has been interrupted
 /// Struct to store info to be sorted.
 typedef struct {
   linenr_T lnum;          ///< line number
-  long start_col_nr;      ///< starting column number or number
-  long end_col_nr;        ///< ending column number
   union {
     struct {
-      long start_col_nr;  ///< starting column number
-      long end_col_nr;    ///< ending column number
+      varnumber_T start_col_nr;  ///< starting column number
+      varnumber_T end_col_nr;    ///< ending column number
     } line;
-    long value;           ///< value if sorting by integer
+    varnumber_T value;           ///< value if sorting by integer
     float_T value_flt;    ///< value if sorting by float
   } st_u;
 } sorti_T;

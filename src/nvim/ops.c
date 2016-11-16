@@ -939,9 +939,9 @@ static int stuff_yank(int regname, char_u *p)
 static int execreg_lastc = NUL;
 
 /*
- * execute a yank register: copy it into the stuff buffer
+ * Execute a yank register: copy it into the stuff buffer
  *
- * return FAIL for failure, OK otherwise
+ * Return FAIL for failure, OK otherwise
  */
 int 
 do_execreg (
@@ -4439,8 +4439,8 @@ int do_addsub(int op_type, pos_T *pos, int length, linenr_T Prenum1)
   char_u buf2[NUMBUFLEN];
   int pre;  // 'X' or 'x': hex; '0': octal; 'B' or 'b': bin
   static bool hexupper = false;  // 0xABC
-  unsigned long n;
-  unsigned long oldn;
+  uvarnumber_T n;
+  uvarnumber_T oldn;
   char_u      *ptr;
   int c;
   int todel;
@@ -4635,20 +4635,20 @@ int do_addsub(int op_type, pos_T *pos, int length, linenr_T Prenum1)
 
     oldn = n;
 
-    n = subtract ? n - (unsigned long) Prenum1
-                 : n + (unsigned long) Prenum1;
+    n = subtract ? n - (uvarnumber_T) Prenum1
+                 : n + (uvarnumber_T) Prenum1;
 
     // handle wraparound for decimal numbers
     if (!pre) {
       if (subtract) {
         if (n > oldn) {
-          n = 1 + (n ^ (unsigned long)-1);
+          n = 1 + (n ^ (uvarnumber_T)-1);
           negative ^= true;
         }
       } else {
         // add
         if (n < oldn) {
-          n = (n ^ (unsigned long)-1);
+          n = (n ^ (uvarnumber_T)-1);
           negative ^= true;
         }
       }
@@ -5238,11 +5238,13 @@ void clear_oparg(oparg_T *oap)
  *  case, eol_size will be added to the character count to account for
  *  the size of the EOL character.
  */
-static long line_count_info(char_u *line, long *wc, long *cc, long limit, int eol_size)
+static varnumber_T line_count_info(char_u *line, varnumber_T *wc,
+                                   varnumber_T *cc, varnumber_T limit,
+                                   int eol_size)
 {
-  long i;
-  long words = 0;
-  long chars = 0;
+  varnumber_T i;
+  varnumber_T words = 0;
+  varnumber_T chars = 0;
   int is_word = 0;
 
   for (i = 0; i < limit && line[i] != NUL; ) {
@@ -5280,15 +5282,15 @@ void cursor_pos_info(dict_T *dict)
   char_u buf1[50];
   char_u buf2[40];
   linenr_T lnum;
-  long byte_count = 0;
-  long bom_count = 0;
-  long byte_count_cursor = 0;
-  long char_count = 0;
-  long char_count_cursor = 0;
-  long word_count = 0;
-  long word_count_cursor = 0;
+  varnumber_T byte_count = 0;
+  varnumber_T bom_count = 0;
+  varnumber_T byte_count_cursor = 0;
+  varnumber_T char_count = 0;
+  varnumber_T char_count_cursor = 0;
+  varnumber_T word_count = 0;
+  varnumber_T word_count_cursor = 0;
   int eol_size;
-  long last_check = 100000L;
+  varnumber_T last_check = 100000L;
   long line_count_selected = 0;
   pos_T min_pos, max_pos;
   oparg_T oparg;
@@ -5398,12 +5400,12 @@ void cursor_pos_info(dict_T *dict)
           byte_count_cursor = byte_count +
                               line_count_info(ml_get(lnum),
               &word_count_cursor, &char_count_cursor,
-              (long)(curwin->w_cursor.col + 1), eol_size);
+              (varnumber_T)(curwin->w_cursor.col + 1), eol_size);
         }
       }
       /* Add to the running totals */
       byte_count += line_count_info(ml_get(lnum), &word_count,
-          &char_count, (long)MAXCOL, eol_size);
+          &char_count, (varnumber_T)MAXCOL, eol_size);
     }
 
     // Correction for when last line doesn't have an EOL.

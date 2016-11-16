@@ -1621,13 +1621,13 @@ bool vim_isblankline(char_u *lbuf)
 /// @param unptr Returns the unsigned result.
 /// @param maxlen Max length of string to check.
 void vim_str2nr(const char_u *const start, int *const prep, int *const len,
-                const int what, long *const nptr, unsigned long *const unptr,
-                const int maxlen)
+                const int what, varnumber_T *const nptr,
+                uvarnumber_T *const unptr, const int maxlen)
 {
   const char_u *ptr = start;
   int pre = 0;  // default is decimal
   bool negative = false;
-  unsigned long un = 0;
+  uvarnumber_T un = 0;
 
   if (ptr[0] == '-') {
     negative = true;
@@ -1683,7 +1683,7 @@ void vim_str2nr(const char_u *const start, int *const prep, int *const len,
       n += 2;  // skip over "0b"
     }
     while ('0' <= *ptr && *ptr <= '1') {
-      un = 2 * un + (unsigned long)(*ptr - '0');
+      un = 2 * un + (uvarnumber_T)(*ptr - '0');
       ptr++;
       if (n++ == maxlen) {
         break;
@@ -1692,7 +1692,7 @@ void vim_str2nr(const char_u *const start, int *const prep, int *const len,
   } else if ((pre == '0') || what == STR2NR_OCT + STR2NR_FORCE) {
     // octal
     while ('0' <= *ptr && *ptr <= '7') {
-      un = 8 * un + (unsigned long)(*ptr - '0');
+      un = 8 * un + (uvarnumber_T)(*ptr - '0');
       ptr++;
       if (n++ == maxlen) {
         break;
@@ -1705,7 +1705,7 @@ void vim_str2nr(const char_u *const start, int *const prep, int *const len,
       n += 2;  // skip over "0x"
     }
     while (ascii_isxdigit(*ptr)) {
-      un = 16 * un + (unsigned long)hex2nr(*ptr);
+      un = 16 * un + (uvarnumber_T)hex2nr(*ptr);
       ptr++;
       if (n++ == maxlen) {
         break;
@@ -1733,9 +1733,9 @@ void vim_str2nr(const char_u *const start, int *const prep, int *const len,
   if (nptr != NULL) {
     if (negative) {
       // account for leading '-' for decimal numbers
-      *nptr = -(long)un;
+      *nptr = -(varnumber_T)un;
     } else {
-      *nptr = (long)un;
+      *nptr = (varnumber_T)un;
     }
   }
 

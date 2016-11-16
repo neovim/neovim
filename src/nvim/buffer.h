@@ -83,14 +83,16 @@ static inline void restore_win_for_buf(win_T *save_curwin,
   }
 }
 
-static inline void buf_set_changedtick(buf_T *const buf, const int changedtick)
+static inline void buf_set_changedtick(buf_T *const buf,
+                                       const varnumber_T changedtick)
   REAL_FATTR_NONNULL_ALL REAL_FATTR_ALWAYS_INLINE;
 
 /// Set b_changedtick and corresponding variable
 ///
 /// @param[out]  buf  Buffer to set changedtick in.
 /// @param[in]  changedtick  New value.
-static inline void buf_set_changedtick(buf_T *const buf, const int changedtick)
+static inline void buf_set_changedtick(buf_T *const buf,
+                                       const varnumber_T changedtick)
 {
 #ifndef NDEBUG
   dictitem_T *const changedtick_di = tv_dict_find(
