@@ -281,7 +281,7 @@ readfile (
   colnr_T len;
   long size = 0;
   char_u      *p = NULL;
-  off_t filesize = 0;
+  off_T filesize = 0;
   int skip_read = FALSE;
   context_sha256_T sha_ctx;
   int read_undo_file = FALSE;
@@ -777,7 +777,7 @@ retry:
     if (read_buffer) {
       read_buf_lnum = 1;
       read_buf_col = 0;
-    } else if (read_stdin || lseek(fd, (off_t)0L, SEEK_SET) != 0) {
+    } else if (read_stdin || vim_lseek(fd, (off_T)0L, SEEK_SET) != 0) {
       /* Can't rewind the file, give up. */
       error = TRUE;
       goto failed;
@@ -1626,7 +1626,7 @@ rewind_retry:
                 if (   try_unix
                        && !read_stdin
                        && (read_buffer
-                           || lseek(fd, (off_t)0L, SEEK_SET) == 0)) {
+                           || vim_lseek(fd, (off_T)0L, SEEK_SET) == 0)) {
                   fileformat = EOL_UNIX;
                   if (set_options)
                     set_fileformat(EOL_UNIX, OPT_LOCAL);
@@ -3833,7 +3833,7 @@ static bool msg_add_fileformat(int eol_type)
 /*
  * Append line and character count to IObuff.
  */
-void msg_add_lines(int insert_space, long lnum, off_t nchars)
+void msg_add_lines(int insert_space, long lnum, off_T nchars)
 {
   char_u  *p;
 

@@ -60,6 +60,7 @@ NEW_TESTS ?= \
 	    test_quickfix.res \
 	    test_signs.res \
 	    test_smartindent.res \
+	    test_stat.res \
 	    test_substitute.res \
 	    test_syntax.res \
 	    test_tabpage.res \

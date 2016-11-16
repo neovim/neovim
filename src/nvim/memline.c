@@ -763,7 +763,7 @@ void ml_recover(void)
   int idx;
   int top;
   int txt_start;
-  off_t size;
+  off_T size;
   int called_from_main;
   int serious_error = TRUE;
   long mtime;
@@ -914,7 +914,7 @@ void ml_recover(void)
       msg_end();
       goto theend;
     }
-    if ((size = lseek(mfp->mf_fd, (off_t)0L, SEEK_END)) <= 0)
+    if ((size = vim_lseek(mfp->mf_fd, (off_T)0L, SEEK_END)) <= 0)
       mfp->mf_blocknr_max = 0;              /* no file or empty file */
     else
       mfp->mf_blocknr_max = size / mfp->mf_page_size;
