@@ -214,7 +214,7 @@ void op_shift(oparg_T *oap, int curs_top, int amount)
     ++curwin->w_cursor.lnum;
   }
 
-  changed_lines(oap->start.lnum, 0, oap->end.lnum + 1, 0L);
+  changed_lines(oap->start.lnum, 0, oap->end.lnum + 1, 0L, true);
 
   if (oap->motion_type == kMTBlockWise) {
     curwin->w_cursor.lnum = oap->start.lnum;
@@ -570,7 +570,7 @@ static void block_insert(oparg_T *oap, char_u *s, int b_insert, struct block_def
     }
   }   /* for all lnum */
 
-  changed_lines(oap->start.lnum + 1, 0, oap->end.lnum + 1, 0L);
+  changed_lines(oap->start.lnum + 1, 0, oap->end.lnum + 1, 0L, true);
 
   State = oldstate;
 }
@@ -635,7 +635,7 @@ void op_reindent(oparg_T *oap, Indenter how)
   if (last_changed != 0)
     changed_lines(first_changed, 0,
         oap->is_VIsual ? start_lnum + oap->line_count :
-        last_changed + 1, 0L);
+        last_changed + 1, 0L, true);
   else if (oap->is_VIsual)
     redraw_curbuf_later(INVERTED);
 
@@ -1455,7 +1455,7 @@ int op_delete(oparg_T *oap)
 
     check_cursor_col();
     changed_lines(curwin->w_cursor.lnum, curwin->w_cursor.col,
-                  oap->end.lnum + 1, 0L);
+                  oap->end.lnum + 1, 0L, true);
     oap->line_count = 0;  // no lines deleted
   } else if (oap->motion_type == kMTLineWise) {
     if (oap->op_type == OP_CHANGE) {
@@ -1817,7 +1817,7 @@ int op_replace(oparg_T *oap, int c)
 
   curwin->w_cursor = oap->start;
   check_cursor();
-  changed_lines(oap->start.lnum, oap->start.col, oap->end.lnum + 1, 0L);
+  changed_lines(oap->start.lnum, oap->start.col, oap->end.lnum + 1, 0L, true);
 
   /* Set "'[" and "']" marks. */
   curbuf->b_op_start = oap->start;
@@ -1852,7 +1852,7 @@ void op_tilde(oparg_T *oap)
 
     }
     if (did_change)
-      changed_lines(oap->start.lnum, 0, oap->end.lnum + 1, 0L);
+      changed_lines(oap->start.lnum, 0, oap->end.lnum + 1, 0L, true);
   } else {  // not block mode
     if (oap->motion_type == kMTLineWise) {
       oap->start.col = 0;
@@ -1876,7 +1876,7 @@ void op_tilde(oparg_T *oap)
       }
     if (did_change) {
       changed_lines(oap->start.lnum, oap->start.col, oap->end.lnum + 1,
-          0L);
+          0L, true);
     }
   }
 
@@ -2257,7 +2257,7 @@ int op_change(oparg_T *oap)
         }
       }
       check_cursor();
-      changed_lines(oap->start.lnum + 1, 0, oap->end.lnum + 1, 0L);
+      changed_lines(oap->start.lnum + 1, 0, oap->end.lnum + 1, 0L, true);
       xfree(ins_text);
     }
   }
@@ -3020,7 +3020,7 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
         curwin->w_cursor.col += bd.startspaces;
     }
 
-    changed_lines(lnum, 0, curwin->w_cursor.lnum, nr_lines);
+    changed_lines(lnum, 0, curwin->w_cursor.lnum, nr_lines, true);
 
     /* Set '[ mark. */
     curbuf->b_op_start = curwin->w_cursor;
@@ -3187,10 +3187,10 @@ error:
       // note changed text for displaying and folding
       if (y_type == kMTCharWise) {
         changed_lines(curwin->w_cursor.lnum, col,
-                      curwin->w_cursor.lnum + 1, nr_lines);
+                      curwin->w_cursor.lnum + 1, nr_lines, true);
       } else {
         changed_lines(curbuf->b_op_start.lnum, 0,
-                      curbuf->b_op_start.lnum, nr_lines);
+                      curbuf->b_op_start.lnum, nr_lines, true);
       }
 
       /* put '] mark at last inserted character */
@@ -3671,7 +3671,7 @@ int do_join(size_t count,
   /* Only report the change in the first line here, del_lines() will report
    * the deleted line. */
   changed_lines(curwin->w_cursor.lnum, currsize,
-      curwin->w_cursor.lnum + 1, 0L);
+      curwin->w_cursor.lnum + 1, 0L, true);
 
   /*
    * Delete following lines. To do this we move the cursor there
@@ -4344,7 +4344,7 @@ void op_addsub(oparg_T *oap, linenr_T Prenum1, bool g_cmd)
     }
     change_cnt = do_addsub(oap->op_type, &pos, 0, amount);
     if (change_cnt) {
-      changed_lines(pos.lnum, 0, pos.lnum + 1, 0L);
+      changed_lines(pos.lnum, 0, pos.lnum + 1, 0L, true);
     }
   } else {
     int one_change;
@@ -4400,7 +4400,7 @@ void op_addsub(oparg_T *oap, linenr_T Prenum1, bool g_cmd)
       }
     }
     if (change_cnt) {
-      changed_lines(oap->start.lnum, 0, oap->end.lnum + 1, 0L);
+      changed_lines(oap->start.lnum, 0, oap->end.lnum + 1, 0L, true);
     }
 
     if (!change_cnt && oap->is_VIsual) {

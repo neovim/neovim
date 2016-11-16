@@ -276,7 +276,7 @@ void ex_align(exarg_T *eap)
       new_indent = 0;
     (void)set_indent(new_indent, 0);                    /* set indent */
   }
-  changed_lines(eap->line1, 0, eap->line2 + 1, 0L);
+  changed_lines(eap->line1, 0, eap->line2 + 1, 0L, true);
   curwin->w_cursor = save_curpos;
   beginline(BL_WHITE | BL_FIX);
 }
@@ -609,7 +609,7 @@ void ex_sort(exarg_T *eap)
   } else if (deleted < 0) {
     mark_adjust(eap->line2, MAXLNUM, -deleted, 0L, false);
   }
-  changed_lines(eap->line1, 0, eap->line2 + 1, -deleted);
+  changed_lines(eap->line1, 0, eap->line2 + 1, -deleted, true);
 
   curwin->w_cursor.lnum = eap->line1;
   beginline(BL_WHITE | BL_FIX);
@@ -742,7 +742,7 @@ void ex_retab(exarg_T *eap)
   if (curbuf->b_p_ts != new_ts)
     redraw_curbuf_later(NOT_VALID);
   if (first_line != 0)
-    changed_lines(first_line, 0, last_line + 1, 0L);
+    changed_lines(first_line, 0, last_line + 1, 0L, true);
 
   curwin->w_p_list = save_list;         /* restore 'list' */
 
@@ -803,6 +803,7 @@ int do_move(linenr_T line1, linenr_T line2, linenr_T dest)
    */
   last_line = curbuf->b_ml.ml_line_count;
   mark_adjust_nofold(line1, line2, last_line - line2, 0L, true);
+  changed_lines(last_line - num_lines + 1, 0, last_line + 1, num_lines, false);
   if (dest >= line2) {
     mark_adjust_nofold(line2 + 1, dest, -num_lines, 0L, false);
     FOR_ALL_TAB_WINDOWS(tab, win) {
@@ -825,6 +826,7 @@ int do_move(linenr_T line1, linenr_T line2, linenr_T dest)
   curbuf->b_op_start.col = curbuf->b_op_end.col = 0;
   mark_adjust_nofold(last_line - num_lines + 1, last_line,
                      -(last_line - dest - extra), 0L, true);
+  changed_lines(last_line - num_lines + 1, 0, last_line + 1, -extra, false);
 
   /*
    * Now we delete the original text -- webb
@@ -855,9 +857,9 @@ int do_move(linenr_T line1, linenr_T line2, linenr_T dest)
     last_line = curbuf->b_ml.ml_line_count;
     if (dest > last_line + 1)
       dest = last_line + 1;
-    changed_lines(line1, 0, dest, 0L);
+    changed_lines(line1, 0, dest, 0L, false);
   } else {
-    changed_lines(dest + 1, 0, line1 + num_lines, 0L);
+    changed_lines(dest + 1, 0, line1 + num_lines, 0L, false);
   }
 
   return OK;
@@ -3992,7 +3994,7 @@ skip:
      * the line number before the change (same as adding the number of
      * deleted lines). */
     i = curbuf->b_ml.ml_line_count - old_line_count;
-    changed_lines(first_line, 0, last_line - i, i);
+    changed_lines(first_line, 0, last_line - i, i, false);
   }
 
   xfree(sub_firstline);   /* may have to free allocated copy of the line */

@@ -835,7 +835,7 @@ open_line (
       saved_line = NULL;
       if (did_append) {
         changed_lines(curwin->w_cursor.lnum, curwin->w_cursor.col,
-            curwin->w_cursor.lnum + 1, 1L);
+            curwin->w_cursor.lnum + 1, 1L, true);
         did_append = FALSE;
 
         /* Move marks after the line break to the new line. */
@@ -853,8 +853,9 @@ open_line (
      */
     curwin->w_cursor.lnum = old_cursor.lnum + 1;
   }
-  if (did_append)
-    changed_lines(curwin->w_cursor.lnum, 0, curwin->w_cursor.lnum, 1L);
+  if (did_append) {
+    changed_lines(curwin->w_cursor.lnum, 0, curwin->w_cursor.lnum, 1L, true);
+  }
 
   curwin->w_cursor.col = newcol;
   curwin->w_cursor.coladd = 0;
@@ -1860,7 +1861,7 @@ static void changedOneline(buf_T *buf, linenr_T lnum)
  */
 void appended_lines(linenr_T lnum, long count)
 {
-  changed_lines(lnum + 1, 0, lnum + 1, count);
+  changed_lines(lnum + 1, 0, lnum + 1, count, true);
 }
 
 /*
@@ -1873,7 +1874,7 @@ void appended_lines_mark(linenr_T lnum, long count)
   if (lnum + count < curbuf->b_ml.ml_line_count) {
     mark_adjust(lnum + 1, (linenr_T)MAXLNUM, count, 0L, false);
   }
-  changed_lines(lnum + 1, 0, lnum + 1, count);
+  changed_lines(lnum + 1, 0, lnum + 1, count, true);
 }
 
 /*
@@ -1883,7 +1884,7 @@ void appended_lines_mark(linenr_T lnum, long count)
  */
 void deleted_lines(linenr_T lnum, long count)
 {
-  changed_lines(lnum, 0, lnum + count, -count);
+  changed_lines(lnum, 0, lnum + count, -count, true);
 }
 
 /*
@@ -1894,7 +1895,7 @@ void deleted_lines(linenr_T lnum, long count)
 void deleted_lines_mark(linenr_T lnum, long count)
 {
   mark_adjust(lnum, (linenr_T)(lnum + count - 1), (long)MAXLNUM, -count, false);
-  changed_lines(lnum, 0, lnum + count, -count);
+  changed_lines(lnum, 0, lnum + count, -count, true);
 }
 
 /*
@@ -1914,7 +1915,11 @@ changed_lines (
     linenr_T lnum,              /* first line with change */
     colnr_T col,                /* column in first line with change */
     linenr_T lnume,             /* line below last changed line */
-    long xtra                  /* number of extra lines (negative when deleting) */
+    long xtra,                  /* number of extra lines (negative when deleting) */
+    bool send_liveupdate  // some callers like undo/redo call changed_lines()
+                          // and then increment b_changedtick *again*. This flag
+                          // allows these callers to send the LiveUpdate events
+                          // after they're done modifying b_changedtick.
 )
 {
   changed_lines_buf(curbuf, lnum, lnume, xtra);
@@ -1939,7 +1944,7 @@ changed_lines (
 
   changed_common(lnum, col, lnume, xtra);
 
-  if (kv_size(curbuf->liveupdate_channels)) {
+  if (send_liveupdate && kv_size(curbuf->liveupdate_channels)) {
     int64_t num_added = (int64_t)(lnume + xtra - lnum);
     int64_t num_removed = lnume - lnum;
     liveupdate_send_changes(curbuf, lnum, num_added, num_removed);

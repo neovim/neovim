@@ -92,6 +92,7 @@
 #include "nvim/eval.h"
 #include "nvim/fileio.h"
 #include "nvim/fold.h"
+#include "nvim/liveupdate.h"
 #include "nvim/mark.h"
 #include "nvim/memline.h"
 #include "nvim/message.h"
@@ -2242,7 +2243,7 @@ static void u_undoredo(int undo)
       }
     }
 
-    changed_lines(top + 1, 0, bot, newsize - oldsize);
+    changed_lines(top + 1, 0, bot, newsize - oldsize, true);
 
     /* set '[ and '] mark */
     if (top + 1 < curbuf->b_op_start.lnum)
@@ -2274,6 +2275,13 @@ static void u_undoredo(int undo)
     changed();
   else
     unchanged(curbuf, FALSE);
+
+  // because the calls to changed()/unchanged() above will bump b_changedtick
+  // again, we need to send a LiveUpdate with just the new value of
+  // b:changedtick
+  if (kv_size(curbuf->liveupdate_channels)) {
+    liveupdate_send_tick(curbuf);
+  }
 
   /*
    * restore marks from before undo/redo
