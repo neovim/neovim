@@ -467,7 +467,7 @@ static const int included_patches[] = {
   1980,
   // 1979,
   // 1978,
-  // 1977,
+  1977,
   1976,
   1975,
   // 1974 NA
