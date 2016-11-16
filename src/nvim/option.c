@@ -4630,7 +4630,7 @@ get_option_value (
     if ((int *)varp == &curbuf->b_changed) {
       *numval = curbufIsChanged();
     } else {
-      *numval = (long) *(varnumber_T *)varp;
+      *numval = (long) *(int *)varp;
     }
   }
   return 1;
