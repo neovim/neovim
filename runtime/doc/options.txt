@@ -6512,7 +6512,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 				     *'ttyfast'* *'tf'* *'nottyfast'* *'notf'*
 'ttyfast' 'tf'		Removed. |vim-differences| {Nvim}
 
-						*'undodir'* *'udir'* *E926*
+						*'undodir'* *'udir'* *E5003*
 'undodir' 'udir'	string	(default "$XDG_DATA_HOME/nvim/undo")
 			global
 			{only when compiled with the |+persistent_undo| feature}

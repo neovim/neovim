@@ -5069,7 +5069,7 @@ msgpackdump({list})				   {Nvim} *msgpackdump()*
 		(dictionary with zero items is represented by 0x80 byte in
 		messagepack).
 
-		Limitations:				*E951* *E952* *E953*
+		Limitations:				*E5004* *E5005*
 		1. |Funcref|s cannot be dumped.
 		2. Containers that reference themselves cannot be dumped.
 		3. Dictionary keys are always dumped as STR strings.
