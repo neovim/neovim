@@ -94,6 +94,7 @@ typedef enum {
     VV_FCS_CHOICE,
     VV_BEVAL_BUFNR,
     VV_BEVAL_WINNR,
+    VV_BEVAL_WINID,
     VV_BEVAL_LNUM,
     VV_BEVAL_COL,
     VV_BEVAL_TEXT,

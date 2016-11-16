@@ -354,6 +354,7 @@ static struct vimvar {
   VV(VV_FCS_CHOICE,     "fcs_choice",       VAR_STRING, 0),
   VV(VV_BEVAL_BUFNR,    "beval_bufnr",      VAR_NUMBER, VV_RO),
   VV(VV_BEVAL_WINNR,    "beval_winnr",      VAR_NUMBER, VV_RO),
+  VV(VV_BEVAL_WINID,    "beval_winid",      VAR_NUMBER, VV_RO),
   VV(VV_BEVAL_LNUM,     "beval_lnum",       VAR_NUMBER, VV_RO),
   VV(VV_BEVAL_COL,      "beval_col",        VAR_NUMBER, VV_RO),
   VV(VV_BEVAL_TEXT,     "beval_text",       VAR_STRING, VV_RO),
