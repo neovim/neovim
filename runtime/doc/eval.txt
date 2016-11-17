@@ -4411,7 +4411,8 @@ jobclose({job}[, {stream}])				{Nvim} *jobclose()*
 		Close {job}'s {stream}, which can be one of "stdin", "stdout",
 		"stderr" or "rpc" (closes the rpc channel for a job started
 		with the "rpc" option.) If {stream} is omitted, all streams
-		are closed.
+		are closed. If the job is a pty job, this will then close the
+		pty master, sending SIGHUP to the job process.
 
 jobpid({job})						{Nvim} *jobpid()*
 		Return the pid (process id) of {job}.

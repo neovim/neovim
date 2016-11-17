@@ -11459,6 +11459,9 @@ static void f_jobclose(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       process_close_err(proc);
     } else {
       process_close_streams(proc);
+      if (proc->type == kProcessTypePty) {
+        pty_process_close_master(&data->proc.pty);
+      }
     }
   }
 }
