@@ -129,8 +129,7 @@ preprocess_patch() {
   local nvim="nvim -u NORC -i NONE --headless"
 
   # Remove *.proto, Make*, gui_*, some if_*
-  local na_src='proto\|Make*\|gui_*'
-  na_src="$na_src"'\|if_lua\|if_mzsch\|if_olepp\|if_ole\|if_perl\|if_py\|if_ruby\|if_tcl\|if_xcmdsrv'
+  local na_src='proto\|Make*\|gui_*\|if_lua\|if_mzsch\|if_olepp\|if_ole\|if_perl\|if_py\|if_ruby\|if_tcl\|if_xcmdsrv'
   2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git a/src/\S*\<\%('${na_src}'\)@norm! d/\v(^diff)|%$' +w +q "$file"
 
   # Remove channel.txt, netbeans.txt, os_*.txt, todo.txt, version*.txt, tags
@@ -140,6 +139,10 @@ preprocess_patch() {
   # Remove some testdir/Make_*.mak files
   local na_src_testdir='Make_amiga.mak\|Make_dos.mak\|Make_ming.mak\|Make_vms.mms'
   2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git a/src/testdir/\%('${na_src_testdir}'\)@norm! d/\v(^diff)|%$' +w +q "$file"
+
+  # Remove some *.po files. #5622
+  local na_po='sjiscorr.c\|ja.sjis.po\|ko.po\|pl.cp1250.po\|pl.po\|ru.cp1251.po\|uk.cp1251.po\|zh_CN.cp936.po\|zh_CN.po\|zh_TW.po'
+  2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git a/src/po/\%('${na_po}'\)@norm! d/\v(^diff)|%$' +w +q "$file"
 
   # Rename src/ paths to src/nvim/
   LC_ALL=C sed -e 's/\( [ab]\/src\)/\1\/nvim/g' \
