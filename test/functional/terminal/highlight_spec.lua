@@ -45,7 +45,7 @@ describe('terminal window highlighting', function()
       return str
     end
 
-    describe(title, function() 
+    describe(title, function()
       before_each(function()
         set_attrs_fn()
         thelpers.feed_data('text')

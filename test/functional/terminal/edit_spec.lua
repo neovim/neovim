@@ -45,7 +45,7 @@ describe(':edit term://*', function()
     command('edit term://foobar')
     local bufcontents = {}
     local winheight = curwinmeths.get_height()
-    -- I have no idea why there is + 4 needed. But otherwise it works fine with 
+    -- I have no idea why there is + 4 needed. But otherwise it works fine with
     -- different scrollbacks.
     local shift = -4
     local buf_cont_start = rep_size - 1 - sb - winheight - shift

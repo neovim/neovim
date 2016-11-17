@@ -7,7 +7,7 @@ describe('TabClosed', function()
             it('matches when  closing any tab', function()
                 clear()
                 nvim('command', 'au! TabClosed * echom "tabclosed:".expand("<afile>").":".expand("<amatch>").":".tabpagenr()')
-                repeat 
+                repeat
                     nvim('command',  'tabnew')
                 until nvim('eval', 'tabpagenr()') == 6 -- current tab is now 6
                 eq("\ntabclosed:6:6:5", nvim('command_output', 'tabclose')) -- close last 6, current tab is now 5
@@ -19,7 +19,7 @@ describe('TabClosed', function()
         describe('with NR as <afile>', function()
             it('matches when  closing a tab whose index is NR', function()
                 nvim('command', 'au! TabClosed 2 echom "tabclosed:match"')
-                repeat 
+                repeat
                     nvim('command',  'tabnew')
                 until nvim('eval', 'tabpagenr()') == 5 -- current tab is now 5
                 -- sanity check, we shouldn't match on tabs with numbers other than 2

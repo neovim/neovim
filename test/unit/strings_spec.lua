@@ -13,7 +13,7 @@ describe('vim_strsave_escaped()', function()
     local res = strings.vim_strsave_escaped(to_cstr(s), to_cstr(chars))
     local ret = ffi.string(res)
 
-    -- Explicitly free memory so we are sure it is allocated: if it was not it 
+    -- Explicitly free memory so we are sure it is allocated: if it was not it
     -- will crash.
     strings.xfree(res)
     return ret
@@ -44,7 +44,7 @@ describe('vim_strnsave_unquoted()', function()
   local vim_strnsave_unquoted = function(s, len)
     local res = strings.vim_strnsave_unquoted(to_cstr(s), len or #s)
     local ret = ffi.string(res)
-    -- Explicitly free memory so we are sure it is allocated: if it was not it 
+    -- Explicitly free memory so we are sure it is allocated: if it was not it
     -- will crash.
     strings.xfree(res)
     return ret

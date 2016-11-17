@@ -22,8 +22,8 @@ local cmdtest = function(cmd, prep, ret1)
       command(cmd .. '\nabc\ndef\n')
       eq(ret1, buffer_contents())
     end)
-    -- Used to crash because this invokes history processing which uses 
-    -- hist_char2type which after fdb68e35e4c729c7ed097d8ade1da29e5b3f4b31 
+    -- Used to crash because this invokes history processing which uses
+    -- hist_char2type which after fdb68e35e4c729c7ed097d8ade1da29e5b3f4b31
     -- crashed.
     it(cmd .. 's' .. prep .. ' the current line by default when feeding',
     function()

@@ -4,7 +4,7 @@ local ok = helpers.ok
 local clear = helpers.clear
 
 describe(":argument", function()
-  before_each(function() 
+  before_each(function()
     clear()
   end)
 

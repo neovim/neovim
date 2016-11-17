@@ -32,7 +32,7 @@ describe('json_decode_string()', function()
   it('does not overflow when running with `n…`, `t…`, `f…`', function()
     local rettv = ffi.new('typval_T', {v_type=decode.VAR_UNKNOWN})
     decode.emsg_silent = 1
-    -- This will not crash, but if `len` argument will be ignored it will parse 
+    -- This will not crash, but if `len` argument will be ignored it will parse
     -- `null` as `null` and if not it will parse `null` as `n`.
     eq(0, decode.json_decode_string('null', 1, rettv))
     eq(decode.VAR_UNKNOWN, rettv.v_type)

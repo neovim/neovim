@@ -194,8 +194,8 @@ describe('ShaDa support code', function()
     reset()
     nvim_command('edit ' .. testfilename)
     nvim_command('normal! Gg;')
-    -- Note: without “sync” “commands” test has good changes to fail for unknown 
-    -- reason (in first eq expected 1 is compared with 2). Any command inserted 
+    -- Note: without “sync” “commands” test has good changes to fail for unknown
+    -- reason (in first eq expected 1 is compared with 2). Any command inserted
     -- causes this to work properly.
     nvim_command('" sync')
     eq(1, nvim_current_line())
