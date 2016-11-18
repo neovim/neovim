@@ -10,6 +10,15 @@ local origlines = {"original line 1",
                    "original line 5",
                    "original line 6"}
 
+function sendkeys(keys)
+  nvim('input', keys)
+  -- give neovim some time to process msgpack requests before possibly sending
+  -- more key presses - otherwise they all pile up in the queue and get
+  -- processed at once
+  local ntime = os.clock() + 0.01
+  repeat until os.clock() > ntime
+end
+
 function editoriginal(activate, lines)
   if not lines then
     lines = origlines
@@ -21,7 +30,7 @@ end
 
 function open(activate, lines)
   local filename = helpers.tmpname()
-  helpers.write_file(filename, table.concat(lines, "\n").."\n")
+  helpers.write_file(filename, table.concat(lines, "\n").."\n", true)
   command('edit ' .. filename)
   local b = nvim('get_current_buf')
   -- what is the value of b:changedtick?
@@ -52,6 +61,31 @@ end
 function expectn(name, args)
   -- expect the next message to be the specified notification event
   eq({'notification', name, args}, next_message())
+end
+
+function reopenwithfolds(b)
+  -- discard any changes to the buffer
+  local tick = reopen(b, origlines)
+
+  -- use markers for folds, make all folds open by default
+  command('setlocal foldmethod=marker foldlevel=20')
+
+  -- add a fold
+  command('2,4fold')
+  tick = tick + 1
+  expectn('LiveUpdate', {b, tick, 1, 3, {'original line 2/*{{{*/',
+                                          'original line 3',
+                                          'original line 4/*}}}*/'}})
+  -- make a new fold that wraps lines 1-6
+  command('1,6fold')
+  tick = tick + 1
+  expectn('LiveUpdate', {b, tick, 0, 6, {'original line 1/*{{{*/',
+                                          'original line 2/*{{{*/',
+                                          'original line 3',
+                                          'original line 4/*}}}*/',
+                                          'original line 5',
+                                          'original line 6/*}}}*/'}})
+  return tick
 end
 
 describe('liveupdate', function()
@@ -196,6 +230,7 @@ describe('liveupdate', function()
 
   it('knows when you modify lines of text', function()
     local b, tick = editoriginal(true)
+    local channel = nvim('get_api_info')[1]
 
     -- some normal text editing
     command('normal! A555')
@@ -208,7 +243,7 @@ describe('liveupdate', function()
     -- modify multiple lines at once using visual block mode
     tick = reopen(b, origlines)
     command('normal! jjw')
-    nvim('input', '\x16jjllx')
+    sendkeys('\x16jjllx')
     tick = tick + 1
     expectn('LiveUpdate',
             {b, tick, 2, 3, {'original e 3', 'original e 4', 'original e 5'}})
@@ -234,17 +269,19 @@ describe('liveupdate', function()
     bnew = nvim('get_current_buf')
     ok(buffer('live_updates', bnew, true))
     expectn('LiveUpdateStart', {bnew, tick, {''}, false})
-    nvim('input', 'i')
-    nvim('input', 'h')
-    nvim('input', 'e')
-    nvim('input', 'l')
-    nvim('input', 'l')
-    nvim('input', 'o')
+    sendkeys('i')
+    sendkeys('h')
+    sendkeys('e')
+    sendkeys('l')
+    sendkeys('l')
+    sendkeys('o\nworld')
     expectn('LiveUpdate', {bnew, tick + 1, 0, 1, {'h'}})
     expectn('LiveUpdate', {bnew, tick + 2, 0, 1, {'he'}})
     expectn('LiveUpdate', {bnew, tick + 3, 0, 1, {'hel'}})
     expectn('LiveUpdate', {bnew, tick + 4, 0, 1, {'hell'}})
     expectn('LiveUpdate', {bnew, tick + 5, 0, 1, {'hello'}})
+    expectn('LiveUpdate', {bnew, tick + 6, 0, 1, {'hello', ''}})
+    expectn('LiveUpdate', {bnew, tick + 7, 1, 1, {'world'}})
   end)
 
   it('knows when you replace lines', function()
@@ -286,6 +323,46 @@ describe('liveupdate', function()
     expectn('LiveUpdate', {b, tick, 1, 4, {}})
   end)
 
+  it('sends a sensible event when you use "o"', function()
+    b, tick = editoriginal(true, {'AAA', 'BBB'})
+    command('set noautoindent nosmartindent')
+
+    -- use 'o' to start a new line from a line with no indent
+    command('normal! o')
+    tick = tick + 1
+    expectn('LiveUpdate', {b, tick, 1, 0, {""}})
+
+    -- undo the change, indent line 1 a bit, and try again
+    command('undo')
+    tick = tick + 1
+    expectn('LiveUpdate', {b, tick, 1, 1, {}})
+    tick = tick + 1
+    expectn('LiveUpdateTick', {b, tick})
+    command('set autoindent')
+    command('normal! >>')
+    tick = tick + 1
+    expectn('LiveUpdate', {b, tick, 0, 1, {"\tAAA"}})
+    command('normal! ommm')
+    tick = tick + 1
+    expectn('LiveUpdate', {b, tick, 1, 0, {"\t"}})
+    tick = tick + 1
+    expectn('LiveUpdate', {b, tick, 1, 1, {"\tmmm"}})
+
+    -- undo the change, and try again with 'O'
+    command('undo')
+    tick = tick + 1
+    expectn('LiveUpdate', {b, tick, 1, 1, {'\t'}})
+    tick = tick + 1
+    expectn('LiveUpdate', {b, tick, 1, 1, {}})
+    tick = tick + 1
+    expectn('LiveUpdateTick', {b, tick})
+    command('normal! ggOmmm')
+    tick = tick + 1
+    expectn('LiveUpdate', {b, tick, 0, 0, {"\t"}})
+    tick = tick + 1
+    expectn('LiveUpdate', {b, tick, 0, 1, {"\tmmm"}})
+  end)
+
   it('deactivates when your buffer changes outside vim', function()
     -- Test changing file from outside vim and reloading using :edit
     local lines = {"Line 1", "Line 2"};
@@ -298,6 +375,7 @@ describe('liveupdate', function()
     tick = tick + 1
     expectn('LiveUpdate', {b, tick, 0, 1, {'Line 1'}})
     tick = tick + 1
+    expectn('LiveUpdateTick', {b, tick})
 
     -- change the file directly
     local f = io.open(filename, 'a')
@@ -332,7 +410,8 @@ describe('liveupdate', function()
     command('undo')
     tick1 = tick1 + 1
     expectn('LiveUpdate', {b1, tick1, 0, 1, {'A1'}})
-    tick1 = tick1 + 1 -- :undo causes another increment after the LiveUpdate
+    tick1 = tick1 + 1
+    expectn('LiveUpdateTick', {b1, tick1})
 
     command('b'..b2nr)
     command('normal! x')
@@ -341,7 +420,8 @@ describe('liveupdate', function()
     command('undo')
     tick2 = tick2 + 1
     expectn('LiveUpdate', {b2, tick2, 0, 1, {'B1'}})
-    tick2 = tick2 + 1 -- :undo causes another increment after the LiveUpdate
+    tick2 = tick2 + 1
+    expectn('LiveUpdateTick', {b2, tick2})
 
     command('b'..b3nr)
     command('normal! x')
@@ -350,6 +430,8 @@ describe('liveupdate', function()
     command('undo')
     tick3 = tick3 + 1
     expectn('LiveUpdate', {b3, tick3, 0, 1, {'C1'}})
+    tick3 = tick3 + 1
+    expectn('LiveUpdateTick', {b3, tick3})
   end)
 
   it('doesn\'t get confused when you turn watching on/off many times',
@@ -435,6 +517,8 @@ describe('liveupdate', function()
     wantn(2, 'LiveUpdate', {b, tick, 0, 1, {'AAA'}})
     wantn(3, 'LiveUpdate', {b, tick, 0, 1, {'AAA'}})
     tick = tick + 1
+    wantn(2, 'LiveUpdateTick', {b, tick})
+    wantn(3, 'LiveUpdateTick', {b, tick})
 
     -- make sure there are no other pending LiveUpdate messages going to
     -- channel 1
@@ -455,6 +539,125 @@ describe('liveupdate', function()
     wantn(1, 'Hello Again', {})
   end)
 
+  it('works with :diffput and :diffget', function()
+    local b1, tick1 = editoriginal(true, {"AAA", "BBB"})
+    local channel = nvim('get_api_info')[1]
+    command('diffthis')
+    command('rightbelow vsplit')
+    local b2, tick2 = open(true, {"BBB", "CCC"})
+    command('diffthis')
+    -- go back to first buffer, and push the 'AAA' line to the second buffer
+    command('1wincmd w')
+    command('normal! gg')
+    command('diffput')
+    tick2 = tick2 + 1
+    expectn('LiveUpdate', {b2, tick2, 0, 0, {"AAA"}})
+
+    -- use :diffget to grab the other change from buffer 2
+    command('normal! G')
+    command('diffget')
+    tick1 = tick1 + 1
+    expectn('LiveUpdate', {b1, tick1, 2, 0, {"CCC"}})
+
+    eval('rpcnotify('..channel..', "Goodbye")')
+    expectn('Goodbye', {})
+  end)
+
+  it('works with :sort', function()
+    -- test for :sort
+    local b, tick = editoriginal(true, {"B", "D", "C", "A", "E"})
+    command('%sort')
+    tick = tick + 1
+    expectn('LiveUpdate', {b, tick, 0, 5, {"A", "B", "C", "D", "E"}})
+  end)
+
+  it('works with :left', function()
+    local b, tick = editoriginal(true, {" A", "  B", "B", "\tB", "\t\tC"})
+    local channel = nvim('get_api_info')[1]
+    command('2,4left')
+    tick = tick + 1
+    expectn('LiveUpdate', {b, tick, 1, 3, {"B", "B", "B"}})
+  end)
+
+  it('works with :right', function()
+    local b, tick = editoriginal(true, {" A",
+                                        "\t  B",
+                                        "\t  \tBB",
+                                        " \tB",
+                                        "\t\tC"})
+    local channel = nvim('get_api_info')[1]
+    command('set ts=2 et')
+    command('2,4retab')
+    tick = tick + 1
+    expectn('LiveUpdate', {b, tick, 1, 3, {"    B", "      BB", "  B"}})
+  end)
+
+  it('works with :move', function()
+    local b, tick = editoriginal(true, origlines)
+    local channel = nvim('get_api_info')[1]
+    -- move text down towards the end of the file
+    command('2,3move 4')
+    tick = tick + 2
+    expectn('LiveUpdate', {b, tick, 4, 0, {"original line 2",
+                                           "original line 3"}})
+    tick = tick + 1
+    expectn('LiveUpdate', {b, tick, 1, 2, {}})
+
+    -- move text up towards the start of the file
+    tick = reopen(b, origlines)
+    command('4,5move 2')
+    tick = tick + 2
+    expectn('LiveUpdate', {b, tick, 2, 0, {"original line 4",
+                                           "original line 5"}})
+    tick = tick + 1
+    expectn('LiveUpdate', {b, tick, 5, 2, {}})
+  end)
+
+  it('sends sensible events when you manually add/remove folds', function()
+    local b, tick = editoriginal(true)
+    local channel = nvim('get_api_info')[1]
+    tick = reopenwithfolds(b)
+
+    -- delete the inner fold
+    command('normal! zR3Gzd')
+    tick = tick + 1
+    expectn('LiveUpdate', {b, tick, 1, 3, {'original line 2',
+                                           'original line 3',
+                                           'original line 4'}})
+    -- delete the outer fold
+    command('normal! zd')
+    tick = tick + 1
+    expectn('LiveUpdate', {b, tick, 0, 6, origlines})
+
+    -- discard changes and put the folds back
+    tick = reopenwithfolds(b)
+
+    -- remove both folds at once
+    command('normal! ggzczD')
+    tick = tick + 1
+    expectn('LiveUpdate', {b, tick, 0, 6, origlines})
+
+    -- discard changes and put the folds back
+    tick = reopenwithfolds(b)
+
+    -- now delete all folds at once
+    command('normal! zE')
+    tick = tick + 1
+    expectn('LiveUpdate', {b, tick, 0, 6, origlines})
+
+    -- create a fold from line 4 to the end of the file
+    command('normal! 4GA/*{{{*/')
+    tick = tick + 1
+    expectn('LiveUpdate', {b, tick, 3, 1, {'original line 4/*{{{*/'}})
+
+    -- delete the fold which only has one marker
+    command('normal! Gzd')
+    tick = tick + 1
+    expectn('LiveUpdate', {b, tick, 3, 3, {'original line 4',
+                                           'original line 5',
+                                           'original line 6'}})
+  end)
+
   it('turns off updates when a buffer is closed', function()
     local b, tick = editoriginal(true, {'AAA'})
     local channel = nvim('get_api_info')[1]
@@ -466,9 +669,8 @@ describe('liveupdate', function()
     command('undo')
     tick = tick + 1
     expectn('LiveUpdate', {b, tick, 0, 1, {'AAA'}})
-    -- undo causes another increment of b:changedtick, but after the LiveUpdate
-    -- has been sent
     tick = tick + 1
+    expectn('LiveUpdateTick', {b, tick})
 
     -- close our buffer by creating a new one
     command('enew')
@@ -494,6 +696,8 @@ describe('liveupdate', function()
     command('undo')
     tick = tick + 1
     expectn('LiveUpdate', {b, tick, 0, 1, {'AAA'}})
+    tick = tick + 1
+    expectn('LiveUpdateTick', {b, tick})
 
     -- close our buffer by creating a new one
     command('set hidden')
@@ -506,7 +710,7 @@ describe('liveupdate', function()
     -- reopen the original buffer, make sure Live Updates are still active
     command('b1')
     command('normal! x')
-    tick = tick + 2
+    tick = tick + 1
     expectn('LiveUpdate', {b, tick, 0, 1, {'AA'}})
   end)
 
@@ -516,8 +720,8 @@ describe('liveupdate', function()
     helpers.clear()
     -- need to make a new window with a buffer because :bunload doesn't let you
     -- unload the last buffer
-    command('new')
     for i, cmd in ipairs({'bunload', 'bdelete', 'bwipeout'}) do
+      command('new')
       -- open a brand spanking new file
       local b, filename = open(true, {'AAA'})
 
