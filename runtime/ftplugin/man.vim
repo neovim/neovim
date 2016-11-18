@@ -11,7 +11,7 @@ let s:pager = 0
 if has('vim_starting')
   let s:pager = 1
   " remove all those backspaces
-  silent execute 'keeppatterns keepjumps %substitute,.\b,,e'.(&gdefault?'':'g')
+  execute 'silent keeppatterns keepjumps %substitute,.\b,,e'.(&gdefault?'':'g')
   if getline(1) =~# '^\s*$'
     silent keepjumps 1delete _
   else
@@ -20,8 +20,12 @@ if has('vim_starting')
   " This is not perfect. See `man glDrawArraysInstanced`. Since the title is
   " all caps it is impossible to tell what the original capitilization was.
   let ref = tolower(matchstr(getline(1), '^\S\+'))
-  let b:man_sect = man#extract_sect_and_name_ref(ref)[0]
-  execute 'silent file man://'.ref
+  try
+    let b:man_sect = man#extract_sect_and_name_ref(ref)[0]
+  catch
+    let b:man_sect = ''
+  endtry
+  execute 'silent file man://'.fnameescape(ref)
 endif
 
 setlocal buftype=nofile

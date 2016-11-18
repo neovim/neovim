@@ -50,7 +50,7 @@ function! man#open_page(count, count1, mods, ...) abort
     return
   endtry
   call s:push_tag()
-  let bufname = 'man://'.name.(empty(sect)?'':'('.sect.')')
+  let bufname = fnameescape('man://'.name.(empty(sect)?'':'('.sect.')'))
   if a:mods !~# 'tab' && s:find_man()
     noautocmd execute 'silent edit' bufname
   else
@@ -157,7 +157,7 @@ endfunction
 function! man#pop_tag() abort
   if !empty(s:tag_stack)
     let tag = remove(s:tag_stack, -1)
-    silent execute tag['buf'].'buffer'
+    execute 'silent' tag['buf'].'buffer'
     call cursor(tag['lnum'], tag['col'])
   endif
 endfunction
