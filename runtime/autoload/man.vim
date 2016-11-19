@@ -50,11 +50,11 @@ function! man#open_page(count, count1, mods, ...) abort
     return
   endtry
   call s:push_tag()
-  let bufname = fnameescape('man://'.name.(empty(sect)?'':'('.sect.')'))
+  let bufname = 'man://'.name.(empty(sect)?'':'('.sect.')')
   if a:mods !~# 'tab' && s:find_man()
-    noautocmd execute 'silent edit' bufname
+    noautocmd execute 'silent edit' fnameescape(bufname)
   else
-    noautocmd execute 'silent' a:mods 'split' bufname
+    noautocmd execute 'silent' a:mods 'split' fnameescape(bufname)
   endif
   let b:man_sect = sect
   call s:read_page(path)
@@ -81,7 +81,7 @@ function! s:read_page(path) abort
   let cmd  = 'env MANPAGER=cat'.(empty($MANWIDTH) ? ' MANWIDTH='.winwidth(0) : '')
   let cmd .= ' '.s:man_cmd.' '.shellescape(a:path)
   silent put =system(cmd)
-  " remove all the backspaced text
+  " Remove all backspaced characters.
   execute 'silent keeppatterns keepjumps %substitute,.\b,,e'.(&gdefault?'':'g')
   while getline(1) =~# '^\s*$'
     silent keepjumps 1delete _
@@ -258,4 +258,23 @@ function! s:format_candidate(path, sect) abort
     " of the actual section.
     return name.'('.sect.')'
   endif
+endfunction
+
+function! man#init_pager() abort
+  " Remove all backspaced characters.
+  execute 'silent keeppatterns keepjumps %substitute,.\b,,e'.(&gdefault?'':'g')
+  if getline(1) =~# '^\s*$'
+    silent keepjumps 1delete _
+  else
+    keepjumps 1
+  endif
+  " This is not perfect. See `man glDrawArraysInstanced`. Since the title is
+  " all caps it is impossible to tell what the original capitilization was.
+  let ref = tolower(matchstr(getline(1), '^\S\+'))
+  try
+    let b:man_sect = man#extract_sect_and_name_ref(ref)[0]
+  catch
+    let b:man_sect = ''
+  endtry
+  execute 'silent file man://'.fnameescape(ref)
 endfunction
