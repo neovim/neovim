@@ -2399,6 +2399,18 @@ static char *set_string_option(const int opt_idx, const char *const value,
   return r;
 }
 
+/// Return true if "val" is a valid 'filetype' name.
+/// Also used for 'syntax' and 'keymap'.
+static bool valid_filetype(char_u *val)
+{
+  for (char_u *s = val; *s != NUL; s++) {
+    if (!ASCII_ISALNUM(*s) && vim_strchr((char_u *)".-_", *s) == NULL) {
+      return false;
+    }
+  }
+  return true;
+}
+
 /*
  * Handle string options that need some action to perform when changed.
  * Returns NULL for success, or an error message for an error.
@@ -2623,8 +2635,12 @@ did_set_string_option (
     xfree(p_penc);
     p_penc = p;
   } else if (varp == &curbuf->b_p_keymap) {
-    /* load or unload key mapping tables */
-    errmsg = keymap_init();
+    if (!valid_filetype(*varp)) {
+      errmsg = e_invarg;
+    } else {
+      // load or unload key mapping tables
+      errmsg = keymap_init();
+    }
 
     if (errmsg == NULL) {
       if (*curbuf->b_p_keymap != NUL) {
@@ -3118,8 +3134,16 @@ did_set_string_option (
       if (check_opt_strings(p_icm, p_icm_values, false) != OK) {
         errmsg = e_invarg;
       }
-  // Options that are a list of flags.
+  } else if (gvarp == &p_ft) {
+    if (!valid_filetype(*varp)) {
+      errmsg = e_invarg;
+    }
+  } else if (gvarp == &p_syn) {
+    if (!valid_filetype(*varp)) {
+      errmsg = e_invarg;
+    }
   } else {
+    // Options that are a list of flags.
     p = NULL;
     if (varp == &p_ww)
       p = (char_u *)WW_ALL;
