@@ -93,8 +93,6 @@ after_success:  .ci/after_success.sh
 addons:
   apt:
     sources:
-      # TODO: Remove PPA when Travis gets Python >=3.3.
-      - deadsnakes
       - ubuntu-toolchain-r-test
     packages:
       - autoconf
