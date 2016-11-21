@@ -10658,7 +10658,7 @@ static void f_has(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   if (!n) {
     if (STRNICMP(name, "patch", 5) == 0) {
       if (name[5] == '-'
-          && strlen(name) > 11
+          && strlen(name) >= 11
           && ascii_isdigit(name[6])
           && ascii_isdigit(name[8])
           && ascii_isdigit(name[10])) {
