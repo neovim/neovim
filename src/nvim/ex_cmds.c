@@ -828,6 +828,11 @@ int do_move(linenr_T line1, linenr_T line2, linenr_T dest)
                      -(last_line - dest - extra), 0L, true);
   changed_lines(last_line - num_lines + 1, 0, last_line + 1, -extra, false);
 
+  // send live update regarding the new lines that were added
+  if (kv_size(curbuf->liveupdate_channels)) {
+    liveupdate_send_changes(curbuf, dest + 1, num_lines, 0, true);
+  }
+
   /*
    * Now we delete the original text -- webb
    */
@@ -860,6 +865,11 @@ int do_move(linenr_T line1, linenr_T line2, linenr_T dest)
     changed_lines(line1, 0, dest, 0L, false);
   } else {
     changed_lines(dest + 1, 0, line1 + num_lines, 0L, false);
+  }
+
+  // send LiveUpdate regarding lines that were deleted
+  if (kv_size(curbuf->liveupdate_channels)) {
+    liveupdate_send_changes(curbuf, line1 + extra, 0, num_lines, true);
   }
 
   return OK;
@@ -3151,7 +3161,7 @@ static char_u *sub_parse_flags(char_u *cmd, subflags_T *subflags,
 /// The usual escapes are supported as described in the regexp docs.
 ///
 /// @return buffer used for 'inccommand' preview
-static buf_T *do_sub(exarg_T *eap, proftime_T timeout)
+static buf_T *do_sub(exarg_T *eap, proftime_T timeout, bool send_liveupdate_changedtick)
 {
   long i = 0;
   regmmatch_T regmatch;
@@ -3995,6 +4005,13 @@ skip:
      * deleted lines). */
     i = curbuf->b_ml.ml_line_count - old_line_count;
     changed_lines(first_line, 0, last_line - i, i, false);
+
+    if (kv_size(curbuf->liveupdate_channels)) {
+      int64_t num_added = last_line - first_line;
+      int64_t num_removed = num_added - i;
+      liveupdate_send_changes(curbuf, first_line, num_added, num_removed,
+                              send_liveupdate_changedtick);
+    }
   }
 
   xfree(sub_firstline);   /* may have to free allocated copy of the line */
@@ -6236,7 +6253,7 @@ void ex_substitute(exarg_T *eap)
 {
   bool preview = (State & CMDPREVIEW);
   if (*p_icm == NUL || !preview) {  // 'inccommand' is disabled
-    (void)do_sub(eap, profile_zero());
+    (void)do_sub(eap, profile_zero(), true);
     return;
   }
 
@@ -6260,7 +6277,7 @@ void ex_substitute(exarg_T *eap)
   // Don't show search highlighting during live substitution
   bool save_hls = p_hls;
   p_hls = false;
-  buf_T *preview_buf = do_sub(eap, profile_setlimit(p_rdt));
+  buf_T *preview_buf = do_sub(eap, profile_setlimit(p_rdt), false);
   p_hls = save_hls;
 
   if (save_changedtick != curbuf->b_changedtick) {

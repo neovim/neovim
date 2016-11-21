@@ -1819,7 +1819,7 @@ void changed_bytes(linenr_T lnum, colnr_T col)
   changed_common(lnum, col, lnum + 1, 0L);
   // notify any channels that are watching
   if (kv_size(curbuf->liveupdate_channels)) {
-    liveupdate_send_changes(curbuf, lnum, 1, 1);
+    liveupdate_send_changes(curbuf, lnum, 1, 1, true);
   }
 
   /* Diff highlighting in other diff windows may need to be updated too. */
@@ -1947,7 +1947,7 @@ changed_lines (
   if (send_liveupdate && kv_size(curbuf->liveupdate_channels)) {
     int64_t num_added = (int64_t)(lnume + xtra - lnum);
     int64_t num_removed = lnume - lnum;
-    liveupdate_send_changes(curbuf, lnum, num_added, num_removed);
+    liveupdate_send_changes(curbuf, lnum, num_added, num_removed, true);
   }
 }
 

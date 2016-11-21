@@ -108,7 +108,7 @@ void liveupdate_unregister_all(buf_T *buf) {
 }
 
 void liveupdate_send_changes(buf_T *buf, linenr_T firstline, int64_t num_added,
-                             int64_t num_removed) {
+                             int64_t num_removed, bool send_tick) {
   // if one the channels doesn't work, put its ID here so we can remove it later
   uint64_t badchannelid = 0;
 
@@ -125,7 +125,7 @@ void liveupdate_send_changes(buf_T *buf, linenr_T firstline, int64_t num_added,
     args.items[0] = BUFFER_OBJ(buf->handle);
 
     // next argument is b:changedtick
-    args.items[1] = INTEGER_OBJ(buf->b_changedtick);
+    args.items[1] = send_tick ? INTEGER_OBJ(buf->b_changedtick) : NIL;
 
     // the first line that changed (zero-indexed)
     args.items[2] = INTEGER_OBJ(firstline - 1);
