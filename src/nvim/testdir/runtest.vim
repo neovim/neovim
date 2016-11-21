@@ -51,6 +51,9 @@ lang mess C
 " Always use forward slashes.
 set shellslash
 
+" Make sure $HOME does not get read or written.
+let $HOME = '/does/not/exist'
+
 function RunTheTest(test)
   echo 'Executing ' . a:test
   if exists("*SetUp")
