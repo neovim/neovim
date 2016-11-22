@@ -2,7 +2,6 @@
 if !has('multi_byte')
   finish
 endif
-scriptencoding utf-8
 
 if !has('visual')
   finish
