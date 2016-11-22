@@ -1383,6 +1383,9 @@ v:dying		Normally zero.	When a deadly signal is caught it's set to
 <		Note: if another deadly signal is caught when v:dying is one,
 		VimLeave autocommands will not be executed.
 
+					*v:exiting* *exiting-variable*
+v:exiting	The exit value Nvim will use. Before exiting, it is |v:null|.
+
 					*v:errmsg* *errmsg-variable*
 v:errmsg	Last given error message.  It's allowed to set this variable.
 		Example: >
