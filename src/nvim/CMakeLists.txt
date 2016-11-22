@@ -347,5 +347,6 @@ add_library(nvim-test MODULE EXCLUDE_FROM_ALL ${NEOVIM_GENERATED_SOURCES}
     ${NEOVIM_SOURCES} ${UNIT_TEST_FIXTURES} ${NEOVIM_HEADERS})
 target_link_libraries(nvim-test ${NVIM_LINK_LIBRARIES})
 set_property(TARGET nvim-test APPEND_STRING PROPERTY COMPILE_FLAGS "-DUNIT_TESTING ${GCOV_FLAG} ")
+set_property(TARGET nvim-test APPEND_STRING PROPERTY LINK_FLAGS " ${GCOV_FLAG} ")
 
 add_subdirectory(po)
