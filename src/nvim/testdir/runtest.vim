@@ -126,6 +126,9 @@ for s:test in sort(s:tests)
 
 endfor
 
+" Don't write viminfo on exit.
+set viminfo=
+
 if s:fail == 0
   " Success, create the .res file so that make knows it's done.
   exe 'split ' . fnamemodify(g:testname, ':r') . '.res'
