@@ -562,6 +562,7 @@ void eval_init(void)
   set_vim_var_list(VV_ERRORS, list_alloc());
   set_vim_var_nr(VV_SEARCHFORWARD, 1L);
   set_vim_var_nr(VV_HLSEARCH, 1L);
+  set_vim_var_nr(VV_COUNT1, 1);
 
   set_vim_var_special(VV_FALSE, kSpecialVarFalse);
   set_vim_var_special(VV_TRUE, kSpecialVarTrue);
