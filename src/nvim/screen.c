@@ -6827,12 +6827,18 @@ void unshowmode(bool force)
   if (!redrawing() || (!force && char_avail() && !KeyTyped)) {
     redraw_cmdline = true;  // delete mode later
   } else {
+    clearmode();
+  }
+}
+
+// Clear the mode message.
+void clearmode(void)
+{
     msg_pos_mode();
     if (Recording) {
       recording_mode(hl_attr(HLF_CM));
     }
     msg_clr_eos();
-  }
 }
 
 static void recording_mode(int attr)

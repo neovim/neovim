@@ -2322,7 +2322,6 @@ static int ins_compl_make_cyclic(void)
   return count;
 }
 
-
 // Set variables that store noselect and noinsert behavior from the
 // 'completeopt' value.
 void completeopt_was_set(void)
