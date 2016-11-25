@@ -12211,9 +12211,16 @@ static void find_some_match(typval_T *argvars, typval_T *rettv, int type)
   p_cpo = (char_u *)"";
 
   rettv->vval.v_number = -1;
-  if (type == 3) {
-    /* return empty list when there are no matches */
+  if (type == 3 || type == 4) {
+    // type 3: return empty list when there are no matches.
+    // type 4: return ["", -1, -1, -1]
     rettv_list_alloc(rettv);
+    if (type == 4) {
+      list_append_string(rettv->vval.v_list, (char_u *)"", 0);
+      list_append_number(rettv->vval.v_list, (varnumber_T)-1);
+      list_append_number(rettv->vval.v_list, (varnumber_T)-1);
+      list_append_number(rettv->vval.v_list, (varnumber_T)-1);
+    }
   } else if (type == 2) {
     rettv->v_type = VAR_STRING;
     rettv->vval.v_string = NULL;
@@ -12276,7 +12283,7 @@ static void find_some_match(typval_T *argvars, typval_T *rettv, int type)
           break;
         }
         xfree(tofree);
-        tofree = str = (char_u *) encode_tv2echo(&li->li_tv, NULL);
+        tofree = expr = str = (char_u *)encode_tv2echo(&li->li_tv, NULL);
         if (str == NULL) {
           break;
         }
@@ -12304,7 +12311,19 @@ static void find_some_match(typval_T *argvars, typval_T *rettv, int type)
     }
 
     if (match) {
-      if (type == 3) {
+      if (type == 4) {
+        listitem_T *li1 = rettv->vval.v_list->lv_first;
+        listitem_T *li2 = li1->li_next;
+        listitem_T *li3 = li2->li_next;
+        listitem_T *li4 = li3->li_next;
+        int rd = (int)(regmatch.endp[0] - regmatch.startp[0]);
+        li1->li_tv.vval.v_string = vim_strnsave(regmatch.startp[0], rd);
+        li3->li_tv.vval.v_number = (varnumber_T)(regmatch.startp[0] - expr);
+        li4->li_tv.vval.v_number = (varnumber_T)(regmatch.endp[0] - expr);
+        if (l != NULL) {
+          li2->li_tv.vval.v_number = (varnumber_T)idx;
+        }
+      } else if (type == 3) {
         int i;
 
         /* return list with matched string and submatches */
@@ -12337,6 +12356,11 @@ static void find_some_match(typval_T *argvars, typval_T *rettv, int type)
       }
     }
     vim_regfree(regmatch.regprog);
+  }
+
+  if (type == 4 && l == NULL) {
+    // matchstrpos() without a list: drop the second item
+    listitem_remove(rettv->vval.v_list, rettv->vval.v_list->lv_first->li_next);
   }
 
 theend:
@@ -12511,6 +12535,11 @@ static void f_matchstr(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   find_some_match(argvars, rettv, 2);
 }
 
+/// "matchstrpos()" function
+static void f_matchstrpos(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  find_some_match(argvars, rettv, 4);
+}
 
 static void max_min(typval_T *argvars, typval_T *rettv, int domax)
 {
