@@ -70,6 +70,11 @@ describe('jobs', function()
     ok(rv ~= nil)
   end)
 
+  it('returns -1 when target is not executable', function()
+    local rv = eval("jobstart(['./test/functional/fixtures/non_executable.txt'])")
+    eq(-1, rv)
+  end)
+
   it('invokes callbacks when the job writes and exits', function()
     nvim('command', "call jobstart(['echo'], g:job_opts)")
     eq({'notification', 'stdout', {0, {'', ''}}}, next_msg())

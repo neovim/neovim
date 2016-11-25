@@ -11597,9 +11597,6 @@ static char **tv_to_argv(typval_T *cmd_tv, char **cmd)
   const char_u *exe = get_tv_string_chk(&argl->lv_first->li_tv);
   if (!exe || !os_can_exe(exe, NULL, true)) {
     // String is not executable
-    if (exe) {
-      EMSG2(e_jobexe, exe);
-    }
     return NULL;
   }
 
@@ -11635,6 +11632,7 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   char **argv = tv_to_argv(&argvars[0], NULL);
   if (!argv) {
+    rettv->vval.v_number = -1;  // Return -1 on non executable
     return;  // Did error message in tv_to_argv.
   }
 
@@ -16430,6 +16428,7 @@ static void f_termopen(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   char *cmd;
   char **argv = tv_to_argv(&argvars[0], &cmd);
   if (!argv) {
+    rettv->vval.v_number = -1;  // Return -1 on non executable
     return;  // Did error message in tv_to_argv.
   }
 
