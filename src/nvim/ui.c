@@ -532,13 +532,16 @@ static void ui_mode_change(void)
   if (!full_screen) {
     return;
   }
-  /* Get a simple UI mode out of State. */
-  if ((State & REPLACE) == REPLACE)
+  // Get a simple UI mode out of State.
+  if ((State & REPLACE) == REPLACE) {
     mode = REPLACE;
-  else if (State & INSERT)
+  } else if (State & INSERT) {
     mode = INSERT;
-  else
+  } else if (State & CMDLINE) {
+    mode = CMDLINE;
+  } else {
     mode = NORMAL;
+  }
   UI_CALL(mode_change, mode);
   conceal_check_cursur_line();
 }
