@@ -2145,11 +2145,9 @@ get_lval (
 
     if (lp->ll_tv->v_type == VAR_DICT) {
       if (len == -1) {
-        /* "[key]": get key from "var1" */
-        key = get_tv_string(&var1);             /* is number or string */
-        if (*key == NUL) {
-          if (!quiet)
-            EMSG(_(e_emptykey));
+        // "[key]": get key from "var1"
+        key = get_tv_string_chk(&var1);  // is number or string
+        if (key == NULL) {
           clear_tv(&var1);
           return NULL;
         }
@@ -4600,10 +4598,8 @@ eval_index (
         dictitem_T  *item;
 
         if (len == -1) {
-          key = get_tv_string(&var1);
-          if (*key == NUL) {
-            if (verbose)
-              EMSG(_(e_emptykey));
+          key = get_tv_string_chk(&var1);
+          if (key == NULL) {
             clear_tv(&var1);
             return FAIL;
           }
@@ -6587,10 +6583,8 @@ static int get_dict_tv(char_u **arg, typval_T *rettv, int evaluate)
     }
     if (evaluate) {
       key = get_tv_string_buf_chk(&tvkey, buf);
-      if (key == NULL || *key == NUL) {
-        /* "key" is NULL when get_tv_string_buf_chk() gave an errmsg */
-        if (key != NULL)
-          EMSG(_(e_emptykey));
+      if (key == NULL) {
+        // "key" is NULL when get_tv_string_buf_chk() gave an errmsg
         clear_tv(&tvkey);
         goto failret;
       }
