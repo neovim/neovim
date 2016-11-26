@@ -6105,7 +6105,8 @@ bool set_ref_in_item(typval_T *tv, int copyID, ht_stack_T **ht_stack,
 
         if (pt != NULL) {
           for (i = 0; i < pt->pt_argc; i++) {
-            abort = set_ref_in_item(&pt->pt_argv[i], copyID, ht_stack, list_stack);
+            abort = abort || set_ref_in_item(&pt->pt_argv[i], copyID,
+                                             ht_stack, list_stack);
           }
         }
       }
