@@ -1604,7 +1604,7 @@ return {
   },
   {
     command='messages',
-    flags=bit.bor(TRLBAR, CMDWIN),
+    flags=bit.bor(EXTRA, TRLBAR, RANGE, CMDWIN),
     addr_type=ADDR_LINES,
     func='ex_messages',
   },
