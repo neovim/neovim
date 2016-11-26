@@ -6888,16 +6888,17 @@ static void draw_tabline(void)
 
   /* Use the 'tabline' option if it's set. */
   if (*p_tal != NUL) {
-    int save_called_emsg = called_emsg;
+    int saved_did_emsg = did_emsg;
 
-    /* Check for an error.  If there is one we would loop in redrawing the
-     * screen.  Avoid that by making 'tabline' empty. */
-    called_emsg = FALSE;
-    win_redr_custom(NULL, FALSE);
-    if (called_emsg)
+    // Check for an error.  If there is one we would loop in redrawing the
+    // screen.  Avoid that by making 'tabline' empty.
+    did_emsg = false;
+    win_redr_custom(NULL, false);
+    if (did_emsg) {
       set_string_option_direct((char_u *)"tabline", -1,
-          (char_u *)"", OPT_FREE, SID_ERROR);
-    called_emsg |= save_called_emsg;
+                               (char_u *)"", OPT_FREE, SID_ERROR);
+    }
+    did_emsg |= saved_did_emsg;
   } else {
     FOR_ALL_TABS(tp) {
       ++tabcount;
