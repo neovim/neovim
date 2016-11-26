@@ -177,14 +177,14 @@ void ui_refresh(void)
   pum_set_external(pum_external);
 }
 
-static void ui_refresh_handler(void **argv)
+static void ui_refresh_event(void **argv)
 {
   ui_refresh();
 }
 
 void ui_schedule_refresh(void)
 {
-  loop_schedule(&main_loop, event_create(1, ui_refresh_handler, 0));
+  loop_schedule(&main_loop, event_create(1, ui_refresh_event, 0));
 }
 
 void ui_resize(int new_width, int new_height)

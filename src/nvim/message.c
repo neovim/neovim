@@ -19,6 +19,7 @@
 #include "nvim/fileio.h"
 #include "nvim/func_attr.h"
 #include "nvim/getchar.h"
+#include "nvim/main.h"
 #include "nvim/mbyte.h"
 #include "nvim/memory.h"
 #include "nvim/misc1.h"
@@ -579,6 +580,24 @@ bool emsgf(const char *const fmt, ...)
   va_end(ap);
 
   return emsg(IObuff);
+}
+
+static void msg_emsgf_event(void **argv)
+{
+  char *s = argv[0];
+  (void)emsg((char_u *)s);
+  xfree(s);
+}
+
+void msg_schedule_emsgf(const char *const fmt, ...)
+{
+  va_list ap;
+  va_start(ap, fmt);
+  vim_vsnprintf((char *)IObuff, IOSIZE, fmt, ap, NULL);
+  va_end(ap);
+
+  char *s = xstrdup((char *)IObuff);
+  loop_schedule(&main_loop, event_create(1, msg_emsgf_event, 1, s));
 }
 
 /*

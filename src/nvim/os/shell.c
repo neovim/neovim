@@ -548,8 +548,8 @@ static void shell_write_cb(Stream *stream, void *data, int status)
   if (status) {
     // Can happen if system() tries to send input to a shell command that was
     // backgrounded (:call system("cat - &", "foo")). #3529 #5241
-    EMSG2(_("E5677: Error writing input to shell-command: %s"),
-          uv_err_name(status));
+    msg_schedule_emsgf(_("E5677: Error writing input to shell-command: %s"),
+                       uv_err_name(status));
   }
   if (stream->closed) {  // Process may have exited before this write.
     ELOG("stream was already closed");
