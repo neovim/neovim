@@ -11,3 +11,6 @@ self = false
 
 -- Rerun tests only if their modification time changed.
 cache = true
+
+-- Ignore whitespace issues in converted Vim legacy tests.
+files["functional/legacy"] = {ignore = { "611", "612", "613", "621" }}

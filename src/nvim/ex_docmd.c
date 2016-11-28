@@ -271,7 +271,7 @@ do_exmode (
 int do_cmdline_cmd(const char *cmd)
 {
   return do_cmdline((char_u *)cmd, NULL, NULL,
-      DOCMD_VERBOSE|DOCMD_NOWAIT|DOCMD_KEYTYPED);
+                    DOCMD_NOWAIT|DOCMD_KEYTYPED);
 }
 
 /*
@@ -598,7 +598,7 @@ int do_cmdline(char_u *cmdline, LineGetter fgetline,
      *    "cmdline_copy" can change, e.g. for '%' and '#' expansion.
      */
     recursive++;
-    next_cmdline = do_one_cmd(&cmdline_copy, flags & DOCMD_VERBOSE,
+    next_cmdline = do_one_cmd(&cmdline_copy, flags,
                               &cstack,
                               cmd_getline, cmd_cookie);
     recursive--;
@@ -1225,7 +1225,7 @@ static void get_wincmd_addr_type(char_u *arg, exarg_T *eap)
  * This function may be called recursively!
  */
 static char_u * do_one_cmd(char_u **cmdlinep,
-                           int sourcing,
+                           int flags,
                            struct condstack *cstack,
                            LineGetter fgetline,
                            void *cookie /* argument for fgetline() */
@@ -1248,7 +1248,7 @@ static char_u * do_one_cmd(char_u **cmdlinep,
   memset(&ea, 0, sizeof(ea));
   ea.line1 = 1;
   ea.line2 = 1;
-  ++ex_nesting_level;
+  ex_nesting_level++;
 
   /* When the last file has not been edited :q has to be typed twice. */
   if (quitmore
@@ -1726,8 +1726,9 @@ static char_u * do_one_cmd(char_u **cmdlinep,
   if (ea.cmdidx == CMD_SIZE) {
     if (!ea.skip) {
       STRCPY(IObuff, _("E492: Not an editor command"));
-      if (!sourcing)
+      if (!(flags & DOCMD_VERBOSE)) {
         append_command(*cmdlinep);
+      }
       errormsg = IObuff;
       did_emsg_syntax = TRUE;
     }
@@ -1809,7 +1810,7 @@ static char_u * do_one_cmd(char_u **cmdlinep,
      */
     if (!global_busy && ea.line1 > ea.line2) {
       if (msg_silent == 0) {
-        if (sourcing || exmode_active) {
+        if ((flags & DOCMD_VERBOSE) || exmode_active) {
           errormsg = (char_u *)_("E493: Backwards range given");
           goto doend;
         }
@@ -2221,7 +2222,7 @@ doend:
     curwin->w_cursor.lnum = 1;
 
   if (errormsg != NULL && *errormsg != NUL && !did_emsg) {
-    if (sourcing) {
+    if (flags & DOCMD_VERBOSE) {
       if (errormsg != IObuff) {
         STRCPY(IObuff, errormsg);
         errormsg = IObuff;
@@ -7296,15 +7297,13 @@ void ex_may_print(exarg_T *eap)
   }
 }
 
-/*
- * ":smagic" and ":snomagic".
- */
+/// ":smagic" and ":snomagic".
 static void ex_submagic(exarg_T *eap)
 {
   int magic_save = p_magic;
 
   p_magic = (eap->cmdidx == CMD_smagic);
-  do_sub(eap);
+  ex_substitute(eap);
   p_magic = magic_save;
 }
 
@@ -7981,7 +7980,8 @@ static void ex_startinsert(exarg_T *eap)
 static void ex_stopinsert(exarg_T *eap)
 {
   restart_edit = 0;
-  stop_insert_mode = TRUE;
+  stop_insert_mode = true;
+  clearmode();
 }
 
 /*
@@ -9658,4 +9658,28 @@ static void ex_terminal(exarg_T *eap)
   if (mustfree) {
     xfree(name);
   }
+}
+
+/// Checks if `cmd` is "previewable" (i.e. supported by 'inccommand').
+///
+/// @param[in] cmd Commandline to check. May start with a range.
+///
+/// @return true if `cmd` is previewable
+bool cmd_can_preview(char_u *cmd)
+{
+  if (cmd == NULL) {
+    return false;
+  }
+
+  exarg_T ea;
+  // parse the command line
+  ea.cmd = skip_range(cmd, NULL);
+  if (*ea.cmd == '*') {
+    ea.cmd = skipwhite(ea.cmd + 1);
+  }
+  find_command(&ea, NULL);
+
+  return ea.cmdidx == CMD_substitute
+      || ea.cmdidx == CMD_smagic
+      || ea.cmdidx == CMD_snomagic;
 }

@@ -53,6 +53,10 @@ command with 'l'.
 If the current window was closed by an |autocommand| while processing a
 location list command, it will be aborted.
 
+							*E925* *E926*
+If the current quickfix or location list was changed by an |autocommand| while
+processing a quickfix or location list command, it will be aborted.
+
 							*:cc*
 :cc[!] [nr]		Display error [nr].  If [nr] is omitted, the same
 			error is displayed again.  Without [!] this doesn't

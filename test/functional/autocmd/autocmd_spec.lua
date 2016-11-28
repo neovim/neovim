@@ -2,6 +2,7 @@ local helpers = require('test.functional.helpers')(after_each)
 
 local clear = helpers.clear
 local command = helpers.command
+local eq = helpers.eq
 local eval = helpers.eval
 
 describe('autocmds:', function()
@@ -27,5 +28,9 @@ describe('autocmds:', function()
     command('autocmd WinLeave * :call add(g:foo, "WinLeave")')
     command('tabnew')
     assert.same(expected, eval('g:foo'))
+  end)
+
+  it('v:vim_did_enter is 1 after VimEnter', function()
+    eq(1, eval('v:vim_did_enter'))
   end)
 end)

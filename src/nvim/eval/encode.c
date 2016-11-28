@@ -837,7 +837,7 @@ char *encode_tv2json(typval_T *tv, size_t *len)
     msgpack_pack_double(packer, (double) (flt))
 
 #define TYPVAL_ENCODE_CONV_FUNC(fun) \
-    return conv_error(_("E951: Error while dumping %s, %s: " \
+    return conv_error(_("E5004: Error while dumping %s, %s: " \
                         "attempt to dump function reference"), \
                       mpstack, objname)
 
@@ -881,7 +881,7 @@ char *encode_tv2json(typval_T *tv, size_t *len)
 #define TYPVAL_ENCODE_CONV_LIST_BETWEEN_ITEMS()
 
 #define TYPVAL_ENCODE_CONV_RECURSE(val, conv_type) \
-    return conv_error(_("E952: Unable to dump %s: " \
+    return conv_error(_("E5005: Unable to dump %s: " \
                         "container references itself in %s"), \
                       mpstack, objname)
 

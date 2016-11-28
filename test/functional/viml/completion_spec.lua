@@ -527,7 +527,7 @@ describe('completion', function()
                                                                     |
       ]])
       expect([[
-        
+
         June
         June]])
     end)
@@ -774,7 +774,7 @@ describe('completion', function()
       {3:-- Keyword completion (^N^P) }{4:match 2 of 2}                   |
     ]])
   end)
-  
+
   describe('from the commandline window', function()
 
     it('is cleared after CTRL-C', function ()
@@ -898,7 +898,7 @@ describe('External completion popupmenu', function()
       {1:~                                                           }|
       {1:~                                                           }|
       {2:-- INSERT --}                                                |
-    ]], nil, nil, function() 
+    ]], nil, nil, function()
       eq(expected, items)
       eq(0, selected)
       eq({1,0}, anchor)
@@ -914,7 +914,7 @@ describe('External completion popupmenu', function()
       {1:~                                                           }|
       {1:~                                                           }|
       {2:-- INSERT --}                                                |
-    ]], nil, nil, function() 
+    ]], nil, nil, function()
       eq(expected, items)
       eq(-1, selected)
       eq({1,0}, anchor)

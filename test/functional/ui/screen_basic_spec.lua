@@ -3,6 +3,7 @@ local Screen = require('test.functional.ui.screen')
 local spawn, set_session, clear = helpers.spawn, helpers.set_session, helpers.clear
 local feed, execute = helpers.feed, helpers.execute
 local insert = helpers.insert
+local eq = helpers.eq
 
 if helpers.pending_win32(pending) then return end
 
@@ -574,6 +575,72 @@ describe('Screen', function()
         resize      |
         :ls^         |
       ]])
+    end)
+  end)
+
+  describe('mode change', function()
+    before_each(function()
+      screen:try_resize(25, 5)
+    end)
+
+    it('works in normal mode', function()
+      screen:expect([[
+        ^                         |
+        {0:~                        }|
+        {0:~                        }|
+        {0:~                        }|
+                                 |
+      ]],nil,nil,function ()
+        eq("normal", screen.mode)
+      end)
+    end)
+
+    it('works in insert mode', function()
+      feed('i')
+      screen:expect([[
+        ^                         |
+        {0:~                        }|
+        {0:~                        }|
+        {0:~                        }|
+        {2:-- INSERT --}             |
+      ]],nil,nil,function ()
+        eq("insert", screen.mode)
+      end)
+
+      feed('word<esc>')
+      screen:expect([[
+        wor^d                     |
+        {0:~                        }|
+        {0:~                        }|
+        {0:~                        }|
+                                 |
+      ]], nil, nil, function ()
+        eq("normal", screen.mode)
+      end)
+    end)
+
+    it('works in replace mode', function()
+      feed('R')
+      screen:expect([[
+        ^                         |
+        {0:~                        }|
+        {0:~                        }|
+        {0:~                        }|
+        {2:-- REPLACE --}            |
+      ]], nil, nil, function ()
+        eq("replace", screen.mode)
+      end)
+
+      feed('word<esc>')
+      screen:expect([[
+        wor^d                     |
+        {0:~                        }|
+        {0:~                        }|
+        {0:~                        }|
+                                 |
+      ]], nil, nil, function ()
+        eq("normal", screen.mode)
+      end)
     end)
   end)
 end)

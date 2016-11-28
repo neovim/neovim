@@ -2340,14 +2340,13 @@ int ml_replace(linenr_T lnum, char_u *line, int copy)
   return OK;
 }
 
-/*
- * Delete line 'lnum' in the current buffer.
- *
- * Check: The caller of this function should probably also call
- * deleted_lines() after this.
- *
- * return FAIL for failure, OK otherwise
- */
+/// Delete line `lnum` in the current buffer.
+///
+/// @note The caller of this function should probably also call
+/// deleted_lines() after this.
+///
+/// @param message  Show "--No lines in buffer--" message.
+/// @return FAIL for failure, OK otherwise
 int ml_delete(linenr_T lnum, int message)
 {
   ml_flush_line(curbuf);

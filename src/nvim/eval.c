@@ -355,6 +355,7 @@ static struct vimvar {
   VV(VV_FCS_CHOICE,     "fcs_choice",       VAR_STRING, 0),
   VV(VV_BEVAL_BUFNR,    "beval_bufnr",      VAR_NUMBER, VV_RO),
   VV(VV_BEVAL_WINNR,    "beval_winnr",      VAR_NUMBER, VV_RO),
+  VV(VV_BEVAL_WINID,    "beval_winid",      VAR_NUMBER, VV_RO),
   VV(VV_BEVAL_LNUM,     "beval_lnum",       VAR_NUMBER, VV_RO),
   VV(VV_BEVAL_COL,      "beval_col",        VAR_NUMBER, VV_RO),
   VV(VV_BEVAL_TEXT,     "beval_text",       VAR_STRING, VV_RO),
@@ -364,6 +365,7 @@ static struct vimvar {
   VV(VV_SWAPCOMMAND,    "swapcommand",      VAR_STRING, VV_RO),
   VV(VV_CHAR,           "char",             VAR_STRING, 0),
   VV(VV_MOUSE_WIN,      "mouse_win",        VAR_NUMBER, 0),
+  VV(VV_MOUSE_WINID,    "mouse_winid",      VAR_NUMBER, 0),
   VV(VV_MOUSE_LNUM,     "mouse_lnum",       VAR_NUMBER, 0),
   VV(VV_MOUSE_COL,      "mouse_col",        VAR_NUMBER, 0),
   VV(VV_OP,             "operator",         VAR_STRING, VV_RO),
@@ -385,6 +387,7 @@ static struct vimvar {
   VV(VV_NULL,           "null",             VAR_SPECIAL, VV_RO),
   VV(VV__NULL_LIST,     "_null_list",       VAR_LIST, VV_RO),
   VV(VV__NULL_DICT,     "_null_dict",       VAR_DICT, VV_RO),
+  VV(VV_VIM_DID_ENTER,  "vim_did_enter",    VAR_NUMBER, VV_RO),
 };
 #undef VV
 
@@ -6776,7 +6779,7 @@ static void f_complete_check(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   int saved = RedrawingDisabled;
 
   RedrawingDisabled = 0;
-  ins_compl_check_keys(0);
+  ins_compl_check_keys(0, true);
   rettv->vval.v_number = compl_interrupted;
   RedrawingDisabled = saved;
 }
@@ -8315,6 +8318,7 @@ static void f_getchar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   --allow_keys;
 
   vimvars[VV_MOUSE_WIN].vv_nr = 0;
+  vimvars[VV_MOUSE_WINID].vv_nr = 0;
   vimvars[VV_MOUSE_LNUM].vv_nr = 0;
   vimvars[VV_MOUSE_COL].vv_nr = 0;
 
@@ -8357,6 +8361,7 @@ static void f_getchar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
         for (wp = firstwin; wp != win; wp = wp->w_next)
           ++winnr;
         vimvars[VV_MOUSE_WIN].vv_nr = winnr;
+        vimvars[VV_MOUSE_WINID].vv_nr = wp->handle;
         vimvars[VV_MOUSE_LNUM].vv_nr = lnum;
         vimvars[VV_MOUSE_COL].vv_nr = col + 1;
       }
@@ -9411,7 +9416,7 @@ static void f_has(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   if (!n) {
     if (STRNICMP(name, "patch", 5) == 0) {
       if (name[5] == '-'
-          && strlen(name) > 11
+          && strlen(name) >= 11
           && ascii_isdigit(name[6])
           && ascii_isdigit(name[8])
           && ascii_isdigit(name[10])) {
@@ -9528,7 +9533,7 @@ static void f_haslocaldir(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   if (scope_number[kCdScopeTab] > 0) {
     tp = find_tabpage(scope_number[kCdScopeTab]);
     if (!tp) {
-      EMSG(_("5000: Cannot find tab number."));
+      EMSG(_("E5000: Cannot find tab number."));
       return;
     }
   }
@@ -10205,6 +10210,9 @@ static void f_jobclose(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       process_close_err(proc);
     } else {
       process_close_streams(proc);
+      if (proc->type == kProcessTypePty) {
+        pty_process_close_master(&data->proc.pty);
+      }
     }
   }
 }

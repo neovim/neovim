@@ -6,9 +6,9 @@ local insert = helpers.insert
 if helpers.pending_win32(pending) then return end
 
 describe('Screen', function()
-  local screen  
+  local screen
 
-  before_each(function() 
+  before_each(function()
     clear()
     screen = Screen.new(nil,10)
     screen:attach()
@@ -17,10 +17,10 @@ describe('Screen', function()
       [1] = {foreground = Screen.colors.LightGrey, background = Screen.colors.DarkGray}
     } )
   end)
-  
+
   after_each(function()
     screen:detach()
-  end)  
+  end)
 
   describe("match and conceal", function()
 
@@ -56,7 +56,7 @@ describe('Screen', function()
           ]])
       end)
 
-      it('double characters and move the cursor one line up.', function() 
+      it('double characters and move the cursor one line up.', function()
         feed("k")
         screen:expect([[
           {1:∧}                                                    |
@@ -88,7 +88,7 @@ describe('Screen', function()
         ]])
       end)
 
-      it('double characters and move the cursor to the second line in the file.', function() 
+      it('double characters and move the cursor to the second line in the file.', function()
         feed("ggj")
         screen:expect([[
           {1:∧}                                                    |
@@ -104,7 +104,7 @@ describe('Screen', function()
         ]])
       end)
 
-      it('double characters and then move the cursor to the beginning of the file and back to the end of the file.', function() 
+      it('double characters and then move the cursor to the beginning of the file and back to the end of the file.', function()
         feed("ggG")
         screen:expect([[
           {1:∧}                                                    |
@@ -119,8 +119,8 @@ describe('Screen', function()
           :syn match dAmpersand '[&][&]' conceal cchar=∧       |
         ]])
       end)
-    end) -- multiple 
-      
+    end) -- multiple
+
     it("keyword instances in initially in the document.", function()
       feed("2ilambda<cr><ESC>")
       execute("let &conceallevel=1")
@@ -141,13 +141,13 @@ describe('Screen', function()
 
     describe("regions in the document", function()
 
-      before_each(function() 
+      before_each(function()
         feed("2")
         insert("<r> a region of text </r>\n")
         execute("let &conceallevel=1")
       end)
-      
-      it('initially and conceal it.', function()  
+
+      it('initially and conceal it.', function()
         execute("syn region rText start='<r>' end='</r>' conceal cchar=R")
         screen:expect([[
           {1:R}                                                    |
@@ -180,9 +180,9 @@ describe('Screen', function()
                                                                |
         ]])
       end)
-       
+
       it('that are nested and conceal the nested region\'s start and end tags.', function()
-        execute("syn region rText contains=rText matchgroup=rMatch start='<r>' end='</r>' concealends cchar=-")  
+        execute("syn region rText contains=rText matchgroup=rMatch start='<r>' end='</r>' concealends cchar=-")
         insert("<r> A region with <r> a nested <r> nested region.</r> </r> </r>\n")
         screen:expect([[
           {1: } a region of text {1:-}                                 |
@@ -200,8 +200,8 @@ describe('Screen', function()
     end) -- regions in the document
 
     describe("a region of text", function()
-      before_each(function() 
-        execute("syntax conceal on") 
+      before_each(function()
+        execute("syntax conceal on")
         feed("2")
         insert("<r> a region of text </r>\n")
         execute("syn region rText start='<r>' end='</r>' cchar=-")
@@ -257,17 +257,17 @@ describe('Screen', function()
     end) -- a region of text (implicit concealing)
   end) -- match and conceal
 
-  describe("let the conceal level be", function() 
+  describe("let the conceal level be", function()
     before_each(function()
-      insert("// No Conceal\n") 
-      insert('"Conceal without a cchar"\n') 
-      insert("+ With cchar\n\n") 
+      insert("// No Conceal\n")
+      insert('"Conceal without a cchar"\n')
+      insert("+ With cchar\n\n")
       execute("syn match noConceal '^//.*$'")
       execute("syn match concealNoCchar '\".\\{-}\"$' conceal")
       execute("syn match concealWCchar '^+.\\{-}$' conceal cchar=C")
     end)
-    
-    it("0. No concealing.", function()    
+
+    it("0. No concealing.", function()
       execute("let &conceallevel=0")
       screen:expect([[
         // No Conceal                                        |
@@ -282,7 +282,7 @@ describe('Screen', function()
         :let &conceallevel=0                                 |
       ]])
     end)
-    
+
     it("1. Conceal using cchar or reference listchars.", function()
       execute("let &conceallevel=1")
       screen:expect([[
@@ -298,7 +298,7 @@ describe('Screen', function()
         :let &conceallevel=1                                 |
       ]])
     end)
-    
+
     it("2. Hidden unless cchar is set.", function()
       execute("let &conceallevel=2")
       screen:expect([[
@@ -314,8 +314,8 @@ describe('Screen', function()
         :let &conceallevel=2                                 |
       ]])
     end)
-    
-    it("3. Hide all concealed text.", function() 
+
+    it("3. Hide all concealed text.", function()
       execute("let &conceallevel=3")
       screen:expect([[
         // No Conceal                                        |

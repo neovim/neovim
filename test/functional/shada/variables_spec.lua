@@ -33,7 +33,7 @@ describe('ShaDa support code', function()
       else
         meths.set_var(varname, varval)
       end
-      -- Exit during `reset` is not a regular exit: it does not write shada 
+      -- Exit during `reset` is not a regular exit: it does not write shada
       -- automatically
       nvim_command('qall')
       reset()
@@ -132,7 +132,7 @@ describe('ShaDa support code', function()
     meths.set_var('U', '10')
     nvim_command('set shada+=!')
     set_additional_cmd('set shada+=!')
-    eq('Vim(wshada):E951: Error while dumping variable g:F, itself: attempt to dump function reference',
+    eq('Vim(wshada):E5004: Error while dumping variable g:F, itself: attempt to dump function reference',
        exc_exec('wshada'))
     meths.set_option('shada', '')
     reset()
@@ -145,7 +145,7 @@ describe('ShaDa support code', function()
     nvim_command('call add(L, L)')
     meths.set_var('U', '10')
     nvim_command('set shada+=!')
-    eq('Vim(wshada):E952: Unable to dump variable g:L: container references itself in index 0',
+    eq('Vim(wshada):E5005: Unable to dump variable g:L: container references itself in index 0',
        exc_exec('wshada'))
     meths.set_option('shada', '')
     set_additional_cmd('set shada+=!')

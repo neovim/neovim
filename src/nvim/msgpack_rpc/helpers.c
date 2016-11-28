@@ -326,7 +326,7 @@ void msgpack_rpc_from_string(const String result, msgpack_packer *res)
   FUNC_ATTR_NONNULL_ARG(2)
 {
   msgpack_pack_str(res, result.size);
-  if (result.size) {
+  if (result.size > 0) {
     msgpack_pack_str_body(res, result.data, result.size);
   }
 }

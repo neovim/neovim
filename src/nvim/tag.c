@@ -1299,7 +1299,7 @@ find_tags (
       for (;; ) {
         line_breakcheck();          /* check for CTRL-C typed */
         if ((flags & TAG_INS_COMP))     /* Double brackets for gcc */
-          ins_compl_check_keys(30);
+          ins_compl_check_keys(30, false);
         if (got_int || compl_interrupted) {
           stop_searching = TRUE;
           break;

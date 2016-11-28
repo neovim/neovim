@@ -16,18 +16,18 @@ describe('msgpack*() functions', function()
     end)
   end
 
-  -- Regression test: msgpack_list_write was failing to write buffer with zero 
+  -- Regression test: msgpack_list_write was failing to write buffer with zero
   -- length.
   obj_test('are able to dump and restore {"file": ""}', {{file=''}})
-  -- Regression test: msgpack_list_write was failing to write buffer with NL at 
+  -- Regression test: msgpack_list_write was failing to write buffer with NL at
   -- the end.
   obj_test('are able to dump and restore {0, "echo mpack"}', {{0, 'echo mpack'}})
   obj_test('are able to dump and restore "Test\\n"', {'Test\n'})
-  -- Regression test: msgpack_list_write was failing to write buffer with NL 
+  -- Regression test: msgpack_list_write was failing to write buffer with NL
   -- inside.
   obj_test('are able to dump and restore "Test\\nTest 2"', {'Test\nTest 2'})
-  -- Test that big objects (requirement: dump to something that is bigger then 
-  -- IOSIZE) are also fine. This particular object is obtained by concatenating 
+  -- Test that big objects (requirement: dump to something that is bigger then
+  -- IOSIZE) are also fine. This particular object is obtained by concatenating
   -- 5 identical shada files.
   local big_obj = {
     1, 1436711454, 78, {
@@ -566,27 +566,27 @@ describe('msgpackdump() function', function()
 
   it('fails to dump a function reference', function()
     execute('let Todump = function("tr")')
-    eq('Vim(call):E951: Error while dumping msgpackdump() argument, index 0, itself: attempt to dump function reference',
+    eq('Vim(call):E5004: Error while dumping msgpackdump() argument, index 0, itself: attempt to dump function reference',
        exc_exec('call msgpackdump([Todump])'))
   end)
 
   it('fails to dump a function reference in a list', function()
     execute('let todump = [function("tr")]')
-    eq('Vim(call):E951: Error while dumping msgpackdump() argument, index 0, index 0: attempt to dump function reference',
+    eq('Vim(call):E5004: Error while dumping msgpackdump() argument, index 0, index 0: attempt to dump function reference',
        exc_exec('call msgpackdump([todump])'))
   end)
 
   it('fails to dump a recursive list', function()
     execute('let todump = [[[]]]')
     execute('call add(todump[0][0], todump)')
-    eq('Vim(call):E952: Unable to dump msgpackdump() argument, index 0: container references itself in index 0, index 0, index 0',
+    eq('Vim(call):E5005: Unable to dump msgpackdump() argument, index 0: container references itself in index 0, index 0, index 0',
        exc_exec('call msgpackdump([todump])'))
   end)
 
   it('fails to dump a recursive dict', function()
     execute('let todump = {"d": {"d": {}}}')
     execute('call extend(todump.d.d, {"d": todump})')
-    eq('Vim(call):E952: Unable to dump msgpackdump() argument, index 0: container references itself in key \'d\', key \'d\', key \'d\'',
+    eq('Vim(call):E5005: Unable to dump msgpackdump() argument, index 0: container references itself in key \'d\', key \'d\', key \'d\'',
        exc_exec('call msgpackdump([todump])'))
   end)
 
@@ -605,35 +605,35 @@ describe('msgpackdump() function', function()
   it('fails to dump a recursive list in a special dict', function()
     execute('let todump = {"_TYPE": v:msgpack_types.array, "_VAL": []}')
     execute('call add(todump._VAL, todump)')
-    eq('Vim(call):E952: Unable to dump msgpackdump() argument, index 0: container references itself in index 0',
+    eq('Vim(call):E5005: Unable to dump msgpackdump() argument, index 0: container references itself in index 0',
        exc_exec('call msgpackdump([todump])'))
   end)
 
   it('fails to dump a recursive (key) map in a special dict', function()
     execute('let todump = {"_TYPE": v:msgpack_types.map, "_VAL": []}')
     execute('call add(todump._VAL, [todump, 0])')
-    eq('Vim(call):E952: Unable to dump msgpackdump() argument, index 0: container references itself in index 1',
+    eq('Vim(call):E5005: Unable to dump msgpackdump() argument, index 0: container references itself in index 1',
        exc_exec('call msgpackdump([todump])'))
   end)
 
   it('fails to dump a recursive (val) map in a special dict', function()
     execute('let todump = {"_TYPE": v:msgpack_types.map, "_VAL": []}')
     execute('call add(todump._VAL, [0, todump])')
-    eq('Vim(call):E952: Unable to dump msgpackdump() argument, index 0: container references itself in key 0 at index 0 from special map',
+    eq('Vim(call):E5005: Unable to dump msgpackdump() argument, index 0: container references itself in key 0 at index 0 from special map',
        exc_exec('call msgpackdump([todump])'))
   end)
 
   it('fails to dump a recursive (key) map in a special dict, _VAL reference', function()
     execute('let todump = {"_TYPE": v:msgpack_types.map, "_VAL": [[[], []]]}')
     execute('call add(todump._VAL[0][0], todump._VAL)')
-    eq('Vim(call):E952: Unable to dump msgpackdump() argument, index 0: container references itself in key [[[[...@0], []]]] at index 0 from special map, index 0',
+    eq('Vim(call):E5005: Unable to dump msgpackdump() argument, index 0: container references itself in key [[[[...@0], []]]] at index 0 from special map, index 0',
        exc_exec('call msgpackdump([todump])'))
   end)
 
   it('fails to dump a recursive (val) map in a special dict, _VAL reference', function()
     execute('let todump = {"_TYPE": v:msgpack_types.map, "_VAL": [[[], []]]}')
     execute('call add(todump._VAL[0][1], todump._VAL)')
-    eq('Vim(call):E952: Unable to dump msgpackdump() argument, index 0: container references itself in key [] at index 0 from special map, index 0',
+    eq('Vim(call):E5005: Unable to dump msgpackdump() argument, index 0: container references itself in key [] at index 0 from special map, index 0',
        exc_exec('call msgpackdump([todump])'))
   end)
 
@@ -641,7 +641,7 @@ describe('msgpackdump() function', function()
   function()
     execute('let todump = {"_TYPE": v:msgpack_types.array, "_VAL": []}')
     execute('call add(todump._VAL, [0, todump._VAL])')
-    eq('Vim(call):E952: Unable to dump msgpackdump() argument, index 0: container references itself in index 0, index 1',
+    eq('Vim(call):E5005: Unable to dump msgpackdump() argument, index 0: container references itself in index 0, index 1',
        exc_exec('call msgpackdump([todump])'))
   end)
 

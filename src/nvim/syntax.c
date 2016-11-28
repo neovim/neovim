@@ -392,7 +392,9 @@ void syntax_start(win_T *wp, linenr_T lnum)
    * Also do this when a change was made, the current state may be invalid
    * then.
    */
-  if (syn_block != wp->w_s || changedtick != syn_buf->b_changedtick) {
+  if (syn_block != wp->w_s
+      || syn_buf != wp->w_buffer
+      || changedtick != syn_buf->b_changedtick) {
     invalidate_current_state();
     syn_buf = wp->w_buffer;
     syn_block = wp->w_s;
@@ -5909,6 +5911,7 @@ static char *highlight_init_both[] =
   "WildMenu     ctermbg=Yellow ctermfg=Black guibg=Yellow guifg=Black",
   "default link EndOfBuffer NonText",
   "default link QuickFixLine Search",
+  "default link Substitute Search",
   NULL
 };
 
@@ -7170,16 +7173,13 @@ int syn_namen2id(char_u *linep, int len)
  */
 int syn_check_group(char_u *pp, int len)
 {
-  int id;
-  char_u  *name;
-
-  name = vim_strnsave(pp, len);
-
-  id = syn_name2id(name);
-  if (id == 0)                          /* doesn't exist yet */
+  char_u  *name = vim_strnsave(pp, len);
+  int id = syn_name2id(name);
+  if (id == 0) {  // doesn't exist yet
     id = syn_add_group(name);
-  else
+  } else {
     xfree(name);
+  }
   return id;
 }
 

@@ -638,15 +638,6 @@ describe('exists() and has() functions', function()
 
       call TestExists()
 
-      function TestHas()
-        redir >> test.out
-        for pl in ['6.9.999', '7.1.999', '7.4.123', '9.1.0', '9.9.1']
-          echo 'has patch ' . pl . ': ' . has('patch-' . pl)
-        endfor
-        redir END
-      endfunc
-      call TestHas()
-
       edit! test.out
       set ff=unix
     ]=])
@@ -858,12 +849,7 @@ describe('exists() and has() functions', function()
       OK
        g:footest#x = 1
          footest#F() 0
-      UndefFun() 0
-      has patch 6.9.999: 1
-      has patch 7.1.999: 1
-      has patch 7.4.123: 1
-      has patch 9.1.0: 0
-      has patch 9.9.1: 0]])
+      UndefFun() 0]])
 
   end)
 end)

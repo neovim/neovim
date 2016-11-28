@@ -206,8 +206,8 @@ describe('fs function', function()
 
       lfs.chdir(directory)
 
-      -- Rely on currentdir to resolve symlinks, if any. Testing against 
-      -- the absolute path taken from arg[0] may result in failure where 
+      -- Rely on currentdir to resolve symlinks, if any. Testing against
+      -- the absolute path taken from arg[0] may result in failure where
       -- the path has a symlink in it.
       local canonical = lfs.currentdir() .. '/' .. executable_name
       local expected = exe(canonical)

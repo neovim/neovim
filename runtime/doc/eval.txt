@@ -1,4 +1,4 @@
-*eval.txt*	For Vim version 7.4.  Last change: 2016 May 20
+*eval.txt*	For Vim version 7.4.  Last change: 2016 Jun 04
 
 
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
@@ -1305,6 +1305,10 @@ v:beval_winnr	The number of the window, over which the mouse pointer is. Only
 		window has number zero (unlike most other places where a
 		window gets a number).
 
+					*v:beval_winid* *beval_winid-variable*
+v:beval_winid	The window ID of the window, over which the mouse pointer is.
+		Otherwise like v:beval_winnr.
+
 					*v:char* *char-variable*
 v:char		Argument for evaluating 'formatexpr' and used for the typed
 		character when using <expr> in an abbreviation |:map-<expr>|.
@@ -1554,6 +1558,10 @@ v:mouse_win	Window number for a mouse click obtained with |getchar()|.
 		First window has number 1, like with |winnr()|.  The value is
 		zero when there was no mouse button click.
 
+					*v:mouse_winid* *mouse_winid-variable*
+v:mouse_winid	Window ID for a mouse click obtained with |getchar()|.
+		The value is zero when there was no mouse button click.
+
 					*v:mouse_lnum* *mouse_lnum-variable*
 v:mouse_lnum	Line number for a mouse click obtained with |getchar()|.
 		This is the text line number, not the screen line number.  The
@@ -1765,13 +1773,17 @@ v:version	Version number of Vim: Major version number times 100 plus
 		version 5.0 and 5.1 may have a patch 123, but these are
 		completely different.
 
+				*v:vim_did_enter* *vim_did_enter-variable*
+v:vim_did_enter	Zero until most of startup is done.  It is set to one just
+		before |VimEnter| autocommands are triggered.
+
 					*v:warningmsg* *warningmsg-variable*
 v:warningmsg	Last given warning message.  It's allowed to set this variable.
 
 					*v:windowid* *windowid-variable* {Nvim}
 v:windowid	Application-specific window ID ("window handle" in MS-Windows)
 		which may be set by any attached UI. Defaults to zero.
-		Note: for windows inside Vim use |winnr()|.
+		Note: for windows inside Vim use |winnr()| or |win_getid()|.
 
 ==============================================================================
 4. Builtin Functions					*functions*
@@ -3550,8 +3562,8 @@ getchar([expr])						*getchar()*
 
 		When the user clicks a mouse button, the mouse event will be
 		returned.  The position can then be found in |v:mouse_col|,
-		|v:mouse_lnum| and |v:mouse_win|.  This example positions the
-		mouse as it would normally happen: >
+		|v:mouse_lnum|, |v:mouse_winid| and |v:mouse_win|.  This
+		example positions the mouse as it would normally happen: >
 			let c = getchar()
 			if c == "\<LeftMouse>" && v:mouse_win > 0
 			  exe v:mouse_win . "wincmd w"
@@ -4399,7 +4411,8 @@ jobclose({job}[, {stream}])				{Nvim} *jobclose()*
 		Close {job}'s {stream}, which can be one of "stdin", "stdout",
 		"stderr" or "rpc" (closes the rpc channel for a job started
 		with the "rpc" option.) If {stream} is omitted, all streams
-		are closed.
+		are closed. If the job is a pty job, this will then close the
+		pty master, sending SIGHUP to the job process.
 
 jobpid({job})						{Nvim} *jobpid()*
 		Return the pid (process id) of {job}.
@@ -5057,7 +5070,7 @@ msgpackdump({list})				   {Nvim} *msgpackdump()*
 		(dictionary with zero items is represented by 0x80 byte in
 		messagepack).
 
-		Limitations:				*E951* *E952* *E953*
+		Limitations:				*E5004* *E5005*
 		1. |Funcref|s cannot be dumped.
 		2. Containers that reference themselves cannot be dumped.
 		3. Dictionary keys are always dumped as STR strings.
@@ -6154,10 +6167,15 @@ setqflist({list} [, {action}[, {title}]])		*setqflist()*
 							*E927*
 		If {action} is set to 'a', then the items from {list} are
 		added to the existing quickfix list. If there is no existing
-		list, then a new list is created. If {action} is set to 'r',
-		then the items from the current quickfix list are replaced
-		with the items from {list}. If {action} is not present or is
-		set to ' ', then a new list is created.
+		list, then a new list is created.
+		
+		If {action} is set to 'r', then the items from the current
+		quickfix list are replaced with the items from {list}.  This
+		can also be used to clear the list: >
+			:call setqflist([], 'r')
+<	
+		If {action} is not present or is set to ' ', then a new list
+		is created.
 
 		If {title} is given, it will be used to set |w:quickfix_title|
 		after opening the quickfix window.

@@ -2,7 +2,7 @@ local helpers = require('test.functional.helpers')(after_each)
 local clear = helpers.clear
 
 describe(':qa', function()
-  before_each(function() 
+  before_each(function()
     clear('--cmd', 'qa')
   end)
 

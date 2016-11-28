@@ -289,6 +289,7 @@ static char *(p_fdm_values[]) =       { "manual", "expr", "marker", "indent",
 static char *(p_fcl_values[]) =       { "all", NULL };
 static char *(p_cot_values[]) =       { "menu", "menuone", "longest", "preview",
                                         "noinsert", "noselect", NULL };
+static char *(p_icm_values[]) =       { "nosplit", "split", NULL };
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "option.c.generated.h"
@@ -1739,13 +1740,25 @@ do_set (
               }
 
               if (flags & P_FLAGLIST) {
-                /* Remove flags that appear twice. */
-                for (s = newval; *s; ++s)
-                  if ((!(flags & P_COMMA) || *s != ',')
-                      && vim_strchr(s + 1, *s) != NULL) {
-                    STRMOVE(s, s + 1);
-                    --s;
+                // Remove flags that appear twice.
+                for (s = newval; *s; s++) {
+                  // if options have P_FLAGLIST and P_ONECOMMA such as
+                  // 'whichwrap'
+                  if (flags & P_ONECOMMA) {
+                    if (*s != ',' && *(s + 1) == ','
+                        && vim_strchr(s + 2, *s) != NULL) {
+                      // Remove the duplicated value and the next comma.
+                      STRMOVE(s, s + 2);
+                      s -= 2;
+                    }
+                  } else {
+                    if ((!(flags & P_COMMA) || *s != ',')
+                        && vim_strchr(s + 1, *s) != NULL) {
+                      STRMOVE(s, s + 1);
+                      s--;
+                    }
                   }
+                }
               }
 
               if (save_arg != NULL)                 /* number for 'whichwrap' */
@@ -2399,6 +2412,18 @@ static char *set_string_option(const int opt_idx, const char *const value,
   return r;
 }
 
+/// Return true if "val" is a valid 'filetype' name.
+/// Also used for 'syntax' and 'keymap'.
+static bool valid_filetype(char_u *val)
+{
+  for (char_u *s = val; *s != NUL; s++) {
+    if (!ASCII_ISALNUM(*s) && vim_strchr((char_u *)".-_", *s) == NULL) {
+      return false;
+    }
+  }
+  return true;
+}
+
 /*
  * Handle string options that need some action to perform when changed.
  * Returns NULL for success, or an error message for an error.
@@ -2622,8 +2647,12 @@ did_set_string_option (
     xfree(p_penc);
     p_penc = p;
   } else if (varp == &curbuf->b_p_keymap) {
-    /* load or unload key mapping tables */
-    errmsg = keymap_init();
+    if (!valid_filetype(*varp)) {
+      errmsg = e_invarg;
+    } else {
+      // load or unload key mapping tables
+      errmsg = keymap_init();
+    }
 
     if (errmsg == NULL) {
       if (*curbuf->b_p_keymap != NUL) {
@@ -3112,9 +3141,21 @@ did_set_string_option (
   else if (gvarp == &p_cino) {
     /* TODO: recognize errors */
     parse_cino(curbuf);
-  }
-  /* Options that are a list of flags. */
-  else {
+  // inccommand
+  } else if (varp == &p_icm) {
+      if (check_opt_strings(p_icm, p_icm_values, false) != OK) {
+        errmsg = e_invarg;
+      }
+  } else if (gvarp == &p_ft) {
+    if (!valid_filetype(*varp)) {
+      errmsg = e_invarg;
+    }
+  } else if (gvarp == &p_syn) {
+    if (!valid_filetype(*varp)) {
+      errmsg = e_invarg;
+    }
+  } else {
+    // Options that are a list of flags.
     p = NULL;
     if (varp == &p_ww)
       p = (char_u *)WW_ALL;

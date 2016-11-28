@@ -482,9 +482,11 @@ qf_init_ext (
 
           p_str += len;
         } else if (tv->v_type == VAR_LIST) {
-          /* Get the next line from the supplied list */
-          while (p_li && p_li->li_tv.v_type != VAR_STRING)
-            p_li = p_li->li_next;               /* Skip non-string items */
+          // Get the next line from the supplied list
+          while (p_li && (p_li->li_tv.v_type != VAR_STRING
+                          || p_li->li_tv.vval.v_string == NULL)) {
+            p_li = p_li->li_next;               // Skip non-string items
+          }
 
           if (!p_li)                            /* End of the list */
             break;
@@ -910,7 +912,9 @@ static int qf_add_entry(qf_info_T *qi, qfline_T **prevp, char_u *dir,
   if (qi->qf_lists[qi->qf_curlist].qf_count == 0) {
     /* first element in the list */
     qi->qf_lists[qi->qf_curlist].qf_start = qfp;
-    qfp->qf_prev = qfp;         /* first element points to itself */
+    qi->qf_lists[qi->qf_curlist].qf_ptr = qfp;
+    qi->qf_lists[qi->qf_curlist].qf_index = 0;
+    qfp->qf_prev = qfp;         // first element points to itself
   } else {
     assert(*prevp);
     qfp->qf_prev = *prevp;
@@ -1254,6 +1258,32 @@ static char_u *qf_guess_filepath(char_u *filename)
 
 }
 
+/// When loading a file from the quickfix, the auto commands may modify it.
+/// This may invalidate the current quickfix entry.  This function checks
+/// whether a entry is still present in the quickfix.
+/// Similar to location list.
+static bool is_qf_entry_present(qf_info_T *qi, qfline_T *qf_ptr)
+{
+  qf_list_T *qfl;
+  qfline_T *qfp;
+  int i;
+
+  qfl = &qi->qf_lists[qi->qf_curlist];
+
+  // Search for the entry in the current list
+  for (i = 0, qfp = qfl->qf_start; i < qfl->qf_count; i++, qfp = qfp->qf_next) {
+    if (qfp == qf_ptr) {
+      break;
+    }
+  }
+
+  if (i == qfl->qf_count) {  // Entry is not found
+    return false;
+  }
+
+  return true;
+}
+
 /*
  * jump to a quickfix line
  * if dir == FORWARD go "errornr" valid entries forward
@@ -1585,14 +1615,29 @@ win_found:
                      oldwin == curwin ? curwin : NULL);
       }
     } else {
+      int old_qf_curlist = qi->qf_curlist;
+      bool is_abort = false;
+
       ok = buflist_getfile(qf_ptr->qf_fnum, (linenr_T)1,
                            GETF_SETMARK | GETF_SWITCH, forceit);
       if (qi != &ql_info && !win_valid(oldwin)) {
         EMSG(_("E924: Current window was closed"));
+        is_abort = true;
+        opened_window = false;
+      } else if (old_qf_curlist != qi->qf_curlist
+                 || !is_qf_entry_present(qi, qf_ptr)) {
+        if (qi == &ql_info) {
+          EMSG(_("E925: Current quickfix was changed"));
+        } else {
+          EMSG(_("E926: Current location list was changed"));
+        }
+        is_abort = true;
+      }
+
+      if (is_abort) {
         ok = false;
         qi = NULL;
         qf_ptr = NULL;
-        opened_window = false;
       }
     }
   }
@@ -2967,6 +3012,7 @@ void ex_vimgrep(exarg_T *eap)
 
   /* Get the search pattern: either white-separated or enclosed in // */
   regmatch.regprog = NULL;
+  char_u *title = vim_strsave(*eap->cmdlinep);
   p = skip_vimgrep_pat(eap->arg, &s, &flags);
   if (p == NULL) {
     EMSG(_(e_invalpat));
@@ -2998,7 +3044,7 @@ void ex_vimgrep(exarg_T *eap)
        && eap->cmdidx != CMD_vimgrepadd && eap->cmdidx != CMD_lvimgrepadd)
       || qi->qf_curlist == qi->qf_listcount) {
     // make place for a new list
-    qf_new_list(qi, *eap->cmdlinep);
+    qf_new_list(qi, title != NULL ? title : *eap->cmdlinep);
   } else if (qi->qf_lists[qi->qf_curlist].qf_count > 0) {
     // Adding to existing list, find last entry.
     for (prevp = qi->qf_lists[qi->qf_curlist].qf_start;
@@ -3226,6 +3272,7 @@ void ex_vimgrep(exarg_T *eap)
   }
 
 theend:
+  xfree(title);
   xfree(dirname_now);
   xfree(dirname_start);
   xfree(target_dir);
@@ -3323,10 +3370,11 @@ load_dummy_buffer (
   int failed = TRUE;
   aco_save_T aco;
 
-  /* Allocate a buffer without putting it in the buffer list. */
+  // Allocate a buffer without putting it in the buffer list.
   newbuf = buflist_new(NULL, NULL, (linenr_T)1, BLN_DUMMY);
-  if (newbuf == NULL)
+  if (newbuf == NULL) {
     return NULL;
+  }
 
   /* Init the options. */
   buf_copy_options(newbuf, BCO_ENTER | BCO_NOHELP);
@@ -3584,7 +3632,9 @@ int set_errorlist(win_T *wp, list_T *list, int action, char_u *title)
   else
     qi->qf_lists[qi->qf_curlist].qf_nonevalid = FALSE;
   qi->qf_lists[qi->qf_curlist].qf_ptr = qi->qf_lists[qi->qf_curlist].qf_start;
-  qi->qf_lists[qi->qf_curlist].qf_index = 1;
+  if (qi->qf_lists[qi->qf_curlist].qf_count > 0) {
+    qi->qf_lists[qi->qf_curlist].qf_index = 1;
+  }
 
   qf_update_buffer(qi);
 

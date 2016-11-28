@@ -2,7 +2,6 @@
 if !has('multi_byte')
   finish
 endif
-scriptencoding utf-8
 
 func Test_strgetchar_utf8()
   call assert_equal(char2nr('á'), strgetchar('áxb', 0))

@@ -692,7 +692,7 @@ char *u_get_undo_file_name(const char *const buf_ffname, const bool reading)
         int ret;
         char *failed_dir;
         if ((ret = os_mkdir_recurse(dir_name, 0755, &failed_dir)) != 0) {
-          EMSG3(_("E926: Unable to create directory \"%s\" for undo file: %s"),
+          EMSG3(_("E5003: Unable to create directory \"%s\" for undo file: %s"),
                 failed_dir, os_strerror(ret));
           xfree(failed_dir);
         } else {
@@ -1670,7 +1670,7 @@ void u_undo(int count)
     undo_undoes = TRUE;
   else
     undo_undoes = !undo_undoes;
-  u_doit(count);
+  u_doit(count, false);
 }
 
 /*
@@ -1679,15 +1679,57 @@ void u_undo(int count)
  */
 void u_redo(int count)
 {
-  if (vim_strchr(p_cpo, CPO_UNDO) == NULL)
-    undo_undoes = FALSE;
-  u_doit(count);
+  if (vim_strchr(p_cpo, CPO_UNDO) == NULL) {
+    undo_undoes = false;
+  }
+
+  u_doit(count, false);
 }
 
-/*
- * Undo or redo, depending on 'undo_undoes', 'count' times.
- */
-static void u_doit(int startcount)
+/// Undo and remove the branch from the undo tree.
+/// Also moves the cursor (as a "normal" undo would).
+bool u_undo_and_forget(int count)
+{
+  if (curbuf->b_u_synced == false) {
+    u_sync(true);
+    count = 1;
+  }
+  undo_undoes = true;
+  u_doit(count, true);
+
+  if (curbuf->b_u_curhead == NULL) {
+    // nothing was undone.
+    return false;
+  }
+
+  // Delete the current redo header
+  // set the redo header to the next alternative branch (if any)
+  // otherwise we will be in the leaf state
+  u_header_T *to_forget = curbuf->b_u_curhead;
+  curbuf->b_u_newhead = to_forget->uh_next.ptr;
+  curbuf->b_u_curhead = to_forget->uh_alt_next.ptr;
+  if (curbuf->b_u_curhead) {
+    to_forget->uh_alt_next.ptr = NULL;
+    curbuf->b_u_curhead->uh_alt_prev.ptr = to_forget->uh_alt_prev.ptr;
+    curbuf->b_u_seq_cur = curbuf->b_u_curhead->uh_seq-1;
+  } else if (curbuf->b_u_newhead) {
+    curbuf->b_u_seq_cur = curbuf->b_u_newhead->uh_seq;
+  }
+  if (to_forget->uh_alt_prev.ptr) {
+    to_forget->uh_alt_prev.ptr->uh_alt_next.ptr = curbuf->b_u_curhead;
+  }
+  if (curbuf->b_u_newhead) {
+    curbuf->b_u_newhead->uh_prev.ptr = curbuf->b_u_curhead;
+  }
+  if (curbuf->b_u_seq_last == to_forget->uh_seq) {
+    curbuf->b_u_seq_last--;
+  }
+  u_freebranch(curbuf, to_forget, NULL);
+  return true;
+}
+
+/// Undo or redo, depending on `undo_undoes`, `count` times.
+static void u_doit(int startcount, bool quiet)
 {
   int count = startcount;
 
@@ -1723,7 +1765,7 @@ static void u_doit(int startcount)
         break;
       }
 
-      u_undoredo(TRUE);
+      u_undoredo(true);
     } else {
       if (curbuf->b_u_curhead == NULL || get_undolevel() <= 0) {
         beep_flush();           /* nothing to redo */
@@ -1743,7 +1785,7 @@ static void u_doit(int startcount)
       curbuf->b_u_curhead = curbuf->b_u_curhead->uh_prev.ptr;
     }
   }
-  u_undo_end(undo_undoes, FALSE);
+  u_undo_end(undo_undoes, false, quiet);
 }
 
 /*
@@ -2056,7 +2098,7 @@ void undo_time(long step, int sec, int file, int absolute)
       }
     }
   }
-  u_undo_end(did_undo, absolute);
+  u_undo_end(did_undo, absolute, false);
 }
 
 /*
@@ -2300,16 +2342,13 @@ static void u_undoredo(int undo)
 #endif
 }
 
-/*
- * If we deleted or added lines, report the number of less/more lines.
- * Otherwise, report the number of changes (this may be incorrect
- * in some cases, but it's better than nothing).
- */
-static void 
-u_undo_end (
-    int did_undo,                   /* just did an undo */
-    int absolute                   /* used ":undo N" */
-)
+/// If we deleted or added lines, report the number of less/more lines.
+/// Otherwise, report the number of changes (this may be incorrect
+/// in some cases, but it's better than nothing).
+static void u_undo_end(
+    int did_undo,     ///< just did an undo
+    int absolute,     ///< used ":undo N"
+    bool quiet)
 {
   char        *msgstr;
   u_header_T  *uhp;
@@ -2318,9 +2357,11 @@ u_undo_end (
   if ((fdo_flags & FDO_UNDO) && KeyTyped)
     foldOpenCursor();
 
-  if (global_busy           /* no messages now, wait until global is finished */
-      || !messaging())        /* 'lazyredraw' set, don't do messages now */
+  if (quiet
+      || global_busy        // no messages until global is finished
+      || !messaging()) {    // 'lazyredraw' set, don't do messages now
     return;
+  }
 
   if (curbuf->b_ml.ml_flags & ML_EMPTY)
     --u_newcount;

@@ -940,7 +940,15 @@ VimEnter			After doing all the startup stuff, including
 				loading vimrc files, executing the "-c cmd"
 				arguments, creating all windows and loading
 				the buffers in them.
-							*VimLeave*
+				Just before this event is triggered the
+				|v:vim_did_enter| variable is set, so that you
+				can do: >
+				   if v:vim_did_enter
+				     call s:init()
+				   else
+ 	  			     au VimEnter * call s:init()
+				   endif
+<							*VimLeave*
 VimLeave			Before exiting Vim, just after writing the
 				.shada file.  Executed only once, like
 				VimLeavePre.

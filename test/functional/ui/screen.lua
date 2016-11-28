@@ -170,9 +170,9 @@ function Screen.new(width, height)
     update_menu = false,
     visual_bell = false,
     suspended = false,
+    mode = 'normal',
     _default_attr_ids = nil,
     _default_attr_ignore = nil,
-    _mode = 'normal',
     _mouse_enabled = true,
     _attrs = {},
     _cursor = {
@@ -375,7 +375,7 @@ end
 
 function Screen:_handle_mode_change(mode)
   assert(mode == 'insert' or mode == 'replace' or mode == 'normal')
-  self._mode = mode
+  self.mode = mode
 end
 
 function Screen:_handle_set_scroll_region(top, bot, left, right)
@@ -549,7 +549,7 @@ function Screen:print_snapshot(attrs, ignore)
   if attrs == nil then
     attrs = {}
     if self._default_attr_ids ~= nil then
-      for i, a in ipairs(self._default_attr_ids) do
+      for i, a in pairs(self._default_attr_ids) do
         attrs[i] = a
       end
     end

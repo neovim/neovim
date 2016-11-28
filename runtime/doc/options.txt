@@ -1155,21 +1155,14 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'buftype'* *'bt'* *E382*
 'buftype' 'bt'		string (default: "")
 			local to buffer
-			{not available when compiled without the |+quickfix|
-			feature}
 	The value of this option specifies the type of a buffer:
 	  <empty>	normal buffer
-	  nofile	buffer which is not related to a file and will not be
-			written
-	  nowrite	buffer which will not be written
-	  acwrite	buffer which will always be written with BufWriteCmd
-			autocommands.
-	  quickfix	quickfix buffer, contains list of errors |:cwindow|
-			or list of locations |:lwindow|
-	  help		help buffer (you are not supposed to set this
-			manually)
-	  terminal	terminal buffer, this is set automatically when a 
-			terminal is created. |terminal-emulator|
+	  acwrite	buffer will always be written with |BufWriteCmd|s
+	  help		help buffer (do not set this manually)
+	  nofile	buffer is not related to a file, will not be written
+	  nowrite	buffer will not be written
+	  quickfix	list of errors |:cwindow| or locations |:lwindow|
+	  terminal	|terminal-emulator| buffer
 
 	This option is used together with 'bufhidden' and 'swapfile' to
 	specify special kinds of buffers.   See |special-buffers|.
@@ -3416,6 +3409,18 @@ A jump table for the options with a short description can be found at |Q_op|.
 	The value is set to 1 when it is not -1 and setting the 'keymap'
 	option to a valid keymap name.
 
+						*'inccommand'* *'icm'*
+'inccommand' 'icm'	string	(default "")
+			global
+			
+	"nosplit": Shows the effects of a command incrementally, as you type.
+	"split"	 : Also shows partial off-screen results in a preview window.
+
+	Works for |:substitute|, |:smagic|, |:snomagic|. |hl-Substitute|
+
+	If the preview is too slow (exceeds 'redrawtime') then 'inccommand' is
+	automatically disabled until |Command-line-mode| is done.
+
 						*'include'* *'inc'*
 'include' 'inc'		string	(default "^\s*#\s*include")
 			global or local to buffer |global-local|
@@ -3896,6 +3901,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 			global
 	Strings to use in 'list' mode and for the |:list| command.  It is a
 	comma separated list of string settings.
+
 							*lcs-eol*
 	  eol:c		Character to show at the end of each line.  When
 			omitted, there is no extra character at the end of the
@@ -4730,8 +4736,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 			global
 			{only available when compiled with the |+reltime|
 			feature}
-	The time in milliseconds for redrawing the display.  This applies to
-	searching for patterns for 'hlsearch' and |:match| highlighting.
+	Time in milliseconds for redrawing the display.  Applies to
+	'hlsearch', 'inccommand' and |:match| highlighting.
 	When redrawing takes more than this many milliseconds no further
 	matches will be highlighted.  This is used to avoid that Vim hangs
 	when using a very complicated pattern.
@@ -6506,7 +6512,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 				     *'ttyfast'* *'tf'* *'nottyfast'* *'notf'*
 'ttyfast' 'tf'		Removed. |vim-differences| {Nvim}
 
-						*'undodir'* *'udir'* *E926*
+						*'undodir'* *'udir'* *E5003*
 'undodir' 'udir'	string	(default "$XDG_DATA_HOME/nvim/undo")
 			global
 			{only when compiled with the |+persistent_undo| feature}

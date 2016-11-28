@@ -22,7 +22,7 @@ function! s:enhance_syntax() abort
   highlight! link markdownError Normal
 
   " We don't need code blocks.
-  syntax clear markdownCodeBlock
+  silent! syntax clear markdownCodeBlock
 endfunction
 
 " Runs the specified healthchecks.
@@ -58,7 +58,7 @@ function! health#check(plugin_names) abort
           let output = execute(
                 \ 'call health#report_error(''Failed to run healthcheck for "'
                 \ .s:to_plugin_name(c)
-                \ .'" plugin. Exception:''."\n".v:exception)')
+                \ .'" plugin. Exception:''."\n".v:throwpoint."\n".v:exception)')
         endif
       endtry
       call append('$', split(output, "\n") + [''])

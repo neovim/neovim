@@ -89,6 +89,7 @@ Error: configure did not run properly.Check auto/config.log.
 #define CONFIRM         0x800   /* ":confirm" prompt */
 #define SELECTMODE      0x1000  /* Select mode, only for mappings */
 #define TERM_FOCUS      0x2000  // Terminal focus mode
+#define CMDPREVIEW      0x4000  // Showing 'inccommand' command "live" preview.
 
 // all mode bits used for mapping
 #define MAP_ALL_MODES   (0x3f | SELECTMODE | TERM_FOCUS)

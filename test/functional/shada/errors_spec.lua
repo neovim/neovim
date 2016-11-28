@@ -17,9 +17,9 @@ describe('ShaDa error handling', function()
     clean()
   end)
 
-  -- Note: most of tests have additional items like sX, mX, rX. These are for 
-  -- valgrind tests, to check for memory leaks (i.e. whether error handling code 
-  -- does (not) forget to call ga_clear). Not needed for array-based items like 
+  -- Note: most of tests have additional items like sX, mX, rX. These are for
+  -- valgrind tests, to check for memory leaks (i.e. whether error handling code
+  -- does (not) forget to call ga_clear). Not needed for array-based items like
   -- history because they are not using ad_ga.
 
   it('does not fail on empty file', function()
@@ -69,15 +69,15 @@ describe('ShaDa error handling', function()
   end)
 
   it('fails on search pattern item with invalid byte', function()
-    -- 195 (== 0xC1) cannot start any valid messagepack entry (the only byte 
+    -- 195 (== 0xC1) cannot start any valid messagepack entry (the only byte
     -- that cannot do this). Specifically unpack_template.h contains
     --
     --     //case 0xc1:  // string
     --     //  again_terminal_trail(NEXT_CS(p), p+1);
     --
-    -- (literally: commented out code) which means that in place of this code 
-    -- `goto _failed` is used from default: case. I do not know any other way to 
-    -- get MSGPACK_UNPACK_PARSE_ERROR and not MSGPACK_UNPACK_CONTINUE or 
+    -- (literally: commented out code) which means that in place of this code
+    -- `goto _failed` is used from default: case. I do not know any other way to
+    -- get MSGPACK_UNPACK_PARSE_ERROR and not MSGPACK_UNPACK_CONTINUE or
     -- MSGPACK_UNPACK_EXTRA_BYTES.
     wshada('\002\000\001\193')
     eq('Vim(rshada):E576: Failed to parse ShaDa file due to a msgpack parser error at position 3', exc_exec(sdrcmd()))
@@ -497,7 +497,7 @@ $
   it('errors when a funcref is stored in a variable', function()
     nvim_command('let F = function("tr")')
     nvim_command('set shada+=!')
-    eq('\nE951: Error while dumping variable g:F, itself: attempt to dump function reference'
+    eq('\nE5004: Error while dumping variable g:F, itself: attempt to dump function reference'
        .. '\nE574: Failed to write variable F',
        redir_exec('wshada'))
   end)
@@ -506,7 +506,7 @@ $
     nvim_command('let L = []')
     nvim_command('call add(L, L)')
     nvim_command('set shada+=!')
-    eq('\nE952: Unable to dump variable g:L: container references itself in index 0'
+    eq('\nE5005: Unable to dump variable g:L: container references itself in index 0'
        .. '\nE574: Failed to write variable L',
        redir_exec('wshada'))
   end)

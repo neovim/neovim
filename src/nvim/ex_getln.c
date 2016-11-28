@@ -96,19 +96,20 @@ typedef struct command_line_state {
   char_u *lookfor;                      // string to match
   int hiscnt;                           // current history line in use
   int histype;                          // history type to be used
-  pos_T old_cursor;
-  colnr_T old_curswant;
-  colnr_T old_leftcol;
-  linenr_T old_topline;
-  int old_topfill;
-  linenr_T old_botline;
+  pos_T     old_cursor;
+  colnr_T   old_curswant;
+  colnr_T   old_leftcol;
+  linenr_T  old_topline;
+  int       old_topfill;
+  linenr_T  old_botline;
   int did_incsearch;
   int incsearch_postponed;
   int did_wild_list;                    // did wild_list() recently
   int wim_index;                        // index in wim_flags[]
   int res;
-  int save_msg_scroll;
-  int save_State;                       // remember State when called
+  int       save_msg_scroll;
+  int       save_State;                 // remember State when called
+  char_u   *save_p_icm;
   int some_key_typed;                   // one of the keys was typed
   // mouse drag and release events are ignored, unless they are
   // preceded with a mouse down event
@@ -160,6 +161,7 @@ static uint8_t *command_line_enter(int firstc, long count, int indent)
   s->indent = indent;
   s->save_msg_scroll = msg_scroll;
   s->save_State = State;
+  s->save_p_icm = vim_strsave(p_icm);
   s->ignore_drag_release = true;
 
   if (s->firstc == -1) {
@@ -324,9 +326,12 @@ static uint8_t *command_line_enter(int firstc, long count, int indent)
     need_wait_return = false;
   }
 
+  set_string_option_direct((char_u *)"icm", -1, s->save_p_icm, OPT_FREE,
+                           SID_NONE);
   State = s->save_State;
   setmouse();
   ui_cursor_shape();            // may show different cursor shape
+  xfree(s->save_p_icm);
 
   {
     char_u *p = ccline.cmdbuff;
@@ -982,7 +987,6 @@ static int command_line_handle_key(CommandLineState *s)
     status_redraw_curbuf();
     return command_line_not_changed(s);
 
-  // case '@':   only in very old vi
   case Ctrl_U:
     // delete all characters left of the cursor
     s->j = ccline.cmdpos;
@@ -996,7 +1000,6 @@ static int command_line_handle_key(CommandLineState *s)
     ccline.cmdbuff[ccline.cmdlen] = NUL;
     redrawcmd();
     return command_line_changed(s);
-
 
   case ESC:           // get here if p_wc != ESC or when ESC typed twice
   case Ctrl_C:
@@ -1490,11 +1493,11 @@ static int command_line_handle_key(CommandLineState *s)
 
 static int command_line_not_changed(CommandLineState *s)
 {
-  // This part implements incremental searches for "/" and "?" Jump to
-  // cmdline_not_changed when a character has been read but the command line
-  // did not change. Then we only search and redraw if something changed in
-  // the past.  Jump to cmdline_changed when the command line did change.
-  // (Sorry for the goto's, I know it is ugly).
+  // Incremental searches for "/" and "?":
+  // Enter command_line_not_changed() when a character has been read but the
+  // command line did not change. Then we only search and redraw if something
+  // changed in the past.
+  // Enter command_line_changed() when the command line did change.
   if (!s->incsearch_postponed) {
     return 1;
   }
@@ -1592,6 +1595,34 @@ static int command_line_changed(CommandLineState *s)
     msg_starthere();
     redrawcmdline();
     s->did_incsearch = true;
+  } else if (s->firstc == ':'
+             && current_SID == 0    // only if interactive
+             && *p_icm != NUL       // 'inccommand' is set
+             && curbuf->b_p_ma      // buffer is modifiable
+             && cmdline_star == 0   // not typing a password
+             && cmd_can_preview(ccline.cmdbuff)
+             && !vpeekc_any()) {
+    // Show 'inccommand' preview. It works like this:
+    //    1. Do the command.
+    //    2. Command implementation detects CMDPREVIEW state, then:
+    //       - Update the screen while the effects are in place.
+    //       - Immediately undo the effects.
+    State |= CMDPREVIEW;
+    do_cmdline(ccline.cmdbuff, NULL, NULL, DOCMD_KEEPLINE|DOCMD_NOWAIT);
+
+    // Restore the window "view".
+    curwin->w_cursor   = s->old_cursor;
+    curwin->w_curswant = s->old_curswant;
+    curwin->w_leftcol  = s->old_leftcol;
+    curwin->w_topline  = s->old_topline;
+    curwin->w_topfill  = s->old_topfill;
+    curwin->w_botline  = s->old_botline;
+    update_topline();
+
+    redrawcmdline();
+  } else if (State & CMDPREVIEW) {
+    State = (State & ~CMDPREVIEW);
+    update_screen(SOME_VALID);  // Clear 'inccommand' preview.
   }
 
   if (cmdmsg_rl || (p_arshape && !p_tbidi && enc_utf8)) {
@@ -5155,16 +5186,14 @@ static int ex_window(void)
   }
   cmdwin_type = get_cmdline_type();
 
-  /* Create the command-line buffer empty. */
-  (void)do_ecmd(0, NULL, NULL, NULL, ECMD_ONE, ECMD_HIDE, NULL);
-  (void)setfname(curbuf, (char_u *)"[Command Line]", NULL, true);
-  set_option_value("bt", 0L, "nofile", OPT_LOCAL);
-  set_option_value("swf", 0L, NULL, OPT_LOCAL);
+  // Create empty command-line buffer.
+  buf_open_scratch(0, "[Command Line]");
+  // Command-line buffer has bufhidden=wipe, unlike a true "scratch" buffer.
+  set_option_value("bh", 0L, "wipe", OPT_LOCAL);
+  curwin->w_p_rl = cmdmsg_rl;
+  cmdmsg_rl = false;
   curbuf->b_p_ma = true;
   curwin->w_p_fen = false;
-  curwin->w_p_rl = cmdmsg_rl;
-  cmdmsg_rl = FALSE;
-  RESET_BINDING(curwin);
 
   /* Do execute autocommands for setting the filetype (load syntax). */
   unblock_autocmds();

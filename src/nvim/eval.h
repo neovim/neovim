@@ -92,6 +92,7 @@ typedef enum {
     VV_FCS_CHOICE,
     VV_BEVAL_BUFNR,
     VV_BEVAL_WINNR,
+    VV_BEVAL_WINID,
     VV_BEVAL_LNUM,
     VV_BEVAL_COL,
     VV_BEVAL_TEXT,
@@ -101,6 +102,7 @@ typedef enum {
     VV_SWAPCOMMAND,
     VV_CHAR,
     VV_MOUSE_WIN,
+    VV_MOUSE_WINID,
     VV_MOUSE_LNUM,
     VV_MOUSE_COL,
     VV_OP,
@@ -122,6 +124,7 @@ typedef enum {
     VV_NULL,
     VV__NULL_LIST,  // List with NULL value. For test purposes only.
     VV__NULL_DICT,  // Dictionary with NULL value. For test purposes only.
+    VV_VIM_DID_ENTER,
 } VimVarIndex;
 
 /// All recognized msgpack types

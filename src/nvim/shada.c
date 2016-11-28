@@ -1575,7 +1575,7 @@ static char *shada_filename(const char *file)
     do { \
       const String s_ = (s); \
       msgpack_pack_bin(spacker, s_.size); \
-      if (s_.size) { \
+      if (s_.size > 0) { \
         msgpack_pack_bin_body(spacker, s_.data, s_.size); \
       } \
     } while (0)

@@ -669,7 +669,7 @@ static int insert_execute(VimState *state, int key)
                && (s->c == CAR || s->c == K_KENTER || s->c == NL)))
           && stop_arrow() == OK) {
         ins_compl_delete();
-        ins_compl_insert();
+        ins_compl_insert(false);
       }
     }
   }
@@ -2369,7 +2369,6 @@ static int ins_compl_make_cyclic(void)
   return count;
 }
 
-
 // Set variables that store noselect and noinsert behavior from the
 // 'completeopt' value.
 void completeopt_was_set(void)
@@ -2822,7 +2821,7 @@ static void ins_compl_files(int count, char_u **files, int thesaurus, int flags,
           break;
       }
       line_breakcheck();
-      ins_compl_check_keys(50);
+      ins_compl_check_keys(50, false);
     }
     fclose(fp);
   }
@@ -3961,7 +3960,7 @@ static int ins_compl_get_exp(pos_T *ini)
         break;
       /* Fill the popup menu as soon as possible. */
       if (type != -1)
-        ins_compl_check_keys(0);
+        ins_compl_check_keys(0, false);
 
       if ((l_ctrl_x_mode != 0 && !CTRL_X_MODE_LINE_OR_EVAL(l_ctrl_x_mode))
           || compl_interrupted) {
@@ -4023,8 +4022,9 @@ static void ins_compl_delete(void)
   set_vim_var_dict(VV_COMPLETED_ITEM, tv_dict_alloc());
 }
 
-/* Insert the new text being completed. */
-static void ins_compl_insert(void)
+// Insert the new text being completed.
+// "in_compl_func" is TRUE when called from complete_check().
+static void ins_compl_insert(int in_compl_func)
 {
   ins_bytes(compl_shown_match->cp_str + ins_compl_len());
   if (compl_shown_match->cp_flags & ORIGINAL_TEXT)
@@ -4050,7 +4050,9 @@ static void ins_compl_insert(void)
       dict, S_LEN("info"),
       (const char *)EMPTY_IF_NULL(compl_shown_match->cp_text[CPT_INFO]));
   set_vim_var_dict(VV_COMPLETED_ITEM, dict);
-  compl_curr_match = compl_shown_match;
+  if (!in_compl_func) {
+    compl_curr_match = compl_shown_match;
+  }
 }
 
 /*
@@ -4072,9 +4074,10 @@ static void ins_compl_insert(void)
 static int
 ins_compl_next (
     int allow_get_expansion,
-    int count,                      /* repeat completion this many times; should
-                                   be at least 1 */
-    int insert_match               /* Insert the newly selected match */
+    int count,                // Repeat completion this many times; should
+                              // be at least 1
+    int insert_match,         // Insert the newly selected match
+    int in_compl_func         // Called from complete_check()
 )
 {
   int num_matches = -1;
@@ -4204,7 +4207,7 @@ ins_compl_next (
     compl_used_match = FALSE;
   } else if (insert_match) {
     if (!compl_get_longest || compl_used_match) {
-      ins_compl_insert();
+      ins_compl_insert(in_compl_func);
     } else {
       ins_bytes(compl_leader + ins_compl_len());
     }
@@ -4254,14 +4257,14 @@ ins_compl_next (
   return num_matches;
 }
 
-/*
- * Call this while finding completions, to check whether the user has hit a key
- * that should change the currently displayed completion, or exit completion
- * mode.  Also, when compl_pending is not zero, show a completion as soon as
- * possible. -- webb
- * "frequency" specifies out of how many calls we actually check.
- */
-void ins_compl_check_keys(int frequency)
+// Call this while finding completions, to check whether the user has hit a key
+// that should change the currently displayed completion, or exit completion
+// mode.  Also, when compl_pending is not zero, show a completion as soon as
+// possible. -- webb
+// "frequency" specifies out of how many calls we actually check.
+// "in_compl_func" is TRUE when called from complete_check(), don't set
+// compl_curr_match.
+void ins_compl_check_keys(int frequency, int in_compl_func)
 {
   static int count = 0;
 
@@ -4284,8 +4287,8 @@ void ins_compl_check_keys(int frequency)
     if (vim_is_ctrl_x_key(c) && c != Ctrl_X && c != Ctrl_R) {
       c = safe_vgetc();         /* Eat the character */
       compl_shows_dir = ins_compl_key2dir(c);
-      (void)ins_compl_next(FALSE, ins_compl_key2count(c),
-          c != K_UP && c != K_DOWN);
+      (void)ins_compl_next(false, ins_compl_key2count(c),
+          c != K_UP && c != K_DOWN, in_compl_func);
     } else {
       /* Need to get the character to have KeyTyped set.  We'll put it
        * back with vungetc() below.  But skip K_IGNORE. */
@@ -4304,7 +4307,7 @@ void ins_compl_check_keys(int frequency)
     int todo = compl_pending > 0 ? compl_pending : -compl_pending;
 
     compl_pending = 0;
-    (void)ins_compl_next(FALSE, todo, TRUE);
+    (void)ins_compl_next(false, todo, true, in_compl_func);
   }
 }
 
@@ -4729,7 +4732,7 @@ static int ins_complete(int c, bool enable_pum)
    * Find next match (and following matches).
    */
   save_w_wrow = curwin->w_wrow;
-  n = ins_compl_next(true, ins_compl_key2count(c), insert_match);
+  n = ins_compl_next(true, ins_compl_key2count(c), insert_match, false);
 
   /* may undisplay the popup menu */
   ins_compl_upd_pum();

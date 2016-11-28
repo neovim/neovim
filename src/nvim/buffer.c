@@ -268,6 +268,9 @@ open_buffer (
 bool buf_valid(buf_T *buf)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
+  if (buf == NULL) {
+    return false;
+  }
   FOR_ALL_BUFFERS(bp) {
     if (bp == buf) {
       return true;
@@ -479,6 +482,18 @@ void buf_clear_file(buf_T *buf)
   buf->b_ml.ml_flags = ML_EMPTY;                /* empty buffer */
 }
 
+/// Clears the current buffer contents.
+void buf_clear(void)
+{
+  linenr_T line_count = curbuf->b_ml.ml_line_count;
+  while (!(curbuf->b_ml.ml_flags & ML_EMPTY)) {
+    ml_delete((linenr_T)1, false);
+  }
+  deleted_lines_mark(1, line_count);  // prepare for display
+  ml_close(curbuf, true);             // free memline_T
+  buf_clear_file(curbuf);
+}
+
 /// buf_freeall() - free all things allocated for a buffer that are related to
 /// the file.  Careful: get here with "curwin" NULL when exiting.
 ///
@@ -671,14 +686,15 @@ void handle_swap_exists(buf_T *old_curbuf)
      * aborting() returns FALSE when closing a buffer. */
     enter_cleanup(&cs);
 
-    /* User selected Quit at ATTENTION prompt.  Go back to previous
-     * buffer.  If that buffer is gone or the same as the current one,
-     * open a new, empty buffer. */
-    swap_exists_action = SEA_NONE;      /* don't want it again */
-    swap_exists_did_quit = TRUE;
-    close_buffer(curwin, curbuf, DOBUF_UNLOAD, FALSE);
-    if (!buf_valid(old_curbuf) || old_curbuf == curbuf)
+    // User selected Quit at ATTENTION prompt.  Go back to previous
+    // buffer.  If that buffer is gone or the same as the current one,
+    // open a new, empty buffer.
+    swap_exists_action = SEA_NONE;      // don't want it again
+    swap_exists_did_quit = true;
+    close_buffer(curwin, curbuf, DOBUF_UNLOAD, false);
+    if (!buf_valid(old_curbuf) || old_curbuf == curbuf) {
       old_curbuf = buflist_new(NULL, NULL, 1L, BLN_CURBUF | BLN_LISTED);
+    }
     if (old_curbuf != NULL) {
       enter_buffer(old_curbuf);
       if (old_tw != curbuf->b_p_tw)
@@ -1319,28 +1335,29 @@ void do_autochdir(void)
   }
 }
 
-/*
- * functions for dealing with the buffer list
- */
+//
+// functions for dealing with the buffer list
+//
 
-/*
- * Add a file name to the buffer list.  Return a pointer to the buffer.
- * If the same file name already exists return a pointer to that buffer.
- * If it does not exist, or if fname == NULL, a new entry is created.
- * If (flags & BLN_CURBUF) is TRUE, may use current buffer.
- * If (flags & BLN_LISTED) is TRUE, add new buffer to buffer list.
- * If (flags & BLN_DUMMY) is TRUE, don't count it as a real buffer.
- * This is the ONLY way to create a new buffer.
- */
-static int top_file_num = 1;            /* highest file number */
+static int top_file_num = 1;            ///< highest file number
 
-buf_T *
-buflist_new (
-    char_u *ffname,            /* full path of fname or relative */
-    char_u *sfname,            /* short fname or NULL */
-    linenr_T lnum,                  /* preferred cursor line */
-    int flags                      /* BLN_ defines */
-)
+/// Add a file name to the buffer list.
+/// If the same file name already exists return a pointer to that buffer.
+/// If it does not exist, or if fname == NULL, a new entry is created.
+/// If (flags & BLN_CURBUF) is TRUE, may use current buffer.
+/// If (flags & BLN_LISTED) is TRUE, add new buffer to buffer list.
+/// If (flags & BLN_DUMMY) is TRUE, don't count it as a real buffer.
+/// If (flags & BLN_NEW) is TRUE, don't use an existing buffer.
+/// This is the ONLY way to create a new buffer.
+///
+/// @param ffname full path of fname or relative
+/// @param sfname short fname or NULL
+/// @param lnum   preferred cursor line
+/// @param flags  BLN_ defines
+/// @param bufnr
+///
+/// @return pointer to the buffer
+buf_T * buflist_new(char_u *ffname, char_u *sfname, linenr_T lnum, int flags)
 {
   buf_T       *buf;
 
@@ -2374,10 +2391,11 @@ buf_T *setaltfname(char_u *ffname, char_u *sfname, linenr_T lnum)
 {
   buf_T       *buf;
 
-  /* Create a buffer.  'buflisted' is not set if it's a new buffer */
+  // Create a buffer.  'buflisted' is not set if it's a new buffer
   buf = buflist_new(ffname, sfname, lnum, 0);
-  if (buf != NULL && !cmdmod.keepalt)
+  if (buf != NULL && !cmdmod.keepalt) {
     curwin->w_alt_fnum = buf->b_fnum;
+  }
   return buf;
 }
 
@@ -2412,8 +2430,9 @@ int buflist_add(char_u *fname, int flags)
   buf_T       *buf;
 
   buf = buflist_new(fname, NULL, (linenr_T)0, flags);
-  if (buf != NULL)
+  if (buf != NULL) {
     return buf->b_fnum;
+  }
   return 0;
 }
 
@@ -5250,4 +5269,22 @@ wipe_buffer (
   if (!aucmd) {
     unblock_autocmds();
   }
+}
+
+/// Creates or switches to a scratch buffer. :h special-buffers
+/// Scratch buffer is:
+///   - buftype=nofile bufhidden=hide noswapfile
+///   - Always considered 'nomodified'
+///
+/// @param bufnr     Buffer to switch to, or 0 to create a new buffer.
+///
+/// @see curbufIsChanged()
+void buf_open_scratch(handle_T bufnr, char *bufname)
+{
+  (void)do_ecmd((int)bufnr, NULL, NULL, NULL, ECMD_ONE, ECMD_HIDE, NULL);
+  (void)setfname(curbuf, (char_u *)bufname, NULL, true);
+  set_option_value((char_u *)"bh", 0L, (char_u *)"hide", OPT_LOCAL);
+  set_option_value((char_u *)"bt", 0L, (char_u *)"nofile", OPT_LOCAL);
+  set_option_value((char_u *)"swf", 0L, NULL, OPT_LOCAL);
+  RESET_BINDING(curwin);
 }

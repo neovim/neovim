@@ -512,7 +512,8 @@ int main(int argc, char **argv)
   if (p_im)
     need_start_insertmode = TRUE;
 
-  apply_autocmds(EVENT_VIMENTER, NULL, NULL, FALSE, curbuf);
+  set_vim_var_nr(VV_VIM_DID_ENTER, 1L);
+  apply_autocmds(EVENT_VIMENTER, NULL, NULL, false, curbuf);
   TIME_MSG("VimEnter autocommands");
 
   /* When a startup script or session file setup for diff'ing and
