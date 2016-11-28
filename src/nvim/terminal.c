@@ -978,9 +978,7 @@ static void refresh_terminal(Terminal *term)
 // event.
 static void refresh_timer_cb(TimeWatcher *watcher, void *data)
 {
-  if (exiting) {
-    // bad things can happen if we redraw when exiting, and there's no need to
-    // update the buffer.
+  if (exiting) {  // Cannot redraw (requires event loop) during teardown/exit.
     goto end;
   }
   Terminal *term;
