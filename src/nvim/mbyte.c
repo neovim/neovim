@@ -665,7 +665,7 @@ size_t mb_string2cells(const char_u *str)
 
 /// Return number of display cells for char at ScreenLines[off].
 /// We make sure that the offset used is less than "max_off".
-int utf_off2cells(unsigned off, unsigned max_off)
+int utf_off2cells(win_T *wp, unsigned off, unsigned max_off)
 {
   schar_T *screen_lines;
   if (!win_get_external()) {
@@ -1986,14 +1986,8 @@ int mb_fix_col(win_T *wp, int col, int row)
 
   col = check_col(col);
   row = check_row(row);
-  if (ScreenLines != NULL && col > 0
-      && ScreenLines[LineOffset[row] + col] == 0) {
-  if (has_mbyte && screen_lines != NULL && col > 0
-      && ((enc_dbcs
-          && screen_lines[line_offset[row] + col] != NUL
-          && dbcs_screen_head_off(screen_lines + line_offset[row],
-            screen_lines + line_offset[row] + col))
-        || (enc_utf8 && screen_lines[line_offset[row] + col] == 0)))
+  if (screen_lines != NULL && col > 0
+      && screen_lines[line_offset[row] + col] == 0) {
     return col - 1;
   }
   return col;

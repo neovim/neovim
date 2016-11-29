@@ -1524,14 +1524,26 @@ static void win_update(win_T *wp)
       wp->w_filler_rows = wp->w_height - srow;
     } else if (dy_flags & DY_TRUNCATE) {      // 'display' has "truncate"
       int scr_row = wp->w_winrow + wp->w_height - 1;
+      if (win_external) {
+          scr_row = wp->w_height - 1;
+      }
 
       // Last line isn't finished: Display "@@@" in the last screen line.
-      screen_puts_len((char_u *)"@@", 2, scr_row, wp->w_wincol,
-                      hl_attr(HLF_AT));
+      if (!win_external) {
+        screen_puts_len(wp, (char_u *)"@@", 2, scr_row, wp->w_wincol,
+                        hl_attr(HLF_AT));
 
-      screen_fill(scr_row, scr_row + 1,
-                  (int)wp->w_wincol + 2, (int)W_ENDCOL(wp),
-                  '@', ' ', hl_attr(HLF_AT));
+        screen_fill(wp, scr_row, scr_row + 1,
+                    (int)wp->w_wincol + 2, (int)W_ENDCOL(wp),
+                    '@', ' ', hl_attr(HLF_AT));
+      } else {
+        screen_puts_len(wp, (char_u *)"@@", 2, scr_row, 0,
+                        hl_attr(HLF_AT));
+
+        screen_fill(wp, scr_row, scr_row + 1,
+                    2, wp->w_width,
+                    '@', ' ', hl_attr(HLF_AT));
+      }
       set_empty_rows(wp, srow);
       wp->w_botline = lnum;
     } else if (dy_flags & DY_LASTLINE) {      /* 'display' has "lastline" */
@@ -5809,7 +5821,7 @@ void screen_puts_len(win_T *wp, char_u *text, int textlen, int row, int col, int
   /* If we detected the next character needs to be redrawn, but the text
    * doesn't extend up to there, update the character here. */
   if (force_redraw_next && col < screen_Columns) {
-      screen_char(off, row, col);
+      screen_char(wp, off, row, col);
   }
 }
 
