@@ -2552,7 +2552,7 @@ static void add_pack_plugin(char_u *fname, void *cookie)
   }
 
   if (cookie != &APP_ADD_DIR) {
-    static const char *plugpat = "%s/plugin/*.vim";  // NOLINT
+    static const char *plugpat = "%s/plugin/**/*.vim";  // NOLINT
     static const char *ftpat = "%s/ftdetect/*.vim";  // NOLINT
 
     size_t len = STRLEN(ffname) + STRLEN(ftpat);
