@@ -4,6 +4,8 @@ function Test_messages()
   let oldmore = &more
   try
     set nomore
+    " Avoid the "message maintainer" line.
+    let $LANG = ''
 
     let arr = map(range(10), '"hello" . v:val')
     for s in arr
@@ -11,31 +13,27 @@ function Test_messages()
     endfor
     let result = ''
 
+    " get last two messages
     redir => result
     2messages | redraw
     redir END
-
-    " get last two messages
-    let msg = split(result, "\n")[1:][-2:]
-    call assert_equal(["hello8", "hello9"], msg)
+    let msg_list = split(result, "\n")
+    call assert_equal(["hello8", "hello9"], msg_list)
 
     " clear messages without last one
     1messages clear
     redir => result
-    redraw | 1messages
+    redraw | messages
     redir END
-    " get last last message
-    let msg = split(result, "\n")[1:][-1:]
-    call assert_equal(['hello9'], msg)
+    let msg_list = split(result, "\n")
+    call assert_equal(['hello9'], msg_list)
 
     " clear all messages
     messages clear
     redir => result
-    redraw | 1messages
+    redraw | messages
     redir END
-    " get last last message
-    let msg = split(result, "\n")[1:][-1:]
-    call assert_equal([], msg)
+    call assert_equal('', result)
   finally
     let &more = oldmore
   endtry
