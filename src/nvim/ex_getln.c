@@ -442,6 +442,11 @@ static int command_line_execute(VimState *state, int key)
       && !(s->c == p_wc && KeyTyped) && s->c != p_wcm
       && s->c != Ctrl_N && s->c != Ctrl_P && s->c != Ctrl_A
       && s->c != Ctrl_L) {
+
+    if (win_get_external()) {
+      Array args = ARRAY_DICT_INIT;
+      ui_event("wild_menu_clean", args);
+    }
     (void)ExpandOne(&s->xpc, NULL, NULL, 0, WILD_FREE);
     s->did_wild_list = false;
     if (!p_wmnu || (s->c != K_UP && s->c != K_DOWN)) {
@@ -3066,6 +3071,11 @@ void ExpandCleanup(expand_T *xp)
   if (xp->xp_numfiles >= 0) {
     FreeWild(xp->xp_numfiles, xp->xp_files);
     xp->xp_numfiles = -1;
+  }
+
+  if (win_get_external()) {
+    Array args = ARRAY_DICT_INIT;
+    ui_event("wild_menu_clean", args);
   }
 }
 

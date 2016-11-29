@@ -427,6 +427,19 @@ void update_screen(int type)
    */
   did_one = FALSE;
   search_hl.rm.regprog = NULL;
+
+  Array args = ARRAY_DICT_INIT;
+  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+    Array item = ARRAY_DICT_INIT;
+    ADD(item, INTEGER_OBJ(wp->handle));
+    ADD(item, INTEGER_OBJ(wp->w_width));
+    ADD(item, INTEGER_OBJ(wp->w_height));
+    ADD(item, INTEGER_OBJ(wp->w_winrow));
+    ADD(item, INTEGER_OBJ(wp->w_wincol));
+    ADD(args, ARRAY_OBJ(item));
+  }
+  ui_event("win_resize", args);
+
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     if (wp->w_redr_type != 0) {
       if (!did_one) {
@@ -589,6 +602,7 @@ void update_debug_sign(buf_T *buf, linenr_T lnum)
       if (wp->w_redr_type != 0) {
         win_update(wp);
       }
+      win_ui_update(wp);
       if (wp->w_redr_status) {
         win_redr_status(wp);
       }
@@ -699,15 +713,7 @@ static void win_update(win_T *wp)
    * changes. */
   i = (wp->w_p_nu || wp->w_p_rnu) ? number_width(wp) : 0;
 
-  Array args = ARRAY_DICT_INIT;
-  ADD(args, INTEGER_OBJ(wp->handle));
-  ADD(args, INTEGER_OBJ(wp->w_width));
-  ADD(args, INTEGER_OBJ(wp->w_height));
-  ADD(args, INTEGER_OBJ(wp->w_winrow));
-  ADD(args, INTEGER_OBJ(wp->w_wincol));
-  ADD(args, INTEGER_OBJ(i));
-  ADD(args, INTEGER_OBJ(draw_signcolumn(wp)));
-  ui_event("win_update", args);
+  win_ui_update(wp);
 
   if (wp->w_nrwidth != i) {
     type = NOT_VALID;
@@ -1562,6 +1568,8 @@ static void win_update(win_T *wp)
     /* put '~'s on rows that aren't part of the file. */
     if (!win_external) {
       win_draw_end(wp, '~', ' ', row, wp->w_height, HLF_EOB);
+    } else {
+      win_draw_end(wp, ' ', ' ', row, wp->w_height, HLF_EOB);
     }
   }
 
@@ -4729,7 +4737,9 @@ static void screen_line(win_T *wp, int row, int coloff, int endcol, int clear_wi
           } else
             screen_lines_uc[off_to] = 0;
         }
-        screen_char(wp, off_to, row, col + coloff);
+        if (!win_external) {
+          screen_char(wp, off_to, row, col + coloff);
+        }
       }
     } else
       line_wraps[row] = FALSE;
@@ -4826,10 +4836,6 @@ static void draw_vsep_win(win_T *wp, int row)
       screen_fill(wp, wp->w_winrow + row, wp->w_winrow + wp->w_height,
           W_ENDCOL(wp), W_ENDCOL(wp) + 1,
           c, ' ', hl);
-    } else {
-      screen_fill(wp, row, wp->w_height,
-          wp->w_width, wp->w_width + 1,
-          c, ' ', hl);
     }
   }
 }
@@ -4916,6 +4922,16 @@ win_redr_status_matches (
     return;
 
   buf = xmalloc(has_mbyte ? Columns * MB_MAXBYTES + 1 : Columns + 1);
+
+  if (win_external) {
+    Array args = ARRAY_DICT_INIT;
+    ADD(args, INTEGER_OBJ(match));
+    for (i = 0; i < num_matches; ++i) {
+      ADD(args, STRING_OBJ(cstr_to_string((char *)L_MATCH(i))));
+    }
+    ui_event("wild_menu", args);
+    return;
+  }
 
   if (match == -1) {    /* don't show match but original text */
     match = 0;
@@ -5186,9 +5202,6 @@ void win_redr_status(win_T *wp)
     if (!win_external) {
       screen_putchar(wp, fillchar, wp->w_winrow + wp->w_height,
                      W_ENDCOL(wp), attr);
-    } else {
-      screen_putchar(wp, fillchar, wp->w_height,
-                     wp->w_width, attr);
     }
   }
   busy = FALSE;
@@ -5616,7 +5629,7 @@ void screen_puts_len(win_T *wp, char_u *text, int textlen, int row, int col, int
       screen_lines_c[i] = wp->screen_lines_c[i];
     screen_attrs = wp->screen_attrs;
     line_offset = wp->line_offset;
-    screen_lines_uc = ScreenLinesUC;
+    screen_lines_uc = wp->screen_lines_uc;
     screen_rows = wp->screen_rows;
     screen_columns = wp->screen_columns;
   }
@@ -6710,6 +6723,16 @@ static void screenclear2(void)
   for (i = 0; i < Rows; ++i) {
     lineclear(curwin, LineOffset[i], (int)Columns);
     LineWraps[i] = FALSE;
+  }
+
+  if (win_external) {
+    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+      for (i = 0; i < Rows; ++i) {
+        wp->line_offset[i] = i * Columns;
+        lineclear(wp, wp->line_offset[i], (int)Columns);
+        wp->line_wraps[i] = FALSE;
+      }
+    }
   }
 
   if (!win_external) {

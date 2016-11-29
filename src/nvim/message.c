@@ -1592,6 +1592,7 @@ static void msg_puts_display(char_u *str, int maxlen, int attr, int recurse)
     Array args = ARRAY_DICT_INIT;
     ADD(args, STRING_OBJ(cstr_to_string((char *)(str))));
     ui_event("msg_puts_display", args);
+    return;
   }
 
   did_wait_return = false;
