@@ -59,6 +59,9 @@ lang mess C
 " Always use forward slashes.
 set shellslash
 
+" Make sure $HOME does not get read or written.
+let $HOME = '/does/not/exist'
+
 function RunTheTest(test)
   echo 'Executing ' . a:test
   if exists("*SetUp")
@@ -130,6 +133,9 @@ for s:test in sort(s:tests)
   endif
 
 endfor
+
+" Don't write viminfo on exit.
+set viminfo=
 
 if s:fail == 0
   " Success, create the .res file so that make knows it's done.
