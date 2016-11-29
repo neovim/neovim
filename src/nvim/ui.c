@@ -356,6 +356,22 @@ void ui_puts(uint8_t *str)
   }
 }
 
+void win_ui_update(win_T *wp)
+{
+  int i;
+  i = (wp->w_p_nu || wp->w_p_rnu) ? number_width(wp) : 0;
+
+  Array args = ARRAY_DICT_INIT;
+  ADD(args, INTEGER_OBJ(wp->handle));
+  ADD(args, INTEGER_OBJ(wp->w_width));
+  ADD(args, INTEGER_OBJ(wp->w_height));
+  ADD(args, INTEGER_OBJ(wp->w_winrow));
+  ADD(args, INTEGER_OBJ(wp->w_wincol));
+  ADD(args, INTEGER_OBJ(i));
+  ADD(args, INTEGER_OBJ(wp->w_buffer->b_signlist != NULL));
+  ui_event("win_update", args);
+}
+
 static void win_put(handle_T win_id, uint8_t *data, size_t size)
 {
   Array args = ARRAY_DICT_INIT;
