@@ -1986,17 +1986,14 @@ int mb_fix_col(win_T *wp, int col, int row)
 
   col = check_col(col);
   row = check_row(row);
-<<<<<<< HEAD
   if (ScreenLines != NULL && col > 0
       && ScreenLines[LineOffset[row] + col] == 0) {
-=======
   if (has_mbyte && screen_lines != NULL && col > 0
       && ((enc_dbcs
           && screen_lines[line_offset[row] + col] != NUL
           && dbcs_screen_head_off(screen_lines + line_offset[row],
             screen_lines + line_offset[row] + col))
         || (enc_utf8 && screen_lines[line_offset[row] + col] == 0)))
->>>>>>> Roughly working
     return col - 1;
   }
   return col;
