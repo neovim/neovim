@@ -17,6 +17,7 @@
 #include "nvim/eval.h"
 #include "nvim/ex_getln.h"
 #include "nvim/version.h"
+#include "nvim/fileio.h"
 
 #ifdef HAVE__NSGETENVIRON
 #include <crt_externs.h>

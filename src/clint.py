@@ -2268,11 +2268,10 @@ def CheckSpacing(filename, clean_lines, linenum, nesting_state, error):
                 # //!<  Header comment
                 # or they begin with multiple slashes followed by a space:
                 # //////// Header comment
-                match = (Search(r'[=/-]{4,}\s*$', line[commentend:]) or
-                         Search(r'^/$', line[commentend:]) or
-                         Search(r'^!< ', line[commentend:]) or
-                         Search(r'^/< ', line[commentend:]) or
-                         Search(r'^/+ ', line[commentend:]))
+                # or it is a vim fold
+                # //{{{1 Title
+                match = (Search(r'(?:[=/-]{4,}\s*$|^/$|^!<|^/|\{{3}\d+ \S)',
+                                line[commentend:]))
                 if not match:
                     error(filename, linenum, 'whitespace/comments', 4,
                           'Should have a space between // and comment')
@@ -3539,7 +3538,7 @@ def main():
 if __name__ == '__main__':
     main()
 
-# vim: ts=4 sts=4 sw=4
+# vim: ts=4 sts=4 sw=4 foldmarker=<<<,>>>
 
 # Ignore "too complex" warnings when using pymode.
 # pylama:ignore=C901

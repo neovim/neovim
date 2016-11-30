@@ -2962,8 +2962,8 @@ static tabpage_T *alloc_tabpage(void)
   tp->handle = ++last_tp_handle;
   handle_register_tabpage(tp);
 
-  /* init t: variables */
-  tp->tp_vars = dict_alloc();
+  // Init t: variables.
+  tp->tp_vars = tv_dict_alloc();
   init_var_dict(tp->tp_vars, &tp->tp_winvar, VAR_SCOPE);
   tp->tp_diff_invalid = TRUE;
   tp->tp_ch_used = p_ch;
@@ -3731,8 +3731,8 @@ static win_T *win_alloc(win_T *after, int hidden)
   new_wp->handle = ++last_win_id;
   handle_register_window(new_wp);
 
-  /* init w: variables */
-  new_wp->w_vars = dict_alloc();
+  // Init w: variables.
+  new_wp->w_vars = tv_dict_alloc();
   init_var_dict(new_wp->w_vars, &new_wp->w_winvar, VAR_SCOPE);
 
   /* Don't execute autocommands while the window is not properly
@@ -5417,9 +5417,9 @@ void restore_buffer(buf_T *save_curbuf)
 // Optionally, a desired ID 'id' can be specified (greater than or equal to 1).
 // If no particular ID is desired, -1 must be specified for 'id'.
 // Return ID of added match, -1 on failure.
-int match_add(win_T *wp, char_u *grp, char_u *pat,
+int match_add(win_T *wp, const char *const grp, const char *const pat,
               int prio, int id, list_T *pos_list,
-              char_u *conceal_char)
+              const char *const conceal_char)
 {
   matchitem_T *cur;
   matchitem_T *prev;
@@ -5447,11 +5447,11 @@ int match_add(win_T *wp, char_u *grp, char_u *pat,
       cur = cur->next;
     }
   }
-  if ((hlg_id = syn_namen2id(grp, (int)STRLEN(grp))) == 0) {
+  if ((hlg_id = syn_name2id((const char_u *)grp)) == 0) {
     EMSG2(_(e_nogroup), grp);
     return -1;
   }
-  if (pat != NULL && (regprog = vim_regcomp(pat, RE_MAGIC)) == NULL) {
+  if (pat != NULL && (regprog = vim_regcomp((char_u *)pat, RE_MAGIC)) == NULL) {
     EMSG2(_(e_invarg2), pat);
     return -1;
   }
@@ -5470,14 +5470,14 @@ int match_add(win_T *wp, char_u *grp, char_u *pat,
   m = xcalloc(1, sizeof(matchitem_T));
   m->id = id;
   m->priority = prio;
-  m->pattern = pat == NULL ? NULL: vim_strsave(pat);
+  m->pattern = pat == NULL ? NULL: (char_u *)xstrdup(pat);
   m->hlg_id = hlg_id;
   m->match.regprog = regprog;
   m->match.rmm_ic = FALSE;
   m->match.rmm_maxcol = 0;
   m->conceal_char = 0;
   if (conceal_char != NULL) {
-    m->conceal_char = (*mb_ptr2char)(conceal_char);
+    m->conceal_char = (*mb_ptr2char)((const char_u *)conceal_char);
   }
 
   // Set up position matches
@@ -5495,7 +5495,7 @@ int match_add(win_T *wp, char_u *grp, char_u *pat,
       int	  len = 1;
       list_T	  *subl;
       listitem_T  *subli;
-      int	  error = false;
+      bool error = false;
 
       if (li->li_tv.v_type == VAR_LIST) {
         subl = li->li_tv.vval.v_list;
@@ -5506,8 +5506,8 @@ int match_add(win_T *wp, char_u *grp, char_u *pat,
         if (subli == NULL) {
           goto fail;
         }
-        lnum = get_tv_number_chk(&subli->li_tv, &error);
-        if (error == true) {
+        lnum = tv_get_number_chk(&subli->li_tv, &error);
+        if (error) {
           goto fail;
         }
         if (lnum == 0) {
@@ -5517,13 +5517,14 @@ int match_add(win_T *wp, char_u *grp, char_u *pat,
         m->pos.pos[i].lnum = lnum;
         subli = subli->li_next;
         if (subli != NULL) {
-          col = get_tv_number_chk(&subli->li_tv, &error);
-          if (error == true)
+          col = tv_get_number_chk(&subli->li_tv, &error);
+          if (error) {
             goto fail;
+          }
           subli = subli->li_next;
           if (subli != NULL) {
-            len = get_tv_number_chk(&subli->li_tv, &error);
-            if (error == true) {
+            len = tv_get_number_chk(&subli->li_tv, &error);
+            if (error) {
               goto fail;
             }
           }
@@ -5722,14 +5723,14 @@ int win_getid(typval_T *argvars)
   if (argvars[0].v_type == VAR_UNKNOWN) {
     return curwin->handle;
   }
-  int winnr = get_tv_number(&argvars[0]);
+  int winnr = tv_get_number(&argvars[0]);
   win_T *wp;
   if (winnr > 0) {
     if (argvars[1].v_type == VAR_UNKNOWN) {
       wp = firstwin;
     } else {
       tabpage_T *tp;
-      int tabnr = get_tv_number(&argvars[1]);
+      int tabnr = tv_get_number(&argvars[1]);
       for (tp = first_tabpage; tp != NULL; tp = tp->tp_next) {
         if (--tabnr == 0) {
           break;
@@ -5751,7 +5752,7 @@ int win_getid(typval_T *argvars)
 
 int win_gotoid(typval_T *argvars)
 {
-  int id = get_tv_number(&argvars[0]);
+  int id = tv_get_number(&argvars[0]);
 
   FOR_ALL_TAB_WINDOWS(tp, wp) {
     if (wp->handle == id) {
@@ -5786,18 +5787,18 @@ void win_id2tabwin(typval_T *argvars, list_T *list)
 {
   int winnr = 1;
   int tabnr = 1;
-  int id = get_tv_number(&argvars[0]);
+  handle_T id = (handle_T)tv_get_number(&argvars[0]);
 
   win_get_tabwin(id, &tabnr, &winnr);
-  list_append_number(list, tabnr);
-  list_append_number(list, winnr);
+  tv_list_append_number(list, tabnr);
+  tv_list_append_number(list, winnr);
 }
 
 int win_id2win(typval_T *argvars)
 {
   win_T   *wp;
   int nr = 1;
-  int id = get_tv_number(&argvars[0]);
+  int id = tv_get_number(&argvars[0]);
 
   for (wp = firstwin; wp != NULL; wp = wp->w_next) {
     if (wp->handle == id) {
@@ -5810,13 +5811,13 @@ int win_id2win(typval_T *argvars)
 
 void win_findbuf(typval_T *argvars, list_T *list)
 {
-  int bufnr = get_tv_number(&argvars[0]);
+  int bufnr = tv_get_number(&argvars[0]);
 
   for (tabpage_T *tp = first_tabpage; tp != NULL; tp = tp->tp_next) {
     for (win_T *wp = tp == curtab ? firstwin : tp->tp_firstwin;
          wp != NULL; wp = wp->w_next) {
       if (wp->w_buffer->b_fnum == bufnr) {
-        list_append_number(list, wp->handle);
+        tv_list_append_number(list, wp->handle);
       }
     }
   }

@@ -31,6 +31,7 @@
 #include <limits.h>
 
 #include "nvim/vim.h"
+#include "nvim/macros.h"
 #include "nvim/ascii.h"
 #include "nvim/edit.h"
 #include "nvim/option.h"
@@ -606,7 +607,7 @@ void set_init_1(void)
   /*
    * 'maxmemtot' and 'maxmem' may have to be adjusted for available memory
    */
-  opt_idx = findoption((char_u *)"maxmemtot");
+  opt_idx = findoption("maxmemtot");
   if (opt_idx >= 0) {
     {
       /* Use half of amount of memory available to Vim. */
@@ -616,7 +617,7 @@ void set_init_1(void)
                     ? UINTPTR_MAX
                     : (uintptr_t)(available_kib /2);
       options[opt_idx].def_val[VI_DEFAULT] = (char_u *)n;
-      opt_idx = findoption((char_u *)"maxmem");
+      opt_idx = findoption("maxmem");
       if (opt_idx >= 0) {
         options[opt_idx].def_val[VI_DEFAULT] = (char_u *)n;
       }
@@ -647,7 +648,7 @@ void set_init_1(void)
           }
         }
         buf[j] = NUL;
-        opt_idx = findoption((char_u *)"cdpath");
+        opt_idx = findoption("cdpath");
         if (opt_idx >= 0) {
           options[opt_idx].def_val[VI_DEFAULT] = buf;
           options[opt_idx].flags |= P_DEF_ALLOCED;
@@ -766,8 +767,9 @@ void set_init_1(void)
    * NOTE: mlterm's author is being asked to 'set' a variable
    *       instead of an environment variable due to inheritance.
    */
-  if (os_env_exists("MLTERM"))
-    set_option_value((char_u *)"tbidi", 1L, NULL, 0);
+  if (os_env_exists("MLTERM")) {
+    set_option_value("tbidi", 1L, NULL, 0);
+  }
 
   didset_options2();
 
@@ -777,7 +779,7 @@ void set_init_1(void)
   char_u *p = enc_locale();
   if (p == NULL) {
       // use utf-8 as 'default' if locale encoding can't be detected.
-      p = vim_strsave((char_u *)"utf-8");
+      p = (char_u *)xmemdupz(S_LEN("utf-8"));
   }
   fenc_default = p;
 
@@ -884,7 +886,7 @@ set_options_default (
 static void set_string_default(const char *name, char *val, bool allocated)
   FUNC_ATTR_NONNULL_ALL
 {
-  int opt_idx = findoption((char_u *)name);
+  int opt_idx = findoption(name);
   if (opt_idx >= 0) {
     if (options[opt_idx].flags & P_DEF_ALLOCED) {
       xfree(options[opt_idx].def_val[VI_DEFAULT]);
@@ -906,9 +908,10 @@ void set_number_default(char *name, long val)
 {
   int opt_idx;
 
-  opt_idx = findoption((char_u *)name);
-  if (opt_idx >= 0)
+  opt_idx = findoption(name);
+  if (opt_idx >= 0) {
     options[opt_idx].def_val[VI_DEFAULT] = (char_u *)val;
+  }
 }
 
 #if defined(EXITFREE)
@@ -949,17 +952,19 @@ void set_init_2(void)
    * wrong when the window height changes.
    */
   set_number_default("scroll", Rows / 2);
-  idx = findoption((char_u *)"scroll");
-  if (idx >= 0 && !(options[idx].flags & P_WAS_SET))
+  idx = findoption("scroll");
+  if (idx >= 0 && !(options[idx].flags & P_WAS_SET)) {
     set_option_default(idx, OPT_LOCAL, p_cp);
+  }
   comp_col();
 
   /*
    * 'window' is only for backwards compatibility with Vi.
    * Default is Rows - 1.
    */
-  if (!option_was_set((char_u *)"window"))
+  if (!option_was_set("window")) {
     p_window = Rows - 1;
+  }
   set_number_default("window", Rows - 1);
   parse_shape_opt(SHAPE_CURSOR);   /* set cursor shapes from 'guicursor' */
   (void)parse_printoptions();       /* parse 'printoptions' default value */
@@ -978,16 +983,18 @@ void set_init_3(void)
   int idx_sp;
   int do_sp;
 
-  idx_srr = findoption((char_u *)"srr");
-  if (idx_srr < 0)
-    do_srr = FALSE;
-  else
+  idx_srr = findoption("srr");
+  if (idx_srr < 0) {
+    do_srr = false;
+  } else {
     do_srr = !(options[idx_srr].flags & P_WAS_SET);
-  idx_sp = findoption((char_u *)"sp");
-  if (idx_sp < 0)
-    do_sp = FALSE;
-  else
+  }
+  idx_sp = findoption("sp");
+  if (idx_sp < 0) {
+    do_sp = false;
+  } else {
     do_sp = !(options[idx_sp].flags & P_WAS_SET);
+  }
 
   size_t len = 0;
   char_u *p = (char_u *)invocation_path_tail(p_sh, &len);
@@ -1031,7 +1038,7 @@ void set_init_3(void)
   }
 
   if (bufempty()) {
-    int idx_ffs = findoption((char_u *)"ffs");
+    int idx_ffs = findoption_len(S_LEN("ffs"));
 
     // Apply the first entry of 'fileformats' to the initial buffer.
     if (idx_ffs >= 0 && (options[idx_ffs].flags & P_WAS_SET)) {
@@ -1050,14 +1057,16 @@ void set_helplang_default(const char *lang)
 {
   int idx;
 
-  if (lang == NULL || STRLEN(lang) < 2)         /* safety check */
+  const size_t lang_len = strlen(lang);
+  if (lang == NULL || lang_len < 2) {  // safety check
     return;
-  idx = findoption((char_u *)"hlg");
+  }
+  idx = findoption("hlg");
   if (idx >= 0 && !(options[idx].flags & P_WAS_SET)) {
     if (options[idx].flags & P_ALLOCED)
       free_string_option(p_hlg);
-    p_hlg = (char_u *)xstrdup(lang);
-    /* zh_CN becomes "cn", zh_TW becomes "tw". */
+    p_hlg = (char_u *)xmemdupz(lang, lang_len);
+    // zh_CN becomes "cn", zh_TW becomes "tw".
     if (STRNICMP(p_hlg, "zh_", 3) == 0 && STRLEN(p_hlg) >= 5) {
       p_hlg[0] = (char_u)TOLOWER_ASC(p_hlg[3]);
       p_hlg[1] = (char_u)TOLOWER_ASC(p_hlg[4]);
@@ -1084,12 +1093,12 @@ void set_title_defaults(void)
    * icon name.  Saves a bit of time, because the X11 display server does
    * not need to be contacted.
    */
-  idx1 = findoption((char_u *)"title");
+  idx1 = findoption("title");
   if (idx1 >= 0 && !(options[idx1].flags & P_WAS_SET)) {
     options[idx1].def_val[VI_DEFAULT] = (char_u *)(intptr_t)0;
     p_title = 0;
   }
-  idx1 = findoption((char_u *)"icon");
+  idx1 = findoption("icon");
   if (idx1 >= 0 && !(options[idx1].flags & P_WAS_SET)) {
     options[idx1].def_val[VI_DEFAULT] = (char_u *)(intptr_t)0;
     p_icon = 0;
@@ -1195,7 +1204,7 @@ do_set (
           goto skip;
         }
         if (arg[1] == 't' && arg[2] == '_') {  // could be term code
-          opt_idx = findoption_len(arg + 1, (size_t) (len - 1));
+          opt_idx = findoption_len((const char *)arg + 1, (size_t)(len - 1));
         }
         len++;
         if (opt_idx == -1) {
@@ -1211,7 +1220,7 @@ do_set (
             len++;
           }
         }
-        opt_idx = findoption_len(arg, (size_t) len);
+        opt_idx = findoption_len((const char *)arg, (size_t)len);
         if (opt_idx == -1) {
           key = find_key_option(arg);
         }
@@ -1393,9 +1402,9 @@ do_set (
               value = prefix;
           }
 
-          errmsg = set_bool_option(opt_idx, varp, (int)value,
-              opt_flags);
-        } else {                                  /* numeric or string */
+          errmsg = (char_u *)set_bool_option(opt_idx, varp, (int)value,
+                                             opt_flags);
+        } else {  // Numeric or string.
           if (vim_strchr((char_u *)"=:&<", nextchar) == NULL
               || prefix != 1) {
             errmsg = e_invarg;
@@ -1450,15 +1459,19 @@ do_set (
               goto skip;
             }
 
-            if (adding)
+            if (adding) {
               value = *(long *)varp + value;
-            if (prepending)
+            }
+            if (prepending) {
               value = *(long *)varp * value;
-            if (removing)
+            }
+            if (removing) {
               value = *(long *)varp - value;
-            errmsg = set_num_option(opt_idx, varp, value,
-                errbuf, sizeof(errbuf), opt_flags);
-          } else if (opt_idx >= 0) {                      /* string */
+            }
+            errmsg = (char_u *)set_num_option(opt_idx, varp, value,
+                                              errbuf, sizeof(errbuf),
+                                              opt_flags);
+          } else if (opt_idx >= 0) {  // String.
             char_u      *save_arg = NULL;
             char_u      *s = NULL;
             char_u      *oldval = NULL;         // previous value if *varp
@@ -2222,7 +2235,7 @@ static void check_string_option(char_u **pp)
  */
 int was_set_insecurely(char_u *opt, int opt_flags)
 {
-  int idx = findoption(opt);
+  int idx = findoption((const char *)opt);
 
   if (idx >= 0) {
     uint32_t *flagp = insecure_flag(idx, opt_flags);
@@ -2284,9 +2297,9 @@ set_string_option_direct (
   int both = (opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0;
   int idx = opt_idx;
 
-  if (idx == -1) {              /* use name */
-    idx = findoption(name);
-    if (idx < 0) {      /* not found (should not happen) */
+  if (idx == -1) {  // Use name.
+    idx = findoption((const char *)name);
+    if (idx < 0) {  // Not found (should not happen).
       EMSG2(_(e_intern2), "set_string_option_direct()");
       EMSG2(_("For option %s"), name);
       return;
@@ -2566,12 +2579,11 @@ did_set_string_option (
 
       init_highlight(FALSE, FALSE);
 
-      if (dark != (*p_bg == 'd')
-          && get_var_value((char_u *)"g:colors_name") != NULL) {
-        /* The color scheme must have set 'background' back to another
-         * value, that's not what we want here.  Disable the color
-         * scheme and set the colors again. */
-        do_unlet((char_u *)"g:colors_name", TRUE);
+      if (dark != (*p_bg == 'd') && get_var_value("g:colors_name") != NULL) {
+        // The color scheme must have set 'background' back to another
+        // value, that's not what we want here.  Disable the color
+        // scheme and set the colors again.
+        do_unlet((char_u *)"g:colors_name", true);
         free_string_option(p_bg);
         p_bg = vim_strsave((char_u *)(dark ? "dark" : "light"));
         check_string_option(&p_bg);
@@ -2767,7 +2779,7 @@ did_set_string_option (
     //              option.
     opt_idx = ((options[opt_idx].fullname[0] == 'v')
                ? (shada_idx == -1
-                  ? ((shada_idx = findoption((char_u *) "shada")))
+                  ? ((shada_idx = findoption("shada")))
                   : shada_idx)
                : opt_idx);
     for (s = p_shada; *s; ) {
@@ -3399,15 +3411,18 @@ static char_u *set_chars_option(char_u **varp)
             && p[len] == ':'
             && p[len + 1] != NUL) {
           s = p + len + 1;
-          c1 = mb_ptr2char_adv(&s);
-          if (mb_char2cells(c1) > 1)
+          c1 = mb_ptr2char_adv((const char_u **)&s);
+          if (mb_char2cells(c1) > 1) {
             continue;
+          }
           if (tab[i].cp == &lcs_tab2) {
-            if (*s == NUL)
+            if (*s == NUL) {
               continue;
-            c2 = mb_ptr2char_adv(&s);
-            if (mb_char2cells(c2) > 1)
+            }
+            c2 = mb_ptr2char_adv((const char_u **)&s);
+            if (mb_char2cells(c2) > 1) {
               continue;
+            }
           }
           if (*s == ',' || *s == NUL) {
             if (round) {
@@ -3568,24 +3583,23 @@ static void set_option_scriptID_idx(int opt_idx, int opt_flags, int id)
   }
 }
 
-/*
- * Set the value of a boolean option, and take care of side effects.
- * Returns NULL for success, or an error message for an error.
- */
-static char_u *
-set_bool_option (
-    int opt_idx,                            /* index in options[] table */
-    char_u *varp,                      /* pointer to the option variable */
-    int value,                              /* new value */
-    int opt_flags                          /* OPT_LOCAL and/or OPT_GLOBAL */
-)
+/// Set the value of a boolean option, taking care of side effects
+///
+/// @param[in]  opt_idx  Option index in options[] table.
+/// @param[out]  varp  Pointer to the option variable.
+/// @param[in]  value  New value.
+/// @param[in]  opt_flags  OPT_LOCAL and/or OPT_GLOBAL.
+///
+/// @return NULL on success, error message on error.
+static char *set_bool_option(int opt_idx, char_u *varp, int value,
+                             int opt_flags)
 {
   int old_value = *(int *)varp;
 
   /* Disallow changing some options from secure mode */
   if ((secure || sandbox != 0)
       && (options[opt_idx].flags & P_SECURE)) {
-    return e_secure;
+    return (char *)e_secure;
   }
 
   *(int *)varp = value;             /* set the new value */
@@ -3598,14 +3612,13 @@ set_bool_option (
     *(int *)get_varp_scope(&(options[opt_idx]), OPT_GLOBAL) = value;
 
   // Ensure that options set to p_force_on cannot be disabled.
-  if ((int *)varp == &p_force_on && p_force_on == FALSE) {
-    p_force_on = TRUE;
-    return e_unsupportedoption;
-  }
+  if ((int *)varp == &p_force_on && !p_force_on) {
+    p_force_on = true;
+    return (char *)e_unsupportedoption;
   // Ensure that options set to p_force_off cannot be enabled.
-  else if ((int *)varp == &p_force_off && p_force_off == TRUE) {
-    p_force_off = FALSE;
-    return e_unsupportedoption;
+  } else if ((int *)varp == &p_force_off && p_force_off) {
+    p_force_off = false;
+    return (char *)e_unsupportedoption;
   }
   /* 'undofile' */
   else if ((int *)varp == &curbuf->b_p_udf || (int *)varp == &p_udf) {
@@ -3732,8 +3745,8 @@ set_bool_option (
     if (curwin->w_p_pvw) {
       FOR_ALL_WINDOWS_IN_TAB(win, curtab) {
         if (win->w_p_pvw && win != curwin) {
-          curwin->w_p_pvw = FALSE;
-          return (char_u *)N_("E590: A preview window already exists");
+          curwin->w_p_pvw = false;
+          return N_("E590: A preview window already exists");
         }
       }
     }
@@ -3874,16 +3887,15 @@ set_bool_option (
             "W17: Arabic requires UTF-8, do ':set encoding=utf-8'");
 
         msg_source(hl_attr(HLF_W));
-        MSG_ATTR(_(w_arabic), hl_attr(HLF_W));
+        msg_attr(_(w_arabic), hl_attr(HLF_W));
         set_vim_var_string(VV_WARNINGMSG, _(w_arabic), -1);
       }
 
       /* set 'delcombine' */
       p_deco = TRUE;
 
-      /* Force-set the necessary keymap for arabic */
-      set_option_value((char_u *)"keymap", 0L, (char_u *)"arabic",
-          OPT_LOCAL);
+      // Force-set the necessary keymap for arabic.
+      set_option_value("keymap", 0L, "arabic", OPT_LOCAL);
       p_altkeymap = 0;
       p_hkmap = 0;
       p_fkmap = 0;
@@ -3949,20 +3961,18 @@ set_bool_option (
   return NULL;
 }
 
-/*
- * Set the value of a number option, and take care of side effects.
- * Returns NULL for success, or an error message for an error.
- */
-static char_u *
-set_num_option (
-    int opt_idx,                            /* index in options[] table */
-    char_u *varp,                      /* pointer to the option variable */
-    long value,                             /* new value */
-    char_u *errbuf,                    /* buffer for error messages */
-    size_t errbuflen,                       /* length of "errbuf" */
-    int opt_flags                          /* OPT_LOCAL, OPT_GLOBAL and
-                                           OPT_MODELINE */
-)
+/// Set the value of a number option, taking care of side effects
+///
+/// @param[in]  opt_idx  Option index in options[] table.
+/// @param[out]  varp  Pointer to the option variable.
+/// @param[in]  value  New value.
+/// @param  errbuf  Buffer for error messages.
+/// @param[in]  errbuflen  Length of `errbuf`.
+/// @param[in]  opt_flags  OPT_LOCAL, OPT_GLOBAL or OPT_MODELINE.
+///
+/// @return NULL on success, error message on error.
+static char *set_num_option(int opt_idx, char_u *varp, long value,
+                            char_u *errbuf, size_t errbuflen, int opt_flags)
 {
   char_u      *errmsg = NULL;
   long old_value = *(long *)varp;
@@ -3973,7 +3983,7 @@ set_num_option (
   /* Disallow changing some options from secure mode. */
   if ((secure || sandbox != 0)
       && (options[opt_idx].flags & P_SECURE)) {
-    return e_secure;
+    return (char *)e_secure;
   }
 
   *pp = value;
@@ -4234,8 +4244,9 @@ set_num_option (
         cmdline_row = (int)(Rows - p_ch);
       }
     }
-    if (p_window >= Rows || !option_was_set((char_u *)"window"))
+    if (p_window >= Rows || !option_was_set("window")) {
       p_window = Rows - 1;
+    }
   }
 
   if (curbuf->b_p_ts <= 0) {
@@ -4335,7 +4346,7 @@ set_num_option (
     curwin->w_set_curswant = TRUE;
   check_redraw(options[opt_idx].flags);
 
-  return errmsg;
+  return (char *)errmsg;
 }
 
 /*
@@ -4366,39 +4377,36 @@ static void check_redraw(uint32_t flags)
 /// @param[in]  len  Length of the option.
 ///
 /// @return Index of the option or -1 if option was not found.
-int findoption_len(const char_u *const arg, const size_t len)
+int findoption_len(const char *const arg, const size_t len)
 {
-  char *s, *p;
+  const char *s;
+  const char *p;
   static int quick_tab[27] = { 0, 0 };  // quick access table
-  int is_term_opt;
 
-  /*
-   * For first call: Initialize the quick-access table.
-   * It contains the index for the first option that starts with a certain
-   * letter.  There are 26 letters, plus the first "t_" option.
-   */
+  // For first call: Initialize the quick-access table.
+  // It contains the index for the first option that starts with a certain
+  // letter.  There are 26 letters, plus the first "t_" option.
   if (quick_tab[1] == 0) {
     p = options[0].fullname;
     for (short int i = 1; (s = options[i].fullname) != NULL; i++) {
       if (s[0] != p[0]) {
-        if (s[0] == 't' && s[1] == '_')
+        if (s[0] == 't' && s[1] == '_') {
           quick_tab[26] = i;
-        else
+        } else {
           quick_tab[CharOrdLow(s[0])] = i;
+        }
       }
       p = s;
     }
   }
 
-  /*
-   * Check for name starting with an illegal character.
-   */
+  // Check for name starting with an illegal character.
   if (len == 0 || arg[0] < 'a' || arg[0] > 'z') {
     return -1;
   }
 
   int opt_idx;
-  is_term_opt = (len > 2 && arg[0] == 't' && arg[1] == '_');
+  const bool is_term_opt = (len > 2 && arg[0] == 't' && arg[1] == '_');
   if (is_term_opt) {
     opt_idx = quick_tab[26];
   } else {
@@ -4406,7 +4414,7 @@ int findoption_len(const char_u *const arg, const size_t len)
   }
   // Match full name
   for (; (s = options[opt_idx].fullname) != NULL; opt_idx++) {
-    if (STRNCMP(arg, s, len) == 0 && s[len] == NUL) {
+    if (strncmp(arg, s, len) == 0 && s[len] == NUL) {
       break;
     }
   }
@@ -4415,20 +4423,22 @@ int findoption_len(const char_u *const arg, const size_t len)
     // Match short name
     for (; options[opt_idx].fullname != NULL; opt_idx++) {
       s = options[opt_idx].shortname;
-      if (s != NULL && STRNCMP(arg, s, len) == 0 && s[len] == NUL) {
+      if (s != NULL && strncmp(arg, s, len) == 0 && s[len] == NUL) {
         break;
       }
       s = NULL;
     }
   }
-  if (s == NULL)
+  if (s == NULL) {
     opt_idx = -1;
+  }
   return opt_idx;
 }
 
-bool is_tty_option(char *name)
+bool is_tty_option(const char *name)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  return (name[0] == 't' && name[1] == '_') || !strcmp((char *)name, "term");
+  return (name[0] == 't' && name[1] == '_') || strcmp(name, "term") == 0;
 }
 
 #define TCO_BUFFER_SIZE 8
@@ -4464,7 +4474,7 @@ bool get_tty_option(char *name, char **value)
   return false;
 }
 
-bool set_tty_option(char *name, char *value)
+bool set_tty_option(const char *name, const char *value)
 {
   if (!strcmp(name, "t_Co")) {
     int colors = atoi(value);
@@ -4475,23 +4485,24 @@ bool set_tty_option(char *name, char *value)
     if (colors != t_colors) {
       t_colors = colors;
       // We now have a different color setup, initialize it again.
-      init_highlight(TRUE, FALSE);
+      init_highlight(true, false);
     }
 
     return true;
   }
 
-  return is_tty_option(name) || !strcmp(name, "term")
-    || !strcmp(name, "ttytype");
+  return (is_tty_option(name) || !strcmp(name, "term")
+          || !strcmp(name, "ttytype"));
 }
 
-/*
- * Find index for option 'arg'.
- * Return -1 if not found.
- */
-static int findoption(char_u *arg)
+/// Find index for an option
+///
+/// @param[in]  arg  Option name.
+///
+/// @return Option index or -1 if option was not found.
+static int findoption(const char *const arg)
 {
-  return findoption_len(arg, STRLEN(arg));
+  return findoption_len(arg, strlen(arg));
 }
 
 /*
@@ -4519,9 +4530,10 @@ get_option_value (
   int opt_idx;
   char_u      *varp;
 
-  opt_idx = findoption(name);
-  if (opt_idx < 0)                  /* unknown option */
+  opt_idx = findoption((const char *)name);
+  if (opt_idx < 0) {  // Unknown option.
     return -3;
+  }
 
   varp = get_varp_scope(&(options[opt_idx]), opt_flags);
 
@@ -4579,7 +4591,7 @@ int get_option_value_strict(char *name,
   char_u *varp = NULL;
   vimoption_T *p;
   int rv = 0;
-  int opt_idx = findoption((uint8_t *)name);
+  int opt_idx = findoption(name);
   if (opt_idx < 0) {
     return 0;
   }
@@ -4673,21 +4685,19 @@ int get_option_value_strict(char *name,
   return rv;
 }
 
-/*
- * Set the value of option "name".
- * Use "string" for string options, use "number" for other options.
- *
- * Returns NULL on success or error message on error.
- */
-char_u *
-set_option_value (
-    char_u *name,
-    long number,
-    char_u *string,
-    int opt_flags                  /* OPT_LOCAL or 0 (both) */
-)
+/// Set the value of an option
+///
+/// @param[in]  name  Option name.
+/// @param[in]  number  New value for the number or boolean option.
+/// @param[in]  string  New value for string option.
+/// @param[in]  opt_flags  Flags: OPT_LOCAL or 0 (both).
+///
+/// @return NULL on success, error message on error.
+char *set_option_value(const char *const name, const long number,
+                       const char *const string, const int opt_flags)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
-  if (set_tty_option((char *)name, (char *)string)) {
+  if (set_tty_option(name, string)) {
     return NULL;
   }
 
@@ -4695,9 +4705,9 @@ set_option_value (
   char_u      *varp;
 
   opt_idx = findoption(name);
-  if (opt_idx < 0)
+  if (opt_idx < 0) {
     EMSG2(_("E355: Unknown option: %s"), name);
-  else {
+  } else {
     uint32_t flags = options[opt_idx].flags;
     // Disallow changing some options in the sandbox
     if (sandbox > 0 && (flags & P_SECURE)) {
@@ -4705,11 +4715,11 @@ set_option_value (
       return NULL;
     }
     if (flags & P_STRING) {
-      const char *s = (const char *)string;
+      const char *s = string;
       if (s == NULL) {
         s = "";
       }
-      return (char_u *)set_string_option(opt_idx, s, opt_flags);
+      return set_string_option(opt_idx, s, opt_flags);
     } else {
       varp = get_varp_scope(&(options[opt_idx]), opt_flags);
       if (varp != NULL) {       /* hidden option is not changed */
@@ -4728,12 +4738,11 @@ set_option_value (
             return NULL;  // do nothing as we hit an error
           }
         }
-        if (flags & P_NUM)
-          return set_num_option(opt_idx, varp, number,
-              NULL, 0, opt_flags);
-        else
-          return set_bool_option(opt_idx, varp, (int)number,
-              opt_flags);
+        if (flags & P_NUM) {
+          return set_num_option(opt_idx, varp, number, NULL, 0, opt_flags);
+        } else {
+          return set_bool_option(opt_idx, varp, (int)number, opt_flags);
+        }
       }
     }
   }
@@ -4744,10 +4753,11 @@ char_u *get_highlight_default(void)
 {
   int i;
 
-  i = findoption((char_u *)"hl");
-  if (i >= 0)
+  i = findoption("hl");
+  if (i >= 0) {
     return options[i].def_val[VI_DEFAULT];
-  return (char_u *)NULL;
+  }
+  return NULL;
 }
 
 /*
@@ -5184,7 +5194,7 @@ void unset_global_local_option(char *name, void *from)
   vimoption_T *p;
   buf_T *buf = (buf_T *)from;
 
-  int opt_idx = findoption((uint8_t *)name);
+  int opt_idx = findoption(name);
   if (opt_idx < 0) {
     EMSG2(_("E355: Unknown option: %s"), name);
     return;
@@ -5740,11 +5750,12 @@ void reset_modifiable(void)
 {
   int opt_idx;
 
-  curbuf->b_p_ma = FALSE;
-  p_ma = FALSE;
-  opt_idx = findoption((char_u *)"ma");
-  if (opt_idx >= 0)
-    options[opt_idx].def_val[VI_DEFAULT] = FALSE;
+  curbuf->b_p_ma = false;
+  p_ma = false;
+  opt_idx = findoption("ma");
+  if (opt_idx >= 0) {
+    options[opt_idx].def_val[VI_DEFAULT] = false;
+  }
 }
 
 /*
@@ -5842,15 +5853,15 @@ set_context_in_set_cmd (
       expand_option_name[2] = p[-2];
       expand_option_name[3] = p[-1];
     } else {
-      /* Allow * wildcard */
-      while (ASCII_ISALNUM(*p) || *p == '_' || *p == '*')
+      // Allow * wildcard.
+      while (ASCII_ISALNUM(*p) || *p == '_' || *p == '*') {
         p++;
-      if (*p == NUL)
+      }
+      if (*p == NUL) {
         return;
+      }
       nextchar = *p;
-      *p = NUL;
-      opt_idx = findoption(arg);
-      *p = nextchar;
+      opt_idx = findoption_len((const char *)arg, (size_t)(p - arg));
       if (opt_idx == -1 || options[opt_idx].var == NULL) {
         xp->xp_context = EXPAND_NOTHING;
         return;
@@ -6012,7 +6023,7 @@ void ExpandOldSetting(int *num_file, char_u ***file)
    * For a terminal key code expand_option_idx is < 0.
    */
   if (expand_option_idx < 0) {
-    expand_option_idx = findoption(expand_option_name);
+    expand_option_idx = findoption((const char *)expand_option_name);
   }
 
   if (expand_option_idx >= 0) {
@@ -6412,20 +6423,22 @@ void vimrc_found(char_u *fname, char_u *envname)
   }
 }
 
-/*
- * Return TRUE when option "name" has been set.
- * Only works correctly for global options.
- */
-int option_was_set(char_u *name)
+/// Check whether global option has been set
+///
+/// @param[in]  name  Option name.
+///
+/// @return True if it was set.
+static bool option_was_set(const char *name)
 {
   int idx;
 
   idx = findoption(name);
-  if (idx < 0)          /* unknown option */
-    return FALSE;
-  if (options[idx].flags & P_WAS_SET)
-    return TRUE;
-  return FALSE;
+  if (idx < 0) {  // Unknown option.
+    return false;
+  } else if (options[idx].flags & P_WAS_SET) {
+    return true;
+  }
+  return false;
 }
 
 /*
@@ -6841,8 +6854,8 @@ void set_fileformat(int eol_style, int opt_flags)
   need_maketitle = true;  // Set window title later.
 }
 
-/// Skip to next part of an option argument: Skip space and comma.
-char_u *skip_to_option_part(char_u *p)
+/// Skip to next part of an option argument: skip space and comma
+char_u *skip_to_option_part(const char_u *p)
 {
   if (*p == ',') {
     p++;
@@ -6850,7 +6863,7 @@ char_u *skip_to_option_part(char_u *p)
   while (*p == ' ') {
     p++;
   }
-  return p;
+  return (char_u *)p;
 }
 
 /// Isolate one part of a string option separated by `sep_chars`.

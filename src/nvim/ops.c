@@ -14,6 +14,7 @@
 #include "nvim/buffer.h"
 #include "nvim/charset.h"
 #include "nvim/cursor.h"
+#include "nvim/assert.h"
 #include "nvim/edit.h"
 #include "nvim/eval.h"
 #include "nvim/ex_cmds.h"
@@ -41,6 +42,7 @@
 #include "nvim/terminal.h"
 #include "nvim/ui.h"
 #include "nvim/undo.h"
+#include "nvim/macros.h"
 #include "nvim/window.h"
 #include "nvim/os/input.h"
 #include "nvim/os/time.h"
@@ -887,7 +889,7 @@ static void set_yreg_additional_data(yankreg_T *reg, dict_T *additional_data)
   if (reg->additional_data == additional_data) {
     return;
   }
-  dict_unref(reg->additional_data);
+  tv_dict_unref(reg->additional_data);
   reg->additional_data = additional_data;
 }
 
@@ -1105,7 +1107,6 @@ int insert_reg(
 )
 {
   int retval = OK;
-  char_u      *arg;
   int allocated;
 
   /*
@@ -1121,21 +1122,24 @@ int insert_reg(
   if (regname != NUL && !valid_yank_reg(regname, false))
     return FAIL;
 
-  if (regname == '.')                   /* insert last inserted text */
-    retval = stuff_inserted(NUL, 1L, TRUE);
-  else if (get_spec_reg(regname, &arg, &allocated, TRUE)) {
-    if (arg == NULL)
+  char_u *arg;
+  if (regname == '.') {  // Insert last inserted text.
+    retval = stuff_inserted(NUL, 1L, true);
+  } else if (get_spec_reg(regname, &arg, &allocated, true)) {
+    if (arg == NULL) {
       return FAIL;
-    stuffescaped(arg, literally);
-    if (allocated)
+    }
+    stuffescaped((const char *)arg, literally);
+    if (allocated) {
       xfree(arg);
-  } else {                            /* name or number register */
+    }
+  } else {  // Name or number register.
     yankreg_T *reg = get_yank_register(regname, YREG_PASTE);
     if (reg->y_array == NULL) {
       retval = FAIL;
     } else {
       for (size_t i = 0; i < reg->y_size; i++) {
-        stuffescaped(reg->y_array[i], literally);
+        stuffescaped((const char *)reg->y_array[i], literally);
         // Insert a newline between lines and after last line if
         // y_type is kMTLineWise.
         if (reg->y_type == kMTLineWise || i < reg->y_size - 1) {
@@ -1152,29 +1156,29 @@ int insert_reg(
  * Stuff a string into the typeahead buffer, such that edit() will insert it
  * literally ("literally" TRUE) or interpret is as typed characters.
  */
-static void stuffescaped(char_u *arg, int literally)
+static void stuffescaped(const char *arg, int literally)
 {
-  int c;
-  char_u      *start;
-
   while (*arg != NUL) {
-    /* Stuff a sequence of normal ASCII characters, that's fast.  Also
-     * stuff K_SPECIAL to get the effect of a special key when "literally"
-     * is TRUE. */
-    start = arg;
-    while ((*arg >= ' ' && *arg < DEL) || (*arg == K_SPECIAL && !literally))
-      ++arg;
-    if (arg > start)
+    // Stuff a sequence of normal ASCII characters, that's fast.  Also
+    // stuff K_SPECIAL to get the effect of a special key when "literally"
+    // is TRUE.
+    const char *const start = arg;
+    while ((*arg >= ' ' && *arg < DEL) || ((uint8_t)(*arg) == K_SPECIAL
+                                           && !literally)) {
+      arg++;
+    }
+    if (arg > start) {
       stuffReadbuffLen(start, (long)(arg - start));
+    }
 
     /* stuff a single special character */
     if (*arg != NUL) {
-      if (has_mbyte)
-        c = mb_cptr2char_adv(&arg);
-      else
-        c = *arg++;
-      if (literally && ((c < ' ' && c != TAB) || c == DEL))
+      const int c = (has_mbyte
+                     ? mb_cptr2char_adv((const char_u **)&arg)
+                     : (uint8_t)(*arg++));
+      if (literally && ((c < ' ' && c != TAB) || c == DEL)) {
         stuffcharReadbuff(Ctrl_V);
+      }
       stuffcharReadbuff(c);
     }
   }
@@ -2555,27 +2559,27 @@ static void yank_do_autocmd(oparg_T *oap, yankreg_T *reg)
   dict_T *dict = get_vim_var_dict(VV_EVENT);
 
   // the yanked text
-  list_T *list = list_alloc();
+  list_T *list = tv_list_alloc();
   for (size_t i = 0; i < reg->y_size; i++) {
-    list_append_string(list, reg->y_array[i], -1);
+    tv_list_append_string(list, (const char *)reg->y_array[i], -1);
   }
   list->lv_lock = VAR_FIXED;
-  dict_add_list(dict, "regcontents", list);
+  tv_dict_add_list(dict, S_LEN("regcontents"), list);
 
   // the register type
   char buf[NUMBUFLEN+2];
   format_reg_type(reg->y_type, reg->y_width, buf, ARRAY_SIZE(buf));
-  dict_add_nr_str(dict, "regtype", 0, (char_u *)buf);
+  tv_dict_add_str(dict, S_LEN("regtype"), buf);
 
   // name of requested register or the empty string for an unnamed operation.
   buf[0] = (char)oap->regname;
   buf[1] = NUL;
-  dict_add_nr_str(dict, "regname", 0, (char_u *)buf);
+  tv_dict_add_str(dict, S_LEN("regname"), buf);
 
   // kind of operation (yank/delete/change)
   buf[0] = (char)get_op_char(oap->op_type);
   buf[1] = NUL;
-  dict_add_nr_str(dict, "operator", 0, (char_u *)buf);
+  tv_dict_add_str(dict, S_LEN("operator"), buf);
 
   dict_set_keys_readonly(dict);
   textlock++;
@@ -4763,8 +4767,8 @@ static void *get_reg_wrap_one_line(char_u *s, int flags)
   if (!(flags & kGRegList)) {
     return s;
   }
-  list_T *list = list_alloc();
-  list_append_string(list, NULL, -1);
+  list_T *list = tv_list_alloc();
+  tv_list_append_string(list, NULL, 0);
   list->lv_first->li_tv.vval.v_string = s;
   return list;
 }
@@ -4814,9 +4818,9 @@ void *get_reg_contents(int regname, int flags)
     return NULL;
 
   if (flags & kGRegList) {
-    list_T *list = list_alloc();
+    list_T *list = tv_list_alloc();
     for (size_t i = 0; i < reg->y_size; i++) {
-      list_append_string(list, reg->y_array[i], -1);
+      tv_list_append_string(list, (const char *)reg->y_array[i], -1);
     }
 
     return list;
@@ -4897,7 +4901,7 @@ void write_reg_contents(int name, const char_u *str, ssize_t len,
   write_reg_contents_ex(name, str, len, must_append, kMTUnknown, 0L);
 }
 
-void write_reg_contents_lst(int name, char_u **strings, int maxlen,
+void write_reg_contents_lst(int name, char_u **strings,
                             bool must_append, MotionType yank_type,
                             colnr_T block_len)
 {
@@ -5401,17 +5405,19 @@ void cursor_pos_info(dict_T *dict)
 
   if (dict != NULL) {
     // Don't shorten this message, the user asked for it.
-    dict_add_nr_str(dict, "words", word_count, NULL);
-    dict_add_nr_str(dict, "chars", char_count, NULL);
-    dict_add_nr_str(dict, "bytes", byte_count + bom_count, NULL);
+    tv_dict_add_nr(dict, S_LEN("words"), (varnumber_T)word_count);
+    tv_dict_add_nr(dict, S_LEN("chars"), (varnumber_T)char_count);
+    tv_dict_add_nr(dict, S_LEN("bytes"), (varnumber_T)(byte_count + bom_count));
 
-    dict_add_nr_str(dict, l_VIsual_active ? "visual_bytes" : "cursor_bytes",
-                    byte_count_cursor, NULL);
-    dict_add_nr_str(dict, l_VIsual_active ? "visual_chars" : "cursor_chars",
-                    char_count_cursor, NULL);
-    dict_add_nr_str(dict, l_VIsual_active ? "visual_words" : "cursor_words",
-                    word_count_cursor, NULL);
-    }
+    STATIC_ASSERT(sizeof("visual") == sizeof("cursor"),
+                  "key_len argument in tv_dict_add_nr is wrong");
+    tv_dict_add_nr(dict, l_VIsual_active ? "visual_bytes" : "cursor_bytes",
+                   sizeof("visual_bytes") - 1, (varnumber_T)byte_count_cursor);
+    tv_dict_add_nr(dict, l_VIsual_active ? "visual_chars" : "cursor_chars",
+                   sizeof("visual_chars") - 1, (varnumber_T)char_count_cursor);
+    tv_dict_add_nr(dict, l_VIsual_active ? "visual_words" : "cursor_words",
+                   sizeof("visual_words") - 1, (varnumber_T)word_count_cursor);
+  }
 }
 
 /// Check if the default register (used in an unnamed paste) should be a
@@ -5487,9 +5493,9 @@ static bool get_clipboard(int name, yankreg_T **target, bool quiet)
   }
   free_register(reg);
 
-  list_T *args = list_alloc();
-  char_u regname = (char_u)name;
-  list_append_string(args, &regname, 1);
+  list_T *const args = tv_list_alloc();
+  const char regname = (char)name;
+  tv_list_append_string(args, &regname, 1);
 
   typval_T result = eval_call_provider("clipboard", "get", args);
 
@@ -5501,7 +5507,8 @@ static bool get_clipboard(int name, yankreg_T **target, bool quiet)
     goto err;
   }
 
-  list_T *res = result.vval.v_list, *lines = NULL;
+  list_T *res = result.vval.v_list;
+  list_T *lines = NULL;
   if (res->lv_len == 2 && res->lv_first->li_tv.v_type == VAR_LIST) {
     lines = res->lv_first->li_tv.vval.v_list;
     if (res->lv_last->li_tv.v_type != VAR_STRING) {
@@ -5545,7 +5552,7 @@ static bool get_clipboard(int name, yankreg_T **target, bool quiet)
     if (li->li_tv.v_type != VAR_STRING) {
       goto err;
     }
-    reg->y_array[i++] = (uint8_t *)xstrdup((char *)li->li_tv.vval.v_string);
+    reg->y_array[i++] = (char_u *)xstrdupnul((char *)li->li_tv.vval.v_string);
   }
 
   if (reg->y_size > 0 && strlen((char*)reg->y_array[reg->y_size-1]) == 0) {
@@ -5603,35 +5610,39 @@ static void set_clipboard(int name, yankreg_T *reg)
     return;
   }
 
-  list_T *lines = list_alloc();
+  list_T *lines = tv_list_alloc();
 
   for (size_t i = 0; i < reg->y_size; i++) {
-    list_append_string(lines, reg->y_array[i], -1);
+    tv_list_append_string(lines, (const char *)reg->y_array[i], -1);
   }
 
-  list_T *args = list_alloc();
-  list_append_list(args, lines);
+  list_T *args = tv_list_alloc();
+  tv_list_append_list(args, lines);
 
-  char_u regtype;
+  char regtype;
   switch (reg->y_type) {
-  case kMTLineWise:
-    regtype = 'V';
-    list_append_string(lines, (char_u*)"", 0);
-    break;
-  case kMTCharWise:
-    regtype = 'v';
-    break;
-  case kMTBlockWise:
-    regtype = 'b';
-    list_append_string(lines, (char_u*)"", 0);
-    break;
-  case kMTUnknown:
-    assert(false);
+    case kMTLineWise: {
+      regtype = 'V';
+      tv_list_append_string(lines, NULL, 0);
+      break;
+    }
+    case kMTCharWise: {
+      regtype = 'v';
+      break;
+    }
+    case kMTBlockWise: {
+      regtype = 'b';
+      tv_list_append_string(lines, NULL, 0);
+      break;
+    }
+    case kMTUnknown: {
+      assert(false);
+    }
   }
-  list_append_string(args, &regtype, 1);
+  tv_list_append_string(args, &regtype, 1);
 
-  char_u regname = (char_u)name;
-  list_append_string(args, &regname, 1);
+  const char regname = (char)name;
+  tv_list_append_string(args, &regname, 1);
 
   (void)eval_call_provider("clipboard", "set", args);
 }

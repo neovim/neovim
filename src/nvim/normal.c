@@ -617,7 +617,7 @@ static void normal_redraw_mode_message(NormalState *s)
     update_screen(0);
     // now reset it, otherwise it's put in the history again
     keep_msg = kmsg;
-    msg_attr(kmsg, keep_msg_attr);
+    msg_attr((const char *)kmsg, keep_msg_attr);
     xfree(kmsg);
   }
   setcursor();
@@ -1163,7 +1163,7 @@ static void normal_check_stuff_buffer(NormalState *s)
 
     if (need_start_insertmode && goto_im() && !VIsual_active) {
       need_start_insertmode = false;
-      stuffReadbuff((uint8_t *)"i");  // start insert mode next
+      stuffReadbuff("i");  // start insert mode next
       // skip the fileinfo message now, because it would be shown
       // after insert mode finishes!
       need_fileinfo = false;
@@ -1275,7 +1275,7 @@ static void normal_redraw(NormalState *s)
     // msg_attr_keep() will set keep_msg to NULL, must free the string here.
     // Don't reset keep_msg, msg_attr_keep() uses it to check for duplicates.
     char *p = (char *)keep_msg;
-    msg_attr((uint8_t *)p, keep_msg_attr);
+    msg_attr(p, keep_msg_attr);
     xfree(p);
   }
 
@@ -1477,8 +1477,9 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
          * If 'cpoptions' does not contain 'r', insert the search
          * pattern to really repeat the same command.
          */
-        if (vim_strchr(p_cpo, CPO_REDO) == NULL)
+        if (vim_strchr(p_cpo, CPO_REDO) == NULL) {
           AppendToRedobuffLit(cap->searchbuf, -1);
+        }
         AppendToRedobuff(NL_STR);
       } else if (cap->cmdchar == ':') {
         /* do_cmdline() has stored the first typed line in
@@ -1862,10 +1863,11 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
       break;
 
     case OP_FILTER:
-      if (vim_strchr(p_cpo, CPO_FILTER) != NULL)
-        AppendToRedobuff((char_u *)"!\r");          /* use any last used !cmd */
-      else
-        bangredo = true;            /* do_bang() will put cmd in redo buffer */
+      if (vim_strchr(p_cpo, CPO_FILTER) != NULL) {
+        AppendToRedobuff("!\r");  // Use any last used !cmd.
+      } else {
+        bangredo = true;  // do_bang() will put cmd in redo buffer.
+      }
 
     case OP_INDENT:
     case OP_COLON:
@@ -2031,40 +2033,42 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
 static void op_colon(oparg_T *oap)
 {
   stuffcharReadbuff(':');
-  if (oap->is_VIsual)
-    stuffReadbuff((char_u *)"'<,'>");
-  else {
-    /*
-     * Make the range look nice, so it can be repeated.
-     */
-    if (oap->start.lnum == curwin->w_cursor.lnum)
+  if (oap->is_VIsual) {
+    stuffReadbuff("'<,'>");
+  } else {
+    // Make the range look nice, so it can be repeated.
+    if (oap->start.lnum == curwin->w_cursor.lnum) {
       stuffcharReadbuff('.');
-    else
+    } else {
       stuffnumReadbuff((long)oap->start.lnum);
+    }
     if (oap->end.lnum != oap->start.lnum) {
       stuffcharReadbuff(',');
-      if (oap->end.lnum == curwin->w_cursor.lnum)
+      if (oap->end.lnum == curwin->w_cursor.lnum) {
         stuffcharReadbuff('.');
-      else if (oap->end.lnum == curbuf->b_ml.ml_line_count)
+      } else if (oap->end.lnum == curbuf->b_ml.ml_line_count) {
         stuffcharReadbuff('$');
-      else if (oap->start.lnum == curwin->w_cursor.lnum) {
-        stuffReadbuff((char_u *)".+");
+      } else if (oap->start.lnum == curwin->w_cursor.lnum) {
+        stuffReadbuff(".+");
         stuffnumReadbuff(oap->line_count - 1);
-      } else
+      } else {
         stuffnumReadbuff((long)oap->end.lnum);
+      }
     }
   }
-  if (oap->op_type != OP_COLON)
-    stuffReadbuff((char_u *)"!");
+  if (oap->op_type != OP_COLON) {
+    stuffReadbuff("!");
+  }
   if (oap->op_type == OP_INDENT) {
-    stuffReadbuff(get_equalprg());
-    stuffReadbuff((char_u *)"\n");
+    stuffReadbuff((const char *)get_equalprg());
+    stuffReadbuff("\n");
   } else if (oap->op_type == OP_FORMAT) {
-    if (*p_fp == NUL)
-      stuffReadbuff((char_u *)"fmt");
-    else
-      stuffReadbuff(p_fp);
-    stuffReadbuff((char_u *)"\n']");
+    if (*p_fp == NUL) {
+      stuffReadbuff("fmt");
+    } else {
+      stuffReadbuff((const char *)p_fp);
+    }
+    stuffReadbuff("\n']");
   }
 
   /*
@@ -2077,7 +2081,6 @@ static void op_colon(oparg_T *oap)
  */
 static void op_function(oparg_T *oap)
 {
-  char_u      *(argv[1]);
   int save_virtual_op = virtual_op;
 
   if (*p_opfunc == NUL)
@@ -2091,16 +2094,16 @@ static void op_function(oparg_T *oap)
       decl(&curbuf->b_op_end);
     }
 
-    if (oap->motion_type == kMTBlockWise) {
-      argv[0] = (char_u *)"block";
-    } else if (oap->motion_type == kMTLineWise) {
-      argv[0] = (char_u *)"line";
-    } else {
-      argv[0] = (char_u *)"char";
-    }
+    const char_u *const argv[1] = {
+      (const char_u *)(((const char *const[]) {
+        [kMTBlockWise] = "block",
+        [kMTLineWise] = "line",
+        [kMTCharWise] = "char",
+      })[oap->motion_type]),
+    };
 
-    /* Reset virtual_op so that 'virtualedit' can be changed in the
-     * function. */
+    // Reset virtual_op so that 'virtualedit' can be changed in the
+    // function.
     virtual_op = MAYBE;
 
     (void)call_func_retnr(p_opfunc, 1, argv, false);
@@ -2307,7 +2310,7 @@ do_mouse (
       if (VIsual_active) {
         if (VIsual_select) {
           stuffcharReadbuff(Ctrl_G);
-          stuffReadbuff((char_u *)"\"+p");
+          stuffReadbuff("\"+p");
         } else {
           stuffcharReadbuff('y');
           stuffcharReadbuff(K_MIDDLEMOUSE);
@@ -2467,7 +2470,7 @@ do_mouse (
                            &rettv, ARRAY_SIZE(argv), argv,
                            curwin->w_cursor.lnum, curwin->w_cursor.lnum,
                            &doesrange, true, NULL);
-          clear_tv(&rettv);
+          tv_clear(&rettv);
           break;
         }
       }
@@ -2700,11 +2703,12 @@ do_mouse (
            && bt_quickfix(curbuf)) {
     if (State & INSERT)
       stuffcharReadbuff(Ctrl_O);
-    if (curwin->w_llist_ref == NULL)            /* quickfix window */
-      stuffReadbuff((char_u *)":.cc\n");
-    else                                        /* location list window */
-      stuffReadbuff((char_u *)":.ll\n");
-    got_click = false;                  /* ignore drag&release now */
+    if (curwin->w_llist_ref == NULL) {  // Quickfix window.
+      stuffReadbuff(":.cc\n");
+    } else {  // Location list window.
+      stuffReadbuff(":.ll\n");
+    }
+    got_click = false;  // Ignore drag&release now.
   }
   /*
    * Ctrl-Mouse click (or double click in a help window) jumps to the tag
@@ -4479,7 +4483,7 @@ static void nv_colon(cmdarg_T *cap)
       /* translate "count:" into ":.,.+(count - 1)" */
       stuffcharReadbuff('.');
       if (cap->count0 > 1) {
-        stuffReadbuff((char_u *)",.+");
+        stuffReadbuff(",.+");
         stuffnumReadbuff(cap->count0 - 1L);
       }
     }
@@ -6156,17 +6160,15 @@ static void nv_abbrev(cmdarg_T *cap)
  */
 static void nv_optrans(cmdarg_T *cap)
 {
-  static char_u *(ar[8]) = {(char_u *)"dl", (char_u *)"dh",
-                            (char_u *)"d$", (char_u *)"c$",
-                            (char_u *)"cl", (char_u *)"cc",
-                            (char_u *)"yy", (char_u *)":s\r"};
-  static char_u *str = (char_u *)"xXDCsSY&";
+  static const char *(ar[]) = { "dl", "dh", "d$", "c$", "cl", "cc", "yy",
+                                ":s\r" };
+  static const char *str = "xXDCsSY&";
 
   if (!checkclearopq(cap->oap)) {
     if (cap->count0) {
       stuffnumReadbuff(cap->count0);
     }
-    stuffReadbuff(ar[(int)(vim_strchr(str, cap->cmdchar) - str)]);
+    stuffReadbuff(ar[strchr(str, (char)cap->cmdchar) - str]);
   }
   cap->opcount = 0;
 }
@@ -7283,17 +7285,18 @@ static bool unadjust_for_sel(void)
   pos_T       *pp;
 
   if (*p_sel == 'e' && !equalpos(VIsual, curwin->w_cursor)) {
-    if (lt(VIsual, curwin->w_cursor))
+    if (lt(VIsual, curwin->w_cursor)) {
       pp = &curwin->w_cursor;
-    else
+    } else {
       pp = &VIsual;
-    if (pp->coladd > 0)
-      --pp->coladd;
-    else if (pp->col > 0) {
-      --pp->col;
-      mb_adjustpos(curbuf, pp);
+    }
+    if (pp->coladd > 0) {
+      pp->coladd--;
+    } else if (pp->col > 0) {
+      pp->col--;
+      mark_mb_adjustpos(curbuf, pp);
     } else if (pp->lnum > 1) {
-      --pp->lnum;
+      pp->lnum--;
       pp->col = (colnr_T)STRLEN(ml_get(pp->lnum));
       return true;
     }
@@ -7824,7 +7827,7 @@ static void get_op_vcol(
 
   // prevent from moving onto a trail byte
   if (has_mbyte) {
-    mb_adjustpos(curwin->w_buffer, &oap->end);
+    mark_mb_adjustpos(curwin->w_buffer, &oap->end);
   }
 
   getvvcol(curwin, &(oap->start), &oap->start_vcol, NULL, &oap->end_vcol);

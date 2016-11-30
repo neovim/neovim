@@ -173,9 +173,8 @@ static char_u *skip_string(char_u *p)
         char_u *delim = p + 2;
         char_u *paren = vim_strchr(delim, '(');
 
-        if (paren != NULL)
-        {
-            long delim_len = paren - delim;
+        if (paren != NULL) {
+            const ptrdiff_t delim_len = paren - delim;
 
             for (p += 3; *p; ++p)
                 if (p[0] == ')' && STRNCMP(p + 1, delim, delim_len) == 0

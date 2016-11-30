@@ -577,7 +577,7 @@ static void free_buffer(buf_T *buf)
   free_buffer_stuff(buf, TRUE);
   unref_var_dict(buf->b_vars);
   aubuflocal_remove(buf);
-  dict_unref(buf->additional_data);
+  tv_dict_unref(buf->additional_data);
   clear_fmark(&buf->b_last_cursor);
   clear_fmark(&buf->b_last_insert);
   clear_fmark(&buf->b_last_change);
@@ -1424,7 +1424,7 @@ buf_T * buflist_new(char_u *ffname, char_u *sfname, linenr_T lnum, int flags)
   if (buf != curbuf || curbuf == NULL) {
     buf = xcalloc(1, sizeof(buf_T));
     // init b: variables
-    buf->b_vars = dict_alloc();
+    buf->b_vars = tv_dict_alloc();
     init_var_dict(buf->b_vars, &buf->b_bufvar, VAR_SCOPE);
   }
 
@@ -4056,14 +4056,12 @@ void fname_expand(buf_T *buf, char_u **ffname, char_u **sfname)
 
 #ifdef WIN32
   if (!buf->b_p_bin) {
-    char_u  *rfname;
-
     // If the file name is a shortcut file, use the file it links to.
-    rfname = os_resolve_shortcut(*ffname);
+    char *rfname = os_resolve_shortcut((const char *)(*ffname));
     if (rfname != NULL) {
       xfree(*ffname);
-      *ffname = rfname;
-      *sfname = rfname;
+      *ffname = (char_u *)rfname;
+      *sfname = (char_u *)rfname;
     }
   }
 #endif

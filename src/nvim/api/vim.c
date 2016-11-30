@@ -168,19 +168,20 @@ Object nvim_eval(String expr, Error *err)
   Object rv = OBJECT_INIT;
   // Evaluate the expression
   try_start();
-  typval_T *expr_result = eval_expr((char_u *)expr.data, NULL);
 
-  if (!expr_result) {
-    api_set_error(err, Exception, _("Failed to evaluate expression"));
+  typval_T rettv;
+  if (eval0((char_u *)expr.data, &rettv, NULL, true) == FAIL) {
+    api_set_error(err, Exception, "Failed to evaluate expression");
   }
 
   if (!try_end(err)) {
     // No errors, convert the result
-    rv = vim_to_object(expr_result);
+    rv = vim_to_object(&rettv);
   }
 
-  // Free the vim object
-  free_tv(expr_result);
+  // Free the Vim object
+  tv_clear(&rettv);
+
   return rv;
 }
 
@@ -224,11 +225,11 @@ Object nvim_call_function(String fname, Array args, Error *err)
   if (!try_end(err)) {
     rv = vim_to_object(&rettv);
   }
-  clear_tv(&rettv);
+  tv_clear(&rettv);
 
 free_vim_args:
   while (i > 0) {
-    clear_tv(&vim_args[--i]);
+    tv_clear(&vim_args[--i]);
   }
 
   return rv;

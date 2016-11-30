@@ -268,7 +268,7 @@ do_exmode (
 /*
  * Execute a simple command line.  Used for translated commands like "*".
  */
-int do_cmdline_cmd(char *cmd)
+int do_cmdline_cmd(const char *cmd)
 {
   return do_cmdline((char_u *)cmd, NULL, NULL,
                     DOCMD_NOWAIT|DOCMD_KEYTYPED);
@@ -583,10 +583,10 @@ int do_cmdline(char_u *cmdline, LineGetter fgetline,
       ++no_wait_return;
       verbose_enter_scroll();
 
-      smsg(_("line %" PRId64 ": %s"),
-          (int64_t)sourcing_lnum, cmdline_copy);
-      if (msg_silent == 0)
-        msg_puts((char_u *)"\n");           /* don't overwrite this */
+      smsg(_("line %" PRIdLINENR ": %s"), sourcing_lnum, cmdline_copy);
+      if (msg_silent == 0) {
+        msg_puts("\n");  // don't overwrite this either
+      }
 
       verbose_leave_scroll();
       --no_wait_return;
@@ -675,7 +675,7 @@ int do_cmdline(char_u *cmdline, LineGetter fgetline,
           /* can only get here with ":endwhile" or ":endfor" */
           if (cstack.cs_idx >= 0)
             rewind_conditionals(&cstack, cstack.cs_idx - 1,
-                CSF_WHILE | CSF_FOR, &cstack.cs_looplevel);
+                                CSF_WHILE | CSF_FOR, &cstack.cs_looplevel);
         }
       }
       /*
@@ -1814,9 +1814,9 @@ static char_u * do_one_cmd(char_u **cmdlinep,
           errormsg = (char_u *)_("E493: Backwards range given");
           goto doend;
         }
-        if (ask_yesno((char_u *)
-                _("Backwards range given, OK to swap"), FALSE) != 'y')
+        if (ask_yesno(_("Backwards range given, OK to swap"), false) != 'y') {
           goto doend;
+        }
       }
       lnum = ea.line1;
       ea.line1 = ea.line2;
@@ -2581,7 +2581,7 @@ int modifier_len(char_u *cmd)
  * Return 2 if there is an exact match.
  * Return 3 if there is an ambiguous match.
  */
-int cmd_exists(char_u *name)
+int cmd_exists(const char *const name)
 {
   exarg_T ea;
   int full = FALSE;
@@ -2589,18 +2589,21 @@ int cmd_exists(char_u *name)
   int j;
   char_u      *p;
 
-  /* Check command modifiers. */
-  for (i = 0; i < (int)ARRAY_SIZE(cmdmods); ++i) {
-    for (j = 0; name[j] != NUL; ++j)
-      if (name[j] != cmdmods[i].name[j])
+  // Check command modifiers.
+  for (i = 0; i < (int)ARRAY_SIZE(cmdmods); i++) {
+    for (j = 0; name[j] != NUL; j++) {
+      if (name[j] != (char)cmdmods[i].name[j]) {
         break;
-    if (name[j] == NUL && j >= cmdmods[i].minlen)
+      }
+    }
+    if (name[j] == NUL && j >= cmdmods[i].minlen) {
       return cmdmods[i].name[j] == NUL ? 2 : 1;
+    }
   }
 
   /* Check built-in commands and user defined commands.
    * For ":2match" and ":3match" we need to skip the number. */
-  ea.cmd = (*name == '2' || *name == '3') ? name + 1 : name;
+  ea.cmd = (char_u *)((*name == '2' || *name == '3') ? name + 1 : name);
   ea.cmdidx = (cmdidx_T)0;
   p = find_command(&ea, &full);
   if (p == NULL)
@@ -6697,7 +6700,7 @@ do_exedit (
         int ms = msg_scroll;
 
         if (eap->nextcmd != NULL) {
-          stuffReadbuff(eap->nextcmd);
+          stuffReadbuff((const char *)eap->nextcmd);
           eap->nextcmd = NULL;
         }
 
@@ -7628,7 +7631,7 @@ static void ex_mkrc(exarg_T *eap)
 
   /* When using 'viewdir' may have to create the directory. */
   if (using_vdir && !os_isdir(p_vdir)) {
-    vim_mkdir_emsg(p_vdir, 0755);
+    vim_mkdir_emsg((const char *)p_vdir, 0755);
   }
 
   fd = open_exfile((char_u *) fname, eap->forceit, WRITEBIN);
@@ -7740,10 +7743,17 @@ static void ex_mkrc(exarg_T *eap)
   xfree(viewFile);
 }
 
-int vim_mkdir_emsg(char_u *name, int prot)
+/// Try creating a directory, give error message on failure
+///
+/// @param[in]  name  Directory to create.
+/// @param[in]  prot  Directory permissions.
+///
+/// @return OK in case of success, FAIL otherwise.
+int vim_mkdir_emsg(const char *const name, const int prot)
+  FUNC_ATTR_NONNULL_ALL
 {
   int ret;
-  if ((ret = os_mkdir((char *)name, prot)) != 0) {
+  if ((ret = os_mkdir(name, prot)) != 0) {
     EMSG3(_(e_mkdir), name, os_strerror(ret));
     return FAIL;
   }
@@ -8320,8 +8330,8 @@ eval_vars (
           *usedlen = 1;
           return NULL;
         }
-        result = list_find_str(get_vim_var_list(VV_OLDFILES),
-            (long)i);
+        result = (char_u *)tv_list_find_str(get_vim_var_list(VV_OLDFILES),
+                                            i - 1);
         if (result == NULL) {
           *errormsg = (char_u *)"";
           return NULL;
@@ -9243,8 +9253,8 @@ static int ses_put_fname(FILE *fd, char_u *name, unsigned *flagp)
         *p = '/';
   }
 
-  /* escape special characters */
-  p = vim_strsave_fnameescape(sname, FALSE);
+  // Escape special characters.
+  p = (char_u *)vim_strsave_fnameescape((const char *)sname, false);
   xfree(sname);
 
   /* write the result */
@@ -9379,18 +9389,18 @@ void dialog_msg(char_u *buff, char *format, char_u *fname)
 static void ex_behave(exarg_T *eap)
 {
   if (STRCMP(eap->arg, "mswin") == 0) {
-    set_option_value((char_u *)"selection", 0L, (char_u *)"exclusive", 0);
-    set_option_value((char_u *)"selectmode", 0L, (char_u *)"mouse,key", 0);
-    set_option_value((char_u *)"mousemodel", 0L, (char_u *)"popup", 0);
-    set_option_value((char_u *)"keymodel", 0L,
-        (char_u *)"startsel,stopsel", 0);
+    set_option_value("selection", 0L, "exclusive", 0);
+    set_option_value("selectmode", 0L, "mouse,key", 0);
+    set_option_value("mousemodel", 0L, "popup", 0);
+    set_option_value("keymodel", 0L, "startsel,stopsel", 0);
   } else if (STRCMP(eap->arg, "xterm") == 0) {
-    set_option_value((char_u *)"selection", 0L, (char_u *)"inclusive", 0);
-    set_option_value((char_u *)"selectmode", 0L, (char_u *)"", 0);
-    set_option_value((char_u *)"mousemodel", 0L, (char_u *)"extend", 0);
-    set_option_value((char_u *)"keymodel", 0L, (char_u *)"", 0);
-  } else
+    set_option_value("selection", 0L, "inclusive", 0);
+    set_option_value("selectmode", 0L, "", 0);
+    set_option_value("mousemodel", 0L, "extend", 0);
+    set_option_value("keymodel", 0L, "", 0);
+  } else {
     EMSG2(_(e_invarg2), eap->arg);
+  }
 }
 
 /*
@@ -9504,8 +9514,9 @@ void filetype_maybe_enable(void)
  */
 static void ex_setfiletype(exarg_T *eap)
 {
-  if (!did_filetype)
-    set_option_value((char_u *)"filetype", 0L, eap->arg, OPT_LOCAL);
+  if (!did_filetype) {
+    set_option_value("filetype", 0L, (char *)eap->arg, OPT_LOCAL);
+  }
 }
 
 static void ex_digraphs(exarg_T *eap)
@@ -9591,7 +9602,8 @@ static void ex_match(exarg_T *eap)
 
       c = *end;
       *end = NUL;
-      match_add(curwin, g, p + 1, 10, id, NULL, NULL);
+      match_add(curwin, (const char *)g, (const char *)p + 1, 10, id,
+                NULL, NULL);
       xfree(g);
       *end = c;
     }

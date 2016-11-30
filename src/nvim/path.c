@@ -159,7 +159,7 @@ const char_u *invocation_path_tail(const char_u *invocation, size_t *len)
 /// @param fname A file path. (Must be != NULL.)
 /// @return Pointer to first found path separator + 1.
 /// An empty string, if `fname` doesn't contain a path separator,
-char_u *path_next_component(char_u *fname)
+const char *path_next_component(const char *fname)
 {
   assert(fname != NULL);
   while (*fname != NUL && !vim_ispathsep(*fname)) {
@@ -282,48 +282,63 @@ bool dir_of_file_exists(char_u *fname)
   return retval;
 }
 
-/*
- * Versions of fnamecmp() and fnamencmp() that handle '/' and '\' equally
- * and deal with 'fileignorecase'.
- */
-int vim_fnamecmp(char_u *x, char_u *y)
+/// Compare two file names
+///
+/// Handles '/' and '\\' correctly and deals with &fileignorecase option.
+///
+/// @param[in]  fname1  First file name.
+/// @param[in]  fname2  Second file name.
+///
+/// @return 0 if they are equal, non-zero otherwise.
+int path_fnamecmp(const char *fname1, const char *fname2)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
 #ifdef BACKSLASH_IN_FILENAME
-  return vim_fnamencmp(x, y, MAXPATHL);
+  const size_t len1 = strlen(fname1);
+  const size_t len2 = strlen(fname2);
+  return path_fnamencmp(fname1, fname2, MAX(len1, len2));
 #else
-  if (p_fic)
-    return mb_stricmp(x, y);
-  return STRCMP(x, y);
+  return mb_strcmp_ic((bool)p_fic, fname1, fname2);
 #endif
 }
 
-int vim_fnamencmp(char_u *x, char_u *y, size_t len)
+/// Compare two file names
+///
+/// Handles '/' and '\\' correctly and deals with &fileignorecase option.
+///
+/// @param[in]  fname1  First file name.
+/// @param[in]  fname2  Second file name.
+/// @param[in]  len  Compare at most len bytes.
+///
+/// @return 0 if they are equal, non-zero otherwise.
+int path_fnamencmp(const char *const fname1, const char *const fname2,
+                   size_t len)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
 #ifdef BACKSLASH_IN_FILENAME
-  char_u      *px = x;
-  char_u      *py = y;
-  int cx = NUL;
-  int cy = NUL;
+  int c1 = NUL;
+  int c2 = NUL;
 
+  const char *p1 = fname1;
+  const char *p2 = fname2;
   while (len > 0) {
-    cx = PTR2CHAR(px);
-    cy = PTR2CHAR(py);
-    if (cx == NUL || cy == NUL
-        || ((p_fic ? vim_tolower(cx) != vim_tolower(cy) : cx != cy)
-            && !(cx == '/' && cy == '\\')
-            && !(cx == '\\' && cy == '/')))
+    c1 = PTR2CHAR((const char_u *)p1);
+    c2 = PTR2CHAR((const char_u *)p2);
+    if ((c1 == NUL || c2 == NUL
+         || (!((c1 == '/' || c1 == '\\') && (c2 == '\\' || c2 == '/'))))
+        && (p_fic ? (c1 != c2 && ch_fold(c1) != ch_fold(c2)) : c1 != c2)) {
       break;
-    len -= MB_PTR2LEN(px);
-    px += MB_PTR2LEN(px);
-    py += MB_PTR2LEN(py);
+    }
+    len -= MB_PTR2LEN((const char_u *)p1);
+    p1 += MB_PTR2LEN((const char_u *)p1);
+    p2 += MB_PTR2LEN((const char_u *)p2);
   }
-  if (len == 0)
-    return 0;
-  return cx - cy;
+  return c1 - c2;
 #else
-  if (p_fic)
-    return mb_strnicmp(x, y, len);
-  return STRNCMP(x, y, len);
+  if (p_fic) {
+    return mb_strnicmp((const char_u *)fname1, (const char_u *)fname2, len);
+  }
+  return strncmp(fname1, fname2, len);
 #endif
 }
 
@@ -409,7 +424,7 @@ void add_pathsep(char *p)
 ///
 /// @return [allocated] Copy of absolute path to `fname` or NULL when
 ///                     `fname` is NULL.
-char *FullName_save(char *fname, bool force)
+char *FullName_save(const char *fname, bool force)
   FUNC_ATTR_NONNULL_RET FUNC_ATTR_MALLOC
 {
   if (fname == NULL) {
@@ -801,7 +816,7 @@ static void expand_path_option(char_u *curdir, garray_T *gap)
       }
       STRMOVE(buf + len + 1, buf);
       STRCPY(buf, curdir);
-      buf[len] = PATHSEP;
+      buf[len] = (char_u)PATHSEP;
       simplify_filename(buf);
     }
 
@@ -888,9 +903,9 @@ static void uniquefy_paths(garray_T *gap, char_u *pattern)
   in_curdir = xcalloc((size_t)gap->ga_len, sizeof(char_u *));
 
   for (int i = 0; i < gap->ga_len && !got_int; i++) {
-    char_u      *path = fnames[i];
+    char_u *path = fnames[i];
     int is_in_curdir;
-    char_u      *dir_end = gettail_dir(path);
+    char_u *dir_end = (char_u *)gettail_dir((const char *)path);
     char_u      *pathsep_p;
     char_u      *path_cutoff;
 
@@ -998,14 +1013,13 @@ static void uniquefy_paths(garray_T *gap, char_u *pattern)
  * "/path/file", "/path/dir/", "/path//dir", "/file"
  *	 ^	       ^	     ^	      ^
  */
-char_u *gettail_dir(const char_u *fname)
+const char *gettail_dir(const char *fname)
 {
-  const char_u      *dir_end = fname;
-  const char_u      *next_dir_end = fname;
+  const char *dir_end = fname;
+  const char *next_dir_end = fname;
   bool look_for_sep = true;
-  const char_u      *p;
 
-  for (p = fname; *p != NUL; ) {
+  for (const char *p = fname; *p != NUL; ) {
     if (vim_ispathsep(*p)) {
       if (look_for_sep) {
         next_dir_end = p;
@@ -1018,7 +1032,7 @@ char_u *gettail_dir(const char_u *fname)
     }
     mb_ptr_adv(p);
   }
-  return (char_u *)dir_end;
+  return dir_end;
 }
 
 
@@ -1313,12 +1327,12 @@ static int expand_backtick(
 /// When the path looks like a URL leave it unmodified.
 void slash_adjust(char_u *p)
 {
-  if (path_with_url(p)) {
+  if (path_with_url((const char *)p)) {
     return;
   }
   while (*p) {
-    if (*p == psepcN) {
-      *p = psepc;
+    if (*p == (char_u)psepcN) {
+      *p = (char_u)psepc;
     }
     mb_ptr_adv(p);
   }
@@ -1537,8 +1551,8 @@ void simplify_filename(char_u *filename)
         p = tail;                       /* skip to char after ".." or "../" */
       }
     } else {
-      ++components;                     /* simple path component */
-      p = path_next_component(p);
+      components++;  // Simple path component.
+      p = (char_u *)path_next_component((const char *)p);
     }
   } while (*p != NUL);
 }

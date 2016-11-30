@@ -5,11 +5,13 @@ local to_cstr = helpers.to_cstr
 local ffi = helpers.ffi
 local eq = helpers.eq
 
-local eval = cimport('./src/nvim/eval.h', './src/nvim/eval_defs.h')
+local eval = cimport('./src/nvim/eval.h', './src/nvim/eval/typval.h')
 
 local null_string = {[true]='NULL string'}
 local null_list = {[true]='NULL list'}
+local null_dict = {[true]='NULL dict'}
 local type_key = {[true]='type key'}
+local locks_key = {[true]='locks key'}
 local list_type = {[true]='list type'}
 local dict_type = {[true]='dict type'}
 local func_type = {[true]='func type'}
@@ -18,27 +20,28 @@ local flt_type = {[true]='flt type'}
 
 local nil_value = {[true]='nil'}
 
+local lua2typvalt
+
+local function li_alloc(nogc)
+  local gcfunc = eval.tv_list_item_free
+  if nogc then gcfunc = nil end
+  local li = ffi.gc(eval.tv_list_item_alloc(), gcfunc)
+  li.li_next = nil
+  li.li_prev = nil
+  li.li_tv = {v_type=eval.VAR_UNKNOWN, v_lock=eval.VAR_UNLOCKED}
+  return li
+end
+
 local function list(...)
-  local ret = ffi.gc(eval.list_alloc(), eval.list_unref)
+  local ret = ffi.gc(eval.tv_list_alloc(), eval.tv_list_unref)
   eq(0, ret.lv_refcount)
   ret.lv_refcount = 1
   for i = 1, select('#', ...) do
     local val = select(i, ...)
-    local typ = type(val)
-    if typ == 'string' then
-      eval.list_append_string(ret, to_cstr(val))
-    elseif typ == 'table' and val == null_string then
-      eval.list_append_string(ret, nil)
-    elseif typ == 'table' and val == null_list then
-      eval.list_append_list(ret, nil)
-    elseif typ == 'table' and val[type_key] == list_type then
-      local itemlist = ffi.gc(list(table.unpack(val)), nil)
-      eq(1, itemlist.lv_refcount)
-      itemlist.lv_refcount = 0
-      eval.list_append_list(ret, itemlist)
-    else
-      assert(false, 'Not implemented yet')
-    end
+    local li_tv = ffi.gc(lua2typvalt(val), nil)
+    local li = li_alloc(true)
+    li.li_tv = li_tv
+    eval.tv_list_append(ret, li)
   end
   return ret
 end
@@ -72,32 +75,38 @@ typvalt2lua_tab = {
       return ffi.string(str)
     end
   end,
-  [tonumber(eval.VAR_LIST)] = function(t)
-    return lst2tbl(t.vval.v_list)
+  [tonumber(eval.VAR_LIST)] = function(t, processed)
+    return lst2tbl(t.vval.v_list, processed)
   end,
-  [tonumber(eval.VAR_DICT)] = function(t)
-    return dct2tbl(t.vval.v_dict)
+  [tonumber(eval.VAR_DICT)] = function(t, processed)
+    return dct2tbl(t.vval.v_dict, processed)
   end,
   [tonumber(eval.VAR_FUNC)] = function(t)
     return {[type_key]=func_type, value=typvalt2lua_tab[eval.VAR_STRING](t)}
   end,
 }
 
-local typvalt2lua = function(t)
+local typvalt2lua = function(t, processed)
   return ((typvalt2lua_tab[tonumber(t.v_type)] or function(t_inner)
     assert(false, 'Converting ' .. tonumber(t_inner.v_type) .. ' was not implemented yet')
-  end)(t))
+  end)(t, processed))
 end
 
-lst2tbl = function(l)
-  local ret = {[type_key]=list_type}
+lst2tbl = function(l, processed)
   if l == nil then
-    return ret
+    return null_list
   end
+  processed = processed or {}
+  local p_key = tostring(l)
+  if processed[p_key] then
+    return processed[p_key]
+  end
+  local ret = {[type_key]=list_type}
+  processed[p_key] = ret
   local li = l.lv_first
   -- (listitem_T *) NULL is equal to nil, but yet it is not false.
   while li ~= nil do
-    ret[#ret + 1] = typvalt2lua(li.li_tv)
+    ret[#ret + 1] = typvalt2lua(li.li_tv, processed)
     li = li.li_next
   end
   if ret[1] then
@@ -106,19 +115,57 @@ lst2tbl = function(l)
   return ret
 end
 
-dct2tbl = function(d)
-  local ret = {d=d}
-  assert(false, 'Converting dictionaries is not implemented yet')
+local function dict_iter(d)
+  local init_s = {
+    todo=d.dv_hashtab.ht_used,
+    hi=d.dv_hashtab.ht_array,
+  }
+  local function f(s, _)
+    if s.todo == 0 then return nil end
+    while s.todo > 0 do
+      if s.hi.hi_key ~= nil and s.hi ~= eval.hash_removed then
+        local key = ffi.string(s.hi.hi_key)
+        local di = ffi.cast('dictitem_T*',
+                            s.hi.hi_key - ffi.offsetof('dictitem_T', 'di_key'))
+        s.todo = s.todo - 1
+        s.hi = s.hi + 1
+        return key, di
+      end
+      s.hi = s.hi + 1
+    end
+  end
+  return f, init_s, nil
+end
+
+local function first_di(d)
+  local f, init_s, v = dict_iter(d)
+  return select(2, f(init_s, v))
+end
+
+dct2tbl = function(d, processed)
+  if d == nil then
+    return null_dict
+  end
+  processed = processed or {}
+  local p_key = tostring(d)
+  if processed[p_key] then
+    return processed[p_key]
+  end
+  local ret = {}
+  processed[p_key] = ret
+  for k, di in dict_iter(d) do
+    ret[k] = typvalt2lua(di.di_tv, processed)
+  end
   return ret
 end
 
-local lua2typvalt
-
 local typvalt = function(typ, vval)
-  if type(typ) == 'string' then
+  if typ == nil then
+    typ = eval.VAR_UNKNOWN
+  elseif type(typ) == 'string' then
     typ = eval[typ]
   end
-  return ffi.gc(ffi.new('typval_T', {v_type=typ, vval=vval}), eval.clear_tv)
+  return ffi.gc(ffi.new('typval_T', {v_type=typ, vval=vval}), eval.tv_clear)
 end
 
 local lua2typvalt_type_tab = {
@@ -133,14 +180,14 @@ local lua2typvalt_type_tab = {
       processed[l].lv_refcount = processed[l].lv_refcount + 1
       return typvalt(eval.VAR_LIST, {v_list=processed[l]})
     end
-    local lst = eval.list_alloc()
+    local lst = eval.tv_list_alloc()
     lst.lv_refcount = 1
     processed[l] = lst
     local ret = typvalt(eval.VAR_LIST, {v_list=lst})
     for i = 1, #l do
       local item_tv = ffi.gc(lua2typvalt(l[i], processed), nil)
-      eval.list_append_tv(lst, item_tv)
-      eval.clear_tv(item_tv)
+      eval.tv_list_append_tv(lst, item_tv)
+      eval.tv_clear(item_tv)
     end
     return ret
   end,
@@ -149,27 +196,44 @@ local lua2typvalt_type_tab = {
       processed[l].dv_refcount = processed[l].dv_refcount + 1
       return typvalt(eval.VAR_DICT, {v_dict=processed[l]})
     end
-    local dct = eval.dict_alloc()
+    local dct = eval.tv_dict_alloc()
     dct.dv_refcount = 1
     processed[l] = dct
     local ret = typvalt(eval.VAR_DICT, {v_dict=dct})
     for k, v in pairs(l) do
       if type(k) == 'string' then
-        local di = eval.dictitem_alloc(to_cstr(k))
+        local di = eval.tv_dict_item_alloc(to_cstr(k))
         local val_tv = ffi.gc(lua2typvalt(v, processed), nil)
-        eval.copy_tv(val_tv, di.di_tv)
-        eval.clear_tv(val_tv)
-        eval.dict_add(dct, di)
+        eval.tv_copy(val_tv, di.di_tv)
+        eval.tv_clear(val_tv)
+        eval.tv_dict_add(dct, di)
       end
     end
     return ret
   end,
 }
 
+local function typvalt_copy(tv)
+  local ret = typvalt(eval.VAR_UNKNOWN)
+  eval.tv_copy(tv, ret)
+  return ret
+end
+
+local special_vals = {
+  [null_string] = typvalt(eval.VAR_STRING, {v_string=ffi.cast('char_u*', nil)}),
+  [null_list] = typvalt(eval.VAR_LIST, {v_list=ffi.cast('list_T*', nil)}),
+  [null_dict] = typvalt(eval.VAR_DICT, {v_dict=ffi.cast('dict_T*', nil)}),
+  [nil_value] = typvalt(eval.VAR_SPECIAL, {v_special=eval.kSpecialVarNull}),
+  [true] = typvalt(eval.VAR_SPECIAL, {v_special=eval.kSpecialVarTrue}),
+  [false] = typvalt(eval.VAR_SPECIAL, {v_special=eval.kSpecialVarFalse}),
+}
+
 lua2typvalt = function(l, processed)
   processed = processed or {}
-  if l == nil or l == nil_value then
-    return typvalt(eval.VAR_SPECIAL, {v_special=eval.kSpecialVarNull})
+  if l == nil then
+    return typvalt_copy(special_vals[nil_value])
+  elseif special_vals[l] then
+    return typvalt_copy(special_vals[l])
   elseif type(l) == 'table' then
     if l[type_key] then
       return lua2typvalt_type_tab[l[type_key]](l, processed)
@@ -182,18 +246,23 @@ lua2typvalt = function(l, processed)
     end
   elseif type(l) == 'number' then
     return typvalt(eval.VAR_FLOAT, {v_float=l})
-  elseif type(l) == 'boolean' then
-    return typvalt(eval.VAR_SPECIAL, {
-      v_special=(l and eval.kSpecialVarTrue or eval.kSpecialVarFalse)
-    })
   elseif type(l) == 'string' then
     return typvalt(eval.VAR_STRING, {v_string=eval.xmemdupz(to_cstr(l), #l)})
+  elseif type(l) == 'cdata' then
+    return typvalt_copy(l)
   end
 end
 
+local function int(n)
+  return {[type_key]=int_type, value=n}
+end
+
 return {
+  int=int,
+
   null_string=null_string,
   null_list=null_list,
+  null_dict=null_dict,
   list_type=list_type,
   dict_type=dict_type,
   func_type=func_type,
@@ -203,6 +272,7 @@ return {
   nil_value=nil_value,
 
   type_key=type_key,
+  locks_key=locks_key,
 
   list=list,
   lst2tbl=lst2tbl,
@@ -212,4 +282,11 @@ return {
   typvalt2lua=typvalt2lua,
 
   typvalt=typvalt,
+
+  li_alloc=li_alloc,
+
+  dict_iter=dict_iter,
+  first_di=first_di,
+
+  empty_list = {[type_key]=list_type},
 }

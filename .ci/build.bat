@@ -35,6 +35,9 @@ bin\nvim --version || goto :error
 :: Functional tests
 mingw32-make functionaltest VERBOSE=1 || goto :error
 
+:: Header files test
+mingw32-make check-single-includes VERBOSE=1 || goto :error
+
 :: Build artifacts
 cpack -G ZIP -C Release
 if defined APPVEYOR_REPO_TAG_NAME cpack -G NSIS -C Release

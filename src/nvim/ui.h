@@ -5,7 +5,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "api/private/defs.h"
+#include "nvim/api/private/defs.h"
 
 typedef struct {
   bool bold, underline, undercurl, italic, reverse;

@@ -91,11 +91,11 @@ int os_dirname(char_u *buf, size_t len)
 /// Check if the given path is a directory and not a symlink to a directory.
 /// @return `true` if `name` is a directory and NOT a symlink to a directory.
 ///         `false` if `name` is not a directory or if an error occurred.
-bool os_isrealdir(const char_u *name)
+bool os_isrealdir(const char *name)
   FUNC_ATTR_NONNULL_ALL
 {
   uv_fs_t request;
-  if (uv_fs_lstat(&fs_loop, &request, (char *)name, NULL) != kLibuvSuccess) {
+  if (uv_fs_lstat(&fs_loop, &request, name, NULL) != kLibuvSuccess) {
     return false;
   }
   if (S_ISLNK(request.statbuf.st_mode)) {
@@ -111,7 +111,7 @@ bool os_isrealdir(const char_u *name)
 bool os_isdir(const char_u *name)
   FUNC_ATTR_NONNULL_ALL
 {
-  int32_t mode = os_getperm(name);
+  int32_t mode = os_getperm((const char *)name);
   if (mode < 0) {
     return false;
   }
@@ -215,7 +215,8 @@ bool os_can_exe(const char_u *name, char_u **abspath, bool use_path)
               || (name[1] == '.' && name[2] == '/')))) {
     // There must be a path separator, files in the current directory
     // can't be executed
-    if (gettail_dir(name) != name && is_executable(name)) {
+    if (gettail_dir((const char *)name) != (const char *)name
+        && is_executable(name)) {
       if (abspath != NULL) {
         *abspath = save_absolute_path(name);
       }
@@ -234,7 +235,7 @@ bool os_can_exe(const char_u *name, char_u **abspath, bool use_path)
 static bool is_executable(const char_u *name)
   FUNC_ATTR_NONNULL_ALL
 {
-  int32_t mode = os_getperm(name);
+  int32_t mode = os_getperm((const char *)name);
 
   if (mode < 0) {
     return false;
@@ -305,8 +306,7 @@ static bool is_executable_in_path(const char_u *name, char_u **abspath)
     for (const char *ext = pathext; *ext; ext++) {
       // Skip the extension if there is no suffix after a '.'.
       if (ext[0] == '.' && (ext[1] == '\0' || ext[1] == ';')) {
-        *ext++;
-
+        ext++;
         continue;
       }
 
@@ -547,11 +547,11 @@ static int os_stat(const char *name, uv_stat_t *statbuf)
 /// Get the file permissions for a given file.
 ///
 /// @return libuv error code on error.
-int32_t os_getperm(const char_u *name)
+int32_t os_getperm(const char *name)
   FUNC_ATTR_NONNULL_ALL
 {
   uv_stat_t statbuf;
-  int stat_result = os_stat((char *)name, &statbuf);
+  int stat_result = os_stat(name, &statbuf);
   if (stat_result == kLibuvSuccess) {
     return (int32_t)statbuf.st_mode;
   } else {
@@ -562,11 +562,11 @@ int32_t os_getperm(const char_u *name)
 /// Set the permission of a file.
 ///
 /// @return `OK` for success, `FAIL` for failure.
-int os_setperm(const char_u *name, int perm)
+int os_setperm(const char *const name, int perm)
   FUNC_ATTR_NONNULL_ALL
 {
   int r;
-  RUN_UV_FS_FUNC(r, uv_fs_chmod, (const char *)name, perm, NULL);
+  RUN_UV_FS_FUNC(r, uv_fs_chmod, name, perm, NULL);
   return (r == kLibuvSuccess ? OK : FAIL);
 }
 
@@ -920,14 +920,12 @@ bool os_fileid_equal_fileinfo(const FileID *file_id,
 /// When "fname" is the name of a shortcut (*.lnk) resolve the file it points
 /// to and return that name in allocated memory.
 /// Otherwise NULL is returned.
-char_u * os_resolve_shortcut(char_u *fname)
+char *os_resolve_shortcut(const char *fname)
 {
   HRESULT hr;
   IPersistFile *ppf = NULL;
   OLECHAR wsz[MAX_PATH];
-  char_u *rfname = NULL;
-  int len;
-  int conversion_result;
+  char *rfname = NULL;
   IShellLinkW *pslw = NULL;
   WIN32_FIND_DATAW ffdw;
 
@@ -936,7 +934,7 @@ char_u * os_resolve_shortcut(char_u *fname)
   if (fname == NULL) {
     return rfname;
   }
-  len = (int)STRLEN(fname);
+  const size_t len = strlen(fname);
   if (len <= 4 || STRNICMP(fname + len - 4, ".lnk", 4) != 0) {
     return rfname;
   }
@@ -948,7 +946,7 @@ char_u * os_resolve_shortcut(char_u *fname)
                         &IID_IShellLinkW, (void **)&pslw);
   if (hr == S_OK) {
     WCHAR *p;
-    int conversion_result = utf8_to_utf16((char *)fname, &p);
+    int conversion_result = utf8_to_utf16(fname, &p);
     if (conversion_result != 0) {
       EMSG2("utf8_to_utf16 failed: %s", uv_strerror(conversion_result));
     }

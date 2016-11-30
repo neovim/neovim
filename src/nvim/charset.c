@@ -41,8 +41,10 @@ static bool chartab_initialized = false;
     (buf)->b_chartab[(unsigned)(c) >> 6] |= (1ull << ((c) & 0x3f))
 #define RESET_CHARTAB(buf, c) \
     (buf)->b_chartab[(unsigned)(c) >> 6] &= ~(1ull << ((c) & 0x3f))
+#define GET_CHARTAB_TAB(chartab, c) \
+    ((chartab)[(unsigned)(c) >> 6] & (1ull << ((c) & 0x3f)))
 #define GET_CHARTAB(buf, c) \
-    ((buf)->b_chartab[(unsigned)(c) >> 6] & (1ull << ((c) & 0x3f)))
+    GET_CHARTAB_TAB((buf)->b_chartab, c)
 
 // Table used below, see init_chartab() for an explanation
 static char_u g_chartab[256];
@@ -92,7 +94,6 @@ int buf_init_chartab(buf_T *buf, int global)
 {
   int c;
   int c2;
-  char_u *p;
   int i;
   bool tilde;
   bool do_isalpha;
@@ -163,7 +164,8 @@ int buf_init_chartab(buf_T *buf, int global)
   // Walk through the 'isident', 'iskeyword', 'isfname' and 'isprint'
   // options Each option is a list of characters, character numbers or
   // ranges, separated by commas, e.g.: "200-210,x,#-178,-"
-  for (i = global ? 0 : 3; i <= 3; ++i) {
+  for (i = global ? 0 : 3; i <= 3; i++) {
+    const char_u *p;
     if (i == 0) {
       // first round: 'isident'
       p = p_isi;
@@ -188,7 +190,7 @@ int buf_init_chartab(buf_T *buf, int global)
       }
 
       if (ascii_isdigit(*p)) {
-        c = getdigits_int(&p);
+        c = getdigits_int((char_u **)&p);
       } else if (has_mbyte) {
         c = mb_ptr2char_adv(&p);
       } else {
@@ -200,7 +202,7 @@ int buf_init_chartab(buf_T *buf, int global)
         ++p;
 
         if (ascii_isdigit(*p)) {
-          c2 = getdigits_int(&p);
+          c2 = getdigits_int((char_u **)&p);
         } else if (has_mbyte) {
           c2 = mb_ptr2char_adv(&p);
         } else {
@@ -684,7 +686,7 @@ int char2cells(int c)
 /// @param p
 ///
 /// @return number of display cells.
-int ptr2cells(char_u *p)
+int ptr2cells(const char_u *p)
 {
   // For UTF-8 we need to look at more bytes if the first byte is >= 0x80.
   if (enc_utf8 && (*p >= 0x80)) {
@@ -830,14 +832,14 @@ bool vim_iswordc(int c)
   return vim_iswordc_buf(c, curbuf);
 }
 
-/// Check that "c" is a keyword character:
+/// Check that "c" is a keyword character
 /// Letters and characters from 'iskeyword' option for given buffer.
 /// For multi-byte characters mb_get_class() is used (builtin rules).
 ///
-/// @param  c    character to check
-/// @param  buf  buffer whose keywords to use
-bool vim_iswordc_buf(int c, buf_T *buf)
-  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ARG(2)
+/// @param[in]  c  Character to check.
+/// @param[in]  chartab  Buffer chartab.
+bool vim_iswordc_tab(const int c, const uint64_t *const chartab)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   if (c >= 0x100) {
     if (enc_dbcs != 0) {
@@ -848,7 +850,19 @@ bool vim_iswordc_buf(int c, buf_T *buf)
       return utf_class(c) >= 2;
     }
   }
-  return c > 0 && c < 0x100 && GET_CHARTAB(buf, c) != 0;
+  return c > 0 && c < 0x100 && GET_CHARTAB_TAB(chartab, c) != 0;
+}
+
+/// Check that "c" is a keyword character:
+/// Letters and characters from 'iskeyword' option for given buffer.
+/// For multi-byte characters mb_get_class() is used (builtin rules).
+///
+/// @param  c    character to check
+/// @param  buf  buffer whose keywords to use
+bool vim_iswordc_buf(int c, buf_T *buf)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ARG(2)
+{
+  return vim_iswordc_tab(c, buf->b_chartab);
 }
 
 /// Just like vim_iswordc() but uses a pointer to the (multi-byte) character.
@@ -1443,17 +1457,17 @@ void getvcols(win_T *wp, pos_T *pos1, pos_T *pos2, colnr_T *left,
 
 /// skipwhite: skip over ' ' and '\t'.
 ///
-/// @param q
+/// @param[in]  q  String to skip in.
 ///
 /// @return Pointer to character after the skipped whitespace.
-char_u* skipwhite(char_u *q)
+char_u *skipwhite(const char_u *q)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  char_u *p = q;
+  const char_u *p = q;
   while (ascii_iswhite(*p)) {
-    // skip to next non-white
     p++;
   }
-  return p;
+  return (char_u *)p;
 }
 
 /// skip over digits
@@ -1694,6 +1708,23 @@ int vim_tolower(int c)
     return latin1lower[c];
   }
   return TOLOWER_LOC(c);
+}
+
+/// Return the folded-case equivalent of the given character
+///
+/// With UTF-8 encoding uses utf_fold, otherwise just vim_tolower.
+///
+/// @param[in]  c  Character to transform.
+///
+/// @return Folded variant.
+int ch_fold(int c)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  if (enc_utf8) {
+    return utf_fold(c);
+  } else {
+    return vim_tolower(c);
+  }
 }
 
 /// skiptowhite: skip over text until ' ' or '\t' or NUL.

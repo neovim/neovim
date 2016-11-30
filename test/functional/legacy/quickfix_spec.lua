@@ -494,6 +494,7 @@ describe('helpgrep', function()
   end)
 
   it('quickfix/location list file commands work', function()
+    -- Duplicated in test/functional/ex_cmds/quickfix_commands_spec.lua
     call('XfileTests', 'c')
     expected_empty()
     call('XfileTests', 'l')

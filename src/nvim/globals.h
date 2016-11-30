@@ -409,10 +409,6 @@ EXTERN struct caller_scope {
 } provider_caller_scope;
 EXTERN int provider_call_nesting INIT(= 0);
 
-/* Magic number used for hashitem "hi_key" value indicating a deleted item.
- * Only the address is used. */
-EXTERN char_u hash_removed;
-
 
 EXTERN int t_colors INIT(= 256);                // int value of T_CCO
 
@@ -1153,7 +1149,6 @@ EXTERN char_u e_noprev[] INIT(= N_("E34: No previous command"));
 EXTERN char_u e_noprevre[] INIT(= N_("E35: No previous regular expression"));
 EXTERN char_u e_norange[] INIT(= N_("E481: No range allowed"));
 EXTERN char_u e_noroom[] INIT(= N_("E36: Not enough room"));
-EXTERN char_u e_notcreate[] INIT(= N_("E482: Can't create file %s"));
 EXTERN char_u e_notmp[] INIT(= N_("E483: Can't get temp file name"));
 EXTERN char_u e_notopen[] INIT(= N_("E484: Can't open file %s"));
 EXTERN char_u e_notread[] INIT(= N_("E485: Can't read file %s"));
@@ -1218,6 +1213,7 @@ EXTERN char_u e_invalidreg[] INIT(= N_("E850: Invalid register name"));
 EXTERN char_u e_dirnotf[] INIT(= N_(
     "E919: Directory not found in '%s': \"%s\""));
 EXTERN char_u e_unsupportedoption[] INIT(= N_("E519: Option not supported"));
+EXTERN char_u e_float_as_string[] INIT(= N_("E806: using Float as a String"));
 
 
 EXTERN char top_bot_msg[] INIT(= N_("search hit TOP, continuing at BOTTOM"));

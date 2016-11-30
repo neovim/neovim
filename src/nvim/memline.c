@@ -999,7 +999,7 @@ void ml_recover(void)
   if (b0_ff != 0)
     set_fileformat(b0_ff - 1, OPT_LOCAL);
   if (b0_fenc != NULL) {
-    set_option_value((char_u *)"fenc", 0L, b0_fenc, OPT_LOCAL);
+    set_option_value("fenc", 0L, (char *)b0_fenc, OPT_LOCAL);
     xfree(b0_fenc);
   }
   unchanged(curbuf, TRUE);
@@ -1409,8 +1409,8 @@ recover_names (
         for (int i = 0; i < num_files; ++i) {
           /* print the swap file name */
           msg_outnum((long)++file_count);
-          MSG_PUTS(".    ");
-          msg_puts(path_tail(files[i]));
+          msg_puts(".    ");
+          msg_puts((const char *)path_tail(files[i]));
           msg_putchar('\n');
           (void)swapfile_info(files[i]);
         }

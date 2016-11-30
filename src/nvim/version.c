@@ -74,7 +74,7 @@ static char *features[] = {
 };
 
 // clang-format off
-static int included_patches[] = {
+static const int included_patches[] = {
   // 2367,
   // 2366 NA
   // 2365 NA
@@ -282,7 +282,7 @@ static int included_patches[] = {
   // 2163,
   2162,
   // 2161,
-  // 2160,
+  2160,
   // 2159,
   2158,
   // 2157 NA
@@ -2463,10 +2463,10 @@ static char *(extra_patches[]) = {
 /// @param version Version string like "1.3.42"
 ///
 /// @return true if Nvim is at or above the version.
-bool has_nvim_version(char *version_str)
-  FUNC_ATTR_NONNULL_ALL
+bool has_nvim_version(const char *const version_str)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
-  char *p   = version_str;
+  const char *p = version_str;
   int major = 0;
   int minor = 0;
   int patch = 0;
@@ -2475,7 +2475,7 @@ bool has_nvim_version(char *version_str)
     return false;
   }
   major = atoi(p);
-  p     = strchr(p, '.');  // Find the next dot.
+  p = strchr(p, '.');  // Find the next dot.
 
   if (p) {
     p++;  // Advance past the dot.
@@ -2483,7 +2483,7 @@ bool has_nvim_version(char *version_str)
       return false;
     }
     minor = atoi(p);
-    p     = strchr(p, '.');
+    p = strchr(p, '.');
     if (p) {
       p++;
       if (!ascii_isdigit(*p)) {
@@ -2575,7 +2575,7 @@ static void list_features(void)
     int idx = (i / ncol) + (i % ncol) * nrow;
     if (idx < nfeat) {
       int last_col = (i + 1) % ncol == 0;
-      msg_puts((char_u *)features[idx]);
+      msg_puts(features[idx]);
       if (last_col) {
         if (msg_col > 0) {
           msg_putchar('\n');

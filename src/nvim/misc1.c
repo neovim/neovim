@@ -2214,44 +2214,49 @@ change_warning (
   }
 }
 
-/*
- * Ask for a reply from the user, a 'y' or a 'n'.
- * No other characters are accepted, the message is repeated until a valid
- * reply is entered or CTRL-C is hit.
- * If direct is TRUE, don't use vgetc() but ui_inchar(), don't get characters
- * from any buffers but directly from the user.
- *
- * return the 'y' or 'n'
- */
-int ask_yesno(char_u *str, int direct)
+/// Ask for a reply from the user, 'y' or 'n'
+///
+/// No other characters are accepted, the message is repeated until a valid
+/// reply is entered or <C-c> is hit.
+///
+/// @param[in]  str  Prompt: question to ask user. Is always followed by
+///                  " (y/n)?".
+/// @param[in]  direct  Determines what function to use to get user input. If
+///                     true then ui_inchar() will be used, otherwise vgetc().
+///                     I.e. when direct is true then characters are obtained
+///                     directly from the user without buffers involved.
+///
+/// @return 'y' or 'n'. Last is also what will be returned in case of interrupt.
+int ask_yesno(const char *const str, const bool direct)
 {
+  const int save_State = State;
+
+  no_wait_return++;
+  State = CONFIRM;  // Mouse behaves like with :confirm.
+  setmouse();  // Disable mouse in xterm.
+  no_mapping++;
+  allow_keys++;  // No mapping here, but recognize keys.
+
   int r = ' ';
-  int save_State = State;
-
-  ++no_wait_return;
-  State = CONFIRM;              /* mouse behaves like with :confirm */
-  setmouse();                   /* disables mouse for xterm */
-  ++no_mapping;
-  ++allow_keys;                 /* no mapping here, but recognize keys */
-
   while (r != 'y' && r != 'n') {
-    /* same highlighting as for wait_return */
-    smsg_attr(hl_attr(HLF_R),
-              "%s (y/n)?", str);
-    if (direct)
+    // Same highlighting as for wait_return.
+    smsg_attr(hl_attr(HLF_R), "%s (y/n)?", str);
+    if (direct) {
       r = get_keystroke();
-    else
+    } else {
       r = plain_vgetc();
-    if (r == Ctrl_C || r == ESC)
+    }
+    if (r == Ctrl_C || r == ESC) {
       r = 'n';
-    msg_putchar(r);         /* show what you typed */
+    }
+    msg_putchar(r);  // Show what you typed.
     ui_flush();
   }
-  --no_wait_return;
+  no_wait_return--;
   State = save_State;
   setmouse();
-  --no_mapping;
-  --allow_keys;
+  no_mapping--;
+  allow_keys--;
 
   return r;
 }
@@ -2544,7 +2549,7 @@ void vim_beep(unsigned val)
      * function give the user a hint where the beep comes from. */
     if (vim_strchr(p_debug, 'e') != NULL) {
       msg_source(hl_attr(HLF_W));
-      msg_attr((char_u *)_("Beep!"), hl_attr(HLF_W));
+      msg_attr(_("Beep!"), hl_attr(HLF_W));
     }
   }
 }

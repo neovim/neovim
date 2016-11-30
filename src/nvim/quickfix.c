@@ -886,7 +886,7 @@ void qf_free_all(win_T *wp)
 static int qf_add_entry(qf_info_T *qi, qfline_T **prevp, char_u *dir,
                         char_u *fname, int bufnum, char_u *mesg, long lnum,
                         int col, char_u vis_col, char_u *pattern, int nr,
-                        char_u type, char_u valid)
+                        int type, char_u valid)
 {
   qfline_T *qfp = xmalloc(sizeof(qfline_T));
 
@@ -906,7 +906,7 @@ static int qf_add_entry(qf_info_T *qi, qfline_T **prevp, char_u *dir,
   qfp->qf_nr = nr;
   if (type != 1 && !vim_isprintc(type))   /* only printable chars allowed */
     type = 0;
-  qfp->qf_type = type;
+  qfp->qf_type = (char_u)type;
   qfp->qf_valid = valid;
 
   if (qi->qf_lists[qi->qf_curlist].qf_count == 0) {
@@ -1826,21 +1826,20 @@ void qf_list(exarg_T *eap)
       if (qfp->qf_lnum == 0) {
         IObuff[0] = NUL;
       } else if (qfp->qf_col == 0) {
-        vim_snprintf((char *)IObuff, IOSIZE, ":%" PRId64,
-                     (int64_t)qfp->qf_lnum);
+        vim_snprintf((char *)IObuff, IOSIZE, ":%" PRIdLINENR, qfp->qf_lnum);
       } else {
-        vim_snprintf((char *)IObuff, IOSIZE, ":%" PRId64 " col %d",
-                     (int64_t)qfp->qf_lnum, qfp->qf_col);
+        vim_snprintf((char *)IObuff, IOSIZE, ":%" PRIdLINENR " col %d",
+                     qfp->qf_lnum, qfp->qf_col);
       }
       vim_snprintf((char *)IObuff + STRLEN(IObuff), IOSIZE, "%s:",
                    (char *)qf_types(qfp->qf_type, qfp->qf_nr));
-      msg_puts_attr(IObuff, hl_attr(HLF_N));
+      msg_puts_attr((const char *)IObuff, hl_attr(HLF_N));
       if (qfp->qf_pattern != NULL) {
         qf_fmt_text(qfp->qf_pattern, IObuff, IOSIZE);
-        STRCAT(IObuff, ":");
-        msg_puts(IObuff);
+        STRNCAT(IObuff, ":", IOSIZE);
+        msg_puts((const char *)IObuff);
       }
-      msg_puts((char_u *)" ");
+      msg_puts(" ");
 
       /* Remove newlines and leading whitespace from the text.  For an
        * unrecognized line keep the indent, the compiler may mark a word
@@ -2170,15 +2169,13 @@ void ex_copen(exarg_T *eap)
     else {
       /* Create a new quickfix buffer */
       (void)do_ecmd(0, NULL, NULL, NULL, ECMD_ONE, ECMD_HIDE, oldwin);
-      /* switch off 'swapfile' */
-      set_option_value((char_u *)"swf", 0L, NULL, OPT_LOCAL);
-      set_option_value((char_u *)"bt", 0L, (char_u *)"quickfix",
-          OPT_LOCAL);
-      set_option_value((char_u *)"bh", 0L, (char_u *)"wipe", OPT_LOCAL);
+      // Switch off 'swapfile'.
+      set_option_value("swf", 0L, NULL, OPT_LOCAL);
+      set_option_value("bt", 0L, "quickfix", OPT_LOCAL);
+      set_option_value("bh", 0L, "wipe", OPT_LOCAL);
       RESET_BINDING(curwin);
-      curwin->w_p_diff = FALSE;
-      set_option_value((char_u *)"fdm", 0L, (char_u *)"manual",
-          OPT_LOCAL);
+      curwin->w_p_diff = false;
+      set_option_value("fdm", 0L, "manual", OPT_LOCAL);
     }
 
     /* Only set the height when still in the same tab page and there is no
@@ -2423,11 +2420,11 @@ static void qf_fill_buffer(qf_info_T *qi)
   /* correct cursor position */
   check_lnums(TRUE);
 
-  /* Set the 'filetype' to "qf" each time after filling the buffer.  This
-   * resembles reading a file into a buffer, it's more logical when using
-   * autocommands. */
-  set_option_value((char_u *)"ft", 0L, (char_u *)"qf", OPT_LOCAL);
-  curbuf->b_p_ma = FALSE;
+  // Set the 'filetype' to "qf" each time after filling the buffer.  This
+  // resembles reading a file into a buffer, it's more logical when using
+  // autocommands.
+  set_option_value("ft", 0L, "qf", OPT_LOCAL);
+  curbuf->b_p_ma = false;
 
   keep_filetype = TRUE;                 /* don't detect 'filetype' */
   apply_autocmds(EVENT_BUFREADPOST, (char_u *)"quickfix", NULL,
@@ -3482,7 +3479,6 @@ static void unload_dummy_buffer(buf_T *buf, char_u *dirname_start)
 int get_errorlist(win_T *wp, list_T *list)
 {
   qf_info_T   *qi = &ql_info;
-  dict_T      *dict;
   char_u buf[2];
   qfline_T    *qfp;
   int i;
@@ -3505,23 +3501,34 @@ int get_errorlist(win_T *wp, list_T *list)
     if (bufnum != 0 && (buflist_findnr(bufnum) == NULL))
       bufnum = 0;
 
-    dict = dict_alloc();
-    list_append_dict(list, dict);
+    dict_T *const dict = tv_dict_alloc();
+    tv_list_append_dict(list, dict);
 
     buf[0] = qfp->qf_type;
     buf[1] = NUL;
-    if ( dict_add_nr_str(dict, "bufnr", (long)bufnum, NULL) == FAIL
-         || dict_add_nr_str(dict, "lnum",  (long)qfp->qf_lnum, NULL) == FAIL
-         || dict_add_nr_str(dict, "col",   (long)qfp->qf_col, NULL) == FAIL
-         || dict_add_nr_str(dict, "vcol",  (long)qfp->qf_viscol, NULL) == FAIL
-         || dict_add_nr_str(dict, "nr",    (long)qfp->qf_nr, NULL) == FAIL
-         || dict_add_nr_str(dict, "pattern",  0L,
-             qfp->qf_pattern == NULL ? (char_u *)"" : qfp->qf_pattern) == FAIL
-         || dict_add_nr_str(dict, "text",  0L,
-             qfp->qf_text == NULL ? (char_u *)"" : qfp->qf_text) == FAIL
-         || dict_add_nr_str(dict, "type",  0L, buf) == FAIL
-         || dict_add_nr_str(dict, "valid", (long)qfp->qf_valid, NULL) == FAIL)
-      return FAIL;
+    if (tv_dict_add_nr(dict, S_LEN("bufnr"), (varnumber_T)bufnum) == FAIL
+        || (tv_dict_add_nr(dict, S_LEN("lnum"), (varnumber_T)qfp->qf_lnum)
+            == FAIL)
+        || (tv_dict_add_nr(dict, S_LEN("col"), (varnumber_T)qfp->qf_col)
+            == FAIL)
+        || (tv_dict_add_nr(dict, S_LEN("vcol"), (varnumber_T)qfp->qf_viscol)
+            == FAIL)
+        || (tv_dict_add_nr(dict, S_LEN("nr"), (varnumber_T)qfp->qf_nr) == FAIL)
+        || tv_dict_add_str(dict, S_LEN("pattern"),
+                           (qfp->qf_pattern == NULL
+                            ? ""
+                            : (const char *)qfp->qf_pattern)) == FAIL
+        || tv_dict_add_str(dict, S_LEN("text"),
+                           (qfp->qf_text == NULL
+                            ? ""
+                            : (const char *)qfp->qf_text)) == FAIL
+        || tv_dict_add_str(dict, S_LEN("type"), (const char *)buf) == FAIL
+        || (tv_dict_add_nr(dict, S_LEN("valid"), (varnumber_T)qfp->qf_valid)
+            == FAIL)) {
+      // tv_dict_add* fail only if key already exist, but this is a newly
+      // allocated dictionary which is thus guaranteed to have no existing keys.
+      assert(false);
+    }
 
     qfp = qfp->qf_next;
   }
@@ -3566,17 +3573,18 @@ int set_errorlist(win_T *wp, list_T *list, int action, char_u *title)
     if (d == NULL)
       continue;
 
-    char_u *filename = get_dict_string(d, "filename", true);
-    int bufnum = (int)get_dict_number(d, "bufnr");
-    long lnum = get_dict_number(d, "lnum");
-    int col = (int)get_dict_number(d, "col");
-    char_u vcol = (char_u)get_dict_number(d, "vcol");
-    int nr = (int)get_dict_number(d, "nr");
-    char_u *type = get_dict_string(d, "type", true);
-    char_u *pattern = get_dict_string(d, "pattern", true);
-    char_u *text = get_dict_string(d, "text", true);
+    char *const filename = tv_dict_get_string(d, "filename", true);
+    int bufnum = (int)tv_dict_get_number(d, "bufnr");
+    long lnum = tv_dict_get_number(d, "lnum");
+    int col = (int)tv_dict_get_number(d, "col");
+    char_u vcol = (char_u)tv_dict_get_number(d, "vcol");
+    int nr = (int)tv_dict_get_number(d, "nr");
+    const char *type_str = tv_dict_get_string(d, "type", false);
+    const int type = (int)(uint8_t)(type_str == NULL ? NUL : *type_str);
+    char *const pattern = tv_dict_get_string(d, "pattern", true);
+    char *text = tv_dict_get_string(d, "text", true);
     if (text == NULL) {
-      text = vim_strsave((char_u *)"");
+      text = xcalloc(1, 1);
     }
     bool valid = true;
     if ((filename == NULL && bufnum == 0) || (lnum == 0 && pattern == NULL)) {
@@ -3597,21 +3605,20 @@ int set_errorlist(win_T *wp, list_T *list, int action, char_u *title)
     int status = qf_add_entry(qi,
                               &prevp,
                               NULL,      // dir
-                              filename,
+                              (char_u *)filename,
                               bufnum,
-                              text,
+                              (char_u *)text,
                               lnum,
                               col,
                               vcol,      // vis_col
-                              pattern,   // search pattern
+                              (char_u *)pattern,   // search pattern
                               nr,
-                              (char_u)(type == NULL ? NUL : *type),
+                              type,
                               valid);
 
     xfree(filename);
     xfree(pattern);
     xfree(text);
-    xfree(type);
 
     if (status == FAIL) {
       retval = FAIL;
@@ -3695,7 +3702,6 @@ void ex_cbuffer(exarg_T *eap)
  */
 void ex_cexpr(exarg_T *eap)
 {
-  typval_T    *tv;
   qf_info_T   *qi = &ql_info;
 
   if (eap->cmdidx == CMD_lexpr || eap->cmdidx == CMD_lgetexpr
@@ -3703,22 +3709,24 @@ void ex_cexpr(exarg_T *eap)
     qi = ll_get_or_alloc_list(curwin);
   }
 
-  /* Evaluate the expression.  When the result is a string or a list we can
-   * use it to fill the errorlist. */
-  tv = eval_expr(eap->arg, NULL);
-  if (tv != NULL) {
-    if ((tv->v_type == VAR_STRING && tv->vval.v_string != NULL)
-        || (tv->v_type == VAR_LIST && tv->vval.v_list != NULL)) {
-      if (qf_init_ext(qi, NULL, NULL, tv, p_efm,
-              (eap->cmdidx != CMD_caddexpr
-               && eap->cmdidx != CMD_laddexpr),
-              (linenr_T)0, (linenr_T)0, *eap->cmdlinep) > 0
+  // Evaluate the expression.  When the result is a string or a list we can
+  // use it to fill the errorlist.
+  typval_T rettv;
+  if (eval0(eap->arg, &rettv, NULL, true) != FAIL) {
+    if ((rettv.v_type == VAR_STRING && rettv.vval.v_string != NULL)
+        || (rettv.v_type == VAR_LIST && rettv.vval.v_list != NULL)) {
+      if (qf_init_ext(qi, NULL, NULL, &rettv, p_efm,
+                      (eap->cmdidx != CMD_caddexpr
+                       && eap->cmdidx != CMD_laddexpr),
+                      (linenr_T)0, (linenr_T)0, *eap->cmdlinep) > 0
           && (eap->cmdidx == CMD_cexpr
-              || eap->cmdidx == CMD_lexpr))
-        qf_jump(qi, 0, 0, eap->forceit);          /* display first error */
-    } else
+              || eap->cmdidx == CMD_lexpr)) {
+        qf_jump(qi, 0, 0, eap->forceit);  // Display first error.
+      }
+    } else {
       EMSG(_("E777: String or List expected"));
-    free_tv(tv);
+    }
+    tv_clear(&rettv);
   }
 }
 

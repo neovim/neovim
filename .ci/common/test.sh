@@ -1,21 +1,46 @@
-check_core_dumps() {
-  sleep 2
+print_core() {
+  local app="$1"
+  local core="$2"
+  if test "$app" = quiet ; then
+    echo "Found core $core"
+    return 0
+  fi
+  echo "======= Core file $core ======="
+  if [[ "${TRAVIS_OS_NAME}" == osx ]]; then
+    lldb -Q -o "bt all" -f "${app}" -c "${core}"
+  else
+    gdb -n -batch -ex 'thread apply all bt full' "${app}" -c "${core}"
+  fi
+}
 
+check_core_dumps() {
+  local del=
+  if test "$1" = "--delete" ; then
+    del=1
+    shift
+  fi
+  local app="${1:-${BUILD_DIR}/bin/nvim}"
   if [[ "${TRAVIS_OS_NAME}" == osx ]]; then
     local cores="$(find /cores/ -type f -print)"
-    local dbg_cmd="lldb -Q -o bt -f ${BUILD_DIR}/bin/nvim -c"
   else
-    # FIXME (fwalch): Will trigger if a file named core.* exists outside of $DEPS_BUILD_DIR.
-    local cores="$(find ./ -type f -not -path "*${DEPS_BUILD_DIR}*" -name 'core.*' -print)"
-    local dbg_cmd="gdb -n -batch -ex bt ${BUILD_DIR}/bin/nvim"
+    local cores="$(find ./ -type f -name 'core.*' -print)"
   fi
 
   if [ -z "${cores}" ]; then
     return
   fi
+  local core
   for core in $cores; do
-    ${dbg_cmd} "${core}"
+    if test "$del" = "1" ; then
+      print_core "$app" "$core" >&2
+      rm "$core"
+    else
+      print_core "$app" "$core"
+    fi
   done
+  if test "$app" = quiet ; then
+    return 0
+  fi
   exit 1
 }
 
@@ -49,29 +74,44 @@ asan_check() {
 }
 
 run_unittests() {
-  ${MAKE_CMD} -C "${BUILD_DIR}" unittest
+  ulimit -c unlimited
+  if ! ${MAKE_CMD} -C "${BUILD_DIR}" unittest ; then
+    check_core_dumps "$(which luajit)"
+    exit 1
+  fi
+  check_core_dumps "$(which luajit)"
 }
 
 run_functionaltests() {
+  ulimit -c unlimited
   if ! ${MAKE_CMD} -C "${BUILD_DIR}" ${FUNCTIONALTEST}; then
     asan_check "${LOG_DIR}"
     valgrind_check "${LOG_DIR}"
+    check_core_dumps
     exit 1
   fi
   asan_check "${LOG_DIR}"
   valgrind_check "${LOG_DIR}"
+  check_core_dumps
 }
 
 run_oldtests() {
+  ulimit -c unlimited
   ${MAKE_CMD} -C "${BUILD_DIR}" helptags
   if ! make -C "${TRAVIS_BUILD_DIR}/src/nvim/testdir"; then
     reset
     asan_check "${LOG_DIR}"
     valgrind_check "${LOG_DIR}"
+    check_core_dumps
     exit 1
   fi
   asan_check "${LOG_DIR}"
   valgrind_check "${LOG_DIR}"
+  check_core_dumps
+}
+
+run_single_includes_tests() {
+  ${MAKE_CMD} -C "${BUILD_DIR}" check-single-includes
 }
 
 install_nvim() {

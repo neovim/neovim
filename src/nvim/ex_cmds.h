@@ -4,6 +4,7 @@
 #include <stdbool.h>
 
 #include "nvim/os/time.h"
+#include "nvim/eval/typval.h"
 #include "nvim/eval_defs.h"
 #include "nvim/pos.h"
 

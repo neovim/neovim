@@ -1575,7 +1575,7 @@ static int diff_cmp(char_u *s1, char_u *s2)
   }
 
   if ((diff_flags & DIFF_ICASE) && !(diff_flags & DIFF_IWHITE)) {
-    return mb_stricmp(s1, s2);
+    return mb_stricmp((const char *)s1, (const char *)s2);
   }
 
   // Ignore white space changes and possibly ignore case.

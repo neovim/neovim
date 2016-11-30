@@ -259,7 +259,10 @@ void ui_detach_impl(UI *ui)
     shift_index++;
   }
 
-  if (--ui_count) {
+  if (--ui_count
+      // During teardown/exit the loop was already destroyed, cannot schedule.
+      // https://github.com/neovim/neovim/pull/5119#issuecomment-258667046
+      && !exiting) {
     ui_schedule_refresh();
   }
 }

@@ -82,6 +82,7 @@
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
 #include "nvim/undo.h"
+#include "nvim/macros.h"
 #include "nvim/cursor.h"
 #include "nvim/edit.h"
 #include "nvim/eval.h"
@@ -321,7 +322,7 @@ static long get_undolevel(void)
 static inline void zero_fmark_additional_data(fmark_T *fmarks)
 {
   for (size_t i = 0; i < NMARKS; i++) {
-    dict_unref(fmarks[i].additional_data);
+    tv_dict_unref(fmarks[i].additional_data);
     fmarks[i].additional_data = NULL;
   }
 }
@@ -1084,7 +1085,7 @@ void u_write_undo(const char *const name, const bool forceit, buf_T *const buf,
    */
   perm = 0600;
   if (buf->b_ffname != NULL) {
-    perm = os_getperm(buf->b_ffname);
+    perm = os_getperm((const char *)buf->b_ffname);
     if (perm < 0) {
       perm = 0600;
     }
@@ -1143,7 +1144,7 @@ void u_write_undo(const char *const name, const bool forceit, buf_T *const buf,
     EMSG2(_(e_not_open), file_name);
     goto theend;
   }
-  (void)os_setperm((char_u *)file_name, perm);
+  (void)os_setperm(file_name, perm);
   if (p_verbose > 0) {
     verbose_enter();
     smsg(_("Writing undo file: %s"), file_name);
@@ -1168,7 +1169,7 @@ void u_write_undo(const char *const name, const bool forceit, buf_T *const buf,
       && os_fileinfo(file_name, &file_info_new)
       && file_info_old.stat.st_gid != file_info_new.stat.st_gid
       && os_fchown(fd, (uv_uid_t)-1, (uv_gid_t)file_info_old.stat.st_gid)) {
-    os_setperm((char_u *)file_name, (perm & 0707) | ((perm & 07) << 3));
+    os_setperm(file_name, (perm & 0707) | ((perm & 07) << 3));
   }
 # ifdef HAVE_SELINUX
   if (buf->b_ffname != NULL)
@@ -2510,13 +2511,14 @@ void ex_undolist(exarg_T *eap)
     sort_strings((char_u **)ga.ga_data, ga.ga_len);
 
     msg_start();
-    msg_puts_attr((char_u *)_("number changes  when               saved"),
-        hl_attr(HLF_T));
-    for (int i = 0; i < ga.ga_len && !got_int; ++i) {
+    msg_puts_attr(_("number changes  when               saved"),
+                  hl_attr(HLF_T));
+    for (int i = 0; i < ga.ga_len && !got_int; i++) {
       msg_putchar('\n');
-      if (got_int)
+      if (got_int) {
         break;
-      msg_puts(((char_u **)ga.ga_data)[i]);
+      }
+      msg_puts(((const char **)ga.ga_data)[i]);
     }
     msg_end();
 
@@ -2942,25 +2944,28 @@ void u_eval_tree(u_header_T *first_uhp, list_T *list)
   dict_T      *dict;
 
   while (uhp != NULL) {
-    dict = dict_alloc();
-    dict_add_nr_str(dict, "seq", uhp->uh_seq, NULL);
-    dict_add_nr_str(dict, "time", (long)uhp->uh_time, NULL);
-    if (uhp == curbuf->b_u_newhead)
-      dict_add_nr_str(dict, "newhead", 1, NULL);
-    if (uhp == curbuf->b_u_curhead)
-      dict_add_nr_str(dict, "curhead", 1, NULL);
-    if (uhp->uh_save_nr > 0)
-      dict_add_nr_str(dict, "save", uhp->uh_save_nr, NULL);
-
-    if (uhp->uh_alt_next.ptr != NULL) {
-      list_T *alt_list = list_alloc();
-
-      /* Recursive call to add alternate undo tree. */
-      u_eval_tree(uhp->uh_alt_next.ptr, alt_list);
-      dict_add_list(dict, "alt", alt_list);
+    dict = tv_dict_alloc();
+    tv_dict_add_nr(dict, S_LEN("seq"), (varnumber_T)uhp->uh_seq);
+    tv_dict_add_nr(dict, S_LEN("time"), (varnumber_T)uhp->uh_time);
+    if (uhp == curbuf->b_u_newhead) {
+      tv_dict_add_nr(dict, S_LEN("newhead"), 1);
+    }
+    if (uhp == curbuf->b_u_curhead) {
+      tv_dict_add_nr(dict, S_LEN("curhead"), 1);
+    }
+    if (uhp->uh_save_nr > 0) {
+      tv_dict_add_nr(dict, S_LEN("save"), (varnumber_T)uhp->uh_save_nr);
     }
 
-    list_append_dict(list, dict);
+    if (uhp->uh_alt_next.ptr != NULL) {
+      list_T *alt_list = tv_list_alloc();
+
+      // Recursive call to add alternate undo tree.
+      u_eval_tree(uhp->uh_alt_next.ptr, alt_list);
+      tv_dict_add_list(dict, S_LEN("alt"), alt_list);
+    }
+
+    tv_list_append_dict(list, dict);
     uhp = uhp->uh_prev.ptr;
   }
 }

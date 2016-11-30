@@ -1013,8 +1013,8 @@ void do_bang(int addr_count, exarg_T *eap, int forceit, int do_in, int do_out)
 
     AppendToRedobuffLit(cmd, -1);
     xfree(cmd);
-    AppendToRedobuff((char_u *)"\n");
-    bangredo = FALSE;
+    AppendToRedobuff("\n");
+    bangredo = false;
   }
   /*
    * Add quotes around the command, for shells that need them.
@@ -1131,11 +1131,12 @@ static void do_filter(
    */
   ++no_wait_return;             /* don't call wait_return() while busy */
   if (itmp != NULL && buf_write(curbuf, itmp, NULL, line1, line2, eap,
-          FALSE, FALSE, FALSE, TRUE) == FAIL) {
-    msg_putchar('\n');                  /* keep message from buf_write() */
-    --no_wait_return;
-    if (!aborting())
-      (void)EMSG2(_(e_notcreate), itmp);        /* will call wait_return */
+                                false, false, false, true) == FAIL) {
+    msg_putchar('\n');  // Keep message from buf_write().
+    no_wait_return--;
+    if (!aborting()) {
+      EMSG2(_("E482: Can't create file %s"), itmp);  // Will call wait_return.
+    }
     goto filterend;
   }
   if (curbuf != old_curbuf)
@@ -1414,9 +1415,9 @@ char_u *make_filter_cmd(char_u *cmd, char_u *itmp, char_u *otmp)
 #else
   // For shells that don't understand braces around commands, at least allow
   // the use of commands in a pipe.
-  strncpy(buf, cmd, len);
+  strncpy(buf, (const char *)cmd, len);
   if (itmp != NULL) {
-    char_u  *p;
+    char *p;
 
     // If there is a pipe, we have to put the '<' in front of it.
     // Don't do this when 'shellquote' is not empty, otherwise the
@@ -1430,7 +1431,7 @@ char_u *make_filter_cmd(char_u *cmd, char_u *itmp, char_u *otmp)
     strncat(buf, " < ", len);
     strncat(buf, (char *) itmp, len);
     if (*p_shq == NUL) {
-      p = strchr(cmd, '|');
+      p = strchr((const char *)cmd, '|');
       if (p != NULL) {
         strncat(buf, " ", len);  // Insert a space before the '|' for DOS
         strncat(buf, p, len);
@@ -1476,12 +1477,12 @@ void append_redir(char *const buf, const size_t buflen,
 
 void print_line_no_prefix(linenr_T lnum, int use_number, int list)
 {
-  char_u numbuf[30];
+  char numbuf[30];
 
   if (curwin->w_p_nu || use_number) {
-    vim_snprintf((char *)numbuf, sizeof(numbuf),
-        "%*ld ", number_width(curwin), (long)lnum);
-    msg_puts_attr(numbuf, hl_attr(HLF_N));      /* Highlight line nrs */
+    vim_snprintf(numbuf, sizeof(numbuf), "%*" PRIdLINENR " ",
+                 number_width(curwin), lnum);
+    msg_puts_attr(numbuf, hl_attr(HLF_N));  // Highlight line nrs.
   }
   msg_prt_line(ml_get(lnum), list);
 }
@@ -2940,7 +2941,7 @@ void sub_set_replacement(SubReplacementString sub)
 {
   xfree(old_sub.sub);
   if (sub.additional_elements != old_sub.additional_elements) {
-    list_unref(old_sub.additional_elements);
+    tv_list_unref(old_sub.additional_elements);
   }
   old_sub = sub;
 }
@@ -4745,8 +4746,8 @@ void fix_help_buffer(void)
   char_u      *p;
   char_u      *rt;
 
-  /* set filetype to "help". */
-  set_option_value((char_u *)"ft", 0L, (char_u *)"help", OPT_LOCAL);
+  // Set filetype to "help".
+  set_option_value("ft", 0L, "help", OPT_LOCAL);
 
   if (!syntax_present(curwin)) {
     for (lnum = 1; lnum <= curbuf->b_ml.ml_line_count; ++lnum) {
@@ -5737,33 +5738,33 @@ void ex_sign(exarg_T *eap)
  */
 static void sign_list_defined(sign_T *sp)
 {
-  char_u  *p;
-
   smsg("sign %s", sp->sn_name);
   if (sp->sn_icon != NULL) {
-    MSG_PUTS(" icon=");
+    msg_puts(" icon=");
     msg_outtrans(sp->sn_icon);
-    MSG_PUTS(_(" (not supported)"));
+    msg_puts(_(" (not supported)"));
   }
   if (sp->sn_text != NULL) {
-    MSG_PUTS(" text=");
+    msg_puts(" text=");
     msg_outtrans(sp->sn_text);
   }
   if (sp->sn_line_hl > 0) {
-    MSG_PUTS(" linehl=");
-    p = get_highlight_name(NULL, sp->sn_line_hl - 1);
-    if (p == NULL)
-      MSG_PUTS("NONE");
-    else
+    msg_puts(" linehl=");
+    const char *const p = get_highlight_name(NULL, sp->sn_line_hl - 1);
+    if (p == NULL) {
+      msg_puts("NONE");
+    } else {
       msg_puts(p);
+    }
   }
   if (sp->sn_text_hl > 0) {
-    MSG_PUTS(" texthl=");
-    p = get_highlight_name(NULL, sp->sn_text_hl - 1);
-    if (p == NULL)
-      MSG_PUTS("NONE");
-    else
+    msg_puts(" texthl=");
+    const char *const p = get_highlight_name(NULL, sp->sn_text_hl - 1);
+    if (p == NULL) {
+      msg_puts("NONE");
+    } else {
       msg_puts(p);
+    }
   }
 }
 
