@@ -6747,24 +6747,21 @@ static void screenclear2(void)
   }
 
   if (win_external) {
-    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-      for (i = 0; i < Rows; ++i) {
-        wp->line_offset[i] = i * Columns;
-        lineclear(wp, wp->line_offset[i], (int)Columns);
-        wp->line_wraps[i] = FALSE;
-      }
-    }
-  }
-
-  if (!win_external) {
-    ui_clear();  // clear the display
-  } else {
     Array args = ARRAY_DICT_INIT;
     FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-      ADD(args, INTEGER_OBJ(wp->handle));
+      if (wp->w_redr_type == CLEAR) {
+        ADD(args, INTEGER_OBJ(wp->handle));
+        for (i = 0; i < Rows; ++i) {
+          wp->line_offset[i] = i * Columns;
+          lineclear(wp, wp->line_offset[i], (int)Columns);
+          wp->line_wraps[i] = FALSE;
+        }
+      }
     }
     ui_event("win_clear", args);
   }
+
+  ui_clear();  // clear the display
   clear_cmdline = FALSE;
   mode_displayed = FALSE;
   screen_cleared = TRUE;        /* can use contents of ScreenLines now */

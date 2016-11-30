@@ -19157,6 +19157,12 @@ void ex_echo(exarg_T *eap)
         msg_puts_attr((char_u *)" ", echo_attr);
       char_u *tofree = p = (char_u *) encode_tv2echo(&rettv, NULL);
       if (p != NULL) {
+        if (win_get_external()) {
+          Array args = ARRAY_DICT_INIT;
+          ADD(args, STRING_OBJ(cstr_to_string((char *)(p))));
+          ui_event("echo", args);
+          return;
+        }
         for (; *p != NUL && !got_int; ++p) {
           if (*p == '\n' || *p == '\r' || *p == TAB) {
             if (*p != TAB && needclr) {
@@ -19259,6 +19265,12 @@ void ex_execute(exarg_T *eap)
 
   if (ret != FAIL && ga.ga_data != NULL) {
     if (eap->cmdidx == CMD_echomsg) {
+      if (win_get_external()) {
+        Array args = ARRAY_DICT_INIT;
+        ADD(args, STRING_OBJ(cstr_to_string((char *)(p))));
+        ui_event("echomsg", args);
+        return;
+      }
       MSG_ATTR(ga.ga_data, echo_attr);
       ui_flush();
     } else if (eap->cmdidx == CMD_echoerr) {

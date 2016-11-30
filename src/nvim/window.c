@@ -1245,7 +1245,11 @@ static void win_exchange(long Prenum)
   (void)win_comp_pos();                 /* recompute window positions */
 
   win_enter(wp, true);
-  redraw_later(CLEAR);
+  if (!win_get_external()) {
+    redraw_later(CLEAR);
+  } else {
+    redraw_later(VALID);
+  }
 }
 
 /*
@@ -1320,7 +1324,11 @@ static void win_rotate(int upwards, int count)
     (void)win_comp_pos();
   }
 
-  redraw_later(CLEAR);
+  if (!win_get_external()) {
+    redraw_later(CLEAR);
+  } else {
+    redraw_later(VALID);
+  }
 }
 
 /*
@@ -1460,7 +1468,11 @@ static void win_equal_rec(
       frame_new_height(topfr, height, FALSE, FALSE);
       topfr->fr_win->w_wincol = col;
       frame_new_width(topfr, width, FALSE, FALSE);
-      redraw_all_later(CLEAR);
+      if (!win_get_external()) {
+        redraw_all_later(CLEAR);
+      } else {
+        redraw_all_later(VALID);
+      }
     }
   } else if (topfr->fr_layout == FR_ROW) {
     topfr->fr_width = width;
@@ -3045,7 +3057,11 @@ int win_new_tabpage(int after, char_u *filename)
     newtp->tp_topframe = topframe;
     last_status(FALSE);
 
-    redraw_all_later(CLEAR);
+    if (!win_get_external()) {
+      redraw_all_later(CLEAR);
+    } else {
+      redraw_all_later(VALID);
+    }
 
     apply_autocmds(EVENT_TABNEW, filename, filename, false, curbuf);
     apply_autocmds(EVENT_WINENTER, NULL, NULL, false, curbuf);
@@ -3213,6 +3229,9 @@ static void enter_tabpage(tabpage_T *tp, buf_T *old_curbuf, int trigger_enter_au
   last_status(FALSE);           /* status line may appear or disappear */
   (void)win_comp_pos();         /* recompute w_winrow for all windows */
   must_redraw = CLEAR;          /* need to redraw everything */
+  if (win_get_external()) {
+    must_redraw = VALID;
+  }
   diff_need_scrollbind = TRUE;
 
   /* The tabpage line may have appeared or disappeared, may need to resize
@@ -3235,7 +3254,11 @@ static void enter_tabpage(tabpage_T *tp, buf_T *old_curbuf, int trigger_enter_au
       apply_autocmds(EVENT_BUFENTER, NULL, NULL, FALSE, curbuf);
   }
 
-  redraw_all_later(CLEAR);
+  if (!win_get_external()) {
+    redraw_all_later(CLEAR);
+  } else {
+    redraw_all_later(VALID);
+  }
 }
 
 /*
@@ -3728,11 +3751,7 @@ win_T *buf_jump_open_tab(buf_T *buf)
  */
 static win_T *win_alloc(win_T *after, int hidden)
 {
-  static int last_win_id = 0;
-  int new_row;
-  schar_T *screen_lines;
-  sattr_T *screen_attrs;
-  unsigned *line_offset;
+  static int last_win_id = LOWEST_WIN_ID - 1;
 
   // allocate window structure and linesizes arrays
   win_T *new_wp = xcalloc(1, sizeof(win_T));
@@ -4913,7 +4932,11 @@ void win_new_height(win_T *wp, int height)
 
   if (wp->w_buffer->terminal) {
     terminal_resize(wp->w_buffer->terminal, 0, wp->w_height);
-    redraw_win_later(wp, CLEAR);
+    if (!win_get_external()) {
+      redraw_win_later(wp, CLEAR);
+    } else {
+      redraw_win_later(wp, VALID);
+    }
   }
 }
 
@@ -4937,7 +4960,11 @@ void win_new_width(win_T *wp, int width)
     if (wp->w_height != 0) {
       terminal_resize(wp->w_buffer->terminal, wp->w_width, 0);
     }
-    redraw_win_later(wp, CLEAR);
+    if (!win_get_external()) {
+      redraw_win_later(wp, CLEAR);
+    } else {
+      redraw_win_later(wp, VALID);
+    }
   }
 }
 
