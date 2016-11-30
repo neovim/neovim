@@ -1,5 +1,6 @@
 local assert = require('luassert')
 local lfs = require('lfs')
+local mpack = require('mpack')
 
 local check_logs_useless_lines = {
   ['Warning: noted but unhandled ioctl']=1,
@@ -8,6 +9,13 @@ local check_logs_useless_lines = {
 }
 
 local eq = function(exp, act)
+  if exp ~= act and (exp == mpack.NIL or act == mpack.NIL) then
+    local expstr = (exp == mpack.NIL and "(mpack.NIL) " or "")..tostring(exp)
+    local actstr = (act == mpack.NIL and "(mpack.NIL) " or "")..tostring(act)
+    -- Hint for test authors, show msgpack NIL in human-readable form.
+    return assert(false, "Actual: "..actstr.." Expected: "..expstr)
+  end
+
   return assert.are.same(exp, act)
 end
 local neq = function(exp, act)
