@@ -14,6 +14,7 @@ source test_popup.vim
 source test_regexp_utf8.vim
 source test_statusline.vim
 source test_syn_attr.vim
+source test_tabline.vim
 source test_tabpage.vim
 source test_unlet.vim
 source test_matchadd_conceal_utf8.vim
