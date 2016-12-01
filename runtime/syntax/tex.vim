@@ -497,13 +497,13 @@ if !exists("g:tex_no_math")
      \ ['\\backslash'  , '\'] ,
      \ ['\\downarrow'  , '↓'] ,
      \ ['\\Downarrow'  , '⇓'] ,
-     \ ['\\langle'     , '<'] ,
+     \ ['\\langle'     , '〈'] ,
      \ ['\\lbrace'     , '['] ,
      \ ['\\lceil'      , '⌈'] ,
      \ ['\\lfloor'     , '⌊'] ,
      \ ['\\lgroup'     , '⌊'] ,
      \ ['\\lmoustache' , '⎛'] ,
-     \ ['\\rangle'     , '>'] ,
+     \ ['\\rangle'     , '〉'] ,
      \ ['\\rbrace'     , ']'] ,
      \ ['\\rceil'      , '⌉'] ,
      \ ['\\rfloor'     , '⌋'] ,
@@ -784,9 +784,11 @@ if has("conceal") && &enc == 'utf-8'
     \ ['iint'		, '∬'],
     \ ['Im'		, 'ℑ'],
     \ ['imath'		, 'ɩ'],
+    \ ['implies'        , '⇒'],
     \ ['in'		, '∈'],
     \ ['infty'		, '∞'],
     \ ['int'		, '∫'],
+    \ ['land'           , '∧'],
     \ ['lceil'		, '⌈'],
     \ ['ldots'		, '…'],
     \ ['le'		, '≤'],
@@ -794,6 +796,7 @@ if has("conceal") && &enc == 'utf-8'
     \ ['left('		, '('],
     \ ['left\['		, '['],
     \ ['left\\{'	, '{'],
+    \ ['left\\langle'   , '〈'],
     \ ['leftarrow'	, '←'],
     \ ['Leftarrow'	, '⇐'],
     \ ['leftarrowtail'	, '↢'],
@@ -813,6 +816,7 @@ if has("conceal") && &enc == 'utf-8'
     \ ['ll'		, '≪'],
     \ ['lmoustache'     , '╭'],
     \ ['lneqq'		, '≨'],
+    \ ['lor'            , '∨'],
     \ ['ltimes'		, '⋉'],
     \ ['mapsto'		, '↦'],
     \ ['measuredangle'	, '∡'],
@@ -881,6 +885,7 @@ if has("conceal") && &enc == 'utf-8'
     \ ['right)'		, ')'],
     \ ['right]'		, ']'],
     \ ['right\\}'	, '}'],
+    \ ['right\\rangle'  , '〉'],
     \ ['rightarrow'	, '→'],
     \ ['Rightarrow'	, '⇒'],
     \ ['rightarrowtail'	, '↣'],
@@ -1042,6 +1047,7 @@ if has("conceal") && &enc == 'utf-8'
   call s:Greek('texGreek','\\Phi\>'		,'Φ')
   call s:Greek('texGreek','\\Psi\>'		,'Ψ')
   call s:Greek('texGreek','\\Omega\>'		,'Ω')
+  call s:Greek('texGreek','\\iota\>'            ,'ι')
   delfun s:Greek
  endif
 
@@ -1124,6 +1130,7 @@ if has("conceal") && &enc == 'utf-8'
   call s:SuperSub('texSuperscript','\^',')','⁾')
   call s:SuperSub('texSuperscript','\^','\.','˙')
   call s:SuperSub('texSuperscript','\^','=','˭')
+  call s:SuperSub('textSuperscript', '\^', '\\prime', '′')
   call s:SuperSub('texSubscript','_','0','₀')
   call s:SuperSub('texSubscript','_','1','₁')
   call s:SuperSub('texSubscript','_','2','₂')
