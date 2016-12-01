@@ -949,6 +949,14 @@ func Test_type()
     call assert_equal(6, type(v:false))
     call assert_equal(6, type(v:true))
     call assert_equal(7, type(v:null))
+    call assert_equal(v:t_number, type(0))
+    call assert_equal(v:t_string, type(""))
+    call assert_equal(v:t_func, type(function("tr")))
+    call assert_equal(v:t_list, type([]))
+    call assert_equal(v:t_dict, type({}))
+    call assert_equal(v:t_float, type(0.0))
+    call assert_equal(v:t_bool, type(v:false))
+    call assert_equal(v:t_bool, type(v:true))
 endfunc
 
 "-------------------------------------------------------------------------------

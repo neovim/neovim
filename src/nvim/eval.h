@@ -127,6 +127,13 @@ typedef enum {
     VV__NULL_LIST,  // List with NULL value. For test purposes only.
     VV__NULL_DICT,  // Dictionary with NULL value. For test purposes only.
     VV_VIM_DID_ENTER,
+    VV_TYPE_NUMBER,
+    VV_TYPE_STRING,
+    VV_TYPE_FUNC,
+    VV_TYPE_LIST,
+    VV_TYPE_DICT,
+    VV_TYPE_FLOAT,
+    VV_TYPE_BOOL,
 } VimVarIndex;
 
 /// All recognized msgpack types

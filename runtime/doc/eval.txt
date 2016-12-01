@@ -1718,6 +1718,21 @@ v:swapcommand	Normal mode command to be executed after a file has been
 		example, when jumping to a tag the value is ":tag tagname\r".
 		For ":edit +cmd file" the value is ":cmd\r".
 
+				*v:t_TYPE* *v:t_bool* *t_bool-varialble*
+v:t_bool	Value of Boolean type.  Read-only.  See: |type()|
+					*v:t_dict* *t_dict-varialble*
+v:t_dict	Value of Dictionary type.  Read-only.  See: |type()|
+					*v:t_float* *t_float-varialble*
+v:t_float	Value of Float type.  Read-only.  See: |type()|
+					*v:t_func* *t_func-varialble*
+v:t_func	Value of Funcref type.  Read-only.  See: |type()|
+					*v:t_list* *t_list-varialble*
+v:t_list	Value of List type.  Read-only.  See: |type()|
+					*v:t_number* *t_number-varialble*
+v:t_number	Value of Number type.  Read-only.  See: |type()|
+					*v:t_string* *t_string-varialble*
+v:t_string	Value of String type.  Read-only.  See: |type()|
+
 				*v:termresponse* *termresponse-variable*
 v:termresponse	The escape sequence returned by the terminal for the |t_RV|
 		termcap entry.	It is set when Vim receives an escape sequence
