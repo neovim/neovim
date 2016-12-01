@@ -394,6 +394,7 @@ static struct vimvar {
   VV(VV_TYPE_DICT,      "t_dict",           VAR_NUMBER, VV_RO),
   VV(VV_TYPE_FLOAT,     "t_float",          VAR_NUMBER, VV_RO),
   VV(VV_TYPE_BOOL,      "t_bool",           VAR_NUMBER, VV_RO),
+  VV(VV_EXITING,        "exiting",          VAR_NUMBER, VV_RO),
 };
 #undef VV
 
@@ -581,6 +582,7 @@ void eval_init(void)
   set_vim_var_special(VV_FALSE, kSpecialVarFalse);
   set_vim_var_special(VV_TRUE, kSpecialVarTrue);
   set_vim_var_special(VV_NULL, kSpecialVarNull);
+  set_vim_var_special(VV_EXITING, kSpecialVarNull);
 
   set_reg_var(0);  // default for v:register is not 0 but '"'
 }
@@ -17763,6 +17765,8 @@ void set_vcount(long count, long count1, int set_prevcount)
 /// @param[in]  val  Value to set to.
 void set_vim_var_nr(const VimVarIndex idx, const varnumber_T val)
 {
+  clear_tv(&vimvars[idx].vv_tv);
+  vimvars[idx].vv_type = VAR_NUMBER;
   vimvars[idx].vv_nr = val;
 }
 
@@ -17772,6 +17776,8 @@ void set_vim_var_nr(const VimVarIndex idx, const varnumber_T val)
 /// @param[in]  val  Value to set to.
 void set_vim_var_special(const VimVarIndex idx, const SpecialVarValue val)
 {
+  clear_tv(&vimvars[idx].vv_tv);
+  vimvars[idx].vv_type = VAR_SPECIAL;
   vimvars[idx].vv_special = val;
 }
 
