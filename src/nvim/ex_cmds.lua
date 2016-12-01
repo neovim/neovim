@@ -35,6 +35,7 @@ local ADDR_LOADED_BUFFERS   =  3
 local ADDR_BUFFERS          =  4
 local ADDR_TABS             =  5
 local ADDR_QUICKFIX         =  6
+local ADDR_OTHER            =  99
 
 -- The following table is described in ex_cmds_defs.h file.
 return {
@@ -1604,8 +1605,8 @@ return {
   },
   {
     command='messages',
-    flags=bit.bor(TRLBAR, CMDWIN),
-    addr_type=ADDR_LINES,
+    flags=bit.bor(EXTRA, TRLBAR, RANGE, CMDWIN),
+    addr_type=ADDR_OTHER,
     func='ex_messages',
   },
   {
