@@ -271,6 +271,8 @@ static void remote_ui_mode_change(UI *ui, int mode)
     ADD(args, STRING_OBJ(cstr_to_string("insert")));
   } else if (mode == REPLACE) {
     ADD(args, STRING_OBJ(cstr_to_string("replace")));
+  } else if (mode == CMDLINE) {
+    ADD(args, STRING_OBJ(cstr_to_string("cmdline")));
   } else {
     assert(mode == NORMAL);
     ADD(args, STRING_OBJ(cstr_to_string("normal")));
