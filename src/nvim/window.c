@@ -503,7 +503,7 @@ int win_new_floating(long width, long height)
     wp->w_height = height;
     wp->w_width = width;
     redraw_win_later(wp, VALID);
-    curwin = wp;
+    win_enter(wp, false);
     return OK;
 }
 
@@ -1930,7 +1930,7 @@ int win_close(win_T *win, int free_buf)
     if (!win->w_floating) {
         wp = frame2win(win_altframe(win, NULL));
     } else {
-        wp = lastwin;
+        wp = prevwin;
     }
 
     /*
@@ -2155,7 +2155,7 @@ win_free_mem (
     wp = winframe_remove(win, dirp, tp);
     xfree(frp);
   } else {
-    wp = lastwin;
+    wp = prevwin;
   }
   win_free(win, tp);
 
@@ -3485,7 +3485,7 @@ win_goto_ver (
   foundfr = curwin->w_frame;
 
   if (curwin->w_floating) {
-    win_goto(lastwin);
+    win_goto(prevwin);
     return;
   }
 
@@ -3550,7 +3550,7 @@ win_goto_hor (
   foundfr = curwin->w_frame;
 
   if (curwin->w_floating) {
-    win_goto(lastwin);
+    win_goto(prevwin);
     return;
   }
 

@@ -2971,6 +2971,12 @@ return {
     func='ex_map',
   },
   {
+    command='fnew',
+    flags=bit.bor(BANG, FILE1, RANGE, NOTADR, EDITCMD, ARGOPT, TRLBAR),
+    addr_type=ADDR_LINES,
+    func='ex_newfwin',
+  },
+  {
     command='vnew',
     flags=bit.bor(BANG, FILE1, RANGE, NOTADR, EDITCMD, ARGOPT, TRLBAR),
     addr_type=ADDR_LINES,

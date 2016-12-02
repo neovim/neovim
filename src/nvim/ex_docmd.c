@@ -6385,6 +6385,14 @@ static void ex_wrongmodifier(exarg_T *eap)
   eap->errmsg = e_invcmd;
 }
 
+void ex_newfwin(exarg_T *eap)
+{
+    win_T       *old_curwin = curwin;
+    win_new_floating(100, 20);
+    RESET_BINDING(curwin);
+    do_exedit(eap, old_curwin);
+}
+
 /*
  * :sview [+command] file	split window with new file, read-only
  * :split [[+command] file]	split window with current or new file
@@ -6721,6 +6729,7 @@ do_exedit (
        || eap->cmdidx == CMD_tabnew
        || eap->cmdidx == CMD_tabedit
        || eap->cmdidx == CMD_vnew
+       || eap->cmdidx == CMD_fnew
        ) && *eap->arg == NUL) {
     /* ":new" or ":tabnew" without argument: edit an new empty buffer */
     setpcmark();

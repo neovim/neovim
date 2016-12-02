@@ -437,6 +437,7 @@ void update_screen(int type)
     ADD(item, INTEGER_OBJ(wp->w_winrow));
     ADD(item, INTEGER_OBJ(wp->w_wincol));
     ADD(item, INTEGER_OBJ(wp->w_floating));
+    ADD(item, INTEGER_OBJ(wp->w_p_pvw));
     ADD(args, ARRAY_OBJ(item));
   }
   ui_event("win_resize", args);
