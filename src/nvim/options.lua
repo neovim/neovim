@@ -1728,6 +1728,13 @@ return {
       defaults={if_true={vi=12}}
     },
     {
+      full_name='previewwidth', abbreviation='pvwd',
+      type='number', scope={'global'},
+      vi_def=true,
+      varname='p_pvwd',
+      defaults={if_true={vi=12}}
+    },
+    {
       full_name='previewwindow', abbreviation='pvw',
       type='bool', scope={'window'},
       noglob=true,

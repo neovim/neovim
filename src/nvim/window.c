@@ -494,6 +494,19 @@ static void cmd_with_count(char *cmd, char_u *bufp, size_t bufsize,
   }
 }
 
+int win_new_floating(long width, long height)
+{
+    win_T *wp;
+    wp = win_alloc(curwin, FALSE);
+    wp->w_floating = 1;
+    win_init(wp, curwin, 0);
+    wp->w_height = height;
+    wp->w_width = width;
+    redraw_win_later(wp, VALID);
+    curwin = wp;
+    return OK;
+}
+
 /*
  * split the current window, implements CTRL-W s and :split
  *
@@ -1914,7 +1927,11 @@ int win_close(win_T *win, int free_buf)
      * Guess which window is going to be the new current window.
      * This may change because of the autocommands (sigh).
      */
-    wp = frame2win(win_altframe(win, NULL));
+    if (!win->w_floating) {
+        wp = frame2win(win_altframe(win, NULL));
+    } else {
+        wp = lastwin;
+    }
 
     /*
      * Be careful: If autocommands delete the window or cause this window
@@ -2133,9 +2150,13 @@ win_free_mem (
   win_T       *wp;
 
   /* Remove the window and its frame from the tree of frames. */
-  frp = win->w_frame;
-  wp = winframe_remove(win, dirp, tp);
-  xfree(frp);
+  if (!win->w_floating) {
+    frp = win->w_frame;
+    wp = winframe_remove(win, dirp, tp);
+    xfree(frp);
+  } else {
+    wp = lastwin;
+  }
   win_free(win, tp);
 
   /* When deleting the current window of another tab page select a new
@@ -3462,6 +3483,12 @@ win_goto_ver (
   frame_T     *foundfr;
 
   foundfr = curwin->w_frame;
+
+  if (curwin->w_floating) {
+    win_goto(lastwin);
+    return;
+  }
+
   while (count--) {
     /*
      * First go upwards in the tree of frames until we find an upwards or
@@ -3521,6 +3548,12 @@ win_goto_hor (
   frame_T     *foundfr;
 
   foundfr = curwin->w_frame;
+
+  if (curwin->w_floating) {
+    win_goto(lastwin);
+    return;
+  }
+
   while (count--) {
     /*
      * First go upwards in the tree of frames until we find a left or
@@ -3784,6 +3817,7 @@ static win_T *win_alloc(win_T *after, int hidden)
   new_wp->w_botline = 2;
   new_wp->w_cursor.lnum = 1;
   new_wp->w_scbind_pos = 1;
+  new_wp->w_floating = 0;
 
   /* We won't calculate w_fraction until resizing the window */
   new_wp->w_fraction = 0;
@@ -4221,7 +4255,9 @@ void win_setheight_win(int height, win_T *win)
       height = 1;
   }
 
-  frame_setheight(win->w_frame, height + win->w_status_height);
+  if (!win->w_floating) {
+    frame_setheight(win->w_frame, height + win->w_status_height);
+  }
 
   /* recompute the window positions */
   row = win_comp_pos();
@@ -4417,7 +4453,9 @@ void win_setwidth_win(int width, win_T *wp)
       width = 1;
   }
 
-  frame_setwidth(wp->w_frame, width + wp->w_vsep_width);
+  if (!wp->w_floating) {
+    frame_setwidth(wp->w_frame, width + wp->w_vsep_width);
+  }
 
   /* recompute the window positions */
   (void)win_comp_pos();

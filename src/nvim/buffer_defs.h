@@ -1151,6 +1151,8 @@ struct window_S {
   int w_tagstackidx;                    /* idx just below active entry */
   int w_tagstacklen;                    /* number of tags on stack */
 
+  int w_floating;                       /* if the window is floating */
+
   /*
    * w_fraction is the fractional row of the cursor within the window, from
    * 0 at the top row to FRACTION_MULT at the last row.

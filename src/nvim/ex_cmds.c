@@ -4228,16 +4228,21 @@ prepare_tagpreview (
       /*
        * There is no preview window open yet.  Create one.
        */
-      if (win_split(g_do_tagpreview > 0 ? g_do_tagpreview : 0, 0)
-          == FAIL)
-        return false;
-      curwin->w_p_pvw = TRUE;
-      curwin->w_p_wfh = TRUE;
-      RESET_BINDING(curwin);                /* don't take over 'scrollbind'
-                                               and 'cursorbind' */
-      curwin->w_p_diff = FALSE;             /* no 'diff' */
-      curwin->w_p_fdc = 0;                  /* no 'foldcolumn' */
-      return true;
+      if (!win_get_external()) {
+        if (win_split(g_do_tagpreview > 0 ? g_do_tagpreview : 0, 0)
+            == FAIL)
+          return false;
+      } else {
+          if (win_new_floating(p_pvwd, p_pvh) == FAIL)
+              return false;
+      }
+        curwin->w_p_pvw = TRUE;
+        curwin->w_p_wfh = TRUE;
+        RESET_BINDING(curwin);                /* don't take over 'scrollbind'
+                                                 and 'cursorbind' */
+        curwin->w_p_diff = FALSE;             /* no 'diff' */
+        curwin->w_p_fdc = 0;                  /* no 'foldcolumn' */
+        return true;
     }
   }
   return false;
