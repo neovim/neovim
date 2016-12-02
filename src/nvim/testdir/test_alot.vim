@@ -8,6 +8,7 @@ source test_ex_undo.vim
 source test_expr.vim
 source test_expr_utf8.vim
 source test_feedkeys.vim
+source test_goto.vim
 source test_menu.vim
 source test_messages.vim
 source test_options.vim
