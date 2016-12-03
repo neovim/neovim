@@ -89,9 +89,12 @@ describe('the unnamed register', function()
 end)
 
 describe('clipboard usage', function()
+  local function reset(...)
+    clear('--cmd', 'let &rtp = "test/functional/fixtures,".&rtp', ...)
+  end
+
   before_each(function()
-    clear()
-    execute('let &rtp = "test/functional/fixtures,".&rtp')
+    reset()
     execute('call getreg("*")') -- force load of provider
   end)
 
@@ -361,6 +364,13 @@ describe('clipboard usage', function()
       feed('<esc>')
       eq('---', eval('getreg("+")'))
     end)
+  end)
+
+  it('sets v:register after startup', function()
+    reset()
+    eq('"', eval('v:register'))
+    reset('--cmd', 'set clipboard=unnamed')
+    eq('*', eval('v:register'))
   end)
 
   it('supports :put', function()
