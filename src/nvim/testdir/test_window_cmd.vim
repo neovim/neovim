@@ -34,4 +34,37 @@ func Test_window_cmd_cmdwin_with_vsp()
   set ls&vim
 endfunc
 
+function Test_window_cmd_wincmd_gf()
+  let fname = 'test_gf.txt'
+  let swp_fname = '.' . fname . '.swp'
+  call writefile([], fname)
+  call writefile([], swp_fname)
+  function s:swap_exists()
+    let v:swapchoice = s:swap_choice
+  endfunc
+  augroup test_window_cmd_wincmd_gf
+    autocmd!
+    exec "autocmd SwapExists " . fname . " call s:swap_exists()"
+  augroup END
+
+  call setline(1, fname)
+  " (E)dit anyway
+  let s:swap_choice = 'e'
+  wincmd gf
+  call assert_equal(2, tabpagenr())
+  call assert_equal(fname, bufname("%"))
+  quit!
+
+  " (Q)uit
+  let s:swap_choice = 'q'
+  wincmd gf
+  call assert_equal(1, tabpagenr())
+  call assert_notequal(fname, bufname("%"))
+  new | only!
+
+  call delete(fname)
+  call delete(swp_fname)
+  augroup! test_window_cmd_wincmd_gf
+endfunc
+
 " vim: sw=2 et
