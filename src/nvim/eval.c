@@ -160,7 +160,6 @@ static char *e_missbrac = N_("E111: Missing ']'");
 static char *e_listarg = N_("E686: Argument of %s must be a List");
 static char *e_listdictarg = N_(
     "E712: Argument of %s must be a List or Dictionary");
-static char *e_emptykey = N_("E713: Cannot use empty key for Dictionary");
 static char *e_listreq = N_("E714: List required");
 static char *e_dictreq = N_("E715: Dictionary required");
 static char *e_stringreq = N_("E928: String required");
@@ -2112,8 +2111,9 @@ static char_u *get_lval(char_u *const name, typval_T *const rettv,
       for (len = 0; ASCII_ISALNUM(key[len]) || key[len] == '_'; ++len)
         ;
       if (len == 0) {
-        if (!quiet)
-          EMSG(_(e_emptykey));
+        if (!quiet) {
+          EMSG(_("E713: Cannot use empty key after ."));
+        }
         return NULL;
       }
       p = key + len;
