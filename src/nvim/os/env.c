@@ -18,7 +18,6 @@
 #include "nvim/eval.h"
 #include "nvim/ex_getln.h"
 #include "nvim/version.h"
-#include "nvim/fileio.h"
 
 #ifdef WIN32
 #include "nvim/mbyte.h"  // for utf8_to_utf16, utf16_to_utf8

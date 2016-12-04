@@ -80,8 +80,7 @@ describe('NULL', function()
     null_list_test('is accepted by :cexpr', 'cexpr L', 'Vim(cexpr):E777: String or List expected')
     -- FIXME should not error out
     null_list_test('is accepted by :lexpr', 'lexpr L', 'Vim(lexpr):E777: String or List expected')
-    -- FIXME should not error out
-    null_list_test('is accepted by :for', 'for x in L|throw x|endfor', 'Vim(for):E714: List required')
+    null_list_test('is accepted by :for', 'for x in L|throw x|endfor', 0)
 
     -- Subjectable behaviour
 

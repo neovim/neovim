@@ -7706,6 +7706,11 @@ static void f_dictwatcheradd(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   if (argvars[0].v_type != VAR_DICT) {
     emsgf(_(e_invarg2), "dict");
     return;
+  } else if (argvars[0].vval.v_dict == NULL) {
+    const char *const arg_errmsg = _("dictwatcheradd() argument");
+    const size_t arg_errmsg_len = strlen(arg_errmsg);
+    emsgf(_(e_readonlyvar), (int)arg_errmsg_len, arg_errmsg);
+    return;
   }
 
   if (argvars[1].v_type != VAR_STRING && argvars[1].v_type != VAR_NUMBER) {
@@ -7725,11 +7730,8 @@ static void f_dictwatcheradd(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     return;
   }
 
-  DictWatcher *watcher = xmalloc(sizeof(DictWatcher));
-  watcher->key_pattern = xmemdupz(key_pattern, key_pattern_len);
-  watcher->callback = callback;
-  watcher->busy = false;
-  QUEUE_INSERT_TAIL(&argvars[0].vval.v_dict->watchers, &watcher->node);
+  tv_dict_watcher_add(argvars[0].vval.v_dict, key_pattern, key_pattern_len,
+                      callback);
 }
 
 // dictwatcherdel(dict, key, funcref) function
@@ -7759,28 +7761,12 @@ static void f_dictwatcherdel(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     return;
   }
 
-  dict_T *dict = argvars[0].vval.v_dict;
-  QUEUE *w = NULL;
-  DictWatcher *watcher = NULL;
-  bool matched = false;
-  QUEUE_FOREACH(w, &dict->watchers) {
-    watcher = tv_dict_watcher_node_data(w);
-    if (callback_equal(&watcher->callback, &callback)
-        && !strcmp(watcher->key_pattern, key_pattern)) {
-      matched = true;
-      break;
-    }
+  if (!tv_dict_watcher_remove(argvars[0].vval.v_dict, key_pattern,
+                              strlen(key_pattern), callback)) {
+    EMSG("Couldn't find a watcher matching key and callback");
   }
 
   callback_free(&callback);
-
-  if (!matched) {
-    EMSG("Couldn't find a watcher matching key and callback");
-    return;
-  }
-
-  QUEUE_REMOVE(w);
-  tv_dict_watcher_free(watcher);
 }
 
 /*
@@ -16576,7 +16562,6 @@ bool callback_from_typval(Callback *const callback, typval_T *const arg)
   return true;
 }
 
-
 /// Unref/free callback
 void callback_free(Callback *const callback)
   FUNC_ATTR_NONNULL_ALL
@@ -16599,28 +16584,6 @@ void callback_free(Callback *const callback)
     }
   }
   callback->type = kCallbackNone;
-}
-
-static bool callback_equal(Callback *cb1, Callback *cb2)
-{
-  if (cb1->type != cb2->type) {
-    return false;
-  }
-  switch (cb1->type) {
-    case kCallbackFuncref:
-      return STRCMP(cb1->data.funcref, cb2->data.funcref) == 0;
-
-    case kCallbackPartial:
-      // FIXME: this is inconsistent with tv_equal but is needed for precision
-      // maybe change dictwatcheradd to return a watcher id instead?
-      return cb1->data.partial == cb2->data.partial;
-
-    case kCallbackNone:
-      return true;
-
-    default:
-      abort();
-  }
 }
 
 bool callback_call(Callback *const callback, const int argcount_in,

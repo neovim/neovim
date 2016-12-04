@@ -790,12 +790,97 @@ long tv_list_idx_of_item(const list_T *const l, const listitem_T *const item)
 /// Perform all necessary cleanup for a `DictWatcher` instance
 ///
 /// @param  watcher  Watcher to free.
-void tv_dict_watcher_free(DictWatcher *watcher)
+static void tv_dict_watcher_free(DictWatcher *watcher)
   FUNC_ATTR_NONNULL_ALL
 {
   callback_free(&watcher->callback);
   xfree(watcher->key_pattern);
   xfree(watcher);
+}
+
+/// Add watcher to a dictionary
+///
+/// @param[in]  dict  Dictionary to add watcher to.
+/// @param[in]  key_pattern  Pattern to watch for.
+/// @param[in]  key_pattern_len  Key pattern length.
+/// @param  callback  Function to be called on events.
+void tv_dict_watcher_add(dict_T *const dict, const char *const key_pattern,
+                         const size_t key_pattern_len, Callback callback)
+  FUNC_ATTR_NONNULL_ARG(2)
+{
+  DictWatcher *const watcher = xmalloc(sizeof(DictWatcher));
+  watcher->key_pattern = xmemdupz(key_pattern, key_pattern_len);
+  watcher->key_pattern_len = key_pattern_len;
+  watcher->callback = callback;
+  watcher->busy = false;
+  QUEUE_INSERT_TAIL(&dict->watchers, &watcher->node);
+}
+
+/// Check whether two callbacks are equal
+///
+/// @param[in]  cb1  First callback to check.
+/// @param[in]  cb2  Second callback to check.
+///
+/// @return True if they are equal, false otherwise.
+static bool tv_callback_equal(const Callback *const cb1,
+                              const Callback *const cb2)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  if (cb1->type != cb2->type) {
+    return false;
+  }
+  switch (cb1->type) {
+    case kCallbackFuncref: {
+      return STRCMP(cb1->data.funcref, cb2->data.funcref) == 0;
+    }
+    case kCallbackPartial: {
+      // FIXME: this is inconsistent with tv_equal but is needed for precision
+      // maybe change dictwatcheradd to return a watcher id instead?
+      return cb1->data.partial == cb2->data.partial;
+    }
+    case kCallbackNone: {
+      return true;
+    }
+  }
+}
+
+/// Remove watcher from a dictionary
+///
+/// @param  dict  Dictionary to remove watcher from.
+/// @param[in]  key_pattern  Pattern to remove watcher for.
+/// @param[in]  key_pattern_len  Pattern length.
+/// @param  callback  Callback to remove watcher for.
+///
+/// @return True on success, false if relevant watcher was not found.
+bool tv_dict_watcher_remove(dict_T *const dict, const char *const key_pattern,
+                            const size_t key_pattern_len,
+                            Callback callback)
+  FUNC_ATTR_NONNULL_ARG(2)
+{
+  if (dict == NULL) {
+    return false;
+  }
+
+  QUEUE *w = NULL;
+  DictWatcher *watcher = NULL;
+  bool matched = false;
+  QUEUE_FOREACH(w, &dict->watchers) {
+    watcher = tv_dict_watcher_node_data(w);
+    if (tv_callback_equal(&watcher->callback, &callback)
+        && watcher->key_pattern_len == key_pattern_len
+        && memcmp(watcher->key_pattern, key_pattern, key_pattern_len) == 0) {
+      matched = true;
+      break;
+    }
+  }
+
+  if (!matched) {
+    return false;
+  }
+
+  QUEUE_REMOVE(w);
+  tv_dict_watcher_free(watcher);
+  return true;
 }
 
 /// Test if `key` matches with with `watcher->key_pattern`
@@ -810,7 +895,7 @@ static bool tv_dict_watcher_matches(DictWatcher *watcher, const char *const key)
   // For now only allow very simple globbing in key patterns: a '*' at the end
   // of the string means it should match everything up to the '*' instead of the
   // whole string.
-  const size_t len = strlen(watcher->key_pattern);
+  const size_t len = watcher->key_pattern_len;
   if (len && watcher->key_pattern[len - 1] == '*') {
     return strncmp(key, watcher->key_pattern, len - 1) == 0;
   } else {
