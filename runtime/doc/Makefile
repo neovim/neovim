@@ -36,5 +36,5 @@ tags.ref tags.html: tags
 	$(AWK) -f maketags.awk tags >tags.html
 
 clean:
-	-rm -f *.html tags.ref $(HTMLS) errors.log
+	-rm -f *.html tags.ref $(HTMLS) errors.log tags
 

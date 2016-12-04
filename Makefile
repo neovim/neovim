@@ -111,6 +111,7 @@ test: functionaltest unittest
 clean:
 	+test -d build && $(BUILD_CMD) -C build clean || true
 	$(MAKE) -C src/nvim/testdir clean
+	$(MAKE) -C runtime/doc clean
 
 distclean: clean
 	rm -rf .deps build
