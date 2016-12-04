@@ -808,6 +808,9 @@ void tv_dict_watcher_add(dict_T *const dict, const char *const key_pattern,
                          const size_t key_pattern_len, Callback callback)
   FUNC_ATTR_NONNULL_ARG(2)
 {
+  if (dict == NULL) {
+    return;
+  }
   DictWatcher *const watcher = xmalloc(sizeof(DictWatcher));
   watcher->key_pattern = xmemdupz(key_pattern, key_pattern_len);
   watcher->key_pattern_len = key_pattern_len;
