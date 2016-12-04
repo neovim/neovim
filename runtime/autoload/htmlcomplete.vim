@@ -245,7 +245,7 @@ function! htmlcomplete#CompleteTags(findstart, base)
 	" If context contains white space it is attribute.
 	" It can be also value of attribute.
 	" We have to get first word to offer proper completions
-	if context == ''
+	if context == '' || context =~ '\v^\s+$'
 		let tag = ''
 	else
 		let tag = split(context)[0]
