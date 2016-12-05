@@ -23,6 +23,10 @@ func Test_printoptions_parsing()
   set printoptions=formfeed:y
   set printoptions=
   set printoptions&
+
+  call assert_fails('set printoptions=paper', 'E550:')
+  call assert_fails('set printoptions=shredder:on', 'E551:')
+  call assert_fails('set printoptions=left:no', 'E552:')
 endfunc
 
 func Test_printmbfont_parsing()

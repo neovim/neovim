@@ -387,6 +387,14 @@ static struct vimvar {
   VV(VV__NULL_LIST,     "_null_list",       VAR_LIST, VV_RO),
   VV(VV__NULL_DICT,     "_null_dict",       VAR_DICT, VV_RO),
   VV(VV_VIM_DID_ENTER,  "vim_did_enter",    VAR_NUMBER, VV_RO),
+  VV(VV_TYPE_NUMBER,    "t_number",         VAR_NUMBER, VV_RO),
+  VV(VV_TYPE_STRING,    "t_string",         VAR_NUMBER, VV_RO),
+  VV(VV_TYPE_FUNC,      "t_func",           VAR_NUMBER, VV_RO),
+  VV(VV_TYPE_LIST,      "t_list",           VAR_NUMBER, VV_RO),
+  VV(VV_TYPE_DICT,      "t_dict",           VAR_NUMBER, VV_RO),
+  VV(VV_TYPE_FLOAT,     "t_float",          VAR_NUMBER, VV_RO),
+  VV(VV_TYPE_BOOL,      "t_bool",           VAR_NUMBER, VV_RO),
+  VV(VV_EXITING,        "exiting",          VAR_NUMBER, VV_RO),
 };
 #undef VV
 
@@ -400,7 +408,7 @@ static struct vimvar {
 #define vv_dict         vv_di.di_tv.vval.v_dict
 #define vv_tv           vv_di.di_tv
 
-static dictitem_T vimvars_var;                  /* variable used for v: */
+static dictitem_T vimvars_var;                  // variable used for v:
 #define vimvarht  vimvardict.dv_hashtab
 
 typedef struct {
@@ -563,10 +571,18 @@ void eval_init(void)
   set_vim_var_nr(VV_SEARCHFORWARD, 1L);
   set_vim_var_nr(VV_HLSEARCH, 1L);
   set_vim_var_nr(VV_COUNT1, 1);
+  set_vim_var_nr(VV_TYPE_NUMBER, VAR_TYPE_NUMBER);
+  set_vim_var_nr(VV_TYPE_STRING, VAR_TYPE_STRING);
+  set_vim_var_nr(VV_TYPE_FUNC,   VAR_TYPE_FUNC);
+  set_vim_var_nr(VV_TYPE_LIST,   VAR_TYPE_LIST);
+  set_vim_var_nr(VV_TYPE_DICT,   VAR_TYPE_DICT);
+  set_vim_var_nr(VV_TYPE_FLOAT,  VAR_TYPE_FLOAT);
+  set_vim_var_nr(VV_TYPE_BOOL,   VAR_TYPE_BOOL);
 
   set_vim_var_special(VV_FALSE, kSpecialVarFalse);
   set_vim_var_special(VV_TRUE, kSpecialVarTrue);
   set_vim_var_special(VV_NULL, kSpecialVarNull);
+  set_vim_var_special(VV_EXITING, kSpecialVarNull);
 
   set_reg_var(0);  // default for v:register is not 0 but '"'
 }
@@ -2146,11 +2162,9 @@ get_lval (
 
     if (lp->ll_tv->v_type == VAR_DICT) {
       if (len == -1) {
-        /* "[key]": get key from "var1" */
-        key = get_tv_string(&var1);             /* is number or string */
-        if (*key == NUL) {
-          if (!quiet)
-            EMSG(_(e_emptykey));
+        // "[key]": get key from "var1"
+        key = get_tv_string_chk(&var1);  // is number or string
+        if (key == NULL) {
           clear_tv(&var1);
           return NULL;
         }
@@ -4601,10 +4615,8 @@ eval_index (
         dictitem_T  *item;
 
         if (len == -1) {
-          key = get_tv_string(&var1);
-          if (*key == NUL) {
-            if (verbose)
-              EMSG(_(e_emptykey));
+          key = get_tv_string_chk(&var1);
+          if (key == NULL) {
             clear_tv(&var1);
             return FAIL;
           }
@@ -6588,10 +6600,8 @@ static int get_dict_tv(char_u **arg, typval_T *rettv, int evaluate)
     }
     if (evaluate) {
       key = get_tv_string_buf_chk(&tvkey, buf);
-      if (key == NULL || *key == NUL) {
-        /* "key" is NULL when get_tv_string_buf_chk() gave an errmsg */
-        if (key != NULL)
-          EMSG(_(e_emptykey));
+      if (key == NULL) {
+        // "key" is NULL when get_tv_string_buf_chk() gave an errmsg
         clear_tv(&tvkey);
         goto failret;
       }
@@ -16801,17 +16811,17 @@ static void f_type(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   int n = -1;
 
   switch (argvars[0].v_type) {
-    case VAR_NUMBER: n = 0; break;
-    case VAR_STRING: n = 1; break;
-    case VAR_FUNC:   n = 2; break;
-    case VAR_LIST:   n = 3; break;
-    case VAR_DICT:   n = 4; break;
-    case VAR_FLOAT:  n = 5; break;
+    case VAR_NUMBER: n = VAR_TYPE_NUMBER; break;
+    case VAR_STRING: n = VAR_TYPE_STRING; break;
+    case VAR_FUNC:   n = VAR_TYPE_FUNC; break;
+    case VAR_LIST:   n = VAR_TYPE_LIST; break;
+    case VAR_DICT:   n = VAR_TYPE_DICT; break;
+    case VAR_FLOAT:  n = VAR_TYPE_FLOAT; break;
     case VAR_SPECIAL: {
       switch (argvars[0].vval.v_special) {
         case kSpecialVarTrue:
         case kSpecialVarFalse: {
-          n = 6;
+          n = VAR_TYPE_BOOL;
           break;
         }
         case kSpecialVarNull: {
@@ -17755,6 +17765,8 @@ void set_vcount(long count, long count1, int set_prevcount)
 /// @param[in]  val  Value to set to.
 void set_vim_var_nr(const VimVarIndex idx, const varnumber_T val)
 {
+  clear_tv(&vimvars[idx].vv_tv);
+  vimvars[idx].vv_type = VAR_NUMBER;
   vimvars[idx].vv_nr = val;
 }
 
@@ -17764,6 +17776,8 @@ void set_vim_var_nr(const VimVarIndex idx, const varnumber_T val)
 /// @param[in]  val  Value to set to.
 void set_vim_var_special(const VimVarIndex idx, const SpecialVarValue val)
 {
+  clear_tv(&vimvars[idx].vv_tv);
+  vimvars[idx].vv_type = VAR_SPECIAL;
   vimvars[idx].vv_special = val;
 }
 

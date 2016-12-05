@@ -642,5 +642,52 @@ describe('Screen', function()
         eq("normal", screen.mode)
       end)
     end)
+
+    it('works in cmdline mode', function()
+      feed(':')
+      screen:expect([[
+                                 |
+        {0:~                        }|
+        {0:~                        }|
+        {0:~                        }|
+        :^                        |
+      ]],nil,nil,function ()
+        eq("cmdline", screen.mode)
+      end)
+
+      feed('<esc>/')
+      screen:expect([[
+                                 |
+        {0:~                        }|
+        {0:~                        }|
+        {0:~                        }|
+        /^                        |
+      ]],nil,nil,function ()
+        eq("cmdline", screen.mode)
+      end)
+
+
+      feed('<esc>?')
+      screen:expect([[
+                                 |
+        {0:~                        }|
+        {0:~                        }|
+        {0:~                        }|
+        ?^                        |
+      ]],nil,nil,function ()
+        eq("cmdline", screen.mode)
+      end)
+
+      feed('<esc>')
+      screen:expect([[
+        ^                         |
+        {0:~                        }|
+        {0:~                        }|
+        {0:~                        }|
+                                 |
+      ]],nil,nil,function ()
+        eq("normal", screen.mode)
+      end)
+    end)
   end)
 end)

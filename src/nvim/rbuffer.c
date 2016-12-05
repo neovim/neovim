@@ -18,7 +18,7 @@ RBuffer *rbuffer_new(size_t capacity)
     capacity = 0x10000;
   }
 
-  RBuffer *rv = xmalloc(sizeof(RBuffer) + capacity);
+  RBuffer *rv = xcalloc(1, sizeof(RBuffer) + capacity);
   rv->full_cb = rv->nonfull_cb = NULL;
   rv->data = NULL;
   rv->size = 0;
@@ -78,7 +78,7 @@ void rbuffer_reset(RBuffer *buf) FUNC_ATTR_NONNULL_ALL
   size_t temp_size;
   if ((temp_size = rbuffer_size(buf))) {
     if (buf->temp == NULL) {
-      buf->temp = xmalloc(rbuffer_capacity(buf));
+      buf->temp = xcalloc(1, rbuffer_capacity(buf));
     }
     rbuffer_read(buf, buf->temp, buf->size);
   }

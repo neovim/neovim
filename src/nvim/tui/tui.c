@@ -461,6 +461,10 @@ static void tui_mode_change(UI *ui, int mode)
     if (data->showing_mode != INSERT) {
       unibi_out(ui, data->unibi_ext.set_cursor_shape_bar);
     }
+  } else if (mode == CMDLINE) {
+    if (data->showing_mode != CMDLINE) {
+      unibi_out(ui, data->unibi_ext.set_cursor_shape_bar);
+    }
   } else if (mode == REPLACE) {
     if (data->showing_mode != REPLACE) {
       unibi_out(ui, data->unibi_ext.set_cursor_shape_ul);

@@ -5239,8 +5239,8 @@ void win_redr_status(win_T *wp)
  */
 static void redraw_custom_statusline(win_T *wp)
 {
-  static int entered = FALSE;
-  int save_called_emsg = called_emsg;
+  static int entered = false;
+  int saved_did_emsg = did_emsg;
 
   /* When called recursively return.  This can happen when the statusline
    * contains an expression that triggers a redraw. */
@@ -5248,18 +5248,18 @@ static void redraw_custom_statusline(win_T *wp)
     return;
   entered = TRUE;
 
-  called_emsg = FALSE;
-  win_redr_custom(wp, FALSE);
-  if (called_emsg) {
-    /* When there is an error disable the statusline, otherwise the
-     * display is messed up with errors and a redraw triggers the problem
-     * again and again. */
+  did_emsg = false;
+  win_redr_custom(wp, false);
+  if (did_emsg) {
+    // When there is an error disable the statusline, otherwise the
+    // display is messed up with errors and a redraw triggers the problem
+    // again and again.
     set_string_option_direct((char_u *)"statusline", -1,
         (char_u *)"", OPT_FREE | (*wp->w_p_stl != NUL
                                   ? OPT_LOCAL : OPT_GLOBAL), SID_ERROR);
   }
-  called_emsg |= save_called_emsg;
-  entered = FALSE;
+  did_emsg |= saved_did_emsg;
+  entered = false;
 }
 
 /*
@@ -7517,16 +7517,17 @@ static void draw_tabline(void)
 
   /* Use the 'tabline' option if it's set. */
   if (*p_tal != NUL) {
-    int save_called_emsg = called_emsg;
+    int saved_did_emsg = did_emsg;
 
-    /* Check for an error.  If there is one we would loop in redrawing the
-     * screen.  Avoid that by making 'tabline' empty. */
-    called_emsg = FALSE;
-    win_redr_custom(NULL, FALSE);
-    if (called_emsg)
+    // Check for an error.  If there is one we would loop in redrawing the
+    // screen.  Avoid that by making 'tabline' empty.
+    did_emsg = false;
+    win_redr_custom(NULL, false);
+    if (did_emsg) {
       set_string_option_direct((char_u *)"tabline", -1,
-          (char_u *)"", OPT_FREE, SID_ERROR);
-    called_emsg |= save_called_emsg;
+                               (char_u *)"", OPT_FREE, SID_ERROR);
+    }
+    did_emsg |= saved_did_emsg;
   } else {
     FOR_ALL_TABS(tp) {
       ++tabcount;

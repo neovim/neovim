@@ -40,7 +40,7 @@ function Test_tabpage()
   call assert_true(t:val_num == 100 && t:val_str == 'SetTabVar test'  && t:val_list == ['red', 'blue', 'green'])
   tabclose
 
-  if has('gui') || has('clientserver')
+  if has('nvim') || has('gui') || has('clientserver')
     " Test for ":tab drop exist-file" to keep current window.
     sp test1
     tab drop test1
@@ -64,6 +64,15 @@ function Test_tabpage()
     call assert_true(tabpagenr() == 2 && tabpagewinnr(2, '$') == 2 && tabpagewinnr(2) == 1)
     tabclose
     q
+    "
+    "
+    " Test for ":tab drop vertical-split-window" to jump test1 buffer
+    tabedit test1
+    vnew
+    tabfirst
+    tab drop test1
+    call assert_equal([2, 2, 2, 2], [tabpagenr('$'), tabpagenr(), tabpagewinnr(2, '$'), tabpagewinnr(2)])
+    1tabonly
   endif
   "
   "

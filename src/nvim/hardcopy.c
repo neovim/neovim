@@ -269,17 +269,25 @@ char_u *parse_printmbfont(void)
  * Returns an error message for an illegal option, NULL otherwise.
  * Only used for the printer at the moment...
  */
-static char_u *parse_list_options(char_u *option_str, option_table_T *table, int table_size)
+static char_u *parse_list_options(char_u *option_str, option_table_T *table,
+                                  size_t table_size)
 {
+  option_table_T *old_opts;
+  char_u      *ret = NULL;
   char_u      *stringp;
   char_u      *colonp;
   char_u      *commap;
   char_u      *p;
-  int idx = 0;                          /* init for GCC */
+  size_t idx = 0;                          // init for GCC
   int len;
 
-  for (idx = 0; idx < table_size; ++idx)
-    table[idx].present = FALSE;
+  // Save the old values, so that they can be restored in case of an error.
+  old_opts = (option_table_T *)xmalloc(sizeof(option_table_T) * table_size);
+
+  for (idx = 0; idx < table_size; idx++) {
+    old_opts[idx] = table[idx];
+    table[idx].present = false;
+  }
 
   /*
    * Repeat for all comma separated parts.
@@ -287,8 +295,10 @@ static char_u *parse_list_options(char_u *option_str, option_table_T *table, int
   stringp = option_str;
   while (*stringp) {
     colonp = vim_strchr(stringp, ':');
-    if (colonp == NULL)
-      return (char_u *)N_("E550: Missing colon");
+    if (colonp == NULL) {
+      ret = (char_u *)N_("E550: Missing colon");
+      break;
+    }
     commap = vim_strchr(stringp, ',');
     if (commap == NULL)
       commap = option_str + STRLEN(option_str);
@@ -299,15 +309,19 @@ static char_u *parse_list_options(char_u *option_str, option_table_T *table, int
       if (STRNICMP(stringp, table[idx].name, len) == 0)
         break;
 
-    if (idx == table_size)
-      return (char_u *)N_("E551: Illegal component");
+    if (idx == table_size) {
+      ret = (char_u *)N_("E551: Illegal component");
+      break;
+    }
 
     p = colonp + 1;
     table[idx].present = TRUE;
 
     if (table[idx].hasnum) {
-      if (!ascii_isdigit(*p))
-        return (char_u *)N_("E552: digit expected");
+      if (!ascii_isdigit(*p)) {
+        ret = (char_u *)N_("E552: digit expected");
+        break;
+      }
 
       table[idx].number = getdigits_int(&p);
     }
@@ -320,7 +334,15 @@ static char_u *parse_list_options(char_u *option_str, option_table_T *table, int
       ++stringp;
   }
 
-  return NULL;
+  if (ret != NULL) {
+    // Restore old options in case of error
+    for (idx = 0; idx < table_size; idx++) {
+      table[idx] = old_opts[idx];
+    }
+  }
+
+  xfree(old_opts);
+  return ret;
 }
 
 

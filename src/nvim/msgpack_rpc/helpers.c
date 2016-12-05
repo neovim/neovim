@@ -125,7 +125,7 @@ bool msgpack_rpc_to_object(const msgpack_object *const obj, Object *const arg)
         dest = conv(((String) { \
           .size = obj->via.attr.size, \
           .data = (obj->via.attr.ptr == NULL || obj->via.attr.size == 0 \
-                   ? NULL \
+                   ? xmemdupz("", 0) \
                    : xmemdupz(obj->via.attr.ptr, obj->via.attr.size)), \
         })); \
         break; \

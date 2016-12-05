@@ -1,7 +1,7 @@
 " Maintainer:          Anmol Sethi <anmol@aubble.com>
 " Previous Maintainer: SungHyun Nam <goweol@gmail.com>
 
-if exists('b:did_ftplugin')
+if exists('b:did_ftplugin') || &filetype !=# 'man'
   finish
 endif
 let b:did_ftplugin = 1

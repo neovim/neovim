@@ -737,6 +737,7 @@ int delete_first_msg(void)
 void ex_messages(exarg_T *eap)
 {
   struct msg_hist *p;
+<<<<<<< HEAD
   if (win_get_external()) {
     for (p = first_msg_hist; p != NULL && !got_int; p = p->next) {
       if (p->msg != NULL) {
@@ -747,14 +748,49 @@ void ex_messages(exarg_T *eap)
     }
     return;
   }
+=======
+  int c = 0;
+>>>>>>> master
 
-  msg_hist_off = TRUE;
+  if (STRCMP(eap->arg, "clear") == 0) {
+    int keep = eap->addr_count == 0 ? 0 : eap->line2;
 
-  for (p = first_msg_hist; p != NULL && !got_int; p = p->next)
-    if (p->msg != NULL)
+    while (msg_hist_len > keep) {
+      (void)delete_first_msg();
+    }
+    return;
+  }
+
+  if (*eap->arg != NUL) {
+    EMSG(_(e_invarg));
+    return;
+  }
+
+  msg_hist_off = true;
+
+  p = first_msg_hist;
+
+  if (eap->addr_count != 0) {
+    // Count total messages
+    for (; p != NULL && !got_int; p = p->next) {
+      c++;
+    }
+
+    c -= eap->line2;
+
+    // Skip without number of messages specified
+    for (p = first_msg_hist; p != NULL && !got_int && c > 0; p = p->next, c--) {
+    }
+  }
+
+  // Display what was not skipped.
+  for (; p != NULL && !got_int; p = p->next) {
+    if (p->msg != NULL) {
       msg_attr(p->msg, p->attr);
+    }
+  }
 
-  msg_hist_off = FALSE;
+  msg_hist_off = false;
 }
 
 /*

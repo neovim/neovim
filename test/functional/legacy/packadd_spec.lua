@@ -27,7 +27,7 @@ describe('packadd', function()
       endfunc
 
       func Test_packadd()
-        call mkdir(s:plugdir . '/plugin', 'p')
+        call mkdir(s:plugdir . '/plugin/also', 'p')
         call mkdir(s:plugdir . '/ftdetect', 'p')
         call mkdir(s:plugdir . '/after', 'p')
         set rtp&
@@ -38,6 +38,10 @@ describe('packadd', function()
         call setline(1, 'let g:plugin_works = 42')
         wq
 
+        exe 'split ' . s:plugdir . '/plugin/also/loaded.vim'
+        call setline(1, 'let g:plugin_also_works = 77')
+        wq
+
         exe 'split ' . s:plugdir . '/ftdetect/test.vim'
         call setline(1, 'let g:ftdetect_works = 17')
         wq
@@ -45,6 +49,7 @@ describe('packadd', function()
         packadd mytest
 
         call assert_true(42, g:plugin_works)
+        call assert_equal(77, g:plugin_also_works)
         call assert_true(17, g:ftdetect_works)
         call assert_true(len(&rtp) > len(rtp))
         call assert_true(&rtp =~ (s:plugdir . '\($\|,\)'))
