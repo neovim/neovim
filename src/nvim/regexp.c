@@ -350,7 +350,7 @@ typedef struct regitem_S {
     save_se_T sesave;
     regsave_T regsave;
   } rs_un;                      /* room for saving reginput */
-  short rs_no;                  /* submatch nr or BEHIND/NOBEHIND */
+  int rs_no;                  /* submatch nr or BEHIND/NOBEHIND */
 } regitem_T;
 
 
@@ -683,9 +683,9 @@ static int prevchr_len;         /* byte length of previous char */
 static int num_complex_braces;      /* Complex \{...} count */
 static int regnpar;             /* () count. */
 static int regnzpar;            /* \z() count. */
-static int re_has_z;            /* \z item detected */
+static unsigned char re_has_z;            /* \z item detected */
 static char_u   *regcode;       /* Code-emit pointer, or JUST_CALC_SIZE */
-static long regsize;            /* Code size. */
+static unsigned long regsize;            /* Code size. */
 static int reg_toolong;         /* TRUE when offset out of range */
 static char_u had_endbrace[NSUBEXP];    /* flags, TRUE if end of () found */
 static unsigned regflags;       /* RF_ flags for prog */

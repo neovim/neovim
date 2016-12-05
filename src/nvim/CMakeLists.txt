@@ -101,11 +101,11 @@ set(CONV_SOURCES
   mbyte.c
   memline.c
   message.c
+  regexp.c
   screen.c
   search.c
   spell.c
   syntax.c
-  tag.c
   window.c)
 
 foreach(sfile ${CONV_SOURCES})

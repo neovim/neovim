@@ -607,7 +607,7 @@ static char *(p_tc_values[]) = { "followic", "ignore", "match", NULL };
 #define TC_FOLLOWIC             0x01
 #define TC_IGNORE               0x02
 #define TC_MATCH                0x04
-EXTERN long p_tl;               ///< 'taglength'
+EXTERN size_t p_tl;               ///< 'taglength'
 EXTERN int p_tr;                ///< 'tagrelative'
 EXTERN char_u *p_tags;          ///< 'tags'
 EXTERN int p_tgst;              ///< 'tagstack'
