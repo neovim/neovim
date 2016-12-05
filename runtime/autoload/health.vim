@@ -87,9 +87,9 @@ function! s:indent_after_line1(s, columns) abort
   return join(lines, "\n")
 endfunction
 
-" Changes ':help clipboard' to '|clipoard|'. Also removes surrounding quotes.
+" Changes ':h clipboard' to ':help |clipboard|'.
 function! s:help_to_link(s) abort
-  return substitute(a:s, '\v[''"]?:h%[elp] ([^''"]+)[''"]?', '|\1|', 'g')
+  return substitute(a:s, '\v[''"]?:h%[elp] ([^''"]+)[''"]?', '":help |\1|"', 'g')
 endfunction
 
 " Format a message for a specific report item
