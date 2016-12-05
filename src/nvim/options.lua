@@ -1732,7 +1732,7 @@ return {
       type='number', scope={'global'},
       vi_def=true,
       varname='p_pvwd',
-      defaults={if_true={vi=12}}
+      defaults={if_true={vi=100}}
     },
     {
       full_name='previewwindow', abbreviation='pvw',
