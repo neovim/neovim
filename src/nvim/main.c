@@ -557,6 +557,8 @@ void getout(int exitval)
   if (exmode_active)
     exitval += ex_exitval;
 
+  set_vim_var_nr(VV_EXITING, exitval);
+
   /* Position the cursor on the last screen line, below all the text */
   ui_cursor_goto((int)Rows - 1, 0);
 

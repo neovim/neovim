@@ -116,6 +116,7 @@ clean:
 	        valgrind.*     \
 	        .*.swp         \
 	        .*.swo         \
+	        .gdbinit       \
 	        del
 
 test1.out: .gdbinit test1.in

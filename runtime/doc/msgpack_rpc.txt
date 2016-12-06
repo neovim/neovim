@@ -390,8 +390,9 @@ of update.
 	The menu mappings changed.
 
 ["mode_change", mode]
-	The mode changed. Currently sent when "insert", "replace" and "normal"
-	modes are entered. A client could for instance change the cursor shape.
+	The mode changed. Currently sent when "insert", "replace", "cmdline" and
+	"normal" modes are entered. A client could for instance change the cursor
+	shape.
 
 ["popupmenu_show", items, selected, row, col]
 	When `popupmenu_external` is set to true, nvim will not draw the

@@ -368,8 +368,7 @@ hash_T hash_hash(char_u *key)
   hash_T hash = *key;
 
   if (hash == 0) {
-    // Empty keys are not allowed, but we don't want to crash if we get one.
-    return (hash_T) 0;
+    return (hash_T)0;
   }
 
   // A simplistic algorithm that appears to do very well.

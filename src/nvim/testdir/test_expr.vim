@@ -38,3 +38,17 @@ func Test_strcharpart()
 
   call assert_equal('a', strcharpart('axb', -1, 2))
 endfunc
+
+func Test_dict()
+  let d = {'': 'empty', 'a': 'a', 0: 'zero'}
+  call assert_equal('empty', d[''])
+  call assert_equal('a', d['a'])
+  call assert_equal('zero', d[0])
+  call assert_true(has_key(d, ''))
+  call assert_true(has_key(d, 'a'))
+
+  let d[''] = 'none'
+  let d['a'] = 'aaa'
+  call assert_equal('none', d[''])
+  call assert_equal('aaa', d['a'])
+endfunc
