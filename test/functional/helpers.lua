@@ -243,6 +243,19 @@ local function connect(file_or_address)
   return Session.new(stream)
 end
 
+-- Calls fn() until it returns without error, up to `max` times.
+local function retry(fn, max)
+  local retries = max and (max - 1) or 2
+  for _ = 1, retries do
+    local success = pcall(fn)
+    if success then
+      return
+    end
+  end
+  -- pcall() is not used for the final attempt so failure can bubble up.
+  fn()
+end
+
 local function clear(...)
   local args = {unpack(nvim_argv)}
   local new_args
@@ -530,6 +543,7 @@ return function(after_each)
     prepend_argv = prepend_argv,
     clear = clear,
     connect = connect,
+    retry = retry,
     spawn = spawn,
     dedent = dedent,
     source = source,
