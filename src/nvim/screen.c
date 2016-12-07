@@ -2597,7 +2597,8 @@ win_line (
     if (cur != NULL) {
       cur->pos.cur = 0;
     }
-    next_search_hl(wp, shl, lnum, (colnr_T)v, cur);
+    next_search_hl(wp, shl, lnum, (colnr_T)v,
+                   shl == &search_hl ? NULL : cur);
 
     // Need to get the line again, a multi-line regexp may have made it
     // invalid.
@@ -2926,7 +2927,8 @@ win_line (
               shl->attr_cur = 0;
               prev_syntax_id = 0;
 
-              next_search_hl(wp, shl, lnum, (colnr_T)v, cur);
+              next_search_hl(wp, shl, lnum, (colnr_T)v,
+                             shl == &search_hl ? NULL : cur);
               pos_inprogress = !(cur == NULL || cur->pos.cur == 0);
 
               /* Need to get the line again, a multi-line regexp
@@ -5562,7 +5564,8 @@ static void prepare_search_hl(win_T *wp, linenr_T lnum)
       n = 0;
       while (shl->first_lnum < lnum && (shl->rm.regprog != NULL
                                     || (cur != NULL && pos_inprogress))) {
-        next_search_hl(wp, shl, shl->first_lnum, (colnr_T)n, cur);
+        next_search_hl(wp, shl, shl->first_lnum, (colnr_T)n,
+                       shl == &search_hl ? NULL : cur);
         pos_inprogress = !(cur == NULL ||  cur->pos.cur == 0);
         if (shl->lnum != 0) {
           shl->first_lnum = shl->lnum
