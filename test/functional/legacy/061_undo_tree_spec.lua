@@ -98,15 +98,7 @@ describe('undo tree:', function()
         expect_line('123456abc')
       end
 
-      -- Retry up to 3 times. pcall() is _not_ used for the final attempt, so
-      -- that failure messages can bubble up.
-      for _ = 1, 2 do
-        local success = pcall(test_earlier_later)
-        if success then
-          return
-        end
-      end
-      test_earlier_later()
+      helpers.retry(test_earlier_later)
     end)
 
     it('file-write specifications', function()
