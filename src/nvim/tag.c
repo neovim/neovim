@@ -214,8 +214,8 @@ do_tag (
    * Don't add a tag to the tagstack if 'tagstack' has been reset.
    */
   if (!p_tgst && *tag != NUL) {
-    use_tagstack = FALSE;
-    new_tag = TRUE;
+    use_tagstack = false;
+    new_tag = true;
     if (g_do_tagpreview != 0) {
       xfree(ptag_entry.tagname);
       ptag_entry.tagname = vim_strsave(tag);
