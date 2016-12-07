@@ -877,13 +877,13 @@ struct frame_S {
  * match functions there is a different pattern for each window.
  */
 typedef struct {
-  regmmatch_T rm;       /* points to the regexp program; contains last found
-                           match (may continue in next line) */
-  buf_T       *buf;     /* the buffer to search for a match */
-  linenr_T lnum;        /* the line to search for a match */
-  int attr;             /* attributes to be used for a match */
-  int attr_cur;           /* attributes currently active in win_line() */
-  linenr_T first_lnum;          /* first lnum to search for multi-line pat */
+  regmmatch_T rm;       // points to the regexp program; contains last found
+                        // match (may continue in next line)
+  buf_T       *buf;     // the buffer to search for a match
+  linenr_T lnum;        // the line to search for a match
+  int attr;             // attributes to be used for a match
+  int attr_cur;         // attributes currently active in win_line()
+  linenr_T first_lnum;  // first lnum to search for multi-line pat
   colnr_T startcol;     // in win_line() points to char where HL starts
   colnr_T endcol;       // in win_line() points to char where HL ends
   bool is_addpos;       // position specified directly by matchaddpos()

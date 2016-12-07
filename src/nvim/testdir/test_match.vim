@@ -191,7 +191,15 @@ func Test_matchaddpos()
   call assert_equal(screenattr(2,2), screenattr(1,7))
   call assert_notequal(screenattr(2,2), screenattr(1,8))
 
+  call clearmatches()
+  call matchaddpos('Error', [[1], [2,2]])
+  redraw!
+  call assert_equal(screenattr(2,2), screenattr(1,1))
+  call assert_equal(screenattr(2,2), screenattr(1,10))
+  call assert_notequal(screenattr(2,2), screenattr(1,11))
+
   nohl
+  call clearmatches()
   syntax off
   set hlsearch&
 endfunc
