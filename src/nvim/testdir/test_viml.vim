@@ -985,6 +985,86 @@ func Test_skip()
 endfunc
 
 "-------------------------------------------------------------------------------
+" Test 93:  :echo and string()					    {{{1
+"-------------------------------------------------------------------------------
+
+func Test_echo_and_string()
+    " String
+    let a = 'foo bar'
+    redir => result
+    echo a
+    echo string(a)
+    redir END
+    let l = split(result, "\n")
+    call assert_equal(["foo bar",
+		     \ "'foo bar'"], l)
+
+    " Float
+    if has('float')
+	let a = -1.2e0
+	redir => result
+	echo a
+	echo string(a)
+	redir END
+	let l = split(result, "\n")
+	call assert_equal(["-1.2",
+			 \ "-1.2"], l)
+    endif
+
+    " Funcref
+    redir => result
+    echo function('string')
+    echo string(function('string'))
+    redir END
+    let l = split(result, "\n")
+    call assert_equal(["string",
+		     \ "function('string')"], l)
+
+    " Empty dictionaries in a list
+    let a = {}
+    redir => result
+    echo [a, a, a]
+    echo string([a, a, a])
+    redir END
+    let l = split(result, "\n")
+    call assert_equal(["[{}, {}, {}]",
+		     \ "[{}, {}, {}]"], l)
+
+    " Empty dictionaries in a dictionary
+    let a = {}
+    let b = {"a": a, "b": a}
+    redir => result
+    echo b
+    echo string(b)
+    redir END
+    let l = split(result, "\n")
+    call assert_equal(["{'a': {}, 'b': {}}",
+		     \ "{'a': {}, 'b': {}}"], l)
+
+    " Empty lists in a list
+    let a = []
+    redir => result
+    echo [a, a, a]
+    echo string([a, a, a])
+    redir END
+    let l = split(result, "\n")
+    call assert_equal(["[[], [], []]",
+		     \ "[[], [], []]"], l)
+
+    " Empty lists in a dictionary
+    let a = []
+    let b = {"a": a, "b": a}
+    redir => result
+    echo b
+    echo string(b)
+    redir END
+    let l = split(result, "\n")
+    call assert_equal(["{'a': [], 'b': []}",
+		     \ "{'a': [], 'b': []}"], l)
+
+endfunc
+
+"-------------------------------------------------------------------------------
 " Modelines								    {{{1
 " vim: ts=8 sw=4 tw=80 fdm=marker
 " vim: fdt=substitute(substitute(foldtext(),\ '\\%(^+--\\)\\@<=\\(\\s*\\)\\(.\\{-}\\)\:\ \\%(\"\ \\)\\=\\(Test\ \\d*\\)\:\\s*',\ '\\3\ (\\2)\:\ \\1',\ \"\"),\ '\\(Test\\s*\\)\\(\\d\\)\\D\\@=',\ '\\1\ \\2',\ "")
