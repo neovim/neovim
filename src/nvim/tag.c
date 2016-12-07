@@ -216,6 +216,10 @@ do_tag (
   if (!p_tgst && *tag != NUL) {
     use_tagstack = FALSE;
     new_tag = TRUE;
+    if (g_do_tagpreview != 0) {
+      xfree(ptag_entry.tagname);
+      ptag_entry.tagname = vim_strsave(tag);
+    }
   } else {
     if (g_do_tagpreview != 0)
       use_tagstack = FALSE;
