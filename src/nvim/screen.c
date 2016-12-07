@@ -2592,6 +2592,7 @@ win_line (
     shl->startcol = MAXCOL;
     shl->endcol = MAXCOL;
     shl->attr_cur = 0;
+    shl->is_addpos = false;
     v = (long)(ptr - line);
     if (cur != NULL) {
       cur->pos.cur = 0;
@@ -3760,18 +3761,18 @@ win_line (
       if ((long)(wp->w_p_wrap ? wp->w_skipcol : wp->w_leftcol) > prevcol)
         ++prevcol;
 
-      /* Invert at least one char, used for Visual and empty line or
-       * highlight match at end of line. If it's beyond the last
-       * char on the screen, just overwrite that one (tricky!)  Not
-       * needed when a '$' was displayed for 'list'. */
-      prevcol_hl_flag = FALSE;
-      if (prevcol == (long)search_hl.startcol)
-        prevcol_hl_flag = TRUE;
-      else {
+      // Invert at least one char, used for Visual and empty line or
+      // highlight match at end of line. If it's beyond the last
+      // char on the screen, just overwrite that one (tricky!)  Not
+      // needed when a '$' was displayed for 'list'.
+      prevcol_hl_flag = false;
+      if (!search_hl.is_addpos && prevcol == (long)search_hl.startcol) {
+        prevcol_hl_flag = true;
+      } else {
         cur = wp->w_match_head;
         while (cur != NULL) {
-          if (prevcol == (long)cur->hl.startcol) {
-            prevcol_hl_flag = TRUE;
+          if (!cur->hl.is_addpos && prevcol == (long)cur->hl.startcol) {
+            prevcol_hl_flag = true;
             break;
           }
           cur = cur->next;
@@ -3821,10 +3822,13 @@ win_line (
               shl_flag = TRUE;
             } else
               shl = &cur->hl;
-            if ((ptr - line) - 1 == (long)shl->startcol)
+            if ((ptr - line) - 1 == (long)shl->startcol
+                && (shl == &search_hl || !shl->is_addpos)) {
               char_attr = shl->attr;
-            if (shl != &search_hl && cur != NULL)
+            }
+            if (shl != &search_hl && cur != NULL) {
               cur = cur->next;
+            }
           }
         }
         ScreenAttrs[off] = char_attr;
@@ -5737,6 +5741,7 @@ next_search_hl_pos(
     shl->rm.startpos[0].col = start;
     shl->rm.endpos[0].lnum = 0;
     shl->rm.endpos[0].col = end;
+    shl->is_addpos = true;
     posmatch->cur = bot + 1;
     return true;
   }
