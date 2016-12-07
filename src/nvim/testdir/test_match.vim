@@ -181,6 +181,16 @@ func Test_matchaddpos()
   redraw!
   call assert_equal(screenattr(2,2), screenattr(1,6))
 
+  " Check overlapping pos
+  call clearmatches()
+  call setline(1, ['1234567890', 'NH'])
+  call matchaddpos('Error', [[1,1,5], [1,3,5], [2,2]])
+  redraw!
+  call assert_notequal(screenattr(2,2), 0)
+  call assert_equal(screenattr(2,2), screenattr(1,5))
+  call assert_equal(screenattr(2,2), screenattr(1,7))
+  call assert_notequal(screenattr(2,2), screenattr(1,8))
+
   nohl
   syntax off
   set hlsearch&

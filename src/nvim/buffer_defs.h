@@ -884,7 +884,7 @@ typedef struct {
   int attr;             /* attributes to be used for a match */
   int attr_cur;           /* attributes currently active in win_line() */
   linenr_T first_lnum;          /* first lnum to search for multi-line pat */
-  colnr_T startcol;       /* in win_line() points to char where HL starts */
+  colnr_T startcol;     // in win_line() points to char where HL starts
   colnr_T endcol;       // in win_line() points to char where HL ends
   bool is_addpos;       // position specified directly by matchaddpos()
   proftime_T tm;        // for a time limit

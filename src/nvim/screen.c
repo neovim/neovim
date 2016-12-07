@@ -5563,7 +5563,7 @@ static void prepare_search_hl(win_T *wp, linenr_T lnum)
                                   // in progress
       n = 0;
       while (shl->first_lnum < lnum && (shl->rm.regprog != NULL
-                                    || (cur != NULL && pos_inprogress))) {
+                                        || (cur != NULL && pos_inprogress))) {
         next_search_hl(wp, shl, shl->first_lnum, (colnr_T)n,
                        shl == &search_hl ? NULL : cur);
         pos_inprogress = !(cur == NULL ||  cur->pos.cur == 0);
@@ -5711,20 +5711,22 @@ next_search_hl_pos(
 
   shl->lnum = 0;
   for (i = posmatch->cur; i < MAXPOSMATCH; i++) {
-    if (posmatch->pos[i].lnum == 0) {
+    llpos_T *pos = &posmatch->pos[i];
+
+    if (pos->lnum == 0) {
       break;
     }
-    if (posmatch->pos[i].col < mincol) {
+    if (pos->col + pos->len - 1 <= mincol) {
       continue;
     }
-    if (posmatch->pos[i].lnum == lnum) {
+    if (pos->lnum == lnum) {
       if (bot != -1) {
         // partially sort positions by column numbers
         // on the same line
-        if (posmatch->pos[i].col < posmatch->pos[bot].col) {
-          llpos_T tmp = posmatch->pos[i];
+        if (pos->col < posmatch->pos[bot].col) {
+          llpos_T tmp = *pos;
 
-          posmatch->pos[i] = posmatch->pos[bot];
+          *pos = posmatch->pos[bot];
           posmatch->pos[bot] = tmp;
         }
       } else {
