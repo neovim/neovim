@@ -385,12 +385,16 @@ wingotofile:
 
     ptr = grab_file_name(Prenum1, &lnum);
     if (ptr != NULL) {
+      tabpage_T *oldtab = curtab;
+      win_T *oldwin = curwin;
       setpcmark();
       if (win_split(0, 0) == OK) {
         RESET_BINDING(curwin);
-        (void)do_ecmd(0, ptr, NULL, NULL, ECMD_LASTL,
-            ECMD_HIDE, NULL);
-        if (nchar == 'F' && lnum >= 0) {
+        if (do_ecmd(0, ptr, NULL, NULL, ECMD_LASTL, ECMD_HIDE, NULL) == FAIL) {
+          // Failed to open the file, close the window opened for it.
+          win_close(curwin, false);
+          goto_tabpage_win(oldtab, oldwin);
+        } else if (nchar == 'F' && lnum >= 0) {
           curwin->w_cursor.lnum = lnum;
           check_cursor_lnum();
           beginline(BL_SOL | BL_FIX);
@@ -894,31 +898,31 @@ int win_split_ins(int size, int flags, win_T *new_wp, int dir)
     /* "new_size" of the current window goes to the new window, use
      * one row for the status line */
     win_new_height(wp, new_size);
-    if (flags & (WSP_TOP | WSP_BOT))
-      frame_new_height(curfrp, curfrp->fr_height
-          - (new_size + STATUS_HEIGHT), flags & WSP_TOP, FALSE);
-    else
+    if (flags & (WSP_TOP | WSP_BOT)) {
+      int new_fr_height = curfrp->fr_height - new_size;
+
+      if (!((flags & WSP_BOT) && p_ls == 0)) {
+        new_fr_height -= STATUS_HEIGHT;
+      }
+      frame_new_height(curfrp, new_fr_height, flags & WSP_TOP, false);
+    } else {
       win_new_height(oldwin, oldwin_height - (new_size + STATUS_HEIGHT));
-    if (before) {       /* new window above current one */
+    }
+    if (before) {       // new window above current one
       wp->w_winrow = oldwin->w_winrow;
       wp->w_status_height = STATUS_HEIGHT;
       oldwin->w_winrow += wp->w_height + STATUS_HEIGHT;
     } else {          /* new window below current one */
       wp->w_winrow = oldwin->w_winrow + oldwin->w_height + STATUS_HEIGHT;
       wp->w_status_height = oldwin->w_status_height;
-      // Don't set the status_height for oldwin yet, this might break
-      // frame_fix_height(oldwin), therefore will be set below.
+      if (!(flags & WSP_BOT)) {
+        oldwin->w_status_height = STATUS_HEIGHT;
+      }
     }
     if (flags & WSP_BOT)
       frame_add_statusline(curfrp);
     frame_fix_height(wp);
     frame_fix_height(oldwin);
-
-    if (!before) {
-      // New window above current one, set the status_height after
-      // frame_fix_height(oldwin)
-      oldwin->w_status_height = STATUS_HEIGHT;
-    }
   }
 
   if (flags & (WSP_TOP | WSP_BOT))

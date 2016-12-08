@@ -62,6 +62,10 @@ set shellslash
 " Make sure $HOME does not get read or written.
 let $HOME = '/does/not/exist'
 
+" Align with vim defaults.
+set directory^=.
+set nohidden
+
 function RunTheTest(test)
   echo 'Executing ' . a:test
   if exists("*SetUp")

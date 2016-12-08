@@ -2032,6 +2032,8 @@ matchlist({expr}, {pat}[, {start}[, {count}]])
 				List	match and submatches of {pat} in {expr}
 matchstr({expr}, {pat}[, {start}[, {count}]])
 				String	{count}'th match of {pat} in {expr}
+matchstrpos( {expr}, {pat}[, {start}[, {count}]])
+				List	{count}'th match of {pat} in {expr}
 max({list})			Number	maximum value of items in {list}
 min({list})			Number	minimum value of items in {list}
 mkdir({name} [, {path} [, {prot}]])
@@ -5017,6 +5019,24 @@ matchstr({expr}, {pat}[, {start}[, {count}]])			*matchstr()*
 			:echo matchstr("testing", "ing", 5)
 <		result is "".
 		When {expr} is a |List| then the matching item is returned.
+		The type isn't changed, it's not necessarily a String.
+
+matchstrpos({expr}, {pat}[, {start}[, {count}]])		*matchstrpos()*
+		Same as |matchstr()|, but return the matched string, the start
+		position and the end position of the match.  Example: >
+			:echo matchstrpos("testing", "ing")
+<		results in ["ing", 4, 7].
+		When there is no match ["", -1, -1] is returned.
+		The {start}, if given, has the same meaning as for |match()|. >
+			:echo matchstrpos("testing", "ing", 2)
+<		results in ["ing", 4, 7]. >
+			:echo matchstrpos("testing", "ing", 5)
+<		result is ["", -1, -1].
+		When {expr} is a |List| then the matching item, the index
+		of first item where {pat} matches, the start position and the
+		end position of the match are returned. >
+			:echo matchstrpos([1, '__x'], '\a')
+<		result is ["x", 1, 2, 3].
 		The type isn't changed, it's not necessarily a String.
 
 							*max()*
