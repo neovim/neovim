@@ -61,3 +61,18 @@ func Test_syn_iskeyword()
 
   quit!
 endfunc
+
+func Test_syntax_after_reload()
+  split Xsomefile
+  call setline(1, ['hello', 'there'])
+  w!
+  only!
+  setl filetype=hello
+  au FileType hello let g:gotit = 1
+  call assert_false(exists('g:gotit'))
+  edit other
+  buf Xsomefile
+  call assert_equal('hello', &filetype)
+  call assert_true(exists('g:gotit'))
+  call delete('Xsomefile')
+endfunc
