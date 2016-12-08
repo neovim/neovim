@@ -1641,6 +1641,11 @@ static int command_line_changed(CommandLineState *s)
     }
   }
 
+  if (win_get_external) {
+    if (!((s->c == p_wc && !s->gotesc && KeyTyped) || s->c == p_wcm || (s->c == Ctrl_P || s->c == Ctrl_N))) {
+      showmatches(&s->xpc, false);
+    }
+  }
   return 1;
 }
 
@@ -3312,6 +3317,19 @@ static int showmatches(expand_T *xp, int wildmenu)
         j = vim_strsize(L_SHOWFILE(i));
       if (j > maxlen)
         maxlen = j;
+    }
+
+    if (win_get_external()) {
+      Array args = ARRAY_DICT_INIT;
+      ADD(args, INTEGER_OBJ(0));
+      for (i = 0; i < num_files; ++i) {
+        ADD(args, STRING_OBJ(cstr_to_string((char *)files_found[i])));
+        if (i > 20) {
+            break;
+        }
+      }
+      ui_event("wild_menu", args);
+      return EXPAND_OK;
     }
 
     if (xp->xp_context == EXPAND_TAGS_LISTFILES)

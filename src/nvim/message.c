@@ -737,7 +737,7 @@ int delete_first_msg(void)
 void ex_messages(exarg_T *eap)
 {
   struct msg_hist *p;
-<<<<<<< HEAD
+  int c = 0;
   if (win_get_external()) {
     for (p = first_msg_hist; p != NULL && !got_int; p = p->next) {
       if (p->msg != NULL) {
@@ -748,9 +748,6 @@ void ex_messages(exarg_T *eap)
     }
     return;
   }
-=======
-  int c = 0;
->>>>>>> master
 
   if (STRCMP(eap->arg, "clear") == 0) {
     int keep = eap->addr_count == 0 ? 0 : eap->line2;
