@@ -1967,26 +1967,29 @@ failed:
      * should not be overwritten: Set msg_scroll, restore its value if no
      * output was done.
      */
-    msg_scroll = TRUE;
-    if (filtering)
+    msg_scroll = true;
+    if (filtering) {
       apply_autocmds_exarg(EVENT_FILTERREADPOST, NULL, sfname,
-          FALSE, curbuf, eap);
-    else if (newfile) {
+                           false, curbuf, eap);
+    } else if (newfile) {
       apply_autocmds_exarg(EVENT_BUFREADPOST, NULL, sfname,
-          FALSE, curbuf, eap);
+                           false, curbuf, eap);
       if (!au_did_filetype && *curbuf->b_p_ft != NUL) {
         // EVENT_FILETYPE was not triggered but the buffer already has a
         // filetype.  Trigger EVENT_FILETYPE using the existing filetype.
-        apply_autocmds(EVENT_FILETYPE, curbuf->b_p_ft, curbuf->b_fname, true, curbuf);
+        apply_autocmds(EVENT_FILETYPE, curbuf->b_p_ft, curbuf->b_fname,
+                       true, curbuf);
       }
     } else {
       apply_autocmds_exarg(EVENT_FILEREADPOST, sfname, sfname,
-          FALSE, NULL, eap);
+                           false, NULL, eap);
     }
-    if (msg_scrolled == n)
+    if (msg_scrolled == n) {
       msg_scroll = m;
-    if (aborting())         /* autocmds may abort script processing */
+    }
+    if (aborting()) {       // autocmds may abort script processing
       return FAIL;
+    }
   }
 
   if (recoverymode && error)
