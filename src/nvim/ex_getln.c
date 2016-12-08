@@ -1642,8 +1642,10 @@ static int command_line_changed(CommandLineState *s)
   }
 
   if (win_get_external) {
-    if (!((s->c == p_wc && !s->gotesc && KeyTyped) || s->c == p_wcm || (s->c == Ctrl_P || s->c == Ctrl_N))) {
-      showmatches(&s->xpc, false);
+    if (KeyTyped) {
+      if (!((s->c == p_wc && !s->gotesc && KeyTyped) || s->c == p_wcm || ((s->c == Ctrl_P || s->c == Ctrl_N) && s->xpc.xp_numfiles > 0))) {
+        showmatches(&s->xpc, false);
+      }
     }
   }
   return 1;

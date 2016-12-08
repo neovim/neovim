@@ -4494,8 +4494,10 @@ static void nv_colon(cmdarg_T *cap)
 
     /* get a command line and execute it */
     if (win_get_external()) {
-      Array args = ARRAY_DICT_INIT;
-      ui_event("command_line_enter", args);
+      if (KeyTyped) {
+        Array args = ARRAY_DICT_INIT;
+        ui_event("command_line_enter", args);
+      }
     }
     cmd_result = do_cmdline(NULL, getexline, NULL,
         cap->oap->op_type != OP_NOP ? DOCMD_KEEPLINE : 0);
