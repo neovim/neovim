@@ -481,10 +481,9 @@ describe('jobs', function()
       eq('rows: 40, cols: 10', next_chunk())
     end)
 
-    it('calling jobclose()', function()
-      -- this should send SIGHUP to the process
+    it('jobclose() sends SIGHUP', function()
       nvim('command', 'call jobclose(j)')
-      eq({'notification', 'exit', {0, 1}}, next_msg())
+      eq({'notification', 'exit', {0, 42}}, next_msg())
     end)
   end)
 end)

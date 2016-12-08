@@ -32,11 +32,21 @@ static void walk_cb(uv_handle_t *handle, void *arg) {
 }
 
 #ifndef WIN32
-static void sigwinch_handler(int signum)
+static void sig_handler(int signum)
 {
-  int width, height;
-  uv_tty_get_winsize(&tty, &width, &height);
-  fprintf(stderr, "rows: %d, cols: %d\n", height, width);
+  switch(signum) {
+  case SIGWINCH: {
+    int width, height;
+    uv_tty_get_winsize(&tty, &width, &height);
+    fprintf(stderr, "rows: %d, cols: %d\n", height, width);
+    return;
+  }
+  case SIGHUP:
+    exit(42);  // arbitrary exit code to test against
+    return;
+  default:
+    return;
+  }
 }
 #endif
 
@@ -141,7 +151,8 @@ int main(int argc, char **argv)
   struct sigaction sa;
   sigemptyset(&sa.sa_mask);
   sa.sa_flags = 0;
-  sa.sa_handler = sigwinch_handler;
+  sa.sa_handler = sig_handler;
+  sigaction(SIGHUP, &sa, NULL);
   sigaction(SIGWINCH, &sa, NULL);
   // uv_signal_t sigwinch_watcher;
   // uv_signal_init(uv_default_loop(), &sigwinch_watcher);
@@ -149,6 +160,9 @@ int main(int argc, char **argv)
   // uv_signal_start(&sigwinch_watcher, sigwinch_cb, SIGWINCH);
 #endif
   uv_run(uv_default_loop(), UV_RUN_DEFAULT);
+
+  // XXX: Without this the SIGHUP handler is skipped on some systems.
+  sleep(100);
 
   return 0;
 }
