@@ -198,6 +198,7 @@ return {
     matchend={args={2, 4}},
     matchlist={args={2, 4}},
     matchstr={args={2, 4}},
+    matchstrpos={args={2,4}},
     max={args=1},
     min={args=1},
     mkdir={args={1, 3}},

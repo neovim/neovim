@@ -592,6 +592,7 @@ String manipulation:					*string-functions*
 	match()			position where a pattern matches in a string
 	matchend()		position where a pattern match ends in a string
 	matchstr()		match of a pattern in a string
+	matchstrpos()		match and postions of a pattern in a string
 	matchlist()		like matchstr() and also return submatches
 	stridx()		first index of a short string in a long string
 	strridx()		last index of a short string in a long string

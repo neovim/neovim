@@ -2592,11 +2592,13 @@ win_line (
     shl->startcol = MAXCOL;
     shl->endcol = MAXCOL;
     shl->attr_cur = 0;
+    shl->is_addpos = false;
     v = (long)(ptr - line);
     if (cur != NULL) {
       cur->pos.cur = 0;
     }
-    next_search_hl(wp, shl, lnum, (colnr_T)v, cur);
+    next_search_hl(wp, shl, lnum, (colnr_T)v,
+                   shl == &search_hl ? NULL : cur);
 
     // Need to get the line again, a multi-line regexp may have made it
     // invalid.
@@ -2925,7 +2927,8 @@ win_line (
               shl->attr_cur = 0;
               prev_syntax_id = 0;
 
-              next_search_hl(wp, shl, lnum, (colnr_T)v, cur);
+              next_search_hl(wp, shl, lnum, (colnr_T)v,
+                             shl == &search_hl ? NULL : cur);
               pos_inprogress = !(cur == NULL || cur->pos.cur == 0);
 
               /* Need to get the line again, a multi-line regexp
@@ -3760,18 +3763,18 @@ win_line (
       if ((long)(wp->w_p_wrap ? wp->w_skipcol : wp->w_leftcol) > prevcol)
         ++prevcol;
 
-      /* Invert at least one char, used for Visual and empty line or
-       * highlight match at end of line. If it's beyond the last
-       * char on the screen, just overwrite that one (tricky!)  Not
-       * needed when a '$' was displayed for 'list'. */
-      prevcol_hl_flag = FALSE;
-      if (prevcol == (long)search_hl.startcol)
-        prevcol_hl_flag = TRUE;
-      else {
+      // Invert at least one char, used for Visual and empty line or
+      // highlight match at end of line. If it's beyond the last
+      // char on the screen, just overwrite that one (tricky!)  Not
+      // needed when a '$' was displayed for 'list'.
+      prevcol_hl_flag = false;
+      if (!search_hl.is_addpos && prevcol == (long)search_hl.startcol) {
+        prevcol_hl_flag = true;
+      } else {
         cur = wp->w_match_head;
         while (cur != NULL) {
-          if (prevcol == (long)cur->hl.startcol) {
-            prevcol_hl_flag = TRUE;
+          if (!cur->hl.is_addpos && prevcol == (long)cur->hl.startcol) {
+            prevcol_hl_flag = true;
             break;
           }
           cur = cur->next;
@@ -3821,10 +3824,13 @@ win_line (
               shl_flag = TRUE;
             } else
               shl = &cur->hl;
-            if ((ptr - line) - 1 == (long)shl->startcol)
+            if ((ptr - line) - 1 == (long)shl->startcol
+                && (shl == &search_hl || !shl->is_addpos)) {
               char_attr = shl->attr;
-            if (shl != &search_hl && cur != NULL)
+            }
+            if (shl != &search_hl && cur != NULL) {
               cur = cur->next;
+            }
           }
         }
         ScreenAttrs[off] = char_attr;
@@ -5557,8 +5563,9 @@ static void prepare_search_hl(win_T *wp, linenr_T lnum)
                                   // in progress
       n = 0;
       while (shl->first_lnum < lnum && (shl->rm.regprog != NULL
-                                    || (cur != NULL && pos_inprogress))) {
-        next_search_hl(wp, shl, shl->first_lnum, (colnr_T)n, cur);
+                                        || (cur != NULL && pos_inprogress))) {
+        next_search_hl(wp, shl, shl->first_lnum, (colnr_T)n,
+                       shl == &search_hl ? NULL : cur);
         pos_inprogress = !(cur == NULL ||  cur->pos.cur == 0);
         if (shl->lnum != 0) {
           shl->first_lnum = shl->lnum
@@ -5691,6 +5698,8 @@ next_search_hl (
   }
 }
 
+/// If there is a match fill "shl" and return one.
+/// Return zero otherwise.
 static int
 next_search_hl_pos(
     match_T *shl,         // points to a match
@@ -5700,47 +5709,50 @@ next_search_hl_pos(
 )
 {
   int i;
-  int bot = -1;
+  int found = -1;
 
   shl->lnum = 0;
   for (i = posmatch->cur; i < MAXPOSMATCH; i++) {
-    if (posmatch->pos[i].lnum == 0) {
+    llpos_T *pos = &posmatch->pos[i];
+
+    if (pos->lnum == 0) {
       break;
     }
-    if (posmatch->pos[i].col < mincol) {
+    if (pos->len == 0 && pos->col < mincol) {
       continue;
     }
-    if (posmatch->pos[i].lnum == lnum) {
-      if (bot != -1) {
-        // partially sort positions by column numbers
-        // on the same line
-        if (posmatch->pos[i].col < posmatch->pos[bot].col) {
-          llpos_T tmp = posmatch->pos[i];
+    if (pos->lnum == lnum) {
+      if (found >= 0) {
+        // if this match comes before the one at "found" then swap
+        // them
+        if (pos->col < posmatch->pos[found].col) {
+          llpos_T tmp = *pos;
 
-          posmatch->pos[i] = posmatch->pos[bot];
-          posmatch->pos[bot] = tmp;
+          *pos = posmatch->pos[found];
+          posmatch->pos[found] = tmp;
         }
       } else {
-        bot = i;
-        shl->lnum = lnum;
+        found = i;
       }
     }
   }
   posmatch->cur = 0;
-  if (bot != -1) {
-    colnr_T start = posmatch->pos[bot].col == 0
-                    ? 0: posmatch->pos[bot].col - 1;
-    colnr_T end = posmatch->pos[bot].col == 0
-                  ? MAXCOL : start + posmatch->pos[bot].len;
+  if (found >= 0) {
+    colnr_T start = posmatch->pos[found].col == 0
+                    ? 0: posmatch->pos[found].col - 1;
+    colnr_T end = posmatch->pos[found].col == 0
+                  ? MAXCOL : start + posmatch->pos[found].len;
 
+    shl->lnum = lnum;
     shl->rm.startpos[0].lnum = 0;
     shl->rm.startpos[0].col = start;
     shl->rm.endpos[0].lnum = 0;
     shl->rm.endpos[0].col = end;
-    posmatch->cur = bot + 1;
-    return true;
+    shl->is_addpos = true;
+    posmatch->cur = found + 1;
+    return 1;
   }
-  return false;
+  return 0;
 }
 
 static void screen_start_highlight(int attr)
