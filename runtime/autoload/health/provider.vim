@@ -42,7 +42,9 @@ function! s:system(cmd, ...) abort
         \ 'on_stderr': function('s:system_handler'),
         \ 'on_exit': function('s:system_handler'),
         \ }
-  let jobid = jobstart(a:cmd, opts)
+
+	let shcmd = "sh -c '".(type(a:cmd) == type([]) ? join(a:cmd) : a:cmd)."'"
+  let jobid = jobstart(shcmd, opts)
 
   if jobid < 1
     call health#report_error(printf('Command error %d: %s', jobid,
@@ -144,7 +146,7 @@ function! s:version_info(python) abort
   let python_version = s:trim(s:system([
         \ a:python,
         \ '-c',
-        \ 'import sys; print(".".join(str(x) for x in sys.version_info[:3]))',
+        \ '"import sys; print(\".\".join(str(x) for x in sys.version_info[:3]))"',
         \ ]))
 
   if empty(python_version)
@@ -154,7 +156,7 @@ function! s:version_info(python) abort
   let nvim_path = s:trim(s:system([
         \ a:python,
         \ '-c',
-        \ 'import neovim; print(neovim.__file__)']))
+        \ '"import neovim; print(neovim.__file__)"']))
   let nvim_path = s:shell_error ? '' : nvim_path
 
   if empty(nvim_path)
@@ -421,8 +423,8 @@ function! s:check_ruby() abort
     let prog_vers = 'not found'
     call health#report_error('Missing Neovim RubyGem', suggestions)
   else
-    silent let latest_gem = get(s:systemlist("gem list -ra '^neovim$' 2>/dev/null | " .
-          \ "awk -F'[()]' '{print $2}' | " .
+    silent let latest_gem = get(s:systemlist('gem list -ra ^neovim$ 2>/dev/null | ' .
+          \ 'awk -F"[()]" "{print \$2}" | ' .
           \ 'cut -d, -f1'), 0, 'not found')
     let latest_desc = ' (latest: ' . latest_gem . ')'
 

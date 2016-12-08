@@ -1,10 +1,6 @@
 " Maintainer: Anmol Sethi <anmol@aubble.com>
 
-if &shell =~# 'fish$'
-  let s:man_cmd = 'man ^/dev/null'
-else
-  let s:man_cmd = 'man 2>/dev/null'
-endif
+let s:man_cmd = 'man 2>/dev/null'
 
 let s:man_find_arg = "-w"
 
@@ -80,6 +76,7 @@ function! s:read_page(path) abort
   " Respect $MANWIDTH, or default to window width.
   let cmd  = 'env MANPAGER=cat'.(empty($MANWIDTH) ? ' MANWIDTH='.winwidth(0) : '')
   let cmd .= ' '.s:man_cmd.' '.shellescape(a:path)
+	let cmd = "sh -c '".cmd."'"
   silent put =system(cmd)
   " Remove all backspaced characters.
   execute 'silent keeppatterns keepjumps %substitute,.\b,,e'.(&gdefault?'':'g')
@@ -112,7 +109,8 @@ endfunction
 
 function! s:get_path(sect, name) abort
   if empty(a:sect)
-    let path = system(s:man_cmd.' '.s:man_find_arg.' '.shellescape(a:name))
+		let cmd = "sh -c '".s:man_cmd.' '.s:man_find_arg.' '.shellescape(a:name)."'"
+    let path = system(cmd)
     if path !~# '^\/'
       throw 'no manual entry for '.a:name
     endif
@@ -123,7 +121,8 @@ function! s:get_path(sect, name) abort
   "   - sections starting with '-'
   "   - 3pcap section (found on macOS)
   "   - commas between sections (for section priority)
-  return system(s:man_cmd.' '.s:man_find_arg.' -s '.shellescape(a:sect).' '.shellescape(a:name))
+	let cmd = "sh -c '".s:man_cmd.' '.s:man_find_arg.' -s '.shellescape(a:sect).' '.shellescape(a:name)."'"
+  return system(cmd)
 endfunction
 
 function! s:verify_exists(sect, name) abort
@@ -197,7 +196,8 @@ function! s:error(msg) abort
   echohl None
 endfunction
 
-let s:mandirs = join(split(system(s:man_cmd.' '.s:man_find_arg), ':\|\n'), ',')
+let mandirscmd = "sh -c '".s:man_cmd.' '.s:man_find_arg."'"
+let s:mandirs = join(split(system(mandirscmd), ':\|\n'), ',')
 
 " see man#extract_sect_and_name_ref on why tolower(sect)
 function! man#complete(arg_lead, cmd_line, cursor_pos) abort
