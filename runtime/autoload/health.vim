@@ -1,4 +1,6 @@
 function! s:enhance_syntax() abort
+  syntax case match
+
   syntax keyword healthError ERROR
   highlight link healthError Error
 
