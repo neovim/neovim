@@ -76,7 +76,7 @@ function! s:read_page(path) abort
   " Respect $MANWIDTH, or default to window width.
   let cmd  = 'env MANPAGER=cat'.(empty($MANWIDTH) ? ' MANWIDTH='.winwidth(0) : '')
   let cmd .= ' '.s:man_cmd.' '.shellescape(a:path)
-	let cmd = "sh -c '".cmd."'"
+  let cmd = "sh -c '".cmd."'"
   silent put =system(cmd)
   " Remove all backspaced characters.
   execute 'silent keeppatterns keepjumps %substitute,.\b,,e'.(&gdefault?'':'g')
