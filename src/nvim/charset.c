@@ -84,7 +84,7 @@ int init_chartab(void)
 ///
 /// @return FAIL if 'iskeyword', 'isident', 'isfname' or 'isprint' option has
 /// an error, OK otherwise.
-int buf_init_chartab(buf_T *buf, int global)
+int buf_init_chartab(buf_T *buf, bool global)
 {
   int c;
   int c2;
