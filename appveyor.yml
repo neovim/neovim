@@ -7,4 +7,5 @@ build_script:
 - call .ci\build.bat
 artifacts:
 - path: build/Neovim.zip
-- path: build/Neovim.exe
+- path: build/nvim.exe
+- path: build/bin/nvim.exe
