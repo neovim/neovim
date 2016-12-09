@@ -74,10 +74,7 @@ function! s:read_page(path) abort
   " Force MANPAGER=cat to ensure Vim is not recursively invoked (by man-db).
   " http://comments.gmane.org/gmane.editors.vim.devel/29085
   " Respect $MANWIDTH, or default to window width.
-  let cmd  = 'env MANPAGER=cat'.(empty($MANWIDTH) ? ' MANWIDTH='.winwidth(0) : '')
-  let cmd .= ' '.s:man_cmd.' '.shellescape(a:path)
-  let cmd = "sh -c '".cmd."'"
-  silent put =system(cmd)
+  silent put =system(['env', 'MANPAGER=cat', (empty($MANWIDTH) ? ' MANWIDTH='.winwidth(0) : ''), s:man_cmd, a:path])
   " Remove all backspaced characters.
   execute 'silent keeppatterns keepjumps %substitute,.\b,,e'.(&gdefault?'':'g')
   while getline(1) =~# '^\s*$'
