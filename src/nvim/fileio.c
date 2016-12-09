@@ -187,6 +187,14 @@ struct bw_info {
 static char *e_auchangedbuf = N_(
     "E812: Autocommands changed buffer or buffer name");
 
+// Set by the apply_autocmds_group function if the given event is equal to
+// EVENT_FILETYPE. Used by the readfile function in order to determine if
+// EVENT_BUFREADPOST triggered the EVENT_FILETYPE.
+//
+// Relying on this value requires one to reset it prior calling
+// apply_autocmds_group.
+static bool au_did_filetype INIT(= false);
+
 void filemess(buf_T *buf, char_u *name, char_u *s, int attr)
 {
   int msg_scroll_save;
@@ -328,6 +336,8 @@ readfile (
   char_u      *old_b_fname;
   int using_b_ffname;
   int using_b_fname;
+
+  au_did_filetype = false;  // reset before triggering any autocommands
 
   curbuf->b_no_eol_lnum = 0;    /* in case it was set by the previous read */
 
@@ -1957,20 +1967,29 @@ failed:
      * should not be overwritten: Set msg_scroll, restore its value if no
      * output was done.
      */
-    msg_scroll = TRUE;
-    if (filtering)
+    msg_scroll = true;
+    if (filtering) {
       apply_autocmds_exarg(EVENT_FILTERREADPOST, NULL, sfname,
-          FALSE, curbuf, eap);
-    else if (newfile)
+                           false, curbuf, eap);
+    } else if (newfile) {
       apply_autocmds_exarg(EVENT_BUFREADPOST, NULL, sfname,
-          FALSE, curbuf, eap);
-    else
+                           false, curbuf, eap);
+      if (!au_did_filetype && *curbuf->b_p_ft != NUL) {
+        // EVENT_FILETYPE was not triggered but the buffer already has a
+        // filetype.  Trigger EVENT_FILETYPE using the existing filetype.
+        apply_autocmds(EVENT_FILETYPE, curbuf->b_p_ft, curbuf->b_fname,
+                       true, curbuf);
+      }
+    } else {
       apply_autocmds_exarg(EVENT_FILEREADPOST, sfname, sfname,
-          FALSE, NULL, eap);
-    if (msg_scrolled == n)
+                           false, NULL, eap);
+    }
+    if (msg_scrolled == n) {
       msg_scroll = m;
-    if (aborting())         /* autocmds may abort script processing */
+    }
+    if (aborting()) {       // autocmds may abort script processing
       return FAIL;
+    }
   }
 
   if (recoverymode && error)
@@ -6864,6 +6883,10 @@ BYPASS_AU:
    * are deleted. */
   if (event == EVENT_BUFWIPEOUT && buf != NULL)
     aubuflocal_remove(buf);
+
+  if (retval == OK && event == EVENT_FILETYPE) {
+    au_did_filetype = true;
+  }
 
   return retval;
 }
