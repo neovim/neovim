@@ -49,8 +49,7 @@ Note: The `--upgrade` flag ensures you have the latest version even if
 PYTHON PROVIDER CONFIGURATION ~
 						*g:python_host_prog*
 						*g:python3_host_prog*
-Set a specific Python interpreter. This also improves host loading time, since
-no suitable interpreter has to be searched first. >
+Program to use for evaluating Python code. Setting this makes startup faster. >
     let g:python_host_prog  = '/path/to/python'
     let g:python3_host_prog = '/path/to/python3'
 <
