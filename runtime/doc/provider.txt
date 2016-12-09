@@ -48,11 +48,10 @@ Note: The `--upgrade` flag ensures you have the latest version even if
 
 PYTHON PROVIDER CONFIGURATION ~
 						*g:python_host_prog*
-Set `g:python_host_prog` to point Nvim to a specific Python 2 interpreter: >
-    let g:python_host_prog = '/path/to/python'
-<
 						*g:python3_host_prog*
-Set `g:python3_host_prog` to point Nvim to a specific Python 3 interpreter: >
+Set a specific Python interpreter. This also improves host loading time, since
+no suitable interpreter has to be searched first. >
+    let g:python_host_prog  = '/path/to/python'
     let g:python3_host_prog = '/path/to/python3'
 <
 						*g:loaded_python_provider*
@@ -62,16 +61,6 @@ To disable Python 2 support: >
 						*g:loaded_python3_provider*
 To disable Python 3 support: >
     let g:loaded_python3_provider = 1
-<
-						*g:python_host_skip_check*
-Set `g:python_host_skip_check` to disable the Python 2 interpreter check.
-Note: This requires you to install the python-neovim module properly. >
-    let g:python_host_skip_check = 1
-<
-						*g:python3_host_skip_check*
-Set `g:python3_host_skip_check` to disable the Python 3 interpreter check.
-Note: This requires you to install the python3-neovim module properly. >
-    let g:python3_host_skip_check = 1
 
 
 ==============================================================================

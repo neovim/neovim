@@ -47,32 +47,27 @@ function! provider#pythonx#Require(host) abort
 endfunction
 
 function! provider#pythonx#Detect(major_ver) abort
-  let host_var = (a:major_ver == 2) ?
-        \ 'g:python_host_prog' : 'g:python3_host_prog'
-  let skip_var = (a:major_ver == 2) ?
-        \ 'g:python_host_skip_check' : 'g:python3_host_skip_check'
-  let skip = exists(skip_var) ? {skip_var} : 0
-  if exists(host_var)
-    " Disable auto detection.
-    let [result, err] = s:check_interpreter({host_var}, a:major_ver, skip)
-    if result
-      return [{host_var}, err]
+  if a:major_ver == 2
+    if exists('g:python_host_prog')
+      return [g:python_host_prog, '']
+    else
+      let progs = ['python2', 'python2.7', 'python2.6', 'python']
     endif
-    return ['', 'provider/pythonx: Could not load Python ' . a:major_ver
-          \ . ' from ' . host_var . ': ' . err]
+  else
+    if exists('g:python3_host_prog')
+      return [g:python3_host_prog, '']
+    else
+      let progs = ['python3', 'python3.5', 'python3.4', 'python3.3', 'python']
+    endif
   endif
 
-  let prog_suffixes = (a:major_ver == 2) ?
-        \   ['2', '2.7', '2.6', '']
-        \ : ['3', '3.5', '3.4', '3.3', '']
-
   let errors = []
-  for prog in map(prog_suffixes, "'python' . v:val")
-    let [result, err] = s:check_interpreter(prog, a:major_ver, skip)
+
+  for prog in progs
+    let [result, err] = s:check_interpreter(prog, a:major_ver)
     if result
       return [prog, err]
     endif
-
     " Accumulate errors in case we don't find
     " any suitable Python interpreter.
     call add(errors, err)
@@ -83,14 +78,10 @@ function! provider#pythonx#Detect(major_ver) abort
         \ . ":\n" .  join(errors, "\n")]
 endfunction
 
-function! s:check_interpreter(prog, major_ver, skip) abort
+function! s:check_interpreter(prog, major_ver) abort
   let prog_path = exepath(a:prog)
   if prog_path ==# ''
     return [0, a:prog . ' not found in search path or not executable.']
-  endif
-
-  if a:skip
-    return [1, '']
   endif
 
   let min_version = (a:major_ver == 2) ? '2.6' : '3.3'
