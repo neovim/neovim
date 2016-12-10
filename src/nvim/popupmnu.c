@@ -67,7 +67,6 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed)
   int kind_width;
   int extra_width;
   int i;
-  int top_clear;
   int row;
   int context_lines;
   int col;
@@ -128,14 +127,11 @@ redo:
 
   FOR_ALL_WINDOWS_IN_TAB(pvwin, curtab) {
       if (pvwin->w_p_pvw) {
-          break;
-      }
-  }
-  if (pvwin != NULL) {
-      if (pvwin->w_wrow < curwin->w_wrow) {
-          above_row = pvwin->w_wrow + pvwin->w_height;
-      } else if (pvwin->w_wrow > pvwin->w_wrow + curwin->w_height) {
-          below_row = pvwin->w_wrow;
+          if (pvwin->w_wrow < curwin->w_wrow) {
+              above_row = pvwin->w_wrow + pvwin->w_height;
+          } else if (pvwin->w_wrow > pvwin->w_wrow + curwin->w_height) {
+              below_row = pvwin->w_wrow;
+          }
       }
   }
 
