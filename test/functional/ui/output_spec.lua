@@ -39,4 +39,25 @@ describe("shell command :!", function()
       {3:-- TERMINAL --}                                    |
     ]])
   end)
+
+  it("throttles shell-command output greater than ~10KB", function()
+    screen.timeout = 20000  -- Avoid false failure on slow systems.
+    child_session.feed_data(
+      ":!for i in $(seq 2 3000); do echo XXXXXXXXXX $i; done\n")
+
+    -- If we observe any line starting with a dot, then throttling occurred.
+    screen:expect("\n.", nil, nil, nil, true)
+
+    -- Final chunk of output should always be displayed, never skipped.
+    -- (Throttling is non-deterministic, this test is merely a sanity check.)
+    screen:expect([[
+      XXXXXXXXXX 2996                                   |
+      XXXXXXXXXX 2997                                   |
+      XXXXXXXXXX 2998                                   |
+      XXXXXXXXXX 2999                                   |
+      XXXXXXXXXX 3000                                   |
+      {10:Press ENTER or type command to continue}{1: }          |
+      {3:-- TERMINAL --}                                    |
+    ]])
+  end)
 end)

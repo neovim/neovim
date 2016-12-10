@@ -255,13 +255,19 @@ g8			Print the hex values of the bytes used in the
 			backslashes are before the newline, only one is
 			removed.
 
-			On Unix the command normally runs in a non-interactive
-			shell.  If you want an interactive shell to be used
-			(to use aliases) set 'shellcmdflag' to "-ic".
+			The command runs in a non-interactive shell connected
+			to a pipe (not a terminal). Use |:terminal| to run an
+			interactive shell connected to a terminal.
+
 			For Win32 also see |:!start|.
 
 			After the command has been executed, the timestamp and
 			size of the current file is checked |timestamp|.
+
+			If the command produces too much output some lines may
+			be skipped so the command can execute quickly.  No
+			data is lost, this only affects the display.  The last
+			few lines are always displayed (never skipped).
 
 			Vim redraws the screen after the command is finished,
 			because it may have printed any text.  This requires a

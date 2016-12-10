@@ -88,18 +88,17 @@ void ui_builtin_start(void)
 #ifdef FEAT_TUI
   tui_start();
 #else
-  fprintf(stderr, "Neovim was built without a Terminal UI," \
-          "press Ctrl+C to exit\n");
-
+  fprintf(stderr, "Nvim headless-mode started.\n");
   size_t len;
   char **addrs = server_address_list(&len);
   if (addrs != NULL) {
-    fprintf(stderr, "currently listening on the following address(es)\n");
+    fprintf(stderr, "Listening on:\n");
     for (size_t i = 0; i < len; i++) {
       fprintf(stderr, "\t%s\n", addrs[i]);
     }
     xfree(addrs);
   }
+  fprintf(stderr, "Press CTRL+C to exit.\n");
 #endif
 }
 

@@ -1,5 +1,5 @@
 // Bridge for communication between a UI thread and nvim core.
-// Used by the built-in TUI and external libnvim-based UIs.
+// Used by the built-in TUI and libnvim-based UIs.
 #ifndef NVIM_UI_BRIDGE_H
 #define NVIM_UI_BRIDGE_H
 

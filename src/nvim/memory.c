@@ -283,18 +283,16 @@ size_t memcnt(const void *data, char c, size_t len)
   return cnt;
 }
 
-/// The xstpcpy() function shall copy the string pointed to by src (including
-/// the terminating NUL character) into the array pointed to by dst.
+/// Copies the string pointed to by src (including the terminating NUL
+/// character) into the array pointed to by dst.
 ///
-/// The xstpcpy() function shall return a pointer to the terminating NUL
-/// character copied into the dst buffer. This is the only difference with
-/// strcpy(), which returns dst.
+/// @returns pointer to the terminating NUL char copied into the dst buffer.
+///          This is the only difference with strcpy(), which returns dst.
 ///
-/// WARNING: If copying takes place between objects that overlap, the behavior is
-/// undefined.
+/// WARNING: If copying takes place between objects that overlap, the behavior
+/// is undefined.
 ///
-/// This is the Neovim version of stpcpy(3) as defined in POSIX 2008. We
-/// don't require that supported platforms implement POSIX 2008, so we
+/// Nvim version of POSIX 2008 stpcpy(3). We do not require POSIX 2008, so
 /// implement our own version.
 ///
 /// @param dst
@@ -306,16 +304,15 @@ char *xstpcpy(char *restrict dst, const char *restrict src)
   return (char *)memcpy(dst, src, len + 1) + len;
 }
 
-/// The xstpncpy() function shall copy not more than n bytes (bytes that follow
-/// a NUL character are not copied) from the array pointed to by src to the
-/// array pointed to by dst.
+/// Copies not more than n bytes (bytes that follow a NUL character are not
+/// copied) from the array pointed to by src to the array pointed to by dst.
 ///
-/// If a NUL character is written to the destination, the xstpncpy() function
-/// shall return the address of the first such NUL character. Otherwise, it
-/// shall return &dst[maxlen].
+/// If a NUL character is written to the destination, xstpncpy() returns the
+/// address of the first such NUL character. Otherwise, it shall return
+/// &dst[maxlen].
 ///
-/// WARNING: If copying takes place between objects that overlap, the behavior is
-/// undefined.
+/// WARNING: If copying takes place between objects that overlap, the behavior
+/// is undefined.
 ///
 /// WARNING: xstpncpy will ALWAYS write maxlen bytes. If src is shorter than
 /// maxlen, zeroes will be written to the remaining bytes.
