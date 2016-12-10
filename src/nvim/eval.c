@@ -11581,7 +11581,7 @@ static void f_jobresize(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   rettv->vval.v_number = 1;
 }
 
-static char **tv_to_argv(typval_T *cmd_tv, char **cmd)
+static char **tv_to_argv(typval_T *cmd_tv, char **cmd, bool *executable)
 {
   if (cmd_tv->v_type == VAR_STRING) {
     char *cmd_str = (char *)get_tv_string(cmd_tv);
@@ -11599,7 +11599,7 @@ static char **tv_to_argv(typval_T *cmd_tv, char **cmd)
   list_T *argl = cmd_tv->vval.v_list;
   int argc = argl->lv_len;
   if (!argc) {
-    EMSG(_("Argument vector must have at least one item"));
+    EMSG(_(e_invarg));  // List must have at least one item.
     return NULL;
   }
 
@@ -11607,14 +11607,16 @@ static char **tv_to_argv(typval_T *cmd_tv, char **cmd)
 
   const char_u *exe = get_tv_string_chk(&argl->lv_first->li_tv);
   if (!exe || !os_can_exe(exe, NULL, true)) {
-    // String is not executable
+    if (exe && executable) {
+      *executable = false;
+    }
     return NULL;
   }
 
   if (cmd) {
     *cmd = (char *)exe;
   }
-  
+
   // Build the argument vector
   int i = 0;
   char **argv = xcalloc(argc + 1, sizeof(char *));
@@ -11641,9 +11643,10 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     return;
   }
 
-  char **argv = tv_to_argv(&argvars[0], NULL);
+  bool executable = true;
+  char **argv = tv_to_argv(&argvars[0], NULL, &executable);
   if (!argv) {
-    rettv->vval.v_number = -1;  // Return -1 on error.
+    rettv->vval.v_number = executable ? 0 : -1;
     return;  // Did error message in tv_to_argv.
   }
 
@@ -16233,7 +16236,7 @@ static void get_system_output_as_rettv(typval_T *argvars, typval_T *rettv,
   }
 
   // get shell command to execute
-  char **argv = tv_to_argv(&argvars[0], NULL);
+  char **argv = tv_to_argv(&argvars[0], NULL, NULL);
   if (!argv) {
     xfree(input);
     return;  // Already did emsg.
@@ -16466,9 +16469,10 @@ static void f_termopen(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   char *cmd;
-  char **argv = tv_to_argv(&argvars[0], &cmd);
+  bool executable = true;
+  char **argv = tv_to_argv(&argvars[0], &cmd, &executable);
   if (!argv) {
-    rettv->vval.v_number = -1;  // Return -1 on error.
+    rettv->vval.v_number = executable ? 0 : -1;
     return;  // Did error message in tv_to_argv.
   }
 
