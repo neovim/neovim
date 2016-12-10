@@ -113,7 +113,7 @@ static mapblock_T       *first_abbr = NULL; /* first entry in abbrlist */
 static int KeyNoremap = 0;                  /* remapping flags */
 
 /*
- * variables used by vgetorpeek() and flush_buffers()
+ * Variables used by vgetorpeek() and flush_buffers()
  *
  * typebuf.tb_buf[] contains all characters that are not consumed yet.
  * typebuf.tb_buf[typebuf.tb_off] is the first valid character.
