@@ -17162,7 +17162,7 @@ static void f_tempname(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 // "test_autochdir()" function
 static void f_test_autochdir(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  test_autochdir = TRUE;
+  test_autochdir = true;
 }
 
 // "termopen(cmd[, cwd])" function
