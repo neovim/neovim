@@ -67,13 +67,13 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed)
   int kind_width;
   int extra_width;
   int i;
-  int top_clear;
   int row;
   int context_lines;
   int col;
   int above_row;
   int below_row;
   int redo_count = 0;
+  win_T *pvwin;
 
   if (!pum_is_visible) {
     // To keep the code simple, we only allow changing the
@@ -126,17 +126,18 @@ redo:
   kind_width = 0;
   extra_width = 0;
 
-  FOR_ALL_WINDOWS_IN_TAB(pvwin, curtab) {
-      if (pvwin->w_p_pvw) {
-          break;
-      }
+  FOR_ALL_WINDOWS(pvwin) {
+    if (pvwin->w_p_pvw) {
+      break;
+    }
   }
+
   if (pvwin != NULL) {
-      if (pvwin->w_wrow < curwin->w_wrow) {
-          above_row = pvwin->w_wrow + pvwin->w_height;
-      } else if (pvwin->w_wrow > pvwin->w_wrow + curwin->w_height) {
-          below_row = pvwin->w_wrow;
-      }
+    if (pvwin->w_wrow < curwin->w_wrow) {
+      above_row = pvwin->w_wrow + pvwin->w_height;
+    } else if (pvwin->w_wrow > pvwin->w_wrow + curwin->w_height) {
+      below_row = pvwin->w_wrow;
+    }
   }
 
   // Figure out the size and position of the pum.
@@ -204,9 +205,9 @@ redo:
   }
 
   // If there is a preview window at the above avoid drawing over it.
-  if (pum_row < above_row && pum_height > above_row) {
-      pum_row += above_row;
-      pum_height -= above_row;
+  if (pvwin != NULL && pum_row < above_row && pum_height > above_row) {
+    pum_row += above_row;
+    pum_height -= above_row;
   }
 
   // Compute the width of the widest match and the widest extra.
