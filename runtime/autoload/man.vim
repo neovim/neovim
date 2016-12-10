@@ -67,6 +67,43 @@ function! man#read_page(ref) abort
   call s:read_page(path)
 endfunction
 
+" Handler for s:system() function.
+function! s:system_handler(jobid, data, event) abort
+  if a:event == 'stdout' || a:event == 'stderr'
+    let self.output .= join(a:data, "\n")
+  elseif a:event == 'exit'
+    let s:shell_error = a:data
+  endif
+endfunction
+
+" Run a system command and timeout after 30 seconds.
+function! s:system(cmd, ...) abort
+  let stdin = a:0 ? a:1 : ''
+  let opts = {
+        \ 'output': '',
+        \ 'on_stdout': function('s:system_handler'),
+        \ 'on_exit': function('s:system_handler'),
+        \ }
+  let jobid = jobstart(a:cmd, opts)
+
+  if jobid < 1
+    let s:shell_error = 1
+    return opts.output
+  endif
+
+  if !empty(stdin)
+    call jobsend(jobid, stdin)
+  endif
+
+  let res = jobwait([jobid], 30000)
+  if res[0] == -1
+    call jobstop(jobid)
+  elseif s:shell_error != 0
+  endif
+
+  return opts.output
+endfunction
+
 function! s:read_page(path) abort
   setlocal modifiable
   setlocal noreadonly
@@ -74,7 +111,7 @@ function! s:read_page(path) abort
   " Force MANPAGER=cat to ensure Vim is not recursively invoked (by man-db).
   " http://comments.gmane.org/gmane.editors.vim.devel/29085
   " Respect $MANWIDTH, or default to window width.
-  silent put =system(['env', 'MANPAGER=cat', (empty($MANWIDTH) ? ' MANWIDTH='.winwidth(0) : ''), s:man_cmd, a:path])
+  silent put =s:system(['env', 'MANPAGER=cat', (empty($MANWIDTH) ? ' MANWIDTH='.winwidth(0) : ''), s:man_cmd, a:path])
   " Remove all backspaced characters.
   execute 'silent keeppatterns keepjumps %substitute,.\b,,e'.(&gdefault?'':'g')
   while getline(1) =~# '^\s*$'
@@ -106,7 +143,7 @@ endfunction
 
 function! s:get_path(sect, name) abort
   if empty(a:sect)
-    let path = system([s:man_cmd, s:man_find_arg, a:name])
+    let path = s:system([s:man_cmd, s:man_find_arg, a:name])
     if path !~# '^\/'
       throw 'no manual entry for '.a:name
     endif
@@ -117,7 +154,7 @@ function! s:get_path(sect, name) abort
   "   - sections starting with '-'
   "   - 3pcap section (found on macOS)
   "   - commas between sections (for section priority)
-  return system([s:man_cmd, s:man_find_arg, '-s', a:sect, a:name])
+  return s:system([s:man_cmd, s:man_find_arg, '-s', a:sect, a:name])
 endfunction
 
 function! s:verify_exists(sect, name) abort
@@ -191,7 +228,7 @@ function! s:error(msg) abort
   echohl None
 endfunction
 
-let s:mandirs = join(split(system([s:man_cmd, s:man_find_arg]), ':\|\n'), ',')
+let s:mandirs = join(split(s:system([s:man_cmd, s:man_find_arg]), ':\|\n'), ',')
 
 " see man#extract_sect_and_name_ref on why tolower(sect)
 function! man#complete(arg_lead, cmd_line, cursor_pos) abort
