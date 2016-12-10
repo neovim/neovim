@@ -3,6 +3,7 @@
 
 source test_assign.vim
 source test_autocmd.vim
+source test_autochdir.vim
 source test_cursor_func.vim
 source test_ex_undo.vim
 source test_expr.vim

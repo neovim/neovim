@@ -17159,6 +17159,12 @@ static void f_tempname(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   rettv->vval.v_string = vim_tempname();
 }
 
+// "test_autochdir()" function
+static void f_test_autochdir(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  test_autochdir = TRUE;
+}
+
 // "termopen(cmd[, cwd])" function
 static void f_termopen(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {

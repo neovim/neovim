@@ -1330,7 +1330,7 @@ void enter_buffer(buf_T *buf)
 void do_autochdir(void)
 {
   if (p_acd) {
-    if (starting == 0
+    if ((starting == 0 || test_autochdir)
         && curbuf->b_ffname != NULL
         && vim_chdirfile(curbuf->b_ffname) == OK) {
       shorten_fnames(true);
