@@ -155,6 +155,10 @@ are always available and may be used simultaneously in separate plugins.  The
 
 |system()| does not support writing/reading "backgrounded" commands. |E5677|
 
+Nvim may throttle (skip) messages from shell commands (|:!|, |:grep|, |:make|)
+if there is too much output. No data is lost, this only affects display and
+makes things faster. |:terminal| output is never throttled.
+
 |mkdir()| behaviour changed:
 1. Assuming /tmp/foo does not exist and /tmp can be written to
    mkdir('/tmp/foo/bar', 'p', 0700) will create both /tmp/foo and /tmp/foo/bar 

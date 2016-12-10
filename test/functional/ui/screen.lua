@@ -126,7 +126,7 @@ end
 do
   local spawn, nvim_prog = helpers.spawn, helpers.nvim_prog
   local session = spawn({nvim_prog, '-u', 'NONE', '-i', 'NONE', '-N', '--embed'})
-  local status, rv = session:request('vim_get_color_map')
+  local status, rv = session:request('nvim_get_color_map')
   if not status then
     print('failed to get color map')
     os.exit(1)
@@ -207,7 +207,15 @@ function Screen:try_resize(columns, rows)
   uimeths.try_resize(columns, rows)
 end
 
-function Screen:expect(expected, attr_ids, attr_ignore, condition)
+-- Asserts that `expected` eventually matches the screen state.
+--
+-- expected:    Expected screen state (string).
+-- attr_ids:    Text attribute definitions.
+-- attr_ignore: Ignored text attributes.
+-- condition:   Function asserting some arbitrary condition.
+-- any:         true: Succeed if `expected` matches ANY screen line(s).
+--              false (default): `expected` must match screen exactly.
+function Screen:expect(expected, attr_ids, attr_ignore, condition, any)
   -- remove the last line and dedent
   expected = dedent(expected:gsub('\n[ ]+$', ''))
   local expected_rows = {}
@@ -229,21 +237,34 @@ function Screen:expect(expected, attr_ids, attr_ignore, condition)
     for i = 1, self._height do
       actual_rows[i] = self:_row_repr(self._rows[i], ids, ignore)
     end
-    for i = 1, self._height do
-      if expected_rows[i] ~= actual_rows[i] then
-        local msg_expected_rows = {}
-        for j = 1, #expected_rows do
-          msg_expected_rows[j] = expected_rows[j]
-        end
-        msg_expected_rows[i] = '*' .. msg_expected_rows[i]
-        actual_rows[i] = '*' .. actual_rows[i]
+
+    if any then
+      -- Search for `expected` anywhere in the screen lines.
+      local actual_screen_str = table.concat(actual_rows, '\n')
+      if nil == string.find(actual_screen_str, expected) then
         return (
-          'Row ' .. tostring(i) .. ' didn\'t match.\n'
-          .. 'Expected:\n|' .. table.concat(msg_expected_rows, '|\n|') .. '|\n'
-          .. 'Actual:\n|' .. table.concat(actual_rows, '|\n|') .. '|\n\n' .. [[
+          'Failed to match any screen lines.\n'
+          .. 'Expected (anywhere): "' .. expected .. '"\n'
+          .. 'Actual:\n  |' .. table.concat(actual_rows, '|\n  |') .. '|\n\n')
+      end
+    else
+      -- `expected` must match the screen lines exactly.
+      for i = 1, self._height do
+        if expected_rows[i] ~= actual_rows[i] then
+          local msg_expected_rows = {}
+          for j = 1, #expected_rows do
+            msg_expected_rows[j] = expected_rows[j]
+          end
+          msg_expected_rows[i] = '*' .. msg_expected_rows[i]
+          actual_rows[i] = '*' .. actual_rows[i]
+          return (
+            'Row ' .. tostring(i) .. ' did not match.\n'
+            ..'Expected:\n  |'..table.concat(msg_expected_rows, '|\n  |')..'|\n'
+            ..'Actual:\n  |'..table.concat(actual_rows, '|\n  |')..'|\n\n'..[[
 To print the expect() call that would assert the current screen state, use
 screen:snaphot_util(). In case of non-deterministic failures, use
 screen:redraw_debug() to show all intermediate screen states.  ]])
+        end
       end
     end
   end)

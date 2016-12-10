@@ -534,7 +534,7 @@ int main(int argc, char **argv)
   }
 
   TIME_MSG("before starting main loop");
-  ILOG("Starting Neovim main loop.");
+  ILOG("starting main loop");
 
   /*
    * Call the main command loop.  This never returns.
