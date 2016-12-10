@@ -1542,7 +1542,8 @@ static char_u * do_one_cmd(char_u **cmdlinep,
         break;
     }
     ea.cmd = skipwhite(ea.cmd);
-    lnum = get_address(&ea, &ea.cmd, ea.addr_type, ea.skip, ea.addr_count == 0);
+    lnum = get_address(&ea, &ea.cmd, ea.addr_type, ea.skip,
+                       ea.addr_count == 0);
     if (ea.cmd == NULL) {  // error detected
       goto doend;
     }
