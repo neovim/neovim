@@ -3286,7 +3286,8 @@ static bool ins_compl_prep(int c)
         retval = true;
       }
 
-      /* CTRL-E means completion is Ended, go back to the typed text. */
+      // CTRL-E means completion is Ended, go back to the typed text.
+      // but only do this, if the Popup is still visible
       if (c == Ctrl_E) {
         ins_compl_delete();
         if (compl_leader != NULL) {
