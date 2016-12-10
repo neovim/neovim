@@ -67,12 +67,13 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed)
   int kind_width;
   int extra_width;
   int i;
-  int top_clear;
   int row;
   int context_lines;
   int col;
-  int above_row = cmdline_row;
+  int above_row;
+  int below_row;
   int redo_count = 0;
+  win_T *pvwin;
 
   if (!pum_is_visible) {
     // To keep the code simple, we only allow changing the
@@ -85,6 +86,8 @@ redo:
   // to avoid that must_redraw is set when 'cursorcolumn' is on.
   pum_is_visible = true;
   validate_cursor_col();
+  above_row = 0;
+  below_row = cmdline_row;
 
   // anchor position: the start of the completed word
   row = curwin->w_wrow + curwin->w_winrow;
@@ -123,17 +126,18 @@ redo:
   kind_width = 0;
   extra_width = 0;
 
-  if (firstwin->w_p_pvw) {
-    top_clear = firstwin->w_height;
-  } else {
-    top_clear = 0;
+  FOR_ALL_WINDOWS(pvwin) {
+    if (pvwin->w_p_pvw) {
+      break;
+    }
   }
 
-  // When the preview window is at the bottom stop just above it.  Also
-  // avoid drawing over the status line so that it's clear there is a window
-  // boundary.
-  if (lastwin->w_p_pvw) {
-    above_row -= lastwin->w_height + lastwin->w_status_height + 1;
+  if (pvwin != NULL) {
+    if (pvwin->w_wrow < curwin->w_wrow) {
+      above_row = pvwin->w_wrow + pvwin->w_height;
+    } else if (pvwin->w_wrow > pvwin->w_wrow + curwin->w_height) {
+      below_row = pvwin->w_wrow;
+    }
   }
 
   // Figure out the size and position of the pum.
@@ -149,8 +153,8 @@ redo:
 
   // Put the pum below "row" if possible.  If there are few lines decide on
   // where there is more room.
-  if ((row  + 2 >= above_row - pum_height)
-      && (row > (above_row - top_clear) / 2)) {
+  if (row + 2 >= below_row - pum_height
+      && row - above_row > (below_row - above_row) / 2) {
     // pum above "row"
 
     // Leave two lines of context if possible
@@ -184,8 +188,8 @@ redo:
     }
 
     pum_row = row + context_lines;
-    if (size > above_row - pum_row) {
-      pum_height = above_row - pum_row;
+    if (size > below_row - pum_row) {
+      pum_height = below_row - pum_row;
     } else {
       pum_height = size;
     }
@@ -200,12 +204,10 @@ redo:
     return;
   }
 
-  // If there is a preview window at the top avoid drawing over it.
-  if (firstwin->w_p_pvw
-      && (pum_row < firstwin->w_height)
-      && (pum_height > firstwin->w_height + 4)) {
-    pum_row += firstwin->w_height;
-    pum_height -= firstwin->w_height;
+  // If there is a preview window at the above avoid drawing over it.
+  if (pvwin != NULL && pum_row < above_row && pum_height > above_row) {
+    pum_row += above_row;
+    pum_height -= above_row;
   }
 
   // Compute the width of the widest match and the widest extra.
@@ -588,7 +590,9 @@ static int pum_set_selected(int n, int repeat)
       g_do_tagpreview = 0;
 
       if (curwin->w_p_pvw) {
-        if ((curbuf->b_fname == NULL)
+        if (!resized
+            && (curbuf->b_nwindows == 1)
+            && (curbuf->b_fname == NULL)
             && (curbuf->b_p_bt[0] == 'n')
             && (curbuf->b_p_bt[2] == 'f')
             && (curbuf->b_p_bh[0] == 'w')) {
