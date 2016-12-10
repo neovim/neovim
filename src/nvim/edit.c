@@ -3267,7 +3267,7 @@ static bool ins_compl_prep(int c)
           dec_cursor();
         }
 
-        if (!arrow_used && !ins_need_undo) {
+        if (!arrow_used && !ins_need_undo && c != Ctrl_E) {
           insertchar(NUL, 0, -1);
         }
 

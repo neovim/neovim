@@ -175,4 +175,22 @@ func Test_omnifunc_with_check()
   q!
 endfunc
 
+" <C-E> - select original typed text before the completion started without
+" auto-wrap text.
+func Test_completion_ctrl_e_without_autowrap()
+  new
+  let tw_save=&tw
+  set tw=78
+  let li = [
+        \ '"                                                        zzz',
+        \ '" zzzyyyyyyyyyyyyyyyyyyy']
+  call setline(1, li)
+  0
+  call feedkeys("A\<C-X>\<C-N>\<C-E>\<Esc>", "tx")
+  call assert_equal(li, getline(1, '$'))
+
+  let &tw=tw_save
+  q!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
