@@ -132,10 +132,11 @@ redo:
       }
   }
   if (pvwin != NULL) {
-      if (pvwin->w_wrow < curwin->w_wrow)
+      if (pvwin->w_wrow < curwin->w_wrow) {
           above_row = pvwin->w_wrow + pvwin->w_height;
-      else if (pvwin->w_wrow > pvwin->w_wrow + curwin->w_height)
+      } else if (pvwin->w_wrow > pvwin->w_wrow + curwin->w_height) {
           below_row = pvwin->w_wrow;
+      }
   }
 
   // Figure out the size and position of the pum.
@@ -152,7 +153,7 @@ redo:
   // Put the pum below "row" if possible.  If there are few lines decide on
   // where there is more room.
   if (row + 2 >= below_row - pum_height
-          && row - above_row > (below_row - above_row) / 2) {
+      && row - above_row > (below_row - above_row) / 2) {
     // pum above "row"
 
     // Leave two lines of context if possible
