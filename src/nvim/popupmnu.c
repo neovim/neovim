@@ -151,7 +151,8 @@ redo:
 
   // Put the pum below "row" if possible.  If there are few lines decide on
   // where there is more room.
-  if (row - above_row >= below_row - row) {
+  if (row + 2 >= below_row - pum_height
+          && row - above_row > (below_row - above_row) / 2) {
     // pum above "row"
 
     // Leave two lines of context if possible
