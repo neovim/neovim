@@ -67,7 +67,7 @@ endfunction
 
 " Handler for s:system() function.
 function! s:system_handler(jobid, data, event) abort
-  if a:event == 'stdout' || a:event == 'stderr'
+  if a:event == 'stdout'
     let self.output .= join(a:data, "\n")
   elseif a:event == 'exit'
     let s:shell_error = a:data
