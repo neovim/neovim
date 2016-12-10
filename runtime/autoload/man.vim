@@ -1,7 +1,5 @@
 " Maintainer: Anmol Sethi <anmol@aubble.com>
 
-let s:man_cmd = 'man'
-
 let s:man_find_arg = "-w"
 
 " TODO(nhooyr) Completion may work on SunOS; I'm not sure if `man -l` displays
@@ -87,8 +85,8 @@ function! s:system(cmd, ...) abort
   let jobid = jobstart(a:cmd, opts)
 
   if jobid < 1
-    let s:shell_error = 1
-    return opts.output
+    throw printf('Command error %d: %s', jobid, 
+        \ type(a:cmd) == type([]) ? join(a:cmd) : a:cmd)
   endif
 
   if !empty(stdin)
@@ -98,7 +96,12 @@ function! s:system(cmd, ...) abort
   let res = jobwait([jobid], 30000)
   if res[0] == -1
     call jobstop(jobid)
+    throw printf('Command timed out: %s',
+        \ type(a:cmd) == type([]) ? join(a:cmd) : a:cmd)
   elseif s:shell_error != 0
+    throw printf("Command error (%d) %s: %s", jobid,
+        \ type(a:cmd) == type([]) ? join(a:cmd) : a:cmd,
+        \ opts.output))
   endif
 
   return opts.output
@@ -111,7 +114,7 @@ function! s:read_page(path) abort
   " Force MANPAGER=cat to ensure Vim is not recursively invoked (by man-db).
   " http://comments.gmane.org/gmane.editors.vim.devel/29085
   " Respect $MANWIDTH, or default to window width.
-  silent put =s:system(['env', 'MANPAGER=cat', (empty($MANWIDTH) ? ' MANWIDTH='.winwidth(0) : ''), s:man_cmd, a:path])
+  silent put =s:system(['env', 'MANPAGER=cat', (empty($MANWIDTH) ? ' MANWIDTH='.winwidth(0) : ''), 'man', a:path])
   " Remove all backspaced characters.
   execute 'silent keeppatterns keepjumps %substitute,.\b,,e'.(&gdefault?'':'g')
   while getline(1) =~# '^\s*$'
@@ -143,7 +146,7 @@ endfunction
 
 function! s:get_path(sect, name) abort
   if empty(a:sect)
-    let path = s:system([s:man_cmd, s:man_find_arg, a:name])
+    let path = s:system(['man', s:man_find_arg, a:name])
     if path !~# '^\/'
       throw 'no manual entry for '.a:name
     endif
@@ -154,7 +157,7 @@ function! s:get_path(sect, name) abort
   "   - sections starting with '-'
   "   - 3pcap section (found on macOS)
   "   - commas between sections (for section priority)
-  return s:system([s:man_cmd, s:man_find_arg, '-s', a:sect, a:name])
+  return s:system(['man', s:man_find_arg, '-s', a:sect, a:name])
 endfunction
 
 function! s:verify_exists(sect, name) abort
@@ -228,7 +231,7 @@ function! s:error(msg) abort
   echohl None
 endfunction
 
-let s:mandirs = join(split(s:system([s:man_cmd, s:man_find_arg]), ':\|\n'), ',')
+let s:mandirs = join(split(s:system(['man', s:man_find_arg]), ':\|\n'), ',')
 
 " see man#extract_sect_and_name_ref on why tolower(sect)
 function! man#complete(arg_lead, cmd_line, cursor_pos) abort
