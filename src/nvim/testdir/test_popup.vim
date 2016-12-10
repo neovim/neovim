@@ -1,26 +1,270 @@
 " Test for completion menu
 
-function! ComplTest() abort
-  call complete(1, ['source', 'soundfold'])
-  return ''
-endfunction
+let g:months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+let g:setting = ''
 
-function! Test() abort
-  call complete(1, ['source', 'soundfold'])
+func! ListMonths()
+  if g:setting != ''
+    exe ":set" g:setting
+  endif
+  let mth=copy(g:months)
+  let entered = strcharpart(getline('.'),0,col('.'))
+  if !empty(entered)
+    let mth=filter(mth, 'v:val=~"^".entered')
+  endif
+  call complete(1, mth)
   return ''
-endfunction
+endfunc
+
+func! Test_popup_complete2()
+  " Although the popupmenu is not visible, this does not mean completion mode
+  " has ended. After pressing <f5> to complete the currently typed char, Vim
+  " still stays in the first state of the completion (:h ins-completion-menu),
+  " although the popupmenu wasn't shown <c-e> will remove the inserted
+  " completed text (:h complete_CTRL-E), while the following <c-e> will behave
+  " like expected (:h i_CTRL-E)
+  new
+  inoremap <f5> <c-r>=ListMonths()<cr>
+  call append(1, ["December2015"])
+  :1
+  call feedkeys("aD\<f5>\<C-E>\<C-E>\<C-E>\<C-E>\<enter>\<esc>", 'tx')
+  call assert_equal(["Dece", "", "December2015"], getline(1,3))
+  %d
+  bw!
+endfu
+
+func! Test_popup_complete()
+  new
+  inoremap <f5> <c-r>=ListMonths()<cr>
+
+  " <C-E> - select original typed text before the completion started
+  call feedkeys("aJu\<f5>\<down>\<c-e>\<esc>", 'tx')
+  call assert_equal(["Ju"], getline(1,2))
+  %d
+
+  " <C-Y> - accept current match
+  call feedkeys("a\<f5>". repeat("\<down>",7). "\<c-y>\<esc>", 'tx')
+  call assert_equal(["August"], getline(1,2))
+  %d
+
+  " <BS> - Delete one character from the inserted text (state: 1)
+  " TODO: This should not end the completion, but it does.
+  " This should according to the documentation:
+  " January
+  " but instead, this does
+  " Januar
+  " (idea is, C-L inserts the match from the popup menu
+  " but if the menu is closed, it will insert the character <c-l>
+  call feedkeys("aJ\<f5>\<bs>\<c-l>\<esc>", 'tx')
+  call assert_equal(["Januar"], getline(1,2))
+  %d
+
+  " any-non special character: Stop completion without changing the match
+  " and insert the typed character
+  call feedkeys("a\<f5>20", 'tx')
+  call assert_equal(["January20"], getline(1,2))
+  %d
+
+  " any-non printable, non-white character: Add this character and
+  " reduce number of matches
+  call feedkeys("aJu\<f5>\<c-p>l\<c-y>", 'tx')
+  call assert_equal(["Jul"], getline(1,2))
+  %d
+
+  " any-non printable, non-white character: Add this character and
+  " reduce number of matches
+  call feedkeys("aJu\<f5>\<c-p>l\<c-n>\<c-y>", 'tx')
+  call assert_equal(["July"], getline(1,2))
+  %d
+
+  " any-non printable, non-white character: Add this character and
+  " reduce number of matches
+  call feedkeys("aJu\<f5>\<c-p>l\<c-e>", 'tx')
+  call assert_equal(["Jul"], getline(1,2))
+  %d
+
+  " <BS> - Delete one character from the inserted text (state: 2)
+  call feedkeys("a\<f5>\<c-n>\<bs>", 'tx')
+  call assert_equal(["Februar"], getline(1,2))
+  %d
+
+  " <c-l> - Insert one character from the current match
+  call feedkeys("aJ\<f5>".repeat("\<c-n>",3)."\<c-l>\<esc>", 'tx')
+  call assert_equal(["J"], getline(1,2))
+  %d
+
+  " <c-l> - Insert one character from the current match
+  call feedkeys("aJ\<f5>".repeat("\<c-n>",4)."\<c-l>\<esc>", 'tx')
+  call assert_equal(["January"], getline(1,2))
+  %d
+
+  " <c-y> - Accept current selected match
+  call feedkeys("aJ\<f5>\<c-y>\<esc>", 'tx')
+  call assert_equal(["January"], getline(1,2))
+  %d
+
+  " <c-e> - End completion, go back to what was there before selecting a match
+  call feedkeys("aJu\<f5>\<c-e>\<esc>", 'tx')
+  call assert_equal(["Ju"], getline(1,2))
+  %d
+
+  " <PageUp> - Select a match several entries back
+  call feedkeys("a\<f5>\<PageUp>\<c-y>\<esc>", 'tx')
+  call assert_equal([""], getline(1,2))
+  %d
+
+  " <PageUp><PageUp> - Select a match several entries back
+  call feedkeys("a\<f5>\<PageUp>\<PageUp>\<c-y>\<esc>", 'tx')
+  call assert_equal(["December"], getline(1,2))
+  %d
+
+  " <PageUp><PageUp><PageUp> - Select a match several entries back
+  call feedkeys("a\<f5>\<PageUp>\<PageUp>\<PageUp>\<c-y>\<esc>", 'tx')
+  call assert_equal(["February"], getline(1,2))
+  %d
+
+  " <PageDown> - Select a match several entries further
+  call feedkeys("a\<f5>\<PageDown>\<c-y>\<esc>", 'tx')
+  call assert_equal(["November"], getline(1,2))
+  %d
+
+  " <PageDown><PageDown> - Select a match several entries further
+  call feedkeys("a\<f5>\<PageDown>\<PageDown>\<c-y>\<esc>", 'tx')
+  call assert_equal(["December"], getline(1,2))
+  %d
+
+  " <PageDown><PageDown><PageDown> - Select a match several entries further
+  call feedkeys("a\<f5>\<PageDown>\<PageDown>\<PageDown>\<c-y>\<esc>", 'tx')
+  call assert_equal([""], getline(1,2))
+  %d
+
+  " <PageDown><PageDown><PageDown><PageDown> - Select a match several entries further
+  call feedkeys("a\<f5>".repeat("\<PageDown>",4)."\<c-y>\<esc>", 'tx')
+  call assert_equal(["October"], getline(1,2))
+  %d
+
+  " <Up> - Select a match don't insert yet
+  call feedkeys("a\<f5>\<Up>\<c-y>\<esc>", 'tx')
+  call assert_equal([""], getline(1,2))
+  %d
+
+  " <Up><Up> - Select a match don't insert yet
+  call feedkeys("a\<f5>\<Up>\<Up>\<c-y>\<esc>", 'tx')
+  call assert_equal(["December"], getline(1,2))
+  %d
+
+  " <Up><Up><Up> - Select a match don't insert yet
+  call feedkeys("a\<f5>\<Up>\<Up>\<Up>\<c-y>\<esc>", 'tx')
+  call assert_equal(["November"], getline(1,2))
+  %d
+
+  " <Tab> - Stop completion and insert the match
+  call feedkeys("a\<f5>\<Tab>\<c-y>\<esc>", 'tx')
+  call assert_equal(["January	"], getline(1,2))
+  %d
+
+  " <Space> - Stop completion and insert the match
+  call feedkeys("a\<f5>".repeat("\<c-p>",5)." \<esc>", 'tx')
+  call assert_equal(["September "], getline(1,2))
+  %d
+
+  " <Enter> - Use the text and insert line break (state: 1)
+  call feedkeys("a\<f5>\<enter>\<esc>", 'tx')
+  call assert_equal(["January", ''], getline(1,2))
+  %d
+
+  " <Enter> - Insert the current selected text (state: 2)
+  call feedkeys("a\<f5>".repeat("\<Up>",5)."\<enter>\<esc>", 'tx')
+  call assert_equal(["September"], getline(1,2))
+  %d
+
+  " Insert match immediately, if there is only one match
+  " <c-y> selects a character from the line above
+  call append(0, ["December2015"])
+  call feedkeys("aD\<f5>\<C-Y>\<C-Y>\<C-Y>\<C-Y>\<enter>\<esc>", 'tx')
+  call assert_equal(["December2015", "December2015", ""], getline(1,3))
+  %d
+
+  " use menuone for 'completeopt'
+  " Since for the first <c-y> the menu is still shown, will only select
+  " three letters from the line above
+  set completeopt&vim
+  set completeopt+=menuone
+  call append(0, ["December2015"])
+  call feedkeys("aD\<f5>\<C-Y>\<C-Y>\<C-Y>\<C-Y>\<enter>\<esc>", 'tx')
+  call assert_equal(["December2015", "December201", ""], getline(1,3))
+  %d
+
+  " use longest for 'completeopt'
+  set completeopt&vim
+  call feedkeys("aM\<f5>\<C-N>\<C-P>\<c-e>\<enter>\<esc>", 'tx')
+  set completeopt+=longest
+  call feedkeys("aM\<f5>\<C-N>\<C-P>\<c-e>\<enter>\<esc>", 'tx')
+  call assert_equal(["M", "Ma", ""], getline(1,3))
+  %d
+
+  " use noselect/noinsert for 'completeopt'
+  set completeopt&vim
+  call feedkeys("aM\<f5>\<enter>\<esc>", 'tx')
+  set completeopt+=noselect
+  call feedkeys("aM\<f5>\<enter>\<esc>", 'tx')
+  set completeopt-=noselect completeopt+=noinsert
+  call feedkeys("aM\<f5>\<enter>\<esc>", 'tx')
+  call assert_equal(["March", "M", "March"], getline(1,4))
+  %d
+endfu
+
+
+func! Test_popup_completion_insertmode()
+  new
+  inoremap <F5> <C-R>=ListMonths()<CR>
+
+  call feedkeys("a\<f5>\<down>\<enter>\<esc>", 'tx')
+  call assert_equal('February', getline(1))
+  %d
+  " Set noinsertmode
+  let g:setting = 'noinsertmode'
+  call feedkeys("a\<f5>\<down>\<enter>\<esc>", 'tx')
+  call assert_equal('February', getline(1))
+  call assert_false(pumvisible())
+  %d
+  " Go through all matches, until none is selected
+  let g:setting = ''
+  call feedkeys("a\<f5>". repeat("\<c-n>",12)."\<enter>\<esc>", 'tx')
+  call assert_equal('', getline(1))
+  %d
+  " select previous entry
+  call feedkeys("a\<f5>\<c-p>\<enter>\<esc>", 'tx')
+  call assert_equal('', getline(1))
+  %d
+  " select last entry
+  call feedkeys("a\<f5>\<c-p>\<c-p>\<enter>\<esc>", 'tx')
+  call assert_equal('December', getline(1))
+
+  iunmap <F5>
+endfunc
 
 func Test_noinsert_complete()
+  function! s:complTest1() abort
+    call complete(1, ['source', 'soundfold'])
+    return ''
+  endfunction
+
+  function! s:complTest2() abort
+    call complete(1, ['source', 'soundfold'])
+    return ''
+  endfunction
+
   new
   set completeopt+=noinsert
-  inoremap <F5>  <C-R>=ComplTest()<CR>
+  inoremap <F5>  <C-R>=s:complTest1()<CR>
   call feedkeys("i\<F5>soun\<CR>\<CR>\<ESC>.", 'tx')
   call assert_equal('soundfold', getline(1))
   call assert_equal('soundfold', getline(2))
   bwipe!
 
   new
-  inoremap <F5>  <C-R>=Test()<CR>
+  inoremap <F5>  <C-R>=s:complTest2()<CR>
   call feedkeys("i\<F5>\<CR>\<ESC>", 'tx')
   call assert_equal('source', getline(1))
   bwipe!
@@ -29,39 +273,20 @@ func Test_noinsert_complete()
   iunmap <F5>
 endfunc
 
-let g:months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
-let g:setting = ''
+func Test_compl_vim_cmds_after_register_expr()
+  function! s:test_func()
+    return 'autocmd '
+  endfunction
+  augroup AAAAA_Group
+    au!
+  augroup END
 
-func ListMonths()
-  if g:setting != ''
-    exe ":set" g:setting
-  endif
-  call complete(col('.'), g:months)
-  return ''
-endfunc
-
-func! Test_popup_completion_insertmode()
-  inoremap <F5> <C-R>=ListMonths()<CR>
   new
-  call feedkeys("a\<F5>\<down>\<enter>\<esc>", 'tx')
-  call assert_equal('February', getline(1))
-  %d
-  let g:setting = 'noinsertmode'
-  call feedkeys("a\<F5>\<down>\<enter>\<esc>", 'tx')
-  call assert_equal('February', getline(1))
-  call assert_false(pumvisible())
-  %d
-  let g:setting = ''
-  call feedkeys("a\<F5>". repeat("\<c-n>",12)."\<enter>\<esc>", 'tx')
-  call assert_equal('', getline(1))
-  %d
-  call feedkeys("a\<F5>\<c-p>\<enter>\<esc>", 'tx')
-  call assert_equal('', getline(1))
-  %d
-  call feedkeys("a\<F5>\<c-p>\<c-p>\<enter>\<esc>", 'tx')
-  call assert_equal('December', getline(1))
+  call feedkeys("i\<c-r>=s:test_func()\<CR>\<C-x>\<C-v>\<Esc>", 'tx')
+  call assert_equal('autocmd AAAAA_Group', getline(1))
+  autocmd! AAAAA_Group
+  augroup! AAAAA_Group
   bwipe!
-  iunmap <F5>
 endfunc
 
 func DummyCompleteOne(findstart, base)
@@ -153,7 +378,7 @@ func DummyCompleteFour(findstart, base)
   endif
 endfunc
 
-:"Test that 'completefunc' works when it's OK.
+" Test that 'omnifunc' works when it's OK.
 func Test_omnifunc_with_check()
   new
   setlocal omnifunc=DummyCompleteFour
@@ -173,6 +398,70 @@ func Test_omnifunc_with_check()
   call assert_equal('four5', getline(1))
 
   q!
+endfunc
+
+function UndoComplete()
+  call complete(1, ['January', 'February', 'March',
+        \ 'April', 'May', 'June', 'July', 'August', 'September',
+        \ 'October', 'November', 'December'])
+  return ''
+endfunc
+
+" Test that no undo item is created when no completion is inserted
+func Test_complete_no_undo()
+  set completeopt=menu,preview,noinsert,noselect
+  inoremap <Right> <C-R>=UndoComplete()<CR>
+  new
+  call feedkeys("ixxx\<CR>\<CR>yyy\<Esc>k", 'xt')
+  call feedkeys("iaaa\<Esc>0", 'xt')
+  call assert_equal('aaa', getline(2))
+  call feedkeys("i\<Right>\<Esc>", 'xt')
+  call assert_equal('aaa', getline(2))
+  call feedkeys("u", 'xt')
+  call assert_equal('', getline(2))
+
+  call feedkeys("ibbb\<Esc>0", 'xt')
+  call assert_equal('bbb', getline(2))
+  call feedkeys("A\<Right>\<Down>\<CR>\<Esc>", 'xt')
+  call assert_equal('January', getline(2))
+  call feedkeys("u", 'xt')
+  call assert_equal('bbb', getline(2))
+
+  call feedkeys("A\<Right>\<C-N>\<Esc>", 'xt')
+  call assert_equal('January', getline(2))
+  call feedkeys("u", 'xt')
+  call assert_equal('bbb', getline(2))
+
+  iunmap <Right>
+  set completeopt&
+  q!
+endfunc
+
+function! DummyCompleteFive(findstart, base)
+  if a:findstart
+    return 0
+  else
+    return [
+          \   { 'word': 'January', 'info': "info1-1\n1-2\n1-3" },
+          \   { 'word': 'February', 'info': "info2-1\n2-2\n2-3" },
+          \   { 'word': 'March', 'info': "info3-1\n3-2\n3-3" },
+          \   { 'word': 'April', 'info': "info4-1\n4-2\n4-3" },
+          \   { 'word': 'May', 'info': "info5-1\n5-2\n5-3" },
+          \ ]
+  endif
+endfunc
+
+" Test that 'completefunc' on Scratch buffer with preview window works when
+" it's OK.
+func Test_completefunc_with_scratch_buffer()
+  new +setlocal\ buftype=nofile\ bufhidden=wipe\ noswapfile
+  set completeopt+=preview
+  setlocal completefunc=DummyCompleteFive
+  call feedkeys("A\<C-X>\<C-U>\<C-N>\<C-N>\<C-N>\<Esc>", "x")
+  call assert_equal(['April'], getline(1, '$'))
+  pclose
+  q!
+  set completeopt&
 endfunc
 
 " <C-E> - select original typed text before the completion started without
