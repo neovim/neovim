@@ -2478,11 +2478,6 @@ msgstr "E900: Id do job � inv�lido"
 msgid "E901: Job table is full"
 msgstr "E901: Tabela de jobs está cheia"
 
-#: ../globals.h:1021
-#, c-format
-msgid "E902: \"%s\" is not an executable"
-msgstr "E902: \"%s\" não é um executável"
-
 #: ../globals.h:1023
 #, c-format
 msgid "E364: Library call failed for \"%s()\""
