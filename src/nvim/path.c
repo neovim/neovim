@@ -2163,9 +2163,12 @@ int append_path(char *path, const char *to_append, size_t max_len)
 static int path_get_absolute_path(const char_u *fname, char_u *buf,
                                   size_t len, int force)
 {
+  if (STRLEN(fname) > len) {
+    return FAIL;
+  }
+
   char_u *p;
   *buf = NUL;
-
   char *relative_directory = xmalloc(len);
   char *end_of_path = (char *) fname;
 
