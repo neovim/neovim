@@ -417,15 +417,11 @@ char *FullName_save(char *fname, bool force)
   }
 
   char *buf = xmalloc(MAXPATHL);
-  char *new_fname = NULL;
-  if (vim_FullName(fname, buf, MAXPATHL, force) != FAIL) {
-    new_fname = xstrdup(buf);
-  } else {
-    new_fname = xstrdup(fname);
+  if (vim_FullName(fname, buf, MAXPATHL, force) == FAIL) {
+    xfree(buf);
+    return xstrdup(fname);
   }
-  xfree(buf);
-
-  return new_fname;
+  return buf;
 }
 
 /// Saves the absolute path.
@@ -1649,30 +1645,37 @@ bool vim_isAbsName(char_u *name)
 
 /// Save absolute file name to "buf[len]".
 ///
-/// @param      fname is the filename to evaluate
-/// @param[out] buf   is the buffer for returning the absolute path for `fname`
-/// @param      len   is the length of `buf`
-/// @param      force is a flag to force expanding even if the path is absolute
+/// @param      fname filename to evaluate
+/// @param[out] buf   contains `fname` absolute path, or:
+///                   - truncated `fname` if longer than `len`
+///                   - unmodified `fname` if absolute path fails or is a URL
+/// @param      len   length of `buf`
+/// @param      force flag to force expanding even if the path is absolute
 ///
 /// @return           FAIL for failure, OK otherwise
 int vim_FullName(const char *fname, char *buf, size_t len, bool force)
   FUNC_ATTR_NONNULL_ARG(2)
 {
-  int retval = OK;
-  int url;
-
   *buf = NUL;
-  if (fname == NULL)
+  if (fname == NULL) {
     return FAIL;
-
-  url = path_with_url(fname);
-  if (!url)
-    retval = path_get_absolute_path((char_u *)fname, (char_u *)buf, len, force);
-  if (url || retval == FAIL) {
-    /* something failed; use the file name (truncate when too long) */
-    xstrlcpy(buf, fname, len);
   }
-  return retval;
+
+  if (strlen(fname) > (len - 1)) {
+    xstrlcpy(buf, fname, len);  // truncate
+    return FAIL;
+  }
+
+  if (path_with_url(fname)) {
+    xstrlcpy(buf, fname, len);
+    return OK;
+  }
+
+  int rv = path_get_absolute_path((char_u *)fname, (char_u *)buf, len, force);
+  if (rv == FAIL) {
+    xstrlcpy(buf, fname, len);  // something failed; use the filename
+  }
+  return rv;
 }
 
 /// Get the full resolved path for `fname`

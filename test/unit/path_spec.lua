@@ -336,6 +336,17 @@ describe('more path function', function()
       eq(FAIL, result)
     end)
 
+    it('fails safely if given length is wrong #5737', function()
+      local force_expansion = 1
+      local filename = 'foo/bar/bazzzzzzz/buz/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/a'
+      local too_short_len = 8
+      local buf = cstr(too_short_len, '')
+      local result = path.vim_FullName(filename, buf, too_short_len, force_expansion)
+      local expected = string.sub(filename, 1, (too_short_len - 1))
+      eq(expected, (ffi.string(buf)))
+      eq(FAIL, result)
+    end)
+
     it('uses the filename if the filename is a URL', function()
       local force_expansion = 1
       local filename = 'http://www.neovim.org'
