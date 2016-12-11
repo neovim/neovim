@@ -43,6 +43,10 @@ function! man#open_page(count, count1, mods, ...) abort
     call s:error(v:exception)
     return
   endtry
+  let page = s:get_page(path)
+  if empty(page)
+    return
+  endif
   call s:push_tag()
   let bufname = 'man://'.name.(empty(sect)?'':'('.sect.')')
   if a:mods !~# 'tab' && s:find_man()
@@ -51,7 +55,7 @@ function! man#open_page(count, count1, mods, ...) abort
     noautocmd execute 'silent' a:mods 'split' fnameescape(bufname)
   endif
   let b:man_sect = sect
-  call s:read_page(path)
+  call s:put_page(page)
 endfunction
 
 function! man#read_page(ref) abort
@@ -62,14 +66,18 @@ function! man#read_page(ref) abort
     " call to s:error() is unnecessary
     return
   endtry
-  call s:read_page(path)
+  let page = s:get_page(path)
+  if empty(page)
+    return
+  endif
+  call s:put_page(page)
 endfunction
 
 " Handler for s:system() function.
 function! s:system_handler(jobid, data, event) abort
   if a:event == 'stdout'
     let self.output .= join(a:data, "\n")
-  elseif a:event == 'exit'
+  else
     let s:shell_error = a:data
   endif
 endfunction
@@ -89,7 +97,7 @@ function! s:system(cmd, ...) abort
 
   let res = jobwait([jobid], 30000)
   if res[0] == -1
-    call jobstop(jobid)
+    silent! call jobstop(jobid)
     throw printf('command timed out: %s', join(a:cmd))
   elseif s:shell_error != 0
     throw printf("command error (%d) %s: %s", jobid, join(a:cmd), opts.output)
@@ -98,20 +106,23 @@ function! s:system(cmd, ...) abort
   return opts.output
 endfunction
 
-function! s:read_page(path) abort
+function! s:get_page(path) abort
+  try
+    return s:system(['env', 'MANPAGER=cat', (empty($MANWIDTH) ? ' MANWIDTH='.winwidth(0) : ''), 'man', a:path])
+  catch
+    call s:error(v:exception)
+    return
+  endtry
+endfunction
+
+function! s:put_page(page) abort
   setlocal modifiable
   setlocal noreadonly
   silent keepjumps %delete _
   " Force MANPAGER=cat to ensure Vim is not recursively invoked (by man-db).
   " http://comments.gmane.org/gmane.editors.vim.devel/29085
   " Respect $MANWIDTH, or default to window width.
-  try
-    let page = s:system(['env', 'MANPAGER=cat', (empty($MANWIDTH) ? ' MANWIDTH='.winwidth(0) : ''), 'man', a:path])
-    silent put =page
-  catch
-    call s:error(v:exception)
-    return
-  endtry
+  silent put =a:page
   " Remove all backspaced characters.
   execute 'silent keeppatterns keepjumps %substitute,.\b,,e'.(&gdefault?'':'g')
   while getline(1) =~# '^\s*$'
