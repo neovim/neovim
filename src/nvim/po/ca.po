@@ -2717,11 +2717,6 @@ msgstr "E49: La distància de desplaçament no és vàlida"
 msgid "E901: Job table is full"
 msgstr ""
 
-#: ../globals.h:1022
-#, c-format
-msgid "E902: \"%s\" is not an executable"
-msgstr ""
-
 #: ../globals.h:1024
 #, c-format
 msgid "E364: Library call failed for \"%s()\""

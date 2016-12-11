@@ -2704,11 +2704,6 @@ msgstr "E900: 'Job id' non valido"
 msgid "E901: Job table is full"
 msgstr "E901: Job table piena"
 
-#: ../globals.h:1022
-#, c-format
-msgid "E902: \"%s\" is not an executable"
-msgstr "E902: \"%s\" non è un esegubile"
-
 #: ../globals.h:1024
 #, c-format
 msgid "E364: Library call failed for \"%s()\""
