@@ -76,7 +76,6 @@ endfunction
 
 " Run a system command and timeout after 30 seconds.
 function! s:system(cmd, ...) abort
-  let stdin = a:0 ? a:1 : ''
   let opts = {
         \ 'output': '',
         \ 'on_stdout': function('s:system_handler'),
@@ -85,23 +84,15 @@ function! s:system(cmd, ...) abort
   let jobid = jobstart(a:cmd, opts)
 
   if jobid < 1
-    throw printf('Command error %d: %s', jobid, 
-        \ type(a:cmd) == type([]) ? join(a:cmd) : a:cmd)
-  endif
-
-  if !empty(stdin)
-    call jobsend(jobid, stdin)
+    throw printf('command error %d: %s', jobid, join(a:cmd))
   endif
 
   let res = jobwait([jobid], 30000)
   if res[0] == -1
     call jobstop(jobid)
-    throw printf('Command timed out: %s',
-        \ type(a:cmd) == type([]) ? join(a:cmd) : a:cmd)
+    throw printf('command timed out: %s', join(a:cmd))
   elseif s:shell_error != 0
-    throw printf("Command error (%d) %s: %s", jobid,
-        \ type(a:cmd) == type([]) ? join(a:cmd) : a:cmd,
-        \ opts.output))
+    throw printf("command error (%d) %s: %s", jobid, join(a:cmd), opts.output)
   endif
 
   return opts.output
@@ -114,7 +105,13 @@ function! s:read_page(path) abort
   " Force MANPAGER=cat to ensure Vim is not recursively invoked (by man-db).
   " http://comments.gmane.org/gmane.editors.vim.devel/29085
   " Respect $MANWIDTH, or default to window width.
-  silent put =s:system(['env', 'MANPAGER=cat', (empty($MANWIDTH) ? ' MANWIDTH='.winwidth(0) : ''), 'man', a:path])
+  try
+    let page = s:system(['env', 'MANPAGER=cat', (empty($MANWIDTH) ? ' MANWIDTH='.winwidth(0) : ''), 'man', a:path])
+    silent put =page
+  catch
+    call s:error(v:exception)
+    return
+  endtry
   " Remove all backspaced characters.
   execute 'silent keeppatterns keepjumps %substitute,.\b,,e'.(&gdefault?'':'g')
   while getline(1) =~# '^\s*$'
@@ -231,8 +228,6 @@ function! s:error(msg) abort
   echohl None
 endfunction
 
-let s:mandirs = join(split(s:system(['man', s:man_find_arg]), ':\|\n'), ',')
-
 " see man#extract_sect_and_name_ref on why tolower(sect)
 function! man#complete(arg_lead, cmd_line, cursor_pos) abort
   let args = split(a:cmd_line)
@@ -276,8 +271,14 @@ function! man#complete(arg_lead, cmd_line, cursor_pos) abort
     let name = a:arg_lead
     let sect = tolower(args[1])
   endif
+  try
+    let mandirs = join(split(s:system(['man', s:man_find_arg]), ':\|\n'), ',')
+  catch
+    call s:error(v:exception)
+    return
+  endtry
   " We remove duplicates incase the same manpage in different languages was found.
-  return uniq(sort(map(globpath(s:mandirs,'man?/'.name.'*.'.sect.'*', 0, 1), 's:format_candidate(v:val, sect)'), 'i'))
+  return uniq(sort(map(globpath(mandirs,'man?/'.name.'*.'.sect.'*', 0, 1), 's:format_candidate(v:val, sect)'), 'i'))
 endfunction
 
 function! s:format_candidate(path, sect) abort
