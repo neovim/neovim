@@ -65,9 +65,22 @@ describe('jobs', function()
   end)
 
   it('returns 0 when it fails to start', function()
-    local status, rv = pcall(eval, "jobstart([])")
-    eq(false, status)
-    ok(rv ~= nil)
+    eq("", eval("v:errmsg"))
+    execute("let g:test_jobid = jobstart([])")
+    eq(0, eval("g:test_jobid"))
+    eq("E474:", string.match(eval("v:errmsg"), "E%d*:"))
+  end)
+
+  it('returns -1 when target is not executable #5465', function()
+    local function new_job() return eval([[jobstart(['echo', 'foo'])]]) end
+    local executable_jobid = new_job()
+    local nonexecutable_jobid = eval(
+      "jobstart(['./test/functional/fixtures/non_executable.txt'])")
+    eq(-1, nonexecutable_jobid)
+    -- Should _not_ throw an error.
+    eq("", eval("v:errmsg"))
+    -- Non-executable job should not increment the job ids. #5465
+    eq(executable_jobid + 1, new_job())
   end)
 
   it('invokes callbacks when the job writes and exits', function()

@@ -383,6 +383,8 @@ int encode_read_from_list(ListReaderState *const state, char *const buf,
 
 #define TYPVAL_ENCODE_ALLOW_SPECIALS false
 
+// string_convert_one_value()
+// encode_vim_to_string()
 TYPVAL_ENCODE_DEFINE_CONV_FUNCTIONS(static, string, garray_T *const, gap)
 
 #undef TYPVAL_ENCODE_CONV_RECURSE
@@ -413,6 +415,8 @@ TYPVAL_ENCODE_DEFINE_CONV_FUNCTIONS(static, string, garray_T *const, gap)
       return OK; \
     } while (0)
 
+// echo_convert_one_value()
+// encode_vim_to_echo()
 TYPVAL_ENCODE_DEFINE_CONV_FUNCTIONS(, echo, garray_T *const, gap)
 
 #undef TYPVAL_ENCODE_CONV_RECURSE
@@ -704,6 +708,8 @@ bool encode_check_json_key(const typval_T *const tv)
       } \
     } while (0)
 
+// json_convert_one_value()
+// encode_vim_to_json()
 TYPVAL_ENCODE_DEFINE_CONV_FUNCTIONS(static, json, garray_T *const, gap)
 
 #undef TYPVAL_ENCODE_CONV_STRING
@@ -886,6 +892,8 @@ char *encode_tv2json(typval_T *tv, size_t *len)
 
 #define TYPVAL_ENCODE_ALLOW_SPECIALS true
 
+// msgpack_convert_one_value()
+// encode_vim_to_msgpack()
 TYPVAL_ENCODE_DEFINE_CONV_FUNCTIONS(, msgpack, msgpack_packer *const, packer)
 
 #undef TYPVAL_ENCODE_CONV_STRING

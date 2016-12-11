@@ -2,10 +2,10 @@ let s:suggest_faq = 'See https://github.com/neovim/neovim/wiki/FAQ'
 
 function! s:check_config() abort
   call health#report_start('Configuration')
-  let sensible_pi = globpath(&runtimepath, '**/sensible.vim', 1, 1)
-  if empty(sensible_pi)
+  if !get(g:, 'loaded_sensible', 0)
     call health#report_ok('no issues found')
   else
+    let sensible_pi = globpath(&runtimepath, '**/sensible.vim', 1, 1)
     call health#report_info("found sensible.vim plugin:\n".join(sensible_pi, "\n"))
     call health#report_error("sensible.vim plugin is not needed; Nvim has the same defaults built-in."
       \ ." Also, sensible.vim sets 'ttimeoutlen' to a sub-optimal value.",
