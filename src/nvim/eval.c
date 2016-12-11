@@ -411,6 +411,13 @@ static struct vimvar {
 static dictitem_T vimvars_var;                  // variable used for v:
 #define vimvarht  vimvardict.dv_hashtab
 
+typedef enum {
+  kJobTypeNormal,
+  kJobTypePty,
+  kJobTypeRpc,
+  kJobTypeTerm,
+} JobType;
+
 typedef struct {
   union {
     LibuvProcess uv;
@@ -421,6 +428,7 @@ typedef struct {
   bool stopped;
   bool exited;
   bool rpc;
+  JobType type;
   int refcount;
   ufunc_T *on_stdout, *on_stderr, *on_exit;
   dict_T *self;
@@ -11477,7 +11485,7 @@ static void f_jobclose(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 }
 
-// "jobpid(id)" function
+// DEPRECATED: "jobpid(id)" function
 static void f_jobpid(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   rettv->v_type = VAR_NUMBER;
@@ -11547,7 +11555,7 @@ static void f_jobsend(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   rettv->vval.v_number = wstream_write(data->proc.uv.process.in, buf);
 }
 
-// "jobresize(job, width, height)" function
+// DEPRECATED: "jobresize(job, width, height)" function
 static void f_jobresize(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   rettv->v_type = VAR_NUMBER;
@@ -11644,7 +11652,8 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     return;
   }
 
-  char **argv = tv_to_argv(&argvars[0], NULL);
+  char *cmd;
+  char **argv = tv_to_argv(&argvars[0], &cmd);
   if (!argv) {
     return;  // Did error message in tv_to_argv.
   }
@@ -11658,19 +11667,44 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
 
   dict_T *job_opts = NULL;
-  bool detach = false, rpc = false, pty = false;
+  JobType type = kJobTypeNormal;
+  bool detach = false;
   ufunc_T *on_stdout = NULL, *on_stderr = NULL, *on_exit = NULL;
   char *cwd = NULL;
   if (argvars[1].v_type == VAR_DICT) {
     job_opts = argvars[1].vval.v_dict;
 
     detach = get_dict_number(job_opts, "detach") != 0;
-    rpc = get_dict_number(job_opts, "rpc") != 0;
-    pty = get_dict_number(job_opts, "pty") != 0;
-    if (pty && rpc) {
-      EMSG2(_(e_invarg2), "job cannot have both 'pty' and 'rpc' options set");
-      shell_free_argv(argv);
-      return;
+    if (get_dict_number(job_opts, "rpc") != 0) {
+      type = kJobTypeRpc;
+    }
+    if (get_dict_number(job_opts, "pty") != 0) {
+      if (type == kJobTypeRpc) {
+        EMSG2(_(e_invarg2), "job cannot have both 'pty' and 'rpc' options set");
+        shell_free_argv(argv);
+        return;
+      }
+      type = kJobTypePty;
+    }
+
+    char *typestr = (char *)get_dict_string(job_opts, "type", false);
+    if (typestr != NULL && strlen(typestr) > 0) {
+      if (type != kJobTypeNormal) {
+        EMSG2(_(e_invarg2), "deprecated options 'rpc' and 'pty' cannot be used with 'type'");
+        shell_free_argv(argv);
+        return;
+      }
+      if (strcmp(typestr, "pty") == 0) {
+        type = kJobTypePty;
+      } else if (strcmp(typestr, "rpc") == 0) {
+        type = kJobTypeRpc;
+      } else if (strcmp(typestr, "term") == 0) {
+        type = kJobTypeTerm;
+      } else {
+        EMSG2(_(e_invarg2), "invalid job type");
+        shell_free_argv(argv);
+        return;
+      }
     }
 
     char *new_cwd = (char *)get_dict_string(job_opts, "cwd", false);
@@ -11691,10 +11725,10 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   TerminalJobData *data = common_job_init(argv, on_stdout, on_stderr, on_exit,
-                                          job_opts, pty, rpc, detach, cwd);
+                                          job_opts, type, detach, cwd);
   Process *proc = (Process *)&data->proc;
 
-  if (pty) {
+  if (type == kJobTypePty || type == kJobTypeTerm ) {
     uint16_t width = get_dict_number(job_opts, "width");
     if (width > 0) {
       data->proc.pty.width = width;
@@ -11705,17 +11739,22 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     }
     char *term = (char *)get_dict_string(job_opts, "TERM", true);
     if (term) {
+      xfree(data->proc.pty.term_name);
       data->proc.pty.term_name = term;
     }
   }
 
-  if (!rpc && !on_stdout) {
+  if (!on_stdout && type != kJobTypeTerm && type != kJobTypeRpc) {
     proc->out = NULL;
   }
-  if (!on_stderr) {
+  if (!on_stderr && type != kJobTypeTerm ) {
     proc->err = NULL;
   }
-  common_job_start(data, rettv);
+  if (common_job_start(data, rettv)) {
+    if (type == kJobTypeTerm) {
+      common_terminal_start(data, rettv, cmd);
+    }
+  }
 }
 
 // "jobstop()" function
@@ -11746,7 +11785,52 @@ static void f_jobstop(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   rettv->vval.v_number = 1;
 }
 
-// "jobwait(ids[, timeout])" function
+// "jobget({job}[, {key}])" function
+static void f_jobget(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  if (check_restricted() || check_secure()) {
+    return;
+  }
+
+  if (argvars[0].v_type != VAR_NUMBER || (argvars[1].v_type != VAR_STRING
+        && argvars[1].v_type != VAR_UNKNOWN)) {
+    EMSG(_(e_invarg));
+    return;
+  }
+
+  TerminalJobData *jobdata = find_job(argvars[0].vval.v_number);
+  if (!jobdata) {
+    EMSG(_(e_invjob));
+    return;
+  }
+
+  Process *jobproc = (Process *)&jobdata->proc;
+
+  rettv_dict_alloc(rettv);
+  dict_T *jobinfo_dict = rettv->vval.v_dict;
+
+  //pid
+  dict_add_nr_str(jobinfo_dict, "pid", jobproc->pid, NULL);
+  //type
+  dict_add_nr_str(jobinfo_dict, "type", -1,
+                  (char_u *)(jobdata->type == kJobTypePty ? "pty"
+                    : (jobdata->type == kJobTypeRpc ? "rpc"
+                       : (jobdata->type == kJobTypeTerm ? "term"
+                           : ""))));
+
+  //children
+  dictitem_T *const children_di = dictitem_alloc((char_u *)"children");
+  rettv_list_alloc(&children_di->di_tv);
+  dict_add(jobinfo_dict, children_di);
+
+  kl_iter(WatcherPtr, jobproc->loop->children, current) {
+    Process *child_proc = (*current)->data;
+    list_append_string(children_di->di_tv.vval.v_list,
+                       (char_u *)child_proc->argv[0],
+                       -1);
+  }
+}
+
 static void f_jobwait(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   rettv->v_type = VAR_NUMBER;
@@ -13863,7 +13947,7 @@ end:
   api_free_object(result);
 }
 
-// "rpcstart()" function (DEPRECATED)
+// DEPRECATED: "rpcstart()" function
 static void f_rpcstart(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   rettv->v_type = VAR_NUMBER;
@@ -13918,7 +14002,7 @@ static void f_rpcstart(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   argv[i] = NULL;
 
   TerminalJobData *data = common_job_init(argv, NULL, NULL, NULL,
-                                          NULL, false, true, false, NULL);
+                                          NULL, kJobTypeRpc, false, NULL);
   common_job_start(data, rettv);
 }
 
@@ -16455,7 +16539,7 @@ static void f_tempname(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   rettv->vval.v_string = vim_tempname();
 }
 
-// "termopen(cmd[, cwd])" function
+// DEPRECATED: "termopen(cmd[, cwd])" function
 static void f_termopen(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   if (check_restricted() || check_secure()) {
@@ -16482,7 +16566,7 @@ static void f_termopen(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   ufunc_T *on_stdout = NULL, *on_stderr = NULL, *on_exit = NULL;
   dict_T *job_opts = NULL;
-  char *cwd = ".";
+  char *cwd = NULL;
   if (argvars[1].v_type == VAR_DICT) {
     job_opts = argvars[1].vval.v_dict;
 
@@ -16504,42 +16588,11 @@ static void f_termopen(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   TerminalJobData *data = common_job_init(argv, on_stdout, on_stderr, on_exit,
-                                          job_opts, true, false, false, cwd);
-  data->proc.pty.width = curwin->w_width;
-  data->proc.pty.height = curwin->w_height;
-  data->proc.pty.term_name = xstrdup("xterm-256color");
+                                          job_opts, kJobTypeTerm, false, cwd);
   if (!common_job_start(data, rettv)) {
     return;
   }
-  TerminalOptions topts;
-  topts.data = data;
-  topts.width = curwin->w_width;
-  topts.height = curwin->w_height;
-  topts.write_cb = term_write;
-  topts.resize_cb = term_resize;
-  topts.close_cb = term_close;
-
-  int pid = data->proc.pty.process.pid;
-
-  char buf[1024];
-  // format the title with the pid to conform with the term:// URI
-  snprintf(buf, sizeof(buf), "term://%s//%d:%s", cwd, pid, cmd);
-  // at this point the buffer has no terminal instance associated yet, so unset
-  // the 'swapfile' option to ensure no swap file will be created
-  curbuf->b_p_swf = false;
-  (void)setfname(curbuf, (uint8_t *)buf, NULL, true);
-  // Save the job id and pid in b:terminal_job_{id,pid}
-  Error err;
-  dict_set_value(curbuf->b_vars, cstr_as_string("terminal_job_id"),
-                 INTEGER_OBJ(rettv->vval.v_number), false, false, &err);
-  dict_set_value(curbuf->b_vars, cstr_as_string("terminal_job_pid"),
-                 INTEGER_OBJ(pid), false, false, &err);
-
-  Terminal *term = terminal_open(topts);
-  data->term = term;
-  data->refcount++;
-
-  return;
+  common_terminal_start(data, rettv, cmd);
 }
 
 /*
@@ -21912,8 +21965,7 @@ static inline TerminalJobData *common_job_init(char **argv,
                                                ufunc_T *on_stderr,
                                                ufunc_T *on_exit,
                                                dict_T *self,
-                                               bool pty,
-                                               bool rpc,
+                                               JobType type,
                                                bool detach,
                                                char *cwd)
 {
@@ -21924,8 +21976,8 @@ static inline TerminalJobData *common_job_init(char **argv,
   data->on_exit = on_exit;
   data->self = self;
   data->events = multiqueue_new_child(main_loop.events);
-  data->rpc = rpc;
-  if (pty) {
+  data->type = type;
+  if (type == kJobTypePty || type == kJobTypeTerm) {
     data->proc.pty = pty_process_init(&main_loop, data);
   } else {
     data->proc.uv = libuv_process_init(&main_loop, data);
@@ -21934,13 +21986,20 @@ static inline TerminalJobData *common_job_init(char **argv,
   proc->argv = argv;
   proc->in = &data->in;
   proc->out = &data->out;
-  if (!pty) {
+  if (type != kJobTypePty && type != kJobTypeTerm) {
     proc->err = &data->err;
   }
   proc->cb = eval_job_process_exit_cb;
   proc->events = data->events;
   proc->detach = detach;
   proc->cwd = cwd;
+
+  if (type == kJobTypeTerm) {  // Default values.
+    data->proc.pty.width = curwin->w_width;
+    data->proc.pty.height = curwin->w_height;
+    data->proc.pty.term_name = xstrdup("xterm-256color");
+  }
+
   return data;
 }
 
@@ -22014,6 +22073,44 @@ static inline bool common_job_start(TerminalJobData *data, typval_T *rettv)
   }
   rettv->vval.v_number = data->id;
   return true;
+}
+
+static inline void common_terminal_start(TerminalJobData *data, typval_T *rettv,
+                                         char *cmd)
+{
+  TerminalOptions topts;
+  topts.data = data;
+  topts.width = data->proc.pty.width;
+  topts.height = data->proc.pty.height;
+  topts.write_cb = term_write;
+  topts.resize_cb = term_resize;
+  topts.close_cb = term_close;
+
+  int pid = data->proc.pty.process.pid;
+
+  char buf[1024];
+  char *cwd = data->proc.pty.process.cwd;
+  // format the title with the pid to conform with the term:// URI
+  snprintf(buf, sizeof(buf), "term://%s//%d:%s",
+           (cwd == NULL ? "." : cwd), pid, cmd);
+  // at this point the buffer has no terminal instance associated yet, so unset
+  // the 'swapfile' option to ensure no swap file will be created
+  curbuf->b_p_swf = false;
+  (void)setfname(curbuf, (uint8_t *)buf, NULL, true);
+  Error err;
+  // b:job
+  dict_set_value(curbuf->b_vars, cstr_as_string("job"),
+                 INTEGER_OBJ(rettv->vval.v_number), false, false, &err);
+  // DEPRECATED: b:terminal_job_id
+  dict_set_value(curbuf->b_vars, cstr_as_string("terminal_job_id"),
+                 INTEGER_OBJ(rettv->vval.v_number), false, false, &err);
+  // DEPRECATED: b:terminal_job_pid
+  dict_set_value(curbuf->b_vars, cstr_as_string("terminal_job_pid"),
+                 INTEGER_OBJ(pid), false, false, &err);
+
+  Terminal *term = terminal_open(topts);
+  data->term = term;
+  data->refcount++;
 }
 
 static inline void free_term_job_data_event(void **argv)

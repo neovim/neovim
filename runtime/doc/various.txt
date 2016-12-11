@@ -212,20 +212,19 @@ g8			Print the hex values of the bytes used in the
 			equivalent to: >
 
 			      :enew
-			      :call termopen('{cmd}')
+			      :call jobstart('{cmd}', {'type':'term'})
 			      :startinsert
 <
-			If no {cmd} is given, 'shellcmdflag' will not be sent
-			to |termopen()|.
+                        If no {cmd} is given, 'shellcmdflag' will not be used.
 
 			Like |:enew|, it will fail if the current buffer is
-			modified, but can be forced with "!".  See |termopen()|
-			and |terminal-emulator|.
+			modified, but can be forced with "!".
 
-			To switch to terminal mode automatically:
->
+			To switch to terminal mode automatically: >
 			      autocmd BufEnter term://* startinsert
 <
+			Also see |terminal-emulator|.
+
 							*:!cmd* *:!* *E34*
 :!{cmd}			Execute {cmd} with 'shell'. See also |:terminal|.
 

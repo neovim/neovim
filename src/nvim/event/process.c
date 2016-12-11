@@ -252,7 +252,7 @@ void process_stop(Process *proc) FUNC_ATTR_NONNULL_ALL
 }
 
 /// Iterates the process list sending SIGTERM to stopped processes and SIGKILL
-/// to those that didn't die from SIGTERM after a while(exit_timeout is 0).
+/// to those that did not die from SIGTERM after awhile.
 static void children_kill_cb(uv_timer_t *handle)
 {
   Loop *loop = handle->loop->data;

@@ -30,7 +30,7 @@ emulation library. http://www.leonerd.org.uk/code/libvterm/
 There are 3 ways to create a terminal buffer:
 
 - By invoking the |:terminal| ex command.
-- By calling the |termopen()| function.
+- By calling the |jobstart()| function.
 - By editing a file with a name matching `term://(.{-}//(\d+:)?)?\zs.*`.
   For example:
 >
@@ -119,13 +119,13 @@ The terminal cursor can be highlighted via |hl-TermCursor| and
 Terminal buffers maintain some information about the terminal in buffer-local
 variables:
 
-- *b:term_title* The settable title of the terminal, typically displayed in
-  the window title or tab title of a graphical terminal emulator. Programs
-  running in the terminal can set this title via an escape sequence.
-- *b:terminal_job_id* The nvim job ID of the job running in the terminal. See
-  |job-control| for more information.
-- *b:terminal_job_pid* The PID of the top-level process running in the
-  terminal.
+*b:term_title*	Terminal title, typically displayed in the window title of
+		a graphical terminal emulator. You can set this. Programs
+		running in the terminal can also set the title via a terminal
+		code.
+
+*b:job*		Job assigned to the process running in the terminal.
+		|job-control|
 
 These variables will have a value by the time the TermOpen autocmd runs, and
 will continue to have a value for the lifetime of the terminal buffer, making

@@ -16,13 +16,11 @@ Normal commands ~
 *]f*
 *[f*			Same as "gf".
 
-
 Commands ~
 *:rv*
 *:rviminfo*		Deprecated alias to |:rshada| command.
 *:wv*
 *:wviminfo*		Deprecated alias to |:wshada| command.
-
 
 Events ~
 *EncodingChanged*	Never fired; 'encoding' is always "utf-8".
@@ -38,9 +36,20 @@ Functions ~
 *file_readable()*	Obsolete name for |filereadable()|.
 *highlight_exists()*	Obsolete name for |hlexists()|.
 *highlightID()*		Obsolete name for |hlID()|.
+*jobpid()*		Deprecated. Use |jobget()| instead: >
+			  :let pid = jobget(job, 'pid')
+*jobresize()*		Deprecated. Use |jobset()| instead: >
+			  :call jobset(job, {'width':80,'height':20})
 *last_buffer_nr()*	Obsolete name for bufnr("$").
+*rpcstart()*		Deprecated. Replace this: >
+			  :let id = rpcstart('prog', ['arg1', 'arg2'])
+<			with this: >
+			  :let id = jobstart(['prog', 'arg1', 'arg2'], {'rpc': v:true})
+*termopen()*		Deprecated.
 
 Options ~
+*b:terminal_job_id*	Use |b:job| instead.
+*b:terminal_job_pid*	Use `jobget(b:job,"pid")` instead.
 *'fe'*			'fenc'+'enc' before Vim 6.0; no longer used.
 *'vi'*
 *'viminfo'*		Deprecated alias to 'shada' option.

@@ -167,6 +167,7 @@ return {
     islocked={args=1},
     items={args=1},
     jobclose={args={1, 2}},
+    jobget={args={1, 2}},
     jobpid={args=1},
     jobresize={args=3},
     jobsend={args=2},
