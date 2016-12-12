@@ -6,24 +6,67 @@ endif
 
 set encoding=utf-8
 
+function! s:setup_commands(cchar)
+  if a:cchar == 'c'
+    command! -nargs=* -bang Xlist <mods>clist<bang> <args>
+    command! -nargs=* Xgetexpr <mods>cgetexpr <args>
+    command! -nargs=* Xolder <mods>colder <args>
+    command! -nargs=* Xnewer <mods>cnewer <args>
+    command! -nargs=* Xopen <mods>copen <args>
+    command! -nargs=* Xwindow <mods>cwindow <args>
+    command! -nargs=* Xclose <mods>cclose <args>
+    command! -nargs=* -bang Xfile <mods>cfile<bang> <args>
+    command! -nargs=* Xgetfile <mods>cgetfile <args>
+    command! -nargs=* Xaddfile <mods>caddfile <args>
+    command! -nargs=* -bang Xbuffer <mods>cbuffer<bang> <args>
+    command! -nargs=* Xgetbuffer <mods>cgetbuffer <args>
+    command! -nargs=* Xaddbuffer <mods>caddbuffer <args>
+    command! -nargs=* Xrewind <mods>crewind <args>
+    command! -nargs=* -bang Xnext <mods>cnext<bang> <args>
+    command! -nargs=* Xexpr <mods>cexpr <args>
+    command! -nargs=* Xvimgrep <mods>vimgrep <args>
+    let g:Xgetlist = function('getqflist')
+    let g:Xsetlist = function('setqflist')
+  else
+    command! -nargs=* -bang Xlist <mods>llist<bang> <args>
+    command! -nargs=* Xgetexpr <mods>lgetexpr <args>
+    command! -nargs=* Xolder <mods>lolder <args>
+    command! -nargs=* Xnewer <mods>lnewer <args>
+    command! -nargs=* Xopen <mods>lopen <args>
+    command! -nargs=* Xwindow <mods>lwindow <args>
+    command! -nargs=* Xclose <mods>lclose <args>
+    command! -nargs=* -bang Xfile <mods>lfile<bang> <args>
+    command! -nargs=* Xgetfile <mods>lgetfile <args>
+    command! -nargs=* Xaddfile <mods>laddfile <args>
+    command! -nargs=* -bang Xbuffer <mods>lbuffer<bang> <args>
+    command! -nargs=* Xgetbuffer <mods>lgetbuffer <args>
+    command! -nargs=* Xaddbuffer <mods>laddbuffer <args>
+    command! -nargs=* Xrewind <mods>lrewind <args>
+    command! -nargs=* -bang Xnext <mods>lnext<bang> <args>
+    command! -nargs=* Xexpr <mods>lexpr <args>
+    command! -nargs=* Xvimgrep <mods>lvimgrep <args>
+    let g:Xgetlist = function('getloclist', [0])
+    let g:Xsetlist = function('setloclist', [0])
+  endif
+endfunction
+
 " Tests for the :clist and :llist commands
 function XlistTests(cchar)
-  let Xlist = a:cchar . 'list'
-  let Xgetexpr = a:cchar . 'getexpr'
+  call s:setup_commands(a:cchar)
 
   " With an empty list, command should return error
-  exe Xgetexpr . ' []'
-  exe 'silent! ' . Xlist
+  Xgetexpr []
+  silent! Xlist
   call assert_true(v:errmsg ==# 'E42: No Errors')
 
   " Populate the list and then try
-  exe Xgetexpr . " ['non-error 1', 'Xtestfile1:1:3:Line1',
+  Xgetexpr ['non-error 1', 'Xtestfile1:1:3:Line1',
 		  \ 'non-error 2', 'Xtestfile2:2:2:Line2',
-		  \ 'non-error 3', 'Xtestfile3:3:1:Line3']"
+		  \ 'non-error 3', 'Xtestfile3:3:1:Line3']
 
   " List only valid entries
   redir => result
-  exe Xlist
+  Xlist
   redir END
   let l = split(result, "\n")
   call assert_equal([' 2 Xtestfile1:1 col 3: Line1',
@@ -32,7 +75,7 @@ function XlistTests(cchar)
 
   " List all the entries
   redir => result
-  exe Xlist . "!"
+  Xlist!
   redir END
   let l = split(result, "\n")
   call assert_equal([' 1: non-error 1', ' 2 Xtestfile1:1 col 3: Line1',
@@ -41,26 +84,26 @@ function XlistTests(cchar)
 
   " List a range of errors
   redir => result
-  exe Xlist . " 3,6"
+  Xlist 3,6
   redir END
   let l = split(result, "\n")
   call assert_equal([' 4 Xtestfile2:2 col 2: Line2',
 		   \ ' 6 Xtestfile3:3 col 1: Line3'], l)
 
   redir => result
-  exe Xlist . "! 3,4"
+  Xlist! 3,4
   redir END
   let l = split(result, "\n")
   call assert_equal([' 3: non-error 2', ' 4 Xtestfile2:2 col 2: Line2'], l)
 
   redir => result
-  exe Xlist . " -6,-4"
+  Xlist -6,-4
   redir END
   let l = split(result, "\n")
   call assert_equal([' 2 Xtestfile1:1 col 3: Line1'], l)
 
   redir => result
-  exe Xlist . "! -5,-3"
+  Xlist! -5,-3
   redir END
   let l = split(result, "\n")
   call assert_equal([' 2 Xtestfile1:1 col 3: Line1',
@@ -76,44 +119,37 @@ endfunction
 " Note that this test assumes that a quickfix/location list is
 " already set by the caller.
 function XageTests(cchar)
-  let Xolder = a:cchar . 'older'
-  let Xnewer = a:cchar . 'newer'
-  let Xgetexpr = a:cchar . 'getexpr'
-  if a:cchar == 'c'
-    let Xgetlist = function('getqflist')
-  else
-    let Xgetlist = function('getloclist', [0])
-  endif
+  call s:setup_commands(a:cchar)
 
   " Jumping to a non existent list should return error
-  exe 'silent! ' . Xolder . ' 99'
+  silent! Xolder 99
   call assert_true(v:errmsg ==# 'E380: At bottom of quickfix stack')
 
-  exe 'silent! ' . Xnewer . ' 99'
+  silent! Xnewer 99
   call assert_true(v:errmsg ==# 'E381: At top of quickfix stack')
 
   " Add three quickfix/location lists
-  exe Xgetexpr . " ['Xtestfile1:1:3:Line1']"
-  exe Xgetexpr . " ['Xtestfile2:2:2:Line2']"
-  exe Xgetexpr . " ['Xtestfile3:3:1:Line3']"
+  Xgetexpr ['Xtestfile1:1:3:Line1']
+  Xgetexpr ['Xtestfile2:2:2:Line2']
+  Xgetexpr ['Xtestfile3:3:1:Line3']
 
   " Go back two lists
-  exe Xolder
-  let l = Xgetlist()
+  Xolder
+  let l = g:Xgetlist()
   call assert_equal('Line2', l[0].text)
 
   " Go forward two lists
-  exe Xnewer
-  let l = Xgetlist()
+  Xnewer
+  let l = g:Xgetlist()
   call assert_equal('Line3', l[0].text)
 
   " Test for the optional count argument
-  exe Xolder . ' 2'
-  let l = Xgetlist()
+  Xolder 2
+  let l = g:Xgetlist()
   call assert_equal('Line1', l[0].text)
 
-  exe Xnewer . ' 2'
-  let l = Xgetlist()
+  Xnewer 2
+  let l = g:Xgetlist()
   call assert_equal('Line3', l[0].text)
 endfunction
 
@@ -129,49 +165,46 @@ endfunction
 " Tests for the :cwindow, :lwindow :cclose, :lclose, :copen and :lopen
 " commands
 function XwindowTests(cchar)
-  let Xwindow = a:cchar . 'window'
-  let Xclose = a:cchar . 'close'
-  let Xopen = a:cchar . 'open'
-  let Xgetexpr = a:cchar . 'getexpr'
+  call s:setup_commands(a:cchar)
 
   " Create a list with no valid entries
-  exe Xgetexpr . " ['non-error 1', 'non-error 2', 'non-error 3']"
+  Xgetexpr ['non-error 1', 'non-error 2', 'non-error 3']
 
   " Quickfix/Location window should not open with no valid errors
-  exe Xwindow
+  Xwindow
   call assert_true(winnr('$') == 1)
 
   " Create a list with valid entries
-  exe Xgetexpr . " ['Xtestfile1:1:3:Line1', 'Xtestfile2:2:2:Line2',
-		  \ 'Xtestfile3:3:1:Line3']"
+  Xgetexpr ['Xtestfile1:1:3:Line1', 'Xtestfile2:2:2:Line2',
+		  \ 'Xtestfile3:3:1:Line3']
 
   " Open the window
-  exe Xwindow
+  Xwindow
   call assert_true(winnr('$') == 2 && winnr() == 2 &&
 	\ getline('.') ==# 'Xtestfile1|1 col 3| Line1')
 
   " Close the window
-  exe Xclose
+  Xclose
   call assert_true(winnr('$') == 1)
 
   " Create a list with no valid entries
-  exe Xgetexpr . " ['non-error 1', 'non-error 2', 'non-error 3']"
+  Xgetexpr ['non-error 1', 'non-error 2', 'non-error 3']
 
   " Open the window
-  exe Xopen . ' 5'
+  Xopen 5
   call assert_true(winnr('$') == 2 && getline('.') ==# '|| non-error 1'
 		      \  && winheight('.') == 5)
 
   " Opening the window again, should move the cursor to that window
   wincmd t
-  exe Xopen . ' 7'
+  Xopen 7
   call assert_true(winnr('$') == 2 && winnr() == 2 &&
 	\ winheight('.') == 7 &&
 	\ getline('.') ==# '|| non-error 1')
 
 
   " Calling cwindow should close the quickfix window with no valid errors
-  exe Xwindow
+  Xwindow
   call assert_true(winnr('$') == 1)
 endfunction
 
@@ -183,21 +216,14 @@ endfunction
 " Tests for the :cfile, :lfile, :caddfile, :laddfile, :cgetfile and :lgetfile
 " commands.
 function XfileTests(cchar)
-  let Xfile = a:cchar . 'file'
-  let Xgetfile = a:cchar . 'getfile'
-  let Xaddfile = a:cchar . 'addfile'
-  if a:cchar == 'c'
-    let Xgetlist = function('getqflist')
-  else
-    let Xgetlist = function('getloclist', [0])
-  endif
+  call s:setup_commands(a:cchar)
 
   call writefile(['Xtestfile1:700:10:Line 700',
 	\ 'Xtestfile2:800:15:Line 800'], 'Xqftestfile1')
 
   enew!
-  exe Xfile . ' Xqftestfile1'
-  let l = Xgetlist()
+  Xfile Xqftestfile1
+  let l = g:Xgetlist()
   call assert_true(len(l) == 2 &&
 	\ l[0].lnum == 700 && l[0].col == 10 && l[0].text ==# 'Line 700' &&
 	\ l[1].lnum == 800 && l[1].col == 15 && l[1].text ==# 'Line 800')
@@ -205,12 +231,12 @@ function XfileTests(cchar)
   " Run cfile/lfile from a modified buffer
   enew!
   silent! put ='Quickfix'
-  exe 'silent! ' . Xfile . ' Xqftestfile1'
+  silent! Xfile Xqftestfile1
   call assert_true(v:errmsg ==# 'E37: No write since last change (add ! to override)')
 
   call writefile(['Xtestfile3:900:30:Line 900'], 'Xqftestfile1')
-  exe Xaddfile . ' Xqftestfile1'
-  let l = Xgetlist()
+  Xaddfile Xqftestfile1
+  let l = g:Xgetlist()
   call assert_true(len(l) == 3 &&
 	\ l[2].lnum == 900 && l[2].col == 30 && l[2].text ==# 'Line 900')
 
@@ -218,8 +244,8 @@ function XfileTests(cchar)
 	\ 'Xtestfile2:333:88:Line 333'], 'Xqftestfile1')
 
   enew!
-  exe Xgetfile . ' Xqftestfile1'
-  let l = Xgetlist()
+  Xgetfile Xqftestfile1
+  let l = g:Xgetlist()
   call assert_true(len(l) == 2 &&
 	\ l[0].lnum == 222 && l[0].col == 77 && l[0].text ==# 'Line 222' &&
 	\ l[1].lnum == 333 && l[1].col == 88 && l[1].text ==# 'Line 333')
@@ -235,20 +261,13 @@ endfunction
 " Tests for the :cbuffer, :lbuffer, :caddbuffer, :laddbuffer, :cgetbuffer and
 " :lgetbuffer commands.
 function XbufferTests(cchar)
-  let Xbuffer = a:cchar . 'buffer'
-  let Xgetbuffer = a:cchar . 'getbuffer'
-  let Xaddbuffer = a:cchar . 'addbuffer'
-  if a:cchar == 'c'
-    let Xgetlist = function('getqflist')
-  else
-    let Xgetlist = function('getloclist', [0])
-  endif
+  call s:setup_commands(a:cchar)
 
   enew!
   silent! call setline(1, ['Xtestfile7:700:10:Line 700',
 	\ 'Xtestfile8:800:15:Line 800'])
-  exe Xbuffer . "!"
-  let l = Xgetlist()
+  Xbuffer!
+  let l = g:Xgetlist()
   call assert_true(len(l) == 2 &&
 	\ l[0].lnum == 700 && l[0].col == 10 && l[0].text ==# 'Line 700' &&
 	\ l[1].lnum == 800 && l[1].col == 15 && l[1].text ==# 'Line 800')
@@ -256,8 +275,8 @@ function XbufferTests(cchar)
   enew!
   silent! call setline(1, ['Xtestfile9:900:55:Line 900',
 	\ 'Xtestfile10:950:66:Line 950'])
-  exe Xgetbuffer
-  let l = Xgetlist()
+  Xgetbuffer
+  let l = g:Xgetlist()
   call assert_true(len(l) == 2 &&
 	\ l[0].lnum == 900 && l[0].col == 55 && l[0].text ==# 'Line 900' &&
 	\ l[1].lnum == 950 && l[1].col == 66 && l[1].text ==# 'Line 950')
@@ -265,8 +284,8 @@ function XbufferTests(cchar)
   enew!
   silent! call setline(1, ['Xtestfile11:700:20:Line 700',
 	\ 'Xtestfile12:750:25:Line 750'])
-  exe Xaddbuffer
-  let l = Xgetlist()
+  Xaddbuffer
+  let l = g:Xgetlist()
   call assert_true(len(l) == 4 &&
 	\ l[1].lnum == 950 && l[1].col == 66 && l[1].text ==# 'Line 950' &&
 	\ l[2].lnum == 700 && l[2].col == 20 && l[2].text ==# 'Line 700' &&
@@ -320,37 +339,30 @@ func Test_vimgreptitle()
 endfunc
 
 function XqfTitleTests(cchar)
-  let Xgetexpr = a:cchar . 'getexpr'
-  if a:cchar == 'c'
-    let Xgetlist = function('getqflist')
-  else
-    let Xgetlist = function('getloclist', [0])
-  endif
-  let Xopen = a:cchar . 'open'
-  let Xclose = a:cchar . 'close'
+  call s:setup_commands(a:cchar)
 
-  exe Xgetexpr . " ['file:1:1:message']"
-  let l = Xgetlist()
+  Xgetexpr ['file:1:1:message']
+  let l = g:Xgetlist()
   if a:cchar == 'c'
     call setqflist(l, 'r')
   else
     call setloclist(0, l, 'r')
   endif
 
-  exe Xopen
+  Xopen
   if a:cchar == 'c'
     let title = ':setqflist()'
   else
     let title = ':setloclist()'
   endif
   call assert_equal(title, w:quickfix_title)
-  exe Xclose
+  Xclose
 endfunction
 
 " Tests for quickfix window's title
 function Test_qf_title()
-    call XqfTitleTests('c')
-    call XqfTitleTests('l')
+  call XqfTitleTests('c')
+  call XqfTitleTests('l')
 endfunction
 
 " Tests for 'errorformat'
@@ -623,13 +635,6 @@ endfunction
 
 " Test for quickfix directory stack support
 function! s:dir_stack_tests(cchar)
-  let Xgetexpr = a:cchar . 'getexpr'
-  if a:cchar == 'c'
-    let Xgetlist = function('getqflist')
-  else
-    let Xgetlist = function('getloclist', [0])
-  endif
-
   let save_efm=&efm
   set efm=%DEntering\ dir\ '%f',%f:%l:%m,%XLeaving\ dir\ '%f'
 
@@ -644,12 +649,12 @@ function! s:dir_stack_tests(cchar)
 		\ "Leaving dir 'dir1/a'\n" .
 		\ 'habits1.txt:4:2 Liters of water' . "\n" .
 		\ "Entering dir 'dir2'\n" .
-		\ 'habits5.txt:5:3 Cups of hot green tea' . "\n" .
+		\ 'habits5.txt:5:3 Cups of hot green tea' . "\n"
 		\ "Leaving dir 'dir2'\n"
 
-  exe Xgetexpr . " l"
+  Xgetexpr l
 
-  let qf = Xgetlist()
+  let qf = g:Xgetlist()
 
   call assert_equal('dir1/a/habits2.txt', bufname(qf[1].bufnr))
   call assert_equal(1, qf[1].lnum)
@@ -703,18 +708,14 @@ function! Test_efm_dirstack()
 endfunction
 
 function XquickfixChangedByAutocmd(cchar)
-  let Xolder = a:cchar . 'older'
-  let Xgetexpr = a:cchar . 'getexpr'
-  let Xrewind = a:cchar . 'rewind'
+  call s:setup_commands(a:cchar)
   if a:cchar == 'c'
-    let Xsetlist = function('setqflist')
     let ErrorNr = 'E925'
     function! ReadFunc()
       colder
       cgetexpr []
     endfunc
   else
-    let Xsetlist = function('setloclist', [0])
     let ErrorNr = 'E926'
     function! ReadFunc()
       lolder
@@ -732,9 +733,9 @@ function XquickfixChangedByAutocmd(cchar)
   let qflist = []
   for word in words
     call add(qflist, {'filename': 'test_changed.txt'})
-    call Xsetlist(qflist, ' ')
+    call g:Xsetlist(qflist, ' ')
   endfor
-  exec "call assert_fails('" . Xrewind . "', '" . ErrorNr . ":')"
+  call assert_fails('Xrewind', ErrorNr . ':')
 
   augroup! testgroup
 endfunc
@@ -760,51 +761,44 @@ endfunc
 func Test_cgetexpr_works()
   " this must not crash Vim
   cgetexpr [$x]
+  lgetexpr [$x]
 endfunc
 
 " Tests for the setqflist() and setloclist() functions
 function SetXlistTests(cchar, bnum)
-  let Xwindow = a:cchar . 'window'
-  let Xnext = a:cchar . 'next'
-  if a:cchar == 'c'
-    let Xsetlist = function('setqflist')
-    let Xgetlist = function('getqflist')
-  else
-    let Xsetlist = function('setloclist', [0])
-    let Xgetlist = function('getloclist', [0])
-  endif
+  call s:setup_commands(a:cchar)
 
-  call Xsetlist([{'bufnr': a:bnum, 'lnum': 1},
+  call g:Xsetlist([{'bufnr': a:bnum, 'lnum': 1},
 	      \  {'bufnr': a:bnum, 'lnum': 2}])
-  let l = Xgetlist()
+  let l = g:Xgetlist()
   call assert_equal(2, len(l))
   call assert_equal(2, l[1].lnum)
 
-  exe Xnext
-  call Xsetlist([{'bufnr': a:bnum, 'lnum': 3}], 'a')
-  let l = Xgetlist()
+  Xnext
+  call g:Xsetlist([{'bufnr': a:bnum, 'lnum': 3}], 'a')
+  let l = g:Xgetlist()
   call assert_equal(3, len(l))
-  exe Xnext
+  Xnext
   call assert_equal(3, line('.'))
 
   " Appending entries to the list should not change the cursor position
   " in the quickfix window
-  exe Xwindow
+  Xwindow
   1
-  call Xsetlist([{'bufnr': a:bnum, 'lnum': 4},
+  call g:Xsetlist([{'bufnr': a:bnum, 'lnum': 4},
 	      \  {'bufnr': a:bnum, 'lnum': 5}], 'a')
   call assert_equal(1, line('.'))
   close
 
-  call Xsetlist([{'bufnr': a:bnum, 'lnum': 3},
+  call g:Xsetlist([{'bufnr': a:bnum, 'lnum': 3},
 	      \  {'bufnr': a:bnum, 'lnum': 4},
 	      \  {'bufnr': a:bnum, 'lnum': 5}], 'r')
-  let l = Xgetlist()
+  let l = g:Xgetlist()
   call assert_equal(3, len(l))
   call assert_equal(5, l[2].lnum)
 
-  call Xsetlist([])
-  let l = Xgetlist()
+  call g:Xsetlist([])
+  let l = g:Xgetlist()
   call assert_equal(0, len(l))
 endfunction
 
@@ -820,58 +814,65 @@ function Test_setqflist()
   call delete('Xtestfile')
 endfunction
 
-func Test_setqflist_empty_middle()
+function Xlist_empty_middle(cchar)
+  call s:setup_commands(a:cchar)
+
   " create three quickfix lists
-  vimgrep Test_ test_quickfix.vim
-  let testlen = len(getqflist())
+  Xvimgrep Test_ test_quickfix.vim
+  let testlen = len(g:Xgetlist())
   call assert_true(testlen > 0)
-  vimgrep empty test_quickfix.vim
-  call assert_true(len(getqflist()) > 0)
-  vimgrep matches test_quickfix.vim
-  let matchlen = len(getqflist())
+  Xvimgrep empty test_quickfix.vim
+  call assert_true(len(g:Xgetlist()) > 0)
+  Xvimgrep matches test_quickfix.vim
+  let matchlen = len(g:Xgetlist())
   call assert_true(matchlen > 0)
-  colder
+  Xolder
   " make the middle list empty
-  call setqflist([], 'r')
-  call assert_true(len(getqflist()) == 0)
-  colder
-  call assert_equal(testlen, len(getqflist()))
-  cnewer
-  cnewer
-  call assert_equal(matchlen, len(getqflist()))
+  call g:Xsetlist([], 'r')
+  call assert_true(len(g:Xgetlist()) == 0)
+  Xolder
+  call assert_equal(testlen, len(g:Xgetlist()))
+  Xnewer
+  Xnewer
+  call assert_equal(matchlen, len(g:Xgetlist()))
 endfunc
 
-func Test_setqflist_empty_older()
+function Test_setqflist_empty_middle()
+  call Xlist_empty_middle('c')
+  call Xlist_empty_middle('l')
+endfunction
+
+function Xlist_empty_older(cchar)
+  call s:setup_commands(a:cchar)
+
   " create three quickfix lists
-  vimgrep one test_quickfix.vim
-  let onelen = len(getqflist())
+  Xvimgrep one test_quickfix.vim
+  let onelen = len(g:Xgetlist())
   call assert_true(onelen > 0)
-  vimgrep two test_quickfix.vim
-  let twolen = len(getqflist())
+  Xvimgrep two test_quickfix.vim
+  let twolen = len(g:Xgetlist())
   call assert_true(twolen > 0)
-  vimgrep three test_quickfix.vim
-  let threelen = len(getqflist())
+  Xvimgrep three test_quickfix.vim
+  let threelen = len(g:Xgetlist())
   call assert_true(threelen > 0)
-  colder 2
+  Xolder 2
   " make the first list empty, check the others didn't change
-  call setqflist([], 'r')
-  call assert_true(len(getqflist()) == 0)
-  cnewer
-  call assert_equal(twolen, len(getqflist()))
-  cnewer
-  call assert_equal(threelen, len(getqflist()))
-endfunc
+  call g:Xsetlist([], 'r')
+  call assert_true(len(g:Xgetlist()) == 0)
+  Xnewer
+  call assert_equal(twolen, len(g:Xgetlist()))
+  Xnewer
+  call assert_equal(threelen, len(g:Xgetlist()))
+endfunction
+
+function Test_setqflist_empty_older()
+  call Xlist_empty_older('c')
+  call Xlist_empty_older('l')
+endfunction
 
 function! XquickfixSetListWithAct(cchar)
-  let Xolder = a:cchar . 'older'
-  let Xnewer = a:cchar . 'newer'
-  if a:cchar == 'c'
-    let Xsetlist = function('setqflist')
-    let Xgetlist = function('getqflist')
-  else
-    let Xsetlist = function('setloclist', [0])
-    let Xgetlist = function('getloclist', [0])
-  endif
+  call s:setup_commands(a:cchar)
+
   let list1 = [{'filename': 'fnameA', 'text': 'A'},
           \    {'filename': 'fnameB', 'text': 'B'}]
   let list2 = [{'filename': 'fnameC', 'text': 'C'},
@@ -880,42 +881,42 @@ function! XquickfixSetListWithAct(cchar)
 
   " {action} is unspecified.  Same as specifing ' '.
   new | only
-  exec "silent! " . Xnewer . "99"
-  call Xsetlist(list1)
-  call Xsetlist(list2)
-  let li = Xgetlist()
+  silent! Xnewer 99
+  call g:Xsetlist(list1)
+  call g:Xsetlist(list2)
+  let li = g:Xgetlist()
   call assert_equal(3, len(li))
   call assert_equal('C', li[0]['text'])
   call assert_equal('D', li[1]['text'])
   call assert_equal('E', li[2]['text'])
-  exec "silent! " . Xolder
-  let li = Xgetlist()
+  silent! Xolder
+  let li = g:Xgetlist()
   call assert_equal(2, len(li))
   call assert_equal('A', li[0]['text'])
   call assert_equal('B', li[1]['text'])
 
   " {action} is specified ' '.
   new | only
-  exec "silent! " . Xnewer . "99"
-  call Xsetlist(list1)
-  call Xsetlist(list2, ' ')
-  let li = Xgetlist()
+  silent! Xnewer 99
+  call g:Xsetlist(list1)
+  call g:Xsetlist(list2, ' ')
+  let li = g:Xgetlist()
   call assert_equal(3, len(li))
   call assert_equal('C', li[0]['text'])
   call assert_equal('D', li[1]['text'])
   call assert_equal('E', li[2]['text'])
-  exec "silent! " . Xolder
-  let li = Xgetlist()
+  silent! Xolder
+  let li = g:Xgetlist()
   call assert_equal(2, len(li))
   call assert_equal('A', li[0]['text'])
   call assert_equal('B', li[1]['text'])
 
   " {action} is specified 'a'.
   new | only
-  exec "silent! " . Xnewer . "99"
-  call Xsetlist(list1)
-  call Xsetlist(list2, 'a')
-  let li = Xgetlist()
+  silent! Xnewer 99
+  call g:Xsetlist(list1)
+  call g:Xsetlist(list2, 'a')
+  let li = g:Xgetlist()
   call assert_equal(5, len(li))
   call assert_equal('A', li[0]['text'])
   call assert_equal('B', li[1]['text'])
@@ -925,10 +926,10 @@ function! XquickfixSetListWithAct(cchar)
 
   " {action} is specified 'r'.
   new | only
-  exec "silent! " . Xnewer . "99"
-  call Xsetlist(list1)
-  call Xsetlist(list2, 'r')
-  let li = Xgetlist()
+  silent! Xnewer 99
+  call g:Xsetlist(list1)
+  call g:Xsetlist(list2, 'r')
+  let li = g:Xgetlist()
   call assert_equal(3, len(li))
   call assert_equal('C', li[0]['text'])
   call assert_equal('D', li[1]['text'])
@@ -936,11 +937,11 @@ function! XquickfixSetListWithAct(cchar)
 
   " Test for wrong value.
   new | only
-  call assert_fails("call Xsetlist(0)", 'E714:')
-  call assert_fails("call Xsetlist(list1, '')", 'E927:')
-  call assert_fails("call Xsetlist(list1, 'aa')", 'E927:')
-  call assert_fails("call Xsetlist(list1, ' a')", 'E927:')
-  call assert_fails("call Xsetlist(list1, 0)", 'E928:')
+  call assert_fails("call g:Xsetlist(0)", 'E714:')
+  call assert_fails("call g:Xsetlist(list1, '')", 'E927:')
+  call assert_fails("call g:Xsetlist(list1, 'aa')", 'E927:')
+  call assert_fails("call g:Xsetlist(list1, ' a')", 'E927:')
+  call assert_fails("call g:Xsetlist(list1, 0)", 'E928:')
 endfunc
 
 function Test_quickfix_set_list_with_act()
@@ -948,8 +949,8 @@ function Test_quickfix_set_list_with_act()
   call XquickfixSetListWithAct('l')
 endfunction
 
-func XLongLinesTests()
-  let l = getqflist()
+function XLongLinesTests(cchar)
+  let l = g:Xgetlist()
 
   call assert_equal(3, len(l))
   call assert_equal(1, l[0].lnum)
@@ -962,25 +963,32 @@ func XLongLinesTests()
   call assert_equal(1, l[2].col)
   call assert_equal(10, len(l[2].text))
 
-  call setqflist([], 'r')
-endfunc
+  call g:Xsetlist([], 'r')
+endfunction
 
-func Test_long_lines()
+function s:long_lines_tests(cchar)
+  call s:setup_commands(a:cchar)
+
   let testfile = 'samples/quickfix.txt'
 
   " file
-  exe 'cgetfile' testfile
-  call XLongLinesTests()
+  exe 'Xgetfile' testfile
+  call XLongLinesTests(a:cchar)
 
   " list
-  cexpr readfile(testfile)
-  call XLongLinesTests()
+  Xexpr readfile(testfile)
+  call XLongLinesTests(a:cchar)
 
   " string
-  cexpr join(readfile(testfile), "\n")
-  call XLongLinesTests()
+  Xexpr join(readfile(testfile), "\n")
+  call XLongLinesTests(a:cchar)
 
   " buffer
-  e testfile
-  exe 'cbuffer' bufnr('%')
-endfunc
+  exe 'edit' testfile
+  exe 'Xbuffer' bufnr('%')
+endfunction
+
+function Test_long_lines()
+  call s:long_lines_tests('c')
+  call s:long_lines_tests('l')
+endfunction
