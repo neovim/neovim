@@ -75,7 +75,7 @@ function! s:system_handler(jobid, data, event) abort
   elseif a:event == 'stderr'
     let self.stderr .= join(a:data, "\n")
   else
-    let s:shell_error = a:data
+    let self.shell_error = a:data
   endif
 endfunction
 
@@ -84,6 +84,7 @@ function! s:system(cmd, ...) abort
   let opts = {
         \ 'stdout': '',
         \ 'stderr': '',
+        \ 'shell_error': 0,
         \ 'on_stdout': function('s:system_handler'),
         \ 'on_stderr': function('s:system_handler'),
         \ 'on_exit': function('s:system_handler'),
@@ -98,7 +99,7 @@ function! s:system(cmd, ...) abort
   if res[0] == -1
     silent! call jobstop(jobid)
     throw printf('command timed out: %s', join(a:cmd))
-  elseif s:shell_error != 0
+  elseif opts.shell_error != 0
     throw printf("command error (%d) %s: %s", jobid, join(a:cmd), opts.stderr)
   endif
 
@@ -106,7 +107,7 @@ function! s:system(cmd, ...) abort
 endfunction
 
 function! s:get_page(path) abort
-  return s:system(['env', 'MANPAGER=cat', (empty($MANWIDTH) ? ' MANWIDTH='.winwidth(0) : ''), 'man', a:path])
+  return s:system(['env', 'MANPAGER=cat', (empty($MANWIDTH) ? 'MANWIDTH='.winwidth(0) : ''), 'man', a:path])
 endfunction
 
 function! s:put_page(page) abort
