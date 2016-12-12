@@ -438,6 +438,11 @@ void update_screen(int type)
     ADD(item, INTEGER_OBJ(wp->w_wincol));
     ADD(item, INTEGER_OBJ(wp->w_floating));
     ADD(item, INTEGER_OBJ(wp->w_p_pvw));
+    if (wp == curwin) {
+      ADD(item, INTEGER_OBJ(1));
+    } else {
+      ADD(item, INTEGER_OBJ(0));
+    }
     ADD(args, ARRAY_OBJ(item));
   }
   ui_event("win_resize", args);
@@ -452,8 +457,12 @@ void update_screen(int type)
     }
 
     /* redraw status line after the window to minimize cursor movement */
-    if (wp->w_redr_status) {
+    if (win_get_external()) {
       win_redr_status(wp);
+    } else {
+      if (wp->w_redr_status) {
+        win_redr_status(wp);
+      }
     }
   }
   end_search_hl();
@@ -4795,7 +4804,7 @@ void status_redraw_all(void)
 {
 
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-    if (wp->w_status_height) {
+    if (wp->w_status_height || win_external) {
       wp->w_redr_status = TRUE;
       redraw_later(VALID);
     }
@@ -4808,7 +4817,7 @@ void status_redraw_all(void)
 void status_redraw_curbuf(void)
 {
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-    if (wp->w_status_height != 0 && wp->w_buffer == curbuf) {
+    if ((wp->w_status_height != 0 || win_external) && wp->w_buffer == curbuf) {
       wp->w_redr_status = TRUE;
       redraw_later(VALID);
     }
@@ -5120,7 +5129,7 @@ void win_redr_status(win_T *wp)
   busy = TRUE;
 
   wp->w_redr_status = FALSE;
-  if (wp->w_status_height == 0) {
+  if (wp->w_status_height == 0 && !win_external) {
     // no status line, can only be last window
     redraw_cmdline = true;
   } else if (!redrawing() || pum_drawn()) {
@@ -5451,6 +5460,14 @@ win_redr_custom (
     ++width;
   }
   buf[len] = NUL;
+
+  if (win_external) {
+    Array args = ARRAY_DICT_INIT;
+    ADD(args, INTEGER_OBJ(ewp->handle));
+    ADD(args, STRING_OBJ(cstr_to_string((char *)buf)));
+    ui_event("win_status_line", args);
+    goto theend;
+  }
 
   /*
    * Draw each snippet with the specified highlighting.

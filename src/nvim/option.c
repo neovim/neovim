@@ -2933,7 +2933,7 @@ did_set_string_option (
         || check_opt_strings(curbuf->b_p_bt, p_buftype_values, FALSE) != OK) {
       errmsg = e_invarg;
     } else {
-      if (curwin->w_status_height) {
+      if (curwin->w_status_height || win_get_external()) {
         curwin->w_redr_status = TRUE;
         redraw_later(VALID);
       }
@@ -3969,6 +3969,10 @@ set_num_option (
   long old_Rows = Rows;                 /* remember old Rows */
   long old_Columns = Columns;           /* remember old Columns */
   long        *pp = (long *)varp;
+
+  if (win_get_external()) {
+      p_ls = 0;
+  }
 
   /* Disallow changing some options from secure mode. */
   if ((secure || sandbox != 0)
@@ -5149,6 +5153,9 @@ static int put_setbool(FILE *fd, char *cmd, char *name, int value)
 
 void comp_col(void)
 {
+  if (win_get_external()) {
+      p_ls = 0;
+  }
   int last_has_status = (p_ls == 2 || (p_ls == 1 && firstwin != lastwin));
 
   sc_col = 0;

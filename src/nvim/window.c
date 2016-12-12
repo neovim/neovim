@@ -502,6 +502,7 @@ int win_new_floating(long width, long height)
     win_init(wp, curwin, 0);
     wp->w_height = height;
     wp->w_width = width;
+    wp->w_status_height = 0;
     redraw_win_later(wp, VALID);
     win_enter(wp, false);
     return OK;
@@ -567,6 +568,12 @@ int win_split_ins(int size, int flags, win_T *new_wp, int dir)
   int before;
   int minheight;
   int wmh1;
+  int status_height = STATUS_HEIGHT;
+
+  if (win_get_external()) {
+      status_height = 0;
+      p_ls = 0;
+  }
 
   if (flags & WSP_TOP)
     oldwin = firstwin;
@@ -581,7 +588,7 @@ int win_split_ins(int size, int flags, win_T *new_wp, int dir)
       EMSG(_(e_noroom));
       return FAIL;
     }
-    need_status = STATUS_HEIGHT;
+    need_status = status_height;
   }
 
 
@@ -674,7 +681,7 @@ int win_split_ins(int size, int flags, win_T *new_wp, int dir)
      */
     // Current window requires at least 1 space.
     wmh1 = (p_wmh == 0 ? 1 : p_wmh);
-    needed = wmh1 + STATUS_HEIGHT;
+    needed = wmh1 + status_height;
     if (flags & WSP_ROOM) {
       needed += p_wh - wmh1;
     }
@@ -709,32 +716,32 @@ int win_split_ins(int size, int flags, win_T *new_wp, int dir)
     }
     oldwin_height = oldwin->w_height;
     if (need_status) {
-      oldwin->w_status_height = STATUS_HEIGHT;
-      oldwin_height -= STATUS_HEIGHT;
+      oldwin->w_status_height = status_height;
+      oldwin_height -= status_height;
     }
     if (new_size == 0)
       new_size = oldwin_height / 2;
 
-    if (new_size > available - minheight - STATUS_HEIGHT) {
-      new_size = available - minheight - STATUS_HEIGHT;
+    if (new_size > available - minheight - status_height) {
+      new_size = available - minheight - status_height;
     }
     if (new_size < wmh1) {
       new_size = wmh1;
     }
 
     /* if it doesn't fit in the current window, need win_equal() */
-    if (oldwin_height - new_size - STATUS_HEIGHT < p_wmh)
+    if (oldwin_height - new_size - status_height < p_wmh)
       do_equal = TRUE;
 
     /* We don't like to take lines for the new window from a
      * 'winfixheight' window.  Take them from a window above or below
      * instead, if possible. */
     if (oldwin->w_p_wfh) {
-      win_setheight_win(oldwin->w_height + new_size + STATUS_HEIGHT,
+      win_setheight_win(oldwin->w_height + new_size + status_height,
           oldwin);
       oldwin_height = oldwin->w_height;
       if (need_status)
-        oldwin_height -= STATUS_HEIGHT;
+        oldwin_height -= status_height;
     }
 
     /* Only make all windows the same height if one of them (except oldwin)
@@ -747,7 +754,7 @@ int win_split_ins(int size, int flags, win_T *new_wp, int dir)
         if (frp->fr_win != oldwin && frp->fr_win != NULL
             && (frp->fr_win->w_height > new_size
                 || frp->fr_win->w_height > oldwin_height - new_size
-                - STATUS_HEIGHT)) {
+                - status_height)) {
           do_equal = TRUE;
           break;
         }
@@ -911,15 +918,15 @@ int win_split_ins(int size, int flags, win_T *new_wp, int dir)
     win_new_height(wp, new_size);
     if (flags & (WSP_TOP | WSP_BOT))
       frame_new_height(curfrp, curfrp->fr_height
-          - (new_size + STATUS_HEIGHT), flags & WSP_TOP, FALSE);
+          - (new_size + status_height), flags & WSP_TOP, FALSE);
     else
-      win_new_height(oldwin, oldwin_height - (new_size + STATUS_HEIGHT));
+      win_new_height(oldwin, oldwin_height - (new_size + status_height));
     if (before) {       /* new window above current one */
       wp->w_winrow = oldwin->w_winrow;
-      wp->w_status_height = STATUS_HEIGHT;
-      oldwin->w_winrow += wp->w_height + STATUS_HEIGHT;
+      wp->w_status_height = status_height;
+      oldwin->w_winrow += wp->w_height + status_height;
     } else {          /* new window below current one */
-      wp->w_winrow = oldwin->w_winrow + oldwin->w_height + STATUS_HEIGHT;
+      wp->w_winrow = oldwin->w_winrow + oldwin->w_height + status_height;
       wp->w_status_height = oldwin->w_status_height;
       // Don't set the status_height for oldwin yet, this might break
       // frame_fix_height(oldwin), therefore will be set below.
@@ -932,7 +939,7 @@ int win_split_ins(int size, int flags, win_T *new_wp, int dir)
     if (!before) {
       // New window above current one, set the status_height after
       // frame_fix_height(oldwin)
-      oldwin->w_status_height = STATUS_HEIGHT;
+      oldwin->w_status_height = status_height;
     }
   }
 
@@ -1124,6 +1131,11 @@ make_windows (
 {
   int maxcount;
   int todo;
+  int status_height = STATUS_HEIGHT;
+
+  if (win_get_external()) {
+    status_height = 0;
+  }
 
   if (vertical) {
     /* Each windows needs at least 'winminwidth' lines and a separator
@@ -1133,7 +1145,7 @@ make_windows (
   } else {
     /* Each window needs at least 'winminheight' lines and a status line. */
     maxcount = (curwin->w_height + curwin->w_status_height
-                - (p_wh - p_wmh)) / (p_wmh + STATUS_HEIGHT);
+                - (p_wh - p_wmh)) / (p_wmh + status_height);
   }
 
   if (maxcount < 2)
@@ -1161,8 +1173,8 @@ make_windows (
         break;
     } else {
       if (win_split(curwin->w_height - (curwin->w_height - todo
-                                        * STATUS_HEIGHT) / (todo + 1)
-              - STATUS_HEIGHT, WSP_ABOVE) == FAIL)
+                                        * status_height) / (todo + 1)
+              - status_height, WSP_ABOVE) == FAIL)
         break;
     }
 
@@ -1620,6 +1632,9 @@ static void win_equal_rec(
       else
         extra_sep = 0;
       totwincount = (n + extra_sep) / (p_wmh + 1);
+      if (win_get_external()) {
+        totwincount = n;
+      }
       has_next_curwin = frame_has_win(topfr, next_curwin);
 
       /*
@@ -1650,10 +1665,15 @@ static void win_equal_rec(
             next_curwin_size = 0;
             if (new_size < p_wh)
               new_size = p_wh;
-          } else
+          } else {
             /* These windows don't use up room. */
-            totwincount -= (n + (fr->fr_next == NULL
-                                 ? extra_sep : 0)) / (p_wmh + 1);
+            if (!win_get_external()) {
+              totwincount -= (n + (fr->fr_next == NULL
+                                   ? extra_sep : 0)) / (p_wmh + 1);
+            } else {
+              totwincount -= n;
+            }
+          }
           room -= new_size - n;
           if (room < 0) {
             new_size += room;
@@ -1697,6 +1717,9 @@ static void win_equal_rec(
         n = frame_minheight(fr, NOWIN);
         wincount = (n + (fr->fr_next == NULL ? extra_sep : 0))
                    / (p_wmh + 1);
+        if (win_get_external()) {
+            wincount = n;
+        }
         m = frame_minheight(fr, next_curwin);
         if (has_next_curwin)
           hnc = frame_has_win(fr, next_curwin);
@@ -5230,6 +5253,9 @@ last_status (
 )
 {
   /* Don't make a difference between horizontal or vertical split. */
+  if (win_get_external()) {
+      p_ls = 0;
+  }
   last_status_rec(topframe, (p_ls == 2
                              || (p_ls == 1 && (morewin || lastwin != firstwin))));
 }

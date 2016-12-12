@@ -1585,7 +1585,7 @@ static int command_line_changed(CommandLineState *s)
 
     validate_cursor();
     // May redraw the status line to show the cursor position.
-    if (p_ru && curwin->w_status_height > 0) {
+    if (p_ru && (curwin->w_status_height > 0 || win_get_external())) {
       curwin->w_redr_status = true;
     }
 
@@ -3323,7 +3323,7 @@ static int showmatches(expand_T *xp, int wildmenu)
 
     if (win_get_external()) {
       Array args = ARRAY_DICT_INIT;
-      ADD(args, INTEGER_OBJ(0));
+      ADD(args, INTEGER_OBJ(-1));
       for (i = 0; i < num_files; ++i) {
         ADD(args, STRING_OBJ(cstr_to_string((char *)files_found[i])));
         if (i > 20) {
