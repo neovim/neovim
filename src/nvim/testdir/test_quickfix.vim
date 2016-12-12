@@ -813,3 +813,40 @@ function Test_quickfix_set_list_with_act()
   call XquickfixSetListWithAct('c')
   call XquickfixSetListWithAct('l')
 endfunction
+
+func XLongLinesTests()
+  let l = getqflist()
+
+  call assert_equal(3, len(l))
+  call assert_equal(1, l[0].lnum)
+  call assert_equal(1, l[0].col)
+  call assert_equal(4070, len(l[0].text))
+  call assert_equal(2, l[1].lnum)
+  call assert_equal(1, l[1].col)
+  call assert_equal(4070, len(l[1].text))
+  call assert_equal(3, l[2].lnum)
+  call assert_equal(1, l[2].col)
+  call assert_equal(10, len(l[2].text))
+
+  call setqflist([], 'r')
+endfunc
+
+func Test_long_lines()
+  let testfile = 'samples/quickfix.txt'
+
+  " file
+  exe 'cgetfile' testfile
+  call XLongLinesTests()
+
+  " list
+  cexpr readfile(testfile)
+  call XLongLinesTests()
+
+  " string
+  cexpr join(readfile(testfile), "\n")
+  call XLongLinesTests()
+
+  " buffer
+  e testfile
+  exe 'cbuffer' bufnr('%')
+endfunc

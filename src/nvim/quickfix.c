@@ -168,6 +168,9 @@ qf_init (
       qf_title);
 }
 
+// Maximum number of bytes allowed per line while reading an errorfile.
+static const size_t LINE_MAXLEN = 4096;
+
 /*
  * Read the errorfile "efile" into memory, line by line, building the error
  * list.
@@ -192,8 +195,15 @@ qf_init_ext (
 {
   char_u          *namebuf;
   char_u          *errmsg;
+  size_t          errmsglen;
   char_u          *pattern;
   char_u          *fmtstr = NULL;
+  char_u          *growbuf = NULL;
+  size_t          growbuflen;
+  size_t          growbufsiz;
+  char_u          *linebuf;
+  size_t          linelen;
+  bool            discard;
   int col = 0;
   bool use_viscol = false;
   char_u type = 0;
@@ -210,7 +220,7 @@ qf_init_ext (
   char_u          *efm;
   char_u          *ptr;
   char_u          *srcptr;
-  int len;
+  size_t len;
   int i;
   int round;
   int idx = 0;
@@ -221,6 +231,7 @@ qf_init_ext (
   char_u *directory = NULL;
   char_u *currfile = NULL;
   char_u *tail = NULL;
+  char_u *p_buf = NULL;
   char_u *p_str = NULL;
   listitem_T *p_li = NULL;
   struct dir_stack_T *file_stack = NULL;
@@ -243,7 +254,8 @@ qf_init_ext (
   };
 
   namebuf = xmalloc(CMDBUFFSIZE + 1);
-  errmsg = xmalloc(CMDBUFFSIZE + 1);
+  errmsglen = CMDBUFFSIZE + 1;
+  errmsg = xmalloc(errmsglen);
   pattern = xmalloc(CMDBUFFSIZE + 1);
 
   if (efile != NULL && (fd = mch_fopen((char *)efile, "r")) == NULL) {
@@ -466,36 +478,66 @@ qf_init_ext (
           /* Get the next line from the supplied string */
           char_u *p;
 
-          if (!*p_str)           /* Reached the end of the string */
+          if (*p_str == NUL)  // Reached the end of the string
             break;
 
           p = vim_strchr(p_str, '\n');
-          if (p)
-            len = (int)(p - p_str + 1);
+          if (p != NULL)
+            len = (size_t)(p - p_str) + 1;
           else
-            len = (int)STRLEN(p_str);
+            len = STRLEN(p_str);
 
-          if (len > CMDBUFFSIZE - 2)
-            STRLCPY(IObuff, p_str, CMDBUFFSIZE - 1);
-          else
-            STRLCPY(IObuff, p_str, len + 1);
+          if (len > IOSIZE - 2) {
+            // If the line exceeds LINE_MAXLEN exclude the last byte since it's
+            // not a NL character.
+            linelen = len > LINE_MAXLEN ? LINE_MAXLEN - 1 : len;
+            if (growbuf == NULL) {
+              growbuf = xmalloc(linelen);
+            } else if (linelen > growbufsiz) {
+              growbuf = xrealloc(growbuf, linelen);
+            }
+            growbufsiz = linelen;
+            linebuf = growbuf;
+          } else {
+            linebuf = IObuff;
+            linelen = len;
+          }
+          STRLCPY(linebuf, p_str, linelen + 1);
 
+          // Increment using len in order to discard the rest of the line if it
+          // exceeds LINE_MAXLEN.
           p_str += len;
         } else if (tv->v_type == VAR_LIST) {
           // Get the next line from the supplied list
-          while (p_li && (p_li->li_tv.v_type != VAR_STRING
-                          || p_li->li_tv.vval.v_string == NULL)) {
+          while (p_li != NULL
+                 && (p_li->li_tv.v_type != VAR_STRING
+                     || p_li->li_tv.vval.v_string == NULL)) {
             p_li = p_li->li_next;               // Skip non-string items
           }
 
-          if (!p_li)                            /* End of the list */
+          if (p_li == NULL)                     // End of the list
             break;
 
-          len = (int)STRLEN(p_li->li_tv.vval.v_string);
-          if (len > CMDBUFFSIZE - 2)
-            len = CMDBUFFSIZE - 2;
+          len = STRLEN(p_li->li_tv.vval.v_string);
+          if (len > IOSIZE - 2) {
+            linelen = len;
+            if (linelen > LINE_MAXLEN) {
+              linelen = LINE_MAXLEN - 1;
+            }
+            if (growbuf == NULL) {
+              growbuf = xmalloc(linelen);
+              growbufsiz = linelen;
+            } else if (linelen > growbufsiz) {
+              growbuf = xrealloc(growbuf, linelen);
+              growbufsiz = linelen;
+            }
+            linebuf = growbuf;
+          } else {
+            linebuf = IObuff;
+            linelen = len;
+          }
 
-          STRLCPY(IObuff, p_li->li_tv.vval.v_string, len + 1);
+          STRLCPY(linebuf, p_li->li_tv.vval.v_string, linelen + 1);
 
           p_li = p_li->li_next;                 /* next item */
         }
@@ -503,21 +545,103 @@ qf_init_ext (
         /* Get the next line from the supplied buffer */
         if (buflnum > lnumlast)
           break;
-        STRLCPY(IObuff, ml_get_buf(buf, buflnum++, FALSE),
-            CMDBUFFSIZE - 1);
+        p_buf = ml_get_buf(buf, buflnum++, false);
+        linelen = STRLEN(p_buf);
+        if (linelen > IOSIZE - 2) {
+          if (growbuf == NULL) {
+            growbuf = xmalloc(linelen);
+            growbufsiz = linelen;
+          } else if (linelen > growbufsiz) {
+            if (linelen > LINE_MAXLEN) {
+              linelen = LINE_MAXLEN - 1;
+            }
+            growbuf = xrealloc(growbuf, linelen);
+            growbufsiz = linelen;
+          }
+          linebuf = growbuf;
+        } else {
+          linebuf = IObuff;
+        }
+        STRLCPY(linebuf, p_buf, linelen + 1);
       }
-    } else if (fgets((char *)IObuff, CMDBUFFSIZE - 2, fd) == NULL)
-      break;
+    } else {
+      if (fgets((char *)IObuff, IOSIZE, fd) == NULL) {
+        break;
+      }
 
-    IObuff[CMDBUFFSIZE - 2] = NUL;      /* for very long lines */
-    remove_bom(IObuff);
-
-    if ((efmp = vim_strrchr(IObuff, '\n')) != NULL)
-      *efmp = NUL;
+      discard = false;
+      linelen = STRLEN(IObuff);
+      if (linelen == IOSIZE - 1 && (IObuff[linelen - 1] != '\n'
 #ifdef USE_CRNL
-    if ((efmp = vim_strrchr(IObuff, '\r')) != NULL)
-      *efmp = NUL;
+                                    || IObuff[linelen - 1] != '\r'
 #endif
+                                   )) {
+        // The current line exceeds IObuff, continue reading using growbuf
+        // until EOL or LINE_MAXLEN bytes is read.
+        if (growbuf == NULL) {
+          growbufsiz = 2 * (IOSIZE - 1);
+          growbuf = xmalloc(growbufsiz);
+        }
+
+        // Copy the read part of the line, excluding null-terminator
+        memcpy(growbuf, IObuff, IOSIZE - 1);
+        growbuflen = linelen;
+
+        for (;;) {
+          if (fgets((char*)growbuf + growbuflen,
+                    (int)(growbufsiz - growbuflen), fd) == NULL) {
+            break;
+          }
+          linelen = STRLEN(growbuf + growbuflen);
+          growbuflen += linelen;
+          if (growbuf[growbuflen - 1] == '\n'
+#ifdef USE_CRNL
+              || growbuf[growbuflen - 1] == '\r'
+#endif
+             ) {
+            break;
+          }
+          if (growbufsiz == LINE_MAXLEN) {
+            discard = true;
+            break;
+          }
+
+          growbufsiz = (2 * growbufsiz < LINE_MAXLEN)
+            ? 2 * growbufsiz : LINE_MAXLEN;
+          growbuf = xrealloc(growbuf, 2 * growbufsiz);
+        }
+
+        while (discard) {
+          // The current line is longer than LINE_MAXLEN, continue reading but
+          // discard everything until EOL or EOF is reached.
+          if (fgets((char *)IObuff, IOSIZE, fd) == NULL
+              || STRLEN(IObuff) < IOSIZE - 1
+              || IObuff[IOSIZE - 1] == '\n'
+#ifdef USE_CRNL
+              || IObuff[IOSIZE - 1] == '\r'
+#endif
+             ) {
+            break;
+          }
+        }
+
+        linebuf = growbuf;
+        linelen = growbuflen;
+      } else {
+        linebuf = IObuff;
+      }
+    }
+
+    if (linelen > 0 && linebuf[linelen - 1] == '\n') {
+      linebuf[linelen - 1] = NUL;
+    }
+#ifdef USE_CRNL
+    if (linelen > 0 && linebuf[linelen - 1] == '\r') {
+      linebuf[linelen - 1] = NUL;
+    }
+#endif
+
+    remove_bom(linebuf);
 
     /* If there was no %> item start at the first pattern */
     if (fmt_start == NULL)
@@ -547,7 +671,7 @@ restofline:
       tail = NULL;
 
       regmatch.regprog = fmt_ptr->prog;
-      int r = vim_regexec(&regmatch, IObuff, (colnr_T)0);
+      int r = vim_regexec(&regmatch, linebuf, (colnr_T)0);
       fmt_ptr->prog = regmatch.regprog;
       if (r) {
         if ((idx == 'C' || idx == 'Z') && !multiline) {
@@ -596,12 +720,22 @@ restofline:
             continue;
           type = *regmatch.startp[i];
         }
-        if (fmt_ptr->flags == '+' && !multiscan)                /* %+ */
-          STRCPY(errmsg, IObuff);
-        else if ((i = (int)fmt_ptr->addr[5]) > 0) {             /* %m */
+        if (fmt_ptr->flags == '+' && !multiscan) {              // %+
+          if (linelen > errmsglen) {
+            // linelen + null terminator
+            errmsg = xrealloc(errmsg, linelen + 1);
+            errmsglen = linelen + 1;
+          }
+          STRLCPY(errmsg, linebuf, linelen + 1);
+        } else if ((i = (int)fmt_ptr->addr[5]) > 0) {             /* %m */
           if (regmatch.startp[i] == NULL || regmatch.endp[i] == NULL)
             continue;
-          len = (int)(regmatch.endp[i] - regmatch.startp[i]);
+          len = (size_t)(regmatch.endp[i] - regmatch.startp[i]);
+          if (len > errmsglen) {
+            // len + null terminator
+            errmsg = xrealloc(errmsg, len + 1);
+            errmsglen = len + 1;
+          }
           STRLCPY(errmsg, regmatch.startp[i], len + 1);
         }
         if ((i = (int)fmt_ptr->addr[6]) > 0) {                  /* %r */
@@ -635,7 +769,7 @@ restofline:
         if ((i = (int)fmt_ptr->addr[9]) > 0) {                  /* %s */
           if (regmatch.startp[i] == NULL || regmatch.endp[i] == NULL)
             continue;
-          len = (int)(regmatch.endp[i] - regmatch.startp[i]);
+          len = (size_t)(regmatch.endp[i] - regmatch.startp[i]);
           if (len > CMDBUFFSIZE - 5)
             len = CMDBUFFSIZE - 5;
           STRCPY(pattern, "^\\V");
@@ -664,7 +798,12 @@ restofline:
       namebuf[0] = NUL;                 // no match found, remove file name
       lnum = 0;                         // don't jump to this line
       valid = false;
-      STRCPY(errmsg, IObuff);           // copy whole line to error message
+      if (linelen > errmsglen) {
+        // linelen + null terminator
+        errmsg = xrealloc(errmsg, linelen + 1);
+      }
+      // copy whole line to error message
+      STRLCPY(errmsg, linebuf, linelen + 1);
       if (fmt_ptr == NULL) {
         multiline = multiignore = false;
       }
@@ -785,6 +924,7 @@ qf_init_end:
   xfree(errmsg);
   xfree(pattern);
   xfree(fmtstr);
+  xfree(growbuf);
 
   qf_update_buffer(qi, true);
 
