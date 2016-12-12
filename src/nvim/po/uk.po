@@ -564,8 +564,8 @@ msgstr "E714: Потрібен список"
 msgid "E715: Dictionary required"
 msgstr "E715: Потрібен словник"
 
-msgid "E114: String required"
-msgstr "E114: Потрібен String"
+msgid "E928: String required"
+msgstr "E928: Потрібен String"
 
 #, c-format
 msgid "E118: Too many arguments for function: %s"

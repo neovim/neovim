@@ -483,7 +483,7 @@ endfunction
 function Test_locationlist_curwin_was_closed()
     augroup testgroup
       au!
-      autocmd BufReadCmd t call R(expand("<amatch>"))
+      autocmd BufReadCmd test_curwin.txt call R(expand("<amatch>"))
     augroup END
 
     function! R(n)
@@ -492,7 +492,7 @@ function Test_locationlist_curwin_was_closed()
 
     new
     let q = []
-    call add(q, {'filename': 't' })
+    call add(q, {'filename': 'test_curwin.txt' })
     call setloclist(0, q)
     call assert_fails('lrewind', 'E924:')
 
@@ -625,14 +625,14 @@ function XquickfixChangedByAutocmd(cchar)
   let Xgetexpr = a:cchar . 'getexpr'
   let Xrewind = a:cchar . 'rewind'
   if a:cchar == 'c'
-    let Xsetlist = 'setqflist('
+    let Xsetlist = function('setqflist')
     let ErrorNr = 'E925'
     function! ReadFunc()
       colder
       cgetexpr []
     endfunc
   else
-    let Xsetlist = 'setloclist(0,'
+    let Xsetlist = function('setloclist', [0])
     let ErrorNr = 'E926'
     function! ReadFunc()
       lolder
@@ -642,15 +642,15 @@ function XquickfixChangedByAutocmd(cchar)
 
   augroup testgroup
     au!
-    autocmd BufReadCmd t call ReadFunc()
+    autocmd BufReadCmd test_changed.txt call ReadFunc()
   augroup END
 
-  bwipe!
+  new | only
   let words = [ "a", "b" ]
   let qflist = []
   for word in words
-    call add(qflist, {'filename': 't'})
-    exec "call " . Xsetlist . "qflist, '')"
+    call add(qflist, {'filename': 'test_changed.txt'})
+    call Xsetlist(qflist, ' ')
   endfor
   exec "call assert_fails('" . Xrewind . "', '" . ErrorNr . ":')"
 
@@ -726,4 +726,90 @@ function Test_setqflist()
   call SetXlistTests('l', bnum)
 
   call delete('Xtestfile')
+endfunction
+
+function! XquickfixSetListWithAct(cchar)
+  let Xolder = a:cchar . 'older'
+  let Xnewer = a:cchar . 'newer'
+  if a:cchar == 'c'
+    let Xsetlist = function('setqflist')
+    let Xgetlist = function('getqflist')
+  else
+    let Xsetlist = function('setloclist', [0])
+    let Xgetlist = function('getloclist', [0])
+  endif
+  let list1 = [{'filename': 'fnameA', 'text': 'A'},
+          \    {'filename': 'fnameB', 'text': 'B'}]
+  let list2 = [{'filename': 'fnameC', 'text': 'C'},
+          \    {'filename': 'fnameD', 'text': 'D'},
+          \    {'filename': 'fnameE', 'text': 'E'}]
+
+  " {action} is unspecified.  Same as specifing ' '.
+  new | only
+  exec "silent! " . Xnewer . "99"
+  call Xsetlist(list1)
+  call Xsetlist(list2)
+  let li = Xgetlist()
+  call assert_equal(3, len(li))
+  call assert_equal('C', li[0]['text'])
+  call assert_equal('D', li[1]['text'])
+  call assert_equal('E', li[2]['text'])
+  exec "silent! " . Xolder
+  let li = Xgetlist()
+  call assert_equal(2, len(li))
+  call assert_equal('A', li[0]['text'])
+  call assert_equal('B', li[1]['text'])
+
+  " {action} is specified ' '.
+  new | only
+  exec "silent! " . Xnewer . "99"
+  call Xsetlist(list1)
+  call Xsetlist(list2, ' ')
+  let li = Xgetlist()
+  call assert_equal(3, len(li))
+  call assert_equal('C', li[0]['text'])
+  call assert_equal('D', li[1]['text'])
+  call assert_equal('E', li[2]['text'])
+  exec "silent! " . Xolder
+  let li = Xgetlist()
+  call assert_equal(2, len(li))
+  call assert_equal('A', li[0]['text'])
+  call assert_equal('B', li[1]['text'])
+
+  " {action} is specified 'a'.
+  new | only
+  exec "silent! " . Xnewer . "99"
+  call Xsetlist(list1)
+  call Xsetlist(list2, 'a')
+  let li = Xgetlist()
+  call assert_equal(5, len(li))
+  call assert_equal('A', li[0]['text'])
+  call assert_equal('B', li[1]['text'])
+  call assert_equal('C', li[2]['text'])
+  call assert_equal('D', li[3]['text'])
+  call assert_equal('E', li[4]['text'])
+
+  " {action} is specified 'r'.
+  new | only
+  exec "silent! " . Xnewer . "99"
+  call Xsetlist(list1)
+  call Xsetlist(list2, 'r')
+  let li = Xgetlist()
+  call assert_equal(3, len(li))
+  call assert_equal('C', li[0]['text'])
+  call assert_equal('D', li[1]['text'])
+  call assert_equal('E', li[2]['text'])
+
+  " Test for wrong value.
+  new | only
+  call assert_fails("call Xsetlist(0)", 'E714:')
+  call assert_fails("call Xsetlist(list1, '')", 'E927:')
+  call assert_fails("call Xsetlist(list1, 'aa')", 'E927:')
+  call assert_fails("call Xsetlist(list1, ' a')", 'E927:')
+  call assert_fails("call Xsetlist(list1, 0)", 'E928:')
+endfunc
+
+function Test_quickfix_set_list_with_act()
+  call XquickfixSetListWithAct('c')
+  call XquickfixSetListWithAct('l')
 endfunction

@@ -158,7 +158,7 @@ static char *e_listdictarg = N_(
 static char *e_emptykey = N_("E713: Cannot use empty key for Dictionary");
 static char *e_listreq = N_("E714: List required");
 static char *e_dictreq = N_("E715: Dictionary required");
-static char *e_strreq = N_("E114: String required");
+static char *e_stringreq = N_("E928: String required");
 static char *e_toomanyarg = N_("E118: Too many arguments for function: %s");
 static char *e_dictkey = N_("E716: Key not present in Dictionary: %s");
 static char *e_funcexts = N_(
@@ -14996,6 +14996,7 @@ static void f_setline(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 static void set_qf_ll_list(win_T *wp, typval_T *args, typval_T *rettv)
   FUNC_ATTR_NONNULL_ARG(2, 3)
 {
+  static char *e_invact = N_("E927: Invalid action: '%s'");
   char_u *title = NULL;
   int action = ' ';
   rettv->vval.v_number = -1;
@@ -15011,12 +15012,16 @@ static void set_qf_ll_list(win_T *wp, typval_T *args, typval_T *rettv)
     // Option argument was not given.
     goto skip_args;
   } else if (action_arg->v_type != VAR_STRING) {
-    EMSG(_(e_strreq));
+    EMSG(_(e_stringreq));
     return;
   }
   char_u *act = get_tv_string_chk(action_arg);
-  if (*act == 'a' || *act == 'r') {
+  if ((*act == 'a' || *act == 'r' || *act == ' ') && act[1] == NUL) {
     action = *act;
+  }
+  else {
+    EMSG2(_(e_invact), act);
+    return;
   }
 
   typval_T *title_arg = &args[2];
