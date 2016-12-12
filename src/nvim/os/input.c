@@ -39,8 +39,6 @@ static int events_enabled = 0;
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "os/input.c.generated.h"
 #endif
-// Helper function used to push bytes from the 'event' key sequence partially
-// between calls to os_inchar when maxlen < 3
 
 void input_init(void)
 {
@@ -389,6 +387,8 @@ static void process_interrupts(void)
   }
 }
 
+// Helper function used to push bytes from the 'event' key sequence partially
+// between calls to os_inchar when maxlen < 3
 static int push_event_key(uint8_t *buf, int maxlen)
 {
   static const uint8_t key[3] = { K_SPECIAL, KS_EXTRA, KE_EVENT };
