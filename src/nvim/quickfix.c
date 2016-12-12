@@ -492,9 +492,9 @@ qf_init_ext (
             // not a NL character.
             linelen = len > LINE_MAXLEN ? LINE_MAXLEN - 1 : len;
             if (growbuf == NULL) {
-              growbuf = xmalloc(linelen);
+              growbuf = xmalloc(linelen + 1);
             } else if (linelen > growbufsiz) {
-              growbuf = xrealloc(growbuf, linelen);
+              growbuf = xrealloc(growbuf, linelen + 1);
             }
             growbufsiz = linelen;
             linebuf = growbuf;
@@ -525,10 +525,10 @@ qf_init_ext (
               linelen = LINE_MAXLEN - 1;
             }
             if (growbuf == NULL) {
-              growbuf = xmalloc(linelen);
+              growbuf = xmalloc(linelen + 1);
               growbufsiz = linelen;
             } else if (linelen > growbufsiz) {
-              growbuf = xrealloc(growbuf, linelen);
+              growbuf = xrealloc(growbuf, linelen + 1);
               growbufsiz = linelen;
             }
             linebuf = growbuf;
@@ -549,13 +549,13 @@ qf_init_ext (
         linelen = STRLEN(p_buf);
         if (linelen > IOSIZE - 2) {
           if (growbuf == NULL) {
-            growbuf = xmalloc(linelen);
+            growbuf = xmalloc(linelen + 1);
             growbufsiz = linelen;
           } else if (linelen > growbufsiz) {
             if (linelen > LINE_MAXLEN) {
               linelen = LINE_MAXLEN - 1;
             }
-            growbuf = xrealloc(growbuf, linelen);
+            growbuf = xrealloc(growbuf, linelen + 1);
             growbufsiz = linelen;
           }
           linebuf = growbuf;
