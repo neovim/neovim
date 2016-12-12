@@ -5386,11 +5386,12 @@ win_redr_custom (
   } else {
     if (!win_external) {
       row = wp->w_winrow + wp->w_height;
+      maxwidth = wp->w_width;
     } else {
       row = wp->w_height;
+      maxwidth = Columns;
     }
     fillchar = fillchar_status(&attr, wp == curwin);
-    maxwidth = wp->w_width;
 
     if (draw_ruler) {
       stl = p_ruf;
@@ -5454,13 +5455,6 @@ win_redr_custom (
   len = (size_t)len < sizeof(buf) ? len : (int)sizeof(buf) - 1;
   xfree(p);
 
-  /* fill up with "fillchar" */
-  while (width < maxwidth && len < (int)sizeof(buf) - 1) {
-    len += (*mb_char2bytes)(fillchar, buf + len);
-    ++width;
-  }
-  buf[len] = NUL;
-
   if (win_external) {
     Array args = ARRAY_DICT_INIT;
     ADD(args, INTEGER_OBJ(ewp->handle));
@@ -5468,6 +5462,13 @@ win_redr_custom (
     ui_event("win_status_line", args);
     goto theend;
   }
+
+  /* fill up with "fillchar" */
+  while (width < maxwidth && len < (int)sizeof(buf) - 1) {
+    len += (*mb_char2bytes)(fillchar, buf + len);
+    ++width;
+  }
+  buf[len] = NUL;
 
   /*
    * Draw each snippet with the specified highlighting.
