@@ -77,6 +77,7 @@ struct qfline_S {
 
 typedef struct qf_list_S {
   qfline_T    *qf_start;        /* pointer to the first error */
+  qfline_T    *qf_last;         // pointer to the last error
   qfline_T    *qf_ptr;          /* pointer to the current error */
   int qf_count;                 /* number of errors (0 means no error list) */
   int qf_index;                 /* current index in the error list */
@@ -226,7 +227,6 @@ qf_init_ext (
   long lnum = 0L;
   int enr = 0;
   FILE            *fd = NULL;
-  qfline_T        *qfprev = NULL;       /* init to make SASC shut up */
   qfline_T        *old_last = NULL;
   char_u          *efmp;
   efm_T           *fmt_first = NULL;
@@ -283,11 +283,8 @@ qf_init_ext (
     /* make place for a new list */
     qf_new_list(qi, qf_title);
   else if (qi->qf_lists[qi->qf_curlist].qf_count > 0) {
-    /* Adding to existing list, find last entry. */
-    for (qfprev = qi->qf_lists[qi->qf_curlist].qf_start;
-         qfprev->qf_next != qfprev; qfprev = qfprev->qf_next)
-      ;
-    old_last = qfprev;
+    /* Adding to existing list, use last entry. */
+    old_last = qi->qf_lists[qi->qf_curlist].qf_last;
   }
 
   /*
@@ -805,6 +802,7 @@ restofline:
         multiignore = false;  // reset continuation
       } else if (vim_strchr((char_u *)"CZ", idx)
                  != NULL) { /* continuation of multi-line msg */
+        qfline_T *qfprev = qi->qf_lists[qi->qf_curlist].qf_last;
         if (qfprev == NULL)
           goto error2;
         if (*errmsg && !multiignore) {
@@ -857,7 +855,7 @@ restofline:
       }
     }
 
-    if (qf_add_entry(qi, &qfprev,
+    if (qf_add_entry(qi,
             directory,
             (*namebuf || directory)
             ? namebuf
@@ -997,7 +995,6 @@ void qf_free_all(win_T *wp)
 /// Add an entry to the end of the list of errors.
 ///
 /// @param  qi       quickfix list
-/// @param  prevp    nonnull pointer (to previously added entry or NULL)
 /// @param  dir      optional directory name
 /// @param  fname    file name or NULL
 /// @param  bufnum   buffer number or zero
@@ -1011,12 +1008,12 @@ void qf_free_all(win_T *wp)
 /// @param  valid    valid entry
 ///
 /// @returns OK or FAIL.
-static int qf_add_entry(qf_info_T *qi, qfline_T **prevp, char_u *dir,
-                        char_u *fname, int bufnum, char_u *mesg, long lnum,
-                        int col, char_u vis_col, char_u *pattern, int nr,
-                        char_u type, char_u valid)
+static int qf_add_entry(qf_info_T *qi, char_u *dir, char_u *fname, int bufnum,
+                        char_u *mesg, long lnum, int col, char_u vis_col,
+                        char_u *pattern, int nr, char_u type, char_u valid)
 {
   qfline_T *qfp = xmalloc(sizeof(qfline_T));
+  qfline_T **lastp;  // pointer to qf_last or NULL
 
   if (bufnum != 0)
     qfp->qf_fnum = bufnum;
@@ -1037,20 +1034,21 @@ static int qf_add_entry(qf_info_T *qi, qfline_T **prevp, char_u *dir,
   qfp->qf_type = type;
   qfp->qf_valid = valid;
 
+  lastp = &qi->qf_lists[qi->qf_curlist].qf_last;
   if (qi->qf_lists[qi->qf_curlist].qf_count == 0) {
     /* first element in the list */
     qi->qf_lists[qi->qf_curlist].qf_start = qfp;
     qi->qf_lists[qi->qf_curlist].qf_ptr = qfp;
     qi->qf_lists[qi->qf_curlist].qf_index = 0;
-    qfp->qf_prev = qfp;         // first element points to itself
+    qfp->qf_prev = NULL;
   } else {
-    assert(*prevp);
-    qfp->qf_prev = *prevp;
-    (*prevp)->qf_next = qfp;
+    assert(*lastp);
+    qfp->qf_prev = *lastp;
+    (*lastp)->qf_next = qfp;
   }
-  qfp->qf_next = qfp;   /* last element points to itself */
+  qfp->qf_next = NULL;
   qfp->qf_cleared = FALSE;
-  *prevp = qfp;
+  *lastp = qfp;
   ++qi->qf_lists[qi->qf_curlist].qf_count;
   if (qi->qf_lists[qi->qf_curlist].qf_index == 0 && qfp->qf_valid) {
     /* first valid entry */
@@ -1136,6 +1134,7 @@ void copy_loclist(win_T *from, win_T *to)
     to_qfl->qf_count = 0;
     to_qfl->qf_index = 0;
     to_qfl->qf_start = NULL;
+    to_qfl->qf_last = NULL;
     to_qfl->qf_ptr = NULL;
     if (from_qfl->qf_title != NULL)
       to_qfl->qf_title = vim_strsave(from_qfl->qf_title);
@@ -1144,12 +1143,13 @@ void copy_loclist(win_T *from, win_T *to)
 
     if (from_qfl->qf_count) {
       qfline_T    *from_qfp;
-      qfline_T    *prevp = NULL;
+      qfline_T    *prevp;
 
       /* copy all the location entries in this list */
-      for (i = 0, from_qfp = from_qfl->qf_start; i < from_qfl->qf_count;
+      for (i = 0, from_qfp = from_qfl->qf_start;
+           i < from_qfl->qf_count && from_qfp != NULL;
            ++i, from_qfp = from_qfp->qf_next) {
-        if (qf_add_entry(to->w_llist, &prevp,
+        if (qf_add_entry(to->w_llist,
                 NULL,
                 NULL,
                 0,
@@ -1169,6 +1169,7 @@ void copy_loclist(win_T *from, win_T *to)
          * directory and file names are not supplied. So the qf_fnum
          * field is copied here.
          */
+        prevp = to->w_llist->qf_lists[to->w_llist->qf_curlist].qf_last;
         prevp->qf_fnum = from_qfp->qf_fnum;         /* file number */
         prevp->qf_type = from_qfp->qf_type;         /* error type */
         if (from_qfl->qf_ptr == from_qfp)
@@ -1400,7 +1401,7 @@ static bool is_qf_entry_present(qf_info_T *qi, qfline_T *qf_ptr)
 
   // Search for the entry in the current list
   for (i = 0, qfp = qfl->qf_start; i < qfl->qf_count; i++, qfp = qfp->qf_next) {
-    if (qfp == qf_ptr) {
+    if (qfp == NULL || qfp == qf_ptr) {
       break;
     }
   }
@@ -1981,6 +1982,9 @@ void qf_list(exarg_T *eap)
     }
 
     qfp = qfp->qf_next;
+    if (qfp == NULL) {
+      break;
+    }
     ++i;
     os_breakcheck();
   }
@@ -2064,22 +2068,24 @@ static void qf_msg(qf_info_T *qi)
 static void qf_free(qf_info_T *qi, int idx)
 {
   qfline_T    *qfp;
+  qfline_T    *qfpnext;
   int stop = FALSE;
 
-  while (qi->qf_lists[idx].qf_count) {
-    qfp = qi->qf_lists[idx].qf_start->qf_next;
+  while (qi->qf_lists[idx].qf_count && qi->qf_lists[idx].qf_start != NULL) {
+    qfp = qi->qf_lists[idx].qf_start;
+    qfpnext = qfp->qf_next;
     if (qi->qf_lists[idx].qf_title != NULL && !stop) {
-      xfree(qi->qf_lists[idx].qf_start->qf_text);
-      stop = (qi->qf_lists[idx].qf_start == qfp);
-      xfree(qi->qf_lists[idx].qf_start->qf_pattern);
-      xfree(qi->qf_lists[idx].qf_start);
+      xfree(qfp->qf_text);
+      stop = (qfp == qfpnext);
+      xfree(qfp->qf_pattern);
+      xfree(qfp);
       if (stop)
         /* Somehow qf_count may have an incorrect value, set it to 1
          * to avoid crashing when it's wrong.
          * TODO: Avoid qf_count being incorrect. */
         qi->qf_lists[idx].qf_count = 1;
     }
-    qi->qf_lists[idx].qf_start = qfp;
+    qi->qf_lists[idx].qf_start = qfpnext;
     --qi->qf_lists[idx].qf_count;
   }
   xfree(qi->qf_lists[idx].qf_title);
@@ -2108,7 +2114,8 @@ void qf_mark_adjust(win_T *wp, linenr_T line1, linenr_T line2, long amount, long
   for (idx = 0; idx < qi->qf_listcount; ++idx)
     if (qi->qf_lists[idx].qf_count)
       for (i = 0, qfp = qi->qf_lists[idx].qf_start;
-           i < qi->qf_lists[idx].qf_count; ++i, qfp = qfp->qf_next)
+           i < qi->qf_lists[idx].qf_count && qfp != NULL;
+           ++i, qfp = qfp->qf_next)
         if (qfp->qf_fnum == curbuf->b_fnum) {
           if (qfp->qf_lnum >= line1 && qfp->qf_lnum <= line2) {
             if (amount == MAXLNUM)
@@ -2571,6 +2578,9 @@ static void qf_fill_buffer(qf_info_T *qi, buf_T *buf, qfline_T *old_last)
         break;
       lnum++;
       qfp = qfp->qf_next;
+      if (qfp == NULL) {
+        break;
+      }
     }
     if (old_last == NULL) {
       /* Delete the empty line which is now at the end */
@@ -3123,7 +3133,6 @@ void ex_vimgrep(exarg_T *eap)
   int fi;
   qf_info_T   *qi = &ql_info;
   qfline_T    *cur_qf_start;
-  qfline_T    *prevp = NULL;
   long lnum;
   buf_T       *buf;
   int duplicate_name = FALSE;
@@ -3208,12 +3217,6 @@ void ex_vimgrep(exarg_T *eap)
       || qi->qf_curlist == qi->qf_listcount) {
     // make place for a new list
     qf_new_list(qi, title != NULL ? title : *eap->cmdlinep);
-  } else if (qi->qf_lists[qi->qf_curlist].qf_count > 0) {
-    // Adding to existing list, find last entry.
-    for (prevp = qi->qf_lists[qi->qf_curlist].qf_start;
-         prevp->qf_next != prevp;
-         prevp = prevp->qf_next) {
-    }
   }
 
   /* parse the list of arguments */
@@ -3311,7 +3314,7 @@ void ex_vimgrep(exarg_T *eap)
         while (vim_regexec_multi(&regmatch, curwin, buf, lnum,
                    col, NULL) > 0) {
           ;
-          if (qf_add_entry(qi, &prevp,
+          if (qf_add_entry(qi,
                   NULL,                     /* dir */
                   fname,
                   0,
@@ -3684,6 +3687,9 @@ int get_errorlist(win_T *wp, list_T *list)
       return FAIL;
 
     qfp = qfp->qf_next;
+    if (qfp == NULL) {
+      break;
+    }
   }
   return OK;
 }
@@ -3695,7 +3701,6 @@ int set_errorlist(win_T *wp, list_T *list, int action, char_u *title)
 {
   listitem_T *li;
   dict_T *d;
-  qfline_T *prevp = NULL;
   qfline_T *old_last = NULL;
   int retval = OK;
   qf_info_T *qi = &ql_info;
@@ -3709,11 +3714,8 @@ int set_errorlist(win_T *wp, list_T *list, int action, char_u *title)
     /* make place for a new list */
     qf_new_list(qi, title);
   else if (action == 'a' && qi->qf_lists[qi->qf_curlist].qf_count > 0) {
-    /* Adding to existing list, find last entry. */
-    for (prevp = qi->qf_lists[qi->qf_curlist].qf_start;
-         prevp->qf_next != prevp; prevp = prevp->qf_next)
-      ;
-    old_last = prevp;
+    // Adding to existing list, use last entry.
+    old_last = qi->qf_lists[qi->qf_curlist].qf_last;
   } else if (action == 'r') {
     qf_free(qi, qi->qf_curlist);
     qf_store_title(qi, title);
@@ -3756,7 +3758,6 @@ int set_errorlist(win_T *wp, list_T *list, int action, char_u *title)
     }
 
     int status = qf_add_entry(qi,
-                              &prevp,
                               NULL,      // dir
                               filename,
                               bufnum,
@@ -3898,7 +3899,6 @@ void ex_helpgrep(exarg_T *eap)
   char_u      **fnames;
   FILE        *fd;
   int fi;
-  qfline_T    *prevp = NULL;
   long lnum;
   char_u      *lang;
   qf_info_T   *qi = &ql_info;
@@ -4001,7 +4001,7 @@ void ex_helpgrep(exarg_T *eap)
                 while (l > 0 && line[l - 1] <= ' ')
                   line[--l] = NUL;
 
-                if (qf_add_entry(qi, &prevp,
+                if (qf_add_entry(qi,
                         NULL,                           /* dir */
                         fnames[fi],
                         0,
