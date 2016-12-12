@@ -635,6 +635,8 @@ endfunction
 
 " Test for quickfix directory stack support
 function! s:dir_stack_tests(cchar)
+  call s:setup_commands(a:cchar)
+
   let save_efm=&efm
   set efm=%DEntering\ dir\ '%f',%f:%l:%m,%XLeaving\ dir\ '%f'
 

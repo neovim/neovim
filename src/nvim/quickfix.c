@@ -541,11 +541,12 @@ qf_init_ext (
         if (buflnum > lnumlast)
           break;
         p_buf = ml_get_buf(buf, buflnum++, false);
-        linelen = STRLEN(p_buf);
-        if (linelen > IOSIZE - 2) {
+        len = STRLEN(p_buf);
+        if (len > IOSIZE - 2) {
             linebuf = qf_grow_linebuf(&growbuf, &growbufsiz, len, &linelen);
         } else {
           linebuf = IObuff;
+          linelen = len;
         }
         STRLCPY(linebuf, p_buf, linelen + 1);
       }
@@ -1238,10 +1239,8 @@ static int qf_get_fnum(char_u *directory, char_u *fname)
   return buf->b_fnum;
 }
 
-/*
- * push dirbuf onto the directory stack and return pointer to actual dir or
- * NULL on error
- */
+// Push dirbuf onto the directory stack and return pointer to actual dir or
+// NULL on error.
 static char_u *qf_push_dir(char_u *dirbuf, struct dir_stack_T **stackptr)
 {
   struct dir_stack_T  *ds_ptr;
