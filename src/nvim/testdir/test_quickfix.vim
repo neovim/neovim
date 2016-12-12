@@ -80,9 +80,9 @@ function XageTests(cchar)
   let Xnewer = a:cchar . 'newer'
   let Xgetexpr = a:cchar . 'getexpr'
   if a:cchar == 'c'
-    let Xgetlist = 'getqflist()'
+    let Xgetlist = function('getqflist')
   else
-    let Xgetlist = 'getloclist(0)'
+    let Xgetlist = function('getloclist', [0])
   endif
 
   " Jumping to a non existent list should return error
@@ -99,21 +99,21 @@ function XageTests(cchar)
 
   " Go back two lists
   exe Xolder
-  exe 'let l = ' . Xgetlist
+  let l = Xgetlist()
   call assert_equal('Line2', l[0].text)
 
   " Go forward two lists
   exe Xnewer
-  exe 'let l = ' . Xgetlist
+  let l = Xgetlist()
   call assert_equal('Line3', l[0].text)
 
   " Test for the optional count argument
   exe Xolder . ' 2'
-  exe 'let l = ' . Xgetlist
+  let l = Xgetlist()
   call assert_equal('Line1', l[0].text)
 
   exe Xnewer . ' 2'
-  exe 'let l = ' . Xgetlist
+  let l = Xgetlist()
   call assert_equal('Line3', l[0].text)
 endfunction
 
@@ -187,9 +187,9 @@ function XfileTests(cchar)
   let Xgetfile = a:cchar . 'getfile'
   let Xaddfile = a:cchar . 'addfile'
   if a:cchar == 'c'
-    let Xgetlist = 'getqflist()'
+    let Xgetlist = function('getqflist')
   else
-    let Xgetlist = 'getloclist(0)'
+    let Xgetlist = function('getloclist', [0])
   endif
 
   call writefile(['Xtestfile1:700:10:Line 700',
@@ -197,7 +197,7 @@ function XfileTests(cchar)
 
   enew!
   exe Xfile . ' Xqftestfile1'
-  exe 'let l = ' . Xgetlist
+  let l = Xgetlist()
   call assert_true(len(l) == 2 &&
 	\ l[0].lnum == 700 && l[0].col == 10 && l[0].text ==# 'Line 700' &&
 	\ l[1].lnum == 800 && l[1].col == 15 && l[1].text ==# 'Line 800')
@@ -210,7 +210,7 @@ function XfileTests(cchar)
 
   call writefile(['Xtestfile3:900:30:Line 900'], 'Xqftestfile1')
   exe Xaddfile . ' Xqftestfile1'
-  exe 'let l = ' . Xgetlist
+  let l = Xgetlist()
   call assert_true(len(l) == 3 &&
 	\ l[2].lnum == 900 && l[2].col == 30 && l[2].text ==# 'Line 900')
 
@@ -219,7 +219,7 @@ function XfileTests(cchar)
 
   enew!
   exe Xgetfile . ' Xqftestfile1'
-  exe 'let l = ' . Xgetlist
+  let l = Xgetlist()
   call assert_true(len(l) == 2 &&
 	\ l[0].lnum == 222 && l[0].col == 77 && l[0].text ==# 'Line 222' &&
 	\ l[1].lnum == 333 && l[1].col == 88 && l[1].text ==# 'Line 333')
@@ -239,16 +239,16 @@ function XbufferTests(cchar)
   let Xgetbuffer = a:cchar . 'getbuffer'
   let Xaddbuffer = a:cchar . 'addbuffer'
   if a:cchar == 'c'
-    let Xgetlist = 'getqflist()'
+    let Xgetlist = function('getqflist')
   else
-    let Xgetlist = 'getloclist(0)'
+    let Xgetlist = function('getloclist', [0])
   endif
 
   enew!
   silent! call setline(1, ['Xtestfile7:700:10:Line 700',
 	\ 'Xtestfile8:800:15:Line 800'])
   exe Xbuffer . "!"
-  exe 'let l = ' . Xgetlist
+  let l = Xgetlist()
   call assert_true(len(l) == 2 &&
 	\ l[0].lnum == 700 && l[0].col == 10 && l[0].text ==# 'Line 700' &&
 	\ l[1].lnum == 800 && l[1].col == 15 && l[1].text ==# 'Line 800')
@@ -257,7 +257,7 @@ function XbufferTests(cchar)
   silent! call setline(1, ['Xtestfile9:900:55:Line 900',
 	\ 'Xtestfile10:950:66:Line 950'])
   exe Xgetbuffer
-  exe 'let l = ' . Xgetlist
+  let l = Xgetlist()
   call assert_true(len(l) == 2 &&
 	\ l[0].lnum == 900 && l[0].col == 55 && l[0].text ==# 'Line 900' &&
 	\ l[1].lnum == 950 && l[1].col == 66 && l[1].text ==# 'Line 950')
@@ -266,11 +266,12 @@ function XbufferTests(cchar)
   silent! call setline(1, ['Xtestfile11:700:20:Line 700',
 	\ 'Xtestfile12:750:25:Line 750'])
   exe Xaddbuffer
-  exe 'let l = ' . Xgetlist
+  let l = Xgetlist()
   call assert_true(len(l) == 4 &&
 	\ l[1].lnum == 950 && l[1].col == 66 && l[1].text ==# 'Line 950' &&
 	\ l[2].lnum == 700 && l[2].col == 20 && l[2].text ==# 'Line 700' &&
 	\ l[3].lnum == 750 && l[3].col == 25 && l[3].text ==# 'Line 750')
+  enew!
 
 endfunction
 
@@ -321,15 +322,15 @@ endfunc
 function XqfTitleTests(cchar)
   let Xgetexpr = a:cchar . 'getexpr'
   if a:cchar == 'c'
-    let Xgetlist = 'getqflist()'
+    let Xgetlist = function('getqflist')
   else
-    let Xgetlist = 'getloclist(0)'
+    let Xgetlist = function('getloclist', [0])
   endif
   let Xopen = a:cchar . 'open'
   let Xclose = a:cchar . 'close'
 
   exe Xgetexpr . " ['file:1:1:message']"
-  exe 'let l = ' . Xgetlist
+  let l = Xgetlist()
   if a:cchar == 'c'
     call setqflist(l, 'r')
   else
@@ -618,6 +619,87 @@ function! Test_efm1()
     call delete('Xerrorfile1')
     call delete('Xerrorfile2')
     call delete('Xtestfile')
+endfunction
+
+" Test for quickfix directory stack support
+function! s:dir_stack_tests(cchar)
+  let Xgetexpr = a:cchar . 'getexpr'
+  if a:cchar == 'c'
+    let Xgetlist = function('getqflist')
+  else
+    let Xgetlist = function('getloclist', [0])
+  endif
+
+  let save_efm=&efm
+  set efm=%DEntering\ dir\ '%f',%f:%l:%m,%XLeaving\ dir\ '%f'
+
+  let l = "Entering dir 'dir1/a'\n" .
+		\ 'habits2.txt:1:Nine Healthy Habits' . "\n" .
+		\ "Entering dir 'b'\n" .
+		\ 'habits3.txt:2:0 Hours of television' . "\n" .
+		\ 'habits2.txt:7:5 Small meals' . "\n" .
+		\ "Entering dir 'dir1/c'\n" .
+		\ 'habits4.txt:3:1 Hour of exercise' . "\n" .
+		\ "Leaving dir 'dir1/c'\n" .
+		\ "Leaving dir 'dir1/a'\n" .
+		\ 'habits1.txt:4:2 Liters of water' . "\n" .
+		\ "Entering dir 'dir2'\n" .
+		\ 'habits5.txt:5:3 Cups of hot green tea' . "\n" .
+		\ "Leaving dir 'dir2'\n"
+
+  exe Xgetexpr . " l"
+
+  let qf = Xgetlist()
+
+  call assert_equal('dir1/a/habits2.txt', bufname(qf[1].bufnr))
+  call assert_equal(1, qf[1].lnum)
+  call assert_equal('dir1/a/b/habits3.txt', bufname(qf[3].bufnr))
+  call assert_equal(2, qf[3].lnum)
+  call assert_equal('dir1/a/habits2.txt', bufname(qf[4].bufnr))
+  call assert_equal(7, qf[4].lnum)
+  call assert_equal('dir1/c/habits4.txt', bufname(qf[6].bufnr))
+  call assert_equal(3, qf[6].lnum)
+  call assert_equal('habits1.txt', bufname(qf[9].bufnr))
+  call assert_equal(4, qf[9].lnum)
+  call assert_equal('dir2/habits5.txt', bufname(qf[11].bufnr))
+  call assert_equal(5, qf[11].lnum)
+
+  let &efm=save_efm
+endfunction
+
+" Tests for %D and %X errorformat options
+function! Test_efm_dirstack()
+  " Create the directory stack and files
+  call mkdir('dir1')
+  call mkdir('dir1/a')
+  call mkdir('dir1/a/b')
+  call mkdir('dir1/c')
+  call mkdir('dir2')
+
+  let lines = ["Nine Healthy Habits",
+		\ "0 Hours of television",
+		\ "1 Hour of exercise",
+		\ "2 Liters of water",
+		\ "3 Cups of hot green tea",
+		\ "4 Short mental breaks",
+		\ "5 Small meals",
+		\ "6 AM wake up time",
+		\ "7 Minutes of laughter",
+		\ "8 Hours of sleep (at least)",
+		\ "9 PM end of the day and off to bed"
+		\ ]
+  call writefile(lines, 'habits1.txt')
+  call writefile(lines, 'dir1/a/habits2.txt')
+  call writefile(lines, 'dir1/a/b/habits3.txt')
+  call writefile(lines, 'dir1/c/habits4.txt')
+  call writefile(lines, 'dir2/habits5.txt')
+
+  call s:dir_stack_tests('c')
+  call s:dir_stack_tests('l')
+
+  call delete('dir1', 'rf')
+  call delete('dir2', 'rf')
+  call delete('habits1.txt')
 endfunction
 
 function XquickfixChangedByAutocmd(cchar)
