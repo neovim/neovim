@@ -2424,12 +2424,13 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer,
 
   // Write buffer list
   if (find_shada_parameter('%') != NULL) {
+    int max_bufs = get_shada_parameter('%');
     size_t buf_count = 0;
 #define IGNORE_BUF(buf)\
     (buf->b_ffname == NULL || !buf->b_p_bl || bt_quickfix(buf) \
      || in_bufset(&removable_bufs, buf))
     FOR_ALL_BUFFERS(buf) {
-      if (!IGNORE_BUF(buf)) {
+      if (!IGNORE_BUF(buf) && (max_bufs < 0 || buf_count < (size_t)max_bufs)) {
         buf_count++;
       }
     }
@@ -2449,6 +2450,9 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer,
     FOR_ALL_BUFFERS(buf) {
       if (IGNORE_BUF(buf)) {
         continue;
+      }
+      if (i >= buf_count) {
+        break;
       }
       buflist_entry.data.buffer_list.buffers[i] = (struct buffer_list_buffer) {
         .pos = buf->b_last_cursor.mark,
