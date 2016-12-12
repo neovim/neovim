@@ -609,6 +609,7 @@ struct file_buffer {
   int b_p_bomb;                 ///< 'bomb'
   char_u *b_p_bh;               ///< 'bufhidden'
   char_u *b_p_bt;               ///< 'buftype'
+  bool b_has_qf_entry;          ///< quickfix exists for buffer
   int b_p_bl;                   ///< 'buflisted'
   int b_p_cin;                  ///< 'cindent'
   char_u *b_p_cino;             ///< 'cinoptions'
@@ -1037,7 +1038,7 @@ struct window_S {
   int w_wrow, w_wcol;               /* cursor position in window */
 
   linenr_T w_botline;               /* number of the line below the bottom of
-                                       the screen */
+                                       the window */
   int w_empty_rows;                 /* number of ~ rows in window */
   int w_filler_rows;                /* number of filler rows at the end of the
                                        window */

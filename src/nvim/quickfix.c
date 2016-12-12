@@ -1015,9 +1015,14 @@ static int qf_add_entry(qf_info_T *qi, char_u *dir, char_u *fname, int bufnum,
   qfline_T *qfp = xmalloc(sizeof(qfline_T));
   qfline_T **lastp;  // pointer to qf_last or NULL
 
-  if (bufnum != 0)
+  if (bufnum != 0) {
+    buf_T *buf = buflist_findnr(bufnum);
+
     qfp->qf_fnum = bufnum;
-  else
+    if (buf != NULL) {
+      buf->b_has_qf_entry = true;
+    }
+  } else
     qfp->qf_fnum = qf_get_fnum(dir, fname);
   qfp->qf_text = vim_strsave(mesg);
   qfp->qf_lnum = lnum;
@@ -1190,45 +1195,47 @@ void copy_loclist(win_T *from, win_T *to)
   to->w_llist->qf_curlist = qi->qf_curlist;     /* current list */
 }
 
-/*
- * get buffer number for file "dir.name"
- */
+// Get buffer number for file "dir.name".
+// Also sets the b_has_qf_entry flag.
 static int qf_get_fnum(char_u *directory, char_u *fname)
 {
+  char_u *ptr;
+  buf_T *buf;
   if (fname == NULL || *fname == NUL)           /* no file name */
     return 0;
-  {
-    char_u      *ptr;
-    int fnum;
 
 #ifdef BACKSLASH_IN_FILENAME
-    if (directory != NULL)
-      slash_adjust(directory);
-    slash_adjust(fname);
+  if (directory != NULL)
+    slash_adjust(directory);
+  slash_adjust(fname);
 #endif
-    if (directory != NULL && !vim_isAbsName(fname)) {
-      ptr = (char_u *)concat_fnames((char *)directory, (char *)fname, TRUE);
-      /*
-       * Here we check if the file really exists.
-       * This should normally be true, but if make works without
-       * "leaving directory"-messages we might have missed a
-       * directory change.
-       */
-      if (!os_path_exists(ptr)) {
-        xfree(ptr);
-        directory = qf_guess_filepath(fname);
-        if (directory)
-          ptr = (char_u *)concat_fnames((char *)directory, (char *)fname, TRUE);
-        else
-          ptr = vim_strsave(fname);
-      }
-      /* Use concatenated directory name and file name */
-      fnum = buflist_add(ptr, 0);
+  if (directory != NULL && !vim_isAbsName(fname)) {
+    ptr = (char_u *)concat_fnames((char *)directory, (char *)fname, TRUE);
+    /*
+     * Here we check if the file really exists.
+     * This should normally be true, but if make works without
+     * "leaving directory"-messages we might have missed a
+     * directory change.
+     */
+    if (!os_path_exists(ptr)) {
       xfree(ptr);
-      return fnum;
+      directory = qf_guess_filepath(fname);
+      if (directory)
+        ptr = (char_u *)concat_fnames((char *)directory, (char *)fname, TRUE);
+      else
+        ptr = vim_strsave(fname);
     }
-    return buflist_add(fname, 0);
+    /* Use concatenated directory name and file name */
+    buf = buflist_new(ptr, NULL, (linenr_T)0, 0);
+    xfree(ptr);
+  } else {
+    buf = buflist_new(fname, NULL, (linenr_T)0, 0);
   }
+  if (buf == NULL) {
+    return 0;
+  }
+  buf->b_has_qf_entry = true;
+  return buf->b_fnum;
 }
 
 /*
@@ -2104,7 +2111,11 @@ void qf_mark_adjust(win_T *wp, linenr_T line1, linenr_T line2, long amount, long
   qfline_T    *qfp;
   int idx;
   qf_info_T   *qi = &ql_info;
+  bool found_one = false;
 
+  if (!curbuf->b_has_qf_entry) {
+    return;
+  }
   if (wp != NULL) {
     if (wp->w_llist == NULL)
       return;
@@ -2117,6 +2128,7 @@ void qf_mark_adjust(win_T *wp, linenr_T line1, linenr_T line2, long amount, long
            i < qi->qf_lists[idx].qf_count && qfp != NULL;
            ++i, qfp = qfp->qf_next)
         if (qfp->qf_fnum == curbuf->b_fnum) {
+          found_one = true;
           if (qfp->qf_lnum >= line1 && qfp->qf_lnum <= line2) {
             if (amount == MAXLNUM)
               qfp->qf_cleared = TRUE;
@@ -2125,6 +2137,10 @@ void qf_mark_adjust(win_T *wp, linenr_T line1, linenr_T line2, long amount, long
           } else if (amount_after && qfp->qf_lnum > line2)
             qfp->qf_lnum += amount_after;
         }
+
+  if (!found_one) {
+    curbuf->b_has_qf_entry = false;
+  }
 }
 
 /*
