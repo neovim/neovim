@@ -988,6 +988,7 @@ function s:long_lines_tests(cchar)
   " buffer
   exe 'edit' testfile
   exe 'Xbuffer' bufnr('%')
+  call XLongLinesTests(a:cchar)
 endfunction
 
 function Test_long_lines()
