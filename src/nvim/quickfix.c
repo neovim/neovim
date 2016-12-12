@@ -556,9 +556,9 @@ qf_init_ext (
 
       discard = false;
       linelen = STRLEN(IObuff);
-      if (linelen == IOSIZE - 1 && (IObuff[linelen - 1] != '\n'
+      if (linelen == IOSIZE - 1 && !(IObuff[linelen - 1] == '\n'
 #ifdef USE_CRNL
-                                    || IObuff[linelen - 1] != '\r'
+                                    || IObuff[linelen - 1] == '\r'
 #endif
                                    )) {
         // The current line exceeds IObuff, continue reading using growbuf
