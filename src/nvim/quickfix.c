@@ -786,7 +786,7 @@ qf_init_end:
   xfree(pattern);
   xfree(fmtstr);
 
-  qf_update_buffer(qi);
+  qf_update_buffer(qi, true);
 
   return retval;
 }
@@ -1927,7 +1927,7 @@ static void qf_msg(qf_info_T *qi)
   smsg(_("error list %d of %d; %d errors"),
       qi->qf_curlist + 1, qi->qf_listcount,
       qi->qf_lists[qi->qf_curlist].qf_count);
-  qf_update_buffer(qi);
+  qf_update_buffer(qi, true);
 }
 
 /*
@@ -2314,7 +2314,7 @@ static buf_T *qf_find_buf(qf_info_T *qi)
 /*
  * Find the quickfix buffer.  If it exists, update the contents.
  */
-static void qf_update_buffer(qf_info_T *qi)
+static void qf_update_buffer(qf_info_T *qi, bool update_cursor)
 {
   buf_T       *buf;
   win_T       *win;
@@ -2337,8 +2337,9 @@ static void qf_update_buffer(qf_info_T *qi)
 
     /* restore curwin/curbuf and a few other things */
     aucmd_restbuf(&aco);
-
-    (void)qf_win_pos_update(qi, 0);
+    if (update_cursor) {
+      (void)qf_win_pos_update(qi, 0);
+    }
   }
 }
 
@@ -3240,7 +3241,7 @@ void ex_vimgrep(exarg_T *eap)
   qi->qf_lists[qi->qf_curlist].qf_ptr = qi->qf_lists[qi->qf_curlist].qf_start;
   qi->qf_lists[qi->qf_curlist].qf_index = 1;
 
-  qf_update_buffer(qi);
+  qf_update_buffer(qi, true);
 
   if (au_name != NULL)
     apply_autocmds(EVENT_QUICKFIXCMDPOST, au_name,
@@ -3624,12 +3625,15 @@ int set_errorlist(win_T *wp, list_T *list, int action, char_u *title)
     qi->qf_lists[qi->qf_curlist].qf_nonevalid = TRUE;
   else
     qi->qf_lists[qi->qf_curlist].qf_nonevalid = FALSE;
-  qi->qf_lists[qi->qf_curlist].qf_ptr = qi->qf_lists[qi->qf_curlist].qf_start;
-  if (qi->qf_lists[qi->qf_curlist].qf_count > 0) {
-    qi->qf_lists[qi->qf_curlist].qf_index = 1;
+  if (action != 'a') {
+    qi->qf_lists[qi->qf_curlist].qf_ptr = qi->qf_lists[qi->qf_curlist].qf_start;
+    if (qi->qf_lists[qi->qf_curlist].qf_count > 0) {
+      qi->qf_lists[qi->qf_curlist].qf_index = 1;
+    }
   }
 
-  qf_update_buffer(qi);
+  // Don't update the cursor in quickfix window when appending entries
+  qf_update_buffer(qi, (action != 'a'));
 
   return retval;
 }
@@ -3885,7 +3889,7 @@ void ex_helpgrep(exarg_T *eap)
     /* Darn, some plugin changed the value. */
     free_string_option(save_cpo);
 
-  qf_update_buffer(qi);
+  qf_update_buffer(qi, true);
 
   if (au_name != NULL) {
     apply_autocmds(EVENT_QUICKFIXCMDPOST, au_name,

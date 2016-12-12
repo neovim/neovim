@@ -679,3 +679,51 @@ func Test_cgetexpr_works()
   " this must not crash Vim
   cgetexpr [$x]
 endfunc
+
+" Tests for the setqflist() and setloclist() functions
+function SetXlistTests(cchar, bnum)
+  if a:cchar == 'c'
+    let Xsetlist = function('setqflist')
+    let Xgetlist = function('getqflist')
+    let Xnext = 'cnext'
+  else
+    let Xsetlist = function('setloclist', [0])
+    let Xgetlist = function('getloclist', [0])
+    let Xnext = 'lnext'
+  endif
+
+  call Xsetlist([{'bufnr': a:bnum, 'lnum': 1},
+	      \  {'bufnr': a:bnum, 'lnum': 2}])
+  let l = Xgetlist()
+  call assert_equal(2, len(l))
+  call assert_equal(2, l[1].lnum)
+
+  exe Xnext
+  call Xsetlist([{'bufnr': a:bnum, 'lnum': 3}], 'a')
+  let l = Xgetlist()
+  call assert_equal(3, len(l))
+  exe Xnext
+  call assert_equal(3, line('.'))
+
+  call Xsetlist([{'bufnr': a:bnum, 'lnum': 3},
+	      \  {'bufnr': a:bnum, 'lnum': 4},
+	      \  {'bufnr': a:bnum, 'lnum': 5}], 'r')
+  let l = Xgetlist()
+  call assert_equal(3, len(l))
+  call assert_equal(5, l[2].lnum)
+
+  call Xsetlist([])
+  let l = Xgetlist()
+  call assert_equal(0, len(l))
+endfunction
+
+function Test_setqflist()
+  new Xtestfile | only
+  let bnum = bufnr('%')
+  call setline(1, range(1,5))
+
+  call SetXlistTests('c', bnum)
+  call SetXlistTests('l', bnum)
+
+  call delete('Xtestfile')
+endfunction
