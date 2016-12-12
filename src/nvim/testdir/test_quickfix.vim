@@ -25,6 +25,9 @@ function! s:setup_commands(cchar)
     command! -nargs=* -bang Xnext <mods>cnext<bang> <args>
     command! -nargs=* Xexpr <mods>cexpr <args>
     command! -nargs=* Xvimgrep <mods>vimgrep <args>
+    command! -nargs=* Xgrep <mods> grep <args>
+    command! -nargs=* Xgrepadd <mods> grepadd <args>
+    command! -nargs=* Xhelpgrep helpgrep <args>
     let g:Xgetlist = function('getqflist')
     let g:Xsetlist = function('setqflist')
   else
@@ -45,6 +48,9 @@ function! s:setup_commands(cchar)
     command! -nargs=* -bang Xnext <mods>lnext<bang> <args>
     command! -nargs=* Xexpr <mods>lexpr <args>
     command! -nargs=* Xvimgrep <mods>lvimgrep <args>
+    command! -nargs=* Xgrep <mods> lgrep <args>
+    command! -nargs=* Xgrepadd <mods> lgrepadd <args>
+    command! -nargs=* Xhelpgrep lhelpgrep <args>
     let g:Xgetlist = function('getloclist', [0])
     let g:Xsetlist = function('setloclist', [0])
   endif
@@ -228,6 +234,9 @@ function XfileTests(cchar)
 	\ l[0].lnum == 700 && l[0].col == 10 && l[0].text ==# 'Line 700' &&
 	\ l[1].lnum == 800 && l[1].col == 15 && l[1].text ==# 'Line 800')
 
+  " Test with a non existent file
+  call assert_fails('Xfile non_existent_file', 'E40')
+
   " Run cfile/lfile from a modified buffer
   enew!
   silent! put ='Quickfix'
@@ -299,11 +308,23 @@ function Test_cbuffer()
   call XbufferTests('l')
 endfunction
 
-function Test_helpgrep()
-  helpgrep quickfix
-  copen
+function! s:test_xhelpgrep(cchar)
+  call s:setup_commands(a:cchar)
+  Xhelpgrep quickfix
+  Xopen
+  if a:cchar == 'c'
+    let title_text = ':helpgrep quickfix'
+  else
+    let title_text = ':lhelpgrep quickfix'
+  endif
+  call assert_true(w:quickfix_title =~ title_text, w:quickfix_title)
   " This wipes out the buffer, make sure that doesn't cause trouble.
-  cclose
+  Xclose
+endfunction
+
+function Test_helpgrep()
+  call s:test_xhelpgrep('c')
+  call s:test_xhelpgrep('l')
 endfunc
 
 func Test_errortitle()
@@ -709,6 +730,47 @@ function! Test_efm_dirstack()
   call delete('habits1.txt')
 endfunction
 
+" TODO:
+" Add tests for the following formats in 'errorformat'
+"	%n  %t  %r  %+  %-  %O
+function! Test_efm2()
+  let save_efm = &efm
+
+  " Test for invalid efm
+  set efm=%L%M%N
+  call assert_fails('cexpr "abc.txt:1:Hello world"', 'E376:')
+  call assert_fails('lexpr "abc.txt:1:Hello world"', 'E376:')
+
+  " Test for %s format in efm
+  set efm=%f:%s
+  cexpr 'Xtestfile:Line search text'
+
+  let l = getqflist()
+  call assert_equal(l[0].pattern, '^\VLine search text\$')
+  call assert_equal(l[0].lnum, 0)
+
+  let lines=["[Xtestfile1]",
+	      \ "(1,17)  error: ';' missing",
+	      \ "(21,2)  warning: variable 'z' not defined",
+	      \ "(67,3)  error: end of file found before string ended",
+	      \ "",
+	      \ "[Xtestfile2]",
+	      \ "",
+	      \ "[Xtestfile3]",
+	      \ "NEW compiler v1.1",
+	      \ "(2,2)   warning: variable 'x' not defined",
+	      \ "(67,3)  warning: 's' already defined"
+	      \]
+  set efm=%+P[%f],(%l\\,%c)%*[\ ]%t%*[^:]:\ %m,%-Q
+  cgetexpr lines
+  let l = getqflist()
+  call assert_equal(9, len(l))
+  call assert_equal(21, l[2].lnum)
+  call assert_equal(2, l[2].col)
+
+  let &efm = save_efm
+endfunction
+
 function XquickfixChangedByAutocmd(cchar)
   call s:setup_commands(a:cchar)
   if a:cchar == 'c'
@@ -954,16 +1016,19 @@ endfunction
 function XLongLinesTests(cchar)
   let l = g:Xgetlist()
 
-  call assert_equal(3, len(l))
+  call assert_equal(4, len(l))
   call assert_equal(1, l[0].lnum)
   call assert_equal(1, l[0].col)
-  call assert_equal(4070, len(l[0].text))
+  call assert_equal(1975, len(l[0].text))
   call assert_equal(2, l[1].lnum)
   call assert_equal(1, l[1].col)
   call assert_equal(4070, len(l[1].text))
   call assert_equal(3, l[2].lnum)
   call assert_equal(1, l[2].col)
-  call assert_equal(10, len(l[2].text))
+  call assert_equal(4070, len(l[2].text))
+  call assert_equal(4, l[3].lnum)
+  call assert_equal(1, l[3].col)
+  call assert_equal(10, len(l[3].text))
 
   call g:Xsetlist([], 'r')
 endfunction
@@ -994,4 +1059,164 @@ endfunction
 function Test_long_lines()
   call s:long_lines_tests('c')
   call s:long_lines_tests('l')
+endfunction
+
+function! s:create_test_file(filename)
+  let l = []
+  for i in range(1, 20)
+      call add(l, 'Line' . i)
+  endfor
+  call writefile(l, a:filename)
+endfunction
+
+function! Test_switchbuf()
+  call s:create_test_file('Xqftestfile1')
+  call s:create_test_file('Xqftestfile2')
+  call s:create_test_file('Xqftestfile3')
+
+  new | only
+  edit Xqftestfile1
+  let file1_winid = win_getid()
+  new Xqftestfile2
+  let file2_winid = win_getid()
+  cgetexpr ['Xqftestfile1:5:Line5',
+		\ 'Xqftestfile1:6:Line6',
+		\ 'Xqftestfile2:10:Line10',
+		\ 'Xqftestfile2:11:Line11',
+		\ 'Xqftestfile3:15:Line15',
+		\ 'Xqftestfile3:16:Line16']
+
+  new
+  let winid = win_getid()
+  cfirst | cnext
+  call assert_equal(winid, win_getid())
+  cnext | cnext
+  call assert_equal(winid, win_getid())
+  cnext | cnext
+  call assert_equal(winid, win_getid())
+  enew
+
+  set switchbuf=useopen
+  cfirst | cnext
+  call assert_equal(file1_winid, win_getid())
+  cnext | cnext
+  call assert_equal(file2_winid, win_getid())
+  cnext | cnext
+  call assert_equal(file2_winid, win_getid())
+
+  enew | only
+  set switchbuf=usetab
+  tabedit Xqftestfile1
+  tabedit Xqftestfile2
+  tabfirst
+  cfirst | cnext
+  call assert_equal(2, tabpagenr())
+  cnext | cnext
+  call assert_equal(3, tabpagenr())
+  cnext | cnext
+  call assert_equal(3, tabpagenr())
+  tabfirst | tabonly | enew
+
+  set switchbuf=split
+  cfirst | cnext
+  call assert_equal(1, winnr('$'))
+  cnext | cnext
+  call assert_equal(2, winnr('$'))
+  cnext | cnext
+  call assert_equal(3, winnr('$'))
+  enew | only
+
+  set switchbuf=newtab
+  cfirst | cnext
+  call assert_equal(1, tabpagenr('$'))
+  cnext | cnext
+  call assert_equal(2, tabpagenr('$'))
+  cnext | cnext
+  call assert_equal(3, tabpagenr('$'))
+  tabfirst | enew | tabonly | only
+
+  set switchbuf=
+  edit Xqftestfile1
+  let file1_winid = win_getid()
+  new Xqftestfile2
+  let file2_winid = win_getid()
+  copen
+  exe "normal 1G\<CR>"
+  call assert_equal(file1_winid, win_getid())
+  copen
+  exe "normal 3G\<CR>"
+  call assert_equal(file2_winid, win_getid())
+  copen | only
+  exe "normal 5G\<CR>"
+  call assert_equal(2, winnr('$'))
+  call assert_equal(1, bufwinnr('Xqftestfile3'))
+
+  enew | only
+
+  call delete('Xqftestfile1')
+  call delete('Xqftestfile2')
+  call delete('Xqftestfile3')
+endfunction
+
+function! Xadjust_qflnum(cchar)
+  call s:setup_commands(a:cchar)
+
+  enew | only
+
+  call s:create_test_file('Xqftestfile')
+  edit Xqftestfile
+
+  Xgetexpr ['Xqftestfile:5:Line5',
+		\ 'Xqftestfile:10:Line10',
+		\ 'Xqftestfile:15:Line15',
+		\ 'Xqftestfile:20:Line20']
+
+  6,14delete
+  call append(6, ['Buffer', 'Window'])
+
+  let l = g:Xgetlist()
+
+  call assert_equal(5, l[0].lnum)
+  call assert_equal(6, l[2].lnum)
+  call assert_equal(13, l[3].lnum)
+
+  enew!
+  call delete('Xqftestfile')
+endfunction
+
+function! Test_adjust_lnum()
+  call Xadjust_qflnum('c')
+  call Xadjust_qflnum('l')
+endfunction
+
+" Tests for the :grep/:lgrep and :grepadd/:lgrepadd commands
+function! s:test_xgrep(cchar)
+  call s:setup_commands(a:cchar)
+
+  " The following lines are used for the grep test. Don't remove.
+  " Grep_Test_Text: Match 1
+  " Grep_Test_Text: Match 2
+  " GrepAdd_Test_Text: Match 1
+  " GrepAdd_Test_Text: Match 2
+  enew! | only
+  set makeef&vim
+  silent Xgrep Grep_Test_Text: test_quickfix.vim
+  call assert_true(len(g:Xgetlist()) == 3)
+  Xopen
+  call assert_true(w:quickfix_title =~ '^:grep')
+  Xclose
+  enew
+  set makeef=Temp_File_##
+  silent Xgrepadd GrepAdd_Test_Text: test_quickfix.vim
+  call assert_true(len(g:Xgetlist()) == 6)
+endfunction
+
+function! Test_grep()
+  if !has('unix')
+    " The grepprg may not be set on non-Unix systems
+    return
+  endif
+
+  call s:test_xgrep('c')
+  call s:test_xgrep('l')
 endfunction
