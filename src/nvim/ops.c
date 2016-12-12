@@ -2637,12 +2637,81 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
    * special characters (newlines, etc.).
    */
   if (regname == '.') {
-    (void)stuff_inserted((dir == FORWARD ? (count == -1 ? 'o' : 'a') :
-                          (count == -1 ? 'O' : 'i')), count, FALSE);
-    /* Putting the text is done later, so can't really move the cursor to
-     * the next character.  Use "l" to simulate it. */
-    if ((flags & PUT_CURSEND) && gchar_cursor() != NUL)
-      stuffcharReadbuff('l');
+    bool non_linewise_vis = (VIsual_active && VIsual_mode != 'V');
+
+    // PUT_LINE has special handling below which means we use 'i' to start.
+    char command_start_char = non_linewise_vis ? 'c' :
+      (flags & PUT_LINE ? 'i' : (dir == FORWARD ? 'a' : 'i'));
+
+    // To avoid being the affect of 'autoindent' on linewise puts, we create a
+    // new line with `:put _`.
+    if (flags & PUT_LINE) {
+      do_put('_', NULL, dir, 1, PUT_LINE);
+    }
+
+    // If given a count when putting linewise, we stuff the readbuf with the
+    // dot register 'count' times split by newlines.
+    if (flags & PUT_LINE) {
+      stuffcharReadbuff(command_start_char);
+      for (; count > 0; count--) {
+        (void)stuff_inserted(NUL, 1, count != 1);
+        if (count != 1) {
+          // To avoid 'autoindent' affecting the text, use Ctrl_U to remove any
+          // whitespace. Can't just insert Ctrl_U into readbuf1, this would go
+          // back to the previous line in the case of 'noautoindent' and
+          // 'backspace' includes "eol". So we insert a dummy space for Ctrl_U
+          // to consume.
+          stuffReadbuff((char_u *)"\n ");
+          stuffcharReadbuff(Ctrl_U);
+        }
+      }
+    } else {
+      (void)stuff_inserted(command_start_char, count, false);
+    }
+    // Putting the text is done later, so can't move the cursor to the next
+    // character.  Simulate it with motion commands after the insert.
+    if (flags & PUT_CURSEND) {
+      if (flags & PUT_LINE) {
+        stuffReadbuff((char_u *)"j0");
+      } else {
+        // Avoid ringing the bell from attempting to move into the space after
+        // the current line. We can stuff the readbuffer with "l" if:
+        // 1) 'virtualedit' is "all" or "onemore"
+        // 2) We are not at the end of the line
+        // 3) We are not  (one past the end of the line && on the last line)
+        //    This allows a visual put over a selection one past the end of the
+        //    line joining the current line with the one below.
+
+        // curwin->w_cursor.col marks the byte position of the cursor in the
+        // currunt line. It increases up to a max of
+        // STRLEN(ml_get(curwin->w_cursor.lnum)). With 'virtualedit' and the
+        // cursor past the end of the line, curwin->w_cursor.coladd is
+        // incremented instead of curwin->w_cursor.col.
+        char_u *cursor_pos = get_cursor_pos_ptr();
+        bool one_past_line = (*cursor_pos == NUL);
+        bool end_of_line = false;
+        if (!one_past_line) {
+          end_of_line = (*(cursor_pos + mb_ptr2len(cursor_pos)) == NUL);
+        }
+
+        bool virtualedit_allows = (ve_flags == VE_ALL
+                                   || ve_flags == VE_ONEMORE);
+        bool end_of_file = (
+            (curbuf->b_ml.ml_line_count == curwin->w_cursor.lnum)
+            && one_past_line);
+        if (virtualedit_allows || !(end_of_line || end_of_file)) {
+          stuffcharReadbuff('l');
+        }
+      }
+    } else if (flags & PUT_LINE) {
+      stuffReadbuff((char_u *)"g'[");
+    }
+
+    // So the 'u' command restores cursor position after ".p, save the cursor
+    // position now (though not saving any text).
+    if (command_start_char == 'a') {
+      u_save(curwin->w_cursor.lnum, curwin->w_cursor.lnum + 1);
+    }
     return;
   }
 
@@ -2831,14 +2900,12 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
       else
         getvcol(curwin, &curwin->w_cursor, NULL, NULL, &col);
 
-      if (has_mbyte)
-        /* move to start of next multi-byte character */
-        curwin->w_cursor.col += (*mb_ptr2len)(get_cursor_pos_ptr());
-      else if (c != TAB || ve_flags != VE_ALL)
-        ++curwin->w_cursor.col;
-      ++col;
-    } else
+      // move to start of next multi-byte character
+      curwin->w_cursor.col += (*mb_ptr2len)(get_cursor_pos_ptr());
+      col++;
+    } else {
       getvcol(curwin, &curwin->w_cursor, &col, NULL, &endcol2);
+    }
 
     col += curwin->w_cursor.coladd;
     if (ve_flags == VE_ALL
@@ -2892,8 +2959,7 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
         bd.startspaces = incr - bd.endspaces;
         --bd.textcol;
         delcount = 1;
-        if (has_mbyte)
-          bd.textcol -= (*mb_head_off)(oldp, oldp + bd.textcol);
+        bd.textcol -= (*mb_head_off)(oldp, oldp + bd.textcol);
         if (oldp[bd.textcol] != TAB) {
           /* Only a Tab can be split into spaces.  Other
            * characters will have to be moved to after the
@@ -2975,21 +3041,13 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
       // if type is kMTCharWise, FORWARD is the same as BACKWARD on the next
       // char
       if (dir == FORWARD && gchar_cursor() != NUL) {
-        if (has_mbyte) {
-          int bytelen = (*mb_ptr2len)(get_cursor_pos_ptr());
+        int bytelen = (*mb_ptr2len)(get_cursor_pos_ptr());
 
-          /* put it on the next of the multi-byte character. */
-          col += bytelen;
-          if (yanklen) {
-            curwin->w_cursor.col += bytelen;
-            curbuf->b_op_end.col += bytelen;
-          }
-        } else {
-          ++col;
-          if (yanklen) {
-            ++curwin->w_cursor.col;
-            ++curbuf->b_op_end.col;
-          }
+        // put it on the next of the multi-byte character.
+        col += bytelen;
+        if (yanklen) {
+          curwin->w_cursor.col += bytelen;
+          curbuf->b_op_end.col += bytelen;
         }
       }
       curbuf->b_op_start = curwin->w_cursor;
@@ -3027,7 +3085,9 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
         }
         if (VIsual_active)
           lnum++;
-      } while (VIsual_active && lnum <= curbuf->b_visual.vi_end.lnum);
+      } while (VIsual_active
+               && (lnum <= curbuf->b_visual.vi_end.lnum
+                   || lnum <= curbuf->b_visual.vi_start.lnum));
 
       if (VIsual_active) {  /* reset lnum to the last visual line */
         lnum--;

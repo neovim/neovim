@@ -13,6 +13,8 @@ local check_logs = global_helpers.check_logs
 local neq = global_helpers.neq
 local eq = global_helpers.eq
 local ok = global_helpers.ok
+local map = global_helpers.map
+local filter = global_helpers.filter
 
 local start_dir = lfs.currentdir()
 local nvim_prog = os.getenv('NVIM_PROG') or 'build/bin/nvim'
@@ -566,6 +568,8 @@ return function(after_each)
     neq = neq,
     expect = expect,
     ok = ok,
+    map = map,
+    filter = filter,
     nvim = nvim,
     nvim_async = nvim_async,
     nvim_prog = nvim_prog,
