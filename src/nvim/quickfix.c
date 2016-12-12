@@ -187,15 +187,14 @@ static char_u *qf_grow_linebuf(char_u **growbuf, size_t *growbufsiz,
   return *growbuf;
 }
 
-/*
- * Read the errorfile "efile" into memory, line by line, building the error
- * list.
- * Alternative: when "efile" is null read errors from buffer "buf".
- * Always use 'errorformat' from "buf" if there is a local value.
- * Then "lnumfirst" and "lnumlast" specify the range of lines to use.
- * Set the title of the list to "qf_title".
- * Return -1 for error, number of errors for success.
- */
+// Read the errorfile "efile" into memory, line by line, building the error
+// list.
+// Alternative: when "efile" is NULL read errors from buffer "buf".
+// Alternative: when "tv" is not NULL get errors from the string or list.
+// Always use 'errorformat' from "buf" if there is a local value.
+// Then "lnumfirst" and "lnumlast" specify the range of lines to use.
+// Set the title of the list to "qf_title".
+// Return -1 for error, number of errors for success.
 static int 
 qf_init_ext (
     qf_info_T *qi,
@@ -228,6 +227,7 @@ qf_init_ext (
   int enr = 0;
   FILE            *fd = NULL;
   qfline_T        *qfprev = NULL;       /* init to make SASC shut up */
+  qfline_T        *old_last = NULL;
   char_u          *efmp;
   efm_T           *fmt_first = NULL;
   efm_T           *fmt_last = NULL;
@@ -282,11 +282,13 @@ qf_init_ext (
   if (newlist || qi->qf_curlist == qi->qf_listcount)
     /* make place for a new list */
     qf_new_list(qi, qf_title);
-  else if (qi->qf_lists[qi->qf_curlist].qf_count > 0)
+  else if (qi->qf_lists[qi->qf_curlist].qf_count > 0) {
     /* Adding to existing list, find last entry. */
     for (qfprev = qi->qf_lists[qi->qf_curlist].qf_start;
          qfprev->qf_next != qfprev; qfprev = qfprev->qf_next)
       ;
+    old_last = qfprev;
+  }
 
   /*
    * Each part of the format string is copied and modified from errorformat to
@@ -912,7 +914,7 @@ qf_init_end:
   xfree(fmtstr);
   xfree(growbuf);
 
-  qf_update_buffer(qi, true);
+  qf_update_buffer(qi, old_last);
 
   return retval;
 }
@@ -2053,7 +2055,7 @@ static void qf_msg(qf_info_T *qi)
   smsg(_("error list %d of %d; %d errors"),
       qi->qf_curlist + 1, qi->qf_listcount,
       qi->qf_lists[qi->qf_curlist].qf_count);
-  qf_update_buffer(qi, true);
+  qf_update_buffer(qi, NULL);
 }
 
 /*
@@ -2321,7 +2323,7 @@ void ex_copen(exarg_T *eap)
   qf_set_title_var(qi);
 
   // Fill the buffer with the quickfix list.
-  qf_fill_buffer(qi);
+  qf_fill_buffer(qi, curbuf, NULL);
 
   curwin->w_cursor.lnum = qi->qf_lists[qi->qf_curlist].qf_index;
   curwin->w_cursor.col = 0;
@@ -2440,7 +2442,7 @@ static buf_T *qf_find_buf(qf_info_T *qi)
 /*
  * Find the quickfix buffer.  If it exists, update the contents.
  */
-static void qf_update_buffer(qf_info_T *qi, bool update_cursor)
+static void qf_update_buffer(qf_info_T *qi, qfline_T *old_last)
 {
   buf_T       *buf;
   win_T       *win;
@@ -2450,8 +2452,12 @@ static void qf_update_buffer(qf_info_T *qi, bool update_cursor)
   /* Check if a buffer for the quickfix list exists.  Update it. */
   buf = qf_find_buf(qi);
   if (buf != NULL) {
-    /* set curwin/curbuf to buf and save a few things */
-    aucmd_prepbuf(&aco, buf);
+    linenr_T old_line_count = buf->b_ml.ml_line_count;
+
+    if (old_last == NULL) {
+      // set curwin/curbuf to buf and save a few things
+      aucmd_prepbuf(&aco, buf);
+    }
 
     if ((win = qf_find_win(qi)) != NULL) {
       curwin_save = curwin;
@@ -2459,12 +2465,20 @@ static void qf_update_buffer(qf_info_T *qi, bool update_cursor)
       qf_set_title_var(qi);
       curwin = curwin_save;
     }
-    qf_fill_buffer(qi);
 
-    /* restore curwin/curbuf and a few other things */
-    aucmd_restbuf(&aco);
-    if (update_cursor) {
+    qf_fill_buffer(qi, buf, old_last);
+
+    if (old_last == NULL) {
       (void)qf_win_pos_update(qi, 0);
+
+      // restore curwin/curbuf and a few other things
+      aucmd_restbuf(&aco);
+    }
+
+    // Only redraw when added lines are visible.  This avoids flickering when
+    // the added lines are not visible.
+    if ((win = qf_find_win(qi)) != NULL && old_line_count < win->w_botline) {
+      redraw_buf_later(buf, NOT_VALID);
     }
   }
 }
@@ -2478,11 +2492,12 @@ static void qf_set_title_var(qf_info_T *qi)
   }
 }
 
-/*
- * Fill current buffer with quickfix errors, replacing any previous contents.
- * curbuf must be the quickfix buffer!
- */
-static void qf_fill_buffer(qf_info_T *qi)
+// Fill current buffer with quickfix errors, replacing any previous contents.
+// curbuf must be the quickfix buffer!
+// If "old_last" is not NULL append the items after this one.
+// When "old_last" is NULL then "buf" must equal "curbuf"!  Because ml_delete()
+// is used and autocommands will be triggered.
+static void qf_fill_buffer(qf_info_T *qi, buf_T *buf, qfline_T *old_last)
 {
   linenr_T lnum;
   qfline_T    *qfp;
@@ -2490,15 +2505,28 @@ static void qf_fill_buffer(qf_info_T *qi)
   int len;
   int old_KeyTyped = KeyTyped;
 
-  /* delete all existing lines */
-  while ((curbuf->b_ml.ml_flags & ML_EMPTY) == 0)
-    (void)ml_delete((linenr_T)1, FALSE);
+  if (old_last == NULL) {
+    if (buf != curbuf) {
+      EMSG2(_(e_intern2), "qf_fill_buffer()");
+      return;
+    }
+
+    /* delete all existing lines */
+    while ((curbuf->b_ml.ml_flags & ML_EMPTY) == 0)
+      (void)ml_delete((linenr_T)1, FALSE);
+  }
 
   /* Check if there is anything to display */
   if (qi->qf_curlist < qi->qf_listcount) {
     /* Add one line for each error */
-    qfp = qi->qf_lists[qi->qf_curlist].qf_start;
-    for (lnum = 0; lnum < qi->qf_lists[qi->qf_curlist].qf_count; ++lnum) {
+    if (old_last == NULL) {
+      qfp = qi->qf_lists[qi->qf_curlist].qf_start;
+      lnum = 0;
+    } else {
+      qfp = old_last->qf_next;
+      lnum = buf->b_ml.ml_line_count;
+    }
+    while (lnum < qi->qf_lists[qi->qf_curlist].qf_count) {
       if (qfp->qf_fnum != 0
           && (errbuf = buflist_findnr(qfp->qf_fnum)) != NULL
           && errbuf->b_fname != NULL) {
@@ -2538,33 +2566,38 @@ static void qf_fill_buffer(qf_info_T *qi)
       qf_fmt_text(len > 3 ? skipwhite(qfp->qf_text) : qfp->qf_text,
           IObuff + len, IOSIZE - len);
 
-      if (ml_append(lnum, IObuff, (colnr_T)STRLEN(IObuff) + 1, FALSE)
+      if (ml_append_buf(buf, lnum, IObuff, (colnr_T)STRLEN(IObuff) + 1, FALSE)
           == FAIL)
         break;
+      lnum++;
       qfp = qfp->qf_next;
     }
-    /* Delete the empty line which is now at the end */
-    (void)ml_delete(lnum + 1, FALSE);
+    if (old_last == NULL) {
+      /* Delete the empty line which is now at the end */
+      (void)ml_delete(lnum + 1, FALSE);
+    }
   }
 
   /* correct cursor position */
   check_lnums(TRUE);
 
-  /* Set the 'filetype' to "qf" each time after filling the buffer.  This
-   * resembles reading a file into a buffer, it's more logical when using
-   * autocommands. */
-  set_option_value((char_u *)"ft", 0L, (char_u *)"qf", OPT_LOCAL);
-  curbuf->b_p_ma = FALSE;
+  if (old_last == NULL) {
+    /* Set the 'filetype' to "qf" each time after filling the buffer.  This
+     * resembles reading a file into a buffer, it's more logical when using
+     * autocommands. */
+    set_option_value((char_u *)"ft", 0L, (char_u *)"qf", OPT_LOCAL);
+    curbuf->b_p_ma = FALSE;
 
-  keep_filetype = TRUE;                 /* don't detect 'filetype' */
-  apply_autocmds(EVENT_BUFREADPOST, (char_u *)"quickfix", NULL,
-      FALSE, curbuf);
-  apply_autocmds(EVENT_BUFWINENTER, (char_u *)"quickfix", NULL,
-      FALSE, curbuf);
-  keep_filetype = FALSE;
+    keep_filetype = TRUE;                 /* don't detect 'filetype' */
+    apply_autocmds(EVENT_BUFREADPOST, (char_u *)"quickfix", NULL,
+        FALSE, curbuf);
+    apply_autocmds(EVENT_BUFWINENTER, (char_u *)"quickfix", NULL,
+        FALSE, curbuf);
+    keep_filetype = FALSE;
 
-  /* make sure it will be redrawn */
-  redraw_curbuf_later(NOT_VALID);
+    /* make sure it will be redrawn */
+    redraw_curbuf_later(NOT_VALID);
+  }
 
   /* Restore KeyTyped, setting 'filetype' may reset it. */
   KeyTyped = old_KeyTyped;
@@ -3367,7 +3400,7 @@ void ex_vimgrep(exarg_T *eap)
   qi->qf_lists[qi->qf_curlist].qf_ptr = qi->qf_lists[qi->qf_curlist].qf_start;
   qi->qf_lists[qi->qf_curlist].qf_index = 1;
 
-  qf_update_buffer(qi, true);
+  qf_update_buffer(qi, NULL);
 
   if (au_name != NULL)
     apply_autocmds(EVENT_QUICKFIXCMDPOST, au_name,
@@ -3655,15 +3688,15 @@ int get_errorlist(win_T *wp, list_T *list)
   return OK;
 }
 
-/*
- * Populate the quickfix list with the items supplied in the list
- * of dictionaries. "title" will be copied to w:quickfix_title
- */
+// Populate the quickfix list with the items supplied in the list
+// of dictionaries. "title" will be copied to w:quickfix_title
+// "action" is 'a' for add, 'r' for replace.  Otherwise create a new list.
 int set_errorlist(win_T *wp, list_T *list, int action, char_u *title)
 {
   listitem_T *li;
   dict_T *d;
   qfline_T *prevp = NULL;
+  qfline_T *old_last = NULL;
   int retval = OK;
   qf_info_T *qi = &ql_info;
   bool did_bufnr_emsg = false;
@@ -3675,12 +3708,13 @@ int set_errorlist(win_T *wp, list_T *list, int action, char_u *title)
   if (action == ' ' || qi->qf_curlist == qi->qf_listcount)
     /* make place for a new list */
     qf_new_list(qi, title);
-  else if (action == 'a' && qi->qf_lists[qi->qf_curlist].qf_count > 0)
+  else if (action == 'a' && qi->qf_lists[qi->qf_curlist].qf_count > 0) {
     /* Adding to existing list, find last entry. */
     for (prevp = qi->qf_lists[qi->qf_curlist].qf_start;
          prevp->qf_next != prevp; prevp = prevp->qf_next)
       ;
-  else if (action == 'r') {
+    old_last = prevp;
+  } else if (action == 'r') {
     qf_free(qi, qi->qf_curlist);
     qf_store_title(qi, title);
   }
@@ -3759,7 +3793,7 @@ int set_errorlist(win_T *wp, list_T *list, int action, char_u *title)
   }
 
   // Don't update the cursor in quickfix window when appending entries
-  qf_update_buffer(qi, (action != 'a'));
+  qf_update_buffer(qi, old_last);
 
   return retval;
 }
@@ -4015,7 +4049,7 @@ void ex_helpgrep(exarg_T *eap)
     /* Darn, some plugin changed the value. */
     free_string_option(save_cpo);
 
-  qf_update_buffer(qi, true);
+  qf_update_buffer(qi, NULL);
 
   if (au_name != NULL) {
     apply_autocmds(EVENT_QUICKFIXCMDPOST, au_name,
