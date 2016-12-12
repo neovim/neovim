@@ -941,7 +941,7 @@ restofline:
     }
     /* return number of matches */
     retval = qi->qf_lists[qi->qf_curlist].qf_count;
-    goto qf_init_ok;
+    goto qf_init_end;
   }
   EMSG(_(e_readerrf));
 error2:
@@ -949,13 +949,12 @@ error2:
   qi->qf_listcount--;
   if (qi->qf_curlist > 0)
     --qi->qf_curlist;
-qf_init_ok:
+qf_init_end:
   if (fd != NULL)
     fclose(fd);
   free_efm_list(&fmt_first);
   qf_clean_dir_stack(&dir_stack);
   qf_clean_dir_stack(&file_stack);
-qf_init_end:
   xfree(namebuf);
   xfree(errmsg);
   xfree(pattern);
