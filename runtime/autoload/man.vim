@@ -39,14 +39,12 @@ function! man#open_page(count, count1, mods, ...) abort
       let sect = string(a:count)
     endif
     let [sect, name, path] = s:verify_exists(sect, name)
+    let page = s:get_page(path)
   catch
     call s:error(v:exception)
     return
   endtry
-  let page = s:get_page(path)
-  if empty(page)
-    return
-  endif
+
   call s:push_tag()
   let bufname = 'man://'.name.(empty(sect)?'':'('.sect.')')
   if a:mods !~# 'tab' && s:find_man()
@@ -62,21 +60,20 @@ function! man#read_page(ref) abort
   try
     let [sect, name] = man#extract_sect_and_name_ref(a:ref)
     let [b:man_sect, name, path] = s:verify_exists(sect, name)
+    let page = s:get_page(path)
   catch
     " call to s:error() is unnecessary
     return
   endtry
-  let page = s:get_page(path)
-  if empty(page)
-    return
-  endif
   call s:put_page(page)
 endfunction
 
 " Handler for s:system() function.
 function! s:system_handler(jobid, data, event) abort
   if a:event == 'stdout'
-    let self.output .= join(a:data, "\n")
+    let self.stdout .= join(a:data, "\n")
+  elseif a:event == 'stderr'
+    let self.stderr .= join(a:data, "\n")
   else
     let s:shell_error = a:data
   endif
@@ -85,8 +82,10 @@ endfunction
 " Run a system command and timeout after 30 seconds.
 function! s:system(cmd, ...) abort
   let opts = {
-        \ 'output': '',
+        \ 'stdout': '',
+        \ 'stderr': '',
         \ 'on_stdout': function('s:system_handler'),
+        \ 'on_stderr': function('s:system_handler'),
         \ 'on_exit': function('s:system_handler'),
         \ }
   let jobid = jobstart(a:cmd, opts)
@@ -100,19 +99,14 @@ function! s:system(cmd, ...) abort
     silent! call jobstop(jobid)
     throw printf('command timed out: %s', join(a:cmd))
   elseif s:shell_error != 0
-    throw printf("command error (%d) %s: %s", jobid, join(a:cmd), opts.output)
+    throw printf("command error (%d) %s: %s", jobid, join(a:cmd), opts.stderr)
   endif
 
-  return opts.output
+  return opts.stdout
 endfunction
 
 function! s:get_page(path) abort
-  try
-    return s:system(['env', 'MANPAGER=cat', (empty($MANWIDTH) ? ' MANWIDTH='.winwidth(0) : ''), 'man', a:path])
-  catch
-    call s:error(v:exception)
-    return
-  endtry
+  return s:system(['env', 'MANPAGER=cat', (empty($MANWIDTH) ? ' MANWIDTH='.winwidth(0) : ''), 'man', a:path])
 endfunction
 
 function! s:put_page(page) abort
@@ -154,11 +148,7 @@ endfunction
 
 function! s:get_path(sect, name) abort
   if empty(a:sect)
-    let path = s:system(['man', s:man_find_arg, a:name])
-    if path !~# '^\/'
-      throw 'no manual entry for '.a:name
-    endif
-    return path
+    return s:system(['man', s:man_find_arg, a:name])
   endif
   " '-s' flag handles:
   "   - tokens like 'printf(echo)'
