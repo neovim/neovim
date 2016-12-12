@@ -734,8 +734,51 @@ function Test_setqflist()
   call SetXlistTests('c', bnum)
   call SetXlistTests('l', bnum)
 
+  enew!
   call delete('Xtestfile')
 endfunction
+
+func Test_setqflist_empty_middle()
+  " create three quickfix lists
+  vimgrep Test_ test_quickfix.vim
+  let testlen = len(getqflist())
+  call assert_true(testlen > 0)
+  vimgrep empty test_quickfix.vim
+  call assert_true(len(getqflist()) > 0)
+  vimgrep matches test_quickfix.vim
+  let matchlen = len(getqflist())
+  call assert_true(matchlen > 0)
+  colder
+  " make the middle list empty
+  call setqflist([], 'r')
+  call assert_true(len(getqflist()) == 0)
+  colder
+  call assert_equal(testlen, len(getqflist()))
+  cnewer
+  cnewer
+  call assert_equal(matchlen, len(getqflist()))
+endfunc
+
+func Test_setqflist_empty_older()
+  " create three quickfix lists
+  vimgrep one test_quickfix.vim
+  let onelen = len(getqflist())
+  call assert_true(onelen > 0)
+  vimgrep two test_quickfix.vim
+  let twolen = len(getqflist())
+  call assert_true(twolen > 0)
+  vimgrep three test_quickfix.vim
+  let threelen = len(getqflist())
+  call assert_true(threelen > 0)
+  colder 2
+  " make the first list empty, check the others didn't change
+  call setqflist([], 'r')
+  call assert_true(len(getqflist()) == 0)
+  cnewer
+  call assert_equal(twolen, len(getqflist()))
+  cnewer
+  call assert_equal(threelen, len(getqflist()))
+endfunc
 
 function! XquickfixSetListWithAct(cchar)
   let Xolder = a:cchar . 'older'
