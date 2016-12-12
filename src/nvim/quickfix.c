@@ -171,6 +171,22 @@ qf_init (
 // Maximum number of bytes allowed per line while reading an errorfile.
 static const size_t LINE_MAXLEN = 4096;
 
+static char_u *qf_grow_linebuf(char_u **growbuf, size_t *growbufsiz,
+                               size_t newsz, size_t *allocsz)
+{
+  // If the line exceeds LINE_MAXLEN exclude the last
+  // byte since it's not a NL character.
+  *allocsz = newsz > LINE_MAXLEN ? LINE_MAXLEN - 1 : newsz;
+  if (*growbuf == NULL) {
+    *growbuf = xmalloc(*allocsz + 1);
+    *growbufsiz = *allocsz;
+  } else if (*allocsz > *growbufsiz) {
+    *growbuf = xrealloc(*growbuf, *allocsz + 1);
+    *growbufsiz = *allocsz;
+  }
+  return *growbuf;
+}
+
 /*
  * Read the errorfile "efile" into memory, line by line, building the error
  * list.
@@ -488,16 +504,7 @@ qf_init_ext (
             len = STRLEN(p_str);
 
           if (len > IOSIZE - 2) {
-            // If the line exceeds LINE_MAXLEN exclude the last byte since it's
-            // not a NL character.
-            linelen = len > LINE_MAXLEN ? LINE_MAXLEN - 1 : len;
-            if (growbuf == NULL) {
-              growbuf = xmalloc(linelen + 1);
-            } else if (linelen > growbufsiz) {
-              growbuf = xrealloc(growbuf, linelen + 1);
-            }
-            growbufsiz = linelen;
-            linebuf = growbuf;
+            linebuf = qf_grow_linebuf(&growbuf, &growbufsiz, len, &linelen);
           } else {
             linebuf = IObuff;
             linelen = len;
@@ -520,18 +527,7 @@ qf_init_ext (
 
           len = STRLEN(p_li->li_tv.vval.v_string);
           if (len > IOSIZE - 2) {
-            linelen = len;
-            if (linelen > LINE_MAXLEN) {
-              linelen = LINE_MAXLEN - 1;
-            }
-            if (growbuf == NULL) {
-              growbuf = xmalloc(linelen + 1);
-              growbufsiz = linelen;
-            } else if (linelen > growbufsiz) {
-              growbuf = xrealloc(growbuf, linelen + 1);
-              growbufsiz = linelen;
-            }
-            linebuf = growbuf;
+            linebuf = qf_grow_linebuf(&growbuf, &growbufsiz, len, &linelen);
           } else {
             linebuf = IObuff;
             linelen = len;
@@ -548,17 +544,7 @@ qf_init_ext (
         p_buf = ml_get_buf(buf, buflnum++, false);
         linelen = STRLEN(p_buf);
         if (linelen > IOSIZE - 2) {
-          if (growbuf == NULL) {
-            growbuf = xmalloc(linelen + 1);
-            growbufsiz = linelen;
-          } else if (linelen > growbufsiz) {
-            if (linelen > LINE_MAXLEN) {
-              linelen = LINE_MAXLEN - 1;
-            }
-            growbuf = xrealloc(growbuf, linelen + 1);
-            growbufsiz = linelen;
-          }
-          linebuf = growbuf;
+            linebuf = qf_grow_linebuf(&growbuf, &growbufsiz, len, &linelen);
         } else {
           linebuf = IObuff;
         }
