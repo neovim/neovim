@@ -75,7 +75,7 @@ function! s:system_handler(jobid, data, event) dict abort
   elseif a:event == 'stderr'
     let self.stderr .= join(a:data, "\n")
   else
-    let self.shell_error = a:data
+    let self.exit_code = a:data
   endif
 endfunction
 
@@ -84,7 +84,7 @@ function! s:system(cmd, ...) abort
   let opts = {
         \ 'stdout': '',
         \ 'stderr': '',
-        \ 'shell_error': 0,
+        \ 'exit_code': 0,
         \ 'on_stdout': function('s:system_handler'),
         \ 'on_stderr': function('s:system_handler'),
         \ 'on_exit': function('s:system_handler'),
@@ -105,7 +105,7 @@ function! s:system(cmd, ...) abort
   elseif res[0] == -2
     throw printf('command interrupted: %s', join(a:cmd))
   endif
-  if opts.shell_error != 0
+  if opts.exit_code != 0
     throw printf("command error (%d) %s: %s", jobid, join(a:cmd), opts.stderr)
   endif
 
