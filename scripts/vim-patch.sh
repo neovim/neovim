@@ -25,6 +25,9 @@ usage() {
   echo "    -p {vim-revision}  Download and apply the Vim patch vim-revision."
   echo "                       vim-revision can be a version number of the "
   echo "                       format '7.4.xxx' or a Git commit hash."
+  echo "    -g {vim-revision}  Download the Vim patch vim-revision."
+  echo "                       vim-revision can be a version number of the "
+  echo "                       format '7.4.xxx' or a Git commit hash."
   echo "    -s                 Submit a vim-patch pull request to Neovim."
   echo "    -r {pr-number}     Review a vim-patch pull request to Neovim."
   echo
@@ -166,9 +169,21 @@ get_vim_patch() {
 
   local patch_content
   patch_content="$(git --no-pager show --color=never -1 --pretty=medium "${vim_commit}")"
-  local nvim_branch="${BRANCH_PREFIX}${vim_version}"
 
   cd "${NVIM_SOURCE_DIR}"
+
+  printf "Creating patch...\n"
+  echo "$patch_content" > "${NVIM_SOURCE_DIR}/${patch_file}"
+
+  printf "Pre-processing patch...\n"
+  preprocess_patch "${NVIM_SOURCE_DIR}/${patch_file}"
+
+  printf "✔ Saved patch to '${NVIM_SOURCE_DIR}/${patch_file}'.\n"
+}
+
+stage_patch() {
+  get_vim_patch "$1"
+
   local git_remote
   git_remote="$(find_git_remote)"
   local checked_out_branch
@@ -183,6 +198,7 @@ get_vim_patch() {
       echo "✔ ${output}" ||
       (echo "✘ ${output}"; false)
 
+    local nvim_branch="${BRANCH_PREFIX}${vim_version}"
     echo
     echo "Creating new branch '${nvim_branch}' based on '${git_remote}/master'."
     cd "${NVIM_SOURCE_DIR}"
@@ -195,14 +211,6 @@ get_vim_patch() {
   output="$(commit_message | git commit --allow-empty --file 2>&1 -)" &&
     echo "✔ ${output}" ||
     (echo "✘ ${output}"; false)
-
-  printf "Creating patch...\n"
-  echo "$patch_content" > "${NVIM_SOURCE_DIR}/${patch_file}"
-
-  printf "Pre-processing patch...\n"
-  preprocess_patch "${NVIM_SOURCE_DIR}/${patch_file}"
-
-  printf "✔ Saved patch to '${NVIM_SOURCE_DIR}/${patch_file}'.\n"
 
   printf "\nInstructions:
   Proceed to port the patch. This may help:
@@ -218,8 +226,7 @@ get_vim_patch() {
   When you're done, try '${BASENAME} -s' to create the pull request.
 
   See the wiki for more information:
-    * https://github.com/neovim/neovim/wiki/Merging-patches-from-upstream-vim
-  "
+    * https://github.com/neovim/neovim/wiki/Merging-patches-from-upstream-vim\n"
 }
 
 hub_pr() {
@@ -430,7 +437,7 @@ review_pr() {
   clean_files
 }
 
-while getopts "hlp:r:s" opt; do
+while getopts "hlp:g:r:s" opt; do
   case ${opt} in
     h)
       usage
@@ -441,6 +448,10 @@ while getopts "hlp:r:s" opt; do
       exit 0
       ;;
     p)
+      stage_patch "${OPTARG}"
+      exit 0
+      ;;
+    g)
       get_vim_patch "${OPTARG}"
       exit 0
       ;;
