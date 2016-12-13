@@ -9883,12 +9883,6 @@ static dict_T *get_buffer_info(buf_T *buf)
   // Get a reference to buffer variables
   dict_add_dict(dict, "variables", buf->b_vars);
 
-  // Copy buffer options
-  dict_T *opts = get_winbuf_options(true);
-  if (opts != NULL) {
-    dict_add_dict(dict, "options", opts);
-  }
-
   // List of windows displaying this buffer
   list_T *windows = list_alloc();
   FOR_ALL_TAB_WINDOWS(tp, wp) {
@@ -10056,8 +10050,20 @@ static void f_getbufvar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     curbuf = buf;
 
     if (*varname == '&') {      /* buffer-local-option */
-      if (get_option_tv(&varname, rettv, TRUE) == OK)
+      if (varname[1] == NUL) {
+        // get all buffer-local options in a dict
+        dict_T *opts = get_winbuf_options(true);
+
+        if (opts != NULL) {
+          rettv->v_type = VAR_DICT;
+          rettv->vval.v_dict = opts;
+          opts->dv_refcount++;
+          done = true;
+        }
+      } else if (get_option_tv(&varname, rettv, true) == OK) {
+        // buffer-local-option
         done = TRUE;
+      }
     } else if (STRCMP(varname, "changedtick") == 0) {
       rettv->v_type = VAR_NUMBER;
       rettv->vval.v_number = curbuf->b_changedtick;
@@ -10904,14 +10910,8 @@ static dict_T *get_win_info(win_T *wp, short tpnr, short winnr)
                   (bt_quickfix(wp->w_buffer) && wp->w_llist_ref != NULL),
                   NULL);
 
-  // Make a reference to window variables
+  // Add a reference to window variables
   dict_add_dict(dict, "variables", wp->w_vars);
-
-  // Copy window options
-  dict_T *opts = get_winbuf_options(false);
-  if (opts != NULL) {
-    dict_add_dict(dict, "options", opts);
-  }
 
   return dict;
 }
@@ -11072,8 +11072,19 @@ getwinvar (
     bool need_switch_win = tp != curtab || win != curwin;
     if (!need_switch_win
         || switch_win(&oldcurwin, &oldtabpage, win, tp, true) == OK) {
-      if (*varname == '&') {  // window-local-option
-        if (get_option_tv(&varname, rettv, 1) == OK) {
+      if (*varname == '&') {
+        if (varname[1] == NUL) {
+          // get all window-local options in a dict
+          dict_T *opts = get_winbuf_options(false);
+
+          if (opts != NULL) {
+            rettv->v_type = VAR_DICT;
+            rettv->vval.v_dict = opts;
+            opts->dv_refcount++;
+            done = true;
+          }
+        } else if (get_option_tv(&varname, rettv, 1) == OK) {
+          // window-local-option
           done = true;
         }
       } else {

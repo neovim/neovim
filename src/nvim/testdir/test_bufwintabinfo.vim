@@ -18,7 +18,6 @@ function Test_getbufwintabinfo()
     let b:editor = 'vim'
     let l = getbufinfo('%')
     call assert_equal(bufnr('%'), l[0].bufnr)
-    call assert_equal(8, l[0].options.tabstop)
     call assert_equal('vim', l[0].variables.editor)
     call assert_notequal(-1, index(l[0].windows, bufwinid('%')))
 
@@ -49,7 +48,6 @@ function Test_getbufwintabinfo()
     call assert_equal(winbufnr(2), winlist[1].bufnr)
     call assert_equal(winheight(2), winlist[1].height)
     call assert_equal(1, winlist[2].winnr)
-    call assert_equal('auto', winlist[0].options.signcolumn)
     call assert_equal(2, winlist[3].tabnr)
     call assert_equal('green', winlist[2].variables.signal)
     call assert_equal(winwidth(1), winlist[0].width)
@@ -81,3 +79,25 @@ function Test_getbufwintabinfo()
     call assert_false(winlist[2].loclist)
     wincmd t | only
 endfunction
+
+function Test_get_buf_options()
+  let opts = getbufvar(bufnr('%'), '&')
+  call assert_equal(v:t_dict, type(opts))
+  call assert_equal(8, opts.tabstop)
+endfunc
+
+function Test_get_win_options()
+  let opts = getwinvar(1, '&')
+  call assert_equal(v:t_dict, type(opts))
+  call assert_equal(0, opts.linebreak)
+  if has('signs')
+    call assert_equal('auto', opts.signcolumn)
+  endif
+
+  let opts = gettabwinvar(1, 1, '&')
+  call assert_equal(v:t_dict, type(opts))
+  call assert_equal(0, opts.linebreak)
+  if has('signs')
+    call assert_equal('auto', opts.signcolumn)
+  endif
+endfunc

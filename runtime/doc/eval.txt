@@ -1,4 +1,4 @@
-*eval.txt*	For Vim version 7.4.  Last change: 2016 Jun 04
+*eval.txt*	For Vim version 7.4.  Last change: 2016 Aug 27
 
 
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
@@ -3625,25 +3625,30 @@ getbufinfo([{dict}])
 			lnum		current line number in buffer.
 			loaded		TRUE if the buffer is loaded.
 			name		full path to the file in the buffer.
-			options		dictionary of buffer local options.
 			signs		list of signs placed in the buffer.
 					Each list item is a dictionary with
 					the following fields:
 					    id	  sign identifier
 					    lnum  line number
 					    name  sign name
-			variables	dictionary of buffer local variables.
-			windows		list of window IDs with this buffer
+			variables	a reference to the dictionary with
+					buffer-local variables.
+			windows		list of |window-ID|s that display this
+					buffer
 
 		Examples: >
 			for buf in getbufinfo()
 			    echo buf.name
 			endfor
 			for buf in getbufinfo({'buflisted':1})
-			    if buf.options.filetype == 'java'
+			    if buf.changed
 				....
 			    endif
 			endfor
+<
+		To get buffer-local options use: >
+			getbufvar({bufnr}, '&')
+
 <
 							*getbufline()*
 getbufline({expr}, {lnum} [, {end}])
@@ -3676,6 +3681,10 @@ getbufvar({expr}, {varname} [, {def}])				*getbufvar()*
 		must be used.
 		When {varname} is empty returns a dictionary with all the
 		buffer-local variables.
+		When {varname} is equal to "&" returns a dictionary with all
+		the buffer-local options.
+		Otherwise, when {varname} starts with "&" returns the value of
+		a buffer-local option.
 		This also works for a global or buffer-local option, but it
 		doesn't work for a global variable, window-local variable or
 		window-local option.
@@ -4111,8 +4120,9 @@ gettabinfo([{arg}])					*gettabinfo()*
 
 		Each List item is a Dictionary with the following entries:
 			nr		tab page number.
+			variables	a reference to the dictionary with
+					tabpage-local variables
 			windows		List of window IDs in the tag page.
-			variables	dictionary of tabpage local variables.
 
 gettabvar({tabnr}, {varname} [, {def}])				*gettabvar()*
 		Get the value of a tab-local variable {varname} in tab page
@@ -4127,10 +4137,12 @@ gettabvar({tabnr}, {varname} [, {def}])				*gettabvar()*
 gettabwinvar({tabnr}, {winnr}, {varname} [, {def}])		*gettabwinvar()*
 		Get the value of window-local variable {varname} in window
 		{winnr} in tab page {tabnr}.
-		When {varname} starts with "&" get the value of a window-local
-		option.
 		When {varname} is empty a dictionary with all window-local
 		variables is returned.
+		When {varname} is equal to "&" get the values of all
+		window-local options in a Dictionary.
+		Otherwise, when {varname} starts with "&" get the value of a
+		window-local option.
 		Note that {varname} must be the name without "w:".
 		Tabs are numbered starting with one.  For the current tabpage
 		use |getwinvar()|.
@@ -4170,12 +4182,15 @@ getwininfo([{winid}])					*getwininfo()*
 			height		window height
 			loclist		1 if showing a location list
 			nr		window number
-			options		dictionary of window local options
 			quickfix	1 if quickfix or location list window
 			tpnr		tab page number
-			variables	dictionary of window local variables
+			variables	a reference to the dictionary with
+					window-local variables
 			width		window width
 			winid		window ID
+
+		To obtain all window-local variables use: >
+			gettabwinvar({tabnr}, {winnr}, '&')
 
 getwinvar({winnr}, {varname} [, {def}])				*getwinvar()*
 		Like |gettabwinvar()| for the current tabpage.
@@ -5544,6 +5559,16 @@ printf({fmt}, {expr1} ...)				*printf()*
 			numeric field; if the result of a conversion is wider
 			than the field width, the field is expanded to contain
 			the conversion result.
+			The 'h' modifier indicates the argument is 16 bits.
+			The 'l' modifier indicates the argument is 32 bits.
+			The 'L' modifier indicates the argument is 64 bits.
+			Generally, these modifiers are not useful. They are
+			ignored when type is known from the argument.
+
+		i	alias for d
+		D	alias for ld
+		U	alias for lu
+		O	alias for lo
 
 							*printf-c*
 		c	The Number argument is converted to a byte, and the
@@ -5560,7 +5585,7 @@ printf({fmt}, {expr1} ...)				*printf()*
 			feature works just like 's'.
 
 							*printf-f* *E807*
-		f	The Float argument is converted into a string of the 
+		f F	The Float argument is converted into a string of the 
 			form 123.456.  The precision specifies the number of
 			digits after the decimal point.  When the precision is
 			zero the decimal point is omitted.  When the precision
