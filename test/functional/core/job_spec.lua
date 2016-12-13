@@ -368,11 +368,11 @@ describe('jobs', function()
       eq({'notification', 'wait', {{-2}}}, next_msg())
     end)
 
-    pending('can be called recursively', function()
+    it('can be called recursively', function()
       source([[
       let g:opts = {}
       let g:counter = 0
-      function g:opts.on_stdout(id, msg)
+      function g:opts.on_stdout(id, msg, _event)
         if self.state == 0
           if self.counter < 10
             call Run()
@@ -390,7 +390,7 @@ describe('jobs', function()
           call jobclose(a:id, 'stdin')
         endif
       endfunction
-      function g:opts.on_exit()
+      function g:opts.on_exit(...)
         call rpcnotify(g:channel, 'w', printf('job %d exited', self.counter))
       endfunction
       function Run()
