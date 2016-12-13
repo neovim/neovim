@@ -97,9 +97,13 @@ function! s:system(cmd, ...) abort
 
   let res = jobwait([jobid], 30000)
   if res[0] == -1
-    silent! call jobstop(jobid)
-    throw printf('command timed out: %s', join(a:cmd))
-  elseif opts.shell_error != 0
+    if jobstop(jobid)
+      throw printf('command timed out: %s', join(a:cmd))
+    endif
+  elseif res[0] == -2
+    throw printf('command interrupted: %s', join(a:cmd))
+  endif
+  if opts.shell_error != 0
     throw printf("command error (%d) %s: %s", jobid, join(a:cmd), opts.stderr)
   endif
 
