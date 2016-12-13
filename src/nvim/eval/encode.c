@@ -315,6 +315,60 @@ int encode_read_from_list(ListReaderState *const state, char *const buf,
       ga_append(gap, ')'); \
     } while (0)
 
+#define TYPVAL_ENCODE_CONV_PARTIAL(pt) \
+    do { \
+        int i; \
+        ga_concat(gap, "function("); \
+        if (&pt->pt_name != NULL) { \
+          size_t len; \
+          char_u *p; \
+          len = 3; \
+          len += STRLEN(pt->pt_name); \
+          for (p = pt->pt_name; *p != NUL; mb_ptr_adv(p)) { \
+            if (*p == '\'') { \
+              len++; \
+            } \
+          } \
+          char_u *r, *s; \
+          s = r = xmalloc(len); \
+          if (r != NULL) { \
+            *r++ = '\''; \
+            for (p = pt->pt_name; *p != NUL; ) { \
+              if (*p == '\'') { \
+                *r++ = '\''; \
+              } \
+            MB_COPY_CHAR(p, r); \
+            } \
+            *r++ = '\''; \
+            *r++ = NUL; \
+          } \
+          ga_concat(gap, s); \
+          xfree(s); \
+        } \
+        if (pt->pt_argc > 0) { \
+          ga_concat(gap, ", ["); \
+          for (i = 0; i < pt->pt_argc; i++) { \
+            if (i > 0) { \
+              ga_concat(gap, ", "); \
+            } \
+            char *tofree = encode_tv2string(&pt->pt_argv[i], NULL); \
+            ga_concat(gap, tofree); \
+            xfree(tofree); \
+          } \
+          ga_append(gap, ']'); \
+        } \
+        if (pt->pt_dict != NULL) { \
+          typval_T dtv; \
+          ga_concat(gap, ", "); \
+          dtv.v_type = VAR_DICT; \
+          dtv.vval.v_dict = pt->pt_dict; \
+          char *tofree = encode_tv2string(&dtv, NULL); \
+          ga_concat(gap, tofree); \
+          xfree(tofree); \
+        } \
+        ga_append(gap, ')'); \
+    } while (0)
+
 #define TYPVAL_ENCODE_CONV_EMPTY_LIST() \
     ga_concat(gap, "[]")
 
@@ -661,6 +715,12 @@ static inline int convert_to_json_string(garray_T *const gap,
                         "attempt to dump function reference"), \
                       mpstack, objname)
 
+#undef TYPVAL_ENCODE_CONV_PARTIAL
+#define TYPVAL_ENCODE_CONV_PARTIAL(pt) \
+    return conv_error(_("E474: Error while dumping %s, %s: " \
+                        "attempt to dump partial"), \
+                      mpstack, objname)
+
 /// Check whether given key can be used in json_encode()
 ///
 /// @param[in]  tv  Key to check.
@@ -718,6 +778,7 @@ TYPVAL_ENCODE_DEFINE_CONV_FUNCTIONS(static, json, garray_T *const, gap)
 #undef TYPVAL_ENCODE_CONV_NUMBER
 #undef TYPVAL_ENCODE_CONV_FLOAT
 #undef TYPVAL_ENCODE_CONV_FUNC
+#undef TYPVAL_ENCODE_CONV_PARTIAL
 #undef TYPVAL_ENCODE_CONV_EMPTY_LIST
 #undef TYPVAL_ENCODE_CONV_LIST_START
 #undef TYPVAL_ENCODE_CONV_EMPTY_DICT
@@ -846,6 +907,11 @@ char *encode_tv2json(typval_T *tv, size_t *len)
                         "attempt to dump function reference"), \
                       mpstack, objname)
 
+#define TYPVAL_ENCODE_CONV_PARTIAL(partial) \
+    return conv_error(_("E5004: Error while dumping %s, %s: " \
+                        "attempt to dump partial"), \
+                      mpstack, objname)
+
 #define TYPVAL_ENCODE_CONV_EMPTY_LIST() \
     msgpack_pack_array(packer, 0)
 
@@ -902,6 +968,7 @@ TYPVAL_ENCODE_DEFINE_CONV_FUNCTIONS(, msgpack, msgpack_packer *const, packer)
 #undef TYPVAL_ENCODE_CONV_NUMBER
 #undef TYPVAL_ENCODE_CONV_FLOAT
 #undef TYPVAL_ENCODE_CONV_FUNC
+#undef TYPVAL_ENCODE_CONV_PARTIAL
 #undef TYPVAL_ENCODE_CONV_EMPTY_LIST
 #undef TYPVAL_ENCODE_CONV_LIST_START
 #undef TYPVAL_ENCODE_CONV_EMPTY_DICT

@@ -69,6 +69,11 @@
 ///
 /// @param  fun  Function name.
 
+/// @def TYPVAL_ENCODE_CONV_PARTIAL
+/// @brief Macros used to convert a partial
+///
+/// @param  pt Partial name.
+
 /// @def TYPVAL_ENCODE_CONV_EMPTY_LIST
 /// @brief Macros used to convert an empty list
 ///
@@ -246,6 +251,10 @@ static int name##_convert_one_value(firstargtype firstargname, \
     } \
     case VAR_FUNC: { \
       TYPVAL_ENCODE_CONV_FUNC(tv->vval.v_string); \
+      break; \
+    } \
+    case VAR_PARTIAL: { \
+      TYPVAL_ENCODE_CONV_PARTIAL(tv->vval.v_partial); \
       break; \
     } \
     case VAR_LIST: { \
