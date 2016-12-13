@@ -9857,7 +9857,7 @@ static void get_buffer_signs(buf_T *buf, list_T *l)
 
     dict_add_nr_str(d, "id", sign->id, NULL);
     dict_add_nr_str(d, "lnum", sign->lnum, NULL);
-    dict_add_nr_str(d, "name", 0L, vim_strsave(sign_typenr2name(sign->typenr)));
+    dict_add_nr_str(d, "name", 0L, sign_typenr2name(sign->typenr));
 
     list_append_dict(l, d);
   }
