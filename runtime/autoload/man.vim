@@ -97,11 +97,10 @@ function! s:system(cmd, ...) abort
 
   let res = jobwait([jobid], 30000)
   if res[0] == -1
-    try
-      jobstop(jobid)
-    catch
+    silent let stopped = jobstop(jobid)
+    if stopped
       throw printf('command timed out: %s', join(a:cmd))
-    endtry
+    endif
   elseif res[0] == -2
     throw printf('command interrupted: %s', join(a:cmd))
   endif
