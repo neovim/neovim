@@ -25,7 +25,7 @@ function! s:version_cmp(a, b) abort
 endfunction
 
 " Handler for s:system() function.
-function! s:system_handler(jobid, data, event) abort
+function! s:system_handler(jobid, data, event) dict abort
   if a:event == 'stdout' || a:event == 'stderr'
     let self.output .= join(a:data, '')
   elseif a:event == 'exit'
