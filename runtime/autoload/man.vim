@@ -69,7 +69,7 @@ function! man#read_page(ref) abort
 endfunction
 
 " Handler for s:system() function.
-function! s:system_handler(jobid, data, event) abort
+function! s:system_handler(jobid, data, event) dict abort
   if a:event == 'stdout'
     let self.stdout .= join(a:data, "\n")
   elseif a:event == 'stderr'
@@ -97,9 +97,11 @@ function! s:system(cmd, ...) abort
 
   let res = jobwait([jobid], 30000)
   if res[0] == -1
-    if jobstop(jobid)
+    try
+      jobstop(jobid)
+    catch
       throw printf('command timed out: %s', join(a:cmd))
-    endif
+    endtry
   elseif res[0] == -2
     throw printf('command interrupted: %s', join(a:cmd))
   endif
