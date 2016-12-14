@@ -2431,6 +2431,34 @@ void ex_copen(exarg_T *eap)
   update_topline();             /* scroll to show the line */
 }
 
+// Move the cursor in the quickfix window to "lnum".
+static void qf_win_goto(win_T *win, linenr_T lnum)
+{
+  win_T *old_curwin = curwin;
+
+  curwin = win;
+  curbuf = win->w_buffer;
+  curwin->w_cursor.lnum = lnum;
+  curwin->w_cursor.col = 0;
+  curwin->w_cursor.coladd = 0;
+  curwin->w_curswant = 0;
+  update_topline();             // scroll to show the line
+  redraw_later(VALID);
+  curwin->w_redr_status = true; // update ruler
+  curwin = old_curwin;
+  curbuf = curwin->w_buffer;
+}
+
+// :cbottom command.
+void ex_cbottom(exarg_T *eap)
+{
+  win_T *win = qf_find_win(&ql_info);
+
+  if (win != NULL && win->w_cursor.lnum != win->w_buffer->b_ml.ml_line_count) {
+    qf_win_goto(win, win->w_buffer->b_ml.ml_line_count);
+  }
+}
+
 /*
  * Return the number of the current entry (line number in the quickfix
  * window).
@@ -2467,24 +2495,14 @@ qf_win_pos_update (
   if (win != NULL
       && qf_index <= win->w_buffer->b_ml.ml_line_count
       && old_qf_index != qf_index) {
-    win_T   *old_curwin = curwin;
-
-    curwin = win;
-    curbuf = win->w_buffer;
     if (qf_index > old_qf_index) {
-      curwin->w_redraw_top = old_qf_index;
-      curwin->w_redraw_bot = qf_index;
+      win->w_redraw_top = old_qf_index;
+      win->w_redraw_bot = qf_index;
     } else {
-      curwin->w_redraw_top = qf_index;
-      curwin->w_redraw_bot = old_qf_index;
+      win->w_redraw_top = qf_index;
+      win->w_redraw_bot = old_qf_index;
     }
-    curwin->w_cursor.lnum = qf_index;
-    curwin->w_cursor.col = 0;
-    update_topline();                   /* scroll to show the line */
-    redraw_later(VALID);
-    curwin->w_redr_status = TRUE;       /* update ruler */
-    curwin = old_curwin;
-    curbuf = curwin->w_buffer;
+    qf_win_goto(win, qf_index);
   }
   return win != NULL;
 }

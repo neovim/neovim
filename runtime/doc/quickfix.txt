@@ -428,6 +428,12 @@ EXECUTE A COMMAND IN ALL THE BUFFERS IN QUICKFIX OR LOCATION LIST:
 :lw[indow] [height]	Same as ":cwindow", except use the window showing the
 			location list for the current window.
 
+:cbo[ttom]		Put the cursor in the last line of the quickfix window
+			and scroll to make it visible.  This is useful for
+			when errors are added by an asynchronous callback.
+			Only call it once in a while if there are many
+			updates to avoid a lot of redrawing.
+
 Normally the quickfix window is at the bottom of the screen.  If there are
 vertical splits, it's at the bottom of the rightmost column of windows.  To
 make it always occupy the full width: >

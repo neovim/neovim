@@ -1396,3 +1396,16 @@ echo string(loc_two)
   call delete('Xone', 'rf')
   call delete('Xtwo', 'rf')
 endfunc
+
+function Test_cbottom()
+  call setqflist([{'filename': 'foo', 'lnum': 42}]) 
+  copen
+  let wid = win_getid()
+  call assert_equal(1, line('.'))
+  wincmd w
+  call setqflist([{'filename': 'var', 'lnum': 24}], 'a') 
+  cbottom
+  call win_gotoid(wid)
+  call assert_equal(2, line('.'))
+  cclose
+endfunc

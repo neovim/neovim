@@ -358,6 +358,12 @@ return {
     func='ex_cbuffer',
   },
   {
+    command='cbottom',
+    flags=bit.bor(TRLBAR),
+    addr_type=ADDR_LINES,
+    func='ex_cbottom',
+  },
+  {
     command='cc',
     flags=bit.bor(RANGE, NOTADR, COUNT, TRLBAR, BANG),
     addr_type=ADDR_LINES,
