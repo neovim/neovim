@@ -5,10 +5,12 @@ func Test_filter_map_list_expr_string()
   " filter()
   call assert_equal([2, 3, 4], filter([1, 2, 3, 4], 'v:val > 1'))
   call assert_equal([3, 4], filter([1, 2, 3, 4], 'v:key > 1'))
+  call assert_equal([], filter([1, 2, 3, 4], 0))
 
   " map()
   call assert_equal([2, 4, 6, 8], map([1, 2, 3, 4], 'v:val * 2'))
   call assert_equal([0, 2, 4, 6], map([1, 2, 3, 4], 'v:key * 2'))
+  call assert_equal([9, 9, 9, 9], map([1, 2, 3, 4], 9))
 endfunc
 
 " dict with expression string
@@ -18,10 +20,12 @@ func Test_filter_map_dict_expr_string()
   " filter()
   call assert_equal({"bar": 2, "baz": 3}, filter(copy(dict), 'v:val > 1'))
   call assert_equal({"foo": 1, "baz": 3}, filter(copy(dict), 'v:key > "bar"'))
+  call assert_equal({}, filter(copy(dict), 0))
 
   " map()
   call assert_equal({"foo": 2, "bar": 4, "baz": 6}, map(copy(dict), 'v:val * 2'))
   call assert_equal({"foo": "f", "bar": "b", "baz": "b"}, map(copy(dict), 'v:key[0]'))
+  call assert_equal({"foo": 9, "bar": 9, "baz": 9}, map(copy(dict), 9))
 endfunc
 
 " list with funcref

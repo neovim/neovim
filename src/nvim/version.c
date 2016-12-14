@@ -438,7 +438,7 @@ static int included_patches[] = {
   2005,
   // 2004 NA
   // 2003 NA
-  // 2002,
+  2002,
   // 2001 NA
   2000,
   1999,
