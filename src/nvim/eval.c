@@ -15018,8 +15018,7 @@ static void set_qf_ll_list(win_T *wp, typval_T *args, typval_T *rettv)
   char_u *act = get_tv_string_chk(action_arg);
   if ((*act == 'a' || *act == 'r' || *act == ' ') && act[1] == NUL) {
     action = *act;
-  }
-  else {
+  } else {
     EMSG2(_(e_invact), act);
     return;
   }
