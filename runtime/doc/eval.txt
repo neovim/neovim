@@ -3372,31 +3372,47 @@ filewritable({file})					*filewritable()*
 		directory, and we can write to it, the result is 2.
 
 
-filter({expr}, {string})					*filter()*
-		{expr} must be a |List| or a |Dictionary|.
-		For each item in {expr} evaluate {string} and when the result
+filter({expr1}, {expr2})					*filter()*
+		{expr1} must be a |List| or a |Dictionary|.
+		For each item in {expr1} evaluate {expr2} and when the result
 		is zero remove the item from the |List| or |Dictionary|.
-		Inside {string} |v:val| has the value of the current item.
+		{expr2} must be a |string| or |Funcref|.
+
+		if {expr2} is a |string|, inside {expr2} |v:val| has the value
+		of the current item.  For a |Dictionary| |v:key| has the key
+		of the current item.
 		For a |Dictionary| |v:key| has the key of the current item.
 		Examples: >
-			:call filter(mylist, 'v:val !~ "OLD"')
+			call filter(mylist, 'v:val !~ "OLD"')
 <		Removes the items where "OLD" appears. >
-			:call filter(mydict, 'v:key >= 8')
+			call filter(mydict, 'v:key >= 8')
 <		Removes the items with a key below 8. >
-			:call filter(var, 0)
+			call filter(var, 0)
 <		Removes all the items, thus clears the |List| or |Dictionary|.
 
-		Note that {string} is the result of expression and is then
+		Note that {expr2} is the result of expression and is then
 		used as an expression again.  Often it is good to use a
 		|literal-string| to avoid having to double backslashes.
 
+		If {expr2} is a |Funcref| it must take two arguments:
+			1. the key or the index of the current item.
+			2. the value of the current item.
+		The function must return TRUE if the item should be kept.
+		Example that keeps the odd items of a list: >
+			func Odd(idx, val)
+			  return a:idx % 2 == 1
+			endfunc
+			call filter(mylist, function('Odd'))
+<
 		The operation is done in-place.  If you want a |List| or
 		|Dictionary| to remain unmodified make a copy first: >
 			:let l = filter(copy(mylist), 'v:val =~ "KEEP"')
 
-<		Returns {expr}, the |List| or |Dictionary| that was filtered.
-		When an error is encountered while evaluating {string} no
-		further items in {expr} are processed.
+<		Returns {expr1}, the |List| or |Dictionary| that was filtered.
+		When an error is encountered while evaluating {expr2} no
+		further items in {expr1} are processed. When {expr2} is a
+		Funcref errors inside a function are ignored, unless it was
+		defined with the "abort" flag.
 
 
 finddir({name}[, {path}[, {count}]])				*finddir()*
@@ -4931,29 +4947,43 @@ log10({expr})						*log10()*
 <			-2.0
 
 
-map({expr}, {string})					*map()*
-		{expr} must be a |List| or a |Dictionary|.
-		Replace each item in {expr} with the result of evaluating
-		{string}.
-		Inside {string} |v:val| has the value of the current item.
-		For a |Dictionary| |v:key| has the key of the current item
-		and for a |List| |v:key| has the index of the current item.
+map({expr1}, {expr2})					*map()*
+		{expr1} must be a |List| or a |Dictionary|.
+		Replace each item in {expr1} with the result of evaluating
+		{expr2}. {expr2} must be a |string| or |Funcref|.
+		
+		If {expr2} is a |string|, inside {expr2} |v:val| has the value
+		of the current item. For a |Dictionary| |v:key| has the key
+		of the current item and for a |List| |v:key| has the index of
+		the current item.
 		Example: >
 			:call map(mylist, '"> " . v:val . " <"')
 <		This puts "> " before and " <" after each item in "mylist".
 
-		Note that {string} is the result of an expression and is then
+		Note that {expr2} is the result of an expression and is then
 		used as an expression again.  Often it is good to use a
 		|literal-string| to avoid having to double backslashes.  You
 		still have to double ' quotes
 
+		If {expr2} is a |Funcref| it is called with two arguments:
+			1. The key or the index of the current item.
+			2. the value of the current item.
+		The function must return the new value of the item. Example
+		that changes each value by "key-value": >
+			func KeyValue(key, val)
+			  return a:key . '-' . a:val
+			endfunc
+			call map(myDict, function('KeyValue'))
+<
 		The operation is done in-place.  If you want a |List| or
 		|Dictionary| to remain unmodified make a copy first: >
 			:let tlist = map(copy(mylist), ' v:val . "\t"')
 
-<		Returns {expr}, the |List| or |Dictionary| that was filtered.
-		When an error is encountered while evaluating {string} no
-		further items in {expr} are processed.
+<		Returns {expr1}, the |List| or |Dictionary| that was filtered.
+		When an error is encountered while evaluating {expr2} no
+		further items in {expr1} are processed. When {expr2} is a
+		Funcref errors inside a function are ignored, unless it was
+		defined with the "abort" flag.
 
 
 maparg({name}[, {mode} [, {abbr} [, {dict}]]])			*maparg()*
