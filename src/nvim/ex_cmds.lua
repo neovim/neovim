@@ -1272,16 +1272,16 @@ return {
     func='ex_later',
   },
   {
-    command='lbottom',
-    flags=bit.bor(TRLBAR),
-    addr_type=ADDR_LINES,
-    func='ex_cbottom',
-  },
-  {
     command='lbuffer',
     flags=bit.bor(BANG, RANGE, NOTADR, WORD1, TRLBAR),
     addr_type=ADDR_LINES,
     func='ex_cbuffer',
+  },
+  {
+    command='lbottom',
+    flags=bit.bor(TRLBAR),
+    addr_type=ADDR_LINES,
+    func='ex_cbottom',
   },
   {
     command='lcd',
