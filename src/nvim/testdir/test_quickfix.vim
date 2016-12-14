@@ -10,6 +10,7 @@ function! s:setup_commands(cchar)
   if a:cchar == 'c'
     command! -nargs=* -bang Xlist <mods>clist<bang> <args>
     command! -nargs=* Xgetexpr <mods>cgetexpr <args>
+    command! -nargs=* Xaddexpr <mods>caddexpr <args>
     command! -nargs=* Xolder <mods>colder <args>
     command! -nargs=* Xnewer <mods>cnewer <args>
     command! -nargs=* Xopen <mods>copen <args>
@@ -33,6 +34,7 @@ function! s:setup_commands(cchar)
   else
     command! -nargs=* -bang Xlist <mods>llist<bang> <args>
     command! -nargs=* Xgetexpr <mods>lgetexpr <args>
+    command! -nargs=* Xaddexpr <mods>laddexpr <args>
     command! -nargs=* Xolder <mods>lolder <args>
     command! -nargs=* Xnewer <mods>lnewer <args>
     command! -nargs=* Xopen <mods>lopen <args>
@@ -661,21 +663,25 @@ function! s:dir_stack_tests(cchar)
   let save_efm=&efm
   set efm=%DEntering\ dir\ '%f',%f:%l:%m,%XLeaving\ dir\ '%f'
 
-  let l = "Entering dir 'dir1/a'\n" .
-		\ 'habits2.txt:1:Nine Healthy Habits' . "\n" .
-		\ "Entering dir 'b'\n" .
-		\ 'habits3.txt:2:0 Hours of television' . "\n" .
-		\ 'habits2.txt:7:5 Small meals' . "\n" .
-		\ "Entering dir 'dir1/c'\n" .
-		\ 'habits4.txt:3:1 Hour of exercise' . "\n" .
-		\ "Leaving dir 'dir1/c'\n" .
-		\ "Leaving dir 'dir1/a'\n" .
-		\ 'habits1.txt:4:2 Liters of water' . "\n" .
-		\ "Entering dir 'dir2'\n" .
-		\ 'habits5.txt:5:3 Cups of hot green tea' . "\n"
-		\ "Leaving dir 'dir2'\n"
+  let lines = ["Entering dir 'dir1/a'",
+		\ 'habits2.txt:1:Nine Healthy Habits',
+		\ "Entering dir 'b'",
+		\ 'habits3.txt:2:0 Hours of television',
+		\ 'habits2.txt:7:5 Small meals',
+		\ "Entering dir 'dir1/c'",
+		\ 'habits4.txt:3:1 Hour of exercise',
+		\ "Leaving dir 'dir1/c'",
+		\ "Leaving dir 'dir1/a'",
+		\ 'habits1.txt:4:2 Liters of water',
+		\ "Entering dir 'dir2'",
+		\ 'habits5.txt:5:3 Cups of hot green tea',
+		\ "Leaving dir 'dir2'"
+		\]
 
-  Xgetexpr l
+  Xexpr ""
+  for l in lines
+      Xaddexpr l
+  endfor
 
   let qf = g:Xgetlist()
 
@@ -762,7 +768,10 @@ function! Test_efm2()
 	      \ "(67,3)  warning: 's' already defined"
 	      \]
   set efm=%+P[%f],(%l\\,%c)%*[\ ]%t%*[^:]:\ %m,%-Q
-  cgetexpr lines
+  cexpr ""
+  for l in lines
+      caddexpr l
+  endfor
   let l = getqflist()
   call assert_equal(9, len(l))
   call assert_equal(21, l[2].lnum)
@@ -1220,3 +1229,46 @@ function! Test_grep()
   call s:test_xgrep('c')
   call s:test_xgrep('l')
 endfunction
+
+function! Test_two_windows()
+  " Use one 'errorformat' for two windows.  Add an expression to each of them,
+  " make sure they each keep their own state.
+  set efm=%DEntering\ dir\ '%f',%f:%l:%m,%XLeaving\ dir\ '%f'
+  call mkdir('Xone/a', 'p')
+  call mkdir('Xtwo/a', 'p')
+  let lines = ['1', '2', 'one one one', '4', 'two two two', '6', '7']
+  call writefile(lines, 'Xone/a/one.txt')
+  call writefile(lines, 'Xtwo/a/two.txt')
+
+  new one
+  let one_id = win_getid()
+  lexpr ""
+  new two
+  let two_id = win_getid()
+  lexpr ""
+
+  laddexpr "Entering dir 'Xtwo/a'"
+  call win_gotoid(one_id)
+  laddexpr "Entering dir 'Xone/a'"
+  call win_gotoid(two_id)
+  laddexpr 'two.txt:5:two two two'
+  call win_gotoid(one_id)
+  laddexpr 'one.txt:3:one one one'
+
+  let loc_one = getloclist(one_id)
+echo string(loc_one)
+  call assert_equal('Xone/a/one.txt', bufname(loc_one[1].bufnr))
+  call assert_equal(3, loc_one[1].lnum)
+
+  let loc_two = getloclist(two_id)
+echo string(loc_two)
+  call assert_equal('Xtwo/a/two.txt', bufname(loc_two[1].bufnr))
+  call assert_equal(5, loc_two[1].lnum)
+
+  call win_gotoid(one_id)
+  bwipe!
+  call win_gotoid(two_id)
+  bwipe!
+  call delete('Xone', 'rf')
+  call delete('Xtwo', 'rf')
+endfunc
