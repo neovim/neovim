@@ -2318,6 +2318,56 @@ static inline ShaDaWriteResult shada_read_when_writing(
   return ret;
 }
 
+/// Get list of buffers to write to the shada file
+///
+/// @param[in]  removable_bufs  Buffers which are ignored
+///
+/// @return  ShadaEntry  List of buffers to save, kSDItemBufferList entry.
+static ShadaEntry shada_get_buflist(khash_t(bufset) *const removable_bufs)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  int max_bufs = get_shada_parameter('%');
+  size_t buf_count = 0;
+#define IGNORE_BUF(buf)\
+  (buf->b_ffname == NULL || !buf->b_p_bl || bt_quickfix(buf) \
+   || in_bufset(removable_bufs, buf))  // NOLINT(whitespace/indent)
+  FOR_ALL_BUFFERS(buf) {
+    if (!IGNORE_BUF(buf) && (max_bufs < 0 || buf_count < (size_t)max_bufs)) {
+      buf_count++;
+    }
+  }
+
+  ShadaEntry buflist_entry = (ShadaEntry) {
+    .type = kSDItemBufferList,
+      .timestamp = os_time(),
+      .data = {
+        .buffer_list = {
+          .size = buf_count,
+          .buffers = xmalloc(buf_count
+                             * sizeof(*buflist_entry.data.buffer_list.buffers)),
+        },
+      },
+  };
+  size_t i = 0;
+  FOR_ALL_BUFFERS(buf) {
+    if (IGNORE_BUF(buf)) {
+      continue;
+    }
+    if (i >= buf_count) {
+      break;
+    }
+    buflist_entry.data.buffer_list.buffers[i] = (struct buffer_list_buffer) {
+      .pos = buf->b_last_cursor.mark,
+        .fname = (char *)buf->b_ffname,
+        .additional_data = buf->additional_data,
+    };
+    i++;
+  }
+
+#undef IGNORE_BUF
+  return buflist_entry;
+}
+
 /// Write ShaDa file
 ///
 /// @param[in]  sd_writer  Structure containing file writer definition.
@@ -2424,50 +2474,13 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer,
 
   // Write buffer list
   if (find_shada_parameter('%') != NULL) {
-    int max_bufs = get_shada_parameter('%');
-    size_t buf_count = 0;
-#define IGNORE_BUF(buf)\
-    (buf->b_ffname == NULL || !buf->b_p_bl || bt_quickfix(buf) \
-     || in_bufset(&removable_bufs, buf))
-    FOR_ALL_BUFFERS(buf) {
-      if (!IGNORE_BUF(buf) && (max_bufs < 0 || buf_count < (size_t)max_bufs)) {
-        buf_count++;
-      }
-    }
-
-    ShadaEntry buflist_entry = (ShadaEntry) {
-      .type = kSDItemBufferList,
-      .timestamp = os_time(),
-      .data = {
-        .buffer_list = {
-          .size = buf_count,
-          .buffers = xmalloc(buf_count
-                             * sizeof(*buflist_entry.data.buffer_list.buffers)),
-        },
-      },
-    };
-    size_t i = 0;
-    FOR_ALL_BUFFERS(buf) {
-      if (IGNORE_BUF(buf)) {
-        continue;
-      }
-      if (i >= buf_count) {
-        break;
-      }
-      buflist_entry.data.buffer_list.buffers[i] = (struct buffer_list_buffer) {
-        .pos = buf->b_last_cursor.mark,
-        .fname = (char *) buf->b_ffname,
-        .additional_data = buf->additional_data,
-      };
-      i++;
-    }
+    ShadaEntry buflist_entry = shada_get_buflist(&removable_bufs);
     if (shada_pack_entry(packer, buflist_entry, 0) == kSDWriteFailed) {
       xfree(buflist_entry.data.buffer_list.buffers);
       ret = kSDWriteFailed;
       goto shada_write_exit;
     }
     xfree(buflist_entry.data.buffer_list.buffers);
-#undef IGNORE_BUF
   }
 
   // Write some of the variables
