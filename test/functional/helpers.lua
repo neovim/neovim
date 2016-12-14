@@ -1,4 +1,5 @@
 require('coxpcall')
+local luv = require('luv')
 local lfs = require('lfs')
 local global_helpers = require('test.helpers')
 
@@ -243,17 +244,24 @@ local function connect(file_or_address)
   return Session.new(stream)
 end
 
--- Calls fn() until it returns without error, up to `max` times.
-local function retry(fn, max)
-  local retries = max and (max - 1) or 2
-  for _ = 1, retries do
-    local success = pcall(fn)
-    if success then
-      return
+-- Calls fn() until it succeeds, up to `max` times or until `max_ms`
+-- milliseconds have passed.
+local function retry(max, max_ms, fn)
+  local tries = 1
+  local timeout = (max_ms and max_ms > 0) and max_ms or 10000
+  local start_time = luv.now()
+  while true do
+    local status, result = pcall(fn)
+    if status then
+      return result
     end
+    if (max and tries >= max) or (luv.now() - start_time > timeout) then
+      break
+    end
+    tries = tries + 1
   end
-  -- pcall() is not used for the final attempt so failure can bubble up.
-  fn()
+  -- Do not use pcall() for the final attempt, let the failure bubble up.
+  return fn()
 end
 
 local function clear(...)
