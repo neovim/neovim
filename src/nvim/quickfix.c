@@ -2449,10 +2449,20 @@ static void qf_win_goto(win_T *win, linenr_T lnum)
   curbuf = curwin->w_buffer;
 }
 
-// :cbottom command.
+// :cbottom/:lbottom command.
 void ex_cbottom(exarg_T *eap)
 {
-  win_T *win = qf_find_win(&ql_info);
+  qf_info_T *qi = &ql_info;
+
+  if (eap->cmdidx == CMD_lbottom) {
+    qi = GET_LOC_LIST(curwin);
+    if (qi == NULL) {
+      EMSG(_(e_loclist));
+      return;
+    }
+  }
+
+  win_T *win = qf_find_win(qi);
 
   if (win != NULL && win->w_cursor.lnum != win->w_buffer->b_ml.ml_line_count) {
     qf_win_goto(win, win->w_buffer->b_ml.ml_line_count);

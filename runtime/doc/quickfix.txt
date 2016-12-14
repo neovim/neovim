@@ -1,4 +1,4 @@
-*quickfix.txt*  For Vim version 7.4.  Last change: 2016 Jul 01
+*quickfix.txt*  For Vim version 7.4.  Last change: 2016 Jul 07
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -428,11 +428,16 @@ EXECUTE A COMMAND IN ALL THE BUFFERS IN QUICKFIX OR LOCATION LIST:
 :lw[indow] [height]	Same as ":cwindow", except use the window showing the
 			location list for the current window.
 
+							*:cbo* *:cbottom*
 :cbo[ttom]		Put the cursor in the last line of the quickfix window
 			and scroll to make it visible.  This is useful for
 			when errors are added by an asynchronous callback.
 			Only call it once in a while if there are many
 			updates to avoid a lot of redrawing.
+
+							*:lbo* *:lbottom*
+:lbo[ttom]		Same as ":cbottom", except use the window showing the
+			location list for the current window.
 
 Normally the quickfix window is at the bottom of the screen.  If there are
 vertical splits, it's at the bottom of the rightmost column of windows.  To

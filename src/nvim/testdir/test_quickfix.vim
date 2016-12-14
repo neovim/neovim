@@ -15,6 +15,7 @@ function! s:setup_commands(cchar)
     command! -nargs=* Xnewer <mods>cnewer <args>
     command! -nargs=* Xopen <mods>copen <args>
     command! -nargs=* Xwindow <mods>cwindow <args>
+    command! -nargs=* Xbottom <mods>cbottom <args>
     command! -nargs=* Xclose <mods>cclose <args>
     command! -nargs=* -bang Xfile <mods>cfile<bang> <args>
     command! -nargs=* Xgetfile <mods>cgetfile <args>
@@ -44,6 +45,7 @@ function! s:setup_commands(cchar)
     command! -nargs=* Xnewer <mods>lnewer <args>
     command! -nargs=* Xopen <mods>lopen <args>
     command! -nargs=* Xwindow <mods>lwindow <args>
+    command! -nargs=* Xbottom <mods>lbottom <args>
     command! -nargs=* Xclose <mods>lclose <args>
     command! -nargs=* -bang Xfile <mods>lfile<bang> <args>
     command! -nargs=* Xgetfile <mods>lgetfile <args>
@@ -200,6 +202,7 @@ function XwindowTests(cchar)
   Xwindow
   call assert_true(winnr('$') == 2 && winnr() == 2 &&
 	\ getline('.') ==# 'Xtestfile1|1 col 3| Line1')
+  redraw!
 
   " Close the window
   Xclose
@@ -1397,15 +1400,23 @@ echo string(loc_two)
   call delete('Xtwo', 'rf')
 endfunc
 
-function Test_cbottom()
-  call setqflist([{'filename': 'foo', 'lnum': 42}]) 
-  copen
+function XbottomTests(cchar)
+  call s:setup_commands(a:cchar)
+
+  call g:Xsetlist([{'filename': 'foo', 'lnum': 42}]) 
+  Xopen
   let wid = win_getid()
   call assert_equal(1, line('.'))
   wincmd w
-  call setqflist([{'filename': 'var', 'lnum': 24}], 'a') 
-  cbottom
+  call g:Xsetlist([{'filename': 'var', 'lnum': 24}], 'a') 
+  Xbottom
   call win_gotoid(wid)
   call assert_equal(2, line('.'))
-  cclose
+  Xclose
 endfunc
+
+" Tests for the :cbottom and :lbottom commands
+function Test_cbottom()
+  call XbottomTests('c')
+  call XbottomTests('l')
+endfunction
