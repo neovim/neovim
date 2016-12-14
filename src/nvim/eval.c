@@ -9414,7 +9414,8 @@ static void filter_map(typval_T *argvars, typval_T *rettv, int map)
 static int filter_map_one(typval_T *tv, typval_T *expr, int map, int *remp)
 {
   typval_T rettv;
-  typeval_T argv[3];
+  typval_T argv[3];
+  char_u buf[NUMBUFLEN];
   char_u      *s;
   int retval = FAIL;
   int dummy;
@@ -9424,6 +9425,7 @@ static int filter_map_one(typval_T *tv, typval_T *expr, int map, int *remp)
   argv[1] = vimvars[VV_VAL].vv_tv;
   s = expr->vval.v_string;
   if (expr->v_type == VAR_FUNC) {
+    s = expr->vval.v_string;
     if (call_func(s, (int)STRLEN(s), &rettv, 2, argv, 0L, 0L, &dummy,
                   true, NULL, NULL) == FAIL) {
       goto theend;
@@ -9437,6 +9439,10 @@ static int filter_map_one(typval_T *tv, typval_T *expr, int map, int *remp)
       goto theend;
     }
   } else {
+    s = get_tv_string_buf_chk(expr, buf);
+    if (s == NULL) {
+      goto theend;
+    }
     s = skipwhite(s);
     if (eval1(&s, &rettv, true) == FAIL) {
       goto theend;
