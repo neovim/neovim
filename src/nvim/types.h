@@ -14,11 +14,4 @@ typedef unsigned char char_u;
 typedef uint32_t u8char_T;
 
 typedef struct expand expand_T;
-
-/*
- * The characters and attributes cached for the screen.
- */
-typedef char_u schar_T;
-typedef unsigned short sattr_T;
-
 #endif  // NVIM_TYPES_H
