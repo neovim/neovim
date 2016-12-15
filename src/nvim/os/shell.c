@@ -379,7 +379,7 @@ static bool out_data_decide_throttle(size_t size)
     screen_del_lines(0, 0, 1, (int)Rows, NULL);
   }
   int lastrow = (int)Rows - 1;
-  screen_puts_len((char_u *)pulse_msg, ARRAY_SIZE(pulse_msg), lastrow, 0, 0);
+  screen_puts_len(curwin, (char_u *)pulse_msg, ARRAY_SIZE(pulse_msg), lastrow, 0, 0);
   ui_flush();
   return true;
 }
