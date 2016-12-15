@@ -1956,7 +1956,7 @@ int win_close(win_T *win, int free_buf)
         if (win_valid(prevwin)) {
             wp = prevwin;
         } else {
-            wp = firstwin;
+            wp = curtab->tp_firstwin;
         }
     }
 
