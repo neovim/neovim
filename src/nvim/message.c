@@ -112,11 +112,6 @@ static int verbose_did_open = FALSE;
  */
 int msg(char_u *s)
 {
-  if (win_get_external()) {
-    Array args = ARRAY_DICT_INIT;
-    ADD(args, STRING_OBJ(cstr_to_string((char *)(s))));
-    ui_event("msg", args);
-  }
   return msg_attr_keep(s, 0, FALSE);
 }
 
@@ -126,11 +121,6 @@ int msg(char_u *s)
 int verb_msg(char_u *s)
 {
   int n;
-  if (win_get_external()) {
-    Array args = ARRAY_DICT_INIT;
-    ADD(args, STRING_OBJ(cstr_to_string((char *)(s))));
-    ui_event("verb_msg", args);
-  }
 
   verbose_enter();
   n = msg_attr_keep(s, 0, FALSE);
@@ -484,7 +474,6 @@ int emsg(char_u *s)
     Array args = ARRAY_DICT_INIT;
     ADD(args, STRING_OBJ(cstr_to_string((char *)(s))));
     ui_event("emsg", args);
-    return true;
   }
 
   // Skip this if not giving error messages at the moment.
@@ -738,16 +727,6 @@ void ex_messages(exarg_T *eap)
 {
   struct msg_hist *p;
   int c = 0;
-  if (win_get_external()) {
-    for (p = first_msg_hist; p != NULL && !got_int; p = p->next) {
-      if (p->msg != NULL) {
-        Array args = ARRAY_DICT_INIT;
-        ADD(args, STRING_OBJ(cstr_to_string((char *)(p->msg))));
-        ui_event("ex_msg", args);
-      }
-    }
-    return;
-  }
 
   if (STRCMP(eap->arg, "clear") == 0) {
     int keep = eap->addr_count == 0 ? 0 : eap->line2;
@@ -778,6 +757,18 @@ void ex_messages(exarg_T *eap)
     // Skip without number of messages specified
     for (p = first_msg_hist; p != NULL && !got_int && c > 0; p = p->next, c--) {
     }
+  }
+
+  if (win_get_external()) {
+    Array args = ARRAY_DICT_INIT;
+    for (; p != NULL && !got_int; p = p->next) {
+      if (p->msg != NULL) {
+        ADD(args, STRING_OBJ(cstr_to_string((char *)(p->msg))));
+      }
+    }
+    ui_event("messages", args);
+    msg_hist_off = false;
+    return;
   }
 
   // Display what was not skipped.
@@ -1641,10 +1632,7 @@ static void msg_puts_display(char_u *str, int maxlen, int attr, int recurse)
   int did_last_char;
 
   if (win_get_external()) {
-    Array args = ARRAY_DICT_INIT;
-    ADD(args, STRING_OBJ(cstr_to_string((char *)(str))));
-    ui_event("msg_puts_display", args);
-    return;
+      return;
   }
 
   did_wait_return = false;

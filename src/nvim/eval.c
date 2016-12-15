@@ -19175,7 +19175,6 @@ void ex_echo(exarg_T *eap)
           Array args = ARRAY_DICT_INIT;
           ADD(args, STRING_OBJ(cstr_to_string((char *)(p))));
           ui_event("echo", args);
-          return;
         }
         for (; *p != NUL && !got_int; ++p) {
           if (*p == '\n' || *p == '\r' || *p == TAB) {
@@ -19283,7 +19282,6 @@ void ex_execute(exarg_T *eap)
         Array args = ARRAY_DICT_INIT;
         ADD(args, STRING_OBJ(cstr_to_string((char *)(p))));
         ui_event("echomsg", args);
-        return;
       }
       MSG_ATTR(ga.ga_data, echo_attr);
       ui_flush();

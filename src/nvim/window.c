@@ -1953,7 +1953,11 @@ int win_close(win_T *win, int free_buf)
     if (!win->w_floating) {
         wp = frame2win(win_altframe(win, NULL));
     } else {
-        wp = prevwin;
+        if (win_valid(prevwin)) {
+            wp = prevwin;
+        } else {
+            wp = firstwin;
+        }
     }
 
     /*
