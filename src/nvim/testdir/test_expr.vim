@@ -124,3 +124,22 @@ func Test_substitute_expr()
   endfunc
   call assert_equal('--', substitute('xxx', 'x*', {-> '-' . Recurse() . '-'}, ''))
 endfunc
+
+func Test_substitute_expr_arg()
+  call assert_equal('123456789-123456789=', substitute('123456789',
+	\ '\(.\)\(.\)\(.\)\(.\)\(.\)\(.\)\(.\)\(.\)\(.\)',
+	\ {m -> m[0] . '-' . m[1] . m[2] . m[3] . m[4] . m[5] . m[6] . m[7] . m[8] . m[9] . '='}, ''))
+
+  call assert_equal('123456-123456=789', substitute('123456789',
+	\ '\(.\)\(.\)\(.\)\(a*\)\(n*\)\(.\)\(.\)\(.\)\(x*\)',
+	\ {m -> m[0] . '-' . m[1] . m[2] . m[3] . m[4] . m[5] . m[6] . m[7] . m[8] . m[9] . '='}, ''))
+
+  call assert_equal('123456789-123456789x=', substitute('123456789',
+	\ '\(.\)\(.\)\(.*\)',
+	\ {m -> m[0] . '-' . m[1] . m[2] . m[3] . 'x' . m[4] . m[5] . m[6] . m[7] . m[8] . m[9] . '='}, ''))
+
+  call assert_fails("call substitute('xxx', '.', {m -> string(add(m, 'x'))}, '')", 'E742:')
+  call assert_fails("call substitute('xxx', '.', {m -> string(insert(m, 'x'))}, '')", 'E742:')
+  call assert_fails("call substitute('xxx', '.', {m -> string(extend(m, ['x']))}, '')", 'E742:')
+  call assert_fails("call substitute('xxx', '.', {m -> string(remove(m, 1))}, '')", 'E742:')
+endfunc

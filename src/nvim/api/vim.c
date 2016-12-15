@@ -221,11 +221,10 @@ Object nvim_call_function(String fname, Array args, Error *err)
   // Call the function
   typval_T rettv;
   int dummy;
-  int r = call_func((char_u *) fname.data, (int) fname.size,
-                    &rettv, (int) args.size, vim_args,
+  int r = call_func((char_u *)fname.data, (int)fname.size,
+                    &rettv, (int)args.size, vim_args, NULL,
                     curwin->w_cursor.lnum, curwin->w_cursor.lnum, &dummy,
-                    true,
-                    NULL, NULL);
+                    true, NULL, NULL);
   if (r == FAIL) {
     api_set_error(err, Exception, _("Error calling function."));
   }
