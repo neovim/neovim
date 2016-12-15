@@ -4293,8 +4293,12 @@ static int eval7(
   case '[':   ret = get_list_tv(arg, rettv, evaluate);
     break;
 
+  // Lambda: {arg, arg -> expr}
   // Dictionary: {key: val, key: val}
-  case '{':   ret = get_dict_tv(arg, rettv, evaluate);
+  case '{':   ret = get_lambda_tv(arg, rettv, evaluate);
+              if (ret == NOTDONE) {
+                ret = get_dict_tv(arg, rettv, evaluate);
+              }
     break;
 
   // Option value: &name
@@ -6874,6 +6878,202 @@ failret:
   return OK;
 }
 
+/// Get function arguments.
+static int get_function_args(char_u **argp, char_u endchar, garray_T *newargs,
+                             int *varargs, int skip)
+{
+  bool    mustend = false;
+  char_u  *arg = *argp;
+  char_u  *p = arg;
+  int     c;
+  int     i;
+
+  if (newargs != NULL) {
+    ga_init(newargs, (int)sizeof(char_u *), 3);
+  }
+
+  if (varargs != NULL) {
+    *varargs = false;
+  }
+
+  // Isolate the arguments: "arg1, arg2, ...)"
+  while (*p != endchar) {
+    if (p[0] == '.' && p[1] == '.' && p[2] == '.') {
+      if (varargs != NULL) {
+        *varargs = true;
+      }
+      p += 3;
+      mustend = true;
+    } else {
+      arg = p;
+      while (ASCII_ISALNUM(*p) || *p == '_') {
+        p++;
+      }
+      if (arg == p || isdigit(*arg)
+          || (p - arg == 9 && STRNCMP(arg, "firstline", 9) == 0)
+          || (p - arg == 8 && STRNCMP(arg, "lastline", 8) == 0)) {
+        if (!skip) {
+          EMSG2(_("E125: Illegal argument: %s"), arg);
+        }
+        break;
+      }
+      if (newargs != NULL) {
+        ga_grow(newargs, 1);
+        c = *p;
+        *p = NUL;
+        arg = vim_strsave(arg);
+        if (arg == NULL) {
+          goto err_ret;
+        }
+
+        // Check for duplicate argument name.
+        for (i = 0; i < newargs->ga_len; i++) {
+          if (STRCMP(((char_u **)(newargs->ga_data))[i], arg) == 0) {
+            EMSG2(_("E853: Duplicate argument name: %s"), arg);
+            xfree(arg);
+            goto err_ret;
+          }
+        }
+        ((char_u **)(newargs->ga_data))[newargs->ga_len] = arg;
+        newargs->ga_len++;
+
+        *p = c;
+      }
+      if (*p == ',') {
+        p++;
+      } else {
+        mustend = true;
+      }
+    }
+    p = skipwhite(p);
+    if (mustend && *p != endchar) {
+      if (!skip) {
+        EMSG2(_(e_invarg2), *argp);
+      }
+      break;
+    }
+  }
+  if (*p != endchar) {
+    goto err_ret;
+  }
+  p++;  // skip "endchar"
+
+  *argp = p;
+  return OK;
+
+err_ret:
+  if (newargs != NULL) {
+    ga_clear_strings(newargs);
+  }
+  return FAIL;
+}
+
+/// Parse a lambda expression and get a Funcref from "*arg".
+/// Return OK or FAIL.  Returns NOTDONE for dict or {expr}.
+static int get_lambda_tv(char_u **arg, typval_T *rettv, int evaluate)
+{
+  garray_T   newargs;
+  garray_T   newlines;
+  ufunc_T    *fp = NULL;
+  int        varargs;
+  int        ret;
+  char_u     name[20];
+  char_u     *start = skipwhite(*arg + 1);
+  char_u     *s, *e;
+  static int lambda_no = 0;
+
+  // TODO(mike): What lengths should be used here?
+  ga_init(&newargs, (int)sizeof(char_u *), 80);
+  ga_init(&newlines, (int)sizeof(char_u *), 80);
+
+  // First, check if this is a lambda expression. "->" must exists.
+  ret = get_function_args(&start, '-', NULL, NULL, true);
+  if (ret == FAIL || *start != '>') {
+    return NOTDONE;
+  }
+
+  // Parse the arguments again.
+  *arg = skipwhite(*arg + 1);
+  ret = get_function_args(arg, '-', &newargs, &varargs, false);
+  if (ret == FAIL || **arg != '>') {
+    goto errret;
+  }
+
+  // Get the start and the end of the expression.
+  *arg = skipwhite(*arg + 1);
+  s = *arg;
+  ret = skip_expr(arg);
+  if (ret == FAIL) {
+    goto errret;
+  }
+  e = *arg;
+  *arg = skipwhite(*arg);
+  if (**arg != '}') {
+    goto errret;
+  }
+  (*arg)++;
+
+  if (evaluate) {
+    int len;
+    char_u *p;
+
+    fp = (ufunc_T *)xmalloc((unsigned)(sizeof(ufunc_T) + 20));
+    if (fp == NULL) {
+      goto errret;
+    }
+
+    snprintf((char *)name, sizeof(name), "<lambda>%d", lambda_no++);
+
+    ga_init(&newlines, (int)sizeof(char_u *), 1);
+    ga_grow(&newlines, 1);
+
+    // Add "return " before the expression.
+    // TODO(vim): Support multiple expressions.
+    len = 7 + e - s + 1;
+    p = (char_u *)xmalloc(len);
+    if (p == NULL) {
+      goto errret;
+    }
+    ((char_u **)(newlines.ga_data))[newlines.ga_len++] = p;
+    STRCPY(p, "return ");
+    STRNCPY(p + 7, s, e - s);
+    p[7 + e - s] = NUL;
+
+    fp->uf_refcount = 1;
+    STRCPY(fp->uf_name, name);
+    hash_add(&func_hashtab, UF2HIKEY(fp));
+    fp->uf_args = newargs;
+    fp->uf_lines = newlines;
+
+#ifdef FEAT_PROFILE
+    fp->uf_tml_count = NULL;
+    fp->uf_tml_total = NULL;
+    fp->uf_tml_self = NULL;
+    fp->uf_profiling = false;
+    if (prof_def_func()) {
+      func_do_profile(fp);
+    }
+#endif
+    fp->uf_varargs = true;
+    fp->uf_flags = 0;
+    fp->uf_calls = 0;
+    fp->uf_script_ID = current_SID;
+
+    rettv->vval.v_string = vim_strsave(name);
+    rettv->v_type = VAR_FUNC;
+    } else {
+      ga_clear_strings(&newargs);
+    }
+
+    return OK;
+
+errret:
+    ga_clear_strings(&newargs);
+    ga_clear_strings(&newlines);
+    xfree(fp);
+    return FAIL;
+}
+
 /// Convert the string to a floating point number
 ///
 /// This uses strtod().  setlocale(LC_NUMERIC, "C") has been used earlier to
@@ -9451,7 +9651,7 @@ static int filter_map_one(typval_T *tv, typval_T *expr, int map, int *remp)
       goto theend;
     }
 
-    if (*s != NUL) { // check for trailing chars after expr
+    if (*s != NUL) {  // check for trailing chars after expr
       EMSG2(_(e_invexpr2), s);
       goto theend;
     }
@@ -20494,8 +20694,7 @@ void ex_function(exarg_T *eap)
   char_u      *line_arg = NULL;
   garray_T newargs;
   garray_T newlines;
-  int varargs = FALSE;
-  int mustend = FALSE;
+  int varargs = false;
   int flags = 0;
   ufunc_T     *fp;
   int indent;
@@ -20678,59 +20877,11 @@ void ex_function(exarg_T *eap)
       EMSG(_("E862: Cannot use g: here"));
   }
 
-  /*
-   * Isolate the arguments: "arg1, arg2, ...)"
-   */
-  while (*p != ')') {
-    if (p[0] == '.' && p[1] == '.' && p[2] == '.') {
-      varargs = TRUE;
-      p += 3;
-      mustend = TRUE;
-    } else {
-      arg = p;
-      while (ASCII_ISALNUM(*p) || *p == '_')
-        ++p;
-      if (arg == p || isdigit(*arg)
-          || (p - arg == 9 && STRNCMP(arg, "firstline", 9) == 0)
-          || (p - arg == 8 && STRNCMP(arg, "lastline", 8) == 0)) {
-        if (!eap->skip)
-          EMSG2(_("E125: Illegal argument: %s"), arg);
-        break;
-      }
-      ga_grow(&newargs, 1);
-      c = *p;
-      *p = NUL;
-      arg = vim_strsave(arg);
-
-      /* Check for duplicate argument name. */
-      for (int i = 0; i < newargs.ga_len; ++i)
-        if (STRCMP(((char_u **)(newargs.ga_data))[i], arg) == 0) {
-          EMSG2(_("E853: Duplicate argument name: %s"), arg);
-          xfree(arg);
-          goto erret;
-        }
-
-      ((char_u **)(newargs.ga_data))[newargs.ga_len] = arg;
-      *p = c;
-      newargs.ga_len++;
-      if (*p == ',')
-        ++p;
-      else
-        mustend = TRUE;
-    }
-    p = skipwhite(p);
-    if (mustend && *p != ')') {
-      if (!eap->skip)
-        EMSG2(_(e_invarg2), eap->arg);
-      break;
-    }
+  if (get_function_args(&p, ')', &newargs, &varargs, eap->skip) == FAIL) {
+    goto errret_2;
   }
-  if (*p != ')') {
-    goto erret;
-  }
-  ++p;  // skip the ')'
 
-  /* find extra arguments "range", "dict" and "abort" */
+  // find extra arguments "range", "dict" and "abort"
   for (;; ) {
     p = skipwhite(p);
     if (STRNCMP(p, "range", 5) == 0) {
@@ -21040,6 +21191,7 @@ void ex_function(exarg_T *eap)
 
 erret:
   ga_clear_strings(&newargs);
+errret_2:
   ga_clear_strings(&newlines);
 ret_free:
   xfree(skip_until);
@@ -21763,7 +21915,9 @@ void func_unref(char_u *name)
 {
   ufunc_T *fp;
 
-  if (name != NULL && isdigit(*name)) {
+  if (name == NULL) {
+    return;
+  } else if (isdigit(*name)) {
     fp = find_func(name);
     if (fp == NULL) {
 #ifdef EXITFREE
@@ -21775,6 +21929,16 @@ void func_unref(char_u *name)
 #endif
     } else {
       user_func_unref(fp);
+    }
+  } else if (STRNCMP(name, "<lambda>", 8) == 0) {
+    // fail silently, when lambda function isn't found
+    fp = find_func(name);
+    if (fp != NULL && --fp->uf_refcount <= 0) {
+      // Only delete it when it's not being used. Otherwise it's done
+      // when "uf_calls" becomes zero.
+      if (fp->uf_calls == 0) {
+        func_free(fp);
+      }
     }
   }
 }
@@ -21797,12 +21961,21 @@ void func_ref(char_u *name)
 {
   ufunc_T *fp;
 
-  if (name != NULL && isdigit(*name)) {
+  if (name == NULL) {
+    return;
+  } else if (isdigit(*name)) {
     fp = find_func(name);
-    if (fp == NULL)
+    if (fp == NULL) {
       EMSG2(_(e_intern2), "func_ref()");
-    else
-      ++fp->uf_refcount;
+    } else {
+      (fp->uf_refcount)++;
+    }
+  } else if (STRNCMP(name, "<lambda>", 8) == 0) {
+    // fail silently, when lambda function isn't found.
+    fp = find_func(name);
+    if (fp != NULL) {
+      (fp->uf_refcount)++;
+    }
   }
 }
 
@@ -21829,6 +22002,7 @@ call_user_func (
   dictitem_T  *v;
   int fixvar_idx = 0;           /* index in fixvar[] */
   int ai;
+  bool islambda = false;
   char_u numbuf[NUMBUFLEN];
   char_u      *name;
   proftime_T wait_start;
@@ -21866,14 +22040,15 @@ call_user_func (
   fc->breakpoint = dbg_find_breakpoint(FALSE, fp->uf_name, (linenr_T)0);
   fc->dbg_tick = debug_tick;
 
-  /*
-   * Note about using fc->fixvar[]: This is an array of FIXVAR_CNT variables
-   * with names up to VAR_SHORT_LEN long.  This avoids having to alloc/free
-   * each argument variable and saves a lot of time.
-   */
-  /*
-   * Init l: variables.
-   */
+  if (STRNCMP(fp->uf_name, "<lambda>", 8) == 0) {
+    islambda = true;
+  }
+
+  // Note about using fc->fixvar[]: This is an array of FIXVAR_CNT variables
+  // with names up to VAR_SHORT_LEN long.  This avoids having to alloc/free
+  // each argument variable and saves a lot of time.
+  //
+  // Init l: variables.
   init_var_dict(&fc->l_vars, &fc->l_vars_var, VAR_DEF_SCOPE);
   if (selfdict != NULL) {
     /* Set l:self to "selfdict".  Use "name" to avoid a warning from
@@ -21915,31 +22090,49 @@ call_user_func (
   fc->l_varlist.lv_refcount = DO_NOT_FREE_CNT;
   fc->l_varlist.lv_lock = VAR_FIXED;
 
-  /*
-   * Set a:firstline to "firstline" and a:lastline to "lastline".
-   * Set a:name to named arguments.
-   * Set a:N to the "..." arguments.
-   */
+  // Set a:firstline to "firstline" and a:lastline to "lastline".
+  // Set a:name to named arguments.
+  // Set a:N to the "..." arguments.
   add_nr_var(&fc->l_avars, &fc->fixvar[fixvar_idx++].var, "firstline",
-      (varnumber_T)firstline);
+             (varnumber_T)firstline);
   add_nr_var(&fc->l_avars, &fc->fixvar[fixvar_idx++].var, "lastline",
-      (varnumber_T)lastline);
-  for (int i = 0; i < argcount; ++i) {
+             (varnumber_T)lastline);
+  for (int i = 0; i < argcount; i++) {
+    bool addlocal = false;
+    dictitem_T *v2;
+
     ai = i - fp->uf_args.ga_len;
-    if (ai < 0)
-      /* named argument a:name */
+    if (ai < 0) {
+      // named argument a:name
       name = FUNCARG(fp, i);
-    else {
-      /* "..." argument a:1, a:2, etc. */
-      sprintf((char *)numbuf, "%d", ai + 1);
+      if (islambda) {
+        addlocal = true;
+      }
+    } else {
+      // "..." argument a:1, a:2, etc.
+      snprintf((char *)numbuf, sizeof(numbuf), "%d", ai + 1);
       name = numbuf;
     }
     if (fixvar_idx < FIXVAR_CNT && STRLEN(name) <= VAR_SHORT_LEN) {
       v = &fc->fixvar[fixvar_idx++].var;
       v->di_flags = DI_FLAGS_RO | DI_FLAGS_FIX;
+
+      if (addlocal) {
+        v2 = v;
+      }
     } else {
       v = xmalloc(sizeof(dictitem_T) + STRLEN(name));
       v->di_flags = DI_FLAGS_RO | DI_FLAGS_FIX | DI_FLAGS_ALLOC;
+
+      if (addlocal) {
+        v2 = (dictitem_T *)xmalloc((unsigned)(sizeof(dictitem_T)
+                                              + STRLEN(name)));
+        if (v2 == NULL) {
+          xfree(v);
+          break;
+        }
+        v2->di_flags = DI_FLAGS_RO | DI_FLAGS_FIX | DI_FLAGS_ALLOC;
+      }
     }
     STRCPY(v->di_key, name);
     hash_add(&fc->l_avars.dv_hashtab, DI2HIKEY(v));
@@ -21948,6 +22141,15 @@ call_user_func (
      * "argvars" must have VAR_FIXED for v_lock. */
     v->di_tv = argvars[i];
     v->di_tv.v_lock = VAR_FIXED;
+
+    // Named arguments can be accessed without the "a:" prefix in lambda
+    // expressions. Add to the l: dict.
+    if (addlocal) {
+      STRCPY(v2->di_key, name);
+      copy_tv(&v->di_tv, &v2->di_tv);
+      v2->di_tv.v_lock = VAR_FIXED;
+      hash_add(&fc->l_vars.dv_hashtab, DI2HIKEY(v2));
+    }
 
     if (ai >= 0 && ai < MAX_FUNC_ARGS) {
       list_append(&fc->l_varlist, &fc->l_listitems[ai]);
@@ -22166,7 +22368,9 @@ call_user_func (
       copy_tv(&li->li_tv, &li->li_tv);
   }
 
-  if (--fp->uf_calls <= 0 && isdigit(*fp->uf_name) && fp->uf_refcount <= 0) {
+  if (--fp->uf_calls <= 0 && (isdigit(*fp->uf_name)
+                              || STRNCMP(fp->uf_name, "<lambda>", 8) == 0)
+      && fp->uf_refcount <= 0) {
     // Function was unreferenced while being used, free it now.
     func_free(fp);
   }

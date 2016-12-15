@@ -37,6 +37,7 @@ NEW_TESTS = \
 	    test_hardcopy.res \
 	    test_help_tagjump.res \
 	    test_history.res \
+		test_lambda.res \
 	    test_langmap.res \
 	    test_match.res \
 	    test_matchadd_conceal.res \
