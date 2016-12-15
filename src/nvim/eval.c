@@ -18665,15 +18665,17 @@ handle_subscript (
   return ret;
 }
 
-static void set_selfdict(typval_T *rettv, dict_T *selfdict) {
+static void set_selfdict(typval_T *rettv, dict_T *selfdict)
+{
   // Don't do this when "dict.Func" is already a partial that was bound
   // explicitly (pt_auto is false).
   if (rettv->v_type == VAR_PARTIAL && !rettv->vval.v_partial->pt_auto
       && rettv->vval.v_partial->pt_dict != NULL) {
     return;
   }
-  char_u *fname = rettv->v_type == VAR_FUNC ? rettv->vval.v_string
-                                  : rettv->vval.v_partial->pt_name;
+  char_u *fname = rettv->v_type == VAR_FUNC || rettv->v_type == VAR_STRING
+                  ? rettv->vval.v_string
+                  : rettv->vval.v_partial->pt_name;
   char_u *tofree = NULL;
   ufunc_T *fp;
   char_u fname_buf[FLEN_FIXED + 1];
@@ -18694,7 +18696,7 @@ static void set_selfdict(typval_T *rettv, dict_T *selfdict) {
       pt->pt_dict = selfdict;
       (selfdict->dv_refcount)++;
       pt->pt_auto = true;
-      if (rettv->v_type == VAR_FUNC) {
+      if (rettv->v_type == VAR_FUNC || rettv->v_type == VAR_STRING) {
         // Just a function: Take over the function name and use selfdict.
         pt->pt_name = rettv->vval.v_string;
       } else {
