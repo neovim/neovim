@@ -1149,7 +1149,7 @@ static ff_stack_T *ff_create_stack_element(char_u *fix_part, char_u *wc_part, in
   new->ffs_filearray_cur  = 0;
   new->ffs_stage         = 0;
   new->ffs_level         = level;
-  new->ffs_star_star_empty = star_star_empty;;
+  new->ffs_star_star_empty = star_star_empty;
 
   /* the following saves NULL pointer checks in vim_findfile */
   if (fix_part == NULL)

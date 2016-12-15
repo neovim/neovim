@@ -158,4 +158,7 @@
 
 #define RGB(r, g, b) ((r << 16) | (g << 8) | b)
 
+#define STR_(x) #x
+#define STR(x) STR_(x)
+
 #endif  // NVIM_MACROS_H

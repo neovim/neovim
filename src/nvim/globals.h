@@ -1119,7 +1119,6 @@ EXTERN char_u e_invcmd[] INIT(= N_("E476: Invalid command"));
 EXTERN char_u e_isadir2[] INIT(= N_("E17: \"%s\" is a directory"));
 EXTERN char_u e_invjob[] INIT(= N_("E900: Invalid job id"));
 EXTERN char_u e_jobtblfull[] INIT(= N_("E901: Job table is full"));
-EXTERN char_u e_jobexe[] INIT(= N_("E902: \"%s\" is not an executable"));
 EXTERN char_u e_jobspawn[] INIT(= N_(
       "E903: Process for command \"%s\" could not be spawned"));
 EXTERN char_u e_jobnotpty[] INIT(= N_("E904: Job is not connected to a pty"));
@@ -1229,6 +1228,8 @@ EXTERN FILE *time_fd INIT(= NULL);  /* where to write startup timing */
  */
 EXTERN int ignored;
 EXTERN char *ignoredp;
+
+EXTERN bool in_free_unref_items INIT(= false);
 
 // If a msgpack-rpc channel should be started over stdin/stdout
 EXTERN bool embedded_mode INIT(= false);

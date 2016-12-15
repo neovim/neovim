@@ -69,6 +69,11 @@
 ///
 /// @param  fun  Function name.
 
+/// @def TYPVAL_ENCODE_CONV_PARTIAL
+/// @brief Macros used to convert a partial
+///
+/// @param  pt Partial name.
+
 /// @def TYPVAL_ENCODE_CONV_EMPTY_LIST
 /// @brief Macros used to convert an empty list
 ///
@@ -212,10 +217,9 @@ static inline size_t tv_strlen(const typval_T *const tv)
           : strlen((char *) tv->vval.v_string));
 }
 
-/// Define functions which convert VimL value to something else
-///
-/// Creates function `vim_to_{name}(firstargtype firstargname, typval_T *const
-/// tv)` which returns OK or FAIL and helper functions.
+/// Define functions to convert a VimL value:
+///   `{name}_convert_one_value(...)`
+///   `encode_vim_to_{name}(...)`
 ///
 /// @param  scope  Scope of the main function: either nothing or `static`.
 /// @param  name  Name of the target converter.
@@ -224,6 +228,7 @@ static inline size_t tv_strlen(const typval_T *const tv)
 /// @param  firstargname  Name of the first argument.
 #define TYPVAL_ENCODE_DEFINE_CONV_FUNCTIONS(scope, name, firstargtype, \
                                             firstargname) \
+/* Returns OK or FAIL */ \
 static int name##_convert_one_value(firstargtype firstargname, \
                                     MPConvStack *const mpstack, \
                                     typval_T *const tv, \
@@ -246,6 +251,10 @@ static int name##_convert_one_value(firstargtype firstargname, \
     } \
     case VAR_FUNC: { \
       TYPVAL_ENCODE_CONV_FUNC(tv->vval.v_string); \
+      break; \
+    } \
+    case VAR_PARTIAL: { \
+      TYPVAL_ENCODE_CONV_PARTIAL(tv->vval.v_partial); \
       break; \
     } \
     case VAR_LIST: { \

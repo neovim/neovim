@@ -25,7 +25,7 @@ function! s:version_cmp(a, b) abort
 endfunction
 
 " Handler for s:system() function.
-function! s:system_handler(jobid, data, event) abort
+function! s:system_handler(jobid, data, event) dict abort
   if a:event == 'stdout' || a:event == 'stderr'
     let self.output .= join(a:data, '')
   elseif a:event == 'exit'
@@ -108,7 +108,7 @@ function! s:check_clipboard() abort
   if empty(clipboard_tool)
     call health#report_warn(
           \ "No clipboard tool found. Using the system clipboard won't work.",
-          \ ['See |clipboard|.'])
+          \ ['See ":help clipboard".'])
   else
     call health#report_ok('Clipboard tool found: '. clipboard_tool)
   endif
@@ -215,7 +215,6 @@ function! s:check_python(version) abort
   let pyenv_root = exists('$PYENV_ROOT') ? resolve($PYENV_ROOT) : 'n'
   let venv = exists('$VIRTUAL_ENV') ? resolve($VIRTUAL_ENV) : ''
   let host_prog_var = python_bin_name.'_host_prog'
-  let host_skip_var = python_bin_name.'_host_skip_check'
   let python_bin = ''
   let python_multiple = []
 
@@ -230,10 +229,6 @@ function! s:check_python(version) abort
     if !empty(pythonx_errs)
       call health#report_warn(pythonx_errs)
     endif
-    let old_skip = get(g:, host_skip_var, 0)
-    let g:[host_skip_var] = 1
-    let [python_bin_name, pythonx_errs] = provider#pythonx#Detect(a:version)
-    let g:[host_skip_var] = old_skip
   endif
 
   if !empty(python_bin_name)

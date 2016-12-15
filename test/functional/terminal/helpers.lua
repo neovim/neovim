@@ -51,6 +51,7 @@ local function screen_setup(extra_height, command)
     [7] = {foreground = 130},
     [8] = {foreground = 15, background = 1}, -- error message
     [9] = {foreground = 4},
+    [10] = {foreground = 2},  -- "Press ENTER" in embedded :terminal session.
   })
 
   screen:attach({rgb=false})

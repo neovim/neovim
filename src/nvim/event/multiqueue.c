@@ -1,6 +1,7 @@
-// Multi-level queue for selective async event processing. Multiqueue supports
-// a parent-child relationship with the following properties:
+// Multi-level queue for selective async event processing.
+// Not threadsafe; access must be synchronized externally.
 //
+// Multiqueue supports a parent-child relationship with these properties:
 // - pushing a node to a child queue will push a corresponding link node to the
 //   parent queue
 // - removing a link node from a parent queue will remove the next node
@@ -14,8 +15,7 @@
 //                         +----------------+
 //                         |   Main loop    |
 //                         +----------------+
-//                                  ^
-//                                  |
+//
 //                         +----------------+
 //         +-------------->|   Event loop   |<------------+
 //         |               +--+-------------+             |
@@ -60,7 +60,7 @@ struct multiqueue_item {
     MultiQueue *queue;
     struct {
       Event event;
-      MultiQueueItem *parent;
+      MultiQueueItem *parent_item;
     } item;
   } data;
   bool link;  // true: current item is just a link to a node in a child queue
@@ -69,9 +69,10 @@ struct multiqueue_item {
 
 struct multiqueue {
   MultiQueue *parent;
-  QUEUE headtail;
+  QUEUE headtail;  // circularly-linked
   put_callback put_cb;
   void *data;
+  size_t size;
 };
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -88,7 +89,8 @@ MultiQueue *multiqueue_new_parent(put_callback put_cb, void *data)
 MultiQueue *multiqueue_new_child(MultiQueue *parent)
   FUNC_ATTR_NONNULL_ALL
 {
-  assert(!parent->parent);
+  assert(!parent->parent);  // parent cannot have a parent, more like a "root"
+  parent->size++;
   return multiqueue_new(parent, NULL, NULL);
 }
 
@@ -97,6 +99,7 @@ static MultiQueue *multiqueue_new(MultiQueue *parent, put_callback put_cb,
 {
   MultiQueue *rv = xmalloc(sizeof(MultiQueue));
   QUEUE_INIT(&rv->headtail);
+  rv->size = 0;
   rv->parent = parent;
   rv->put_cb = put_cb;
   rv->data = data;
@@ -110,8 +113,8 @@ void multiqueue_free(MultiQueue *this)
     QUEUE *q = QUEUE_HEAD(&this->headtail);
     MultiQueueItem *item = multiqueue_node_data(q);
     if (this->parent) {
-      QUEUE_REMOVE(&item->data.item.parent->node);
-      xfree(item->data.item.parent);
+      QUEUE_REMOVE(&item->data.item.parent_item->node);
+      xfree(item->data.item.parent_item);
     }
     QUEUE_REMOVE(q);
     xfree(item);
@@ -145,6 +148,15 @@ void multiqueue_process_events(MultiQueue *this)
   }
 }
 
+/// Removes all events without processing them.
+void multiqueue_purge_events(MultiQueue *this)
+{
+  assert(this);
+  while (!multiqueue_empty(this)) {
+    (void)multiqueue_remove(this);
+  }
+}
+
 bool multiqueue_empty(MultiQueue *this)
 {
   assert(this);
@@ -155,6 +167,12 @@ void multiqueue_replace_parent(MultiQueue *this, MultiQueue *new_parent)
 {
   assert(multiqueue_empty(this));
   this->parent = new_parent;
+}
+
+/// Gets the count of all events currently in the queue.
+size_t multiqueue_size(MultiQueue *this)
+{
+  return this->size;
 }
 
 static Event multiqueue_remove(MultiQueue *this)
@@ -178,12 +196,13 @@ static Event multiqueue_remove(MultiQueue *this)
   } else {
     if (this->parent) {
       // remove the corresponding link node in the parent queue
-      QUEUE_REMOVE(&item->data.item.parent->node);
-      xfree(item->data.item.parent);
+      QUEUE_REMOVE(&item->data.item.parent_item->node);
+      xfree(item->data.item.parent_item);
     }
     rv = item->data.item.event;
   }
 
+  this->size--;
   xfree(item);
   return rv;
 }
@@ -196,11 +215,13 @@ static void multiqueue_push(MultiQueue *this, Event event)
   QUEUE_INSERT_TAIL(&this->headtail, &item->node);
   if (this->parent) {
     // push link node to the parent queue
-    item->data.item.parent = xmalloc(sizeof(MultiQueueItem));
-    item->data.item.parent->link = true;
-    item->data.item.parent->data.queue = this;
-    QUEUE_INSERT_TAIL(&this->parent->headtail, &item->data.item.parent->node);
+    item->data.item.parent_item = xmalloc(sizeof(MultiQueueItem));
+    item->data.item.parent_item->link = true;
+    item->data.item.parent_item->data.queue = this;
+    QUEUE_INSERT_TAIL(&this->parent->headtail,
+                      &item->data.item.parent_item->node);
   }
+  this->size++;
 }
 
 static MultiQueueItem *multiqueue_node_data(QUEUE *q)

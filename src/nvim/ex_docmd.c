@@ -1542,7 +1542,8 @@ static char_u * do_one_cmd(char_u **cmdlinep,
         break;
     }
     ea.cmd = skipwhite(ea.cmd);
-    lnum = get_address(&ea, &ea.cmd, ea.addr_type, ea.skip, ea.addr_count == 0);
+    lnum = get_address(&ea, &ea.cmd, ea.addr_type, ea.skip,
+                       ea.addr_count == 0);
     if (ea.cmd == NULL) {  // error detected
       goto doend;
     }
@@ -8763,17 +8764,18 @@ makeopens (
     if (put_line(fd, "wincmd t") == FAIL)
       return FAIL;
 
-    /*
-     * If more than one window, see if sizes can be restored.
-     * First set 'winheight' and 'winwidth' to 1 to avoid the windows being
-     * resized when moving between windows.
-     * Do this before restoring the view, so that the topline and the
-     * cursor can be set.  This is done again below.
-     */
-    if (put_line(fd, "set winheight=1 winwidth=1") == FAIL)
+    // If more than one window, see if sizes can be restored.
+    // First set 'winheight' and 'winwidth' to 1 to avoid the windows being
+    // resized when moving between windows.
+    // Do this before restoring the view, so that the topline and the
+    // cursor can be set.  This is done again below.
+    if (put_line(fd, "set winminheight=1 winminwidth=1 winheight=1 winwidth=1")
+        == FAIL) {
       return FAIL;
-    if (nr > 1 && ses_winsizes(fd, restore_size, tab_firstwin) == FAIL)
+    }
+    if (nr > 1 && ses_winsizes(fd, restore_size, tab_firstwin) == FAIL) {
       return FAIL;
+    }
 
     /*
      * Restore the view of the window (options, file, cursor, etc.).
@@ -8837,11 +8839,18 @@ makeopens (
   if (put_line(fd, "unlet! s:wipebuf") == FAIL)
     return FAIL;
 
-  /* Re-apply 'winheight', 'winwidth' and 'shortmess'. */
-  if (fprintf(fd, "set winheight=%" PRId64 " winwidth=%" PRId64 " shortmess=%s",
-          (int64_t)p_wh, (int64_t)p_wiw, p_shm) < 0
-      || put_eol(fd) == FAIL)
+  // Re-apply options.
+  if (fprintf(fd, "set winheight=%" PRId64 " winwidth=%" PRId64
+                  " winminheight=%" PRId64 " winminwidth=%" PRId64
+                  " shortmess=%s",
+              (int64_t)p_wh,
+              (int64_t)p_wiw,
+              (int64_t)p_wmh,
+              (int64_t)p_wmw,
+              p_shm) < 0
+      || put_eol(fd) == FAIL) {
     return FAIL;
+  }
 
   /*
    * Lastly, execute the x.vim file if it exists.

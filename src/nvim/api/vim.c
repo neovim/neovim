@@ -61,6 +61,7 @@ void nvim_feedkeys(String keys, String mode, Boolean escape_csi)
   bool insert = false;
   bool typed = false;
   bool execute = false;
+  bool dangerous = false;
 
   for (size_t i = 0; i < mode.size; ++i) {
     switch (mode.data[i]) {
@@ -69,6 +70,7 @@ void nvim_feedkeys(String keys, String mode, Boolean escape_csi)
     case 't': typed = true; break;
     case 'i': insert = true; break;
     case 'x': execute = true; break;
+    case '!': dangerous = true; break;
     }
   }
 
@@ -99,7 +101,13 @@ void nvim_feedkeys(String keys, String mode, Boolean escape_csi)
 
     /* Avoid a 1 second delay when the keys start Insert mode. */
     msg_scroll = false;
+    if (!dangerous) {
+      ex_normal_busy++;
+    }
     exec_normal(true);
+    if (!dangerous) {
+      ex_normal_busy--;
+    }
     msg_scroll |= save_msg_scroll;
   }
 }
@@ -217,7 +225,7 @@ Object nvim_call_function(String fname, Array args, Error *err)
                     &rettv, (int) args.size, vim_args,
                     curwin->w_cursor.lnum, curwin->w_cursor.lnum, &dummy,
                     true,
-                    NULL);
+                    NULL, NULL);
   if (r == FAIL) {
     api_set_error(err, Exception, _("Error calling function."));
   }

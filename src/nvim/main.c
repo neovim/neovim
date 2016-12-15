@@ -534,7 +534,7 @@ int main(int argc, char **argv)
   }
 
   TIME_MSG("before starting main loop");
-  ILOG("Starting Neovim main loop.");
+  ILOG("starting main loop");
 
   /*
    * Call the main command loop.  This never returns.
@@ -1763,7 +1763,7 @@ static int process_env(char *env, bool is_viminit)
     do_cmdline_cmd((char *)initstr);
     sourcing_name = save_sourcing_name;
     sourcing_lnum = save_sourcing_lnum;
-    current_SID = save_sid;;
+    current_SID = save_sid;
     return OK;
   }
   return FAIL;

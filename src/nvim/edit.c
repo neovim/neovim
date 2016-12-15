@@ -474,7 +474,9 @@ static int insert_check(VimState *state)
   InsertState *s = (InsertState *)state;
 
   // If typed something may trigger CursorHoldI again.
-  if (s->c != K_EVENT) {
+  if (s->c != K_EVENT
+      // but not in CTRL-X mode, a script can't restore the state
+      && ctrl_x_mode == 0) {
     did_cursorhold = false;
   }
 

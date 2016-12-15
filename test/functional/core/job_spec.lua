@@ -18,7 +18,7 @@ describe('jobs', function()
     channel = nvim('get_api_info')[1]
     nvim('set_var', 'channel', channel)
     source([[
-    function! s:OnEvent(id, data, event)
+    function! s:OnEvent(id, data, event) dict
       let userdata = get(self, 'user')
       call rpcnotify(g:channel, a:event, userdata, a:data)
     endfunction
@@ -65,9 +65,22 @@ describe('jobs', function()
   end)
 
   it('returns 0 when it fails to start', function()
-    local status, rv = pcall(eval, "jobstart([])")
-    eq(false, status)
-    ok(rv ~= nil)
+    eq("", eval("v:errmsg"))
+    execute("let g:test_jobid = jobstart([])")
+    eq(0, eval("g:test_jobid"))
+    eq("E474:", string.match(eval("v:errmsg"), "E%d*:"))
+  end)
+
+  it('returns -1 when target is not executable #5465', function()
+    local function new_job() return eval([[jobstart(['echo', 'foo'])]]) end
+    local executable_jobid = new_job()
+    local nonexecutable_jobid = eval(
+      "jobstart(['./test/functional/fixtures/non_executable.txt'])")
+    eq(-1, nonexecutable_jobid)
+    -- Should _not_ throw an error.
+    eq("", eval("v:errmsg"))
+    -- Non-executable job should not increment the job ids. #5465
+    eq(executable_jobid + 1, new_job())
   end)
 
   it('invokes callbacks when the job writes and exits', function()
@@ -252,9 +265,12 @@ describe('jobs', function()
     eq({'notification', 'exit', {45, 10}}, next_msg())
   end)
 
-  it('cannot redefine callbacks being used by a job', function()
+  it('can redefine callbacks being used by a job', function()
     local screen = Screen.new()
     screen:attach()
+    screen:set_default_attr_ids({
+      [1] = {bold=true, foreground=Screen.colors.Blue},
+    })
     local script = [[
       function! g:JobHandler(job_id, data, event)
       endfunction
@@ -270,20 +286,20 @@ describe('jobs', function()
     feed(':function! g:JobHandler(job_id, data, event)<cr>')
     feed(':endfunction<cr>')
     screen:expect([[
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
-      :function! g:JobHandler(job_id, data, event)         |
-      :  :endfunction                                      |
-      E127: Cannot redefine function JobHandler: It is in u|
-      se                                                   |
-      Press ENTER or type command to continue^              |
+      ^                                                     |
+      {1:~                                                    }|
+      {1:~                                                    }|
+      {1:~                                                    }|
+      {1:~                                                    }|
+      {1:~                                                    }|
+      {1:~                                                    }|
+      {1:~                                                    }|
+      {1:~                                                    }|
+      {1:~                                                    }|
+      {1:~                                                    }|
+      {1:~                                                    }|
+      {1:~                                                    }|
+                                                           |
     ]])
   end)
 
@@ -304,7 +320,7 @@ describe('jobs', function()
       source([[
       let g:dict = {'id': 10}
       let g:exits = 0
-      function g:dict.on_exit(id, code)
+      function g:dict.on_exit(id, code, event)
         if a:code != 5
           throw 'Error!'
         endif
@@ -356,7 +372,7 @@ describe('jobs', function()
       source([[
       let g:opts = {}
       let g:counter = 0
-      function g:opts.on_stdout(id, msg)
+      function g:opts.on_stdout(id, msg, _event)
         if self.state == 0
           if self.counter < 10
             call Run()
@@ -374,7 +390,7 @@ describe('jobs', function()
           call jobclose(a:id, 'stdin')
         endif
       endfunction
-      function g:opts.on_exit()
+      function g:opts.on_exit(...)
         call rpcnotify(g:channel, 'w', printf('job %d exited', self.counter))
       endfunction
       function Run()
@@ -481,10 +497,9 @@ describe('jobs', function()
       eq('rows: 40, cols: 10', next_chunk())
     end)
 
-    it('calling jobclose()', function()
-      -- this should send SIGHUP to the process
+    it('jobclose() sends SIGHUP', function()
       nvim('command', 'call jobclose(j)')
-      eq({'notification', 'exit', {0, 1}}, next_msg())
+      eq({'notification', 'exit', {0, 42}}, next_msg())
     end)
   end)
 end)

@@ -49,6 +49,9 @@ String		A NUL terminated string of 8-bit unsigned characters (bytes).
 
 Funcref		A reference to a function |Funcref|.
 		Example: function("strlen")
+		It can be bound to a dictionary and arguments, it then works
+		like a Partial.
+		Example: function("Callback", [arg], myDict)
 
 List		An ordered sequence of items |List|.
 		Example: [1, 2, ['a', 'b']]
@@ -139,6 +142,40 @@ The name of the referenced function can be obtained with |string()|. >
 You can use |call()| to invoke a Funcref and use a list variable for the
 arguments: >
 	:let r = call(Fn, mylist)
+<
+								*Partial*
+A Funcref optionally binds a Dictionary and/or arguments.  This is also called
+a Partial.  This is created by passing the Dictionary and/or arguments to
+function().  When calling the function the Dictionary and/or arguments will be
+passed to the function.  Example: >
+
+	let Cb = function('Callback', ['foo'], myDict)
+	call Cb()
+
+This will invoke the function as if using: >
+	call myDict.Callback('foo')
+
+Note that binding a function to a Dictionary also happens when the function is
+a member of the Dictionary: >
+
+	let myDict.myFunction = MyFunction
+	call myDict.myFunction()
+
+Here MyFunction() will get myDict passed as "self".  This happens when the
+"myFunction" member is accessed.  When assigning "myFunction" to otherDict
+and calling it, it will be bound to otherDict: >
+
+	let otherDict.myFunction = myDict.myFunction
+	call otherDict.myFunction()
+
+Now "self" will be "otherDict".  But when the dictionary was bound explicitly
+this won't happen: >
+
+	let myDict.myFunction = function(MyFunction, myDict)
+	let otherDict.myFunction = myDict.myFunction
+	call otherDict.myFunction()
+
+Here "self" will be "myDict", because it was bound explitly.
 
 
 1.3 Lists ~
@@ -1913,10 +1950,12 @@ foldlevel({lnum})		Number	fold level at {lnum}
 foldtext()			String	line displayed for closed fold
 foldtextresult({lnum})		String	text for closed fold at {lnum}
 foreground()			Number	bring the Vim window to the foreground
-function({name})		Funcref reference to function {name}
+function({name} [, {arglist}] [, {dict}])
+				Funcref reference to function {name}
 garbagecollect([{atexit}])	none	free memory, breaking cyclic references
 get({list}, {idx} [, {def}])	any	get item {idx} from {list} or {def}
 get({dict}, {key} [, {def}])	any	get item {key} from {dict} or {def}
+get({func}, {what})		any	get property of funcref/partial {func}
 getbufline({expr}, {lnum} [, {end}])
 				List	lines {lnum} to {end} of buffer {expr}
 getbufvar({expr}, {varname} [, {def}])
@@ -2032,6 +2071,8 @@ matchlist({expr}, {pat}[, {start}[, {count}]])
 				List	match and submatches of {pat} in {expr}
 matchstr({expr}, {pat}[, {start}[, {count}]])
 				String	{count}'th match of {pat} in {expr}
+matchstrpos( {expr}, {pat}[, {start}[, {count}]])
+				List	{count}'th match of {pat} in {expr}
 max({list})			Number	maximum value of items in {list}
 min({list})			Number	minimum value of items in {list}
 mkdir({name} [, {path} [, {prot}]])
@@ -3481,9 +3522,45 @@ foreground()	Move the Vim window to the foreground.	Useful when sent from
 		{only in the Win32 GUI and console version}
 
 
-function({name})					*function()* *E700*
+				       *function()* *E700* *E922* *E929*
+function({name} [, {arglist}] [, {dict}])
 		Return a |Funcref| variable that refers to function {name}.
 		{name} can be a user defined function or an internal function.
+
+		When {arglist} or {dict} is present this creates a partial.
+		That mans the argument list and/or the dictionary is stored in
+		the Funcref and will be used when the Funcref is called.
+		
+		The arguments are passed to the function in front of other
+		arguments.  Example: >
+			func Callback(arg1, arg2, name)
+			...
+			let Func = function('Callback', ['one', 'two'])
+			...
+			call Func('name')
+<		Invokes the function as with: >
+			call Callback('one', 'two', 'name')
+
+<		The Dictionary is only useful when calling a "dict" function.
+		In that case the {dict} is passed in as "self". Example: >
+			function Callback() dict
+			   echo "called for " . self.name
+			endfunction
+			...
+			let context = {"name": "example"}
+			let Func = function('Callback', context)
+			...
+			call Func()	" will echo: called for example
+
+<		The argument list and the Dictionary can be combined: >
+			function Callback(arg1, count) dict
+			...
+			let context = {"name": "example"}
+			let Func = function('Callback', ['one'], context)
+			...
+			call Func(500)
+<		Invokes the function as with: >
+			call context.Callback('one', 500)
 
 
 garbagecollect([{atexit}])				*garbagecollect()*
@@ -3508,6 +3585,13 @@ get({dict}, {key} [, {default}])
 		Get item with key {key} from |Dictionary| {dict}.  When this
 		item is not available return {default}.  Return zero when
 		{default} is omitted.
+get({func}, {what})
+		Get item {what} from Funcref {func}.  Possible values for
+		{what} are:
+			'name'	The function name
+			'func'	The function
+			'dict'	The dictionary
+			'args'	The list with arguments
 
 							*getbufline()*
 getbufline({expr}, {lnum} [, {end}])
@@ -5017,6 +5101,24 @@ matchstr({expr}, {pat}[, {start}[, {count}]])			*matchstr()*
 			:echo matchstr("testing", "ing", 5)
 <		result is "".
 		When {expr} is a |List| then the matching item is returned.
+		The type isn't changed, it's not necessarily a String.
+
+matchstrpos({expr}, {pat}[, {start}[, {count}]])		*matchstrpos()*
+		Same as |matchstr()|, but return the matched string, the start
+		position and the end position of the match.  Example: >
+			:echo matchstrpos("testing", "ing")
+<		results in ["ing", 4, 7].
+		When there is no match ["", -1, -1] is returned.
+		The {start}, if given, has the same meaning as for |match()|. >
+			:echo matchstrpos("testing", "ing", 2)
+<		results in ["ing", 4, 7]. >
+			:echo matchstrpos("testing", "ing", 5)
+<		result is ["", -1, -1].
+		When {expr} is a |List| then the matching item, the index
+		of first item where {pat} matches, the start position and the
+		end position of the match are returned. >
+			:echo matchstrpos([1, '__x'], '\a')
+<		result is ["x", 1, 2, 3].
 		The type isn't changed, it's not necessarily a String.
 
 							*max()*

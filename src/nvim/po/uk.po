@@ -2433,10 +2433,6 @@ msgid "E901: Job table is full"
 msgstr "E901: Таблиця завдань заповнена"
 
 #, c-format
-msgid "E902: \"%s\" is not an executable"
-msgstr "E902: \"%s\" не можна виконати"
-
-#, c-format
 msgid "E903: Process for command \"%s\" could not be spawned"
 msgstr "E903: Не вдалося запустити процес для команди «%s»"
 

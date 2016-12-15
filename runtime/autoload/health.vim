@@ -1,28 +1,33 @@
 function! s:enhance_syntax() abort
+  syntax case match
+
   syntax keyword healthError ERROR
+        \ containedin=markdownCodeBlock,mkdListItemLine
   highlight link healthError Error
 
   syntax keyword healthWarning WARNING
+        \ containedin=markdownCodeBlock,mkdListItemLine
   highlight link healthWarning WarningMsg
 
   syntax keyword healthInfo INFO
+        \ containedin=markdownCodeBlock,mkdListItemLine
   highlight link healthInfo ModeMsg
 
   syntax keyword healthSuccess SUCCESS
+        \ containedin=markdownCodeBlock,mkdListItemLine
   highlight link healthSuccess ModeMsg
 
   syntax keyword healthSuggestion SUGGESTIONS
+        \ containedin=markdownCodeBlock,mkdListItemLine
   highlight link healthSuggestion String
 
   syntax match healthHelp "|.\{-}|" contains=healthBar
+        \ containedin=markdownCodeBlock,mkdListItemLine
   syntax match healthBar  "|" contained conceal
   highlight link healthHelp Identifier
 
   " We do not care about markdown syntax errors in :CheckHealth output.
   highlight! link markdownError Normal
-
-  " We don't need code blocks.
-  silent! syntax clear markdownCodeBlock
 endfunction
 
 " Runs the specified healthchecks.
@@ -66,6 +71,8 @@ function! health#check(plugin_names) abort
     endfor
   endif
 
+  " needed for plasticboy/vim-markdown, because it uses fdm=expr
+  normal! zR
   setlocal nomodified
   redraw|echo ''
 endfunction
@@ -87,9 +94,9 @@ function! s:indent_after_line1(s, columns) abort
   return join(lines, "\n")
 endfunction
 
-" Changes ':help clipboard' to '|clipoard|'. Also removes surrounding quotes.
+" Changes ':h clipboard' to ':help |clipboard|'.
 function! s:help_to_link(s) abort
-  return substitute(a:s, '\v[''"]?:h%[elp] ([^''"]+)[''"]?', '|\1|', 'g')
+  return substitute(a:s, '\v[''"]?:h%[elp] ([^''"]+)[''"]?', '":help |\1|"', 'g')
 endfunction
 
 " Format a message for a specific report item

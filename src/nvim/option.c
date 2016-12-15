@@ -2770,6 +2770,10 @@ did_set_string_option (
                   ? ((shada_idx = findoption((char_u *) "shada")))
                   : shada_idx)
                : opt_idx);
+    // Update free_oldval now that we have the opt_idx for 'shada', otherwise
+    // there would be a disconnect between the check for P_ALLOCED at the start
+    // of the function and the set of P_ALLOCED at the end of the fuction.
+    free_oldval = (options[opt_idx].flags & P_ALLOCED);
     for (s = p_shada; *s; ) {
       /* Check it's a valid character */
       if (vim_strchr((char_u *)"!\"%'/:<@cfhnrs", *s) == NULL) {

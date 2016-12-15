@@ -37,13 +37,14 @@ NEW_TESTS = \
 	    test_help_tagjump.res \
 	    test_history.res \
 	    test_langmap.res \
+		test_match.res \
+	    test_matchadd_conceal.res \
 	    test_syntax.res \
 	    test_usercommands.res \
 	    test_timers.res \
 	    test_viml.res \
 	    test_visual.res \
 	    test_window_id.res \
-	    test_matchadd_conceal.res \
 	    test_alot.res
 
 SCRIPTS_GUI := test16.out

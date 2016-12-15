@@ -360,6 +360,9 @@ void set_option_to(void *to, int type, String name, Object value, Error *err)
 #define TYPVAL_ENCODE_CONV_FUNC(fun) \
     TYPVAL_ENCODE_CONV_NIL()
 
+#define TYPVAL_ENCODE_CONV_PARTIAL(partial) \
+    TYPVAL_ENCODE_CONV_NIL()
+
 #define TYPVAL_ENCODE_CONV_EMPTY_LIST() \
     kv_push(edata->stack, ARRAY_OBJ(((Array) { .capacity = 0, .size = 0 })))
 
@@ -472,6 +475,8 @@ static inline void typval_encode_dict_end(EncodedData *const edata)
 #define TYPVAL_ENCODE_CONV_RECURSE(val, conv_type) \
     TYPVAL_ENCODE_CONV_NIL()
 
+// object_convert_one_value()
+// encode_vim_to_object()
 TYPVAL_ENCODE_DEFINE_CONV_FUNCTIONS(static, object, EncodedData *const, edata)
 
 #undef TYPVAL_ENCODE_CONV_STRING
@@ -480,6 +485,7 @@ TYPVAL_ENCODE_DEFINE_CONV_FUNCTIONS(static, object, EncodedData *const, edata)
 #undef TYPVAL_ENCODE_CONV_NUMBER
 #undef TYPVAL_ENCODE_CONV_FLOAT
 #undef TYPVAL_ENCODE_CONV_FUNC
+#undef TYPVAL_ENCODE_CONV_PARTIAL
 #undef TYPVAL_ENCODE_CONV_EMPTY_LIST
 #undef TYPVAL_ENCODE_CONV_LIST_START
 #undef TYPVAL_ENCODE_CONV_EMPTY_DICT
@@ -651,7 +657,7 @@ bool object_to_vim(Object obj, typval_T *tv, Error *err)
         if (!object_to_vim(item, &li->li_tv, err)) {
           // cleanup
           listitem_free(li);
-          list_free(list, true);
+          list_free(list);
           return false;
         }
 
@@ -675,7 +681,7 @@ bool object_to_vim(Object obj, typval_T *tv, Error *err)
           api_set_error(err, Validation,
                         _("Empty dictionary keys aren't allowed"));
           // cleanup
-          dict_free(dict, true);
+          dict_free(dict);
           return false;
         }
 
@@ -684,7 +690,7 @@ bool object_to_vim(Object obj, typval_T *tv, Error *err)
         if (!object_to_vim(item.value, &di->di_tv, err)) {
           // cleanup
           dictitem_free(di);
-          dict_free(dict, true);
+          dict_free(dict);
           return false;
         }
 

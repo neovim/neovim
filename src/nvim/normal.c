@@ -2467,7 +2467,7 @@ do_mouse (
                            (int) strlen(tab_page_click_defs[mouse_col].func),
                            &rettv, ARRAY_SIZE(argv), argv,
                            curwin->w_cursor.lnum, curwin->w_cursor.lnum,
-                           &doesrange, true, NULL);
+                           &doesrange, true, NULL, NULL);
           clear_tv(&rettv);
           break;
         }
