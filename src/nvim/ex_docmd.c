@@ -6389,7 +6389,7 @@ static void ex_wrongmodifier(exarg_T *eap)
 void ex_newfwin(exarg_T *eap)
 {
     win_T       *old_curwin = curwin;
-    win_new_floating(100, 20);
+    win_new_floating(Columns / 2, Rows / 2);
     RESET_BINDING(curwin);
     do_exedit(eap, old_curwin);
 }
