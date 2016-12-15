@@ -112,9 +112,10 @@ You will not get an error if you try to change the type of a variable.
 	
 1.2 Function references ~
 					*Funcref* *E695* *E718*
-A Funcref variable is obtained with the |function()| function.	It can be used
-in an expression in the place of a function name, before the parenthesis
-around the arguments, to invoke the function it refers to.  Example: >
+A Funcref variable is obtained with the |function()| function or created with
+the lambda expression |expr-lambda|. It can be used in an expression in the
+place of a function name, before the parenthesis around the arguments, to
+invoke the function it refers to.  Example: >
 
 	:let Fn = function("MyFunc")
 	:echo Fn()
@@ -667,6 +668,7 @@ Expression syntax summary, from least to most significant:
 	@r			contents of register 'r'
 	function(expr1, ...)	function call
 	func{ti}on(expr1, ...)	function call with curly braces
+	{args -> expr1}		lambda expression
 
 
 ".." indicates that the operations in this level can be concatenated.
@@ -1173,6 +1175,42 @@ function call		*expr-function* *E116* *E118* *E119* *E120*
 function(expr1, ...)	function call
 See below |functions|.
 
+
+lambda expression				*expr-lambda* *lambda*
+-----------------
+{args -> expr1}		lambda expression
+
+A lambda expression creates a new unnamed function which returns the result of
+evaluating |expr1|.  Lambda expressions are differ from |user-functions| in
+the following ways:
+
+1. The body of the lambda expression is an |expr1| and not a sequence of |Ex|
+   commands.
+2. The prefix "a:" is optional for arguments.  E.g.: >
+	:let F = {arg1, arg2 -> arg1 - arg2}
+	:echo F(5, 2)
+<	3
+
+The arguments are optional.  Example: >
+	:let F = {-> 'error function'}
+	:echo F()
+<	error function
+
+Examples for using a lambda expression with |sort()|, |map()| and |filter()|: >
+	:echo map([1, 2, 3], {idx, val -> val + 1})
+<	[2, 3, 4] >
+	:echo sort([3,7,2,1,4], {a, b -> a - b})
+<	[1, 2, 3, 4, 7]
+
+The lambda expression is also useful for Channel, Job and timer: >
+	:let timer = timer_start(500,
+			\ {-> execute("echo 'Handler called'", "")},
+			\ {'repeat': 3})
+<	Handler called
+	Handler called
+	Handler called
+
+Note how execute() is used to execute an Ex command.  That's ugly though.
 
 ==============================================================================
 3. Internal variable				*internal-variables* *E461*
@@ -8094,10 +8132,10 @@ can be 0).  "a:000" is set to a |List| that contains these arguments.  Note
 that "a:1" is the same as "a:000[0]".
 								*E742*
 The a: scope and the variables in it cannot be changed, they are fixed.
-However, if a |List| or |Dictionary| is used, you can change their contents.
-Thus you can pass a |List| to a function and have the function add an item to
-it.  If you want to make sure the function cannot change a |List| or
-|Dictionary| use |:lockvar|.
+However, if a composite type is used, such as |List| or |Dictionary| , you can
+change their contents.  Thus you can pass a |List| to a function and have the
+function add an item to it.  If you want to make sure the function cannot
+change a |List| or |Dictionary| use |:lockvar|.
 
 When not using "...", the number of arguments in a function call must be equal
 to the number of named arguments.  When using "...", the number of arguments
@@ -8109,9 +8147,8 @@ until the matching |:endfunction|.  It is allowed to define another function
 inside a function body.
 
 							*local-variables*
-Inside a function variables can be used.  These are local variables, which
-will disappear when the function returns.  Global variables need to be
-accessed with "g:".
+Inside a function local variables can be used.  These will disappear when the
+function returns. Global variables need to be accessed with "g:".
 
 Example: >
   :function Table(title, ...)
