@@ -366,6 +366,14 @@ review_commit() {
     echo "✘ Could not detect the Vim patch number."
     echo "  This script assumes that the PR contains only commits"
     echo "  with 'vim-patch:XXX' in their title."
+    echo
+    printf -- "$(head -n 4 <<< "${nvim_patch}")\n\n"
+    local reply
+    read -p "Continue reviewing (y/N)? " -n 1 -r reply
+    if [[ ! "${reply}" =~ ^[Nn]$ ]]; then
+      echo
+      return
+    fi
     exit 1
   fi
 
