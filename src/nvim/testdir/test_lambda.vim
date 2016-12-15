@@ -284,5 +284,3 @@ func Test_named_function_closure()
   call garbagecollect()
   call assert_equal(14, s:Abar())
 endfunc
-=======
->>>>>>> 381a8796... vim-patch:7.4.2044
