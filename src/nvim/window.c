@@ -2182,7 +2182,11 @@ win_free_mem (
     wp = winframe_remove(win, dirp, tp);
     xfree(frp);
   } else {
-    wp = prevwin;
+    if (win_valid(prevwin)) {
+      wp = prevwin;
+    } else {
+      wp = curtab->tp_firstwin;
+    }
   }
   win_free(win, tp);
 
