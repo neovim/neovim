@@ -8,7 +8,7 @@ local NULL = helpers.NULL
 local OK = helpers.OK
 local FAIL = helpers.FAIL
 
-local users = cimport('./src/nvim/os/os.h', 'unistd.h')
+local users = cimport('./src/nvim/os/os.h')
 
 local function garray_new()
   return ffi.new('garray_T[1]')

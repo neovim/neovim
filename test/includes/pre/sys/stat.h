@@ -1,4 +1,3 @@
-#define _GNU_SOURCE
 #include <sys/stat.h>
 
 static const mode_t kS_IFMT = S_IFMT;

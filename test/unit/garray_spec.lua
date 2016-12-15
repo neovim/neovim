@@ -8,7 +8,7 @@ local ffi = helpers.ffi
 local to_cstr = helpers.to_cstr
 local NULL = helpers.NULL
 
-local garray = cimport('stdlib.h', './src/nvim/garray.h')
+local garray = cimport('./src/nvim/garray.h')
 
 local itemsize = 14
 local growsize = 95

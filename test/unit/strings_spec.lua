@@ -5,7 +5,7 @@ local eq = helpers.eq
 local ffi = helpers.ffi
 local to_cstr = helpers.to_cstr
 
-local strings = cimport('stdlib.h', './src/nvim/strings.h',
+local strings = cimport('./src/nvim/strings.h',
                         './src/nvim/memory.h')
 
 describe('vim_strsave_escaped()', function()
