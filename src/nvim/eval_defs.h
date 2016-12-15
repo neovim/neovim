@@ -104,15 +104,19 @@ struct listvar_S {
   list_T      *lv_used_prev;    /* previous list in used lists list */
 };
 
-/*
- * Structure to hold an item of a Dictionary.
- * Also used for a variable.
- * The key is copied into "di_key" to avoid an extra alloc/free for it.
- */
+// Static list with 10 items. Use init_static_list() to initialize.
+typedef struct {
+  list_T sl_list;  // must be first
+  listitem_T sl_items[10];
+} staticList10_T;
+
+// Structure to hold an item of a Dictionary.
+// Also used for a variable.
+// The key is copied into "di_key" to avoid an extra alloc/free for it.
 struct dictitem_S {
-  typval_T di_tv;               /* type and value of the variable */
-  char_u di_flags;              /* flags (only used for variable) */
-  char_u di_key[1];             /* key (actually longer!) */
+  typval_T di_tv;               // type and value of the variable
+  char_u di_flags;              // flags (only used for variable)
+  char_u di_key[1];             // key (actually longer!)
 };
 
 typedef struct dictitem_S dictitem_T;

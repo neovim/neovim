@@ -1519,7 +1519,7 @@ v:false		Special value used to put "false" in JSON and msgpack.  See
 		|json_encode()|.  This value is converted to "v:false" when used 
 		as a String (e.g. in |expr5| with string concatenation 
 		operator) and to zero when used as a Number (e.g. in |expr5| 
-		or |expr7| when used with numeric operators).
+		or |expr7| when used with numeric operators). Read-only.
 
 					*v:fcs_reason* *fcs_reason-variable*
 v:fcs_reason	The reason why the |FileChangedShell| event was triggered.
@@ -1669,7 +1669,7 @@ v:null		Special value used to put "null" in JSON and NIL in msgpack.
 		See |json_encode()|.  This value is converted to "v:null" when 
 		used as a String (e.g. in |expr5| with string concatenation 
 		operator) and to zero when used as a Number (e.g. in |expr5| 
-		or |expr7| when used with numeric operators).
+		or |expr7| when used with numeric operators). Read-only.
 
 					*v:oldfiles* *oldfiles-variable*
 v:oldfiles	List of file names that is loaded from the |shada| file on
@@ -1855,7 +1855,7 @@ v:true		Special value used to put "true" in JSON and msgpack.  See
 		|json_encode()|.  This value is converted to "v:true" when used 
 		as a String (e.g. in |expr5| with string concatenation 
 		operator) and to one when used as a Number (e.g. in |expr5| or 
-		|expr7| when used with numeric operators).
+		|expr7| when used with numeric operators). Read-only.
 
 						*v:val* *val-variable*
 v:val		Value of the current item of a |List| or |Dictionary|.	Only
@@ -7108,6 +7108,14 @@ substitute({expr}, {pat}, {sub}, {flags})		*substitute()*
 			:echo substitute(s, '%\(\x\x\)',
 			   \ '\=nr2char("0x" . submatch(1))', 'g')
 
+<		When {sub} is a Funcref that function is called, with one
+		optional argument.  Example: >
+		   :echo substitute(s, '%\(\x\x\)', SubNr, 'g')
+<		The optional argument is a list which contains the whole
+		matched string and up to nine submatches,like what
+		|submatch()| returns. Example: >
+		   :echo substitute(s, '\(\x\x\)', {m -> '0x' . m[1]}, 'g')
+
 synID({lnum}, {col}, {trans})				*synID()*
 		The result is a Number, which is the syntax ID at the position
 		{lnum} and {col} in the current window.
@@ -7464,16 +7472,18 @@ trunc({expr})							*trunc()*
 <			4.0
 
 type({expr})							*type()*
-		The result is a Number, depending on the type of {expr}:
-			Number:     0
-			String:     1
-			Funcref:    2
-			List:       3
-			Dictionary: 4
-			Float:      5
+		The result is a Number representing the type of {expr}.
+		Instead of using the number directly, it is better to use the
+		v:t_ variable that has the value:
+		        Number:     0 (|v:t_number|)
+			String:     1 (|v:t_string|)
+			Funcref:    2 (|v:t_func|)
+			List:       3 (|v:t_list|)
+			Dictionary: 4 (|v:t_dict|)
+			Float:      5 (|v:t_float|)
 			Boolean:    6 (|v:true| and |v:false|)
 			Null:       7 (|v:null|)
-		To avoid the magic numbers it should be used this way: >
+		For backward compatibility, this method can be used: >
 			:if type(myvar) == type(0)
 			:if type(myvar) == type("")
 			:if type(myvar) == type(function("tr"))
@@ -7484,6 +7494,8 @@ type({expr})							*type()*
 <		In place of checking for |v:null| type it is better to check 
 		for |v:null| directly as it is the only value of this type: >
 			:if myvar is v:null
+<               To check if the v:t_ variables exist use this: >
+                        :if exists('v:t_number')
 
 undofile({name})					*undofile()*
 		Return the name of the undo file that would be used for a file

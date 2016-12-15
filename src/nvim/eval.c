@@ -1230,8 +1230,8 @@ int call_vim_function(
     ++sandbox;
   }
 
-  rettv->v_type = VAR_UNKNOWN;                  /* clear_tv() uses this */
-  ret = call_func(func, (int)STRLEN(func), rettv, argc, argvars,
+  rettv->v_type = VAR_UNKNOWN;                  // clear_tv() uses this
+  ret = call_func(func, (int)STRLEN(func), rettv, argc, argvars, NULL,
                   curwin->w_cursor.lnum, curwin->w_cursor.lnum,
                   &doesrange, true, NULL, NULL);
   if (safe) {
@@ -7388,6 +7388,11 @@ fname_trans_sid(char_u *name, char_u *fname_buf, char_u **tofree, int *error) {
 }
 
 /// Call a function with its resolved parameters
+///
+/// "argv_func", when not NULL, can be used to fill in arguments only when the
+/// invoked function uses them. It is called like this:
+///   new_argcount = argv_func(current_argcount, argv, called_func_argcount)
+///
 /// Return FAIL when the function can't be called,  OK otherwise.
 /// Also returns OK when an error was encountered while executing the function.
 int
@@ -7398,6 +7403,7 @@ call_func(
     int argcount_in,                // number of "argvars"
     typval_T *argvars_in,           // vars for arguments, must have "argcount"
                                     // PLUS ONE elements!
+    ArgvFunc argv_func,             // function to fill in argvars
     linenr_T firstline,             // first line of range
     linenr_T lastline,              // last line of range
     int *doesrange,                 // return: function handled range
@@ -7484,15 +7490,19 @@ call_func(
       }
 
       if (fp != NULL) {
-        if (fp->uf_flags & FC_RANGE)
-          *doesrange = TRUE;
-        if (argcount < fp->uf_args.ga_len)
+        if (argv_func != NULL) {
+          argcount = argv_func(argcount, argvars, fp->uf_args.ga_len);
+        }
+        if (fp->uf_flags & FC_RANGE) {
+          *doesrange = true;
+        }
+        if (argcount < fp->uf_args.ga_len) {
           error = ERROR_TOOFEW;
-        else if (!fp->uf_varargs && argcount > fp->uf_args.ga_len)
+        } else if (!fp->uf_varargs && argcount > fp->uf_args.ga_len) {
           error = ERROR_TOOMANY;
-        else if ((fp->uf_flags & FC_DICT) && selfdict == NULL)
+        } else if ((fp->uf_flags & FC_DICT) && selfdict == NULL) {
           error = ERROR_DICT;
-        else {
+        } else {
           // Call the user function.
           call_user_func(fp, argcount, argvars, rettv, firstline, lastline,
               (fp->uf_flags & FC_DICT) ? selfdict : NULL);
@@ -8344,7 +8354,7 @@ int func_call(char_u *name, typval_T *args, partial_T *partial,
   }
 
   if (item == NULL) {
-    r = call_func(name, (int)STRLEN(name), rettv, argc, argv,
+    r = call_func(name, (int)STRLEN(name), rettv, argc, argv, NULL,
                   curwin->w_cursor.lnum, curwin->w_cursor.lnum,
                   &dummy, true, partial, selfdict);
   }
@@ -9626,16 +9636,16 @@ static int filter_map_one(typval_T *tv, typval_T *expr, int map, int *remp)
   s = expr->vval.v_string;
   if (expr->v_type == VAR_FUNC) {
     s = expr->vval.v_string;
-    if (call_func(s, (int)STRLEN(s), &rettv, 2, argv, 0L, 0L, &dummy,
-                  true, NULL, NULL) == FAIL) {
+    if (call_func(s, (int)STRLEN(s), &rettv, 2, argv, NULL,
+                  0L, 0L, &dummy, true, NULL, NULL) == FAIL) {
       goto theend;
     }
   } else if (expr->v_type == VAR_PARTIAL) {
     partial_T *partial = expr->vval.v_partial;
 
     s = partial->pt_name;
-    if (call_func(s, (int)STRLEN(s), &rettv, 2, argv, 0L, 0L, &dummy,
-                  true, partial, NULL) == FAIL) {
+    if (call_func(s, (int)STRLEN(s), &rettv, 2, argv, NULL,
+                  0L, 0L, &dummy, true, partial, NULL) == FAIL) {
       goto theend;
     }
   } else {
@@ -16160,7 +16170,7 @@ static int item_compare2(const void *s1, const void *s2, bool keep_zero)
   rettv.v_type = VAR_UNKNOWN;  // clear_tv() uses this
   res = call_func(func_name,
                   (int)STRLEN(func_name),
-                  &rettv, 2, argv, 0L, 0L, &dummy, true,
+                  &rettv, 2, argv, NULL, 0L, 0L, &dummy, true,
                   partial, sortinfo->item_compare_selfdict);
   clear_tv(&argv[0]);
   clear_tv(&argv[1]);
@@ -17666,7 +17676,7 @@ static bool callback_call(Callback *callback, int argcount_in,
 
   int dummy;
   return call_func(name, (int)STRLEN(name), rettv, argcount_in, argvars_in,
-                   curwin->w_cursor.lnum, curwin->w_cursor.lnum, &dummy,
+                   NULL, curwin->w_cursor.lnum, curwin->w_cursor.lnum, &dummy,
                    true, partial, NULL);
 }
 
@@ -18313,6 +18323,33 @@ static bool write_list(FILE *fd, list_T *list, bool binary)
     }
   }
   return ret;
+}
+
+/// Initializes a static list with 10 items.
+void init_static_list(staticList10_T *sl) {
+  list_T *l = &sl->sl_list;
+
+  memset(sl, 0, sizeof(staticList10_T));
+  l->lv_first = &sl->sl_items[0];
+  l->lv_last = &sl->sl_items[9];
+  l->lv_refcount = DO_NOT_FREE_CNT;
+  l->lv_lock = VAR_FIXED;
+  sl->sl_list.lv_len = 10;
+
+  for (int i = 0; i < 10; i++) {
+    listitem_T *li = &sl->sl_items[i];
+
+    if (i == 0) {
+      li->li_prev = NULL;
+    } else {
+      li->li_prev = li - 1;
+    }
+    if (i == 9) {
+      li->li_next = NULL;
+    } else {
+      li->li_next = li + 1;
+    }
+  }
 }
 
 /// Saves a typval_T as a string.
@@ -19763,7 +19800,7 @@ char_u *get_tv_string_chk(const typval_T *varp)
   return get_tv_string_buf_chk(varp, mybuf);
 }
 
-static char_u *get_tv_string_buf_chk(const typval_T *varp, char_u *buf)
+char_u *get_tv_string_buf_chk(const typval_T *varp, char_u *buf)
   FUNC_ATTR_NONNULL_ALL
 {
   switch (varp->v_type) {
@@ -23621,6 +23658,7 @@ typval_T eval_call_provider(char *provider, char *method, list_T *arguments)
                   &rettv,
                   2,
                   argvars,
+                  NULL,
                   curwin->w_cursor.lnum,
                   curwin->w_cursor.lnum,
                   &dummy,
