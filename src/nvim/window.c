@@ -2060,6 +2060,10 @@ int win_close(win_T *win, int free_buf)
         }
       }
     }
+    if (!win_valid(wp)) {
+      wp = curtab->tp_firstwin;
+      curwin = wp;
+    }
     curbuf = curwin->w_buffer;
     close_curwin = TRUE;
   }
