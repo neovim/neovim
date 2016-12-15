@@ -21838,8 +21838,10 @@ char_u *get_user_func_name(expand_T *xp, int idx)
       ++hi;
     fp = HI2UF(hi);
 
-    if (fp->uf_flags & FC_DICT)
-      return (char_u *)"";       /* don't show dict functions */
+    if ((fp->uf_flags & FC_DICT)
+        || STRNCMP(fp->uf_name, "<lambda>", 8) == 0) {
+      return (char_u *)"";       // don't show dict and lambda functions
+    }
 
     if (STRLEN(fp->uf_name) + 4 >= IOSIZE)
       return fp->uf_name;       /* prevents overflow */
