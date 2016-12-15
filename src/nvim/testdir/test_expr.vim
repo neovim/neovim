@@ -106,3 +106,21 @@ func Test_setmatches()
   call setmatches(set)
   call assert_equal(exp, getmatches())
 endfunc
+
+func Test_substitute_expr()
+  let g:val = 'XXX'
+  call assert_equal('XXX', substitute('yyy', 'y*', '\=g:val', ''))
+  call assert_equal('XXX', substitute('yyy', 'y*', {-> g:val}, ''))
+  call assert_equal("-\u1b \uf2-", substitute("-%1b %f2-", '%\(\x\x\)',
+			   \ '\=nr2char("0x" . submatch(1))', 'g'))
+  call assert_equal("-\u1b \uf2-", substitute("-%1b %f2-", '%\(\x\x\)',
+			   \ {-> nr2char("0x" . submatch(1))}, 'g'))
+
+  call assert_equal('231', substitute('123', '\(.\)\(.\)\(.\)',
+	\ {-> submatch(2) . submatch(3) . submatch(1)}, ''))
+
+  func Recurse()
+    return substitute('yyy', 'y*', {-> g:val}, '')
+  endfunc
+  call assert_equal('--', substitute('xxx', 'x*', {-> '-' . Recurse() . '-'}, ''))
+endfunc

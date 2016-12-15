@@ -16996,19 +16996,26 @@ static void f_substitute(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   char_u      *str = get_tv_string_chk(&argvars[0]);
   char_u      *pat = get_tv_string_buf_chk(&argvars[1], patbuf);
-  char_u      *sub = get_tv_string_buf_chk(&argvars[2], subbuf);
+  char_u      *sub = NULL;
+  typval_T    *expr = NULL;
   char_u      *flg = get_tv_string_buf_chk(&argvars[3], flagsbuf);
 
+  if (argvars[2].v_type == VAR_FUNC || argvars[2].v_type == VAR_PARTIAL) {
+    expr = &argvars[2];
+  } else {
+    sub = get_tv_string_buf_chk(&argvars[2], subbuf);
+  }
+
   rettv->v_type = VAR_STRING;
-  if (str == NULL || pat == NULL || sub == NULL || flg == NULL)
+  if (str == NULL || pat == NULL || (sub == NULL && expr == NULL)
+      || flg == NULL) {
     rettv->vval.v_string = NULL;
-  else
-    rettv->vval.v_string = do_string_sub(str, pat, sub, flg);
+  } else {
+    rettv->vval.v_string = do_string_sub(str, pat, sub, expr, flg);
+  }
 }
 
-/*
- * "synID(lnum, col, trans)" function
- */
+/// "synID(lnum, col, trans)" function
 static void f_synID(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   int id = 0;
@@ -23132,7 +23139,7 @@ repeat:
           sub = vim_strnsave(s, (int)(p - s));
           str = vim_strnsave(*fnamep, *fnamelen);
           *usedlen = (size_t)(p + 1 - src);
-          s = do_string_sub(str, pat, sub, flags);
+          s = do_string_sub(str, pat, sub, NULL, flags);
           *fnamep = s;
           *fnamelen = STRLEN(s);
           xfree(*bufp);
@@ -23168,12 +23175,12 @@ repeat:
   return valid;
 }
 
-/*
- * Perform a substitution on "str" with pattern "pat" and substitute "sub".
- * "flags" can be "g" to do a global substitute.
- * Returns an allocated string, NULL for error.
- */
-char_u *do_string_sub(char_u *str, char_u *pat, char_u *sub, char_u *flags)
+/// Perform a substitution on "str" with pattern "pat" and substitute "sub".
+/// When "sub" is NULL "expr" is used, must be a VAR_FUNC or VAR_PARTIAL.
+/// "flags" can be "g" to do a global substitute.
+/// Returns an allocated string, NULL for error.
+char_u *do_string_sub(char_u *str, char_u *pat, char_u *sub,
+                      typval_T *expr, char_u *flags)
 {
   int sublen;
   regmatch_T regmatch;
@@ -23211,23 +23218,21 @@ char_u *do_string_sub(char_u *str, char_u *pat, char_u *sub, char_u *flags)
         zero_width = regmatch.startp[0];
       }
 
-      /*
-       * Get some space for a temporary buffer to do the substitution
-       * into.  It will contain:
-       * - The text up to where the match is.
-       * - The substituted text.
-       * - The text after the match.
-       */
-      sublen = vim_regsub(&regmatch, sub, tail, FALSE, TRUE, FALSE);
+      // Get some space for a temporary buffer to do the substitution
+      // into.  It will contain:
+      // - The text up to where the match is.
+      // - The substituted text.
+      // - The text after the match.
+      sublen = vim_regsub(&regmatch, sub, expr, tail, false, true, false);
       ga_grow(&ga, (int)((end - tail) + sublen -
                      (regmatch.endp[0] - regmatch.startp[0])));
 
       /* copy the text up to where the match is */
       int i = (int)(regmatch.startp[0] - tail);
       memmove((char_u *)ga.ga_data + ga.ga_len, tail, (size_t)i);
-      /* add the substituted text */
-      (void)vim_regsub(&regmatch, sub, (char_u *)ga.ga_data
-          + ga.ga_len + i, TRUE, TRUE, FALSE);
+      // add the substituted text
+      (void)vim_regsub(&regmatch, sub, expr, (char_u *)ga.ga_data
+                       + ga.ga_len + i, true, true, false);
       ga.ga_len += i + sublen - 1;
       tail = regmatch.endp[0];
       if (*tail == NUL)
@@ -23244,11 +23249,12 @@ char_u *do_string_sub(char_u *str, char_u *pat, char_u *sub, char_u *flags)
 
   char_u *ret = vim_strsave(ga.ga_data == NULL ? str : (char_u *)ga.ga_data);
   ga_clear(&ga);
-  if (p_cpo == empty_option)
+  if (p_cpo == empty_option) {
     p_cpo = save_cpo;
-  else
-    /* Darn, evaluating {sub} expression changed the value. */
+  } else {
+    // Darn, evaluating {sub} expression or {expr} changed the value.
     free_string_option(save_cpo);
+  }
 
   return ret;
 }
