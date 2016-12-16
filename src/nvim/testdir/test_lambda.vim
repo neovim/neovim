@@ -259,10 +259,10 @@ endfunction
 
 func Test_closure_refcount()
   let g:Count = LambdaFoo()
-  call test_garbagecollect_now()
+  call garbagecollect()
   call assert_equal(1, g:Count())
   let g:Count2 = LambdaFoo()
-  call test_garbagecollect_now()
+  call garbagecollect()
   call assert_equal(1, g:Count2())
   call assert_equal(2, g:Count())
   call assert_equal(3, g:Count2())

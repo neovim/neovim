@@ -150,3 +150,18 @@ func Test_function_with_funcref()
   call assert_equal(v:t_string, s:fref('x'))
   call assert_fails("call function('s:f')", 'E700:')
 endfunc
+
+func Test_funcref()
+  func! One()
+    return 1
+  endfunc
+  let OneByName = function('One')
+  let OneByRef = funcref('One')
+  func! One()
+    return 2
+  endfunc
+  call assert_equal(2, OneByName())
+  call assert_equal(1, OneByRef())
+  let OneByRef = funcref('One')
+  call assert_equal(2, OneByRef())
+endfunc
