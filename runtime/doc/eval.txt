@@ -1207,7 +1207,8 @@ function returns: >
 	:let Bar = Foo(4)
 	:echo Bar(6)
 <	5
-See also |:func-closure|.
+See also |:func-closure|. Lambda and closure support can be checked with: >
+        if has('lambda')
 
 Examples for using a lambda expression with |sort()|, |map()| and |filter()|: >
 	:echo map([1, 2, 3], {idx, val -> val + 1})
@@ -2014,8 +2015,10 @@ foldlevel({lnum})		Number	fold level at {lnum}
 foldtext()			String	line displayed for closed fold
 foldtextresult({lnum})		String	text for closed fold at {lnum}
 foreground()			Number	bring the Vim window to the foreground
-function({name} [, {arglist}] [, {dict}])
+funcref({name} [, {arglist}] [, {dict}])
 				Funcref reference to function {name}
+function({name} [, {arglist}] [, {dict}])
+				Funcref named reference to function {name}
 garbagecollect([{atexit}])	none	free memory, breaking cyclic references
 get({list}, {idx} [, {def}])	any	get item {idx} from {list} or {def}
 get({dict}, {key} [, {def}])	any	get item {key} from {dict} or {def}
@@ -3622,11 +3625,30 @@ foreground()	Move the Vim window to the foreground.	Useful when sent from
 		|remote_foreground()| instead.
 		{only in the Win32 GUI and console version}
 
+						*funcref()*
+funcref({name} [, {arglist}] [, {dict}])
+		Just like |function()|, but the returned Funcref will lookup
+		the function by reference, not by name.  This matters when the
+		function {name} is redefined later.
+
+		Unlike |function()|, {name} must be an existing user function.
+		Also for autoloaded functions. {name} cannot be a builtin
+		function.
 
 				       *function()* *E700* *E922* *E923*
 function({name} [, {arglist}] [, {dict}])
 		Return a |Funcref| variable that refers to function {name}.
 		{name} can be a user defined function or an internal function.
+
+		{name} can also be a Funcref or a partial. When it is a
+		partial the dict stored in it will be used and the {dict}
+		argument is not allowed. E.g.: >
+			let FuncWithArg = function(dict.Func, [arg])
+			let Broken = function(dict.Func, [arg], dict)
+<
+		When using the Funcref the function will be found by {name},
+		also when it was redefined later. Use |funcref()| to keep the
+		same function.
 
 		When {arglist} or {dict} is present this creates a partial.
 		That mans the argument list and/or the dictionary is stored in
@@ -6101,6 +6123,7 @@ screenrow()							*screenrow()*
 		The result is a Number, which is the current screen row of the
 		cursor.  The top line has number one.
 		This function is mainly used for testing.
+		Alternatively you can use |winline()|.
 
 		Note: Same restrictions as with |screencol()|.
 
@@ -7922,6 +7945,7 @@ insert_expand		Compiled with support for CTRL-X expansion commands in
 			Insert mode.
 jumplist		Compiled with |jumplist| support.
 keymap			Compiled with 'keymap' support.
+lambda			Compiled with |lambda| support.
 langmap			Compiled with 'langmap' support.
 libcall			Compiled with |libcall()| support.
 linebreak		Compiled with 'linebreak', 'breakat', 'showbreak' and
@@ -8149,7 +8173,7 @@ See |:verbose-cmd| for more information.
 :endf[unction]		The end of a function definition.  Must be on a line
 			by its own, without other commands.
 
-					*:delf* *:delfunction* *E130* *E131*
+				    *:delf* *:delfunction* *E130* *E131* *E933*
 :delf[unction] {name}	Delete function {name}.
 			{name} can also be a |Dictionary| entry that is a
 			|Funcref|: >
