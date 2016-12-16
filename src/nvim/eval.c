@@ -21781,11 +21781,15 @@ ufunc_T *find_func(char_u *name)
 void free_all_functions(void)
 {
   hashitem_T  *hi;
+  ufunc_T     *fp;
+  uint64_t skipped = 0;
+  uint64_t todo;
 
-  /* Need to start all over every time, because func_free() may change the
-   * hash table. */
-  while (func_hashtab.ht_used > 0)
-    for (hi = func_hashtab.ht_array;; ++hi)
+  // Need to start all over every time, because func_free() may change the
+  // hash table.
+  while (func_hashtab.ht_used > skipped) {
+    todo = func_hashtab.ht_used;
+    for (hi = func_hashtab.ht_array; todo > 0; hi++) {
       if (!HASHITEM_EMPTY(hi)) {
         todo--;
         // Only free functions that are not refcounted, those are
@@ -21799,6 +21803,11 @@ void free_all_functions(void)
           break;
         }
       }
+    }
+  }
+  if (skipped == 0) {
+    hash_clear(&func_hashtab);
+  }
 }
 
 #endif
