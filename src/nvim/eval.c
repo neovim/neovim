@@ -211,12 +211,12 @@ static int echo_attr = 0;   /* attributes used for ":echo" */
 #define GLV_NO_AUTOLOAD TFN_NO_AUTOLOAD  // do not use script autoloading
 
 // function flags
-#define FC_ABORT    1           // abort function on error
-#define FC_RANGE    2           // function accepts range
-#define FC_DICT     4           // Dict function, uses "self"
-#define FC_CLOSURE  8           // closure, uses outer scope variables
-#define FC_DELETED  16          // :delfunction used while uf_refcount > 0
-#define FC_REMOVED  32          // function redefined while uf_refcount > 0
+#define FC_ABORT    0x01          // abort function on error
+#define FC_RANGE    0x02          // function accepts range
+#define FC_DICT     0x04          // Dict function, uses "self"
+#define FC_CLOSURE  0x08          // closure, uses outer scope variables
+#define FC_DELETED  0x10          // :delfunction used while uf_refcount > 0
+#define FC_REMOVED  0x20          // function redefined while uf_refcount > 0
 
 // The names of packages that once were loaded are remembered.
 static garray_T ga_loaded = { 0, 0, sizeof(char_u *), 4, NULL };
@@ -6995,13 +6995,17 @@ err_ret:
 
 /// Register function "fp" as using "current_funccal" as its scope.
 static int register_closure(ufunc_T *fp) {
-  funccal_unref(fp->uf_scoped, NULL);
+  if (fp->uf_scoped == current_funccal) {
+    // no change
+    return OK;
+  }
+  funccal_unref(fp->uf_scoped, fp);
   fp->uf_scoped = current_funccal;
   current_funccal->fc_refcount++;
+  func_ptr_ref(current->funccal->func);
   ga_grow(&current_funccal->fc_funcs, 1);
   ((ufunc_T **)current_funccal->fc_funcs.ga_data)
     [current_funccal->fc_funcs.ga_len++] = fp;
-  func_ptr_ref(current_funccal->func);
   return OK;
 }
 
@@ -21332,6 +21336,7 @@ void ex_function(exarg_T *eap)
         // This function is referenced somewhere, don't redefine it but
         // create a new one.
         (fp->uf_refcount)--;
+        fp->uf_flags |= FC_REMOVED;
         fp = NULL;
         overwrite = true;
       } else {
@@ -22097,9 +22102,18 @@ static void cat_func_name(char_u *buf, ufunc_T *fp)
     STRCPY(buf, fp->uf_name);
 }
 
-/*
- * ":delfunction {name}"
- */
+/// There are two kinds of function names:
+/// 1. ordinary names, function defined with :function
+/// 2. numbered functions and lambdas
+/// For the first we only count the name stored in func_hashtab as a reference,
+/// using function() does not count as a reference, because the function is
+/// looked up by name.
+static bool func_name_refcount(char_u *name)
+{
+  return isdigit(*name) || *name == '<';
+}
+
+/// ":delfunction {name}"
 void ex_delfunction(exarg_T *eap)
 {
   ufunc_T     *fp = NULL;
@@ -22150,18 +22164,18 @@ void ex_delfunction(exarg_T *eap)
        * invoke func_unref() and possibly delete the function. */
       dictitem_remove(fudi.fd_dict, fudi.fd_di);
     } else {
-      // Normal functions (not numbered functions and lambdas) have a
+      // A normal function (not a numbered function or lambda) has a
       // refcount of 1 for the entry in the hashtable.  When deleting
-      // them and the refcount is more than one, it should be kept.
-      // Numbered functions and lambdas snould be kept if the refcount is
+      // it and the refcount is more than one, it should be kept.
+      // A numbered function or lambda snould be kept if the refcount is
       // one or more.
-      if (fp->uf_refcount > (isdigit(fp->uf_name[0])
-                             || fp->uf_name[0] == '<' ? 0 : 1)) {
+      if (fp->uf_refcount > (func_name_refcount(fp->uf_name) ? 0 : 1)) {
         // Function is still referenced somewhere. Don't free it but
         // do remove it from the hashtable.
-        func_remove(fp);
+        if (func_remove(fp)) {
+          fp->uf_refcount--;
+        }
         fp->uf_flags |= FC_DELETED;
-        fp->uf_refcount--;
       } else {
         func_free(fp);
       }
@@ -22171,13 +22185,18 @@ void ex_delfunction(exarg_T *eap)
 
 /// Remove the function from the function hashtable.  If the function was
 /// deleted while it still has references this was already done.
-static void func_remove(ufunc_T *fp)
+///
+/// @return true if the entry was deleted, false if it wasn't found.
+static bool func_remove(ufunc_T *fp)
 {
   hashitem_T *hi = hash_find(&func_hashtab, UF2HIKEY(fp));
 
   if (!HASHITEM_EMPTY(hi)) {
     hash_remove(&func_hashtab, hi);
+    return true;
   }
+
+  return false;
 }
 
 /*
@@ -22210,7 +22229,7 @@ void func_unref(char_u *name)
 {
   ufunc_T *fp = NULL;
 
-  if (name == NULL) {
+  if (name == NULL || !func_name_refcount(name)) {
     return;
   }
   if (isdigit(*name)) {
@@ -22261,7 +22280,7 @@ void func_ref(char_u *name)
 {
   ufunc_T *fp;
 
-  if (name == NULL) {
+  if (name == NULL || !func_name_refcount(name)) {
     return;
   }
   fp = find_func(name);
@@ -22672,7 +22691,7 @@ call_user_func(
 }
 
 /// Unreference "fc": decrement the reference count and free it when it
-/// becomes zero.  If "fp" is not NULL, "fp" is detached from "fc".
+/// becomes zero.  "fp" is detached from "fc".
 static void funccal_unref(funccall_T *fc, ufunc_T *fp)
 {
   funccall_T **pfc;
@@ -22683,28 +22702,23 @@ static void funccal_unref(funccall_T *fc, ufunc_T *fp)
     return;
   }
 
-  if (--fc->fc_refcount <= 0) {
+  if (--fc->fc_refcount <= 0
+      && fc->l_varlist.lv_refcount == DO_NOT_FREE_CNT
+      && fc->l_vars.dv_refcount == DO_NOT_FREE_CNT
+      && fc->l_avars.dv_refcount == DO_NOT_FREE_CNT) {
     for (pfc = &previous_funccal; *pfc != NULL; pfc = &(*pfc)->caller) {
       if (fc == *pfc) {
-        if (fc->l_varlist.lv_refcount == DO_NOT_FREE_CNT
-            && fc->l_vars.dv_refcount == DO_NOT_FREE_CNT
-            && fc->l_avars.dv_refcount == DO_NOT_FREE_CNT) {
           *pfc = fc->caller;
           free_funccal(fc, true);
-          freed = true;
+          return;
         }
       }
     }
   }
-  if (!freed) {
-    func_ptr_unref(fc->func);
-
-    if (fp != NULL) {
-      for (i = 0; i < fc->fc_funcs.ga_len; i++) {
-        if (((ufunc_T **)(fc->fc_funcs.ga_data))[i] == fp) {
-            ((ufunc_T **)(fc->fc_funcs.ga_data))[i] = NULL;
-        }
-      }
+  for (i = 0; i < fc->fc_funcs.ga_len; i++) {
+    if (((ufunc_T **)(fc->fc_funcs.ga_data))[i] == fp) {
+      func_ptr_unref(fc->func);
+      ((ufunc_T **)(fc->fc_funcs.ga_data))[i] = NULL;
     }
   }
 }
