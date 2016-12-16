@@ -219,7 +219,7 @@ static int echo_attr = 0;   /* attributes used for ":echo" */
 #define FC_REMOVED  32          // function redefined while uf_refcount > 0
 
 // The names of packages that once were loaded are remembered.
-static garray_T ga_loaded = {0, 0, sizeof(char_u *), 4, NULL};
+static garray_T ga_loaded = { 0, 0, sizeof(char_u *), 4, NULL };
 
 // List heads for garbage collection. Although there can be a reference loop
 // from partial to dict to partial, we don't need to keep track of the partial,
@@ -20926,6 +20926,7 @@ void ex_function(exarg_T *eap)
   int varargs = false;
   int flags = 0;
   ufunc_T     *fp;
+  bool overwrite = false;
   int indent;
   int nesting;
   char_u      *skip_until = NULL;
@@ -21337,7 +21338,7 @@ void ex_function(exarg_T *eap)
       } else {
         // redefine existing function
         ga_clear_strings(&(fp->uf_args));
-        ga_clear_strings(&(fp->uf_lines))
+        ga_clear_strings(&(fp->uf_lines));
         xfree(name);
         name = NULL;
       }
@@ -22156,7 +22157,7 @@ void ex_delfunction(exarg_T *eap)
       // Numbered functions and lambdas snould be kept if the refcount is
       // one or more.
       if (fp->uf_refcount > (isdigit(fp->uf_name[0])
-                             || fp->uf_name[0] == '<') ? 0 : 1) {
+                             || fp->uf_name[0] == '<' ? 0 : 1)) {
         // Function is still referenced somewhere. Don't free it but
         // do remove it from the hashtable.
         func_remove(fp);
