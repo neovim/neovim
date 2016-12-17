@@ -1231,6 +1231,9 @@ EXTERN char *ignoredp;
 
 EXTERN bool in_free_unref_items INIT(= false);
 
+// Used for checking if local variables or arguments used in a lambda.
+EXTERN int *eval_lavars_used INIT(= NULL);
+
 // If a msgpack-rpc channel should be started over stdin/stdout
 EXTERN bool embedded_mode INIT(= false);
 
