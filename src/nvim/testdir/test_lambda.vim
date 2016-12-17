@@ -286,3 +286,5 @@ func Test_named_function_closure()
 endfunc
 =======
 >>>>>>> 42b34811... vim-patch:7.4.2119
+=======
+>>>>>>> 789a3319... vim-patch:7.4.2120

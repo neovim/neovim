@@ -209,10 +209,13 @@ static int echo_attr = 0;   /* attributes used for ":echo" */
 #define GLV_QUIET       TFN_QUIET       /* no error messages */
 #define GLV_NO_AUTOLOAD TFN_NO_AUTOLOAD /* do not use script autoloading */
 
-/* function flags */
-#define FC_ABORT    1           /* abort function on error */
-#define FC_RANGE    2           /* function accepts range */
-#define FC_DICT     4           /* Dict function, uses "self" */
+// function flags
+#define FC_ABORT    1           // abort function on error
+#define FC_RANGE    2           // function accepts range
+#define FC_DICT     4           // Dict function, uses "self"
+#define FC_CLOSURE  8           // closure, uses outer scope variables
+#define FC_DELETED  16          // :delfunction used while uf_refcount > 0
+#define FC_REMOVED  32          // function redefined while uf_refcount > 0
 
 /* The names of packages that once were loaded are remembered. */
 static garray_T ga_loaded = {0, 0, sizeof(char_u *), 4, NULL};
@@ -3062,7 +3065,10 @@ int do_unlet(char_u *name, int forceit)
       return FAIL;
     }
     hi = hash_find(ht, varname);
-    if (!HASHITEM_EMPTY(hi)) {
+    if (HASHITEM_EMPTY(hi)) {
+      hi = find_hi_in_scoped_ht(name, &varname, &ht);
+    }
+    if (hi != NULL && !HASHITEM_EMPTY(hi)) {
       di = HI2DI(hi);
       if (var_check_fixed(di->di_flags, name, false)
           || var_check_ro(di->di_flags, name, false)
@@ -7073,7 +7079,7 @@ static int get_lambda_tv(char_u **arg, typval_T *rettv, int evaluate)
   (*arg)++;
 
   if (evaluate) {
-    int len;
+    int len, flags = 0;
     char_u *p;
 
     snprintf((char *)name, sizeof(name), "<lambda>%d", lambda_no++);
@@ -7103,6 +7109,7 @@ static int get_lambda_tv(char_u **arg, typval_T *rettv, int evaluate)
     fp->uf_args = newargs;
     fp->uf_lines = newlines;
     if (current_funccal != NULL && eval_lavars) {
+      flags |= FC_CLOSURE;
       fp->uf_scoped = current_funccal;
       current_funccal->fc_refcount++;
       ga_grow(&current_funccal->fc_funcs, 1);
@@ -7121,7 +7128,7 @@ static int get_lambda_tv(char_u **arg, typval_T *rettv, int evaluate)
       func_do_profile(fp);
     }
     fp->uf_varargs = true;
-    fp->uf_flags = 0;
+    fp->uf_flags = flags;
     fp->uf_calls = 0;
     fp->uf_script_ID = current_SID;
 
@@ -21049,7 +21056,7 @@ void ex_function(exarg_T *eap)
     goto errret_2;
   }
 
-  // find extra arguments "range", "dict" and "abort"
+  // find extra arguments "range", "dict", "abort" and "closure"
   for (;; ) {
     p = skipwhite(p);
     if (STRNCMP(p, "range", 5) == 0) {
@@ -21061,8 +21068,12 @@ void ex_function(exarg_T *eap)
     } else if (STRNCMP(p, "abort", 5) == 0) {
       flags |= FC_ABORT;
       p += 5;
-    } else
+    } else if (STRNCMP(p, "closure", 7) == 0) {
+      flags |= FC_CLOSURE;
+      p += 7;
+    } else {
       break;
+    }
   }
 
   /* When there is a line break use what follows for the function body.
@@ -21345,7 +21356,21 @@ void ex_function(exarg_T *eap)
   fp->uf_refcount = 1;
   fp->uf_args = newargs;
   fp->uf_lines = newlines;
-  fp->uf_scoped = NULL;
+  if ((flags & FC_CLOSURE) != 0) {
+    if (current_funccal == NULL) {
+      emsg_funcname(N_("E932 Closure function should not be at top level: %s"),
+                    name);
+      goto erret;
+    }
+    fp->uf_scoped = current_funccal;
+    current_funccal->fc_refcount++;
+    ga_grow(&current_funccal->fc_funcs, 1);
+    ((ufunc_T **)current_funccal->fc_funcs.ga_data)
+      [current_funccal->fc_funcs.ga_len++] = fp;
+    func_ref(current_funccal->func->uf_name);
+  } else {
+    fp->uf_scoped = NULL;
+  }
   fp->uf_tml_count = NULL;
   fp->uf_tml_total = NULL;
   fp->uf_tml_self = NULL;
@@ -21626,12 +21651,18 @@ static void list_func_head(ufunc_T *fp, int indent)
     MSG_PUTS("...");
   }
   msg_putchar(')');
-  if (fp->uf_flags & FC_ABORT)
+  if (fp->uf_flags & FC_ABORT) {
     MSG_PUTS(" abort");
-  if (fp->uf_flags & FC_RANGE)
+  }
+  if (fp->uf_flags & FC_RANGE) {
     MSG_PUTS(" range");
-  if (fp->uf_flags & FC_DICT)
+  }
+  if (fp->uf_flags & FC_DICT) {
     MSG_PUTS(" dict");
+  }
+  if (fp->uf_flags & FC_CLOSURE) {
+    MSG_PUTS(" closure");
+  }
   msg_clr_eos();
   if (p_verbose > 0)
     last_set_msg(fp->uf_script_ID);
@@ -22951,6 +22982,39 @@ static var_flavour_T var_flavour(char_u *varname)
   } else {
     return VAR_FLAVOUR_DEFAULT;
   }
+}
+
+/// Search hashitem in parent scope.
+hashitem_T *find_hi_in_scoped_ht(char_u *name, char_u **varname,
+                                 hashtab_T **pht)
+{
+  funccall_T *old_current_funccal = current_funccal;
+  hashtab_T  *ht;
+  hashitem_T *hi = NULL;
+
+  if (current_funccal == NULL || current_funccal->func->uf_scoped == NULL) {
+    return NULL;
+  }
+
+  // Search in parent scope which is possible to reference from lambda
+  current_funccal = current_funccal->func->uf_scoped;
+  while (current_funccal) {
+    ht = find_var_ht(name, varname);
+    if (ht != NULL && **varname != NUL) {
+      hi = hash_find(ht, *varname);
+      if (!HASHITEM_EMPTY(hi)) {
+        *pht = ht;
+        break;
+      }
+    }
+    if (current_funccal == current_funccal->func->uf_scoped) {
+      break;
+    }
+    current_funccal = current_funccal->func->uf_scoped;
+  }
+  current_funccal = old_current_funccal;
+
+  return hi;
 }
 
 /// Search variable in parent scope.
