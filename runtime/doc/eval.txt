@@ -1207,6 +1207,7 @@ function returns: >
 	:let Bar = Foo(4)
 	:echo Bar(6)
 <	5
+See also |:func-closure|.
 
 Examples for using a lambda expression with |sort()|, |map()| and |filter()|: >
 	:echo map([1, 2, 3], {idx, val -> val + 1})
@@ -8072,7 +8073,7 @@ last defined. Example: >
 See |:verbose-cmd| for more information.
 
 						*E124* *E125* *E853* *E884*
-:fu[nction][!] {name}([arguments]) [range] [abort] [dict]
+:fu[nction][!] {name}([arguments]) [range] [abort] [dict] [closure]
 			Define a new function by the name {name}.  The name
 			must be made of alphanumeric characters and '_', and
 			must start with a capital or "s:" (see above).  Note
@@ -8115,6 +8116,28 @@ See |:verbose-cmd| for more information.
 			be invoked through an entry in a |Dictionary|.	The
 			local variable "self" will then be set to the
 			dictionary.  See |Dictionary-function|.
+						*:func-closure* *E932*
+			When the [closure] argument is added, the function
+			can access variables and arguments from the outer
+			scope.  This is usually called a closure.  In this
+			example Bar() uses "x" from the scope of Foo().  It
+			remains referenced even after Foo() returns: >
+				:function! Foo()
+				:  let x = 0
+				:  function! Bar() closure
+				:    let x += 1
+				:    return x
+				:  endfunction
+				:  return function('Bar')
+				:endfunction
+
+				:let F = Foo()
+				:echo F()
+<				1 >
+				:echo F()
+<				2 >
+				:echo F()
+<				3
 
 						*function-search-undo*
 			The last used search pattern and the redo command "."
