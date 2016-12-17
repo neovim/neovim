@@ -11656,6 +11656,7 @@ static void f_has(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     "insert_expand",
     "jumplist",
     "keymap",
+    "lambda",
     "langmap",
     "libcall",
     "linebreak",
