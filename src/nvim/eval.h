@@ -13,6 +13,8 @@
 // All user-defined functions are found in this hashtable.
 extern hashtab_T func_hashtab;
 
+typedef struct funccall_S funccall_T;
+
 // Structure to hold info for a user function.
 typedef struct ufunc ufunc_T;
 
@@ -40,6 +42,7 @@ struct ufunc {
   scid_T       uf_script_ID;     ///< ID of script where function was defined,
                                  //   used for s: variables
   int          uf_refcount;      ///< for numbered function: reference count
+  funccall_T   *uf_scoped;       ///< l: local variables for closure
   char_u       uf_name[1];       ///< name of function (actually longer); can
                                  //   start with <SNR>123_ (<SNR> is K_SPECIAL
                                  //   KS_EXTRA KE_SNR)
