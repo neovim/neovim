@@ -143,3 +143,10 @@ func Test_substitute_expr_arg()
   call assert_fails("call substitute('xxx', '.', {m -> string(extend(m, ['x']))}, '')", 'E742:')
   call assert_fails("call substitute('xxx', '.', {m -> string(remove(m, 1))}, '')", 'E742:')
 endfunc
+
+func Test_function_with_funcref()
+  let s:f = function('type')
+  let s:fref = function(s:f)
+  call assert_equal(v:t_string, s:fref('x'))
+  call assert_fails("call function('s:f')", 'E700:')
+endfunc

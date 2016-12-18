@@ -200,14 +200,15 @@ static garray_T ga_scripts = {0, 0, sizeof(scriptvar_T *), 4, NULL};
 
 static int echo_attr = 0;   /* attributes used for ":echo" */
 
-/* Values for trans_function_name() argument: */
-#define TFN_INT         1       /* internal function name OK */
-#define TFN_QUIET       2       /* no error messages */
-#define TFN_NO_AUTOLOAD 4       /* do not use script autoloading */
+// Values for trans_function_name() argument:
+#define TFN_INT         1       // internal function name OK
+#define TFN_QUIET       2       // no error messages
+#define TFN_NO_AUTOLOAD 4       // do not use script autoloading
+#define TFN_NO_DEREF    8       // do not dereference a Funcref
 
-/* Values for get_lval() flags argument: */
-#define GLV_QUIET       TFN_QUIET       /* no error messages */
-#define GLV_NO_AUTOLOAD TFN_NO_AUTOLOAD /* do not use script autoloading */
+// Values for get_lval() flags argument:
+#define GLV_QUIET       TFN_QUIET        // no error messages
+#define GLV_NO_AUTOLOAD TFN_NO_AUTOLOAD  // do not use script autoloading
 
 // function flags
 #define FC_ABORT    1           // abort function on error
@@ -7021,7 +7022,8 @@ err_ret:
 }
 
 /// Parse a lambda expression and get a Funcref from "*arg".
-/// Return OK or FAIL.  Returns NOTDONE for dict or {expr}.
+///
+/// @return OK or FAIL.  Returns NOTDONE for dict or {expr}.
 static int get_lambda_tv(char_u **arg, typval_T *rettv, int evaluate)
 {
   garray_T   newargs;
@@ -7059,7 +7061,7 @@ static int get_lambda_tv(char_u **arg, typval_T *rettv, int evaluate)
     goto errret;
   }
 
-  // Set up dictionaries for checking local variables and arguments.
+  // Set up a flag for checking local variables and arguments.
   if (evaluate) {
     eval_lavars_used = &eval_lavars;
   }
@@ -9245,12 +9247,13 @@ static void f_exists(typval_T *argvars, typval_T *rettv, FunPtr fptr)
         n = TRUE;
       xfree(p);
     }
-  } else if (*p == '&' || *p == '+') {                /* option */
-    n = (get_option_tv(&p, NULL, TRUE) == OK);
-    if (*skipwhite(p) != NUL)
-      n = FALSE;                        /* trailing garbage */
-  } else if (*p == '*') {             /* internal or user defined function */
-    n = function_exists(p + 1);
+  } else if (*p == '&' || *p == '+') {                // option
+    n = (get_option_tv(&p, NULL, true) == OK);
+    if (*skipwhite(p) != NUL) {
+      n = false;               // trailing garbage
+    }
+  } else if (*p == '*') {             // internal or user defined function
+    n = function_exists(p + 1, false);
   } else if (*p == ':') {
     n = cmd_exists(p + 1);
   } else if (*p == '#') {
@@ -10022,7 +10025,7 @@ static void f_function(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   if (s == NULL || *s == NUL || (use_string && ascii_isdigit(*s))) {
     EMSG2(_(e_invarg2), s);
   } else if (use_string && vim_strchr(s, AUTOLOAD_CHAR) == NULL
-             && !function_exists(s)) {
+             && !function_exists(s, true)) {
     // Don't check an autoload name for existence here.
     EMSG2(_("E700: Unknown function: %s"), s);
   } else {
@@ -20456,10 +20459,10 @@ var_check_func_name (
     EMSG2(_("E704: Funcref variable name must start with a capital: %s"), name);
     return TRUE;
   }
-  /* Don't allow hiding a function.  When "v" is not NULL we might be
-   * assigning another function to the same var, the type is checked
-   * below. */
-  if (new_var && function_exists(name)) {
+  // Don't allow hiding a function.  When "v" is not NULL we might be
+  // assigning another function to the same var, the type is checked
+  // below.
+  if (new_var && function_exists(name, false)) {
     EMSG2(_("E705: Variable name conflicts with existing function: %s"),
         name);
     return TRUE;
@@ -21396,16 +21399,16 @@ ret_free:
   need_wait_return |= saved_wait_return;
 }
 
-/*
- * Get a function name, translating "<SID>" and "<SNR>".
- * Also handles a Funcref in a List or Dictionary.
- * Returns the function name in allocated memory, or NULL for failure.
- * flags:
- * TFN_INT:         internal function name OK
- * TFN_QUIET:       be quiet
- * TFN_NO_AUTOLOAD: do not use script autoloading
- * Advances "pp" to just after the function name (if no error).
- */
+/// Get a function name, translating "<SID>" and "<SNR>".
+/// Also handles a Funcref in a List or Dictionary.
+/// flags:
+/// TFN_INT:         internal function name OK
+/// TFN_QUIET:       be quiet
+/// TFN_NO_AUTOLOAD: do not use script autoloading
+/// TFN_NO_DEREF:    do not dereference a Funcref
+/// Advances "pp" to just after the function name (if no error).
+///
+/// @return the function name in allocated memory, or NULL for failure.
 static char_u *
 trans_function_name (
     char_u **pp,
@@ -21508,7 +21511,7 @@ trans_function_name (
     if (name == lv.ll_exp_name) {
       name = NULL;
     }
-  } else {
+  } else if (!(flags & TFN_NO_DEREF)) {
     len = (int)(end - *pp);
     name = deref_func_name(*pp, &len, partial, flags & TFN_NO_AUTOLOAD);
     if (name == *pp) {
@@ -21571,7 +21574,7 @@ trans_function_name (
     goto theend;
   }
 
-  if (!skip && !(flags & TFN_QUIET)) {
+  if (!skip && !(flags & TFN_QUIET) && !(flags & TFN_NO_DEREF)) {
     char_u *cp = vim_strchr(lv.ll_name, ':');
 
     if (cp != NULL && cp < end) {
@@ -21708,17 +21711,23 @@ int translated_function_exists(char_u *name)
   return find_func(name) != NULL;
 }
 
-/*
- * Return TRUE if a function "name" exists.
- */
-static int function_exists(char_u *name)
+/// Check if a function exists by name
+///
+/// @param[in]   name       The name of the function to check.
+/// @param[in]   no_deref   If true, do not dereference a Funcref.
+///
+/// @return true if a function "name" exists.
+static int function_exists(char_u *name, bool no_deref)
 {
   char_u  *nm = name;
   char_u  *p;
-  int n = FALSE;
+  int n = false;
+  int flag = TFN_INT | TFN_QUIET | TFN_NO_AUTOLOAD;
 
-  p = trans_function_name(&nm, false, TFN_INT|TFN_QUIET|TFN_NO_AUTOLOAD,
-                          NULL, NULL);
+  if (no_deref) {
+    flag |= TFN_NO_DEREF;
+  }
+  p = trans_function_name(&nm, false, flag, NULL, NULL);
   nm = skipwhite(nm);
 
   /* Only accept "funcname", "funcname ", "funcname (..." and
@@ -21729,9 +21738,13 @@ static int function_exists(char_u *name)
   return n;
 }
 
-/// Return TRUE if "name" looks like a builtin function name: starts with a
+/// Checks if a builtin function with the given name exists.
+///
+/// @param[in]   name   The name of the builtin function to check.
+/// @param[in]   len    The length of "name", or -1 for NUL terminated.
+///
+/// @return true if "name" looks like a builtin function name: starts with a
 /// lower case letter and doesn't contain AUTOLOAD_CHAR.
-/// "len" is the length of "name", or -1 for NUL terminated.
 static bool builtin_function(char_u *name, int len)
 {
   if (!ASCII_ISLOWER(name[0])) {
