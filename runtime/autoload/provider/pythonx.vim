@@ -35,7 +35,6 @@ function! provider#pythonx#Require(host) abort
     call add(args, plugin.path)
   endfor
 
-  let start = reltime()
   try
     let channel_id = jobstart(args, s:job_opts)
     let s:job_chan_ids += [channel_id]
