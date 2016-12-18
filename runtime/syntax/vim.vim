@@ -593,14 +593,14 @@ syn region	vimGlobal	matchgroup=Statement start='\<v\%[global]!\=/' skip='\\.' e
 " Allows users to specify the type of embedded script highlighting
 " they want:  (perl/python/ruby/tcl support)
 "   g:vimsyn_embed == 0   : don't embed any scripts
-"   g:vimsyn_embed =~# 'l' : embed lua      (but only if vim supports it)
-"   g:vimsyn_embed =~# 'm' : embed mzscheme (but only if vim supports it)
-"   g:vimsyn_embed =~# 'p' : embed perl     (but only if vim supports it)
-"   g:vimsyn_embed =~# 'P' : embed python   (but only if vim supports it)
-"   g:vimsyn_embed =~# 'r' : embed ruby     (but only if vim supports it)
-"   g:vimsyn_embed =~# 't' : embed tcl      (but only if vim supports it)
+"   g:vimsyn_embed =~# 'l' : embed lua
+"   g:vimsyn_embed =~# 'm' : embed mzscheme
+"   g:vimsyn_embed =~# 'p' : embed perl
+"   g:vimsyn_embed =~# 'P' : embed python
+"   g:vimsyn_embed =~# 'r' : embed ruby
+"   g:vimsyn_embed =~# 't' : embed tcl
 if !exists("g:vimsyn_embed")
- let g:vimsyn_embed= "lmpPr"
+ let g:vimsyn_embed= "lpPr"
 endif
 
 " [-- lua --] {{{3
@@ -613,7 +613,7 @@ if !filereadable(s:luapath)
   endif
  endfor
 endif
-if (g:vimsyn_embed =~# 'l' && has("lua")) && filereadable(s:luapath)
+if g:vimsyn_embed =~# 'l' && filereadable(s:luapath)
  unlet! b:current_syntax
  exe "syn include @vimLuaScript ".s:luapath
  VimFoldl syn region vimLuaRegion matchgroup=vimScriptDelim start=+lua\s*<<\s*\z(.*\)$+ end=+^\z1$+	contains=@vimLuaScript
@@ -635,7 +635,7 @@ if !filereadable(s:perlpath)
   endif
  endfor
 endif
-if (g:vimsyn_embed =~# 'p' && has("perl")) && filereadable(s:perlpath)
+if g:vimsyn_embed =~# 'p' && filereadable(s:perlpath)
  unlet! b:current_syntax
  exe "syn include @vimPerlScript ".s:perlpath
  VimFoldp syn region vimPerlRegion  matchgroup=vimScriptDelim start=+pe\%[rl]\s*<<\s*\z(.*\)$+ end=+^\z1$+	contains=@vimPerlScript
@@ -657,7 +657,7 @@ if !filereadable(s:rubypath)
   endif
  endfor
 endif
-if (g:vimsyn_embed =~# 'r' && has("ruby")) && filereadable(s:rubypath)
+if g:vimsyn_embed =~# 'r' && filereadable(s:rubypath)
  unlet! b:current_syntax
  exe "syn include @vimRubyScript ".s:rubypath
  VimFoldr syn region vimRubyRegion matchgroup=vimScriptDelim start=+rub[y]\s*<<\s*\z(.*\)$+ end=+^\z1$+	contains=@vimRubyScript
@@ -679,7 +679,7 @@ if !filereadable(s:pythonpath)
   endif
  endfor
 endif
-if g:vimsyn_embed =~# 'P' && (has("python") || has("python3")) && filereadable(s:pythonpath)
+if g:vimsyn_embed =~# 'P' && filereadable(s:pythonpath)
  unlet! b:current_syntax
  exe "syn include @vimPythonScript ".s:pythonpath
  VimFoldP syn region vimPythonRegion matchgroup=vimScriptDelim start=+py\%[thon]3\=\s*<<\s*\z(.*\)$+ end=+^\z1$+	contains=@vimPythonScript
@@ -710,7 +710,7 @@ if s:trytcl
    endif
   endfor
  endif
- if (g:vimsyn_embed =~# 't' && has("tcl")) && filereadable(s:tclpath)
+ if g:vimsyn_embed =~# 't' && filereadable(s:tclpath)
   unlet! b:current_syntax
   exe "syn include @vimTclScript ".s:tclpath
   VimFoldt syn region vimTclRegion matchgroup=vimScriptDelim start=+tc[l]\=\s*<<\s*\z(.*\)$+ end=+^\z1$+	contains=@vimTclScript
@@ -737,7 +737,7 @@ if !filereadable(s:mzschemepath)
   endif
  endfor
 endif
-if (g:vimsyn_embed =~# 'm' && has("mzscheme")) && filereadable(s:mzschemepath)
+if g:vimsyn_embed =~# 'm' && filereadable(s:mzschemepath)
  unlet! b:current_syntax
  let iskKeep= &isk
  exe "syn include @vimMzSchemeScript ".s:mzschemepath
