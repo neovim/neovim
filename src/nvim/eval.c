@@ -17129,12 +17129,16 @@ static void f_submatch(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     return;
   }
 
+  if (no < 0 || no >= NSUBEXP) {
+    EMSGN(_("E935: invalid submatch number: %d"), no);
+    return;
+  }
   int retList = 0;
 
   if (argvars[1].v_type != VAR_UNKNOWN) {
     retList = get_tv_number_chk(&argvars[1], &error);
     if (error) {
-    return;
+      return;
     }
   }
 
