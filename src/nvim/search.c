@@ -4009,7 +4009,7 @@ static int is_one_char(char_u *pattern, bool move)
      * start and end are in the same position. */
     called_emsg = FALSE;
     nmatched = vim_regexec_multi(&regmatch, curwin, curbuf,
-        pos.lnum, (colnr_T)0, NULL);
+        pos.lnum, pos.col, NULL);
 
     if (!called_emsg)
       result = (nmatched != 0
