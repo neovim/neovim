@@ -34,7 +34,7 @@ NEW_TESTS ?= \
 	    test_cscope.res \
 	    test_digraph.res \
 	    test_diffmode.res \
-		test_filter_map.res \
+	    test_filter_map.res \
 	    test_gn.res \
 	    test_hardcopy.res \
 	    test_help_tagjump.res \

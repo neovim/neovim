@@ -18,29 +18,29 @@ function! Test_lambda_with_sort()
   call assert_equal([1, 2, 3, 4, 7], sort([3,7,2,1,4], {a, b -> a - b}))
 endfunction
 
-" function! Test_lambda_with_timer()
-"   if !has('timers')
-"     return
-"   endif
+function! Test_lambda_with_timer()
+  if !has('timers')
+    return
+  endif
 
-"   let s:n = 0
-"   let s:timer_id = 0
-"   function! s:Foo()
-"     "let n = 0
-"     let s:timer_id = timer_start(50, {-> execute("let s:n += 1 | echo s:n", "")}, {"repeat": -1})
-"   endfunction
+  let s:n = 0
+  let s:timer_id = 0
+  function! s:Foo()
+    "let n = 0
+    let s:timer_id = timer_start(50, {-> execute("let s:n += 1 | echo s:n", "")}, {"repeat": -1})
+  endfunction
 
-"   call s:Foo()
-"   sleep 200ms
-"   " do not collect lambda
-"   call garbagecollect()
-"   let m = s:n
-"   sleep 200ms
-"   call timer_stop(s:timer_id)
-"   call assert_true(m > 1)
-"   call assert_true(s:n > m + 1)
-"   call assert_true(s:n < 9)
-" endfunction
+  call s:Foo()
+  sleep 200ms
+  " do not collect lambda
+  call garbagecollect()
+  let m = s:n
+  sleep 200ms
+  call timer_stop(s:timer_id)
+  call assert_true(m > 1)
+  call assert_true(s:n > m + 1)
+  call assert_true(s:n < 9)
+endfunction
 
 function! Test_lambda_with_partial()
   let l:Cb = function({... -> ['zero', a:1, a:2, a:3]}, ['one', 'two'])
@@ -259,10 +259,10 @@ endfunction
 
 func Test_closure_refcount()
   let g:Count = LambdaFoo()
-  call garbagecollect()
+  call test_garbagecollect_now()
   call assert_equal(1, g:Count())
   let g:Count2 = LambdaFoo()
-  call garbagecollect()
+  call test_garbagecollect_now()
   call assert_equal(1, g:Count2())
   call assert_equal(2, g:Count())
   call assert_equal(3, g:Count2())
@@ -271,6 +271,7 @@ func Test_closure_refcount()
   delfunc LambdaBar
 endfunc
 
+" This test is causing a use-after-free on shutdown.
 func Test_named_function_closure()
   func! Afoo()
     let x = 14
