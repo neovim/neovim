@@ -6,10 +6,9 @@
 
 #include "nvim/hashtab.h"
 #include "nvim/lib/queue.h"
-#include "nvim/garray.h"  // For garray_T
-// for proftime_T
-#include "nvim/profile.h"
-#include "nvim/pos.h" // for linenr_T
+#include "nvim/garray.h"   // for garray_T
+#include "nvim/profile.h"  // for proftime_T
+#include "nvim/pos.h"      // for linenr_T
 
 typedef int varnumber_T;
 typedef double float_T;
@@ -118,9 +117,9 @@ typedef struct {
 // Also used for a variable.
 // The key is copied into "di_key" to avoid an extra alloc/free for it.
 struct dictitem_S {
-  typval_T di_tv;               // type and value of the variable
-  char_u di_flags;              // flags (only used for variable)
-  char_u di_key[1];             // key (actually longer!)
+  typval_T di_tv;               ///< type and value of the variable
+  char_u di_flags;              ///< flags (only used for variable)
+  char_u di_key[1];             ///< key (actually longer!)
 };
 
 typedef struct dictitem_S dictitem_T;
@@ -198,30 +197,29 @@ struct ufunc {
 
 // structure to hold info for a function that is currently being executed.
 struct funccall_S {
-  ufunc_T     *func;            // function being called
-  int linenr;                   // next line to be executed
-  int returned;                 // ":return" used
-  struct                        // fixed variables for arguments
-  {
-    dictitem_T var;                     // variable (without room for name)
-    char_u room[VAR_SHORT_LEN];         // room for the name
+  ufunc_T     *func;            ///< function being called
+  int linenr;                   ///< next line to be executed
+  int returned;                 ///< ":return" used
+  struct {                      ///< fixed variables for arguments
+    dictitem_T var;                     ///< variable (without room for name)
+    char_u room[VAR_SHORT_LEN];         ///< room for the name
   } fixvar[FIXVAR_CNT];
-  dict_T l_vars;                // l: local function variables
-  dictitem_T l_vars_var;        // variable for l: scope
-  dict_T l_avars;               // a: argument variables
-  dictitem_T l_avars_var;       // variable for a: scope
-  list_T l_varlist;             // list for a:000
-  listitem_T l_listitems[MAX_FUNC_ARGS];        // listitems for a:000
-  typval_T    *rettv;           // return value
-  linenr_T breakpoint;          // next line with breakpoint or zero
-  int dbg_tick;                 // debug_tick when breakpoint was set
-  int level;                    // top nesting level of executed function
-  proftime_T prof_child;        // time spent in a child
-  funccall_T  *caller;          // calling function or NULL
-  int fc_refcount;              // number of user functions that reference
+  dict_T l_vars;                ///< l: local function variables
+  dictitem_T l_vars_var;        ///< variable for l: scope
+  dict_T l_avars;               ///< a: argument variables
+  dictitem_T l_avars_var;       ///< variable for a: scope
+  list_T l_varlist;             ///< list for a:000
+  listitem_T l_listitems[MAX_FUNC_ARGS];        ///< listitems for a:000
+  typval_T    *rettv;           ///< return value
+  linenr_T breakpoint;          ///< next line with breakpoint or zero
+  int dbg_tick;                 ///< debug_tick when breakpoint was set
+  int level;                    ///< top nesting level of executed function
+  proftime_T prof_child;        ///< time spent in a child
+  funccall_T  *caller;          ///< calling function or NULL
+  int fc_refcount;              ///< number of user functions that reference
                                 // this funccal
-  int fc_copyID;                // for garbage collection
-  garray_T fc_funcs;            // list of ufunc_T* which keep a reference
+  int fc_copyID;                ///< for garbage collection
+  garray_T fc_funcs;            ///< list of ufunc_T* which keep a reference
                                 // to "func"
 };
 

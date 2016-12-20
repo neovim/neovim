@@ -344,7 +344,7 @@ static int _TYPVAL_ENCODE_CONVERT_ONE_VALUE(
     case VAR_PARTIAL: {
       partial_T *const pt = tv->vval.v_partial;
       (void)pt;
-      TYPVAL_ENCODE_CONV_FUNC_START(tv, (pt == NULL ? NULL : pt->pt_name));
+      TYPVAL_ENCODE_CONV_FUNC_START(tv, (pt == NULL ? NULL : partial_name(pt)));
       _mp_push(*mpstack, ((MPConvStackVal) {
         .type = kMPConvPartial,
         .tv = tv,
