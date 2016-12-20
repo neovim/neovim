@@ -164,4 +164,5 @@ func Test_funcref()
   call assert_equal(1, OneByRef())
   let OneByRef = funcref('One')
   call assert_equal(2, OneByRef())
+  call assert_fails('echo funcref("{")', 'E475:')
 endfunc

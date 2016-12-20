@@ -10054,8 +10054,7 @@ static void common_function(typval_T *argvars, typval_T *rettv,
     use_string = true;
   }
 
-  if (((use_string && vim_strchr(s, AUTOLOAD_CHAR) == NULL)
-       || is_funcref)) {
+  if (((use_string && vim_strchr(s, AUTOLOAD_CHAR) == NULL) || is_funcref)) {
     name = s;
     trans_name = trans_function_name(&name, false,
                                      TFN_INT | TFN_QUIET | TFN_NO_AUTOLOAD
@@ -10064,7 +10063,8 @@ static void common_function(typval_T *argvars, typval_T *rettv,
       s = NULL;
     }
   }
-  if (s == NULL || *s == NUL || (use_string && ascii_isdigit(*s))) {
+  if (s == NULL || *s == NUL || (use_string && ascii_isdigit(*s))
+      || (is_funcref && trans_name == NULL)) {
     EMSG2(_(e_invarg2), s);
   } else if (trans_name != NULL
              && (is_funcref ? find_func(trans_name) == NULL
