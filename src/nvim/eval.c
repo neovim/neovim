@@ -5938,6 +5938,9 @@ bool garbage_collect(bool testing)
     ABORTING(set_ref_in_ht)(&fc->l_avars.dv_hashtab, copyID, NULL);
   }
 
+  // named functions (matters for closures)
+  ABORTING(set_ref_in_functions(copyID));
+
   // Jobs
   {
     TerminalJobData *data;
@@ -6275,12 +6278,33 @@ bool set_ref_in_item(typval_T *tv, int copyID, ht_stack_T **ht_stack,
   return abort;
 }
 
+/// Set "copyID" in all functions available by name.
+bool set_ref_in_functions(int copyID)
+{
+  int todo;
+  hashitem_T *hi = NULL;
+  bool abort = false;
+  ufunc_T *fp;
+
+  todo = (int)func_hashtab.ht_used;
+  for (hi = func_hashtab.ht_array; todo > 0 && !got_int; ++hi) {
+    if (!HASHITEM_EMPTY(hi)) {
+      todo--;
+      fp = HI2UF(hi);
+      if (!func_name_refcount(fp->uf_name)) {
+		abort = abort || set_ref_in_func(NULL, fp, copyID);
+      }
+    }
+  }
+  return abort;
+}
+
 /// Mark all lists and dicts referenced through function "name" with "copyID".
 /// "list_stack" is used to add lists to be marked.  Can be NULL.
 /// "ht_stack" is used to add hashtabs to be marked.  Can be NULL.
 ///
-/// @return TRUE if setting references failed somehow.
-int set_ref_in_func(char_u *name, ufunc_T *fp_in, int copyID)
+/// @return true if setting references failed somehow.
+bool set_ref_in_func(char_u *name, ufunc_T *fp_in, int copyID)
 {
   ufunc_T *fp = fp_in;
   funccall_T *fc;
@@ -6299,11 +6323,7 @@ int set_ref_in_func(char_u *name, ufunc_T *fp_in, int copyID)
   }
   if (fp != NULL) {
     for (fc = fp->uf_scoped; fc != NULL; fc = fc->func->uf_scoped) {
-      if (fc->fc_copyID != copyID) {
-        fc->fc_copyID = copyID;
-        abort = set_ref_in_ht(&fc->l_vars.dv_hashtab, copyID, NULL);
-        abort = set_ref_in_ht(&fc->l_avars.dv_hashtab, copyID, NULL);
-      }
+      abort = abort || set_ref_in_funccal(fc, copyID);
     }
   }
   xfree(tofree);
@@ -6356,9 +6376,20 @@ static inline bool set_ref_dict(dict_T *dict, int copyID)
   return false;
 }
 
-/*
- * Allocate an empty header for a dictionary.
- */
+static bool set_ref_in_funccal(funccall_T *fc, int copyID)
+{
+  int abort = false;
+
+  if (fc->fc_copyID != copyID) {
+    fc->fc_copyID = copyID;
+    abort = abort || set_ref_in_ht(&fc->l_vars.dv_hashtab, copyID, NULL);
+    abort = abort || set_ref_in_ht(&fc->l_avars.dv_hashtab, copyID, NULL);
+    abort = abort || set_ref_in_func(NULL, fc->func, copyID);
+  }
+  return abort;
+}
+
+/// Allocate an empty header for a dictionary.
 dict_T *dict_alloc(void) FUNC_ATTR_NONNULL_RET
 {
   dict_T *d = xmalloc(sizeof(dict_T));
@@ -6999,10 +7030,9 @@ static int register_closure(ufunc_T *fp) {
     // no change
     return OK;
   }
-  funccal_unref(fp->uf_scoped, fp);
+  funccal_unref(fp->uf_scoped, fp, false);
   fp->uf_scoped = current_funccal;
   current_funccal->fc_refcount++;
-  func_ptr_ref(current->funccal->func);
   ga_grow(&current_funccal->fc_funcs, 1);
   ((ufunc_T **)current_funccal->fc_funcs.ga_data)
     [current_funccal->fc_funcs.ga_len++] = fp;
@@ -20952,8 +20982,9 @@ void ex_function(exarg_T *eap)
         if (!HASHITEM_EMPTY(hi)) {
           --todo;
           fp = HI2UF(hi);
-          if (!isdigit(*fp->uf_name))
-            list_func_head(fp, FALSE);
+          if (!func_name_refcount(fp->uf_name)) {
+            list_func_head(fp, false);
+          }
         }
       }
     }
@@ -21756,8 +21787,17 @@ void free_all_functions(void)
   while (func_hashtab.ht_used > 0)
     for (hi = func_hashtab.ht_array;; ++hi)
       if (!HASHITEM_EMPTY(hi)) {
-        func_free(HI2UF(hi));
-        break;
+        todo--;
+        // Only free functions that are not refcounted, those are
+        // supposed to be freed when no longer referenced.
+        fp = HI2UF(hi);
+        if (func_name_refcount(fp->uf_name)) {
+          skipped++;
+        } else {
+          func_free(fp, true);
+          skipped = 0;
+          break;
+        }
       }
 }
 
@@ -22177,7 +22217,7 @@ void ex_delfunction(exarg_T *eap)
         }
         fp->uf_flags |= FC_DELETED;
       } else {
-        func_free(fp);
+        func_free(fp, false);
       }
     }
   }
@@ -22199,10 +22239,10 @@ static bool func_remove(ufunc_T *fp)
   return false;
 }
 
-/*
- * Free a function and remove it from the list of functions.
- */
-static void func_free(ufunc_T *fp)
+/// Free a function and remove it from the list of functions.
+///
+/// param[in]        force        When true, we are exiting.
+static void func_free(ufunc_T *fp, bool force)
 {
   // clear this function
   ga_clear_strings(&(fp->uf_args));
@@ -22216,7 +22256,7 @@ static void func_free(ufunc_T *fp)
   if ((fp->uf_flags & (FC_DELETED | FC_REMOVED)) == 0) {
     func_remove(fp);
   }
-  funccal_unref(fp->uf_scoped, fp);
+  funccal_unref(fp->uf_scoped, fp, force);
   func_remove(fp);
   xfree(fp);
 }
@@ -22257,7 +22297,7 @@ void func_unref(char_u *name)
     // Only delete it when it's not being used. Otherwise it's done
     // when "uf_calls" becomes zero.
     if (fp->uf_calls == 0) {
-      func_free(fp);
+      func_free(fp, false);
     }
   }
 }
@@ -22270,7 +22310,7 @@ void func_ptr_unref(ufunc_T *fp)
     // Only delete it when it's not being used. Otherwise it's done
     // when "uf_calls" becomes zero.
     if (fp->uf_calls == 0) {
-      func_free(fp);
+      func_free(fp, false);
     }
   }
 }
@@ -22681,7 +22721,7 @@ call_user_func(
 
   if (--fp->uf_calls <= 0 && fp->uf_refcount <= 0) {
     // Function was unreferenced while being used, free it now.
-    func_free(fp);
+    func_free(fp, false);
   }
   // restore search patterns and redo buffer
   if (did_save_redo) {
@@ -22692,26 +22732,26 @@ call_user_func(
 
 /// Unreference "fc": decrement the reference count and free it when it
 /// becomes zero.  "fp" is detached from "fc".
-static void funccal_unref(funccall_T *fc, ufunc_T *fp)
+///
+/// @param[in]   force   When true, we are exiting.
+static void funccal_unref(funccall_T *fc, ufunc_T *fp, bool force)
 {
   funccall_T **pfc;
   int i;
-  int freed = false;
 
   if (fc == NULL) {
     return;
   }
 
-  if (--fc->fc_refcount <= 0
-      && fc->l_varlist.lv_refcount == DO_NOT_FREE_CNT
+  if (--fc->fc_refcount <= 0 && (force || (
+      fc->l_varlist.lv_refcount == DO_NOT_FREE_CNT
       && fc->l_vars.dv_refcount == DO_NOT_FREE_CNT
-      && fc->l_avars.dv_refcount == DO_NOT_FREE_CNT) {
+      && fc->l_avars.dv_refcount == DO_NOT_FREE_CNT))) {
     for (pfc = &previous_funccal; *pfc != NULL; pfc = &(*pfc)->caller) {
       if (fc == *pfc) {
-          *pfc = fc->caller;
-          free_funccal(fc, true);
-          return;
-        }
+        *pfc = fc->caller;
+        free_funccal(fc, true);
+        return;
       }
     }
   }
@@ -22747,13 +22787,12 @@ free_funccal (
   for (int i = 0; i < fc->fc_funcs.ga_len; i++) {
     ufunc_T *fp = ((ufunc_T **)(fc->fc_funcs.ga_data))[i];
 
-    if (fp != NULL) {
-      // Function may have been redefined and point to another
-      // funccall_T, don't clear it then.
-      if (fp->uf_scoped == fc) {
-        fp->uf_scoped = NULL;
-      }
-      func_ptr_unref(fc->func);
+    // When garbage collecting a funccall_T may be freed before the
+    // function that references it, clear its uf_scoped field.
+    // The function may have been redefined and point to another
+    // funccal_T, don't clear it then.
+    if (fp != NULL && fp->uf_scoped == fc) {
+      fp->uf_scoped = NULL;
     }
   }
   ga_clear(&fc->fc_funcs);
