@@ -3027,7 +3027,7 @@ int do_unlet(char_u *name, int forceit)
     }
     hi = hash_find(ht, varname);
     if (HASHITEM_EMPTY(hi)) {
-      hi = find_hi_in_scoped_ht(name, &varname, &ht);
+      hi = find_hi_in_scoped_ht(name, &ht);
     }
     if (hi != NULL && !HASHITEM_EMPTY(hi)) {
       di = HI2DI(hi);
@@ -20008,8 +20008,7 @@ static dictitem_T *find_var(char_u *name, hashtab_T **htp, int no_autoload)
   }
 
   // Search in parent scope for lambda
-  return find_var_in_scoped_ht(name, varname ? &varname : NULL,
-                               no_autoload || htp != NULL);
+  return find_var_in_scoped_ht(name, no_autoload || htp != NULL);
 }
 
 /// Find variable "varname" in hashtab "ht" with name "htname".
@@ -20380,7 +20379,7 @@ set_var (
 
   // Search in parent scope which is possible to reference from lambda
   if (v == NULL) {
-    v = find_var_in_scoped_ht(name, varname ? &varname : NULL, true);
+    v = find_var_in_scoped_ht(name, true);
   }
 
   if ((tv->v_type == VAR_FUNC || tv->v_type == VAR_PARTIAL)
@@ -23078,12 +23077,12 @@ static var_flavour_T var_flavour(char_u *varname)
 }
 
 /// Search hashitem in parent scope.
-hashitem_T *find_hi_in_scoped_ht(char_u *name, char_u **varname,
-                                 hashtab_T **pht)
+hashitem_T *find_hi_in_scoped_ht(char_u *name, hashtab_T **pht)
 {
   funccall_T *old_current_funccal = current_funccal;
   hashtab_T  *ht;
   hashitem_T *hi = NULL;
+  char_u     *varname;
 
   if (current_funccal == NULL || current_funccal->func->uf_scoped == NULL) {
     return NULL;
@@ -23092,9 +23091,9 @@ hashitem_T *find_hi_in_scoped_ht(char_u *name, char_u **varname,
   // Search in parent scope which is possible to reference from lambda
   current_funccal = current_funccal->func->uf_scoped;
   while (current_funccal != NULL) {
-    ht = find_var_ht(name, varname);
-    if (ht != NULL && **varname != NUL) {
-      hi = hash_find(ht, *varname);
+    ht = find_var_ht(name, &varname);
+    if (ht != NULL && *varname != NUL) {
+      hi = hash_find(ht, varname);
       if (!HASHITEM_EMPTY(hi)) {
         *pht = ht;
         break;
@@ -23111,12 +23110,12 @@ hashitem_T *find_hi_in_scoped_ht(char_u *name, char_u **varname,
 }
 
 /// Search variable in parent scope.
-dictitem_T *find_var_in_scoped_ht(char_u *name, char_u **varname,
-                                  int no_autoload)
+dictitem_T *find_var_in_scoped_ht(char_u *name, int no_autoload)
 {
   dictitem_T *v = NULL;
   funccall_T *old_current_funccal = current_funccal;
-  hashtab_T *ht;
+  hashtab_T  *ht;
+  char_u     *varname;
 
   if (current_funccal == NULL || current_funccal->func->uf_scoped == NULL) {
     return NULL;
@@ -23125,10 +23124,9 @@ dictitem_T *find_var_in_scoped_ht(char_u *name, char_u **varname,
   // Search in parent scope which is possible to reference from lambda
   current_funccal = current_funccal->func->uf_scoped;
   while (current_funccal) {
-    ht = find_var_ht(name, varname ? &(*varname) : NULL);
-    if (ht != NULL) {
-      v = find_var_in_ht(ht, *name,
-                         varname ? *varname : NULL, no_autoload);
+    ht = find_var_ht(name, &varname);
+    if (ht != NULL && *varname != NUL) {
+      v = find_var_in_ht(ht, *name, varname, no_autoload);
       if (v != NULL) {
         break;
       }
