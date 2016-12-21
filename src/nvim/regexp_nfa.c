@@ -4320,12 +4320,14 @@ static int check_char_class(int class, int c)
 {
   switch (class) {
   case NFA_CLASS_ALNUM:
-    if (c >= 1 && c <= 255 && isalnum(c))
+    if (c >= 1 && c < 128 && isalnum(c)) {
       return OK;
+    }
     break;
   case NFA_CLASS_ALPHA:
-    if (c >= 1 && c <= 255 && isalpha(c))
+    if (c >= 1 && c < 128 && isalpha(c)) {
       return OK;
+    }
     break;
   case NFA_CLASS_BLANK:
     if (c == ' ' || c == '\t')
@@ -4344,16 +4346,18 @@ static int check_char_class(int class, int c)
       return OK;
     break;
   case NFA_CLASS_LOWER:
-    if (vim_islower(c))
+    if (vim_islower(c) && c != 170 && c != 186) {
       return OK;
+    }
     break;
   case NFA_CLASS_PRINT:
     if (vim_isprintc(c))
       return OK;
     break;
   case NFA_CLASS_PUNCT:
-    if (c >= 1 && c <= 255 && ispunct(c))
+    if (c >= 1 && c < 128 && ispunct(c)) {
       return OK;
+    }
     break;
   case NFA_CLASS_SPACE:
     if ((c >= 9 && c <= 13) || (c == ' '))

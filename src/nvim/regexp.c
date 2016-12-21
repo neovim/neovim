@@ -2309,14 +2309,18 @@ collection:
               }
               break;
             case CLASS_ALNUM:
-              for (cu = 1; cu <= 255; cu++)
-                if (isalnum(cu))
+              for (cu = 1; cu < 128; cu++) {
+                if (isalnum(cu)) {
                   regc(cu);
+                }
+              }
               break;
             case CLASS_ALPHA:
-              for (cu = 1; cu <= 255; cu++)
-                if (isalpha(cu))
+              for (cu = 1; cu < 128; cu++) {
+                if (isalpha(cu)) {
                   regc(cu);
+                }
+              }
               break;
             case CLASS_BLANK:
               regc(' ');
@@ -2338,9 +2342,11 @@ collection:
                   regc(cu);
               break;
             case CLASS_LOWER:
-              for (cu = 1; cu <= 255; cu++)
-                if (vim_islower(cu))
+              for (cu = 1; cu <= 255; cu++) {
+                if (vim_islower(cu) && cu != 170 && cu != 186) {
                   regc(cu);
+                }
+              }
               break;
             case CLASS_PRINT:
               for (cu = 1; cu <= 255; cu++)
@@ -2348,9 +2354,11 @@ collection:
                   regc(cu);
               break;
             case CLASS_PUNCT:
-              for (cu = 1; cu <= 255; cu++)
-                if (ispunct(cu))
+              for (cu = 1; cu < 128; cu++) {
+                if (ispunct(cu)) {
                   regc(cu);
+                }
+              }
               break;
             case CLASS_SPACE:
               for (cu = 9; cu <= 13; cu++)
