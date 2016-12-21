@@ -1862,7 +1862,7 @@ parse_line:
                       && memcmp(mfp2->match, mfp->match,
                           (size_t)mfp->len) == 0)
                     break;
-                  line_breakcheck();
+                  fast_breakcheck();
                 }
               if (i < 0) {
                 ((struct match_found **)(ga_match[mtt].ga_data))

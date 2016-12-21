@@ -40,7 +40,7 @@ for details.
 Job control is achieved by calling a combination of the |jobstart()|,
 |jobsend()| and |jobstop()| functions. Here's an example:
 >
-    function! s:JobHandler(job_id, data, event)
+    function! s:JobHandler(job_id, data, event) dict
       if a:event == 'stdout'
         let str = self.shell.' stdout: '.join(a:data)
       elseif a:event == 'stderr'
@@ -102,23 +102,23 @@ function. Here's a more object-oriented version of the above:
 >
     let Shell = {}
 
-    function Shell.on_stdout(job_id, data)
+    function Shell.on_stdout(job_id, data) dict
       call append(line('$'), self.get_name().' stdout: '.join(a:data))
     endfunction
 
-    function Shell.on_stderr(job_id, data)
+    function Shell.on_stderr(job_id, data) dict
       call append(line('$'), self.get_name().' stderr: '.join(a:data))
     endfunction
 
-    function Shell.on_exit(job_id, data)
+    function Shell.on_exit(job_id, data) dict
       call append(line('$'), self.get_name().' exited')
     endfunction
 
-    function Shell.get_name()
+    function Shell.get_name() dict
       return 'shell '.self.name
     endfunction
 
-    function Shell.new(name, ...)
+    function Shell.new(name, ...) dict
       let instance = extend(copy(g:Shell), {'name': a:name})
       let argv = ['bash']
       if a:0 > 0

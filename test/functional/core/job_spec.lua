@@ -303,6 +303,26 @@ describe('jobs', function()
     ]])
   end)
 
+  it('requires funcrefs for script-local (s:) functions', function()
+    -- Pass job callback names _without_ `function(...)`.
+    source([[
+      function! s:OnEvent(id, data, event) dict
+        let g:job_result = get(self, 'user')
+      endfunction
+      let s:job = jobstart(['echo'], {
+        \ 'on_stdout': 's:OnEvent',
+        \ 'on_stderr': 's:OnEvent',
+        \ 'on_exit':   's:OnEvent',
+        \ 'user': 2349
+        \ })
+    ]])
+
+    -- The behavior is asynchronous, retry until a time limit.
+    helpers.retry(nil, 10000, function()
+      eq("E120:", string.match(eval("v:errmsg"), "E%d*:"))
+    end)
+  end)
+
   describe('jobwait', function()
     it('returns a list of status codes', function()
       source([[
