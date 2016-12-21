@@ -2311,14 +2311,14 @@ collection:
             case CLASS_ALNUM:
               for (cu = 1; cu < 128; cu++) {
                 if (isalnum(cu)) {
-                  regc(cu);
+                  regmbc(cu);
                 }
               }
               break;
             case CLASS_ALPHA:
               for (cu = 1; cu < 128; cu++) {
                 if (isalpha(cu)) {
-                  regc(cu);
+                  regmbc(cu);
                 }
               }
               break;
@@ -2327,36 +2327,44 @@ collection:
               regc('\t');
               break;
             case CLASS_CNTRL:
-              for (cu = 1; cu <= 255; cu++)
-                if (iscntrl(cu))
-                  regc(cu);
+              for (cu = 1; cu <= 255; cu++) {
+                if (iscntrl(cu)) {
+                  regmbc(cu);
+                }
+              }
               break;
             case CLASS_DIGIT:
-              for (cu = 1; cu <= 255; cu++)
-                if (ascii_isdigit(cu))
-                  regc(cu);
+              for (cu = 1; cu <= 255; cu++) {
+                if (ascii_isdigit(cu)) {
+                  regmbc(cu);
+                }
+              }
               break;
             case CLASS_GRAPH:
-              for (cu = 1; cu <= 255; cu++)
-                if (isgraph(cu))
-                  regc(cu);
+              for (cu = 1; cu <= 255; cu++) {
+                if (isgraph(cu)) {
+                  regmbc(cu);
+                }
+              }
               break;
             case CLASS_LOWER:
               for (cu = 1; cu <= 255; cu++) {
                 if (vim_islower(cu) && cu != 170 && cu != 186) {
-                  regc(cu);
+                  regmbc(cu);
                 }
               }
               break;
             case CLASS_PRINT:
-              for (cu = 1; cu <= 255; cu++)
-                if (vim_isprintc(cu))
-                  regc(cu);
+              for (cu = 1; cu <= 255; cu++) {
+                if (vim_isprintc(cu)) {
+                  regmbc(cu);
+                }
+              }
               break;
             case CLASS_PUNCT:
               for (cu = 1; cu < 128; cu++) {
                 if (ispunct(cu)) {
-                  regc(cu);
+                  regmbc(cu);
                 }
               }
               break;
@@ -2366,14 +2374,18 @@ collection:
               regc(' ');
               break;
             case CLASS_UPPER:
-              for (cu = 1; cu <= 255; cu++)
-                if (vim_isupper(cu))
-                  regc(cu);
+              for (cu = 1; cu <= 255; cu++) {
+                if (vim_isupper(cu)) {
+                  regmbc(cu);
+                }
+              }
               break;
             case CLASS_XDIGIT:
-              for (cu = 1; cu <= 255; cu++)
-                if (ascii_isxdigit(cu))
-                  regc(cu);
+              for (cu = 1; cu <= 255; cu++) {
+                if (ascii_isxdigit(cu)) {
+                  regmbc(cu);
+                }
+              }
               break;
             case CLASS_TAB:
               regc('\t');
