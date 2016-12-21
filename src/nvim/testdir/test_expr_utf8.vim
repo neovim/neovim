@@ -37,6 +37,7 @@ func Test_strcharpart_utf8()
 endfunc
 
 func s:classes_test()
+  set isprint=@,161-255
   call assert_equal('Motörhead', matchstr('Motörhead', '[[:print:]]\+'))
 
   let alphachars = ''
