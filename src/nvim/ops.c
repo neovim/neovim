@@ -5441,7 +5441,8 @@ static yankreg_T *adjust_clipboard_name(int *name, bool quiet, bool writing)
   if (*name == '*' || *name == '+') {
     if(!eval_has_provider("clipboard")) {
       if (!quiet) {
-        EMSG("clipboard: provider is not available");
+        EMSG("clipboard: No provider. Try \":CheckHealth\" or "
+             "\":h clipboard\".");
       }
       return NULL;
     }
@@ -5449,7 +5450,8 @@ static yankreg_T *adjust_clipboard_name(int *name, bool quiet, bool writing)
   } else if ((*name == NUL) && (cb_flags & CB_UNNAMEDMASK)) {
     if(!eval_has_provider("clipboard")) {
       if (!quiet && !clipboard_didwarn_unnamed) {
-        msg((char_u*)"clipboard: provider not available, ignoring clipboard=unnamed[plus]");
+        msg((char_u *)"clipboard: No provider. Try \":CheckHealth\" or "
+            "\":h clipboard\".");
         clipboard_didwarn_unnamed = true;
       }
       return NULL;
