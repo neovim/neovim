@@ -6,6 +6,7 @@ local clear, eq, eval, execute, feed, insert, neq, next_msg, nvim,
   helpers.nvim_dir, helpers.ok, helpers.source,
   helpers.write_file, helpers.mkdir, helpers.rmdir
 local command = helpers.command
+local wait = helpers.wait
 local Screen = require('test.functional.ui.screen')
 
 if helpers.pending_win32(pending) then return end
@@ -271,7 +272,7 @@ describe('jobs', function()
     screen:set_default_attr_ids({
       [1] = {bold=true, foreground=Screen.colors.Blue},
     })
-    local script = [[
+    source([[
       function! g:JobHandler(job_id, data, event)
       endfunction
 
@@ -281,26 +282,14 @@ describe('jobs', function()
       \ 'on_exit': function('g:JobHandler')
       \ }
       let job = jobstart('cat -', g:callbacks)
-    ]]
-    source(script)
-    feed(':function! g:JobHandler(job_id, data, event)<cr>')
-    feed(':endfunction<cr>')
-    screen:expect([[
-      ^                                                     |
-      {1:~                                                    }|
-      {1:~                                                    }|
-      {1:~                                                    }|
-      {1:~                                                    }|
-      {1:~                                                    }|
-      {1:~                                                    }|
-      {1:~                                                    }|
-      {1:~                                                    }|
-      {1:~                                                    }|
-      {1:~                                                    }|
-      {1:~                                                    }|
-      {1:~                                                    }|
-                                                           |
     ]])
+    wait()
+    source([[
+      function! g:JobHandler(job_id, data, event)
+      endfunction
+    ]])
+
+    eq("", eval("v:errmsg"))
   end)
 
   it('requires funcrefs for script-local (s:) functions', function()

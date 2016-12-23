@@ -7,9 +7,13 @@
 
 #include <uv.h>
 #include <unibilium.h>
+#if defined(HAVE_TERMIOS_H)
+# include <termios.h>
+#endif
 
 #include "nvim/lib/kvec.h"
 
+#include "nvim/ascii.h"
 #include "nvim/vim.h"
 #include "nvim/log.h"
 #include "nvim/ui.h"
@@ -195,6 +199,9 @@ static void tui_terminal_start(UI *ui)
   terminfo_start(ui);
   update_size(ui);
   signal_watcher_start(&data->winch_handle, sigwinch_cb, SIGWINCH);
+
+  data->input.tk_ti_hook_fn = tui_tk_ti_getstr;
+  term_input_init(&data->input, data->loop);
   term_input_start(&data->input);
 }
 
@@ -227,8 +234,6 @@ static void tui_main(UIBridgeData *bridge, UI *ui)
   signal_watcher_init(data->loop, &data->winch_handle, ui);
   signal_watcher_init(data->loop, &data->cont_handle, data);
   signal_watcher_start(&data->cont_handle, sigcont_cb, SIGCONT);
-  // initialize input reading structures
-  term_input_init(&data->input, &tui_loop);
   tui_terminal_start(ui);
   data->stop = false;
   // allow the main thread to continue, we are ready to start handling UI
@@ -957,3 +962,50 @@ static void flush_buf(UI *ui, bool toggle_cursor)
     unibi_out(ui, unibi_cursor_invisible);
   }
 }
+
+/// Try to get "kbs" code from stty because "the terminfo kbs entry is extremely
+/// unreliable." (Vim, Bash, and tmux also do this.)
+///
+/// @see tmux/tty-keys.c fe4e9470bb504357d073320f5d305b22663ee3fd
+/// @see https://bugzilla.redhat.com/show_bug.cgi?id=142659
+static const char *tui_get_stty_erase(void)
+{
+  static char stty_erase[2] = { 0 };
+#if defined(ECHOE) && defined(ICANON) \
+  && (defined(HAVE_TERMIO_H) || defined(HAVE_TERMIOS_H))
+  struct termios t;
+  if (tcgetattr(input_global_fd(), &t) != -1) {
+    stty_erase[0] = (char)t.c_cc[VERASE];
+    stty_erase[1] = '\0';
+    ILOG("stty/termios:erase=%s", stty_erase);
+  }
+#endif
+  return stty_erase;
+}
+
+/// libtermkey hook to override terminfo entries.
+/// @see TermInput.tk_ti_hook_fn
+static const char *tui_tk_ti_getstr(const char *name, const char *value,
+                                    void *data)
+{
+  static const char *stty_erase = NULL;
+  if (stty_erase == NULL) {
+    stty_erase = tui_get_stty_erase();
+  }
+
+  if (strcmp(name, "key_backspace") == 0) {
+    ILOG("libtermkey:kbs=%s", value);
+    if (stty_erase != NULL && stty_erase[0] != 0) {
+      return stty_erase;
+    }
+  } else if (strcmp(name, "key_dc") == 0) {
+    ILOG("libtermkey:kdch1=%s", value);
+    // Vim: "If <BS> and <DEL> are now the same, redefine <DEL>."
+    if (stty_erase != NULL && strcmp(stty_erase, value) == 0) {
+      return stty_erase[0] == DEL ? (char *)CTRL_H_STR : (char *)DEL_STR;
+    }
+  }
+
+  return value;
+}
+

@@ -32,7 +32,14 @@ void term_input_init(TermInput *input, Loop *loop)
     term = "";  // termkey_new_abstract assumes non-null (#2745)
   }
 
+#if TERMKEY_VERSION_MAJOR > 0 || TERMKEY_VERSION_MINOR > 18
+  input->tk = termkey_new_abstract(term,
+                                   TERMKEY_FLAG_UTF8 | TERMKEY_FLAG_NOSTART);
+  termkey_hook_terminfo_getstr(input->tk, input->tk_ti_hook_fn, NULL);
+  termkey_start(input->tk);
+#else
   input->tk = termkey_new_abstract(term, TERMKEY_FLAG_UTF8);
+#endif
 
   int curflags = termkey_get_canonflags(input->tk);
   termkey_set_canonflags(input->tk, curflags | TERMKEY_CANON_DELBS);

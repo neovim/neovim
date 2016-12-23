@@ -123,29 +123,23 @@ function! s:check_tmux() abort
   endif
 endfunction
 
-function! s:check_terminfo() abort
+function! s:check_terminal() abort
   if !executable('infocmp')
     return
   endif
-  call health#report_start('terminfo')
-  let suggestions = [
-        \ "Set key_backspace to \\177 (ASCII BACKSPACE). Run these commands:\n"
-        \   .'infocmp $TERM | sed ''s/kbs=^[hH]/kbs=\\177/'' > $TERM.ti'
-        \   ."\n"
-        \   .'tic $TERM.ti',
-        \ s:suggest_faq]
+  call health#report_start('terminal')
   let cmd = 'infocmp -L'
   let out = system(cmd)
-  let kbs_entry = matchstr(out, 'key_backspace=\S*')
+  let kbs_entry   = matchstr(out, 'key_backspace=[^,[:space:]]*')
+  let kdch1_entry = matchstr(out, 'key_dc=[^,[:space:]]*')
 
   if v:shell_error
     call health#report_error('command failed: '.cmd."\n".out)
-  elseif !empty(matchstr(out, '\Vkey_backspace=^H'))
-    call health#report_error('key_backspace (kbs) entry is ^H (ASCII DELETE): '
-        \ .kbs_entry, suggestions)
   else
-    call health#report_info('key_backspace terminfo entry: '
+    call health#report_info('key_backspace (kbs) terminfo entry: '
         \ .(empty(kbs_entry) ? '? (not found)' : kbs_entry))
+    call health#report_info('key_dc (kdch1) terminfo entry: '
+        \ .(empty(kbs_entry) ? '? (not found)' : kdch1_entry))
   endif
 endfunction
 
@@ -153,6 +147,6 @@ function! health#nvim#check() abort
   call s:check_config()
   call s:check_performance()
   call s:check_rplugin_manifest()
-  call s:check_terminfo()
+  call s:check_terminal()
   call s:check_tmux()
 endfunction
