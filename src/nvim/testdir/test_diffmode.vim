@@ -162,6 +162,43 @@ func Test_filler_lines()
   wincmd h
   call assert_equal(1, line('w0'))
   unlet! diff_fdm diff_fdc
+  windo diffoff
+  bwipe!
+  enew!
+endfunc
 
-  windo bw!
+func Test_diffget_diffput()
+  enew!
+  let l = range(50)
+  call setline(1, l)
+  call assert_fails('diffget', 'E99:')
+  diffthis
+  call assert_fails('diffget', 'E100:')
+  new
+  let l[10] = 'one'
+  let l[20] = 'two'
+  let l[30] = 'three'
+  let l[40] = 'four'
+  call setline(1, l)
+  diffthis
+  call assert_equal('one', getline(11))
+  11diffget
+  call assert_equal('10', getline(11))
+  21diffput
+  wincmd w
+  call assert_equal('two', getline(21))
+  normal 31Gdo
+  call assert_equal('three', getline(31))
+  call assert_equal('40', getline(41))
+  normal 41Gdp
+  wincmd w
+  call assert_equal('40', getline(41))
+  new
+  diffthis
+  call assert_fails('diffget', 'E101:')
+
+  windo diffoff
+  bwipe!
+  bwipe!
+  enew!
 endfunc
