@@ -145,6 +145,8 @@ func Test_vert_split()
   call assert_equal(0, &cursorbind)
   call assert_equal(1, &wrap)
 
+  call delete('Xtest')
+  call delete('Xtest2')
   windo bw!
 endfunc
 
