@@ -253,7 +253,7 @@ describe('dictionary change notifications', function()
       command('call g:ReplaceWatcher2()')
       command('let g:key = "value"')
       eq({'notification', '2b', {'key', {old = 'v2', new = 'value'}}}, next_msg())
-
+      
     end)
   end)
 end)
