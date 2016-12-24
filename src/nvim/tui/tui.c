@@ -200,7 +200,9 @@ static void tui_terminal_start(UI *ui)
   update_size(ui);
   signal_watcher_start(&data->winch_handle, sigwinch_cb, SIGWINCH);
 
+#if TERMKEY_VERSION_MAJOR > 0 || TERMKEY_VERSION_MINOR > 18
   data->input.tk_ti_hook_fn = tui_tk_ti_getstr;
+#endif
   term_input_init(&data->input, data->loop);
   term_input_start(&data->input);
 }
@@ -963,6 +965,7 @@ static void flush_buf(UI *ui, bool toggle_cursor)
   }
 }
 
+#if TERMKEY_VERSION_MAJOR > 0 || TERMKEY_VERSION_MINOR > 18
 /// Try to get "kbs" code from stty because "the terminfo kbs entry is extremely
 /// unreliable." (Vim, Bash, and tmux also do this.)
 ///
@@ -1008,4 +1011,4 @@ static const char *tui_tk_ti_getstr(const char *name, const char *value,
 
   return value;
 }
-
+#endif

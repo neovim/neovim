@@ -12,7 +12,9 @@ typedef struct term_input {
   bool paste_enabled;
   bool waiting;
   TermKey *tk;
+#if TERMKEY_VERSION_MAJOR > 0 || TERMKEY_VERSION_MINOR > 18
   TermKey_Terminfo_Getstr_Hook *tk_ti_hook_fn;  ///< libtermkey terminfo hook
+#endif
   TimeWatcher timer_handle;
   Loop *loop;
   Stream read_stream;
