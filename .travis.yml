@@ -91,8 +91,6 @@ after_success:  .ci/after_success.sh
 addons:
   apt:
     sources:
-      # TODO: Remove PPA when Travis gets Python >=3.3.
-      - deadsnakes
       - ubuntu-toolchain-r-test
       - llvm-toolchain-precise-3.8
     packages:
@@ -101,6 +99,7 @@ addons:
       - build-essential
       - clang-3.8
       - cmake
+      - cscope
       - g++-5-multilib
       - g++-multilib
       - gcc-5-multilib
@@ -110,7 +109,6 @@ addons:
       - libtool
       - llvm-3.8-dev
       - pkg-config
-      - python3.3-dev
       - unzip
       - valgrind
       - xclip
