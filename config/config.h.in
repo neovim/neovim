@@ -43,7 +43,6 @@
 #cmakedefine HAVE_STRNCASECMP
 #cmakedefine HAVE_SYS_UTSNAME_H
 #cmakedefine HAVE_SYS_WAIT_H
-#cmakedefine HAVE_TERMIO_H
 #cmakedefine HAVE_TERMIOS_H
 #cmakedefine HAVE_UTIME
 #cmakedefine HAVE_UTIME_H

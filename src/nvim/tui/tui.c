@@ -974,8 +974,7 @@ static void flush_buf(UI *ui, bool toggle_cursor)
 static const char *tui_get_stty_erase(void)
 {
   static char stty_erase[2] = { 0 };
-#if defined(ECHOE) && defined(ICANON) \
-  && (defined(HAVE_TERMIO_H) || defined(HAVE_TERMIOS_H))
+#if defined(ECHOE) && defined(ICANON) && defined(HAVE_TERMIOS_H)
   struct termios t;
   if (tcgetattr(input_global_fd(), &t) != -1) {
     stty_erase[0] = (char)t.c_cc[VERASE];
