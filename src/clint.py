@@ -3001,9 +3001,10 @@ def CheckIncludeLine(filename, clean_lines, linenum, include_state, error):
         include = match.group(2)
         is_system = (match.group(1) == '<')
         if include in include_state:
-            error(filename, linenum, 'build/include', 4,
-                  '"%s" already included at %s:%s' %
-                  (include, filename, include_state[include]))
+            if is_system or not include.endswith('.c.h'):
+                error(filename, linenum, 'build/include', 4,
+                      '"%s" already included at %s:%s' %
+                      (include, filename, include_state[include]))
         else:
             include_state[include] = linenum
 
