@@ -166,7 +166,8 @@
 ///
 /// After including this file it will define function
 /// `encode_vim_to_{TYPVAL_ENCODE_NAME}` with scope #TYPVAL_ENCODE_SCOPE and
-/// static function `_{TYPVAL_ENCODE_NAME}_convert_one_value`.
+/// static functions `_typval_encode_{TYPVAL_ENCODE_NAME}_convert_one_value` and
+/// `_typval_encode_{TYPVAL_ENCODE_NAME}_check_self_reference`.
 
 /// @def TYPVAL_ENCODE_FIRST_ARG_TYPE
 /// @brief Type of the first argument, which will be used to return the results
@@ -192,11 +193,50 @@
 #include "nvim/func_attr.h"
 #include "nvim/eval/typval_encode.h"
 
+static inline int _TYPVAL_ENCODE_CHECK_SELF_REFERENCE(
+    TYPVAL_ENCODE_FIRST_ARG_TYPE TYPVAL_ENCODE_FIRST_ARG_NAME,
+    void *const val, int *const val_copyID,
+    const MPConvStack *const mpstack, const int copyID,
+    const MPConvStackValType conv_type,
+    const char *const objname)
+  REAL_FATTR_NONNULL_ARG(2, 3, 4, 7) REAL_FATTR_WARN_UNUSED_RESULT
+  REAL_FATTR_ALWAYS_INLINE;
+
+/// Function for checking whether container references itself
+///
+/// @param  TYPVAL_ENCODE_FIRST_ARG_NAME  First argument.
+/// @param[in,out]  val  Container to check.
+/// @param  val_copyID  Pointer to the container attribute that holds copyID.
+///                     After checking whether value of this attribute is
+///                     copyID (variable) it is set to copyID.
+/// @param[in]  mpstack  Stack with values to convert. Read-only, used for error
+///                      reporting.
+/// @param[in]  copyID  CopyID used by the caller.
+/// @param[in]  conv_type  Type of the conversion, @see MPConvStackValType.
+/// @param[in]  objname  Object name, used for error reporting.
+///
+/// @return NOTDONE in case of success, what to return in case of failure.
+static inline int _TYPVAL_ENCODE_CHECK_SELF_REFERENCE(
+    TYPVAL_ENCODE_FIRST_ARG_TYPE TYPVAL_ENCODE_FIRST_ARG_NAME,
+    void *const val, int *const val_copyID,
+    const MPConvStack *const mpstack, const int copyID,
+    const MPConvStackValType conv_type,
+    const char *const objname)
+{
+  if (*val_copyID == copyID) {
+    TYPVAL_ENCODE_CONV_RECURSE(val, conv_type);
+    return OK;
+  }
+  *val_copyID = copyID;
+  return NOTDONE;
+}
+
 static int _TYPVAL_ENCODE_CONVERT_ONE_VALUE(
     TYPVAL_ENCODE_FIRST_ARG_TYPE TYPVAL_ENCODE_FIRST_ARG_NAME,
-    MPConvStack *const mpstack, typval_T *const tv, const int copyID,
+    MPConvStack *const mpstack, MPConvStackVal *const cur_mpsv,
+    typval_T *const tv, const int copyID,
     const char *const objname)
-  REAL_FATTR_NONNULL_ALL REAL_FATTR_WARN_UNUSED_RESULT;
+  REAL_FATTR_NONNULL_ARG(2, 4, 6) REAL_FATTR_WARN_UNUSED_RESULT;
 
 /// Convert single value
 ///
@@ -206,9 +246,10 @@ static int _TYPVAL_ENCODE_CONVERT_ONE_VALUE(
 /// @param  TYPVAL_ENCODE_FIRST_ARG_NAME  First argument, defined by the
 ///                                       includer. Only meaningful to macros
 ///                                       defined by the includer.
-/// @param[out]  mpstack  Stack with values to convert. Values which are not
-///                       converted completely by this function (i.e.
-///                       non-scalars) are pushed here.
+/// @param  mpstack  Stack with values to convert. Values which are not
+///                  converted completely by this function (i.e.
+///                  non-scalars) are pushed here.
+/// @param  cur_mpsv  Currently converted value from stack.
 /// @param  tv  Converted value.
 /// @param[in]  copyID  CopyID.
 /// @param[in]  objname  Object name, used for error reporting.
@@ -216,7 +257,8 @@ static int _TYPVAL_ENCODE_CONVERT_ONE_VALUE(
 /// @return OK in case of success, FAIL in case of failure.
 static int _TYPVAL_ENCODE_CONVERT_ONE_VALUE(
     TYPVAL_ENCODE_FIRST_ARG_TYPE TYPVAL_ENCODE_FIRST_ARG_NAME,
-    MPConvStack *const mpstack, typval_T *const tv, const int copyID,
+    MPConvStack *const mpstack, MPConvStackVal *const cur_mpsv,
+    typval_T *const tv, const int copyID,
     const char *const objname)
 {
   switch (tv->v_type) {
@@ -260,8 +302,8 @@ static int _TYPVAL_ENCODE_CONVERT_ONE_VALUE(
         TYPVAL_ENCODE_CONV_EMPTY_LIST();
         break;
       }
-      _TYPVAL_ENCODE_CHECK_SELF_REFERENCE(tv->vval.v_list, lv_copyID, copyID,
-                                          kMPConvList);
+      _TYPVAL_ENCODE_DO_CHECK_SELF_REFERENCE(tv->vval.v_list, lv_copyID, copyID,
+                                             kMPConvList);
       TYPVAL_ENCODE_CONV_LIST_START(tv->vval.v_list->lv_len);
       _mp_push(*mpstack, ((MPConvStackVal) {
         .type = kMPConvList,
@@ -392,8 +434,9 @@ static int _TYPVAL_ENCODE_CONVERT_ONE_VALUE(
             if (val_di->di_tv.v_type != VAR_LIST) {
               goto _convert_one_value_regular_dict;
             }
-            _TYPVAL_ENCODE_CHECK_SELF_REFERENCE(val_di->di_tv.vval.v_list,
-                                                lv_copyID, copyID, kMPConvList);
+            _TYPVAL_ENCODE_DO_CHECK_SELF_REFERENCE(val_di->di_tv.vval.v_list,
+                                                   lv_copyID, copyID,
+                                                   kMPConvList);
             TYPVAL_ENCODE_CONV_LIST_START(val_di->di_tv.vval.v_list->lv_len);
             _mp_push(*mpstack, ((MPConvStackVal) {
               .tv = tv,
@@ -423,8 +466,8 @@ static int _TYPVAL_ENCODE_CONVERT_ONE_VALUE(
                 goto _convert_one_value_regular_dict;
               }
             }
-            _TYPVAL_ENCODE_CHECK_SELF_REFERENCE(val_list, lv_copyID, copyID,
-                                                kMPConvPairs);
+            _TYPVAL_ENCODE_DO_CHECK_SELF_REFERENCE(val_list, lv_copyID, copyID,
+                                                   kMPConvPairs);
             TYPVAL_ENCODE_CONV_DICT_START(val_list->lv_len);
             _mp_push(*mpstack, ((MPConvStackVal) {
               .tv = tv,
@@ -464,8 +507,8 @@ static int _TYPVAL_ENCODE_CONVERT_ONE_VALUE(
         break;
       }
 _convert_one_value_regular_dict:
-      _TYPVAL_ENCODE_CHECK_SELF_REFERENCE(tv->vval.v_dict, dv_copyID, copyID,
-                                          kMPConvDict);
+      _TYPVAL_ENCODE_DO_CHECK_SELF_REFERENCE(tv->vval.v_dict, dv_copyID, copyID,
+                                             kMPConvDict);
       TYPVAL_ENCODE_CONV_DICT_START(tv->vval.v_dict->dv_hashtab.ht_used);
       _mp_push(*mpstack, ((MPConvStackVal) {
         .tv = tv,
@@ -491,7 +534,7 @@ _convert_one_value_regular_dict:
 TYPVAL_ENCODE_SCOPE int _TYPVAL_ENCODE_ENCODE(
     TYPVAL_ENCODE_FIRST_ARG_TYPE TYPVAL_ENCODE_FIRST_ARG_NAME,
     typval_T *const tv, const char *const objname)
-  REAL_FATTR_WARN_UNUSED_RESULT;
+  REAL_FATTR_NONNULL_ARG(2, 3) REAL_FATTR_WARN_UNUSED_RESULT;
 
 /// Convert the whole typval
 ///
@@ -510,6 +553,7 @@ TYPVAL_ENCODE_SCOPE int _TYPVAL_ENCODE_ENCODE(
   MPConvStack mpstack;
   _mp_init(mpstack);
   if (_TYPVAL_ENCODE_CONVERT_ONE_VALUE(TYPVAL_ENCODE_FIRST_ARG_NAME, &mpstack,
+                                       NULL,
                                        tv, copyID, objname)
       == FAIL) {
     goto encode_vim_to__error_ret;
@@ -566,7 +610,7 @@ TYPVAL_ENCODE_SCOPE int _TYPVAL_ENCODE_ENCODE(
         TYPVAL_ENCODE_CONV_SPECIAL_DICT_KEY_CHECK(
             encode_vim_to__error_ret, kv_pair->lv_first->li_tv);
         if (_TYPVAL_ENCODE_CONVERT_ONE_VALUE(TYPVAL_ENCODE_FIRST_ARG_NAME,
-                                             &mpstack,
+                                             &mpstack, cur_mpsv,
                                              &kv_pair->lv_first->li_tv,
                                              copyID,
                                              objname) == FAIL) {
@@ -587,7 +631,7 @@ TYPVAL_ENCODE_SCOPE int _TYPVAL_ENCODE_ENCODE(
               TYPVAL_ENCODE_CONV_LIST_START(pt->pt_argc);
               _mp_push(mpstack, ((MPConvStackVal) {
                 .type = kMPConvPartialList,
-                .tv = tv,
+                .tv = NULL,
                 .data = {
                   .a = {
                     .arg = pt->pt_argv,
@@ -604,10 +648,21 @@ TYPVAL_ENCODE_SCOPE int _TYPVAL_ENCODE_ENCODE(
             dict_T *const dict = pt == NULL ? NULL : pt->pt_dict;
             if (dict != NULL) {
               TYPVAL_ENCODE_CONV_FUNC_BEFORE_SELF(dict->dv_hashtab.ht_used);
+              const int te_csr_ret = _TYPVAL_ENCODE_CHECK_SELF_REFERENCE(
+                  TYPVAL_ENCODE_FIRST_ARG_NAME,
+                  dict, &dict->dv_copyID, &mpstack, copyID, kMPConvDict,
+                  objname);
+              if (te_csr_ret != NOTDONE) {
+                if (te_csr_ret == FAIL) {
+                  goto encode_vim_to__error_ret;
+                } else {
+                  continue;
+                }
+              }
               TYPVAL_ENCODE_CONV_DICT_START(dict->dv_hashtab.ht_used);
               _mp_push(mpstack, ((MPConvStackVal) {
                 .type = kMPConvDict,
-                .tv = tv,
+                .tv = NULL,
                 .data = {
                   .d = {
                     .dict = dict,
@@ -644,7 +699,8 @@ TYPVAL_ENCODE_SCOPE int _TYPVAL_ENCODE_ENCODE(
     }
     assert(cur_tv != NULL);
     if (_TYPVAL_ENCODE_CONVERT_ONE_VALUE(TYPVAL_ENCODE_FIRST_ARG_NAME, &mpstack,
-                                         cur_tv, copyID, objname) == FAIL) {
+                                         cur_mpsv, cur_tv, copyID, objname)
+        == FAIL) {
       goto encode_vim_to__error_ret;
     }
   }

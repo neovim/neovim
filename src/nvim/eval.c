@@ -19072,22 +19072,30 @@ void free_tv(typval_T *varp)
 
 #define TYPVAL_ENCODE_CONV_FUNC_START(fun, is_partial, pt) \
     do { \
-      if (is_partial) { \
-        partial_unref(pt); \
-        tv->vval.v_partial = NULL; \
-      } else { \
+      if (!is_partial) { \
         func_unref(fun); \
         if (fun != empty_string) { \
           xfree(fun); \
         } \
         tv->vval.v_string = NULL; \
+        tv->v_lock = VAR_UNLOCKED; \
       } \
-      tv->v_lock = VAR_UNLOCKED; \
     } while (0)
 
 #define TYPVAL_ENCODE_CONV_FUNC_BEFORE_ARGS(len)
 #define TYPVAL_ENCODE_CONV_FUNC_BEFORE_SELF(len)
-#define TYPVAL_ENCODE_CONV_FUNC_END()
+#define TYPVAL_ENCODE_CONV_FUNC_END() \
+    do { \
+      if (cur_mpsv->type == kMPConvPartial) { \
+        typval_T *const cur_tv = cur_mpsv->tv; \
+        partial_T *const pt = cur_mpsv->data.p.pt; \
+        partial_unref(pt); \
+        if (cur_tv != NULL) { \
+          cur_tv->vval.v_partial = NULL; \
+          cur_tv->v_lock = VAR_UNLOCKED; \
+        } \
+      } \
+    } while (0)
 
 #define TYPVAL_ENCODE_CONV_EMPTY_LIST() \
     do { \
@@ -19118,10 +19126,14 @@ void free_tv(typval_T *varp)
 #define TYPVAL_ENCODE_CONV_LIST_END() \
     do { \
       typval_T *const cur_tv = cur_mpsv->tv; \
-      assert(cur_tv->v_type == VAR_LIST); \
-      list_unref(cur_tv->vval.v_list); \
-      cur_tv->vval.v_list = NULL; \
-      cur_tv->v_lock = VAR_UNLOCKED; \
+      list_T *const list = cur_mpsv->data.l.list; \
+      list_unref(list); \
+      if (cur_tv != NULL) { \
+        assert(list == cur_tv->vval.v_list); \
+        assert(cur_tv->v_type == VAR_LIST); \
+        cur_tv->vval.v_list = NULL; \
+        cur_tv->v_lock = VAR_UNLOCKED; \
+      } \
     } while (0)
 
 #define TYPVAL_ENCODE_CONV_DICT_START(ignored) \
@@ -19143,10 +19155,14 @@ void free_tv(typval_T *varp)
 #define TYPVAL_ENCODE_CONV_DICT_END() \
     do { \
       typval_T *const cur_tv = cur_mpsv->tv; \
-      assert(cur_tv->v_type == VAR_DICT); \
+      dict_T *const dict = cur_mpsv->data.d.dict; \
       dict_unref(cur_tv->vval.v_dict); \
-      cur_tv->vval.v_dict = NULL; \
-      cur_tv->v_lock = VAR_UNLOCKED; \
+      if (cur_tv != NULL) { \
+        assert(dict == cur_tv->vval.v_dict); \
+        assert(cur_tv->v_type == VAR_DICT); \
+        cur_tv->vval.v_dict = NULL; \
+        cur_tv->v_lock = VAR_UNLOCKED; \
+      } \
     } while (0)
 
 #define TYPVAL_ENCODE_CONV_RECURSE(ignored1, ignored2)

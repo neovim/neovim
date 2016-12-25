@@ -9,6 +9,7 @@ local redir_exec = helpers.redir_exec
 local funcs = helpers.funcs
 local write_file = helpers.write_file
 local NIL = helpers.NIL
+local source = helpers.source
 
 describe('string() function', function()
   before_each(clear)
@@ -136,6 +137,18 @@ describe('string() function', function()
 
     it('dumps references to script functions', function()
       eq('function(\'<SNR>1_Test2\')', eval('string(Test2_f)'))
+    end)
+
+    it('dumps partials with self referencing a partial', function()
+      source([[
+        function TestDict() dict
+        endfunction
+        let d = {}
+        let TestDictRef = function('TestDict', d)
+        let d.tdr = TestDictRef
+      ]])
+      eq("\nE724: unable to correctly dump variable with self-referencing container\nfunction('TestDict', {'tdr': function('TestDict', {E724@1})})",
+         redir_exec('echo string(d.tdr)'))
     end)
   end)
 

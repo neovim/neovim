@@ -249,15 +249,25 @@ static inline size_t tv_strlen(const typval_T *const tv)
 ///                      copyID (variable) it is set to copyID.
 /// @param[in]  copyID  CopyID used by the caller.
 /// @param  conv_type  Type of the conversion, @see MPConvStackValType.
-#define _TYPVAL_ENCODE_CHECK_SELF_REFERENCE(val, copyID_attr, copyID, \
-                                            conv_type) \
+#define _TYPVAL_ENCODE_DO_CHECK_SELF_REFERENCE(val, copyID_attr, copyID, \
+                                               conv_type) \
     do { \
-      if ((val)->copyID_attr == (copyID)) { \
-        TYPVAL_ENCODE_CONV_RECURSE((val), conv_type); \
-        return OK; \
+      const int te_csr_ret = _TYPVAL_ENCODE_CHECK_SELF_REFERENCE( \
+          TYPVAL_ENCODE_FIRST_ARG_NAME, \
+          (val), &(val)->copyID_attr, mpstack, copyID, conv_type, objname); \
+      if (te_csr_ret != NOTDONE) { \
+        return te_csr_ret; \
       } \
-      (val)->copyID_attr = (copyID); \
     } while (0)
+
+#define _TYPVAL_ENCODE_CHECK_SELF_REFERENCE_INNER_2(name) \
+    _typval_encode_##name##_check_self_reference
+#define _TYPVAL_ENCODE_CHECK_SELF_REFERENCE_INNER(name) \
+    _TYPVAL_ENCODE_CHECK_SELF_REFERENCE_INNER_2(name)
+
+/// Self reference checker function name
+#define _TYPVAL_ENCODE_CHECK_SELF_REFERENCE \
+    _TYPVAL_ENCODE_CHECK_SELF_REFERENCE_INNER(TYPVAL_ENCODE_NAME)
 
 #define _TYPVAL_ENCODE_ENCODE_INNER_2(name) encode_vim_to_##name
 #define _TYPVAL_ENCODE_ENCODE_INNER(name) _TYPVAL_ENCODE_ENCODE_INNER_2(name)
