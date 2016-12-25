@@ -19,7 +19,6 @@
 #include "nvim/option.h"
 #include "nvim/option_defs.h"
 #include "nvim/version.h"
-#include "nvim/eval/typval_encode.h"
 #include "nvim/lib/kvec.h"
 
 /// Helper structure for vim_to_object
@@ -476,9 +475,17 @@ static inline void typval_encode_dict_end(EncodedData *const edata)
 #define TYPVAL_ENCODE_CONV_RECURSE(val, conv_type) \
     TYPVAL_ENCODE_CONV_NIL()
 
-// object_convert_one_value()
+#define TYPVAL_ENCODE_SCOPE static
+#define TYPVAL_ENCODE_NAME object
+#define TYPVAL_ENCODE_FIRST_ARG_TYPE EncodedData *const
+#define TYPVAL_ENCODE_FIRST_ARG_NAME edata
+// _object_convert_one_value()
 // encode_vim_to_object()
-TYPVAL_ENCODE_DEFINE_CONV_FUNCTIONS(static, object, EncodedData *const, edata)
+#include "nvim/eval/typval_encode.c.h"
+#undef TYPVAL_ENCODE_SCOPE
+#undef TYPVAL_ENCODE_NAME
+#undef TYPVAL_ENCODE_FIRST_ARG_TYPE
+#undef TYPVAL_ENCODE_FIRST_ARG_NAME
 
 #undef TYPVAL_ENCODE_CONV_STRING
 #undef TYPVAL_ENCODE_CONV_STR_STRING
@@ -513,7 +520,9 @@ TYPVAL_ENCODE_DEFINE_CONV_FUNCTIONS(static, object, EncodedData *const, edata)
 Object vim_to_object(typval_T *obj)
 {
   EncodedData edata = { .stack = KV_INITIAL_VALUE };
-  encode_vim_to_object(&edata, obj, "vim_to_object argument");
+  const int evo_ret = encode_vim_to_object(&edata, obj,
+                                           "vim_to_object argument");
+  assert(evo_ret == OK);
   Object ret = kv_A(edata.stack, 0);
   assert(kv_size(edata.stack) == 1);
   kv_destroy(edata.stack);

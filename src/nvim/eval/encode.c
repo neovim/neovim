@@ -425,9 +425,17 @@ int encode_read_from_list(ListReaderState *const state, char *const buf,
 
 #define TYPVAL_ENCODE_ALLOW_SPECIALS false
 
-// string_convert_one_value()
+#define TYPVAL_ENCODE_SCOPE static
+#define TYPVAL_ENCODE_NAME string
+#define TYPVAL_ENCODE_FIRST_ARG_TYPE garray_T *const
+#define TYPVAL_ENCODE_FIRST_ARG_NAME gap
+// _string_convert_one_value()
 // encode_vim_to_string()
-TYPVAL_ENCODE_DEFINE_CONV_FUNCTIONS(static, string, garray_T *const, gap)
+#include "nvim/eval/typval_encode.c.h"
+#undef TYPVAL_ENCODE_SCOPE
+#undef TYPVAL_ENCODE_NAME
+#undef TYPVAL_ENCODE_FIRST_ARG_TYPE
+#undef TYPVAL_ENCODE_FIRST_ARG_NAME
 
 #undef TYPVAL_ENCODE_CONV_RECURSE
 #define TYPVAL_ENCODE_CONV_RECURSE(val, conv_type) \
@@ -457,9 +465,17 @@ TYPVAL_ENCODE_DEFINE_CONV_FUNCTIONS(static, string, garray_T *const, gap)
       return OK; \
     } while (0)
 
-// echo_convert_one_value()
+#define TYPVAL_ENCODE_SCOPE
+#define TYPVAL_ENCODE_NAME echo
+#define TYPVAL_ENCODE_FIRST_ARG_TYPE garray_T *const
+#define TYPVAL_ENCODE_FIRST_ARG_NAME gap
+// _echo_convert_one_value()
 // encode_vim_to_echo()
-TYPVAL_ENCODE_DEFINE_CONV_FUNCTIONS(, echo, garray_T *const, gap)
+#include "nvim/eval/typval_encode.c.h"
+#undef TYPVAL_ENCODE_SCOPE
+#undef TYPVAL_ENCODE_NAME
+#undef TYPVAL_ENCODE_FIRST_ARG_TYPE
+#undef TYPVAL_ENCODE_FIRST_ARG_NAME
 
 #undef TYPVAL_ENCODE_CONV_RECURSE
 #define TYPVAL_ENCODE_CONV_RECURSE(val, conv_type) \
@@ -750,9 +766,17 @@ bool encode_check_json_key(const typval_T *const tv)
       } \
     } while (0)
 
-// json_convert_one_value()
+#define TYPVAL_ENCODE_SCOPE static
+#define TYPVAL_ENCODE_NAME json
+#define TYPVAL_ENCODE_FIRST_ARG_TYPE garray_T *const
+#define TYPVAL_ENCODE_FIRST_ARG_NAME gap
+// _json_convert_one_value()
 // encode_vim_to_json()
-TYPVAL_ENCODE_DEFINE_CONV_FUNCTIONS(static, json, garray_T *const, gap)
+#include "nvim/eval/typval_encode.c.h"
+#undef TYPVAL_ENCODE_SCOPE
+#undef TYPVAL_ENCODE_NAME
+#undef TYPVAL_ENCODE_FIRST_ARG_TYPE
+#undef TYPVAL_ENCODE_FIRST_ARG_NAME
 
 #undef TYPVAL_ENCODE_CONV_STRING
 #undef TYPVAL_ENCODE_CONV_STR_STRING
@@ -791,7 +815,9 @@ char *encode_tv2string(typval_T *tv, size_t *len)
 {
   garray_T ga;
   ga_init(&ga, (int)sizeof(char), 80);
-  encode_vim_to_string(&ga, tv, "encode_tv2string() argument");
+  const int evs_ret = encode_vim_to_string(&ga, tv,
+                                           "encode_tv2string() argument");
+  (void)evs_ret;
   did_echo_string_emsg = false;
   if (len != NULL) {
     *len = (size_t) ga.ga_len;
@@ -817,7 +843,8 @@ char *encode_tv2echo(typval_T *tv, size_t *len)
       ga_concat(&ga, tv->vval.v_string);
     }
   } else {
-    encode_vim_to_echo(&ga, tv, ":echo argument");
+    const int eve_ret = encode_vim_to_echo(&ga, tv, ":echo argument");
+    (void)eve_ret;
   }
   if (len != NULL) {
     *len = (size_t) ga.ga_len;
@@ -838,7 +865,8 @@ char *encode_tv2json(typval_T *tv, size_t *len)
 {
   garray_T ga;
   ga_init(&ga, (int)sizeof(char), 80);
-  encode_vim_to_json(&ga, tv, "encode_tv2json() argument");
+  const int evj_ret = encode_vim_to_json(&ga, tv, "encode_tv2json() argument");
+  (void)evj_ret;
   did_echo_string_emsg = false;
   if (len != NULL) {
     *len = (size_t) ga.ga_len;
@@ -941,9 +969,17 @@ char *encode_tv2json(typval_T *tv, size_t *len)
 
 #define TYPVAL_ENCODE_ALLOW_SPECIALS true
 
-// msgpack_convert_one_value()
+#define TYPVAL_ENCODE_SCOPE
+#define TYPVAL_ENCODE_NAME msgpack
+#define TYPVAL_ENCODE_FIRST_ARG_TYPE msgpack_packer *const
+#define TYPVAL_ENCODE_FIRST_ARG_NAME packer
+// _msgpack_convert_one_value()
 // encode_vim_to_msgpack()
-TYPVAL_ENCODE_DEFINE_CONV_FUNCTIONS(, msgpack, msgpack_packer *const, packer)
+#include "nvim/eval/typval_encode.c.h"
+#undef TYPVAL_ENCODE_SCOPE
+#undef TYPVAL_ENCODE_NAME
+#undef TYPVAL_ENCODE_FIRST_ARG_TYPE
+#undef TYPVAL_ENCODE_FIRST_ARG_NAME
 
 #undef TYPVAL_ENCODE_CONV_STRING
 #undef TYPVAL_ENCODE_CONV_STR_STRING

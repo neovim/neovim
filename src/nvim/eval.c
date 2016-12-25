@@ -19151,9 +19151,17 @@ void free_tv(typval_T *varp)
 
 #define TYPVAL_ENCODE_CONV_RECURSE(ignored1, ignored2)
 
-// nothing_convert_one_value()
+#define TYPVAL_ENCODE_SCOPE static
+#define TYPVAL_ENCODE_NAME nothing
+#define TYPVAL_ENCODE_FIRST_ARG_TYPE const void *const
+#define TYPVAL_ENCODE_FIRST_ARG_NAME ignored
+// _nothing_convert_one_value()
 // encode_vim_to_nothing()
-TYPVAL_ENCODE_DEFINE_CONV_FUNCTIONS(static, nothing, void *, ignored)
+#include "nvim/eval/typval_encode.c.h"
+#undef TYPVAL_ENCODE_SCOPE
+#undef TYPVAL_ENCODE_NAME
+#undef TYPVAL_ENCODE_FIRST_ARG_TYPE
+#undef TYPVAL_ENCODE_FIRST_ARG_NAME
 
 #undef TYPVAL_ENCODE_ALLOW_SPECIALS
 #undef TYPVAL_ENCODE_CONV_NIL
@@ -19186,7 +19194,8 @@ TYPVAL_ENCODE_DEFINE_CONV_FUNCTIONS(static, nothing, void *, ignored)
 void clear_tv(typval_T *varp)
 {
   if (varp != NULL && varp->v_type != VAR_UNKNOWN) {
-    encode_vim_to_nothing(varp, varp, "clear_tv argument");
+    const int evn_ret = encode_vim_to_nothing(varp, varp, "clear_tv argument");
+    assert(evn_ret == OK);
   }
 }
 
