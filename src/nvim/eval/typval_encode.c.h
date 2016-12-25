@@ -579,9 +579,9 @@ TYPVAL_ENCODE_SCOPE int _TYPVAL_ENCODE_ENCODE(
         partial_T *const pt = cur_mpsv->data.p.pt;
         switch (cur_mpsv->data.p.stage) {
           case kMPConvPartialArgs: {
-            TYPVAL_ENCODE_CONV_FUNC_BEFORE_ARGS(pt->pt_argc);
+            TYPVAL_ENCODE_CONV_FUNC_BEFORE_ARGS(pt == NULL ? 0 : pt->pt_argc);
             cur_mpsv->data.p.stage = kMPConvPartialSelf;
-            if (pt->pt_argc > 0) {
+            if (pt != NULL && pt->pt_argc > 0) {
               TYPVAL_ENCODE_CONV_LIST_START(pt->pt_argc);
               _mp_push(mpstack, ((MPConvStackVal) {
                 .type = kMPConvPartialList,
@@ -599,7 +599,7 @@ TYPVAL_ENCODE_SCOPE int _TYPVAL_ENCODE_ENCODE(
           }
           case kMPConvPartialSelf: {
             cur_mpsv->data.p.stage = kMPConvPartialEnd;
-            dict_T *const dict = pt->pt_dict;
+            dict_T *const dict = pt == NULL ? NULL : pt->pt_dict;
             if (dict != NULL) {
               TYPVAL_ENCODE_CONV_FUNC_BEFORE_SELF(dict->dv_hashtab.ht_used);
               TYPVAL_ENCODE_CONV_DICT_START(dict->dv_hashtab.ht_used);
