@@ -3638,7 +3638,7 @@ set_cmd_context (
   nextcomm = str;
 
   if (use_ccline && ccline.cmdfirstc == '=') {
-    /* pass CMD_SIZE because there is no real command */
+    // pass CMD_SIZE because there is no real command
     set_context_for_expression(xp, str, CMD_SIZE);
   } else if (use_ccline && ccline.input_fn) {
     xp->xp_context = ccline.xp_context;
