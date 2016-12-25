@@ -108,9 +108,12 @@ static int conv_error(const char *const msg, const MPConvStack *const mpstack,
 {
   garray_T msg_ga;
   ga_init(&msg_ga, (int)sizeof(char), 80);
-  char *const key_msg = _("key %s");
-  char *const key_pair_msg = _("key %s at index %i from special map");
-  char *const idx_msg = _("index %i");
+  const char *const key_msg = _("key %s");
+  const char *const key_pair_msg = _("key %s at index %i from special map");
+  const char *const idx_msg = _("index %i");
+  const char *const partial_arg_msg = _("partial");
+  const char *const partial_arg_i_msg = _("argument %i");
+  const char *const partial_self_msg = _("partial self dictionary");
   for (size_t i = 0; i < kv_size(*mpstack); i++) {
     if (i != 0) {
       ga_concat(&msg_ga, ", ");
@@ -152,6 +155,29 @@ static int conv_error(const char *const msg, const MPConvStack *const mpstack,
           xfree(key);
           ga_concat(&msg_ga, IObuff);
         }
+        break;
+      }
+      case kMPConvPartial: {
+        switch (v.data.p.stage) {
+          case kMPConvPartialArgs: {
+            assert(false);
+            break;
+          }
+          case kMPConvPartialSelf: {
+            ga_concat(&msg_ga, partial_arg_msg);
+            break;
+          }
+          case kMPConvPartialEnd: {
+            ga_concat(&msg_ga, partial_self_msg);
+            break;
+          }
+        }
+        break;
+      }
+      case kMPConvPartialList: {
+        const int idx = (int)(v.data.a.arg - v.data.a.argv) - 1;
+        vim_snprintf((char *)IObuff, IOSIZE, partial_arg_i_msg, idx);
+        ga_concat(&msg_ga, IObuff);
         break;
       }
     }
@@ -308,66 +334,28 @@ int encode_read_from_list(ListReaderState *const state, char *const buf,
       } \
     } while (0)
 
-#define TYPVAL_ENCODE_CONV_FUNC(fun) \
+#define TYPVAL_ENCODE_CONV_FUNC_START(fun, is_partial, pt) \
     do { \
       ga_concat(gap, "function("); \
       TYPVAL_ENCODE_CONV_STRING(fun, STRLEN(fun)); \
-      ga_append(gap, ')'); \
     } while (0)
 
-#define TYPVAL_ENCODE_CONV_PARTIAL(pt) \
+#define TYPVAL_ENCODE_CONV_FUNC_BEFORE_ARGS(len) \
     do { \
-        int i; \
-        ga_concat(gap, "function("); \
-        if (pt->pt_name != NULL) { \
-          size_t len; \
-          char_u *p; \
-          len = 3; \
-          len += STRLEN(pt->pt_name); \
-          for (p = pt->pt_name; *p != NUL; mb_ptr_adv(p)) { \
-            if (*p == '\'') { \
-              len++; \
-            } \
-          } \
-          char_u *r, *s; \
-          s = r = xmalloc(len); \
-          if (r != NULL) { \
-            *r++ = '\''; \
-            for (p = pt->pt_name; *p != NUL; ) { \
-              if (*p == '\'') { \
-                *r++ = '\''; \
-              } \
-            MB_COPY_CHAR(p, r); \
-            } \
-            *r++ = '\''; \
-            *r++ = NUL; \
-          } \
-          ga_concat(gap, s); \
-          xfree(s); \
-        } \
-        if (pt->pt_argc > 0) { \
-          ga_concat(gap, ", ["); \
-          for (i = 0; i < pt->pt_argc; i++) { \
-            if (i > 0) { \
-              ga_concat(gap, ", "); \
-            } \
-            char *tofree = encode_tv2string(&pt->pt_argv[i], NULL); \
-            ga_concat(gap, tofree); \
-            xfree(tofree); \
-          } \
-          ga_append(gap, ']'); \
-        } \
-        if (pt->pt_dict != NULL) { \
-          typval_T dtv; \
-          ga_concat(gap, ", "); \
-          dtv.v_type = VAR_DICT; \
-          dtv.vval.v_dict = pt->pt_dict; \
-          char *tofree = encode_tv2string(&dtv, NULL); \
-          ga_concat(gap, tofree); \
-          xfree(tofree); \
-        } \
-        ga_append(gap, ')'); \
+      if (len != 0) { \
+        ga_concat(gap, ", "); \
+      } \
     } while (0)
+
+#define TYPVAL_ENCODE_CONV_FUNC_BEFORE_SELF(len) \
+    do { \
+      if ((ptrdiff_t)len != -1) { \
+        ga_concat(gap, ", "); \
+      } \
+    } while (0)
+
+#define TYPVAL_ENCODE_CONV_FUNC_END() \
+    ga_append(gap, ')')
 
 #define TYPVAL_ENCODE_CONV_EMPTY_LIST() \
     ga_concat(gap, "[]")
@@ -709,16 +697,10 @@ static inline int convert_to_json_string(garray_T *const gap,
       return FAIL; \
     } while (0)
 
-#undef TYPVAL_ENCODE_CONV_FUNC
-#define TYPVAL_ENCODE_CONV_FUNC(fun) \
+#undef TYPVAL_ENCODE_CONV_FUNC_START
+#define TYPVAL_ENCODE_CONV_FUNC_START(fun, is_partial, pt) \
     return conv_error(_("E474: Error while dumping %s, %s: " \
                         "attempt to dump function reference"), \
-                      mpstack, objname)
-
-#undef TYPVAL_ENCODE_CONV_PARTIAL
-#define TYPVAL_ENCODE_CONV_PARTIAL(pt) \
-    return conv_error(_("E474: Error while dumping %s, %s: " \
-                        "attempt to dump partial"), \
                       mpstack, objname)
 
 /// Check whether given key can be used in json_encode()
@@ -777,8 +759,10 @@ TYPVAL_ENCODE_DEFINE_CONV_FUNCTIONS(static, json, garray_T *const, gap)
 #undef TYPVAL_ENCODE_CONV_EXT_STRING
 #undef TYPVAL_ENCODE_CONV_NUMBER
 #undef TYPVAL_ENCODE_CONV_FLOAT
-#undef TYPVAL_ENCODE_CONV_FUNC
-#undef TYPVAL_ENCODE_CONV_PARTIAL
+#undef TYPVAL_ENCODE_CONV_FUNC_START
+#undef TYPVAL_ENCODE_CONV_FUNC_BEFORE_ARGS
+#undef TYPVAL_ENCODE_CONV_FUNC_BEFORE_SELF
+#undef TYPVAL_ENCODE_CONV_FUNC_END
 #undef TYPVAL_ENCODE_CONV_EMPTY_LIST
 #undef TYPVAL_ENCODE_CONV_LIST_START
 #undef TYPVAL_ENCODE_CONV_EMPTY_DICT
@@ -902,15 +886,14 @@ char *encode_tv2json(typval_T *tv, size_t *len)
 #define TYPVAL_ENCODE_CONV_FLOAT(flt) \
     msgpack_pack_double(packer, (double) (flt))
 
-#define TYPVAL_ENCODE_CONV_FUNC(fun) \
+#define TYPVAL_ENCODE_CONV_FUNC_START(fun, is_partial, pt) \
     return conv_error(_("E5004: Error while dumping %s, %s: " \
                         "attempt to dump function reference"), \
                       mpstack, objname)
 
-#define TYPVAL_ENCODE_CONV_PARTIAL(partial) \
-    return conv_error(_("E5004: Error while dumping %s, %s: " \
-                        "attempt to dump partial"), \
-                      mpstack, objname)
+#define TYPVAL_ENCODE_CONV_FUNC_BEFORE_ARGS(len)
+#define TYPVAL_ENCODE_CONV_FUNC_BEFORE_SELF(len)
+#define TYPVAL_ENCODE_CONV_FUNC_END()
 
 #define TYPVAL_ENCODE_CONV_EMPTY_LIST() \
     msgpack_pack_array(packer, 0)
@@ -967,8 +950,10 @@ TYPVAL_ENCODE_DEFINE_CONV_FUNCTIONS(, msgpack, msgpack_packer *const, packer)
 #undef TYPVAL_ENCODE_CONV_EXT_STRING
 #undef TYPVAL_ENCODE_CONV_NUMBER
 #undef TYPVAL_ENCODE_CONV_FLOAT
-#undef TYPVAL_ENCODE_CONV_FUNC
-#undef TYPVAL_ENCODE_CONV_PARTIAL
+#undef TYPVAL_ENCODE_CONV_FUNC_START
+#undef TYPVAL_ENCODE_CONV_FUNC_BEFORE_ARGS
+#undef TYPVAL_ENCODE_CONV_FUNC_BEFORE_SELF
+#undef TYPVAL_ENCODE_CONV_FUNC_END
 #undef TYPVAL_ENCODE_CONV_EMPTY_LIST
 #undef TYPVAL_ENCODE_CONV_LIST_START
 #undef TYPVAL_ENCODE_CONV_EMPTY_DICT

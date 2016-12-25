@@ -19070,22 +19070,24 @@ void free_tv(typval_T *varp)
 
 #define TYPVAL_ENCODE_CONV_EXT_STRING(ignored1, ignored2, ignored3)
 
-#define TYPVAL_ENCODE_CONV_FUNC(fun) \
+#define TYPVAL_ENCODE_CONV_FUNC_START(fun, is_partial, pt) \
     do { \
-      func_unref(fun); \
-      if (fun != empty_string) { \
-        xfree(fun); \
+      if (is_partial) { \
+        partial_unref(pt); \
+        tv->vval.v_partial = NULL; \
+      } else { \
+        func_unref(fun); \
+        if (fun != empty_string) { \
+          xfree(fun); \
+        } \
+        tv->vval.v_string = NULL; \
       } \
-      tv->vval.v_string = NULL; \
       tv->v_lock = VAR_UNLOCKED; \
     } while (0)
 
-#define TYPVAL_ENCODE_CONV_PARTIAL(pt) \
-    do { \
-      partial_unref(pt); \
-      pt = NULL; \
-      tv->v_lock = VAR_UNLOCKED; \
-    } while (0)
+#define TYPVAL_ENCODE_CONV_FUNC_BEFORE_ARGS(len)
+#define TYPVAL_ENCODE_CONV_FUNC_BEFORE_SELF(len)
+#define TYPVAL_ENCODE_CONV_FUNC_END()
 
 #define TYPVAL_ENCODE_CONV_EMPTY_LIST() \
     do { \
@@ -19162,8 +19164,10 @@ TYPVAL_ENCODE_DEFINE_CONV_FUNCTIONS(static, nothing, void *, ignored)
 #undef TYPVAL_ENCODE_CONV_STRING
 #undef TYPVAL_ENCODE_CONV_STR_STRING
 #undef TYPVAL_ENCODE_CONV_EXT_STRING
-#undef TYPVAL_ENCODE_CONV_FUNC
-#undef TYPVAL_ENCODE_CONV_PARTIAL
+#undef TYPVAL_ENCODE_CONV_FUNC_START
+#undef TYPVAL_ENCODE_CONV_FUNC_BEFORE_ARGS
+#undef TYPVAL_ENCODE_CONV_FUNC_BEFORE_SELF
+#undef TYPVAL_ENCODE_CONV_FUNC_END
 #undef TYPVAL_ENCODE_CONV_EMPTY_LIST
 #undef TYPVAL_ENCODE_CONV_EMPTY_DICT
 #undef TYPVAL_ENCODE_CONV_LIST_START

@@ -69,10 +69,30 @@
 ///
 /// @param  fun  Function name.
 
-/// @def TYPVAL_ENCODE_CONV_PARTIAL
-/// @brief Macros used to convert a partial
+/// @def TYPVAL_ENCODE_CONV_FUNC_START
+/// @brief Macros used when starting to convert a funcref or a partial
 ///
-/// @param  pt Partial name.
+/// @param  fun  Function name.
+/// @param  is_partial  True if converted function is a partial.
+/// @param  pt  Pointer to partial or NULL.
+
+/// @def TYPVAL_ENCODE_CONV_FUNC_BEFORE_ARGS
+/// @brief Macros used before starting to convert partial arguments
+///
+/// @param  len  Number of arguments. Zero for absent arguments or when
+///              converting a funcref.
+
+/// @def TYPVAL_ENCODE_CONV_FUNC_BEFORE_SELF
+/// @brief Macros used before starting to convert self dictionary
+///
+/// @param  len  Number of arguments. May be zero for empty dictionary or -1 for
+///              missing self dictionary, also when converting function
+///              reference.
+
+/// @def TYPVAL_ENCODE_CONV_FUNC_END
+/// @brief Macros used after converting a funcref or a partial
+///
+/// Accepts no arguments, but still must be a function-like macros.
 
 /// @def TYPVAL_ENCODE_CONV_EMPTY_LIST
 /// @brief Macros used to convert an empty list
@@ -151,10 +171,19 @@
 
 /// Type of the stack entry
 typedef enum {
-  kMPConvDict,   ///< Convert dict_T *dictionary.
-  kMPConvList,   ///< Convert list_T *list.
+  kMPConvDict,  ///< Convert dict_T *dictionary.
+  kMPConvList,  ///< Convert list_T *list.
   kMPConvPairs,  ///< Convert mapping represented as a list_T* of pairs.
+  kMPConvPartial,  ///< Convert partial_T* partial.
+  kMPConvPartialList,  ///< Convert argc/argv pair coming from a partial.
 } MPConvStackValType;
+
+/// Stage at which partial is being converted
+typedef enum {
+  kMPConvPartialArgs,  ///< About to convert arguments.
+  kMPConvPartialSelf,  ///< About to convert self dictionary.
+  kMPConvPartialEnd,  ///< Already converted everything.
+} MPConvPartialStage;
 
 /// Structure representing current VimL to messagepack conversion state
 typedef struct {
@@ -170,6 +199,15 @@ typedef struct {
       list_T *list;    ///< Currently converted list.
       listitem_T *li;  ///< Currently converted list item.
     } l;  ///< State of list or generic mapping conversion.
+    struct {
+      MPConvPartialStage stage;  ///< Stage at which partial is being converted.
+      partial_T *pt;  ///< Currently converted partial.
+    } p;  ///< State of partial conversion.
+    struct {
+      typval_T *arg;    ///< Currently converted argument.
+      typval_T *argv;    ///< Start of the argument list.
+      size_t todo;  ///< Number of items left to process.
+    } a;  ///< State of list or generic mapping conversion.
   } data;  ///< Data to convert.
 } MPConvStackVal;
 
@@ -250,11 +288,26 @@ static int name##_convert_one_value(firstargtype firstargname, \
       break; \
     } \
     case VAR_FUNC: { \
-      TYPVAL_ENCODE_CONV_FUNC(tv->vval.v_string); \
+      TYPVAL_ENCODE_CONV_FUNC_START(tv->vval.v_string, false, NULL); \
+      TYPVAL_ENCODE_CONV_FUNC_BEFORE_ARGS(0); \
+      TYPVAL_ENCODE_CONV_FUNC_BEFORE_SELF(-1); \
+      TYPVAL_ENCODE_CONV_FUNC_END(); \
       break; \
     } \
     case VAR_PARTIAL: { \
-      TYPVAL_ENCODE_CONV_PARTIAL(tv->vval.v_partial); \
+      partial_T *const pt = tv->vval.v_partial; \
+      (void)pt; \
+      TYPVAL_ENCODE_CONV_FUNC_START(pt->pt_name, true, pt); \
+      _mp_push(*mpstack, ((MPConvStackVal) { \
+        .type = kMPConvPartial, \
+        .tv = tv, \
+        .data = { \
+          .p = { \
+            .stage = kMPConvPartialArgs, \
+            .pt = tv->vval.v_partial, \
+          }, \
+        }, \
+      })); \
       break; \
     } \
     case VAR_LIST: { \
@@ -560,6 +613,70 @@ scope int encode_vim_to_##name(firstargtype firstargname, typval_T *const tv, \
         TYPVAL_ENCODE_CONV_DICT_AFTER_KEY(); \
         cur_tv = &kv_pair->lv_last->li_tv; \
         cur_mpsv->data.l.li = cur_mpsv->data.l.li->li_next; \
+        break; \
+      } \
+      case kMPConvPartial: { \
+        partial_T *const pt = cur_mpsv->data.p.pt; \
+        switch (cur_mpsv->data.p.stage) { \
+          case kMPConvPartialArgs: { \
+            TYPVAL_ENCODE_CONV_FUNC_BEFORE_ARGS(pt->pt_argc); \
+            cur_mpsv->data.p.stage = kMPConvPartialSelf; \
+            if (pt->pt_argc > 0) { \
+              TYPVAL_ENCODE_CONV_LIST_START(pt->pt_argc); \
+              _mp_push(mpstack, ((MPConvStackVal) { \
+                .type = kMPConvPartialList, \
+                .tv = tv, \
+                .data = { \
+                  .a = { \
+                    .arg = pt->pt_argv, \
+                    .argv = pt->pt_argv, \
+                    .todo = (size_t)pt->pt_argc, \
+                  }, \
+                }, \
+              })); \
+            } \
+            break; \
+          } \
+          case kMPConvPartialSelf: { \
+            cur_mpsv->data.p.stage = kMPConvPartialEnd; \
+            dict_T *const dict = pt->pt_dict; \
+            if (dict != NULL) { \
+              TYPVAL_ENCODE_CONV_FUNC_BEFORE_SELF(dict->dv_hashtab.ht_used); \
+              TYPVAL_ENCODE_CONV_DICT_START(dict->dv_hashtab.ht_used); \
+              _mp_push(mpstack, ((MPConvStackVal) { \
+                .type = kMPConvDict, \
+                .tv = tv, \
+                .data = { \
+                  .d = { \
+                    .dict = dict, \
+                    .hi = dict->dv_hashtab.ht_array, \
+                    .todo = dict->dv_hashtab.ht_used, \
+                  }, \
+                }, \
+              })); \
+            } else { \
+              TYPVAL_ENCODE_CONV_FUNC_BEFORE_SELF(-1); \
+            } \
+            break; \
+          } \
+          case kMPConvPartialEnd: { \
+            TYPVAL_ENCODE_CONV_FUNC_END(); \
+            (void) _mp_pop(mpstack); \
+            break; \
+          } \
+        } \
+        continue; \
+      } \
+      case kMPConvPartialList: { \
+        if (!cur_mpsv->data.a.todo) { \
+          (void) _mp_pop(mpstack); \
+          TYPVAL_ENCODE_CONV_LIST_END(); \
+          continue; \
+        } else if (cur_mpsv->data.a.argv != cur_mpsv->data.a.arg) { \
+          TYPVAL_ENCODE_CONV_LIST_BETWEEN_ITEMS(); \
+        } \
+        cur_tv = cur_mpsv->data.a.arg++; \
+        cur_mpsv->data.a.todo--; \
         break; \
       } \
     } \
