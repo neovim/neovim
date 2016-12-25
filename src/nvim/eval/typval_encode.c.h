@@ -299,11 +299,11 @@ static int _TYPVAL_ENCODE_CONVERT_ONE_VALUE(
       const dictitem_T *val_di;
       if (TYPVAL_ENCODE_ALLOW_SPECIALS
           && tv->vval.v_dict->dv_hashtab.ht_used == 2
-          && (type_di = dict_find((dict_T *) tv->vval.v_dict,
-                                  (char_u *) "_TYPE", -1)) != NULL
+          && (type_di = dict_find((dict_T *)tv->vval.v_dict,
+                                  (char_u *)"_TYPE", -1)) != NULL
           && type_di->di_tv.v_type == VAR_LIST
-          && (val_di = dict_find((dict_T *) tv->vval.v_dict,
-                                 (char_u *) "_VAL", -1)) != NULL) {
+          && (val_di = dict_find((dict_T *)tv->vval.v_dict,
+                                 (char_u *)"_VAL", -1)) != NULL) {
         size_t i;
         for (i = 0; i < ARRAY_SIZE(eval_msgpack_type_lists); i++) {
           if (type_di->di_tv.vval.v_list == eval_msgpack_type_lists[i]) {
@@ -313,7 +313,7 @@ static int _TYPVAL_ENCODE_CONVERT_ONE_VALUE(
         if (i == ARRAY_SIZE(eval_msgpack_type_lists)) {
           goto _convert_one_value_regular_dict;
         }
-        switch ((MessagePackType) i) {
+        switch ((MessagePackType)i) {
           case kMPNil: {
             TYPVAL_ENCODE_CONV_NIL();
             break;
@@ -331,11 +331,11 @@ static int _TYPVAL_ENCODE_CONVERT_ONE_VALUE(
             varnumber_T highest_bits;
             varnumber_T high_bits;
             varnumber_T low_bits;
-            /* List of 4 integers; first is signed (should be 1 or -1, but */
-            /* this is not checked), second is unsigned and have at most */
-            /* one (sign is -1) or two (sign is 1) non-zero bits (number of */
-            /* bits is not checked), other unsigned and have at most 31 */
-            /* non-zero bits (number of bits is not checked).*/
+            // List of 4 integers; first is signed (should be 1 or -1, but
+            // this is not checked), second is unsigned and have at most
+            // one (sign is -1) or two (sign is 1) non-zero bits (number of
+            // bits is not checked), other unsigned and have at most 31
+            // non-zero bits (number of bits is not checked).
             if (val_di->di_tv.v_type != VAR_LIST
                 || (val_list = val_di->di_tv.vval.v_list) == NULL
                 || val_list->lv_len != 4
@@ -351,9 +351,9 @@ static int _TYPVAL_ENCODE_CONVERT_ONE_VALUE(
                 || (low_bits = val_list->lv_last->li_tv.vval.v_number) < 0) {
               goto _convert_one_value_regular_dict;
             }
-            uint64_t number = ((uint64_t) (((uint64_t) highest_bits) << 62)
-                               | (uint64_t) (((uint64_t) high_bits) << 31)
-                               | (uint64_t) low_bits);
+            uint64_t number = ((uint64_t)(((uint64_t)highest_bits) << 62)
+                               | (uint64_t)(((uint64_t)high_bits) << 31)
+                               | (uint64_t)low_bits);
             if (sign > 0) {
               TYPVAL_ENCODE_CONV_UNSIGNED_NUMBER(number);
             } else {
@@ -370,7 +370,7 @@ static int _TYPVAL_ENCODE_CONVERT_ONE_VALUE(
           }
           case kMPString:
           case kMPBinary: {
-            const bool is_string = ((MessagePackType) i == kMPString);
+            const bool is_string = ((MessagePackType)i == kMPString);
             if (val_di->di_tv.v_type != VAR_LIST) {
               goto _convert_one_value_regular_dict;
             }
@@ -520,7 +520,7 @@ TYPVAL_ENCODE_SCOPE int _TYPVAL_ENCODE_ENCODE(
     switch (cur_mpsv->type) {
       case kMPConvDict: {
         if (!cur_mpsv->data.d.todo) {
-          (void) _mp_pop(mpstack);
+          (void)_mp_pop(mpstack);
           cur_mpsv->data.d.dict->dv_copyID = copyID - 1;
           TYPVAL_ENCODE_CONV_DICT_END();
           continue;
@@ -535,14 +535,14 @@ TYPVAL_ENCODE_SCOPE int _TYPVAL_ENCODE_ENCODE(
         cur_mpsv->data.d.todo--;
         cur_mpsv->data.d.hi++;
         TYPVAL_ENCODE_CONV_STR_STRING(&di->di_key[0],
-                                      strlen((char *) &di->di_key[0]));
+                                      strlen((char *)&di->di_key[0]));
         TYPVAL_ENCODE_CONV_DICT_AFTER_KEY();
         cur_tv = &di->di_tv;
         break;
       }
       case kMPConvList: {
         if (cur_mpsv->data.l.li == NULL) {
-          (void) _mp_pop(mpstack);
+          (void)_mp_pop(mpstack);
           cur_mpsv->data.l.list->lv_copyID = copyID - 1;
           TYPVAL_ENCODE_CONV_LIST_END();
           continue;
@@ -555,7 +555,7 @@ TYPVAL_ENCODE_SCOPE int _TYPVAL_ENCODE_ENCODE(
       }
       case kMPConvPairs: {
         if (cur_mpsv->data.l.li == NULL) {
-          (void) _mp_pop(mpstack);
+          (void)_mp_pop(mpstack);
           cur_mpsv->data.l.list->lv_copyID = copyID - 1;
           TYPVAL_ENCODE_CONV_DICT_END();
           continue;
@@ -565,9 +565,11 @@ TYPVAL_ENCODE_SCOPE int _TYPVAL_ENCODE_ENCODE(
         const list_T *const kv_pair = cur_mpsv->data.l.li->li_tv.vval.v_list;
         TYPVAL_ENCODE_CONV_SPECIAL_DICT_KEY_CHECK(
             encode_vim_to__error_ret, kv_pair->lv_first->li_tv);
-        if (_TYPVAL_ENCODE_CONVERT_ONE_VALUE(
-                TYPVAL_ENCODE_FIRST_ARG_NAME, &mpstack,
-                &kv_pair->lv_first->li_tv, copyID, objname) == FAIL) {
+        if (_TYPVAL_ENCODE_CONVERT_ONE_VALUE(TYPVAL_ENCODE_FIRST_ARG_NAME,
+                                             &mpstack,
+                                             &kv_pair->lv_first->li_tv,
+                                             copyID,
+                                             objname) == FAIL) {
           goto encode_vim_to__error_ret;
         }
         TYPVAL_ENCODE_CONV_DICT_AFTER_KEY();
@@ -621,7 +623,7 @@ TYPVAL_ENCODE_SCOPE int _TYPVAL_ENCODE_ENCODE(
           }
           case kMPConvPartialEnd: {
             TYPVAL_ENCODE_CONV_FUNC_END();
-            (void) _mp_pop(mpstack);
+            (void)_mp_pop(mpstack);
             break;
           }
         }
@@ -629,7 +631,7 @@ TYPVAL_ENCODE_SCOPE int _TYPVAL_ENCODE_ENCODE(
       }
       case kMPConvPartialList: {
         if (!cur_mpsv->data.a.todo) {
-          (void) _mp_pop(mpstack);
+          (void)_mp_pop(mpstack);
           TYPVAL_ENCODE_CONV_LIST_END();
           continue;
         } else if (cur_mpsv->data.a.argv != cur_mpsv->data.a.arg) {
@@ -641,9 +643,8 @@ TYPVAL_ENCODE_SCOPE int _TYPVAL_ENCODE_ENCODE(
       }
     }
     assert(cur_tv != NULL);
-    if (_TYPVAL_ENCODE_CONVERT_ONE_VALUE(
-            TYPVAL_ENCODE_FIRST_ARG_NAME, &mpstack, cur_tv, copyID, objname)
-        == FAIL) {
+    if (_TYPVAL_ENCODE_CONVERT_ONE_VALUE(TYPVAL_ENCODE_FIRST_ARG_NAME, &mpstack,
+                                         cur_tv, copyID, objname) == FAIL) {
       goto encode_vim_to__error_ret;
     }
   }
