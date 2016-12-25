@@ -3998,6 +3998,7 @@ getcompletion({pat}, {type} [, {filtered}])		*getcompletion()*
 		augroup		autocmd groups
 		buffer		buffer names
 		behave		:behave suboptions
+		cmdline		|cmdline-completion|
 		color		color schemes
 		command		Ex command (and arguments)
 		compiler	compilers
@@ -4026,7 +4027,7 @@ getcompletion({pat}, {type} [, {filtered}])		*getcompletion()*
 		user		user names
 		var		user variables
 
-		If {pat} is an empty string, then all the matches are returned.
+		If {pat} is an empty string then all matches are returned.
 		Otherwise only items matching {pat} are returned. See
 		|wildcards| for the use of special characters in {pat}.
 
