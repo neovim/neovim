@@ -4517,7 +4517,7 @@ static int ins_complete(int c, bool enable_pum)
     } else if (ctrl_x_mode == CTRL_X_CMDLINE) {
       compl_pattern = vim_strnsave(line, curs_col);
       set_cmd_context(&compl_xp, compl_pattern,
-          (int)STRLEN(compl_pattern), curs_col);
+                      (int)STRLEN(compl_pattern), curs_col, false);
       if (compl_xp.xp_context == EXPAND_UNSUCCESSFUL
           || compl_xp.xp_context == EXPAND_NOTHING)
         /* No completion possible, use an empty pattern to get a
