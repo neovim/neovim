@@ -522,6 +522,7 @@ Object vim_to_object(typval_T *obj)
   EncodedData edata = { .stack = KV_INITIAL_VALUE };
   const int evo_ret = encode_vim_to_object(&edata, obj,
                                            "vim_to_object argument");
+  (void)evo_ret;
   assert(evo_ret == OK);
   Object ret = kv_A(edata.stack, 0);
   assert(kv_size(edata.stack) == 1);
