@@ -19086,7 +19086,8 @@ void free_tv(typval_T *varp)
 #define TYPVAL_ENCODE_CONV_FUNC_BEFORE_SELF(len)
 #define TYPVAL_ENCODE_CONV_FUNC_END() \
     do { \
-      if (cur_mpsv->type == kMPConvPartial) { \
+      assert(cur_mpsv != NULL || tv->v_type == VAR_FUNC); \
+      if (cur_mpsv != NULL && cur_mpsv->type == kMPConvPartial) { \
         typval_T *const cur_tv = cur_mpsv->tv; \
         partial_T *const pt = cur_mpsv->data.p.pt; \
         partial_unref(pt); \
