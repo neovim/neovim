@@ -215,6 +215,7 @@ function! man#complete(arg_lead, cmd_line, cursor_pos) abort
     let tmp = split(a:arg_lead, '(')
     let name = tmp[0]
     let sect = tolower(get(tmp, 1, ''))
+    return s:complete(sect, '', name)
   elseif args[1] !~# '^[^()]\+$'
     " cursor (|) is at ':Man 3() |' or ':Man (3|' or ':Man 3() pri|'
     " or ':Man 3() pri |'
@@ -242,18 +243,22 @@ function! man#complete(arg_lead, cmd_line, cursor_pos) abort
     let name = a:arg_lead
     let sect = tolower(args[1])
   endif
-  " We remove duplicates incase the same manpage in different languages was found.
-  return uniq(sort(map(globpath(s:mandirs,'man?/'.name.'*.'.sect.'*', 0, 1), 's:format_candidate(v:val, sect)'), 'i'))
+  return s:complete(sect, sect, name)
 endfunction
 
-function! s:format_candidate(path, sect) abort
+function! s:complete(sect, psect, name) abort
+  " We remove duplicates incase the same manpage in different languages was found.
+  return uniq(sort(map(globpath(s:mandirs,'man?/'.a:name.'*.'.a:sect.'*', 0, 1), 's:format_candidate(v:val, a:psect)'), 'i'))
+endfunction
+
+function! s:format_candidate(path, psect) abort
   if a:path =~# '\.\%(pdf\|in\)$' " invalid extensions
     return
   endif
   let [sect, name] = s:extract_sect_and_name_path(a:path)
-  if sect ==# a:sect
+  if sect ==# a:psect
     return name
-  elseif sect =~# a:sect.'.\+$'
+  elseif sect =~# a:psect.'.\+$'
     " We include the section if the user provided section is a prefix
     " of the actual section.
     return name.'('.sect.')'
