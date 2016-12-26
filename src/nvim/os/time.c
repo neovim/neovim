@@ -6,6 +6,7 @@
 
 #include <uv.h>
 
+#include "nvim/os/input.h"
 #include "nvim/os/time.h"
 #include "nvim/event/loop.h"
 #include "nvim/vim.h"
@@ -46,26 +47,51 @@ void os_delay(uint64_t milliseconds, bool ignoreinput)
     }
     LOOP_PROCESS_EVENTS_UNTIL(&main_loop, NULL, (int)milliseconds, got_int);
   } else {
-    os_microdelay(milliseconds * 1000);
+    os_microdelay(milliseconds * 1000u, ignoreinput);
   }
 }
 
-/// Sleeps for a certain amount of microseconds
+/// Sleeps for a certain amount of microseconds.
 ///
 /// @param microseconds Number of microseconds to sleep
-void os_microdelay(uint64_t microseconds)
+/// @param ignoreinput If true, ignore pressed keys during the waiting period.
+///                    If false, waiting is aborted on key press.
+void os_microdelay(uint64_t microseconds, bool ignoreinput)
 {
-  uint64_t elapsed = 0;
-  uint64_t ns = microseconds * 1000;  // convert to nanoseconds
+  uint64_t elapsed = 0u;
   uint64_t base = uv_hrtime();
+
+  /* Convert microseconds to nanoseconds. If uint64_t would overflow, set
+   * nanoseconds to UINT64_MAX. */
+  uint64_t nanoseconds;
+  if (microseconds < UINT64_MAX/1000u) {
+    nanoseconds = microseconds * 1000u;
+  } else {
+    nanoseconds = UINT64_MAX;
+  }
 
   uv_mutex_lock(&delay_mutex);
 
-  while (elapsed < ns) {
-    if (uv_cond_timedwait(&delay_cond, &delay_mutex, ns - elapsed)
-        == UV_ETIMEDOUT)
+  while (elapsed < nanoseconds) {
+
+    /* If the key input is ignored, we simply wait the full delay. If not, we
+     * check every 10 milliseconds for input and break the waiting loop if input
+     * is available. */
+    uint64_t nanoseconds_delta;
+    if (true == ignoreinput) {
+      nanoseconds_delta = nanoseconds - elapsed;
+    } else {
+      nanoseconds_delta = 10000u;
+    }
+
+    if ((uv_cond_timedwait(&delay_cond, &delay_mutex, nanoseconds_delta)
+        == UV_ETIMEDOUT) && (true == os_char_avail())) {
       break;
-    uint64_t now = uv_hrtime();
+    }
+
+    /* Update elapsed delay. As soon as the delay is over, the condition of the
+     * loop is not met any more and we leave. */
+    const uint64_t now = uv_hrtime();
     elapsed += now - base;
     base = now;
   }
