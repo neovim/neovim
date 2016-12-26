@@ -6,11 +6,11 @@
 
 #include <uv.h>
 
-#include "nvim/os/input.h"
 #include "nvim/os/time.h"
 #include "nvim/event/loop.h"
 #include "nvim/vim.h"
 #include "nvim/main.h"
+#include "nvim/getchar.h"
 
 static uv_mutex_t delay_mutex;
 static uv_cond_t delay_cond;
@@ -71,20 +71,21 @@ void os_microdelay(uint64_t microseconds, bool ignoreinput)
 
   while (elapsed < nanoseconds) {
 
-    // If the key input is ignored, we simply wait the full delay. If not, we
+    // If the input is ignored, we simply wait the full delay. If not, we
     // check every 10 milliseconds for input and break the waiting loop if input
     // is available.
     const uint64_t nanoseconds_delta = (ignoreinput)
                                        ? nanoseconds - elapsed
-                                       : MIN(nanoseconds - elapsed, 10000000u);
+                                       : MIN(nanoseconds - elapsed, 100000000u);
+    uv_cond_timedwait(&delay_cond, &delay_mutex, nanoseconds_delta);
 
-    if ((uv_cond_timedwait(&delay_cond, &delay_mutex, nanoseconds_delta)
-        == UV_ETIMEDOUT) && (ignoreinput || os_char_avail())) {
+    // Exit the waiting loop if we do not ignore input and input is available.
+    if (!ignoreinput && char_avail()) {
       break;
     }
 
-    // Update elapsed delay. As soon as the delay is over, the condition of the
-    // loop is not met any more and we leave.
+    // Update elapsed delay. As soon as the elabsed time exeeds 'nanoseconds',
+    // the condition of the loop is not met any more and we leave.
     const uint64_t now = uv_hrtime();
     elapsed += now - base;
     base = now;
