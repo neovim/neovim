@@ -76,7 +76,7 @@ void os_microdelay(uint64_t microseconds, bool ignoreinput)
     const uint64_t nanoseconds_delta = (ignoreinput ? nanoseconds - elapsed : 10000u);
 
     if ((uv_cond_timedwait(&delay_cond, &delay_mutex, nanoseconds_delta)
-        == UV_ETIMEDOUT) && (true == os_char_avail())) {
+        == UV_ETIMEDOUT) && os_char_avail()) {
       break;
     }
 
