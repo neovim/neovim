@@ -38,7 +38,7 @@ uint64_t os_hrtime(void)
 /// Sleeps for a certain amount of milliseconds
 ///
 /// @param milliseconds Number of milliseconds to sleep
-/// @param ignoreinput If true, allow a SIGINT to interrupt us
+/// @param ignoreinput If true, only SIGINT (CTRL-C) can interrupt.
 void os_delay(uint64_t milliseconds, bool ignoreinput)
 {
   if (ignoreinput) {
@@ -54,8 +54,8 @@ void os_delay(uint64_t milliseconds, bool ignoreinput)
 /// Sleeps for a certain amount of microseconds.
 ///
 /// @param microseconds Number of microseconds to sleep
-/// @param ignoreinput If true, ignore pressed keys during the waiting period.
-///                    If false, waiting is aborted on key press.
+/// @param ignoreinput If true, ignore all input (including SIGINT/CTRL-C).
+///                    If false, waiting is aborted on any input.
 void os_microdelay(uint64_t microseconds, bool ignoreinput)
 {
   uint64_t elapsed = 0u;
