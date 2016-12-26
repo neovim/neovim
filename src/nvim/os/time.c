@@ -61,27 +61,30 @@ void os_microdelay(uint64_t microseconds, bool ignoreinput)
   uint64_t elapsed = 0u;
   uint64_t base = uv_hrtime();
 
-  /* Convert microseconds to nanoseconds. If uint64_t would overflow, set
-   * nanoseconds to UINT64_MAX. */
-  const uint64_t nanoseconds = (microseconds < UINT64_MAX/1000u ? microseconds * 1000u :
-      UINT64_MAX);
+  // Convert microseconds to nanoseconds. If uint64_t would overflow, set
+  // nanoseconds to UINT64_MAX.
+  const uint64_t nanoseconds = (microseconds < UINT64_MAX/1000u)
+                               ? microseconds * 1000u
+                               : UINT64_MAX;
 
   uv_mutex_lock(&delay_mutex);
 
   while (elapsed < nanoseconds) {
 
-    /* If the key input is ignored, we simply wait the full delay. If not, we
-     * check every 10 milliseconds for input and break the waiting loop if input
-     * is available. */
-    const uint64_t nanoseconds_delta = (ignoreinput ? nanoseconds - elapsed : 10000u);
+    // If the key input is ignored, we simply wait the full delay. If not, we
+    // check every 10 milliseconds for input and break the waiting loop if input
+    // is available.
+    const uint64_t nanoseconds_delta = (ignoreinput)
+                                       ? nanoseconds - elapsed
+                                       : 10000u;
 
     if ((uv_cond_timedwait(&delay_cond, &delay_mutex, nanoseconds_delta)
         == UV_ETIMEDOUT) && (ignoreinput || os_char_avail())) {
       break;
     }
 
-    /* Update elapsed delay. As soon as the delay is over, the condition of the
-     * loop is not met any more and we leave. */
+    // Update elapsed delay. As soon as the delay is over, the condition of the
+    // loop is not met any more and we leave.
     const uint64_t now = uv_hrtime();
     elapsed += now - base;
     base = now;
