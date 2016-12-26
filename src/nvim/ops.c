@@ -4607,7 +4607,7 @@ int do_addsub(int op_type, pos_T *pos, int length, linenr_T Prenum1)
       goto theend;
     }
     ptr = buf1;
-    if (negative && (!visual || (visual && was_positive))) {
+    if (negative && (!visual || was_positive)) {
       *ptr++ = '-';
     }
     if (pre) {
