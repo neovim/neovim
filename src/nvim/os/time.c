@@ -63,12 +63,8 @@ void os_microdelay(uint64_t microseconds, bool ignoreinput)
 
   /* Convert microseconds to nanoseconds. If uint64_t would overflow, set
    * nanoseconds to UINT64_MAX. */
-  uint64_t nanoseconds;
-  if (microseconds < UINT64_MAX/1000u) {
-    nanoseconds = microseconds * 1000u;
-  } else {
-    nanoseconds = UINT64_MAX;
-  }
+  const uint64_t nanoseconds = (microseconds < UINT64_MAX/1000u ? microseconds * 1000u :
+      UINT64_MAX);
 
   uv_mutex_lock(&delay_mutex);
 
@@ -77,12 +73,7 @@ void os_microdelay(uint64_t microseconds, bool ignoreinput)
     /* If the key input is ignored, we simply wait the full delay. If not, we
      * check every 10 milliseconds for input and break the waiting loop if input
      * is available. */
-    uint64_t nanoseconds_delta;
-    if (true == ignoreinput) {
-      nanoseconds_delta = nanoseconds - elapsed;
-    } else {
-      nanoseconds_delta = 10000u;
-    }
+    const uint64_t nanoseconds_delta = (ignoreinput ? nanoseconds - elapsed : 10000u);
 
     if ((uv_cond_timedwait(&delay_cond, &delay_mutex, nanoseconds_delta)
         == UV_ETIMEDOUT) && (true == os_char_avail())) {
