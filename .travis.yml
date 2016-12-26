@@ -1,3 +1,4 @@
+dist: trusty
 sudo: false
 language: c
 
