@@ -7,6 +7,7 @@
 #include <uv.h>
 
 #include "nvim/os/time.h"
+#include "nvim/os/input.h"
 #include "nvim/event/loop.h"
 #include "nvim/vim.h"
 #include "nvim/main.h"
@@ -34,10 +35,10 @@ uint64_t os_hrtime(void)
   return uv_hrtime();
 }
 
-/// Sleeps for a certain amount of milliseconds
+/// Sleeps for a certain amount of milliseconds.
 ///
 /// @param milliseconds Number of milliseconds to sleep
-/// @param ignoreinput If true, allow a SIGINT to interrupt us
+/// @param ignoreinput If true, only SIGINT (CTRL-C) can interrupt.
 void os_delay(uint64_t milliseconds, bool ignoreinput)
 {
   if (ignoreinput) {
@@ -46,26 +47,42 @@ void os_delay(uint64_t milliseconds, bool ignoreinput)
     }
     LOOP_PROCESS_EVENTS_UNTIL(&main_loop, NULL, (int)milliseconds, got_int);
   } else {
-    os_microdelay(milliseconds * 1000);
+    os_microdelay(milliseconds * 1000u, ignoreinput);
   }
 }
 
-/// Sleeps for a certain amount of microseconds
+/// Sleeps for a certain amount of microseconds.
 ///
-/// @param microseconds Number of microseconds to sleep
-void os_microdelay(uint64_t microseconds)
+/// @param ms          Number of microseconds to sleep.
+/// @param ignoreinput If true, ignore all input (including SIGINT/CTRL-C).
+///                    If false, waiting is aborted on any input.
+void os_microdelay(uint64_t ms, bool ignoreinput)
 {
-  uint64_t elapsed = 0;
-  uint64_t ns = microseconds * 1000;  // convert to nanoseconds
+  uint64_t elapsed = 0u;
   uint64_t base = uv_hrtime();
+  // Convert microseconds to nanoseconds, or UINT64_MAX on overflow.
+  const uint64_t ns = (ms < UINT64_MAX / 1000u) ? ms * 1000u : UINT64_MAX;
 
   uv_mutex_lock(&delay_mutex);
 
   while (elapsed < ns) {
-    if (uv_cond_timedwait(&delay_cond, &delay_mutex, ns - elapsed)
-        == UV_ETIMEDOUT)
+    // If ignoring input, we simply wait the full delay.
+    // Else we check for input in ~100ms intervals.
+    const uint64_t ns_delta = ignoreinput
+                              ? ns - elapsed
+                              : MIN(ns - elapsed, 100000000u);  // 100ms
+
+    const int rv = uv_cond_timedwait(&delay_cond, &delay_mutex, ns_delta);
+    if (0 != rv && UV_ETIMEDOUT != rv) {
+      assert(false);
       break;
-    uint64_t now = uv_hrtime();
+    }  // Else: Timeout proceeded normally.
+
+    if (!ignoreinput && os_char_avail()) {
+      break;
+    }
+
+    const uint64_t now = uv_hrtime();
     elapsed += now - base;
     base = now;
   }
