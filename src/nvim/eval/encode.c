@@ -319,7 +319,7 @@ int encode_read_from_list(ListReaderState *const state, char *const buf,
     do { \
         int i; \
         ga_concat(gap, "function("); \
-        if (&pt->pt_name != NULL) { \
+        if (pt->pt_name != NULL) { \
           size_t len; \
           char_u *p; \
           len = 3; \

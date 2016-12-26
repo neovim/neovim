@@ -1297,7 +1297,12 @@ find_tags (
        * Read and parse the lines in the file one by one
        */
       for (;; ) {
-        line_breakcheck();          /* check for CTRL-C typed */
+        // check for CTRL-C typed, more often when jumping around
+        if (state == TS_BINARY || state == TS_SKIP_BACK) {
+          line_breakcheck();
+        } else {
+          fast_breakcheck();
+        }
         if ((flags & TAG_INS_COMP))     /* Double brackets for gcc */
           ins_compl_check_keys(30, false);
         if (got_int || compl_interrupted) {

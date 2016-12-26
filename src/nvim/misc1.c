@@ -566,7 +566,7 @@ open_line (
             int i;
             int l;
 
-            for (i = 0; p[i] != NUL && i < lead_len; i += l) {
+            for (i = 0; i < lead_len && p[i] != NUL; i += l) {
               l = (*mb_ptr2len)(p + i);
               if (vim_strnsize(p, i + l) > repl_size)
                 break;

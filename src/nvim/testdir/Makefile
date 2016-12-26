@@ -17,7 +17,6 @@ SCRIPTS := \
            test37.out             \
            test40.out             \
            test42.out             \
-           test47.out             \
            test48.out             \
            test49.out             \
            test52.out             \
@@ -33,6 +32,7 @@ SCRIPTS := \
 NEW_TESTS = \
 	    test_cscope.res \
 		test_cmdline.res \
+	    test_diffmode.res \
 	    test_hardcopy.res \
 	    test_help_tagjump.res \
 	    test_history.res \

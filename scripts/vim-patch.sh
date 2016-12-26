@@ -61,10 +61,10 @@ clean_files() {
 
   read -p "Delete these files (Y/n)? " -n 1 -r reply
   echo
-  if [[ "${reply}" =~ ^[Yy]$ ]]; then
-    rm -- "${CREATED_FILES[@]}"
-  else
+  if [[ "${reply}" == n ]]; then
     echo "You can use 'git clean' to remove these files when you're done."
+  else
+    rm -- "${CREATED_FILES[@]}"
   fi
 }
 
@@ -370,7 +370,7 @@ review_commit() {
     printf -- "$(head -n 4 <<< "${nvim_patch}")\n\n"
     local reply
     read -p "Continue reviewing (y/N)? " -n 1 -r reply
-    if [[ ! "${reply}" =~ ^[Nn]$ ]]; then
+    if [[ "${reply}" == y ]]; then
       echo
       return
     fi
@@ -436,7 +436,7 @@ review_pr() {
     if [[ "${pr_commit_url}" != "${pr_commit_urls[-1]}" ]]; then
       read -p "Continue with next commit (Y/n)? " -n 1 -r reply
       echo
-      if [[ ! "${reply}" =~ ^[Yy]$ ]]; then
+      if [[ "${reply}" == n ]]; then
         break
       fi
     fi
