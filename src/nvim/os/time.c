@@ -53,7 +53,7 @@ void os_delay(uint64_t milliseconds, bool ignoreinput)
 
 /// Sleeps for a certain amount of microseconds.
 ///
-/// @param microseconds Number of microseconds to sleep
+/// @param microseconds Number of microseconds to sleep.
 /// @param ignoreinput If true, ignore all input (including SIGINT/CTRL-C).
 ///                    If false, waiting is aborted on any input.
 void os_microdelay(uint64_t microseconds, bool ignoreinput)
@@ -71,8 +71,8 @@ void os_microdelay(uint64_t microseconds, bool ignoreinput)
 
   while (elapsed < nanoseconds) {
     // If the input is ignored, we simply wait the full delay. If not, we
-    // check every 10 milliseconds for input and break the waiting loop if input
-    // is available.
+    // check every 100 milliseconds for input and break the waiting loop if
+    // input is available.
     const uint64_t nanoseconds_delta = (ignoreinput)
                                        ? nanoseconds - elapsed
                                        : MIN(nanoseconds - elapsed, 100000000u);
@@ -91,6 +91,7 @@ void os_microdelay(uint64_t microseconds, bool ignoreinput)
   }
 
   uv_mutex_unlock(&delay_mutex);
+  return;
 }
 
 /// Portable version of POSIX localtime_r()
