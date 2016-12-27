@@ -70,14 +70,13 @@ void os_microdelay(uint64_t microseconds, bool ignoreinput)
   uv_mutex_lock(&delay_mutex);
 
   while (elapsed < nanoseconds) {
-
     // If the input is ignored, we simply wait the full delay. If not, we
     // check every 10 milliseconds for input and break the waiting loop if input
     // is available.
     const uint64_t nanoseconds_delta = (ignoreinput)
                                        ? nanoseconds - elapsed
                                        : MIN(nanoseconds - elapsed, 100000000u);
-    uv_cond_timedwait(&delay_cond, &delay_mutex, nanoseconds_delta);
+    (void)uv_cond_timedwait(&delay_cond, &delay_mutex, nanoseconds_delta);
 
     // Exit the waiting loop if we do not ignore input and input is available.
     if (!ignoreinput && char_avail()) {
