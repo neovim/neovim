@@ -279,7 +279,7 @@ function! man#init_pager() abort
   endif
   " This is not perfect. See `man glDrawArraysInstanced`. Since the title is
   " all caps it is impossible to tell what the original capitilization was.
-  let ref = tolower(matchstr(getline(1), '^\S\+'))
+  let ref = substitute(matchstr(getline(1), '^[^)]\+)'), ' ', '_', 'g')
   try
     let b:man_sect = man#extract_sect_and_name_ref(ref)[0]
   catch
