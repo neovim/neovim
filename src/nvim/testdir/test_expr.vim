@@ -74,3 +74,10 @@ func Test_dict()
   call assert_equal('none', d[''])
   call assert_equal('aaa', d['a'])
 endfunc
+
+func Test_loop_over_null_list()
+  let null_list = submatch(1, 1)
+  for i in null_list
+    call assert_true(0, 'should not get here')
+  endfor
+endfunc
