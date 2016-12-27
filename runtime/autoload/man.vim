@@ -247,8 +247,12 @@ function! man#complete(arg_lead, cmd_line, cursor_pos) abort
 endfunction
 
 function! s:complete(sect, psect, name) abort
-  " We remove duplicates incase the same manpage in different languages was found.
-  return uniq(sort(map(globpath(s:mandirs,'man?/'.a:name.'*.'.a:sect.'*', 0, 1), 's:format_candidate(v:val, a:psect)'), 'i'))
+  let old_fic = &fileignorecase
+  let &fileignorecase = &wildignorecase
+  let pages = globpath(s:mandirs,'man?/'.a:name.'*.'.a:sect.'*', 0, 1)
+  let &fileignorecase = old_fic
+  " We remove duplicates in case the same manpage in different languages was found.
+  return uniq(sort(map(pages, 's:format_candidate(v:val, a:psect)'), 'i'))
 endfunction
 
 function! s:format_candidate(path, psect) abort
