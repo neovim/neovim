@@ -26,7 +26,7 @@ endfunction
 
 " Handler for s:system() function.
 function! s:system_handler(jobid, data, event) dict abort
-  if a:event == 'stdout' || a:event == 'stderr'
+  if a:event == 'stdout'
     let self.output .= join(a:data, '')
   elseif a:event == 'exit'
     let s:shell_error = a:data
@@ -35,11 +35,9 @@ endfunction
 
 " Run a system command and timeout after 30 seconds.
 function! s:system(cmd, ...) abort
-  let stdin = a:0 ? a:1 : ''
   let opts = {
         \ 'output': '',
         \ 'on_stdout': function('s:system_handler'),
-        \ 'on_stderr': function('s:system_handler'),
         \ 'on_exit': function('s:system_handler'),
         \ }
   let jobid = jobstart(a:cmd, opts)
@@ -49,10 +47,6 @@ function! s:system(cmd, ...) abort
           \ type(a:cmd) == type([]) ? join(a:cmd) : a:cmd)))
     let s:shell_error = 1
     return opts.output
-  endif
-
-  if !empty(stdin)
-    call jobsend(jobid, stdin)
   endif
 
   let res = jobwait([jobid], 30000)
@@ -258,8 +252,7 @@ function! s:check_python(version) abort
         call health#report_ok(printf('pyenv found: "%s"', pyenv))
       endif
 
-      let python_bin = s:trim(s:system(
-            \ printf('"%s" which %s 2>/dev/null', pyenv, python_bin_name)))
+      let python_bin = s:trim(s:system([pyenv, 'which', python_bin_name]))
 
       if empty(python_bin)
         call health#report_warn(printf('pyenv couldn''t find %s.', python_bin_name))
@@ -415,10 +408,9 @@ function! s:check_ruby() abort
     let ruby_prog = 'not found'
     let prog_vers = 'not found'
     call health#report_error('Missing Neovim RubyGem', suggestions)
-  else
-    silent let latest_gem = get(s:systemlist("gem list -ra '^neovim$' 2>/dev/null | " .
-          \ "awk -F'[()]' '{print $2}' | " .
-          \ 'cut -d, -f1'), 0, 'not found')
+	else
+    silent let latest_gem = get(split(s:system(['gem', 'list', '-ra', '^neovim$']), 
+				\ ' (\|, \|)$' ), 1, 'not found')
     let latest_desc = ' (latest: ' . latest_gem . ')'
 
     silent let prog_vers = s:systemlist(ruby_prog . ' --version')[0]
