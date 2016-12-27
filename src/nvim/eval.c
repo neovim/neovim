@@ -5162,8 +5162,12 @@ dict_equal (
   dictitem_T  *item2;
   int todo;
 
-  if (d1 == NULL || d2 == NULL)
+  if (d1 == NULL && d2 == NULL) {
+    return true;
+  }
+  if (d1 == NULL || d2 == NULL) {
     return FALSE;
+  }
   if (d1 == d2)
     return TRUE;
   if (dict_len(d1) != dict_len(d2))
@@ -6652,9 +6656,12 @@ dictitem_T *dict_find(dict_T *d, char_u *key, int len)
   char_u      *tofree = NULL;
   hashitem_T  *hi;
 
-  if (len < 0)
+  if (d == NULL) {
+    return NULL;
+  }
+  if (len < 0) {
     akey = key;
-  else if (len >= AKEYLEN) {
+  } else if (len >= AKEYLEN) {
     tofree = akey = vim_strnsave(key, len);
   } else {
     /* Avoid a malloc/free by using buf[]. */
@@ -15248,7 +15255,10 @@ static void f_setreg(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   if (argvars[1].v_type == VAR_LIST) {
-    int len = argvars[1].vval.v_list->lv_len;
+    list_T *ll = argvars[1].vval.v_list;
+    // If the list is NULL handle like an empty list.
+    int len = ll == NULL ? 0 : ll->lv_len;
+
     // First half: use for pointers to result lines; second half: use for
     // pointers to allocated copies.
     char_u **lstval = xmalloc(sizeof(char_u *) * ((len + 1) * 2));
@@ -15257,7 +15267,7 @@ static void f_setreg(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     char_u **curallocval = allocval;
 
     char_u buf[NUMBUFLEN];
-    for (listitem_T *li = argvars[1].vval.v_list->lv_first;
+    for (listitem_T *li = ll == NULL ? NULL : ll->lv_first;
          li != NULL;
          li = li->li_next) {
       char_u *strval = get_tv_string_buf_chk(&li->li_tv, buf);
