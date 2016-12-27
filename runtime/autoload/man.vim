@@ -290,10 +290,7 @@ function! s:complete(sect, psect, name) abort
     call s:error(v:exception)
     return
   endtry
-  let old_fic = &fileignorecase
-  let &fileignorecase = &wildignorecase
   let pages = globpath(mandirs,'man?/'.a:name.'*.'.a:sect.'*', 0, 1)
-  let &fileignorecase = old_fic
   " We remove duplicates in case the same manpage in different languages was found.
   return uniq(sort(map(pages, 's:format_candidate(v:val, a:psect)'), 'i'))
 endfunction

@@ -521,6 +521,8 @@ To use Nvim as a manpager: >
 man.vim will always attempt to reuse the closest man window (above/left) but
 otherwise create a split.
 
+The case sensitivity of completion is controlled by 'fileignorecase'.
+
 Commands:
 Man {name}                Display the manpage for {name}.
 Man {sect} {name}         Display the manpage for {name} and section {sect}.
