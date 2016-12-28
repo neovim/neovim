@@ -105,7 +105,12 @@ local Gcc = {
    '-DINCLUDE_GENERATED_DECLARATIONS',
 
    -- Needed for FreeBSD
-   '-D "_Thread_local="'
+   '-D "_Thread_local="',
+
+   -- Needed for macOS Sierra
+   '-D "_Nullable="',
+   '-D "_Nonnull="',
+   '-U__BLOCKS__',
   }
 }
 
