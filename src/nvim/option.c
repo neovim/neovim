@@ -3008,9 +3008,8 @@ did_set_string_option (
     } else {
       completeopt_was_set();
     }
-  }
-  /* 'signcolumn' */
-  else if (varp == &curwin->w_p_scl) {
+  } else if (varp == &curwin->w_p_scl) {
+    // 'signcolumn'
     if (check_opt_strings(*varp, p_scl_values, false) != OK) {
       errmsg = e_invarg;
     }
@@ -5513,7 +5512,7 @@ void copy_winopt(winopt_T *from, winopt_T *to)
   to->wo_fdt = vim_strsave(from->wo_fdt);
   to->wo_fmr = vim_strsave(from->wo_fmr);
   to->wo_scl = vim_strsave(from->wo_scl);
-  check_winopt(to);             /* don't want NULL pointers */
+  check_winopt(to);             // don't want NULL pointers
 }
 
 /*

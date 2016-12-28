@@ -1630,8 +1630,7 @@ static void win_draw_end(win_T *wp, int c1, int c2, int row, int endrow, hlf_T h
       n = nn;
     }
 
-    if (signcolumn_on(wp))
-    {
+    if (signcolumn_on(wp)) {
         int nn = n + 2;
 
         /* draw the sign column after the fold column */
@@ -1743,7 +1742,7 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
    * text */
   RL_MEMSET(col, hl_attr(HLF_FL), wp->w_width - col);
 
-  /* If signs are being displayed, add two spaces. */
+  // If signs are being displayed, add two spaces.
   if (signcolumn_on(wp)) {
       len = wp->w_width - col;
       if (len > 0) {

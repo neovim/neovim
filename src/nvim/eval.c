@@ -10049,7 +10049,7 @@ static void f_getbufvar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     save_curbuf = curbuf;
     curbuf = buf;
 
-    if (*varname == '&') {      /* buffer-local-option */
+    if (*varname == '&') {      // buffer-local-option
       if (varname[1] == NUL) {
         // get all buffer-local options in a dict
         dict_T *opts = get_winbuf_options(true);
@@ -10062,7 +10062,7 @@ static void f_getbufvar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
         }
       } else if (get_option_tv(&varname, rettv, true) == OK) {
         // buffer-local-option
-        done = TRUE;
+        done = true;
       }
     } else if (STRCMP(varname, "changedtick") == 0) {
       rettv->v_type = VAR_NUMBER;
@@ -10825,8 +10825,9 @@ static void f_gettabinfo(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   if (argvars[0].v_type != VAR_UNKNOWN) {
     // Information about one tab page
     tparg = find_tabpage((int)get_tv_number_chk(&argvars[0], NULL));
-    if (tparg == NULL)
+    if (tparg == NULL) {
       return;
+    }
   }
 
   // Get information about a specific tab page or all tab pages
@@ -10894,7 +10895,7 @@ static void f_gettabwinvar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 }
 
 /// Returns information about a window as a dictionary.
-static dict_T *get_win_info(win_T *wp, short tpnr, short winnr)
+static dict_T *get_win_info(win_T *wp, int16_t tpnr, int16_t winnr)
 {
   dict_T *dict = dict_alloc();
 
@@ -10932,10 +10933,10 @@ static void f_getwininfo(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   // Collect information about either all the windows across all the tab
   // pages or one particular window.
-  short tabnr = 0;
+  int16_t tabnr = 0;
   FOR_ALL_TABS(tp) {
     tabnr++;
-    short winnr = 0;
+    int16_t winnr = 0;
     FOR_ALL_WINDOWS_IN_TAB(wp, tp) {
       if (wparg != NULL && wp != wparg) {
         continue;
