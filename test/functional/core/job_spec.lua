@@ -508,7 +508,9 @@ describe('jobs', function()
 
     it('jobclose() sends SIGHUP', function()
       nvim('command', 'call jobclose(j)')
-      eq({'notification', 'exit', {0, 42}}, next_msg())
+      local msg = next_msg()
+      msg = (msg[2] == 'stdout') and next_msg() or msg  -- Skip stdout, if any.
+      eq({'notification', 'exit', {0, 42}}, msg)
     end)
   end)
 end)
