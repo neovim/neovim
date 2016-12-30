@@ -34,6 +34,10 @@ if b:man_sect =~# '^[23]'
   highlight default link manCFuncDefinition Function
 endif
 
+highlight default manBold cterm=bold gui=bold
+highlight default manUnderline cterm=underline gui=underline
+call man#highlight_backspaced_text()
+
 " Prevent everything else from matching the last line
 execute 'syntax match manFooter display "^\%'.line('$').'l.*$"'
 

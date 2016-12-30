@@ -124,8 +124,6 @@ function! s:put_page(page) abort
   setlocal noreadonly
   silent keepjumps %delete _
   silent put =a:page
-  " Remove all backspaced characters.
-  execute 'silent keeppatterns keepjumps %substitute,.\b,,e'.(&gdefault?'':'g')
   while getline(1) =~# '^\s*$'
     silent keepjumps 1delete _
   endwhile
@@ -309,9 +307,39 @@ function! s:format_candidate(path, psect) abort
   endif
 endfunction
 
+function! s:strip_backspaced_text(match) abort
+  let s:stripped = substitute(a:match, '.\b', '', 'g')
+  return s:stripped
+endfunction
+
+function! man#highlight_backspaced_text() abort
+  set modifiable
+  if exists('b:man_src_id')
+    call nvim_buf_clear_highlight(0, b:man_src_id, 0, -1)
+  else
+    let b:man_src_id = 0
+  endif
+  while 1
+    let pos = searchpos('\(_\b[^_]\)\|\(\(.\)\b\3\)', 'p')
+    if pos[0] == 0
+      break
+    endif
+    if pos[2] ==# 2
+      let pattern = '\%(_\b[^_]\)\+'
+      let group = 'manUnderline'
+    else
+      let pattern = '\%(\(.\)\b\1\)\+'
+      let group = 'manBold'
+    end
+    execute 'silent keepjumps substitute/'.pattern.'/\=s:strip_backspaced_text(submatch(0))'
+    let pos[1] -= 1
+    let b:man_src_id = nvim_buf_add_highlight(0, b:man_src_id, group, pos[0]-1, pos[1], pos[1]+len(s:stripped))
+  endwhile
+  keepjumps 1
+  set nomodifiable
+endfunction
+
 function! man#init_pager() abort
-  " Remove all backspaced characters.
-  execute 'silent keeppatterns keepjumps %substitute,.\b,,e'.(&gdefault?'':'g')
   if getline(1) =~# '^\s*$'
     silent keepjumps 1delete _
   else
@@ -319,7 +347,8 @@ function! man#init_pager() abort
   endif
   " This is not perfect. See `man glDrawArraysInstanced`. Since the title is
   " all caps it is impossible to tell what the original capitilization was.
-  let ref = substitute(matchstr(getline(1), '^[^)]\+)'), ' ', '_', 'g')
+  " But it's usually lowercase, so we'll stick to that.
+  let ref = tolower(substitute(matchstr(getline(1), '^[^)]\+)'), ' ', '_', 'g'))
   try
     let b:man_sect = man#extract_sect_and_name_ref(ref)[0]
   catch
