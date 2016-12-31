@@ -312,13 +312,10 @@ function! s:strip_backspaced_text(match) abort
   return s:stripped
 endfunction
 
+let s:src_id = nvim_buf_add_highlight(0, 0, '', 0, 0, 0)
 function! man#highlight_backspaced_text() abort
   set modifiable
-  if exists('b:man_src_id')
-    call nvim_buf_clear_highlight(0, b:man_src_id, 0, -1)
-  else
-    let b:man_src_id = 0
-  endif
+  call nvim_buf_clear_highlight(0, s:src_id, 0, -1)
   while 1
     let pos = searchpos('\(_\b[^_]\)\|\(\(.\)\b\3\)', 'p')
     if pos[0] == 0
@@ -333,7 +330,7 @@ function! man#highlight_backspaced_text() abort
     end
     execute 'silent keepjumps substitute/'.pattern.'/\=s:strip_backspaced_text(submatch(0))'
     let pos[1] -= 1
-    let b:man_src_id = nvim_buf_add_highlight(0, b:man_src_id, group, pos[0]-1, pos[1], pos[1]+len(s:stripped))
+    call nvim_buf_add_highlight(0, s:src_id, group, pos[0]-1, pos[1], pos[1]+len(s:stripped))
   endwhile
   keepjumps 1
   set nomodifiable
