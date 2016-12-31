@@ -2632,7 +2632,7 @@ void ex_append(exarg_T *eap)
   if (eap->cmdidx != CMD_append)
     --lnum;
 
-  /* when the buffer is empty append to line 0 and delete the dummy line */
+  // when the buffer is empty need to delete the dummy line
   if (empty && lnum == 1)
     lnum = 0;
 
@@ -2704,7 +2704,7 @@ void ex_append(exarg_T *eap)
 
     did_undo = TRUE;
     ml_append(lnum, theline, (colnr_T)0, FALSE);
-    appended_lines_mark(lnum, 1L);
+    appended_lines_mark(lnum + (empty ? 1 : 0), 1L);
 
     xfree(theline);
     ++lnum;
