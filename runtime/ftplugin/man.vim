@@ -12,6 +12,8 @@ if s:pager
   call man#init_pager()
 endif
 
+call man#highlight_backspaced_text()
+
 setlocal buftype=nofile
 setlocal noswapfile
 setlocal bufhidden=hide
