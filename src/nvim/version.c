@@ -412,7 +412,7 @@ static int included_patches[] = {
   // 2031,
   // 2030 NA
   // 2029,
-  // 2028,
+  2028,
   // 2027 NA
   // 2026 NA
   // 2025 NA

@@ -2109,13 +2109,14 @@ char_u * enc_locale(void)
     } else
       s = p + 1;
   }
-  for (i = 0; s[i] != NUL && i < (int)sizeof(buf) - 1; ++i) {
-    if (s[i] == '_' || s[i] == '-')
+  for (i = 0; i < (int)sizeof(buf) - 1 && s[i] != NUL; i++) {
+    if (s[i] == '_' || s[i] == '-') {
       buf[i] = '-';
-    else if (isalnum((int)s[i]))
+    } else if (isalnum((int)s[i])) {
       buf[i] = TOLOWER_ASC(s[i]);
-    else
+    } else {
       break;
+    }
   }
   buf[i] = NUL;
 
