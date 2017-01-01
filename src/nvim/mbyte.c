@@ -1315,6 +1315,10 @@ static int utf_convert(int a, const convertStruct *const table, size_t n_items)
  */
 int utf_fold(int a)
 {
+  if (a < 0x80) {
+    // be fast for ASCII
+    return a >= 0x41 && a <= 0x5a ? a + 32 : a;
+  }
   return utf_convert(a, foldCase, ARRAY_SIZE(foldCase));
 }
 
