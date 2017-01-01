@@ -5797,6 +5797,19 @@ void win_id2tabwin(typval_T *argvars, list_T *list)
   list_append_number(list, winnr);
 }
 
+win_T * win_id2wp(typval_T *argvars)
+{
+  int id = get_tv_number(&argvars[0]);
+
+  FOR_ALL_TAB_WINDOWS(tp, wp) {
+    if (wp->handle == id) {
+      return wp;
+    }
+  }
+
+  return NULL;
+}
+
 int win_id2win(typval_T *argvars)
 {
   win_T   *wp;

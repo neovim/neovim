@@ -86,6 +86,12 @@ function RunTheTest(test)
   if exists("*TearDown")
     call TearDown()
   endif
+
+  " Close any extra windows and make the current one not modified.
+  while winnr('$') > 1
+    bwipe!
+  endwhile
+  set nomodified
 endfunc
 
 " Source the test script.  First grab the file name, in case the script

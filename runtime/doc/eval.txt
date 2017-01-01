@@ -1,4 +1,4 @@
-*eval.txt*	For Vim version 7.4.  Last change: 2016 Jun 04
+*eval.txt*	For Vim version 7.4.  Last change: 2016 Aug 27
 
 
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
@@ -1956,6 +1956,7 @@ garbagecollect([{atexit}])	none	free memory, breaking cyclic references
 get({list}, {idx} [, {def}])	any	get item {idx} from {list} or {def}
 get({dict}, {key} [, {def}])	any	get item {key} from {dict} or {def}
 get({func}, {what})		any	get property of funcref/partial {func}
+getbufinfo( [{expr}])		List  	information about buffers
 getbufline({expr}, {lnum} [, {end}])
 				List	lines {lnum} to {end} of buffer {expr}
 getbufvar({expr}, {varname} [, {def}])
@@ -1986,10 +1987,12 @@ getqflist()			List	list of quickfix items
 getreg([{regname} [, 1 [, {list}]]])
 				String or List   contents of register
 getregtype([{regname}])	String	type of register
+gettabinfo( [{expr}])		List  	list of tab pages
 gettabvar({nr}, {varname} [, {def}])
 				any	variable {varname} in tab {nr} or {def}
 gettabwinvar({tabnr}, {winnr}, {name} [, {def}])
 				any	{name} in {winnr} in tab page {tabnr}
+getwininfo( [{winid}])		List  	list of windows
 getwinposx()			Number	X coord in pixels of GUI Vim window
 getwinposy()			Number	Y coord in pixels of GUI Vim window
 getwinvar({nr}, {varname} [, {def}])
@@ -3593,6 +3596,60 @@ get({func}, {what})
 			'dict'	The dictionary
 			'args'	The list with arguments
 
+							*getbufinfo()*
+getbufinfo([{expr}])
+getbufinfo([{dict}])
+		Get information about buffers as a List of Dictionaries.
+
+		Without an argument information about all the buffers is
+		returned.
+
+		When the argument is a Dictionary only the buffers matching
+		the specified criteria are returned.  The following keys can
+		be specified in {dict}:
+			buflisted	include only listed buffers.
+			bufloaded	include only loaded buffers.
+
+		Otherwise, {expr} specifies a particular buffer to return
+		information for.  For the use of {expr}, see |bufname()|
+		above.  If the buffer is found the returned List has one item.
+		Otherwise the result is an empty list.
+
+		Each returned List item is a dictionary with the following
+		entries:
+			bufnr		buffer number.
+			changed		TRUE if the buffer is modified.
+			changedtick	number of changes made to the buffer.
+			hidden		TRUE if the buffer is hidden.
+			listed		TRUE if the buffer is listed.
+			lnum		current line number in buffer.
+			loaded		TRUE if the buffer is loaded.
+			name		full path to the file in the buffer.
+			signs		list of signs placed in the buffer.
+					Each list item is a dictionary with
+					the following fields:
+					    id	  sign identifier
+					    lnum  line number
+					    name  sign name
+			variables	a reference to the dictionary with
+					buffer-local variables.
+			windows		list of |window-ID|s that display this
+					buffer
+
+		Examples: >
+			for buf in getbufinfo()
+			    echo buf.name
+			endfor
+			for buf in getbufinfo({'buflisted':1})
+			    if buf.changed
+				....
+			    endif
+			endfor
+<
+		To get buffer-local options use: >
+			getbufvar({bufnr}, '&')
+
+<
 							*getbufline()*
 getbufline({expr}, {lnum} [, {end}])
 		Return a |List| with the lines starting from {lnum} to {end}
@@ -3624,6 +3681,10 @@ getbufvar({expr}, {varname} [, {def}])				*getbufvar()*
 		must be used.
 		When {varname} is empty returns a dictionary with all the
 		buffer-local variables.
+		When {varname} is equal to "&" returns a dictionary with all
+		the buffer-local options.
+		Otherwise, when {varname} starts with "&" returns the value of
+		a buffer-local option.
 		This also works for a global or buffer-local option, but it
 		doesn't work for a global variable, window-local variable or
 		window-local option.
@@ -4050,6 +4111,19 @@ getregtype([{regname}])					*getregtype()*
 		<CTRL-V> is one character with value 0x16.
 		If {regname} is not specified, |v:register| is used.
 
+gettabinfo([{arg}])					*gettabinfo()*
+		If {arg} is not specified, then information about all the tab
+		pages is returned as a List. Each List item is a Dictionary.
+		Otherwise, {arg} specifies the tab page number and information
+		about that one is returned.  If the tab page does not exist an
+		empty List is returned.
+
+		Each List item is a Dictionary with the following entries:
+			nr		tab page number.
+			variables	a reference to the dictionary with
+					tabpage-local variables
+			windows		List of window IDs in the tag page.
+
 gettabvar({tabnr}, {varname} [, {def}])				*gettabvar()*
 		Get the value of a tab-local variable {varname} in tab page
 		{tabnr}. |t:var|
@@ -4063,10 +4137,12 @@ gettabvar({tabnr}, {varname} [, {def}])				*gettabvar()*
 gettabwinvar({tabnr}, {winnr}, {varname} [, {def}])		*gettabwinvar()*
 		Get the value of window-local variable {varname} in window
 		{winnr} in tab page {tabnr}.
-		When {varname} starts with "&" get the value of a window-local
-		option.
 		When {varname} is empty a dictionary with all window-local
 		variables is returned.
+		When {varname} is equal to "&" get the values of all
+		window-local options in a Dictionary.
+		Otherwise, when {varname} starts with "&" get the value of a
+		window-local option.
 		Note that {varname} must be the name without "w:".
 		Tabs are numbered starting with one.  For the current tabpage
 		use |getwinvar()|.
@@ -4090,6 +4166,31 @@ getwinposx()	The result is a Number, which is the X coordinate in pixels of
 getwinposy()	The result is a Number, which is the Y coordinate in pixels of
 		the top of the GUI Vim window.	The result will be -1 if the
 		information is not available.
+
+getwininfo([{winid}])					*getwininfo()*
+		Returns information about windows as a List with Dictionaries.
+
+		If {winid} is given Information about the window with that ID
+		is returned.  If the window does not exist the result is an
+		empty list.
+
+		Without an information about all the windows in all the tab
+		pages is returned.
+
+		Each List item is a Dictionary with the following entries:
+			bufnum		number of buffer in the window
+			height		window height
+			loclist		1 if showing a location list
+			nr		window number
+			quickfix	1 if quickfix or location list window
+			tpnr		tab page number
+			variables	a reference to the dictionary with
+					window-local variables
+			width		window width
+			winid		window ID
+
+		To obtain all window-local variables use: >
+			gettabwinvar({tabnr}, {winnr}, '&')
 
 getwinvar({winnr}, {varname} [, {def}])				*getwinvar()*
 		Like |gettabwinvar()| for the current tabpage.
@@ -5458,6 +5559,16 @@ printf({fmt}, {expr1} ...)				*printf()*
 			numeric field; if the result of a conversion is wider
 			than the field width, the field is expanded to contain
 			the conversion result.
+			The 'h' modifier indicates the argument is 16 bits.
+			The 'l' modifier indicates the argument is 32 bits.
+			The 'L' modifier indicates the argument is 64 bits.
+			Generally, these modifiers are not useful. They are
+			ignored when type is known from the argument.
+
+		i	alias for d
+		D	alias for ld
+		U	alias for lu
+		O	alias for lo
 
 							*printf-c*
 		c	The Number argument is converted to a byte, and the
@@ -5474,7 +5585,7 @@ printf({fmt}, {expr1} ...)				*printf()*
 			feature works just like 's'.
 
 							*printf-f* *E807*
-		f	The Float argument is converted into a string of the 
+		f F	The Float argument is converted into a string of the 
 			form 123.456.  The precision specifies the number of
 			digits after the decimal point.  When the precision is
 			zero the decimal point is omitted.  When the precision

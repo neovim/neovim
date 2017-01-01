@@ -6611,6 +6611,23 @@ int dict_add_list(dict_T *d, char *key, list_T *list)
   return OK;
 }
 
+/// Add a dict entry to dictionary "d".
+/// Returns FAIL when out of memory and when key already exists.
+int dict_add_dict(dict_T *d, char *key, dict_T *dict)
+{
+  dictitem_T *item = dictitem_alloc((char_u *)key);
+
+  item->di_tv.v_lock = 0;
+  item->di_tv.v_type = VAR_DICT;
+  item->di_tv.vval.v_dict = dict;
+  if (dict_add(d, item) == FAIL) {
+    dictitem_free(item);
+    return FAIL;
+  }
+  dict->dv_refcount++;
+  return OK;
+}
+
 /// Set all existing keys in "dict" as read-only.
 ///
 /// This does not protect against adding new keys to the Dictionary.
@@ -9832,6 +9849,118 @@ static void f_get(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     copy_tv(tv, rettv);
 }
 
+/// Returns information about signs placed in a buffer as list of dicts.
+static void get_buffer_signs(buf_T *buf, list_T *l)
+{
+  for (signlist_T *sign = buf->b_signlist; sign; sign = sign->next) {
+    dict_T *d = dict_alloc();
+
+    dict_add_nr_str(d, "id", sign->id, NULL);
+    dict_add_nr_str(d, "lnum", sign->lnum, NULL);
+    dict_add_nr_str(d, "name", 0L, sign_typenr2name(sign->typenr));
+
+    list_append_dict(l, d);
+  }
+}
+
+/// Returns buffer options, variables and other attributes in a dictionary.
+static dict_T *get_buffer_info(buf_T *buf)
+{
+  dict_T *dict = dict_alloc();
+
+  dict_add_nr_str(dict, "bufnr", buf->b_fnum, NULL);
+  dict_add_nr_str(dict, "name", 0L,
+                  buf->b_ffname != NULL ? buf->b_ffname : (char_u *)"");
+  dict_add_nr_str(dict, "lnum", buflist_findlnum(buf), NULL);
+  dict_add_nr_str(dict, "loaded", buf->b_ml.ml_mfp != NULL, NULL);
+  dict_add_nr_str(dict, "listed", buf->b_p_bl, NULL);
+  dict_add_nr_str(dict, "changed", bufIsChanged(buf), NULL);
+  dict_add_nr_str(dict, "changedtick", buf->b_changedtick, NULL);
+  dict_add_nr_str(dict, "hidden",
+                  buf->b_ml.ml_mfp != NULL && buf->b_nwindows == 0,
+                  NULL);
+
+  // Get a reference to buffer variables
+  dict_add_dict(dict, "variables", buf->b_vars);
+
+  // List of windows displaying this buffer
+  list_T *windows = list_alloc();
+  FOR_ALL_TAB_WINDOWS(tp, wp) {
+    if (wp->w_buffer == buf) {
+      list_append_number(windows, (varnumber_T)wp->handle);
+    }
+  }
+  dict_add_list(dict, "windows", windows);
+
+  if (buf->b_signlist != NULL) {
+    // List of signs placed in this buffer
+    list_T *signs = list_alloc();
+    get_buffer_signs(buf, signs);
+    dict_add_list(dict, "signs", signs);
+  }
+
+  return dict;
+}
+
+/// "getbufinfo()" function
+static void f_getbufinfo(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  buf_T *argbuf = NULL;
+  bool filtered = false;
+  bool sel_buflisted = false;
+  bool sel_bufloaded = false;
+
+  rettv_list_alloc(rettv);
+
+  // List of all the buffers or selected buffers
+  if (argvars[0].v_type == VAR_DICT) {
+    dict_T *sel_d = argvars[0].vval.v_dict;
+
+    if (sel_d != NULL) {
+      dictitem_T *di;
+
+      filtered = true;
+
+      di = dict_find(sel_d, (char_u *)"buflisted", -1);
+      if (di != NULL && get_tv_number(&di->di_tv)) {
+        sel_buflisted = true;
+      }
+
+      di = dict_find(sel_d, (char_u *)"bufloaded", -1);
+      if (di != NULL && get_tv_number(&di->di_tv)) {
+        sel_bufloaded = true;
+      }
+    }
+  } else if (argvars[0].v_type != VAR_UNKNOWN) {
+    // Information about one buffer.  Argument specifies the buffer
+    (void)get_tv_number(&argvars[0]);   // issue errmsg if type error
+    emsg_off++;
+    argbuf = get_buf_tv(&argvars[0], false);
+    emsg_off--;
+    if (argbuf == NULL) {
+      return;
+    }
+  }
+
+  // Return information about all the buffers or a specified buffer
+  FOR_ALL_BUFFERS(buf) {
+    if (argbuf != NULL && argbuf != buf) {
+      continue;
+    }
+    if (filtered && ((sel_bufloaded && buf->b_ml.ml_mfp == NULL)
+                     || (sel_buflisted && !buf->b_p_bl))) {
+      continue;
+    }
+
+    dict_T *d = get_buffer_info(buf);
+    if (d != NULL) {
+      list_append_dict(rettv->vval.v_list, d);
+    }
+    if (argbuf != NULL) {
+      return;
+    }
+  }
+}
 
 /*
  * Get line or list of lines from buffer "buf" into "rettv".
@@ -9920,9 +10049,21 @@ static void f_getbufvar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     save_curbuf = curbuf;
     curbuf = buf;
 
-    if (*varname == '&') {      /* buffer-local-option */
-      if (get_option_tv(&varname, rettv, TRUE) == OK)
-        done = TRUE;
+    if (*varname == '&') {      // buffer-local-option
+      if (varname[1] == NUL) {
+        // get all buffer-local options in a dict
+        dict_T *opts = get_winbuf_options(true);
+
+        if (opts != NULL) {
+          rettv->v_type = VAR_DICT;
+          rettv->vval.v_dict = opts;
+          opts->dv_refcount++;
+          done = true;
+        }
+      } else if (get_option_tv(&varname, rettv, true) == OK) {
+        // buffer-local-option
+        done = true;
+      }
     } else if (STRCMP(varname, "changedtick") == 0) {
       rettv->v_type = VAR_NUMBER;
       rettv->vval.v_number = curbuf->b_changedtick;
@@ -10654,6 +10795,58 @@ static void f_getregtype(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   rettv->vval.v_string = (char_u *)xstrdup(buf);
 }
 
+/// Returns information (variables, options, etc.) about a tab page
+/// as a dictionary.
+static dict_T *get_tabpage_info(tabpage_T *tp, int tp_idx)
+{
+  dict_T *dict = dict_alloc();
+
+  dict_add_nr_str(dict, "tabnr", tp_idx, NULL);
+
+  list_T *l = list_alloc();
+  FOR_ALL_WINDOWS_IN_TAB(wp, tp) {
+    list_append_number(l, (varnumber_T)wp->handle);
+  }
+  dict_add_list(dict, "windows", l);
+
+  // Make a reference to tabpage variables
+  dict_add_dict(dict, "variables", tp->tp_vars);
+
+  return dict;
+}
+
+/// "gettabinfo()" function
+static void f_gettabinfo(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  tabpage_T *tparg = NULL;
+
+  rettv_list_alloc(rettv);
+
+  if (argvars[0].v_type != VAR_UNKNOWN) {
+    // Information about one tab page
+    tparg = find_tabpage((int)get_tv_number_chk(&argvars[0], NULL));
+    if (tparg == NULL) {
+      return;
+    }
+  }
+
+  // Get information about a specific tab page or all tab pages
+  int tpnr = 0;
+  FOR_ALL_TABS(tp) {
+    tpnr++;
+    if (tparg != NULL && tp != tparg) {
+      continue;
+    }
+    dict_T *d = get_tabpage_info(tp, tpnr);
+    if (d != NULL) {
+      list_append_dict(rettv->vval.v_list, d);
+    }
+    if (tparg != NULL) {
+      return;
+    }
+  }
+}
+
 /*
  * "gettabvar()" function
  */
@@ -10699,6 +10892,66 @@ static void f_gettabvar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 static void f_gettabwinvar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   getwinvar(argvars, rettv, 1);
+}
+
+/// Returns information about a window as a dictionary.
+static dict_T *get_win_info(win_T *wp, int16_t tpnr, int16_t winnr)
+{
+  dict_T *dict = dict_alloc();
+
+  dict_add_nr_str(dict, "tabnr", tpnr, NULL);
+  dict_add_nr_str(dict, "winnr", winnr, NULL);
+  dict_add_nr_str(dict, "winid", wp->handle, NULL);
+  dict_add_nr_str(dict, "height", wp->w_height, NULL);
+  dict_add_nr_str(dict, "width", wp->w_width, NULL);
+  dict_add_nr_str(dict, "bufnr", wp->w_buffer->b_fnum, NULL);
+
+  dict_add_nr_str(dict, "quickfix", bt_quickfix(wp->w_buffer), NULL);
+  dict_add_nr_str(dict, "loclist",
+                  (bt_quickfix(wp->w_buffer) && wp->w_llist_ref != NULL),
+                  NULL);
+
+  // Add a reference to window variables
+  dict_add_dict(dict, "variables", wp->w_vars);
+
+  return dict;
+}
+
+/// "getwininfo()" function
+static void f_getwininfo(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  win_T *wparg = NULL;
+
+  rettv_list_alloc(rettv);
+
+  if (argvars[0].v_type != VAR_UNKNOWN) {
+    wparg = win_id2wp(argvars);
+    if (wparg == NULL) {
+      return;
+    }
+  }
+
+  // Collect information about either all the windows across all the tab
+  // pages or one particular window.
+  int16_t tabnr = 0;
+  FOR_ALL_TABS(tp) {
+    tabnr++;
+    int16_t winnr = 0;
+    FOR_ALL_WINDOWS_IN_TAB(wp, tp) {
+      if (wparg != NULL && wp != wparg) {
+        continue;
+      }
+      winnr++;
+      dict_T *d = get_win_info(wp, tabnr, winnr);
+      if (d != NULL) {
+        list_append_dict(rettv->vval.v_list, d);
+      }
+      if (wparg != NULL) {
+        // found information about a specific window
+        return;
+      }
+    }
+  }
 }
 
 /*
@@ -10820,8 +11073,19 @@ getwinvar (
     bool need_switch_win = tp != curtab || win != curwin;
     if (!need_switch_win
         || switch_win(&oldcurwin, &oldtabpage, win, tp, true) == OK) {
-      if (*varname == '&') {  // window-local-option
-        if (get_option_tv(&varname, rettv, 1) == OK) {
+      if (*varname == '&') {
+        if (varname[1] == NUL) {
+          // get all window-local options in a dict
+          dict_T *opts = get_winbuf_options(false);
+
+          if (opts != NULL) {
+            rettv->v_type = VAR_DICT;
+            rettv->vval.v_dict = opts;
+            opts->dv_refcount++;
+            done = true;
+          }
+        } else if (get_option_tv(&varname, rettv, 1) == OK) {
+          // window-local-option
           done = true;
         }
       } else {
