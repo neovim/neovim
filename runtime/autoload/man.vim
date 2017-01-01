@@ -106,7 +106,7 @@ function! s:system(cmd, ...) abort
     throw printf('command interrupted: %s', join(a:cmd))
   endif
   if opts.exit_code != 0
-    throw printf("command error (%d) %s: %s", jobid, join(a:cmd), opts.stderr)
+    throw printf("command error (%d) %s: %s", jobid, join(a:cmd), substitute(opts.stderr, '\_s\+$', '', &gdefault ? '' : 'g'))
   endif
 
   return opts.stdout
