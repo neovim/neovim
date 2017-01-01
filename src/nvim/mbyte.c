@@ -1315,6 +1315,10 @@ static int utf_convert(int a, const convertStruct *const table, size_t n_items)
  */
 int utf_fold(int a)
 {
+  if (a < 0x80) {
+    // be fast for ASCII
+    return a >= 0x41 && a <= 0x5a ? a + 32 : a;
+  }
   return utf_convert(a, foldCase, ARRAY_SIZE(foldCase));
 }
 
@@ -2105,13 +2109,14 @@ char_u * enc_locale(void)
     } else
       s = p + 1;
   }
-  for (i = 0; s[i] != NUL && i < (int)sizeof(buf) - 1; ++i) {
-    if (s[i] == '_' || s[i] == '-')
+  for (i = 0; i < (int)sizeof(buf) - 1 && s[i] != NUL; i++) {
+    if (s[i] == '_' || s[i] == '-') {
       buf[i] = '-';
-    else if (isalnum((int)s[i]))
+    } else if (isalnum((int)s[i])) {
       buf[i] = TOLOWER_ASC(s[i]);
-    else
+    } else {
       break;
+    }
   }
   buf[i] = NUL;
 
