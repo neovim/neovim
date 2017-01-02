@@ -3534,7 +3534,7 @@ foreground()	Move the Vim window to the foreground.	Useful when sent from
 		{only in the Win32 GUI and console version}
 
 
-				       *function()* *E700* *E922* *E929*
+				       *function()* *E700* *E922* *E923*
 function({name} [, {arglist}] [, {dict}])
 		Return a |Funcref| variable that refers to function {name}.
 		{name} can be a user defined function or an internal function.
