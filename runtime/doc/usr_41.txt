@@ -786,6 +786,7 @@ Buffers, windows and the argument list:
 	tabpagenr()		get the number of a tab page
 	tabpagewinnr()		like winnr() for a specified tab page
 	winnr()			get the window number for the current window
+	bufwinid()		get the window ID of a specific buffer
 	bufwinnr()		get the window number of a specific buffer
 	winbufnr()		get the buffer number of a specific window
 	getbufline()		get a list of lines from the specified buffer
