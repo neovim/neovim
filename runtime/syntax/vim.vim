@@ -637,7 +637,9 @@ if !filereadable(s:perlpath)
 endif
 if g:vimsyn_embed =~# 'p' && filereadable(s:perlpath)
  unlet! b:current_syntax
+ let s:foldmethod = &l:foldmethod
  exe "syn include @vimPerlScript ".s:perlpath
+ let &l:foldmethod = s:foldmethod
  VimFoldp syn region vimPerlRegion  matchgroup=vimScriptDelim start=+pe\%[rl]\s*<<\s*\z(.*\)$+ end=+^\z1$+	contains=@vimPerlScript
  VimFoldp syn region vimPerlRegion	matchgroup=vimScriptDelim start=+pe\%[rl]\s*<<\s*$+ end=+\.$+	contains=@vimPerlScript
  syn cluster vimFuncBodyList	add=vimPerlRegion
@@ -659,7 +661,9 @@ if !filereadable(s:rubypath)
 endif
 if g:vimsyn_embed =~# 'r' && filereadable(s:rubypath)
  unlet! b:current_syntax
+ let s:foldmethod = &l:foldmethod
  exe "syn include @vimRubyScript ".s:rubypath
+ let &l:foldmethod = s:foldmethod
  VimFoldr syn region vimRubyRegion matchgroup=vimScriptDelim start=+rub[y]\s*<<\s*\z(.*\)$+ end=+^\z1$+	contains=@vimRubyScript
  syn region vimRubyRegion matchgroup=vimScriptDelim start=+rub[y]\s*<<\s*$+ end=+\.$+		contains=@vimRubyScript
  syn cluster vimFuncBodyList	add=vimRubyRegion
