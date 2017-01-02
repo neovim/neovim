@@ -51,6 +51,7 @@
 #include "nvim/window.h"
 #include "nvim/shada.h"
 #include "nvim/os/os.h"
+#include "nvim/os/os_defs.h"
 #include "nvim/os/time.h"
 #include "nvim/os/input.h"
 
@@ -5224,6 +5225,10 @@ static void vim_maketempdir(void)
   // Try the entries in `TEMP_DIR_NAMES` to create the temp directory.
   char_u template[TEMP_FILE_PATH_MAXLEN];
   char_u path[TEMP_FILE_PATH_MAXLEN];
+
+  // Make sure the umask doesn't remove the executable bit.
+  // "repl" has been reported to use "0177".
+  mode_t umask_save = umask(0077);
   for (size_t i = 0; i < ARRAY_SIZE(temp_dirs); i++) {
     // Expand environment variables, leave room for "/nvimXXXXXX/999999999"
     expand_env((char_u *)temp_dirs[i], template, TEMP_FILE_PATH_MAXLEN - 22);
@@ -5247,6 +5252,7 @@ static void vim_maketempdir(void)
       os_rmdir((char *)path);
     }
   }
+  (void)umask(umask_save);
 }
 
 /// Delete "name" and everything in it, recursively.
