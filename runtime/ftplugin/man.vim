@@ -12,8 +12,6 @@ if s:pager
   call man#init_pager()
 endif
 
-call man#highlight_backspaced_text()
-
 setlocal buftype=nofile
 setlocal noswapfile
 setlocal bufhidden=hide
@@ -31,6 +29,10 @@ setlocal foldcolumn=0
 setlocal colorcolumn=0
 setlocal nolist
 setlocal nofoldenable
+
+setlocal nowrap
+setlocal conceallevel=2
+setlocal concealcursor=nvic
 
 if !exists('g:no_plugin_maps') && !exists('g:no_man_maps')
   nnoremap <silent> <buffer> <C-]>      :Man<CR>

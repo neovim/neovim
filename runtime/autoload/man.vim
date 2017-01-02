@@ -17,7 +17,7 @@ function! man#open_page(count, count1, mods, ...) abort
     call s:error('too many arguments')
     return
   elseif a:0 == 0
-    let ref = &filetype ==# 'man' ? expand('<cWORD>') : expand('<cword>')
+    let ref = &filetype ==# 'man' ? substitute(expand('<cWORD>'), '.\b', '', 'g') : expand('<cword>')
     if empty(ref)
       call s:error('no identifier under cursor')
       return
@@ -305,44 +305,6 @@ function! s:format_candidate(path, psect) abort
     " of the actual section.
     return name.'('.sect.')'
   endif
-endfunction
-
-function! s:init_highlight_groups() abort
-  highlight default manBold cterm=bold gui=bold
-  highlight default manUnderline cterm=underline gui=underline
-endfunction
-augroup man_colorscheme
- autocmd!
- autocmd ColorScheme * call s:init_highlight_groups()
-augroup END
-call s:init_highlight_groups()
-
-function! s:strip_backspaced_text(match) abort
-  let s:stripped = substitute(a:match, '.\b', '', 'g')
-  return s:stripped
-endfunction
-
-let s:src_id = nvim_buf_add_highlight(0, 0, '', 0, 0, 0)
-function! man#highlight_backspaced_text() abort
-  call nvim_buf_clear_highlight(0, s:src_id, 0, -1)
-  while 1
-    let pos = searchpos('\%(_\b[^_]\)\|\%(\(.\)\b\1\)', 'p')
-    if pos[0] == 0
-      break
-    endif
-    let pos[0] -= 1
-    let pos[1] -= 1
-    if pos[2] ==# 1
-      let pattern = '\%(_\b[^_]\)\+'
-      let group = 'manUnderline'
-    else
-      let pattern = '\%(\(.\)\b\1\)\+'
-      let group = 'manBold'
-    end
-    execute 'silent keepjumps substitute/'.pattern.'/\=s:strip_backspaced_text(submatch(0))'
-    call nvim_buf_add_highlight(0, s:src_id, group, pos[0], pos[1], pos[1]+len(s:stripped))
-  endwhile
-  keepjumps 1
 endfunction
 
 function! man#init_pager() abort
