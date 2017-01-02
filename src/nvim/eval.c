@@ -21570,7 +21570,7 @@ void func_unref(char_u *name)
     fp = find_func(name);
     if (fp == NULL) {
 #ifdef EXITFREE
-      if (!entered_free_all_mem)
+      if (!entered_free_all_mem)  // NOLINT(readability/braces)
 #endif
         EMSG2(_(e_intern2), "func_unref()");
     } else {

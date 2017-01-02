@@ -489,10 +489,11 @@ void free_all_mem(void)
 {
   buf_T       *buf, *nextbuf;
 
-  /* When we cause a crash here it is caught and Vim tries to exit cleanly.
-   * Don't try freeing everything again. */
-  if (entered_free_all_mem)
+  // When we cause a crash here it is caught and Vim tries to exit cleanly.
+  // Don't try freeing everything again.
+  if (entered_free_all_mem) {
     return;
+  }
   entered_free_all_mem = true;
 
   // Don't want to trigger autocommands from here on.
