@@ -496,6 +496,9 @@ void free_all_mem(void)
     return;
   entered = true;
 
+  // Set this flag to indicate some errors can be ignored.
+  really_exiting = true;
+
   // Don't want to trigger autocommands from here on.
   block_autocmds();
 

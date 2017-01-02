@@ -21569,7 +21569,10 @@ void func_unref(char_u *name)
   if (name != NULL && isdigit(*name)) {
     fp = find_func(name);
     if (fp == NULL) {
-      EMSG2(_(e_intern2), "func_unref()");
+      // Ignore when invoked through free_all_mem().
+      if (!really_exiting) {
+        EMSG2(_(e_intern2), "func_unref()");
+      }
     } else {
       user_func_unref(fp);
     }
