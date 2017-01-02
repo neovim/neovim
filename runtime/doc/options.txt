@@ -2682,6 +2682,40 @@ A jump table for the options with a short description can be found at |Q_op|.
 	It is not allowed to change text or jump to another window while
 	evaluating 'foldtext' |textlock|.
 
+						*'formatexpr'* *'fex'*
+'formatexpr' 'fex'	string (default "")
+			local to buffer
+			{not available when compiled without the |+eval|
+			feature}
+	Expression which is evaluated to format a range of lines for the |gq|
+	operator or automatic formatting (see 'formatoptions').  When this
+	option is empty 'formatprg' is used.
+
+	The |v:lnum|  variable holds the first line to be formatted.
+	The |v:count| variable holds the number of lines to be formatted.
+	The |v:char|  variable holds the character that is going to be
+		      inserted if the expression is being evaluated due to
+		      automatic formatting.  This can be empty.  Don't insert
+		      it yet!
+
+	Example: >
+		:set formatexpr=mylang#Format()
+<	This will invoke the mylang#Format() function in the
+	autoload/mylang.vim file in 'runtimepath'. |autoload|
+
+	The expression is also evaluated when 'textwidth' is set and adding
+	text beyond that limit.  This happens under the same conditions as
+	when internal formatting is used.  Make sure the cursor is kept in the
+	same spot relative to the text then!  The |mode()| function will
+	return "i" or "R" in this situation.
+	
+	When the expression evaluates to non-zero Vim will fall back to using
+	the internal format mechanism.
+
+	The expression will be evaluated in the |sandbox| when set from a
+	modeline, see |sandbox-option|.  That stops the option from working,
+	since changing the buffer text is not allowed.
+
 					*'formatoptions'* *'fo'*
 'formatoptions' 'fo'	string (default: "tcqj", Vi default: "vt")
 			local to buffer
@@ -2719,40 +2753,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	about including spaces and backslashes.
 	This option cannot be set from a |modeline| or in the |sandbox|, for
 	security reasons.
-
-						*'formatexpr'* *'fex'*
-'formatexpr' 'fex'	string (default "")
-			local to buffer
-			{not available when compiled without the |+eval|
-			feature}
-	Expression which is evaluated to format a range of lines for the |gq|
-	operator or automatic formatting (see 'formatoptions').  When this
-	option is empty 'formatprg' is used.
-
-	The |v:lnum|  variable holds the first line to be formatted.
-	The |v:count| variable holds the number of lines to be formatted.
-	The |v:char|  variable holds the character that is going to be
-		      inserted if the expression is being evaluated due to
-		      automatic formatting.  This can be empty.  Don't insert
-		      it yet!
-
-	Example: >
-		:set formatexpr=mylang#Format()
-<	This will invoke the mylang#Format() function in the
-	autoload/mylang.vim file in 'runtimepath'. |autoload|
-
-	The expression is also evaluated when 'textwidth' is set and adding
-	text beyond that limit.  This happens under the same conditions as
-	when internal formatting is used.  Make sure the cursor is kept in the
-	same spot relative to the text then!  The |mode()| function will
-	return "i" or "R" in this situation.
-	
-	When the expression evaluates to non-zero Vim will fall back to using
-	the internal format mechanism.
-
-	The expression will be evaluated in the |sandbox| when set from a
-	modeline, see |sandbox-option|.  That stops the option from working,
-	since changing the buffer text is not allowed.
 
 						*'fsync'* *'fs'*
 'fsync' 'fs'		boolean	(default on)

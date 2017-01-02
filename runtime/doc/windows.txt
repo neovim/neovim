@@ -1,4 +1,4 @@
-*windows.txt*   For Vim version 7.4.  Last change: 2016 Feb 01
+*windows.txt*   For Vim version 7.4.  Last change: 2016 Jun 10
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -69,6 +69,16 @@ places where a Normal mode command can't be used or is inconvenient.
 
 The main Vim window can hold several split windows.  There are also tab pages
 |tab-page|, each of which can hold multiple windows.
+
+Each window has a unique identifier called the window ID.  This identifier
+will not change within a Vim session. The |win_getid()| and |win_id2tabwin()|
+functions can be used to convert between the window/tab number and the
+identifier.  There is also the window number, which may change whenever
+windows are opened or closed, see |winnr()|.
+
+Each buffer has a unique number and the number will not change within a Vim
+session.  The |bufnr()| and |bufname()| functions can be used to convert
+between a buffer name and the buffer number.
 
 ==============================================================================
 2. Starting Vim						*windows-starting*

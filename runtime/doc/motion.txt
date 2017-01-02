@@ -1013,6 +1013,9 @@ CTRL-I			Go to [count] newer cursor position in jump list
 							*:ju* *:jumps*
 :ju[mps]		Print the jump list (not a motion command).
 
+							*:cle* *:clearjumps*
+:cle[arjumps]		Clear the jump list of the current window.
+
 							*jumplist*
 Jumps are remembered in a jump list.  With the CTRL-O and CTRL-I command you
 can go to cursor positions before older jumps, and back again.  Thus you can

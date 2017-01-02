@@ -1470,7 +1470,7 @@ v:exception	The value of the exception most recently caught and not
 
 					*v:false* *false-variable*
 v:false		Special value used to put "false" in JSON and msgpack.  See 
-		|json_encode()|.  This value is converted to "false" when used 
+		|json_encode()|.  This value is converted to "v:false" when used 
 		as a String (e.g. in |expr5| with string concatenation 
 		operator) and to zero when used as a Number (e.g. in |expr5| 
 		or |expr7| when used with numeric operators).
@@ -1620,7 +1620,7 @@ v:msgpack_types	Dictionary containing msgpack types used by |msgpackparse()|
 
 					*v:null* *null-variable*
 v:null		Special value used to put "null" in JSON and NIL in msgpack.  
-		See |json_encode()|.  This value is converted to "null" when 
+		See |json_encode()|.  This value is converted to "v:null" when 
 		used as a String (e.g. in |expr5| with string concatenation 
 		operator) and to zero when used as a Number (e.g. in |expr5| 
 		or |expr7| when used with numeric operators).
@@ -1807,7 +1807,7 @@ v:throwpoint	The point where the exception most recently caught and not
 
 					*v:true* *true-variable*
 v:true		Special value used to put "true" in JSON and msgpack.  See 
-		|json_encode()|.  This value is converted to "true" when used 
+		|json_encode()|.  This value is converted to "v:true" when used 
 		as a String (e.g. in |expr5| with string concatenation 
 		operator) and to one when used as a Number (e.g. in |expr5| or 
 		|expr7| when used with numeric operators).

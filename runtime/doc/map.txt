@@ -1,4 +1,4 @@
-*map.txt*       For Vim version 7.4.  Last change: 2016 Jan 10
+*map.txt*       For Vim version 7.4.  Last change: 2016 Jun 10
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -1408,11 +1408,11 @@ The valid escape sequences are
 		expands to nothing.
 						*<mods>*
 	<mods>  The command modifiers, if specified. Otherwise, expands to
-		nothing. Supported modifiers are |aboveleft|, |belowright|,
-		|botright|, |browse|, |confirm|, |hide|, |keepalt|,
-		|keepjumps|, |keepmarks|, |keeppatterns|, |lockmarks|,
-		|noswapfile|, |silent|, |tab|, |topleft|, |verbose|, and
-		|vertical|.
+		nothing. Supported modifiers are |:aboveleft|, |:belowright|,
+		|:botright|, |:browse|, |:confirm|, |:hide|, |:keepalt|,
+		|:keepjumps|, |:keepmarks|, |:keeppatterns|, |:lockmarks|,
+		|:noswapfile|, |:silent|, |:tab|, |:topleft|, |:verbose|, and
+		|:vertical|.
 		Examples: >
 		    command! -nargs=+ -complete=file MyEdit
 				\ for f in expand(<q-args>, 0, 1) |

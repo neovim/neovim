@@ -602,7 +602,9 @@ String manipulation:					*string-functions*
 	strdisplaywidth()	size of string when displayed, deals with tabs
 	substitute()		substitute a pattern match with a string
 	submatch()		get a specific match in ":s" and substitute()
-	strpart()		get part of a string
+	strpart()		get part of a string using byte index
+	strcharpart()		get part of a string using char index
+	strgetchar()		get character from a string using char index
 	expand()		expand special keywords
 	iconv()			convert text from one encoding to another
 	byteidx()		byte index of a character in a string
@@ -732,11 +734,14 @@ Working with text in the current buffer:		*text-functions*
 	searchpair()		find the other end of a start/skip/end
 	searchpairpos()		find the other end of a start/skip/end
 	searchdecl()		search for the declaration of a name
+	getcharsearch()		return character search information
+	setcharsearch()		set character search information
 
 					*system-functions* *file-functions*
 System functions and manipulation of files:
 	glob()			expand wildcards
 	globpath()		expand wildcards in a number of directories
+	glob2regpat()		convert a glob pattern into a search pattern
 	findfile()		find a file in a list of directories
 	finddir()		find a directory in a list of directories
 	resolve()		find out where a shortcut points to
@@ -748,6 +753,7 @@ System functions and manipulation of files:
 	filereadable()		check if a file can be read
 	filewritable()		check if a file can be written to
 	getfperm()		get the permissions of a file
+	setfperm()		set the permissions of a file
 	getftype()		get the kind of a file
 	isdirectory()		check if a directory exists
 	getfsize()		get the size of a file
@@ -790,6 +796,11 @@ Buffers, windows and the argument list:
 	bufwinnr()		get the window number of a specific buffer
 	winbufnr()		get the buffer number of a specific window
 	getbufline()		get a list of lines from the specified buffer
+	win_findbuf()		find windows containing a buffer
+	win_getid()		get window ID of a window
+	win_gotoid()		go to window with ID
+	win_id2tabwin()		get tab and window nr from window ID
+	win_id2win()		get window nr from window ID
 	getbufinfo()		get a list with buffer information
 	gettabinfo()		get a list with tab page information
 	getwininfo()		get a list with window information
@@ -905,6 +916,10 @@ Testing:				    *test-functions*
 	assert_true()		assert that an expression is true
 	assert_exception()	assert that a command throws an exception
 	assert_fails()		assert that a function call fails
+
+Timers:						*timer-functions*
+	timer_start()		create a timer
+	timer_stop()		stop a timer
 
 Various:					*various-functions*
 	mode()			get current editing mode
@@ -1402,9 +1417,9 @@ Now we can instantiate a Dutch translation object: >
 And a German translator: >
 
 	:let uk2de = copy(transdict)
-	:let uk2de.words = {'one': 'ein', 'two': 'zwei', 'three': 'drei'}
+	:let uk2de.words = {'one': 'eins', 'two': 'zwei', 'three': 'drei'}
 	:echo uk2de.translate('three one')
-<	drei ein ~
+<	drei eins ~
 
 You see that the copy() function is used to make a copy of the "transdict"
 Dictionary and then the copy is changed to add the words.  The original

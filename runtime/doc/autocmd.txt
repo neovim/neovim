@@ -1,4 +1,4 @@
-*autocmd.txt*   For Vim version 7.4.  Last change: 2016 Apr 20
+*autocmd.txt*   For Vim version 7.4.  Last change: 2016 Jun 09
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -1229,6 +1229,8 @@ option will not cause any commands to be executed.
 			argument is present. You probably want to use
 			<nomodeline> for events that are not used when loading
 			a buffer, such as |User|.
+			Processing modelines is also skipped when no
+			matching autocommands were executed.
 
 						*:doautoa* *:doautoall*
 :doautoa[ll] [<nomodeline>] [group] {event} [fname]

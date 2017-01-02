@@ -1,8 +1,9 @@
 " Vim filetype plugin file
 " Language:	python
-" Maintainer:	Johannes Zellner <johannes@zellner.org>
-" Last Change:	2014 Feb 09
-" Last Change By Johannes: Wed, 21 Apr 2004 13:13:08 CEST
+" Maintainer:	James Sully <sullyj3@gmail.com>
+" Previous Maintainer: Johannes Zellner <johannes@zellner.org>
+" Last Change:	Fri, 10 June 2016
+" https://github.com/sullyj3/vim-ftplugin-python
 
 if exists("b:did_ftplugin") | finish | endif
 let b:did_ftplugin = 1
@@ -21,10 +22,10 @@ setlocal omnifunc=pythoncomplete#Complete
 
 set wildignore+=*.pyc
 
-nnoremap <silent> <buffer> ]] :call <SID>Python_jump('/^\(class\\|def\)')<cr>
-nnoremap <silent> <buffer> [[ :call <SID>Python_jump('?^\(class\\|def\)')<cr>
-nnoremap <silent> <buffer> ]m :call <SID>Python_jump('/^\s*\(class\\|def\)')<cr>
-nnoremap <silent> <buffer> [m :call <SID>Python_jump('?^\s*\(class\\|def\)')<cr>
+nnoremap <silent> <buffer> ]] :call <SID>Python_jump('/^\(class\\|def\)\>')<cr>
+nnoremap <silent> <buffer> [[ :call <SID>Python_jump('?^\(class\\|def\)\>')<cr>
+nnoremap <silent> <buffer> ]m :call <SID>Python_jump('/^\s*\(class\\|def\)\>')<cr>
+nnoremap <silent> <buffer> [m :call <SID>Python_jump('?^\s*\(class\\|def\)\>')<cr>
 
 if !exists('*<SID>Python_jump')
   fun! <SID>Python_jump(motion) range

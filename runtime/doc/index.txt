@@ -1,4 +1,4 @@
-*index.txt*     For Vim version 7.4.  Last change: 2016 Apr 12
+*index.txt*     For Vim version 7.4.  Last change: 2016 Jun 12
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -1152,8 +1152,9 @@ tag	      command	      action ~
 |:chdir|	:chd[ir]	change directory
 |:checkpath|	:che[ckpath]	list included files
 |:checktime|	:checkt[ime]	check timestamp of loaded buffers
-|:clist|	:cl[ist]	list all errors
 |:clast|	:cla[st]	go to the specified error, default last one
+|:clearjumps|	:cle[arjumps]	clear the jump list
+|:clist|	:cl[ist]	list all errors
 |:close|	:clo[se]	close current window
 |:cmap|		:cm[ap]		like ":map" but for Command-line mode
 |:cmapclear|	:cmapc[lear]	clear all mappings for Command-line mode
