@@ -1,4 +1,4 @@
-*autocmd.txt*   For Vim version 7.4.  Last change: 2016 Mar 26
+*autocmd.txt*   For Vim version 7.4.  Last change: 2016 Apr 20
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -544,6 +544,9 @@ CursorHold			When the user doesn't press a key for the time
 
 							*CursorHoldI*
 CursorHoldI			Just like CursorHold, but in Insert mode.
+				Not triggered when waiting for another key,
+				e.g. after CTRL-V, and not when in CTRL-X mode
+				|insert_expand|.
 
 							*CursorMoved*
 CursorMoved			After the cursor was moved in Normal or Visual

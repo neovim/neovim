@@ -1,4 +1,4 @@
-*change.txt*    For Vim version 7.4.  Last change: 2016 Mar 08
+*change.txt*    For Vim version 7.4.  Last change: 2016 Apr 12
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -813,7 +813,7 @@ Examples: >
   :s/abcde/abc^Mde/		 modifies "abcde"    to "abc", "de" (two lines)
   :s/$/\^M/			 modifies "abcde"    to "abcde^M"
   :s/\w\+/\u\0/g		 modifies "bla bla"  to "Bla Bla"
-  :s/\w\+/\L\u/g		 modifies "BLA bla"  to "Bla Bla"
+  :s/\w\+/\L\u\0/g		 modifies "BLA bla"  to "Bla Bla"
 
 Note: "\L\u" can be used to capitalize the first letter of a word.  This is
 not compatible with Vi and older versions of Vim, where the "\u" would cancel
@@ -1164,7 +1164,7 @@ which does not specify a register.  Additionally you can access it with the
 name '"'.  This means you have to type two double quotes.  Writing to the ""
 register writes to register "0.
 
-2. Numbered registers "0 to "9		*quote_number* *quote0*	*quote1*
+2. Numbered registers "0 to "9		*quote_number* *quote0* *quote1*
 					*quote2* *quote3* *quote4* *quote9*
 Vim fills these registers with text from yank and delete commands.
    Numbered register 0 contains the text from the most recent yank command,
