@@ -98,7 +98,6 @@ describe('vim_to_object', function()
       },
       {},
     }
-    local ffi=require'ffi'
     local list = lua2typvalt(llist)
     eq(llist, typvalt2lua(list))
     eq({nil_value, {}}, obj2lua(api.vim_to_object(list)))

@@ -62,16 +62,16 @@ local typvalt2lua
 local typvalt2lua_tab
 
 typvalt2lua_tab = {
-  [tonumber(eval.VAR_SPECIAL)] = function(t, processed)
+  [tonumber(eval.VAR_SPECIAL)] = function(t)
     return special_tab[t.vval.v_special]
   end,
-  [tonumber(eval.VAR_NUMBER)] = function(t, processed)
+  [tonumber(eval.VAR_NUMBER)] = function(t)
     return {[type_key]=int_type, value=tonumber(t.vval.v_number)}
   end,
-  [tonumber(eval.VAR_FLOAT)] = function(t, processed)
+  [tonumber(eval.VAR_FLOAT)] = function(t)
     return tonumber(t.vval.v_float)
   end,
-  [tonumber(eval.VAR_STRING)] = function(t, processed)
+  [tonumber(eval.VAR_STRING)] = function(t)
     local str = t.vval.v_string
     if str == nil then
       return null_string
@@ -117,7 +117,7 @@ typvalt2lua_tab = {
 }
 
 typvalt2lua = function(t, processed)
-  return ((typvalt2lua_tab[tonumber(t.v_type)] or function(t_inner, processed)
+  return ((typvalt2lua_tab[tonumber(t.v_type)] or function(t_inner)
     assert(false, 'Converting ' .. tonumber(t_inner.v_type) .. ' was not implemented yet')
   end)(t, processed or {}))
 end
