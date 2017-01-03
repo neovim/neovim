@@ -19151,7 +19151,7 @@ static inline int _nothing_conv_list_start(typval_T *const tv)
 #define TYPVAL_ENCODE_CONV_LIST_START(tv, len) \
     do { \
       if (_nothing_conv_list_start(tv) != NOTDONE) { \
-        return OK; \
+        goto typval_encode_stop_converting_one_item; \
       } \
     } while (0)
 
@@ -19190,7 +19190,7 @@ static inline int _nothing_conv_dict_start(typval_T *const tv,
       if (_nothing_conv_dict_start(tv, (dict_T **)&dict, \
                                    (void *)&TYPVAL_ENCODE_NODICT_VAR) \
           != NOTDONE) { \
-        return OK; \
+        goto typval_encode_stop_converting_one_item; \
       } \
     } while (0)
 

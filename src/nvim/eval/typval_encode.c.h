@@ -565,7 +565,10 @@ _convert_one_value_regular_dict:
       return FAIL;
     }
   }
+typval_encode_stop_converting_one_item:
   return OK;
+  // Prevent “unused label” warnings.
+  goto typval_encode_stop_converting_one_item;
 }
 
 TYPVAL_ENCODE_SCOPE int _TYPVAL_ENCODE_ENCODE(
@@ -595,6 +598,9 @@ TYPVAL_ENCODE_SCOPE int _TYPVAL_ENCODE_ENCODE(
       == FAIL) {
     goto encode_vim_to__error_ret;
   }
+/// Label common for this and convert_one_value functions, used for escaping
+/// from macros like TYPVAL_ENCODE_CONV_DICT_START.
+typval_encode_stop_converting_one_item:
   while (_mp_size(mpstack)) {
     MPConvStackVal *cur_mpsv = &_mp_last(mpstack);
     typval_T *tv = NULL;
@@ -754,5 +760,7 @@ TYPVAL_ENCODE_SCOPE int _TYPVAL_ENCODE_ENCODE(
 encode_vim_to__error_ret:
   _mp_destroy(mpstack);
   return FAIL;
+  // Prevent “unused label” warnings.
+  goto typval_encode_stop_converting_one_item;
 }
 #endif  // NVIM_EVAL_TYPVAL_ENCODE_C_H
