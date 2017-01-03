@@ -11,22 +11,22 @@ local ccs = {}
 
 local env_cc = os.getenv("CC")
 if env_cc then
-  table.insert(ccs, {path = "/usr/bin/env " .. tostring(env_cc), type = "gcc"})
+  table.insert(ccs, {path = {"/usr/bin/env", env_cc}, type = "gcc"})
 end
 
 if ffi.os == "Windows" then
-  table.insert(ccs, {path = "cl", type = "msvc"})
+  table.insert(ccs, {path = {"cl"}, type = "msvc"})
 end
 
-table.insert(ccs, {path = "/usr/bin/env cc", type = "gcc"})
-table.insert(ccs, {path = "/usr/bin/env gcc", type = "gcc"})
-table.insert(ccs, {path = "/usr/bin/env gcc-4.9", type = "gcc"})
-table.insert(ccs, {path = "/usr/bin/env gcc-4.8", type = "gcc"})
-table.insert(ccs, {path = "/usr/bin/env gcc-4.7", type = "gcc"})
-table.insert(ccs, {path = "/usr/bin/env clang", type = "clang"})
-table.insert(ccs, {path = "/usr/bin/env icc", type = "gcc"})
+table.insert(ccs, {path = {"/usr/bin/env", "cc"}, type = "gcc"})
+table.insert(ccs, {path = {"/usr/bin/env", "gcc"}, type = "gcc"})
+table.insert(ccs, {path = {"/usr/bin/env", "gcc-4.9"}, type = "gcc"})
+table.insert(ccs, {path = {"/usr/bin/env", "gcc-4.8"}, type = "gcc"})
+table.insert(ccs, {path = {"/usr/bin/env", "gcc-4.7"}, type = "gcc"})
+table.insert(ccs, {path = {"/usr/bin/env", "clang"}, type = "clang"})
+table.insert(ccs, {path = {"/usr/bin/env", "icc"}, type = "gcc"})
 
-local quote_me = '[^%w%+%-%=%@%_%/]' -- complement (needn't quote)
+local quote_me = '[^.%w%+%-%@%_%/]' -- complement (needn't quote)
 local function shell_quote(str)
   if string.find(str, quote_me) or str == '' then
     return "'" .. string.gsub(str, "'", [['"'"']]) .. "'"
@@ -94,49 +94,78 @@ local function headerize(headers, global)
 end
 
 local Gcc = {
+  preprocessor_extra_flags = {},
+  get_defines_extra_flags = {'-std=c99', '-dM', '-E'},
+  get_declarations_extra_flags = {'-std=c99', '-P', '-E'},
+}
+
+function Gcc:define(name, args, val)
+  local define = '-D' .. name
+  local quoted_define = ''
+  if args ~= nil then
+    define = define .. '(' .. table.concat(args, ',') .. ')'
+  end
+  if val ~= nil then
+    define = define .. '=' .. val
+  end
+  self.preprocessor_extra_flags[#self.preprocessor_extra_flags + 1] = define
+end
+
+function Gcc:undefine(name)
+  self.preprocessor_extra_flags[#self.preprocessor_extra_flags + 1] = (
+      '-U' .. name)
+end
+
+function Gcc:init_defines(name)
   -- preprocessor flags that will hopefully make the compiler produce C
   -- declarations that the LuaJIT ffi understands.
-  preprocessor_extra_flags = {
-   '-D "aligned(ARGS)="',
-   '-D "__attribute__(ARGS)="',
-   '-D "__asm(ARGS)="',
-   '-D "__asm__(ARGS)="',
-   '-D "__inline__="',
-   '-D "EXTERN=extern"',
-   '-D "INIT(...)="',
-   '-D_GNU_SOURCE',
-   '-DINCLUDE_GENERATED_DECLARATIONS',
-
-   -- Needed for FreeBSD
-   '-D "_Thread_local="',
-
-   -- Needed for macOS Sierra
-   '-D "_Nullable="',
-   '-D "_Nonnull="',
-   '-U__BLOCKS__',
-  },
-}
+  self:define('aligned', {'ARGS'}, '')
+  self:define('__attribute__', {'ARGS'}, '')
+  self:define('__asm', {'ARGS'}, '')
+  self:define('__asm__', {'ARGS'}, '')
+  self:define('__inline__', nil, '')
+  self:define('EXTERN', nil, 'extern')
+  self:define('INIT', {'...'}, '')
+  self:define('_GNU_SOURCE')
+  self:define('INCLUDE_GENERATED_DECLARATIONS')
+  -- Needed for FreeBSD
+  self:define('_Thread_local', nil, '')
+  -- Needed for macOS Sierra
+  self:define('_Nullable', nil, '')
+  self:define('_Nonnull', nil, '')
+  self:undefine('__BLOCKS__')
+end
 
 function Gcc:new(obj)
   obj = obj or {}
   setmetatable(obj, self)
   self.__index = self
+  self:init_defines()
   return obj
 end
 
 function Gcc:add_to_include_path(...)
-  local paths = {...}
-  for i = 1, #paths do
-    local path = paths[i]
-    local directive = '-I ' .. '"' .. path .. '"'
+  for i = 1, select('#', ...) do
+    local path = select(i, ...)
     local ef = self.preprocessor_extra_flags
-    ef[#ef + 1] = directive
+    ef[#ef + 1] = '-I' .. path
   end
+end
+
+local function argss_to_cmd(...)
+  local cmd = ''
+  for i = 1, select('#', ...) do
+    for _, arg in ipairs(select(i, ...)) do
+      cmd = cmd .. ' ' .. shell_quote(arg)
+    end
+  end
+  return cmd
 end
 
 -- returns a list of the headers files upon which this file relies
 function Gcc:dependencies(hdr)
-  local out = io.popen(tostring(self.path) .. " -M " .. tostring(hdr) .. " 2>&1")
+  local cmd = argss_to_cmd(self.path, {'-M', hdr}) .. ' 2>&1'
+  local out = io.popen(cmd)
   local deps = out:read("*a")
   out:close()
   if deps then
@@ -146,7 +175,8 @@ function Gcc:dependencies(hdr)
   end
 end
 
-local function repeated_call(cmd)
+local function repeated_call(...)
+  local cmd = argss_to_cmd(...)
   for _ = 1, 10 do
     local stream = io.popen(cmd)
     local ret = stream:read('*a')
@@ -171,19 +201,20 @@ function Gcc:preprocess(previous_defines, ...)
   pseudoheader_file:write(pseudoheader)
   pseudoheader_file:flush()
   pseudoheader_file:close()
-  local defines = table.concat(self.preprocessor_extra_flags, ' ')
-  local cmd_base = self.path .. " " .. defines .. " -std=c99"
 
-  local def_cmd = (cmd_base .. " -dM -E " .. shell_quote(pseudoheader_fname))
-  local defines = repeated_call(def_cmd)
+  local defines = repeated_call(self.path, self.preprocessor_extra_flags,
+                                self.get_defines_extra_flags,
+                                {pseudoheader_fname})
 
   -- lfs = require("lfs")
   -- print("CWD: #{lfs.currentdir!}")
   -- print("CMD: #{cmd}")
   -- io.stderr\write("CWD: #{lfs.currentdir!}\n")
   -- io.stderr\write("CMD: #{cmd}\n")
-  local decl_cmd = (cmd_base .. " -P -E " .. shell_quote(pseudoheader_fname))
-  local declarations = repeated_call(decl_cmd)
+
+  local declarations = repeated_call(self.path, self.preprocessor_extra_flags,
+                                     self.get_declarations_extra_flags,
+                                     {pseudoheader_fname})
 
   os.remove(pseudoheader_fname)
 
