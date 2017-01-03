@@ -909,10 +909,10 @@ char *encode_tv2json(typval_T *tv, size_t *len)
     } while (0)
 
 #define TYPVAL_ENCODE_CONV_NUMBER(tv, num) \
-    msgpack_pack_int64(packer, (int64_t) (num))
+    msgpack_pack_int64(packer, (int64_t)(num))
 
 #define TYPVAL_ENCODE_CONV_FLOAT(tv, flt) \
-    msgpack_pack_double(packer, (double) (flt))
+    msgpack_pack_double(packer, (double)(flt))
 
 #define TYPVAL_ENCODE_CONV_FUNC_START(tv, fun) \
     return conv_error(_("E5004: Error while dumping %s, %s: " \
@@ -927,7 +927,7 @@ char *encode_tv2json(typval_T *tv, size_t *len)
     msgpack_pack_array(packer, 0)
 
 #define TYPVAL_ENCODE_CONV_LIST_START(tv, len) \
-    msgpack_pack_array(packer, (size_t) (len))
+    msgpack_pack_array(packer, (size_t)(len))
 
 #define TYPVAL_ENCODE_CONV_EMPTY_DICT(tv) \
     msgpack_pack_map(packer, 0)
@@ -948,7 +948,7 @@ char *encode_tv2json(typval_T *tv, size_t *len)
     msgpack_pack_uint64(packer, (num))
 
 #define TYPVAL_ENCODE_CONV_DICT_START(tv, dict, len) \
-    msgpack_pack_map(packer, (size_t) (len))
+    msgpack_pack_map(packer, (size_t)(len))
 
 #define TYPVAL_ENCODE_CONV_DICT_END(tv, dict)
 
