@@ -541,26 +541,26 @@ TYPVAL_ENCODE_SCOPE int _TYPVAL_ENCODE_ENCODE(
 /// @param  TYPVAL_ENCODE_FIRST_ARG_NAME  First argument, defined by the
 ///                                       includer. Only meaningful to macros
 ///                                       defined by the includer.
-/// @param  tv  Converted value.
+/// @param  top_tv  Converted value.
 /// @param[in]  objname  Object name, used for error reporting.
 ///
 /// @return OK in case of success, FAIL in case of failure.
 TYPVAL_ENCODE_SCOPE int _TYPVAL_ENCODE_ENCODE(
     TYPVAL_ENCODE_FIRST_ARG_TYPE TYPVAL_ENCODE_FIRST_ARG_NAME,
-    typval_T *const tv, const char *const objname)
+    typval_T *const top_tv, const char *const objname)
 {
   const int copyID = get_copyID();
   MPConvStack mpstack;
   _mp_init(mpstack);
   if (_TYPVAL_ENCODE_CONVERT_ONE_VALUE(TYPVAL_ENCODE_FIRST_ARG_NAME, &mpstack,
                                        NULL,
-                                       tv, copyID, objname)
+                                       top_tv, copyID, objname)
       == FAIL) {
     goto encode_vim_to__error_ret;
   }
   while (_mp_size(mpstack)) {
     MPConvStackVal *cur_mpsv = &_mp_last(mpstack);
-    typval_T *cur_tv = NULL;
+    typval_T *tv = NULL;
     switch (cur_mpsv->type) {
       case kMPConvDict: {
         if (!cur_mpsv->data.d.todo) {
@@ -581,7 +581,7 @@ TYPVAL_ENCODE_SCOPE int _TYPVAL_ENCODE_ENCODE(
         TYPVAL_ENCODE_CONV_STR_STRING(&di->di_key[0],
                                       strlen((char *)&di->di_key[0]));
         TYPVAL_ENCODE_CONV_DICT_AFTER_KEY();
-        cur_tv = &di->di_tv;
+        tv = &di->di_tv;
         break;
       }
       case kMPConvList: {
@@ -593,7 +593,7 @@ TYPVAL_ENCODE_SCOPE int _TYPVAL_ENCODE_ENCODE(
         } else if (cur_mpsv->data.l.li != cur_mpsv->data.l.list->lv_first) {
           TYPVAL_ENCODE_CONV_LIST_BETWEEN_ITEMS();
         }
-        cur_tv = &cur_mpsv->data.l.li->li_tv;
+        tv = &cur_mpsv->data.l.li->li_tv;
         cur_mpsv->data.l.li = cur_mpsv->data.l.li->li_next;
         break;
       }
@@ -617,7 +617,7 @@ TYPVAL_ENCODE_SCOPE int _TYPVAL_ENCODE_ENCODE(
           goto encode_vim_to__error_ret;
         }
         TYPVAL_ENCODE_CONV_DICT_AFTER_KEY();
-        cur_tv = &kv_pair->lv_last->li_tv;
+        tv = &kv_pair->lv_last->li_tv;
         cur_mpsv->data.l.li = cur_mpsv->data.l.li->li_next;
         break;
       }
@@ -692,14 +692,14 @@ TYPVAL_ENCODE_SCOPE int _TYPVAL_ENCODE_ENCODE(
         } else if (cur_mpsv->data.a.argv != cur_mpsv->data.a.arg) {
           TYPVAL_ENCODE_CONV_LIST_BETWEEN_ITEMS();
         }
-        cur_tv = cur_mpsv->data.a.arg++;
+        tv = cur_mpsv->data.a.arg++;
         cur_mpsv->data.a.todo--;
         break;
       }
     }
-    assert(cur_tv != NULL);
+    assert(tv != NULL);
     if (_TYPVAL_ENCODE_CONVERT_ONE_VALUE(TYPVAL_ENCODE_FIRST_ARG_NAME, &mpstack,
-                                         cur_mpsv, cur_tv, copyID, objname)
+                                         cur_mpsv, tv, copyID, objname)
         == FAIL) {
       goto encode_vim_to__error_ret;
     }
