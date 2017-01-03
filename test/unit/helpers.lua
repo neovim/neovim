@@ -69,14 +69,7 @@ local function cimport(...)
   end
 
   local body = nil
-  for _ = 1, 10 do
-    body, previous_defines = Preprocess.preprocess(previous_defines, unpack(paths))
-    if body ~= nil then break end
-  end
-
-  if body == nil then
-    print("ERROR: helpers.lua: Preprocess.preprocess() returned empty")
-  end
+  body, previous_defines = Preprocess.preprocess(previous_defines, unpack(paths))
 
   -- format it (so that the lines are "unique" statements), also filter out
   -- Objective-C blocks

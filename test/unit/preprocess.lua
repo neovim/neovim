@@ -146,6 +146,19 @@ function Gcc:dependencies(hdr)
   end
 end
 
+local function repeated_call(cmd)
+  for _ = 1, 10 do
+    local stream = io.popen(cmd)
+    local ret = stream:read('*a')
+    stream:close()
+    if ret then
+      return ret
+    end
+  end
+  print('ERROR: preprocess.lua: Failed to execute ' .. cmd .. ': nil return after 10 attempts')
+  return nil
+end
+
 -- returns a stream representing a preprocessed form of the passed-in headers.
 -- Don't forget to close the stream by calling the close() method on it.
 function Gcc:preprocess(previous_defines, ...)
@@ -159,28 +172,22 @@ function Gcc:preprocess(previous_defines, ...)
   pseudoheader_file:flush()
   pseudoheader_file:close()
   local defines = table.concat(self.preprocessor_extra_flags, ' ')
-  local cmd = ("echo $hdr | " ..
-               tostring(self.path) ..
-               " " ..
-               tostring(defines) ..
-               " -std=c99 -P -E " .. shell_quote(pseudoheader_fname))
-  local def_cmd = ("echo $hdr | " ..
-                   tostring(self.path) ..
-                   " " ..
-                   tostring(defines) ..
-                   " -std=c99 -dM -E " .. shell_quote(pseudoheader_fname))
-  local def_stream = io.popen(def_cmd)
-  local defines = def_stream:read('*a')
-  def_stream:close()
+  local cmd_base = self.path .. " " .. defines .. " -std=c99"
+
+  local def_cmd = (cmd_base .. " -dM -E " .. shell_quote(pseudoheader_fname))
+  local defines = repeated_call(def_cmd)
+
   -- lfs = require("lfs")
   -- print("CWD: #{lfs.currentdir!}")
   -- print("CMD: #{cmd}")
   -- io.stderr\write("CWD: #{lfs.currentdir!}\n")
   -- io.stderr\write("CMD: #{cmd}\n")
-  local stream = io.popen(cmd)
-  local declarations = stream:read('*a')
-  stream:close()
+  local decl_cmd = (cmd_base .. " -P -E " .. shell_quote(pseudoheader_fname))
+  local declarations = repeated_call(decl_cmd)
+
   os.remove(pseudoheader_fname)
+
+  assert(declarations and defines)
   return declarations, defines
 end
 

@@ -221,10 +221,6 @@ local function standalone(...)  -- luacheck: ignore
 
   local raw = Preprocess.preprocess('', arg[1])
 
-  if raw == nil then
-    print("ERROR: Preprocess.preprocess() returned empty")
-  end
-
   local formatted
   if #arg == 2 and arg[2] == 'no' then
       formatted = raw
