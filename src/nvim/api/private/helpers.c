@@ -326,21 +326,21 @@ void set_option_to(void *to, int type, String name, Object value, Error *err)
 
 #define TYPVAL_ENCODE_ALLOW_SPECIALS false
 
-#define TYPVAL_ENCODE_CONV_NIL() \
+#define TYPVAL_ENCODE_CONV_NIL(tv) \
     kv_push(edata->stack, NIL)
 
-#define TYPVAL_ENCODE_CONV_BOOL(num) \
+#define TYPVAL_ENCODE_CONV_BOOL(tv, num) \
     kv_push(edata->stack, BOOLEAN_OBJ((Boolean)(num)))
 
-#define TYPVAL_ENCODE_CONV_NUMBER(num) \
+#define TYPVAL_ENCODE_CONV_NUMBER(tv, num) \
     kv_push(edata->stack, INTEGER_OBJ((Integer)(num)))
 
 #define TYPVAL_ENCODE_CONV_UNSIGNED_NUMBER TYPVAL_ENCODE_CONV_NUMBER
 
-#define TYPVAL_ENCODE_CONV_FLOAT(flt) \
+#define TYPVAL_ENCODE_CONV_FLOAT(tv, flt) \
     kv_push(edata->stack, FLOATING_OBJ((Float)(flt)))
 
-#define TYPVAL_ENCODE_CONV_STRING(str, len) \
+#define TYPVAL_ENCODE_CONV_STRING(tv, str, len) \
     do { \
       const size_t len_ = (size_t)(len); \
       const char *const str_ = (const char *)(str); \
@@ -353,20 +353,20 @@ void set_option_to(void *to, int type, String name, Object value, Error *err)
 
 #define TYPVAL_ENCODE_CONV_STR_STRING TYPVAL_ENCODE_CONV_STRING
 
-#define TYPVAL_ENCODE_CONV_EXT_STRING(str, len, type) \
+#define TYPVAL_ENCODE_CONV_EXT_STRING(tv, str, len, type) \
     TYPVAL_ENCODE_CONV_NIL()
 
-#define TYPVAL_ENCODE_CONV_FUNC_START(fun, is_partial, pt) \
+#define TYPVAL_ENCODE_CONV_FUNC_START(tv, fun) \
     TYPVAL_ENCODE_CONV_NIL()
 
-#define TYPVAL_ENCODE_CONV_FUNC_BEFORE_ARGS(len)
-#define TYPVAL_ENCODE_CONV_FUNC_BEFORE_SELF(len)
-#define TYPVAL_ENCODE_CONV_FUNC_END()
+#define TYPVAL_ENCODE_CONV_FUNC_BEFORE_ARGS(tv, len)
+#define TYPVAL_ENCODE_CONV_FUNC_BEFORE_SELF(tv, len)
+#define TYPVAL_ENCODE_CONV_FUNC_END(tv)
 
-#define TYPVAL_ENCODE_CONV_EMPTY_LIST() \
+#define TYPVAL_ENCODE_CONV_EMPTY_LIST(tv) \
     kv_push(edata->stack, ARRAY_OBJ(((Array) { .capacity = 0, .size = 0 })))
 
-#define TYPVAL_ENCODE_CONV_EMPTY_DICT() \
+#define TYPVAL_ENCODE_CONV_EMPTY_DICT(tv) \
     kv_push(edata->stack, \
             DICTIONARY_OBJ(((Dictionary) { .capacity = 0, .size = 0 })))
 
@@ -381,7 +381,7 @@ static inline void typval_encode_list_start(EncodedData *const edata,
   })));
 }
 
-#define TYPVAL_ENCODE_CONV_LIST_START(len) \
+#define TYPVAL_ENCODE_CONV_LIST_START(tv, len) \
     typval_encode_list_start(edata, (size_t)(len))
 
 static inline void typval_encode_between_list_items(EncodedData *const edata)
@@ -394,7 +394,7 @@ static inline void typval_encode_between_list_items(EncodedData *const edata)
   list->data.array.items[list->data.array.size++] = item;
 }
 
-#define TYPVAL_ENCODE_CONV_LIST_BETWEEN_ITEMS() \
+#define TYPVAL_ENCODE_CONV_LIST_BETWEEN_ITEMS(tv) \
     typval_encode_between_list_items(edata)
 
 static inline void typval_encode_list_end(EncodedData *const edata)
@@ -407,7 +407,7 @@ static inline void typval_encode_list_end(EncodedData *const edata)
 #endif
 }
 
-#define TYPVAL_ENCODE_CONV_LIST_END() \
+#define TYPVAL_ENCODE_CONV_LIST_END(tv) \
     typval_encode_list_end(edata)
 
 static inline void typval_encode_dict_start(EncodedData *const edata,
@@ -421,10 +421,10 @@ static inline void typval_encode_dict_start(EncodedData *const edata,
   })));
 }
 
-#define TYPVAL_ENCODE_CONV_DICT_START(len) \
+#define TYPVAL_ENCODE_CONV_DICT_START(tv, dict, len) \
     typval_encode_dict_start(edata, (size_t)(len))
 
-#define TYPVAL_ENCODE_CONV_SPECIAL_DICT_KEY_CHECK(label, kv_pair)
+#define TYPVAL_ENCODE_SPECIAL_DICT_KEY_CHECK(label, kv_pair)
 
 static inline void typval_encode_after_key(EncodedData *const edata)
   FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_NONNULL_ALL
@@ -443,7 +443,7 @@ static inline void typval_encode_after_key(EncodedData *const edata)
   }
 }
 
-#define TYPVAL_ENCODE_CONV_DICT_AFTER_KEY() \
+#define TYPVAL_ENCODE_CONV_DICT_AFTER_KEY(tv, dict) \
     typval_encode_after_key(edata)
 
 static inline void typval_encode_between_dict_items(EncodedData *const edata)
@@ -456,7 +456,7 @@ static inline void typval_encode_between_dict_items(EncodedData *const edata)
   dict->data.dictionary.items[dict->data.dictionary.size++].value = val;
 }
 
-#define TYPVAL_ENCODE_CONV_DICT_BETWEEN_ITEMS() \
+#define TYPVAL_ENCODE_CONV_DICT_BETWEEN_ITEMS(tv, dict) \
     typval_encode_between_dict_items(edata)
 
 static inline void typval_encode_dict_end(EncodedData *const edata)
@@ -469,7 +469,7 @@ static inline void typval_encode_dict_end(EncodedData *const edata)
 #endif
 }
 
-#define TYPVAL_ENCODE_CONV_DICT_END() \
+#define TYPVAL_ENCODE_CONV_DICT_END(tv, dict) \
     typval_encode_dict_end(edata)
 
 #define TYPVAL_ENCODE_CONV_RECURSE(val, conv_type) \
@@ -506,7 +506,7 @@ static inline void typval_encode_dict_end(EncodedData *const edata)
 #undef TYPVAL_ENCODE_CONV_DICT_END
 #undef TYPVAL_ENCODE_CONV_DICT_AFTER_KEY
 #undef TYPVAL_ENCODE_CONV_DICT_BETWEEN_ITEMS
-#undef TYPVAL_ENCODE_CONV_SPECIAL_DICT_KEY_CHECK
+#undef TYPVAL_ENCODE_SPECIAL_DICT_KEY_CHECK
 #undef TYPVAL_ENCODE_CONV_LIST_END
 #undef TYPVAL_ENCODE_CONV_LIST_BETWEEN_ITEMS
 #undef TYPVAL_ENCODE_CONV_RECURSE

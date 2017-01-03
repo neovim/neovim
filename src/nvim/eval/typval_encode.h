@@ -284,4 +284,13 @@ static inline size_t tv_strlen(const typval_T *const tv)
 #define _TYPVAL_ENCODE_CONVERT_ONE_VALUE \
     _TYPVAL_ENCODE_CONVERT_ONE_VALUE_INNER(TYPVAL_ENCODE_NAME)
 
+#define _TYPVAL_ENCODE_NODICT_VAR_INNER_2(name) \
+    _typval_encode_##name##_nodict_var
+#define _TYPVAL_ENCODE_NODICT_VAR_INNER(name) \
+    _TYPVAL_ENCODE_NODICT_VAR_INNER_2(name)
+
+/// Name of the dummy const dict_T *const variable
+#define TYPVAL_ENCODE_NODICT_VAR \
+    _TYPVAL_ENCODE_NODICT_VAR_INNER(TYPVAL_ENCODE_NAME)
+
 #endif  // NVIM_EVAL_TYPVAL_ENCODE_H

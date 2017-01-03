@@ -280,7 +280,7 @@ int encode_read_from_list(ListReaderState *const state, char *const buf,
           : OK);
 }
 
-#define TYPVAL_ENCODE_CONV_STRING(buf, len) \
+#define TYPVAL_ENCODE_CONV_STRING(tv, buf, len) \
     do { \
       const char *const buf_ = (const char *) buf; \
       if (buf == NULL) { \
@@ -299,19 +299,19 @@ int encode_read_from_list(ListReaderState *const state, char *const buf,
       } \
     } while (0)
 
-#define TYPVAL_ENCODE_CONV_STR_STRING(buf, len) \
-    TYPVAL_ENCODE_CONV_STRING(buf, len)
+#define TYPVAL_ENCODE_CONV_STR_STRING(tv, buf, len) \
+    TYPVAL_ENCODE_CONV_STRING(tv, buf, len)
 
-#define TYPVAL_ENCODE_CONV_EXT_STRING(buf, len, type)
+#define TYPVAL_ENCODE_CONV_EXT_STRING(tv, buf, len, type)
 
-#define TYPVAL_ENCODE_CONV_NUMBER(num) \
+#define TYPVAL_ENCODE_CONV_NUMBER(tv, num) \
     do { \
       char numbuf[NUMBUFLEN]; \
       vim_snprintf(numbuf, ARRAY_SIZE(numbuf), "%" PRId64, (int64_t) (num)); \
       ga_concat(gap, numbuf); \
     } while (0)
 
-#define TYPVAL_ENCODE_CONV_FLOAT(flt) \
+#define TYPVAL_ENCODE_CONV_FLOAT(tv, flt) \
     do { \
       const float_T flt_ = (flt); \
       switch (fpclassify(flt_)) { \
@@ -334,65 +334,65 @@ int encode_read_from_list(ListReaderState *const state, char *const buf,
       } \
     } while (0)
 
-#define TYPVAL_ENCODE_CONV_FUNC_START(fun, is_partial, pt) \
+#define TYPVAL_ENCODE_CONV_FUNC_START(tv, fun) \
     do { \
       ga_concat(gap, "function("); \
-      TYPVAL_ENCODE_CONV_STRING(fun, STRLEN(fun)); \
+      TYPVAL_ENCODE_CONV_STRING(tv, fun, STRLEN(fun)); \
     } while (0)
 
-#define TYPVAL_ENCODE_CONV_FUNC_BEFORE_ARGS(len) \
+#define TYPVAL_ENCODE_CONV_FUNC_BEFORE_ARGS(tv, len) \
     do { \
       if (len != 0) { \
         ga_concat(gap, ", "); \
       } \
     } while (0)
 
-#define TYPVAL_ENCODE_CONV_FUNC_BEFORE_SELF(len) \
+#define TYPVAL_ENCODE_CONV_FUNC_BEFORE_SELF(tv, len) \
     do { \
       if ((ptrdiff_t)len != -1) { \
         ga_concat(gap, ", "); \
       } \
     } while (0)
 
-#define TYPVAL_ENCODE_CONV_FUNC_END() \
+#define TYPVAL_ENCODE_CONV_FUNC_END(tv) \
     ga_append(gap, ')')
 
-#define TYPVAL_ENCODE_CONV_EMPTY_LIST() \
+#define TYPVAL_ENCODE_CONV_EMPTY_LIST(tv) \
     ga_concat(gap, "[]")
 
-#define TYPVAL_ENCODE_CONV_LIST_START(len) \
+#define TYPVAL_ENCODE_CONV_LIST_START(tv, dict) \
     ga_append(gap, '[')
 
-#define TYPVAL_ENCODE_CONV_EMPTY_DICT() \
+#define TYPVAL_ENCODE_CONV_EMPTY_DICT(tv) \
     ga_concat(gap, "{}")
 
-#define TYPVAL_ENCODE_CONV_NIL() \
+#define TYPVAL_ENCODE_CONV_NIL(tv) \
     ga_concat(gap, "v:null")
 
-#define TYPVAL_ENCODE_CONV_BOOL(num) \
+#define TYPVAL_ENCODE_CONV_BOOL(tv, num) \
     ga_concat(gap, ((num)? "v:true": "v:false"))
 
-#define TYPVAL_ENCODE_CONV_UNSIGNED_NUMBER(num)
+#define TYPVAL_ENCODE_CONV_UNSIGNED_NUMBER(tv, num)
 
-#define TYPVAL_ENCODE_CONV_DICT_START(len) \
+#define TYPVAL_ENCODE_CONV_DICT_START(tv, dict, len) \
     ga_append(gap, '{')
 
-#define TYPVAL_ENCODE_CONV_DICT_END() \
+#define TYPVAL_ENCODE_CONV_DICT_END(tv, dict) \
     ga_append(gap, '}')
 
-#define TYPVAL_ENCODE_CONV_DICT_AFTER_KEY() \
+#define TYPVAL_ENCODE_CONV_DICT_AFTER_KEY(tv, dict) \
     ga_concat(gap, ": ")
 
-#define TYPVAL_ENCODE_CONV_DICT_BETWEEN_ITEMS() \
+#define TYPVAL_ENCODE_CONV_DICT_BETWEEN_ITEMS(tv, dict) \
     ga_concat(gap, ", ")
 
-#define TYPVAL_ENCODE_CONV_SPECIAL_DICT_KEY_CHECK(label, key)
+#define TYPVAL_ENCODE_SPECIAL_DICT_KEY_CHECK(label, key)
 
-#define TYPVAL_ENCODE_CONV_LIST_END() \
+#define TYPVAL_ENCODE_CONV_LIST_END(tv) \
     ga_append(gap, ']')
 
-#define TYPVAL_ENCODE_CONV_LIST_BETWEEN_ITEMS() \
-    TYPVAL_ENCODE_CONV_DICT_BETWEEN_ITEMS()
+#define TYPVAL_ENCODE_CONV_LIST_BETWEEN_ITEMS(tv) \
+    TYPVAL_ENCODE_CONV_DICT_BETWEEN_ITEMS(tv, NULL)
 
 #define TYPVAL_ENCODE_CONV_RECURSE(val, conv_type) \
     do { \
@@ -493,15 +493,15 @@ int encode_read_from_list(ListReaderState *const state, char *const buf,
 #define TYPVAL_ENCODE_ALLOW_SPECIALS true
 
 #undef TYPVAL_ENCODE_CONV_NIL
-#define TYPVAL_ENCODE_CONV_NIL() \
+#define TYPVAL_ENCODE_CONV_NIL(tv) \
       ga_concat(gap, "null")
 
 #undef TYPVAL_ENCODE_CONV_BOOL
-#define TYPVAL_ENCODE_CONV_BOOL(num) \
+#define TYPVAL_ENCODE_CONV_BOOL(tv, num) \
       ga_concat(gap, ((num)? "true": "false"))
 
 #undef TYPVAL_ENCODE_CONV_UNSIGNED_NUMBER
-#define TYPVAL_ENCODE_CONV_UNSIGNED_NUMBER(num) \
+#define TYPVAL_ENCODE_CONV_UNSIGNED_NUMBER(tv, num) \
       do { \
         char numbuf[NUMBUFLEN]; \
         vim_snprintf(numbuf, ARRAY_SIZE(numbuf), "%" PRIu64, (num)); \
@@ -509,7 +509,7 @@ int encode_read_from_list(ListReaderState *const state, char *const buf,
       } while (0)
 
 #undef TYPVAL_ENCODE_CONV_FLOAT
-#define TYPVAL_ENCODE_CONV_FLOAT(flt) \
+#define TYPVAL_ENCODE_CONV_FLOAT(tv, flt) \
     do { \
       const float_T flt_ = (flt); \
       switch (fpclassify(flt_)) { \
@@ -698,7 +698,7 @@ static inline int convert_to_json_string(garray_T *const gap,
 }
 
 #undef TYPVAL_ENCODE_CONV_STRING
-#define TYPVAL_ENCODE_CONV_STRING(buf, len) \
+#define TYPVAL_ENCODE_CONV_STRING(tv, buf, len) \
     do { \
       if (convert_to_json_string(gap, (const char *) (buf), (len)) != OK) { \
         return FAIL; \
@@ -706,7 +706,7 @@ static inline int convert_to_json_string(garray_T *const gap,
     } while (0)
 
 #undef TYPVAL_ENCODE_CONV_EXT_STRING
-#define TYPVAL_ENCODE_CONV_EXT_STRING(buf, len, type) \
+#define TYPVAL_ENCODE_CONV_EXT_STRING(tv, buf, len, type) \
     do { \
       xfree(buf); \
       EMSG(_("E474: Unable to convert EXT string to JSON")); \
@@ -714,7 +714,7 @@ static inline int convert_to_json_string(garray_T *const gap,
     } while (0)
 
 #undef TYPVAL_ENCODE_CONV_FUNC_START
-#define TYPVAL_ENCODE_CONV_FUNC_START(fun, is_partial, pt) \
+#define TYPVAL_ENCODE_CONV_FUNC_START(tv, fun) \
     return conv_error(_("E474: Error while dumping %s, %s: " \
                         "attempt to dump function reference"), \
                       mpstack, objname)
@@ -757,8 +757,8 @@ bool encode_check_json_key(const typval_T *const tv)
   return true;
 }
 
-#undef TYPVAL_ENCODE_CONV_SPECIAL_DICT_KEY_CHECK
-#define TYPVAL_ENCODE_CONV_SPECIAL_DICT_KEY_CHECK(label, key) \
+#undef TYPVAL_ENCODE_SPECIAL_DICT_KEY_CHECK
+#define TYPVAL_ENCODE_SPECIAL_DICT_KEY_CHECK(label, key) \
     do { \
       if (!encode_check_json_key(&key)) { \
         EMSG(_("E474: Invalid key in special dictionary")); \
@@ -797,7 +797,7 @@ bool encode_check_json_key(const typval_T *const tv)
 #undef TYPVAL_ENCODE_CONV_DICT_END
 #undef TYPVAL_ENCODE_CONV_DICT_AFTER_KEY
 #undef TYPVAL_ENCODE_CONV_DICT_BETWEEN_ITEMS
-#undef TYPVAL_ENCODE_CONV_SPECIAL_DICT_KEY_CHECK
+#undef TYPVAL_ENCODE_SPECIAL_DICT_KEY_CHECK
 #undef TYPVAL_ENCODE_CONV_LIST_END
 #undef TYPVAL_ENCODE_CONV_LIST_BETWEEN_ITEMS
 #undef TYPVAL_ENCODE_CONV_RECURSE
@@ -875,7 +875,7 @@ char *encode_tv2json(typval_T *tv, size_t *len)
   return (char *) ga.ga_data;
 }
 
-#define TYPVAL_ENCODE_CONV_STRING(buf, len) \
+#define TYPVAL_ENCODE_CONV_STRING(tv, buf, len) \
     do { \
       if (buf == NULL) { \
         msgpack_pack_bin(packer, 0); \
@@ -886,7 +886,7 @@ char *encode_tv2json(typval_T *tv, size_t *len)
       } \
     } while (0)
 
-#define TYPVAL_ENCODE_CONV_STR_STRING(buf, len) \
+#define TYPVAL_ENCODE_CONV_STR_STRING(tv, buf, len) \
     do { \
       if (buf == NULL) { \
         msgpack_pack_str(packer, 0); \
@@ -897,7 +897,7 @@ char *encode_tv2json(typval_T *tv, size_t *len)
       } \
     } while (0)
 
-#define TYPVAL_ENCODE_CONV_EXT_STRING(buf, len, type) \
+#define TYPVAL_ENCODE_CONV_EXT_STRING(tv, buf, len, type) \
     do { \
       if (buf == NULL) { \
         msgpack_pack_ext(packer, 0, (int8_t) type); \
@@ -908,34 +908,34 @@ char *encode_tv2json(typval_T *tv, size_t *len)
       } \
     } while (0)
 
-#define TYPVAL_ENCODE_CONV_NUMBER(num) \
+#define TYPVAL_ENCODE_CONV_NUMBER(tv, num) \
     msgpack_pack_int64(packer, (int64_t) (num))
 
-#define TYPVAL_ENCODE_CONV_FLOAT(flt) \
+#define TYPVAL_ENCODE_CONV_FLOAT(tv, flt) \
     msgpack_pack_double(packer, (double) (flt))
 
-#define TYPVAL_ENCODE_CONV_FUNC_START(fun, is_partial, pt) \
+#define TYPVAL_ENCODE_CONV_FUNC_START(tv, fun) \
     return conv_error(_("E5004: Error while dumping %s, %s: " \
                         "attempt to dump function reference"), \
                       mpstack, objname)
 
-#define TYPVAL_ENCODE_CONV_FUNC_BEFORE_ARGS(len)
-#define TYPVAL_ENCODE_CONV_FUNC_BEFORE_SELF(len)
-#define TYPVAL_ENCODE_CONV_FUNC_END()
+#define TYPVAL_ENCODE_CONV_FUNC_BEFORE_ARGS(tv, len)
+#define TYPVAL_ENCODE_CONV_FUNC_BEFORE_SELF(tv, len)
+#define TYPVAL_ENCODE_CONV_FUNC_END(tv)
 
-#define TYPVAL_ENCODE_CONV_EMPTY_LIST() \
+#define TYPVAL_ENCODE_CONV_EMPTY_LIST(tv) \
     msgpack_pack_array(packer, 0)
 
-#define TYPVAL_ENCODE_CONV_LIST_START(len) \
+#define TYPVAL_ENCODE_CONV_LIST_START(tv, len) \
     msgpack_pack_array(packer, (size_t) (len))
 
-#define TYPVAL_ENCODE_CONV_EMPTY_DICT() \
+#define TYPVAL_ENCODE_CONV_EMPTY_DICT(tv) \
     msgpack_pack_map(packer, 0)
 
-#define TYPVAL_ENCODE_CONV_NIL() \
+#define TYPVAL_ENCODE_CONV_NIL(tv) \
     msgpack_pack_nil(packer)
 
-#define TYPVAL_ENCODE_CONV_BOOL(num) \
+#define TYPVAL_ENCODE_CONV_BOOL(tv, num) \
     do { \
       if ((num)) { \
         msgpack_pack_true(packer); \
@@ -944,23 +944,23 @@ char *encode_tv2json(typval_T *tv, size_t *len)
       } \
     } while (0)
 
-#define TYPVAL_ENCODE_CONV_UNSIGNED_NUMBER(num) \
+#define TYPVAL_ENCODE_CONV_UNSIGNED_NUMBER(tv, num) \
     msgpack_pack_uint64(packer, (num))
 
-#define TYPVAL_ENCODE_CONV_DICT_START(len) \
+#define TYPVAL_ENCODE_CONV_DICT_START(tv, dict, len) \
     msgpack_pack_map(packer, (size_t) (len))
 
-#define TYPVAL_ENCODE_CONV_DICT_END()
+#define TYPVAL_ENCODE_CONV_DICT_END(tv, dict)
 
-#define TYPVAL_ENCODE_CONV_DICT_AFTER_KEY()
+#define TYPVAL_ENCODE_CONV_DICT_AFTER_KEY(tv, dict)
 
-#define TYPVAL_ENCODE_CONV_DICT_BETWEEN_ITEMS()
+#define TYPVAL_ENCODE_CONV_DICT_BETWEEN_ITEMS(tv, dict)
 
-#define TYPVAL_ENCODE_CONV_SPECIAL_DICT_KEY_CHECK(label, key)
+#define TYPVAL_ENCODE_SPECIAL_DICT_KEY_CHECK(label, key)
 
-#define TYPVAL_ENCODE_CONV_LIST_END()
+#define TYPVAL_ENCODE_CONV_LIST_END(tv)
 
-#define TYPVAL_ENCODE_CONV_LIST_BETWEEN_ITEMS()
+#define TYPVAL_ENCODE_CONV_LIST_BETWEEN_ITEMS(tv)
 
 #define TYPVAL_ENCODE_CONV_RECURSE(val, conv_type) \
     return conv_error(_("E5005: Unable to dump %s: " \
@@ -1000,7 +1000,7 @@ char *encode_tv2json(typval_T *tv, size_t *len)
 #undef TYPVAL_ENCODE_CONV_DICT_END
 #undef TYPVAL_ENCODE_CONV_DICT_AFTER_KEY
 #undef TYPVAL_ENCODE_CONV_DICT_BETWEEN_ITEMS
-#undef TYPVAL_ENCODE_CONV_SPECIAL_DICT_KEY_CHECK
+#undef TYPVAL_ENCODE_SPECIAL_DICT_KEY_CHECK
 #undef TYPVAL_ENCODE_CONV_LIST_END
 #undef TYPVAL_ENCODE_CONV_LIST_BETWEEN_ITEMS
 #undef TYPVAL_ENCODE_CONV_RECURSE
