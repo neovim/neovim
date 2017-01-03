@@ -68,7 +68,7 @@ local function cimport(...)
     return libnvim
   end
 
-  local body = nil
+  local body
   body, previous_defines = Preprocess.preprocess(previous_defines, unpack(paths))
 
   -- format it (so that the lines are "unique" statements), also filter out

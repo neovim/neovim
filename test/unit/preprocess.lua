@@ -1,11 +1,7 @@
 -- helps managing loading different headers into the LuaJIT ffi. Untested on
 -- windows, will probably need quite a bit of adjustment to run there.
 
-local global_helpers = require('test.helpers')
-
 local ffi = require("ffi")
-
-local tmpname = global_helpers.tmpname
 
 local ccs = {}
 
@@ -83,7 +79,7 @@ local function headerize(headers, global)
   end
 
   local formatted = {}
-  for i, hdr in ipairs(headers) do
+  for _, hdr in ipairs(headers) do
     formatted[#formatted + 1] = "#include " ..
                                 tostring(pre) ..
                                 tostring(hdr) ..
@@ -101,7 +97,6 @@ local Gcc = {
 
 function Gcc:define(name, args, val)
   local define = '-D' .. name
-  local quoted_define = ''
   if args ~= nil then
     define = define .. '(' .. table.concat(args, ',') .. ')'
   end
@@ -116,7 +111,7 @@ function Gcc:undefine(name)
       '-U' .. name)
 end
 
-function Gcc:init_defines(name)
+function Gcc:init_defines()
   -- preprocessor flags that will hopefully make the compiler produce C
   -- declarations that the LuaJIT ffi understands.
   self:define('aligned', {'ARGS'}, '')
