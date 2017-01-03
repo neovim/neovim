@@ -2576,6 +2576,28 @@ def CheckBraces(filename, clean_lines, linenum, error):
                     '{ should almost always be at the end'
                     ' of the previous line')
 
+    # Brace must appear after function signature, but on the *next* line
+    if Match(r'^(?:\w+(?: ?\*+)? )+\w+\(', line):
+        pos = line.find('(')
+        (endline, end_linenum, endpos) = CloseExpression(
+            clean_lines, linenum, pos)
+        if endline.endswith('{'):
+            error(filename, end_linenum, 'readability/braces', 5,
+                  'Brace starting function body must be placed on its own line')
+        else:
+            func_start_linenum = end_linenum + 1
+            while not clean_lines.lines[func_start_linenum] == '{':
+                if not Match(r'^(?:\s*\b(?:FUNC_ATTR|REAL_FATTR)_\w+\b(?:\(\d+(, \d+)*\))?)+$',
+                             clean_lines.lines[func_start_linenum]):
+                    if clean_lines.lines[func_start_linenum].endswith('{'):
+                        error(filename, func_start_linenum,
+                              'readability/braces', 5,
+                              'Brace starting function body must be placed '
+                              'after the function signature')
+                    break
+                else:
+                    func_start_linenum += 1
+
     # An else clause should be on the same line as the preceding closing brace.
     # If there is no preceding closing brace, there should be one.
     if Match(r'\s*else\s*', line):
