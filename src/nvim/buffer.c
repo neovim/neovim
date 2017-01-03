@@ -279,6 +279,26 @@ bool buf_valid(buf_T *buf)
   return false;
 }
 
+/// A hash table used to quickly lookup a buffer by its number.
+static hashtab_T buf_hashtab;
+
+static void buf_hashtab_add(buf_T *buf)
+{
+  sprintf((char *)buf->b_key, "%x", buf->b_fnum);
+  if (hash_add(&buf_hashtab, buf->b_key) == FAIL) {
+    EMSG(_("E931: Buffer cannot be registered"));
+  }
+}
+
+static void buf_hashtab_remove(buf_T *buf)
+{
+  hashitem_T *hi = hash_find(&buf_hashtab, buf->b_key);
+
+  if (!HASHITEM_EMPTY(hi)) {
+    hash_remove(&buf_hashtab, hi);
+  }
+}
+
 /// Close the link to a buffer.
 ///
 /// @param win    If not NULL, set b_last_cursor.
@@ -580,6 +600,7 @@ static void free_buffer(buf_T *buf)
   free_buffer_stuff(buf, TRUE);
   unref_var_dict(buf->b_vars);
   aubuflocal_remove(buf);
+  buf_hashtab_remove(buf);
   dict_unref(buf->additional_data);
   clear_fmark(&buf->b_last_cursor);
   clear_fmark(&buf->b_last_insert);
@@ -1364,6 +1385,9 @@ buf_T * buflist_new(char_u *ffname, char_u *sfname, linenr_T lnum, int flags)
 {
   buf_T       *buf;
 
+  if (top_file_num == 1) {
+    hash_init(&buf_hashtab);
+  }
   fname_expand(curbuf, &ffname, &sfname);       /* will allocate ffname */
 
   /*
@@ -1488,6 +1512,7 @@ buf_T * buflist_new(char_u *ffname, char_u *sfname, linenr_T lnum, int flags)
       }
       top_file_num = 1;
     }
+    buf_hashtab_add(buf);
 
     /*
      * Always copy the options from the current buffer.
@@ -1997,19 +2022,22 @@ static char_u *fname_match(regmatch_T *rmp, char_u *name, bool ignore_case)
   return match;
 }
 
-/*
- * find file in buffer list by number
- */
+/// Find a file in the buffer list by buffer number.
 buf_T *buflist_findnr(int nr)
 {
+  char_u key[SIZEOF_INT * 2 + 1];
+  hashitem_T *hi;
+
   if (nr == 0) {
     nr = curwin->w_alt_fnum;
   }
 
-  FOR_ALL_BUFFERS(buf) {
-    if (buf->b_fnum == nr) {
-      return buf;
-    }
+  sprintf((char *)key, "%x", nr);
+  hi = hash_find(&buf_hashtab, key);
+
+  if (!HASHITEM_EMPTY(hi)) {
+    return (buf_T *)(hi->hi_key
+			     - ((unsigned)(curbuf->b_key - (char_u *)curbuf)));
   }
   return NULL;
 }
