@@ -192,6 +192,9 @@ typedef struct {
   union {
     struct {
       dict_T *dict;    ///< Currently converted dictionary.
+      dict_T **dictp;  ///< Location where that dictionary is stored.
+                       ///< Normally it is &.tv->vval.v_dict, but not when
+                       ///< converting partials.
       hashitem_T *hi;  ///< Currently converted dictionary item.
       size_t todo;     ///< Amount of items left to process.
     } d;  ///< State of dictionary conversion.

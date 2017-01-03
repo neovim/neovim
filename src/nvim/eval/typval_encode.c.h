@@ -552,6 +552,7 @@ _convert_one_value_regular_dict:
         .data = {
           .d = {
             .dict = tv->vval.v_dict,
+            .dictp = &tv->vval.v_dict,
             .hi = tv->vval.v_dict->dv_hashtab.ht_array,
             .todo = tv->vval.v_dict->dv_hashtab.ht_used,
           },
@@ -602,12 +603,12 @@ TYPVAL_ENCODE_SCOPE int _TYPVAL_ENCODE_ENCODE(
         if (!cur_mpsv->data.d.todo) {
           (void)_mp_pop(mpstack);
           cur_mpsv->data.d.dict->dv_copyID = copyID - 1;
-          TYPVAL_ENCODE_CONV_DICT_END(cur_mpsv->tv, cur_mpsv->tv->vval.v_dict);
+          TYPVAL_ENCODE_CONV_DICT_END(cur_mpsv->tv, *cur_mpsv->data.d.dictp);
           continue;
         } else if (cur_mpsv->data.d.todo
                    != cur_mpsv->data.d.dict->dv_hashtab.ht_used) {
           TYPVAL_ENCODE_CONV_DICT_BETWEEN_ITEMS(cur_mpsv->tv,
-                                                cur_mpsv->tv->vval.v_dict);
+                                                *cur_mpsv->data.d.dictp);
         }
         while (HASHITEM_EMPTY(cur_mpsv->data.d.hi)) {
           cur_mpsv->data.d.hi++;
@@ -618,7 +619,7 @@ TYPVAL_ENCODE_SCOPE int _TYPVAL_ENCODE_ENCODE(
         TYPVAL_ENCODE_CONV_STR_STRING(NULL, &di->di_key[0],
                                       strlen((char *)&di->di_key[0]));
         TYPVAL_ENCODE_CONV_DICT_AFTER_KEY(cur_mpsv->tv,
-                                          cur_mpsv->tv->vval.v_dict);
+                                          *cur_mpsv->data.d.dictp);
         tv = &di->di_tv;
         break;
       }
@@ -709,6 +710,7 @@ TYPVAL_ENCODE_SCOPE int _TYPVAL_ENCODE_ENCODE(
                 .data = {
                   .d = {
                     .dict = dict,
+                    .dictp = &pt->pt_dict,
                     .hi = dict->dv_hashtab.ht_array,
                     .todo = dict->dv_hashtab.ht_used,
                   },
