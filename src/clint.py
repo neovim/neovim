@@ -2560,22 +2560,21 @@ def CheckBraces(filename, clean_lines, linenum, error):
 
     line = clean_lines.elided[linenum]        # get rid of comments and strings
 
-    if not (filename.endswith('.c') or filename.endswith('.h')):
-        if Match(r'\s*{\s*$', line):
-            # We allow an open brace to start a line in the case where someone
-            # is using braces in a block to explicitly create a new scope, which
-            # is commonly used to control the lifetime of stack-allocated
-            # variables.  Braces are also used for brace initializers inside
-            # function calls.  We don't detect this perfectly: we just don't
-            # complain if the last non-whitespace character on the previous
-            # non-blank line is ',', ';', ':', '(', '{', or '}', or if the
-            # previous line starts a preprocessor block.
-            prevline = GetPreviousNonBlankLine(clean_lines, linenum)[0]
-            if (not Search(r'[,;:}{(]\s*$', prevline) and
-                    not Match(r'\s*#', prevline)):
-                error(filename, linenum, 'whitespace/braces', 4,
-                      '{ should almost always be at the end'
-                      ' of the previous line')
+    if Match(r'\s+{\s*$', line):
+        # We allow an open brace to start a line in the case where someone
+        # is using braces in a block to explicitly create a new scope, which
+        # is commonly used to control the lifetime of stack-allocated
+        # variables.  Braces are also used for brace initializers inside
+        # function calls.  We don't detect this perfectly: we just don't
+        # complain if the last non-whitespace character on the previous
+        # non-blank line is ',', ';', ':', '(', '{', or '}', or if the
+        # previous line starts a preprocessor block.
+        prevline = GetPreviousNonBlankLine(clean_lines, linenum)[0]
+        if (not Search(r'[,;:}{(]\s*$', prevline) and
+                not Match(r'\s*#', prevline)):
+            error(filename, linenum, 'whitespace/braces', 4,
+                    '{ should almost always be at the end'
+                    ' of the previous line')
 
     # An else clause should be on the same line as the preceding closing brace.
     # If there is no preceding closing brace, there should be one.
