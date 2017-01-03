@@ -81,3 +81,14 @@ func Test_loop_over_null_list()
     call assert_true(0, 'should not get here')
   endfor
 endfunc
+
+func Test_compare_null_dict()
+  call assert_fails('let x = v:_null_dict[10]')
+  call assert_equal({}, {})
+  call assert_equal(v:_null_dict, v:_null_dict)
+  call assert_notequal({}, v:_null_dict)
+endfunc
+
+func Test_set_reg_null_list()
+  call setreg('x', v:_null_list)
+endfunc
