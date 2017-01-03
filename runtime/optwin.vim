@@ -1,7 +1,7 @@
 " These commands create the option window.
 "
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2016 Apr 21
+" Last Change:	2016 Aug 12
 
 " If there already is an option window, jump to that one.
 if bufwinnr("option-window") > 0
@@ -1250,6 +1250,9 @@ call append("$", "\t(local to buffer)")
 call <SID>BinOptionL("bl")
 call append("$", "debug\tset to \"msg\" to see all error messages")
 call append("$", " \tset debug=" . &debug)
+call append("$", "signcolumn\twhether to show the signcolumn")
+call append("$", "\t(local to window)")
+call <SID>OptionL("scl")
 
 set cpo&vim
 

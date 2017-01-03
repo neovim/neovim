@@ -24,6 +24,7 @@
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
 #include "nvim/misc1.h"
+#include "nvim/option.h"
 #include "nvim/popupmnu.h"
 #include "nvim/screen.h"
 #include "nvim/strings.h"
@@ -669,8 +670,7 @@ int win_col_off(win_T *wp)
   return ((wp->w_p_nu || wp->w_p_rnu) ? number_width(wp) + 1 : 0)
          + (cmdwin_type == 0 || wp != curwin ? 0 : 1)
          + (int)wp->w_p_fdc
-         + (wp->w_buffer->b_signlist != NULL ? 2 : 0)
-  ;
+         + (signcolumn_on(wp) ? 2 : 0);
 }
 
 int curwin_col_off(void)

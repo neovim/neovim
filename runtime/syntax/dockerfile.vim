@@ -1,7 +1,7 @@
 " dockerfile.vim - Syntax highlighting for Dockerfiles
-" Maintainer:   Honza Pokorny <http://honza.ca>
-" Version:      0.5
-" Last Change:  2014 Aug 29
+" Maintainer:   Honza Pokorny <https://honza.ca>
+" Version:      0.6
+" Last Change:  2016 Aug 9
 " License:      BSD
 
 
@@ -13,7 +13,7 @@ let b:current_syntax = "dockerfile"
 
 syntax case ignore
 
-syntax match dockerfileKeyword /\v^\s*(ONBUILD\s+)?(ADD|CMD|ENTRYPOINT|ENV|EXPOSE|FROM|MAINTAINER|RUN|USER|VOLUME|WORKDIR|COPY)\s/
+syntax match dockerfileKeyword /\v^\s*(ONBUILD\s+)?(ADD|ARG|CMD|COPY|ENTRYPOINT|ENV|EXPOSE|FROM|HEALTHCHECK|LABEL|MAINTAINER|RUN|SHELL|STOPSIGNAL|USER|VOLUME|WORKDIR)\s/
 
 syntax region dockerfileString start=/\v"/ skip=/\v\\./ end=/\v"/
 

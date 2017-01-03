@@ -1129,6 +1129,7 @@ tag	      command	      action ~
 |:caddfile|	:caddf[ile]	add error message to current quickfix list
 |:call|		:cal[l]		call a function
 |:catch|	:cat[ch]	part of a :try command
+|:cbottom|	:cbo[ttom]	scroll to the bottom of the quickfix window
 |:cbuffer|	:cb[uffer]	parse error messages and jump to first error
 |:cc|		:cc		go to specific error
 |:cclose|	:ccl[ose]	close quickfix window
@@ -1286,6 +1287,7 @@ tag	      command	      action ~
 |:last|		:la[st]		go to the last file in the argument list
 |:language|	:lan[guage]	set the language (locale)
 |:later|	:lat[er]	go to newer change, redo
+|:lbottom|	:lbo[ttom]	scroll to the bottom of the location window
 |:lbuffer|	:lb[uffer]	parse locations and jump to first location
 |:lcd|		:lc[d]		change directory locally
 |:lchdir|	:lch[dir]	change directory locally

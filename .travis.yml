@@ -1,3 +1,4 @@
+dist: trusty
 sudo: false
 language: c
 
@@ -78,6 +79,8 @@ matrix:
     - os: osx
       compiler: gcc-4.9
       osx_image: xcode7.3  # macOS 10.11
+  allow_failures:
+    - env: GCOV=gcov-5 CMAKE_FLAGS="$CMAKE_FLAGS -DUSE_GCOV=ON"
   fast_finish: true
 
 before_install: .ci/before_install.sh
@@ -90,8 +93,6 @@ after_success:  .ci/after_success.sh
 addons:
   apt:
     sources:
-      # TODO: Remove PPA when Travis gets Python >=3.3.
-      - deadsnakes
       - ubuntu-toolchain-r-test
       - llvm-toolchain-precise-3.8
     packages:
@@ -100,6 +101,7 @@ addons:
       - build-essential
       - clang-3.8
       - cmake
+      - cscope
       - g++-5-multilib
       - g++-multilib
       - gcc-5-multilib
@@ -109,7 +111,6 @@ addons:
       - libtool
       - llvm-3.8-dev
       - pkg-config
-      - python3.3-dev
       - unzip
       - valgrind
       - xclip

@@ -636,10 +636,14 @@ EXTERN int exiting INIT(= FALSE);
 /* TRUE when planning to exit Vim.  Might
  * still keep on running if there is a changed
  * buffer. */
-/* volatile because it is used in signal handler deathtrap(). */
-EXTERN volatile int full_screen INIT(= FALSE);
-/* TRUE when doing full-screen output
- * otherwise only writing some messages */
+#if defined(EXITFREE)
+// true when in or after free_all_mem()
+EXTERN bool entered_free_all_mem INIT(= false);
+#endif
+// volatile because it is used in signal handler deathtrap().
+EXTERN volatile int full_screen INIT(= false);
+// TRUE when doing full-screen output
+// otherwise only writing some messages
 
 EXTERN int restricted INIT(= FALSE);
 // TRUE when started in restricted mode (-Z)

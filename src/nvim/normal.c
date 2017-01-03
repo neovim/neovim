@@ -3666,7 +3666,7 @@ find_decl (
     size_t len,
     bool locally,
     bool thisblock,
-    int searchflags                /* flags passed to searchit() */
+    int flags_arg                  // flags passed to searchit()
 )
 {
   char_u      *pat;
@@ -3678,6 +3678,7 @@ find_decl (
   bool save_p_scs;
   bool retval = true;
   bool incll;
+  int searchflags = flags_arg;
 
   pat = xmalloc(len + 7);
 
@@ -3751,10 +3752,12 @@ find_decl (
       break;
     }
 
-    /* For finding a local variable and the match is before the "{" search
-     * to find a later match.  For K&R style function declarations this
-     * skips the function header without types. */
+    // For finding a local variable and the match is before the "{" search
+    // to find a later match.  For K&R style function declarations this
+    // skips the function header without types.  Remove SEARCH_START from
+    // flags to avoid getting stuck at one position.
     found_pos = curwin->w_cursor;
+    searchflags &= ~SEARCH_START;
   }
 
   if (t == false) {

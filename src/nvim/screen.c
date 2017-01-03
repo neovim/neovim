@@ -486,6 +486,11 @@ void update_single_line(win_T *wp, linenr_T lnum)
   int row;
   int j;
 
+  // Don't do anything if the screen structures are (not yet) valid.
+  if (!screen_valid(true)) {
+    return;
+  }
+
   if (lnum >= wp->w_topline && lnum < wp->w_botline
       && foldedCount(wp, lnum, &win_foldinfo) == 0) {
     row = 0;
@@ -574,15 +579,6 @@ void update_debug_sign(buf_T *buf, linenr_T lnum)
 
     update_finish();
 }
-
-/*
- * Return TRUE when window "wp" has a column to draw signs in.
- */
-static int draw_signcolumn(win_T *wp)
-{
-    return (wp->w_buffer->b_signlist != NULL);
-}
-
 
 /*
  * Update a single window.
@@ -1598,7 +1594,7 @@ static void win_draw_end(win_T *wp, int c1, int c2, int row, int endrow, hlf_T h
                   ' ', ' ', hl_attr(HLF_FC));
     }
 
-    if (draw_signcolumn(wp)) {
+    if (signcolumn_on(wp)) {
         int nn = n + 2;
 
         /* draw the sign column left of the fold column */
@@ -1639,8 +1635,7 @@ static void win_draw_end(win_T *wp, int c1, int c2, int row, int endrow, hlf_T h
       n = nn;
     }
 
-    if (draw_signcolumn(wp))
-    {
+    if (signcolumn_on(wp)) {
         int nn = n + 2;
 
         /* draw the sign column after the fold column */
@@ -1752,8 +1747,8 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
    * text */
   RL_MEMSET(col, hl_attr(HLF_FL), wp->w_width - col);
 
-  /* If signs are being displayed, add two spaces. */
-  if (draw_signcolumn(wp)) {
+  // If signs are being displayed, add two spaces.
+  if (signcolumn_on(wp)) {
       len = wp->w_width - col;
       if (len > 0) {
           if (len > 2) {
@@ -2701,7 +2696,7 @@ win_line (
           draw_state = WL_SIGN;
           /* Show the sign column when there are any signs in this
            * buffer or when using Netbeans. */
-          if (draw_signcolumn(wp)) {
+          if (signcolumn_on(wp)) {
               int text_sign;
               /* Draw two cells with the sign value or blank. */
               c_extra = ' ';

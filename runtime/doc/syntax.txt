@@ -1,4 +1,4 @@
-*syntax.txt*	For Vim version 7.4.  Last change: 2016 Apr 10
+*syntax.txt*	For Vim version 7.4.  Last change: 2016 Aug 10
 
 
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
@@ -944,6 +944,8 @@ Variable		Highlight ~
 *c_no_bracket_error*	don't highlight {}; inside [] as errors
 *c_no_curly_error*	don't highlight {}; inside [] and () as errors;
 				except { and } in first column
+				Default is to highlight them, otherwise you
+				can't spot a missing ")".
 *c_curly_error*		highlight a missing }; this forces syncing from the
 			start of the file, can be slow
 *c_no_ansi*		don't do standard ANSI types and constants
