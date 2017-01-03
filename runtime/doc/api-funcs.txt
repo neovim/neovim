@@ -1,0 +1,716 @@
+*api-funcs.txt*         Neovim API Function Reference                   {Nvim}
+
+Note: This documentation is generated from Neovim's API source code.
+
+Contents:
+
+1. Global Functions   |api-global|
+2. Buffer Functions   |api-buffer|
+3. Window Functions   |api-window|
+4. Tabpage Functions  |api-tabpage|
+5. UI Functions       |api-ui|
+
+==============================================================================
+1. Global Functions                                               *api-global*
+
+nvim_command({command})                                       *nvim_command()*
+                Executes an ex-command. On VimL error: Returns the VimL error;
+                v:errmsg is not updated.
+
+                Parameters:~
+                    {command}  Ex-command string
+
+nvim_feedkeys({keys}, {mode}, {escape_csi})                  *nvim_feedkeys()*
+                Passes input keys to Nvim. On VimL error: Does not fail, but
+                updates v:errmsg.
+
+                Parameters:~
+                    {keys}        to be typed
+                    {mode}        mapping options
+                    {escape_csi}  If true, escape K_SPECIAL/CSI bytes in
+                                  `keys`
+
+nvim_input({keys})                                              *nvim_input()*
+                Passes keys to Nvim as raw user-input. On VimL error: Does not
+                fail, but updates v:errmsg.
+
+                Unlike `nvim_feedkeys`, this uses a lower-level input buffer
+                and the call is not deferred. This is the most reliable way to
+                emulate real user input.
+
+                Parameters:~
+                    {keys}  to be typed
+
+                Return:~
+                    Number of bytes actually written (can be fewer than
+                    requested if the buffer becomes full).
+
+                                                    *nvim_replace_termcodes()*
+nvim_replace_termcodes({str}, {from_part}, {do_lt}, {special})
+                Replaces any terminal codes with the internal representation
+
+nvim_command_output({str})                             *nvim_command_output()*
+                TODO: Documentation
+
+nvim_eval({expr})                                                *nvim_eval()*
+                Evaluates a VimL expression (:help expression). Dictionaries
+                and Lists are recursively expanded. On VimL error: Returns a
+                generic error; v:errmsg is not updated.
+
+                Parameters:~
+                    {expr}  VimL expression string
+
+                Return:~
+                    Evaluation result or expanded object
+
+nvim_call_function({fname}, {args})                     *nvim_call_function()*
+                Calls a VimL function with the given arguments. On VimL error:
+                Returns a generic error; v:errmsg is not updated.
+
+                Parameters:~
+                    {fname}  Function to call
+                    {args}   Function arguments packed in an Array
+
+                Return:~
+                    Result of the function call
+
+nvim_strwidth({str})                                         *nvim_strwidth()*
+                Calculates the number of display cells occupied by `text`.
+                <Tab> counts as one cell.
+
+                Parameters:~
+                    {text}  Some text
+
+                Return:~
+                    Number of cells
+
+nvim_list_runtime_paths()                          *nvim_list_runtime_paths()*
+                Gets the paths contained in 'runtimepath'.
+
+                Return:~
+                    List of paths
+
+nvim_set_current_dir({dir})                           *nvim_set_current_dir()*
+                Changes the global working directory.
+
+                Parameters:~
+                    {dir}  Directory path
+
+nvim_get_current_line()                              *nvim_get_current_line()*
+                Gets the current line
+
+                Parameters:~
+
+                Return:~
+                    Current line string
+
+nvim_set_current_line({line})                        *nvim_set_current_line()*
+                Sets the current line
+
+                Parameters:~
+                    {line}  Line contents
+
+nvim_del_current_line()                              *nvim_del_current_line()*
+                Deletes the current line
+
+                Parameters:~
+
+nvim_get_var({name})                                          *nvim_get_var()*
+                Gets a global (g:) variable
+
+                Parameters:~
+                    {name}  Variable name
+
+                Return:~
+                    Variable value
+
+nvim_set_var({name}, {value})                                 *nvim_set_var()*
+                Sets a global (g:) variable
+
+                Parameters:~
+                    {name}   Variable name
+                    {value}  Variable value
+
+nvim_del_var({name})                                          *nvim_del_var()*
+                Removes a global (g:) variable
+
+                Parameters:~
+                    {name}  Variable name
+
+nvim_get_vvar({name})                                        *nvim_get_vvar()*
+                Gets a v: variable
+
+                Parameters:~
+                    {name}  Variable name
+
+                Return:~
+                    Variable value
+
+nvim_get_option({name})                                    *nvim_get_option()*
+                Gets an option value string
+
+                Parameters:~
+                    {name}  Option name
+
+                Return:~
+                    Option value
+
+nvim_set_option({name}, {value})                           *nvim_set_option()*
+                Sets an option value
+
+                Parameters:~
+                    {name}   Option name
+                    {value}  New option value
+
+nvim_out_write({str})                                       *nvim_out_write()*
+                Writes a message to vim output buffer
+
+                Parameters:~
+                    {str}  Message
+
+nvim_err_write({str})                                       *nvim_err_write()*
+                Writes a message to vim error buffer
+
+                Parameters:~
+                    {str}  Message
+
+nvim_err_writeln({str})                                   *nvim_err_writeln()*
+                Writes a message to vim error buffer. Appends a linefeed to
+                ensure all contents are written.
+
+                Parameters:~
+                    {str}  Message
+
+nvim_list_bufs()                                            *nvim_list_bufs()*
+                Gets the current list of buffer handles
+
+                Return:~
+                    List of buffer handles
+
+nvim_get_current_buf()                                *nvim_get_current_buf()*
+                Gets the current buffer
+
+                Return:~
+                    Buffer handle
+
+nvim_set_current_buf({buffer})                        *nvim_set_current_buf()*
+                Sets the current buffer
+
+                Parameters:~
+                    {id}  Buffer handle
+
+nvim_list_wins()                                            *nvim_list_wins()*
+                Gets the current list of window handles
+
+                Return:~
+                    List of window handles
+
+nvim_get_current_win()                                *nvim_get_current_win()*
+                Gets the current window
+
+                Return:~
+                    Window handle
+
+nvim_set_current_win({window})                        *nvim_set_current_win()*
+                Sets the current window
+
+                Parameters:~
+                    {handle}  Window handle
+
+nvim_list_tabpages()                                    *nvim_list_tabpages()*
+                Gets the current list of tabpage handles
+
+                Return:~
+                    List of tabpage handles
+
+nvim_get_current_tabpage()                        *nvim_get_current_tabpage()*
+                Gets the current tabpage
+
+                Return:~
+                    Tabpage handle
+
+nvim_set_current_tabpage({tabpage})               *nvim_set_current_tabpage()*
+                Sets the current tabpage
+
+                Parameters:~
+                    {handle}  Tabpage handle
+
+nvim_subscribe({event})                                     *nvim_subscribe()*
+                Subscribes to event broadcasts
+
+                Parameters:~
+                    {event}  Event type string
+
+nvim_unsubscribe({event})                                 *nvim_unsubscribe()*
+                Unsubscribes to event broadcasts
+
+                Parameters:~
+                    {event}  Event type string
+
+nvim_get_color_by_name({name})                      *nvim_get_color_by_name()*
+                TODO: Documentation
+
+nvim_get_color_map()                                    *nvim_get_color_map()*
+                TODO: Documentation
+
+nvim_get_api_info()                                      *nvim_get_api_info()*
+                TODO: Documentation
+
+nvim_call_atomic({calls})                                 *nvim_call_atomic()*
+                Call many api methods atomically
+
+                This has two main usages: Firstly, to perform several requests
+                from an async context atomically, i.e. without processing
+                requests from other rpc clients or redrawing or allowing user
+                interaction in between. Note that api methods that could fire
+                autocommands or do event processing still might do so. For
+                instance invoking the :sleep command might call timer
+                callbacks. Secondly, it can be used to reduce rpc overhead
+                (roundtrips) when doing many requests in sequence.
+
+                Parameters:~
+                    {calls}  an array of calls, where each call is described
+                             by an array with two elements: the request name,
+                             and an array of arguments.
+
+                Return:~
+                    an array with two elements. The first is an array of
+                    return values. The second is NIL if all calls succeeded.
+                    If a call resulted in an error, it is a three-element
+                    array with the zero-based index of the call which resulted
+                    in an error, the error type and the error message. If an
+                    error ocurred, the values from all preceding calls will
+                    still be returned.
+
+
+==============================================================================
+2. Buffer Functions                                               *api-buffer*
+
+nvim_buf_line_count({buffer})                          *nvim_buf_line_count()*
+                Gets the buffer line count
+
+                Parameters:~
+                    {buffer}  Buffer handle
+
+                Return:~
+                    Line count
+
+                                                        *nvim_buf_get_lines()*
+nvim_buf_get_lines({buffer}, {start}, {end}, {strict_indexing})
+                Retrieves a line range from the buffer
+
+                Indexing is zero-based, end-exclusive. Negative indices are
+                interpreted as length+1+index, i e -1 refers to the index past
+                the end. So to get the last element set start=-2 and end=-1.
+
+                Out-of-bounds indices are clamped to the nearest valid value,
+                unless `strict_indexing` is set.
+
+                Parameters:~
+                    {buffer}           Buffer handle
+                    {start}            First line index
+                    {end}              Last line index (exclusive)
+                    {strict_indexing}  Whether out-of-bounds should be an
+                                       error.
+
+                Return:~
+                    Array of lines
+
+                                                        *nvim_buf_set_lines()*
+nvim_buf_set_lines({buffer}, {start}, {end}, {strict_indexing},
+                   {replacement})
+                Replaces line range on the buffer
+
+                Indexing is zero-based, end-exclusive. Negative indices are
+                interpreted as length+1+index, i e -1 refers to the index past
+                the end. So to change or delete the last element set start=-2
+                and end=-1.
+
+                To insert lines at a given index, set both start and end to
+                the same index. To delete a range of lines, set replacement to
+                an empty array.
+
+                Out-of-bounds indices are clamped to the nearest valid value,
+                unless `strict_indexing` is set.
+
+                Parameters:~
+                    {buffer}           Buffer handle
+                    {start}            First line index
+                    {end}              Last line index (exclusive)
+                    {strict_indexing}  Whether out-of-bounds should be an
+                                       error.
+                    {replacement}      Array of lines to use as replacement
+
+nvim_buf_get_var({buffer}, {name})                        *nvim_buf_get_var()*
+                Gets a buffer-scoped (b:) variable.
+
+                Parameters:~
+                    {buffer}  Buffer handle
+                    {name}    Variable name
+
+                Return:~
+                    Variable value
+
+nvim_buf_set_var({buffer}, {name}, {value})               *nvim_buf_set_var()*
+                Sets a buffer-scoped (b:) variable
+
+                Parameters:~
+                    {buffer}  Buffer handle
+                    {name}    Variable name
+                    {value}   Variable value
+
+nvim_buf_del_var({buffer}, {name})                        *nvim_buf_del_var()*
+                Removes a buffer-scoped (b:) variable
+
+                Parameters:~
+                    {buffer}  Buffer handle
+                    {name}    Variable name
+
+nvim_buf_get_option({buffer}, {name})                  *nvim_buf_get_option()*
+                Gets a buffer option value
+
+                Parameters:~
+                    {buffer}  Buffer handle
+                    {name}    Option name
+
+                Return:~
+                    Option value
+
+nvim_buf_set_option({buffer}, {name}, {value})         *nvim_buf_set_option()*
+                Sets a buffer option value. Passing 'nil' as value deletes the
+                option (only works if there's a global fallback)
+
+                Parameters:~
+                    {buffer}  Buffer handle
+                    {name}    Option name
+                    {value}   Option value
+
+nvim_buf_get_number({buffer})                          *nvim_buf_get_number()*
+                Gets the buffer number
+
+                Parameters:~
+                    {buffer}  Buffer handle
+
+                Return:~
+                    Buffer number
+
+nvim_buf_get_name({buffer})                              *nvim_buf_get_name()*
+                Gets the full file name for the buffer
+
+                Parameters:~
+                    {buffer}  Buffer handle
+
+                Return:~
+                    Buffer name
+
+nvim_buf_set_name({buffer}, {name})                      *nvim_buf_set_name()*
+                Sets the full file name for a buffer
+
+                Parameters:~
+                    {buffer}  Buffer handle
+                    {name}    Buffer name
+
+nvim_buf_is_valid({buffer})                              *nvim_buf_is_valid()*
+                Checks if a buffer is valid
+
+                Parameters:~
+                    {buffer}  Buffer handle
+
+                Return:~
+                    true if the buffer is valid, false otherwise
+
+nvim_buf_get_mark({buffer}, {name})                      *nvim_buf_get_mark()*
+                Return a tuple (row,col) representing the position of the
+                named mark
+
+                Parameters:~
+                    {buffer}  Buffer handle
+                    {name}    Mark name
+
+                Return:~
+                    (row, col) tuple
+
+                                                    *nvim_buf_add_highlight()*
+nvim_buf_add_highlight({buffer}, {src_id}, {hl_group}, {line},
+                       {col_start}, {col_end})
+                Adds a highlight to buffer.
+
+                This can be used for plugins which dynamically generate
+                highlights to a buffer (like a semantic highlighter or
+                linter). The function adds a single highlight to a buffer.
+                Unlike matchaddpos() highlights follow changes to line
+                numbering (as lines are inserted/removed above the highlighted
+                line), like signs and marks do.
+
+                "src_id" is useful for batch deletion/updating of a set of
+                highlights. When called with src_id = 0, an unique source id
+                is generated and returned. Succesive calls can pass in it as
+                "src_id" to add new highlights to the same source group. All
+                highlights in the same group can then be cleared with
+                nvim_buf_clear_highlight. If the highlight never will be
+                manually deleted pass in -1 for "src_id".
+
+                If "hl_group" is the empty string no highlight is added, but a
+                new src_id is still returned. This is useful for an external
+                plugin to synchrounously request an unique src_id at
+                initialization, and later asynchronously add and clear
+                highlights in response to buffer changes.
+
+                Parameters:~
+                    {buffer}     Buffer handle
+                    {src_id}     Source group to use or 0 to use a new group,
+                                 or -1 for ungrouped highlight
+                    {hl_group}   Name of the highlight group to use
+                    {line}       Line to highlight
+                    {col_start}  Start of range of columns to highlight
+                    {col_end}    End of range of columns to highlight, or -1
+                                 to highlight to end of line
+
+                Return:~
+                    The src_id that was used
+
+                                                  *nvim_buf_clear_highlight()*
+nvim_buf_clear_highlight({buffer}, {src_id}, {line_start}, {line_end})
+                Clears highlights from a given source group and a range of
+                lines
+
+                To clear a source group in the entire buffer, pass in 1 and -1
+                to line_start and line_end respectively.
+
+                Parameters:~
+                    {buffer}      Buffer handle
+                    {src_id}      Highlight source group to clear, or -1 to
+                                  clear all.
+                    {line_start}  Start of range of lines to clear
+                    {line_end}    End of range of lines to clear (exclusive)
+                                  or -1 to clear to end of file.
+
+
+==============================================================================
+3. Window Functions                                               *api-window*
+
+nvim_win_get_buf({window})                                *nvim_win_get_buf()*
+                Gets the current buffer in a window
+
+                Parameters:~
+                    {window}  Window handle
+
+                Return:~
+                    Buffer handle
+
+nvim_win_get_cursor({window})                          *nvim_win_get_cursor()*
+                Gets the cursor position in the window
+
+                Parameters:~
+                    {window}  Window handle
+
+                Return:~
+                    (row, col) tuple
+
+nvim_win_set_cursor({window}, {pos})                   *nvim_win_set_cursor()*
+                Sets the cursor position in the window
+
+                Parameters:~
+                    {window}  Window handle
+                    {pos}     (row, col) tuple representing the new position
+
+nvim_win_get_height({window})                          *nvim_win_get_height()*
+                Gets the window height
+
+                Parameters:~
+                    {window}  Window handle
+
+                Return:~
+                    Height as a count of rows
+
+nvim_win_set_height({window}, {height})                *nvim_win_set_height()*
+                Sets the window height. This will only succeed if the screen
+                is split horizontally.
+
+                Parameters:~
+                    {window}  Window handle
+                    {height}  Height as a count of rows
+
+nvim_win_get_width({window})                            *nvim_win_get_width()*
+                Gets the window width
+
+                Parameters:~
+                    {window}  Window handle
+
+                Return:~
+                    Width as a count of columns
+
+nvim_win_set_width({window}, {width})                   *nvim_win_set_width()*
+                Sets the window width. This will only succeed if the screen is
+                split vertically.
+
+                Parameters:~
+                    {window}  Window handle
+                    {width}   Width as a count of columns
+
+nvim_win_get_var({window}, {name})                        *nvim_win_get_var()*
+                Gets a window-scoped (w:) variable
+
+                Parameters:~
+                    {window}  Window handle
+                    {name}    Variable name
+
+                Return:~
+                    Variable value
+
+nvim_win_set_var({window}, {name}, {value})               *nvim_win_set_var()*
+                Sets a window-scoped (w:) variable
+
+                Parameters:~
+                    {window}  Window handle
+                    {name}    Variable name
+                    {value}   Variable value
+
+nvim_win_del_var({window}, {name})                        *nvim_win_del_var()*
+                Removes a window-scoped (w:) variable
+
+                Parameters:~
+                    {window}  Window handle
+                    {name}    Variable name
+
+nvim_win_get_option({window}, {name})                  *nvim_win_get_option()*
+                Gets a window option value
+
+                Parameters:~
+                    {window}  Window handle
+                    {name}    Option name
+
+                Return:~
+                    Option value
+
+nvim_win_set_option({window}, {name}, {value})         *nvim_win_set_option()*
+                Sets a window option value. Passing 'nil' as value deletes the
+                option(only works if there's a global fallback)
+
+                Parameters:~
+                    {window}  Window handle
+                    {name}    Option name
+                    {value}   Option value
+
+nvim_win_get_position({window})                      *nvim_win_get_position()*
+                Gets the window position in display cells. First position is
+                zero.
+
+                Parameters:~
+                    {window}  Window handle
+
+                Return:~
+                    (row, col) tuple with the window position
+
+nvim_win_get_tabpage({window})                        *nvim_win_get_tabpage()*
+                Gets the window tabpage
+
+                Parameters:~
+                    {window}  Window handle
+
+                Return:~
+                    Tabpage that contains the window
+
+nvim_win_get_number({window})                          *nvim_win_get_number()*
+                Gets the window number
+
+                Parameters:~
+                    {window}  Window handle
+
+                Return:~
+                    Window number
+
+nvim_win_is_valid({window})                              *nvim_win_is_valid()*
+                Checks if a window is valid
+
+                Parameters:~
+                    {window}  Window handle
+
+                Return:~
+                    true if the window is valid, false otherwise
+
+
+==============================================================================
+4. Tabpage Functions                                             *api-tabpage*
+
+nvim_tabpage_list_wins({tabpage})                   *nvim_tabpage_list_wins()*
+                Gets the windows in a tabpage
+
+                Parameters:~
+                    {tabpage}  Tabpage
+
+                Return:~
+                    List of windows in tabpage
+
+nvim_tabpage_get_var({tabpage}, {name})               *nvim_tabpage_get_var()*
+                Gets a tab-scoped (t:) variable
+
+                Parameters:~
+                    {tabpage}  Tabpage handle
+                    {name}     Variable name
+
+                Return:~
+                    Variable value
+
+nvim_tabpage_set_var({tabpage}, {name}, {value})      *nvim_tabpage_set_var()*
+                Sets a tab-scoped (t:) variable
+
+                Parameters:~
+                    {tabpage}  Tabpage handle
+                    {name}     Variable name
+                    {value}    Variable value
+
+nvim_tabpage_del_var({tabpage}, {name})               *nvim_tabpage_del_var()*
+                Removes a tab-scoped (t:) variable
+
+                Parameters:~
+                    {tabpage}  Tabpage handle
+                    {name}     Variable name
+
+nvim_tabpage_get_win({tabpage})                       *nvim_tabpage_get_win()*
+                Gets the current window in a tabpage
+
+                Parameters:~
+                    {tabpage}  Tabpage handle
+
+                Return:~
+                    Window handle
+
+nvim_tabpage_get_number({tabpage})                 *nvim_tabpage_get_number()*
+                Gets the tabpage number
+
+                Parameters:~
+                    {tabpage}  Tabpage handle
+
+                Return:~
+                    Tabpage number
+
+nvim_tabpage_is_valid({tabpage})                     *nvim_tabpage_is_valid()*
+                Checks if a tabpage is valid
+
+                Parameters:~
+                    {tabpage}  Tabpage handle
+
+                Return:~
+                    true if the tabpage is valid, false otherwise
+
+
+==============================================================================
+5. UI Functions                                                       *api-ui*
+
+remote_ui_disconnect()                                *remote_ui_disconnect()*
+                TODO: Documentation
+
+nvim_ui_attach({width}, {height}, {options})                *nvim_ui_attach()*
+                TODO: Documentation
+
+nvim_ui_detach()                                            *nvim_ui_detach()*
+                TODO: Documentation
+
+nvim_ui_try_resize({width}, {height})                   *nvim_ui_try_resize()*
+                TODO: Documentation
+
+nvim_ui_set_option({name}, {value})                     *nvim_ui_set_option()*
+                TODO: Documentation
+
+ vim:tw=78:ts=8:ft=help:norl:
