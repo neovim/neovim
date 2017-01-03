@@ -284,7 +284,7 @@ static hashtab_T buf_hashtab;
 
 static void buf_hashtab_add(buf_T *buf)
 {
-  sprintf((char *)buf->b_key, "%x", buf->b_fnum);
+  snprintf((char *)buf->b_key, sizeof(buf->b_key), "%x", buf->b_fnum);
   if (hash_add(&buf_hashtab, buf->b_key) == FAIL) {
     EMSG(_("E931: Buffer cannot be registered"));
   }
@@ -1388,7 +1388,7 @@ buf_T * buflist_new(char_u *ffname, char_u *sfname, linenr_T lnum, int flags)
   if (top_file_num == 1) {
     hash_init(&buf_hashtab);
   }
-  fname_expand(curbuf, &ffname, &sfname);       /* will allocate ffname */
+  fname_expand(curbuf, &ffname, &sfname);       // will allocate ffname
 
   /*
    * If file name already exists in the list, update the entry.
@@ -2025,19 +2025,19 @@ static char_u *fname_match(regmatch_T *rmp, char_u *name, bool ignore_case)
 /// Find a file in the buffer list by buffer number.
 buf_T *buflist_findnr(int nr)
 {
-  char_u key[SIZEOF_INT * 2 + 1];
+  char_u key[sizeof(handle_T) * 2 + 1];
   hashitem_T *hi;
 
   if (nr == 0) {
     nr = curwin->w_alt_fnum;
   }
 
-  sprintf((char *)key, "%x", nr);
+  snprintf((char *)key, sizeof(key), "%x", nr);
   hi = hash_find(&buf_hashtab, key);
 
   if (!HASHITEM_EMPTY(hi)) {
-    return (buf_T *)(hi->hi_key
-			     - ((unsigned)(curbuf->b_key - (char_u *)curbuf)));
+    return (buf_T *)(hi->hi_key -
+                     ((unsigned)(curbuf->b_key - (char_u *)curbuf)));
   }
   return NULL;
 }

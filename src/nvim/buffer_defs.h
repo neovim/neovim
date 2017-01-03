@@ -490,9 +490,8 @@ struct file_buffer {
   bool file_id_valid;
   FileID file_id;
 
-  char_u b_key[SIZEOF_INT * 2 + 1];  // key used for buf_hashtab, holds
-                                         // b_fnum as hex string
-                                            
+  char_u b_key[sizeof(handle_T) * 2 + 1];  // key used for buf_hashtab, holds
+                                           // b_fnum as hex string
   int b_changed;                // 'modified': Set to true if something in the
                                 // file has been changed and not written out.
   int b_changedtick;            // incremented for each change, also for undo
