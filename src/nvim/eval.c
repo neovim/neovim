@@ -19072,13 +19072,20 @@ void free_tv(typval_T *varp)
 
 #define TYPVAL_ENCODE_CONV_FUNC_START(fun, is_partial, pt) \
     do { \
-      if (!is_partial) { \
+      partial_T *const pt_ = (pt); \
+      tv->v_lock = VAR_UNLOCKED; \
+      if (is_partial) { \
+        if (pt_ != NULL && pt_->pt_refcount > 1) { \
+          pt_->pt_refcount--; \
+          tv->vval.v_partial = NULL; \
+          return OK; \
+        } \
+      } else { \
         func_unref(fun); \
         if (fun != empty_string) { \
           xfree(fun); \
         } \
         tv->vval.v_string = NULL; \
-        tv->v_lock = VAR_UNLOCKED; \
       } \
     } while (0)
 
@@ -19114,10 +19121,10 @@ void free_tv(typval_T *varp)
 
 #define TYPVAL_ENCODE_CONV_LIST_START(ignored) \
     do { \
+      tv->v_lock = VAR_UNLOCKED; \
       if (tv->vval.v_list->lv_refcount > 1) { \
         tv->vval.v_list->lv_refcount--; \
         tv->vval.v_list = NULL; \
-        tv->v_lock = VAR_UNLOCKED; \
         return OK; \
       } \
     } while (0)
@@ -19136,16 +19143,15 @@ void free_tv(typval_T *varp)
         assert(list == cur_tv->vval.v_list); \
         assert(cur_tv->v_type == VAR_LIST); \
         cur_tv->vval.v_list = NULL; \
-        cur_tv->v_lock = VAR_UNLOCKED; \
       } \
     } while (0)
 
 #define TYPVAL_ENCODE_CONV_DICT_START(ignored) \
     do { \
+      tv->v_lock = VAR_UNLOCKED; \
       if (tv->vval.v_dict->dv_refcount > 1) { \
         tv->vval.v_dict->dv_refcount--; \
         tv->vval.v_dict = NULL; \
-        tv->v_lock = VAR_UNLOCKED; \
         return OK; \
       } \
     } while (0)
@@ -19165,7 +19171,6 @@ void free_tv(typval_T *varp)
         assert(dict == cur_tv->vval.v_dict); \
         assert(cur_tv->v_type == VAR_DICT); \
         cur_tv->vval.v_dict = NULL; \
-        cur_tv->v_lock = VAR_UNLOCKED; \
       } \
     } while (0)
 
