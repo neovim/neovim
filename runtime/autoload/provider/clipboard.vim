@@ -22,9 +22,12 @@ function! s:try_cmd(cmd, ...)
   let argv = split(a:cmd, " ")
   let out = a:0 ? systemlist(argv, a:1, 1) : systemlist(argv, [''], 1)
   if v:shell_error
-    echohl WarningMsg
-    echo "clipboard: error: ".(len(out) ? out[0] : '')
-    echohl None
+    if !exists('s:did_error_try_cmd')
+      echohl WarningMsg
+      echomsg "clipboard: error: ".(len(out) ? out[0] : '')
+      echohl None
+      let s:did_error_try_cmd = 1
+    endif
     return 0
   endif
   return out
