@@ -19126,6 +19126,9 @@ void free_tv(typval_T *varp)
 
 #define TYPVAL_ENCODE_CONV_LIST_END() \
     do { \
+      if (cur_mpsv->type == kMPConvPartialList) { \
+        break; \
+      } \
       typval_T *const cur_tv = cur_mpsv->tv; \
       list_T *const list = cur_mpsv->data.l.list; \
       list_unref(list); \
