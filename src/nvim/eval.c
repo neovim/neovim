@@ -5166,12 +5166,14 @@ dict_equal (
     return true;
   }
   if (d1 == NULL || d2 == NULL) {
-    return FALSE;
+    return false;
   }
-  if (d1 == d2)
-    return TRUE;
-  if (dict_len(d1) != dict_len(d2))
-    return FALSE;
+  if (d1 == d2) {
+    return true;
+  }
+  if (dict_len(d1) != dict_len(d2)) {
+    return false;
+  }
 
   todo = (int)d1->dv_hashtab.ht_used;
   for (hi = d1->dv_hashtab.ht_array; todo > 0; ++hi) {
@@ -10074,7 +10076,7 @@ static void f_getbufvar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     } else if (STRCMP(varname, "changedtick") == 0) {
       rettv->v_type = VAR_NUMBER;
       rettv->vval.v_number = curbuf->b_changedtick;
-      done = TRUE;
+      done = true;
     } else {
       /* Look up the variable. */
       /* Let getbufvar({nr}, "") return the "b:" dictionary. */
