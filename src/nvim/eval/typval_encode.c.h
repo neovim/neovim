@@ -87,7 +87,7 @@
 /// @brief Macros used when starting to convert a funcref or a partial
 ///
 /// @param  tv  Pointer to typval where value is stored. May not be NULL.
-/// @param  fun  Function name.
+/// @param  fun  Function name. May be NULL.
 
 /// @def TYPVAL_ENCODE_CONV_FUNC_BEFORE_ARGS
 /// @brief Macros used before starting to convert partial arguments
@@ -317,7 +317,7 @@ static int _TYPVAL_ENCODE_CONVERT_ONE_VALUE(
     case VAR_PARTIAL: {
       partial_T *const pt = tv->vval.v_partial;
       (void)pt;
-      TYPVAL_ENCODE_CONV_FUNC_START(tv, pt->pt_name);
+      TYPVAL_ENCODE_CONV_FUNC_START(tv, (pt == NULL ? NULL : pt->pt_name));
       _mp_push(*mpstack, ((MPConvStackVal) {
         .type = kMPConvPartial,
         .tv = tv,
