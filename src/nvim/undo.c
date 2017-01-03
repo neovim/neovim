@@ -2549,20 +2549,20 @@ static void u_add_time(char_u *buf, size_t buflen, time_t tt)
  */
 void ex_undojoin(exarg_T *eap)
 {
-  if (curbuf->b_u_newhead == NULL)
-    return;                 /* nothing changed before */
+  if (curbuf->b_u_newhead == NULL) {
+    return;                 // nothing changed before
+  }
   if (curbuf->b_u_curhead != NULL) {
     EMSG(_("E790: undojoin is not allowed after undo"));
     return;
   }
-  if (!curbuf->b_u_synced)
-    return;                 /* already unsynced */
-  if (get_undolevel() < 0)
-    return;                 /* no entries, nothing to do */
-  else {
-    /* Go back to the last entry */
-    curbuf->b_u_curhead = curbuf->b_u_newhead;
-    curbuf->b_u_synced = false;      /* no entries, nothing to do */
+  if (!curbuf->b_u_synced) {
+    return;                 // already unsynced
+  }
+  if (get_undolevel() < 0) {
+    return;                 // no entries, nothing to do
+  } else {
+    curbuf->b_u_synced = false;  // Append next change to last entry
   }
 }
 
