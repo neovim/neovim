@@ -336,8 +336,14 @@ int encode_read_from_list(ListReaderState *const state, char *const buf,
 
 #define TYPVAL_ENCODE_CONV_FUNC_START(tv, fun) \
     do { \
-      ga_concat(gap, "function("); \
-      TYPVAL_ENCODE_CONV_STRING(tv, fun, STRLEN(fun)); \
+      const char *const fun_ = (const char *)(fun); \
+      if (fun_ == NULL) { \
+        EMSG2(_(e_intern2), "string(): NULL function name"); \
+        ga_concat(gap, "function(NULL"); \
+      } else { \
+        ga_concat(gap, "function("); \
+        TYPVAL_ENCODE_CONV_STRING(tv, fun_, strlen(fun_)); \
+      }\
     } while (0)
 
 #define TYPVAL_ENCODE_CONV_FUNC_BEFORE_ARGS(tv, len) \
