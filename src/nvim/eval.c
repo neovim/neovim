@@ -19258,6 +19258,7 @@ void clear_tv(typval_T *varp)
 {
   if (varp != NULL && varp->v_type != VAR_UNKNOWN) {
     const int evn_ret = encode_vim_to_nothing(varp, varp, "clear_tv argument");
+    (void)evn_ret;
     assert(evn_ret == OK);
   }
 }
