@@ -493,6 +493,12 @@ describe('msgpackparse() function', function()
        exc_exec('call msgpackparse(function("tr"))'))
   end)
 
+  it('fails to parse a partial', function()
+    execute('function T() dict\nendfunction')
+    eq('Vim(call):E686: Argument of msgpackparse() must be a List',
+       exc_exec('call msgpackparse(function("T", [1, 2], {}))'))
+  end)
+
   it('fails to parse a float', function()
     eq('Vim(call):E686: Argument of msgpackparse() must be a List',
        exc_exec('call msgpackparse(0.0)'))
@@ -566,6 +572,13 @@ describe('msgpackdump() function', function()
 
   it('fails to dump a function reference', function()
     execute('let Todump = function("tr")')
+    eq('Vim(call):E5004: Error while dumping msgpackdump() argument, index 0, itself: attempt to dump function reference',
+       exc_exec('call msgpackdump([Todump])'))
+  end)
+
+  it('fails to dump a partial', function()
+    execute('function T() dict\nendfunction')
+    execute('let Todump = function("T", [1, 2], {})')
     eq('Vim(call):E5004: Error while dumping msgpackdump() argument, index 0, itself: attempt to dump function reference',
        exc_exec('call msgpackdump([Todump])'))
   end)
@@ -673,6 +686,12 @@ describe('msgpackdump() function', function()
   it('fails to dump a funcref', function()
     eq('Vim(call):E686: Argument of msgpackdump() must be a List',
        exc_exec('call msgpackdump(function("tr"))'))
+  end)
+
+  it('fails to dump a partial', function()
+    execute('function T() dict\nendfunction')
+    eq('Vim(call):E686: Argument of msgpackdump() must be a List',
+       exc_exec('call msgpackdump(function("T", [1, 2], {}))'))
   end)
 
   it('fails to dump a float', function()

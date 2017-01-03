@@ -10,6 +10,7 @@ local funcs = helpers.funcs
 local write_file = helpers.write_file
 local NIL = helpers.NIL
 local source = helpers.source
+local dedent = helpers.dedent
 
 describe('string() function', function()
   before_each(clear)
@@ -111,10 +112,10 @@ describe('string() function', function()
         function Test1()
         endfunction
 
-        function s:Test2()
+        function s:Test2() dict
         endfunction
 
-        function g:Test3()
+        function g:Test3() dict
         endfunction
 
         let g:Test2_f = function('s:Test2')
@@ -149,6 +150,61 @@ describe('string() function', function()
       ]])
       eq("\nE724: unable to correctly dump variable with self-referencing container\nfunction('TestDict', {'tdr': function('TestDict', {E724@1})})",
          redir_exec('echo string(d.tdr)'))
+    end)
+
+    it('dumps automatically created partials', function()
+      eq('function(\'<SNR>1_Test2\', {\'f\': function(\'<SNR>1_Test2\')})',
+         eval('string({"f": Test2_f}.f)'))
+      eq('function(\'<SNR>1_Test2\', [1], {\'f\': function(\'<SNR>1_Test2\', [1])})',
+         eval('string({"f": function(Test2_f, [1])}.f)'))
+    end)
+
+    it('dumps manually created partials', function()
+      eq('function(\'Test3\', [1, 2], {})',
+         eval('string(function("Test3", [1, 2], {}))'))
+      eq('function(\'Test3\', {})',
+         eval('string(function("Test3", {}))'))
+      eq('function(\'Test3\', [1, 2])',
+         eval('string(function("Test3", [1, 2]))'))
+    end)
+
+    it('does not crash or halt when dumping partials with reference cycles in self',
+    function()
+      meths.set_var('d', {v=true})
+      eq(dedent([[
+
+          E724: unable to correctly dump variable with self-referencing container
+          {'p': function('<SNR>1_Test2', {E724@0}), 'f': function('<SNR>1_Test2'), 'v': v:true}]]),
+        redir_exec('echo string(extend(extend(g:d, {"f": g:Test2_f}), {"p": g:d.f}))'))
+    end)
+
+    it('does not crash or halt when dumping partials with reference cycles in arguments',
+    function()
+      meths.set_var('l', {})
+      eval('add(l, l)')
+      -- Regression: the below line used to crash (add returns original list and
+      -- there was error in dumping partials). Tested explicitly in
+      -- test/unit/api/private_helpers_spec.lua.
+      eval('add(l, function("Test1", l))')
+      eq(dedent([=[
+
+          E724: unable to correctly dump variable with self-referencing container
+          function('Test1', [[{E724@2}, function('Test1', [{E724@2}])], function('Test1', [[{E724@4}, function('Test1', [{E724@4}])]])])]=]),
+        redir_exec('echo string(function("Test1", l))'))
+    end)
+
+    it('does not crash or halt when dumping partials with reference cycles in self and arguments',
+    function()
+      meths.set_var('d', {v=true})
+      meths.set_var('l', {})
+      eval('add(l, l)')
+      eval('add(l, function("Test1", l))')
+      eval('add(l, function("Test1", d))')
+      eq(dedent([=[
+
+          E724: unable to correctly dump variable with self-referencing container
+          {'p': function('<SNR>1_Test2', [[{E724@3}, function('Test1', [{E724@3}]), function('Test1', {E724@0})], function('Test1', [[{E724@5}, function('Test1', [{E724@5}]), function('Test1', {E724@0})]]), function('Test1', {E724@0})], {E724@0}), 'f': function('<SNR>1_Test2'), 'v': v:true}]=]),
+        redir_exec('echo string(extend(extend(g:d, {"f": g:Test2_f}), {"p": function(g:d.f, l)}))'))
     end)
   end)
 

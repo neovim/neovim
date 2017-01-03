@@ -672,6 +672,12 @@ describe('json_encode() function', function()
        exc_exec('call json_encode(function("tr"))'))
   end)
 
+  it('fails to dump a partial', function()
+    execute('function T() dict\nendfunction')
+    eq('Vim(call):E474: Error while dumping encode_tv2json() argument, itself: attempt to dump function reference',
+       exc_exec('call json_encode(function("T", [1, 2], {}))'))
+  end)
+
   it('fails to dump a function reference in a list', function()
     eq('Vim(call):E474: Error while dumping encode_tv2json() argument, index 0: attempt to dump function reference',
        exc_exec('call json_encode([function("tr")])'))

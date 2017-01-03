@@ -354,10 +354,13 @@ void set_option_to(void *to, int type, String name, Object value, Error *err)
 #define TYPVAL_ENCODE_CONV_STR_STRING TYPVAL_ENCODE_CONV_STRING
 
 #define TYPVAL_ENCODE_CONV_EXT_STRING(tv, str, len, type) \
-    TYPVAL_ENCODE_CONV_NIL()
+    TYPVAL_ENCODE_CONV_NIL(tv)
 
 #define TYPVAL_ENCODE_CONV_FUNC_START(tv, fun) \
-    TYPVAL_ENCODE_CONV_NIL()
+    do { \
+      TYPVAL_ENCODE_CONV_NIL(tv); \
+      goto typval_encode_stop_converting_one_item; \
+    } while (0)
 
 #define TYPVAL_ENCODE_CONV_FUNC_BEFORE_ARGS(tv, len)
 #define TYPVAL_ENCODE_CONV_FUNC_BEFORE_SELF(tv, len)
