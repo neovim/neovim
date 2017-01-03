@@ -52,9 +52,49 @@ local function check_logs()
   assert(0 == runtime_errors)
 end
 
+-- Tries to get platform name from $SYSTEM_NAME, uname; fallback is "Windows".
+local uname = (function()
+  local platform = nil
+  return (function()
+    if platform then
+      return platform
+    end
+
+    platform = os.getenv("SYSTEM_NAME")
+    if platform then
+      return platform
+    end
+
+    local status, f = pcall(io.popen, "uname -s")
+    if status then
+      platform = f:read("*l")
+    else
+      platform = 'Windows'
+    end
+    return platform
+  end)
+end)()
+
+local function tmpname()
+  local fname = os.tmpname()
+  if uname() == 'Windows' and fname:sub(1, 2) == '\\s' then
+    -- In Windows tmpname() returns a filename starting with
+    -- special sequence \s, prepend $TEMP path
+    local tmpdir = os.getenv('TEMP')
+    return tmpdir..fname
+  elseif fname:match('^/tmp') and uname() == 'Darwin' then
+    -- In OS X /tmp links to /private/tmp
+    return '/private'..fname
+  else
+    return fname
+  end
+end
+
 return {
   eq = eq,
   neq = neq,
   ok = ok,
   check_logs = check_logs,
+  uname = uname,
+  tmpname = tmpname,
 }

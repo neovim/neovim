@@ -68,14 +68,12 @@ local function cimport(...)
 
   local body = nil
   for _ = 1, 10 do
-    local stream = Preprocess.preprocess_stream(unpack(paths))
-    body = stream:read("*a")
-    stream:close()
+    body = Preprocess.preprocess(unpack(paths))
     if body ~= nil then break end
   end
 
   if body == nil then
-    print("ERROR: helpers.lua: Preprocess.preprocess_stream():read() returned empty")
+    print("ERROR: helpers.lua: Preprocess.preprocess() returned empty")
   end
 
   -- format it (so that the lines are "unique" statements), also filter out

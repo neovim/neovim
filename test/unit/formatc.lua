@@ -219,12 +219,10 @@ local function standalone(...)  -- luacheck: ignore
   Preprocess.add_to_include_path('./../../build/include')
   Preprocess.add_to_include_path('./../../.deps/usr/include')
 
-  local input = Preprocess.preprocess_stream(arg[1])
-  local raw = input:read('*all')
-  input:close()
+  local raw = Preprocess.preprocess(arg[1])
 
   if raw == nil then
-    print("ERROR: Preprocess.preprocess_stream():read() returned empty")
+    print("ERROR: Preprocess.preprocess() returned empty")
   end
 
   local formatted

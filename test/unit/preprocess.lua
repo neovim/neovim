@@ -1,7 +1,11 @@
 -- helps managing loading different headers into the LuaJIT ffi. Untested on
 -- windows, will probably need quite a bit of adjustment to run there.
 
+local global_helpers = require('test.helpers')
+
 local ffi = require("ffi")
+
+local tmpname = global_helpers.tmpname
 
 local ccs = {}
 
@@ -61,12 +65,12 @@ end
 -- will produce a string that represents a meta C header file that includes
 -- all the passed in headers. I.e.:
 --
--- headerize({"stdio.h", "math.h", true}
+-- headerize({"stdio.h", "math.h"}, true)
 -- produces:
 -- #include <stdio.h>
 -- #include <math.h>
 --
--- headerize({"vim.h", "memory.h", false}
+-- headerize({"vim.h", "memory.h"}, false)
 -- produces:
 -- #include "vim.h"
 -- #include "memory.h"
@@ -79,8 +83,7 @@ local function headerize(headers, global)
   end
 
   local formatted = {}
-  for i = 1, #headers do
-    local hdr = headers[i]
+  for i, hdr in ipairs(headers) do
     formatted[#formatted + 1] = "#include " ..
                                 tostring(pre) ..
                                 tostring(hdr) ..
@@ -111,7 +114,8 @@ local Gcc = {
    '-D "_Nullable="',
    '-D "_Nonnull="',
    '-U__BLOCKS__',
-  }
+  },
+  added_header_defines = '',
 }
 
 function Gcc:new(obj)
@@ -145,21 +149,40 @@ end
 
 -- returns a stream representing a preprocessed form of the passed-in headers.
 -- Don't forget to close the stream by calling the close() method on it.
-function Gcc:preprocess_stream(...)
+function Gcc:preprocess(...)
   -- create pseudo-header
   local pseudoheader = headerize({...}, false)
+  local pseudoheader_fname = 'tmp_pseudoheader.h'
+  local pseudoheader_file = io.open(pseudoheader_fname, 'w')
+  pseudoheader_file:write(self.added_header_defines)
+  pseudoheader_file:write("\n")
+  pseudoheader_file:write(pseudoheader)
+  pseudoheader_file:flush()
+  pseudoheader_file:close()
   local defines = table.concat(self.preprocessor_extra_flags, ' ')
   local cmd = ("echo $hdr | " ..
                tostring(self.path) ..
                " " ..
                tostring(defines) ..
-               " -std=c99 -P -E -"):gsub('$hdr', shell_quote(pseudoheader))
+               " -std=c99 -P -E " .. shell_quote(pseudoheader_fname))
+  local def_cmd = ("echo $hdr | " ..
+                   tostring(self.path) ..
+                   " " ..
+                   tostring(defines) ..
+                   " -std=c99 -dM -E " .. shell_quote(pseudoheader_fname))
+  local def_stream = io.popen(def_cmd)
+  self.added_header_defines = def_stream:read('*a')
+  def_stream:close()
   -- lfs = require("lfs")
   -- print("CWD: #{lfs.currentdir!}")
   -- print("CMD: #{cmd}")
   -- io.stderr\write("CWD: #{lfs.currentdir!}\n")
   -- io.stderr\write("CMD: #{cmd}\n")
-  return io.popen(cmd)
+  local stream = io.popen(cmd)
+  local ret = stream:read('*a')
+  stream:close()
+  os.remove(pseudoheader_fname)
+  return ret
 end
 
 local Clang = Gcc:new()
@@ -197,8 +220,8 @@ return {
   includes = function(hdr)
     return cc:dependencies(hdr)
   end,
-  preprocess_stream = function(...)
-    return cc:preprocess_stream(...)
+  preprocess = function(...)
+    return cc:preprocess(...)
   end,
   add_to_include_path = function(...)
     return cc:add_to_include_path(...)
