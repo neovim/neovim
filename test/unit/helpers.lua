@@ -45,6 +45,8 @@ local function filter_complex_blocks(body)
   return table.concat(result, "\n")
 end
 
+local previous_defines = ''
+
 -- use this helper to import C files, you can pass multiple paths at once,
 -- this helper will return the C namespace of the nvim library.
 local function cimport(...)
@@ -68,7 +70,7 @@ local function cimport(...)
 
   local body = nil
   for _ = 1, 10 do
-    body = Preprocess.preprocess(unpack(paths))
+    body, previous_defines = Preprocess.preprocess(previous_defines, unpack(paths))
     if body ~= nil then break end
   end
 

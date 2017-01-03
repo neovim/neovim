@@ -115,7 +115,6 @@ local Gcc = {
    '-D "_Nonnull="',
    '-U__BLOCKS__',
   },
-  added_header_defines = '',
 }
 
 function Gcc:new(obj)
@@ -149,12 +148,12 @@ end
 
 -- returns a stream representing a preprocessed form of the passed-in headers.
 -- Don't forget to close the stream by calling the close() method on it.
-function Gcc:preprocess(...)
+function Gcc:preprocess(previous_defines, ...)
   -- create pseudo-header
   local pseudoheader = headerize({...}, false)
   local pseudoheader_fname = 'tmp_pseudoheader.h'
   local pseudoheader_file = io.open(pseudoheader_fname, 'w')
-  pseudoheader_file:write(self.added_header_defines)
+  pseudoheader_file:write(previous_defines)
   pseudoheader_file:write("\n")
   pseudoheader_file:write(pseudoheader)
   pseudoheader_file:flush()
@@ -171,7 +170,7 @@ function Gcc:preprocess(...)
                    tostring(defines) ..
                    " -std=c99 -dM -E " .. shell_quote(pseudoheader_fname))
   local def_stream = io.popen(def_cmd)
-  self.added_header_defines = def_stream:read('*a')
+  local defines = def_stream:read('*a')
   def_stream:close()
   -- lfs = require("lfs")
   -- print("CWD: #{lfs.currentdir!}")
@@ -179,10 +178,10 @@ function Gcc:preprocess(...)
   -- io.stderr\write("CWD: #{lfs.currentdir!}\n")
   -- io.stderr\write("CMD: #{cmd}\n")
   local stream = io.popen(cmd)
-  local ret = stream:read('*a')
+  local declarations = stream:read('*a')
   stream:close()
   os.remove(pseudoheader_fname)
-  return ret
+  return declarations, defines
 end
 
 local Clang = Gcc:new()
