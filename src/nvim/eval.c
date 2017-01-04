@@ -19218,8 +19218,6 @@ static inline void _nothing_conv_dict_end(typval_T *const tv,
 #define TYPVAL_ENCODE_NAME nothing
 #define TYPVAL_ENCODE_FIRST_ARG_TYPE const void *const
 #define TYPVAL_ENCODE_FIRST_ARG_NAME ignored
-// _nothing_convert_one_value()
-// encode_vim_to_nothing()
 #include "nvim/eval/typval_encode.c.h"
 #undef TYPVAL_ENCODE_SCOPE
 #undef TYPVAL_ENCODE_NAME
