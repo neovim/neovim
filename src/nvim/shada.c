@@ -2411,8 +2411,8 @@ static inline void add_search_pattern(PossiblyFreedShadaEntry *const ret_pse,
                 ? defaults.data.search_pattern.place_cursor_at_end
                 : pat.off.end),
             .offset = (is_substitute_pattern
-                       ? pat.off.off
-                       : defaults.data.search_pattern.offset),
+                       ? defaults.data.search_pattern.offset
+                       : pat.off.off),
             .is_last_used = (is_substitute_pattern ^ search_last_used),
             .is_substitute_pattern = is_substitute_pattern,
             .highlighted = ((is_substitute_pattern ^ search_last_used)
