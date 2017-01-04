@@ -65,6 +65,7 @@ set shellslash
 " Align with vim defaults.
 set directory^=.
 set nohidden
+set backspace=
 
 function RunTheTest(test)
   echo 'Executing ' . a:test
