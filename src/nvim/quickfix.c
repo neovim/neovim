@@ -3029,7 +3029,7 @@ static void qf_fill_buffer(qf_info_T *qi, buf_T *buf, qfline_T *old_last)
 /*
  * Return TRUE if "buf" is the quickfix buffer.
  */
-int bt_quickfix(buf_T *buf)
+int bt_quickfix(const buf_T *const buf)
 {
   return buf != NULL && buf->b_p_bt[0] == 'q';
 }
