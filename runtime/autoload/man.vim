@@ -324,3 +324,17 @@ function! man#init_pager() abort
   endtry
   execute 'silent file man://'.fnameescape(ref)
 endfunction
+
+function! man#init_highlight_groups() abort
+  let group = 'Keyword'
+  while 1
+    let hl =  execute('highlight '.group)
+    let values = matchstr(hl, '\%(.*xxx\)\?\%(.*cleared\)\?\s*\zs.*')
+    if values !~# '^links to'
+      break
+    endif
+    let group = matchstr(values, '\w\+$')
+  endwhile
+  execute 'highlight default manBold' values 'cterm=bold gui=bold'
+  highlight default manUnderline cterm=underline gui=underline
+endfunction
