@@ -279,23 +279,24 @@ bool buf_valid(buf_T *buf)
   return false;
 }
 
-/// A hash table used to quickly lookup a buffer by its number.
-static hashtab_T buf_hashtab;
+// Map used to quickly lookup a buffer by its number.
+static PMap(handle_T) *buf_map = NULL;
 
 static void buf_hashtab_add(buf_T *buf)
+  FUNC_ATTR_NONNULL_ALL
 {
-  snprintf((char *)buf->b_key, sizeof(buf->b_key), "%x", buf->b_fnum);
-  if (hash_add(&buf_hashtab, buf->b_key) == FAIL) {
+  if (pmap_has(handle_T)(buf_map, buf->handle)) {
     EMSG(_("E931: Buffer cannot be registered"));
+  } else {
+    pmap_put(handle_T)(buf_map, buf->handle, buf);
   }
 }
 
 static void buf_hashtab_remove(buf_T *buf)
+  FUNC_ATTR_NONNULL_ALL
 {
-  hashitem_T *hi = hash_find(&buf_hashtab, buf->b_key);
-
-  if (!HASHITEM_EMPTY(hi)) {
-    hash_remove(&buf_hashtab, hi);
+  if (pmap_has(handle_T)(buf_map, buf->handle)) {
+    pmap_del(handle_T)(buf_map, buf->handle);
   }
 }
 
@@ -1386,7 +1387,7 @@ buf_T * buflist_new(char_u *ffname, char_u *sfname, linenr_T lnum, int flags)
   buf_T       *buf;
 
   if (top_file_num == 1) {
-    hash_init(&buf_hashtab);
+    buf_map = pmap_new(handle_T)();
   }
   fname_expand(curbuf, &ffname, &sfname);       // will allocate ffname
 
@@ -2025,19 +2026,12 @@ static char_u *fname_match(regmatch_T *rmp, char_u *name, bool ignore_case)
 /// Find a file in the buffer list by buffer number.
 buf_T *buflist_findnr(int nr)
 {
-  char_u key[sizeof(handle_T) * 2 + 1];
-  hashitem_T *hi;
-
   if (nr == 0) {
     nr = curwin->w_alt_fnum;
   }
 
-  snprintf((char *)key, sizeof(key), "%x", nr);
-  hi = hash_find(&buf_hashtab, key);
-
-  if (!HASHITEM_EMPTY(hi)) {
-    return (buf_T *)(hi->hi_key -
-                     ((unsigned)(curbuf->b_key - (char_u *)curbuf)));
+  if (pmap_has(handle_T)(buf_map, (handle_T)nr)) {
+    return pmap_get(handle_T)(buf_map, (handle_T)nr);
   }
   return NULL;
 }
