@@ -59,7 +59,7 @@ syn match helpSpecial		"\[N]"
 syn match helpSpecial		"N  N"he=s+1
 syn match helpSpecial		"Nth"me=e-2
 syn match helpSpecial		"N-1"me=e-2
-syn match helpSpecial		"{[-a-zA-Z0-9'"*+/:%#=[\]<>.,]\+}"
+syn match helpSpecial		"{[-_a-zA-Z0-9'"*+/:%#=[\]<>.,]\+}"
 syn match helpSpecial		"\s\[[-a-z^A-Z0-9_]\{2,}]"ms=s+1
 syn match helpSpecial		"<[-a-zA-Z0-9_]\+>"
 syn match helpSpecial		"<[SCM]-.>"
