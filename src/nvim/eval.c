@@ -17249,14 +17249,6 @@ static void f_termopen(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   return;
 }
 
-/*
- * "test(list)" function: Just checking the walls...
- */
-static void f_test(typval_T *argvars, typval_T *rettv, FunPtr fptr)
-{
-  /* Used for unit testing.  Change the code below to your liking. */
-}
-
 static bool callback_from_typval(Callback *callback, typval_T *arg)
 {
   if (arg->v_type == VAR_PARTIAL && arg->vval.v_partial != NULL) {
