@@ -21,6 +21,9 @@ local nvim_argv = {nvim_prog, '-u', 'NONE', '-i', 'NONE', '-N',
 
 local mpack = require('mpack')
 
+local tmpname = global_helpers.tmpname
+local uname = global_helpers.uname
+
 -- Formulate a path to the directory containing nvim.  We use this to
 -- help run test executables.  It helps to keep the tests working, even
 -- when the build is not in the default location.
@@ -332,44 +335,6 @@ local function write_file(name, text, dont_dedent)
   file:write(text)
   file:flush()
   file:close()
-end
-
--- Tries to get platform name from $SYSTEM_NAME, uname; fallback is "Windows".
-local uname = (function()
-  local platform = nil
-  return (function()
-    if platform then
-      return platform
-    end
-
-    platform = os.getenv("SYSTEM_NAME")
-    if platform then
-      return platform
-    end
-
-    local status, f = pcall(io.popen, "uname -s")
-    if status then
-      platform = f:read("*l")
-    else
-      platform = 'Windows'
-    end
-    return platform
-  end)
-end)()
-
-local function tmpname()
-  local fname = os.tmpname()
-  if uname() == 'Windows' and fname:sub(1, 2) == '\\s' then
-    -- In Windows tmpname() returns a filename starting with
-    -- special sequence \s, prepend $TEMP path
-    local tmpdir = os.getenv('TEMP')
-    return tmpdir..fname
-  elseif fname:match('^/tmp') and uname() == 'Darwin' then
-    -- In OS X /tmp links to /private/tmp
-    return '/private'..fname
-  else
-    return fname
-  end
 end
 
 local function source(code)

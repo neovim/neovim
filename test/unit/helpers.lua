@@ -45,6 +45,8 @@ local function filter_complex_blocks(body)
   return table.concat(result, "\n")
 end
 
+local previous_defines = ''
+
 -- use this helper to import C files, you can pass multiple paths at once,
 -- this helper will return the C namespace of the nvim library.
 local function cimport(...)
@@ -66,17 +68,8 @@ local function cimport(...)
     return libnvim
   end
 
-  local body = nil
-  for _ = 1, 10 do
-    local stream = Preprocess.preprocess_stream(unpack(paths))
-    body = stream:read("*a")
-    stream:close()
-    if body ~= nil then break end
-  end
-
-  if body == nil then
-    print("ERROR: helpers.lua: Preprocess.preprocess_stream():read() returned empty")
-  end
+  local body
+  body, previous_defines = Preprocess.preprocess(previous_defines, unpack(paths))
 
   -- format it (so that the lines are "unique" statements), also filter out
   -- Objective-C blocks
