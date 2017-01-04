@@ -33,6 +33,12 @@ function! s:try_cmd(cmd, ...)
   return out
 endfunction
 
+" Returns TRUE if `cmd` exits with success, else FALSE.
+function! s:cmd_ok(cmd)
+  call system(a:cmd)
+  return v:shell_error == 0
+endfunction
+
 let s:cache_enabled = 1
 let s:err = ''
 
@@ -48,7 +54,7 @@ function! provider#clipboard#Executable() abort
     let s:paste['*'] = s:paste['+']
     let s:cache_enabled = 0
     return 'pbcopy'
-  elseif exists('$DISPLAY') && executable('xsel')
+  elseif exists('$DISPLAY') && executable('xsel') && s:cmd_ok('xsel -o -b')
     let s:copy['+'] = 'xsel --nodetach -i -b'
     let s:paste['+'] = 'xsel -o -b'
     let s:copy['*'] = 'xsel --nodetach -i -p'
