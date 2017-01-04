@@ -437,6 +437,9 @@ func! Test_digraphs_output()
 endfunc
 
 func! Test_loadkeymap()
+  if !has('keymap')
+    return
+  endif
   new
   set keymap=czech
   set iminsert=0
