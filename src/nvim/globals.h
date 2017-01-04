@@ -641,8 +641,6 @@ EXTERN volatile int full_screen INIT(= FALSE);
 /* TRUE when doing full-screen output
  * otherwise only writing some messages */
 
-EXTERN int test_autochdir INIT(= false);
-
 EXTERN int restricted INIT(= FALSE);
 // TRUE when started in restricted mode (-Z)
 EXTERN int secure INIT(= FALSE);

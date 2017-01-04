@@ -2207,7 +2207,6 @@ tagfiles()			List	tags files used
 tan({expr})			Float	tangent of {expr}
 tanh({expr})			Float	hyperbolic tangent of {expr}
 tempname()			String	name for a temporary file
-test_autochdir()		none	enable 'autochdir' during startup
 timer_start({time}, {callback} [, {options}])
 				Number	create a timer
 timer_stop({timer})		none	stop a timer
@@ -7213,10 +7212,6 @@ tempname()					*tempname()* *temp-file-name*
 <		For Unix, the file will be in a private directory |tempfile|.
 		For MS-Windows forward slashes are used when the 'shellslash'
 		option is set or when 'shellcmdflag' starts with '-'.
-
-test_autochdir()					*test_autochdir()*
-		Set a flag to enable the effect of 'autochdir' before Vim
-		startup has finished.
 
 termopen({cmd}[, {opts}])			{Nvim} *termopen()*
 		Spawns {cmd} in a new pseudo-terminal session connected

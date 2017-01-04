@@ -904,7 +904,6 @@ Testing:				    *test-functions*
 	assert_true()		assert that an expression is true
 	assert_exception()	assert that a command throws an exception
 	assert_fails()		assert that a function call fails
-	test_autochdir()	enable 'autochdir' during startup
 
 Various:					*various-functions*
 	mode()			get current editing mode
