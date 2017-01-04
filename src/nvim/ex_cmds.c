@@ -1611,6 +1611,7 @@ int do_write(exarg_T *eap)
   int retval = FAIL;
   char_u      *free_fname = NULL;
   buf_T       *alt_buf = NULL;
+  int          name_was_missing;
 
   if (not_writing())            /* check 'write' option */
     return FAIL;
@@ -1734,6 +1735,7 @@ int do_write(exarg_T *eap)
       fname = curbuf->b_sfname;
     }
 
+    name_was_missing = curbuf->b_ffname == NULL;
     retval = buf_write(curbuf, ffname, fname, eap->line1, eap->line2,
         eap, eap->append, eap->forceit, TRUE, FALSE);
 
@@ -1743,7 +1745,11 @@ int do_write(exarg_T *eap)
         curbuf->b_p_ro = FALSE;
         redraw_tabline = TRUE;
       }
-      /* Change directories when the 'acd' option is set. */
+    }
+
+    // Change directories when the 'acd' option is set and the file name
+    // got changed or set.
+    if (eap->cmdidx == CMD_saveas || name_was_missing) {
       do_autochdir();
     }
   }

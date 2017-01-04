@@ -14,6 +14,7 @@ local neq = global_helpers.neq
 local eq = global_helpers.eq
 local ok = global_helpers.ok
 
+local start_dir = lfs.currentdir()
 local nvim_prog = os.getenv('NVIM_PROG') or 'build/bin/nvim'
 local nvim_argv = {nvim_prog, '-u', 'NONE', '-i', 'NONE', '-N',
                    '--cmd', 'set shortmess+=I background=light noswapfile noautoindent laststatus=1 undodir=. directory=. viewdir=. backupdir=.',
@@ -440,6 +441,12 @@ end
 
 local function rmdir(path)
   local ret, _ = pcall(do_rmdir, path)
+  if not ret and os_name() == "windows" then
+    -- Maybe "Permission denied"; try again after changing the nvim
+    -- process to the top-level directory.
+    nvim_command([[exe 'cd '.fnameescape(']]..start_dir.."')")
+    ret, _ = pcall(do_rmdir, path)
+  end
   -- During teardown, the nvim process may not exit quickly enough, then rmdir()
   -- will fail (on Windows).
   if not ret then  -- Try again.

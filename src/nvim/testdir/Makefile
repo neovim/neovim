@@ -43,8 +43,8 @@ NEW_TESTS = \
 	    test_quickfix.res \
 	    test_signs.res \
 	    test_syntax.res \
-	    test_usercommands.res \
 	    test_timers.res \
+	    test_usercommands.res \
 	    test_viml.res \
 	    test_visual.res \
 	    test_window_id.res \

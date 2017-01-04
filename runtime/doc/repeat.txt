@@ -1,4 +1,4 @@
-*repeat.txt*    For Vim version 7.4.  Last change: 2016 Apr 05
+*repeat.txt*    For Vim version 7.4.  Last change: 2016 Jul 21
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -286,7 +286,9 @@ For writing a Vim script, see chapter 41 of the user manual |usr_41.txt|.
 				... not converted ...
 
 <			When conversion isn't supported by the system, there
-			is no error message and no conversion is done.
+			is no error message and no conversion is done.  When a
+			line can't be converted there is no error and the
+			original line is kept.
 
 			Don't use "ucs-2" or "ucs-4", scripts cannot be in
 			these encodings (they would contain NUL bytes).

@@ -1,4 +1,4 @@
-*mbyte.txt*     For Vim version 7.4.  Last change: 2013 May 18
+*mbyte.txt*     For Vim version 7.4.  Last change: 2016 Jul 21
 
 
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar et al.
@@ -849,6 +849,7 @@ text, you can use the 'keymap' option.  This will translate one or more
 (English) characters to another (non-English) character.  This only happens
 when typing text, not when typing Vim commands.  This avoids having to switch
 between two keyboard settings.
+{only available when compiled with the |+keymap| feature}
 
 The value of the 'keymap' option specifies a keymap file to use.  The name of
 this file is one of these two:

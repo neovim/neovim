@@ -77,12 +77,15 @@ Clipboard integration		|provider-clipboard|
 
 USER EXPERIENCE  ~
 
-A major goal of Nvim is to work intuitively and consistently. For example,
-Nvim does not have `-X`, a platform-specific option available in some Vim
-builds (with potential surprises: http://stackoverflow.com/q/14635295). Nvim
-avoids features that cannot be provided on all platforms--instead that is
-delegated to external plugins/extensions.
+Working intuitively and consistently is a major goal of Nvim. Examples:
 
+- Nvim does not have `-X`, a platform-specific option "sometimes" available in
+  Vim (with potential surprises: http://stackoverflow.com/q/14635295). Nvim
+  avoids features that cannot be provided on all platforms--instead that is
+  delegated to external plugins/extensions.
+
+- Test-only globals and functions such as test_autochdir(), test_settime(),
+  etc., are not exposed (because they don't exist).
 
 ARCHITECTURE ~
 
@@ -270,6 +273,19 @@ MS-DOS support:
 
 Highlight groups:
   |hl-VisualNOS|
+
+Test functions:
+  test_alloc_fail()
+  test_autochdir()
+  test_disable_char_avail()
+  test_garbagecollect_now()
+  test_null_channel()
+  test_null_dict()
+  test_null_job()
+  test_null_list()
+  test_null_partial()
+  test_null_string()
+  test_settime()
 
 Other options:
   'antialias'
