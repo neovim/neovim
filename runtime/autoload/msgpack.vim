@@ -665,11 +665,15 @@ function msgpack#eval(s, special_objs) abort
       call add(expr, ']}')
       let s = s[1:]
     elseif s[0] is# ''''
-      let char = matchstr(s, '\m\C^''\zs.\ze''')
+      let char = matchstr(s, '\v\C^\''\zs%(\\\d+|.)\ze\''')
       if empty(char)
         throw 'char-invalid:Invalid integer character literal format: ' . s
       endif
-      call add(expr, char2nr(char))
+      if char[0] is# '\'
+        call add(expr, +char[1:])
+      else
+        call add(expr, char2nr(char))
+      endif
       let s = s[len(char) + 2:]
     else
       throw 'unknown:Invalid non-space character: ' . s

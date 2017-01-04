@@ -652,6 +652,8 @@ describe('In autoload/msgpack.vim', function()
 
       eval_eq('integer', ('a'):byte(), '\'a\'')
       eval_eq('integer', 0xAB, '\'«\'')
+      eval_eq('integer', 0, '\'\\0\'')
+      eval_eq('integer', 10246567, '\'\\10246567\'')
     end)
 
     it('correctly loads constants', function()
