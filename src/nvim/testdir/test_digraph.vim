@@ -4,6 +4,8 @@ if !has("digraphs") || !has("multi_byte")
   finish
 endif
 
+scriptencoding utf-8
+
 func! Put_Dig(chars)
   exe "norm! o\<c-k>".a:chars
 endfu
@@ -13,8 +15,8 @@ func! Put_Dig_BS(char1, char2)
 endfu
 
 func! Test_digraphs()
-  let _enc=&enc
-  set nocp enc=utf8
+  let _enc = &enc
+  set enc=utf8
   new
   call Put_Dig("00")
   call assert_equal("∞", getline('.'))
@@ -214,7 +216,7 @@ func! Test_digraphs()
   call Put_Dig("el")
   call assert_equal(['␀', 'ü', '∞', 'l'], getline(line('.')-3,line('.')))
   " reset encoding option
-  let &enc=_enc
+  let &enc = _enc
   bw!
 endfunc
 
@@ -222,7 +224,7 @@ func! Test_digraphs_option()
   let _enc=&enc
   " reset whichwrap option, so that testing <esc><bs>A works,
   " without moving up a line
-  set nocp enc=utf8 digraph ww=
+  set enc=utf8 digraph ww=
   new
   call Put_Dig_BS("0","0")
   call assert_equal("∞", getline('.'))
@@ -422,7 +424,7 @@ func! Test_digraphs_option()
   call Put_Dig_BS("e","l")
   call assert_equal(['␀', 'ü', '∞', 'l'], getline(line('.')-3,line('.')))
   " reset encoding option
-  let &enc=_enc
+  let &enc = _enc
   set nodigraph ww&vim
   bw!
 endfunc
