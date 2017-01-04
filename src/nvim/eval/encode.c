@@ -366,7 +366,7 @@ int encode_read_from_list(ListReaderState *const state, char *const buf,
 #define TYPVAL_ENCODE_CONV_EMPTY_LIST(tv) \
     ga_concat(gap, "[]")
 
-#define TYPVAL_ENCODE_CONV_LIST_START(tv, dict) \
+#define TYPVAL_ENCODE_CONV_LIST_START(tv, len) \
     ga_append(gap, '[')
 
 #define TYPVAL_ENCODE_CONV_EMPTY_DICT(tv) \
@@ -824,6 +824,7 @@ char *encode_tv2string(typval_T *tv, size_t *len)
   const int evs_ret = encode_vim_to_string(&ga, tv,
                                            "encode_tv2string() argument");
   (void)evs_ret;
+  assert(evs_ret == OK);
   did_echo_string_emsg = false;
   if (len != NULL) {
     *len = (size_t) ga.ga_len;
@@ -851,6 +852,7 @@ char *encode_tv2echo(typval_T *tv, size_t *len)
   } else {
     const int eve_ret = encode_vim_to_echo(&ga, tv, ":echo argument");
     (void)eve_ret;
+    assert(eve_ret == OK);
   }
   if (len != NULL) {
     *len = (size_t) ga.ga_len;
@@ -872,13 +874,15 @@ char *encode_tv2json(typval_T *tv, size_t *len)
   garray_T ga;
   ga_init(&ga, (int)sizeof(char), 80);
   const int evj_ret = encode_vim_to_json(&ga, tv, "encode_tv2json() argument");
-  (void)evj_ret;
+  if (!evj_ret) {
+    ga_clear(&ga);
+  }
   did_echo_string_emsg = false;
   if (len != NULL) {
-    *len = (size_t) ga.ga_len;
+    *len = (size_t)ga.ga_len;
   }
   ga_append(&ga, '\0');
-  return (char *) ga.ga_data;
+  return (char *)ga.ga_data;
 }
 
 #define TYPVAL_ENCODE_CONV_STRING(tv, buf, len) \
