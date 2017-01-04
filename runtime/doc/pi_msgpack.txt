@@ -128,6 +128,11 @@ msgpack#eval({string}, {dict})				*msgpack#eval()*
 	always evaluated to |msgpack-special-dict| values, as well as 
 	hexadecimal digits.  When evaluating maps order of keys is preserved.
 
+	Note that in addition to regular integer representations that may be 
+	obtained using |msgpack#string()| msgpack#eval() also supports C-style 
+	“character” integer constants like `'/'` (equivalent to 
+	`char2nr('/')`: `47`). This also allows `'\0'` (number is decimal).
+
 							*msgpack#equal*
 msgpack#equal({msgpack-value}, {msgpack-value})		*msgpack#equal()*
 	Returns 1 if given values are equal, 0 otherwise.  When comparing 
