@@ -420,4 +420,39 @@ func! Test_digraphs_option()
   bw!
 endfunc
 
+func! Test_digraphs_output()
+  new
+  let out = execute(':digraph')
+  call assert_equal('Eu €  8364',  matchstr(out, '\C\<Eu\D*8364\>'))
+  call assert_equal('=e €  8364',  matchstr(out, '\C=e\D*8364\>'))
+  call assert_equal('=R ₽  8381',  matchstr(out, '\C=R\D*8381\>'))
+  call assert_equal('=P ₽  8381',  matchstr(out, '\C=P\D*8381\>'))
+  call assert_equal('o: ö  246',   matchstr(out, '\C\<o:\D*246\>'))
+  call assert_equal('v4 ㄪ 12586', matchstr(out, '\C\<v4\D*12586\>'))
+  call assert_equal("'0 ˚  730",   matchstr(out, '\C''0\D*730\>'))
+  call assert_equal('Z% Ж  1046',  matchstr(out, '\C\<Z%\D*1046\>'))
+  call assert_equal('u- ū  363',   matchstr(out, '\C\<u-\D*363\>'))
+  call assert_equal('SH ^A   1',   matchstr(out, '\C\<SH\D*1\>'))
+  bw!
+endfunc
+
+func! Test_loadkeymap()
+  new
+  set keymap=czech
+  set iminsert=0
+  call feedkeys("o|\<c-^>|01234567890|\<esc>", 'tx')
+  call assert_equal("|'é+ěščřžýáíé'", getline('.'))
+  " reset keymap and encoding option
+  set keymap=
+  bw!
+endfunc
+
+func! Test_digraph_cmndline()
+  " Create digraph on commandline
+  " This is a hack, to let Vim create the digraph in commandline mode
+  let s = ''
+  exe "sil! norm! :let s.='\<c-k>Eu'\<cr>"
+  call assert_equal("€", s)
+endfunc
+
 " vim: tabstop=2 shiftwidth=0 sts=-1 expandtab
