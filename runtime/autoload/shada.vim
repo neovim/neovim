@@ -241,8 +241,6 @@ function s:shada_check_type(type, val) abort
     if msg isnot# 0
       return msg
     endif
-    if a:val > 0 || a:val < 1
-    endif
     return 0
   elseif a:type is# 'binarray'
     if type isnot# 'array'
@@ -359,9 +357,14 @@ function s:shada_string(type, v) abort
   if (has_key(s:SHADA_ENUMS, a:type) && type(a:v) == type(0)
      \&& has_key(s:SHADA_REV_ENUMS[a:type], a:v))
     return s:SHADA_REV_ENUMS[a:type][a:v]
-  elseif (a:type is# 'intchar' && type(a:v) == type(0)
-         \&& strtrans(nr2char(a:v)) is# nr2char(a:v))
-    return "'" . nr2char(a:v) . "'"
+  " Restricting a:v to be <= 127 is not necessary, but intchar constants are
+  " normally expected to be either ASCII printable characters or NUL.
+  elseif a:type is# 'intchar' && type(a:v) == type(0) && a:v >= 0 && a:v <= 127
+    if a:v > 0 && strtrans(nr2char(a:v)) is# nr2char(a:v)
+      return "'" . nr2char(a:v) . "'"
+    else
+      return "'\\" . a:v . "'"
+    endif
   else
     return msgpack#string(a:v)
   endif

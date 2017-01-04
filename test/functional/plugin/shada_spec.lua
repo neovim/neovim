@@ -609,6 +609,18 @@ describe('In autoload/shada.vim', function()
         'abc',
         -1,
       ]}] ]]):gsub('\n', ''))
+      -- Regression: NUL separator must be properly supported
+      sd2strings_eq({
+        'History entry with timestamp ' .. epoch .. ':',
+        '  @ Description_  Value',
+        '  - history type  SEARCH',
+        '  - contents      ""',
+        '  - separator     \'\\0\'',
+      }, ([[ [{'type': 4, 'timestamp': 0, 'data': [
+        1,
+        '',
+        0x0
+      ]}] ]]):gsub('\n', ''))
     end)
 
     it('works with register items', function()
@@ -837,7 +849,7 @@ describe('In autoload/shada.vim', function()
       sd2strings_eq({
         'Global mark with timestamp ' .. epoch .. ':',
         '  % Key  Description  Value',
-        '  + n    name         20',
+        '  + n    name         \'\\20\'',
         '  + f    file name    "foo"',
         '  # Value is negative',
         '  + l    line number  -10',
@@ -852,7 +864,18 @@ describe('In autoload/shada.vim', function()
       sd2strings_eq({
         'Global mark with timestamp ' .. epoch .. ':',
         '  % Key  Description  Value',
-        '  + n    name         20',
+        '  + n    name         128',
+        '  + f    file name    "foo"',
+        '  + l    line number  1',
+        '  + c    column       0',
+      }, ([[ [{'type': 7, 'timestamp': 0, 'data': {
+        'n': 128,
+        'f': 'foo',
+      }}] ]]):gsub('\n', ''))
+      sd2strings_eq({
+        'Global mark with timestamp ' .. epoch .. ':',
+        '  % Key  Description  Value',
+        '  + n    name         \'\\20\'',
         '  + f    file name    "foo"',
         '  # Expected integer',
         '  + l    line number  "FOO"',
@@ -1123,7 +1146,7 @@ describe('In autoload/shada.vim', function()
         'Local mark with timestamp ' .. epoch .. ':',
         '  % Key  Description  Value',
         '  + f    file name    "foo"',
-        '  + n    name         20',
+        '  + n    name         \'\\20\'',
         '  # Value is negative',
         '  + l    line number  -10',
         '  # Value is negative',
@@ -1138,7 +1161,7 @@ describe('In autoload/shada.vim', function()
         'Local mark with timestamp ' .. epoch .. ':',
         '  % Key  Description  Value',
         '  + f    file name    "foo"',
-        '  + n    name         20',
+        '  + n    name         \'\\20\'',
         '  # Expected integer',
         '  + l    line number  "FOO"',
         '  # Expected integer',
@@ -1932,13 +1955,13 @@ describe('In autoload/shada.vim', function()
         'Buffer list with timestamp ' .. epoch .. ':',
         '  % Key  Description  Value',
         '  # Expected binary string',
-        '  + f    file name    10',
+        '  + f    file name    \'\\10\'',
         '  + l    line number  1',
         '  + c    column       0',
         '',
         '  % Key  Description  Value',
         '  # Expected binary string',
-        '  + f    file name    20',
+        '  + f    file name    \'\\20\'',
         '  + l    line number  1',
         '  + c    column       0',
       })
@@ -1948,7 +1971,7 @@ describe('In autoload/shada.vim', function()
         'Buffer list with timestamp ' .. epoch .. ':',
         '  % Key  Description  Value',
         '  # Expected binary string',
-        '  + f    file name    10',
+        '  + f    file name    \'\\10\'',
         '  + l    line number  1',
         '  + c    column       0',
         '',
