@@ -4,9 +4,6 @@ if !has("digraphs") || !has("multi_byte")
   finish
 endif
 
-set enc=utf-8
-scriptencoding utf-8
-
 func! Put_Dig(chars)
   exe "norm! o\<c-k>".a:chars
 endfu
