@@ -153,9 +153,10 @@ describe('Mouse input', function()
     end)
 
     it('in tabline to the left moves tab left', function()
-      if os.getenv("TRAVIS") and (helpers.os_name() == "osx"
-          or os.getenv("CLANG_SANITIZER") == "ASAN_UBSAN") then
-        pending("[Fails on Travis macOS, ASAN_UBSAN. #4874]", function() end)
+      if helpers.skip_fragile(pending,
+        os.getenv("TRAVIS") and (helpers.os_name() == "osx"
+          or os.getenv("CLANG_SANITIZER") == "ASAN_UBSAN"))  -- #4874
+      then
         return
       end
 
@@ -257,9 +258,10 @@ describe('Mouse input', function()
     end)
 
     it('out of tabline to the left moves tab left', function()
-      if os.getenv("TRAVIS") and (helpers.os_name() == "osx"
-          or os.getenv("CLANG_SANITIZER") == "ASAN_UBSAN") then
-        pending("[Fails on Travis macOS, ASAN_UBSAN. #4874]", function() end)
+      if helpers.skip_fragile(pending,
+        os.getenv("TRAVIS") and (helpers.os_name() == "osx"
+          or os.getenv("CLANG_SANITIZER") == "ASAN_UBSAN"))  -- #4874
+      then
         return
       end
 

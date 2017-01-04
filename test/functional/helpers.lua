@@ -520,17 +520,33 @@ local function create_callindex(func)
 end
 
 -- Helper to skip tests. Returns true in Windows systems.
--- pending_func is pending() from busted
-local function pending_win32(pending_func)
+-- pending_fn is pending() from busted
+local function pending_win32(pending_fn)
   clear()
   if uname() == 'Windows' then
-    if pending_func ~= nil then
-      pending_func('FIXME: Windows', function() end)
+    if pending_fn ~= nil then
+      pending_fn('FIXME: Windows', function() end)
     end
     return true
   else
     return false
   end
+end
+
+-- Calls pending() and returns `true` if the system is too slow to
+-- run fragile or expensive tests. Else returns `false`.
+local function skip_fragile(pending_fn, cond)
+  if pending_fn == nil or type(pending_fn) ~= type(function()end) then
+    error("invalid pending_fn")
+  end
+  if cond then
+    pending_fn("skipped (test is fragile on this system)", function() end)
+    return true
+  elseif os.getenv("TEST_SKIP_FRAGILE") then
+    pending_fn("skipped (TEST_SKIP_FRAGILE)", function() end)
+    return true
+  end
+  return false
 end
 
 local funcs = create_callindex(nvim_call)
@@ -601,6 +617,7 @@ return function(after_each)
     curwinmeths = curwinmeths,
     curtabmeths = curtabmeths,
     pending_win32 = pending_win32,
+    skip_fragile = skip_fragile,
     tmpname = tmpname,
     NIL = mpack.NIL,
   }

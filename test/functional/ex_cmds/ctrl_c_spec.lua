@@ -11,6 +11,12 @@ describe("CTRL-C (mapped)", function()
   end)
 
   it("interrupts :global", function()
+    if helpers.skip_fragile(pending,
+      (os.getenv("TRAVIS") and os.getenv("CLANG_SANITIZER") == "ASAN_UBSAN"))
+    then
+      return
+    end
+
     source([[
       set nomore nohlsearch undolevels=-1
       nnoremap <C-C> <NOP>
