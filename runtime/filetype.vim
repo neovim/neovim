@@ -1143,7 +1143,7 @@ au BufNewFile,BufRead *.ist,*.mst		setf ist
 au BufNewFile,BufRead *.page			setf mallard
 
 " Manpage
-au BufNewFile,BufRead *.man			setf man
+au BufNewFile,BufRead *.man			setf nroff
 
 " Man config
 au BufNewFile,BufRead */etc/man.conf,man.config	setf manconf
