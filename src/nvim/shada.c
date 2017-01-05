@@ -2326,7 +2326,8 @@ static inline ShaDaWriteResult shada_read_when_writing(
 /// @param[in]  removable_bufs  Buffers which are ignored
 ///
 /// @return  ShadaEntry  List of buffers to save, kSDItemBufferList entry.
-static ShadaEntry shada_get_buflist(khash_t(bufset) *const removable_bufs)
+static inline ShadaEntry shada_get_buflist(
+    khash_t(bufset) *const removable_bufs)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_ALWAYS_INLINE
 {
   int max_bufs = get_shada_parameter('%');
