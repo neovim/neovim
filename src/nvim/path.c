@@ -417,15 +417,11 @@ char *FullName_save(char *fname, bool force)
   }
 
   char *buf = xmalloc(MAXPATHL);
-  char *new_fname = NULL;
-  if (vim_FullName(fname, buf, MAXPATHL, force) != FAIL) {
-    new_fname = xstrdup(buf);
-  } else {
-    new_fname = xstrdup(fname);
+  if (vim_FullName(fname, buf, MAXPATHL, force) == FAIL) {
+    xfree(buf);
+    return xstrdup(fname);
   }
-  xfree(buf);
-
-  return new_fname;
+  return buf;
 }
 
 /// Saves the absolute path.
@@ -1650,7 +1646,11 @@ bool vim_isAbsName(char_u *name)
 /// Save absolute file name to "buf[len]".
 ///
 /// @param      fname is the filename to evaluate
-/// @param[out] buf   is the buffer for returning the absolute path for `fname`
+/// @param[out] buf   is the buffer for returning:
+///                     - `fname` truncated if longer than `len`
+///                     - `fname` if `fname` is a URL
+///                     - the absolute path for `fname`
+///                     - `fname` if getting the absolute path fails
 /// @param      len   is the length of `buf`
 /// @param      force is a flag to force expanding even if the path is absolute
 ///
@@ -1658,21 +1658,25 @@ bool vim_isAbsName(char_u *name)
 int vim_FullName(const char *fname, char *buf, size_t len, bool force)
   FUNC_ATTR_NONNULL_ARG(2)
 {
-  int retval = OK;
-  int url;
-
   *buf = NUL;
   if (fname == NULL)
     return FAIL;
 
-  url = path_with_url(fname);
-  if (!url)
-    retval = path_get_absolute_path((char_u *)fname, (char_u *)buf, len, force);
-  if (url || retval == FAIL) {
-    /* something failed; use the file name (truncate when too long) */
+  if (strlen(fname) > (len - 1)) {
+    // use the truncated filename
     xstrlcpy(buf, fname, len);
+    return FAIL;
   }
-  return retval;
+
+  if (path_with_url(fname)) {
+    xstrlcpy(buf, fname, len);
+  } else if (path_get_absolute_path((char_u *)fname, (char_u *)buf, len, force)
+             == FAIL) {
+      // something failed; use the filename
+      xstrlcpy(buf, fname, len);
+      return FAIL;
+  }
+  return OK;
 }
 
 /// Get the full resolved path for `fname`
