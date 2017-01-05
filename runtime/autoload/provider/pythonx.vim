@@ -57,7 +57,8 @@ function! provider#pythonx#Detect(major_ver) abort
     if exists('g:python3_host_prog')
       return [g:python3_host_prog, '']
     else
-      let progs = ['python3', 'python3.5', 'python3.4', 'python3.3', 'python']
+      let progs = ['python3', 'python3.7', 'python3.6', 'python3.5',
+            \ 'python3.4', 'python3.3', 'python']
     endif
   endif
 
