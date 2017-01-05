@@ -113,10 +113,11 @@ function! s:system(cmd, ...) abort
 endfunction
 
 function! s:get_page(path) abort
+  " Respect $MANWIDTH or default to window width.
+  let manwidth = empty($MANWIDTH) ? winwidth(0) : $MANWIDTH
   " Force MANPAGER=cat to ensure Vim is not recursively invoked (by man-db).
   " http://comments.gmane.org/gmane.editors.vim.devel/29085
-  " Respect $MANWIDTH, or default to window width.
-  return s:system(['env', 'MANPAGER=cat', (empty($MANWIDTH) ? 'MANWIDTH='.winwidth(0) : ''), 'man', a:path])
+  return s:system(['env', 'MANPAGER=cat', 'MANWIDTH='.manwidth, 'man', a:path])
 endfunction
 
 function! s:put_page(page) abort
