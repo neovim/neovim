@@ -2516,6 +2516,10 @@ def CheckSpacing(filename, clean_lines, linenum, nesting_state, error):
 
     cast_line = re.sub(r'^# *define +\w+\([^)]*\)', '', line)
     match = Search(r'(?<!\bkvec_t)'
+                   r'(?<!\bkvec_withinit_t)'
+                   r'(?<!\bklist_t)'
+                   r'(?<!\bkliter_t)'
+                   r'(?<!\bkhash_t)'
                    r'\((?:const )?(?:struct )?[a-zA-Z_]\w*(?: *\*(?:const)?)*\)'
                    r' +'
                    r'-?(?:\*+|&)?(?:\w+|\+\+|--|\()', cast_line)
