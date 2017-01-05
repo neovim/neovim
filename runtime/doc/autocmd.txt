@@ -49,9 +49,6 @@ effects.  Be careful not to destroy your text.
 ==============================================================================
 2. Defining autocommands				*autocmd-define*
 
-Note: The ":autocmd" command cannot be followed by another command, since any
-'|' is considered part of the command.
-
 							*:au* *:autocmd*
 :au[tocmd] [group] {event} {pat} [nested] {cmd}
 			Add {cmd} to the list of commands that Vim will
@@ -63,6 +60,12 @@ Note: The ":autocmd" command cannot be followed by another command, since any
 
 The special pattern <buffer> or <buffer=N> defines a buffer-local autocommand.
 See |autocmd-buflocal|.
+
+Note: The ":autocmd" command can only be followed by another command when the
+'|' appears before {cmd}.  This works: >
+	:augroup mine | au! BufRead | augroup END
+But this sees "augroup" as part of the defined command: >
+	:augroup mine | au BufRead * set tw=70 | augroup END
 
 Note that special characters (e.g., "%", "<cword>") in the ":autocmd"
 arguments are not expanded when the autocommand is defined.  These will be

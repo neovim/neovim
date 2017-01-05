@@ -5652,9 +5652,10 @@ static event_T event_name2nr(char_u *start, char_u **end)
   int i;
   int len;
 
-  /* the event name ends with end of line, a blank or a comma */
-  for (p = start; *p && !ascii_iswhite(*p) && *p != ','; ++p)
+  // the event name ends with end of line, '|', a blank or a comma */
+  for (p = start; *p && !ascii_iswhite(*p) && *p != ',' && *p != '|'; ++p) {
     ;
+  }
   for (i = 0; event_names[i].name != NULL; ++i) {
     len = (int) event_names[i].len;
     if (len == p - start && STRNICMP(event_names[i].name, start, len) == 0)
@@ -5700,7 +5701,7 @@ find_end_event (
     }
     pat = arg + 1;
   } else {
-    for (pat = arg; *pat && !ascii_iswhite(*pat); pat = p) {
+    for (pat = arg; *pat && *pat != '|' && !ascii_iswhite(*pat); pat = p) {
       if ((int)event_name2nr(pat, &p) >= (int)NUM_EVENTS) {
         if (have_group)
           EMSG2(_("E216: No such event: %s"), pat);
@@ -5815,8 +5816,9 @@ void au_event_restore(char_u *old_ei)
  *
  * Mostly a {group} argument can optionally appear before <event>.
  */
-void do_autocmd(char_u *arg, int forceit)
+void do_autocmd(char_u *arg_in, int forceit)
 {
+  char_u      *arg = arg_in;
   char_u      *pat;
   char_u      *envpat = NULL;
   char_u      *cmd;
@@ -5825,10 +5827,13 @@ void do_autocmd(char_u *arg, int forceit)
   int nested = FALSE;
   int group;
 
-  /*
-   * Check for a legal group name.  If not, use AUGROUP_ALL.
-   */
-  group = au_get_grouparg(&arg);
+  if (*arg == '|') {
+    arg = (char_u *)"";
+    group = AUGROUP_ALL; // no argument, use all groups
+  } else {
+    // Check for a legal group name.  If not, use AUGROUP_ALL.
+    group = au_get_grouparg(&arg);
+  }
 
   /*
    * Scan over the events.
@@ -5838,50 +5843,53 @@ void do_autocmd(char_u *arg, int forceit)
   if (pat == NULL)
     return;
 
-  /*
-   * Scan over the pattern.  Put a NUL at the end.
-   */
   pat = skipwhite(pat);
-  cmd = pat;
-  while (*cmd && (!ascii_iswhite(*cmd) || cmd[-1] == '\\'))
-    cmd++;
-  if (*cmd)
-    *cmd++ = NUL;
+  if (*pat == '|') {
+    pat = (char_u *)"";
+    cmd = (char_u *)"";
+  } else {
+    // Scan over the pattern.  Put a NUL at the end.
+    cmd = pat;
+    while (*cmd && (!ascii_iswhite(*cmd) || cmd[-1] == '\\')) {
+        cmd++;
+    }
+    if (*cmd) {
+      *cmd++ = NUL;
+    }
 
-  /* Expand environment variables in the pattern.  Set 'shellslash', we want
-   * forward slashes here. */
-  if (vim_strchr(pat, '$') != NULL || vim_strchr(pat, '~') != NULL) {
+    // Expand environment variables in the pattern.  Set 'shellslash', we want
+    // forward slashes here.
+    if (vim_strchr(pat, '$') != NULL || vim_strchr(pat, '~') != NULL) {
 #ifdef BACKSLASH_IN_FILENAME
-    int p_ssl_save = p_ssl;
+      int p_ssl_save = p_ssl;
 
-    p_ssl = TRUE;
+      p_ssl = true;
 #endif
-    envpat = expand_env_save(pat);
+      envpat = expand_env_save(pat);
 #ifdef BACKSLASH_IN_FILENAME
-    p_ssl = p_ssl_save;
+      p_ssl = p_ssl_save;
 #endif
-    if (envpat != NULL)
-      pat = envpat;
-  }
+      if (envpat != NULL) {
+        pat = envpat;
+      }
+    }
 
-  /*
-   * Check for "nested" flag.
-   */
-  cmd = skipwhite(cmd);
-  if (*cmd != NUL && STRNCMP(cmd, "nested", 6) == 0 && ascii_iswhite(cmd[6])) {
-    nested = TRUE;
-    cmd = skipwhite(cmd + 6);
-  }
+    // Check for "nested" flag.
+    cmd = skipwhite(cmd);
+    if (*cmd != NUL && STRNCMP(cmd, "nested", 6) == 0 && ascii_iswhite(cmd[6])) {
+      nested = true;
+      cmd = skipwhite(cmd + 6);
+    }
 
-  /*
-   * Find the start of the commands.
-   * Expand <sfile> in it.
-   */
-  if (*cmd != NUL) {
-    cmd = expand_sfile(cmd);
-    if (cmd == NULL)                /* some error */
-      return;
-    need_free = TRUE;
+    // Find the start of the commands.
+    // Expand <sfile> in it.
+    if (*cmd != NUL) {
+      cmd = expand_sfile(cmd);
+      if (cmd == NULL) {                // some error
+        return;
+      }
+      need_free = true;
+    }
   }
 
   /*
@@ -5897,14 +5905,14 @@ void do_autocmd(char_u *arg, int forceit)
    */
   last_event = (event_T)-1;             /* for listing the event name */
   last_group = AUGROUP_ERROR;           /* for listing the group name */
-  if (*arg == '*' || *arg == NUL) {
+  if (*arg == '*' || *arg == NUL || *arg == '|') {
     for (event = (event_T)0; (int)event < (int)NUM_EVENTS;
          event = (event_T)((int)event + 1))
       if (do_autocmd_event(event, pat,
               nested, cmd, forceit, group) == FAIL)
         break;
   } else {
-    while (*arg && !ascii_iswhite(*arg)) {
+    while (*arg && *arg != '|' && !ascii_iswhite(*arg)) {
       event_T event = event_name2nr(arg, &arg);
       assert(event < NUM_EVENTS);
       if (do_autocmd_event(event, pat, nested, cmd, forceit, group) == FAIL) {
@@ -5931,7 +5939,8 @@ static int au_get_grouparg(char_u **argp)
   char_u      *arg = *argp;
   int group = AUGROUP_ALL;
 
-  p = skiptowhite(arg);
+  for (p = arg; *p && !ascii_iswhite(*p) && *p != '|'; ++p)
+	;
   if (p > arg) {
     group_name = vim_strnsave(arg, (int)(p - arg));
     group = au_find_group(group_name);
