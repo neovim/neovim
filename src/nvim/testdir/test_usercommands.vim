@@ -46,3 +46,33 @@ function Test_cmdmods()
   delcommand MyQCmd
   unlet g:mods
 endfunction
+
+func Test_Ambiguous()
+  command Doit let g:didit = 'yes'
+  command Dothat let g:didthat = 'also'
+  call assert_fails('Do', 'E464:')
+  Doit
+  call assert_equal('yes', g:didit)
+  Dothat
+  call assert_equal('also', g:didthat)
+  unlet g:didit
+  unlet g:didthat
+
+  delcommand Doit
+  Do
+  call assert_equal('also', g:didthat)
+  delcommand Dothat
+endfunc
+
+func Test_CmdUndefined()
+  call assert_fails('Doit', 'E492:')
+  au CmdUndefined Doit :command Doit let g:didit = 'yes'
+  Doit
+  call assert_equal('yes', g:didit)
+  delcommand Doit
+
+  call assert_fails('Dothat', 'E492:')
+  au CmdUndefined * let g:didnot = 'yes'
+  call assert_fails('Dothat', 'E492:')
+  call assert_equal('yes', g:didnot)
+endfunc
