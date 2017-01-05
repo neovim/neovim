@@ -7,6 +7,7 @@
 #include <uv.h>
 
 #include "nvim/os/time.h"
+#include "nvim/os/input.h"
 #include "nvim/event/loop.h"
 #include "nvim/vim.h"
 #include "nvim/main.h"
@@ -34,10 +35,10 @@ uint64_t os_hrtime(void)
   return uv_hrtime();
 }
 
-/// Sleeps for a certain amount of milliseconds
+/// Sleeps for a certain amount of milliseconds.
 ///
 /// @param milliseconds Number of milliseconds to sleep
-/// @param ignoreinput If true, allow a SIGINT to interrupt us
+/// @param ignoreinput If true, only SIGINT (CTRL-C) can interrupt.
 void os_delay(uint64_t milliseconds, bool ignoreinput)
 {
   if (ignoreinput) {
@@ -46,31 +47,73 @@ void os_delay(uint64_t milliseconds, bool ignoreinput)
     }
     LOOP_PROCESS_EVENTS_UNTIL(&main_loop, NULL, (int)milliseconds, got_int);
   } else {
-    os_microdelay(milliseconds * 1000);
+    os_microdelay(milliseconds * 1000u, ignoreinput);
   }
 }
 
-/// Sleeps for a certain amount of microseconds
+/// Sleeps for a certain amount of microseconds.
 ///
-/// @param microseconds Number of microseconds to sleep
-void os_microdelay(uint64_t microseconds)
+/// @param microseconds Number of microseconds to sleep.
+/// @param ignoreinput If true, ignore all input (including SIGINT/CTRL-C).
+///                    If false, waiting is aborted on any input.
+void os_microdelay(uint64_t microseconds, bool ignoreinput)
 {
-  uint64_t elapsed = 0;
-  uint64_t ns = microseconds * 1000;  // convert to nanoseconds
+  uint64_t elapsed = 0u;
   uint64_t base = uv_hrtime();
+  const uint64_t input_check_interval = 100000000u;  // 100ms
+
+  // Convert microseconds to nanoseconds. If uint64_t would overflow, set
+  // nanoseconds to UINT64_MAX.
+  const uint64_t nanoseconds = (microseconds < UINT64_MAX/1000u)
+                               ? microseconds * 1000u
+                               : UINT64_MAX;
 
   uv_mutex_lock(&delay_mutex);
 
-  while (elapsed < ns) {
-    if (uv_cond_timedwait(&delay_cond, &delay_mutex, ns - elapsed)
-        == UV_ETIMEDOUT)
+  // If the input is ignored, we simply wait the full delay. If not, we
+  // check every 'input_check_delay' milliseconds for input and break the
+  // waiting loop if input is available.
+  while (elapsed < nanoseconds) {
+    // We split the waiting period in 'input_check_interval' long intervals in
+    // case of 'ignoreinput == true' or wait the whole 'nanoseconds' if
+    // 'ignoreinput == false'.
+    const uint64_t nanoseconds_delta = (ignoreinput)
+                                       ? nanoseconds - elapsed
+                                       : MIN(nanoseconds - elapsed,
+                                             input_check_interval);
+
+    // Main waiting work happens here.
+    // Take note that uv_cond_timedwait() can only return 0 and UV_ETIMEDOUT. We
+    // check explicitly for that because of clarity.
+    const int return_wait = uv_cond_timedwait(&delay_cond, &delay_mutex,
+                                              nanoseconds_delta);
+    if (0 != return_wait && UV_ETIMEDOUT != return_wait) {
+      // In case of an error in uv_cond_timedwait() we abort waiting quietly in
+      // release mode and terminate with an error message in debug mode.
+#ifdef DEBUG
+      assert(false);
+#endif  // DEBUG
+
+      // In case of 'ignoreinput == true', an recurring error and a large value
+      // for 'nanoseconds', this break will save the control over the beast in
+      // release mode.
       break;
-    uint64_t now = uv_hrtime();
+    }
+
+    // Exit the waiting loop if we do not ignore input and input is available.
+    if (!ignoreinput && os_char_avail()) {
+      break;
+    }
+
+    // Update elapsed delay. As soon as the elapsed time exceeds 'nanoseconds',
+    // the condition of the loop is not met any more and we leave.
+    const uint64_t now = uv_hrtime();
     elapsed += now - base;
     base = now;
   }
 
   uv_mutex_unlock(&delay_mutex);
+  return;
 }
 
 /// Portable version of POSIX localtime_r()
