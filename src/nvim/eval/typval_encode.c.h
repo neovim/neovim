@@ -703,6 +703,10 @@ typval_encode_stop_converting_one_item:
             dict_T *const dict = pt == NULL ? NULL : pt->pt_dict;
             if (dict != NULL) {
               TYPVAL_ENCODE_CONV_FUNC_BEFORE_SELF(tv, dict->dv_hashtab.ht_used);
+              if (dict->dv_hashtab.ht_used == 0) {
+                TYPVAL_ENCODE_CONV_EMPTY_DICT(NULL, pt->pt_dict);
+                continue;
+              }
               const int te_csr_ret = _TYPVAL_ENCODE_CHECK_SELF_REFERENCE(
                   TYPVAL_ENCODE_FIRST_ARG_NAME,
                   dict, &dict->dv_copyID, &mpstack, copyID, kMPConvDict,
@@ -714,24 +718,20 @@ typval_encode_stop_converting_one_item:
                   continue;
                 }
               }
-              if (dict->dv_hashtab.ht_used == 0) {
-                TYPVAL_ENCODE_CONV_EMPTY_DICT(NULL, pt->pt_dict);
-              } else {
-                TYPVAL_ENCODE_CONV_DICT_START(NULL, pt->pt_dict,
-                                              dict->dv_hashtab.ht_used);
-                _mp_push(mpstack, ((MPConvStackVal) {
-                  .type = kMPConvDict,
-                  .tv = NULL,
-                  .data = {
-                    .d = {
-                      .dict = dict,
-                      .dictp = &pt->pt_dict,
-                      .hi = dict->dv_hashtab.ht_array,
-                      .todo = dict->dv_hashtab.ht_used,
-                    },
+              TYPVAL_ENCODE_CONV_DICT_START(NULL, pt->pt_dict,
+                                            dict->dv_hashtab.ht_used);
+              _mp_push(mpstack, ((MPConvStackVal) {
+                .type = kMPConvDict,
+                .tv = NULL,
+                .data = {
+                  .d = {
+                    .dict = dict,
+                    .dictp = &pt->pt_dict,
+                    .hi = dict->dv_hashtab.ht_array,
+                    .todo = dict->dv_hashtab.ht_used,
                   },
-                }));
-              }
+                },
+              }));
             } else {
               TYPVAL_ENCODE_CONV_FUNC_BEFORE_SELF(tv, -1);
             }
