@@ -19,6 +19,7 @@ if has('timers')
     call timer_start(100, 'ExitInsertMode')
     call feedkeys('a', 'x!')
     call assert_equal(1, g:triggered)
+    au! CursorHoldI
   endfunc
 
   func Test_cursorhold_insert_ctrl_x()
@@ -29,6 +30,7 @@ if has('timers')
     " CursorHoldI does not trigger after CTRL-X
     call feedkeys("a\<C-X>", 'x!')
     call assert_equal(0, g:triggered)
+    au! CursorHoldI
   endfunc
 endif
 
@@ -58,5 +60,34 @@ function Test_bufunload()
   bwipeout
   call assert_equal(["bufunload", "bufdelete", "bufwipeout"], s:li)
 
+  au! test_bufunload_group
   augroup! test_bufunload_group
+endfunc
+
+func s:AddAnAutocmd()
+  augroup vimBarTest
+    au BufReadCmd * echo 'hello'
+  augroup END
+  call assert_equal(3, len(split(execute('au vimBarTest'), "\n")))
+endfunc
+
+func Test_early_bar()
+  " test that a bar is recognized before the {event}
+  call s:AddAnAutocmd()
+  augroup vimBarTest | au! | augroup END
+  call assert_equal(1, len(split(execute('au vimBarTest'), "\n")))
+
+  call s:AddAnAutocmd()
+  augroup vimBarTest| au!| augroup END
+  call assert_equal(1, len(split(execute('au vimBarTest'), "\n")))
+
+  " test that a bar is recognized after the {event}
+  call s:AddAnAutocmd()
+  augroup vimBarTest| au!BufReadCmd| augroup END
+  call assert_equal(1, len(split(execute('au vimBarTest'), "\n")))
+
+  " test that a bar is recognized after the {group}
+  call s:AddAnAutocmd()
+  au! vimBarTest|echo 'hello'
+  call assert_equal(1, len(split(execute('au vimBarTest'), "\n")))
 endfunc
