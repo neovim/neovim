@@ -389,6 +389,7 @@ static struct vimvar {
   VV(VV__NULL_LIST,     "_null_list",       VAR_LIST, VV_RO),
   VV(VV__NULL_DICT,     "_null_dict",       VAR_DICT, VV_RO),
   VV(VV_VIM_DID_ENTER,  "vim_did_enter",    VAR_NUMBER, VV_RO),
+  VV(VV_TESTING,        "testing",          VAR_NUMBER, 0),
   VV(VV_TYPE_NUMBER,    "t_number",         VAR_NUMBER, VV_RO),
   VV(VV_TYPE_STRING,    "t_string",         VAR_NUMBER, VV_RO),
   VV(VV_TYPE_FUNC,      "t_func",           VAR_NUMBER, VV_RO),
@@ -640,8 +641,8 @@ void eval_clear(void)
     xfree(SCRIPT_SV(i));
   ga_clear(&ga_scripts);
 
-  /* unreferenced lists and dicts */
-  (void)garbage_collect();
+  // unreferenced lists and dicts
+  (void)garbage_collect(false);
 
   /* functions */
   free_all_functions();
@@ -5805,6 +5806,9 @@ int get_copyID(void)
   return current_copyID;
 }
 
+// Used by get_func_tv()
+static garray_T funcargs = GA_EMPTY_INIT_VALUE;
+
 /*
  * Garbage collection for lists and dictionaries.
  *
@@ -5827,16 +5831,19 @@ int get_copyID(void)
 
 /// Do garbage collection for lists and dicts.
 ///
+/// @param testing  true if called from test_garbagecollect_now().
 /// @returns        true if some memory was freed.
-bool garbage_collect(void)
+bool garbage_collect(bool testing)
 {
   bool abort = false;
 #define ABORTING(func) abort = abort || func
 
-  // Only do this once.
-  want_garbage_collect = false;
-  may_garbage_collect = false;
-  garbage_collect_at_exit = false;
+  if (!testing) {
+    // Only do this once.
+    want_garbage_collect = false;
+    may_garbage_collect = false;
+    garbage_collect_at_exit = false;
+  }
 
   // We advance by two because we add one for items referenced through
   // previous_funccal.
@@ -5946,6 +5953,12 @@ bool garbage_collect(void)
     })
   }
 
+  // function call arguments, if v:testing is set.
+  for (int i = 0; i < funcargs.ga_len; i++) {
+	ABORTING(set_ref_in_item)(((typval_T **)funcargs.ga_data)[i],
+							  copyID, NULL, NULL);
+  }
+
   // v: vars
   ABORTING(set_ref_in_ht)(&vimvarht, copyID, NULL);
 
@@ -6000,7 +6013,7 @@ bool garbage_collect(void)
     if (did_free_funccal) {
       // When a funccal was freed some more items might be garbage
       // collected, so run again.
-      (void)garbage_collect();
+      (void)garbage_collect(testing);
     }
   } else if (p_verbose > 0) {
     verb_msg((char_u *)_(
@@ -7088,9 +7101,24 @@ get_func_tv (
     ret = FAIL;
 
   if (ret == OK) {
-    ret = call_func(name, len, rettv, argcount, argvars,
+    int	i = 0;
+
+    if (get_vim_var_nr(VV_TESTING)) {
+      // Prepare for calling garbagecollect_for_testing(), need to know
+      // what variables are used on the call stack.
+      if (funcargs.ga_itemsize == 0) {
+        ga_init(&funcargs, (int)sizeof(typval_T *), 50);
+      }
+      for (i = 0; i < argcount; i++) {
+        ga_grow(&funcargs, 1);
+        ((typval_T **)funcargs.ga_data)[funcargs.ga_len++] = &argvars[i];
+      }
+	}
+    ret = call_func(name, len, rettv, argcount, argvars, NULL,
                     firstline, lastline, doesrange, evaluate,
                     partial, selfdict);
+
+    funcargs.ga_len -= i;
   } else if (!aborting()) {
     if (argcount == MAX_FUNC_ARGS) {
       emsg_funcname(N_("E740: Too many arguments for function %s"), name);
@@ -17303,6 +17331,14 @@ static void f_termopen(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   data->refcount++;
 
   return;
+}
+
+// "test_garbagecollect_now()" function
+static void f_test_garbagecollect_now(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  // This is dangerous, any Lists and Dicts used internally may be freed
+  // while still in use.
+  garbage_collect(true);
 }
 
 static bool callback_from_typval(Callback *callback, typval_T *arg)

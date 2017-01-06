@@ -62,6 +62,12 @@ lang mess C
 " Always use forward slashes.
 set shellslash
 
+" Make sure $HOME does not get read or written.
+let $HOME = '/does/not/exist'
+
+" Prepare for calling garbagecollect_for_testing().
+let v:testing = 1
+
 " Align with vim defaults.
 set directory^=.
 set nohidden

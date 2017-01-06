@@ -621,8 +621,9 @@ void getout(int exitval)
   iconv_end();
 #endif
   cs_end();
-  if (garbage_collect_at_exit)
-    garbage_collect();
+  if (garbage_collect_at_exit) {
+    garbage_collect(false);
+  }
 
   mch_exit(exitval);
 }
