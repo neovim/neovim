@@ -405,38 +405,49 @@ endfunction
 
 function! s:check_ruby() abort
   call health#report_start('Ruby provider')
-  let ruby_version = 'not found'
-  if executable('ruby')
-    let ruby_version = s:systemlist('ruby -v')[0]
-  endif
-  let ruby_prog    = provider#ruby#Detect()
-  let suggestions  =
-        \ ['Install or upgrade the neovim RubyGem using `gem install neovim`.']
 
-  if empty(ruby_prog)
-    let ruby_prog = 'not found'
-    let prog_vers = 'not found'
-    call health#report_error('Missing Neovim RubyGem', suggestions)
+  if !executable('ruby') || !executable('gem')
+    call health#report_warn(
+          \ "Both `ruby` and `gem` have to be in $PATH. Ruby code won't work.",
+          \ ["Install Ruby and make sure that `ruby` and `gem` are in $PATH."])
+    return
+  endif
+  call health#report_info('Ruby: '. s:system('ruby -v'))
+
+  let host = provider#ruby#Detect()
+  if empty(host)
+    call health#report_warn("Missing \"neovim\" gem. Ruby code won't work.",
+          \ ['Run in shell: gem install neovim'])
+    return
+  endif
+  call health#report_info('Host: '. host)
+
+  let latest_gem_cmd = 'gem list -rae neovim'
+  let latest_gem = s:system(split(latest_gem_cmd))
+  if s:shell_error || empty(latest_gem)
+    call health#report_error('Failed to run: '. latest_gem_cmd,
+          \ ["Make sure you're connected to the internet.",
+          \  "Are you behind a firewall or proxy?"])
+    return
+  endif
+  let latest_gem = get(split(latest_gem, ' (\|, \|)$' ), 1, 'not found')
+
+  let current_gem_cmd = host .' --version'
+  let current_gem = s:system(current_gem_cmd)
+  if s:shell_error
+    call health#report_error('Failed to run: '. current_gem_cmd,
+          \ ["Report this issue with the output of: ", current_gem_cmd])
+    return
+  endif
+
+  if s:version_cmp(current_gem, latest_gem) == -1
+    call health#report_warn(
+          \ printf('Gem "neovim" is out-of-date. Installed: %s, latest: %s',
+          \ current_gem, latest_gem),
+          \ ['Run in shell: gem update neovim'])
   else
-    silent let latest_gem = get(split(s:system(['gem', 'list', '-ra', '^neovim$']), 
-          \ ' (\|, \|)$' ), 1, 'not found')
-    let latest_desc = ' (latest: ' . latest_gem . ')'
-
-    silent let prog_vers = s:systemlist(ruby_prog . ' --version')[0]
-    if s:shell_error
-      let prog_vers = 'not found' . latest_desc
-      call health#report_warn('Neovim RubyGem is not up-to-date.', suggestions)
-    elseif s:version_cmp(prog_vers, latest_gem) == -1
-      let prog_vers .= latest_desc
-      call health#report_warn('Neovim RubyGem is not up-to-date.', suggestions)
-    else
-      call health#report_ok('Found up-to-date neovim RubyGem')
-    endif
+    call health#report_ok('Gem "neovim" is up-to-date: '. current_gem)
   endif
-
-  call health#report_info('Ruby Version: ' . ruby_version)
-  call health#report_info('Host Executable: ' . ruby_prog)
-  call health#report_info('Host Version: ' . prog_vers)
 endfunction
 
 function! health#provider#check() abort
