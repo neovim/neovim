@@ -19108,7 +19108,7 @@ static inline void _nothing_conv_func_end(typval_T *const tv, const int copyID)
     if (pt == NULL) {
       return;
     }
-    // Dictionaly should already be freed by the time.
+    // Dictionary should already be freed by the time.
     // If it was not freed then it is a part of the reference cycle.
     assert(pt->pt_dict == NULL || pt->pt_dict->dv_copyID == copyID);
     pt->pt_dict = NULL;
