@@ -19100,7 +19100,7 @@ static inline int _nothing_conv_func_start(typval_T *const tv,
 #define TYPVAL_ENCODE_CONV_FUNC_BEFORE_ARGS(tv, len)
 #define TYPVAL_ENCODE_CONV_FUNC_BEFORE_SELF(tv, len)
 
-static inline void _nothing_conv_func_end(typval_T *const tv)
+static inline void _nothing_conv_func_end(typval_T *const tv, const int copyID)
   FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_NONNULL_ALL
 {
   if (tv->v_type == VAR_PARTIAL) {
@@ -19109,7 +19109,9 @@ static inline void _nothing_conv_func_end(typval_T *const tv)
       return;
     }
     // Dictionaly should already be freed by the time.
-    assert(pt->pt_dict == NULL);
+    // If it was not freed then it is a part of the reference cycle.
+    assert(pt->pt_dict == NULL || pt->pt_dict->dv_copyID == copyID);
+    pt->pt_dict = NULL;
     // As well as all arguments.
     pt->pt_argc = 0;
     assert(pt->pt_refcount <= 1);
@@ -19118,7 +19120,7 @@ static inline void _nothing_conv_func_end(typval_T *const tv)
     assert(tv->v_lock == VAR_UNLOCKED);
   }
 }
-#define TYPVAL_ENCODE_CONV_FUNC_END(tv) _nothing_conv_func_end(tv)
+#define TYPVAL_ENCODE_CONV_FUNC_END(tv) _nothing_conv_func_end(tv, copyID)
 
 #define TYPVAL_ENCODE_CONV_EMPTY_LIST(tv) \
     do { \
