@@ -369,7 +369,7 @@ int encode_read_from_list(ListReaderState *const state, char *const buf,
 #define TYPVAL_ENCODE_CONV_LIST_START(tv, len) \
     ga_append(gap, '[')
 
-#define TYPVAL_ENCODE_CONV_EMPTY_DICT(tv) \
+#define TYPVAL_ENCODE_CONV_EMPTY_DICT(tv, dict) \
     ga_concat(gap, "{}")
 
 #define TYPVAL_ENCODE_CONV_NIL(tv) \
@@ -933,7 +933,7 @@ char *encode_tv2json(typval_T *tv, size_t *len)
 #define TYPVAL_ENCODE_CONV_LIST_START(tv, len) \
     msgpack_pack_array(packer, (size_t)(len))
 
-#define TYPVAL_ENCODE_CONV_EMPTY_DICT(tv) \
+#define TYPVAL_ENCODE_CONV_EMPTY_DICT(tv, dict) \
     msgpack_pack_map(packer, 0)
 
 #define TYPVAL_ENCODE_CONV_NIL(tv) \

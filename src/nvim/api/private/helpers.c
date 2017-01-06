@@ -369,7 +369,7 @@ void set_option_to(void *to, int type, String name, Object value, Error *err)
 #define TYPVAL_ENCODE_CONV_EMPTY_LIST(tv) \
     kv_push(edata->stack, ARRAY_OBJ(((Array) { .capacity = 0, .size = 0 })))
 
-#define TYPVAL_ENCODE_CONV_EMPTY_DICT(tv) \
+#define TYPVAL_ENCODE_CONV_EMPTY_DICT(tv, dict) \
     kv_push(edata->stack, \
             DICTIONARY_OBJ(((Dictionary) { .capacity = 0, .size = 0 })))
 

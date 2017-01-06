@@ -19127,11 +19127,14 @@ static inline void _nothing_conv_func_end(typval_T *const tv)
       tv->v_lock = VAR_UNLOCKED; \
     } while (0)
 
-#define TYPVAL_ENCODE_CONV_EMPTY_DICT(tv) \
+#define TYPVAL_ENCODE_CONV_EMPTY_DICT(tv, dict) \
     do { \
-      dict_unref(tv->vval.v_dict); \
-      tv->vval.v_dict = NULL; \
-      tv->v_lock = VAR_UNLOCKED; \
+      assert((void *)&dict != (void *)&TYPVAL_ENCODE_NODICT_VAR); \
+      dict_unref((dict_T *)dict); \
+      *((dict_T **)&dict) = NULL; \
+      if (tv != NULL) { \
+        ((typval_T *)tv)->v_lock = VAR_UNLOCKED; \
+      } \
     } while (0)
 
 static inline int _nothing_conv_list_start(typval_T *const tv)

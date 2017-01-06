@@ -117,8 +117,10 @@
 /// @def TYPVAL_ENCODE_CONV_EMPTY_DICT
 /// @brief Macros used to convert an empty dictionary
 ///
-/// @param  tv  Pointer to typval where value is stored. May not be NULL. May
+/// @param  tv  Pointer to typval where value is stored. May be NULL. May
 ///             point to a special dictionary.
+/// @param  dict  Converted dictionary, lvalue or #TYPVAL_ENCODE_NODICT_VAR
+///               (for dictionaries represented as special lists).
 
 /// @def TYPVAL_ENCODE_CONV_LIST_START
 /// @brief Macros used before starting to convert non-empty list
@@ -142,7 +144,7 @@
 ///
 /// @param  tv  Pointer to typval where dictionary is stored. May be NULL. May
 ///             point to a special dictionary.
-/// @param  dict  Converted dictionary, lvalue or &#TYPVAL_ENCODE_NODICT_VAR
+/// @param  dict  Converted dictionary, lvalue or #TYPVAL_ENCODE_NODICT_VAR
 ///               (for dictionaries represented as special lists).
 /// @param  len  Dictionary length. Is an expression which evaluates to an
 ///              integer.
@@ -158,7 +160,7 @@
 ///
 /// @param  tv  Pointer to typval where dictionary is stored. May be NULL. May
 ///             point to a special dictionary.
-/// @param  dict  Converted dictionary, lvalue or &#TYPVAL_ENCODE_NODICT_VAR
+/// @param  dict  Converted dictionary, lvalue or #TYPVAL_ENCODE_NODICT_VAR
 ///               (for dictionaries represented as special lists).
 
 /// @def TYPVAL_ENCODE_CONV_DICT_BETWEEN_ITEMS
@@ -166,7 +168,7 @@
 ///
 /// @param  tv  Pointer to typval where dictionary is stored. May be NULL. May
 ///             point to a special dictionary.
-/// @param  dict  Converted dictionary, lvalue or &#TYPVAL_ENCODE_NODICT_VAR
+/// @param  dict  Converted dictionary, lvalue or #TYPVAL_ENCODE_NODICT_VAR
 ///               (for dictionaries represented as special lists).
 
 /// @def TYPVAL_ENCODE_CONV_DICT_END
@@ -174,7 +176,7 @@
 ///
 /// @param  tv  Pointer to typval where dictionary is stored. May be NULL. May
 ///             point to a special dictionary.
-/// @param  dict  Converted dictionary, lvalue or &#TYPVAL_ENCODE_NODICT_VAR
+/// @param  dict  Converted dictionary, lvalue or #TYPVAL_ENCODE_NODICT_VAR
 ///               (for dictionaries represented as special lists).
 
 /// @def TYPVAL_ENCODE_CONV_RECURSE
@@ -224,6 +226,10 @@
 #include "nvim/func_attr.h"
 #include "nvim/eval/typval_encode.h"
 
+/// Dummy variable used because some macros need lvalue
+///
+/// Must not be written to, if needed one must check that address of the
+/// macros argument is (not) equal to `&TYPVAL_ENCODE_NODICT_VAR`.
 const dict_T *const TYPVAL_ENCODE_NODICT_VAR = NULL;
 
 static inline int _TYPVAL_ENCODE_CHECK_SELF_REFERENCE(
@@ -367,7 +373,7 @@ static int _TYPVAL_ENCODE_CONVERT_ONE_VALUE(
     case VAR_DICT: {
       if (tv->vval.v_dict == NULL
           || tv->vval.v_dict->dv_hashtab.ht_used == 0) {
-        TYPVAL_ENCODE_CONV_EMPTY_DICT(tv);
+        TYPVAL_ENCODE_CONV_EMPTY_DICT(tv, tv->vval.v_dict);
         break;
       }
       const dictitem_T *type_di;
@@ -490,7 +496,7 @@ static int _TYPVAL_ENCODE_CONVERT_ONE_VALUE(
             }
             list_T *const val_list = val_di->di_tv.vval.v_list;
             if (val_list == NULL || val_list->lv_len == 0) {
-              TYPVAL_ENCODE_CONV_EMPTY_DICT(tv);
+              TYPVAL_ENCODE_CONV_EMPTY_DICT(tv, TYPVAL_ENCODE_NODICT_VAR);
               break;
             }
             for (const listitem_T *li = val_list->lv_first; li != NULL;
@@ -708,20 +714,24 @@ typval_encode_stop_converting_one_item:
                   continue;
                 }
               }
-              TYPVAL_ENCODE_CONV_DICT_START(NULL, pt->pt_dict,
-                                            dict->dv_hashtab.ht_used);
-              _mp_push(mpstack, ((MPConvStackVal) {
-                .type = kMPConvDict,
-                .tv = NULL,
-                .data = {
-                  .d = {
-                    .dict = dict,
-                    .dictp = &pt->pt_dict,
-                    .hi = dict->dv_hashtab.ht_array,
-                    .todo = dict->dv_hashtab.ht_used,
+              if (dict->dv_hashtab.ht_used == 0) {
+                TYPVAL_ENCODE_CONV_EMPTY_DICT(NULL, pt->pt_dict);
+              } else {
+                TYPVAL_ENCODE_CONV_DICT_START(NULL, pt->pt_dict,
+                                              dict->dv_hashtab.ht_used);
+                _mp_push(mpstack, ((MPConvStackVal) {
+                  .type = kMPConvDict,
+                  .tv = NULL,
+                  .data = {
+                    .d = {
+                      .dict = dict,
+                      .dictp = &pt->pt_dict,
+                      .hi = dict->dv_hashtab.ht_array,
+                      .todo = dict->dv_hashtab.ht_used,
+                    },
                   },
-                },
-              }));
+                }));
+              }
             } else {
               TYPVAL_ENCODE_CONV_FUNC_BEFORE_SELF(tv, -1);
             }
