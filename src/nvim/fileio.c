@@ -5653,13 +5653,13 @@ static event_T event_name2nr(char_u *start, char_u **end)
   int len;
 
   // the event name ends with end of line, '|', a blank or a comma */
-  for (p = start; *p && !ascii_iswhite(*p) && *p != ',' && *p != '|'; ++p) {
-    ;
+  for (p = start; *p && !ascii_iswhite(*p) && *p != ',' && *p != '|'; p++) {
   }
-  for (i = 0; event_names[i].name != NULL; ++i) {
-    len = (int) event_names[i].len;
-    if (len == p - start && STRNICMP(event_names[i].name, start, len) == 0)
+  for (i = 0; event_names[i].name != NULL; i++) {
+    len = (int)event_names[i].len;
+    if (len == p - start && STRNICMP(event_names[i].name, start, len) == 0) {
       break;
+    }
   }
   if (*p == ',')
     ++p;
@@ -5829,7 +5829,7 @@ void do_autocmd(char_u *arg_in, int forceit)
 
   if (*arg == '|') {
     arg = (char_u *)"";
-    group = AUGROUP_ALL; // no argument, use all groups
+    group = AUGROUP_ALL;  // no argument, use all groups
   } else {
     // Check for a legal group name.  If not, use AUGROUP_ALL.
     group = au_get_grouparg(&arg);
@@ -5876,7 +5876,8 @@ void do_autocmd(char_u *arg_in, int forceit)
 
     // Check for "nested" flag.
     cmd = skipwhite(cmd);
-    if (*cmd != NUL && STRNCMP(cmd, "nested", 6) == 0 && ascii_iswhite(cmd[6])) {
+    if (*cmd != NUL && STRNCMP(cmd, "nested", 6) == 0
+        && ascii_iswhite(cmd[6])) {
       nested = true;
       cmd = skipwhite(cmd + 6);
     }
@@ -5903,14 +5904,15 @@ void do_autocmd(char_u *arg_in, int forceit)
   /*
    * Loop over the events.
    */
-  last_event = (event_T)-1;             /* for listing the event name */
-  last_group = AUGROUP_ERROR;           /* for listing the group name */
+  last_event = (event_T)-1;             // for listing the event name
+  last_group = AUGROUP_ERROR;           // for listing the group name
   if (*arg == '*' || *arg == NUL || *arg == '|') {
     for (event = (event_T)0; (int)event < (int)NUM_EVENTS;
-         event = (event_T)((int)event + 1))
-      if (do_autocmd_event(event, pat,
-              nested, cmd, forceit, group) == FAIL)
+         event = (event_T)((int)event + 1)) {
+      if (do_autocmd_event(event, pat, nested, cmd, forceit, group) == FAIL) {
         break;
+      }
+    }
   } else {
     while (*arg && *arg != '|' && !ascii_iswhite(*arg)) {
       event_T event = event_name2nr(arg, &arg);
@@ -5939,8 +5941,8 @@ static int au_get_grouparg(char_u **argp)
   char_u      *arg = *argp;
   int group = AUGROUP_ALL;
 
-  for (p = arg; *p && !ascii_iswhite(*p) && *p != '|'; ++p)
-	;
+  for (p = arg; *p && !ascii_iswhite(*p) && *p != '|'; p++) {
+  }
   if (p > arg) {
     group_name = vim_strnsave(arg, (int)(p - arg));
     group = au_find_group(group_name);
