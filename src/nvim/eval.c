@@ -9693,7 +9693,7 @@ static void f_function(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       }
       if (arg_idx > 0) {
         if (argvars[arg_idx].v_type != VAR_LIST) {
-          EMSG(_("E923: Second argument of function() must be "
+          EMSG(_("E923: Second argument of function() must be"
                  "a list or a dict"));
           xfree(name);
           return;
