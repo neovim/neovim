@@ -178,6 +178,18 @@ describe('string() function', function()
         redir_exec('echo string(extend(extend(g:d, {"f": g:Test2_f}), {"p": g:d.f}))'))
     end)
 
+    it('does not show errors when dumping partials referencing the same dictionary',
+    function()
+      command('let d = {}')
+      -- Regression for “eval/typval_encode: Dump empty dictionary before
+      -- checking for refcycle”, results in error.
+      eq('[function(\'tr\', {}), function(\'tr\', {})]', eval('string([function("tr", d), function("tr", d)])'))
+      -- Regression for “eval: Work with reference cycles in partials (self)
+      -- properly”, results in crash.
+      eval('extend(d, {"a": 1})')
+      eq('[function(\'tr\', {\'a\': 1}), function(\'tr\', {\'a\': 1})]', eval('string([function("tr", d), function("tr", d)])'))
+    end)
+
     it('does not crash or halt when dumping partials with reference cycles in arguments',
     function()
       meths.set_var('l', {})
@@ -241,6 +253,13 @@ describe('string() function', function()
   describe('used to represent dictionaries', function()
     it('dumps empty dictionary', function()
       eq('{}', eval('string({})'))
+    end)
+
+    it('dumps list with two same empty dictionaries, also in partials', function()
+      command('let d = {}')
+      eq('[{}, {}]', eval('string([d, d])'))
+      eq('[function(\'tr\', {}), {}]', eval('string([function("tr", d), d])'))
+      eq('[{}, function(\'tr\', {})]', eval('string([d, function("tr", d)])'))
     end)
 
     it('dumps non-empty dictionary', function()
