@@ -9251,7 +9251,7 @@ static void filter_map(typval_T *argvars, typval_T *rettv, int map)
   dict_T      *d = NULL;
   typval_T save_val;
   typval_T save_key;
-  int rem;
+  int rem = false;
   int todo;
   char_u      *ermsg = (char_u *)(map ? "map()" : "filter()");
   char_u      *arg_errmsg = (char_u *)(map ? N_("map() argument")
