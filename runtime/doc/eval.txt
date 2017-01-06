@@ -1791,6 +1791,9 @@ v:termresponse	The escape sequence returned by the terminal for the |t_RV|
 		always 95 or bigger).  Pc is always zero.
 		{only when compiled with |+termresponse| feature}
 
+					*v:testing* *testing-variable*
+v:testing	Must be set before using `test_garbagecollect_now()`.
+
 				*v:this_session* *this_session-variable*
 v:this_session	Full filename of the last loaded or saved session file.  See
 		|:mksession|.  It is allowed to set this variable.  When no
@@ -2215,6 +2218,7 @@ tagfiles()			List	tags files used
 tan({expr})			Float	tangent of {expr}
 tanh({expr})			Float	hyperbolic tangent of {expr}
 tempname()			String	name for a temporary file
+test_garbagecollect_now()	none	free memory right now for testing
 timer_start({time}, {callback} [, {options}])
 				Number	create a timer
 timer_stop({timer})		none	stop a timer
@@ -3589,17 +3593,24 @@ function({name} [, {arglist}] [, {dict}])
 
 garbagecollect([{atexit}])				*garbagecollect()*
 		Cleanup unused |Lists| and |Dictionaries| that have circular
-		references.  There is hardly ever a need to invoke this
-		function, as it is automatically done when Vim runs out of
-		memory or is waiting for the user to press a key after
-		'updatetime'.  Items without circular references are always
-		freed when they become unused.
+		references.
+		
+		There is hardly ever a need to invoke this function, as it is
+		automatically done when Vim runs out of memory or is waiting
+		for the user to press a key after 'updatetime'.  Items without
+		circular references are always freed when they become unused.
 		This is useful if you have deleted a very big |List| and/or
 		|Dictionary| with circular references in a script that runs
 		for a long time.
+
 		When the optional {atexit} argument is one, garbage
 		collection will also be done when exiting Vim, if it wasn't
 		done before.  This is useful when checking for memory leaks.
+
+		The garbage collection is not done immediately but only when
+		it's safe to perform.  This is when waiting for the user to
+		type a character.  To force garbage collection immediately use
+		|test_garbagecollect_now()|.
 
 get({list}, {idx} [, {default}])			*get()*
 		Get item {idx} from |List| {list}.  When this item is not
@@ -7287,6 +7298,12 @@ termopen({cmd}[, {opts}])			{Nvim} *termopen()*
 		Returns the same values as |jobstart()|.
 
 		See |terminal-emulator| for more information.
+
+test_garbagecollect_now()			 *test_garbagecollect_now()*
+		Like garbagecollect(), but executed right away.  This must
+		only be called directly to avoid any structure to exist
+		internally, and |v:testing| must have been set before calling
+		any function.
 
 tan({expr})						*tan()*
 		Return the tangent of {expr}, measured in radians, as a |Float|

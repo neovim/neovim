@@ -303,6 +303,7 @@ return {
     tanh={args=1, func="float_op_wrapper", data="&tanh"},
     tempname={},
     termopen={args={1, 2}},
+    test_garbagecollect_now={},
     timer_start={args={2,3}},
     timer_stop={args=1},
     tolower={args=1},
