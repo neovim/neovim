@@ -6,7 +6,7 @@ endif
 
 func CscopeSetupOrClean(setup)
     if a:setup
-      noa sp ../memfile_test.c
+      noa sp samples/memfile_test.c
       saveas! Xmemfile_test.c
       call system('cscope -bk -fXcscope.out Xmemfile_test.c')
       call system('cscope -bk -fXcscope2.out Xmemfile_test.c')
