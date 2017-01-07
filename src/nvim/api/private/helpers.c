@@ -19,7 +19,6 @@
 #include "nvim/option.h"
 #include "nvim/option_defs.h"
 #include "nvim/version.h"
-#include "nvim/eval/typval_encode.h"
 #include "nvim/lib/kvec.h"
 
 /// Helper structure for vim_to_object
@@ -327,21 +326,21 @@ void set_option_to(void *to, int type, String name, Object value, Error *err)
 
 #define TYPVAL_ENCODE_ALLOW_SPECIALS false
 
-#define TYPVAL_ENCODE_CONV_NIL() \
+#define TYPVAL_ENCODE_CONV_NIL(tv) \
     kv_push(edata->stack, NIL)
 
-#define TYPVAL_ENCODE_CONV_BOOL(num) \
+#define TYPVAL_ENCODE_CONV_BOOL(tv, num) \
     kv_push(edata->stack, BOOLEAN_OBJ((Boolean)(num)))
 
-#define TYPVAL_ENCODE_CONV_NUMBER(num) \
+#define TYPVAL_ENCODE_CONV_NUMBER(tv, num) \
     kv_push(edata->stack, INTEGER_OBJ((Integer)(num)))
 
 #define TYPVAL_ENCODE_CONV_UNSIGNED_NUMBER TYPVAL_ENCODE_CONV_NUMBER
 
-#define TYPVAL_ENCODE_CONV_FLOAT(flt) \
+#define TYPVAL_ENCODE_CONV_FLOAT(tv, flt) \
     kv_push(edata->stack, FLOATING_OBJ((Float)(flt)))
 
-#define TYPVAL_ENCODE_CONV_STRING(str, len) \
+#define TYPVAL_ENCODE_CONV_STRING(tv, str, len) \
     do { \
       const size_t len_ = (size_t)(len); \
       const char *const str_ = (const char *)(str); \
@@ -354,19 +353,23 @@ void set_option_to(void *to, int type, String name, Object value, Error *err)
 
 #define TYPVAL_ENCODE_CONV_STR_STRING TYPVAL_ENCODE_CONV_STRING
 
-#define TYPVAL_ENCODE_CONV_EXT_STRING(str, len, type) \
-    TYPVAL_ENCODE_CONV_NIL()
+#define TYPVAL_ENCODE_CONV_EXT_STRING(tv, str, len, type) \
+    TYPVAL_ENCODE_CONV_NIL(tv)
 
-#define TYPVAL_ENCODE_CONV_FUNC(fun) \
-    TYPVAL_ENCODE_CONV_NIL()
+#define TYPVAL_ENCODE_CONV_FUNC_START(tv, fun) \
+    do { \
+      TYPVAL_ENCODE_CONV_NIL(tv); \
+      goto typval_encode_stop_converting_one_item; \
+    } while (0)
 
-#define TYPVAL_ENCODE_CONV_PARTIAL(partial) \
-    TYPVAL_ENCODE_CONV_NIL()
+#define TYPVAL_ENCODE_CONV_FUNC_BEFORE_ARGS(tv, len)
+#define TYPVAL_ENCODE_CONV_FUNC_BEFORE_SELF(tv, len)
+#define TYPVAL_ENCODE_CONV_FUNC_END(tv)
 
-#define TYPVAL_ENCODE_CONV_EMPTY_LIST() \
+#define TYPVAL_ENCODE_CONV_EMPTY_LIST(tv) \
     kv_push(edata->stack, ARRAY_OBJ(((Array) { .capacity = 0, .size = 0 })))
 
-#define TYPVAL_ENCODE_CONV_EMPTY_DICT() \
+#define TYPVAL_ENCODE_CONV_EMPTY_DICT(tv, dict) \
     kv_push(edata->stack, \
             DICTIONARY_OBJ(((Dictionary) { .capacity = 0, .size = 0 })))
 
@@ -381,7 +384,7 @@ static inline void typval_encode_list_start(EncodedData *const edata,
   })));
 }
 
-#define TYPVAL_ENCODE_CONV_LIST_START(len) \
+#define TYPVAL_ENCODE_CONV_LIST_START(tv, len) \
     typval_encode_list_start(edata, (size_t)(len))
 
 static inline void typval_encode_between_list_items(EncodedData *const edata)
@@ -394,7 +397,7 @@ static inline void typval_encode_between_list_items(EncodedData *const edata)
   list->data.array.items[list->data.array.size++] = item;
 }
 
-#define TYPVAL_ENCODE_CONV_LIST_BETWEEN_ITEMS() \
+#define TYPVAL_ENCODE_CONV_LIST_BETWEEN_ITEMS(tv) \
     typval_encode_between_list_items(edata)
 
 static inline void typval_encode_list_end(EncodedData *const edata)
@@ -407,7 +410,7 @@ static inline void typval_encode_list_end(EncodedData *const edata)
 #endif
 }
 
-#define TYPVAL_ENCODE_CONV_LIST_END() \
+#define TYPVAL_ENCODE_CONV_LIST_END(tv) \
     typval_encode_list_end(edata)
 
 static inline void typval_encode_dict_start(EncodedData *const edata,
@@ -421,10 +424,10 @@ static inline void typval_encode_dict_start(EncodedData *const edata,
   })));
 }
 
-#define TYPVAL_ENCODE_CONV_DICT_START(len) \
+#define TYPVAL_ENCODE_CONV_DICT_START(tv, dict, len) \
     typval_encode_dict_start(edata, (size_t)(len))
 
-#define TYPVAL_ENCODE_CONV_SPECIAL_DICT_KEY_CHECK(label, kv_pair)
+#define TYPVAL_ENCODE_SPECIAL_DICT_KEY_CHECK(label, kv_pair)
 
 static inline void typval_encode_after_key(EncodedData *const edata)
   FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_NONNULL_ALL
@@ -443,7 +446,7 @@ static inline void typval_encode_after_key(EncodedData *const edata)
   }
 }
 
-#define TYPVAL_ENCODE_CONV_DICT_AFTER_KEY() \
+#define TYPVAL_ENCODE_CONV_DICT_AFTER_KEY(tv, dict) \
     typval_encode_after_key(edata)
 
 static inline void typval_encode_between_dict_items(EncodedData *const edata)
@@ -456,7 +459,7 @@ static inline void typval_encode_between_dict_items(EncodedData *const edata)
   dict->data.dictionary.items[dict->data.dictionary.size++].value = val;
 }
 
-#define TYPVAL_ENCODE_CONV_DICT_BETWEEN_ITEMS() \
+#define TYPVAL_ENCODE_CONV_DICT_BETWEEN_ITEMS(tv, dict) \
     typval_encode_between_dict_items(edata)
 
 static inline void typval_encode_dict_end(EncodedData *const edata)
@@ -469,23 +472,31 @@ static inline void typval_encode_dict_end(EncodedData *const edata)
 #endif
 }
 
-#define TYPVAL_ENCODE_CONV_DICT_END() \
+#define TYPVAL_ENCODE_CONV_DICT_END(tv, dict) \
     typval_encode_dict_end(edata)
 
 #define TYPVAL_ENCODE_CONV_RECURSE(val, conv_type) \
     TYPVAL_ENCODE_CONV_NIL()
 
-// object_convert_one_value()
-// encode_vim_to_object()
-TYPVAL_ENCODE_DEFINE_CONV_FUNCTIONS(static, object, EncodedData *const, edata)
+#define TYPVAL_ENCODE_SCOPE static
+#define TYPVAL_ENCODE_NAME object
+#define TYPVAL_ENCODE_FIRST_ARG_TYPE EncodedData *const
+#define TYPVAL_ENCODE_FIRST_ARG_NAME edata
+#include "nvim/eval/typval_encode.c.h"
+#undef TYPVAL_ENCODE_SCOPE
+#undef TYPVAL_ENCODE_NAME
+#undef TYPVAL_ENCODE_FIRST_ARG_TYPE
+#undef TYPVAL_ENCODE_FIRST_ARG_NAME
 
 #undef TYPVAL_ENCODE_CONV_STRING
 #undef TYPVAL_ENCODE_CONV_STR_STRING
 #undef TYPVAL_ENCODE_CONV_EXT_STRING
 #undef TYPVAL_ENCODE_CONV_NUMBER
 #undef TYPVAL_ENCODE_CONV_FLOAT
-#undef TYPVAL_ENCODE_CONV_FUNC
-#undef TYPVAL_ENCODE_CONV_PARTIAL
+#undef TYPVAL_ENCODE_CONV_FUNC_START
+#undef TYPVAL_ENCODE_CONV_FUNC_BEFORE_ARGS
+#undef TYPVAL_ENCODE_CONV_FUNC_BEFORE_SELF
+#undef TYPVAL_ENCODE_CONV_FUNC_END
 #undef TYPVAL_ENCODE_CONV_EMPTY_LIST
 #undef TYPVAL_ENCODE_CONV_LIST_START
 #undef TYPVAL_ENCODE_CONV_EMPTY_DICT
@@ -496,7 +507,7 @@ TYPVAL_ENCODE_DEFINE_CONV_FUNCTIONS(static, object, EncodedData *const, edata)
 #undef TYPVAL_ENCODE_CONV_DICT_END
 #undef TYPVAL_ENCODE_CONV_DICT_AFTER_KEY
 #undef TYPVAL_ENCODE_CONV_DICT_BETWEEN_ITEMS
-#undef TYPVAL_ENCODE_CONV_SPECIAL_DICT_KEY_CHECK
+#undef TYPVAL_ENCODE_SPECIAL_DICT_KEY_CHECK
 #undef TYPVAL_ENCODE_CONV_LIST_END
 #undef TYPVAL_ENCODE_CONV_LIST_BETWEEN_ITEMS
 #undef TYPVAL_ENCODE_CONV_RECURSE
@@ -510,7 +521,10 @@ TYPVAL_ENCODE_DEFINE_CONV_FUNCTIONS(static, object, EncodedData *const, edata)
 Object vim_to_object(typval_T *obj)
 {
   EncodedData edata = { .stack = KV_INITIAL_VALUE };
-  encode_vim_to_object(&edata, obj, "vim_to_object argument");
+  const int evo_ret = encode_vim_to_object(&edata, obj,
+                                           "vim_to_object argument");
+  (void)evo_ret;
+  assert(evo_ret == OK);
   Object ret = kv_A(edata.stack, 0);
   assert(kv_size(edata.stack) == 1);
   kv_destroy(edata.stack);

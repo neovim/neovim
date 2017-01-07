@@ -7,6 +7,7 @@ local NULL = helpers.NULL
 local eq = helpers.eq
 
 local lua2typvalt = eval_helpers.lua2typvalt
+local typvalt2lua = eval_helpers.typvalt2lua
 local typvalt = eval_helpers.typvalt
 
 local nil_value = api_helpers.nil_value
@@ -14,6 +15,7 @@ local list_type = api_helpers.list_type
 local int_type = api_helpers.int_type
 local type_key = api_helpers.type_key
 local obj2lua = api_helpers.obj2lua
+local func_type = api_helpers.func_type
 
 local api = cimport('./src/nvim/api/private/helpers.h')
 
@@ -84,5 +86,20 @@ describe('vim_to_object', function()
     local tt = typvalt('VAR_DICT', {v_dict=NULL})
     eq(nil, tt.vval.v_dict)
     eq({}, obj2lua(api.vim_to_object(tt)))
+  end)
+
+  it('regression: partials in a list', function()
+    local llist = {
+      {
+        [type_key]=func_type,
+        value='printf',
+        args={'%s'},
+        dict={v=1},
+      },
+      {},
+    }
+    local list = lua2typvalt(llist)
+    eq(llist, typvalt2lua(list))
+    eq({nil_value, {}}, obj2lua(api.vim_to_object(list)))
   end)
 end)

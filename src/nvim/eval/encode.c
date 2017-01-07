@@ -108,9 +108,12 @@ static int conv_error(const char *const msg, const MPConvStack *const mpstack,
 {
   garray_T msg_ga;
   ga_init(&msg_ga, (int)sizeof(char), 80);
-  char *const key_msg = _("key %s");
-  char *const key_pair_msg = _("key %s at index %i from special map");
-  char *const idx_msg = _("index %i");
+  const char *const key_msg = _("key %s");
+  const char *const key_pair_msg = _("key %s at index %i from special map");
+  const char *const idx_msg = _("index %i");
+  const char *const partial_arg_msg = _("partial");
+  const char *const partial_arg_i_msg = _("argument %i");
+  const char *const partial_self_msg = _("partial self dictionary");
   for (size_t i = 0; i < kv_size(*mpstack); i++) {
     if (i != 0) {
       ga_concat(&msg_ga, ", ");
@@ -152,6 +155,29 @@ static int conv_error(const char *const msg, const MPConvStack *const mpstack,
           xfree(key);
           ga_concat(&msg_ga, IObuff);
         }
+        break;
+      }
+      case kMPConvPartial: {
+        switch (v.data.p.stage) {
+          case kMPConvPartialArgs: {
+            assert(false);
+            break;
+          }
+          case kMPConvPartialSelf: {
+            ga_concat(&msg_ga, partial_arg_msg);
+            break;
+          }
+          case kMPConvPartialEnd: {
+            ga_concat(&msg_ga, partial_self_msg);
+            break;
+          }
+        }
+        break;
+      }
+      case kMPConvPartialList: {
+        const int idx = (int)(v.data.a.arg - v.data.a.argv) - 1;
+        vim_snprintf((char *)IObuff, IOSIZE, partial_arg_i_msg, idx);
+        ga_concat(&msg_ga, IObuff);
         break;
       }
     }
@@ -254,7 +280,7 @@ int encode_read_from_list(ListReaderState *const state, char *const buf,
           : OK);
 }
 
-#define TYPVAL_ENCODE_CONV_STRING(buf, len) \
+#define TYPVAL_ENCODE_CONV_STRING(tv, buf, len) \
     do { \
       const char *const buf_ = (const char *) buf; \
       if (buf == NULL) { \
@@ -273,19 +299,19 @@ int encode_read_from_list(ListReaderState *const state, char *const buf,
       } \
     } while (0)
 
-#define TYPVAL_ENCODE_CONV_STR_STRING(buf, len) \
-    TYPVAL_ENCODE_CONV_STRING(buf, len)
+#define TYPVAL_ENCODE_CONV_STR_STRING(tv, buf, len) \
+    TYPVAL_ENCODE_CONV_STRING(tv, buf, len)
 
-#define TYPVAL_ENCODE_CONV_EXT_STRING(buf, len, type)
+#define TYPVAL_ENCODE_CONV_EXT_STRING(tv, buf, len, type)
 
-#define TYPVAL_ENCODE_CONV_NUMBER(num) \
+#define TYPVAL_ENCODE_CONV_NUMBER(tv, num) \
     do { \
       char numbuf[NUMBUFLEN]; \
       vim_snprintf(numbuf, ARRAY_SIZE(numbuf), "%" PRId64, (int64_t) (num)); \
       ga_concat(gap, numbuf); \
     } while (0)
 
-#define TYPVAL_ENCODE_CONV_FLOAT(flt) \
+#define TYPVAL_ENCODE_CONV_FLOAT(tv, flt) \
     do { \
       const float_T flt_ = (flt); \
       switch (fpclassify(flt_)) { \
@@ -308,103 +334,71 @@ int encode_read_from_list(ListReaderState *const state, char *const buf,
       } \
     } while (0)
 
-#define TYPVAL_ENCODE_CONV_FUNC(fun) \
+#define TYPVAL_ENCODE_CONV_FUNC_START(tv, fun) \
     do { \
-      ga_concat(gap, "function("); \
-      TYPVAL_ENCODE_CONV_STRING(fun, STRLEN(fun)); \
-      ga_append(gap, ')'); \
-    } while (0)
-
-#define TYPVAL_ENCODE_CONV_PARTIAL(pt) \
-    do { \
-        int i; \
+      const char *const fun_ = (const char *)(fun); \
+      if (fun_ == NULL) { \
+        EMSG2(_(e_intern2), "string(): NULL function name"); \
+        ga_concat(gap, "function(NULL"); \
+      } else { \
         ga_concat(gap, "function("); \
-        if (pt->pt_name != NULL) { \
-          size_t len; \
-          char_u *p; \
-          len = 3; \
-          len += STRLEN(pt->pt_name); \
-          for (p = pt->pt_name; *p != NUL; mb_ptr_adv(p)) { \
-            if (*p == '\'') { \
-              len++; \
-            } \
-          } \
-          char_u *r, *s; \
-          s = r = xmalloc(len); \
-          if (r != NULL) { \
-            *r++ = '\''; \
-            for (p = pt->pt_name; *p != NUL; ) { \
-              if (*p == '\'') { \
-                *r++ = '\''; \
-              } \
-            MB_COPY_CHAR(p, r); \
-            } \
-            *r++ = '\''; \
-            *r++ = NUL; \
-          } \
-          ga_concat(gap, s); \
-          xfree(s); \
-        } \
-        if (pt->pt_argc > 0) { \
-          ga_concat(gap, ", ["); \
-          for (i = 0; i < pt->pt_argc; i++) { \
-            if (i > 0) { \
-              ga_concat(gap, ", "); \
-            } \
-            char *tofree = encode_tv2string(&pt->pt_argv[i], NULL); \
-            ga_concat(gap, tofree); \
-            xfree(tofree); \
-          } \
-          ga_append(gap, ']'); \
-        } \
-        if (pt->pt_dict != NULL) { \
-          typval_T dtv; \
-          ga_concat(gap, ", "); \
-          dtv.v_type = VAR_DICT; \
-          dtv.vval.v_dict = pt->pt_dict; \
-          char *tofree = encode_tv2string(&dtv, NULL); \
-          ga_concat(gap, tofree); \
-          xfree(tofree); \
-        } \
-        ga_append(gap, ')'); \
+        TYPVAL_ENCODE_CONV_STRING(tv, fun_, strlen(fun_)); \
+      }\
     } while (0)
 
-#define TYPVAL_ENCODE_CONV_EMPTY_LIST() \
+#define TYPVAL_ENCODE_CONV_FUNC_BEFORE_ARGS(tv, len) \
+    do { \
+      if (len != 0) { \
+        ga_concat(gap, ", "); \
+      } \
+    } while (0)
+
+#define TYPVAL_ENCODE_CONV_FUNC_BEFORE_SELF(tv, len) \
+    do { \
+      if ((ptrdiff_t)len != -1) { \
+        ga_concat(gap, ", "); \
+      } \
+    } while (0)
+
+#define TYPVAL_ENCODE_CONV_FUNC_END(tv) \
+    ga_append(gap, ')')
+
+#define TYPVAL_ENCODE_CONV_EMPTY_LIST(tv) \
     ga_concat(gap, "[]")
 
-#define TYPVAL_ENCODE_CONV_LIST_START(len) \
+#define TYPVAL_ENCODE_CONV_LIST_START(tv, len) \
     ga_append(gap, '[')
 
-#define TYPVAL_ENCODE_CONV_EMPTY_DICT() \
+#define TYPVAL_ENCODE_CONV_EMPTY_DICT(tv, dict) \
     ga_concat(gap, "{}")
 
-#define TYPVAL_ENCODE_CONV_NIL() \
+#define TYPVAL_ENCODE_CONV_NIL(tv) \
     ga_concat(gap, "v:null")
 
-#define TYPVAL_ENCODE_CONV_BOOL(num) \
+#define TYPVAL_ENCODE_CONV_BOOL(tv, num) \
     ga_concat(gap, ((num)? "v:true": "v:false"))
 
-#define TYPVAL_ENCODE_CONV_UNSIGNED_NUMBER(num)
+#define TYPVAL_ENCODE_CONV_UNSIGNED_NUMBER(tv, num)
 
-#define TYPVAL_ENCODE_CONV_DICT_START(len) \
+#define TYPVAL_ENCODE_CONV_DICT_START(tv, dict, len) \
     ga_append(gap, '{')
 
-#define TYPVAL_ENCODE_CONV_DICT_END() \
+#define TYPVAL_ENCODE_CONV_DICT_END(tv, dict) \
     ga_append(gap, '}')
 
-#define TYPVAL_ENCODE_CONV_DICT_AFTER_KEY() \
+#define TYPVAL_ENCODE_CONV_DICT_AFTER_KEY(tv, dict) \
     ga_concat(gap, ": ")
 
-#define TYPVAL_ENCODE_CONV_DICT_BETWEEN_ITEMS() \
+#define TYPVAL_ENCODE_CONV_DICT_BETWEEN_ITEMS(tv, dict) \
     ga_concat(gap, ", ")
 
-#define TYPVAL_ENCODE_CONV_SPECIAL_DICT_KEY_CHECK(label, key)
+#define TYPVAL_ENCODE_SPECIAL_DICT_KEY_CHECK(label, key)
 
-#define TYPVAL_ENCODE_CONV_LIST_END() \
+#define TYPVAL_ENCODE_CONV_LIST_END(tv) \
     ga_append(gap, ']')
 
-#define TYPVAL_ENCODE_CONV_LIST_BETWEEN_ITEMS() \
-    TYPVAL_ENCODE_CONV_DICT_BETWEEN_ITEMS()
+#define TYPVAL_ENCODE_CONV_LIST_BETWEEN_ITEMS(tv) \
+    TYPVAL_ENCODE_CONV_DICT_BETWEEN_ITEMS(tv, NULL)
 
 #define TYPVAL_ENCODE_CONV_RECURSE(val, conv_type) \
     do { \
@@ -437,9 +431,15 @@ int encode_read_from_list(ListReaderState *const state, char *const buf,
 
 #define TYPVAL_ENCODE_ALLOW_SPECIALS false
 
-// string_convert_one_value()
-// encode_vim_to_string()
-TYPVAL_ENCODE_DEFINE_CONV_FUNCTIONS(static, string, garray_T *const, gap)
+#define TYPVAL_ENCODE_SCOPE static
+#define TYPVAL_ENCODE_NAME string
+#define TYPVAL_ENCODE_FIRST_ARG_TYPE garray_T *const
+#define TYPVAL_ENCODE_FIRST_ARG_NAME gap
+#include "nvim/eval/typval_encode.c.h"
+#undef TYPVAL_ENCODE_SCOPE
+#undef TYPVAL_ENCODE_NAME
+#undef TYPVAL_ENCODE_FIRST_ARG_TYPE
+#undef TYPVAL_ENCODE_FIRST_ARG_NAME
 
 #undef TYPVAL_ENCODE_CONV_RECURSE
 #define TYPVAL_ENCODE_CONV_RECURSE(val, conv_type) \
@@ -469,9 +469,15 @@ TYPVAL_ENCODE_DEFINE_CONV_FUNCTIONS(static, string, garray_T *const, gap)
       return OK; \
     } while (0)
 
-// echo_convert_one_value()
-// encode_vim_to_echo()
-TYPVAL_ENCODE_DEFINE_CONV_FUNCTIONS(, echo, garray_T *const, gap)
+#define TYPVAL_ENCODE_SCOPE
+#define TYPVAL_ENCODE_NAME echo
+#define TYPVAL_ENCODE_FIRST_ARG_TYPE garray_T *const
+#define TYPVAL_ENCODE_FIRST_ARG_NAME gap
+#include "nvim/eval/typval_encode.c.h"
+#undef TYPVAL_ENCODE_SCOPE
+#undef TYPVAL_ENCODE_NAME
+#undef TYPVAL_ENCODE_FIRST_ARG_TYPE
+#undef TYPVAL_ENCODE_FIRST_ARG_NAME
 
 #undef TYPVAL_ENCODE_CONV_RECURSE
 #define TYPVAL_ENCODE_CONV_RECURSE(val, conv_type) \
@@ -489,15 +495,15 @@ TYPVAL_ENCODE_DEFINE_CONV_FUNCTIONS(, echo, garray_T *const, gap)
 #define TYPVAL_ENCODE_ALLOW_SPECIALS true
 
 #undef TYPVAL_ENCODE_CONV_NIL
-#define TYPVAL_ENCODE_CONV_NIL() \
+#define TYPVAL_ENCODE_CONV_NIL(tv) \
       ga_concat(gap, "null")
 
 #undef TYPVAL_ENCODE_CONV_BOOL
-#define TYPVAL_ENCODE_CONV_BOOL(num) \
+#define TYPVAL_ENCODE_CONV_BOOL(tv, num) \
       ga_concat(gap, ((num)? "true": "false"))
 
 #undef TYPVAL_ENCODE_CONV_UNSIGNED_NUMBER
-#define TYPVAL_ENCODE_CONV_UNSIGNED_NUMBER(num) \
+#define TYPVAL_ENCODE_CONV_UNSIGNED_NUMBER(tv, num) \
       do { \
         char numbuf[NUMBUFLEN]; \
         vim_snprintf(numbuf, ARRAY_SIZE(numbuf), "%" PRIu64, (num)); \
@@ -505,7 +511,7 @@ TYPVAL_ENCODE_DEFINE_CONV_FUNCTIONS(, echo, garray_T *const, gap)
       } while (0)
 
 #undef TYPVAL_ENCODE_CONV_FLOAT
-#define TYPVAL_ENCODE_CONV_FLOAT(flt) \
+#define TYPVAL_ENCODE_CONV_FLOAT(tv, flt) \
     do { \
       const float_T flt_ = (flt); \
       switch (fpclassify(flt_)) { \
@@ -694,7 +700,7 @@ static inline int convert_to_json_string(garray_T *const gap,
 }
 
 #undef TYPVAL_ENCODE_CONV_STRING
-#define TYPVAL_ENCODE_CONV_STRING(buf, len) \
+#define TYPVAL_ENCODE_CONV_STRING(tv, buf, len) \
     do { \
       if (convert_to_json_string(gap, (const char *) (buf), (len)) != OK) { \
         return FAIL; \
@@ -702,23 +708,17 @@ static inline int convert_to_json_string(garray_T *const gap,
     } while (0)
 
 #undef TYPVAL_ENCODE_CONV_EXT_STRING
-#define TYPVAL_ENCODE_CONV_EXT_STRING(buf, len, type) \
+#define TYPVAL_ENCODE_CONV_EXT_STRING(tv, buf, len, type) \
     do { \
       xfree(buf); \
       EMSG(_("E474: Unable to convert EXT string to JSON")); \
       return FAIL; \
     } while (0)
 
-#undef TYPVAL_ENCODE_CONV_FUNC
-#define TYPVAL_ENCODE_CONV_FUNC(fun) \
+#undef TYPVAL_ENCODE_CONV_FUNC_START
+#define TYPVAL_ENCODE_CONV_FUNC_START(tv, fun) \
     return conv_error(_("E474: Error while dumping %s, %s: " \
                         "attempt to dump function reference"), \
-                      mpstack, objname)
-
-#undef TYPVAL_ENCODE_CONV_PARTIAL
-#define TYPVAL_ENCODE_CONV_PARTIAL(pt) \
-    return conv_error(_("E474: Error while dumping %s, %s: " \
-                        "attempt to dump partial"), \
                       mpstack, objname)
 
 /// Check whether given key can be used in json_encode()
@@ -759,8 +759,8 @@ bool encode_check_json_key(const typval_T *const tv)
   return true;
 }
 
-#undef TYPVAL_ENCODE_CONV_SPECIAL_DICT_KEY_CHECK
-#define TYPVAL_ENCODE_CONV_SPECIAL_DICT_KEY_CHECK(label, key) \
+#undef TYPVAL_ENCODE_SPECIAL_DICT_KEY_CHECK
+#define TYPVAL_ENCODE_SPECIAL_DICT_KEY_CHECK(label, key) \
     do { \
       if (!encode_check_json_key(&key)) { \
         EMSG(_("E474: Invalid key in special dictionary")); \
@@ -768,17 +768,25 @@ bool encode_check_json_key(const typval_T *const tv)
       } \
     } while (0)
 
-// json_convert_one_value()
-// encode_vim_to_json()
-TYPVAL_ENCODE_DEFINE_CONV_FUNCTIONS(static, json, garray_T *const, gap)
+#define TYPVAL_ENCODE_SCOPE static
+#define TYPVAL_ENCODE_NAME json
+#define TYPVAL_ENCODE_FIRST_ARG_TYPE garray_T *const
+#define TYPVAL_ENCODE_FIRST_ARG_NAME gap
+#include "nvim/eval/typval_encode.c.h"
+#undef TYPVAL_ENCODE_SCOPE
+#undef TYPVAL_ENCODE_NAME
+#undef TYPVAL_ENCODE_FIRST_ARG_TYPE
+#undef TYPVAL_ENCODE_FIRST_ARG_NAME
 
 #undef TYPVAL_ENCODE_CONV_STRING
 #undef TYPVAL_ENCODE_CONV_STR_STRING
 #undef TYPVAL_ENCODE_CONV_EXT_STRING
 #undef TYPVAL_ENCODE_CONV_NUMBER
 #undef TYPVAL_ENCODE_CONV_FLOAT
-#undef TYPVAL_ENCODE_CONV_FUNC
-#undef TYPVAL_ENCODE_CONV_PARTIAL
+#undef TYPVAL_ENCODE_CONV_FUNC_START
+#undef TYPVAL_ENCODE_CONV_FUNC_BEFORE_ARGS
+#undef TYPVAL_ENCODE_CONV_FUNC_BEFORE_SELF
+#undef TYPVAL_ENCODE_CONV_FUNC_END
 #undef TYPVAL_ENCODE_CONV_EMPTY_LIST
 #undef TYPVAL_ENCODE_CONV_LIST_START
 #undef TYPVAL_ENCODE_CONV_EMPTY_DICT
@@ -789,7 +797,7 @@ TYPVAL_ENCODE_DEFINE_CONV_FUNCTIONS(static, json, garray_T *const, gap)
 #undef TYPVAL_ENCODE_CONV_DICT_END
 #undef TYPVAL_ENCODE_CONV_DICT_AFTER_KEY
 #undef TYPVAL_ENCODE_CONV_DICT_BETWEEN_ITEMS
-#undef TYPVAL_ENCODE_CONV_SPECIAL_DICT_KEY_CHECK
+#undef TYPVAL_ENCODE_SPECIAL_DICT_KEY_CHECK
 #undef TYPVAL_ENCODE_CONV_LIST_END
 #undef TYPVAL_ENCODE_CONV_LIST_BETWEEN_ITEMS
 #undef TYPVAL_ENCODE_CONV_RECURSE
@@ -807,7 +815,10 @@ char *encode_tv2string(typval_T *tv, size_t *len)
 {
   garray_T ga;
   ga_init(&ga, (int)sizeof(char), 80);
-  encode_vim_to_string(&ga, tv, "encode_tv2string() argument");
+  const int evs_ret = encode_vim_to_string(&ga, tv,
+                                           "encode_tv2string() argument");
+  (void)evs_ret;
+  assert(evs_ret == OK);
   did_echo_string_emsg = false;
   if (len != NULL) {
     *len = (size_t) ga.ga_len;
@@ -833,7 +844,9 @@ char *encode_tv2echo(typval_T *tv, size_t *len)
       ga_concat(&ga, tv->vval.v_string);
     }
   } else {
-    encode_vim_to_echo(&ga, tv, ":echo argument");
+    const int eve_ret = encode_vim_to_echo(&ga, tv, ":echo argument");
+    (void)eve_ret;
+    assert(eve_ret == OK);
   }
   if (len != NULL) {
     *len = (size_t) ga.ga_len;
@@ -854,16 +867,19 @@ char *encode_tv2json(typval_T *tv, size_t *len)
 {
   garray_T ga;
   ga_init(&ga, (int)sizeof(char), 80);
-  encode_vim_to_json(&ga, tv, "encode_tv2json() argument");
+  const int evj_ret = encode_vim_to_json(&ga, tv, "encode_tv2json() argument");
+  if (!evj_ret) {
+    ga_clear(&ga);
+  }
   did_echo_string_emsg = false;
   if (len != NULL) {
-    *len = (size_t) ga.ga_len;
+    *len = (size_t)ga.ga_len;
   }
   ga_append(&ga, '\0');
-  return (char *) ga.ga_data;
+  return (char *)ga.ga_data;
 }
 
-#define TYPVAL_ENCODE_CONV_STRING(buf, len) \
+#define TYPVAL_ENCODE_CONV_STRING(tv, buf, len) \
     do { \
       if (buf == NULL) { \
         msgpack_pack_bin(packer, 0); \
@@ -874,7 +890,7 @@ char *encode_tv2json(typval_T *tv, size_t *len)
       } \
     } while (0)
 
-#define TYPVAL_ENCODE_CONV_STR_STRING(buf, len) \
+#define TYPVAL_ENCODE_CONV_STR_STRING(tv, buf, len) \
     do { \
       if (buf == NULL) { \
         msgpack_pack_str(packer, 0); \
@@ -885,7 +901,7 @@ char *encode_tv2json(typval_T *tv, size_t *len)
       } \
     } while (0)
 
-#define TYPVAL_ENCODE_CONV_EXT_STRING(buf, len, type) \
+#define TYPVAL_ENCODE_CONV_EXT_STRING(tv, buf, len, type) \
     do { \
       if (buf == NULL) { \
         msgpack_pack_ext(packer, 0, (int8_t) type); \
@@ -896,35 +912,34 @@ char *encode_tv2json(typval_T *tv, size_t *len)
       } \
     } while (0)
 
-#define TYPVAL_ENCODE_CONV_NUMBER(num) \
-    msgpack_pack_int64(packer, (int64_t) (num))
+#define TYPVAL_ENCODE_CONV_NUMBER(tv, num) \
+    msgpack_pack_int64(packer, (int64_t)(num))
 
-#define TYPVAL_ENCODE_CONV_FLOAT(flt) \
-    msgpack_pack_double(packer, (double) (flt))
+#define TYPVAL_ENCODE_CONV_FLOAT(tv, flt) \
+    msgpack_pack_double(packer, (double)(flt))
 
-#define TYPVAL_ENCODE_CONV_FUNC(fun) \
+#define TYPVAL_ENCODE_CONV_FUNC_START(tv, fun) \
     return conv_error(_("E5004: Error while dumping %s, %s: " \
                         "attempt to dump function reference"), \
                       mpstack, objname)
 
-#define TYPVAL_ENCODE_CONV_PARTIAL(partial) \
-    return conv_error(_("E5004: Error while dumping %s, %s: " \
-                        "attempt to dump partial"), \
-                      mpstack, objname)
+#define TYPVAL_ENCODE_CONV_FUNC_BEFORE_ARGS(tv, len)
+#define TYPVAL_ENCODE_CONV_FUNC_BEFORE_SELF(tv, len)
+#define TYPVAL_ENCODE_CONV_FUNC_END(tv)
 
-#define TYPVAL_ENCODE_CONV_EMPTY_LIST() \
+#define TYPVAL_ENCODE_CONV_EMPTY_LIST(tv) \
     msgpack_pack_array(packer, 0)
 
-#define TYPVAL_ENCODE_CONV_LIST_START(len) \
-    msgpack_pack_array(packer, (size_t) (len))
+#define TYPVAL_ENCODE_CONV_LIST_START(tv, len) \
+    msgpack_pack_array(packer, (size_t)(len))
 
-#define TYPVAL_ENCODE_CONV_EMPTY_DICT() \
+#define TYPVAL_ENCODE_CONV_EMPTY_DICT(tv, dict) \
     msgpack_pack_map(packer, 0)
 
-#define TYPVAL_ENCODE_CONV_NIL() \
+#define TYPVAL_ENCODE_CONV_NIL(tv) \
     msgpack_pack_nil(packer)
 
-#define TYPVAL_ENCODE_CONV_BOOL(num) \
+#define TYPVAL_ENCODE_CONV_BOOL(tv, num) \
     do { \
       if ((num)) { \
         msgpack_pack_true(packer); \
@@ -933,23 +948,23 @@ char *encode_tv2json(typval_T *tv, size_t *len)
       } \
     } while (0)
 
-#define TYPVAL_ENCODE_CONV_UNSIGNED_NUMBER(num) \
+#define TYPVAL_ENCODE_CONV_UNSIGNED_NUMBER(tv, num) \
     msgpack_pack_uint64(packer, (num))
 
-#define TYPVAL_ENCODE_CONV_DICT_START(len) \
-    msgpack_pack_map(packer, (size_t) (len))
+#define TYPVAL_ENCODE_CONV_DICT_START(tv, dict, len) \
+    msgpack_pack_map(packer, (size_t)(len))
 
-#define TYPVAL_ENCODE_CONV_DICT_END()
+#define TYPVAL_ENCODE_CONV_DICT_END(tv, dict)
 
-#define TYPVAL_ENCODE_CONV_DICT_AFTER_KEY()
+#define TYPVAL_ENCODE_CONV_DICT_AFTER_KEY(tv, dict)
 
-#define TYPVAL_ENCODE_CONV_DICT_BETWEEN_ITEMS()
+#define TYPVAL_ENCODE_CONV_DICT_BETWEEN_ITEMS(tv, dict)
 
-#define TYPVAL_ENCODE_CONV_SPECIAL_DICT_KEY_CHECK(label, key)
+#define TYPVAL_ENCODE_SPECIAL_DICT_KEY_CHECK(label, key)
 
-#define TYPVAL_ENCODE_CONV_LIST_END()
+#define TYPVAL_ENCODE_CONV_LIST_END(tv)
 
-#define TYPVAL_ENCODE_CONV_LIST_BETWEEN_ITEMS()
+#define TYPVAL_ENCODE_CONV_LIST_BETWEEN_ITEMS(tv)
 
 #define TYPVAL_ENCODE_CONV_RECURSE(val, conv_type) \
     return conv_error(_("E5005: Unable to dump %s: " \
@@ -958,17 +973,25 @@ char *encode_tv2json(typval_T *tv, size_t *len)
 
 #define TYPVAL_ENCODE_ALLOW_SPECIALS true
 
-// msgpack_convert_one_value()
-// encode_vim_to_msgpack()
-TYPVAL_ENCODE_DEFINE_CONV_FUNCTIONS(, msgpack, msgpack_packer *const, packer)
+#define TYPVAL_ENCODE_SCOPE
+#define TYPVAL_ENCODE_NAME msgpack
+#define TYPVAL_ENCODE_FIRST_ARG_TYPE msgpack_packer *const
+#define TYPVAL_ENCODE_FIRST_ARG_NAME packer
+#include "nvim/eval/typval_encode.c.h"
+#undef TYPVAL_ENCODE_SCOPE
+#undef TYPVAL_ENCODE_NAME
+#undef TYPVAL_ENCODE_FIRST_ARG_TYPE
+#undef TYPVAL_ENCODE_FIRST_ARG_NAME
 
 #undef TYPVAL_ENCODE_CONV_STRING
 #undef TYPVAL_ENCODE_CONV_STR_STRING
 #undef TYPVAL_ENCODE_CONV_EXT_STRING
 #undef TYPVAL_ENCODE_CONV_NUMBER
 #undef TYPVAL_ENCODE_CONV_FLOAT
-#undef TYPVAL_ENCODE_CONV_FUNC
-#undef TYPVAL_ENCODE_CONV_PARTIAL
+#undef TYPVAL_ENCODE_CONV_FUNC_START
+#undef TYPVAL_ENCODE_CONV_FUNC_BEFORE_ARGS
+#undef TYPVAL_ENCODE_CONV_FUNC_BEFORE_SELF
+#undef TYPVAL_ENCODE_CONV_FUNC_END
 #undef TYPVAL_ENCODE_CONV_EMPTY_LIST
 #undef TYPVAL_ENCODE_CONV_LIST_START
 #undef TYPVAL_ENCODE_CONV_EMPTY_DICT
@@ -979,7 +1002,7 @@ TYPVAL_ENCODE_DEFINE_CONV_FUNCTIONS(, msgpack, msgpack_packer *const, packer)
 #undef TYPVAL_ENCODE_CONV_DICT_END
 #undef TYPVAL_ENCODE_CONV_DICT_AFTER_KEY
 #undef TYPVAL_ENCODE_CONV_DICT_BETWEEN_ITEMS
-#undef TYPVAL_ENCODE_CONV_SPECIAL_DICT_KEY_CHECK
+#undef TYPVAL_ENCODE_SPECIAL_DICT_KEY_CHECK
 #undef TYPVAL_ENCODE_CONV_LIST_END
 #undef TYPVAL_ENCODE_CONV_LIST_BETWEEN_ITEMS
 #undef TYPVAL_ENCODE_CONV_RECURSE

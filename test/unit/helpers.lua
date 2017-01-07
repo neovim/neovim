@@ -129,7 +129,7 @@ end
 
 local cstr = ffi.typeof('char[?]')
 local function to_cstr(string)
-  return cstr((string.len(string)) + 1, string)
+  return cstr(#string + 1, string)
 end
 
 -- initialize some global variables, this is still necessary to unit test
