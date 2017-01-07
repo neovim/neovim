@@ -122,6 +122,32 @@ typvalt2lua = function(t, processed)
   end)(t, processed or {}))
 end
 
+local function list_iter(l)
+  local init_s = {
+    idx=0,
+    li=l.lv_first,
+  }
+  local function f(s, _)
+    -- (listitem_T *) NULL is equal to nil, but yet it is not false.
+    if s.li == nil then
+      return nil
+    end
+    local ret_li = s.li
+    s.li = s.li.li_next
+    s.idx = s.idx + 1
+    return s.idx, ret_li
+  end
+  return f, init_s, nil
+end
+
+local function list_items(l)
+  local ret = {}
+  for i, li in list_iter(l) do
+    ret[i] = li
+  end
+  return ret
+end
+
 lst2tbl = function(l, processed)
   if l == nil then
     return null_list
@@ -133,11 +159,8 @@ lst2tbl = function(l, processed)
   end
   local ret = {[type_key]=list_type}
   processed[p_key] = ret
-  local li = l.lv_first
-  -- (listitem_T *) NULL is equal to nil, but yet it is not false.
-  while li ~= nil do
-    ret[#ret + 1] = typvalt2lua(li.li_tv, processed)
-    li = li.li_next
+  for i, li in list_iter(l) do
+    ret[i] = typvalt2lua(li.li_tv, processed)
   end
   if ret[1] then
     ret[type_key] = nil
@@ -324,6 +347,22 @@ lua2typvalt = function(l, processed)
   end
 end
 
+local function void(ptr)
+  return ffi.cast('void*', ptr)
+end
+
+local alloc_logging_helpers = {
+  list = function(l) return {func='calloc', args={1, ffi.sizeof('list_T')}, ret=void(l)} end,
+  li = function(li) return {func='malloc', args={ffi.sizeof('listitem_T')}, ret=void(li)} end,
+  dict = function(d) return {func='malloc', args={ffi.sizeof('dict_T')}, ret=void(d)} end,
+  di = function(di, size)
+    return {func='malloc', args={ffi.offsetof('dictitem_T', 'di_key') + size + 1}, ret=void(di)}
+  end,
+  str = function(s, size) return {func='malloc', args={size + 1}, ret=void(s)} end,
+
+  freed = function(p) return {func='free', args={p and void(p)}} end,
+}
+
 return {
   null_string=null_string,
   null_list=null_list,
@@ -350,5 +389,10 @@ return {
   li_alloc=li_alloc,
 
   dict_iter=dict_iter,
+  list_iter=list_iter,
   first_di=first_di,
+
+  alloc_logging_helpers=alloc_logging_helpers,
+
+  list_items=list_items,
 }
