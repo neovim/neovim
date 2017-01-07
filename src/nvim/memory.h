@@ -1,9 +1,10 @@
 #ifndef NVIM_MEMORY_H
 #define NVIM_MEMORY_H
 
+#include <stdbool.h>  // for bool
 #include <stdint.h>  // for uint8_t
 #include <stddef.h>  // for size_t
-#include <time.h>    // for time_t
+#include <time.h>  // for time_t
 
 /// `malloc()` function signature
 typedef void *(*MemMalloc)(size_t);
