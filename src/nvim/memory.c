@@ -17,14 +17,39 @@
 // Force je_ prefix on jemalloc functions.
 # define JEMALLOC_NO_DEMANGLE
 # include <jemalloc/jemalloc.h>
-# define malloc(size) je_malloc(size)
-# define calloc(count, size) je_calloc(count, size)
-# define realloc(ptr, size) je_realloc(ptr, size)
-# define free(ptr) je_free(ptr)
+#endif
+
+#ifdef UNIT_TESTING
+# define malloc(size) mem_malloc(size)
+# define calloc(count, size) mem_calloc(count, size)
+# define realloc(ptr, size) mem_realloc(ptr, size)
+# define free(ptr) mem_free(ptr)
+# ifdef HAVE_JEMALLOC
+MemMalloc mem_malloc = &je_malloc;
+MemFree mem_free = &je_free;
+MemCalloc mem_calloc = &je_calloc;
+MemRealloc mem_realloc = &je_realloc;
+# else
+MemMalloc mem_malloc = &malloc;
+MemFree mem_free = &free;
+MemCalloc mem_calloc = &calloc;
+MemRealloc mem_realloc = &realloc;
+# endif
+#else
+# ifdef HAVE_JEMALLOC
+#  define malloc(size) je_malloc(size)
+#  define calloc(count, size) je_calloc(count, size)
+#  define realloc(ptr, size) je_realloc(ptr, size)
+#  define free(ptr) je_free(ptr)
+# endif
 #endif
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "memory.c.generated.h"
+#endif
+
+#ifdef EXITFREE
+bool entered_free_all_mem = false;
 #endif
 
 /// Try to free memory. Used when trying to recover from out of memory errors.
@@ -353,15 +378,15 @@ char *xstpncpy(char *restrict dst, const char *restrict src, size_t maxlen)
 size_t xstrlcpy(char *restrict dst, const char *restrict src, size_t size)
   FUNC_ATTR_NONNULL_ALL
 {
-    size_t ret = strlen(src);
+  size_t ret = strlen(src);
 
-    if (size) {
-        size_t len = (ret >= size) ? size - 1 : ret;
-        memcpy(dst, src, len);
-        dst[len] = '\0';
-    }
+  if (size) {
+    size_t len = (ret >= size) ? size - 1 : ret;
+    memcpy(dst, src, len);
+    dst[len] = '\0';
+  }
 
-    return ret;
+  return ret;
 }
 
 /// strdup() wrapper
@@ -371,6 +396,7 @@ size_t xstrlcpy(char *restrict dst, const char *restrict src, size_t size)
 /// @return pointer to a copy of the string
 char *xstrdup(const char *str)
   FUNC_ATTR_MALLOC FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_RET
+  FUNC_ATTR_NONNULL_ALL
 {
   return xmemdupz(str, strlen(str));
 }
@@ -401,6 +427,7 @@ void *xmemrchr(const void *src, uint8_t c, size_t len)
 /// @return pointer to a copy of the string
 char *xstrndup(const char *str, size_t len)
   FUNC_ATTR_MALLOC FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_RET
+  FUNC_ATTR_NONNULL_ALL
 {
   char *p = memchr(str, '\0', len);
   return xmemdupz(str, p ? (size_t)(p - str) : len);

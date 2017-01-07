@@ -123,6 +123,7 @@ function Gcc:init_defines()
   self:define('INIT', {'...'}, '')
   self:define('_GNU_SOURCE')
   self:define('INCLUDE_GENERATED_DECLARATIONS')
+  self:define('UNIT_TESTING')
   -- Needed for FreeBSD
   self:define('_Thread_local', nil, '')
   -- Needed for macOS Sierra

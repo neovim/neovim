@@ -6445,7 +6445,7 @@ void dict_free(dict_T *d) {
  */
 dictitem_T *dictitem_alloc(char_u *key) FUNC_ATTR_NONNULL_RET
 {
-  dictitem_T *di = xmalloc(sizeof(dictitem_T) + STRLEN(key));
+  dictitem_T *di = xmalloc(offsetof(dictitem_T, di_key) + STRLEN(key) + 1);
 #ifndef __clang_analyzer__
   STRCPY(di->di_key, key);
 #endif
@@ -19147,23 +19147,25 @@ static inline void _nothing_conv_func_end(typval_T *const tv, const int copyID)
       } \
     } while (0)
 
-static inline int _nothing_conv_list_start(typval_T *const tv)
+static inline int _nothing_conv_real_list_after_start(
+    typval_T *const tv, MPConvStackVal *const mpsv)
   FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  if (tv == NULL) {
-    return NOTDONE;
-  }
+  assert(tv != NULL);
   tv->v_lock = VAR_UNLOCKED;
   if (tv->vval.v_list->lv_refcount > 1) {
     tv->vval.v_list->lv_refcount--;
     tv->vval.v_list = NULL;
+    mpsv->data.l.li = NULL;
     return OK;
   }
   return NOTDONE;
 }
-#define TYPVAL_ENCODE_CONV_LIST_START(tv, len) \
+#define TYPVAL_ENCODE_CONV_LIST_START(tv, len)
+
+#define TYPVAL_ENCODE_CONV_REAL_LIST_AFTER_START(tv, mpsv) \
     do { \
-      if (_nothing_conv_list_start(tv) != NOTDONE) { \
+      if (_nothing_conv_real_list_after_start(tv, &mpsv) != NOTDONE) { \
         goto typval_encode_stop_converting_one_item; \
       } \
     } while (0)
@@ -19183,9 +19185,9 @@ static inline void _nothing_conv_list_end(typval_T *const tv)
 }
 #define TYPVAL_ENCODE_CONV_LIST_END(tv) _nothing_conv_list_end(tv)
 
-static inline int _nothing_conv_dict_start(typval_T *const tv,
-                                           dict_T **const dictp,
-                                           const void *const nodictvar)
+static inline int _nothing_conv_real_dict_after_start(
+    typval_T *const tv, dict_T **const dictp, const void *const nodictvar,
+    MPConvStackVal *const mpsv)
   FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (tv != NULL) {
@@ -19194,15 +19196,18 @@ static inline int _nothing_conv_dict_start(typval_T *const tv,
   if ((const void *)dictp != nodictvar && (*dictp)->dv_refcount > 1) {
     (*dictp)->dv_refcount--;
     *dictp = NULL;
+    mpsv->data.d.todo = 0;
     return OK;
   }
   return NOTDONE;
 }
-#define TYPVAL_ENCODE_CONV_DICT_START(tv, dict, len) \
+#define TYPVAL_ENCODE_CONV_DICT_START(tv, dict, len)
+
+#define TYPVAL_ENCODE_CONV_REAL_DICT_AFTER_START(tv, dict, mpsv) \
     do { \
-      if (_nothing_conv_dict_start(tv, (dict_T **)&dict, \
-                                   (void *)&TYPVAL_ENCODE_NODICT_VAR) \
-          != NOTDONE) { \
+      if (_nothing_conv_real_dict_after_start( \
+          tv, (dict_T **)&dict, (void *)&TYPVAL_ENCODE_NODICT_VAR, \
+          &mpsv) != NOTDONE) { \
         goto typval_encode_stop_converting_one_item; \
       } \
     } while (0)
@@ -19253,9 +19258,11 @@ static inline void _nothing_conv_dict_end(typval_T *const tv,
 #undef TYPVAL_ENCODE_CONV_EMPTY_LIST
 #undef TYPVAL_ENCODE_CONV_EMPTY_DICT
 #undef TYPVAL_ENCODE_CONV_LIST_START
+#undef TYPVAL_ENCODE_CONV_REAL_LIST_AFTER_START
 #undef TYPVAL_ENCODE_CONV_LIST_BETWEEN_ITEMS
 #undef TYPVAL_ENCODE_CONV_LIST_END
 #undef TYPVAL_ENCODE_CONV_DICT_START
+#undef TYPVAL_ENCODE_CONV_REAL_DICT_AFTER_START
 #undef TYPVAL_ENCODE_SPECIAL_DICT_KEY_CHECK
 #undef TYPVAL_ENCODE_CONV_DICT_AFTER_KEY
 #undef TYPVAL_ENCODE_CONV_DICT_BETWEEN_ITEMS
@@ -21658,9 +21665,12 @@ void func_unref(char_u *name)
     fp = find_func(name);
     if (fp == NULL) {
 #ifdef EXITFREE
-      if (!entered_free_all_mem)  // NOLINT(readability/braces)
-#endif
+      if (!entered_free_all_mem) {
         EMSG2(_(e_intern2), "func_unref()");
+      }
+#else
+      EMSG2(_(e_intern2), "func_unref()");
+#endif
     } else {
       user_func_unref(fp);
     }

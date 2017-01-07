@@ -9,6 +9,12 @@ local neq = global_helpers.neq
 local eq = global_helpers.eq
 local ok = global_helpers.ok
 
+-- C constants.
+local NULL = ffi.cast('void*', 0)
+
+local OK = 1
+local FAIL = 0
+
 -- add some standard header locations
 for _, p in ipairs(Paths.include_paths) do
   Preprocess.add_to_include_path(p)
@@ -118,6 +124,67 @@ local function cppimport(path)
   return cimport(Paths.test_include_path .. '/' .. path)
 end
 
+local function alloc_log_new()
+  local log = {
+    log={},
+    lib=cimport('./src/nvim/memory.h'),
+    original_functions={},
+    null={['\0:is_null']=true},
+  }
+  local allocator_functions = {'malloc', 'free', 'calloc', 'realloc'}
+  function log:save_original_functions()
+    for _, funcname in ipairs(allocator_functions) do
+      self.original_functions[funcname] = self.lib['mem_' .. funcname]
+    end
+  end
+  function log:set_mocks()
+    for _, k in ipairs(allocator_functions) do
+      do
+        local kk = k
+        self.lib['mem_' .. k] = function(...)
+          local log_entry = {func=kk, args={...}}
+          self.log[#self.log + 1] = log_entry
+          if kk == 'free' then
+            self.original_functions[kk](...)
+          else
+            log_entry.ret = self.original_functions[kk](...)
+          end
+          for i, v in ipairs(log_entry.args) do
+            if v == nil then
+              -- XXX This thing thinks that {NULL} ~= {NULL}.
+              log_entry.args[i] = self.null
+            end
+          end
+          if self.hook then self:hook(log_entry) end
+          if log_entry.ret then
+            return log_entry.ret
+          end
+        end
+      end
+    end
+  end
+  function log:clear()
+    self.log = {}
+  end
+  function log:check(exp)
+    eq(exp, self.log)
+    self:clear()
+  end
+  function log:restore_original_functions()
+    for k, v in pairs(self.original_functions) do
+      self.lib['mem_' .. k] = v
+    end
+  end
+  function log:before_each()
+    log:save_original_functions()
+    log:set_mocks()
+  end
+  function log:after_each()
+    log:restore_original_functions()
+  end
+  return log
+end
+
 cimport('./src/nvim/types.h')
 
 -- take a pointer to a C-allocated string and return an interned
@@ -142,12 +209,6 @@ do
   main.event_init()
 end
 
--- C constants.
-local NULL = ffi.cast('void*', 0)
-
-local OK = 1
-local FAIL = 0
-
 return {
   cimport = cimport,
   cppimport = cppimport,
@@ -161,5 +222,6 @@ return {
   to_cstr = to_cstr,
   NULL = NULL,
   OK = OK,
-  FAIL = FAIL
+  FAIL = FAIL,
+  alloc_log_new = alloc_log_new,
 }

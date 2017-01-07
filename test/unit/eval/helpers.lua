@@ -5,7 +5,8 @@ local to_cstr = helpers.to_cstr
 local ffi = helpers.ffi
 local eq = helpers.eq
 
-local eval = cimport('./src/nvim/eval.h', './src/nvim/eval_defs.h')
+local eval = cimport('./src/nvim/eval.h', './src/nvim/eval_defs.h',
+                     './src/nvim/hashtab.h')
 
 local null_string = {[true]='NULL string'}
 local null_list = {[true]='NULL list'}
@@ -122,6 +123,32 @@ typvalt2lua = function(t, processed)
   end)(t, processed or {}))
 end
 
+local function list_iter(l)
+  local init_s = {
+    idx=0,
+    li=l.lv_first,
+  }
+  local function f(s, _)
+    -- (listitem_T *) NULL is equal to nil, but yet it is not false.
+    if s.li == nil then
+      return nil
+    end
+    local ret_li = s.li
+    s.li = s.li.li_next
+    s.idx = s.idx + 1
+    return s.idx, ret_li
+  end
+  return f, init_s, nil
+end
+
+local function list_items(l)
+  local ret = {}
+  for i, li in list_iter(l) do
+    ret[i] = li
+  end
+  return ret
+end
+
 lst2tbl = function(l, processed)
   if l == nil then
     return null_list
@@ -133,11 +160,8 @@ lst2tbl = function(l, processed)
   end
   local ret = {[type_key]=list_type}
   processed[p_key] = ret
-  local li = l.lv_first
-  -- (listitem_T *) NULL is equal to nil, but yet it is not false.
-  while li ~= nil do
-    ret[#ret + 1] = typvalt2lua(li.li_tv, processed)
-    li = li.li_next
+  for i, li in list_iter(l) do
+    ret[i] = typvalt2lua(li.li_tv, processed)
   end
   if ret[1] then
     ret[type_key] = nil
@@ -145,7 +169,9 @@ lst2tbl = function(l, processed)
   return ret
 end
 
-local function dict_iter(d)
+local hi_key_removed = eval._hash_key_removed()
+
+local function dict_iter(d, return_hi)
   local init_s = {
     todo=d.dv_hashtab.ht_used,
     hi=d.dv_hashtab.ht_array,
@@ -153,13 +179,18 @@ local function dict_iter(d)
   local function f(s, _)
     if s.todo == 0 then return nil end
     while s.todo > 0 do
-      if s.hi.hi_key ~= nil and s.hi ~= eval.hash_removed then
+      if s.hi.hi_key ~= nil and s.hi.hi_key ~= hi_key_removed then
         local key = ffi.string(s.hi.hi_key)
-        local di = ffi.cast('dictitem_T*',
-                            s.hi.hi_key - ffi.offsetof('dictitem_T', 'di_key'))
+        local ret
+        if return_hi then
+          ret = s.hi
+        else
+          ret = ffi.cast('dictitem_T*',
+                         s.hi.hi_key - ffi.offsetof('dictitem_T', 'di_key'))
+        end
         s.todo = s.todo - 1
         s.hi = s.hi + 1
-        return key, di
+        return key, ret
       end
       s.hi = s.hi + 1
     end
@@ -170,6 +201,16 @@ end
 local function first_di(d)
   local f, init_s, v = dict_iter(d)
   return select(2, f(init_s, v))
+end
+
+local function dict_items(d)
+  local ret = {[0]=0}
+  for k, hi in dict_iter(d) do
+    ret[k] = hi
+    ret[0] = ret[0] + 1
+    ret[ret[0]] = hi
+  end
+  return ret
 end
 
 dct2tbl = function(d, processed)
@@ -324,6 +365,22 @@ lua2typvalt = function(l, processed)
   end
 end
 
+local function void(ptr)
+  return ffi.cast('void*', ptr)
+end
+
+local alloc_logging_helpers = {
+  list = function(l) return {func='calloc', args={1, ffi.sizeof('list_T')}, ret=void(l)} end,
+  li = function(li) return {func='malloc', args={ffi.sizeof('listitem_T')}, ret=void(li)} end,
+  dict = function(d) return {func='malloc', args={ffi.sizeof('dict_T')}, ret=void(d)} end,
+  di = function(di, size)
+    return {func='malloc', args={ffi.offsetof('dictitem_T', 'di_key') + size + 1}, ret=void(di)}
+  end,
+  str = function(s, size) return {func='malloc', args={size + 1}, ret=void(s)} end,
+
+  freed = function(p) return {func='free', args={p and void(p)}} end,
+}
+
 return {
   null_string=null_string,
   null_list=null_list,
@@ -350,5 +407,11 @@ return {
   li_alloc=li_alloc,
 
   dict_iter=dict_iter,
+  list_iter=list_iter,
   first_di=first_di,
+
+  alloc_logging_helpers=alloc_logging_helpers,
+
+  list_items=list_items,
+  dict_items=dict_items,
 }

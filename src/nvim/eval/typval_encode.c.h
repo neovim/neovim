@@ -129,6 +129,16 @@
 ///             point to a special dictionary.
 /// @param  len  List length. Is an expression which evaluates to an integer.
 
+/// @def TYPVAL_ENCODE_CONV_REAL_LIST_AFTER_START
+/// @brief Macros used after pushing list onto the stack
+///
+/// Only used for real list_T* lists, not for special dictionaries or partial
+/// arguments.
+///
+/// @param  tv  Pointer to typval where value is stored. May be NULL. May
+///             point to a special dictionary.
+/// @param  mpsv  Pushed MPConvStackVal value.
+
 /// @def TYPVAL_ENCODE_CONV_LIST_BETWEEN_ITEMS
 /// @brief Macros used after finishing converting non-last list item
 ///
@@ -142,12 +152,23 @@
 /// @def TYPVAL_ENCODE_CONV_DICT_START
 /// @brief Macros used before starting to convert non-empty dictionary
 ///
+/// Only used for real dict_T* dictionaries, not for special dictionaries. Also
+/// used for partial self dictionary.
+///
 /// @param  tv  Pointer to typval where dictionary is stored. May be NULL. May
 ///             point to a special dictionary.
 /// @param  dict  Converted dictionary, lvalue or #TYPVAL_ENCODE_NODICT_VAR
 ///               (for dictionaries represented as special lists).
 /// @param  len  Dictionary length. Is an expression which evaluates to an
 ///              integer.
+
+/// @def TYPVAL_ENCODE_CONV_REAL_DICT_AFTER_START
+/// @brief Macros used after pushing dictionary onto the stack
+///
+/// @param  tv  Pointer to typval where dictionary is stored. May be NULL.
+///             May not point to a special dictionary.
+/// @param  dict  Converted dictionary, lvalue.
+/// @param  mpsv  Pushed MPConvStackVal value.
 
 /// @def TYPVAL_ENCODE_SPECIAL_DICT_KEY_CHECK
 /// @brief Macros used to check special dictionary key
@@ -354,6 +375,7 @@ static int _TYPVAL_ENCODE_CONVERT_ONE_VALUE(
           },
         },
       }));
+      TYPVAL_ENCODE_CONV_REAL_LIST_AFTER_START(tv, _mp_last(*mpstack));
       break;
     }
     case VAR_SPECIAL: {
@@ -564,6 +586,8 @@ _convert_one_value_regular_dict:
           },
         },
       }));
+      TYPVAL_ENCODE_CONV_REAL_DICT_AFTER_START(tv, tv->vval.v_dict,
+                                               _mp_last(*mpstack));
       break;
     }
     case VAR_UNKNOWN: {
@@ -732,6 +756,8 @@ typval_encode_stop_converting_one_item:
                   },
                 },
               }));
+              TYPVAL_ENCODE_CONV_REAL_DICT_AFTER_START(NULL, pt->pt_dict,
+                                                       _mp_last(mpstack));
             } else {
               TYPVAL_ENCODE_CONV_FUNC_BEFORE_SELF(tv, -1);
             }

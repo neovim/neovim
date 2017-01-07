@@ -36,6 +36,8 @@
 # include "hashtab.c.generated.h"
 #endif
 
+char hash_removed;
+
 /// Initialize an empty hash table.
 void hash_init(hashtab_T *ht)
 {
@@ -379,4 +381,14 @@ hash_T hash_hash(char_u *key)
   }
 
   return hash;
+}
+
+/// Function to get HI_KEY_REMOVED value
+///
+/// Used for testing because luajit ffi does not allow getting addresses of
+/// globals.
+const char_u *_hash_key_removed(void)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  return HI_KEY_REMOVED;
 }
