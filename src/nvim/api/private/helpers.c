@@ -387,6 +387,8 @@ static inline void typval_encode_list_start(EncodedData *const edata,
 #define TYPVAL_ENCODE_CONV_LIST_START(tv, len) \
     typval_encode_list_start(edata, (size_t)(len))
 
+#define TYPVAL_ENCODE_CONV_REAL_LIST_AFTER_START(tv, mpsv)
+
 static inline void typval_encode_between_list_items(EncodedData *const edata)
   FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_NONNULL_ALL
 {
@@ -499,6 +501,7 @@ static inline void typval_encode_dict_end(EncodedData *const edata)
 #undef TYPVAL_ENCODE_CONV_FUNC_END
 #undef TYPVAL_ENCODE_CONV_EMPTY_LIST
 #undef TYPVAL_ENCODE_CONV_LIST_START
+#undef TYPVAL_ENCODE_CONV_REAL_LIST_AFTER_START
 #undef TYPVAL_ENCODE_CONV_EMPTY_DICT
 #undef TYPVAL_ENCODE_CONV_NIL
 #undef TYPVAL_ENCODE_CONV_BOOL

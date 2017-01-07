@@ -19147,23 +19147,25 @@ static inline void _nothing_conv_func_end(typval_T *const tv, const int copyID)
       } \
     } while (0)
 
-static inline int _nothing_conv_list_start(typval_T *const tv)
+static inline int _nothing_conv_real_list_after_start(
+    typval_T *const tv, MPConvStackVal *const mpsv)
   FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  if (tv == NULL) {
-    return NOTDONE;
-  }
+  assert(tv != NULL);
   tv->v_lock = VAR_UNLOCKED;
   if (tv->vval.v_list->lv_refcount > 1) {
     tv->vval.v_list->lv_refcount--;
     tv->vval.v_list = NULL;
+    mpsv->data.l.li = NULL;
     return OK;
   }
   return NOTDONE;
 }
-#define TYPVAL_ENCODE_CONV_LIST_START(tv, len) \
+#define TYPVAL_ENCODE_CONV_LIST_START(tv, len)
+
+#define TYPVAL_ENCODE_CONV_REAL_LIST_AFTER_START(tv, mpsv) \
     do { \
-      if (_nothing_conv_list_start(tv) != NOTDONE) { \
+      if (_nothing_conv_real_list_after_start(tv, &mpsv) != NOTDONE) { \
         goto typval_encode_stop_converting_one_item; \
       } \
     } while (0)
@@ -19253,6 +19255,7 @@ static inline void _nothing_conv_dict_end(typval_T *const tv,
 #undef TYPVAL_ENCODE_CONV_EMPTY_LIST
 #undef TYPVAL_ENCODE_CONV_EMPTY_DICT
 #undef TYPVAL_ENCODE_CONV_LIST_START
+#undef TYPVAL_ENCODE_CONV_REAL_LIST_AFTER_START
 #undef TYPVAL_ENCODE_CONV_LIST_BETWEEN_ITEMS
 #undef TYPVAL_ENCODE_CONV_LIST_END
 #undef TYPVAL_ENCODE_CONV_DICT_START

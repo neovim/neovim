@@ -129,6 +129,16 @@
 ///             point to a special dictionary.
 /// @param  len  List length. Is an expression which evaluates to an integer.
 
+/// @def TYPVAL_ENCODE_CONV_REAL_LIST_AFTER_START
+/// @brief Macros used after pushing list onto the stack
+///
+/// Only used for real list_T* lists, not for special dictionaries or partial
+/// arguments.
+///
+/// @param  tv  Pointer to typval where value is stored. May be NULL. May
+///             point to a special dictionary.
+/// @param  mpsv  Pushed MPConvStackVal value.
+
 /// @def TYPVAL_ENCODE_CONV_LIST_BETWEEN_ITEMS
 /// @brief Macros used after finishing converting non-last list item
 ///
@@ -354,6 +364,7 @@ static int _TYPVAL_ENCODE_CONVERT_ONE_VALUE(
           },
         },
       }));
+      TYPVAL_ENCODE_CONV_REAL_LIST_AFTER_START(tv, _mp_last(*mpstack));
       break;
     }
     case VAR_SPECIAL: {

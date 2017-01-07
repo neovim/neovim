@@ -369,6 +369,8 @@ int encode_read_from_list(ListReaderState *const state, char *const buf,
 #define TYPVAL_ENCODE_CONV_LIST_START(tv, len) \
     ga_append(gap, '[')
 
+#define TYPVAL_ENCODE_CONV_REAL_LIST_AFTER_START(tv, mpsv)
+
 #define TYPVAL_ENCODE_CONV_EMPTY_DICT(tv, dict) \
     ga_concat(gap, "{}")
 
@@ -789,6 +791,7 @@ bool encode_check_json_key(const typval_T *const tv)
 #undef TYPVAL_ENCODE_CONV_FUNC_END
 #undef TYPVAL_ENCODE_CONV_EMPTY_LIST
 #undef TYPVAL_ENCODE_CONV_LIST_START
+#undef TYPVAL_ENCODE_CONV_REAL_LIST_AFTER_START
 #undef TYPVAL_ENCODE_CONV_EMPTY_DICT
 #undef TYPVAL_ENCODE_CONV_NIL
 #undef TYPVAL_ENCODE_CONV_BOOL
@@ -933,6 +936,8 @@ char *encode_tv2json(typval_T *tv, size_t *len)
 #define TYPVAL_ENCODE_CONV_LIST_START(tv, len) \
     msgpack_pack_array(packer, (size_t)(len))
 
+#define TYPVAL_ENCODE_CONV_REAL_LIST_AFTER_START(tv, mpsv)
+
 #define TYPVAL_ENCODE_CONV_EMPTY_DICT(tv, dict) \
     msgpack_pack_map(packer, 0)
 
@@ -994,6 +999,7 @@ char *encode_tv2json(typval_T *tv, size_t *len)
 #undef TYPVAL_ENCODE_CONV_FUNC_END
 #undef TYPVAL_ENCODE_CONV_EMPTY_LIST
 #undef TYPVAL_ENCODE_CONV_LIST_START
+#undef TYPVAL_ENCODE_CONV_REAL_LIST_AFTER_START
 #undef TYPVAL_ENCODE_CONV_EMPTY_DICT
 #undef TYPVAL_ENCODE_CONV_NIL
 #undef TYPVAL_ENCODE_CONV_BOOL
