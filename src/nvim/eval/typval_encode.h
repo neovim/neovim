@@ -108,37 +108,38 @@ static inline size_t tv_strlen(const typval_T *const tv)
       } \
     } while (0)
 
-#define _TYPVAL_ENCODE_CHECK_SELF_REFERENCE_INNER_2(name) \
-    _typval_encode_##name##_check_self_reference
-#define _TYPVAL_ENCODE_CHECK_SELF_REFERENCE_INNER(name) \
-    _TYPVAL_ENCODE_CHECK_SELF_REFERENCE_INNER_2(name)
+#define _TYPVAL_ENCODE_FUNC_NAME_INNER_2(pref, name, suf) \
+    pref##name##suf
+#define _TYPVAL_ENCODE_FUNC_NAME_INNER(pref, name, suf) \
+    _TYPVAL_ENCODE_FUNC_NAME_INNER_2(pref, name, suf)
+
+/// Construct function name, possibly using macros
+///
+/// Is used to expand macros that may appear in arguments.
+///
+/// @note Expands all arguments, even if only one is needed.
+///
+/// @param[in]  pref  Prefix.
+/// @param[in]  suf  Suffix.
+///
+/// @return Concat: pref + #TYPVAL_ENCODE_NAME + suf.
+#define _TYPVAL_ENCODE_FUNC_NAME(pref, suf) \
+    _TYPVAL_ENCODE_FUNC_NAME_INNER(pref, TYPVAL_ENCODE_NAME, suf)
 
 /// Self reference checker function name
 #define _TYPVAL_ENCODE_CHECK_SELF_REFERENCE \
-    _TYPVAL_ENCODE_CHECK_SELF_REFERENCE_INNER(TYPVAL_ENCODE_NAME)
-
-#define _TYPVAL_ENCODE_ENCODE_INNER_2(name) encode_vim_to_##name
-#define _TYPVAL_ENCODE_ENCODE_INNER(name) _TYPVAL_ENCODE_ENCODE_INNER_2(name)
+    _TYPVAL_ENCODE_FUNC_NAME(_typval_encode_, _check_self_reference)
 
 /// Entry point function name
-#define _TYPVAL_ENCODE_ENCODE _TYPVAL_ENCODE_ENCODE_INNER(TYPVAL_ENCODE_NAME)
-
-#define _TYPVAL_ENCODE_CONVERT_ONE_VALUE_INNER_2(name) \
-    _typval_encode_##name##_convert_one_value
-#define _TYPVAL_ENCODE_CONVERT_ONE_VALUE_INNER(name) \
-    _TYPVAL_ENCODE_CONVERT_ONE_VALUE_INNER_2(name)
+#define _TYPVAL_ENCODE_ENCODE \
+    _TYPVAL_ENCODE_FUNC_NAME(encode_vim_to_, )
 
 /// Name of the …convert_one_value function
 #define _TYPVAL_ENCODE_CONVERT_ONE_VALUE \
-    _TYPVAL_ENCODE_CONVERT_ONE_VALUE_INNER(TYPVAL_ENCODE_NAME)
-
-#define _TYPVAL_ENCODE_NODICT_VAR_INNER_2(name) \
-    _typval_encode_##name##_nodict_var
-#define _TYPVAL_ENCODE_NODICT_VAR_INNER(name) \
-    _TYPVAL_ENCODE_NODICT_VAR_INNER_2(name)
+    _TYPVAL_ENCODE_FUNC_NAME(_typval_encode_, _convert_one_value)
 
 /// Name of the dummy const dict_T *const variable
 #define TYPVAL_ENCODE_NODICT_VAR \
-    _TYPVAL_ENCODE_NODICT_VAR_INNER(TYPVAL_ENCODE_NAME)
+    _TYPVAL_ENCODE_FUNC_NAME(_typval_encode_, _nodict_var)
 
 #endif  // NVIM_EVAL_TYPVAL_ENCODE_H
