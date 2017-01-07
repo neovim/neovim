@@ -48,6 +48,11 @@ MemRealloc mem_realloc = &realloc;
 # include "memory.c.generated.h"
 #endif
 
+#ifdef EXITFREE
+/// Indicates that free_all_mem function was or is running
+bool entered_free_all_mem = false;
+#endif
+
 /// Try to free memory. Used when trying to recover from out of memory errors.
 /// @see {xmalloc}
 void try_to_free_memory(void)
@@ -511,13 +516,13 @@ void time_to_bytes(time_t time_, uint8_t buf[8])
 void free_all_mem(void)
 {
   buf_T       *buf, *nextbuf;
-  static bool entered = false;
 
-  /* When we cause a crash here it is caught and Vim tries to exit cleanly.
-   * Don't try freeing everything again. */
-  if (entered)
+  // When we cause a crash here it is caught and Vim tries to exit cleanly.
+  // Don't try freeing everything again.
+  if (entered_free_all_mem) {
     return;
-  entered = true;
+  }
+  entered_free_all_mem = true;
 
   // Don't want to trigger autocommands from here on.
   block_autocmds();

@@ -15,6 +15,10 @@ extern MemFree mem_free;
 extern MemCalloc mem_calloc;
 extern MemRealloc mem_realloc;
 
+#ifdef EXITFREE
+extern bool entered_free_all_mem;
+#endif
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "memory.h.generated.h"
 #endif
