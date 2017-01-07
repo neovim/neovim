@@ -40,6 +40,8 @@ func Test_cscope1()
       call assert_true(0)
     endtry
     call assert_fails('cscope add Xcscope.out', 'E568')
+    call assert_fails('cscope add doesnotexist.out', 'E563')
+    call assert_fails('cscope kill 2', 'E261')
     " Test 1: Find this C-Symbol
     let a=execute('cscope find s main')
     " Test 1.1 test where it moves the cursor
@@ -89,9 +91,12 @@ func Test_cscope1()
     call assert_equal(['','"Xmemfile_test.c" 143L, 3137C','(1 of 1): <<global>> #include <assert.h>'], split(a, '\n', 1))
     call assert_equal('#include <assert.h>', getline('.'))
 
-    " Test 9: Find places where this symbol is assigned a value
+    " Test 9: Invalid find command
+    call assert_fails('cs find x', 'E560')
+
+    " Test 10: Find places where this symbol is assigned a value
     " this needs a cscope >= 15.8
-    " unfortunatly, Travis has cscope version 15.7
+    " unfortunately, Travis has cscope version 15.7
     let cscope_version=systemlist('cscope --version')[0]
     let cs_version=str2float(matchstr(cscope_version, '\d\+\(\.\d\+\)\?'))
     if cs_version >= 15.8
@@ -106,12 +111,12 @@ func Test_cscope1()
       call assert_equal('	item = mf_hash_find(&ht, key);', getline('.'))
     endif
 
-    " Test 10: leading whitespace is not removed for cscope find text
+    " Test 11: leading whitespace is not removed for cscope find text
     let a=execute('cscope find t     test_mf_hash')
     call assert_equal(['', '(1 of 1): <<<unknown>>>     test_mf_hash();'], split(a, '\n', 1))
     call assert_equal('    test_mf_hash();', getline('.'))
 
-    " Test 11: cscope help
+    " Test 12: cscope help
     let a=execute('cscope help')
     call assert_match('^cscope commands:\n', a)
     call assert_match('\nadd  :', a)
@@ -121,20 +126,44 @@ func Test_cscope1()
     call assert_match('\nreset: Reinit all connections', a)
     call assert_match('\nshow : Show connections', a)
 
-    " Test 12: reset connections
+    " Test 13: reset connections
     let a=execute('cscope reset')
     call assert_match('\nAdded cscope database.*Xcscope.out (#0)', a)
     call assert_match('\nAll cscope databases reset', a)
 
-    " Test 13: cscope show
+    " Test 14: cscope show
     let a=execute('cscope show')
     call assert_match('\n 0 \d\+.*Xcscope.out\s*<none>', a)
 
-    " Test 14: 'csprg' option
+    " Test 15: cstag and 'csto' option
+    set csto=0
+    let a=execute('cstag TEST_COUNT')
+    call assert_match('(1 of 1): <<TEST_COUNT>> #define TEST_COUNT 50000', a)
+    call assert_equal('#define TEST_COUNT 50000', getline('.'))
+    set csto=1
+    let a=execute('cstag index_to_key')
+    call assert_match('(1 of 1): <<index_to_key>> #define index_to_key(i) ((i) ^ 15167)', a)
+    call assert_equal('#define index_to_key(i) ((i) ^ 15167)', getline('.'))
+    call assert_fails('cstag xxx', 'E257')
+    call assert_fails('cstag', 'E562')
+
+    " Test 15: 'csprg' option
     call assert_equal('cscope', &csprg)
+
+    " Test 16: 'cst' option
+    set cst
+    let a=execute('tag TEST_COUNT')
+    call assert_match('(1 of 1): <<TEST_COUNT>> #define TEST_COUNT 50000', a)
+    call assert_equal('#define TEST_COUNT 50000', getline('.'))
+    set nocst
+    call assert_fails('tag TEST_COUNT', 'E426')
 
     " CleanUp
     call CscopeSetupOrClean(0)
+
+    " cscope command should fail after killing scope connection.
+    call assert_fails('cscope find s main', 'E567')
+
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab
