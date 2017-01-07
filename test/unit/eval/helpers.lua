@@ -5,7 +5,8 @@ local to_cstr = helpers.to_cstr
 local ffi = helpers.ffi
 local eq = helpers.eq
 
-local eval = cimport('./src/nvim/eval.h', './src/nvim/eval_defs.h')
+local eval = cimport('./src/nvim/eval.h', './src/nvim/eval_defs.h',
+                     './src/nvim/hashtab.h')
 
 local null_string = {[true]='NULL string'}
 local null_list = {[true]='NULL list'}
@@ -168,7 +169,9 @@ lst2tbl = function(l, processed)
   return ret
 end
 
-local function dict_iter(d)
+local hi_key_removed = eval._hash_key_removed()
+
+local function dict_iter(d, return_hi)
   local init_s = {
     todo=d.dv_hashtab.ht_used,
     hi=d.dv_hashtab.ht_array,
@@ -176,13 +179,18 @@ local function dict_iter(d)
   local function f(s, _)
     if s.todo == 0 then return nil end
     while s.todo > 0 do
-      if s.hi.hi_key ~= nil and s.hi ~= eval.hash_removed then
+      if s.hi.hi_key ~= nil and s.hi.hi_key ~= hi_key_removed then
         local key = ffi.string(s.hi.hi_key)
-        local di = ffi.cast('dictitem_T*',
-                            s.hi.hi_key - ffi.offsetof('dictitem_T', 'di_key'))
+        local ret
+        if return_hi then
+          ret = s.hi
+        else
+          ret = ffi.cast('dictitem_T*',
+                         s.hi.hi_key - ffi.offsetof('dictitem_T', 'di_key'))
+        end
         s.todo = s.todo - 1
         s.hi = s.hi + 1
-        return key, di
+        return key, ret
       end
       s.hi = s.hi + 1
     end
@@ -193,6 +201,16 @@ end
 local function first_di(d)
   local f, init_s, v = dict_iter(d)
   return select(2, f(init_s, v))
+end
+
+local function dict_items(d)
+  local ret = {[0]=0}
+  for k, hi in dict_iter(d) do
+    ret[k] = hi
+    ret[0] = ret[0] + 1
+    ret[ret[0]] = hi
+  end
+  return ret
 end
 
 dct2tbl = function(d, processed)
@@ -395,4 +413,5 @@ return {
   alloc_logging_helpers=alloc_logging_helpers,
 
   list_items=list_items,
+  dict_items=dict_items,
 }

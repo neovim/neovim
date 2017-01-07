@@ -6445,7 +6445,7 @@ void dict_free(dict_T *d) {
  */
 dictitem_T *dictitem_alloc(char_u *key) FUNC_ATTR_NONNULL_RET
 {
-  dictitem_T *di = xmalloc(sizeof(dictitem_T) + STRLEN(key));
+  dictitem_T *di = xmalloc(offsetof(dictitem_T, di_key) + STRLEN(key) + 1);
 #ifndef __clang_analyzer__
   STRCPY(di->di_key, key);
 #endif
