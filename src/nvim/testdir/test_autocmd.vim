@@ -64,6 +64,24 @@ function Test_bufunload()
   augroup! test_bufunload_group
 endfunc
 
+" SEGV occurs in older versions.  (At least 7.4.2005 or older)
+function Test_autocmd_bufunload_with_tabnext()
+  tabedit
+  tabfirst
+
+  augroup test_autocmd_bufunload_with_tabnext_group
+    autocmd!
+    autocmd BufUnload <buffer> tabnext
+  augroup END
+
+  quit
+  call assert_equal(2, tabpagenr('$'))
+
+  augroup! test_autocmd_bufunload_with_tabnext_group
+  tablast
+  quit
+endfunc
+
 func s:AddAnAutocmd()
   augroup vimBarTest
     au BufReadCmd * echo 'hello'
