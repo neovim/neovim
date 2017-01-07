@@ -49,7 +49,6 @@ MemRealloc mem_realloc = &realloc;
 #endif
 
 #ifdef EXITFREE
-/// Indicates that free_all_mem function was or is running
 bool entered_free_all_mem = false;
 #endif
 
