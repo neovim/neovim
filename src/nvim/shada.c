@@ -148,6 +148,9 @@ KHASH_SET_INIT_STR(strset)
 /// Common prefix for all ignorable “write” errors
 #define WERR "E574: "
 
+/// Callback function for add_search_pattern
+typedef void (*SearchPatternGetter)(SearchPattern *);
+
 /// Flags for shada_read_file and children
 typedef enum {
   kShaDaWantInfo = 1,       ///< Load non-mark information
@@ -2323,8 +2326,9 @@ static inline ShaDaWriteResult shada_read_when_writing(
 /// @param[in]  removable_bufs  Buffers which are ignored
 ///
 /// @return  ShadaEntry  List of buffers to save, kSDItemBufferList entry.
-static ShadaEntry shada_get_buflist(khash_t(bufset) *const removable_bufs)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+static inline ShadaEntry shada_get_buflist(
+    khash_t(bufset) *const removable_bufs)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_ALWAYS_INLINE
 {
   int max_bufs = get_shada_parameter('%');
   size_t buf_count = 0;
@@ -2366,6 +2370,62 @@ static ShadaEntry shada_get_buflist(khash_t(bufset) *const removable_bufs)
 
 #undef IGNORE_BUF
   return buflist_entry;
+}
+
+/// Save search pattern to PossiblyFreedShadaEntry
+///
+/// @param[out]  ret_pse  Location where result will be saved.
+/// @param[in]  get_pattern  Function used to get pattern.
+/// @param[in]  is_substitute_pattern  True if pattern in question is substitute
+///                                    pattern. Also controls whether some
+///                                    fields should be initialized to default
+///                                    or values from get_pattern.
+/// @param[in]  search_last_used  Result of search_was_last_used().
+/// @param[in]  search_highlighted  True if search pattern was highlighted by
+///                                 &hlsearch and this information should be
+///                                 saved.
+static inline void add_search_pattern(PossiblyFreedShadaEntry *const ret_pse,
+                                      const SearchPatternGetter get_pattern,
+                                      const bool is_substitute_pattern,
+                                      const bool search_last_used,
+                                      const bool search_highlighted)
+  FUNC_ATTR_ALWAYS_INLINE
+{
+  const ShadaEntry defaults = sd_default_values[kSDItemSearchPattern];
+  SearchPattern pat;
+  get_pattern(&pat);
+  if (pat.pat != NULL) {
+    *ret_pse = (PossiblyFreedShadaEntry) {
+      .can_free_entry = false,
+      .data = {
+        .type = kSDItemSearchPattern,
+        .timestamp = pat.timestamp,
+        .data = {
+          .search_pattern = {
+            .magic = pat.magic,
+            .smartcase = !pat.no_scs,
+            .has_line_offset = (is_substitute_pattern
+                                ? defaults.data.search_pattern.has_line_offset
+                                : pat.off.line),
+            .place_cursor_at_end = (
+                is_substitute_pattern
+                ? defaults.data.search_pattern.place_cursor_at_end
+                : pat.off.end),
+            .offset = (is_substitute_pattern
+                       ? defaults.data.search_pattern.offset
+                       : pat.off.off),
+            .is_last_used = (is_substitute_pattern ^ search_last_used),
+            .is_substitute_pattern = is_substitute_pattern,
+            .highlighted = ((is_substitute_pattern ^ search_last_used)
+                            && search_highlighted),
+            .pat = (char *)pat.pat,
+            .additional_data = pat.additional_data,
+            .search_backward = (!is_substitute_pattern && pat.off.dir == '?'),
+          }
+        }
+      }
+    };
+  }
 }
 
 /// Write ShaDa file
@@ -2529,45 +2589,14 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer,
   const bool search_highlighted = !(no_hlsearch
                                     || find_shada_parameter('h') != NULL);
   const bool search_last_used = search_was_last_used();
-#define ADD_SEARCH_PAT(func, wms_attr, hlo, pcae, o, is_sub) \
-  do { \
-    SearchPattern pat; \
-    func(&pat); \
-    if (pat.pat != NULL) { \
-      wms->wms_attr = (PossiblyFreedShadaEntry) { \
-        .can_free_entry = false, \
-        .data = { \
-          .type = kSDItemSearchPattern, \
-          .timestamp = pat.timestamp, \
-          .data = { \
-            .search_pattern = { \
-              .magic = pat.magic, \
-              .smartcase = !pat.no_scs, \
-              .has_line_offset = hlo, \
-              .place_cursor_at_end = pcae, \
-              .offset = o, \
-              .is_last_used = (is_sub ^ search_last_used), \
-              .is_substitute_pattern = is_sub, \
-              .highlighted = ((is_sub ^ search_last_used) \
-                              && search_highlighted), \
-              .pat = (char *) pat.pat, \
-              .additional_data = pat.additional_data, \
-              .search_backward = (!is_sub && pat.off.dir == '?'), \
-            } \
-          } \
-        } \
-      }; \
-    } \
-  } while (0)
 
   // Initialize search pattern
-  ADD_SEARCH_PAT(get_search_pattern, search_pattern, pat.off.line, \
-                 pat.off.end, pat.off.off, false);
+  add_search_pattern(&wms->search_pattern, &get_search_pattern, false,
+                     search_last_used, search_highlighted);
 
   // Initialize substitute search pattern
-  ADD_SEARCH_PAT(get_substitute_pattern, sub_search_pattern, false, false, 0,
-                 true);
-#undef ADD_SEARCH_PAT
+  add_search_pattern(&wms->sub_search_pattern, &get_substitute_pattern, true,
+                     search_last_used, search_highlighted);
 
   // Initialize substitute replacement string
   {
@@ -2590,10 +2619,12 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer,
 
   // Initialize jump list
   const void *jump_iter = NULL;
+  setpcmark();
+  cleanup_jumplist();
   do {
     xfmark_T fm;
-    cleanup_jumplist();
     jump_iter = mark_jumplist_iter(jump_iter, curwin, &fm);
+
     const buf_T *const buf = (fm.fmark.fnum == 0
                               ? NULL
                               : buflist_findnr(fm.fmark.fnum));

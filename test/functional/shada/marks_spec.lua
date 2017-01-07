@@ -153,6 +153,19 @@ describe('ShaDa support code', function()
     eq(saved, redir_exec('jumps'))
   end)
 
+  it('when dumping jump list also dumps current position', function()
+    nvim_command('edit ' .. testfilename)
+    nvim_command('normal! G')
+    nvim_command('split ' .. testfilename_2)
+    nvim_command('normal! G')
+    nvim_command('wshada')
+    nvim_command('quit')
+    nvim_command('rshada')
+    nvim_command('normal! \15')  -- <C-o>
+    eq(testfilename_2, funcs.bufname('%'))
+    eq({2, 0}, curwinmeths.get_cursor())
+  end)
+
   it('is able to dump and restore jump list with different times (slow!)',
   function()
     nvim_command('edit ' .. testfilename_2)
