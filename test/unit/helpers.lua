@@ -124,7 +124,7 @@ local function cppimport(path)
   return cimport(Paths.test_include_path .. '/' .. path)
 end
 
-local function alloc_log_new(eq)
+local function alloc_log_new()
   local log = {
     log={},
     lib=cimport('./src/nvim/memory.h'),

@@ -15,7 +15,7 @@ local lua2typvalt = eval_helpers.lua2typvalt
 
 local lib = cimport('./src/nvim/eval_defs.h', './src/nvim/eval.h')
 
-local alloc_log = alloc_log_new(eq)
+local alloc_log = alloc_log_new()
 
 before_each(function()
   alloc_log:before_each()
