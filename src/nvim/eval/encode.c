@@ -385,6 +385,8 @@ int encode_read_from_list(ListReaderState *const state, char *const buf,
 #define TYPVAL_ENCODE_CONV_DICT_START(tv, dict, len) \
     ga_append(gap, '{')
 
+#define TYPVAL_ENCODE_CONV_REAL_DICT_AFTER_START(tv, dict, mpsv)
+
 #define TYPVAL_ENCODE_CONV_DICT_END(tv, dict) \
     ga_append(gap, '}')
 
@@ -797,6 +799,7 @@ bool encode_check_json_key(const typval_T *const tv)
 #undef TYPVAL_ENCODE_CONV_BOOL
 #undef TYPVAL_ENCODE_CONV_UNSIGNED_NUMBER
 #undef TYPVAL_ENCODE_CONV_DICT_START
+#undef TYPVAL_ENCODE_CONV_REAL_DICT_AFTER_START
 #undef TYPVAL_ENCODE_CONV_DICT_END
 #undef TYPVAL_ENCODE_CONV_DICT_AFTER_KEY
 #undef TYPVAL_ENCODE_CONV_DICT_BETWEEN_ITEMS
@@ -959,6 +962,8 @@ char *encode_tv2json(typval_T *tv, size_t *len)
 #define TYPVAL_ENCODE_CONV_DICT_START(tv, dict, len) \
     msgpack_pack_map(packer, (size_t)(len))
 
+#define TYPVAL_ENCODE_CONV_REAL_DICT_AFTER_START(tv, dict, mpsv)
+
 #define TYPVAL_ENCODE_CONV_DICT_END(tv, dict)
 
 #define TYPVAL_ENCODE_CONV_DICT_AFTER_KEY(tv, dict)
@@ -1005,6 +1010,7 @@ char *encode_tv2json(typval_T *tv, size_t *len)
 #undef TYPVAL_ENCODE_CONV_BOOL
 #undef TYPVAL_ENCODE_CONV_UNSIGNED_NUMBER
 #undef TYPVAL_ENCODE_CONV_DICT_START
+#undef TYPVAL_ENCODE_CONV_REAL_DICT_AFTER_START
 #undef TYPVAL_ENCODE_CONV_DICT_END
 #undef TYPVAL_ENCODE_CONV_DICT_AFTER_KEY
 #undef TYPVAL_ENCODE_CONV_DICT_BETWEEN_ITEMS

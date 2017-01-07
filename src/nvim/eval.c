@@ -19185,9 +19185,9 @@ static inline void _nothing_conv_list_end(typval_T *const tv)
 }
 #define TYPVAL_ENCODE_CONV_LIST_END(tv) _nothing_conv_list_end(tv)
 
-static inline int _nothing_conv_dict_start(typval_T *const tv,
-                                           dict_T **const dictp,
-                                           const void *const nodictvar)
+static inline int _nothing_conv_real_dict_after_start(
+    typval_T *const tv, dict_T **const dictp, const void *const nodictvar,
+    MPConvStackVal *const mpsv)
   FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (tv != NULL) {
@@ -19196,15 +19196,18 @@ static inline int _nothing_conv_dict_start(typval_T *const tv,
   if ((const void *)dictp != nodictvar && (*dictp)->dv_refcount > 1) {
     (*dictp)->dv_refcount--;
     *dictp = NULL;
+    mpsv->data.d.todo = 0;
     return OK;
   }
   return NOTDONE;
 }
-#define TYPVAL_ENCODE_CONV_DICT_START(tv, dict, len) \
+#define TYPVAL_ENCODE_CONV_DICT_START(tv, dict, len)
+
+#define TYPVAL_ENCODE_CONV_REAL_DICT_AFTER_START(tv, dict, mpsv) \
     do { \
-      if (_nothing_conv_dict_start(tv, (dict_T **)&dict, \
-                                   (void *)&TYPVAL_ENCODE_NODICT_VAR) \
-          != NOTDONE) { \
+      if (_nothing_conv_real_dict_after_start( \
+          tv, (dict_T **)&dict, (void *)&TYPVAL_ENCODE_NODICT_VAR, \
+          &mpsv) != NOTDONE) { \
         goto typval_encode_stop_converting_one_item; \
       } \
     } while (0)
@@ -19259,6 +19262,7 @@ static inline void _nothing_conv_dict_end(typval_T *const tv,
 #undef TYPVAL_ENCODE_CONV_LIST_BETWEEN_ITEMS
 #undef TYPVAL_ENCODE_CONV_LIST_END
 #undef TYPVAL_ENCODE_CONV_DICT_START
+#undef TYPVAL_ENCODE_CONV_REAL_DICT_AFTER_START
 #undef TYPVAL_ENCODE_SPECIAL_DICT_KEY_CHECK
 #undef TYPVAL_ENCODE_CONV_DICT_AFTER_KEY
 #undef TYPVAL_ENCODE_CONV_DICT_BETWEEN_ITEMS

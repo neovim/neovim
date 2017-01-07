@@ -429,6 +429,8 @@ static inline void typval_encode_dict_start(EncodedData *const edata,
 #define TYPVAL_ENCODE_CONV_DICT_START(tv, dict, len) \
     typval_encode_dict_start(edata, (size_t)(len))
 
+#define TYPVAL_ENCODE_CONV_REAL_DICT_AFTER_START(tv, dict, mpsv)
+
 #define TYPVAL_ENCODE_SPECIAL_DICT_KEY_CHECK(label, kv_pair)
 
 static inline void typval_encode_after_key(EncodedData *const edata)
@@ -507,6 +509,7 @@ static inline void typval_encode_dict_end(EncodedData *const edata)
 #undef TYPVAL_ENCODE_CONV_BOOL
 #undef TYPVAL_ENCODE_CONV_UNSIGNED_NUMBER
 #undef TYPVAL_ENCODE_CONV_DICT_START
+#undef TYPVAL_ENCODE_CONV_REAL_DICT_AFTER_START
 #undef TYPVAL_ENCODE_CONV_DICT_END
 #undef TYPVAL_ENCODE_CONV_DICT_AFTER_KEY
 #undef TYPVAL_ENCODE_CONV_DICT_BETWEEN_ITEMS
