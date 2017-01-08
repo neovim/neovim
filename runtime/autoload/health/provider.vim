@@ -393,14 +393,12 @@ function! s:check_python(version) abort
     endif
 
     if s:is_bad_response(latest)
-      call health#report_warn('Unable to contact PyPI.')
+      call health#report_warn('Could not contact PyPI to get latest version.')
       call health#report_error('HTTP request failed: '.latest)
-    endif
-
-    if s:is_bad_response(status)
+    elseif s:is_bad_response(status)
       call health#report_warn(printf('Latest %s-neovim is NOT installed: %s',
             \ python_bin_name, latest))
-    elseif !s:is_bad_response(latest) !s:is_bad_response(current)
+    elseif !s:is_bad_response(current)
       call health#report_ok(printf('Latest %s-neovim is installed: %s',
             \ python_bin_name, latest))
     endif
