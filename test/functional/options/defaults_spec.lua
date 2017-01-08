@@ -9,8 +9,6 @@ local eval = helpers.eval
 local eq = helpers.eq
 local neq = helpers.neq
 
-if helpers.pending_win32(pending) then return end
-
 local function init_session(...)
   local args = { helpers.nvim_prog, '-i', 'NONE', '--embed',
     '--cmd', 'set shortmess+=I background=light noswapfile noautoindent',
@@ -23,6 +21,32 @@ local function init_session(...)
 end
 
 describe('startup defaults', function()
+
+  it('work without key environment variables', function()
+    clear({env={
+      XDG_CONFIG_HOME=nil,
+      XDG_DATA_HOME=nil,
+      XDG_CACHE_HOME=nil,
+      XDG_RUNTIME_DIR=nil,
+      XDG_CONFIG_DIRS=nil,
+      XDG_DATA_DIRS=nil,
+      LOCALAPPDATA=nil,
+      HOMEPATH=nil,
+      HOMEDRIVE=nil,
+      HOME=nil,
+      TEMP=nil,
+      VIMRUNTIME=nil,
+      USER=nil,
+    }})
+
+    eq('.', meths.get_option('backupdir'))
+    eq('.', meths.get_option('viewdir'))
+    eq('.', meths.get_option('directory'))
+    eq('.', meths.get_option('undodir'))
+  end)
+
+  if helpers.pending_win32(pending) then return end
+
   describe(':filetype', function()
     local function expect_filetype(expected)
       local screen = Screen.new(48, 4)
@@ -97,6 +121,8 @@ describe('startup defaults', function()
     end)
   end)
 end)
+
+if helpers.pending_win32(pending) then return end
 
 describe('XDG-based defaults', function()
   -- Need to be in separate describe() block to not run clear() twice.
