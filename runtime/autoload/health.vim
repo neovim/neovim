@@ -39,7 +39,7 @@ function! health#check(plugin_names) abort
 
   tabnew
   setlocal wrap breakindent
-  setlocal filetype=markdown bufhidden=wipe
+  setlocal filetype=markdown
   setlocal conceallevel=2 concealcursor=nc
   setlocal keywordprg=:help
   call s:enhance_syntax()
