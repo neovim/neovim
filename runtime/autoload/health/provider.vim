@@ -84,8 +84,8 @@ endfunction
 " Fetch the contents of a URL.
 function! s:download(url) abort
   if executable('curl')
-    let rv = s:system(['curl', '-sL', a:url])
-    return s:shell_error ? 'curl error: '.s:shell_error : rv
+    let rv = s:system(['curl', '-sL', a:url], '', 1, 1)
+    return s:shell_error ? 'curl error with '.a:url.': '.s:shell_error : rv
   elseif executable('python')
     let script = "
           \try:\n
