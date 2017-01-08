@@ -41,7 +41,7 @@ function! s:check_rplugin_manifest() abort
           \ + glob(python_dir.'/*/__init__.py', 1, 1)
       let contents = join(readfile(script))
       if contents =~# '\<\%(from\|import\)\s\+neovim\>'
-        if script =~# '/__init__\.py$'
+        if script =~# '[\/]__init__\.py$'
           let script = fnamemodify(script, ':h')
         endif
 

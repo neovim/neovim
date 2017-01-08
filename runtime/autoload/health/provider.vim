@@ -110,7 +110,7 @@ function! s:check_clipboard() abort
   let clipboard_tool = provider#clipboard#Executable()
   if empty(clipboard_tool)
     call health#report_warn(
-          \ "No clipboard tool found. Using the system clipboard won't work.",
+          \ "No clipboard tool found. Clipboard registers will not work.",
           \ ['See ":help clipboard".'])
   else
     call health#report_ok('Clipboard tool found: '. clipboard_tool)
@@ -264,7 +264,7 @@ function! s:check_python(version) abort
       let python_bin = s:trim(s:system([pyenv, 'which', python_bin_name], '', 1))
 
       if empty(python_bin)
-        call health#report_warn(printf('pyenv couldn''t find %s.', python_bin_name))
+        call health#report_warn(printf('pyenv could not find %s.', python_bin_name))
       endif
     endif
 
@@ -283,15 +283,15 @@ function! s:check_python(version) abort
         if len(python_multiple)
           " This is worth noting since the user may install something
           " that changes $PATH, like homebrew.
-          call health#report_info(printf('There are multiple %s executables found.  '
-                \ . 'Set "g:%s" to avoid surprises.', python_bin_name, host_prog_var))
+          call health#report_info(printf('Multiple %s executables found.  '
+                \ . 'Set `g:%s` to avoid surprises.', python_bin_name, host_prog_var))
         endif
 
         if python_bin =~# '\<shims\>'
-          call health#report_warn(printf('"%s" appears to be a pyenv shim.', python_bin), [
-                      \ 'The "pyenv" executable is not in $PATH,',
+          call health#report_warn(printf('`%s` appears to be a pyenv shim.', python_bin), [
+                      \ 'The `pyenv` executable is not in $PATH,',
                       \ 'Your pyenv installation is broken. You should set '
-                      \ . '"g:'.host_prog_var.'" to avoid surprises.',
+                      \ . '`g:'.host_prog_var.'` to avoid surprises.',
                       \ ])
         endif
       endif
@@ -302,9 +302,9 @@ function! s:check_python(version) abort
     if empty(venv) && !empty(pyenv) && !exists('g:'.host_prog_var)
           \ && !empty(pyenv_root) && resolve(python_bin) !~# '^'.pyenv_root.'/'
       call health#report_warn('pyenv is not set up optimally.', [
-            \ printf('Suggestion: Create a virtualenv specifically '
-            \ . 'for Neovim using pyenv and use "g:%s".  This will avoid '
-            \ . 'the need to install Neovim''s Python client in each '
+            \ printf('Create a virtualenv specifically '
+            \ . 'for Neovim using pyenv, and set `g:%s`.  This will avoid '
+            \ . 'the need to install Neovim''s Python module in each '
             \ . 'version/virtualenv.', host_prog_var)
             \ ])
     elseif !empty(venv) && exists('g:'.host_prog_var)
@@ -316,9 +316,9 @@ function! s:check_python(version) abort
 
       if resolve(python_bin) !~# '^'.venv_root.'/'
         call health#report_warn('Your virtualenv is not set up optimally.', [
-              \ printf('Suggestion: Create a virtualenv specifically '
-              \ . 'for Neovim and use "g:%s".  This will avoid '
-              \ . 'the need to install Neovim''s Python client in each '
+              \ printf('Create a virtualenv specifically '
+              \ . 'for Neovim and use `g:%s`.  This will avoid '
+              \ . 'the need to install Neovim''s Python module in each '
               \ . 'virtualenv.', host_prog_var)
               \ ])
       endif
@@ -327,7 +327,7 @@ function! s:check_python(version) abort
 
   if empty(python_bin) && !empty(python_bin_name)
     " An error message should have already printed.
-    call health#report_error(printf('"%s" was not found.', python_bin_name))
+    call health#report_error(printf('`%s` was not found.', python_bin_name))
   elseif !empty(python_bin) && !s:check_bin(python_bin)
     let python_bin = ''
   endif
@@ -347,13 +347,10 @@ function! s:check_python(version) abort
   endif
 
   if virtualenv_inactive
-    let suggestions = [
-          \ 'If you are using Zsh, see: http://vi.stackexchange.com/a/7654/5229',
-          \ ]
     call health#report_warn(
-          \ '$VIRTUAL_ENV exists but appears to be inactive. '
-          \ . 'This could lead to unexpected results.',
-          \ suggestions)
+      \ '$VIRTUAL_ENV exists but appears to be inactive. '
+      \ . 'This could lead to unexpected results.',
+      \ [ 'If you are using Zsh, see: http://vi.stackexchange.com/a/7654/5229' ])
   endif
 
   " Diagnostic output
@@ -367,7 +364,7 @@ function! s:check_python(version) abort
   if !empty(python_bin)
     let [pyversion, current, latest, status] = s:version_info(python_bin)
     if a:version != str2nr(pyversion)
-      call health#report_warn('Got an unexpected version of Python.' .
+      call health#report_warn('Unexpected Python version.' .
                   \ ' This could lead to confusing error messages.')
     endif
     if a:version == 3 && str2float(pyversion) < 3.3
@@ -378,13 +375,9 @@ function! s:check_python(version) abort
     call health#report_info(printf('%s-neovim version: %s', python_bin_name, current))
 
     if s:is_bad_response(current)
-      let suggestions = [
-            \ 'Error found was: ' . current,
-            \ 'Use the command `$ pip' . a:version . ' install neovim`',
-            \ ]
       call health#report_error(
-            \ 'Neovim Python client is not installed.',
-            \ suggestions)
+        \ "Neovim Python client is not installed.\nError: ".current,
+        \ ['Run in shell: pip' . a:version . ' install neovim'])
     endif
 
     if s:is_bad_response(latest)
@@ -408,15 +401,15 @@ function! s:check_ruby() abort
 
   if !executable('ruby') || !executable('gem')
     call health#report_warn(
-          \ "Both `ruby` and `gem` have to be in $PATH. Ruby code won't work.",
-          \ ["Install Ruby and make sure that `ruby` and `gem` are in $PATH."])
+          \ "`ruby` and `gem` must be in $PATH.",
+          \ ["Install Ruby and verify that `ruby` and `gem` commands work."])
     return
   endif
   call health#report_info('Ruby: '. s:system('ruby -v'))
 
   let host = provider#ruby#Detect()
   if empty(host)
-    call health#report_warn("Missing \"neovim\" gem. Ruby code won't work.",
+    call health#report_warn('Missing "neovim" gem.',
           \ ['Run in shell: gem install neovim'])
     return
   endif

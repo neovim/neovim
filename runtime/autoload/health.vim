@@ -39,7 +39,7 @@ function! health#check(plugin_names) abort
 
   tabnew
   setlocal wrap breakindent
-  setlocal filetype=markdown bufhidden=wipe
+  setlocal filetype=markdown
   setlocal conceallevel=2 concealcursor=nc
   setlocal keywordprg=:help
   call s:enhance_syntax()
@@ -152,8 +152,8 @@ function! health#report_error(msg, ...) abort " {{{
 endfunction " }}}
 
 function! s:filepath_to_function(name) abort
-  return substitute(substitute(substitute(a:name, ".*autoload/", "", ""),
-        \ "\\.vim", "#check", ""), "/", "#", "g")
+  return substitute(substitute(substitute(a:name, '.*autoload[\/]', '', ''),
+        \ '\.vim', '#check', ''), '[\/]', '#', 'g')
 endfunction
 
 function! s:discover_health_checks() abort
