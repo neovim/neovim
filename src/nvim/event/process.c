@@ -170,8 +170,9 @@ int process_wait(Process *proc, int ms, MultiQueue *events)
   int status = -1;
   bool interrupted = false;
   if (!proc->refcount) {
+    status = proc->status;
     LOOP_PROCESS_EVENTS(proc->loop, proc->events, 0);
-    return proc->status;
+    return status;
   }
 
   if (!events) {
