@@ -563,13 +563,14 @@ describe('ShaDa marks support code', function()
     nvim_command('normal! `A')
     eq('-', funcs.fnamemodify(curbufmeths.get_name(), ':t'))
     eq(0, exc_exec('wshada ' .. shada_fname))
-    local found = 0
+    local found = {}
     for _, v in ipairs(read_shada_file(shada_fname)) do
-      if v.type == 7 and v.value.f == '' .. mock_file_path .. '-' then
-        found = found + 1
+      if v.type == 7 and v.value.f == mock_file_path .. '-' then
+        local name = ('%c'):format(v.value.n)
+        found[name] = (found[name] or 0) + 1
       end
     end
-    eq(1, found)
+    eq({['0']=1, A=1}, found)
   end)
 
   it('uses last A mark with eq timestamp from instance when writing',
@@ -580,13 +581,14 @@ describe('ShaDa marks support code', function()
     nvim_command('normal! `A')
     eq('-', funcs.fnamemodify(curbufmeths.get_name(), ':t'))
     eq(0, exc_exec('wshada ' .. shada_fname))
-    local found = 0
+    local found = {}
     for _, v in ipairs(read_shada_file(shada_fname)) do
       if v.type == 7 and v.value.f == mock_file_path .. '-' then
-        found = found + 1
+        local name = ('%c'):format(v.value.n)
+        found[name] = (found[name] or 0) + 1
       end
     end
-    eq(1, found)
+    eq({['0']=1, A=1}, found)
   end)
 
   it('uses last A mark with gt timestamp from file when writing',
@@ -597,13 +599,16 @@ describe('ShaDa marks support code', function()
     nvim_command('normal! `A')
     eq('-', funcs.fnamemodify(curbufmeths.get_name(), ':t'))
     eq(0, exc_exec('wshada ' .. shada_fname))
-    local found = 0
+    local found = {}
     for _, v in ipairs(read_shada_file(shada_fname)) do
-      if v.type == 7 and v.value.f == '' .. mock_file_path .. '?' then
-        found = found + 1
+      if v.type == 7 then
+        local name = ('%c'):format(v.value.n)
+        local t = found[name] or {}
+        t[v.value.f] = (t[v.value.f] or 0) + 1
+        found[name] = t
       end
     end
-    eq(1, found)
+    eq({['0']={['/a/b/-']=1}, A={['/a/b/?']=1}}, found)
   end)
 
   it('uses last a mark with gt timestamp from instance when reading',
