@@ -990,6 +990,11 @@ WinLeave			Before leaving a window.  If the window to be
 				WinLeave autocommands (but not for ":new").
 				Not used for ":qa" or ":q" when exiting Vim.
 
+							*WinNew*
+WinNew				When a new window was created.  Not done for
+				the fist window, when Vim has just started.
+				Before a WinEnter event.
+
 ==============================================================================
 6. Patterns					*autocmd-patterns* *{pat}*
 
