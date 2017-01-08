@@ -185,10 +185,11 @@ function! s:version_info(python) abort
     endfor
   endif
 
-  let version_status = 'unknown'
+  let nvim_path_base = fnamemodify(nvim_path, ':~:h')
+  let version_status = 'unknown; '.nvim_path_base
   if !s:is_bad_response(nvim_version) && !s:is_bad_response(pypi_version)
     if s:version_cmp(nvim_version, pypi_version) == -1
-      let version_status = 'outdated'
+      let version_status = 'outdated; from '.nvim_path_base
     else
       let version_status = 'up to date'
     endif
@@ -371,7 +372,11 @@ function! s:check_python(version) abort
     endif
 
     call health#report_info('Python'.a:version.' version: ' . pyversion)
-    call health#report_info(printf('%s-neovim version: %s', python_bin_name, current))
+    if s:is_bad_response(status)
+      call health#report_info(printf('%s-neovim version: %s (%s)', python_bin_name, current, status))
+    else
+      call health#report_info(printf('%s-neovim version: %s', python_bin_name, current))
+    endif
 
     if s:is_bad_response(current)
       call health#report_error(
