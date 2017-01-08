@@ -37,6 +37,7 @@ endfunction
 function! s:system(cmd, ...) abort
   let stdin = a:0 ? a:1 : ''
   let ignore_stderr = a:0 > 1 ? a:2 : 0
+  let ignore_error = a:0 > 2 ? a:3 : 0
   let opts = {
         \ 'output': '',
         \ 'on_stdout': function('s:system_handler'),
@@ -63,7 +64,7 @@ function! s:system(cmd, ...) abort
     call health#report_error(printf('Command timed out: %s',
           \ type(a:cmd) == type([]) ? join(a:cmd) : a:cmd))
     call jobstop(jobid)
-  elseif s:shell_error != 0
+  elseif s:shell_error != 0 && !ignore_error
     call health#report_error(printf("Command error (%d) %s: %s", jobid,
           \ type(a:cmd) == type([]) ? join(a:cmd) : a:cmd,
           \ opts.output))
@@ -169,20 +170,27 @@ function! s:version_info(python) abort
     return a == b ? 0 : a > b ? 1 : -1
   endfunction
 
-  let nvim_version = 'unable to find neovim Python module version'
-  let base = fnamemodify(nvim_path, ':h')
-  let metas = glob(base.'-*/METADATA', 1, 1)
-        \ + glob(base.'-*/PKG-INFO', 1, 1)
-        \ + glob(base.'.egg-info/PKG-INFO', 1, 1)
-  let metas = sort(metas, 's:compare')
+  " Try to get neovim.VERSION (added in 0.1.11dev).
+  let nvim_version = s:system(['python', '-c',
+        \ 'from neovim import VERSION as v; '.
+        \ 'print("{}.{}.{}{}".format(v.major, v.minor, v.patch, v.prerelease))'],
+        \ '', 1, 1)
+  if empty(nvim_version)
+    let nvim_version = 'unable to find neovim Python module version'
+    let base = fnamemodify(nvim_path, ':h')
+    let metas = glob(base.'-*/METADATA', 1, 1)
+          \ + glob(base.'-*/PKG-INFO', 1, 1)
+          \ + glob(base.'.egg-info/PKG-INFO', 1, 1)
+    let metas = sort(metas, 's:compare')
 
-  if !empty(metas)
-    for meta_line in readfile(metas[0])
-      if meta_line =~# '^Version:'
-        let nvim_version = matchstr(meta_line, '^Version: \zs\S\+')
-        break
-      endif
-    endfor
+    if !empty(metas)
+      for meta_line in readfile(metas[0])
+        if meta_line =~# '^Version:'
+          let nvim_version = matchstr(meta_line, '^Version: \zs\S\+')
+          break
+        endif
+      endfor
+    endif
   endif
 
   let nvim_path_base = fnamemodify(nvim_path, ':~:h')
