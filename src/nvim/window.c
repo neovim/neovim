@@ -973,11 +973,12 @@ int win_split_ins(int size, int flags, win_T *new_wp, int dir)
   /*
    * make the new window the current window
    */
-  win_enter(wp, false);
-  if (flags & WSP_VERT)
+  win_enter_ext(wp, false, false, true, true, true);
+  if (flags & WSP_VERT) {
     p_wiw = i;
-  else
+  } else {
     p_wh = i;
+  }
 
   return OK;
 }
@@ -2014,10 +2015,11 @@ int win_close(win_T *win, int free_buf)
   }
 
   if (close_curwin) {
-    win_enter_ext(wp, false, TRUE, TRUE, TRUE);
-    if (other_buffer)
-      /* careful: after this wp and win may be invalid! */
-      apply_autocmds(EVENT_BUFENTER, NULL, NULL, FALSE, curbuf);
+    win_enter_ext(wp, false, true, false, true, true);
+    if (other_buffer) {
+      // careful: after this wp and win may be invalid!
+      apply_autocmds(EVENT_BUFENTER, NULL, NULL, false, curbuf);
+    }
   }
 
   /*
@@ -3045,8 +3047,9 @@ int win_new_tabpage(int after, char_u *filename)
 
     redraw_all_later(CLEAR);
 
-    apply_autocmds(EVENT_TABNEW, filename, filename, false, curbuf);
+    apply_autocmds(EVENT_WINNEW, NULL, NULL, false, curbuf);
     apply_autocmds(EVENT_WINENTER, NULL, NULL, false, curbuf);
+    apply_autocmds(EVENT_TABNEW, filename, filename, false, curbuf);
     apply_autocmds(EVENT_TABENTER, NULL, NULL, false, curbuf);
 
     return OK;
@@ -3204,8 +3207,8 @@ static void enter_tabpage(tabpage_T *tp, buf_T *old_curbuf, int trigger_enter_au
   /* We would like doing the TabEnter event first, but we don't have a
    * valid current window yet, which may break some commands.
    * This triggers autocommands, thus may make "tp" invalid. */
-  win_enter_ext(tp->tp_curwin, false, TRUE,
-      trigger_enter_autocmds, trigger_leave_autocmds);
+  win_enter_ext(tp->tp_curwin, false, true, false,
+                trigger_enter_autocmds, trigger_leave_autocmds);
   prevwin = next_prevwin;
 
   last_status(FALSE);           /* status line may appear or disappear */
@@ -3546,7 +3549,7 @@ end:
  */
 void win_enter(win_T *wp, bool undo_sync)
 {
-  win_enter_ext(wp, undo_sync, FALSE, TRUE, TRUE);
+  win_enter_ext(wp, undo_sync, false, false, true, true);
 }
 
 /*
@@ -3554,7 +3557,9 @@ void win_enter(win_T *wp, bool undo_sync)
  * Can be called with "curwin_invalid" TRUE, which means that curwin has just
  * been closed and isn't valid.
  */
-static void win_enter_ext(win_T *wp, bool undo_sync, int curwin_invalid, int trigger_enter_autocmds, int trigger_leave_autocmds)
+static void win_enter_ext(win_T *wp, bool undo_sync, int curwin_invalid,
+                          int trigger_new_autocmds, int trigger_enter_autocmds,
+                          int trigger_leave_autocmds)
 {
   int other_buffer = FALSE;
 
@@ -3630,6 +3635,9 @@ static void win_enter_ext(win_T *wp, bool undo_sync, int curwin_invalid, int tri
     shorten_fnames(TRUE);
   }
 
+  if (trigger_new_autocmds) {
+    apply_autocmds(EVENT_WINNEW, NULL, NULL, false, curbuf);
+  }
   if (trigger_enter_autocmds) {
     apply_autocmds(EVENT_WINENTER, NULL, NULL, FALSE, curbuf);
     if (other_buffer)

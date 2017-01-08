@@ -82,6 +82,36 @@ function Test_autocmd_bufunload_with_tabnext()
   quit
 endfunc
 
+func Test_win_tab_autocmd()
+  let g:record = []
+
+  augroup testing
+    au WinNew * call add(g:record, 'WinNew')
+    au WinEnter * call add(g:record, 'WinEnter') 
+    au WinLeave * call add(g:record, 'WinLeave') 
+    au TabNew * call add(g:record, 'TabNew')
+    au TabEnter * call add(g:record, 'TabEnter')
+    au TabLeave * call add(g:record, 'TabLeave')
+  augroup END
+
+  split
+  tabnew
+  close
+  close
+
+  call assert_equal([
+	\ 'WinLeave', 'WinNew', 'WinEnter',
+	\ 'WinLeave', 'TabLeave', 'WinNew', 'WinEnter', 'TabNew', 'TabEnter',
+	\ 'WinLeave', 'TabLeave', 'WinEnter', 'TabEnter',
+	\ 'WinLeave', 'WinEnter'
+	\ ], g:record)
+
+  augroup testing
+    au!
+  augroup END
+  unlet g:record
+endfunc
+
 func s:AddAnAutocmd()
   augroup vimBarTest
     au BufReadCmd * echo 'hello'
