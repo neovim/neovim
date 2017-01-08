@@ -5588,12 +5588,6 @@ void buf_copy_options(buf_T *buf, int flags)
   int did_isk = FALSE;
 
   /*
-   * Don't do anything if the buffer is invalid.
-   */
-  if (buf == NULL || !buf_valid(buf))
-    return;
-
-  /*
    * Skip this when the option defaults have not been set yet.  Happens when
    * main() allocates the first buffer.
    */

@@ -274,7 +274,9 @@ bool buf_valid(buf_T *buf)
   if (buf == NULL) {
     return false;
   }
-  FOR_ALL_BUFFERS(bp) {
+  // Assume that we more often have a recent buffer,
+  // start with the last one.
+  for (buf_T *bp = lastbuf; bp != NULL; bp = bp->b_prev) {
     if (bp == buf) {
       return true;
     }
@@ -366,10 +368,9 @@ void close_buffer(win_T *win, buf_T *buf, int action, int abort_if_last)
   /* When the buffer is no longer in a window, trigger BufWinLeave */
   if (buf->b_nwindows == 1) {
     buf->b_closing = true;
-    apply_autocmds(EVENT_BUFWINLEAVE, buf->b_fname, buf->b_fname,
-        FALSE, buf);
-    if (!buf_valid(buf)) {
-      /* Autocommands deleted the buffer. */
+    if (apply_autocmds(EVENT_BUFWINLEAVE, buf->b_fname, buf->b_fname, false,
+                       buf) && !buf_valid(buf)) {
+      // Autocommands deleted the buffer.
       EMSG(_(e_auabort));
       return;
     }
@@ -384,10 +385,9 @@ void close_buffer(win_T *win, buf_T *buf, int action, int abort_if_last)
      * BufHidden */
     if (!unload_buf) {
       buf->b_closing = true;
-      apply_autocmds(EVENT_BUFHIDDEN, buf->b_fname, buf->b_fname,
-          FALSE, buf);
-      if (!buf_valid(buf)) {
-        /* Autocommands deleted the buffer. */
+      if (apply_autocmds(EVENT_BUFHIDDEN, buf->b_fname, buf->b_fname, false,
+                         buf) && !buf_valid(buf)) {
+        // Autocommands deleted the buffer.
         EMSG(_(e_auabort));
         return;
       }
@@ -535,22 +535,25 @@ void buf_freeall(buf_T *buf, int flags)
 
   // Make sure the buffer isn't closed by autocommands.
   buf->b_closing = true;
-  if (buf->b_ml.ml_mfp != NULL) {
-      apply_autocmds(EVENT_BUFUNLOAD, buf->b_fname, buf->b_fname, false, buf);
-      if (!buf_valid(buf)) {    // autocommands may delete the buffer
-          return;
-      }
+  if ((buf->b_ml.ml_mfp != NULL)
+      && apply_autocmds(EVENT_BUFUNLOAD, buf->b_fname, buf->b_fname, false, buf)
+      && !buf_valid(buf)) {
+    // Autocommands may delete the buffer.
+    return;
   }
-  if ((flags & BFA_DEL) && buf->b_p_bl) {
-    apply_autocmds(EVENT_BUFDELETE, buf->b_fname, buf->b_fname, FALSE, buf);
-    if (!buf_valid(buf))            /* autocommands may delete the buffer */
-      return;
+  if ((flags & BFA_DEL)
+      && buf->b_p_bl
+      && apply_autocmds(EVENT_BUFDELETE, buf->b_fname, buf->b_fname, false, buf)
+      && !buf_valid(buf)) {
+    // Autocommands may delete the buffer.
+    return;
   }
-  if (flags & BFA_WIPE) {
-    apply_autocmds(EVENT_BUFWIPEOUT, buf->b_fname, buf->b_fname,
-        FALSE, buf);
-    if (!buf_valid(buf))            /* autocommands may delete the buffer */
-      return;
+  if ((flags & BFA_WIPE)
+      && apply_autocmds(EVENT_BUFWIPEOUT, buf->b_fname, buf->b_fname, false,
+                        buf)
+      && !buf_valid(buf)) {
+    // Autocommands may delete the buffer.
+    return;
   }
   buf->b_closing = false;
 
@@ -1235,12 +1238,14 @@ void set_curbuf(buf_T *buf, int action)
   /* close_windows() or apply_autocmds() may change curbuf */
   prevbuf = curbuf;
 
-  apply_autocmds(EVENT_BUFLEAVE, NULL, NULL, FALSE, curbuf);
-  if (buf_valid(prevbuf) && !aborting()) {
-    if (prevbuf == curwin->w_buffer)
+  if (!apply_autocmds(EVENT_BUFLEAVE, NULL, NULL, false, curbuf)
+      || (buf_valid(prevbuf) && !aborting())) {
+    if (prevbuf == curwin->w_buffer) {
       reset_synblock(curwin);
-    if (unload)
-      close_windows(prevbuf, FALSE);
+    }
+    if (unload) {
+      close_windows(prevbuf, false);
+    }
     if (buf_valid(prevbuf) && !aborting()) {
       win_T  *previouswin = curwin;
       if (prevbuf == curbuf)
@@ -1378,6 +1383,8 @@ static int top_file_num = 1;            ///< highest file number
 /// If (flags & BLN_LISTED) is TRUE, add new buffer to buffer list.
 /// If (flags & BLN_DUMMY) is TRUE, don't count it as a real buffer.
 /// If (flags & BLN_NEW) is TRUE, don't use an existing buffer.
+/// If (flags & BLN_NOOPT) is TRUE, don't copy options from the current buffer
+///                                 if the buffer already exists.
 /// This is the ONLY way to create a new buffer.
 ///
 /// @param ffname full path of fname or relative
@@ -1408,16 +1415,18 @@ buf_T * buflist_new(char_u *ffname, char_u *sfname, linenr_T lnum, int flags)
       && (buf = buflist_findname_file_id(ffname, &file_id,
                                          file_id_valid)) != NULL) {
     xfree(ffname);
-    if (lnum != 0)
-      buflist_setfpos(buf, curwin, lnum, (colnr_T)0, FALSE);
-    /* copy the options now, if 'cpo' doesn't have 's' and not done
-     * already */
-    buf_copy_options(buf, 0);
+    if (lnum != 0) {
+      buflist_setfpos(buf, curwin, lnum, (colnr_T)0, false);
+    }
+    if ((flags & BLN_NOOPT) == 0) {
+      // Copy the options now, if 'cpo' doesn't have 's' and not done already.
+      buf_copy_options(buf, 0);
+    }
     if ((flags & BLN_LISTED) && !buf->b_p_bl) {
       buf->b_p_bl = TRUE;
       if (!(flags & BLN_DUMMY)) {
-        apply_autocmds(EVENT_BUFADD, NULL, NULL, FALSE, buf);
-        if (!buf_valid(buf)) {
+        if (apply_autocmds(EVENT_BUFADD, NULL, NULL, false, buf)
+            && !buf_valid(buf)) {
           return NULL;
         }
       }
@@ -1551,18 +1560,19 @@ buf_T * buflist_new(char_u *ffname, char_u *sfname, linenr_T lnum, int flags)
     // Tricky: these autocommands may change the buffer list.  They could also
     // split the window with re-using the one empty buffer. This may result in
     // unexpectedly losing the empty buffer.
-    apply_autocmds(EVENT_BUFNEW, NULL, NULL, FALSE, buf);
-    if (!buf_valid(buf)) {
+    if (apply_autocmds(EVENT_BUFNEW, NULL, NULL, false, buf)
+        && !buf_valid(buf)) {
       return NULL;
     }
-    if (flags & BLN_LISTED) {
-      apply_autocmds(EVENT_BUFADD, NULL, NULL, FALSE, buf);
-      if (!buf_valid(buf)) {
-        return NULL;
-      }
-    }
-    if (aborting())             /* autocmds may abort script processing */
+    if ((flags & BLN_LISTED)
+        && apply_autocmds(EVENT_BUFADD, NULL, NULL, false, buf)
+        && !buf_valid(buf)) {
       return NULL;
+    }
+    if (aborting()) {
+      // Autocmds may abort script processing.
+      return NULL;
+    }
   }
 
   return buf;
