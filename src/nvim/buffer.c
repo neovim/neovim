@@ -78,6 +78,9 @@ static char *msg_loclist = N_("[Location List]");
 static char *msg_qflist = N_("[Quickfix List]");
 static char *e_auabort = N_("E855: Autocommands caused command to abort");
 
+// Number of times free_buffer() was called.
+static int buf_free_count = 0;
+
 /*
  * Open current buffer, that is: open the memfile and read the file into
  * memory.
@@ -267,7 +270,31 @@ open_buffer (
   return retval;
 }
 
-/// Check that "buf" points to a valid buffer (in the buffer list).
+/// Store "buf" in "bufref" and set the free count.
+///
+/// @param bufref Reference to be used for the buffer.
+/// @param buf    The buffer to reference.
+void set_bufref(bufref_T *bufref, buf_T *buf) {
+  bufref->br_buf = buf;
+  bufref->br_buf_free_count = buf_free_count;
+}
+
+/// Check if "bufref" points to a valid buffer.
+///
+/// Only goes through the buffer list if buf_free_count changed.
+///
+/// @param bufref Buffer reference to check for.
+bool bufref_valid(bufref_T *bufref) {
+  return bufref->br_buf_free_count == buf_free_count
+    ? true
+    : buf_valid(bufref->br_buf);
+}
+
+/// Check that "buf" points to a valid buffer in the buffer list.
+///
+/// Can be slow if there are many buffers, prefer using bufref_valid().
+///
+/// @param buf The buffer to check for.
 bool buf_valid(buf_T *buf)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
@@ -365,11 +392,14 @@ void close_buffer(win_T *win, buf_T *buf, int action, int abort_if_last)
         win->w_cursor.col, TRUE);
   }
 
+  bufref_T bufref;
+  set_bufref(&bufref, buf);
+
   /* When the buffer is no longer in a window, trigger BufWinLeave */
   if (buf->b_nwindows == 1) {
     buf->b_closing = true;
     if (apply_autocmds(EVENT_BUFWINLEAVE, buf->b_fname, buf->b_fname, false,
-                       buf) && !buf_valid(buf)) {
+                       buf) && !bufref_valid(&bufref)) {
       // Autocommands deleted the buffer.
       EMSG(_(e_auabort));
       return;
@@ -386,7 +416,7 @@ void close_buffer(win_T *win, buf_T *buf, int action, int abort_if_last)
     if (!unload_buf) {
       buf->b_closing = true;
       if (apply_autocmds(EVENT_BUFHIDDEN, buf->b_fname, buf->b_fname, false,
-                         buf) && !buf_valid(buf)) {
+                         buf) && !bufref_valid(&bufref)) {
         // Autocommands deleted the buffer.
         EMSG(_(e_auabort));
         return;
@@ -431,11 +461,14 @@ void close_buffer(win_T *win, buf_T *buf, int action, int abort_if_last)
 
   buf_freeall(buf, (del_buf ? BFA_DEL : 0) + (wipe_buf ? BFA_WIPE : 0));
 
-  /* Autocommands may have deleted the buffer. */
-  if (!buf_valid(buf))
+  if (!bufref_valid(&bufref)) {
+    // Autocommands may have deleted the buffer.
     return;
-  if (aborting())           /* autocmds may abort script processing */
+  }
+  if (aborting()) {
+    // Autocmds may abort script processing.
     return;
+  }
 
   /*
    * It's possible that autocommands change curbuf to the one being deleted.
@@ -535,23 +568,27 @@ void buf_freeall(buf_T *buf, int flags)
 
   // Make sure the buffer isn't closed by autocommands.
   buf->b_closing = true;
+
+  bufref_T bufref;
+  set_bufref(&bufref, buf);
+
   if ((buf->b_ml.ml_mfp != NULL)
       && apply_autocmds(EVENT_BUFUNLOAD, buf->b_fname, buf->b_fname, false, buf)
-      && !buf_valid(buf)) {
-    // Autocommands may delete the buffer.
+      && !bufref_valid(&bufref)) {
+    // Autocommands deleted the buffer.
     return;
   }
   if ((flags & BFA_DEL)
       && buf->b_p_bl
       && apply_autocmds(EVENT_BUFDELETE, buf->b_fname, buf->b_fname, false, buf)
-      && !buf_valid(buf)) {
+      && !bufref_valid(&bufref)) {
     // Autocommands may delete the buffer.
     return;
   }
   if ((flags & BFA_WIPE)
       && apply_autocmds(EVENT_BUFWIPEOUT, buf->b_fname, buf->b_fname, false,
                         buf)
-      && !buf_valid(buf)) {
+      && !bufref_valid(&bufref)) {
     // Autocommands may delete the buffer.
     return;
   }
@@ -606,7 +643,8 @@ void buf_freeall(buf_T *buf, int flags)
 static void free_buffer(buf_T *buf)
 {
   handle_unregister_buffer(buf);
-  free_buffer_stuff(buf, TRUE);
+  buf_free_count++;
+  free_buffer_stuff(buf, true);
   unref_var_dict(buf->b_vars);
   aubuflocal_remove(buf);
   buf_hashtab_remove(buf);
@@ -882,6 +920,9 @@ static int empty_curbuf(int close_others, int forceit, int action)
     return FAIL;
   }
 
+  bufref_T bufref;
+  set_bufref(&bufref, buf);
+
   if (close_others) {
     /* Close any other windows on this buffer, then make it empty. */
     close_windows(buf, TRUE);
@@ -891,15 +932,17 @@ static int empty_curbuf(int close_others, int forceit, int action)
   retval = do_ecmd(0, NULL, NULL, NULL, ECMD_ONE,
       forceit ? ECMD_FORCEIT : 0, curwin);
 
-  /*
-   * do_ecmd() may create a new buffer, then we have to delete
-   * the old one.  But do_ecmd() may have done that already, check
-   * if the buffer still exists.
-   */
-  if (buf != curbuf && buf_valid(buf) && buf->b_nwindows == 0)
-    close_buffer(NULL, buf, action, FALSE);
-  if (!close_others)
-    need_fileinfo = FALSE;
+  // do_ecmd() may create a new buffer, then we have to delete
+  // the old one.  But do_ecmd() may have done that already, check
+  // if the buffer still exists.
+  if (buf != curbuf && bufref_valid(&bufref) && buf->b_nwindows == 0) {
+    close_buffer(NULL, buf, action, false);
+  }
+
+  if (!close_others) {
+    need_fileinfo = false;
+  }
+
   return retval;
 }
 /*
@@ -1001,6 +1044,8 @@ do_buffer (
    */
   if (unload) {
     int forward;
+    bufref_T bufref;
+    set_bufref(&bufref, buf);
 
     /* When unloading or deleting a buffer that's already unloaded and
      * unlisted: fail silently. */
@@ -1009,15 +1054,16 @@ do_buffer (
 
     if (!forceit && (buf->terminal || bufIsChanged(buf))) {
       if ((p_confirm || cmdmod.confirm) && p_write && !buf->terminal) {
-        dialog_changed(buf, FALSE);
-        if (!buf_valid(buf))
-          /* Autocommand deleted buffer, oops!  It's not changed
-           * now. */
+        dialog_changed(buf, false);
+        if (!bufref_valid(&bufref)) {
+          // Autocommand deleted buffer, oops! It's not changed now.
           return FAIL;
-        /* If it's still changed fail silently, the dialog already
-         * mentioned why it fails. */
-        if (bufIsChanged(buf))
+        }
+        // If it's still changed fail silently, the dialog already
+        // mentioned why it fails.
+        if (bufIsChanged(buf)) {
           return FAIL;
+        }
       } else {
         if (buf->terminal) {
           EMSG2(_("E89: %s will be killed(add ! to override)"),
@@ -1061,9 +1107,10 @@ do_buffer (
      * If the buffer to be deleted is not the current one, delete it here.
      */
     if (buf != curbuf) {
-      close_windows(buf, FALSE);
-      if (buf != curbuf && buf_valid(buf) && buf->b_nwindows <= 0)
-        close_buffer(NULL, buf, action, FALSE);
+      close_windows(buf, false);
+      if (buf != curbuf && bufref_valid(&bufref) && buf->b_nwindows <= 0) {
+        close_buffer(NULL, buf, action, false);
+      }
       return OK;
     }
 
@@ -1186,10 +1233,13 @@ do_buffer (
    */
   if (action == DOBUF_GOTO && !can_abandon(curbuf, forceit)) {
     if ((p_confirm || cmdmod.confirm) && p_write) {
-      dialog_changed(curbuf, FALSE);
-      if (!buf_valid(buf))
-        /* Autocommand deleted buffer, oops! */
+      bufref_T bufref;
+      set_bufref(&bufref, buf);
+      dialog_changed(curbuf, false);
+      if (!bufref_valid(&bufref)) {
+        // Autocommand deleted buffer, oops!
         return FAIL;
+      }
     }
     if (bufIsChanged(curbuf)) {
       EMSG(_(e_nowrtmsg));
@@ -1237,16 +1287,18 @@ void set_curbuf(buf_T *buf, int action)
 
   /* close_windows() or apply_autocmds() may change curbuf */
   prevbuf = curbuf;
+  bufref_T bufref;
+  set_bufref(&bufref, prevbuf);
 
   if (!apply_autocmds(EVENT_BUFLEAVE, NULL, NULL, false, curbuf)
-      || (buf_valid(prevbuf) && !aborting())) {
+      || (bufref_valid(&bufref) && !aborting())) {
     if (prevbuf == curwin->w_buffer) {
       reset_synblock(curwin);
     }
     if (unload) {
       close_windows(prevbuf, false);
     }
-    if (buf_valid(prevbuf) && !aborting()) {
+    if (bufref_valid(&bufref) && !aborting()) {
       win_T  *previouswin = curwin;
       if (prevbuf == curbuf)
         u_sync(FALSE);
@@ -1423,10 +1475,12 @@ buf_T * buflist_new(char_u *ffname, char_u *sfname, linenr_T lnum, int flags)
       buf_copy_options(buf, 0);
     }
     if ((flags & BLN_LISTED) && !buf->b_p_bl) {
-      buf->b_p_bl = TRUE;
+      buf->b_p_bl = true;
+      bufref_T bufref;
+      set_bufref(&bufref, buf);
       if (!(flags & BLN_DUMMY)) {
         if (apply_autocmds(EVENT_BUFADD, NULL, NULL, false, buf)
-            && !buf_valid(buf)) {
+            && !bufref_valid(&bufref)) {
           return NULL;
         }
       }
@@ -1560,13 +1614,15 @@ buf_T * buflist_new(char_u *ffname, char_u *sfname, linenr_T lnum, int flags)
     // Tricky: these autocommands may change the buffer list.  They could also
     // split the window with re-using the one empty buffer. This may result in
     // unexpectedly losing the empty buffer.
+    bufref_T bufref;
+    set_bufref(&bufref, buf);
     if (apply_autocmds(EVENT_BUFNEW, NULL, NULL, false, buf)
-        && !buf_valid(buf)) {
+        && !bufref_valid(&bufref)) {
       return NULL;
     }
     if ((flags & BLN_LISTED)
         && apply_autocmds(EVENT_BUFADD, NULL, NULL, false, buf)
-        && !buf_valid(buf)) {
+        && !bufref_valid(&bufref)) {
       return NULL;
     }
     if (aborting()) {
@@ -4235,12 +4291,13 @@ do_arg_all (
             || !bufIsChanged(buf)) {
           /* If the buffer was changed, and we would like to hide it,
            * try autowriting. */
-          if (!P_HID(buf) && buf->b_nwindows <= 1
-              && bufIsChanged(buf)) {
-            (void)autowrite(buf, FALSE);
-            /* check if autocommands removed the window */
-            if (!win_valid(wp) || !buf_valid(buf)) {
-              wpnext = firstwin;                /* start all over... */
+          if (!P_HID(buf) && buf->b_nwindows <= 1 && bufIsChanged(buf)) {
+            bufref_T bufref;
+            set_bufref(&bufref, buf);
+            (void)autowrite(buf, false);
+            // Check if autocommands removed the window.
+            if (!win_valid(wp) || !bufref_valid(&bufref)) {
+              wpnext = firstwin;  // Start all over...
               continue;
             }
           }
@@ -4454,7 +4511,9 @@ void ex_buffer_all(exarg_T *eap)
     }
 
     if (wp == NULL && split_ret == OK) {
-      /* Split the window and put the buffer in it */
+      bufref_T bufref;
+      set_bufref(&bufref, buf);
+      // Split the window and put the buffer in it.
       p_ea_save = p_ea;
       p_ea = true;                      /* use space from all windows */
       split_ret = win_split(0, WSP_ROOM | WSP_BELOW);
@@ -4466,7 +4525,8 @@ void ex_buffer_all(exarg_T *eap)
       /* Open the buffer in this window. */
       swap_exists_action = SEA_DIALOG;
       set_curbuf(buf, DOBUF_GOTO);
-      if (!buf_valid(buf)) {            /* autocommands deleted the buffer!!! */
+      if (!bufref_valid(&bufref)) {
+        // Autocommands deleted the buffer.
         swap_exists_action = SEA_NONE;
         break;
       }
