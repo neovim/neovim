@@ -152,6 +152,11 @@ func Test_early_bar()
   call assert_equal(1, len(split(execute('au vimBarTest'), "\n")))
 endfunc
 
+func RemoveGroup()
+  autocmd! StartOK
+  augroup! StartOK
+endfunc
+
 func Test_augroup_warning()
   augroup TheWarning
     au VimEnter * echo 'entering'
@@ -167,4 +172,14 @@ func Test_augroup_warning()
   augroup Another
   augroup END
   call assert_true(match(execute('au VimEnter'), "-Deleted-.*VimEnter") >= 0)
+
+  " no warning for postpone aucmd delete
+  augroup StartOK
+    au VimEnter * call RemoveGroup()
+  augroup END
+  call assert_true(match(execute('au VimEnter'), "StartOK.*VimEnter") >= 0)
+  redir => res
+  doautocmd VimEnter
+  redir END
+  call assert_true(match(res, "W19:") < 0)
 endfunc
