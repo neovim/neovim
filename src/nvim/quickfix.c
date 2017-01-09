@@ -3778,10 +3778,15 @@ load_dummy_buffer (
       }
     }
 
-    /* restore curwin/curbuf and a few other things */
+    // Restore curwin/curbuf and a few other things.
     aucmd_restbuf(&aco);
-    if (newbuf_to_wipe != NULL && buf_valid(newbuf_to_wipe))
-      wipe_buffer(newbuf_to_wipe, FALSE);
+    if (newbuf_to_wipe != NULL && buf_valid(newbuf_to_wipe)) {
+      wipe_buffer(newbuf_to_wipe, false);
+    }
+
+    // Add back the "dummy" flag, otherwise buflist_findname_file_id()
+    // won't skip it.
+    newbuf->b_flags |= BF_DUMMY;
   }
 
   /*

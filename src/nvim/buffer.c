@@ -1849,7 +1849,8 @@ buf_T *buflist_findname(char_u *ffname)
 static buf_T *buflist_findname_file_id(char_u *ffname, FileID *file_id,
                                        bool file_id_valid)
 {
-  FOR_ALL_BUFFERS(buf) {
+  // Start at the last buffer, expect to find a match sooner.
+  FOR_ALL_BUFFERS_BACKWARDS(buf) {
     if ((buf->b_flags & BF_DUMMY) == 0
         && !otherfile_buf(buf, ffname, file_id, file_id_valid)) {
       return buf;
@@ -1923,7 +1924,7 @@ int buflist_findpat(
           return -1;
         }
 
-        FOR_ALL_BUFFERS(buf) {
+        FOR_ALL_BUFFERS_BACKWARDS(buf) {
           if (buf->b_p_bl == find_listed
               && (!diffmode || diff_mode_buf(buf))
               && buflist_match(&regmatch, buf, false) != NULL) {
