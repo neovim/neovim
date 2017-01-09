@@ -183,3 +183,12 @@ func Test_augroup_warning()
   redir END
   call assert_true(match(res, "W19:") < 0)
 endfunc
+
+func Test_augroup_deleted()
+  " This caused a crash
+  augroup x
+  augroup! x
+  au VimEnter * echo
+  au VimEnter
+endfunc
+
