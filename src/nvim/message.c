@@ -2510,8 +2510,7 @@ static void redir_write(char_u *str, int maxlen)
 int redirecting(void)
 {
   return redir_fd != NULL || *p_vfile != NUL
-         || redir_reg || redir_vname || capture_ga != NULL
-  ;
+         || redir_reg || redir_vname || capture_ga != NULL;
 }
 
 /*
