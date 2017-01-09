@@ -1114,21 +1114,19 @@ do_buffer (
       return OK;
     }
 
-    /*
-     * Deleting the current buffer: Need to find another buffer to go to.
-     * There should be another, otherwise it would have been handled
-     * above.  However, autocommands may have deleted all buffers.
-     * First use au_new_curbuf, if it is valid.
-     * Then prefer the buffer we most recently visited.
-     * Else try to find one that is loaded, after the current buffer,
-     * then before the current buffer.
-     * Finally use any buffer.
-     */
-    buf = NULL;         /* selected buffer */
-    bp = NULL;          /* used when no loaded buffer found */
-    if (au_new_curbuf != NULL && buf_valid(au_new_curbuf))
-      buf = au_new_curbuf;
-    else if (curwin->w_jumplistlen > 0) {
+    // Deleting the current buffer: Need to find another buffer to go to.
+    // There should be another, otherwise it would have been handled
+    // above.  However, autocommands may have deleted all buffers.
+    // First use au_new_curbuf.br_buf, if it is valid.
+    // Then prefer the buffer we most recently visited.
+    // Else try to find one that is loaded, after the current buffer,
+    // then before the current buffer.
+    // Finally use any buffer.
+    buf = NULL;  // Selected buffer.
+    bp = NULL;   // Used when no loaded buffer found.
+    if (au_new_curbuf.br_buf != NULL && bufref_valid(&au_new_curbuf)) {
+      buf = au_new_curbuf.br_buf;
+    } else if (curwin->w_jumplistlen > 0) {
       int jumpidx;
 
       jumpidx = curwin->w_jumplistidx - 1;
