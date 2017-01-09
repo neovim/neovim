@@ -5127,11 +5127,13 @@ void buf_reload(buf_T *buf, int orig_mode)
         EMSG2(_("E321: Could not reload \"%s\""), buf->b_fname);
       }
       if (savebuf != NULL && bufref_valid(&bufref) && buf == curbuf) {
-        /* Put the text back from the save buffer.  First
-         * delete any lines that readfile() added. */
-        while (!bufempty())
-          if (ml_delete(buf->b_ml.ml_line_count, FALSE) == FAIL)
+        // Put the text back from the save buffer.  First
+        // delete any lines that readfile() added.
+        while (!bufempty()) {
+          if (ml_delete(buf->b_ml.ml_line_count, false) == FAIL) {
             break;
+          }
+        }
         (void)move_lines(savebuf, buf);
       }
     } else if (buf == curbuf) {  /* "buf" still valid */
@@ -6329,9 +6331,10 @@ void ex_doautoall(exarg_T *eap)
     /* restore the current window */
     aucmd_restbuf(&aco);
 
-    /* stop if there is some error or buffer was deleted */
-    if (retval == FAIL || !bufref_valid(&bufref))
+    // Stop if there is some error or buffer was deleted.
+    if (retval == FAIL || !bufref_valid(&bufref)) {
       break;
+    }
   }
 
   check_cursor();           /* just in case lines got deleted */

@@ -3736,7 +3736,7 @@ load_dummy_buffer (
   buf_T       *newbuf;
   bufref_T newbufref;
   bufref_T newbuf_to_wipe;
-  int failed = TRUE;
+  int failed = true;
   aco_save_T aco;
 
   // Allocate a buffer without putting it in the buffer list.

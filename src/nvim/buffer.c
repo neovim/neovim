@@ -274,7 +274,8 @@ open_buffer (
 ///
 /// @param bufref Reference to be used for the buffer.
 /// @param buf    The buffer to reference.
-void set_bufref(bufref_T *bufref, buf_T *buf) {
+void set_bufref(bufref_T *bufref, buf_T *buf)
+{
   bufref->br_buf = buf;
   bufref->br_buf_free_count = buf_free_count;
 }
@@ -284,7 +285,8 @@ void set_bufref(bufref_T *bufref, buf_T *buf) {
 /// Only goes through the buffer list if buf_free_count changed.
 ///
 /// @param bufref Buffer reference to check for.
-bool bufref_valid(bufref_T *bufref) {
+bool bufref_valid(bufref_T *bufref)
+{
   return bufref->br_buf_free_count == buf_free_count
     ? true
     : buf_valid(bufref->br_buf);
