@@ -182,13 +182,17 @@ func Test_augroup_warning()
   doautocmd VimEnter
   redir END
   call assert_true(match(res, "W19:") < 0)
+  au! VimEnter
 endfunc
 
 func Test_augroup_deleted()
-  " This caused a crash
+  " This caused a crash before E936 was introduced
   augroup x
+    call assert_fails('augroup! x', 'E936:')
+    au VimEnter * echo
+  augroup end
   augroup! x
-  au VimEnter * echo
-  au VimEnter
+  call assert_true(match(execute('au VimEnter'), "-Deleted-.*VimEnter") >= 0)
+  au! VimEnter
 endfunc
 

@@ -5581,6 +5581,8 @@ static void au_del_group(char_u *name)
   i = au_find_group(name);
   if (i == AUGROUP_ERROR) {      // the group doesn't exist
     EMSG2(_("E367: No such group: \"%s\""), name);
+  } else if (i == current_augroup) {
+    EMSG(_("E936: Cannot delete the current group"));
   } else {
     event_T event;
     AutoPat *ap;
