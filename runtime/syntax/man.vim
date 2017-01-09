@@ -5,11 +5,9 @@ if exists('b:current_syntax')
   finish
 endif
 
-" Not contained because sometimes, manpages contain garbage backspaced
-" characters. See Restricted Shell at bash(1)
-syntax match manBackspacedChar display conceal '.\b'
+syntax match manBackspacedChar      display conceal contained '.\b'
 syntax match manBold                display contains=manBackspacedChar
-      \ '\%(\([[:graph:]]\)\b\1\)\+'
+      \ '\%(.\b.\)\+'
 syntax match manUnderline           display contains=manBackspacedChar
       \ '\%(_\b[^_]\)\+'
 
