@@ -12,8 +12,8 @@ describe('autocmds:', function()
     local expected = {
       'WinLeave',
       'TabLeave',
-      'TabNew',
       'WinEnter',
+      'TabNew',
       'TabEnter',
       'BufLeave',
       'BufEnter'

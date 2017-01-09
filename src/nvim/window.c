@@ -1719,6 +1719,7 @@ close_windows (
 {
   tabpage_T   *tp, *nexttp;
   int h = tabline_height();
+  int count = tabpage_index(NULL);
 
   ++RedrawingDisabled;
 
@@ -1755,9 +1756,14 @@ close_windows (
 
   --RedrawingDisabled;
 
-  redraw_tabline = TRUE;
-  if (h != tabline_height())
+  if (count != tabpage_index(NULL)) {
+    apply_autocmds(EVENT_TABCLOSED, NULL, NULL, false, curbuf);
+  }
+
+  redraw_tabline = true;
+  if (h != tabline_height()) {
     shell_new_rows();
+  }
 }
 
 /// Check that current window is the last one.
