@@ -290,7 +290,6 @@ void nvim_buf_set_lines(uint64_t channel_id,
     return;
   }
 
-  buf_T *save_curbuf = NULL;
   win_T *save_curwin = NULL;
   tabpage_T *save_curtab = NULL;
   size_t new_len = replacement.size;
@@ -322,6 +321,7 @@ void nvim_buf_set_lines(uint64_t channel_id,
   }
 
   try_start();
+  bufref_T save_curbuf = { NULL, 0 };
   switch_to_win_for_buf(buf, &save_curwin, &save_curtab, &save_curbuf);
 
   if (u_save((linenr_T)(start - 1), (linenr_T)end) == FAIL) {
@@ -389,7 +389,7 @@ void nvim_buf_set_lines(uint64_t channel_id,
   // changed range, and move any in the remainder of the buffer.
   // Only adjust marks if we managed to switch to a window that holds
   // the buffer, otherwise line numbers will be invalid.
-  if (save_curbuf == NULL) {
+  if (save_curbuf.br_buf == NULL) {
     mark_adjust((linenr_T)start, (linenr_T)(end - 1), MAXLNUM, extra);
   }
 
@@ -405,7 +405,7 @@ end:
   }
 
   xfree(lines);
-  restore_win_for_buf(save_curwin, save_curtab, save_curbuf);
+  restore_win_for_buf(save_curwin, save_curtab, &save_curbuf);
   try_end(err);
 }
 
@@ -651,13 +651,13 @@ ArrayOf(Integer, 2) nvim_buf_get_mark(Buffer buffer, String name, Error *err)
   }
 
   pos_T *posp;
-  buf_T *savebuf;
   char mark = *name.data;
 
   try_start();
-  switch_buffer(&savebuf, buf);
+  bufref_T save_buf;
+  switch_buffer(&save_buf, buf);
   posp = getmark(mark, false);
-  restore_buffer(savebuf);
+  restore_buffer(&save_buf);
 
   if (try_end(err)) {
     return rv;

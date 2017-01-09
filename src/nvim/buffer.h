@@ -81,12 +81,12 @@ static inline void restore_win_for_buf(win_T *save_curwin,
 
 #define WITH_BUFFER(b, code) \
   do { \
-    buf_T *save_curbuf = NULL; \
     win_T *save_curwin = NULL; \
     tabpage_T *save_curtab = NULL; \
+    bufref_T save_curbuf = { NULL, 0 }; \
     switch_to_win_for_buf(b, &save_curwin, &save_curtab, &save_curbuf); \
     code; \
-    restore_win_for_buf(save_curwin, save_curtab, save_curbuf); \
+    restore_win_for_buf(save_curwin, save_curtab, &save_curbuf); \
   } while (0)
 
 
