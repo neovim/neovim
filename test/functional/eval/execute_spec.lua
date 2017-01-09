@@ -7,7 +7,7 @@ local redir_exec = helpers.redir_exec
 local exc_exec = helpers.exc_exec
 local funcs = helpers.funcs
 local Screen = require('test.functional.ui.screen')
-local feed = helpers.feed
+local command = helpers.command
 
 describe('execute()', function()
   before_each(clear)
@@ -62,11 +62,11 @@ describe('execute()', function()
     ret = exc_exec('call execute(function("tr"))')
     eq('Vim(call):E729: using Funcref as a String', ret)
     ret = exc_exec('call execute(["echo 42", 0.0, "echo 44"])')
-    eq('Vim(call):E806: using Float as a String', ret)
+    eq('Vim:E806: using Float as a String', ret)
     ret = exc_exec('call execute(["echo 42", v:_null_dict, "echo 44"])')
-    eq('Vim(call):E731: using Dictionary as a String', ret)
+    eq('Vim:E731: using Dictionary as a String', ret)
     ret = exc_exec('call execute(["echo 42", function("tr"), "echo 44"])')
-    eq('Vim(call):E729: using Funcref as a String', ret)
+    eq('Vim:E729: using Funcref as a String', ret)
   end)
 
   -- This matches Vim behavior.
@@ -74,18 +74,75 @@ describe('execute()', function()
     eq('\n:!echo "foo"\13\n', funcs.execute('!echo "foo"'))
   end)
 
-  it('silences command run inside', function()
-    local screen = Screen.new(40, 5)
-    screen:attach()
-    screen:set_default_attr_ids( {[0] = {bold=true, foreground=255}} )
-    feed(':let g:mes = execute("echon 42")<CR>')
-    screen:expect([[
-    ^                                        |
-    {0:~                                       }|
-    {0:~                                       }|
-    {0:~                                       }|
-    :let g:mes = execute("echon 42")        |
-    ]])
-    eq('42', eval('g:mes'))
+  describe('{silent} argument', function()
+    it('captures & displays output for ""', function()
+      local screen = Screen.new(40, 5)
+      screen:attach()
+      command('let g:mes = execute("echon 42", "")')
+      screen:expect([[
+      ^                                        |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      42                                      |
+      ]])
+      eq('42', eval('g:mes'))
+    end)
+
+    it('captures but does not display output for "silent"', function()
+      local screen = Screen.new(40, 5)
+      screen:attach()
+      command('let g:mes = execute("echon 42")')
+      screen:expect([[
+      ^                                        |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+                                              |
+      ]])
+      eq('42', eval('g:mes'))
+
+      command('let g:mes = execute("echon 13", "silent")')
+      screen:expect([[
+      ^                                        |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+                                              |
+      ]])
+      eq('13', eval('g:mes'))
+    end)
+
+    it('suppresses errors for "silent!"', function()
+      eq(0, exc_exec('let g:mes = execute(0.0, "silent!")'))
+      eq('', eval('g:mes'))
+
+      eq(0, exc_exec('let g:mes = execute("echon add(1, 1)", "silent!")'))
+      eq('1', eval('g:mes'))
+
+      eq(0, exc_exec('let g:mes = execute(["echon 42", "echon add(1, 1)"], "silent!")'))
+      eq('421', eval('g:mes'))
+    end)
+
+    it('propagates errors for "" and "silent"', function()
+      local ret
+      ret = exc_exec('call execute(0.0, "")')
+      eq('Vim(call):E806: using Float as a String', ret)
+
+      ret = exc_exec('call execute(v:_null_dict, "silent")')
+      eq('Vim(call):E731: using Dictionary as a String', ret)
+
+      ret = exc_exec('call execute("echo add(1, 1)", "")')
+      eq('Vim(echo):E714: List required', ret)
+
+      ret = exc_exec('call execute(["echon 42", "echo add(1, 1)"], "")')
+      eq('Vim(echo):E714: List required', ret)
+
+      ret = exc_exec('call execute("echo add(1, 1)", "silent")')
+      eq('Vim(echo):E714: List required', ret)
+
+      ret = exc_exec('call execute(["echon 42", "echo add(1, 1)"], "silent")')
+      eq('Vim(echo):E714: List required', ret)
+    end)
   end)
 end)

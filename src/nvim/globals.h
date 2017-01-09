@@ -871,6 +871,7 @@ EXTERN cmdmod_T cmdmod;                 /* Ex command modifiers */
 
 EXTERN int msg_silent INIT(= 0);        /* don't print messages */
 EXTERN int emsg_silent INIT(= 0);       /* don't print error messages */
+EXTERN bool emsg_noredir INIT(= false);  // don't redirect error messages
 EXTERN int cmd_silent INIT(= FALSE);      /* don't echo the command line */
 
 /* Values for swap_exists_action: what to do when swap file already exists */
