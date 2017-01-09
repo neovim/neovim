@@ -151,3 +151,20 @@ func Test_early_bar()
   au! vimBarTest|echo 'hello'
   call assert_equal(1, len(split(execute('au vimBarTest'), "\n")))
 endfunc
+
+func Test_augroup_warning()
+  augroup TheWarning
+    au VimEnter * echo 'entering'
+  augroup END
+  call assert_true(match(execute('au VimEnter'), "TheWarning.*VimEnter") >= 0)
+  redir => res
+  augroup! TheWarning
+  redir END
+  call assert_true(match(res, "W19:") >= 0)
+  call assert_true(match(execute('au VimEnter'), "-Deleted-.*VimEnter") >= 0)
+
+  " check "Another" does not take the pace of the deleted entry
+  augroup Another
+  augroup END
+  call assert_true(match(execute('au VimEnter'), "-Deleted-.*VimEnter") >= 0)
+endfunc
