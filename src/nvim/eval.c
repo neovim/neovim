@@ -8855,10 +8855,6 @@ static void f_execute(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       return;
     }
 
-    garray_T capture_local;
-    ga_init(&capture_local, (int)sizeof(char), 80);
-    capture_ga = &capture_local;
-
     if (argvars[1].v_type != VAR_UNKNOWN) {
       char_u buf[NUMBUFLEN];
       char_u *s = get_tv_string_buf_chk(&argvars[1], buf);
@@ -8876,6 +8872,10 @@ static void f_execute(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     } else {
       msg_silent++;
     }
+
+    garray_T capture_local;
+    ga_init(&capture_local, (int)sizeof(char), 80);
+    capture_ga = &capture_local;
 
     if (argvars[0].v_type != VAR_LIST) {
       do_cmdline_cmd((char *)get_tv_string(&argvars[0]));
