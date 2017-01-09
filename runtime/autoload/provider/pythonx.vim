@@ -1,4 +1,4 @@
-" The Python provider helper
+
 if exists('s:loaded_pythonx_provider')
   finish
 endif
@@ -22,7 +22,7 @@ function! provider#pythonx#Require(host) abort
 
   " Python host arguments
   let prog = (ver == '2' ?  provider#python#Prog() : provider#python3#Prog())
-  let args = [prog, '-c', 'import sys; sys.path.remove(""); import neovim; neovim.start_host()']
+  let args = [prog, '-c', shellescape('import sys; sys.path.remove(""); import neovim; neovim.start_host()')]
 
   " Collect registered Python plugins into args
   let python_plugins = remote#host#PluginsForHost(a:host.name)
@@ -92,13 +92,13 @@ function! s:check_interpreter(prog, major_ver) abort
   "   0  Neovim module can be loaded.
   "   2  Neovim module cannot be loaded.
   "   Otherwise something else went wrong (e.g. 1 or 127).
-  let prog_ver = system([ a:prog , '-c' ,
+  let prog_ver = system([ a:prog , '-c' , shellescape(
         \ 'import sys; ' .
         \ 'sys.path.remove(""); ' .
         \ 'sys.stdout.write(str(sys.version_info[0]) + "." + str(sys.version_info[1])); ' .
         \ 'import pkgutil; ' .
         \ 'exit(2*int(pkgutil.get_loader("neovim") is None))'
-        \ ])
+        \ )])
 
   if v:shell_error == 2 || v:shell_error == 0
     " Check version only for expected return codes.
