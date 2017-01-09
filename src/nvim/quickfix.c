@@ -3734,7 +3734,8 @@ load_dummy_buffer (
 )
 {
   buf_T       *newbuf;
-  buf_T       *newbuf_to_wipe = NULL;
+  bufref_T newbufref;
+  bufref_T newbuf_to_wipe;
   int failed = TRUE;
   aco_save_T aco;
 
@@ -3743,6 +3744,7 @@ load_dummy_buffer (
   if (newbuf == NULL) {
     return NULL;
   }
+  set_bufref(&newbufref, newbuf);
 
   /* Init the options. */
   buf_copy_options(newbuf, BCO_ENTER | BCO_NOHELP);
@@ -3762,6 +3764,7 @@ load_dummy_buffer (
      * work. */
     curbuf->b_flags &= ~BF_DUMMY;
 
+    newbuf_to_wipe.br_buf = NULL;
     if (readfile(fname, NULL,
             (linenr_T)0, (linenr_T)0, (linenr_T)MAXLNUM,
             NULL, READ_NEW | READ_DUMMY) == OK
@@ -3769,19 +3772,19 @@ load_dummy_buffer (
         && !(curbuf->b_flags & BF_NEW)) {
       failed = FALSE;
       if (curbuf != newbuf) {
-        /* Bloody autocommands changed the buffer!  Can happen when
-         * using netrw and editing a remote file.  Use the current
-         * buffer instead, delete the dummy one after restoring the
-         * window stuff. */
-        newbuf_to_wipe = newbuf;
+        // Bloody autocommands changed the buffer!  Can happen when
+        // using netrw and editing a remote file.  Use the current
+        // buffer instead, delete the dummy one after restoring the
+        // window stuff.
+        set_bufref(&newbuf_to_wipe, newbuf);
         newbuf = curbuf;
       }
     }
 
     // Restore curwin/curbuf and a few other things.
     aucmd_restbuf(&aco);
-    if (newbuf_to_wipe != NULL && buf_valid(newbuf_to_wipe)) {
-      wipe_buffer(newbuf_to_wipe, false);
+    if (newbuf_to_wipe.br_buf != NULL && bufref_valid(&newbuf_to_wipe)) {
+      wipe_buffer(newbuf_to_wipe.br_buf, false);
     }
 
     // Add back the "dummy" flag, otherwise buflist_findname_file_id()
@@ -3797,8 +3800,9 @@ load_dummy_buffer (
   os_dirname(resulting_dir, MAXPATHL);
   restore_start_dir(dirname_start);
 
-  if (!buf_valid(newbuf))
+  if (!bufref_valid(&newbufref)) {
     return NULL;
+  }
   if (failed) {
     wipe_dummy_buffer(newbuf, dirname_start);
     return NULL;

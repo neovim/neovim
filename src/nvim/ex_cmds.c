@@ -2086,7 +2086,7 @@ int do_ecmd(
   int did_set_swapcommand = FALSE;
   buf_T       *buf;
   bufref_T     bufref;
-  buf_T       *old_curbuf = curbuf;
+  bufref_T     old_curbuf;
   char_u      *free_fname = NULL;
   int retval = FAIL;
   long n;
@@ -2102,6 +2102,8 @@ int do_ecmd(
 
   if (eap != NULL)
     command = eap->do_ecmd_cmd;
+
+  set_bufref(&old_curbuf, curbuf);
 
   if (fnum != 0) {
     if (fnum == curbuf->b_fnum)         /* file is already being edited */
@@ -2214,7 +2216,7 @@ int do_ecmd(
       if (oldwin != NULL) {
         oldwin = curwin;
       }
-      old_curbuf = curbuf;
+      set_bufref(&old_curbuf, curbuf);
     }
     if (buf == NULL)
       goto theend;
@@ -2228,7 +2230,7 @@ int do_ecmd(
       (void)buf_check_timestamp(buf, false);
       // Check if autocommands made buffer invalid or changed the current
       // buffer.
-      if (!bufref_valid(&bufref) || curbuf != old_curbuf) {
+      if (!bufref_valid(&bufref) || curbuf != old_curbuf.br_buf) {
         goto theend;
       }
       if (aborting()) {
@@ -2283,7 +2285,7 @@ int do_ecmd(
 
         // Set the w_closing flag to avoid that autocommands close the window.
         the_curwin->w_closing = true;
-        if (curbuf == old_curbuf) {
+        if (curbuf == old_curbuf.br_buf) {
           buf_copy_options(buf, BCO_ENTER);
         }
 
@@ -2487,7 +2489,7 @@ int do_ecmd(
 
       if (swap_exists_action == SEA_QUIT)
         retval = FAIL;
-      handle_swap_exists(old_curbuf);
+      handle_swap_exists(&old_curbuf);
     } else {
       /* Read the modelines, but only to set window-local options.  Any
        * buffer-local options have already been set and may have been

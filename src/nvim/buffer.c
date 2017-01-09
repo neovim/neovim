@@ -94,7 +94,7 @@ open_buffer (
 )
 {
   int retval = OK;
-  buf_T       *old_curbuf;
+  bufref_T       old_curbuf;
   long old_tw = curbuf->b_p_tw;
 
   /*
@@ -136,10 +136,10 @@ open_buffer (
     return FAIL;
   }
 
-  /* The autocommands in readfile() may change the buffer, but only AFTER
-   * reading the file. */
-  old_curbuf = curbuf;
-  modified_was_set = FALSE;
+  // The autocommands in readfile() may change the buffer, but only AFTER
+  // reading the file.
+  set_bufref(&old_curbuf, curbuf);
+  modified_was_set = false;
 
   /* mark cursor position as being invalid */
   curwin->w_valid = 0;
@@ -252,11 +252,11 @@ open_buffer (
    * The autocommands may have changed the current buffer.  Apply the
    * modelines to the correct buffer, if it still exists and is loaded.
    */
-  if (buf_valid(old_curbuf) && old_curbuf->b_ml.ml_mfp != NULL) {
+  if (bufref_valid(&old_curbuf) && old_curbuf.br_buf->b_ml.ml_mfp != NULL) {
     aco_save_T aco;
 
-    /* Go to the buffer that was opened. */
-    aucmd_prepbuf(&aco, old_curbuf);
+    // Go to the buffer that was opened.
+    aucmd_prepbuf(&aco, old_curbuf.br_buf);
     do_modelines(0);
     curbuf->b_flags &= ~(BF_CHECK_RO | BF_NEVERLOADED);
 
@@ -719,8 +719,9 @@ static void clear_wininfo(buf_T *buf)
 void goto_buffer(exarg_T *eap, int start, int dir, int count)
 {
   (void)do_buffer(*eap->cmd == 's' ? DOBUF_SPLIT : DOBUF_GOTO,
-      start, dir, count, eap->forceit);
-  buf_T *old_curbuf = curbuf;
+                  start, dir, count, eap->forceit);
+  bufref_T old_curbuf;
+  set_bufref(&old_curbuf, curbuf);
   swap_exists_action = SEA_DIALOG;
 
   if (swap_exists_action == SEA_QUIT && *eap->cmd == 's') {
@@ -739,18 +740,20 @@ void goto_buffer(exarg_T *eap, int start, int dir, int count)
      * new aborting error, interrupt, or uncaught exception. */
     leave_cleanup(&cs);
   } else {
-    handle_swap_exists(old_curbuf);
+    handle_swap_exists(&old_curbuf);
   }
 }
 
-/*
- * Handle the situation of swap_exists_action being set.
- * It is allowed for "old_curbuf" to be NULL or invalid.
- */
-void handle_swap_exists(buf_T *old_curbuf)
+/// Handle the situation of swap_exists_action being set.
+///
+/// It is allowed for "old_curbuf" to be NULL or invalid.
+///
+/// @param old_curbuf The buffer to check for.
+void handle_swap_exists(bufref_T *old_curbuf)
 {
   cleanup_T cs;
   long old_tw = curbuf->b_p_tw;
+  buf_T *buf;
 
   if (swap_exists_action == SEA_QUIT) {
     /* Reset the error/interrupt/exception state here so that
@@ -763,13 +766,18 @@ void handle_swap_exists(buf_T *old_curbuf)
     swap_exists_action = SEA_NONE;      // don't want it again
     swap_exists_did_quit = true;
     close_buffer(curwin, curbuf, DOBUF_UNLOAD, false);
-    if (!buf_valid(old_curbuf) || old_curbuf == curbuf) {
-      old_curbuf = buflist_new(NULL, NULL, 1L, BLN_CURBUF | BLN_LISTED);
+    if (old_curbuf == NULL
+        || !bufref_valid(old_curbuf)
+        || old_curbuf->br_buf == curbuf) {
+      buf = buflist_new(NULL, NULL, 1L, BLN_CURBUF | BLN_LISTED);
+    } else {
+      buf = old_curbuf->br_buf;
     }
-    if (old_curbuf != NULL) {
-      enter_buffer(old_curbuf);
-      if (old_tw != curbuf->b_p_tw)
+    if (buf != NULL) {
+      enter_buffer(buf);
+      if (old_tw != curbuf->b_p_tw) {
         check_colorcolumn(curwin);
+      }
     }
     /* If "old_curbuf" is NULL we are in big trouble here... */
 

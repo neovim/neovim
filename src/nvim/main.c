@@ -590,10 +590,13 @@ void getout(int exitval)
     /* Trigger BufUnload for buffers that are loaded */
     FOR_ALL_BUFFERS(buf) {
       if (buf->b_ml.ml_mfp != NULL) {
-        apply_autocmds(EVENT_BUFUNLOAD, buf->b_fname, buf->b_fname,
-            FALSE, buf);
-        if (!buf_valid(buf))            /* autocmd may delete the buffer */
+        bufref_T bufref;
+        set_bufref(&bufref, buf);
+        apply_autocmds(EVENT_BUFUNLOAD, buf->b_fname, buf->b_fname, false, buf);
+        if (!bufref_valid(&bufref)) {
+          // Autocmd deleted the buffer.
           break;
+        }
       }
     }
     apply_autocmds(EVENT_VIMLEAVEPRE, NULL, NULL, FALSE, curbuf);

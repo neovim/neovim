@@ -1945,6 +1945,8 @@ int win_close(win_T *win, int free_buf)
    * Close the link to the buffer.
    */
   if (win->w_buffer != NULL) {
+    bufref_T bufref;
+    set_bufref(&bufref, curbuf);
     win->w_closing = true;
     close_buffer(win, win->w_buffer, free_buf ? DOBUF_UNLOAD : 0, true);
     if (win_valid_any_tab(win)) {
@@ -1953,7 +1955,7 @@ int win_close(win_T *win, int free_buf)
 
     // Make sure curbuf is valid. It can become invalid if 'bufhidden' is
     // "wipe".
-    if (!buf_valid(curbuf)) {
+    if (!bufref_valid(&bufref)) {
       curbuf = firstbuf;
     }
   }
@@ -5401,31 +5403,29 @@ void restore_win(win_T *save_curwin, tabpage_T *save_curtab, int no_display)
   unblock_autocmds();
 }
 
-/*
- * Make "buf" the current buffer.  restore_buffer() MUST be called to undo.
- * No autocommands will be executed.  Use aucmd_prepbuf() if there are any.
- */
-void switch_buffer(buf_T **save_curbuf, buf_T *buf)
+/// Make "buf" the current buffer.
+///
+/// restore_buffer() MUST be called to undo.
+/// No autocommands will be executed. Use aucmd_prepbuf() if there are any.
+void switch_buffer(bufref_T *save_curbuf, buf_T *buf)
 {
   block_autocmds();
-  *save_curbuf = curbuf;
+  set_bufref(save_curbuf, curbuf);
   --curbuf->b_nwindows;
   curbuf = buf;
   curwin->w_buffer = buf;
   ++curbuf->b_nwindows;
 }
 
-/*
- * Restore the current buffer after using switch_buffer().
- */
-void restore_buffer(buf_T *save_curbuf)
+/// Restore the current buffer after using switch_buffer().
+void restore_buffer(bufref_T *save_curbuf)
 {
   unblock_autocmds();
-  /* Check for valid buffer, just in case. */
-  if (buf_valid(save_curbuf)) {
+  // Check for valid buffer, just in case.
+  if (bufref_valid(save_curbuf)) {
     --curbuf->b_nwindows;
-    curwin->w_buffer = save_curbuf;
-    curbuf = save_curbuf;
+    curwin->w_buffer = save_curbuf->br_buf;
+    curbuf = save_curbuf->br_buf;
     ++curbuf->b_nwindows;
   }
 }
