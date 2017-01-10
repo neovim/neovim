@@ -47,7 +47,7 @@ function! provider#clipboard#Error() abort
 endfunction
 
 function! provider#clipboard#Executable() abort
-  if executable('pbcopy')
+  if has('mac') && executable('pbcopy')
     let s:copy['+'] = 'pbcopy'
     let s:paste['+'] = 'pbpaste'
     let s:copy['*'] = s:copy['+']
