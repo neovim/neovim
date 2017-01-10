@@ -4,6 +4,7 @@
 source test_assign.vim
 source test_autocmd.vim
 source test_cursor_func.vim
+source test_execute_func.vim
 source test_ex_undo.vim
 source test_expr.vim
 source test_expr_utf8.vim

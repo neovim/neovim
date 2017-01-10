@@ -79,7 +79,7 @@ return {
     eval={args=1},
     eventhandler={},
     executable={args=1},
-    execute={args=1},
+    execute={args={1, 2}},
     exepath={args=1},
     exists={args=1},
     exp={args=1, func="float_op_wrapper", data="&exp"},

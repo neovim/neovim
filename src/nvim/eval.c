@@ -8828,34 +8828,73 @@ static void f_executable(typval_T *argvars, typval_T *rettv, FunPtr fptr)
            || (gettail_dir(name) != name && os_can_exe(name, NULL, false));
 }
 
+static char_u * get_list_line(int c, void *cookie, int indent)
+{
+  listitem_T **p = (listitem_T **)cookie;
+  listitem_T *item = *p;
+  char_u buf[NUMBUFLEN];
+  char_u *s;
+
+  if (item == NULL) {
+    return NULL;
+  }
+  s = get_tv_string_buf_chk(&item->li_tv, buf);
+  *p = item->li_next;
+  return s == NULL ? NULL : vim_strsave(s);
+}
+
 // "execute(command)" function
 static void f_execute(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
     int save_msg_silent = msg_silent;
+    int save_emsg_silent = emsg_silent;
+    bool save_emsg_noredir = emsg_noredir;
     garray_T *save_capture_ga = capture_ga;
 
     if (check_secure()) {
       return;
     }
 
-    garray_T capture_local;
-    capture_ga = &capture_local;
-    ga_init(capture_ga, (int)sizeof(char), 80);
+    if (argvars[1].v_type != VAR_UNKNOWN) {
+      char_u buf[NUMBUFLEN];
+      char_u *s = get_tv_string_buf_chk(&argvars[1], buf);
 
-    msg_silent++;
+      if (s == NULL) {
+        return;
+      }
+      if (STRNCMP(s, "silent", 6) == 0) {
+        msg_silent++;
+      }
+      if (STRCMP(s, "silent!") == 0) {
+        emsg_silent = true;
+        emsg_noredir = true;
+      }
+    } else {
+      msg_silent++;
+    }
+
+    garray_T capture_local;
+    ga_init(&capture_local, (int)sizeof(char), 80);
+    capture_ga = &capture_local;
+
     if (argvars[0].v_type != VAR_LIST) {
       do_cmdline_cmd((char *)get_tv_string(&argvars[0]));
     } else if (argvars[0].vval.v_list != NULL) {
-      for (listitem_T *li = argvars[0].vval.v_list->lv_first;
-           li != NULL; li = li->li_next) {
-        do_cmdline_cmd((char *)get_tv_string(&li->li_tv));
-      }
+      list_T *list = argvars[0].vval.v_list;
+      list->lv_refcount++;
+      listitem_T *item = list->lv_first;
+      do_cmdline(NULL, get_list_line, (void *)&item,
+                 DOCMD_NOWAIT|DOCMD_VERBOSE|DOCMD_REPEAT|DOCMD_KEYTYPED);
+      list->lv_refcount--;
     }
     msg_silent = save_msg_silent;
+    emsg_silent = save_emsg_silent;
+    emsg_noredir = save_emsg_noredir;
 
     ga_append(capture_ga, NUL);
     rettv->v_type = VAR_STRING;
-    rettv->vval.v_string = capture_ga->ga_data;
+    rettv->vval.v_string = vim_strsave(capture_ga->ga_data);
+    ga_clear(capture_ga);
 
     capture_ga = save_capture_ga;
 }

@@ -508,20 +508,22 @@ int emsg(char_u *s)
      * But do write it to the redirection file.
      */
     if (emsg_silent != 0) {
-      msg_start();
-      p = get_emsg_source();
-      if (p != NULL) {
-        STRCAT(p, "\n");
-        redir_write(p, STRLEN(p));
-        xfree(p);
+      if (!emsg_noredir) {
+        msg_start();
+        p = get_emsg_source();
+        if (p != NULL) {
+          STRCAT(p, "\n");
+          redir_write(p, STRLEN(p));
+          xfree(p);
+        }
+        p = get_emsg_lnum();
+        if (p != NULL) {
+          STRCAT(p, "\n");
+          redir_write(p, STRLEN(p));
+          xfree(p);
+        }
+        redir_write(s, STRLEN(s));
       }
-      p = get_emsg_lnum();
-      if (p != NULL) {
-        STRCAT(p, "\n");
-        redir_write(p, STRLEN(p));
-        xfree(p);
-      }
-      redir_write(s, STRLEN(s));
       return true;
     }
 
@@ -2508,8 +2510,7 @@ static void redir_write(char_u *str, int maxlen)
 int redirecting(void)
 {
   return redir_fd != NULL || *p_vfile != NUL
-         || redir_reg || redir_vname
-  ;
+         || redir_reg || redir_vname || capture_ga != NULL;
 }
 
 /*

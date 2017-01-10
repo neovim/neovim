@@ -3070,7 +3070,7 @@ executable({expr})					*executable()*
 			0	does not exist
 			-1	not implemented on this system
 
-execute({command})					*execute()*
+execute({command} [, {silent}])				*execute()*
 		Execute {command} and capture its output.
 		If {command} is a |String|, returns {command} output.
 		If {command} is a |List|, returns concatenated outputs.
@@ -3079,10 +3079,17 @@ execute({command})					*execute()*
 <			foo >
 			echo execute(['echon "foo"', 'echon "bar"'])
 <			foobar
+
+		The optional {silent} argument can have these values:
+			""		no `:silent` used
+			"silent"	`:silent` used
+			"silent!"	`:silent!` used
+		The default is 'silent'.  Note that with "silent!", unlike
+		`:redir`, error messages are dropped.
+
 		This function is not available in the |sandbox|.
-		Note: {command} executes as if prepended with |:silent|
-		(output is collected but not displayed).  If nested, an outer
-		execute() will not observe output of the inner calls.
+		Note: If nested, an outer execute() will not observe output of
+		the inner calls.
 		Note: Text attributes (highlights) are not captured.
 
 exepath({expr})						*exepath()*
@@ -7007,9 +7014,9 @@ synID({lnum}, {col}, {trans})				*synID()*
 		that's where the cursor can be in Insert mode, synID() returns
 		zero.
 
-		When {trans} is non-zero, transparent items are reduced to the
+		When {trans} is |TRUE|, transparent items are reduced to the
 		item that they reveal.	This is useful when wanting to know
-		the effective color.  When {trans} is zero, the transparent
+		the effective color.  When {trans} is |FALSE|, the transparent
 		item is returned.  This is useful when wanting to know which
 		syntax item is effective (e.g. inside parens).
 		Warning: This function can be very slow.  Best speed is
