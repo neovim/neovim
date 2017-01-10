@@ -34,6 +34,7 @@ NEW_TESTS = \
 	    test_cmdline.res \
 	    test_cscope.res \
 	    test_diffmode.res \
+	    test_gn.res \
 	    test_hardcopy.res \
 	    test_help_tagjump.res \
 	    test_history.res \
