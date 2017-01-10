@@ -480,6 +480,12 @@ return {
     func='ex_close',
   },
   {
+    command='clearjumps',
+    flags=bit.bor(TRLBAR, CMDWIN),
+    addr_type=ADDR_LINES,
+    func='ex_clearjumps',
+  },
+  {
     command='cmap',
     flags=bit.bor(EXTRA, TRLBAR, NOTRLCOM, USECTRLV, CMDWIN),
     addr_type=ADDR_LINES,

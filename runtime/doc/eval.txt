@@ -783,7 +783,7 @@ A |Dictionary| can only be compared with a |Dictionary| and only "equal", "not
 equal" and "is" can be used.  This compares the key/values of the |Dictionary|
 recursively.  Ignoring case means case is ignored when comparing item values.
 
-							*E693* *E694*
+							*E694*
 A |Funcref| can only be compared with a |Funcref| and only "equal" and "not
 equal" can be used.  Case is never ignored.
 
@@ -1470,7 +1470,7 @@ v:exception	The value of the exception most recently caught and not
 
 					*v:false* *false-variable*
 v:false		Special value used to put "false" in JSON and msgpack.  See 
-		|json_encode()|.  This value is converted to "false" when used 
+		|json_encode()|.  This value is converted to "v:false" when used 
 		as a String (e.g. in |expr5| with string concatenation 
 		operator) and to zero when used as a Number (e.g. in |expr5| 
 		or |expr7| when used with numeric operators).
@@ -1620,7 +1620,7 @@ v:msgpack_types	Dictionary containing msgpack types used by |msgpackparse()|
 
 					*v:null* *null-variable*
 v:null		Special value used to put "null" in JSON and NIL in msgpack.  
-		See |json_encode()|.  This value is converted to "null" when 
+		See |json_encode()|.  This value is converted to "v:null" when 
 		used as a String (e.g. in |expr5| with string concatenation 
 		operator) and to zero when used as a Number (e.g. in |expr5| 
 		or |expr7| when used with numeric operators).
@@ -1807,7 +1807,7 @@ v:throwpoint	The point where the exception most recently caught and not
 
 					*v:true* *true-variable*
 v:true		Special value used to put "true" in JSON and msgpack.  See 
-		|json_encode()|.  This value is converted to "true" when used 
+		|json_encode()|.  This value is converted to "v:true" when used 
 		as a String (e.g. in |expr5| with string concatenation 
 		operator) and to one when used as a Number (e.g. in |expr5| or 
 		|expr7| when used with numeric operators).
@@ -2174,14 +2174,17 @@ sqrt({expr})			Float	square root of {expr}
 str2float({expr})		Float	convert String to Float
 str2nr({expr} [, {base}])	Number	convert String to Number
 strchars({expr} [, {skipcc}])	Number	character length of the String {expr}
+strcharpart({str}, {start}[, {len}])
+				String	{len} characters of {str} at {start}
 strdisplaywidth({expr} [, {col}]) Number display length of the String {expr}
 strftime({format}[, {time}])	String	time in specified format
+strgetchar({str}, {index})	Number	get char {index} from {str}
 stridx({haystack}, {needle}[, {start}])
 				Number	index of {needle} in {haystack}
 string({expr})			String	String representation of {expr} value
 strlen({expr})			Number	length of the String {expr}
-strpart({src}, {start}[, {len}])
-				String	{len} characters of {src} at {start}
+strpart({str}, {start}[, {len}])
+				String	{len} characters of {str} at {start}
 strridx({haystack}, {needle} [, {start}])
 				Number	last index of {needle} in {haystack}
 strtrans({expr})		String	translate string to make it printable
@@ -2591,7 +2594,9 @@ byteidx({expr}, {nr})					*byteidx()*
 		same: >
 			let s = strpart(str, byteidx(str, 3))
 			echo strpart(s, 0, byteidx(s, 1))
-<		If there are less than {nr} characters -1 is returned.
+<		Also see |strgetchar()| and |strcharpart()|.
+
+		If there are less than {nr} characters -1 is returned.
 		If there are exactly {nr} characters the length of the string
 		in bytes is returned.
 
@@ -3330,6 +3335,10 @@ feedkeys({string} [, {mode}])				*feedkeys()*
 			will behave as if <Esc> is typed, to avoid getting
 			stuck, waiting for a character to be typed before the
 			script continues.
+		'!'	When used with 'x' will not end Insert mode. Can be
+			used in a test when a timer is set to exit Insert mode
+			a little later.  Useful for testing CursorHoldI.
+
 		Return value is always 0.
 
 filereadable({file})					*filereadable()*
@@ -3525,7 +3534,7 @@ foreground()	Move the Vim window to the foreground.	Useful when sent from
 		{only in the Win32 GUI and console version}
 
 
-				       *function()* *E700* *E922* *E929*
+				       *function()* *E700* *E922* *E923*
 function({name} [, {arglist}] [, {dict}])
 		Return a |Funcref| variable that refers to function {name}.
 		{name} can be a user defined function or an internal function.
@@ -4088,16 +4097,21 @@ getreg([{regname} [, 1 [, {list}]]])			*getreg()*
 		The result is a String, which is the contents of register
 		{regname}.  Example: >
 			:let cliptext = getreg('*')
-<		getreg('=') returns the last evaluated value of the expression
+<		When {regname} was not set the result is a empty string.
+
+		getreg('=') returns the last evaluated value of the expression
 		register.  (For use in maps.)
 		getreg('=', 1) returns the expression itself, so that it can
 		be restored with |setreg()|.  For other registers the extra
 		argument is ignored, thus you can always give it.
-		If {list} is present and non-zero result type is changed to 
-		|List|. Each list item is one text line. Use it if you care
+
+		If {list} is present and non-zero, the result type is changed
+		to |List|. Each list item is one text line. Use it if you care
 		about zero bytes possibly present inside register: without
 		third argument both NLs and zero bytes are represented as NLs
 		(see |NL-used-for-Nul|).
+		When the register was not set an empty list is returned.
+
 		If {regname} is not specified, |v:register| is used.
 
 
@@ -5635,7 +5649,6 @@ pumvisible()						*pumvisible()*
 		This can be used to avoid some things that would remove the
 		popup menu.
 
-							*E860*
 py3eval({expr})						*py3eval()*
 		Evaluate Python expression {expr} and return its result
 		converted to Vim data structures.
@@ -6761,7 +6774,6 @@ strchars({expr} [, {skipcc}])					*strchars()*
 		counted separately.
 		When {skipcc} set to 1, Composing characters are ignored.
 		Also see |strlen()|, |strdisplaywidth()| and |strwidth()|.
-
 		
 		{skipcc} is only available after 7.4.755.  For backward
 		compatibility, you can define a wrapper function: >
@@ -6779,6 +6791,13 @@ strchars({expr} [, {skipcc}])					*strchars()*
 		      endfunction
 		    endif
 <
+strcharpart({src}, {start}[, {len}])			*strcharpart()*
+		Like |strpart()| but using character index and length instead
+		of byte index and length.
+		When a character index is used where a character does not
+		exist it is assumed to be one byte.  For example: >
+			strcharpart('abc', -1, 2)
+<		results in 'a'.
 
 strdisplaywidth({expr}[, {col}])			*strdisplaywidth()*
 		The result is a Number, which is the number of display cells
@@ -6811,6 +6830,12 @@ strftime({format} [, {time}])				*strftime()*
 						   Show mod time of file.c.
 <		Not available on all systems.  To check use: >
 			:if exists("*strftime")
+
+strgetchar({str}, {index})				*strgetchar()*
+		Get character {index} from {str}.  This uses a character
+		index, not a byte index.  Composing characters are considered
+		separate characters here.
+		Also see |strcharpart()| and |strchars()|.
 
 stridx({haystack}, {needle} [, {start}])		*stridx()*
 		The result is a Number, which gives the byte index in
@@ -6866,14 +6891,17 @@ strlen({expr})	The result is a Number, which is the length of the String
 strpart({src}, {start}[, {len}])			*strpart()*
 		The result is a String, which is part of {src}, starting from
 		byte {start}, with the byte length {len}.
-		When non-existing bytes are included, this doesn't result in
-		an error, the bytes are simply omitted.
+		To count characters instead of bytes use |strcharpart()|.
+
+		When bytes are selected which do not exist, this doesn't
+		result in an error, the bytes are simply omitted.
 		If {len} is missing, the copy continues from {start} till the
 		end of the {src}. >
 			strpart("abcdefg", 3, 2)    == "de"
 			strpart("abcdefg", -2, 4)   == "ab"
 			strpart("abcdefg", 5, 4)    == "fg"
 			strpart("abcdefg", 3)	    == "defg"
+
 <		Note: To get the first character, {start} must be 0.  For
 		example, to get three bytes under and after the cursor: >
 			strpart(getline("."), col(".") - 1, 3)
@@ -8499,14 +8527,6 @@ This does NOT work: >
 				endfor
 <			Note that reordering the list (e.g., with sort() or
 			reverse()) may have unexpected effects.
-			Note that the type of each list item should be
-			identical to avoid errors for the type of {var}
-			changing.  Unlet the variable at the end of the loop
-			to allow multiple item types: >
-				for item in ["foo", ["bar"]]
-				   echo item
-				   unlet item  " E706 without this
-				endfor
 
 :for [{var1}, {var2}, ...] in {listlist}
 :endfo[r]

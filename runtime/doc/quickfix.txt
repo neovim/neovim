@@ -474,6 +474,9 @@ expression.
 The BufWinEnter event is also triggered, again using "quickfix" for the buffer
 name.
 
+Note: When adding to an existing quickfix list the autocommand are not
+triggered.
+
 Note: Making changes in the quickfix window has no effect on the list of
 errors.  'modifiable' is off to avoid making changes.  If you delete or insert
 lines anyway, the relation between the text and the error number is messed up.

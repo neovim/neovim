@@ -1,8 +1,8 @@
 " VHDL indent ('93 syntax)
 " Language:    VHDL
 " Maintainer:  Gerald Lai <laigera+vim?gmail.com>
-" Version:     1.58
-" Last Change: 2011 Sep 27
+" Version:     1.60
+" Last Change: 2016 Feb 26
 " URL:         http://www.vim.org/scripts/script.php?script_id=1450
 
 " only load this indent file when no other was loaded
@@ -104,7 +104,7 @@ function GetVHDLindent()
     let pn = prevnonblank(pn - 1)
     let ps = getline(pn)
   endwhile
-  if (curs =~ '^\s*)' || curs =~? '^\s*\%(\<\%(procedure\|generic\|map\|port\)\>.*\)\@<!\w\+\s*\w*\s*\%(=>\s*\S\+\|:[^=]\@=\s*\%(\%(in\|out\|inout\|buffer\|linkage\)\>\|\w\+\s\+:=\)\)') && (prevs =~? s:NC.'\<\%(procedure\s\+\S\+\|generic\|map\|port\)\s*(\%(\s*\w\)\=' || (ps =~? s:NC.'\<\%(procedure\|generic\|map\|port\)'.s:ES && prevs =~ '^\s*('))
+  if (curs =~ '^\s*)' || curs =~? '^\s*\%(\<\%(procedure\|generic\|map\|port\)\>.*\)\@<!\w\+\s*\w*\s*\((.*)\)*\s*\%(=>\s*\S\+\|:[^=]\@=\s*\%(\%(in\|out\|inout\|buffer\|linkage\)\>\|\s\+\)\)') && (prevs =~? s:NC.'\<\%(procedure\s\+\S\+\|generic\|map\|port\)\s*(\%(\s*\w\)\=' || (ps =~? s:NC.'\<\%(procedure\|generic\|map\|port\)'.s:ES && prevs =~ '^\s*('))
     " align closing ")" with opening "("
     if curs =~ '^\s*)'
       return ind2 + stridx(prevs_noi, '(')
@@ -412,11 +412,22 @@ function GetVHDLindent()
 
   " ****************************************************************************************
   " indent:   maintain indent of previous opening statement
-  " keywords: without "procedure", "generic", "map", "port" + ":" but not ":=" + "in", "out", "inout", "buffer", "linkage", variable & ":="
+  " keywords: without "procedure", "generic", "map", "port" + ":" but not ":=" + eventually ;$
   " where:    start of current line
-  if curs =~? '^\s*\%(\<\%(procedure\|generic\|map\|port\)\>.*\)\@<!\w\+\s*\w*\s*:[^=]\@=\s*\%(\%(in\|out\|inout\|buffer\|linkage\)\>\|\w\+\s\+:=\)'
+  if curs =~? '^\s*\%(\<\%(procedure\|generic\|map\|port\)\>.*\)\@<!\w\+\s*\w*\s*:[^=].*;.*$'
     return ind2
   endif
+  " ****************************************************************************************
+  " indent:     maintain indent of previous opening statement, corner case which
+  "             does not end in ;, but is part of a mapping
+  " keywords:   without "procedure", "generic", "map", "port" + ":" but not ":=", never + ;$ and
+  "             prevline without "procedure", "generic", "map", "port" + ":" but not ":=" + eventually ;$
+  " where:      start of current line
+  if curs =~? '^\s*\%(\<\%(procedure\|generic\|map\|port\)\>.*\)\@<!\w\+\s*\w*\s*:[^=].*[^;].*$'
+      if prevs =~? '^\s*\%(\<\%(procedure\|generic\|map\|port\)\>.*\)\@<!\w\+\s*\w*\s*:[^=].*;.*$'
+         return ind2
+     endif
+ endif
 
   " return leftover filtered indent
   return ind

@@ -1,4 +1,4 @@
-*pi_netrw.txt*  For Vim version 7.4.  Last change: 2016 Feb 16
+*pi_netrw.txt*  For Vim version 7.4.  Last change: 2016 Apr 20
 
 	    ------------------------------------------------
 	    NETRW REFERENCE MANUAL    by Charles E. Campbell
@@ -1523,6 +1523,7 @@ the |'isfname'| option (which is global, so netrw doesn't modify it).
 Associated setting variables:
 	|g:netrw_gx|	control how gx picks up the text under the cursor
 	|g:netrw_nogx|	prevent gx map while editing
+	|g:netrw_suppress_gx_mesg| controls gx's suppression of browser messages
 
 							*netrw_filehandler*
 
@@ -2929,6 +2930,13 @@ your browsing preferences.  (see also: |netrw-settings|)
 				such as listing, file removal, etc.
 				 default: ssh
 
+ *g:netrw_suppress_gx_mesg*	=1 : browsers sometimes produce messages
+				which are normally unwanted intermixed
+				with the page.
+				However, when using links, for example,
+				those messages are what the browser produces.
+				By setting this option to 0, netrw will not
+				suppress browser messages.
 
   *g:netrw_tmpfile_escape*	=' &;'
 				escape() is applied to all temporary files
@@ -3755,6 +3763,23 @@ netrw:
 ==============================================================================
 12. History						*netrw-history* {{{1
 
+	v156:	Feb 18, 2016	* Changed =~ to =~# where appropriate
+		Feb 23, 2016	* s:ComposePath(base,subdir) now uses
+				  fnameescape() on the base portion
+		Mar 01, 2016	* (gt_macki) reported where :Explore would
+				  make file unlisted. Fixed (tst943)
+		Apr 04, 2016	* (reported by John Little) netrw normally
+				  suppresses browser messages, but sometimes
+				  those "messages" are what is wanted.
+				  See |g:netrw_suppress_gx_mesg|
+		Apr 06, 2016	* (reported by Carlos Pita) deleting a remote
+				  file was giving an error message.  Fixed.
+		Apr 08, 2016	* (Charles Cooper) had a problem with an
+				  undefined b:netrw_curdir.  He also provided
+				  a fix.
+		Apr 20, 2016	* Changed s:NetrwGetBuffer(); now uses
+				  dictionaries.  Also fixed the "No Name"
+				  buffer problem.
 	v155:	Oct 29, 2015	* (Timur Fayzrakhmanov) reported that netrw's
 				  mapping of ctrl-l was not allowing refresh of
 				  other windows when it was done in a netrw

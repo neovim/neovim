@@ -130,17 +130,17 @@ int setmark_pos(int c, pos_T *pos, int fnum)
     return OK;
   }
 
-  if (c > 'z')              /* some islower() and isupper() cannot handle
-                                characters above 127 */
-    return FAIL;
-  if (islower(c)) {
+  if (ASCII_ISLOWER(c)) {
     i = c - 'a';
     RESET_FMARK(curbuf->b_namedm + i, *pos, curbuf->b_fnum);
     return OK;
   }
-  if (isupper(c)) {
-    assert(c >= 'A' && c <= 'Z');
-    i = c - 'A';
+  if (ASCII_ISUPPER(c) || ascii_isdigit(c)) {
+    if (ascii_isdigit(c)) {
+      i = c - '0' + NMARKS;
+    } else {
+      i = c - 'A';
+    }
     RESET_XFMARK(namedfm + i, *pos, fnum, NULL);
     return OK;
   }
@@ -796,6 +796,13 @@ void ex_jumps(exarg_T *eap)
   }
   if (curwin->w_jumplistidx == curwin->w_jumplistlen)
     MSG_PUTS("\n>");
+}
+
+void ex_clearjumps(exarg_T *eap)
+{
+  free_jumplist(curwin);
+  curwin->w_jumplistlen = 0;
+  curwin->w_jumplistidx = 0;
 }
 
 /*

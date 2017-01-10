@@ -118,9 +118,10 @@ KHASH_SET_INIT_STR(strset)
 //   E576: Missing '>'
 //   E577: Illegal register name
 //   E886: Can't rename viminfo file to %s!
+//   E929: Too many viminfo temp files, like %s!
 // Now only six of them are used:
 //   E137: ShaDa file is not writeable (for pre-open checks)
-//   E138: All %s.tmp.X files exist, cannot write ShaDa file!
+//   E929: All %s.tmp.X files exist, cannot write ShaDa file!
 //   RCERR (E576) for critical read errors.
 //   RNERR (E136) for various errors when renaming.
 //   RERR (E575) for various errors inside read ShaDa file.

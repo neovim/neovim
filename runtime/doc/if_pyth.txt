@@ -699,7 +699,7 @@ if the `:py3` command is working: >
 	:py3 print("Hello")
 <							*:py3file*
 The `:py3file` command works similar to `:pyfile`.
-							*:py3do* *E863*
+							*:py3do*
 The `:py3do` command works similar to `:pydo`.
 
 							*E880*

@@ -4424,8 +4424,8 @@ msgstr ""
 "перед записом: %s"
 
 #, c-format
-msgid "E138: All %s.tmp.X files exist, cannot write ShaDa file!"
-msgstr "E138: Усі файли %s.tmp.X зайнято, неможливо записати файл ShaDa!"
+msgid "E929: All %s.tmp.X files exist, cannot write ShaDa file!"
+msgstr "E929: Усі файли %s.tmp.X зайнято, неможливо записати файл ShaDa!"
 
 #, c-format
 msgid "System error while opening temporary ShaDa file %s for writing: %s"

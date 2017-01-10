@@ -1152,7 +1152,7 @@ Examples: >
 
 If you want to always use ":confirm", set the 'confirm' option.
 
-			*:browse* *:bro* *E338* *E614* *E615* *E616* *E578*
+			*:browse* *:bro* *E338* *E614* *E615* *E616*
 :bro[wse] {command}	Open a file selection dialog for an argument to
 			{command}.  At present this works for |:e|, |:w|,
 			|:wall|, |:wq|, |:wqall|, |:x|, |:xall|, |:exit|,
