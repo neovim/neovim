@@ -3976,12 +3976,10 @@ current_search (
   return OK;
 }
 
-/*
- * Check if the pattern is one character long or zero-width.
- * If move is true, check from the beginning of the buffer,
- * else from the current cursor position.
- * Returns TRUE, FALSE or -1 for failure.
- */
+/// Check if the pattern is one character long or zero-width.
+/// If move is true, check from the beginning of the buffer,
+/// else from the current cursor position.
+/// Returns TRUE, FALSE or -1 for failure.
 static int is_one_char(char_u *pattern, bool move)
 {
   regmmatch_T regmatch;
@@ -4001,7 +3999,7 @@ static int is_one_char(char_u *pattern, bool move)
 
   // init startcol correctly
   regmatch.startpos[0].col = -1;
-  /* move to match */
+  // move to match
   if (move) {
     clearpos(&pos);
   } else {
@@ -4010,10 +4008,10 @@ static int is_one_char(char_u *pattern, bool move)
     flag = SEARCH_START;
   }
   if (searchit(curwin, curbuf, &pos, FORWARD, pattern, 1,
-          SEARCH_KEEP + flag, RE_SEARCH, 0, NULL) != FAIL) {
-    /* Zero-width pattern should match somewhere, then we can check if
-     * start and end are in the same position. */
-    called_emsg = FALSE;
+               SEARCH_KEEP + flag, RE_SEARCH, 0, NULL) != FAIL) {
+    // Zero-width pattern should match somewhere, then we can check if
+    // start and end are in the same position.
+    called_emsg = false;
     do {
       regmatch.startpos[0].col++;
       nmatched = vim_regexec_multi(&regmatch, curwin, curbuf,
