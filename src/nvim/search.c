@@ -3976,12 +3976,10 @@ current_search (
   return OK;
 }
 
-/*
- * Check if the pattern is one character or zero-width.
- * If move is true, check from the beginning of the buffer,
- * else from the current cursor position.
- * Returns TRUE, FALSE or -1 for failure.
- */
+/// Check if the pattern is one character long or zero-width.
+/// If move is true, check from the beginning of the buffer,
+/// else from the current cursor position.
+/// Returns TRUE, FALSE or -1 for failure.
 static int is_one_char(char_u *pattern, bool move)
 {
   regmmatch_T regmatch;
@@ -3991,11 +3989,17 @@ static int is_one_char(char_u *pattern, bool move)
   int save_called_emsg = called_emsg;
   int flag = 0;
 
+  if (pattern == NULL) {
+    pattern = spats[last_idx].pat;
+  }
+
   if (search_regcomp(pattern, RE_SEARCH, RE_SEARCH,
           SEARCH_KEEP, &regmatch) == FAIL)
     return -1;
 
-  /* move to match */
+  // init startcol correctly
+  regmatch.startpos[0].col = -1;
+  // move to match
   if (move) {
     clearpos(&pos);
   } else {
@@ -4003,21 +4007,29 @@ static int is_one_char(char_u *pattern, bool move)
     /* accept a match at the cursor position */
     flag = SEARCH_START;
   }
-  if (searchit(curwin, curbuf, &pos, FORWARD, spats[last_idx].pat, 1,
-          SEARCH_KEEP + flag, RE_SEARCH, 0, NULL) != FAIL) {
-    /* Zero-width pattern should match somewhere, then we can check if
-     * start and end are in the same position. */
-    called_emsg = FALSE;
-    nmatched = vim_regexec_multi(&regmatch, curwin, curbuf,
-        pos.lnum, (colnr_T)0, NULL);
+  if (searchit(curwin, curbuf, &pos, FORWARD, pattern, 1,
+               SEARCH_KEEP + flag, RE_SEARCH, 0, NULL) != FAIL) {
+    // Zero-width pattern should match somewhere, then we can check if
+    // start and end are in the same position.
+    called_emsg = false;
+    do {
+      regmatch.startpos[0].col++;
+      nmatched = vim_regexec_multi(&regmatch, curwin, curbuf,
+                                   pos.lnum, regmatch.startpos[0].col, NULL);
+      if (!nmatched) {
+        break;
+      }
+    } while (regmatch.startpos[0].col < pos.col);
 
-    if (!called_emsg)
+    if (!called_emsg) {
       result = (nmatched != 0
                 && regmatch.startpos[0].lnum == regmatch.endpos[0].lnum
                 && regmatch.startpos[0].col == regmatch.endpos[0].col);
-
-    if (!result && inc(&pos) >= 0 && pos.col == regmatch.endpos[0].col)
-      result = TRUE;
+      // one char width
+      if (!result && inc(&pos) >= 0 && pos.col == regmatch.endpos[0].col) {
+        result = true;
+      }
+    }
   }
 
   called_emsg |= save_called_emsg;
