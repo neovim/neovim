@@ -38,6 +38,29 @@ describe('system()', function()
       eq(-1, eval('v:shell_error'))
     end)
 
+    it('parameter validation does NOT modify v:shell_error', function()
+      -- 1. Call system() with invalid parameters.
+      -- 2. Assert that v:shell_error was NOT set.
+      execute('call system({})')
+      eq('E475: Invalid argument: expected String or List', eval('v:errmsg'))
+      eq(0, eval('v:shell_error'))
+      execute('call system([])')
+      eq('E474: Invalid argument', eval('v:errmsg'))
+      eq(0, eval('v:shell_error'))
+
+      -- Provoke a non-zero v:shell_error.
+      call('system', { 'this-should-not-exist' })
+      local old_val = eval('v:shell_error')
+      eq(-1, old_val)
+
+      -- 1. Call system() with invalid parameters.
+      -- 2. Assert that v:shell_error was NOT modified.
+      execute('call system({})')
+      eq(old_val, eval('v:shell_error'))
+      execute('call system([])')
+      eq(old_val, eval('v:shell_error'))
+    end)
+
     it('quotes arguments correctly #5280', function()
       local out = call('system',
         { printargs_path, [[1]], [[2 "3]], [[4 ' 5]], [[6 ' 7']] })
