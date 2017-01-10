@@ -2564,22 +2564,43 @@ def CheckBraces(filename, clean_lines, linenum, error):
 
     line = clean_lines.elided[linenum]        # get rid of comments and strings
 
-    if not (filename.endswith('.c') or filename.endswith('.h')):
-        if Match(r'\s*{\s*$', line):
-            # We allow an open brace to start a line in the case where someone
-            # is using braces in a block to explicitly create a new scope, which
-            # is commonly used to control the lifetime of stack-allocated
-            # variables.  Braces are also used for brace initializers inside
-            # function calls.  We don't detect this perfectly: we just don't
-            # complain if the last non-whitespace character on the previous
-            # non-blank line is ',', ';', ':', '(', '{', or '}', or if the
-            # previous line starts a preprocessor block.
-            prevline = GetPreviousNonBlankLine(clean_lines, linenum)[0]
-            if (not Search(r'[,;:}{(]\s*$', prevline) and
-                    not Match(r'\s*#', prevline)):
-                error(filename, linenum, 'whitespace/braces', 4,
-                      '{ should almost always be at the end'
-                      ' of the previous line')
+    if Match(r'\s+{\s*$', line):
+        # We allow an open brace to start a line in the case where someone
+        # is using braces in a block to explicitly create a new scope, which
+        # is commonly used to control the lifetime of stack-allocated
+        # variables.  Braces are also used for brace initializers inside
+        # function calls.  We don't detect this perfectly: we just don't
+        # complain if the last non-whitespace character on the previous
+        # non-blank line is ',', ';', ':', '(', '{', or '}', or if the
+        # previous line starts a preprocessor block.
+        prevline = GetPreviousNonBlankLine(clean_lines, linenum)[0]
+        if (not Search(r'[,;:}{(]\s*$', prevline) and
+                not Match(r'\s*#', prevline)):
+            error(filename, linenum, 'whitespace/braces', 4,
+                    '{ should almost always be at the end'
+                    ' of the previous line')
+
+    # Brace must appear after function signature, but on the *next* line
+    if Match(r'^(?:\w+(?: ?\*+)? )+\w+\(', line):
+        pos = line.find('(')
+        (endline, end_linenum, endpos) = CloseExpression(
+            clean_lines, linenum, pos)
+        if endline.endswith('{'):
+            error(filename, end_linenum, 'readability/braces', 5,
+                  'Brace starting function body must be placed on its own line')
+        else:
+            func_start_linenum = end_linenum + 1
+            while not clean_lines.lines[func_start_linenum] == '{':
+                if not Match(r'^(?:\s*\b(?:FUNC_ATTR|REAL_FATTR)_\w+\b(?:\(\d+(, \d+)*\))?)+$',
+                             clean_lines.lines[func_start_linenum]):
+                    if clean_lines.lines[func_start_linenum].endswith('{'):
+                        error(filename, func_start_linenum,
+                              'readability/braces', 5,
+                              'Brace starting function body must be placed '
+                              'after the function signature')
+                    break
+                else:
+                    func_start_linenum += 1
 
     # An else clause should be on the same line as the preceding closing brace.
     # If there is no preceding closing brace, there should be one.
