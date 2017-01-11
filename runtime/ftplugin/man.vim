@@ -34,6 +34,8 @@ setlocal nowrap
 setlocal conceallevel=2
 setlocal concealcursor=nvic
 
+execute "setlocal iskeyword+=\b"
+
 if !exists('g:no_plugin_maps') && !exists('g:no_man_maps')
   nnoremap <silent> <buffer> <C-]>      :Man<CR>
   nnoremap <silent> <buffer> K          :Man<CR>
