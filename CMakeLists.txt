@@ -489,10 +489,9 @@ if(BUSTED_PRG)
     ${CMAKE_BINARY_DIR}/test/config/paths.lua)
 
   set(UNITTEST_PREREQS nvim-test unittest-headers)
-  if(WIN32)
-    set(FUNCTIONALTEST_PREREQS nvim shell-test)
-  else()
-    set(FUNCTIONALTEST_PREREQS nvim tty-test shell-test)
+  set(FUNCTIONALTEST_PREREQS nvim printargs-test shell-test)
+  if(NOT WIN32)
+    list(APPEND FUNCTIONALTEST_PREREQS tty-test)
   endif()
   set(BENCHMARK_PREREQS nvim tty-test)
 

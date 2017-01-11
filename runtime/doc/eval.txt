@@ -4666,11 +4666,16 @@ jobstart({cmd}[, {opts}])				{Nvim} *jobstart()*
 		Spawns {cmd} as a job.  If {cmd} is a |List| it is run
 		directly.  If {cmd} is a |String| it is processed like this: >
 		  :call jobstart(split(&shell) + split(&shellcmdflag) + ['{cmd}'])
-<		NOTE: read |shell-unquoting| before constructing any lists 
-		with 'shell' or 'shellcmdflag' options.  The above call is 
-		only written to show the idea, one needs to perform unquoting 
-		and do split taking quotes into account.
+<		NOTE: This only shows the idea; see |shell-unquoting| before
+		constructing lists with 'shell' or 'shellcmdflag'.
 
+		NOTE: On Windows if {cmd} is a List, cmd[0] must be a valid
+		executable (.exe, .com).  If the executable is in $PATH it can
+		be called by name, with or without an extension: >
+		   :call jobstart(['ping', 'neovim.io'])
+<		If it is a path (not a name), it must include the extension: >
+		   :call jobstart(['System32\ping.exe', 'neovim.io'])
+<
 		{opts} is a dictionary with these keys:
 		  on_stdout: stdout event handler (function name or |Funcref|)
 		  on_stderr: stderr event handler (function name or |Funcref|)
@@ -7099,9 +7104,8 @@ synstack({lnum}, {col})					*synstack()*
 		valid positions.
 
 system({cmd} [, {input}])				*system()* *E677*
-		Get the output of the shell command {cmd} as a |string|.  {cmd}
-		will be run the same as in |jobstart()|.  See |systemlist()|
-		to get the output as a |List|.
+		Get the output of {cmd} as a |string| (use |systemlist()| to
+		get a |List|). {cmd} is treated exactly as in |jobstart()|.
 		Not to be used for interactive commands.
 
 		If {input} is a string it is written to a pipe and passed as
