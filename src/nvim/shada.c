@@ -2259,8 +2259,8 @@ static inline ShaDaWriteResult shada_read_when_writing(
 /// @param[in]  removable_bufs  Cache of buffers ignored due to their location.
 ///
 /// @return true or false.
-static bool ignore_buf(const buf_T *const buf,
-                       khash_t(bufset) *const removable_bufs)
+static inline bool ignore_buf(const buf_T *const buf,
+                              khash_t(bufset) *const removable_bufs)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_ALWAYS_INLINE
 {
   return (buf->b_ffname == NULL || !buf->b_p_bl || bt_quickfix(buf) \
