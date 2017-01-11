@@ -150,7 +150,7 @@
 ///
 /// This should be called with a real array. Calling this with a pointer is an
 /// error.
-#define LAST_ARRAY_ENTRY(arr) (arr)[ARRAY_SIZE(arr) - 1]
+#define ARRAY_LAST_ENTRY(arr) (arr)[ARRAY_SIZE(arr) - 1]
 
 // Duplicated in os/win_defs.h to avoid include-order sensitivity.
 #define RGB_(r, g, b) ((r << 16) | (g << 8) | b)

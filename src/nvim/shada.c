@@ -2426,8 +2426,8 @@ static inline void replace_numbered_mark(WriteMergerState *const wms,
                                          const PossiblyFreedShadaEntry entry)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_ALWAYS_INLINE
 {
-  if (LAST_ARRAY_ENTRY(wms->numbered_marks).can_free_entry) {
-    shada_free_shada_entry(&LAST_ARRAY_ENTRY(wms->numbered_marks).data);
+  if (ARRAY_LAST_ENTRY(wms->numbered_marks).can_free_entry) {
+    shada_free_shada_entry(&ARRAY_LAST_ENTRY(wms->numbered_marks).data);
   }
   for (size_t i = idx; i < ARRAY_SIZE(wms->numbered_marks) - 1; i++) {
     if (wms->numbered_marks[i].data.type == kSDItemGlobalMark) {
