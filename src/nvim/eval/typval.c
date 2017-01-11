@@ -1166,6 +1166,58 @@ bool tv_dict_get_callback(dict_T *const d,
   return res;
 }
 
+//{{{2 dict_add*
+
+/// Add a list entry to dictionary
+///
+/// @param[out]  d  Dictionary to add entry to.
+/// @param[in]  key  Key to add.
+/// @param[in]  key_len  Key length.
+/// @param  list  List to add. Will have reference count incremented.
+///
+/// @return OK in case of success, FAIL when key already exists.
+int tv_dict_add_list(dict_T *const d, const char *const key,
+                     const size_t key_len, list_T *const list)
+  FUNC_ATTR_NONNULL_ALL
+{
+  dictitem_T *item = tv_dict_item_alloc_len(key, key_len);
+
+  item->di_tv.v_lock = VAR_UNLOCKED;
+  item->di_tv.v_type = VAR_LIST;
+  item->di_tv.vval.v_list = list;
+  if (tv_dict_add(d, item) == FAIL) {
+    tv_dict_item_free(item);
+    return FAIL;
+  }
+  list->lv_refcount++;
+  return OK;
+}
+
+/// Add a dictionary entry to dictionary
+///
+/// @param[out]  d  Dictionary to add entry to.
+/// @param[in]  key  Key to add.
+/// @param[in]  key_len  Key length.
+/// @param  dict  Dictionary to add. Will have reference count incremented.
+///
+/// @return OK in case of success, FAIL when key already exists.
+int tv_dict_add_dict(dict_T *const d, const char *const key,
+                     const size_t key_len, dict_T *const dict)
+    FUNC_ATTR_NONNULL_ALL
+{
+  dictitem_T *const item = tv_dict_item_alloc(key);
+
+  item->di_tv.v_lock = VAR_UNLOCKED;
+  item->di_tv.v_type = VAR_DICT;
+  item->di_tv.vval.v_dict = dict;
+  if (tv_dict_add(d, item) == FAIL) {
+    tv_dict_item_free(item);
+    return FAIL;
+  }
+  dict->dv_refcount++;
+  return OK;
+}
+
 //{{{2 Operations on the whole dict
 
 /// Clear all the keys of a Dictionary. "d" remains a valid empty Dictionary.

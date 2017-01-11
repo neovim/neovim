@@ -5570,42 +5570,6 @@ int dict_add_nr_str(dict_T *d, char *key, long nr, char_u *str)
 }
 
 /*
- * Add a list entry to dictionary "d".
- * Returns FAIL when key already exists.
- */
-int dict_add_list(dict_T *d, char *key, list_T *list)
-{
-  dictitem_T *item = tv_dict_item_alloc(key);
-
-  item->di_tv.v_lock = 0;
-  item->di_tv.v_type = VAR_LIST;
-  item->di_tv.vval.v_list = list;
-  if (tv_dict_add(d, item) == FAIL) {
-    tv_dict_item_free(item);
-    return FAIL;
-  }
-  ++list->lv_refcount;
-  return OK;
-}
-
-/// Add a dict entry to dictionary "d".
-/// Returns FAIL when out of memory and when key already exists.
-int dict_add_dict(dict_T *d, char *key, dict_T *dict)
-{
-  dictitem_T *const item = tv_dict_item_alloc(key);
-
-  item->di_tv.v_lock = 0;
-  item->di_tv.v_type = VAR_DICT;
-  item->di_tv.vval.v_dict = dict;
-  if (tv_dict_add(d, item) == FAIL) {
-    tv_dict_item_free(item);
-    return FAIL;
-  }
-  dict->dv_refcount++;
-  return OK;
-}
-
-/*
  * Allocate a variable for a Dictionary and fill it from "*arg".
  * Return OK or FAIL.  Returns NOTDONE for {expr}.
  */
@@ -9128,7 +9092,7 @@ static dict_T *get_buffer_info(buf_T *buf)
                   NULL);
 
   // Get a reference to buffer variables
-  dict_add_dict(dict, "variables", buf->b_vars);
+  tv_dict_add_dict(dict, S_LEN("variables"), buf->b_vars);
 
   // List of windows displaying this buffer
   list_T *const windows = tv_list_alloc();
@@ -9137,13 +9101,13 @@ static dict_T *get_buffer_info(buf_T *buf)
       tv_list_append_number(windows, (varnumber_T)wp->handle);
     }
   }
-  dict_add_list(dict, "windows", windows);
+  tv_dict_add_list(dict, S_LEN("windows"), windows);
 
   if (buf->b_signlist != NULL) {
     // List of signs placed in this buffer
     list_T *const signs = tv_list_alloc();
     get_buffer_signs(buf, signs);
-    dict_add_list(dict, "signs", signs);
+    tv_dict_add_list(dict, S_LEN("signs"), signs);
   }
 
   return dict;
@@ -9900,7 +9864,7 @@ static void f_getmatches(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       // match added with matchaddpos() 
       for (i = 0; i < MAXPOSMATCH; ++i) {
         llpos_T   *llpos;
-        char      buf[6];
+        char buf[6];
 
         llpos = &cur->pos.pos[i];
         if (llpos->lnum == 0) {
@@ -9912,8 +9876,9 @@ static void f_getmatches(typval_T *argvars, typval_T *rettv, FunPtr fptr)
           tv_list_append_number(l, (varnumber_T)llpos->col);
           tv_list_append_number(l, (varnumber_T)llpos->len);
         }
-        sprintf(buf, "pos%d", i + 1);
-        dict_add_list(dict, buf, l);
+        int len = snprintf(buf, sizeof(buf), "pos%d", i + 1);
+        assert((size_t)len < sizeof(buf));
+        tv_dict_add_list(dict, buf, (size_t)len, l);
       }
     } else {
       dict_add_nr_str(dict, "pattern", 0L, cur->pattern);
@@ -10082,10 +10047,10 @@ static dict_T *get_tabpage_info(tabpage_T *tp, int tp_idx)
   FOR_ALL_WINDOWS_IN_TAB(wp, tp) {
     tv_list_append_number(l, (varnumber_T)wp->handle);
   }
-  dict_add_list(dict, "windows", l);
+  tv_dict_add_list(dict, S_LEN("windows"), l);
 
   // Make a reference to tabpage variables
-  dict_add_dict(dict, "variables", tp->tp_vars);
+  tv_dict_add_dict(dict, S_LEN("variables"), tp->tp_vars);
 
   return dict;
 }
@@ -10187,7 +10152,7 @@ static dict_T *get_win_info(win_T *wp, int16_t tpnr, int16_t winnr)
                   NULL);
 
   // Add a reference to window variables
-  dict_add_dict(dict, "variables", wp->w_vars);
+  tv_dict_add_dict(dict, S_LEN("variables"), wp->w_vars);
 
   return dict;
 }
@@ -17029,7 +16994,7 @@ static void f_undotree(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   list = tv_list_alloc();
   u_eval_tree(curbuf->b_u_oldhead, list);
-  dict_add_list(dict, "entries", list);
+  tv_dict_add_list(dict, S_LEN("entries"), list);
 }
 
 /*

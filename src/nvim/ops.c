@@ -42,6 +42,7 @@
 #include "nvim/terminal.h"
 #include "nvim/ui.h"
 #include "nvim/undo.h"
+#include "nvim/macros.h"
 #include "nvim/window.h"
 #include "nvim/os/input.h"
 #include "nvim/os/time.h"
@@ -2561,7 +2562,7 @@ static void do_autocmd_textyankpost(oparg_T *oap, yankreg_T *reg)
     tv_list_append_string(list, (const char *)reg->y_array[i], -1);
   }
   list->lv_lock = VAR_FIXED;
-  dict_add_list(dict, "regcontents", list);
+  tv_dict_add_list(dict, S_LEN("regcontents"), list);
 
   // the register type
   char buf[NUMBUFLEN+2];
