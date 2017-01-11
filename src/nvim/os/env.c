@@ -560,8 +560,8 @@ const void *vim_colon_env_iter_rev(const char *const val,
 /// Vim's version of getenv().
 /// Special handling of $HOME, $VIM and $VIMRUNTIME, allowing the user to
 /// override the vim runtime directory at runtime.  Also does ACP to 'enc'
-/// conversion for Win32.  Results must be freed by the calling function.
-/// @param name Name of environment variable to expand
+/// conversion for Win32.  Result must be freed by the caller.
+/// @param name Environment variable to expand
 char *vim_getenv(const char *name)
 {
   const char *kos_env_path = os_getenv(name);
@@ -598,6 +598,27 @@ char *vim_getenv(const char *name)
     if (p_hf != NULL && vim_strchr(p_hf, '$') == NULL) {
       vim_path = (char *)p_hf;
     }
+
+#ifdef WIN32
+    // Find runtime path relative to the nvim binary i.e. ../share/runtime
+    if (vim_path == NULL) {
+      char exe_name[MAXPATHL];
+      size_t exe_name_len = MAXPATHL;
+      if (os_exepath(exe_name, &exe_name_len) == 0) {
+        char *path_end = (char *)path_tail_with_sep((char_u *)exe_name);
+        *path_end = '\0';  // remove the trailing "nvim.exe"
+        path_end = (char *)path_tail((char_u *)exe_name);
+        *path_end = '\0';  // remove the trailing "bin/"
+        if (append_path(
+            exe_name,
+            "share" _PATHSEPSTR "nvim" _PATHSEPSTR "runtime" _PATHSEPSTR,
+            MAXPATHL) == OK) {
+          vim_path = exe_name;
+        }
+      }
+    }
+#endif
+
     if (vim_path != NULL) {
       // remove the file name
       char *vim_path_end = (char *)path_tail((char_u *)vim_path);
