@@ -1201,6 +1201,40 @@ describe(":substitute, 'inccommand' with a failing expression", function()
     end
   end)
 
+  it('in the range does not error #5912', function()
+    for _, case in pairs(cases) do
+      refresh(case)
+      feed(':100s/')
+
+      screen:expect([[
+        Inc substitution on |
+        two lines           |
+                            |
+        {15:~                   }|
+        {15:~                   }|
+        {15:~                   }|
+        {15:~                   }|
+        {15:~                   }|
+        {15:~                   }|
+        :100s/^              |
+      ]])
+
+      feed('<enter>')
+      screen:expect([[
+        Inc substitution on |
+        two lines           |
+        ^                    |
+        {15:~                   }|
+        {15:~                   }|
+        {15:~                   }|
+        {15:~                   }|
+        {15:~                   }|
+        {15:~                   }|
+        {14:E16: Invalid range}  |
+      ]])
+    end
+  end)
+
 end)
 
 describe("'inccommand' and :cnoremap", function()

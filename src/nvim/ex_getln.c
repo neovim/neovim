@@ -1607,7 +1607,9 @@ static int command_line_changed(CommandLineState *s)
     //       - Update the screen while the effects are in place.
     //       - Immediately undo the effects.
     State |= CMDPREVIEW;
+    emsg_silent++;  // Block error reporting as the command may be incomplete
     do_cmdline(ccline.cmdbuff, NULL, NULL, DOCMD_KEEPLINE|DOCMD_NOWAIT);
+    emsg_silent--;  // Unblock error reporting
 
     // Restore the window "view".
     curwin->w_cursor   = s->old_cursor;
