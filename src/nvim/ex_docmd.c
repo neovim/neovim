@@ -6949,7 +6949,7 @@ void free_cd_dir(void)
 
 #endif
 
-static void apply_autocmd_dirchanged(char_u *new_dir, CdScope scope)
+void apply_autocmd_dirchanged(char_u *new_dir, CdScope scope)
 {
   dict_T *dict = get_vim_var_dict(VV_EVENT);
   char buf[8];
