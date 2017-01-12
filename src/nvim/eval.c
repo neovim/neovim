@@ -6410,8 +6410,8 @@ static void dict_free_contents(dict_T *d) {
   while (!QUEUE_EMPTY(&d->watchers)) {
     QUEUE *w = QUEUE_HEAD(&d->watchers);
     DictWatcher *watcher = dictwatcher_node_data(w);
-    dictwatcher_free(watcher);
     QUEUE_REMOVE(w);
+    dictwatcher_free(watcher);
   }
 
   hash_clear(&d->dv_hashtab);

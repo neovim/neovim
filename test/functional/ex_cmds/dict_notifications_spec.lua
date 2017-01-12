@@ -3,6 +3,7 @@ local clear, nvim, source = helpers.clear, helpers.nvim, helpers.source
 local eq, next_msg = helpers.eq, helpers.next_message
 local exc_exec = helpers.exc_exec
 local command = helpers.command
+local eval = helpers.eval
 
 
 describe('dictionary change notifications', function()
@@ -254,6 +255,22 @@ describe('dictionary change notifications', function()
       command('let g:key = "value"')
       eq({'notification', '2b', {'key', {old = 'v2', new = 'value'}}}, next_msg())
 
+    end)
+
+    it('does not crash when freeing a watched dictionary', function()
+      source([[
+        function! Watcher(dict, key, value)
+          echo a:key string(a:value)
+        endfunction
+
+        function! MakeWatch()
+          let d = {'foo': 'bar'}
+          call dictwatcheradd(d, 'foo', function('Watcher'))
+        endfunction
+      ]])
+
+      command('call MakeWatch()')
+      eq(2, eval('1+1')) -- Still alive?
     end)
   end)
 end)
