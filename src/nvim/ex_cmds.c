@@ -6093,7 +6093,6 @@ void ex_substitute(exarg_T *eap)
   int save_w_p_cul = curwin->w_p_cul;
   int save_w_p_cuc = curwin->w_p_cuc;
 
-  emsg_off++;                 // No error messages during command preview.
   curbuf->b_p_ul = LONG_MAX;  // make sure we can undo all changes
   curwin->w_p_cul = false;    // Disable 'cursorline'
   curwin->w_p_cuc = false;    // Disable 'cursorcolumn'
@@ -6120,6 +6119,5 @@ void ex_substitute(exarg_T *eap)
   restore_search_patterns();
   win_size_restore(&save_view);
   ga_clear(&save_view);
-  emsg_off--;
   unblock_autocmds();
 }

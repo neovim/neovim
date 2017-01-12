@@ -42,6 +42,7 @@ local function common_setup(screen, inccommand, text)
       [14] = {foreground = Screen.colors.White, background = Screen.colors.Red},
       [15] = {bold=true, foreground=Screen.colors.Blue},
       [16] = {background=Screen.colors.Grey90},  -- cursorline
+      vis  = {background=Screen.colors.LightGrey}
     })
   end
 
@@ -204,6 +205,42 @@ describe(":substitute, 'inccommand' preserves", function()
       wait()
 
       eq(expected_tick, eval("b:changedtick"))
+    end)
+  end
+
+  for _, case in pairs{"", "split", "nosplit"} do
+    it("visual selection for non-previewable command (inccommand="..case..") #5888", function()
+      local screen = Screen.new(30,10)
+      common_setup(screen, case, default_text)
+      feed('1G2V')
+
+      feed(':s')
+      screen:expect([[
+        {vis:Inc substitution on}           |
+        t{vis:wo lines}                     |
+                                      |
+        {15:~                             }|
+        {15:~                             }|
+        {15:~                             }|
+        {15:~                             }|
+        {15:~                             }|
+        {15:~                             }|
+        :'<,'>s^                       |
+      ]])
+
+      feed('o')
+      screen:expect([[
+        {vis:Inc substitution on}           |
+        t{vis:wo lines}                     |
+                                      |
+        {15:~                             }|
+        {15:~                             }|
+        {15:~                             }|
+        {15:~                             }|
+        {15:~                             }|
+        {15:~                             }|
+        :'<,'>so^                      |
+      ]])
     end)
   end
 
@@ -1198,6 +1235,40 @@ describe(":substitute, 'inccommand' with a failing expression", function()
         expect(default_text:gsub("tw", ""))
         execute("undo")
       end
+    end
+  end)
+
+  it('in the range does not error #5912', function()
+    for _, case in pairs(cases) do
+      refresh(case)
+      feed(':100s/')
+
+      screen:expect([[
+        Inc substitution on |
+        two lines           |
+                            |
+        {15:~                   }|
+        {15:~                   }|
+        {15:~                   }|
+        {15:~                   }|
+        {15:~                   }|
+        {15:~                   }|
+        :100s/^              |
+      ]])
+
+      feed('<enter>')
+      screen:expect([[
+        Inc substitution on |
+        two lines           |
+        ^                    |
+        {15:~                   }|
+        {15:~                   }|
+        {15:~                   }|
+        {15:~                   }|
+        {15:~                   }|
+        {15:~                   }|
+        {14:E16: Invalid range}  |
+      ]])
     end
   end)
 
