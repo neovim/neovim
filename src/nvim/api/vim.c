@@ -315,7 +315,7 @@ void nvim_set_current_dir(String dir, Error *err)
 
   try_start();
 
-  if (vim_chdir((char_u *)string)) {
+  if (vim_chdir((char_u *)string, kCdScopeGlobal)) {
     if (!try_end(err)) {
       api_set_error(err, Exception, _("Failed to change directory"));
     }

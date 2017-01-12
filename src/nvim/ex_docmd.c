@@ -6949,35 +6949,6 @@ void free_cd_dir(void)
 
 #endif
 
-void apply_autocmd_dirchanged(char_u *new_dir, CdScope scope)
-{
-  dict_T *dict = get_vim_var_dict(VV_EVENT);
-  char buf[8];
-
-  switch (scope) {
-  case kCdScopeGlobal:
-    snprintf(buf, sizeof(buf), "global");
-    break;
-  case kCdScopeTab:
-    snprintf(buf, sizeof(buf), "tab");
-    break;
-  case kCdScopeWindow:
-    snprintf(buf, sizeof(buf), "window");
-    break;
-  case kCdScopeInvalid:
-    // Should never happen.
-    assert(false);
-  }
-
-  dict_add_nr_str(dict, "scope", 0L, (char_u *)buf);
-  dict_add_nr_str(dict, "cwd",   0L, new_dir);
-  dict_set_keys_readonly(dict);
-
-  apply_autocmds(EVENT_DIRCHANGED, NULL, new_dir, false, NULL);
-
-  dict_clear(dict);
-}
-
 /// Deal with the side effects of changing the current directory.
 ///
 /// @param scope  Scope of the function call (global, tab or window).
@@ -7000,8 +6971,6 @@ void post_chdir(CdScope scope)
       globaldir = vim_strsave(prev_dir);
     }
   }
-
-  apply_autocmd_dirchanged(new_dir, scope);
 
   switch (scope) {
   case kCdScopeGlobal:
@@ -7070,30 +7039,31 @@ void ex_cd(exarg_T *eap)
       new_dir = NameBuff;
     }
 #endif
-    if (vim_chdir(new_dir)) {
+    CdScope scope = kCdScopeGlobal;  // Depends on command invoked
+
+    switch (eap->cmdidx) {
+    case CMD_tcd:
+    case CMD_tchdir:
+      scope = kCdScopeTab;
+      break;
+    case CMD_lcd:
+    case CMD_lchdir:
+      scope = kCdScopeWindow;
+      break;
+    default:
+      break;
+    }
+
+    if (vim_chdir(new_dir, scope)) {
       EMSG(_(e_failed));
     } else {
-      CdScope scope = kCdScopeGlobal;  // Depends on command invoked
-
-      switch (eap->cmdidx) {
-      case CMD_tcd:
-      case CMD_tchdir:
-        scope = kCdScopeTab;
-        break;
-      case CMD_lcd:
-      case CMD_lchdir:
-        scope = kCdScopeWindow;
-        break;
-      default:
-        break;
-      }
-
       post_chdir(scope);
-
       // Echo the new current directory if the command was typed.
       if (KeyTyped || p_verbose >= 5) {
         ex_pwd(eap);
+      }
     }
+
     xfree(tofree);
   }
 }

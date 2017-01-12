@@ -48,10 +48,10 @@
 #include <limits.h>
 
 #include "nvim/vim.h"
+#include "nvim/eval.h"
 #include "nvim/ascii.h"
 #include "nvim/file_search.h"
 #include "nvim/charset.h"
-#include "nvim/ex_docmd.h"
 #include "nvim/fileio.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
@@ -1523,6 +1523,47 @@ theend:
   return file_name;
 }
 
+static void do_autocmd_dirchanged(char_u *new_dir, CdScope scope)
+{
+  static bool recursive = false;
+
+  if (recursive || !has_event(EVENT_DIRCHANGED)) {
+    // No autocommand was defined or we changed
+    // the directory from this autocommand.
+    return;
+  }
+
+  recursive = true;
+
+  dict_T *dict = get_vim_var_dict(VV_EVENT);
+  char buf[8];
+
+  switch (scope) {
+  case kCdScopeGlobal:
+    snprintf(buf, sizeof(buf), "global");
+    break;
+  case kCdScopeTab:
+    snprintf(buf, sizeof(buf), "tab");
+    break;
+  case kCdScopeWindow:
+    snprintf(buf, sizeof(buf), "window");
+    break;
+  case kCdScopeInvalid:
+    // Should never happen.
+    assert(false);
+  }
+
+  dict_add_nr_str(dict, "scope", 0L, (char_u *)buf);
+  dict_add_nr_str(dict, "cwd",   0L, new_dir);
+  dict_set_keys_readonly(dict);
+
+  apply_autocmds(EVENT_DIRCHANGED, NULL, new_dir, false, NULL);
+
+  dict_clear(dict);
+
+  recursive = false;
+}
+
 /// Change to a file's directory.
 /// Caller must call shorten_fnames()!
 /// @return OK or FAIL
@@ -1535,20 +1576,25 @@ int vim_chdirfile(char_u *fname)
   if (os_chdir((char *)dir) != 0) {
     return FAIL;
   }
-  apply_autocmd_dirchanged(dir, kCdScopeWindow);
+  do_autocmd_dirchanged(dir, kCdScopeWindow);
 
   return OK;
 }
 
 /// Change directory to "new_dir". Search 'cdpath' for relative directory names.
-int vim_chdir(char_u *new_dir)
+int vim_chdir(char_u *new_dir, CdScope scope)
 {
   char_u *dir_name = find_directory_in_path(new_dir, STRLEN(new_dir),
                                             FNAME_MESS, curbuf->b_ffname);
   if (dir_name == NULL) {
     return -1;
   }
+
   int r = os_chdir((char *)dir_name);
+  if (r == 0) {
+    do_autocmd_dirchanged(dir_name, scope);
+  }
+
   xfree(dir_name);
   return r;
 }
