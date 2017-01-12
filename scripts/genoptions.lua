@@ -31,6 +31,7 @@ local type_flags={
 local redraw_flags={
   statuslines='P_RSTAT',
   current_window='P_RWIN',
+  current_window_only='P_RWINONLY',
   current_buffer='P_RBUF',
   all_windows='P_RALL',
   everything='P_RCLR',

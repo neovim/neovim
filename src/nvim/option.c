@@ -238,6 +238,8 @@ typedef struct vimoption {
                                    ///< when there is a redraw flag
 #define P_NO_DEF_EXP   0x8000000U  ///< Do not expand default value.
 
+#define P_RWINONLY     0x10000000U  ///< only redraw current window
+
 #define HIGHLIGHT_INIT \
   "8:SpecialKey,~:EndOfBuffer,z:TermCursor,Z:TermCursorNC,@:NonText," \
   "d:Directory,e:ErrorMsg,i:IncSearch,l:Search,m:MoreMsg,M:ModeMsg,n:LineNr," \
@@ -4364,6 +4366,8 @@ static void check_redraw(uint32_t flags)
     changed_window_setting();
   if (flags & P_RBUF)
     redraw_curbuf_later(NOT_VALID);
+  if (flags & P_RWINONLY)
+    redraw_later(NOT_VALID);
   if (doclear)
     redraw_all_later(CLEAR);
   else if (all)
