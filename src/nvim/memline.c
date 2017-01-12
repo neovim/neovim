@@ -1063,11 +1063,12 @@ void ml_recover(void)
             if (!cannot_open) {
               line_count = pp->pb_pointer[idx].pe_line_count;
               if (readfile(curbuf->b_ffname, NULL, lnum,
-                      pp->pb_pointer[idx].pe_old_lnum - 1,
-                      line_count, NULL, 0) != OK)
-                cannot_open = TRUE;
-              else
+                           pp->pb_pointer[idx].pe_old_lnum - 1, line_count,
+                           NULL, 0) != OK) {
+                cannot_open = true;
+              } else {
                 lnum += line_count;
+              }
             }
             if (cannot_open) {
               ++error;

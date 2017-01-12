@@ -5105,13 +5105,13 @@ void buf_reload(buf_T *buf, int orig_mode)
   }
 
   if (saved == OK) {
-    curbuf->b_flags |= BF_CHECK_RO;           /* check for RO again */
-    keep_filetype = TRUE;                     /* don't detect 'filetype' */
-    if (readfile(buf->b_ffname, buf->b_fname, (linenr_T)0,
-            (linenr_T)0,
-            (linenr_T)MAXLNUM, &ea, flags) != OK) {
-      if (!aborting())
+    curbuf->b_flags |= BF_CHECK_RO;           // check for RO again
+    keep_filetype = true;                     // don't detect 'filetype'
+    if (readfile(buf->b_ffname, buf->b_fname, (linenr_T)0, (linenr_T)0,
+                 (linenr_T)MAXLNUM, &ea, flags) != OK) {
+      if (!aborting()) {
         EMSG2(_("E321: Could not reload \"%s\""), buf->b_fname);
+      }
       if (savebuf != NULL && buf_valid(savebuf) && buf == curbuf) {
         /* Put the text back from the save buffer.  First
          * delete any lines that readfile() added. */
