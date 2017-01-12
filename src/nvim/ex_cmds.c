@@ -1193,8 +1193,8 @@ static void do_filter(
 
   if (do_out) {
     if (otmp != NULL) {
-      if (readfile(otmp, NULL, line2, (linenr_T)0, (linenr_T)MAXLNUM,
-              eap, READ_FILTER) == FAIL) {
+      if (readfile(otmp, NULL, line2, (linenr_T)0, (linenr_T)MAXLNUM, eap,
+                   READ_FILTER) != OK) {
         if (!aborting()) {
           msg_putchar('\n');
           EMSG2(_(e_notread), otmp);

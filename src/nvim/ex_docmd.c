@@ -6910,9 +6910,10 @@ static void ex_read(exarg_T *eap)
           eap->line2, (linenr_T)0, (linenr_T)MAXLNUM, eap, 0);
 
     }
-    if (i == FAIL) {
-      if (!aborting())
+    if (i != OK) {
+      if (!aborting()) {
         EMSG2(_(e_notopen), eap->arg);
+      }
     } else {
       if (empty && exmode_active) {
         /* Delete the empty line that remains.  Historically ex does

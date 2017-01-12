@@ -193,10 +193,13 @@ open_buffer (
        * it can be changed there. */
       if (!readonlymode && !bufempty())
         changed();
-      else if (retval != FAIL)
+      else if (retval == OK) {
         unchanged(curbuf, FALSE);
-      apply_autocmds_retval(EVENT_STDINREADPOST, NULL, NULL, FALSE,
-          curbuf, &retval);
+      }
+      if (retval == OK) {
+        apply_autocmds_retval(EVENT_STDINREADPOST, NULL, NULL, FALSE,
+                              curbuf, &retval);
+      }
     }
   }
 
@@ -219,7 +222,7 @@ open_buffer (
       || (aborting() && vim_strchr(p_cpo, CPO_INTMOD) != NULL)
       )
     changed();
-  else if (retval != FAIL && !read_stdin)
+  else if (retval == OK && !read_stdin)
     unchanged(curbuf, FALSE);
   save_file_ff(curbuf);                 /* keep this fileformat */
 
