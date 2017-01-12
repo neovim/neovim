@@ -8,8 +8,6 @@ local nvim_prog, command, funcs = helpers.nvim_prog, helpers.command, helpers.fu
 local source, next_message = helpers.source, helpers.next_message
 local meths = helpers.meths
 
-if helpers.pending_win32(pending) then return end
-
 describe('server -> client', function()
   local cid
 
@@ -211,6 +209,8 @@ describe('server -> client', function()
     after_each(function()
       funcs.jobstop(jobid)
     end)
+
+    if helpers.pending_win32(pending) then return end
 
     it('rpc and text stderr can be combined', function()
       eq("ok",funcs.rpcrequest(jobid, "poll"))

@@ -5,8 +5,6 @@ local command = helpers.command
 local eq = helpers.eq
 local eval = helpers.eval
 
-if helpers.pending_win32(pending) then return end
-
 describe('autocmd TabNew', function()
   before_each(clear)
 
@@ -19,12 +17,11 @@ describe('autocmd TabNew', function()
   end)
 
   it('matches when opening a new tab for FILE', function()
-    local tmp_path = helpers.funcs.tempname()
     command('let g:test = "foo"')
-    command('autocmd! TabNew ' .. tmp_path .. ' let g:test = "bar"')
-    command('tabnew ' .. tmp_path ..'X')
+    command('autocmd! TabNew Xtest-tabnew let g:test = "bar"')
+    command('tabnew Xtest-tabnewX')
     eq('foo', eval('g:test'))
-    command('tabnew ' .. tmp_path)
+    command('tabnew Xtest-tabnew')
     eq('bar', eval('g:test'))
   end)
 end)

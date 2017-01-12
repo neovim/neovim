@@ -4,8 +4,6 @@ local nvim, eq, neq, eval = helpers.nvim, helpers.eq, helpers.neq, helpers.eval
 local clear, funcs, meths = helpers.clear, helpers.funcs, helpers.meths
 local os_name = helpers.os_name
 
-if helpers.pending_win32(pending) then return end
-
 describe('serverstart(), serverstop()', function()
   before_each(clear)
 
@@ -42,8 +40,8 @@ describe('serverstart(), serverstop()', function()
 
     -- v:servername will take the next available server.
     local servername = (os_name() == 'windows'
-                        and [[\\.\pipe\Xtest-functional-server-server-pipe]]
-                        or 'Xtest-functional-server-server-socket')
+                        and [[\\.\pipe\Xtest-functional-server-pipe]]
+                        or 'Xtest-functional-server-socket')
     funcs.serverstart(servername)
     eq(servername, meths.get_vvar('servername'))
   end)
@@ -63,9 +61,11 @@ describe('serverlist()', function()
     local n = eval('len(serverlist())')
 
     -- Add a few
-    local servs = {'should-not-exist', 'another-one-that-shouldnt'}
+    local servs = (os_name() == 'windows'
+      and { [[\\.\pipe\Xtest-pipe0934]], [[\\.\pipe\Xtest-pipe4324]] }
+      or  { [[Xtest-pipe0934]], [[Xtest-pipe4324]] })
     for _, s in ipairs(servs) do
-      eq(s, eval('serverstart("'..s..'")'))
+      eq(s, eval("serverstart('"..s.."')"))
     end
 
     local new_servs = eval('serverlist()')
@@ -75,10 +75,9 @@ describe('serverlist()', function()
     -- The new servers should be at the end of the list.
     for i = 1, #servs do
       eq(servs[i], new_servs[i + n])
-      nvim('command', 'call serverstop("'..servs[i]..'")')
+      nvim('command', "call serverstop('"..servs[i].."')")
     end
-    -- After calling serverstop() on the new servers, they should no longer be
-    -- in the list.
+    -- After serverstop() the servers should NOT be in the list.
     eq(n, eval('len(serverlist())'))
   end)
 end)
