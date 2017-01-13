@@ -1484,6 +1484,9 @@ int utf8_to_utf16(const char *str, WCHAR **strw)
                               (WCHAR *)pos,
                               wchar_len);
   assert(r == wchar_len);
+  if (r != wchar_len) {
+    EMSG2("MultiByteToWideChar failed: %d", r);
+  }
   *strw = (WCHAR *)pos;
 
   return 0;
@@ -1519,6 +1522,9 @@ int utf16_to_utf8(const WCHAR *strw, char **str)
                               NULL,
                               NULL);
   assert(r == utf8_len);
+  if (r != utf8_len) {
+    EMSG2("WideCharToMultiByte failed: %d", r);
+  }
   *str = pos;
 
   return 0;

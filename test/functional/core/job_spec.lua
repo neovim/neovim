@@ -341,7 +341,7 @@ describe('jobs', function()
       function! s:OnEvent(id, data, event) dict
         let g:job_result = get(self, 'user')
       endfunction
-      let s:job = jobstart('echo', {
+      let s:job = jobstart('echo "foo"', {
         \ 'on_stdout': 's:OnEvent',
         \ 'on_stderr': 's:OnEvent',
         \ 'on_exit':   's:OnEvent',
