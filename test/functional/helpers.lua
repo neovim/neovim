@@ -346,6 +346,14 @@ local function source(code)
   return fname
 end
 
+local function set_shell_powershell()
+  source([[
+    set shell=powershell shellquote=\" shellpipe=\| shellredir=>
+    set shellcmdflag=\ -ExecutionPolicy\ RemoteSigned\ -Command
+    let &shellxquote=' '
+  ]])
+end
+
 local function nvim(method, ...)
   return request('nvim_'..method, ...)
 end
@@ -590,6 +598,7 @@ return function(after_each)
     curtabmeths = curtabmeths,
     pending_win32 = pending_win32,
     skip_fragile = skip_fragile,
+    set_shell_powershell = set_shell_powershell,
     tmpname = tmpname,
     NIL = mpack.NIL,
   }

@@ -189,14 +189,18 @@ open_buffer (
       curwin->w_cursor.lnum = 1;
       curwin->w_cursor.col = 0;
 
-      /* Set or reset 'modified' before executing autocommands, so that
-       * it can be changed there. */
-      if (!readonlymode && !bufempty())
+      // Set or reset 'modified' before executing autocommands, so that
+      // it can be changed there.
+      if (!readonlymode && !bufempty()) {
         changed();
-      else if (retval != FAIL)
-        unchanged(curbuf, FALSE);
-      apply_autocmds_retval(EVENT_STDINREADPOST, NULL, NULL, FALSE,
-          curbuf, &retval);
+      } else if (retval == OK) {
+        unchanged(curbuf, false);
+      }
+
+      if (retval == OK) {
+        apply_autocmds_retval(EVENT_STDINREADPOST, NULL, NULL, false,
+                              curbuf, &retval);
+      }
     }
   }
 
@@ -206,22 +210,21 @@ open_buffer (
     parse_cino(curbuf);
   }
 
-  /*
-   * Set/reset the Changed flag first, autocmds may change the buffer.
-   * Apply the automatic commands, before processing the modelines.
-   * So the modelines have priority over auto commands.
-   */
-  /* When reading stdin, the buffer contents always needs writing, so set
-   * the changed flag.  Unless in readonly mode: "ls | nvim -R -".
-   * When interrupted and 'cpoptions' contains 'i' set changed flag. */
+  // Set/reset the Changed flag first, autocmds may change the buffer.
+  // Apply the automatic commands, before processing the modelines.
+  // So the modelines have priority over auto commands.
+
+  // When reading stdin, the buffer contents always needs writing, so set
+  // the changed flag.  Unless in readonly mode: "ls | nvim -R -".
+  // When interrupted and 'cpoptions' contains 'i' set changed flag.
   if ((got_int && vim_strchr(p_cpo, CPO_INTMOD) != NULL)
-      || modified_was_set               /* ":set modified" used in autocmd */
-      || (aborting() && vim_strchr(p_cpo, CPO_INTMOD) != NULL)
-      )
+      || modified_was_set               // ":set modified" used in autocmd
+      || (aborting() && vim_strchr(p_cpo, CPO_INTMOD) != NULL)) {
     changed();
-  else if (retval != FAIL && !read_stdin)
-    unchanged(curbuf, FALSE);
-  save_file_ff(curbuf);                 /* keep this fileformat */
+  } else if (retval == OK && !read_stdin) {
+    unchanged(curbuf, false);
+  }
+  save_file_ff(curbuf);                 // keep this fileformat
 
   /* require "!" to overwrite the file, because it wasn't read completely */
   if (aborting())

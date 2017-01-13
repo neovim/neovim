@@ -249,7 +249,7 @@ void filemess(buf_T *buf, char_u *name, char_u *s, int attr)
  * READ_DUMMY	read into a dummy buffer (to check if file contents changed)
  * READ_KEEP_UNDO  don't clear undo info or read it from a file
  *
- * return FAIL for failure, OK otherwise
+ * return FAIL for failure, NOTDONE for directory (failure), or OK
  */
 int 
 readfile (
@@ -258,7 +258,7 @@ readfile (
     linenr_T from,
     linenr_T lines_to_skip,
     linenr_T lines_to_read,
-    exarg_T *eap,                       /* can be NULL! */
+    exarg_T *eap,                       // can be NULL!
     int flags
 )
 {
@@ -444,13 +444,14 @@ readfile (
         // ... or a character special file named /dev/fd/<n>
 # endif
         ) {
-      if (S_ISDIR(perm))
+      if (S_ISDIR(perm)) {
         filemess(curbuf, fname, (char_u *)_("is a directory"), 0);
-      else
+      } else {
         filemess(curbuf, fname, (char_u *)_("is not a file"), 0);
+      }
       msg_end();
       msg_scroll = msg_save;
-      return FAIL;
+      return S_ISDIR(perm) ? NOTDONE : FAIL;
     }
 #endif
   }
@@ -5104,13 +5105,13 @@ void buf_reload(buf_T *buf, int orig_mode)
   }
 
   if (saved == OK) {
-    curbuf->b_flags |= BF_CHECK_RO;           /* check for RO again */
-    keep_filetype = TRUE;                     /* don't detect 'filetype' */
-    if (readfile(buf->b_ffname, buf->b_fname, (linenr_T)0,
-            (linenr_T)0,
-            (linenr_T)MAXLNUM, &ea, flags) == FAIL) {
-      if (!aborting())
+    curbuf->b_flags |= BF_CHECK_RO;           // check for RO again
+    keep_filetype = true;                     // don't detect 'filetype'
+    if (readfile(buf->b_ffname, buf->b_fname, (linenr_T)0, (linenr_T)0,
+                 (linenr_T)MAXLNUM, &ea, flags) != OK) {
+      if (!aborting()) {
         EMSG2(_("E321: Could not reload \"%s\""), buf->b_fname);
+      }
       if (savebuf != NULL && buf_valid(savebuf) && buf == curbuf) {
         /* Put the text back from the save buffer.  First
          * delete any lines that readfile() added. */

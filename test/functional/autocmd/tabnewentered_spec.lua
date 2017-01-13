@@ -1,8 +1,6 @@
 local helpers = require('test.functional.helpers')(after_each)
 local clear, nvim, eq = helpers.clear, helpers.nvim, helpers.eq
 
-if helpers.pending_win32(pending) then return end
-
 describe('TabNewEntered', function()
   describe('au TabNewEntered', function()
     describe('with * as <afile>', function()
@@ -15,9 +13,9 @@ describe('TabNewEntered', function()
     end)
     describe('with FILE as <afile>', function()
       it('matches when opening a new tab for FILE', function()
-        local tmp_path = nvim('eval', 'tempname()')
-        nvim('command', 'au! TabNewEntered '..tmp_path..' echom "tabnewentered:match"')
-        eq("\n\""..tmp_path.."\" [New File]\ntabnewentered:4:4\ntabnewentered:match", nvim('command_output', 'tabnew '..tmp_path))
+        nvim('command', 'au! TabNewEntered Xtest-tabnewentered echom "tabnewentered:match"')
+        eq('\n"Xtest-tabnewentered" [New File]\ntabnewentered:4:4\ntabnewentered:match',
+          nvim('command_output', 'tabnew Xtest-tabnewentered'))
      end)
     end)
     describe('with CTRL-W T', function()
