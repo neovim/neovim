@@ -312,6 +312,24 @@ describe('jobs', function()
     end)
   end)
 
+  it('does not repeat output with slow output handlers', function()
+    source([[
+      let d = {'data': []}
+      function! d.on_stdout(job, data, event) dict
+        call add(self.data, a:data)
+        sleep 200m
+      endfunction
+      if has('win32')
+        let cmd = '1,2,3,4,5 | foreach-object -process {echo $_; sleep 0.1}'
+      else
+        let cmd = ['sh', '-c', 'for i in $(seq 1 5); do echo $i; sleep 0.1; done']
+      endif
+      call jobwait([jobstart(cmd, d)])
+      call rpcnotify(g:channel, 'data', d.data)
+    ]])
+    eq({'notification', 'data', {{{'1', ''}, {'2', ''}, {'3', ''}, {'4', ''}, {'5', ''}}}}, next_msg())
+  end)
+
   describe('jobwait', function()
     it('returns a list of status codes', function()
       source([[

@@ -23183,11 +23183,10 @@ static void on_job_output(Stream *stream, TerminalJobData *data, RBuffer *buf,
     terminal_receive(data->term, ptr, count);
   }
 
+  rbuffer_consumed(buf, count);
   if (callback->type != kCallbackNone) {
     process_job_event(data, callback, type, ptr, count, 0);
   }
-
-  rbuffer_consumed(buf, count);
 }
 
 static void eval_job_process_exit_cb(Process *proc, int status, void *d)
