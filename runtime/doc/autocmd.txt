@@ -273,6 +273,8 @@ Name			triggered by ~
 |VimLeave|		before exiting Vim, after writing the shada file
 
 	Various
+|DirChanged|		When the current working directory changed.
+
 |FileChangedShell|	Vim notices that a file changed since editing started
 |FileChangedShellPost|	After handling a file changed since editing started
 |FileChangedRO|		before making the first change to a read-only file
@@ -562,6 +564,16 @@ CursorMoved			After the cursor was moved in Normal or Visual
 CursorMovedI			After the cursor was moved in Insert mode.
 				Not triggered when the popup menu is visible.
 				Otherwise the same as CursorMoved.
+							*DirChanged*
+DirChanged			When the current working directory was changed
+				using the |:cd| family of commands,
+				|nvim_set_current_dir()|, or on 'autochdir'.
+				The pattern must be * because its meaning may
+				change in the future.
+				It sets these |v:event| keys:
+				    cwd:   String (current working directory)
+				    scope: String ("global", "tab", "window")
+				Recursion is ignored.
 							*FileAppendCmd*
 FileAppendCmd			Before appending to a file.  Should do the
 				appending to the file.  Use the '[ and ']

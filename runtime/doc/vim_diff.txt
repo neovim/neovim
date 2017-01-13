@@ -129,6 +129,7 @@ Functions:
   |msgpackdump()|, |msgpackparse()| provide msgpack de/serialization
 
 Events:
+  |DirChanged|
   |TabNewEntered|
   |TermClose|
   |TermOpen|
