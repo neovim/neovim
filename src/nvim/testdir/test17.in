@@ -4,13 +4,7 @@ Tests for:
 
 STARTTEST
 :set isfname=@,48-57,/,.,-,_,+,,,$,:,~,{,}
-:function! DeleteDirectory(dir)
-: if has("win16") || has("win32") || has("win64") || has("dos16") || has("dos32")
-:  exec "silent !rmdir /Q /S " . a:dir
-: else
-:  exec "silent !rm -rf " . a:dir
-: endif
-:endfun
+:"
 :if has("unix")
 :let $CDIR = "."
 /CDIR
@@ -36,7 +30,7 @@ STARTTEST
 :" check for 'include' without \zs or \ze
 :lang C
 :call delete("./Xbase.a")
-:call DeleteDirectory("Xdir1")
+:call delete("Xdir1", "rf")
 :!mkdir Xdir1
 :!mkdir "Xdir1/dir2"
 :e! Xdir1/dir2/foo.a
@@ -61,7 +55,7 @@ ENDTEST
 STARTTEST
 :" check for 'include' with \zs and \ze
 :call delete("./Xbase.b")
-:call DeleteDirectory("Xdir1")
+:call delete("Xdir1", "rf")
 :!mkdir Xdir1
 :!mkdir "Xdir1/dir2"
 :let &include='^\s*%inc\s*/\zs[^/]\+\ze'
@@ -91,7 +85,7 @@ ENDTEST
 STARTTEST
 :" check for 'include' with \zs and no \ze
 :call delete("./Xbase.c")
-:call DeleteDirectory("Xdir1")
+:call delete("Xdir1", "rf")
 :!mkdir Xdir1
 :!mkdir "Xdir1/dir2"
 :let &include='^\s*%inc\s*\%([[:upper:]][^[:space:]]*\s\+\)\?\zs\S\+\ze'
