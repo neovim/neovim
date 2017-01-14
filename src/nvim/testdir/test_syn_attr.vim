@@ -20,7 +20,7 @@ func Test_missing_attr()
     if fontname == ''
       let fontname = 'something'
     endif
-    exe 'hi Mine guifg=blue guibg=red font=' . escape(fontname, ' \')
+    exe "hi Mine guifg=blue guibg=red font='" . fontname . "'"
     call assert_equal('blue', synIDattr(hlID("Mine"), "fg", 'gui'))
     call assert_equal('red', synIDattr(hlID("Mine"), "bg", 'gui'))
     call assert_equal(fontname, synIDattr(hlID("Mine"), "font", 'gui'))
