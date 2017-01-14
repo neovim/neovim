@@ -9573,24 +9573,29 @@ static void f_foldlevel(typval_T *argvars, typval_T *rettv, FunPtr fptr)
  */
 static void f_foldtext(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  linenr_T lnum;
+  linenr_T    foldstart;
+  linenr_T    foldend;
+  char_u      *dashes;
+  linenr_T    lnum;
   char_u      *s;
   char_u      *r;
-  int len;
+  int         len;
   char        *txt;
+  long        count;
 
   rettv->v_type = VAR_STRING;
   rettv->vval.v_string = NULL;
-  if ((linenr_T)vimvars[VV_FOLDSTART].vv_nr > 0
-      && (linenr_T)vimvars[VV_FOLDEND].vv_nr
-      <= curbuf->b_ml.ml_line_count
-      && vimvars[VV_FOLDDASHES].vv_str != NULL) {
+
+  foldstart = (linenr_T)get_vim_var_nr(VV_FOLDSTART);
+  foldend = (linenr_T)get_vim_var_nr(VV_FOLDEND);
+  dashes = get_vim_var_str(VV_FOLDDASHES);
+  if (foldstart > 0 && foldend <= curbuf->b_ml.ml_line_count
+      && dashes != NULL) {
     /* Find first non-empty line in the fold. */
-    lnum = (linenr_T)vimvars[VV_FOLDSTART].vv_nr;
-    while (lnum < (linenr_T)vimvars[VV_FOLDEND].vv_nr) {
-      if (!linewhite(lnum))
+    for (lnum = foldstart; lnum < foldend; ++lnum) {
+      if (!linewhite(lnum)) {
         break;
-      ++lnum;
+      }
     }
 
     /* Find interesting text in this line. */
@@ -9598,21 +9603,19 @@ static void f_foldtext(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     /* skip C comment-start */
     if (s[0] == '/' && (s[1] == '*' || s[1] == '/')) {
       s = skipwhite(s + 2);
-      if (*skipwhite(s) == NUL
-          && lnum + 1 < (linenr_T)vimvars[VV_FOLDEND].vv_nr) {
+      if (*skipwhite(s) == NUL && lnum + 1 < foldend) {
         s = skipwhite(ml_get(lnum + 1));
         if (*s == '*')
           s = skipwhite(s + 1);
       }
     }
+    count = (long)(foldend - foldstart + 1);
     txt = _("+-%s%3ld lines: ");
     r = xmalloc(STRLEN(txt)
-                + STRLEN(vimvars[VV_FOLDDASHES].vv_str) // for %s
-                + 20                                    // for %3ld
-                + STRLEN(s));                           // concatenated
-    sprintf((char *)r, txt, vimvars[VV_FOLDDASHES].vv_str,
-        (long)((linenr_T)vimvars[VV_FOLDEND].vv_nr
-               - (linenr_T)vimvars[VV_FOLDSTART].vv_nr + 1));
+                + STRLEN(dashes) // for %s
+                + 20             // for %3ld
+                + STRLEN(s));    // concatenated
+    sprintf((char *)r, txt, dashes, count);
     len = (int)STRLEN(r);
     STRCAT(r, s);
     /* remove 'foldmarker' and 'commentstring' */
