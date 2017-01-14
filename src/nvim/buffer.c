@@ -3443,7 +3443,7 @@ int build_stl_str_hl(
 
     case STL_KEYMAP:
       fillable = false;
-      if (get_keymap_str(wp, tmp, TMPLEN))
+      if (get_keymap_str(wp, (char_u *)"<%s>", tmp, TMPLEN))
         str = tmp;
       break;
     case STL_PAGENUM:
