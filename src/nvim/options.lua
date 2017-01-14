@@ -17,8 +17,8 @@
 -- types: bool, number, string
 -- lists: (nil), comma, onecomma, flags, flagscomma
 -- scopes: global, buffer, window
--- redraw options: statuslines, current_window, current_buffer, all_windows, 
---                 everything, curswant
+-- redraw options: statuslines, current_window, curent_window_only,
+--                 current_buffer, all_windows, everything, curswant
 -- default: {vi=…[, vim=…]}
 -- defaults: {condition=#if condition, if_true=default, if_false=default}
 -- #if condition:
@@ -539,7 +539,7 @@ return {
       full_name='cursorline', abbreviation='cul',
       type='bool', scope={'window'},
       vi_def=true,
-      redraw={'current_window'},
+      redraw={'current_window_only'},
       defaults={if_true={vi=false}}
     },
     {

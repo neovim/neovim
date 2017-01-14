@@ -18,3 +18,18 @@ func Test_gee_dee()
   call assert_equal(14, col('.'))
   quit!
 endfunc
+
+" Check that setting 'cursorline' does not change curswant
+func Test_cursorline_keep_col()
+  new
+  call setline(1, ['long long long line', 'short line'])
+  normal ggfi
+  let pos = getcurpos()
+  normal j
+  set cursorline
+  normal k
+  call assert_equal(pos, getcurpos())
+  bwipe!
+  set nocursorline
+endfunc
+

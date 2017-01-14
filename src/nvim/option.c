@@ -213,12 +213,12 @@ typedef struct vimoption {
 #define P_VI_DEF        0x400U   /* Use Vi default for Vim */
 #define P_VIM           0x800U   /* Vim option */
 
-/* when option changed, what to display: */
-#define P_RSTAT         0x1000U  /* redraw status lines */
-#define P_RWIN          0x2000U  /* redraw current window */
-#define P_RBUF          0x4000U  /* redraw current buffer */
-#define P_RALL          0x6000U  /* redraw all windows */
-#define P_RCLR          0x7000U  /* clear and redraw all */
+// when option changed, what to display:
+#define P_RSTAT         0x1000U  ///< redraw status lines
+#define P_RWIN          0x2000U  ///< redraw current window and recompute text
+#define P_RBUF          0x4000U  ///< redraw current buffer and recompute text
+#define P_RALL          0x6000U  ///< redraw all windows
+#define P_RCLR          0x7000U  ///< clear and redraw all
 
 #define P_COMMA         0x8000U    ///< comma separated list
 #define P_ONECOMMA      0x18000U   ///< P_COMMA and cannot have two consecutive
@@ -237,6 +237,8 @@ typedef struct vimoption {
 #define P_CURSWANT     0x4000000U  ///< update curswant required; not needed
                                    ///< when there is a redraw flag
 #define P_NO_DEF_EXP   0x8000000U  ///< Do not expand default value.
+
+#define P_RWINONLY     0x10000000U  ///< only redraw current window
 
 #define HIGHLIGHT_INIT \
   "8:SpecialKey,~:EndOfBuffer,z:TermCursor,Z:TermCursorNC,@:NonText," \
@@ -4357,17 +4359,24 @@ static void check_redraw(uint32_t flags)
   bool doclear = (flags & P_RCLR) == P_RCLR;
   bool all = ((flags & P_RALL) == P_RALL || doclear);
 
-  if ((flags & P_RSTAT) || all)         /* mark all status lines dirty */
+  if ((flags & P_RSTAT) || all) {  // mark all status lines dirty
     status_redraw_all();
+  }
 
-  if ((flags & P_RBUF) || (flags & P_RWIN) || all)
+  if ((flags & P_RBUF) || (flags & P_RWIN) || all) {
     changed_window_setting();
-  if (flags & P_RBUF)
+  }
+  if (flags & P_RBUF) {
     redraw_curbuf_later(NOT_VALID);
-  if (doclear)
+  }
+  if (flags & P_RWINONLY) {
+    redraw_later(NOT_VALID);
+  }
+  if (doclear) {
     redraw_all_later(CLEAR);
-  else if (all)
+  } else if (all) {
     redraw_all_later(NOT_VALID);
+  }
 }
 
 /// Find index for named option
