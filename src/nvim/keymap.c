@@ -573,8 +573,10 @@ int find_special_key(const char_u **srcp, const size_t src_len, int *const modp,
         } else {
           l = 1;
         }
-        if (end - bp > l && bp[l + 1] == '>') {
-          bp += l;  // anything accepted, like <C-?>
+        if (end - bp > l && bp[l] != '"' && bp[l + 1] == '>') {
+          // Anything accepted, like <C-?>, except <C-">, because the "
+          // ends the string.
+          bp += l;
         }
       }
     }
