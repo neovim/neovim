@@ -92,3 +92,13 @@ endfunc
 func Test_set_reg_null_list()
   call setreg('x', v:_null_list)
 endfunc
+
+func Test_named_function_closure()
+  func! Afoo()
+    let x = 14
+    func! s:Abar() closure
+      return x
+    endfunc
+  endfunc
+  call Afoo()
+endfunc
