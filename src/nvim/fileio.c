@@ -281,7 +281,7 @@ readfile (
   int wasempty;                         /* buffer was empty before reading */
   colnr_T len;
   long size = 0;
-  char_u      *p;
+  char_u      *p = NULL;
   off_t filesize = 0;
   int skip_read = FALSE;
   context_sha256_T sha_ctx;
@@ -1883,16 +1883,20 @@ failed:
       xfree(keep_msg);
       keep_msg = NULL;
       msg_scrolled_ign = TRUE;
-      p = msg_trunc_attr(IObuff, FALSE, 0);
+
+      if (!read_stdin && !read_buffer) {
+        p = msg_trunc_attr(IObuff, FALSE, 0);
+      }
+
       if (read_stdin || read_buffer || restart_edit != 0
-          || (msg_scrolled != 0 && !need_wait_return))
-        /* Need to repeat the message after redrawing when:
-         * - When reading from stdin (the screen will be cleared next).
-         * - When restart_edit is set (otherwise there will be a delay
-         *   before redrawing).
-         * - When the screen was scrolled but there is no wait-return
-         *   prompt. */
+          || (msg_scrolled != 0 && !need_wait_return)) {
+        // Need to repeat the message after redrawing when:
+        // - When reading from stdin (the screen will be cleared next).
+        // - When restart_edit is set (otherwise there will be a delay before
+        //   redrawing).
+        // - When the screen was scrolled but there is no wait-return prompt.
         set_keep_msg(p, 0);
+      }
       msg_scrolled_ign = FALSE;
     }
 
