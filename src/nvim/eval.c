@@ -6726,6 +6726,7 @@ static bool get_dict_callback(dict_T *d, char *key, Callback *result)
 /// Get a string item from a dictionary.
 ///
 /// @param save whether memory should be allocated for the return value
+///             when false a shared buffer is used, can only be used once!
 ///
 /// @return the entry or NULL if the entry doesn't exist.
 char_u *get_dict_string(dict_T *d, char *key, bool save)
@@ -15445,12 +15446,11 @@ static void f_setmatches(typval_T *argvars, typval_T *rettv, FunPtr fptr)
         }
       }
 
-      char_u *group = get_dict_string(d, "group", false);
+      char_u *group = get_dict_string(d, "group", true);
       int priority = get_dict_number(d, "priority");
       int id = get_dict_number(d, "id");
       char_u *conceal = dict_find(d, (char_u *)"conceal", -1) != NULL
-                                  ? get_dict_string(d, "conceal",
-                                                    false)
+                                  ? get_dict_string(d, "conceal", true)
                                   : NULL;
       if (i == 0) {
         match_add(curwin, group,
@@ -15461,6 +15461,8 @@ static void f_setmatches(typval_T *argvars, typval_T *rettv, FunPtr fptr)
         list_unref(s);
         s = NULL;
       }
+      xfree(group);
+      xfree(conceal);
       li = li->li_next;
     }
     rettv->vval.v_number = 0;
