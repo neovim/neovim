@@ -96,4 +96,12 @@ endfunc
 func Test_special_char()
   " The failure is only visible using valgrind.
   call assert_fails('echo "\<C-">')
+
+func Test_setmatches()
+  hi def link 1 Comment
+  hi def link 2 PreProc
+  let set = [{"group": 1, "pattern": 2, "id": 3, "priority": 4, "conceal": 5}]
+  let exp = [{"group": '1', "pattern": '2', "id": 3, "priority": 4, "conceal": '5'}]
+  call setmatches(set)
+  call assert_equal(exp, getmatches())
 endfunc
