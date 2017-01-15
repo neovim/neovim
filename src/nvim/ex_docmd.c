@@ -9634,7 +9634,7 @@ static void ex_terminal(exarg_T *eap)
     mustfree = true;
     snprintf(ex_cmd, sizeof(ex_cmd),
              ":enew%s | call termopen(\"%s\") | startinsert",
-             eap->forceit == true ? "!" : "", name);
+             eap->forceit ? "!" : "", name);
   } else {
     char **argv = build_argv((char *)p_sh);
     char **p = argv;
@@ -9656,7 +9656,7 @@ static void ex_terminal(exarg_T *eap)
 
     snprintf(ex_cmd, sizeof(ex_cmd),
              ":enew%s | call termopen([%s]) | startinsert",
-             eap->forceit == true ? "!" : "", shell_argv);
+             eap->forceit ? "!" : "", shell_argv);
   }
 
   do_cmdline_cmd(ex_cmd);
