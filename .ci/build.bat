@@ -3,11 +3,11 @@
 :: in MSYS2, but we cannot build inside the MSYS2 shell.
 echo on
 if "%CONFIGURATION%" == "MINGW_32" (
-	set ARCH=i686
-	set BITS=32
+  set ARCH=i686
+  set BITS=32
 ) else (
-	set ARCH=x86_64
-	set BITS=64
+  set ARCH=x86_64
+  set BITS=64
 )
 :: We cannot have sh.exe in the PATH (MinGW)
 set PATH=%PATH:C:\Program Files\Git\usr\bin;=%
@@ -19,12 +19,15 @@ set PATH=C:\Program Files (x86)\CMake\bin\cpack.exe;%PATH%
 C:\msys64\usr\bin\bash -lc "pacman --verbose --noconfirm -Su" || goto :error
 C:\msys64\usr\bin\bash -lc "pacman --verbose --noconfirm --needed -S mingw-w64-%ARCH%-cmake mingw-w64-%ARCH%-perl mingw-w64-%ARCH%-diffutils gperf" || goto :error
 
-:: Use Appveyor's python
-set PATH=C:\Python27;C:\Python27\Scripts;%PATH%
-set PATH=C:\Python35;C:\Python35\Scripts;%PATH%
-copy c:\Python35\python.exe c:\Python35\python3.exe
-pip2 install neovim || goto error
-pip3 install neovim || goto error
+:: Setup python (use AppVeyor system python)
+C:\Python27\python.exe -m pip install neovim || goto :error
+C:\Python35\python.exe -m pip install neovim || goto :error
+:: Disambiguate python3
+move c:\Python35\python.exe c:\Python35\python3.exe
+set PATH=C:\Python35;C:\Python27;%PATH%
+:: Sanity check
+python  -c "import neovim; print(str(neovim))" || goto :error
+python3 -c "import neovim; print(str(neovim))" || goto :error
 
 mkdir .deps
 cd .deps
