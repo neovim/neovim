@@ -281,7 +281,7 @@ readfile (
   int wasempty;                         /* buffer was empty before reading */
   colnr_T len;
   long size = 0;
-  char_u      *p;
+  char_u      *p = NULL;
   off_t filesize = 0;
   int skip_read = FALSE;
   context_sha256_T sha_ctx;
@@ -707,7 +707,7 @@ readfile (
      * always using the GUI.
      */
     if (read_stdin) {
-      mch_msg(_("Nvim: Reading from stdin...\n"));
+      mch_msg(_("Nvim: Reading from stdin ...\n"));
     } else if (!read_buffer)
       filemess(curbuf, sfname, (char_u *)"", 0);
   }
@@ -1883,7 +1883,11 @@ failed:
       xfree(keep_msg);
       keep_msg = NULL;
       msg_scrolled_ign = TRUE;
-      p = msg_trunc_attr(IObuff, FALSE, 0);
+
+      if (!read_stdin && !read_buffer) {
+        p = msg_trunc_attr(IObuff, FALSE, 0);
+      }
+
       if (read_stdin || read_buffer || restart_edit != 0
           || (msg_scrolled != 0 && !need_wait_return))
         /* Need to repeat the message after redrawing when:
