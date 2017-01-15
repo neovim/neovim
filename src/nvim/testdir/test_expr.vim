@@ -92,3 +92,8 @@ endfunc
 func Test_set_reg_null_list()
   call setreg('x', v:_null_list)
 endfunc
+
+func Test_special_char()
+  " The failure is only visible using valgrind.
+  call assert_fails('echo "\<C-">')
+endfunc
