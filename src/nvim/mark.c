@@ -130,9 +130,15 @@ int setmark_pos(int c, pos_T *pos, int fnum)
     return OK;
   }
 
+  buf_T *buf = buflist_findnr(fnum);
+  // Can't set a mark in a non-existant buffer.
+  if (buf == NULL) {
+    return FAIL;
+  }
+
   if (ASCII_ISLOWER(c)) {
     i = c - 'a';
-    RESET_FMARK(curbuf->b_namedm + i, *pos, curbuf->b_fnum);
+    RESET_FMARK(buf->b_namedm + i, *pos, fnum);
     return OK;
   }
   if (ASCII_ISUPPER(c) || ascii_isdigit(c)) {
