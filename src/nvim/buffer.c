@@ -409,20 +409,12 @@ void close_buffer(win_T *win, buf_T *buf, int action, int abort_if_last)
   buf->b_nwindows = nwindows;
 
   buf_freeall(buf, (del_buf ? BFA_DEL : 0) + (wipe_buf ? BFA_WIPE : 0));
-  if (win_valid_any_tab(win) && win->w_buffer == buf) {
-    win->w_buffer = NULL;  // make sure we don't use the buffer now
-  }
 
   /* Autocommands may have deleted the buffer. */
   if (!buf_valid(buf))
     return;
   if (aborting())           /* autocmds may abort script processing */
     return;
-
-  /* Autocommands may have opened or closed windows for this buffer.
-   * Decrement the count for the close we do here. */
-  if (buf->b_nwindows > 0)
-    --buf->b_nwindows;
 
   /*
    * It's possible that autocommands change curbuf to the one being deleted.
@@ -433,6 +425,16 @@ void close_buffer(win_T *win, buf_T *buf, int action, int abort_if_last)
    */
   if (buf == curbuf && !is_curbuf)
     return;
+
+  if (win_valid_any_tab(win) && win->w_buffer == buf) {
+    win->w_buffer = NULL;  // make sure we don't use the buffer now
+  }
+
+  // Autocommands may have opened or closed windows for this buffer.
+  // Decrement the count for the close we do here.
+  if (buf->b_nwindows > 0) {
+    buf->b_nwindows--;
+  }
 
   /* Change directories when the 'acd' option is set. */
   do_autochdir();

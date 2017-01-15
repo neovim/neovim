@@ -5373,6 +5373,8 @@ static AutoPatCmd *active_apc_list = NULL; /* stack of active autocommands */
  */
 static garray_T augroups = {0, 0, sizeof(char_u *), 10, NULL};
 #define AUGROUP_NAME(i) (((char_u **)augroups.ga_data)[i])
+// use get_deleted_augroup() to get this
+static char_u *deleted_augroup = NULL;
 
 /*
  * The ID of the current group.  Group 0 is the default one.
@@ -5386,6 +5388,14 @@ static int au_need_clean = FALSE;   /* need to delete marked patterns */
 static event_T last_event;
 static int last_group;
 static int autocmd_blocked = 0;         /* block all autocmds */
+
+static char_u *get_deleted_augroup(void)
+{
+    if (deleted_augroup == NULL) {
+      deleted_augroup = (char_u *)_("--Deleted--");
+    }
+    return deleted_augroup;
+}
 
 /*
  * Show the autocommands for one AutoPat.
@@ -5406,10 +5416,11 @@ static void show_autocmd(AutoPat *ap, event_T event)
     return;
   if (event != last_event || ap->group != last_group) {
     if (ap->group != AUGROUP_DEFAULT) {
-      if (AUGROUP_NAME(ap->group) == NULL)
-        msg_puts_attr((char_u *)_("--Deleted--"), hl_attr(HLF_E));
-      else
+      if (AUGROUP_NAME(ap->group) == NULL) {
+        msg_puts_attr(get_deleted_augroup(), hl_attr(HLF_E));
+      } else {
         msg_puts_attr(AUGROUP_NAME(ap->group), hl_attr(HLF_T));
+      }
       msg_puts((char_u *)"  ");
     }
     msg_puts_attr(event_nr2name(event), hl_attr(HLF_T));
@@ -5575,11 +5586,33 @@ static void au_del_group(char_u *name)
   int i;
 
   i = au_find_group(name);
-  if (i == AUGROUP_ERROR)       /* the group doesn't exist */
+  if (i == AUGROUP_ERROR) {      // the group doesn't exist
     EMSG2(_("E367: No such group: \"%s\""), name);
-  else {
+  } else if (i == current_augroup) {
+    EMSG(_("E936: Cannot delete the current group"));
+  } else {
+    event_T event;
+    AutoPat *ap;
+    int in_use = false;
+
+    for (event = (event_T)0; (int)event < (int)NUM_EVENTS;
+         event = (event_T)((int)event + 1)) {
+      for (ap = first_autopat[(int)event]; ap != NULL; ap = ap->next) {
+        if (ap->group == i && ap->pat != NULL) {
+          give_warning((char_u *)
+                       _("W19: Deleting augroup that is still in use"), true);
+          in_use = true;
+          event = NUM_EVENTS;
+          break;
+        }
+      }
+    }
     xfree(AUGROUP_NAME(i));
-    AUGROUP_NAME(i) = NULL;
+    if (in_use) {
+      AUGROUP_NAME(i) = get_deleted_augroup();
+    } else {
+      AUGROUP_NAME(i) = NULL;
+    }
   }
 }
 
@@ -5591,8 +5624,9 @@ static void au_del_group(char_u *name)
 static int au_find_group(const char_u *name)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  for (int i = 0; i < augroups.ga_len; ++i) {
-    if (AUGROUP_NAME(i) != NULL && STRCMP(AUGROUP_NAME(i), name) == 0) {
+  for (int i = 0; i < augroups.ga_len; i++) {
+    if (AUGROUP_NAME(i) != NULL && AUGROUP_NAME(i) != get_deleted_augroup()
+        && STRCMP(AUGROUP_NAME(i), name) == 0) {
       return i;
     }
   }
@@ -5640,10 +5674,21 @@ void do_augroup(char_u *arg, int del_group)
 #if defined(EXITFREE)
 void free_all_autocmds(void)
 {
+  int i;
+  char_u *s;
+
   for (current_augroup = -1; current_augroup < augroups.ga_len;
-       ++current_augroup)
-    do_autocmd((char_u *)"", TRUE);
-  ga_clear_strings(&augroups);
+       current_augroup++) {
+    do_autocmd((char_u *)"", true);
+  }
+
+  for (i = 0; i < augroups.ga_len; i++) {
+      s = ((char_u **)(augroups.ga_data))[i];
+      if (s != get_deleted_augroup()) {
+          xfree(s);
+      }
+  }
+  ga_clear(&augroups);
 }
 
 #endif
@@ -7105,9 +7150,11 @@ char_u *get_augroup_name(expand_T *xp, int idx)
     return (char_u *)"END";
   if (idx >= augroups.ga_len)           /* end of list */
     return NULL;
-  if (AUGROUP_NAME(idx) == NULL)        /* skip deleted entries */
+  if (AUGROUP_NAME(idx) == NULL || AUGROUP_NAME(idx) == get_deleted_augroup()) {
+    // skip deleted entries
     return (char_u *)"";
-  return AUGROUP_NAME(idx);             /* return a name */
+  }
+  return AUGROUP_NAME(idx);             // return a name
 }
 
 static int include_groups = FALSE;
@@ -7164,10 +7211,12 @@ set_context_in_autocmd (
  */
 char_u *get_event_name(expand_T *xp, int idx)
 {
-  if (idx < augroups.ga_len) {          /* First list group names, if wanted */
-    if (!include_groups || AUGROUP_NAME(idx) == NULL)
-      return (char_u *)"";              /* skip deleted entries */
-    return AUGROUP_NAME(idx);           /* return a name */
+  if (idx < augroups.ga_len) {          // First list group names, if wanted
+    if (!include_groups || AUGROUP_NAME(idx) == NULL
+        || AUGROUP_NAME(idx) == get_deleted_augroup()) {
+      return (char_u *)"";              // skip deleted entries
+    }
+    return AUGROUP_NAME(idx);           // return a name
   }
   return (char_u *)event_names[idx - augroups.ga_len].name;
 }
