@@ -6765,8 +6765,9 @@ static bool apply_autocmds_group(event_T event, char_u *fname, char_u *fname_io,
     fname = vim_strsave(fname);         /* make a copy, so we can change it */
   } else {
     sfname = vim_strsave(fname);
-    // don't try expanding the following events
+    // Don't try expanding the following events.
     if (event == EVENT_COLORSCHEME
+        || event == EVENT_DIRCHANGED
         || event == EVENT_FILETYPE
         || event == EVENT_FUNCUNDEFINED
         || event == EVENT_OPTIONSET
@@ -6775,10 +6776,11 @@ static bool apply_autocmds_group(event_T event, char_u *fname, char_u *fname_io,
         || event == EVENT_REMOTEREPLY
         || event == EVENT_SPELLFILEMISSING
         || event == EVENT_SYNTAX
-        || event == EVENT_TABCLOSED)
+        || event == EVENT_TABCLOSED) {
       fname = vim_strsave(fname);
-    else
-      fname = (char_u *)FullName_save((char *)fname, FALSE);
+    } else {
+      fname = (char_u *)FullName_save((char *)fname, false);
+    }
   }
   if (fname == NULL) {      /* out of memory */
     xfree(sfname);

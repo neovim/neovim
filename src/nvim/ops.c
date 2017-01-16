@@ -1404,7 +1404,7 @@ int op_delete(oparg_T *oap)
 
     if (oap->regname == 0) {
       set_clipboard(0, reg);
-      yank_do_autocmd(oap, reg);
+      do_autocmd_textyankpost(oap, reg);
     }
 
   }
@@ -2315,7 +2315,7 @@ bool op_yank(oparg_T *oap, bool message)
   yankreg_T *reg = get_yank_register(oap->regname, YREG_YANK);
   op_yank_reg(oap, message, reg, is_append_register(oap->regname));
   set_clipboard(oap->regname, reg);
-  yank_do_autocmd(oap, reg);
+  do_autocmd_textyankpost(oap, reg);
 
   return true;
 }
@@ -2538,7 +2538,7 @@ static void yank_copy_line(yankreg_T *reg, struct block_def *bd, size_t y_idx)
 ///
 /// @param oap Operator arguments.
 /// @param reg The yank register used.
-static void yank_do_autocmd(oparg_T *oap, yankreg_T *reg)
+static void do_autocmd_textyankpost(oparg_T *oap, yankreg_T *reg)
   FUNC_ATTR_NONNULL_ALL
 {
   static bool recursive = false;

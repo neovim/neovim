@@ -14,4 +14,5 @@ typedef unsigned char char_u;
 typedef uint32_t u8char_T;
 
 typedef struct expand expand_T;
+
 #endif  // NVIM_TYPES_H

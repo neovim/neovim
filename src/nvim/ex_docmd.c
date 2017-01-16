@@ -6998,8 +6998,6 @@ void post_chdir(CdScope scope)
   shorten_fnames(TRUE);
 }
 
-
-
 /// `:cd`, `:tcd`, `:lcd`, `:chdir`, `:tchdir` and `:lchdir`.
 void ex_cd(exarg_T *eap)
 {
@@ -7041,30 +7039,31 @@ void ex_cd(exarg_T *eap)
       new_dir = NameBuff;
     }
 #endif
-    if (vim_chdir(new_dir)) {
+    CdScope scope = kCdScopeGlobal;  // Depends on command invoked
+
+    switch (eap->cmdidx) {
+    case CMD_tcd:
+    case CMD_tchdir:
+      scope = kCdScopeTab;
+      break;
+    case CMD_lcd:
+    case CMD_lchdir:
+      scope = kCdScopeWindow;
+      break;
+    default:
+      break;
+    }
+
+    if (vim_chdir(new_dir, scope)) {
       EMSG(_(e_failed));
     } else {
-      CdScope scope = kCdScopeGlobal;  // Depends on command invoked
-
-      switch (eap->cmdidx) {
-      case CMD_tcd:
-      case CMD_tchdir:
-        scope = kCdScopeTab;
-        break;
-      case CMD_lcd:
-      case CMD_lchdir:
-        scope = kCdScopeWindow;
-        break;
-      default:
-        break;
-      }
-
       post_chdir(scope);
-
-      /* Echo the new current directory if the command was typed. */
-      if (KeyTyped || p_verbose >= 5)
+      // Echo the new current directory if the command was typed.
+      if (KeyTyped || p_verbose >= 5) {
         ex_pwd(eap);
+      }
     }
+
     xfree(tofree);
   }
 }
