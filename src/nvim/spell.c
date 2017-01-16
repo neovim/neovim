@@ -292,6 +292,9 @@
 #include <stdlib.h>
 #include <wctype.h>
 
+/* for offsetof() */
+#include <stddef.h>
+
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
 #include "nvim/spell.h"
@@ -583,9 +586,8 @@ typedef struct wordcount_S {
   char_u wc_word[1];                // word, actually longer
 } wordcount_T;
 
-static wordcount_T dumwc;
-#define WC_KEY_OFF  (unsigned)(dumwc.wc_word - (char_u *)&dumwc)
-#define HI2WC(hi)     ((wordcount_T *)((hi)->hi_key - WC_KEY_OFF))
+#define WC_KEY_OFF   offsetof(wordcount_T, wc_word)
+#define HI2WC(hi)    ((wordcount_T *)((hi)->hi_key - WC_KEY_OFF))
 #define MAXWORDCOUNT 0xffff
 
 // Information used when looking for suggestions.
