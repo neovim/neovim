@@ -7,8 +7,8 @@ local eq = h.eq
 local eval = h.eval
 local request = h.request
 
-describe('DirChanged ->', function()
-  local curdir = lfs.currentdir()
+describe('autocmd DirChanged', function()
+  local curdir = string.gsub(lfs.currentdir(), '\\', '/')
   local dirs = {
     curdir .. '/Xtest-functional-autocmd-dirchanged.dir1',
     curdir .. '/Xtest-functional-autocmd-dirchanged.dir2',
@@ -20,21 +20,46 @@ describe('DirChanged ->', function()
 
   before_each(function()
     clear()
-    command('autocmd DirChanged * let g:event = copy(v:event)')
+    command('autocmd DirChanged * let [g:event, g:scope, g:cdcount] = [copy(v:event), expand("<amatch>"), 1 + get(g:, "cdcount", 0)]')
   end)
 
-  it('"autocmd DirChanged *" sets v:event for all :cd variants', function()
+  it('sets v:event', function()
     command('lcd '..dirs[1])
     eq({cwd=dirs[1], scope='window'}, eval('g:event'))
+    eq(1, eval('g:cdcount'))
 
     command('tcd '..dirs[2])
     eq({cwd=dirs[2], scope='tab'}, eval('g:event'))
+    eq(2, eval('g:cdcount'))
 
     command('cd '..dirs[3])
     eq({cwd=dirs[3], scope='global'}, eval('g:event'))
+    eq(3, eval('g:cdcount'))
   end)
 
-  it('"autocmd DirChanged *" does not trigger for failing :cd variants', function()
+  it('disallows recursion', function()
+    command('set shellslash')
+    -- Set up a _nested_ handler.
+    command('autocmd DirChanged * nested lcd '..dirs[3])
+    command('lcd '..dirs[1])
+    eq({cwd=dirs[1], scope='window'}, eval('g:event'))
+    eq(1, eval('g:cdcount'))
+    -- autocmd changed to dirs[3], but did NOT trigger another DirChanged.
+    eq(dirs[3], eval('getcwd()'))
+  end)
+
+  it('sets <amatch> to CWD "scope"', function()
+    command('lcd '..dirs[1])
+    eq('window', eval('g:scope'))
+
+    command('tcd '..dirs[2])
+    eq('tab', eval('g:scope'))
+
+    command('cd '..dirs[3])
+    eq('global', eval('g:scope'))
+  end)
+
+  it('does not trigger if :cd fails', function()
     command('let g:event = {}')
 
     local status1, err1 = pcall(function()
@@ -56,12 +81,12 @@ describe('DirChanged ->', function()
     eq(false, status2)
     eq(false, status3)
 
-    eq('E344', string.match(err1, 'Vim.*:(.*):'))
-    eq('E344', string.match(err2, 'Vim.*:(.*):'))
-    eq('E344', string.match(err3, 'Vim.*:(.*):'))
+    eq('E344:', string.match(err1, "E%d*:"))
+    eq('E344:', string.match(err2, "E%d*:"))
+    eq('E344:', string.match(err3, "E%d*:"))
   end)
 
-  it("'autochdir' triggers DirChanged", function()
+  it("is triggered by 'autochdir'", function()
     command('set autochdir')
 
     command('split '..dirs[1]..'/foo')
@@ -71,7 +96,7 @@ describe('DirChanged ->', function()
     eq({cwd=dirs[2], scope='window'}, eval('g:event'))
   end)
 
-  it('nvim_set_current_dir() triggers DirChanged', function()
+  it('is triggered by nvim_set_current_dir()', function()
     request('nvim_set_current_dir', dirs[1])
     eq({cwd=dirs[1], scope='global'}, eval('g:event'))
 
