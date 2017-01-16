@@ -97,6 +97,7 @@ describe('jobs', function()
   end)
 
   it('returns -1 when target is not executable #5465', function()
+    if helpers.pending_win32(pending) then return end
     local function new_job()
       return eval([[jobstart('')]])
     end
@@ -356,6 +357,7 @@ describe('jobs', function()
   end)
 
   it('does not repeat output with slow output handlers', function()
+    if helpers.pending_win32(pending) then return end
     source([[
       let d = {'data': []}
       function! d.on_stdout(job, data, event) dict
@@ -500,6 +502,7 @@ describe('jobs', function()
     end)
 
     describe('with timeout argument', function()
+      if helpers.pending_win32(pending) then return end
       it('will return -1 if the wait timed out', function()
         source([[
         call rpcnotify(g:channel, 'wait', jobwait([
@@ -541,6 +544,7 @@ describe('jobs', function()
   end)
 
   describe('running tty-test program', function()
+    if helpers.pending_win32(pending) then return end
     local function next_chunk()
       local rv
       while true do
