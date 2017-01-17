@@ -42,8 +42,10 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
   if(CMAKE_COMPILER_IS_GNUCXX)
     set(CMAKE_INCLUDE_SYSTEM_FLAG_CXX "-isystem ")
   endif()
+endif()
 
-  # Enable fixing case-insensitive filenames for Mac.
+if(WIN32 OR CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+  # Enable fixing case-insensitive filenames for Windows and Mac.
   set(USE_FNAME_CASE TRUE)
 endif()
 
