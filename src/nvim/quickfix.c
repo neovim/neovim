@@ -2105,6 +2105,28 @@ static void qf_fmt_text(char_u *text, char_u *buf, int bufsize)
   buf[i] = NUL;
 }
 
+static void qf_msg(qf_info_T *qi, int which, char *lead)
+{
+  char *title = (char *)qi->qf_lists[which].qf_title;
+  int count = qi->qf_lists[which].qf_count;
+  char_u buf[IOSIZE];
+
+  vim_snprintf((char *)buf, IOSIZE, _("%serror list %d of %d; %d errors "),
+               lead,
+               which + 1,
+               qi->qf_listcount,
+               count);
+
+  if (title != NULL) {
+    while (STRLEN(buf) < 34) {
+      STRCAT(buf, " ");
+    }
+    STRCAT(buf, title);
+  }
+  trunc_string(buf, buf, Columns - 1, IOSIZE);
+  msg(buf);
+}
+
 /*
  * ":colder [count]": Up in the quickfix stack.
  * ":cnewer [count]": Down in the quickfix stack.
@@ -2145,15 +2167,26 @@ void qf_age(exarg_T *eap)
       ++qi->qf_curlist;
     }
   }
-  qf_msg(qi);
+  qf_msg(qi, qi->qf_curlist, "");
+  qf_update_buffer(qi, NULL);
 }
 
-static void qf_msg(qf_info_T *qi)
+void qf_history(exarg_T *eap)
 {
-  smsg(_("error list %d of %d; %d errors"),
-       qi->qf_curlist + 1, qi->qf_listcount,
-       qi->qf_lists[qi->qf_curlist].qf_count);
-  qf_update_buffer(qi, NULL);
+  qf_info_T *qi = &ql_info;
+  int i;
+
+  if (eap->cmdidx == CMD_lhistory) {
+    qi = GET_LOC_LIST(curwin);
+  }
+  if (qi == NULL || (qi->qf_listcount == 0
+                     && qi->qf_lists[qi->qf_curlist].qf_count == 0)) {
+    MSG(_("No entries"));
+  } else {
+    for (i = 0; i < qi->qf_listcount; i++) {
+      qf_msg(qi, i, i == qi->qf_curlist ? "> " : "  ");
+    }
+  }
 }
 
 /*

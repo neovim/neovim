@@ -1420,3 +1420,27 @@ function Test_cbottom()
   call XbottomTests('c')
   call XbottomTests('l')
 endfunction
+
+function HistoryTest(cchar)
+  call s:setup_commands(a:cchar)
+
+  call assert_fails(a:cchar . 'older 99', 'E380:')
+  " clear all lists after the first one, then replace the first one.
+  call g:Xsetlist([])
+  Xolder
+  let entry = {'filename': 'foo', 'lnum': 42}
+  call g:Xsetlist([entry], 'r')
+  call g:Xsetlist([entry, entry])
+  call g:Xsetlist([entry, entry, entry])
+  let res = split(execute(a:cchar . 'hist'), "\n")
+  call assert_equal(3, len(res))
+  let common = 'errors     :set' . (a:cchar == 'c' ? 'qf' : 'loc') . 'list()'
+  call assert_equal('  error list 1 of 3; 1 ' . common, res[0])
+  call assert_equal('  error list 2 of 3; 2 ' . common, res[1])
+  call assert_equal('> error list 3 of 3; 3 ' . common, res[2])
+endfunc
+
+func Test_history()
+  call HistoryTest('c')
+  call HistoryTest('l')
+endfunc
