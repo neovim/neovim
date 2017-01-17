@@ -1444,3 +1444,18 @@ func Test_history()
   call HistoryTest('c')
   call HistoryTest('l')
 endfunc
+
+func Test_duplicate_buf()
+  " make sure we can get the highest buffer number
+  edit DoesNotExist
+  edit DoesNotExist2
+  let last_buffer = bufnr("$")
+
+  " make sure only one buffer is created
+  call writefile(['this one', 'that one'], 'Xgrepthis')
+  vimgrep one Xgrepthis
+  vimgrep one Xgrepthis
+  call assert_equal(last_buffer + 1, bufnr("$"))
+
+  call delete('Xgrepthis')
+endfunc

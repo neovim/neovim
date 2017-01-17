@@ -1282,7 +1282,7 @@ void copy_loclist(win_T *from, win_T *to)
   to->w_llist->qf_curlist = qi->qf_curlist;     /* current list */
 }
 
-// Get buffer number for file "dir.name".
+// Get buffer number for file "directory.fname".
 // Also sets the b_has_qf_entry flag.
 static int qf_get_fnum(qf_info_T *qi, char_u *directory, char_u *fname)
 {
@@ -2123,7 +2123,7 @@ static void qf_msg(qf_info_T *qi, int which, char *lead)
     }
     STRCAT(buf, title);
   }
-  trunc_string(buf, buf, Columns - 1, IOSIZE);
+  trunc_string(buf, buf, (int)Columns - 1, IOSIZE);
   msg(buf);
 }
 
@@ -3484,10 +3484,13 @@ void ex_vimgrep(exarg_T *eap)
         col = 0;
         while (vim_regexec_multi(&regmatch, curwin, buf, lnum,
                                  col, NULL) > 0) {
+          // Pass the buffer number so that it gets used even for a
+          // dummy buffer, unless duplicate_name is set, then the
+          // buffer will be wiped out below.
           if (qf_add_entry(qi,
                            NULL,            // dir
                            fname,
-                           0,
+                           duplicate_name ? 0 : buf->b_fnum,
                            ml_get_buf(buf,
                                       regmatch.startpos[0].lnum + lnum, false),
                            regmatch.startpos[0].lnum + lnum,
@@ -3541,17 +3544,23 @@ void ex_vimgrep(exarg_T *eap)
             buf = NULL;
           } else if (buf != first_match_buf || (flags & VGR_NOJUMP)) {
             unload_dummy_buffer(buf, dirname_start);
+            // Keeping the buffer, remove the dummy flag.
+            buf->b_flags &= ~BF_DUMMY;
             buf = NULL;
           }
         }
 
         if (buf != NULL) {
-          /* If the buffer is still loaded we need to use the
-           * directory we jumped to below. */
+          // Keeping the buffer, remove the dummy flag.
+          buf->b_flags &= ~BF_DUMMY;
+
+          // If the buffer is still loaded we need to use the
+          // directory we jumped to below.
           if (buf == first_match_buf
               && target_dir == NULL
-              && STRCMP(dirname_start, dirname_now) != 0)
+              && STRCMP(dirname_start, dirname_now) != 0) {
             target_dir = vim_strsave(dirname_now);
+          }
 
           /* The buffer is still loaded, the Filetype autocommands
            * need to be done now, in that buffer.  And the modelines
