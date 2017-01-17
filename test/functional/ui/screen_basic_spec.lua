@@ -5,8 +5,6 @@ local feed, execute = helpers.feed, helpers.execute
 local insert = helpers.insert
 local eq = helpers.eq
 
-if helpers.pending_win32(pending) then return end
-
 describe('Initial screen', function()
   local screen
   local nvim_argv = {helpers.nvim_prog, '-u', 'NONE', '-i', 'NONE', '-N',
