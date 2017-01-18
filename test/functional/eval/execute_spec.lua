@@ -8,6 +8,7 @@ local exc_exec = helpers.exc_exec
 local funcs = helpers.funcs
 local Screen = require('test.functional.ui.screen')
 local command = helpers.command
+local feed = helpers.feed
 
 describe('execute()', function()
   before_each(clear)
@@ -67,6 +68,25 @@ describe('execute()', function()
     eq('Vim:E731: using Dictionary as a String', ret)
     ret = exc_exec('call execute(["echo 42", function("tr"), "echo 44"])')
     eq('Vim:E729: using Funcref as a String', ret)
+  end)
+
+  it('captures output with highlights', function()
+    eq('\nErrorMsg       xxx ctermfg=15 ctermbg=1 guifg=White guibg=Red',
+       eval('execute("hi ErrorMsg")'))
+  end)
+
+  it('does not corrupt the command display #5422', function()
+    local screen = Screen.new(70, 5)
+    screen:attach()
+    feed(':echo execute("hi ErrorMsg")<CR>')
+    screen:expect([[
+      ~                                                                     |
+      ~                                                                     |
+      :echo execute("hi ErrorMsg")                                          |
+      ErrorMsg       xxx ctermfg=15 ctermbg=1 guifg=White guibg=Red         |
+      Press ENTER or type command to continue^                               |
+    ]])
+    feed('<CR>')
   end)
 
   -- This matches Vim behavior.
