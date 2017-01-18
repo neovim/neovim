@@ -2118,10 +2118,13 @@ static void qf_msg(qf_info_T *qi, int which, char *lead)
                count);
 
   if (title != NULL) {
-    while (STRLEN(buf) < 34) {
-      STRCAT(buf, " ");
+    size_t len = STRLEN(buf);
+
+    if (len < 34) {
+       memset(buf + len, ' ', 34 - len);
+       buf[34] = NUL;
     }
-    vim_strcat(buf, title, IOSIZE);
+    vim_strcat(buf, (char_u *)title, IOSIZE);
   }
   trunc_string(buf, buf, (int)Columns - 1, IOSIZE);
   msg(buf);
