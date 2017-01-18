@@ -439,6 +439,36 @@ Example: create a float with scratch buffer: >
 >
 
 ==============================================================================
+Buffer extended marks	                                  *api-extended-marks*
+
+An extended mark represents a buffer annotation that remains logically
+stationary even as the buffer changes. They could be used to represent cursors,
+folds, misspelled words, and anything else that needs to track a logical
+location in the buffer over time.
+
+Example:
+
+We will set an extmark at row 1, column three.
+
+`let g:mark_ns = nvim_create_namespace('myplugin')`
+`let g:mark_id = nvim_buf_set_mark(0, :g:mark_ns, 0, 1, 3)`
+
+Note: the mark id was randomly generated because we used an inital value of 0
+
+`echo nvim_buf_lookup_mark(0, g:mark_ns, g:mark_id)`
+=> [1, 1, 3]
+`echo nvim_buf_get_marks(0, g:mark_ns, [1, 1], [1, 3], -1, 0)`
+=> [[1, 1, 3]]
+
+Deleting the text all around an extended mark does not remove it. If you want
+to remove an extended mark, use the |nvim_buf_unset_mark()| function.
+
+The namepsace ensures you only ever work with the extended marks you mean to.
+
+Calling set and unset of marks will not automatically prop a new undo.
+
+
+==============================================================================
 Global Functions                                                  *api-global*
 
 nvim_command({command})                                       *nvim_command()*
@@ -1448,6 +1478,22 @@ nvim_select_popupmenu_item({item}, {insert}, {finish}, {opts})
 
 nvim__inspect_cell({grid}, {row}, {col})                *nvim__inspect_cell()*
                 TODO: Documentation
+
+                                                        *nvim_init_mark_ns()*
+nvim_init_mark_ns({namespace})
+                Create a new namepsace for holding extended marks. The id
+                of the namespace is returned, this namespace id is required
+                for using the rest of the extended marks api.
+
+                Parameters:~
+                    {namespace} String name to be assigned to the namespace
+
+
+                                                     *nvim_mark_get_ns_ids()*
+nvim_mark_get_ns_ids()
+                Returns a list of extended mark namespaces.
+                Pairs of ids and string names are returned.
+                An empty list will be returned if no namespaces are set.
 
 
 ==============================================================================
