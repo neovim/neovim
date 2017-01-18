@@ -905,9 +905,10 @@ void mark_adjust(linenr_T line1,
                  linenr_T line2,
                  long amount,
                  long amount_after,
-                 bool end_temp)
+                 bool end_temp,
+                 ExtmarkOp op)
 {
-  mark_adjust_internal(line1, line2, amount, amount_after, true, end_temp);
+  mark_adjust_internal(line1, line2, amount, amount_after, true, end_temp, op);
 }
 
 // mark_adjust_nofold() does the same as mark_adjust() but without adjusting
@@ -916,14 +917,16 @@ void mark_adjust(linenr_T line1,
 // calling foldMarkAdjust() with arguments line1, line2, amount, amount_after,
 // for an example of why this may be necessary, see do_move().
 void mark_adjust_nofold(linenr_T line1, linenr_T line2, long amount,
-                        long amount_after, bool end_temp)
+                        long amount_after, bool end_temp,
+                        ExtmarkOp op)
 {
-  mark_adjust_internal(line1, line2, amount, amount_after, false, end_temp);
+  mark_adjust_internal(line1, line2, amount, amount_after, false, end_temp, op);
 }
 
 static void mark_adjust_internal(linenr_T line1, linenr_T line2,
                                  long amount, long amount_after,
-                                 bool adjust_folds, bool end_temp)
+                                 bool adjust_folds, bool end_temp,
+                                 ExtmarkOp op)
 {
   int i;
   int fnum = curbuf->b_fnum;
@@ -979,6 +982,9 @@ static void mark_adjust_internal(linenr_T line1, linenr_T line2,
 
     sign_mark_adjust(line1, line2, amount, amount_after);
     bufhl_mark_adjust(curbuf, line1, line2, amount, amount_after, end_temp);
+    if (op != kExtmarkNOOP) {
+      extmark_adjust(curbuf, line1, line2, amount, amount_after, op, end_temp);
+    }
   }
 
   /* previous context mark */
@@ -1090,7 +1096,7 @@ static void mark_adjust_internal(linenr_T line1, linenr_T line2,
 // cursor is inside them.
 void mark_col_adjust(
     linenr_T lnum, colnr_T mincol, long lnum_amount, long col_amount,
-    int spaces_removed)
+    int spaces_removed,  ExtmarkOp op)
 {
   int i;
   int fnum = curbuf->b_fnum;
@@ -1108,6 +1114,13 @@ void mark_col_adjust(
   for (i = NMARKS; i < NGLOBALMARKS; i++) {
     if (namedfm[i].fmark.fnum == fnum)
       col_adjust(&(namedfm[i].fmark.mark));
+  }
+
+  // Extmarks
+  if (op != kExtmarkNOOP) {
+    // TODO(timeyyy): consider spaces_removed? (behave like a delete)
+    extmark_col_adjust(curbuf, lnum, mincol, lnum_amount, col_amount,
+                       kExtmarkUndo);
   }
 
   /* last Insert position */

@@ -8,22 +8,22 @@ local expect = helpers.expect
 describe('multi-line regexp', function()
   setup(clear)
 
-  it('is working', function()
+  it('is working #fail', function()
     insert([[
-      1 aa
-      bb
-      cc
-      2 dd
-      ee
-      3 ef
-      gh
-      4 ij
-      5 a8
-      8b c9
-      9d
-      6 e7
-      77f
-      xxxxx]])
+1 aa
+bb
+cc
+2 dd
+ee
+3 ef
+gh
+4 ij
+5 a8
+8b c9
+9d
+6 e7
+77f
+xxxxx]])
 
     -- Test if replacing a line break works with a back reference
     feed([[:/^1/,/^2/s/\n\(.\)/ \1/<cr>]])
