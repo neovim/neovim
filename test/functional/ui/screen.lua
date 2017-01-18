@@ -1,31 +1,17 @@
--- This module contains the Screen class, a complete Nvim screen implementation
--- designed for functional testing. The goal is to provide a simple and
--- intuitive API for verifying screen state after a set of actions.
+-- This module contains the Screen class, a complete Nvim UI implementation
+-- designed for functional testing (verifying screen state, in particular).
 --
--- The screen class exposes a single assertion method, "Screen:expect". This
--- method takes a string representing the expected screen state and an optional
--- set of attribute identifiers for checking highlighted characters(more on
--- this later).
---
--- The string passed to "expect" will be processed according to these rules:
---
---  - Each line of the string represents and is matched individually against
---    a screen row.
---  - The entire string is stripped of common indentation
---  - Expected screen rows are stripped of the last character. The last
---    character should be used to write pipes(|) that make clear where the
---    screen ends
---  - The last line is stripped, so the string must have (row count + 1)
---    lines.
+-- Screen:expect() takes a string representing the expected screen state and an
+-- optional set of attribute identifiers for checking highlighted characters.
 --
 -- Example usage:
 --
 --     local screen = Screen.new(25, 10)
---     -- attach the screen to the current Nvim instance
+--     -- Attach the screen to the current Nvim instance.
 --     screen:attach()
---     --enter insert mode and type some text
+--     -- Enter insert-mode and type some text.
 --     feed('ihello screen')
---     -- declare an expectation for the eventual screen state
+--     -- Assert the expected screen state.
 --     screen:expect([[
 --       hello screen             |
 --       ~                        |
@@ -39,31 +25,19 @@
 --       -- INSERT --             |
 --     ]]) -- <- Last line is stripped
 --
--- Since screen updates are received asynchronously, "expect" is actually
--- specifying the eventual screen state. This is how "expect" works: It will
--- start the event loop with a timeout of 5 seconds. Each time it receives an
--- update the expected state will be checked against the updated state.
+-- Since screen updates are received asynchronously, expect() actually specifies
+-- the _eventual_ screen state.
 --
--- If the expected state matches the current state, the event loop will be
--- stopped and "expect" will return.  If the timeout expires, the last match
--- error will be reported and the test will fail.
+-- This is how expect() works:
+--  * It starts the event loop with a timeout.
+--  * Each time it receives an update it checks that against the expected state.
+--    * If the expected state matches the current state, the event loop will be
+--      stopped and expect() will return.
+--    * If the timeout expires, the last match error will be reported and the
+--      test will fail.
 --
--- If the second argument is passed to "expect", the screen rows will be
--- transformed before being matched against the string lines. The
--- transformation rule is simple: Each substring "S" composed with characters
--- having the exact same set of attributes will be substituted by "{K:S}",
--- where K is a key associated the attribute set via the second argument of
--- "expect".
--- If a transformation table is present, unexpected attribute sets in the final
--- state is considered an error. To make testing simpler, a list of attribute
--- sets that should be ignored can be passed as a third argument. Alternatively,
--- this third argument can be "true" to indicate that all unexpected attribute
--- sets should be ignored.
---
--- To illustrate how this works, let's say that in the above example we wanted
--- to assert that the "-- INSERT --" string is highlighted with the bold
--- attribute(which normally is), here's how the call to "expect" should look
--- like:
+-- Continuing the above example, say we want to assert that "-- INSERT --" is
+-- highlighted with the bold attribute. The expect() call should look like this:
 --
 --     NonText = Screen.colors.Blue
 --     screen:expect([[
@@ -81,29 +55,20 @@
 --
 -- In this case "b" is a string associated with the set composed of one
 -- attribute: bold. Note that since the {b:} markup is not a real part of the
--- screen, the delimiter(|) had to be moved right. Also, the highlighting of the
--- NonText markers (~) is ignored in this test.
+-- screen, the delimiter "|" moved to the right. Also, the highlighting of the
+-- NonText markers "~" is ignored in this test.
 --
--- Multiple expect:s will likely share a group of attribute sets to test.
--- Therefore these could be specified at the beginning of a test like this:
+-- Tests will often share a group of attribute sets to expect(). Those can be
+-- defined at the beginning of a test:
+--
 --    NonText = Screen.colors.Blue
 --    screen:set_default_attr_ids( {
 --      [1] = {reverse = true, bold = true},
 --      [2] = {reverse = true}
 --    })
 --    screen:set_default_attr_ignore( {{}, {bold=true, foreground=NonText}} )
--- These can be overridden for a specific expect expression, by passing
--- different sets as parameters.
 --
--- To help writing screen tests, there is a utility function
--- "screen:snapshot_util()", that can be placed in a test file at any point an
--- "expect(...)" should be. It will wait a short amount of time and then dump
--- the current state of the screen, in the form of an "expect(..)" expression
--- that would match it exactly. "snapshot_util" optionally also take the
--- transformation and ignore set as parameters, like expect, or uses the default
--- set. It will generate a larger attribute transformation set, if needed.
--- To generate a text-only test without highlight checks,
--- use `screen:snapshot_util({},true)`
+-- To help write screen tests, see screen:snapshot_util().
 
 local helpers = require('test.functional.helpers')(nil)
 local request, run, uimeths = helpers.request, helpers.run, helpers.uimeths
@@ -209,9 +174,15 @@ end
 
 -- Asserts that `expected` eventually matches the screen state.
 --
--- expected:    Expected screen state (string).
--- attr_ids:    Text attribute definitions.
--- attr_ignore: Ignored text attributes.
+-- expected:    Expected screen state (string). Each line represents a screen
+--              row. Last character of each row (typically "|") is stripped.
+--              Common indentation is stripped.
+-- attr_ids:    Expected text attributes. Screen rows are transformed according
+--              to this table, as follows: each substring S composed of
+--              characters having the same attributes will be substituted by
+--              "{K:S}", where K is a key in `attr_ids`. Any unexpected
+--              attributes in the final state are an error.
+-- attr_ignore: Ignored text attributes, or `true` to ignore all.
 -- condition:   Function asserting some arbitrary condition.
 -- any:         true: Succeed if `expected` matches ANY screen line(s).
 --              false (default): `expected` must match screen exactly.
@@ -541,8 +512,10 @@ function Screen:_current_screen()
   return table.concat(rv, '\n')
 end
 
+-- Utility to generate/debug tests. Call it where screen:expect() would be.
+-- Waits briefly, then dumps the current screen state in the form of
+-- screen:expect(). Use snapshot_util({},true) to generate a text-only test.
 function Screen:snapshot_util(attrs, ignore)
-  -- util to generate screen test
   self:sleep(250)
   self:print_snapshot(attrs, ignore)
 end
