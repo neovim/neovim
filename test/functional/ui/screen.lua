@@ -170,6 +170,9 @@ end
 
 function Screen:try_resize(columns, rows)
   uimeths.try_resize(columns, rows)
+  -- Give ourselves a chance to _handle_resize, which requires using
+  -- self.sleep() (for the resize notification) rather than run()
+  self:sleep(0.1)
 end
 
 -- Asserts that `expected` eventually matches the screen state.
@@ -194,6 +197,11 @@ function Screen:expect(expected, attr_ids, attr_ignore, condition, any)
     -- the last character should be the screen delimiter
     row = row:sub(1, #row - 1)
     table.insert(expected_rows, row)
+  end
+  if not any then
+    assert(self._height == #expected_rows,
+      "Expected screen state's row count(" .. #expected_rows
+      .. ') differs from configured height(' .. self._height .. ') of Screen.')
   end
   local ids = attr_ids or self._default_attr_ids
   local ignore = attr_ignore or self._default_attr_ignore

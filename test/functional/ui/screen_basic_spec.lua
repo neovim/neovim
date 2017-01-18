@@ -562,11 +562,10 @@ describe('Screen', function()
       ]])
     end)
 
-    -- FIXME this has some race conditions that cause it to fail periodically
-    pending('has minimum width/height values', function()
+    it('has minimum width/height values', function()
       screen:try_resize(1, 1)
       screen:expect([[
-        -- INS^ERT --|
+        {2:-- INS^ERT --}|
                     |
       ]])
       feed('<esc>:ls')
