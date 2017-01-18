@@ -1299,13 +1299,14 @@ function! Xadjust_qflnum(cchar)
 
   enew | only
 
-  call s:create_test_file('Xqftestfile')
-  edit Xqftestfile
+  let fname = 'Xqftestfile' . a:cchar
+  call s:create_test_file(fname)
+  exe 'edit ' . fname
 
-  Xgetexpr ['Xqftestfile:5:Line5',
-		\ 'Xqftestfile:10:Line10',
-		\ 'Xqftestfile:15:Line15',
-		\ 'Xqftestfile:20:Line20']
+  Xgetexpr [fname . ':5:Line5',
+	      \ fname . ':10:Line10',
+	      \ fname . ':15:Line15',
+	      \ fname . ':20:Line20']
 
   6,14delete
   call append(6, ['Buffer', 'Window'])
@@ -1317,11 +1318,13 @@ function! Xadjust_qflnum(cchar)
   call assert_equal(13, l[3].lnum)
 
   enew!
-  call delete('Xqftestfile')
+  call delete(fname)
 endfunction
 
 function! Test_adjust_lnum()
+  call setloclist(0, [])
   call Xadjust_qflnum('c')
+  call setqflist([])
   call Xadjust_qflnum('l')
 endfunction
 

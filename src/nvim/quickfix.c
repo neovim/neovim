@@ -1105,7 +1105,8 @@ static int qf_add_entry(qf_info_T *qi, char_u *dir, char_u *fname, int bufnum,
 
     qfp->qf_fnum = bufnum;
     if (buf != NULL) {
-      buf->b_has_qf_entry = true;
+      buf->b_has_qf_entry |=
+        (qi == &ql_info) ? BUF_HAS_QF_ENTRY : BUF_HAS_LL_ENTRY;
     }
   } else {
     qfp->qf_fnum = qf_get_fnum(qi, dir, fname);
@@ -1322,7 +1323,8 @@ static int qf_get_fnum(qf_info_T *qi, char_u *directory, char_u *fname)
   if (buf == NULL) {
     return 0;
   }
-  buf->b_has_qf_entry = true;
+  buf->b_has_qf_entry =
+    (qi == &ql_info) ? BUF_HAS_QF_ENTRY : BUF_HAS_LL_ENTRY;
   return buf->b_fnum;
 }
 
@@ -2239,8 +2241,9 @@ void qf_mark_adjust(win_T *wp, linenr_T line1, linenr_T line2, long amount, long
   int idx;
   qf_info_T   *qi = &ql_info;
   bool found_one = false;
+  int buf_has_flag = wp == NULL ? BUF_HAS_QF_ENTRY : BUF_HAS_LL_ENTRY;
 
-  if (!curbuf->b_has_qf_entry) {
+  if (!(curbuf->b_has_qf_entry & buf_has_flag)) {
     return;
   }
   if (wp != NULL) {
@@ -2267,7 +2270,7 @@ void qf_mark_adjust(win_T *wp, linenr_T line1, linenr_T line2, long amount, long
       }
 
   if (!found_one) {
-    curbuf->b_has_qf_entry = false;
+    curbuf->b_has_qf_entry &= ~buf_has_flag;
   }
 }
 

@@ -454,6 +454,9 @@ typedef struct {
 } synblock_T;
 
 
+#define BUF_HAS_QF_ENTRY 1
+#define BUF_HAS_LL_ENTRY 2
+
 /*
  * buffer: structure that holds information about one file
  *
@@ -611,7 +614,7 @@ struct file_buffer {
   int b_p_bomb;                 ///< 'bomb'
   char_u *b_p_bh;               ///< 'bufhidden'
   char_u *b_p_bt;               ///< 'buftype'
-  bool b_has_qf_entry;          ///< quickfix exists for buffer
+  int b_has_qf_entry;           ///< quickfix exists for buffer
   int b_p_bl;                   ///< 'buflisted'
   int b_p_cin;                  ///< 'cindent'
   char_u *b_p_cino;             ///< 'cinoptions'
