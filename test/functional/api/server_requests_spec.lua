@@ -1,11 +1,11 @@
--- Tests for some server->client RPC scenarios. Note that unlike with
--- `rpcnotify`, to evaluate `rpcrequest` calls we need the client event loop to
--- be running.
+-- Test server -> client RPC scenarios. Note: unlike `rpcnotify`, to evaluate
+-- `rpcrequest` calls we need the client event loop to be running.
 local helpers = require('test.functional.helpers')(after_each)
 local clear, nvim, eval = helpers.clear, helpers.nvim, helpers.eval
 local eq, neq, run, stop = helpers.eq, helpers.neq, helpers.run, helpers.stop
 local nvim_prog, command, funcs = helpers.nvim_prog, helpers.command, helpers.funcs
 local source, next_message = helpers.source, helpers.next_message
+local ok = helpers.ok
 local meths = helpers.meths
 
 describe('server -> client', function()
@@ -180,7 +180,7 @@ describe('server -> client', function()
     it('returns an error if the request failed', function()
       local status, err = pcall(eval, "rpcrequest(vim, 'does-not-exist')")
       eq(false, status)
-      eq(true, string.match(err, ': (.*)') == 'Failed to evaluate expression')
+      ok(nil ~= string.match(err, 'Failed to evaluate expression'))
     end)
   end)
 

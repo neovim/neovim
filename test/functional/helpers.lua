@@ -169,6 +169,10 @@ local os_name = (function()
   end)
 end)()
 
+local function iswin()
+  return os_name() == 'windows'
+end
+
 -- Executes a VimL function.
 -- Fails on VimL error, but does not update v:errmsg.
 local function nvim_call(name, ...)
@@ -502,7 +506,6 @@ end
 -- Helper to skip tests. Returns true in Windows systems.
 -- pending_fn is pending() from busted
 local function pending_win32(pending_fn)
-  clear()
   if uname() == 'Windows' then
     if pending_fn ~= nil then
       pending_fn('FIXME: Windows', function() end)
@@ -553,6 +556,7 @@ return function(after_each)
     source = source,
     rawfeed = rawfeed,
     insert = insert,
+    iswin = iswin,
     feed = feed,
     execute = execute,
     eval = nvim_eval,

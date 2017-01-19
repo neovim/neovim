@@ -68,6 +68,7 @@ local uname = (function()
     local status, f = pcall(io.popen, "uname -s")
     if status then
       platform = f:read("*l")
+      f:close()
     else
       platform = 'Windows'
     end

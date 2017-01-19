@@ -939,7 +939,6 @@ char_u * os_resolve_shortcut(char_u *fname)
   OLECHAR wsz[MAX_PATH];
   char_u *rfname = NULL;
   int len;
-  int conversion_result;
   IShellLinkW *pslw = NULL;
   WIN32_FIND_DATAW ffdw;
 
