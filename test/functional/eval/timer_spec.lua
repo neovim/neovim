@@ -81,7 +81,7 @@ describe('timers', function()
     run(nil, nil, nil, 300)
     feed("c")
     local count = eval("g:val")
-    ok(count >= 5)
+    ok(count >= 4)
     eq(99, eval("g:c"))
   end)
 
