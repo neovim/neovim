@@ -282,6 +282,27 @@ bool buf_valid(buf_T *buf)
   return false;
 }
 
+// Map used to quickly lookup a buffer by its number.
+static PMap(handle_T) *buf_map = NULL;
+
+static void buf_hashtab_add(buf_T *buf)
+  FUNC_ATTR_NONNULL_ALL
+{
+  if (pmap_has(handle_T)(buf_map, buf->handle)) {
+    EMSG(_("E931: Buffer cannot be registered"));
+  } else {
+    pmap_put(handle_T)(buf_map, buf->handle, buf);
+  }
+}
+
+static void buf_hashtab_remove(buf_T *buf)
+  FUNC_ATTR_NONNULL_ALL
+{
+  if (pmap_has(handle_T)(buf_map, buf->handle)) {
+    pmap_del(handle_T)(buf_map, buf->handle);
+  }
+}
+
 /// Close the link to a buffer.
 ///
 /// @param win    If not NULL, set b_last_cursor.
@@ -585,6 +606,7 @@ static void free_buffer(buf_T *buf)
   free_buffer_stuff(buf, TRUE);
   unref_var_dict(buf->b_vars);
   aubuflocal_remove(buf);
+  buf_hashtab_remove(buf);
   dict_unref(buf->additional_data);
   clear_fmark(&buf->b_last_cursor);
   clear_fmark(&buf->b_last_insert);
@@ -1369,7 +1391,10 @@ buf_T * buflist_new(char_u *ffname, char_u *sfname, linenr_T lnum, int flags)
 {
   buf_T       *buf;
 
-  fname_expand(curbuf, &ffname, &sfname);       /* will allocate ffname */
+  if (top_file_num == 1) {
+    buf_map = pmap_new(handle_T)();
+  }
+  fname_expand(curbuf, &ffname, &sfname);       // will allocate ffname
 
   /*
    * If file name already exists in the list, update the entry.
@@ -1493,6 +1518,7 @@ buf_T * buflist_new(char_u *ffname, char_u *sfname, linenr_T lnum, int flags)
       }
       top_file_num = 1;
     }
+    buf_hashtab_add(buf);
 
     /*
      * Always copy the options from the current buffer.
@@ -2002,19 +2028,15 @@ static char_u *fname_match(regmatch_T *rmp, char_u *name, bool ignore_case)
   return match;
 }
 
-/*
- * find file in buffer list by number
- */
+/// Find a file in the buffer list by buffer number.
 buf_T *buflist_findnr(int nr)
 {
   if (nr == 0) {
     nr = curwin->w_alt_fnum;
   }
 
-  FOR_ALL_BUFFERS(buf) {
-    if (buf->b_fnum == nr) {
-      return buf;
-    }
+  if (pmap_has(handle_T)(buf_map, (handle_T)nr)) {
+    return pmap_get(handle_T)(buf_map, (handle_T)nr);
   }
   return NULL;
 }
