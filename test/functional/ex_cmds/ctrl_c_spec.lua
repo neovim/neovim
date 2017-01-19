@@ -3,17 +3,15 @@ local Screen = require('test.functional.ui.screen')
 local clear, feed, source = helpers.clear, helpers.feed, helpers.source
 local execute = helpers.execute
 
-if helpers.pending_win32(pending) then return end
-
 describe("CTRL-C (mapped)", function()
   before_each(function()
     clear()
   end)
 
   it("interrupts :global", function()
+    -- Crashes luajit.
     if helpers.skip_fragile(pending,
-      (os.getenv("TRAVIS") and os.getenv("CLANG_SANITIZER") == "ASAN_UBSAN"))
-    then
+      os.getenv("TRAVIS") or os.getenv("APPVEYOR")) then
       return
     end
 

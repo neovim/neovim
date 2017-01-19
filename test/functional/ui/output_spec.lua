@@ -25,7 +25,7 @@ describe("shell command :!", function()
     screen:detach()
   end)
 
-  it("displays output even without LF/EOF. #4646 #4569 #3772", function()
+  it("displays output without LF/EOF. #4646 #4569 #3772", function()
     -- NOTE: We use a child nvim (within a :term buffer)
     --       to avoid triggering a UI flush.
     child_session.feed_data(":!printf foo; sleep 200\n")
