@@ -185,6 +185,30 @@ local function repeated_call(...)
   return nil
 end
 
+function Gcc:filter_standard_defines(defines)
+  if not self.standard_defines then
+    local pseudoheader_fname = 'tmp_empty_pseudoheader.h'
+    local pseudoheader_file = io.open(pseudoheader_fname, 'w')
+    pseudoheader_file:close()
+    local standard_defines = repeated_call(self.path,
+                                           self.preprocessor_extra_flags,
+                                           self.get_defines_extra_flags,
+                                           {pseudoheader_fname})
+    os.remove(pseudoheader_fname)
+    self.standard_defines = {}
+    for line in standard_defines:gmatch('[^\n]+') do
+      self.standard_defines[line] = true
+    end
+  end
+  local ret = {}
+  for line in defines:gmatch('[^\n]+') do
+    if not self.standard_defines[line] then
+      ret[#ret + 1] = line
+    end
+  end
+  return table.concat(ret, "\n")
+end
+
 -- returns a stream representing a preprocessed form of the passed-in headers.
 -- Don't forget to close the stream by calling the close() method on it.
 function Gcc:preprocess(previous_defines, ...)
@@ -201,6 +225,7 @@ function Gcc:preprocess(previous_defines, ...)
   local defines = repeated_call(self.path, self.preprocessor_extra_flags,
                                 self.get_defines_extra_flags,
                                 {pseudoheader_fname})
+  defines = self:filter_standard_defines(defines)
 
   -- lfs = require("lfs")
   -- print("CWD: #{lfs.currentdir!}")
