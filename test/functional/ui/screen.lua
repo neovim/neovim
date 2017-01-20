@@ -68,7 +68,8 @@
 --    })
 --    screen:set_default_attr_ignore( {{}, {bold=true, foreground=NonText}} )
 --
--- To help write screen tests, see screen:snapshot_util().
+-- To help write screen tests, see Screen:snapshot_util().
+-- To debug screen tests, see Screen:redraw_debug().
 
 local helpers = require('test.functional.helpers')(nil)
 local request, run, uimeths = helpers.request, helpers.run, helpers.uimeths
@@ -520,9 +521,11 @@ function Screen:_current_screen()
   return table.concat(rv, '\n')
 end
 
--- Utility to generate/debug tests. Call it where screen:expect() would be.
--- Waits briefly, then dumps the current screen state in the form of
--- screen:expect(). Use snapshot_util({},true) to generate a text-only test.
+-- Generates tests. Call it where Screen:expect() would be. Waits briefly, then
+-- dumps the current screen state in the form of Screen:expect().
+-- Use snapshot_util({},true) to generate a text-only (no attributes) test.
+--
+-- @see Screen:redraw_debug()
 function Screen:snapshot_util(attrs, ignore)
   self:sleep(250)
   self:print_snapshot(attrs, ignore)
