@@ -221,6 +221,9 @@ static int nlua_eval_lua_string(lua_State *lstate)
   if (luaL_loadbuffer(lstate, lcmd, lcmd_len, NLUA_EVAL_NAME)) {
     nlua_error(lstate,
                _("E5107: Error while creating lua chunk for luaeval(): %.*s"));
+    if (lcmd != (char *)IObuff) {
+      xfree(lcmd);
+    }
     return 0;
   }
   if (lcmd != (char *)IObuff) {
