@@ -422,7 +422,7 @@ local function process_function(fn)
     cparams = cparam .. ', ' .. cparams
   end
   if fn.receives_channel_id then
-    cparams = 'INTERNAL_CALL, ' .. cparams
+    cparams = 'LUA_INTERNAL_CALL, ' .. cparams
   end
   if fn.can_fail then
     cparams = cparams .. '&err'

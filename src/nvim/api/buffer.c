@@ -192,7 +192,7 @@ ArrayOf(String) nvim_buf_get_lines(uint64_t channel_id,
     Object str = STRING_OBJ(cstr_to_string(bufstr));
 
     // Vim represents NULs as NLs, but this may confuse clients.
-    if (channel_id != INTERNAL_CALL) {
+    if (channel_id != VIML_INTERNAL_CALL) {
       strchrsub(str.data.string.data, '\n', '\0');
     }
 
@@ -313,7 +313,7 @@ void nvim_buf_set_lines(uint64_t channel_id,
     // line and convert NULs to newlines to avoid truncation.
     lines[i] = xmallocz(l.size);
     for (size_t j = 0; j < l.size; j++) {
-      if (l.data[j] == '\n' && channel_id != INTERNAL_CALL) {
+      if (l.data[j] == '\n' && channel_id != VIML_INTERNAL_CALL) {
         api_set_error(err, Exception, _("string cannot contain newlines"));
         new_len = i + 1;
         goto end;

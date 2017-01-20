@@ -5,6 +5,8 @@
 #include <stdbool.h>
 #include <string.h>
 
+#include "nvim/func_attr.h"
+
 #define ARRAY_DICT_INIT {.size = 0, .capacity = 0, .items = NULL}
 #define STRING_INIT {.data = NULL, .size = 0}
 #define OBJECT_INIT { .type = kObjectTypeNil }
@@ -33,8 +35,29 @@ typedef enum {
 /// Used as the message ID of notifications.
 #define NO_RESPONSE UINT64_MAX
 
-/// Used as channel_id when the call is local.
-#define INTERNAL_CALL UINT64_MAX
+/// Mask for all internal calls
+#define INTERNAL_CALL_MASK (UINT64_MAX ^ (UINT64_MAX >> 1))
+// (1 << 63) in all forms produces “warning: shift count >= width of type
+// [-Wshift-count-overflow]”
+
+/// Internal call from VimL code
+#define VIML_INTERNAL_CALL INTERNAL_CALL_MASK
+
+/// Internal call from lua code
+#define LUA_INTERNAL_CALL (VIML_INTERNAL_CALL + 1)
+
+static inline bool is_internal_call(uint64_t channel_id)
+  REAL_FATTR_ALWAYS_INLINE REAL_FATTR_CONST;
+
+/// Check whether call is internal
+///
+/// @param[in]  channel_id  Channel id.
+///
+/// @return true if channel_id refers to internal channel.
+static inline bool is_internal_call(const uint64_t channel_id)
+{
+  return !!(channel_id & INTERNAL_CALL_MASK);
+}
 
 typedef struct {
   ErrorType type;
