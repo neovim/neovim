@@ -249,10 +249,14 @@ list_T *decode_create_map_special_dict(typval_T *const ret_tv)
 ///                     determined.
 /// @param[in]  binary  If true, save special string type as kMPBinary,
 ///                     otherwise kMPString.
+/// @param[in]  s_allocated  If true, then `s` was allocated and can be saved in
+///                          a returned structure. If it is not saved there, it
+///                          will be freed.
 ///
 /// @return Decoded string.
 typval_T decode_string(const char *const s, const size_t len,
-                       const TriState hasnul, const bool binary)
+                       const TriState hasnul, const bool binary,
+                       const bool s_allocated)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
   assert(s != NULL || len == 0);
@@ -268,7 +272,11 @@ typval_T decode_string(const char *const s, const size_t len,
       .v_lock = VAR_UNLOCKED,
       .vval = { .v_list = list },
     }));
-    if (encode_list_write((void *)list, s, len) == -1) {
+    const int elw_ret = encode_list_write((void *)list, s, len);
+    if (s_allocated) {
+      xfree((void *)s);
+    }
+    if (elw_ret == -1) {
       clear_tv(&tv);
       return (typval_T) { .v_type = VAR_UNKNOWN, .v_lock = VAR_UNLOCKED };
     }
@@ -277,7 +285,8 @@ typval_T decode_string(const char *const s, const size_t len,
     return (typval_T) {
       .v_type = VAR_STRING,
       .v_lock = VAR_UNLOCKED,
-      .vval = { .v_string = xmemdupz(s, len) },
+      .vval = { .v_string = (char_u *)(
+          s_allocated ? (char *)s : xmemdupz(s, len)) },
     };
   }
 }
@@ -492,9 +501,10 @@ static inline int parse_json_string(vimconv_T *const conv,
     str = new_str;
     str_end = new_str + str_len;
   }
+  *str_end = NUL;
   typval_T obj;
   obj = decode_string(str, (size_t)(str_end - str), hasnul ? kTrue : kFalse,
-                      false);
+                      false, true);
   if (obj.v_type == VAR_UNKNOWN) {
     goto parse_json_string_fail;
   }
@@ -1022,14 +1032,16 @@ int msgpack_to_vim(const msgpack_object mobj, typval_T *const rettv)
       break;
     }
     case MSGPACK_OBJECT_STR: {
-      *rettv = decode_string(mobj.via.bin.ptr, mobj.via.bin.size, kTrue, false);
+      *rettv = decode_string(mobj.via.bin.ptr, mobj.via.bin.size, kTrue, false,
+                             false);
       if (rettv->v_type == VAR_UNKNOWN) {
         return FAIL;
       }
       break;
     }
     case MSGPACK_OBJECT_BIN: {
-      *rettv = decode_string(mobj.via.bin.ptr, mobj.via.bin.size, kNone, true);
+      *rettv = decode_string(mobj.via.bin.ptr, mobj.via.bin.size, kNone, true,
+                             false);
       if (rettv->v_type == VAR_UNKNOWN) {
         return FAIL;
       }

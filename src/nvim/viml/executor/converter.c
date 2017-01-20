@@ -210,7 +210,7 @@ bool nlua_pop_typval(lua_State *lstate, typval_T *ret_tv)
             list_T *const kv_pair = list_alloc();
             list_append_list(cur.tv->vval.v_list, kv_pair);
             listitem_T *const key = listitem_alloc();
-            key->li_tv = decode_string(s, len, kTrue, false);
+            key->li_tv = decode_string(s, len, kTrue, false, false);
             list_append(kv_pair, key);
             if (key->li_tv.v_type == VAR_UNKNOWN) {
               ret = false;
@@ -268,7 +268,7 @@ bool nlua_pop_typval(lua_State *lstate, typval_T *ret_tv)
       case LUA_TSTRING: {
         size_t len;
         const char *s = lua_tolstring(lstate, -1, &len);
-        *cur.tv = decode_string(s, len, kNone, true);
+        *cur.tv = decode_string(s, len, kNone, true, false);
         if (cur.tv->v_type == VAR_UNKNOWN) {
           ret = false;
         }
