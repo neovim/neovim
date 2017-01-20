@@ -86,7 +86,7 @@ static void nlua_error(lua_State *const lstate, const char *const msg)
   size_t len;
   const char *const str = lua_tolstring(lstate, -1, &len);
 
-  EMSG2(msg, str);
+  emsgf(msg, (int)len, str);
 
   lua_pop(lstate, 1);
 }
@@ -120,11 +120,11 @@ static int nlua_exec_lua_string(lua_State *lstate) FUNC_ATTR_NONNULL_ALL
   lua_pop(lstate, 2);
 
   if (luaL_loadbuffer(lstate, str->data, str->size, NLUA_EVAL_NAME)) {
-    nlua_error(lstate, _("E5104: Error while creating lua chunk: %s"));
+    nlua_error(lstate, _("E5104: Error while creating lua chunk: %.*s"));
     return 0;
   }
   if (lua_pcall(lstate, 0, 1, 0)) {
-    nlua_error(lstate, _("E5105: Error while calling lua chunk: %s"));
+    nlua_error(lstate, _("E5105: Error while calling lua chunk: %.*s"));
     return 0;
   }
   if (!nlua_pop_typval(lstate, ret_tv)) {
@@ -141,7 +141,7 @@ static int nlua_state_init(lua_State *lstate) FUNC_ATTR_NONNULL_ALL
   lua_pushcfunction(lstate, &nlua_stricmp);
   lua_setglobal(lstate, "stricmp");
   if (luaL_dostring(lstate, (char *)&vim_module[0])) {
-    nlua_error(lstate, _("E5106: Error while creating vim module: %s"));
+    nlua_error(lstate, _("E5106: Error while creating vim module: %.*s"));
     return 1;
   }
   nlua_add_api_functions(lstate);
@@ -220,7 +220,7 @@ static int nlua_eval_lua_string(lua_State *lstate)
 #undef EVALHEADER
   if (luaL_loadbuffer(lstate, lcmd, lcmd_len, NLUA_EVAL_NAME)) {
     nlua_error(lstate,
-               _("E5107: Error while creating lua chunk for luaeval(): %s"));
+               _("E5107: Error while creating lua chunk for luaeval(): %.*s"));
     return 0;
   }
   if (lcmd != (char *)IObuff) {
@@ -234,7 +234,7 @@ static int nlua_eval_lua_string(lua_State *lstate)
   }
   if (lua_pcall(lstate, 1, 1, 0)) {
     nlua_error(lstate,
-               _("E5108: Error while calling lua chunk for luaeval(): %s"));
+               _("E5108: Error while calling lua chunk for luaeval(): %.*s"));
     return 0;
   }
   if (!nlua_pop_typval(lstate, ret_tv)) {
