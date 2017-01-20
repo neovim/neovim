@@ -170,12 +170,13 @@ bool os_isatty(int fd)
 
 size_t input_enqueue(String keys)
 {
-  char *ptr = keys.data, *end = ptr + keys.size;
+  char *ptr = keys.data;
+  char *end = ptr + keys.size;
 
   while (rbuffer_space(input_buffer) >= 6 && ptr < end) {
     uint8_t buf[6] = { 0 };
-    unsigned int new_size = trans_special((const uint8_t **)&ptr, keys.size,
-                                          buf, true);
+    unsigned int new_size
+        = trans_special((const uint8_t **)&ptr, (size_t)(end - ptr), buf, true);
 
     if (new_size) {
       new_size = handle_mouse_event(&ptr, buf, new_size);
@@ -185,8 +186,7 @@ size_t input_enqueue(String keys)
 
     if (*ptr == '<') {
       char *old_ptr = ptr;
-      // Invalid or incomplete key sequence, skip until the next '>' or until
-      // *end
+      // Invalid or incomplete key sequence, skip until the next '>' or *end.
       do {
         ptr++;
       } while (ptr < end && *ptr != '>');
