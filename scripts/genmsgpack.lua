@@ -393,8 +393,7 @@ local function process_function(fn)
     Error err = {.set = false};
     if (lua_gettop(lstate) != %i) {
       api_set_error(&err, Validation, "Expected %i argument%s");
-      lua_pushstring(lstate, err.msg);
-      return lua_error(lstate);
+      return luaL_error(lstate, "%%s", err.msg);
     }
   ]], lua_c_function_name, #fn.parameters, #fn.parameters,
       (#fn.parameters == 1) and '' or 's'))
@@ -414,8 +413,7 @@ local function process_function(fn)
 
     if (err.set) {
       %s
-      lua_pushstring(lstate, err.msg);
-      return lua_error(lstate);
+      return luaL_error(lstate, "%%s", err.msg);
     }
     ]], param[1], cparam, param_type, table.concat(free_code, '\n      ')))
     free_code[#free_code + 1] = ('api_free_%s(%s);'):format(lc_param_type, cparam)
@@ -440,8 +438,7 @@ local function process_function(fn)
     const %s ret = %s(%s);
     %s
     if (err.set) {
-      lua_pushstring(lstate, err.msg);
-      return lua_error(lstate);
+      return luaL_error(lstate, "%%s", err.msg);
     }
     nlua_push_%s(lstate, ret);
     api_free_%s(ret);
@@ -453,8 +450,7 @@ local function process_function(fn)
     %s(%s);
     %s
     if (err.set) {
-      lua_pushstring(lstate, err.msg);
-      return lua_error(lstate);
+      return luaL_error(lstate, "%%s", err.msg);
     }
     return 0;
     ]], fn.name, cparams, free_at_exit_code))
@@ -465,7 +461,7 @@ local function process_function(fn)
 end
 
 for _, fn in ipairs(functions) do
-  if not fn.noeval then
+  if not fn.noeval or fn.name:sub(1, 4) == '_vim' then
     process_function(fn)
   end
 end
