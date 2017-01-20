@@ -241,4 +241,11 @@ describe('luaeval()', function()
     eq('Vim(call):E5108: Error while calling lua chunk for luaeval(): [string "<VimL compiled string>"]:1: ERROR',
        exc_exec([[call luaeval("error('ERROR')")]]))
   end)
+
+  it('does not leak memory when called with too long line with syntax error',
+  function()
+    local s = ('x'):rep(65536)
+    eq('Vim(call):E5107: Error while creating lua chunk for luaeval(): [string "<VimL compiled string>"]:1: unexpected symbol near \')\'',
+       exc_exec([[call luaeval("(']] .. s ..[[' + )")]]))
+  end)
 end)
