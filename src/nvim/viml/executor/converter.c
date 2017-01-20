@@ -217,7 +217,7 @@ bool nlua_pop_typval(lua_State *lstate, typval_T *ret_tv)
               list_unref(kv_pair);
               continue;
             }
-            listitem_T *const  val = listitem_alloc();
+            listitem_T *const val = listitem_alloc();
             list_append(kv_pair, val);
             kv_push(stack, cur);
             cur = (TVPopStackItem) { &val->li_tv, false, false, 0 };
@@ -240,7 +240,7 @@ bool nlua_pop_typval(lua_State *lstate, typval_T *ret_tv)
           lua_pop(lstate, 2);
           continue;
         }
-        listitem_T *li = listitem_alloc();
+        listitem_T *const li = listitem_alloc();
         list_append(cur.tv->vval.v_list, li);
         kv_push(stack, cur);
         cur = (TVPopStackItem) { &li->li_tv, false, false, 0 };
@@ -293,6 +293,7 @@ bool nlua_pop_typval(lua_State *lstate, typval_T *ret_tv)
           const TVPopStackItem item = kv_A(stack, i);
           if (item.container && lua_rawequal(lstate, -1, item.idx)) {
             copy_tv(item.tv, cur.tv);
+            cur.container = false;
             goto nlua_pop_typval_table_processing_end;
           }
         }
@@ -540,25 +541,14 @@ bool nlua_push_typval(lua_State *lstate, typval_T *const tv)
   return true;
 }
 
-#define NLUA_PUSH_IDX(lstate, type, idx) \
+#define NLUA_PUSH_HANDLE(lstate, type, idx) \
   do { \
-    STATIC_ASSERT(sizeof(type) <= sizeof(lua_Number), \
-                  "Number sizes do not match"); \
-    const type src = idx; \
-    lua_Number tgt; \
-    memset(&tgt, 0, sizeof(tgt)); \
-    memcpy(&tgt, &src, sizeof(src)); \
-    lua_pushnumber(lstate, tgt); \
+    lua_pushnumber(lstate, (lua_Number)(idx)); \
   } while (0)
 
-#define NLUA_POP_IDX(lstate, type, stack_idx, idx) \
+#define NLUA_POP_HANDLE(lstate, type, stack_idx, idx) \
   do { \
-    STATIC_ASSERT(sizeof(type) <= sizeof(lua_Number), \
-                  "Number sizes do not match"); \
-    const lua_Number src = lua_tonumber(lstate, stack_idx); \
-    type tgt; \
-    memcpy(&tgt, &src, sizeof(tgt)); \
-    idx = tgt; \
+    idx = (type)lua_tonumber(lstate, stack_idx); \
   } while (0)
 
 /// Push value which is a type index
@@ -685,7 +675,7 @@ void nlua_push_Array(lua_State *lstate, const Array array)
 void nlua_push_##type(lua_State *lstate, const type item) \
   FUNC_ATTR_NONNULL_ALL \
 { \
-  NLUA_PUSH_IDX(lstate, type, item); \
+  NLUA_PUSH_HANDLE(lstate, type, item); \
 }
 
 GENERATE_INDEX_FUNCTION(Buffer)
@@ -1144,7 +1134,7 @@ type nlua_pop_##type(lua_State *lstate, Error *err) \
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT \
 { \
   type ret; \
-  NLUA_POP_IDX(lstate, type, -1, ret); \
+  NLUA_POP_HANDLE(lstate, type, -1, ret); \
   lua_pop(lstate, 1); \
   return ret; \
 }
