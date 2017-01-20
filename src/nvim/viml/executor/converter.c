@@ -167,6 +167,7 @@ typedef struct {
   bool container;  ///< True if tv is a container.
   bool special;  ///< If true then tv is a _VAL part of special dictionary
                  ///< that represents mapping.
+  int idx;  ///< Container index (used to detect self-referencing structures).
 } TVPopStackItem;
 
 /// Convert lua object to VimL typval_T
@@ -183,7 +184,7 @@ bool nlua_pop_typval(lua_State *lstate, typval_T *ret_tv)
   bool ret = true;
   const int initial_size = lua_gettop(lstate);
   kvec_t(TVPopStackItem) stack = KV_INITIAL_VALUE;
-  kv_push(stack, ((TVPopStackItem) { ret_tv, false, false }));
+  kv_push(stack, ((TVPopStackItem) { ret_tv, false, false, 0 }));
   while (ret && kv_size(stack)) {
     if (!lua_checkstack(lstate, lua_gettop(lstate) + 3)) {
       emsgf(_("E1502: Lua failed to grow stack to %i"), lua_gettop(lstate) + 3);
@@ -219,14 +220,14 @@ bool nlua_pop_typval(lua_State *lstate, typval_T *ret_tv)
             listitem_T *const  val = listitem_alloc();
             list_append(kv_pair, val);
             kv_push(stack, cur);
-            cur = (TVPopStackItem) { &val->li_tv, false, false };
+            cur = (TVPopStackItem) { &val->li_tv, false, false, 0 };
           } else {
             dictitem_T *const di = dictitem_alloc_len(s, len);
             if (dict_add(cur.tv->vval.v_dict, di) == FAIL) {
               assert(false);
             }
             kv_push(stack, cur);
-            cur = (TVPopStackItem) { &di->di_tv, false, false };
+            cur = (TVPopStackItem) { &di->di_tv, false, false, 0 };
           }
         } else {
           lua_pop(lstate, 1);
@@ -242,7 +243,7 @@ bool nlua_pop_typval(lua_State *lstate, typval_T *ret_tv)
         listitem_T *li = listitem_alloc();
         list_append(cur.tv->vval.v_list, li);
         kv_push(stack, cur);
-        cur = (TVPopStackItem) { &li->li_tv, false, false };
+        cur = (TVPopStackItem) { &li->li_tv, false, false, 0 };
       }
     }
     assert(!cur.container);
@@ -288,6 +289,14 @@ bool nlua_pop_typval(lua_State *lstate, typval_T *ret_tv)
       case LUA_TTABLE: {
         const LuaTableProps table_props = nlua_traverse_table(lstate);
 
+        for (size_t i = 0; i < kv_size(stack); i++) {
+          const TVPopStackItem item = kv_A(stack, i);
+          if (item.container && lua_rawequal(lstate, -1, item.idx)) {
+            copy_tv(item.tv, cur.tv);
+            goto nlua_pop_typval_table_processing_end;
+          }
+        }
+
         switch (table_props.type) {
           case kObjectTypeArray: {
             cur.tv->v_type = VAR_LIST;
@@ -295,6 +304,7 @@ bool nlua_pop_typval(lua_State *lstate, typval_T *ret_tv)
             cur.tv->vval.v_list->lv_refcount++;
             if (table_props.maxidx != 0) {
               cur.container = true;
+              cur.idx = lua_gettop(lstate);
               kv_push(stack, cur);
             }
             break;
@@ -320,6 +330,7 @@ bool nlua_pop_typval(lua_State *lstate, typval_T *ret_tv)
                 cur.tv->vval.v_dict->dv_refcount++;
               }
               cur.container = true;
+              cur.idx = lua_gettop(lstate);
               kv_push(stack, cur);
               lua_pushnil(lstate);
             }
@@ -341,6 +352,7 @@ bool nlua_pop_typval(lua_State *lstate, typval_T *ret_tv)
             assert(false);
           }
         }
+nlua_pop_typval_table_processing_end:
         break;
       }
       default: {
