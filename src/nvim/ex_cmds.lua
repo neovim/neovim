@@ -462,6 +462,12 @@ return {
     func='ex_checktime',
   },
   {
+    command='chistory',
+    flags=bit.bor(TRLBAR),
+    addr_type=ADDR_LINES,
+    func='qf_history',
+  },
+  {
     command='clist',
     flags=bit.bor(BANG, EXTRA, TRLBAR, CMDWIN),
     addr_type=ADDR_LINES,
@@ -1398,6 +1404,12 @@ return {
     flags=bit.bor(EXTRA, NOTRLCOM, NEEDARG),
     addr_type=ADDR_LINES,
     func='ex_helpgrep',
+  },
+  {
+    command='lhistory',
+    flags=bit.bor(TRLBAR),
+    addr_type=ADDR_LINES,
+    func='qf_history',
   },
   {
     command='ll',

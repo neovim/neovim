@@ -1105,7 +1105,8 @@ static int qf_add_entry(qf_info_T *qi, char_u *dir, char_u *fname, int bufnum,
 
     qfp->qf_fnum = bufnum;
     if (buf != NULL) {
-      buf->b_has_qf_entry = true;
+      buf->b_has_qf_entry |=
+        (qi == &ql_info) ? BUF_HAS_QF_ENTRY : BUF_HAS_LL_ENTRY;
     }
   } else {
     qfp->qf_fnum = qf_get_fnum(qi, dir, fname);
@@ -1282,7 +1283,7 @@ void copy_loclist(win_T *from, win_T *to)
   to->w_llist->qf_curlist = qi->qf_curlist;     /* current list */
 }
 
-// Get buffer number for file "dir.name".
+// Get buffer number for file "directory.fname".
 // Also sets the b_has_qf_entry flag.
 static int qf_get_fnum(qf_info_T *qi, char_u *directory, char_u *fname)
 {
@@ -1322,7 +1323,8 @@ static int qf_get_fnum(qf_info_T *qi, char_u *directory, char_u *fname)
   if (buf == NULL) {
     return 0;
   }
-  buf->b_has_qf_entry = true;
+  buf->b_has_qf_entry =
+    (qi == &ql_info) ? BUF_HAS_QF_ENTRY : BUF_HAS_LL_ENTRY;
   return buf->b_fnum;
 }
 
@@ -2105,6 +2107,31 @@ static void qf_fmt_text(char_u *text, char_u *buf, int bufsize)
   buf[i] = NUL;
 }
 
+static void qf_msg(qf_info_T *qi, int which, char *lead)
+{
+  char *title = (char *)qi->qf_lists[which].qf_title;
+  int count = qi->qf_lists[which].qf_count;
+  char_u buf[IOSIZE];
+
+  vim_snprintf((char *)buf, IOSIZE, _("%serror list %d of %d; %d errors "),
+               lead,
+               which + 1,
+               qi->qf_listcount,
+               count);
+
+  if (title != NULL) {
+    size_t len = STRLEN(buf);
+
+    if (len < 34) {
+       memset(buf + len, ' ', 34 - len);
+       buf[34] = NUL;
+    }
+    vim_strcat(buf, (char_u *)title, IOSIZE);
+  }
+  trunc_string(buf, buf, (int)Columns - 1, IOSIZE);
+  msg(buf);
+}
+
 /*
  * ":colder [count]": Up in the quickfix stack.
  * ":cnewer [count]": Down in the quickfix stack.
@@ -2145,15 +2172,26 @@ void qf_age(exarg_T *eap)
       ++qi->qf_curlist;
     }
   }
-  qf_msg(qi);
+  qf_msg(qi, qi->qf_curlist, "");
+  qf_update_buffer(qi, NULL);
 }
 
-static void qf_msg(qf_info_T *qi)
+void qf_history(exarg_T *eap)
 {
-  smsg(_("error list %d of %d; %d errors"),
-       qi->qf_curlist + 1, qi->qf_listcount,
-       qi->qf_lists[qi->qf_curlist].qf_count);
-  qf_update_buffer(qi, NULL);
+  qf_info_T *qi = &ql_info;
+  int i;
+
+  if (eap->cmdidx == CMD_lhistory) {
+    qi = GET_LOC_LIST(curwin);
+  }
+  if (qi == NULL || (qi->qf_listcount == 0
+                     && qi->qf_lists[qi->qf_curlist].qf_count == 0)) {
+    MSG(_("No entries"));
+  } else {
+    for (i = 0; i < qi->qf_listcount; i++) {
+      qf_msg(qi, i, i == qi->qf_curlist ? "> " : "  ");
+    }
+  }
 }
 
 /*
@@ -2203,8 +2241,9 @@ void qf_mark_adjust(win_T *wp, linenr_T line1, linenr_T line2, long amount, long
   int idx;
   qf_info_T   *qi = &ql_info;
   bool found_one = false;
+  int buf_has_flag = wp == NULL ? BUF_HAS_QF_ENTRY : BUF_HAS_LL_ENTRY;
 
-  if (!curbuf->b_has_qf_entry) {
+  if (!(curbuf->b_has_qf_entry & buf_has_flag)) {
     return;
   }
   if (wp != NULL) {
@@ -2231,7 +2270,7 @@ void qf_mark_adjust(win_T *wp, linenr_T line1, linenr_T line2, long amount, long
       }
 
   if (!found_one) {
-    curbuf->b_has_qf_entry = false;
+    curbuf->b_has_qf_entry &= ~buf_has_flag;
   }
 }
 
@@ -3451,10 +3490,13 @@ void ex_vimgrep(exarg_T *eap)
         col = 0;
         while (vim_regexec_multi(&regmatch, curwin, buf, lnum,
                                  col, NULL) > 0) {
+          // Pass the buffer number so that it gets used even for a
+          // dummy buffer, unless duplicate_name is set, then the
+          // buffer will be wiped out below.
           if (qf_add_entry(qi,
                            NULL,            // dir
                            fname,
-                           0,
+                           duplicate_name ? 0 : buf->b_fnum,
                            ml_get_buf(buf,
                                       regmatch.startpos[0].lnum + lnum, false),
                            regmatch.startpos[0].lnum + lnum,
@@ -3508,17 +3550,23 @@ void ex_vimgrep(exarg_T *eap)
             buf = NULL;
           } else if (buf != first_match_buf || (flags & VGR_NOJUMP)) {
             unload_dummy_buffer(buf, dirname_start);
+            // Keeping the buffer, remove the dummy flag.
+            buf->b_flags &= ~BF_DUMMY;
             buf = NULL;
           }
         }
 
         if (buf != NULL) {
-          /* If the buffer is still loaded we need to use the
-           * directory we jumped to below. */
+          // Keeping the buffer, remove the dummy flag.
+          buf->b_flags &= ~BF_DUMMY;
+
+          // If the buffer is still loaded we need to use the
+          // directory we jumped to below.
           if (buf == first_match_buf
               && target_dir == NULL
-              && STRCMP(dirname_start, dirname_now) != 0)
+              && STRCMP(dirname_start, dirname_now) != 0) {
             target_dir = vim_strsave(dirname_now);
+          }
 
           /* The buffer is still loaded, the Filetype autocommands
            * need to be done now, in that buffer.  And the modelines

@@ -297,8 +297,22 @@ void trunc_string(char_u *s, char_u *buf, int room, int buflen)
       len += n;
   }
 
-  /* Set the middle and copy the last part. */
-  if (e + 3 < buflen) {
+  if (i <= e + 3) {
+    // text fits without truncating
+    if (s != buf) {
+      len = STRLEN(s);
+      if (len >= buflen) {
+        len = buflen - 1;
+      }
+      len = len - e + 1;
+      if (len < 1) {
+        buf[e - 1] = NUL;
+      } else {
+        memmove(buf + e, s + e, len);
+      }
+    }
+  } else if (e + 3 < buflen) {
+    // set the middle and copy the last part
     memmove(buf + e, "...", (size_t)3);
     len = (int)STRLEN(s + i) + 1;
     if (len >= buflen - e - 3)
@@ -306,7 +320,8 @@ void trunc_string(char_u *s, char_u *buf, int room, int buflen)
     memmove(buf + e + 3, s + i, len);
     buf[e + 3 + len - 1] = NUL;
   } else {
-    buf[e - 1] = NUL;      /* make sure it is truncated */
+    // can't fit in the "...", just truncate it
+    buf[e - 1] = NUL;
   }
 }
 

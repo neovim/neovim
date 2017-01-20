@@ -1299,13 +1299,14 @@ function! Xadjust_qflnum(cchar)
 
   enew | only
 
-  call s:create_test_file('Xqftestfile')
-  edit Xqftestfile
+  let fname = 'Xqftestfile' . a:cchar
+  call s:create_test_file(fname)
+  exe 'edit ' . fname
 
-  Xgetexpr ['Xqftestfile:5:Line5',
-		\ 'Xqftestfile:10:Line10',
-		\ 'Xqftestfile:15:Line15',
-		\ 'Xqftestfile:20:Line20']
+  Xgetexpr [fname . ':5:Line5',
+	      \ fname . ':10:Line10',
+	      \ fname . ':15:Line15',
+	      \ fname . ':20:Line20']
 
   6,14delete
   call append(6, ['Buffer', 'Window'])
@@ -1317,11 +1318,13 @@ function! Xadjust_qflnum(cchar)
   call assert_equal(13, l[3].lnum)
 
   enew!
-  call delete('Xqftestfile')
+  call delete(fname)
 endfunction
 
 function! Test_adjust_lnum()
+  call setloclist(0, [])
   call Xadjust_qflnum('c')
+  call setqflist([])
   call Xadjust_qflnum('l')
 endfunction
 
@@ -1420,3 +1423,42 @@ function Test_cbottom()
   call XbottomTests('c')
   call XbottomTests('l')
 endfunction
+
+function HistoryTest(cchar)
+  call s:setup_commands(a:cchar)
+
+  call assert_fails(a:cchar . 'older 99', 'E380:')
+  " clear all lists after the first one, then replace the first one.
+  call g:Xsetlist([])
+  Xolder
+  let entry = {'filename': 'foo', 'lnum': 42}
+  call g:Xsetlist([entry], 'r')
+  call g:Xsetlist([entry, entry])
+  call g:Xsetlist([entry, entry, entry])
+  let res = split(execute(a:cchar . 'hist'), "\n")
+  call assert_equal(3, len(res))
+  let common = 'errors     :set' . (a:cchar == 'c' ? 'qf' : 'loc') . 'list()'
+  call assert_equal('  error list 1 of 3; 1 ' . common, res[0])
+  call assert_equal('  error list 2 of 3; 2 ' . common, res[1])
+  call assert_equal('> error list 3 of 3; 3 ' . common, res[2])
+endfunc
+
+func Test_history()
+  call HistoryTest('c')
+  call HistoryTest('l')
+endfunc
+
+func Test_duplicate_buf()
+  " make sure we can get the highest buffer number
+  edit DoesNotExist
+  edit DoesNotExist2
+  let last_buffer = bufnr("$")
+
+  " make sure only one buffer is created
+  call writefile(['this one', 'that one'], 'Xgrepthis')
+  vimgrep one Xgrepthis
+  vimgrep one Xgrepthis
+  call assert_equal(last_buffer + 1, bufnr("$"))
+
+  call delete('Xgrepthis')
+endfunc
