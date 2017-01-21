@@ -1882,6 +1882,7 @@ failed:
 
       xfree(keep_msg);
       keep_msg = NULL;
+      p = NULL;
       msg_scrolled_ign = TRUE;
 
       if (!read_stdin && !read_buffer) {
