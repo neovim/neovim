@@ -7,6 +7,9 @@ CI_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${CI_DIR}/common/build.sh"
 source "${CI_DIR}/common/test.sh"
 
+check_core_dumps --delete quiet
+
+prepare_build
 build_nvim
 
 if [ "$CLANG_SANITIZER" != "TSAN" ]; then
