@@ -42,10 +42,12 @@ describe('jobs', function()
   end)
 
   it('uses &shell and &shellcmdflag if passed a string', function()
-    -- TODO: Windows: jobstart() does not inherit $VAR
-    if helpers.pending_win32(pending) then return end
     nvim('command', "let $VAR = 'abc'")
-    nvim('command', "let j = jobstart('echo $VAR', g:job_opts)")
+    if iswin() then
+      nvim('command', "let j = jobstart('echo $env:VAR', g:job_opts)")
+    else
+      nvim('command', "let j = jobstart('echo $VAR', g:job_opts)")
+    end
     eq({'notification', 'stdout', {0, {'abc', ''}}}, next_msg())
     eq({'notification', 'exit', {0, 0}}, next_msg())
   end)
