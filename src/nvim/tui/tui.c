@@ -844,7 +844,7 @@ static void fix_terminfo(TUIData *data)
   }
 
   if (STARTS_WITH(term, "xterm") || STARTS_WITH(term, "rxvt")) {
-    unibi_set_if_empty(ut, unibi_cursor_normal, "\x1b[?12l\x1b[?25h");
+    unibi_set_if_empty(ut, unibi_cursor_normal, "\x1b[?25h");
     unibi_set_if_empty(ut, unibi_cursor_invisible, "\x1b[?25l");
     unibi_set_if_empty(ut, unibi_flash_screen, "\x1b[?5h$<100/>\x1b[?5l");
     unibi_set_if_empty(ut, unibi_exit_attribute_mode, "\x1b(B\x1b[m");
@@ -877,9 +877,11 @@ static void fix_terminfo(TUIData *data)
     unibi_set_str(ut, unibi_set_a_background, XTERM_SETAB);
   }
 
-  if (os_getenv("NVIM_TUI_ENABLE_CURSOR_SHAPE") == NULL) {
+  const char * env_cusr_shape = os_getenv("NVIM_TUI_ENABLE_CURSOR_SHAPE");
+  if (env_cusr_shape && strncmp(env_cusr_shape, "0", 1) == 0) {
     goto end;
   }
+  bool cusr_blink = env_cusr_shape && strncmp(env_cusr_shape, "2", 1) == 0;
 
 #define TMUX_WRAP(seq) (inside_tmux ? "\x1bPtmux;\x1b" seq "\x1b\\" : seq)
   // Support changing cursor shape on some popular terminals.
@@ -891,22 +893,22 @@ static void fix_terminfo(TUIData *data)
     // Konsole uses a proprietary escape code to set the cursor shape
     // and does not support DECSCUSR.
     data->unibi_ext.set_cursor_shape_bar = (int)unibi_add_ext_str(ut, NULL,
-        TMUX_WRAP("\x1b]50;CursorShape=1;BlinkingCursorEnabled=1\x07"));
+        TMUX_WRAP("\x1b]50;CursorShape=1\x07"));
     data->unibi_ext.set_cursor_shape_ul = (int)unibi_add_ext_str(ut, NULL,
-        TMUX_WRAP("\x1b]50;CursorShape=2;BlinkingCursorEnabled=1\x07"));
+        TMUX_WRAP("\x1b]50;CursorShape=2\x07"));
     data->unibi_ext.set_cursor_shape_block = (int)unibi_add_ext_str(ut, NULL,
-        TMUX_WRAP("\x1b]50;CursorShape=0;BlinkingCursorEnabled=0\x07"));
+        TMUX_WRAP("\x1b]50;CursorShape=0\x07"));
   } else if (!vte_version || atoi(vte_version) >= 3900) {
     // Assume that the terminal supports DECSCUSR unless it is an
     // old VTE based terminal.  This should not get wrapped for tmux,
     // which will handle it via its Ss/Se terminfo extension - usually
     // according to its terminal-overrides.
     data->unibi_ext.set_cursor_shape_bar =
-      (int)unibi_add_ext_str(ut, NULL, "\x1b[5 q");
+      (int)unibi_add_ext_str(ut, NULL, cusr_blink ? "\x1b[5 q" : "\x1b[6 q");
     data->unibi_ext.set_cursor_shape_ul =
-      (int)unibi_add_ext_str(ut, NULL, "\x1b[3 q");
+      (int)unibi_add_ext_str(ut, NULL, cusr_blink ? "\x1b[3 q" : "\x1b[4 q");
     data->unibi_ext.set_cursor_shape_block =
-      (int)unibi_add_ext_str(ut, NULL, "\x1b[2 q");
+      (int)unibi_add_ext_str(ut, NULL, cusr_blink ? "\x1b[1 q" : "\x1b[2 q");
   }
 
 end:
