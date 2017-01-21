@@ -10,19 +10,19 @@ local NULL = helpers.NULL
 
 require('lfs')
 
-local env = cimport('./src/nvim/os/os.h')
+local cimp = cimport('./src/nvim/os/os.h')
 
 describe('env function', function()
   local function os_setenv(name, value, override)
-    return env.os_setenv((to_cstr(name)), (to_cstr(value)), override)
+    return cimp.os_setenv((to_cstr(name)), (to_cstr(value)), override)
   end
 
   local function os_unsetenv(name, _, _)
-    return env.os_unsetenv((to_cstr(name)))
+    return cimp.os_unsetenv((to_cstr(name)))
   end
 
   local function os_getenv(name)
-    local rval = env.os_getenv((to_cstr(name)))
+    local rval = cimp.os_getenv((to_cstr(name)))
     if rval ~= NULL then
       return ffi.string(rval)
     else
@@ -88,14 +88,14 @@ describe('env function', function()
       local i = 0
       local names = { }
       local found_name = false
-      local name = env.os_getenvname_at_index(i)
+      local name = cimp.os_getenvname_at_index(i)
       while name ~= NULL do
         table.insert(names, ffi.string(name))
         if (ffi.string(name)) == test_name then
           found_name = true
         end
         i = i + 1
-        name = env.os_getenvname_at_index(i)
+        name = cimp.os_getenvname_at_index(i)
       end
       eq(true, (table.getn(names)) > 0)
       eq(true, found_name)
@@ -104,15 +104,15 @@ describe('env function', function()
     it('returns NULL if the index is out of bounds', function()
       local huge = ffi.new('size_t', 10000)
       local maxuint32 = ffi.new('size_t', 4294967295)
-      eq(NULL, env.os_getenvname_at_index(huge))
-      eq(NULL, env.os_getenvname_at_index(maxuint32))
+      eq(NULL, cimp.os_getenvname_at_index(huge))
+      eq(NULL, cimp.os_getenvname_at_index(maxuint32))
 
       if ffi.abi('64bit') then
         -- couldn't use a bigger number because it gets converted to
         -- double somewere, should be big enough anyway
         -- maxuint64 = ffi.new 'size_t', 18446744073709551615
         local maxuint64 = ffi.new('size_t', 18446744073709000000)
-        eq(NULL, env.os_getenvname_at_index(maxuint64))
+        eq(NULL, cimp.os_getenvname_at_index(maxuint64))
       end
     end)
   end)
@@ -124,10 +124,10 @@ describe('env function', function()
         local stat_str = stat_file:read('*l')
         stat_file:close()
         local pid = tonumber((stat_str:match('%d+')))
-        eq(pid, tonumber(env.os_get_pid()))
+        eq(pid, tonumber(cimp.os_get_pid()))
       else
         -- /proc is not available on all systems, test if pid is nonzero.
-        eq(true, (env.os_get_pid() > 0))
+        eq(true, (cimp.os_get_pid() > 0))
       end
     end)
   end)
@@ -138,7 +138,7 @@ describe('env function', function()
       local hostname = handle:read('*l')
       handle:close()
       local hostname_buf = cstr(255, '')
-      env.os_get_hostname(hostname_buf, 255)
+      cimp.os_get_hostname(hostname_buf, 255)
       eq(hostname, (ffi.string(hostname_buf)))
     end)
   end)
@@ -155,39 +155,52 @@ describe('env function', function()
       local output_buff1 = cstr(255, '')
       local output_buff2 = cstr(255, '')
       local output_expected = 'NEOVIM_UNIT_TEST_EXPAND_ENV_ESCV/test'
-      env.expand_env_esc(input1, output_buff1, 255, false, true, NULL)
-      env.expand_env_esc(input2, output_buff2, 255, false, true, NULL)
+      cimp.expand_env_esc(input1, output_buff1, 255, false, true, NULL)
+      cimp.expand_env_esc(input2, output_buff2, 255, false, true, NULL)
       eq(output_expected, ffi.string(output_buff1))
       eq(output_expected, ffi.string(output_buff2))
     end)
 
-    it('expands ~ once when one is true', function()
+    it('expands ~ once when `one` is true', function()
       local input = '~/foo ~ foo'
       local homedir = cstr(255, '')
-      env.expand_env_esc(to_cstr('~'), homedir, 255, false, true, NULL)
+      cimp.expand_env_esc(to_cstr('~'), homedir, 255, false, true, NULL)
       local output_expected = ffi.string(homedir) .. "/foo ~ foo"
       local output = cstr(255, '')
-      env.expand_env_esc(to_cstr(input), output, 255, false, true, NULL)
+      cimp.expand_env_esc(to_cstr(input), output, 255, false, true, NULL)
       eq(ffi.string(output), ffi.string(output_expected))
     end)
 
-    it('expands ~ every time when one is false', function()
+    it('expands ~ every time when `one` is false', function()
       local input = to_cstr('~/foo ~ foo')
-      local homedir = cstr(255, '')
-      env.expand_env_esc(to_cstr('~'), homedir, 255, false, true, NULL)
-      homedir = ffi.string(homedir)
+      local dst = cstr(255, '')
+      cimp.expand_env_esc(to_cstr('~'), dst, 255, false, true, NULL)
+      local homedir = ffi.string(dst)
       local output_expected = homedir .. "/foo " .. homedir .. " foo"
       local output = cstr(255, '')
-      env.expand_env_esc(input, output, 255, false, false, NULL)
+      cimp.expand_env_esc(input, output, 255, false, false, NULL)
       eq(output_expected, ffi.string(output))
     end)
 
-    it('respects the dstlen parameter without expansion', function()
+    it('does not crash #3725', function()
+      local name_out = ffi.new('char[100]')
+      cimp.os_get_user_name(name_out, 100)
+      local curuser = ffi.string(name_out)
+
+      local src = to_cstr("~"..curuser.."/Vcs/django-rest-framework/rest_framework/renderers.py")
+      local dst = cstr(256, "~"..curuser)
+      cimp.expand_env_esc(src, dst, 1024, false, false, NULL)
+      local len = string.len(ffi.string(dst))
+      assert.True(len > 56)
+      assert.True(len < 99)
+    end)
+
+    it('respects `dstlen` without expansion', function()
       local input = to_cstr('this is a very long thing that will not fit')
       -- The buffer is long enough to actually contain the full input in case the
       -- test fails, but we don't tell expand_env_esc that
       local output = cstr(255, '')
-      env.expand_env_esc(input, output, 5, false, true, NULL)
+      cimp.expand_env_esc(input, output, 5, false, true, NULL)
       -- Make sure the first few characters are copied properly and that there is a
       -- terminating null character
       for i=0,3 do
@@ -196,17 +209,17 @@ describe('env function', function()
       eq(0, output[4])
     end)
 
-    it('respects the dstlen parameter with expansion', function()
+    it('respects `dstlen` with expansion', function()
       local varname = to_cstr('NVIM_UNIT_TEST_EXPAND_ENV_ESC_DSTLENN')
       local varval = to_cstr('NVIM_UNIT_TEST_EXPAND_ENV_ESC_DSTLENV')
-      env.os_setenv(varname, varval, 1)
+      cimp.os_setenv(varname, varval, 1)
       -- TODO(bobtwinkles) This test uses unix-specific environment variable accessing,
       -- should have some alternative for windows
       local input = to_cstr('$NVIM_UNIT_TEST_EXPAND_ENV_ESC_DSTLENN/even more stuff')
       -- The buffer is long enough to actually contain the full input in case the
       -- test fails, but we don't tell expand_env_esc that
       local output = cstr(255, '')
-      env.expand_env_esc(input, output, 5, false, true, NULL)
+      cimp.expand_env_esc(input, output, 5, false, true, NULL)
       -- Make sure the first few characters are copied properly and that there is a
       -- terminating null character
       -- expand_env_esc SHOULD NOT expand the variable if there is not enough space to

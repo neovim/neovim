@@ -226,25 +226,24 @@ char_u *expand_env_save_opt(char_u *src, bool one)
 /// "~/" is also expanded, using $HOME. For Unix "~user/" is expanded.
 /// Skips over "\ ", "\~" and "\$" (not for Win32 though).
 /// If anything fails no expansion is done and dst equals src.
-/// @param src Input string e.g. "$HOME/vim.hlp"
-/// @param dst Where to put the result
-/// @param dstlen Maximum length of the result
+///
+/// @param src        Input string e.g. "$HOME/vim.hlp"
+/// @param dst[out]   Where to put the result
+/// @param dstlen     Maximum length of the result
 void expand_env(char_u *src, char_u *dst, int dstlen)
 {
   expand_env_esc(src, dst, dstlen, false, false, NULL);
 }
 
 /// Expand environment variable with path name and escaping.
-/// "~/" is also expanded, using $HOME. For Unix "~user/" is expanded.
-/// Skips over "\ ", "\~" and "\$" (not for Win32 though).
-/// If anything fails no expansion is done and dst equals src.
-/// prefix recognize the start of a new name, for '~' expansion.
-/// @param srcp Input string e.g. "$HOME/vim.hlp"
-/// @param dst Where to put the result
-/// @param dstlen Maximum length of the result
-/// @param esc Should we escape spaces in expanded variables?
-/// @param one Should we expand more than one '~'?
-/// @param prefix Common prefix for paths, can be NULL
+/// @see expand_env
+///
+/// @param srcp       Input string e.g. "$HOME/vim.hlp"
+/// @param dst[out]   Where to put the result
+/// @param dstlen     Maximum length of the result
+/// @param esc        Escape spaces in expanded variables
+/// @param one        `srcp` is a single filename
+/// @param prefix     Start again after this (can be NULL)
 void expand_env_esc(char_u *restrict srcp,
                     char_u *restrict dst,
                     int dstlen,
