@@ -73,6 +73,13 @@ int pty_process_spawn(PtyProcess *ptyproc)
     goto error;
   }
 
+  // Other jobs and providers should not get a copy of this file descriptor.
+  if (os_set_cloexec(master) == -1) {
+    status = -errno;
+    ELOG("Failed to set CLOEXEC on ptmx file descriptor");
+    goto error;
+  }
+
   if (proc->in
       && (status = set_duplicating_descriptor(master, &proc->in->uv.pipe))) {
     goto error;
@@ -215,13 +222,23 @@ static int set_duplicating_descriptor(int fd, uv_pipe_t *pipe)
     ELOG("Failed to dup descriptor %d: %s", fd, strerror(errno));
     return status;
   }
+
+  if (os_set_cloexec(fd_dup) == -1) {
+    status = -errno;
+    ELOG("Failed to set CLOEXEC on duplicate fd");
+    goto error;
+  }
+
   status = uv_pipe_open(pipe, fd_dup);
   if (status) {
     ELOG("Failed to set pipe to descriptor %d: %s",
          fd_dup, uv_strerror(status));
-    close(fd_dup);
-    return status;
+    goto error;
   }
+  return status;
+
+error:
+  close(fd_dup);
   return status;
 }
 

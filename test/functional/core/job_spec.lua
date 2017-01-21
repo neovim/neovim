@@ -1,7 +1,7 @@
 local helpers = require('test.functional.helpers')(after_each)
-local clear, eq, eval, execute, feed, insert, neq, next_msg, nvim,
+local clear, eq, eval, exc_exec, execute, feed, insert, neq, next_msg, nvim,
   nvim_dir, ok, source, write_file, mkdir, rmdir = helpers.clear,
-  helpers.eq, helpers.eval, helpers.execute, helpers.feed,
+  helpers.eq, helpers.eval, helpers.exc_exec, helpers.execute, helpers.feed,
   helpers.insert, helpers.neq, helpers.next_message, helpers.nvim,
   helpers.nvim_dir, helpers.ok, helpers.source,
   helpers.write_file, helpers.mkdir, helpers.rmdir
@@ -621,6 +621,26 @@ describe('jobs', function()
       local msg = next_msg()
       msg = (msg[2] == 'stdout') and next_msg() or msg  -- Skip stdout, if any.
       eq({'notification', 'exit', {0, 42}}, msg)
+    end)
+
+    it('jobstart() does not keep ptmx file descriptor open', function()
+      -- Start another job (using libuv)
+      command('let g:job_opts.pty = 0')
+      local other_jobid = eval("jobstart(['cat', '-'], g:job_opts)")
+      local other_pid = eval('jobpid(' .. other_jobid .. ')')
+
+      -- Other job doesn't block first job from recieving SIGHUP on jobclose()
+      command('call jobclose(j)')
+      -- Have to wait so that the SIGHUP can be processed by tty-test on time.
+      -- Can't wait for the next message in case this test fails, if it fails
+      -- there won't be any more messages, and the test would hang.
+      helpers.sleep(100)
+      local err = exc_exec('call jobpid(j)')
+      eq('Vim(call):E900: Invalid job id', err)
+
+      -- cleanup
+      eq(other_pid, eval('jobpid(' .. other_jobid .. ')'))
+      command('call jobstop(' .. other_jobid .. ')')
     end)
   end)
 end)

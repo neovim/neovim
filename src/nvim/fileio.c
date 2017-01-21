@@ -1742,16 +1742,11 @@ failed:
   }
 # endif
 
-  if (!read_buffer && !read_stdin)
-    close(fd);                                  /* errors are ignored */
-#ifdef HAVE_FD_CLOEXEC
-  else {
-    int fdflags = fcntl(fd, F_GETFD);
-    if (fdflags >= 0 && (fdflags & FD_CLOEXEC) == 0) {
-      (void)fcntl(fd, F_SETFD, fdflags | FD_CLOEXEC);
-    }
+  if (!read_buffer && !read_stdin) {
+    close(fd);  // errors are ignored
+  } else {
+    (void)os_set_cloexec(fd);
   }
-#endif
   xfree(buffer);
 
   if (read_stdin) {
