@@ -391,6 +391,37 @@ int os_open(const char* path, int flags, int mode)
   return r;
 }
 
+/// Set a file descriptor to close on exec.
+//
+// @return -1 if failed to set, 0 otherwise.
+int os_set_cloexec(const int fd)
+{
+#ifdef HAVE_FD_CLOEXEC
+  int e;
+  int fdflags = fcntl(fd, F_GETFD);
+  if (fdflags < 0) {
+    e = errno;
+    ELOG("Failed to get flags on descriptor %d: %s", fd, strerror(errno));
+    errno = e;
+    return -1;
+  }
+  if ((fdflags & FD_CLOEXEC) == 0) {
+    if (fcntl(fd, F_SETFD, fdflags | FD_CLOEXEC) == -1) {
+      e = errno;
+      ELOG("Failed to set CLOEXEC on descriptor %d: %s", fd, strerror(errno));
+      errno = e;
+      return -1;
+    }
+  }
+  return 0;
+#endif
+
+  // No FD_CLOEXEC flag -- probably because we're on windows.
+  // If we are on windows, the file should have been opened with O_NOINHERIT
+  // anyway.
+  return -1;
+}
+
 /// Close a file
 ///
 /// @return 0 or libuv error code on failure.

@@ -2692,14 +2692,7 @@ static FILE *fopen_noinh_readbin(char *filename)
     return NULL;
   }
 
-#ifdef HAVE_FD_CLOEXEC
-  {
-    int fdflags = fcntl(fd_tmp, F_GETFD);
-    if (fdflags >= 0 && (fdflags & FD_CLOEXEC) == 0) {
-      (void)fcntl(fd_tmp, F_SETFD, fdflags | FD_CLOEXEC);
-    }
-  }
-#endif
+  (void)os_set_cloexec(fd_tmp);
 
   return fdopen(fd_tmp, READBIN);
 }
