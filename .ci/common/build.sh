@@ -2,7 +2,8 @@ build_deps() {
   if [[ "${BUILD_32BIT}" == ON ]]; then
     DEPS_CMAKE_FLAGS="${DEPS_CMAKE_FLAGS} ${CMAKE_FLAGS_32BIT}"
   fi
-  if [[ "${FUNCTIONALTEST}" == "functionaltest-lua" ]]; then
+  if [[ "${FUNCTIONALTEST}" == "functionaltest-lua" ]] \
+     || [[ "${CLANG_SANITIZER}" == "ASAN_UBSAN" ]]; then
     DEPS_CMAKE_FLAGS="${DEPS_CMAKE_FLAGS} -DUSE_BUNDLED_LUA=ON"
   fi
 
