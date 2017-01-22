@@ -1,13 +1,23 @@
-assert(#arg == 2)
+if arg[1] == '--help' then
+  print('Usage:')
+  print('  gencharblob.lua source target varname')
+  print('')
+  print('Generates C file with big uint8_t blob.')
+  print('Blob will be stored in a static const array named varname.')
+  os.exit()
+end
 
-module_file = arg[1]
-target_file = arg[2]
+assert(#arg == 3)
 
-module = io.open(module_file, 'r')
+local source_file = arg[1]
+local target_file = arg[2]
+local varname = arg[3]
+
+source = io.open(source_file, 'r')
 target = io.open(target_file, 'w')
 
 target:write('#include <stdint.h>\n\n')
-target:write('static const uint8_t vim_module[] = {\n')
+target:write(('static const uint8_t %s[] = {\n'):format(varname))
 
 num_bytes = 0
 MAX_NUM_BYTES = 15  -- 78 / 5: maximum number of bytes on one line
@@ -21,7 +31,7 @@ increase_num_bytes = function()
   end
 end
 
-for line in module:lines() do
+for line in source:lines() do
   for i = 1,string.len(line) do
     byte = string.byte(line, i)
     assert(byte ~= 0)
@@ -34,5 +44,5 @@ end
 
 target:write('   0};\n')
 
-module:close()
+source:close()
 target:close()

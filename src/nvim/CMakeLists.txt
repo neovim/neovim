@@ -39,7 +39,7 @@ set(UNICODE_DIR ${PROJECT_SOURCE_DIR}/unicode)
 set(GENERATED_UNICODE_TABLES ${GENERATED_DIR}/unicode_tables.generated.h)
 set(VIM_MODULE_FILE ${GENERATED_DIR}/viml/executor/vim_module.generated.h)
 set(VIM_MODULE_SOURCE ${PROJECT_SOURCE_DIR}/src/nvim/viml/executor/vim.lua)
-set(VIM_MODULE_GENERATOR ${PROJECT_SOURCE_DIR}/scripts/generate_vim_module.lua)
+set(CHAR_BLOB_GENERATOR ${PROJECT_SOURCE_DIR}/scripts/gencharblob.lua)
 
 file(GLOB API_HEADERS api/*.h)
 file(GLOB MSGPACK_RPC_HEADERS msgpack_rpc/*.h)
@@ -222,10 +222,10 @@ add_custom_command(
 
 add_custom_command(
   OUTPUT ${VIM_MODULE_FILE}
-  COMMAND ${LUA_PRG} ${VIM_MODULE_GENERATOR} ${VIM_MODULE_SOURCE}
-                     ${VIM_MODULE_FILE}
+  COMMAND ${LUA_PRG} ${CHAR_BLOB_GENERATOR} ${VIM_MODULE_SOURCE}
+                     ${VIM_MODULE_FILE} vim_module
   DEPENDS
-    ${VIM_MODULE_GENERATOR}
+    ${CHAR_BLOB_GENERATOR}
     ${VIM_MODULE_SOURCE}
 )
 
