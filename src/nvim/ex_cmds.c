@@ -1408,8 +1408,8 @@ char_u *make_filter_cmd(char_u *cmd, char_u *itmp, char_u *otmp)
   }
 
   if (itmp != NULL) {
-    strncat(buf, " < ", len - 1);
-    strncat(buf, (const char *)itmp, len - 1);
+    xstrlcat(buf, " < ", len - 1);
+    xstrlcat(buf, (const char *)itmp, len - 1);
   }
 #else
   // For shells that don't understand braces around commands, at least allow
@@ -1425,13 +1425,13 @@ char_u *make_filter_cmd(char_u *cmd, char_u *itmp, char_u *otmp)
         *p = NUL;
       }
     }
-    strncat(buf, " < ", len);
-    strncat(buf, (const char *)itmp, len);
+    xstrlcat(buf, " < ", len);
+    xstrlcat(buf, (const char *)itmp, len);
     if (*p_shq == NUL) {
       const char *const p = strchr((const char *)cmd, '|');
       if (p != NULL) {
-        strncat(buf, " ", len - 1);  // Insert a space before the '|' for DOS
-        strncat(buf, p, len - 1);
+        xstrlcat(buf, " ", len - 1);  // Insert a space before the '|' for DOS
+        xstrlcat(buf, p, len - 1);
       }
     }
   }

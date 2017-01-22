@@ -4982,8 +4982,8 @@ buf_check_timestamp (
     set_vim_var_string(VV_WARNINGMSG, tbuf, -1);
     if (can_reload) {
       if (*mesg2 != NUL) {
-        strncat(tbuf, "\n", tbuf_len - 1);
-        strncat(tbuf, mesg2, tbuf_len - 1);
+        xstrlcat(tbuf, "\n", tbuf_len - 1);
+        xstrlcat(tbuf, mesg2, tbuf_len - 1);
       }
       if (do_dialog(VIM_WARNING, (char_u *) _("Warning"), (char_u *) tbuf,
                     (char_u *) _("&OK\n&Load File"), 1, NULL, true) == 2) {
@@ -4991,8 +4991,8 @@ buf_check_timestamp (
       }
     } else if (State > NORMAL_BUSY || (State & CMDLINE) || already_warned) {
       if (*mesg2 != NUL) {
-        strncat(tbuf, "; ", tbuf_len);
-        strncat(tbuf, mesg2, tbuf_len);
+        xstrlcat(tbuf, "; ", tbuf_len - 1);
+        xstrlcat(tbuf, mesg2, tbuf_len - 1);
       }
       EMSG(tbuf);
       retval = 2;
