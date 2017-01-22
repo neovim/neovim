@@ -91,6 +91,24 @@ local function tmpname()
   end
 end
 
+local function map(func, tab)
+  local rettab = {}
+  for k, v in pairs(tab) do
+    rettab[k] = func(v)
+  end
+  return rettab
+end
+
+local function filter(filter_func, tab)
+  local rettab = {}
+  for _, entry in pairs(tab) do
+    if filter_func(entry) then
+      table.insert(rettab, entry)
+    end
+  end
+  return rettab
+end
+
 return {
   eq = eq,
   neq = neq,
@@ -98,4 +116,6 @@ return {
   check_logs = check_logs,
   uname = uname,
   tmpname = tmpname,
+  map = map,
+  filter = filter,
 }

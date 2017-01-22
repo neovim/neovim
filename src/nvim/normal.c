@@ -1517,10 +1517,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
         coladvance(curwin->w_curswant);
       }
       cap->count0 = redo_VIsual_count;
-      if (redo_VIsual_count != 0)
-        cap->count1 = redo_VIsual_count;
-      else
-        cap->count1 = 1;
+      cap->count1 = (cap->count0 == 0 ? 1 : cap->count0);
     } else if (VIsual_active) {
       if (!gui_yank) {
         /* Save the current VIsual area for '< and '> marks, and "gv" */
@@ -7727,16 +7724,22 @@ static void nv_put(cmdarg_T *cap)
         savereg = copy_register(regname);
       }
 
-      /* Now delete the selected text. */
-      cap->cmdchar = 'd';
-      cap->nchar = NUL;
-      cap->oap->regname = NUL;
-      nv_operator(cap);
-      do_pending_operator(cap, 0, false);
-      empty = (curbuf->b_ml.ml_flags & ML_EMPTY);
+      // To place the cursor correctly after a blockwise put, and to leave the
+      // text in the correct position when putting over a selection with
+      // 'virtualedit' and past the end of the line, we use the 'c' operator in
+      // do_put(), which requires the visual selection to still be active.
+      if (!VIsual_active || VIsual_mode == 'V' || regname != '.') {
+        // Now delete the selected text.
+        cap->cmdchar = 'd';
+        cap->nchar = NUL;
+        cap->oap->regname = NUL;
+        nv_operator(cap);
+        do_pending_operator(cap, 0, false);
+        empty = (curbuf->b_ml.ml_flags & ML_EMPTY);
 
-      /* delete PUT_LINE_BACKWARD; */
-      cap->oap->regname = regname;
+        // delete PUT_LINE_BACKWARD;
+        cap->oap->regname = regname;
+      }
 
       /* When deleted a linewise Visual area, put the register as
        * lines to avoid it joined with the next line.  When deletion was
