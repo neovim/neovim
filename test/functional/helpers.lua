@@ -32,12 +32,8 @@ local uname = global_helpers.uname
 -- when the build is not in the default location.
 local nvim_dir = nvim_prog:gsub("[/\\][^/\\]+$", "")
 if nvim_dir == nvim_prog then
-    nvim_dir = "."
+  nvim_dir = "."
 end
-
--- Nvim "Unit Under Test" http://en.wikipedia.org/wiki/Device_under_test
-local NvimUUT = {}
-NvimUUT.__index = NvimUUT
 
 local prepend_argv
 
@@ -544,70 +540,72 @@ local curbufmeths = create_callindex(curbuf)
 local curwinmeths = create_callindex(curwin)
 local curtabmeths = create_callindex(curtab)
 
+local M = {
+  prepend_argv = prepend_argv,
+  clear = clear,
+  connect = connect,
+  retry = retry,
+  spawn = spawn,
+  dedent = dedent,
+  source = source,
+  rawfeed = rawfeed,
+  insert = insert,
+  iswin = iswin,
+  feed = feed,
+  execute = execute,
+  eval = nvim_eval,
+  call = nvim_call,
+  command = nvim_command,
+  request = request,
+  next_message = next_message,
+  run = run,
+  stop = stop,
+  eq = eq,
+  neq = neq,
+  expect = expect,
+  ok = ok,
+  map = map,
+  filter = filter,
+  nvim = nvim,
+  nvim_async = nvim_async,
+  nvim_prog = nvim_prog,
+  nvim_dir = nvim_dir,
+  buffer = buffer,
+  window = window,
+  tabpage = tabpage,
+  curbuf = curbuf,
+  curwin = curwin,
+  curtab = curtab,
+  curbuf_contents = curbuf_contents,
+  wait = wait,
+  sleep = sleep,
+  set_session = set_session,
+  write_file = write_file,
+  os_name = os_name,
+  rmdir = rmdir,
+  mkdir = lfs.mkdir,
+  exc_exec = exc_exec,
+  redir_exec = redir_exec,
+  merge_args = merge_args,
+  funcs = funcs,
+  meths = meths,
+  bufmeths = bufmeths,
+  winmeths = winmeths,
+  tabmeths = tabmeths,
+  uimeths = uimeths,
+  curbufmeths = curbufmeths,
+  curwinmeths = curwinmeths,
+  curtabmeths = curtabmeths,
+  pending_win32 = pending_win32,
+  skip_fragile = skip_fragile,
+  set_shell_powershell = set_shell_powershell,
+  tmpname = tmpname,
+  NIL = mpack.NIL,
+}
+
 return function(after_each)
   if after_each then
     after_each(check_logs)
   end
-  return {
-    prepend_argv = prepend_argv,
-    clear = clear,
-    connect = connect,
-    retry = retry,
-    spawn = spawn,
-    dedent = dedent,
-    source = source,
-    rawfeed = rawfeed,
-    insert = insert,
-    iswin = iswin,
-    feed = feed,
-    execute = execute,
-    eval = nvim_eval,
-    call = nvim_call,
-    command = nvim_command,
-    request = request,
-    next_message = next_message,
-    run = run,
-    stop = stop,
-    eq = eq,
-    neq = neq,
-    expect = expect,
-    ok = ok,
-    map = map,
-    filter = filter,
-    nvim = nvim,
-    nvim_async = nvim_async,
-    nvim_prog = nvim_prog,
-    nvim_dir = nvim_dir,
-    buffer = buffer,
-    window = window,
-    tabpage = tabpage,
-    curbuf = curbuf,
-    curwin = curwin,
-    curtab = curtab,
-    curbuf_contents = curbuf_contents,
-    wait = wait,
-    sleep = sleep,
-    set_session = set_session,
-    write_file = write_file,
-    os_name = os_name,
-    rmdir = rmdir,
-    mkdir = lfs.mkdir,
-    exc_exec = exc_exec,
-    redir_exec = redir_exec,
-    merge_args = merge_args,
-    funcs = funcs,
-    meths = meths,
-    bufmeths = bufmeths,
-    winmeths = winmeths,
-    tabmeths = tabmeths,
-    uimeths = uimeths,
-    curbufmeths = curbufmeths,
-    curwinmeths = curwinmeths,
-    curtabmeths = curtabmeths,
-    pending_win32 = pending_win32,
-    skip_fragile = skip_fragile,
-    set_shell_powershell = set_shell_powershell,
-    tmpname = tmpname,
-    NIL = mpack.NIL,
-  }
+  return M
 end
