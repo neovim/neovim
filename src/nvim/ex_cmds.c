@@ -1408,8 +1408,8 @@ char_u *make_filter_cmd(char_u *cmd, char_u *itmp, char_u *otmp)
   }
 
   if (itmp != NULL) {
-    strncat(buf, " < ", len);
-    strncat(buf, (char *) itmp, len);
+    strncat(buf, " < ", len - 1);
+    strncat(buf, (const char *)itmp, len - 1);
   }
 #else
   // For shells that don't understand braces around commands, at least allow
