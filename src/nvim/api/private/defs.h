@@ -100,15 +100,16 @@ typedef struct {
 
 typedef enum {
   kObjectTypeNil = 0,
-  kObjectTypeBuffer,
-  kObjectTypeWindow,
-  kObjectTypeTabpage,
   kObjectTypeBoolean,
   kObjectTypeInteger,
   kObjectTypeFloat,
   kObjectTypeString,
   kObjectTypeArray,
   kObjectTypeDictionary,
+  // EXT types, cannot be split or reordered, see #EXT_OBJECT_TYPE_SHIFT
+  kObjectTypeBuffer,
+  kObjectTypeWindow,
+  kObjectTypeTabpage,
 } ObjectType;
 
 struct object {
