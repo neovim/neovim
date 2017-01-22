@@ -1416,24 +1416,22 @@ char_u *make_filter_cmd(char_u *cmd, char_u *itmp, char_u *otmp)
   // the use of commands in a pipe.
   strncpy(buf, cmd, len);
   if (itmp != NULL) {
-    char_u  *p;
-
     // If there is a pipe, we have to put the '<' in front of it.
     // Don't do this when 'shellquote' is not empty, otherwise the
     // redirection would be inside the quotes.
     if (*p_shq == NUL) {
-      p = strchr(buf, '|');
+      char *const p = strchr(buf, '|');
       if (p != NULL) {
         *p = NUL;
       }
     }
     strncat(buf, " < ", len);
-    strncat(buf, (char *) itmp, len);
+    strncat(buf, (const char *)itmp, len);
     if (*p_shq == NUL) {
-      p = strchr(cmd, '|');
+      const char *const p = strchr((const char *)cmd, '|');
       if (p != NULL) {
-        strncat(buf, " ", len);  // Insert a space before the '|' for DOS
-        strncat(buf, p, len);
+        strncat(buf, " ", len - 1);  // Insert a space before the '|' for DOS
+        strncat(buf, p, len - 1);
       }
     }
   }
