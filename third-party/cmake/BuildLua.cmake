@@ -51,14 +51,13 @@ else()
   endif()
 endif()
 
-set(LUA_CFLAGS "-g3")
+set(LUA_CFLAGS "-O0 -g3 -fPIC")
 set(LUA_LDFLAGS "")
 
 if(CLANG_ASAN_UBSAN)
   set(LUA_CFLAGS "${LUA_CFLAGS} -fsanitize=address")
   set(LUA_CFLAGS "${LUA_CFLAGS} -fno-omit-frame-pointer")
   set(LUA_CFLAGS "${LUA_CFLAGS} -fno-optimize-sibling-calls")
-  set(LUA_CFLAGS "${LUA_CFLAGS} -fPIC")
 
   set(LUA_LDFLAGS "${LUA_LDFLAGS} -fsanitize=address")
 endif()
