@@ -363,6 +363,23 @@ if(WIN32)
   add_dependencies(nvim_runtime_deps external_blobs)
 endif()
 
+add_library(libnvim STATIC EXCLUDE_FROM_ALL ${NEOVIM_GENERATED_SOURCES}
+  ${NEOVIM_SOURCES} ${NEOVIM_HEADERS})
+target_link_libraries(libnvim ${NVIM_LINK_LIBRARIES})
+set_target_properties(libnvim PROPERTIES
+  POSITION_INDEPENDENT_CODE ON
+  OUTPUT_NAME nvim)
+set_property(TARGET libnvim
+             APPEND_STRING PROPERTY COMPILE_FLAGS " -DMAKE_LIB ")
+
+add_library(nvim-test MODULE EXCLUDE_FROM_ALL ${NEOVIM_GENERATED_SOURCES}
+    ${NEOVIM_SOURCES} ${UNIT_TEST_FIXTURES} ${NEOVIM_HEADERS})
+target_link_libraries(nvim-test ${NVIM_LINK_LIBRARIES})
+set_target_properties(nvim-test PROPERTIES
+                      POSITION_INDEPENDENT_CODE ON)
+set_property(TARGET nvim-test
+             APPEND_STRING PROPERTY COMPILE_FLAGS " -DUNIT_TESTING ")
+
 if(CLANG_ASAN_UBSAN)
   message(STATUS "Enabling Clang address sanitizer and undefined behavior sanitizer for nvim.")
   check_c_compiler_flag(-fno-sanitize-recover=all SANITIZE_RECOVER_ALL)
@@ -374,6 +391,9 @@ if(CLANG_ASAN_UBSAN)
   set_property(TARGET nvim APPEND_STRING PROPERTY COMPILE_FLAGS "-DEXITFREE ")
   set_property(TARGET nvim APPEND_STRING PROPERTY COMPILE_FLAGS "${SANITIZE_RECOVER} -fno-omit-frame-pointer -fno-optimize-sibling-calls -fsanitize=address -fsanitize=undefined -fsanitize-blacklist=${PROJECT_SOURCE_DIR}/src/.asan-blacklist")
   set_property(TARGET nvim APPEND_STRING PROPERTY LINK_FLAGS "-fsanitize=address -fsanitize=undefined ")
+
+  set_property(TARGET nvim-test APPEND_STRING PROPERTY COMPILE_FLAGS "${SANITIZE_RECOVER} -fno-omit-frame-pointer -fno-optimize-sibling-calls -fsanitize=address -fsanitize-blacklist=${PROJECT_SOURCE_DIR}/src/.asan-blacklist")
+  set_property(TARGET nvim-test APPEND_STRING PROPERTY LINK_FLAGS "-fsanitize=address ")
 elseif(CLANG_MSAN)
   message(STATUS "Enabling Clang memory sanitizer for nvim.")
   set_property(TARGET nvim APPEND_STRING PROPERTY COMPILE_FLAGS "-DEXITFREE ")
@@ -386,18 +406,5 @@ elseif(CLANG_TSAN)
   set_property(TARGET nvim APPEND_STRING PROPERTY COMPILE_FLAGS "-fPIE ")
   set_property(TARGET nvim APPEND_STRING PROPERTY LINK_FLAGS "-fsanitize=thread ")
 endif()
-
-add_library(libnvim STATIC EXCLUDE_FROM_ALL ${NEOVIM_GENERATED_SOURCES}
-  ${NEOVIM_SOURCES} ${NEOVIM_HEADERS})
-target_link_libraries(libnvim ${NVIM_LINK_LIBRARIES})
-set_target_properties(libnvim PROPERTIES
-  POSITION_INDEPENDENT_CODE ON
-  OUTPUT_NAME nvim)
-set_property(TARGET libnvim APPEND_STRING PROPERTY COMPILE_FLAGS " -DMAKE_LIB ")
-
-add_library(nvim-test MODULE EXCLUDE_FROM_ALL ${NEOVIM_GENERATED_SOURCES}
-    ${NEOVIM_SOURCES} ${UNIT_TEST_FIXTURES} ${NEOVIM_HEADERS})
-target_link_libraries(nvim-test ${NVIM_LINK_LIBRARIES})
-set_property(TARGET nvim-test APPEND_STRING PROPERTY COMPILE_FLAGS -DUNIT_TESTING)
 
 add_subdirectory(po)
