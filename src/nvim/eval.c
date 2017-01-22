@@ -9748,60 +9748,54 @@ static void f_function(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       }
     }
     if (dict_idx > 0 || arg_idx > 0 || arg_pt != NULL) {
-      partial_T *pt = (partial_T *)xcalloc(1, sizeof(partial_T));
+      partial_T *const pt = xcalloc(1, sizeof(*pt));
 
       // result is a VAR_PARTIAL
-      if (pt != NULL) {
-        if (arg_idx > 0 || (arg_pt != NULL && arg_pt->pt_argc > 0)) {
-          listitem_T *li;
+      if (arg_idx > 0 || (arg_pt != NULL && arg_pt->pt_argc > 0)) {
+        const int arg_len = (arg_pt == NULL ? 0 : arg_pt->pt_argc);
+        const int lv_len = (list == NULL ? 0 : list->lv_len);
+
+        pt->pt_argc = arg_len + lv_len;
+        pt->pt_argv = xmalloc(sizeof(pt->pt_argv[0]) * pt->pt_argc);
+        if (pt->pt_argv == NULL) {
+          xfree(pt);
+          xfree(name);
+          return;
+        } else {
           int i = 0;
-          int arg_len = 0;
-          int lv_len = 0;
-
-          if (arg_pt != NULL) {
-            arg_len = arg_pt->pt_argc;
+          for (; i < arg_len; i++) {
+            copy_tv(&arg_pt->pt_argv[i], &pt->pt_argv[i]);
           }
-          if (list != NULL) {
-            lv_len = list->lv_len;
-          }
-          pt->pt_argc = arg_len + lv_len;
-          pt->pt_argv = (typval_T *)xmalloc(sizeof(typval_T) * pt->pt_argc);
-          if (pt->pt_argv == NULL) {
-            xfree(pt);
-            xfree(name);
-            return;
-          } else {
-            for (i = 0; i < arg_len; i++) {
-              copy_tv(&arg_pt->pt_argv[i], &pt->pt_argv[i]);
-            }
-            if (lv_len > 0) {
-              for (li = list->lv_first; li != NULL; li = li->li_next) {
-                copy_tv(&li->li_tv, &pt->pt_argv[i++]);
-              }
+          if (lv_len > 0) {
+            for (listitem_T *li = list->lv_first;
+                 li != NULL;
+                 li = li->li_next) {
+              copy_tv(&li->li_tv, &pt->pt_argv[i++]);
             }
           }
         }
-
-        // For "function(dict.func, [], dict)" and "func" is a partial
-        // use "dict". That is backwards compatible.
-        if (dict_idx > 0) {
-          // The dict is bound explicitly, pt_auto is false
-          pt->pt_dict = argvars[dict_idx].vval.v_dict;
-          (pt->pt_dict->dv_refcount)++;
-        } else if (arg_pt != NULL) {
-          // If the dict was bound automatically the result is also
-          // bound automatically.
-          pt->pt_dict = arg_pt->pt_dict;
-          pt->pt_auto = arg_pt->pt_auto;
-          if (pt->pt_dict != NULL) {
-            (pt->pt_dict->dv_refcount)++;
-          }
-        }
-
-        pt->pt_refcount = 1;
-        pt->pt_name = name;
-        func_ref(pt->pt_name);
       }
+
+      // For "function(dict.func, [], dict)" and "func" is a partial
+      // use "dict". That is backwards compatible.
+      if (dict_idx > 0) {
+        // The dict is bound explicitly, pt_auto is false
+        pt->pt_dict = argvars[dict_idx].vval.v_dict;
+        (pt->pt_dict->dv_refcount)++;
+      } else if (arg_pt != NULL) {
+        // If the dict was bound automatically the result is also
+        // bound automatically.
+        pt->pt_dict = arg_pt->pt_dict;
+        pt->pt_auto = arg_pt->pt_auto;
+        if (pt->pt_dict != NULL) {
+          (pt->pt_dict->dv_refcount)++;
+        }
+      }
+
+      pt->pt_refcount = 1;
+      pt->pt_name = name;
+      func_ref(pt->pt_name);
+
       rettv->v_type = VAR_PARTIAL;
       rettv->vval.v_partial = pt;
     } else {
