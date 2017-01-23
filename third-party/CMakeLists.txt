@@ -120,6 +120,9 @@ set(LUV_SHA256 86a199403856018cd8e5529c8527450c83664a3d36f52d5253cbe909ea6c5a06)
 set(GPERF_URL http://ftp.gnu.org/pub/gnu/gperf/gperf-3.0.4.tar.gz)
 set(GPERF_SHA256 767112a204407e62dbc3106647cf839ed544f3cf5d0f0523aaa2508623aad63e)
 
+set(WIN32YANK_URL https://github.com/equalsraf/win32yank/releases/download/v0.0.2/win32yank.zip)
+set(WIN32YANK_SHA256 78869bf68565607cda1b6a3d549e2487d59d6f0f16f9b003e123c0086f90309d)
+
 if(USE_BUNDLED_UNIBILIUM)
   include(BuildUnibilium)
 endif()
@@ -162,6 +165,13 @@ endif()
 
 if(USE_BUNDLED_GPERF)
   include(BuildGperf)
+endif()
+
+include(GetBinaryDeps)
+
+if(WIN32)
+  GetBinaryDep(TARGET win32yank
+    INSTALL_COMMAND ${CMAKE_COMMAND} -E copy win32yank.exe ${DEPS_INSTALL_DIR}/bin)
 endif()
 
 add_custom_target(clean-shared-libraries
