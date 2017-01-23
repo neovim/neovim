@@ -4032,11 +4032,11 @@ eval6 (
         else if (op == '/') {
           if (n2 == 0) {                /* give an error message? */
             if (n1 == 0)
-              n1 = -0x7fffffffffffffff - 1; /* similar to NaN */
+              n1 = VARNUMBER_MIN; /* similar to NaN */
             else if (n1 < 0)
-              n1 = -0x7fffffffffffffff;
+              n1 = -VARNUMBER_MAX;
             else
-              n1 = 0x7fffffffffffffff;
+              n1 = VARNUMBER_MAX;
           } else
             n1 = n1 / n2;
         } else {
@@ -8539,8 +8539,8 @@ static void f_float2nr(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   float_T f;
 
   if (tv_get_float_chk(argvars, &f)) {
-    if (f < VARNUMBER_MIN) {
-      rettv->vval.v_number = VARNUMBER_MIN;
+    if (f < -VARNUMBER_MAX) {
+      rettv->vval.v_number = -VARNUMBER_MAX;
     } else if (f > VARNUMBER_MAX) {
       rettv->vval.v_number = VARNUMBER_MAX;
     } else {
