@@ -41,6 +41,11 @@ describe("shell command :!", function()
   end)
 
   it("throttles shell-command output greater than ~10KB", function()
+    if os.getenv("TRAVIS") and helpers.os_name() == "osx" then
+      pending("[Unreliable on Travis macOS.]", function() end)
+      return
+    end
+
     screen.timeout = 20000  -- Avoid false failure on slow systems.
     child_session.feed_data(
       ":!for i in $(seq 2 3000); do echo XXXXXXXXXX $i; done\n")
