@@ -1986,7 +1986,7 @@ static ShaDaWriteResult shada_pack_encoded_entry(msgpack_packer *const packer,
           entry.data.data.reg.contents =
               xmemdup(entry.data.data.reg.contents,
                       (entry.data.data.reg.contents_size
-                       * sizeof(entry.data.data.reg.contents)));
+                       * sizeof(entry.data.data.reg.contents[0])));
           for (size_t i = 0; i < entry.data.data.reg.contents_size; i++) {
             if (i >= first_non_ascii) {
               entry.data.data.reg.contents[i] = get_converted_string(
