@@ -672,6 +672,11 @@ static int insert_execute(VimState *state, int key)
           && stop_arrow() == OK) {
         ins_compl_delete();
         ins_compl_insert(false);
+
+        // Disable CursorMovedI and TextChangedI events.
+        last_cursormoved = curwin->w_cursor;
+        last_changedtick_buf = curbuf;
+        last_changedtick = curbuf->b_changedtick;
       }
     }
   }
@@ -3296,6 +3301,11 @@ static bool ins_compl_prep(int c)
           ins_bytes(compl_orig_text + ins_compl_len());
         }
         retval = true;
+
+        // Disable CursorMovedI and TextChangedI events.
+        last_cursormoved = curwin->w_cursor;
+        last_changedtick_buf = curbuf;
+        last_changedtick = curbuf->b_changedtick;
       }
 
       auto_format(FALSE, TRUE);
