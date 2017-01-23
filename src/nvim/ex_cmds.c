@@ -4816,7 +4816,7 @@ void fix_help_buffer(void)
           if (!add_pathsep((char *)NameBuff)
               || STRLCAT(NameBuff, "doc/*.??[tx]",
                          sizeof(NameBuff)) >= MAXPATHL) {
-            EMSG(_(e_pathtoolong));
+            EMSG(_(e_fnametoolong));
             continue;
           }
 
@@ -4984,7 +4984,7 @@ static void helptags_one(char_u *dir, char_u *ext, char_u *tagfname,
   if (dirlen >= MAXPATHL
       || STRLCAT(NameBuff, "/**/*", sizeof(NameBuff)) >= MAXPATHL  // NOLINT
       || STRLCAT(NameBuff, ext, sizeof(NameBuff)) >= MAXPATHL) {
-    EMSG(_(e_pathtoolong));
+    EMSG(_(e_fnametoolong));
     return;
   }
 
@@ -5006,7 +5006,7 @@ static void helptags_one(char_u *dir, char_u *ext, char_u *tagfname,
   memcpy(NameBuff, dir, dirlen + 1);
   if (!add_pathsep((char *)NameBuff)
       || STRLCAT(NameBuff, tagfname, sizeof(NameBuff)) >= MAXPATHL) {
-    EMSG(_(e_pathtoolong));
+    EMSG(_(e_fnametoolong));
     return;
   }
   fd_tags = mch_fopen((char *)NameBuff, "w");
@@ -5184,7 +5184,7 @@ static void do_helptags(char_u *dirname, bool add_help_tags)
   STRLCPY(NameBuff, dirname, sizeof(NameBuff));
   if (!add_pathsep((char *)NameBuff)
       || STRLCAT(NameBuff, "**", sizeof(NameBuff)) >= MAXPATHL) {
-    EMSG(_(e_pathtoolong));
+    EMSG(_(e_fnametoolong));
     xfree(dirname);
     return;
   }
