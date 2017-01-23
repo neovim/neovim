@@ -1544,8 +1544,8 @@ static int prt_find_resource(char *name, struct prt_ps_resource_S *resource)
   /* Look for named resource file in runtimepath */
   STRCPY(buffer, "print");
   add_pathsep((char *)buffer);
-  vim_strcat(buffer, (char_u *)name, MAXPATHL);
-  vim_strcat(buffer, (char_u *)".ps", MAXPATHL);
+  xstrlcat((char *)buffer, name, MAXPATHL);
+  xstrlcat((char *)buffer, ".ps", MAXPATHL);
   resource->filename[0] = NUL;
   retval = (do_in_runtimepath(buffer, 0, prt_resource_name, resource->filename)
             && resource->filename[0] != NUL);

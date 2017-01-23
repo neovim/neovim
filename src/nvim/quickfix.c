@@ -2126,7 +2126,7 @@ static void qf_msg(qf_info_T *qi, int which, char *lead)
        memset(buf + len, ' ', 34 - len);
        buf[34] = NUL;
     }
-    vim_strcat(buf, (char_u *)title, IOSIZE);
+    xstrlcat((char *)buf, title, IOSIZE);
   }
   trunc_string(buf, buf, (int)Columns - 1, IOSIZE);
   msg(buf);
