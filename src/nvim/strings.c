@@ -344,24 +344,6 @@ void del_trailing_spaces(char_u *ptr)
     *q = NUL;
 }
 
-/*
- * Like strcat(), but make sure the result fits in "tosize" bytes and is
- * always NUL terminated.
- */
-void vim_strcat(char_u *restrict to, const char_u *restrict from,
-                size_t tosize)
-  FUNC_ATTR_NONNULL_ALL
-{
-  size_t tolen = STRLEN(to);
-  size_t fromlen = STRLEN(from);
-
-  if (tolen + fromlen + 1 > tosize) {
-    memcpy(to + tolen, from, tosize - tolen - 1);
-    to[tosize - 1] = NUL;
-  } else
-    STRCPY(to + tolen, from);
-}
-
 #if (!defined(HAVE_STRCASECMP) && !defined(HAVE_STRICMP))
 /*
  * Compare two strings, ignoring case, using current locale.

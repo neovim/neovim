@@ -185,7 +185,7 @@ command: >
 <
 
 					*:helpt* *:helptags*
-				*E154* *E150* *E151* *E152* *E153* *E670*
+			*E154* *E150* *E151* *E152* *E153* *E670* *E856*
 :helpt[ags] [++t] {dir}
 			Generate the help tags file(s) for directory {dir}.
 			When {dir} is ALL then all "doc" directories in

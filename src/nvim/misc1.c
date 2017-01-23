@@ -2507,8 +2507,9 @@ void msgmore(long n)
         vim_snprintf((char *)msg_buf, MSG_BUF_LEN,
             _("%" PRId64 " fewer lines"), (int64_t)pn);
     }
-    if (got_int)
-      vim_strcat(msg_buf, (char_u *)_(" (Interrupted)"), MSG_BUF_LEN);
+    if (got_int) {
+      xstrlcat((char *)msg_buf, _(" (Interrupted)"), MSG_BUF_LEN);
+    }
     if (msg(msg_buf)) {
       set_keep_msg(msg_buf, 0);
       keep_msg_more = TRUE;

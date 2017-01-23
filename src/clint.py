@@ -3166,11 +3166,15 @@ def CheckLanguage(filename, clean_lines, linenum, file_extension,
     # Check if some verboten C functions are being used.
     if Search(r'\bsprintf\b', line):
         error(filename, linenum, 'runtime/printf', 5,
-              'Never use sprintf.  Use snprintf instead.')
-    match = Search(r'\b(strcpy|strcat)\b', line)
+              'Use snprintf instead of sprintf.')
+    match = Search(r'\b(STRCPY|strcpy)\b', line)
     if match:
         error(filename, linenum, 'runtime/printf', 4,
-              'Almost always, snprintf is better than %s' % match.group(1))
+              'Use xstrlcpy or snprintf instead of %s' % match.group(1))
+    match = Search(r'\b(STRNCAT|strncat)\b', line)
+    if match:
+        error(filename, linenum, 'runtime/printf', 4,
+              'Use xstrlcat instead of %s' % match.group(1))
 
     # Check for suspicious usage of "if" like
     # } if (a == b) {

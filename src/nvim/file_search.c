@@ -193,7 +193,6 @@ typedef struct ff_search_ctx_T {
 
 static char_u e_pathtoolong[] = N_("E854: path too long for completion");
 
-
 /*
  * Initialization routine for vim_findfile().
  *

@@ -1130,6 +1130,7 @@ static int normal_execute(VimState *state, int key)
       start_selection();
       unshift_special(&s->ca);
       s->idx = find_command(s->ca.cmdchar);
+      assert(s->idx >= 0);
     } else if ((nv_cmds[s->idx].cmd_flags & NV_SSS)
                && (mod_mask & MOD_MASK_SHIFT)) {
       start_selection();

@@ -381,20 +381,17 @@ static int other_sourcing_name(void)
   return FALSE;
 }
 
-/*
- * Get the message about the source, as used for an error message.
- * Returns an allocated string with room for one more character.
- * Returns NULL when no message is to be given.
- */
+/// Get the message about the source, as used for an error message.
+/// Returns an allocated string with room for one more character.
+/// Returns NULL when no message is to be given.
 static char_u *get_emsg_source(void)
 {
-  char_u      *Buf, *p;
-
   if (sourcing_name != NULL && other_sourcing_name()) {
-    p = (char_u *)_("Error detected while processing %s:");
-    Buf = xmalloc(STRLEN(sourcing_name) + STRLEN(p));
-    sprintf((char *)Buf, (char *)p, sourcing_name);
-    return Buf;
+    char_u *p = (char_u *)_("Error detected while processing %s:");
+    size_t len = STRLEN(sourcing_name) + STRLEN(p) + 1;
+    char_u *buf = xmalloc(len);
+    snprintf((char *)buf, len, (char *)p, sourcing_name);
+    return buf;
   }
   return NULL;
 }
