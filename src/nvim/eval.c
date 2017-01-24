@@ -970,7 +970,7 @@ eval_to_bool (
     emsg_skip--;
   }
 
-  return (int)retval;
+  return retval;
 }
 
 /// Top level evaluation function, returning a string
@@ -1262,7 +1262,7 @@ int call_vim_function(
  * Uses argv[argc] for the function arguments.
  */
 varnumber_T
-call_func_retnr (
+call_func_retnr(
     char_u *func,
     int argc,
     const char_u *const *const argv,
@@ -3939,7 +3939,7 @@ eval6 (
   typval_T var2;
   int op;
   varnumber_T n1, n2;
-  int use_float = FALSE;
+  bool use_float = false;
   float_T f1 = 0, f2;
   bool error = false;
 
@@ -3960,7 +3960,7 @@ eval6 (
     if (evaluate) {
       if (rettv->v_type == VAR_FLOAT) {
         f1 = rettv->vval.v_float;
-        use_float = TRUE;
+        use_float = true;
         n1 = 0;
       } else {
         n1 = tv_get_number_chk(rettv, &error);
@@ -3984,7 +3984,7 @@ eval6 (
       if (var2.v_type == VAR_FLOAT) {
         if (!use_float) {
           f1 = n1;
-          use_float = TRUE;
+          use_float = true;
         }
         f2 = var2.vval.v_float;
         n2 = 0;
@@ -4027,18 +4027,20 @@ eval6 (
         rettv->v_type = VAR_FLOAT;
         rettv->vval.v_float = f1;
       } else {
-        if (op == '*')
+        if (op == '*') {
           n1 = n1 * n2;
-        else if (op == '/') {
-          if (n2 == 0) {                /* give an error message? */
-            if (n1 == 0)
-              n1 = VARNUMBER_MIN; /* similar to NaN */
-            else if (n1 < 0)
+        } else if (op == '/') {
+          if (n2 == 0) {                // give an error message?
+            if (n1 == 0) {
+              n1 = VARNUMBER_MIN;  // similar to NaN
+            } else if (n1 < 0) {
               n1 = -VARNUMBER_MAX;
-            else
+            } else {
               n1 = VARNUMBER_MAX;
-          } else
+            }
+          } else {
             n1 = n1 / n2;
+          }
         } else {
           if (n2 == 0)                  /* give an error message? */
             n1 = 0;

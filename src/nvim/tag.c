@@ -1079,18 +1079,17 @@ find_tags (
   char_u      *p;
   char_u      *s;
   int i;
-  int tag_file_sorted = NUL;            /* !_TAG_FILE_SORTED value */
-  struct tag_search_info        /* Binary search file offsets */
-  {
-    off_T low_offset;           /* offset for first char of first line that
-                                   could match */
-    off_T high_offset;          /* offset of char after last line that could
-                                   match */
-    off_T curr_offset;          /* Current file offset in search range */
-    off_T curr_offset_used;       /* curr_offset used when skipping back */
-    off_T match_offset;         /* Where the binary search found a tag */
-    int low_char;               /* first char at low_offset */
-    int high_char;              /* first char at high_offset */
+  int tag_file_sorted = NUL;            // !_TAG_FILE_SORTED value
+  struct tag_search_info {      // Binary search file offsets
+    off_T low_offset;           // offset for first char of first line that
+                                // could match
+    off_T high_offset;          // offset of char after last line that could
+                                // match
+    off_T curr_offset;          // Current file offset in search range
+    off_T curr_offset_used;     // curr_offset used when skipping back
+    off_T match_offset;         // Where the binary search found a tag
+    int low_char;               // first char at low_offset
+    int high_char;              // first char at high_offset
   } search_info;
   off_T filesize;
   int tagcmp;
@@ -1376,7 +1375,7 @@ find_tags (
              * (repeated below). */
             search_info.curr_offset = vim_ftell(fp);
             if (search_info.curr_offset == search_info.high_offset) {
-              /* oops, gone a bit too far; try from low offset */
+              // oops, gone a bit too far; try from low offset
               vim_fseek(fp, search_info.low_offset, SEEK_SET);
               search_info.curr_offset = search_info.low_offset;
             }
@@ -1662,10 +1661,11 @@ parse_line:
           } else if (state == TS_STEP_FORWARD)   {
             assert(cmplen >= 0);
             if (mb_strnicmp(tagp.tagname, orgpat.head, (size_t)cmplen) != 0) {
-              if ((off_T)vim_ftell(fp) > search_info.match_offset)
-                break;                  /* past last match */
-              else
-                continue;               /* before first match */
+              if ((off_T)vim_ftell(fp) > search_info.match_offset) {
+                break;                  // past last match
+              } else {
+                continue;               // before first match
+              }
             }
           } else
           /* skip this match if it can't match */
@@ -1886,10 +1886,11 @@ parse_line:
 
       if (line_error) {
         EMSG2(_("E431: Format error in tags file \"%s\""), tag_fname);
-        if (!use_cscope)
+        if (!use_cscope) {
           EMSGN(_("Before byte %" PRId64), vim_ftell(fp));
-        stop_searching = TRUE;
-        line_error = FALSE;
+        }
+        stop_searching = true;
+        line_error = false;
       }
 
       if (!use_cscope)

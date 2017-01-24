@@ -4630,7 +4630,7 @@ get_option_value (
     if ((int *)varp == &curbuf->b_changed) {
       *numval = curbufIsChanged();
     } else {
-      *numval = (long) *(int *)varp;
+      *numval = (long) *(int *)varp;  // NOLINT(whitespace/cast)
     }
   }
   return 1;

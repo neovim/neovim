@@ -914,10 +914,11 @@ void ml_recover(void)
       msg_end();
       goto theend;
     }
-    if ((size = vim_lseek(mfp->mf_fd, (off_T)0L, SEEK_END)) <= 0)
-      mfp->mf_blocknr_max = 0;              /* no file or empty file */
-    else
+    if ((size = vim_lseek(mfp->mf_fd, (off_T)0L, SEEK_END)) <= 0) {
+      mfp->mf_blocknr_max = 0;              // no file or empty file
+    } else {
       mfp->mf_blocknr_max = size / mfp->mf_page_size;
+    }
     mfp->mf_infile_count = mfp->mf_blocknr_max;
 
     /* need to reallocate the memory used to store the data */

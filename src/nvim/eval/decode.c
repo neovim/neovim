@@ -436,7 +436,7 @@ static inline int parse_json_string(const char *const buf, const size_t buf_len,
           const char ubuf[] = { t[1], t[2], t[3], t[4] };
           t += 4;
           uvarnumber_T ch;
-          vim_str2nr((char_u *) ubuf, NULL, NULL,
+          vim_str2nr((char_u *)ubuf, NULL, NULL,
                      STR2NR_HEX | STR2NR_FORCE, NULL, &ch, 4);
           if (ch == 0) {
             hasnul = true;

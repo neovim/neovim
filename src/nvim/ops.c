@@ -938,13 +938,11 @@ static int stuff_yank(int regname, char_u *p)
 
 static int execreg_lastc = NUL;
 
-/*
- * Execute a yank register: copy it into the stuff buffer
- *
- * Return FAIL for failure, OK otherwise
- */
-int 
-do_execreg (
+/// Execute a yank register: copy it into the stuff buffer
+///
+/// Return FAIL for failure, OK otherwise
+int
+do_execreg(
     int regname,
     int colon,                      /* insert ':' before each line */
     int addcr,                      /* always add '\n' to end of line */
@@ -4635,8 +4633,8 @@ int do_addsub(int op_type, pos_T *pos, int length, linenr_T Prenum1)
 
     oldn = n;
 
-    n = subtract ? n - (uvarnumber_T) Prenum1
-                 : n + (uvarnumber_T) Prenum1;
+    n = subtract ? n - (uvarnumber_T)Prenum1
+                 : n + (uvarnumber_T)Prenum1;
 
     // handle wraparound for decimal numbers
     if (!pre) {
@@ -5397,15 +5395,16 @@ void cursor_pos_info(dict_T *dict)
         if (lnum == curwin->w_cursor.lnum) {
           word_count_cursor += word_count;
           char_count_cursor += char_count;
-          byte_count_cursor = byte_count +
-                              line_count_info(ml_get(lnum),
-              &word_count_cursor, &char_count_cursor,
-              (varnumber_T)(curwin->w_cursor.col + 1), eol_size);
+          byte_count_cursor = byte_count
+            + line_count_info(ml_get(lnum), &word_count_cursor,
+                              &char_count_cursor,
+                              (varnumber_T)(curwin->w_cursor.col + 1),
+                              eol_size);
         }
       }
-      /* Add to the running totals */
-      byte_count += line_count_info(ml_get(lnum), &word_count,
-          &char_count, (varnumber_T)MAXCOL, eol_size);
+      // Add to the running totals
+      byte_count += line_count_info(ml_get(lnum), &word_count, &char_count,
+                                    (varnumber_T)MAXCOL, eol_size);
     }
 
     // Correction for when last line doesn't have an EOL.
