@@ -342,8 +342,8 @@ if((CLANG_ASAN_UBSAN OR CLANG_MSAN OR CLANG_TSAN) AND NOT CMAKE_C_COMPILER_ID MA
   message(FATAL_ERROR "Sanitizers are only supported for Clang.")
 endif()
 
-if(CMAKE_SYSTEM_NAME STREQUAL "OpenBSD")
-  message(STATUS "detected OpenBSD; disabled jemalloc. #5318")
+if(CMAKE_SYSTEM_NAME MATCHES "OpenBSD|FreeBSD")
+  message(STATUS "detected OpenBSD/FreeBSD; disabled jemalloc. #5318")
   option(ENABLE_JEMALLOC "enable jemalloc" OFF)
 else()
   option(ENABLE_JEMALLOC "enable jemalloc" ON)
