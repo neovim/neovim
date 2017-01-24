@@ -41,7 +41,7 @@ describe("shell command :!", function()
   end)
 
   it("throttles shell-command output greater than ~10KB", function()
-    if os.getenv("TRAVIS") and helpers.os_name() == "osx" then
+    if os.getenv("TRAVIS") and session.os_name() == "osx" then
       pending("[Unreliable on Travis macOS.]", function() end)
       return
     end
