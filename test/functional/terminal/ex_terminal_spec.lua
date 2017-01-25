@@ -112,4 +112,40 @@ describe(':terminal (with fake shell)', function()
       eq(2, eval("1+1"))  -- Still alive?
   end)
 
+  it('works with findfile()', function()
+    execute('terminal')
+    eq('term://', string.match(eval('bufname("%")'), "^term://"))
+    eq('scripts/shadacat.py', eval('findfile("scripts/shadacat.py", ".")'))
+  end)
+
+  it('works with :find', function()
+    terminal_with_fake_shell()
+    wait()
+    screen:expect([[
+      ready $                                           |
+      [Process exited 0]                                |
+                                                        |
+      -- TERMINAL --                                    |
+    ]])
+    eq('term://', string.match(eval('bufname("%")'), "^term://"))
+    helpers.feed([[<C-\><C-N>]])
+    execute([[find */shadacat.py]])
+    eq('scripts/shadacat.py', eval('bufname("%")'))
+  end)
+
+  it('works with gf', function()
+    terminal_with_fake_shell([[echo "scripts/shadacat.py"]])
+    wait()
+    screen:expect([[
+      ready $ echo "scripts/shadacat.py"                |
+                                                        |
+      [Process exited 0]                                |
+      -- TERMINAL --                                    |
+    ]])
+    helpers.feed([[<C-\><C-N>]])
+    eq('term://', string.match(eval('bufname("%")'), "^term://"))
+    helpers.feed([[ggf"lgf]])
+    eq('scripts/shadacat.py', eval('bufname("%")'))
+  end)
+
 end)
