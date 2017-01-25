@@ -92,6 +92,7 @@ add_custom_target(doc_html
   WORKING_DIRECTORY "${GENERATED_RUNTIME_DIR}/doc"
 )
 
+# additionnal dependancies can be added afterwards
 add_custom_target(
   runtime ALL
   DEPENDS
@@ -99,6 +100,29 @@ add_custom_target(
     ${GENERATED_HELP_TAGS}
     ${GENERATED_PACKAGE_TAGS}
 )
+
+# add 'desktop-install' target to install neovim.desktop when possible
+find_program(XDG_MENU_PRG xdg-desktop-menu)
+if(XDG_MENU_PRG)
+	add_custom_target(desktop-install
+	COMMAND xdg-desktop-menu install --novendor ${PROJECT_SOURCE_DIR}/runtime/neovim.desktop
+	COMMENT "Install neovim.desktop file"
+	)
+
+  add_dependencies(runtime desktop-install)
+endif()
+
+# add 'icon-install' target to install neovim icon when possible
+find_program(XDG_ICON_PRG xdg-icon-resource)
+if(XDG_ICON_PRG)
+	add_custom_target(icon-install
+  COMMAND xdg-icon-resource install --novendor --size 128 ${PROJECT_SOURCE_DIR}/runtime/nvim.png
+	COMMENT "Install neovim icon"
+	)
+
+  add_dependencies(runtime icon-install)
+endif()
+
 
 # CMake is painful here.  It will create the destination using the user's
 # current umask, and we don't want that.  And we don't just want to install
