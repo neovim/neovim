@@ -22314,7 +22314,7 @@ char_u *get_return_cmd(void *rettv)
   }
 
   STRCPY(IObuff, ":return ");
-  STRNCPY(IObuff + 8, s, IOSIZE - 8);
+  STRLCPY(IObuff + 8, s, IOSIZE - 8);
   if (STRLEN(s) + 8 >= IOSIZE)
     STRCPY(IObuff + IOSIZE - 4, "...");
   xfree(tofree);

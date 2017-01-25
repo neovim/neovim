@@ -112,11 +112,11 @@ int64_t os_get_pid(void)
 #endif
 }
 
-/// Get the hostname of the machine running Neovim.
+/// Gets the hostname of the current machine.
 ///
-/// @param hostname Buffer to store the hostname.
-/// @param len Length of `hostname`.
-void os_get_hostname(char *hostname, size_t len)
+/// @param hostname   Buffer to store the hostname.
+/// @param size       Size of `hostname`.
+void os_get_hostname(char *hostname, size_t size)
 {
 #ifdef HAVE_SYS_UTSNAME_H
   struct utsname vutsname;
@@ -124,8 +124,7 @@ void os_get_hostname(char *hostname, size_t len)
   if (uname(&vutsname) < 0) {
     *hostname = '\0';
   } else {
-    strncpy(hostname, vutsname.nodename, len - 1);
-    hostname[len - 1] = '\0';
+    xstrlcpy(hostname, vutsname.nodename, size);
   }
 #else
   // TODO(unknown): Implement this for windows.

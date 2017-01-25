@@ -310,7 +310,7 @@ void nvim_set_current_dir(String dir, Error *err)
   }
 
   char string[MAXPATHL];
-  strncpy(string, dir.data, dir.size);
+  memcpy(string, dir.data, dir.size);
   string[dir.size] = NUL;
 
   try_start();
