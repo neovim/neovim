@@ -112,4 +112,46 @@ describe(':terminal (with fake shell)', function()
       eq(2, eval("1+1"))  -- Still alive?
   end)
 
+  describe('works with', function()
+    it('findfile()', function()
+      source('terminal')
+      eq(1, nvim('eval', 'bufname("%") =~# "^term://"'))
+      eq('scripts/shadacat.py', nvim('call_function',
+                                     'findfile', {'scripts/shadacat.py', '.'}))
+    end)
+
+    it(':find', function()
+      terminal_with_fake_shell()
+      wait()
+      screen:expect([[
+        ready $                                           |
+        [Process exited 0]                                |
+                                                          |
+        -- TERMINAL --                                    |
+      ]])
+      eq(1, nvim('eval', 'bufname("%") =~# "^term://"'))
+      helpers.feed([[<C-\><C-N>]])
+      wait()
+      execute([[find */shadacat.py]])
+      wait()
+      eq(1, nvim('eval', 'bufname("%") ==# "scripts/shadacat.py"'))
+    end)
+
+    it('gf', function()
+      terminal_with_fake_shell([[echo "scripts/shadacat.py"]])
+      wait()
+      screen:expect([[
+        ready $ echo "scripts/shadacat.py"                |
+                                                          |
+        [Process exited 0]                                |
+        -- TERMINAL --                                    |
+      ]])
+      helpers.feed([[<C-\><C-N>]])
+      wait()
+      eq(1, nvim('eval', 'bufname("%") =~# "^term://"'))
+      execute([[normal! ggf"lgf]])
+      eq(1, nvim('eval', 'bufname("%") ==# "scripts/shadacat.py"'))
+    end)
+  end)
+
 end)

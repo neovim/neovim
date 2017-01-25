@@ -1370,6 +1370,10 @@ find_file_in_path_option (
   char_u              *buf = NULL;
   int rel_to_curdir;
 
+  if (rel_fname != NULL && path_with_url((const char *)rel_fname)) {
+    rel_fname = NULL;
+  }
+
   if (first == TRUE) {
     /* copy file name into NameBuff, expanding environment variables */
     save_char = ptr[len];
