@@ -136,6 +136,7 @@ Events:
   |TextYankPost|
 
 Highlight groups:
+  |hl-EndOfBuffer|
   |hl-QuickFixLine|
   |hl-Substitute|
   |hl-TermCursor|
