@@ -352,6 +352,14 @@ describe(":substitute, 'inccommand' preserves undo", function()
 
     feed("2u")
     feed(substring .. "<esc>")
+    expect([[
+      1]])
+    feed("g-")
+    expect([[
+      ]])
+    feed("g+")
+    expect([[
+      1]])
     feed("<c-r>")
     expect([[
       1
@@ -374,9 +382,7 @@ describe(":substitute, 'inccommand' preserves undo", function()
       2]])
   end
 
-  -- TODO(vim): This does not work, even in Vim.
-  -- Waiting for fix (perhaps from upstream).
-  pending("at a non-leaf of the undo tree", function()
+  it("at a non-leaf of the undo tree", function()
    for _, case in pairs(cases) do
      for _, str in pairs(substrings) do
        for _, redoable in pairs({true}) do
