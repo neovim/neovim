@@ -3176,7 +3176,7 @@ def CheckLanguage(filename, clean_lines, linenum, file_extension,
     if match:
         error(filename, linenum, 'runtime/printf', 4,
               'Use xstrlcpy or snprintf instead of %s' % match.group(1))
-    match = Search(r'\b(STRNCAT|strncat|strcat)\b', line)
+    match = Search(r'\b(STRNCAT|strncat|strcat|vim_strcat)\b', line)
     if match:
         error(filename, linenum, 'runtime/printf', 4,
               'Use xstrlcat or snprintf instead of %s' % match.group(1))

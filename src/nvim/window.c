@@ -129,9 +129,10 @@ newwindow:
       vim_snprintf(cbuf, sizeof(cbuf) - 5, "%" PRId64, (int64_t)Prenum);
     else
       cbuf[0] = NUL;
-    if (nchar == 'v' || nchar == Ctrl_V)
-      strcat(cbuf, "v");
-    strcat(cbuf, "new");
+    if (nchar == 'v' || nchar == Ctrl_V) {
+      xstrlcat(cbuf, "v", sizeof(cbuf));
+    }
+    xstrlcat(cbuf, "new", sizeof(cbuf));
     do_cmdline_cmd(cbuf);
     break;
 

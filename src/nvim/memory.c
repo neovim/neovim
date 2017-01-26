@@ -372,15 +372,15 @@ char *xstpncpy(char *restrict dst, const char *restrict src, size_t maxlen)
 ///
 /// @param dst    Buffer to store the result
 /// @param src    String to be copied
-/// @param size   Size of `dst`
+/// @param dsize  Size of `dst`
 /// @return       strlen(src). If retval >= dstsize, truncation occurs.
-size_t xstrlcpy(char *restrict dst, const char *restrict src, size_t size)
+size_t xstrlcpy(char *restrict dst, const char *restrict src, size_t dsize)
   FUNC_ATTR_NONNULL_ALL
 {
   size_t slen = strlen(src);
 
-  if (size) {
-    size_t len = MIN(slen, size - 1);
+  if (dsize) {
+    size_t len = MIN(slen, dsize - 1);
     memcpy(dst, src, len);
     dst[len] = '\0';
   }
@@ -388,31 +388,34 @@ size_t xstrlcpy(char *restrict dst, const char *restrict src, size_t size)
   return slen;  // Does not include NUL.
 }
 
-/// xstrlcat - Appends string src to the end of dst.
+/// Appends `src` to string `dst` of size `dsize` (unlike strncat, dsize is the
+/// full size of `dst`, not space left).  At most dsize-1 characters
+/// will be copied.  Always NUL terminates. `src` and `dst` may overlap.
 ///
-/// Compatible with *BSD strlcat: Appends at most (dstsize - strlen(dst) - 1)
-/// characters. dst will be NUL-terminated.
+/// @see vim_strcat from Vim.
+/// @see strlcat from OpenBSD.
 ///
-/// Note: Replaces `vim_strcat`.
-///
-/// @param dst      Buffer to store the string
-/// @param src      String to be copied
-/// @param dstsize  Size of destination buffer, must be greater than 0
-/// @return         strlen(src) + MIN(dstsize, strlen(initial dst)).
-///                 If retval >= dstsize, truncation occurs.
-size_t xstrlcat(char *restrict dst, const char *restrict src, size_t dstsize)
+/// @param dst      Buffer to be appended-to. Must have a NUL byte.
+/// @param src      String to put at the end of `dst`
+/// @param dsize    Size of `dst` including NUL byte. Must be greater than 0.
+/// @return         strlen(src) + strlen(initial dst)
+///                 If retval >= dsize, truncation occurs.
+size_t xstrlcat(char *const dst, const char *const src, const size_t dsize)
   FUNC_ATTR_NONNULL_ALL
 {
-  assert(dstsize > 0);
-  size_t srclen = strlen(src);
-  size_t dstlen = strlen(dst);
-  size_t ret = srclen + dstlen;  // Total string length (excludes NUL)
-  if (srclen) {
-    size_t len = (ret >= dstsize) ? dstsize - 1 : ret;
-    memcpy(dst + dstlen, src, len - dstlen);
-    dst[len] = '\0';
+  assert(dsize > 0);
+  const size_t dlen = strlen(dst);
+  assert(dlen < dsize);
+  const size_t slen = strlen(src);
+
+  if (slen > dsize - dlen - 1) {
+    memmove(dst + dlen, src, dsize - dlen - 1);
+    dst[dsize - 1] = '\0';
+  } else {
+    memmove(dst + dlen, src, slen + 1);
   }
-  return ret;  // Does not include NUL.
+
+  return slen + dlen;  // Does not include NUL.
 }
 
 /// strdup() wrapper
