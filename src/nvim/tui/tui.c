@@ -844,7 +844,16 @@ static void fix_terminfo(TUIData *data)
   }
 
   if (STARTS_WITH(term, "xterm") || STARTS_WITH(term, "rxvt")) {
-    unibi_set_if_empty(ut, unibi_cursor_normal, "\x1b[?25h");
+    const char *normal = unibi_get_str(ut, unibi_cursor_normal);
+    if (!normal) {
+      unibi_set_str(ut, unibi_cursor_normal, "\x1b[?25h");
+    } else if (STARTS_WITH(normal, "\x1b[?12l")) {
+      // terminfo typically includes DECRST 12 as part of setting up the normal
+      // cursor, which interferes with the user's control via
+      // NVIM_TUI_ENABLE_CURSOR_SHAPE.  When DECRST 12 is present, skip over
+      // it, but honor the rest of the TI setting.
+      unibi_set_str(ut, unibi_cursor_normal, normal + strlen("\x1b[?12l"));
+    }
     unibi_set_if_empty(ut, unibi_cursor_invisible, "\x1b[?25l");
     unibi_set_if_empty(ut, unibi_flash_screen, "\x1b[?5h$<100/>\x1b[?5l");
     unibi_set_if_empty(ut, unibi_exit_attribute_mode, "\x1b(B\x1b[m");
