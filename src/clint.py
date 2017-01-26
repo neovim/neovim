@@ -3167,14 +3167,19 @@ def CheckLanguage(filename, clean_lines, linenum, file_extension,
     if Search(r'\bsprintf\b', line):
         error(filename, linenum, 'runtime/printf', 5,
               'Use snprintf instead of sprintf.')
-    match = Search(r'\b(STRCPY|strcpy)\b', line)
+    match = Search(r'\b(strncpy|STRNCPY)\b', line)
+    if match:
+        error(filename, linenum, 'runtime/printf', 4,
+              'Use xstrlcpy or snprintf instead of %s (unless this is from Vim)'
+              % match.group(1))
+    match = Search(r'\b(strcpy)\b', line)
     if match:
         error(filename, linenum, 'runtime/printf', 4,
               'Use xstrlcpy or snprintf instead of %s' % match.group(1))
-    match = Search(r'\b(STRNCAT|strncat)\b', line)
+    match = Search(r'\b(STRNCAT|strncat|strcat)\b', line)
     if match:
         error(filename, linenum, 'runtime/printf', 4,
-              'Use xstrlcat instead of %s' % match.group(1))
+              'Use xstrlcat or snprintf instead of %s' % match.group(1))
 
     # Check for suspicious usage of "if" like
     # } if (a == b) {

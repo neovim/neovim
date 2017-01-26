@@ -3847,13 +3847,11 @@ static int ins_compl_get_exp(pos_T *ini)
           if ((compl_cont_status & CONT_ADDING)
               && len == compl_length) {
             if (pos->lnum < ins_buf->b_ml.ml_line_count) {
-              /* Try next line, if any. the new word will be
-               * "join" as if the normal command "J" was used.
-               * IOSIZE is always greater than
-               * compl_length, so the next STRNCPY always
-               * works -- Acevedo */
+              // Try next line, if any. the new word will be "join" as if the
+              // normal command "J" was used. IOSIZE is always greater than
+              // compl_length, so the next STRNCPY always works -- Acevedo
               STRNCPY(IObuff, ptr, len);
-              ptr = ml_get_buf(ins_buf, pos->lnum + 1, FALSE);
+              ptr = ml_get_buf(ins_buf, pos->lnum + 1, false);
               tmp_ptr = ptr = skipwhite(ptr);
               /* Find start of next word. */
               tmp_ptr = find_word_start(tmp_ptr);

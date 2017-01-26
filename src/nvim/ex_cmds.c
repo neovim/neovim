@@ -357,12 +357,12 @@ static int sort_compare(const void *s1, const void *s2)
     // We need to copy one line into "sortbuf1", because there is no
     // guarantee that the first pointer becomes invalid when obtaining the
     // second one.
-    STRNCPY(sortbuf1, ml_get(l1.lnum) + l1.st_u.line.start_col_nr,
-            l1.st_u.line.end_col_nr - l1.st_u.line.start_col_nr + 1);
-    sortbuf1[l1.st_u.line.end_col_nr - l1.st_u.line.start_col_nr] = 0;
-    STRNCPY(sortbuf2, ml_get(l2.lnum) + l2.st_u.line.start_col_nr,
-            l2.st_u.line.end_col_nr - l2.st_u.line.start_col_nr + 1);
-    sortbuf2[l2.st_u.line.end_col_nr - l2.st_u.line.start_col_nr] = 0;
+    memcpy(sortbuf1, ml_get(l1.lnum) + l1.st_u.line.start_col_nr,
+           l1.st_u.line.end_col_nr - l1.st_u.line.start_col_nr + 1);
+    sortbuf1[l1.st_u.line.end_col_nr - l1.st_u.line.start_col_nr] = NUL;
+    memcpy(sortbuf2, ml_get(l2.lnum) + l2.st_u.line.start_col_nr,
+           l2.st_u.line.end_col_nr - l2.st_u.line.start_col_nr + 1);
+    sortbuf2[l2.st_u.line.end_col_nr - l2.st_u.line.start_col_nr] = NUL;
 
     result = sort_ic ? STRICMP(sortbuf1, sortbuf2)
              : STRCMP(sortbuf1, sortbuf2);
@@ -1404,7 +1404,7 @@ char_u *make_filter_cmd(char_u *cmd, char_u *itmp, char_u *otmp)
                               :       "(%s)";
     vim_snprintf(buf, len, fmt, (char *)cmd);
   } else {
-    strncpy(buf, (char *) cmd, len);
+    xstrlcpy(buf, (char *)cmd, len);
   }
 
   if (itmp != NULL) {
@@ -1414,7 +1414,7 @@ char_u *make_filter_cmd(char_u *cmd, char_u *itmp, char_u *otmp)
 #else
   // For shells that don't understand braces around commands, at least allow
   // the use of commands in a pipe.
-  strncpy(buf, cmd, len);
+  xstrlcpy(buf, cmd, len);
   if (itmp != NULL) {
     // If there is a pipe, we have to put the '<' in front of it.
     // Don't do this when 'shellquote' is not empty, otherwise the

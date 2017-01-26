@@ -364,29 +364,28 @@ char *xstpncpy(char *restrict dst, const char *restrict src, size_t maxlen)
     }
 }
 
-/// xstrlcpy - Copy a %NUL terminated string into a sized buffer
+/// xstrlcpy - Copy a NUL-terminated string into a sized buffer
 ///
-/// Compatible with *BSD strlcpy: the result is always a valid
-/// NUL-terminated string that fits in the buffer (unless,
-/// of course, the buffer size is zero). It does not pad
-/// out the result like strncpy() does.
+/// Compatible with *BSD strlcpy: the result is always a valid NUL-terminated
+/// string that fits in the buffer (unless, of course, the buffer size is
+/// zero). It does not pad out the result like strncpy() does.
 ///
-/// @param dst Where to copy the string to
-/// @param src Where to copy the string from
-/// @param size Size of destination buffer
-/// @return Length of the source string (i.e.: strlen(src))
+/// @param dst    Buffer to store the result
+/// @param src    String to be copied
+/// @param size   Size of `dst`
+/// @return       strlen(src). If retval >= dstsize, truncation occurs.
 size_t xstrlcpy(char *restrict dst, const char *restrict src, size_t size)
   FUNC_ATTR_NONNULL_ALL
 {
-  size_t ret = strlen(src);
+  size_t slen = strlen(src);
 
   if (size) {
-    size_t len = (ret >= size) ? size - 1 : ret;
+    size_t len = MIN(slen, size - 1);
     memcpy(dst, src, len);
     dst[len] = '\0';
   }
 
-  return ret;
+  return slen;  // Does not include NUL.
 }
 
 /// xstrlcat - Appends string src to the end of dst.
@@ -396,8 +395,8 @@ size_t xstrlcpy(char *restrict dst, const char *restrict src, size_t size)
 ///
 /// Note: Replaces `vim_strcat`.
 ///
-/// @param dst      Where to copy the string to
-/// @param src      Where to copy the string from
+/// @param dst      Buffer to store the string
+/// @param src      String to be copied
 /// @param dstsize  Size of destination buffer, must be greater than 0
 /// @return         strlen(src) + MIN(dstsize, strlen(initial dst)).
 ///                 If retval >= dstsize, truncation occurs.

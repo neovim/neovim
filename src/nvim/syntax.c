@@ -3377,7 +3377,7 @@ static void syn_cmd_onoff(exarg_T *eap, char *name)
   eap->nextcmd = check_nextcmd(eap->arg);
   if (!eap->skip) {
     char buf[100];
-    strncpy(buf, "so ", 4);
+    memcpy(buf, "so ", 4);
     vim_snprintf(buf + 3, sizeof(buf) - 3, SYNTAX_FNAME, name);
     do_cmdline_cmd(buf);
   }

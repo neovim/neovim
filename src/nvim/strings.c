@@ -51,15 +51,14 @@ char_u *vim_strsave(const char_u *string)
   return (char_u *)xstrdup((char *)string);
 }
 
-/*
- * Copy up to "len" bytes of "string" into newly allocated memory and
- * terminate with a NUL.
- * The allocated memory always has size "len + 1", also when "string" is
- * shorter.
- */
+/// Copy up to `len` bytes of `string` into newly allocated memory and
+/// terminate with a NUL. The allocated memory always has size `len + 1`, even
+/// when `string` is shorter.
 char_u *vim_strnsave(const char_u *string, size_t len)
   FUNC_ATTR_NONNULL_RET FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_ALL
 {
+  // strncpy is intentional: some parts of Vim use `string` shorter than `len`
+  // and expect the remainder to be zeroed out.
   return (char_u *)strncpy(xmallocz(len), (char *)string, len);
 }
 

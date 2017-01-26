@@ -3854,7 +3854,7 @@ static char_u *replace_makeprg(exarg_T *eap, char_u *p, char_u **cmdlinep)
       ptr = new_cmdline;
       while ((pos = (char_u *)strstr((char *)program, "$*")) != NULL) {
         i = (int)(pos - program);
-        STRNCPY(ptr, program, i);
+        memcpy(ptr, program, i);
         STRCPY(ptr += i, p);
         ptr += len;
         program = pos + 2;

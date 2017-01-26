@@ -1608,7 +1608,7 @@ static void foldAddMarker(linenr_T lnum, char_u *marker, size_t markerlen)
       STRLCPY(newline + line_len, marker, markerlen + 1);
     else {
       STRCPY(newline + line_len, cms);
-      STRNCPY(newline + line_len + (p - cms), marker, markerlen);
+      memcpy(newline + line_len + (p - cms), marker, markerlen);
       STRCPY(newline + line_len + (p - cms) + markerlen, p + 2);
     }
 
@@ -1673,7 +1673,8 @@ static void foldDelMarker(linenr_T lnum, char_u *marker, size_t markerlen)
     if (u_save(lnum - 1, lnum + 1) == OK) {
       /* Make new line: text-before-marker + text-after-marker */
       newline = xmalloc(STRLEN(line) - len + 1);
-      STRNCPY(newline, line, p - line);
+      assert(p >= line);
+      memcpy(newline, line, (size_t)(p - line));
       STRCPY(newline + (p - line), p + len);
       ml_replace(lnum, newline, FALSE);
     }
