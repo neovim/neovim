@@ -1710,7 +1710,8 @@ bool u_undo_and_forget(int count)
   if (curbuf->b_u_curhead) {
     to_forget->uh_alt_next.ptr = NULL;
     curbuf->b_u_curhead->uh_alt_prev.ptr = to_forget->uh_alt_prev.ptr;
-    curbuf->b_u_seq_cur = curbuf->b_u_curhead->uh_seq-1;
+    curbuf->b_u_seq_cur = curbuf->b_u_curhead->uh_next.ptr ?
+        curbuf->b_u_curhead->uh_next.ptr->uh_seq : 0;
   } else if (curbuf->b_u_newhead) {
     curbuf->b_u_seq_cur = curbuf->b_u_newhead->uh_seq;
   }
@@ -2321,7 +2322,8 @@ static void u_undoredo(int undo)
   if (undo)
     /* We are below the previous undo.  However, to make ":earlier 1s"
      * work we compute this as being just above the just undone change. */
-    --curbuf->b_u_seq_cur;
+    curbuf->b_u_seq_cur = curhead->uh_next.ptr ?
+        curhead->uh_next.ptr->uh_seq : 0;
 
   /* Remember where we are for ":earlier 1f" and ":later 1f". */
   if (curhead->uh_save_nr != 0) {
