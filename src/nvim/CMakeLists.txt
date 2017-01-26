@@ -292,11 +292,6 @@ list(APPEND NVIM_LINK_LIBRARIES
   ${UNIBILIUM_LIBRARIES}
   ${CMAKE_THREAD_LIBS_INIT}
 )
-if(PREFER_LUAJIT)
-  list(APPEND NVIM_LINK_LIBRARIES ${LUAJIT_LIBRARIES})
-else()
-  list(APPEND NVIM_LINK_LIBRARIES ${LUA_LIBRARIES})
-endif()
 
 if(UNIX)
   list(APPEND NVIM_LINK_LIBRARIES
@@ -306,6 +301,14 @@ if(UNIX)
 endif()
 
 set(NVIM_EXEC_LINK_LIBRARIES ${NVIM_LINK_LIBRARIES})
+set(NVIM_TEST_LINK_LIBRARIES ${NVIM_LINK_LIBRARIES})
+
+if(PREFER_LUAJIT)
+  list(APPEND NVIM_EXEC_LINK_LIBRARIES ${LUAJIT_LIBRARIES})
+else()
+  list(APPEND NVIM_EXEC_LINK_LIBRARIES ${LUA_LIBRARIES})
+endif()
+list(APPEND NVIM_TEST_LINK_LIBRARIES ${LUAJIT_LIBRARIES})
 
 # Don't use jemalloc in the unit test library.
 if(JEMALLOC_FOUND)
@@ -316,6 +319,12 @@ add_executable(nvim ${NEOVIM_GENERATED_SOURCES} ${NEOVIM_SOURCES}
   ${NEOVIM_HEADERS})
 target_link_libraries(nvim ${NVIM_EXEC_LINK_LIBRARIES})
 install_helper(TARGETS nvim)
+
+if(PREFER_LUAJIT)
+  target_include_directories(nvim SYSTEM PRIVATE ${LUAJIT_INCLUDE_DIRS})
+else()
+  target_include_directories(nvim SYSTEM PRIVATE ${LUA_INCLUDE_DIRS})
+endif()
 
 if(WIN32)
   # Copy DLLs and third-party tools to bin/ and install them along with nvim
@@ -365,7 +374,7 @@ endif()
 
 add_library(libnvim STATIC EXCLUDE_FROM_ALL ${NEOVIM_GENERATED_SOURCES}
   ${NEOVIM_SOURCES} ${NEOVIM_HEADERS})
-target_link_libraries(libnvim ${NVIM_LINK_LIBRARIES})
+target_link_libraries(libnvim ${NVIM_TEST_LINK_LIBRARIES})
 set_target_properties(libnvim PROPERTIES
   POSITION_INDEPENDENT_CODE ON
   OUTPUT_NAME nvim)
@@ -374,7 +383,8 @@ set_property(TARGET libnvim
 
 add_library(nvim-test MODULE EXCLUDE_FROM_ALL ${NEOVIM_GENERATED_SOURCES}
     ${NEOVIM_SOURCES} ${UNIT_TEST_FIXTURES} ${NEOVIM_HEADERS})
-target_link_libraries(nvim-test ${NVIM_LINK_LIBRARIES})
+target_link_libraries(nvim-test ${NVIM_TEST_LINK_LIBRARIES})
+target_include_directories(nvim-test SYSTEM PRIVATE ${LUAJIT_INCLUDE_DIRS})
 set_target_properties(nvim-test PROPERTIES
                       POSITION_INDEPENDENT_CODE ON)
 set_property(TARGET nvim-test
@@ -391,9 +401,6 @@ if(CLANG_ASAN_UBSAN)
   set_property(TARGET nvim APPEND_STRING PROPERTY COMPILE_FLAGS "-DEXITFREE ")
   set_property(TARGET nvim APPEND_STRING PROPERTY COMPILE_FLAGS "${SANITIZE_RECOVER} -fno-omit-frame-pointer -fno-optimize-sibling-calls -fsanitize=address -fsanitize=undefined -fsanitize-blacklist=${PROJECT_SOURCE_DIR}/src/.asan-blacklist")
   set_property(TARGET nvim APPEND_STRING PROPERTY LINK_FLAGS "-fsanitize=address -fsanitize=undefined ")
-
-  set_property(TARGET nvim-test APPEND_STRING PROPERTY COMPILE_FLAGS "${SANITIZE_RECOVER} -fno-omit-frame-pointer -fno-optimize-sibling-calls -fsanitize=address -fsanitize-blacklist=${PROJECT_SOURCE_DIR}/src/.asan-blacklist")
-  set_property(TARGET nvim-test APPEND_STRING PROPERTY LINK_FLAGS "-fsanitize=address ")
 elseif(CLANG_MSAN)
   message(STATUS "Enabling Clang memory sanitizer for nvim.")
   set_property(TARGET nvim APPEND_STRING PROPERTY COMPILE_FLAGS "-DEXITFREE ")

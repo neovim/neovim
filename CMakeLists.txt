@@ -310,14 +310,12 @@ include_directories(SYSTEM ${LIBUV_INCLUDE_DIRS})
 find_package(Msgpack 1.0.0 REQUIRED)
 include_directories(SYSTEM ${MSGPACK_INCLUDE_DIRS})
 
-option(PREFER_LUAJIT "Prefer LuaJIT over Lua." ON)
+option(PREFER_LUAJIT "Prefer LuaJIT over Lua when compiling executable. Test library always uses luajit." ON)
 
-if(PREFER_LUAJIT)
-  find_package(LuaJit REQUIRED)
-  include_directories(SYSTEM ${LUAJIT_INCLUDE_DIRS})
-else()
+find_package(LuaJit REQUIRED)
+
+if(NOT PREFER_LUAJIT)
   find_package(Lua REQUIRED)
-  include_directories(SYSTEM ${LUA_INCLUDE_DIR})
 endif()
 
 if(UNIX)
