@@ -208,13 +208,15 @@ while init ~= nil do
     local line, dir, file = text:match(filepattern, init)
     if file ~= nil then
       curfile = file
-    end
-    declline = tonumber(line) - 1
-    local curdir_start = dir:find('src/nvim/')
-    if curdir_start ~= nil then
-      curdir = dir:sub(curdir_start + #('src/nvim/'))
+      declline = tonumber(line) - 1
+      local curdir_start = dir:find('src/nvim/')
+      if curdir_start ~= nil then
+        curdir = dir:sub(curdir_start + #('src/nvim/'))
+      else
+        curdir = dir
+      end
     else
-      curdir = dir
+      declline = declline - 1
     end
   elseif init < declendpos then
     -- Skipping over declaration
