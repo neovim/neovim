@@ -395,7 +395,7 @@ void nvim_buf_set_lines(uint64_t channel_id,
 
   changed_lines((linenr_T)start, 0, (linenr_T)end, extra);
 
-  if (buf == curbuf) {
+  if (save_curbuf.br_buf == NULL) {
     fix_cursor((linenr_T)start, (linenr_T)end, extra);
   }
 
