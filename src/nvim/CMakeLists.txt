@@ -151,7 +151,7 @@ if(CLANG_ASAN_UBSAN OR CLANG_MSAN OR CLANG_TSAN)
 endif()
 
 get_directory_property(gen_includes INCLUDE_DIRECTORIES)
-foreach(gen_include ${gen_includes})
+foreach(gen_include ${gen_includes} ${LUAJIT_INCLUDE_DIRS})
   list(APPEND gen_cflags "-I${gen_include}")
 endforeach()
 string(TOUPPER "${CMAKE_BUILD_TYPE}" build_type)
