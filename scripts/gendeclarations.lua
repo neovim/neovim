@@ -188,14 +188,15 @@ local footer = [[
 local non_static = header
 local static = header
 
-local filepattern = '^#%a* (%d+) "[^"]-/?([^"/]+)"'
+local filepattern = '^#%a* (%d+) "([^"]-)/?([^"/]+)"'
 local curfile
 
-init = 0
-curfile = nil
-neededfile = fname:match('[^/]+$')
+local init = 0
+local curfile = nil
+local neededfile = fname:match('[^/]+$')
 local declline = 0
 local declendpos = 0
+local curdir = nil
 while init ~= nil do
   init = text:find('\n', init)
   if init == nil then
@@ -204,11 +205,17 @@ while init ~= nil do
   init = init + 1
   declline = declline + 1
   if text:sub(init, init) == '#' then
-    local line, file = text:match(filepattern, init)
+    local line, dir, file = text:match(filepattern, init)
     if file ~= nil then
       curfile = file
     end
     declline = tonumber(line) - 1
+    local curdir_start = dir:find('src/nvim/')
+    if curdir_start ~= nil then
+      curdir = dir:sub(curdir_start + #('src/nvim/'))
+    else
+      curdir = dir
+    end
   elseif init < declendpos then
     -- Skipping over declaration
   elseif curfile == neededfile then
@@ -232,7 +239,8 @@ while init ~= nil do
       declaration = declaration:gsub(' ?(FUNC_ATTR_)', ' %1')
       declaration = declaration:gsub(' $', '')
       declaration = declaration .. ';'
-      declaration = declaration .. '  // ' .. curfile .. ':' .. declline
+      declaration = declaration .. ('  // %s/%s:%u'):format(
+          curdir, curfile, declline)
       declaration = declaration .. '\n'
       if text:sub(s, s + 5) == 'static' then
         static = static .. declaration
