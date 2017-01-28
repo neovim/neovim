@@ -438,6 +438,8 @@ describe('clipboard usage', function()
   end)
 
   it('handles middleclick correctly', function()
+    execute('set mouse=a')
+
     local screen = Screen.new(30, 5)
     screen:attach()
     insert([[
