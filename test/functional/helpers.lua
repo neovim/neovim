@@ -570,7 +570,7 @@ local curbufmeths = create_callindex(curbuf)
 local curwinmeths = create_callindex(curwin)
 local curtabmeths = create_callindex(curtab)
 
-local M = {
+local module = {
   prepend_argv = prepend_argv,
   clear = clear,
   connect = connect,
@@ -644,5 +644,5 @@ return function(after_each)
       check_cores('build/bin/nvim')
     end)
   end
-  return M
+  return module
 end
