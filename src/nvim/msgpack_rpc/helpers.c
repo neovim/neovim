@@ -20,13 +20,6 @@
 static msgpack_zone zone;
 static msgpack_sbuffer sbuffer;
 
-/// Value by which objects represented as EXT type are shifted
-///
-/// Subtracted when packing, added when unpacking. Used to allow moving
-/// buffer/window/tabpage block inside ObjectType enum. This block yet cannot be
-/// split or reordered.
-#define EXT_OBJECT_TYPE_SHIFT kObjectTypeBuffer
-
 #define HANDLE_TYPE_CONVERSION_IMPL(t, lt) \
   static bool msgpack_rpc_to_##lt(const msgpack_object *const obj, \
                                   Integer *const arg) \

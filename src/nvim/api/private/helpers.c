@@ -851,15 +851,18 @@ static void init_type_metadata(Dictionary *metadata)
   Dictionary types = ARRAY_DICT_INIT;
 
   Dictionary buffer_metadata = ARRAY_DICT_INIT;
-  PUT(buffer_metadata, "id", INTEGER_OBJ(kObjectTypeBuffer));
+  PUT(buffer_metadata, "id",
+      INTEGER_OBJ(kObjectTypeBuffer - EXT_OBJECT_TYPE_SHIFT));
   PUT(buffer_metadata, "prefix", STRING_OBJ(cstr_to_string("nvim_buf_")));
 
   Dictionary window_metadata = ARRAY_DICT_INIT;
-  PUT(window_metadata, "id", INTEGER_OBJ(kObjectTypeWindow));
+  PUT(window_metadata, "id",
+      INTEGER_OBJ(kObjectTypeWindow - EXT_OBJECT_TYPE_SHIFT));
   PUT(window_metadata, "prefix", STRING_OBJ(cstr_to_string("nvim_win_")));
 
   Dictionary tabpage_metadata = ARRAY_DICT_INIT;
-  PUT(tabpage_metadata, "id", INTEGER_OBJ(kObjectTypeTabpage));
+  PUT(tabpage_metadata, "id",
+      INTEGER_OBJ(kObjectTypeTabpage - EXT_OBJECT_TYPE_SHIFT));
   PUT(tabpage_metadata, "prefix", STRING_OBJ(cstr_to_string("nvim_tabpage_")));
 
   PUT(types, "Buffer", DICTIONARY_OBJ(buffer_metadata));
