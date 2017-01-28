@@ -374,6 +374,7 @@ endif()
 
 add_library(libnvim STATIC EXCLUDE_FROM_ALL ${NEOVIM_GENERATED_SOURCES}
   ${NEOVIM_SOURCES} ${NEOVIM_HEADERS})
+target_include_directories(libnvim SYSTEM PRIVATE ${LUAJIT_INCLUDE_DIRS})
 target_link_libraries(libnvim ${NVIM_TEST_LINK_LIBRARIES})
 set_target_properties(libnvim PROPERTIES
   POSITION_INDEPENDENT_CODE ON
