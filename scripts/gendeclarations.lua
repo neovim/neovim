@@ -69,17 +69,18 @@ local word = branch(
     right_word
   )
 )
+local inline_comment = concat(
+  lit('/*'),
+  any_amount(concat(
+    neg_look_ahead(lit('*/')),
+    any_character
+  )),
+  lit('*/')
+)
 local spaces = any_amount(branch(
   s,
   -- Comments are really handled by preprocessor, so the following is not needed
-  concat(
-    lit('/*'),
-    any_amount(concat(
-      neg_look_ahead(lit('*/')),
-      any_character
-    )),
-    lit('*/')
-  ),
+  inline_comment,
   concat(
     lit('//'),
     any_amount(concat(
@@ -110,6 +111,7 @@ local typ = one_or_more(typ_part)
 local typ_id = two_or_more(typ_part)
 local arg = typ_id         -- argument name is swallowed by typ
 local pattern = concat(
+  any_amount(branch(set(' ', '\t'), inline_comment)),
   typ_id,                  -- return type with function name
   spaces,
   lit('('),
@@ -197,17 +199,22 @@ local neededfile = fname:match('[^/]+$')
 local declline = 0
 local declendpos = 0
 local curdir = nil
+local is_needed_file = false
 while init ~= nil do
-  init = text:find('\n', init)
+  init = text:find('[\n;}]', init)
   if init == nil then
     break
   end
+  local init_is_nl = text:sub(init, init) == '\n'
   init = init + 1
-  declline = declline + 1
-  if text:sub(init, init) == '#' then
+  if init_is_nl and is_needed_file then
+    declline = declline + 1
+  end
+  if init_is_nl and text:sub(init, init) == '#' then
     local line, dir, file = text:match(filepattern, init)
     if file ~= nil then
       curfile = file
+      is_needed_file = (curfile == neededfile)
       declline = tonumber(line) - 1
       local curdir_start = dir:find('src/nvim/')
       if curdir_start ~= nil then
@@ -220,7 +227,7 @@ while init ~= nil do
     end
   elseif init < declendpos then
     -- Skipping over declaration
-  elseif curfile == neededfile then
+  elseif is_needed_file then
     s = init
     e = pattern:match(text, init)
     if e ~= nil then
@@ -240,11 +247,12 @@ while init ~= nil do
       declaration = declaration:gsub(' ?(%*+) ?', ' %1')
       declaration = declaration:gsub(' ?(FUNC_ATTR_)', ' %1')
       declaration = declaration:gsub(' $', '')
+      declaration = declaration:gsub('^ ', '')
       declaration = declaration .. ';'
       declaration = declaration .. ('  // %s/%s:%u'):format(
           curdir, curfile, declline)
       declaration = declaration .. '\n'
-      if text:sub(s, s + 5) == 'static' then
+      if declaration:sub(1, 6) == 'static' then
         static = static .. declaration
       else
         non_static = non_static .. declaration

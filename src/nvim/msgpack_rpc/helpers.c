@@ -30,9 +30,7 @@ static msgpack_sbuffer sbuffer;
 #define HANDLE_TYPE_CONVERSION_IMPL(t, lt) \
   static bool msgpack_rpc_to_##lt(const msgpack_object *const obj, \
                                   Integer *const arg) \
-    REAL_FATTR_NONNULL_ALL REAL_FATTR_WARN_UNUSED_RESULT; \
-  static bool msgpack_rpc_to_##lt(const msgpack_object *const obj, \
-                                  Integer *const arg) \
+    FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT \
   { \
     if (obj->type != MSGPACK_OBJECT_EXT \
         || obj->via.ext.type + EXT_OBJECT_TYPE_SHIFT != kObjectType##t) { \
@@ -55,8 +53,7 @@ static msgpack_sbuffer sbuffer;
   } \
   \
   static void msgpack_rpc_from_##lt(Integer o, msgpack_packer *res) \
-    REAL_FATTR_NONNULL_ARG(2); \
-  static void msgpack_rpc_from_##lt(Integer o, msgpack_packer *res) \
+    FUNC_ATTR_NONNULL_ARG(2) \
   { \
     msgpack_packer pac; \
     msgpack_packer_init(&pac, &sbuffer, msgpack_sbuffer_write); \
