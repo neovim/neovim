@@ -7,8 +7,10 @@
 #include "nvim/garray.h"
 #include "nvim/func_attr.h"
 #include "nvim/api/private/defs.h"
+#include "nvim/api/private/helpers.h"
 #include "nvim/api/vim.h"
 #include "nvim/vim.h"
+#include "nvim/ex_getln.h"
 #include "nvim/message.h"
 
 #include "nvim/viml/executor/executor.h"
@@ -171,8 +173,6 @@ static lua_State *global_lstate = NULL;
 
 /// Execute lua string
 ///
-/// Used for :lua.
-///
 /// @param[in]  str  String to execute.
 /// @param[out]  ret_tv  Location where result will be saved.
 ///
@@ -266,4 +266,19 @@ void executor_eval_lua(const String str, typval_T *const arg,
 
   NLUA_CALL_C_FUNCTION_3(global_lstate, nlua_eval_lua_string, 0,
                          (void *)&str, arg, ret_tv);
+}
+
+/// Run lua string
+///
+/// Used for :lua.
+///
+/// @param  eap  VimL command being run.
+void ex_lua(exarg_T *const eap)
+  FUNC_ATTR_NONNULL_ALL
+{
+  char *const code = (char *)script_get(eap, eap->arg);
+  typval_T tv = { .v_type = VAR_UNKNOWN };
+  executor_exec_lua(cstr_as_string(code), &tv);
+  clear_tv(&tv);
+  xfree(code);
 }
