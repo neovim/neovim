@@ -1572,7 +1572,7 @@ return {
       full_name='mouse',
       type='string', list='flags', scope={'global'},
       varname='p_mouse',
-      defaults={if_true={vi="", vim="a"}}
+      defaults={if_true={vi="", vim=""}}
     },
     {
       full_name='mousefocus', abbreviation='mousef',

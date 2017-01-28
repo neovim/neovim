@@ -47,7 +47,6 @@ these differences.
 - 'langnoremap' is set by default
 - 'laststatus' defaults to 2 (statusline is always shown)
 - 'listchars' defaults to "tab:> ,trail:-,nbsp:+"
-- 'mouse' defaults to "a"
 - 'nocompatible' is always set
 - 'nrformats' defaults to "bin,hex"
 - 'sessionoptions' doesn't include "options"
