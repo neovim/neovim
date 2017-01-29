@@ -174,9 +174,9 @@ static int nlua_exec_luado_string(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   } else {
     lcmd = xmalloc(lcmd_len + 1);
   }
-  memcpy(lcmd, S_LEN(DOSTART));
+  memcpy(lcmd, DOSTART, sizeof(DOSTART) - 1);
   memcpy(lcmd + sizeof(DOSTART) - 1, str->data, str->size);
-  memcpy(lcmd + sizeof(DOSTART) - 1 + str->size, S_LEN(DOEND));
+  memcpy(lcmd + sizeof(DOSTART) - 1 + str->size, DOEND, sizeof(DOEND) - 1);
 #undef DOSTART
 #undef DOEND
 
@@ -325,7 +325,7 @@ static int nlua_eval_lua_string(lua_State *const lstate)
   } else {
     lcmd = xmalloc(lcmd_len);
   }
-  memcpy(lcmd, S_LEN(EVALHEADER));
+  memcpy(lcmd, EVALHEADER, sizeof(EVALHEADER) - 1);
   memcpy(lcmd + sizeof(EVALHEADER) - 1, str->data, str->size);
   lcmd[lcmd_len - 1] = ')';
 #undef EVALHEADER
