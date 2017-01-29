@@ -36,9 +36,7 @@ typedef enum {
 #define NO_RESPONSE UINT64_MAX
 
 /// Mask for all internal calls
-#define INTERNAL_CALL_MASK (UINT64_MAX ^ (UINT64_MAX >> 1))
-// (1 << 63) in all forms produces “warning: shift count >= width of type
-// [-Wshift-count-overflow]”
+#define INTERNAL_CALL_MASK (((uint64_t)1) << (sizeof(uint64_t) * 8 - 1))
 
 /// Internal call from VimL code
 #define VIML_INTERNAL_CALL INTERNAL_CALL_MASK
