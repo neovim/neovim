@@ -2,8 +2,10 @@
 local helpers = require('test.functional.helpers')(after_each)
 
 local eq = helpers.eq
+local NIL = helpers.NIL
 local clear = helpers.clear
 local meths = helpers.meths
+local funcs = helpers.funcs
 local source = helpers.source
 local dedent = helpers.dedent
 local exc_exec = helpers.exc_exec
@@ -53,5 +55,11 @@ describe(':lua command', function()
         vim.api.nvim_buf_set_lines(1, 3, 4, false, {"STTE"})
     ]])
     eq({'', 'ETTS', 'TTSE', 'STTE'}, curbufmeths.get_lines(0, 100, false))
+  end)
+  it('preserves global and not preserves local variables', function()
+    eq('', redir_exec('lua gvar = 42'))
+    eq('', redir_exec('lua local lvar = 100500'))
+    eq(NIL, funcs.luaeval('lvar'))
+    eq(42, funcs.luaeval('gvar'))
   end)
 end)

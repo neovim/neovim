@@ -46,6 +46,7 @@ describe('luaeval()', function()
          funcs.luaeval('{n=1, f=1.5, s="string", l={4, 2}}'))
       -- Not tested: nil inside containers: behaviour will most likely change.
       eq(NIL, funcs.luaeval('nil'))
+      eq({['']=1}, funcs.luaeval('{[""]=1}'))
     end)
   end)
   describe('recursive lua values', function()
