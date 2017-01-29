@@ -2140,6 +2140,7 @@ lispindent({lnum})		Number	Lisp indent for line {lnum}
 localtime()			Number	current time
 log({expr})			Float	natural logarithm (base e) of {expr}
 log10({expr})			Float	logarithm of Float {expr} to base 10
+luaeval({expr}[, {expr}])	any	evaluate Lua expression
 map({expr}, {string})		List/Dict  change each item in {expr} to {expr}
 maparg({name}[, {mode} [, {abbr} [, {dict}]]])
 				String or Dict
@@ -5095,6 +5096,9 @@ log10({expr})						*log10()*
 			:echo log10(0.01)
 <			-2.0
 
+luaeval({expr}[, {expr}])
+		Evaluate Lua expression {expr} and return its result converted 
+		to Vim data structures. See |lua-luaeval| for more details.
 
 map({expr1}, {expr2})					*map()*
 		{expr1} must be a |List| or a |Dictionary|.

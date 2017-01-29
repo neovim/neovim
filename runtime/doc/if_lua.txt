@@ -114,8 +114,9 @@ functions may be found in |api-funcs.txt|.
 							*luaeval()*
 
 The (dual) equivalent of "vim.eval" for passing Lua values to Vim is
-"luaeval". "luaeval" takes an expression string and an optional argument and
-returns the result of the expression. It is semantically equivalent in Lua to:
+"luaeval". "luaeval" takes an expression string and an optional argument used 
+for _A inside expression and returns the result of the expression. It is 
+semantically equivalent in Lua to:
 >
 	local chunkheader = "local _A = select(1, ...) return "
 	function luaeval (expstr, arg)
@@ -129,8 +130,8 @@ thrown if conversion of any of the remaining Lua types is attempted.
 
 Note 2: lua tables are used as both dictionaries and lists, thus making it 
 impossible to determine whether empty table is meant to be empty list or empty 
-dictionary. To distinguish between these cases there is the following 
-agreement:
+dictionary. Additionally lua does not have integer numbers. To distinguish 
+between these cases there is the following agreement:
 
 0. Empty table is empty list.
 1. Table with N incrementally growing integral numbers, starting from 1 and 
@@ -165,9 +166,9 @@ Examples: >
 	:echo Rand(1,10)
 
 Note that currently second argument to `luaeval` undergoes VimL to lua 
-conversion, so changing resulting containers in lua do not affect values in 
-VimL. Return value is also always converted. When converting, 
-|msgpack-special-dict|s are treated specially.
+conversion, so changing containers in lua do not affect values in VimL. Return 
+value is also always converted. When converting, |msgpack-special-dict|s are 
+treated specially.
 
 ==============================================================================
  vim:tw=78:ts=8:noet:ft=help:norl:
