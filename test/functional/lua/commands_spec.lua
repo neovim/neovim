@@ -46,6 +46,10 @@ describe(':lua command', function()
        exc_exec('lua vim.api.nvim_buf_set_lines(-10, 1, 1, false, {"TEST"})'))
     eq({''}, curbufmeths.get_lines(0, 100, false))
   end)
+  it('works with NULL errors', function()
+    eq([=[Vim(lua):E5105: Error while calling lua chunk: [NULL]]=],
+       exc_exec('lua error(nil)'))
+  end)
   it('accepts embedded NLs without heredoc', function()
     -- Such code is usually used for `:execute 'lua' {generated_string}`:
     -- heredocs do not work in this case.
@@ -106,6 +110,10 @@ describe(':luado command', function()
     eq([[Vim(luado):E5111: Error while calling lua function: [string "<VimL compiled string>"]:1: attempt to perform arithmetic on global 'liness' (a nil value)]],
        exc_exec('luado return liness + 1'))
   end)
+  it('works with NULL errors', function()
+    eq([=[Vim(luado):E5111: Error while calling lua function: [NULL]]=],
+       exc_exec('luado error(nil)'))
+  end)
   it('fails in sandbox when needed', function()
     curbufmeths.set_lines(0, 1, false, {"ABC", "def", "gHi"})
     eq('\nE48: Not allowed in sandbox: sandbox luado runs = (runs or 0) + 1',
@@ -146,6 +154,11 @@ describe(':luafile', function()
        exc_exec('luafile ' .. fname))
     write_file(fname, 'vimm.api.nvim_buf_set_lines(1, 1, 2, false, {"ETTS"})')
     eq(("Vim(luafile):E5113: Error while calling lua chunk: %s:1: attempt to index global 'vimm' (a nil value)"):format(fname),
+       exc_exec('luafile ' .. fname))
+  end)
+  it('works with NULL errors', function()
+    write_file(fname, 'error(nil)')
+    eq([=[Vim(luafile):E5113: Error while calling lua chunk: [NULL]]=],
        exc_exec('luafile ' .. fname))
   end)
 end)

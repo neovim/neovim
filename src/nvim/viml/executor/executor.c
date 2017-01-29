@@ -384,9 +384,6 @@ static int nlua_print(lua_State *const lstate)
     lua_pushvalue(lstate, curargidx);  // arg
     if (lua_pcall(lstate, 1, 1, 0)) {
       errmsg = lua_tolstring(lstate, -1, &errmsg_len);
-      if (!errmsg) {
-        PRINT_ERROR("<Unknown error: lua_tolstring returned NULL for error>");
-      }
       goto nlua_print_error;
     }
     size_t len;
@@ -408,18 +405,31 @@ static int nlua_print(lua_State *const lstate)
     const size_t len = (size_t)msg_ga.ga_len - 1;
     char *const str = (char *)msg_ga.ga_data;
 
-    for (size_t i = 0; i < len - 1;) {
+    for (size_t i = 0; i < len;) {
       const size_t start = i;
-      while (str[i] != NL && i < len - 1) {
-        if (str[i] == NUL) {
-          str[i] = NL;
+      while (i < len) {
+        switch (str[i]) {
+          case NUL: {
+            str[i] = NL;
+            i++;
+            continue;
+          }
+          case NL: {
+            str[i] = NUL;
+            i++;
+            break;
+          }
+          default: {
+            i++;
+            continue;
+          }
         }
-        i++;
-      }
-      if (str[i] == NL) {
-        str[i] = NUL;
+        break;
       }
       msg((char_u *)str + start);
+    }
+    if (str[len - 1] == NUL) {  // Last was newline
+      msg((char_u *)"");
     }
   }
   ga_clear(&msg_ga);

@@ -241,6 +241,8 @@ describe('luaeval()', function()
        exc_exec([[call luaeval("vim.xxx_nonexistent_key_xxx()")]]))
     eq('Vim(call):E5108: Error while calling lua chunk for luaeval(): [string "<VimL compiled string>"]:1: ERROR',
        exc_exec([[call luaeval("error('ERROR')")]]))
+    eq('Vim(call):E5108: Error while calling lua chunk for luaeval(): [NULL]',
+       exc_exec([[call luaeval("error(nil)")]]))
   end)
 
   it('does not leak memory when called with too long line',
