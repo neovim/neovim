@@ -3695,19 +3695,18 @@ char_u *get_locales(expand_T *xp, int idx)
 
 static void script_host_execute(char *name, exarg_T *eap)
 {
-  uint8_t *script = script_get(eap, eap->arg);
+  size_t len;
+  char *const script = script_get(eap, &len);
 
-  if (!eap->skip) {
-    list_T *args = list_alloc();
+  if (script != NULL) {
+    list_T *const args = list_alloc();
     // script
-    list_append_string(args, script ? script : eap->arg, -1);
+    list_append_allocated_string(args, script);
     // current range
     list_append_number(args, (int)eap->line1);
     list_append_number(args, (int)eap->line2);
     (void)eval_call_provider(name, "execute", args);
   }
-
-  xfree(script);
 }
 
 static void script_host_execute_file(char *name, exarg_T *eap)

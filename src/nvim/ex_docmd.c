@@ -3734,10 +3734,12 @@ void ex_ni(exarg_T *eap)
 /// Skips over ":perl <<EOF" constructs.
 static void ex_script_ni(exarg_T *eap)
 {
-  if (!eap->skip)
+  if (!eap->skip) {
     ex_ni(eap);
-  else
-    xfree(script_get(eap, eap->arg));
+  } else {
+    size_t len;
+    xfree(script_get(eap, &len));
+  }
 }
 
 /*

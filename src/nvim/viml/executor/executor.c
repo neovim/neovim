@@ -277,9 +277,14 @@ void executor_eval_lua(const String str, typval_T *const arg,
 void ex_lua(exarg_T *const eap)
   FUNC_ATTR_NONNULL_ALL
 {
-  char *const code = (char *)script_get(eap, eap->arg);
+  size_t len;
+  char *const code = script_get(eap, &len);
+  if (eap->skip) {
+    xfree(code);
+    return;
+  }
   typval_T tv = { .v_type = VAR_UNKNOWN };
-  executor_exec_lua(cstr_as_string(code), &tv);
+  executor_exec_lua((String) { .data = code, .size = len }, &tv);
   clear_tv(&tv);
   xfree(code);
 }
