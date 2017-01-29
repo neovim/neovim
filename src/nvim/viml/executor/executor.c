@@ -160,17 +160,19 @@ static int nlua_exec_lua_string(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
 static int nlua_exec_luado_string(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
 {
   const String *const str = (const String *)lua_touserdata(lstate, 1);
-  const linenr_T *const range = (const linenr_T *)lua_touserdata(lstate, 1);
+  const linenr_T *const range = (const linenr_T *)lua_touserdata(lstate, 2);
   lua_pop(lstate, 1);
 
 #define DOSTART "return function(line, linenr) "
 #define DOEND " end"
-  const size_t lcmd_len = str->size + (sizeof(DOSTART) - 1) + (sizeof(DOEND) - 1);
+  const size_t lcmd_len = (str->size
+                           + (sizeof(DOSTART) - 1)
+                           + (sizeof(DOEND) - 1));
   char *lcmd;
   if (lcmd_len < IOSIZE) {
     lcmd = (char *)IObuff;
   } else {
-    lcmd = xmalloc(lcmd_len);
+    lcmd = xmalloc(lcmd_len + 1);
   }
   memcpy(lcmd, S_LEN(DOSTART));
   memcpy(lcmd + sizeof(DOSTART) - 1, str->data, str->size);
@@ -186,7 +188,7 @@ static int nlua_exec_luado_string(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
     nlua_error(lstate, _("E5110: Error while creating lua function: %.*s"));
     return 0;
   }
-  for (linenr_T l = range[0]; l < range[1]; l++) {
+  for (linenr_T l = range[0]; l <= range[1]; l++) {
     if (l > curbuf->b_ml.ml_line_count) {
       break;
     }
@@ -198,24 +200,15 @@ static int nlua_exec_luado_string(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
       break;
     }
     if (lua_isstring(lstate, -1)) {
-      if (sandbox) {
-        EMSG(_("E5112: Not allowed in sandbox"));
-        lua_pop(lstate, 1);
-        break;
-      }
       size_t new_line_len;
-      const char *new_line = lua_tolstring(lstate, -1, &new_line_len);
-      char *const new_line_transformed = (
-          new_line_len < IOSIZE
-          ? memcpy(IObuff, new_line, new_line_len)
-          : xmemdupz(new_line, new_line_len));
-      new_line_transformed[new_line_len] = NUL;
+      const char *const new_line = lua_tolstring(lstate, -1, &new_line_len);
+      char *const new_line_transformed = xmemdupz(new_line, new_line_len);
       for (size_t i = 0; i < new_line_len; i++) {
-        if (new_line_transformed[new_line_len] == NUL) {
-          new_line_transformed[new_line_len] = '\n';
+        if (new_line_transformed[i] == NUL) {
+          new_line_transformed[i] = '\n';
         }
       }
-      ml_replace(l, (char_u *)new_line_transformed, true);
+      ml_replace(l, (char_u *)new_line_transformed, false);
       changed_bytes(l, 0);
     }
     lua_pop(lstate, 1);
