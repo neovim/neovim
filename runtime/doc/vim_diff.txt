@@ -245,6 +245,17 @@ coerced to strings. See |id()| for more details, currently it uses
 
 |c_CTRL-R| pasting a non-special register into |cmdline| omits the last <CR>.
 
+Lua interface (|if_lua.txt|):
+
+- `:lua print("a\0b")` will print `a^@b`, like with `:echomsg "a\nb"` . In Vim 
+  that prints `a` and `b` on separate lines, exactly like
+  `:lua print("a\nb")` .
+- `:lua error('TEST')` will print “TEST” as the error in Vim and “E5105: Error 
+  while calling lua chunk: [string "<VimL compiled string>"]:1: TEST” in 
+  Neovim.
+- Lua has direct access to Neovim api via `vim.api`.
+- Currently most of features are missing.
+
 ==============================================================================
 5. Missing legacy features				 *nvim-features-missing*
 				     *if_lua* *if_perl* *if_mzscheme* *if_tcl*
