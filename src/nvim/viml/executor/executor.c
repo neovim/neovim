@@ -252,6 +252,8 @@ static int nlua_state_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
 {
   lua_pushcfunction(lstate, &nlua_stricmp);
   lua_setglobal(lstate, "stricmp");
+  lua_pushcfunction(lstate, &nlua_print);
+  lua_setglobal(lstate, "print");
   if (luaL_dostring(lstate, (char *)&vim_module[0])) {
     nlua_error(lstate, _("E5106: Error while creating vim module: %.*s"));
     return 1;
@@ -355,6 +357,78 @@ static int nlua_eval_lua_string(lua_State *const lstate)
     return 0;
   }
 
+  return 0;
+}
+
+/// Print as a Vim message
+///
+/// @param  lstate  Lua interpreter state.
+static int nlua_print(lua_State *const lstate)
+  FUNC_ATTR_NONNULL_ALL
+{
+#define PRINT_ERROR(msg) \
+  do { \
+    errmsg = msg; \
+    errmsg_len = sizeof(msg) - 1; \
+    goto nlua_print_error; \
+  } while (0)
+  const int nargs = lua_gettop(lstate);
+  lua_getglobal(lstate, "tostring");
+  const char *errmsg = NULL;
+  size_t errmsg_len = 0;
+  garray_T msg_ga;
+  ga_init(&msg_ga, 1, 80);
+  int curargidx = 1;
+  for (; curargidx <= nargs; curargidx++) {
+    lua_pushvalue(lstate, -1);  // tostring
+    lua_pushvalue(lstate, curargidx);  // arg
+    if (lua_pcall(lstate, 1, 1, 0)) {
+      errmsg = lua_tolstring(lstate, -1, &errmsg_len);
+      if (!errmsg) {
+        PRINT_ERROR("<Unknown error: lua_tolstring returned NULL for error>");
+      }
+      goto nlua_print_error;
+    }
+    size_t len;
+    const char *const s = lua_tolstring(lstate, -1, &len);
+    if (s == NULL) {
+      PRINT_ERROR(
+          "<Unknown error: lua_tolstring returned NULL for tostring result>");
+    }
+    ga_concat_len(&msg_ga, s, len);
+    if (curargidx < nargs) {
+      ga_append(&msg_ga, ' ');
+    }
+    lua_pop(lstate, 1);
+  }
+#undef PRINT_ERROR
+  lua_pop(lstate, nargs + 1);
+  ga_append(&msg_ga, NUL);
+  {
+    const size_t len = (size_t)msg_ga.ga_len - 1;
+    char *const str = (char *)msg_ga.ga_data;
+
+    for (size_t i = 0; i < len - 1;) {
+      const size_t start = i;
+      while (str[i] != NL && i < len - 1) {
+        if (str[i] == NUL) {
+          str[i] = NL;
+        }
+        i++;
+      }
+      if (str[i] == NL) {
+        str[i] = NUL;
+      }
+      msg((char_u *)str + start);
+    }
+  }
+  ga_clear(&msg_ga);
+  return 0;
+nlua_print_error:
+  emsgf(_("E5114: Error while converting print argument #%i: %.*s"),
+        curargidx, errmsg_len, errmsg);
+  ga_clear(&msg_ga);
+  lua_pop(lstate, lua_gettop(lstate));
   return 0;
 }
 
