@@ -100,7 +100,7 @@ static void nlua_error(lua_State *const lstate, const char *const msg)
 ///
 /// Does no error handling: never call it with non-string or with some arguments
 /// omitted.
-static int nlua_stricmp(lua_State *lstate) FUNC_ATTR_NONNULL_ALL
+static int nlua_stricmp(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
 {
   const char *s1 = luaL_checklstring(lstate, 1, NULL);
   const char *s2 = luaL_checklstring(lstate, 2, NULL);
@@ -115,10 +115,10 @@ static int nlua_stricmp(lua_State *lstate) FUNC_ATTR_NONNULL_ALL
 /// Expects two values on the stack: string to evaluate, pointer to the
 /// location where result is saved. Always returns nothing (from the lua point
 /// of view).
-static int nlua_exec_lua_string(lua_State *lstate) FUNC_ATTR_NONNULL_ALL
+static int nlua_exec_lua_string(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
 {
-  String *str = (String *)lua_touserdata(lstate, 1);
-  typval_T *ret_tv = (typval_T *)lua_touserdata(lstate, 2);
+  const String *const str = (String *)lua_touserdata(lstate, 1);
+  typval_T *const ret_tv = (typval_T *)lua_touserdata(lstate, 2);
   lua_pop(lstate, 2);
 
   if (luaL_loadbuffer(lstate, str->data, str->size, NLUA_EVAL_NAME)) {
@@ -138,7 +138,7 @@ static int nlua_exec_lua_string(lua_State *lstate) FUNC_ATTR_NONNULL_ALL
 /// Initialize lua interpreter state
 ///
 /// Called by lua interpreter itself to initialize state.
-static int nlua_state_init(lua_State *lstate) FUNC_ATTR_NONNULL_ALL
+static int nlua_state_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
 {
   lua_pushcfunction(lstate, &nlua_stricmp);
   lua_setglobal(lstate, "stricmp");
@@ -177,14 +177,15 @@ static lua_State *global_lstate = NULL;
 /// @param[out]  ret_tv  Location where result will be saved.
 ///
 /// @return Result of the execution.
-void executor_exec_lua(String str, typval_T *ret_tv)
+void executor_exec_lua(const String str, typval_T *const ret_tv)
   FUNC_ATTR_NONNULL_ALL
 {
   if (global_lstate == NULL) {
     global_lstate = init_lua();
   }
 
-  NLUA_CALL_C_FUNCTION_2(global_lstate, nlua_exec_lua_string, 0, &str, ret_tv);
+  NLUA_CALL_C_FUNCTION_2(global_lstate, nlua_exec_lua_string, 0,
+                         (void *)&str, ret_tv);
 }
 
 /// Evaluate lua string
@@ -196,12 +197,12 @@ void executor_exec_lua(String str, typval_T *ret_tv)
 /// 3. Pointer to location where result is saved.
 ///
 /// @param[in,out]  lstate  Lua interpreter state.
-static int nlua_eval_lua_string(lua_State *lstate)
+static int nlua_eval_lua_string(lua_State *const lstate)
   FUNC_ATTR_NONNULL_ALL
 {
-  String *str = (String *)lua_touserdata(lstate, 1);
-  typval_T *arg = (typval_T *)lua_touserdata(lstate, 2);
-  typval_T *ret_tv = (typval_T *)lua_touserdata(lstate, 3);
+  const String *const str = (String *)lua_touserdata(lstate, 1);
+  typval_T *const arg = (typval_T *)lua_touserdata(lstate, 2);
+  typval_T *const ret_tv = (typval_T *)lua_touserdata(lstate, 3);
   lua_pop(lstate, 3);
 
   garray_T str_ga;
