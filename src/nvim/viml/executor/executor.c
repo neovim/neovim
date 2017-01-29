@@ -161,7 +161,7 @@ static int nlua_exec_luado_string(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
 {
   const String *const str = (const String *)lua_touserdata(lstate, 1);
   const linenr_T *const range = (const linenr_T *)lua_touserdata(lstate, 2);
-  lua_pop(lstate, 1);
+  lua_pop(lstate, 2);
 
 #define DOSTART "return function(line, linenr) "
 #define DOEND " end"
@@ -222,6 +222,26 @@ static int nlua_exec_luado_string(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   lua_pop(lstate, 1);
   check_cursor();
   update_screen(NOT_VALID);
+  return 0;
+}
+
+/// Evaluate lua file
+///
+/// Expects one value on the stack: file to evaluate. Always returns nothing
+/// (from the lua point of view).
+static int nlua_exec_lua_file(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
+{
+  const char *const filename = (const char *)lua_touserdata(lstate, 1);
+  lua_pop(lstate, 1);
+
+  if (luaL_loadfile(lstate, filename)) {
+    nlua_error(lstate, _("E5112: Error while creating lua chunk: %.*s"));
+    return 0;
+  }
+  if (lua_pcall(lstate, 0, 0, 0)) {
+    nlua_error(lstate, _("E5113: Error while calling lua chunk: %.*s"));
+    return 0;
+  }
   return 0;
 }
 
@@ -401,4 +421,19 @@ void ex_luado(exarg_T *const eap)
   const linenr_T range[] = { eap->line1, eap->line2 };
   NLUA_CALL_C_FUNCTION_2(global_lstate, nlua_exec_luado_string, 0,
                          (void *)&cmd, (void *)range);
+}
+
+/// Run lua file
+///
+/// Used for :luafile.
+///
+/// @param  eap  VimL command being run.
+void ex_luafile(exarg_T *const eap)
+  FUNC_ATTR_NONNULL_ALL
+{
+  if (global_lstate == NULL) {
+    global_lstate = init_lua();
+  }
+  NLUA_CALL_C_FUNCTION_1(global_lstate, nlua_exec_lua_file, 0,
+                         (void *)eap->arg);
 }

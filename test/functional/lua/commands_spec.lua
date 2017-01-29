@@ -9,6 +9,7 @@ local funcs = helpers.funcs
 local source = helpers.source
 local dedent = helpers.dedent
 local exc_exec = helpers.exc_exec
+local write_file = helpers.write_file
 local redir_exec = helpers.redir_exec
 local curbufmeths = helpers.curbufmeths
 
@@ -119,5 +120,32 @@ describe(':luado command', function()
 
     eq('', redir_exec(('luado return "%s"'):format(s)))
     eq({s}, curbufmeths.get_lines(0, -1, false))
+  end)
+end)
+
+describe(':luafile', function()
+  local fname = 'Xtest-functional-lua-commands-luafile'
+
+  after_each(function()
+    os.remove(fname)
+  end)
+
+  it('works', function()
+    write_file(fname, [[
+        vim.api.nvim_buf_set_lines(1, 1, 2, false, {"ETTS"})
+        vim.api.nvim_buf_set_lines(1, 2, 3, false, {"TTSE"})
+        vim.api.nvim_buf_set_lines(1, 3, 4, false, {"STTE"})
+    ]])
+    eq('', redir_exec('luafile ' .. fname))
+    eq({'', 'ETTS', 'TTSE', 'STTE'}, curbufmeths.get_lines(0, 100, false))
+  end)
+
+  it('correctly errors out', function()
+    write_file(fname, '()')
+    eq(("Vim(luafile):E5112: Error while creating lua chunk: %s:1: unexpected symbol near ')'"):format(fname),
+       exc_exec('luafile ' .. fname))
+    write_file(fname, 'vimm.api.nvim_buf_set_lines(1, 1, 2, false, {"ETTS"})')
+    eq(("Vim(luafile):E5113: Error while calling lua chunk: %s:1: attempt to index global 'vimm' (a nil value)"):format(fname),
+       exc_exec('luafile ' .. fname))
   end)
 end)

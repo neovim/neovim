@@ -1554,7 +1554,7 @@ return {
     command='luafile',
     flags=bit.bor(RANGE, FILE1, NEEDARG, CMDWIN),
     addr_type=ADDR_LINES,
-    func='ex_ni',
+    func='ex_luafile',
   },
   {
     command='lvimgrep',
