@@ -5757,10 +5757,10 @@ int parse_addr_type_arg(char_u *value, int vallen, uint32_t *argt,
  * copied to allocated memory and stored in "*compl_arg".
  * Returns FAIL if something is wrong.
  */
-int parse_compl_arg(char_u *value, int vallen, int *complp,
+int parse_compl_arg(const char_u *value, int vallen, int *complp,
                     uint32_t *argt, char_u **compl_arg)
 {
-  char_u      *arg = NULL;
+  const char_u *arg = NULL;
   size_t arglen = 0;
   int i;
   int valend = vallen;

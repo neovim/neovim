@@ -250,15 +250,28 @@ static int nlua_exec_lua_file(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
 /// Called by lua interpreter itself to initialize state.
 static int nlua_state_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
 {
+  // stricmp
   lua_pushcfunction(lstate, &nlua_stricmp);
   lua_setglobal(lstate, "stricmp");
+
+  // print
   lua_pushcfunction(lstate, &nlua_print);
   lua_setglobal(lstate, "print");
+
+  // debug.debug
+  lua_getglobal(lstate, "debug");
+  lua_pushcfunction(lstate, &nlua_debug);
+  lua_setfield(lstate, -2, "debug");
+  lua_pop(lstate, 1);
+
+  // vim
   if (luaL_dostring(lstate, (char *)&vim_module[0])) {
     nlua_error(lstate, _("E5106: Error while creating vim module: %.*s"));
     return 1;
   }
+  // vim.api
   nlua_add_api_functions(lstate);
+  // vim.types, vim.type_idx, vim.val_idx
   nlua_init_types(lstate);
   lua_setglobal(lstate, "vim");
   return 0;
@@ -439,6 +452,31 @@ nlua_print_error:
         curargidx, errmsg_len, errmsg);
   ga_clear(&msg_ga);
   lua_pop(lstate, lua_gettop(lstate));
+  return 0;
+}
+
+/// debug.debug implementation: interaction with user while debugging
+///
+/// @param  lstate  Lua interpreter state.
+int nlua_debug(lua_State *lstate)
+  FUNC_ATTR_NONNULL_ALL
+{
+  for (;;) {
+    lua_settop(lstate, 0);
+    char *const input = get_user_input("lua_debug> ", "", NULL, NULL);
+    msg_putchar('\n');  // Avoid outputting on input line.
+    if (input == NULL || *input == NUL || strcmp(input, "cont") == 0) {
+      xfree(input);
+      return 0;
+    }
+    if (luaL_loadbuffer(lstate, input, strlen(input), "=(debug command)")) {
+      nlua_error(lstate, _("E5115: Error while loading debug string: %.*s"));
+    }
+    xfree(input);
+    if (lua_pcall(lstate, 0, 0, 0)) {
+      nlua_error(lstate, _("E5116: Error while calling debug string: %.*s"));
+    }
+  }
   return 0;
 }
 

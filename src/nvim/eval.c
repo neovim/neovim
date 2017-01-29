@@ -12280,93 +12280,70 @@ static void f_index(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
 static int inputsecret_flag = 0;
 
-
-/*
- * This function is used by f_input() and f_inputdialog() functions. The third
- * argument to f_input() specifies the type of completion to use at the
- * prompt. The third argument to f_inputdialog() specifies the value to return
- * when the user cancels the prompt.
- */
-static void get_user_input(typval_T *argvars, typval_T *rettv, int inputdialog)
+/// Get user input
+///
+/// Used for f_input and f_inputdialog functions.
+///
+/// @param[in]  prompt  Input prompt.
+/// @param[in]  initval  Initial value, may be NULL.
+/// @param[in]  xp_name  Completion, for input().
+/// @param[in]  cancelval  Value returned when user cancelled dialog, for
+///                        inputdialog().
+///
+/// @return [allocated] User input or NULL.
+char *get_user_input(const char *const prompt,
+                     const char *const initval,
+                     const char *const xp_name,
+                     const char *const cancelval)
+  FUNC_ATTR_NONNULL_ARG(1, 2) FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_MALLOC
 {
-  char_u      *prompt = get_tv_string_chk(&argvars[0]);
-  char_u      *p = NULL;
-  int c;
-  char_u buf[NUMBUFLEN];
-  int cmd_silent_save = cmd_silent;
-  char_u      *defstr = (char_u *)"";
-  int xp_type = EXPAND_NOTHING;
-  char_u      *xp_arg = NULL;
-
-  rettv->v_type = VAR_STRING;
-  rettv->vval.v_string = NULL;
-
-  cmd_silent = FALSE;           /* Want to see the prompt. */
-  if (prompt != NULL) {
-    /* Only the part of the message after the last NL is considered as
-     * prompt for the command line */
-    p = vim_strrchr(prompt, '\n');
-    if (p == NULL)
-      p = prompt;
-    else {
-      ++p;
-      c = *p;
-      *p = NUL;
-      msg_start();
-      msg_clr_eos();
-      msg_puts_attr((const char *)prompt, echo_attr);
-      msg_didout = false;
-      msg_starthere();
-      *p = c;
-    }
-    cmdline_row = msg_row;
-
-    if (argvars[1].v_type != VAR_UNKNOWN) {
-      defstr = get_tv_string_buf_chk(&argvars[1], buf);
-      if (defstr != NULL)
-        stuffReadbuffSpec(defstr);
-
-      if (!inputdialog && argvars[2].v_type != VAR_UNKNOWN) {
-        char_u  *xp_name;
-        int xp_namelen;
-        uint32_t argt;
-
-        /* input() with a third argument: completion */
-        rettv->vval.v_string = NULL;
-
-        xp_name = get_tv_string_buf_chk(&argvars[2], buf);
-        if (xp_name == NULL)
-          return;
-
-        xp_namelen = (int)STRLEN(xp_name);
-
-        if (parse_compl_arg(xp_name, xp_namelen, &xp_type, &argt,
-                &xp_arg) == FAIL)
-          return;
-      }
-    }
-
-    if (defstr != NULL) {
-      int save_ex_normal_busy = ex_normal_busy;
-      ex_normal_busy = 0;
-      rettv->vval.v_string =
-        getcmdline_prompt(inputsecret_flag ? NUL : '@', p, echo_attr,
-            xp_type, xp_arg);
-      ex_normal_busy = save_ex_normal_busy;
-    }
-    if (inputdialog && rettv->vval.v_string == NULL
-        && argvars[1].v_type != VAR_UNKNOWN
-        && argvars[2].v_type != VAR_UNKNOWN)
-      rettv->vval.v_string = vim_strsave(get_tv_string_buf(
-              &argvars[2], buf));
-
-    xfree(xp_arg);
-
-    /* since the user typed this, no need to wait for return */
-    need_wait_return = FALSE;
-    msg_didout = FALSE;
+  char *ret = NULL;
+  const int saved_cmd_silent = cmd_silent;
+  cmd_silent = false;  // Want to see the prompt.
+  // Only the part of the message after the last NL is considered as
+  // prompt for the command line.
+  const char *p = strrchr(prompt, NL);
+  if (p == NULL) {
+    p = prompt;
+  } else {
+    p++;
+    msg_start();
+    msg_clr_eos();
+    msg_puts_attr_len(prompt, (int)(p - prompt) + 1, echo_attr);
+    msg_didout = false;
+    msg_starthere();
   }
-  cmd_silent = cmd_silent_save;
+  cmdline_row = msg_row;
+
+  stuffReadbuffSpec((char_u *)initval);
+
+  char *xp_arg = NULL;
+  int xp_type = EXPAND_NOTHING;
+  if (xp_name != NULL) {
+    uint32_t argt;
+    if (parse_compl_arg((const char_u *)xp_name, (int)strlen(xp_name),
+                        &xp_type, &argt, (char_u **)&xp_arg) == FAIL) {
+      return NULL;
+    }
+  }
+
+  const int saved_ex_normal_busy = ex_normal_busy;
+  ex_normal_busy = 0;
+  ret = (char *)getcmdline_prompt(inputsecret_flag ? NUL : '@', (char_u *)p,
+                                  echo_attr, xp_type, (char_u *)xp_arg);
+  ex_normal_busy = saved_ex_normal_busy;
+
+  if (ret == NULL && cancelval != NULL) {
+    ret = xstrdup(cancelval);
+  }
+
+  xfree(xp_arg);
+
+  // Since the user typed this, no need to wait for return.
+  need_wait_return = false;
+  msg_didout = false;
+  cmd_silent = saved_cmd_silent;
+  return ret;
 }
 
 /*
@@ -12375,7 +12352,25 @@ static void get_user_input(typval_T *argvars, typval_T *rettv, int inputdialog)
  */
 static void f_input(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  get_user_input(argvars, rettv, FALSE);
+  char initval_buf[NUMBUFLEN];
+  char xp_name_buf[NUMBUFLEN];
+  const char *const prompt = (const char *)get_tv_string_chk(&argvars[0]);
+  const char *const initval = (
+      argvars[1].v_type != VAR_UNKNOWN
+      ? (const char *)get_tv_string_buf(&argvars[1], (char_u *)initval_buf)
+      : "");
+  const char *const xp_name = (
+      argvars[1].v_type != VAR_UNKNOWN && argvars[2].v_type != VAR_UNKNOWN
+      ? (const char *)get_tv_string_buf(&argvars[2], (char_u *)xp_name_buf)
+      : NULL);
+  if (prompt == NULL || initval == NULL || (
+          argvars[1].v_type != VAR_UNKNOWN && argvars[2].v_type != VAR_UNKNOWN
+          && xp_name == NULL)) {
+    return;
+  }
+  rettv->v_type = VAR_STRING;
+  rettv->vval.v_string = (char_u *)get_user_input(prompt, initval, xp_name,
+                                                  NULL);
 }
 
 /*
@@ -12383,7 +12378,25 @@ static void f_input(typval_T *argvars, typval_T *rettv, FunPtr fptr)
  */
 static void f_inputdialog(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  get_user_input(argvars, rettv, TRUE);
+  char initval_buf[NUMBUFLEN];
+  char cancelval_buf[NUMBUFLEN];
+  const char *const prompt = (const char *)get_tv_string_chk(&argvars[0]);
+  const char *const initval = (
+      argvars[1].v_type != VAR_UNKNOWN
+      ? (const char *)get_tv_string_buf(&argvars[1], (char_u *)initval_buf)
+      : "");
+  const char *const cancelval = (
+      argvars[1].v_type != VAR_UNKNOWN && argvars[2].v_type != VAR_UNKNOWN
+      ? (const char *)get_tv_string_buf(&argvars[2], (char_u *)cancelval_buf)
+      : NULL);
+  if (prompt == NULL || initval == NULL || (
+          argvars[1].v_type != VAR_UNKNOWN && argvars[2].v_type != VAR_UNKNOWN
+          && cancelval == NULL)) {
+    return;
+  }
+  rettv->v_type = VAR_STRING;
+  rettv->vval.v_string = (char_u *)get_user_input(prompt, initval, NULL,
+                                                  cancelval);
 }
 
 /*

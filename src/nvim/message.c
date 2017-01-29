@@ -1564,7 +1564,6 @@ void msg_puts_attr(const char *const s, const int attr)
 
 /// Like msg_puts_attr(), but with a maximum length "maxlen" (in bytes).
 /// When "maxlen" is -1 there is no maximum length.
-/// When "maxlen" is >= 0 the message is not put in the history.
 void msg_puts_attr_len(const char *str, const ptrdiff_t maxlen, int attr)
 {
   // If redirection is on, also write to the redirection file.
@@ -1576,7 +1575,7 @@ void msg_puts_attr_len(const char *str, const ptrdiff_t maxlen, int attr)
   }
 
   // if MSG_HIST flag set, add message to history
-  if ((attr & MSG_HIST) && maxlen < 0) {
+  if (attr & MSG_HIST) {
     add_msg_hist(str, -1, attr);
     attr &= ~MSG_HIST;
   }
