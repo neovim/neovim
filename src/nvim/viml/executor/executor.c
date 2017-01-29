@@ -182,7 +182,13 @@ static int nlua_exec_luado_string(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
 
   if (luaL_loadbuffer(lstate, lcmd, lcmd_len, NLUA_EVAL_NAME)) {
     nlua_error(lstate, _("E5109: Error while creating lua chunk: %.*s"));
+    if (lcmd_len >= IOSIZE) {
+      xfree(lcmd);
+    }
     return 0;
+  }
+  if (lcmd_len >= IOSIZE) {
+    xfree(lcmd);
   }
   if (lua_pcall(lstate, 0, 1, 0)) {
     nlua_error(lstate, _("E5110: Error while creating lua function: %.*s"));

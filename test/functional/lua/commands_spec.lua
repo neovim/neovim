@@ -62,6 +62,15 @@ describe(':lua command', function()
     eq(NIL, funcs.luaeval('lvar'))
     eq(42, funcs.luaeval('gvar'))
   end)
+  it('works with long strings', function()
+    local s = ('x'):rep(100500)
+
+    eq('\nE5104: Error while creating lua chunk: [string "<VimL compiled string>"]:1: unfinished string near \'<eof>\'', redir_exec(('lua vim.api.nvim_buf_set_lines(1, 1, 2, false, {"%s})'):format(s)))
+    eq({''}, curbufmeths.get_lines(0, -1, false))
+
+    eq('', redir_exec(('lua vim.api.nvim_buf_set_lines(1, 1, 2, false, {"%s"})'):format(s)))
+    eq({'', s}, curbufmeths.get_lines(0, -1, false))
+  end)
 end)
 
 describe(':luado command', function()
@@ -104,6 +113,10 @@ describe(':luado command', function()
   end)
   it('works with long strings', function()
     local s = ('x'):rep(100500)
+
+    eq('\nE5109: Error while creating lua chunk: [string "<VimL compiled string>"]:1: unfinished string near \'<eof>\'', redir_exec(('luado return "%s'):format(s)))
+    eq({''}, curbufmeths.get_lines(0, -1, false))
+
     eq('', redir_exec(('luado return "%s"'):format(s)))
     eq({s}, curbufmeths.get_lines(0, -1, false))
   end)
