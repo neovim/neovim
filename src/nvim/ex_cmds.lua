@@ -1548,7 +1548,7 @@ return {
     command='luado',
     flags=bit.bor(RANGE, DFLALL, EXTRA, NEEDARG, CMDWIN),
     addr_type=ADDR_LINES,
-    func='ex_ni',
+    func='ex_luado',
   },
   {
     command='luafile',

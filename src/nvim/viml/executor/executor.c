@@ -12,6 +12,13 @@
 #include "nvim/vim.h"
 #include "nvim/ex_getln.h"
 #include "nvim/message.h"
+#include "nvim/memline.h"
+#include "nvim/buffer_defs.h"
+#include "nvim/macros.h"
+#include "nvim/screen.h"
+#include "nvim/cursor.h"
+#include "nvim/undo.h"
+#include "nvim/ascii.h"
 
 #include "nvim/viml/executor/executor.h"
 #include "nvim/viml/executor/converter.h"
@@ -37,6 +44,17 @@ typedef struct {
     do { \
       lua_pushcfunction(lstate, &function); \
       lua_call(lstate, 0, numret); \
+    } while (0)
+/// Call C function which expects one argument
+///
+/// @param  function  Called function
+/// @param  numret    Number of returned arguments
+/// @param  a…        Supplied argument (should be a void* pointer)
+#define NLUA_CALL_C_FUNCTION_1(lstate, function, numret, a1) \
+    do { \
+      lua_pushcfunction(lstate, &function); \
+      lua_pushlightuserdata(lstate, a1); \
+      lua_call(lstate, 1, numret); \
     } while (0)
 /// Call C function which expects two arguments
 ///
@@ -117,7 +135,7 @@ static int nlua_stricmp(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
 /// of view).
 static int nlua_exec_lua_string(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
 {
-  const String *const str = (String *)lua_touserdata(lstate, 1);
+  const String *const str = (const String *)lua_touserdata(lstate, 1);
   typval_T *const ret_tv = (typval_T *)lua_touserdata(lstate, 2);
   lua_pop(lstate, 2);
 
@@ -132,6 +150,79 @@ static int nlua_exec_lua_string(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   if (!nlua_pop_typval(lstate, ret_tv)) {
     return 0;
   }
+  return 0;
+}
+
+/// Evaluate lua string for each line in range
+///
+/// Expects two values on the stack: string to evaluate and pointer to integer
+/// array with line range. Always returns nothing (from the lua point of view).
+static int nlua_exec_luado_string(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
+{
+  const String *const str = (const String *)lua_touserdata(lstate, 1);
+  const linenr_T *const range = (const linenr_T *)lua_touserdata(lstate, 1);
+  lua_pop(lstate, 1);
+
+#define DOSTART "return function(line, linenr) "
+#define DOEND " end"
+  const size_t lcmd_len = str->size + (sizeof(DOSTART) - 1) + (sizeof(DOEND) - 1);
+  char *lcmd;
+  if (lcmd_len < IOSIZE) {
+    lcmd = (char *)IObuff;
+  } else {
+    lcmd = xmalloc(lcmd_len);
+  }
+  memcpy(lcmd, S_LEN(DOSTART));
+  memcpy(lcmd + sizeof(DOSTART) - 1, str->data, str->size);
+  memcpy(lcmd + sizeof(DOSTART) - 1 + str->size, S_LEN(DOEND));
+#undef DOSTART
+#undef DOEND
+
+  if (luaL_loadbuffer(lstate, lcmd, lcmd_len, NLUA_EVAL_NAME)) {
+    nlua_error(lstate, _("E5109: Error while creating lua chunk: %.*s"));
+    return 0;
+  }
+  if (lua_pcall(lstate, 0, 1, 0)) {
+    nlua_error(lstate, _("E5110: Error while creating lua function: %.*s"));
+    return 0;
+  }
+  for (linenr_T l = range[0]; l < range[1]; l++) {
+    if (l > curbuf->b_ml.ml_line_count) {
+      break;
+    }
+    lua_pushvalue(lstate, -1);
+    lua_pushstring(lstate, (const char *)ml_get_buf(curbuf, l, false));
+    lua_pushnumber(lstate, (lua_Number)l);
+    if (lua_pcall(lstate, 2, 1, 0)) {
+      nlua_error(lstate, _("E5111: Error while calling lua function: %.*s"));
+      break;
+    }
+    if (lua_isstring(lstate, -1)) {
+      if (sandbox) {
+        EMSG(_("E5112: Not allowed in sandbox"));
+        lua_pop(lstate, 1);
+        break;
+      }
+      size_t new_line_len;
+      const char *new_line = lua_tolstring(lstate, -1, &new_line_len);
+      char *const new_line_transformed = (
+          new_line_len < IOSIZE
+          ? memcpy(IObuff, new_line, new_line_len)
+          : xmemdupz(new_line, new_line_len));
+      new_line_transformed[new_line_len] = NUL;
+      for (size_t i = 0; i < new_line_len; i++) {
+        if (new_line_transformed[new_line_len] == NUL) {
+          new_line_transformed[new_line_len] = '\n';
+        }
+      }
+      ml_replace(l, (char_u *)new_line_transformed, true);
+      changed_bytes(l, 0);
+    }
+    lua_pop(lstate, 1);
+  }
+  lua_pop(lstate, 1);
+  check_cursor();
+  update_screen(NOT_VALID);
   return 0;
 }
 
@@ -200,7 +291,7 @@ void executor_exec_lua(const String str, typval_T *const ret_tv)
 static int nlua_eval_lua_string(lua_State *const lstate)
   FUNC_ATTR_NONNULL_ALL
 {
-  const String *const str = (String *)lua_touserdata(lstate, 1);
+  const String *const str = (const String *)lua_touserdata(lstate, 1);
   typval_T *const arg = (typval_T *)lua_touserdata(lstate, 2);
   typval_T *const ret_tv = (typval_T *)lua_touserdata(lstate, 3);
   lua_pop(lstate, 3);
@@ -215,7 +306,7 @@ static int nlua_eval_lua_string(lua_State *const lstate)
   } else {
     lcmd = xmalloc(lcmd_len);
   }
-  memcpy(lcmd, EVALHEADER, sizeof(EVALHEADER) - 1);
+  memcpy(lcmd, S_LEN(EVALHEADER));
   memcpy(lcmd + sizeof(EVALHEADER) - 1, str->data, str->size);
   lcmd[lcmd_len - 1] = ')';
 #undef EVALHEADER
@@ -287,4 +378,28 @@ void ex_lua(exarg_T *const eap)
   executor_exec_lua((String) { .data = code, .size = len }, &tv);
   clear_tv(&tv);
   xfree(code);
+}
+
+/// Run lua string for each line in range
+///
+/// Used for :luado.
+///
+/// @param  eap  VimL command being run.
+void ex_luado(exarg_T *const eap)
+  FUNC_ATTR_NONNULL_ALL
+{
+  if (global_lstate == NULL) {
+    global_lstate = init_lua();
+  }
+  if (u_save(eap->line1 - 1, eap->line2 + 1) == FAIL) {
+    EMSG(_("cannot save undo information"));
+    return;
+  }
+  const String cmd = {
+    .size = STRLEN(eap->arg),
+    .data = (char *)eap->arg,
+  };
+  const linenr_T range[] = { eap->line1, eap->line2 };
+  NLUA_CALL_C_FUNCTION_2(global_lstate, nlua_exec_luado_string, 0,
+                         (void *)&cmd, (void *)range);
 }

@@ -36,7 +36,7 @@ describe('luaeval()', function()
     it('is successfully received', function()
       local t = {t=true, f=false, --[[n=NIL,]] d={l={'string', 42, 0.42}}}
       eq(t, funcs.luaeval("_A", t))
-      -- Not tested: nil, funcrefs, returned object identity: behaviour will 
+      -- Not tested: nil, funcrefs, returned object identity: behaviour will
       -- most likely change.
     end)
   end)
