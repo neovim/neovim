@@ -1,14 +1,18 @@
 -- Test for Vim overrides of lua built-ins
 local helpers = require('test.functional.helpers')(after_each)
+local Screen = require('test.functional.ui.screen')
 
 local eq = helpers.eq
 local NIL = helpers.NIL
+local feed = helpers.feed
 local clear = helpers.clear
 local funcs = helpers.funcs
 local meths = helpers.meths
 local command = helpers.command
 local write_file = helpers.write_file
 local redir_exec = helpers.redir_exec
+
+local screen
 
 local fname = 'Xtest-functional-lua-overrides-luafile'
 
@@ -61,5 +65,112 @@ describe('print', function()
        redir_exec([[lua print("abc \0 def\nghi\0\0\0jkl\nTEST\n\n\nT\0")]]))
     eq('\nT^@', redir_exec([[lua print("T\0")]]))
     eq('\nT\n', redir_exec([[lua print("T\n")]]))
+  end)
+end)
+
+describe('debug.debug', function()
+  before_each(function()
+    screen = Screen.new()
+    screen:attach()
+    screen:set_default_attr_ids({
+      [0] = {bold=true, foreground=255},
+      E = {foreground = Screen.colors.Grey100, background = Screen.colors.Red},
+      cr = {bold = true, foreground = Screen.colors.SeaGreen4},
+    })
+  end)
+  it('works', function()
+    write_file(fname, [[
+      function Test(a)
+        print(a)
+        debug.debug()
+        print(a * 100)
+      end
+    ]])
+    eq('', redir_exec('luafile ' .. fname))
+    feed(':lua Test()\n')
+    screen:expect([[
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      nil                                                  |
+      lua_debug> ^                                          |
+    ]])
+    feed('print("TEST")\n')
+    screen:expect([[
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      nil                                                  |
+      lua_debug> print("TEST")                             |
+      TEST                                                 |
+      lua_debug> ^                                          |
+    ]])
+    feed('<C-c>')
+    screen:expect([[
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      nil                                                  |
+      lua_debug> print("TEST")                             |
+      TEST                                                 |
+                                                           |
+      {E:E5105: Error while calling lua chunk: Xtest-functiona}|
+      {E:l-lua-overrides-luafile:4: attempt to perform arithme}|
+      {E:tic on local 'a' (a nil value)}                       |
+      Interrupt: {cr:Press ENTER or type command to continue}^   |
+    ]])
+    feed('<C-l>:lua Test()\n')
+    screen:expect([[
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      nil                                                  |
+      lua_debug> ^                                          |
+    ]])
+    feed('\n')
+    screen:expect([[
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      nil                                                  |
+      lua_debug>                                           |
+      {E:E5105: Error while calling lua chunk: Xtest-functiona}|
+      {E:l-lua-overrides-luafile:4: attempt to perform arithme}|
+      {E:tic on local 'a' (a nil value)}                       |
+      {cr:Press ENTER or type command to continue}^              |
+    ]])
   end)
 end)
