@@ -321,9 +321,11 @@ target_link_libraries(nvim ${NVIM_EXEC_LINK_LIBRARIES})
 install_helper(TARGETS nvim)
 
 if(PREFER_LUAJIT)
-  target_include_directories(nvim SYSTEM PRIVATE ${LUAJIT_INCLUDE_DIRS})
+  set_property(TARGET nvim APPEND PROPERTY
+               INCLUDE_DIRECTORIES ${LUAJIT_INCLUDE_DIRS})
 else()
-  target_include_directories(nvim SYSTEM PRIVATE ${LUA_INCLUDE_DIRS})
+  set_property(TARGET nvim APPEND PROPERTY
+               INCLUDE_DIRECTORIES ${LUA_INCLUDE_DIRS})
 endif()
 
 if(WIN32)
@@ -374,7 +376,8 @@ endif()
 
 add_library(libnvim STATIC EXCLUDE_FROM_ALL ${NEOVIM_GENERATED_SOURCES}
   ${NEOVIM_SOURCES} ${NEOVIM_HEADERS})
-target_include_directories(libnvim SYSTEM PRIVATE ${LUAJIT_INCLUDE_DIRS})
+set_property(TARGET libnvim APPEND PROPERTY
+             INCLUDE_DIRECTORIES ${LUAJIT_INCLUDE_DIRS})
 target_link_libraries(libnvim ${NVIM_TEST_LINK_LIBRARIES})
 set_target_properties(libnvim PROPERTIES
   POSITION_INDEPENDENT_CODE ON
@@ -385,7 +388,8 @@ set_property(TARGET libnvim
 add_library(nvim-test MODULE EXCLUDE_FROM_ALL ${NEOVIM_GENERATED_SOURCES}
     ${NEOVIM_SOURCES} ${UNIT_TEST_FIXTURES} ${NEOVIM_HEADERS})
 target_link_libraries(nvim-test ${NVIM_TEST_LINK_LIBRARIES})
-target_include_directories(nvim-test SYSTEM PRIVATE ${LUAJIT_INCLUDE_DIRS})
+set_property(TARGET nvim-test APPEND PROPERTY
+             INCLUDE_DIRECTORIES ${LUAJIT_INCLUDE_DIRS})
 set_target_properties(nvim-test PROPERTIES
                       POSITION_INDEPENDENT_CODE ON)
 set_property(TARGET nvim-test
