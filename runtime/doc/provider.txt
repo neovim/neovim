@@ -97,6 +97,9 @@ are found in your `$PATH`.
   - lemonade (for SSH) https://github.com/pocke/lemonade
   - doitclient (for SSH) http://www.chiark.greenend.org.uk/~sgtatham/doit/
 
+If you would like to set the executable explicitly: >
+    let g:clipboard_executable = 'pbcopy'
+
 The presence of a suitable clipboard tool implicitly enables the '+' and '*'
 registers.
 
