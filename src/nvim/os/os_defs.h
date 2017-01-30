@@ -8,7 +8,7 @@
 #include <sys/types.h>
 
 #ifdef WIN32
-# include "nvim/os/win_defs.h"
+# include "nvim/os/windep/win_defs.h"
 #else
 # include "nvim/os/unix_defs.h"
 #endif

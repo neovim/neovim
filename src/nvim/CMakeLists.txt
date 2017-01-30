@@ -61,6 +61,9 @@ foreach(subdir
   if(${subdir} MATCHES "tui" AND NOT FEAT_TUI)
     continue()
   endif()
+  if(WIN32 AND ${subdir} MATCHES "windep")
+	continue()
+  endif()
 
   file(MAKE_DIRECTORY ${GENERATED_DIR}/${subdir})
   file(MAKE_DIRECTORY ${GENERATED_INCLUDES_DIR}/${subdir})
