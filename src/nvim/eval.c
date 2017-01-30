@@ -12363,8 +12363,8 @@ static void f_input(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       argvars[1].v_type != VAR_UNKNOWN && argvars[2].v_type != VAR_UNKNOWN
       ? (const char *)get_tv_string_buf(&argvars[2], (char_u *)xp_name_buf)
       : NULL);
-  if (prompt == NULL || initval == NULL || (
-          argvars[1].v_type != VAR_UNKNOWN && argvars[2].v_type != VAR_UNKNOWN
+  if (prompt == NULL || initval == NULL
+      || (argvars[1].v_type != VAR_UNKNOWN && argvars[2].v_type != VAR_UNKNOWN
           && xp_name == NULL)) {
     return;
   }
@@ -12389,8 +12389,8 @@ static void f_inputdialog(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       argvars[1].v_type != VAR_UNKNOWN && argvars[2].v_type != VAR_UNKNOWN
       ? (const char *)get_tv_string_buf(&argvars[2], (char_u *)cancelval_buf)
       : NULL);
-  if (prompt == NULL || initval == NULL || (
-          argvars[1].v_type != VAR_UNKNOWN && argvars[2].v_type != VAR_UNKNOWN
+  if (prompt == NULL || initval == NULL
+      || (argvars[1].v_type != VAR_UNKNOWN && argvars[2].v_type != VAR_UNKNOWN
           && cancelval == NULL)) {
     return;
   }

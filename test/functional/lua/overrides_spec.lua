@@ -79,14 +79,13 @@ describe('debug.debug', function()
     })
   end)
   it('works', function()
-    write_file(fname, [[
+    command([[lua
       function Test(a)
         print(a)
         debug.debug()
         print(a * 100)
       end
     ]])
-    eq('', redir_exec('luafile ' .. fname))
     feed(':lua Test()\n')
     screen:expect([[
       {0:~                                                    }|
@@ -133,9 +132,9 @@ describe('debug.debug', function()
       lua_debug> print("TEST")                             |
       TEST                                                 |
                                                            |
-      {E:E5105: Error while calling lua chunk: Xtest-functiona}|
-      {E:l-lua-overrides-luafile:4: attempt to perform arithme}|
-      {E:tic on local 'a' (a nil value)}                       |
+      {E:E5105: Error while calling lua chunk: [string "<VimL }|
+      {E:compiled string>"]:5: attempt to perform arithmetic o}|
+      {E:n local 'a' (a nil value)}                            |
       Interrupt: {cr:Press ENTER or type command to continue}^   |
     ]])
     feed('<C-l>:lua Test()\n')
@@ -167,9 +166,9 @@ describe('debug.debug', function()
       {0:~                                                    }|
       nil                                                  |
       lua_debug>                                           |
-      {E:E5105: Error while calling lua chunk: Xtest-functiona}|
-      {E:l-lua-overrides-luafile:4: attempt to perform arithme}|
-      {E:tic on local 'a' (a nil value)}                       |
+      {E:E5105: Error while calling lua chunk: [string "<VimL }|
+      {E:compiled string>"]:5: attempt to perform arithmetic o}|
+      {E:n local 'a' (a nil value)}                            |
       {cr:Press ENTER or type command to continue}^              |
     ]])
   end)
