@@ -195,7 +195,7 @@ local function dedent(str)
       indent = line_indent
     end
   end
-  if #indent == 0 then
+  if indent == nil or #indent == 0 then
     -- no minimum common indent
     return str
   end
