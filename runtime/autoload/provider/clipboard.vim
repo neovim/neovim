@@ -46,16 +46,9 @@ function! provider#clipboard#Error() abort
   return s:err
 endfunction
 
-function! s:set_provider(p) abort
-    let s:copy['+'] = a:p.copy['+']
-    let s:paste['+'] = a:p.paste['+']
-    let s:copy['*'] = a:p.copy['*']
-    let s:copy['*'] = a:p.paste['*']
-    let s:cache_enabled = a:p.cache_enabled
-endfunction
-
-let s:defaults = {
-      \ 'pbcopy': {
+let s:providers = [
+      \ {
+      \   'name': 'pbcopy/pbpaste',
       \   'copy': {
       \      '+': 'pbcopy',
       \      '*': 'pbcopy',
@@ -65,8 +58,10 @@ let s:defaults = {
       \      '*': 'pbpaste',
       \   },
       \   'cache_enabled': 0,
+      \   'check': 'executable("pbcopy")',
       \ },
-      \ 'xsel': {
+      \ {
+      \   'name': 'xsel',
       \   'copy': {
       \      '+': 'xsel --nodetach -i -b',
       \      '*': 'xsel --nodetach -i -p',
@@ -76,8 +71,10 @@ let s:defaults = {
       \      '*': 'xsel -o -p',
       \   },
       \   'cache_enabled': 1,
+      \   'check': 'exists("$DISPLAY") && executable("xsel") && s:cmd_ok("xsel -o -b")',
       \ },
-      \ 'xclip': {
+      \ {
+      \   'name': 'xclip',
       \   'copy': {
       \      '+': 'xclip -quiet -i -selection clipboard',
       \      '*': 'xclip -quiet -i -selection primary',
@@ -87,8 +84,10 @@ let s:defaults = {
       \      '*': 'xclip -o -selection primary',
       \   },
       \   'cache_enabled': 1,
+      \   'check': 'exists("$DISPLAY") && executable("xclip")',
       \ },
-      \ 'lemonade': {
+      \ {
+      \   'name': 'lemonade',
       \   'copy': {
       \      '+': 'lemonade copy',
       \      '*': 'lemonade copy',
@@ -98,8 +97,10 @@ let s:defaults = {
       \      '*': 'lemonade paste',
       \   },
       \   'cache_enabled': 1,
+      \   'check': 'executable("lemonade")',
       \ },
-      \ 'doitclient': {
+      \ {
+      \   'name': 'doitclient',
       \   'copy': {
       \      '+': 'doitclient wclip',
       \      '*': 'doitclient wclip',
@@ -109,8 +110,10 @@ let s:defaults = {
       \      '*': 'doitclient wclip -r',
       \   },
       \   'cache_enabled': 1,
+      \   'check': 'executable("doitclient")',
       \ },
-      \ 'win32yank': {
+      \ {
+      \   'name': 'win32yank',
       \   'copy': {
       \      '+': 'win32yank -i --crlf',
       \      '*': 'win32yank -i --crlf',
@@ -120,32 +123,30 @@ let s:defaults = {
       \      '*': 'win32yank -i --lf',
       \   },
       \   'cache_enabled': 1,
+      \   'check': 'executable("win32yank")',
       \ },
-      \ }
+      \ ]
+
+function! s:set_provider(p) abort
+    let s:copy['+'] = a:p.copy['+']
+    let s:paste['+'] = a:p.paste['+']
+    let s:copy['*'] = a:p.copy['*']
+    let s:copy['*'] = a:p.paste['*']
+    let s:cache_enabled = a:p.cache_enabled
+    return a:p.name
+endfunction
 
 function! provider#clipboard#Executable() abort
   if exists('g:clipboard_provider')
-    call s:set_provider(g:clipboard_provider)
-    return g:clipboard_provider.name
+    return s:set_provider(g:clipboard_provider)
   endif
-  if has('mac') && executable('pbcopy')
-    let name = 'pbcopy'
-  elseif exists('$DISPLAY') && executable('xsel') && s:cmd_ok('xsel -o -b')
-    let name = 'xsel'
-  elseif exists('$DISPLAY') && executable('xclip')
-    let name = 'xclip'
-  elseif executable('lemonade')
-    let name = 'lemonade'
-  elseif executable('doitclient')
-    let name = 'doitclient'
-  elseif executable('win32yank')
-    let name = 'win32yank'
-  else
-    let s:err = 'clipboard: No clipboard tool available. See :help clipboard'
-    return ''
-  endif
-  call s:set_provider(s:defaults[name])
-  return name
+  for p in s:providers
+    if eval(p.check)
+      return s:set_provider(p)
+    endif
+  endfor
+  let s:err = 'clipboard: No clipboard tool available. See :help clipboard'
+  return ''
 endfunction
 
 if empty(provider#clipboard#Executable())
