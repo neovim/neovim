@@ -39,7 +39,6 @@ function! man#open_page(count, count1, mods, ...) abort
       let sect = string(a:count)
     endif
     let [sect, name, path] = s:verify_exists(sect, name)
-    let page = s:get_page(path)
   catch
     call s:error(v:exception)
     return
@@ -52,6 +51,15 @@ function! man#open_page(count, count1, mods, ...) abort
   else
     noautocmd execute 'silent' a:mods 'split' fnameescape(bufname)
   endif
+
+  try
+    let page = s:get_page(path)
+  catch
+    close
+    call s:error(v:exception)
+    return
+  endtry
+
   let b:man_sect = sect
   call s:put_page(page)
 endfunction
