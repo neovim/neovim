@@ -17,7 +17,7 @@ function! man#open_page(count, count1, mods, ...) abort
     call s:error('too many arguments')
     return
   elseif a:0 == 0
-    let ref = &filetype ==# 'man' ? expand('<cWORD>') : expand('<cword>')
+    let ref = &filetype ==# 'man' ? substitute(expand('<cWORD>'), '.\b', '', 'g') : expand('<cword>')
     if empty(ref)
       call s:error('no identifier under cursor')
       return
@@ -125,8 +125,6 @@ function! s:put_page(page) abort
   setlocal noreadonly
   silent keepjumps %delete _
   silent put =a:page
-  " Remove all backspaced characters.
-  execute 'silent keeppatterns keepjumps %substitute,.\b,,e'.(&gdefault?'':'g')
   while getline(1) =~# '^\s*$'
     silent keepjumps 1delete _
   endwhile
@@ -311,8 +309,6 @@ function! s:format_candidate(path, psect) abort
 endfunction
 
 function! man#init_pager() abort
-  " Remove all backspaced characters.
-  execute 'silent keeppatterns keepjumps %substitute,.\b,,e'.(&gdefault?'':'g')
   if getline(1) =~# '^\s*$'
     silent keepjumps 1delete _
   else
@@ -320,11 +316,26 @@ function! man#init_pager() abort
   endif
   " This is not perfect. See `man glDrawArraysInstanced`. Since the title is
   " all caps it is impossible to tell what the original capitilization was.
-  let ref = substitute(matchstr(getline(1), '^[^)]\+)'), ' ', '_', 'g')
+  " But it's usually lowercase, so we'll stick to that.
+  let ref = tolower(substitute(matchstr(getline(1), '^[^)]\+)'), ' ', '_', 'g'))
   try
     let b:man_sect = man#extract_sect_and_name_ref(ref)[0]
   catch
     let b:man_sect = ''
   endtry
   execute 'silent file man://'.fnameescape(ref)
+endfunction
+
+function! man#init_highlight_groups() abort
+  let group = 'Keyword'
+  while 1
+    let hl =  execute('highlight '.group)
+    let values = matchstr(hl, '\%(.*xxx\)\?\%(.*cleared\)\?\s*\zs.*')
+    if values !~# '^links to'
+      break
+    endif
+    let group = matchstr(values, '\w\+$')
+  endwhile
+  execute 'highlight default manBold' values 'cterm=bold gui=bold'
+  highlight default manUnderline cterm=underline gui=underline
 endfunction

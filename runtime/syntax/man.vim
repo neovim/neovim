@@ -5,18 +5,19 @@ if exists('b:current_syntax')
   finish
 endif
 
-syntax case  ignore
-syntax match manReference      display '[^()[:space:]]\+([0-9nx][a-z]*)'
-syntax match manSectionHeading display '^\S.*$'
-syntax match manTitle          display '^\%1l.*$'
-syntax match manSubHeading     display '^ \{3\}\S.*$'
-syntax match manOptionDesc     display '^\s\+\%(+\|-\)\S\+'
+syntax match manBackspacedChar      display conceal contained '.\b'
+syntax match manBold                display contains=manBackspacedChar
+      \ '\%(.\b.\)\+'
+syntax match manUnderline           display contains=manBackspacedChar
+      \ '\%(_\b[^_]\)\+'
 
-highlight default link manTitle          Title
-highlight default link manSectionHeading Statement
-highlight default link manOptionDesc     Constant
-highlight default link manReference      PreProc
-highlight default link manSubHeading     Function
+if !exists('#man_init_highlight_groups')
+  augroup man_init_highlight_groups
+    autocmd!
+    autocmd ColorScheme * call man#init_highlight_groups()
+  augroup END
+  call man#init_highlight_groups()
+endif
 
 if !exists('b:man_sect')
   call man#init_pager()
