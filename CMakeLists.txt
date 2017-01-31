@@ -257,11 +257,10 @@ if(HAS_DIAG_COLOR_FLAG)
   add_definitions(-fdiagnostics-color=auto)
 endif()
 
-option(
-  TRAVIS_CI_BUILD "Travis CI build.  Extra compilation flags will be set." OFF)
+option(TRAVIS_CI_BUILD "Travis/QuickBuild CI. Extra flags will be set." OFF)
 
 if(TRAVIS_CI_BUILD)
-  message(STATUS "Travis CI build enabled.")
+  message(STATUS "Travis/QuickBuild CI build enabled.")
   add_definitions(-Werror)
   if(DEFINED ENV{BUILD_32BIT})
     # Get some test coverage for unsigned char

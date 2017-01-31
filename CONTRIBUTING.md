@@ -90,6 +90,15 @@ Each pull request must pass the automated builds ([travis CI] and [quickbuild]).
       a commit that contains only style changes.
 - [How to investigate QuickBuild failures](https://github.com/neovim/neovim/pull/4718#issuecomment-217631350)
 
+QuickBuild uses this invocation:
+
+    mkdir -p build/${params.get("buildType")} \
+    && cd build/${params.get("buildType")} \
+    && cmake -G "Unix Makefiles" -DBUSTED_OUTPUT_TYPE=TAP -DCMAKE_BUILD_TYPE=${params.get("buildType")}
+    -DTRAVIS_CI_BUILD=ON ../.. && ${node.getAttribute("make", "make")}
+    VERBOSE=1 nvim unittest-prereqs functionaltest-prereqs
+
+
 ### Coverity
 
 [Coverity](https://scan.coverity.com/projects/neovim-neovim) runs against the
