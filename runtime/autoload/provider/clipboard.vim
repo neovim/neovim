@@ -128,10 +128,8 @@ let s:providers = [
       \ ]
 
 function! s:set_provider(p) abort
-    let s:copy['+'] = a:p.copy['+']
-    let s:paste['+'] = a:p.paste['+']
-    let s:copy['*'] = a:p.copy['*']
-    let s:copy['*'] = a:p.paste['*']
+    let s:copy = a:p.copy
+    let s:paste = a:p.paste
     let s:cache_enabled = a:p.cache_enabled
     return a:p.name
 endfunction
