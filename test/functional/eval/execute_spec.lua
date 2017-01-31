@@ -22,7 +22,11 @@ describe('execute()', function()
     eq("\nfoo\nbar", funcs.execute({'echo "foo"', 'echo "bar"'}))
   end)
 
-  it('supports nested redirection', function()
+  it('supports nested execute("execute(...)")', function()
+    eq('42', funcs.execute([[echon execute("echon execute('echon 42')")]]))
+  end)
+
+  it('supports nested :redir to a variable', function()
     source([[
     function! g:Foo()
       let a = ''
@@ -34,14 +38,39 @@ describe('execute()', function()
     function! g:Bar()
       let a = ''
       redir => a
+      silent echon "bar1"
       call g:Foo()
+      silent echon "bar2"
       redir END
+      silent echon "bar3"
       return a
     endfunction
     ]])
-    eq('foo', funcs.execute('call g:Bar()'))
+    eq('top1bar1foobar2bar3', funcs.execute('echon "top1"|call g:Bar()'))
+  end)
 
-    eq('42', funcs.execute([[echon execute("echon execute('echon 42')")]]))
+  it('supports nested :redir to a register', function()
+    source([[
+    let @a = ''
+    function! g:Foo()
+      redir @a>>
+      silent echon "foo"
+      redir END
+      return @a
+    endfunction
+    function! g:Bar()
+      redir @a>>
+      silent echon "bar1"
+      call g:Foo()
+      silent echon "bar2"
+      redir END
+      silent echon "bar3"
+      return @a
+    endfunction
+    ]])
+    eq('top1bar1foobar2bar3', funcs.execute('echon "top1"|call g:Bar()'))
+    -- :redir itself doesn't nest, so the redirection ends in g:Foo
+    eq('bar1foo', eval('@a'))
   end)
 
   it('captures a transformed string', function()
