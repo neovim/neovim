@@ -111,9 +111,10 @@ If you would like to configure the provider: >
           \   'cache_enabled': 1,
           \ }
 
-If the cache is enabled, neovim will track the copy command. As long as it
-does not die, the selection it last copied will be cached. Then, during
-pasting, it will be returned directly instead of calling the paste command.
+If the cache is enabled, then when a selection is copied and the copy command
+is executed, neovim will cache this selection until the copy command process
+dies. Then, when pasting, if the copy command process has not died, the cached
+selection is returned instead of executing the paste command.
 
 The presence of a suitable clipboard tool implicitly enables the '+' and '*'
 registers.
