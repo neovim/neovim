@@ -55,7 +55,10 @@ function! man#open_page(count, count1, mods, ...) abort
   try
     let page = s:get_page(path)
   catch
-    close
+    if a:mods =~# 'tab' || !s:find_man()
+      " a new window was opened
+      close
+    endif
     call s:error(v:exception)
     return
   endtry
@@ -175,13 +178,15 @@ function! s:get_path(sect, name) abort
 endfunction
 
 function! s:verify_exists(sect, name) abort
-  let path = s:get_path(a:sect, a:name)
-  if path !~# '^\/'
-    let path = s:get_path(get(b:, 'man_default_sects', ''), a:name)
-    if path !~# '^\/'
+  try
+    let path = s:get_path(a:sect, a:name)
+  catch /^command error (/
+    try
+      let path = s:get_path(get(b:, 'man_default_sects', ''), a:name)
+    catch /^command error (/
       let path = s:get_path('', a:name)
-    endif
-  endif
+    endtry
+  endtry
   " We need to extract the section from the path because sometimes
   " the actual section of the manpage is more specific than the section
   " we provided to `man`. Try ':Man 3 App::CLI'.
