@@ -1,8 +1,8 @@
 " Vim syntax file
 " Language:	TeX
 " Maintainer:	Charles E. Campbell <NdrchipO@ScampbellPfamily.AbizM>
-" Last Change:	May 02, 2016
-" Version:	95
+" Last Change:	Jun 17, 2016
+" Version:	97
 " URL:		http://www.drchip.org/astronaut/vim/index.html#SYNTAX_TEX
 "
 " Notes: {{{1
@@ -83,15 +83,16 @@ else
  let s:tex_conceal= g:tex_conceal
 endif
 if !exists("g:tex_superscripts")
- let s:tex_superscripts= "[0-9a-zA-W.,:;+-<>/()=]"
+ let s:tex_superscripts= '[0-9a-zA-W.,:;+-<>/()=]'
 else
  let s:tex_superscripts= g:tex_superscripts
 endif
 if !exists("g:tex_subscripts")
- let s:tex_subscripts= "[0-9aehijklmnoprstuvx,+-/().]"
+ let s:tex_subscripts= '[0-9aehijklmnoprstuvx,+-/().]'
 else
  let s:tex_subscripts= g:tex_subscripts
 endif
+echomsg "s:tex_subscripts=".s:tex_subscripts
 
 " Determine whether or not to use "*.sty" mode {{{1
 " The user may override the normal determination by setting
@@ -206,16 +207,16 @@ endif
 " Try to flag {} and () mismatches: {{{1
 if s:tex_fast =~# 'm'
   if !s:tex_no_error
-   syn region texMatcher		matchgroup=Delimiter start="{" skip="\\\\\|\\[{}]"	end="}"		transparent contains=@texMatchGroup,texError
-   syn region texMatcher		matchgroup=Delimiter start="\["				end="]"		transparent contains=@texMatchGroup,texError,@NoSpell
+   syn region texMatcher	matchgroup=Delimiter start="{" skip="\\\\\|\\[{}]"	end="}"			transparent contains=@texMatchGroup,texError
+   syn region texMatcher	matchgroup=Delimiter start="\["				end="]"			transparent contains=@texMatchGroup,texError,@NoSpell
   else
-   syn region texMatcher		matchgroup=Delimiter start="{" skip="\\\\\|\\[{}]"	end="}"		transparent contains=@texMatchGroup
-   syn region texMatcher		matchgroup=Delimiter start="\["				end="]"		transparent contains=@texMatchGroup
+   syn region texMatcher	matchgroup=Delimiter start="{" skip="\\\\\|\\[{}]"	end="}"			transparent contains=@texMatchGroup
+   syn region texMatcher	matchgroup=Delimiter start="\["				end="]"			transparent contains=@texMatchGroup
   endif
   if !s:tex_nospell
-   syn region texParen		start="("						end=")"		transparent contains=@texMatchGroup,@Spell
+   syn region texParen		start="("	end=")"								transparent contains=@texMatchGroup,@Spell
   else
-   syn region texParen		start="("						end=")"		transparent contains=@texMatchGroup
+   syn region texParen		start="("	end=")"								transparent contains=@texMatchGroup
   endif
 endif
 if !s:tex_no_error
@@ -266,7 +267,7 @@ syn match texLigature		"\\\([ijolL]\|ae\|oe\|ss\|AA\|AE\|OE\)$"
 syn match  texBeginEnd		"\\begin\>\|\\end\>" nextgroup=texBeginEndName
 if s:tex_fast =~# 'm'
   syn region texBeginEndName		matchgroup=Delimiter	start="{"		end="}"	contained	nextgroup=texBeginEndModifier	contains=texComment
-  syn region texBeginEndModifier	matchgroup=Delimiter	start="\["		end="]"	contained	contains=texComment,@NoSpell
+  syn region texBeginEndModifier	matchgroup=Delimiter	start="\["		end="]"	contained	contains=texComment,@texMathZones,@NoSpell
 endif
 
 " \documentclass, \documentstyle, \usepackage: {{{1
@@ -1136,9 +1137,21 @@ if has("conceal") && &enc == 'utf-8'
   call s:SuperSub('texSubscript','_','9','₉')
   call s:SuperSub('texSubscript','_','a','ₐ')
   call s:SuperSub('texSubscript','_','e','ₑ')
+  call s:SuperSub('texSubscript','_','h','ₕ')
   call s:SuperSub('texSubscript','_','i','ᵢ')
+  call s:SuperSub('texSubscript','_','j','ⱼ')
+  call s:SuperSub('texSubscript','_','k','ₖ')
+  call s:SuperSub('texSubscript','_','l','ₗ')
+  call s:SuperSub('texSubscript','_','m','ₘ')
+  call s:SuperSub('texSubscript','_','n','ₙ')
   call s:SuperSub('texSubscript','_','o','ₒ')
+  call s:SuperSub('texSubscript','_','p','ₚ')
+  call s:SuperSub('texSubscript','_','r','ᵣ')
+  call s:SuperSub('texSubscript','_','s','ₛ')
+  call s:SuperSub('texSubscript','_','t','ₜ')
   call s:SuperSub('texSubscript','_','u','ᵤ')
+  call s:SuperSub('texSubscript','_','v','ᵥ')
+  call s:SuperSub('texSubscript','_','x','ₓ')
   call s:SuperSub('texSubscript','_',',','︐')
   call s:SuperSub('texSubscript','_','+','₊')
   call s:SuperSub('texSubscript','_','-','₋')
@@ -1154,6 +1167,7 @@ if has("conceal") && &enc == 'utf-8'
   call s:SuperSub('texSubscript','_','\\phi\>'  ,'ᵩ')
   call s:SuperSub('texSubscript','_','\\gamma\>','ᵧ')
   call s:SuperSub('texSubscript','_','\\chi\>'  ,'ᵪ')
+
   delfun s:SuperSub
  endif
 

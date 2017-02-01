@@ -2109,7 +2109,7 @@ remote_peek({serverid} [, {retvar}])
 remote_read({serverid})	String	read reply string
 remote_send({server}, {string} [, {idvar}])
 				String	send key sequence
-remove({list}, {idx} [, {end}])  any	remove items {idx}-{end} from {list}
+remove({list}, {idx} [, {end}])	any	remove items {idx}-{end} from {list}
 remove({dict}, {key})		any	remove entry {key} from {dict}
 rename({from}, {to})		Number	rename (move) file from {from} to {to}
 repeat({expr}, {count})	String	repeat {expr} {count} times
@@ -2201,7 +2201,7 @@ synconcealed({lnum}, {col})	List    info about concealing
 synstack({lnum}, {col})	List	stack of syntax IDs at {lnum} and {col}
 system({cmd} [, {input}])	String	output of shell command/filter {cmd}
 systemlist({cmd} [, {input}])	List	output of shell command/filter {cmd}
-tabpagebuflist([{arg}])	List	list of buffer numbers in tab page
+tabpagebuflist([{arg}])		List	list of buffer numbers in tab page
 tabpagenr([{arg}])		Number	number of current or last tab page
 tabpagewinnr({tabarg}[, {arg}])
 				Number	number of current window in tab page
