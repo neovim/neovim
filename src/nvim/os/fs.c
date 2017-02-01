@@ -223,11 +223,14 @@ bool os_can_exe(const char_u *name, char_u **abspath, bool use_path)
   // need to use $PATH.
   if (!use_path || path_is_absolute_path(name)
       || (name[0] == '.'
-          && (name[1] == '/'
-              || (name[1] == '.' && name[2] == '/')))) {
-    // There must be a path separator, files in the current directory
-    // can't be executed
-    if (gettail_dir(name) != name && is_executable(name)) {
+          && (name[1] == '/' || (name[1] == '.' && name[2] == '/')))) {
+#if WIN32
+    bool ok = is_executable(name);
+#else
+    // Must have path separator, cannot execute files in the current directory.
+    bool ok = gettail_dir(name) != name && is_executable(name);
+#endif
+    if (ok) {
       if (abspath != NULL) {
         *abspath = save_absolute_path(name);
       }
@@ -259,8 +262,6 @@ static bool is_executable(const char_u *name)
 #else
   return (S_ISREG(mode) && (S_IXUSR & mode));
 #endif
-
-  return false;
 }
 
 /// Checks if a file is inside the `$PATH` and is executable.
@@ -272,12 +273,21 @@ static bool is_executable(const char_u *name)
 static bool is_executable_in_path(const char_u *name, char_u **abspath)
   FUNC_ATTR_NONNULL_ARG(1)
 {
-  const char *path = os_getenv("PATH");
-  if (path == NULL) {
+  const char *path_env = os_getenv("PATH");
+  if (path_env == NULL) {
     return false;
   }
 
-  size_t buf_len = STRLEN(name) + STRLEN(path) + 2;
+#ifdef WIN32
+  // Prepend ".;" to $PATH.
+  size_t pathlen = strlen(path_env);
+  char *path = memcpy(xmallocz(pathlen + 3), ".;", 2);
+  memcpy(path + 2, path_env, pathlen);
+#else
+  char *path = xstrdup(path_env);
+#endif
+
+  size_t buf_len = STRLEN(name) + strlen(path) + 2;
 
 #ifdef WIN32
   const char *pathext = os_getenv("PATHEXT");
@@ -285,20 +295,21 @@ static bool is_executable_in_path(const char_u *name, char_u **abspath)
     pathext = ".com;.exe;.bat;.cmd";
   }
 
-  buf_len += STRLEN(pathext);
+  buf_len += strlen(pathext);
 #endif
 
   char_u *buf = xmalloc(buf_len);
 
   // Walk through all entries in $PATH to check if "name" exists there and
   // is an executable file.
+  char *p = path;
+  bool rv = false;
   for (;; ) {
-    const char *e = xstrchrnul(path, ENV_SEPCHAR);
+    char *e = xstrchrnul(p, ENV_SEPCHAR);
 
-    // Glue together the given directory from $PATH with name and save into
-    // buf.
-    STRLCPY(buf, path, e - path + 1);
-    append_path((char *) buf, (const char *) name, buf_len);
+    // Glue the directory from $PATH with `name` and save into buf.
+    STRLCPY(buf, p, e - p + 1);
+    append_path((char *)buf, (char *)name, buf_len);
 
     if (is_executable(buf)) {
       // Check if the caller asked for a copy of the path.
@@ -306,9 +317,8 @@ static bool is_executable_in_path(const char_u *name, char_u **abspath)
         *abspath = save_absolute_path(buf);
       }
 
-      xfree(buf);
-
-      return true;
+      rv = true;
+      goto end;
     }
 
 #ifdef WIN32
@@ -316,9 +326,8 @@ static bool is_executable_in_path(const char_u *name, char_u **abspath)
     char *buf_end = xstrchrnul((char *)buf, '\0');
     for (const char *ext = pathext; *ext; ext++) {
       // Skip the extension if there is no suffix after a '.'.
-      if (ext[0] == '.' && (ext[1] == '\0' || ext[1] == ';')) {
+      if (ext[0] == '.' && (ext[1] == '\0' || ext[1] == ENV_SEPCHAR)) {
         *ext++;
-
         continue;
       }
 
@@ -331,9 +340,8 @@ static bool is_executable_in_path(const char_u *name, char_u **abspath)
           *abspath = save_absolute_path(buf);
         }
 
-        xfree(buf);
-
-        return true;
+        rv = true;
+        goto end;
       }
 
       if (*ext_end != ENV_SEPCHAR) {
@@ -345,16 +353,16 @@ static bool is_executable_in_path(const char_u *name, char_u **abspath)
 
     if (*e != ENV_SEPCHAR) {
       // End of $PATH without finding any executable called name.
-      xfree(buf);
-      return false;
+      goto end;
     }
 
-    path = e + 1;
+    p = e + 1;
   }
 
-  // We should never get to this point.
-  assert(false);
-  return false;
+end:
+  xfree(buf);
+  xfree(path);
+  return rv;
 }
 
 /// Opens or creates a file and returns a non-negative integer representing
