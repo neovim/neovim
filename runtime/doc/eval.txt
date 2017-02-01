@@ -3095,7 +3095,10 @@ execute({command} [, {silent}])				*execute()*
 		The default is 'silent'.  Note that with "silent!", unlike
 		`:redir`, error messages are dropped.
 
-		This function is not available in the |sandbox|.
+		To get a list of lines use |split()| on the result: >
+			split(execute('args'), "\n")
+
+<		This function is not available in the |sandbox|.
 		Note: If nested, an outer execute() will not observe output of
 		the inner calls.
 		Note: Text attributes (highlights) are not captured.

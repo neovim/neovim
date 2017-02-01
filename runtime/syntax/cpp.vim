@@ -2,7 +2,7 @@
 " Language:	C++
 " Current Maintainer:	vim-jp (https://github.com/vim-jp/vim-cpp)
 " Previous Maintainer:	Ken Shan <ccshan@post.harvard.edu>
-" Last Change:	2015 Nov 10
+" Last Change:	2016 Jul 07
 
 " For version 5.x: Clear all syntax items
 " For version 6.x: Quit when a syntax file was already loaded
@@ -80,6 +80,7 @@ if version >= 508 || !exists("did_cpp_syntax_inits")
   HiLink cppConstant		Constant
   HiLink cppRawStringDelimiter	Delimiter
   HiLink cppRawString		String
+  HiLink cppNumber		Number
   delcommand HiLink
 endif
 
