@@ -1,7 +1,7 @@
 " Vim indent file
 " Language:	Vim script
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2016 Apr 19
+" Last Change:	2016 Jun 27
 
 " Only load this indent file when no other was loaded.
 if exists("b:did_indent")
@@ -60,7 +60,7 @@ function GetVimIndentIntern()
     else
       let ind = ind + shiftwidth() * 3
     endif
-  elseif prev_text =~ '^\s*aug\%[roup]' && prev_text !~ '^\s*aug\%[roup]\s*!\=\s\+[eE][nN][dD]'
+  elseif prev_text =~ '^\s*aug\%[roup]\s\+' && prev_text !~ '^\s*aug\%[roup]\s\+[eE][nN][dD]\>'
     let ind = ind + shiftwidth()
   else
     " A line starting with :au does not increment/decrement indent.
@@ -89,7 +89,7 @@ function GetVimIndentIntern()
 
   " Subtract a 'shiftwidth' on a :endif, :endwhile, :catch, :finally, :endtry,
   " :endfun, :else and :augroup END.
-  if cur_text =~ '^\s*\(ene\@!\|cat\|fina\|el\|aug\%[roup]\s*!\=\s\+[eE][nN][dD]\)'
+  if cur_text =~ '^\s*\(ene\@!\|cat\|fina\|el\|aug\%[roup]\s\+[eE][nN][dD]\)'
     let ind = ind - shiftwidth()
   endif
 

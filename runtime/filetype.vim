@@ -1015,7 +1015,7 @@ au BufNewFile,BufRead *.jgr			setf jgraph
 au BufNewFile,BufRead *.jov,*.j73,*.jovial	setf jovial
 
 " JSON
-au BufNewFile,BufRead *.json,*.jsonp		setf json
+au BufNewFile,BufRead *.json,*.jsonp,*.webmanifest	setf json
 
 " Kixtart
 au BufNewFile,BufRead *.kix			setf kix

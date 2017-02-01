@@ -23,8 +23,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Vim(Esperanto)\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-03-29 23:03+0200\n"
-"PO-Revision-Date: 2016-03-29 23:05+0200\n"
+"POT-Creation-Date: 2016-07-02 16:21+0200\n"
+"PO-Revision-Date: 2016-07-02 17:05+0200\n"
 "Last-Translator: Dominique PELLÉ <dominique.pelle@gmail.com>\n"
 "Language-Team: \n"
 "Language: eo\n"
@@ -512,6 +512,9 @@ msgstr "E714: Listo bezonata"
 msgid "E715: Dictionary required"
 msgstr "E715: Vortaro bezonata"
 
+msgid "E928: String required"
+msgstr "E928: Ĉeno bezonata"
+
 #: ../eval.c:147
 #, c-format
 msgid "E118: Too many arguments for function: %s"
@@ -830,6 +833,10 @@ msgstr "E655: Tro da simbolaj ligiloj (ĉu estas ciklo?)"
 #: ../eval.c:12593
 msgid "reverse() argument"
 msgstr "argumento de reverse()"
+
+#, c-format
+msgid "E927: Invalid action: '%s'"
+msgstr "E927: Nevalida ago: '%s'"
 
 #: ../eval.c:13721
 msgid "sort() argument"
@@ -2012,6 +2019,9 @@ msgstr "Esprimo"
 #: ../ex_getln.c:5050
 msgid "Input Line"
 msgstr "Eniga linio"
+
+msgid "Debug Line"
+msgstr "Sencimiga linio"
 
 #: ../ex_getln.c:5117
 msgid "E198: cmd_pchar beyond the command length"
@@ -3255,6 +3265,7 @@ msgid ""
 "       i: Find files #including this file\n"
 "       s: Find this C symbol\n"
 "       t: Find this text string\n"
+"       a: Find assignments to this symbol\n"
 msgstr ""
 "\n"
 "       c: Trovi funkciojn, kiuj alvokas tiun funkcion\n"
@@ -3265,6 +3276,7 @@ msgstr ""
 "       i: Trovi dosierojn, kiuj inkluzivas (#include) tiun dosieron\n"
 "       s: Trovi tiun C-simbolon\n"
 "       t: Trovi tiun ĉenon\n"
+"       a: Trovi valirizojn al tiu simbolo\n"
 
 #: ../if_cscope.c:1226
 msgid "E568: duplicate cscope database not added"

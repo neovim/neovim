@@ -784,8 +784,16 @@ equal" and "is" can be used.  This compares the key/values of the |Dictionary|
 recursively.  Ignoring case means case is ignored when comparing item values.
 
 							*E694*
-A |Funcref| can only be compared with a |Funcref| and only "equal" and "not
-equal" can be used.  Case is never ignored.
+A |Funcref| can only be compared with a |Funcref| and only "equal", "not
+equal", "is" and "isnot" can be used.  Case is never ignored.  Whether
+arguments or a Dictionary are bound (with a partial) matters.  The
+Dictionaries must also be equal (or the same, in case of "is") and the
+arguments must be equal (or the same).
+
+To compare Funcrefs to see if they refer to the same function, ignoring bound
+Dictionary and arguments, use |get()| to get the function name: >
+	if get(Part1, 'name') == get(Part2, 'name')
+	   " Part1 and Part2 refer to the same function
 
 When using "is" or "isnot" with a |List| or a |Dictionary| this checks if the
 expressions are referring to the same |List| or |Dictionary| instance.  A copy

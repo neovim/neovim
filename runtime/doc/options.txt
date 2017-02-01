@@ -1238,8 +1238,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Only non-printable keys are allowed.
 	The key can be specified as a single character, but it is difficult to
 	type.  The preferred way is to use the <> notation.  Examples: >
-		:set cedit=<C-Y>
-		:set cedit=<Esc>
+		:exe "set cedit=\<C-Y>"
+		:exe "set cedit=\<Esc>"
 <	|Nvi| also has this option, but it only uses the first character.
 	See |cmdwin|.
 

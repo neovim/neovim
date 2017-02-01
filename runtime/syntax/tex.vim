@@ -92,7 +92,6 @@ if !exists("g:tex_subscripts")
 else
  let s:tex_subscripts= g:tex_subscripts
 endif
-echomsg "s:tex_subscripts=".s:tex_subscripts
 
 " Determine whether or not to use "*.sty" mode {{{1
 " The user may override the normal determination by setting

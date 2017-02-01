@@ -15,8 +15,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Vim(Français)\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-07-30 17:54+0200\n"
-"PO-Revision-Date: 2015-07-30 18:00+0200\n"
+"POT-Creation-Date: 2016-07-02 16:21+0200\n"
+"PO-Revision-Date: 2016-07-02 17:06+0200\n"
 "Last-Translator: Dominique Pellé <dominique.pelle@gmail.com>\n"
 "Language-Team: \n"
 "Language: fr\n"
@@ -569,6 +569,9 @@ msgstr "E714: Liste requise"
 msgid "E715: Dictionary required"
 msgstr "E715: Dictionnaire requis"
 
+msgid "E928: String required"
+msgstr "E928: Chaine requis"
+
 # DB : Suggestion
 #: ../eval.c:147
 #, c-format
@@ -899,6 +902,10 @@ msgstr "E655: Trop de liens symboliques (cycle ?)"
 #: ../eval.c:12593
 msgid "reverse() argument"
 msgstr "argument de reverse()"
+
+#, c-format
+msgid "E927: Invalid action: '%s'"
+msgstr "E927: Action invalide : « %s »"
 
 #: ../eval.c:13721
 msgid "sort() argument"
@@ -1608,7 +1615,7 @@ msgstr "E162: Le tampon %s n'a pas été enregistré"
 
 #: ../ex_cmds2.c:1480
 msgid "Warning: Entered other buffer unexpectedly (check autocommands)"
-msgstr "Alerte : Entrée inattendue dans un autre tampon (vérifier autocmdes)"
+msgstr "Alerte : Entrée inattendue dans un autre tampon (vérifier autocommandes)"
 
 #: ../ex_cmds2.c:1826
 msgid "E163: There is only one file to edit"
@@ -2176,6 +2183,9 @@ msgstr "expression"
 #: ../ex_getln.c:5050
 msgid "Input Line"
 msgstr "ligne de saisie"
+
+msgid "Debug Line"
+msgstr "Ligne de débogage"
 
 #: ../ex_getln.c:5117
 msgid "E198: cmd_pchar beyond the command length"
@@ -3442,6 +3452,7 @@ msgid ""
 "       i: Find files #including this file\n"
 "       s: Find this C symbol\n"
 "       t: Find this text string\n"
+"       a: Find assignments to this symbol\n"
 msgstr ""
 "\n"
 "       c: Trouver les fonctions appelant cette fonction\n"
@@ -3452,6 +3463,7 @@ msgstr ""
 "       i: Trouver les fichiers qui #incluent ce fichier\n"
 "       s: Trouver ce symbole C\n"
 "       t: Trouver cette chaîne\n"
+"       a: Trouver les assignements à ce symbole\n"
 
 #: ../if_cscope.c:1226
 msgid "E568: duplicate cscope database not added"
