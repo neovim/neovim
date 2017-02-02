@@ -831,3 +831,43 @@ char_u *get_env_name(expand_T *xp, int idx)
   return NULL;
 }
 
+/// Appends the head of `fname` to $PATH and sets it in the environment.
+///
+/// @param fname  Full path whose parent directory will be appended to $PATH.
+///
+/// @return true if `path` was appended-to
+bool os_setenv_append_path(const char *fname)
+  FUNC_ATTR_NONNULL_ALL
+{
+#ifdef WIN32
+// 8191 (plus NUL) is considered the practical maximum.
+# define MAX_ENVPATHLEN 8192
+#else
+// No prescribed maximum on unix.
+# define MAX_ENVPATHLEN INT_MAX
+#endif
+  if (!path_is_absolute_path((char_u *)fname)) {
+    EMSG2(_(e_intern2), "os_setenv_append_path()");
+    return false;
+  }
+  const char *tail = (char *)path_tail_with_sep((char_u *)fname);
+  const char *dir = (char *)vim_strnsave((char_u *)fname,
+                                         (size_t)(tail - fname));
+  const char *path = os_getenv("PATH");
+  const size_t pathlen = path ? strlen(path) : 0;
+  const size_t newlen = pathlen + strlen(dir) + 2;
+  if (newlen < MAX_ENVPATHLEN) {
+    char *temp = xmalloc(newlen);
+    if (pathlen == 0) {
+      temp[0] = NUL;
+    } else {
+      xstrlcpy(temp, path, newlen);
+      xstrlcat(temp, ENV_SEPSTR, newlen);
+    }
+    xstrlcat(temp, dir, newlen);
+    os_setenv("PATH", temp, 1);
+    xfree(temp);
+    return true;
+  }
+  return false;
+}

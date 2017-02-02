@@ -1686,11 +1686,7 @@ v:progname	Contains the name (with path removed) with which Nvim was
 		Read-only.
 
 					*v:progpath* *progpath-variable*
-v:progpath	Contains the command with which Vim was invoked, including the
-		path. To get the full path use: >
-			echo exepath(v:progpath)
-<		NOTE: This does not work when the command is a relative path
-		and the current directory has changed.
+v:progpath	Absolute path to the current running Nvim.
 		Read-only.
 
 					*v:register* *register-variable*
@@ -3104,13 +3100,10 @@ execute({command} [, {silent}])				*execute()*
 		Note: Text attributes (highlights) are not captured.
 
 exepath({expr})						*exepath()*
-		If {expr} is an executable and is either an absolute path, a
-		relative path or found in $PATH, return the full path.
-		Note that the current directory is used when {expr} starts
-		with "./", which may be a problem for Vim: >
-			echo exepath(v:progpath)
-<		If {expr} cannot be found in $PATH or is not executable then
-		an empty string is returned.
+		Returns the full path of {expr} if it is an executable and
+		given as a (partial or full) path or is found in $PATH.
+		Returns empty string otherwise.
+		If {expr} starts with "./" the |current-directory| is used.
 
 							*exists()*
 exists({expr})	The result is a Number, which is non-zero if {expr} is

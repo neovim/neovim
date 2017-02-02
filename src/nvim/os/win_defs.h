@@ -20,8 +20,9 @@
 
 #define FNAME_ILLEGAL "\"*?><|"
 
-// Separator character for environment variables.
+// Character that separates entries in $PATH.
 #define ENV_SEPCHAR ';'
+#define ENV_SEPSTR  ";"
 
 #define USE_CRNL
 

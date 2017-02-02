@@ -1,7 +1,6 @@
 local helpers = require('test.functional.helpers')(after_each)
-local eq, clear, execute, call, iswin, write_file =
-  helpers.eq, helpers.clear, helpers.execute, helpers.call, helpers.iswin,
-  helpers.write_file
+local eq, clear, call, iswin, write_file =
+  helpers.eq, helpers.clear, helpers.call, helpers.iswin, helpers.write_file
 
 describe('executable()', function()
   before_each(clear)
@@ -15,8 +14,28 @@ describe('executable()', function()
     eq(0, call('executable', 'no_such_file_exists_209ufq23f'))
   end)
 
+  it('sibling to nvim binary', function()
+    -- Some executable in build/bin/, *not* in $PATH nor CWD.
+    local sibling_exe = 'printargs-test'
+    -- Windows: siblings are in Nvim's "pseudo-$PATH".
+    local expected = iswin() and 1 or 0
+    if iswin() then
+      print('XXXXXXXXXXXXXXXXXXXXXXXXX')
+      print(helpers.eval('$PATH'))
+      print('XXXXXXXXXXXXXXXXXXXXXXXXX')
+      -- $PATH on AppVeyor CI might be oversized, redefine it to a minimal one.
+      clear({env={PATH=[[C:\Windows\system32;C:\Windows]]}})
+      print(helpers.eval('$PATH'))
+      print('XXXXXXXXXXXXXXXXXXXXXXXXX')
+      eq('arg1=lemon;arg2=sky;arg3=tree;',
+         call('system', sibling_exe..' lemon sky tree'))
+    end
+    eq(expected, call('executable', sibling_exe))
+  end)
+
   describe('exec-bit', function()
     setup(function()
+      clear()
       write_file('Xtest_not_executable', 'non-executable file')
       write_file('Xtest_executable', 'executable file (exec-bit set)')
       if not iswin() then  -- N/A for Windows.

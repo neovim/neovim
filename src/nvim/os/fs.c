@@ -224,7 +224,7 @@ bool os_can_exe(const char_u *name, char_u **abspath, bool use_path)
   if (!use_path || path_is_absolute_path(name)
       || (name[0] == '.'
           && (name[1] == '/' || (name[1] == '.' && name[2] == '/')))) {
-#if WIN32
+#ifdef WIN32
     bool ok = is_executable(name);
 #else
     // Must have path separator, cannot execute files in the current directory.
@@ -255,7 +255,7 @@ static bool is_executable(const char_u *name)
     return false;
   }
 
-#if WIN32
+#ifdef WIN32
   // Windows does not have exec bit; just check if the file exists and is not
   // a directory.
   return (S_ISREG(mode));
@@ -281,7 +281,7 @@ static bool is_executable_in_path(const char_u *name, char_u **abspath)
 #ifdef WIN32
   // Prepend ".;" to $PATH.
   size_t pathlen = strlen(path_env);
-  char *path = memcpy(xmallocz(pathlen + 3), ".;", 2);
+  char *path = memcpy(xmallocz(pathlen + 3), "." ENV_SEPSTR, 2);
   memcpy(path + 2, path_env, pathlen);
 #else
   char *path = xstrdup(path_env);
@@ -1027,7 +1027,7 @@ shortcut_end:
 int os_translate_sys_error(int sys_errno) {
 #ifdef HAVE_UV_TRANSLATE_SYS_ERROR
   return uv_translate_sys_error(sys_errno);
-#elif WIN32
+#elif defined(WIN32)
   // TODO(equalsraf): libuv does not yet expose uv_translate_sys_error()
   // in its public API, include a version here until it can be used.
   // See https://github.com/libuv/libuv/issues/79

@@ -16,7 +16,8 @@
 // Special wildcards that need to be handled by the shell.
 #define SPECIAL_WILDCHAR "`'{"
 
-// Separator character for environment variables.
+// Character that separates entries in $PATH.
 #define ENV_SEPCHAR ':'
+#define ENV_SEPSTR  ":"
 
 #endif  // NVIM_OS_UNIX_DEFS_H

@@ -14,15 +14,15 @@ local cimp = cimport('./src/nvim/os/os.h')
 
 describe('env function', function()
   local function os_setenv(name, value, override)
-    return cimp.os_setenv((to_cstr(name)), (to_cstr(value)), override)
+    return cimp.os_setenv(to_cstr(name), to_cstr(value), override)
   end
 
   local function os_unsetenv(name, _, _)
-    return cimp.os_unsetenv((to_cstr(name)))
+    return cimp.os_unsetenv(to_cstr(name))
   end
 
   local function os_getenv(name)
-    local rval = cimp.os_getenv((to_cstr(name)))
+    local rval = cimp.os_getenv(to_cstr(name))
     if rval ~= NULL then
       return ffi.string(rval)
     else
@@ -49,6 +49,20 @@ describe('env function', function()
       eq(value, os.getenv(name))
       eq(OK, (os_setenv(name, value_updated, 0)))
       eq(value, os.getenv(name))
+    end)
+  end)
+
+  describe('os_setenv_append_path', function()
+    it('appends /foo/bar to $PATH', function()
+      local original_path = os.getenv('PATH')
+      eq(true, cimp.os_setenv_append_path(to_cstr('/foo/bar/baz')))
+      eq(original_path..':/foo/bar', os.getenv('PATH'))
+    end)
+
+    it('returns false if `fname` is not absolute', function()
+      local original_path = os.getenv('PATH')
+      eq(false, cimp.os_setenv_append_path(to_cstr('foo/bar/baz')))
+      eq(original_path, os.getenv('PATH'))
     end)
   end)
 
