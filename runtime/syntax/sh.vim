@@ -2,15 +2,15 @@
 " Language:		shell (sh) Korn shell (ksh) bash (sh)
 " Maintainer:		Charles E. Campbell  <NdrOchipS@PcampbellAfamily.Mbiz>
 " Previous Maintainer:	Lennart Schultz <Lennart.Schultz@ecmwf.int>
-" Last Change:		May 02, 2016
-" Version:		151
+" Last Change:		Jun 10, 2016
+" Version:		152
 " URL:		http://www.drchip.org/astronaut/vim/index.html#SYNTAX_SH
 " For options and settings, please use:      :help ft-sh-syntax
 " This file includes many ideas from Eric Brunet (eric.brunet@ens.fr)
 
 " For version 5.x: Clear all syntax items {{{1
 " For version 6.x: Quit when a syntax file was already loaded
-if version < 600
+if v:version < 600
   syntax clear
 elseif exists("b:current_syntax")
   finish
@@ -173,7 +173,7 @@ if exists("b:is_kornshell") || exists("b:is_bash")
 
  " Touch: {{{1
  " =====
- syn match shTouch	'\<touch\>[^;#]*'	skipwhite nextgroup=shTouchList contains=shTouchCmd
+ syn match shTouch	'\<touch\>[^;#]*'	skipwhite nextgroup=shComment contains=shTouchCmd
  syn match shTouchCmd	'\<touch\>'		contained
 endif
 
@@ -333,9 +333,10 @@ endif
 "================================
 syn match   shNumber	"\<\d\+\>#\="
 syn match   shNumber	"-\=\.\=\d\+\>#\="
-syn match   shCtrlSeq	"\\\d\d\d\|\\[abcfnrtv0]"		contained
+syn match   shCtrlSeq	"\\\d\d\d\|\\[abcfnrtv0]"			contained
 if exists("b:is_bash")
- syn match   shSpecial	"\\\o\o\o\|\\x\x\x\|\\c[^"]\|\\[abefnrtv]"	contained
+ syn match   shSpecial	"[^\\]\(\\\\\)*\zs\\\o\o\o\|\\x\x\x\|\\c[^"]\|\\[abefnrtv]"	contained
+ syn match   shSpecial	"^\(\\\\\)*\zs\\\o\o\o\|\\x\x\x\|\\c[^"]\|\\[abefnrtv]"	contained
 endif
 if exists("b:is_bash")
  syn region  shExSingleQuote	matchgroup=shQuote start=+\$'+ skip=+\\\\\|\\.+ end=+'+	contains=shStringSpecial,shSpecial
@@ -346,11 +347,13 @@ elseif !exists("g:sh_no_error")
 endif
 syn region  shSingleQuote	matchgroup=shQuote start=+'+ end=+'+		contains=@Spell
 syn region  shDoubleQuote	matchgroup=shQuote start=+\%(\%(\\\\\)*\\\)\@<!"+ skip=+\\"+ end=+"+	contains=@shDblQuoteList,shStringSpecial,@Spell
-syn match   shStringSpecial	"[^[:print:] \t]"		contained
-syn match   shStringSpecial	"\%(\\\\\)*\\[\\"'`$()#]"
-syn match   shSpecial	"[^\\]\zs\%(\\\\\)*\\[\\"'`$()#]"
+syn match   shStringSpecial	"[^[:print:] \t]"			contained
+syn match   shStringSpecial	"[^\\]\zs\%(\\\\\)*\\[\\"'`$()#]"
+syn match   shSpecial	"[^\\]\zs\%(\\\\\)*\\[\\"'`$()#]"		nextgroup=shBkslshSnglQuote,shBkslshDblQuote
 syn match   shSpecial	"^\%(\\\\\)*\\[\\"'`$()#]"
-syn match   shMoreSpecial	"\%(\\\\\)*\\[\\"'`$()#]"		nextgroup=shMoreSpecial contained
+syn match   shMoreSpecial	"[^\\]\zs\%(\\\\\)*\\[\\"'`$()#]"		nextgroup=shMoreSpecial contained
+syn region  shBkslshSnglQuote	contained	matchgroup=shQuote start=+'+ end=+'+	contains=@Spell
+syn region  shBkslshDblQuote	contained	matchgroup=shQuote start=+"+ skip=+\\"+ end=+"+	contains=@shDblQuoteList,shStringSpecial,@Spell
 
 " Comments: {{{1
 "==========
@@ -363,31 +366,21 @@ syn match	shQuickComment	contained	"#.*$"
 
 " Here Documents: {{{1
 " =========================================
-if version < 600
- syn region shHereDoc matchgroup=shHereDoc01 start="<<\s*\**END[a-zA-Z_0-9]*\**" 	matchgroup=shHereDoc01 end="^END[a-zA-Z_0-9]*$"	contains=@shDblQuoteList
- syn region shHereDoc matchgroup=shHereDoc02 start="<<-\s*\**END[a-zA-Z_0-9]*\**"	matchgroup=shHereDoc02 end="^\s*END[a-zA-Z_0-9]*$"	contains=@shDblQuoteList
- syn region shHereDoc matchgroup=shHereDoc03 start="<<\s*\**EOF\**"		matchgroup=shHereDoc03 end="^EOF$"	contains=@shDblQuoteList
- syn region shHereDoc matchgroup=shHereDoc04 start="<<-\s*\**EOF\**"		matchgroup=shHereDoc04 end="^\s*EOF$"	contains=@shDblQuoteList
- syn region shHereDoc matchgroup=shHereDoc05 start="<<\s*\**\.\**"		matchgroup=shHereDoc05 end="^\.$"	contains=@shDblQuoteList
- syn region shHereDoc matchgroup=shHereDoc06 start="<<-\s*\**\.\**"		matchgroup=shHereDoc06 end="^\s*\.$"	contains=@shDblQuoteList
-
-else
- ShFoldHereDoc syn region shHereDoc matchgroup=shHereDoc07 start="<<\s*\\\=\z([^ \t|]\+\)"		matchgroup=shHereDoc07 end="^\z1\s*$"	contains=@shDblQuoteList
- ShFoldHereDoc syn region shHereDoc matchgroup=shHereDoc08 start="<<\s*\"\z([^ \t|]\+\)\""		matchgroup=shHereDoc08 end="^\z1\s*$"
- ShFoldHereDoc syn region shHereDoc matchgroup=shHereDoc09 start="<<-\s*\z([^ \t|]\+\)"		matchgroup=shHereDoc09 end="^\s*\z1\s*$"	contains=@shDblQuoteList
- ShFoldHereDoc syn region shHereDoc matchgroup=shHereDoc10 start="<<-\s*'\z([^ \t|]\+\)'"		matchgroup=shHereDoc10 end="^\s*\z1\s*$"
- ShFoldHereDoc syn region shHereDoc matchgroup=shHereDoc11 start="<<\s*'\z([^ \t|]\+\)'"		matchgroup=shHereDoc11 end="^\z1\s*$"
- ShFoldHereDoc syn region shHereDoc matchgroup=shHereDoc12 start="<<-\s*\"\z([^ \t|]\+\)\""		matchgroup=shHereDoc12 end="^\s*\z1\s*$"
- ShFoldHereDoc syn region shHereDoc matchgroup=shHereDoc13 start="<<\s*\\\_$\_s*\z([^ \t|]\+\)"		matchgroup=shHereDoc13 end="^\z1\s*$"           contains=@shDblQuoteList
- ShFoldHereDoc syn region shHereDoc matchgroup=shHereDoc14 start="<<\s*\\\_$\_s*'\z([^ \t|]\+\)'"	matchgroup=shHereDoc14 end="^\z1\s*$"
- ShFoldHereDoc syn region shHereDoc matchgroup=shHereDoc15 start="<<\s*\\\_$\_s*\"\z([^ \t|]\+\)\""	matchgroup=shHereDoc15 end="^\z1\s*$"
- ShFoldHereDoc syn region shHereDoc matchgroup=shHereDoc16 start="<<-\s*\\\_$\_s*\z([^ \t|]\+\)"	matchgroup=shHereDoc16 end="^\s*\z1\s*$"	
- ShFoldHereDoc syn region shHereDoc matchgroup=shHereDoc17 start="<<-\s*\\\_$\_s*\\\z([^ \t|]\+\)"	matchgroup=shHereDoc17 end="^\s*\z1\s*$"	
- ShFoldHereDoc syn region shHereDoc matchgroup=shHereDoc18 start="<<-\s*\\\_$\_s*'\z([^ \t|]\+\)'"	matchgroup=shHereDoc18 end="^\s*\z1\s*$"
- ShFoldHereDoc syn region shHereDoc matchgroup=shHereDoc19 start="<<-\s*\\\_$\_s*\"\z([^ \t|]\+\)\""	matchgroup=shHereDoc19 end="^\s*\z1\s*$"
- ShFoldHereDoc syn region shHereDoc matchgroup=shHereDoc20 start="<<\\\z([^ \t|]\+\)"		matchgroup=shHereDoc20 end="^\z1\s*$"
- ShFoldHereDoc syn region shHereDoc matchgroup=shHereDoc21 start="<<-\s*\\\z([^ \t|]\+\)"		matchgroup=shHereDoc21 end="^\s*\z1\s*$"
-endif
+ShFoldHereDoc syn region shHereDoc matchgroup=shHereDoc01 start="<<\s*\\\=\z([^ \t|]\+\)"		matchgroup=shHereDoc01 end="^\z1\s*$"	contains=@shDblQuoteList
+ShFoldHereDoc syn region shHereDoc matchgroup=shHereDoc02 start="<<\s*\"\z([^ \t|]\+\)\""		matchgroup=shHereDoc02 end="^\z1\s*$"
+ShFoldHereDoc syn region shHereDoc matchgroup=shHereDoc03 start="<<-\s*\z([^ \t|]\+\)"		matchgroup=shHereDoc03 end="^\s*\z1\s*$"	contains=@shDblQuoteList
+ShFoldHereDoc syn region shHereDoc matchgroup=shHereDoc04 start="<<-\s*'\z([^ \t|]\+\)'"		matchgroup=shHereDoc04 end="^\s*\z1\s*$"
+ShFoldHereDoc syn region shHereDoc matchgroup=shHereDoc05 start="<<\s*'\z([^ \t|]\+\)'"		matchgroup=shHereDoc05 end="^\z1\s*$"
+ShFoldHereDoc syn region shHereDoc matchgroup=shHereDoc06 start="<<-\s*\"\z([^ \t|]\+\)\""		matchgroup=shHereDoc06 end="^\s*\z1\s*$"
+ShFoldHereDoc syn region shHereDoc matchgroup=shHereDoc07 start="<<\s*\\\_$\_s*\z([^ \t|]\+\)"		matchgroup=shHereDoc07 end="^\z1\s*$"           contains=@shDblQuoteList
+ShFoldHereDoc syn region shHereDoc matchgroup=shHereDoc08 start="<<\s*\\\_$\_s*'\z([^ \t|]\+\)'"	matchgroup=shHereDoc08 end="^\z1\s*$"
+ShFoldHereDoc syn region shHereDoc matchgroup=shHereDoc09 start="<<\s*\\\_$\_s*\"\z([^ \t|]\+\)\""	matchgroup=shHereDoc09 end="^\z1\s*$"
+ShFoldHereDoc syn region shHereDoc matchgroup=shHereDoc10 start="<<-\s*\\\_$\_s*\z([^ \t|]\+\)"		matchgroup=shHereDoc10 end="^\s*\z1\s*$"	
+ShFoldHereDoc syn region shHereDoc matchgroup=shHereDoc11 start="<<-\s*\\\_$\_s*\\\z([^ \t|]\+\)"	matchgroup=shHereDoc11 end="^\s*\z1\s*$"	
+ShFoldHereDoc syn region shHereDoc matchgroup=shHereDoc12 start="<<-\s*\\\_$\_s*'\z([^ \t|]\+\)'"	matchgroup=shHereDoc12 end="^\s*\z1\s*$"
+ShFoldHereDoc syn region shHereDoc matchgroup=shHereDoc13 start="<<-\s*\\\_$\_s*\"\z([^ \t|]\+\)\""	matchgroup=shHereDoc13 end="^\s*\z1\s*$"
+ShFoldHereDoc syn region shHereDoc matchgroup=shHereDoc14 start="<<\\\z([^ \t|]\+\)"		matchgroup=shHereDoc14 end="^\z1\s*$"
+ShFoldHereDoc syn region shHereDoc matchgroup=shHereDoc15 start="<<-\s*\\\z([^ \t|]\+\)"		matchgroup=shHereDoc15 end="^\s*\z1\s*$"
 
 " Here Strings: {{{1
 " =============
@@ -702,12 +695,6 @@ hi def link shHereDoc12		shRedir
 hi def link shHereDoc13		shRedir
 hi def link shHereDoc14		shRedir
 hi def link shHereDoc15		shRedir
-hi def link shHereDoc16		shRedir
-hi def link shHereDoc17		shRedir
-hi def link shHereDoc18		shRedir
-hi def link shHereDoc19		shRedir
-hi def link shHereDoc20		shRedir
-hi def link shHereDoc21		shRedir
 
 " Delete shell folding commands {{{1
 " =============================

@@ -1,4 +1,4 @@
-*various.txt*   For Vim version 7.4.  Last change: 2016 Mar 20
+*various.txt*   For Vim version 7.4.  Last change: 2016 Jul 09
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -416,9 +416,12 @@ m  *+xpm_w32*		Win32 GUI only: pixmap support |w32-xpm-support|
 			shown on the screen.  When [!] is included, an
 			existing file is overwritten.  When [!] is omitted,
 			and {file} exists, this command fails.
+
 			Only one ":redir" can be active at a time.  Calls to
 			":redir" will close any active redirection before
-			starting redirection to the new target.
+			starting redirection to the new target.  For recursive
+			use check out |execute()|.
+
 			To stop the messages and commands from being echoed to
 			the screen, put the commands in a function and call it
 			with ":silent call Function()".
@@ -456,6 +459,8 @@ m  *+xpm_w32*		Win32 GUI only: pixmap support |w32-xpm-support|
 			redirection starts, if the variable is removed or
 			locked or the variable type is changed, then further
 			command output messages will cause errors.
+			To get the output of one command the |execute()|
+			function can be used.
 
 :redi[r] =>> {var}	Append messages to an existing variable.  Only string
 			variables can be used.

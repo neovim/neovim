@@ -1,4 +1,4 @@
-*map.txt*       For Vim version 7.4.  Last change: 2016 Jun 10
+*map.txt*       For Vim version 7.4.  Last change: 2016 Jul 06
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -1268,6 +1268,7 @@ completion can be enabled:
 	-complete=mapping	mapping name
 	-complete=menu		menus
 	-complete=option	options
+	-complete=packadd	optional package |pack-add| names
 	-complete=shellcmd	Shell command
 	-complete=sign		|:sign| suboptions
 	-complete=syntax	syntax file names |'syntax'|
