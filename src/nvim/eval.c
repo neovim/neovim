@@ -21775,10 +21775,37 @@ void free_all_functions(void)
   hashitem_T  *hi;
   ufunc_T     *fp;
   uint64_t skipped = 0;
-  uint64_t todo;
+  uint64_t todo = 1;
+  uint64_t used;
 
-  // Need to start all over every time, because func_free() may change the
-  // hash table.
+  // First clear what the functions contain. Since this may lower the
+  // reference count of a function, it may also free a function and change
+  // the hash table. Restart if that happens.
+  while (todo > 0) {
+    todo = func_hashtab.ht_used;
+    for (hi = func_hashtab.ht_array; todo > 0; hi++) {
+      if (!HASHITEM_EMPTY(hi)) {
+        // Only free functions that are not refcounted, those are
+        // supposed to be freed when no longer referenced.
+        fp = HI2UF(hi);
+        if (func_name_refcount(fp->uf_name)) {
+          skipped++;
+        } else {
+          used = func_hashtab.ht_used;
+          func_clear(fp, true);
+          if (used != func_hashtab.ht_used) {
+            skipped = 0;
+            break;
+          }
+        }
+        todo--;
+      }
+    }
+  }
+
+  // Now actually free the functions. Need to start all over every time,
+  // because func_free() may change the hash table.
+  skipped = 0;
   while (func_hashtab.ht_used > skipped) {
     todo = func_hashtab.ht_used;
     for (hi = func_hashtab.ht_array; todo > 0; hi++) {
@@ -21790,7 +21817,7 @@ void free_all_functions(void)
         if (func_name_refcount(fp->uf_name)) {
           skipped++;
         } else {
-          func_free(fp, true);
+          func_free(fp);
           skipped = 0;
           break;
         }
@@ -22218,7 +22245,7 @@ void ex_delfunction(exarg_T *eap)
         }
         fp->uf_flags |= FC_DELETED;
       } else {
-        func_free(fp, false);
+        func_clear_free(fp, false);
       }
     }
   }
@@ -22240,25 +22267,47 @@ static bool func_remove(ufunc_T *fp)
   return false;
 }
 
-/// Free a function and remove it from the list of functions.
+/// Free all things that a function contains. Does not free the function
+/// itself, use func_free() for that.
 ///
 /// param[in]        force        When true, we are exiting.
-static void func_free(ufunc_T *fp, bool force)
+static void func_clear(ufunc_T *fp, bool force)
 {
+  if (fp->uf_cleared) {
+    return;
+  }
+  fp->uf_cleared = true;
+
   // clear this function
   ga_clear_strings(&(fp->uf_args));
   ga_clear_strings(&(fp->uf_lines));
   xfree(fp->uf_tml_count);
   xfree(fp->uf_tml_total);
   xfree(fp->uf_tml_self);
+  funccal_unref(fp->uf_scoped, fp, force);
+}
 
+/// Free a function and remove it from the list of functions. Does not free
+/// what a function contains, call func_clear() first.
+///
+/// param[in]        fp        The function to free.
+static void func_free(ufunc_T *fp)
+{
   // only remove it when not done already, otherwise we would remove a newer
   // version of the function
   if ((fp->uf_flags & (FC_DELETED | FC_REMOVED)) == 0) {
     func_remove(fp);
   }
-  funccal_unref(fp->uf_scoped, fp, force);
   xfree(fp);
+}
+
+/// Free all things that a function contains and free the function itself.
+///
+/// param[in]        force        When true, we are exiting.
+static void func_clear_free(ufunc_T *fp, bool force)
+{
+  func_clear(fp, force);
+  func_free(fp);
 }
 
 /*
@@ -22289,7 +22338,7 @@ void func_unref(char_u *name)
     // Only delete it when it's not being used. Otherwise it's done
     // when "uf_calls" becomes zero.
     if (fp->uf_calls == 0) {
-      func_free(fp, false);
+      func_clear_free(fp, false);
     }
   }
 }
@@ -22302,7 +22351,7 @@ void func_ptr_unref(ufunc_T *fp)
     // Only delete it when it's not being used. Otherwise it's done
     // when "uf_calls" becomes zero.
     if (fp->uf_calls == 0) {
-      func_free(fp, false);
+      func_clear_free(fp, false);
     }
   }
 }
@@ -22713,7 +22762,7 @@ call_user_func(
 
   if (--fp->uf_calls <= 0 && fp->uf_refcount <= 0) {
     // Function was unreferenced while being used, free it now.
-    func_free(fp, false);
+    func_clear_free(fp, false);
   }
   // restore search patterns and redo buffer
   if (did_save_redo) {
