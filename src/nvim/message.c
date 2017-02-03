@@ -2455,15 +2455,6 @@ static void redir_write(char_u *str, int maxlen)
     return;
   }
 
-  // Append output for execute().
-  if (capture_ga) {
-    size_t len = 0;
-    while (str[len] && (maxlen < 0 ? 1 : (len < (size_t)maxlen))) {
-      len++;
-    }
-    ga_concat_len(capture_ga, (const char *)str, len);
-  }
-
   /* Don't do anything for displaying prompts and the like. */
   if (redir_off)
     return;
@@ -2476,6 +2467,9 @@ static void redir_write(char_u *str, int maxlen)
     /* If the string doesn't start with CR or NL, go to msg_col */
     if (*s != '\n' && *s != '\r') {
       while (cur_col < msg_col) {
+        if (capture_ga) {
+          ga_concat_len(capture_ga, " ", 1);
+        }
         if (redir_reg) {
           write_reg_contents(redir_reg, (char_u *)" ", 1, true);
         } else if (redir_vname) {
@@ -2490,8 +2484,11 @@ static void redir_write(char_u *str, int maxlen)
       }
     }
 
+    size_t len = maxlen == -1 ? STRLEN(s) : (size_t)maxlen;
+    if (capture_ga) {
+      ga_concat_len(capture_ga, (const char *)str, len);
+    }
     if (redir_reg) {
-      size_t len = maxlen == -1 ? STRLEN(s) : (size_t)maxlen;
       write_reg_contents(redir_reg, s, len, true);
     }
     if (redir_vname) {
@@ -2500,7 +2497,7 @@ static void redir_write(char_u *str, int maxlen)
 
     /* Write and adjust the current column. */
     while (*s != NUL && (maxlen < 0 || (int)(s - str) < maxlen)) {
-      if (!redir_reg && !redir_vname)
+      if (!redir_reg && !redir_vname && !capture_ga)
         if (redir_fd != NULL)
           putc(*s, redir_fd);
       if (verbose_fd != NULL)
