@@ -280,7 +280,7 @@ function! s:check_python(version) abort
       let python_bin = exepath(python_bin_name)
 
       if exists('$PATH')
-        for path in split($PATH, ':')
+        for path in split($PATH, has('win32') ? ';' : ':')
           let path_bin = path.'/'.python_bin_name
           if path_bin != python_bin && index(python_multiple, path_bin) == -1
                 \ && executable(path_bin)
