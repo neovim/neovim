@@ -290,7 +290,9 @@ local function clear(...)
         'NVIM_LOG_FILE',
         'NVIM_RPLUGIN_MANIFEST',
       }) do
-        env_tbl[k] = os.getenv(k)
+        if not env_tbl[k] then
+          env_tbl[k] = os.getenv(k)
+        end
       end
       env = {}
       for k, v in pairs(env_tbl) do
