@@ -266,7 +266,7 @@ describe('system()', function()
       pending('missing `xclip`', function() end)
     else
       it('will exit properly after passing input', function()
-        eq('', eval([[system('xclip -i -selection clipboard', 'clip-data')]]))
+        eq('', eval([[system('xclip -i -loops 1 -selection clipboard', 'clip-data')]]))
         eq('clip-data', eval([[system('xclip -o -selection clipboard')]]))
       end)
     end
@@ -440,7 +440,7 @@ describe('systemlist()', function()
     else
       it('will exit properly after passing input', function()
         eq({}, eval(
-          "systemlist('xclip -i -selection clipboard', ['clip', 'data'])"))
+          "systemlist('xclip -i -loops 1 -selection clipboard', ['clip', 'data'])"))
         eq({'clip', 'data'}, eval(
           "systemlist('xclip -o -selection clipboard')"))
       end)
