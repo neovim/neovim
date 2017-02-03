@@ -23,7 +23,7 @@ cimport('./src/nvim/os/shell.h')
 cimport('./src/nvim/option_defs.h')
 cimport('./src/nvim/main.h')
 cimport('./src/nvim/fileio.h')
-local fs = cimport('./src/nvim/os/os.h')
+local fs = cimport('./src/nvim/os/os.h', './src/nvim/path.h')
 cppimport('sys/stat.h')
 cppimport('fcntl.h')
 cppimport('uv-errno.h')
@@ -77,11 +77,9 @@ describe('fs function', function()
     lfs.link('test.file', 'unit-test-directory/test_link.file', true)
 
     lfs.link('non_existing_file.file', 'unit-test-directory/test_broken_link.file', true)
-    -- Since the tests are executed, they are called by an executable. We use
-    -- that executable for several asserts.
+    -- The tests are invoked with an absolute path to `busted` executable.
     absolute_executable = arg[0]
-    -- Split absolute_executable into a directory and the actual file name for
-    -- later usage.
+    -- Split the absolute_executable path into a directory and filename.
     directory, executable_name = string.match(absolute_executable, '^(.*)/(.*)$')
   end)
 
@@ -194,11 +192,8 @@ describe('fs function', function()
     end)
 
     it('returns the absolute path when given an executable inside $PATH', function()
-      -- Since executable_name does not start with "./", the path will be
-      -- selected from $PATH. Make sure the ends match, ignore the directories.
-      local _, busted = string.match(absolute_executable, '^(.*)/(.*)$')
-      local _, name = string.match(exe(executable_name), '^(.*)/(.*)$')
-      eq(busted, name)
+      local fullpath = exe('ls')
+      eq(1, fs.path_is_absolute_path(to_cstr(fullpath)))
     end)
 
     it('returns the absolute path when given an executable relative to the current dir', function()

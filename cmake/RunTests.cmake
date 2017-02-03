@@ -1,6 +1,3 @@
-get_filename_component(BUSTED_DIR ${BUSTED_PRG} PATH)
-set(ENV{PATH} "${BUSTED_DIR}:$ENV{PATH}")
-
 set(ENV{VIMRUNTIME} ${WORKING_DIR}/runtime)
 set(ENV{NVIM_RPLUGIN_MANIFEST} ${WORKING_DIR}/Xtest_rplugin_manifest)
 set(ENV{XDG_CONFIG_HOME} ${WORKING_DIR}/Xtest_xdg/config)
