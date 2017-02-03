@@ -27,6 +27,7 @@ describe('executable()', function()
       clear({env={PATH=[[C:\Windows\system32;C:\Windows]]}})
       print(helpers.eval('$PATH'))
       print('XXXXXXXXXXXXXXXXXXXXXXXXX')
+      print(helpers.eval("echo glob(fnamemodify(exepath(v:progpath), ':h').'/*')"))
       eq('arg1=lemon;arg2=sky;arg3=tree;',
          call('system', sibling_exe..' lemon sky tree'))
     end

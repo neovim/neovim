@@ -9,6 +9,7 @@
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
 #include "nvim/charset.h"
+#include "nvim/fileio.h"
 #include "nvim/os/os.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
@@ -17,6 +18,10 @@
 #include "nvim/eval.h"
 #include "nvim/ex_getln.h"
 #include "nvim/version.h"
+
+#ifdef WIN32
+#include "nvim/mbyte.h"  // for utf8_to_utf16, utf16_to_utf8
+#endif
 
 #ifdef HAVE__NSGETENVIRON
 #include <crt_externs.h>
@@ -45,7 +50,21 @@ bool os_env_exists(const char *name)
 int os_setenv(const char *name, const char *value, int overwrite)
   FUNC_ATTR_NONNULL_ALL
 {
-#ifdef HAVE_SETENV
+#ifdef WIN32
+  size_t envbuflen = strlen(name) + strlen(value) + 2;
+  char *envbuf = xmalloc(envbuflen);
+  snprintf(envbuf, envbuflen, "%s=%s", name, value);
+
+  WCHAR *p;
+  utf8_to_utf16(envbuf, &p);
+  xfree(envbuf);
+  if (p == NULL) {
+    return -1;
+  }
+  _wputenv(p);
+  xfree(p);  // Unlike Unix systems, we can free the string for _wputenv().
+  return 0;
+#elif defined(HAVE_SETENV)
   return setenv(name, value, overwrite);
 #elif defined(HAVE_PUTENV_S)
   if (!overwrite && os_getenv(name) != NULL) {
