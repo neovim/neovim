@@ -995,12 +995,10 @@ static void uniquefy_paths(garray_T *gap, char_u *pattern)
     ga_remove_duplicate_strings(gap);
 }
 
-/*
- * Return the end of the directory name, on the first path
- * separator:
- * "/path/file", "/path/dir/", "/path//dir", "/file"
- *	 ^	       ^	     ^	      ^
- */
+/// Return the end of the directory name, on the first path
+/// separator:
+/// "/path/file", "/path/dir/", "/path//dir", "/file"
+///       ^             ^             ^        ^
 char_u *gettail_dir(const char_u *fname)
 {
   const char_u      *dir_end = fname;
@@ -2131,17 +2129,12 @@ int append_path(char *path, const char *to_append, size_t max_len)
   size_t current_length = strlen(path);
   size_t to_append_length = strlen(to_append);
 
-  // Do not append empty strings.
-  if (to_append_length == 0) {
+  // Do not append empty string or a dot.
+  if (to_append_length == 0 || strcmp(to_append, ".") == 0) {
     return OK;
   }
 
-  // Do not append a dot.
-  if (STRCMP(to_append, ".") == 0) {
-    return OK;
-  }
-
-  // Glue both paths with a slash.
+  // Combine the path segments, separated by a slash.
   if (current_length > 0 && !vim_ispathsep_nocolon(path[current_length-1])) {
     current_length += 1;  // Count the trailing slash.
 
@@ -2150,7 +2143,7 @@ int append_path(char *path, const char *to_append, size_t max_len)
       return FAIL;
     }
 
-    STRCAT(path, PATHSEPSTR);
+    xstrlcat(path, PATHSEPSTR, max_len);
   }
 
   // +1 for the NUL at the end.
@@ -2158,7 +2151,7 @@ int append_path(char *path, const char *to_append, size_t max_len)
     return FAIL;
   }
 
-  STRCAT(path, to_append);
+  xstrlcat(path, to_append, max_len);
   return OK;
 }
 

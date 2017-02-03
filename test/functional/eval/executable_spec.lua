@@ -20,14 +20,8 @@ describe('executable()', function()
     -- Windows: siblings are in Nvim's "pseudo-$PATH".
     local expected = iswin() and 1 or 0
     if iswin() then
-      print('XXXXXXXXXXXXXXXXXXXXXXXXX')
-      print(helpers.eval('$PATH'))
-      print('XXXXXXXXXXXXXXXXXXXXXXXXX')
       -- $PATH on AppVeyor CI might be oversized, redefine it to a minimal one.
       clear({env={PATH=[[C:\Windows\system32;C:\Windows]]}})
-      print(helpers.eval('$PATH'))
-      print('XXXXXXXXXXXXXXXXXXXXXXXXX')
-      print(helpers.eval("echo glob(fnamemodify(exepath(v:progpath), ':h').'/*')"))
       eq('arg1=lemon;arg2=sky;arg3=tree;',
          call('system', sibling_exe..' lemon sky tree'))
     end
@@ -101,6 +95,26 @@ describe('executable() (Windows)', function()
       eq(1, call('executable', '.\\test_executable_'..ext))
     end
     eq(0, call('executable', '.\\test_executable_zzz'))
+  end)
+
+  it('full path with extension', function()
+    -- Some executable we can expect in the test env.
+    local exe = 'printargs-test'
+    local exedir = helpers.eval("fnamemodify(v:progpath, ':h')")
+    local exepath = exedir..'/'..exe..'.exe'
+    eq(1, call('executable', exepath))
+    eq('arg1=lemon;arg2=sky;arg3=tree;',
+       call('system', exepath..' lemon sky tree'))
+  end)
+
+  it('full path without extension', function()
+    -- Some executable we can expect in the test env.
+    local exe = 'printargs-test'
+    local exedir = helpers.eval("fnamemodify(v:progpath, ':h')")
+    local exepath = exedir..'/'..exe
+    eq('arg1=lemon;arg2=sky;arg3=tree;',
+       call('system', exepath..' lemon sky tree'))
+     eq(1, call('executable', exepath))
   end)
 
   it('respects $PATHEXT when trying extensions on a filename', function()
