@@ -424,11 +424,11 @@ ptrdiff_t os_read(const int fd, bool *ret_eof, char *const ret_buf,
   size_t read_bytes = 0;
   bool did_try_to_free = false;
   while (read_bytes != size) {
+    assert(size >= read_bytes);
     const ptrdiff_t cur_read_bytes = read(fd, ret_buf + read_bytes,
                                           size - read_bytes);
     if (cur_read_bytes > 0) {
       read_bytes += (size_t)cur_read_bytes;
-      assert(read_bytes <= size);
     }
     if (cur_read_bytes < 0) {
       const int error = os_translate_sys_error(errno);
@@ -527,6 +527,7 @@ ptrdiff_t os_write(const int fd, const char *const buf, const size_t size)
   }
   size_t written_bytes = 0;
   while (written_bytes != size) {
+    assert(size >= written_bytes);
     const ptrdiff_t cur_written_bytes = write(fd, buf + written_bytes,
                                               size - written_bytes);
     if (cur_written_bytes > 0) {
@@ -949,12 +950,12 @@ bool os_fileid_equal_fileinfo(const FileID *file_id,
 /// When "fname" is the name of a shortcut (*.lnk) resolve the file it points
 /// to and return that name in allocated memory.
 /// Otherwise NULL is returned.
-char_u * os_resolve_shortcut(char_u *fname)
+char *os_resolve_shortcut(char_u *fname)
 {
   HRESULT hr;
   IPersistFile *ppf = NULL;
   OLECHAR wsz[MAX_PATH];
-  char_u *rfname = NULL;
+  char *rfname = NULL;
   int len;
   IShellLinkW *pslw = NULL;
   WIN32_FIND_DATAW ffdw;
