@@ -85,6 +85,7 @@ describe('autocommands that delete and unload buffers:', function()
     feed('<C-L>')
     execute('q')
     wait()
-    eq('\nVimLeave done\n', io.open('test.out', 'r'):read('*all'))
+    eq('VimLeave done',
+       string.match(io.open('test.out', 'r'):read('*all'), "^%s*(.-)%s*$"))
   end)
 end)
