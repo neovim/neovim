@@ -3,7 +3,7 @@
 -- Test for *:s%* on :substitute.
 -- Test for :s replacing \n with  line break.
 
-local helpers = require('test.functional.helpers')
+local helpers = require('test.functional.helpers')(before_each)
 local feed, insert, source = helpers.feed, helpers.insert, helpers.source
 local clear, execute, expect = helpers.clear, helpers.execute, helpers.expect
 local eq, eval, write_file = helpers.eq, helpers.eval, helpers.write_file
