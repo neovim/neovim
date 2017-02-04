@@ -3,7 +3,7 @@
 -- Also test match() and matchstr()
 -- Also test the gn command and repeating it.
 
-local helpers = require('test.functional.helpers')
+local helpers = require('test.functional.helpers')(before_each)
 local feed, insert, source = helpers.feed, helpers.insert, helpers.source
 local clear, execute, expect = helpers.clear, helpers.execute, helpers.expect
 local eq, eval = helpers.eq, helpers.eval
@@ -121,7 +121,7 @@ describe('repeating gn', function()
       one
       two
       abcdx | abcdx | abcdx
-      join 
+      join
       lines
       zero width pattern
       delete first and last chars
@@ -129,9 +129,9 @@ describe('repeating gn', function()
       my very excellent mother just served us nachos
       for (i=0; i<=10; i++)
       a:10
-      
+
       a:1
-      
+
       a:20
       Y
       text
@@ -187,18 +187,18 @@ describe('repeating gn', function()
       my very excellent mongoose just served us nachos
       for (j=0; i<=10; i++)
       a:10
-      
+
       a:1
       1
-      
+
       a:20
-      
+
       text
       Y
       --1
-      
+
       --2
-      
+
       --3
       DEPP
       --4
