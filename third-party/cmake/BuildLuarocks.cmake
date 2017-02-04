@@ -123,11 +123,6 @@ add_custom_target(inspect
 list(APPEND THIRD_PARTY_DEPS inspect)
 
 if(USE_BUNDLED_BUSTED)
-
-  find_program(UNZIP_PRG unzip)
-  if(NOT UNZIP_PRG)
-    message(FATAL_ERROR "'unzip' must be installed to allow for penlight installation")
-  endif()
   add_custom_command(OUTPUT ${HOSTDEPS_LIB_DIR}/luarocks/rocks/penlight/1.3.2-2
     COMMAND ${LUAROCKS_BINARY}
     ARGS build penlight 1.3.2-2 ${LUAROCKS_BUILDARGS}
