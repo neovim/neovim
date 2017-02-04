@@ -1,7 +1,7 @@
 -- Tests for vertical splits and filler lines in diff mode
 -- Also tests restoration of saved options by :diffoff.
 
-local helpers = require('test.functional.helpers')
+local helpers = require('test.functional.helpers')(after_each)
 local feed = helpers.feed
 local clear, execute, expect = helpers.clear, helpers.execute, helpers.expect
 local write_file = helpers.write_file
@@ -31,8 +31,8 @@ describe('47', function()
     execute('silent! :set diff? fdm? fdc? scb? crb? wrap?')
     execute('redir END')
     expect_string_var('nodiffsettings', [[
-      
-      
+
+
       nodiff
         foldmethod=marker
         foldcolumn=4
@@ -46,8 +46,8 @@ describe('47', function()
     execute('silent! :set diff? fdm? fdc? scb? crb? wrap?')
     execute('redir END')
     expect_string_var('diffsettings', [[
-      
-      
+
+
         diff
         foldmethod=diff
         foldcolumn=2
@@ -116,8 +116,8 @@ describe('47', function()
     execute('silent! :set diff? fdm? fdc? scb? crb? wrap?')
     execute('redir END')
     expect_string_var('nd1', [[
-      
-      
+
+
       nodiff
         foldmethod=marker
         foldcolumn=4
@@ -130,8 +130,8 @@ describe('47', function()
     execute('silent! :set diff? fdm? fdc? scb? crb? wrap?')
     execute('redir END')
     expect_string_var('nd2', [[
-      
-      
+
+
       nodiff
         foldmethod=marker
         foldcolumn=4
@@ -144,8 +144,8 @@ describe('47', function()
     execute('silent! :set diff? fdm? fdc? scb? crb? wrap?')
     execute('redir END')
     expect_string_var('nd2', [[
-      
-      
+
+
       nodiff
         foldmethod=marker
         foldcolumn=4
