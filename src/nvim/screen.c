@@ -507,7 +507,7 @@ void update_single_line(win_T *wp, linenr_T lnum)
       row += wp->w_lines[j].wl_size;
     }
   }
-  need_cursor_line_redraw = FALSE;
+  need_cursor_line_redraw = false;
   updating_screen = false;
 }
 
@@ -7328,12 +7328,11 @@ void screen_resize(int width, int height)
 {
   static int busy = FALSE;
 
-  /*
-   * Avoid recursiveness, can happen when setting the window size causes
-   * another window-changed signal.
-   */
-  if (busy)
+  // Avoid recursiveness, can happen when setting the window size causes
+  // another window-changed signal.
+  if (updating_screen || busy) {
     return;
+  }
 
   if (width < 0 || height < 0)      /* just checking... */
     return;
