@@ -763,8 +763,8 @@ end:
     height = DFLT_ROWS;
   }
 
-  data->bridge->bridge.width = width;
-  data->bridge->bridge.height = height;
+  data->bridge->bridge.width = ui->width = width;
+  data->bridge->bridge.height = ui->height = height;
 }
 
 static void unibi_goto(UI *ui, int row, int col)
