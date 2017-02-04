@@ -180,10 +180,10 @@ endfunction
 function! s:verify_exists(sect, name) abort
   try
     let path = s:get_path(a:sect, a:name)
-  catch
+  catch /^command error (/
     try
       let path = s:get_path(get(b:, 'man_default_sects', ''), a:name)
-    catch
+    catch /^command error (/
       let path = s:get_path('', a:name)
     endtry
   endtry
