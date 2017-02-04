@@ -487,9 +487,10 @@ void update_single_line(win_T *wp, linenr_T lnum)
   int j;
 
   // Don't do anything if the screen structures are (not yet) valid.
-  if (!screen_valid(true)) {
+  if (!screen_valid(true) || updating_screen) {
     return;
   }
+  updating_screen = true;
 
   if (lnum >= wp->w_topline && lnum < wp->w_botline
       && foldedCount(wp, lnum, &win_foldinfo) == 0) {
@@ -507,6 +508,7 @@ void update_single_line(win_T *wp, linenr_T lnum)
     }
   }
   need_cursor_line_redraw = FALSE;
+  updating_screen = false;
 }
 
 
