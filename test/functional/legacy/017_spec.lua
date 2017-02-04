@@ -2,7 +2,7 @@
 -- - "gf" on ${VAR},
 -- - ":checkpath!" with various 'include' settings.
 
-local helpers = require('test.functional.helpers')
+local helpers = require('test.functional.helpers')(after_each)
 local feed, insert, source = helpers.feed, helpers.insert, helpers.source
 local clear, execute, expect = helpers.clear, helpers.execute, helpers.expect
 local write_file = helpers.write_file
@@ -134,8 +134,8 @@ describe('17', function()
       This file is just to test "gf" in test 17.
       The contents is not important.
       Just testing!
-      
-      
+
+
       --- Included files in path ---
       Xdir1/dir2/foo.a
       Xdir1/dir2/foo.a -->
@@ -144,8 +144,8 @@ describe('17', function()
           Xdir1/dir2/baz.a
           Xdir1/dir2/baz.a -->
             "foo.a"  (Already listed)
-      
-      
+
+
       --- Included files in path ---
       Xdir1/dir2/foo.b
       Xdir1/dir2/foo.b -->
@@ -154,8 +154,8 @@ describe('17', function()
           Xdir1/dir2/baz.b
           Xdir1/dir2/baz.b -->
             foo  (Already listed)
-      
-      
+
+
       --- Included files in path ---
       Xdir1/dir2/foo.c
       Xdir1/dir2/foo.c -->
