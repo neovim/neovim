@@ -1,6 +1,6 @@
 -- Test for writing and reading a file starting with a BOM
 
-local helpers, lfs = require('test.functional.helpers'), require('lfs')
+local helpers, lfs = require('test.functional.helpers')(after_each), require('lfs')
 local clear, execute, expect, eq, eval, wait, write_file, neq =
   helpers.clear, helpers.execute, helpers.expect, helpers.eq, helpers.eval,
   helpers.wait, helpers.write_file, helpers.neq
