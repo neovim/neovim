@@ -1,6 +1,6 @@
 -- Test for "*Cmd" autocommands
 
-local helpers, lfs = require('test.functional.helpers'), require('lfs')
+local helpers, lfs = require('test.functional.helpers')(after_each), require('lfs')
 local clear, execute, expect, feed, eq, write_file =
   helpers.clear, helpers.execute, helpers.expect, helpers.feed, helpers.eq,
   helpers.write_file
