@@ -1581,10 +1581,21 @@ static void win_update(win_T *wp)
 ///       the returned value width adapts to the maximum number of marks to draw
 ///       for the window
 /// TODO(teto)
+// , int col
 int win_signcol_width(win_T *wp)
 {
   // 2 is vim default value
-  return 2;
+
+  // int fdc = wp->w_p_sclwidth;
+  // int wmw = wp == curwin && p_wmw == 0 ? 1 : p_wmw;
+  // int wwidth = wp->w_width;
+
+  // if (fdc > wwidth - (col + wmw)) {
+  //   fdc = wwidth - (col + wmw);
+  // }
+  // return fdc;
+  // return MIN(wp->w_signcolumn_width, 2); // hopefully it's 2
+  return 5;
 }
 
 /*
@@ -2154,6 +2165,7 @@ win_line (
   int lnum_in_visual_area = FALSE;
   pos_T pos;
   long v;
+  signlist_T *sign;                      //!< 
 
   int char_attr = 0;                    /* attributes for next character */
   int attr_pri = FALSE;                 /* char_attr has priority */
@@ -2422,9 +2434,13 @@ win_line (
   filler_todo = filler_lines;
 
   /* If this line has a sign with line highlighting set line_attr. */
-  v = buf_getsigntype(wp->w_buffer, lnum, SIGN_LINEHL);
-  if (v != 0)
-      line_attr = sign_get_attr((int)v, TRUE);
+                  // signlist_T	*sign = wp->w_buffer->b_signlist
+                  // sign = buf_getsigntype(sign, lnum, SIGN_TEXT);
+  sign = buf_getsigntype(wp->w_buffer->b_signlist, lnum, SIGN_LINEHL);
+
+  if (sign != NULL && sign->typenr != 0) {
+      line_attr = sign_get_attr((int)sign->typenr, TRUE);
+  }
 
   // Highlight the current line in the quickfix window.
   if (bt_quickfix(wp->w_buffer) && qf_current_entry(wp) == lnum) {
@@ -2714,29 +2730,53 @@ win_line (
           /* Show the sign column when there are any signs in this
            * buffer or when using Netbeans. */
           if (signcolumn_on(wp)) {
-              int text_sign;
+              // int text_sign;
+              int used_cells = 0;
+              // win_signcol_width(wp);
               // Draw cells with the sign value or blank.
               c_extra = ' ';
               char_attr = hl_attr(HLF_SC);
               n_extra = win_signcol_width(wp);
 
+              // Not sure I understand
               if (row == startrow + filler_lines && filler_todo <= 0) {
-                  text_sign = buf_getsigntype(wp->w_buffer, lnum, SIGN_TEXT);
-                  if (text_sign != 0) {
-                      p_extra = sign_get_text(text_sign);
-                      int symbol_blen = (int)STRLEN(p_extra);
-                      if (p_extra != NULL) {
-                          c_extra = NUL;
-                          // symbol(s) bytes + (filling spaces) (one byte each)
-                          n_extra = symbol_blen +
-                            (win_signcol_width(wp) - mb_string2cells(p_extra));
-                          memset(extra, ' ', sizeof(extra));
-                          STRNCPY(extra, p_extra, STRLEN(p_extra));
-                          p_extra = extra;
-                          p_extra[n_extra] = NUL;
-                      }
-                      char_attr = sign_get_attr(text_sign, FALSE);
+                  signlist_T	*sign = wp->w_buffer->b_signlist;
+                  ILOG("Looking for signs ");
+                  memset(extra, 'x', sizeof(extra));
+                  extra[0]= '\0';
+
+                  for (; (sign = buf_getsigntype(sign, lnum, SIGN_TEXT)); sign= sign->next) {
+
+                    p_extra = sign_get_text(sign->typenr);
+                    int symbol_clen = mb_string2cells(p_extra);
+                    ILOG("found one %s (%d cells)", p_extra, symbol_clen );
+                    // if (sign != NULL) {
+                    // int symbol_blen = (int)STRLEN(p_extra);
+                    // as long we can append symbols
+                    // TODO it could change texthl here several times !
+                    if (p_extra != NULL 
+                        && (symbol_clen + used_cells <= win_signcol_width(wp))) {
+                        c_extra = NUL;
+                        // TODO append to extra
+                        // xstrlcat ?
+                        //
+                      ILOG("extra before=%s", extra);
+                      STRNCAT(extra, p_extra, sizeof(extra));
+                      ILOG("extra after=%s", extra);
+                      used_cells += symbol_clen;
+                    }
+                    char_attr = sign_get_attr(sign->typenr, FALSE);
+                    // }
                   }
+
+                      // symbol(s) bytes + (filling spaces) (one byte each)
+                  n_extra = STRLEN(extra) +
+                    (win_signcol_width(wp) - used_cells);
+                  extra[STRLEN(extra)] = ' ';
+                  p_extra = extra;
+                  
+                  p_extra[n_extra] = NUL;
+
               }
           }
       }

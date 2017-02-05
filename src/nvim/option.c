@@ -3006,6 +3006,8 @@ did_set_string_option (
     }
   } else if (varp == &curwin->w_p_scl) {
     // 'signcolumn'
+    //so for now we change nowthing
+    /* if (ascii_isdigit(*p_bs)) { */
     if (check_opt_strings(*varp, p_scl_values, false) != OK) {
       errmsg = e_invarg;
     }

@@ -5330,7 +5330,7 @@ struct sign
     int         sn_text_hl;     /* highlight ID for text */
 };
 
-static sign_T   *first_sign = NULL;
+static sign_T   *first_sign = NULL; // TODO to remove, why static ?
 static int      next_sign_typenr = 1;
 
 /*
@@ -5504,8 +5504,10 @@ void ex_sign(exarg_T *eap)
               cells += (*mb_ptr2cells)(s);
             }
             // Currently must be one or two display cells
+            // This can be configurable now
             if (s != p || cells < 1 || cells > 2) {
               *p = NUL;
+              // TODO message should be updated to be clearer
               EMSG2(_("E239: Invalid sign text: %s"), arg);
               return;
             }
@@ -5516,9 +5518,10 @@ void ex_sign(exarg_T *eap)
             len = (int)(p - arg + ((cells == 1) ? 1 : 0));
             sp->sn_text = vim_strnsave(arg, len);
 
-            if (cells == 1) {
-              STRCPY(sp->sn_text + len - 1, " ");
-            }
+            // completed with a space
+            // if (cells == 1) {
+            //   STRCPY(sp->sn_text + len - 1, " ");
+            // }
           } else if (STRNCMP(arg, "linehl=", 7) == 0) {
             arg += 7;
             sp->sn_line_hl = syn_check_group(arg, (int)(p - arg));

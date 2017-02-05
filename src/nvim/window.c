@@ -1012,6 +1012,7 @@ static void win_init(win_T *newp, win_T *oldp, int flags)
   newp->w_wrow = oldp->w_wrow;
   newp->w_fraction = oldp->w_fraction;
   newp->w_prev_fraction_row = oldp->w_prev_fraction_row;
+  newp->w_signcolumn_width = 0;
   copy_jumplist(oldp, newp);
   if (flags & WSP_NEWLOC) {
     /* Don't copy the location list.  */

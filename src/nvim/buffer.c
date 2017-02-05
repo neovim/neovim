@@ -4927,22 +4927,28 @@ linenr_T buf_change_sign_type(
     return (linenr_T)0;
 }
 
-int buf_getsigntype(
-        buf_T *buf,
+
+/// @param sign where to start
+/// @param lnum 
+/// @param type SIGN_ICON, SIGN_TEXT, SIGN_ANY, SIGN_LINEHL
+/// @return sign type
+signlist_T *buf_getsigntype(
+        // buf_T *buf,
+        signlist_T	*sign,
         linenr_T lnum,
-        int type /* SIGN_ICON, SIGN_TEXT, SIGN_ANY, SIGN_LINEHL */
+        int type
         )
 {
-    signlist_T	*sign;		/* a sign in a b_signlist */
-
-    for (sign = buf->b_signlist; sign != NULL; sign = sign->next) {
+    // signlist_T	*sign;		/* a sign in a b_signlist */
+//sign = buf->b_signlist
+    for (; sign != NULL; sign = sign->next) {
         if (sign->lnum == lnum
                 && (type == SIGN_ANY
                     || (type == SIGN_TEXT
                         && sign_get_text(sign->typenr) != NULL)
                     || (type == SIGN_LINEHL
                         && sign_get_attr(sign->typenr, TRUE) != 0))) {
-            return sign->typenr;
+            return sign;
         }
     }
     return 0;
