@@ -14137,11 +14137,9 @@ static void f_resolve(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   p = get_tv_string(&argvars[0]);
 #ifdef WIN32
   {
-    char_u  *v = NULL;
-
-    v = os_resolve_shortcut(p);
+    char *v = os_resolve_shortcut(p);
     if (v != NULL) {
-      rettv->vval.v_string = v;
+      rettv->vval.v_string = (char_u *)v;
     } else {
       rettv->vval.v_string = vim_strsave(p);
     }

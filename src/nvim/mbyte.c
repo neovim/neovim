@@ -1517,7 +1517,7 @@ int utf16_to_utf8(const WCHAR *strw, char **str)
                               0,
                               strw,
                               -1,
-                              (LPSTR *)pos,
+                              pos,
                               utf8_len,
                               NULL,
                               NULL);

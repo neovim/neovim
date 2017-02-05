@@ -96,6 +96,10 @@ describe('startup defaults', function()
       eq(meths.get_option('runtimepath'), meths.get_option('packpath'))
     end)
   end)
+
+  it('v:progpath is set to the absolute path', function()
+    eq(eval("fnamemodify(v:progpath, ':p')"), eval('v:progpath'))
+  end)
 end)
 
 describe('XDG-based defaults', function()
