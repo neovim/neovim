@@ -1283,11 +1283,17 @@ void copy_loclist(win_T *from, win_T *to)
   to->w_llist->qf_curlist = qi->qf_curlist;     /* current list */
 }
 
+// Looking up a buffer can be slow if there are many. Remember the last one to
+// make this a lot faster if there are multiple matches in the same file.
+static char_u *qf_last_bufname = NULL;
+static bufref_T qf_last_bufref = { NULL, 0 };
+
 // Get buffer number for file "directory.fname".
 // Also sets the b_has_qf_entry flag.
 static int qf_get_fnum(qf_info_T *qi, char_u *directory, char_u *fname)
 {
-  char_u *ptr;
+  char_u *ptr = NULL;
+  char_u *bufname;
   buf_T *buf;
   if (fname == NULL || *fname == NUL) {         // no file name
     return 0;
@@ -1314,11 +1320,22 @@ static int qf_get_fnum(qf_info_T *qi, char_u *directory, char_u *fname)
         ptr = vim_strsave(fname);
       }
     }
-    // Use concatenated directory name and file name
-    buf = buflist_new(ptr, NULL, (linenr_T)0, 0);
+    // Use concatenated directory name and file name.
+    bufname = ptr;
+  } else {
+    bufname = fname;
+  }
+
+  if (qf_last_bufname != NULL
+      && STRCMP(bufname, qf_last_bufname) == 0
+      && bufref_valid(&qf_last_bufref)) {
+    buf = qf_last_bufref.br_buf;
     xfree(ptr);
   } else {
-    buf = buflist_new(fname, NULL, (linenr_T)0, 0);
+    xfree(qf_last_bufname);
+    buf = buflist_new(bufname, NULL, (linenr_T)0, BLN_NOOPT);
+    qf_last_bufname = (bufname == ptr) ? bufname : vim_strsave(bufname);
+    set_bufref(&qf_last_bufref, buf);
   }
   if (buf == NULL) {
     return 0;
@@ -3717,8 +3734,9 @@ load_dummy_buffer (
 )
 {
   buf_T       *newbuf;
-  buf_T       *newbuf_to_wipe = NULL;
-  int failed = TRUE;
+  bufref_T newbufref;
+  bufref_T newbuf_to_wipe;
+  int failed = true;
   aco_save_T aco;
 
   // Allocate a buffer without putting it in the buffer list.
@@ -3726,6 +3744,7 @@ load_dummy_buffer (
   if (newbuf == NULL) {
     return NULL;
   }
+  set_bufref(&newbufref, newbuf);
 
   /* Init the options. */
   buf_copy_options(newbuf, BCO_ENTER | BCO_NOHELP);
@@ -3745,6 +3764,7 @@ load_dummy_buffer (
      * work. */
     curbuf->b_flags &= ~BF_DUMMY;
 
+    newbuf_to_wipe.br_buf = NULL;
     if (readfile(fname, NULL,
             (linenr_T)0, (linenr_T)0, (linenr_T)MAXLNUM,
             NULL, READ_NEW | READ_DUMMY) == OK
@@ -3752,19 +3772,24 @@ load_dummy_buffer (
         && !(curbuf->b_flags & BF_NEW)) {
       failed = FALSE;
       if (curbuf != newbuf) {
-        /* Bloody autocommands changed the buffer!  Can happen when
-         * using netrw and editing a remote file.  Use the current
-         * buffer instead, delete the dummy one after restoring the
-         * window stuff. */
-        newbuf_to_wipe = newbuf;
+        // Bloody autocommands changed the buffer!  Can happen when
+        // using netrw and editing a remote file.  Use the current
+        // buffer instead, delete the dummy one after restoring the
+        // window stuff.
+        set_bufref(&newbuf_to_wipe, newbuf);
         newbuf = curbuf;
       }
     }
 
-    /* restore curwin/curbuf and a few other things */
+    // Restore curwin/curbuf and a few other things.
     aucmd_restbuf(&aco);
-    if (newbuf_to_wipe != NULL && buf_valid(newbuf_to_wipe))
-      wipe_buffer(newbuf_to_wipe, FALSE);
+    if (newbuf_to_wipe.br_buf != NULL && bufref_valid(&newbuf_to_wipe)) {
+      wipe_buffer(newbuf_to_wipe.br_buf, false);
+    }
+
+    // Add back the "dummy" flag, otherwise buflist_findname_file_id()
+    // won't skip it.
+    newbuf->b_flags |= BF_DUMMY;
   }
 
   /*
@@ -3775,8 +3800,9 @@ load_dummy_buffer (
   os_dirname(resulting_dir, MAXPATHL);
   restore_start_dir(dirname_start);
 
-  if (!buf_valid(newbuf))
+  if (!bufref_valid(&newbufref)) {
     return NULL;
+  }
   if (failed) {
     wipe_dummy_buffer(newbuf, dirname_start);
     return NULL;

@@ -2402,6 +2402,7 @@ buf_write (
     int did_cmd = FALSE;
     int nofile_err = FALSE;
     int empty_memline = (buf->b_ml.ml_mfp == NULL);
+    bufref_T bufref;
 
     /*
      * Apply PRE autocommands.
@@ -2417,8 +2418,9 @@ buf_write (
     if (fname == buf->b_sfname)
       buf_fname_s = TRUE;
 
-    /* set curwin/curbuf to buf and save a few things */
+    // Set curwin/curbuf to buf and save a few things.
     aucmd_prepbuf(&aco, buf);
+    set_bufref(&bufref, buf);
 
     if (append) {
       if (!(did_cmd = apply_autocmds_exarg(EVENT_FILEAPPENDCMD,
@@ -2466,14 +2468,13 @@ buf_write (
     /* restore curwin/curbuf and a few other things */
     aucmd_restbuf(&aco);
 
-    /*
-     * In three situations we return here and don't write the file:
-     * 1. the autocommands deleted or unloaded the buffer.
-     * 2. The autocommands abort script processing.
-     * 3. If one of the "Cmd" autocommands was executed.
-     */
-    if (!buf_valid(buf))
+    // In three situations we return here and don't write the file:
+    // 1. the autocommands deleted or unloaded the buffer.
+    // 2. The autocommands abort script processing.
+    // 3. If one of the "Cmd" autocommands was executed.
+    if (!bufref_valid(&bufref)) {
       buf = NULL;
+    }
     if (buf == NULL || (buf->b_ml.ml_mfp == NULL && !empty_memline)
         || did_cmd || nofile_err
         || aborting()
@@ -4760,12 +4761,14 @@ check_timestamps (
     for (buf = firstbuf; buf != NULL; ) {
       /* Only check buffers in a window. */
       if (buf->b_nwindows > 0) {
+        bufref_T bufref;
+        set_bufref(&bufref, buf);
         n = buf_check_timestamp(buf, focus);
-        if (didit < n)
+        if (didit < n) {
           didit = n;
-        if (n > 0 && !buf_valid(buf)) {
-          /* Autocommands have removed the buffer, start at the
-           * first one again. */
+        }
+        if (n > 0 && !bufref_valid(&bufref)) {
+          // Autocommands have removed the buffer, start at the first one again.
           buf = firstbuf;
           continue;
         }
@@ -4850,6 +4853,9 @@ buf_check_timestamp (
   char_u      *s;
   char        *reason;
 
+  bufref_T bufref;
+  set_bufref(&bufref, buf);
+
   // If its a terminal, there is no file name, the buffer is not loaded,
   // 'buftype' is set, we are in the middle of a save or being called
   // recursively: ignore this buffer.
@@ -4919,8 +4925,9 @@ buf_check_timestamp (
       allbuf_lock--;
       busy = false;
       if (n) {
-        if (!buf_valid(buf))
+        if (!bufref_valid(&bufref)) {
           EMSG(_("E246: FileChangedShell autocommand deleted buffer"));
+        }
         s = get_vim_var_str(VV_FCS_CHOICE);
         if (STRCMP(s, "reload") == 0 && *reason != 'd')
           reload = TRUE;
@@ -5037,11 +5044,11 @@ buf_check_timestamp (
     }
   }
 
-  /* Trigger FileChangedShell when the file was changed in any way. */
-  if (buf_valid(buf) && retval != 0)
-    (void)apply_autocmds(EVENT_FILECHANGEDSHELLPOST,
-        buf->b_fname, buf->b_fname, FALSE, buf);
-
+  // Trigger FileChangedShell when the file was changed in any way.
+  if (bufref_valid(&bufref) && retval != 0) {
+    (void)apply_autocmds(EVENT_FILECHANGEDSHELLPOST, buf->b_fname, buf->b_fname,
+                         false, buf);
+  }
   return retval;
 }
 
@@ -5058,6 +5065,7 @@ void buf_reload(buf_T *buf, int orig_mode)
   linenr_T old_topline;
   int old_ro = buf->b_p_ro;
   buf_T       *savebuf;
+  bufref_T bufref;
   int saved = OK;
   aco_save_T aco;
   int flags = READ_NEW;
@@ -5093,6 +5101,7 @@ void buf_reload(buf_T *buf, int orig_mode)
   } else {
     // Allocate a buffer without putting it in the buffer list.
     savebuf = buflist_new(NULL, NULL, (linenr_T)1, BLN_DUMMY);
+    set_bufref(&bufref, savebuf);
     if (savebuf != NULL && buf == curbuf) {
       /* Open the memline. */
       curbuf = savebuf;
@@ -5117,12 +5126,14 @@ void buf_reload(buf_T *buf, int orig_mode)
       if (!aborting()) {
         EMSG2(_("E321: Could not reload \"%s\""), buf->b_fname);
       }
-      if (savebuf != NULL && buf_valid(savebuf) && buf == curbuf) {
-        /* Put the text back from the save buffer.  First
-         * delete any lines that readfile() added. */
-        while (!bufempty())
-          if (ml_delete(buf->b_ml.ml_line_count, FALSE) == FAIL)
+      if (savebuf != NULL && bufref_valid(&bufref) && buf == curbuf) {
+        // Put the text back from the save buffer.  First
+        // delete any lines that readfile() added.
+        while (!bufempty()) {
+          if (ml_delete(buf->b_ml.ml_line_count, false) == FAIL) {
             break;
+          }
+        }
         (void)move_lines(savebuf, buf);
       }
     } else if (buf == curbuf) {  /* "buf" still valid */
@@ -5139,8 +5150,9 @@ void buf_reload(buf_T *buf, int orig_mode)
   }
   xfree(ea.cmd);
 
-  if (savebuf != NULL && buf_valid(savebuf))
-    wipe_buffer(savebuf, FALSE);
+  if (savebuf != NULL && bufref_valid(&bufref)) {
+    wipe_buffer(savebuf, false);
+  }
 
   /* Invalidate diff info if necessary. */
   diff_invalidate(curbuf);
@@ -6288,6 +6300,7 @@ void ex_doautoall(exarg_T *eap)
   aco_save_T aco;
   char_u      *arg = eap->arg;
   int call_do_modelines = check_nomodeline(&arg);
+  bufref_T bufref;
 
   /*
    * This is a bit tricky: For some commands curwin->w_buffer needs to be
@@ -6300,8 +6313,9 @@ void ex_doautoall(exarg_T *eap)
     if (buf->b_ml.ml_mfp == NULL) {
       continue;
     }
-    /* find a window for this buffer and save some values */
+    // Find a window for this buffer and save some values.
     aucmd_prepbuf(&aco, buf);
+    set_bufref(&bufref, buf);
 
     bool did_aucmd;
     // execute the autocommands for this buffer
@@ -6317,9 +6331,10 @@ void ex_doautoall(exarg_T *eap)
     /* restore the current window */
     aucmd_restbuf(&aco);
 
-    /* stop if there is some error or buffer was deleted */
-    if (retval == FAIL || !buf_valid(buf))
+    // Stop if there is some error or buffer was deleted.
+    if (retval == FAIL || !bufref_valid(&bufref)) {
       break;
+    }
   }
 
   check_cursor();           /* just in case lines got deleted */
@@ -6426,7 +6441,7 @@ aucmd_prepbuf (
   }
   curbuf = buf;
   aco->new_curwin = curwin;
-  aco->new_curbuf = curbuf;
+  set_bufref(&aco->new_curbuf, curbuf);
 }
 
 /// Cleanup after executing autocommands for a (hidden) buffer.
@@ -6489,14 +6504,14 @@ win_found:
       // Restore the buffer which was previously edited by curwin, if it was
       // changed, we are still the same window and the buffer is valid.
       if (curwin == aco->new_curwin
-          && curbuf != aco->new_curbuf
-          && buf_valid(aco->new_curbuf)
-          && aco->new_curbuf->b_ml.ml_mfp != NULL) {
+          && curbuf != aco->new_curbuf.br_buf
+          && bufref_valid(&aco->new_curbuf)
+          && aco->new_curbuf.br_buf->b_ml.ml_mfp != NULL) {
         if (curwin->w_s == &curbuf->b_s) {
-          curwin->w_s = &aco->new_curbuf->b_s;
+          curwin->w_s = &aco->new_curbuf.br_buf->b_s;
         }
         curbuf->b_nwindows--;
-        curbuf = aco->new_curbuf;
+        curbuf = aco->new_curbuf.br_buf;
         curwin->w_buffer = curbuf;
         curbuf->b_nwindows++;
       }

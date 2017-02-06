@@ -899,7 +899,7 @@ static void set_option_value_for(char *key,
 {
   win_T *save_curwin = NULL;
   tabpage_T *save_curtab = NULL;
-  buf_T *save_curbuf = NULL;
+  bufref_T save_curbuf =  { NULL, 0 };
 
   try_start();
   switch (opt_type)
@@ -922,7 +922,7 @@ static void set_option_value_for(char *key,
     case SREQ_BUF:
       switch_buffer(&save_curbuf, (buf_T *)from);
       set_option_value_err(key, numval, stringval, opt_flags, err);
-      restore_buffer(save_curbuf);
+      restore_buffer(&save_curbuf);
       break;
     case SREQ_GLOBAL:
       set_option_value_err(key, numval, stringval, opt_flags, err);

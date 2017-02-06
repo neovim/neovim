@@ -1004,7 +1004,8 @@ theend:
 void ex_diffsplit(exarg_T *eap)
 {
   win_T *old_curwin = curwin;
-  buf_T *old_curbuf = curbuf;
+  bufref_T old_curbuf;
+  set_bufref(&old_curbuf, curbuf);
 
   // don't use a new tab page, each tab page has its own diffs
   cmdmod.tab = 0;
@@ -1022,10 +1023,10 @@ void ex_diffsplit(exarg_T *eap)
       if (win_valid(old_curwin)) {
         diff_win_options(old_curwin, true);
 
-        if (buf_valid(old_curbuf)) {
+        if (bufref_valid(&old_curbuf)) {
           // Move the cursor position to that of the old window.
           curwin->w_cursor.lnum = diff_get_corresponding_line(
-              old_curbuf,
+              old_curbuf.br_buf,
               old_curwin->w_cursor.lnum,
               curbuf,
               curwin->w_cursor.lnum);

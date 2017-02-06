@@ -5134,9 +5134,9 @@ int cmd_gchar(int offset)
 static int ex_window(void)
 {
   struct cmdline_info save_ccline;
-  buf_T               *old_curbuf = curbuf;
+  bufref_T            old_curbuf;
+  bufref_T            bufref;
   win_T               *old_curwin = curwin;
-  buf_T               *bp;
   win_T               *wp;
   int i;
   linenr_T lnum;
@@ -5154,6 +5154,8 @@ static int ex_window(void)
     beep_flush();
     return K_IGNORE;
   }
+
+  set_bufref(&old_curbuf, curbuf);
 
   /* Save current window sizes. */
   win_size_save(&winsizes);
@@ -5269,7 +5271,7 @@ static int ex_window(void)
 
   /* Safety check: The old window or buffer was deleted: It's a bug when
    * this happens! */
-  if (!win_valid(old_curwin) || !buf_valid(old_curbuf)) {
+  if (!win_valid(old_curwin) || !bufref_valid(&old_curbuf)) {
     cmdwin_result = Ctrl_C;
     EMSG(_("E199: Active window or buffer deleted"));
   } else {
@@ -5320,14 +5322,15 @@ static int ex_window(void)
     // Avoid command-line window first character being concealed
     curwin->w_p_cole = 0;
     wp = curwin;
-    bp = curbuf;
+    set_bufref(&bufref, curbuf);
     win_goto(old_curwin);
     win_close(wp, TRUE);
 
-    /* win_close() may have already wiped the buffer when 'bh' is
-     * set to 'wipe' */
-    if (buf_valid(bp))
-      close_buffer(NULL, bp, DOBUF_WIPE, FALSE);
+    // win_close() may have already wiped the buffer when 'bh' is
+    // set to 'wipe'.
+    if (bufref_valid(&bufref)) {
+      close_buffer(NULL, bufref.br_buf, DOBUF_WIPE, false);
+    }
 
     /* Restore window sizes. */
     win_size_restore(&winsizes);

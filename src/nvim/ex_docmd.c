@@ -5914,10 +5914,13 @@ ex_win_close (
   need_hide = (bufIsChanged(buf) && buf->b_nwindows <= 1);
   if (need_hide && !P_HID(buf) && !forceit) {
     if ((p_confirm || cmdmod.confirm) && p_write) {
-      dialog_changed(buf, FALSE);
-      if (buf_valid(buf) && bufIsChanged(buf))
+      bufref_T bufref;
+      set_bufref(&bufref, buf);
+      dialog_changed(buf, false);
+      if (bufref_valid(&bufref) && bufIsChanged(buf)) {
         return;
-      need_hide = FALSE;
+      }
+      need_hide = false;
     } else {
       EMSG(_(e_nowrtmsg));
       return;

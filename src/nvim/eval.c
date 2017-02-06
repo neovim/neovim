@@ -10306,7 +10306,7 @@ static void f_getcompletion(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   ExpandInit(&xpc);
   xpc.xp_pattern = get_tv_string(&argvars[0]);
-  xpc.xp_pattern_len = STRLEN(xpc.xp_pattern);
+  xpc.xp_pattern_len = (int)STRLEN(xpc.xp_pattern);
   xpc.xp_context = cmdcomplete_str_to_type(get_tv_string(&argvars[1]));
   if (xpc.xp_context == EXPAND_NOTHING) {
     if (argvars[1].v_type == VAR_STRING) {
@@ -10319,17 +10319,17 @@ static void f_getcompletion(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   if (xpc.xp_context == EXPAND_MENUS) {
     set_context_in_menu_cmd(&xpc, (char_u *)"menu", xpc.xp_pattern, false);
-    xpc.xp_pattern_len = STRLEN(xpc.xp_pattern);
+    xpc.xp_pattern_len = (int)STRLEN(xpc.xp_pattern);
   }
 
   if (xpc.xp_context == EXPAND_CSCOPE) {
     set_context_in_cscope_cmd(&xpc, xpc.xp_pattern, CMD_cscope);
-    xpc.xp_pattern_len = STRLEN(xpc.xp_pattern);
+    xpc.xp_pattern_len = (int)STRLEN(xpc.xp_pattern);
   }
 
   if (xpc.xp_context == EXPAND_SIGN) {
     set_context_in_sign_cmd(&xpc, xpc.xp_pattern);
-    xpc.xp_pattern_len = STRLEN(xpc.xp_pattern);
+    xpc.xp_pattern_len = (int)STRLEN(xpc.xp_pattern);
   }
 
   pat = addstar(xpc.xp_pattern, xpc.xp_pattern_len, xpc.xp_context);

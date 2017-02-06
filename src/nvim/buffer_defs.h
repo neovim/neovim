@@ -8,6 +8,13 @@
 
 typedef struct file_buffer buf_T; // Forward declaration
 
+// Reference to a buffer that stores the value of buf_free_count.
+// bufref_valid() only needs to check "buf" when the count differs.
+typedef struct {
+  buf_T *br_buf;
+  int    br_buf_free_count;
+} bufref_T;
+
 // for garray_T
 #include "nvim/garray.h"
 // for pos_T, lpos_T and linenr_T

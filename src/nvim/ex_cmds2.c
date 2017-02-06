@@ -1181,6 +1181,7 @@ bool prof_def_func(void)
 int autowrite(buf_T *buf, int forceit)
 {
   int r;
+  bufref_T bufref;
 
   if (!(p_aw || p_awa) || !p_write
       // never autowrite a "nofile" or "nowrite" buffer
@@ -1188,11 +1189,12 @@ int autowrite(buf_T *buf, int forceit)
       || (!forceit && buf->b_p_ro) || buf->b_ffname == NULL) {
     return FAIL;
   }
+  set_bufref(&bufref, buf);
   r = buf_write_all(buf, forceit);
 
   // Writing may succeed but the buffer still changed, e.g., when there is a
   // conversion error.  We do want to return FAIL then.
-  if (buf_valid(buf) && bufIsChanged(buf)) {
+  if (bufref_valid(&bufref) && bufIsChanged(buf)) {
     r = FAIL;
   }
   return r;
@@ -1207,9 +1209,11 @@ void autowrite_all(void)
 
   FOR_ALL_BUFFERS(buf) {
     if (bufIsChanged(buf) && !buf->b_p_ro) {
+      bufref_T bufref;
+      set_bufref(&bufref, buf);
       (void)buf_write_all(buf, false);
       // an autocommand may have deleted the buffer
-      if (!buf_valid(buf)) {
+      if (!bufref_valid(&bufref)) {
         buf = firstbuf;
       }
     }
@@ -1221,6 +1225,8 @@ void autowrite_all(void)
 bool check_changed(buf_T *buf, int flags)
 {
   int forceit = (flags & CCGD_FORCEIT);
+  bufref_T bufref;
+  set_bufref(&bufref, buf);
 
   if (!forceit
       && bufIsChanged(buf)
@@ -1236,12 +1242,12 @@ bool check_changed(buf_T *buf, int flags)
           }
         }
       }
-      if (!buf_valid(buf)) {
+      if (!bufref_valid(&bufref)) {
         // Autocommand deleted buffer, oops!  It's not changed now.
         return false;
       }
       dialog_changed(buf, count > 1);
-      if (!buf_valid(buf)) {
+      if (!bufref_valid(&bufref)) {
         // Autocommand deleted buffer, oops!  It's not changed now.
         return false;
       }
@@ -1300,9 +1306,10 @@ void dialog_changed(buf_T *buf, int checkall)
     // Skip readonly buffers, these need to be confirmed
     // individually.
     FOR_ALL_BUFFERS(buf2) {
-      if (bufIsChanged(buf2)
-          && (buf2->b_ffname != NULL)
-          && !buf2->b_p_ro) {
+      if (bufIsChanged(buf2) && (buf2->b_ffname != NULL) && !buf2->b_p_ro) {
+        bufref_T bufref;
+        set_bufref(&bufref, buf2);
+
         if (buf2->b_fname != NULL
             && check_overwrite(&ea, buf2, buf2->b_fname,
                                buf2->b_ffname, false) == OK) {
@@ -1310,7 +1317,7 @@ void dialog_changed(buf_T *buf, int checkall)
           (void)buf_write_all(buf2, false);
         }
         // an autocommand may have deleted the buffer
-        if (!buf_valid(buf2)) {
+        if (!bufref_valid(&bufref)) {
           buf2 = firstbuf;
         }
       }
@@ -1407,11 +1414,14 @@ bool check_changed_any(bool hidden, bool unload)
       continue;
     }
     if ((!hidden || buf->b_nwindows == 0) && bufIsChanged(buf)) {
+      bufref_T bufref;
+      set_bufref(&bufref, buf);
+
       // Try auto-writing the buffer.  If this fails but the buffer no
       // longer exists it's not changed, that's OK.
       if (check_changed(buf, (p_awa ? CCGD_AW : 0)
                         | CCGD_MULTWIN
-                        | CCGD_ALLBUF) && buf_valid(buf)) {
+                        | CCGD_ALLBUF) && bufref_valid(&bufref)) {
         break;    // didn't save - still changes
       }
     }
@@ -1447,9 +1457,11 @@ bool check_changed_any(bool hidden, bool unload)
   if (buf != curbuf) {
     FOR_ALL_TAB_WINDOWS(tp, wp) {
       if (wp->w_buffer == buf) {
+        bufref_T bufref;
+        set_bufref(&bufref, buf);
         goto_tabpage_win(tp, wp);
         // Paranoia: did autocmds wipe out the buffer with changes?
-        if (!buf_valid(buf)) {
+        if (!bufref_valid(&bufref)) {
           goto theend;
         }
         goto buf_found;

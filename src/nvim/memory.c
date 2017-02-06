@@ -629,12 +629,12 @@ void free_all_mem(void)
    * were freed already. */
   p_acd = false;
   for (buf = firstbuf; buf != NULL; ) {
+    bufref_T bufref;
+    set_bufref(&bufref, buf);
     nextbuf = buf->b_next;
     close_buffer(NULL, buf, DOBUF_WIPE, false);
-    if (buf_valid(buf))
-      buf = nextbuf;            /* didn't work, try next one */
-    else
-      buf = firstbuf;
+    // Didn't work, try next one.
+    buf = bufref_valid(&bufref) ? nextbuf : firstbuf;
   }
 
   free_cmdline_buf();
