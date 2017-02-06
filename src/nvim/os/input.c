@@ -144,9 +144,15 @@ bool os_char_avail(void)
 // Check for CTRL-C typed by reading all available characters.
 void os_breakcheck(void)
 {
+  int save_us = updating_screen;
+  // We do not want screen_resize() to redraw here.
+  updating_screen++;
+
   if (!got_int) {
     loop_poll_events(&main_loop, 0);
   }
+
+  updating_screen = save_us;
 }
 
 void input_enable_events(void)
