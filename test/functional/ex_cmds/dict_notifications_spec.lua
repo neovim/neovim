@@ -254,23 +254,33 @@ describe('dictionary change notifications', function()
       command('call g:ReplaceWatcher2()')
       command('let g:key = "value"')
       eq({'notification', '2b', {'key', {old = 'v2', new = 'value'}}}, next_msg())
-
     end)
 
     it('does not crash when freeing a watched dictionary', function()
       source([[
-        function! Watcher(dict, key, value)
-          echo a:key string(a:value)
-        endfunction
+      function! Watcher(dict, key, value)
+        echo a:key string(a:value)
+      endfunction
 
-        function! MakeWatch()
-          let d = {'foo': 'bar'}
-          call dictwatcheradd(d, 'foo', function('Watcher'))
-        endfunction
+      function! MakeWatch()
+        let d = {'foo': 'bar'}
+        call dictwatcheradd(d, 'foo', function('Watcher'))
+      endfunction
       ]])
 
       command('call MakeWatch()')
       eq(2, eval('1+1')) -- Still alive?
+    end)
+  end)
+
+  describe('with lambdas', function()
+    it('works correctly', function()
+      source([[
+      let d = {'foo': 'baz'}
+      call dictwatcheradd(d, 'foo', {dict, key, value -> rpcnotify(g:channel, '2', key, value)})
+      let d.foo = 'bar'
+      ]])
+      eq({'notification', '2', {'foo', {old = 'baz', new = 'bar'}}}, next_msg())
     end)
   end)
 end)

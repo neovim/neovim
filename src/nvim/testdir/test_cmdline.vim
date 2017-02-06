@@ -85,6 +85,11 @@ func Test_getcompletion()
   let l = getcompletion('paint', 'function')
   call assert_equal([], l)
 
+  let Flambda = {-> 'hello'}
+  let l = getcompletion('', 'function')
+  let l = filter(l, {i, v -> v =~ 'lambda'})
+  call assert_equal(0, len(l))
+
   let l = getcompletion('run', 'file')
   call assert_true(index(l, 'runtest.vim') >= 0)
   let l = getcompletion('walk', 'file')

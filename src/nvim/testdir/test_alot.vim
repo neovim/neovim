@@ -9,8 +9,10 @@ source test_ex_undo.vim
 source test_expr.vim
 source test_expr_utf8.vim
 source test_feedkeys.vim
+source test_filter_map.vim
 source test_goto.vim
 source test_jumps.vim
+source test_lambda.vim
 source test_match.vim
 source test_matchadd_conceal_utf8.vim
 source test_menu.vim
