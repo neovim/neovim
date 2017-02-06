@@ -4269,6 +4269,7 @@ void ex_help(exarg_T *eap)
   int len;
   char_u      *lang;
   int old_KeyTyped = KeyTyped;
+  bool tab_suc = false;
 
   if (eap != NULL) {
     /*
@@ -4369,8 +4370,9 @@ void ex_help(exarg_T *eap)
       if (cmdmod.split == 0 && curwin->w_width != Columns
           && curwin->w_width < 80)
         n |= WSP_TOP;
-      if (win_split(0, n) == FAIL)
+      if (win_split_with_tab_suc(0, n, &tab_suc) == FAIL) {
         goto erret;
+      }
 
       if (curwin->w_height < p_hh)
         win_setheight((int)p_hh);
@@ -4413,6 +4415,9 @@ void ex_help(exarg_T *eap)
   if (alt_fnum != 0 && curwin->w_alt_fnum == empty_fnum && !cmdmod.keepalt)
     curwin->w_alt_fnum = alt_fnum;
 
+  if (tab_suc) {
+      apply_autocmds(EVENT_TABNEWENTERED, NULL, NULL, false, curbuf);
+  }
 erret:
   xfree(tag);
 }

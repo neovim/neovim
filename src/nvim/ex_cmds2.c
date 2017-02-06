@@ -1809,6 +1809,7 @@ void do_argfile(exarg_T *eap, int argn)
 {
   int other;
   char_u      *p;
+  bool tab_suc = false;
   int old_arg_idx = curwin->w_arg_idx;
 
   if (argn < 0 || argn >= ARGCOUNT) {
@@ -1824,7 +1825,7 @@ void do_argfile(exarg_T *eap, int argn)
 
     // split window or create new tab page first
     if (*eap->cmd == 's' || cmdmod.tab != 0) {
-      if (win_split(0, 0) == FAIL) {
+      if (win_split_with_tab_suc(0, 0, &tab_suc) == FAIL) {
         return;
       }
       RESET_BINDING(curwin);
@@ -1860,9 +1861,14 @@ void do_argfile(exarg_T *eap, int argn)
                 (P_HID(curwin->w_buffer) ? ECMD_HIDE : 0)
                 + (eap->forceit ? ECMD_FORCEIT : 0), curwin) == FAIL) {
       curwin->w_arg_idx = old_arg_idx;
-    } else if (eap->cmdidx != CMD_argdo) {
-      // like Vi: set the mark where the cursor is in the file.
-      setmark('\'');
+    } else {
+      if (eap->cmdidx != CMD_argdo) {
+        // like Vi: set the mark where the cursor is in the file.
+        setmark('\'');
+      }
+      if (tab_suc) {
+          apply_autocmds(EVENT_TABNEWENTERED, NULL, NULL, false, curbuf);
+      }
     }
   }
 }

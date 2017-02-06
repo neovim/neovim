@@ -926,6 +926,7 @@ do_buffer (
 {
   buf_T       *buf;
   buf_T       *bp;
+  bool         tab_suc = false;
   int unload = (action == DOBUF_UNLOAD || action == DOBUF_DEL
                 || action == DOBUF_WIPE);
 
@@ -1170,13 +1171,18 @@ do_buffer (
      * page containing "buf" if one exists */
     if ((swb_flags & SWB_USETAB) && buf_jump_open_tab(buf))
       return OK;
-    if (win_split(0, 0) == FAIL)
+    if (win_split_with_tab_suc(0, 0, &tab_suc) == FAIL) {
       return FAIL;
+    }
   }
 
-  /* go to current buffer - nothing to do */
-  if (buf == curbuf)
+  // go to current buffer - nothing to do
+  if (buf == curbuf) {
+    if (tab_suc) {
+        apply_autocmds(EVENT_TABNEWENTERED, NULL, NULL, false, curbuf);
+    }
     return OK;
+  }
 
   /*
    * Check if the current buffer may be abandoned.
@@ -1199,6 +1205,10 @@ do_buffer (
 
   if (action == DOBUF_SPLIT) {
     RESET_BINDING(curwin);      /* reset 'scrollbind' and 'cursorbind' */
+  }
+
+  if (tab_suc) {
+      apply_autocmds(EVENT_TABNEWENTERED, NULL, NULL, false, curbuf);
   }
 
   if (aborting())           /* autocmds may abort script processing */
@@ -4294,15 +4304,18 @@ do_arg_all (
         }
       }
     } else if (split_ret == OK) {
+      bool tab_suc = false;
       if (!use_firstwin) {              /* split current window */
         p_ea_save = p_ea;
         p_ea = true;                    /* use space from all windows */
-        split_ret = win_split(0, WSP_ROOM | WSP_BELOW);
+        split_ret = win_split_with_tab_suc(0, WSP_ROOM | WSP_BELOW, &tab_suc);
         p_ea = p_ea_save;
-        if (split_ret == FAIL)
+        if (split_ret == FAIL) {
           continue;
-      } else        /* first window: do autocmd for leaving this buffer */
+        }
+      } else {       /* first window: do autocmd for leaving this buffer */
         --autocmd_no_leave;
+      }
 
       /*
        * edit file "i"
@@ -4317,9 +4330,13 @@ do_arg_all (
           ((P_HID(curwin->w_buffer)
             || bufIsChanged(curwin->w_buffer)) ? ECMD_HIDE : 0)
           + ECMD_OLDBUF, curwin);
-      if (use_firstwin)
+      if (use_firstwin) {
         ++autocmd_no_leave;
+      }
       use_firstwin = FALSE;
+      if (tab_suc) {
+          apply_autocmds(EVENT_TABNEWENTERED, NULL, NULL, false, curbuf);
+      }
     }
     os_breakcheck();
 
@@ -4445,7 +4462,8 @@ void ex_buffer_all(exarg_T *eap)
       /* Split the window and put the buffer in it */
       p_ea_save = p_ea;
       p_ea = true;                      /* use space from all windows */
-      split_ret = win_split(0, WSP_ROOM | WSP_BELOW);
+      bool tab_suc = false;
+      split_ret = win_split_with_tab_suc(0, WSP_ROOM | WSP_BELOW, &tab_suc);
       ++open_wins;
       p_ea = p_ea_save;
       if (split_ret == FAIL)
@@ -4454,6 +4472,9 @@ void ex_buffer_all(exarg_T *eap)
       /* Open the buffer in this window. */
       swap_exists_action = SEA_DIALOG;
       set_curbuf(buf, DOBUF_GOTO);
+      if (tab_suc) {
+          apply_autocmds(EVENT_TABNEWENTERED, NULL, NULL, false, curbuf);
+      }
       if (!buf_valid(buf)) {            /* autocommands deleted the buffer!!! */
         swap_exists_action = SEA_NONE;
         break;
