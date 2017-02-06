@@ -800,7 +800,7 @@ static int insert_handle_key(InsertState *s)
     if (!p_im) {
       goto normalchar;                // insert CTRL-Z as normal char
     }
-    stuffReadbuff((char_u *)":st\r");
+    do_cmdline_cmd("stop");
     s->c = Ctrl_O;
   // FALLTHROUGH
 
