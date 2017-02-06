@@ -6200,17 +6200,6 @@ bool set_ref_in_item(typval_T *tv, int copyID, ht_stack_T **ht_stack,
           set_ref_in_callback(&watcher->callback, copyID, ht_stack, list_stack);
         }
       }
-      if (tv->v_type == VAR_PARTIAL) {
-        partial_T *pt = tv->vval.v_partial;
-        int i;
-
-        if (pt != NULL) {
-          for (i = 0; i < pt->pt_argc; i++) {
-            abort = abort || set_ref_in_item(&pt->pt_argv[i], copyID,
-                                             ht_stack, list_stack);
-          }
-        }
-      }
       break;
     }
 
