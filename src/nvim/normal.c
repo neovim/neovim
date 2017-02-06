@@ -2698,11 +2698,12 @@ do_mouse (
            && bt_quickfix(curbuf)) {
     if (State & INSERT)
       stuffcharReadbuff(Ctrl_O);
-    if (curwin->w_llist_ref == NULL)            /* quickfix window */
+    if (curwin->w_llist_ref == NULL) {          // quickfix window
       do_cmdline_cmd(".cc");
-    else                                        /* location list window */
+    } else {                                    // location list window
       do_cmdline_cmd(".ll");
-    got_click = false;                  /* ignore drag&release now */
+    }
+    got_click = false;                  // ignore drag&release now
   }
   /*
    * Ctrl-Mouse click (or double click in a help window) jumps to the tag
