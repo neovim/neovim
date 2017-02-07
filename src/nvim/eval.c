@@ -11,6 +11,7 @@
 #include <math.h>
 #include <limits.h>
 #include <msgpack.h>
+#include <signal.h>
 
 #include "nvim/assert.h"
 #include "nvim/vim.h"
@@ -1045,8 +1046,13 @@ int eval_to_number(char_u *expr)
 static void prepare_vimvar(int idx, typval_T *save_tv)
 {
   *save_tv = vimvars[idx].vv_tv;
-  if (vimvars[idx].vv_type == VAR_UNKNOWN)
+  if (vimvars[idx].vv_type == VAR_UNKNOWN) {
+    // if (0 == strcmp("val", (char *)vimvars[idx].vv_di.di_key)) {
+    //   ILOG("%s %p ht_mask=%zu", vimvars[idx].vv_di.di_key, &vimvarht,
+    //        vimvarht.ht_mask);
+    // }
     hash_add(&vimvarht, vimvars[idx].vv_di.di_key);
+  }
 }
 
 /*
@@ -4641,6 +4647,8 @@ eval_index (
           }
         }
 
+        assert(rettv->vval.v_dict->dv_hashtab.ht_mask > 0
+               && rettv->vval.v_dict->dv_hashtab.ht_mask < INT_MAX);
         item = dict_find(rettv->vval.v_dict, key, (int)len);
 
         if (item == NULL && verbose)
@@ -5839,8 +5847,8 @@ bool garbage_collect(bool testing)
     garbage_collect_at_exit = false;
   }
 
-  // We advance by two because we add one for items referenced through
-  // previous_funccal.
+  // We advance by two (COPYID_INC) because we add one for items referenced
+  // through previous_funccal.
   const int copyID = get_copyID();
 
   // 1. Go through all accessible variables and mark all lists and dicts
@@ -5994,6 +6002,7 @@ bool garbage_collect(bool testing)
   bool did_free = false;
   if (!abort) {
     // 2. Free lists and dictionaries that are not referenced.
+    ILOG("free_unref_items copyID=%d", copyID);
     did_free = free_unref_items(copyID);
 
     // 3. Check if any funccal can be freed now.
@@ -6030,8 +6039,6 @@ bool garbage_collect(bool testing)
 /// @return true, if something was freed.
 static int free_unref_items(int copyID)
 {
-  dict_T *dd, *dd_next;
-  list_T *ll, *ll_next;
   bool did_free = false;
 
   // Let all "free" functions know that we are here. This means no
@@ -6069,14 +6076,16 @@ static int free_unref_items(int copyID)
   }
 
   // PASS 2: free the items themselves.
-  for (dd = first_dict; dd != NULL; dd = dd_next) {
+  for (dict_T *dd = first_dict, *dd_next; dd != NULL; dd = dd_next) {
     dd_next = dd->dv_used_next;
     if ((dd->dv_copyID & COPYID_MASK) != (copyID & COPYID_MASK)) {
+      ILOG("%p copyID=%d dd->dv_copyID=%d dv_refcount=%d ht_mask=%zu", dd,
+           copyID, dd->dv_copyID, dd->dv_refcount, dd->dv_hashtab.ht_mask);
       dict_free_dict(dd);
     }
   }
 
-  for (ll = first_list; ll != NULL; ll = ll_next) {
+  for (list_T *ll = first_list, *ll_next; ll != NULL; ll = ll_next) {
     ll_next = ll->lv_used_next;
     if ((ll->lv_copyID & COPYID_MASK) != (copyID & COPYID_MASK)
         && ll->lv_watch == NULL) {
@@ -6190,6 +6199,8 @@ bool set_ref_in_item(typval_T *tv, int copyID, ht_stack_T **ht_stack,
     case VAR_DICT: {
       dict_T *dd = tv->vval.v_dict;
       if (dd != NULL && dd->dv_copyID != copyID) {
+        ILOG("%p copyID=%d dv_refcount=%d ht_mask=%zu", dd, copyID,
+             dd->dv_refcount, dd->dv_hashtab.ht_mask);
         // Didn't see this dict yet.
         dd->dv_copyID = copyID;
         if (ht_stack == NULL) {
@@ -6428,7 +6439,6 @@ static void dict_free_contents(dict_T *d) {
   hashitem_T  *hi;
   dictitem_T  *di;
 
-
   /* Lock the hashtab, we don't want it to resize while freeing items. */
   hash_lock(&d->dv_hashtab);
   assert(d->dv_hashtab.ht_locked > 0);
@@ -6453,9 +6463,11 @@ static void dict_free_contents(dict_T *d) {
   }
 
   hash_clear(&d->dv_hashtab);
+  // hash_init(&d->dv_hashtab);
 }
 
-static void dict_free_dict(dict_T *d) {
+static void dict_free_dict(dict_T *d)
+{
   // Remove the dict from the list of dicts for garbage collection.
   if (d->dv_used_prev == NULL) {
     first_dict = d->dv_used_next;
@@ -6558,6 +6570,7 @@ static dict_T *dict_copy(const vimconv_T *const conv,
   {
     if (copyID != 0) {
       orig->dv_copyID = copyID;
+      ILOG("%p copyID=%d", orig, copyID);
       orig->dv_copydict = copy;
     }
     todo = (int)orig->dv_hashtab.ht_used;
@@ -6602,13 +6615,22 @@ static dict_T *dict_copy(const vimconv_T *const conv,
   return copy;
 }
 
+static dict_T *g_added_dicts[128] = { 0 };
+// static hash_T *g_ht_masks[128] = { 0 };
+static int     g_added = 0;
+
 /*
  * Add item "item" to Dictionary "d".
  * Returns FAIL when key already exists.
  */
 int dict_add(dict_T *d, dictitem_T *item)
 {
-  return hash_add(&d->dv_hashtab, item->di_key);
+  int rv = hash_add(&d->dv_hashtab, item->di_key);
+  if (g_added < 127 && 0 == strcmp("vimfiler__is_directory", (char *)item->di_key) && g_added++ > 82) {
+    ILOG("%s %p dv_refcount=%d ht_mask=%zu", item->di_key, d, d->dv_refcount, d->dv_hashtab.ht_mask);
+    g_added_dicts[g_added] = d;
+  }
+  return rv;
 }
 
 /*
@@ -7307,6 +7329,68 @@ static char_u *deref_func_name(
   return name;
 }
 
+bool validate_dict(dict_T *dd)
+{
+  if (dd->dv_hashtab.ht_mask == 0 || dd->dv_hashtab.ht_mask >= INT_MAX) {
+    ILOG("invalid dict: %p dv_refcount=%d ht_mask=%zu", dd, dd->dv_refcount, dd->dv_hashtab.ht_mask);
+    return false;
+  }
+  return true;
+}
+
+bool validate_list(list_T *ll)
+{
+  bool rv = true;
+  for (listitem_T *l = ll->lv_first; rv && l != NULL; l = l->li_next) {
+    switch(l->li_tv.v_type) {
+      case VAR_UNKNOWN:
+      case VAR_NUMBER:
+      case VAR_STRING:
+      case VAR_FUNC:
+      case VAR_LIST:
+      case VAR_FLOAT:
+      case VAR_SPECIAL:
+      case VAR_PARTIAL:
+        break;
+      case VAR_DICT:
+        rv = validate_dict(l->li_tv.vval.v_dict);
+        break;
+      default:
+        rv = false;
+        break;
+    }
+  }
+  return rv;
+}
+
+bool validate_argvars(typval_T *argvars, int argcount)
+{
+  bool rv = true;
+  for (int i = 0; rv && i < argcount; i++) {
+    typval_T *p = argvars + i;
+    switch(p->v_type) {
+      case VAR_UNKNOWN:
+      case VAR_NUMBER:
+      case VAR_STRING:
+      case VAR_FUNC:
+      case VAR_FLOAT:
+      case VAR_SPECIAL:
+      case VAR_PARTIAL:
+        break;
+      case VAR_DICT:
+        rv = validate_dict(p->vval.v_dict);
+        break;
+      case VAR_LIST:
+        rv = validate_list(p->vval.v_list);
+        break;
+      default:
+        rv = false;
+        break;
+    }
+  }
+  return rv;
+}
+
 /*
  * Allocate a variable for the result of a function.
  * Return OK or FAIL.
@@ -7366,6 +7450,11 @@ get_func_tv (
         ((typval_T **)funcargs.ga_data)[funcargs.ga_len++] = &argvars[i];
       }
     }
+
+    if (!validate_argvars(argvars, argcount)) {
+      raise(SIGINT);
+    }
+
     ret = call_func(name, len, rettv, argcount, argvars, NULL,
                     firstline, lastline, doesrange, evaluate,
                     partial, selfdict);
@@ -8849,9 +8938,9 @@ static void f_deepcopy(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   if (noref < 0 || noref > 1) {
     EMSG(_(e_invarg));
   } else {
-    var_item_copy(NULL, &argvars[0], rettv, true, (noref == 0
-                                                   ? get_copyID()
-                                                   : 0));
+    int copyID = (noref == 0 ? get_copyID() : 0);
+    // ILOG("copyID=%d", copyID);
+    var_item_copy(NULL, &argvars[0], rettv, true, copyID);
   }
 }
 
@@ -17819,14 +17908,11 @@ static bool set_ref_in_callback(Callback *callback, int copyID,
     case kCallbackFuncref:
     case kCallbackNone:
       break;
-
     case kCallbackPartial:
       tv.v_type = VAR_PARTIAL;
       tv.vval.v_partial = callback->data.partial;
       return set_ref_in_item(&tv, copyID, ht_stack, list_stack);
       break;
-
-
     default:
       abort();
   }
@@ -19790,6 +19876,9 @@ void clear_tv(typval_T *varp)
     (void)evn_ret;
     assert(evn_ret == OK);
   }
+  if (varp != NULL) {
+    varp->v_lock = 0;
+  }
 }
 
 /*
@@ -20454,6 +20543,9 @@ set_var (
 
     v = xmalloc(sizeof(dictitem_T) + STRLEN(varname));
     STRCPY(v->di_key, varname);
+    if (0 == strcmp("vimfiler__is_directory", (char *)v->di_key)) {
+      ILOG("%s ht_mask=%zu", v->di_key, ht->ht_mask);
+    }
     if (hash_add(ht, DI2HIKEY(v)) == FAIL) {
       xfree(v);
       return;
@@ -22857,6 +22949,9 @@ static void add_nr_var(dict_T *dp, dictitem_T *v, char *name, varnumber_T nr)
   v->di_tv.v_type = VAR_NUMBER;
   v->di_tv.v_lock = VAR_FIXED;
   v->di_tv.vval.v_number = nr;
+  if (0 == strcmp("vimfiler__is_directory", (char *)v->di_key)) {
+    ILOG("%s %p ht_mask=%zu", v->di_key, dp, dp->dv_hashtab.ht_mask);
+  }
 }
 
 /*
