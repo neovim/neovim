@@ -4930,6 +4930,9 @@ char_u *partial_name(partial_T *pt)
 
 static void partial_free(partial_T *pt)
 {
+  if (in_free_unref_items) {
+    return;
+  }
   for (int i = 0; i < pt->pt_argc; i++) {
     clear_tv(&pt->pt_argv[i]);
   }
@@ -17828,6 +17831,9 @@ static bool callback_from_typval(Callback *callback, typval_T *arg)
 /// Unref/free callback
 static void callback_free(Callback *callback)
 {
+  if (in_free_unref_items) {
+    return;
+  }
   switch (callback->type) {
     case kCallbackFuncref:
       func_unref(callback->data.funcref);
@@ -19871,7 +19877,10 @@ static inline void _nothing_conv_dict_end(typval_T *const tv,
 /// @param[in,out]  varp  Value to free.
 void clear_tv(typval_T *varp)
 {
-  if (varp != NULL && varp->v_type != VAR_UNKNOWN) {
+  if (varp != NULL && varp->v_type != VAR_UNKNOWN
+      && varp->v_type != VAR_DICT
+      && varp->v_type != VAR_LIST
+      ) {
     const int evn_ret = encode_vim_to_nothing(varp, varp, "clear_tv argument");
     (void)evn_ret;
     assert(evn_ret == OK);
@@ -22387,6 +22396,9 @@ static void func_free(ufunc_T *fp)
 /// param[in]        force        When true, we are exiting.
 static void func_clear_free(ufunc_T *fp, bool force)
 {
+  if (in_free_unref_items) {
+    return;
+  }
   func_clear(fp, force);
   func_free(fp);
 }
@@ -24325,6 +24337,9 @@ static bool dictwatcher_matches(DictWatcher *watcher, const char *key)
 static void dictwatcher_free(DictWatcher *watcher)
   FUNC_ATTR_NONNULL_ALL
 {
+  if (in_free_unref_items) {
+    return;
+  }
   callback_free(&watcher->callback);
   xfree(watcher->key_pattern);
   xfree(watcher);
