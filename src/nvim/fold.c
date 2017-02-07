@@ -34,47 +34,6 @@
 #include "nvim/undo.h"
 #include "nvim/ops.h"
 
-/* local declarations. {{{1 */
-/* typedef fold_T {{{2 */
-/*
- * The toplevel folds for each window are stored in the w_folds growarray.
- * Each toplevel fold can contain an array of second level folds in the
- * fd_nested growarray.
- * The info stored in both growarrays is the same: An array of fold_T.
- */
-typedef struct {
-  linenr_T fd_top;              /* first line of fold; for nested fold
-                                 * relative to parent */
-  linenr_T fd_len;              /* number of lines in the fold */
-  garray_T fd_nested;           /* array of nested folds */
-  char fd_flags;                /* see below */
-  char fd_small;                /* TRUE, FALSE or MAYBE: fold smaller than
-                                   'foldminlines'; MAYBE applies to nested
-                                   folds too */
-} fold_T;
-
-#define FD_OPEN         0       /* fold is open (nested ones can be closed) */
-#define FD_CLOSED       1       /* fold is closed */
-#define FD_LEVEL        2       /* depends on 'foldlevel' (nested folds too) */
-
-#define MAX_LEVEL       20      /* maximum fold depth */
-
-/* Define "fline_T", passed to get fold level for a line. {{{2 */
-typedef struct {
-  win_T       *wp;              /* window */
-  linenr_T lnum;                /* current line number */
-  linenr_T off;                 /* offset between lnum and real line number */
-  linenr_T lnum_save;           /* line nr used by foldUpdateIEMSRecurse() */
-  int lvl;                      /* current level (-1 for undefined) */
-  int lvl_next;                 /* level used for next line */
-  int start;                    /* number of folds that are forced to start at
-                                   this line. */
-  int end;                      /* level of fold that is forced to end below
-                                   this line */
-  int had_end;                  /* level of fold that is forced to end above
-                                   this line (copy of "end" of prev. line) */
-} fline_T;
-
 /* Flag is set when redrawing is needed. */
 static int fold_changed;
 
@@ -149,25 +108,52 @@ bool hasFolding(linenr_T lnum, linenr_T *firstp, linenr_T *lastp)
   return hasFoldingWin(curwin, lnum, firstp, lastp, TRUE, NULL);
 }
 
+/// Return all folds that contain a specific line
+///
+/// @param[in] gap array to search for matching folds
+/// @param lnum line whose folds we are looking for
+/// @param[out] out array of folds that contain the line 'lnum'
+void getFolds(garray_T *gap, linenr_T lnum, garray_T *out) {
+  fold_T *fp;
+  int level = 0;
+  linenr_T lnum_rel = lnum;
+  // Recursively search for a fold that contains "lnum".
+  while (true) {
+    if (!foldFind(gap, lnum_rel, &fp)) {
+      break;
+    }
+    assert(fp != 0);
+    GA_APPEND(fold_T *, out, fp);
+    gap = &fp->fd_nested;
+    lnum_rel -= fp->fd_top;
+    level++;
+  }
+}
+
 /* hasFoldingWin() {{{2 */
+/// @param[out] firstp first line covered by the fold
+/// @param[out] lastp last line covered by the fold
+/// @param[out] infop where to store fold info, can be null
+/// @param cache when TRUE: use cached values of window
+/// @return true
 bool hasFoldingWin(
     win_T *win,
     linenr_T lnum,
     linenr_T *firstp,
     linenr_T *lastp,
-    int cache,                      /* when TRUE: use cached values of window */
-    foldinfo_T *infop             /* where to store fold info */
+    int cache,
+    foldinfo_T *infop
 )
 {
-  int had_folded = FALSE;
+  bool had_folded = false;
   linenr_T first = 0;
   linenr_T last = 0;
   linenr_T lnum_rel = lnum;
   int x;
   fold_T      *fp;
   int level = 0;
-  int use_level = FALSE;
-  int maybe_small = FALSE;
+  bool use_level = false;
+  bool maybe_small = false;
   garray_T    *gap;
   int low_level = 0;
 
@@ -675,8 +661,8 @@ deleteFold (
   garray_T    *found_ga;
   fold_T      *found_fp = NULL;
   linenr_T found_off = 0;
-  int use_level;
-  int maybe_small = FALSE;
+  bool use_level;
+  bool maybe_small = FALSE;
   int level = 0;
   linenr_T lnum = start;
   linenr_T lnum_off;
@@ -836,8 +822,8 @@ foldMoveTo (
   linenr_T lnum_off;
   linenr_T lnum_found;
   linenr_T lnum;
-  int use_level;
-  int maybe_small;
+  bool use_level;
+  bool maybe_small;
   garray_T    *gap;
   fold_T      *fp;
   int level;
@@ -1108,7 +1094,7 @@ static int foldLevelWin(win_T *wp, linenr_T lnum)
 /*
  * Check if the folds in window "wp" are invalid and update them if needed.
  */
-static void checkupdate(win_T *wp)
+void checkupdate(win_T *wp)
 {
   if (wp->w_foldinvalid) {
     foldUpdate(wp, (linenr_T)1, (linenr_T)MAXLNUM);     /* will update all */
@@ -1489,39 +1475,48 @@ static int getDeepestNestingRecurse(garray_T *gap)
 }
 
 /* check_closed() {{{2 */
-/*
- * Check if a fold is closed and update the info needed to check nested folds.
- */
-static int 
-check_closed (
+/// Check if a fold is closed and update the info needed to check nested folds.
+///
+/// @param[in,out] use_levelp TRUE: outer fold had FD_LEVEL
+/// @param level folding depth
+/// @param[out] maybe_smallp TRUE: outer this had fd_small == MAYBE
+/// @param lnum_off line number offset for fp->fd_top
+bool
+check_closed(
     win_T *win,
     fold_T *fp,
-    int *use_levelp,            /* TRUE: outer fold had FD_LEVEL */
-    int level,                          /* folding depth */
-    int *maybe_smallp,          /* TRUE: outer this had fd_small == MAYBE */
-    linenr_T lnum_off                  /* line number offset for fp->fd_top */
+    bool *use_levelp,
+    int level,
+    bool *maybe_smallp,
+    linenr_T lnum_off
 )
 {
-  int closed = FALSE;
+  bool closed = false;
 
   /* Check if this fold is closed.  If the flag is FD_LEVEL this
    * fold and all folds it contains depend on 'foldlevel'. */
   if (*use_levelp || fp->fd_flags == FD_LEVEL) {
-    *use_levelp = TRUE;
-    if (level >= win->w_p_fdl)
-      closed = TRUE;
-  } else if (fp->fd_flags == FD_CLOSED)
-    closed = TRUE;
+    *use_levelp = true;
+    if (level >= win->w_p_fdl) {
+      closed = true;
+    }
+  } else if (fp->fd_flags == FD_CLOSED) {
+    closed = true;
+  }
 
-  /* Small fold isn't closed anyway. */
-  if (fp->fd_small == MAYBE)
-    *maybe_smallp = TRUE;
+  // Small fold isn't closed anyway
+  if (fp->fd_small == MAYBE) {
+    *maybe_smallp = true;
+  }
+
   if (closed) {
-    if (*maybe_smallp)
+    if (*maybe_smallp) {
       fp->fd_small = MAYBE;
+    }
     checkSmall(win, fp, lnum_off);
-    if (fp->fd_small == TRUE)
-      closed = FALSE;
+    if (fp->fd_small == true) {
+      closed = false;
+    }
   }
   return closed;
 }
@@ -1697,7 +1692,7 @@ static void foldDelMarker(linenr_T lnum, char_u *marker, size_t markerlen)
 /// When 'foldtext' isn't set puts the result in "buf[FOLD_TEXT_LEN]".
 /// Otherwise the result is in allocated memory.
 char_u *get_foldtext(win_T *wp, linenr_T lnum, linenr_T lnume,
-                     foldinfo_T *foldinfo, char_u *buf)
+                     int level, char_u *buf)
   FUNC_ATTR_NONNULL_ARG(1)
 {
   char_u      *text = NULL;
@@ -1718,7 +1713,6 @@ char_u *get_foldtext(win_T *wp, linenr_T lnum, linenr_T lnume,
   if (*wp->w_p_fdt != NUL) {
     char dashes[MAX_LEVEL + 2];
     win_T   *save_curwin;
-    int level;
     char_u  *p;
 
     // Set "v:foldstart" and "v:foldend".
@@ -1727,9 +1721,9 @@ char_u *get_foldtext(win_T *wp, linenr_T lnum, linenr_T lnume,
 
     /* Set "v:folddashes" to a string of "level" dashes. */
     /* Set "v:foldlevel" to "level". */
-    level = foldinfo->fi_level;
-    if (level > (int)sizeof(dashes) - 1)
+    if (level > (int)sizeof(dashes) - 1) {
       level = (int)sizeof(dashes) - 1;
+    }
     memset(dashes, '-', (size_t)level);
     dashes[level] = NUL;
     set_vim_var_string(VV_FOLDDASHES, dashes, -1);

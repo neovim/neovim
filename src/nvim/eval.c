@@ -8861,7 +8861,10 @@ static void f_foldtextresult(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
   fold_count = foldedCount(curwin, lnum, &foldinfo);
   if (fold_count > 0) {
-    text = get_foldtext(curwin, lnum, lnum + fold_count - 1, &foldinfo, buf);
+    text = get_foldtext(curwin, lnum, lnum + fold_count - 1,
+        &foldinfo, buf);
+    text = get_foldtext(curwin, lnum, lnum + fold_count - 1,
+        foldinfo.fi_level, buf);
     if (text == buf) {
       text = vim_strsave(text);
     }
@@ -10609,6 +10612,7 @@ static void f_has(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     "find_in_path",
     "float",
     "folding",
+    "folding_fillchars",
 #if defined(UNIX)
     "fork",
 #endif

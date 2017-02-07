@@ -20,6 +20,7 @@
 #include "nvim/vim.h"
 #include "nvim/buffer.h"
 #include "nvim/file_search.h"
+#include "nvim/fold.h"
 #include "nvim/window.h"
 #include "nvim/types.h"
 #include "nvim/ex_docmd.h"
@@ -43,6 +44,22 @@
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "api/vim.c.generated.h"
 #endif
+
+/// @see foldCreate
+void nvim_fold_create(Window window, Integer start, Integer end, Error *err)
+{
+  foldCreate(start, end);
+}
+
+/// @see deleteFold
+void nvim_fold_delete(Window window, Integer start, Integer end, Boolean recursive, Error *err)
+{
+  deleteFold(
+    start,
+    end,
+    recursive,
+    false);
+}
 
 /// Executes an ex-command.
 ///

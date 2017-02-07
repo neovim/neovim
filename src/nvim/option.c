@@ -3411,6 +3411,10 @@ static char_u *set_chars_option(char_u **varp)
     { &fill_vert,    "vert" , 9474 },  // │
     { &fill_fold,    "fold" , 183  },  // ·
     { &fill_diff,    "diff" , '-'  },
+    { &fold_chars[kFoldOpenStart],  "foldopen", '-' },
+    { &fold_chars[kFoldClosed],     "foldclose", '+' },
+    { &fold_chars[kFoldOpenMid],    "foldsep", '|'},
+    { &fold_chars[kFoldOpenLast],   "foldend", '^' },
   };
   static struct charstab lcstab[] = {
     { &lcs_eol,      "eol",      NUL },
