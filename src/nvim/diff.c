@@ -1007,6 +1007,10 @@ void ex_diffsplit(exarg_T *eap)
   bufref_T old_curbuf;
   set_bufref(&old_curbuf, curbuf);
 
+  // Need to compute w_fraction when no redraw happened yet.
+  validate_cursor();
+  set_fraction(curwin);
+
   // don't use a new tab page, each tab page has its own diffs
   cmdmod.tab = 0;
 
@@ -1032,6 +1036,9 @@ void ex_diffsplit(exarg_T *eap)
               curwin->w_cursor.lnum);
         }
       }
+      // Now that lines are folded scroll to show the cursor at the same
+      // relative position.
+      scroll_to_fraction(curwin, curwin->w_height);
     }
   }
 }
