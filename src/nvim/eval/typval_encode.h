@@ -34,6 +34,7 @@ typedef enum {
 typedef struct {
   MPConvStackValType type;  ///< Type of the stack entry.
   typval_T *tv;  ///< Currently converted typval_T.
+  int saved_copyID;  ///< copyID item used to have.
   union {
     struct {
       dict_T *dict;    ///< Currently converted dictionary.
