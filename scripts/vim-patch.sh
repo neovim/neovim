@@ -379,8 +379,6 @@ review_commit() {
 
   assign_commit_details "${vim_version}"
 
-  local vim_patch_url="${vim_commit_url}.patch"
-
   local expected_commit_message
   expected_commit_message="$(commit_message)"
   local message_length
@@ -403,8 +401,7 @@ review_commit() {
   echo "✔ Saved pull request diff to '${NVIM_SOURCE_DIR}/n${patch_file}'."
   CREATED_FILES+=("${NVIM_SOURCE_DIR}/n${patch_file}")
 
-  curl -Ssfo "${NVIM_SOURCE_DIR}/${patch_file}" "${vim_patch_url}"
-  echo "✔ Saved Vim diff to '${NVIM_SOURCE_DIR}/${patch_file}'."
+  get_vim_patch "${vim_version}"
   CREATED_FILES+=("${NVIM_SOURCE_DIR}/${patch_file}")
 
   echo
