@@ -1154,10 +1154,13 @@ void ex_diffoff(exarg_T *eap)
         }
 
         foldUpdateAll(wp);
-
-        // make sure topline is not halfway through a fold
-        changed_window_setting_win(wp);
       }
+      // remove filler lines
+      wp->w_topfill = 0;
+
+      // make sure topline is not halfway a fold and cursor is
+      // invalidated
+      changed_window_setting_win(wp);
 
       // Note: 'sbo' is not restored, it's a global option.
       diff_buf_adjust(wp);

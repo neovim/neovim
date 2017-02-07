@@ -202,3 +202,19 @@ func Test_diffget_diffput()
   bwipe!
   enew!
 endfunc
+
+func Test_diffoff()
+  enew!
+  call setline(1, ['Two', 'Three'])
+  let normattr = screenattr(1, 1)
+  diffthis
+  botright vert new
+  call setline(1, ['One', '', 'Two', 'Three'])
+  diffthis
+  redraw
+  diffoff!
+  redraw
+  call assert_equal(normattr, screenattr(1, 1))
+  bwipe!
+  bwipe!
+endfunc
