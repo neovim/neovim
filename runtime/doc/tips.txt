@@ -400,7 +400,7 @@ when they are not in the same location as the compressed "doc" directory.  See
 ==============================================================================
 Hex editing					*hex-editing* *using-xxd*
 
-See section |23.4| of the user manual.
+See section |23.3| of the user manual.
 
 If one has a particular extension that one uses for binary files (such as exe,
 bin, etc), you may find it helpful to automate the process with the following
