@@ -25,6 +25,7 @@ source test_statusline.vim
 source test_syn_attr.vim
 source test_tabline.vim
 source test_tabpage.vim
+source test_tagcase.vim
 source test_tagjump.vim
 source test_unlet.vim
 source test_window_cmd.vim

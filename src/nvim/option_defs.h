@@ -601,11 +601,14 @@ EXTERN int p_tbs;               ///< 'tagbsearch'
 EXTERN char_u *p_tc;            ///< 'tagcase'
 EXTERN unsigned tc_flags;       ///< flags from 'tagcase'
 #ifdef IN_OPTION_C
-static char *(p_tc_values[]) = { "followic", "ignore", "match", NULL };
+static char *(p_tc_values[]) =
+  { "followic", "ignore", "match", "followscs", "smart", NULL };
 #endif
 #define TC_FOLLOWIC             0x01
 #define TC_IGNORE               0x02
 #define TC_MATCH                0x04
+#define TC_FOLLOWSCS            0x08
+#define TC_SMART                0x10
 EXTERN long p_tl;               ///< 'taglength'
 EXTERN int p_tr;                ///< 'tagrelative'
 EXTERN char_u *p_tags;          ///< 'tags'

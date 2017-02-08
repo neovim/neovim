@@ -6273,6 +6273,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 	By default, tag searches are case-sensitive.  Case is ignored when
 	'ignorecase' is set and 'tagcase' is "followic", or when 'tagcase' is
 	"ignore".
+	Also when 'tagcase' is "followscs" and 'smartcase' is set, or
+	'tagcase' is "smart", and the pattern contains only lowercase
+	characters.
 
 	When 'tagbsearch' is off, tags searching is slower when a full match
 	exists, but faster when no full match exists.  Tags in unsorted tags
@@ -6290,8 +6293,10 @@ A jump table for the options with a short description can be found at |Q_op|.
 	This option specifies how case is handled when searching the tags
 	file:
 	   followic	Follow the 'ignorecase' option
+	   followscs    Follow the 'smartcase' and 'ignorecase' options
 	   ignore	Ignore case
 	   match	Match case
+	   smart	Ignore case unless an upper case letter is used
 
 						*'taglength'* *'tl'*
 'taglength' 'tl'	number	(default 0)
