@@ -1595,7 +1595,7 @@ int win_signcol_width(win_T *wp)
   // }
   // return fdc;
   // return MIN(wp->w_signcolumn_width, 2); // hopefully it's 2
-  return 5;
+  return 8;
 }
 
 /*
@@ -2761,11 +2761,16 @@ win_line (
                         // xstrlcat ?
                         //
                       ILOG("extra before=%s", extra);
-                      STRNCAT(extra, p_extra, sizeof(extra));
+                      mb_string2cells(p_extra);
+                      // screen_puts_len(char_u *text, int textlen, int row, int col, int attr)
+                      // TODO avancer col ?
+                      char_attr = sign_get_attr(sign->typenr, FALSE);
+                      screen_puts_len(p_extra, 1, Rows, col, char_attr);
+                      // Does not take into account cell !
+                      // STRNCAT(extra, p_extra, sizeof(extra));
                       ILOG("extra after=%s", extra);
                       used_cells += symbol_clen;
                     }
-                    char_attr = sign_get_attr(sign->typenr, FALSE);
                     // }
                   }
 
@@ -2774,7 +2779,6 @@ win_line (
                     (win_signcol_width(wp) - used_cells);
                   extra[STRLEN(extra)] = ' ';
                   p_extra = extra;
-                  
                   p_extra[n_extra] = NUL;
 
               }
@@ -5335,6 +5339,7 @@ void screen_puts(char_u *text, int row, int col, int attr)
  * Like screen_puts(), but output "text[len]".  When "len" is -1 output up to
  * a NUL.
  */
+// TODO shouldreturn number of cells or newcol ?
 void screen_puts_len(char_u *text, int textlen, int row, int col, int attr)
 {
   unsigned off;
