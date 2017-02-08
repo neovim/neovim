@@ -23046,8 +23046,9 @@ static inline bool common_job_start(TerminalJobData *data, typval_T *rettv)
 
   data->refcount++;
   char *cmd = xstrdup(proc->argv[0]);
-  if (!process_spawn(proc)) {
-    EMSG2(_(e_jobspawn), cmd);
+  int status = process_spawn(proc);
+  if (status) {
+    EMSG3(_(e_jobspawn), os_strerror(status), cmd);
     xfree(cmd);
     if (proc->type == kProcessTypePty) {
       xfree(data->proc.pty.term_name);

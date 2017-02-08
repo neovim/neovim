@@ -30,7 +30,8 @@
 
 static bool process_is_tearing_down = false;
 
-bool process_spawn(Process *proc) FUNC_ATTR_NONNULL_ALL
+/// @returns zero on success, or negative error code
+int process_spawn(Process *proc) FUNC_ATTR_NONNULL_ALL
 {
   if (proc->in) {
     uv_pipe_init(&proc->loop->uv, &proc->in->uv.pipe, 0);
@@ -44,19 +45,19 @@ bool process_spawn(Process *proc) FUNC_ATTR_NONNULL_ALL
     uv_pipe_init(&proc->loop->uv, &proc->err->uv.pipe, 0);
   }
 
-  bool success;
+  int status;
   switch (proc->type) {
     case kProcessTypeUv:
-      success = libuv_process_spawn((LibuvProcess *)proc);
+      status = libuv_process_spawn((LibuvProcess *)proc);
       break;
     case kProcessTypePty:
-      success = pty_process_spawn((PtyProcess *)proc);
+      status = pty_process_spawn((PtyProcess *)proc);
       break;
     default:
       abort();
   }
 
-  if (!success) {
+  if (status) {
     if (proc->in) {
       uv_close((uv_handle_t *)&proc->in->uv.pipe, NULL);
     }
@@ -74,7 +75,7 @@ bool process_spawn(Process *proc) FUNC_ATTR_NONNULL_ALL
     }
     shell_free_argv(proc->argv);
     proc->status = -1;
-    return false;
+    return status;
   }
 
   if (proc->in) {
@@ -105,7 +106,7 @@ bool process_spawn(Process *proc) FUNC_ATTR_NONNULL_ALL
   proc->internal_close_cb = decref;
   proc->refcount++;
   kl_push(WatcherPtr, proc->loop->children, proc);
-  return true;
+  return 0;
 }
 
 void process_teardown(Loop *loop) FUNC_ATTR_NONNULL_ALL
@@ -155,19 +156,16 @@ void process_close_err(Process *proc) FUNC_ATTR_NONNULL_ALL
 
 /// Synchronously wait for a process to finish
 ///
-/// @param process The Process instance
-/// @param ms Number of milliseconds to wait, 0 for not waiting, -1 for
-///        waiting until the process quits.
-/// @return returns the status code of the exited process. -1 if the process is
-///         still running and the `timeout` has expired. Note that this is
-///         indistinguishable from the process returning -1 by itself. Which
-///         is possible on some OS. Returns -2 if an user has interruped the
-///         wait.
+/// @param process  Process instance
+/// @param ms       Time in milliseconds to wait for the process.
+///                 0 for no wait. -1 to wait until the process quits.
+/// @return Exit code of the process.
+///         -1 if the timeout expired while the process is still running.
+///         -2 if the user interruped the wait.
 int process_wait(Process *proc, int ms, MultiQueue *events)
   FUNC_ATTR_NONNULL_ARG(1)
 {
-  // The default status is -1, which represents a timeout
-  int status = -1;
+  int status = -1;  // default
   bool interrupted = false;
   if (!proc->refcount) {
     status = proc->status;
@@ -179,8 +177,8 @@ int process_wait(Process *proc, int ms, MultiQueue *events)
     events = proc->events;
   }
 
-  // Increase refcount to stop the exit callback from being called(and possibly
-  // being freed) before we have a chance to get the status.
+  // Increase refcount to stop the exit callback from being called (and possibly
+  // freed) before we have a chance to get the status.
   proc->refcount++;
   LOOP_PROCESS_EVENTS_UNTIL(proc->loop, events, ms,
                             // Until...

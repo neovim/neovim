@@ -13,7 +13,8 @@
 # include "event/libuv_process.c.generated.h"
 #endif
 
-bool libuv_process_spawn(LibuvProcess *uvproc)
+/// @returns zero on success, or negative error code
+int libuv_process_spawn(LibuvProcess *uvproc)
   FUNC_ATTR_NONNULL_ALL
 {
   Process *proc = (Process *)uvproc;
@@ -51,11 +52,11 @@ bool libuv_process_spawn(LibuvProcess *uvproc)
   int status;
   if ((status = uv_spawn(&proc->loop->uv, &uvproc->uv, &uvproc->uvopts))) {
     ELOG("uv_spawn failed: %s", uv_strerror(status));
-    return false;
+    return status;
   }
 
   proc->pid = uvproc->uv.pid;
-  return true;
+  return status;
 }
 
 void libuv_process_close(LibuvProcess *uvproc)
