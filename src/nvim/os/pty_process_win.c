@@ -15,7 +15,7 @@ static void CALLBACK pty_process_finish1(void *context, BOOLEAN unused)
   uv_async_send(finish_async);
 }
 
-bool pty_process_spawn(PtyProcess *ptyproc)
+int pty_process_spawn(PtyProcess *ptyproc)
   FUNC_ATTR_NONNULL_ALL
 {
   Process *proc = (Process *)ptyproc;
@@ -52,13 +52,14 @@ bool pty_process_spawn(PtyProcess *ptyproc)
       out_name,
       pty_process_connect_cb);
 
-  // XXX: Provide the correct ptyprocess parameters (at least, the cmdline...
-  // probably cwd too?  what about environ?)
   if (!(spawncfg = winpty_spawn_config_new(
-      WINPTY_SPAWN_FLAG_AUTO_SHUTDOWN,
+      WINPTY_SPAWN_FLAG_AUTO_SHUTDOWN,  // gather all of the child's output
       L"C:\\Windows\\System32\\cmd.exe",
-      L"C:\\Windows\\System32\\cmd.exe",
-      NULL, NULL,
+      L"C:\\Windows\\System32\\cmd.exe",  // TODO: full command with args
+      proc->cwd,
+      NULL,  // TODO: environment. "pointer to an environment block like that
+             // passed to CreateProcess--a contiguous array of NUL-terminated
+             // "VAR=VAL" strings followed by a final NUL terminator."
       &err))) {
     goto cleanup;
   }
