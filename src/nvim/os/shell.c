@@ -124,13 +124,9 @@ int os_call_shell(char_u *cmd, ShellOpts opts, char_u *extra_args)
 
   size_t nread;
 
-  int status = do_os_system(shell_build_argv((char *)cmd, (char *)extra_args),
-                            input.data,
-                            input.len,
-                            output_ptr,
-                            &nread,
-                            emsg_silent,
-                            forward_output);
+  int exitcode = do_os_system(shell_build_argv((char *)cmd, (char *)extra_args),
+                              input.data, input.len, output_ptr, &nread,
+                              emsg_silent, forward_output);
 
   xfree(input.data);
 
@@ -139,16 +135,16 @@ int os_call_shell(char_u *cmd, ShellOpts opts, char_u *extra_args)
     xfree(output);
   }
 
-  if (!emsg_silent && status != 0 && !(opts & kShellOptSilent)) {
+  if (!emsg_silent && exitcode != 0 && !(opts & kShellOptSilent)) {
     MSG_PUTS(_("\nshell returned "));
-    msg_outnum(status);
+    msg_outnum(exitcode);
     msg_putchar('\n');
   }
 
   State = current_state;
   signal_accept_deadly();
 
-  return status;
+  return exitcode;
 }
 
 /// os_system - synchronously execute a command in the shell
@@ -157,7 +153,7 @@ int os_call_shell(char_u *cmd, ShellOpts opts, char_u *extra_args)
 ///   char *output = NULL;
 ///   size_t nread = 0;
 ///   char *argv[] = {"ls", "-la", NULL};
-///   int status = os_sytem(argv, NULL, 0, &output, &nread);
+///   int exitcode = os_sytem(argv, NULL, 0, &output, &nread);
 ///
 /// @param argv The commandline arguments to be passed to the shell. `argv`
 ///             will be consumed.
@@ -218,11 +214,14 @@ static int do_os_system(char **argv,
   proc->in = input != NULL ? &in : NULL;
   proc->out = &out;
   proc->err = &err;
-  if (!process_spawn(proc)) {
+  int status = process_spawn(proc);
+  if (status) {
     loop_poll_events(&main_loop, 0);
-    // Failed, probably due to 'sh' not being executable
+    // Failed, probably 'shell' is not executable.
     if (!silent) {
-      MSG_PUTS(_("\nCannot execute "));
+      MSG_PUTS(_("\nshell failed to start: "));
+      msg_outtrans((char_u *)os_strerror(status));
+      MSG_PUTS(": ");
       msg_outtrans((char_u *)prog);
       msg_putchar('\n');
     }
@@ -262,7 +261,7 @@ static int do_os_system(char **argv,
   // busy state.
   ui_busy_start();
   ui_flush();
-  int status = process_wait(proc, -1, NULL);
+  int exitcode = process_wait(proc, -1, NULL);
   if (!got_int && out_data_decide_throttle(0)) {
     // Last chunk of output was skipped; display it now.
     out_data_ring(NULL, SIZE_MAX);
@@ -289,7 +288,7 @@ static int do_os_system(char **argv,
   assert(multiqueue_empty(events));
   multiqueue_free(events);
 
-  return status;
+  return exitcode;
 }
 
 ///  - ensures at least `desired` bytes in buffer
@@ -321,7 +320,7 @@ static void system_data_cb(Stream *stream, RBuffer *buf, size_t count,
 /// Tracks output received for the current executing shell command, and displays
 /// a pulsing "..." when output should be skipped. Tracking depends on the
 /// synchronous/blocking nature of ":!".
-//
+///
 /// Purpose:
 ///   1. CTRL-C is more responsive. #1234 #5396
 ///   2. Improves performance of :! (UI, esp. TUI, is the bottleneck).
