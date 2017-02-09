@@ -64,7 +64,7 @@ run_functionaltests() {
 
 run_oldtests() {
   ${MAKE_CMD} -C "${BUILD_DIR}" helptags
-  if ! make -C "${TRAVIS_BUILD_DIR}/src/nvim/testdir"; then
+  if ! make oldtest; then
     reset
     asan_check "${LOG_DIR}"
     valgrind_check "${LOG_DIR}"
