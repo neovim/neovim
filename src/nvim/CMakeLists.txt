@@ -299,7 +299,7 @@ if(WIN32)
   install(DIRECTORY ${PROJECT_BINARY_DIR}/windows_runtime_deps/
     DESTINATION ${CMAKE_INSTALL_BINDIR})
 
-  foreach(BIN win32yank.exe)
+  foreach(BIN cat.exe curl.exe diff.exe tee.exe tidy.exe win32yank.exe)
     unset(BIN_PATH CACHE)
     find_program(BIN_PATH ${BIN})
     if(NOT BIN_PATH)
