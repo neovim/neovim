@@ -870,11 +870,12 @@ bool os_setenv_append_path(const char *fname)
     return false;
   }
   const char *tail = (char *)path_tail_with_sep((char_u *)fname);
-  const char *dir = (char *)vim_strnsave((char_u *)fname,
-                                         (size_t)(tail - fname));
+  size_t dirlen = (size_t)(tail - fname);
+  assert(tail >= fname && dirlen + 1 < sizeof(NameBuff));
+  xstrlcpy((char *)NameBuff, fname, dirlen + 1);
   const char *path = os_getenv("PATH");
   const size_t pathlen = path ? strlen(path) : 0;
-  const size_t newlen = pathlen + strlen(dir) + 2;
+  const size_t newlen = pathlen + dirlen + 2;
   if (newlen < MAX_ENVPATHLEN) {
     char *temp = xmalloc(newlen);
     if (pathlen == 0) {
@@ -883,7 +884,7 @@ bool os_setenv_append_path(const char *fname)
       xstrlcpy(temp, path, newlen);
       xstrlcat(temp, ENV_SEPSTR, newlen);
     }
-    xstrlcat(temp, dir, newlen);
+    xstrlcat(temp, (char *)NameBuff, newlen);
     os_setenv("PATH", temp, 1);
     xfree(temp);
     return true;
