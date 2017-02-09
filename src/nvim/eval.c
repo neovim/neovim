@@ -14124,7 +14124,9 @@ static void f_resolve(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 #endif
 
   p = get_tv_string(&argvars[0]);
-#ifdef WIN32
+#if 0
+// TODO(Hettomei,equalsraf): Temporarily disable this block
+// because mch_resolve_shortcut has gone from source tree.
   {
     char *v = os_resolve_shortcut(p);
     if (v != NULL) {

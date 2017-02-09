@@ -4159,7 +4159,9 @@ void fname_expand(buf_T *buf, char_u **ffname, char_u **sfname)
     *sfname = *ffname;
   *ffname = (char_u *)fix_fname((char *)*ffname);     /* expand to full path */
 
-#ifdef WIN32
+// TODO(Hettomei,equalsraf): Temporarily disable this block
+// because mch_resolve_shortcut has gone from source tree.
+#if 0
   if (!buf->b_p_bin) {
     // If the file name is a shortcut file, use the file it links to.
     char_u *rfname = (char_u *)os_resolve_shortcut(*ffname);
