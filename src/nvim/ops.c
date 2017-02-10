@@ -4455,12 +4455,14 @@ int do_addsub(int op_type, pos_T *pos, int length, linenr_T Prenum1)
     if (dobin) {
       while (col > 0 && ascii_isbdigit(ptr[col])) {
         col--;
+        col -= utf_head_off(ptr, ptr + col);
       }
     }
 
     if (dohex) {
       while (col > 0 && ascii_isxdigit(ptr[col])) {
         col--;
+        col -= utf_head_off(ptr, ptr + col);
       }
     }
     if (dobin
@@ -4468,6 +4470,7 @@ int do_addsub(int op_type, pos_T *pos, int length, linenr_T Prenum1)
         && !((col > 0
               && (ptr[col] == 'X' || ptr[col] == 'x')
               && ptr[col - 1] == '0'
+              && !utf_head_off(ptr, ptr + col - 1)
               && ascii_isxdigit(ptr[col + 1])))) {
         // In case of binary/hexadecimal pattern overlap match, rescan
 
@@ -4475,6 +4478,7 @@ int do_addsub(int op_type, pos_T *pos, int length, linenr_T Prenum1)
 
         while (col > 0 && ascii_isdigit(ptr[col])) {
           col--;
+          col -= utf_head_off(ptr, ptr + col);
         }
     }
 
@@ -4482,14 +4486,17 @@ int do_addsub(int op_type, pos_T *pos, int length, linenr_T Prenum1)
          && col > 0
          && (ptr[col] == 'X' || ptr[col] == 'x')
          && ptr[col - 1] == '0'
+         && !utf_head_off(ptr, ptr + col - 1)
          && ascii_isxdigit(ptr[col + 1]))
         || (dobin
             && col > 0
             && (ptr[col] == 'B' || ptr[col] == 'b')
             && ptr[col - 1] == '0'
+            && !utf_head_off(ptr, ptr + col - 1)
             && ascii_isbdigit(ptr[col + 1]))) {
       // Found hexadecimal or binary number, move to its start.
         col--;
+        col -= utf_head_off(ptr, ptr + col);
     } else {
       // Search forward and then backward to find the start of number.
       col = pos->col;
@@ -4511,15 +4518,18 @@ int do_addsub(int op_type, pos_T *pos, int length, linenr_T Prenum1)
   if (visual) {
     while (ptr[col] != NUL && length > 0 && !ascii_isdigit(ptr[col])
            && !(doalp && ASCII_ISALPHA(ptr[col]))) {
-      col++;
-      length--;
+      int mb_len = MB_PTR2LEN(ptr + col);
+
+      col += mb_len;
+      length -= mb_len;
     }
 
     if (length == 0) {
       goto theend;
     }
 
-    if (col > pos->col && ptr[col - 1] == '-') {
+    if (col > pos->col && ptr[col - 1] == '-'
+        && !utf_head_off(ptr, ptr + col - 1)) {
       negative = true;
       was_positive = false;
     }
@@ -4565,7 +4575,8 @@ int do_addsub(int op_type, pos_T *pos, int length, linenr_T Prenum1)
     endpos = curwin->w_cursor;
     curwin->w_cursor.col = col;
   } else {
-    if (col > 0 && ptr[col - 1] == '-' && !visual) {
+    if (col > 0 && ptr[col - 1] == '-'
+        && !utf_head_off(ptr, ptr + col - 1) && !visual) {
       // negative number
       col--;
       negative = true;
