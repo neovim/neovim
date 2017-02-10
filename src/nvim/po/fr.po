@@ -5264,11 +5264,20 @@ msgstr "Vim est un logiciel libre"
 msgid "Help poor children in Uganda!"
 msgstr "Aidez les enfants pauvres d'Ouganda !"
 
-msgid "type  :help iccf<Enter>       for information "
-msgstr "tapez  :help iccf<Entrée>       pour plus d'informations          "
+msgid "type  :help nvim<Enter>       if you are new! "
+msgstr "tapez  :help nvim<Entrée>       si vous êtes nouveau!             "
+
+msgid "type  :CheckHealth<Enter>     to optimize Nvim"
+msgstr "tapez  :CheckHealth<Entrée>     pour optimiser Nvim               "
 
 msgid "type  :q<Enter>               to exit         "
 msgstr "tapez  :q<Entrée>               pour sortir du programme          "
+
+msgid "type  :help<Enter>            for help        "
+msgstr "tapez  :help<Entrée>            pour optenir de l'aide            "
+
+msgid "type  :help iccf<Enter>       for information "
+msgstr "tapez  :help iccf<Entrée>       pour plus d'informations          "
 
 msgid "type  :help<Enter>  or  <F1>  for on-line help"
 msgstr "tapez  :help<Entrée>  ou  <F1>  pour accéder à l'aide en ligne    "
