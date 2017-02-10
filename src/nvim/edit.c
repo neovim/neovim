@@ -844,6 +844,11 @@ static int insert_handle_key(InsertState *s)
     return 0;  // exit insert mode
 
 
+  case ' ':
+    if (mod_mask != 4) {
+      goto normalchar;
+    }
+  // FALLTHROUGH
   case K_ZERO:        // Insert the previously inserted text.
   case NUL:
   case Ctrl_A:
