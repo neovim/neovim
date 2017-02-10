@@ -9,7 +9,7 @@ local eval = helpers.eval
 describe('Initial screen', function()
   local screen
   local nvim_argv = {helpers.nvim_prog, '-u', 'NONE', '-i', 'NONE', '-N',
-                     '--cmd', 'set shortmess+=I background=light noswapfile',
+                     '--cmd', 'set shortmess+=I background=light noswapfile belloff= noshowcmd noruler',
                      '--embed'}
 
   before_each(function()

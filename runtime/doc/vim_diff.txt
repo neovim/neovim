@@ -37,6 +37,7 @@ these differences.
 - 'autoread' is set by default
 - 'backspace' defaults to "indent,eol,start"
 - 'backupdir' defaults to .,~/.local/share/nvim/backup (|xdg|)
+- 'belloff' defaults to "all"
 - 'complete' doesn't include "i"
 - 'directory' defaults to ~/.local/share/nvim/swap// (|xdg|), auto-created
 - 'display' defaults to "lastline"
@@ -49,7 +50,9 @@ these differences.
 - 'listchars' defaults to "tab:> ,trail:-,nbsp:+"
 - 'nocompatible' is always set
 - 'nrformats' defaults to "bin,hex"
+- 'ruler' is set by default
 - 'sessionoptions' doesn't include "options"
+- 'showcmd' is set by default
 - 'smarttab' is set by default
 - 'tabpagemax' defaults to 50
 - 'tags' defaults to "./tags;,tags"

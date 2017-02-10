@@ -979,7 +979,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 'balloonexpr' 'bexpr'	Removed. {Nvim}
 
 						*'belloff'* *'bo'*
-'belloff' 'bo'		string	(default "")
+'belloff' 'bo'		string	(default "all")
 			global
 	Specifies for which events the bell will not be rung. It is a comma
 	separated list of items. For each item that is present, the bell
@@ -2186,9 +2186,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Ring the bell (beep or screen flash) for error messages.  This only
 	makes a difference for error messages, the bell will be used always
 	for a lot of errors without a message (e.g., hitting <Esc> in Normal
-	mode).  See 'visualbell' on how to make the bell behave like a beep,
-	screen flash or do nothing. See 'belloff' to finetune when to ring the
-	bell.
+	mode).  See 'visualbell' to make the bell behave like a screen flash
+	or do nothing. See 'belloff' to finetune when to ring the bell.
 
 						*'errorfile'* *'ef'*
 'errorfile' 'ef'	string	(default: "errors.err")
@@ -4822,10 +4821,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	The 'rightleft' option must be set for 'rightleftcmd' to take effect.
 
 					 *'ruler'* *'ru'* *'noruler'* *'noru'*
-'ruler' 'ru'		boolean	(default off)
+'ruler' 'ru'		boolean	(default on)
 			global
-			{not available when compiled without the
-			|+cmdline_info| feature}
 	Show the line and column number of the cursor position, separated by a
 	comma.  When there is room, the relative position of the displayed
 	text in the file is shown on the far right:
@@ -5530,11 +5527,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	"n" flag to 'cpoptions'.
 
 				     *'showcmd'* *'sc'* *'noshowcmd'* *'nosc'*
-'showcmd' 'sc'		boolean	(Vim default: on (off for Unix),
-				 Vi default: off)
+'showcmd' 'sc'		boolean	(Vim default: on, Vi default: off)
 			global
-			{not available when compiled without the
-			|+cmdline_info| feature}
 	Show (partial) command in the last line of the screen.  Set this
 	option off if your terminal is slow.
 	In Visual mode the size of the selected area is shown:
@@ -6709,14 +6703,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 			*'visualbell'* *'vb'* *'novisualbell'* *'novb'* *beep*
 'visualbell' 'vb'	boolean	(default off)
 			global
-	Use visual bell instead of beeping.  The terminal code to display the
-	visual bell is given with 't_vb'.  When no beep or flash is wanted,
-	use ":set vb t_vb=".
-	Note: When the GUI starts, 't_vb' is reset to its default value.  You
-	might want to set it again in your |gvimrc|.
-	In the GUI, 't_vb' defaults to "<Esc>|f", which inverts the display
-	for 20 msec.  If you want to use a different time, use "<Esc>|40f",
-	where 40 is the time in msec.  Also see 'errorbells'.
+	Use visual bell instead of beeping.  Also see 'errorbells'.
 
 						*'warn'* *'nowarn'*
 'warn'			boolean	(default on)

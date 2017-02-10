@@ -190,7 +190,7 @@ return {
       type='string', list='comma', scope={'global'},
       vi_def=true,
       varname='p_bo',
-      defaults={if_true={vi=""}}
+      defaults={if_true={vi="all"}}
     },
     {
       full_name='binary', abbreviation='bin',
@@ -1883,7 +1883,7 @@ return {
       vim=true,
       redraw={'statuslines'},
       varname='p_ru',
-      defaults={if_true={vi=false}}
+      defaults={if_true={vi=true}}
     },
     {
       full_name='rulerformat', abbreviation='ruf',
@@ -2119,11 +2119,7 @@ return {
       type='bool', scope={'global'},
       vim=true,
       varname='p_sc',
-      defaults={
-        condition='UNIX',
-        if_true={vi=false, vim=false},
-        if_false={vi=false, vim=true},
-      }
+      defaults={if_true={vi=false, vim=true}}
     },
     {
       full_name='showfulltag', abbreviation='sft',

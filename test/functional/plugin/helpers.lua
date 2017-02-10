@@ -10,7 +10,7 @@ local function nvim_argv(shada_file)
   local rtp_value = ('\'%s/runtime\''):format(
       paths.test_source_path:gsub('\'', '\'\''))
   local nvim_args = {nvim_prog, '-u', 'NORC', '-i', shada_file or 'NONE', '-N',
-                     '--cmd', 'set shortmess+=I background=light noswapfile',
+                     '--cmd', 'set shortmess+=I background=light noswapfile belloff= noshowcmd noruler',
                      '--cmd', 'let &runtimepath=' .. rtp_value,
                      '--cmd', additional_cmd,
                      '--embed'}
@@ -23,7 +23,7 @@ end
 
 local session = nil
 
-local reset = function(...)
+local function reset(...)
   if session then
     session:close()
   end
@@ -31,7 +31,7 @@ local reset = function(...)
   set_session(session)
 end
 
-local set_additional_cmd = function(s)
+local function set_additional_cmd(s)
   additional_cmd = s
 end
 

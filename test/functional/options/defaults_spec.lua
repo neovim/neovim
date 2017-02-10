@@ -11,9 +11,7 @@ local neq = helpers.neq
 
 local function init_session(...)
   local args = { helpers.nvim_prog, '-i', 'NONE', '--embed',
-    '--cmd', 'set shortmess+=I background=light noswapfile noautoindent',
-    '--cmd', 'set laststatus=1 undodir=. directory=. viewdir=. backupdir=.'
-    }
+                 '--cmd', helpers.nvim_set }
   for _, v in ipairs({...}) do
     table.insert(args, v)
   end
