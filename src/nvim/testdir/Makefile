@@ -31,6 +31,7 @@ NEW_TESTS = \
 	    test_bufwintabinfo.res \
 	    test_cmdline.res \
 	    test_cscope.res \
+	    test_digraph.res \
 	    test_diffmode.res \
 	    test_gn.res \
 	    test_hardcopy.res \
