@@ -1294,9 +1294,10 @@ static int cs_kill(exarg_T *eap)
     }
   }
 
-  if (i >= csinfo_size || csinfo[i].fname == NULL) {
-    if (p_csverbose)
+  if (!killall && (i >= csinfo_size || csinfo[i].fname == NULL)) {
+    if (p_csverbose) {
       (void)EMSG2(_("E261: cscope connection %s not found"), stok);
+    }
     return CSCOPE_FAILURE;
   } else {
     if (killall) {
