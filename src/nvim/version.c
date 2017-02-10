@@ -486,7 +486,7 @@ static int included_patches[] = {
   // 1957 NA
   1956,
   // 1955 NA
-  // 1954,
+  1954,
   1953,
   1952,
   // 1951 NA
