@@ -4717,8 +4717,6 @@ void set_fraction(win_T *wp)
  */
 void win_new_height(win_T *wp, int height)
 {
-  linenr_T lnum;
-  int sline, line_size;
   int prev_height = wp->w_height;
 
   /* Don't want a negative height.  Happens when splitting a tiny window.
@@ -4744,6 +4742,15 @@ void win_new_height(win_T *wp, int height)
 
   wp->w_height = height;
   wp->w_skipcol = 0;
+
+  scroll_to_fraction(wp, prev_height);
+}
+
+void scroll_to_fraction(win_T *wp, int prev_height)
+{
+    linenr_T lnum;
+    int sline, line_size;
+    int height = wp->w_height;
 
   /* Don't change w_topline when height is zero.  Don't set w_topline when
    * 'scrollbind' is set and this isn't the current window. */
