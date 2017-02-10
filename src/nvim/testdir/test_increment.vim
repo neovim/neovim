@@ -735,5 +735,26 @@ func Test_normal_increment_02()
   call assert_equal([0, 2, 4, 0], getpos('.'))
 endfunc
 
+" The test35 unified to this file.
+func Test_normal_increment_03()
+  call setline(1, ["100     0x100     077     0",
+        \          "100     0x100     077     ",
+        \          "100     0x100     077     0xfF     0xFf",
+        \          "100     0x100     077     "])
+  set nrformats=octal,hex
+  exec "norm! gg\<C-A>102\<C-X>\<C-A>l\<C-X>l\<C-A>64\<C-A>128\<C-X>$\<C-X>"
+  set nrformats=octal
+  exec "norm! j0\<C-A>102\<C-X>\<C-A>l\<C-X>2\<C-A>w65\<C-A>129\<C-X>blx6lD"
+  set nrformats=hex
+  exec "norm! j0101\<C-X>l257\<C-X>\<C-A>Txldt \<C-A> \<C-X> \<C-X>"
+  set nrformats=
+  exec "norm! j0200\<C-X>l100\<C-X>w78\<C-X>\<C-A>k"
+  call assert_equal(["0     0x0ff     0000     -1",
+        \            "0     1x100     0777777",
+        \            "-1     0x0     078     0xFE     0xfe",
+        \            "-100     -100x100     000     "], getline(1, '$'))
+  call assert_equal([0, 3, 25, 0], getpos('.'))
+endfunc
+
 
 " vim: tabstop=2 shiftwidth=2 expandtab
