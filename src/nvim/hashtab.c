@@ -22,6 +22,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <inttypes.h>
+#include <signal.h>
 
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
@@ -66,6 +67,9 @@ void hash_clear_all(hashtab_T *ht, unsigned int off)
   size_t todo = ht->ht_used;
   for (hashitem_T *hi = ht->ht_array; todo > 0; ++hi) {
     if (!HASHITEM_EMPTY(hi)) {
+      if (0 == strcmp("vimfiler__is_directory", (char *)hi->hi_key)) {
+        ILOG("%s ht_mask=%zu", hi->hi_key, ht->ht_mask);
+      }
       xfree(hi->hi_key - off);
       todo--;
     }
@@ -108,6 +112,9 @@ hashitem_T* hash_lookup(hashtab_T *ht, char_u *key, hash_T hash)
   // - skip over a removed item
   // - return if the item matches
   hash_T idx = hash & ht->ht_mask;
+  assert(idx <= ht->ht_mask);
+  assert(ht->ht_mask < INT_MAX);
+  assert(ht->ht_mask > 0);
   hashitem_T *hi = &ht->ht_array[idx];
 
   if (hi->hi_key == NULL) {
@@ -185,6 +192,8 @@ int hash_add(hashtab_T *ht, char_u *key)
     return FAIL;
   }
   hash_add_item(ht, hi, key, hash);
+  assert(ht->ht_mask < INT_MAX);
+  assert(ht->ht_mask > 0);
   return OK;
 }
 
@@ -203,9 +212,11 @@ void hash_add_item(hashtab_T *ht, hashitem_T *hi, char_u *key, hash_T hash)
   }
   hi->hi_key = key;
   hi->hi_hash = hash;
+  assert((hash & ht->ht_mask) < INT_MAX);
 
   // When the space gets low may resize the array.
   hash_may_resize(ht, 0);
+  assert((hash & ht->ht_mask) < INT_MAX);
 }
 
 /// Remove item "hi" from hashtable "ht".
@@ -306,6 +317,7 @@ static void hash_may_resize(hashtab_T *ht, size_t minitems)
     // assert newsize didn't overflow
     assert(newsize != 0);
   }
+  assert(newsize < INT_MAX);
 
   bool newarray_is_small = newsize == HT_INIT_SIZE;
   bool keep_smallarray = newarray_is_small
@@ -356,6 +368,8 @@ static void hash_may_resize(hashtab_T *ht, size_t minitems)
   }
   ht->ht_array = newarray;
   ht->ht_mask = newmask;
+  assert(ht->ht_mask < INT_MAX);
+  assert(ht->ht_mask > 0);
   ht->ht_filled = ht->ht_used;
 }
 
