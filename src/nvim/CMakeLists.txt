@@ -48,6 +48,7 @@ file(MAKE_DIRECTORY ${GENERATED_DIR})
 file(MAKE_DIRECTORY ${GENERATED_INCLUDES_DIR})
 
 file(GLOB NEOVIM_SOURCES *.c)
+file(GLOB NEOVIM_HEADERS *.h)
 
 foreach(subdir
         os
@@ -65,10 +66,11 @@ foreach(subdir
   file(MAKE_DIRECTORY ${GENERATED_DIR}/${subdir})
   file(MAKE_DIRECTORY ${GENERATED_INCLUDES_DIR}/${subdir})
   file(GLOB sources ${subdir}/*.c)
+  file(GLOB headers ${subdir}/*.h)
   list(APPEND NEOVIM_SOURCES ${sources})
+  list(APPEND NEOVIM_HEADERS ${headers})
 endforeach()
 
-file(GLOB_RECURSE NEOVIM_HEADERS *.h)
 file(GLOB UNIT_TEST_FIXTURES ${PROJECT_SOURCE_DIR}/test/unit/fixtures/*.c)
 
 # Sort file lists to ensure generated files are created in the same order from
@@ -152,6 +154,14 @@ separate_arguments(C_FLAGS_ARRAY UNIX_COMMAND ${CMAKE_C_FLAGS})
 separate_arguments(C_FLAGS_${build_type}_ARRAY UNIX_COMMAND ${CMAKE_C_FLAGS_${build_type}})
 set(gen_cflags ${gen_cflags} ${C_FLAGS_${build_type}_ARRAY} ${C_FLAGS_ARRAY})
 
+function(get_preproc_output varname iname)
+  if(MSVC)
+    set(${varname} /P /Fi${iname} PARENT_SCOPE)
+  else()
+    set(${varname} -E -o ${iname} PARENT_SCOPE)
+  endif()
+endfunction()
+
 foreach(sfile ${NEOVIM_SOURCES}
               "${PROJECT_SOURCE_DIR}/src/nvim/regexp_nfa.c"
               ${GENERATED_API_DISPATCH})
@@ -170,10 +180,11 @@ foreach(sfile ${NEOVIM_SOURCES}
   set(gf2 "${GENERATED_INCLUDES_DIR}/${r}.h.generated.h")
   set(gf3 "${GENERATED_DIR}/${r}.i")
 
+  # get_preproc_output(PREPROC_OUTPUT gf3)
   if(MSVC)
-    set(PREPROC_OUTPUT /P /Fi${gf3})
+      set(PREPROC_OUTPUT /P /Fi${gf3})
   else()
-    set(PREPROC_OUTPUT -E -o ${gf3})
+      set(PREPROC_OUTPUT -E -o ${gf3})
   endif()
 
   add_custom_command(
@@ -373,5 +384,82 @@ add_library(nvim-test MODULE EXCLUDE_FROM_ALL ${NEOVIM_GENERATED_SOURCES}
     ${NEOVIM_SOURCES} ${UNIT_TEST_FIXTURES} ${NEOVIM_HEADERS})
 target_link_libraries(nvim-test ${NVIM_LINK_LIBRARIES})
 set_property(TARGET nvim-test APPEND_STRING PROPERTY COMPILE_FLAGS -DUNIT_TESTING)
+
+# Helper targets that verify that specific headers can be included alone (i.e.
+# do not depend on other includes)
+set(HEADER_CHECK_FILES)
+set(NO_SINGLE_CHECK_HEADERS
+  buffer
+  charset
+  cursor_shape
+  diff
+  digraph
+  ex_cmds
+  ex_getln
+  file_search
+  fold
+  getchar
+  hardcopy
+  if_cscope
+  if_cscope_defs
+  mark
+  mbyte
+  memfile_defs
+  memline
+  memline_defs
+  menu
+  misc2
+  move
+  msgpack_rpc/server
+  ops
+  option
+  os/shell
+  os_unix
+  popupmnu
+  quickfix
+  regexp
+  regexp_defs
+  screen
+  search
+  sha256
+  sign_defs
+  spell
+  syntax
+  syntax_defs
+  tag
+  terminal
+  tui/tui
+  ugrid
+  ui
+  ui_bridge
+  undo
+  undo_defs
+  version
+  window
+)
+foreach(hfile ${NEOVIM_HEADERS})
+  get_filename_component(full_d ${hfile} PATH)
+  file(RELATIVE_PATH d "${PROJECT_SOURCE_DIR}/src/nvim" "${full_d}")
+  if(${d} MATCHES "^[.][.]")
+    file(RELATIVE_PATH d "${GENERATED_DIR}" "${full_d}")
+  endif()
+  string(REGEX REPLACE "^(.+)\\.[^.]+$" "\\1" r ${hfile})
+  if(NOT ${d} EQUAL ".")
+    set(r "${d}/${r}")
+  endif()
+
+  set(tsource "${GENERATED_DIR}/${r}.test-include.c")
+  set(tresult "${GENERATED_DIR}/${r}.test-include.i")
+  string(REPLACE "/" "-" texe "${r}-test")
+  write_file("${tsource}" "#include \"${hfile}\"\nint main(int argc, char **argv) { return 0; }")
+  get_preproc_output(PREPROC_OUTPUT ${tresult})
+  add_executable(${texe} EXCLUDE_FROM_ALL ${tsource})
+
+  list(FIND NO_SINGLE_CHECK_HEADERS "${r}" hfile_exclude_idx)
+  if(${hfile_exclude_idx} EQUAL -1)
+    list(APPEND HEADER_CHECK_TARGETS ${texe})
+  endif()
+endforeach()
+add_custom_target(check-single-includes DEPENDS ${HEADER_CHECK_TARGETS})
 
 add_subdirectory(po)

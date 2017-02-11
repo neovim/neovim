@@ -109,6 +109,11 @@ run_oldtests() {
   check_core_dumps
 }
 
+run_single_includes_tests() {
+  ${MAKE_CMD} -C "${BULID_DIR}" check-single-includes
+}
+
+
 install_nvim() {
   ${MAKE_CMD} -C "${BUILD_DIR}" install
 
