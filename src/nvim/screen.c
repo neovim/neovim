@@ -156,6 +156,23 @@ long tab_page_click_defs_size = 0;
 #endif
 #define SEARCH_HL_PRIORITY 0
 
+
+// offset remain global
+struct screen_line {
+    /* ScreenLines[off - 1] = ' '; */
+    /* ScreenAttrs[off - 1] = 0; */
+    /* /1* if (l_enc_utf8) { *1/ */
+    /* ScreenLinesUC[off - 1] = 0; */
+    /* ScreenLinesC[0][off - 1] = 0; */
+
+ schar_T  *screenLines ;
+ sattr_T  *screenAttrs ;
+ unsigned *lineOffset ;
+ char_u   *lineWraps ;        /* line wraps to next line */
+
+bool wrap;
+};
+
 /*
  * Redraw the current window later, with update_screen(type).
  * Set must_redraw only if not already set to a higher value.
@@ -2761,13 +2778,18 @@ win_line (
                         // xstrlcat ?
                         //
                       ILOG("extra before=%s", extra);
-                      mb_string2cells(p_extra);
+                      /* mb_string2cells(p_extra); */
                       // screen_puts_len(char_u *text, int textlen, int row, int col, int attr)
                       // TODO avancer col ?
                       char_attr = sign_get_attr(sign->typenr, FALSE);
-                      screen_puts_len(p_extra, 1, Rows, col, char_attr);
+                      /* screen_puts_len(p_extra, 1, Rows, col, char_attr); */
                       // Does not take into account cell !
-                      // STRNCAT(extra, p_extra, sizeof(extra));
+                      STRNCAT(extra, p_extra, sizeof(extra));
+                      if ( symbol_clen > 1) {
+                        //! adds a space after
+                        STRNCAT(extra, " ", sizeof(extra));
+
+                      }
                       ILOG("extra after=%s", extra);
                       used_cells += symbol_clen;
                     }
@@ -3114,9 +3136,9 @@ win_line (
              * Decode it into "mb_c". */
             mb_l = (*mb_ptr2len)(p_extra);
             mb_utf8 = FALSE;
-            if (mb_l > n_extra)
+            if (mb_l > n_extra) {
               mb_l = 1;
-            else if (mb_l > 1) {
+            } else if (mb_l > 1) {
               mb_c = utfc_ptr2char(p_extra, u8cc);
               mb_utf8 = TRUE;
               c = 0xc0;
@@ -4081,14 +4103,16 @@ win_line (
             if (u8cc[i] == 0)
               break;
           }
-        } else
+        } else {
           ScreenLinesUC[off] = 0;
+        }
       }
       if (multi_attr) {
         ScreenAttrs[off] = multi_attr;
         multi_attr = 0;
-      } else
+      } else {
         ScreenAttrs[off] = char_attr;
+      }
 
       if (has_mbyte && (*mb_char2cells)(mb_c) > 1) {
         // Need to fill two screen columns.
@@ -5393,15 +5417,17 @@ void screen_puts_len(char_u *text, int textlen, int row, int col, int attr)
     c = *ptr;
     /* check if this is the first byte of a multibyte */
     if (l_has_mbyte) {
-      if (l_enc_utf8 && len > 0)
+      if (l_enc_utf8 && len > 0) {
         mbyte_blen = utfc_ptr2len_len(ptr, (int)((text + len) - ptr));
-      else
+      } else {
         mbyte_blen = (*mb_ptr2len)(ptr);
-      if (l_enc_dbcs == DBCS_JPNU && c == 0x8e)
+      }
+
+      if (l_enc_dbcs == DBCS_JPNU && c == 0x8e) {
         mbyte_cells = 1;
-      else if (l_enc_dbcs != 0)
+      } else if (l_enc_dbcs != 0) {
         mbyte_cells = mbyte_blen;
-      else {            /* enc_utf8 */
+      } else {            /* enc_utf8 */
         if (len >= 0)
           u8c = utfc_ptr2char_len(ptr, u8cc,
               (int)((text + len) - ptr));
@@ -5458,16 +5484,17 @@ void screen_puts_len(char_u *text, int textlen, int row, int col, int attr)
        * cell.  Also when overwriting the left halve of a two-cell char
        * with the right halve of a two-cell char.  Do this only once
        * (mb_off2cells() may return 2 on the right halve). */
-      if (clear_next_cell)
+      if (clear_next_cell) {
         clear_next_cell = FALSE;
-      else if (l_has_mbyte
+      } else if (l_has_mbyte
                && (len < 0 ? ptr[mbyte_blen] == NUL
                    : ptr + mbyte_blen >= text + len)
                && ((mbyte_cells == 1 && (*mb_off2cells)(off, max_off) > 1)
                    || (mbyte_cells == 2
                        && (*mb_off2cells)(off, max_off) == 1
-                       && (*mb_off2cells)(off + 1, max_off) > 1)))
+                       && (*mb_off2cells)(off + 1, max_off) > 1))) {
         clear_next_cell = TRUE;
+      }
 
       /* Make sure we never leave a second byte of a double-byte behind,
        * it confuses mb_off2cells(). */
@@ -7031,8 +7058,9 @@ static void draw_tabline(void)
                           hl_combine_attr(attr, hl_attr(HLF_T)));
           col += len;
         }
-        if (modified)
+        if (modified) {
           screen_puts_len((char_u *)"+", 1, 0, col++, attr);
+        }
         screen_putchar(' ', 0, col++, attr);
       }
 
