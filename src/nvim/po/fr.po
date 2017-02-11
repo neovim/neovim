@@ -5274,7 +5274,7 @@ msgid "type  :q<Enter>               to exit         "
 msgstr "tapez  :q<Entrée>               pour sortir du programme          "
 
 msgid "type  :help<Enter>            for help        "
-msgstr "tapez  :help<Entrée>            pour optenir de l'aide            "
+msgstr "tapez  :help<Entrée>            pour obtenir de l'aide            "
 
 msgid "type  :help iccf<Enter>       for information "
 msgstr "tapez  :help iccf<Entrée>       pour plus d'informations          "
