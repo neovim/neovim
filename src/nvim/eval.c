@@ -498,6 +498,14 @@ static PMap(uint64_t) *jobs = NULL;
 static uint64_t last_timer_id = 0;
 static PMap(uint64_t) *timers = NULL;
 
+/// Dummy va_list for passing to vim_snprintf
+///
+/// Used because:
+/// - passing a NULL pointer doesn't work when va_list isn't a pointer
+/// - locally in the function results in a "used before set" warning
+/// - using va_start() to initialize it gives "function with fixed args" error
+static va_list dummy_ap;
+
 static const char *const msgpack_type_names[] = {
   [kMPNil] = "nil",
   [kMPBoolean] = "boolean",
@@ -12133,6 +12141,16 @@ static void dict_list(typval_T *argvars, typval_T *rettv, int what)
   }
 }
 
+/// "id()" function
+static void f_id(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+  FUNC_ATTR_NONNULL_ALL
+{
+  const int len = vim_vsnprintf(NULL, 0, "%p", dummy_ap, argvars);
+  rettv->v_type = VAR_STRING;
+  rettv->vval.v_string = xmalloc(len + 1);
+  vim_vsnprintf((char *)rettv->vval.v_string, len + 1, "%p", dummy_ap, argvars);
+}
+
 /*
  * "items(dict)" function
  */
@@ -13639,12 +13657,6 @@ static void f_prevnonblank(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   rettv->vval.v_number = lnum;
 }
 
-/* This dummy va_list is here because:
- * - passing a NULL pointer doesn't work when va_list isn't a pointer
- * - locally in the function results in a "used before set" warning
- * - using va_start() to initialize it gives "function with fixed args" error */
-static va_list ap;
-
 /*
  * "printf()" function
  */
@@ -13661,11 +13673,11 @@ static void f_printf(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     /* Get the required length, allocate the buffer and do it for real. */
     did_emsg = FALSE;
     fmt = (char *)get_tv_string_buf(&argvars[0], buf);
-    len = vim_vsnprintf(NULL, 0, fmt, ap, argvars + 1);
+    len = vim_vsnprintf(NULL, 0, fmt, dummy_ap, argvars + 1);
     if (!did_emsg) {
       char *s = xmalloc(len + 1);
       rettv->vval.v_string = (char_u *)s;
-      (void)vim_vsnprintf(s, len + 1, fmt, ap, argvars + 1);
+      (void)vim_vsnprintf(s, len + 1, fmt, dummy_ap, argvars + 1);
     }
     did_emsg |= saved_did_emsg;
   }

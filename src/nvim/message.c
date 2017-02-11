@@ -11,6 +11,7 @@
 
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
+#include "nvim/assert.h"
 #include "nvim/message.h"
 #include "nvim/charset.h"
 #include "nvim/eval.h"
@@ -3046,6 +3047,38 @@ static char *tv_str(typval_T *tvs, int *idxp)
   return s;
 }
 
+/// Get pointer argument from the next entry in tvs
+///
+/// First entry is 1. Returns NULL for an error.
+///
+/// @param[in]  tvs  List of typval_T values.
+/// @param[in,out]  idxp  Pointer to the index of the current value.
+///
+/// @return Pointer stored in typval_T or NULL.
+static const void *tv_ptr(const typval_T *const tvs, int *const idxp)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+{
+#define OFF(attr) offsetof(union typval_vval_union, attr)
+  STATIC_ASSERT(
+      OFF(v_string) == OFF(v_list)
+      && OFF(v_string) == OFF(v_dict)
+      && OFF(v_string) == OFF(v_partial)
+      && sizeof(tvs[0].vval.v_string) == sizeof(tvs[0].vval.v_list)
+      && sizeof(tvs[0].vval.v_string) == sizeof(tvs[0].vval.v_dict)
+      && sizeof(tvs[0].vval.v_string) == sizeof(tvs[0].vval.v_partial),
+      "Strings, dictionaries, lists and partials are expected to be pointers, "
+      "so that all three of them can be accessed via v_string");
+#undef OFF
+  const int idx = *idxp - 1;
+  if (tvs[idx].v_type == VAR_UNKNOWN) {
+    EMSG(_(e_printf));
+    return NULL;
+  } else {
+    (*idxp)++;
+    return tvs[idx].vval.v_string;
+  }
+}
+
 /*
  * Get float argument from "idxp" entry in "tvs".  First entry is 1.
  */
@@ -3372,11 +3405,11 @@ int vim_vsnprintf(char *str, size_t str_m, const char *fmt, va_list ap,
         size_t size_t_arg = 0;
 
         // only defined for p conversion
-        void *ptr_arg = NULL;
+        const void *ptr_arg = NULL;
 
         if (fmt_spec == 'p') {
           length_modifier = '\0';
-          ptr_arg = tvs ? (void *)tv_str(tvs, &arg_idx) : va_arg(ap, void *);
+          ptr_arg = tvs ? tv_ptr(tvs, &arg_idx) : va_arg(ap, void *);
           if (ptr_arg) {
             arg_sign = 1;
           }

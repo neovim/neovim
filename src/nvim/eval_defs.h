@@ -49,7 +49,7 @@ typedef enum {
 typedef struct {
   VarType v_type;  ///< Variable type.
   VarLockStatus v_lock;  ///< Variable lock status.
-  union {
+  union typval_vval_union {
     varnumber_T v_number;  ///< Number, for VAR_NUMBER.
     SpecialVarValue v_special;  ///< Special value, for VAR_SPECIAL.
     float_T v_float;  ///< Floating-point number, for VAR_FLOAT.
