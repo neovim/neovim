@@ -232,6 +232,12 @@ Additional differences:
   itself.
 - ShaDa file keeps search direction (|v:searchforward|), viminfo does not.
 
+|printf()| returns something meaningful when used with `%p` argument: in Vim 
+it used to return useless address of the string (strings are copied to the 
+newly allocated memory all over the place) and fail on types which cannot be 
+coerced to strings. See |id()| for more details, currently it uses 
+`printf("%p", {expr})` internally.
+
 ==============================================================================
 5. Missing legacy features				 *nvim-features-missing*
 				     *if_lua* *if_perl* *if_mzscheme* *if_tcl*

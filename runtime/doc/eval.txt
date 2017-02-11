@@ -2036,6 +2036,7 @@ insert({list}, {item} [, {idx}])
 invert({expr})			Number  bitwise invert
 isdirectory({directory})	Number	TRUE if {directory} is a directory
 islocked({expr})		Number	TRUE if {expr} is locked
+id({expr})			String	identifier of the container
 items({dict})			List	key-value pairs in {dict}
 jobclose({job}[, {stream}])	Number	Closes a job stream(s)
 jobpid({job})			Number	Returns pid of a job.
@@ -4629,6 +4630,22 @@ islocked({expr})					*islocked()* *E786*
 <		When {expr} is a variable that does not exist you get an error
 		message.  Use |exists()| to check for existence.
 
+id({expr})						*id()*
+		Returns a |String| which is a unique identifier of the 
+		container type (|List|, |Dict| and |Partial|). It is 
+		guaranteed that for the mentioned types `id(v1) ==# id(v2)` 
+		returns true iff `type(v1) == type(v2) && v1 is v2` (note: 
+		|v:_null_list| and |v:_null_dict| have the same `id()` with 
+		different types because they are internally represented as 
+		a NULL pointers). Currently `id()` returns a hexadecimal 
+		representanion of the pointers to the containers (i.e. like 
+		`0x994a40`), same as `printf("%p", {expr})`, but it is advised 
+		against counting on exact format of return value.
+
+		It is not guaranteed that `id(no_longer_existing_container)` 
+		will not be equal to some other `id()`: new containers may 
+		reuse identifiers of the garbage-collected ones.
+
 items({dict})						*items()*
 		Return a |List| with all the key-value pairs of {dict}.  Each
 		|List| item is a list with two items: the key of a {dict}
@@ -5500,6 +5517,7 @@ printf({fmt}, {expr1} ...)				*printf()*
 		  %g	floating point number, as %f or %e depending on value
 		  %G	floating point number, as %f or %E depending on value
 		  %%	the % character itself
+		  %p	representation of the pointer to the container
 
 		Conversion specifications start with '%' and end with the
 		conversion type.  All other characters are copied unchanged to
