@@ -48,6 +48,7 @@ file(MAKE_DIRECTORY ${GENERATED_DIR})
 file(MAKE_DIRECTORY ${GENERATED_INCLUDES_DIR})
 
 file(GLOB NEOVIM_SOURCES *.c)
+file(GLOB NEOVIM_HEADERS *.h)
 
 foreach(subdir
         os
@@ -65,10 +66,11 @@ foreach(subdir
   file(MAKE_DIRECTORY ${GENERATED_DIR}/${subdir})
   file(MAKE_DIRECTORY ${GENERATED_INCLUDES_DIR}/${subdir})
   file(GLOB sources ${subdir}/*.c)
+  file(GLOB headers ${subdir}/*.h)
   list(APPEND NEOVIM_SOURCES ${sources})
+  list(APPEND NEOVIM_HEADERS ${headers})
 endforeach()
 
-file(GLOB_RECURSE NEOVIM_HEADERS *.h)
 file(GLOB UNIT_TEST_FIXTURES ${PROJECT_SOURCE_DIR}/test/unit/fixtures/*.c)
 
 # Sort file lists to ensure generated files are created in the same order from
@@ -152,6 +154,19 @@ separate_arguments(C_FLAGS_ARRAY UNIX_COMMAND ${CMAKE_C_FLAGS})
 separate_arguments(C_FLAGS_${build_type}_ARRAY UNIX_COMMAND ${CMAKE_C_FLAGS_${build_type}})
 set(gen_cflags ${gen_cflags} ${C_FLAGS_${build_type}_ARRAY} ${C_FLAGS_ARRAY})
 
+function(get_preproc_output varname iname)
+  if(MSVC)
+    set(${varname} /P /Fi${iname} PARENT_SCOPE)
+  else()
+    set(${varname} -E -o ${iname} PARENT_SCOPE)
+  endif()
+endfunction()
+
+# NEOVIM_GENERATED_FOR_HEADERS: header files generated to be included in headers
+# NEOVIM_GENERATED_FOR_SOURCES: header files generated to be included in sources
+# NEOVIM_GENERATED_SOURCES: generated source files
+# These lists should be mutually exclusive
+
 foreach(sfile ${NEOVIM_SOURCES}
               "${PROJECT_SOURCE_DIR}/src/nvim/regexp_nfa.c"
               ${GENERATED_API_DISPATCH})
@@ -166,26 +181,22 @@ foreach(sfile ${NEOVIM_SOURCES}
     set(f "${d}/${f}")
     set(r "${d}/${r}")
   endif()
-  set(gf1 "${GENERATED_DIR}/${r}.c.generated.h")
-  set(gf2 "${GENERATED_INCLUDES_DIR}/${r}.h.generated.h")
-  set(gf3 "${GENERATED_DIR}/${r}.i")
+  set(gf_c_h "${GENERATED_DIR}/${r}.c.generated.h")
+  set(gf_h_h "${GENERATED_INCLUDES_DIR}/${r}.h.generated.h")
+  set(gf_i "${GENERATED_DIR}/${r}.i")
 
-  if(MSVC)
-    set(PREPROC_OUTPUT /P /Fi${gf3})
-  else()
-    set(PREPROC_OUTPUT -E -o ${gf3})
-  endif()
+  get_preproc_output(PREPROC_OUTPUT ${gf_i})
 
   add_custom_command(
-    OUTPUT "${gf1}" "${gf2}"
+    OUTPUT "${gf_c_h}" "${gf_h_h}"
     COMMAND ${CMAKE_C_COMPILER} ${sfile} ${PREPROC_OUTPUT} ${gen_cflags} ${C_FLAGS_ARRAY}
-    COMMAND "${LUA_PRG}" "${HEADER_GENERATOR}" "${sfile}" "${gf1}" "${gf2}" "${gf3}"
+    COMMAND "${LUA_PRG}" "${HEADER_GENERATOR}" "${sfile}" "${gf_c_h}" "${gf_h_h}" "${gf_i}"
     DEPENDS "${HEADER_GENERATOR}" "${sfile}"
     )
-  list(APPEND NEOVIM_GENERATED_SOURCES "${gf1}")
-  list(APPEND NEOVIM_GENERATED_SOURCES "${gf2}")
+  list(APPEND NEOVIM_GENERATED_FOR_SOURCES "${gf_c_h}")
+  list(APPEND NEOVIM_GENERATED_FOR_HEADERS "${gf_h_h}")
   if(${d} MATCHES "^api$" AND NOT ${f} MATCHES "^api/helpers.c$")
-    list(APPEND API_HEADERS ${gf2})
+    list(APPEND API_HEADERS ${gf_h_h})
   endif()
 endforeach()
 
@@ -210,15 +221,21 @@ add_custom_command(OUTPUT ${GENERATED_API_DISPATCH} ${GENERATED_FUNCS_METADATA}
     ${CMAKE_CURRENT_LIST_DIR}/api/dispatch_deprecated.lua
 )
 
-list(APPEND NEOVIM_GENERATED_SOURCES
-  "${PROJECT_BINARY_DIR}/config/auto/pathdef.c"
-  "${GENERATED_API_DISPATCH}"
+list(APPEND NEOVIM_GENERATED_FOR_HEADERS
   "${GENERATED_EX_CMDS_ENUM}"
-  "${GENERATED_EX_CMDS_DEFS}"
   "${GENERATED_EVENTS_ENUM}"
+)
+
+list(APPEND NEOVIM_GENERATED_FOR_SOURCES
+  "${GENERATED_API_DISPATCH}"
+  "${GENERATED_EX_CMDS_DEFS}"
   "${GENERATED_EVENTS_NAMES_MAP}"
   "${GENERATED_OPTIONS}"
   "${GENERATED_UNICODE_TABLES}"
+)
+
+list(APPEND NEOVIM_GENERATED_SOURCES
+  "${PROJECT_BINARY_DIR}/config/auto/pathdef.c"
 )
 
 add_custom_command(OUTPUT ${GENERATED_EX_CMDS_ENUM} ${GENERATED_EX_CMDS_DEFS}
@@ -237,7 +254,7 @@ add_custom_command(OUTPUT ${GENERATED_FUNCS} ${FUNCS_DATA}
     ${GENERATED_FUNCS_HASH_INPUT} --output-file=${GENERATED_FUNCS}
     DEPENDS ${FUNCS_GENERATOR} ${EVAL_DEFS_FILE} ${API_METADATA}
 )
-list(APPEND NEOVIM_GENERATED_SOURCES
+list(APPEND NEOVIM_GENERATED_FOR_SOURCES
   "${GENERATED_FUNCS}")
 
 add_custom_command(OUTPUT ${GENERATED_EVENTS_ENUM} ${GENERATED_EVENTS_NAMES_MAP}
@@ -251,6 +268,15 @@ add_custom_command(OUTPUT ${GENERATED_OPTIONS}
                      ${PROJECT_SOURCE_DIR}/src/nvim ${GENERATED_OPTIONS}
   DEPENDS ${OPTIONS_GENERATOR} ${OPTIONS_LIST_FILE}
 )
+
+# Check that NEOVIM_GENERATED_FOR_SOURCES and NEOVIM_GENERATED_FOR_HEADERS are mutually exclusive
+
+foreach(hfile ${NEOVIM_GENERATED_FOR_HEADERS})
+  list(FIND NEOVIM_GENERATED_FOR_SOURCES ${hfile} hfile_idx)
+  if(NOT ${hfile_idx} EQUAL -1)
+    message(FATAL_ERROR "File included in both NEOVIM_GENERATED_FOR_HEADERS and NEOVIM_GENERATED_FOR_SOURCES")
+  endif()
+endforeach()
 
 # Our dependencies come first.
 
@@ -286,8 +312,8 @@ if(JEMALLOC_FOUND)
   list(APPEND NVIM_EXEC_LINK_LIBRARIES ${JEMALLOC_LIBRARIES})
 endif()
 
-add_executable(nvim ${NEOVIM_GENERATED_SOURCES} ${NEOVIM_SOURCES}
-  ${NEOVIM_HEADERS})
+add_executable(nvim ${NEOVIM_GENERATED_FOR_SOURCES} ${NEOVIM_GENERATED_FOR_HEADERS}
+  ${NEOVIM_GENERATED_SOURCES} ${NEOVIM_SOURCES} ${NEOVIM_HEADERS})
 target_link_libraries(nvim ${NVIM_EXEC_LINK_LIBRARIES})
 install_helper(TARGETS nvim)
 
@@ -361,17 +387,97 @@ elseif(CLANG_TSAN)
   set_property(TARGET nvim APPEND_STRING PROPERTY LINK_FLAGS "-fsanitize=thread ")
 endif()
 
-add_library(libnvim STATIC EXCLUDE_FROM_ALL ${NEOVIM_GENERATED_SOURCES}
-  ${NEOVIM_SOURCES} ${NEOVIM_HEADERS})
+add_library(libnvim STATIC EXCLUDE_FROM_ALL ${NEOVIM_GENERATED_FOR_SOURCES} ${NEOVIM_GENERATED_FOR_HEADERS}
+  ${NEOVIM_GENERATED_SOURCES} ${NEOVIM_SOURCES} ${NEOVIM_HEADERS})
 target_link_libraries(libnvim ${NVIM_LINK_LIBRARIES})
 set_target_properties(libnvim PROPERTIES
   POSITION_INDEPENDENT_CODE ON
   OUTPUT_NAME nvim)
 set_property(TARGET libnvim APPEND_STRING PROPERTY COMPILE_FLAGS " -DMAKE_LIB ")
 
-add_library(nvim-test MODULE EXCLUDE_FROM_ALL ${NEOVIM_GENERATED_SOURCES}
-    ${NEOVIM_SOURCES} ${UNIT_TEST_FIXTURES} ${NEOVIM_HEADERS})
+add_library(nvim-test MODULE EXCLUDE_FROM_ALL ${NEOVIM_GENERATED_FOR_SOURCES} ${NEOVIM_GENERATED_FOR_HEADERS}
+  ${NEOVIM_GENERATED_SOURCES} ${NEOVIM_SOURCES} ${UNIT_TEST_FIXTURES} ${NEOVIM_HEADERS})
 target_link_libraries(nvim-test ${NVIM_LINK_LIBRARIES})
 set_property(TARGET nvim-test APPEND_STRING PROPERTY COMPILE_FLAGS -DUNIT_TESTING)
+
+set(NO_SINGLE_CHECK_HEADERS
+  buffer
+  charset
+  cursor_shape
+  diff
+  digraph
+  ex_cmds
+  ex_getln
+  file_search
+  fold
+  getchar
+  hardcopy
+  if_cscope
+  if_cscope_defs
+  mark
+  mbyte
+  memfile_defs
+  memline
+  memline_defs
+  menu
+  misc2
+  move
+  msgpack_rpc/server
+  ops
+  option
+  os/shell
+  os_unix
+  os/win_defs
+  popupmnu
+  quickfix
+  regexp
+  regexp_defs
+  screen
+  search
+  sha256
+  sign_defs
+  spell
+  syntax
+  syntax_defs
+  tag
+  terminal
+  tui/tui
+  ugrid
+  ui
+  ui_bridge
+  undo
+  undo_defs
+  version
+  window
+)
+foreach(hfile ${NEOVIM_HEADERS})
+  get_filename_component(full_d ${hfile} PATH)
+  file(RELATIVE_PATH d "${PROJECT_SOURCE_DIR}/src/nvim" "${full_d}")
+  if(${d} MATCHES "^[.][.]")
+    file(RELATIVE_PATH d "${GENERATED_DIR}" "${full_d}")
+  endif()
+  get_filename_component(r ${hfile} NAME_WE)
+  if(NOT ${d} EQUAL ".")
+    set(r "${d}/${r}")
+  endif()
+
+  if(NOT ${hfile} MATCHES "[.]c[.]h$")
+    set(tsource "${GENERATED_DIR}/${r}.test-include.c")
+    set(tresult "${GENERATED_DIR}/${r}.test-include.i")
+    string(REPLACE "/" "-" texe "${r}-test")
+    write_file("${tsource}" "#include \"${hfile}\"\nint main(int argc, char **argv) { return 0; }")
+    get_preproc_output(PREPROC_OUTPUT ${tresult})
+    add_executable(
+      ${texe}
+      EXCLUDE_FROM_ALL
+      ${tsource} ${NEOVIM_HEADERS} ${NEOVIM_GENERATED_FOR_HEADERS})
+
+    list(FIND NO_SINGLE_CHECK_HEADERS "${r}" hfile_exclude_idx)
+    if(${hfile_exclude_idx} EQUAL -1)
+      list(APPEND HEADER_CHECK_TARGETS ${texe})
+    endif()
+  endif()
+endforeach()
+add_custom_target(check-single-includes DEPENDS ${HEADER_CHECK_TARGETS})
 
 add_subdirectory(po)
