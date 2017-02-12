@@ -66,6 +66,7 @@
 #include "nvim/event/rstream.h"
 #include "nvim/event/wstream.h"
 #include "nvim/shada.h"
+#include "nvim/globals.h"
 
 static int quitmore = 0;
 static int ex_pressedreturn = FALSE;

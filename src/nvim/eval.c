@@ -19869,6 +19869,12 @@ static inline void _nothing_conv_dict_end(typval_T *const tv,
 #define TYPVAL_ENCODE_FIRST_ARG_TYPE const void *const
 #define TYPVAL_ENCODE_FIRST_ARG_NAME ignored
 #include "nvim/eval/typval_encode.c.h"
+DECLARE_TYPVAL_ENCODE_CHECK_SELF_REFERENCE(static, nothing, const void *const, ignored)
+DEFINE_TYPVAL_ENCODE_CHECK_SELF_REFERENCE(static, nothing, const void *const, ignored)
+DECLARE_TYPVAL_ENCODE_CONVERT_ONE_VALUE(static, nothing, const void *const, ignored)
+DEFINE_TYPVAL_ENCODE_CONVERT_ONE_VALUE(static, nothing, const void *const, ignored)
+DECLARE_TYPVAL_ENCODE_ENCODE(static, nothing, const void *const, ignored)
+DEFINE_TYPVAL_ENCODE_ENCODE(static, nothing, const void *const, ignored)
 #undef TYPVAL_ENCODE_SCOPE
 #undef TYPVAL_ENCODE_NAME
 #undef TYPVAL_ENCODE_FIRST_ARG_TYPE

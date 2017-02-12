@@ -3,6 +3,7 @@
 
 #include <limits.h>
 #include <stddef.h>
+#include <stdbool.h>
 
 #include "nvim/hashtab.h"
 #include "nvim/lib/queue.h"
