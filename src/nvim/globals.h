@@ -13,10 +13,6 @@
 #include "nvim/types.h"
 #include "nvim/event/loop.h"
 
-/*
- * definition of global variables
- */
-
 #define IOSIZE         (1024+1)          // file I/O and sprintf buffer size
 
 #define MAX_MCO        6                 // maximum value for 'maxcombine'
@@ -25,11 +21,8 @@
 # define MSG_BUF_CLEN  (MSG_BUF_LEN / 6) // cell length (worst case: utf-8
                                          // takes 6 bytes for one cell)
 
-/*
- * Maximum length of a path (for non-unix systems) Make it a bit long, to stay
- * on the safe side.  But not too long to put on the stack.
- * TODO(metrix78): Move this to os_defs.h
- */
+// Maximum length of a file path.  Make it a bit long, to stay
+// on the safe side.  But not too long to put on the stack.
 #ifndef MAXPATHL
 # ifdef MAXPATHLEN
 #  define MAXPATHL  MAXPATHLEN
@@ -108,12 +101,9 @@ typedef enum {
  * They may have different values when the screen wasn't (re)allocated yet
  * after setting Rows or Columns (e.g., when starting up).
  */
-
-#define DFLT_COLS       80              /* default value for 'columns' */
-#define DFLT_ROWS       24              /* default value for 'lines' */
-
+#define DFLT_COLS       80              // default value for 'columns'
+#define DFLT_ROWS       24              // default value for 'lines'
 EXTERN long Rows INIT(= DFLT_ROWS);     // nr of rows in the screen
-
 EXTERN long Columns INIT(= DFLT_COLS);  // nr of columns in the screen
 
 /*
@@ -889,9 +879,11 @@ EXTERN int swap_exists_action INIT(= SEA_NONE);
 EXTERN int swap_exists_did_quit INIT(= FALSE);
 /* Selected "quit" at the dialog. */
 
-EXTERN char_u IObuff[IOSIZE];       /* sprintf's are done in this buffer */
-EXTERN char_u NameBuff[MAXPATHL];   /* buffer for expanding file names */
-EXTERN char_u msg_buf[MSG_BUF_LEN]; /* small buffer for messages */
+EXTERN char_u IObuff[IOSIZE];               ///< Buffer for sprintf, I/O, etc.
+EXTERN char_u NameBuff[MAXPATHL];           ///< Buffer for expanding file names
+EXTERN char_u msg_buf[MSG_BUF_LEN];         ///< Small buffer for messages
+EXTERN char os_buf[MAX(MAXPATHL, IOSIZE)];  ///< Buffer for the os/ layer
+
 
 /* When non-zero, postpone redrawing. */
 EXTERN int RedrawingDisabled INIT(= 0);

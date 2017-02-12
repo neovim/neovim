@@ -164,11 +164,11 @@ static char_u   *homedir = NULL;
 
 void init_homedir(void)
 {
-  // In case we are called a second time (when 'encoding' changes).
+  // In case we are called a second time.
   xfree(homedir);
   homedir = NULL;
 
-  char_u *var = (char_u *)os_getenv("HOME");
+  const char *var = os_getenv("HOME");
 
 #ifdef WIN32
   // Typically, $HOME is not defined on Windows, unless the user has
@@ -182,10 +182,10 @@ void init_homedir(void)
         homepath = "\\";
     }
     if (homedrive != NULL && strlen(homedrive) + strlen(homepath) < MAXPATHL) {
-      snprintf((char *)NameBuff, MAXPATHL, "%s%s", homedrive, homepath);
-      if (NameBuff[0] != NUL) {
-        var = NameBuff;
-        vim_setenv("HOME", (char *)NameBuff);
+      snprintf(os_buf, MAXPATHL, "%s%s", homedrive, homepath);
+      if (os_buf[0] != NUL) {
+        var = os_buf;
+        vim_setenv("HOME", os_buf);
       }
     }
   }
@@ -195,17 +195,16 @@ void init_homedir(void)
 #ifdef UNIX
     // Change to the directory and get the actual path.  This resolves
     // links.  Don't do it when we can't return.
-    if (os_dirname(NameBuff, MAXPATHL) == OK
-        && os_chdir((char *)NameBuff) == 0) {
-      if (!os_chdir((char *)var) && os_dirname(IObuff, IOSIZE) == OK) {
-        var = IObuff;
+    if (os_dirname((char_u *)os_buf, MAXPATHL) == OK && os_chdir(os_buf) == 0) {
+      if (!os_chdir(var) && os_dirname(IObuff, IOSIZE) == OK) {
+        var = (char *)IObuff;
       }
-      if (os_chdir((char *)NameBuff) != 0) {
+      if (os_chdir(os_buf) != 0) {
         EMSG(_(e_prev_dir));
       }
     }
 #endif
-    homedir = vim_strsave(var);
+    homedir = vim_strsave((char_u *)var);
   }
 }
 
@@ -870,11 +869,12 @@ bool os_setenv_append_path(const char *fname)
     return false;
   }
   const char *tail = (char *)path_tail_with_sep((char_u *)fname);
-  const char *dir = (char *)vim_strnsave((char_u *)fname,
-                                         (size_t)(tail - fname));
+  size_t dirlen = (size_t)(tail - fname);
+  assert(tail >= fname && dirlen + 1 < sizeof(os_buf));
+  xstrlcpy(os_buf, fname, dirlen + 1);
   const char *path = os_getenv("PATH");
   const size_t pathlen = path ? strlen(path) : 0;
-  const size_t newlen = pathlen + strlen(dir) + 2;
+  const size_t newlen = pathlen + dirlen + 2;
   if (newlen < MAX_ENVPATHLEN) {
     char *temp = xmalloc(newlen);
     if (pathlen == 0) {
@@ -883,7 +883,7 @@ bool os_setenv_append_path(const char *fname)
       xstrlcpy(temp, path, newlen);
       xstrlcat(temp, ENV_SEPSTR, newlen);
     }
-    xstrlcat(temp, dir, newlen);
+    xstrlcat(temp, os_buf, newlen);
     os_setenv("PATH", temp, 1);
     xfree(temp);
     return true;

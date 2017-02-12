@@ -275,8 +275,8 @@ static bool is_executable(const char *name)
 static bool is_executable_ext(char *name, const char *pathext)
   FUNC_ATTR_NONNULL_ALL
 {
-  xstrlcpy((char *)NameBuff, name, sizeof(NameBuff));
-  char *buf_end = xstrchrnul((char *)NameBuff, '\0');
+  xstrlcpy(os_buf, name, sizeof(os_buf));
+  char *buf_end = xstrchrnul(os_buf, '\0');
   for (const char *ext = pathext; *ext; ext++) {
     // Skip the extension if there is no suffix after a '.'.
     if (ext[0] == '.' && (ext[1] == '\0' || ext[1] == ENV_SEPCHAR)) {
@@ -287,7 +287,7 @@ static bool is_executable_ext(char *name, const char *pathext)
     const char *ext_end = xstrchrnul(ext, ENV_SEPCHAR);
     STRLCPY(buf_end, ext, ext_end - ext + 1);
 
-    if (is_executable((char *)NameBuff)) {
+    if (is_executable(os_buf)) {
       return true;
     }
 
