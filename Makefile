@@ -85,8 +85,14 @@ endif
 	mkdir -p build
 	touch $@
 
+# TODO: cmake 3.2+ add_custom_target() has a USES_TERMINAL flag.
 oldtest: | nvim helptags
-	+$(SINGLE_MAKE) -C src/nvim/testdir $(MAKEOVERRIDES)
+	+$(SINGLE_MAKE) -C src/nvim/testdir clean
+ifeq ($(strip $(TEST_FILE)),)
+	+$(SINGLE_MAKE) -C src/nvim/testdir NVIM_PRG="$(realpath build/bin/nvim)" $(MAKEOVERRIDES)
+else
+	+$(SINGLE_MAKE) -C src/nvim/testdir NVIM_PRG="$(realpath build/bin/nvim)" NEW_TESTS=$(TEST_FILE) SCRIPTS= $(MAKEOVERRIDES)
+endif
 
 helptags: | nvim
 	+$(BUILD_CMD) -C build helptags

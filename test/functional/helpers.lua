@@ -17,7 +17,8 @@ local map = global_helpers.map
 local filter = global_helpers.filter
 
 local start_dir = lfs.currentdir()
-local nvim_prog = os.getenv('NVIM_PROG') or 'build/bin/nvim'
+-- XXX: NVIM_PROG takes precedence, QuickBuild sets it.
+local nvim_prog = os.getenv('NVIM_PROG') or os.getenv('NVIM_PRG') or 'build/bin/nvim'
 local nvim_argv = {nvim_prog, '-u', 'NONE', '-i', 'NONE', '-N',
                    '--cmd', 'set shortmess+=I background=light noswapfile noautoindent laststatus=1 undodir=. directory=. viewdir=. backupdir=.',
                    '--embed'}

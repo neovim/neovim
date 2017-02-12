@@ -4,7 +4,7 @@ set(ENV{XDG_CONFIG_HOME} ${WORKING_DIR}/Xtest_xdg/config)
 set(ENV{XDG_DATA_HOME} ${WORKING_DIR}/Xtest_xdg/share)
 
 if(NVIM_PRG)
-  set(ENV{NVIM_PROG} "${NVIM_PRG}")
+  set(ENV{NVIM_PRG} "${NVIM_PRG}")
 endif()
 
 if(DEFINED ENV{TEST_FILE})

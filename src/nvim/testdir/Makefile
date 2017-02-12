@@ -4,10 +4,10 @@
 
 export SHELL := sh
 
-VIMPROG := ../../../build/bin/nvim
+VIMPROG ?= $(NVIM_PRG)
 SCRIPTSOURCE := ../../../runtime
 
-SCRIPTS := \
+SCRIPTS ?= \
            test13.out             \
            test14.out             \
            test17.out             \
@@ -25,9 +25,9 @@ SCRIPTS := \
            test79.out             \
            test_marks.out         \
 
-# Tests using runtest.vim.vim.
+# Tests using runtest.vim.
 # Keep test_alot*.res as the last one, sort the others.
-NEW_TESTS = \
+NEW_TESTS ?= \
 	    test_bufwintabinfo.res \
 	    test_cmdline.res \
 	    test_cscope.res \
