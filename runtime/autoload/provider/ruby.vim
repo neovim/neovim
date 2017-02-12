@@ -16,7 +16,9 @@ function! s:job_opts.on_stderr(chan_id, data, event)
 endfunction
 
 function! provider#ruby#Detect() abort
-  return exepath('neovim-ruby-host')
+  let ruby_exe = get(g:, 'ruby_host_prog', 'ruby')
+  let host_var = systemlist([ruby_exe,'-rubygems', '-e', 'puts Gem.user_dir'])[0] . join(['','bin','neovim-ruby-host'], '/')
+  return exepath(host_var)
 endfunction
 
 function! provider#ruby#Prog()
