@@ -4216,6 +4216,8 @@ do_arg_all (
   win_T       *new_curwin = NULL;
   tabpage_T   *new_curtab = NULL;
 
+  assert(firstwin != NULL);  // satisfy coverity
+
   if (ARGCOUNT <= 0) {
     /* Don't give an error message.  We don't want it when the ":all"
      * command is in the .vimrc. */
@@ -4407,19 +4409,23 @@ do_arg_all (
   /* Remove the "lock" on the argument list. */
   alist_unlink(alist);
 
-  --autocmd_no_enter;
-  /* restore last referenced tabpage's curwin */
+  autocmd_no_enter--;
+  // restore last referenced tabpage's curwin
   if (last_curtab != new_curtab) {
-    if (valid_tabpage(last_curtab))
-      goto_tabpage_tp(last_curtab, TRUE, TRUE);
-    if (win_valid(last_curwin))
+    if (valid_tabpage(last_curtab)) {
+      goto_tabpage_tp(last_curtab, true, true);
+    }
+    if (win_valid(last_curwin)) {
       win_enter(last_curwin, false);
+    }
   }
-  /* to window with first arg */
-  if (valid_tabpage(new_curtab))
-    goto_tabpage_tp(new_curtab, TRUE, TRUE);
-  if (win_valid(new_curwin))
+  // to window with first arg
+  if (valid_tabpage(new_curtab)) {
+    goto_tabpage_tp(new_curtab, true, true);
+  }
+  if (win_valid(new_curwin)) {
     win_enter(new_curwin, false);
+  }
 
   --autocmd_no_leave;
   xfree(opened);
