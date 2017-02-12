@@ -1,6 +1,7 @@
-/// @file eval/typval_encode.h
+/// @file eval/typval_encode_types.h
 ///
-/// Contains common definitions for eval/typval_encode.h, eval/typval_encode.c.h and its users.
+/// Contains common definitions for eval/typval_encode.h,
+/// eval/typval_encode.c.h and its users.
 #ifndef NVIM_EVAL_TYPVAL_ENCODE_TYPES_H
 #define NVIM_EVAL_TYPVAL_ENCODE_TYPES_H
 

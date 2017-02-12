@@ -1006,12 +1006,18 @@ char *encode_tv2json(typval_T *tv, size_t *len)
 #define TYPVAL_ENCODE_FIRST_ARG_TYPE msgpack_packer *const
 #define TYPVAL_ENCODE_FIRST_ARG_NAME packer
 #include "nvim/eval/typval_encode.c.h"
-DECLARE_TYPVAL_ENCODE_CHECK_SELF_REFERENCE(, msgpack, msgpack_packer *const, packer)
-DEFINE_TYPVAL_ENCODE_CHECK_SELF_REFERENCE(, msgpack, msgpack_packer *const, packer)
-DECLARE_TYPVAL_ENCODE_CONVERT_ONE_VALUE(, msgpack, msgpack_packer *const, packer)
-DEFINE_TYPVAL_ENCODE_CONVERT_ONE_VALUE(, msgpack, msgpack_packer *const, packer)
-DECLARE_TYPVAL_ENCODE_ENCODE(, msgpack, msgpack_packer *const, packer)
-DEFINE_TYPVAL_ENCODE_ENCODE(, msgpack, msgpack_packer *const, packer)
+DECLARE_TYPVAL_ENCODE_CHECK_SELF_REFERENCE(
+    , msgpack, msgpack_packer *const, packer)
+DEFINE_TYPVAL_ENCODE_CHECK_SELF_REFERENCE(
+    , msgpack, msgpack_packer *const, packer)
+DECLARE_TYPVAL_ENCODE_CONVERT_ONE_VALUE(
+    , msgpack, msgpack_packer *const, packer)
+DEFINE_TYPVAL_ENCODE_CONVERT_ONE_VALUE(
+    , msgpack, msgpack_packer *const, packer)
+DECLARE_TYPVAL_ENCODE_ENCODE(
+    , msgpack, msgpack_packer *const, packer)
+DEFINE_TYPVAL_ENCODE_ENCODE(
+    , msgpack, msgpack_packer *const, packer)
 #undef TYPVAL_ENCODE_SCOPE
 #undef TYPVAL_ENCODE_NAME
 #undef TYPVAL_ENCODE_FIRST_ARG_TYPE
