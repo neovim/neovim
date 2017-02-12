@@ -134,4 +134,7 @@ clint:
 
 lint: clint testlint
 
+check-single-includes: | nvim
+	+$(BUILD_CMD) -C build check-single-includes
+
 .PHONY: test testlint functionaltest unittest lint clint clean distclean nvim libnvim cmake deps install
