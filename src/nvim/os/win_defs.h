@@ -1,7 +1,9 @@
 #ifndef NVIM_OS_WIN_DEFS_H
 #define NVIM_OS_WIN_DEFS_H
 
-STATIC_ASSERT(defined(WIN32), "WIN32 is not defined");
+#ifndef WIN32
+# error Header must be included only when compiling for Windows.
+#endif
 
 // winsock2.h must be first to avoid incompatibilities
 // with winsock.h (included by windows.h)
