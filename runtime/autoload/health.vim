@@ -9,17 +9,9 @@ function! s:enhance_syntax() abort
         \ containedin=markdownCodeBlock,mkdListItemLine
   highlight link healthWarning WarningMsg
 
-  syntax keyword healthInfo INFO
-        \ containedin=markdownCodeBlock,mkdListItemLine
-  highlight link healthInfo ModeMsg
-
   syntax keyword healthSuccess SUCCESS
         \ containedin=markdownCodeBlock,mkdListItemLine
-  highlight link healthSuccess ModeMsg
-
-  syntax keyword healthSuggestion SUGGESTIONS
-        \ containedin=markdownCodeBlock,mkdListItemLine
-  highlight link healthSuggestion String
+  highlight healthSuccess guibg=#5fff00 guifg=#080808 ctermbg=82 ctermfg=232
 
   syntax match healthHelp "|.\{-}|" contains=healthBar
         \ containedin=markdownCodeBlock,mkdListItemLine

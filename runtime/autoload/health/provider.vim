@@ -420,7 +420,9 @@ function! s:check_ruby() abort
   let host = provider#ruby#Detect()
   if empty(host)
     call health#report_warn('Missing "neovim" gem.',
-          \ ['Run in shell: gem install neovim'])
+          \ ['Run in shell: gem install neovim',
+          \  'Is the gem bin directory in $PATH? Check `gem environment`.',
+          \  'If you are using rvm/rbenv/chruby, try "rehashing".'])
     return
   endif
   call health#report_info('Host: '. host)
