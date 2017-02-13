@@ -226,12 +226,12 @@ function! s:check_python(version) abort
   let pyenv_root = exists('$PYENV_ROOT') ? resolve($PYENV_ROOT) : 'n'
   let venv = exists('$VIRTUAL_ENV') ? resolve($VIRTUAL_ENV) : ''
   let host_prog_var = pyname.'_host_prog'
-  let loaded_var = 'loaded_'.pyname.'_provider'
+  let loaded_var = 'g:loaded_'.pyname.'_provider'
   let python_bin = ''
   let python_multiple = []
 
-  if get(g:, loaded_var, 0) && !exists('*provider#'.pyname.'#Call')
-    call health#report_info('Disabled. g:'.loaded_var.'='.get(g:, loaded_var, 0))
+  if exists(loaded_var) && !exists('*provider#'.pyname.'#Call')
+    call health#report_info('Disabled. '.loaded_var.'='.eval(loaded_var))
     return
   endif
 
@@ -415,9 +415,9 @@ endfunction
 function! s:check_ruby() abort
   call health#report_start('Ruby provider')
 
-  let loaded_var = 'loaded_ruby_provider'
-  if get(g:, loaded_var, 0) && !exists('*provider#ruby#Call')
-    call health#report_info('Disabled. g:'.loaded_var.'='.get(g:, loaded_var, 0))
+  let loaded_var = 'g:loaded_ruby_provider'
+  if exists(loaded_var) && !exists('*provider#ruby#Call')
+    call health#report_info('Disabled. '.loaded_var.'='.eval(loaded_var))
     return
   endif
 

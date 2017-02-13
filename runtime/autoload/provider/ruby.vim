@@ -1,5 +1,5 @@
 " The Ruby provider helper
-if get(g:, 'loaded_ruby_provider', 0)
+if exists('g:loaded_ruby_provider')
   finish
 endif
 let g:loaded_ruby_provider = 1
