@@ -182,9 +182,9 @@ foreach(sfile ${NEOVIM_SOURCES}
 
   # get_preproc_output(PREPROC_OUTPUT gf3)
   if(MSVC)
-      set(PREPROC_OUTPUT /P /Fi${gf3})
+    set(PREPROC_OUTPUT /P /Fi${gf3})
   else()
-      set(PREPROC_OUTPUT -E -o ${gf3})
+    set(PREPROC_OUTPUT -E -o ${gf3})
   endif()
 
   add_custom_command(
