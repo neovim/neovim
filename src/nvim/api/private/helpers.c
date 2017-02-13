@@ -380,7 +380,7 @@ static inline void typval_encode_list_start(EncodedData *const edata,
   kv_push(edata->stack, ARRAY_OBJ(((Array) {
     .capacity = len,
     .size = 0,
-    .items = xmalloc(len * sizeof(*((Object *)NULL)->data.array.items)),
+    .items = xmalloc(len * sizeof(*((Object)OBJECT_INIT).data.array.items)),
   })));
 }
 
@@ -422,7 +422,8 @@ static inline void typval_encode_dict_start(EncodedData *const edata,
   kv_push(edata->stack, DICTIONARY_OBJ(((Dictionary) {
     .capacity = len,
     .size = 0,
-    .items = xmalloc(len * sizeof(*((Object *)NULL)->data.dictionary.items)),
+    .items = xmalloc(len * sizeof(
+        *((Object)OBJECT_INIT).data.dictionary.items)),
   })));
 }
 
