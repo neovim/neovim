@@ -2041,7 +2041,7 @@ bool tv_islocked(const typval_T *const tv)
 ///
 /// @param[in]  lock  Lock status.
 /// @param[in]  name  Variable name, used in the error message.
-/// @param[in]  use_gettext  True if variable name also is to be translated.
+/// @param[in]  name_len  Variable name length.
 ///
 /// @return true if variable is locked, false otherwise.
 bool tv_check_lock(const VarLockStatus lock, const char *const name,

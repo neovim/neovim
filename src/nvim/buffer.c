@@ -3504,7 +3504,7 @@ int build_stl_str_hl(
       curbuf = o_curbuf;
 
       // Remove the variable we just stored
-      do_unlet((char_u *)"g:actual_curbuf", true);
+      do_unlet(S_LEN("g:actual_curbuf"), true);
 
       // }
 

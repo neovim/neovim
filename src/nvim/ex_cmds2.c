@@ -2256,8 +2256,8 @@ void ex_compiler(exarg_T *eap)
       }
       do_cmdline_cmd("command -nargs=* CompilerSet setlocal <args>");
     }
-    do_unlet((char_u *)"g:current_compiler", true);
-    do_unlet((char_u *)"b:current_compiler", true);
+    do_unlet(S_LEN("g:current_compiler"), true);
+    do_unlet(S_LEN("b:current_compiler"), true);
 
     snprintf((char *)buf, bufsize, "compiler/%s.vim", eap->arg);
     if (source_runtime(buf, DIP_ALL) == FAIL) {
@@ -2280,7 +2280,7 @@ void ex_compiler(exarg_T *eap)
                                 old_cur_comp);
         xfree(old_cur_comp);
       } else {
-        do_unlet((char_u *)"g:current_compiler", true);
+        do_unlet(S_LEN("g:current_compiler"), true);
       }
     }
   }

@@ -2582,7 +2582,7 @@ did_set_string_option (
         // The color scheme must have set 'background' back to another
         // value, that's not what we want here.  Disable the color
         // scheme and set the colors again.
-        do_unlet((char_u *)"g:colors_name", true);
+        do_unlet(S_LEN("g:colors_name"), true);
         free_string_option(p_bg);
         p_bg = vim_strsave((char_u *)(dark ? "dark" : "light"));
         check_string_option(&p_bg);

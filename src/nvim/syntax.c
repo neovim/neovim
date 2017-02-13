@@ -3259,9 +3259,10 @@ static void syn_cmd_clear(exarg_T *eap, int syncing)
       syntax_sync_clear();
     else {
       syntax_clear(curwin->w_s);
-      if (curwin->w_s == &curwin->w_buffer->b_s)
-        do_unlet((char_u *)"b:current_syntax", TRUE);
-      do_unlet((char_u *)"w:current_syntax", TRUE);
+      if (curwin->w_s == &curwin->w_buffer->b_s) {
+        do_unlet(S_LEN("b:current_syntax"), true);
+      }
+      do_unlet(S_LEN("w:current_syntax"), true);
     }
   } else {
     /*
@@ -3337,7 +3338,7 @@ static void syn_cmd_enable(exarg_T *eap, int syncing)
 {
   set_internal_string_var((char_u *)"syntax_cmd", (char_u *)"enable");
   syn_cmd_onoff(eap, "syntax");
-  do_unlet((char_u *)"g:syntax_cmd", TRUE);
+  do_unlet(S_LEN("g:syntax_cmd"), true);
 }
 
 /*
@@ -3350,7 +3351,7 @@ static void syn_cmd_reset(exarg_T *eap, int syncing)
   if (!eap->skip) {
     set_internal_string_var((char_u *)"syntax_cmd", (char_u *)"reset");
     do_cmdline_cmd("runtime! syntax/syncolor.vim");
-    do_unlet((char_u *)"g:syntax_cmd", TRUE);
+    do_unlet(S_LEN("g:syntax_cmd"), true);
   }
 }
 
@@ -5538,9 +5539,9 @@ void ex_ownsyntax(exarg_T *eap)
   }
 
   /* restore value of b:current_syntax */
-  if (old_value == NULL)
-    do_unlet((char_u *)"b:current_syntax", TRUE);
-  else {
+  if (old_value == NULL) {
+    do_unlet(S_LEN("b:current_syntax"), true);
+  } else {
     set_internal_string_var((char_u *)"b:current_syntax", old_value);
     xfree(old_value);
   }
@@ -6231,7 +6232,7 @@ do_highlight (
      */
     line = linep;
     if (ends_excmd(*line)) {
-      do_unlet((char_u *)"colors_name", TRUE);
+      do_unlet(S_LEN("colors_name"), true);
       restore_cterm_colors();
 
       /*
