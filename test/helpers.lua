@@ -167,7 +167,7 @@ local function check_cores(app)
     db_cmd = lldb_db_cmd
   else
     initial_path = '.'
-    re = 'core[^/]*'
+    re = '/core[^/]*$'
     exc_re = '^/%.deps$'
     db_cmd = gdb_db_cmd
     random_skip = true
