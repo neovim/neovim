@@ -18176,8 +18176,6 @@ static void f_writefile(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     }
   }
 
-  // Always open the file in binary mode, library functions have a mind of
-  // their own about CR-LF conversion.
   const char *const fname = (const char *)get_tv_string(&argvars[1]);
   FileDescriptor *fp;
   int error;
