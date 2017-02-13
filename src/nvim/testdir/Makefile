@@ -2,10 +2,11 @@
 # Makefile to run all tests for Vim
 #
 
-export SHELL := sh
-
-VIMPROG ?= $(NVIM_PRG)
+NVIM_PRG ?= ../../../build/bin/nvim
 SCRIPTSOURCE := ../../../runtime
+
+export SHELL := sh
+export NVIM_PRG := $(NVIM_PRG)
 
 SCRIPTS ?= \
            test13.out             \
@@ -101,13 +102,13 @@ report:
 	                 echo ALL DONE;        \
 	             fi"
 
-test1.out: $(VIMPROG)
+test1.out: $(NVIM_PRG)
 
-$(SCRIPTS) $(SCRIPTS_GUI): $(VIMPROG) test1.out
+$(SCRIPTS) $(SCRIPTS_GUI): $(NVIM_PRG) test1.out
 
 RM_ON_RUN   := test.out X* viminfo
 RM_ON_START := test.ok
-RUN_VIM     := VIMRUNTIME=$(SCRIPTSOURCE); export VIMRUNTIME; $(TOOL) $(VIMPROG) -u unix.vim -U NONE -i viminfo --noplugin -s dotest.in
+RUN_VIM     := VIMRUNTIME=$(SCRIPTSOURCE); export VIMRUNTIME; $(TOOL) $(NVIM_PRG) -u unix.vim -U NONE -i viminfo --noplugin -s dotest.in
 
 clean:
 	-rm -rf *.out          \
@@ -176,7 +177,7 @@ nolog:
 # New style of tests uses Vim script with assert calls.  These are easier
 # to write and a lot easier to read and debug.
 # Limitation: Only works with the +eval feature.
-RUN_VIMTEST = VIMRUNTIME=$(SCRIPTSOURCE); export VIMRUNTIME; $(VALGRIND) $(VIMPROG) -u unix.vim -U NONE --noplugin
+RUN_VIMTEST = VIMRUNTIME=$(SCRIPTSOURCE); export VIMRUNTIME; $(VALGRIND) $(NVIM_PRG) -u unix.vim -U NONE --noplugin
 
 newtests: newtestssilent
 	@/bin/sh -c "if test -f messages && grep -q 'FAILED' messages; then \
