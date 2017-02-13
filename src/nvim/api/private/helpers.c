@@ -20,7 +20,6 @@
 #include "nvim/option_defs.h"
 #include "nvim/version.h"
 #include "nvim/lib/kvec.h"
-#include "nvim/eval/typval_encode_types.h"
 
 /// Helper structure for vim_to_object
 typedef struct {
@@ -502,18 +501,6 @@ static inline void typval_encode_dict_end(EncodedData *const edata)
 #define TYPVAL_ENCODE_FIRST_ARG_TYPE EncodedData *const
 #define TYPVAL_ENCODE_FIRST_ARG_NAME edata
 #include "nvim/eval/typval_encode.c.h"
-DECLARE_TYPVAL_ENCODE_CHECK_SELF_REFERENCE(
-    static, object, EncodedData * const, edata)
-DEFINE_TYPVAL_ENCODE_CHECK_SELF_REFERENCE(
-    static, object, EncodedData * const, edata)
-DECLARE_TYPVAL_ENCODE_CONVERT_ONE_VALUE(
-    static, object, EncodedData * const, edata)
-DEFINE_TYPVAL_ENCODE_CONVERT_ONE_VALUE(
-    static, object, EncodedData * const, edata)
-DECLARE_TYPVAL_ENCODE_ENCODE(
-    static, object, EncodedData *const, edata)
-DEFINE_TYPVAL_ENCODE_ENCODE(
-    static, object, EncodedData *const, edata)
 #undef TYPVAL_ENCODE_SCOPE
 #undef TYPVAL_ENCODE_NAME
 #undef TYPVAL_ENCODE_FIRST_ARG_TYPE

@@ -440,12 +440,6 @@ int encode_read_from_list(ListReaderState *const state, char *const buf,
 #define TYPVAL_ENCODE_FIRST_ARG_TYPE garray_T *const
 #define TYPVAL_ENCODE_FIRST_ARG_NAME gap
 #include "nvim/eval/typval_encode.c.h"
-DECLARE_TYPVAL_ENCODE_CHECK_SELF_REFERENCE(static, string, garray_T *const, gap)
-DEFINE_TYPVAL_ENCODE_CHECK_SELF_REFERENCE(static, string, garray_T *const, gap)
-DECLARE_TYPVAL_ENCODE_CONVERT_ONE_VALUE(static, string, garray_T *const, gap)
-DEFINE_TYPVAL_ENCODE_CONVERT_ONE_VALUE(static, string, garray_T *const, gap)
-DECLARE_TYPVAL_ENCODE_ENCODE(static, string, garray_T *const, gap)
-DEFINE_TYPVAL_ENCODE_ENCODE(static, string, garray_T *const, gap)
 #undef TYPVAL_ENCODE_SCOPE
 #undef TYPVAL_ENCODE_NAME
 #undef TYPVAL_ENCODE_FIRST_ARG_TYPE
@@ -484,12 +478,6 @@ DEFINE_TYPVAL_ENCODE_ENCODE(static, string, garray_T *const, gap)
 #define TYPVAL_ENCODE_FIRST_ARG_TYPE garray_T *const
 #define TYPVAL_ENCODE_FIRST_ARG_NAME gap
 #include "nvim/eval/typval_encode.c.h"
-DECLARE_TYPVAL_ENCODE_CHECK_SELF_REFERENCE(, echo, garray_T *const, gap)
-DEFINE_TYPVAL_ENCODE_CHECK_SELF_REFERENCE(, echo, garray_T *const, gap)
-DECLARE_TYPVAL_ENCODE_CONVERT_ONE_VALUE(, echo, garray_T *const, gap)
-DEFINE_TYPVAL_ENCODE_CONVERT_ONE_VALUE(, echo, garray_T *const, gap)
-DECLARE_TYPVAL_ENCODE_ENCODE(, echo, garray_T *const, gap)
-DEFINE_TYPVAL_ENCODE_ENCODE(, echo, garray_T *const, gap)
 #undef TYPVAL_ENCODE_SCOPE
 #undef TYPVAL_ENCODE_NAME
 #undef TYPVAL_ENCODE_FIRST_ARG_TYPE
@@ -789,12 +777,6 @@ bool encode_check_json_key(const typval_T *const tv)
 #define TYPVAL_ENCODE_FIRST_ARG_TYPE garray_T *const
 #define TYPVAL_ENCODE_FIRST_ARG_NAME gap
 #include "nvim/eval/typval_encode.c.h"
-DECLARE_TYPVAL_ENCODE_CHECK_SELF_REFERENCE(static, json, garray_T *const, gap)
-DEFINE_TYPVAL_ENCODE_CHECK_SELF_REFERENCE(static, json, garray_T *const, gap)
-DECLARE_TYPVAL_ENCODE_CONVERT_ONE_VALUE(static, json, garray_T *const, gap)
-DEFINE_TYPVAL_ENCODE_CONVERT_ONE_VALUE(static, json, garray_T *const, gap)
-DECLARE_TYPVAL_ENCODE_ENCODE(static, json, garray_T *const, gap)
-DEFINE_TYPVAL_ENCODE_ENCODE(static, json, garray_T *const, gap)
 #undef TYPVAL_ENCODE_SCOPE
 #undef TYPVAL_ENCODE_NAME
 #undef TYPVAL_ENCODE_FIRST_ARG_TYPE
@@ -1006,18 +988,6 @@ char *encode_tv2json(typval_T *tv, size_t *len)
 #define TYPVAL_ENCODE_FIRST_ARG_TYPE msgpack_packer *const
 #define TYPVAL_ENCODE_FIRST_ARG_NAME packer
 #include "nvim/eval/typval_encode.c.h"
-DECLARE_TYPVAL_ENCODE_CHECK_SELF_REFERENCE(
-    , msgpack, msgpack_packer *const, packer)
-DEFINE_TYPVAL_ENCODE_CHECK_SELF_REFERENCE(
-    , msgpack, msgpack_packer *const, packer)
-DECLARE_TYPVAL_ENCODE_CONVERT_ONE_VALUE(
-    , msgpack, msgpack_packer *const, packer)
-DEFINE_TYPVAL_ENCODE_CONVERT_ONE_VALUE(
-    , msgpack, msgpack_packer *const, packer)
-DECLARE_TYPVAL_ENCODE_ENCODE(
-    , msgpack, msgpack_packer *const, packer)
-DEFINE_TYPVAL_ENCODE_ENCODE(
-    , msgpack, msgpack_packer *const, packer)
 #undef TYPVAL_ENCODE_SCOPE
 #undef TYPVAL_ENCODE_NAME
 #undef TYPVAL_ENCODE_FIRST_ARG_TYPE
