@@ -4016,28 +4016,6 @@ int expand_filename(exarg_T *eap, char_u **cmdlinep, char_u **errormsgp)
       }
     }
 
-    // Replace any other wildcards, remove backslashes.
-#ifdef UNIX
-    /*
-     * Only for Unix we check for more than one file name.
-     * For other systems spaces are considered to be part
-     * of the file name.
-     * Only check here if there is no wildcard, otherwise
-     * ExpandOne() will check for errors. This allows
-     * ":e `ls ve*.c`" on Unix.
-     */
-    if (!has_wildcards)
-      for (p = eap->arg; *p; ++p) {
-        /* skip escaped characters */
-        if (p[1] && (*p == '\\' || *p == Ctrl_V))
-          ++p;
-        else if (ascii_iswhite(*p)) {
-          *errormsgp = (char_u *)_("E172: Only one file name allowed");
-          return FAIL;
-        }
-      }
-#endif
-
     /*
      * Halve the number of backslashes (this is Vi compatible).
      * For Unix, when wildcards are expanded, this is
