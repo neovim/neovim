@@ -9,6 +9,7 @@ local TcpStream = require('nvim.tcp_stream')
 local SocketStream = require('nvim.socket_stream')
 local ChildProcessStream = require('nvim.child_process_stream')
 
+local check_cores = global_helpers.check_cores
 local check_logs = global_helpers.check_logs
 local neq = global_helpers.neq
 local eq = global_helpers.eq
@@ -608,7 +609,10 @@ local M = {
 
 return function(after_each)
   if after_each then
-    after_each(check_logs)
+    after_each(function()
+      check_logs()
+      check_cores('build/bin/nvim')
+    end)
   end
   return M
 end
