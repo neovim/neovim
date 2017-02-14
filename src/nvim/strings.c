@@ -1083,26 +1083,20 @@ int vim_vsnprintf(char *str, size_t str_m, const char *fmt, va_list ap,
             // when zero value is formatted with an explicit precision 0,
             // resulting formatted string is empty (d, i, u, b, B, o, x, X, p)
           } else {
-            // construct a simple format string for snprintf
-            char f[] = "%" PRIdMAX;
-            f[sizeof("%" PRIdMAX) - 1 - 1] = fmt_spec;
-
             switch (fmt_spec) {
-              case 'p': {
+              case 'p': {  // pointer
                 str_arg_l += (size_t)snprintf(tmp + str_arg_l,
                                               sizeof(tmp) - str_arg_l,
-                                              f, ptr_arg);
+                                              "%p", ptr_arg);
                 break;
               }
-              case 'd': {
-                // signed
+              case 'd': {  // signed
                 str_arg_l += (size_t)snprintf(tmp + str_arg_l,
                                               sizeof(tmp) - str_arg_l,
-                                              f, arg);
+                                              "%" PRIdMAX, arg);
                 break;
               }
-              case 'b': case 'B': {
-                // binary
+              case 'b': case 'B': {  // binary
                 size_t bits = 0;
                 for (bits = sizeof(uintmax_t) * 8; bits > 0; bits--) {
                   if ((uarg >> (bits - 1)) & 0x1) {
@@ -1115,8 +1109,11 @@ int vim_vsnprintf(char *str, size_t str_m, const char *fmt, va_list ap,
                 }
                 break;
               }
-              default: {
-                // unsigned
+              default: {  // unsigned
+                // construct a simple format string for snprintf
+                char f[] = "%" PRIuMAX;
+                f[sizeof("%" PRIuMAX) - 1 - 1] = fmt_spec;
+                assert(PRIuMAX[sizeof(PRIuMAX) - 1 - 1] == 'u');
                 str_arg_l += (size_t)snprintf(tmp + str_arg_l,
                                               sizeof(tmp) - str_arg_l,
                                               f, uarg);
