@@ -18033,7 +18033,11 @@ static bool write_list(FileDescriptor *const fp, const list_T *const list,
 {
   int error = 0;
   for (const listitem_T *li = list->lv_first; li != NULL; li = li->li_next) {
-    const char *const s = (const char *)get_tv_string((typval_T *)&li->li_tv);
+    const char *const s = (const char *)get_tv_string_chk(
+        (typval_T *)&li->li_tv);
+    if (s == NULL) {
+      return false;
+    }
     const char *hunk_start = s;
     for (const char *p = hunk_start;; p++) {
       if (*p == NUL || *p == NL) {
@@ -18168,15 +18172,24 @@ static void f_writefile(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   bool binary = false;
   bool append = false;
   if (argvars[2].v_type != VAR_UNKNOWN) {
-    if (vim_strchr(get_tv_string(&argvars[2]), 'b')) {
+    const char *const flags = (const char *)get_tv_string_chk(&argvars[2]);
+    if (flags == NULL) {
+      return;
+    }
+    if (strchr(flags, 'b')) {
       binary = true;
     }
-    if (vim_strchr(get_tv_string(&argvars[2]), 'a')) {
+    if (strchr(flags, 'a')) {
       append = true;
     }
   }
 
-  const char *const fname = (const char *)get_tv_string(&argvars[1]);
+  const char buf[NUMBUFLEN];
+  const char *const fname = (const char *)get_tv_string_buf_chk(&argvars[1],
+                                                                (char_u *)buf);
+  if (fname == NULL) {
+    return;
+  }
   FileDescriptor *fp;
   int error;
   rettv->vval.v_number = -1;
