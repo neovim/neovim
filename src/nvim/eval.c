@@ -18053,7 +18053,7 @@ static bool write_list(FileDescriptor *const fp, const list_T *const list,
           break;
         } else {
           hunk_start = p + 1;
-          const ptrdiff_t written = file_write(fp, (char []){ NUL }, 1);
+          const ptrdiff_t written = file_write(fp, (char[]){ NUL }, 1);
           if (written < 0) {
             error = (int)written;
             break;
