@@ -411,9 +411,6 @@ end:
 
 /// Gets a buffer-scoped (b:) variable.
 ///
-/// @note Use nvim_buf_get_changedtick() for “variable” `b:changedtick`.
-///       This method only gets variables from b: dictionary.
-///
 /// @param buffer The buffer handle
 /// @param name The variable name
 /// @param[out] err Details of an error that may have occurred

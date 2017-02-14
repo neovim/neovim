@@ -1645,13 +1645,7 @@ static void list_glob_vars(int *first)
  */
 static void list_buf_vars(int *first)
 {
-  char numbuf[NUMBUFLEN];
-
   list_hashtable_vars(&curbuf->b_vars->dv_hashtab, "b:", true, first);
-
-  snprintf(numbuf, sizeof(numbuf), "%d", curbuf->b_changedtick);
-  list_one_var_a("b:", "changedtick", sizeof("changedtick") - 1, VAR_NUMBER,
-                 numbuf, first);
 }
 
 /*
@@ -1946,18 +1940,6 @@ ex_let_one (
     EMSG2(_(e_invarg2), arg);
 
   return arg_end;
-}
-
-/*
- * If "arg" is equal to "b:changedtick" give an error and return TRUE.
- */
-static int check_changedtick(char_u *arg)
-{
-  if (STRNCMP(arg, "b:changedtick", 13) == 0 && !eval_isnamec(arg[13])) {
-    EMSG2(_(e_readonlyvar), arg);
-    return TRUE;
-  }
-  return FALSE;
 }
 
 /*
@@ -2298,28 +2280,27 @@ static void set_var_lval(lval_T *lp, char_u *endp, typval_T *rettv, int copy, ch
   dictitem_T  *di;
 
   if (lp->ll_tv == NULL) {
-    if (!check_changedtick(lp->ll_name)) {
-      cc = *endp;
-      *endp = NUL;
-      if (op != NULL && *op != '=') {
-        typval_T tv;
+    cc = *endp;
+    *endp = NUL;
+    if (op != NULL && *op != '=') {
+      typval_T tv;
 
-        // handle +=, -= and .=
-        di = NULL;
-        if (get_var_tv((const char *)lp->ll_name, (int)STRLEN(lp->ll_name),
-                       &tv, &di, true, false) == OK) {
-          if ((di == NULL
-               || (!var_check_ro(di->di_flags, lp->ll_name, false)
-                   && !tv_check_lock(di->di_tv.v_lock, lp->ll_name, false)))
-              && tv_op(&tv, rettv, op) == OK) {
-            set_var(lp->ll_name, &tv, false);
-          }
-          clear_tv(&tv);
+      // handle +=, -= and .=
+      di = NULL;
+      if (get_var_tv((const char *)lp->ll_name, (int)STRLEN(lp->ll_name),
+                     &tv, &di, true, false) == OK) {
+        if ((di == NULL
+             || (!var_check_ro(di->di_flags, lp->ll_name, false)
+                 && !tv_check_lock(di->di_tv.v_lock, lp->ll_name, false)))
+            && tv_op(&tv, rettv, op) == OK) {
+          set_var(lp->ll_name, &tv, false);
         }
-      } else
-        set_var(lp->ll_name, rettv, copy);
-      *endp = cc;
+        clear_tv(&tv);
+      }
+    } else {
+      set_var(lp->ll_name, rettv, copy);
     }
+    *endp = cc;
   } else if (tv_check_lock(lp->ll_newkey == NULL
                            ? lp->ll_tv->v_lock
                            : lp->ll_tv->vval.v_dict->dv_lock,
@@ -2937,11 +2918,10 @@ static int do_unlet_var(lval_T *lp, char_u *name_end, int forceit)
     cc = *name_end;
     *name_end = NUL;
 
-    /* Normal name or expanded name. */
-    if (check_changedtick(lp->ll_name))
+    // Normal name or expanded name.
+    if (do_unlet(lp->ll_name, forceit) == FAIL) {
       ret = FAIL;
-    else if (do_unlet(lp->ll_name, forceit) == FAIL)
-      ret = FAIL;
+    }
     *name_end = cc;
   } else if ((lp->ll_list != NULL
               && tv_check_lock(lp->ll_list->lv_lock, lp->ll_name, false))
@@ -3088,20 +3068,16 @@ static int do_lock_var(lval_T *lp, char_u *name_end, int deep, int lock)
     *name_end = NUL;
 
     // Normal name or expanded name.
-    if (check_changedtick(lp->ll_name)) {
+    di = find_var((const char *)lp->ll_name, STRLEN(lp->ll_name), NULL, true);
+    if (di == NULL) {
       ret = FAIL;
     } else {
-      di = find_var((const char *)lp->ll_name, STRLEN(lp->ll_name), NULL, true);
-      if (di == NULL) {
-        ret = FAIL;
+      if (lock) {
+        di->di_flags |= DI_FLAGS_LOCK;
       } else {
-        if (lock) {
-          di->di_flags |= DI_FLAGS_LOCK;
-        } else {
-          di->di_flags &= ~DI_FLAGS_LOCK;
-        }
-        item_lock(&di->di_tv, deep, lock);
+        di->di_flags &= ~DI_FLAGS_LOCK;
       }
+      item_lock(&di->di_tv, deep, lock);
     }
     *name_end = cc;
   } else if (lp->ll_range) {
@@ -3300,10 +3276,6 @@ char_u *get_user_var_name(expand_T *xp, int idx)
     while (HASHITEM_EMPTY(hi))
       ++hi;
     return cat_prefix_varname('b', hi->hi_key);
-  }
-  if (bdone == ht->ht_used) {
-    ++bdone;
-    return (char_u *)"b:changedtick";
   }
 
   /* w: variables */
@@ -10523,10 +10495,6 @@ static void f_getbufvar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
         // buffer-local-option
         done = true;
       }
-    } else if (STRCMP(varname, "changedtick") == 0) {
-      rettv->v_type = VAR_NUMBER;
-      rettv->vval.v_number = curbuf->b_changedtick;
-      done = true;
     } else {
       // Look up the variable.
       // Let getbufvar({nr}, "") return the "b:" dictionary.
@@ -12458,31 +12426,26 @@ static void f_islocked(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       EMSG(_(e_trailing));
     else {
       if (lv.ll_tv == NULL) {
-        if (check_changedtick(lv.ll_name)) {
-          rettv->vval.v_number = 1;  // Always locked.
-        } else {
-          di = find_var((const char *)lv.ll_name, STRLEN(lv.ll_name), NULL,
-                        true);
-          if (di != NULL) {
-            /* Consider a variable locked when:
-             * 1. the variable itself is locked
-             * 2. the value of the variable is locked.
-             * 3. the List or Dict value is locked.
-             */
-            rettv->vval.v_number = ((di->di_flags & DI_FLAGS_LOCK)
-                                    || tv_islocked(&di->di_tv));
-          }
+        di = find_var((const char *)lv.ll_name, STRLEN(lv.ll_name), NULL, true);
+        if (di != NULL) {
+          // Consider a variable locked when:
+          // 1. the variable itself is locked
+          // 2. the value of the variable is locked.
+          // 3. the List or Dict value is locked.
+          rettv->vval.v_number = ((di->di_flags & DI_FLAGS_LOCK)
+                                  || tv_islocked(&di->di_tv));
         }
-      } else if (lv.ll_range)
+      } else if (lv.ll_range) {
         EMSG(_("E786: Range not allowed"));
-      else if (lv.ll_newkey != NULL)
+      } else if (lv.ll_newkey != NULL) {
         EMSG2(_(e_dictkey), lv.ll_newkey);
-      else if (lv.ll_list != NULL)
-        /* List item. */
+      } else if (lv.ll_list != NULL) {
+        // List item.
         rettv->vval.v_number = tv_islocked(&lv.ll_li->li_tv);
-      else
-        /* Dictionary item. */
+      } else {
+        // Dictionary item.
         rettv->vval.v_number = tv_islocked(&lv.ll_di->di_tv);
+      }
     }
   }
 
@@ -19335,23 +19298,13 @@ static int get_var_tv(
 {
   int ret = OK;
   typval_T    *tv = NULL;
-  typval_T atv;
   dictitem_T  *v;
 
-  // Check for "b:changedtick".
-  if (sizeof("b:changedtick") - 1 == len
-      && STRNCMP(name, "b:changedtick", len) == 0) {
-    atv.v_type = VAR_NUMBER;
-    atv.vval.v_number = curbuf->b_changedtick;
-    tv = &atv;
-  } else {
-    // Check for user-defined variables.
-    v = find_var(name, (size_t)len, NULL, no_autoload);
-    if (v != NULL) {
-      tv = &v->di_tv;
-      if (dip != NULL) {
-        *dip = v;
-      }
+  v = find_var(name, (size_t)len, NULL, no_autoload);
+  if (v != NULL) {
+    tv = &v->di_tv;
+    if (dip != NULL) {
+      *dip = v;
     }
   }
 

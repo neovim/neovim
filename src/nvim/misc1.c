@@ -51,6 +51,7 @@
 #include "nvim/os/input.h"
 #include "nvim/os/time.h"
 #include "nvim/event/stream.h"
+#include "nvim/buffer.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "misc1.c.generated.h"
@@ -1788,7 +1789,7 @@ void changed(void)
     }
     changed_int();
   }
-  ++curbuf->b_changedtick;
+  buf_set_changedtick(curbuf, curbuf->b_changedtick + 1);
 }
 
 /*
@@ -2147,7 +2148,7 @@ unchanged (
     redraw_tabline = TRUE;
     need_maketitle = TRUE;          /* set window title later */
   }
-  ++buf->b_changedtick;
+  buf_set_changedtick(buf, buf->b_changedtick + 1);
 }
 
 /*

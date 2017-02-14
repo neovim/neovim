@@ -577,8 +577,8 @@ void getout(int exitval)
         if (buf->b_changedtick != -1) {
           apply_autocmds(EVENT_BUFWINLEAVE, buf->b_fname,
               buf->b_fname, FALSE, buf);
-          buf->b_changedtick = -1;            /* note that we did it already */
-          /* start all over, autocommands may mess up the lists */
+          buf_set_changedtick(buf, -1);  // note that we did it already
+          // start all over, autocommands may mess up the lists
           next_tp = first_tabpage;
           break;
         }

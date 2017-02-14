@@ -6138,7 +6138,7 @@ void ex_substitute(exarg_T *eap)
     // restore it so that undotree() is identical before/after the preview.
     curbuf->b_u_newhead = save_b_u_newhead;
     curbuf->b_u_time_cur = save_b_u_time_cur;
-    curbuf->b_changedtick = save_changedtick;
+    buf_set_changedtick(curbuf, save_changedtick);
   }
   if (buf_valid(preview_buf)) {
     // XXX: Must do this *after* u_undo_and_forget(), why?

@@ -500,6 +500,7 @@ struct file_buffer {
   int b_changed;                // 'modified': Set to true if something in the
                                 // file has been changed and not written out.
   int b_changedtick;            // incremented for each change, also for undo
+  varnumber_T *changedtick_val;  // Pointer to the changedtick storage inside b:
 
   bool b_saving;                /* Set to true if we are in the middle of
                                    saving the buffer. */

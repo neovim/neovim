@@ -688,6 +688,7 @@ free_buffer_stuff (
   }
   vars_clear(&buf->b_vars->dv_hashtab);   // free all internal variables
   hash_init(&buf->b_vars->dv_hashtab);
+  buf_init_changedtick(buf);
   uc_clear(&buf->b_ucmds);              // clear local user commands
   buf_delete_signs(buf);                // delete any signs
   bufhl_clear_all(buf);                // delete any highligts
@@ -1436,6 +1437,25 @@ void do_autochdir(void)
 
 static int top_file_num = 1;            ///< highest file number
 
+/// Initialize b:changedtick and changedtick_val attribute
+///
+/// @param[out]  buf  Buffer to intialize for.
+static inline void buf_init_changedtick(buf_T *const buf)
+  FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_NONNULL_ALL
+{
+  dictitem_T *const changedtick_di = dictitem_alloc((char_u *)"changedtick");
+  // For some reason `islocked('b:changedtick')` should return 1. It does not
+  // do so for other read-only variables which are normally VAR_FIXED.
+  changedtick_di->di_flags |= DI_FLAGS_LOCK|DI_FLAGS_FIX;
+  changedtick_di->di_tv = (typval_T) {
+    .v_type = VAR_NUMBER,
+    .v_lock = VAR_FIXED,
+    .vval.v_number = buf->b_changedtick,
+  };
+  dict_add(buf->b_vars, changedtick_di);
+  buf->changedtick_val = &changedtick_di->di_tv.vval.v_number;
+}
+
 /// Add a file name to the buffer list.
 /// If the same file name already exists return a pointer to that buffer.
 /// If it does not exist, or if fname == NULL, a new entry is created.
@@ -1530,6 +1550,7 @@ buf_T * buflist_new(char_u *ffname, char_u *sfname, linenr_T lnum, int flags)
     // init b: variables
     buf->b_vars = dict_alloc();
     init_var_dict(buf->b_vars, &buf->b_bufvar, VAR_SCOPE);
+    buf_init_changedtick(buf);
   }
 
   if (ffname != NULL) {

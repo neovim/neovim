@@ -13,6 +13,14 @@ describe('context variables', function()
     -- Test for getbufvar().
     -- Use strings to test for memory leaks.
     source([[
+      function Getbufscope(buf, ...)
+        let ret = call('getbufvar', [a:buf, ''] + a:000)
+        if type(ret) == type({})
+          return filter(copy(ret), 'v:key isnot# "changedtick"')
+        else
+          return ret
+        endif
+      endfunction
       let t:testvar='abcd'
       $put =string(gettabvar(1, 'testvar'))
       $put =string(gettabvar(1, 'testvar'))
@@ -20,14 +28,14 @@ describe('context variables', function()
       let def_num = '5678'
       $put =string(getbufvar(1, 'var_num'))
       $put =string(getbufvar(1, 'var_num', def_num))
-      $put =string(getbufvar(1, ''))
-      $put =string(getbufvar(1, '', def_num))
+      $put =string(Getbufscope(1))
+      $put =string(Getbufscope(1, def_num))
       unlet b:var_num
       $put =string(getbufvar(1, 'var_num', def_num))
-      $put =string(getbufvar(1, ''))
-      $put =string(getbufvar(1, '', def_num))
-      $put =string(getbufvar(9, ''))
-      $put =string(getbufvar(9, '', def_num))
+      $put =string(Getbufscope(1))
+      $put =string(Getbufscope(1, def_num))
+      $put =string(Getbufscope(9))
+      $put =string(Getbufscope(9, def_num))
       unlet def_num
       $put =string(getbufvar(1, '&autoindent'))
       $put =string(getbufvar(1, '&autoindent', 1))
