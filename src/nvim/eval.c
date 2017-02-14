@@ -18031,8 +18031,8 @@ static void f_winsaveview(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 static bool write_list(FileDescriptor *const fp, const list_T *const list,
                        const bool binary)
 {
+  int error = 0;
   for (const listitem_T *li = list->lv_first; li != NULL; li = li->li_next) {
-    int error = 0;
     const char *const s = (const char *)get_tv_string((typval_T *)&li->li_tv);
     const char *hunk_start = s;
     for (const char *p = hunk_start;; p++) {
@@ -18042,7 +18042,7 @@ static bool write_list(FileDescriptor *const fp, const list_T *const list,
                                                (size_t)(p - hunk_start));
           if (written < 0) {
             error = (int)written;
-            break;
+            goto write_list_error;
           }
         }
         if (*p == NUL) {
@@ -18061,14 +18061,14 @@ static bool write_list(FileDescriptor *const fp, const list_T *const list,
       const ptrdiff_t written = file_write(fp, "\n", 1);
       if (written < 0) {
         error = (int)written;
+        goto write_list_error;
       }
-    }
-    if (error != 0) {
-      emsgf(_("E80: Error while writing: %s"), os_strerror(error));
-      return false;
     }
   }
   return true;
+write_list_error:
+  emsgf(_("E80: Error while writing: %s"), os_strerror(error));
+  return false;
 }
 
 /// Saves a typval_T as a string.
