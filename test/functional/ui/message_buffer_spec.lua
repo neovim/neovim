@@ -1,6 +1,6 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
-local clear, feed, wait = helpers.clear, helpers.feed, helpers.wait
+local clear, feed = helpers.clear, helpers.feed
 local execute, command = helpers.execute, helpers.command
 
 before_each(function()
@@ -24,12 +24,12 @@ end)
 describe(':messages', function()
   local screen
 
-  function echo_messages(times, final_message)
+  local function echo_messages(times, final_message)
     if times == nil then
       times = 1
     end
 
-    for i=1,times do
+    for _=1,times do
       command('echomsg "message 1"')
 
       command('echohl Green')
@@ -51,12 +51,12 @@ describe(':messages', function()
     end
   end
 
-  function echo_long_messages(times, final_message)
+  local function echo_long_messages(times, final_message)
     if times == nil then
       times = 1
     end
 
-    for i=1,times do
+    for _=1,times do
       command('echomsg "message 1 xxxx xxxx xxxx xxxx xxxx xxxx xxxx end 1"')
 
       command('echohl Green')
@@ -108,10 +108,10 @@ describe(':messages', function()
       [16] = { background = Screen.colors.Coral, foreground = Screen.colors.Yellow },
       [17] = { background = Screen.colors.Coral, foreground = Screen.colors.Fuchsia },
       -- Search
-      [18] = { background = Screen.colors.Oldlace },
-      [19] = { background = Screen.colors.Oldlace, foreground = Screen.colors.Green },
-      [20] = { background = Screen.colors.Oldlace, foreground = Screen.colors.Yellow },
-      [21] = { background = Screen.colors.Oldlace, foreground = Screen.colors.Fuchsia },
+      [18] = { background = Screen.colors.PeachPuff },
+      [19] = { background = Screen.colors.PeachPuff, foreground = Screen.colors.Green },
+      [20] = { background = Screen.colors.PeachPuff, foreground = Screen.colors.Yellow },
+      [21] = { background = Screen.colors.PeachPuff, foreground = Screen.colors.Fuchsia },
       -- tabline
       [22] = { background = Screen.colors.LightGrey, underline = true },
       [23] = { background = Screen.colors.LightGrey, underline = true, bold = true, foreground = Screen.colors.Fuchsia },
@@ -133,7 +133,7 @@ describe(':messages', function()
     command('highlight Magenta guifg=Magenta guibg=none')
     command('highlight CursorLine guibg=Maroon')
     command('highlight Visual guibg=Coral')
-    command('highlight Search guibg=Oldlace')
+    command('highlight Search guibg=PeachPuff')
   end)
 
   describe('default', function()
