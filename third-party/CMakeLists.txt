@@ -124,6 +124,9 @@ set(GPERF_SHA256 767112a204407e62dbc3106647cf839ed544f3cf5d0f0523aaa2508623aad63
 set(WINTOOLS_URL https://github.com/neovim/deps/raw/5d23093c66d63a8777244ed84de727c26d3f7b79/opt/win32tools.zip)
 set(WINTOOLS_SHA256 40c7d1fbed47d8b1cf3b3cada6bfe0e0df06d99beb48775b4db27972d3ceafc1)
 
+set(WINGUI_URL https://github.com/equalsraf/neovim-qt/releases/download/v0.2.4/neovim-qt.zip)
+set(WINGUI_SHA256 95bbc852b69b12d0ef962a8410522010b453ba70f36ea379c548558d16abc2e6)
+
 set(WIN32YANK_URL https://github.com/equalsraf/win32yank/releases/download/v0.0.2/win32yank.zip)
 set(WIN32YANK_SHA256 78869bf68565607cda1b6a3d549e2487d59d6f0f16f9b003e123c0086f90309d)
 
@@ -182,6 +185,10 @@ if(WIN32)
 
   GetBinaryDep(TARGET win32yank
     INSTALL_COMMAND ${CMAKE_COMMAND} -E copy win32yank.exe ${DEPS_INSTALL_DIR}/bin)
+
+  GetBinaryDep(TARGET wingui
+    INSTALL_COMMAND ${CMAKE_COMMAND} -E copy_directory bin ${DEPS_INSTALL_DIR}/bin
+    COMMAND ${CMAKE_COMMAND} -E copy_directory share/nvim-qt/runtime ${DEPS_INSTALL_DIR}/share/nvim/runtime)
 
   include(TargetArch)
   if("${TARGET_ARCH}" STREQUAL "X86_64")

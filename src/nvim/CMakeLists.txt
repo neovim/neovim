@@ -326,6 +326,29 @@ if(WIN32)
       -DDST=${PROJECT_BINARY_DIR}/windows_runtime_deps
       -P ${PROJECT_SOURCE_DIR}/cmake/WindowsDllCopy.cmake)
   add_dependencies(nvim_runtime_deps nvim_dll_deps)
+
+  add_custom_target(external_blobs
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${PROJECT_BINARY_DIR}/windows_runtime_deps/platforms
+
+    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/ca-bundle.crt"       ${PROJECT_BINARY_DIR}/windows_runtime_deps/
+
+    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/D3Dcompiler_47.dll"  ${PROJECT_BINARY_DIR}/windows_runtime_deps/
+    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/libEGL.dll"          ${PROJECT_BINARY_DIR}/windows_runtime_deps/
+    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/libgcc_s_dw2-1.dll"  ${PROJECT_BINARY_DIR}/windows_runtime_deps/
+    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/libGLESV2.dll"       ${PROJECT_BINARY_DIR}/windows_runtime_deps/
+    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/libstdc++-6.dll"     ${PROJECT_BINARY_DIR}/windows_runtime_deps/
+    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/libwinpthread-1.dll" ${PROJECT_BINARY_DIR}/windows_runtime_deps/
+    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/nvim-qt.exe"         ${PROJECT_BINARY_DIR}/windows_runtime_deps/
+    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/Qt5Core.dll"         ${PROJECT_BINARY_DIR}/windows_runtime_deps/
+    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/Qt5Gui.dll"          ${PROJECT_BINARY_DIR}/windows_runtime_deps/
+    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/Qt5Network.dll"      ${PROJECT_BINARY_DIR}/windows_runtime_deps/
+    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/Qt5Svg.dll"          ${PROJECT_BINARY_DIR}/windows_runtime_deps/
+    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/Qt5Widgets.dll"      ${PROJECT_BINARY_DIR}/windows_runtime_deps/
+
+    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/platforms/qwindows.dll" ${PROJECT_BINARY_DIR}/windows_runtime_deps/platforms/
+    )
+
+  add_dependencies(nvim_runtime_deps external_blobs)
 endif()
 
 if(CLANG_ASAN_UBSAN)
