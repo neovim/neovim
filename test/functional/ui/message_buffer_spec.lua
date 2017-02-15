@@ -1,7 +1,7 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
-local clear, feed = helpers.clear, helpers.feed
-local execute, command = helpers.execute, helpers.command
+local clear, feed, eq = helpers.clear, helpers.feed, helpers.eq
+local execute, command, eval = helpers.execute, helpers.command, helpers.eval
 
 before_each(function()
   local file = io.open('Xtest_msgbuf_script', 'w')
@@ -930,5 +930,54 @@ describe(':messages', function()
         end)
       end)
     end)
-  end)
+
+  end) -- in a buffer
+
+  describe('captured', function()
+    local short_output = 'hello'
+    local long_output = 'xxxx xxxx xxxx xxxx xxxx xxxx xxxx xxxx xxxx xxxx'
+    local function lstrip(s)
+      return s:gsub('^%s+', '')
+    end
+
+    before_each(function()
+      command('set msgbuf')
+    end)
+
+    after_each(function()
+      command('messages')
+      screen:expect([[
+                                                |
+        {2:[No Name]                               }|
+        ^                                        |
+        {1:~                                       }|
+        {1:~                                       }|
+        {1:~                                       }|
+        {1:~                                       }|
+        {1:~                                       }|
+        {3:nvim://messages                         }|
+                                                |
+     ]])
+    end)
+
+    it('with execute()', function()
+      command(string.format("let redir_msg = execute('silent echomsg \"%s\"')", short_output))
+      eq(short_output, lstrip(eval('redir_msg')))
+
+      command(string.format("let redir_msg = execute('silent echomsg \"%s\"')", long_output))
+      eq(long_output, lstrip(eval('redir_msg')))
+    end)
+
+    it('with :redir =>', function()
+      command('redir => redir_msg')
+      command(string.format("silent echomsg '%s'", short_output))
+      command('redir END')
+      eq(short_output, lstrip(eval('redir_msg')))
+
+      command('redir => redir_msg')
+      command(string.format("silent echomsg '%s'", long_output))
+      command('redir END')
+      eq(long_output, lstrip(eval('redir_msg')))
+    end)
+end)
 end)
