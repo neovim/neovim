@@ -6725,7 +6725,7 @@ int showmode(void)
             msg_puts_attr((const char *)edit_submode, attr);
           }
           if (edit_submode_extra != NULL) {
-            MSG_PUTS_ATTR(" ", attr);              /* add a space in between */
+            MSG_PUTS_ATTR(" ", attr);  // Add a space in between.
             if ((int)edit_submode_highl < (int)HLF_COUNT) {
               sub_attr = hl_attr(edit_submode_highl);
             } else {

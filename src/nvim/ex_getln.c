@@ -3903,36 +3903,35 @@ ExpandFromContext (
       ExpandFunc func;
       int ic;
       int escaped;
-    } tab[] =
-    {
-      {EXPAND_COMMANDS, get_command_name, FALSE, TRUE},
-      {EXPAND_BEHAVE, get_behave_arg, TRUE, TRUE},
-      {EXPAND_HISTORY, get_history_arg, TRUE, TRUE},
-      {EXPAND_USER_COMMANDS, get_user_commands, FALSE, TRUE},
-      {EXPAND_USER_ADDR_TYPE, get_user_cmd_addr_type, FALSE, TRUE},
-      {EXPAND_USER_CMD_FLAGS, get_user_cmd_flags, FALSE, TRUE},
-      {EXPAND_USER_NARGS, get_user_cmd_nargs, FALSE, TRUE},
-      {EXPAND_USER_COMPLETE, get_user_cmd_complete, FALSE, TRUE},
-      {EXPAND_USER_VARS, get_user_var_name, FALSE, TRUE},
-      {EXPAND_FUNCTIONS, get_function_name, FALSE, TRUE},
-      {EXPAND_USER_FUNC, get_user_func_name, FALSE, TRUE},
-      {EXPAND_EXPRESSION, get_expr_name, FALSE, TRUE},
-      {EXPAND_MENUS, get_menu_name, FALSE, TRUE},
-      {EXPAND_MENUNAMES, get_menu_names, FALSE, TRUE},
-      {EXPAND_SYNTAX, get_syntax_name, TRUE, TRUE},
-      {EXPAND_SYNTIME, get_syntime_arg, TRUE, TRUE},
-      {EXPAND_HIGHLIGHT, (ExpandFunc)get_highlight_name, TRUE, TRUE},
-      {EXPAND_EVENTS, get_event_name, TRUE, TRUE},
-      {EXPAND_AUGROUP, get_augroup_name, TRUE, TRUE},
-      {EXPAND_CSCOPE, get_cscope_name, TRUE, TRUE},
-      {EXPAND_SIGN, get_sign_name, TRUE, TRUE},
-      {EXPAND_PROFILE, get_profile_name, TRUE, TRUE},
+    } tab[] = {
+      { EXPAND_COMMANDS, get_command_name, false, true },
+      { EXPAND_BEHAVE, get_behave_arg, true, true },
+      { EXPAND_HISTORY, get_history_arg, true, true },
+      { EXPAND_USER_COMMANDS, get_user_commands, false, true },
+      { EXPAND_USER_ADDR_TYPE, get_user_cmd_addr_type, false, true },
+      { EXPAND_USER_CMD_FLAGS, get_user_cmd_flags, false, true },
+      { EXPAND_USER_NARGS, get_user_cmd_nargs, false, true },
+      { EXPAND_USER_COMPLETE, get_user_cmd_complete, false, true },
+      { EXPAND_USER_VARS, get_user_var_name, false, true },
+      { EXPAND_FUNCTIONS, get_function_name, false, true },
+      { EXPAND_USER_FUNC, get_user_func_name, false, true },
+      { EXPAND_EXPRESSION, get_expr_name, false, true },
+      { EXPAND_MENUS, get_menu_name, false, true },
+      { EXPAND_MENUNAMES, get_menu_names, false, true },
+      { EXPAND_SYNTAX, get_syntax_name, true, true },
+      { EXPAND_SYNTIME, get_syntime_arg, true, true },
+      { EXPAND_HIGHLIGHT, (ExpandFunc)get_highlight_name, true, true },
+      { EXPAND_EVENTS, get_event_name, true, true },
+      { EXPAND_AUGROUP, get_augroup_name, true, true },
+      { EXPAND_CSCOPE, get_cscope_name, true, true },
+      { EXPAND_SIGN, get_sign_name, true, true },
+      { EXPAND_PROFILE, get_profile_name, true, true },
 #ifdef HAVE_WORKING_LIBINTL
-      {EXPAND_LANGUAGE, get_lang_arg, TRUE, FALSE},
-      {EXPAND_LOCALES, get_locales, TRUE, FALSE},
+      { EXPAND_LANGUAGE, get_lang_arg, true, false },
+      { EXPAND_LOCALES, get_locales, true, false },
 #endif
-      {EXPAND_ENV_VARS, get_env_name, TRUE, TRUE},
-      {EXPAND_USER, get_users, TRUE, FALSE},
+      { EXPAND_ENV_VARS, get_env_name, true, true },
+      { EXPAND_USER, get_users, true, false },
     };
     int i;
 

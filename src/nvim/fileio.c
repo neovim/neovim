@@ -3895,15 +3895,15 @@ static int check_mtime(buf_T *buf, FileInfo *file_info)
   if (buf->b_mtime_read != 0
       && time_differs(file_info->stat.st_mtim.tv_sec,
                       buf->b_mtime_read)) {
-    msg_scroll = TRUE;              /* don't overwrite messages here */
-    msg_silent = 0;                 /* must give this prompt */
+    msg_scroll = true;  // Don't overwrite messages here.
+    msg_silent = 0;     // Must give this prompt.
     // Don't use emsg() here, don't want to flush the buffers.
     msg_attr(_("WARNING: The file has been changed since reading it!!!"),
-        hl_attr(HLF_E));
-    if (ask_yesno((char_u *)_("Do you really want to write to it"),
-            TRUE) == 'n')
+             hl_attr(HLF_E));
+    if (ask_yesno(_("Do you really want to write to it"), true) == 'n') {
       return FAIL;
-    msg_scroll = FALSE;             /* always overwrite the file message now */
+    }
+    msg_scroll = false;  // Always overwrite the file message now.
   }
   return OK;
 }
@@ -5384,10 +5384,8 @@ char_u *vim_tempname(void)
 
 static AutoPatCmd *active_apc_list = NULL; /* stack of active autocommands */
 
-/*
- * augroups stores a list of autocmd group names.
- */
-static garray_T augroups = {0, 0, sizeof(char_u *), 10, NULL};
+/// List of autocmd group names
+static garray_T augroups = { 0, 0, sizeof(char_u *), 10, NULL };
 #define AUGROUP_NAME(i) (((char **)augroups.ga_data)[i])
 
 /*
@@ -5592,8 +5590,9 @@ static int au_new_group(char_u *name)
     }
 
     AUGROUP_NAME(i) = xstrdup((char *)name);
-    if (i == augroups.ga_len)
-      ++augroups.ga_len;
+    if (i == augroups.ga_len) {
+      augroups.ga_len++;
+    }
   }
 
   return i;

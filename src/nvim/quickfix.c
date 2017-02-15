@@ -2078,7 +2078,7 @@ void qf_list(exarg_T *eap)
       msg_puts_attr((const char *)IObuff, hl_attr(HLF_N));
       if (qfp->qf_pattern != NULL) {
         qf_fmt_text(qfp->qf_pattern, IObuff, IOSIZE);
-        STRNCAT(IObuff, ":", IOSIZE);
+        xstrlcat((char *)IObuff, ":", IOSIZE);
         msg_puts((const char *)IObuff);
       }
       msg_puts(" ");

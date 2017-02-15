@@ -583,8 +583,7 @@ int do_cmdline(char_u *cmdline, LineGetter fgetline,
       ++no_wait_return;
       verbose_enter_scroll();
 
-      smsg(_("line %" PRId64 ": %s"),
-          (int64_t)sourcing_lnum, cmdline_copy);
+      smsg(_("line %" PRIdLINENR ": %s"), sourcing_lnum, cmdline_copy);
       if (msg_silent == 0) {
         msg_puts("\n");  // don't overwrite this either
       }
@@ -1816,9 +1815,9 @@ static char_u * do_one_cmd(char_u **cmdlinep,
           errormsg = (char_u *)_("E493: Backwards range given");
           goto doend;
         }
-        if (ask_yesno((char_u *)
-                _("Backwards range given, OK to swap"), FALSE) != 'y')
+        if (ask_yesno(_("Backwards range given, OK to swap"), false) != 'y') {
           goto doend;
+        }
       }
       lnum = ea.line1;
       ea.line1 = ea.line2;
@@ -2586,13 +2585,11 @@ int modifier_len(char_u *cmd)
 int cmd_exists(const char *const name)
 {
   exarg_T ea;
-  int full = FALSE;
-  int i;
-  int j;
   char_u      *p;
 
-  /* Check command modifiers. */
-  for (i = 0; i < (int)ARRAY_SIZE(cmdmods); i++) {
+  // Check command modifiers.
+  for (int i = 0; i < (int)ARRAY_SIZE(cmdmods); i++) {
+    int j;
     for (j = 0; name[j] != NUL; j++) {
       if (name[j] != (char)cmdmods[i].name[j]) {
         break;
@@ -2607,6 +2604,7 @@ int cmd_exists(const char *const name)
    * For ":2match" and ":3match" we need to skip the number. */
   ea.cmd = (char_u *)((*name == '2' || *name == '3') ? name + 1 : name);
   ea.cmdidx = (cmdidx_T)0;
+  int full = false;
   p = find_command(&ea, &full);
   if (p == NULL)
     return 3;
@@ -8250,9 +8248,9 @@ eval_vars (
   char_u      *resultbuf = NULL;
   size_t resultlen;
   buf_T       *buf;
-  int valid = VALID_HEAD + VALID_PATH;              /* assume valid result */
-  int skip_mod = FALSE;
-  char_u strbuf[30];
+  int valid = VALID_HEAD | VALID_PATH;  // Assume valid result.
+  int skip_mod = false;
+  char strbuf[30];
 
   *errormsg = NULL;
   if (escaped != NULL)
@@ -8384,8 +8382,8 @@ eval_vars (
             "E496: no autocommand buffer number to substitute for \"<abuf>\"");
         return NULL;
       }
-      sprintf((char *)strbuf, "%d", autocmd_bufnr);
-      result = strbuf;
+      snprintf(strbuf, sizeof(strbuf), "%d", autocmd_bufnr);
+      result = (char_u *)strbuf;
       break;
 
     case SPEC_AMATCH:           /* match name for autocommand */
@@ -8410,8 +8408,8 @@ eval_vars (
         *errormsg = (char_u *)_("E842: no line number to use for \"<slnum>\"");
         return NULL;
       }
-      sprintf((char *)strbuf, "%" PRId64, (int64_t)sourcing_lnum);
-      result = strbuf;
+      snprintf(strbuf, sizeof(strbuf), "%" PRIdLINENR, sourcing_lnum);
+      result = (char_u *)strbuf;
       break;
     default:
       // should not happen

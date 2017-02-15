@@ -541,9 +541,10 @@ do_tag (
           vim_snprintf((char *)IObuff + 1, IOSIZE - 1, "%2d %s ", i + 1,
                        mt_names[matches[i][0] & MT_MASK]);
           msg_puts((const char *)IObuff);
-          if (tagp.tagkind != NULL)
+          if (tagp.tagkind != NULL) {
             msg_outtrans_len(tagp.tagkind,
-                (int)(tagp.tagkind_end - tagp.tagkind));
+                             (int)(tagp.tagkind_end - tagp.tagkind));
+          }
           msg_advance(13);
           msg_outtrans_len_attr(tagp.tagname,
               (int)(tagp.tagname_end - tagp.tagname),
@@ -864,8 +865,9 @@ do_tag (
             msg(IObuff);
           }
           msg_scroll = true;  // Don't overwrite this message.
-        } else
+        } else {
           give_warning(IObuff, ic);
+        }
         if (ic && !msg_scrolled && msg_silent == 0) {
           ui_flush();
           os_delay(1000L, true);

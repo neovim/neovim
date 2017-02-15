@@ -2223,7 +2223,7 @@ change_warning (
  *
  * return the 'y' or 'n'
  */
-int ask_yesno(char_u *str, int direct)
+int ask_yesno(const char *str, bool direct)
 {
   int r = ' ';
   int save_State = State;

@@ -3227,7 +3227,7 @@ showmap (
   while (++len <= 3)
     msg_putchar(' ');
 
-  /* Display the LHS.  Get length of what we write. */
+  // Display the LHS.  Get length of what we write.
   len = (size_t)msg_outtrans_special(mp->m_keys, true);
   do {
     msg_putchar(' ');                   /* padd with blanks */
@@ -3252,8 +3252,8 @@ showmap (
   if (*mp->m_str == NUL) {
     msg_puts_attr("<Nop>", hl_attr(HLF_8));
   } else {
-    /* Remove escaping of CSI, because "m_str" is in a format to be used
-     * as typeahead. */
+    // Remove escaping of CSI, because "m_str" is in a format to be used
+    // as typeahead.
     char_u *s = vim_strsave(mp->m_str);
     vim_unescape_csi(s);
     msg_outtrans_special(s, FALSE);

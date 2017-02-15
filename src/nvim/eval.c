@@ -1755,7 +1755,7 @@ static const char *list_arg_vars(exarg_T *eap, const char *arg, int *first)
       // get_name_len() takes care of expanding curly braces
       name_start = name = arg;
       char *tofree;
-      len = get_name_len(&arg, &tofree, TRUE, TRUE);
+      len = get_name_len(&arg, &tofree, true, true);
       if (len <= 0) {
         /* This is mainly to keep test 49 working: when expanding
          * curly braces fails overrule the exception error message. */
@@ -1775,7 +1775,7 @@ static const char *list_arg_vars(exarg_T *eap, const char *arg, int *first)
         } else {
           // handle d.key, l[idx], f(expr)
           const char *const arg_subsc = arg;
-          if (handle_subscript(&arg, &tv, TRUE, TRUE) == FAIL) {
+          if (handle_subscript(&arg, &tv, true, true) == FAIL) {
             error = true;
           } else {
             if (arg == arg_subsc && len == 2 && name[1] == ':') {
@@ -1844,15 +1844,15 @@ ex_let_one (
     ++arg;
     name = arg;
     len = get_env_len(&arg);
-    if (len == 0)
+    if (len == 0) {
       EMSG2(_(e_invarg2), name - 1);
-    else {
-      if (op != NULL && (*op == '+' || *op == '-'))
+    } else {
+      if (op != NULL && (*op == '+' || *op == '-')) {
         EMSG2(_(e_letwrong), op);
-      else if (endchars != NULL
-               && vim_strchr(endchars, *skipwhite(arg)) == NULL)
+      } else if (endchars != NULL
+                 && vim_strchr(endchars, *skipwhite(arg)) == NULL) {
         EMSG(_(e_letunexp));
-      else if (!check_secure()) {
+      } else if (!check_secure()) {
         const char_u c1 = name[len];
         name[len] = NUL;
         char_u *p = get_tv_string_chk(tv);
@@ -1904,15 +1904,16 @@ ex_let_one (
       if (s != NULL && op != NULL && *op != '=') {
         opt_type = get_option_value(arg, &numval, &stringval, opt_flags);
         if ((opt_type == 1 && *op == '.')
-            || (opt_type == 0 && *op != '.'))
+            || (opt_type == 0 && *op != '.')) {
           EMSG2(_(e_letwrong), op);
-        else {
-          if (opt_type == 1) {          /* number */
-            if (*op == '+')
+        } else {
+          if (opt_type == 1) {  // number
+            if (*op == '+') {
               n = numval + n;
-            else
+            } else {
               n = numval - n;
-          } else if (opt_type == 0 && stringval != NULL) {     /* string */
+            }
+          } else if (opt_type == 0 && stringval != NULL) {  // string
             s = concat_str(stringval, s);
             xfree(stringval);
             stringval = s;
@@ -1963,7 +1964,7 @@ ex_let_one (
   else if (eval_isnamec1(*arg) || *arg == '{') {
     lval_T lv;
 
-    char_u *const p = get_lval(arg, tv, &lv, FALSE, FALSE, 0, FNE_CHECK_START);
+    char_u *const p = get_lval(arg, tv, &lv, false, false, 0, FNE_CHECK_START);
     if (p != NULL && lv.ll_name != NULL) {
       if (endchars != NULL && vim_strchr(endchars, *skipwhite(p)) == NULL)
         EMSG(_(e_letunexp));
@@ -2075,8 +2076,9 @@ get_lval (
   *p = NUL;
   v = find_var((const char *)lp->ll_name, STRLEN(lp->ll_name), &ht,
                flags & GLV_NO_AUTOLOAD);
-  if (v == NULL && !quiet)
+  if (v == NULL && !quiet) {
     EMSG2(_(e_undefvar), lp->ll_name);
+  }
   *p = cc;
   if (v == NULL)
     return NULL;
@@ -2850,9 +2852,10 @@ void ex_call(exarg_T *eap)
       break;
     }
 
-    /* Handle a function returning a Funcref, Dictionary or List. */
-    if (handle_subscript((const char **)&arg, &rettv, !eap->skip, TRUE) == FAIL) {
-      failed = TRUE;
+    // Handle a function returning a Funcref, Dictionary or List.
+    if (handle_subscript((const char **)&arg, &rettv, !eap->skip, true)
+        == FAIL) {
+      failed = true;
       break;
     }
 
@@ -3113,18 +3116,19 @@ static int do_lock_var(lval_T *lp, char_u *name_end, int deep, int lock)
     cc = *name_end;
     *name_end = NUL;
 
-    /* Normal name or expanded name. */
-    if (check_changedtick(lp->ll_name))
+    // Normal name or expanded name.
+    if (check_changedtick(lp->ll_name)) {
       ret = FAIL;
-    else {
+    } else {
       di = find_var((const char *)lp->ll_name, STRLEN(lp->ll_name), NULL, true);
-      if (di == NULL)
+      if (di == NULL) {
         ret = FAIL;
-      else {
-        if (lock)
+      } else {
+        if (lock) {
           di->di_flags |= DI_FLAGS_LOCK;
-        else
+        } else {
           di->di_flags &= ~DI_FLAGS_LOCK;
+        }
         item_lock(&di->di_tv, deep, lock);
       }
     }
@@ -4727,7 +4731,7 @@ static int get_option_tv(const char **const arg, typval_T *const rettv,
 
   c = *option_end;
   *option_end = NUL;
-  opt_type = get_option_value((char_u *)*arg, &numval,
+  opt_type = get_option_value((char_u *)(*arg), &numval,
                               rettv == NULL ? NULL : &stringval, opt_flags);
 
   if (opt_type == -3) {                 /* invalid name */
@@ -7011,7 +7015,7 @@ static char_u *deref_func_name(const char *name, int *lenp,
     *partialp = NULL;
   }
 
-  dictitem_T *const v = find_var(name, (size_t)*lenp, NULL, no_autoload);
+  dictitem_T *const v = find_var(name, (size_t)(*lenp), NULL, no_autoload);
   if (v != NULL && v->di_tv.v_type == VAR_FUNC) {
     if (v->di_tv.vval.v_string == NULL) {  // just in case
       *lenp = 0;
@@ -7250,9 +7254,7 @@ call_func(
     error = ERROR_UNKNOWN;
 
     if (!builtin_function((const char *)rfname, -1)) {
-      /*
-       * User defined function.
-       */
+      // User defined function.
       fp = find_func(rfname);
 
       /* Trigger FuncUndefined event, may load the function. */
@@ -7265,7 +7267,7 @@ call_func(
       // Try loading a package.
       if (fp == NULL && script_autoload((const char *)rfname, STRLEN(rfname),
                                         true) && !aborting()) {
-        /* loaded a package, search for the function again */
+        // Loaded a package, search for the function again.
         fp = find_func(rfname);
       }
 
@@ -8965,7 +8967,7 @@ static void f_exists(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     // get_name_len() takes care of expanding curly braces
     const char *name = p;
     char *tofree;
-    len = get_name_len((const char **)&p, &tofree, TRUE, FALSE);
+    len = get_name_len((const char **)&p, &tofree, true, false);
     if (len > 0) {
       if (tofree != NULL) {
         name = tofree;
@@ -11837,7 +11839,7 @@ static void get_user_input(typval_T *argvars, typval_T *rettv, int inputdialog)
       msg_start();
       msg_clr_eos();
       msg_puts_attr((const char *)prompt, echo_attr);
-      msg_didout = FALSE;
+      msg_didout = false;
       msg_starthere();
       *p = c;
     }
@@ -12899,9 +12901,9 @@ static void get_maparg(typval_T *argvars, typval_T *rettv, int exact)
     rettv_dict_alloc(rettv);
     if (rhs != NULL) {
       // Return a dictionary.
-      char_u      *lhs = str2special_save(mp->m_keys, TRUE);
+      char_u *lhs = str2special_save(mp->m_keys, true);
       char *const mapmode = map_mode_to_chars(mp->m_mode);
-      dict_T      *dict = rettv->vval.v_dict;
+      dict_T *dict = rettv->vval.v_dict;
 
       dict_add_nr_str(dict, "lhs",     0L, lhs);
       dict_add_nr_str(dict, "rhs",     0L, mp->m_orig_str);
@@ -16841,7 +16843,7 @@ static void f_synIDattr(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       p = highlight_has_attr(id, HL_ITALIC, modec);
     break;
 
-  case 'n':                                             /* name */
+  case 'n':                                             // name
     p = (char_u *)get_highlight_name(NULL, id - 1);
     break;
 
@@ -18423,7 +18425,7 @@ static int get_name_len(const char **const arg,
 
   if ((*arg)[0] == (char)K_SPECIAL && (*arg)[1] == (char)KS_EXTRA
       && (*arg)[2] == (char)KE_SNR) {
-    /* hard coded <SNR>, already translated */
+    // Hard coded <SNR>, already translated.
     *arg += 3;
     return get_id_len(arg) + 3;
   }
@@ -18436,7 +18438,7 @@ static int get_name_len(const char **const arg,
   /*
    * Find the end of the name; check for {} construction.
    */
-  const char *p = (const char *)find_name_end((char_u *)*arg,
+  const char *p = (const char *)find_name_end((char_u *)(*arg),
                                               &expr_start,
                                               &expr_end,
                                               len > 0 ? 0 : FNE_CHECK_START);
@@ -18451,7 +18453,7 @@ static int get_name_len(const char **const arg,
      * Include any <SID> etc in the expanded string:
      * Thus the -len here.
      */
-    char_u *temp_string = make_expanded_name((char_u *)*arg - len, expr_start,
+    char_u *temp_string = make_expanded_name((char_u *)(*arg) - len, expr_start,
                                              expr_end, (char_u *)p);
     if (temp_string == NULL) {
       return -1;
@@ -18919,8 +18921,8 @@ static int get_var_tv(
  * Also handle function call with Funcref variable: func(expr)
  * Can all be combined: dict.func(expr)[idx]['func'](expr)
  */
-static int 
-handle_subscript (
+static int
+handle_subscript(
     const char **const arg,
     typval_T *rettv,
     int evaluate,                   /* do more than finding the end */
@@ -19786,7 +19788,7 @@ char_u *get_var_value(const char *const name)
 {
   dictitem_T  *v;
 
-  v = find_var(name, strlen(name), NULL, FALSE);
+  v = find_var(name, strlen(name), NULL, false);
   if (v == NULL) {
     return NULL;
   }
@@ -20341,7 +20343,7 @@ void ex_echo(exarg_T *eap)
         if (!aborting()) {
           EMSG2(_(e_invexpr2), p);
         }
-        need_clr_eos = FALSE;
+        need_clr_eos = false;
         break;
       }
       need_clr_eos = false;
@@ -20372,15 +20374,16 @@ void ex_echo(exarg_T *eap)
               msg_clr_eos();
               needclr = false;
             }
-            msg_putchar_attr((uint8_t)*p, echo_attr);
+            msg_putchar_attr((uint8_t)(*p), echo_attr);
           } else {
             if (has_mbyte) {
               int i = (*mb_ptr2len)((const char_u *)p);
 
               (void)msg_outtrans_len_attr((char_u *)p, i, echo_attr);
               p += i - 1;
-            } else
+            } else {
               (void)msg_outtrans_len_attr((char_u *)p, 1, echo_attr);
+            }
           }
         }
       }
@@ -20961,7 +20964,7 @@ void ex_function(exarg_T *eap)
    * If there are no errors, add the function
    */
   if (fudi.fd_dict == NULL) {
-    v = find_var((const char *)name, STRLEN(name), &ht, FALSE);
+    v = find_var((const char *)name, STRLEN(name), &ht, false);
     if (v != NULL && v->di_tv.v_type == VAR_FUNC) {
       emsg_funcname(N_("E707: Function name conflicts with variable: %s"),
           name);
@@ -21205,7 +21208,7 @@ trans_function_name (
     }
   } else {
     len = (int)(end - *pp);
-    name = deref_func_name((const char *)*pp, &len, partial,
+    name = deref_func_name((const char *)(*pp), &len, partial,
                            flags & TFN_NO_AUTOLOAD);
     if (name == *pp) {
       name = NULL;
@@ -21252,7 +21255,7 @@ trans_function_name (
   else if (lead > 0) {
     lead = 3;
     if ((lv.ll_exp_name != NULL && eval_fname_sid((const char *)lv.ll_exp_name))
-        || eval_fname_sid((const char *)*pp)) {
+        || eval_fname_sid((const char *)(*pp))) {
       // It's "s:" or "<SID>".
       if (current_SID <= 0) {
         EMSG(_(e_usingsid));
@@ -21346,7 +21349,7 @@ static void list_func_head(ufunc_T *fp, int indent)
   }
   msg_putchar('(');
   int j;
-  for (j = 0; j < fp->uf_args.ga_len; ++j) {
+  for (j = 0; j < fp->uf_args.ga_len; j++) {
     if (j) {
       msg_puts(", ");
     }
@@ -22059,7 +22062,7 @@ call_user_func (
       smsg(_("calling %s"), sourcing_name);
       if (p_verbose >= 14) {
         msg_puts("(");
-        for (int i = 0; i < argcount; ++i) {
+        for (int i = 0; i < argcount; i++) {
           if (i > 0) {
             msg_puts(", ");
           }

@@ -1177,13 +1177,14 @@ int msg_outtrans_len_attr(char_u *msgstr, int len, int attr)
    * Normal characters are printed several at a time.
    */
   while (--len >= 0) {
-    if (enc_utf8)
-      /* Don't include composing chars after the end. */
+    if (enc_utf8) {
+      // Don't include composing chars after the end.
       mb_l = utfc_ptr2len_len((char_u *)str, len + 1);
-    else if (has_mbyte)
+    } else if (has_mbyte) {
       mb_l = (*mb_ptr2len)((char_u *)str);
-    else
+    } else {
       mb_l = 1;
+    }
     if (has_mbyte && mb_l > 1) {
       c = (*mb_ptr2char)((char_u *)str);
       if (vim_isprintc(c)) {
@@ -1680,9 +1681,10 @@ static void msg_puts_display(const char_u *str, int maxlen, int attr,
         } else {
           msg_screen_putchar(*s++, attr);
         }
-        did_last_char = TRUE;
-      } else
-        did_last_char = FALSE;
+        did_last_char = true;
+      } else {
+        did_last_char = false;
+      }
 
       if (p_more) {
         // Store text for scrolling back.
@@ -1784,7 +1786,7 @@ static void msg_puts_display(const char_u *str, int maxlen, int attr,
     ++s;
   }
 
-  /* output any postponed text */
+  // Output any postponed text.
   if (t_col > 0) {
     t_puts(&t_col, t_s, s, attr);
   }
@@ -1968,8 +1970,8 @@ static msgchunk_T *disp_sb_line(int row, msgchunk_T *smp)
  */
 static void t_puts(int *t_col, const char_u *t_s, const char_u *s, int attr)
 {
-  /* output postponed text */
-  msg_didout = TRUE;            /* remember that line is not empty */
+  // Output postponed text.
+  msg_didout = true;  // Remember that line is not empty.
   screen_puts_len((char_u *)t_s, (int)(s - t_s), msg_row, msg_col, attr);
   msg_col += *t_col;
   *t_col = 0;

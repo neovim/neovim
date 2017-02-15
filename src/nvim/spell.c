@@ -13006,7 +13006,7 @@ void ex_spellinfo(exarg_T *eap)
   }
 
   msg_start();
-  for (int lpi = 0; lpi < curwin->w_s->b_langp.ga_len && !got_int; ++lpi) {
+  for (int lpi = 0; lpi < curwin->w_s->b_langp.ga_len && !got_int; lpi++) {
     langp_T *const lp = LANGP_ENTRY(curwin->w_s->b_langp, lpi);
     msg_puts("file: ");
     msg_puts((const char *)lp->lp_slang->sl_fname);
