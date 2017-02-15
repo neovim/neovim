@@ -679,7 +679,7 @@ qf_init_ext(
   size_t          errmsglen;
   char_u          *pattern;
   qfstate_T state = { NULL, 0, NULL, 0, NULL, NULL, NULL, NULL,
-                      NULL, lnumfirst, lnumlast };
+                      NULL, 0, 0 };
   int col = 0;
   bool use_viscol = false;
   char_u type = 0;
@@ -776,6 +776,8 @@ qf_init_ext(
     state.tv = tv;
   }
   state.buf = buf;
+  state.buflnum  = lnumfirst;
+  state.lnumlast = lnumlast;
 
   /*
    * Read the lines in the error file one by one.
