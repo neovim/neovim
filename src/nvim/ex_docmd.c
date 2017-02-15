@@ -3940,8 +3940,6 @@ int expand_filename(exarg_T *eap, char_u **cmdlinep, char_u **errormsgp)
      * Don't do this for:
      * - replacement that already has been escaped: "##"
      * - shell commands (may have to use quotes instead).
-     * - non-unix systems when there is a single argument (spaces don't
-     *   separate arguments then).
      */
     if (!eap->usefilter
         && !escaped
@@ -3952,9 +3950,7 @@ int expand_filename(exarg_T *eap, char_u **cmdlinep, char_u **errormsgp)
         && eap->cmdidx != CMD_lgrep
         && eap->cmdidx != CMD_grepadd
         && eap->cmdidx != CMD_lgrepadd
-#ifndef UNIX
         && !(eap->argt & NOSPC)
-#endif
         ) {
       char_u      *l;
 #ifdef BACKSLASH_IN_FILENAME

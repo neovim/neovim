@@ -231,6 +231,9 @@ describe('argument list commands', function()
     execute('argedit! y')
     eq({'x', 'y', 'a', 'c', 'b'}, eval('argv()'))
     execute('%argd')
+    -- Nvim allows unescaped spaces in filename on all platforms. #6010
+    execute('argedit a b')
+    eq({'a b'}, eval('argv()'))
   end)
 
   it('test for :argdelete command', function()
