@@ -904,6 +904,30 @@ function! Test_efm2()
   call assert_equal('E', l[0].type)
   call assert_equal("\nunknown variable 'i'", l[0].text)
 
+  " Test for %A, %C and other formats
+  let lines = [
+	  \"==============================================================",
+	  \"FAIL: testGetTypeIdCachesResult (dbfacadeTest.DjsDBFacadeTest)",
+	  \"--------------------------------------------------------------",
+	  \"Traceback (most recent call last):",
+	  \'  File "unittests/dbfacadeTest.py", line 89, in testFoo',
+	  \"    self.assertEquals(34, dtid)",
+	  \'  File "/usr/lib/python2.2/unittest.py", line 286, in',
+	  \" failUnlessEqual",
+	  \"    raise self.failureException, \\",
+	  \"AssertionError: 34 != 33",
+	  \"",
+	  \"--------------------------------------------------------------",
+	  \"Ran 27 tests in 0.063s"
+	  \]
+  set efm=%C\ %.%#,%A\ \ File\ \"%f\"\\,\ line\ %l%.%#,%Z%[%^\ ]%\\@=%m
+  cgetexpr lines
+  let l = getqflist()
+  call assert_equal(8, len(l))
+  call assert_equal(89, l[4].lnum)
+  call assert_equal(1, l[4].valid)
+  call assert_equal('unittests/dbfacadeTest.py', bufname(l[4].bufnr))
+
   let &efm = save_efm
 endfunction
 

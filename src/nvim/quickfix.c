@@ -141,7 +141,8 @@ enum {
   QF_FAIL = 0,
   QF_OK = 1,
   QF_END_OF_INPUT = 2,
-  QF_NOMEM = 3
+  QF_NOMEM = 3,
+  QF_IGNORE_LINE = 4
 };
 
 typedef struct {
@@ -157,6 +158,19 @@ typedef struct {
   linenr_T buflnum;
   linenr_T lnumlast;
 } qfstate_T;
+
+typedef struct {
+  char_u *namebuf;
+  char_u *errmsg;
+  size_t errmsglen;
+  long lnum;
+  int  col;
+  bool use_viscol;
+  char_u *pattern;
+  int    enr;
+  char_u type;
+  bool   valid;
+} qffields_T;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "quickfix.c.generated.h"
@@ -653,6 +667,284 @@ static int qf_get_nextline(qfstate_T *state)
   return QF_OK;
 }
 
+
+/// Parse a line and get the quickfix fields.
+/// Return the QF_ status.
+static int qf_parse_line(qf_info_T *qi, char_u *linebuf, size_t linelen,
+                         efm_T *fmt_first, qffields_T *fields)
+{
+  efm_T *fmt_ptr;
+  static efm_T *fmt_start = NULL;  // cached across calls
+  size_t len;
+  int    i;
+  int    idx = 0;
+  char_u *tail = NULL;
+  regmatch_T regmatch;
+
+
+  // Always ignore case when looking for a matching error.
+  regmatch.rm_ic = true;
+
+  // If there was no %> item start at the first pattern
+  if (fmt_start == NULL) {
+    fmt_ptr = fmt_first;
+  } else {
+    fmt_ptr = fmt_start;
+    fmt_start = NULL;
+  }
+
+  // Try to match each part of 'errorformat' until we find a complete
+  // match or no match.
+  fields->valid = true;
+restofline:
+  for (; fmt_ptr != NULL; fmt_ptr = fmt_ptr->next) {
+    idx = fmt_ptr->prefix;
+    if (qi->qf_multiscan && vim_strchr((char_u *)"OPQ", idx) == NULL) {
+      continue;
+    }
+    fields->namebuf[0] = NUL;
+    fields->pattern[0] = NUL;
+    if (!qi->qf_multiscan) {
+      fields->errmsg[0] = NUL;
+    }
+    fields->lnum = 0;
+    fields->col = 0;
+    fields->use_viscol = false;
+    fields->enr = -1;
+    fields->type = 0;
+    tail = NULL;
+
+    regmatch.regprog = fmt_ptr->prog;
+    int r = vim_regexec(&regmatch, linebuf, (colnr_T)0);
+    fmt_ptr->prog = regmatch.regprog;
+    if (r) {
+      if ((idx == 'C' || idx == 'Z') && !qi->qf_multiline) {
+        continue;
+      }
+      if (vim_strchr((char_u *)"EWI", idx) != NULL) {
+        fields->type = (char_u)idx;
+      } else {
+        fields->type = 0;
+      }
+      // Extract error message data from matched line.
+      // We check for an actual submatch, because "\[" and "\]" in
+      // the 'errorformat' may cause the wrong submatch to be used.
+      if ((i = (int)fmt_ptr->addr[0]) > 0) {  // %f
+        if (regmatch.startp[i] == NULL || regmatch.endp[i] == NULL) {
+          continue;
+        }
+        // Expand ~/file and $HOME/file to full path.
+        char_u c = *regmatch.endp[i];
+        *regmatch.endp[i] = NUL;
+        expand_env(regmatch.startp[i], fields->namebuf, CMDBUFFSIZE);
+        *regmatch.endp[i] = c;
+
+        if (vim_strchr((char_u *)"OPQ", idx) != NULL
+            && !os_path_exists(fields->namebuf)) {
+          continue;
+        }
+      }
+      if ((i = (int)fmt_ptr->addr[1]) > 0) {                  // %n
+        if (regmatch.startp[i] == NULL) {
+          continue;
+        }
+        fields->enr = (int)atol((char *)regmatch.startp[i]);
+      }
+      if ((i = (int)fmt_ptr->addr[2]) > 0) {                  // %l
+        if (regmatch.startp[i] == NULL) {
+          continue;
+        }
+        fields->lnum = atol((char *)regmatch.startp[i]);
+      }
+      if ((i = (int)fmt_ptr->addr[3]) > 0) {                  // %c
+        if (regmatch.startp[i] == NULL) {
+          continue;
+        }
+        fields->col = (int)atol((char *)regmatch.startp[i]);
+      }
+      if ((i = (int)fmt_ptr->addr[4]) > 0) {                  // %t
+        if (regmatch.startp[i] == NULL) {
+          continue;
+        }
+        fields->type = *regmatch.startp[i];
+      }
+      if (fmt_ptr->flags == '+' && !qi->qf_multiscan) {       // %+
+        if (linelen > fields->errmsglen) {
+          // linelen + null terminator
+          fields->errmsg = xrealloc(fields->errmsg, linelen + 1);
+          fields->errmsglen = linelen + 1;
+        }
+        STRLCPY(fields->errmsg, linebuf, linelen + 1);
+      } else if ((i = (int)fmt_ptr->addr[5]) > 0) {           // %m
+        if (regmatch.startp[i] == NULL || regmatch.endp[i] == NULL) {
+          continue;
+        }
+        len = (size_t)(regmatch.endp[i] - regmatch.startp[i]);
+        if (len > fields->errmsglen) {
+          // len + null terminator
+          fields->errmsg = xrealloc(fields->errmsg, len + 1);
+          fields->errmsglen = len + 1;
+        }
+        STRLCPY(fields->errmsg, regmatch.startp[i], len + 1);
+      }
+      if ((i = (int)fmt_ptr->addr[6]) > 0) {                  // %r
+        if (regmatch.startp[i] == NULL) {
+          continue;
+        }
+        tail = regmatch.startp[i];
+      }
+      if ((i = (int)fmt_ptr->addr[7]) > 0) {                  // %p
+        char_u      *match_ptr;
+
+        if (regmatch.startp[i] == NULL || regmatch.endp[i] == NULL) {
+          continue;
+        }
+        fields->col = 0;
+        for (match_ptr = regmatch.startp[i];
+             match_ptr != regmatch.endp[i]; match_ptr++) {
+          fields->col++;
+          if (*match_ptr == TAB) {
+            fields->col += 7;
+            fields->col -= fields->col % 8;
+          }
+        }
+        fields->col++;
+        fields->use_viscol = true;
+      }
+      if ((i = (int)fmt_ptr->addr[8]) > 0) {                  // %v
+        if (regmatch.startp[i] == NULL) {
+          continue;
+        }
+        fields->col = (int)atol((char *)regmatch.startp[i]);
+        fields->use_viscol = true;
+      }
+      if ((i = (int)fmt_ptr->addr[9]) > 0) {                  // %s
+        if (regmatch.startp[i] == NULL || regmatch.endp[i] == NULL) {
+          continue;
+        }
+        len = (size_t)(regmatch.endp[i] - regmatch.startp[i]);
+        if (len > CMDBUFFSIZE - 5) {
+          len = CMDBUFFSIZE - 5;
+        }
+        STRCPY(fields->pattern, "^\\V");
+        xstrlcat((char *)fields->pattern, (char *)regmatch.startp[i],
+                 CMDBUFFSIZE+1);
+        fields->pattern[len + 3] = '\\';
+        fields->pattern[len + 4] = '$';
+        fields->pattern[len + 5] = NUL;
+      }
+      break;
+    }
+  }
+  qi->qf_multiscan = false;
+
+  if (fmt_ptr == NULL || idx == 'D' || idx == 'X') {
+    if (fmt_ptr != NULL) {
+      if (idx == 'D') {                               // enter directory
+        if (*fields->namebuf == NUL) {
+          EMSG(_("E379: Missing or empty directory name"));
+          return QF_FAIL;
+        }
+        qi->qf_directory = qf_push_dir(fields->namebuf, &qi->qf_dir_stack,
+                                       false);
+        if (qi->qf_directory == NULL) {
+          return QF_FAIL;
+        }
+      } else if (idx == 'X') {                        // leave directory
+        qi->qf_directory = qf_pop_dir(&qi->qf_dir_stack);
+      }
+    }
+    fields->namebuf[0] = NUL;                // no match found, remove file name
+    fields->lnum = 0;                        // don't jump to this line
+    fields->valid = false;
+    if (linelen > fields->errmsglen) {
+      // linelen + null terminator
+      fields->errmsg = xrealloc(fields->errmsg, linelen + 1);
+      fields->errmsglen = linelen + 1;
+    }
+    // copy whole line to error message
+    STRLCPY(fields->errmsg, linebuf, linelen + 1);
+    if (fmt_ptr == NULL) {
+      qi->qf_multiline = qi->qf_multiignore = false;
+    }
+  } else if (fmt_ptr != NULL) {
+    // honor %> item
+    if (fmt_ptr->conthere) {
+      fmt_start = fmt_ptr;
+    }
+
+    if (vim_strchr((char_u *)"AEWI", idx) != NULL) {
+      qi->qf_multiline = true;     // start of a multi-line message
+      qi->qf_multiignore = false;  // reset continuation
+    } else if (vim_strchr((char_u *)"CZ", idx)
+               != NULL) {  // continuation of multi-line msg
+      qfline_T *qfprev = qi->qf_lists[qi->qf_curlist].qf_last;
+      if (qfprev == NULL) {
+        return QF_FAIL;
+      }
+      if (*fields->errmsg && !qi->qf_multiignore) {
+        size_t len = STRLEN(qfprev->qf_text);
+        qfprev->qf_text = xrealloc(qfprev->qf_text,
+                                   len + STRLEN(fields->errmsg) + 2);
+        qfprev->qf_text[len] = '\n';
+        STRCPY(qfprev->qf_text + len + 1, fields->errmsg);
+      }
+      if (qfprev->qf_nr == -1) {
+        qfprev->qf_nr = fields->enr;
+      }
+      if (vim_isprintc(fields->type) && !qfprev->qf_type) {
+        qfprev->qf_type = fields->type;          // only printable chars allowed
+      }
+      if (!qfprev->qf_lnum) {
+        qfprev->qf_lnum = fields->lnum;
+      }
+      if (!qfprev->qf_col) {
+        qfprev->qf_col = fields->col;
+      }
+      qfprev->qf_viscol = fields->use_viscol;
+      if (!qfprev->qf_fnum) {
+        qfprev->qf_fnum = qf_get_fnum(qi, qi->qf_directory,
+                                      *fields->namebuf || qi->qf_directory
+                                      ? fields->namebuf
+                                      : qi->qf_currfile && fields->valid
+                                      ? qi->qf_currfile : 0);
+      }
+      if (idx == 'Z') {
+        qi->qf_multiline = qi->qf_multiignore = false;
+      }
+
+      line_breakcheck();
+      return QF_IGNORE_LINE;
+    } else if (vim_strchr((char_u *)"OPQ", idx) != NULL) {
+      // global file names
+      fields->valid = false;
+      if (*fields->namebuf == NUL || os_path_exists(fields->namebuf)) {
+        if (*fields->namebuf && idx == 'P') {
+          qi->qf_currfile = qf_push_dir(fields->namebuf, &qi->qf_file_stack,
+                                        true);
+        } else if (idx == 'Q') {
+          qi->qf_currfile = qf_pop_dir(&qi->qf_file_stack);
+        }
+        *fields->namebuf = NUL;
+        if (tail && *tail) {
+          STRMOVE(IObuff, skipwhite(tail));
+          qi->qf_multiscan = true;
+          goto restofline;
+        }
+      }
+    }
+    if (fmt_ptr->flags == '-') {  // generally exclude this line
+      if (qi->qf_multiline) {
+        // also exclude continuation lines
+        qi->qf_multiignore = true;
+      }
+      return QF_IGNORE_LINE;
+    }
+  }
+
+  return QF_OK;
+}
+
 // Read the errorfile "efile" into memory, line by line, building the error
 // list.
 // Alternative: when "efile" is NULL read errors from buffer "buf".
@@ -674,35 +966,20 @@ qf_init_ext(
     char_u *qf_title
 )
 {
-  char_u          *namebuf;
-  char_u          *errmsg;
-  size_t          errmsglen;
-  char_u          *pattern;
   qfstate_T state = { NULL, 0, NULL, 0, NULL, NULL, NULL, NULL,
                       NULL, 0, 0 };
-  int col = 0;
-  bool use_viscol = false;
-  char_u type = 0;
-  long lnum = 0L;
-  int enr = 0;
+  qffields_T fields = { NULL, NULL, 0, 0L, 0, false, NULL, 0, 0, 0 };
   qfline_T        *old_last = NULL;
   static efm_T    *fmt_first = NULL;
-  efm_T           *fmt_ptr;
-  efm_T           *fmt_start = NULL;
   char_u          *efm;
   static char_u   *last_efm = NULL;
-  size_t len;
-  int i;
-  int idx = 0;
   int retval = -1;                      // default: return error flag
   int status;
-  char_u *tail = NULL;
-  regmatch_T regmatch;
 
-  namebuf = xmalloc(CMDBUFFSIZE + 1);
-  errmsglen = CMDBUFFSIZE + 1;
-  errmsg = xmalloc(errmsglen);
-  pattern = xmalloc(CMDBUFFSIZE + 1);
+  fields.namebuf = xmalloc(CMDBUFFSIZE + 1);
+  fields.errmsglen = CMDBUFFSIZE + 1;
+  fields.errmsg = xmalloc(fields.errmsglen);
+  fields.pattern = xmalloc(CMDBUFFSIZE + 1);
 
   if (efile != NULL && (state.fd = mch_fopen((char *)efile, "r")) == NULL) {
     EMSG2(_(e_openerrf), efile);
@@ -717,15 +994,12 @@ qf_init_ext(
     old_last = qi->qf_lists[qi->qf_curlist].qf_last;
   }
 
-  /*
-   * Each part of the format string is copied and modified from errorformat to
-   * regex prog.  Only a few % characters are allowed.
-   */
-  /* Use the local value of 'errorformat' if it's set. */
-  if (errorformat == p_efm && tv == NULL && *buf->b_p_efm != NUL)
+  // Use the local value of 'errorformat' if it's set.
+  if (errorformat == p_efm && tv == NULL && *buf->b_p_efm != NUL) {
     efm = buf->b_p_efm;
-  else
+  } else {
     efm = errorformat;
+  }
 
   // If we are not adding or adding to another list: clear the state.
   if (newlist || qi->qf_curlist != qi->qf_dir_curlist) {
@@ -764,9 +1038,6 @@ qf_init_ext(
    */
   got_int = FALSE;
 
-  /* Always ignore case when looking for a matching error. */
-  regmatch.rm_ic = TRUE;
-
   if (tv != NULL) {
     if (tv->v_type == VAR_STRING) {
       state.p_str = tv->vval.v_string;
@@ -790,259 +1061,29 @@ qf_init_ext(
       break;
     }
 
-    /* If there was no %> item start at the first pattern */
-    if (fmt_start == NULL)
-      fmt_ptr = fmt_first;
-    else {
-      fmt_ptr = fmt_start;
-      fmt_start = NULL;
+    status = qf_parse_line(qi, state.linebuf, state.linelen, fmt_first,
+                           &fields);
+    if (status == QF_FAIL) {
+      goto error2;
     }
-
-    // Try to match each part of 'errorformat' until we find a complete
-    // match or no match.
-    bool valid = true;
-restofline:
-    for (; fmt_ptr != NULL; fmt_ptr = fmt_ptr->next) {
-      idx = fmt_ptr->prefix;
-      if (qi->qf_multiscan && vim_strchr((char_u *)"OPQ", idx) == NULL) {
-        continue;
-      }
-      namebuf[0] = NUL;
-      pattern[0] = NUL;
-      if (!qi->qf_multiscan) {
-        errmsg[0] = NUL;
-      }
-      lnum = 0;
-      col = 0;
-      use_viscol = false;
-      enr = -1;
-      type = 0;
-      tail = NULL;
-
-      regmatch.regprog = fmt_ptr->prog;
-      int r = vim_regexec(&regmatch, state.linebuf, (colnr_T)0);
-      fmt_ptr->prog = regmatch.regprog;
-      if (r) {
-        if ((idx == 'C' || idx == 'Z') && !qi->qf_multiline) {
-          continue;
-        }
-        if (vim_strchr((char_u *)"EWI", idx) != NULL) {
-          type = (char_u)idx;
-        } else {
-          type = 0;
-        }
-        // Extract error message data from matched line.
-        // We check for an actual submatch, because "\[" and "\]" in
-        // the 'errorformat' may cause the wrong submatch to be used.
-        if ((i = (int)fmt_ptr->addr[0]) > 0) {  // %f
-          if (regmatch.startp[i] == NULL || regmatch.endp[i] == NULL) {
-            continue;
-          }
-          // Expand ~/file and $HOME/file to full path.
-          char_u c = *regmatch.endp[i];
-          *regmatch.endp[i] = NUL;
-          expand_env(regmatch.startp[i], namebuf, CMDBUFFSIZE);
-          *regmatch.endp[i] = c;
-
-          if (vim_strchr((char_u *)"OPQ", idx) != NULL
-              && !os_path_exists(namebuf)) {
-            continue;
-          }
-        }
-        if ((i = (int)fmt_ptr->addr[1]) > 0) {                  /* %n */
-          if (regmatch.startp[i] == NULL)
-            continue;
-          enr = (int)atol((char *)regmatch.startp[i]);
-        }
-        if ((i = (int)fmt_ptr->addr[2]) > 0) {                  /* %l */
-          if (regmatch.startp[i] == NULL)
-            continue;
-          lnum = atol((char *)regmatch.startp[i]);
-        }
-        if ((i = (int)fmt_ptr->addr[3]) > 0) {                  /* %c */
-          if (regmatch.startp[i] == NULL)
-            continue;
-          col = (int)atol((char *)regmatch.startp[i]);
-        }
-        if ((i = (int)fmt_ptr->addr[4]) > 0) {                  /* %t */
-          if (regmatch.startp[i] == NULL)
-            continue;
-          type = *regmatch.startp[i];
-        }
-        if (fmt_ptr->flags == '+' && !qi->qf_multiscan) {       // %+
-          if (state.linelen > errmsglen) {
-            // linelen + null terminator
-            errmsg = xrealloc(errmsg, state.linelen + 1);
-            errmsglen = state.linelen + 1;
-          }
-          STRLCPY(errmsg, state.linebuf, state.linelen + 1);
-        } else if ((i = (int)fmt_ptr->addr[5]) > 0) {           // %m
-          if (regmatch.startp[i] == NULL || regmatch.endp[i] == NULL) {
-            continue;
-          }
-          len = (size_t)(regmatch.endp[i] - regmatch.startp[i]);
-          if (len > errmsglen) {
-            // len + null terminator
-            errmsg = xrealloc(errmsg, len + 1);
-            errmsglen = len + 1;
-          }
-          STRLCPY(errmsg, regmatch.startp[i], len + 1);
-        }
-        if ((i = (int)fmt_ptr->addr[6]) > 0) {                  /* %r */
-          if (regmatch.startp[i] == NULL)
-            continue;
-          tail = regmatch.startp[i];
-        }
-        if ((i = (int)fmt_ptr->addr[7]) > 0) {                  /* %p */
-          char_u      *match_ptr;
-
-          if (regmatch.startp[i] == NULL || regmatch.endp[i] == NULL)
-            continue;
-          col = 0;
-          for (match_ptr = regmatch.startp[i];
-               match_ptr != regmatch.endp[i]; ++match_ptr) {
-            ++col;
-            if (*match_ptr == TAB) {
-              col += 7;
-              col -= col % 8;
-            }
-          }
-          col++;
-          use_viscol = true;
-        }
-        if ((i = (int)fmt_ptr->addr[8]) > 0) {                  /* %v */
-          if (regmatch.startp[i] == NULL)
-            continue;
-          col = (int)atol((char *)regmatch.startp[i]);
-          use_viscol = true;
-        }
-        if ((i = (int)fmt_ptr->addr[9]) > 0) {                  /* %s */
-          if (regmatch.startp[i] == NULL || regmatch.endp[i] == NULL)
-            continue;
-          len = (size_t)(regmatch.endp[i] - regmatch.startp[i]);
-          if (len > CMDBUFFSIZE - 5) {
-            len = CMDBUFFSIZE - 5;
-          }
-          STRCPY(pattern, "^\\V");
-          STRNCAT(pattern, regmatch.startp[i], len);
-          pattern[len + 3] = '\\';
-          pattern[len + 4] = '$';
-          pattern[len + 5] = NUL;
-        }
-        break;
-      }
-    }
-    qi->qf_multiscan = false;
-
-    if (fmt_ptr == NULL || idx == 'D' || idx == 'X') {
-      if (fmt_ptr != NULL) {
-        if (idx == 'D') {                               /* enter directory */
-          if (*namebuf == NUL) {
-            EMSG(_("E379: Missing or empty directory name"));
-            goto error2;
-          }
-          qi->qf_directory = qf_push_dir(namebuf, &qi->qf_dir_stack, false);
-          if (qi->qf_directory == NULL) {
-            goto error2;
-          }
-        } else if (idx == 'X') {                        // leave directory
-          qi->qf_directory = qf_pop_dir(&qi->qf_dir_stack);
-        }
-      }
-      namebuf[0] = NUL;                 // no match found, remove file name
-      lnum = 0;                         // don't jump to this line
-      valid = false;
-      if (state.linelen > errmsglen) {
-        // linelen + null terminator
-        errmsg = xrealloc(errmsg, state.linelen + 1);
-        errmsglen = state.linelen + 1;
-      }
-      // copy whole line to error message
-      STRLCPY(errmsg, state.linebuf, state.linelen + 1);
-      if (fmt_ptr == NULL) {
-        qi->qf_multiline = qi->qf_multiignore = false;
-      }
-    } else if (fmt_ptr != NULL) {
-      /* honor %> item */
-      if (fmt_ptr->conthere)
-        fmt_start = fmt_ptr;
-
-      if (vim_strchr((char_u *)"AEWI", idx) != NULL) {
-        qi->qf_multiline = true;     // start of a multi-line message
-        qi->qf_multiignore = false;  // reset continuation
-      } else if (vim_strchr((char_u *)"CZ", idx)
-                 != NULL) {  // continuation of multi-line msg
-        qfline_T *qfprev = qi->qf_lists[qi->qf_curlist].qf_last;
-        if (qfprev == NULL) {
-          goto error2;
-        }
-        if (*errmsg && !qi->qf_multiignore) {
-          size_t len = STRLEN(qfprev->qf_text);
-          qfprev->qf_text = xrealloc(qfprev->qf_text, len + STRLEN(errmsg) + 2);
-          qfprev->qf_text[len] = '\n';
-          STRCPY(qfprev->qf_text + len + 1, errmsg);
-        }
-        if (qfprev->qf_nr == -1)
-          qfprev->qf_nr = enr;
-        if (vim_isprintc(type) && !qfprev->qf_type)
-          qfprev->qf_type = type;            /* only printable chars allowed */
-        if (!qfprev->qf_lnum)
-          qfprev->qf_lnum = lnum;
-        if (!qfprev->qf_col)
-          qfprev->qf_col = col;
-        qfprev->qf_viscol = use_viscol;
-        if (!qfprev->qf_fnum) {
-          qfprev->qf_fnum = qf_get_fnum(qi, qi->qf_directory,
-                                        *namebuf
-                                        || qi->qf_directory
-                                        ? namebuf : qi->qf_currfile
-                                        && valid ? qi->qf_currfile : 0);
-        }
-        if (idx == 'Z') {
-          qi->qf_multiline = qi->qf_multiignore = false;
-        }
-        line_breakcheck();
-        continue;
-      } else if (vim_strchr((char_u *)"OPQ", idx) != NULL) {
-        // global file names
-        valid = false;
-        if (*namebuf == NUL || os_path_exists(namebuf)) {
-          if (*namebuf && idx == 'P') {
-            qi->qf_currfile = qf_push_dir(namebuf, &qi->qf_file_stack, true);
-          } else if (idx == 'Q') {
-            qi->qf_currfile = qf_pop_dir(&qi->qf_file_stack);
-          }
-          *namebuf = NUL;
-          if (tail && *tail) {
-            STRMOVE(IObuff, skipwhite(tail));
-            qi->qf_multiscan = true;
-            goto restofline;
-          }
-        }
-      }
-      if (fmt_ptr->flags == '-') {  // generally exclude this line
-        if (qi->qf_multiline) {
-          // also exclude continuation lines
-          qi->qf_multiignore = true;
-        }
-        continue;
-      }
+    if (status == QF_IGNORE_LINE) {
+      continue;
     }
 
     if (qf_add_entry(qi,
                      qi->qf_directory,
-                     (*namebuf || qi->qf_directory)
-                     ? namebuf : ((qi->qf_currfile && valid)
-                                  ? qi->qf_currfile : (char_u *)NULL),
+                     (*fields.namebuf || qi->qf_directory)
+                     ? fields.namebuf : ((qi->qf_currfile && fields.valid)
+                                         ? qi->qf_currfile : (char_u *)NULL),
                      0,
-                     errmsg,
-                     lnum,
-                     col,
-                     use_viscol,
-                     pattern,
-                     enr,
-                     type,
-                     valid) == FAIL) {
+                     fields.errmsg,
+                     fields.lnum,
+                     fields.col,
+                     fields.use_viscol,
+                     fields.pattern,
+                     fields.enr,
+                     fields.type,
+                     fields.valid) == FAIL) {
       goto error2;
     }
     line_breakcheck();
@@ -1075,9 +1116,9 @@ qf_init_end:
   if (state.fd != NULL) {
     fclose(state.fd);
   }
-  xfree(namebuf);
-  xfree(errmsg);
-  xfree(pattern);
+  xfree(fields.namebuf);
+  xfree(fields.errmsg);
+  xfree(fields.pattern);
   xfree(state.growbuf);
 
   qf_update_buffer(qi, old_last);
