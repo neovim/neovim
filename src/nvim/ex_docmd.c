@@ -3940,8 +3940,6 @@ int expand_filename(exarg_T *eap, char_u **cmdlinep, char_u **errormsgp)
      * Don't do this for:
      * - replacement that already has been escaped: "##"
      * - shell commands (may have to use quotes instead).
-     * - non-unix systems when there is a single argument (spaces don't
-     *   separate arguments then).
      */
     if (!eap->usefilter
         && !escaped
@@ -3952,9 +3950,7 @@ int expand_filename(exarg_T *eap, char_u **cmdlinep, char_u **errormsgp)
         && eap->cmdidx != CMD_lgrep
         && eap->cmdidx != CMD_grepadd
         && eap->cmdidx != CMD_lgrepadd
-#ifndef UNIX
         && !(eap->argt & NOSPC)
-#endif
         ) {
       char_u      *l;
 #ifdef BACKSLASH_IN_FILENAME
@@ -4015,28 +4011,6 @@ int expand_filename(exarg_T *eap, char_u **cmdlinep, char_u **errormsgp)
         (void)repl_cmdline(eap, eap->arg, STRLEN(eap->arg), p, cmdlinep);
       }
     }
-
-    // Replace any other wildcards, remove backslashes.
-#ifdef UNIX
-    /*
-     * Only for Unix we check for more than one file name.
-     * For other systems spaces are considered to be part
-     * of the file name.
-     * Only check here if there is no wildcard, otherwise
-     * ExpandOne() will check for errors. This allows
-     * ":e `ls ve*.c`" on Unix.
-     */
-    if (!has_wildcards)
-      for (p = eap->arg; *p; ++p) {
-        /* skip escaped characters */
-        if (p[1] && (*p == '\\' || *p == Ctrl_V))
-          ++p;
-        else if (ascii_iswhite(*p)) {
-          *errormsgp = (char_u *)_("E172: Only one file name allowed");
-          return FAIL;
-        }
-      }
-#endif
 
     /*
      * Halve the number of backslashes (this is Vi compatible).
