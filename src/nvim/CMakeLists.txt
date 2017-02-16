@@ -299,25 +299,6 @@ if(WIN32)
   install(DIRECTORY ${PROJECT_BINARY_DIR}/windows_runtime_deps/
     DESTINATION ${CMAKE_INSTALL_BINDIR})
 
-  foreach(BIN cat.exe curl.exe diff.exe tee.exe tidy.exe win32yank.exe)
-    unset(BIN_PATH CACHE)
-    find_program(BIN_PATH ${BIN})
-    if(NOT BIN_PATH)
-      message(FATAL_ERROR "Unable to find external dependency ${BIN}")
-    endif()
-
-    add_custom_target(external_${BIN}
-      COMMAND ${CMAKE_COMMAND} -E make_directory ${PROJECT_BINARY_DIR}/windows_runtime_deps
-      COMMAND ${CMAKE_COMMAND}
-        "-DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}"
-        -DBINARY="${BIN_PATH}"
-        -DDST=${PROJECT_BINARY_DIR}/windows_runtime_deps
-        -P ${PROJECT_SOURCE_DIR}/cmake/WindowsDllCopy.cmake
-      COMMAND ${CMAKE_COMMAND} -E copy ${BIN_PATH} ${PROJECT_BINARY_DIR}/windows_runtime_deps/
-      COMMENT "${BIN_PATH}")
-    add_dependencies(nvim_runtime_deps "external_${BIN}")
-  endforeach()
-
   add_custom_target(nvim_dll_deps DEPENDS nvim
     COMMAND ${CMAKE_COMMAND} -E make_directory ${PROJECT_BINARY_DIR}/windows_runtime_deps
     COMMAND ${CMAKE_COMMAND}
@@ -331,6 +312,11 @@ if(WIN32)
     COMMAND ${CMAKE_COMMAND} -E make_directory ${PROJECT_BINARY_DIR}/windows_runtime_deps/platforms
 
     COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/ca-bundle.crt"       ${PROJECT_BINARY_DIR}/windows_runtime_deps/
+    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/curl.exe"            ${PROJECT_BINARY_DIR}/windows_runtime_deps/
+    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/diff.exe"            ${PROJECT_BINARY_DIR}/windows_runtime_deps/
+    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/tee.exe"             ${PROJECT_BINARY_DIR}/windows_runtime_deps/
+    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/tidy.exe"            ${PROJECT_BINARY_DIR}/windows_runtime_deps/
+    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/win32yank.exe"       ${PROJECT_BINARY_DIR}/windows_runtime_deps/
 
     COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/D3Dcompiler_47.dll"  ${PROJECT_BINARY_DIR}/windows_runtime_deps/
     COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/libEGL.dll"          ${PROJECT_BINARY_DIR}/windows_runtime_deps/
