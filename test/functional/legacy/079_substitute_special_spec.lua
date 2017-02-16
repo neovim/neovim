@@ -8,10 +8,6 @@ local feed, insert, source = helpers.feed, helpers.insert, helpers.source
 local clear, execute, expect = helpers.clear, helpers.execute, helpers.expect
 local eq, eval, write_file = helpers.eq, helpers.eval, helpers.write_file
 
-local function expect_line(line)
-  return eq(line, eval('getline(".")'))
-end
-
 describe(':substitue', function()
   setup(function()
     write_file('test_79_7.in', 'A\rA\nB\x00B\nC\x00C\nD\x00\nD\nE\x00\n\x00'..
