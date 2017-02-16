@@ -4,17 +4,9 @@
 -- Also test the gn command and repeating it.
 
 local helpers = require('test.functional.helpers')(before_each)
-local feed, insert, source = helpers.feed, helpers.insert, helpers.source
-local clear, execute, expect = helpers.clear, helpers.execute, helpers.expect
-local eq, eval = helpers.eq, helpers.eval
-
-local function expect_line(text)
-  return eq(text, eval('getline(".")'))
-end
-
-local function expect_line_above(text)
-  return eq(text, eval('getline(line(".")-1)'))
-end
+local feed, insert, eq, eval, clear, execute, expect =
+  helpers.feed, helpers.insert, helpers.eq, helpers.eval, helpers.clear,
+  helpers.execute, helpers.expect
 
 describe('text objects:', function()
   before_each(clear)
