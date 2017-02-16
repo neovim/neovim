@@ -180,12 +180,7 @@ foreach(sfile ${NEOVIM_SOURCES}
   set(gf2 "${GENERATED_INCLUDES_DIR}/${r}.h.generated.h")
   set(gf3 "${GENERATED_DIR}/${r}.i")
 
-  # get_preproc_output(PREPROC_OUTPUT gf3)
-  if(MSVC)
-    set(PREPROC_OUTPUT /P /Fi${gf3})
-  else()
-    set(PREPROC_OUTPUT -E -o ${gf3})
-  endif()
+  get_preproc_output(PREPROC_OUTPUT ${gf3})
 
   add_custom_command(
     OUTPUT "${gf1}" "${gf2}"
@@ -385,9 +380,6 @@ add_library(nvim-test MODULE EXCLUDE_FROM_ALL ${NEOVIM_GENERATED_SOURCES}
 target_link_libraries(nvim-test ${NVIM_LINK_LIBRARIES})
 set_property(TARGET nvim-test APPEND_STRING PROPERTY COMPILE_FLAGS -DUNIT_TESTING)
 
-# Helper targets that verify that specific headers can be included alone (i.e.
-# do not depend on other includes)
-set(HEADER_CHECK_FILES)
 set(NO_SINGLE_CHECK_HEADERS
   buffer
   charset
