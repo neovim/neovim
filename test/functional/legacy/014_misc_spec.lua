@@ -5,9 +5,9 @@
 -- Also test search()
 
 local helpers = require('test.functional.helpers')(after_each)
-local feed, insert, source, eq, eval, clear, execute, expect =
-  helpers.feed, helpers.insert, helpers.source, helpers.eq, helpers.eval,
-  helpers.clear, helpers.execute, helpers.expect
+local feed, insert, eq, eval, clear, execute, expect =
+  helpers.feed, helpers.insert, helpers.eq, helpers.eval, helpers.clear,
+  helpers.execute, helpers.expect
 
 local function expect_line(string)
   return eq(string, eval('getline(".")'))
