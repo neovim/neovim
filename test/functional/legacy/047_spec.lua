@@ -2,10 +2,9 @@
 -- Also tests restoration of saved options by :diffoff.
 
 local helpers = require('test.functional.helpers')(after_each)
-local feed = helpers.feed
-local clear, execute, expect = helpers.clear, helpers.execute, helpers.expect
-local write_file = helpers.write_file
-local eq, eval, dedent = helpers.eq, helpers.eval, helpers.dedent
+local feed, clear, execute, write_file, eq, eval, dedent =
+  helpers.feed, helpers.clear, helpers.execute, helpers.write_file,
+  helpers.eq, helpers.eval, helpers.dedent
 
 local function expect_string_var(name, text)
   return eq(dedent(text), eval(name))
