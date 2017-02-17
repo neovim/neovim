@@ -110,7 +110,6 @@ run_oldtests() {
 }
 
 run_single_includes_tests() {
-  ulimit -c unlimited
   ${MAKE_CMD} -C "${BUILD_DIR}" check-single-includes
 }
 
