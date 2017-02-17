@@ -3051,10 +3051,10 @@ win_line (
           char_attr = line_attr;
         }
       } else {
-        attr_pri = FALSE;
-        if (has_syntax)
+        attr_pri = false;
+        if (has_syntax) {
           char_attr = syntax_attr;
-        else if (msgbuf_attr != 0) {
+        } else if (msgbuf_attr != 0) {
           char_attr = msgbuf_attr;
         } else {
           char_attr = 0;
