@@ -20,8 +20,8 @@ if [ "$CLANG_SANITIZER" != "TSAN" ]; then
 fi
 run_oldtests
 
-install_nvim
-
 run_single_includes_tests
+
+install_nvim
 
 touch "${SUCCESS_MARKER}"
