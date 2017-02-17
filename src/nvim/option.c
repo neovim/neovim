@@ -2569,12 +2569,11 @@ did_set_string_option (
 
       init_highlight(FALSE, FALSE);
 
-      if (dark != (*p_bg == 'd')
-          && get_var_value((char_u *)"g:colors_name") != NULL) {
-        /* The color scheme must have set 'background' back to another
-         * value, that's not what we want here.  Disable the color
-         * scheme and set the colors again. */
-        do_unlet((char_u *)"g:colors_name", TRUE);
+      if (dark != (*p_bg == 'd') && get_var_value("g:colors_name") != NULL) {
+        // The color scheme must have set 'background' back to another
+        // value, that's not what we want here.  Disable the color
+        // scheme and set the colors again.
+        do_unlet((char_u *)"g:colors_name", true);
         free_string_option(p_bg);
         p_bg = vim_strsave((char_u *)(dark ? "dark" : "light"));
         check_string_option(&p_bg);
@@ -3886,7 +3885,7 @@ set_bool_option (
             "W17: Arabic requires UTF-8, do ':set encoding=utf-8'");
 
         msg_source(hl_attr(HLF_W));
-        MSG_ATTR(_(w_arabic), hl_attr(HLF_W));
+        msg_attr(_(w_arabic), hl_attr(HLF_W));
         set_vim_var_string(VV_WARNINGMSG, _(w_arabic), -1);
       }
 

@@ -482,7 +482,7 @@ static int throw_exception(void *value, int type, char_u *cmdname)
       msg_scroll = TRUE;            /* always scroll up, don't overwrite */
 
     smsg(_("Exception thrown: %s"), excp->value);
-    msg_puts((char_u *)"\n");       /* don't overwrite this either */
+    msg_puts("\n");  // don't overwrite this either
 
     if (debug_break_level > 0 || *p_vfile == NUL)
       cmdline_row = msg_row;
@@ -532,15 +532,17 @@ static void discard_exception(except_T *excp, int was_finished)
     smsg(was_finished ? _("Exception finished: %s")
                       : _("Exception discarded: %s"),
          excp->value);
-    msg_puts((char_u *)"\n");       /* don't overwrite this either */
-    if (debug_break_level > 0 || *p_vfile == NUL)
+    msg_puts("\n");  // don't overwrite this either
+    if (debug_break_level > 0 || *p_vfile == NUL) {
       cmdline_row = msg_row;
-    --no_wait_return;
-    if (debug_break_level > 0)
+    }
+    no_wait_return--;
+    if (debug_break_level > 0) {
       msg_silent = save_msg_silent;
-    else
+    } else {
       verbose_leave();
-    STRCPY(IObuff, saved_IObuff);
+    }
+    xstrlcpy((char *)IObuff, (const char *)saved_IObuff, IOSIZE);
     xfree(saved_IObuff);
   }
   if (excp->type != ET_INTERRUPT)
@@ -595,7 +597,7 @@ static void catch_exception(except_T *excp)
       msg_scroll = TRUE;            /* always scroll up, don't overwrite */
 
     smsg(_("Exception caught: %s"), excp->value);
-    msg_puts((char_u *)"\n");       /* don't overwrite this either */
+    msg_puts("\n");  // don't overwrite this either
 
     if (debug_break_level > 0 || *p_vfile == NUL)
       cmdline_row = msg_row;
@@ -714,7 +716,7 @@ static void report_pending(int action, int pending, void *value)
   ++no_wait_return;
   msg_scroll = TRUE;            /* always scroll up, don't overwrite */
   smsg(mesg, s);
-  msg_puts((char_u *)"\n");     /* don't overwrite this either */
+  msg_puts("\n");  // don't overwrite this either
   cmdline_row = msg_row;
   --no_wait_return;
   if (debug_break_level > 0)
