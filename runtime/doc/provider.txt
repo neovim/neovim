@@ -61,6 +61,13 @@ To disable Python 2 support: >
 To disable Python 3 support: >
     let g:loaded_python3_provider = 1
 
+PYTHON VIRTUALENVS ~
+
+If you are using python virtual environments, it's best to hardcode the
+Interpreter path so that the neovim python package isn't required for each
+Environment. More information can be found here:
+https://github.com/zchee/deoplete-jedi/wiki/Setting-up-Python-for-Neovim
+
 
 ==============================================================================
 Ruby integration		    	      *provider-ruby*
