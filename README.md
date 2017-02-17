@@ -1,4 +1,5 @@
 [![Neovim](https://raw.githubusercontent.com/neovim/neovim.github.io/master/logos/neovim-logo-600x173.png)](https://neovim.io)
+
 [Wiki](https://github.com/neovim/neovim/wiki) |
 [Documentation](https://neovim.io/doc) |
 [Twitter](https://twitter.com/Neovim) |
@@ -20,10 +21,8 @@ Neovim is a project that seeks to aggressively refactor Vim in order to:
 - Enable [advanced UIs] without modifications to the core
 - Maximize [extensibility](https://github.com/neovim/neovim/wiki/Plugin-UI-architecture)
 
-See [the wiki](https://github.com/neovim/neovim/wiki/Introduction) for more
-information.
-
-See the [Roadmap] for future plans.
+See [the wiki](https://github.com/neovim/neovim/wiki/Introduction) and [Roadmap]
+for more information.
 
 [![Throughput Graph](https://graphs.waffle.io/neovim/neovim/throughput.svg)](https://waffle.io/neovim/neovim/metrics)
 
