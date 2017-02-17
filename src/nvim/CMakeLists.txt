@@ -407,6 +407,7 @@ set(NO_SINGLE_CHECK_HEADERS
   option
   os/shell
   os_unix
+  os/win_defs
   popupmnu
   quickfix
   regexp
