@@ -4876,7 +4876,7 @@ void win_redr_status(win_T *wp)
     }
     if (wp->w_buffer->b_p_ro) {
       STRCPY(p + len, _("[RO]"));
-      len += 4;
+      len += (int)STRLEN(p + len);
     }
 
     this_ru_col = ru_col - (Columns - wp->w_width);
