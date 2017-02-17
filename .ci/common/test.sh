@@ -110,7 +110,16 @@ run_oldtests() {
 }
 
 run_single_includes_tests() {
-  ${MAKE_CMD} -C "${BULID_DIR}" check-single-includes
+  ulimit -c unlimited
+  if ! ${MAKE_CMD} -C "${BUILD_DIR}" check-single-includes; then
+    asan_check "${LOG_DIR}"
+    valgrind_check "${LOG_DIR}"
+    check_core_dumps
+    exit 1
+  fi
+  asan_check "${LOG_DIR}"
+  valgrind_check "${LOG_DIR}"
+  check_core_dumps
 }
 
 install_nvim() {
