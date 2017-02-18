@@ -711,13 +711,6 @@ return {
       defaults={if_true={vi=macros('DFLT_EFM')}}
     },
     {
-      full_name='esckeys', abbreviation='ek',
-      type='bool', scope={'global'},
-      vim=true,
-      varname='p_ek',
-      defaults={if_true={vi=false, vim=true}}
-    },
-    {
       full_name='eventignore', abbreviation='ei',
       type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
