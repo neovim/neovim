@@ -238,8 +238,7 @@ newly allocated memory all over the place) and fail on types which cannot be
 coerced to strings. See |id()| for more details, currently it uses 
 `printf("%p", {expr})` internally.
 
-|c_CTRL-R| pasting a non-special register into the |cmdline| separates lines
-by <Space> instead of <CR>.
+|c_CTRL-R| pasting a non-special register into |cmdline| omits the last <CR>.
 
 ==============================================================================
 5. Missing legacy features				 *nvim-features-missing*
