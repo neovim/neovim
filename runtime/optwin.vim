@@ -524,8 +524,6 @@ endif
 
 
 call <SID>Header("terminal")
-call append("$", "esckeys\trecognize keys that start with <Esc> in Insert mode")
-call <SID>BinOptionG("ek", &ek)
 call append("$", "scrolljump\tminimal number of lines to scroll at a time")
 call append("$", " \tset sj=" . &sj)
 if has("gui") || has("msdos") || has("win32")

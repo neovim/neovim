@@ -678,7 +678,6 @@ Short explanation of each option:		*option-list*
 'errorbells'	  'eb'	    ring the bell for error messages
 'errorfile'	  'ef'	    name of the errorfile for the QuickFix mode
 'errorformat'	  'efm'     description of the lines in the error file
-'esckeys'	  'ek'	    recognize function keys in Insert mode
 'eventignore'	  'ei'	    autocommand events that are ignored
 'expandtab'	  'et'	    use spaces when <Tab> is inserted
 'exrc'		  'ex'	    read .nvimrc and .exrc in the current directory

@@ -370,9 +370,6 @@ CTRL-G U	don't break undo with next left/right cursor *i_CTRL-G_U*
 		within same the line)
 -----------------------------------------------------------------------
 
-Note: If the cursor keys take you out of Insert mode, check the 'noesckeys'
-option.
-
 The CTRL-O command sometimes has a side effect: If the cursor was beyond the
 end of the line, it will be put on the last character in the line.  In
 mappings it's often better to use <Esc> (first put an "x" in the text, <Esc>

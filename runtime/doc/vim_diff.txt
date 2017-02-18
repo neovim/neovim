@@ -298,6 +298,7 @@ Other options:
   'antialias'
   'cpoptions' ("g", "w", "H", "*", "-", "j", and all POSIX flags were removed)
   'encoding' ("utf-8" is always used)
+  'esckeys'
   'guioptions' "t" flag was removed
   *'guipty'* (Nvim uses pipes and PTYs consistently on all platforms.)
   *'imactivatefunc'* *'imaf'*

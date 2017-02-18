@@ -70,9 +70,7 @@ for a next character to arrive.  If it does not arrive within one second a
 single <Esc> is assumed.  On very slow systems this may fail, causing cursor
 keys not to work sometimes.  If you discover this problem reset the 'timeout'
 option.  Vim will wait for the next character to arrive after an <Esc>.  If
-you want to enter a single <Esc> you must type it twice.  Resetting the
-'esckeys' option avoids this problem in Insert mode, but you lose the
-possibility to use cursor and function keys in Insert mode.
+you want to enter a single <Esc> you must type it twice.
 
 Some terminals have confusing codes for the cursor keys.  The televideo 925 is
 such a terminal.  It sends a CTRL-H for cursor-left.  This would make it

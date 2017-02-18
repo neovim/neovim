@@ -1911,17 +1911,13 @@ static int vgetorpeek(int advance)
 
           if ((mp == NULL || max_mlen >= mp_match_len)
               && keylen != KEYLEN_PART_MAP) {
-            /*
-             * When no matching mapping found or found a
-             * non-matching mapping that matches at least what the
-             * matching mapping matched:
-             * Check if we have a terminal code, when:
-             *  mapping is allowed,
-             *  keys have not been mapped,
-             *  and not an ESC sequence, not in insert mode or
-             *	p_ek is on,
-             *  and when not timed out,
-             */
+            // When no matching mapping found or found a non-matching mapping
+            // that matches at least what the matching mapping matched:
+            // Check if we have a terminal code, when:
+            //  mapping is allowed,
+            //  keys have not been mapped,
+            //  and not an ESC sequence, not in insert mode,
+            //  and when not timed out.
             if ((no_mapping == 0 || allow_keys != 0)
                 && (typebuf.tb_maplen == 0
                     || (p_remap && typebuf.tb_noremap[
