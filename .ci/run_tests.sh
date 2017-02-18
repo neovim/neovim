@@ -11,6 +11,7 @@ check_core_dumps --delete quiet
 
 prepare_build
 build_nvim
+run_single_includes_tests
 
 if [ "$CLANG_SANITIZER" != "TSAN" ]; then
   # Additional threads are only created when the builtin UI starts, which
@@ -21,7 +22,5 @@ fi
 run_oldtests
 
 install_nvim
-
-run_single_includes_tests
 
 touch "${SUCCESS_MARKER}"
