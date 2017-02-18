@@ -187,8 +187,7 @@ if(WIN32)
     INSTALL_COMMAND ${CMAKE_COMMAND} -E copy win32yank.exe ${DEPS_INSTALL_DIR}/bin)
 
   GetBinaryDep(TARGET wingui
-    INSTALL_COMMAND ${CMAKE_COMMAND} -E copy_directory bin ${DEPS_INSTALL_DIR}/bin
-    COMMAND ${CMAKE_COMMAND} -E copy_directory share/nvim-qt/runtime ${DEPS_INSTALL_DIR}/share/nvim/runtime)
+    INSTALL_COMMAND ${CMAKE_COMMAND} -E copy_directory bin ${DEPS_INSTALL_DIR}/bin)
 
   include(TargetArch)
   if("${TARGET_ARCH}" STREQUAL "X86_64")
