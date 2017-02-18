@@ -189,7 +189,7 @@ foreach(sfile ${NEOVIM_SOURCES}
     DEPENDS "${HEADER_GENERATOR}" "${sfile}"
     )
   list(APPEND NEOVIM_GENERATED_SOURCES "${gf1}")
-  list(APPEND NEOVIM_GENERATED_SOURCES "${gf2}")
+  list(APPEND NEOVIM_GENERATED_HEADERS "${gf2}")
   if(${d} MATCHES "^api$" AND NOT ${f} MATCHES "^api/helpers.c$")
     list(APPEND API_HEADERS ${gf2})
   endif()
@@ -214,6 +214,11 @@ add_custom_command(OUTPUT ${GENERATED_API_DISPATCH} ${GENERATED_FUNCS_METADATA}
     ${MSGPACK_RPC_HEADERS}
     ${DISPATCH_GENERATOR}
     ${CMAKE_CURRENT_LIST_DIR}/api/dispatch_deprecated.lua
+)
+
+list(APPEND NEOVIM_GENERATED_HEADERS
+  "${GENERATED_EX_CMDS_ENUM}"
+  "${GENERATED_EVENTS_ENUM}"
 )
 
 list(APPEND NEOVIM_GENERATED_SOURCES
@@ -448,9 +453,9 @@ foreach(hfile ${NEOVIM_HEADERS})
     write_file("${tsource}" "#include \"${hfile}\"\nint main(int argc, char **argv) { return 0; }")
     get_preproc_output(PREPROC_OUTPUT ${tresult})
     add_executable(
-        ${texe}
-        EXCLUDE_FROM_ALL
-        ${tsource} ${NEOVIM_HEADERS} ${NEOVIM_GENERATED_HEADERS})
+      ${texe}
+      EXCLUDE_FROM_ALL
+      ${tsource} ${NEOVIM_HEADERS} ${NEOVIM_GENERATED_HEADERS})
 
     list(FIND NO_SINGLE_CHECK_HEADERS "${r}" hfile_exclude_idx)
     if(${hfile_exclude_idx} EQUAL -1)
