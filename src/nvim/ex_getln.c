@@ -2471,10 +2471,10 @@ void restore_cmdline_alloc(char_u *p)
 ///
 /// @param regname   Register name.
 /// @param literally Insert text literally instead of "as typed".
-/// @param remcr     When true, remove trailing CR.
+/// @param remspc    When true, remove trailing <Space>.
 ///
 /// @returns FAIL for failure, OK otherwise
-static bool cmdline_paste(int regname, bool literally, bool remcr)
+static bool cmdline_paste(int regname, bool literally, bool remspc)
 {
   long i;
   char_u              *arg;
@@ -2539,7 +2539,7 @@ static bool cmdline_paste(int regname, bool literally, bool remcr)
     return OK;
   }
 
-  return cmdline_paste_reg(regname, literally, remcr);
+  return cmdline_paste_reg(regname, literally, remspc);
 }
 
 /*

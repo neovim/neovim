@@ -1260,16 +1260,16 @@ int get_spec_reg(
 
 /// Paste a yank register into the command line.
 /// Only for non-special registers.
-/// Used by CTRL-R command in command-line mode
+/// Used by CTRL-R in command-line mode.
 /// insert_reg() can't be used here, because special characters from the
 /// register contents will be interpreted as commands.
 ///
 /// @param regname   Register name.
 /// @param literally Insert text literally instead of "as typed".
-/// @param remcr     When true, don't add CR characters.
+/// @param remspc    When true, don't add <Space> characters.
 ///
 /// @returns FAIL for failure, OK otherwise
-bool cmdline_paste_reg(int regname, bool literally, bool remcr)
+bool cmdline_paste_reg(int regname, bool literally, bool remspc)
 {
   yankreg_T *reg = get_yank_register(regname, YREG_PASTE);
   if (reg->y_array == NULL)
@@ -1278,10 +1278,9 @@ bool cmdline_paste_reg(int regname, bool literally, bool remcr)
   for (size_t i = 0; i < reg->y_size; i++) {
     cmdline_paste_str(reg->y_array[i], literally);
 
-    // Insert ^M between lines and after last line if type is kMTLineWise.
-    // Don't do this when "remcr" is true.
-    if ((reg->y_type == kMTLineWise || i < reg->y_size - 1) && !remcr) {
-      cmdline_paste_str((char_u *)"\r", literally);
+    // Insert space between lines, unless `remspc` is true.
+    if (i < reg->y_size - 1 && !remspc) {
+      cmdline_paste_str((char_u *)" ", literally);
     }
 
     /* Check for CTRL-C, in case someone tries to paste a few thousand
