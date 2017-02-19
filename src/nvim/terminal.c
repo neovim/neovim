@@ -237,12 +237,16 @@ Terminal *terminal_open(TerminalOptions opts)
   rv->invalid_end = opts.height;
   refresh_screen(rv, curbuf);
   set_option_value((uint8_t *)"buftype", 0, (uint8_t *)"terminal", OPT_LOCAL);
+
   // some sane settings for terminal buffers
+  curbuf->b_p_ma = false;   // 'nomodifiable'
+  curbuf->b_p_ul = -1;      // disable undo
   set_option_value((uint8_t *)"wrap", false, NULL, OPT_LOCAL);
   set_option_value((uint8_t *)"number", false, NULL, OPT_LOCAL);
   set_option_value((uint8_t *)"relativenumber", false, NULL, OPT_LOCAL);
   buf_set_term_title(curbuf, (char *)curbuf->b_ffname);
   RESET_BINDING(curwin);
+
   // Apply TermOpen autocmds so the user can configure the terminal
   apply_autocmds(EVENT_TERMOPEN, NULL, NULL, false, curbuf);
 
@@ -958,7 +962,7 @@ static void refresh_terminal(Terminal *term)
   buf_T *buf = handle_get_buffer(term->buf_handle);
   bool valid = true;
   if (!buf || !(valid = buf_valid(buf))) {
-    // destroyed by `close_buffer`. Dont do anything else
+    // Destroyed by `close_buffer`. Do not do anything else.
     if (!valid) {
       term->buf_handle = 0;
     }
@@ -1039,7 +1043,7 @@ static void refresh_scrollback(Terminal *term, buf_T *buf)
   }
 }
 
-// Refresh the screen(visible part of the buffer when the terminal is
+// Refresh the screen (visible part of the buffer when the terminal is
 // focused) of a invalidated terminal
 static void refresh_screen(Terminal *term, buf_T *buf)
 {

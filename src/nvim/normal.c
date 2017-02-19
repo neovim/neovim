@@ -7435,12 +7435,10 @@ static void nv_edit(cmdarg_T *cap)
 
   /* in Visual mode and after an operator "a" and "i" are for text objects */
   else if ((cap->cmdchar == 'a' || cap->cmdchar == 'i')
-           && (cap->oap->op_type != OP_NOP
-               || VIsual_active
-               )) {
+           && (cap->oap->op_type != OP_NOP || VIsual_active)) {
     nv_object(cap);
-  } else if (!curbuf->b_p_ma && !p_im) {
-    /* Only give this error when 'insertmode' is off. */
+  } else if (!curbuf->b_p_ma && !p_im && !curbuf->terminal) {
+    // Only give this error when 'insertmode' is off.
     EMSG(_(e_modifiable));
     clearop(cap->oap);
   } else if (!checkclearopq(cap->oap)) {
