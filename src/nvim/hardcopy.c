@@ -845,12 +845,10 @@ static colnr_T hardcopy_line(prt_settings_T *psettings, int page_line, prt_pos_T
    * Loop over the columns until the end of the file line or right margin.
    */
   for (col = ppos->column; line[col] != NUL && !need_break; col += outputlen) {
-    outputlen = 1;
-    if (has_mbyte && (outputlen = (*mb_ptr2len)(line + col)) < 1)
+    if ((outputlen = (*mb_ptr2len)(line + col)) < 1) {
       outputlen = 1;
-    /*
-     * syntax highlighting stuff.
-     */
+    }
+    // syntax highlighting stuff.
     if (psettings->do_syntax) {
       id = syn_get_id(curwin, ppos->file_line, col, 1, NULL, FALSE);
       if (id > 0)
