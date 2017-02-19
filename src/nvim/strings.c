@@ -980,7 +980,6 @@ int vim_vsnprintf(char *str, size_t str_m, const char *fmt, va_list ap,
           const void *ptr_arg = NULL;
 
           if (fmt_spec == 'p') {
-            length_modifier = '\0';
             ptr_arg = tvs ? tv_ptr(tvs, &arg_idx) : va_arg(ap, void *);
             if (ptr_arg) {
               arg_sign = 1;
