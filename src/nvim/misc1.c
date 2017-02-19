@@ -1405,7 +1405,6 @@ void ins_char_bytes(char_u *buf, size_t charlen)
     coladvance_force(getviscol());
   }
 
-  int c = buf[0];
   size_t col = (size_t)curwin->w_cursor.col;
   linenr_T lnum = curwin->w_cursor.lnum;
   char_u *oldp = ml_get(lnum);
@@ -1498,10 +1497,7 @@ void ins_char_bytes(char_u *buf, size_t charlen)
       && msg_silent == 0
       && !ins_compl_active()
       ) {
-    if (has_mbyte)
-      showmatch(mb_ptr2char(buf));
-    else
-      showmatch(c);
+    showmatch(mb_ptr2char(buf));
   }
 
   if (!p_ri || (State & REPLACE_FLAG)) {
