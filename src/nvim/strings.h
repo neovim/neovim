@@ -1,6 +1,7 @@
 #ifndef NVIM_STRINGS_H
 #define NVIM_STRINGS_H
 
+#include <stdarg.h>
 #include <stdbool.h>
 #include <stddef.h>
 
