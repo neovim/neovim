@@ -1446,7 +1446,7 @@ static inline void buf_init_changedtick(buf_T *const buf)
   dictitem_T *const changedtick_di = dictitem_alloc((char_u *)"changedtick");
   // For some reason `islocked('b:changedtick')` should return 1. It does not
   // do so for other read-only variables which are normally VAR_FIXED.
-  changedtick_di->di_flags |= DI_FLAGS_LOCK|DI_FLAGS_FIX;
+  changedtick_di->di_flags |= DI_FLAGS_RO|DI_FLAGS_LOCK|DI_FLAGS_FIX;
   changedtick_di->di_tv = (typval_T) {
     .v_type = VAR_NUMBER,
     .v_lock = VAR_FIXED,

@@ -3,6 +3,7 @@ local helpers = require('test.functional.helpers')(after_each)
 local curbufmeths = helpers.curbufmeths
 local clear = helpers.clear
 local eq = helpers.eq
+local neq = helpers.neq
 local eval = helpers.eval
 local feed = helpers.feed
 local funcs = helpers.funcs
@@ -57,13 +58,13 @@ describe('b:changedtick', function()
     local ct = changedtick()
     local ctn = ct + 100500
     eq(0, exc_exec('let d = b:'))
-    eq('\nE742: Cannot change value of b:changedtick',
+    eq('\nE46: Cannot change read-only variable "b:changedtick"',
        redir_exec('let b:changedtick = ' .. ctn))
-    eq('\nE742: Cannot change value of b:["changedtick"] = ' .. ctn,
+    eq('\nE46: Cannot change read-only variable "b:["changedtick"] = '..ctn..'"',
        redir_exec('let b:["changedtick"] = ' .. ctn))
-    eq('\nE742: Cannot change value of b:.changedtick = ' .. ctn,
+    eq('\nE46: Cannot change read-only variable "b:.changedtick = '..ctn..'"',
        redir_exec('let b:.changedtick = ' .. ctn))
-    eq('\nE742: Cannot change value of d.changedtick = ' .. ctn,
+    eq('\nE46: Cannot change read-only variable "d.changedtick = '..ctn..'"',
        redir_exec('let d.changedtick = ' .. ctn))
     -- FIXME
     -- eq({fales, ''},
@@ -71,24 +72,29 @@ describe('b:changedtick', function()
 
     eq('\nE795: Cannot delete variable b:changedtick',
        redir_exec('unlet b:changedtick'))
-    -- FIXME
-    -- eq('\nE795: Cannot delete variable b:.changedtick',
-       -- redir_exec('unlet b:.changedtick'))
-    -- eq('\nE795: Cannot delete variable b:["changedtick"]',
-       -- redir_exec('unlet b:["changedtick"]'))
-    -- eq('\nE795: Cannot delete variable d.changedtick',
-       -- redir_exec('unlet d.changedtick'))
+    eq('\nE46: Cannot change read-only variable "b:.changedtick"',
+       redir_exec('unlet b:.changedtick'))
+    eq('\nE46: Cannot change read-only variable "b:["changedtick"]"',
+       redir_exec('unlet b:["changedtick"]'))
+    eq('\nE46: Cannot change read-only variable "d.changedtick"',
+       redir_exec('unlet d.changedtick'))
     -- FIXME
     -- eq({},
        -- {pcall(curbufmeths.del_var, 'changedtick')})
     eq(ct, changedtick())
 
-    eq('\nE742: Cannot change value of b:["changedtick"] += ' .. ctn,
+    eq('\nE46: Cannot change read-only variable "b:["changedtick"] += '..ctn..'"',
        redir_exec('let b:["changedtick"] += ' .. ctn))
-    eq('\nE742: Cannot change value of b:["changedtick"] -= ' .. ctn,
+    eq('\nE46: Cannot change read-only variable "b:["changedtick"] -= '..ctn..'"',
        redir_exec('let b:["changedtick"] -= ' .. ctn))
-    eq('\nE742: Cannot change value of b:["changedtick"] .= ' .. ctn,
+    eq('\nE46: Cannot change read-only variable "b:["changedtick"] .= '..ctn..'"',
        redir_exec('let b:["changedtick"] .= ' .. ctn))
+
+    eq(ct, changedtick())
+
+    funcs.setline(1, 'hello')
+
+    eq(ct + 1, changedtick())
   end)
   it('is listed in :let output', function()
     eq('\nb:changedtick         #2',
@@ -101,13 +107,13 @@ describe('b:changedtick', function()
     -- So test mostly checks that b:changedtick status does not change.
     eq(0, exc_exec('let d = b:'))
     eq(1, funcs.islocked('b:changedtick'))
-    eq(0, funcs.islocked('d.changedtick'))
+    neq(1, funcs.islocked('d.changedtick'))
     eq('\nE46: Cannot change read-only variable "b:changedtick"',
        redir_exec('unlockvar b:changedtick'))
-    eq('',
+    eq('\nE46: Cannot change read-only variable "d.changedtick"',
        redir_exec('unlockvar d.changedtick'))
     eq(1, funcs.islocked('b:changedtick'))
-    eq(0, funcs.islocked('d.changedtick'))
+    neq(1, funcs.islocked('d.changedtick'))
   end)
   it('is being completed', function()
     feed(':echo b:<Tab><Home>let cmdline="<End>"<CR>')
