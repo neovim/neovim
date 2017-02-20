@@ -208,15 +208,20 @@ g8			Print the hex values of the bytes used in the
 
 						  *:terminal* *:te*
 :te[rminal][!] {cmd}	Execute {cmd} with 'shell' in a |terminal-emulator|
-                        buffer.  Equivalent to: >
-			      :enew
-			      :call termopen('{cmd}')
-			      :startinsert
+			buffer.  Equivalent to: >
+				:enew
+				:call termopen('{cmd}')
+				:startinsert
 <
-                        See |jobstart()|.
+			See |jobstart()|.
 
-			To enter terminal mode automatically: >
-			      autocmd BufEnter term://* startinsert
+			To enter terminal mode automatically:
+>
+				augroup terminal_insert
+				    autocmd!
+				    autocmd BufEnter term://* startinsert
+				    autocmd BufLeave term://* stopinsert
+				augroup END
 <
 							*:!cmd* *:!* *E34*
 :!{cmd}			Execute {cmd} with 'shell'. See also |:terminal|.
