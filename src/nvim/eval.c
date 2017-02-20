@@ -2190,8 +2190,11 @@ get_lval (
         if (len == -1)
           clear_tv(&var1);
         break;
+      // existing variable, need to check if it can be changed
       } else if (var_check_ro(lp->ll_di->di_flags, name, false)) {
-        // existing variable, need to check if it can be changed
+        if (len == -1) {
+          clear_tv(&var1);
+        }
         return NULL;
       }
 
