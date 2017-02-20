@@ -95,17 +95,19 @@ describe('b:changedtick', function()
        redir_exec(':let b:'))
   end)
   it('fails to unlock b:changedtick', function()
+    -- Note:
+    -- - unlocking VAR_FIXED variables is not an error.
+    -- - neither VAR_FIXED variables are reported as locked by islocked().
+    -- So test mostly checks that b:changedtick status does not change.
     eq(0, exc_exec('let d = b:'))
     eq(1, funcs.islocked('b:changedtick'))
-    -- FIXME
-    -- eq(1, funcs.islocked('d.changedtick'))
+    eq(0, funcs.islocked('d.changedtick'))
     eq('\nE46: Cannot change read-only variable "b:changedtick"',
        redir_exec('unlockvar b:changedtick'))
-    -- FIXME
-    -- eq('\nE46: Cannot change read-only variable "b:changedtick"',
-       -- redir_exec('unlockvar d.changedtick'))
+    eq('',
+       redir_exec('unlockvar d.changedtick'))
     eq(1, funcs.islocked('b:changedtick'))
-    -- eq(1, funcs.islocked('d.changedtick'))
+    eq(0, funcs.islocked('d.changedtick'))
   end)
   it('is being completed', function()
     feed(':echo b:<Tab><Home>let cmdline="<End>"<CR>')

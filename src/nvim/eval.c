@@ -3112,68 +3112,71 @@ static int do_lock_var(lval_T *lp, char_u *name_end, int deep, int lock)
 static void item_lock(typval_T *tv, int deep, int lock)
 {
   static int recurse = 0;
-  list_T      *l;
-  listitem_T  *li;
-  dict_T      *d;
-  hashitem_T  *hi;
-  int todo;
 
   if (recurse >= DICT_MAXNEST) {
     EMSG(_("E743: variable nested too deep for (un)lock"));
     return;
   }
-  if (deep == 0)
+  if (deep == 0) {
     return;
-  ++recurse;
+  }
+  recurse++;
 
-  /* lock/unlock the item itself */
-  if (lock)
-    tv->v_lock |= VAR_LOCKED;
-  else
-    tv->v_lock &= ~VAR_LOCKED;
+  // lock/unlock the item itself
+#define CHANGE_LOCK(var, lock) \
+  do { \
+    var = ((VarLockStatus[]) { \
+      [VAR_UNLOCKED] = (lock ? VAR_LOCKED : VAR_UNLOCKED), \
+      [VAR_LOCKED] = (lock ? VAR_LOCKED : VAR_UNLOCKED), \
+      [VAR_FIXED] = VAR_FIXED, \
+    })[var]; \
+  } while (0)
+  CHANGE_LOCK(tv->v_lock, lock);
 
   switch (tv->v_type) {
-  case VAR_LIST:
-    if ((l = tv->vval.v_list) != NULL) {
-      if (lock)
-        l->lv_lock |= VAR_LOCKED;
-      else
-        l->lv_lock &= ~VAR_LOCKED;
-      if (deep < 0 || deep > 1)
-        /* recursive: lock/unlock the items the List contains */
-        for (li = l->lv_first; li != NULL; li = li->li_next)
-          item_lock(&li->li_tv, deep - 1, lock);
+    case VAR_LIST: {
+      list_T *const l = tv->vval.v_list;
+      if (l != NULL) {
+        CHANGE_LOCK(l->lv_lock, lock);
+        if (deep < 0 || deep > 1)
+          // Recursive: lock/unlock the items the List contains.
+          for (listitem_T *li = l->lv_first; li != NULL; li = li->li_next) {
+            item_lock(&li->li_tv, deep - 1, lock);
+          }
+      }
+      break;
     }
-    break;
-  case VAR_DICT:
-    if ((d = tv->vval.v_dict) != NULL) {
-      if (lock)
-        d->dv_lock |= VAR_LOCKED;
-      else
-        d->dv_lock &= ~VAR_LOCKED;
-      if (deep < 0 || deep > 1) {
-        /* recursive: lock/unlock the items the List contains */
-        todo = (int)d->dv_hashtab.ht_used;
-        for (hi = d->dv_hashtab.ht_array; todo > 0; ++hi) {
-          if (!HASHITEM_EMPTY(hi)) {
-            --todo;
-            item_lock(&HI2DI(hi)->di_tv, deep - 1, lock);
+    case VAR_DICT: {
+      dict_T *const d = tv->vval.v_dict;
+      if (d != NULL) {
+        CHANGE_LOCK(d->dv_lock, lock);
+        if (deep < 0 || deep > 1) {
+          // Recursive: lock/unlock the items the List contains.
+          int todo = (int)d->dv_hashtab.ht_used;
+          for (hashitem_T *hi = d->dv_hashtab.ht_array; todo > 0; hi++) {
+            if (!HASHITEM_EMPTY(hi)) {
+              todo--;
+              item_lock(&HI2DI(hi)->di_tv, deep - 1, lock);
+            }
           }
         }
       }
+      break;
     }
-    break;
-  case VAR_NUMBER:
-  case VAR_FLOAT:
-  case VAR_STRING:
-  case VAR_FUNC:
-  case VAR_PARTIAL:
-  case VAR_SPECIAL:
-    break;
-  case VAR_UNKNOWN:
-    assert(false);
+    case VAR_NUMBER:
+    case VAR_FLOAT:
+    case VAR_STRING:
+    case VAR_FUNC:
+    case VAR_PARTIAL:
+    case VAR_SPECIAL: {
+      break;
+    }
+    case VAR_UNKNOWN: {
+      assert(false);
+    }
   }
-  --recurse;
+#undef CHANGE_LOCK
+  recurse--;
 }
 
 /*
@@ -6350,7 +6353,7 @@ dict_T *dict_alloc(void) FUNC_ATTR_NONNULL_RET
   first_dict = d;
 
   hash_init(&d->dv_hashtab);
-  d->dv_lock = 0;
+  d->dv_lock = VAR_UNLOCKED;
   d->dv_scope = 0;
   d->dv_refcount = 0;
   d->dv_copyID = 0;
@@ -20293,7 +20296,7 @@ void new_script_vars(scid_T id)
 void init_var_dict(dict_T *dict, dictitem_T *dict_var, int scope)
 {
   hash_init(&dict->dv_hashtab);
-  dict->dv_lock = 0;
+  dict->dv_lock = VAR_UNLOCKED;
   dict->dv_scope = scope;
   dict->dv_refcount = DO_NOT_FREE_CNT;
   dict->dv_copyID = 0;
