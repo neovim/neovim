@@ -60,11 +60,11 @@ describe('b:changedtick', function()
     eq(0, exc_exec('let d = b:'))
     eq('\nE46: Cannot change read-only variable "b:changedtick"',
        redir_exec('let b:changedtick = ' .. ctn))
-    eq('\nE46: Cannot change read-only variable "b:["changedtick"] = '..ctn..'"',
+    eq('\nE46: Cannot change read-only variable "b:["changedtick"]"',
        redir_exec('let b:["changedtick"] = ' .. ctn))
-    eq('\nE46: Cannot change read-only variable "b:.changedtick = '..ctn..'"',
+    eq('\nE46: Cannot change read-only variable "b:.changedtick"',
        redir_exec('let b:.changedtick = ' .. ctn))
-    eq('\nE46: Cannot change read-only variable "d.changedtick = '..ctn..'"',
+    eq('\nE46: Cannot change read-only variable "d.changedtick"',
        redir_exec('let d.changedtick = ' .. ctn))
     -- FIXME
     -- eq({fales, ''},
@@ -83,11 +83,11 @@ describe('b:changedtick', function()
        -- {pcall(curbufmeths.del_var, 'changedtick')})
     eq(ct, changedtick())
 
-    eq('\nE46: Cannot change read-only variable "b:["changedtick"] += '..ctn..'"',
+    eq('\nE46: Cannot change read-only variable "b:["changedtick"]"',
        redir_exec('let b:["changedtick"] += ' .. ctn))
-    eq('\nE46: Cannot change read-only variable "b:["changedtick"] -= '..ctn..'"',
+    eq('\nE46: Cannot change read-only variable "b:["changedtick"]"',
        redir_exec('let b:["changedtick"] -= ' .. ctn))
-    eq('\nE46: Cannot change read-only variable "b:["changedtick"] .= '..ctn..'"',
+    eq('\nE46: Cannot change read-only variable "b:["changedtick"]"',
        redir_exec('let b:["changedtick"] .= ' .. ctn))
 
     eq(ct, changedtick())

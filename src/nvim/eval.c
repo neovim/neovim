@@ -1964,7 +1964,7 @@ ex_let_one (
  */
 static char_u *
 get_lval (
-    char_u *name,
+    char_u *const name,
     typval_T *rettv,
     lval_T *lp,
     int unlet,
@@ -2192,7 +2192,7 @@ get_lval (
         break;
       // existing variable, need to check if it can be changed
       } else if (var_check_ro(lp->ll_di->di_flags, (const char *)name,
-                              STRLEN(name))) {
+                              (size_t)(p - name))) {
         if (len == -1) {
           clear_tv(&var1);
         }
@@ -20493,8 +20493,8 @@ set_var (
 
   if (v != NULL) {
     // existing variable, need to clear the value
-    if (var_check_ro(v->di_flags, (const char *)name, STRLEN(name))
-        || tv_check_lock(v->di_tv.v_lock, (const char *)name, STRLEN(name))) {
+    if (var_check_ro(v->di_flags, (const char *)name, name_len)
+        || tv_check_lock(v->di_tv.v_lock, (const char *)name, name_len)) {
       return;
     }
 
