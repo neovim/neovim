@@ -217,6 +217,7 @@ g8			Print the hex values of the bytes used in the
 
 			To enter terminal mode automatically: >
 			      autocmd BufEnter term://* startinsert
+			      autocmd BufLeave term://* stopinsert
 <
 							*:!cmd* *:!* *E34*
 :!{cmd}			Execute {cmd} with 'shell'. See also |:terminal|.

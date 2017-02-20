@@ -46,11 +46,17 @@ function! man#open_page(count, count1, mods, ...) abort
 
   call s:push_tag()
   let bufname = 'man://'.name.(empty(sect)?'':'('.sect.')')
-  if a:mods !~# 'tab' && s:find_man()
-    noautocmd execute 'silent edit' fnameescape(bufname)
-  else
-    noautocmd execute 'silent' a:mods 'split' fnameescape(bufname)
-  endif
+
+  try
+    set eventignore+=BufReadCmd
+    if a:mods !~# 'tab' && s:find_man()
+      execute 'silent edit' fnameescape(bufname)
+    else
+      execute 'silent' a:mods 'split' fnameescape(bufname)
+    endif
+  finally
+    set eventignore-=BufReadCmd
+  endtry
 
   try
     let page = s:get_page(path)
@@ -70,12 +76,13 @@ endfunction
 function! man#read_page(ref) abort
   try
     let [sect, name] = man#extract_sect_and_name_ref(a:ref)
-    let [b:man_sect, name, path] = s:verify_exists(sect, name)
+    let [sect, name, path] = s:verify_exists(sect, name)
     let page = s:get_page(path)
   catch
     " call to s:error() is unnecessary
     return
   endtry
+  let b:man_sect = sect
   call s:put_page(page)
 endfunction
 
