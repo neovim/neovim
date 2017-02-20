@@ -482,4 +482,24 @@ func Test_completion_ctrl_e_without_autowrap()
   q!
 endfunc
 
+func CompleteUndo() abort
+  call complete(1, g:months)
+  return ''
+endfunc
+
+func Test_completion_can_undo()
+  inoremap <Right> <c-r>=CompleteUndo()<cr>
+  set completeopt+=noinsert,noselect
+
+  new
+  call feedkeys("a\<Right>a\<Esc>", 'xt')
+  call assert_equal('a', getline(1))
+  undo
+  call assert_equal('', getline(1))
+
+  bwipe!
+  set completeopt&
+  iunmap <Right>
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

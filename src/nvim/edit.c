@@ -3001,6 +3001,9 @@ static void ins_compl_addleader(int c)
 {
   int cc;
 
+  if (stop_arrow() == FAIL) {
+        return;
+  }
   if (has_mbyte && (cc = (*mb_char2len)(c)) > 1) {
     char_u buf[MB_MAXBYTES + 1];
 
