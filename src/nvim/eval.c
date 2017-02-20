@@ -170,6 +170,8 @@ static char *e_letwrong = N_("E734: Wrong variable type for %s=");
 static char *e_nofunc = N_("E130: Unknown function: %s");
 static char *e_illvar = N_("E461: Illegal variable name: %s");
 static char *e_float_as_string = N_("E806: using Float as a String");
+static const char *e_readonlyvar = N_(
+        "E46: Cannot change read-only variable \"%.*s\"");
 
 static char_u * const empty_string = (char_u *)"";
 static char_u * const namespace_char = (char_u *)"abglstvw";
@@ -3057,29 +3059,33 @@ int do_unlet(char_u *name, int forceit)
 static int do_lock_var(lval_T *lp, char_u *name_end, int deep, int lock)
 {
   int ret = OK;
-  int cc;
-  dictitem_T  *di;
 
-  if (deep == 0)        /* nothing to do */
+  if (deep == 0) {  // Nothing to do.
     return OK;
+  }
 
   if (lp->ll_tv == NULL) {
-    cc = *name_end;
-    *name_end = NUL;
-
     // Normal name or expanded name.
-    di = find_var((const char *)lp->ll_name, STRLEN(lp->ll_name), NULL, true);
+    const size_t name_len = (size_t)(name_end - lp->ll_name);
+    dictitem_T *const di = find_var(
+        (const char *)lp->ll_name, name_len, NULL,
+        true);
     if (di == NULL) {
       ret = FAIL;
     } else {
-      if (lock) {
+      if ((di->di_flags & (DI_FLAGS_LOCK|DI_FLAGS_FIX))
+          == (DI_FLAGS_LOCK|DI_FLAGS_FIX)) {
+        // Locked and fixed: do not alter lock, but issue an error.
+        // Provides compatibility with former `unlockvar b:changedtick`
+        // behaviour.
+        emsgf(_(e_readonlyvar), (int)name_len, lp->ll_name);
+      } else if (lock) {
         di->di_flags |= DI_FLAGS_LOCK;
       } else {
         di->di_flags &= ~DI_FLAGS_LOCK;
       }
       item_lock(&di->di_tv, deep, lock);
     }
-    *name_end = cc;
   } else if (lp->ll_range) {
     listitem_T    *li = lp->ll_li;
 
@@ -20542,7 +20548,9 @@ set_var (
 static bool var_check_ro(int flags, char_u *name, bool use_gettext)
 {
   if (flags & DI_FLAGS_RO) {
-    EMSG2(_(e_readonlyvar), use_gettext ? (char_u *)_(name) : name);
+    const char_u *const name_translated = (
+        use_gettext ? (char_u *)_(name) : name);
+    emsgf(_(e_readonlyvar), (int)STRLEN(name_translated), name_translated);
     return true;
   }
   if ((flags & DI_FLAGS_RO_SBX) && sandbox) {

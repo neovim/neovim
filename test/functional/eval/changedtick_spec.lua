@@ -95,8 +95,17 @@ describe('b:changedtick', function()
        redir_exec(':let b:'))
   end)
   it('fails to unlock b:changedtick', function()
+    eq(0, exc_exec('let d = b:'))
+    eq(1, funcs.islocked('b:changedtick'))
     -- FIXME
-    -- eq('\nE', redir_exec('unlockvar b:changedtick'))
+    -- eq(1, funcs.islocked('d.changedtick'))
+    eq('\nE46: Cannot change read-only variable "b:changedtick"',
+       redir_exec('unlockvar b:changedtick'))
+    -- FIXME
+    -- eq('\nE46: Cannot change read-only variable "b:changedtick"',
+       -- redir_exec('unlockvar d.changedtick'))
+    eq(1, funcs.islocked('b:changedtick'))
+    -- eq(1, funcs.islocked('d.changedtick'))
   end)
   it('is being completed', function()
     feed(':echo b:<Tab><Home>let cmdline="<End>"<CR>')
