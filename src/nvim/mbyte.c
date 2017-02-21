@@ -606,20 +606,25 @@ int utf_char2cells(int c)
 }
 
 /// Return the number of display cells character at "*p" occupies.
-/// This doesn't take care of unprintable characters, use ptr2cells() for that.
+/// @warn This doesn't take care of unprintable characters, use ptr2cells() for that.
+/// @see ptr2cells
 int utf_ptr2cells(const char_u *p)
 {
   int c;
 
   /* Need to convert to a wide character. */
   if (*p >= 0x80) {
+    ILOG("Converting to wide char %s", p);
     c = utf_ptr2char(p);
     /* An illegal byte is displayed as <xx>. */
     if (utf_ptr2len(p) == 1 || c == NUL)
       return 4;
     /* If the char is ASCII it must be an overlong sequence. */
-    if (c < 0x80)
+    if (c < 0x80) {
       return char2cells(c);
+    }
+
+    ILOG("utf_char2cells %d", c);
     return utf_char2cells(c);
   }
   return 1;

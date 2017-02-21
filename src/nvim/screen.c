@@ -158,20 +158,22 @@ long tab_page_click_defs_size = 0;
 
 
 // offset remain global
-struct screen_line {
+// concat portions of text
+struct kScreenLine {
     /* ScreenLines[off - 1] = ' '; */
     /* ScreenAttrs[off - 1] = 0; */
     /* /1* if (l_enc_utf8) { *1/ */
     /* ScreenLinesUC[off - 1] = 0; */
     /* ScreenLinesC[0][off - 1] = 0; */
-
- schar_T  *screenLines ;
- sattr_T  *screenAttrs ;
+ schar_T  *lines ;  /* ScreenLines */
+ sattr_T  *attrs ; //!< ScreenAttrs
+u8char_T *linesUC; //!< ScreenLinesUC
+u8char_T *linesC[MAX_MCO]; //!< ScreenLinesC
  unsigned *lineOffset ;
  char_u   *lineWraps ;        /* line wraps to next line */
 
-bool wrap;
 };
+// TODO fill other array
 
 /*
  * Redraw the current window later, with update_screen(type).
@@ -2648,7 +2650,7 @@ win_line (
     // Need to get the line again, a multi-line regexp may have made it
     // invalid.
     line = ml_get_buf(wp->w_buffer, lnum, false);
-    ptr = line + v;
+    ptr = line + v; // points to 
 
     if (shl->lnum != 0 && shl->lnum <= lnum) {
       if (shl->lnum == lnum) {
@@ -2785,11 +2787,10 @@ win_line (
                       /* screen_puts_len(p_extra, 1, Rows, col, char_attr); */
                       // Does not take into account cell !
                       STRNCAT(extra, p_extra, sizeof(extra));
-                      if ( symbol_clen > 1) {
-                        //! adds a space after
-                        STRNCAT(extra, " ", sizeof(extra));
-
-                      }
+                      // if ( symbol_clen > 1) {
+                      //   //! adds a space after
+                      //   STRNCAT(extra, " ", sizeof(extra));
+                      // }
                       ILOG("extra after=%s", extra);
                       used_cells += symbol_clen;
                     }
@@ -2933,7 +2934,7 @@ win_line (
         } else
           char_attr = 0;
       }
-    }
+    } // if (draw_state != WL_LINE)
 
     /* When still displaying '$' of change command, stop at cursor */
     if (dollar_vcol >= 0 && wp == curwin
@@ -3104,7 +3105,7 @@ win_line (
         else
           char_attr = 0;
       }
-    }
+    } //     if (draw_state == WL_LINE && area_highlighting) 
 
     /*
      * Get the next character to put on the screen.
@@ -3177,7 +3178,7 @@ win_line (
         ++p_extra;
       }
       --n_extra;
-    } else {
+    } else { // if (n_extra > 0)
       if (p_extra_free != NULL) {
         xfree(p_extra_free);
         p_extra_free = NULL;
@@ -3782,7 +3783,7 @@ win_line (
         prev_syntax_id = 0;
         is_concealing = FALSE;
       }
-    }
+    } // else
 
     /* In the cursor line and we may be concealing characters: correct
      * the cursor column when we reach its position. */
@@ -3931,9 +3932,9 @@ win_line (
       }
     }
 
-    /*
-     * At end of the text line.
-     */
+  /********************************
+  * At end of the text line.
+  */
     if (c == NUL) {
       if (eol_hl_off > 0 && vcol - eol_hl_off == (long)wp->w_virtcol
           && lnum == wp->w_cursor.lnum) {
@@ -3971,13 +3972,17 @@ win_line (
         int rightmost_vcol = 0;
         int i;
 
-        if (wp->w_p_cuc)
+        if (wp->w_p_cuc) {
           rightmost_vcol = wp->w_virtcol;
-        if (draw_color_col)
+        }
+        if (draw_color_col) {
           /* determine rightmost colorcolumn to possibly draw */
-          for (i = 0; color_cols[i] >= 0; ++i)
-            if (rightmost_vcol < color_cols[i])
+          for (i = 0; color_cols[i] >= 0; ++i) {
+            if (rightmost_vcol < color_cols[i]) {
               rightmost_vcol = color_cols[i];
+            }
+          }
+        }
 
         while (col < wp->w_width) {
           ScreenLines[off] = ' ';
@@ -4000,7 +4005,7 @@ win_line (
 
           ++vcol;
         }
-      }
+      } // ends drawing virtual cursorcolumns
 
       if (wp->w_buffer->terminal) {
         // terminal buffers may need to highlight beyond the end of the
@@ -4029,7 +4034,7 @@ win_line (
       }
 
       break;
-    }
+    } // c == NUL
 
     /* line continues beyond line end */
     if (lcs_ext
@@ -4205,8 +4210,9 @@ win_line (
         }
       }
 
-    } else
+    } else {
       --n_skip;
+    }
 
     /* Only advance the "vcol" when after the 'number' or 'relativenumber'
      * column. */
@@ -4313,7 +4319,7 @@ win_line (
           /* force a redraw of the first char on the next line */
           ScreenAttrs[LineOffset[screen_row]] = (sattr_T)-1;
         }
-      }
+      } // line wraps
 
       col = 0;
       off = (unsigned)(current_ScreenLine - ScreenLines);
@@ -5364,6 +5370,37 @@ void screen_puts(char_u *text, int row, int col, int attr)
  * a NUL.
  */
 // TODO shouldreturn number of cells or newcol ?
+
+// void screen_puts_len(char_u *text, int textlen, int row, int col, int attr)
+// {
+//   if (ScreenLines == NULL || row >= screen_Rows)        /* safety check */
+//     return;
+//   off = LineOffset[row] + col;
+
+//   struct kScreenLine line= {
+//     .screenLines = &ScreenLines[row];
+//  .screenAttrs = &ScreenAttrs[];
+// .linesUC ScreenLinesUC;
+// // .linesC = 
+//  // unsigned *lineOffset ;
+//   };
+
+//   // TODO move that to 
+//   off = LineOffset[row] + col;
+//   line_puts_len();
+// }
+// void line_puts_len(char_u *text, int textlen, int row, int col, int attr)
+// {
+
+// }
+
+/**
+  *
+  * param[in,out] line
+  * max_len ?
+  todo return part that could not be added ?
+  */
+// void line_puts_len(kScreenLine *line, char_u *text, int textlen, int attr)
 void screen_puts_len(char_u *text, int textlen, int row, int col, int attr)
 {
   unsigned off;

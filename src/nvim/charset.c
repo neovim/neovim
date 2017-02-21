@@ -633,7 +633,7 @@ int char2cells(int c)
 /// @param p
 ///
 /// @return number of display cells.
-int ptr2cells(char_u *p)
+int ptr2cells(const char_u *p)
 {
   // For UTF-8 we need to look at more bytes if the first byte is >= 0x80.
   if (*p >= 0x80) {

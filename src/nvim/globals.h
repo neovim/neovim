@@ -117,14 +117,17 @@ typedef unsigned short sattr_T;
  * It is a single block of characters, the size of the screen plus one line.
  * The attributes for those characters are kept in ScreenAttrs[].
  *
- * "LineOffset[n]" is the offset from ScreenLines[] for the start of line 'n'.
- * The same value is used for ScreenLinesUC[] and ScreenAttrs[].
  *
  * Note: before the screen is initialized and when out of memory these can be
  * NULL.
  */
 EXTERN schar_T  *ScreenLines INIT(= NULL);
 EXTERN sattr_T  *ScreenAttrs INIT(= NULL);
+
+
+/** "LineOffset[n]" is the offset from ScreenLines[] for the start of line 'n'.
+ * The same value is used for ScreenLinesUC[] and ScreenAttrs[].
+ */
 EXTERN unsigned *LineOffset INIT(= NULL);
 EXTERN char_u   *LineWraps INIT(= NULL);        /* line wraps to next line */
 
