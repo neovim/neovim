@@ -634,8 +634,8 @@ void op_reindent(oparg_T *oap, Indenter how)
    * there is no change still need to remove the Visual highlighting. */
   if (last_changed != 0)
     changed_lines(first_changed, 0,
-        oap->is_VIsual ? start_lnum + oap->line_count :
-        last_changed + 1, 0L, true);
+                  oap->is_VIsual ? start_lnum + oap->line_count :
+                  last_changed + 1, 0L, true);
   else if (oap->is_VIsual)
     redraw_curbuf_later(INVERTED);
 
@@ -1876,7 +1876,7 @@ void op_tilde(oparg_T *oap)
       }
     if (did_change) {
       changed_lines(oap->start.lnum, oap->start.col, oap->end.lnum + 1,
-          0L, true);
+                    0L, true);
     }
   }
 
@@ -3671,7 +3671,7 @@ int do_join(size_t count,
   /* Only report the change in the first line here, del_lines() will report
    * the deleted line. */
   changed_lines(curwin->w_cursor.lnum, currsize,
-      curwin->w_cursor.lnum + 1, 0L, true);
+                curwin->w_cursor.lnum + 1, 0L, true);
 
   /*
    * Delete following lines. To do this we move the cursor there

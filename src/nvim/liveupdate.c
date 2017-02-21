@@ -6,7 +6,8 @@
 // Register a channel. Return True if the channel was added, or already added.
 // Return False if the channel couldn't be added because the buffer is
 // unloaded.
-bool liveupdate_register(buf_T *buf, uint64_t channel_id) {
+bool liveupdate_register(buf_T *buf, uint64_t channel_id)
+{
   // must fail if the buffer isn't loaded
   if (buf->b_ml.ml_mfp == NULL) {
     return false;
@@ -57,7 +58,8 @@ bool liveupdate_register(buf_T *buf, uint64_t channel_id) {
   return true;
 }
 
-void liveupdate_send_end(buf_T *buf, uint64_t channelid) {
+void liveupdate_send_end(buf_T *buf, uint64_t channelid)
+{
     Array args = ARRAY_DICT_INIT;
     args.size = 1;
     args.items = xcalloc(sizeof(Object), args.size);
@@ -65,7 +67,8 @@ void liveupdate_send_end(buf_T *buf, uint64_t channelid) {
     channel_send_event(channelid, "LiveUpdateEnd", args);
 }
 
-void liveupdate_unregister(buf_T *buf, uint64_t channelid) {
+void liveupdate_unregister(buf_T *buf, uint64_t channelid)
+{
   size_t size = kv_size(buf->liveupdate_channels);
   if (!size) {
     return;
@@ -96,7 +99,8 @@ void liveupdate_unregister(buf_T *buf, uint64_t channelid) {
   }
 }
 
-void liveupdate_unregister_all(buf_T *buf) {
+void liveupdate_unregister_all(buf_T *buf)
+{
   size_t size = kv_size(buf->liveupdate_channels);
   if (size) {
     for (size_t i = 0; i < size; i++) {
@@ -108,7 +112,8 @@ void liveupdate_unregister_all(buf_T *buf) {
 }
 
 void liveupdate_send_changes(buf_T *buf, linenr_T firstline, int64_t num_added,
-                             int64_t num_removed, bool send_tick) {
+                             int64_t num_removed, bool send_tick)
+{
   // if one the channels doesn't work, put its ID here so we can remove it later
   uint64_t badchannelid = 0;
 
@@ -167,7 +172,8 @@ void liveupdate_send_changes(buf_T *buf, linenr_T firstline, int64_t num_added,
   }
 }
 
-void liveupdate_send_tick(buf_T *buf) {
+void liveupdate_send_tick(buf_T *buf)
+{
   // notify each of the active channels
   for (size_t i = 0; i < kv_size(buf->liveupdate_channels); i++) {
     uint64_t channelid = kv_A(buf->liveupdate_channels, i);

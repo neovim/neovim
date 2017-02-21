@@ -835,7 +835,7 @@ open_line (
       saved_line = NULL;
       if (did_append) {
         changed_lines(curwin->w_cursor.lnum, curwin->w_cursor.col,
-            curwin->w_cursor.lnum + 1, 1L, true);
+                      curwin->w_cursor.lnum + 1, 1L, true);
         did_append = FALSE;
 
         /* Move marks after the line break to the new line. */

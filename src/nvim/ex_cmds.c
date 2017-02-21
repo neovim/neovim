@@ -3161,7 +3161,8 @@ static char_u *sub_parse_flags(char_u *cmd, subflags_T *subflags,
 /// The usual escapes are supported as described in the regexp docs.
 ///
 /// @return buffer used for 'inccommand' preview
-static buf_T *do_sub(exarg_T *eap, proftime_T timeout, bool send_liveupdate_changedtick)
+static buf_T *do_sub(exarg_T *eap, proftime_T timeout,
+                     bool send_liveupdate_changedtick)
 {
   long i = 0;
   regmmatch_T regmatch;
