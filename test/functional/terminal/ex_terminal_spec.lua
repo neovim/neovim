@@ -36,6 +36,18 @@ describe(':terminal', function()
     ]])
   end)
 
+  it("in normal-mode :split does not move cursor", function()
+    execute([[terminal while true; do echo foo; sleep .1; done]])
+    helpers.feed([[<C-\><C-N>M]])  -- move cursor away from last line
+    wait()
+    eq(3, eval("line('$')"))  -- window height
+    eq(2, eval("line('.')"))  -- cursor is in the middle
+    execute('vsplit')
+    eq(2, eval("line('.')"))  -- cursor stays where we put it
+    execute('split')
+    eq(2, eval("line('.')"))  -- cursor stays where we put it
+  end)
+
 end)
 
 describe(':terminal (with fake shell)', function()

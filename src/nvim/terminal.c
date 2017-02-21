@@ -370,8 +370,7 @@ void terminal_enter(void)
   State = TERM_FOCUS;
   mapped_ctrl_c |= TERM_FOCUS;  // Always map CTRL-C to avoid interrupt.
   RedrawingDisabled = false;
-  // go to the bottom when the terminal is focused
-  adjust_topline(s->term, buf, false);
+  adjust_topline(s->term, buf, 0);  // scroll to end
   // erase the unfocused cursor
   invalidate_terminal(s->term, s->term->cursor.row, s->term->cursor.row + 1);
   showmode();
@@ -966,14 +965,15 @@ static void refresh_terminal(Terminal *term)
     }
     return;
   }
-  bool pending_resize = term->pending_resize;
+  long ml_before = buf->b_ml.ml_line_count;
   WITH_BUFFER(buf, {
     refresh_size(term, buf);
     refresh_scrollback(term, buf);
     refresh_screen(term, buf);
     redraw_buf_later(buf, NOT_VALID);
   });
-  adjust_topline(term, buf, pending_resize);
+  long ml_added = buf->b_ml.ml_line_count - ml_before;
+  adjust_topline(term, buf, ml_added);
 }
 // Calls refresh_terminal() on all invalidated_terminals.
 static void refresh_timer_cb(TimeWatcher *watcher, void *data)
@@ -1153,21 +1153,21 @@ static void redraw(bool restore_cursor)
   ui_flush();
 }
 
-static void adjust_topline(Terminal *term, buf_T *buf, bool force)
+static void adjust_topline(Terminal *term, buf_T *buf, long added)
 {
   int height, width;
   vterm_get_size(term->vt, &height, &width);
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     if (wp->w_buffer == buf) {
-      // for every window that displays a terminal, ensure the cursor is in a
-      // valid line
-      wp->w_cursor.lnum = MIN(wp->w_cursor.lnum, buf->b_ml.ml_line_count);
-      if (force || curbuf != buf || is_focused(term)) {
-        // if the terminal is not in the current window or if it's focused,
-        // adjust topline/cursor so the window will "follow" the terminal
-        // output
-        wp->w_cursor.lnum = buf->b_ml.ml_line_count;
+      linenr_T ml_end = buf->b_ml.ml_line_count;
+      bool following = ml_end == wp->w_cursor.lnum + added;  // cursor at end?
+      if (following || (wp == curwin && is_focused(term))) {
+        // "Follow" the terminal output
+        wp->w_cursor.lnum = ml_end;
         set_topline(wp, MAX(wp->w_cursor.lnum - height + 1, 1));
+      } else {
+        // Ensure valid cursor for each window displaying this terminal.
+        wp->w_cursor.lnum = MIN(wp->w_cursor.lnum, ml_end);
       }
     }
   }

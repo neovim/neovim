@@ -38,7 +38,8 @@ describe(':edit term://*', function()
     meths.set_option('shellcmdflag', 'REP ' .. rep)
     local rep_size = rep:byte()  -- 'a' => 97
     local sb = 10
-    command('autocmd TermOpen * :setlocal scrollback='..tostring(sb))
+    command('autocmd TermOpen * :setlocal scrollback='..tostring(sb)
+            ..'|call feedkeys("G", "n")')
     command('edit term://foobar')
 
     local bufcontents = {}
