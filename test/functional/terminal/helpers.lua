@@ -37,7 +37,6 @@ local default_command = '["'..nvim_dir..'/tty-test'..'"]'
 local function screen_setup(extra_height, command)
   nvim('command', 'highlight TermCursor cterm=reverse')
   nvim('command', 'highlight TermCursorNC ctermbg=11')
-  nvim('set_var', 'terminal_scrollback_buffer_size', 10)
   if not extra_height then extra_height = 0 end
   if not command then command = default_command end
   local screen = Screen.new(50, 7 + extra_height)
@@ -58,7 +57,9 @@ local function screen_setup(extra_height, command)
   -- tty-test puts the terminal into raw mode and echoes all input. tests are
   -- done by feeding it with terminfo codes to control the display and
   -- verifying output with screen:expect.
-  execute('enew | call termopen('..command..') | startinsert')
+  execute('enew | call termopen('..command..')')
+  execute('setlocal scrollback=10')
+  execute('startinsert')
   if command == default_command then
     -- wait for "tty ready" to be printed before each test or the terminal may
     -- still be in canonical mode(will echo characters for example)

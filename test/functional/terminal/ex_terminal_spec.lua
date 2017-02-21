@@ -20,22 +20,18 @@ describe(':terminal', function()
     source([[
       echomsg "msg1"
       echomsg "msg2"
+      echomsg "msg3"
     ]])
     -- Invoke a command that emits frequent terminal activity.
     execute([[terminal while true; do echo X; done]])
     helpers.feed([[<C-\><C-N>]])
-    screen:expect([[
-      X                                                 |
-      X                                                 |
-      ^X                                                 |
-                                                        |
-    ]])
+    wait()
     helpers.sleep(10)  -- Let some terminal activity happen.
     execute("messages")
     screen:expect([[
-      X                                                 |
       msg1                                              |
       msg2                                              |
+      msg3                                              |
       Press ENTER or type command to continue^           |
     ]])
   end)

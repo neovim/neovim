@@ -207,23 +207,15 @@ g8			Print the hex values of the bytes used in the
 :sh[ell]		Removed. |vim-differences| {Nvim}
 
 						  *:terminal* *:te*
-:te[rminal][!] {cmd}	Spawns {cmd} using the current value of 'shell' and
-			'shellcmdflag' in a new terminal buffer.  This is
-			equivalent to: >
-
+:te[rminal][!] {cmd}	Execute {cmd} with 'shell' in a |terminal-emulator|
+                        buffer.  Equivalent to: >
 			      :enew
 			      :call termopen('{cmd}')
 			      :startinsert
 <
-			If no {cmd} is given, 'shellcmdflag' will not be sent
-			to |termopen()|.
+                        See |jobstart()|.
 
-			Like |:enew|, it will fail if the current buffer is
-			modified, but can be forced with "!".  See |termopen()|
-			and |terminal-emulator|.
-
-			To switch to terminal mode automatically:
->
+			To enter terminal mode automatically: >
 			      autocmd BufEnter term://* startinsert
 <
 							*:!cmd* *:!* *E34*

@@ -4949,9 +4949,15 @@ A jump table for the options with a short description can be found at |Q_op|.
 	be used as the new value for 'scroll'.  Reset to half the window
 	height with ":set scroll=0".
 
-			*'scrollback'* *'scbk'* *'noscrollback'* *'noscbk'*
-'scrollback' 'scbk'	boolean  (default: 1000)
-			global or local to buffer |global-local|
+						*'scrollback'* *'scbk'*
+'scrollback' 'scbk'	number	(default: 1000
+				 in normal buffers: -1)
+			local to buffer
+	Maximum number of lines kept beyond the visible screen. Lines at the
+	top are deleted if new lines exceed this limit.
+	Only in |terminal-emulator| buffers. 'buftype'
+	-1 means "unlimited" for normal buffers, 100000 otherwise.
+	Minimum is 1.
 
 			*'scrollbind'* *'scb'* *'noscrollbind'* *'noscb'*
 'scrollbind' 'scb'	boolean  (default off)

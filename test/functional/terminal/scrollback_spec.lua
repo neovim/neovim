@@ -3,7 +3,11 @@ local helpers = require('test.functional.helpers')(after_each)
 local thelpers = require('test.functional.terminal.helpers')
 local clear, eq, curbuf = helpers.clear, helpers.eq, helpers.curbuf
 local feed, nvim_dir, execute = helpers.feed, helpers.nvim_dir, helpers.execute
+local eval = helpers.eval
+local command = helpers.command
 local wait = helpers.wait
+local retry = helpers.retry
+local curbufmeths = helpers.curbufmeths
 local feed_data = thelpers.feed_data
 
 if helpers.pending_win32(pending) then return end
@@ -20,7 +24,7 @@ describe('terminal scrollback', function()
     screen:detach()
   end)
 
-  describe('when the limit is crossed', function()
+  describe('when the limit is exceeded', function()
     before_each(function()
       local lines = {}
       for i = 1, 30 do
@@ -359,3 +363,88 @@ describe('terminal prints more lines than the screen height and exits', function
   end)
 end)
 
+describe("'scrollback' option", function()
+  before_each(function()
+    clear()
+  end)
+
+  local function expect_lines(expected)
+    local actual = eval("line('$')")
+    if expected ~= actual then
+    error('expected: '..expected..', actual: '..tostring(actual))
+    end
+  end
+
+  it('set to 0 behaves as 1', function()
+    local screen = thelpers.screen_setup(nil, "['sh']", 30)
+
+    curbufmeths.set_option('scrollback', 0)
+    feed_data('for i in $(seq 1 30); do echo "line$i"; done\n')
+    screen:expect('line30                        ', nil, nil, nil, true)
+    retry(nil, nil, function() expect_lines(7) end)
+
+    screen:detach()
+  end)
+
+  it('deletes lines (only) if necessary', function()
+    local screen = thelpers.screen_setup(nil, "['sh']", 30)
+
+    curbufmeths.set_option('scrollback', 200)
+
+    -- Wait for prompt.
+    screen:expect('$', nil, nil, nil, true)
+
+    wait()
+    feed_data('for i in $(seq 1 30); do echo "line$i"; done\n')
+
+    screen:expect('line30                        ', nil, nil, nil, true)
+
+    retry(nil, nil, function() expect_lines(33) end)
+    curbufmeths.set_option('scrollback', 10)
+    wait()
+    retry(nil, nil, function() expect_lines(16) end)
+    curbufmeths.set_option('scrollback', 10000)
+    eq(16, eval("line('$')"))
+    -- Terminal job data is received asynchronously, may happen before the
+    -- 'scrollback' option is synchronized with the internal sb_buffer.
+    command('sleep 100m')
+    feed_data('for i in $(seq 1 40); do echo "line$i"; done\n')
+
+    screen:expect('line40                        ', nil, nil, nil, true)
+
+    retry(nil, nil, function() expect_lines(58) end)
+    -- Verify off-screen state
+    eq('line35', eval("getline(line('w0') - 1)"))
+    eq('line26', eval("getline(line('w0') - 10)"))
+
+    screen:detach()
+  end)
+
+  it('defaults to 1000', function()
+    execute('terminal')
+    eq(1000, curbufmeths.get_option('scrollback'))
+  end)
+
+  it('error if set to invalid values', function()
+    local status, rv = pcall(command, 'set scrollback=-2')
+    eq(false, status)  -- assert failure
+    eq('E474:', string.match(rv, "E%d*:"))
+
+    status, rv = pcall(command, 'set scrollback=100001')
+    eq(false, status)  -- assert failure
+    eq('E474:', string.match(rv, "E%d*:"))
+  end)
+
+  it('defaults to -1 on normal buffers', function()
+    execute('new')
+    eq(-1, curbufmeths.get_option('scrollback'))
+  end)
+
+  it('error if set on a normal buffer', function()
+    command('new')
+    execute('set scrollback=42')
+    feed('<CR>')
+    eq('E474:', string.match(eval("v:errmsg"), "E%d*:"))
+  end)
+
+end)

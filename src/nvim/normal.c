@@ -7420,22 +7420,20 @@ static void nv_esc(cmdarg_T *cap)
     restart_edit = 'a';
 }
 
-/*
- * Handle "A", "a", "I", "i" and <Insert> commands.
- */
+/// Handle "A", "a", "I", "i" and <Insert> commands.
 static void nv_edit(cmdarg_T *cap)
 {
-  /* <Insert> is equal to "i" */
-  if (cap->cmdchar == K_INS || cap->cmdchar == K_KINS)
+  // <Insert> is equal to "i"
+  if (cap->cmdchar == K_INS || cap->cmdchar == K_KINS) {
     cap->cmdchar = 'i';
+  }
 
-  /* in Visual mode "A" and "I" are an operator */
-  if (VIsual_active && (cap->cmdchar == 'A' || cap->cmdchar == 'I'))
+  // in Visual mode "A" and "I" are an operator
+  if (VIsual_active && (cap->cmdchar == 'A' || cap->cmdchar == 'I')) {
     v_visop(cap);
-
-  /* in Visual mode and after an operator "a" and "i" are for text objects */
-  else if ((cap->cmdchar == 'a' || cap->cmdchar == 'i')
-           && (cap->oap->op_type != OP_NOP || VIsual_active)) {
+  // in Visual mode and after an operator "a" and "i" are for text objects
+  } else if ((cap->cmdchar == 'a' || cap->cmdchar == 'i')
+             && (cap->oap->op_type != OP_NOP || VIsual_active)) {
     nv_object(cap);
   } else if (!curbuf->b_p_ma && !p_im && !curbuf->terminal) {
     // Only give this error when 'insertmode' is off.

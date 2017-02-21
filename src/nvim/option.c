@@ -3994,16 +3994,7 @@ set_num_option (
   /*
    * Number options that need some action when changed
    */
-  if (pp == &p_scbk) {
-    // 'scrollback'
-    if (p_scbk < 1) {
-      errmsg = e_invarg;
-      p_scbk = 0;
-    } else if (p_scbk > 100000) {
-      errmsg = e_invarg;
-      p_scbk = 100000;
-    }
-  } else if (pp == &p_wh || pp == &p_hh) {
+  if (pp == &p_wh || pp == &p_hh) {
     if (p_wh < 1) {
       errmsg = e_positive;
       p_wh = 1;
@@ -4205,7 +4196,19 @@ set_num_option (
     FOR_ALL_TAB_WINDOWS(tp, wp) {
       check_colorcolumn(wp);
     }
-
+  } else if (pp == &curbuf->b_p_scbk) {
+    // 'scrollback'
+    if (!curbuf->terminal) {
+      errmsg = e_invarg;
+      curbuf->b_p_scbk = -1;
+    } else {
+      if (curbuf->b_p_scbk < -1 || curbuf->b_p_scbk > 100000) {
+        errmsg = e_invarg;
+        curbuf->b_p_scbk = 1000;
+      }
+      // Force the scrollback to take effect.
+      terminal_resize(curbuf->terminal, UINT16_MAX, UINT16_MAX);
+    }
   }
 
   /*
@@ -5641,7 +5644,7 @@ void buf_copy_options(buf_T *buf, int flags)
       buf->b_p_ai = p_ai;
       buf->b_p_ai_nopaste = p_ai_nopaste;
       buf->b_p_sw = p_sw;
-      buf->b_p_scbk = p_scbk;
+      buf->b_p_scbk = -1;
       buf->b_p_tw = p_tw;
       buf->b_p_tw_nopaste = p_tw_nopaste;
       buf->b_p_tw_nobin = p_tw_nobin;

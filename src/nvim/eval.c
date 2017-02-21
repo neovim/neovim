@@ -5845,8 +5845,8 @@ bool garbage_collect(bool testing)
     garbage_collect_at_exit = false;
   }
 
-  // We advance by two because we add one for items referenced through
-  // previous_funccal.
+  // We advance by two (COPYID_INC) because we add one for items referenced
+  // through previous_funccal.
   const int copyID = get_copyID();
 
   // 1. Go through all accessible variables and mark all lists and dicts
