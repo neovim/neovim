@@ -98,8 +98,7 @@ Mouse input is also fully supported, and has the following behavior:
 Terminal buffers can be customized through the following global/buffer-local
 variables (set via the |TermOpen| autocmd):
 
-- `{g,b}:terminal_scrollback_buffer_size`: Scrollback buffer size, between 1
-  and 100000 inclusive. The default is 1000.
+- 'scrollback' option: Scrollback lines (output history) limit.
 - `{g,b}:terminal_color_$NUM`: The terminal color palette, where `$NUM` is the
   color index, between 0 and 255 inclusive. This setting only affects UIs with
   RGB capabilities; for normal terminals the color index is simply forwarded.

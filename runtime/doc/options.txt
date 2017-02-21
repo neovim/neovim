@@ -4949,6 +4949,10 @@ A jump table for the options with a short description can be found at |Q_op|.
 	be used as the new value for 'scroll'.  Reset to half the window
 	height with ":set scroll=0".
 
+			*'scrollback'* *'scbk'* *'noscrollback'* *'noscbk'*
+'scrollback' 'scbk'	boolean  (default: 1000)
+			global or local to buffer |global-local|
+
 			*'scrollbind'* *'scb'* *'noscrollbind'* *'noscb'*
 'scrollbind' 'scb'	boolean  (default off)
 			local to window

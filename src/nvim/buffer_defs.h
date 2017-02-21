@@ -651,6 +651,7 @@ struct file_buffer {
   char_u *b_p_qe;               ///< 'quoteescape'
   int b_p_ro;                   ///< 'readonly'
   long b_p_sw;                  ///< 'shiftwidth'
+  long b_p_scbk;                ///< 'scrollback'
   int b_p_si;                   ///< 'smartindent'
   long b_p_sts;                 ///< 'softtabstop'
   long b_p_sts_nopaste;         ///< b_p_sts saved for paste mode

@@ -739,6 +739,7 @@ enum {
   , BV_PI
   , BV_QE
   , BV_RO
+  , BV_SCBK
   , BV_SI
   , BV_SMC
   , BV_SYN
