@@ -17731,10 +17731,10 @@ static void f_termopen(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   (void)setfname(curbuf, (uint8_t *)buf, NULL, true);
   // Save the job id and pid in b:terminal_job_{id,pid}
   Error err;
-  dict_set_value(curbuf->b_vars, cstr_as_string("terminal_job_id"),
-                 INTEGER_OBJ(rettv->vval.v_number), false, false, &err);
-  dict_set_value(curbuf->b_vars, cstr_as_string("terminal_job_pid"),
-                 INTEGER_OBJ(pid), false, false, &err);
+  dict_set_var(curbuf->b_vars, cstr_as_string("terminal_job_id"),
+               INTEGER_OBJ(rettv->vval.v_number), false, false, &err);
+  dict_set_var(curbuf->b_vars, cstr_as_string("terminal_job_pid"),
+               INTEGER_OBJ(pid), false, false, &err);
 
   Terminal *term = terminal_open(topts);
   data->term = term;

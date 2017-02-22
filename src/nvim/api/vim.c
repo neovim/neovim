@@ -368,7 +368,7 @@ Object nvim_get_var(String name, Error *err)
 /// @param[out] err Error details, if any
 void nvim_set_var(String name, Object value, Error *err)
 {
-  dict_set_value(&globvardict, name, value, false, false, err);
+  dict_set_var(&globvardict, name, value, false, false, err);
 }
 
 /// Removes a global (g:) variable
@@ -377,7 +377,7 @@ void nvim_set_var(String name, Object value, Error *err)
 /// @param[out] err Error details, if any
 void nvim_del_var(String name, Error *err)
 {
-  dict_set_value(&globvardict, name, NIL, true, false, err);
+  dict_set_var(&globvardict, name, NIL, true, false, err);
 }
 
 /// Sets a global variable
@@ -393,7 +393,7 @@ void nvim_del_var(String name, Error *err)
 ///                  or if previous value was `v:null`.
 Object vim_set_var(String name, Object value, Error *err)
 {
-  return dict_set_value(&globvardict, name, value, false, true, err);
+  return dict_set_var(&globvardict, name, value, false, true, err);
 }
 
 /// Removes a global variable
@@ -405,7 +405,7 @@ Object vim_set_var(String name, Object value, Error *err)
 /// @return Old value
 Object vim_del_var(String name, Error *err)
 {
-  return dict_set_value(&globvardict, name, NIL, true, true, err);
+  return dict_set_var(&globvardict, name, NIL, true, true, err);
 }
 
 /// Gets a v: variable

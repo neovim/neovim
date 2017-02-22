@@ -456,7 +456,7 @@ void nvim_buf_set_var(Buffer buffer, String name, Object value, Error *err)
     return;
   }
 
-  dict_set_value(buf->b_vars, name, value, false, false, err);
+  dict_set_var(buf->b_vars, name, value, false, false, err);
 }
 
 /// Removes a buffer-scoped (b:) variable
@@ -472,7 +472,7 @@ void nvim_buf_del_var(Buffer buffer, String name, Error *err)
     return;
   }
 
-  dict_set_value(buf->b_vars, name, NIL, true, false, err);
+  dict_set_var(buf->b_vars, name, NIL, true, false, err);
 }
 
 /// Sets a buffer-scoped (b:) variable
@@ -495,7 +495,7 @@ Object buffer_set_var(Buffer buffer, String name, Object value, Error *err)
     return (Object) OBJECT_INIT;
   }
 
-  return dict_set_value(buf->b_vars, name, value, false, true, err);
+  return dict_set_var(buf->b_vars, name, value, false, true, err);
 }
 
 /// Removes a buffer-scoped (b:) variable
@@ -514,7 +514,7 @@ Object buffer_del_var(Buffer buffer, String name, Error *err)
     return (Object) OBJECT_INIT;
   }
 
-  return dict_set_value(buf->b_vars, name, NIL, true, true, err);
+  return dict_set_var(buf->b_vars, name, NIL, true, true, err);
 }
 
 

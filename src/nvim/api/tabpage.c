@@ -71,7 +71,7 @@ void nvim_tabpage_set_var(Tabpage tabpage,
     return;
   }
 
-  dict_set_value(tab->tp_vars, name, value, false, false, err);
+  dict_set_var(tab->tp_vars, name, value, false, false, err);
 }
 
 /// Removes a tab-scoped (t:) variable
@@ -87,7 +87,7 @@ void nvim_tabpage_del_var(Tabpage tabpage, String name, Error *err)
     return;
   }
 
-  dict_set_value(tab->tp_vars, name, NIL, true, false, err);
+  dict_set_var(tab->tp_vars, name, NIL, true, false, err);
 }
 
 /// Sets a tab-scoped (t:) variable
@@ -110,7 +110,7 @@ Object tabpage_set_var(Tabpage tabpage, String name, Object value, Error *err)
     return (Object) OBJECT_INIT;
   }
 
-  return dict_set_value(tab->tp_vars, name, value, false, true, err);
+  return dict_set_var(tab->tp_vars, name, value, false, true, err);
 }
 
 /// Removes a tab-scoped (t:) variable
@@ -129,7 +129,7 @@ Object tabpage_del_var(Tabpage tabpage, String name, Error *err)
     return (Object) OBJECT_INIT;
   }
 
-  return dict_set_value(tab->tp_vars, name, NIL, true, true, err);
+  return dict_set_var(tab->tp_vars, name, NIL, true, true, err);
 }
 
 /// Gets the current window in a tabpage
