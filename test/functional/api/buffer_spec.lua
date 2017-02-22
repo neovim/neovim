@@ -4,7 +4,6 @@ local curbuf, curwin, eq = helpers.curbuf, helpers.curwin, helpers.eq
 local curbufmeths, ok = helpers.curbufmeths, helpers.ok
 local funcs = helpers.funcs
 local request = helpers.request
-local neq = helpers.neq
 local NIL = helpers.NIL
 local meth_pcall = helpers.meth_pcall
 local command = helpers.command

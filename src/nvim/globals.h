@@ -1172,7 +1172,7 @@ EXTERN char_u e_loclist[] INIT(= N_("E776: No location list"));
 EXTERN char_u e_re_damg[] INIT(= N_("E43: Damaged match string"));
 EXTERN char_u e_re_corr[] INIT(= N_("E44: Corrupted regexp program"));
 EXTERN char_u e_readonly[] INIT(= N_(
-        "E45: 'readonly' option is set (add ! to override)"));
+    "E45: 'readonly' option is set (add ! to override)"));
 EXTERN char_u e_readerrf[] INIT(= N_("E47: Error while reading errorfile"));
 EXTERN char_u e_sandbox[] INIT(= N_("E48: Not allowed in sandbox"));
 EXTERN char_u e_secure[] INIT(= N_("E523: Not allowed here"));

@@ -1,7 +1,6 @@
 local helpers = require('test.functional.helpers')(after_each)
 
 local eq = helpers.eq
-local neq = helpers.neq
 local eval = helpers.eval
 local feed = helpers.feed
 local clear = helpers.clear
@@ -14,8 +13,6 @@ local meth_pcall = helpers.meth_pcall
 local curbufmeths = helpers.curbufmeths
 
 before_each(clear)
-
-local function preinc(t, v) t.value = t.value + (v or 1) return t.value end
 
 local function changedtick()
   local ct = curbufmeths.get_changedtick()

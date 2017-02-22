@@ -171,7 +171,7 @@ static char *e_nofunc = N_("E130: Unknown function: %s");
 static char *e_illvar = N_("E461: Illegal variable name: %s");
 static char *e_float_as_string = N_("E806: using Float as a String");
 static const char *e_readonlyvar = N_(
-        "E46: Cannot change read-only variable \"%.*s\"");
+    "E46: Cannot change read-only variable \"%.*s\"");
 
 static char_u * const empty_string = (char_u *)"";
 static char_u * const namespace_char = (char_u *)"abglstvw";
@@ -3157,11 +3157,12 @@ static void item_lock(typval_T *tv, int deep, int lock)
       list_T *const l = tv->vval.v_list;
       if (l != NULL) {
         CHANGE_LOCK(l->lv_lock, lock);
-        if (deep < 0 || deep > 1)
+        if (deep < 0 || deep > 1) {
           // Recursive: lock/unlock the items the List contains.
           for (listitem_T *li = l->lv_first; li != NULL; li = li->li_next) {
             item_lock(&li->li_tv, deep - 1, lock);
           }
+        }
       }
       break;
     }
@@ -12396,7 +12397,7 @@ static void f_insert(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   long before = 0;
   listitem_T  *item;
   list_T      *l;
-  int error = FALSE;
+  int error = false;
   const char *const arg_errmsg = _("insert() argument");
   const size_t arg_errmsg_len = strlen(arg_errmsg);
 
@@ -12454,8 +12455,8 @@ static void f_islocked(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   dictitem_T  *di;
 
   rettv->vval.v_number = -1;
-  end = get_lval(get_tv_string(&argvars[0]), NULL, &lv, FALSE, FALSE,
-      GLV_NO_AUTOLOAD|GLV_READ_ONLY, FNE_CHECK_START);
+  end = get_lval(get_tv_string(&argvars[0]), NULL, &lv, false, false,
+                 GLV_NO_AUTOLOAD|GLV_READ_ONLY, FNE_CHECK_START);
   if (end != NULL && lv.ll_name != NULL) {
     if (*end != NUL)
       EMSG(_(e_trailing));
