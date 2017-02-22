@@ -34,12 +34,15 @@ local function disable_mouse() feed_termcode('[?1002l') end
 local default_command = '["'..nvim_dir..'/tty-test'..'"]'
 
 
-local function screen_setup(extra_height, command)
+local function screen_setup(extra_rows, command, cols)
+  extra_rows = extra_rows and extra_rows or 0
+  command = command and command or default_command
+  cols = cols and cols or 50
+
   nvim('command', 'highlight TermCursor cterm=reverse')
   nvim('command', 'highlight TermCursorNC ctermbg=11')
-  if not extra_height then extra_height = 0 end
-  if not command then command = default_command end
-  local screen = Screen.new(50, 7 + extra_height)
+
+  local screen = Screen.new(cols, 7 + extra_rows)
   screen:set_default_attr_ids({
     [1] = {reverse = true},   -- focused cursor
     [2] = {background = 11},  -- unfocused cursor
@@ -61,23 +64,22 @@ local function screen_setup(extra_height, command)
   execute('setlocal scrollback=10')
   execute('startinsert')
   if command == default_command then
-    -- wait for "tty ready" to be printed before each test or the terminal may
-    -- still be in canonical mode(will echo characters for example)
-    --
-    local empty_line =  '                                                   '
+    -- Wait for "tty ready" to be printed before each test or the terminal may
+    -- still be in canonical mode (will echo characters for example).
+    local empty_line = (' '):rep(cols + 1)
     local expected = {
-      'tty ready                                          ',
-      '{1: }                                                  ',
+      'tty ready'..(' '):rep(cols - 8),
+      '{1: }'    ..(' '):rep(cols),
       empty_line,
       empty_line,
       empty_line,
       empty_line,
     }
-    for _ = 1, extra_height do
+    for _ = 1, extra_rows do
       table.insert(expected, empty_line)
     end
 
-    table.insert(expected, '{3:-- TERMINAL --}                                     ')
+    table.insert(expected, '{3:-- TERMINAL --}' .. ((' '):rep(cols - 13)))
     screen:expect(table.concat(expected, '\n'))
   else
     wait()

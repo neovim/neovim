@@ -17,7 +17,7 @@ describe('terminal scrollback', function()
 
   before_each(function()
     clear()
-    screen = thelpers.screen_setup()
+    screen = thelpers.screen_setup(nil, nil, 30)
   end)
 
   after_each(function()
@@ -33,26 +33,26 @@ describe('terminal scrollback', function()
       table.insert(lines, '')
       feed_data(lines)
       screen:expect([[
-        line26                                            |
-        line27                                            |
-        line28                                            |
-        line29                                            |
-        line30                                            |
-        {1: }                                                 |
-        {3:-- TERMINAL --}                                    |
+        line26                        |
+        line27                        |
+        line28                        |
+        line29                        |
+        line30                        |
+        {1: }                             |
+        {3:-- TERMINAL --}                |
       ]])
     end)
 
     it('will delete extra lines at the top', function()
       feed('<c-\\><c-n>gg')
       screen:expect([[
-        ^line16                                            |
-        line17                                            |
-        line18                                            |
-        line19                                            |
-        line20                                            |
-        line21                                            |
-                                                          |
+        ^line16                        |
+        line17                        |
+        line18                        |
+        line19                        |
+        line20                        |
+        line21                        |
+                                      |
       ]])
     end)
   end)
@@ -61,13 +61,13 @@ describe('terminal scrollback', function()
     before_each(function()
       feed_data({'line1', 'line2', 'line3', 'line4', ''})
       screen:expect([[
-        tty ready                                         |
-        line1                                             |
-        line2                                             |
-        line3                                             |
-        line4                                             |
-        {1: }                                                 |
-        {3:-- TERMINAL --}                                    |
+        tty ready                     |
+        line1                         |
+        line2                         |
+        line3                         |
+        line4                         |
+        {1: }                             |
+        {3:-- TERMINAL --}                |
       ]])
     end)
 
@@ -76,13 +76,13 @@ describe('terminal scrollback', function()
 
       it('will hide the top line', function()
         screen:expect([[
-          line1                                             |
-          line2                                             |
-          line3                                             |
-          line4                                             |
-          line5                                             |
-          {1: }                                                 |
-          {3:-- TERMINAL --}                                    |
+          line1                         |
+          line2                         |
+          line3                         |
+          line4                         |
+          line5                         |
+          {1: }                             |
+          {3:-- TERMINAL --}                |
         ]])
         eq(7, curbuf('line_count'))
       end)
@@ -92,46 +92,46 @@ describe('terminal scrollback', function()
 
         it('will hide the top 4 lines', function()
           screen:expect([[
-            line3                                             |
-            line4                                             |
-            line5                                             |
-            line6                                             |
-            line7                                             |
-            line8{1: }                                            |
-            {3:-- TERMINAL --}                                    |
+            line3                         |
+            line4                         |
+            line5                         |
+            line6                         |
+            line7                         |
+            line8{1: }                        |
+            {3:-- TERMINAL --}                |
           ]])
 
           feed('<c-\\><c-n>6k')
           screen:expect([[
-            ^line2                                             |
-            line3                                             |
-            line4                                             |
-            line5                                             |
-            line6                                             |
-            line7                                             |
-                                                              |
+            ^line2                         |
+            line3                         |
+            line4                         |
+            line5                         |
+            line6                         |
+            line7                         |
+                                          |
           ]])
 
           feed('gg')
           screen:expect([[
-            ^tty ready                                         |
-            line1                                             |
-            line2                                             |
-            line3                                             |
-            line4                                             |
-            line5                                             |
-                                                              |
+            ^tty ready                     |
+            line1                         |
+            line2                         |
+            line3                         |
+            line4                         |
+            line5                         |
+                                          |
           ]])
 
           feed('G')
           screen:expect([[
-            line3                                             |
-            line4                                             |
-            line5                                             |
-            line6                                             |
-            line7                                             |
-            ^line8{2: }                                            |
-                                                              |
+            line3                         |
+            line4                         |
+            line5                         |
+            line6                         |
+            line7                         |
+            ^line8{2: }                        |
+                                          |
           ]])
         end)
       end)
@@ -142,12 +142,12 @@ describe('terminal scrollback', function()
       local function will_hide_top_line()
         screen:try_resize(screen._width, screen._height - 1)
         screen:expect([[
-          line2                                             |
-          line3                                             |
-          line4                                             |
-          rows: 5, cols: 50                                 |
-          {1: }                                                 |
-          {3:-- TERMINAL --}                                    |
+          line2                         |
+          line3                         |
+          line4                         |
+          rows: 5, cols: 30             |
+          {1: }                             |
+          {3:-- TERMINAL --}                |
         ]])
       end
 
@@ -161,18 +161,18 @@ describe('terminal scrollback', function()
 
         it('will hide the top 3 lines', function()
           screen:expect([[
-            rows: 5, cols: 50                                 |
-            rows: 3, cols: 50                                 |
-            {1: }                                                 |
-            {3:-- TERMINAL --}                                    |
+            rows: 5, cols: 30             |
+            rows: 3, cols: 30             |
+            {1: }                             |
+            {3:-- TERMINAL --}                |
           ]])
           eq(8, curbuf('line_count'))
           feed('<c-\\><c-n>3k')
           screen:expect([[
-            ^line4                                             |
-            rows: 5, cols: 50                                 |
-            rows: 3, cols: 50                                 |
-                                                              |
+            ^line4                         |
+            rows: 5, cols: 30             |
+            rows: 3, cols: 30             |
+                                          |
           ]])
         end)
       end)
@@ -187,11 +187,11 @@ describe('terminal scrollback', function()
 
       local function will_delete_last_two_lines()
         screen:expect([[
-          tty ready                                         |
-          rows: 4, cols: 50                                 |
-          {1: }                                                 |
-                                                            |
-          {3:-- TERMINAL --}                                    |
+          tty ready                     |
+          rows: 4, cols: 30             |
+          {1: }                             |
+                                        |
+          {3:-- TERMINAL --}                |
         ]])
         eq(4, curbuf('line_count'))
       end
@@ -206,25 +206,25 @@ describe('terminal scrollback', function()
 
         it('will delete the last line and hide the first', function()
           screen:expect([[
-            rows: 4, cols: 50                                 |
-            rows: 3, cols: 50                                 |
-            {1: }                                                 |
-            {3:-- TERMINAL --}                                    |
+            rows: 4, cols: 30             |
+            rows: 3, cols: 30             |
+            {1: }                             |
+            {3:-- TERMINAL --}                |
           ]])
           eq(4, curbuf('line_count'))
           feed('<c-\\><c-n>gg')
           screen:expect([[
-            ^tty ready                                         |
-            rows: 4, cols: 50                                 |
-            rows: 3, cols: 50                                 |
-                                                              |
+            ^tty ready                     |
+            rows: 4, cols: 30             |
+            rows: 3, cols: 30             |
+                                          |
           ]])
           feed('a')
           screen:expect([[
-            rows: 4, cols: 50                                 |
-            rows: 3, cols: 50                                 |
-            {1: }                                                 |
-            {3:-- TERMINAL --}                                    |
+            rows: 4, cols: 30             |
+            rows: 3, cols: 30             |
+            {1: }                             |
+            {3:-- TERMINAL --}                |
           ]])
         end)
       end)
@@ -235,20 +235,20 @@ describe('terminal scrollback', function()
     before_each(function()
       feed_data({'line1', 'line2', 'line3', 'line4', ''})
       screen:expect([[
-        tty ready                                         |
-        line1                                             |
-        line2                                             |
-        line3                                             |
-        line4                                             |
-        {1: }                                                 |
-        {3:-- TERMINAL --}                                    |
+        tty ready                     |
+        line1                         |
+        line2                         |
+        line3                         |
+        line4                         |
+        {1: }                             |
+        {3:-- TERMINAL --}                |
       ]])
       screen:try_resize(screen._width, screen._height - 3)
       screen:expect([[
-        line4                                             |
-        rows: 3, cols: 50                                 |
-        {1: }                                                 |
-        {3:-- TERMINAL --}                                    |
+        line4                         |
+        rows: 3, cols: 30             |
+        {1: }                             |
+        {3:-- TERMINAL --}                |
       ]])
       eq(7, curbuf('line_count'))
     end)
@@ -257,11 +257,11 @@ describe('terminal scrollback', function()
       local function pop_then_push()
         screen:try_resize(screen._width, screen._height + 1)
         screen:expect([[
-          line4                                             |
-          rows: 3, cols: 50                                 |
-          rows: 4, cols: 50                                 |
-          {1: }                                                 |
-          {3:-- TERMINAL --}                                    |
+          line4                         |
+          rows: 3, cols: 30             |
+          rows: 4, cols: 30             |
+          {1: }                             |
+          {3:-- TERMINAL --}                |
         ]])
       end
 
@@ -276,26 +276,26 @@ describe('terminal scrollback', function()
 
         local function pop3_then_push1()
           screen:expect([[
-            line2                                             |
-            line3                                             |
-            line4                                             |
-            rows: 3, cols: 50                                 |
-            rows: 4, cols: 50                                 |
-            rows: 7, cols: 50                                 |
-            {1: }                                                 |
-            {3:-- TERMINAL --}                                    |
+            line2                         |
+            line3                         |
+            line4                         |
+            rows: 3, cols: 30             |
+            rows: 4, cols: 30             |
+            rows: 7, cols: 30             |
+            {1: }                             |
+            {3:-- TERMINAL --}                |
           ]])
           eq(9, curbuf('line_count'))
           feed('<c-\\><c-n>gg')
           screen:expect([[
-            ^tty ready                                         |
-            line1                                             |
-            line2                                             |
-            line3                                             |
-            line4                                             |
-            rows: 3, cols: 50                                 |
-            rows: 4, cols: 50                                 |
-                                                              |
+            ^tty ready                     |
+            line1                         |
+            line2                         |
+            line3                         |
+            line4                         |
+            rows: 3, cols: 30             |
+            rows: 4, cols: 30             |
+                                          |
           ]])
         end
 
@@ -310,18 +310,18 @@ describe('terminal scrollback', function()
 
           it('will show all lines and leave a blank one at the end', function()
             screen:expect([[
-              tty ready                                         |
-              line1                                             |
-              line2                                             |
-              line3                                             |
-              line4                                             |
-              rows: 3, cols: 50                                 |
-              rows: 4, cols: 50                                 |
-              rows: 7, cols: 50                                 |
-              rows: 11, cols: 50                                |
-              {1: }                                                 |
-                                                                |
-              {3:-- TERMINAL --}                                    |
+              tty ready                     |
+              line1                         |
+              line2                         |
+              line3                         |
+              line4                         |
+              rows: 3, cols: 30             |
+              rows: 4, cols: 30             |
+              rows: 7, cols: 30             |
+              rows: 11, cols: 30            |
+              {1: }                             |
+                                            |
+              {3:-- TERMINAL --}                |
             ]])
             -- since there's an empty line after the cursor, the buffer line
             -- count equals the terminal screen height
@@ -336,29 +336,29 @@ end)
 describe('terminal prints more lines than the screen height and exits', function()
   it('will push extra lines to scrollback', function()
     clear()
-    local screen = Screen.new(50, 7)
+    local screen = Screen.new(30, 7)
     screen:attach({rgb=false})
     execute('call termopen(["'..nvim_dir..'/tty-test", "10"]) | startinsert')
     wait()
     screen:expect([[
-      line6                                             |
-      line7                                             |
-      line8                                             |
-      line9                                             |
-                                                        |
-      [Process exited 0]                                |
-      -- TERMINAL --                                    |
+      line6                         |
+      line7                         |
+      line8                         |
+      line9                         |
+                                    |
+      [Process exited 0]            |
+      -- TERMINAL --                |
     ]])
     feed('<cr>')
     -- closes the buffer correctly after pressing a key
     screen:expect([[
-      ^                                                  |
-      ~                                                 |
-      ~                                                 |
-      ~                                                 |
-      ~                                                 |
-      ~                                                 |
-                                                        |
+      ^                              |
+      ~                             |
+      ~                             |
+      ~                             |
+      ~                             |
+      ~                             |
+                                    |
     ]])
   end)
 end)
