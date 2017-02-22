@@ -1,7 +1,7 @@
 local helpers = require('test.functional.helpers')(nil)
 local Screen = require('test.functional.ui.screen')
 local nvim_dir = helpers.nvim_dir
-local execute, nvim, wait = helpers.execute, helpers.nvim, helpers.wait
+local execute, nvim = helpers.execute, helpers.nvim
 
 local function feed_data(data)
   nvim('set_var', 'term_data', data)
@@ -57,12 +57,19 @@ local function screen_setup(extra_rows, command, cols)
   })
 
   screen:attach({rgb=false})
-  -- tty-test puts the terminal into raw mode and echoes all input. tests are
-  -- done by feeding it with terminfo codes to control the display and
-  -- verifying output with screen:expect.
+
   execute('enew | call termopen('..command..')')
+  nvim('input', '<CR>')
+  local vim_errmsg = nvim('eval', 'v:errmsg')
+  if vim_errmsg and "" ~= vim_errmsg then
+    error(vim_errmsg)
+  end
+
   execute('setlocal scrollback=10')
   execute('startinsert')
+
+  -- tty-test puts the terminal into raw mode and echoes input. Tests work by
+  -- feeding termcodes to control the display and asserting by screen:expect.
   if command == default_command then
     -- Wait for "tty ready" to be printed before each test or the terminal may
     -- still be in canonical mode (will echo characters for example).
@@ -82,7 +89,10 @@ local function screen_setup(extra_rows, command, cols)
     table.insert(expected, '{3:-- TERMINAL --}' .. ((' '):rep(cols - 13)))
     screen:expect(table.concat(expected, '\n'))
   else
-    wait()
+    -- This eval also acts as a wait().
+    if 0 == nvim('eval', "exists('b:terminal_job_id')") then
+      error("terminal job failed to start")
+    end
   end
   return screen
 end

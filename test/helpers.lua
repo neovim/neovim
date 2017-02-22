@@ -207,7 +207,9 @@ local function check_cores(app)
     out:write(('\nTests covered by this check: %u\n'):format(tests_skipped + 1))
   end
   tests_skipped = 0
-  assert(0 == found_cores)
+  if found_cores > 0 then
+    error("crash detected (see above)")
+  end
 end
 
 return {
