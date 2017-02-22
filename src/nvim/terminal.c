@@ -1126,14 +1126,6 @@ static void redraw(bool restore_cursor)
     update_screen(0);
   }
 
-  redraw_statuslines();
-
-  if (need_maketitle) {
-    maketitle();
-  }
-
-  showruler(false);
-
   if (term && is_focused(term)) {
     curwin->w_wrow = term->cursor.row;
     curwin->w_wcol = term->cursor.col + win_col_off(curwin);
