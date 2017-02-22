@@ -1246,18 +1246,17 @@ int call_vim_function(
   return ret;
 }
 
-/*
- * Call vimL function "func" and return the result as a number.
- * Returns -1 when calling the function fails.
- * Uses argv[argc] for the function arguments.
- */
-long 
-call_func_retnr (
-    char_u *func,
-    int argc,
-    char_u **argv,
-    int safe                       /* use the sandbox */
-)
+/// Call vimL function "func".
+/// Uses argv[argc] for the function arguments.
+///
+/// @param  func  function to call
+/// @param  argc
+/// @param  argv
+/// @param  safe  use the sandbox
+///
+/// @return the result as a number or -1 when the call failed.
+int call_func_retnr(char_u *func, int argc, char_u **argv, int safe)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
   typval_T rettv;
   long retval;
