@@ -8,6 +8,8 @@ local curwinmeths = helpers.curwinmeths
 local funcs = helpers.funcs
 local request = helpers.request
 local NIL = helpers.NIL
+local meth_pcall = helpers.meth_pcall
+local command = helpers.command
 
 -- check if str is visible at the beginning of some line
 local function is_visible(str)
@@ -137,6 +139,11 @@ describe('api/win', function()
       eq(1, funcs.exists('w:lua'))
       curwinmeths.del_var('lua')
       eq(0, funcs.exists('w:lua'))
+      eq({false, 'Key "lua" doesn\'t exist'}, meth_pcall(curwinmeths.del_var, 'lua'))
+      curwinmeths.set_var('lua', 1)
+      command('lockvar w:lua')
+      eq({false, 'Key is locked: lua'}, meth_pcall(curwinmeths.del_var, 'lua'))
+      eq({false, 'Key is locked: lua'}, meth_pcall(curwinmeths.set_var, 'lua', 1))
     end)
 
     it('window_set_var returns the old value', function()

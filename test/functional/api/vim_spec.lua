@@ -7,6 +7,8 @@ local os_name = helpers.os_name
 local meths = helpers.meths
 local funcs = helpers.funcs
 local request = helpers.request
+local meth_pcall = helpers.meth_pcall
+local command = helpers.command
 
 describe('api', function()
   before_each(clear)
@@ -117,6 +119,11 @@ describe('api', function()
       eq(1, funcs.exists('g:lua'))
       meths.del_var('lua')
       eq(0, funcs.exists('g:lua'))
+      eq({false, 'Key "lua" doesn\'t exist'}, meth_pcall(meths.del_var, 'lua'))
+      meths.set_var('lua', 1)
+      command('lockvar lua')
+      eq({false, 'Key is locked: lua'}, meth_pcall(meths.del_var, 'lua'))
+      eq({false, 'Key is locked: lua'}, meth_pcall(meths.set_var, 'lua', 1))
     end)
 
     it('vim_set_var returns the old value', function()

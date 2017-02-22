@@ -6,6 +6,8 @@ local funcs = helpers.funcs
 local request = helpers.request
 local neq = helpers.neq
 local NIL = helpers.NIL
+local meth_pcall = helpers.meth_pcall
+local command = helpers.command
 
 describe('api/buf', function()
   before_each(clear)
@@ -251,6 +253,15 @@ describe('api/buf', function()
       eq(1, funcs.exists('b:lua'))
       curbufmeths.del_var('lua')
       eq(0, funcs.exists('b:lua'))
+      eq({false, 'Key "lua" doesn\'t exist'}, meth_pcall(curbufmeths.del_var, 'lua'))
+      curbufmeths.set_var('lua', 1)
+      command('lockvar b:lua')
+      eq({false, 'Key is locked: lua'}, meth_pcall(curbufmeths.del_var, 'lua'))
+      eq({false, 'Key is locked: lua'}, meth_pcall(curbufmeths.set_var, 'lua', 1))
+      eq({false, 'Key is read-only: changedtick'},
+         meth_pcall(curbufmeths.del_var, 'changedtick'))
+      eq({false, 'Key is read-only: changedtick'},
+         meth_pcall(curbufmeths.set_var, 'changedtick', 1))
     end)
   end)
 

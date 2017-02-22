@@ -131,6 +131,19 @@ Object dict_set_var(dict_T *dict, String key, Object value, bool del,
 
   dictitem_T *di = dict_find(dict, (char_u *)key.data, (int)key.size);
 
+  if (di != NULL) {
+    if (di->di_flags & DI_FLAGS_RO) {
+      api_set_error(err, Exception, _("Key is read-only: %s"), key.data);
+      return rv;
+    } else if (di->di_flags & DI_FLAGS_FIX) {
+      api_set_error(err, Exception, _("Key is fixed: %s"), key.data);
+      return rv;
+    } else if (di->di_flags & DI_FLAGS_LOCK) {
+      api_set_error(err, Exception, _("Key is locked: %s"), key.data);
+      return rv;
+    }
+  }
+
   if (del) {
     // Delete the key
     if (di == NULL) {

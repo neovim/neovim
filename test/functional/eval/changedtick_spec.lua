@@ -1,16 +1,17 @@
 local helpers = require('test.functional.helpers')(after_each)
 
-local curbufmeths = helpers.curbufmeths
-local clear = helpers.clear
 local eq = helpers.eq
 local neq = helpers.neq
 local eval = helpers.eval
 local feed = helpers.feed
+local clear = helpers.clear
 local funcs = helpers.funcs
 local meths = helpers.meths
 local command = helpers.command
 local exc_exec = helpers.exc_exec
 local redir_exec = helpers.redir_exec
+local meth_pcall = helpers.meth_pcall
+local curbufmeths = helpers.curbufmeths
 
 before_each(clear)
 
@@ -66,9 +67,8 @@ describe('b:changedtick', function()
        redir_exec('let b:.changedtick = ' .. ctn))
     eq('\nE46: Cannot change read-only variable "d.changedtick"',
        redir_exec('let d.changedtick = ' .. ctn))
-    -- FIXME
-    -- eq({fales, ''},
-       -- {pcall(curbufmeths.set_var, 'changedtick', ctn)})
+    eq({false, 'Key is read-only: changedtick'},
+       meth_pcall(curbufmeths.set_var, 'changedtick', ctn))
 
     eq('\nE795: Cannot delete variable b:changedtick',
        redir_exec('unlet b:changedtick'))
@@ -78,9 +78,8 @@ describe('b:changedtick', function()
        redir_exec('unlet b:["changedtick"]'))
     eq('\nE46: Cannot change read-only variable "d.changedtick"',
        redir_exec('unlet d.changedtick'))
-    -- FIXME
-    -- eq({},
-       -- {pcall(curbufmeths.del_var, 'changedtick')})
+    eq({false, 'Key is read-only: changedtick'},
+       meth_pcall(curbufmeths.del_var, 'changedtick'))
     eq(ct, changedtick())
 
     eq('\nE46: Cannot change read-only variable "b:["changedtick"]"',
