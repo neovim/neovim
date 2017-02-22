@@ -3091,6 +3091,12 @@ static int do_lock_var(lval_T *lp, char_u *name_end, int deep, int lock)
         true);
     if (di == NULL) {
       ret = FAIL;
+    } else if ((di->di_flags & DI_FLAGS_FIX)
+               && di->di_tv.v_type != VAR_DICT
+               && di->di_tv.v_type != VAR_LIST) {
+      // For historical reasons this error is not given for Lists and
+      // Dictionaries. E.g. b: dictionary may be locked/unlocked.
+      emsgf(_("E940: Cannot lock or unlock variable %s"), lp->ll_name);
     } else {
       if ((di->di_flags & (DI_FLAGS_LOCK|DI_FLAGS_FIX))
           == (DI_FLAGS_LOCK|DI_FLAGS_FIX)) {
