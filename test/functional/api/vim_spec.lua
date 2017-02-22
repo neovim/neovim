@@ -43,7 +43,7 @@ describe('api', function()
     it('works', function()
       nvim('command', 'let g:v1 = "a"')
       nvim('command', 'let g:v2 = [1, 2, {"v3": 3}]')
-      eq({v1 = 'a', v2 = {1, 2, {v3 = 3}}}, nvim('eval', 'g:'))
+      eq({v1 = 'a', v2 = { 1, 2, { v3 = 3 } } }, nvim('eval', 'g:'))
     end)
 
     it('handles NULL-initialized strings correctly', function()
@@ -65,7 +65,7 @@ describe('api', function()
 
   describe('nvim_call_function', function()
     it('works', function()
-      nvim('call_function', 'setqflist', {{{ filename = 'something', lnum = 17}}, 'r'})
+      nvim('call_function', 'setqflist', { { { filename = 'something', lnum = 17 } }, 'r' })
       eq(17, nvim('call_function', 'getqflist', {})[1].lnum)
       eq(17, nvim('call_function', 'eval', {17}))
       eq('foo', nvim('call_function', 'simplify', {'this/./is//redundant/../../../foo'}))
@@ -396,7 +396,7 @@ describe('api', function()
       eq(1, meths.get_var('avar'))
 
       req = {
-        {'nvim_set_var', {'bvar', {2,3}}},
+        { 'nvim_set_var', { 'bvar', { 2, 3 } } },
         12,
       }
       status, err = pcall(meths.call_atomic, req)
