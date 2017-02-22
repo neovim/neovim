@@ -202,15 +202,22 @@ static garray_T ga_scripts = {0, 0, sizeof(scriptvar_T *), 4, NULL};
 
 static int echo_attr = 0;   /* attributes used for ":echo" */
 
-// Values for trans_function_name() argument:
-#define TFN_INT         1       // internal function name OK
-#define TFN_QUIET       2       // no error messages
-#define TFN_NO_AUTOLOAD 4       // do not use script autoloading
-#define TFN_NO_DEREF    8       // do not dereference a Funcref
+/// trans_function_name() flags
+typedef enum {
+  TFN_INT = 1,  ///< May use internal function name
+  TFN_QUIET = 2,  ///< Do not emit error messages.
+  TFN_NO_AUTOLOAD = 4,  ///< Do not use script autoloading.
+  TFN_NO_DEREF = 8,  ///< Do not dereference a Funcref.
+  TFN_READ_ONLY = 16,  ///< Will not change the variable.
+} TransFunctionNameFlags;
 
-// Values for get_lval() flags argument:
-#define GLV_QUIET       TFN_QUIET        // no error messages
-#define GLV_NO_AUTOLOAD TFN_NO_AUTOLOAD  // do not use script autoloading
+/// get_lval() flags
+typedef enum {
+  GLV_QUIET = TFN_QUIET,  ///< Do not emit error messages.
+  GLV_NO_AUTOLOAD = TFN_NO_AUTOLOAD,  ///< Do not use script autoloading.
+  GLV_READ_ONLY = TFN_READ_ONLY,  ///< Indicates that caller will not change
+                                  ///< the value (prevents error message).
+} GetLvalFlags;
 
 // function flags
 #define FC_ABORT    0x01          // abort function on error
@@ -1944,34 +1951,33 @@ ex_let_one (
   return arg_end;
 }
 
-/*
- * Get an lval: variable, Dict item or List item that can be assigned a value
- * to: "name", "na{me}", "name[expr]", "name[expr:expr]", "name[expr][expr]",
- * "name.key", "name.key[expr]" etc.
- * Indexing only works if "name" is an existing List or Dictionary.
- * "name" points to the start of the name.
- * If "rettv" is not NULL it points to the value to be assigned.
- * "unlet" is TRUE for ":unlet": slightly different behavior when something is
- * wrong; must end in space or cmd separator.
- *
- * flags:
- *  GLV_QUIET:       do not give error messages
- *  GLV_NO_AUTOLOAD: do not use script autoloading
- *
- * Returns a pointer to just after the name, including indexes.
- * When an evaluation error occurs "lp->ll_name" is NULL;
- * Returns NULL for a parsing error.  Still need to free items in "lp"!
- */
-static char_u *
-get_lval (
-    char_u *const name,
-    typval_T *rettv,
-    lval_T *lp,
-    int unlet,
-    int skip,
-    int flags,                  /* GLV_ values */
-    int fne_flags              /* flags for find_name_end() */
-)
+/// Get an lvalue
+///
+/// Lvalue may be
+/// - variable: "name", "na{me}"
+/// - dictionary item: "dict.key", "dict['key']"
+/// - list item: "list[expr]"
+/// - list slice: "list[expr:expr]"
+///
+/// Indexing only works if trying to use it with an existing List or Dictionary.
+///
+/// @param[in]  name  Name to parse.
+/// @param  rettv  Pointer to the value to be assigned or NULL.
+/// @param[out]  lp  Lvalue definition. When evaluation errors occur `->ll_name`
+///                  is NULL.
+/// @param[in]  unlet  True if using `:unlet`. This results in slightly
+///                    different behaviour when something is wrong; must end in
+///                    space or cmd separator.
+/// @param[in]  skip  True when skipping.
+/// @param[in]  flags  @see GetLvalFlags.
+/// @param[in]  fne_flags  Flags for find_name_end().
+///
+/// @return A pointer to just after the name, including indexes. Returns NULL
+///         for a parsing error, but it is still needed to free items in lp.
+static char_u *get_lval(char_u *const name, typval_T *const rettv,
+                        lval_T *const lp, const bool unlet, const bool skip,
+                        const int flags, const int fne_flags)
+  FUNC_ATTR_NONNULL_ARG(1, 3)
 {
   char_u      *p;
   char_u      *expr_start, *expr_end;
@@ -2191,8 +2197,9 @@ get_lval (
           clear_tv(&var1);
         break;
       // existing variable, need to check if it can be changed
-      } else if (var_check_ro(lp->ll_di->di_flags, (const char *)name,
-                              (size_t)(p - name))) {
+      } else if (!(flags & GLV_READ_ONLY) && var_check_ro(lp->ll_di->di_flags,
+                                                          (const char *)name,
+                                                          (size_t)(p - name))) {
         if (len == -1) {
           clear_tv(&var1);
         }
@@ -3088,8 +3095,6 @@ static int do_lock_var(lval_T *lp, char_u *name_end, int deep, int lock)
       if ((di->di_flags & (DI_FLAGS_LOCK|DI_FLAGS_FIX))
           == (DI_FLAGS_LOCK|DI_FLAGS_FIX)) {
         // Locked and fixed: do not alter lock, but issue an error.
-        // Provides compatibility with former `unlockvar b:changedtick`
-        // behaviour.
         emsgf(_(e_readonlyvar), (int)name_len, lp->ll_name);
       } else if (lock) {
         di->di_flags |= DI_FLAGS_LOCK;
@@ -12448,7 +12453,7 @@ static void f_islocked(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   rettv->vval.v_number = -1;
   end = get_lval(get_tv_string(&argvars[0]), NULL, &lv, FALSE, FALSE,
-      GLV_NO_AUTOLOAD, FNE_CHECK_START);
+      GLV_NO_AUTOLOAD|GLV_READ_ONLY, FNE_CHECK_START);
   if (end != NULL && lv.ll_name != NULL) {
     if (*end != NUL)
       EMSG(_(e_trailing));
