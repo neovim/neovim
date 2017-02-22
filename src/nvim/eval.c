@@ -3098,11 +3098,7 @@ static int do_lock_var(lval_T *lp, char_u *name_end, int deep, int lock)
       // Dictionaries. E.g. b: dictionary may be locked/unlocked.
       emsgf(_("E940: Cannot lock or unlock variable %s"), lp->ll_name);
     } else {
-      if ((di->di_flags & (DI_FLAGS_LOCK|DI_FLAGS_FIX))
-          == (DI_FLAGS_LOCK|DI_FLAGS_FIX)) {
-        // Locked and fixed: do not alter lock, but issue an error.
-        emsgf(_(e_readonlyvar), (int)name_len, lp->ll_name);
-      } else if (lock) {
+      if (lock) {
         di->di_flags |= DI_FLAGS_LOCK;
       } else {
         di->di_flags &= ~DI_FLAGS_LOCK;
