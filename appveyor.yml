@@ -5,6 +5,9 @@ configuration:
 install: []
 build_script:
 - call .ci\build.bat
+cache:
+- C:\msys64\var\cache\pacman\pkg -> .ci\build.bat
+- .deps -> third-party/CMakeLists.txt
 artifacts:
 - path: build/Neovim.zip
 - path: build/bin/nvim.exe

@@ -1014,7 +1014,7 @@ static const char *tui_tk_ti_getstr(const char *name, const char *value,
   } else if (strcmp(name, "key_dc") == 0) {
     ILOG("libtermkey:kdch1=%s", value);
     // Vim: "If <BS> and <DEL> are now the same, redefine <DEL>."
-    if (stty_erase != NULL && strcmp(stty_erase, value) == 0) {
+    if (stty_erase != NULL && value != NULL && strcmp(stty_erase, value) == 0) {
       return stty_erase[0] == DEL ? (char *)CTRL_H_STR : (char *)DEL_STR;
     }
   }

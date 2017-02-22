@@ -4656,12 +4656,12 @@ static void show_pat_in_path(char_u *line, int type, int did_show, int action, F
       *(p + 1) = NUL;
     }
     if (action == ACTION_SHOW_ALL) {
-      sprintf((char *)IObuff, "%3ld: ", count);         /* show match nr */
-      msg_puts(IObuff);
-      sprintf((char *)IObuff, "%4ld", *lnum);           /* show line nr */
-      /* Highlight line numbers */
-      msg_puts_attr(IObuff, hl_attr(HLF_N));
-      MSG_PUTS(" ");
+      snprintf((char *)IObuff, IOSIZE, "%3ld: ", count);  // Show match nr.
+      msg_puts((const char *)IObuff);
+      snprintf((char *)IObuff, IOSIZE, "%4ld", *lnum);  // Show line nr.
+      // Highlight line numbers.
+      msg_puts_attr((const char *)IObuff, hl_attr(HLF_N));
+      msg_puts(" ");
     }
     msg_prt_line(line, FALSE);
     ui_flush();                        /* show one line at a time */

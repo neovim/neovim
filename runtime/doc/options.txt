@@ -2209,18 +2209,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Scanf-like description of the format for the lines in the error file
 	(see |errorformat|).
 
-				     *'esckeys'* *'ek'* *'noesckeys'* *'noek'*
-'esckeys' 'ek'		boolean	(Vim default: on, Vi default: off)
-			global
-	Function keys that start with an <Esc> are recognized in Insert
-	mode.  When this option is off, the cursor and function keys cannot be
-	used in Insert mode if they start with an <Esc>.  The advantage of
-	this is that the single <Esc> is recognized immediately, instead of
-	after one second.  Instead of resetting this option, you might want to
-	try changing the values for 'timeoutlen' and 'ttimeoutlen'.  Note that
-	when 'esckeys' is off, you can still map anything, but the cursor keys
-	won't work by default.
-
 						*'eventignore'* *'ei'*
 'eventignore' 'ei'	string	(default "")
 			global

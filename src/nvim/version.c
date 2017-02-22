@@ -2572,7 +2572,7 @@ static void list_features(void)
     int idx = (i / ncol) + (i % ncol) * nrow;
     if (idx < nfeat) {
       int last_col = (i + 1) % ncol == 0;
-      msg_puts((char_u *)features[idx]);
+      msg_puts(features[idx]);
       if (last_col) {
         if (msg_col > 0) {
           msg_putchar('\n');

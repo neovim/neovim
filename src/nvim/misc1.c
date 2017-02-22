@@ -2223,7 +2223,7 @@ change_warning (
  *
  * return the 'y' or 'n'
  */
-int ask_yesno(char_u *str, int direct)
+int ask_yesno(const char *str, bool direct)
 {
   int r = ' ';
   int save_State = State;
@@ -2545,7 +2545,7 @@ void vim_beep(unsigned val)
      * function give the user a hint where the beep comes from. */
     if (vim_strchr(p_debug, 'e') != NULL) {
       msg_source(hl_attr(HLF_W));
-      msg_attr((char_u *)_("Beep!"), hl_attr(HLF_W));
+      msg_attr(_("Beep!"), hl_attr(HLF_W));
     }
   }
 }

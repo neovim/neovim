@@ -2,6 +2,7 @@ local helpers = require('test.functional.helpers')(after_each)
 local eq = helpers.eq
 local clear = helpers.clear
 local funcs = helpers.funcs
+local iswin = helpers.iswin
 
 describe('has()', function()
   before_each(clear)
@@ -49,4 +50,11 @@ describe('has()', function()
     eq(1, funcs.has("nvim-00.001.05"))
   end)
 
+  it('"unnamedplus"', function()
+    if (not iswin()) and funcs.has("clipboard") == 1 then
+      eq(1, funcs.has("unnamedplus"))
+    else
+      eq(0, funcs.has("unnamedplus"))
+    end
+  end)
 end)

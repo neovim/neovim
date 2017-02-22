@@ -1,4 +1,4 @@
-[![Neovim](https://raw.githubusercontent.com/neovim/neovim.github.io/master/logos/neovim-logo.png)](https://neovim.io)
+[![Neovim](https://raw.githubusercontent.com/neovim/neovim.github.io/master/logos/neovim-logo-600x173.png)](https://neovim.io)
 
 [Wiki](https://github.com/neovim/neovim/wiki) |
 [Documentation](https://neovim.io/doc) |
@@ -18,13 +18,27 @@ Neovim is a project that seeks to aggressively refactor Vim in order to:
 
 - Simplify maintenance and encourage [contributions](CONTRIBUTING.md)
 - Split the work between multiple developers
-- Enable advanced [external UIs] without modifications to the core
-- Improve extensibility with a new [plugin architecture](https://github.com/neovim/neovim/wiki/Plugin-UI-architecture)
+- Enable [advanced UIs] without modifications to the core
+- Maximize [extensibility](https://github.com/neovim/neovim/wiki/Plugin-UI-architecture)
 
-For more details, see
-[the wiki](https://github.com/neovim/neovim/wiki/Introduction)!
+See [the wiki](https://github.com/neovim/neovim/wiki/Introduction) and [Roadmap]
+for more information.
 
 [![Throughput Graph](https://graphs.waffle.io/neovim/neovim/throughput.svg)](https://waffle.io/neovim/neovim/metrics)
+
+Install from source
+-------------------
+
+    make CMAKE_BUILD_TYPE=RelWithDebInfo
+    sudo make install
+
+See [the wiki](https://github.com/neovim/neovim/wiki/Building-Neovim) for details.
+
+Install from package
+--------------------
+
+Packages are in [Homebrew], [Debian], [Ubuntu], [Fedora], [Arch Linux], and
+[more](https://github.com/neovim/neovim/wiki/Installing-Neovim).
 
 What's been done so far
 -----------------------
@@ -34,23 +48,12 @@ What's been done so far
 - Asynchronous [job control](https://github.com/neovim/neovim/pull/2247)
 - [Shared data (shada)](https://github.com/neovim/neovim/pull/2506) among multiple editor instances
 - [XDG base directories](https://github.com/neovim/neovim/pull/3470) support
-- [libuv](https://github.com/libuv/libuv/)-based platform/OS/"mch" layer
+- [libuv](https://github.com/libuv/libuv/)-based platform/OS layer
 - [Pushdown automaton](https://github.com/neovim/neovim/pull/3413) input model
 - 1000s of new tests
 - Legacy tests converted to Lua tests
 
 See [`:help nvim-features`][nvim-features] for a comprehensive list.
-
-What's being worked on now
---------------------------
-
-See the [Roadmap].
-
-How do I get it?
-----------------
-
-There is a Debian package, homebrew formula, PKGBUILD for Arch Linux, RPM, and
-more. See [the wiki](https://github.com/neovim/neovim/wiki/Installing-Neovim)!
 
 License
 -------
@@ -81,6 +84,11 @@ See `LICENSE` for details.
 [license-commit]: https://github.com/neovim/neovim/commit/b17d9691a24099c9210289f16afb1a498a89d803
 [nvim-features]: https://neovim.io/doc/user/vim_diff.html#nvim-features
 [Roadmap]: https://neovim.io/roadmap/
-[external UIs]: https://github.com/neovim/neovim/wiki/Related-projects#gui-projects
+[advanced UIs]: https://github.com/neovim/neovim/wiki/Related-projects#gui-projects
+[Homebrew]: https://github.com/neovim/homebrew-neovim#installation
+[Debian]: https://packages.debian.org/testing/neovim
+[Ubuntu]: http://packages.ubuntu.com/search?keywords=neovim
+[Fedora]: https://admin.fedoraproject.org/pkgdb/package/rpms/neovim
+[Arch Linux]: https://www.archlinux.org/packages/?q=neovim
 
 <!-- vim: set tw=80: -->

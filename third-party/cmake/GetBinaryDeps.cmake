@@ -21,7 +21,7 @@ function(GetBinaryDep)
   set(URL ${${URL_VARNAME}})
   set(HASH ${${HASH_VARNAME}})
   if(NOT URL OR NOT HASH )
-	  message(FATAL_ERROR "${URL_VARNAME} and ${HASH_VARNAME} must be set")
+    message(FATAL_ERROR "${URL_VARNAME} and ${HASH_VARNAME} must be set")
   endif()
 
   ExternalProject_Add(${_gettool_TARGET}
@@ -41,6 +41,6 @@ function(GetBinaryDep)
     CONFIGURE_COMMAND ""
     BUILD_COMMAND ""
     INSTALL_COMMAND ${CMAKE_COMMAND} -E make_directory ${DEPS_INSTALL_DIR}/bin
-		COMMAND "${_gettool_INSTALL_COMMAND}")
+    COMMAND "${_gettool_INSTALL_COMMAND}")
   list(APPEND THIRD_PARTY_DEPS ${__gettool_TARGET})
 endfunction()
