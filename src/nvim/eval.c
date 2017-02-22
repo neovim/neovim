@@ -18069,6 +18069,9 @@ static bool write_list(FileDescriptor *const fp, const list_T *const list,
       }
     }
   }
+  if ((error = file_fsync(fp)) != 0) {
+    goto write_list_error;
+  }
   return true;
 write_list_error:
   emsgf(_("E80: Error while writing: %s"), os_strerror(error));
