@@ -393,23 +393,23 @@ describe('jobs', function()
 
   it('jobstart() works with closures', function()
     source([[
-    fun! MkFun()
-        let a1 = 'foo'
-        let a2 = 'bar'
-        return {id, data, event -> rpcnotify(g:channel, '1', a1, a2, data, event)}
-    endfun
-    let g:job_opts = {'on_stdout': MkFun()}
-    call jobstart(['echo'], g:job_opts)
+      fun! MkFun()
+          let a1 = 'foo'
+          let a2 = 'bar'
+          return {id, data, event -> rpcnotify(g:channel, '1', a1, a2, Normalize(data), event)}
+      endfun
+      let g:job_opts = {'on_stdout': MkFun()}
+      call jobstart('echo "some text"', g:job_opts)
     ]])
-    eq({'notification', '1', {'foo', 'bar', {'', ''}, 'stdout'}}, next_msg())
+    eq({'notification', '1', {'foo', 'bar', {'some text', ''}, 'stdout'}}, next_msg())
   end)
 
   it('jobstart() works when closure passed directly to `jobstart`', function()
     source([[
-    let g:job_opts = {'on_stdout': {id, data, event -> rpcnotify(g:channel, '1', 'foo', 'bar', data, event)}}
-    call jobstart(['echo'], g:job_opts)
+      let g:job_opts = {'on_stdout': {id, data, event -> rpcnotify(g:channel, '1', 'foo', 'bar', Normalize(data), event)}}
+      call jobstart('echo "some text"', g:job_opts)
     ]])
-    eq({'notification', '1', {'foo', 'bar', {'', ''}, 'stdout'}}, next_msg())
+    eq({'notification', '1', {'foo', 'bar', {'some text', ''}, 'stdout'}}, next_msg())
   end)
 
   describe('jobwait', function()
