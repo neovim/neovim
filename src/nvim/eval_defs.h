@@ -6,6 +6,9 @@
 
 #include "nvim/hashtab.h"
 #include "nvim/lib/queue.h"
+#include "nvim/garray.h"   // for garray_T
+#include "nvim/profile.h"  // for proftime_T
+#include "nvim/pos.h"      // for linenr_T
 
 typedef int varnumber_T;
 typedef double float_T;
@@ -104,15 +107,19 @@ struct listvar_S {
   list_T      *lv_used_prev;    /* previous list in used lists list */
 };
 
-/*
- * Structure to hold an item of a Dictionary.
- * Also used for a variable.
- * The key is copied into "di_key" to avoid an extra alloc/free for it.
- */
+// Static list with 10 items. Use init_static_list() to initialize.
+typedef struct {
+  list_T sl_list;  // must be first
+  listitem_T sl_items[10];
+} staticList10_T;
+
+// Structure to hold an item of a Dictionary.
+// Also used for a variable.
+// The key is copied into "di_key" to avoid an extra alloc/free for it.
 struct dictitem_S {
-  typval_T di_tv;               /* type and value of the variable */
-  char_u di_flags;              /* flags (only used for variable) */
-  char_u di_key[1];             /* key (actually longer!) */
+  typval_T di_tv;               ///< type and value of the variable
+  char_u di_flags;              ///< flags (only used for variable)
+  char_u di_key[1];             ///< key (actually longer!)
 };
 
 typedef struct dictitem_S dictitem_T;
@@ -147,9 +154,88 @@ struct dictvar_S {
   QUEUE watchers;         ///< Dictionary key watchers set by user code.
 };
 
+typedef int scid_T;                     // script ID
+typedef struct funccall_S funccall_T;
+
+// Structure to hold info for a user function.
+typedef struct ufunc ufunc_T;
+
+struct ufunc {
+  int          uf_varargs;       ///< variable nr of arguments
+  int          uf_flags;
+  int          uf_calls;         ///< nr of active calls
+  bool         uf_cleared;       ///< func_clear() was already called
+  garray_T     uf_args;          ///< arguments
+  garray_T     uf_lines;         ///< function lines
+  int          uf_profiling;     ///< true when func is being profiled
+  // Profiling the function as a whole.
+  int          uf_tm_count;      ///< nr of calls
+  proftime_T   uf_tm_total;      ///< time spent in function + children
+  proftime_T   uf_tm_self;       ///< time spent in function itself
+  proftime_T   uf_tm_children;   ///< time spent in children this call
+  // Profiling the function per line.
+  int         *uf_tml_count;     ///< nr of times line was executed
+  proftime_T  *uf_tml_total;     ///< time spent in a line + children
+  proftime_T  *uf_tml_self;      ///< time spent in a line itself
+  proftime_T   uf_tml_start;     ///< start time for current line
+  proftime_T   uf_tml_children;  ///< time spent in children for this line
+  proftime_T   uf_tml_wait;      ///< start wait time for current line
+  int          uf_tml_idx;       ///< index of line being timed; -1 if none
+  int          uf_tml_execed;    ///< line being timed was executed
+  scid_T       uf_script_ID;     ///< ID of script where function was defined,
+                                 //   used for s: variables
+  int          uf_refcount;      ///< reference count, see func_name_refcount()
+  funccall_T   *uf_scoped;       ///< l: local variables for closure
+  char_u       uf_name[1];       ///< name of function (actually longer); can
+                                 //   start with <SNR>123_ (<SNR> is K_SPECIAL
+                                 //   KS_EXTRA KE_SNR)
+};
+
+/// Maximum number of function arguments
+#define MAX_FUNC_ARGS   20
+#define VAR_SHORT_LEN   20      // short variable name length
+#define FIXVAR_CNT      12      // number of fixed variables
+
+// structure to hold info for a function that is currently being executed.
+struct funccall_S {
+  ufunc_T     *func;            ///< function being called
+  int linenr;                   ///< next line to be executed
+  int returned;                 ///< ":return" used
+  struct {                      ///< fixed variables for arguments
+    dictitem_T var;                     ///< variable (without room for name)
+    char_u room[VAR_SHORT_LEN];         ///< room for the name
+  } fixvar[FIXVAR_CNT];
+  dict_T l_vars;                ///< l: local function variables
+  dictitem_T l_vars_var;        ///< variable for l: scope
+  dict_T l_avars;               ///< a: argument variables
+  dictitem_T l_avars_var;       ///< variable for a: scope
+  list_T l_varlist;             ///< list for a:000
+  listitem_T l_listitems[MAX_FUNC_ARGS];        ///< listitems for a:000
+  typval_T    *rettv;           ///< return value
+  linenr_T breakpoint;          ///< next line with breakpoint or zero
+  int dbg_tick;                 ///< debug_tick when breakpoint was set
+  int level;                    ///< top nesting level of executed function
+  proftime_T prof_child;        ///< time spent in a child
+  funccall_T  *caller;          ///< calling function or NULL
+  int fc_refcount;              ///< number of user functions that reference
+                                // this funccal
+  int fc_copyID;                ///< for garbage collection
+  garray_T fc_funcs;            ///< list of ufunc_T* which keep a reference
+                                // to "func"
+};
+
+// structure used by trans_function_name()
+typedef struct {
+  dict_T      *fd_dict;         ///< Dictionary used.
+  char_u      *fd_newkey;       ///< New key in "dict" in allocated memory.
+  dictitem_T  *fd_di;           ///< Dictionary item used.
+} funcdict_T;
+
 struct partial_S {
   int pt_refcount;        ///< Reference count.
-  char_u *pt_name;        ///< Function name.
+  char_u *pt_name;        ///< Function name; when NULL use pt_func->name.
+  ufunc_T *pt_func;       ///< Function pointer; when NULL lookup function
+                          ///< with pt_name.
   bool pt_auto;           ///< when true the partial was created for using
                           ///< dict.member in handle_subscript().
   int pt_argc;            ///< Number of arguments.

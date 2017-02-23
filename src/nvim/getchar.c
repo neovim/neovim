@@ -1327,8 +1327,9 @@ int using_script(void)
 void before_blocking(void)
 {
   updatescript(0);
-  if (may_garbage_collect)
-    garbage_collect();
+  if (may_garbage_collect) {
+    garbage_collect(false);
+  }
 }
 
 /*
@@ -1366,10 +1367,11 @@ int vgetc(void)
   char_u buf[MB_MAXBYTES + 1];
   int i;
 
-  /* Do garbage collection when garbagecollect() was called previously and
-   * we are now at the toplevel. */
-  if (may_garbage_collect && want_garbage_collect)
-    garbage_collect();
+  // Do garbage collection when garbagecollect() was called previously and
+  // we are now at the toplevel.
+  if (may_garbage_collect && want_garbage_collect) {
+    garbage_collect(false);
+  }
 
   /*
    * If a character was put back with vungetc, it was already processed.

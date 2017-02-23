@@ -6442,32 +6442,72 @@ static linenr_T submatch_firstlnum;
 static linenr_T submatch_maxline;
 static int submatch_line_lbr;
 
-/*
- * vim_regsub() - perform substitutions after a vim_regexec() or
- * vim_regexec_multi() match.
- *
- * If "copy" is TRUE really copy into "dest".
- * If "copy" is FALSE nothing is copied, this is just to find out the length
- * of the result.
- *
- * If "backslash" is TRUE, a backslash will be removed later, need to double
- * them to keep them, and insert a backslash before a CR to avoid it being
- * replaced with a line break later.
- *
- * Note: The matched text must not change between the call of
- * vim_regexec()/vim_regexec_multi() and vim_regsub()!  It would make the back
- * references invalid!
- *
- * Returns the size of the replacement, including terminating NUL.
- */
-int vim_regsub(regmatch_T *rmp, char_u *source, char_u *dest, int copy, int magic, int backslash)
+/// Put the submatches in "argv[0]" which is a list passed into call_func() by
+/// vim_regsub_both().
+static int fill_submatch_list(int argc, typval_T *argv, int argcount)
+{
+  listitem_T *li;
+  int        i;
+  char_u     *s;
+
+  if (argcount == 0) {
+    // called function doesn't take an argument
+    return 0;
+  }
+
+  // Relies on sl_list to be the first item in staticList10_T.
+  init_static_list((staticList10_T *)(argv->vval.v_list));
+
+  // There are always 10 list items in staticList10_T.
+  li = argv->vval.v_list->lv_first;
+  for (i = 0; i < 10; i++) {
+    s = submatch_match->startp[i];
+    if (s == NULL || submatch_match->endp[i] == NULL) {
+      s = NULL;
+    } else {
+      s = vim_strnsave(s, (int)(submatch_match->endp[i] - s));
+    }
+    li->li_tv.v_type = VAR_STRING;
+    li->li_tv.vval.v_string = s;
+    li = li->li_next;
+  }
+  return 1;
+}
+
+static void clear_submatch_list(staticList10_T *sl)
+{
+  int i;
+
+  for (i = 0; i < 10; i++) {
+    xfree(sl->sl_items[i].li_tv.vval.v_string);
+  }
+}
+
+/// vim_regsub() - perform substitutions after a vim_regexec() or
+/// vim_regexec_multi() match.
+///
+/// If "copy" is TRUE really copy into "dest".
+/// If "copy" is FALSE nothing is copied, this is just to find out the length
+/// of the result.
+///
+/// If "backslash" is TRUE, a backslash will be removed later, need to double
+/// them to keep them, and insert a backslash before a CR to avoid it being
+/// replaced with a line break later.
+///
+/// Note: The matched text must not change between the call of
+/// vim_regexec()/vim_regexec_multi() and vim_regsub()!  It would make the back
+/// references invalid!
+///
+/// Returns the size of the replacement, including terminating NUL.
+int vim_regsub(regmatch_T *rmp, char_u *source, typval_T *expr, char_u *dest,
+               int copy, int magic, int backslash)
 {
   reg_match = rmp;
   reg_mmatch = NULL;
   reg_maxline = 0;
   reg_buf = curbuf;
-  reg_line_lbr = TRUE;
-  return vim_regsub_both(source, dest, copy, magic, backslash);
+  reg_line_lbr = true;
+  return vim_regsub_both(source, expr, dest, copy, magic, backslash);
 }
 
 int vim_regsub_multi(regmmatch_T *rmp, linenr_T lnum, char_u *source, char_u *dest, int copy, int magic, int backslash)
@@ -6477,11 +6517,12 @@ int vim_regsub_multi(regmmatch_T *rmp, linenr_T lnum, char_u *source, char_u *de
   reg_buf = curbuf;             /* always works on the current buffer! */
   reg_firstlnum = lnum;
   reg_maxline = curbuf->b_ml.ml_line_count - lnum;
-  reg_line_lbr = FALSE;
-  return vim_regsub_both(source, dest, copy, magic, backslash);
+  reg_line_lbr = false;
+  return vim_regsub_both(source, NULL, dest, copy, magic, backslash);
 }
 
-static int vim_regsub_both(char_u *source, char_u *dest, int copy, int magic, int backslash)
+static int vim_regsub_both(char_u *source, typval_T *expr, char_u *dest,
+                           int copy, int magic, int backslash)
 {
   char_u      *src;
   char_u      *dst;
@@ -6495,8 +6536,8 @@ static int vim_regsub_both(char_u *source, char_u *dest, int copy, int magic, in
   int len = 0;                  /* init for GCC */
   static char_u *eval_result = NULL;
 
-  /* Be paranoid... */
-  if (source == NULL || dest == NULL) {
+  // Be paranoid...
+  if ((source == NULL && expr == NULL) || dest == NULL) {
     EMSG(_(e_null));
     return 0;
   }
@@ -6505,16 +6546,13 @@ static int vim_regsub_both(char_u *source, char_u *dest, int copy, int magic, in
   src = source;
   dst = dest;
 
-  /*
-   * When the substitute part starts with "\=" evaluate it as an expression.
-   */
-  if (source[0] == '\\' && source[1] == '='
-      && !can_f_submatch            /* can't do this recursively */
-      ) {
-    /* To make sure that the length doesn't change between checking the
-     * length and copying the string, and to speed up things, the
-     * resulting string is saved from the call with "copy" == FALSE to the
-     * call with "copy" == TRUE. */
+  // When the substitute part starts with "\=" evaluate it as an expression.
+  if (expr != NULL || (source[0] == '\\' && source[1] == '='
+                       && !can_f_submatch)) {       // can't do this recursively
+    // To make sure that the length doesn't change between checking the
+    // length and copying the string, and to speed up things, the
+    // resulting string is saved from the call with "copy" == FALSE to the
+    // call with "copy" == TRUE.
     if (copy) {
       if (eval_result != NULL) {
         STRCPY(dest, eval_result);
@@ -6525,6 +6563,7 @@ static int vim_regsub_both(char_u *source, char_u *dest, int copy, int magic, in
     } else {
       win_T       *save_reg_win;
       int save_ireg_ic;
+      bool prev_can_f_submatch = can_f_submatch;
 
       xfree(eval_result);
 
@@ -6539,9 +6578,50 @@ static int vim_regsub_both(char_u *source, char_u *dest, int copy, int magic, in
       submatch_line_lbr = reg_line_lbr;
       save_reg_win = reg_win;
       save_ireg_ic = ireg_ic;
-      can_f_submatch = TRUE;
+      can_f_submatch = true;
 
-      eval_result = eval_to_string(source + 2, NULL, TRUE);
+      if (expr != NULL) {
+        typval_T argv[2];
+        int dummy;
+        char_u buf[NUMBUFLEN];
+        typval_T rettv;
+        staticList10_T matchList;
+
+        rettv.v_type = VAR_STRING;
+        rettv.vval.v_string = NULL;
+        if (prev_can_f_submatch) {
+          // can't do this recursively
+        } else {
+          argv[0].v_type = VAR_LIST;
+          argv[0].vval.v_list = &matchList.sl_list;
+          matchList.sl_list.lv_len = 0;
+          if (expr->v_type == VAR_FUNC) {
+            s = expr->vval.v_string;
+            call_func(s, (int)STRLEN(s), &rettv, 1, argv,
+                      fill_submatch_list, 0L, 0L, &dummy,
+                      true, NULL, NULL);
+          } else if (expr->v_type == VAR_PARTIAL) {
+            partial_T *partial = expr->vval.v_partial;
+
+            s = partial_name(partial);
+            call_func(s, (int)STRLEN(s), &rettv, 1, argv,
+                      fill_submatch_list, 0L, 0L, &dummy,
+                      true, partial, NULL);
+          }
+          if (matchList.sl_list.lv_len > 0) {
+            // fill_submatch_list() was called.
+            clear_submatch_list(&matchList);
+          }
+        }
+        eval_result = get_tv_string_buf_chk(&rettv, buf);
+        if (eval_result != NULL) {
+          eval_result = vim_strsave(eval_result);
+        }
+        clear_tv(&rettv);
+      } else {
+        eval_result = eval_to_string(source + 2, NULL, true);
+      }
+
       if (eval_result != NULL) {
         int had_backslash = FALSE;
 
