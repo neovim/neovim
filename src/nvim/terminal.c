@@ -174,7 +174,7 @@ void terminal_init(void)
   VTerm *vt = vterm_new(24, 80);
   VTermState *state = vterm_obtain_state(vt);
 
-  for (int color_index = 0; color_index < 256; color_index++) {
+  for (int color_index = 255; color_index >= 0; color_index--) {
     VTermColor color;
     // Some of the default 16 colors has the same color as the later
     // 240 colors. To avoid collisions, we will use the custom colors
