@@ -321,14 +321,15 @@ static void parse_msgpack(Stream *stream, RBuffer *rbuf, size_t c, void *data,
 
   if (eof) {
     close_channel(channel);
-    call_set_error(channel, "Channel was closed by the client");
+    char buf[256];
+    snprintf(buf, sizeof(buf), "channel %" PRIu64 " was closed by the client",
+             channel->id);
+    call_set_error(channel, buf);
     goto end;
   }
 
   size_t count = rbuffer_size(rbuf);
-  DLOG("Feeding the msgpack parser with %u bytes of data from Stream(%p)",
-       count,
-       stream);
+  DLOG("parsing %u bytes of msgpack data from Stream(%p)", count, stream);
 
   // Feed the unpacker with data
   msgpack_unpacker_reserve_buffer(channel->unpacker, count);
@@ -350,11 +351,9 @@ static void parse_msgpack(Stream *stream, RBuffer *rbuf, size_t c, void *data,
         complete_call(&unpacked.data, channel);
       } else {
         char buf[256];
-        snprintf(buf,
-                 sizeof(buf),
-                 "Channel %" PRIu64 " returned a response that doesn't have "
-                 "a matching request id. Ensure the client is properly "
-                 "synchronized",
+        snprintf(buf, sizeof(buf),
+                 "channel %" PRIu64 " sent a response without a matching "
+                 "request id. Ensure the client is properly synchronized",
                  channel->id);
         call_set_error(channel, buf);
       }
@@ -406,7 +405,7 @@ static void handle_request(Channel *channel, msgpack_object *request)
                                          &out_buffer))) {
       char buf[256];
       snprintf(buf, sizeof(buf),
-               "Channel %" PRIu64 " sent an invalid message, closed.",
+               "channel %" PRIu64 " sent an invalid message, closed.",
                channel->id);
       call_set_error(channel, buf);
     }
@@ -716,7 +715,7 @@ static void complete_call(msgpack_object *obj, Channel *channel)
 
 static void call_set_error(Channel *channel, char *msg)
 {
-  ELOG("msgpack-rpc: %s", msg);
+  ELOG("RPC: %s", msg);
   for (size_t i = 0; i < kv_size(channel->call_stack); i++) {
     ChannelCallFrame *frame = kv_A(channel->call_stack, i);
     frame->returned = true;
@@ -789,10 +788,10 @@ static void decref(Channel *channel)
 }
 
 #if MIN_LOG_LEVEL <= DEBUG_LOG_LEVEL
-#define REQ "[request]      "
-#define RES "[response]     "
-#define NOT "[notification] "
-#define ERR "[error]        "
+#define REQ "[request]  "
+#define RES "[response] "
+#define NOT "[notify]   "
+#define ERR "[error]    "
 
 // Cannot define array with negative offsets, so this one is needed to be added
 // to MSGPACK_UNPACK_\* values.
@@ -810,7 +809,7 @@ static void log_server_msg(uint64_t channel_id,
 {
   msgpack_unpacked unpacked;
   msgpack_unpacked_init(&unpacked);
-  DLOGN("[msgpack-rpc] nvim -> client(%" PRIu64 ") ", channel_id);
+  DLOGN("RPC ->ch %" PRIu64 ": ", channel_id);
   const msgpack_unpack_return result =
       msgpack_unpack_next(&unpacked, packed->data, packed->size, NULL);
   switch (result) {
@@ -847,7 +846,7 @@ static void log_client_msg(uint64_t channel_id,
                            bool is_request,
                            msgpack_object msg)
 {
-  DLOGN("[msgpack-rpc] client(%" PRIu64 ") -> nvim ", channel_id);
+  DLOGN("RPC <-ch %" PRIu64 ": ", channel_id);
   log_lock();
   FILE *f = open_log_file();
   fprintf(f, is_request ? REQ : RES);
