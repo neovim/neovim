@@ -62,6 +62,7 @@
 #include "nvim/os/os.h"
 #include "nvim/event/loop.h"
 #include "nvim/os/time.h"
+#include "nvim/api/private/helpers.h"
 
 /*
  * Variables shared between getcmdline(), redrawcmdline() and others.
@@ -136,6 +137,8 @@ static struct cmdline_info ccline;
 static int cmd_showtail;                /* Only show path tail in lists ? */
 
 static int new_cmdpos;          /* position set by set_cmdline_pos() */
+
+static bool cmdline_external = false;
 
 /*
  * Type used by call_user_expand_func
@@ -218,7 +221,9 @@ static uint8_t *command_line_enter(int firstc, long count, int indent)
   if (!cmd_silent) {
     s->i = msg_scrolled;
     msg_scrolled = 0;           // avoid wait_return message
-    gotocmdline(true);
+    if (!cmdline_external) {
+      gotocmdline(true);
+    }
     msg_scrolled += s->i;
     redrawcmdprompt();          // draw prompt or indent
     set_cmdspos();
@@ -1670,7 +1675,16 @@ getcmdline (
     int indent               // indent for inside conditionals
 )
 {
-  return command_line_enter(firstc, count, indent);
+  if (cmdline_external) {
+    Array args = ARRAY_DICT_INIT;
+    ui_event("cmdline_enter", args);
+  }
+  char_u *p = command_line_enter(firstc, count, indent);
+  if (cmdline_external) {
+    Array args = ARRAY_DICT_INIT;
+    ui_event("cmdline_leave", args);
+  }
+  return p;
 }
 
 /*
@@ -2176,6 +2190,14 @@ static void draw_cmdline(int start, int len)
 {
   int i;
 
+  if (cmdline_external) {
+    Array args = ARRAY_DICT_INIT;
+    ADD(args, STRING_OBJ(cstr_to_string((char *)(ccline.cmdbuff))));
+    ADD(args, INTEGER_OBJ(ccline.cmdpos));
+    ui_event("cmdline", args);
+    return;
+  }
+
   if (cmdline_star > 0)
     for (i = 0; i < len; ++i) {
       msg_putchar('*');
@@ -2273,11 +2295,28 @@ void putcmdline(int c, int shift)
 {
   if (cmd_silent)
     return;
-  msg_no_more = TRUE;
-  msg_putchar(c);
-  if (shift)
-    draw_cmdline(ccline.cmdpos, ccline.cmdlen - ccline.cmdpos);
-  msg_no_more = FALSE;
+  if (!cmdline_external) {
+    msg_no_more = TRUE;
+    msg_putchar(c);
+    if (shift)
+      draw_cmdline(ccline.cmdpos, ccline.cmdlen - ccline.cmdpos);
+    msg_no_more = FALSE;
+  } else {
+      char_u *p;
+      if (ccline.cmdpos == ccline.cmdlen || shift) {
+        p = vim_strnsave(ccline.cmdbuff, ccline.cmdlen + 1);
+      } else {
+        p = vim_strsave(ccline.cmdbuff);
+      }
+      p[ccline.cmdpos] = c;
+      if (shift)
+        STRCPY(p + ccline.cmdpos + 1, ccline.cmdbuff + ccline.cmdpos);
+      Array args = ARRAY_DICT_INIT;
+      ADD(args, STRING_OBJ(cstr_to_string((char *)(p))));
+      ADD(args, INTEGER_OBJ(ccline.cmdpos));
+      ui_event("cmdline", args);
+      xfree(p);
+  }
   cursorcmd();
   ui_cursor_shape();
 }
@@ -2626,8 +2665,15 @@ static void redrawcmdprompt(void)
 
   if (cmd_silent)
     return;
-  if (ccline.cmdfirstc != NUL)
-    msg_putchar(ccline.cmdfirstc);
+  if (ccline.cmdfirstc != NUL) {
+    if (cmdline_external) {
+      Array args = ARRAY_DICT_INIT;
+      ADD(args, STRING_OBJ(cstr_to_string((char *)(&ccline.cmdfirstc))));
+      ui_event("cmdline_firstc", args);
+    } else {
+      msg_putchar(ccline.cmdfirstc);
+    }
+  }
   if (ccline.cmdprompt != NULL) {
     msg_puts_attr((const char *)ccline.cmdprompt, ccline.cmdattr);
     ccline.cmdindent = msg_col + (msg_row - cmdline_row) * Columns;
@@ -2646,6 +2692,11 @@ void redrawcmd(void)
 {
   if (cmd_silent)
     return;
+
+  if (cmdline_external) {
+    draw_cmdline(0, ccline.cmdlen);
+    return;
+  }
 
   /* when 'incsearch' is set there may be no command line while redrawing */
   if (ccline.cmdbuff == NULL) {
@@ -2689,6 +2740,13 @@ static void cursorcmd(void)
 {
   if (cmd_silent)
     return;
+
+  if (cmdline_external) {
+    Array args = ARRAY_DICT_INIT;
+    ADD(args, INTEGER_OBJ(ccline.cmdpos));
+    ui_event("cmdline_pos", args);
+    return;
+  }
 
   if (cmdmsg_rl) {
     msg_row = cmdline_row  + (ccline.cmdspos / (int)(Columns - 1));
@@ -5518,4 +5576,9 @@ histentry_T *hist_get_array(const uint8_t history_type, int **const new_hisidx,
   *new_hisidx = &(hisidx[history_type]);
   *new_hisnum = &(hisnum[history_type]);
   return history[history_type];
+}
+
+void cmdline_set_external(bool external)
+{
+  cmdline_external = external;
 }

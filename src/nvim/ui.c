@@ -29,6 +29,7 @@
 #include "nvim/os/input.h"
 #include "nvim/os/signal.h"
 #include "nvim/popupmnu.h"
+#include "nvim/ex_getln.h"
 #include "nvim/screen.h"
 #include "nvim/syntax.h"
 #include "nvim/window.h"
@@ -168,6 +169,7 @@ void ui_refresh(void)
   }
 
   row = col = 0;
+  cmdline_set_external(cmdline_external);
   screen_resize(width, height);
   for (UIWidget i = 0; (int)i < UI_WIDGETS; i++) {
     ui_set_external(i, ext_widgets[i]);
