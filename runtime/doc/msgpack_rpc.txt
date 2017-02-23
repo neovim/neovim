@@ -462,6 +462,9 @@ states might be represented as separate modes.
         The first character of the command, which could be : / ? etc. With
 	the firstc, you know wheither it's a command or a search.
 
+["cmdline_prompt", prompt]
+        The prompt of the cmdline.
+
 ["cmdline", content, pos]
 	When cmdline_external is set to true, nvim will not draw the cmdline
 	on the grad, instead nvim will send ui events of the cmdline content
