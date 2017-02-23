@@ -550,7 +550,7 @@ void eval_init(void)
     type_list->lv_lock = VAR_FIXED;
     type_list->lv_refcount = 1;
     dictitem_T *const di = dictitem_alloc((char_u *) msgpack_type_names[i]);
-    di->di_flags = DI_FLAGS_RO | DI_FLAGS_FIX;
+    di->di_flags |= DI_FLAGS_RO|DI_FLAGS_FIX;
     di->di_tv = (typval_T) {
       .v_type = VAR_LIST,
       .vval = { .v_list = type_list, },
@@ -6446,9 +6446,8 @@ static void dict_free_contents(dict_T *d) {
        * something recursive causing trouble. */
       di = HI2DI(hi);
       hash_remove(&d->dv_hashtab, hi);
-      clear_tv(&di->di_tv);
-      xfree(di);
-      --todo;
+      dictitem_free(di);
+      todo--;
     }
   }
 

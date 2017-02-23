@@ -96,10 +96,11 @@ static inline void buf_set_changedtick(buf_T *const buf, const int changedtick)
   assert(changedtick_di != NULL);
   assert(changedtick_di->di_tv.v_type == VAR_NUMBER);
   assert(changedtick_di->di_tv.v_lock == VAR_FIXED);
-  assert(&changedtick_di->di_tv.vval.v_number == buf->changedtick_val);
-  assert(*buf->changedtick_val == (varnumber_T)buf->b_changedtick);
+  assert(changedtick_di->di_flags == (DI_FLAGS_RO|DI_FLAGS_FIX));
+  assert(changedtick_di == (dictitem_T *)&buf->changedtick_di);
+  assert(&buf->b_changedtick == &buf->changedtick_di.di_tv.vval.v_number);
 #endif
-  *buf->changedtick_val = buf->b_changedtick = changedtick;
+  buf->b_changedtick = changedtick;
 }
 
 #define WITH_BUFFER(b, code) \
