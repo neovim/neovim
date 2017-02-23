@@ -2675,11 +2675,17 @@ static void redrawcmdprompt(void)
     }
   }
   if (ccline.cmdprompt != NULL) {
-    msg_puts_attr((const char *)ccline.cmdprompt, ccline.cmdattr);
-    ccline.cmdindent = msg_col + (msg_row - cmdline_row) * Columns;
-    /* do the reverse of set_cmdspos() */
-    if (ccline.cmdfirstc != NUL)
-      --ccline.cmdindent;
+    if (cmdline_external) {
+      Array args = ARRAY_DICT_INIT;
+      ADD(args, STRING_OBJ(cstr_to_string((char *)(ccline.cmdprompt))));
+      ui_event("cmdline_prompt", args);
+    } else {
+      msg_puts_attr((const char *)ccline.cmdprompt, ccline.cmdattr);
+      ccline.cmdindent = msg_col + (msg_row - cmdline_row) * Columns;
+      /* do the reverse of set_cmdspos() */
+      if (ccline.cmdfirstc != NUL)
+        --ccline.cmdindent;
+    }
   } else
     for (i = ccline.cmdindent; i > 0; --i)
       msg_putchar(' ');
@@ -5581,4 +5587,9 @@ histentry_T *hist_get_array(const uint8_t history_type, int **const new_hisidx,
 void cmdline_set_external(bool external)
 {
   cmdline_external = external;
+}
+
+bool cmdline_get_external()
+{
+  return cmdline_external;
 }

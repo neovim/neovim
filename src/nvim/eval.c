@@ -11089,15 +11089,19 @@ void get_user_input(const typval_T *const argvars,
   // Only the part of the message after the last NL is considered as
   // prompt for the command line.
   const char *p = strrchr(prompt, '\n');
-  if (p == NULL) {
+  if (ui_is_external(kUICmdline)) {
     p = prompt;
   } else {
-    p++;
-    msg_start();
-    msg_clr_eos();
-    msg_puts_attr_len(prompt, p - prompt, echo_attr);
-    msg_didout = false;
-    msg_starthere();
+    if (p == NULL) {
+      p = prompt;
+    } else {
+      p++;
+      msg_start();
+      msg_clr_eos();
+      msg_puts_attr_len(prompt, p - prompt, echo_attr);
+      msg_didout = false;
+      msg_starthere();
+    }
   }
   cmdline_row = msg_row;
 
