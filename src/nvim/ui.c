@@ -30,6 +30,7 @@
 #include "nvim/os/input.h"
 #include "nvim/os/signal.h"
 #include "nvim/popupmnu.h"
+#include "nvim/ex_getln.h"
 #include "nvim/screen.h"
 #include "nvim/syntax.h"
 #include "nvim/window.h"
@@ -280,6 +281,7 @@ void ui_refresh(void)
 
   int save_p_lz = p_lz;
   p_lz = false;  // convince redrawing() to return true ...
+  cmdline_set_external(cmdline_external);
   screen_resize(width, height);
   p_lz = save_p_lz;
 
