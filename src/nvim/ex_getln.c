@@ -62,6 +62,7 @@
 #include "nvim/os/os.h"
 #include "nvim/event/loop.h"
 #include "nvim/os/time.h"
+#include "nvim/api/private/helpers.h"
 
 /*
  * Variables shared between getcmdline(), redrawcmdline() and others.
@@ -148,6 +149,7 @@ static int hisnum[HIST_COUNT] = {0, 0, 0, 0, 0};
 /* identifying (unique) number of newest history entry */
 static int hislen = 0;                  /* actual length of history tables */
 
+static bool wildmenu_external = false;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ex_getln.c.generated.h"
@@ -451,6 +453,10 @@ static int command_line_execute(VimState *state, int key)
       && !(s->c == p_wc && KeyTyped) && s->c != p_wcm
       && s->c != Ctrl_N && s->c != Ctrl_P && s->c != Ctrl_A
       && s->c != Ctrl_L) {
+    if (wildmenu_external) {
+      Array args = ARRAY_DICT_INIT;
+      ui_event("wildmenu_hide", args);
+    }
     (void)ExpandOne(&s->xpc, NULL, NULL, 0, WILD_FREE);
     s->did_wild_list = false;
     if (!p_wmnu || (s->c != K_UP && s->c != K_DOWN)) {
@@ -2928,9 +2934,16 @@ ExpandOne (
         else
           findex = -1;
       }
-      if (p_wmnu)
-        win_redr_status_matches(xp, xp->xp_numfiles, xp->xp_files,
-            findex, cmd_showtail);
+      if (p_wmnu) {
+        if (wildmenu_external) {
+          Array args = ARRAY_DICT_INIT;
+          ADD(args, INTEGER_OBJ(findex));
+          ui_event("wildmenu_select", args);
+        } else {
+          win_redr_status_matches(xp, xp->xp_numfiles, xp->xp_files,
+              findex, cmd_showtail);
+        }
+      }
       if (findex == -1)
         return vim_strsave(orig_save);
       return vim_strsave(xp->xp_files[findex]);
@@ -3287,6 +3300,15 @@ static int showmatches(expand_T *xp, int wildmenu)
     num_files = xp->xp_numfiles;
     files_found = xp->xp_files;
     showtail = cmd_showtail;
+  }
+
+  if (wildmenu_external) {
+    Array args = ARRAY_DICT_INIT;
+    for (i = 0; i < num_files; ++i) {
+      ADD(args, STRING_OBJ(cstr_to_string((char *)files_found[i])));
+    }
+    ui_event("wildmenu", args);
+    return EXPAND_OK;
   }
 
   if (!wildmenu) {
@@ -5518,4 +5540,9 @@ histentry_T *hist_get_array(const uint8_t history_type, int **const new_hisidx,
   *new_hisidx = &(hisidx[history_type]);
   *new_hisnum = &(hisnum[history_type]);
   return history[history_type];
+}
+
+void wildmenu_set_external(bool external)
+{
+  wildmenu_external = external;
 }

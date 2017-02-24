@@ -441,5 +441,18 @@ states might be represented as separate modes.
 	curtab:	  Current Tabpage
 	tabs:	  List of Dicts [{ "tab": Tabpage, "name": String }, ...]
 
+["wildmenu", items]
+	When `wildmenu_external` is set to true, nvim will not draw the
+	wildmenu on the grid, instead when the wildmenu is to be displayed
+	this update is sent. `items` is an array of the completion items.
+
+["wildmenu_select", selected]
+	An item in the currently displayed wildmenu is selected. `selected`
+	is either a zero-based index into the array of items from the last
+	wildmenu event, or -1 if no item is selected.
+
+["wildmenu_hide"]
+	The wildmenu is hidden.
+
 ==============================================================================
  vim:tw=78:ts=8:noet:ft=help:norl:
