@@ -79,6 +79,13 @@ local function cimport(...)
 
   -- format it (so that the lines are "unique" statements), also filter out
   -- Objective-C blocks
+  if os.getenv('NVIM_TEST_PRINT_I') == '1' then
+    local lnum = 0
+    for line in body:gmatch('[^\n]+') do
+      lnum = lnum + 1
+      print(lnum, line)
+    end
+  end
   body = formatc(body)
   body = filter_complex_blocks(body)
 

@@ -96,7 +96,10 @@ static inline void buf_set_changedtick(buf_T *const buf, const int changedtick)
   assert(changedtick_di != NULL);
   assert(changedtick_di->di_tv.v_type == VAR_NUMBER);
   assert(changedtick_di->di_tv.v_lock == VAR_FIXED);
+  // For some reason formatc does not like the below.
+# ifndef UNIT_TESTING_LUA_PREPROCESSING
   assert(changedtick_di->di_flags == (DI_FLAGS_RO|DI_FLAGS_FIX));
+# endif
   assert(changedtick_di == (dictitem_T *)&buf->changedtick_di);
   assert(&buf->b_changedtick == &buf->changedtick_di.di_tv.vval.v_number);
 #endif
