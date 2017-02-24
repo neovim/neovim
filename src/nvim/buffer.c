@@ -1452,6 +1452,8 @@ static int top_file_num = 1;            ///< highest file number
 static inline void buf_init_changedtick(buf_T *const buf)
   FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_NONNULL_ALL
 {
+  STATIC_ASSERT(sizeof("changedtick") <= sizeof(buf->changedtick_di.di_key),
+                "buf->changedtick_di cannot hold large enough keys");
   buf->changedtick_di = (dictitem16_T) {
     .di_flags = DI_FLAGS_RO|DI_FLAGS_FIX,  // Must not include DI_FLAGS_ALLOC.
     .di_tv = (typval_T) {
@@ -1459,10 +1461,8 @@ static inline void buf_init_changedtick(buf_T *const buf)
       .v_lock = VAR_FIXED,
       .vval.v_number = buf->b_changedtick,
     },
+    .di_key = "changedtick",
   };
-  STATIC_ASSERT(sizeof("changedtick") <= sizeof(buf->changedtick_di.di_key),
-                "buf->changedtick_di cannot hold large enough keys");
-  memcpy(buf->changedtick_di.di_key, "changedtick", sizeof("changedtick"));
   dict_add(buf->b_vars, (dictitem_T *)&buf->changedtick_di);
 }
 
