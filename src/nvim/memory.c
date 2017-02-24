@@ -625,18 +625,6 @@ void free_all_mem(void)
   /* Destroy all windows.  Must come before freeing buffers. */
   win_free_all();
 
-  /* Free all buffers.  Reset 'autochdir' to avoid accessing things that
-   * were freed already. */
-  p_acd = false;
-  for (buf = firstbuf; buf != NULL; ) {
-    bufref_T bufref;
-    set_bufref(&bufref, buf);
-    nextbuf = buf->b_next;
-    close_buffer(NULL, buf, DOBUF_WIPE, false);
-    // Didn't work, try next one.
-    buf = bufref_valid(&bufref) ? nextbuf : firstbuf;
-  }
-
   free_cmdline_buf();
 
   /* Clear registers. */
@@ -659,6 +647,20 @@ void free_all_mem(void)
       break;
 
   eval_clear();
+
+  // Free all buffers.  Reset 'autochdir' to avoid accessing things that
+  // were freed already.
+  // Must be after eval_clear to avoid it trying to access b:changedtick after 
+  // freeing it.
+  p_acd = false;
+  for (buf = firstbuf; buf != NULL; ) {
+    bufref_T bufref;
+    set_bufref(&bufref, buf);
+    nextbuf = buf->b_next;
+    close_buffer(NULL, buf, DOBUF_WIPE, false);
+    // Didn't work, try next one.
+    buf = bufref_valid(&bufref) ? nextbuf : firstbuf;
+  }
 
   /* screenlines (can't display anything now!) */
   free_screenlines();
