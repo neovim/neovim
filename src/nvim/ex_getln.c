@@ -534,6 +534,9 @@ static int command_line_execute(VimState *state, int key)
   if (!(s->c == p_wc && KeyTyped) && s->c != p_wcm
       && s->c != Ctrl_N && s->c != Ctrl_P && s->c != Ctrl_A
       && s->c != Ctrl_L) {
+    if (ui_is_external(kUIWildmenu)) {
+      ui_call_wildmenu_hide();
+    }
     if (s->xpc.xp_numfiles != -1) {
       (void)ExpandOne(&s->xpc, NULL, NULL, 0, WILD_FREE);
     }
@@ -3515,11 +3518,17 @@ ExpandOne (
         else
           findex = -1;
       }
-      if (p_wmnu)
-        win_redr_status_matches(xp, xp->xp_numfiles, xp->xp_files,
-            findex, cmd_showtail);
-      if (findex == -1)
+      if (p_wmnu) {
+        if (ui_is_external(kUIWildmenu)) {
+          ui_call_wildmenu_select(findex);
+        } else {
+          win_redr_status_matches(xp, xp->xp_numfiles, xp->xp_files,
+                                  findex, cmd_showtail);
+        }
+      }
+      if (findex == -1) {
         return vim_strsave(orig_save);
+      }
       return vim_strsave(xp->xp_files[findex]);
     } else
       return NULL;
@@ -3874,6 +3883,15 @@ static int showmatches(expand_T *xp, int wildmenu)
     num_files = xp->xp_numfiles;
     files_found = xp->xp_files;
     showtail = cmd_showtail;
+  }
+
+  if (ui_is_external(kUIWildmenu)) {
+    Array args = ARRAY_DICT_INIT;
+    for (i = 0; i < num_files; i++) {
+      ADD(args, STRING_OBJ(cstr_to_string((char *)files_found[i])));
+    }
+    ui_call_wildmenu_show(args);
+    return EXPAND_OK;
   }
 
   if (!wildmenu) {
@@ -6128,4 +6146,3 @@ static void set_search_match(pos_T *t)
     coladvance((colnr_T)MAXCOL);
   }
 }
-

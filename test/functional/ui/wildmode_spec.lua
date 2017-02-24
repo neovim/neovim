@@ -179,3 +179,102 @@ describe('command line completion', function()
     ]])
   end)
 end)
+
+describe('External wildmenu', function()
+  local screen
+  local items, selected = nil, nil
+
+  before_each(function()
+    clear()
+    screen = Screen.new(25, 5)
+    screen:attach({rgb=true, ext_wildmenu=true})
+    screen:set_on_event_handler(function(name, data)
+      if name == "wildmenu_show" then
+        items = data[1]
+      elseif name == "wildmenu_select" then
+        selected = data[1]
+      elseif name == "wildmenu_hide" then
+        items, selected = nil, nil
+      end
+    end)
+  end)
+
+  after_each(function()
+    screen:detach()
+  end)
+
+  it('works with :sign <tab>', function()
+    local expected = {
+        'define',
+        'jump',
+        'list',
+        'place',
+        'undefine',
+        'unplace',
+    }
+
+    command('set wildmode=full')
+    command('set wildmenu')
+    feed(':sign <tab>')
+    screen:expect([[
+                               |
+      ~                        |
+      ~                        |
+      ~                        |
+      :sign define^             |
+    ]], nil, nil, function()
+      eq(expected, items)
+      eq(0, selected)
+    end)
+
+    feed('<tab>')
+    screen:expect([[
+                               |
+      ~                        |
+      ~                        |
+      ~                        |
+      :sign jump^               |
+    ]], nil, nil, function()
+      eq(expected, items)
+      eq(1, selected)
+    end)
+
+    feed('<left><left>')
+    screen:expect([[
+                               |
+      ~                        |
+      ~                        |
+      ~                        |
+      :sign ^                   |
+    ]], nil, nil, function()
+      eq(expected, items)
+      eq(-1, selected)
+    end)
+
+    feed('<right>')
+    screen:expect([[
+                               |
+      ~                        |
+      ~                        |
+      ~                        |
+      :sign define^             |
+    ]], nil, nil, function()
+      eq(expected, items)
+      eq(0, selected)
+    end)
+
+
+
+    feed('a')
+    screen:expect([[
+                               |
+      ~                        |
+      ~                        |
+      ~                        |
+      :sign definea^            |
+    ]], nil, nil, function()
+      eq(nil, items)
+      eq(nil, selected)
+    end)
+  end)
+end)

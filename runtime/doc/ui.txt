@@ -28,6 +28,7 @@ a dictionary with these (optional) keys:
 	`ext_popupmenu`		Externalize the popupmenu. |ui-popupmenu|
 	`ext_tabline`		Externalize the tabline. |ui-tabline|
 	`ext_cmdline`		Externalize the cmdline. |ui-cmdline|
+	`ext_wildmenu`		Externalize the tabline. |ui-ext-wildmenu|
 
 Nvim will then send msgpack-rpc notifications, with the method name "redraw"
 and a single argument, an array of screen update events.
@@ -285,6 +286,24 @@ Only sent if `ext_cmdline` option is set in |ui-options|
 
 ["cmdline_block_hide"]
 	Hide the block.
+
+==============================================================================
+Wildmenu Events							   *ui-wildmenu*
+
+Only sent if `ext_wildmenu` option is set in |ui-options|
+
+["wildmenu_show", items]
+	When `ext_wildmenu` is set to true, nvim will not draw the
+	wildmenu on the grid, instead when the wildmenu is to be displayed
+	this update is sent. `items` is an array of the completion items.
+
+["wildmenu_select", selected]
+	An item in the currently displayed wildmenu is selected. `selected`
+	is either a zero-based index into the array of items from the last
+	wildmenu event, or -1 if no item is selected.
+
+["wildmenu_hide"]
+	The wildmenu is hidden.
 
 ==============================================================================
  vim:tw=78:ts=8:noet:ft=help:norl:
