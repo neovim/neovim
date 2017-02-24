@@ -5592,7 +5592,7 @@ void cmdline_set_external(bool external)
   cmdline_external = external;
 }
 
-bool cmdline_get_external()
+bool cmdline_get_external(void)
 {
   return cmdline_external;
 }
