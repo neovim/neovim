@@ -37,7 +37,7 @@ describe('terminal', function()
       {4:~                                                 }|
       {4:~                                                 }|
       ==========                                        |
-                                                        |
+      :2split                                           |
     ]])
     execute('wincmd p')
     screen:expect([[
