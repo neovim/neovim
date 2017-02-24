@@ -686,6 +686,15 @@ free_buffer_stuff (
     free_buf_options(buf, true);
     ga_clear(&buf->b_s.b_langp);
   }
+  {
+    // Avoid loosing b:changedtick when deleting buffer: clearing variables
+    // implies using clear_tv() on b:changedtick and that sets changedtick to
+    // zero.
+    hashitem_T *const changedtick_hi = hash_find(
+        &buf->b_vars->dv_hashtab, (const char_u *)"changedtick");
+    assert(changedtick_hi != NULL);
+    hash_remove(&buf->b_vars->dv_hashtab, changedtick_hi);
+  }
   vars_clear(&buf->b_vars->dv_hashtab);   // free all internal variables
   hash_init(&buf->b_vars->dv_hashtab);
   buf_init_changedtick(buf);
