@@ -221,9 +221,7 @@ static uint8_t *command_line_enter(int firstc, long count, int indent)
   if (!cmd_silent) {
     s->i = msg_scrolled;
     msg_scrolled = 0;           // avoid wait_return message
-    if (!cmdline_external) {
-      gotocmdline(true);
-    }
+    gotocmdline(true);
     msg_scrolled += s->i;
     redrawcmdprompt();          // draw prompt or indent
     set_cmdspos();
@@ -736,7 +734,9 @@ static int command_line_execute(VimState *state, int key)
       }
 
       if (!cmd_silent) {
-        ui_cursor_goto(msg_row, 0);
+        if (!cmdline_external) {
+          ui_cursor_goto(msg_row, 0);
+        }
         ui_flush();
       }
       return 0;
@@ -2771,6 +2771,9 @@ static void cursorcmd(void)
 
 void gotocmdline(int clr)
 {
+  if (cmdline_external) {
+      return;
+  }
   msg_start();
   if (cmdmsg_rl)
     msg_col = Columns - 1;

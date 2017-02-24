@@ -98,6 +98,31 @@ describe('External command line completion', function()
         eq(false, shown)
       end)
 
+      feed(':call input("input", "default")<cr>')
+      screen:expect([[
+        ^                         |
+        ~                        |
+        ~                        |
+        ~                        |
+                                 |
+      ]], nil, nil, function()
+        eq(true, shown)
+        eq("input", prompt)
+        eq("default", content)
+      end)
+
+      feed('<cr>')
+      feed(':<C-R>=1+2<cr>')
+      screen:expect([[
+        ^                         |
+        ~                        |
+        ~                        |
+        ~                        |
+                                 |
+      ]], nil, nil, function()
+        eq("3", content)
+      end)
+
     end)
   end)
 end)
