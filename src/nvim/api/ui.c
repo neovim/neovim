@@ -65,6 +65,7 @@ void nvim_ui_attach(uint64_t channel_id, Integer width, Integer height,
   ui->height = (int)height;
   ui->rgb = true;
   ui->pum_external = false;
+  ui->tabline_external = false;
   ui->resize = remote_ui_resize;
   ui->clear = remote_ui_clear;
   ui->eol_clear = remote_ui_eol_clear;
@@ -179,6 +180,13 @@ static void ui_set_option(UI *ui, String name, Object value, Error *error) {
       return;
     }
     ui->pum_external = value.data.boolean;
+  } else if (strcmp(name.data, "tabline_external") == 0) {
+    if (value.type != kObjectTypeBoolean) {
+      api_set_error(error, Validation,
+                    _("tabline_external must be a Boolean"));
+      return;
+    }
+    ui->tabline_external = value.data.boolean;
   } else {
     api_set_error(error, Validation, _("No such ui option"));
   }

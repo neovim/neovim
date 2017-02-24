@@ -15,7 +15,7 @@ typedef struct {
 typedef struct ui_t UI;
 
 struct ui_t {
-  bool rgb, pum_external;
+  bool rgb, pum_external, tabline_external;
   int width, height;
   void *data;
   void (*resize)(UI *ui, int rows, int columns);

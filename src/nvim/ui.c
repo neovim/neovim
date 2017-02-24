@@ -163,17 +163,20 @@ void ui_refresh(void)
 
   int width = INT_MAX, height = INT_MAX;
   bool pum_external = true;
+  bool tabline_external = true;
 
   for (size_t i = 0; i < ui_count; i++) {
     UI *ui = uis[i];
     width = MIN(ui->width, width);
     height = MIN(ui->height, height);
     pum_external &= ui->pum_external;
+    tabline_external &= ui->tabline_external;
   }
 
   row = col = 0;
   screen_resize(width, height);
   pum_set_external(pum_external);
+  tabline_set_external(tabline_external);
 }
 
 static void ui_refresh_event(void **argv)

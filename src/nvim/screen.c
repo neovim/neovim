@@ -128,6 +128,7 @@
 #include "nvim/version.h"
 #include "nvim/window.h"
 #include "nvim/os/time.h"
+#include "nvim/api/private/helpers.h"
 
 #define MB_FILLER_CHAR '<'  /* character used when a double-width character
                              * doesn't fit. */
@@ -6887,6 +6888,30 @@ static void draw_tabline(void)
   int room;
   int use_sep_chars = (t_colors < 8
                        );
+
+  if (tabline_get_external()) {
+    Array args = ARRAY_DICT_INIT;
+    ADD(args, INTEGER_OBJ(curtab->handle));
+
+    Array arr = ARRAY_DICT_INIT;
+    FOR_ALL_TABS(tp) {
+      if (tp == curtab) {
+        cwp = curwin;
+      } else {
+        cwp = tp->tp_curwin;
+      }
+      get_trans_bufname(cwp->w_buffer);
+      Array item = ARRAY_DICT_INIT;
+      ADD(item, INTEGER_OBJ(tp->handle));
+      ADD(item, STRING_OBJ(cstr_to_string((char *)NameBuff)));
+      ADD(arr, ARRAY_OBJ(item));
+    }
+    ADD(args, ARRAY_OBJ(arr));
+
+    ui_event("tabline", args);
+    return;
+  }
+
 
   redraw_tabline = FALSE;
 
