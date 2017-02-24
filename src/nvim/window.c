@@ -5871,7 +5871,7 @@ void tabline_set_external(bool external)
   tabline_external = external;
 }
 
-bool tabline_get_external()
+bool tabline_get_external(void)
 {
   return tabline_external;
 }
