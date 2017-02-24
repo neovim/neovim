@@ -8,6 +8,13 @@
 #include "api/private/defs.h"
 #include "nvim/buffer_defs.h"
 
+// values for externalized widgets
+typedef enum {
+  kUITabline,
+  kUICmdline,
+  kUIWildmenu
+} UIWidget;
+
 typedef struct {
   bool bold, underline, undercurl, italic, reverse;
   int foreground, background, special;
@@ -16,7 +23,7 @@ typedef struct {
 typedef struct ui_t UI;
 
 struct ui_t {
-  bool rgb, pum_external;
+  bool rgb, pum_external, tabline_external;
   int width, height;
   void *data;
   void (*resize)(UI *ui, int rows, int columns);

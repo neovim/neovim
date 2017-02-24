@@ -69,6 +69,7 @@ void nvim_ui_attach(uint64_t channel_id, Integer width, Integer height,
   ui->height = (int)height;
   ui->rgb = true;
   ui->pum_external = false;
+  ui->tabline_external = false;
   ui->resize = remote_ui_resize;
   ui->clear = remote_ui_clear;
   ui->eol_clear = remote_ui_eol_clear;
@@ -171,19 +172,26 @@ void nvim_ui_set_option(uint64_t channel_id, String name,
 }
 
 static void ui_set_option(UI *ui, String name, Object value, Error *error) {
-  if (strcmp(name.data, "rgb") == 0) {
+  if (strequal(name.data, "rgb")) {
     if (value.type != kObjectTypeBoolean) {
       api_set_error(error, kErrorTypeValidation, "rgb must be a Boolean");
       return;
     }
     ui->rgb = value.data.boolean;
-  } else if (strcmp(name.data, "popupmenu_external") == 0) {
+  } else if (strequal(name.data, "popupmenu_external")) {
     if (value.type != kObjectTypeBoolean) {
       api_set_error(error, kErrorTypeValidation,
                     "popupmenu_external must be a Boolean");
       return;
     }
     ui->pum_external = value.data.boolean;
+  } else if (strequal(name.data, "tabline_external")) {
+    if (value.type != kObjectTypeBoolean) {
+      api_set_error(error, kErrorTypeValidation,
+                    "tabline_external must be a Boolean");
+      return;
+    }
+    ui->tabline_external = value.data.boolean;
   } else {
     api_set_error(error, kErrorTypeValidation, "No such ui option");
   }
