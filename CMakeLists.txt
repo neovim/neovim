@@ -439,11 +439,11 @@ install_helper(
 # MIN_LOG_LEVEL for log.h
 if(DEFINED MIN_LOG_LEVEL)
   if(NOT MIN_LOG_LEVEL MATCHES "^[0-3]$")
-    message(FATAL_ERROR "MIN_LOG_LEVEL must be a number DEBUG (0), INFO (1), WARNING (2) or ERROR (3)")
+    message(FATAL_ERROR "MIN_LOG_LEVEL must be a number 0-3")
   endif()
-  message(STATUS "Log level set to ${MIN_LOG_LEVEL}")
+  message(STATUS "MIN_LOG_LEVEL set to ${MIN_LOG_LEVEL}")
 else()
-  message(STATUS "Log level not specified, defaulting to INFO(1)")
+  message(STATUS "MIN_LOG_LEVEL not specified, defaulting to INFO(1)")
 endif()
 
 # Go down the tree.
