@@ -2941,11 +2941,12 @@ ExpandOne (
           ui_event("wildmenu_select", args);
         } else {
           win_redr_status_matches(xp, xp->xp_numfiles, xp->xp_files,
-              findex, cmd_showtail);
+                                  findex, cmd_showtail);
         }
       }
-      if (findex == -1)
+      if (findex == -1) {
         return vim_strsave(orig_save);
+      }
       return vim_strsave(xp->xp_files[findex]);
     } else
       return NULL;
@@ -3304,7 +3305,7 @@ static int showmatches(expand_T *xp, int wildmenu)
 
   if (wildmenu_external) {
     Array args = ARRAY_DICT_INIT;
-    for (i = 0; i < num_files; ++i) {
+    for (i = 0; i < num_files; i++) {
       ADD(args, STRING_OBJ(cstr_to_string((char *)files_found[i])));
     }
     ui_event("wildmenu", args);
