@@ -549,7 +549,7 @@ void eval_init(void)
     list_T *const type_list = list_alloc();
     type_list->lv_lock = VAR_FIXED;
     type_list->lv_refcount = 1;
-    dictitem_T *const di = dictitem_alloc((char_u *) msgpack_type_names[i]);
+    dictitem_T *const di = dictitem_alloc((char_u *)msgpack_type_names[i]);
     di->di_flags |= DI_FLAGS_RO|DI_FLAGS_FIX;
     di->di_tv = (typval_T) {
       .v_type = VAR_LIST,

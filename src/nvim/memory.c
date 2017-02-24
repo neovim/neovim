@@ -650,7 +650,7 @@ void free_all_mem(void)
 
   // Free all buffers.  Reset 'autochdir' to avoid accessing things that
   // were freed already.
-  // Must be after eval_clear to avoid it trying to access b:changedtick after 
+  // Must be after eval_clear to avoid it trying to access b:changedtick after
   // freeing it.
   p_acd = false;
   for (buf = firstbuf; buf != NULL; ) {
