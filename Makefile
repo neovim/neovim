@@ -126,10 +126,9 @@ install: | nvim
 	+$(BUILD_CMD) -C build install
 
 clint:
-	cmake -DLINT_PRG=./src/clint.py \
-		-DLINT_DIR=src \
-		-DLINT_SUPPRESS_URL="$(DOC_DOWNLOAD_URL_BASE)$(CLINT_ERRORS_FILE_PATH)" \
-		-P cmake/RunLint.cmake
+	wget https://raw.githubusercontent.com/neovim/doc/gh-pages/reports/clint/errors.json
+	$(eval FILES = $(shell git diff-tree --name-only --no-commit-id -r HEAD))
+	src/clint.py --suppress-errors=errors.json ${FILES}
 
 lint: clint testlint
 
