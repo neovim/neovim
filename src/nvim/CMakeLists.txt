@@ -164,8 +164,9 @@ endfunction()
 
 # NEOVIM_GENERATED_FOR_HEADERS: files generated to be included in headers
 # NEOVIM_GENERATED_FOR_SOURCES: files generated to be included in sources
-# Files included in both lists will be removed from NEOVIM_GENERATED_FOR_SOURCES
-# just before building dependency trees.
+# These lists should be mutually exclusive
+# If a generated file is included in both of headers and sources,
+# the file for one should be duplicated for the other with different filepath.
 
 foreach(sfile ${NEOVIM_SOURCES}
               "${PROJECT_SOURCE_DIR}/src/nvim/regexp_nfa.c"
@@ -229,9 +230,7 @@ list(APPEND NEOVIM_GENERATED_FOR_HEADERS
 list(APPEND NEOVIM_GENERATED_FOR_SOURCES
   "${PROJECT_BINARY_DIR}/config/auto/pathdef.c"
   "${GENERATED_API_DISPATCH}"
-  "${GENERATED_EX_CMDS_ENUM}"
   "${GENERATED_EX_CMDS_DEFS}"
-  "${GENERATED_EVENTS_ENUM}"
   "${GENERATED_EVENTS_NAMES_MAP}"
   "${GENERATED_OPTIONS}"
   "${GENERATED_UNICODE_TABLES}"
@@ -268,14 +267,12 @@ add_custom_command(OUTPUT ${GENERATED_OPTIONS}
   DEPENDS ${OPTIONS_GENERATOR} ${OPTIONS_LIST_FILE}
 )
 
-# Make NEOVIM_GENERATED_FOR_SOURCES and NEOVIM_GENERATED_FOR_HEADERS mutually exclusive
-# If a header in NEOVIM_GENERATED_FOR_HEADERS is also included in NEOVIM_GENERATED_SOURCES,
-# the header should be included only in NEOVIM_GENERATED_HEADERS
+# Check that NEOVIM_GENERATED_FOR_SOURCES and NEOVIM_GENERATED_FOR_HEADERS are mutually exclusive
 
 foreach(hfile ${NEOVIM_GENERATED_FOR_HEADERS})
   list(FIND NEOVIM_GENERATED_FOR_SOURCES ${hfile} hfile_idx)
   if(NOT ${hfile_idx} EQUAL -1)
-    list(REMOVE_AT NEOVIM_GENERATED_FOR_SOURCES ${hfile_idx})
+    message(FATAL_ERROR "File included in both NEOVIM_GENERATED_FOR_HEADERS and NEOVIM_GENERATED_FOR_SOURCES")
   endif()
 endforeach()
 
