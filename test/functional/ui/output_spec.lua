@@ -8,7 +8,7 @@ describe("shell command :!", function()
   before_each(function()
     session.clear()
     screen = child_session.screen_setup(0, '["'..session.nvim_prog..
-      '", "-u", "NONE", "-i", "NONE", "--cmd", "set noswapfile"]')
+      '", "-u", "NONE", "-i", "NONE", "--cmd", "set noswapfile shell=sh"]')
     screen:expect([[
       {1: }                                                 |
       {4:~                                                 }|

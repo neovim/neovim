@@ -178,11 +178,11 @@ describe('system()', function()
 
   describe('passing no input', function()
     it('returns the program output', function()
-      eq("echoed", eval('system("echo -n echoed")'))
+      eq("echoed", eval('system("printf echoed")'))
     end)
     it('to backgrounded command does not crash', function()
       -- This is indeterminate, just exercise the codepath. May get E5677.
-      execute('call system("echo -n echoed &")')
+      execute('call system("printf echoed &")')
       local v_errnum = string.match(eval("v:errmsg"), "^E%d*:")
       if v_errnum then
         eq("E5677:", v_errnum)
