@@ -83,14 +83,23 @@ Note that when the current file changes, the priority list is mostly not
 changed, to avoid confusion when using ":tnext".  It is changed when using
 ":tag {ident}".
 
-The ignore-case matches are not found for a ":tag" command when the
-'ignorecase' option is off and 'tagcase' is "followic" or when 'tagcase' is
-"match".  They are found when a pattern is used (starting with a "/") and for
-":tselect", also when 'ignorecase' is off and 'tagcase' is "followic" or when
-'tagcase' is "match".  Note that using ignore-case tag searching disables
-binary searching in the tags file, which causes a slowdown.  This can be
-avoided by fold-case sorting the tag file.  See the 'tagbsearch' option for an
-explanation.
+The ignore-case matches are not found for a ":tag" command when:
+- the 'ignorecase' option is off and 'tagcase' is "followic"
+- 'tagcase' is "match"
+- 'tagcase' is "smart" and the pattern contains an upper case character.
+- 'tagcase' is "followscs" and 'smartcase' option is on and the pattern
+  contains an upper case character.
+
+The gnore-case matches are found when:
+- a pattern is used (starting with a "/")
+- for ":tselect"
+- when 'tagcase' is "followic" and 'ignorecase' is off
+- when 'tagcase' is "match"
+- when 'tagcase' is "followscs" and the 'smartcase' option is off
+
+Note that using ignore-case tag searching disables binary searching in the
+tags file, which causes a slowdown.  This can be avoided by fold-case sorting
+the tag file. See the 'tagbsearch' option for an explanation.
 
 ==============================================================================
 2. Tag stack				*tag-stack* *tagstack* *E425*
@@ -420,13 +429,18 @@ file "tags".  It can also be used to access a common tags file.
 The next file in the list is not used when:
 - A matching static tag for the current buffer has been found.
 - A matching global tag has been found.
-This also depends on whether case is ignored.  Case is ignored when
-'ignorecase' is set and 'tagcase' is "followic", or when 'tagcase' is
-"ignore".  If case is not ignored, and the tags file only has a match without
-matching case, the next tags file is searched for a match with matching case.
-If no tag with matching case is found, the first match without matching case
-is used.  If case is ignored, and a matching global tag with or without
-matching case is found, this one is used, no further tags files are searched.
+This also depends on whether case is ignored.  Case is ignored when:
+- 'tagcase' is "followic" and 'ignorecase' is set
+- 'tagcase' is "ignore"
+- 'tagcase' is "smart" and and the pattern only contains lower case
+  characters.
+- 'tagcase' is "followscs" and 'smartcase' is set and and the pattern only
+  contains lower case characters.
+If case is not ignored, and the tags file only has a match without matching
+case, the next tags file is searched for a match with matching case.  If no
+tag with matching case is found, the first match without matching case is
+used.  If case is ignored, and a matching global tag with or without matching
+case is found, this one is used, no further tags files are searched.
 
 When a tag file name starts with "./", the '.' is replaced with the path of
 the current file.  This makes it possible to use a tags file in the directory

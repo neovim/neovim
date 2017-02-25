@@ -1164,6 +1164,12 @@ find_tags (
     case TC_MATCH:
       p_ic = false;
       break;
+    case TC_FOLLOWSCS:
+      p_ic = ignorecase(pat);
+      break;
+    case TC_SMART:
+      p_ic = ignorecase_opt(pat, true, true);
+      break;
     default:
       assert(false);
   }
