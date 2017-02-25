@@ -162,8 +162,9 @@ function(get_preproc_output varname iname)
   endif()
 endfunction()
 
-# NEOVIM_GENERATED_FOR_HEADERS: files generated to be included in headers
-# NEOVIM_GENERATED_FOR_SOURCES: files generated to be included in sources
+# NEOVIM_GENERATED_FOR_HEADERS: header files generated to be included in headers
+# NEOVIM_GENERATED_FOR_SOURCES: header files generated to be included in sources
+# NEOVIM_GENERATED_SOURCES: generated source files
 # These lists should be mutually exclusive
 # If a generated file is included in both of headers and sources,
 # the file for one should be duplicated for the other with different filepath.
@@ -228,12 +229,15 @@ list(APPEND NEOVIM_GENERATED_FOR_HEADERS
 )
 
 list(APPEND NEOVIM_GENERATED_FOR_SOURCES
-  "${PROJECT_BINARY_DIR}/config/auto/pathdef.c"
   "${GENERATED_API_DISPATCH}"
   "${GENERATED_EX_CMDS_DEFS}"
   "${GENERATED_EVENTS_NAMES_MAP}"
   "${GENERATED_OPTIONS}"
   "${GENERATED_UNICODE_TABLES}"
+)
+
+list(APPEND NEOVIM_GENERATED_SOURCES
+  "${PROJECT_BINARY_DIR}/config/auto/pathdef.c"
 )
 
 add_custom_command(OUTPUT ${GENERATED_EX_CMDS_ENUM} ${GENERATED_EX_CMDS_DEFS}
@@ -310,7 +314,7 @@ if(JEMALLOC_FOUND)
   list(APPEND NVIM_EXEC_LINK_LIBRARIES ${JEMALLOC_LIBRARIES})
 endif()
 
-add_executable(nvim ${NEOVIM_GENERATED_FOR_SOURCES} ${NEOVIM_GENERATED_FOR_HEADERS}
+add_executable(nvim ${NEOVIM_GENERATED_FOR_SOURCES} ${NEOVIM_GENERATED_FOR_HEADERS} ${NEOVIM_GENERATED_SOURCES}
   ${NEOVIM_SOURCES} ${NEOVIM_HEADERS})
 target_link_libraries(nvim ${NVIM_EXEC_LINK_LIBRARIES})
 install_helper(TARGETS nvim)
@@ -385,7 +389,7 @@ elseif(CLANG_TSAN)
   set_property(TARGET nvim APPEND_STRING PROPERTY LINK_FLAGS "-fsanitize=thread ")
 endif()
 
-add_library(libnvim STATIC EXCLUDE_FROM_ALL ${NEOVIM_GENERATED_FOR_SOURCES} ${NEOVIM_GENERATED_FOR_HEADERS}
+add_library(libnvim STATIC EXCLUDE_FROM_ALL ${NEOVIM_GENERATED_FOR_SOURCES} ${NEOVIM_GENERATED_FOR_HEADERS} ${NEOVIM_GENERATED_SOURCES}
   ${NEOVIM_SOURCES} ${NEOVIM_HEADERS})
 target_link_libraries(libnvim ${NVIM_LINK_LIBRARIES})
 set_target_properties(libnvim PROPERTIES
@@ -393,7 +397,7 @@ set_target_properties(libnvim PROPERTIES
   OUTPUT_NAME nvim)
 set_property(TARGET libnvim APPEND_STRING PROPERTY COMPILE_FLAGS " -DMAKE_LIB ")
 
-add_library(nvim-test MODULE EXCLUDE_FROM_ALL ${NEOVIM_GENERATED_FOR_SOURCES} ${NEOVIM_GENERATED_FOR_HEADERS}
+add_library(nvim-test MODULE EXCLUDE_FROM_ALL ${NEOVIM_GENERATED_FOR_SOURCES} ${NEOVIM_GENERATED_FOR_HEADERS} ${NEOVIM_GENERATED_SOURCES}
     ${NEOVIM_SOURCES} ${UNIT_TEST_FIXTURES} ${NEOVIM_HEADERS})
 target_link_libraries(nvim-test ${NVIM_LINK_LIBRARIES})
 set_property(TARGET nvim-test APPEND_STRING PROPERTY COMPILE_FLAGS -DUNIT_TESTING)
