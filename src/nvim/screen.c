@@ -7191,10 +7191,10 @@ static int fillchar_status(int *attr, win_T *wp)
   return '=';
 }
 
-/*
- * Get the character to use in a separator between vertically split windows.
- * Get its attributes in "*attr".
- */
+
+/// Get the character to use in a separator between vertically split windows.
+/// @param[out] attr Get its attributes in "*attr".
+/// @return character to use to fill char
 static int fillchar_vsep(win_T *wp, int *attr)
 {
   *attr = win_hl_attr(wp, HLF_C);
