@@ -279,6 +279,7 @@ describe('tui focus event handling', function()
     execute('set laststatus=0')
     execute('set noshowmode')
     execute('terminal')
+    execute('startinsert')
     feed('\027[I')
     screen:expect([[
       ready $                                           |
