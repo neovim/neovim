@@ -162,6 +162,11 @@ function(get_preproc_output varname iname)
   endif()
 endfunction()
 
+# NEOVIM_GENERATED_FOR_HEADERS: files generated to be included in headers
+# NEOVIM_GENERATED_FOR_SOURCES: files generated to be included in sources
+# Files included in both lists will be removed from NEOVIM_GENERATED_FOR_SOURCES
+# just before building dependency trees.
+
 foreach(sfile ${NEOVIM_SOURCES}
               "${PROJECT_SOURCE_DIR}/src/nvim/regexp_nfa.c"
               ${GENERATED_API_DISPATCH})
@@ -189,7 +194,6 @@ foreach(sfile ${NEOVIM_SOURCES}
     DEPENDS "${HEADER_GENERATOR}" "${sfile}"
     )
   list(APPEND NEOVIM_GENERATED_FOR_SOURCES "${gf_c_h}")
-  list(APPEND NEOVIM_GENERATED_FOR_SOURCES "${gf_h_h}")
   list(APPEND NEOVIM_GENERATED_FOR_HEADERS "${gf_h_h}")
   if(${d} MATCHES "^api$" AND NOT ${f} MATCHES "^api/helpers.c$")
     list(APPEND API_HEADERS ${gf_h_h})
@@ -264,6 +268,17 @@ add_custom_command(OUTPUT ${GENERATED_OPTIONS}
   DEPENDS ${OPTIONS_GENERATOR} ${OPTIONS_LIST_FILE}
 )
 
+# Make NEOVIM_GENERATED_FOR_SOURCES and NEOVIM_GENERATED_FOR_HEADERS mutually exclusive
+# If a header in NEOVIM_GENERATED_FOR_HEADERS is also included in NEOVIM_GENERATED_SOURCES,
+# the header should be included only in NEOVIM_GENERATED_HEADERS
+
+foreach(hfile ${NEOVIM_GENERATED_FOR_HEADERS})
+  list(FIND NEOVIM_GENERATED_FOR_SOURCES ${hfile} hfile_idx)
+  if(NOT ${hfile_idx} EQUAL -1)
+    list(REMOVE_AT NEOVIM_GENERATED_FOR_SOURCES ${hfile_idx})
+  endif()
+endforeach()
+
 # Our dependencies come first.
 
 if (LibIntl_FOUND)
@@ -298,8 +313,8 @@ if(JEMALLOC_FOUND)
   list(APPEND NVIM_EXEC_LINK_LIBRARIES ${JEMALLOC_LIBRARIES})
 endif()
 
-add_executable(nvim ${NEOVIM_GENERATED_FOR_SOURCES} ${NEOVIM_SOURCES}
-  ${NEOVIM_HEADERS})
+add_executable(nvim ${NEOVIM_GENERATED_FOR_SOURCES} ${NEOVIM_GENERATED_FOR_HEADERS}
+  ${NEOVIM_SOURCES} ${NEOVIM_HEADERS})
 target_link_libraries(nvim ${NVIM_EXEC_LINK_LIBRARIES})
 install_helper(TARGETS nvim)
 
@@ -373,7 +388,7 @@ elseif(CLANG_TSAN)
   set_property(TARGET nvim APPEND_STRING PROPERTY LINK_FLAGS "-fsanitize=thread ")
 endif()
 
-add_library(libnvim STATIC EXCLUDE_FROM_ALL ${NEOVIM_GENERATED_FOR_SOURCES}
+add_library(libnvim STATIC EXCLUDE_FROM_ALL ${NEOVIM_GENERATED_FOR_SOURCES} ${NEOVIM_GENERATED_FOR_HEADERS}
   ${NEOVIM_SOURCES} ${NEOVIM_HEADERS})
 target_link_libraries(libnvim ${NVIM_LINK_LIBRARIES})
 set_target_properties(libnvim PROPERTIES
@@ -381,7 +396,7 @@ set_target_properties(libnvim PROPERTIES
   OUTPUT_NAME nvim)
 set_property(TARGET libnvim APPEND_STRING PROPERTY COMPILE_FLAGS " -DMAKE_LIB ")
 
-add_library(nvim-test MODULE EXCLUDE_FROM_ALL ${NEOVIM_GENERATED_FOR_SOURCES}
+add_library(nvim-test MODULE EXCLUDE_FROM_ALL ${NEOVIM_GENERATED_FOR_SOURCES} ${NEOVIM_GENERATED_FOR_HEADERS}
     ${NEOVIM_SOURCES} ${UNIT_TEST_FIXTURES} ${NEOVIM_HEADERS})
 target_link_libraries(nvim-test ${NVIM_LINK_LIBRARIES})
 set_property(TARGET nvim-test APPEND_STRING PROPERTY COMPILE_FLAGS -DUNIT_TESTING)
