@@ -5,7 +5,9 @@ local clear, funcs, meths = helpers.clear, helpers.funcs, helpers.meths
 local os_name = helpers.os_name
 
 describe('serverstart(), serverstop()', function()
-  before_each(clear)
+  before_each(function()
+    clear({env={NVIM_LISTEN_ADDRESS=nil}})
+  end)
 
   it('sets $NVIM_LISTEN_ADDRESS on first invocation', function()
     -- Unset $NVIM_LISTEN_ADDRESS
