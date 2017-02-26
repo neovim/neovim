@@ -2795,9 +2795,7 @@ win_line (
                     if (p_extra != NULL 
                         && (symbol_clen + used_cells <= win_signcol_width(wp))) {
                         c_extra = NUL;
-                        // TODO append to extra
                         // xstrlcat ?
-                        //
                       ILOG("extra before=%s", extra);
                       /* mb_string2cells(p_extra); */
                       // screen_puts_len(char_u *text, int textlen, int row, int col, int attr)

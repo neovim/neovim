@@ -2181,7 +2181,7 @@ return {
     {
       full_name='signcolumnwidth', abbreviation='sclw',
       type='number', scope={'window'},
-      vi_def=false,
+      vi_def=true,
       alloced=true,
       redraw={'current_window'},
       defaults={if_true={vi=2}}
