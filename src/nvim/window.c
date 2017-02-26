@@ -4848,7 +4848,7 @@ void scroll_to_fraction(win_T *wp, int prev_height)
 
   if (wp->w_buffer->terminal) {
     terminal_resize(wp->w_buffer->terminal, 0, wp->w_height);
-    redraw_win_later(wp, CLEAR);
+    redraw_win_later(wp, NOT_VALID);
   }
 }
 
@@ -4872,7 +4872,6 @@ void win_new_width(win_T *wp, int width)
     if (wp->w_height != 0) {
       terminal_resize(wp->w_buffer->terminal, wp->w_width, 0);
     }
-    redraw_win_later(wp, CLEAR);
   }
 }
 

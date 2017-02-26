@@ -117,7 +117,7 @@ describe('terminal mouse', function()
           rows: 5, cols: 25        |rows: 5, cols: 25       |
           {2:^ }                        |{2: }                       |
           ==========                ==========              |
-                                                            |
+          :vsp                                              |
         ]])
         feed(':enew | set number<cr>')
         screen:expect([[
