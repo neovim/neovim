@@ -801,8 +801,8 @@ static int insert_handle_key(InsertState *s)
       goto normalchar;                // insert CTRL-Z as normal char
     }
     do_cmdline_cmd("stop");
-    s->c = Ctrl_O;
-  // FALLTHROUGH
+    ui_cursor_shape();  // may need to update cursor shape
+    break;
 
   case Ctrl_O:        // execute one command
     if (ctrl_x_mode == CTRL_X_OMNI) {
