@@ -81,6 +81,12 @@ return {
     'TermChanged',            -- after changing 'term'
     'TermClose',              -- after the processs exits
     'TermOpen',               -- after opening a terminal buffer
+    'TermCursorHold',         -- cursor idle in a terminal
+    'TermCursorHoldI',        -- cursor idle in a terminal while typing
+    'TermCursorMoved',        -- cursor moved in a terminal
+    'TermCursorMovedI',       -- cursor moved in a terminal while typing
+    'TermTextChanged',        -- terminal contents changed
+    'TermTextChangedI',       -- terminal contents changed while typing
     'TermResponse',           -- after setting "v:termresponse"
     'TextChanged',            -- text was modified
     'TextChangedI',           -- text was modified in Insert mode
@@ -109,5 +115,11 @@ return {
     TabNewEntered=true,
     TermClose=true,
     TermOpen=true,
+    TermCursorHold=true,
+    TermCursorHoldI=true,
+    TermCursorMoved=true,
+    TermCursorMovedI=true,
+    TermTextChanged=true,
+    TermTextChangedI=true,
   },
 }
