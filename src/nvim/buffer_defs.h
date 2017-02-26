@@ -139,11 +139,10 @@ struct buffheader {
   size_t bh_space;          // space in bh_curr for appending
 };
 
-/*
- * Structure that contains all options that are local to a window.
- * Used twice in a window: for the current buffer and for all buffers.
- * Also used in wininfo_T.
- */
+/// Structure that contains all options that are local to a window.
+/// Used twice in a window: for the current buffer and for all buffers.
+/// Also used in wininfo_T.
+/// @see check_winopt, clear_winopt
 typedef struct {
   int wo_arab;
 # define w_p_arab w_onebuf_opt.wo_arab  /* 'arabic' */
@@ -233,6 +232,8 @@ typedef struct {
 # define w_p_crb_save w_onebuf_opt.wo_crb_save
   char_u *wo_scl;
 # define w_p_scl w_onebuf_opt.wo_scl    // 'signcolumn'
+  int wo_sclmax;
+# define w_p_sclmax w_onebuf_opt.wo_sclmax    // max 'signcolumn' width TODO rename
 
   int wo_scriptID[WV_COUNT];            /* SIDs for window-local options */
 # define w_p_scriptID w_onebuf_opt.wo_scriptID

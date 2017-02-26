@@ -677,7 +677,7 @@ EXTERN int p_force_on;          ///< options that cannot be turned off.
 EXTERN int p_force_off;         ///< options that cannot be turned on.
 
 /*
- * "indir" values for buffer-local opions.
+ * "indir" values for buffer-local options.
  * These need to be defined globally, so that the BV_COUNT can be used with
  * b_p_scriptID[].
  */
@@ -803,6 +803,7 @@ enum {
   , WV_WFW
   , WV_WRAP
   , WV_SCL
+  , WV_SCLW
   , WV_COUNT        // must be the last one
 };
 

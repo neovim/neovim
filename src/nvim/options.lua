@@ -2179,6 +2179,14 @@ return {
       defaults={if_true={vi="auto"}}
     },
     {
+      full_name='signcolumnwidth', abbreviation='sclw',
+      type='number', scope={'window'},
+      vi_def=false,
+      alloced=true,
+      redraw={'current_window'},
+      defaults={if_true={vi=2}}
+    },
+    {
       full_name='smartcase', abbreviation='scs',
       type='bool', scope={'global'},
       vi_def=true,

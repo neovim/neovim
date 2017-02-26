@@ -1604,18 +1604,37 @@ static void win_update(win_T *wp)
 int win_signcol_width(win_T *wp)
 {
   // 2 is vim default value
-
+  // TODO careful I also have added int w_signcolumn_width;           //!< last value
   // int fdc = wp->w_p_sclwidth;
   // int wmw = wp == curwin && p_wmw == 0 ? 1 : p_wmw;
   // int wwidth = wp->w_width;
+  // TODO remove signcolumn_on
+  // if (signcolumn_on(wp)) {
+
+    if (*wp->w_p_scl == 'n') {
+      return 0;
+    }
+    if (*wp->w_p_scl == 'y') {
+      return wp->w_p_sclmax;
+    }
+
+    // auto mode
+    if(wp->w_buffer->b_signlist == NULL) {
+      return 0;
+    }
+    // TODO use some cache to compute the max
+    // return MIN(wp->w_p_sclw);
+    return wp->w_p_sclmax;
+}
+
 
   // if (fdc > wwidth - (col + wmw)) {
   //   fdc = wwidth - (col + wmw);
   // }
   // return fdc;
   // return MIN(wp->w_signcolumn_width, 2); // hopefully it's 2
-  return 8;
-}
+  // return 8;
+// }
 
 /*
  * Clear the rest of the window and mark the unused lines with "c1".  use "c2"
@@ -2761,7 +2780,7 @@ win_line (
               if (row == startrow + filler_lines && filler_todo <= 0) {
                   signlist_T	*sign = wp->w_buffer->b_signlist;
                   ILOG("Looking for signs ");
-                  memset(extra, 'x', sizeof(extra));
+                  memset(extra, ' ', sizeof(extra));
                   extra[0]= '\0';
 
                   for (; (sign = buf_getsigntype(sign, lnum, SIGN_TEXT)); sign= sign->next) {

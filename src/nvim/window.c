@@ -985,13 +985,17 @@ int win_split_ins(int size, int flags, win_T *new_wp, int dir)
 }
 
 
-/*
- * Initialize window "newp" from window "oldp".
- * Used when splitting a window and when creating a new tab page.
- * The windows will both edit the same buffer.
- * WSP_NEWLOC may be specified in flags to prevent the location list from
- * being copied.
- */
+
+/// Initialize window "newp" from window "oldp".
+/// Used when splitting a window and when creating a new tab page.
+/// The windows will both edit the same buffer.
+///
+/// @param[out] newp window to initialize
+/// @param oldp
+/// @param flags Specify WSP_NEWLOC  to prevent the location list from
+/// being copied.
+///
+/// @see win_close,win_copy_options
 static void win_init(win_T *newp, win_T *oldp, int flags)
 {
   int i;
@@ -1012,14 +1016,15 @@ static void win_init(win_T *newp, win_T *oldp, int flags)
   newp->w_wrow = oldp->w_wrow;
   newp->w_fraction = oldp->w_fraction;
   newp->w_prev_fraction_row = oldp->w_prev_fraction_row;
-  newp->w_signcolumn_width = 0;
+  // newp->w_signcolumn_width = oldp->w_prev_fraction_row;
   copy_jumplist(oldp, newp);
   if (flags & WSP_NEWLOC) {
     /* Don't copy the location list.  */
     newp->w_llist = NULL;
     newp->w_llist_ref = NULL;
-  } else
+  } else {
     copy_loclist(oldp, newp);
+  }
   newp->w_localdir = (oldp->w_localdir == NULL)
                      ? NULL : vim_strsave(oldp->w_localdir);
 

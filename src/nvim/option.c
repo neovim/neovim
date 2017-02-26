@@ -2322,22 +2322,24 @@ set_string_option_direct (
   }
 }
 
-/*
- * Set global value for string option when it's a local option.
- */
-static void 
-set_string_option_global (
-    int opt_idx,                    /* option index */
-    char_u **varp             /* pointer to option variable */
+
+/// Set global value for string option when it's a local option.
+/// @param opt_idx option index
+/// @param varp pointer to option variable
+static void
+set_string_option_global(
+    int opt_idx,
+    char_u **varp
 )
 {
   char_u      **p, *s;
 
-  /* the global value is always allocated */
-  if (options[opt_idx].var == VAR_WIN)
+  // the global value is always allocated
+  if (options[opt_idx].var == VAR_WIN) {
     p = (char_u **)GLOBAL_WO(varp);
-  else
+  } else {
     p = (char_u **)options[opt_idx].var;
+  }
   if (options[opt_idx].indir != PV_NONE && p != varp) {
     s = vim_strsave(*varp);
     free_string_option(*p);
@@ -2409,18 +2411,24 @@ static bool valid_filetype(char_u *val)
   return true;
 }
 
-/*
- * Handle string options that need some action to perform when changed.
- * Returns NULL for success, or an error message for an error.
- */
+/// Handle string options that need some action to perform when changed.
+///
+/// @param opt_idx  index in options[] table
+/// @param varp pointer to the option variable
+/// @param new_value_alloced new value was allocated
+/// @param oldval previous value of the option
+/// @param errbuf buffer for errors, or NULL
+/// @param opt_flags OPT_LOCAL and/or OPT_GLOBAL
+///
+/// @return NULL for success, or an error message for an error.
 static char_u *
 did_set_string_option (
-    int opt_idx,                            /* index in options[] table */
-    char_u **varp,                     /* pointer to the option variable */
-    int new_value_alloced,                  /* new value was allocated */
-    char_u *oldval,                    /* previous value of the option */
-    char_u *errbuf,                    /* buffer for errors, or NULL */
-    int opt_flags                          /* OPT_LOCAL and/or OPT_GLOBAL */
+    int opt_idx,
+    char_u **varp,
+    int new_value_alloced,
+    char_u *oldval,
+    char_u *errbuf,
+    int opt_flags
 )
 {
   char_u      *errmsg = NULL;
@@ -3009,7 +3017,13 @@ did_set_string_option (
     //so for now we change nowthing
     /* if (ascii_isdigit(*p_bs)) { */
     if (check_opt_strings(*varp, p_scl_values, false) != OK) {
-      errmsg = e_invarg;
+      // TODO check it works for several digits ?
+      // if (ascii_isdigit(*varp)) {
+        // curwin->w_allbuf_opt.
+      // }
+      // else {
+        errmsg = e_invarg;
+      // }
     }
   }
   /* 'pastetoggle': translate key codes like in a mapping */
@@ -5393,6 +5407,7 @@ static char_u *get_varp(vimoption_T *p)
   case PV_CRBIND: return (char_u *)&(curwin->w_p_crb);
   case PV_COCU:    return (char_u *)&(curwin->w_p_cocu);
   case PV_COLE:    return (char_u *)&(curwin->w_p_cole);
+  case PV_SCLW:   return (char_u *)&(curwin->w_p_sclmax);
 
   case PV_AI:     return (char_u *)&(curbuf->b_p_ai);
   case PV_BIN:    return (char_u *)&(curbuf->b_p_bin);
@@ -5468,10 +5483,9 @@ char_u *get_equalprg(void)
   return curbuf->b_p_ep;
 }
 
-/*
- * Copy options from one window to another.
- * Used when splitting a window.
- */
+
+/// Copy options from one window to another.
+/// Used when splitting a window.
 void win_copy_options(win_T *wp_from, win_T *wp_to)
 {
   copy_winopt(&wp_from->w_onebuf_opt, &wp_to->w_onebuf_opt);
@@ -5530,6 +5544,7 @@ void copy_winopt(winopt_T *from, winopt_T *to)
   to->wo_fdt = vim_strsave(from->wo_fdt);
   to->wo_fmr = vim_strsave(from->wo_fmr);
   to->wo_scl = vim_strsave(from->wo_scl);
+  to->wo_sclmax = from->wo_sclmax;
   check_winopt(to);             // don't want NULL pointers
 }
 
@@ -6479,32 +6494,34 @@ static void fill_breakat_flags(void)
 static int check_opt_strings(
     char_u *val,
     char **values,
-    int list                   /* when TRUE: accept a list of values */
+    bool list                   /* when TRUE: accept a list of values */
 )
 {
   return opt_strings_flags(val, values, NULL, list);
 }
 
-/*
- * Handle an option that can be a range of string values.
- * Set a flag in "*flagp" for each string present.
- *
- * Return OK for correct value, FAIL otherwise.
- * Empty is always OK.
- */
+/// Handle an option that can be a range of string values.
+/// Set a flag in "*flagp" for each string present.
+/// @param val new value
+/// @param values array of valid string values
+/// @param[out] flagp set flag according to position in values
+/// @param list when true: accept a list of values
+/// @return OK for correct value, FAIL otherwise. Empty is always OK.
 static int opt_strings_flags(
-    char_u *val,             /* new value */
-    char **values,           /* array of valid string values */
+    char_u *val,
+    char **values,
     unsigned *flagp,
-    bool list                /* when TRUE: accept a list of values */
+    bool list
 )
 {
   unsigned int new_flags = 0;
 
   while (*val) {
     for (unsigned int i = 0;; ++i) {
-      if (values[i] == NULL)            /* val not found in values[] */
+      if (values[i] == NULL) {
+        // val not found in values[]
         return FAIL;
+      }
 
       size_t len = STRLEN(values[i]);
       if (STRNCMP(values[i], val, len) == 0
@@ -6516,8 +6533,9 @@ static int opt_strings_flags(
       }
     }
   }
-  if (flagp != NULL)
+  if (flagp != NULL) {
     *flagp = new_flags;
+  }
 
   return OK;
 }
