@@ -11065,6 +11065,37 @@ static void f_getline(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   get_buffer_lines(curbuf, lnum, end, retlist, rettv);
 }
 
+static void get_qf_loc_list(int is_qf, win_T *wp, typval_T *what_arg,
+                            typval_T *rettv)
+{
+  if (what_arg->v_type == VAR_UNKNOWN) {
+    rettv_list_alloc(rettv);
+    if (is_qf || wp != NULL) {
+      (void)get_errorlist(wp, -1, rettv->vval.v_list);
+    }
+  } else {
+    rettv_dict_alloc(rettv);
+    if (is_qf || wp != NULL) {
+      if (what_arg->v_type == VAR_DICT) {
+        dict_T *d = what_arg->vval.v_dict;
+
+        if (d != NULL) {
+          get_errorlist_properties(wp, d, rettv->vval.v_dict);
+        }
+      } else {
+        EMSG(_(e_dictreq));
+      }
+    }
+  }
+}
+
+/// "getloclist()" function
+static void f_getloclist(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  win_T *wp = find_win_by_nr(&argvars[0], NULL);
+  get_qf_loc_list(false, wp, &argvars[1], rettv);
+}
+
 /*
  * "getmatches()" function
  */
@@ -11166,20 +11197,10 @@ static void f_getpos(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   getpos_both(argvars, rettv, false);
 }
 
-/*
- * "getqflist()" and "getloclist()" functions
- */
+/// "getqflist()" functions
 static void f_getqflist(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  rettv_list_alloc(rettv);
-  win_T *wp = NULL;
-  if (argvars[0].v_type != VAR_UNKNOWN) { /* getloclist() */
-    wp = find_win_by_nr(&argvars[0], NULL);
-    if (wp == NULL) {
-      return;
-    }
-  }
-  (void)get_errorlist(wp, rettv->vval.v_list);
+  get_qf_loc_list(true, NULL, &argvars[0], rettv);
 }
 
 /// "getreg()" function
@@ -15721,7 +15742,7 @@ static void f_setline(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 /// Create quickfix/location list from VimL values
 ///
 /// Used by `setqflist()` and `setloclist()` functions. Accepts invalid
-/// list_arg, action_arg and title_arg arguments in which case errors out,
+/// list_arg, action_arg and what_arg arguments in which case errors out,
 /// including VAR_UNKNOWN parameters.
 ///
 /// @param[in,out]  wp  Window to create location list for. May be NULL in
@@ -15738,6 +15759,7 @@ static void set_qf_ll_list(win_T *wp, typval_T *args, typval_T *rettv)
   char_u *title = NULL;
   int action = ' ';
   rettv->vval.v_number = -1;
+  dict_T *d = NULL;
 
   typval_T *list_arg = &args[0];
   if (list_arg->v_type != VAR_LIST) {
@@ -15765,10 +15787,16 @@ static void set_qf_ll_list(win_T *wp, typval_T *args, typval_T *rettv)
   if (title_arg->v_type == VAR_UNKNOWN) {
     // Option argument was not given.
     goto skip_args;
-  }
-  title = get_tv_string_chk(title_arg);
-  if (!title) {
-    // Type error. Error already printed by get_tv_string_chk().
+  } else if (title_arg->v_type == VAR_STRING) {
+    title = get_tv_string_chk(title_arg);
+    if (!title) {
+      // Type error. Error already printed by get_tv_string_chk().
+      return;
+    }
+  } else if (title_arg->v_type == VAR_DICT) {
+    d = title_arg->vval.v_dict;
+  } else {
+    EMSG(_(e_dictreq));
     return;
   }
 
@@ -15778,7 +15806,7 @@ skip_args:
   }
 
   list_T *l = list_arg->vval.v_list;
-  if (l && set_errorlist(wp, l, action, title) == OK) {
+  if (l && set_errorlist(wp, l, action, title, d) == OK) {
     rettv->vval.v_number = 0;
   }
 }

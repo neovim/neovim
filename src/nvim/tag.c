@@ -789,7 +789,7 @@ do_tag (
         }
 
         vim_snprintf((char *)IObuff, IOSIZE, "ltag %s", tag);
-        set_errorlist(curwin, list, ' ', IObuff);
+        set_errorlist(curwin, list, ' ', IObuff, NULL);
 
         list_free(list);
         xfree(fname);

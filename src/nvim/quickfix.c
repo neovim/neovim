@@ -2637,6 +2637,19 @@ static buf_T *qf_find_buf(qf_info_T *qi)
   return NULL;
 }
 
+/// Update the w:quickfix_title variable in the quickfix/location list window
+static void qf_update_win_titlevar(qf_info_T *qi)
+{
+  win_T *win;
+
+  if ((win = qf_find_win(qi)) != NULL) {
+    win_T *curwin_save = curwin;
+    curwin = win;
+    qf_set_title_var(qi);
+    curwin = curwin_save;
+  }
+}
+
 /*
  * Find the quickfix buffer.  If it exists, update the contents.
  */
@@ -2644,7 +2657,6 @@ static void qf_update_buffer(qf_info_T *qi, qfline_T *old_last)
 {
   buf_T       *buf;
   win_T       *win;
-  win_T       *curwin_save;
   aco_save_T aco;
 
   /* Check if a buffer for the quickfix list exists.  Update it. */
@@ -2657,12 +2669,7 @@ static void qf_update_buffer(qf_info_T *qi, qfline_T *old_last)
       aucmd_prepbuf(&aco, buf);
     }
 
-    if ((win = qf_find_win(qi)) != NULL) {
-      curwin_save = curwin;
-      curwin = win;
-      qf_set_title_var(qi);
-      curwin = curwin_save;
-    }
+    qf_update_win_titlevar(qi);
 
     qf_fill_buffer(qi, buf, old_last);
 
@@ -3849,10 +3856,9 @@ static void unload_dummy_buffer(buf_T *buf, char_u *dirname_start)
   }
 }
 
-/*
- * Add each quickfix error to list "list" as a dictionary.
- */
-int get_errorlist(win_T *wp, list_T *list)
+/// Add each quickfix error to list "list" as a dictionary.
+/// If qf_idx is -1, use the current list. Otherwise, use the specified list.
+int get_errorlist(win_T *wp, int qf_idx, list_T *list)
 {
   qf_info_T   *qi = &ql_info;
   dict_T      *dict;
@@ -3867,13 +3873,18 @@ int get_errorlist(win_T *wp, list_T *list)
       return FAIL;
   }
 
-  if (qi->qf_curlist >= qi->qf_listcount
-      || qi->qf_lists[qi->qf_curlist].qf_count == 0)
-    return FAIL;
+  if (qf_idx == -1) {
+    qf_idx = qi->qf_curlist;
+  }
 
-  qfp = qi->qf_lists[qi->qf_curlist].qf_start;
-  for (i = 1; !got_int && i <= qi->qf_lists[qi->qf_curlist].qf_count; ++i) {
-    /* Handle entries with a non-existing buffer number. */
+  if (qf_idx >= qi->qf_listcount
+      || qi->qf_lists[qf_idx].qf_count == 0) {
+    return FAIL;
+  }
+
+  qfp = qi->qf_lists[qf_idx].qf_start;
+  for (i = 1; !got_int && i <= qi->qf_lists[qf_idx].qf_count; i++) {
+    // Handle entries with a non-existing buffer number.
     bufnum = qfp->qf_fnum;
     if (bufnum != 0 && (buflist_findnr(bufnum) == NULL))
       bufnum = 0;
@@ -3904,21 +3915,90 @@ int get_errorlist(win_T *wp, list_T *list)
   return OK;
 }
 
-// Populate the quickfix list with the items supplied in the list
-// of dictionaries. "title" will be copied to w:quickfix_title
-// "action" is 'a' for add, 'r' for replace.  Otherwise create a new list.
-int set_errorlist(win_T *wp, list_T *list, int action, char_u *title)
+/// Flags used by getqflist()/getloclist() to determine which fields to return.
+enum {
+  QF_GETLIST_NONE = 0x0,
+  QF_GETLIST_TITLE = 0x1,
+  QF_GETLIST_ITEMS = 0x2,
+  QF_GETLIST_NR = 0x4,
+  QF_GETLIST_WINID = 0x8,
+  QF_GETLIST_ALL = 0xFF
+};
+
+/// Return quickfix/location list details (title) as a
+/// dictionary. 'what' contains the details to return. If 'list_idx' is -1,
+/// then current list is used. Otherwise the specified list is used.
+int get_errorlist_properties(win_T *wp, dict_T *what, dict_T *retdict)
+{
+  qf_info_T *qi = &ql_info;
+
+  if (wp != NULL) {
+    qi = GET_LOC_LIST(wp);
+    if (qi == NULL) {
+      return FAIL;
+    }
+  }
+
+  int status = OK;
+  dictitem_T *di;
+  int flags = QF_GETLIST_NONE;
+
+  int qf_idx = qi->qf_curlist;  // default is the current list
+  if ((di = dict_find(what, (char_u *)"nr", -1)) != NULL) {
+    // Use the specified quickfix/location list
+    if (di->di_tv.v_type == VAR_NUMBER) {
+      qf_idx = di->di_tv.vval.v_number - 1;
+      if (qf_idx < 0 || qf_idx >= qi->qf_listcount) {
+        return FAIL;
+      }
+      flags |= QF_GETLIST_NR;
+    } else {
+      return FAIL;
+    }
+  }
+
+  if (dict_find(what, (char_u *)"all", -1) != NULL) {
+    flags |= QF_GETLIST_ALL;
+  }
+
+  if (dict_find(what, (char_u *)"title", -1) != NULL) {
+    flags |= QF_GETLIST_TITLE;
+  }
+
+  if (dict_find(what, (char_u *)"winid", -1) != NULL) {
+    flags |= QF_GETLIST_WINID;
+  }
+
+  if (flags & QF_GETLIST_TITLE) {
+    char_u *t = qi->qf_lists[qf_idx].qf_title;
+    if (t == NULL) {
+      t = (char_u *)"";
+    }
+    status = dict_add_nr_str(retdict, "title", 0L, t);
+  }
+  if ((status == OK) && (flags & QF_GETLIST_NR)) {
+    status = dict_add_nr_str(retdict, "nr", qf_idx + 1, NULL);
+  }
+  if ((status == OK) && (flags & QF_GETLIST_WINID)) {
+    win_T *win = qf_find_win(qi);
+    if (win != NULL) {
+      status = dict_add_nr_str(retdict, "winid", win->handle, NULL);
+    }
+  }
+
+  return status;
+}
+
+/// Add list of entries to quickfix/location list. Each list entry is
+/// a dictionary with item information.
+static int qf_add_entries(qf_info_T *qi, list_T *list, char_u *title,
+                          int action)
 {
   listitem_T *li;
   dict_T *d;
   qfline_T *old_last = NULL;
   int retval = OK;
-  qf_info_T *qi = &ql_info;
   bool did_bufnr_emsg = false;
-
-  if (wp != NULL) {
-    qi = ll_get_or_alloc_list(wp);
-  }
 
   if (action == ' ' || qi->qf_curlist == qi->qf_listcount) {
     // make place for a new list
@@ -4006,6 +4086,60 @@ int set_errorlist(win_T *wp, list_T *list, int action, char_u *title)
 
   // Don't update the cursor in quickfix window when appending entries
   qf_update_buffer(qi, old_last);
+
+  return retval;
+}
+
+static int qf_set_properties(qf_info_T *qi, dict_T *what)
+{
+  dictitem_T *di;
+  int retval = FAIL;
+
+  int qf_idx = qi->qf_curlist;  // default is the current list
+  if ((di = dict_find(what, (char_u *)"nr", -1)) != NULL) {
+    // Use the specified quickfix/location list
+    if (di->di_tv.v_type == VAR_NUMBER) {
+      qf_idx = di->di_tv.vval.v_number - 1;
+      if (qf_idx < 0 || qf_idx >= qi->qf_listcount) {
+        return FAIL;
+      }
+    } else {
+      return FAIL;
+    }
+  }
+
+  if ((di = dict_find(what, (char_u *)"title", -1)) != NULL) {
+    if (di->di_tv.v_type == VAR_STRING) {
+      xfree(qi->qf_lists[qf_idx].qf_title);
+      qi->qf_lists[qf_idx].qf_title = get_dict_string(what, "title", true);
+      if (qf_idx == qi->qf_curlist) {
+        qf_update_win_titlevar(qi);
+      }
+      retval = OK;
+    }
+  }
+
+  return retval;
+}
+
+// Populate the quickfix list with the items supplied in the list
+// of dictionaries. "title" will be copied to w:quickfix_title
+// "action" is 'a' for add, 'r' for replace.  Otherwise create a new list.
+int set_errorlist(win_T *wp, list_T *list, int action, char_u *title,
+                  dict_T *what)
+{
+  qf_info_T *qi = &ql_info;
+  int retval = OK;
+
+  if (wp != NULL) {
+    qi = ll_get_or_alloc_list(wp);
+  }
+
+  if (what != NULL) {
+    retval = qf_set_properties(qi, what);
+  } else {
+    retval = qf_add_entries(qi, list, title, action);
+  }
 
   return retval;
 }

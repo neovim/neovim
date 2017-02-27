@@ -176,7 +176,7 @@ this won't happen: >
 	let otherDict.myFunction = myDict.myFunction
 	call otherDict.myFunction()
 
-Here "self" will be "myDict", because it was bound explitly.
+Here "self" will be "myDict", because it was bound explicitly.
 
 
 1.3 Lists ~
@@ -1820,19 +1820,19 @@ v:swapcommand	Normal mode command to be executed after a file has been
 		example, when jumping to a tag the value is ":tag tagname\r".
 		For ":edit +cmd file" the value is ":cmd\r".
 
-				*v:t_TYPE* *v:t_bool* *t_bool-varialble*
+				*v:t_TYPE* *v:t_bool* *t_bool-variable*
 v:t_bool	Value of Boolean type.  Read-only.  See: |type()|
-					*v:t_dict* *t_dict-varialble*
+					*v:t_dict* *t_dict-variable*
 v:t_dict	Value of Dictionary type.  Read-only.  See: |type()|
-					*v:t_float* *t_float-varialble*
+					*v:t_float* *t_float-variable*
 v:t_float	Value of Float type.  Read-only.  See: |type()|
-					*v:t_func* *t_func-varialble*
+					*v:t_func* *t_func-variable*
 v:t_func	Value of Funcref type.  Read-only.  See: |type()|
-					*v:t_list* *t_list-varialble*
+					*v:t_list* *t_list-variable*
 v:t_list	Value of List type.  Read-only.  See: |type()|
-					*v:t_number* *t_number-varialble*
+					*v:t_number* *t_number-variable*
 v:t_number	Value of Number type.  Read-only.  See: |type()|
-					*v:t_string* *t_string-varialble*
+					*v:t_string* *t_string-variable*
 v:t_string	Value of String type.  Read-only.  See: |type()|
 
 				*v:termresponse* *termresponse-variable*
@@ -2046,11 +2046,11 @@ getftime({fname})		Number	last modification time of file
 getftype({fname})		String	description of type of file {fname}
 getline({lnum})		String	line {lnum} of current buffer
 getline({lnum}, {end})		List	lines {lnum} to {end} of current buffer
-getloclist({nr})		List	list of location list items
+getloclist({nr}[, {what}])	List	list of location list items
 getmatches()			List	list of current matches
 getpid()			Number	process ID of Vim
 getpos({expr})			List	position of cursor, mark, etc.
-getqflist()			List	list of quickfix items
+getqflist([{what}])		List	list of quickfix items
 getreg([{regname} [, 1 [, {list}]]])
 				String or List   contents of register
 getregtype([{regname}])	String	type of register
@@ -2211,11 +2211,11 @@ setcharsearch({dict})		Dict	set character search from {dict}
 setcmdpos({pos})		Number	set cursor position in command-line
 setfperm({fname}, {mode}	Number	set {fname} file permissions to {mode}
 setline({lnum}, {line})	Number	set line {lnum} to {line}
-setloclist({nr}, {list}[, {action}[, {title}]])
+setloclist({nr}, {list}[, {action}[, {what}]])
 				Number	modify location list using {list}
 setmatches({list})		Number	restore a list of matches
 setpos({expr}, {list})		Number	set the {expr} position to {list}
-setqflist({list}[, {action}[, {title}]]
+setqflist({list}[, {action}[, {what}]]
 				Number	modify quickfix list using {list}
 setreg({n}, {v}[, {opt}])	Number	set register to value and type
 settabvar({nr}, {varname}, {val})	set {varname} in tab page {nr} to {val}
@@ -2773,8 +2773,8 @@ col({expr})	The result is a Number, which is the byte index of the column
 complete({startcol}, {matches})			*complete()* *E785*
 		Set the matches for Insert mode completion.
 		Can only be used in Insert mode.  You need to use a mapping
-		with CTRL-R = |i_CTRL-R|.  It does not work after CTRL-O or
-		with an expression mapping.
+		with CTRL-R = (see |i_CTRL-R|).  It does not work after CTRL-O
+		or with an expression mapping.
 		{startcol} is the byte offset in the line where the completed
 		text start.  The text up to the cursor is the original text
 		that will be replaced by the matches.  Use col('.') for an
@@ -4126,7 +4126,7 @@ getline({lnum} [, {end}])
 
 <		To get lines from another buffer see |getbufline()|
 
-getloclist({nr})					*getloclist()*
+getloclist({nr},[, {what}])				*getloclist()*
 		Returns a list with all the entries in the location list for
 		window {nr}. {nr} can be the window number or the window ID.
 		When {nr} is zero the current window is used.
@@ -4134,6 +4134,10 @@ getloclist({nr})					*getloclist()*
 		For a location list window, the displayed location list is
 		returned.  For an invalid window number {nr}, an empty list is
 		returned. Otherwise, same as |getqflist()|.
+
+		If the optional {what} dictionary argument is supplied, then
+		returns the items listed in {what} as a dictionary. Refer to
+		|getqflist()| for the supported items in {what}.
 
 getmatches()						*getmatches()*
 		Returns a |List| with all matches previously defined by
@@ -4184,7 +4188,7 @@ getpos({expr})	Get the position for {expr}.  For possible values of {expr}
 <		Also see |getcurpos()| and |setpos()|.
 
 
-getqflist()						*getqflist()*
+getqflist([{what}])					*getqflist()*
 		Returns a list with all the current quickfix errors.  Each
 		list item is a dictionary with these entries:
 			bufnr	number of buffer that has the file name, use
@@ -4209,7 +4213,28 @@ getqflist()						*getqflist()*
 			:for d in getqflist()
 			:   echo bufname(d.bufnr) ':' d.lnum '=' d.text
 			:endfor
+<
+		If the optional {what} dictionary argument is supplied, then
+		returns only the items listed in {what} as a dictionary. The
+		following string items are supported in {what}:
+			nr	get information for this quickfix list
+			title	get list title
+			winid	get window id (if opened)
+			all	all of the above quickfix properties
+		Non-string items in {what} are ignored.
+		If "nr" is not present then the current quickfix list is used.
+		In case of error processing {what}, an empty dictionary is
+		returned.
 
+		The returned dictionary contains the following entries:
+			nr	quickfix list number
+			title	quickfix list title text
+			winid	quickfix window id (if opened)
+
+		Examples: >
+			:echo getqflist({'all': 1})
+			:echo getqflist({'nr': 2, 'title': 1})
+<
 
 getreg([{regname} [, 1 [, {list}]]])			*getreg()*
 		The result is a String, which is the contents of register
@@ -4372,6 +4397,8 @@ glob2regpat({expr})					 *glob2regpat()*
 			if filename =~ '^Make.*\.mak$'
 <		When {expr} is an empty string the result is "^$", match an
 		empty string.
+		Note that the result depends on the system.  On MS-Windows
+		a backslash usually means a patch separator.
 
 								*globpath()*
 globpath({path}, {expr} [, {nosuf} [, {list} [, {allinks}]]])
@@ -6466,17 +6493,19 @@ setline({lnum}, {text})					*setline()*
 			:endfor
 <		Note: The '[ and '] marks are not set.
 
-setloclist({nr}, {list} [, {action}[, {title}]])	*setloclist()*
+setloclist({nr}, {list} [, {action}[, {what}]])		*setloclist()*
 		Create or replace or add to the location list for window {nr}.
 		{nr} can be the window number or the window ID.
 		When {nr} is zero the current window is used.
 
 		For a location list window, the displayed location list is
-		modified.  For an invalid window number {nr}, -1 is returned. If
-		{title} is given, it will be used to set |w:quickfix_title|
-		after opening the location window.
+		modified.  For an invalid window number {nr}, -1 is returned.
 		Otherwise, same as |setqflist()|.
 		Also see |location-list|.
+
+		If the optional {what} dictionary argument is supplied, then
+		only the items listed in {what} are set. Refer to |setqflist()|
+		for the list of supported keys in {what}.
 
 setmatches({list})					*setmatches()*
 		Restores a list of matches saved by |getmatches()|.  Returns 0
@@ -6531,7 +6560,7 @@ setpos({expr}, {list})
 		|winrestview()|.
 
 
-setqflist({list} [, {action}[, {title}]])		*setqflist()*
+setqflist({list} [, {action}[, {what}]])		*setqflist()*
 		Create or replace or add to the quickfix list using the items
 		in {list}.  Each item in {list} is a dictionary.
 		Non-dictionary items in {list} are ignored.  Each dictionary
@@ -6579,6 +6608,20 @@ setqflist({list} [, {action}[, {title}]])		*setqflist()*
 		If {title} is given, it will be used to set |w:quickfix_title|
 		after opening the quickfix window.
 
+		If the optional {what} dictionary argument is supplied, then
+		only the items listed in {what} are set. The first {list}
+		argument is ignored.  The following items can be specified in
+		{what}:
+		    nr		list number in the quickfix stack
+		    title	quickfix list title text
+		Unsupported keys in {what} are ignored.
+		If the "nr" item is not present, then the current quickfix list
+		is modified.
+
+		Examples: >
+			:call setqflist([], 'r', {'title': 'My search'})
+			:call setqflist([], 'r', {'nr': 2, 'title': 'Errors'})
+<
 		Returns zero for success, -1 for failure.
 
 		This function can be used to create a quickfix list
@@ -7900,6 +7943,10 @@ There are four types of features:
 	:if has("patch-7.4.248")
 <    Note that it's possible for patch 147 to be omitted even though 148 is
     included.
+
+Hint: To find out if Vim supports backslashes in a file name (MS-Windows),
+use: `if exists('+shellslash')`
+
 
 acl			Compiled with |ACL| support.
 arabic			Compiled with Arabic support |Arabic|.
