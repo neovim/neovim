@@ -166,8 +166,6 @@ endfunction()
 # NEOVIM_GENERATED_FOR_SOURCES: header files generated to be included in sources
 # NEOVIM_GENERATED_SOURCES: generated source files
 # These lists should be mutually exclusive
-# If a generated file is included in both of headers and sources,
-# the file for one should be duplicated for the other with different filepath.
 
 foreach(sfile ${NEOVIM_SOURCES}
               "${PROJECT_SOURCE_DIR}/src/nvim/regexp_nfa.c"
