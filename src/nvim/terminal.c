@@ -1126,18 +1126,17 @@ static void redraw(bool restore_cursor)
     update_screen(0);
   }
 
-  if (term && is_focused(term)) {
-    curwin->w_wrow = term->cursor.row;
-    curwin->w_wcol = term->cursor.col + win_col_off(curwin);
-    setcursor();
-  } else if (restore_cursor) {
+  if (restore_cursor) {
     ui_cursor_goto(save_row, save_col);
   } else if (term) {
-    // exiting terminal focus, put the window cursor in a valid position
-    int height, width;
-    vterm_get_size(term->vt, &height, &width);
-    curwin->w_wrow = height - 1;
-    curwin->w_wcol = 0;
+    curwin->w_wrow = term->cursor.row;
+    curwin->w_wcol = term->cursor.col + win_col_off(curwin);
+    curwin->w_cursor.lnum = MIN(curbuf->b_ml.ml_line_count,
+                                row_to_linenr(term, term->cursor.row));
+    // Nudge cursor when returning to normal-mode.
+    int off = is_focused(term) ? 0 : (curwin->w_p_rl ? 1 : -1);
+    curwin->w_cursor.col = MAX(0, term->cursor.col + win_col_off(curwin) + off);
+    curwin->w_cursor.coladd = 0;
     setcursor();
   }
 
@@ -1153,6 +1152,7 @@ static void adjust_topline(Terminal *term, buf_T *buf, long added)
     if (wp->w_buffer == buf) {
       linenr_T ml_end = buf->b_ml.ml_line_count;
       bool following = ml_end == wp->w_cursor.lnum + added;  // cursor at end?
+
       if (following || (wp == curwin && is_focused(term))) {
         // "Follow" the terminal output
         wp->w_cursor.lnum = ml_end;

@@ -50,11 +50,11 @@ describe('terminal buffer', function()
       feed('<c-\\><c-n>')
       screen:expect([[
         tty ready                                         |
-        {2: }                                                 |
+        {2:^ }                                                 |
                                                           |
                                                           |
                                                           |
-        ^                                                  |
+                                                          |
                                                           |
       ]])
     end)
@@ -74,11 +74,11 @@ describe('terminal buffer', function()
     feed('<c-\\><c-n>dd')
     screen:expect([[
       tty ready                                         |
-      {2: }                                                 |
+      {2:^ }                                                 |
                                                         |
                                                         |
                                                         |
-      ^                                                  |
+                                                        |
       {8:E21: Cannot make changes, 'modifiable' is off}     |
     ]])
   end)
