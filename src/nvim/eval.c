@@ -30,6 +30,7 @@
 #include "nvim/ex_eval.h"
 #include "nvim/ex_getln.h"
 #include "nvim/fileio.h"
+#include "nvim/os/fileio.h"
 #include "nvim/func_attr.h"
 #include "nvim/fold.h"
 #include "nvim/getchar.h"
@@ -18467,29 +18468,60 @@ static void f_winsaveview(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 }
 
 /// Writes list of strings to file
-static bool write_list(FILE *fd, list_T *list, bool binary)
+///
+/// @param  fp  File to write to.
+/// @param[in]  list  List to write.
+/// @param[in]  binary  Whether to write in binary mode.
+///
+/// @return true in case of success, false otherwise.
+static bool write_list(FileDescriptor *const fp, const list_T *const list,
+                       const bool binary)
 {
-  int ret = true;
-
-  for (listitem_T *li = list->lv_first; li != NULL; li = li->li_next) {
-    for (char_u *s = get_tv_string(&li->li_tv); *s != NUL; ++s) {
-      if (putc(*s == '\n' ? NUL : *s, fd) == EOF) {
-        ret = false;
-        break;
+  int error = 0;
+  for (const listitem_T *li = list->lv_first; li != NULL; li = li->li_next) {
+    const char *const s = (const char *)get_tv_string_chk(
+        (typval_T *)&li->li_tv);
+    if (s == NULL) {
+      return false;
+    }
+    const char *hunk_start = s;
+    for (const char *p = hunk_start;; p++) {
+      if (*p == NUL || *p == NL) {
+        if (p != hunk_start) {
+          const ptrdiff_t written = file_write(fp, hunk_start,
+                                               (size_t)(p - hunk_start));
+          if (written < 0) {
+            error = (int)written;
+            goto write_list_error;
+          }
+        }
+        if (*p == NUL) {
+          break;
+        } else {
+          hunk_start = p + 1;
+          const ptrdiff_t written = file_write(fp, (char[]){ NUL }, 1);
+          if (written < 0) {
+            error = (int)written;
+            break;
+          }
+        }
       }
     }
     if (!binary || li->li_next != NULL) {
-      if (putc('\n', fd) == EOF) {
-        ret = false;
-        break;
+      const ptrdiff_t written = file_write(fp, "\n", 1);
+      if (written < 0) {
+        error = (int)written;
+        goto write_list_error;
       }
     }
-    if (ret == false) {
-      EMSG(_(e_write));
-      break;
-    }
   }
-  return ret;
+  if ((error = file_fsync(fp)) != 0) {
+    goto write_list_error;
+  }
+  return true;
+write_list_error:
+  emsgf(_("E80: Error while writing: %s"), os_strerror(error));
+  return false;
 }
 
 /// Initializes a static list with 10 items.
@@ -18617,27 +18649,42 @@ static void f_writefile(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   bool binary = false;
   bool append = false;
   if (argvars[2].v_type != VAR_UNKNOWN) {
-    if (vim_strchr(get_tv_string(&argvars[2]), 'b')) {
+    const char *const flags = (const char *)get_tv_string_chk(&argvars[2]);
+    if (flags == NULL) {
+      return;
+    }
+    if (strchr(flags, 'b')) {
       binary = true;
     }
-    if (vim_strchr(get_tv_string(&argvars[2]), 'a')) {
+    if (strchr(flags, 'a')) {
       append = true;
     }
   }
 
-  // Always open the file in binary mode, library functions have a mind of
-  // their own about CR-LF conversion.
-  char_u *fname = get_tv_string(&argvars[1]);
-  FILE *fd;
-  if (*fname == NUL || (fd = mch_fopen((char *)fname,
-       append ? APPENDBIN : WRITEBIN)) == NULL) {
-    EMSG2(_(e_notcreate), *fname == NUL ? (char_u *)_("<empty>") : fname);
-    rettv->vval.v_number = -1;
+  const char buf[NUMBUFLEN];
+  const char *const fname = (const char *)get_tv_string_buf_chk(&argvars[1],
+                                                                (char_u *)buf);
+  if (fname == NULL) {
+    return;
+  }
+  FileDescriptor *fp;
+  int error;
+  rettv->vval.v_number = -1;
+  if (*fname == NUL) {
+    EMSG(_("E482: Can't open file with an empty name"));
+  } else if ((fp = file_open_new(&error, fname,
+                                 ((append ? kFileAppend : kFileTruncate)
+                                  | kFileCreate), 0666)) == NULL) {
+    emsgf(_("E482: Can't open file %s for writing: %s"),
+          fname, os_strerror(error));
   } else {
-    if (write_list(fd, argvars[0].vval.v_list, binary) == false) {
-      rettv->vval.v_number = -1;
+    if (write_list(fp, argvars[0].vval.v_list, binary)) {
+      rettv->vval.v_number = 0;
     }
-    fclose(fd);
+    if ((error = file_free(fp)) != 0) {
+      emsgf(_("E80: Error when closing file %s: %s"),
+            fname, os_strerror(error));
+    }
   }
 }
 /*

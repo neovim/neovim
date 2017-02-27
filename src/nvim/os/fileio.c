@@ -62,6 +62,8 @@ int file_open(FileDescriptor *const ret_fp, const char *const fname,
   FLAG(flags, kFileCreate, O_CREAT|O_WRONLY, kTrue, !(flags & kFileCreateOnly));
   FLAG(flags, kFileTruncate, O_TRUNC|O_WRONLY, kTrue,
        !(flags & kFileCreateOnly));
+  FLAG(flags, kFileAppend, O_APPEND|O_WRONLY, kTrue,
+       !(flags & kFileCreateOnly));
   FLAG(flags, kFileReadOnly, O_RDONLY, kFalse, wr != kTrue);
 #ifdef O_NOFOLLOW
   FLAG(flags, kFileNoSymlink, O_NOFOLLOW, kNone, true);
@@ -153,7 +155,11 @@ int file_fsync(FileDescriptor *const fp)
     fp->_error = 0;
     return error;
   }
-  return os_fsync(fp->fd);
+  const int error = os_fsync(fp->fd);
+  if (error != UV_EINVAL && error != UV_EROFS) {
+    return error;
+  }
+  return 0;
 }
 
 /// Buffer used for writing
