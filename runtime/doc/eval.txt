@@ -89,14 +89,30 @@ To force conversion from String to Number, add zero to it: >
 To avoid a leading zero to cause octal conversion, or for using a different
 base, use |str2nr()|.
 
+							*TRUE* *FALSE*
 For boolean operators Numbers are used.  Zero is FALSE, non-zero is TRUE.
+You can also use |v:false| and |v:true|.  When TRUE is returned from a
+function it is the Number one, FALSE is the number zero.
 
-Note that in the command >
+Note that in the command: >
 	:if "foo"
-"foo" is converted to 0, which means FALSE.  To test for a non-empty string,
-use empty(): >
+	:" NOT executed
+"foo" is converted to 0, which means FALSE.  If the string starts with a
+non-zero number it means TRUE: >
+	:if "8foo"
+	:" executed
+To test for a non-empty string, use empty(): >
 	:if !empty("foo")
-<				*E745* *E728* *E703* *E729* *E730* *E731*
+<
+							*non-zero-arg*
+Function arguments often behave slightly different from |TRUE|: If the
+argument is present and it evaluates to a non-zero Number, |v:true| or a
+non-empty String, then the value is considere to be TRUE.
+Note that " " and "0" are also non-empty strings, thus cause the mode to be
+cleared.  A List, Dictionary or Float is not a Number or String, thus
+evaluates to FALSE.
+
+				*E745* *E728* *E703* *E729* *E730* *E731*
 List, Dictionary and Funcref types are not automatically converted.
 
 							*E805* *E806* *E808*
@@ -684,7 +700,7 @@ expr1							*expr1* *E109*
 expr2 ? expr1 : expr1
 
 The expression before the '?' is evaluated to a number.  If it evaluates to
-non-zero, the result is the value of the expression between the '?' and ':',
+|TRUE|, the result is the value of the expression between the '?' and ':',
 otherwise the result is the value of the expression after the ':'.
 Example: >
 	:echo lnum == 1 ? "top" : lnum
@@ -712,12 +728,12 @@ expr2 and expr3						*expr2* *expr3*
 The "||" and "&&" operators take one argument on each side.  The arguments
 are (converted to) Numbers.  The result is:
 
-	 input				 output ~
-n1		n2		n1 || n2	n1 && n2 ~
-zero		zero		zero		zero
-zero		non-zero	non-zero	zero
-non-zero	zero		non-zero	zero
-non-zero	non-zero	non-zero	non-zero
+    input			 output ~
+n1	n2		n1 || n2	n1 && n2 ~
+|FALSE|	|FALSE|		|FALSE|		|FALSE|
+|FALSE|	|TRUE|		|TRUE|		|FALSE|
+|TRUE|	|FALSE|		|TRUE|		|FALSE|
+|TRUE|	|TRUE|		|TRUE|		|TRUE|
 
 The operators can be concatenated, for example: >
 
@@ -733,8 +749,8 @@ arguments are not evaluated.  This is like what happens in C.  For example: >
 	let a = 1
 	echo a || b
 
-This is valid even if there is no variable called "b" because "a" is non-zero,
-so the result must be non-zero.  Similarly below: >
+This is valid even if there is no variable called "b" because "a" is |TRUE|,
+so the result must be |TRUE|.  Similarly below: >
 
 	echo exists("b") && b == "yes"
 
@@ -896,7 +912,7 @@ expr7							*expr7*
 - expr7			unary minus		*expr-unary--*
 + expr7			unary plus		*expr-unary-+*
 
-For '!' non-zero becomes zero, zero becomes one.
+For '!' |TRUE| becomes |FALSE|, |FALSE| becomes |TRUE| (one).
 For '-' the sign of the number is changed.
 For '+' the number is unchanged.
 
@@ -1940,9 +1956,9 @@ atan2({expr}, {expr})		Float   arc tangent of {expr1} / {expr2}
 browse({save}, {title}, {initdir}, {default})
 				String	put up a file requester
 browsedir({title}, {initdir})	String	put up a directory requester
-bufexists({expr})		Number	TRUE if buffer {expr} exists
-buflisted({expr})		Number	TRUE if buffer {expr} is listed
-bufloaded({expr})		Number	TRUE if buffer {expr} is loaded
+bufexists({expr})		Number	|TRUE| if buffer {expr} exists
+buflisted({expr})		Number	|TRUE| if buffer {expr} is listed
+bufloaded({expr})		Number	|TRUE| if buffer {expr} is loaded
 bufname({expr})		String	Name of the buffer {expr}
 bufnr({expr} [, {create}])	Number	Number of the buffer {expr}
 bufwinid({expr})		Number	window ID of buffer {expr}
@@ -1979,25 +1995,25 @@ dictwatcheradd({dict}, {pattern}, {callback})
 				Start watching a dictionary
 dictwatcherdel({dict}, {pattern}, {callback})
 				Stop watching a dictionary
-did_filetype()			Number	TRUE if FileType autocommand event used
+did_filetype()			Number	|TRUE| if FileType autocommand event used
 diff_filler({lnum})		Number	diff filler lines about {lnum}
 diff_hlID({lnum}, {col})	Number	diff highlighting at {lnum}/{col}
-empty({expr})			Number	TRUE if {expr} is empty
+empty({expr})			Number	|TRUE| if {expr} is empty
 escape({string}, {chars})	String	escape {chars} in {string} with '\'
 eval({string})			any	evaluate {string} into its value
-eventhandler()			Number	TRUE if inside an event handler
+eventhandler()			Number	|TRUE| if inside an event handler
 executable({expr})		Number	1 if executable {expr} exists
 execute({command})		String	execute and capture output of {command}
 exepath({expr})		String  full path of the command {expr}
-exists({expr})			Number	TRUE if {expr} exists
+exists({expr})			Number	|TRUE| if {expr} exists
 extend({expr1}, {expr2} [, {expr3}])
 				List/Dict insert items of {expr2} into {expr1}
 exp({expr})			Float	exponential of {expr}
 expand({expr} [, {nosuf} [, {list}]])
 				any	expand special keywords in {expr}
 feedkeys({string} [, {mode}])	Number	add key sequence to typeahead buffer
-filereadable({file})		Number	TRUE if {file} is a readable file
-filewritable({file})		Number	TRUE if {file} is a writable file
+filereadable({file})		Number	|TRUE| if {file} is a readable file
+filewritable({file})		Number	|TRUE| if {file} is a writable file
 filter({expr}, {string})	List/Dict  remove items from {expr} where
 				{string} is 0
 finddir({name}[, {path}[, {count}]])
@@ -2069,17 +2085,17 @@ glob({expr} [, {nosuf} [, {list} [, {alllinks}]]])
 glob2regpat({expr})		String  convert a glob pat into a search pat
 globpath({path}, {expr} [, {nosuf} [, {list} [, {alllinks}]]])
 				String	do glob({expr}) for all dirs in {path}
-has({feature})			Number	TRUE if feature {feature} supported
-has_key({dict}, {key})		Number	TRUE if {dict} has entry {key}
+has({feature})			Number	|TRUE| if feature {feature} supported
+has_key({dict}, {key})		Number	|TRUE| if {dict} has entry {key}
 haslocaldir([{winnr} [, {tabnr}]])
-				Number	TRUE if current window executed |:lcd|
+				Number	|TRUE| if current window executed |:lcd|
 hasmapto({what} [, {mode} [, {abbr}]])
-				Number	TRUE if mapping to {what} exists
+				Number	|TRUE| if mapping to {what} exists
 histadd({history}, {item})	String	add an item to a history
 histdel({history} [, {item}])	String	remove an item from a history
 histget({history} [, {index}])	String	get the item {index} from a history
 histnr({history})		Number	highest index of a history
-hlexists({name})		Number	TRUE if highlight group {name} exists
+hlexists({name})		Number	|TRUE| if highlight group {name} exists
 hlID({name})			Number	syntax ID of highlight group {name}
 hostname()			String	name of the machine Vim is running on
 iconv({expr}, {from}, {to})	String	convert encoding of {expr}
@@ -2097,8 +2113,8 @@ inputsecret({prompt} [, {text}])
 insert({list}, {item} [, {idx}])
 				List	insert {item} in {list} [before {idx}]
 invert({expr})			Number  bitwise invert
-isdirectory({directory})	Number	TRUE if {directory} is a directory
-islocked({expr})		Number	TRUE if {expr} is locked
+isdirectory({directory})	Number	|TRUE| if {directory} is a directory
+islocked({expr})		Number	|TRUE| if {expr} is locked
 id({expr})			String	identifier of the container
 items({dict})			List	key-value pairs in {dict}
 jobclose({job}[, {stream}])	Number	Closes a job stream(s)
@@ -2480,7 +2496,7 @@ assert_notmatch({pattern}, {actual} [, {msg}])
 assert_true({actual} [, {msg}])					*assert_true()*
 		When {actual} is not true an error message is added to
 		|v:errors|, like with |assert_equal()|.
-		A value is true when it is a non-zero number or |v:true|.  
+		A value is |TRUE| when it is a non-zero number or |v:true|.
 		When {actual} is not a number or |v:true| the assert fails.
 		When {msg} is omitted an error in the form "Expected True but
 		got {actual}" is produced.
@@ -2522,9 +2538,9 @@ atan2({expr1}, {expr2})					*atan2()*
 							*browse()*
 browse({save}, {title}, {initdir}, {default})
 		Put up a file requester.  This only works when "has("browse")"
-		returns non-zero (only in some GUI versions).
+		returns |TRUE| (only in some GUI versions).
 		The input fields are:
-		    {save}	when non-zero, select file to write
+		    {save}	when |TRUE|, select file to write
 		    {title}	title for the requester
 		    {initdir}	directory to start browsing in
 		    {default}	default file name
@@ -2534,7 +2550,7 @@ browse({save}, {title}, {initdir}, {default})
 							*browsedir()*
 browsedir({title}, {initdir})
 		Put up a directory requester.  This only works when
-		"has("browse")" returns non-zero (only in some GUI versions).
+		"has("browse")" returns |TRUE| (only in some GUI versions).
 		On systems where a directory browser is not supported a file
 		browser is used.  In that case: select a file in the directory
 		to be used.
@@ -2545,7 +2561,7 @@ browsedir({title}, {initdir})
 		browsing is not possible, an empty string is returned.
 
 bufexists({expr})					*bufexists()*
-		The result is a Number, which is non-zero if a buffer called
+		The result is a Number, which is |TRUE| if a buffer called
 		{expr} exists.
 		If the {expr} argument is a number, buffer numbers are used.
 		If the {expr} argument is a string it must match a buffer name
@@ -2565,12 +2581,12 @@ bufexists({expr})					*bufexists()*
 		file name.
 
 buflisted({expr})					*buflisted()*
-		The result is a Number, which is non-zero if a buffer called
+		The result is a Number, which is |TRUE| if a buffer called
 		{expr} exists and is listed (has the 'buflisted' option set).
 		The {expr} argument is used like with |bufexists()|.
 
 bufloaded({expr})					*bufloaded()*
-		The result is a Number, which is non-zero if a buffer called
+		The result is a Number, which is |TRUE| if a buffer called
 		{expr} exists and is loaded (shown in a window or hidden).
 		The {expr} argument is used like with |bufexists()|.
 
@@ -2811,7 +2827,7 @@ complete_add({expr})				*complete_add()*
 complete_check()				*complete_check()*
 		Check for a key typed while looking for completion matches.
 		This is to be used when looking for matches takes some time.
-		Returns non-zero when searching for matches is to be aborted,
+		Returns |TRUE| when searching for matches is to be aborted,
 		zero otherwise.
 		Only to be used by the function specified with the
 		'completefunc' option.
@@ -2905,7 +2921,7 @@ count({comp}, {expr} [, {ic} [, {start}]])			*count()*
 		in |List| or |Dictionary| {comp}.
 		If {start} is given then start with the item with this index.
 		{start} can only be used with a |List|.
-		When {ic} is given and it's non-zero then case is ignored.
+		When {ic} is given and it's |TRUE| then case is ignored.
 
 
 							*cscope_connection()*
@@ -3058,7 +3074,7 @@ dictwatcherdel({dict}, {pattern}, {callback})		      *dictwatcherdel()*
 		order for the watcher to be successfully deleted.
 
 							*did_filetype()*
-did_filetype()	Returns non-zero when autocommands are being executed and the
+did_filetype()	Returns |TRUE| when autocommands are being executed and the
 		FileType event has been triggered at least once.  Can be used
 		to avoid triggering the FileType event again in the scripts
 		that detect the file type. |FileType|
@@ -3171,7 +3187,7 @@ exepath({expr})						*exepath()*
 		If {expr} starts with "./" the |current-directory| is used.
 
 							*exists()*
-exists({expr})	The result is a Number, which is non-zero if {expr} is
+exists({expr})	The result is a Number, which is |TRUE| if {expr} is
 		defined, zero otherwise.  The {expr} argument is a string,
 		which contains one of these:
 			&option-name	Vim option (only checks if it exists,
@@ -3267,7 +3283,7 @@ expand({expr} [, {nosuf} [, {list}]])				*expand()*
 		Expand wildcards and the following special keywords in {expr}.
 		'wildignorecase' applies.
 
-		If {list} is given and it is non-zero, a List will be returned.
+		If {list} is given and it is |TRUE|, a List will be returned.
 		Otherwise the result is a String and when there are several
 		matches, they are separated by <NL> characters.  [Note: in
 		version 5.0 a space was used, which caused problems when a
@@ -3326,7 +3342,7 @@ expand({expr} [, {nosuf} [, {list}]])				*expand()*
 		When {expr} does not start with '%', '#' or '<', it is
 		expanded like a file name is expanded on the command line.
 		'suffixes' and 'wildignore' are used, unless the optional
-		{nosuf} argument is given and it is non-zero.
+		{nosuf} argument is given and it is |TRUE|.
 		Names for non-existing files are included.  The "**" item can
 		be used to search in a directory tree.  For example, to find
 		all "README" files in the current directory and below: >
@@ -3418,9 +3434,9 @@ feedkeys({string} [, {mode}])				*feedkeys()*
 		Return value is always 0.
 
 filereadable({file})					*filereadable()*
-		The result is a Number, which is TRUE when a file with the
+		The result is a Number, which is |TRUE| when a file with the
 		name {file} exists, and can be read.  If {file} doesn't exist,
-		or is a directory, the result is FALSE.  {file} is any
+		or is a directory, the result is |FALSE|.  {file} is any
 		expression, which is used as a String.
 		If you don't care about the file being readable you can use
 		|glob()|.
@@ -3458,7 +3474,7 @@ filter({expr1}, {expr2})					*filter()*
 		If {expr2} is a |Funcref| it must take two arguments:
 			1. the key or the index of the current item.
 			2. the value of the current item.
-		The function must return TRUE if the item should be kept.
+		The function must return |TRUE| if the item should be kept.
 		Example that keeps the odd items of a list: >
 			func Odd(idx, val)
 			  return a:idx % 2 == 1
@@ -4191,13 +4207,13 @@ getqflist()						*getqflist()*
 				bufname() to get the name
 			lnum	line number in the buffer (first line is 1)
 			col	column number (first column is 1)
-			vcol	non-zero: "col" is visual column
-				zero: "col" is byte index
+			vcol	|TRUE|: "col" is visual column
+				|FALSE|: "col" is byte index
 			nr	error number
 			pattern	search pattern used to locate the error
 			text	description of the error
 			type	type of the error, 'E', '1', etc.
-			valid	non-zero: recognized error message
+			valid	|TRUE|: recognized error message
 
 		When there is no error list or it's empty an empty list is
 		returned. Quickfix list entries with non-existing buffer
@@ -4223,7 +4239,7 @@ getreg([{regname} [, 1 [, {list}]]])			*getreg()*
 		be restored with |setreg()|.  For other registers the extra
 		argument is ignored, thus you can always give it.
 
-		If {list} is present and non-zero, the result type is changed
+		If {list} is present and |TRUE|, the result type is changed
 		to |List|. Each list item is one text line. Use it if you care
 		about zero bytes possibly present inside register: without
 		third argument both NLs and zero bytes are represented as NLs
@@ -4334,13 +4350,13 @@ glob({expr} [, {nosuf} [, {list} [, {alllinks}]]])		*glob()*
 		Expand the file wildcards in {expr}.  See |wildcards| for the
 		use of special characters.
 
-		Unless the optional {nosuf} argument is given and is non-zero,
+		Unless the optional {nosuf} argument is given and is |TRUE|,
 		the 'suffixes' and 'wildignore' options apply: Names matching
 		one of the patterns in 'wildignore' will be skipped and
 		'suffixes' affect the ordering of matches.
 		'wildignorecase' always applies.
 
-		When {list} is present and it is non-zero the result is a List
+		When {list} is present and it is |TRUE| the result is a List
 		with all matching files. The advantage of using a List is,
 		you also get filenames containing newlines correctly.
 		Otherwise the result is a String and when there are several
@@ -4351,7 +4367,7 @@ glob({expr} [, {nosuf} [, {list} [, {alllinks}]]])		*glob()*
 		A name for a non-existing file is not included.  A symbolic
 		link is only included if it points to an existing file.
 		However, when the {alllinks} argument is present and it is
-		non-zero then all symbolic links are included.
+		|TRUE| then all symbolic links are included.
 
 		For most systems backticks can be used to get files names from
 		any external command.  Example: >
@@ -4388,12 +4404,12 @@ globpath({path}, {expr} [, {nosuf} [, {list} [, {allinks}]]])
 		If the expansion fails for one of the directories, there is no
 		error message.
 
-		Unless the optional {nosuf} argument is given and is non-zero,
+		Unless the optional {nosuf} argument is given and is |TRUE|,
 		the 'suffixes' and 'wildignore' options apply: Names matching
 		one of the patterns in 'wildignore' will be skipped and
 		'suffixes' affect the ordering of matches.
 
-		When {list} is present and it is non-zero the result is a List
+		When {list} is present and it is |TRUE| the result is a List
 		with all matching files. The advantage of using a List is, you
 		also get filenames containing newlines correctly. Otherwise
 		the result is a String and when there are several matches,
@@ -4439,7 +4455,7 @@ hasmapto({what} [, {mode} [, {abbr}]])			*hasmapto()*
 		contains {what} in somewhere in the rhs (what it is mapped to)
 		and this mapping exists in one of the modes indicated by
 		{mode}.
-		When {abbr} is there and it is non-zero use abbreviations
+		When {abbr} is there and it is |TRUE| use abbreviations
 		instead of mappings.  Don't forget to specify Insert and/or
 		Command-line mode.
 		Both the global mappings and the mappings local to the current
@@ -4590,7 +4606,7 @@ index({list}, {expr} [, {start} [, {ic}]])			*index()*
 		is not used here, case always matters.
 		If {start} is given then start looking at the item with index
 		{start} (may be negative for an item relative to the end).
-		When {ic} is given and it is non-zero, ignore case.  Otherwise
+		When {ic} is given and it is |TRUE|, ignore case.  Otherwise
 		case must match.
 		-1 is returned when {expr} is not found in {list}.
 		Example: >
@@ -4718,13 +4734,13 @@ invert({expr})						*invert()*
 			:let bits = invert(bits)
 
 isdirectory({directory})				*isdirectory()*
-		The result is a Number, which is non-zero when a directory
+		The result is a Number, which is |TRUE| when a directory
 		with the name {directory} exists.  If {directory} doesn't
-		exist, or isn't a directory, the result is FALSE.  {directory}
+		exist, or isn't a directory, the result is |FALSE|.  {directory}
 		is any expression, which is used as a String.
 
 islocked({expr})					*islocked()* *E786*
-		The result is a Number, which is non-zero when {expr} is the
+		The result is a Number, which is |TRUE| when {expr} is the
 		name of a locked variable.
 		{expr} must be the name of a variable, |List| item or
 		|Dictionary| entry, not the variable itself!  Example: >
@@ -5106,10 +5122,10 @@ maparg({name}[, {mode} [, {abbr} [, {dict}]]])			*maparg()*
 			""	Normal, Visual and Operator-pending
 		When {mode} is omitted, the modes for "" are used.
 
-		When {abbr} is there and it is non-zero use abbreviations
+		When {abbr} is there and it is |TRUE| use abbreviations
 		instead of mappings.
 
-		When {dict} is there and it is non-zero return a dictionary
+		When {dict} is there and it is |TRUE| return a dictionary
 		containing all the information of the mapping with the
 		following items:
 		  "lhs"	     The {lhs} of the mapping.
@@ -5423,8 +5439,7 @@ mkdir({name} [, {path} [, {prot}]])
 mode([expr])	Return a string that indicates the current mode.
 		If [expr] is supplied and it evaluates to a non-zero Number or
 		a non-empty String (|non-zero-arg|), then the full mode is
-		returned, otherwise only the first letter is returned.  Note
-		that " " and "0" are also non-empty strings.
+		returned, otherwise only the first letter is returned.
 
 			n	Normal
 			no	Operator-pending
@@ -6670,8 +6685,8 @@ shellescape({string} [, {special}])			*shellescape()*
 		On Windows when 'shellslash' is not set, it
 		will enclose {string} in double quotes and double all double
 		quotes within {string}.
-		For other systems, it will enclose {string} in single quotes
-		and replace all "'" with "'\''".
+		Otherwise, it will enclose {string} in single quotes and
+		replace all "'" with "'\''".
 		When the {special} argument is present and it's a non-zero
 		Number or a non-empty String (|non-zero-arg|), then special
 		items such as "!", "%", "#" and "<cword>" will be preceded by
@@ -7660,16 +7675,12 @@ visualmode([expr])						*visualmode()*
 		Visual mode that was used.
 		If Visual mode is active, use |mode()| to get the Visual mode
 		(e.g., in a |:vmap|).
-							*non-zero-arg*
 		If [expr] is supplied and it evaluates to a non-zero Number or
 		a non-empty String, then the Visual mode will be cleared and
-		the old value is returned.  Note that " " and "0" are also
-		non-empty strings, thus cause the mode to be cleared.  A List,
-		Dictionary or Float is not a Number or String, thus does not
-		cause the mode to be cleared.
+		the old value is returned.  See |non-zero-arg|.
 
 wildmenumode()					*wildmenumode()*
-		Returns non-zero when the wildmenu is active and zero
+		Returns |TRUE| when the wildmenu is active and |FALSE|
 		otherwise.  See 'wildmenu' and 'wildmode'.
 		This can be used in mappings to handle the 'wildcharm' option
 		gracefully. (Makes only sense with |mapmode-c| mappings).
