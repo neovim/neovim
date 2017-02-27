@@ -1225,7 +1225,7 @@ int gen_expand_wildcards(int num_pat, char_u **pat, int *num_file,
        * "vim c:/" work. */
       if (flags & EW_NOTFOUND) {
         addfile(&ga, t, flags | EW_DIR | EW_FILE);
-      } else if (os_path_exists(t)) {
+      } else {
         addfile(&ga, t, flags);
       }
       xfree(t);
