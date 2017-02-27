@@ -320,8 +320,11 @@ static void parse_msgpack(Stream *stream, RBuffer *rbuf, size_t c, void *data,
   incref(channel);
 
   if (eof) {
-    close_channel(channel);
-    call_set_error(channel, "Channel was closed by the client");
+    char buf[256];
+    snprintf(buf, sizeof(buf),
+             "Channel %" PRIu64 " was closed by the client",
+             channel->id);
+    call_set_error(channel, buf);
     goto end;
   }
 
@@ -473,6 +476,7 @@ static void on_request_event(void **argv)
 static bool channel_write(Channel *channel, WBuffer *buffer)
 {
   bool success;
+  Stream *stream;
 
   if (channel->closed) {
     wstream_release_wbuffer(buffer);
@@ -481,27 +485,30 @@ static bool channel_write(Channel *channel, WBuffer *buffer)
 
   switch (channel->type) {
     case kChannelTypeSocket:
-      success = wstream_write(&channel->data.stream, buffer);
+      stream = &channel->data.stream;
       break;
     case kChannelTypeProc:
-      success = wstream_write(channel->data.proc->in, buffer);
+      stream = channel->data.proc->in;
       break;
     case kChannelTypeStdio:
-      success = wstream_write(&channel->data.std.out, buffer);
+      stream = &channel->data.std.out;
       break;
     default:
       abort();
   }
 
+  success = !stream->closed && wstream_write(stream, buffer);
+
   if (!success) {
-    // If the write failed for any reason, close the channel
     char buf[256];
-    snprintf(buf,
-             sizeof(buf),
-             "Before returning from a RPC call, channel %" PRIu64 " was "
-             "closed due to a failed write",
+    snprintf(buf, sizeof(buf),
+             stream->closed
+                ? "RPC failed to complete: Channel %" PRIu64
+                  " has a closed stream. Channel closed."
+                : "RPC failed to complete: Failed to write to "
+                  "channel %" PRIu64 ". Channel closed.",
              channel->id);
-    call_set_error(channel, buf);
+    call_set_error(channel, buf);  // Closes the channel.
   }
 
   return success;
@@ -661,6 +668,7 @@ static void free_channel(Channel *channel)
 
 static void close_cb(Stream *stream, void *data)
 {
+  ILOG("channel->refcount: %zu", ((Channel *)data)->refcount);
   decref(data);
 }
 

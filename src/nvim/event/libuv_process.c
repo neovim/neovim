@@ -77,5 +77,6 @@ static void exit_cb(uv_process_t *handle, int64_t status, int term_signal)
 {
   Process *proc = handle->data;
   proc->status = (int)status;
+  ILOG("");
   proc->internal_exit_cb(proc);
 }
