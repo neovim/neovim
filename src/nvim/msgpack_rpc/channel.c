@@ -322,7 +322,7 @@ static void parse_msgpack(Stream *stream, RBuffer *rbuf, size_t c, void *data,
   if (eof) {
     close_channel(channel);
     char buf[256];
-    snprintf(buf, sizeof(buf), "channel %" PRIu64 " was closed by the client",
+    snprintf(buf, sizeof(buf), "ch %" PRIu64 " was closed by the client",
              channel->id);
     call_set_error(channel, buf);
     goto end;
@@ -352,8 +352,8 @@ static void parse_msgpack(Stream *stream, RBuffer *rbuf, size_t c, void *data,
       } else {
         char buf[256];
         snprintf(buf, sizeof(buf),
-                 "channel %" PRIu64 " sent a response without a matching "
-                 "request id. Ensure the client is properly synchronized",
+                 "ch %" PRIu64 " returned a response with an unknown request "
+                 "id. Ensure the client is properly synchronized",
                  channel->id);
         call_set_error(channel, buf);
       }
@@ -405,7 +405,7 @@ static void handle_request(Channel *channel, msgpack_object *request)
                                          &out_buffer))) {
       char buf[256];
       snprintf(buf, sizeof(buf),
-               "channel %" PRIu64 " sent an invalid message, closed.",
+               "ch %" PRIu64 " sent an invalid message, closed.",
                channel->id);
       call_set_error(channel, buf);
     }
@@ -497,7 +497,7 @@ static bool channel_write(Channel *channel, WBuffer *buffer)
     char buf[256];
     snprintf(buf,
              sizeof(buf),
-             "Before returning from a RPC call, channel %" PRIu64 " was "
+             "Before returning from a RPC call, ch %" PRIu64 " was "
              "closed due to a failed write",
              channel->id);
     call_set_error(channel, buf);

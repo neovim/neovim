@@ -232,8 +232,9 @@ Terminal *terminal_open(TerminalOptions opts)
 
   // Default settings for terminal buffers
   curbuf->b_p_ma = false;   // 'nomodifiable'
-  curbuf->b_p_ul = -1;      // disable undo
+  curbuf->b_p_ul = -1;      // 'undolevels'
   curbuf->b_p_scbk = 1000;  // 'scrollback'
+  curbuf->b_p_tw = 0;       // 'textwidth'
   set_option_value((uint8_t *)"wrap", false, NULL, OPT_LOCAL);
   set_option_value((uint8_t *)"number", false, NULL, OPT_LOCAL);
   set_option_value((uint8_t *)"relativenumber", false, NULL, OPT_LOCAL);
@@ -370,6 +371,16 @@ void terminal_enter(void)
   State = TERM_FOCUS;
   mapped_ctrl_c |= TERM_FOCUS;  // Always map CTRL-C to avoid interrupt.
   RedrawingDisabled = false;
+
+  // Disable these options in terminal-mode. They are nonsense because cursor is
+  // placed at end of buffer to "follow" output.
+  int save_w_p_cul = curwin->w_p_cul;
+  int save_w_p_cuc = curwin->w_p_cuc;
+  int save_w_p_rnu = curwin->w_p_rnu;
+  curwin->w_p_cul = false;
+  curwin->w_p_cuc = false;
+  curwin->w_p_rnu = false;
+
   adjust_topline(s->term, buf, 0);  // scroll to end
   // erase the unfocused cursor
   invalidate_terminal(s->term, s->term->cursor.row, s->term->cursor.row + 1);
@@ -383,6 +394,10 @@ void terminal_enter(void)
   restart_edit = 0;
   State = save_state;
   RedrawingDisabled = s->save_rd;
+  curwin->w_p_cul = save_w_p_cul;
+  curwin->w_p_cuc = save_w_p_cuc;
+  curwin->w_p_rnu = save_w_p_rnu;
+
   // draw the unfocused cursor
   invalidate_terminal(s->term, s->term->cursor.row, s->term->cursor.row + 1);
   unshowmode(true);
