@@ -128,6 +128,7 @@
 #include "nvim/version.h"
 #include "nvim/window.h"
 #include "nvim/os/time.h"
+#include "nvim/message_buffer.h"
 
 #define MB_FILLER_CHAR '<'  /* character used when a double-width character
                              * doesn't fit. */
@@ -2196,6 +2197,7 @@ win_line (
   bool has_bufhl = false;                // this buffer has highlight matches
   int bufhl_attr = 0;                   // attributes desired by bufhl
   bufhl_lineinfo_T bufhl_info;          // bufhl data for this line
+  int msgbuf_attr = 0;                  // message pane line highlight attr
 
   /* draw_state: items that are drawn in sequence: */
 #define WL_START        0               /* nothing done yet */
@@ -2646,6 +2648,18 @@ win_line (
     area_highlighting = true;
   }
 
+  // Messages in the history pane only have one higlight attribute for the
+  // entire line.
+  if (wp->w_buffer->b_messages) {
+    msgbuf_attr = msgbuf_line_attr(lnum);
+
+    // If the message pane line is a separator, use NonText if it doesn't have
+    // its own highlight attribute.
+    if (msgbuf_attr == 0 && msgbuf_line_is_sep(lnum)) {
+      msgbuf_attr = hl_attr(HLF_AT);
+    }
+  }
+
   off = (unsigned)(current_ScreenLine - ScreenLines);
   col = 0;
   if (wp->w_p_rl) {
@@ -2842,6 +2856,8 @@ win_line (
           c_extra = saved_c_extra;
           p_extra = saved_p_extra;
           char_attr = saved_char_attr;
+        } else if (msgbuf_attr != 0) {
+          char_attr = msgbuf_attr;
         } else
           char_attr = 0;
       }
@@ -2860,6 +2876,15 @@ win_line (
       else
         row = wp->w_height;
       break;
+    }
+
+    if (n_extra == 0 && wp->w_buffer->b_messages != 0 && *ptr == NUL
+        && msgbuf_line_is_sep(lnum)) {
+      char_u p[512];  // 512 characters should be a reasonable maximum width.
+      size_t n = MIN(512, wp->w_width - col);
+      msgbuf_line_sep_fill(p, lnum, n);
+      p_extra = p;
+      n_extra = n;
     }
 
     if (draw_state == WL_LINE && area_highlighting) {
@@ -2998,6 +3023,18 @@ win_line (
       // Decide which of the highlight attributes to use.
       attr_pri = true;
 
+      // If message pane is being rendered, combine visual selection or search
+      // attributes.
+      if (msgbuf_attr != 0) {
+        if (area_attr != 0) {
+          area_attr = hl_combine_attr(msgbuf_attr, area_attr);
+        }
+
+        if (search_attr != 0) {
+          search_attr = hl_combine_attr(msgbuf_attr, search_attr);
+        }
+      }
+
       if (area_attr != 0) {
         char_attr = hl_combine_attr(line_attr, area_attr);
       } else if (search_attr != 0) {
@@ -3007,14 +3044,21 @@ win_line (
       // (area_attr may be 0 when "noinvcur" is set).
       else if (line_attr != 0 && ((fromcol == -10 && tocol == MAXCOL)
                                   || vcol < fromcol || vcol_prev < fromcol_prev
-                                  || vcol >= tocol))
-        char_attr = line_attr;
-      else {
-        attr_pri = FALSE;
-        if (has_syntax)
+                                  || vcol >= tocol)) {
+        if (msgbuf_attr != 0) {
+          char_attr = hl_combine_attr(msgbuf_attr, line_attr);
+        } else {
+          char_attr = line_attr;
+        }
+      } else {
+        attr_pri = false;
+        if (has_syntax) {
           char_attr = syntax_attr;
-        else
+        } else if (msgbuf_attr != 0) {
+          char_attr = msgbuf_attr;
+        } else {
           char_attr = 0;
+        }
       }
     }
 
@@ -3256,6 +3300,10 @@ win_line (
           syntax_attr = get_syntax_attr((colnr_T)v - 1,
               has_spell ? &can_spell :
               NULL, FALSE);
+
+          if (msgbuf_attr != 0) {
+            syntax_attr = hl_combine_attr(msgbuf_attr, syntax_attr);
+          }
 
           if (did_emsg) {
             wp->w_s->b_syn_error = TRUE;

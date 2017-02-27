@@ -2814,18 +2814,22 @@ int bt_quickfix(buf_T *buf)
   return buf != NULL && buf->b_p_bt[0] == 'q';
 }
 
-// Return TRUE if "buf" is a "nofile", "acwrite" or "terminal" buffer.
+// Return TRUE if "buf" is a "nofile", "acwrite", "terminal", or "messages"
+// buffer.
 // This means the buffer name is not a file name.
 int bt_nofile(buf_T *buf)
 {
   return buf != NULL && ((buf->b_p_bt[0] == 'n' && buf->b_p_bt[2] == 'f')
-                         || buf->b_p_bt[0] == 'a' || buf->terminal);
+                         || buf->b_p_bt[0] == 'a' || buf->terminal
+                         || buf->b_messages);
 }
 
-// Return TRUE if "buf" is a "nowrite", "nofile" or "terminal" buffer.
+// Return TRUE if "buf" is a "nowrite", "nofile", "terminal", or "messages"
+// buffer.
 int bt_dontwrite(buf_T *buf)
 {
-  return buf != NULL && (buf->b_p_bt[0] == 'n' || buf->terminal);
+  return buf != NULL && (buf->b_p_bt[0] == 'n' || buf->terminal
+                         || buf->b_messages);
 }
 
 int bt_dontwrite_msg(buf_T *buf)

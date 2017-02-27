@@ -32,6 +32,7 @@
 #include "nvim/strings.h"
 #include "nvim/ui.h"
 #include "nvim/mouse.h"
+#include "nvim/message_buffer.h"
 #include "nvim/os/os.h"
 #include "nvim/os/input.h"
 #include "nvim/os/time.h"
@@ -128,8 +129,41 @@ int verb_msg(char_u *s)
   return n;
 }
 
+static inline bool msg_is_redir(void)
+{
+  return (redir_fd != NULL || redir_reg || redir_vname || capture_ga != NULL);
+}
+
 int msg_attr(const char *s, const int attr) FUNC_ATTR_NONNULL_ARG(1)
 {
+  if (!msg_is_redir() && p_msgbuf && !msg_hist_off && msg_silent == 0
+      && (keep_msg == NULL || STRCMP(keep_msg, s) || keep_msg_attr != attr)) {
+    msgbuf_add_msg((char_u *)s, attr);
+
+    msg_scroll = false;
+    msg_nowait = true;
+    msg_scrolled_ign = true;
+
+    // Everying that `wait_return()` resets after `msg_check()`
+    need_wait_return = false;
+    did_wait_return = true;
+    emsg_on_display = false;
+    lines_left = -1;
+
+    // If the message pane's window redraws while not `curwin`, forcing the
+    // message and its attribute to be kept will keep the last message on the
+    // screen.
+    msg_attr_keep((char_u *)s, attr, true);
+
+    if (keep_msg != NULL) {
+      keep_msg_attr = attr;
+    }
+
+    reset_last_sourcing();
+
+    return true;
+  }
+
   return msg_attr_keep((char_u *)s, attr, false);
 }
 
@@ -175,9 +209,10 @@ msg_attr_keep (
 
   /* Truncate the message if needed. */
   msg_start();
-  buf = msg_strtrunc(s, FALSE);
-  if (buf != NULL)
+  buf = msg_strtrunc(s, msg_is_redir() ? false : p_msgbuf);
+  if (buf != NULL) {
     s = buf;
+  }
 
   msg_outtrans_attr(s, attr);
   msg_clr_eos();
@@ -732,6 +767,10 @@ void ex_messages(void *const eap_p)
   exarg_T *eap = (exarg_T *)eap_p;
   struct msg_hist *p;
   int c = 0;
+
+  if (!msg_is_redir() && p_msgbuf && msgbuf_open()) {
+    return;
+  }
 
   if (STRCMP(eap->arg, "clear") == 0) {
     int keep = eap->addr_count == 0 ? 0 : eap->line2;

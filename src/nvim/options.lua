@@ -1515,6 +1515,13 @@ return {
       defaults={if_true={vi=25}}
     },
     {
+      full_name='messagebuf', abbreviation='msgbuf',
+      type='bool', scope={'global'},
+      vi_def=false,
+      varname='p_msgbuf',
+      defaults={if_true={vi=false}}
+    },
+    {
       full_name='mkspellmem', abbreviation='msm',
       type='string', scope={'global'},
       secure=true,

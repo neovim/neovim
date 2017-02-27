@@ -73,6 +73,7 @@
 #include "nvim/undo.h"
 #include "nvim/version.h"
 #include "nvim/window.h"
+#include "nvim/message_buffer.h"
 #include "nvim/eval/encode.h"
 #include "nvim/eval/decode.h"
 #include "nvim/os/os.h"
@@ -11747,6 +11748,7 @@ static void f_has(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     "macunix",
 #endif
     "menu",
+    "msgbuf",
     "mksession",
     "modify_fname",
     "mouse",
@@ -13973,6 +13975,57 @@ f_msgpackparse_exit:
   msgpack_unpacked_destroy(&unpacked);
   msgpack_unpacker_free(unpacker);
   return;
+}
+
+/// "msgbuf()" function
+///
+/// Display a message in the message buffer.
+///
+/// @param message Message to display.
+/// @param [highlight] The highlight group name.
+/// @param [open] Opens the message pane if it's not already in a window.
+///
+/// @return Nothing.
+static void f_msgbuf(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  char_u *msg = get_tv_string(&argvars[0]);
+  int attr = 0;
+
+  if (argvars[1].v_type != VAR_UNKNOWN) {
+    char_u *attrName = get_tv_string(&argvars[1]);
+    int hl_id = syn_name2id(attrName);
+    if (hl_id != 0) {
+      attr = syn_id2attr(hl_id);
+    }
+
+    if (argvars[2].v_type != VAR_UNKNOWN) {
+      if (non_zero_arg(&argvars[2])) {
+        msgbuf_open();
+      }
+    }
+  }
+
+  msgbuf_add_msg(msg, attr);
+}
+
+/// "msgbuf_open()" function
+///
+/// Displays the message buffer if not already in a window.
+///
+/// @return Buffer number of the message buffer or 0 if it can't be opened.
+static void f_msgbuf_open(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  if (!msgbuf_open()) {
+    rettv->vval.v_number = 0;
+    return;
+  }
+
+  FOR_ALL_TAB_WINDOWS(curtab, wp) {
+    if (wp->w_buffer->b_messages) {
+      rettv->vval.v_number = wp->w_buffer->b_fnum;
+      break;
+    }
+  }
 }
 
 /*
