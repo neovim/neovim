@@ -305,9 +305,9 @@ list_vim_patches() {
 
   printf "\nVim patches missing from Neovim:\n"
 
-  # Get commits since 7.4.602.
+  # Get missing Vim commits
   local vim_commits
-  vim_commits="$(cd "${VIM_SOURCE_DIR}" && git log --reverse --format='%H' v7.4.602..HEAD)"
+  vim_commits="$(cd "${VIM_SOURCE_DIR}" && git log --reverse --format='%H' v7.4.1979..HEAD)"
 
   local vim_commit
   for vim_commit in ${vim_commits}; do
