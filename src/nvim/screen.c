@@ -1624,7 +1624,8 @@ int win_signcol_width(win_T *wp)
     }
     // TODO use some cache to compute the max
     // return MIN(wp->w_p_sclw);
-    return wp->w_p_sclmax;
+    ILOG("Choosing min between %d (config) and %d (cache)", wp->w_p_sclmax, wp->w_sclmax );
+    return MIN(wp->w_sclmax, wp->w_p_sclmax);
 }
 
 
@@ -2770,6 +2771,7 @@ win_line (
           if (signcolumn_on(wp)) {
               // int text_sign;
               int used_cells = 0;
+              int needed_cells = 0;
               // win_signcol_width(wp);
               // Draw cells with the sign value or blank.
               c_extra = ' ';
@@ -2788,8 +2790,6 @@ win_line (
                     p_extra = sign_get_text(sign->typenr);
                     int symbol_clen = mb_string2cells(p_extra);
                     ILOG("found one %s (%d cells)", p_extra, symbol_clen );
-                    // if (sign != NULL) {
-                    // int symbol_blen = (int)STRLEN(p_extra);
                     // as long we can append symbols
                     // TODO it could change texthl here several times !
                     if (p_extra != NULL 
@@ -2808,10 +2808,13 @@ win_line (
                       //   //! adds a space after
                       //   STRNCAT(extra, " ", sizeof(extra));
                       // }
-                      ILOG("extra after=%s", extra);
                       used_cells += symbol_clen;
+                      ILOG("extra after=%s", extra);
+                    // only on auto mode ? if()
+                    } else {
+                      // TODO keep counting
                     }
-                    // }
+                    needed_cells += symbol_clen;
                   }
 
                       // symbol(s) bytes + (filling spaces) (one byte each)
@@ -2820,6 +2823,12 @@ win_line (
                   extra[STRLEN(extra)] = ' ';
                   p_extra = extra;
                   p_extra[n_extra] = NUL;
+
+                  //
+                  if(needed_cells > wp->w_sclmax) {
+                    // if in automatic require a redraw
+                    wp->w_sclmax = needed_cells;
+                  }
 
               }
           }

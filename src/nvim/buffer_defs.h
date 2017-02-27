@@ -1067,6 +1067,8 @@ struct window_S {
                                        recomputed */
   int w_nrwidth;                    /* width of 'number' and 'relativenumber'
                                        column being used */
+  int w_sclmax;                     ///< max width necessary to display signs
+  int w_sclcurrent;                 ///< current width
 
   /*
    * === end of cached values ===

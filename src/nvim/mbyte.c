@@ -614,7 +614,7 @@ int utf_ptr2cells(const char_u *p)
 
   /* Need to convert to a wide character. */
   if (*p >= 0x80) {
-    ILOG("Converting to wide char %s", p);
+    // ILOG("Converting to wide char %s", p);
     c = utf_ptr2char(p);
     /* An illegal byte is displayed as <xx>. */
     if (utf_ptr2len(p) == 1 || c == NUL)
@@ -624,7 +624,7 @@ int utf_ptr2cells(const char_u *p)
       return char2cells(c);
     }
 
-    ILOG("utf_char2cells %d", c);
+    // ILOG("utf_char2cells %d", c);
     return utf_char2cells(c);
   }
   return 1;
