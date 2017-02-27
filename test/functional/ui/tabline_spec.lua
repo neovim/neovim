@@ -1,7 +1,6 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
-local clear, feed, execute, eq = helpers.clear, helpers.feed, helpers.execute, helpers.eq
-local funcs = helpers.funcs
+local clear, feed, eq = helpers.clear, helpers.feed, helpers.eq
 
 if helpers.pending_win32(pending) then return end
 
