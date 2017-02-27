@@ -85,6 +85,25 @@ func Test_true_false_arg()
     call Try_arg_true_false('globpath(".", "Xlink", 0, 0, %v%)', "", "./Xlink")
     silent !rm Xlink
   endif
+
+  abbr asdf asdff
+  call Try_arg_true_false('hasmapto("asdff", "i", %v%)', 0, 1)
+
+  call Try_arg_true_false('index(["a", "A"], "A", 0, %v%)', 1, 0)
+
+  call Try_arg_true_false('maparg("asdf", "i", %v%)', "", "asdff")
+  call Try_arg_true_false('maparg("asdf", "i", 1, %v%)', "asdff", {'silent': 0, 'noremap': 0, 'lhs': 'asdf', 'mode': '!', 'nowait': 0, 'expr': 0, 'sid': 3, 'rhs': 'asdff', 'buffer': 0})
+
+  call Try_arg_true_false('hasmapto("asdf", "i", %v%)', 0, 1)
+
+  new colored
+  call setline(1, '<here>')
+  syn match brackets "<.*>"
+  syn match here "here" transparent
+  let brackets_id = synID(1, 1, 0)
+  let here_id = synID(1, 3, 0)
+  call Try_arg_true_false('synID(1, 3, %v%)', here_id, brackets_id)
+  bwipe!
 endfunc
 
 function Try_arg_non_zero(expr, false_val, true_val)
