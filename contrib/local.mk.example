@@ -62,3 +62,12 @@
 # CMAKE_EXTRA_FLAGS += -DLIBVTERM_USE_STATIC=OFF
 # CMAKE_EXTRA_FLAGS += -DLUAJIT_USE_STATIC=OFF
 # CMAKE_EXTRA_FLAGS += -DMSGPACK_USE_STATIC=OFF
+#
+#
+# .DEFAULT_GOAL := nvim
+#
+# Run doxygen over the source code.
+# Output will be in build/doxygen
+#
+# doxygen:
+# 	doxygen src/Doxyfile
