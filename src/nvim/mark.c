@@ -887,6 +887,23 @@ void ex_changes(exarg_T *eap)
  */
 void mark_adjust(linenr_T line1, linenr_T line2, long amount, long amount_after)
 {
+  mark_adjust_internal(line1, line2, amount, amount_after, true);
+}
+
+// mark_adjust_nofold() does the same as mark_adjust() but without adjusting
+// folds in any way. Folds must be adjusted manually by the caller.
+// This is only useful when folds need to be moved in a way different to
+// calling foldMarkAdjust() with arguments line1, line2, amount, amount_after,
+// for an example of why this may be necessary, see do_move().
+void mark_adjust_nofold(linenr_T line1, linenr_T line2, long amount,
+                        long amount_after)
+{
+  mark_adjust_internal(line1, line2, amount, amount_after, false);
+}
+
+static void mark_adjust_internal(linenr_T line1, linenr_T line2, long amount,
+                                 long amount_after, bool adjust_folds)
+{
   int i;
   int fnum = curbuf->b_fnum;
   linenr_T    *lp;
@@ -1011,8 +1028,9 @@ void mark_adjust(linenr_T line1, linenr_T line2, long amount, long amount_after)
         }
       }
 
-      /* adjust folds */
-      foldMarkAdjust(win, line1, line2, amount, amount_after);
+      if (adjust_folds) {
+        foldMarkAdjust(win, line1, line2, amount, amount_after);
+      }
     }
   }
 
