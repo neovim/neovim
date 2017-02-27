@@ -1,9 +1,13 @@
+
 filter-false = $(strip $(filter-out 0 off OFF false FALSE,$1))
 filter-true = $(strip $(filter-out 1 on ON true TRUE,$1))
 
 # See contrib/local.mk.example
 -include local.mk
 
+CMAKE_PRG ?= $(shell (which cmake3 || \
+						          which cmake || \
+											echo missing-cmake) 2>/dev/null)
 CMAKE_BUILD_TYPE ?= Debug
 
 CMAKE_FLAGS := -DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE)
@@ -15,7 +19,7 @@ BUILD_TYPE ?= $(shell (type ninja > /dev/null 2>&1 && echo "Ninja") || \
 
 ifeq (,$(BUILD_TOOL))
   ifeq (Ninja,$(BUILD_TYPE))
-    ifneq ($(shell cmake --help 2>/dev/null | grep Ninja),)
+    ifneq ($(shell $(CMAKE_PRG) --help 2>/dev/null | grep Ninja),)
       BUILD_TOOL := ninja
     else
       # User's version of CMake doesn't support Ninja
@@ -67,7 +71,7 @@ cmake:
 	$(MAKE) build/.ran-cmake
 
 build/.ran-cmake: | deps
-	cd build && cmake -G '$(BUILD_TYPE)' $(CMAKE_FLAGS) $(CMAKE_EXTRA_FLAGS) ..
+	cd build && $(CMAKE_PRG) -G '$(BUILD_TYPE)' $(CMAKE_FLAGS) $(CMAKE_EXTRA_FLAGS) ..
 	touch $@
 
 deps: | build/.ran-third-party-cmake
@@ -79,7 +83,7 @@ build/.ran-third-party-cmake:
 ifeq ($(call filter-true,$(USE_BUNDLED_DEPS)),)
 	mkdir -p .deps
 	cd .deps && \
-		cmake -G '$(BUILD_TYPE)' $(BUNDLED_CMAKE_FLAG) $(BUNDLED_LUA_CMAKE_FLAG) \
+		$(CMAKE_PRG) -G '$(BUILD_TYPE)' $(BUNDLED_CMAKE_FLAG) $(BUNDLED_LUA_CMAKE_FLAG) \
 		$(DEPS_CMAKE_FLAGS) ../third-party
 endif
 	mkdir -p build
@@ -126,7 +130,7 @@ install: | nvim
 	+$(BUILD_CMD) -C build install
 
 clint:
-	cmake -DLINT_PRG=./src/clint.py \
+	$(CMAKE_PRG) -DLINT_PRG=./src/clint.py \
 		-DLINT_DIR=src \
 		-DLINT_SUPPRESS_URL="$(DOC_DOWNLOAD_URL_BASE)$(CLINT_ERRORS_FILE_PATH)" \
 		-P cmake/RunLint.cmake
