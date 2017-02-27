@@ -5361,6 +5361,7 @@ theend:
 /// Output a single character directly to the screen and update ScreenLines.
 /// @see screen_puts
 /// TODO(teto) should be removed in favor of more powerful functions
+/// @see screen_getbytes
 void screen_putchar(int c, int row, int col, int attr)
 {
   char_u buf[MB_MAXBYTES + 1];
@@ -5374,10 +5375,11 @@ void screen_putchar(int c, int row, int col, int attr)
   screen_puts(buf, row, col, attr);
 }
 
-/*
- * Get a single character directly from ScreenLines into "bytes[]".
- * Also return its attribute in *attrp;
- */
+
+/// Get a single character directly from ScreenLines into "bytes[]".
+/// Also return its attribute in *attrp;
+/// @param[out] bytes
+/// @param[out] attrp must be set
 void screen_getbytes(int row, int col, char_u *bytes, int *attrp)
 {
   unsigned off;
@@ -5389,9 +5391,9 @@ void screen_getbytes(int row, int col, char_u *bytes, int *attrp)
     bytes[0] = ScreenLines[off];
     bytes[1] = NUL;
 
-    if (enc_utf8 && ScreenLinesUC[off] != 0)
+    if (enc_utf8 && ScreenLinesUC[off] != 0) {
       bytes[utfc_char2bytes(off, bytes)] = NUL;
-    else if (enc_dbcs == DBCS_JPNU && ScreenLines[off] == 0x8e) {
+    } else if (enc_dbcs == DBCS_JPNU && ScreenLines[off] == 0x8e) {
       bytes[0] = ScreenLines[off];
       bytes[1] = ScreenLines2[off];
       bytes[2] = NUL;
