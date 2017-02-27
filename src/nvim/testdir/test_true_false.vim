@@ -91,8 +91,14 @@ func Test_true_false_arg()
 
   call Try_arg_true_false('index(["a", "A"], "A", 0, %v%)', 1, 0)
 
+  function FilterMapArg(d)
+    if type(a:d) == type({})
+      return filter(a:d, 'v:key == "rhs"')
+    endif
+    return a:d
+  endfunction
   call Try_arg_true_false('maparg("asdf", "i", %v%)', "", "asdff")
-  call Try_arg_true_false('maparg("asdf", "i", 1, %v%)', "asdff", {'silent': 0, 'noremap': 0, 'lhs': 'asdf', 'mode': '!', 'nowait': 0, 'expr': 0, 'sid': 3, 'rhs': 'asdff', 'buffer': 0})
+  call Try_arg_true_false('FilterMapArg(maparg("asdf", "i", 1, %v%))', "asdff", {'rhs': 'asdff'})
 
   call Try_arg_true_false('hasmapto("asdf", "i", %v%)', 0, 1)
 
