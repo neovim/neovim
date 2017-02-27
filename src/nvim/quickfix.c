@@ -3878,12 +3878,13 @@ int get_errorlist(win_T *wp, int qf_idx, list_T *list)
   }
 
   if (qf_idx >= qi->qf_listcount
-      || qi->qf_lists[qf_idx].qf_count == 0)
+      || qi->qf_lists[qf_idx].qf_count == 0) {
     return FAIL;
+  }
 
   qfp = qi->qf_lists[qf_idx].qf_start;
-  for (i = 1; !got_int && i <= qi->qf_lists[qf_idx].qf_count; ++i) {
-    /* Handle entries with a non-existing buffer number. */
+  for (i = 1; !got_int && i <= qi->qf_lists[qf_idx].qf_count; i++) {
+    // Handle entries with a non-existing buffer number.
     bufnum = qfp->qf_fnum;
     if (bufnum != 0 && (buflist_findnr(bufnum) == NULL))
       bufnum = 0;
