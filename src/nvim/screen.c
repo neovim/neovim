@@ -4876,37 +4876,34 @@ void win_redr_status(win_T *wp)
     }
     if (wp->w_buffer->b_p_ro) {
       STRCPY(p + len, _("[RO]"));
-      len += 4;
+      len += (int)STRLEN(p + len);
     }
 
     this_ru_col = ru_col - (Columns - wp->w_width);
-    if (this_ru_col < (wp->w_width + 1) / 2)
+    if (this_ru_col < (wp->w_width + 1) / 2) {
       this_ru_col = (wp->w_width + 1) / 2;
+    }
     if (this_ru_col <= 1) {
-      p = (char_u *)"<";                /* No room for file name! */
+      p = (char_u *)"<";                // No room for file name!
       len = 1;
-    } else if (has_mbyte) {
+    } else {
       int clen = 0, i;
 
-      /* Count total number of display cells. */
-      clen = (int) mb_string2cells(p);
+      // Count total number of display cells.
+      clen = (int)mb_string2cells(p);
 
-      /* Find first character that will fit.
-       * Going from start to end is much faster for DBCS. */
+      // Find first character that will fit.
+      // Going from start to end is much faster for DBCS.
       for (i = 0; p[i] != NUL && clen >= this_ru_col - 1;
-           i += (*mb_ptr2len)(p + i))
+           i += (*mb_ptr2len)(p + i)) {
         clen -= (*mb_ptr2cells)(p + i);
+      }
       len = clen;
       if (i > 0) {
         p = p + i - 1;
         *p = '<';
         ++len;
       }
-
-    } else if (len > this_ru_col - 1) {
-      p += len - (this_ru_col - 1);
-      *p = '<';
-      len = this_ru_col - 1;
     }
 
     row = wp->w_winrow + wp->w_height;
