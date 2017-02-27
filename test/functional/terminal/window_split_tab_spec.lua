@@ -28,12 +28,12 @@ describe('terminal', function()
     feed('<c-\\><c-n>')
     execute('2split')
     screen:expect([[
-      tty ready                                         |
-      ^rows: 2, cols: 50                                 |
+      rows: 2, cols: 50                                 |
+      {2:^ }                                                 |
       ==========                                        |
-      tty ready                                         |
       rows: 2, cols: 50                                 |
       {2: }                                                 |
+      {4:~                                                 }|
       {4:~                                                 }|
       {4:~                                                 }|
       ==========                                        |
@@ -54,12 +54,12 @@ describe('terminal', function()
     ]])
     execute('wincmd p')
     screen:expect([[
-      rows: 5, cols: 50                                 |
-      ^rows: 2, cols: 50                                 |
+      rows: 2, cols: 50                                 |
+      {2:^ }                                                 |
       ==========                                        |
-      rows: 5, cols: 50                                 |
       rows: 2, cols: 50                                 |
       {2: }                                                 |
+      {4:~                                                 }|
       {4:~                                                 }|
       {4:~                                                 }|
       ==========                                        |

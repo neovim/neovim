@@ -1,24 +1,18 @@
-/*
- * Code to handle user-settable options. This is all pretty much table-
- * driven. Checklist for adding a new option:
- * - Put it in the options array below (copy an existing entry).
- * - For a global option: Add a variable for it in option_defs.h.
- * - For a buffer or window local option:
- *   - Add a PV_XX entry to the enum below.
- *   - Add a variable to the window or buffer struct in buffer_defs.h.
- *   - For a window option, add some code to copy_winopt().
- *   - For a buffer option, add some code to buf_copy_options().
- *   - For a buffer string option, add code to check_buf_options().
- * - If it's a numeric option, add any necessary bounds checks to do_set().
- * - If it's a list of flags, add some code in do_set(), search for WW_ALL.
- * - When adding an option with expansion (P_EXPAND), but with a different
- *   default for Vi and Vim (no P_VI_DEF), add some code at VIMEXP.
- * - Add documentation!  One line in doc/help.txt, full description in
- *   options.txt, and any other related places.
- * - Add an entry in runtime/optwin.vim.
- * When making changes:
- * - Adjust the help for the option in doc/option.txt.
- */
+// User-settable options. Checklist for adding a new option:
+// - Put it in options.lua
+// - For a global option: Add a variable for it in option_defs.h.
+// - For a buffer or window local option:
+//   - Add a BV_XX or WV_XX entry to option_defs.h
+//   - Add a variable to the window or buffer struct in buffer_defs.h.
+//   - For a window option, add some code to copy_winopt().
+//   - For a buffer option, add some code to buf_copy_options().
+//   - For a buffer string option, add code to check_buf_options().
+// - If it's a numeric option, add any necessary bounds checks to do_set().
+// - If it's a list of flags, add some code in do_set(), search for WW_ALL.
+// - When adding an option with expansion (P_EXPAND), but with a different
+//   default for Vi and Vim (no P_VI_DEF), add some code at VIMEXP.
+// - Add documentation! doc/options.txt, and any other related places.
+// - Add an entry in runtime/optwin.vim.
 
 #define IN_OPTION_C
 #include <assert.h>
@@ -161,6 +155,7 @@ static long p_ts;
 static long p_tw;
 static int p_udf;
 static long p_wm;
+static long p_scbk;
 static char_u   *p_keymap;
 
 /* Saved values for when 'bin' is set. */
@@ -4201,7 +4196,19 @@ set_num_option (
     FOR_ALL_TAB_WINDOWS(tp, wp) {
       check_colorcolumn(wp);
     }
-
+  } else if (pp == &curbuf->b_p_scbk) {
+    // 'scrollback'
+    if (!curbuf->terminal) {
+      errmsg = e_invarg;
+      curbuf->b_p_scbk = -1;
+    } else {
+      if (curbuf->b_p_scbk < -1 || curbuf->b_p_scbk > 100000) {
+        errmsg = e_invarg;
+        curbuf->b_p_scbk = 1000;
+      }
+      // Force the scrollback to take effect.
+      terminal_resize(curbuf->terminal, UINT16_MAX, UINT16_MAX);
+    }
   }
 
   /*
@@ -5426,6 +5433,7 @@ static char_u *get_varp(vimoption_T *p)
   case PV_PI:     return (char_u *)&(curbuf->b_p_pi);
   case PV_QE:     return (char_u *)&(curbuf->b_p_qe);
   case PV_RO:     return (char_u *)&(curbuf->b_p_ro);
+  case PV_SCBK:   return (char_u *)&(curbuf->b_p_scbk);
   case PV_SI:     return (char_u *)&(curbuf->b_p_si);
   case PV_STS:    return (char_u *)&(curbuf->b_p_sts);
   case PV_SUA:    return (char_u *)&(curbuf->b_p_sua);
@@ -5636,6 +5644,7 @@ void buf_copy_options(buf_T *buf, int flags)
       buf->b_p_ai = p_ai;
       buf->b_p_ai_nopaste = p_ai_nopaste;
       buf->b_p_sw = p_sw;
+      buf->b_p_scbk = -1;
       buf->b_p_tw = p_tw;
       buf->b_p_tw_nopaste = p_tw_nopaste;
       buf->b_p_tw_nobin = p_tw_nobin;

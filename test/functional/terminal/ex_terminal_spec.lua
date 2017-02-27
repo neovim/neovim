@@ -20,24 +20,32 @@ describe(':terminal', function()
     source([[
       echomsg "msg1"
       echomsg "msg2"
+      echomsg "msg3"
     ]])
     -- Invoke a command that emits frequent terminal activity.
     execute([[terminal while true; do echo X; done]])
     helpers.feed([[<C-\><C-N>]])
-    screen:expect([[
-      X                                                 |
-      X                                                 |
-      ^X                                                 |
-                                                        |
-    ]])
+    wait()
     helpers.sleep(10)  -- Let some terminal activity happen.
     execute("messages")
     screen:expect([[
-      X                                                 |
       msg1                                              |
       msg2                                              |
+      msg3                                              |
       Press ENTER or type command to continue^           |
     ]])
+  end)
+
+  it("in normal-mode :split does not move cursor", function()
+    execute([[terminal while true; do echo foo; sleep .1; done]])
+    helpers.feed([[<C-\><C-N>M]])  -- move cursor away from last line
+    wait()
+    eq(3, eval("line('$')"))  -- window height
+    eq(2, eval("line('.')"))  -- cursor is in the middle
+    execute('vsplit')
+    eq(2, eval("line('.')"))  -- cursor stays where we put it
+    execute('split')
+    eq(2, eval("line('.')"))  -- cursor stays where we put it
   end)
 
 end)

@@ -36,7 +36,7 @@ typedef struct {
 // for Map(K, V)
 #include "nvim/map.h"
 
-#define MODIFIABLE(buf) (!buf->terminal && buf->b_p_ma)
+#define MODIFIABLE(buf) (buf->b_p_ma)
 
 /*
  * Flags for w_valid.
@@ -91,32 +91,22 @@ typedef struct frame_S frame_T;
 
 // for struct memline (it needs memfile_T)
 #include "nvim/memline_defs.h"
-
 // for struct memfile, bhdr_T, blocknr_T... (it needs buf_T)
 #include "nvim/memfile_defs.h"
 
-/*
- * This is here because regexp_defs.h needs win_T and buf_T. regprog_T is
- * used below.
- */
+// for regprog_T. Needs win_T and buf_T.
 #include "nvim/regexp_defs.h"
-
-// for  synstate_T (needs reg_extmatch_T, win_T and buf_T)
+// for synstate_T (needs reg_extmatch_T, win_T, buf_T)
 #include "nvim/syntax_defs.h"
-
 // for signlist_T
 #include "nvim/sign_defs.h"
-
 // for bufhl_*_T
 #include "nvim/bufhl_defs.h"
 
 typedef Map(linenr_T, bufhl_vec_T) bufhl_info_T;
 
-// for FileID
-#include "nvim/os/fs_defs.h"
-
-// for Terminal
-#include "nvim/terminal.h"
+#include "nvim/os/fs_defs.h"    // for FileID
+#include "nvim/terminal.h"      // for Terminal
 
 /*
  * The taggy struct is used to store the information about a :tag command.
@@ -661,6 +651,7 @@ struct file_buffer {
   char_u *b_p_qe;               ///< 'quoteescape'
   int b_p_ro;                   ///< 'readonly'
   long b_p_sw;                  ///< 'shiftwidth'
+  long b_p_scbk;                ///< 'scrollback'
   int b_p_si;                   ///< 'smartindent'
   long b_p_sts;                 ///< 'softtabstop'
   long b_p_sts_nopaste;         ///< b_p_sts saved for paste mode

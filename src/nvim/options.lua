@@ -1913,6 +1913,14 @@ return {
       defaults={if_true={vi=12}}
     },
     {
+      full_name='scrollback', abbreviation='scbk',
+      type='number', scope={'buffer'},
+      vi_def=true,
+      varname='p_scbk',
+      redraw={'current_buffer'},
+      defaults={if_true={vi=-1}}
+    },
+    {
       full_name='scrollbind', abbreviation='scb',
       type='bool', scope={'window'},
       vi_def=true,

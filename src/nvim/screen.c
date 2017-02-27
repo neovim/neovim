@@ -7113,8 +7113,9 @@ void showruler(int always)
   }
   if ((*p_stl != NUL || *curwin->w_p_stl != NUL) && curwin->w_status_height) {
     redraw_custom_statusline(curwin);
-  } else
+  } else {
     win_redr_ruler(curwin, always);
+  }
 
   if (need_maketitle
       || (p_icon && (stl_syntax & STL_IN_ICON))
