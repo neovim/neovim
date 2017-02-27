@@ -5,6 +5,8 @@
 #include "nvim/pos.h"  // for linenr_T
 #include "nvim/ex_cmds_defs.h"  // for exarg_T
 #include "nvim/screen.h"  // for StlClickRecord
+#include "nvim/func_attr.h"
+#include "nvim/eval.h"
 
 // Values for buflist_getfile()
 enum getf_values {
@@ -77,6 +79,31 @@ static inline void restore_win_for_buf(win_T *save_curwin,
   } else {
     restore_buffer(save_curbuf);
   }
+}
+
+static inline void buf_set_changedtick(buf_T *const buf, const int changedtick)
+  REAL_FATTR_NONNULL_ALL REAL_FATTR_ALWAYS_INLINE;
+
+/// Set b_changedtick and corresponding variable
+///
+/// @param[out]  buf  Buffer to set changedtick in.
+/// @param[in]  changedtick  New value.
+static inline void buf_set_changedtick(buf_T *const buf, const int changedtick)
+{
+#ifndef NDEBUG
+  dictitem_T *const changedtick_di = dict_find(
+      buf->b_vars, (char_u *)"changedtick", sizeof("changedtick") - 1);
+  assert(changedtick_di != NULL);
+  assert(changedtick_di->di_tv.v_type == VAR_NUMBER);
+  assert(changedtick_di->di_tv.v_lock == VAR_FIXED);
+  // For some reason formatc does not like the below.
+# ifndef UNIT_TESTING_LUA_PREPROCESSING
+  assert(changedtick_di->di_flags == (DI_FLAGS_RO|DI_FLAGS_FIX));
+# endif
+  assert(changedtick_di == (dictitem_T *)&buf->changedtick_di);
+  assert(&buf->b_changedtick == &buf->changedtick_di.di_tv.vval.v_number);
+#endif
+  buf->b_changedtick = changedtick;
 }
 
 #define WITH_BUFFER(b, code) \

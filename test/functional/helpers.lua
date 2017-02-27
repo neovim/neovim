@@ -544,6 +544,14 @@ local function skip_fragile(pending_fn, cond)
   return false
 end
 
+local function meth_pcall(...)
+  local ret = {pcall(...)}
+  if type(ret[2]) == 'string' then
+    ret[2] = ret[2]:gsub('^[^:]+:%d+: ', '')
+  end
+  return ret
+end
+
 local funcs = create_callindex(nvim_call)
 local meths = create_callindex(nvim)
 local uimeths = create_callindex(ui)
@@ -615,6 +623,7 @@ local M = {
   skip_fragile = skip_fragile,
   set_shell_powershell = set_shell_powershell,
   tmpname = tmpname,
+  meth_pcall = meth_pcall,
   NIL = mpack.NIL,
 }
 

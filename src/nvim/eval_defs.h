@@ -30,8 +30,8 @@ typedef enum {
 /// Variable lock status for typval_T.v_lock
 typedef enum {
   VAR_UNLOCKED = 0,  ///< Not locked.
-  VAR_LOCKED,        ///< User lock, can be unlocked.
-  VAR_FIXED,         ///< Locked forever.
+  VAR_LOCKED = 1,    ///< User lock, can be unlocked.
+  VAR_FIXED = 2,     ///< Locked forever.
 } VarLockStatus;
 
 /// VimL variable types, for use in typval_T.v_type
@@ -93,18 +93,18 @@ struct listwatch_S {
  * Structure to hold info about a list.
  */
 struct listvar_S {
-  listitem_T  *lv_first;        /* first item, NULL if none */
-  listitem_T  *lv_last;         /* last item, NULL if none */
-  int lv_refcount;              /* reference count */
-  int lv_len;                   /* number of items */
-  listwatch_T *lv_watch;        /* first watcher, NULL if none */
-  int lv_idx;                   /* cached index of an item */
-  listitem_T  *lv_idx_item;     /* when not NULL item at index "lv_idx" */
-  int lv_copyID;                /* ID used by deepcopy() */
-  list_T      *lv_copylist;     /* copied list used by deepcopy() */
-  char lv_lock;                 /* zero, VAR_LOCKED, VAR_FIXED */
-  list_T      *lv_used_next;    /* next list in used lists list */
-  list_T      *lv_used_prev;    /* previous list in used lists list */
+  listitem_T *lv_first;  ///< First item, NULL if none.
+  listitem_T *lv_last;  ///< Last item, NULL if none.
+  int lv_refcount;  ///< Reference count.
+  int lv_len;  ///< Number of items.
+  listwatch_T *lv_watch;  ///< First watcher, NULL if none.
+  int lv_idx;  ///< Index of a cached item, used for optimising repeated l[idx].
+  listitem_T *lv_idx_item;  ///< When not NULL item at index "lv_idx".
+  int lv_copyID;  ///< ID used by deepcopy().
+  list_T *lv_copylist;  ///< Copied list used by deepcopy().
+  VarLockStatus lv_lock;  ///< Zero, VAR_LOCKED, VAR_FIXED.
+  list_T *lv_used_next;  ///< next list in used lists list.
+  list_T *lv_used_prev;  ///< Previous list in used lists list.
 };
 
 // Static list with 10 items. Use init_static_list() to initialize.

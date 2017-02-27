@@ -210,7 +210,7 @@ void nvim_win_set_var(Window window, String name, Object value, Error *err)
     return;
   }
 
-  dict_set_value(win->w_vars, name, value, false, false, err);
+  dict_set_var(win->w_vars, name, value, false, false, err);
 }
 
 /// Removes a window-scoped (w:) variable
@@ -226,7 +226,7 @@ void nvim_win_del_var(Window window, String name, Error *err)
     return;
   }
 
-  dict_set_value(win->w_vars, name, NIL, true, false, err);
+  dict_set_var(win->w_vars, name, NIL, true, false, err);
 }
 
 /// Sets a window-scoped (w:) variable
@@ -249,7 +249,7 @@ Object window_set_var(Window window, String name, Object value, Error *err)
     return (Object) OBJECT_INIT;
   }
 
-  return dict_set_value(win->w_vars, name, value, false, true, err);
+  return dict_set_var(win->w_vars, name, value, false, true, err);
 }
 
 /// Removes a window-scoped (w:) variable
@@ -268,7 +268,7 @@ Object window_del_var(Window window, String name, Error *err)
     return (Object) OBJECT_INIT;
   }
 
-  return dict_set_value(win->w_vars, name, NIL, true, true, err);
+  return dict_set_var(win->w_vars, name, NIL, true, true, err);
 }
 
 /// Gets a window option value

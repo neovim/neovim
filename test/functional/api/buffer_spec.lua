@@ -2,8 +2,11 @@ local helpers = require('test.functional.helpers')(after_each)
 local clear, nvim, buffer = helpers.clear, helpers.nvim, helpers.buffer
 local curbuf, curwin, eq = helpers.curbuf, helpers.curwin, helpers.eq
 local curbufmeths, ok = helpers.curbufmeths, helpers.ok
-local funcs, request = helpers.funcs, helpers.request
+local funcs = helpers.funcs
+local request = helpers.request
 local NIL = helpers.NIL
+local meth_pcall = helpers.meth_pcall
+local command = helpers.command
 
 describe('api/buf', function()
   before_each(clear)
@@ -249,6 +252,24 @@ describe('api/buf', function()
       eq(1, funcs.exists('b:lua'))
       curbufmeths.del_var('lua')
       eq(0, funcs.exists('b:lua'))
+      eq({false, 'Key "lua" doesn\'t exist'}, meth_pcall(curbufmeths.del_var, 'lua'))
+      curbufmeths.set_var('lua', 1)
+      command('lockvar b:lua')
+      eq({false, 'Key is locked: lua'}, meth_pcall(curbufmeths.del_var, 'lua'))
+      eq({false, 'Key is locked: lua'}, meth_pcall(curbufmeths.set_var, 'lua', 1))
+      eq({false, 'Key is read-only: changedtick'},
+         meth_pcall(curbufmeths.del_var, 'changedtick'))
+      eq({false, 'Key is read-only: changedtick'},
+         meth_pcall(curbufmeths.set_var, 'changedtick', 1))
+    end)
+  end)
+
+  describe('get_changedtick', function()
+    it('works', function()
+      eq(2, curbufmeths.get_changedtick())
+      curbufmeths.set_lines(0, 1, false, {'abc\0', '\0def', 'ghi'})
+      eq(3, curbufmeths.get_changedtick())
+      eq(3, curbufmeths.get_var('changedtick'))
     end)
 
     it('buffer_set_var returns the old value', function()

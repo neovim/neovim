@@ -98,7 +98,7 @@ Object dict_get_value(dict_T *dict, String key, Error *err)
   return vim_to_object(&di->di_tv);
 }
 
-/// Set a value in a dict. Objects are recursively expanded into their
+/// Set a value in a scope dict. Objects are recursively expanded into their
 /// vimscript equivalents.
 ///
 /// @param dict The vimscript dict
@@ -109,8 +109,8 @@ Object dict_get_value(dict_T *dict, String key, Error *err)
 /// @param retval If true the old value will be converted and returned.
 /// @param[out] err Details of an error that may have occurred
 /// @return The old value if `retval` is true and the key was present, else NIL
-Object dict_set_value(dict_T *dict, String key, Object value, bool del,
-                      bool retval, Error *err)
+Object dict_set_var(dict_T *dict, String key, Object value, bool del,
+                    bool retval, Error *err)
 {
   Object rv = OBJECT_INIT;
 
@@ -120,7 +120,7 @@ Object dict_set_value(dict_T *dict, String key, Object value, bool del,
   }
 
   if (key.size == 0) {
-    api_set_error(err, Validation, _("Empty dictionary keys aren't allowed"));
+    api_set_error(err, Validation, _("Empty variable names aren't allowed"));
     return rv;
   }
 
@@ -129,7 +129,20 @@ Object dict_set_value(dict_T *dict, String key, Object value, bool del,
     return rv;
   }
 
-  dictitem_T *di = dict_find(dict, (uint8_t *)key.data, (int)key.size);
+  dictitem_T *di = dict_find(dict, (char_u *)key.data, (int)key.size);
+
+  if (di != NULL) {
+    if (di->di_flags & DI_FLAGS_RO) {
+      api_set_error(err, Exception, _("Key is read-only: %s"), key.data);
+      return rv;
+    } else if (di->di_flags & DI_FLAGS_FIX) {
+      api_set_error(err, Exception, _("Key is fixed: %s"), key.data);
+      return rv;
+    } else if (di->di_flags & DI_FLAGS_LOCK) {
+      api_set_error(err, Exception, _("Key is locked: %s"), key.data);
+      return rv;
+    }
+  }
 
   if (del) {
     // Delete the key

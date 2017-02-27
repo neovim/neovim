@@ -8606,9 +8606,12 @@ This does NOT work: >
 				:lockvar v
 				:let v = 'asdf'		" fails!
 				:unlet v
-<							*E741*
+<							*E741* *E940*
 			If you try to change a locked variable you get an
-			error message: "E741: Value is locked: {name}"
+			error message: "E741: Value is locked: {name}".
+			If you try to lock or unlock a built-in variable you 
+			will get an error message "E940: Cannot lock or unlock 
+			variable {name}".
 
 			[depth] is relevant when locking a |List| or
 			|Dictionary|.  It specifies how deep the locking goes:

@@ -686,8 +686,18 @@ free_buffer_stuff (
     free_buf_options(buf, true);
     ga_clear(&buf->b_s.b_langp);
   }
+  {
+    // Avoid loosing b:changedtick when deleting buffer: clearing variables
+    // implies using clear_tv() on b:changedtick and that sets changedtick to
+    // zero.
+    hashitem_T *const changedtick_hi = hash_find(
+        &buf->b_vars->dv_hashtab, (const char_u *)"changedtick");
+    assert(changedtick_hi != NULL);
+    hash_remove(&buf->b_vars->dv_hashtab, changedtick_hi);
+  }
   vars_clear(&buf->b_vars->dv_hashtab);   // free all internal variables
   hash_init(&buf->b_vars->dv_hashtab);
+  buf_init_changedtick(buf);
   uc_clear(&buf->b_ucmds);              // clear local user commands
   buf_delete_signs(buf);                // delete any signs
   bufhl_clear_all(buf);                // delete any highligts
@@ -1436,6 +1446,26 @@ void do_autochdir(void)
 
 static int top_file_num = 1;            ///< highest file number
 
+/// Initialize b:changedtick and changedtick_val attribute
+///
+/// @param[out]  buf  Buffer to intialize for.
+static inline void buf_init_changedtick(buf_T *const buf)
+  FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_NONNULL_ALL
+{
+  STATIC_ASSERT(sizeof("changedtick") <= sizeof(buf->changedtick_di.di_key),
+                "buf->changedtick_di cannot hold large enough keys");
+  buf->changedtick_di = (dictitem16_T) {
+    .di_flags = DI_FLAGS_RO|DI_FLAGS_FIX,  // Must not include DI_FLAGS_ALLOC.
+    .di_tv = (typval_T) {
+      .v_type = VAR_NUMBER,
+      .v_lock = VAR_FIXED,
+      .vval.v_number = buf->b_changedtick,
+    },
+    .di_key = "changedtick",
+  };
+  dict_add(buf->b_vars, (dictitem_T *)&buf->changedtick_di);
+}
+
 /// Add a file name to the buffer list.
 /// If the same file name already exists return a pointer to that buffer.
 /// If it does not exist, or if fname == NULL, a new entry is created.
@@ -1530,6 +1560,7 @@ buf_T * buflist_new(char_u *ffname, char_u *sfname, linenr_T lnum, int flags)
     // init b: variables
     buf->b_vars = dict_alloc();
     init_var_dict(buf->b_vars, &buf->b_bufvar, VAR_SCOPE);
+    buf_init_changedtick(buf);
   }
 
   if (ffname != NULL) {

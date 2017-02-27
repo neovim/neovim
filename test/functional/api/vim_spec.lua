@@ -7,6 +7,8 @@ local os_name = helpers.os_name
 local meths = helpers.meths
 local funcs = helpers.funcs
 local request = helpers.request
+local meth_pcall = helpers.meth_pcall
+local command = helpers.command
 
 describe('api', function()
   before_each(clear)
@@ -43,7 +45,7 @@ describe('api', function()
     it('works', function()
       nvim('command', 'let g:v1 = "a"')
       nvim('command', 'let g:v2 = [1, 2, {"v3": 3}]')
-      eq({v1 = 'a', v2 = {1, 2, {v3 = 3}}}, nvim('eval', 'g:'))
+      eq({v1 = 'a', v2 = { 1, 2, { v3 = 3 } } }, nvim('eval', 'g:'))
     end)
 
     it('handles NULL-initialized strings correctly', function()
@@ -65,7 +67,7 @@ describe('api', function()
 
   describe('nvim_call_function', function()
     it('works', function()
-      nvim('call_function', 'setqflist', {{{ filename = 'something', lnum = 17}}, 'r'})
+      nvim('call_function', 'setqflist', { { { filename = 'something', lnum = 17 } }, 'r' })
       eq(17, nvim('call_function', 'getqflist', {})[1].lnum)
       eq(17, nvim('call_function', 'eval', {17}))
       eq('foo', nvim('call_function', 'simplify', {'this/./is//redundant/../../../foo'}))
@@ -117,6 +119,11 @@ describe('api', function()
       eq(1, funcs.exists('g:lua'))
       meths.del_var('lua')
       eq(0, funcs.exists('g:lua'))
+      eq({false, 'Key "lua" doesn\'t exist'}, meth_pcall(meths.del_var, 'lua'))
+      meths.set_var('lua', 1)
+      command('lockvar lua')
+      eq({false, 'Key is locked: lua'}, meth_pcall(meths.del_var, 'lua'))
+      eq({false, 'Key is locked: lua'}, meth_pcall(meths.set_var, 'lua', 1))
     end)
 
     it('vim_set_var returns the old value', function()
@@ -396,7 +403,7 @@ describe('api', function()
       eq(1, meths.get_var('avar'))
 
       req = {
-        {'nvim_set_var', {'bvar', {2,3}}},
+        { 'nvim_set_var', { 'bvar', { 2, 3 } } },
         12,
       }
       status, err = pcall(meths.call_atomic, req)

@@ -1180,7 +1180,7 @@ void ml_recover(void)
      * empty.  Don't set the modified flag then. */
     if (!(curbuf->b_ml.ml_line_count == 2 && *ml_get(1) == NUL)) {
       changed_int();
-      ++curbuf->b_changedtick;
+      buf_set_changedtick(curbuf, curbuf->b_changedtick + 1);
     }
   } else {
     for (idx = 1; idx <= lnum; ++idx) {
@@ -1190,7 +1190,7 @@ void ml_recover(void)
       xfree(p);
       if (i != 0) {
         changed_int();
-        ++curbuf->b_changedtick;
+        buf_set_changedtick(curbuf, curbuf->b_changedtick + 1);
         break;
       }
     }

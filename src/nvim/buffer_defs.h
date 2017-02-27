@@ -489,7 +489,9 @@ struct file_buffer {
 
   int b_changed;                // 'modified': Set to true if something in the
                                 // file has been changed and not written out.
-  int b_changedtick;            // incremented for each change, also for undo
+/// Change identifier incremented for each change, including undo
+#define b_changedtick changedtick_di.di_tv.vval.v_number
+  dictitem16_T changedtick_di;  // b:changedtick dictionary item.
 
   bool b_saving;                /* Set to true if we are in the middle of
                                    saving the buffer. */
