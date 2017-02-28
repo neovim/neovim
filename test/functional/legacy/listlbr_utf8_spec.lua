@@ -1,209 +1,180 @@
--- Test for linebreak and list option in utf-8 mode
-
 local helpers = require('test.functional.helpers')(after_each)
-local source = helpers.source
-local feed = helpers.feed
-local clear, expect = helpers.clear, helpers.expect
+local Screen = require('test.functional.ui.screen')
 
-describe('linebreak', function()
-  setup(clear)
 
-  it('is working', function()
-    source([[
-      set wildchar=^E
-      10new
-      vsp
-      vert resize 20
-      put =\"\tabcdef hijklmn\tpqrstuvwxyz\u00a01060ABCDEFGHIJKLMNOP \"
-      norm! zt
-      set ts=4 sw=4 sts=4 linebreak sbr=+ wrap
-      fu! ScreenChar(width, lines)
-      	let c=''
-      	for j in range(1,a:lines)
-      	    for i in range(1,a:width)
-      	    	let c.=nr2char(screenchar(j, i))
-      	    endfor
-                 let c.="\n"
-      	endfor
-      	return c
-      endfu
-      fu! DoRecordScreen()
-      	wincmd l
-      	$put =printf(\"\n%s\", g:test)
-      	$put =g:line
-      	wincmd p
-      endfu
-      "
-      let g:test ="Test 1: set linebreak + set list + fancy listchars"
-      exe "set linebreak list listchars=nbsp:\u2423,tab:\u2595\u2014,trail:\u02d1,eol:\ub6"
-      redraw!
-      let line=ScreenChar(winwidth(0),4)
-      call DoRecordScreen()
-      "
-      let g:test ="Test 2: set nolinebreak list"
-      set list nolinebreak
-      redraw!
-      let line=ScreenChar(winwidth(0),4)
-      call DoRecordScreen()
-      "
-      let g:test ="Test 3: set linebreak nolist"
-      $put =\"\t*mask = nil;\"
-      $
-      norm! zt
-      set nolist linebreak
-      redraw!
-      let line=ScreenChar(winwidth(0),4)
-      call DoRecordScreen()
-      "
-      let g:test ="Test 4: set linebreak list listchars and concealing"
-      let c_defines=['#define ABCDE		1','#define ABCDEF		1','#define ABCDEFG		1','#define ABCDEFGH	1', '#define MSG_MODE_FILE			1','#define MSG_MODE_CONSOLE		2','#define MSG_MODE_FILE_AND_CONSOLE	3','#define MSG_MODE_FILE_THEN_CONSOLE	4']
-      call append('$', c_defines)
-      vert resize 40
-      $-7
-      norm! zt
-      set list linebreak listchars=tab:>- cole=1
-      syn match Conceal conceal cchar=>'AB\|MSG_MODE'
-      redraw!
-      let line=ScreenChar(winwidth(0),7)
-      call DoRecordScreen()
-      "
-      let g:test ="Test 5: set linebreak list listchars and concealing part2"
-      let c_defines=['bbeeeeee		;	some text']
-      call append('$', c_defines)
-      $
-      norm! zt
-      set nowrap ts=2 list linebreak listchars=tab:>- cole=2 concealcursor=n
-      syn clear
-      syn match meaning    /;\s*\zs.*/
-      syn match hasword    /^\x\{8}/    contains=word
-      syn match word       /\<\x\{8}\>/ contains=beginword,endword contained
-      syn match beginword  /\<\x\x/     contained conceal
-      syn match endword    /\x\{6}\>/   contained
-      hi meaning   guibg=blue
-      hi beginword guibg=green
-      hi endword   guibg=red
-      redraw!
-      let line=ScreenChar(winwidth(0),1)
-      call DoRecordScreen()
-      "
-      let g:test ="Test 6: Screenattributes for comment"
-      $put =g:test
-      call append('$', ' /*		 and some more */')
-      exe "set ft=c ts=7 linebreak list listchars=nbsp:\u2423,tab:\u2595\u2014,trail:\u02d1,eol:\ub6"
-      syntax on
-      hi SpecialKey term=underline ctermfg=red guifg=red
-      let attr=[]
-      nnoremap <expr> GG ":let attr += ['".screenattr(screenrow(),screencol())."']\n"
-      $
-      norm! zt0
-    ]])
-    feed('GGlGGlGGlGGlGGlGGlGGlGGlGGlGGl')
-    source([[
-      call append('$', ['ScreenAttributes for test6:'])
-      if attr[0] != attr[1] && attr[1] != attr[3] && attr[3] != attr[5]
-         call append('$', "Attribut 0 and 1 and 3 and 5 are different!")
-      else
-         call append('$', "Not all attributes are different")
-      endif
-      set cpo&vim linebreak selection=exclusive
-      let g:test ="Test 8: set linebreak with visual block mode and v_b_A and selection=exclusive and multibyte char"
-      $put =g:test
-    ]])
-    feed("Golong line: <Esc>40afoobar <Esc>aTARGETÃ' at end<Esc>")
-    source([[
-      exe "norm! $3B\<C-v>eAx\<Esc>"
-      "
-      let g:test ="Test 9: a multibyte sign and colorcolumn"
-      let attr=[]
-      let attr2=[]
-      $put =''
-      $put ='a b c'
-      $put ='a b c'
-      set list nolinebreak cc=3
-    ]])
-    feed(':sign define foo text=<C-v>uff0b<CR>')
-    source([[
-      sign place 1 name=foo line=50 buffer=2
-      norm! 2kztj
-      let line1=line('.')
-    ]])
-    feed('0GGlGGlGGlGGl')
-    source([[
-      let line2=line('.')
-      let attr2=attr
-      let attr=[]
-    ]])
-    feed('0GGlGGlGGlGGl')
-    source([[
-      redraw!
-      let line=ScreenChar(winwidth(0),3)
-      call DoRecordScreen()
-      " expected: attr[2] is different because of colorcolumn
-      if attr[0] != attr2[0] || attr[1] != attr2[1] || attr[2] != attr2[2]
-         call append('$', "Screen attributes are different!")
-      else
-         call append('$', "Screen attributes are the same!")
-      endif
-    ]])
+local feed, execute, source, insert = helpers.feed, helpers.execute,
+    helpers.source, helpers.insert
+local session = helpers
 
-    -- Assert buffer contents.
-    expect([[
-      
-      	abcdef hijklmn	pqrstuvwxyz 1060ABCDEFGHIJKLMNOP 
-      
-      Test 1: set linebreak + set list + fancy listchars
-      ▕———abcdef          
-      +hijklmn▕———        
-      +pqrstuvwxyz␣1060ABC
-      +DEFGHIJKLMNOPˑ¶    
-      
-      Test 2: set nolinebreak list
-      ▕———abcdef hijklmn▕—
-      +pqrstuvwxyz␣1060ABC
-      +DEFGHIJKLMNOPˑ¶    
-      ¶                   
-      	*mask = nil;
-      
-      Test 3: set linebreak nolist
-          *mask = nil;    
-      ~                   
-      ~                   
-      ~                   
-      #define ABCDE		1
-      #define ABCDEF		1
-      #define ABCDEFG		1
-      #define ABCDEFGH	1
-      #define MSG_MODE_FILE			1
-      #define MSG_MODE_CONSOLE		2
-      #define MSG_MODE_FILE_AND_CONSOLE	3
-      #define MSG_MODE_FILE_THEN_CONSOLE	4
-      
-      Test 4: set linebreak list listchars and concealing
-      #define ABCDE>-->---1                   
-      #define >CDEF>-->---1                   
-      #define >CDEFG>->---1                   
-      #define >CDEFGH>----1                   
-      #define >_FILE>--------->--->---1       
-      #define >_CONSOLE>---------->---2       
-      #define >_FILE_AND_CONSOLE>---------3   
-      bbeeeeee		;	some text
-      
-      Test 5: set linebreak list listchars and concealing part2
-      eeeeee>--->-;>some text                 
-      Test 6: Screenattributes for comment
-       /*		 and some more */
-      ScreenAttributes for test6:
-      Attribut 0 and 1 and 3 and 5 are different!
-      Test 8: set linebreak with visual block mode and v_b_A and selection=exclusive and multibyte char
-      long line: foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar TARGETÃx' at end
+describe("linebreak", function()
+  local screen
+  pending("temporary")
+
+  before_each(function()
+    session.clear()
+
+    screen = Screen.new(20, 5)
+    screen:attach()
+
+    execute('set wildchar=<C-e>')
+    execute('vert resize 20')
+    execute('set ts=4 sw=4 sts=4 linebreak showbreak=+ wrap')
+    execute("set linebreak list listchars=nbsp:␣,tab:▕—,trail:ˑ,eol:¶")
+  end)
+
+  after_each(function()
+    screen:detach()
+  end)
+
+  it("set linebreak list with fancy listchars", function()
+    execute("set linebreak list listchars=nbsp:␣,tab:▕—,trail:ˑ,eol:¶")
+    feed("i\tabcdef hijklmn\tpqrstuvwxyz 1060ABCDEFGHIJKLMNOP ")
+    screen:expect([[
+    ▕———abcdef          |
+    +hijklmn▕———        |
+    +pqrstuvwxyz␣1060ABC|
+    +DEFGHIJKLMNOPˑ^¶    |
+    -- INSERT --        |
+    ]])
+  end)
+
+  it("set list nolinebreak", function()
+    execute("set list nolinebreak")
+    feed("i\tabcdef hijklmn\tpqrstuvwxyz 1060ABCDEFGHIJKLMNOP ")
+    screen:expect([[
+    ▕———abcdef hijklmn▕—|
+    +pqrstuvwxyz␣1060ABC|
+    +DEFGHIJKLMNOPˑ^¶    |
+    ~                   |
+    -- INSERT --        |
+    ]])
+  end)
+
+  it("set linebreak nolist", function()
+    execute("set nolist linebreak")
+    feed("i\t*mask = nil;")
+    screen:expect([[
+        *mask = nil;^    |
+    ~                   |
+    ~                   |
+    ~                   |
+    -- INSERT --        |
+    ]])
+  end)
+
+  it("set linebreak list listchars and concealing", function()
+    screen:try_resize(40, 9)
+    source([[
+    let c_defines=['#define ABCDE		1','#define ABCDEF		1','#define ABCDEFG		1','#define ABCDEFGH	1', '#define MSG_MODE_FILE			1','#define MSG_MODE_CONSOLE		2','#define MSG_MODE_FILE_AND_CONSOLE	3']
+    call append(0, c_defines)
+    ]])
+    execute("set list linebreak listchars=tab:>- conceallevel=1")
+    execute("verbose set sw? sts? ts?")
+    -- see :h syn-cchar
+    execute("syn match Conceal conceal cchar=>'AB\\|MSG_MODE'")
+    screen:expect([[
+    #define >CDE>--->---1                   |
+    #define >CDEF>-->---1                   |
+    #define >CDEFG>->---1                   |
+    #define >CDEFGH>----1                   |
+    #define >_FILE>--------->--->---1       |
+    #define >_CONSOLE>---------->---2       |
+    #define >_FILE_AND_CONSOLE>---------3   |
+    ^                                        |
+                                            |
+    ]])
+    execute("gg")
+  end)
+
+  it("set linebreak list listchars and concealing part2", function()
+    -- should conceal 'bb'
+    screen:try_resize(40, 6)
+    source([[
+    let c_defines=['bbeeeeee		;	some text']
+    call append(0, c_defines)
+    $]])
+    -- concealcursor=n => just in normal mode
+    -- cole=2 => not displayed if no cchar
+    execute("set nowrap ts=2 list linebreak listchars=tab:>- cole=2 concealcursor=n")
+    source([[
+    syn clear
+    syn match meaning    /;\s*\zs.*/
+    syn match hasword    /^\x\{8}/    contains=word
+    syn match word       /\<\x\{8}\>/ contains=beginword,endword contained
+    syn match beginword  /\<\x\x/     contained conceal
+    syn match endword    /\x\{6}\>/   contained
+    hi meaning   guibg=blue
+    hi beginword guibg=green
+    hi endword   guibg=red
+    ]])
+    helpers.wait()
+    screen:expect("eeeeee>--->-;>some text",
+    nil,nil,nil, true )
+  end)
+
+  -- TODO update with new neovim system to check attributes
+  -- or remove it if done somewhere else
+  -- it("screenattributes for comment", function()
+  --   execute("set ft=c ts=7 linebreak list listchars=nbsp:␣,tab:▕—,trail:ˑ,eol:¶")
+  --   source([[
+  --   syntax on
+  --   hi SpecialKey term=underline ctermfg=red guifg=red
+  --   let attr=[]
+  --   nnoremap <expr> GG ":let attr += ['".screenattr(screenrow(),screencol())."']\n"
+  --   $
+  --   norm! zt0
+  --   ]])
+  --   -- GG being remapped
+  --   feed('GGlGGlGGlGGlGGlGGlGGlGGlGGlGGl')
+  --   screen:expect([[
+  --   /*     and some more */
+  --   ScreenAttributes for test6:
+  --   Attribut 0 and 1 and 3 and 5 are different!
+  --   ]])
+  -- end)
+
+  it("visual block append after multibyte char ", function()
+    -- ...with set linebreak selection=exclusive
+    -- reset cpo to its vim default values
+    execute("set cpo&vim linebreak selection=exclusive")
+    feed("ilong line: <Esc>40afoobar <Esc>aTARGETÃ' at end<Esc>")
+    -- test v_b_a (visual block append): add the letter 'x' somewhere
+    feed("$3B<C-v>eAx<Esc>")
+      helpers.expect_any("long line: foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar TARGETÃx' at end")
+  end)
+
+  it("multibyte sign and colorcolumn", function()
+
+    local buf = helpers.eval("nvim_get_current_buf()")
+    local bufid = helpers.buffer("get_number", buf)
+    screen:try_resize(10, 6)
+    screen:set_default_attr_ignore( {{},
+      {bold=true, foreground=Screen.colors.Blue1}, } )
+
+    execute("set list nolinebreak colorcolumn=3")
+    execute('sign define foo text=＋')
+    insert([[
       
       a b c
-      a b c
-      
-      Test 9: a multibyte sign and colorcolumn
-        ¶                                     
-      ＋a b c¶                                
-        a b c¶                                
-      Screen attributes are the same!]])
+      d e f
+      ]])
+    helpers.command('sign place 1 name=foo line=2 buffer='..bufid)
+
+    feed("gg")
+    screen:expect([[
+    {1:  }{2:¶} {3: }       |
+    ＋a {3:b} c{2:¶}    |
+    {1:  }d {3:e} f{2:¶}    |
+    {1:  }{2:^¶} {3: }       |
+    {1:  }{2:~         }|
+                |]]
+    , {
+      -- signcolumn group
+      [1] = {foreground = Screen.colors.DarkBlue, background=Screen.colors.WebGray},
+      -- fillchar
+      [2] = { bold = true, foreground = Screen.colors.Blue1},
+      -- colorcolumn
+      [3] = {background = Screen.colors.LightRed}
+    })
   end)
 end)

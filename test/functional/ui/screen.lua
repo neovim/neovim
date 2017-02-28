@@ -221,7 +221,7 @@ function Screen:expect(expected, attr_ids, attr_ignore, condition, any)
     if any then
       -- Search for `expected` anywhere in the screen lines.
       local actual_screen_str = table.concat(actual_rows, '\n')
-      if nil == string.find(actual_screen_str, expected) then
+      if nil == string.find(actual_screen_str, expected, 1, true) then
         return (
           'Failed to match any screen lines.\n'
           .. 'Expected (anywhere): "' .. expected .. '"\n'
