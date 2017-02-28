@@ -40,7 +40,7 @@ describe(':ball', function()
     -- Write contents of this file
     execute('%yank A')
     
-    -- Append contents of second window (Xxx1) 
+    -- Append contents of second window (Xxx1)
     feed('')
     execute('%yank A')
 
