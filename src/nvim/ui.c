@@ -555,7 +555,7 @@ static void ui_mode_change(void)
   conceal_check_cursur_line();
 }
 
-bool ui_is_widget_external(int widget)
+bool ui_is_widget_external(UIWidget widget)
 {
   switch (widget) {
     case kUITabline:
@@ -564,12 +564,10 @@ bool ui_is_widget_external(int widget)
       return cmdline_external;
     case kUIWildmenu:
       return wildmenu_external;
-    default:
-      return false;
   }
 }
 
-void ui_set_widget_external(int widget, bool external)
+void ui_set_widget_external(UIWidget widget, bool external)
 {
   switch (widget) {
     case kUITabline:

@@ -8,11 +8,11 @@
 #include "api/private/defs.h"
 
 // values for externalized widgets
-enum {
-  kUITabline = 0
-  , kUICmdline
-  , kUIWildmenu
-};
+typedef enum {
+  kUITabline,
+  kUICmdline,
+  kUIWildmenu
+} UIWidget;
 
 typedef struct {
   bool bold, underline, undercurl, italic, reverse;

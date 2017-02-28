@@ -6890,25 +6890,7 @@ static void draw_tabline(void)
                        );
 
   if (ui_is_widget_external(kUITabline)) {
-    Array args = ARRAY_DICT_INIT;
-    ADD(args, INTEGER_OBJ(curtab->handle));
-
-    Array arr = ARRAY_DICT_INIT;
-    FOR_ALL_TABS(tp) {
-      if (tp == curtab) {
-        cwp = curwin;
-      } else {
-        cwp = tp->tp_curwin;
-      }
-      get_trans_bufname(cwp->w_buffer);
-      Array item = ARRAY_DICT_INIT;
-      ADD(item, INTEGER_OBJ(tp->handle));
-      ADD(item, STRING_OBJ(cstr_to_string((char *)NameBuff)));
-      ADD(arr, ARRAY_OBJ(item));
-    }
-    ADD(args, ARRAY_OBJ(arr));
-
-    ui_event("tabline_update", args);
+    draw_tabline_ext();
     return;
   }
 
@@ -7053,6 +7035,31 @@ static void draw_tabline(void)
   /* Reset the flag here again, in case evaluating 'tabline' causes it to be
    * set. */
   redraw_tabline = FALSE;
+}
+
+// send tabline update to external ui
+void draw_tabline_ext(void)
+{
+  win_T       *cwp;
+
+  Array args = ARRAY_DICT_INIT;
+  ADD(args, INTEGER_OBJ(curtab->handle));
+  Array arr = ARRAY_DICT_INIT;
+  FOR_ALL_TABS(tp) {
+    if (tp == curtab) {
+      cwp = curwin;
+    } else {
+      cwp = tp->tp_curwin;
+    }
+    get_trans_bufname(cwp->w_buffer);
+    Array item = ARRAY_DICT_INIT;
+    ADD(item, INTEGER_OBJ(tp->handle));
+    ADD(item, STRING_OBJ(cstr_to_string((char *)NameBuff)));
+    ADD(arr, ARRAY_OBJ(item));
+  }
+  ADD(args, ARRAY_OBJ(arr));
+
+  ui_event("tabline_update", args);
 }
 
 /*
