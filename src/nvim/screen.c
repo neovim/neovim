@@ -1696,12 +1696,20 @@ static int advance_color_col(int vcol, int **color_cols)
 
 /// Compute the width of the foldcolumn.  Based on 'foldcolumn' and how much
 /// space is available for window "wp", minus "col".
+/// @param wp
+/// @param col 
 /// @return foldcolumn width in cell unit
 static int compute_foldcolumn(win_T *wp, int col)
 {
+  // int desired_width = wp->w_p_fdc;
   int fdc = wp->w_p_fdc;
-  int wmw = wp == curwin && p_wmw == 0 ? 1 : p_wmw;
+  int wmw = (wp == curwin && p_wmw == 0) ? 1 : p_wmw;
   int wwidth = wp->w_width;
+
+  if(wp->w_fdc == -1) {
+    // if automatic sizing, lookup in cache
+    fdc = MAX(wp->w_fdcwidth, 0);
+  }
 
   if (fdc > wwidth - (col + wmw)) {
     fdc = wwidth - (col + wmw);
@@ -2111,6 +2119,7 @@ static kFoldChar fill_foldcolumn_single(
 /// @param wrapped screen line is a wrapped continuation of absolute line
 ///
 /// Assume monocell characters
+/// @return number of cells
 static int
 fill_foldcolumn(
     char_u *p,
@@ -2123,6 +2132,7 @@ fill_foldcolumn(
   int level;
   int cell_counter = 0;
   fold_T **fp = NULL;      // Top level/parent fold
+  // TODO we should not have to recompute it
   int fdc = compute_foldcolumn(wp, 0);    // allowed width in cells
   bool maybe_small;
   bool use_level;

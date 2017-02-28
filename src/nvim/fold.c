@@ -527,10 +527,7 @@ int foldManualAllowed(int create)
 }
 
 /* foldCreate() {{{2 */
-/*
- * Create a fold from line "start" to line "end" (inclusive) in the current
- * window.
- */
+/// @see nvim_fold_create
 void foldCreate(linenr_T start, linenr_T end)
 {
   fold_T      *fp;
@@ -643,17 +640,14 @@ void foldCreate(linenr_T start, linenr_T end)
 
 
 /* deleteFold() {{{2 */
-/*
- * Delete a fold at line "start" in the current window.
- * When "end" is not 0, delete all folds from "start" to "end".
- * When "recursive" is TRUE delete recursively.
- */
-void 
-deleteFold (
+/// @param had_visual TRUE when Visual selection used
+/// @see nvim_fold_delete
+void
+deleteFold(
     linenr_T start,
     linenr_T end,
     int recursive,
-    int had_visual                 /* TRUE when Visual selection used */
+    int had_visual
 )
 {
   garray_T    *gap;
@@ -662,7 +656,7 @@ deleteFold (
   fold_T      *found_fp = NULL;
   linenr_T found_off = 0;
   bool use_level;
-  bool maybe_small = FALSE;
+  bool maybe_small = false;
   int level = 0;
   linenr_T lnum = start;
   linenr_T lnum_off;
@@ -1868,6 +1862,7 @@ void foldtext_cleanup(char_u *str)
 /*
  * Update the folding for window "wp", at least from lines "top" to "bot".
  * Return TRUE if any folds did change.
+ * Indent Expr Marker Syntax (IEMS)
  */
 static void foldUpdateIEMS(win_T *wp, linenr_T top, linenr_T bot)
 {

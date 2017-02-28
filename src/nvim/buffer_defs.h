@@ -1062,12 +1062,13 @@ struct window_S {
   int w_lines_valid;                /* number of valid entries */
   wline_T     *w_lines;
 
-  garray_T w_folds;                 /* array of nested folds */
-  bool w_fold_manual;               /* when true: some folds are opened/closed
+  garray_T w_folds;                 /**!< array of nested folds */
+  bool w_fold_manual;               /**!< when true: some folds are opened/closed
                                        manually */
-  bool w_foldinvalid;               /* when true: folding needs to be
+  bool w_foldinvalid;               /**!< when true: folding needs to be
                                        recomputed */
-  int w_nrwidth;                    /* width of 'number' and 'relativenumber'
+  int w_fdcwidth;                   /**!< optimal width to draw 'foldcolumn' */
+  int w_nrwidth;                    /**!< width of 'number' and 'relativenumber'
                                        column being used */
 
   /*

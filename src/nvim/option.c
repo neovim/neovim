@@ -3413,7 +3413,7 @@ static char_u *set_chars_option(char_u **varp)
     { &fill_diff,    "diff" , '-'  },
     { &fold_chars[kFoldOpenStart],  "foldopen", '-' },
     { &fold_chars[kFoldClosed],     "foldclose", '+' },
-    { &fold_chars[kFoldOpenMid],    "foldsep", '|'},
+    { &fold_chars[kFoldOpenMid],    "foldsep", '|' },
     { &fold_chars[kFoldOpenLast],   "foldend", '^' },
   };
   static struct charstab lcstab[] = {
@@ -4194,8 +4194,8 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
     }
   } else if (pp == &curwin->w_p_fdc
              || pp == (long *)GLOBAL_WO(&curwin->w_p_fdc)) {
-    if (value < 0) {
-      errmsg = e_positive;
+    if (value < -1) {
+      errmsg = e_invarg;
     } else if (value > 12) {
       errmsg = e_invarg;
     }

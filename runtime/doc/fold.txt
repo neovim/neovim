@@ -526,7 +526,8 @@ handles differently: Space, backslash and double-quote. |option-backslash|
 FOLDCOLUMN						*fold-foldcolumn*
 
 'foldcolumn' is a number, which sets the width for a column on the side of the
-window to indicate folds.  When it is zero, there is no foldcolumn.  A normal
+window to indicate folds.  When it is -1, the width is found automatically.
+When it is zero, there is no foldcolumn.  A normal
 value is 4 or 5.  The minimal useful value is 2, although 1 still provides
 some information.  The maximum is 12.
 
