@@ -4928,26 +4928,23 @@ linenr_T buf_change_sign_type(
 }
 
 
-/// @param sign where to start
-/// @param lnum 
-/// @param type SIGN_ICON, SIGN_TEXT, SIGN_ANY, SIGN_LINEHL
+/// @param sign item to start searching from
+/// @param lnum line number
+/// @param type one of SIGN_ICON, SIGN_TEXT, SIGN_ANY, SIGN_LINEHL
 /// @return sign type
 signlist_T *buf_getsigntype(
-        // buf_T *buf,
-        signlist_T	*sign,
-        linenr_T lnum,
-        int type
-        )
+  signlist_T	*sign,
+  linenr_T lnum,
+  int type
+)
 {
-    // signlist_T	*sign;		/* a sign in a b_signlist */
-//sign = buf->b_signlist
     for (; sign != NULL; sign = sign->next) {
         if (sign->lnum == lnum
-                && (type == SIGN_ANY
-                    || (type == SIGN_TEXT
-                        && sign_get_text(sign->typenr) != NULL)
-                    || (type == SIGN_LINEHL
-                        && sign_get_attr(sign->typenr, TRUE) != 0))) {
+            && (type == SIGN_ANY
+                || (type == SIGN_TEXT
+                    && sign_get_text(sign->typenr) != NULL)
+                || (type == SIGN_LINEHL
+                    && sign_get_attr(sign->typenr, TRUE) != 0))) {
             return sign;
         }
     }

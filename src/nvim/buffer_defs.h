@@ -1002,7 +1002,7 @@ struct window_S {
   int w_wincol;                     /* Leftmost column of window in screen. */
   int w_width;                      /* Width of window, excluding separation. */
   int w_vsep_width;                 /* Number of separator columns (0 or 1). */
-  int w_signcolumn_width;           //!< last value
+  int w_signcolumn_width;           ///< last value
 
   /*
    * === start of cached values ====
