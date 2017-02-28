@@ -45,6 +45,7 @@
 #include "nvim/syntax.h"
 #include "nvim/terminal.h"
 #include "nvim/undo.h"
+#include "nvim/ui.h"
 #include "nvim/os/os.h"
 
 
@@ -61,8 +62,6 @@
 
 
 static char *m_onlyone = N_("Already only one window");
-
-static bool tabline_external = false;
 
 /*
  * all CTRL-W window commands are handled here, called from normal_cmd().
@@ -5160,7 +5159,7 @@ static void last_status_rec(frame_T *fr, int statusline)
  */
 int tabline_height(void)
 {
-  if (tabline_external) {
+  if (ui_is_widget_external(kUITabline)) {
       return 0;
   }
   assert(first_tabpage);
@@ -5864,14 +5863,4 @@ void win_findbuf(typval_T *argvars, list_T *list)
       }
     }
   }
-}
-
-void tabline_set_external(bool external)
-{
-  tabline_external = external;
-}
-
-bool tabline_get_external(void)
-{
-  return tabline_external;
 }

@@ -417,7 +417,7 @@ of update.
 ["popupmenu_hide"]
 	The popupmenu is hidden.
 
-["tabline", curtab, tabs]
+["tabline_update", curtab, tabs]
 	Nvim will send this event when drawing tabline. curtab is the tab id
 	of the current tab. tabs is an arrays of the form [tabid, tabname].
 

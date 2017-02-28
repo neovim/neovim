@@ -6889,7 +6889,7 @@ static void draw_tabline(void)
   int use_sep_chars = (t_colors < 8
                        );
 
-  if (tabline_get_external()) {
+  if (ui_is_widget_external(kUITabline)) {
     Array args = ARRAY_DICT_INIT;
     ADD(args, INTEGER_OBJ(curtab->handle));
 
@@ -6908,7 +6908,7 @@ static void draw_tabline(void)
     }
     ADD(args, ARRAY_OBJ(arr));
 
-    ui_event("tabline", args);
+    ui_event("tabline_update", args);
     return;
   }
 

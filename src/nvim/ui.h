@@ -7,6 +7,13 @@
 
 #include "api/private/defs.h"
 
+// values for externalized widgets
+enum {
+  kUITabline = 0
+  , kUICmdline
+  , kUIWildmenu
+};
+
 typedef struct {
   bool bold, underline, undercurl, italic, reverse;
   int foreground, background, special;
