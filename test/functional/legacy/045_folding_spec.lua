@@ -2,10 +2,10 @@
 local Screen = require('test.functional.ui.screen')
 
 local helpers = require('test.functional.helpers')(after_each)
-local feed, insert, execute, expect =
-  helpers.feed, helpers.insert, helpers.execute, helpers.expect
+local feed, insert, execute, expect_any =
+  helpers.feed, helpers.insert, helpers.execute, helpers.expect_any
 
-describe('Folding ', function()
+describe('folding', function()
   local screen
 
   before_each(function()
@@ -38,15 +38,14 @@ describe('Folding ', function()
     feed('zc')
     execute('call append("$", getline(foldclosed(".")))')
 
-    expect([[
+    expect_any([[
       manual 1 aa
       -1
       3 cc
-      1 aa]], true)
+      1 aa]])
   end)
 
-  it("with marker foldmethod", function()
-
+  it("foldmethod=marker", function()
     screen:try_resize(20, 10)
     insert([[
       dd {{{
@@ -79,7 +78,7 @@ describe('Folding ', function()
 
   end)
 
-  it("with indent foldmethod", function()
+  it("foldmethod=indent", function()
     screen:try_resize(20, 8)
     execute('set fdm=indent sw=2')
     insert([[
@@ -105,7 +104,7 @@ describe('Folding ', function()
     ]])
   end)
 
-  it("with syntax foldmethod", function()
+  it("foldmethod=syntax", function()
     screen:try_resize(35, 15)
     insert([[
       1 aa
@@ -137,14 +136,14 @@ describe('Folding ', function()
     feed('zO<C-L>j') -- <C-L> redraws screen
     execute('call append("$", getline("."))')
     execute('set fdl=0')
-    expect([[
+    expect_any([[
       folding 9 ii
       3 cc
       9 ii
-      a jj]], true)
+      a jj]])
   end)
 
-  it("with expression foldmethod", function()
+  it("foldmethod=expression", function()
     insert([[
       1 aa
       2 bb
@@ -184,16 +183,15 @@ describe('Folding ', function()
     execute('/kk$')
     execute('call append("$", foldlevel("."))')
 
-    expect([[
+    expect_any([[
       expr 2
       1
       2
-      0]], true)
+      0]])
   end)
 
   it('can be opened after :move', function()
     -- luacheck: ignore
-
     screen:try_resize(35, 8)
     insert([[
       Test fdm=indent and :move bug END
@@ -208,12 +206,12 @@ describe('Folding ', function()
     execute('m0')
     feed('zR')
 
-    expect([[
+    expect_any([[
       	Test fdm=indent START
       	line3
       	line4
       Test fdm=indent and :move bug END
-      line2]], true)
+      line2]])
   end)
 end)
 

@@ -16,9 +16,6 @@ end
 local ok = function(res)
   return assert.is_true(res)
 end
-local substr = function(pattern, actual)
-  return assert.is_true(nil ~= string.find(actual, pattern, 1, true), "expected substring")
-end
 
 local function glob(initial_path, re, exc_re)
   local paths_to_check = {initial_path}
@@ -219,7 +216,6 @@ return {
   eq = eq,
   neq = neq,
   ok = ok,
-  substr = substr,
   check_logs = check_logs,
   uname = uname,
   tmpname = tmpname,

@@ -16,7 +16,6 @@ local eq = global_helpers.eq
 local ok = global_helpers.ok
 local map = global_helpers.map
 local filter = global_helpers.filter
-local substr = global_helpers.substr
 
 local start_dir = lfs.currentdir()
 -- XXX: NVIM_PROG takes precedence, QuickBuild sets it.
@@ -432,12 +431,13 @@ local function curtab(method, ...)
   return tabpage(method, 0, ...)
 end
 
-local function expect(contents, any)
+local function expect(contents)
+  return eq(dedent(contents), curbuf_contents())
+end
+
+local function expect_any(contents)
   contents = dedent(contents)
-  if any then
-    return substr(contents, curbuf_contents())
-  end
-  return eq(contents, curbuf_contents())
+  return ok(nil ~= string.find(curbuf_contents(), contents, 1, true))
 end
 
 local function do_rmdir(path)
@@ -590,8 +590,8 @@ local M = {
   eq = eq,
   neq = neq,
   expect = expect,
+  expect_any = expect_any,
   ok = ok,
-  substr = substr,
   map = map,
   filter = filter,
   nvim = nvim,
