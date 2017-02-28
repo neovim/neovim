@@ -435,6 +435,11 @@ local function expect(contents)
   return eq(dedent(contents), curbuf_contents())
 end
 
+local function expect_any(contents)
+  contents = dedent(contents)
+  return ok(nil ~= string.find(curbuf_contents(), contents, 1, true))
+end
+
 local function do_rmdir(path)
   if lfs.attributes(path, 'mode') ~= 'directory' then
     return nil
@@ -585,6 +590,7 @@ local M = {
   eq = eq,
   neq = neq,
   expect = expect,
+  expect_any = expect_any,
   ok = ok,
   map = map,
   filter = filter,
