@@ -235,6 +235,26 @@ describe('assert function:', function()
     end)
   end)
 
+  -- assert_inrange({lower}, {upper}, {actual}[, {msg}])
+  describe('assert_inrange()', function()
+    it('should not change v:errors when actual is in range', function()
+      call('assert_inrange', 7, 7, 7)
+      call('assert_inrange', 5, 7, 5)
+      call('assert_inrange', 5, 7, 6)
+      call('assert_inrange', 5, 7, 7)
+      expected_empty()
+    end)
+
+    it('should change v:errors when actual is not in range', function()
+      call('assert_inrange', 5, 7, 4)
+      call('assert_inrange', 5, 7, 8)
+      expected_errors({
+        "Expected range 5 - 7, but got 4",
+        "Expected range 5 - 7, but got 8",
+      })
+    end)
+  end)
+
   -- assert_exception({cmd}, [, {error}])
   describe('assert_exception()', function()
     it('should assert thrown exceptions properly', function()

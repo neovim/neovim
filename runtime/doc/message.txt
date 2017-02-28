@@ -1,4 +1,4 @@
-*message.txt*   For Vim version 7.4.  Last change: 2016 Jul 14
+*message.txt*   For Vim version 7.4.  Last change: 2016 Jul 16
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -668,7 +668,7 @@ Vim and restart it.
 							*E931*  >
   Buffer cannot be registered
 
-Out of memory or a duplicate buffer number.  May habben after W14.  Looking up
+Out of memory or a duplicate buffer number.  May happen after W14.  Looking up
 a buffer will not always work, better restart Vim.
 
 							*E296* *E297*  >

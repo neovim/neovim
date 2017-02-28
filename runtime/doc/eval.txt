@@ -1197,7 +1197,7 @@ lambda expression				*expr-lambda* *lambda*
 {args -> expr1}		lambda expression
 
 A lambda expression creates a new unnamed function which returns the result of
-evaluating |expr1|.  Lambda expressions are differ from |user-functions| in
+evaluating |expr1|.  Lambda expressions differ from |user-functions| in
 the following ways:
 
 1. The body of the lambda expression is an |expr1| and not a sequence of |Ex|
@@ -1946,6 +1946,8 @@ assert_equal({exp}, {act} [, {msg}]) none  assert {exp} is equal to {act}
 assert_exception( {error} [, {msg}]) none  assert {error} is in v:exception
 assert_fails( {cmd} [, {error}])     none  assert {cmd} fails
 assert_false({actual} [, {msg}])     none  assert {actual} is false
+assert_inrange({lower}, {upper}, {actual} [, {msg}])
+				none  	assert {actual} is inside the range
 assert_match( {pat}, {text} [, {msg}]) none  assert {pat} matches {text}
 assert_notequal( {exp}, {act} [, {msg}]) none  assert {exp} is not equal {act}
 assert_notmatch( {pat}, {text} [, {msg}]) none  assert {pat} not matches {text}
@@ -2460,8 +2462,16 @@ assert_false({actual} [, {msg}])				*assert_false()*
 		|v:errors|, like with |assert_equal()|.
 		A value is false when it is zero or |v:false|. When "{actual}" 
 		is not a number or |v:false| the assert fails.
-		When {msg} is omitted an error in the form "Expected False but
-		got {actual}" is produced.
+		When {msg} is omitted an error in the form
+		"Expected False but got {actual}" is produced.
+
+assert_inrange({lower}, {upper}, {actual} [, {msg}])	 *assert_inrange()*
+		This asserts number values.  When {actual}  is lower than
+		{lower} or higher than {upper} an error message is added to
+		|v:errors|.
+		When {msg} is omitted an error in the form
+		"Expected range {lower} - {upper}, but got {actual}" is
+		produced.
 
 								*assert_match()*
 assert_match({pattern}, {actual} [, {msg}])
@@ -2476,8 +2486,8 @@ assert_match({pattern}, {actual} [, {msg}])
 		Use "^" and "$" to match with the start and end of the text.
 		Use both to match the whole text.
 
-		When {msg} is omitted an error in the form "Pattern {pattern}
-		does not match {actual}" is produced.
+		When {msg} is omitted an error in the form
+		"Pattern {pattern} does not match {actual}" is produced.
 		Example: >
 	assert_match('^f.*o$', 'foobar')
 <		Will result in a string to be added to |v:errors|:

@@ -8111,6 +8111,30 @@ static void f_assert_fails(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   set_vim_var_string(VV_ERRMSG, NULL, 0);
 }
 
+void assert_inrange(typval_T *argvars)
+{
+  int error = (int)false;
+  varnumber_T lower = get_tv_number_chk(&argvars[0], &error);
+  varnumber_T upper = get_tv_number_chk(&argvars[1], &error);
+  varnumber_T actual = get_tv_number_chk(&argvars[2], &error);
+
+  if (error) {
+    return;
+  }
+  if (actual < lower || actual > upper) {
+    garray_T ga;
+    prepare_assert_error(&ga);
+
+    char msg[55];
+    vim_snprintf(msg, sizeof(msg), "range %" PRId64 " - %" PRId64 ",",
+                 (int64_t)lower, (int64_t)upper);
+    fill_assert_error(&ga, &argvars[3], (char_u *)msg, NULL, &argvars[2],
+                      ASSERT_INRANGE);
+    assert_error(&ga);
+    ga_clear(&ga);
+  }
+}
+
 // Common for assert_true() and assert_false().
 static void assert_bool(typval_T *argvars, bool is_true)
 {
@@ -8156,6 +8180,12 @@ static void assert_match_common(typval_T *argvars, assert_type_T atype)
     assert_error(&ga);
     ga_clear(&ga);
   }
+}
+
+/// "assert_inrange(lower, upper[, msg])" function
+static void f_assert_inrange(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+    assert_inrange(argvars);
 }
 
 /// "assert_match(pattern, actual[, msg])" function

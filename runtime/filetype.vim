@@ -2642,6 +2642,8 @@ au BufNewFile,BufRead [rR]akefile*		call s:StarSetf('ruby')
 " Mail (also matches muttrc.vim, so this is below the other checks)
 au BufNewFile,BufRead mutt[[:alnum:]._-]\\\{6\}	setf mail
 
+au BufNewFile,BufRead reportbug-*		call s:StarSetf('mail')
+
 " Modconf
 au BufNewFile,BufRead */etc/modutils/*
 	\ if executable(expand("<afile>")) != 1
