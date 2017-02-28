@@ -278,6 +278,7 @@ typedef enum
   ASSERT_NOTEQUAL,
   ASSERT_MATCH,
   ASSERT_NOTMATCH,
+  ASSERT_INRANGE,
   ASSERT_OTHER,
 } assert_type_T;
 
