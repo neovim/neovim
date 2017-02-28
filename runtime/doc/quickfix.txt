@@ -1,4 +1,4 @@
-*quickfix.txt*  For Vim version 7.4.  Last change: 2016 Jul 07
+*quickfix.txt*  For Vim version 7.4.  Last change: 2016 Jul 17
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -525,7 +525,7 @@ lists.  They set one of the existing error lists as the current one.
 			list, an error message is given.
 
 						*:lolder* *:lol*
-:lol[der] [count]	Same as ":colder", except use the location list for
+:lol[der] [count]	Same as `:colder`, except use the location list for
 			the current window instead of the quickfix list.
 
 						*:cnewer* *:cnew* *E381*
@@ -534,8 +534,19 @@ lists.  They set one of the existing error lists as the current one.
 			list, an error message is given.
 
 						*:lnewer* *:lnew*
-:lnew[er] [count]	Same as ":cnewer", except use the location list for
+:lnew[er] [count]	Same as `:cnewer`, except use the location list for
 			the current window instead of the quickfix list.
+
+						*:chistory* *:chi*
+:chi[story]		Show the list of error lists.  The current list is
+			marked with ">".  The output looks like:
+				  error list 1 of 3; 43 errors ~
+				> error list 2 of 3; 0 errors ~
+				  error list 3 of 3; 15 errors ~
+
+						*:lhistory* *:lhi*
+:lhi[story]		Show the list of location lists, otherwise like
+			`:chistory`.
 
 When adding a new error list, it becomes the current list.
 

@@ -188,7 +188,7 @@ an 20.435	 &Edit.Startup\ &Settings		:call <SID>EditVimrc()<CR>
 fun! s:EditVimrc()
   if $MYVIMRC != ''
     let fname = $MYVIMRC
-  elseif has("win32") || has("dos32") || has("dos16")
+  elseif has("win32")
     if $HOME != ''
       let fname = $HOME . "/_vimrc"
     else
@@ -552,7 +552,7 @@ endfun
 func! s:XxdFind()
   if !exists("g:xxdprogram")
     " On the PC xxd may not be in the path but in the install directory
-    if (has("win32") || has("dos32")) && !executable("xxd")
+    if has("win32") && !executable("xxd")
       let g:xxdprogram = $VIMRUNTIME . (&shellslash ? '/' : '\') . "xxd.exe"
     else
       let g:xxdprogram = "xxd"
