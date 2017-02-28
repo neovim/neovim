@@ -3654,10 +3654,10 @@ static linenr_T get_address(exarg_T *eap,
         n = 1;
       else
         n = getdigits(&cmd);
-      if (addr_type == ADDR_LOADED_BUFFERS || addr_type == ADDR_BUFFERS)
+      if (addr_type == ADDR_LOADED_BUFFERS || addr_type == ADDR_BUFFERS) {
         lnum = compute_buffer_local_count(
             addr_type, lnum, (i == '-') ? -1 * n : n);
-      else {
+      } else {
         // Relative line addressing, need to adjust for folded lines
         // now, but only do it after the first address.
         if (addr_type == ADDR_LINES && (i == '-' || i == '+')
