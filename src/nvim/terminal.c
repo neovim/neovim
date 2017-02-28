@@ -318,6 +318,7 @@ void terminal_close(Terminal *term, char *msg)
     // close_buffer() doesn't call this again.
     term->buf_handle = 0;
     if (buf) {
+      handle_unregister_buffer(buf);
       buf->terminal = NULL;
     }
     if (!term->refcount) {
@@ -665,7 +666,9 @@ static int term_settermprop(VTermProp prop, VTermValue *val, void *data)
 
     case VTERM_PROP_TITLE: {
       buf_T *buf = handle_get_buffer(term->buf_handle);
-      buf_set_term_title(buf, val->string);
+      if (buf) {
+        buf_set_term_title(buf, val->string);
+      }
       break;
     }
 
@@ -1073,12 +1076,8 @@ static void invalidate_terminal(Terminal *term, int start_row, int end_row)
 static void refresh_terminal(Terminal *term)
 {
   buf_T *buf = handle_get_buffer(term->buf_handle);
-  bool valid = true;
-  if (!buf || !(valid = buf_valid(buf))) {
+  if (!buf) {
     // Destroyed by `close_buffer`. Do not do anything else.
-    if (!valid) {
-      term->buf_handle = 0;
-    }
     return;
   }
   long ml_before = buf->b_ml.ml_line_count;

@@ -1,4 +1,5 @@
 local helpers = require('test.functional.helpers')(after_each)
+local thelpers = require('test.functional.terminal.helpers')
 local Screen = require('test.functional.ui.screen')
 local clear, wait, nvim = helpers.clear, helpers.wait, helpers.nvim
 local nvim_dir, source, eq = helpers.nvim_dir, helpers.source, helpers.eq
@@ -49,6 +50,35 @@ describe(':terminal', function()
     eq(2, eval("line('.')"))  -- cursor stays where we put it
   end)
 
+  it('does not crash when callback fires after terminal closes', function()
+    screen:detach()
+    local argv = {
+      helpers.nvim_prog,
+      '-u', 'NONE',
+      '-i', 'NONE',
+      '-n',
+      '-c', 'let g:split = 0',
+      '-c', 'au TermOpen * nnoremap <buffer> x :q<CR>',
+      '-c', 'nnoremap <silent> x :new <bar> let g:split += 1 <bar> call termopen([&shell])<CR>'
+    }
+    screen = thelpers.screen_setup(0, '["'..table.concat(argv, '", "')..'"]')
+    screen:expect([[
+      {1: }                                                 |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {5:[No Name]                       0,0-1          All}|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]])
+    local count = 50
+    for _ = 1,count do
+      thelpers.feed_data('xx')
+    end
+    thelpers.feed_data({':echo g:split', ''})
+    screen:expect(tostring(count)..string.rep(' ', 50 - string.len(tostring(count))),
+      nil, nil, nil, true)
+  end)
 end)
 
 describe(':terminal (with fake shell)', function()
