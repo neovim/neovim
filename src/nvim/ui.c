@@ -565,6 +565,7 @@ bool ui_is_widget_external(UIWidget widget)
     case kUIWildmenu:
       return wildmenu_external;
   }
+  return false;
 }
 
 void ui_set_widget_external(UIWidget widget, bool external)
