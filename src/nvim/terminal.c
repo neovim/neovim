@@ -1003,9 +1003,12 @@ static void refresh_timer_cb(TimeWatcher *watcher, void *data)
   map_foreach(invalidated_terminals, term, stub, {
     refresh_terminal(term);
   });
+  bool any_visible = is_term_visible();
   pmap_clear(ptr_t)(invalidated_terminals);
   unblock_autocmds();
-  redraw(true);
+  if (any_visible) {
+    redraw(true);
+  }
 end:
   refresh_pending = false;
 }
@@ -1117,6 +1120,18 @@ static void refresh_screen(Terminal *term, buf_T *buf)
   changed_lines(change_start, 0, change_end, added);
   term->invalid_start = INT_MAX;
   term->invalid_end = -1;
+}
+
+/// @return true if any invalidated terminal buffer is visible to the user
+static bool is_term_visible(void)
+{
+  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+    if (wp->w_buffer->terminal
+        && pmap_has(ptr_t)(invalidated_terminals, wp->w_buffer->terminal)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 static void redraw(bool restore_cursor)
