@@ -7715,11 +7715,13 @@ static void emsg_funcname(char *ermsg, char_u *name)
  */
 static int non_zero_arg(typval_T *argvars)
 {
-  return (argvars[0].v_type == VAR_NUMBER
-          && argvars[0].vval.v_number != 0)
-         || (argvars[0].v_type == VAR_STRING
-             && argvars[0].vval.v_string != NULL
-             && *argvars[0].vval.v_string != NUL);
+  return ((argvars[0].v_type == VAR_NUMBER
+           && argvars[0].vval.v_number != 0)
+          || (argvars[0].v_type == VAR_SPECIAL
+              && argvars[0].vval.v_special == kSpecialVarTrue)
+          || (argvars[0].v_type == VAR_STRING
+              && argvars[0].vval.v_string != NULL
+              && *argvars[0].vval.v_string != NUL));
 }
 
 /*********************************************

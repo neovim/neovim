@@ -27,5 +27,6 @@ source test_tabline.vim
 source test_tabpage.vim
 source test_tagcase.vim
 source test_tagjump.vim
+source test_true_false.vim
 source test_unlet.vim
 source test_window_cmd.vim
