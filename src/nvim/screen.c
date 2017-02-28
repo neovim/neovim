@@ -7044,7 +7044,7 @@ void draw_tabline_ext(void)
 
   Array args = ARRAY_DICT_INIT;
   ADD(args, INTEGER_OBJ(curtab->handle));
-  Array arr = ARRAY_DICT_INIT;
+  Array tabs = ARRAY_DICT_INIT;
   FOR_ALL_TABS(tp) {
     if (tp == curtab) {
       cwp = curwin;
@@ -7052,12 +7052,15 @@ void draw_tabline_ext(void)
       cwp = tp->tp_curwin;
     }
     get_trans_bufname(cwp->w_buffer);
-    Array item = ARRAY_DICT_INIT;
-    ADD(item, INTEGER_OBJ(tp->handle));
-    ADD(item, STRING_OBJ(cstr_to_string((char *)NameBuff)));
-    ADD(arr, ARRAY_OBJ(item));
+    Array tab = ARRAY_DICT_INIT;
+    ADD(tab, INTEGER_OBJ(tp->handle));
+
+    Dictionary tab_info = ARRAY_DICT_INIT;
+    PUT(tab_info, "name", STRING_OBJ(cstr_to_string((char *)NameBuff)));
+    ADD(tab, DICTIONARY_OBJ(tab_info));
+    ADD(tabs, ARRAY_OBJ(tab));
   }
-  ADD(args, ARRAY_OBJ(arr));
+  ADD(args, ARRAY_OBJ(tabs));
 
   ui_event("tabline_update", args);
 }

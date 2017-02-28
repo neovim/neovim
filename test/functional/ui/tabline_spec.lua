@@ -26,8 +26,8 @@ describe('External tab line', function()
   describe("'tabline'", function()
     it('tabline', function()
       local expected = {
-        {1, '[No Name]'},
-        {2, '[No Name]'},
+        {1, {['name'] = '[No Name]'}},
+        {2, {['name'] = '[No Name]'}},
       }
       feed(":tabnew<CR>")
       screen:expect([[
