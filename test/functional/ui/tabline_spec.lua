@@ -13,7 +13,7 @@ describe('External tab line', function()
     screen = Screen.new(25, 5)
     screen:attach({rgb=true, tabline_external=true})
     screen:set_on_event_handler(function(name, data)
-      if name == "tabline" then
+      if name == "tabline_update" then
         curtab, tabs = unpack(data)
       end
     end)
