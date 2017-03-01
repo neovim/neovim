@@ -38,6 +38,9 @@ nvim_input({keys})                                              *nvim_input()*
                 and the call is not deferred. This is the most reliable way to
                 emulate real user input.
 
+                Attributes:~
+                    {async}
+
                 Parameters:~
                     {keys}  to be typed
 
@@ -256,6 +259,9 @@ nvim_get_color_map()                                    *nvim_get_color_map()*
 nvim_get_api_info()                                      *nvim_get_api_info()*
                 TODO: Documentation
 
+                Attributes:~
+                    {async}
+
 nvim_call_atomic({calls})                                 *nvim_call_atomic()*
                 Call many api methods atomically
 
@@ -345,11 +351,20 @@ nvim_buf_get_var({buffer}, {name})                        *nvim_buf_get_var()*
                 Gets a buffer-scoped (b:) variable.
 
                 Parameters:~
-                    {buffer}  Buffer handle
-                    {name}    Variable name
+                    {buffer}  The buffer handle
+                    {name}    The variable name
 
                 Return:~
-                    Variable value
+                    The variable value
+
+nvim_buf_get_changedtick({buffer})                *nvim_buf_get_changedtick()*
+                Gets a changed tick of a buffer
+
+                Parameters:~
+                    {buffer}  The buffer handle.
+
+                Return:~
+                    b:changedtickvalue.
 
 nvim_buf_set_var({buffer}, {name}, {value})               *nvim_buf_set_var()*
                 Sets a buffer-scoped (b:) variable

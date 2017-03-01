@@ -63,6 +63,11 @@ param_exclude = (
     'channel_id',
 )
 
+# Annotations are displayed as line items after API function descriptions.
+annotation_map = {
+    'FUNC_API_ASYNC': '{async}',
+}
+
 text_width = 78
 script_path = os.path.abspath(__file__)
 base_dir = os.path.dirname(os.path.dirname(script_path))
@@ -278,6 +283,12 @@ def parse_source_xml(filename):
             parts = return_type.strip('_').split('_')
             return_type = '%s(%s)' % (parts[0], ', '.join(parts[1:]))
 
+        annotations = get_text(get_child(member, 'argsstring'))
+        if annotations and ')' in annotations:
+            annotations = annotations.rsplit(')', 1)[-1].strip()
+        annotations = filter(None, map(lambda x: annotation_map.get(x),
+                                       annotations.split()))
+
         name = get_text(get_child(member, 'name'))
 
         vimtag = '*%s()*' % name
@@ -335,6 +346,16 @@ def parse_source_xml(filename):
 
         if not doc:
             doc = 'TODO: Documentation'
+
+        annotations = '\n'.join(annotations)
+        if annotations:
+            annotations = ('\n\nAttributes:~\n' +
+                           textwrap.indent(annotations, '    '))
+            i = doc.rfind('Parameters:~')
+            if i == -1:
+                doc += annotations
+            else:
+                doc = doc[:i] + annotations + '\n\n' + doc[i:]
 
         if 'INCLUDE_C_DECL' in os.environ:
             doc += '\n\nC Declaration:~\n>\n'
