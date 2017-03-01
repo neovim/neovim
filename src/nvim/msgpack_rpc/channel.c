@@ -217,9 +217,9 @@ Object channel_send_call(uint64_t id,
           && (array.items[0].data.integer == kErrorTypeException
               || array.items[0].data.integer == kErrorTypeValidation)
           && array.items[1].type == kObjectTypeString) {
-        err->type = (ErrorType) array.items[0].data.integer;
-        xstrlcpy(err->apimsg, array.items[1].data.string.data, sizeof(err->apimsg));
-        err->set = true;
+
+		_api_set_error(err, (ErrorType) array.items[0].data.integer, "%s",
+			array.items[1].data.string.data, sizeof(err->apimsg));
       } else {
         api_set_error(err, Exception, "%s", "unknown error");
       }

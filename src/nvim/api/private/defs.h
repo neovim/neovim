@@ -38,7 +38,7 @@ typedef enum {
 
 typedef struct {
   ErrorType type;
-  char apimsg[1024];
+  char *apimsg;
   bool set;
 } ApiError;
 

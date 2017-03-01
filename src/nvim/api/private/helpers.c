@@ -65,8 +65,7 @@ bool try_end(ApiError *err)
                                              ET_ERROR,
                                              NULL,
                                              &should_free);
-    xstrlcpy(err->apimsg, msg, sizeof(err->apimsg));
-    err->set = true;
+    _api_set_error(err, err->type, "%s", msg);
     free_global_msglist();
 
     if (should_free) {
@@ -957,4 +956,20 @@ static void set_option_value_err(char *key,
 
     api_set_error(err, Exception, "%s", errmsg);
   }
+}
+
+void _api_set_error(ApiError *err, ErrorType errType, const char *format, ...)
+{
+    va_list args1;
+    va_start(args1, format);
+    va_list args2;
+    va_copy(args2, args1);
+    int len = vsnprintf(NULL, 0, format, args1);
+    va_end(args1);
+	err->apimsg = xmalloc(len+1);
+    vsprintf(err->apimsg, format, args2);
+    va_end(args2);
+	
+	err->set = true;
+	err->type = errType;
 }
