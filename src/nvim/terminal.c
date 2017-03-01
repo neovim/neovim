@@ -232,8 +232,9 @@ Terminal *terminal_open(TerminalOptions opts)
 
   // Default settings for terminal buffers
   curbuf->b_p_ma = false;   // 'nomodifiable'
-  curbuf->b_p_ul = -1;      // disable undo
+  curbuf->b_p_ul = -1;      // 'undolevels'
   curbuf->b_p_scbk = 1000;  // 'scrollback'
+  curbuf->b_p_tw = 0;       // 'textwidth'
   set_option_value((uint8_t *)"wrap", false, NULL, OPT_LOCAL);
   set_option_value((uint8_t *)"number", false, NULL, OPT_LOCAL);
   set_option_value((uint8_t *)"relativenumber", false, NULL, OPT_LOCAL);
@@ -370,6 +371,16 @@ void terminal_enter(void)
   State = TERM_FOCUS;
   mapped_ctrl_c |= TERM_FOCUS;  // Always map CTRL-C to avoid interrupt.
   RedrawingDisabled = false;
+
+  // Disable these options in terminal-mode. They are nonsense because cursor is
+  // placed at end of buffer to "follow" output.
+  int save_w_p_cul = curwin->w_p_cul;
+  int save_w_p_cuc = curwin->w_p_cuc;
+  int save_w_p_rnu = curwin->w_p_rnu;
+  curwin->w_p_cul = false;
+  curwin->w_p_cuc = false;
+  curwin->w_p_rnu = false;
+
   adjust_topline(s->term, buf, 0);  // scroll to end
   // erase the unfocused cursor
   invalidate_terminal(s->term, s->term->cursor.row, s->term->cursor.row + 1);
@@ -383,6 +394,10 @@ void terminal_enter(void)
   restart_edit = 0;
   State = save_state;
   RedrawingDisabled = s->save_rd;
+  curwin->w_p_cul = save_w_p_cul;
+  curwin->w_p_cuc = save_w_p_cuc;
+  curwin->w_p_rnu = save_w_p_rnu;
+
   // draw the unfocused cursor
   invalidate_terminal(s->term, s->term->cursor.row, s->term->cursor.row + 1);
   unshowmode(true);
@@ -988,9 +1003,12 @@ static void refresh_timer_cb(TimeWatcher *watcher, void *data)
   map_foreach(invalidated_terminals, term, stub, {
     refresh_terminal(term);
   });
+  bool any_visible = is_term_visible();
   pmap_clear(ptr_t)(invalidated_terminals);
   unblock_autocmds();
-  redraw(true);
+  if (any_visible) {
+    redraw(true);
+  }
 end:
   refresh_pending = false;
 }
@@ -1104,6 +1122,18 @@ static void refresh_screen(Terminal *term, buf_T *buf)
   term->invalid_end = -1;
 }
 
+/// @return true if any invalidated terminal buffer is visible to the user
+static bool is_term_visible(void)
+{
+  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+    if (wp->w_buffer->terminal
+        && pmap_has(ptr_t)(invalidated_terminals, wp->w_buffer->terminal)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 static void redraw(bool restore_cursor)
 {
   Terminal *term = curbuf->terminal;
@@ -1126,18 +1156,17 @@ static void redraw(bool restore_cursor)
     update_screen(0);
   }
 
-  if (term && is_focused(term)) {
-    curwin->w_wrow = term->cursor.row;
-    curwin->w_wcol = term->cursor.col + win_col_off(curwin);
-    setcursor();
-  } else if (restore_cursor) {
+  if (restore_cursor) {
     ui_cursor_goto(save_row, save_col);
   } else if (term) {
-    // exiting terminal focus, put the window cursor in a valid position
-    int height, width;
-    vterm_get_size(term->vt, &height, &width);
-    curwin->w_wrow = height - 1;
-    curwin->w_wcol = 0;
+    curwin->w_wrow = term->cursor.row;
+    curwin->w_wcol = term->cursor.col + win_col_off(curwin);
+    curwin->w_cursor.lnum = MIN(curbuf->b_ml.ml_line_count,
+                                row_to_linenr(term, term->cursor.row));
+    // Nudge cursor when returning to normal-mode.
+    int off = is_focused(term) ? 0 : (curwin->w_p_rl ? 1 : -1);
+    curwin->w_cursor.col = MAX(0, term->cursor.col + win_col_off(curwin) + off);
+    curwin->w_cursor.coladd = 0;
     setcursor();
   }
 
@@ -1153,6 +1182,7 @@ static void adjust_topline(Terminal *term, buf_T *buf, long added)
     if (wp->w_buffer == buf) {
       linenr_T ml_end = buf->b_ml.ml_line_count;
       bool following = ml_end == wp->w_cursor.lnum + added;  // cursor at end?
+
       if (following || (wp == curwin && is_focused(term))) {
         // "Follow" the terminal output
         wp->w_cursor.lnum = ml_end;

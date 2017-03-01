@@ -22,9 +22,9 @@ describe('TermClose event', function()
     execute('terminal')
     feed('<c-\\><c-n>')
     screen:expect([[
-      ready $             |
+      ^ready $             |
       [Process exited 0]  |
-      ^                    |
+                          |
       TermClose works!    |
     ]])
   end)

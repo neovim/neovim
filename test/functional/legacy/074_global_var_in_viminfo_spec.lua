@@ -31,8 +31,8 @@ describe('storing global variables in ShaDa files', function()
       'set visualbell',
       'set shada+=!',
       "let MY_GLOBAL_DICT={'foo': 1, 'bar': 0, 'longvarible': 1000}",
-      -- Store a really long list. Initially this was testing line wrapping in 
-      -- viminfo, but shada files has no line wrapping, no matter how long the 
+      -- Store a really long list. Initially this was testing line wrapping in
+      -- viminfo, but shada files has no line wrapping, no matter how long the
       -- list is.
       'let MY_GLOBAL_LIST=range(1,100)'
     )

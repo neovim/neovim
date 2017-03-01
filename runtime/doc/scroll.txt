@@ -235,15 +235,9 @@ This allows quick adjustment of the relative offset of 'scrollbind' windows.
 ==============================================================================
 6. Scrolling with a mouse wheel				*scroll-mouse-wheel*
 
-When your mouse has a scroll wheel, it should work with Vim in the GUI.  How
-it works depends on your system.  It might also work in an xterm
-|xterm-mouse-wheel|.  By default only vertical scroll wheels are supported,
-but some GUIs also support horizontal scroll wheels.
-
-For the Win32 GUI the scroll action is hard coded.  It works just like
-dragging the scrollbar of the current window.  How many lines are scrolled
-depends on your mouse driver.  If the scroll action causes input focus
-problems, see |intellimouse-wheel-problems|.
+When your mouse has a scroll wheel, it should work with Nvim in the GUI and
+any terminal that has mouse support.  By default only vertical scroll wheels
+are supported, but some GUIs also support horizontal scroll wheels.
 
 Note that horizontal scrolling only works if 'nowrap' is set.  Also, unless
 the "h" flag in 'guioptions' is set, the cursor moves to the longest visible
@@ -258,43 +252,4 @@ the scroll wheel move one line or half a page in Normal mode: >
    :map <S-ScrollWheelDown> <C-D>
 You can also use Alt and Ctrl modifiers.
 
-This only works when Vim gets the scroll wheel events, of course.  You can
-check if this works with the "xev" program.
-
-						*<MouseDown>* *<MouseUp>*
-The keys <MouseDown> and <MouseUp> have been deprecated.  Use <ScrollWheelUp>
-instead of <MouseDown> and use <ScrollWheelDown> instead of <MouseUp>.
-
-							*xterm-mouse-wheel*
-To use the mouse wheel in a new xterm you only have to make the scroll wheel
-work in your Xserver, as mentioned above.
-
-To use the mouse wheel in an older xterm you must do this:
-1. Make it work in your Xserver, as mentioned above.
-2. Add translations for the xterm, so that the xterm will pass a scroll event
-   to Vim as an escape sequence.
-3. Add mappings in Vim, to interpret the escape sequences as <ScrollWheelDown>
-   or <ScrollWheelUp> keys.
-
-You can do the translations by adding this to your ~.Xdefaults file (or other
-file where your X resources are kept): >
-
-  XTerm*VT100.Translations:		#override \n\
-		s<Btn4Down>: string("0x9b") string("[64~") \n\
-		s<Btn5Down>: string("0x9b") string("[65~") \n\
-		<Btn4Down>: string("0x9b") string("[62~") \n\
-		<Btn5Down>: string("0x9b") string("[63~") \n\
-		<Btn4Up>: \n\
-		<Btn5Up>:
-
-Add these mappings to your vimrc file: >
-	:map <M-Esc>[62~ <ScrollWheelUp>
-	:map! <M-Esc>[62~ <ScrollWheelUp>
-	:map <M-Esc>[63~ <ScrollWheelDown>
-	:map! <M-Esc>[63~ <ScrollWheelDown>
-	:map <M-Esc>[64~ <S-ScrollWheelUp>
-	:map! <M-Esc>[64~ <S-ScrollWheelUp>
-	:map <M-Esc>[65~ <S-ScrollWheelDown>
-	:map! <M-Esc>[65~ <S-ScrollWheelDown>
-<
  vim:tw=78:ts=8:ft=help:norl:

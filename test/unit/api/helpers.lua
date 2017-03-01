@@ -106,7 +106,8 @@ local lua2obj_type_tab = {
                      api.xmalloc(len * ffi.sizeof('KeyValuePair'))),
     }})
     for i = 1, len do
-      local key, val = table.unpack(kvs[i])
+      local table_unpack = table.unpack or unpack  -- luacheck: compat
+      local key, val = table_unpack(kvs[i])
       dct.data.dictionary.items[i - 1] = ffi.new(
           'KeyValuePair', {key=ffi.gc(lua2obj(key), nil).data.string,
                            value=ffi.gc(lua2obj(val), nil)})

@@ -16,13 +16,11 @@ Normal commands ~
 *]f*
 *[f*			Same as "gf".
 
-
 Commands ~
 *:rv*
 *:rviminfo*		Deprecated alias to |:rshada| command.
 *:wv*
 *:wviminfo*		Deprecated alias to |:wshada| command.
-
 
 Events ~
 *EncodingChanged*	Never fired; 'encoding' is always "utf-8".
@@ -30,6 +28,10 @@ Events ~
 
 Highlight groups ~
 *hl-VisualNOS*		Obsolete. |vim-differences| {Nvim}
+
+Keycodes ~
+*<MouseDown>*		Use <ScrollWheelUp> instead.
+*<MouseUp>*		Use <ScrollWheelDown> instead.
 
 Functions ~
 *buffer_exists()*	Obsolete name for |bufexists()|.

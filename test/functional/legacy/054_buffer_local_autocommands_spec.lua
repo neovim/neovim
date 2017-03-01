@@ -13,7 +13,7 @@ describe('BufLeave <buffer>', function()
     execute('au BufLeave <buffer> update')
     
     -- Here, autocommand for xx shall append a line
-    -- But autocommand shall not apply to buffer named <buffer> 
+    -- But autocommand shall not apply to buffer named <buffer>
     execute('e somefile')
 
     -- Here, autocommand shall be auto-deleted

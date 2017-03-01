@@ -658,7 +658,7 @@ describe('Mouse input', function()
       {4:[No Name] [+]                                        }|
       :vsp                                                 |
     ]])
-    feed('<MouseUp><0,0>')
+    feed('<ScrollWheelDown><0,0>')
     screen:expect([[
       mouse scrolling           {4:|}lines                     |
       ^                          {4:|}to                        |
@@ -675,7 +675,7 @@ describe('Mouse input', function()
       {4:[No Name] [+]                                        }|
                                                            |
     ]])
-    feed('<MouseDown><27,0>')
+    feed('<ScrollWheelUp><27,0>')
     screen:expect([[
       mouse scrolling           {4:|}text                      |
       ^                          {4:|}with                      |
@@ -692,7 +692,7 @@ describe('Mouse input', function()
       {4:[No Name] [+]                                        }|
                                                            |
     ]])
-    feed('<MouseDown><27,7><MouseDown>')
+    feed('<ScrollWheelUp><27,7><ScrollWheelUp>')
     screen:expect([[
       mouse scrolling           {4:|}text                      |
       ^                          {4:|}with                      |

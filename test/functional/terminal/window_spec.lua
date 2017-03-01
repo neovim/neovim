@@ -18,11 +18,11 @@ describe('terminal window', function()
       feed('<c-\\><c-n>')
       screen:expect([[
         tty ready                                         |
-        {2: }                                                 |
+        {2:^ }                                                 |
                                                           |
                                                           |
                                                           |
-        ^                                                  |
+                                                          |
                                                           |
       ]])
       feed(':set colorcolumn=20<cr>i')
