@@ -507,7 +507,7 @@ void msgpack_rpc_serialize_response(uint64_t response_id,
     // error represented by a [type, message] array
     msgpack_pack_array(pac, 2);
     msgpack_rpc_from_integer(err->type, pac);
-    msgpack_rpc_from_string(cstr_as_string(err->apimsg), pac);
+    msgpack_rpc_from_string(cstr_as_string(err->msg), pac);
     // Nil result
     msgpack_pack_nil(pac);
   } else {

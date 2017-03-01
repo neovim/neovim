@@ -966,8 +966,8 @@ void _api_set_error(ApiError *err, ErrorType errType, const char *format, ...)
     va_copy(args2, args1);
     int len = vsnprintf(NULL, 0, format, args1);
     va_end(args1);
-	err->apimsg = xmalloc(len+1);
-    vsprintf(err->apimsg, format, args2);
+	err->msg = xmalloc(len+1);
+    vsprintf(err->msg, format, args2);
     va_end(args2);
 	
 	err->set = true;

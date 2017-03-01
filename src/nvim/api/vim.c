@@ -753,7 +753,7 @@ Array nvim_call_atomic(uint64_t channel_id, Array calls, ApiError *err)
     Array errval = ARRAY_DICT_INIT;
     ADD(errval, INTEGER_OBJ((Integer)i));
     ADD(errval, INTEGER_OBJ(nested_error.type));
-    ADD(errval, STRING_OBJ(cstr_to_string(nested_error.apimsg)));
+    ADD(errval, STRING_OBJ(cstr_to_string(nested_error.msg)));
     ADD(rv, ARRAY_OBJ(errval));
   } else {
     ADD(rv, NIL);
