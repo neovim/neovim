@@ -192,7 +192,7 @@ Object channel_send_call(uint64_t id,
   Channel *channel = NULL;
 
   if (!(channel = pmap_get(uint64_t)(channels, id)) || channel->closed) {
-    api_set_error(err, Exception, _("Invalid channel \"%" PRIu64 "\""), id);
+    _api_set_error(err, kErrorTypeException, _("Invalid channel \"%" PRIu64 "\""), id);
     api_free_array(args);
     return NIL;
   }
@@ -212,7 +212,7 @@ Object channel_send_call(uint64_t id,
 
   if (frame.errored) {
     if (frame.result.type == kObjectTypeString) {
-      api_set_error(err, Exception, "%s", frame.result.data.string.data);
+      _api_set_error(err, kErrorTypeException, "%s", frame.result.data.string.data);
     } else if (frame.result.type == kObjectTypeArray) {
       // Should be an error in the form [type, message]
       Array array = frame.result.data.array;
@@ -220,14 +220,13 @@ Object channel_send_call(uint64_t id,
           && (array.items[0].data.integer == kErrorTypeException
               || array.items[0].data.integer == kErrorTypeValidation)
           && array.items[1].type == kObjectTypeString) {
-        err->type = (ErrorType) array.items[0].data.integer;
-        xstrlcpy(err->msg, array.items[1].data.string.data, sizeof(err->msg));
-        err->set = true;
+        _api_set_error(err, (ErrorType)array.items[0].data.integer, "%s",
+                       array.items[1].data.string.data);
       } else {
-        api_set_error(err, Exception, "%s", "unknown error");
+        _api_set_error(err, kErrorTypeException, "%s", "unknown error");
       }
     } else {
-      api_set_error(err, Exception, "%s", "unknown error");
+      _api_set_error(err, kErrorTypeException, "%s", "unknown error");
     }
 
     api_free_object(frame.result);
@@ -412,38 +411,38 @@ static void handle_request(Channel *channel, msgpack_object *request)
                channel->id);
       call_set_error(channel, buf);
     }
-    return;
-  }
-
-  // Retrieve the request handler
-  MsgpackRpcRequestHandler handler;
-  msgpack_object *method = msgpack_rpc_method(request);
-
-  if (method) {
-    handler = msgpack_rpc_get_handler_for(method->via.bin.ptr,
-                                          method->via.bin.size);
   } else {
-    handler.fn = msgpack_rpc_handle_missing_method;
-    handler.async = true;
-  }
+    // Retrieve the request handler
+    MsgpackRpcRequestHandler handler;
+    msgpack_object *method = msgpack_rpc_method(request);
 
-  Array args = ARRAY_DICT_INIT;
-  if (!msgpack_rpc_to_array(msgpack_rpc_args(request), &args)) {
-    handler.fn = msgpack_rpc_handle_invalid_arguments;
-    handler.async = true;
-  }
+    if (method) {
+      handler = msgpack_rpc_get_handler_for(method->via.bin.ptr,
+                                            method->via.bin.size);
+    } else {
+      handler.fn = msgpack_rpc_handle_missing_method;
+      handler.async = true;
+    }
 
-  RequestEvent *event_data = xmalloc(sizeof(RequestEvent));
-  event_data->channel = channel;
-  event_data->handler = handler;
-  event_data->args = args;
-  event_data->request_id = request_id;
-  incref(channel);
-  if (handler.async) {
-    on_request_event((void **)&event_data);
-  } else {
-    multiqueue_put(channel->events, on_request_event, 1, event_data);
+    Array args = ARRAY_DICT_INIT;
+    if (!msgpack_rpc_to_array(msgpack_rpc_args(request), &args)) {
+      handler.fn = msgpack_rpc_handle_invalid_arguments;
+      handler.async = true;
+    }
+
+    RequestEvent *event_data = xmalloc(sizeof(RequestEvent));
+    event_data->channel = channel;
+    event_data->handler = handler;
+    event_data->args = args;
+    event_data->request_id = request_id;
+    incref(channel);
+    if (handler.async) {
+      on_request_event((void **)&event_data);
+    } else {
+      multiqueue_put(channel->events, on_request_event, 1, event_data);
+    }
   }
+  xfree(error.msg);
 }
 
 static void on_request_event(void **argv)
@@ -470,6 +469,7 @@ static void on_request_event(void **argv)
   api_free_array(args);
   decref(channel);
   xfree(e);
+  xfree(error.msg);
 }
 
 static bool channel_write(Channel *channel, WBuffer *buffer)
@@ -512,12 +512,13 @@ static bool channel_write(Channel *channel, WBuffer *buffer)
 static void send_error(Channel *channel, uint64_t id, char *err)
 {
   Error e = ERROR_INIT;
-  api_set_error(&e, Exception, "%s", err);
+  _api_set_error(&e, kErrorTypeException, "%s", err);
   channel_write(channel, serialize_response(channel->id,
                                             id,
                                             &e,
                                             NIL,
                                             &out_buffer));
+  xfree(e.msg);
 }
 
 static void send_request(Channel *channel,
