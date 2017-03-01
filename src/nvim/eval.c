@@ -7448,6 +7448,7 @@ static void api_wrapper(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 end:
   api_free_array(args);
   api_free_object(result);
+  xfree(err.msg);
 }
 
 /*
@@ -14613,6 +14614,7 @@ static void f_rpcrequest(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
 end:
   api_free_object(result);
+  xfree(err.msg);
 }
 
 // "rpcstart()" function (DEPRECATED)
@@ -17316,7 +17318,7 @@ static void f_termopen(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   curbuf->b_p_swf = false;
   (void)setfname(curbuf, (uint8_t *)buf, NULL, true);
   // Save the job id and pid in b:terminal_job_{id,pid}
-  Error err;
+  Error err = ERROR_INIT;
   dict_set_value(curbuf->b_vars, cstr_as_string("terminal_job_id"),
                  INTEGER_OBJ(rettv->vval.v_number), false, false, &err);
   dict_set_value(curbuf->b_vars, cstr_as_string("terminal_job_pid"),
@@ -17325,6 +17327,7 @@ static void f_termopen(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   Terminal *term = terminal_open(topts);
   data->term = term;
   data->refcount++;
+  xfree(err.msg);
 
   return;
 }

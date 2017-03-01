@@ -608,7 +608,9 @@ void nvim_buf_set_name(Buffer buffer, String name, Error *err)
 Boolean nvim_buf_is_valid(Buffer buffer)
 {
   Error stub = ERROR_INIT;
-  return find_buffer_by_handle(buffer, &stub) != NULL;
+  Boolean ret = find_buffer_by_handle(buffer, &stub) != NULL;
+  xfree(stub.msg);
+  return ret;
 }
 
 /// Inserts a sequence of lines to a buffer at a certain index

@@ -183,6 +183,8 @@ Integer nvim_tabpage_get_number(Tabpage tabpage, Error *err)
 Boolean nvim_tabpage_is_valid(Tabpage tabpage)
 {
   Error stub = ERROR_INIT;
-  return find_tab_by_handle(tabpage, &stub) != NULL;
+  Boolean ret = find_tab_by_handle(tabpage, &stub) != NULL;
+  xfree(stub.msg);
+  return ret;
 }
 
