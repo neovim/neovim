@@ -8,7 +8,7 @@
 #include "nvim/memory.h"
 #include "nvim/lib/kvec.h"
 
-void _api_set_error(ApiError *err, ErrorType errType, const char *format, ...);
+void _api_set_error(Error *err, ErrorType errType, const char *format, ...);
 #define api_set_error(err, errtype, ...) \
 	_api_set_error(err, kErrorType##errtype, __VA_ARGS__)
 

@@ -38,7 +38,7 @@
 ///
 /// @param command  Ex-command string
 /// @param[out] err Error details (including actual VimL error), if any
-void nvim_command(String command, ApiError *err)
+void nvim_command(String command, Error *err)
 {
   // Run the command
   try_start();
@@ -151,7 +151,7 @@ String nvim_replace_termcodes(String str, Boolean from_part, Boolean do_lt,
   return cstr_as_string(ptr);
 }
 
-String nvim_command_output(String str, ApiError *err)
+String nvim_command_output(String str, Error *err)
 {
   do_cmdline_cmd("redir => v:command_output");
   nvim_command(str, err);
@@ -171,7 +171,7 @@ String nvim_command_output(String str, ApiError *err)
 /// @param expr     VimL expression string
 /// @param[out] err Error details, if any
 /// @return         Evaluation result or expanded object
-Object nvim_eval(String expr, ApiError *err)
+Object nvim_eval(String expr, Error *err)
 {
   Object rv = OBJECT_INIT;
   // Evaluate the expression
@@ -199,7 +199,7 @@ Object nvim_eval(String expr, ApiError *err)
 /// @param args     Function arguments packed in an Array
 /// @param[out] err Error details, if any
 /// @return Result of the function call
-Object nvim_call_function(String fname, Array args, ApiError *err)
+Object nvim_call_function(String fname, Array args, Error *err)
 {
   Object rv = OBJECT_INIT;
   if (args.size > MAX_FUNC_ARGS) {
@@ -248,7 +248,7 @@ free_vim_args:
 /// @param text       Some text
 /// @param[out] err   Error details, if any
 /// @return Number of cells
-Integer nvim_strwidth(String str, ApiError *err)
+Integer nvim_strwidth(String str, Error *err)
 {
   if (str.size > INT_MAX) {
     api_set_error(err, Validation, _("String length is too high"));
@@ -302,7 +302,7 @@ ArrayOf(String) nvim_list_runtime_paths(void)
 ///
 /// @param dir      Directory path
 /// @param[out] err Error details, if any
-void nvim_set_current_dir(String dir, ApiError *err)
+void nvim_set_current_dir(String dir, Error *err)
 {
   if (dir.size >= MAXPATHL) {
     api_set_error(err, Validation, _("Directory string is too long"));
@@ -330,7 +330,7 @@ void nvim_set_current_dir(String dir, ApiError *err)
 ///
 /// @param[out] err Error details, if any
 /// @return Current line string
-String nvim_get_current_line(ApiError *err)
+String nvim_get_current_line(Error *err)
 {
   return buffer_get_line(curbuf->handle, curwin->w_cursor.lnum - 1, err);
 }
@@ -339,7 +339,7 @@ String nvim_get_current_line(ApiError *err)
 ///
 /// @param line     Line contents
 /// @param[out] err Error details, if any
-void nvim_set_current_line(String line, ApiError *err)
+void nvim_set_current_line(String line, Error *err)
 {
   buffer_set_line(curbuf->handle, curwin->w_cursor.lnum - 1, line, err);
 }
@@ -347,7 +347,7 @@ void nvim_set_current_line(String line, ApiError *err)
 /// Deletes the current line
 ///
 /// @param[out] err Error details, if any
-void nvim_del_current_line(ApiError *err)
+void nvim_del_current_line(Error *err)
 {
   buffer_del_line(curbuf->handle, curwin->w_cursor.lnum - 1, err);
 }
@@ -357,7 +357,7 @@ void nvim_del_current_line(ApiError *err)
 /// @param name     Variable name
 /// @param[out] err Error details, if any
 /// @return Variable value
-Object nvim_get_var(String name, ApiError *err)
+Object nvim_get_var(String name, Error *err)
 {
   return dict_get_value(&globvardict, name, err);
 }
@@ -367,7 +367,7 @@ Object nvim_get_var(String name, ApiError *err)
 /// @param name     Variable name
 /// @param value    Variable value
 /// @param[out] err Error details, if any
-void nvim_set_var(String name, Object value, ApiError *err)
+void nvim_set_var(String name, Object value, Error *err)
 {
   dict_set_value(&globvardict, name, value, false, false, err);
 }
@@ -376,7 +376,7 @@ void nvim_set_var(String name, Object value, ApiError *err)
 ///
 /// @param name     Variable name
 /// @param[out] err Error details, if any
-void nvim_del_var(String name, ApiError *err)
+void nvim_del_var(String name, Error *err)
 {
   dict_set_value(&globvardict, name, NIL, true, false, err);
 }
@@ -392,7 +392,7 @@ void nvim_del_var(String name, ApiError *err)
 ///
 ///         @warning It may return nil if there was no previous value
 ///                  or if previous value was `v:null`.
-Object vim_set_var(String name, Object value, ApiError *err)
+Object vim_set_var(String name, Object value, Error *err)
 {
   return dict_set_value(&globvardict, name, value, false, true, err);
 }
@@ -404,7 +404,7 @@ Object vim_set_var(String name, Object value, ApiError *err)
 /// @param name     Variable name
 /// @param[out] err Error details, if any
 /// @return Old value
-Object vim_del_var(String name, ApiError *err)
+Object vim_del_var(String name, Error *err)
 {
   return dict_set_value(&globvardict, name, NIL, true, true, err);
 }
@@ -414,7 +414,7 @@ Object vim_del_var(String name, ApiError *err)
 /// @param name     Variable name
 /// @param[out] err Error details, if any
 /// @return         Variable value
-Object nvim_get_vvar(String name, ApiError *err)
+Object nvim_get_vvar(String name, Error *err)
 {
   return dict_get_value(&vimvardict, name, err);
 }
@@ -424,7 +424,7 @@ Object nvim_get_vvar(String name, ApiError *err)
 /// @param name     Option name
 /// @param[out] err Error details, if any
 /// @return         Option value
-Object nvim_get_option(String name, ApiError *err)
+Object nvim_get_option(String name, Error *err)
 {
   return get_option_from(NULL, SREQ_GLOBAL, name, err);
 }
@@ -434,7 +434,7 @@ Object nvim_get_option(String name, ApiError *err)
 /// @param name     Option name
 /// @param value    New option value
 /// @param[out] err Error details, if any
-void nvim_set_option(String name, Object value, ApiError *err)
+void nvim_set_option(String name, Object value, Error *err)
 {
   set_option_to(NULL, SREQ_GLOBAL, name, value, err);
 }
@@ -499,7 +499,7 @@ Buffer nvim_get_current_buf(void)
 ///
 /// @param id       Buffer handle
 /// @param[out] err Error details, if any
-void nvim_set_current_buf(Buffer buffer, ApiError *err)
+void nvim_set_current_buf(Buffer buffer, Error *err)
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
 
@@ -549,7 +549,7 @@ Window nvim_get_current_win(void)
 /// Sets the current window
 ///
 /// @param handle Window handle
-void nvim_set_current_win(Window window, ApiError *err)
+void nvim_set_current_win(Window window, Error *err)
 {
   win_T *win = find_window_by_handle(window, err);
 
@@ -600,7 +600,7 @@ Tabpage nvim_get_current_tabpage(void)
 ///
 /// @param handle   Tabpage handle
 /// @param[out] err Error details, if any
-void nvim_set_current_tabpage(Tabpage tabpage, ApiError *err)
+void nvim_set_current_tabpage(Tabpage tabpage, Error *err)
 {
   tabpage_T *tp = find_tab_by_handle(tabpage, err);
 
@@ -698,12 +698,12 @@ Array nvim_get_api_info(uint64_t channel_id)
 /// an error, it is a three-element array with the zero-based index of the call
 /// which resulted in an error, the error type and the error message. If an
 /// error ocurred, the values from all preceding calls will still be returned.
-Array nvim_call_atomic(uint64_t channel_id, Array calls, ApiError *err)
+Array nvim_call_atomic(uint64_t channel_id, Array calls, Error *err)
   FUNC_API_NOEVAL
 {
   Array rv = ARRAY_DICT_INIT;
   Array results = ARRAY_DICT_INIT;
-  ApiError nested_error = ERROR_INIT;
+  Error nested_error = ERROR_INIT;
 
   size_t i;  // also used for freeing the variables
   for (i = 0; i < calls.size; i++) {

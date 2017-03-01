@@ -7433,7 +7433,7 @@ static void api_wrapper(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     ADD(args, vim_to_object(tv));
   }
 
-  ApiError err = ERROR_INIT;
+  Error err = ERROR_INIT;
   Object result = fn(INTERNAL_CALL, args, &err);
 
   if (err.set) {
@@ -14585,7 +14585,7 @@ static void f_rpcrequest(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
 
-  ApiError err = ERROR_INIT;
+  Error err = ERROR_INIT;
   Object result = channel_send_call((uint64_t)argvars[0].vval.v_number,
                                     (char *)get_tv_string(&argvars[1]),
                                     args,
@@ -17316,7 +17316,7 @@ static void f_termopen(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   curbuf->b_p_swf = false;
   (void)setfname(curbuf, (uint8_t *)buf, NULL, true);
   // Save the job id and pid in b:terminal_job_{id,pid}
-  ApiError err;
+  Error err;
   dict_set_value(curbuf->b_vars, cstr_as_string("terminal_job_id"),
                  INTEGER_OBJ(rettv->vval.v_number), false, false, &err);
   dict_set_value(curbuf->b_vars, cstr_as_string("terminal_job_pid"),

@@ -459,7 +459,7 @@ void msgpack_rpc_from_dictionary(Dictionary result, msgpack_packer *res)
 /// Handler executed when an invalid method name is passed
 Object msgpack_rpc_handle_missing_method(uint64_t channel_id,
                                          Array args,
-                                         ApiError *error)
+                                         Error *error)
 {
   _api_set_error(error, error->type, "Invalid method name");
   return NIL;
@@ -468,7 +468,7 @@ Object msgpack_rpc_handle_missing_method(uint64_t channel_id,
 /// Handler executed when malformated arguments are passed
 Object msgpack_rpc_handle_invalid_arguments(uint64_t channel_id,
                                             Array args,
-                                            ApiError *error)
+                                            Error *error)
 {
   _api_set_error(error, error->type, "Invalid method arguments");
   return NIL;
@@ -494,7 +494,7 @@ void msgpack_rpc_serialize_request(uint64_t request_id,
 
 /// Serializes a msgpack-rpc response
 void msgpack_rpc_serialize_response(uint64_t response_id,
-                                    ApiError *err,
+                                    Error *err,
                                     Object arg,
                                     msgpack_packer *pac)
   FUNC_ATTR_NONNULL_ARG(2, 4)
@@ -549,7 +549,7 @@ static msgpack_object *msgpack_rpc_msg_id(msgpack_object *req)
 
 void msgpack_rpc_validate(uint64_t *response_id,
                           msgpack_object *req,
-                          ApiError *err)
+                          Error *err)
 {
   // response id not known yet
 

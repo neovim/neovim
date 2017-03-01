@@ -40,7 +40,7 @@ typedef struct {
   ErrorType type;
   char *msg;
   bool set;
-} ApiError;
+} Error;
 
 typedef bool Boolean;
 typedef int64_t Integer;

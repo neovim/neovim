@@ -14,7 +14,7 @@
 /// @param tabpage  Tabpage
 /// @param[out] err Error details, if any
 /// @return List of windows in `tabpage`
-ArrayOf(Window) nvim_tabpage_list_wins(Tabpage tabpage, ApiError *err)
+ArrayOf(Window) nvim_tabpage_list_wins(Tabpage tabpage, Error *err)
 {
   Array rv = ARRAY_DICT_INIT;
   tabpage_T *tab = find_tab_by_handle(tabpage, err);
@@ -43,7 +43,7 @@ ArrayOf(Window) nvim_tabpage_list_wins(Tabpage tabpage, ApiError *err)
 /// @param name     Variable name
 /// @param[out] err Error details, if any
 /// @return Variable value
-Object nvim_tabpage_get_var(Tabpage tabpage, String name, ApiError *err)
+Object nvim_tabpage_get_var(Tabpage tabpage, String name, Error *err)
 {
   tabpage_T *tab = find_tab_by_handle(tabpage, err);
 
@@ -63,7 +63,7 @@ Object nvim_tabpage_get_var(Tabpage tabpage, String name, ApiError *err)
 void nvim_tabpage_set_var(Tabpage tabpage,
                           String name,
                           Object value,
-                          ApiError *err)
+                          Error *err)
 {
   tabpage_T *tab = find_tab_by_handle(tabpage, err);
 
@@ -79,7 +79,7 @@ void nvim_tabpage_set_var(Tabpage tabpage,
 /// @param tabpage  Tabpage handle
 /// @param name     Variable name
 /// @param[out] err Error details, if any
-void nvim_tabpage_del_var(Tabpage tabpage, String name, ApiError *err)
+void nvim_tabpage_del_var(Tabpage tabpage, String name, Error *err)
 {
   tabpage_T *tab = find_tab_by_handle(tabpage, err);
 
@@ -102,7 +102,7 @@ void nvim_tabpage_del_var(Tabpage tabpage, String name, ApiError *err)
 ///
 ///         @warning It may return nil if there was no previous value
 ///                  or if previous value was `v:null`.
-Object tabpage_set_var(Tabpage tabpage, String name, Object value, ApiError *err)
+Object tabpage_set_var(Tabpage tabpage, String name, Object value, Error *err)
 {
   tabpage_T *tab = find_tab_by_handle(tabpage, err);
 
@@ -121,7 +121,7 @@ Object tabpage_set_var(Tabpage tabpage, String name, Object value, ApiError *err
 /// @param name     Variable name
 /// @param[out] err Error details, if any
 /// @return Old value
-Object tabpage_del_var(Tabpage tabpage, String name, ApiError *err)
+Object tabpage_del_var(Tabpage tabpage, String name, Error *err)
 {
   tabpage_T *tab = find_tab_by_handle(tabpage, err);
 
@@ -137,7 +137,7 @@ Object tabpage_del_var(Tabpage tabpage, String name, ApiError *err)
 /// @param tabpage  Tabpage handle
 /// @param[out] err Error details, if any
 /// @return Window handle
-Window nvim_tabpage_get_win(Tabpage tabpage, ApiError *err)
+Window nvim_tabpage_get_win(Tabpage tabpage, Error *err)
 {
   Window rv = 0;
   tabpage_T *tab = find_tab_by_handle(tabpage, err);
@@ -164,7 +164,7 @@ Window nvim_tabpage_get_win(Tabpage tabpage, ApiError *err)
 /// @param tabpage  Tabpage handle
 /// @param[out] err Error details, if any
 /// @return Tabpage number
-Integer nvim_tabpage_get_number(Tabpage tabpage, ApiError *err)
+Integer nvim_tabpage_get_number(Tabpage tabpage, Error *err)
 {
   Integer rv = 0;
   tabpage_T *tab = find_tab_by_handle(tabpage, err);
@@ -182,7 +182,7 @@ Integer nvim_tabpage_get_number(Tabpage tabpage, ApiError *err)
 /// @return true if the tabpage is valid, false otherwise
 Boolean nvim_tabpage_is_valid(Tabpage tabpage)
 {
-  ApiError stub = ERROR_INIT;
+  Error stub = ERROR_INIT;
   return find_tab_by_handle(tabpage, &stub) != NULL;
 }
 

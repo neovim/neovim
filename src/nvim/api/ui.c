@@ -47,7 +47,7 @@ void remote_ui_disconnect(uint64_t channel_id)
 }
 
 void nvim_ui_attach(uint64_t channel_id, Integer width, Integer height,
-                    Dictionary options, ApiError *err)
+                    Dictionary options, Error *err)
     FUNC_API_NOEVAL
 {
   if (pmap_has(uint64_t)(connected_uis, channel_id)) {
@@ -109,7 +109,7 @@ void nvim_ui_attach(uint64_t channel_id, Integer width, Integer height,
 
 /// @deprecated
 void ui_attach(uint64_t channel_id, Integer width, Integer height,
-               Boolean enable_rgb, ApiError *err)
+               Boolean enable_rgb, Error *err)
 {
   Dictionary opts = ARRAY_DICT_INIT;
   PUT(opts, "rgb", BOOLEAN_OBJ(enable_rgb));
@@ -117,7 +117,7 @@ void ui_attach(uint64_t channel_id, Integer width, Integer height,
   api_free_dictionary(opts);
 }
 
-void nvim_ui_detach(uint64_t channel_id, ApiError *err)
+void nvim_ui_detach(uint64_t channel_id, Error *err)
     FUNC_API_NOEVAL
 {
   if (!pmap_has(uint64_t)(connected_uis, channel_id)) {
@@ -129,7 +129,7 @@ void nvim_ui_detach(uint64_t channel_id, ApiError *err)
 
 
 void nvim_ui_try_resize(uint64_t channel_id, Integer width,
-                        Integer height, ApiError *err)
+                        Integer height, Error *err)
     FUNC_API_NOEVAL
 {
   if (!pmap_has(uint64_t)(connected_uis, channel_id)) {
@@ -150,7 +150,7 @@ void nvim_ui_try_resize(uint64_t channel_id, Integer width,
 }
 
 void nvim_ui_set_option(uint64_t channel_id, String name,
-                        Object value, ApiError *error)
+                        Object value, Error *error)
     FUNC_API_NOEVAL
 {
   if (!pmap_has(uint64_t)(connected_uis, channel_id)) {
@@ -165,7 +165,7 @@ void nvim_ui_set_option(uint64_t channel_id, String name,
   }
 }
 
-static void ui_set_option(UI *ui, String name, Object value, ApiError *error) {
+static void ui_set_option(UI *ui, String name, Object value, Error *error) {
   if (strcmp(name.data, "rgb") == 0) {
     if (value.type != kObjectTypeBoolean) {
       api_set_error(error, Validation, _("rgb must be a Boolean"));
