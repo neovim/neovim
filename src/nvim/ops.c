@@ -210,8 +210,6 @@ void op_shift(oparg_T *oap, int curs_top, int amount)
   }
 
   changed_lines(oap->start.lnum, 0, oap->end.lnum + 1, 0L);
-  /* The cursor line is not in a closed fold */
-  foldOpenCursor();
 
   if (oap->motion_type == kMTBlockWise) {
     curwin->w_cursor.lnum = oap->start.lnum;
@@ -221,6 +219,9 @@ void op_shift(oparg_T *oap, int curs_top, int amount)
     beginline(BL_SOL | BL_FIX);       /* shift_line() may have set cursor.col */
   } else
     --curwin->w_cursor.lnum;            /* put cursor on last line, for ":>" */
+
+  // The cursor line is not in a closed fold
+  foldOpenCursor();
 
   if (oap->line_count > p_report) {
     if (oap->op_type == OP_RSHIFT)
