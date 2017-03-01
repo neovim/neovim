@@ -622,7 +622,7 @@ static int term_movecursor(VTermPos new, VTermPos old, int visible,
 static void buf_set_term_title(buf_T *buf, char *title)
     FUNC_ATTR_NONNULL_ALL
 {
-  Error err;
+  ApiError err;
   dict_set_value(buf->b_vars,
                  cstr_as_string("term_title"),
                  STRING_OBJ(cstr_as_string(title)),
@@ -1158,7 +1158,7 @@ static bool is_focused(Terminal *term)
 
 #define GET_CONFIG_VALUE(k, o) \
   do { \
-    Error err; \
+    ApiError err; \
     /* Only called from terminal_open where curbuf->terminal is the */ \
     /* context  */ \
     o = dict_get_value(curbuf->b_vars, cstr_as_string(k), &err); \

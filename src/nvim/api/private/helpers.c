@@ -42,7 +42,7 @@ void try_start(void)
 ///
 /// @param err Pointer to the stack-allocated error object
 /// @return true if an error occurred
-bool try_end(Error *err)
+bool try_end(ApiError *err)
 {
   --trylevel;
 
@@ -85,7 +85,7 @@ bool try_end(Error *err)
 /// @param dict The vimscript dict
 /// @param key The key
 /// @param[out] err Details of an error that may have occurred
-Object dict_get_value(dict_T *dict, String key, Error *err)
+Object dict_get_value(dict_T *dict, String key, ApiError *err)
 {
   hashitem_T *hi = hash_find(&dict->dv_hashtab, (uint8_t *) key.data);
 
@@ -110,7 +110,7 @@ Object dict_get_value(dict_T *dict, String key, Error *err)
 /// @param[out] err Details of an error that may have occurred
 /// @return The old value if `retval` is true and the key was present, else NIL
 Object dict_set_value(dict_T *dict, String key, Object value, bool del,
-                      bool retval, Error *err)
+                      bool retval, ApiError *err)
 {
   Object rv = OBJECT_INIT;
 
@@ -184,7 +184,7 @@ Object dict_set_value(dict_T *dict, String key, Object value, bool del,
 /// @param name The option name
 /// @param[out] err Details of an error that may have occurred
 /// @return the option value
-Object get_option_from(void *from, int type, String name, Error *err)
+Object get_option_from(void *from, int type, String name, ApiError *err)
 {
   Object rv = OBJECT_INIT;
 
@@ -241,7 +241,7 @@ Object get_option_from(void *from, int type, String name, Error *err)
 /// @param type One of `SREQ_GLOBAL`, `SREQ_WIN` or `SREQ_BUF`
 /// @param name The option name
 /// @param[out] err Details of an error that may have occurred
-void set_option_to(void *to, int type, String name, Object value, Error *err)
+void set_option_to(void *to, int type, String name, Object value, ApiError *err)
 {
   if (name.size == 0) {
     api_set_error(err, Validation, _("Empty option name"));
@@ -538,7 +538,7 @@ Object vim_to_object(typval_T *obj)
   return ret;
 }
 
-buf_T *find_buffer_by_handle(Buffer buffer, Error *err)
+buf_T *find_buffer_by_handle(Buffer buffer, ApiError *err)
 {
   if (buffer == 0) {
     return curbuf;
@@ -553,7 +553,7 @@ buf_T *find_buffer_by_handle(Buffer buffer, Error *err)
   return rv;
 }
 
-win_T * find_window_by_handle(Window window, Error *err)
+win_T * find_window_by_handle(Window window, ApiError *err)
 {
   if (window == 0) {
     return curwin;
@@ -568,7 +568,7 @@ win_T * find_window_by_handle(Window window, Error *err)
   return rv;
 }
 
-tabpage_T * find_tab_by_handle(Tabpage tabpage, Error *err)
+tabpage_T * find_tab_by_handle(Tabpage tabpage, ApiError *err)
 {
   if (tabpage == 0) {
     return curtab;
@@ -623,7 +623,7 @@ String cstr_as_string(char *str) FUNC_ATTR_PURE
 /// @param tv   Conversion result is placed here. On failure member v_type is
 ///             set to VAR_UNKNOWN (no allocation was made for this variable).
 /// returns     true if conversion is successful, otherwise false.
-bool object_to_vim(Object obj, typval_T *tv, Error *err)
+bool object_to_vim(Object obj, typval_T *tv, ApiError *err)
 {
   tv->v_type = VAR_UNKNOWN;
   tv->v_lock = VAR_UNLOCKED;
@@ -896,7 +896,7 @@ static void set_option_value_for(char *key,
                                  int opt_flags,
                                  int opt_type,
                                  void *from,
-                                 Error *err)
+                                 ApiError *err)
 {
   win_T *save_curwin = NULL;
   tabpage_T *save_curtab = NULL;
@@ -942,7 +942,7 @@ static void set_option_value_err(char *key,
                                  int numval,
                                  char *stringval,
                                  int opt_flags,
-                                 Error *err)
+                                 ApiError *err)
 {
   char *errmsg;
 

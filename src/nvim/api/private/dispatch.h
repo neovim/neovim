@@ -5,7 +5,7 @@
 
 typedef Object (*ApiDispatchWrapper)(uint64_t channel_id,
                                      Array args,
-                                     Error *error);
+                                     ApiError *error);
 
 /// The rpc_method_handlers table, used in msgpack_rpc_dispatch(), stores
 /// functions of this type.

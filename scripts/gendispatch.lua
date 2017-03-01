@@ -209,7 +209,7 @@ for i = 1, #functions do
   if fn.impl_name == nil then
     local args = {}
 
-    output:write('Object handle_'..fn.name..'(uint64_t channel_id, Array args, Error *error)')
+    output:write('Object handle_'..fn.name..'(uint64_t channel_id, Array args, ApiError *error)')
     output:write('\n{')
     output:write('\n  Object ret = NIL;')
     -- Declare/initialize variables that will hold converted arguments
