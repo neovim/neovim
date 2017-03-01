@@ -2379,6 +2379,7 @@ void set_completion(colnr_T startcol, list_T *list)
   compl_used_match = TRUE;
   compl_cont_status = 0;
   int save_w_wrow = curwin->w_wrow;
+  int save_w_leftcol = curwin->w_leftcol;
 
   compl_curr_match = compl_first_match;
   if (compl_no_insert || compl_no_select) {
@@ -2393,7 +2394,7 @@ void set_completion(colnr_T startcol, list_T *list)
 
   // Lazily show the popup menu, unless we got interrupted.
   if (!compl_interrupted) {
-    show_pum(save_w_wrow);
+    show_pum(save_w_wrow, save_w_leftcol);
   }
 
   ui_flush();
@@ -4338,6 +4339,7 @@ static int ins_complete(int c, bool enable_pum)
   colnr_T curs_col;                 /* cursor column */
   int n;
   int save_w_wrow;
+  int save_w_leftcol;
   int insert_match;
 
   compl_direction = ins_compl_key2dir(c);
@@ -4687,6 +4689,7 @@ static int ins_complete(int c, bool enable_pum)
    * Find next match (and following matches).
    */
   save_w_wrow = curwin->w_wrow;
+  save_w_leftcol = curwin->w_leftcol;
   n = ins_compl_next(true, ins_compl_key2count(c), insert_match, false);
 
   /* may undisplay the popup menu */
@@ -4821,7 +4824,7 @@ static int ins_complete(int c, bool enable_pum)
 
   // Show the popup menu, unless we got interrupted.
   if (enable_pum && !compl_interrupted) {
-    show_pum(save_w_wrow);
+    show_pum(save_w_wrow, save_w_leftcol);
   }
   compl_was_interrupted = compl_interrupted;
   compl_interrupted = FALSE;
@@ -8549,15 +8552,16 @@ static char_u *do_insert_char_pre(int c)
   return res;
 }
 
-static void show_pum(int save_w_wrow)
+static void show_pum(int prev_w_wrow, int prev_w_leftcol)
 {
   // RedrawingDisabled may be set when invoked through complete().
   int n = RedrawingDisabled;
   RedrawingDisabled = 0;
 
-  // If the cursor moved we need to remove the pum first.
+  // If the cursor moved or the display scrolled we need to remove the pum
+  // first.
   setcursor();
-  if (save_w_wrow != curwin->w_wrow) {
+  if (prev_w_wrow != curwin->w_wrow || prev_w_leftcol != curwin->w_leftcol) {
     ins_compl_del_pum();
   }
 
