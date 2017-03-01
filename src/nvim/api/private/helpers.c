@@ -69,8 +69,7 @@ bool try_end(Error *err)
                                              ET_ERROR,
                                              NULL,
                                              &should_free);
-    xstrlcpy(err->msg, msg, sizeof(err->msg));
-    err->set = true;
+    _api_set_error(err, err->type, "%s", msg);
     free_global_msglist();
 
     if (should_free) {
@@ -567,7 +566,7 @@ buf_T *find_buffer_by_handle(Buffer buffer, Error *err)
   return rv;
 }
 
-win_T * find_window_by_handle(Window window, Error *err)
+win_T *find_window_by_handle(Window window, Error *err)
 {
   if (window == 0) {
     return curwin;
@@ -582,7 +581,7 @@ win_T * find_window_by_handle(Window window, Error *err)
   return rv;
 }
 
-tabpage_T * find_tab_by_handle(Tabpage tabpage, Error *err)
+tabpage_T *find_tab_by_handle(Tabpage tabpage, Error *err)
 {
   if (tabpage == 0) {
     return curtab;
@@ -801,6 +800,11 @@ void api_free_dictionary(Dictionary value)
   xfree(value.items);
 }
 
+void api_free_error(Error value)
+{
+  xfree(value.msg);
+}
+
 Dictionary api_metadata(void)
 {
   static Dictionary metadata = ARRAY_DICT_INIT;
@@ -967,4 +971,23 @@ static void set_option_value_err(char *key,
 
     api_set_error(err, Exception, "%s", errmsg);
   }
+}
+
+void _api_set_error(Error *err, ErrorType errType, const char *format, ...)
+{
+  va_list args1;
+  va_list args2;
+  va_start(args1, format);
+  va_copy(args2, args1);
+  int len = vsnprintf(NULL, 0, format, args1);
+  va_end(args1);
+  assert(len >= 0);
+  // Limit error message to 1 MB.
+  size_t bufsize = MIN((size_t)len + 1, 1024 * 1024);
+  err->msg = xmalloc(bufsize);
+  vsnprintf(err->msg, bufsize, format, args2);
+  va_end(args2);
+
+  err->set = true;
+  err->type = errType;
 }

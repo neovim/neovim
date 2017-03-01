@@ -220,9 +220,8 @@ Object channel_send_call(uint64_t id,
           && (array.items[0].data.integer == kErrorTypeException
               || array.items[0].data.integer == kErrorTypeValidation)
           && array.items[1].type == kObjectTypeString) {
-        err->type = (ErrorType) array.items[0].data.integer;
-        xstrlcpy(err->msg, array.items[1].data.string.data, sizeof(err->msg));
-        err->set = true;
+        _api_set_error(err, (ErrorType)array.items[0].data.integer, "%s",
+                       array.items[1].data.string.data);
       } else {
         api_set_error(err, Exception, "%s", "unknown error");
       }
@@ -412,6 +411,7 @@ static void handle_request(Channel *channel, msgpack_object *request)
                channel->id);
       call_set_error(channel, buf);
     }
+    api_free_error(error);
     return;
   }
 
@@ -444,6 +444,7 @@ static void handle_request(Channel *channel, msgpack_object *request)
   } else {
     multiqueue_put(channel->events, on_request_event, 1, event_data);
   }
+  api_free_error(error);
 }
 
 static void on_request_event(void **argv)
@@ -470,6 +471,7 @@ static void on_request_event(void **argv)
   api_free_array(args);
   decref(channel);
   xfree(e);
+  api_free_error(error);
 }
 
 static bool channel_write(Channel *channel, WBuffer *buffer)
@@ -518,6 +520,7 @@ static void send_error(Channel *channel, uint64_t id, char *err)
                                             &e,
                                             NIL,
                                             &out_buffer));
+  api_free_error(e);
 }
 
 static void send_request(Channel *channel,

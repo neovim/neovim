@@ -794,10 +794,12 @@ Array nvim_call_atomic(uint64_t channel_id, Array calls, Error *err)
   } else {
     ADD(rv, NIL);
   }
-  return rv;
+  goto theend;
 
 validation_error:
   api_free_array(results);
+theend:
+  api_free_error(nested_error);
   return rv;
 }
 

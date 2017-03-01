@@ -639,7 +639,9 @@ Boolean nvim_buf_is_valid(Buffer buffer)
     FUNC_API_SINCE(1)
 {
   Error stub = ERROR_INIT;
-  return find_buffer_by_handle(buffer, &stub) != NULL;
+  Boolean ret = find_buffer_by_handle(buffer, &stub) != NULL;
+  api_free_error(stub);
+  return ret;
 }
 
 /// Inserts a sequence of lines to a buffer at a certain index

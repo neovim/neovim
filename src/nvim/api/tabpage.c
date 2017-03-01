@@ -193,6 +193,8 @@ Boolean nvim_tabpage_is_valid(Tabpage tabpage)
     FUNC_API_SINCE(1)
 {
   Error stub = ERROR_INIT;
-  return find_tab_by_handle(tabpage, &stub) != NULL;
+  Boolean ret = find_tab_by_handle(tabpage, &stub) != NULL;
+  api_free_error(stub);
+  return ret;
 }
 

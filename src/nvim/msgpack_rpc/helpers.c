@@ -475,8 +475,7 @@ Object msgpack_rpc_handle_missing_method(uint64_t channel_id,
                                          Array args,
                                          Error *error)
 {
-  snprintf(error->msg, sizeof(error->msg), "Invalid method name");
-  error->set = true;
+  _api_set_error(error, error->type, "Invalid method name");
   return NIL;
 }
 
@@ -485,8 +484,7 @@ Object msgpack_rpc_handle_invalid_arguments(uint64_t channel_id,
                                             Array args,
                                             Error *error)
 {
-  snprintf(error->msg, sizeof(error->msg), "Invalid method arguments");
-  error->set = true;
+  _api_set_error(error, error->type, "Invalid method arguments");
   return NIL;
 }
 
