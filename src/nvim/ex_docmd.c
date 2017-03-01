@@ -1244,6 +1244,7 @@ static char_u * do_one_cmd(char_u **cmdlinep,
   cmdmod_T save_cmdmod;
   int ni;                                       /* set when Not Implemented */
   char_u *cmd;
+  int address_count = 1;
 
   memset(&ea, 0, sizeof(ea));
   ea.line1 = 1;
@@ -1405,7 +1406,7 @@ static char_u * do_one_cmd(char_u **cmdlinep,
       continue;
 
     case 't':   if (checkforcmd(&p, "tab", 3)) {
-      long tabnr = get_address(&ea, &ea.cmd, ADDR_TABS, ea.skip, false);
+      long tabnr = get_address(&ea, &ea.cmd, ADDR_TABS, ea.skip, false, 1);
       if (tabnr == MAXLNUM) {
         cmdmod.tab = tabpage_index(curtab) + 1;
       } else {
@@ -1543,7 +1544,7 @@ static char_u * do_one_cmd(char_u **cmdlinep,
     }
     ea.cmd = skipwhite(ea.cmd);
     lnum = get_address(&ea, &ea.cmd, ea.addr_type, ea.skip,
-                       ea.addr_count == 0);
+                       ea.addr_count == 0, address_count++);
     if (ea.cmd == NULL) {  // error detected
       goto doend;
     }
@@ -3422,8 +3423,8 @@ static linenr_T get_address(exarg_T *eap,
                             char_u **ptr,
                             int addr_type,  // flag: one of ADDR_LINES, ...
                             int skip,  // only skip the address, don't use it
-                            int to_other_file  // flag: may jump to other file
-                            )
+                            int to_other_file,  // flag: may jump to other file
+                            int address_count)  // 1 for first, >1 after comma
 {
   int c;
   int i;
@@ -3653,13 +3654,22 @@ static linenr_T get_address(exarg_T *eap,
         n = 1;
       else
         n = getdigits(&cmd);
-      if (addr_type == ADDR_LOADED_BUFFERS || addr_type == ADDR_BUFFERS)
+      if (addr_type == ADDR_LOADED_BUFFERS || addr_type == ADDR_BUFFERS) {
         lnum = compute_buffer_local_count(
             addr_type, lnum, (i == '-') ? -1 * n : n);
-      else if (i == '-')
-        lnum -= n;
-      else
-        lnum += n;
+      } else {
+        // Relative line addressing, need to adjust for folded lines
+        // now, but only do it after the first address.
+        if (addr_type == ADDR_LINES && (i == '-' || i == '+')
+            && address_count >= 2) {
+          (void)hasFolding(lnum, NULL, &lnum);
+        }
+        if (i == '-') {
+          lnum -= n;
+        } else {
+          lnum += n;
+        }
+      }
     }
   } while (*cmd == '/' || *cmd == '?');
 
@@ -7237,7 +7247,7 @@ static void ex_put(exarg_T *eap)
  */
 static void ex_copymove(exarg_T *eap)
 {
-  long n = get_address(eap, &eap->arg, eap->addr_type, false, false);
+  long n = get_address(eap, &eap->arg, eap->addr_type, false, false, 1);
   if (eap->arg == NULL) {  // error detected
     eap->nextcmd = NULL;
     return;
