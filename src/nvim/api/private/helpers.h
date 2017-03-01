@@ -8,14 +8,9 @@
 #include "nvim/memory.h"
 #include "nvim/lib/kvec.h"
 
+void _api_set_error(Error *err, ErrorType errType, const char *format, ...);
 #define api_set_error(err, errtype, ...) \
-  do { \
-    snprintf((err)->msg, \
-             sizeof((err)->msg), \
-             __VA_ARGS__); \
-    (err)->set = true; \
-    (err)->type = kErrorType##errtype; \
-  } while (0)
+	_api_set_error(err, kErrorType##errtype, __VA_ARGS__)
 
 #define OBJECT_OBJ(o) o
 
