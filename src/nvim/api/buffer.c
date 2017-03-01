@@ -411,10 +411,10 @@ end:
 
 /// Gets a buffer-scoped (b:) variable.
 ///
-/// @param buffer The buffer handle
-/// @param name The variable name
-/// @param[out] err Details of an error that may have occurred
-/// @return The variable value
+/// @param buffer     Buffer handle
+/// @param name       Variable name
+/// @param[out] err   Error details, if any
+/// @return Variable value
 Object nvim_buf_get_var(Buffer buffer, String name, Error *err)
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
@@ -428,7 +428,7 @@ Object nvim_buf_get_var(Buffer buffer, String name, Error *err)
 
 /// Gets a changed tick of a buffer
 ///
-/// @param[in]  buffer  The buffer handle.
+/// @param[in]  buffer  Buffer handle.
 ///
 /// @return `b:changedtick` value.
 Integer nvim_buf_get_changedtick(Buffer buffer, Error *err)
