@@ -10,8 +10,8 @@
 
 #define api_set_error(err, errtype, ...) \
   do { \
-    snprintf((err)->msg, \
-             sizeof((err)->msg), \
+    snprintf((err)->apimsg, \
+             sizeof((err)->apimsg), \
              __VA_ARGS__); \
     (err)->set = true; \
     (err)->type = kErrorType##errtype; \

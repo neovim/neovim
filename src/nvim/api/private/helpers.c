@@ -65,7 +65,7 @@ bool try_end(ApiError *err)
                                              ET_ERROR,
                                              NULL,
                                              &should_free);
-    xstrlcpy(err->msg, msg, sizeof(err->msg));
+    xstrlcpy(err->apimsg, msg, sizeof(err->apimsg));
     err->set = true;
     free_global_msglist();
 

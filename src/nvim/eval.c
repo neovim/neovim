@@ -7437,12 +7437,12 @@ static void api_wrapper(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   Object result = fn(INTERNAL_CALL, args, &err);
 
   if (err.set) {
-    nvim_err_writeln(cstr_as_string(err.msg));
+    nvim_err_writeln(cstr_as_string(err.apimsg));
     goto end;
   }
 
   if (!object_to_vim(result, rettv, &err)) {
-    EMSG2(_("Error converting the call result: %s"), err.msg);
+    EMSG2(_("Error converting the call result: %s"), err.apimsg);
   }
 
 end:
@@ -14603,12 +14603,12 @@ static void f_rpcrequest(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   if (err.set) {
-    nvim_err_writeln(cstr_as_string(err.msg));
+    nvim_err_writeln(cstr_as_string(err.apimsg));
     goto end;
   }
 
   if (!object_to_vim(result, rettv, &err)) {
-    EMSG2(_("Error converting the call result: %s"), err.msg);
+    EMSG2(_("Error converting the call result: %s"), err.apimsg);
   }
 
 end:

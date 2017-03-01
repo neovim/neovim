@@ -461,7 +461,7 @@ Object msgpack_rpc_handle_missing_method(uint64_t channel_id,
                                          Array args,
                                          ApiError *error)
 {
-  snprintf(error->msg, sizeof(error->msg), "Invalid method name");
+  snprintf(error->apimsg, sizeof(error->apimsg), "Invalid method name");
   error->set = true;
   return NIL;
 }
@@ -471,7 +471,7 @@ Object msgpack_rpc_handle_invalid_arguments(uint64_t channel_id,
                                             Array args,
                                             ApiError *error)
 {
-  snprintf(error->msg, sizeof(error->msg), "Invalid method arguments");
+  snprintf(error->apimsg, sizeof(error->apimsg), "Invalid method arguments");
   error->set = true;
   return NIL;
 }
@@ -509,7 +509,7 @@ void msgpack_rpc_serialize_response(uint64_t response_id,
     // error represented by a [type, message] array
     msgpack_pack_array(pac, 2);
     msgpack_rpc_from_integer(err->type, pac);
-    msgpack_rpc_from_string(cstr_as_string(err->msg), pac);
+    msgpack_rpc_from_string(cstr_as_string(err->apimsg), pac);
     // Nil result
     msgpack_pack_nil(pac);
   } else {
