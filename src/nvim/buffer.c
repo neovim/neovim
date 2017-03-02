@@ -3839,7 +3839,7 @@ int build_stl_str_hl(
 
         // { Reduce the number by base^n
         while (num_chars-- > maxwid) {
-          num /= base;
+          num /= (long)base;
         }
         // }
 
