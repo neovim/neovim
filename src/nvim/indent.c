@@ -454,7 +454,7 @@ int get_number_indent(linenr_T lnum)
  * parameters into account. Window must be specified, since it is not
  * necessarily always the current one.
  */
-int get_breakindent_win(win_T *wp, char_u *line) {
+int get_breakindent_win(const win_T *wp, char_u *line) {
   static int prev_indent = 0;  /* cached indent value */
   static long prev_ts = 0; /* cached tabstop value */
   static char_u *prev_line = NULL; /* cached pointer to line */

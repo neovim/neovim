@@ -163,13 +163,15 @@ retnomove:
 
     // Before jumping to another buffer, or moving the cursor for a left
     // click, stop Visual mode.
+    // TODO compute foldcolumnwidth
+    int fdc = compute_foldcolumn(curwin, 0);
     if (VIsual_active
         && (wp->w_buffer != curwin->w_buffer
             || (!on_status_line
                 && !on_sep_line
                 && (
-                  wp->w_p_rl ? col < wp->w_width - wp->w_p_fdc :
-                                     col >= wp->w_p_fdc
+                  wp->w_p_rl ? col < wp->w_width - fdc :
+                                     col >= fdc
                                              + (cmdwin_type == 0 && wp ==
                                                 curwin ? 0 : 1)
                   )

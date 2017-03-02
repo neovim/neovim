@@ -2452,6 +2452,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	When non-zero, a column with the specified width is shown at the side
 	of the window which indicates open and closed folds.  The maximum
 	value is 12.
+  When set to -1, adopt the maximum fold level as column width.
 	See |folding|.
 
 			*'foldenable'* *'fen'* *'nofoldenable'* *'nofen'*

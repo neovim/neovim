@@ -5776,22 +5776,25 @@ comp_textwidth (
 )
 {
   int textwidth;
+  int fdc = compute_foldcolumn(curwin, 0);
 
   textwidth = curbuf->b_p_tw;
   if (textwidth == 0 && curbuf->b_p_wm) {
     /* The width is the window width minus 'wrapmargin' minus all the
      * things that add to the margin. */
     textwidth = curwin->w_width - curbuf->b_p_wm;
-    if (cmdwin_type != 0)
+    if (cmdwin_type != 0) {
       textwidth -= 1;
-    textwidth -= curwin->w_p_fdc;
+    }
+    textwidth -= fdc;
 
     if (signcolumn_on(curwin)) {
         textwidth -= 1;
     }
 
-    if (curwin->w_p_nu || curwin->w_p_rnu)
+    if (curwin->w_p_nu || curwin->w_p_rnu) {
       textwidth -= 8;
+    }
   }
   if (textwidth < 0)
     textwidth = 0;

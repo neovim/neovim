@@ -285,7 +285,7 @@ int ml_open(buf_T *buf)
   buf->b_ml.ml_mfp = mfp;
   buf->b_ml.ml_flags = ML_EMPTY;
   buf->b_ml.ml_line_count = 1;
-  curwin->w_nrwidth_line_count = 0;
+  // curwin->w_nrwidth_line_count = 0;
 
 
   /*

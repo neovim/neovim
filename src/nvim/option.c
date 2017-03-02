@@ -7113,7 +7113,7 @@ int csh_like_shell(void)
 }
 
 /// Return true when window "wp" has a column to draw signs in.
-bool signcolumn_on(win_T *wp)
+bool signcolumn_on(const win_T *wp)
 {
     if (*wp->w_p_scl == 'n') {
       return false;

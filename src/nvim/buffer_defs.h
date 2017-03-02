@@ -1067,7 +1067,11 @@ struct window_S {
                                        manually */
   bool w_foldinvalid;               /**!< when true: folding needs to be
                                        recomputed */
-  int w_fdcwidth;                   /**!< optimal width to draw 'foldcolumn' */
+  int w_fdcwidth;                   /**!< optimal width to draw 'foldcolumn'
+
+                  int d = getDeepestNesting();
+                                     */
+  // int w_fdcwidth_current;           /**!< optimal width to draw 'foldcolumn' */
   int w_nrwidth;                    /**!< width of 'number' and 'relativenumber'
                                        column being used */
 
@@ -1167,8 +1171,6 @@ struct window_S {
   int w_fraction;
   int w_prev_fraction_row;
 
-  linenr_T w_nrwidth_line_count;        /* line count when ml_nrwidth_width
-                                         * was computed. */
   int w_nrwidth_width;                  /* nr of chars to print line count. */
 
   qf_info_T   *w_llist;                 /* Location list for this window */

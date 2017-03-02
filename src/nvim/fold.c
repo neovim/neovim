@@ -113,7 +113,7 @@ bool hasFolding(linenr_T lnum, linenr_T *firstp, linenr_T *lastp)
 /// @param[in] gap array to search for matching folds
 /// @param lnum line whose folds we are looking for
 /// @param[out] out array of folds that contain the line 'lnum'
-void getFolds(garray_T *gap, linenr_T lnum, garray_T *out) {
+void getFolds(const garray_T *gap, linenr_T lnum, garray_T *out) {
   fold_T *fp;
   int level = 0;
   linenr_T lnum_rel = lnum;
@@ -1028,7 +1028,7 @@ void cloneFoldGrowArray(garray_T *from, garray_T *to)
  * the first fold below it (careful: it can be beyond the end of the array!).
  * Returns FALSE when there is no fold that contains "lnum".
  */
-static int foldFind(garray_T *gap, linenr_T lnum, fold_T **fpp)
+static int foldFind(const garray_T *gap, linenr_T lnum, fold_T **fpp)
 {
   linenr_T low, high;
   fold_T      *fp;
@@ -1043,13 +1043,13 @@ static int foldFind(garray_T *gap, linenr_T lnum, fold_T **fpp)
   high = gap->ga_len - 1;
   while (low <= high) {
     linenr_T i = (low + high) / 2;
-    if (fp[i].fd_top > lnum)
+    if (fp[i].fd_top > lnum) {
       /* fold below lnum, adjust high */
       high = i - 1;
-    else if (fp[i].fd_top + fp[i].fd_len <= lnum)
+    } else if (fp[i].fd_top + fp[i].fd_len <= lnum) {
       /* fold above lnum, adjust low */
       low = i + 1;
-    else {
+    } else {
       /* lnum is inside this fold */
       *fpp = fp + i;
       return TRUE;
@@ -1092,6 +1092,12 @@ void checkupdate(win_T *wp)
 {
   if (wp->w_foldinvalid) {
     foldUpdate(wp, (linenr_T)1, (linenr_T)MAXLNUM);     /* will update all */
+
+    int res = getDeepestNestingRecurse(&wp->w_folds);
+    if(res != wp->w_fdcwidth) {
+      fold_changed = TRUE;
+      wp->w_fdcwidth = res;
+    }
     wp->w_foldinvalid = false;
   }
 }
@@ -1477,7 +1483,7 @@ static int getDeepestNestingRecurse(garray_T *gap)
 /// @param lnum_off line number offset for fp->fd_top
 bool
 check_closed(
-    win_T *win,
+    const win_T *win,
     fold_T *fp,
     bool *use_levelp,
     int level,
@@ -1516,14 +1522,13 @@ check_closed(
 }
 
 /* checkSmall() {{{2 */
-/*
- * Update fd_small field of fold "fp".
- */
-static void 
+/// Update fd_small field of fold "fp".
+/// @param lnum_off offset for fp->fd_top */
+static void
 checkSmall (
-    win_T *wp,
+    const win_T *wp,
     fold_T *fp,
-    linenr_T lnum_off              /* offset for fp->fd_top */
+    linenr_T lnum_off
 )
 {
   int count;
@@ -1533,9 +1538,9 @@ checkSmall (
     /* Mark any nested folds to maybe-small */
     setSmallMaybe(&fp->fd_nested);
 
-    if (fp->fd_len > curwin->w_p_fml)
+    if (fp->fd_len > curwin->w_p_fml) {
       fp->fd_small = FALSE;
-    else {
+    } else {
       count = 0;
       for (n = 0; n < fp->fd_len; ++n) {
         count += plines_win_nofold(wp, fp->fd_top + lnum_off + n);
@@ -1933,10 +1938,11 @@ static void foldUpdateIEMS(win_T *wp, linenr_T top, linenr_T bot)
       /* If a fold started here, we already had the level, if it stops
        * here, we need to use lvl_next.  Could also start and end a fold
        * in the same line. */
-      if (fline.lvl > level)
+      if (fline.lvl > level) {
         fline.lvl = level - (fline.lvl - fline.lvl_next);
-      else
+      } else {
         fline.lvl = fline.lvl_next;
+      }
     }
     fline.lnum = top;
     getlevel(&fline);
@@ -1946,14 +1952,16 @@ static void foldUpdateIEMS(win_T *wp, linenr_T top, linenr_T bot)
       getlevel = foldlevelExpr;
       /* start one line back, because a "<1" may indicate the end of a
        * fold in the topline */
-      if (top > 1)
+      if (top > 1) {
         --fline.lnum;
-    } else if (foldmethodIsSyntax(wp))
+      }
+    } else if (foldmethodIsSyntax(wp)) {
       getlevel = foldlevelSyntax;
-    else if (foldmethodIsDiff(wp))
+    } else if (foldmethodIsDiff(wp)) {
       getlevel = foldlevelDiff;
-    else
+    } else {
       getlevel = foldlevelIndent;
+    }
 
     /* Backup to a line for which the fold level is defined.  Since it's
      * always defined for line one, we will stop there. */
@@ -2053,9 +2061,10 @@ static void foldUpdateIEMS(win_T *wp, linenr_T top, linenr_T bot)
   /* There can't be any folds from start until end now. */
   foldRemove(&wp->w_folds, start, end);
 
-  /* If some fold changed, need to redraw and position cursor. */
-  if (fold_changed && wp->w_p_fen)
+  // If some fold changed, need to redraw and position cursor
+  if (fold_changed && wp->w_p_fen) {
     changed_window_setting_win(wp);
+  }
 
   /* If we updated folds past "bot", need to redraw more lines.  Don't do
    * this in other situations, the changed lines will be redrawn anyway and

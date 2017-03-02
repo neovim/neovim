@@ -213,5 +213,28 @@ describe('folding', function()
       Test fdm=indent and :move bug END
       line2]])
   end)
+
+  it('test fdc', function()
+    insert([[
+      Test fdm=indent and :move bug END
+      line2
+      	Test fdm=indent START
+      	line3
+      	line4]])
+
+    execute('set noai nosta')
+    execute('set fdm=indent')
+    execute('1m1')
+    feed('2jzc')
+    execute('m0')
+
+    expect([[
+      	Test fdm=indent START
+      	line3
+      	line4
+      Test fdm=indent and :move bug END
+      line2]])
+  end)
+
 end)
 

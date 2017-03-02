@@ -1252,7 +1252,7 @@ plines_win_nofill (
  * Return number of window lines physical line "lnum" will occupy in window
  * "wp".  Does not care about folding, 'wrap' or 'diff'.
  */
-int plines_win_nofold(win_T *wp, linenr_T lnum)
+int plines_win_nofold(const win_T *wp, linenr_T lnum)
 {
   char_u      *s;
   unsigned int col;

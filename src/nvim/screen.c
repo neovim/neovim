@@ -277,8 +277,9 @@ void update_screen(int type)
   }
 
   /* Need to update w_lines[]. */
-  if (curwin->w_lines_valid == 0 && type < NOT_VALID)
+  if (curwin->w_lines_valid == 0 && type < NOT_VALID) {
     type = NOT_VALID;
+  }
 
   /* Postpone the redrawing when it's not needed and when being called
    * recursively. */
@@ -347,10 +348,17 @@ void update_screen(int type)
 
   /* Force redraw when width of 'number' or 'relativenumber' column
    * changes. */
+  // if (curwin->w_redr_type < NOT_VALID
+  //     && curwin->w_nrwidth != ((curwin->w_p_nu || curwin->w_p_rnu)
+  //                              ? number_width(curwin) : 0))
+  int ret = compute_number_width(curwin);
   if (curwin->w_redr_type < NOT_VALID
-      && curwin->w_nrwidth != ((curwin->w_p_nu || curwin->w_p_rnu)
-                               ? number_width(curwin) : 0))
+      && (curwin->w_p_nu || curwin->w_p_rnu)
+      ?? TODO revisit with number_width(curwin) : 0))
+      && curwin->w_nrwidth_width != ret) {
+    curwin->w_nrwidth_width = ret;
     curwin->w_redr_type = NOT_VALID;
+  }
 
   /*
    * Only start redrawing if there is really something to do.
@@ -1697,18 +1705,18 @@ static int advance_color_col(int vcol, int **color_cols)
 /// Compute the width of the foldcolumn.  Based on 'foldcolumn' and how much
 /// space is available for window "wp", minus "col".
 /// @param wp
-/// @param col 
+/// @param col is that ever != 0 ?
 /// @return foldcolumn width in cell unit
-static int compute_foldcolumn(win_T *wp, int col)
+int compute_foldcolumn(const win_T *wp, int col)
 {
-  // int desired_width = wp->w_p_fdc;
   int fdc = wp->w_p_fdc;
   int wmw = (wp == curwin && p_wmw == 0) ? 1 : p_wmw;
   int wwidth = wp->w_width;
 
-  if(wp->w_fdc == -1) {
+  if(wp->w_p_fdc < 0) {
     // if automatic sizing, lookup in cache
-    fdc = MAX(wp->w_fdcwidth, 0);
+    fdc = wp->w_fdcwidth;
+    // redraw_win_later(wp, NOT_VALID);
   }
 
   if (fdc > wwidth - (col + wmw)) {
@@ -1765,7 +1773,7 @@ static void fold_line(
   // Reduce the width when there is not enough space.
   fdc = compute_foldcolumn(wp, col);
   if (fdc > 0) {
-    int n_extra = fill_foldcolumn(buf, wp, lnum, false);
+    int n_extra = fill_foldcolumn(buf, wp, fdc, lnum, false);
     // buf[n_extra] = '\0';
     screen_puts_len(buf, n_extra, screen_Rows, col, hl_attr(HLF_FC));
     // TODO reestablish right/left
@@ -2115,6 +2123,7 @@ static kFoldChar fill_foldcolumn_single(
 /// Only to be called when 'foldcolumn' > 0.
 ///
 /// @param p To fill with characters
+/// @param fdc available width
 /// @param lnum Absolute line number
 /// @param wrapped screen line is a wrapped continuation of absolute line
 ///
@@ -2123,7 +2132,8 @@ static kFoldChar fill_foldcolumn_single(
 static int
 fill_foldcolumn(
     char_u *p,
-    win_T *wp,
+    const win_T *wp,
+    int fdc,
     linenr_T lnum,
     bool wrapped
 )
@@ -2133,7 +2143,7 @@ fill_foldcolumn(
   int cell_counter = 0;
   fold_T **fp = NULL;      // Top level/parent fold
   // TODO we should not have to recompute it
-  int fdc = compute_foldcolumn(wp, 0);    // allowed width in cells
+  // int fdc = compute_foldcolumn(wp, 0);    // allowed width in cells
   bool maybe_small;
   bool use_level;
   bool closed;
@@ -2144,49 +2154,51 @@ fill_foldcolumn(
   // Init to all spaces.
   memset(p, ' ', 18);
   // here fp contains the valid top level fold
-  checkupdate(wp);  // don't need that ?
+  // checkupdate(wp);  // don't need that ?
   getFolds(&wp->w_folds, lnum, &results);
   level = results.ga_len;
 
-  // if there are folds
-  if (level > 0) {
-    kFoldChar symbol;
+  // if there are no folds
+  if (level <= 0) {
+    return fdc;
+  }
 
-    fp = (fold_T **)results.ga_data;
-    linenr_T fold_starting_line = 0;
+  kFoldChar symbol;
 
-    for (i = 0; i < MIN(level, fdc) ; i++) {
-      linenr_T current_line = lnum;
-      use_level = fp[i]->fd_flags == FD_LEVEL;
+  fp = (fold_T **)results.ga_data;
+  linenr_T fold_starting_line = 0;
 
-      closed = check_closed(wp, fp[i], &use_level, i,
-                            &maybe_small, current_line-fold_starting_line+1);
-      symbol = fill_foldcolumn_single(
-          fp[i], current_line,
-          &fold_starting_line, wrapped, closed);
+  for (i = 0; i < MIN(level, fdc) ; i++) {
+    linenr_T current_line = lnum;
+    use_level = fp[i]->fd_flags == FD_LEVEL;
 
-      // if last column, look for prioritary signal
-      if (i == fdc-1) {
-        for (i++; i < results.ga_len; i++) {
-          bool closed = check_closed(wp, fp[i], &use_level, i, &maybe_small,
-                                     current_line-fold_starting_line+1);
-          kFoldChar k = fill_foldcolumn_single(
-              fp[i], current_line,
-              &fold_starting_line, wrapped, closed);
-          symbol = MAX(symbol, k);
-        }
+    closed = check_closed(wp, fp[i], &use_level, i,
+                          &maybe_small, current_line-fold_starting_line+1);
+    symbol = fill_foldcolumn_single(
+        fp[i], current_line,
+        &fold_starting_line, wrapped, closed);
+
+    // if last column, look for prioritary signal
+    if (i == fdc-1) {
+      for (i++; i < results.ga_len; i++) {
+        bool closed = check_closed(wp, fp[i], &use_level, i, &maybe_small,
+                                    current_line-fold_starting_line+1);
+        kFoldChar k = fill_foldcolumn_single(
+            fp[i], current_line,
+            &fold_starting_line, wrapped, closed);
+        symbol = MAX(symbol, k);
       }
-      int m = fold_chars[symbol];
-      int char2cells = mb_char2cells(m);
+    }
+    int m = fold_chars[symbol];
+    int char2cells = mb_char2cells(m);
 
-      mb_char2bytes(m, &p[char_counter]);
+    mb_char2bytes(m, &p[char_counter]);
 
-      char_counter += mb_char2len(m);
-      cell_counter += char2cells;
+    char_counter += mb_char2len(m);
+    cell_counter += char2cells;
 
-      if (symbol == kFoldClosed) {
-        break;
-      }
+    if (symbol == kFoldClosed) {
+      break;
     }
   }
 
@@ -2819,7 +2831,7 @@ win_line (
             wrapped= false;
           }
           // not sure I undersstand but this is how it's done for
-          n_extra = fill_foldcolumn(extra, wp, lnum, wrapped);
+          n_extra = fill_foldcolumn(extra, wp, fdc, lnum, wrapped);
           // if(wrapped)
           //   ILOG("screen_row=%d lnum=%d col=%d wrapped=%d", screen_row, lnum, col, filler_todo);
           p_extra = extra;
@@ -7422,21 +7434,23 @@ static void win_redr_ruler(win_T *wp, int always)
  * Caller may need to check if 'number' or 'relativenumber' is set.
  * Otherwise it depends on 'numberwidth' and the line count.
  */
-int number_width(win_T *wp)
+
+int number_width(const win_T *wp) {
+  return wp->w_nrwidth_width;
+}
+
+int compute_number_width(const win_T *wp)
 {
   int n;
   linenr_T lnum;
 
-  if (wp->w_p_rnu && !wp->w_p_nu)
+  if (wp->w_p_rnu && !wp->w_p_nu) {
     /* cursor line shows "0" */
     lnum = wp->w_height;
-  else
+  } else {
     /* cursor line shows absolute line number */
     lnum = wp->w_buffer->b_ml.ml_line_count;
-
-  if (lnum == wp->w_nrwidth_line_count)
-    return wp->w_nrwidth_width;
-  wp->w_nrwidth_line_count = lnum;
+  }
 
   n = 0;
   do {
@@ -7445,10 +7459,10 @@ int number_width(win_T *wp)
   } while (lnum > 0);
 
   /* 'numberwidth' gives the minimal width plus one */
-  if (n < wp->w_p_nuw - 1)
+  if (n < wp->w_p_nuw - 1) {
     n = wp->w_p_nuw - 1;
+  }
 
-  wp->w_nrwidth_width = n;
   return n;
 }
 
