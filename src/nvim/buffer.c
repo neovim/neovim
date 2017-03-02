@@ -2378,8 +2378,9 @@ void get_winopts(buf_T *buf)
     curwin->w_fold_manual = wip->wi_fold_manual;
     curwin->w_foldinvalid = true;
     cloneFoldGrowArray(&wip->wi_folds, &curwin->w_folds);
-  } else
+  } else {
     copy_winopt(&curwin->w_allbuf_opt, &curwin->w_onebuf_opt);
+  }
 
   /* Set 'foldlevel' to 'foldlevelstart' if it's not negative. */
   if (p_fdls >= 0)

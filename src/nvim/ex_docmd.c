@@ -9847,8 +9847,9 @@ static void ex_match(exarg_T *eap)
 
 static void ex_fold(exarg_T *eap)
 {
-  if (foldManualAllowed(TRUE))
-    foldCreate(eap->line1, eap->line2);
+  if (foldManualAllowed(TRUE)) {
+    foldCreate(curwin, eap->line1, eap->line2);
+  }
 }
 
 static void ex_foldopen(exarg_T *eap)

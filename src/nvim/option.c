@@ -5642,7 +5642,7 @@ void win_copy_options(win_T *wp_from, win_T *wp_to)
  * The 'scroll' option is not copied, because it depends on the window height.
  * The 'previewwindow' option is reset, there can be only one preview window.
  */
-void copy_winopt(winopt_T *from, winopt_T *to)
+void copy_winopt(const winopt_T *from, winopt_T *to)
 {
   to->wo_arab = from->wo_arab;
   to->wo_list = from->wo_list;

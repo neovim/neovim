@@ -1067,11 +1067,7 @@ struct window_S {
                                        manually */
   bool w_foldinvalid;               /**!< when true: folding needs to be
                                        recomputed */
-  int w_fdcwidth;                   /**!< optimal width to draw 'foldcolumn'
-
-                  int d = getDeepestNesting();
-                                     */
-  // int w_fdcwidth_current;           /**!< optimal width to draw 'foldcolumn' */
+  int w_fdcwidth;                   /**!< optimal width to draw 'foldcolumn' */
   int w_nrwidth;                    /**!< width of 'number' and 'relativenumber'
                                        column being used */
 

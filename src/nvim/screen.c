@@ -360,6 +360,14 @@ void update_screen(int type)
     curwin->w_redr_type = NOT_VALID;
   }
 
+  // fold
+  int nesting = getDeepestNesting();
+  if (curwin->w_redr_type < NOT_VALID
+      && curwin->w_fdcwidth != nesting) {
+    curwin->w_fdcwidth = nesting;
+    curwin->w_redr_type = NOT_VALID;
+  }
+
   /*
    * Only start redrawing if there is really something to do.
    */
@@ -2142,8 +2150,6 @@ fill_foldcolumn(
   int level;
   int cell_counter = 0;
   fold_T **fp = NULL;      // Top level/parent fold
-  // TODO we should not have to recompute it
-  // int fdc = compute_foldcolumn(wp, 0);    // allowed width in cells
   bool maybe_small;
   bool use_level;
   bool closed;
@@ -2153,7 +2159,6 @@ fill_foldcolumn(
 
   // Init to all spaces.
   memset(p, ' ', 18);
-  // here fp contains the valid top level fold
   // checkupdate(wp);  // don't need that ?
   getFolds(&wp->w_folds, lnum, &results);
   level = results.ga_len;
@@ -2190,6 +2195,7 @@ fill_foldcolumn(
       }
     }
     int m = fold_chars[symbol];
+    // TODO use strwidth/assume monocell ?
     int char2cells = mb_char2cells(m);
 
     mb_char2bytes(m, &p[char_counter]);

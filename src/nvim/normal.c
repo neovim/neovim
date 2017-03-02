@@ -1977,7 +1977,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
 
     case OP_FOLD:
       VIsual_reselect = false;          /* don't reselect now */
-      foldCreate(oap->start.lnum, oap->end.lnum);
+      foldCreate(curwin, oap->start.lnum, oap->end.lnum);
       break;
 
     case OP_FOLDOPEN:

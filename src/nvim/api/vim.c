@@ -48,19 +48,33 @@
 
 /// Create a fold from line "start" to line "end" (inclusive) in the current
 /// window.
+/// @param window
 /// @param start starting line
 /// @param end starting end
 /// @param err
 void nvim_fold_create(Window window, Integer start, Integer end, Error *err)
 {
-  foldCreate(start, end);
+  win_T *win = find_window_by_handle(window, err);
+
+  if (!win) {
+    return;
+  }
+  // Window is 
+  foldCreate(win, start, end);
 }
 
 /// Delete a fold at line "start" in the current window.
 /// When "end" is not 0, delete all folds from "start" to "end".
 /// When "recursive" is TRUE delete recursively.
+/// @param window 
 void nvim_fold_delete(Window window, Integer start, Integer end, Boolean recursive, Error *err)
 {
+  win_T *win = find_window_by_handle(window, err);
+
+  if (!win) {
+    return;
+  }
+
   deleteFold(
     start,
     end,
