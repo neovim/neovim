@@ -78,7 +78,7 @@ typedef struct terminal_state {
   Terminal *term;
   int save_rd;              // saved value of RedrawingDisabled
   bool close;
-  bool got_bs;              // if the last input was <C-\>
+  bool got_bsl;             // if the last input was <C-\>
 } TerminalState;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -374,6 +374,7 @@ void terminal_enter(void)
 
   // Disable these options in terminal-mode. They are nonsense because cursor is
   // placed at end of buffer to "follow" output.
+  win_T *save_curwin = curwin;
   int save_w_p_cul = curwin->w_p_cul;
   int save_w_p_cuc = curwin->w_p_cuc;
   int save_w_p_rnu = curwin->w_p_rnu;
@@ -394,9 +395,11 @@ void terminal_enter(void)
   restart_edit = 0;
   State = save_state;
   RedrawingDisabled = s->save_rd;
-  curwin->w_p_cul = save_w_p_cul;
-  curwin->w_p_cuc = save_w_p_cuc;
-  curwin->w_p_rnu = save_w_p_rnu;
+  if (save_curwin == curwin) {  // save_curwin may be invalid (window closed)!
+    curwin->w_p_cul = save_w_p_cul;
+    curwin->w_p_cuc = save_w_p_cuc;
+    curwin->w_p_rnu = save_w_p_rnu;
+  }
 
   // draw the unfocused cursor
   invalidate_terminal(s->term, s->term->cursor.row, s->term->cursor.row + 1);
@@ -457,14 +460,14 @@ static int terminal_execute(VimState *state, int key)
       break;
 
     case Ctrl_N:
-      if (s->got_bs) {
+      if (s->got_bsl) {
         return 0;
       }
       // FALLTHROUGH
 
     default:
-      if (key == Ctrl_BSL && !s->got_bs) {
-        s->got_bs = true;
+      if (key == Ctrl_BSL && !s->got_bsl) {
+        s->got_bsl = true;
         break;
       }
       if (s->term->closed) {
@@ -472,7 +475,7 @@ static int terminal_execute(VimState *state, int key)
         return 0;
       }
 
-      s->got_bs = false;
+      s->got_bsl = false;
       terminal_send_key(s->term, key);
   }
 
