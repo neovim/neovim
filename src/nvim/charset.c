@@ -486,7 +486,8 @@ char_u* transchar(int c)
     c = K_SECOND(c);
   }
 
-  if ((!chartab_initialized && (((c >= ' ') && (c <= '~')) || F_ischar(c)))
+  if ((!chartab_initialized && (((c >= ' ') && (c <= '~'))
+                                || (p_altkeymap && F_ischar(c))))
       || ((c < 256) && vim_isprintc_strict(c))) {
     // printable character
     transchar_buf[i] = (char_u)c;
