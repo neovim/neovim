@@ -17931,6 +17931,61 @@ static bool set_ref_in_callback(Callback *callback, int copyID,
   return false;
 }
 
+static void add_timer_info(typval_T *rettv, timer_T *timer)
+{
+  list_T *list = rettv->vval.v_list;
+  dict_T *dict = dict_alloc();
+
+  list_append_dict(list, dict);
+  dict_add_nr_str(dict, "id", (long)timer->timer_id, NULL);
+  dict_add_nr_str(dict, "time", timer->timeout, NULL);
+
+  dict_add_nr_str(dict, "repeat",
+                  (long)(timer->repeat_count < 0 ? -1 : timer->repeat_count),
+                  NULL);
+
+  dictitem_T *di = dictitem_alloc((char_u *)"callback");
+  if (dict_add(dict, di) == FAIL) {
+    xfree(di);
+    return;
+  }
+
+  if (timer->callback.type == kCallbackPartial) {
+    di->di_tv.v_type = VAR_PARTIAL;
+    di->di_tv.vval.v_partial = timer->callback.data.partial;
+    timer->callback.data.partial->pt_refcount++;
+  } else if (timer->callback.type == kCallbackFuncref) {
+    di->di_tv.v_type = VAR_FUNC;
+    di->di_tv.vval.v_string = vim_strsave(timer->callback.data.funcref);
+  }
+  di->di_tv.v_lock = 0;
+}
+
+static void add_timer_info_all(typval_T *rettv)
+{
+  timer_T *timer;
+  map_foreach_value(timers, timer, {
+    add_timer_info(rettv, timer);
+  })
+}
+
+/// "timer_info([timer])" function
+static void f_timer_info(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  rettv_list_alloc(rettv);
+  if (argvars[0].v_type != VAR_UNKNOWN) {
+    if (argvars[0].v_type != VAR_NUMBER) {
+      EMSG(_(e_number_exp));
+    } else {
+      timer_T *timer = pmap_get(uint64_t)(timers, get_tv_number(&argvars[0]));
+      if (timer != NULL) {
+        add_timer_info(rettv, timer);
+      }
+    }
+  } else {
+    add_timer_info_all(rettv);
+  }
+}
 
 /// "timer_start(timeout, callback, opts)" function
 static void f_timer_start(typval_T *argvars, typval_T *rettv, FunPtr fptr)

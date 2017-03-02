@@ -306,6 +306,7 @@ return {
     tempname={},
     termopen={args={1, 2}},
     test_garbagecollect_now={},
+    timer_info={args={0,1}},
     timer_start={args={2,3}},
     timer_stop={args=1},
     tolower={args=1},
