@@ -2232,32 +2232,51 @@ static linenr_T foldUpdateIEMSRecurse(garray_T *gap, int level,
              * before where we started looking, extend it.  If it
              * starts at another line, update nested folds to keep
              * their position, compensating for the new fd_top. */
-            if (fp->fd_top >= startlnum && fp->fd_top != firstlnum) {
-              if (fp->fd_top > firstlnum)
-                /* like lines are inserted */
+            if (fp->fd_top == firstlnum) {
+              // We have found a fold beginning exactly where we want one.
+            } else if (fp->fd_top >= startlnum) {
+              if (fp->fd_top > firstlnum) {
+                // We will move the start of this fold up, hence we move all
+                // nested folds (with relative line numbers) down.
                 foldMarkAdjustRecurse(&fp->fd_nested,
-                    (linenr_T)0, (linenr_T)MAXLNUM,
-                    (long)(fp->fd_top - firstlnum), 0L);
-              else
-                /* like lines are deleted */
+                                      (linenr_T)0, (linenr_T)MAXLNUM,
+                                      (long)(fp->fd_top - firstlnum), 0L);
+              } else {
+                // Will move fold down, move nested folds relatively up.
                 foldMarkAdjustRecurse(&fp->fd_nested,
-                    (linenr_T)0,
-                    (long)(firstlnum - fp->fd_top - 1),
-                    (linenr_T)MAXLNUM,
-                    (long)(fp->fd_top - firstlnum));
+                                      (linenr_T)0,
+                                      (long)(firstlnum - fp->fd_top - 1),
+                                      (linenr_T)MAXLNUM,
+                                      (long)(fp->fd_top - firstlnum));
+              }
               fp->fd_len += fp->fd_top - firstlnum;
               fp->fd_top = firstlnum;
-              fold_changed = TRUE;
-            } else if (flp->start != 0 && lvl == level
-                       && fp->fd_top != firstlnum) {
-              /* Existing fold that includes startlnum must stop
-               * if we find the start of a new fold at the same
-               * level.  Split it.  Delete contained folds at
-               * this point to split them too. */
-              foldRemove(&fp->fd_nested, flp->lnum - fp->fd_top,
-                  flp->lnum - fp->fd_top);
+              fold_changed = true;
+            } else if ((flp->start != 0 && lvl == level)
+                       || (firstlnum != startlnum)) {
+              // Before there was a fold spanning from above startlnum to below
+              // firstlnum. This fold is valid above startlnum (because we are
+              // not updating that range), but there is now a break in it.
+              // If the break is because we are now forced to start a new fold
+              // at the level "level" at line fline->lnum, then we need to
+              // split the fold at fline->lnum.
+              // If the break is because the range [startlnum, firstlnum) is
+              // now at a lower indent than "level", we need to split the fold
+              // in this range.
+              // Any splits have to be done recursively.
+              linenr_T breakstart;
+              linenr_T breakend;
+              if (firstlnum != startlnum) {
+                breakstart = startlnum;
+                breakend = firstlnum;
+              } else {
+                breakstart = flp->lnum;
+                breakend = flp->lnum;
+              }
+              foldRemove(&fp->fd_nested, breakstart - fp->fd_top,
+                         breakend - fp->fd_top);
               i = (int)(fp - (fold_T *)gap->ga_data);
-              foldSplit(gap, i, flp->lnum, flp->lnum - 1);
+              foldSplit(gap, i, breakstart, breakend - 1);
               fp = (fold_T *)gap->ga_data + i + 1;
               /* If using the "marker" or "syntax" method, we
                * need to continue until the end of the fold is
@@ -2266,6 +2285,16 @@ static linenr_T foldUpdateIEMSRecurse(garray_T *gap, int level,
                   || getlevel == foldlevelExpr
                   || getlevel == foldlevelSyntax)
                 finish = TRUE;
+            }
+            if (fp->fd_top == startlnum && concat) {
+              i = (int)(fp - (fold_T *)gap->ga_data);
+              if (i != 0) {
+                fp2 = fp - 1;
+                if (fp2->fd_top + fp2->fd_len == fp->fd_top) {
+                  foldMerge(fp2, gap, fp);
+                  fp = fp2;
+                }
+              }
             }
             break;
           }
