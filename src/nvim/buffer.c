@@ -4492,14 +4492,16 @@ void ex_buffer_all(exarg_T *eap)
   int had_tab = cmdmod.tab;
   tabpage_T   *tpnext;
 
-  if (eap->addr_count == 0)     /* make as many windows as possible */
+  if (eap->addr_count == 0) {   // make as many windows as possible
     count = 9999;
-  else
-    count = eap->line2;         /* make as many windows as specified */
-  if (eap->cmdidx == CMD_unhide || eap->cmdidx == CMD_sunhide)
-    all = FALSE;
-  else
-    all = TRUE;
+  } else {
+    count = eap->line2;         // make as many windows as specified
+  }
+  if (eap->cmdidx == CMD_unhide || eap->cmdidx == CMD_sunhide) {
+    all = false;
+  } else {
+    all = true;
+  }
 
   setpcmark();
 
