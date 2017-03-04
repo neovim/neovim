@@ -435,6 +435,7 @@ Object nvim_buf_get_var(Buffer buffer, String name, Error *err)
 ///
 /// @return `b:changedtick` value.
 Integer nvim_buf_get_changedtick(Buffer buffer, Error *err)
+    FUNC_API_SINCE(2)
 {
   const buf_T *const buf = find_buffer_by_handle(buffer, err);
 
