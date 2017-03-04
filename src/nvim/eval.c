@@ -13432,7 +13432,7 @@ static void f_resolve(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       const size_t p_len = strlen(p);
       cpy = xmallocz(p_len + len);
       memcpy(cpy, p, p_len + 1);
-      xstrlcat(cpy + p_len, remain, len);
+      xstrlcat(cpy + p_len, remain, len + 1);
       xfree(p);
       p = cpy;
 
