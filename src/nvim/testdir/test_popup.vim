@@ -482,6 +482,26 @@ func Test_completion_ctrl_e_without_autowrap()
   q!
 endfunc
 
+func Test_completion_respect_bs_option()
+  new
+  let li = ["aaa", "aaa12345", "aaaabcdef", "aaaABC"]
+
+  set bs=indent,eol
+  call setline(1, li)
+  1
+  call feedkeys("A\<C-X>\<C-N>\<C-P>\<BS>\<BS>\<BS>\<Esc>", "tx")
+  call assert_equal('aaa', getline(1))
+
+  %d
+  set bs=indent,eol,start
+  call setline(1, li)
+  1
+  call feedkeys("A\<C-X>\<C-N>\<C-P>\<BS>\<BS>\<BS>\<Esc>", "tx")
+  call assert_equal('', getline(1))
+
+  bw!
+endfunc
+
 func CompleteUndo() abort
   call complete(1, g:months)
   return ''
