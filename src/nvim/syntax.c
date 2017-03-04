@@ -5538,7 +5538,7 @@ void ex_ownsyntax(exarg_T *eap)
     set_internal_string_var((char_u *)"w:current_syntax", new_value);
   }
 
-  /* restore value of b:current_syntax */
+  // Restore value of b:current_syntax.
   if (old_value == NULL) {
     do_unlet(S_LEN("b:current_syntax"), true);
   } else {
