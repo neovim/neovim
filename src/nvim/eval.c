@@ -2082,8 +2082,9 @@ static char_u *get_lval(char_u *const name, typval_T *const rettv,
     emsgf(_("E121: Undefined variable: %.*s"),
           (int)lp->ll_name_len, lp->ll_name);
   }
-  if (v == NULL)
+  if (v == NULL) {
     return NULL;
+  }
 
   /*
    * Loop until no more [idx] or .key is following.
@@ -13431,7 +13432,7 @@ static void f_resolve(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       const size_t p_len = strlen(p);
       cpy = xmallocz(p_len + len);
       memcpy(cpy, p, p_len + 1);
-      strncat(cpy + p_len, remain, len);
+      xstrlcat(cpy + p_len, remain, len);
       xfree(p);
       p = cpy;
 
@@ -19968,8 +19969,8 @@ trans_function_name(
     len = (int)strlen(lv.ll_exp_name);
     if (lead <= 2 && lv.ll_name == lv.ll_exp_name
         && lv.ll_name_len >= 2 && memcmp(lv.ll_name, "s:", 2) == 0) {
-      /* When there was "s:" already or the name expanded to get a
-       * leading "s:" then remove it. */
+      // When there was "s:" already or the name expanded to get a
+      // leading "s:" then remove it.
       lv.ll_name += 2;
       lv.ll_name_len -= 2;
       len -= 2;
