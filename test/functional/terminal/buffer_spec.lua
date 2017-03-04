@@ -4,6 +4,7 @@ local feed, clear, nvim = helpers.feed, helpers.clear, helpers.nvim
 local wait = helpers.wait
 local eval, execute, source = helpers.eval, helpers.execute, helpers.source
 local eq, neq = helpers.eq, helpers.neq
+local write_file = helpers.write_file
 
 if helpers.pending_win32(pending) then return end
 
@@ -207,3 +208,25 @@ describe('terminal buffer', function()
   end)
 end)
 
+describe('No heap-buffer-overflow when using', function()
+
+  local testfilename = 'Xtestfile-functional-terminal-buffers_spec'
+
+  before_each(function()
+    write_file(testfilename, "aaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+  end)
+
+  after_each(function()
+    os.remove(testfilename)
+  end)
+
+  it('termopen(echo) #3161', function()
+    execute('edit ' .. testfilename)
+    -- Move cursor away from the beginning of the line
+    feed('$')
+    -- Let termopen() modify the buffer
+    execute('call termopen("echo")')
+    wait()
+    execute('bdelete!')
+  end)
+end)

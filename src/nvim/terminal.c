@@ -240,6 +240,8 @@ Terminal *terminal_open(TerminalOptions opts)
   set_option_value((uint8_t *)"relativenumber", false, NULL, OPT_LOCAL);
   buf_set_term_title(curbuf, (char *)curbuf->b_ffname);
   RESET_BINDING(curwin);
+  // Reset cursor in current window.
+  curwin->w_cursor = (pos_T){ .lnum = 1, .col = 0, .coladd = 0 };
 
   // Apply TermOpen autocmds _before_ configuring the scrollback buffer.
   apply_autocmds(EVENT_TERMOPEN, NULL, NULL, false, curbuf);
