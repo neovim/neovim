@@ -416,7 +416,10 @@ local alloc_logging_helpers = {
 
   -- lua_…: allocated by this file, not by some Neovim function
   lua_pt = function(pt) return {func='calloc', args={1, ffi.sizeof('partial_T')}, ret=void(pt)} end,
-  lua_tvs = function(argv, argc) return {func='malloc', args={ffi.sizeof('typval_T')*argc}, ret=void(argv)} end,
+  lua_tvs = function(argv, argc)
+    argc = alloc_len(argc)
+    return {func='malloc', args={ffi.sizeof('typval_T')*argc}, ret=void(argv)}
+  end,
 }
 
 local function int(n)
@@ -430,7 +433,7 @@ end
 
 local function dict(d)
   return populate_dict(ffi.gc(eval.tv_dict_alloc(), eval.tv_dict_free),
-                       d, {})
+                       d or {}, {})
 end
 
 local callback2tbl_type_tab = nil

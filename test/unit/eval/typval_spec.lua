@@ -8,6 +8,7 @@ local OK = helpers.OK
 local eq = helpers.eq
 local neq = helpers.neq
 local ffi = helpers.ffi
+local FAIL = helpers.FAIL
 local cimport = helpers.cimport
 local to_cstr = helpers.to_cstr
 local alloc_log_new = helpers.alloc_log_new
@@ -17,6 +18,7 @@ local int = eval_helpers.int
 local list = eval_helpers.list
 local dict = eval_helpers.dict
 local lst2tbl = eval_helpers.lst2tbl
+local dct2tbl = eval_helpers.dct2tbl
 local typvalt = eval_helpers.typvalt
 local type_key  = eval_helpers.type_key
 local li_alloc  = eval_helpers.li_alloc
@@ -109,6 +111,18 @@ local function ga_alloc(itemsize, growsize)
                     lib.ga_clear)
   lib.ga_init(ga, itemsize or 1, growsize or 80)
   return ga
+end
+
+local function check_emsg(f, msg)
+  local saved_last_msg_hist = lib.last_msg_hist
+  local ret = {f()}
+  if msg ~= nil then
+    neq(saved_last_msg_hist, lib.last_msg_hist)
+    eq(msg, ffi.string(lib.last_msg_hist.msg))
+  else
+    eq(saved_last_msg_hist, lib.last_msg_hist)
+  end
+  return unpack(ret)
 end
 
 describe('typval.c', function()
@@ -1242,17 +1256,6 @@ describe('typval.c', function()
           alloc_log:check({})
         end)
       end)
-      local function check_emsg(f, msg)
-        local saved_last_msg_hist = lib.last_msg_hist
-        local ret = {f()}
-        if msg ~= nil then
-          neq(saved_last_msg_hist, lib.last_msg_hist)
-          eq(msg, ffi.string(lib.last_msg_hist.msg))
-        else
-          eq(saved_last_msg_hist, lib.last_msg_hist)
-        end
-        return unpack(ret)
-      end
       describe('nr()', function()
         local function tv_list_find_nr(l, n, msg)
           return check_emsg(function()
@@ -1541,6 +1544,27 @@ describe('typval.c', function()
           tv = lua2typvalt('test')
           alloc_log:check({a.str(tv.vval.v_string, #('test'))})
           check_tv_dict_item_alloc_len('', 0, tv, {a.freed(tv.vval.v_string)})
+        end)
+      end)
+      describe('add/remove', function()
+        itp('works', function()
+          local d = dict()
+          eq({}, dct2tbl(d))
+          alloc_log:check({a.dict(d)})
+          local di = ffi.gc(lib.tv_dict_item_alloc(''), nil)
+          local tv = lua2typvalt('test')
+          di.di_tv = tv
+          alloc_log:check({a.di(di, ''), a.str(tv.vval.v_string, 'test')})
+          eq(OK, lib.tv_dict_add(d, di))
+          alloc_log:check({})
+          eq(FAIL, check_emsg(function() return lib.tv_dict_add(d, di) end,
+                              'E685: Internal error: hash_add()'))
+          alloc_log:clear()
+          lib.tv_dict_item_remove(d, di)
+          alloc_log:check({
+            a.freed(tv.vval.v_string),
+            a.freed(di),
+          })
         end)
       end)
     end)
