@@ -14,21 +14,26 @@ local alloc_log_new = helpers.alloc_log_new
 local a = eval_helpers.alloc_logging_helpers
 local int = eval_helpers.int
 local list = eval_helpers.list
+local dict = eval_helpers.dict
 local lst2tbl = eval_helpers.lst2tbl
 local typvalt = eval_helpers.typvalt
 local type_key  = eval_helpers.type_key
 local li_alloc  = eval_helpers.li_alloc
 local int_type  = eval_helpers.int_type
 local first_di  = eval_helpers.first_di
+local func_type  = eval_helpers.func_type
 local null_list  = eval_helpers.null_list
 local null_dict  = eval_helpers.null_dict
 local empty_list  = eval_helpers.empty_list
 local lua2typvalt  = eval_helpers.lua2typvalt
 local typvalt2lua  = eval_helpers.typvalt2lua
 local null_string  = eval_helpers.null_string
+local tbl2callback = eval_helpers.tbl2callback
+local dict_watchers = eval_helpers.dict_watchers
 
 local lib = cimport('./src/nvim/eval/typval.h', './src/nvim/memory.h',
-                    './src/nvim/mbyte.h', './src/nvim/garray.h')
+                    './src/nvim/mbyte.h', './src/nvim/garray.h',
+                    './src/nvim/eval.h')
 
 local function list_items(l)
   local lis = {}
@@ -1384,6 +1389,114 @@ describe('typval.c', function()
         eq(-1, lib.tv_list_idx_of_item(l, nil))
         eq(-1, lib.tv_list_idx_of_item(nil, nil))
         eq(-1, lib.tv_list_idx_of_item(nil, lis[1]))
+      end)
+    end)
+  end)
+  describe('dict', function()
+    describe('watcher', function()
+      describe('add/remove', function()
+        itp('works with an empty key', function()
+          local d = dict({})
+          eq({}, dict_watchers(d))
+          local cb = ffi.gc(tbl2callback({type='none'}), nil)
+          alloc_log:clear()
+          lib.tv_dict_watcher_add(d, '*', 0, cb[0])
+          local ws, qs = dict_watchers(d)
+          local key_p = qs[1].key_pattern
+          alloc_log:check({
+            a.dwatcher(qs[1]),
+            a.str(key_p, 0),
+          })
+          eq({{busy=false, cb={type='none'}, pat=''}}, ws)
+          eq(true, lib.tv_dict_watcher_remove(d, 'x', 0, cb[0]))
+          alloc_log:check({
+            a.freed(key_p),
+            a.freed(qs[1]),
+          })
+          eq({}, dict_watchers(d))
+        end)
+        itp('works with multiple callbacks', function()
+          local d = dict({})
+          eq({}, dict_watchers(d))
+          alloc_log:check({a.dict(d)})
+          local cbs = {}
+          cbs[1] = {'te', ffi.gc(tbl2callback({type='none'}), nil)}
+          alloc_log:check({})
+          cbs[2] = {'foo', ffi.gc(tbl2callback({type='fref', fref='tr'}), nil)}
+          alloc_log:check({
+            a.str(cbs[2][2].data.funcref, #('tr')),
+          })
+          cbs[3] = {'te', ffi.gc(tbl2callback({type='pt', fref='tr', pt={
+            value='tr',
+            args={'test'},
+            dict={},
+          }}), nil)}
+          local pt3 = cbs[3][2].data.partial
+          local pt3_argv = pt3.pt_argv
+          local pt3_dict = pt3.pt_dict
+          local pt3_name = pt3.pt_name
+          local pt3_str_arg = pt3.pt_argv[0].vval.v_string
+          alloc_log:check({
+            a.lua_pt(pt3),
+            a.lua_tvs(pt3_argv, pt3.pt_argc),
+            a.str(pt3_str_arg, #('test')),
+            a.dict(pt3_dict),
+            a.str(pt3_name, #('tr')),
+          })
+          for _, v in ipairs(cbs) do
+            lib.tv_dict_watcher_add(d, v[1], #(v[1]), v[2][0])
+          end
+          local ws, qs, kps = dict_watchers(d)
+          eq({{busy=false, pat=cbs[1][1], cb={type='none'}},
+              {busy=false, pat=cbs[2][1], cb={type='fref', fref='tr'}},
+              {busy=false, pat=cbs[3][1], cb={type='pt', fref='tr', pt={
+                [type_key]=func_type,
+                value='tr',
+                args={'test'},
+                dict={},
+          }}}}, ws)
+          alloc_log:check({
+            a.dwatcher(qs[1]),
+            a.str(kps[1][1], kps[1][2]),
+            a.dwatcher(qs[2]),
+            a.str(kps[2][1], kps[2][2]),
+            a.dwatcher(qs[3]),
+            a.str(kps[3][1], kps[3][2]),
+          })
+          eq(true, lib.tv_dict_watcher_remove(d, cbs[2][1], #cbs[2][1], cbs[2][2][0]))
+          alloc_log:check({
+            a.freed(cbs[2][2].data.funcref),
+            a.freed(kps[2][1]),
+            a.freed(qs[2]),
+          })
+          eq(false, lib.tv_dict_watcher_remove(d, cbs[2][1], #cbs[2][1], cbs[2][2][0]))
+          eq({{busy=false, pat=cbs[1][1], cb={type='none'}},
+              {busy=false, pat=cbs[3][1], cb={type='pt', fref='tr', pt={
+                [type_key]=func_type,
+                value='tr',
+                args={'test'},
+                dict={},
+          }}}}, dict_watchers(d))
+          eq(true, lib.tv_dict_watcher_remove(d, cbs[3][1], #cbs[3][1], cbs[3][2][0]))
+          alloc_log:check({
+            a.freed(pt3_str_arg),
+            a.freed(pt3_argv),
+            a.freed(pt3_dict),
+            a.freed(pt3_name),
+            a.freed(pt3),
+            a.freed(kps[3][1]),
+            a.freed(qs[3]),
+          })
+          eq(false, lib.tv_dict_watcher_remove(d, cbs[3][1], #cbs[3][1], cbs[3][2][0]))
+          eq({{busy=false, pat=cbs[1][1], cb={type='none'}}}, dict_watchers(d))
+          eq(true, lib.tv_dict_watcher_remove(d, cbs[1][1], #cbs[1][1], cbs[1][2][0]))
+          alloc_log:check({
+            a.freed(kps[1][1]),
+            a.freed(qs[1]),
+          })
+          eq(false, lib.tv_dict_watcher_remove(d, cbs[1][1], #cbs[1][1], cbs[1][2][0]))
+          eq({}, dict_watchers(d))
+        end)
       end)
     end)
   end)

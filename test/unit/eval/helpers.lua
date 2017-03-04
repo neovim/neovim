@@ -33,18 +33,62 @@ local function li_alloc(nogc)
   return li
 end
 
-local function list(...)
-  local ret = ffi.gc(eval.tv_list_alloc(), eval.tv_list_unref)
-  eq(0, ret.lv_refcount)
-  ret.lv_refcount = 1
-  for i = 1, select('#', ...) do
-    local val = select(i, ...)
-    local li_tv = ffi.gc(lua2typvalt(val), nil)
-    local li = li_alloc(true)
-    li.li_tv = li_tv
-    eval.tv_list_append(ret, li)
+local function populate_list(l, lua_l, processed)
+  processed = processed or {}
+  eq(0, l.lv_refcount)
+  l.lv_refcount = 1
+  processed[lua_l] = l
+  for i = 1, #lua_l do
+    local item_tv = ffi.gc(lua2typvalt(lua_l[i], processed), nil)
+    local item_li = eval.tv_list_item_alloc()
+    item_li.li_tv = item_tv
+    eval.tv_list_append(l, item_li)
   end
-  return ret
+  return l
+end
+
+local function populate_dict(d, lua_d, processed)
+  processed = processed or {}
+  eq(0, d.dv_refcount)
+  d.dv_refcount = 1
+  processed[lua_d] = d
+  for k, v in pairs(lua_d) do
+    if type(k) == 'string' then
+      local di = eval.tv_dict_item_alloc(to_cstr(k))
+      local val_tv = ffi.gc(lua2typvalt(v, processed), nil)
+      eval.tv_copy(val_tv, di.di_tv)
+      eval.tv_clear(val_tv)
+      eval.tv_dict_add(d, di)
+    end
+  end
+  return d
+end
+
+local function populate_partial(pt, lua_pt, processed)
+  processed = processed or {}
+  eq(0, pt.pt_refcount)
+  processed[lua_pt] = pt
+  local argv = nil
+  if lua_pt.args and #lua_pt.args > 0 then
+    argv = ffi.gc(ffi.cast('typval_T*', eval.xmalloc(ffi.sizeof('typval_T') * #lua_pt.args)), nil)
+    for i, arg in ipairs(lua_pt.args) do
+      local arg_tv = ffi.gc(lua2typvalt(arg, processed), nil)
+      argv[i - 1] = arg_tv
+    end
+  end
+  local dict = nil
+  if lua_pt.dict then
+    local dict_tv = ffi.gc(lua2typvalt(lua_pt.dict, processed), nil)
+    assert(dict_tv.v_type == eval.VAR_DICT)
+    dict = dict_tv.vval.v_dict
+  end
+  pt.pt_refcount = 1
+  pt.pt_name = eval.xmemdupz(to_cstr(lua_pt.value), #lua_pt.value)
+  pt.pt_auto = not not lua_pt.auto
+  pt.pt_argc = lua_pt.args and #lua_pt.args or 0
+  pt.pt_argv = argv
+  pt.pt_dict = dict
+  return pt
 end
 
 local ptr2key = function(ptr)
@@ -55,6 +99,30 @@ local lst2tbl
 local dct2tbl
 
 local typvalt2lua
+
+local function partial2lua(pt, processed)
+  processed = processed or {}
+  local value, auto, dict, argv = nil, nil, nil, nil
+  if pt ~= nil then
+    value = ffi.string(pt.pt_name)
+    auto = pt.pt_auto and true or nil
+    argv = {}
+    for i = 1, pt.pt_argc do
+      argv[i] = typvalt2lua(pt.pt_argv[i - 1], processed)
+    end
+    if pt.pt_dict ~= nil then
+      dict = dct2tbl(pt.pt_dict)
+    end
+  end
+  return {
+    [type_key]=func_type,
+    value=value,
+    auto=auto,
+    args=argv,
+    dict=dict,
+  }
+end
+
 local typvalt2lua_tab = nil
 
 local function typvalt2lua_tab_init()
@@ -97,26 +165,7 @@ local function typvalt2lua_tab_init()
       if processed[p_key] then
         return processed[p_key]
       end
-      local pt = t.vval.v_partial
-      local value, auto, dict, argv = nil, nil, nil, nil
-      if pt ~= nil then
-        value = ffi.string(pt.pt_name)
-        auto = pt.pt_auto and true or nil
-        argv = {}
-        for i = 1, pt.pt_argc do
-          argv[i] = typvalt2lua(pt.pt_argv[i - 1], processed)
-        end
-        if pt.pt_dict ~= nil then
-          dict = dct2tbl(pt.pt_dict)
-        end
-      end
-      return {
-        [type_key]=func_type,
-        value=value,
-        auto=auto,
-        args=argv,
-        dict=dict,
-      }
+      return partial2lua(t.vval.v_partial, processed)
     end,
   }
 end
@@ -257,36 +306,16 @@ local lua2typvalt_type_tab = {
       processed[l].lv_refcount = processed[l].lv_refcount + 1
       return typvalt(eval.VAR_LIST, {v_list=processed[l]})
     end
-    local lst = eval.tv_list_alloc()
-    lst.lv_refcount = 1
-    processed[l] = lst
-    local ret = typvalt(eval.VAR_LIST, {v_list=lst})
-    for i = 1, #l do
-      local item_tv = ffi.gc(lua2typvalt(l[i], processed), nil)
-      eval.tv_list_append_tv(lst, item_tv)
-      eval.tv_clear(item_tv)
-    end
-    return ret
+    local lst = populate_list(eval.tv_list_alloc(), l, processed)
+    return typvalt(eval.VAR_LIST, {v_list=lst})
   end,
   [dict_type] = function(l, processed)
     if processed[l] then
       processed[l].dv_refcount = processed[l].dv_refcount + 1
       return typvalt(eval.VAR_DICT, {v_dict=processed[l]})
     end
-    local dct = eval.tv_dict_alloc()
-    dct.dv_refcount = 1
-    processed[l] = dct
-    local ret = typvalt(eval.VAR_DICT, {v_dict=dct})
-    for k, v in pairs(l) do
-      if type(k) == 'string' then
-        local di = eval.tv_dict_item_alloc(to_cstr(k))
-        local val_tv = ffi.gc(lua2typvalt(v, processed), nil)
-        eval.tv_copy(val_tv, di.di_tv)
-        eval.tv_clear(val_tv)
-        eval.tv_dict_add(dct, di)
-      end
-    end
-    return ret
+    local dct = populate_dict(eval.tv_dict_alloc(), l, processed)
+    return typvalt(eval.VAR_DICT, {v_dict=dct})
   end,
   [func_type] = function(l, processed)
     if processed[l] then
@@ -294,29 +323,8 @@ local lua2typvalt_type_tab = {
       return typvalt(eval.VAR_PARTIAL, {v_partial=processed[l]})
     end
     if l.args or l.dict then
-      local pt = ffi.gc(ffi.cast('partial_T*', eval.xmalloc(ffi.sizeof('partial_T'))), nil)
-      processed[l] = pt
-      local argv = nil
-      if l.args and #l.args > 0 then
-        argv = ffi.gc(ffi.cast('typval_T*', eval.xmalloc(ffi.sizeof('typval_T') * #l.args)), nil)
-        for i, arg in ipairs(l.args) do
-          local arg_tv = ffi.gc(lua2typvalt(arg, processed), nil)
-          eval.tv_copy(arg_tv, argv[i - 1])
-          eval.tv_clear(arg_tv)
-        end
-      end
-      local dict = nil
-      if l.dict then
-        local dict_tv = ffi.gc(lua2typvalt(l.dict, processed), nil)
-        assert(dict_tv.v_type == eval.VAR_DICT)
-        dict = dict_tv.vval.v_dict
-      end
-      pt.pt_refcount = 1
-      pt.pt_name = eval.xmemdupz(to_cstr(l.value), #l.value)
-      pt.pt_auto = not not l.auto
-      pt.pt_argc = l.args and #l.args or 0
-      pt.pt_argv = argv
-      pt.pt_dict = dict
+      local pt = populate_partial(ffi.gc(ffi.cast('partial_T*',
+          eval.xcalloc(1, ffi.sizeof('partial_T'))), nil), l, processed)
       return typvalt(eval.VAR_PARTIAL, {v_partial=pt})
     else
       return typvalt(eval.VAR_FUNC, {
@@ -402,11 +410,89 @@ local alloc_logging_helpers = {
     return {func='malloc', args={size + 1}, ret=void(s)}
   end,
 
+  dwatcher = function(w) return {func='malloc', args={ffi.sizeof('DictWatcher')}, ret=void(w)} end,
+
   freed = function(p) return {func='free', args={type(p) == 'table' and p or void(p)}} end,
+
+  -- lua_…: allocated by this file, not by some Neovim function
+  lua_pt = function(pt) return {func='calloc', args={1, ffi.sizeof('partial_T')}, ret=void(pt)} end,
+  lua_tvs = function(argv, argc) return {func='malloc', args={ffi.sizeof('typval_T')*argc}, ret=void(argv)} end,
 }
 
 local function int(n)
   return {[type_key]=int_type, value=n}
+end
+
+local function list(...)
+  return populate_list(ffi.gc(eval.tv_list_alloc(), eval.tv_list_unref),
+                       {...}, {})
+end
+
+local function dict(d)
+  return populate_dict(ffi.gc(eval.tv_dict_alloc(), eval.tv_dict_free),
+                       d, {})
+end
+
+local callback2tbl_type_tab = nil
+
+local function init_callback2tbl_type_tab()
+  if callback2tbl_type_tab then
+    return
+  end
+  callback2tbl_type_tab = {
+    [tonumber(eval.kCallbackNone)] = function(_) return {type='none'} end,
+    [tonumber(eval.kCallbackFuncref)] = function(cb)
+      return {type='fref', fref=ffi.string(cb.data.funcref)}
+    end,
+    [tonumber(eval.kCallbackPartial)] = function(cb)
+      local lua_pt = partial2lua(cb.data.partial)
+      return {type='pt', fref=ffi.string(lua_pt.value), pt=lua_pt}
+    end
+  }
+end
+
+local function callback2tbl(cb)
+  init_callback2tbl_type_tab()
+  return callback2tbl_type_tab[tonumber(cb.type)](cb)
+end
+
+local function tbl2callback(tbl)
+  local ret = nil
+  if tbl.type == 'none' then
+    ret = ffi.new('Callback[1]', {{type=eval.kCallbackNone}})
+  elseif tbl.type == 'fref' then
+    ret = ffi.new('Callback[1]', {{type=eval.kCallbackFuncref,
+                                   data={funcref=eval.xstrdup(tbl.fref)}}})
+  elseif tbl.type == 'pt' then
+    local pt = ffi.gc(ffi.cast('partial_T*',
+        eval.xcalloc(1, ffi.sizeof('partial_T'))), eval.partial_unref)
+    ret = ffi.new('Callback[1]', {{type=eval.kCallbackPartial,
+                                   data={partial=populate_partial(pt, tbl.pt, {})}}})
+  else
+    assert(false)
+  end
+  return ffi.gc(ffi.cast('Callback*', ret), helpers.callback_free)
+end
+
+local function dict_watchers(d)
+  local ret = {}
+  local h = d.watchers
+  local q = h.next
+  local qs = {}
+  local key_patterns = {}
+  while q ~= h do
+    local qitem = ffi.cast('DictWatcher *',
+        ffi.cast('char *', q) - ffi.offsetof('DictWatcher', 'node'))
+    ret[#ret + 1] = {
+      cb=callback2tbl(qitem.callback),
+      pat=ffi.string(qitem.key_pattern, qitem.key_pattern_len),
+      busy=qitem.busy,
+    }
+    qs[#qs + 1] = qitem
+    key_patterns[#key_patterns + 1] = {qitem.key_pattern, qitem.key_pattern_len}
+    q = q.next
+  end
+  return ret, qs, key_patterns
 end
 
 return {
@@ -427,6 +513,7 @@ return {
   locks_key=locks_key,
 
   list=list,
+  dict=dict,
   lst2tbl=lst2tbl,
   dct2tbl=dct2tbl,
 
@@ -445,6 +532,9 @@ return {
 
   list_items=list_items,
   dict_items=dict_items,
+
+  dict_watchers=dict_watchers,
+  tbl2callback=tbl2callback,
 
   empty_list = {[type_key]=list_type},
 }
