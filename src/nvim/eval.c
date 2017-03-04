@@ -20004,7 +20004,8 @@ trans_function_name(
         EMSG(_(e_usingsid));
         goto theend;
       }
-      sid_buf_len = snprintf(S_LEN(sid_buf), "%" PRIdSCID "_", current_SID);
+      sid_buf_len = snprintf(sid_buf, sizeof(sid_buf),
+                             "%" PRIdSCID "_", current_SID);
       lead += sid_buf_len;
     }
   } else if (!(flags & TFN_INT)
