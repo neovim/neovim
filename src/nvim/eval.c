@@ -2055,6 +2055,7 @@ static char_u *get_lval(char_u *const name, typval_T *const rettv,
 
     lp->ll_exp_name = (char *)make_expanded_name(name, expr_start, expr_end,
                                                  (char_u *)p);
+    lp->ll_name = lp->ll_exp_name;
     if (lp->ll_exp_name == NULL) {
       /* Report an invalid expression in braces, unless the
        * expression evaluation has been cancelled due to an
@@ -2064,9 +2065,10 @@ static char_u *get_lval(char_u *const name, typval_T *const rettv,
         EMSG2(_(e_invarg2), name);
         return NULL;
       }
+      lp->ll_name_len = 0;
+    } else {
+      lp->ll_name_len = strlen(lp->ll_name);
     }
-    lp->ll_name = lp->ll_exp_name;
-    lp->ll_name_len = strlen(lp->ll_name);
   } else {
     lp->ll_name = (const char *)name;
     lp->ll_name_len = (size_t)((const char *)p - lp->ll_name);
