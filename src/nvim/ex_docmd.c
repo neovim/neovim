@@ -9638,18 +9638,18 @@ static void ex_terminal(exarg_T *eap)
   } else {
     char **argv = build_argv((char *)p_sh);
     char **p = argv;
-    char tempstring[512] = "";
+    char tempstring[512] = { 0 };
+    char shell_argv[512] = { 0 };
 
-    char shell_argv[512] = "";
     if (*p != NULL) {
       snprintf(tempstring, sizeof(tempstring), "\"%s\"", *p);
-      vim_strcat((char_u *)shell_argv, (char_u *)tempstring, 512);
+      xstrlcat(shell_argv, tempstring, sizeof(shell_argv));
       p++;
     }
 
     while (*p != NULL) {
       snprintf(tempstring, sizeof(tempstring), ", \"%s\"", *p);
-      vim_strcat((char_u *)shell_argv, (char_u *)tempstring, 512);
+      xstrlcat(shell_argv, tempstring, sizeof(shell_argv));
       p++;
     }
     shell_free_argv(argv);
