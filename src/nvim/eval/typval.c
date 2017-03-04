@@ -1167,8 +1167,11 @@ void tv_dict_unref(dict_T *const d)
 /// @return found item or NULL if nothing was found.
 dictitem_T *tv_dict_find(const dict_T *const d, const char *const key,
                          const ptrdiff_t len)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_NONNULL_ARG(2) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
+  if (d == NULL) {
+    return NULL;
+  }
   hashitem_T *const hi = (len < 0
                           ? hash_find(&d->dv_hashtab, (const char_u *)key)
                           : hash_find_len(&d->dv_hashtab, key, (size_t)len));
