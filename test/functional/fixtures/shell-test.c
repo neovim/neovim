@@ -16,6 +16,8 @@ static void help(void)
   puts("    Prints \"{prompt text} $ \" to stderr.");
   puts("  shell-test EXE \"prog args...\"");
   puts("    Prints \"ready $ prog args...\\n\" to stderr.");
+  puts("  shell-test -t {prompt text} EXE \"prog args...\"");
+  puts("    Prints \"{prompt text} $ progs args...\" to stderr.");
   puts("  shell-test REP {byte} \"line line line\"");
   puts("    Prints \"{lnr}: line line line\\n\" to stdout {byte} times.");
   puts("    I.e. for `shell-test REP ab \"test\"'");
@@ -38,6 +40,9 @@ int main(int argc, char **argv)
         return 5;
       } else {
         fprintf(stderr, "%s $ ", argv[2]);
+        if (argc >= 5 && (strcmp(argv[3], "EXE") == 0)) {
+          fprintf(stderr, "%s\n", argv[4]);
+        }
       }
     } else if (strcmp(argv[1], "EXE") == 0) {
       fprintf(stderr, "ready $ ");

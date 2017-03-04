@@ -50,37 +50,6 @@ describe(':terminal', function()
 
 end)
 
-describe(':terminal (with fake shell with arguments)', function()
-  local screen
-
-  before_each(function()
-    clear()
-    screen = Screen.new(50, 4)
-    screen:attach({rgb=false})
-    -- shell-test.c is a fake shell that prints its arguments and exits.
-    nvim('set_option', 'shell', nvim_dir..'/shell-test -t jeff')
-    nvim('set_option', 'shellcmdflag', 'EXE')
-  end)
-
-  -- Invokes `:terminal {cmd}` using a fake shell (shell-test.c) which prints
-  -- the {cmd} and exits immediately .
-  local function terminal_with_fake_shell(cmd)
-    execute("terminal "..(cmd and cmd or ""))
-  end
-
-  it('with no argument, acts like termopen()', function()
-    terminal_with_fake_shell()
-    wait()
-    screen:expect([[
-      jeff $                                            |
-      [Process exited 0]                                |
-                                                        |
-      -- TERMINAL --                                    |
-    ]])
-  end)
-
-end)
-
 describe(':terminal (with fake shell)', function()
   local screen
 
@@ -99,11 +68,46 @@ describe(':terminal (with fake shell)', function()
     execute("terminal "..(cmd and cmd or ""))
   end
 
+  it('with no argument, acts like termopen()', function()
+    terminal_with_fake_shell()
+    wait()
+    screen:expect([[
+      ready $                                           |
+      [Process exited 0]                                |
+                                                        |
+      -- TERMINAL --                                    |
+    ]])
+  end)
+
+  it("with no argument, but 'shell' has arguments, acts like termopen()", function()
+    nvim('set_option', 'shell', nvim_dir..'/shell-test -t jeff')
+    terminal_with_fake_shell()
+    wait()
+    screen:expect([[
+      jeff $                                            |
+      [Process exited 0]                                |
+                                                        |
+      -- TERMINAL --                                    |
+    ]])
+  end)
+
   it('executes a given command through the shell', function()
     terminal_with_fake_shell('echo hi')
     wait()
     screen:expect([[
       ready $ echo hi                                   |
+                                                        |
+      [Process exited 0]                                |
+      -- TERMINAL --                                    |
+    ]])
+  end)
+
+  it("executes a given command through the shell, when 'shell' has arguments", function()
+    nvim('set_option', 'shell', nvim_dir..'/shell-test -t jeff')
+    terminal_with_fake_shell('echo hi')
+    wait()
+    screen:expect([[
+      jeff $ echo hi                                    |
                                                         |
       [Process exited 0]                                |
       -- TERMINAL --                                    |
