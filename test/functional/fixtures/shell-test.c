@@ -34,7 +34,7 @@ int main(int argc, char **argv)
   if (argc >= 2) {
     if (strcmp(argv[1], "-t") == 0) {
       if (argc < 3) {
-        fprintf(stderr,"Missing promt text for -t option\n");
+        fprintf(stderr,"Missing prompt text for -t option\n");
         return 5;
       } else {
         fprintf(stderr, "%s $ ", argv[2]);
