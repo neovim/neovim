@@ -185,12 +185,6 @@ FILENAME == "gui.txt" && asciiart == "no"  \
 	asciicnt=0;
 	}
 
-FILENAME == "quotes.txt" && asciiart == "no" \
-	  && $0 ~ /In summary:/ {
-	asciiart= "yes";
-	asciicnt=0;
-	}
-
 FILENAME == "usr_20.txt" && asciiart == "no" \
 	  && $0 ~ /an empty line at the end:/ {
 	asciiart= "yes";
