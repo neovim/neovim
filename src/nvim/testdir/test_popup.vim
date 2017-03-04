@@ -522,4 +522,23 @@ func Test_completion_can_undo()
   iunmap <Right>
 endfunc
 
+func Test_completion_comment_formatting()
+  new
+  setl formatoptions=tcqro
+  call feedkeys("o/*\<cr>\<cr>/\<esc>", 'tx')
+  call assert_equal(['', '/*', ' *', ' */'], getline(1,4))
+  %d
+  call feedkeys("o/*\<cr>foobar\<cr>/\<esc>", 'tx')
+  call assert_equal(['', '/*', ' * foobar', ' */'], getline(1,4))
+  %d
+  try
+    call feedkeys("o/*\<cr>\<cr>\<c-x>\<c-u>/\<esc>", 'tx')
+    call assert_false(1, 'completefunc not set, should have failed')
+  catch
+    call assert_exception('E764:')
+  endtry
+  call assert_equal(['', '/*', ' *', ' */'], getline(1,4))
+  bwipe!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
