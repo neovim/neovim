@@ -845,6 +845,8 @@ static bool tv_callback_equal(const Callback *const cb1,
       return true;
     }
   }
+  assert(false);
+  return false;
 }
 
 /// Remove watcher from a dictionary
