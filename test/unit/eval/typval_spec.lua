@@ -1,4 +1,5 @@
 local helpers = require('test.unit.helpers')(after_each)
+local global_helpers = require('test.helpers')
 local eval_helpers = require('test.unit.eval.helpers')
 
 local itp = helpers.gen_itp(it)
@@ -30,6 +31,8 @@ local typvalt2lua  = eval_helpers.typvalt2lua
 local null_string  = eval_helpers.null_string
 local tbl2callback = eval_helpers.tbl2callback
 local dict_watchers = eval_helpers.dict_watchers
+
+local concat_tables = global_helpers.concat_tables
 
 local lib = cimport('./src/nvim/eval/typval.h', './src/nvim/memory.h',
                     './src/nvim/mbyte.h', './src/nvim/garray.h',
@@ -1496,6 +1499,48 @@ describe('typval.c', function()
           })
           eq(false, lib.tv_dict_watcher_remove(d, cbs[1][1], #cbs[1][1], cbs[1][2][0]))
           eq({}, dict_watchers(d))
+        end)
+      end)
+      describe('notify', function()
+        -- Way too hard to test it here, functional tests in
+        -- dict_notifications_spec.lua.
+      end)
+    end)
+    describe('item', function()
+      describe('alloc/free', function()
+        local function check_tv_dict_item_alloc_len(s, len, tv, more_frees)
+          local di
+          if len == nil then
+            di = ffi.gc(lib.tv_dict_item_alloc(s), nil)
+            len = #s
+          else
+            di = ffi.gc(lib.tv_dict_item_alloc_len(s, len or #s), nil)
+          end
+          eq(s:sub(1, len), ffi.string(di.di_key))
+          alloc_log:check({a.di(di, len)})
+          if tv then
+            di.di_tv = tv
+          else
+            di.di_tv.v_type = lib.VAR_UNKNOWN
+          end
+          lib.tv_dict_item_free(di)
+          alloc_log:check(concat_tables(more_frees, {a.freed(di)}))
+        end
+        local function check_tv_dict_item_alloc(s, tv, more_frees)
+          return check_tv_dict_item_alloc_len(s, nil, tv, more_frees)
+        end
+        itp('works', function()
+          check_tv_dict_item_alloc('')
+          check_tv_dict_item_alloc('t')
+          check_tv_dict_item_alloc('TEST')
+          check_tv_dict_item_alloc_len('', 0)
+          check_tv_dict_item_alloc_len('TEST', 2)
+          local tv = lua2typvalt('test')
+          alloc_log:check({a.str(tv.vval.v_string, #('test'))})
+          check_tv_dict_item_alloc('', tv, {a.freed(tv.vval.v_string)})
+          tv = lua2typvalt('test')
+          alloc_log:check({a.str(tv.vval.v_string, #('test'))})
+          check_tv_dict_item_alloc_len('', 0, tv, {a.freed(tv.vval.v_string)})
         end)
       end)
     end)

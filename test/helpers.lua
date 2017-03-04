@@ -225,6 +225,19 @@ local function which(exe)
   end
 end
 
+local function concat_tables(...)
+  local ret = {}
+  for i = 1, select('#', ...) do
+    local tbl = select(i, ...)
+    if tbl then
+      for _, v in ipairs(tbl) do
+        ret[#ret + 1] = v
+      end
+    end
+  end
+  return ret
+end
+
 return {
   eq = eq,
   neq = neq,
@@ -238,4 +251,5 @@ return {
   check_cores = check_cores,
   hasenv = hasenv,
   which = which,
+  concat_tables = concat_tables,
 }
