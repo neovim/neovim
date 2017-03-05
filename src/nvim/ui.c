@@ -161,6 +161,11 @@ void ui_refresh(void)
     return;
   }
 
+  if (updating_screen) {
+    ui_schedule_refresh();
+    return;
+  }
+
   int width = INT_MAX, height = INT_MAX;
   bool pum_external = true;
 
