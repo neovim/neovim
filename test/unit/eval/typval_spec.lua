@@ -34,6 +34,7 @@ local null_string  = eval_helpers.null_string
 local tbl2callback = eval_helpers.tbl2callback
 local dict_watchers = eval_helpers.dict_watchers
 
+local uname = global_helpers.uname
 local concat_tables = global_helpers.concat_tables
 
 local lib = cimport('./src/nvim/eval/typval.h', './src/nvim/memory.h',
@@ -1132,7 +1133,7 @@ describe('typval.c', function()
         local recursive_li = recursive_l.lv_first
         lib.tv_list_item_remove(recursive_l, recursive_li)
         lib.tv_list_free(l)
-      end)
+      end, uname() == 'Darwin')
     end)
     describe('equal()', function()
       itp('compares empty and NULL lists correctly', function()
