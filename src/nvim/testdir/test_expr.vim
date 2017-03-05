@@ -107,6 +107,33 @@ func Test_setmatches()
   call assert_equal(exp, getmatches())
 endfunc
 
+function Test_printf_spec_s()
+  " number
+  call assert_equal("1234567890", printf('%s', 1234567890))
+
+  " string
+  call assert_equal("abcdefgi", printf('%s', "abcdefgi"))
+
+  " float
+  if has('float')
+    call assert_equal("1.23", printf('%s', 1.23))
+  endif
+
+  " list
+  let value = [1, 'two', ['three', 4]]
+  call assert_equal(string(value), printf('%s', value))
+
+  " dict
+  let value = {'key1' : 'value1', 'key2' : ['list', 'value'], 'key3' : {'dict' : 'value'}}
+  call assert_equal(string(value), printf('%s', value))
+
+  " funcref
+  call assert_equal('printf', printf('%s', function('printf')))
+
+  " partial
+  call assert_equal(string(function('printf', ['%s'])), printf('%s', function('printf', ['%s'])))
+endfunc
+
 func Test_substitute_expr()
   let g:val = 'XXX'
   call assert_equal('XXX', substitute('yyy', 'y*', '\=g:val', ''))
