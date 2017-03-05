@@ -2914,11 +2914,14 @@ static int ins_compl_bs(void)
   p = line + curwin->w_cursor.col;
   mb_ptr_back(line, p);
 
-  /* Stop completion when the whole word was deleted.  For Omni completion
-   * allow the word to be deleted, we won't match everything. */
+  // Stop completion when the whole word was deleted.  For Omni completion
+  // allow the word to be deleted, we won't match everything.
+  // Respect the 'backspace' option.
   if ((int)(p - line) - (int)compl_col < 0
       || ((int)(p - line) - (int)compl_col == 0
-          && ctrl_x_mode != CTRL_X_OMNI) || ctrl_x_mode == CTRL_X_EVAL) {
+          && ctrl_x_mode != CTRL_X_OMNI) || ctrl_x_mode == CTRL_X_EVAL
+      || (!can_bs(BS_START) && (int)(p - line) - (int)compl_col
+          - compl_length < 0)) {
     return K_BS;
   }
 
@@ -4341,6 +4344,7 @@ static int ins_complete(int c, bool enable_pum)
   int save_w_wrow;
   int save_w_leftcol;
   int insert_match;
+  int save_did_ai = did_ai;
 
   compl_direction = ins_compl_key2dir(c);
   insert_match = ins_compl_use_match(c);
@@ -4556,6 +4560,8 @@ static int ins_complete(int c, bool enable_pum)
       if (*funcname == NUL) {
         EMSG2(_(e_notset), ctrl_x_mode == CTRL_X_FUNCTION
             ? "completefunc" : "omnifunc");
+        // restore did_ai, so that adding comment leader works
+        did_ai = save_did_ai;
         return FAIL;
       }
 

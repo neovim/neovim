@@ -482,6 +482,26 @@ func Test_completion_ctrl_e_without_autowrap()
   q!
 endfunc
 
+func Test_completion_respect_bs_option()
+  new
+  let li = ["aaa", "aaa12345", "aaaabcdef", "aaaABC"]
+
+  set bs=indent,eol
+  call setline(1, li)
+  1
+  call feedkeys("A\<C-X>\<C-N>\<C-P>\<BS>\<BS>\<BS>\<Esc>", "tx")
+  call assert_equal('aaa', getline(1))
+
+  %d
+  set bs=indent,eol,start
+  call setline(1, li)
+  1
+  call feedkeys("A\<C-X>\<C-N>\<C-P>\<BS>\<BS>\<BS>\<Esc>", "tx")
+  call assert_equal('', getline(1))
+
+  bw!
+endfunc
+
 func CompleteUndo() abort
   call complete(1, g:months)
   return ''
@@ -500,6 +520,25 @@ func Test_completion_can_undo()
   bwipe!
   set completeopt&
   iunmap <Right>
+endfunc
+
+func Test_completion_comment_formatting()
+  new
+  setl formatoptions=tcqro
+  call feedkeys("o/*\<cr>\<cr>/\<esc>", 'tx')
+  call assert_equal(['', '/*', ' *', ' */'], getline(1,4))
+  %d
+  call feedkeys("o/*\<cr>foobar\<cr>/\<esc>", 'tx')
+  call assert_equal(['', '/*', ' * foobar', ' */'], getline(1,4))
+  %d
+  try
+    call feedkeys("o/*\<cr>\<cr>\<c-x>\<c-u>/\<esc>", 'tx')
+    call assert_false(1, 'completefunc not set, should have failed')
+  catch
+    call assert_exception('E764:')
+  endtry
+  call assert_equal(['', '/*', ' *', ' */'], getline(1,4))
+  bwipe!
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab
