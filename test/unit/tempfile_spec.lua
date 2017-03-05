@@ -1,5 +1,6 @@
 local lfs = require 'lfs'
 local helpers = require 'test.unit.helpers'
+local itp = helpers.gen_itp(it)
 
 local os = helpers.cimport './src/nvim/os/os.h'
 local tempfile = helpers.cimport './src/nvim/fileio.h'
@@ -17,7 +18,7 @@ describe('tempfile related functions', function()
   end
 
   describe('vim_gettempdir', function()
-    it('returns path to Neovim own temp directory', function()
+    itp('returns path to Neovim own temp directory', function()
       local dir = vim_gettempdir()
       assert.True(dir ~= nil and dir:len() > 0)
       -- os_file_is_writable returns 2 for a directory which we have rights
@@ -28,7 +29,7 @@ describe('tempfile related functions', function()
       end
     end)
 
-    it('returns the same directory on each call', function()
+    itp('returns the same directory on each call', function()
       local dir1 = vim_gettempdir()
       local dir2 = vim_gettempdir()
       assert.equals(dir1, dir2)
@@ -40,19 +41,19 @@ describe('tempfile related functions', function()
       return helpers.ffi.string(tempfile.vim_tempname())
     end
 
-    it('generate name of non-existing file', function()
+    itp('generate name of non-existing file', function()
       local file = vim_tempname()
       assert.truthy(file)
       assert.False(os.os_path_exists(file))
     end)
 
-    it('generate different names on each call', function()
+    itp('generate different names on each call', function()
       local fst = vim_tempname()
       local snd = vim_tempname()
       assert.not_equals(fst, snd)
     end)
 
-    it('generate file name in Neovim own temp directory', function()
+    itp('generate file name in Neovim own temp directory', function()
       local dir = vim_gettempdir()
       local file = vim_tempname()
       assert.truthy(file:find('^' .. dir .. '[^/]*$'))

@@ -1,4 +1,5 @@
 local helpers = require('test.unit.helpers')
+local itp = helpers.gen_itp(it)
 
 local cimport = helpers.cimport
 local to_cstr = helpers.to_cstr
@@ -15,7 +16,7 @@ local eval_expr = function(expr)
 end
 
 describe('NULL typval_T', function()
-  it('is produced by $XXX_UNEXISTENT_VAR_XXX', function()
+  itp('is produced by $XXX_UNEXISTENT_VAR_XXX', function()
     -- Required for various tests which need to check whether typval_T with NULL
     -- string works correctly. This test checks that unexistent environment
     -- variable produces NULL string, not that some specific environment
@@ -29,13 +30,13 @@ describe('NULL typval_T', function()
     eq(nil, rettv.vval.v_string)
   end)
 
-  it('is produced by v:_null_list', function()
+  itp('is produced by v:_null_list', function()
     local rettv = eval_expr('v:_null_list')
     eq(eval.VAR_LIST, rettv.v_type)
     eq(nil, rettv.vval.v_list)
   end)
 
-  it('is produced by v:_null_dict', function()
+  itp('is produced by v:_null_dict', function()
     local rettv = eval_expr('v:_null_dict')
     eq(eval.VAR_DICT, rettv.v_type)
     eq(nil, rettv.vval.v_dict)

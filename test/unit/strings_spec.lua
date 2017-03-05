@@ -1,4 +1,5 @@
 local helpers = require("test.unit.helpers")
+local itp = helpers.gen_itp(it)
 
 local cimport = helpers.cimport
 local eq = helpers.eq
@@ -19,23 +20,23 @@ describe('vim_strsave_escaped()', function()
     return ret
   end
 
-  it('precedes by a backslash all chars from second argument', function()
+  itp('precedes by a backslash all chars from second argument', function()
     eq([[\a\b\c\d]], vim_strsave_escaped('abcd','abcd'))
   end)
 
-  it('precedes by a backslash chars only from second argument', function()
+  itp('precedes by a backslash chars only from second argument', function()
     eq([[\a\bcd]], vim_strsave_escaped('abcd','ab'))
   end)
 
-  it('returns a copy of passed string if second argument is empty', function()
+  itp('returns a copy of passed string if second argument is empty', function()
     eq('text \n text', vim_strsave_escaped('text \n text',''))
   end)
 
-  it('returns an empty string if first argument is empty string', function()
+  itp('returns an empty string if first argument is empty string', function()
     eq('', vim_strsave_escaped('','\r'))
   end)
 
-  it('returns a copy of passed string if it does not contain chars from 2nd argument', function()
+  itp('returns a copy of passed string if it does not contain chars from 2nd argument', function()
     eq('some text', vim_strsave_escaped('some text', 'a'))
   end)
 end)
@@ -50,51 +51,51 @@ describe('vim_strnsave_unquoted()', function()
     return ret
   end
 
-  it('copies unquoted strings as-is', function()
+  itp('copies unquoted strings as-is', function()
     eq('-c', vim_strnsave_unquoted('-c'))
     eq('', vim_strnsave_unquoted(''))
   end)
 
-  it('respects length argument', function()
+  itp('respects length argument', function()
     eq('', vim_strnsave_unquoted('-c', 0))
     eq('-', vim_strnsave_unquoted('-c', 1))
     eq('-', vim_strnsave_unquoted('"-c', 2))
   end)
 
-  it('unquotes fully quoted word', function()
+  itp('unquotes fully quoted word', function()
     eq('/bin/sh', vim_strnsave_unquoted('"/bin/sh"'))
   end)
 
-  it('unquotes partially quoted word', function()
+  itp('unquotes partially quoted word', function()
     eq('/Program Files/sh', vim_strnsave_unquoted('/Program" "Files/sh'))
   end)
 
-  it('removes ""', function()
+  itp('removes ""', function()
     eq('/Program Files/sh', vim_strnsave_unquoted('/""Program" "Files/sh'))
   end)
 
-  it('performs unescaping of "', function()
+  itp('performs unescaping of "', function()
     eq('/"Program Files"/sh', vim_strnsave_unquoted('/"\\""Program Files"\\""/sh'))
   end)
 
-  it('performs unescaping of \\', function()
+  itp('performs unescaping of \\', function()
     eq('/\\Program Files\\foo/sh', vim_strnsave_unquoted('/"\\\\"Program Files"\\\\foo"/sh'))
   end)
 
-  it('strips quote when there is no pair to it', function()
+  itp('strips quote when there is no pair to it', function()
     eq('/Program Files/sh', vim_strnsave_unquoted('/Program" Files/sh'))
     eq('', vim_strnsave_unquoted('"'))
   end)
 
-  it('allows string to end with one backslash unescaped', function()
+  itp('allows string to end with one backslash unescaped', function()
     eq('/Program Files/sh\\', vim_strnsave_unquoted('/Program" Files/sh\\'))
   end)
 
-  it('does not perform unescaping out of quotes', function()
+  itp('does not perform unescaping out of quotes', function()
     eq('/Program\\ Files/sh\\', vim_strnsave_unquoted('/Program\\ Files/sh\\'))
   end)
 
-  it('does not unescape \\n', function()
+  itp('does not unescape \\n', function()
     eq('/Program\\nFiles/sh', vim_strnsave_unquoted('/Program"\\n"Files/sh'))
   end)
 end)

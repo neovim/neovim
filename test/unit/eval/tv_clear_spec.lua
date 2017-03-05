@@ -1,4 +1,5 @@
 local helpers = require('test.unit.helpers')
+local itp = helpers.gen_itp(it)
 local eval_helpers = require('test.unit.eval.helpers')
 
 local alloc_log_new = helpers.alloc_log_new
@@ -26,7 +27,7 @@ after_each(function()
 end)
 
 describe('clear_tv()', function()
-  it('successfully frees all lists in [&l [1], *l, *l]', function()
+  itp('successfully frees all lists in [&l [1], *l, *l]', function()
     local l_inner = {1}
     local list = {l_inner, l_inner, l_inner}
     local list_tv = ffi.gc(lua2typvalt(list), nil)
@@ -53,7 +54,7 @@ describe('clear_tv()', function()
       a.freed(list_p),
     })
   end)
-  it('successfully frees all lists in [&l [], *l, *l]', function()
+  itp('successfully frees all lists in [&l [], *l, *l]', function()
     local l_inner = {[type_key]=list_type}
     local list = {l_inner, l_inner, l_inner}
     local list_tv = ffi.gc(lua2typvalt(list), nil)
@@ -77,7 +78,7 @@ describe('clear_tv()', function()
       a.freed(list_p),
     })
   end)
-  it('successfully frees all dictionaries in [&d {}, *d]', function()
+  itp('successfully frees all dictionaries in [&d {}, *d]', function()
     local d_inner = {}
     local list = {d_inner, d_inner}
     local list_tv = ffi.gc(lua2typvalt(list), nil)
@@ -99,7 +100,7 @@ describe('clear_tv()', function()
       a.freed(list_p),
     })
   end)
-  it('successfully frees all dictionaries in [&d {a: 1}, *d]', function()
+  itp('successfully frees all dictionaries in [&d {a: 1}, *d]', function()
     local d_inner = {a=1}
     local list = {d_inner, d_inner}
     local list_tv = ffi.gc(lua2typvalt(list), nil)

@@ -1,4 +1,5 @@
 local helpers = require('test.unit.helpers')
+local itp = helpers.gen_itp(it)
 local cimported = helpers.cimport(
   './src/nvim/os/shell.h',
   './src/nvim/option_defs.h',
@@ -51,21 +52,21 @@ describe('shell functions', function()
   end
 
   describe('os_system', function()
-    it('can echo some output (shell builtin)', function()
+    itp('can echo some output (shell builtin)', function()
       local cmd, text = 'echo -n', 'some text'
       local status, output = os_system(cmd .. ' ' .. text)
       eq(text, output)
       eq(0, status)
     end)
 
-    it('can deal with empty output', function()
+    itp('can deal with empty output', function()
       local cmd = 'echo -n'
       local status, output = os_system(cmd)
       eq('', output)
       eq(0, status)
     end)
 
-    it('can pass input on stdin', function()
+    itp('can pass input on stdin', function()
       local cmd, input = 'cat -', 'some text\nsome other text'
       local status, output = os_system(cmd, input)
       eq(input, output)
@@ -91,23 +92,23 @@ describe('shell functions', function()
       cimported.p_shcf = saved_opts.p_shcf
     end)
 
-    it('works with NULL arguments', function()
+    itp('works with NULL arguments', function()
       eq({'/bin/bash'}, shell_build_argv(nil, nil))
     end)
 
-    it('works with cmd', function()
+    itp('works with cmd', function()
       eq({'/bin/bash', '-c', 'abc  def'}, shell_build_argv('abc  def', nil))
     end)
 
-    it('works with extra_args', function()
+    itp('works with extra_args', function()
       eq({'/bin/bash', 'ghi  jkl'}, shell_build_argv(nil, 'ghi  jkl'))
     end)
 
-    it('works with cmd and extra_args', function()
+    itp('works with cmd and extra_args', function()
       eq({'/bin/bash', 'ghi  jkl', '-c', 'abc  def'}, shell_build_argv('abc  def', 'ghi  jkl'))
     end)
 
-    it('splits and unquotes &shell and &shellcmdflag', function()
+    itp('splits and unquotes &shell and &shellcmdflag', function()
       cimported.p_sh = to_cstr('/Program" "Files/zsh -f')
       cimported.p_shcf = to_cstr('-x -o "sh word split" "-"c')
       eq({'/Program Files/zsh', '-f',
@@ -117,7 +118,7 @@ describe('shell functions', function()
          shell_build_argv('abc  def', 'ghi  jkl'))
     end)
 
-    it('applies shellxescape (p_sxe) and shellxquote (p_sxq)', function()
+    itp('applies shellxescape (p_sxe) and shellxquote (p_sxq)', function()
       cimported.p_sxq = to_cstr('(')
       cimported.p_sxe = to_cstr('"&|<>()@^')
 
@@ -129,7 +130,7 @@ describe('shell functions', function()
       eq(nil, argv[3])
     end)
 
-    it('applies shellxquote="(', function()
+    itp('applies shellxquote="(', function()
       cimported.p_sxq = to_cstr('"(')
       cimported.p_sxe = to_cstr('"&|<>()@^')
 
@@ -141,7 +142,7 @@ describe('shell functions', function()
       eq(nil, argv[3])
     end)
 
-    it('applies shellxquote="', function()
+    itp('applies shellxquote="', function()
       cimported.p_sxq = to_cstr('"')
       cimported.p_sxe = to_cstr('')
 
@@ -153,7 +154,7 @@ describe('shell functions', function()
       eq(nil, argv[3])
     end)
 
-    it('with empty shellxquote/shellxescape', function()
+    itp('with empty shellxquote/shellxescape', function()
       local argv = ffi.cast('char**', cimported.shell_build_argv(
                                           to_cstr('echo -n some text'), nil))
       eq(ffi.string(argv[0]), '/bin/bash')
