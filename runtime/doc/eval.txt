@@ -1947,7 +1947,7 @@ assert_exception( {error} [, {msg}]) none  assert {error} is in v:exception
 assert_fails( {cmd} [, {error}])     none  assert {cmd} fails
 assert_false({actual} [, {msg}])     none  assert {actual} is false
 assert_inrange({lower}, {upper}, {actual} [, {msg}])
-				none  	assert {actual} is inside the range
+				none	assert {actual} is inside the range
 assert_match( {pat}, {text} [, {msg}]) none  assert {pat} matches {text}
 assert_notequal( {exp}, {act} [, {msg}]) none  assert {exp} is not equal {act}
 assert_notmatch( {pat}, {text} [, {msg}]) none  assert {pat} not matches {text}
@@ -2298,9 +2298,11 @@ tanh({expr})			Float	hyperbolic tangent of {expr}
 tempname()			String	name for a temporary file
 test_garbagecollect_now()	none	free memory right now for testing
 timer_info([{id}])		List	information about timers
+timer_pause({id}, {pause})	none	pause or unpause a timer
 timer_start({time}, {callback} [, {options}])
 				Number	create a timer
 timer_stop({timer})		none	stop a timer
+timer_stopall()			none	stop all timers
 tolower({expr})			String	the String {expr} switched to lowercase
 toupper({expr})			String	the String {expr} switched to uppercase
 tr({src}, {fromstr}, {tostr})	String	translate chars of {src} in {fromstr}
@@ -7534,6 +7536,19 @@ timer_info([{id}])
 				    -1 means forever
 		    "callback"	    the callback
 
+timer_pause({timer}, {paused})				*timer_pause()*
+		Pause or unpause a timer.  A paused timer does not invoke its
+		callback, while the time it would is not changed.  Unpausing a
+		timer may cause the callback to be invoked almost immediately
+		if enough time has passed.
+
+		Pausing a timer is useful to avoid the callback to be called
+		for a short time.
+
+		If {paused} evaluates to a non-zero Number or a non-empty
+		String, then the timer is paused, otherwise it is unpaused.
+		See |non-zero-arg|.
+
 							*timer_start()*
 timer_start({time}, {callback} [, {options}])
 		Create a timer and return the timer ID.
@@ -7564,6 +7579,11 @@ timer_stop({timer})					*timer_stop()*
 		Stop a timer.  The timer callback will no longer be invoked.
 		{timer} is an ID returned by timer_start(), thus it must be a
 		Number.  If {timer} does not exist there is no error.
+
+timer_stopall()						*timer_stopall()*
+		Stop all timers.  The timer callbacks will no longer be
+		invoked.  Useful if some timers is misbehaving.  If there are
+		no timers there is no error.
 
 tolower({expr})						*tolower()*
 		The result is a copy of the String given, with all uppercase

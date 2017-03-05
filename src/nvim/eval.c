@@ -446,6 +446,7 @@ typedef struct {
   int refcount;
   long timeout;
   bool stopped;
+  bool paused;
   Callback callback;
 } timer_T;
 
@@ -17939,6 +17940,7 @@ static void add_timer_info(typval_T *rettv, timer_T *timer)
   list_append_dict(list, dict);
   dict_add_nr_str(dict, "id", (long)timer->timer_id, NULL);
   dict_add_nr_str(dict, "time", timer->timeout, NULL);
+  dict_add_nr_str(dict, "paused", (long)timer->paused, NULL);
 
   dict_add_nr_str(dict, "repeat",
                   (long)(timer->repeat_count < 0 ? -1 : timer->repeat_count),
@@ -17965,7 +17967,9 @@ static void add_timer_info_all(typval_T *rettv)
 {
   timer_T *timer;
   map_foreach_value(timers, timer, {
-    add_timer_info(rettv, timer);
+    if (!timer->stopped) {
+      add_timer_info(rettv, timer);
+    }
   })
 }
 
@@ -17978,12 +17982,26 @@ static void f_timer_info(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       EMSG(_(e_number_exp));
     } else {
       timer_T *timer = pmap_get(uint64_t)(timers, get_tv_number(&argvars[0]));
-      if (timer != NULL) {
+      if (timer != NULL && !timer->stopped) {
         add_timer_info(rettv, timer);
       }
     }
   } else {
     add_timer_info_all(rettv);
+  }
+}
+
+/// "timer_pause(timer, paused)" function
+static void f_timer_pause(typval_T *argvars, typval_T *unused, FunPtr fptr)
+{
+  if (argvars[0].v_type != VAR_NUMBER) {
+    EMSG(_(e_number_exp));
+  } else {
+    int paused = (bool)get_tv_number(&argvars[1]);
+    timer_T *timer = pmap_get(uint64_t)(timers, get_tv_number(&argvars[0]));
+    if (timer != NULL) {
+      timer->paused = paused;
+    }
   }
 }
 
@@ -18019,6 +18037,7 @@ static void f_timer_start(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   timer = xmalloc(sizeof *timer);
   timer->refcount = 1;
   timer->stopped = false;
+  timer->paused = false;
   timer->repeat_count = repeat;
   timer->timeout = timeout;
   timer->timer_id = last_timer_id++;
@@ -18028,8 +18047,7 @@ static void f_timer_start(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   timer->tw.events = multiqueue_new_child(main_loop.events);
   // if main loop is blocked, don't queue up multiple events
   timer->tw.blockable = true;
-  time_watcher_start(&timer->tw, timer_due_cb, timeout,
-                     timeout * (repeat != 1));
+  time_watcher_start(&timer->tw, timer_due_cb, timeout, timeout);
 
   pmap_put(uint64_t)(timers, timer->timer_id, timer);
   rettv->vval.v_number = timer->timer_id;
@@ -18053,13 +18071,19 @@ static void f_timer_stop(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     timer_stop(timer);
 }
 
+static void f_timer_stopall(typval_T *argvars, typval_T *unused, FunPtr fptr)
+{
+  timer_teardown();
+}
+
 // invoked on the main loop
 static void timer_due_cb(TimeWatcher *tw, void *data)
 {
   timer_T *timer = (timer_T *)data;
-  if (timer->stopped) {
+  if (timer->stopped || timer->paused) {
     return;
   }
+
   timer->refcount++;
   // if repeat was negative repeat forever
   if (timer->repeat_count >= 0 && --timer->repeat_count == 0) {
