@@ -202,6 +202,13 @@ int mch_expand_wildcards(int num_pat, char_u **pat, int *num_file,
   static char *sh_vimglob_func =
     "vimglob() { while [ $# -ge 1 ]; do echo \"$1\"; shift; done }; vimglob >";
 
+  bool is_fish_shell =
+#if defined(UNIX)
+    STRNCMP(invocation_path_tail(p_sh, NULL), "fish", 4) == 0;
+#else
+    false;
+#endif
+
   *num_file = 0;        /* default: no files found */
   *file = NULL;
 
@@ -281,6 +288,11 @@ int mch_expand_wildcards(int num_pat, char_u **pat, int *num_file,
       ++len;
     }
   }
+
+  if (is_fish_shell) {
+    len += sizeof("egin;"" end") - 1;
+  }
+
   command = xmalloc(len);
 
   /*
@@ -293,10 +305,19 @@ int mch_expand_wildcards(int num_pat, char_u **pat, int *num_file,
    */
   if (shell_style == STYLE_BT) {
     /* change `command; command& ` to (command; command ) */
-    STRCPY(command, "(");
+    if (is_fish_shell) {
+      STRCPY(command, "begin; ");
+    } else {
+      STRCPY(command, "(");
+    }
     STRCAT(command, pat[0] + 1);                /* exclude first backtick */
     p = command + STRLEN(command) - 1;
-    *p-- = ')';                                 /* remove last backtick */
+    if (is_fish_shell) {
+      *p-- = ';';
+      STRCAT(command, " end");
+    } else {
+      *p-- = ')';                                 /* remove last backtick */
+    }
     while (p > command && ascii_iswhite(*p))
       --p;
     if (*p == '&') {                            /* remove trailing '&' */
