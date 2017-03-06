@@ -198,10 +198,6 @@ describe('terminal buffer', function()
   end)
 
   it('term_close() use-after-free #4393', function()
-    if eval("executable('yes')") == 0 then
-      pending('missing "yes" command')
-      return
-    end
     execute('terminal yes')
     feed([[<C-\><C-n>]])
     execute('bdelete!')
