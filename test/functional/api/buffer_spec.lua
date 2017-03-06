@@ -4,6 +4,9 @@ local curbuf, curwin, eq = helpers.curbuf, helpers.curwin, helpers.eq
 local curbufmeths, ok = helpers.curbufmeths, helpers.ok
 local funcs = helpers.funcs
 local request = helpers.request
+local exc_exec = helpers.exc_exec
+local execute = helpers.execute
+local insert = helpers.insert
 local NIL = helpers.NIL
 local meth_pcall = helpers.meth_pcall
 local command = helpers.command
@@ -242,6 +245,27 @@ describe('api/buf', function()
       eq({'e', 'a', 'b', 'c', 'd'}, get_lines(0, -1, true))
     end)
 
+    it("set_line on alternate buffer doesn't give Vim error E315", function()
+      execute('set hidden')
+      helpers.source([[
+      function! SetLines()
+        call nvim_buf_set_lines(1, 0, 1, v:false, ['test'])
+      endfunction
+      ]])
+      insert('Initial file')
+      command('enew')
+      insert([[
+      More
+      Lines
+      Than
+      In
+      The
+      Other
+      Buffer]])
+      execute('$')
+      local retval = exc_exec('call SetLines()')
+      eq(0, retval)
+    end)
   end)
 
   describe('{get,set,del}_var', function()
