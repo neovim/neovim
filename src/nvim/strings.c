@@ -588,17 +588,14 @@ static varnumber_T tv_nr(typval_T *tvs, int *idxp)
 /// @param[in]  tvs  List of VimL values. List is terminated by VAR_UNKNOWN
 ///                  value.
 /// @param[in,out]  idxp  Index in a list. Will be incremented.
-///
-/// @param[out]  tofree If "tofree" is NULL get_tv_string_chk() is used. Some
-///                     types (e.g. List) are not converted to a string. If
-///                     "tofree" is not NULL encode_tv2echo() is used. All
-///                     types are converted to a string with the same format as
-///                     ":echo". The caller must free "*tofree".
+/// @param[out]  tofree  If the idxp entry in tvs is not a String or a Number,
+///                      it will be converted to String in the same format
+///                      as ":echo" and stored in "*tofree". The caller must
+///                      free "*tofree".
 ///
 /// @return String value or NULL in case of error.
-static char *tv_str(typval_T *tvs, int *idxp, char_u **tofree)
-  FUNC_ATTR_NONNULL_ARG(1) FUNC_ATTR_NONNULL_ARG(2)
-  FUNC_ATTR_WARN_UNUSED_RESULT
+static char *tv_str(typval_T *tvs, int *idxp, char ** const tofree)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   int idx = *idxp - 1;
   char *s = NULL;
@@ -607,11 +604,12 @@ static char *tv_str(typval_T *tvs, int *idxp, char_u **tofree)
     EMSG(_(e_printf));
   } else {
     (*idxp)++;
-    if (tofree != NULL) {
-      s = encode_tv2echo(&tvs[idx], NULL);
-      *tofree = (char_u *)s;
-    } else {
+    if (tvs[idx].v_type == VAR_STRING || tvs[idx].v_type == VAR_NUMBER) {
       s = (char *)get_tv_string_chk(&tvs[idx]);
+      *tofree = NULL;
+    } else {
+      s = encode_tv2echo(&tvs[idx], NULL);
+      *tofree = s;
     }
   }
   return s;
@@ -827,7 +825,7 @@ int vim_vsnprintf(char *str, size_t str_m, const char *fmt, va_list ap,
       char fmt_spec = '\0';
 
       // buffer for 's' and 'S' specs
-      char_u *tofree = NULL;
+      char *tofree = NULL;
 
       p++;  // skip '%'
 
