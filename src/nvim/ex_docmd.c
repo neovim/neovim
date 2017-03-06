@@ -9624,31 +9624,23 @@ static void ex_folddo(exarg_T *eap)
 
 static void ex_terminal(exarg_T *eap)
 {
-  char *name = (char *)p_sh;  // Default to 'shell' if {cmd} is not given.
-  char ex_cmd[1024] = { 0 };
-  bool mustfree = false;
+  char ex_cmd[1024];
 
   // We will call termopen() with shell as an arglist if not given a {cmd}.
   if (*eap->arg != NUL) {
-    name = (char *)vim_strsave_escaped(eap->arg, (char_u *)"\"\\");
-    mustfree = true;
+    char *name = (char *)vim_strsave_escaped(eap->arg, (char_u *)"\"\\");
     snprintf(ex_cmd, sizeof(ex_cmd),
              ":enew%s | call termopen(\"%s\") | startinsert",
              eap->forceit ? "!" : "", name);
+    xfree(name);
   } else {
     char **argv = build_argv((char *)p_sh);
     char **p = argv;
-    char tempstring[512] = { 0 };
+    char tempstring[512];
     char shell_argv[512] = { 0 };
 
-    if (*p != NULL) {
-      snprintf(tempstring, sizeof(tempstring), "\"%s\"", *p);
-      xstrlcat(shell_argv, tempstring, sizeof(shell_argv));
-      p++;
-    }
-
     while (*p != NULL) {
-      snprintf(tempstring, sizeof(tempstring), ", \"%s\"", *p);
+      snprintf(tempstring, sizeof(tempstring), ",\"%s\"", *p);
       xstrlcat(shell_argv, tempstring, sizeof(shell_argv));
       p++;
     }
@@ -9656,14 +9648,10 @@ static void ex_terminal(exarg_T *eap)
 
     snprintf(ex_cmd, sizeof(ex_cmd),
              ":enew%s | call termopen([%s]) | startinsert",
-             eap->forceit ? "!" : "", shell_argv);
+             eap->forceit ? "!" : "", shell_argv + 1);
   }
 
   do_cmdline_cmd(ex_cmd);
-
-  if (mustfree) {
-    xfree(name);
-  }
 }
 
 /// Checks if `cmd` is "previewable" (i.e. supported by 'inccommand').
