@@ -259,8 +259,9 @@ void trunc_string(char_u *s, char_u *buf, int room_in, int buflen)
       return;
     }
     n = ptr2cells(s + e);
-    if (len + n > half)
+    if (len + n > half) {
       break;
+    }
     len += n;
     buf[e] = s[e];
     if (has_mbyte)
@@ -303,8 +304,9 @@ void trunc_string(char_u *s, char_u *buf, int room_in, int buflen)
     // set the middle and copy the last part
     memmove(buf + e, "...", (size_t)3);
     len = STRLEN(s + i) + 1;
-    if (len >= (size_t)buflen - e - 3)
+    if (len >= (size_t)buflen - e - 3) {
       len = buflen - e - 3 - 1;
+    }
     memmove(buf + e + 3, s + i, len);
     buf[e + 3 + len - 1] = NUL;
   } else {
