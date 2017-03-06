@@ -1186,7 +1186,7 @@ void cleanup_jumplist(void)
 /*
  * Copy the jumplist from window "from" to window "to".
  */
-void copy_jumplist(win_T *from, win_T *to)
+void copy_jumplist(const win_T *from, win_T *to)
 {
   int i;
 

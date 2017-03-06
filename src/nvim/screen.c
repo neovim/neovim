@@ -696,7 +696,7 @@ static void win_update(win_T *wp)
 
   /* Force redraw when width of 'number' or 'relativenumber' column
    * changes. */
-  i = (wp->w_p_nu || wp->w_p_rnu) ? number_width(wp) : 0;
+  i = (wp->w_p_nu || wp->w_p_rnu) ? compute_number_width(wp) : 0;
   if (wp->w_nrwidth != i) {
     type = NOT_VALID;
     wp->w_nrwidth = i;
@@ -1837,10 +1837,10 @@ static void fold_line(
       if (len > w + 1)
         len = w + 1;
 
-      if (wp->w_p_nu && !wp->w_p_rnu)
-        /* 'number' + 'norelativenumber' */
+      if (wp->w_p_nu && !wp->w_p_rnu) {
+        // 'number' + 'norelativenumber'
         num = (long)lnum;
-      else {
+      } else {
         /* 'relativenumber', don't use negative numbers */
         num = labs((long)get_cursor_rel_lnum(wp, lnum));
         if (num == 0 && wp->w_p_nu && wp->w_p_rnu) {
@@ -7450,7 +7450,10 @@ int compute_number_width(const win_T *wp)
   int n;
   linenr_T lnum;
 
-  if (wp->w_p_rnu && !wp->w_p_nu) {
+  if (!wp->w_p_rnu && !wp->w_p_nu) {
+    return 0;
+  }
+  else if (wp->w_p_rnu && !wp->w_p_nu) {
     /* cursor line shows "0" */
     lnum = wp->w_height;
   } else {
@@ -7468,6 +7471,7 @@ int compute_number_width(const win_T *wp)
   if (n < wp->w_p_nuw - 1) {
     n = wp->w_p_nuw - 1;
   }
+  ILOG(" compute_number_width nu=%d rnu=%d result=%d" , wp->w_p_nu, wp->w_p_rnu, n);
 
   return n;
 }

@@ -1026,8 +1026,9 @@ static void win_init(win_T *newp, win_T *oldp, int flags)
     /* Don't copy the location list.  */
     newp->w_llist = NULL;
     newp->w_llist_ref = NULL;
-  } else
+  } else {
     copy_loclist(oldp, newp);
+  }
   newp->w_localdir = (oldp->w_localdir == NULL)
                      ? NULL : vim_strsave(oldp->w_localdir);
 
@@ -2955,6 +2956,8 @@ static int win_alloc_firstwin(win_T *oldwin)
     RESET_BINDING(curwin);
   }
 
+  curwin->w_nrwidth_width = compute_number_width(curwin);
+  curwin->w_fdcwidth = getDeepestNesting();
   new_frame(curwin);
   topframe = curwin->w_frame;
   topframe->fr_width = Columns;
