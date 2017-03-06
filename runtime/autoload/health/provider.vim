@@ -118,6 +118,20 @@ function! s:check_clipboard() abort
   endif
 endfunction
 
+" Check for clipboard tools.
+function! s:check_notifier() abort
+  call health#report_start('Notifier')
+
+  let notify_tool = provider#notifier#Executable()
+  if empty(notify_tool)
+    call health#report_warn(
+          \ "No notification tool found. OS notifications will not work.",
+          \ ['See ":help notifications".'])
+  else
+    call health#report_ok('Notification tool found: '. notify_tool)
+  endif
+endfunction
+
 " Get the latest Neovim Python client version from PyPI.
 function! s:latest_pypi_version() abort
   let pypi_version = 'unable to get pypi response'
@@ -469,6 +483,7 @@ endfunction
 
 function! health#provider#check() abort
   call s:check_clipboard()
+  call s:check_notifier()
   call s:check_python(2)
   call s:check_python(3)
   call s:check_ruby()
