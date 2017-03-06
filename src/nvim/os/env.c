@@ -615,8 +615,7 @@ char *vim_getenv(const char *name)
       vim_path = (char *)p_hf;
     }
 
-#ifdef WIN32
-    // Find runtime path relative to the nvim binary i.e. ../share/runtime
+    // Find runtime path relative to the nvim binary: ../share/nvim/runtime
     if (vim_path == NULL) {
       char exe_name[MAXPATHL];
       size_t exe_name_len = MAXPATHL;
@@ -633,7 +632,6 @@ char *vim_getenv(const char *name)
         }
       }
     }
-#endif
 
     if (vim_path != NULL) {
       // remove the file name
