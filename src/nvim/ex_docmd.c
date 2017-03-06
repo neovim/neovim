@@ -9634,7 +9634,12 @@ static void ex_terminal(exarg_T *eap)
              eap->forceit ? "!" : "", name);
     xfree(name);
   } else {
-    char **argv = build_argv((char *)p_sh);
+    if (*p_sh == 0) {
+      EMSG(_(e_shellempty));
+      return;
+    }
+
+    char **argv = shell_build_argv(NULL, NULL);
     char **p = argv;
     char tempstring[512];
     char shell_argv[512] = { 0 };
