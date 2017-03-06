@@ -657,14 +657,9 @@ is the order used to find the value of $VIMRUNTIME:
 3. If "$VIM/runtime" exists, it is used.
 4. The value of $VIM is used.  This is for backwards compatibility with older
    versions.
-5. When the 'helpfile' option is set and doesn't contain a '$', its value is
+5. If "../share/nvim/runtime" exists relative to |v:progpath|, it is used.
+6. When the 'helpfile' option is set and doesn't contain a '$', its value is
    used, with "doc/help.txt" removed from the end.
-
-For Unix, when there is a compiled-in default for $VIMRUNTIME (check the
-output of ":version"), steps 2, 3 and 4 are skipped, and the compiled-in
-default is used after step 5.  This means that the compiled-in default
-overrules the value of $VIM.  This is useful if $VIM is "/etc" and the runtime
-files are in "/usr/share/vim/vim54".
 
 Once Vim has done this once, it will set the $VIMRUNTIME environment variable.
 To change it later, use a ":let" command like this: >
