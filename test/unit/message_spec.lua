@@ -4,22 +4,28 @@ local ffi = helpers.ffi
 local eq = helpers.eq
 local to_cstr = helpers.to_cstr
 
-local cimp = helpers.cimport('./src/nvim/message.h')
+local cimp = helpers.cimport('./src/nvim/message.h', './src/nvim/memory.h',
+                             './src/nvim/strings.h')
 
 describe('trunc_string', function()
-  local buffer = ffi.typeof('char_u[40]')
-
-  local function test_inplace(s, expected)
-    local buf = buffer()
+  local buflen = 40
+  local function test_inplace(s, expected, room)
+    room = room and room or 20
+    local buf = cimp.xmalloc(ffi.sizeof('char_u') * buflen)
     ffi.C.strcpy(buf, s)
-    cimp.trunc_string(buf, buf, 20, 40)
+    cimp.trunc_string(buf, buf, room, buflen)
     eq(expected, ffi.string(buf))
+    cimp.xfree(buf)
   end
 
-  local function test_copy(s, expected)
-    local buf = buffer()
-    cimp.trunc_string(to_cstr(s), buf, 20, 40)
+  local function test_copy(s, expected, room)
+    room = room and room or 20
+    local buf = cimp.xmalloc(ffi.sizeof('char_u') * buflen)
+    local str = cimp.vim_strsave(to_cstr(s))
+    cimp.trunc_string(str, buf, room, buflen)
     eq(expected, ffi.string(buf))
+    cimp.xfree(buf)
+    cimp.xfree(str)
   end
 
   local permutations = {
@@ -35,6 +41,10 @@ describe('trunc_string', function()
 
       it('with a medium string', function()
         t.func('a short text', 'a short text')
+      end)
+
+      it('with a string of length == 1/2 room', function()
+        t.func('a text that fits', 'a text that fits', 34)
       end)
 
       it('with a string exactly the truncate size', function()

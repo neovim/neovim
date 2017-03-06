@@ -274,9 +274,9 @@ void trunc_string(char_u *s, char_u *buf, int room, int buflen)
   for (;;) {
     do {
       half = half - (*mb_head_off)(s, s + half - 1) - 1;
-    } while (utf_iscomposing(utf_ptr2char(s + half)) && half > 0);
+    } while (half > 0 && utf_iscomposing(utf_ptr2char(s + half)));
     n = ptr2cells(s + half);
-    if (len + n > room) {
+    if (len + n > room || half == 0) {
       break;
     }
     len += n;
