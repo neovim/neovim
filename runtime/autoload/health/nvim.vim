@@ -113,11 +113,21 @@ function! s:check_tmux() abort
     call health#report_ok('escape-time: '.tmux_esc_time.'ms')
   endif
 
-  " check $TERM
+  " check default-terminal and $TERM
   call health#report_info('$TERM: '.$TERM)
-  if $TERM !~# '\v(tmux-256color|screen-256color)'
+  let cmd = 'tmux show-option -qvg default-terminal'
+  let out = system(cmd)
+  let tmux_default_term = substitute(out, '\v(\s|\r|\n)', '', 'g')
+  if v:shell_error
+    call health#report_error('command failed: '.cmd."\n".out)
+  elseif tmux_default_term !=# $TERM
+    call health#report_info('default-terminal: '.tmux_default_term)
     call health#report_error(
-          \ '$TERM should be "screen-256color" or "tmux-256color" when running tmux.',
+          \ '$TERM differs from the tmux `default-terminal` setting. Colors might look wrong.',
+          \ ['$TERM may have been set by some rc (.bashrc, .zshrc, ...).'])
+  elseif $TERM !~# '\v(tmux-256color|screen-256color)'
+    call health#report_error(
+          \ '$TERM should be "screen-256color" or "tmux-256color" in tmux. Colors might look wrong.',
           \ ["Set default-terminal in ~/.tmux.conf:\nset-option -g default-terminal \"screen-256color\"",
           \  s:suggest_faq])
   endif
