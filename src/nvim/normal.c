@@ -7193,8 +7193,10 @@ static void nv_wordcmd(cmdarg_T *cap)
       // Another strangeness: When standing on the end of a word "ce" will
       // change until the end of the next word, but "cw" will change only one
       // character!  This is done by setting "flag".
-      cap->oap->inclusive = true;
-      word_end = true;
+      if (vim_strchr(p_cpo, CPO_CHANGEW) != NULL) {
+        cap->oap->inclusive = true;
+        word_end = true;
+      }
       flag = true;
     }
   }
