@@ -925,7 +925,6 @@ int vim_vsnprintf(char *str, size_t str_m, const char *fmt, va_list ap,
         case 'D': fmt_spec = 'd'; length_modifier = 'l'; break;
         case 'U': fmt_spec = 'u'; length_modifier = 'l'; break;
         case 'O': fmt_spec = 'o'; length_modifier = 'l'; break;
-        case 'F': fmt_spec = 'f'; break;
         default: break;
       }
 
@@ -1202,6 +1201,7 @@ int vim_vsnprintf(char *str, size_t str_m, const char *fmt, va_list ap,
         }
 
         case 'f':
+        case 'F':
         case 'e':
         case 'E':
         case 'g':
@@ -1217,37 +1217,19 @@ int vim_vsnprintf(char *str, size_t str_m, const char *fmt, va_list ap,
             if (fmt_spec == 'g' || fmt_spec == 'G') {
               // can't use %g directly, cause it prints "1.0" as "1"
               if ((abs_f >= 0.001 && abs_f < 10000000.0) || abs_f == 0.0) {
-                fmt_spec = 'f';
+                fmt_spec = ASCII_ISUPPER(fmt_spec) ? 'F' : 'f';
               } else {
                 fmt_spec = fmt_spec == 'g' ? 'e' : 'E';
               }
               remove_trailing_zeroes = true;
             }
 
-            if (fmt_spec == 'f' && abs_f > 1.0e307) {
+            if ((fmt_spec == 'f' || fmt_spec == 'F') && abs_f > 1.0e307) {
               STRCPY(tmp, infinity_str(f > 0.0, fmt_spec,
                                        force_sign, space_for_positive));
               str_arg_l = STRLEN(tmp);
               zero_padding = 0;
             } else {
-              format[0] = '%';
-              int l = 1;
-              if (precision_specified) {
-                size_t max_prec = TMP_LEN - 10;
-
-                // make sure we don't get more digits than we have room for
-                if (fmt_spec == 'f' && abs_f > 1.0) {
-                  max_prec -= (size_t)log10(abs_f);
-                }
-                if (precision > max_prec) {
-                  precision = max_prec;
-                }
-                l += snprintf(format + 1, sizeof(format) - 1, ".%d",
-                              (int)precision);
-              }
-              format[l] = (char)(fmt_spec == 'F' ? 'f' : fmt_spec);
-              format[l + 1] = NUL;
-
               if (isnan(f)) {
                 // Not a number: nan or NAN
                 STRCPY(tmp, ASCII_ISUPPER(fmt_spec) ? "NAN" : "nan");
@@ -1259,6 +1241,27 @@ int vim_vsnprintf(char *str, size_t str_m, const char *fmt, va_list ap,
                 str_arg_l = STRLEN(tmp);
                 zero_padding = 0;
               } else {
+                format[0] = '%';
+                int l = 1;
+                if (force_sign) {
+                  format[l++] = space_for_positive ? ' ' : '+';
+                }
+                if (precision_specified) {
+                  size_t max_prec = TMP_LEN - 10;
+
+                  // make sure we don't get more digits than we have room for
+                  if ((fmt_spec == 'f' || fmt_spec == 'F') && abs_f > 1.0) {
+                    max_prec -= (size_t)log10(abs_f);
+                  }
+                  if (precision > max_prec) {
+                    precision = max_prec;
+                  }
+                  l += snprintf(format + l, sizeof(format) - 1, ".%d",
+                                (int)precision);
+                }
+                format[l] = (char)(fmt_spec == 'F' ? 'f' : fmt_spec);
+                format[l + 1] = NUL;
+
                 // Regular float number
                 assert(l + 1 < (int)sizeof(format));
                 str_arg_l = (size_t)snprintf(tmp, sizeof(tmp), format, f);
@@ -1270,7 +1273,7 @@ int vim_vsnprintf(char *str, size_t str_m, const char *fmt, va_list ap,
                 char *tp;
 
                 // using %g or %G: remove superfluous zeroes
-                if (fmt_spec == 'f') {
+                if (fmt_spec == 'f' || fmt_spec == 'F') {
                   tp = tmp + str_arg_l - 1;
                 } else {
                   tp = (char *)vim_strchr((char_u *)tmp,
@@ -1311,6 +1314,12 @@ int vim_vsnprintf(char *str, size_t str_m, const char *fmt, va_list ap,
                   str_arg_l--;
                 }
               }
+            }
+            if (zero_padding && min_field_width > str_arg_l
+                && (tmp[0] == '-' || force_sign)) {
+              // Padding 0's should be inserted after the sign.
+              number_of_zeros_to_pad = min_field_width - str_arg_l;
+              zero_padding_insertion_ind = 1;
             }
             str_arg = tmp;
             break;
