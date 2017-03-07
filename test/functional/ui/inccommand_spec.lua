@@ -482,7 +482,7 @@ describe(":substitute, 'inccommand' preserves undo", function()
           {15:~                   }|
           {15:~                   }|
           {15:~                   }|
-          Already...st change |
+          Already ...t change |
         ]])
       else
         screen:expect([[
@@ -495,7 +495,7 @@ describe(":substitute, 'inccommand' preserves undo", function()
           {15:~                   }|
           {15:~                   }|
           {15:~                   }|
-          Already...st change |
+          Already ...t change |
         ]])
       end
     end
@@ -534,7 +534,7 @@ describe(":substitute, 'inccommand' preserves undo", function()
           {15:~                   }|
           {15:~                   }|
           {15:~                   }|
-          Already...st change |
+          Already ...t change |
         ]])
       else
         screen:expect([[
@@ -547,7 +547,7 @@ describe(":substitute, 'inccommand' preserves undo", function()
           {15:~                   }|
           {15:~                   }|
           {15:~                   }|
-          Already...st change |
+          Already ...t change |
         ]])
       end
 
@@ -574,7 +574,7 @@ describe(":substitute, 'inccommand' preserves undo", function()
           {15:~                   }|
           {15:~                   }|
           {15:~                   }|
-          Already...st change |
+          Already ...t change |
         ]])
       else
         screen:expect([[
@@ -587,7 +587,7 @@ describe(":substitute, 'inccommand' preserves undo", function()
           {15:~                   }|
           {15:~                   }|
           {15:~                   }|
-          Already...st change |
+          Already ...t change |
         ]])
       end
       screen:detach()
@@ -616,7 +616,7 @@ describe(":substitute, 'inccommand' preserves undo", function()
           {15:~                   }|
           {15:~                   }|
           {15:~                   }|
-          Already...st change |
+          Already ...t change |
         ]])
       else
         screen:expect([[
@@ -629,7 +629,7 @@ describe(":substitute, 'inccommand' preserves undo", function()
           {15:~                   }|
           {15:~                   }|
           {15:~                   }|
-          Already...st change |
+          Already ...t change |
         ]])
       end
 
@@ -653,7 +653,7 @@ describe(":substitute, 'inccommand' preserves undo", function()
         {15:~                   }|
         {15:~                   }|
         {15:~                   }|
-        Already...st change |
+        Already ...t change |
       ]])
     end
     screen:detach()
