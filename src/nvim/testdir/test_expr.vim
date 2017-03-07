@@ -115,9 +115,7 @@ function Test_printf_spec_s()
   call assert_equal("abcdefgi", printf('%s', "abcdefgi"))
 
   " float
-  if has('float')
-    call assert_equal("1.23", printf('%s', 1.23))
-  endif
+  call assert_equal("1.23", printf('%s', 1.23))
 
   " list
   let value = [1, 'two', ['three', 4]]
@@ -132,6 +130,93 @@ function Test_printf_spec_s()
 
   " partial
   call assert_equal(string(function('printf', ['%s'])), printf('%s', function('printf', ['%s'])))
+endfunc
+
+function Test_printf_misc()
+  call assert_equal('123', printf('%d', 123))
+  call assert_equal('123', printf('%i', 123))
+  call assert_equal('123', printf('%D', 123))
+  call assert_equal('123', printf('%U', 123))
+  call assert_equal('173', printf('%o', 123))
+  call assert_equal('173', printf('%O', 123))
+  call assert_equal('7b', printf('%x', 123))
+  call assert_equal('7B', printf('%X', 123))
+  call assert_equal('{', printf('%c', 123))
+  call assert_equal('abc', printf('%s', 'abc'))
+  call assert_equal('abc', printf('%S', 'abc'))
+
+  call assert_equal('+123', printf('%+d', 123))
+  call assert_equal('-123', printf('%+d', -123))
+  call assert_equal('+123', printf('%+ d', 123))
+  call assert_equal(' 123', printf('% d', 123))
+  call assert_equal(' 123', printf('%  d', 123))
+  call assert_equal('-123', printf('% d', -123))
+
+  call assert_equal('00123', printf('%.*d', 5, 123))
+  call assert_equal('  123', printf('% *d', 5, 123))
+  call assert_equal(' +123', printf('%+ *d', 5, 123))
+
+  call assert_equal('123', printf('%2d', 123))
+  call assert_equal('  123', printf('%5d', 123))
+  call assert_equal('00123', printf('%05d', 123))
+  call assert_equal('123  ', printf('%-5d', 123))
+  call assert_equal('0x7b', printf('%#x', 123))
+  call assert_equal('0X7B', printf('%#X', 123))
+  call assert_equal('0173', printf('%#o', 123))
+  call assert_equal('0173', printf('%#O', 123))
+  call assert_equal('abc', printf('%#s', 'abc'))
+  call assert_equal('abc', printf('%#S', 'abc'))
+
+  call assert_equal(' 00123', printf('%6.5d', 123))
+  call assert_equal(' 0007b', printf('%6.5x', 123))
+
+  call assert_equal('abc', printf('%2s', 'abc'))
+  call assert_equal('abc', printf('%2S', 'abc'))
+  call assert_equal('abc', printf('%.4s', 'abc'))
+  call assert_equal('abc', printf('%.4S', 'abc'))
+  call assert_equal('ab', printf('%.2s', 'abc'))
+  call assert_equal('ab', printf('%.2S', 'abc'))
+  call assert_equal('', printf('%.0s', 'abc'))
+  call assert_equal('', printf('%.s', 'abc'))
+  call assert_equal(' abc', printf('%4s', 'abc'))
+  call assert_equal(' abc', printf('%4S', 'abc'))
+  call assert_equal('0abc', printf('%04s', 'abc'))
+  call assert_equal('0abc', printf('%04S', 'abc'))
+  call assert_equal('abc ', printf('%-4s', 'abc'))
+  call assert_equal('abc ', printf('%-4S', 'abc'))
+
+  call assert_equal('1%', printf('%d%%', 1))
+endfunc
+
+function Test_printf_float()
+  call assert_equal('1.230000', printf('%f', 1.23))
+  call assert_equal('1.230000', printf('%F', 1.23))
+  call assert_equal('1.23', printf('%g', 1.23))
+  call assert_equal('1.23', printf('%G', 1.23))
+  call assert_equal('1.230000e+00', printf('%e', 1.23))
+  call assert_equal('1.230000E+00', printf('%E', 1.23))
+  call assert_equal('1.200000e-02', printf('%e', 0.012))
+  call assert_equal('-1.200000e-02', printf('%e', -0.012))
+  call assert_equal('1.2', printf('%.1f', 1.23))
+
+  call assert_equal('inf', printf('%f', 1.0/0.0))
+
+  " This prints inf but shouldn't it print -inf instead?
+  call assert_match('^-\?inf$', printf('%f', -1.0/0.0))
+
+  " This prints -nan but shouldn't it print nan instead?
+  call assert_match('^-\?nan$', printf('%f', sqrt(-1.0)))
+  call assert_match('^-\?nan$', printf('%f', 0.0/0.0))
+
+  call assert_fails('echo printf("%f", "a")', 'E807:')
+endfunc
+
+function Test_printf_errors()
+  call assert_fails('echo printf("%d", {})', 'E728:')
+  call assert_fails('echo printf("%d", [])', 'E745:')
+  call assert_fails('echo printf("%d", 1, 2)', 'E767:')
+  call assert_fails('echo printf("%*d", 1)', 'E766:')
+  call assert_fails('echo printf("%d", 1.2)', 'E805:')
 endfunc
 
 func Test_substitute_expr()
