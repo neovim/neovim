@@ -753,6 +753,22 @@ int vim_snprintf(char *str, size_t str_m, const char *fmt, ...)
   return str_l;
 }
 
+// Return the representation of infinity for printf() function:
+// "-inf", "inf", "+inf", " inf", "-INF", "INF", "+INF" or " INF".
+static const char *infinity_str(bool positive, char fmt_spec,
+                                int force_sign, int space_for_positive)
+{
+  static const char *table[] = {
+    "-inf", "inf", "+inf", " inf",
+    "-INF", "INF", "+INF", " INF"
+  };
+  int idx = positive * (1 + force_sign + force_sign * space_for_positive);
+  if (ASCII_ISUPPER(fmt_spec)) {
+    idx += 4;
+  }
+  return table[idx];
+}
+
 
 /// Write formatted value to the string
 ///
@@ -1209,10 +1225,10 @@ int vim_vsnprintf(char *str, size_t str_m, const char *fmt, va_list ap,
             }
 
             if (fmt_spec == 'f' && abs_f > 1.0e307) {
-              const char inf_str[] = f < 0 ? "-inf" : "inf";
-              // avoid a buffer overflow
-              memmove(tmp, inf_str, sizeof(inf_str) - 1);
-              str_arg_l = sizeof(inf_str) - 1;
+              STRCPY(tmp, infinity_str(f > 0.0, fmt_spec,
+                                       force_sign, space_for_positive));
+              str_arg_l = STRLEN(tmp);
+              zero_padding = 0;
             } else {
               format[0] = '%';
               int l = 1;
@@ -1231,25 +1247,22 @@ int vim_vsnprintf(char *str, size_t str_m, const char *fmt, va_list ap,
               }
               format[l] = (char)(fmt_spec == 'F' ? 'f' : fmt_spec);
               format[l + 1] = NUL;
-              assert(l + 1 < (int)sizeof(format));
-              str_arg_l = (size_t)snprintf(tmp, sizeof(tmp), format, f);
-              assert(str_arg_l < sizeof(tmp));
 
-              // Be consistent: Change "1.#IND" to "nan" and
-              // "1.#INF" to "inf".
-              char *s = *tmp == '-' ? tmp + 1 : tmp;
-              if (STRNCMP(s, "1.#INF", 6) == 0) {
-                STRCPY(s, "inf");
-              } else if (STRNCMP(s, "1.#IND", 6) == 0) {
-                STRCPY(s, "nan");
-              }
-              // Remove sign before "nan"
-              if (STRNCMP(tmp, "-nan", 4) == 0) {
-                STRCPY(tmp, "nan");
-              }
-              // Add sign before "inf" if needed.
-              if (isinf(f) == -1 && STRNCMP(tmp, "inf", 3) == 0) {
-                STRCPY(tmp, "-inf");
+              if (isnan(f)) {
+                // Not a number: nan or NAN
+                STRCPY(tmp, ASCII_ISUPPER(fmt_spec) ? "NAN" : "nan");
+                str_arg_l = 3;
+                zero_padding = 0;
+              } else if (isinf(f)) {
+                STRCPY(tmp, infinity_str(f > 0.0, fmt_spec,
+                                         force_sign, space_for_positive));
+                str_arg_l = STRLEN(tmp);
+                zero_padding = 0;
+              } else {
+                // Regular float number
+                assert(l + 1 < (int)sizeof(format));
+                str_arg_l = (size_t)snprintf(tmp, sizeof(tmp), format, f);
+                assert(str_arg_l < sizeof(tmp));
               }
 
               if (remove_trailing_zeroes) {
