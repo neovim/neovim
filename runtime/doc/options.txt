@@ -1829,6 +1829,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 			character, the cursor won't move. When not included,
 			the cursor would skip over it and jump to the
 			following occurrence.
+								*cpo-_*
+		_	When using "cw" on a word, do not include the
+			whitespace following the word in the motion.
 
 						*'cscopepathcomp'* *'cspc'*
 'cscopepathcomp' 'cspc'	number	(default 0)
