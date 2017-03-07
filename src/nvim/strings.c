@@ -45,6 +45,7 @@
 #include "nvim/window.h"
 #include "nvim/os/os.h"
 #include "nvim/os/shell.h"
+#include "nvim/eval/encode.h"
 
 /*
  * Copy "string" into newly allocated memory.
@@ -587,19 +588,29 @@ static varnumber_T tv_nr(typval_T *tvs, int *idxp)
 /// @param[in]  tvs  List of VimL values. List is terminated by VAR_UNKNOWN
 ///                  value.
 /// @param[in,out]  idxp  Index in a list. Will be incremented.
+/// @param[out]  tofree  If the idxp entry in tvs is not a String or a Number,
+///                      it will be converted to String in the same format
+///                      as ":echo" and stored in "*tofree". The caller must
+///                      free "*tofree".
 ///
 /// @return String value or NULL in case of error.
-static char *tv_str(typval_T *tvs, int *idxp)
+static char *tv_str(typval_T *tvs, int *idxp, char ** const tofree)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   int idx = *idxp - 1;
-  char        *s = NULL;
+  char *s = NULL;
 
   if (tvs[idx].v_type == VAR_UNKNOWN) {
     EMSG(_(e_printf));
   } else {
     (*idxp)++;
-    s = (char *)get_tv_string_chk(&tvs[idx]);
+    if (tvs[idx].v_type == VAR_STRING || tvs[idx].v_type == VAR_NUMBER) {
+      s = (char *)get_tv_string_chk(&tvs[idx]);
+      *tofree = NULL;
+    } else {
+      s = encode_tv2echo(&tvs[idx], NULL);
+      *tofree = s;
+    }
   }
   return s;
 }
@@ -813,6 +824,9 @@ int vim_vsnprintf(char *str, size_t str_m, const char *fmt, va_list ap,
       // current conversion specifier character
       char fmt_spec = '\0';
 
+      // buffer for 's' and 'S' specs
+      char *tofree = NULL;
+
       p++;  // skip '%'
 
       // parse flags
@@ -919,7 +933,8 @@ int vim_vsnprintf(char *str, size_t str_m, const char *fmt, va_list ap,
 
             case 's':
             case 'S':
-              str_arg = tvs ? tv_str(tvs, &arg_idx) : va_arg(ap, char *);
+              str_arg = tvs ? tv_str(tvs, &arg_idx, &tofree)
+                            : va_arg(ap, char *);
               if (!str_arg) {
                 str_arg = "[NULL]";
                 str_arg_l = 6;
@@ -1370,6 +1385,8 @@ int vim_vsnprintf(char *str, size_t str_m, const char *fmt, va_list ap,
           str_l += pn;
         }
       }
+
+      xfree(tofree);
     }
   }
 
