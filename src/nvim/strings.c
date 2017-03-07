@@ -1209,9 +1209,10 @@ int vim_vsnprintf(char *str, size_t str_m, const char *fmt, va_list ap,
             }
 
             if (fmt_spec == 'f' && abs_f > 1.0e307) {
+              const char inf_str[] = f < 0 ? "-inf" : "inf";
               // avoid a buffer overflow
-              memmove(tmp, "inf", sizeof("inf"));
-              str_arg_l = sizeof("inf") - 1;
+              memmove(tmp, inf_str, sizeof(inf_str) - 1);
+              str_arg_l = sizeof(inf_str) - 1;
             } else {
               format[0] = '%';
               int l = 1;
@@ -1233,6 +1234,23 @@ int vim_vsnprintf(char *str, size_t str_m, const char *fmt, va_list ap,
               assert(l + 1 < (int)sizeof(format));
               str_arg_l = (size_t)snprintf(tmp, sizeof(tmp), format, f);
               assert(str_arg_l < sizeof(tmp));
+
+              // Be consistent: Change "1.#IND" to "nan" and
+              // "1.#INF" to "inf".
+              char *s = *tmp == '-' ? tmp + 1 : tmp;
+              if (STRNCMP(s, "1.#INF", 6) == 0) {
+                STRCPY(s, "inf");
+              } else if (STRNCMP(s, "1.#IND", 6) == 0) {
+                STRCPY(s, "nan");
+              }
+              // Remove sign before "nan"
+              if (STRNCMP(tmp, "-nan", 4) == 0) {
+                STRCPY(tmp, "nan");
+              }
+              // Add sign before "inf" if needed.
+              if (isinf(f) == -1 && STRNCMP(tmp, "inf", 3) == 0) {
+                STRCPY(tmp, "-inf");
+              }
 
               if (remove_trailing_zeroes) {
                 int i;

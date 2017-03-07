@@ -201,12 +201,10 @@ function Test_printf_float()
 
   call assert_equal('inf', printf('%f', 1.0/0.0))
 
-  " This prints inf but shouldn't it print -inf instead?
-  call assert_match('^-\?inf$', printf('%f', -1.0/0.0))
+  call assert_match('^-inf$', printf('%f', -1.0/0.0))
 
-  " This prints -nan but shouldn't it print nan instead?
-  call assert_match('^-\?nan$', printf('%f', sqrt(-1.0)))
-  call assert_match('^-\?nan$', printf('%f', 0.0/0.0))
+  call assert_match('^nan$', printf('%f', sqrt(-1.0)))
+  call assert_match('^nan$', printf('%f', 0.0/0.0))
 
   call assert_fails('echo printf("%f", "a")', 'E807:')
 endfunc
