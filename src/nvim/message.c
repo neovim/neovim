@@ -257,7 +257,7 @@ void trunc_string(char_u *s, char_u *buf, int room, int buflen)
       return;
     }
     n = ptr2cells(s + e);
-    if (len + n >= half)
+    if (len + n > half)
       break;
     len += n;
     buf[e] = s[e];
