@@ -1525,3 +1525,38 @@ function Test_qf_property()
     call Xproperty_tests('c')
     call Xproperty_tests('l')
 endfunction
+
+" Tests for the QuickFixCmdPre/QuickFixCmdPost autocommands
+function QfAutoCmdHandler(loc, cmd)
+  call add(g:acmds, a:loc . a:cmd)
+endfunction
+
+function Test_Autocmd()
+  autocmd QuickFixCmdPre * call QfAutoCmdHandler('pre', expand('<amatch>'))
+  autocmd QuickFixCmdPost * call QfAutoCmdHandler('post', expand('<amatch>'))
+
+  let g:acmds = []
+  cexpr "F1:10:Line 10"
+  caddexpr "F1:20:Line 20"
+  cgetexpr "F1:30:Line 30"
+  enew! | call append(0, "F2:10:Line 10")
+  cbuffer!
+  enew! | call append(0, "F2:20:Line 20")
+  cgetbuffer
+  enew! | call append(0, "F2:30:Line 30")
+  caddbuffer
+
+  let l = ['precexpr',
+      \ 'postcexpr',
+      \ 'precaddexpr',
+      \ 'postcaddexpr',
+      \ 'precgetexpr',
+      \ 'postcgetexpr',
+      \ 'precbuffer',
+      \ 'postcbuffer',
+      \ 'precgetbuffer',
+      \ 'postcgetbuffer',
+      \ 'precaddbuffer',
+      \ 'postcaddbuffer']
+  call assert_equal(l, g:acmds)
+endfunction
