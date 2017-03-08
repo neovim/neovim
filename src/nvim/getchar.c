@@ -18,6 +18,7 @@
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
 #include "nvim/getchar.h"
+#include "nvim/buffer_defs.h"
 #include "nvim/charset.h"
 #include "nvim/cursor.h"
 #include "nvim/edit.h"
@@ -47,6 +48,7 @@
 #include "nvim/event/loop.h"
 #include "nvim/os/input.h"
 #include "nvim/os/os.h"
+#include "nvim/api/private/handle.h"
 
 /*
  * These buffers are used for storing:
@@ -102,11 +104,10 @@ static int block_redo = FALSE;
                        (NORMAL + VISUAL + SELECTMODE + \
                         OP_PENDING)) ? (c1) : ((c1) ^ 0x80))
 
-/*
- * Each mapping is put in one of the 256 hash lists, to speed up finding it.
- */
-static mapblock_T       *(maphash[256]);
-static int maphash_valid = FALSE;
+// Each mapping is put in one of the MAX_MAPHASH hash lists,
+// to speed up finding it.
+static mapblock_T *(maphash[MAX_MAPHASH]);
+static bool maphash_valid = false;
 
 /*
  * List used for abbreviations.
@@ -4236,4 +4237,18 @@ static bool typebuf_match_len(const uint8_t *str, int *mlen)
   }
   *mlen = i;
   return str[i] == NUL;  // matched the whole string
+}
+
+/// Retrieve the mapblock at the index either globally or for a certain buffer
+///
+/// @param  index  The index in the maphash[]
+/// @param  buf  The buffer to get the maphash from. NULL for global
+mapblock_T *get_maphash(int index, buf_T *buf)
+  FUNC_ATTR_PURE
+{
+  if (index > MAX_MAPHASH) {
+    return NULL;
+  }
+
+  return (buf == NULL) ? maphash[index] : buf->b_maphash[index];
 }
