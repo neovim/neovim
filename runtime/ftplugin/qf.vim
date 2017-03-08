@@ -16,8 +16,10 @@ let b:undo_ftplugin = "set stl<"
 setlocal stl=%t%{exists('w:quickfix_title')?\ '\ '.w:quickfix_title\ :\ ''}\ %=%-15(%l,%c%V%)\ %P
 
 autocmd Syntax <buffer>
-      \ if exists('w:quickfix_title') && w:quickfix_title =~# '^:\%(Man\|Help\) TOC$' |
-      \   syntax match qfHideTOC "^.*| " conceal containedin=ALL |
-      \   setlocal concealcursor=nvi |
-      \   setlocal conceallevel=2 |
+      \ if exists('w:quickfix_title') && w:quickfix_title =~# '^:\%(Man\|Help\) TOC$' && &syntax == 'qf' |
+      \   setlocal modifiable |
+      \   silent %delete _ |
+      \   call setline(1, map(deepcopy(getloclist(0)), 'v:val.text')) |
+      \   setlocal nomodifiable nomodified |
+      \   let &syntax = tolower(matchstr(w:quickfix_title, '\w\+')) |
       \ endif

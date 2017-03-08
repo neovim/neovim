@@ -21,33 +21,55 @@ endif
 function! s:create_toc() abort
   if !exists('b:help_toc')
     let b:help_toc = []
-    let lnum = 1
-    let last_line = line('$')
+    let lnum = 2
+    let last_line = line('$') - 1
     let last_added = 0
+    let has_section = 0
+    let has_sub_section = 0
 
     while lnum <= last_line
+      let level = 0
       let add_text = ''
       let text = getline(lnum)
 
-      if text =~# '^=\+$'
-        let text = getline(lnum + 1)
-        if text =~# '\*[^*]\+\*'
-          let lnum += 1
-          let add_text = matchstr(text, '.\{-}\ze\s*\*')
-        endif
-      elseif text =~# '^[A-Z][-A-Z .][-A-Z0-9 .()]*[ \t]\+\*'
-        let add_text = matchstr(text, '.\{-}\ze\s*\*')
-      elseif text =~# '^\u.*\s\+\~$'
-        let add_text = matchstr(text, '.\{-}\ze\s\+\~$')
-      elseif lnum == 1
+      if text =~# '^=\+$' && lnum + 1 < last_line
+        " A de-factor section heading.  Other headings are inferred.
+        let has_section = 1
+        let has_sub_section = 0
+        let lnum = nextnonblank(lnum + 1)
+        let text = getline(lnum)
         let add_text = text
+        while add_text =~# '\*[^*]\+\*\s*$'
+          let add_text = matchstr(add_text, '.*\ze\*[^*]\+\*\s*$')
+        endwhile
+      elseif text =~# '^[A-Z0-9][-A-ZA-Z0-9 .][-A-Z0-9 .():]*\%([ \t]\+\*.\+\*\)\?$'
+        " Any line that's yelling is important.
+        let has_sub_section = 1
+        let level = has_section
+        let add_text = matchstr(text, '.\{-}\ze\s*\%([ \t]\+\*.\+\*\)\?$')
+      elseif text =~# '\~$'
+            \ && matchstr(text, '^\s*\zs.\{-}\ze\s*\~$') !~# '\t\|\s\{2,}'
+            \ && getline(lnum - 1) =~# '^\s*<\?$\|^\s*\*.*\*$'
+            \ && getline(lnum + 1) =~# '^\s*>\?$\|^\s*\*.*\*$'
+        " These lines could be headers or code examples.  We only want the
+        " ones that have subsequent lines at the same indent or more.
+        let l = nextnonblank(lnum + 1)
+        if getline(l) =~# '\*[^*]\+\*$'
+          " Ignore tag lines
+          let l = nextnonblank(l + 1)
+        endif
+
+        if indent(lnum) <= indent(l)
+          let level = has_section + has_sub_section
+          let add_text = matchstr(text, '\S.*')
+        endif
       endif
 
+      let add_text = substitute(add_text, '\s\+$', '', 'g')
       if !empty(add_text) && last_added != lnum
         let last_added = lnum
         call add(b:help_toc, {'bufnr': bufnr('%'), 'lnum': lnum,
-              \ 'filename': 'butt.txt',
-              \ 'text': substitute(add_text, '\s\+', ' ', 'g')})
+              \ 'text': repeat('  ', level) . add_text})
       endif
       let lnum += 1
     endwhile

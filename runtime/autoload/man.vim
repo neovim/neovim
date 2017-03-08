@@ -156,10 +156,9 @@ function! man#create_toc() abort
   if !exists('b:man_toc')
     " Cache the TOC since user might switch in and out between the man pages.
     let b:man_toc = []
-    for lnum in range(1, line('$'))
+    for lnum in range(2, line('$') - 1)
       let text = getline(lnum)
-      if text =~# '^\%(\%(\S.*\)\=\S\|\%1l.*\| \{3\}\S.*\)$'
-        let text = substitute(getline(lnum), '\s\+', ' ', 'g')
+      if text =~# '^\%( \{3\}\)\=\S.*$'
         call add(b:man_toc, {'bufnr': bufnr('%'), 'lnum': lnum, 'text': text})
       endif
     endfor
