@@ -19,6 +19,7 @@ highlight default link manReference      PreProc
 highlight default link manSubHeading     Function
 
 if &filetype != 'man'
+  " Loaded by the location list TOC
   finish
 endif
 

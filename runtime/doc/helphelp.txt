@@ -25,6 +25,9 @@ Help on help files					*helphelp*
 			The 'helplang' option is used to select a language, if
 			the main help file is available in several languages.
 
+			Help file sections are added to the |location-list|
+			and can be viewed with |:lwindow|.
+
 						*{subject}* *E149* *E661*
 :h[elp] {subject}	Like ":help", additionally jump to the tag {subject}.
 			{subject} can include wildcards like "*", "?" and
