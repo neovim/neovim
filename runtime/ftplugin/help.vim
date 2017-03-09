@@ -27,7 +27,7 @@ function! s:create_toc() abort
     let has_section = 0
     let has_sub_section = 0
 
-    while lnum <= last_line
+    while lnum && lnum <= last_line
       let level = 0
       let add_text = ''
       let text = getline(lnum)
@@ -71,7 +71,7 @@ function! s:create_toc() abort
         call add(b:help_toc, {'bufnr': bufnr('%'), 'lnum': lnum,
               \ 'text': repeat('  ', level) . add_text})
       endif
-      let lnum += 1
+      let lnum = nextnonblank(lnum + 1)
     endwhile
   endif
 
