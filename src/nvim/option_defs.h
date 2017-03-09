@@ -129,9 +129,11 @@
 #define CPO_REGAPPEND   '>'     /* insert NL when appending to a register */
 #define CPO_SCOLON      ';'     /* using "," and ";" will skip over char if
                                  * cursor would not move */
-/* default values for Vim and Vi */
-#define CPO_VIM         "aABceFs"
-#define CPO_VI          "aAbBcCdDeEfFiIJkKlLmMnoOpPqrRsStuvWxXyZ$!%+<>;"
+#define CPO_CHANGEW     '_'     // do not special-case cw, it works as
+                                // expected
+// default values for Vim and Vi
+#define CPO_VIM         "aABceFs_"
+#define CPO_VI          "aAbBcCdDeEfFiIJkKlLmMnoOpPqrRsStuvWxXyZ$!%+<>;_"
 
 /* characters for p_ww option: */
 #define WW_ALL          "bshl<>[],~"

@@ -402,7 +402,8 @@ WORD before the fold.
 
 Special case: "cw" and "cW" are treated like "ce" and "cE" if the cursor is
 on a non-blank.  This is because "cw" is interpreted as change-word, and a
-word does not include the following white space.
+word does not include the following white space. This behavior can be
+adjusted via |cpo-_|.
 
 Another special case: When using the "w" motion in combination with an
 operator and the last word moved over is at the end of a line, the end of
