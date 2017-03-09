@@ -75,7 +75,7 @@ function! s:create_toc() abort
     endwhile
   endif
 
-  call setloclist(0, b:help_toc, ' ', {'title': 'Help TOC'})
+  call setloclist(0, b:help_toc, ' ', 'Help TOC')
 endfunction
 
 autocmd BufWinEnter <buffer> call s:create_toc()

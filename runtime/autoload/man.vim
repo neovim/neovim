@@ -164,7 +164,7 @@ function! man#create_toc() abort
     endfor
   endif
 
-  call setloclist(0, b:man_toc, ' ', {'title': 'Man TOC'})
+  call setloclist(0, b:man_toc, ' ', 'Man TOC')
 endfunction
 
 " attempt to extract the name and sect out of 'name(sect)'
