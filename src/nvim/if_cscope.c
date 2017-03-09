@@ -995,10 +995,10 @@ static int cs_find_common(char *opt, char *pat, int forceit, int verbose,
     }
 
     if (*qfpos != '0'
-            && apply_autocmds(EVENT_QUICKFIXCMDPRE, (char_u *)"cscope",
-                curbuf->b_fname, TRUE, curbuf)) {
+        && apply_autocmds(EVENT_QUICKFIXCMDPRE, (char_u *)"cscope",
+                          curbuf->b_fname, true, curbuf)) {
       if (aborting()) {
-        return FALSE;
+        return false;
       }
     }
   }

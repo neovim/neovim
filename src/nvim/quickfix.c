@@ -3024,7 +3024,7 @@ void ex_make(exarg_T *eap)
   default: break;
   }
   if (au_name != NULL && apply_autocmds(EVENT_QUICKFIXCMDPRE, au_name,
-              curbuf->b_fname, TRUE, curbuf)) {
+                                        curbuf->b_fname, true, curbuf)) {
     if (aborting()) {
       return;
     }
@@ -3488,7 +3488,7 @@ void ex_vimgrep(exarg_T *eap)
   default: break;
   }
   if (au_name != NULL && apply_autocmds(EVENT_QUICKFIXCMDPRE, au_name,
-              curbuf->b_fname, TRUE, curbuf)) {
+                                        curbuf->b_fname, true, curbuf)) {
     if (aborting()) {
       return;
     }
@@ -4311,7 +4311,7 @@ void ex_cbuffer(exarg_T *eap)
   }
 
   if (au_name != NULL && apply_autocmds(EVENT_QUICKFIXCMDPRE, (char_u *)au_name,
-              curbuf->b_fname, true, curbuf)) {
+                                        curbuf->b_fname, true, curbuf)) {
     if (aborting()) {
       return;
     }
@@ -4396,7 +4396,7 @@ void ex_cexpr(exarg_T *eap)
       break;
   }
   if (au_name != NULL && apply_autocmds(EVENT_QUICKFIXCMDPRE, (char_u *)au_name,
-              curbuf->b_fname, true, curbuf)) {
+                                        curbuf->b_fname, true, curbuf)) {
     if (aborting()) {
       return;
     }
@@ -4454,7 +4454,7 @@ void ex_helpgrep(exarg_T *eap)
   default: break;
   }
   if (au_name != NULL && apply_autocmds(EVENT_QUICKFIXCMDPRE, au_name,
-              curbuf->b_fname, TRUE, curbuf)) {
+                                        curbuf->b_fname, true, curbuf)) {
     if (aborting()) {
       return;
     }
