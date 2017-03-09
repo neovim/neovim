@@ -994,11 +994,12 @@ static int cs_find_common(char *opt, char *pat, int forceit, int verbose,
       return FALSE;
     }
 
-    if (*qfpos != '0') {
-      apply_autocmds(EVENT_QUICKFIXCMDPRE, (char_u *)"cscope",
-          curbuf->b_fname, TRUE, curbuf);
-      if (did_throw || force_abort)
+    if (*qfpos != '0'
+            && apply_autocmds(EVENT_QUICKFIXCMDPRE, (char_u *)"cscope",
+                curbuf->b_fname, TRUE, curbuf)) {
+      if (aborting()) {
         return FALSE;
+      }
     }
   }
 
