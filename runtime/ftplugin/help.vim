@@ -33,7 +33,7 @@ function! s:create_toc() abort
       let text = getline(lnum)
 
       if text =~# '^=\+$' && lnum + 1 < last_line
-        " A de-factor section heading.  Other headings are inferred.
+        " A de-facto section heading.  Other headings are inferred.
         let has_section = 1
         let has_sub_section = 0
         let lnum = nextnonblank(lnum + 1)
