@@ -948,7 +948,7 @@ return {
     },
     {
       full_name='formatprg', abbreviation='fp',
-      type='string', scope={'global'},
+      type='string', scope={'global', 'buffer'},
       secure=true,
       vi_def=true,
       expand=true,

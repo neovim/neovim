@@ -224,21 +224,33 @@ func! Test_normal06_formatprg()
   " only test on non windows platform
   if has('win32')
     return
-  else
-    " uses sed to number non-empty lines
-    call writefile(['#!/bin/sh', 'sed ''/./=''|sed ''/./{', 'N', 's/\n/    /', '}'''], 'Xsed_format.sh')
-    call system('chmod +x ./Xsed_format.sh')
   endif
-  call Setup_NewWindow()
-  %d
-  call setline(1, ['a', '', 'c', '', ' ', 'd', 'e'])
+
+  " uses sed to number non-empty lines
+  call writefile(['#!/bin/sh', 'sed ''/./=''|sed ''/./{', 'N', 's/\n/    /', '}'''], 'Xsed_format.sh')
+  call system('chmod +x ./Xsed_format.sh')
+  let text = ['a', '', 'c', '', ' ', 'd', 'e']
+  let expected = ['1    a', '', '3    c', '', '5     ', '6    d', '7    e']
+
+  10new
+  call setline(1, text)
   set formatprg=./Xsed_format.sh
   norm! gggqG
-  call assert_equal(['1    a', '', '3    c', '', '5     ', '6    d', '7    e'], getline(1, '$'))
+  call assert_equal(expected, getline(1, '$'))
+  bw!
+
+  10new
+  call setline(1, text)
+  set formatprg=donothing
+  setlocal formatprg=./Xsed_format.sh
+  norm! gggqG
+  call assert_equal(expected, getline(1, '$'))
+  bw!
+
   " clean up
   set formatprg=
+  setlocal formatprg=
   call delete('Xsed_format.sh')
-  bw!
 endfunc
 
 func! Test_normal07_internalfmt()
@@ -251,7 +263,7 @@ func! Test_normal07_internalfmt()
   norm! gggqG
   call assert_equal(['1    2    3', '4    5    6', '7    8    9', '10    11    '], getline(1, '$'))
   " clean up
-  set formatprg= tw=0
+  set tw=0
   bw!
 endfunc
 

@@ -1901,12 +1901,13 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
       break;
 
     case OP_FORMAT:
-      if (*curbuf->b_p_fex != NUL)
-        op_formatexpr(oap);             /* use expression */
-      else if (*p_fp != NUL)
-        op_colon(oap);                  /* use external command */
-      else
-        op_format(oap, false);          /* use internal function */
+      if (*curbuf->b_p_fex != NUL) {
+        op_formatexpr(oap);             // use expression
+      } else if (*p_fp != NUL || *curbuf->b_p_fp != NUL) {
+        op_colon(oap);                  // use external command
+      } else {
+        op_format(oap, false);          // use internal function
+      }
       break;
 
     case OP_FORMAT2:
@@ -2064,10 +2065,13 @@ static void op_colon(oparg_T *oap)
     stuffReadbuff(get_equalprg());
     stuffReadbuff((char_u *)"\n");
   } else if (oap->op_type == OP_FORMAT) {
-    if (*p_fp == NUL)
-      stuffReadbuff((char_u *)"fmt");
-    else
+    if (*curbuf->b_p_fp != NUL) {
+      stuffReadbuff(curbuf->b_p_fp);
+    } else if (*p_fp != NUL) {
       stuffReadbuff(p_fp);
+    } else {
+      stuffReadbuff((char_u *)"fmt");
+    }
     stuffReadbuff((char_u *)"\n']");
   }
 

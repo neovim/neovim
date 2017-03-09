@@ -2150,6 +2150,7 @@ void check_buf_options(buf_T *buf)
   check_string_option(&buf->b_p_inex);
   check_string_option(&buf->b_p_inde);
   check_string_option(&buf->b_p_indk);
+  check_string_option(&buf->b_p_fp);
   check_string_option(&buf->b_p_fex);
   check_string_option(&buf->b_p_kp);
   check_string_option(&buf->b_p_mps);
@@ -5255,6 +5256,9 @@ void unset_global_local_option(char *name, void *from)
     case PV_TSR:
       clear_string_option(&buf->b_p_tsr);
       break;
+    case PV_FP:
+      clear_string_option(&buf->b_p_fp);
+      break;
     case PV_EFM:
       clear_string_option(&buf->b_p_efm);
       break;
@@ -5288,6 +5292,7 @@ static char_u *get_varp_scope(vimoption_T *p, int opt_flags)
   }
   if ((opt_flags & OPT_LOCAL) && ((int)p->indir & PV_BOTH)) {
     switch ((int)p->indir) {
+    case PV_FP:   return (char_u *)&(curbuf->b_p_fp);
     case PV_EFM:  return (char_u *)&(curbuf->b_p_efm);
     case PV_GP:   return (char_u *)&(curbuf->b_p_gp);
     case PV_MP:   return (char_u *)&(curbuf->b_p_mp);
@@ -5346,6 +5351,8 @@ static char_u *get_varp(vimoption_T *p)
            ? (char_u *)&(curbuf->b_p_dict) : p->var;
   case PV_TSR:    return *curbuf->b_p_tsr != NUL
            ? (char_u *)&(curbuf->b_p_tsr) : p->var;
+  case PV_FP: return *curbuf->b_p_fp != NUL
+           ? (char_u *)&(curbuf->b_p_fp) : p->var;
   case PV_EFM:    return *curbuf->b_p_efm != NUL
            ? (char_u *)&(curbuf->b_p_efm) : p->var;
   case PV_GP:     return *curbuf->b_p_gp != NUL
@@ -5694,6 +5701,7 @@ void buf_copy_options(buf_T *buf, int flags)
       buf->b_s.b_p_spl = vim_strsave(p_spl);
       buf->b_p_inde = vim_strsave(p_inde);
       buf->b_p_indk = vim_strsave(p_indk);
+      buf->b_p_fp = empty_option;
       buf->b_p_fex = vim_strsave(p_fex);
       buf->b_p_sua = vim_strsave(p_sua);
       buf->b_p_keymap = vim_strsave(p_keymap);

@@ -640,6 +640,7 @@ struct file_buffer {
   char_u *b_p_inde;             ///< 'indentexpr'
   uint32_t b_p_inde_flags;      ///< flags for 'indentexpr'
   char_u *b_p_indk;             ///< 'indentkeys'
+  char_u *b_p_fp;               ///< 'formatprg'
   char_u *b_p_fex;              ///< 'formatexpr'
   uint32_t b_p_fex_flags;       ///< flags for 'formatexpr'
   char_u *b_p_kp;               ///< 'keywordprg'
