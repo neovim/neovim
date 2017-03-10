@@ -3,7 +3,6 @@ local eval, command, nvim = helpers.eval, helpers.command, helpers.nvim
 local eq, run, stop = helpers.eq, helpers.run, helpers.stop
 local clear = helpers.clear
 
-
 local function get_prefix(sync)
   if sync then
     return 'sync'
@@ -11,11 +10,9 @@ local function get_prefix(sync)
   return 'async'
 end
 
-
 local function call(fn, arguments)
   command('call '..fn..'('..arguments..')')
 end
-
 
 local function clear_and_init(init)
   return function()
@@ -25,7 +22,6 @@ local function clear_and_init(init)
     end
   end
 end
-
 
 local function runx(sync, handler, on_setup)
   local function setup_cb(...)
