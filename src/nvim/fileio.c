@@ -4733,7 +4733,6 @@ check_timestamps (
     int focus                      /* called for GUI focus event */
 )
 {
-  buf_T       *buf;
   int didit = 0;
   int n;
 
@@ -4758,7 +4757,7 @@ check_timestamps (
     ++no_wait_return;
     did_check_timestamps = TRUE;
     already_warned = FALSE;
-    for (buf = firstbuf; buf != NULL; ) {
+    FOR_ALL_BUFFERS(buf) {
       /* Only check buffers in a window. */
       if (buf->b_nwindows > 0) {
         bufref_T bufref;
@@ -4773,7 +4772,6 @@ check_timestamps (
           continue;
         }
       }
-      buf = buf->b_next;
     }
     --no_wait_return;
     need_check_timestamps = FALSE;

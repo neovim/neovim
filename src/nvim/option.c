@@ -3623,7 +3623,8 @@ set_bool_option (
       char_u hash[UNDO_HASH_SIZE];
       buf_T       *save_curbuf = curbuf;
 
-      for (curbuf = firstbuf; curbuf != NULL; curbuf = curbuf->b_next) {
+      FOR_ALL_BUFFERS(bp) {
+        curbuf = bp;
         /* When 'undofile' is set globally: for every buffer, otherwise
          * only for the current buffer: Try to read in the undofile,
          * if one exists, the buffer wasn't changed and the buffer was
