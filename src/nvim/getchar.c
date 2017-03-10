@@ -3746,8 +3746,10 @@ eval_map_expr (
  */
 char_u *vim_strsave_escape_csi(char_u *p)
 {
-  /* Need a buffer to hold up to three times as much. */
-  char_u *res = xmalloc(STRLEN(p) * 3 + 1);
+  // Need a buffer to hold up to three times as much.  Four in case of an
+  // illegal utf-8 byte:
+  // 0xc0 -> 0xc3 - 0x80 -> 0xc3 K_SPECIAL KS_SPECIAL KE_FILLER
+  char_u *res = xmalloc(STRLEN(p) * 4 + 1);
   char_u *d = res;
   for (char_u *s = p; *s != NUL; ) {
     if (s[0] == K_SPECIAL && s[1] != NUL && s[2] != NUL) {
@@ -3756,17 +3758,10 @@ char_u *vim_strsave_escape_csi(char_u *p)
       *d++ = *s++;
       *d++ = *s++;
     } else {
-      int len  = mb_char2len(PTR2CHAR(s));
-      int len2 = mb_ptr2len(s);
-      /* Add character, possibly multi-byte to destination, escaping
-       * CSI and K_SPECIAL. */
+      // Add character, possibly multi-byte to destination, escaping
+      // CSI and K_SPECIAL. Be careful, it can be an illegal byte!
       d = add_char2buf(PTR2CHAR(s), d);
-      while (len < len2) {
-        /* add following combining char */
-        d = add_char2buf(PTR2CHAR(s + len), d);
-        len += mb_char2len(PTR2CHAR(s + len));
-      }
-      mb_ptr_adv(s);
+      s += MB_CPTR2LEN(s);
     }
   }
   *d = NUL;

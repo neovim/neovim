@@ -4507,7 +4507,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
       }
 
       if (has_mbyte) {
-        n = mb_cptr2len(p);
+        n = MB_CPTR2LEN(p);
         c = mb_ptr2char(p);
         if (p[n] == NUL)
           c2 = NUL;
@@ -4584,9 +4584,9 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
       // "fword" here, it's changed back afterwards at STATE_UNSWAP3.
       p = fword + sp->ts_fidx;
       if (has_mbyte) {
-        n = mb_cptr2len(p);
+        n = MB_CPTR2LEN(p);
         c = mb_ptr2char(p);
-        fl = mb_cptr2len(p + n);
+        fl = MB_CPTR2LEN(p + n);
         c2 = mb_ptr2char(p + n);
         if (!soundfold && !spell_iswordp(p + n + fl, curwin))
           c3 = c;               // don't swap non-word char
@@ -4682,10 +4682,10 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
         ++depth;
         p = fword + sp->ts_fidx;
         if (has_mbyte) {
-          n = mb_cptr2len(p);
+          n = MB_CPTR2LEN(p);
           c = mb_ptr2char(p);
-          fl = mb_cptr2len(p + n);
-          fl += mb_cptr2len(p + n + fl);
+          fl = MB_CPTR2LEN(p + n);
+          fl += MB_CPTR2LEN(p + n + fl);
           memmove(p, p + n, fl);
           mb_char2bytes(c, p + fl);
           stack[depth].ts_fidxtry = sp->ts_fidx + n + fl;
@@ -4734,10 +4734,10 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
         ++depth;
         p = fword + sp->ts_fidx;
         if (has_mbyte) {
-          n = mb_cptr2len(p);
-          n += mb_cptr2len(p + n);
+          n = MB_CPTR2LEN(p);
+          n += MB_CPTR2LEN(p + n);
           c = mb_ptr2char(p + n);
-          tl = mb_cptr2len(p + n);
+          tl = MB_CPTR2LEN(p + n);
           memmove(p + tl, p, n);
           mb_char2bytes(c, p);
           stack[depth].ts_fidxtry = sp->ts_fidx + n + tl;
@@ -4980,8 +4980,8 @@ static void find_keepcap_word(slang_T *slang, char_u *fword, char_u *kword)
       // round[depth] == 1: Try using the folded-case character.
       // round[depth] == 2: Try using the upper-case character.
       if (has_mbyte) {
-        flen = mb_cptr2len(fword + fwordidx[depth]);
-        ulen = mb_cptr2len(uword + uwordidx[depth]);
+        flen = MB_CPTR2LEN(fword + fwordidx[depth]);
+        ulen = MB_CPTR2LEN(uword + uwordidx[depth]);
       } else
         ulen = flen = 1;
       if (round[depth] == 1) {

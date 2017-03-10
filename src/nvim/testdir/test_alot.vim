@@ -21,6 +21,7 @@ source test_options.vim
 source test_partial.vim
 source test_popup.vim
 source test_regexp_utf8.vim
+source test_source_utf8.vim
 source test_statusline.vim
 source test_syn_attr.vim
 source test_tabline.vim
