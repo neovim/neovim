@@ -193,7 +193,12 @@ void ui_refresh(void)
   }
 
   row = col = 0;
+
+  int save_p_lz = p_lz;
+  p_lz = false;  // convince redrawing() to return true ...
   screen_resize(width, height);
+  p_lz = save_p_lz;
+
   for (UIWidget i = 0; (int)i < UI_WIDGETS; i++) {
     ui_set_external(i, ext_widgets[i]);
   }

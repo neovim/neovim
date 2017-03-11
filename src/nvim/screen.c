@@ -7440,13 +7440,11 @@ int number_width(win_T *wp)
   return n;
 }
 
-/*
- * Set size of the Vim shell.
- * If 'mustset' is TRUE, we must set Rows and Columns, do not get the real
- * window size (this is used for the :win command).
- * If 'mustset' is FALSE, we may try to get the real window size and if
- * it fails use 'width' and 'height'.
- */
+/// Set size of the Vim shell.
+/// If 'mustset' is TRUE, we must set Rows and Columns, do not get the real
+/// window size (this is used for the :win command).
+/// If 'mustset' is FALSE, we may try to get the real window size and if
+/// it fails use 'width' and 'height'.
 void screen_resize(int width, int height)
 {
   static int busy = FALSE;
