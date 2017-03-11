@@ -1,10 +1,12 @@
 local helpers = require("test.unit.helpers")(after_each)
 local itp = helpers.gen_itp(it)
 
-local ffi     = helpers.ffi
-local eq      = helpers.eq
+local deferred_call = helpers.deferred_call
+local cimport = helpers.cimport
+local ffi = helpers.ffi
+local eq = helpers.eq
 
-local multiqueue = helpers.cimport("./test/unit/fixtures/multiqueue.h")
+local multiqueue = cimport("./test/unit/fixtures/multiqueue.h")
 
 describe("multiqueue (multi-level event-queue)", function()
   local parent, child1, child2, child3
@@ -21,7 +23,7 @@ describe("multiqueue (multi-level event-queue)", function()
     multiqueue.multiqueue_free(q)
   end
 
-  before_each(function()
+  before_each(deferred_call(function()
     parent = multiqueue.multiqueue_new_parent(ffi.NULL, ffi.NULL)
     child1 = multiqueue.multiqueue_new_child(parent)
     child2 = multiqueue.multiqueue_new_child(parent)
@@ -35,7 +37,7 @@ describe("multiqueue (multi-level event-queue)", function()
     put(child2, 'c2i4')
     put(child3, 'c3i1')
     put(child3, 'c3i2')
-  end)
+  end))
 
   itp('keeps count of added events', function()
     eq(3, multiqueue.multiqueue_size(child1))

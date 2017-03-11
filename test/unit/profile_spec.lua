@@ -1,10 +1,12 @@
-local helpers = require 'test.unit.helpers'
+local helpers = require('test.unit.helpers')(after_each)
 local itp = helpers.gen_itp(it)
 
-local prof = helpers.cimport './src/nvim/profile.h'
+local cimport = helpers.cimport
 local ffi = helpers.ffi
 local eq = helpers.eq
 local neq = helpers.neq
+
+local prof = cimport('./src/nvim/profile.h')
 
 local function split(inputstr, sep)
   if sep == nil then

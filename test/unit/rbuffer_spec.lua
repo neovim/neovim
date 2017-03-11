@@ -1,10 +1,11 @@
 local helpers = require("test.unit.helpers")(after_each)
 local itp = helpers.gen_itp(it)
 
-local ffi     = helpers.ffi
-local eq      = helpers.eq
-local cstr    = helpers.cstr
+local eq = helpers.eq
+local ffi = helpers.ffi
+local cstr = helpers.cstr
 local to_cstr = helpers.to_cstr
+local deferred_call = helpers.deferred_call
 
 local rbuffer = helpers.cimport("./test/unit/fixtures/rbuffer.h")
 
@@ -31,11 +32,11 @@ describe('rbuffer functions', function()
     return ffi.string(rbuffer.rbuffer_get(rbuf, idx), 1)
   end
 
-  before_each(function()
+  before_each(deferred_call(function()
     rbuf = ffi.gc(rbuffer.rbuffer_new(capacity), rbuffer.rbuffer_free)
     -- fill the internal buffer with the character '0' to simplify inspecting
     ffi.C.memset(rbuf.start_ptr, string.byte('0'), capacity)
-  end)
+  end))
 
   describe('RBUFFER_UNTIL_FULL', function()
     local chunks
@@ -58,59 +59,44 @@ describe('rbuffer functions', function()
     end)
 
     describe('with partially empty buffer in one contiguous chunk', function()
-      before_each(function()
-        write('string')
-      end)
-
       itp('is called once with the empty chunk', function()
+        write('string')
         collect_write_chunks()
         eq({'0000000000'}, chunks)
       end)
     end)
 
     describe('with filled buffer in one contiguous chunk', function()
-      before_each(function()
-        write('abcdefghijklmnopq')
-      end)
-
       itp('is not called', function()
+        write('abcdefghijklmnopq')
         collect_write_chunks()
         eq({}, chunks)
       end)
     end)
 
     describe('with buffer partially empty in two contiguous chunks', function()
-      before_each(function()
+      itp('is called twice with each filled chunk', function()
         write('1234567890')
         read(8)
-      end)
-
-      itp('is called twice with each filled chunk', function()
         collect_write_chunks()
         eq({'000000', '12345678'}, chunks)
       end)
     end)
 
     describe('with buffer empty in two contiguous chunks', function()
-      before_each(function()
+      itp('is called twice with each filled chunk', function()
         write('12345678')
         read(8)
-      end)
-
-      itp('is called twice with each filled chunk', function()
         collect_write_chunks()
         eq({'00000000', '12345678'}, chunks)
       end)
     end)
 
     describe('with buffer filled in two contiguous chunks', function()
-      before_each(function()
+      itp('is not called', function()
         write('12345678')
         read(8)
         write('abcdefghijklmnopq')
-      end)
-
-      itp('is not called', function()
         collect_write_chunks()
         eq({}, chunks)
       end)
@@ -138,48 +124,36 @@ describe('rbuffer functions', function()
     end)
 
     describe('with partially filled buffer in one contiguous chunk', function()
-      before_each(function()
-        write('string')
-      end)
-
       itp('is called once with the filled chunk', function()
+        write('string')
         collect_read_chunks()
         eq({'string'}, chunks)
       end)
     end)
 
     describe('with filled buffer in one contiguous chunk', function()
-      before_each(function()
-        write('abcdefghijklmnopq')
-      end)
-
       itp('is called once with the filled chunk', function()
+        write('abcdefghijklmnopq')
         collect_read_chunks()
         eq({'abcdefghijklmnop'}, chunks)
       end)
     end)
 
     describe('with buffer partially filled in two contiguous chunks', function()
-      before_each(function()
+      itp('is called twice with each filled chunk', function()
         write('1234567890')
         read(10)
         write('long string')
-      end)
-
-      itp('is called twice with each filled chunk', function()
         collect_read_chunks()
         eq({'long s', 'tring'}, chunks)
       end)
     end)
 
     describe('with buffer filled in two contiguous chunks', function()
-      before_each(function()
+      itp('is called twice with each filled chunk', function()
         write('12345678')
         read(8)
         write('abcdefghijklmnopq')
-      end)
-
-      itp('is called twice with each filled chunk', function()
         collect_read_chunks()
         eq({'abcdefgh', 'ijklmnop'}, chunks)
       end)
@@ -206,13 +180,10 @@ describe('rbuffer functions', function()
     end)
 
     describe('with buffer filled in two contiguous chunks', function()
-      before_each(function()
+      itp('collects each character and index', function()
         write('1234567890')
         read(10)
         write('long string')
-      end)
-
-      itp('collects each character and index', function()
         collect_chars()
         eq({{'l', 0}, {'o', 1}, {'n', 2}, {'g', 3}, {' ', 4}, {'s', 5},
             {'t', 6}, {'r', 7}, {'i', 8}, {'n', 9}, {'g', 10}}, chars)
@@ -240,13 +211,10 @@ describe('rbuffer functions', function()
     end)
 
     describe('with buffer filled in two contiguous chunks', function()
-      before_each(function()
+      itp('collects each character and index', function()
         write('1234567890')
         read(10)
         write('long string')
-      end)
-
-      itp('collects each character and index', function()
         collect_chars()
         eq({{'g', 10}, {'n', 9}, {'i', 8}, {'r', 7}, {'t', 6}, {'s', 5},
             {' ', 4}, {'g', 3}, {'n', 2}, {'o', 1}, {'l', 0}}, chars)
@@ -265,13 +233,10 @@ describe('rbuffer functions', function()
     end
 
     describe('with buffer filled in two contiguous chunks', function()
-      before_each(function()
+      itp('compares the common longest sequence', function()
         write('1234567890')
         read(10)
         write('long string')
-      end)
-
-      itp('compares the common longest sequence', function()
         eq(0, cmp('long string'))
         eq(0, cmp('long strin'))
         eq(-1, cmp('long striM'))

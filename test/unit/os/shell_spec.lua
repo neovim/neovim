@@ -11,6 +11,7 @@ local ffi, eq = helpers.ffi, helpers.eq
 local intern = helpers.internalize
 local to_cstr = helpers.to_cstr
 local NULL = ffi.cast('void *', 0)
+local deferred_call = deferred_call
 
 describe('shell functions', function()
   before_each(function()
@@ -73,25 +74,13 @@ describe('shell functions', function()
       eq(0, status)
     end)
 
-    it ('returns non-zero exit code', function()
+    itp('returns non-zero exit code', function()
       local status = os_system('exit 2')
       eq(2, status)
     end)
   end)
 
   describe('shell_build_argv', function()
-    local saved_opts = {}
-
-    setup(function()
-      saved_opts.p_sh = cimported.p_sh
-      saved_opts.p_shcf = cimported.p_shcf
-    end)
-
-    teardown(function()
-      cimported.p_sh = saved_opts.p_sh
-      cimported.p_shcf = saved_opts.p_shcf
-    end)
-
     itp('works with NULL arguments', function()
       eq({'/bin/bash'}, shell_build_argv(nil, nil))
     end)

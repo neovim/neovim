@@ -19,47 +19,46 @@ local api = cimport('./src/nvim/api/private/defs.h',
 
 local obj2lua
 
-local obj2lua_tab = {
-  [tonumber(api.kObjectTypeArray)] = function(obj)
-    local ret = {[type_key]=list_type}
-    for i = 1,tonumber(obj.data.array.size) do
-      ret[i] = obj2lua(obj.data.array.items[i - 1])
-    end
-    if ret[1] then
-      ret[type_key] = nil
-    end
-    return ret
-  end,
-  [tonumber(api.kObjectTypeDictionary)] = function(obj)
-    local ret = {}
-    for i = 1,tonumber(obj.data.dictionary.size) do
-      local kv_pair = obj.data.dictionary.items[i - 1]
-      ret[ffi.string(kv_pair.key.data, kv_pair.key.size)] = obj2lua(kv_pair.value)
-    end
-    return ret
-  end,
-  [tonumber(api.kObjectTypeBoolean)] = function(obj)
-    if obj.data.boolean == false then
-      return false
-    else
-      return true
-    end
-  end,
-  [tonumber(api.kObjectTypeNil)] = function(_)
-    return nil_value
-  end,
-  [tonumber(api.kObjectTypeFloat)] = function(obj)
-    return tonumber(obj.data.floating)
-  end,
-  [tonumber(api.kObjectTypeInteger)] = function(obj)
-    return {[type_key]=int_type, value=tonumber(obj.data.integer)}
-  end,
-  [tonumber(api.kObjectTypeString)] = function(obj)
-    return ffi.string(obj.data.string.data, obj.data.string.size)
-  end,
-}
-
 obj2lua = function(obj)
+  local obj2lua_tab = {
+    [tonumber(api.kObjectTypeArray)] = function(obj)
+      local ret = {[type_key]=list_type}
+      for i = 1,tonumber(obj.data.array.size) do
+        ret[i] = obj2lua(obj.data.array.items[i - 1])
+      end
+      if ret[1] then
+        ret[type_key] = nil
+      end
+      return ret
+    end,
+    [tonumber(api.kObjectTypeDictionary)] = function(obj)
+      local ret = {}
+      for i = 1,tonumber(obj.data.dictionary.size) do
+        local kv_pair = obj.data.dictionary.items[i - 1]
+        ret[ffi.string(kv_pair.key.data, kv_pair.key.size)] = obj2lua(kv_pair.value)
+      end
+      return ret
+    end,
+    [tonumber(api.kObjectTypeBoolean)] = function(obj)
+      if obj.data.boolean == false then
+        return false
+      else
+        return true
+      end
+    end,
+    [tonumber(api.kObjectTypeNil)] = function(_)
+      return nil_value
+    end,
+    [tonumber(api.kObjectTypeFloat)] = function(obj)
+      return tonumber(obj.data.floating)
+    end,
+    [tonumber(api.kObjectTypeInteger)] = function(obj)
+      return {[type_key]=int_type, value=tonumber(obj.data.integer)}
+    end,
+    [tonumber(api.kObjectTypeString)] = function(obj)
+      return ffi.string(obj.data.string.data, obj.data.string.size)
+    end,
+  }
   return ((obj2lua_tab[tonumber(obj['type'])] or function(obj_inner)
     assert(false, 'Converting ' .. tostring(tonumber(obj_inner['type'])) .. ' is not implementing yet')
   end)(obj))

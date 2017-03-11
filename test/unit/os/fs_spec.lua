@@ -16,10 +16,10 @@ local to_cstr = helpers.to_cstr
 local OK = helpers.OK
 local FAIL = helpers.FAIL
 local NULL = helpers.NULL
+
 local NODE_NORMAL = 0
 local NODE_WRITABLE = 1
 
-cimport('unistd.h')
 cimport('./src/nvim/os/shell.h')
 cimport('./src/nvim/option_defs.h')
 cimport('./src/nvim/main.h')
@@ -66,13 +66,10 @@ local function os_getperm(filename)
 end
 
 describe('fs function', function()
-  local orig_test_file_perm
-
-  setup(function()
+  before_each(function()
     lfs.mkdir('unit-test-directory');
 
     io.open('unit-test-directory/test.file', 'w').close()
-    orig_test_file_perm = os_getperm('unit-test-directory/test.file')
 
     io.open('unit-test-directory/test_2.file', 'w').close()
     lfs.link('test.file', 'unit-test-directory/test_link.file', true)
@@ -84,7 +81,7 @@ describe('fs function', function()
     directory, executable_name = string.match(absolute_executable, '^(.*)/(.*)$')
   end)
 
-  teardown(function()
+  after_each(function()
     os.remove('unit-test-directory/test.file')
     os.remove('unit-test-directory/test_2.file')
     os.remove('unit-test-directory/test_link.file')
@@ -217,10 +214,6 @@ describe('fs function', function()
   end)
 
   describe('file permissions', function()
-    before_each(function()
-      os_setperm('unit-test-directory/test.file', orig_test_file_perm)
-    end)
-
     local function os_fchown(filename, user_id, group_id)
       local fd = ffi.C.open(filename, 0)
       local res = fs.os_fchown(fd, user_id, group_id)

@@ -46,12 +46,6 @@ local function list(...)
   return ret
 end
 
-local special_tab = {
-  [eval.kSpecialVarFalse] = false,
-  [eval.kSpecialVarNull] = nil_value,
-  [eval.kSpecialVarTrue] = true,
-}
-
 local ptr2key = function(ptr)
   return tostring(ptr)
 end
@@ -60,64 +54,74 @@ local lst2tbl
 local dct2tbl
 
 local typvalt2lua
-local typvalt2lua_tab
+local typvalt2lua_tab = nil
 
-typvalt2lua_tab = {
-  [tonumber(eval.VAR_SPECIAL)] = function(t)
-    return special_tab[t.vval.v_special]
-  end,
-  [tonumber(eval.VAR_NUMBER)] = function(t)
-    return {[type_key]=int_type, value=tonumber(t.vval.v_number)}
-  end,
-  [tonumber(eval.VAR_FLOAT)] = function(t)
-    return tonumber(t.vval.v_float)
-  end,
-  [tonumber(eval.VAR_STRING)] = function(t)
-    local str = t.vval.v_string
-    if str == nil then
-      return null_string
-    else
-      return ffi.string(str)
-    end
-  end,
-  [tonumber(eval.VAR_LIST)] = function(t, processed)
-    return lst2tbl(t.vval.v_list, processed)
-  end,
-  [tonumber(eval.VAR_DICT)] = function(t, processed)
-    return dct2tbl(t.vval.v_dict, processed)
-  end,
-  [tonumber(eval.VAR_FUNC)] = function(t, processed)
-    return {[type_key]=func_type, value=typvalt2lua_tab[eval.VAR_STRING](t, processed or {})}
-  end,
-  [tonumber(eval.VAR_PARTIAL)] = function(t, processed)
-    local p_key = ptr2key(t)
-    if processed[p_key] then
-      return processed[p_key]
-    end
-    local pt = t.vval.v_partial
-    local value, auto, dict, argv = nil, nil, nil, nil
-    if pt ~= nil then
-      value = ffi.string(pt.pt_name)
-      auto = pt.pt_auto and true or nil
-      argv = {}
-      for i = 1, pt.pt_argc do
-        argv[i] = typvalt2lua(pt.pt_argv[i - 1], processed)
+local function typvalt2lua_tab_init()
+  if typvalt2lua_tab then
+    return
+  end
+  typvalt2lua_tab = {
+    [tonumber(eval.VAR_SPECIAL)] = function(t)
+      return ({
+        [eval.kSpecialVarFalse] = false,
+        [eval.kSpecialVarNull] = nil_value,
+        [eval.kSpecialVarTrue] = true,
+      })[t.vval.v_special]
+    end,
+    [tonumber(eval.VAR_NUMBER)] = function(t)
+      return {[type_key]=int_type, value=tonumber(t.vval.v_number)}
+    end,
+    [tonumber(eval.VAR_FLOAT)] = function(t)
+      return tonumber(t.vval.v_float)
+    end,
+    [tonumber(eval.VAR_STRING)] = function(t)
+      local str = t.vval.v_string
+      if str == nil then
+        return null_string
+      else
+        return ffi.string(str)
       end
-      if pt.pt_dict ~= nil then
-        dict = dct2tbl(pt.pt_dict)
+    end,
+    [tonumber(eval.VAR_LIST)] = function(t, processed)
+      return lst2tbl(t.vval.v_list, processed)
+    end,
+    [tonumber(eval.VAR_DICT)] = function(t, processed)
+      return dct2tbl(t.vval.v_dict, processed)
+    end,
+    [tonumber(eval.VAR_FUNC)] = function(t, processed)
+      return {[type_key]=func_type, value=typvalt2lua_tab[eval.VAR_STRING](t, processed or {})}
+    end,
+    [tonumber(eval.VAR_PARTIAL)] = function(t, processed)
+      local p_key = ptr2key(t)
+      if processed[p_key] then
+        return processed[p_key]
       end
-    end
-    return {
-      [type_key]=func_type,
-      value=value,
-      auto=auto,
-      args=argv,
-      dict=dict,
-    }
-  end,
-}
+      local pt = t.vval.v_partial
+      local value, auto, dict, argv = nil, nil, nil, nil
+      if pt ~= nil then
+        value = ffi.string(pt.pt_name)
+        auto = pt.pt_auto and true or nil
+        argv = {}
+        for i = 1, pt.pt_argc do
+          argv[i] = typvalt2lua(pt.pt_argv[i - 1], processed)
+        end
+        if pt.pt_dict ~= nil then
+          dict = dct2tbl(pt.pt_dict)
+        end
+      end
+      return {
+        [type_key]=func_type,
+        value=value,
+        auto=auto,
+        args=argv,
+        dict=dict,
+      }
+    end,
+  }
+end
 
 typvalt2lua = function(t, processed)
+  typvalt2lua_tab_init()
   return ((typvalt2lua_tab[tonumber(t.v_type)] or function(t_inner)
     assert(false, 'Converting ' .. tonumber(t_inner.v_type) .. ' was not implemented yet')
   end)(t, processed or {}))
@@ -169,9 +173,10 @@ lst2tbl = function(l, processed)
   return ret
 end
 
-local hi_key_removed = eval._hash_key_removed()
+local hi_key_removed = nil
 
 local function dict_iter(d, return_hi)
+  hi_key_removed = hi_key_removed or eval._hash_key_removed()
   local init_s = {
     todo=d.dv_hashtab.ht_used,
     hi=d.dv_hashtab.ht_array,
@@ -320,25 +325,28 @@ local lua2typvalt_type_tab = {
   end,
 }
 
-local special_vals = {
-  [null_string] = {eval.VAR_STRING, {v_string=ffi.cast('char_u*', nil)}},
-  [null_list] = {eval.VAR_LIST, {v_list=ffi.cast('list_T*', nil)}},
-  [null_dict] = {eval.VAR_DICT, {v_dict=ffi.cast('dict_T*', nil)}},
-  [nil_value] = {eval.VAR_SPECIAL, {v_special=eval.kSpecialVarNull}},
-  [true] = {eval.VAR_SPECIAL, {v_special=eval.kSpecialVarTrue}},
-  [false] = {eval.VAR_SPECIAL, {v_special=eval.kSpecialVarFalse}},
-}
-
-for k, v in pairs(special_vals) do
-  local tmp = function(typ, vval)
-    special_vals[k] = function()
-      return typvalt(typ, vval)
-    end
-  end
-  tmp(v[1], v[2])
-end
+local special_vals = nil
 
 lua2typvalt = function(l, processed)
+  if not special_vals then
+    special_vals = {
+      [null_string] = {'VAR_STRING', {v_string=ffi.cast('char_u*', nil)}},
+      [null_list] = {'VAR_LIST', {v_list=ffi.cast('list_T*', nil)}},
+      [null_dict] = {'VAR_DICT', {v_dict=ffi.cast('dict_T*', nil)}},
+      [nil_value] = {'VAR_SPECIAL', {v_special=eval.kSpecialVarNull}},
+      [true] = {'VAR_SPECIAL', {v_special=eval.kSpecialVarTrue}},
+      [false] = {'VAR_SPECIAL', {v_special=eval.kSpecialVarFalse}},
+    }
+
+    for k, v in pairs(special_vals) do
+      local tmp = function(typ, vval)
+        special_vals[k] = function()
+          return typvalt(eval[typ], vval)
+        end
+      end
+      tmp(v[1], v[2])
+    end
+  end
   processed = processed or {}
   if l == nil or l == nil_value then
     return special_vals[nil_value]()
@@ -360,7 +368,7 @@ lua2typvalt = function(l, processed)
     return typvalt(eval.VAR_STRING, {v_string=eval.xmemdupz(to_cstr(l), #l)})
   elseif type(l) == 'cdata' then
     local tv = typvalt(eval.VAR_UNKNOWN)
-    eval.tv_copy(l, tv)
+    eval.copy_tv(l, tv)
     return tv
   end
 end

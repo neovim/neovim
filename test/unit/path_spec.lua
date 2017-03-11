@@ -15,13 +15,6 @@ local FAIL = helpers.FAIL
 cimport('string.h')
 local path = cimport('./src/nvim/path.h')
 
--- import constants parsed by ffi
-local kEqualFiles = path.kEqualFiles
-local kDifferentFiles = path.kDifferentFiles
-local kBothFilesMissing = path.kBothFilesMissing
-local kOneFileMissing = path.kOneFileMissing
-local kEqualFileNames = path.kEqualFileNames
-
 local length = 0
 local buffer = nil
 
@@ -93,25 +86,25 @@ describe('path function', function()
     end)
 
     itp('returns kEqualFiles when passed the same file', function()
-      eq(kEqualFiles, (path_full_compare(f1, f1)))
+      eq(path.kEqualFiles, (path_full_compare(f1, f1)))
     end)
 
     itp('returns kEqualFileNames when files that dont exist and have same name', function()
-      eq(kEqualFileNames, (path_full_compare('null.txt', 'null.txt', true)))
+      eq(path.kEqualFileNames, (path_full_compare('null.txt', 'null.txt', true)))
     end)
 
     itp('returns kBothFilesMissing when files that dont exist', function()
-      eq(kBothFilesMissing, (path_full_compare('null.txt', 'null.txt')))
+      eq(path.kBothFilesMissing, (path_full_compare('null.txt', 'null.txt')))
     end)
 
     itp('returns kDifferentFiles when passed different files', function()
-      eq(kDifferentFiles, (path_full_compare(f1, f2)))
-      eq(kDifferentFiles, (path_full_compare(f2, f1)))
+      eq(path.kDifferentFiles, (path_full_compare(f1, f2)))
+      eq(path.kDifferentFiles, (path_full_compare(f2, f1)))
     end)
 
     itp('returns kOneFileMissing if only one does not exist', function()
-      eq(kOneFileMissing, (path_full_compare(f1, 'null.txt')))
-      eq(kOneFileMissing, (path_full_compare('null.txt', f1)))
+      eq(path.kOneFileMissing, (path_full_compare(f1, 'null.txt')))
+      eq(path.kOneFileMissing, (path_full_compare('null.txt', f1)))
     end)
   end)
 

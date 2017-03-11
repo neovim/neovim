@@ -13,6 +13,7 @@ local syscall = nil
 local check_cores = global_helpers.check_cores
 local which = global_helpers.which
 local neq = global_helpers.neq
+local map = global_helpers.map
 local eq = global_helpers.eq
 local ok = global_helpers.ok
 
@@ -22,13 +23,82 @@ local NULL = ffi.cast('void*', 0)
 local OK = 1
 local FAIL = 0
 
+local cimport
+
 -- add some standard header locations
 for _, p in ipairs(Paths.include_paths) do
   Preprocess.add_to_include_path(p)
 end
 
--- load neovim shared library
-local libnvim = ffi.load(Paths.test_libnvim_path)
+local pid = nil
+local function only_separate(func)
+  return function(...)
+    if pid ~= 0 then
+      eq(0, 'This function must be run in a separate process only')
+    end
+    return func(...)
+  end
+end
+local deferred_calls_init = {}
+local deferred_calls_mod = nil
+local function deferred_call(func, ret)
+  return function(...)
+    local deferred_calls = deferred_calls_mod or deferred_calls_init
+    if pid ~= 0 then
+      deferred_calls[#deferred_calls + 1] = {func=func, args={...}}
+      return ret
+    else
+      return func(...)
+    end
+  end
+end
+
+local separate_cleanups_mod = nil
+local function separate_cleanup(func)
+  return function(...)
+    local separate_cleanups = separate_cleanups_mod
+    if pid ~= 0 then
+      separate_cleanups[#separate_cleanups + 1] = {args={...}}
+    else
+      func(...)
+    end
+  end
+end
+
+local libnvim = nil
+
+local lib = setmetatable({}, {
+  __index = only_separate(function(tbl, idx)
+    return libnvim[idx]
+  end),
+  __newindex = deferred_call(function(tbl, idx, val)
+    libnvim[idx] = val
+  end),
+})
+
+local init = only_separate(function()
+  -- load neovim shared library
+  libnvim = ffi.load(Paths.test_libnvim_path)
+  for _, c in ipairs(deferred_calls_init) do
+    c.func(unpack(c.args))
+  end
+  libnvim.time_init()
+  libnvim.early_init()
+  libnvim.event_init()
+  if deferred_calls_mod then
+    for _, c in ipairs(deferred_calls_mod) do
+      c.func(unpack(c.args))
+    end
+  end
+end)
+
+local deinit = only_separate(function()
+  if separate_cleanups_mod then
+    for _, c in ipairs(separate_cleanups_mod) do
+      c.func(unpack(c.args))
+    end
+  end
+end)
 
 local function trim(s)
   return s:match('^%s*(.*%S)') or ''
@@ -58,52 +128,74 @@ local function filter_complex_blocks(body)
   return table.concat(result, "\n")
 end
 
-local previous_defines = ''
 
 local cdef = ffi.cdef
 
 local cimportstr
 
+local previous_defines_init = ''
+local preprocess_cache_init = {}
+local previous_defines_mod = ''
+local preprocess_cache_mod = nil
+
 -- use this helper to import C files, you can pass multiple paths at once,
 -- this helper will return the C namespace of the nvim library.
-local function cimport(...)
-  local paths = {}
-  local args = {...}
-
-  -- filter out paths we've already imported
-  for _,path in pairs(args) do
-    if path ~= nil and not imported:contains(path) then
-      paths[#paths + 1] = path
+cimport = function(...)
+  local previous_defines, preprocess_cache
+  if preprocess_cache_mod then
+    preprocess_cache = preprocess_cache_mod
+    previous_defines = previous_defines_mod
+  else
+    preprocess_cache = preprocess_cache_init
+    previous_defines = previous_defines_init
+  end
+  for _, path in ipairs({...}) do
+    if not (path:sub(1, 1) == '/' or path:sub(1, 1) == '.'
+            or path:sub(2, 2) == ':') then
+      path = './' .. path
     end
+    local body
+    if preprocess_cache[path] then
+      body = preprocess_cache[path]
+    else
+      body, previous_defines = Preprocess.preprocess(previous_defines, path)
+      -- format it (so that the lines are "unique" statements), also filter out
+      -- Objective-C blocks
+      if os.getenv('NVIM_TEST_PRINT_I') == '1' then
+        local lnum = 0
+        for line in body:gmatch('[^\n]+') do
+          lnum = lnum + 1
+          print(lnum, line)
+        end
+      end
+      body = formatc(body)
+      body = filter_complex_blocks(body)
+      preprocess_cache[path] = body
+    end
+    cimportstr(preprocess_cache, path)
   end
-
-  for _,path in pairs(paths) do
-    imported:add(path)
-  end
-
-  if #paths == 0 then
-    return libnvim
-  end
-
-  local body
-  body, previous_defines = Preprocess.preprocess(previous_defines, unpack(paths))
-
-  return cimportstr(body)
+  return lib
 end
 
-cimportstr = function(body)
-  -- format it (so that the lines are "unique" statements), also filter out
-  -- Objective-C blocks
-  if os.getenv('NVIM_TEST_PRINT_I') == '1' then
-    local lnum = 0
-    for line in body:gmatch('[^\n]+') do
-      lnum = lnum + 1
-      print(lnum, line)
-    end
+local cimport_immediate = function(...)
+  local saved_pid = pid
+  pid = 0
+  local err, emsg = pcall(cimport, ...)
+  pid = saved_pid
+  if not err then
+    emsg = tostring(emsg)
+    io.stderr:write(emsg .. '\n')
+    assert(false)
+  else
+    return lib
   end
-  body = formatc(body)
-  body = filter_complex_blocks(body)
+end
 
+cimportstr = deferred_call(function(preprocess_cache, path)
+  if imported:contains(path) then
+    return lib
+  end
+  local body = preprocess_cache[path]
   -- add the formatted lines to a set
   local new_cdefs = Set:new()
   for line in body:gmatch("[^\r\n]+") do
@@ -126,7 +218,7 @@ cimportstr = function(body)
 
   if new_cdefs:size() == 0 then
     -- if there's no new lines, just return
-    return libnvim
+    return lib
   end
 
   -- request a sorted version of the new lines (same relative order as the
@@ -138,13 +230,10 @@ cimportstr = function(body)
     end
   end
   cdef(table.concat(new_lines, "\n"))
+  imported:add(path)
 
-  return libnvim
-end
-
-local function cppimport(path)
-  return cimport(Paths.test_include_path .. '/' .. path)
-end
+  return lib
+end, lib)
 
 local function alloc_log_new()
   local log = {
@@ -156,9 +245,12 @@ local function alloc_log_new()
   local allocator_functions = {'malloc', 'free', 'calloc', 'realloc'}
   function log:save_original_functions()
     for _, funcname in ipairs(allocator_functions) do
-      self.original_functions[funcname] = self.lib['mem_' .. funcname]
+      if not self.original_functions[funcname] then
+        self.original_functions[funcname] = self.lib['mem_' .. funcname]
+      end
     end
   end
+  log.save_original_functions = deferred_call(log.save_original_functions)
   function log:set_mocks()
     for _, k in ipairs(allocator_functions) do
       do
@@ -185,6 +277,7 @@ local function alloc_log_new()
       end
     end
   end
+  log.set_mocks = deferred_call(log.set_mocks)
   function log:clear()
     self.log = {}
   end
@@ -193,21 +286,27 @@ local function alloc_log_new()
     self:clear()
   end
   function log:restore_original_functions()
-    for k, v in pairs(self.original_functions) do
-      self.lib['mem_' .. k] = v
-    end
+    -- Do nothing: set mocks live in a separate process
+    return
+    --[[
+       [ for k, v in pairs(self.original_functions) do
+       [   self.lib['mem_' .. k] = v
+       [ end
+       ]]
   end
-  function log:before_each()
+  function log:setup()
     log:save_original_functions()
     log:set_mocks()
+  end
+  function log:before_each()
+    return
   end
   function log:after_each()
     log:restore_original_functions()
   end
+  log:setup()
   return log
 end
-
-cimport('./src/nvim/types.h')
 
 -- take a pointer to a C-allocated string and return an interned
 -- version while also freeing the memory
@@ -219,16 +318,6 @@ end
 local cstr = ffi.typeof('char[?]')
 local function to_cstr(string)
   return cstr(#string + 1, string)
-end
-
--- initialize some global variables, this is still necessary to unit test
--- functions that rely on global state.
-do
-  local main = cimport('./src/nvim/main.h')
-  local time = cimport('./src/nvim/os/time.h')
-  time.time_init()
-  main.early_init()
-  main.event_init()
 end
 
 local sc
@@ -263,7 +352,7 @@ elseif syscall ~= nil then
     exit = syscall.exit,
   }
 else
-  cimport('./test/unit/fixtures/posix.h')
+  cimport_immediate('./test/unit/fixtures/posix.h')
   sc = {
     fork = function()
       return tonumber(ffi.C.fork())
@@ -291,7 +380,7 @@ else
             len - total_bytes_read))
         if bytes_read == -1 then
           local err = ffi.errno(0)
-          if err ~= libnvim.kPOSIXErrnoEINTR then
+          if err ~= ffi.C.kPOSIXErrnoEINTR then
             assert(false, ("read() error: %u: %s"):format(
                 err, ffi.string(ffi.C.strerror(err))))
           end
@@ -314,7 +403,7 @@ else
             #s - total_bytes_written))
         if bytes_written == -1 then
           local err = ffi.errno(0)
-          if err ~= libnvim.kPOSIXErrnoEINTR then
+          if err ~= ffi.C.kPOSIXErrnoEINTR then
             assert(false, ("write() error: %u: %s"):format(
                 err, ffi.string(ffi.C.strerror(err))))
           end
@@ -330,12 +419,12 @@ else
     wait = function(pid)
       ffi.errno(0)
       while true do
-        local r = ffi.C.waitpid(pid, nil, libnvim.kPOSIXWaitWUNTRACED)
+        local r = ffi.C.waitpid(pid, nil, ffi.C.kPOSIXWaitWUNTRACED)
         if r == -1 then
           local err = ffi.errno(0)
-          if err == libnvim.kPOSIXErrnoECHILD then
+          if err == ffi.C.kPOSIXErrnoECHILD then
             break
-          elseif err ~= libnvim.kPOSIXErrnoEINTR then
+          elseif err ~= ffi.C.kPOSIXErrnoEINTR then
             assert(false, ("waitpid() error: %u: %s"):format(
                 err, ffi.string(ffi.C.strerror(err))))
           end
@@ -371,6 +460,10 @@ if os.getenv('NVIM_TEST_PRINT_SYSCALLS') == '1' then
 end
 
 local function gen_itp(it)
+  deferred_calls_mod = {}
+  deferred_cleanups_mod = {}
+  preprocess_cache_mod = map(function(v) return v end, preprocess_cache_init)
+  previous_defines_mod = previous_defines_init
   local function just_fail(_)
     return false
   end
@@ -386,8 +479,9 @@ local function gen_itp(it)
     end
     it(name, function()
       local rd, wr = sc.pipe()
-      local pid = sc.fork()
+      pid = sc.fork()
       if pid == 0 then
+        init()
         sc.close(rd)
         collectgarbage('stop')
         local err, emsg = pcall(func)
@@ -395,16 +489,19 @@ local function gen_itp(it)
         emsg = tostring(emsg)
         if not err then
           sc.write(wr, ('-\n%05u\n%s'):format(#emsg, emsg))
+          deinit()
           sc.close(wr)
           sc.exit(1)
         else
           sc.write(wr, '+\n')
+          deinit()
           sc.close(wr)
           sc.exit(0)
         end
       else
         sc.close(wr)
         sc.wait(pid)
+        pid = nil
         local function check()
           local res = sc.read(rd, 2)
           eq(2, #res)
@@ -433,6 +530,12 @@ local function gen_itp(it)
   return itp
 end
 
+local function cppimport(path)
+  return cimport(Paths.test_include_path .. '/' .. path)
+end
+
+cimport('./src/nvim/types.h', './src/nvim/main.h', './src/nvim/os/time.h')
+
 local module = {
   cimport = cimport,
   cppimport = cppimport,
@@ -441,7 +544,7 @@ local module = {
   eq = eq,
   neq = neq,
   ffi = ffi,
-  lib = libnvim,
+  lib = lib,
   cstr = cstr,
   to_cstr = to_cstr,
   NULL = NULL,
@@ -449,6 +552,9 @@ local module = {
   FAIL = FAIL,
   alloc_log_new = alloc_log_new,
   gen_itp = gen_itp,
+  only_separate = only_separate,
+  deferred_call = deferred_call,
+  separate_cleanup = separate_cleanup,
 }
 return function(after_each)
   if after_each then

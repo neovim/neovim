@@ -9,7 +9,7 @@ local ffi = helpers.ffi
 local to_cstr = helpers.to_cstr
 local NULL = helpers.NULL
 
-local garray = cimport('stdlib.h', './src/nvim/garray.h')
+local garray = cimport('./src/nvim/garray.h')
 
 local itemsize = 14
 local growsize = 95
@@ -157,7 +157,7 @@ local ga_append_ints = function(garr, ...)
 end
 
 -- enhanced constructors
-local garray_ctype = ffi.typeof('garray_T[1]')
+local garray_ctype = function(...) return ffi.typeof('garray_T[1]')(...) end
 local new_garray = function()
   local garr = garray_ctype()
   return ffi.gc(garr, ga_clear)

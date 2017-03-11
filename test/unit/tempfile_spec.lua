@@ -1,20 +1,25 @@
-local lfs = require 'lfs'
-local helpers = require 'test.unit.helpers'
+local lfs = require('lfs')
+local helpers = require('test.unit.helpers')(after_each)
 local itp = helpers.gen_itp(it)
 
-local os = helpers.cimport './src/nvim/os/os.h'
-local tempfile = helpers.cimport './src/nvim/fileio.h'
+local eq = helpers.eq
+local neq = helpers.neq
+local cimport = helpers.cimport
+local deferred_call = helpers.deferred_call
+local separate_cleanup = helpers.separate_cleanup
+
+local lib = cimport('./src/nvim/os/os.h', './src/nvim/fileio.h')
 
 describe('tempfile related functions', function()
-  before_each(function()
-    tempfile.vim_deltempdir()
-  end)
-  after_each(function()
-    tempfile.vim_deltempdir()
+  before_each(deferred_call(function()
+    lib.vim_deltempdir()
+  end))
+  separate_cleanup(function()
+    lib.vim_deltempdir()
   end)
 
   local vim_gettempdir = function()
-    return helpers.ffi.string(tempfile.vim_gettempdir())
+    return helpers.ffi.string(lib.vim_gettempdir())
   end
 
   describe('vim_gettempdir', function()
@@ -23,7 +28,7 @@ describe('tempfile related functions', function()
       assert.True(dir ~= nil and dir:len() > 0)
       -- os_file_is_writable returns 2 for a directory which we have rights
       -- to write into.
-      assert.equals(os.os_file_is_writable(helpers.to_cstr(dir)), 2)
+      eq(lib.os_file_is_writable(helpers.to_cstr(dir)), 2)
       for entry in lfs.dir(dir) do
         assert.True(entry == '.' or entry == '..')
       end
@@ -32,25 +37,25 @@ describe('tempfile related functions', function()
     itp('returns the same directory on each call', function()
       local dir1 = vim_gettempdir()
       local dir2 = vim_gettempdir()
-      assert.equals(dir1, dir2)
+      eq(dir1, dir2)
     end)
   end)
 
   describe('vim_tempname', function()
     local vim_tempname = function()
-      return helpers.ffi.string(tempfile.vim_tempname())
+      return helpers.ffi.string(lib.vim_tempname())
     end
 
     itp('generate name of non-existing file', function()
       local file = vim_tempname()
       assert.truthy(file)
-      assert.False(os.os_path_exists(file))
+      assert.False(lib.os_path_exists(file))
     end)
 
     itp('generate different names on each call', function()
       local fst = vim_tempname()
       local snd = vim_tempname()
-      assert.not_equals(fst, snd)
+      neq(fst, snd)
     end)
 
     itp('generate file name in Neovim own temp directory', function()

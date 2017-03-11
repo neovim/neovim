@@ -12,20 +12,6 @@ local decode = cimport('./src/nvim/eval/decode.h', './src/nvim/eval_defs.h',
                        './src/nvim/message.h')
 
 describe('json_decode_string()', function()
-  local saved_p_enc = nil
-
-  before_each(function()
-    saved_p_enc = decode.p_enc
-  end)
-
-  after_each(function()
-    decode.emsg_silent = 0
-    decode.p_enc = saved_p_enc
-    while decode.delete_first_msg() == 1 do
-      -- Delete all messages
-    end
-  end)
-
   local char = function(c)
     return ffi.gc(decode.xmemdup(c, 1), decode.xfree)
   end
