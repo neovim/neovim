@@ -30,13 +30,15 @@ local function glob(initial_path, re, exc_re)
       if ((not exc_re or not checked_path:match(exc_re))
           and e:sub(1, 1) ~= '.') then
         local attrs = lfs.attributes(full_path)
-        local check_key = attrs.dev .. ':' .. tostring(attrs.ino)
-        if not checked_files[check_key] then
-          checked_files[check_key] = true
-          if attrs.mode == 'directory' then
-            paths_to_check[#paths_to_check + 1] = full_path
-          elseif not re or checked_path:match(re) then
-            ret[#ret + 1] = full_path
+        if attrs then
+          local check_key = attrs.dev .. ':' .. tostring(attrs.ino)
+          if not checked_files[check_key] then
+            checked_files[check_key] = true
+            if attrs.mode == 'directory' then
+              paths_to_check[#paths_to_check + 1] = full_path
+            elseif not re or checked_path:match(re) then
+              ret[#ret + 1] = full_path
+            end
           end
         end
       end
