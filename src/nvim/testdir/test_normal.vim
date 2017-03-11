@@ -1248,10 +1248,12 @@ func! Test_normal23_K()
   norm! K
   call assert_equal('aa%bb', fnamemodify(bufname('%'), ':t'))
   bwipe!
-  4
-  norm! K
-  call assert_equal('cc|dd', fnamemodify(bufname('%'), ':t'))
-  bwipe!
+  if !has('win32')
+    4
+    norm! K
+    call assert_equal('cc|dd', fnamemodify(bufname('%'), ':t'))
+    bwipe!
+  endif
   set iskeyword-=%
   set iskeyword-=\|
 
