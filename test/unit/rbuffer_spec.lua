@@ -5,7 +5,7 @@ local eq = helpers.eq
 local ffi = helpers.ffi
 local cstr = helpers.cstr
 local to_cstr = helpers.to_cstr
-local deferred_call = helpers.deferred_call
+local child_call_once = helpers.child_call_once
 
 local rbuffer = helpers.cimport("./test/unit/fixtures/rbuffer.h")
 
@@ -32,11 +32,13 @@ describe('rbuffer functions', function()
     return ffi.string(rbuffer.rbuffer_get(rbuf, idx), 1)
   end
 
-  before_each(deferred_call(function()
-    rbuf = ffi.gc(rbuffer.rbuffer_new(capacity), rbuffer.rbuffer_free)
-    -- fill the internal buffer with the character '0' to simplify inspecting
-    ffi.C.memset(rbuf.start_ptr, string.byte('0'), capacity)
-  end))
+  before_each(function()
+    child_call_once(function()
+      rbuf = ffi.gc(rbuffer.rbuffer_new(capacity), rbuffer.rbuffer_free)
+      -- fill the internal buffer with the character '0' to simplify inspecting
+      ffi.C.memset(rbuf.start_ptr, string.byte('0'), capacity)
+    end)
+  end)
 
   describe('RBUFFER_UNTIL_FULL', function()
     local chunks

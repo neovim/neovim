@@ -1,7 +1,7 @@
 local helpers = require("test.unit.helpers")(after_each)
 local itp = helpers.gen_itp(it)
 
-local deferred_call = helpers.deferred_call
+local child_call_once = helpers.child_call_once
 local cimport = helpers.cimport
 local ffi = helpers.ffi
 local eq = helpers.eq
@@ -23,21 +23,23 @@ describe("multiqueue (multi-level event-queue)", function()
     multiqueue.multiqueue_free(q)
   end
 
-  before_each(deferred_call(function()
-    parent = multiqueue.multiqueue_new_parent(ffi.NULL, ffi.NULL)
-    child1 = multiqueue.multiqueue_new_child(parent)
-    child2 = multiqueue.multiqueue_new_child(parent)
-    child3 = multiqueue.multiqueue_new_child(parent)
-    put(child1, 'c1i1')
-    put(child1, 'c1i2')
-    put(child2, 'c2i1')
-    put(child1, 'c1i3')
-    put(child2, 'c2i2')
-    put(child2, 'c2i3')
-    put(child2, 'c2i4')
-    put(child3, 'c3i1')
-    put(child3, 'c3i2')
-  end))
+  before_each(function()
+    child_call_once(function()
+      parent = multiqueue.multiqueue_new_parent(ffi.NULL, ffi.NULL)
+      child1 = multiqueue.multiqueue_new_child(parent)
+      child2 = multiqueue.multiqueue_new_child(parent)
+      child3 = multiqueue.multiqueue_new_child(parent)
+      put(child1, 'c1i1')
+      put(child1, 'c1i2')
+      put(child2, 'c2i1')
+      put(child1, 'c1i3')
+      put(child2, 'c2i2')
+      put(child2, 'c2i3')
+      put(child2, 'c2i4')
+      put(child3, 'c3i1')
+      put(child3, 'c3i2')
+    end)
+  end)
 
   itp('keeps count of added events', function()
     eq(3, multiqueue.multiqueue_size(child1))

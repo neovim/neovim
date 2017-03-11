@@ -38,13 +38,14 @@ local function only_separate(func)
     return func(...)
   end
 end
-local deferred_calls_init = {}
-local deferred_calls_mod = nil
-local function deferred_call(func, ret)
+local child_calls_init = {}
+local child_calls_mod = nil
+local child_calls_mod_once = nil
+local function child_call(func, ret)
   return function(...)
-    local deferred_calls = deferred_calls_mod or deferred_calls_init
+    local child_calls = child_calls_mod or child_calls_init
     if child_pid ~= 0 then
-      deferred_calls[#deferred_calls + 1] = {func=func, args={...}}
+      child_calls[#child_calls + 1] = {func=func, args={...}}
       return ret
     else
       return func(...)
@@ -52,15 +53,27 @@ local function deferred_call(func, ret)
   end
 end
 
-local separate_cleanups_mod = nil
-local function separate_cleanup(func)
-  return function(...)
-    local separate_cleanups = separate_cleanups_mod
-    if child_pid ~= 0 then
-      separate_cleanups[#separate_cleanups + 1] = {args={...}}
-    else
-      func(...)
-    end
+-- Run some code at the start of the child process, before running the test
+-- itself. Is supposed to be run in `before_each`.
+local function child_call_once(func, ...)
+  if child_pid ~= 0 then
+    child_calls_mod_once[#child_calls_mod_once + 1] = {
+      func=func, args={...}}
+  else
+    func(...)
+  end
+end
+
+local child_cleanups_mod_once = nil
+
+-- Run some code at the end of the child process, before exiting. Is supposed to
+-- be run in `before_each` because `after_each` is run after child has exited.
+local function child_cleanup_once(func, ...)
+  local child_cleanups = child_cleanups_mod_once
+  if child_pid ~= 0 then
+    child_cleanups[#child_cleanups + 1] = {func=func, args={...}}
+  else
+    func(...)
   end
 end
 
@@ -70,7 +83,7 @@ local lib = setmetatable({}, {
   __index = only_separate(function(_, idx)
     return libnvim[idx]
   end),
-  __newindex = deferred_call(function(_, idx, val)
+  __newindex = child_call(function(_, idx, val)
     libnvim[idx] = val
   end),
 })
@@ -78,24 +91,31 @@ local lib = setmetatable({}, {
 local init = only_separate(function()
   -- load neovim shared library
   libnvim = ffi.load(Paths.test_libnvim_path)
-  for _, c in ipairs(deferred_calls_init) do
+  for _, c in ipairs(child_calls_init) do
     c.func(unpack(c.args))
   end
   libnvim.time_init()
   libnvim.early_init()
   libnvim.event_init()
-  if deferred_calls_mod then
-    for _, c in ipairs(deferred_calls_mod) do
+  if child_calls_mod then
+    for _, c in ipairs(child_calls_mod) do
       c.func(unpack(c.args))
     end
+  end
+  if child_calls_mod_once then
+    for _, c in ipairs(child_calls_mod_once) do
+      c.func(unpack(c.args))
+    end
+    child_calls_mod_once = nil
   end
 end)
 
 local deinit = only_separate(function()
-  if separate_cleanups_mod then
-    for _, c in ipairs(separate_cleanups_mod) do
+  if child_cleanups_mod_once then
+    for _, c in ipairs(child_cleanups_mod_once) do
       c.func(unpack(c.args))
     end
+    child_cleanups_mod_once = nil
   end
 end)
 
@@ -188,7 +208,7 @@ local cimport_immediate = function(...)
   end
 end
 
-cimportstr = deferred_call(function(preprocess_cache, path)
+cimportstr = child_call(function(preprocess_cache, path)
   if imported:contains(path) then
     return lib
   end
@@ -247,7 +267,7 @@ local function alloc_log_new()
       end
     end
   end
-  log.save_original_functions = deferred_call(log.save_original_functions)
+  log.save_original_functions = child_call(log.save_original_functions)
   function log:set_mocks()
     for _, k in ipairs(allocator_functions) do
       do
@@ -274,7 +294,7 @@ local function alloc_log_new()
       end
     end
   end
-  log.set_mocks = deferred_call(log.set_mocks)
+  log.set_mocks = child_call(log.set_mocks)
   function log:clear()
     self.log = {}
   end
@@ -457,8 +477,9 @@ if os.getenv('NVIM_TEST_PRINT_SYSCALLS') == '1' then
 end
 
 local function gen_itp(it)
-  deferred_calls_mod = {}
-  separate_cleanups_mod = {}
+  child_calls_mod = {}
+  child_calls_mod_once = {}
+  child_cleanups_mod_once = {}
   preprocess_cache_mod = map(function(v) return v end, preprocess_cache_init)
   previous_defines_mod = previous_defines_init
   local function just_fail(_)
@@ -551,8 +572,8 @@ local module = {
   alloc_log_new = alloc_log_new,
   gen_itp = gen_itp,
   only_separate = only_separate,
-  deferred_call = deferred_call,
-  separate_cleanup = separate_cleanup,
+  child_call_once = child_call_once,
+  child_cleanup_once = child_cleanup_once,
 }
 return function(after_each)
   if after_each then

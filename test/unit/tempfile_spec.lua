@@ -5,17 +5,18 @@ local itp = helpers.gen_itp(it)
 local eq = helpers.eq
 local neq = helpers.neq
 local cimport = helpers.cimport
-local deferred_call = helpers.deferred_call
-local separate_cleanup = helpers.separate_cleanup
+local child_call_once = helpers.child_call_once
+local child_cleanup_once = helpers.child_cleanup_once
 
 local lib = cimport('./src/nvim/os/os.h', './src/nvim/fileio.h')
 
 describe('tempfile related functions', function()
-  before_each(deferred_call(function()
-    lib.vim_deltempdir()
-  end))
-  separate_cleanup(function()
-    lib.vim_deltempdir()
+  before_each(function()
+    local function vim_deltempdir()
+      lib.vim_deltempdir()
+    end
+    child_call_once(vim_deltempdir)
+    child_cleanup_once(vim_deltempdir)
   end)
 
   local vim_gettempdir = function()
