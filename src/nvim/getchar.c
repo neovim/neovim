@@ -2460,7 +2460,7 @@ inchar (
   if (typebuf_changed(tb_change_cnt))
     return 0;
 
-  return fix_input_buffer(buf, len, script_char >= 0);
+  return fix_input_buffer(buf, len);
 }
 
 /*
@@ -2468,12 +2468,7 @@ inchar (
  * buf[] must have room to triple the number of bytes!
  * Returns the new length.
  */
-int 
-fix_input_buffer (
-    char_u *buf,
-    int len,
-    int script                     /* TRUE when reading from a script */
-)
+int fix_input_buffer(char_u *buf, int len)
 {
   if (!using_script()) {
     // Should not escape K_SPECIAL/CSI reading input from the user because vim
@@ -2490,11 +2485,9 @@ fix_input_buffer (
   // Replace	     NUL by K_SPECIAL KS_ZERO	 KE_FILLER
   // Replace K_SPECIAL by K_SPECIAL KS_SPECIAL KE_FILLER
   // Replace       CSI by K_SPECIAL KS_EXTRA   KE_CSI
-  // Don't replace K_SPECIAL when reading a script file.
   for (i = len; --i >= 0; ++p) {
     if (p[0] == NUL
         || (p[0] == K_SPECIAL
-          && !script
           && (i < 2 || p[1] != KS_EXTRA))) {
       memmove(p + 3, p + 1, (size_t)i);
       p[2] = (char_u)K_THIRD(p[0]);

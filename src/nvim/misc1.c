@@ -2322,7 +2322,7 @@ int get_keystroke(void)
     n = os_inchar(buf + len, maxlen, len == 0 ? -1L : 100L, 0);
     if (n > 0) {
       /* Replace zero and CSI by a special key code. */
-      n = fix_input_buffer(buf + len, n, FALSE);
+      n = fix_input_buffer(buf + len, n);
       len += n;
       waited = 0;
     } else if (len > 0)
