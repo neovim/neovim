@@ -3023,11 +3023,11 @@ void ex_make(exarg_T *eap)
   case CMD_lgrepadd:  au_name = (char_u *)"lgrepadd"; break;
   default: break;
   }
-  if (au_name != NULL) {
-    apply_autocmds(EVENT_QUICKFIXCMDPRE, au_name,
-        curbuf->b_fname, TRUE, curbuf);
-    if (did_throw || force_abort)
+  if (au_name != NULL && apply_autocmds(EVENT_QUICKFIXCMDPRE, au_name,
+                                        curbuf->b_fname, true, curbuf)) {
+    if (aborting()) {
       return;
+    }
   }
 
   if (eap->cmdidx == CMD_lmake || eap->cmdidx == CMD_lgrep
@@ -3487,11 +3487,11 @@ void ex_vimgrep(exarg_T *eap)
   case CMD_lgrepadd:    au_name = (char_u *)"lgrepadd"; break;
   default: break;
   }
-  if (au_name != NULL) {
-    apply_autocmds(EVENT_QUICKFIXCMDPRE, au_name,
-        curbuf->b_fname, TRUE, curbuf);
-    if (did_throw || force_abort)
+  if (au_name != NULL && apply_autocmds(EVENT_QUICKFIXCMDPRE, au_name,
+                                        curbuf->b_fname, true, curbuf)) {
+    if (aborting()) {
       return;
+    }
   }
 
   if (eap->cmdidx == CMD_lgrep
@@ -4310,10 +4310,9 @@ void ex_cbuffer(exarg_T *eap)
       break;
   }
 
-  if (au_name != NULL) {
-    apply_autocmds(EVENT_QUICKFIXCMDPRE, (char_u *)au_name,
-                   curbuf->b_fname, true, curbuf);
-    if (did_throw || force_abort) {
+  if (au_name != NULL && apply_autocmds(EVENT_QUICKFIXCMDPRE, (char_u *)au_name,
+                                        curbuf->b_fname, true, curbuf)) {
+    if (aborting()) {
       return;
     }
   }
@@ -4396,10 +4395,9 @@ void ex_cexpr(exarg_T *eap)
     default:
       break;
   }
-  if (au_name != NULL) {
-    apply_autocmds(EVENT_QUICKFIXCMDPRE, (char_u *)au_name,
-                   curbuf->b_fname, true, curbuf);
-    if (did_throw || force_abort) {
+  if (au_name != NULL && apply_autocmds(EVENT_QUICKFIXCMDPRE, (char_u *)au_name,
+                                        curbuf->b_fname, true, curbuf)) {
+    if (aborting()) {
       return;
     }
   }
@@ -4455,11 +4453,11 @@ void ex_helpgrep(exarg_T *eap)
   case CMD_lhelpgrep: au_name = (char_u *)"lhelpgrep"; break;
   default: break;
   }
-  if (au_name != NULL) {
-    apply_autocmds(EVENT_QUICKFIXCMDPRE, au_name,
-        curbuf->b_fname, TRUE, curbuf);
-    if (did_throw || force_abort)
+  if (au_name != NULL && apply_autocmds(EVENT_QUICKFIXCMDPRE, au_name,
+                                        curbuf->b_fname, true, curbuf)) {
+    if (aborting()) {
       return;
+    }
   }
 
   /* Make 'cpoptions' empty, the 'l' flag should not be used here. */
