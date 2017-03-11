@@ -1596,6 +1596,8 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
       oap->start = curwin->w_cursor;
     }
 
+    // Just in case lines were deleted that make the position invalid.
+    check_pos(curwin->w_buffer, &oap->end);
     oap->line_count = oap->end.lnum - oap->start.lnum + 1;
 
     /* Set "virtual_op" before resetting VIsual_active. */
@@ -7831,7 +7833,6 @@ static void get_op_vcol(
 
   // prevent from moving onto a trail byte
   if (has_mbyte) {
-    check_pos(curwin->w_buffer, &oap->end);
     mb_adjustpos(curwin->w_buffer, &oap->end);
   }
 

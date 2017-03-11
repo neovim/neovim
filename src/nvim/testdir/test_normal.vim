@@ -1998,3 +1998,17 @@ func! Test_normal46_ignore()
   " clean up
   bw!
 endfu
+
+func! Test_normal47_visual_buf_wipe()
+  " This was causing a crash or ml_get error.
+  enew!
+  call setline(1,'xxx')
+  normal $
+  new
+  call setline(1, range(1,2))
+  2
+  exe "norm \<C-V>$"
+  bw!
+  norm yp
+  set nomodified
+endfu
