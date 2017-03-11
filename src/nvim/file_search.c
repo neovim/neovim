@@ -1519,7 +1519,7 @@ theend:
   return file_name;
 }
 
-static void do_autocmd_dirchanged(char_u *new_dir, CdScope scope)
+void do_autocmd_dirchanged(char *new_dir, CdScope scope)
 {
   static bool recursive = false;
 
@@ -1587,10 +1587,6 @@ int vim_chdir(char_u *new_dir, CdScope scope)
   }
 
   int r = os_chdir((char *)dir_name);
-  if (r == 0) {
-    do_autocmd_dirchanged(dir_name, scope);
-  }
-
   xfree(dir_name);
   return r;
 }

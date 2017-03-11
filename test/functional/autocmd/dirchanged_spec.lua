@@ -20,7 +20,9 @@ describe('autocmd DirChanged', function()
 
   before_each(function()
     clear()
-    command('autocmd DirChanged * let [g:event, g:scope, g:cdcount] = [copy(v:event), expand("<amatch>"), 1 + get(g:, "cdcount", 0)]')
+    command('autocmd DirChanged * let [g:getcwd_rv, g:event, g:amatch, g:cdcount] '
+        ..'  = [getcwd(), copy(v:event), expand("<amatch>"), 1 + get(g:, "cdcount", 0)]'
+        ..[[ | let g:event['cwd'] = substitute(g:event['cwd'], '\\', '/', 'g') ]])
   end)
 
   it('sets v:event', function()
@@ -37,6 +39,17 @@ describe('autocmd DirChanged', function()
     eq(3, eval('g:cdcount'))
   end)
 
+  it('sets getcwd() during event #6260', function()
+    command('lcd '..dirs[1])
+    eq(dirs[1], eval('g:getcwd_rv'))
+
+    command('tcd '..dirs[2])
+    eq(dirs[2], eval('g:getcwd_rv'))
+
+    command('cd '..dirs[3])
+    eq(dirs[3], eval('g:getcwd_rv'))
+  end)
+
   it('disallows recursion', function()
     command('set shellslash')
     -- Set up a _nested_ handler.
@@ -50,13 +63,13 @@ describe('autocmd DirChanged', function()
 
   it('sets <amatch> to CWD "scope"', function()
     command('lcd '..dirs[1])
-    eq('window', eval('g:scope'))
+    eq('window', eval('g:amatch'))
 
     command('tcd '..dirs[2])
-    eq('tab', eval('g:scope'))
+    eq('tab', eval('g:amatch'))
 
     command('cd '..dirs[3])
-    eq('global', eval('g:scope'))
+    eq('global', eval('g:amatch'))
   end)
 
   it('does not trigger if :cd fails', function()

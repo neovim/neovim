@@ -6943,24 +6943,28 @@ void free_cd_dir(void)
 /// @param scope  Scope of the function call (global, tab or window).
 void post_chdir(CdScope scope)
 {
-  // The local directory of the current window is always overwritten.
+  // Always overwrite the window-local CWD.
   xfree(curwin->w_localdir);
   curwin->w_localdir = NULL;
 
-  // Overwrite the local directory of the current tab page for `cd` and `tcd`
+  // Overwrite the tab-local CWD for :cd, :tcd.
   if (scope >= kCdScopeTab) {
     xfree(curtab->tp_localdir);
     curtab->tp_localdir = NULL;
   }
 
   if (scope < kCdScopeGlobal) {
-    // If still in global directory, need to remember current directory as
-    // global directory.
+    // If still in global directory, set CWD as the global directory.
     if (globaldir == NULL && prev_dir != NULL) {
       globaldir = vim_strsave(prev_dir);
     }
   }
 
+  char curdir[MAXPATHL];
+  if (os_dirname((char_u *)curdir, MAXPATHL) != OK) {
+    EMSG2(_(e_intern2), "post_chdir()");
+    return;
+  }
   switch (scope) {
   case kCdScopeGlobal:
     // We are now in the global directory, no need to remember its name.
@@ -6968,23 +6972,17 @@ void post_chdir(CdScope scope)
     globaldir = NULL;
     break;
   case kCdScopeTab:
-    // Remember this local directory for the tab page.
-    if (os_dirname(NameBuff, MAXPATHL) == OK) {
-      curtab->tp_localdir = vim_strsave(NameBuff);
-    }
+    curtab->tp_localdir = (char_u *)xstrdup(curdir);
     break;
   case kCdScopeWindow:
-    // Remember this local directory for the window.
-    if (os_dirname(NameBuff, MAXPATHL) == OK) {
-      curwin->w_localdir = vim_strsave(NameBuff);
-    }
+    curwin->w_localdir = (char_u *)xstrdup(curdir);
     break;
   case kCdScopeInvalid:
-    // We should never get here
     assert(false);
   }
 
   shorten_fnames(TRUE);
+  do_autocmd_dirchanged(curdir, scope);
 }
 
 /// `:cd`, `:tcd`, `:lcd`, `:chdir`, `:tchdir` and `:lchdir`.
