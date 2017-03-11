@@ -1125,6 +1125,8 @@ func! Test_normal19_z_spell()
   exe "lang" oldlang
   call delete("./Xspellfile.add")
   call delete("./Xspellfile2.add")
+  call delete("./Xspellfile.add.spl")
+  call delete("./Xspellfile2.add.spl")
 
   " zux -> no-op
   2
