@@ -35,8 +35,20 @@ func! CountSpaces(type, ...)
   let @@ = reg_save
 endfunc
 
-func! IsWindows()
-  return has("win32") || has("win64") || has("win95")
+func! OpfuncDummy(type, ...)
+  " for testing operatorfunc
+  let g:opt=&linebreak
+
+  if a:0  " Invoked from Visual mode, use gv command.
+    silent exe "normal! gvy"
+  elseif a:type == 'line'
+    silent exe "normal! '[V']y"
+  else
+    silent exe "normal! `[v`]y"
+  endif
+  " Create a new dummy window
+  new
+  let g:bufnr=bufnr('%')
 endfunc
 
 fun! Test_normal00_optrans()
@@ -147,7 +159,7 @@ endfunc
 func! Test_normal04_filter()
   " basic filter test
   " only test on non windows platform
-  if IsWindows()
+  if has('win32')
     return
   endif
   call Setup_NewWindow()
@@ -210,7 +222,7 @@ endfunc
 func! Test_normal06_formatprg()
   " basic test for formatprg
   " only test on non windows platform
-  if IsWindows()
+  if has('win32')
     return
   else
     " uses sed to number non-empty lines
@@ -328,7 +340,34 @@ func! Test_normal09_operatorfunc()
   " clean up
   unmap <buffer> ,,
   set opfunc=
+  unlet! g:a
   bw!
+endfunc
+
+func! Test_normal09a_operatorfunc()
+  " Test operatorfunc
+  call Setup_NewWindow()
+  " Add some spaces for counting
+  50,60s/$/  /
+  unlet! g:opt
+  set linebreak
+  nmap <buffer><silent> ,, :set opfunc=OpfuncDummy<CR>g@
+  50
+  norm ,,j
+  exe "bd!" g:bufnr
+  call assert_true(&linebreak)
+  call assert_equal(g:opt, &linebreak)
+  set nolinebreak
+  norm ,,j
+  exe "bd!" g:bufnr
+  call assert_false(&linebreak)
+  call assert_equal(g:opt, &linebreak)
+
+  " clean up
+  unmap <buffer> ,,
+  set opfunc=
+  bw!
+  unlet! g:opt
 endfunc
 
 func! Test_normal10_expand()
