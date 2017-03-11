@@ -441,7 +441,7 @@ void close_buffer(win_T *win, buf_T *buf, int action, int abort_if_last)
 
   // When closing the current buffer stop Visual mode before freeing
   // anything.
-  if (is_curbuf) {
+  if (is_curbuf && VIsual_active) {
     end_visual_mode();
   }
 
@@ -1083,7 +1083,7 @@ do_buffer (
     }
 
     // When closing the current buffer stop Visual mode.
-    if (buf == curbuf) {
+    if (buf == curbuf && VIsual_active) {
       end_visual_mode();
     }
 
