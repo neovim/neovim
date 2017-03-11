@@ -2943,11 +2943,14 @@ void end_visual_mode(void)
   /* Save the current VIsual area for '< and '> marks, and "gv" */
   curbuf->b_visual.vi_mode = VIsual_mode;
   curbuf->b_visual.vi_start = VIsual;
-  curbuf->b_visual.vi_end = curwin->w_cursor;
-  curbuf->b_visual.vi_curswant = curwin->w_curswant;
+  if (curwin != NULL) {
+    curbuf->b_visual.vi_end = curwin->w_cursor;
+    curbuf->b_visual.vi_curswant = curwin->w_curswant;
+  }
   curbuf->b_visual_mode_eval = VIsual_mode;
-  if (!virtual_active())
+  if (!virtual_active() && curwin != NULL) {
     curwin->w_cursor.coladd = 0;
+  }
 
   may_clear_cmdline();
 

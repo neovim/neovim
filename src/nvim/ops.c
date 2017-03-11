@@ -3242,7 +3242,7 @@ end:
  */
 void adjust_cursor_eol(void)
 {
-  if (curwin->w_cursor.col > 0
+  if (curwin != NULL && curwin->w_cursor.col > 0
       && gchar_cursor() == NUL
       && (ve_flags & VE_ONEMORE) == 0
       && !(restart_edit || (State & INSERT))) {
