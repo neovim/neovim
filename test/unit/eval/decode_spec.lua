@@ -72,6 +72,7 @@ describe('json_decode_string()', function()
   end
 
   itp('does not overflow in error messages', function()
+    local saved_p_enc = decode.p_enc
     check_failure(']test', 1, 'E474: No container to close: ]')
     check_failure('[}test', 2, 'E474: Closing list with curly bracket: }')
     check_failure('{]test', 2,

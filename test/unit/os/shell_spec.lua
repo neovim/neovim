@@ -11,7 +11,6 @@ local ffi, eq = helpers.ffi, helpers.eq
 local intern = helpers.internalize
 local to_cstr = helpers.to_cstr
 local NULL = ffi.cast('void *', 0)
-local deferred_call = deferred_call
 
 describe('shell functions', function()
   before_each(function()

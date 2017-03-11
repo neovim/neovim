@@ -19,8 +19,13 @@ local api = cimport('./src/nvim/api/private/defs.h',
 
 local obj2lua
 
-obj2lua = function(obj)
-  local obj2lua_tab = {
+local obj2lua_tab = nil
+
+local function init_obj2lua_tab()
+  if obj2lua_tab then
+    return
+  end
+  obj2lua_tab = {
     [tonumber(api.kObjectTypeArray)] = function(obj)
       local ret = {[type_key]=list_type}
       for i = 1,tonumber(obj.data.array.size) do
@@ -59,6 +64,10 @@ obj2lua = function(obj)
       return ffi.string(obj.data.string.data, obj.data.string.size)
     end,
   }
+end
+
+obj2lua = function(obj)
+  init_obj2lua_tab()
   return ((obj2lua_tab[tonumber(obj['type'])] or function(obj_inner)
     assert(false, 'Converting ' .. tostring(tonumber(obj_inner['type'])) .. ' is not implementing yet')
   end)(obj))

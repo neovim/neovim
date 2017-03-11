@@ -11,7 +11,6 @@ local posix = nil
 local syscall = nil
 
 local check_cores = global_helpers.check_cores
-local which = global_helpers.which
 local neq = global_helpers.neq
 local map = global_helpers.map
 local eq = global_helpers.eq
@@ -30,11 +29,11 @@ for _, p in ipairs(Paths.include_paths) do
   Preprocess.add_to_include_path(p)
 end
 
-local pid = nil
+local child_pid = nil
 local function only_separate(func)
   return function(...)
-    if pid ~= 0 then
-      eq(0, 'This function must be run in a separate process only')
+    if child_pid ~= 0 then
+      error('This function must be run in a separate process only')
     end
     return func(...)
   end
@@ -44,7 +43,7 @@ local deferred_calls_mod = nil
 local function deferred_call(func, ret)
   return function(...)
     local deferred_calls = deferred_calls_mod or deferred_calls_init
-    if pid ~= 0 then
+    if child_pid ~= 0 then
       deferred_calls[#deferred_calls + 1] = {func=func, args={...}}
       return ret
     else
@@ -57,7 +56,7 @@ local separate_cleanups_mod = nil
 local function separate_cleanup(func)
   return function(...)
     local separate_cleanups = separate_cleanups_mod
-    if pid ~= 0 then
+    if child_pid ~= 0 then
       separate_cleanups[#separate_cleanups + 1] = {args={...}}
     else
       func(...)
@@ -68,10 +67,10 @@ end
 local libnvim = nil
 
 local lib = setmetatable({}, {
-  __index = only_separate(function(tbl, idx)
+  __index = only_separate(function(_, idx)
     return libnvim[idx]
   end),
-  __newindex = deferred_call(function(tbl, idx, val)
+  __newindex = deferred_call(function(_, idx, val)
     libnvim[idx] = val
   end),
 })
@@ -154,10 +153,8 @@ cimport = function(...)
             or path:sub(2, 2) == ':') then
       path = './' .. path
     end
-    local body
-    if preprocess_cache[path] then
-      body = preprocess_cache[path]
-    else
+    if not preprocess_cache[path] then
+      local body
       body, previous_defines = Preprocess.preprocess(previous_defines, path)
       -- format it (so that the lines are "unique" statements), also filter out
       -- Objective-C blocks
@@ -178,10 +175,10 @@ cimport = function(...)
 end
 
 local cimport_immediate = function(...)
-  local saved_pid = pid
-  pid = 0
+  local saved_pid = child_pid
+  child_pid = 0
   local err, emsg = pcall(cimport, ...)
-  pid = saved_pid
+  child_pid = saved_pid
   if not err then
     emsg = tostring(emsg)
     io.stderr:write(emsg .. '\n')
@@ -461,7 +458,7 @@ end
 
 local function gen_itp(it)
   deferred_calls_mod = {}
-  deferred_cleanups_mod = {}
+  separate_cleanups_mod = {}
   preprocess_cache_mod = map(function(v) return v end, preprocess_cache_init)
   previous_defines_mod = previous_defines_init
   local function just_fail(_)
@@ -479,8 +476,8 @@ local function gen_itp(it)
     end
     it(name, function()
       local rd, wr = sc.pipe()
-      pid = sc.fork()
-      if pid == 0 then
+      child_pid = sc.fork()
+      if child_pid == 0 then
         init()
         sc.close(rd)
         collectgarbage('stop')
@@ -500,8 +497,8 @@ local function gen_itp(it)
         end
       else
         sc.close(wr)
-        sc.wait(pid)
-        pid = nil
+        sc.wait(child_pid)
+        child_pid = nil
         local function check()
           local res = sc.read(rd, 2)
           eq(2, #res)
