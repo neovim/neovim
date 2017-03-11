@@ -2488,7 +2488,7 @@ int fix_input_buffer(char_u *buf, int len)
   for (i = len; --i >= 0; ++p) {
     if (p[0] == NUL
         || (p[0] == K_SPECIAL
-          && (i < 2 || p[1] != KS_EXTRA))) {
+            && (i < 2 || p[1] != KS_EXTRA))) {
       memmove(p + 3, p + 1, (size_t)i);
       p[2] = (char_u)K_THIRD(p[0]);
       p[1] = (char_u)K_SECOND(p[0]);

@@ -4751,14 +4751,14 @@ check_timestamps (
 
   if (!stuff_empty() || global_busy || !typebuf_typed()
       || autocmd_busy || curbuf_lock > 0 || allbuf_lock > 0
-      )
-    need_check_timestamps = TRUE;               /* check later */
-  else {
-    ++no_wait_return;
-    did_check_timestamps = TRUE;
-    already_warned = FALSE;
+      ) {
+    need_check_timestamps = true;               // check later
+  } else {
+    no_wait_return++;
+    did_check_timestamps = true;
+    already_warned = false;
     FOR_ALL_BUFFERS(buf) {
-      /* Only check buffers in a window. */
+      // Only check buffers in a window.
       if (buf->b_nwindows > 0) {
         bufref_T bufref;
         set_bufref(&bufref, buf);

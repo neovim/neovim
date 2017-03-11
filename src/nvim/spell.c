@@ -1795,15 +1795,14 @@ static void spell_load_cb(char_u *fname, void *cookie)
   }
 }
 
-// Add a word to the hashtable of common words.
-// If it's already there then the counter is increased.
-void
-count_common_word (
-    slang_T *lp,
-    char_u *word,
-    int len,                    // word length, -1 for upto NUL
-    int count                  // 1 to count once, 10 to init
-)
+/// Add a word to the hashtable of common words.
+/// If it's already there then the counter is increased.
+///
+/// @param[in]  lp
+/// @param[in]  word  added to common words hashtable
+/// @param[in]  len  length of word or -1 for NUL terminated
+/// @param[in]  count  1 to count once, 10 to init
+void count_common_word(slang_T *lp, char_u *word, int len, int count)
 {
   hash_T hash;
   hashitem_T  *hi;
@@ -2288,16 +2287,17 @@ static int find_region(char_u *rp, char_u *region)
   return i / 2;
 }
 
-// Return case type of word:
-// w word       0
-// Word         WF_ONECAP
-// W WORD       WF_ALLCAP
-// WoRd wOrd    WF_KEEPCAP
-int
-captype (
-    char_u *word,
-    char_u *end           // When NULL use up to NUL byte.
-)
+/// Return case type of word:
+/// w word       0
+/// Word         WF_ONECAP
+/// W WORD       WF_ALLCAP
+/// WoRd wOrd    WF_KEEPCAP
+///
+/// @param[in]  word
+/// @param[in]  end  End of word or NULL for NUL delimited string
+///
+/// @returns  Case type of word
+int captype(char_u *word, char_u *end)
 {
   char_u      *p;
   int c;
@@ -3396,15 +3396,14 @@ static void spell_find_cleanup(suginfo_T *su)
   hash_clear_all(&su->su_banned, 0);
 }
 
-// Make a copy of "word", with the first letter upper or lower cased, to
-// "wcopy[MAXWLEN]".  "word" must not be empty.
-// The result is NUL terminated.
-void
-onecap_copy (
-    char_u *word,
-    char_u *wcopy,
-    bool upper                  // true: first letter made upper case
-)
+/// Make a copy of "word", with the first letter upper or lower cased, to
+/// "wcopy[MAXWLEN]".  "word" must not be empty.
+/// The result is NUL terminated.
+///
+/// @param[in]  word  source string to copy
+/// @param[in,out]  wcopy  copied string, with case of first letter changed
+/// @param[in]  upper  True to upper case, otherwise lower case
+void onecap_copy(char_u *word, char_u *wcopy, bool upper)
 {
   char_u      *p;
   int c;
@@ -4982,8 +4981,9 @@ static void find_keepcap_word(slang_T *slang, char_u *fword, char_u *kword)
       if (has_mbyte) {
         flen = MB_CPTR2LEN(fword + fwordidx[depth]);
         ulen = MB_CPTR2LEN(uword + uwordidx[depth]);
-      } else
+      } else {
         ulen = flen = 1;
+      }
       if (round[depth] == 1) {
         p = fword + fwordidx[depth];
         l = flen;
@@ -5885,23 +5885,22 @@ char_u *eval_soundfold(char_u *word)
   return vim_strsave(word);
 }
 
-// Turn "inword" into its sound-a-like equivalent in "res[MAXWLEN]".
-//
-// There are many ways to turn a word into a sound-a-like representation.  The
-// oldest is Soundex (1918!).   A nice overview can be found in "Approximate
-// swedish name matching - survey and test of different algorithms" by Klas
-// Erikson.
-//
-// We support two methods:
-// 1. SOFOFROM/SOFOTO do a simple character mapping.
-// 2. SAL items define a more advanced sound-folding (and much slower).
-void
-spell_soundfold (
-    slang_T *slang,
-    char_u *inword,
-    bool folded,                 // "inword" is already case-folded
-    char_u *res
-)
+/// Turn "inword" into its sound-a-like equivalent in "res[MAXWLEN]".
+///
+/// There are many ways to turn a word into a sound-a-like representation.  The
+/// oldest is Soundex (1918!).   A nice overview can be found in "Approximate
+/// swedish name matching - survey and test of different algorithms" by Klas
+/// Erikson.
+///
+/// We support two methods:
+/// 1. SOFOFROM/SOFOTO do a simple character mapping.
+/// 2. SAL items define a more advanced sound-folding (and much slower).
+///
+/// @param[in]  slang
+/// @param[in]  inword  word to soundfold
+/// @param[in]  folded  whether inword is already case-folded
+/// @param[in,out]  res  destination for soundfolded word
+void spell_soundfold(slang_T *slang, char_u *inword, bool folded, char_u *res)
 {
   char_u fword[MAXWLEN];
   char_u      *word;

@@ -5853,12 +5853,12 @@ static void ex_close(exarg_T *eap)
 {
   win_T *win = NULL;
   int winnr = 0;
-  if (cmdwin_type != 0)
+  if (cmdwin_type != 0) {
     cmdwin_result = Ctrl_C;
-  else if (!text_locked() && !curbuf_locked()) {
-    if (eap->addr_count == 0)
+  } else if (!text_locked() && !curbuf_locked()) {
+    if (eap->addr_count == 0) {
       ex_win_close(eap->forceit, curwin, NULL);
-    else {
+    } else {
       FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
         winnr++;
         if (winnr == eap->line2) {

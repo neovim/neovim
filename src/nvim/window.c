@@ -168,10 +168,11 @@ newwindow:
         break;
       }
     }
-    if (wp == NULL)
+    if (wp == NULL) {
       EMSG(_("E441: There is no preview window"));
-    else
+    } else {
       win_goto(wp);
+    }
     break;
 
   /* close all but current window */
@@ -3366,10 +3367,10 @@ void tabpage_move(int nr)
 
   tp_dst = tp;
 
-  /* Remove the current tab page from the list of tab pages. */
-  if (curtab == first_tabpage)
+  // Remove the current tab page from the list of tab pages.
+  if (curtab == first_tabpage) {
     first_tabpage = curtab->tp_next;
-  else {
+  } else {
     tp = NULL;
     FOR_ALL_TABS(tp2) {
       if (tp2->tp_next == curtab) {
@@ -3377,8 +3378,9 @@ void tabpage_move(int nr)
         break;
       }
     }
-    if (tp == NULL)     /* "cannot happen" */
+    if (tp == NULL) {   // "cannot happen"
       return;
+    }
     tp->tp_next = curtab->tp_next;
   }
 

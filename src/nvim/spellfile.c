@@ -384,14 +384,12 @@ struct sblock_S {
 // A node in the tree.
 typedef struct wordnode_S wordnode_T;
 struct wordnode_S {
-  union     // shared to save space
-  {
+  union {   // shared to save space
     char_u hashkey[6];          // the hash key, only used while compressing
     int index;                  // index in written nodes (valid after first
                                 // round)
   } wn_u1;
-  union     // shared to save space
-  {
+  union {   // shared to save space
     wordnode_T *next;           // next node with same hash key
     wordnode_T *wnode;          // parent node that will write this node
   } wn_u2;
