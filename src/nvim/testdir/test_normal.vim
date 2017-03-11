@@ -36,47 +36,14 @@ function! CountSpaces(type, ...)
 endfunction
 
 fun! Test_normal00_optrans()
-  " Attention: This needs to be the very first test,
-  " it will fail, if it runs later, don't know why!
-  " Test for S s and alike comamnds, that are internally handled aliased
   new
   call append(0, ['1 This is a simple test: abcd', '2 This is the second line', '3 this is the third line'])
   1
   exe "norm! Sfoobar\<esc>"
   call assert_equal(['foobar', '2 This is the second line', '3 this is the third line', ''], getline(1,'$'))
   2
-  " Test does not work
-  " TODO: Why does it not work?
-  " Adds an additional linebreak if used in visual mode...
-  " When run in the test, this returns:
-  " ,--------
-  " |foobar
-  " |2 This is
-  " |the second
-  " |one
-  " |3 this is the third line
-  " `-----------
-  " instead of
-  " ,--------
-  " |foobar
-  " |2 This is the second one
-  " |3 this is the third line
-  " `-----------
   exe "norm! $vbsone"
   call assert_equal(['foobar', '2 This is the second one', '3 this is the third line', ''], getline(1,'$'))
-  " When run in the test, this returns:
-  " ,--------
-  " |foobar
-  " |Second line
-  " |here
-  " |3 this is the third line
-  " `-----------
-  " instead of
-  " ,--------
-  " |foobar
-  " |Second line here
-  " |3 this is the third line
-  " `-----------
   norm! VS Second line here
   call assert_equal(['foobar', ' Second line here', '3 this is the third line', ''], getline(1, '$'))
   %d
@@ -192,6 +159,30 @@ func! Test_normal05_formatexpr()
   bw!
 endfu
 
+func Test_normal05_formatexpr_newbuf()
+  " Edit another buffer in the 'formatexpr' function
+  new
+  func! Format()
+    edit another
+  endfunc
+  set formatexpr=Format()
+  norm gqG
+  bw!
+  set formatexpr=
+endfunc
+
+func Test_normal05_formatexpr_setopt()
+  " Change the 'formatexpr' value in the function
+  new
+  func! Format()
+    set formatexpr=
+  endfunc
+  set formatexpr=Format()
+  norm gqG
+  bw!
+  set formatexpr=
+endfunc
+
 func! Test_normal06_formatprg()
   " basic test for formatprg
   " only test on non windows platform
@@ -224,7 +215,7 @@ func! Test_normal07_internalfmt()
   norm! gggqG
   call assert_equal(['1    2    3', '4    5    6', '7    8    9', '10    11    '], getline(1, '$'))
   " clean up
-  set formatprg=
+  set formatprg= tw=0
   bw!
 endfu
 
@@ -1695,7 +1686,7 @@ fun! Test_normal35_g_cmd4()
   " Test for g<
   " Cannot capture its output,
   " probably a bug, therefore, test disabled:
-  return
+  throw "Skipped: output of g< can't be tested currently"
   echo "a\nb\nc\nd"
   let b=execute(':norm! g<')
   call assert_true(!empty(b), 'failed `execute(g<)`')
@@ -1853,7 +1844,7 @@ fun! Test_normal41_insert_reg()
 
   " clean up
   set sts=0 sw=8 ts=8
-  "bw!
+  bw!
 endfu
 
 func! Test_normal42_halfpage()
