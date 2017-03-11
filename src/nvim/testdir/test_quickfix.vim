@@ -1560,3 +1560,20 @@ function Test_Autocmd()
       \ 'postcaddbuffer']
   call assert_equal(l, g:acmds)
 endfunction
+
+function! Test_Autocmd_Exception()
+  set efm=%m
+  lgetexpr '?'
+
+  try
+    call DoesNotExit()
+  catch
+    lgetexpr '1'
+  finally
+    lgetexpr '1'
+  endtry
+
+  call assert_equal('1', getloclist(0)[0].text)
+
+  set efm&vim
+endfunction

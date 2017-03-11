@@ -401,8 +401,7 @@ a range of folded lines.  "b" and "B" move to the start of the first word or
 WORD before the fold.
 
 Special case: "cw" and "cW" are treated like "ce" and "cE" if the cursor is
-on a non-blank.  This is because "cw" is interpreted as change-word, and a
-word does not include the following white space.
+on a non-blank.  This is Vi-compatible, see |cpo-_| to change the behavior.
 
 Another special case: When using the "w" motion in combination with an
 operator and the last word moved over is at the end of a line, the end of

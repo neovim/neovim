@@ -2,7 +2,6 @@ let s:hosts = {}
 let s:plugin_patterns = {}
 let s:plugins_for_host = {}
 
-
 " Register a host by associating it with a factory(funcref)
 function! remote#host#Register(name, pattern, factory) abort
   let s:hosts[a:name] = {'factory': a:factory, 'channel': 0, 'initialized': 0}
@@ -12,7 +11,6 @@ function! remote#host#Register(name, pattern, factory) abort
     let s:hosts[a:name].channel = a:factory
   endif
 endfunction
-
 
 " Register a clone to an existing host. The new host will use the same factory
 " as `source`, but it will run as a different process. This can be used by
@@ -31,12 +29,8 @@ function! remote#host#RegisterClone(name, orig_name) abort
         \ }
 endfunction
 
-
 " Get a host channel, bootstrapping it if necessary
 function! remote#host#Require(name) abort
-  if empty(s:plugins_for_host)
-    call remote#host#LoadRemotePlugins()
-  endif
   if !has_key(s:hosts, a:name)
     throw 'No host named "'.a:name.'" is registered'
   endif
@@ -52,14 +46,12 @@ function! remote#host#Require(name) abort
   return host.channel
 endfunction
 
-
 function! remote#host#IsRunning(name) abort
   if !has_key(s:hosts, a:name)
     throw 'No host named "'.a:name.'" is registered'
   endif
   return s:hosts[a:name].channel != 0
 endfunction
-
 
 " Example of registering a Python plugin with two commands (one async), one
 " autocmd (async) and one function (sync):
@@ -117,73 +109,6 @@ function! remote#host#RegisterPlugin(host, path, specs) abort
   call add(plugins, {'path': a:path, 'specs': a:specs})
 endfunction
 
-
-" Get the path to the rplugin manifest file.
-function! s:GetManifestPath() abort
-  let manifest_base = ''
-
-  if exists('$NVIM_RPLUGIN_MANIFEST')
-    return fnamemodify($NVIM_RPLUGIN_MANIFEST, ':p')
-  endif
-
-  let dest = has('win32') ? '$LOCALAPPDATA' : '$XDG_DATA_HOME'
-  if !exists(dest)
-    let dest = has('win32') ? '~/AppData/Local' : '~/.local/share'
-  endif
-
-  let dest = fnamemodify(expand(dest), ':p')
-  if !empty(dest) && !filereadable(dest)
-    let dest .= ('/' ==# dest[-1:] ? '' : '/') . 'nvim'
-    call mkdir(dest, 'p', 0700)
-    let manifest_base = dest
-  endif
-
-  return manifest_base.'/rplugin.vim'
-endfunction
-
-
-" Old manifest file based on known script locations.
-function! s:GetOldManifestPath() abort
-  let prefix = exists('$MYVIMRC')
-        \ ? $MYVIMRC
-        \ : matchstr(get(split(execute('scriptnames'), '\n'), 0, ''), '\f\+$')
-  return fnamemodify(expand(prefix, 1), ':h')
-        \.'/.'.fnamemodify(prefix, ':t').'-rplugin~'
-endfunction
-
-
-function! s:GetManifest() abort
-  let manifest = s:GetManifestPath()
-
-  if !filereadable(manifest)
-    " Check if an old manifest file exists and move it to the new location.
-    let old_manifest = s:GetOldManifestPath()
-    if filereadable(old_manifest)
-      call rename(old_manifest, manifest)
-    endif
-  endif
-
-  return manifest
-endfunction
-
-
-function! remote#host#LoadRemotePlugins() abort
-  let manifest = s:GetManifest()
-  if filereadable(manifest)
-    execute 'source' fnameescape(manifest)
-  endif
-endfunction
-
-
-function! remote#host#LoadRemotePluginsEvent(event, pattern) abort
-  autocmd! nvim-rplugin
-  call remote#host#LoadRemotePlugins()
-  if exists('#'.a:event.'#'.a:pattern)  " Avoid 'No matching autocommands'.
-    execute 'silent doautocmd <nomodeline>' a:event a:pattern
-  endif
-endfunction
-
-
 function! s:RegistrationCommands(host) abort
   " Register a temporary host clone for discovering specs
   let host_id = a:host.'-registration-clone'
@@ -228,7 +153,6 @@ function! s:RegistrationCommands(host) abort
   return lines
 endfunction
 
-
 function! remote#host#UpdateRemotePlugins() abort
   let commands = []
   let hosts = keys(s:hosts)
@@ -245,11 +169,10 @@ function! remote#host#UpdateRemotePlugins() abort
       endtry
     endif
   endfor
-  call writefile(commands, s:GetManifest())
+  call writefile(commands, g:loaded_remote_plugins)
   echomsg printf('remote/host: generated rplugin manifest: %s',
-        \ s:GetManifest())
+        \ g:loaded_remote_plugins)
 endfunction
-
 
 function! remote#host#PluginsForHost(host) abort
   if !has_key(s:plugins_for_host, a:host)
@@ -258,14 +181,12 @@ function! remote#host#PluginsForHost(host) abort
   return s:plugins_for_host[a:host]
 endfunction
 
-
 function! remote#host#LoadErrorForHost(host, log) abort
   return 'Failed to load '. a:host . ' host. '.
         \ 'You can try to see what happened by starting nvim with '.
         \ a:log . ' set and opening the generated log file.'.
         \ ' Also, the host stderr is available in messages.'
 endfunction
-
 
 " Registration of standard hosts
 

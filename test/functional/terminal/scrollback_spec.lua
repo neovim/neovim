@@ -368,10 +368,11 @@ describe("'scrollback' option", function()
     clear()
   end)
 
-  local function expect_lines(expected)
+  local function expect_lines(expected, epsilon)
+    local ep = epsilon and epsilon or 0
     local actual = eval("line('$')")
-    if expected ~= actual then
-    error('expected: '..expected..', actual: '..tostring(actual))
+    if expected > actual + ep and expected < actual - ep then
+      error('expected (+/- '..ep..'): '..expected..', actual: '..tostring(actual))
     end
   end
 
@@ -399,12 +400,12 @@ describe("'scrollback' option", function()
 
     screen:expect('line30                        ', nil, nil, nil, true)
 
-    retry(nil, nil, function() expect_lines(33) end)
+    retry(nil, nil, function() expect_lines(33, 2) end)
     curbufmeths.set_option('scrollback', 10)
     wait()
     retry(nil, nil, function() expect_lines(16) end)
     curbufmeths.set_option('scrollback', 10000)
-    eq(16, eval("line('$')"))
+    retry(nil, nil, function() expect_lines(16) end)
     -- Terminal job data is received asynchronously, may happen before the
     -- 'scrollback' option is synchronized with the internal sb_buffer.
     command('sleep 100m')
