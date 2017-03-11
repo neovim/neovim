@@ -515,14 +515,15 @@ local function gen_itp(it)
           local err = sc.read(rd, len + 1)
           assert.just_fail(err)
         end
-        if allow_failure then
-          local err, emsg = pcall(check)
-          if not err then
+        local err, emsg = pcall(check)
+        sc.close(rd)
+        if not err then
+          if allow_failure then
             io.stderr:write('Errorred out:\n' .. tostring(emsg) .. '\n')
             os.execute([[sh -c "source .ci/common/test.sh ; check_core_dumps --delete \"\$(which luajit)\""]])
+          else
+            error(emsg)
           end
-        else
-          check()
         end
       end
     end)
