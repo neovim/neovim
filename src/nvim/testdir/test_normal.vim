@@ -1137,7 +1137,8 @@ func! Test_normal19_z_spell()
 endfu
 
 func! Test_normal20_exmode()
-  if !(has("win32") || has("win64"))
+  if !has("unix")
+    " Reading from redirected file doesn't work on MS-Windows
     return
   endif
   call writefile(['1a', 'foo', 'bar', '.', 'w! Xfile2', 'q!'], 'Xscript')
@@ -1168,8 +1169,8 @@ endfu
 
 func! Test_normal22_zet()
   " Test for ZZ
-  let shell = &shell
-  let &shell = 'sh'
+  " let shell = &shell
+  " let &shell = 'sh'
   call writefile(['1', '2'], 'Xfile')
   let args = ' -u NONE -N -U NONE -i NONE --noplugins -X --not-a-term'
   call system(v:progpath . args . ' -c "%d" -c ":norm! ZZ" Xfile')
@@ -1185,7 +1186,7 @@ func! Test_normal22_zet()
   for file in ['Xfile']
     call delete(file)
   endfor
-  let &shell = shell
+  " let &shell = shell
 endfu
 
 func! Test_normal23_K()
@@ -1206,7 +1207,8 @@ func! Test_normal23_K()
   call assert_match('\*version8\.0\*', getline('.'))
   helpclose
 
-  if !(has("win32") || has("win64"))
+  " Only expect "man" to work on Unix
+  if !has("unix")
     let &keywordprg = k
     bw!
     return
@@ -1642,6 +1644,7 @@ fun! Test_normal33_g_cmd2()
   call assert_equal('l', getreg(0))
 
   " Test for g Ctrl-G
+  set ff=unix
   let a=execute(":norm! g\<c-g>")
   call assert_match('Col 15 of 43; Line 2 of 2; Word 2 of 2; Byte 16 of 45', a)
 
@@ -1692,6 +1695,7 @@ endfu
 fun! Test_normal36_g_cmd5()
   new
   call append(0, 'abcdefghijklmnopqrstuvwxyz')
+  set ff=unix
   " Test for gp gP
   call append(1, range(1,10))
   1
