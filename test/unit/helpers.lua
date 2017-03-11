@@ -520,7 +520,7 @@ local function gen_itp(it)
         if not err then
           if allow_failure then
             io.stderr:write('Errorred out:\n' .. tostring(emsg) .. '\n')
-            os.execute([[sh -c "source .ci/common/test.sh ; check_core_dumps --delete \"\$(which luajit)\""]])
+            os.execute([[sh -c "source .ci/common/test.sh ; check_core_dumps --delete \"]] .. Paths.test_luajit_prg .. [[\""]])
           else
             error(emsg)
           end
@@ -560,7 +560,7 @@ local module = {
 return function(after_each)
   if after_each then
     after_each(function()
-      check_cores(which('luajit'))
+      check_cores(Paths.test_luajit_prg)
     end)
   end
   return module

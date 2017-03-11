@@ -216,8 +216,11 @@ local function which(exe)
   local pipe = io.popen('which ' .. exe, 'r')
   local ret = pipe:read('*a')
   pipe:close()
-  assert(ret:sub(-1) == '\n')
-  return ret:sub(1, -2)
+  if ret == '' then
+    return nil
+  else
+    return ret:sub(1, -2)
+  end
 end
 
 return {
