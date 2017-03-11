@@ -2998,8 +2998,7 @@ void free_tabpage(tabpage_T *tp)
   hash_init(&tp->tp_vars->dv_hashtab);
   unref_var_dict(tp->tp_vars);
 
-
-  xfree(tp->localdir);  // Free tab-local working directory
+  xfree(tp->tp_localdir);
   xfree(tp);
 }
 
@@ -3025,7 +3024,7 @@ int win_new_tabpage(int after, char_u *filename)
     return FAIL;
   }
 
-  newtp->localdir = tp->localdir ? vim_strsave(tp->localdir) : NULL;
+  newtp->tp_localdir = tp->tp_localdir ? vim_strsave(tp->tp_localdir) : NULL;
 
   curtab = newtp;
 
@@ -3617,9 +3616,9 @@ static void win_enter_ext(win_T *wp, bool undo_sync, int curwin_invalid,
     curwin->w_cursor.coladd = 0;
   changed_line_abv_curs();      /* assume cursor position needs updating */
 
-  // The new directory is either the local directory of the window, of the tab
-  // or NULL.
-  char_u *new_dir = curwin->w_localdir ? curwin->w_localdir : curtab->localdir;
+  // The new directory is either the local directory of the window, tab or NULL.
+  char_u *new_dir = curwin->w_localdir
+                    ? curwin->w_localdir : curtab->tp_localdir;
 
   if (new_dir) {
     // Window/tab has a local directory: Save current directory as global

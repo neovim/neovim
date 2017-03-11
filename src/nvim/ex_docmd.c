@@ -6949,8 +6949,8 @@ void post_chdir(CdScope scope)
 
   // Overwrite the local directory of the current tab page for `cd` and `tcd`
   if (scope >= kCdScopeTab) {
-    xfree(curtab->localdir);
-    curtab->localdir = NULL;
+    xfree(curtab->tp_localdir);
+    curtab->tp_localdir = NULL;
   }
 
   if (scope < kCdScopeGlobal) {
@@ -6970,7 +6970,7 @@ void post_chdir(CdScope scope)
   case kCdScopeTab:
     // Remember this local directory for the tab page.
     if (os_dirname(NameBuff, MAXPATHL) == OK) {
-      curtab->localdir = vim_strsave(NameBuff);
+      curtab->tp_localdir = vim_strsave(NameBuff);
     }
     break;
   case kCdScopeWindow:
