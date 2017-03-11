@@ -7322,6 +7322,7 @@ static void ex_at(exarg_T *eap)
   int prev_len = typebuf.tb_len;
 
   curwin->w_cursor.lnum = eap->line2;
+  check_cursor_col();
 
   // Get the register name. No name means use the previous one.
   int c = *eap->arg;
