@@ -1,4 +1,4 @@
-if !exists('g:no_plugin_maps') && !exists('g:no_man_maps')
+if !exists('g:no_plugin_maps')
   function! s:show_toc() abort
     if !exists('b:qf_toc')
       let b:qf_toc = []
