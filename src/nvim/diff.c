@@ -129,7 +129,7 @@ void diff_buf_add(buf_T *buf)
     }
   }
 
-  EMSGN(_("E96: Can not diff more than %" PRId64 " buffers"), DB_COUNT);
+  EMSGN(_("E96: Cannot diff more than %" PRId64 " buffers"), DB_COUNT);
 }
 
 /// Find buffer "buf" in the list of diff buffers for the current tab page.

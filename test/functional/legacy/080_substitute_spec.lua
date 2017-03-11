@@ -1,5 +1,5 @@
--- Test for *sub-replace-special* and *sub-replace-expression* on substitue().
--- Test for submatch() on substitue().
+-- Test for *sub-replace-special* and *sub-replace-expression* on substitute().
+-- Test for submatch() on substitute().
 -- Test for *:s%* on :substitute.
 
 local helpers = require('test.functional.helpers')(after_each)
