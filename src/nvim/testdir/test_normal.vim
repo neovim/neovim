@@ -13,9 +13,9 @@ func! MyFormatExpr()
       call setline(ln, substitute(line, '\s\+$', '', '') . '->$')
     endif
   endfor
-endfu
+endfunc
 
-function! CountSpaces(type, ...)
+func! CountSpaces(type, ...)
   " for testing operatorfunc
   " will count the number of spaces
   " and return the result in g:a
@@ -33,7 +33,11 @@ function! CountSpaces(type, ...)
   let g:a=strlen(substitute(@@, '[^ ]', '', 'g'))
   let &selection = sel_save
   let @@ = reg_save
-endfunction
+endfunc
+
+func! IsWindows()
+  return has("win32") || has("win64") || has("win95")
+endfunc
 
 fun! Test_normal00_optrans()
   new
@@ -60,27 +64,37 @@ fun! Test_normal00_optrans()
   " clean up
   set cpo-=#
   bw!
-endfu
+endfunc
 
 func! Test_normal01_keymodel()
   call Setup_NewWindow()
   " Test 1: depending on 'keymodel' <s-down> does something different
-  :50
+  50
   call feedkeys("V\<S-Up>y", 'tx')
   call assert_equal(['47', '48', '49', '50'], getline("'<", "'>"))
-  :set keymodel=startsel
-  :50
+  set keymodel=startsel
+  50
   call feedkeys("V\<S-Up>y", 'tx')
   call assert_equal(['49', '50'], getline("'<", "'>"))
   " Start visual mode when keymodel = startsel
-  :50
+  50
   call feedkeys("\<S-Up>y", 'tx')
   call assert_equal(['49', '5'], getreg(0, 0, 1))
   " Do not start visual mode when keymodel=
-  :set keymodel=
-  :50
+  set keymodel=
+  50
   call feedkeys("\<S-Up>y$", 'tx')
   call assert_equal(['42'], getreg(0, 0, 1))
+  " Stop visual mode when keymodel=stopsel
+  set keymodel=stopsel
+  50
+  call feedkeys("Vkk\<Up>yy", 'tx')
+  call assert_equal(['47'], getreg(0, 0, 1))
+
+  set keymodel=
+  50
+  call feedkeys("Vkk\<Up>yy", 'tx')
+  call assert_equal(['47', '48', '49', '50'], getreg(0, 0, 1))
 
   " clean up
   bw!
@@ -98,7 +112,17 @@ func! Test_normal02_selectmode()
   call assert_equal('y60', getline('.'))
   " clean up
   bw!
-endfu
+endfunc
+
+func! Test_normal02_selectmode2()
+  " some basic select mode tests
+  call Setup_NewWindow()
+  50
+  call feedkeys(":set im\n\<c-o>gHc\<c-o>:set noim\n", 'tx')
+  call assert_equal('c51', getline('.'))
+  " clean up
+  bw!
+endfunc
 
 func! Test_normal03_join()
   " basic join test
@@ -118,12 +142,12 @@ func! Test_normal03_join()
   call assert_equal('100', getline('.'))
   " clean up
   bw!
-endfu
+endfunc
 
 func! Test_normal04_filter()
   " basic filter test
   " only test on non windows platform
-  if has("win32") || has("win64") || has("win95")
+  if IsWindows()
     return
   endif
   call Setup_NewWindow()
@@ -144,7 +168,7 @@ func! Test_normal04_filter()
   call assert_equal('one', getline('.'))
   set cpo-=!
   bw!
-endfu
+endfunc
 
 func! Test_normal05_formatexpr()
   " basic formatexpr test
@@ -157,7 +181,7 @@ func! Test_normal05_formatexpr()
   call assert_equal(['here: 1->$', '2', 'here: 3->$', '4', 'not here:   '], getline(1,'$'))
   set formatexpr=
   bw!
-endfu
+endfunc
 
 func Test_normal05_formatexpr_newbuf()
   " Edit another buffer in the 'formatexpr' function
@@ -186,7 +210,7 @@ endfunc
 func! Test_normal06_formatprg()
   " basic test for formatprg
   " only test on non windows platform
-  if has("win32") || has("win64") || has("win95")
+  if IsWindows()
     return
   else
     " uses sed to number non-empty lines
@@ -203,7 +227,7 @@ func! Test_normal06_formatprg()
   set formatprg=
   call delete('Xsed_format.sh')
   bw!
-endfu
+endfunc
 
 func! Test_normal07_internalfmt()
   " basic test for internal formmatter to textwidth of 12
@@ -217,7 +241,7 @@ func! Test_normal07_internalfmt()
   " clean up
   set formatprg= tw=0
   bw!
-endfu
+endfunc
 
 func! Test_normal08_fold()
   " basic tests for foldopen/folddelete
@@ -276,7 +300,7 @@ func! Test_normal08_fold()
   " clean up
   setl nofoldenable fdm=marker
   bw!
-endfu
+endfunc
 
 func! Test_normal09_operatorfunc()
   " Test operatorfunc
@@ -305,7 +329,7 @@ func! Test_normal09_operatorfunc()
   unmap <buffer> ,,
   set opfunc=
   bw!
-endfu
+endfunc
 
 func! Test_normal10_expand()
   " Test for expand()
@@ -319,7 +343,7 @@ func! Test_normal10_expand()
   call assert_equal('ifooar,,cbar', b)
   " clean up
   bw!
-endfu
+endfunc
 
 func! Test_normal11_showcmd()
   " test for 'showcmd'
@@ -334,7 +358,7 @@ func! Test_normal11_showcmd()
   exe "norm! 0d3\<del>2l"
   call assert_equal('obar2foobar3', getline('.'))
   bw!
-endfu
+endfunc
 
 func! Test_normal12_nv_error()
   " Test for nv_error
@@ -344,7 +368,7 @@ func! Test_normal12_nv_error()
   exe "norm! <c-k>"
   call assert_equal(map(range(1,5), 'string(v:val)'), getline(1,'$'))
   bw!
-endfu
+endfunc
 
 func! Test_normal13_help()
   " Test for F1
@@ -353,7 +377,7 @@ func! Test_normal13_help()
   call assert_match('help\.txt', bufname('%'))
   call assert_equal(2, winnr('$'))
   bw!
-endfu
+endfunc
 
 func! Test_normal14_page()
   " basic test for Ctrl-F and Ctrl-B
@@ -387,7 +411,7 @@ func! Test_normal14_page()
   " cleanup
   set startofline
   bw!
-endfu
+endfunc
 
 func! Test_normal14_page_eol()
   10new
@@ -485,7 +509,7 @@ func! Test_normal15_z_scroll_vert()
 
   " cleanup
   bw!
-endfu
+endfunc
 
 func! Test_normal16_z_scroll_hor()
   " basic test for z commands that scroll the window
@@ -551,7 +575,7 @@ func! Test_normal16_z_scroll_hor()
   " cleanup
   set wrap listchars=eol:$
   bw!
-endfu
+endfunc
 
 func! Test_normal17_z_scroll_hor2()
   " basic test for z commands that scroll the window
@@ -618,7 +642,7 @@ func! Test_normal17_z_scroll_hor2()
   " cleanup
   set wrap listchars=eol:$ sidescrolloff=0
   bw!
-endfu
+endfunc
 
 func! Test_normal18_z_fold()
   " basic tests for foldopen/folddelete
@@ -989,7 +1013,7 @@ func! Test_normal18_z_fold()
   " clean up
   setl nofoldenable fdm=marker foldlevel=0
   bw!
-endfu
+endfunc
 
 func! Test_normal19_z_spell()
   if !has("spell") || !has('syntax')
@@ -1136,7 +1160,7 @@ func! Test_normal19_z_spell()
 
   set spellfile=
   bw!
-endfu
+endfunc
 
 func! Test_normal20_exmode()
   if !has("unix")
@@ -1154,10 +1178,14 @@ func! Test_normal20_exmode()
     call delete(file)
   endfor
   bw!
-endfu
+endfunc
 
 func! Test_normal21_nv_hat()
   set hidden
+  new
+  " to many buffers opened already, will not work
+  "call assert_fails(":b#", 'E23')
+  "call assert_equal('', @#)
   e Xfoobar
   e Xfile2
   call feedkeys("\<c-^>", 't')
@@ -1167,7 +1195,7 @@ func! Test_normal21_nv_hat()
   " clean up
   set nohidden
   bw!
-endfu
+endfunc
 
 func! Test_normal22_zet()
   " Test for ZZ
@@ -1189,7 +1217,7 @@ func! Test_normal22_zet()
     call delete(file)
   endfor
   " let &shell = shell
-endfu
+endfunc
 
 func! Test_normal23_K()
   " Test for K command
@@ -1224,7 +1252,7 @@ func! Test_normal23_K()
   " clean up
   let &keywordprg = k
   bw!
-endfu
+endfunc
 
 func! Test_normal24_rot13()
   " This test uses multi byte characters
@@ -1242,7 +1270,7 @@ func! Test_normal24_rot13()
 
   " clean up
   bw!
-endfu
+endfunc
 
 func! Test_normal25_tag()
   " Testing for CTRL-] g CTRL-] g]
@@ -1309,7 +1337,7 @@ func! Test_normal25_tag()
 
   " clean up
   helpclose
-endfu
+endfunc
 
 func! Test_normal26_put()
   " Test for ]p ]P [p and [P
@@ -1328,7 +1356,7 @@ func! Test_normal26_put()
 
   " clean up
   bw!
-endfu
+endfunc
 
 func! Test_normal27_bracket()
   " Test for [' [` ]' ]`
@@ -1379,7 +1407,7 @@ func! Test_normal27_bracket()
 
   " clean up
   bw!
-endfu
+endfunc
 
 func! Test_normal28_parenthesis()
   " basic testing for ( and )
@@ -1402,7 +1430,7 @@ func! Test_normal28_parenthesis()
 
   " clean up
   bw!
-endfu
+endfunc
 
 fun! Test_normal29_brace()
   " basic test for { and } movements
@@ -1477,7 +1505,7 @@ fun! Test_normal29_brace()
   " clean up
   set cpo-={
   bw!
-endfu
+endfunc
 
 fun! Test_normal30_changecase()
   " This test uses multi byte characters
@@ -1505,7 +1533,7 @@ fun! Test_normal30_changecase()
 
   " clean up
   bw!
-endfu
+endfunc
 
 fun! Test_normal31_r_cmd()
   " Test for r command
@@ -1530,7 +1558,7 @@ fun! Test_normal31_r_cmd()
   " clean up
   set noautoindent
   bw!
-endfu
+endfunc
 
 func! Test_normal32_g_cmd1()
   " Test for g*, g#
@@ -1546,7 +1574,7 @@ func! Test_normal32_g_cmd1()
 
   " clean up
   bw!
-endfu
+endfunc
 
 fun! Test_normal33_g_cmd2()
   if !has("jumplist")
@@ -1666,7 +1694,7 @@ fun! Test_normal33_g_cmd2()
 
   " clean up
   bw!
-endfu
+endfunc
 
 fun! Test_normal34_g_cmd3()
   if !has("multi_byte")
@@ -1682,7 +1710,7 @@ fun! Test_normal34_g_cmd3()
   call append(1, range(1,10))
   " clean up
   bw!
-endfu
+endfunc
 
 fun! Test_normal35_g_cmd4()
   " Test for g<
@@ -1692,7 +1720,7 @@ fun! Test_normal35_g_cmd4()
   echo "a\nb\nc\nd"
   let b=execute(':norm! g<')
   call assert_true(!empty(b), 'failed `execute(g<)`')
-endfu
+endfunc
 
 fun! Test_normal36_g_cmd5()
   new
@@ -1730,7 +1758,7 @@ fun! Test_normal36_g_cmd5()
   call assert_equal([0, 14, 1, 0, 2147483647], getcurpos())
   " clean up
   bw!
-endfu
+endfunc
 
 fun! Test_normal37_g_cmd6()
   " basic test for gt and gT
@@ -1757,7 +1785,7 @@ fun! Test_normal37_g_cmd6()
   endfor
   " clean up
   call assert_fails(':tabclose', 'E784')
-endfu
+endfunc
 
 fun! Test_normal38_nvhome()
   " Test for <Home> and <C-Home> key
@@ -1778,7 +1806,7 @@ fun! Test_normal38_nvhome()
 
   " clean up
   bw!
-endfu
+endfunc
 
 fun! Test_normal39_cw()
   " Test for cw and cW on whitespace
@@ -1802,7 +1830,7 @@ fun! Test_normal39_cw()
 
   " clean up
   bw!
-endfu
+endfunc
 
 fun! Test_normal40_ctrl_bsl()
   " Basic test for CTRL-\ commands
@@ -1827,7 +1855,7 @@ fun! Test_normal40_ctrl_bsl()
 
   " clean up
   bw!
-endfu
+endfunc
 
 fun! Test_normal41_insert_reg()
   " Test for <c-r>=, <c-r><c-r>= and <c-r><c-o>=
@@ -1847,7 +1875,7 @@ fun! Test_normal41_insert_reg()
   " clean up
   set sts=0 sw=8 ts=8
   bw!
-endfu
+endfunc
 
 func! Test_normal42_halfpage()
   " basic test for Ctrl-D and Ctrl-U
@@ -1884,7 +1912,7 @@ func! Test_normal42_halfpage()
   " cleanup
   set startofline
   bw!
-endfu
+endfunc
 
 fun! Test_normal43_textobject1()
   " basic tests for text object aw
@@ -1915,7 +1943,7 @@ fun! Test_normal43_textobject1()
 
   " clean up
   bw!
-endfu
+endfunc
 
 func! Test_normal44_textobjects2()
   " basic testing for is and as text objects
@@ -1970,7 +1998,7 @@ func! Test_normal44_textobjects2()
 
   " clean up
   bw!
-endfu
+endfunc
 
 func! Test_normal45_drop()
   if !has("dnd")
@@ -1985,9 +2013,14 @@ func! Test_normal45_drop()
   " the ~ register is read only
   call assert_fails(':let @~="1"', 'E354')
   bw!
-endfu
+endfunc
 
 func! Test_normal46_ignore()
+  " This test uses multi byte characters
+  if !has("multi_byte")
+    return
+  endif
+
   new
   " How to test this?
   " let's just for now test, that the buffer
@@ -1995,9 +2028,16 @@ func! Test_normal46_ignore()
   call feedkeys("\<c-s>", 't')
   call assert_equal([''], getline(1,'$'))
 
+  " no valid commands
+  exe "norm! \<char-0x100>"
+  call assert_equal([''], getline(1,'$'))
+
+  exe "norm! ä"
+  call assert_equal([''], getline(1,'$'))
+
   " clean up
   bw!
-endfu
+endfunc
 
 func! Test_normal47_visual_buf_wipe()
   " This was causing a crash or ml_get error.
@@ -2011,4 +2051,159 @@ func! Test_normal47_visual_buf_wipe()
   bw!
   norm yp
   set nomodified
-endfu
+endfunc
+
+func! Test_normal47_autocmd()
+  " disabled, does not seem to be possible currently
+  throw "Skipped: not possible to test cursorhold autocmd while waiting for input in normal_cmd"
+  new
+  call append(0, repeat('-',20))
+  au CursorHold * call feedkeys('2l', '')
+  1
+  set updatetime=20
+  " should delete 12 chars (d12l)
+  call feedkeys('d1', '!')
+  call assert_equal('--------', getline(1))
+
+  " clean up
+  au! CursorHold
+  set updatetime=4000
+  bw!
+endfunc
+
+func! Test_normal48_wincmd()
+  new
+  exe "norm! \<c-w>c"
+  call assert_equal(1, winnr('$'))
+  call assert_fails(":norm! \<c-w>c", "E444")
+endfunc
+
+func! Test_normal49_counts()
+  new
+  call setline(1, 'one two three four five six seven eight nine ten')
+  1
+  norm! 3d2w
+  call assert_equal('seven eight nine ten', getline(1))
+  bw!
+endfunc
+
+func! Test_normal50_commandline()
+  if !has("timers") || !has("cmdline_hist") || !has("vertsplit")
+    return
+  endif
+  func! DoTimerWork(id)
+    call assert_equal('[Command Line]', bufname(''))
+    " should fail, with E11, but does fail with E23?
+    "call feedkeys("\<c-^>", 'tm')
+
+    " should also fail with E11
+    call assert_fails(":wincmd p", 'E11')
+    " return from commandline window
+    call feedkeys("\<cr>")
+  endfunc
+
+  let oldlang=v:lang
+  lang C
+  set updatetime=20
+  call timer_start(100, 'DoTimerWork')
+  try
+    " throws E23, for whatever reason...
+    call feedkeys('q:', 'x!')
+  catch /E23/
+    " no-op
+  endtry
+  " clean up
+  set updatetime=4000
+  exe "lang" oldlang
+  bw!
+endfunc
+
+func! Test_normal51_FileChangedRO()
+  if !has("autocmd")
+    return
+  endif
+  call writefile(['foo'], 'Xreadonly.log')
+  new Xreadonly.log
+  setl ro
+  au FileChangedRO <buffer> :call feedkeys("\<c-^>", 'tix')
+  call assert_fails(":norm! Af", 'E788')
+  call assert_equal(['foo'], getline(1,'$'))
+  call assert_equal('Xreadonly.log', bufname(''))
+
+  " cleanup
+  bw!
+  call delete("Xreadonly.log")
+endfunc
+
+func! Test_normal52_rl()
+  if !has("rightleft")
+    return
+  endif
+  new
+  call setline(1, 'abcde fghij klmnopq')
+  norm! 1gg$
+  set rl
+  call assert_equal(19, col('.'))
+  call feedkeys('l', 'tx')
+  call assert_equal(18, col('.'))
+  call feedkeys('h', 'tx')
+  call assert_equal(19, col('.'))
+  call feedkeys("\<right>", 'tx')
+  call assert_equal(18, col('.'))
+  call feedkeys("\<s-right>", 'tx')
+  call assert_equal(13, col('.'))
+  call feedkeys("\<c-right>", 'tx')
+  call assert_equal(7, col('.'))
+  call feedkeys("\<c-left>", 'tx')
+  call assert_equal(13, col('.'))
+  call feedkeys("\<s-left>", 'tx')
+  call assert_equal(19, col('.'))
+  call feedkeys("<<", 'tx')
+  call assert_equal('	abcde fghij klmnopq',getline(1))
+  call feedkeys(">>", 'tx')
+  call assert_equal('abcde fghij klmnopq',getline(1))
+
+  " cleanup
+  set norl
+  bw!
+endfunc
+
+func! Test_normal53_digraph()
+  if !has('digraphs')
+    return
+  endif
+  new
+  call setline(1, 'abcdefgh|')
+  exe "norm! 1gg0f\<c-k>!!"
+  call assert_equal(9, col('.'))
+  set cpo+=D
+  exe "norm! 1gg0f\<c-k>!!"
+  call assert_equal(1, col('.'))
+
+  set cpo-=D
+  bw!
+endfunc
+
+func! Test_normal54_Ctrl_bsl()
+	new
+	call setline(1, 'abcdefghijklmn')
+	exe "norm! df\<c-\>\<c-n>"
+	call assert_equal(['abcdefghijklmn'], getline(1,'$'))
+	exe "norm! df\<c-\>\<c-g>"
+	call assert_equal(['abcdefghijklmn'], getline(1,'$'))
+	exe "norm! df\<c-\>m"
+	call assert_equal(['abcdefghijklmn'], getline(1,'$'))
+  if !has("multi_byte")
+    return
+  endif
+	call setline(2, 'abcdefghijklmnāf')
+	norm! 2gg0
+	exe "norm! df\<Char-0x101>"
+	call assert_equal(['abcdefghijklmn', 'f'], getline(1,'$'))
+	norm! 1gg0
+	exe "norm! df\<esc>"
+	call assert_equal(['abcdefghijklmn', 'f'], getline(1,'$'))
+
+	" clean up
+	bw!
+endfunc
