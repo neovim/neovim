@@ -127,8 +127,8 @@ set(WINTOOLS_SHA256 8bfce7e3a365721a027ce842f2ec1cf878f1726233c215c05964aac07300
 set(WINGUI_URL https://github.com/equalsraf/neovim-qt/releases/download/v0.2.5/neovim-qt.zip)
 set(WINGUI_SHA256 07e2838c713bda9221a0b8022f4c9df3f8bbe69bb0b2fbeec473a0e8f0e779fa)
 
-set(WIN32YANK_URL https://github.com/equalsraf/win32yank/releases/download/v0.0.2/win32yank.zip)
-set(WIN32YANK_SHA256 78869bf68565607cda1b6a3d549e2487d59d6f0f16f9b003e123c0086f90309d)
+set(WIN32YANK_URL https://github.com/equalsraf/win32yank/releases/download/v0.0.3/win32yank.zip)
+set(WIN32YANK_SHA256 b474439ed2854a9a24941d66970c7fcfece219401eaaa5ebc0ffcc962e69887a)
 
 set(WINPTY_URL https://github.com/rprichard/winpty/releases/download/0.4.2/winpty-0.4.2-msvc2015.zip)
 set(WINPTY_SHA256 b465f2584ff394b3fe27c01aa1dcfc679583c1ee951d0e83de3f859d8b8305b8)
