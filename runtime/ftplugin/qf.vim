@@ -14,12 +14,3 @@ let b:undo_ftplugin = "set stl<"
 
 " Display the command that produced the list in the quickfix window:
 setlocal stl=%t%{exists('w:quickfix_title')?\ '\ '.w:quickfix_title\ :\ ''}\ %=%-15(%l,%c%V%)\ %P
-
-autocmd Syntax <buffer>
-      \ if get(w:, 'quickfix_title') =~# '^:\%(Man\|Help\) TOC$' && &syntax == 'qf' |
-      \   setlocal modifiable |
-      \   silent %delete _ |
-      \   call setline(1, map(getloclist(0), 'v:val.text')) |
-      \   setlocal nomodifiable nomodified |
-      \   let &syntax = tolower(matchstr(w:quickfix_title, '\w\+')) |
-      \ endif

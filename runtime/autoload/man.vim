@@ -149,25 +149,26 @@ function! s:put_page(page) abort
     silent keepjumps 1delete _
   endwhile
   setlocal filetype=man
-  call man#create_toc()
 endfunction
 
-function! man#create_toc() abort
-  if !exists('b:man_toc')
-    " Cache the TOC since user might switch in and out between the man pages.
-    let b:man_toc = []
+function! man#show_toc() abort
+  if !exists('b:qf_toc')
+    let b:qf_toc = []
     let lnum = 2
     let last_line = line('$') - 1
     while lnum && lnum < last_line
       let text = getline(lnum)
       if text =~# '^\%( \{3\}\)\=\S.*$'
-        call add(b:man_toc, {'bufnr': bufnr('%'), 'lnum': lnum, 'text': text})
+        call add(b:qf_toc, {'bufnr': bufnr('%'), 'lnum': lnum, 'text': text})
       endif
       let lnum = nextnonblank(lnum + 1)
     endwhile
   endif
 
-  call setloclist(0, b:man_toc, ' ', 'Man TOC')
+  if map(copy(b:qf_toc), 'v:val.text') != map(getloclist(0), 'v:val.text')
+    call setloclist(0, b:qf_toc, ' ', 'Man TOC')
+  endif
+  lopen
 endfunction
 
 " attempt to extract the name and sect out of 'name(sect)'
