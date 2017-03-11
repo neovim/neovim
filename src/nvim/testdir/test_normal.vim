@@ -398,6 +398,15 @@ func! Test_normal14_page()
   bw!
 endfu
 
+func! Test_normal14_page_eol()
+  10new
+  norm oxxxxxxx
+  exe "norm 2\<c-f>"
+  " check with valgrind that cursor is put back in column 1
+  exe "norm 2\<c-b>"
+  bw!
+endfunc
+
 func! Test_normal15_z_scroll_vert()
   " basic test for z commands that scroll the window
   call Setup_NewWindow()
