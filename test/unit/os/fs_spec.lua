@@ -1,7 +1,7 @@
 local lfs = require('lfs')
 local bit = require('bit')
 
-local helpers = require('test.unit.helpers')
+local helpers = require('test.unit.helpers')(after_each)
 local itp = helpers.gen_itp(it)
 
 local cimport = helpers.cimport

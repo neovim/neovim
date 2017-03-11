@@ -1,4 +1,4 @@
-local helpers = require('test.unit.helpers')
+local helpers = require('test.unit.helpers')(nil)
 local eval_helpers = require('test.unit.eval.helpers')
 
 local cimport = helpers.cimport

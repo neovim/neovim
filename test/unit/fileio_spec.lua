@@ -1,4 +1,4 @@
-local helpers = require("test.unit.helpers")
+local helpers = require("test.unit.helpers")(after_each)
 local itp = helpers.gen_itp(it)
 --{:cimport, :internalize, :eq, :neq, :ffi, :lib, :cstr, :to_cstr} = require 'test.unit.helpers'
 

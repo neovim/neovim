@@ -10,6 +10,8 @@ local say = require('say')
 local posix = nil
 local syscall = nil
 
+local check_cores = global_helpers.check_cores
+local which = global_helpers.which
 local neq = global_helpers.neq
 local eq = global_helpers.eq
 local ok = global_helpers.ok
@@ -431,7 +433,7 @@ local function gen_itp(it)
   return itp
 end
 
-return {
+local module = {
   cimport = cimport,
   cppimport = cppimport,
   internalize = internalize,
@@ -448,3 +450,11 @@ return {
   alloc_log_new = alloc_log_new,
   gen_itp = gen_itp,
 }
+return function(after_each)
+  if after_each then
+    after_each(function()
+      check_cores(which('luajit'))
+    end)
+  end
+  return module
+end

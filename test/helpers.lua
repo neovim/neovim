@@ -212,6 +212,14 @@ local function check_cores(app)
   end
 end
 
+local function which(exe)
+  local pipe = io.popen('which ' .. exe, 'r')
+  local ret = pipe:read('*a')
+  pipe:close()
+  assert(ret:sub(-1) == '\n')
+  return ret:sub(1, -2)
+end
+
 return {
   eq = eq,
   neq = neq,
@@ -224,4 +232,5 @@ return {
   glob = glob,
   check_cores = check_cores,
   hasenv = hasenv,
+  which = which,
 }
