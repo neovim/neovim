@@ -7829,6 +7829,7 @@ static void get_op_vcol(
 
   // prevent from moving onto a trail byte
   if (has_mbyte) {
+    check_pos(curwin->w_buffer, &oap->end);
     mb_adjustpos(curwin->w_buffer, &oap->end);
   }
 
