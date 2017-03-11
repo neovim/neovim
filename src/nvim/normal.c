@@ -1916,7 +1916,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
       // Restore linebreak, so that when the user edits it looks as
       // before.
       curwin->w_p_lbr = lbr_saved;
-      op_function(oap);                 /* call 'operatorfunc' */
+      op_function(oap);                 // call 'operatorfunc'
       break;
 
     case OP_INSERT:
@@ -4767,10 +4767,10 @@ static void nv_ident(cmdarg_T *cap)
     ptr = vim_strnsave(ptr, n);
     if (kp_ex) {
       // Escape the argument properly for an Ex command
-      p = vim_strsave_fnameescape(ptr, FALSE);
+      p = vim_strsave_fnameescape(ptr, false);
     } else {
       // Escape the argument properly for a shell command
-      p = vim_strsave_shellescape(ptr, TRUE, TRUE);
+      p = vim_strsave_shellescape(ptr, true, true);
     }
     xfree(ptr);
     char *newbuf = xrealloc(buf, STRLEN(buf) + STRLEN(p) + 1);

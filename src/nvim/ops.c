@@ -3857,14 +3857,14 @@ fex_format (
   if (fex == NULL) {
     return 0;
   }
-  /*
-   * Evaluate the function.
-   */
-  if (use_sandbox)
-    ++sandbox;
+  // Evaluate the function.
+  if (use_sandbox) {
+    sandbox++;
+  }
   r = (int)eval_to_number(fex);
-  if (use_sandbox)
-    --sandbox;
+  if (use_sandbox) {
+    sandbox--;
+  }
 
   set_vim_var_string(VV_CHAR, NULL, -1);
   xfree(fex);
