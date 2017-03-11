@@ -1222,7 +1222,7 @@ endfunc
 func! Test_normal23_K()
   " Test for K command
   new
-  call append(0, ['version8.txt', 'man'])
+  call append(0, ['version8.txt', 'man', 'aa%bb', 'cc|dd'])
   let k = &keywordprg
   set keywordprg=:help
   1
@@ -1236,6 +1236,24 @@ func! Test_normal23_K()
   call assert_equal('help', &ft)
   call assert_match('\*version8\.0\*', getline('.'))
   helpclose
+
+  set keywordprg=:new
+  set iskeyword+=%
+  set iskeyword+=\|
+  2
+  norm! K
+  call assert_equal('man', fnamemodify(bufname('%'), ':t'))
+  bwipe!
+  3
+  norm! K
+  call assert_equal('aa%bb', fnamemodify(bufname('%'), ':t'))
+  bwipe!
+  4
+  norm! K
+  call assert_equal('cc|dd', fnamemodify(bufname('%'), ':t'))
+  bwipe!
+  set iskeyword-=%
+  set iskeyword-=\|
 
   " Only expect "man" to work on Unix
   if !has("unix")

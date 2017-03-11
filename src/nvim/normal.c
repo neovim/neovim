@@ -4763,9 +4763,14 @@ static void nv_ident(cmdarg_T *cap)
    * Now grab the chars in the identifier
    */
   if (cmdchar == 'K' && !kp_ex) {
-    /* Escape the argument properly for a shell command */
     ptr = vim_strnsave(ptr, n);
-    p = vim_strsave_shellescape(ptr, true, true);
+    if (kp_ex) {
+      // Escape the argument properly for an Ex command
+      p = vim_strsave_fnameescape(ptr, FALSE);
+    } else {
+      // Escape the argument properly for a shell command
+      p = vim_strsave_shellescape(ptr, TRUE, TRUE);
+    }
     xfree(ptr);
     char *newbuf = xrealloc(buf, STRLEN(buf) + STRLEN(p) + 1);
     buf = newbuf;
