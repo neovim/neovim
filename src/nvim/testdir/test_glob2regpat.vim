@@ -9,14 +9,18 @@ endfunc
 func Test_valid()
   call assert_equal('^foo\.', glob2regpat('foo.*'))
   call assert_equal('^foo.$', glob2regpat('foo?'))
-  call assert_equal('^foo?$', glob2regpat('foo\?'))
   call assert_equal('\.vim$', glob2regpat('*.vim'))
   call assert_equal('^[abc]$', glob2regpat('[abc]'))
   call assert_equal('^foo bar$', glob2regpat('foo\ bar'))
   call assert_equal('^foo,bar$', glob2regpat('foo,bar'))
   call assert_equal('^\(foo\|bar\)$', glob2regpat('{foo,bar}'))
-  call assert_equal('^\(foo,bar\|foobar\)$', glob2regpat('{foo\,bar,foobar}'))
-  call assert_equal('^{foo,bar}$', glob2regpat('\{foo,bar\}'))
-  call assert_equal('^\\\(foo\|bar\\\)$', glob2regpat('\\{foo,bar\\}'))
   call assert_equal('.*', glob2regpat('**'))
+
+  if has('unix')
+    call assert_equal('^foo?$', glob2regpat('foo\?'))
+    call assert_equal('^\(foo,bar\|foobar\)$', glob2regpat('{foo\,bar,foobar}'))
+    call assert_equal('^{foo,bar}$', glob2regpat('\{foo,bar\}'))
+    call assert_equal('^\\\(foo\|bar\\\)$', glob2regpat('\\{foo,bar\\}'))
+  " todo: Windows
+  endif
 endfunc
