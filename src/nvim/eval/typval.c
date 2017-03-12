@@ -755,7 +755,7 @@ const char *tv_list_find_str(list_T *const l, const int n)
 {
   const listitem_T *const li = tv_list_find(l, n);
   if (li == NULL) {
-    EMSGN(_(e_listidx), n);
+    emsgf(_(e_listidx), (int64_t)n);
     return NULL;
   }
   return tv_get_string(&li->li_tv);
@@ -1264,14 +1264,14 @@ bool tv_dict_get_callback(dict_T *const d,
 
   if (di->di_tv.v_type != VAR_FUNC && di->di_tv.v_type != VAR_STRING
       && di->di_tv.v_type != VAR_PARTIAL) {
-    EMSG(_("Argument is not a function or function name"));
+    emsgf(_("E6000: Argument is not a function or function name"));
     return false;
   }
 
   typval_T tv;
   tv_copy(&di->di_tv, &tv);
   set_selfdict(&tv, d);
-  bool res = callback_from_typval(result, &tv);
+  const bool res = callback_from_typval(result, &tv);
   tv_clear(&tv);
   return res;
 }
@@ -1942,7 +1942,7 @@ void tv_copy(typval_T *const from, typval_T *const to)
       break;
     }
     case VAR_UNKNOWN: {
-      EMSG2(_(e_intern2), "tv_copy(UNKNOWN)");
+      emsgf(_(e_intern2), "tv_copy(UNKNOWN)");
       break;
     }
   }
@@ -2259,7 +2259,7 @@ bool tv_check_num(const typval_T *const tv)
     case VAR_DICT:
     case VAR_FLOAT:
     case VAR_UNKNOWN: {
-      EMSG(_(num_errors[tv->v_type]));
+      emsgf(_(num_errors[tv->v_type]));
       return false;
     }
   }
@@ -2303,7 +2303,7 @@ bool tv_check_str(const typval_T *const tv)
     case VAR_DICT:
     case VAR_FLOAT:
     case VAR_UNKNOWN: {
-      EMSG(_(str_errors[tv->v_type]));
+      emsgf(_(str_errors[tv->v_type]));
       return false;
     }
   }
@@ -2350,7 +2350,7 @@ varnumber_T tv_get_number_chk(const typval_T *const tv, bool *const ret_error)
     case VAR_LIST:
     case VAR_DICT:
     case VAR_FLOAT: {
-      EMSG(_(num_errors[tv->v_type]));
+      emsgf(_(num_errors[tv->v_type]));
       break;
     }
     case VAR_NUMBER: {
@@ -2378,7 +2378,7 @@ varnumber_T tv_get_number_chk(const typval_T *const tv, bool *const ret_error)
       break;
     }
     case VAR_UNKNOWN: {
-      EMSG2(_(e_intern2), "tv_get_number(UNKNOWN)");
+      emsgf(_(e_intern2), "tv_get_number(UNKNOWN)");
       break;
     }
   }
@@ -2428,27 +2428,27 @@ float_T tv_get_float(const typval_T *const tv)
     }
     case VAR_PARTIAL:
     case VAR_FUNC: {
-      EMSG(_("E891: Using a Funcref as a Float"));
+      emsgf(_("E891: Using a Funcref as a Float"));
       break;
     }
     case VAR_STRING: {
-      EMSG(_("E892: Using a String as a Float"));
+      emsgf(_("E892: Using a String as a Float"));
       break;
     }
     case VAR_LIST: {
-      EMSG(_("E893: Using a List as a Float"));
+      emsgf(_("E893: Using a List as a Float"));
       break;
     }
     case VAR_DICT: {
-      EMSG(_("E894: Using a Dictionary as a Float"));
+      emsgf(_("E894: Using a Dictionary as a Float"));
       break;
     }
     case VAR_SPECIAL: {
-      EMSG(_("E907: Using a special value as a Float"));
+      emsgf(_("E907: Using a special value as a Float"));
       break;
     }
     case VAR_UNKNOWN: {
-      EMSG2(_(e_intern2), "get_tv_float(UNKNOWN)");
+      emsgf(_(e_intern2), "get_tv_float(UNKNOWN)");
       break;
     }
   }
@@ -2490,7 +2490,7 @@ const char *tv_get_string_buf_chk(const typval_T *const tv, char *const buf)
     case VAR_DICT:
     case VAR_FLOAT:
     case VAR_UNKNOWN: {
-      EMSG(_(str_errors[tv->v_type]));
+      emsgf(_(str_errors[tv->v_type]));
       return false;
     }
   }
