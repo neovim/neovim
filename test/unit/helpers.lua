@@ -124,7 +124,8 @@ local function trim(s)
 end
 
 -- a Set that keeps around the lines we've already seen
-local cdefs = Set:new()
+local cdefs_init = Set:new()
+local cdefs_mod = nil
 local imported = Set:new()
 local pragma_pack_id = 1
 
@@ -164,9 +165,11 @@ cimport = function(...)
   if preprocess_cache_mod then
     preprocess_cache = preprocess_cache_mod
     previous_defines = previous_defines_mod
+    cdefs = cdefs_mod
   else
     preprocess_cache = preprocess_cache_init
     previous_defines = previous_defines_init
+    cdefs = cdefs_init
   end
   for _, path in ipairs({...}) do
     if not (path:sub(1, 1) == '/' or path:sub(1, 1) == '.'
@@ -187,6 +190,35 @@ cimport = function(...)
       end
       body = formatc(body)
       body = filter_complex_blocks(body)
+      -- add the formatted lines to a set
+      local new_cdefs = Set:new()
+      for line in body:gmatch("[^\r\n]+") do
+        line = trim(line)
+        -- give each #pragma pack an unique id, so that they don't get removed
+        -- if they are inserted into the set
+        -- (they are needed in the right order with the struct definitions,
+        -- otherwise luajit has wrong memory layouts for the sturcts)
+        if line:match("#pragma%s+pack") then
+          line = line .. " // " .. pragma_pack_id
+          pragma_pack_id = pragma_pack_id + 1
+        end
+        new_cdefs:add(line)
+      end
+
+      -- subtract the lines we've already imported from the new lines, then add
+      -- the new unique lines to the old lines (so they won't be imported again)
+      new_cdefs:diff(cdefs)
+      cdefs:union(new_cdefs)
+      -- request a sorted version of the new lines (same relative order as the
+      -- original preprocessed file) and feed that to the LuaJIT ffi
+      local new_lines = new_cdefs:to_table()
+      if os.getenv('NVIM_TEST_PRINT_CDEF') == '1' then
+        for lnum, line in ipairs(new_lines) do
+          print(lnum, line)
+        end
+      end
+      body = table.concat(new_lines, '\n')
+
       preprocess_cache[path] = body
     end
     cimportstr(preprocess_cache, path)
@@ -213,40 +245,10 @@ cimportstr = child_call(function(preprocess_cache, path)
     return lib
   end
   local body = preprocess_cache[path]
-  -- add the formatted lines to a set
-  local new_cdefs = Set:new()
-  for line in body:gmatch("[^\r\n]+") do
-    line = trim(line)
-    -- give each #pragma pack an unique id, so that they don't get removed
-    -- if they are inserted into the set
-    -- (they are needed in the right order with the struct definitions,
-    -- otherwise luajit has wrong memory layouts for the sturcts)
-    if line:match("#pragma%s+pack") then
-      line = line .. " // " .. pragma_pack_id
-      pragma_pack_id = pragma_pack_id + 1
-    end
-    new_cdefs:add(line)
-  end
-
-  -- subtract the lines we've already imported from the new lines, then add
-  -- the new unique lines to the old lines (so they won't be imported again)
-  new_cdefs:diff(cdefs)
-  cdefs:union(new_cdefs)
-
-  if new_cdefs:size() == 0 then
-    -- if there's no new lines, just return
+  if body == '' then
     return lib
   end
-
-  -- request a sorted version of the new lines (same relative order as the
-  -- original preprocessed file) and feed that to the LuaJIT ffi
-  local new_lines = new_cdefs:to_table()
-  if os.getenv('NVIM_TEST_PRINT_CDEF') == '1' then
-    for lnum, line in ipairs(new_lines) do
-      print(lnum, line)
-    end
-  end
-  cdef(table.concat(new_lines, "\n"))
+  cdef(body)
   imported:add(path)
 
   return lib
@@ -482,6 +484,7 @@ local function gen_itp(it)
   child_cleanups_mod_once = {}
   preprocess_cache_mod = map(function(v) return v end, preprocess_cache_init)
   previous_defines_mod = previous_defines_init
+  cdefs_mod = cdefs_init:copy()
   local function just_fail(_)
     return false
   end
