@@ -1490,7 +1490,7 @@ do_set (
               new_value_alloced = true;
               if (newval == NULL) {
                 newval = empty_option;
-              } else if (!(options[opt_idx].flags | P_NO_DEF_EXP)) {
+              } else if (!(options[opt_idx].flags & P_NO_DEF_EXP)) {
                 s = option_expand(opt_idx, newval);
                 if (s == NULL) {
                   s = newval;
